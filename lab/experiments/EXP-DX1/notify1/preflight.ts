@@ -10,6 +10,7 @@ import { inputPins, measuredPair } from "./rung.ts";
 export async function preflight(
   dir: string,
   binding: { source: string; slot: string; nonce: string },
+  recipient?: { pages: number; intervalMs: number },
 ) {
   try {
     const pins = inputPins(binding.source);
@@ -32,6 +33,8 @@ export async function preflight(
       4,
       true,
       true,
+      recipient?.pages,
+      recipient?.intervalMs ?? 0,
     );
     const proof = pair.dispatch.proof;
     assert(
@@ -41,6 +44,7 @@ export async function preflight(
     );
     const receipt = {
       binding,
+      recipient: recipient ?? null,
       inputPins: pins,
       windowIdentity: identity.binding,
       oracle: identity.oracleSha256,

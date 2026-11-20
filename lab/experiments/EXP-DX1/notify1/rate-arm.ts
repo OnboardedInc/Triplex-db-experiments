@@ -14,8 +14,17 @@ import { runWindow } from "./workload.ts";
 const { slotCpu }: { slotCpu(holder: string, lane: string, slot: string): unknown } = await import(
   new URL("../../../bin/engine.mjs", import.meta.url).href
 );
-const [mode, size, pause, duration, shape = "fixture", pages = "1", route = "source"] =
-  process.argv.slice(2);
+const [
+  mode,
+  size,
+  pause,
+  duration,
+  shape = "fixture",
+  pages = "1",
+  route = "source",
+  train = "1",
+  interval = "0",
+] = process.argv.slice(2);
 const n = Number(size),
   gap = Number(pause),
   ms = Number(duration),
@@ -38,6 +47,12 @@ assert(
     batchPages >= 1 &&
     batchPages <= 32 &&
     (route === "recipient" || batchPages === 1),
+);
+assert(
+  Number.isFinite(Number(interval)) &&
+    Number(interval) >= 0 &&
+    Number(interval) <= 1000 &&
+    (route === "recipient" || Number(interval) === 0),
 );
 const recipientPages = route === "recipient" ? batchPages : undefined;
 const dir = process.env.NOTIFY_DIR!,
@@ -81,6 +96,8 @@ try {
     idle: mode === "idle",
     budget,
     recipientPages,
+    releases: Number(train),
+    readIntervalMs: Number(interval),
     cpuSnapshot: () => slotCpu(owner.holder, owner.lane, owner.slot),
     duration: mode === "baseline" ? ms : undefined,
     workerJob: {
@@ -94,6 +111,8 @@ try {
       priority: mode !== "idle",
       profileDir: profiled ? dir : undefined,
       recipientPages,
+      releases: Number(train),
+      readIntervalMs: Number(interval),
     },
     phase: (stage) => console.log(stage),
   });
@@ -109,7 +128,8 @@ try {
       run.proof?.subjects === n &&
         run.proof.receiverStates === n &&
         run.proof.ledgerStates === n &&
-        run.dispatch.deliveries === run.proof.eventCounts[1] &&
+        run.dispatch.deliveries ===
+          run.proof.eventCounts.slice(1, Number(train) + 1).reduce((a, b) => a + b, 0) &&
         run.dispatch.deliveries > 0,
     );
   if (mode !== "idle") assert(reads.length && saves.length);

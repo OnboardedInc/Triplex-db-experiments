@@ -29,6 +29,15 @@ export function inspectPair(dir: string) {
     const pre = JSON.parse(fs.readFileSync(path.join(parent, "preflight-receipt.json"), "utf8"));
     assert.deepEqual(pre.binding, { source, slot, nonce: b.nonce });
     assert.deepEqual(pre.inputPins, result.inputs);
+    if (pre.recipient || result.dispatch.recipientPages) {
+      assert(
+        pre.recipient &&
+          pre.recipient.pages === result.dispatch.recipientPages &&
+          pre.recipient.intervalMs === result.dispatch.readIntervalMs,
+      );
+      assert.equal(result.baseline.recipientPages, result.dispatch.recipientPages);
+      assert.equal(result.baseline.readIntervalMs, result.dispatch.readIntervalMs);
+    }
     if (path.basename(dir) === "notice-preflight") {
       assert.equal(pre.noticeAttempt, nonce);
       assert.equal(pre.noticeDigest, result.dispatch.proof.orderedEffectSha256);

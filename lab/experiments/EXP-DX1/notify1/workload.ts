@@ -45,6 +45,8 @@ export async function runWindow(opts: {
   cpuSnapshot?: () => unknown;
   idle?: boolean;
   recipientPages?: number;
+  releases?: number;
+  readIntervalMs?: number;
 }) {
   const { profile: p, source, receiver, epoch } = opts;
   const a = new Notices(source, "account", p.inputs),
@@ -58,7 +60,9 @@ export async function runWindow(opts: {
     validTime: p.validTime,
   });
   const sender = () =>
-    opts.recipientPages ? new Relay(a, sink, opts.recipientPages) : new Dispatcher(a, sink);
+    opts.recipientPages
+      ? new Relay(a, sink, opts.recipientPages, opts.readIntervalMs)
+      : new Dispatcher(a, sink);
   if (opts.recipientPages) await new Relay(a, sink, opts.recipientPages).create(epoch, p.validTime);
   else await a.create(epoch, p.validTime);
   const history: Offered[] = [];
@@ -83,6 +87,12 @@ export async function runWindow(opts: {
   );
   const changes = claim.value.changes as { entityId: string; op: string }[];
   assert(changes.length === 4 && changes.every((x) => x.entityId.startsWith(a.db.prefix)));
+  const releases = opts.releases ?? 1;
+  assert(Number.isSafeInteger(releases) && releases >= 1 && releases <= 127 && releases % 2 === 1);
+  // [DX-STG1] Why: multiple genuinely committed release changes keep dispatch active long enough to observe a live latency tail. Rejected: resending an already-applied packet or warming an idle worker.
+  let lastPublication = broad;
+  for (let i = 1; i < releases; i++)
+    lastPublication = await append(release("publication-" + i, i % 2 ? "R1" : "R2"));
   const packetReaders = opts.readers;
   const saves: {
       seq: number;
@@ -103,7 +113,7 @@ export async function runWindow(opts: {
       world: string;
       validTime: string;
     }[] = [];
-  let through = broad.receipt.position,
+  let through = lastPublication.receipt.position,
     latestValid = p.validTime,
     duration = opts.duration ?? Infinity;
   const worker = sender(),
@@ -230,7 +240,7 @@ export async function runWindow(opts: {
         ).separate(opts.workerJob, grant, onEffect, abort.signal);
       else
         await worker.drain({
-          through: 2,
+          through: releases + 1,
           gapMs: opts.gapMs,
           grant: async () => {
             abort.signal.throwIfAborted();
@@ -292,15 +302,24 @@ export async function runWindow(opts: {
         );
     }
   }
-  let proof;
+  let proof,
+    catchupMs = 0;
   if (opts.duration === undefined) {
+    const started = performance.now();
     await sender().drain();
+    catchupMs = performance.now() - started;
     proof = await verify(worker, p.ids, history, p.witness.bind(p));
-    assert.equal(proof.eventCounts[1], dispatch.deliveries);
+    assert.equal(
+      proof.eventCounts.slice(1, releases + 1).reduce((a, b) => a + b, 0),
+      dispatch.deliveries,
+    );
   }
   return {
     epoch,
     recipientPages: opts.recipientPages ?? null,
+    releases,
+    catchupMs,
+    readIntervalMs: opts.readIntervalMs ?? 0,
     startedAt: performance.timeOrigin + start,
     processCpu,
     cpuBefore,

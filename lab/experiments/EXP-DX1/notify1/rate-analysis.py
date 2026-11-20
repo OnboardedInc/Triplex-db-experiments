@@ -40,7 +40,7 @@ def arm(d):
     if a["mode"] != "baseline":
         p = a["proof"]
         assert p["subjects"] == p["receiverStates"] == p["ledgerStates"] == a["n"] and sum(p["eventCounts"]) == p["effects"]
-        assert a["dispatch"]["deliveries"] == p["eventCounts"][1] > 0
+        assert a["dispatch"]["deliveries"] == sum(p["eventCounts"][1:1+a.get("releases",1)]) > 0
         assert a["deliveriesPerSecond"] == 1000*a["dispatch"]["deliveries"]/a["duration"]
     return a,raw
 
@@ -65,7 +65,7 @@ def data(d,role,a):
 
 def partition(rows,start,duration):
     changes=[(start,False,""),(start+duration,False,"")]
-    categories=["sleep","foreground-grant","kernel","publish-and-pack","source-derive","source-ack","receiver-write","receiver-state","source-ledger","source-data","source-metadata"]
+    categories=["sleep","read-pacing","foreground-grant","kernel","publish-and-pack","source-derive","source-ack","receiver-write","receiver-state","source-ledger","source-data","source-metadata"]
     for r in rows:
         k=r["kind"]
         if k=="write": k="receiver-write" if r["role"]=="receiver" else "source-ack" if r["operation"]=="cursor" else "source-derive"
@@ -110,6 +110,11 @@ def stats(d):
         rr=[r for r in rows if r.get("role")==role]
         samples=[s for r in rr for s in r["samples"]]
         counts[role]={"writes":sum(r["kind"]=="write" for r in rr),"pinned":sum(r["kind"]=="pinned" for r in rr),"roots":sum(r.get("roots",0) for r in rr),"heads":sum(r["kind"]=="head" for r in rr),"lookups":sum(r["kind"]=="lookup" for r in rr),"http":sum(r["requests"] for r in rr),"httpSamples":len(samples),"wireIn":sum(q["requestBytes"] for q in samples),"wireOut":sum(q["responseBytes"] for q in samples),"opBytes":sum(r.get("opBytes",0) for r in rr)}
+        wal=[r["wal"] for r in rr if "wal" in r]
+        if wal:
+            assert len(wal)==counts[role]["writes"]
+            counts[role]["walBytes"]=sum(x["bytes"] for x in wal)
+            counts[role]["walFrames"]=sum(x["frames"] for x in wal)
         assert counts[role]["http"]==len(samples)
     packets=[r for r in rows if r["kind"]=="deliveries"]
     assert sum(r["count"] for r in packets)==ds and len({r["batch"] for r in packets})==m["packets"]

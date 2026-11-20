@@ -20,8 +20,12 @@ export class Relay {
   readonly notices: Notices;
   readonly sink: Documents;
   readonly pages: number;
+  readonly readIntervalMs: number;
+  private lastRead = -Infinity;
   readonly metrics = emptyMetrics();
-  constructor(source: Notices, sink: Documents, pages: number) {
+  constructor(source: Notices, sink: Documents, pages: number, readIntervalMs = 0) {
+    assert(Number.isFinite(readIntervalMs) && readIntervalMs >= 0 && readIntervalMs <= 1000);
+    this.readIntervalMs = readIntervalMs;
     assert(Number.isSafeInteger(pages) && pages >= 1 && pages <= 32);
     this.notices = source;
     this.sink = sink;
@@ -113,11 +117,24 @@ export class Relay {
     const start = performance.now();
     try {
       // [DX-STG1] Why: overlap at most two pinned native pages and fold them in census order, leaving an admission opportunity before each pair. Rejected: firing an entire account's reads at the foreground gateway.
-      for (let i = 0; i < ids.length; i += width * 2) {
+      const interval = sel.kind === "census" ? this.readIntervalMs : 0;
+      const quantum = interval ? 16 : 2 * width;
+      for (let i = 0; i < ids.length; i += quantum) {
+        if (interval) {
+          const remaining = this.lastRead + interval - performance.now();
+          if (remaining > 0) {
+            const began = performance.timeOrigin + performance.now();
+            await sleep(remaining);
+            a.budget?.mark("read-pacing", began);
+          }
+        }
         await opts.grant?.();
-        const groups = [ids.slice(i, i + width), ids.slice(i + width, i + 2 * width)].filter(
-          (g) => g.length,
-        );
+        this.lastRead = performance.now();
+        const groups = (
+          interval
+            ? [ids.slice(i, i + quantum)]
+            : [ids.slice(i, i + width), ids.slice(i + width, i + 2 * width)]
+        ).filter((g) => g.length);
         const records = await Promise.all(groups.map((group) => a.work(e, group, sourceAt)));
         for (const [j, group] of groups.entries())
           for (const [k, s] of group.entries()) {

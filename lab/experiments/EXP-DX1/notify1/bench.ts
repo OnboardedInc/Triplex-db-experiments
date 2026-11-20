@@ -25,10 +25,25 @@ export function commandPlan(tag: string) {
   return { dir, tag, prefix, preflight: 1000, subjects: 100000, readers: 64, ceiling: 24 * 3600 };
 }
 async function run() {
-  const [op, tag] = process.argv.slice(2),
+  const [op, tag, ...args] = process.argv.slice(2),
     p = commandPlan(tag!);
+  const selected = args.length
+    ? { pages: Number(args[1]), intervalMs: Number(args[2]) }
+    : undefined;
+  if (selected)
+    assert(
+      (op === "launch" || op === "plan") &&
+        args.length === 3 &&
+        args[0] === "recipient" &&
+        Number.isInteger(selected.pages) &&
+        selected.pages >= 1 &&
+        selected.pages <= 32 &&
+        Number.isFinite(selected.intervalMs) &&
+        selected.intervalMs >= 0 &&
+        selected.intervalMs <= 1000,
+    );
   if (op === "plan") {
-    console.log(JSON.stringify(p));
+    console.log(JSON.stringify({ ...p, recipient: selected ?? null }));
     return;
   }
   scaleHost.physical();
@@ -92,6 +107,7 @@ async function run() {
     const nonce = randomUUID(),
       clientBudget = Math.floor(budget.host.memory - budget.sharedReserve - 5 * GiB);
     write(file, {
+      recipient: selected ?? null,
       tag,
       slot: p.prefix,
       nonce,
@@ -150,7 +166,7 @@ async function run() {
   call("taskset", ["-pc", "3,5,6,7,9,10,11", String(process.pid)]);
   const binding = { source, slot: p.prefix, nonce: attempt.nonce };
   // [DX-STG1] Why: require ACT2's identity gate and a complete 1k notice replay on this allocation before paying for either 100k seed. Rejected: accepting a saved Mac preflight or a launch-only success.
-  await preflight(p.dir, binding);
+  await preflight(p.dir, binding, attempt.recipient ?? undefined);
   const large = path.join(p.dir, "deep");
   fs.mkdirSync(large);
   write(path.join(p.dir, "before-deep.json"), scaleHost.snapshot(p.prefix));
@@ -165,6 +181,8 @@ async function run() {
     p.readers,
     true,
     true,
+    attempt.recipient?.pages,
+    attempt.recipient?.intervalMs ?? 0,
   );
   write(path.join(p.dir, "after-deep.json"), scaleHost.snapshot(p.prefix));
 }

@@ -21,6 +21,8 @@ export interface Job {
   priority: boolean;
   profileDir?: string;
   recipientPages?: number;
+  releases?: number;
+  readIntervalMs?: number;
 }
 export function recipient(name: string, directory?: string) {
   return directory ? sqliteStore(directory, name) : openComposition("reach", "datomic", name);
@@ -84,7 +86,7 @@ if (process.argv[1] === import.meta.filename) {
       assert.equal((await a.observe()).value.epoch, job.epoch);
       const sink = new Documents(budget?.store(receiver, "receiver") ?? receiver, "effects");
       const d = job.recipientPages
-        ? new Relay(a, sink, job.recipientPages)
+        ? new Relay(a, sink, job.recipientPages, job.readIntervalMs)
         : new Dispatcher(a, sink);
       a.budget = budget;
       if (budget) budget.enabled = true;
@@ -102,7 +104,7 @@ if (process.argv[1] === import.meta.filename) {
           }
         : undefined;
       const metrics = await d.drain({
-        through: 2,
+        through: (job.releases ?? 1) + 1,
         gapMs: job.gap,
         grant,
         afterReceive: async () => {

@@ -28,6 +28,7 @@ export function inputPins(revision?: string): Record<string, string> {
       "store.ts",
       "verify.ts",
       "workload.ts",
+      "wal.ts",
       "worker.ts",
     ]
       .sort()
@@ -97,6 +98,8 @@ export async function measuredPair(
   readers = 4,
   priority = false,
   independent = false,
+  recipientPages?: number,
+  readIntervalMs = 0,
 ) {
   const pins = inputPins(source);
   const native = process.env.NOTIFY_NATIVE === "1" || deep;
@@ -134,6 +137,8 @@ export async function measuredPair(
         receiver,
         epoch,
         gapMs,
+        recipientPages,
+        readIntervalMs,
         readers,
         workerJob: independent
           ? {
@@ -144,6 +149,8 @@ export async function measuredPair(
               subjects: n,
               epoch,
               gap: gapMs,
+              recipientPages,
+              readIntervalMs,
               priority,
             }
           : undefined,
