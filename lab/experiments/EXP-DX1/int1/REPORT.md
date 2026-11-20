@@ -17,6 +17,10 @@ The restart released the interrupted owned slot, removed its volume and retired 
 
 The PREP1 merge kept the singular diagnostic timing field in the erasure harness. The four fairness checks and 724 native assertions passed on the runtime tree at 4f5105dc3. The fresh SQL recovery witness compared the exact original receipt, the feed, the native log and three pinned query results across restart. It checked the current attempt, image, source hashes, slot, durable native cut and two synchronous WAL flushes before recording the verified result. The report amendment changes only documentation and the checksums. No acceptance pins, bars or frozen inputs changed.
 
+The ACT1 merge was clean. Its legacy gate needed the gateway's omitted legacy layout field decoded as legacy and smaller seed frames. Both failed attempts are retained. The successful runtime tree at 783a2b917 matched both save and Publish orders, three typed predecessor conflicts, settlement across two stops and three shared-save worker stops.
+
+The Publish gate independently compares pinned results and ordered effects to the oracle, checks the durable marker and the exact HTTP writer setting, and binds the new namespace, slot, runtime and cleanup to the attempt. Its source and JSON digests are in the archive. Physical Publish timing and the pooled receipt-only campaign remain open.
+
 ## Server work
 
 Run the physical scorecard on the exact merged revision at both ages. The old frozen preflight had two exact arms. The field comparison, compatibility with the aged journal and physical age results remain open. [Earlier campaign and options](P5-EVIDENCE.md)
