@@ -2649,3 +2649,21 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **Assigned, part 2:** open-loop saves and reads through every drill (the true unavailable interval; review finding
   14); growth with size at three sizes; growth with 1, 4 and 10 Datomic systems on one machine pair; the degraded
   window's options for Sam and the fence.
+
+## 2026-11-20 03:16 UTC (22:16 local, 2026-11-19): DX-RD1 part 1 in: the read collapse at 1,024 readers is gateway fallback
+
+- **DX-RD1 part 1 (`89cf9d4d2`, Mac VM; `rd1/REPORT.md`).** Driver: observations are folded as the run goes (4,489,064
+  reads verified, 35 independent replay samples, 688,872 bytes of peak spill; busiest reader mean 38.7% on the Mac;
+  forecast 0.60 to 0.90 on a server against the 0.70 limit); maintenance now starts 10 ms inside each bin (37 of 44
+  bins had started up to 1.8 ms early); the sender scans less. **The product limit:** in the judged pair four stress
+  blocks with under 1% of reads falling back to the gateway averaged 72.9 thousand reads per second and fourteen with
+  about 5% falling back averaged 4.1 thousand; a read at a cut older than the replica's retained floor goes to the
+  gateway, where misses queue for admission, historical revision repair and row decode. Recovery after stress:
+  67,617 per second at 0.0028% fallback, 4,836 at 5.05%. The 5,609 of 150,078 weighted pulls sent to the gateway are
+  the same rule (the Mac's young head sent none). New option `--replica-history-coverage closure` keeps older reads
+  local when the replica holds every record they need: forecast 4.5 to 6.5 thousand weighted pulls per second (bar
+  4,400), stress ratio 0.55 to 0.75 (bar 0.90). The four-block writer probe exists as one ten-minute command
+  (`rd1/writer-probe.ts`; predicts 1.15 to 1.25 times in the ON blocks if host contention is the cause).
+- **Assigned, part 2:** reproduce the collapse law on the Mac (reads per second against fallback share); size retained
+  history so pinned cuts stay local; a separate lane and batching for fallbacks, cheaper historical reads, installing
+  fetched history; recovery; predictions for every read bar.
