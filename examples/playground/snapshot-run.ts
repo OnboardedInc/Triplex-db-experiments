@@ -36,6 +36,7 @@ export async function runSnapshot(options: Options) {
     directory: scratch,
     apiPort: 0,
     fixture,
+    serveActions: false,
   });
   let restored: Awaited<ReturnType<typeof openInstance>> | undefined;
   let buildClosed = false;
@@ -46,6 +47,7 @@ export async function runSnapshot(options: Options) {
   try {
     const capture = await initial.ready;
     const checkpoint = await capture.snapshotCheckpoint(plan);
+    const index = await capture.settleSnapshot(checkpoint);
     const buildPeaks = await initial.stack.memoryPeaks();
     const buildMs = performance.now() - buildStart;
     const dumpStart = performance.now();
@@ -110,6 +112,7 @@ export async function runSnapshot(options: Options) {
       sourceHead,
       timingClass,
       checkpoint,
+      index,
       prefix,
       slot: options.slot,
       manifestSha256: published.checksum,

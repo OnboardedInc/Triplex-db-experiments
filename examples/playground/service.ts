@@ -447,6 +447,28 @@ export class Playground {
     return { early, middle, head: committed.position };
   }
 
+  async settleSnapshot(checkpoint: Checkpoint) {
+    const basis = await this.writer.basis(this.db);
+    if (Number(basis.position.v) !== checkpoint.head) throw new Error("Snapshot head moved");
+    const index = await this.writer.request<{
+      database: string;
+      requestedT: string;
+      job: string;
+      completed: boolean;
+    }>("POST", "/v2/db/" + this.db + "/request-index", { waitMs: 120_000 }, 125_000);
+    // [DX-PLAY1] Why: charge settled durable index bytes to the tier being forecast.
+    // Rejected: a delay that can finish before the checkpoint is adopted by Datomic indexing.
+    if (
+      !index.completed ||
+      index.database !== this.db ||
+      !index.job ||
+      BigInt(index.requestedT) < BigInt(basis.t.v) ||
+      (await this.head()) !== checkpoint.head
+    )
+      throw new Error("Datomic did not index the snapshot cut");
+    return index;
+  }
+
   private async verifySnapshot(source: Restore) {
     const { plan, checkpoint } = source.manifest;
     const { early, middle, head } = checkpoint;

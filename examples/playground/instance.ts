@@ -10,6 +10,7 @@ export type InstanceOptions = StackOptions & {
   token?: string;
   fixture: Source | ((signal: AbortSignal) => Promise<Source>);
   onFault?: (action: string, error: unknown) => void;
+  serveActions?: boolean;
 };
 
 export async function openInstance(options: InstanceOptions) {
@@ -50,11 +51,12 @@ export async function openInstance(options: InstanceOptions) {
     playground = new Playground(fixture, urls, options.prefix);
     await playground.seed(signal);
     signal.throwIfAborted();
-    invoke = actionService(
-      playground,
-      new Timings(gatewaySpans ? stack.traceDir : undefined, options.prefix, urls.source),
-      options.onFault,
-    );
+    if (options.serveActions !== false)
+      invoke = actionService(
+        playground,
+        new Timings(gatewaySpans ? stack.traceDir : undefined, options.prefix, urls.source),
+        options.onFault,
+      );
     return {
       stackMs,
       seedMs: performance.now() - seedStart,
@@ -62,6 +64,7 @@ export async function openInstance(options: InstanceOptions) {
       urls,
       seedCounts: playground.seedCounts,
       snapshotCheckpoint: playground.snapshotCheckpoint.bind(playground),
+      settleSnapshot: playground.settleSnapshot.bind(playground),
     };
   })();
   let closing: Promise<Awaited<ReturnType<Stack["stop"]>>> | undefined;
