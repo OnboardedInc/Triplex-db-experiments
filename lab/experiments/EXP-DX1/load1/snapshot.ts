@@ -313,16 +313,23 @@ export class Snapshot {
     const fixture = this.batches();
     const positions = this.ledger.prepare("SELECT first FROM frames ORDER BY first").iterate();
     let expectedPrefix = 0;
-    for (const row of positions) {
-      let step = fixture.next();
-      while (!step.done && step.value.first < Number(row["first"])) step = fixture.next();
-      assert(!step.done && step.value.first === Number(row["first"]));
-      const f = step.value,
-        e = this.entry(f)!,
-        original = await lookup(this.comp, f, identity(this.scope, this.source, this.width, f));
-      assert.deepEqual(original, this.summary(e));
-      if (f.first === expectedPrefix) expectedPrefix = f.end;
+    function* verifyFrames() {
+      for (const row of positions) {
+        let step = fixture.next();
+        while (!step.done && step.value.first < Number(row["first"])) step = fixture.next();
+        assert(!step.done && step.value.first === Number(row["first"]));
+        const f = step.value;
+        if (f.first === expectedPrefix) expectedPrefix = f.end;
+        yield f;
+      }
     }
+    // [DX-LOAD2] Why: disjoint claim reads after drain are independent and still check every original receipt.
+    // Rejected: turning the feed alone into a claim-index proof or putting claim audits in the timed window.
+    await windowed(verifyFrames(), this.adaptive ? 4 : 1, async (f) => {
+      const e = this.entry(f)!;
+      const original = await lookup(this.comp, f, identity(this.scope, this.source, this.width, f));
+      assert.deepEqual(original, this.summary(e));
+    });
     assert.equal(this.cursor(), expectedPrefix);
     if (complete) assert.equal(expectedPrefix, this.subjects);
     while (pos < cut) {

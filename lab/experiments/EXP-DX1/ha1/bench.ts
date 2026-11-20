@@ -95,6 +95,7 @@ try {
     "load-tail": "50",
     "load-frontier-low": "50,100",
     "load-frontier-high": "50,100",
+    "load-frontier-allowance": "50,100",
     "load-split-sql": "50,100",
     "load-split-pg": "50,100",
     failures: "2000",

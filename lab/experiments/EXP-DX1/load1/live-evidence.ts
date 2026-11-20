@@ -76,7 +76,8 @@ export function replayLive(
     budgetMs?: number;
   },
 ) {
-  if (!/^(load-tail|load-frontier-(low|high)|load-split-(sql|pg))$/.test(attempt.mode)) return;
+  if (!/^(load-tail|load-frontier-(low|high|allowance)|load-split-(sql|pg))$/.test(attempt.mode))
+    return;
   const prefix = "tx2-ha1-" + attempt.nonce.slice(0, 8);
   assert.deepEqual(
     [tape.nonce, tape.source, tape.slot, tape.scope, tape.duration],
@@ -87,8 +88,10 @@ export function replayLive(
   assert(Number.isFinite(tape.start));
   assert([50, 100].includes(arm.rate));
   if (attempt.mode === "load-tail") assert.equal(arm.rate, 50);
+  const alone = arm.arm === "frontier-alone";
+  assert(!alone || attempt.mode === "load-frontier-allowance");
   const quiet = (5 * arm.duration) / 1000,
-    noisy = (arm.rate * arm.duration) / 1000;
+    noisy = alone ? 0 : (arm.rate * arm.duration) / 1000;
   const expected = new Map<string, number>();
   for (let i = 0; i < quiet; i++) {
     expected.set("quiet/read/" + i, i * 200);
@@ -96,7 +99,7 @@ export function replayLive(
   }
   for (let i = 0; i < noisy; i++)
     expected.set("live" + (i % 10) + "/save/" + i, (1000 * i) / arm.rate);
-  if (attempt.mode !== "load-tail")
+  if (attempt.mode !== "load-tail" && !alone)
     for (let i = 0; i < quiet * 10; i++) expected.set("live" + (i % 10) + "/read/" + i, i * 20);
   const recorded = new Map(tape.native.map((n) => [n.command, n]));
   assert.equal(recorded.size, tape.native.length);

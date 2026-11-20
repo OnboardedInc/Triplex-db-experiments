@@ -60,12 +60,13 @@ export async function live(
   const traceTail = mode === "load-tail",
     frontier = mode.startsWith("load-frontier-");
   const split = splitLoad(mode);
-  const allReads = split || frontier;
-  assert((allReads ? [50, 100] : [50, 235, 390]).includes(rate));
-  const cell = arm.split("-")[1],
+  const alone = frontier && arm === "frontier-alone";
+  const allReads = (split || frontier) && !alone;
+  assert((split || frontier ? [50, 100] : [50, 235, 390]).includes(rate));
+  const cell = alone ? "0" : arm.split("-")[1],
     width = frontier && cell !== "0" ? maxBulkFacts : Number(cell),
-    duration = (traceTail || allReads ? 108 : server ? 60 : 12) * 1000,
-    subjects = server || traceTail || allReads ? 100000 : 20000;
+    duration = (traceTail || split || frontier ? 108 : server ? 60 : 12) * 1000,
+    subjects = server || traceTail || split || frontier ? 100000 : 20000;
   const budget =
     frontier && width
       ? new SerialBudget(Number(cell === "allowance" ? process.env.DX_LOAD2_ALLOWANCE_MS : cell))
@@ -84,6 +85,12 @@ export async function live(
     toEntryMs?: number;
     serialHold?: { start: number; end: number };
     frameSize?: { rows: number; bytes: number };
+    peerTimings?: {
+      payloadPrepared: number;
+      predecessorReady?: number;
+      submitted?: number;
+      completed: number;
+    };
     recovered?: true;
   };
   const native = new Map<string, Native>();
@@ -123,6 +130,7 @@ export async function live(
         toEntryMs: reply.submitToNativeEntryMs,
         serialHold: reply.serialHold,
         frameSize: reply.frameSize,
+        peerTimings: traceTail ? reply.timeline : undefined,
         submit: start,
         end: performance.now(),
       });
@@ -347,7 +355,7 @@ export async function live(
     let noisy = 0,
       read = 0,
       q = 0;
-    const nNoisy = Math.floor((rate * duration) / 1000),
+    const nNoisy = alone ? 0 : Math.floor((rate * duration) / 1000),
       nQuiet = Math.floor((5 * duration) / 1000),
       nReads = allReads ? 10 * nQuiet : 0;
     while (noisy < nNoisy || q < nQuiet || read < nReads) {

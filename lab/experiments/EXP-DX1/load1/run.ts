@@ -64,32 +64,27 @@ export async function load(s: Stack, people: number) {
               ? ["tail-0-a", "tail-128", "tail-500", "tail-2000", "tail-0-b"]
               : ["tail-0-a", "tail-128", "tail-0-b"]
             : e.mode === "load-frontier-low"
-              ? [
-                  "frontier-0-a",
-                  "frontier-1",
-                  "frontier-4",
-                  "frontier-8",
-                  "frontier-allowance",
-                  "frontier-0-b",
-                ]
+              ? ["frontier-0-a", "frontier-1", "frontier-4", "frontier-8", "frontier-0-b"]
               : e.mode === "load-frontier-high"
-                ? ["frontier-0-a", "frontier-16", "frontier-24", "frontier-32", "frontier-0-b"]
-                : split
-                  ? ["split-0-a", "split-2000", "split-0-b"]
-                  : server
-                    ? ["quiet-server-2000-2"]
-                    : [
-                        "quiet-a-2000-1",
-                        "classic-a-2000-2",
-                        "quiet-a-2000-2",
-                        "quiet-a-2000-4",
-                        "quiet-a-1024-2",
-                        "quiet-a-3000-2",
-                        "quiet-b-2000-2",
-                        "classic-b-2000-2",
-                        "quiet-b-2000-1",
-                        "proof-gap-1024-2",
-                      ];
+                ? ["frontier-0-a", "frontier-16", "frontier-32", "frontier-0-b"]
+                : e.mode === "load-frontier-allowance"
+                  ? ["frontier-alone", "frontier-0-a", "frontier-allowance", "frontier-0-b"]
+                  : split
+                    ? ["split-0-a", "split-2000", "split-0-b"]
+                    : server
+                      ? ["quiet-server-2000-2"]
+                      : [
+                          "quiet-a-2000-1",
+                          "classic-a-2000-2",
+                          "quiet-a-2000-2",
+                          "quiet-a-2000-4",
+                          "quiet-a-1024-2",
+                          "quiet-a-3000-2",
+                          "quiet-b-2000-2",
+                          "classic-b-2000-2",
+                          "quiet-b-2000-1",
+                          "proof-gap-1024-2",
+                        ];
   const reports: Array<{ sourceSeal: string; [key: string]: unknown }> = [];
   let allowance = 0;
   for (const arm of arms) {
@@ -142,7 +137,10 @@ export async function load(s: Stack, people: number) {
         },
         timeout: server
           ? 48 * 3600000
-          : Math.max(1, Math.min(240000, 830000 - (performance.now() - e.start))),
+          : Math.max(
+              1,
+              Math.floor(Math.min(split ? 330000 : 240000, 830000 - (performance.now() - e.start))),
+            ),
         maxBuffer: 4 * 2 ** 20,
         encoding: "utf8",
       },
@@ -158,7 +156,7 @@ export async function load(s: Stack, people: number) {
     const live =
       ["load-live", "load-tail"].includes(e.mode) || e.mode.startsWith("load-frontier-") || split;
     assert(Number.isSafeInteger(r.facts) && (live ? r.facts >= 0 : r.facts > 0));
-    if (e.mode.startsWith("load-frontier-") && arm === "frontier-0-a") {
+    if (e.mode === "load-frontier-allowance" && arm === "frontier-alone") {
       const quiet = r.neighbors.quiet;
       assert(
         quiet.save.ok >= 500 &&
@@ -167,7 +165,8 @@ export async function load(s: Stack, people: number) {
           quiet.read.p99Ms > 0,
       );
       allowance = Math.min(32, Math.min(quiet.save.p99Ms, quiet.read.p99Ms) * 0.5);
-      e.log("solo-allowance", {
+      e.log("frame-allowance", {
+        controlArm: arm,
         read: quiet.read.p99Ms * 0.5,
         save: quiet.save.p99Ms * 0.5,
         bound: allowance,

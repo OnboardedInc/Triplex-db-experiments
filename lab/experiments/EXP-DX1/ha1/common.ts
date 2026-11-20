@@ -33,6 +33,7 @@ export const modes = [
   "load-tail",
   "load-frontier-low",
   "load-frontier-high",
+  "load-frontier-allowance",
   "load-split-sql",
   "load-split-pg",
 ] as const;
