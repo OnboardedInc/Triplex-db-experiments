@@ -161,6 +161,7 @@ async function reserve(config, manager, names, roleMemory, signal, diskForecast)
 }
 
 export async function runTail(options, config, manager) {
+  const invokedAt = Date.now();
   assert.equal(options.holder, holder);
   const mac = process.platform === "darwin";
   assert(mac || (process.platform === "linux" && process.env.DX_BARE_METAL === "1"));
@@ -260,9 +261,15 @@ export async function runTail(options, config, manager) {
     oracle: stageReplay(REPO, oracle),
     source: sourceInventory(REPO),
     tail1: Object.fromEntries(
-      ["run.mjs", "archive.py", "replay-input.mjs", "profile.clj", "measure.py", "arms.mjs"].map(
-        (file) => [file, sha256File(path.join(import.meta.dirname, file))],
-      ),
+      [
+        "run.mjs",
+        "archive.py",
+        "replay-input.mjs",
+        "profile.clj",
+        "measure.py",
+        "arms.mjs",
+        "receipt-oracle.py",
+      ].map((file) => [file, sha256File(path.join(import.meta.dirname, file))]),
     ),
     offers: { ...plan, bytes: sha256File(input) },
     datomicImage: {
@@ -312,8 +319,7 @@ export async function runTail(options, config, manager) {
       variant.flags.join(" ") +
       " -Ddatomic.objectCacheMax=" +
       (mac ? "32m " : "1536m ") +
-      gc("gw-w") +
-      " -XX:StartFlightRecording=settings=profile,filename=/trace/gw-w.jfr,dumponexit=true,maxsize=32m",
+      gc("gw-w"),
     DX_GW_READ_JAVA_OPTS:
       "-Xms256m -Xmx" +
       heaps["gw-r"] +
@@ -339,7 +345,9 @@ export async function runTail(options, config, manager) {
       const bytes = Object.fromEntries(roles.map((role) => [role, caps[role] * MiB]));
       reservation = await reserve(config, manager, names, bytes, signal, 6 * GiB);
     }
-    const latest = Date.now() + (seconds === 5910 ? 9000 : mac ? 2400 : 1740) * 1000;
+    const latest = mac
+      ? Date.now() + (seconds === 5910 ? 9000 : 2400) * 1000
+      : invokedAt + 29 * 60_000;
     const wPort = reservation?.port ?? 8491,
       rPort = wPort + 10;
     write(path.join(out, "attempt.json"), {
@@ -417,6 +425,84 @@ export async function runTail(options, config, manager) {
       docker(["exec", ids.tx, "sha256sum", "/opt/datomic/" + peerJar]).split(/\s+/)[0],
       peerHash,
     );
+    const runtimeFlags = {};
+    for (const role of ["gw-w", "gw-r", "tx"]) {
+      const args = docker([
+        "exec",
+        ids[role],
+        "sh",
+        "-c",
+        [
+          "for p in /proc/[0-9]*; do",
+          '  [ "$(cat "$p/comm" 2>/dev/null)" = java ] || continue',
+          '  tr "\\000" "\\n" < "$p/cmdline" | grep -E "^(-Xm[sx]|-XX:)"',
+          "done",
+        ].join("\n"),
+      ]).split("\n");
+      assert.equal(args.filter((arg) => arg.startsWith("-Xmx")).at(-1), "-Xmx" + heaps[role] + "m");
+      const selected = role === "gw-w" ? variant.flags : ["-XX:+UseG1GC"];
+      for (const flag of selected) assert(args.includes(flag), role + " did not apply " + flag);
+      runtimeFlags[role] = args;
+    }
+    write(path.join(out, "runtime-flags.json"), { identity, ids, flags: runtimeFlags });
+    if (options.gate === true) {
+      // [DX-TAIL1] Why: use two native writers and an independent replay on their actual receipts.
+      // Rejected: exercising only the in-memory adapter or collecting benchmark samples from the gate.
+      const suiteEnv = {
+        ...env,
+        DATOMIC_INTEGRATION: "1",
+        DATOMIC_GATEWAY_URL: stack.writeUrl,
+        DATOMIC_URL: stack.writeUrl,
+        DATOMIC_READ_URLS: stack.readUrl,
+        TRIPLEX_DATOMIC_LAYOUT: "lean",
+        DX_TAIL1_RECEIPT_CASE: path.join(out, "receipt-native.json"),
+        DX_TAIL1_RECEIPTS: "1",
+        DX_ACT1_NATIVE: "1",
+        DELTA_ATTEMPT: out,
+      };
+      const checks = [
+        [
+          "predecessor",
+          "node_modules/.bin/vitest",
+          [
+            "run",
+            "packages/datomic/test/predecessor.test.ts",
+            "packages/datomic/test/commit-fast.test.ts",
+          ],
+        ],
+        [
+          "erasure",
+          process.execPath,
+          ["--import", "tsx", "--test", "lab/experiments/EXP-DX1/actv-delta/erasure.test.ts"],
+        ],
+        [
+          "oracle",
+          "python3",
+          [
+            path.join(import.meta.dirname, "receipt-oracle.py"),
+            out,
+            path.join(oracle, "lab/oracles/replay/cli.py"),
+          ],
+        ],
+      ];
+      const outcomes = [];
+      for (const [name, program, args] of checks) {
+        signal.throwIfAborted();
+        const check = spawnBound(program, args, {
+          env: suiteEnv,
+          log: path.join(out, name + ".log"),
+          signal,
+          deadline: Date.now() + 120_000,
+        });
+        outcomes.push({ name, ...(await check.done) });
+      }
+      write(path.join(out, "gate-exits.json"), { identity, ids, outcomes });
+      assert(
+        outcomes.every((result) => result.code === 0 && result.signal === null),
+        "Native predecessor, erasure or oracle check failed",
+      );
+      return;
+    }
     console.log("DX-TAIL1 stack ready, seeding 10,000 deep people");
     driver = spawnBound(
       process.execPath,
@@ -481,7 +567,7 @@ export async function runTail(options, config, manager) {
         },
         log: path.join(out, "driver.log"),
         signal,
-        deadline: latest - 25_000,
+        deadline: latest - 120_000,
       },
     );
     const readyFile = path.join(barrier, "s0.ready.json");
@@ -489,7 +575,7 @@ export async function runTail(options, config, manager) {
       () => fs.existsSync(readyFile),
       driver.child,
       signal,
-      latest - seconds * 1000 - 60_000,
+      latest - seconds * 1000 - 135_000,
     );
     const ready = readJson(readyFile);
     assert.deepEqual(ready.identity, identity);
@@ -544,6 +630,23 @@ export async function runTail(options, config, manager) {
       const m = inspect(ids[role]);
       assert(m?.State.Running && !m.State.OOMKilled && m.RestartCount === 0);
     }
+    const recording = path.join(trace, "gw-w.jfr");
+    try {
+      fs.writeFileSync(path.join(trace, ".finish"), "", { flag: "wx" });
+      const complete = recording + "-complete.jsonl";
+      const until = Date.now() + 30_000;
+      while (!fs.existsSync(complete) && Date.now() < until)
+        await delay(250, undefined, { signal });
+      const seal = readJson(complete);
+      assert.equal(seal.fileSha256, sha256File(recording));
+      assert.equal(seal.source, identity.source);
+      assert.equal(seal.run, slot);
+      assert.equal(seal.slot, slot);
+      assert.equal(seal.process, "gw-w");
+    } catch (error) {
+      signal.throwIfAborted();
+      write(path.join(out, "allocation-dump-error.json"), { error: String(error) });
+    }
     for (const file of ["ns-report.json", "oracle-case.json", "oracle-expected.json"])
       fs.copyFileSync(path.join(raw, file), path.join(out, file), fs.constants.COPYFILE_EXCL);
     output(path.join(out, "ns-writes.jsonl.zst"), "zstd", [
@@ -588,7 +691,11 @@ export async function runTail(options, config, manager) {
         assert.equal(docker([kind, "inspect", name], { allowFail: true }), null);
       }
       try {
-        if (measuredStart !== undefined && fs.existsSync(path.join(out, "ns-writes.jsonl.zst"))) {
+        if (
+          measuredStart !== undefined &&
+          fs.existsSync(path.join(out, "ns-writes.jsonl.zst")) &&
+          !fs.existsSync(path.join(out, "allocation-dump-error.json"))
+        ) {
           // [DX-TAIL1] Why: decode in the still-admitted space of the stopped writer.
           // Rejected: adding its CPU or heap to the timed window.
           const recording = path.join(trace, "gw-w.jfr");
@@ -645,6 +752,8 @@ export async function runTail(options, config, manager) {
             .at(-1);
           write(path.join(out, "allocation.json"), JSON.parse(profileJson));
         }
+      } catch (error) {
+        write(path.join(out, "allocation-decode-error.json"), { error: String(error) });
       } finally {
         const helper = inspect(names["gw-w"]);
         if (helper) {

@@ -29,7 +29,7 @@ def quantiles(values):
 def pauses(log):
     # [DX-TAIL1] Why: HotSpot can log a pause at start and end, and ZGC cycles
     # include concurrent work. Rejected: treating cycle duration as stopped time.
-    pause = re.compile(r"GC\((\d+)\) Pause (.*?)\s+([\d.]+)(ms|us|s)$")
+    pause = re.compile(r"GC\((\d+)\) (?:[YM]: )?Pause (.*?)\s+([\d.]+)(ms|us|s)$")
     uptime = re.compile(r"\[(\d+(?:\.\d+)?)(ms|s)\]")
     for line in log.splitlines():
         match = pause.search(line)

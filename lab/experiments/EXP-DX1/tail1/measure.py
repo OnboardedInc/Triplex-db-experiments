@@ -25,15 +25,20 @@ def timed_gc(directory, role, start, stop):
     assert collector, f"Missing initial collector settings for {role}"
     initialized = [line.rsplit("] ", 1)[-1] for line in log.splitlines() if "[gc,init]" in line]
     events = []
+    allocation_stalls = []
     for line in log.splitlines():
         stamp = re.match(r"\[([^\]]+)\]", line)
         if not stamp:
             continue
         at = datetime.fromisoformat(stamp[1]).timestamp() * 1000
+        stall = re.search(r"Allocation Stall .*? ([\d.]+)ms$", line)
+        if stall and start <= at < stop:
+            allocation_stalls.append(float(stall[1]))
         for event in pauses(line):
             if at >= start and at - event["ms"] < stop:
                 events.append(event)
-    return {"collector": collector[1], "init": initialized, "window": describe(events)}
+    return {"collector": collector[1], "init": initialized, "window": describe(events),
+            "allocationStalls": {"count": len(allocation_stalls), "ms": quantiles(allocation_stalls)}}
 
 
 def measure(out):
@@ -51,6 +56,8 @@ def measure(out):
     assert stack["prefix"] == identity["slot"]
     assert all(stack["durability"][key] == "on" for key in ("fsync", "synchronous_commit", "full_page_writes"))
     ids = {row["name"].removeprefix(identity["slot"] + "-"): row["id"] for row in stack["containers"]}
+    effective = load(out / "runtime-flags.json")
+    assert effective["identity"] == identity and effective["ids"] == ids
     with subprocess.Popen(["zstd", "-dc", out / "ns-writes.jsonl.zst"], stdout=subprocess.PIPE) as reader:
         writes = [json.loads(line) for line in reader.stdout]
         assert reader.wait() == 0
@@ -113,9 +120,12 @@ def measure(out):
             "peakSinceStartupMiB": last["stats"][role]["peak"] / (2 ** 20),
             "heapMaxMiB": attempt["heaps"].get(role), "containerMiB": attempt["caps"][role],
         }
-    alloc = load(out / "allocation.json")
-    assert alloc["from"] == start and alloc["to"] == stop
-    alloc_total = sum(g["weightBytes"] for g in alloc["groups"].values())
+    allocation = out / "allocation.json"
+    groups = None
+    if allocation.exists():
+        alloc = load(allocation)
+        assert alloc["from"] == start and alloc["to"] == stop
+        groups = alloc["groups"]
     write_json(out / "measurement.json", {
         "identity": identity, "archive": archive["archive"], "arm": attempt["arm"], "seconds": attempt["seconds"],
         "saves": len(saved), "replays": len(observed) - len(saved),
@@ -124,7 +134,8 @@ def measure(out):
         "gc": {role: timed_gc(trace, role, start, stop) for role in ("gw-w", "gw-r", "tx")},
         "gatewayRequests": dict(requests), "requestsPerSave": requests.total() / len(saved),
         "transactJoinMissing": sum("transact" not in exchanges[trace_id] for trace_id in saved),
-        "allocationSampleWeightBytesPerSave": alloc_total / len(saved), "allocationGroups": alloc["groups"],
+        "allocationSampleWeightBytesPerSave": sum(g["weightBytes"] for g in groups.values()) / len(saved) if groups else None,
+        "allocationGroups": groups,
     })
 
 

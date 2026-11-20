@@ -242,6 +242,7 @@ export class DatomicClient {
       readonly rowCacheBytes?: number;
       readonly predecessorCacheBytes?: number;
       readonly predecessorAttributes?: readonly string[];
+      readonly receiptPredecessorAttributes?: readonly string[];
       readonly reachKeyBytes?: number;
     } = {},
   ) {
@@ -255,6 +256,7 @@ export class DatomicClient {
     this.predecessorCache = new PredecessorCache(
       cacheOptions.predecessorCacheBytes,
       cacheOptions.predecessorAttributes,
+      cacheOptions.receiptPredecessorAttributes,
     );
     this.rowCache = new RowCache(
       Number.MAX_SAFE_INTEGER,

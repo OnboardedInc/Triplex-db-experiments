@@ -463,7 +463,15 @@ for role in w r; do
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
   [[ $role != w ]] || entity_cache_bytes=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-268435456}
   role_trace_java=$trace_gw_java
-  if [[ $TRIPLEX_TRACE_GW_JFR == 1 ]]; then role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0"; fi
+  role_jfr=$TRIPLEX_TRACE_GW_JFR
+  if [[ $role == w && -n ${DX_TAIL1_ATTEMPT:-} ]]; then
+    # [DX-TAIL1] Why: dump the allocation recording from the owning live JVM.
+    # Rejected: depending on bin/run to forward Docker shutdown to the Java child.
+    role_jfr=1
+    role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=profile,dumponexit=false,maxsize=32m"
+  elif [[ $role_jfr == 1 ]]; then
+    role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0"
+  fi
   if [[ ${TRIPLEX_TRACE_DEBUG:-0} == 1 ]]; then
     debug_port=8506; [[ $role == w ]] || debug_port=8507
     role_trace_java="$role_trace_java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$debug_port"
@@ -473,7 +481,7 @@ for role in w r; do
     tail1_env=(-e TX2_TAIL1_ROW_DECODE=1)
   fi
   docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
-    ${ports[@]+"${ports[@]}"} ${tail1_env[@]+"${tail1_env[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_GW_JFR" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+    ${ports[@]+"${ports[@]}"} ${tail1_env[@]+"${tail1_env[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$role_jfr" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \
     -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \

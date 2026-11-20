@@ -87,6 +87,7 @@ export const makeDatomicStorageAdapter = (
   const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 45_000;
   let lastSeenPosition = 0;
   let strictRecordClocks = false;
+  const receiptPredecessors = (client.cacheOptions.receiptPredecessorAttributes?.length ?? 0) > 0;
   const prefix = `${db}\0`;
   const cache = {
     get: (id: string) => client.rowCache.get(prefix + id),
@@ -95,11 +96,19 @@ export const makeDatomicStorageAdapter = (
     delete: (id: string) => client.rowCache.delete(prefix + id),
     clear: () => client.rowCache.deleteWhere((key) => key.startsWith(prefix)),
   };
-  const remember = (row: TripleRow) => {
+  const remember = (row: TripleRow, source: "read" | "receipt" = "read") => {
     // [DX-B6-1] Why: immutable journal bodies evicted subject preconditions during seed, adding a snapshot HTTP call to lone commits.
     // Rejected: raising the 32 MiB budget (unbounded client memory caused the original driver failure).
     if (row.entity_type === "_Transaction") return;
-    if (client.predecessorCache.enabled) client.predecessorCache.remember(prefix + row.id, row);
+    // [DX-TAIL1] Why: a known retirement invalidates both fast-path copies of the same identity.
+    // Rejected: normalizing an observed retired row back into a live optimistic input.
+    if (receiptPredecessors && row.retracted_at !== null) {
+      cache.delete(row.id);
+      client.predecessorCache.delete(prefix + row.id);
+      return;
+    }
+    if (client.predecessorCache.enabled)
+      client.predecessorCache.remember(prefix + row.id, row, source);
     cache.set(row.id, {
       ...row,
       retracted_at: null,
@@ -275,13 +284,16 @@ export const makeDatomicStorageAdapter = (
       if (state.serverRecordTime)
         next = assignRecordTime(next, state.newIds.has(id), instant!, state.newIds);
       state.rows.set(id, next);
-      if (next.retracted_at !== null) client.predecessorCache.delete(prefix + id);
+      if (next.retracted_at !== null) {
+        if (receiptPredecessors) cache.delete(id);
+        client.predecessorCache.delete(prefix + id);
+      }
       if (state.newIds.has(id)) {
         if (row.tx_id) {
           finalPositions.set(row.tx_id, next.recorded_position);
           if (state.serverRecordTime) finalInstants.set(row.tx_id, instant!);
         }
-        remember(next);
+        remember(next, "receipt");
       }
     }
     state.position = position;
@@ -348,7 +360,8 @@ export const makeDatomicStorageAdapter = (
                 // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
                 // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
                 replaySafe:
-                  state.replaySafe === true && state.importInstant === undefined &&
+                  state.replaySafe === true &&
+                  state.importInstant === undefined &&
                   [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
                 sourceK: state.optimistic ? null : state.sourceK,
                 position: state.position,
@@ -958,7 +971,13 @@ export const makeDatomicStorageAdapter = (
         const instant = yield* Effect.try({
           try: () => {
             if (imported || state.importInstant !== undefined) {
-              if (!imported || imported.scope !== scopeKey || strictRecordClocks || (state.importInstant !== undefined && state.importInstant !== imported.instant)) throw new Error("Source record clock conflicts with target scope or transaction");
+              if (
+                !imported ||
+                imported.scope !== scopeKey ||
+                strictRecordClocks ||
+                (state.importInstant !== undefined && state.importInstant !== imported.instant)
+              )
+                throw new Error("Source record clock conflicts with target scope or transaction");
               // [DX-ACT1] Why: historical source ordinals can share or reverse clocks. Rejected: the normal monotone allocation or gateway clock-replay flag, which rewrites those cuts.
               return (state.importInstant = imported.instant);
             }

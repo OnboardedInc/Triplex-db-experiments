@@ -21,6 +21,9 @@ export function makeDatomicRuntime(options: {
   readonly layout?: "lean" | "legacy";
   readonly entityCacheBytes?: number;
   readonly rowCacheBytes?: number;
+  readonly predecessorCacheBytes?: number;
+  readonly predecessorAttributes?: readonly string[];
+  readonly receiptPredecessorAttributes?: readonly string[];
   readonly admissionQueue?: boolean;
   readonly maxRetries?: number;
   readonly serverRecordTime?: boolean;

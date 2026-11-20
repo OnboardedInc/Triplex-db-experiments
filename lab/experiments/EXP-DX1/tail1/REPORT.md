@@ -29,8 +29,20 @@ The allocation arm keeps Serial and decodes the existing positional row vector i
 
 The first Mac launch found the Datomic tag missing and released its slot before seeding. The old image ID was also absent. The retry uses the existing SCALE1 build receipt and checks the running peer JAR against the distribution pin.
 
+## Receipt reuse
+
+The TypeScript write adapter already skips `/begin` when every hinted live row is cached. The new opt-in keeps the deep fields eligible for that path only after a bound receipt settles. Known retirement evicts their cache entries. Datomic rechecks the exact live IDs at the serial point, and unsupported reads and conflicts use the existing snapshot path.
+
+Eleven focused tests and the Datomic type check passed. The native gate captures a save after an intervening writer, a rejected stale receipt and five pinned reads for O-REPLAY. It also runs the protected-value erasure fixture on the native stack. The native gate and request-count comparison are pending.
+
 ## Measurement audit
 
 - The archive extractor checks the compressed SHA-256, ledger identity and each primary ACK. The replay checks the frozen source, population, offers and spacing, and checks the newly populated seed before releasing the driver.
 - The Mac measurement requires the attempt's source, slot and nonce, PostgreSQL durability readback, all primary and resend offers, unique ACK positions, exact receipt coverage and a fresh independent replay check. It binds resource samples to the same four containers and records their cleanup.
+- The receipt oracle compares actual assertion IDs and values at five fresh pinned cuts against its hashed case, along with the observed conflict and receipt order. Captures are created in the newly allocated attempt directory.
 - The archive results are historical. The replay is a diagnostic, and the acceptance contract is unchanged.
+
+Image source pin changes under `packages/datomic/gateway/src/triplex/gateway/`, SHA-256 before → after.
+
+- `lean.clj` `bafa5d00aaaf87321396674f16d6ffc03faa664100a75ce0024de7287ce58ca2` → `115812796134acf278ec30d71eabd9710fb121e7759475b28df97a43ed815fee`.
+- `storage.clj` `341f45cf51ea1f785292b72eca34951d7fe10c9ace55e69af8fbe9df71234b60` → `144e4ecd3742f1323669e67ddaa14dfd3bd69e22b9366ac5d02bcad1bb2bff66`.
