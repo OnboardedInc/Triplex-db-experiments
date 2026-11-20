@@ -4,7 +4,7 @@
 
 Layout pooled. Evidence tag arm-p6-i1-pool-staggered-a. Runtime a4b2331e966113aaab02d51a3c65aca1be804fe4.
 
-Traffic stopped after 62 minutes when the sender missed the fixed start of `staggered-1-4`. No terminal scope verdict was emitted. The first raw archive is retained for the completed write windows.
+The attempt ended with exit-code.
 
 Peak cgroup memory and busiest three consecutive CPU samples across the execution (one core = 100%).
 

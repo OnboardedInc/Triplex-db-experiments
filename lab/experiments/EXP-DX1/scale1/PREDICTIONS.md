@@ -47,6 +47,6 @@ Forecast one 162,456,470-fact image at 6,500 verified ingested facts/s, 6.94 h t
 
 | Image | Forecast for ingest |
 | --- | --- |
-| Small pooled image | At 5,800–6,500 facts/s, 42–47 min for 16,245,050 facts. |
+| Small pooled image | At 5,800–6,500 facts/s, 42–47 min for 16,245,050 facts.<br>Observed arm-d7-small-seed ended with exit-code. |
 | Full pooled image | At 5,800–6,500 facts/s, 6.94–7.78 h for 162,456,470 facts. |
 | Full split image | At 5,800–6,500 total facts/s, 6.94–7.78 h for the same 162,456,470 facts placed across two databases. |
