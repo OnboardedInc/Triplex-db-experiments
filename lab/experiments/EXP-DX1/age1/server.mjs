@@ -9,7 +9,7 @@ import { fileURLToPath } from "node:url";
 const here = import.meta.dirname;
 const repo = path.resolve(here, "../../../..");
 const rateUsd = 1.09;
-const targetSet = [1e9, 2e9, 4e9, 8e9];
+const targetRecords = 1e9;
 const coldCells = ["current-recent", "current-year-idle", "pinned-recent", "pinned-year-idle", "old-cut"];
 const GiB = 2 ** 30;
 const read = (file) => JSON.parse(fs.readFileSync(file, "utf8"));
@@ -19,8 +19,8 @@ const safeInteger = (x, min, max) => Number.isSafeInteger(x) && min <= x && x <=
 const digest = /^[0-9a-f]{64}$/;
 
 export function forecast(records, target, recordsPerSecond, reserveHours) {
-  assert(targetSet.includes(target));
-  assert(safeInteger(records, 1, 8e9) && records <= target);
+  assert.equal(target, targetRecords, "The campaign targets one billion records");
+  assert(safeInteger(records, 1, target));
   assert(Number.isFinite(recordsPerSecond) && recordsPerSecond > 0);
   assert(Number.isFinite(reserveHours) && reserveHours > 0);
   const agingHours = (target - records) / recordsPerSecond / 3600;
@@ -54,7 +54,7 @@ function admit(config, configFile) {
   const git = (args) => execFileSync("git", args, { cwd: repo, encoding: "utf8" }).trim();
   assert.equal(git(["rev-parse", "HEAD"]), config.source);
   assert.equal(git(["status", "--porcelain", "--untracked-files=no"]), "");
-  assert(targetSet.includes(config.target));
+  assert.equal(config.target, targetRecords, "The campaign targets one billion records");
   assert(safeInteger(config.fromRecords, 1, config.target));
   assert(safeInteger(config.seconds, 60, 900) && config.seconds % 2 === 0);
   assert(safeInteger(config.activePerAccount, 26, 2000));
@@ -62,7 +62,7 @@ function admit(config, configFile) {
   assert(safeInteger(config.copyHeadroomBytes, 25 * GiB, 64 * 1024 * GiB));
   assert(safeInteger(config.bytesPerAddedRecord, 50, 2048));
   assert([config.peerHeap, config.peerCache, config.copyHeap].every((s) => /^[1-9]\d*[mg]$/.test(s)));
-  assert(config.maxHours > 0 && config.maxHours <= (config.target === 1e9 ? 9.9 : 60));
+  assert(config.maxHours > 0 && config.maxHours <= 9.9);
   assert(config.maxUsd > 0 && config.maxUsd <= 74 && config.maxHours * rateUsd <= config.maxUsd);
   assert(digest.test(config.imageSha) && digest.test(config.transferSha));
   const seal = read(config.image);
@@ -157,16 +157,6 @@ async function run(configFile, config) {
     console.log(JSON.stringify(saved));
     return;
   }
-  let spent = 0;
-  for (const prior of fs.readdirSync(dir)) {
-    if (!targetSet.includes(Number(prior)) || prior === String(config.target)) continue;
-    const pending = path.join(dir, prior, "admission.json");
-    if (!fs.existsSync(pending)) continue;
-    const previous = read(path.join(dir, prior, "sealed.json"));
-    assert(Number(prior) < config.target && Number.isFinite(previous.usd));
-    spent += previous.usd;
-  }
-  assert(spent + config.maxUsd <= 74, "Rung reserve exceeds remaining campaign budget");
   const admitted = path.join(rung, "admission.json");
   if (!fs.existsSync(admitted)) write(admitted, { started: Date.now(), binding });
   const origin = read(admitted);

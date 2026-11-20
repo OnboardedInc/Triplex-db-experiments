@@ -14,7 +14,8 @@ Part 1 at `e44ea53dc` matched 112 saves and reached 360,314 and 1,260,314 record
 - [Seed adoption](SEED-ADOPTION.md) compares the exact SCALE1 bulk loader and synthetic AGE1 seed. The full seed business count is 162,456,470 facts. The server command reads the native history count before aging and checks the observed load rate before continuing.
 - [Aging arms](AGING-ARMS.md) joins 15,000 native acknowledgements in each original Mac sample. It adds measured client stage timers, a rolling pipeline, W1-shaped physical groups and larger load-only index settings. Adopted solo K retains the intended index workload. Server rates remain predictions.
 - [Growth model](GROWTH-MODEL.md) predicts level count, leaf count, directory count and serialized-size estimates per index. It names a counterexample measurement for each operation and includes a separate directory-census peer.
-- [Server rung](SERVER-RUNG.md) describes one Linux command and its setup, stopping conditions, exact-prefix restart, quiet and busy schedules, index overlap, fresh JVM reads, pauses and backup/restore seal. The project has about $74 left. At a qualifying 24k records/s, 2B costs $27.44 cumulative, 4B $59.21 and 8B $119.48. The 20k prior misses the 1B time cap on the estimated seed.
+- [Server rung](SERVER-RUNG.md) describes one Linux command and its setup, stopping conditions, exact-prefix restart, quiet and busy schedules, index overlap, fresh JVM reads, pauses and backup/restore seal. The campaign ends at 1B. The 20k prior misses the time cap on the estimated seed.
+- The release scorecard is a separate bare-metal run on merged INT1. Its current verifier needs a starting-state and oracle replay extension for SCALE1 seed command identities and the aged head. This branch has not merged into INT1. [v0.1 handoff](CAMPAIGN.md)
 - [Successor erasure](SUCCESSOR-ERASURE.md) describes the source-pinned detached cipher and shared frontier. The test forces a partial publication, then checks replay, held cuts, the ordinary feed and detached-key removal.
 
 ## Evidence checks
@@ -27,4 +28,4 @@ Part 1 at `e44ea53dc` matched 112 saves and reached 360,314 and 1,260,314 record
 
 ## Verification
 
-The SDK build, source parsing, rate and count tests, and historical log join completed. The pinned SCALE1 source produced five frames with 9,690 facts for 80 people, and the Clojure adopter validated that fixture manifest. Fresh SQL-backed fidelity and successor gate results are pending the shared Mac slot. [Evidence manifest](P2-SHA256SUMS)
+The SDK build, source parsing, rate and count tests, and historical log join completed. The pinned SCALE1 source produced five frames with 9,690 facts for 80 people, and the Clojure adopter validated that fixture manifest. The small SQL-backed gates use one ordinary heavy token per run. Any Mac timing is diagnostic. [Evidence manifest](P2-SHA256SUMS)

@@ -2,14 +2,7 @@
 
 Use the verified SCALE1 transfer and the exclusively held, already restored pooled seed. Start with the 1B rung. The [source census](SEED-ADOPTION.md) suggests 430M starting records. A rate of 24k records/s would add 570M in 6.60 h. With 3 h for measurements and native copies that is 9.60 h and $10.46. The original 820M assumption gives 5.50 h and $6.00 at 20k/s. The cap is 9.9 h, at most $10.79. A 430M seed requires at least 23.0k records/s after reserving three hours. Even if the initial rate prior is lower, the command can run a bounded 100,000-save calibration and continues aging only if the fresh rate fits. The working prior of 20k/s would miss the 430M scenario's cap.
 
-| Rung | Estimated age-only hours from the previous rung at 24k/s | Added allowance for traffic, full backup, verify and restore | Cumulative estimated cost |
-| --- | ---: | ---: | ---: |
-| 1B from 0.43B | 6.60 | 3 h | $10.46 |
-| 2B | 11.57 | 4 h | $27.44 |
-| 4B | 23.15 | 6 h | $59.21 |
-| 8B | 46.30 | 9 h | $119.48 |
-
-The project has about $74 left. Stop after 1B to price the next step from actual steady rates, native bytes and copy costs. A 2B rung buys the first doubling and evidence on cold directories and indexing. Run 4B if the prior rungs leave working reserve and at least another $32. The 8B rung requires faster qualified solo writes or a different budget.
+The campaign ends at 1B. The [growth model](GROWTH-MODEL.md) retains the projections for larger databases.
 
 ## Invocation
 
@@ -18,7 +11,7 @@ node lab/experiments/EXP-DX1/age1/server.mjs forecast 430000000 1000000000 24000
 node lab/experiments/EXP-DX1/age1/server.mjs "$AGE_RUNG_CONFIG"
 ```
 
-The Linux driver is responsible for the existing SQL/transactor stack and the exclusive seed. Give it an already verified SCALE1 `image.json` and `transfer.json` whose SHA-256s came from the transfer controller. A single output directory per database is required across stops and rungs. Exclude other writers from the live scope. Provision a different SQL database for restores, without a transactor, and install the official Datomic PostgreSQL table there. Use storage whose paths are visible to this driver and its observed Java processes. Clock synchronization and filesystem free-space reads assume a single Linux server. Keep the source checkout, image, transfer and settings policy immutable. Refresh the live process IDs in the config and observed settings after restarting the stack.
+The Linux driver is responsible for the existing SQL/transactor stack and the exclusive seed. Give it an already verified SCALE1 `image.json` and `transfer.json` whose SHA-256s came from the transfer controller. A single output directory per database is required across stops. Exclude other writers from the live scope. Provision a different SQL database for restores, without a transactor, and install the official Datomic PostgreSQL table there. Use storage whose paths are visible to this driver and its observed Java processes. Clock synchronization and filesystem free-space reads assume a single Linux server. Keep the source checkout, image, transfer and settings policy immutable. Refresh the live process IDs in the config and observed settings after restarting the stack.
 
 The config keys are shown below. Values in angle brackets are supplied by the driver from its admitted stack and artifacts.
 

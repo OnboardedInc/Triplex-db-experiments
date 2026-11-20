@@ -242,6 +242,7 @@
     view))
 
 (defn rung! [file target seconds deadline reserve]
+  (gate/equal! 1000000000 target "The campaign targets one billion records")
   (let [previous (load-state! file)
         pop (:population previous)
         db (db-for pop)
@@ -326,6 +327,7 @@
     (native/emit "structure" (structure/measure! view))))
 
 (defn seal! [file target]
+  (gate/equal! 1000000000 target "The campaign targets one billion records")
   (let [{:keys [finished closed-rungs] :as state} (load-state! file)
         db (db-for (:population state))]
     (verify-state! state db)
