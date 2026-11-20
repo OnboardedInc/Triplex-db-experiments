@@ -3122,3 +3122,20 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   staged-values windows stay as a report of how long the background writing takes. Review findings that treated the
   recipe as insufficient (ACTAUDIT 1, ACTREVIEW2 1) are answered by this ruling for the record itself; the checks
   that the record is decodable with the receiver stopped and that reads are correct for unopened people remain.
+
+## 2026-11-20 11:55 UTC (06:55 local, 2026-11-20): W3-ISOLATE part 1 in; pilot archive copied; server 2's queue changed for one database
+
+- **W3-ISOLATE part 1 (private folder `research/2026-11-20-onedb/ISOLATE/`).** Pilot at 35 saves per second: quiet-account
+  save p99 199.679 ms beside neighbours against 52.991 ms alone (3.77 times, 630 saves per side; the two point ratios
+  3.72 and 2.07); all-account gateway queue p99 220 and 58 ms; the writer kept up overall while some saves waited
+  long in its queue. Per-cause counts and the pause-free ratio need the raw ledgers. Ideal model for the design it
+  proposes (shared pauses shortened, field edits prepared once, reserved turns for quiet accounts, about 5 ms of real
+  blocking with mean groups of 1/1/2/4 at 35/100/235/394 saves per second): 1.19 to 1.20 times. Test design: twelve
+  matched five-minute pairs per rung, 12,600 quiet offers per side, paired block resampling.
+- **Archive copied to the Mac and verified:** `evidence/DX-SCALE1/arm-d7-wfix-pilot-b/raw.tar.zst` (50,817,517 bytes,
+  sha256 `859f152a...`). No JVM pause logs were kept for that attempt. Part 2 assigned (xhigh): counts by cause for
+  the quiet account's slowest saves, the slow-when-quiet effect (53 ms alone p99 here; 67 ms at 3.5 saves per second
+  in the single-account run), an ordered build plan with predicted ratios.
+- **DX-SCALE1 stopped and resumed (xhigh):** the split-layout arm comes out of the detached queue (one database is
+  decided); every timed arm keeps garbage-collection logs for all three JVMs and per-save stage clocks; the
+  full-size cells follow the isolation study's paired design.
