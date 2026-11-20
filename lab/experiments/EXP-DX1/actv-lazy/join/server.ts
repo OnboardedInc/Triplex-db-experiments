@@ -205,7 +205,8 @@ try {
   for (const [index, [mode, rate]] of plan.entries()) {
     const baseline = await account.publish("baseline-" + index, W0.R1.doc, valid, "owed");
     const priorSeq = (await account.notices.observe()).value.sequence;
-    const offered = clock() + (smoke ? 200 : rate ? 29000 : 200),
+    const observerLeadMs = 3000;
+    const offered = clock() + (smoke || !rate ? (receiptOnly ? observerLeadMs : 200) : 29000),
       windowStart = offered - (smoke ? 100 : rate ? 29000 : 0);
     const pending: Promise<unknown>[] = [];
     let tail = Promise.resolve(),
@@ -235,6 +236,32 @@ try {
     };
     const submit = <T>(go: () => Promise<T>) => (oneSeed ? go() : inOrder(go));
     const subject = n - index - 1; // Distinct subjects for each first request.
+    const witnessIndices = [subject, n - index - 9, Math.floor(n / 2) - index];
+    const witnessSubjects = witnessIndices.map((i) => seeded.roster[i]!);
+    const nonceAtDeadline = randomUUID();
+    const observeAt = (cutoff: number) =>
+      promisify(execFile)(
+        process.execPath,
+        [
+          "--experimental-strip-types",
+          new URL("./read-witness.ts", import.meta.url).pathname,
+          store.scope,
+          "act2-deep",
+          nonceAtDeadline,
+          valid,
+          "at-" + (performance.timeOrigin + cutoff),
+          ...witnessSubjects,
+        ],
+        { encoding: "utf8", maxBuffer: 16 << 20, timeout: 120000 },
+      );
+    // [DX-ACT1] Why: arm the one-shot deadline observer before ingress so process startup cannot erase a sample. Rejected: forgiving a late start (no observation at the required instant). The observer gets no release and reads no subjects until the cutoff.
+    const armed = receiptOnly
+      ? (async () => {
+          await sleep(Math.max(0, offered - observerLeadMs - clock()));
+          return observeAt(offered + 1000);
+        })()
+      : undefined;
+    void armed?.catch(() => {});
     const probe = async () => {
       const started = clock(),
         position = await readStore.head(),
@@ -350,23 +377,7 @@ try {
     })();
     // [DX-ACT1] Why: supervise deadline sources even if the writer fails first. Rejected: dropping the offer on an unhandled observer rejection.
     void scheduledProbe.catch(() => {});
-    const witnessIndices = [subject, n - index - 9, Math.floor(n / 2) - index];
-    const witnessSubjects = witnessIndices.map((i) => seeded.roster[i]!);
-    const nonceAtDeadline = randomUUID();
-    const observeInNewProcess = promisify(execFile)(
-      process.execPath,
-      [
-        "--experimental-strip-types",
-        new URL("./read-witness.ts", import.meta.url).pathname,
-        store.scope,
-        "act2-deep",
-        nonceAtDeadline,
-        valid,
-        "at-" + (performance.timeOrigin + cutoff),
-        ...witnessSubjects,
-      ],
-      { encoding: "utf8", maxBuffer: 16 << 20, timeout: 120000 },
-    );
+    const observeInNewProcess = armed ?? observeAt(cutoff);
     void observeInNewProcess.catch(() => {});
     let testedCut: number | undefined;
     try {
