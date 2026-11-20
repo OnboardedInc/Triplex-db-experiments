@@ -45,3 +45,8 @@ f0af694dae27b35d87afd314e508ae74a170b2d048607e6d3dd0ff87b02be950  serial-f/incom
 3ca06d548f645a4fea0f86ca598d08cd0816a931573de90b666e261bd5e589b1  serial-f/delay-stages.json
 19f0c42f1f9f44781e66b4280d4fd9e524dd058c87dd3382285e0f438437a784  serial-f/serial-heap-growth.json
 4751c1c025b745181688bc0947cda994c5d79c890f5eebe2f48700758cae97b0  serial-f/cleanup.json
+962dc12951d5bb35cc411a164d4e3667234b9436b54917cb67e2c10f59cae913  serial-f/original-spool/model.bin.gz
+1184c7b3368c043f73313f2fae41e5de460cfa30f712bb30ac0e222db64bff27  serial-f/original-spool/model.bin.archive.json
+73c1b9126b46f71cf3387d914d2c2f7bca641bb29f4d99f0e93d10e9f345ee0e  serial-f/original-spool/oracle-case.json
+5cd68d1899dec54e8df085c45b47350aca86fd855617b9af73f29ebf4b123a8a  serial-f/original-spool/oracle-expected.json
+cc2ec2d2476f54490f07a9a86795a22967c893541171a545bae2b3af002913f9  serial-f/original-spool/ns-full-read-samples.jsonl
