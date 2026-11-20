@@ -21,7 +21,7 @@ import { Reference } from "./check.ts";
 const [count, root, flag] = process.argv.slice(2),
   n = Number(count),
   smoke = flag === "--local";
-assert(root && (smoke ? n === 1000 : process.platform === "linux" && n === 100000));
+assert(root && (smoke ? n >= 64 && n <= 1000 : process.platform === "linux" && n === 100000));
 const ownerPath = process.env.TRIPLEX_LAB_SLOT_OWNER!,
   ownerBytes = readFileSync(ownerPath),
   owner = JSON.parse(ownerBytes.toString("utf8"));

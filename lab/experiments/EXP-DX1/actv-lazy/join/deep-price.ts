@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { writeFileSync } from "node:fs";
+import { mkdirSync, unlinkSync, rmdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import { W0, sha256 } from "../../../../bench/lib/w0-world.ts";
 import { ids } from "../../../../bench/lib/world.ts";
 import { integer } from "../../../../bench/lib/deep-world.ts";
@@ -34,6 +35,54 @@ const native = (samples: Record<string, unknown>[]) => {
     nativeMs: requests.reduce((b, q) => b + Number(q.wallMs), 0),
   };
 };
+// [DX-ACT1] Why: 1.6M baseline facts can take longer than the timing window. Rejected: holding the shared clock reservation throughout release-independent fixture loading.
+let releaseTiming = () => {};
+const timingPath = process.env.DX_JOIN_TIMING_DIR;
+async function timePrices() {
+  if (!timingPath) return;
+  const started = performance.now();
+  const token = join(timingPath, "lazy-price-" + randomUUID());
+  for (;;) {
+    try {
+      mkdirSync(timingPath);
+      break;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+    }
+    assert(
+      performance.now() - started < 15 * 60 * 1000,
+      "Timed deep window did not open after loading",
+    );
+    await sleep(5000);
+  }
+  let held = true;
+  const signal = () => {
+    releaseTiming();
+    process.exit(143);
+  };
+  const watchdog = setTimeout(
+    () => {
+      releaseTiming();
+      process.exit(124);
+    },
+    13 * 60 * 1000,
+  );
+  releaseTiming = () => {
+    if (!held) return;
+    held = false;
+    clearTimeout(watchdog);
+    process.off("SIGTERM", signal);
+    unlinkSync(token);
+    rmdirSync(timingPath);
+  };
+  writeFileSync(token, "", { flag: "wx" });
+  process.once("SIGTERM", signal);
+  store("deep-timing-window", {
+    startedAt: new Date().toISOString(),
+    loadedPosition: await s.head(),
+    waitMs: performance.now() - started,
+  });
+}
 try {
   const f = await seed(s, n),
     a = new JoinedAccount(s),
@@ -103,6 +152,7 @@ try {
     }
     return result;
   }
+  await timePrices();
   const control = await saves(false);
   const started = performance.now();
   await a.install(f.roster, valid);
@@ -170,6 +220,7 @@ try {
     current = doc;
   }
   const joined = await saves(true);
+  releaseTiming();
   const dispatch = a.dispatcher(new Documents(sink.comp, "sink"));
   await dispatch.drain();
   const receiver = await ref.receiver(a, dispatch);
@@ -189,6 +240,7 @@ try {
     receiver,
   });
 } finally {
+  releaseTiming();
   ref.oracle.close();
   await sink.close();
   await s.close();

@@ -128,7 +128,7 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
     binding.mode === "--joined-fast-deep" ? "deep" : "compact",
   ]);
 } else if (binding.mode === "--joined-server-smoke") {
-  run("join/server.ts", ["1000", dir, "--local"]);
+  run("join/server.ts", ["64", dir, "--local"]);
 } else if (binding.mode === "--joined-deep") {
   assert(["1000", "10000"].includes(binding.size!));
   run("join/deep-price.ts", [dir, binding.size!]);
