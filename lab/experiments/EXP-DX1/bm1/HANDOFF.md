@@ -38,17 +38,16 @@ done < <(bench 'sudo -n find /var/tmp/triplex-bm1/bundles -mindepth 2 -maxdepth 
 
 A terminal failure with missing bundles or a nonempty `remaining.txt` requires checking its corresponding `logs/<item>-cleanup/cleanup.log` and run output before release. The retained November 18 seed volume belongs to its original attempt and is outside the scoped day teardown.
 
-The deferred job is `g19r`, pinned to `c0ee7dc9f0b3198f28e0103eb2a5dfb692a2ce15`. The installer observed the terminal day archive, checked out the pinned public source, and registered the server trigger. At 18:48:20 EST the trigger was active and waiting for the handback after SCALE1 item 1. SCALE1 runs on its own allocation at present. The first reader produced zero complete scope reports. SCALE1 restarted item 1 on the matched B pair, whose zero tag is `arm-d19-i1-zero-b`. The Mac relay watches the B-pair evidence locally through 01:30 EST November 20. Once both transfers are complete and BM1 is FREE, it signals the waiting server service by SSH. It checks the two archive hashes, attempt and terminal bytes, nonces, source, baseline tag, end times and cleanups. Only the tags and terminal digests cross the connection. The manual release below can recover an expired relay.
+## Overnight queue
+
+The November 19 evening dispatch replaced the deferred SCALE1 handback. Its server trigger, installer and Mac relay and collector were retired before the overnight items. The 18:48:15 EST FREE line records the afternoon handoff. The current queue owns the allocation.
+
+Item 0 began at 19:01:16 EST on ACT2 `6eb4a3e3831f9352d0f56495cd5c881c81a30f9d`. Its 1k gate took 143.889 s and its scoped cleanup finished at 19:06:26. The published launcher refused the one-account 100k workload at the population check. The verified summary and 297,236-byte raw archive are under `evidence/DX-BM1/overnight/i0`.
+
+Item 1 began at 19:12:21 EST, group `grpw1a`, W1 `502c8897deb9af8233d72dfc6cc2d62f601f0fca`. The separate systemd ceiling stops this unit by 23:11:31 EST. The import, thin lookup comparison, guarded release and 2% active-capacity runs follow. Each forecast and actual outcome is in [the prediction ledger](PREDICTIONS.md).
 
 ```sh
-bench 'systemctl show triplex-bm1-g19r-install-b.path triplex-bm1-g19r-install-b.service -p ActiveState -p SubState -p Result'
-bench 'sudo -n cat /var/tmp/triplex-bm1/deferred-g19r/STATUS'
-launchctl print "gui/$(id -u)/org.triplex.dx-bm1.g19r-relay" | rg "state =|last exit code"
-bench 'systemctl status --no-pager triplex-bm1-g19r-after-scale1.path'
-bash lab/experiments/EXP-DX1/bm1/deferred.sh --release g19r "$BENCH_SERVER" arm-d19-i1-zero-b arm-d19-i1-reader-b
-bench 'sudo -n tail -n 12 /var/tmp/triplex-bm1/day-g19r/logs/queue.log'
+bench 'cat /var/tmp/triplex-bm1/STATUS'
+bench 'sudo -n tail -12 /var/tmp/triplex-w1/grpw1a/campaign.log'
+bench 'systemctl show triplex-w1-grpw1a -p ActiveState -p Result -p ExecMainStatus'
 ```
-
-The deferred seed has a four-hour ceiling. It stops before any release or live traffic, proves the fresh writable head and all 100,000 worlds, then seals a cold PostgreSQL copy. Each activation restores every file into a new private volume, checks its seed digest, and runs native schedules and complete readback. The three arms share a further three-hour ceiling. Allow 7 h 45 min from release including setup and archival. A failed prerequisite skips its dependants and releases the clean bench. Use the collection command above with the tags for `g19r` and its three request slots. `DX_BM1_COMPACT=1` keeps the raw traces compressed on the Mac and extracts the Linux telemetry needed to replay the study. Both 10k driver reports are directly readable. The canonical loaded raw bundle and the separate viewer use the locations above.
-
-The Mac collector follows the relay automatically. Every 11 minutes after handback it inventories only this batch’s sealed archives and requested activation slots, pulls new bundles, checks their hashes and updates the evidence index. Its receipt is `evidence/DX-BM1/collection-g19r.json`. It names missing terminal archives and ends at most nine hours after the handback signal. If no release arrived by 01:40 EST, it exits with the server trigger still available. The manual collection commands above work independently.

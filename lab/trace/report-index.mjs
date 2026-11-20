@@ -38,13 +38,15 @@ export class TraceReportIndex {
         CREATE INDEX requests_by_tier ON requests (tier, id);
         CREATE TABLE events (
           id INTEGER PRIMARY KEY, start REAL, end REAL, layer TEXT, process TEXT, thread INTEGER,
-          name TEXT, native_type TEXT, database_hash TEXT, native_t TEXT, data TEXT
+          name TEXT, native_type TEXT, database_hash TEXT, native_t TEXT, trace_id TEXT, data TEXT
         );
         CREATE VIRTUAL TABLE event_windows USING rtree (id, start, end);
         CREATE VIRTUAL TABLE pause_windows USING rtree (id, start, end);
         CREATE VIRTUAL TABLE work_windows USING rtree (id, start, end);
         CREATE INDEX events_by_name ON events (name);
         CREATE INDEX events_by_native ON events (native_type, database_hash, native_t);
+        CREATE INDEX functions_by_trace ON events (trace_id) WHERE native_type = 'triplex.TransactionFunction';
+        CREATE INDEX work_by_duration ON events (process, thread, (end-start) DESC, start DESC, id DESC) WHERE layer = 'typescript';
         CREATE TABLE resources (id INTEGER PRIMARY KEY, at REAL, process TEXT, name TEXT,
           qualified INTEGER, data TEXT);
         CREATE INDEX resources_by_time ON resources (at);
@@ -84,7 +86,7 @@ export class TraceReportIndex {
   addEvent(row) {
     const id =
       this.prepare(`INSERT INTO events (start, end, layer, process, thread, name, native_type,
-      database_hash, native_t, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+      database_hash, native_t, trace_id, data) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
         row.start,
         row.end,
         row.layer,
@@ -94,6 +96,7 @@ export class TraceReportIndex {
         row.nativeType ?? null,
         row.databaseHash ?? null,
         row.datomicT ?? null,
+        row.traceId ?? null,
         JSON.stringify(row),
       ).lastInsertRowid;
     const interval = [id, row.start - this.anchor, row.end - this.anchor];
@@ -137,9 +140,11 @@ export class TraceReportIndex {
       return;
     }
     yield* decode(tier.iterate(0));
-    yield* decode(this.prepare(`SELECT r.data FROM requests r WHERE r.tier = 1 AND NOT EXISTS
+    yield* decode(
+      this.prepare(`SELECT r.data FROM requests r WHERE r.tier = 1 AND NOT EXISTS
       (SELECT 1 FROM requests owner WHERE owner.trace_id = r.trace_id AND owner.tier = 0)
-      ORDER BY r.id`).iterate());
+      ORDER BY r.id`).iterate(),
+    );
   }
 
   commit(traceId) {
@@ -157,21 +162,89 @@ export class TraceReportIndex {
     );
   }
 
-  *overlap(start, end, group, filter, ...args) {
+  overlapRows(start, end, group, filter, args) {
     // [DX-BM1] Why: use the R-tree to find candidates, then apply the original double-precision boundary.
     // Rejected: letting the R-tree's single-precision envelope decide whether a request overlaps.
     if (!["event", "pause", "work"].includes(group)) throw Error("unknown event window group");
-    yield* decode(
-      this.prepare(`SELECT e.data FROM ${group}_windows w CROSS JOIN events e ON e.id = w.id
+    return this.prepare(`SELECT e.id, e.start, e.data FROM ${group}_windows w CROSS JOIN events e ON e.id = w.id
       WHERE w.start < ? AND w.end > ? AND e.start < ? AND e.end > ? AND (${filter})
       ORDER BY e.start DESC, e.id DESC`).iterate(
-        end - this.anchor,
-        start - this.anchor,
-        end,
-        start,
-        ...args,
+      end - this.anchor,
+      start - this.anchor,
+      end,
+      start,
+      ...args,
+    );
+  }
+
+  overlap(start, end, group, filter, ...args) {
+    return decode(this.overlapRows(start, end, group, filter, args));
+  }
+
+  functions(root) {
+    return decode(
+      this.prepare(`SELECT data FROM events WHERE native_type='triplex.TransactionFunction'
+      AND trace_id=? AND start<? AND end>? ORDER BY start DESC,id DESC`).iterate(
+        root.traceId,
+        root.end,
+        root.start,
       ),
     );
+  }
+
+  pauses(root, eligible) {
+    // [DX-BM1] Why: an observer wait can cross a million unrelated GC records. Only GC in an exclusive code interval can change attribution.
+    // Rejected: expanding the whole wait or changing tie order when a pause spans two intervals.
+    const matched = new Map();
+    for (const { start, end, selected } of eligible) {
+      const js = selected.layer === "typescript";
+      const filter = js
+        ? "e.layer='typescript-gc' AND e.process IS ? AND e.thread IS ?"
+        : "e.layer='gateway-gc' AND e.process IS ?";
+      const args = [selected.process ?? root.process ?? null];
+      if (js) args.push(selected.thread ?? root.thread ?? null);
+      for (const row of this.overlapRows(start, end, "pause", filter, args))
+        matched.set(row.id, row);
+    }
+    return [...matched.values()]
+      .sort((a, b) => b.start - a.start || b.id - a.id)
+      .map((r) => JSON.parse(r.data));
+  }
+
+  topWork(root) {
+    const { start, end, traceId } = root;
+    const role = [root.process ?? null, root.thread ?? null];
+    const own = " AND (e.trace_id IS NULL OR e.trace_id='' OR e.trace_id<>?)";
+    const ranked = " ORDER BY wall DESC,e.start DESC,e.id DESC LIMIT 5";
+    const timing = "SELECT e.id,e.name,e.start,min(e.end,?)-max(e.start,?) AS wall ";
+    const table = "FROM work_windows w CROSS JOIN events e ON e.id=w.id ";
+    const where = "WHERE e.process IS ? AND e.thread IS ? ";
+    const window = (a, b) =>
+      this.prepare(
+        timing +
+          table +
+          where +
+          "AND w.start<? AND w.end>? AND e.start<? AND e.end>?" +
+          own +
+          ranked,
+      ).all(end, start, ...role, a - this.anchor, b - this.anchor, a, b, traceId);
+    if (end - start < 2000) return window(end, start);
+    // [DX-BM1] Why: the five longest intersections are among the five best wholly inside the window or crossing either boundary.
+    // Rejected: decoding every overlapping event for thousands of minute-long observer waits.
+    const inside =
+      this.prepare(`SELECT e.id,e.name,e.start,e.end-e.start AS wall FROM events e INDEXED BY work_by_duration
+      ${where} AND e.layer='typescript' AND e.start>=? AND e.end<=? AND e.start<? AND e.end>?${own}${ranked}`).all(
+        ...role,
+        start,
+        end,
+        end,
+        start,
+        traceId,
+      );
+    const rows = [...inside, ...window(start, start), ...window(end, end)];
+    return [...new Map(rows.map((r) => [r.id, r])).values()]
+      .sort((a, b) => b.wall - a.wall || b.start - a.start || b.id - a.id)
+      .slice(0, 5);
   }
 
   events(filter, ...args) {
