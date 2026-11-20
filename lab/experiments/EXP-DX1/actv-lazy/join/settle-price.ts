@@ -368,7 +368,7 @@ export async function settlementPrices(
           const [terminal, loaded] = await Promise.all([settle.settle(seq + 1, offer), also]);
           return { control, loaded, offer, visible, after, terminal, published, doc, charged };
         });
-      if (prepared) {
+      if (prepared || seconds === 180) {
         if (n !== 64 && !shortDiagnostic)
           for (const x of [...control, ...loaded]) assert(x.writes.length >= 500);
         save(out, "observed-" + i, {

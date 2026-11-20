@@ -19,18 +19,19 @@ import { rawDeep, replaceDeep } from "./deep.ts";
 import { authoredSeed, authoredWrite, compareSource, expectedPolicy } from "./deep-reference.ts";
 import { Reference } from "./check.ts";
 import { timings, verifyTimings } from "./observations.ts";
-import { campaignCells, collect, format } from "./collect.ts";
+import { campaignBudgetMs, campaignCells, collect, format } from "./collect.ts";
 import { AccountAdmission, type PublishObservation } from "./admission.ts";
-import { liveGateway } from "./admission-gate.ts";
+import { liveGateway, run as checkAdmission } from "./admission-gate.ts";
 import type { Tail } from "../../notify1/journal.ts";
 import { settlementPrices } from "./settle-price.ts";
 
 const [count, root, flag] = process.argv.slice(2),
   n = Number(count),
-  smoke = flag === "--local" || flag === "--one-seed-local",
-  oneSeed = flag === "--one-seed" || flag === "--one-seed-local";
+  receiptOnly = flag === "--receipt" || flag === "--receipt-local",
+  smoke = flag === "--local" || flag === "--one-seed-local" || flag === "--receipt-local",
+  oneSeed = receiptOnly || flag === "--one-seed" || flag === "--one-seed-local";
 assert(flag === undefined || flag === "--settlement" || smoke || oneSeed);
-const plan = campaignCells(oneSeed);
+const plan = campaignCells(oneSeed, receiptOnly);
 assert(root && (smoke ? n >= 64 && n <= 1000 : process.platform === "linux" && n === 100000));
 const ownerPath = process.env.TRIPLEX_LAB_SLOT_OWNER!,
   ownerBytes = readFileSync(ownerPath),
@@ -94,23 +95,24 @@ const attempt = {
   smoke,
   settlement: flag === "--settlement",
   planned: plan,
-  ...(oneSeed ? { oneSeed, workBudgetMs: 83 * 60000, gatewayAttempt } : {}),
+  ...(oneSeed ? { oneSeed, workBudgetMs: campaignBudgetMs(receiptOnly), gatewayAttempt } : {}),
+  ...(receiptOnly ? { receiptOnly } : {}),
   pins,
   build,
   config: configDigest,
 };
 save("server-inputs", attempt);
-// [DX-ACT2] Why: a single large seed and four cells share an 83-minute work horizon with seven minutes available to the slot supervisor. Rejected: letting a slow seed silently turn a 90-minute campaign into the old multi-seed job.
+// [DX-ACT1] Why: the receipt campaign budgets the measured seed and ordered replay as part of one finite run. Rejected: using the earlier 83-minute budget (the actual seed alone needed 112 minutes).
 const budget = oneSeed
   ? setTimeout(() => {
       save("server-budget-stop", {
         source,
         nonce: attempt.nonce,
         at: Date.now(),
-        reason: "83-minute work budget expired",
+        reason: "Joined campaign work budget expired",
       });
       process.exit(124);
-    }, 83 * 60000)
+    }, campaignBudgetMs(receiptOnly))
   : undefined;
 budget?.unref();
 if (!smoke) {
@@ -136,6 +138,15 @@ if (!smoke) {
       },
     );
   }
+  if (receiptOnly) {
+    assert(gatewayAttempt);
+    // [DX-ACT1] Why: each attempt's order gate uses a new database on the pinned gateway. Rejected: using the gateway nonce as the database name (a rerun could replay old command receipts).
+    await checkAdmission(
+      pre,
+      { source, nonce: attempt.nonce, identity: attempt.owner },
+      gatewayAttempt,
+    );
+  }
   if (oneSeed) {
     // [DX-ACT2] Why: run the exact scheduled one-seed producer and collector at 1,000 before starting the large seed. Rejected: a quiet preflight that never admits Publish behind an active save.
     const small = join(pre, "one-seed"),
@@ -145,7 +156,13 @@ if (!smoke) {
       assert(remaining > 0, "Joined preflight exhausted its ten-minute budget");
       execFileSync(
         process.execPath,
-        ["--experimental-strip-types", import.meta.filename, "1000", small, "--one-seed-local"],
+        [
+          "--experimental-strip-types",
+          import.meta.filename,
+          "1000",
+          small,
+          receiptOnly ? "--receipt-local" : "--one-seed-local",
+        ],
         { stdio: "inherit", timeout: remaining },
       );
     } catch (error) {
@@ -710,6 +727,7 @@ try {
       "server-seed",
       ...(oneSeed ? ["server-native-options"] : []),
       ...(oneSeed && !smoke ? ["preflight/one-seed/server-collected"] : []),
+      ...(receiptOnly && !smoke ? ["preflight/joined-admission"] : []),
       ...(!smoke
         ? [
             "preflight/stage-gate",

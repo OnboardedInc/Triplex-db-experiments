@@ -64,8 +64,12 @@ if (mode === "--joined-settle-diagnostic") {
   const data = sha256(readFileSync(process.env.DX_JOIN_PREPARATION!));
   const old = JSON.parse(seal.toString());
   assert(
-    macDiagnostic && old.mode === "--joined-settle-prepare" && old.size === process.argv[3] &&
-      old.slot === slot.container && old.volume === slot.volume && old.outputs["preparation.json"] === data,
+    macDiagnostic &&
+      old.mode === "--joined-settle-prepare" &&
+      old.size === process.argv[3] &&
+      old.slot === slot.container &&
+      old.volume === slot.volume &&
+      old.outputs["preparation.json"] === data,
   );
   execFileSync("git", ["merge-base", "--is-ancestor", old.source, source]);
   preparation = { source: old.source, seal: sha256(seal), data };
@@ -146,6 +150,15 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
   ]);
 } else if (binding.mode === "--joined-server-smoke") {
   run("join/server.ts", ["64", dir, "--local"]);
+} else if (binding.mode === "--joined-priority-proof") {
+  const gatewayAttempt = process.env.TX2_WRITE_OPTIONS_ATTEMPT;
+  assert(gatewayAttempt);
+  const { run: checkAdmission } = await import("./join/admission-gate.ts");
+  await checkAdmission(
+    dir,
+    { source, nonce: binding.nonce, identity: binding.owner },
+    gatewayAttempt,
+  );
 } else if (binding.mode === "--joined-settle-proof") {
   run("join/settle-gate.ts", [dir]);
 } else if (binding.mode === "--joined-shared-proof") {
@@ -166,7 +179,16 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
 } else if (binding.mode === "--joined-settle-price") {
   assert(["64", "1000", "10000"].includes(binding.size!));
   run("join/settle-price.ts", [dir, binding.size!, binding.size === "64" ? "3" : "60"]);
-} else if (binding.mode === "--joined-settle-prepare" || binding.mode === "--joined-settle-block" || preparation) {
+} else if (binding.mode === "--joined-settle-server") {
+  assert(process.platform === "linux" && !macDiagnostic && binding.size === "100000");
+  process.env.DX_ACT1_W1_GATE = "1";
+  run("join/settle-gate.ts", [dir]);
+  run("join/settle-price.ts", [dir, binding.size, "180", "64"]);
+} else if (
+  binding.mode === "--joined-settle-prepare" ||
+  binding.mode === "--joined-settle-block" ||
+  preparation
+) {
   const [n, rate] = binding.size!.split(":");
   assert(["64", "1000", "10000"].includes(n!) && ["3.5", "23.5"].includes(rate!));
   const prepare = binding.mode === "--joined-settle-prepare";

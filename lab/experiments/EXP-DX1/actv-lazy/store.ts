@@ -117,7 +117,8 @@ export async function openStore(
   };
   async function lookup(id: string) {
     const r = await comp.transactionByCommand(id);
-    assert(r.ok);
+    // [DX-ACT1] Why: a receipt lookup can fail while the gateway or transactor is stopped. Rejected: replacing the adapter error with an assertion that loses its cause.
+    if (!r.ok) throw r.error;
     return r.value;
   }
   async function commit(
