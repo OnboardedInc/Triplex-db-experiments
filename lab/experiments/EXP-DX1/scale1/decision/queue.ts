@@ -242,9 +242,34 @@ async function main() {
   for (;;) {
     const p = plan();
     assert.equal(p.source, first.source);
+    const pilot = p.steps.find(
+      (s) => s.people === 10000 && s.phase === "cells" && s.mode === "bounded",
+    );
+    assert(pilot);
+    const pilotDir = path.join(attempts, pilot.tag);
+    // [DX-SCALE1] Why: a finalizer failure cannot erase a completed native pilot. Rejected: spending a million-person load on an unexercised writer or replaying a measured pilot to regenerate a transfer.
+    const pilotComplete =
+      results.some((r) => r.tag === pilot.tag && r.outcome === "success") ||
+      (exists(path.join(pilotDir, "measurement.json")) &&
+        exists(path.join(pilotDir, "unit.json")) &&
+        (() => {
+          const a = read(path.join(pilotDir, "attempt.json"));
+          const m = read(path.join(pilotDir, "measurement.json"));
+          const unit = read(path.join(pilotDir, "unit.json"));
+          return (
+            a.source === p.source &&
+            unit.result === "success" &&
+            m.source === a.source &&
+            m.slot === a.slot &&
+            m.nonce === a.nonce &&
+            unit.nonce === a.nonce &&
+            m.cells.length === 10
+          );
+        })());
     const s = p.steps.find(
       (s) =>
         !results.some((r) => r.tag === s.tag) &&
+        (s.people === 10000 || pilotComplete) &&
         (!s.from || results.some((r) => r.tag === s.from && r.outcome === "success")),
     );
     if (!s) {

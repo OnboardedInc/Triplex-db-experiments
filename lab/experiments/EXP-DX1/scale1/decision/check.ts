@@ -85,6 +85,17 @@ export function checkCell(x: Observation, model: OracleRows) {
     if (w.status === "expired-before-dispatch") {
       assert(!w.dispatched && !w.sent && !w.receipt && !f.has(w.id));
       assert(w.end >= w.due + expiryMs);
+      assert(
+        w.expiryCause &&
+          [
+            "timer",
+            "same-subject",
+            "in-flight-limit",
+            "unresolved-predecessor",
+            "dispatch",
+          ].includes(w.expiryCause),
+      );
+      if (w.expiryCause === "timer") assert(w.enqueued >= w.due + expiryMs);
     } else if (w.status === "acked" || w.status === "recovered") {
       const v = f.get(w.id),
         r = w.receipt;
@@ -180,6 +191,15 @@ export function checkCell(x: Observation, model: OracleRows) {
   const inWindow = acked.filter((w) => w.end! < upper).length;
   const drainMs = Math.max(0, ...acked.map((w) => w.end! - upper));
   const beforeDispatch = x.writes.filter((w) => w.status === "expired-before-dispatch").length;
+  const expiryCauses = Object.fromEntries(
+    ["timer", "same-subject", "in-flight-limit", "unresolved-predecessor", "dispatch"].map(
+      (cause) => [cause, x.writes.filter((w) => w.expiryCause === cause).length],
+    ),
+  );
+  assert.equal(
+    Object.values(expiryCauses).reduce((a, b) => a + b, 0),
+    beforeDispatch,
+  );
   const uncertain = x.writes.filter((w) => w.status === "uncertain").length;
   const refused = x.writes.filter((w) => w.status === "refused").length;
   const groupsEligible =
@@ -202,6 +222,27 @@ export function checkCell(x: Observation, model: OracleRows) {
     if (w.status === "acked") inc(w.end, "durableAck");
   }
   const pooled = metric(acked.map(commitLatency), label + "/all");
+  const measure = (name: string, sample: (w: Save) => number | undefined) =>
+    metric(
+      acked
+        .map(sample)
+        .filter((v): v is number => typeof v === "number" && Number.isFinite(v) && v >= 0),
+      label + "/" + name,
+    );
+  const stages = {
+    timer: measure("timer", (w) => w.enqueued - w.due),
+    admission: measure("admission", (w) =>
+      w.dispatched === undefined ? undefined : w.dispatched - w.enqueued,
+    ),
+    requestSend: measure("request-send", (w) =>
+      w.sent === undefined || w.dispatched === undefined ? undefined : w.sent - w.dispatched,
+    ),
+    gatewayQueue: measure("gateway-queue", (w) =>
+      typeof w.stage?.groupQueueMicros === "number" ? w.stage.groupQueueMicros / 1000 : undefined,
+    ),
+    nativeEntry: measure("native-entry", (w) => w.stage?.submitToNativeEntryMs),
+    nativeCompute: measure("native-compute", (w) => w.stage?.nativeComputeMs),
+  };
   return {
     label,
     cell: x.cell,
@@ -210,6 +251,7 @@ export function checkCell(x: Observation, model: OracleRows) {
     planned: program.length,
     missing,
     preDispatchExpiry: beforeDispatch,
+    expiryCauses,
     recovered,
     uncertain,
     refused,
@@ -220,6 +262,7 @@ export function checkCell(x: Observation, model: OracleRows) {
     offered: program.length / seconds,
     nativeTransactions: groups.size,
     groupMean: f.size / Math.max(1, groups.size),
+    stages,
     sampledReadPlan: sha(readPlan),
     readErrors,
     qualifiedInputs: groupsEligible,

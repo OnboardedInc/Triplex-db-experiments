@@ -65,6 +65,7 @@ test("deadline expiry before dispatch is counted separately and incomplete reads
       enqueued: start + w.ms + 1,
       end: start + w.ms + 30001,
       status: "expired-before-dispatch",
+      expiryCause: "dispatch",
     }),
   );
   const makeRead = (worker: number): ReadResult => {

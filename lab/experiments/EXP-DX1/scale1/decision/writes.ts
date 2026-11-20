@@ -58,6 +58,12 @@ export type Save = {
   receipt?: { p: number; t: string; clock: number; tx: string; digest: string; size: number };
   stage?: Omit<Ack, "operationId" | "position" | "t" | "recordedAt">;
   error?: string;
+  expiryCause?:
+    | "timer"
+    | "same-subject"
+    | "in-flight-limit"
+    | "unresolved-predecessor"
+    | "dispatch";
   pending?: number;
   queued?: number;
 };
@@ -147,8 +153,9 @@ export async function play(scopes: Sender[], tape: Write[], start: number, nonce
     rows: Save[] = [];
   const quarantined = new Set<string>();
   const unresolved = new Map<Save, ReturnType<typeof expectedSave>>();
-  const expire = (entry: Save) => {
+  const expire = (entry: Save, cause: NonNullable<Save["expiryCause"]>) => {
     entry.status = "expired-before-dispatch";
+    entry.expiryCause = cause;
     entry.end = now();
     assert(!entry.dispatched && !entry.sent);
   };
@@ -157,16 +164,24 @@ export async function play(scopes: Sender[], tape: Write[], start: number, nonce
   function pump(account: number) {
     const q = queues[account]!,
       sender = scopes[account]!;
+    while (q[0] && now() >= q[0].row.due + expiryMs) {
+      const { row } = q.shift()!;
+      const k = key(row);
+      const cause = quarantined.has(k)
+        ? "unresolved-predecessor"
+        : owned.has(k)
+          ? "same-subject"
+          : active[account]! >= maxInflight
+            ? "in-flight-limit"
+            : "dispatch";
+      expire(row, cause);
+    }
     while (active[account]! < maxInflight && q.length) {
-      const next = q.findIndex(
-        (x) =>
-          (!owned.has(key(x.row)) && !quarantined.has(key(x.row))) || now() >= x.row.due + expiryMs,
-      );
+      const next = q.findIndex((x) => !owned.has(key(x.row)) && !quarantined.has(key(x.row)));
       if (next < 0) break;
       const { e, row } = q.splice(next, 1)[0]!;
       if (now() >= row.due + expiryMs) {
-        if (quarantined.has(key(row))) row.error = "prior save has uncertain disposition";
-        expire(row);
+        expire(row, "dispatch");
         continue;
       }
       const candidate = expectedSave(row, e, sender.rows.get(task(row.account, row.subject))!);
@@ -235,7 +250,7 @@ export async function play(scopes: Sender[], tape: Write[], start: number, nonce
       status: "offered",
     };
     rows.push(row);
-    if (row.enqueued >= due + expiryMs) expire(row);
+    if (row.enqueued >= due + expiryMs) expire(row, "timer");
     else {
       q.push({ e, row });
       pump(e.account);

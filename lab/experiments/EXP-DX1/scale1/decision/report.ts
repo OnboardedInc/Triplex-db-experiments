@@ -108,8 +108,8 @@ export function placementReport(dir: string, trials: Trial[]) {
       d.mode === a.mode && d.from === a.from && d.cells.length === 10 && d.comparisons.length === 4,
     );
     lines.push(
-      "| Cell | Offered/s | Durable ACKs/s (n) | Pre-dispatch expiry | Missing | Refused / uncertain / recovered | p50 ms | p99 ms | Reader p99 ms | Feed p99 ms | Drain ms |",
-      "| --- | ---: | --- | ---: | ---: | ---: | --- | --- | --- | --- | ---: |",
+      "| Cell | Offered/s | Durable ACKs/s (n) | Pre-dispatch expiry | Missing | Refused / uncertain / recovered | p50 ms | p99 ms | Quiet save p99 ms | Reader p99 ms | Feed p99 ms | Drain ms |",
+      "| --- | ---: | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | ---: |",
     );
     for (const c of d.cells)
       lines.push(
@@ -123,6 +123,7 @@ export function placementReport(dir: string, trials: Trial[]) {
             [c.refused, c.uncertain, c.recovered].join(" / "),
             metric(c.writes, "p50"),
             metric(c.writes, "p99"),
+            metric(c.quiet, "p99"),
             metric(c.read, "p99"),
             metric(c.feed, "p99"),
             fmt(c.drainMs),
@@ -141,6 +142,32 @@ export function placementReport(dir: string, trials: Trial[]) {
           " |",
       );
     lines.push("");
+    lines.push(
+      "| Cell | SDK timer p99 ms | Admission p99 ms | Request send p99 ms | Gateway queue p99 ms | Native entry p99 ms | Native compute p99 ms | Logical saves / native tx |",
+      "| --- | --- | --- | --- | --- | --- | --- | --- |",
+    );
+    for (const c of d.cells)
+      lines.push(
+        "| " +
+          [
+            c.label,
+            ...[
+              "timer",
+              "admission",
+              "requestSend",
+              "gatewayQueue",
+              "nativeEntry",
+              "nativeCompute",
+            ].map((k) => metric(c.stages?.[k], "p99")),
+            c.acked + c.recovered + " / " + c.nativeTransactions,
+          ].join(" | ") +
+          " |",
+      );
+    lines.push(
+      "",
+      "Separate WAL latency is unmeasured. Per-cell cgroup, storage and sender dose records are in the compact evidence.",
+      "",
+    );
     if (a.people === 100000 && a.layout === "pooled")
       pooled.push({ tag: t.tag, mode: a.mode, summary: d });
   }
