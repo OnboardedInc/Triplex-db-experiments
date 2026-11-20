@@ -47,7 +47,11 @@ def erasure(out, subject):
     assert run["host"] == "mac-vm" and run["timings"] == "diagnostic"
     assert run["people"] == inputs["people"]
     assert run["slot"] == cleanup["slot"] and cleanup["released"] and not cleanup["errors"]
-    assert set(cleanup["removedContainers"]) == set(run["containers"].values())
+    restore = read(out / "exit-restore.json")
+    assert restore["code"] == 0 and not restore["running"] and not restore["oom"]
+    # [DX-PREP1] Why: the backup gate starts an owned restore helper after the initial stack receipt.
+    # Rejected: ignoring extra cleanup entries or claiming the three initially recorded processes were the whole run.
+    assert set(cleanup["removedContainers"]) == {*run["containers"].values(), restore["id"]}
     assert read(out / "driver-exit.json") == {"code": 0, "signal": None}
 
     def data(name):
