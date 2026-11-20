@@ -25,7 +25,7 @@ The deterministic solo K tape has ten deep and four thin accounts. Each replacem
 
 The Mac harness measures the fixed population at three increasing ages, with 3.5 and 50 offered saves/s, settled and overlapping index requests, fresh-peer and warm reads, role memory, SQL bytes and native recovery. [Method](METHOD.md)
 
-The 1B / 2B / 4B / 8B server campaign has predeclared predictions and stop conditions. At 20k records/s from a compatible 0.82B seed, age-only cost is $2.73 / $17.86 / $48.14 / $108.70 cumulative. This is a sensitivity; the full-shape sustained rate still needs a run. [Campaign](CAMPAIGN.md)
+The 1B / 2B / 4B / 8B server campaign has predeclared predictions and stop conditions. At the observed 20,097 records/s from a compatible 0.82B seed, age-only cost is $2.71 / $17.78 / $47.91 / $108.17 cumulative. Budget through 4B and admit 8B only on observed rate and remaining copy budget. The rate sample is 14.93 seconds. [Campaign](CAMPAIGN.md)
 
 The successor prototype carries all 14 test accounts at one logical cut. It checks the old product writer fence, current and old pins, a two-era page, replay of the original native receipt and erasure carriers on both sides. Full erasure remains open until the drill executes.
 
