@@ -102,8 +102,8 @@ def joined_output(folder, owner, source, start, repo=None):
 def host(r, request, clean=False):
     root = Path(r["root"])
     tag, source = r["tag"], r["source"]
-    revised = r["item"] in (15, 17, 27)
-    assert r["item"] in (14, 15, 17, 27) and re.fullmatch(r"joined(?:v2)?n(?:19|20)r?b?", tag)
+    revised = r["item"] in (15, 17, 27, 29)
+    assert r["item"] in (14, 15, 17, 27, 29) and re.fullmatch(r"joined(?:v2)?n(?:19|20)r?b?", tag)
     assert root == Path("/var/tmp/triplex-bm1/night-n19") / tag
     repo = root / "build/repository"
     stack_repo = Path(r["writerRepo"]) if revised else repo
@@ -223,6 +223,19 @@ def host(r, request, clean=False):
             # [DX-BM1] Why: component evidence must survive a later failure in the separate settlement gate.
             # Rejected: writing one combined receipt only after all stages return.
             save("collector.json", small)
+            shared_scope = {}
+            if r["item"]==29:
+                # [DX-BM1] Why: the 64-person component grid never exercises the shared-location save in the scale gate.
+                # Rejected: inferring census coverage from the independent small settlement alone.
+                shared=root/"shared-scope-smoke"
+                shared.mkdir()
+                run(*launch, JOIN/"gate.ts", shared, timeout=180)
+                check_shared=shared/"joined-gate.json"
+                proof=get(check_shared)
+                conditions=[x["coverage"] for x in proof["expected"] if "coverage" in x]
+                assert any(len(c["affected"])>=2 and c["complement"] for c in conditions)
+                assert proof["stops"]==3 and proof["lostAck"] and proof["firstCut"]>0
+                shared_scope["sharedScopeSha256"]=digest(check_shared)
             gate = root / "settlement-smoke"
             gate.mkdir()
             env["DX_ACT1_W1_GATE"] = "1"
@@ -230,7 +243,7 @@ def host(r, request, clean=False):
             witness = get(gate / "settle-gate.json")
             assert witness["nativeClass"] is True and witness["kills"] == 2 and witness["entries"] > 0
             bulk = None
-            if r["item"] == 27:
+            if r["item"] in (27,29):
                 bulk = get(gate / "bulk-limit.json")
                 assert bulk["status"] == 413 and bulk["code"] == "BulkFrameTooLarge"
                 assert bulk["accept"] == bulk["start"] + 1 and bulk["tx"] and bulk["rejectedBytes"] == 70000
@@ -252,7 +265,7 @@ def host(r, request, clean=False):
         save("scale-admission.json", {**bound, "reviewSha256": r["reviewSha256"],
                                      "collectorSha256": digest(root / "collector.json"),
                                      "settlementSmokeSha256": digest(root / "settlement-smoke-check.json"),
-                                     "issuedAt": issued})
+                                     "issuedAt": issued, **shared_scope})
         remaining = int(r["deadline"] - time.time() - 40)
         assert remaining >= 1800, "Less than 30 minutes remains after the reviewed native preflight"
         run(*launch, JOIN / "server.ts", "100000", scale, "--settlement", timeout=remaining)

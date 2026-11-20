@@ -27,7 +27,8 @@ WFIX_SOURCE = "cd2151749d52df47e179a9b6d13d3d62c0f57aef"
 ACT = "exp/DX-ACT2-activation-100k"
 JOINED_REVIEW_SOURCE = "befa95acfa69fe05e1ba96f86ca13141b0a0e3c1"
 JOINED_REVISED_SOURCE = "95a1058d7bfc7515e1f582b87162247ddce645a3"
-REVISED_JOINED = (15, 17, 27)
+REVISED_JOINED = (15, 17, 27, 29)
+TYPED_JOINED = (27, 29)
 JOINED_POLICY_FIX = "5100afc528b8bf188532bc621c81a0fc332dd644"
 SCALE_PROBES = {18:"ceil", 19:"pred", 20:"pulse", 21:"growth", 22:"size"}
 SEALED_ITEMS = (*SCALE_PROBES, 24)
@@ -40,6 +41,7 @@ ITEMS = {
     15: ("exp/DX-ACT1-activation", "actv-lazy", JOINED_REVISED_SOURCE, 4, "joinedv2n19"),
     17: ("exp/DX-ACT1-activation", "actv-lazy", JOINED_REVISED_SOURCE, 3.9, "joinedv2n19r"),
     27: ("exp/DX-ACT1-activation", "actv-lazy", JOINED_POLICY_FIX, 4, "joinedv2n20"),
+    29: ("exp/DX-ACT1-activation", "actv-lazy", JOINED_POLICY_FIX, 4, "joinedv2n20r"),
     16: (WFIX, "wfix1", WFIX_SOURCE, 4, "pulsew4an19"),
     18: (WFIX, "wfix1", WFIX_SOURCE, 1, "ceiln20"),
     19: (WFIX, "wfix1", WFIX_SOURCE, 1, "predecessorn20"),
@@ -66,6 +68,7 @@ NEXT = {1:"joined-publish-preflight", 14:"enhanced-pulse", 8:"ceil-live10", 11:"
         17:"collect", 16:"size-ledger", 12:"readers", 7:"predecessor",
         10:"same-database-import", 13:"int1", 5:"collect", 6:"resume", 4:"collect", 3:"collect"}
 NEXT.update({18:"predecessor",19:"enhanced-pulse",20:"growth",21:"size-ledger",22:"readers",24:"rd1-pairs",28:"thin-1m",26:"collect",27:"ceil"})
+NEXT[29]="sealed-probes"
 EXP = Path("lab/experiments/EXP-DX1")
 ENV = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
            GIT_TERMINAL_PROMPT="0", DOCKER_HOST="unix:///var/run/docker.sock",
@@ -387,6 +390,8 @@ def public_source(item, directory):
     # [DX-BM1] Why: preserve the historical joined check, then pin the current published source per new attempt.
     # Rejected: picking up a different file format or application between the small and large runs.
     pinned={14:JOINED_REVIEW_SOURCE}
+    if item==29:
+        pinned[29]=os.environ["DX_BM1_ACT_RETRY"]
     head = pinned.get(item,document.get("source",advertised))
     repo = checkout_source(branch,advertised,head,minimum)
     report = repo / EXP / component / "REPORT.md"
@@ -425,7 +430,7 @@ def bind(r):
     if item==1 and attempt==1:valid_repos.add(root/"bootstrap")
     assert Path(r["repo"]) in valid_repos
     if item in REVISED_JOINED:
-        assert r["writerSource"]==WFIX_SOURCE or (item==27 and re.fullmatch(r"[a-f0-9]{40}",r["writerSource"]))
+        assert r["writerSource"]==WFIX_SOURCE or (item in TYPED_JOINED and re.fullmatch(r"[a-f0-9]{40}",r["writerSource"]))
         assert Path(r["writerRepo"])==NIGHT/("source-"+r["writerSource"])
         assert re.fullmatch(r"[a-f0-9]{64}",r["reviewSha256"])
     if item in SEALED_ITEMS:
@@ -451,14 +456,14 @@ def make(item, attempt, start, deadline):
     token="| ACT2 audited activation," if item==6 else {8:"| Enhanced pulse,",9:"| Thin/deep matched,",10:"| Predecessor lookup,",
             11:"| CEIL-SERVER-LIVE10,",12:"| W2-SIZE-LEDGER,",13:"| HA1 one-host import,",14:"| ACT1 joined Publish,",
             15:"| ACT1 reviewed joined Publish,",16:"| WFIX enhanced pulse,",17:"| ACT1 manifest repair,",27:"| ACT1 typed refusal,",
-            24:"| RD1 writer probe,",26:"| INT1 single thin rung,",28:"| RD1 short pairs,",
+            24:"| RD1 writer probe,",26:"| INT1 single thin rung,",28:"| RD1 short pairs,",29:"| ACT1 shared-scope repair,",
             **{i:"| Sealed "+s+"," for i,s in SCALE_PROBES.items()}}.get(item,f"| {item} ·")
     forecast=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith(token))
     r=dict(item=item,attempt=attempt,tag=tag,source=head,repo=str(repo),unit=unit,root=str(root),
            directory=str(directory),start=start,deadline=deadline,prediction=forecast,requested=stamp())
     if item in REVISED_JOINED:
         advertised=command("git","-c","credential.helper=","ls-remote","--exit-code",URL,"refs/heads/"+WFIX).split()[0]
-        writer_source=advertised if item==27 else WFIX_SOURCE
+        writer_source=advertised if item in TYPED_JOINED else WFIX_SOURCE
         writer=checkout_source(WFIX,advertised,writer_source,WFIX_SOURCE)
         shutil.copyfile(writer/EXP/"wfix1/REPORT.md",directory/"writer-report.md")
         review=repo/EXP/"actv-lazy/REVIEW2.md"
@@ -891,7 +896,7 @@ def result(r):
         small_settlement=settlement(root/"settlement-smoke",64,4,2,r["start"])
         checked=root/"settlement-smoke-check.json"
         small_settlement["gateSha256"]=digest(root/"settlement-smoke/settle-gate.json")
-        if item==27:
+        if item in TYPED_JOINED:
             bulk=root/"settlement-smoke/bulk-limit.json"
             sample=get(bulk)
             assert sample["status"]==413 and sample["code"]=="BulkFrameTooLarge" and sample["accept"]==sample["start"]+1
@@ -903,6 +908,8 @@ def result(r):
         assert admission["collectorSha256"]==digest(root/"collector.json")
         assert admission["settlementSmokeSha256"]==digest(checked)
         assert admission["reviewSha256"]==r["reviewSha256"]
+        if item==29:
+            assert admission["sharedScopeSha256"]==digest(root/"shared-scope-smoke/joined-gate.json")
         if not (root/"scale/server-collected.json").is_file():
             return "partial","The six revised native preflight cells and small settlement matched. The 100,000-person producer did not seal."
         large=collect(root/"scale",owner,r["source"],100000,admission["issuedAt"],repo,node,env=ENV)
@@ -1286,13 +1293,21 @@ def main():
         (NIGHT/"finished").unlink(missing_ok=True)
         while active("bm1n20-single-seed"):
             time.sleep(5)
-        assert not command("docker","ps","-q")
-        status("seed100","checking-seal",time.time(),"ceil")
         sys.path.insert(0,str(HERE/"probes"))
-        from scale_seed import prepare_receipt
+        from scale_seed import checked_binding, prepare_receipt
         try:
-            prepare_receipt(SCALE_CHECKPOINT)
+            if SCALE_CHECKPOINT.is_file():
+                # [DX-BM1] Why: adopt the already verified checkpoint on an operator restart during an owned probe.
+                # Rejected: rereading the full dump and SQLite ledger while the active probe is measuring disk pressure.
+                checked_binding(SCALE_CHECKPOINT)
+            else:
+                assert not command("docker","ps","-q")
+                status("seed100","checking-seal",time.time(),"ceil")
+                prepare_receipt(SCALE_CHECKPOINT)
             scheduled=(27,*SCALE_PROBES,24,28,26)
+            if retry:=os.environ.get("DX_BM1_ACT_RETRY"):
+                assert re.fullmatch(r"[a-f0-9]{40}",retry)
+                scheduled=(29,*scheduled)
         except (OSError,ValueError,AssertionError,KeyError) as error:
             # [DX-BM1] Why: keep the original seed evidence and use the next independent population while diagnosing it.
             # Rejected: repeatedly restoring an unverified image or leaving a usable bench idle after a seal check fails.

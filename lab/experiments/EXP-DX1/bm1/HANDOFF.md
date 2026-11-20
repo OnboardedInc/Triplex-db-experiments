@@ -83,10 +83,13 @@ HA1 completed at 23:54:04 EST. The five raw offer tapes and exact p99 replay are
 
 The bench resumed at 00:17:32 EST on November 20 as `bm1n20-single-seed.service`. The inner `triplex-scale1-arm-d7-bm1-single-n20.service` executes the public SCALE1 `a072629eb` single-account decision seed and owns its own cleanup. It uses the verified two-frame loader. The current lease covers the seed, the next ACT1 native preflight and the clone-based probes. The earlier FREE line is historical.
 
+The verified seed sealed at 01:43:12 EST. The PostgreSQL image stays in the SCALE1 attempt directory and its SHA-256 is `e6b23c1f5b377a01997c40cba27ecc15932345008ea09404e579b955a1091e89`. The Mac copy `single-n20/seed` contains the verified transfer, exact terminal proof and checkpoint metadata. `bm1n20-after-seed-v3.service` started ACT1 from `dfa7a506c` at 01:43:24 and CEIL at 01:45:45. The small joined and settlement evidence is in `overnight/i27-1`. The long gate ended at the shared `local-before` location save in `join/gate.ts`, before any 100k offers. W0 `classify` supplies `""` for locations and jurisdictions. `join/account.ts:1053` passes that string through `owner ?? undefined`, while `notify1/journal.ts:185` correctly requires an owned reconcile when it gets a defined owner. Wait for a published repair. The retry uses an additional native shared-scope replay before scale and advances ahead of remaining probes at the next free slot.
+
 ```sh
 bench 'sudo -n cat /var/tmp/triplex-bm1/STATUS'
 bench 'sudo -n cat /var/tmp/triplex-scale1/decision/attempts/arm-d7-bm1-single-n20/STATUS.json'
 bench 'sudo -n tail -1 /var/tmp/triplex-scale1/decision/attempts/arm-d7-bm1-single-n20/seed-progress.jsonl'
+bench 'sudo -n tail -20 /var/tmp/triplex-bm1/single-n20/after-seed.log'
 BENCH_SERVER="$BENCH_SERVER" BM1_TRACE_INDEX="$PWD/lab/bin/trace-store.mjs" \
   python3 lab/experiments/EXP-DX1/bm1/night-client.py collect-seed
 BENCH_SERVER="$BENCH_SERVER" BM1_TRACE_INDEX="$PWD/lab/bin/trace-store.mjs" \

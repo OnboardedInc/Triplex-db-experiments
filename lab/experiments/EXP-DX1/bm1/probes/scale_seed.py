@@ -106,3 +106,23 @@ def prepare_receipt(destination):
             json.dump(value, stream, indent=2)
             stream.write("\n")
     return value
+
+
+def checked_binding(destination):
+    """Read the immutable verified receipt without a second cold backup scan."""
+    value=read(destination)
+    image=read(ORIGIN/"image.json")
+    attempt=read(ORIGIN/"attempt.json")
+    terminal=read(ORIGIN/"transfer.json")
+    assert value["kind"]=="scale1-single" and attempt["tag"]==terminal["tag"]==TAG
+    assert value["source"]==image["source"]==attempt["source"]==terminal["source"]==SOURCE
+    assert value["nonce"]==image["nonce"]==attempt["nonce"]==terminal["nonce"]
+    assert value["slot"]==image["slot"]==attempt["slot"]=="tx2-dxscale1-"+TAG
+    assert value["sourceImageSha256"]==sha(ORIGIN/"image.json")
+    assert value["sourceSeedSha256"]==sha(ORIGIN/"seed.json")
+    assert value["lastPosition"]==image["scopes"][0]["seedCut"]==value["witness"]["position"]
+    assert value["seed"]==dict(people=PEOPLE,facts=FACTS,accounts=1,population=POPULATION)
+    assert value["dumpSha256"]==image["sha256"] and Path(value["dump"])==ORIGIN/"seed.pgdump"
+    assert (ORIGIN/"seed.pgdump").stat().st_size==value["bytes"]==image["bytes"]
+    assert terminal["result"]=="success" and read(ORIGIN/"cleanup.json")==dict(containers=[],networks=[],volumes=[])
+    return value
