@@ -11,14 +11,20 @@ addr=$(node -p 'Object.values(require("node:os").networkInterfaces()).flat().fin
 children=()
 finish() {
   local status=$?
+  local i j keys=("${!children[@]}")
   trap - EXIT
-  for ((i=${#children[@]}-1; i>=0; i--)); do
-    if ((i == 0)); then
-      kill -INT "${children[i]}" 2>/dev/null || true
-    else
+  for ((j=${#keys[@]}-1; j>=0; j--)); do
+    i=${keys[j]}
+    if ((i != 0 && i != 3)); then
       kill "${children[i]}" 2>/dev/null || true
+      wait "${children[i]}" 2>/dev/null || true
     fi
-    wait "${children[i]}" 2>/dev/null || true
+  done
+  for i in 3 0; do
+    if [[ -n "${children[i]-}" ]]; then
+      kill -INT "${children[i]}" 2>/dev/null || true
+      wait "${children[i]}" 2>/dev/null || true
+    fi
   done
   exit "$status"
 }
@@ -36,9 +42,36 @@ wait_tcp() {
 }
 sql() { pg_run psql -XAtq -v ON_ERROR_STOP=1 -h "$work/socket" -U postgres "$@"; }
 start_postgres() {
-  setpriv --reuid=65534 --regid=65534 --clear-groups "$pg/postgres" -D "$work/data" -h "$addr" -k "$work/socket" -c shared_buffers=24MB &
+  setpriv --reuid=65534 --regid=65534 --clear-groups "$pg/postgres" -D "$work/data" -h "$addr" -k "$work/socket" -c shared_buffers=24MB -c track_wal_io_timing=on &
   children[0]=$!
   wait_tcp "$!" 5432
+}
+start_standby() {
+  setpriv --reuid=65534 --regid=65534 --clear-groups "$pg/postgres" -D "$work/standby" -h "$addr" -p 5433 -k "$work/socket" -c shared_buffers=16MB -c track_wal_io_timing=on &
+  children[3]=$!
+  wait_tcp "$!" 5433
+  for ((i=0; i<120; i++)); do
+    if [[ $(sql -d datomic -c "SELECT count(*) FROM pg_stat_replication WHERE application_name='preplica' AND state='streaming' AND sync_state='sync'") == 1 ]]; then
+      [[ $(pg_run psql -XAtq -h "$work/socket" -p 5433 -U postgres -d datomic -c "SHOW fsync") == on ]]
+      printf 'PREP1_SQL_REPLICA streaming sync fsync=on\n'
+      return
+    fi
+    sleep .25
+  done
+  return 1
+}
+replica_flushed() {
+  local lsn
+  lsn=$(sql -d datomic -c "SELECT pg_current_wal_flush_lsn()")
+  [[ "$lsn" =~ ^[0-9A-F]+/[0-9A-F]+$ ]]
+  for ((i=0; i<120; i++)); do
+    if [[ $(sql -d datomic -c "SELECT count(*) FROM pg_stat_replication WHERE application_name='preplica' AND sync_state='sync' AND flush_lsn >= '$lsn'::pg_lsn") == 1 ]]; then
+      printf 'PREP1_SQL_REPLICA durable-through %s\n' "$lsn"
+      return
+    fi
+    sleep .25
+  done
+  return 1
 }
 durability() {
   local setting value
@@ -55,6 +88,20 @@ sql -d postgres -c "CREATE ROLE datomic LOGIN PASSWORD '$secret'"
 sql -d postgres -c "CREATE DATABASE datomic TEMPLATE template0"
 sql -d datomic -f bin/sql/postgres-table.sql
 durability
+export PREP1_MODE=$(cat /config/mode)
+if [[ "$PREP1_MODE" == "subject-recovery" || "$PREP1_MODE" == "subject-profile" ]]; then
+  # [DX-PREP1] Why: hold each storage commit until the standby has flushed the same WAL.
+  # Rejected: a lone primary with fsync enabled (no replica durability).
+  sql -d postgres -c "CREATE ROLE datomic_replica LOGIN REPLICATION PASSWORD '$secret'"
+  install -m 600 -o 65534 -g 65534 /dev/null "$work/standby.pgpass"
+  printf '%s:5432:replication:datomic_replica:%s\n' "$addr" "$secret" > "$work/standby.pgpass"
+  install -d -m 700 -o 65534 -g 65534 "$work/standby"
+  pg_run pg_basebackup -w -D "$work/standby" -X stream -R -c fast \
+    -d "host=$addr port=5432 user=datomic_replica application_name=preplica passfile=$work/standby.pgpass"
+  sql -d postgres -c "ALTER SYSTEM SET synchronous_standby_names='FIRST 1 (preplica)'"
+  sql -d postgres -c "SELECT pg_reload_conf()" >/dev/null
+  start_standby
+fi
 umask 077
 cat >"$work/transactor.properties" <<EOF
 protocol=sql
@@ -72,7 +119,6 @@ log-dir=$work
 pid-file=$work/tx.pid
 EOF
 export PREP1_ATTEMPT=$(cat /config/attempt)
-export PREP1_MODE=$(cat /config/mode)
 export PREP1_URL="http://$addr:8080"
 export DATOMIC_URI_TEMPLATE="datomic:sql://{db}?jdbc:postgresql://$addr:5432/datomic?user=datomic&password=$secret"
 export DATOMIC_EXT_CLASSPATH=/opt/gateway/src
@@ -102,6 +148,37 @@ stop_gateway() {
   wait "${children[i]}" || true
   unset 'children[i]'
 }
+subject_workers() {
+  local n=$1 subject=$2 port i share=$((768 / $1))
+  PREP1_PEERS=
+  # [DX-PREP1] Why: all peers share the slot CPU cap and the same combined Java heap.
+  # Rejected: multiplying memory or CPU with the gateway count.
+  for ((i=0; i<n; i++)); do
+    port=$((8080+i))
+    TX2_SUBJECT_SAVE=$subject TX2_GROUP_COMMIT=$((1-subject)) TX2_LIVE_PRIORITY=$((1-subject)) \
+      TX2_PREDECESSOR_LOOKUP=1 TX2_GROUP_REUSE_PREPARED=1 TX2_GROUP_STAGE_CLOCK=1 \
+      TX2_GROUP_FAST_REPLY=1 TX2_INT1_WRITE_READBACK=1 TX2_SUBJECT_PROFILE=1 \
+      DATOMIC_JAVA_OPTS="-Xms$((128/n))m -Xmx${share}m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -Ddatomic.objectCacheMax=24m -Ddatomic.memoryIndexMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json" \
+      java_role -i bin/bridge.clj -m triplex.gateway.main "$port" &
+    children[$((4+i))]=$!
+    PREP1_PEERS="${PREP1_PEERS:+$PREP1_PEERS,}http://$addr:$port"
+  done
+  for ((i=0; i<n; i++)); do wait_tcp "${children[4+i]}" "$((8080+i))"; done
+  export PREP1_PEERS
+}
+stop_subject_workers() {
+  local i
+  for ((i=4; i<4+$1; i++)); do kill "${children[i]}"; done
+  for ((i=4; i<4+$1; i++)); do
+    wait "${children[i]}" || true
+    unset 'children[i]'
+  done
+}
+wal_snapshot() {
+  local arm=$1 edge=$2 stats='SELECT to_json(w) FROM pg_stat_wal w'
+  printf 'PREP1_SQL_WAL %s %s primary %s\n' "$arm" "$edge" "$(sql -d datomic -c "$stats")"
+  printf 'PREP1_SQL_WAL %s %s standby %s\n' "$arm" "$edge" "$(pg_run psql -XAtq -h "$work/socket" -p 5433 -U postgres -d datomic -c "$stats")"
+}
 case "$PREP1_MODE" in
   ortho) gateway 0 off; node /config/probe.mjs ;;
   prepare|two) gateway 1 "$PREP1_MODE"; node /config/probe.mjs ;;
@@ -111,6 +188,22 @@ case "$PREP1_MODE" in
       if ((arm == 0 || arm == 3)); then gateway 0 off; else gateway 1 prepare; fi
       node /config/probe.mjs "$PREP1_URL" "$PREP1_URL" "$seconds" "$PREP1_ATTEMPT" "$arm"
       stop_gateway
+    done
+    ;;
+  subject-profile)
+    for n in 1 2 4; do
+      for cell in A B B A; do
+        serial=${serial:-0}
+        arm="$cell$n-$serial"
+        serial=$((serial+1))
+        subject=0
+        if [[ "$cell" == B ]]; then subject=1; fi
+        subject_workers "$n" "$subject"
+        wal_snapshot "$arm" before
+        PREP1_ARM="$arm" node /config/probe.mjs
+        wal_snapshot "$arm" after
+        stop_subject_workers "$n"
+      done
     done
     ;;
   profile|cheap|census)
@@ -133,11 +226,21 @@ case "$PREP1_MODE" in
       stop_gateway
     done
     ;;
-  recovery)
-    export PREP1_GATE_LIBRARY=1 PREP1_URI="$DATOMIC_URI_TEMPLATE" TX2_PREPARE_GUARD=basis
-    export TX2_PREDECESSOR_LOOKUP=1 TX2_GROUP_REUSE_PREPARED=1
+  recovery|subject-recovery)
+    if [[ "$PREP1_MODE" == "subject-recovery" ]]; then
+      export WFIX1_URI="$DATOMIC_URI_TEMPLATE" TX2_SUBJECT_SAVE=1
+      recovery=/config/subject_recovery.clj
+      java_role "$recovery" gate &
+      children[2]=$!
+      wait "${children[2]}"
+      unset 'children[2]'
+    else
+      export PREP1_GATE_LIBRARY=1 PREP1_URI="$DATOMIC_URI_TEMPLATE" TX2_PREPARE_GUARD=basis
+      export TX2_PREDECESSOR_LOOKUP=1 TX2_GROUP_REUSE_PREPARED=1
+      recovery=/config/recovery.clj
+    fi
     ready="$work/witness.json"
-    java_role /config/recovery.clj before "$ready" &
+    java_role "$recovery" before "$ready" &
     children[2]=$!
     for ((i=0; i<1200; i++)); do
       kill -0 "${children[2]}"
@@ -151,15 +254,23 @@ case "$PREP1_MODE" in
     [[ "$code" == 137 ]]
     unset 'children[2]'
     printf 'PREP1_STOP {"attempt":"%s","gatewayExit":%s}\n' "$PREP1_ATTEMPT" "$code"
+    if [[ "$PREP1_MODE" == "subject-recovery" ]]; then replica_flushed; fi
     kill "${children[1]}"
     wait "${children[1]}" || true
+    if [[ "$PREP1_MODE" == "subject-recovery" ]]; then
+      kill -INT "${children[3]}"
+      wait "${children[3]}"
+      unset 'children[3]'
+    fi
     kill -INT "${children[0]}"
     wait "${children[0]}"
     start_postgres
     durability
+    if [[ "$PREP1_MODE" == "subject-recovery" ]]; then start_standby; fi
     start_transactor
-    java_role /config/recovery.clj after "$ready" &
+    java_role "$recovery" after "$ready" &
     children[2]=$!
     wait "${children[2]}"
+    if [[ "$PREP1_MODE" == "subject-recovery" ]]; then replica_flushed; fi
     ;;
 esac

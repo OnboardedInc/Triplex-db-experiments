@@ -21,6 +21,10 @@ console.log(
       waitMs: Date.now() - started,
     }),
 );
+if (!lease && process.env.PREP1_REQUIRE_LEASE === "1") {
+  console.error("[lab] REFUSED: measurement lease is required for the subject comparison");
+  process.exit(1);
+}
 try {
   const [executable, ...args] = process.argv.slice(2);
   const child = spawn(executable, args, { stdio: "inherit" });

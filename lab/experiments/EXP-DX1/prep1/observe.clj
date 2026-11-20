@@ -24,6 +24,8 @@
 (def ^ThreadMXBean cpu-bean (ManagementFactory/getThreadMXBean))
 (def ^:dynamic *profile* nil)
 (defn cpu [] (.getCurrentThreadCpuTime cpu-bean))
+(defn writer-database []
+  (second (re-matches #"writer-(.+)-[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}" (.getName (Thread/currentThread)))))
 (defn retain! [prefix event]
   (when-not (.offer diagnostic-events [prefix (assoc event :attempt attempt)])
     (.incrementAndGet dropped)))
@@ -88,7 +90,7 @@
       (into {} (map #(str/split % #" " 2))
             (str/split-lines (String. buffer 0 n StandardCharsets/US_ASCII))))))
 
-(when (#{"profile" "cheap" "census"} mode)
+(when (#{"profile" "cheap" "census" "subject-profile"} mode)
   ;; [DX-PREP1] Why: join samples to each native apply on the same VM monotonic clock.
   ;; Rejected: applying a whole-run CPU average to every group.
   (doto (Thread.
@@ -100,6 +102,23 @@
               (recur))))
     (.setDaemon true)
     (.start)))
+
+(when (= "subject-profile" mode)
+  ;; [DX-PREP1] Why: sample the native transaction application and bind its CPU time to db-after.
+  ;; Rejected: attributing process-wide CPU, storage waits or the gateway's speculative apply to this save.
+  (alter-var-root #'db/with-tx
+    (fn [apply-tx]
+      (fn [db dispatcher txdata]
+        (let [start (System/nanoTime) before (cpu)
+              result (apply-tx db dispatcher txdata)
+              end (System/nanoTime) cpu-ns (- (cpu) before)]
+          (when-let [database (writer-database)]
+            (if-let [after (:db-after result)]
+              (let [basis-t (requiring-resolve 'datomic.api/basis-t)]
+                (retain! "PREP1_SUBJECT_APPLY" {:db database :t (str (basis-t after))
+                                               :start start :end end :cpuNs cpu-ns}))
+              (retain! "PREP1_SUBJECT_APPLY_UNBOUND" {:db database :start start :end end})))
+          result)))))
 
 (when (#{"profile" "cheap"} mode)
   ;; [DX-PREP1] Why: measure native uniqueness and its shared prefetch, including reads after the authored function returns.
@@ -142,8 +161,7 @@
   (fn [complete]
     (fn [metadata]
       (let [append (.get appended)
-            thread (.getName (Thread/currentThread))
-            db (second (re-matches #"writer-(.+)-[\da-f]{8}(?:-[\da-f]{4}){3}-[\da-f]{12}" thread))]
+            db (writer-database)]
         (.remove appended)
         (when (and db append)
           (let [members (mapv (fn [m]

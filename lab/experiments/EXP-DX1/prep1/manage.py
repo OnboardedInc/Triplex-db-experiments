@@ -31,7 +31,7 @@ def disk_floor():
 
 
 def main(out, mode="ortho", seconds="10"):
-    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery"):
+    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery", "subject-recovery", "subject-profile"):
         raise SystemExit("Unknown managed probe mode")
     out.mkdir()
     attempt = str(uuid.uuid4())
@@ -55,9 +55,14 @@ def main(out, mode="ortho", seconds="10"):
         (config / "seconds").write_text(seconds + "\n")
     shutil.copyfile(EXPERIMENT / "stack.sh", config / "entrypoint.sh")
     shutil.copyfile(EXPERIMENT / "observe.clj", config / "observe.clj")
-    if mode == "recovery":
-        for source in (EXPERIMENT / "gate.clj", EXPERIMENT / "recovery.clj",
-                       EXPERIMENT.parent / "wfix1/regression.clj"):
+    clojure_driver = {
+        "recovery": ("gate.clj", "recovery.clj"),
+        "subject-recovery": ("subject_gate.clj", "subject_conflicts.clj", "subject_recovery.clj"),
+    }.get(mode, ())
+    clojure_inputs = [EXPERIMENT / name for name in clojure_driver]
+    if clojure_inputs:
+        clojure_inputs.append(EXPERIMENT.parent / "wfix1/regression.clj")
+        for source in clojure_inputs:
             shutil.copyfile(source, config / source.name)
     recipe = config / "Dockerfile"
     recipe.write_text("FROM postgres:17-alpine AS prep_pg\nFROM node:22.23.2-bookworm-slim AS prep_node\n"
@@ -72,7 +77,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     esbuild = REPO / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
     metafile = out / "bundle.json"
     driver = "live.ts" if mode == "live" else "probe.ts"
-    if mode != "recovery":
+    if not clojure_inputs:
         subprocess.run([
             esbuild, str(EXPERIMENT.relative_to(REPO) / driver), "--bundle", "--platform=node",
             "--format=esm", "--banner:js=import {createRequire} from 'node:module'; const require=createRequire(import.meta.url);",
@@ -88,9 +93,11 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     engine_dir = REPO / "runs/engines/prep1"
     env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots),
                TX2_ENGINE_DIR=str(engine_dir))
+    if mode == "subject-profile":
+        env["PREP1_REQUIRE_LEASE"] = "1"
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
-    if mode == "recovery":
-        source_paths.append(EXPERIMENT.parent / "wfix1/regression.clj")
+    if clojure_inputs:
+        source_paths.extend(clojure_inputs)
     else:
         source_paths.extend(REPO / p for p in json.loads(metafile.read_text())["inputs"])
     inputs = {
@@ -110,7 +117,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
             disk_floor()
             path = out / f"{action}-{i}.log"
             args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{out.name}-{action}", "--"]
-            if action == "selftest" and mode in ("profile", "cheap", "census"):
+            if action == "selftest" and mode in ("profile", "cheap", "census", "subject-profile"):
                 args += ["node", str((EXPERIMENT / "measure.mjs").relative_to(REPO))]
             args += ["node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-PREP1"]
             if action == "selftest":

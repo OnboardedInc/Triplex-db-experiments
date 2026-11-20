@@ -311,6 +311,7 @@
 ;; expanded data (would move invariant checks off the authoritative transaction).
 (def commit-hints? (= "true" (System/getenv "TX2_COMMIT_HINTS")))
 (def writer-readback (= "1" (System/getenv "TX2_INT1_WRITE_READBACK")))
+(def subject-profile (= "1" (System/getenv "TX2_SUBJECT_PROFILE")))
 (defn transaction-hints [conn data timeline]
   (when commit-hints?
     (try
@@ -465,6 +466,7 @@
         (and pred/diagnostic (true? (get input "readProfile"))) (assoc :readProfile (:io-stats report))
         group/stage-clock (assoc :nativeComputeMs (get-in report [:io-stats :api-ms]) :groupStages (:group-stages report)
                                  :preparedStats (:prepared-stats report))
+        (and group/stage-clock subject-profile) (assoc :nativeIoStats (:io-stats report))
         stamp (assoc :requestBytes (policy/request-size input) :preparedOps (count (:ops (second (first data)))) :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
     (catch Exception e

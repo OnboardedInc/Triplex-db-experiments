@@ -6,10 +6,17 @@ import { command } from "../w1/group/workload.ts";
 
 const mode = process.env.PREP1_MODE;
 const arm = process.env.PREP1_ARM;
+const subjectProfile = mode === "subject-profile";
 const deep = mode === "profile" || mode === "census";
 const guardProbe = deep || mode === "cheap";
-const depths = guardProbe ? [32] : mode === "ortho" ? [1, 8, 32, 32, 8, 1] : [32, 32];
-const count = guardProbe ? 96 : 192;
+const depths = subjectProfile
+  ? [1, 2, 4, 6].flatMap((n) => [n, n, n])
+  : guardProbe
+    ? [32]
+    : mode === "ortho"
+      ? [1, 8, 32, 32, 8, 1]
+      : [32, 32];
+const count = subjectProfile ? 30 : guardProbe ? 96 : 192;
 const subjectCount = deep ? 1200 : depths.length * count;
 // [DX-PREP1] Why: sample across the same seeded depth as the earlier open-loop experiment.
 // Rejected: a narrow prefix of that database, where all historical lookups can share the same index leaves.
@@ -20,10 +27,13 @@ const scope = JSON.stringify([
   "triplex-scope-v1",
   "test",
   "prep1",
-  guardProbe ? `${attempt}-${arm}` : attempt,
+  guardProbe || subjectProfile ? `${attempt}-${arm}` : attempt,
   0,
 ]);
-const c = new DatomicClient(process.env.PREP1_URL!, 35000);
+const peers = (process.env.PREP1_PEERS ?? process.env.PREP1_URL!)
+  .split(",")
+  .map((url) => new DatomicClient(url, 35000));
+const c = peers[0]!;
 const emit = (kind: string, data: unknown) =>
   console.log("PREP1_PROBE " + JSON.stringify({ attempt, kind, data, arm }));
 const now = () => process.hrtime.bigint().toString();
@@ -41,6 +51,8 @@ type Ack = {
   t: { v: string };
   groupSize: number;
   datoms: number;
+  subjectSave?: string;
+  subjectReplan?: boolean;
   requestBytes: number;
   nativeComputeMs: number;
   submitToNativeEntryMs: number;
@@ -84,6 +96,33 @@ try {
   const seedHead = await c.begin(db);
   await c.release(db, seedHead.handle);
   assert.equal(seedHead.position, seeds.length / 8);
+  if (subjectProfile) {
+    const installed = [];
+    for (const [i, client] of peers.entries()) {
+      if (i > 0) assert.equal((await client.create(scope, "lean", true, 35000)).db, db);
+      const observed = await client.request<{
+        database: string;
+        position: number;
+        subjectSave?: boolean;
+        subjectFunction?: string;
+        subjectFunctionTx?: string;
+        options: { groupCommit: boolean; livePriority: boolean; fieldCoalesce: boolean };
+      }>("GET", `/v1/db/${db}/write-options`);
+      assert.equal(observed.database, db);
+      assert.equal(observed.position, seedHead.position);
+      assert.equal(peers.length, Number(arm![1]));
+      assert.equal(!!observed.subjectSave, arm!.startsWith("B"));
+      assert.equal(observed.options.groupCommit, arm!.startsWith("A"));
+      assert.equal(observed.options.livePriority, arm!.startsWith("A"));
+      assert.equal(observed.options.fieldCoalesce, false);
+      if (observed.subjectSave) {
+        assert.match(observed.subjectFunction ?? "", /^:triplex\.subject\/v-[0-9a-f]{24}$/);
+        assert.match(observed.subjectFunctionTx ?? "", /^[1-9][0-9]*$/);
+      }
+      installed.push(observed);
+    }
+    emit("writers", installed);
+  }
   emit("seed", {
     db,
     scope,
@@ -95,9 +134,14 @@ try {
   for (const [block, outstanding] of depths.entries()) {
     const inputs = Array.from({ length: count }, (_, j) => {
       const i = block * count + j;
-      const width = 1 + (j % 3);
+      const width = 1 + ((subjectProfile ? block : j) % 3);
       const subject = subjectFor(i);
-      return command(`edit-${i}`, facts(subject, width, "edited"), seeds[subject]!.slice(0, width));
+      const edit = command(
+        `edit-${i}`,
+        facts(subject, width, "edited"),
+        seeds[subject]!.slice(0, width),
+      );
+      return subjectProfile ? { ...edit, sourceK: seedHead.position } : edit;
     });
     const head = seedHead.position + block * count;
     let next = 0;
@@ -110,10 +154,11 @@ try {
             const index = next++;
             const input = inputs[index]!;
             const begin = now();
-            const ack = (await c.transact(db, input)) as Ack;
+            const peer = index % peers.length;
+            const ack = (await peers[peer]!.transact(db, input)) as Ack;
             const end = now();
             assert.equal(ack.operationId, input.operationId);
-            recorded.push({ index, begin, end, ack });
+            recorded.push({ index, begin, end, ack, ...(subjectProfile ? { peer } : {}) });
           }
           return recorded;
         }),
@@ -200,11 +245,21 @@ try {
         }),
       );
     }
-    emit("block", { db, block, outstanding, start, end, head, rows });
+    emit("block", {
+      db,
+      block,
+      outstanding,
+      start,
+      end,
+      head,
+      rows,
+      ...(subjectProfile ? { width: 1 + (block % 3) } : {}),
+    });
   }
   emit("finished", { db, head: seedHead.position + depths.length * count });
+  if (subjectProfile) await c.delete(scope);
 } finally {
-  c.close();
+  for (const peer of peers) peer.close();
 }
 
 function byId(a: { id: string }, b: { id: string }) {

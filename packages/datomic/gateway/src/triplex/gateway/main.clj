@@ -268,7 +268,7 @@
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e))))))))
 (defn handler [request] (trace/handler route-handler request))
-(defn -main [& _]
+(defn -main [& [port]]
   (d/create-database (db-uri "tx2-health"))
   ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.
   ;; Rejected: per-read initialization barriers.
@@ -278,4 +278,5 @@
     (try (sync-db (db-uri name))
          (catch Exception e
            (when (some #{name} (d/get-database-names (db-uri "*"))) (throw e)))))
-  (jetty/run-jetty handler {:port 8080 :host "0.0.0.0" :join? true :min-threads 8 :max-threads 512}))
+  (jetty/run-jetty handler {:port (if port (Integer/parseInt port) 8080)
+                           :host "0.0.0.0" :join? true :min-threads 8 :max-threads 512}))
