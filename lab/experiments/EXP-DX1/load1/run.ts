@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { root, runFile, until } from "../ha1/common.ts";
+import { root, runFile, splitLoad, until } from "../ha1/common.ts";
 import type { Stack } from "../ha1/stack.ts";
+import { replayLive } from "./live-evidence.ts";
 export async function load(s: Stack, people: number) {
   const e = s.e;
   await s.tool();
@@ -28,8 +29,28 @@ export async function load(s: Stack, people: number) {
   await s.database("pg", "moving");
   await s.tx("active", s.a, "pg", "moving");
   await until("active writer", async () => (await s.broker("active")) || undefined);
-  await s.gateway("write", s.b, "pg", "moving");
+  const split = splitLoad(e.mode);
+  const newDesign = split || e.mode === "load-tail" || e.mode.startsWith("load-frontier-");
+  await s.gateway("write", newDesign ? s.a : s.b, "pg", "moving");
   const url = await s.ready("write");
+  let importUrl = "";
+  if (split) {
+    const storage = e.mode === "load-split-pg" ? "target" : "pg";
+    if (storage === "target") await s.postgres(storage, s.b);
+    await s.database(storage, "neighbor");
+    await s.tx("standby", s.b, storage, "neighbor");
+    await until("independent import writer", async () => (await s.broker("standby")) || undefined);
+    await s.gateway("read", s.b, storage, "neighbor");
+    importUrl = await s.ready("read");
+    assert(url !== importUrl);
+    e.log("load-storage-layout", {
+      mode: e.mode,
+      live: ["pg", "active", "write"],
+      import: [storage, "standby", "read"],
+      separateSqlProcesses: storage === "target",
+      hostCount: new Set([s.a, s.b]).size,
+    });
+  }
   const server = s.a !== s.b;
   const arms =
     e.mode === "load-profile"
@@ -51,20 +72,22 @@ export async function load(s: Stack, people: number) {
                 ]
               : e.mode === "load-frontier-high"
                 ? ["frontier-0-a", "frontier-16", "frontier-24", "frontier-32", "frontier-0-b"]
-                : server
-                  ? ["quiet-server-2000-2"]
-                  : [
-                      "quiet-a-2000-1",
-                      "classic-a-2000-2",
-                      "quiet-a-2000-2",
-                      "quiet-a-2000-4",
-                      "quiet-a-1024-2",
-                      "quiet-a-3000-2",
-                      "quiet-b-2000-2",
-                      "classic-b-2000-2",
-                      "quiet-b-2000-1",
-                      "proof-gap-1024-2",
-                    ];
+                : split
+                  ? ["split-0-a", "split-2000", "split-0-b"]
+                  : server
+                    ? ["quiet-server-2000-2"]
+                    : [
+                        "quiet-a-2000-1",
+                        "classic-a-2000-2",
+                        "quiet-a-2000-2",
+                        "quiet-a-2000-4",
+                        "quiet-a-1024-2",
+                        "quiet-a-3000-2",
+                        "quiet-b-2000-2",
+                        "classic-b-2000-2",
+                        "quiet-b-2000-1",
+                        "proof-gap-1024-2",
+                      ];
   const reports: Array<{ sourceSeal: string; [key: string]: unknown }> = [];
   let allowance = 0;
   for (const arm of arms) {
@@ -72,10 +95,9 @@ export async function load(s: Stack, people: number) {
     const cpu = async () =>
       Object.fromEntries(
         await Promise.all(
-          (["active", "write", "pg"] as const).map(async (r) => [
-            r,
-            await s.exec(r, "cat", "/sys/fs/cgroup/cpu.stat"),
-          ]),
+          [...s.members.keys()]
+            .filter((role) => role !== "tool")
+            .map(async (r) => [r, await s.exec(r, "cat", "/sys/fs/cgroup/cpu.stat")]),
         ),
       );
     const before = await cpu();
@@ -98,6 +120,7 @@ export async function load(s: Stack, people: number) {
           ...process.env,
           DATOMIC_URL: url,
           DX_LOAD2_ALLOWANCE_MS: String(allowance),
+          DX_LOAD2_IMPORT_URL: importUrl,
           TRIPLEX_DATOMIC_LAYOUT: "lean",
           DX_SERVER_RECORD_TIME: "1",
           TRIPLEX_TRACE_LEVEL: e.mode === "load-profile" ? "full" : "off",
@@ -127,7 +150,11 @@ export async function load(s: Stack, people: number) {
       [r.nonce, r.source, r.slot, r.scope, r.arm],
       [e.nonce, e.source.git, e.slot, scope, arm],
     );
-    const live = ["load-live", "load-tail"].includes(e.mode) || e.mode.startsWith("load-frontier-");
+    if (newDesign) {
+      replayLive(JSON.parse(readFileSync(path.join(e.dir, arm + ".offers.json"), "utf8")), e, r);
+    }
+    const live =
+      ["load-live", "load-tail"].includes(e.mode) || e.mode.startsWith("load-frontier-") || split;
     assert(Number.isSafeInteger(r.facts) && (live ? r.facts >= 0 : r.facts > 0));
     if (e.mode.startsWith("load-frontier-") && arm === "frontier-0-a") {
       const quiet = r.neighbors.quiet;
@@ -153,6 +180,7 @@ export async function load(s: Stack, people: number) {
       cpuBefore: before,
       cpuAfter: await cpu(),
     });
+    if (newDesign) e.write("arm-" + arm, r);
     reports.push(r);
   }
   if (e.mode === "load-tail") await s.collectLoadTrace();

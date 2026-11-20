@@ -9,20 +9,12 @@ import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { frames, sha, sourceId } from "./source.ts";
 import { Snapshot } from "./snapshot.ts";
 import { maxBulkFacts, SerialBudget } from "./budget.ts";
+import { isolatedImport } from "./isolated.ts";
+import { sharedMono } from "./split-import.ts";
+import { splitLoad } from "../ha1/common.ts";
+import { offers, type Offer } from "./live-evidence.ts";
 import { ack, record, type Seen } from "./oracle.ts";
 
-type Sample = {
-  actor: string;
-  kind: "save" | "read";
-  seq: number;
-  due: number;
-  offered: number;
-  end: number;
-  outcome: string;
-  seen?: Seen;
-};
-const nearest = (values: number[]) =>
-  values.length ? values.sort((a, b) => a - b)[Math.ceil(values.length * 0.99) - 1] : null;
 // [DX-LOAD2] Why: bracket the guest clock with both host timestamps; compare guest-native clocks directly.
 // Rejected: assuming wall time on a VM is the same as the client's clock, or hiding uncertain overlaps.
 async function sampleClock() {
@@ -67,16 +59,18 @@ export async function live(
 ) {
   const traceTail = mode === "load-tail",
     frontier = mode.startsWith("load-frontier-");
-  assert((frontier ? [50, 100] : [50, 235, 390]).includes(rate));
+  const split = splitLoad(mode);
+  const allReads = split || frontier;
+  assert((allReads ? [50, 100] : [50, 235, 390]).includes(rate));
   const cell = arm.split("-")[1],
     width = frontier && cell !== "0" ? maxBulkFacts : Number(cell),
-    duration = (traceTail || frontier ? 108 : server ? 60 : 12) * 1000,
-    subjects = server || traceTail || frontier ? 100000 : 20000;
+    duration = (traceTail || allReads ? 108 : server ? 60 : 12) * 1000,
+    subjects = server || traceTail || allReads ? 100000 : 20000;
   const budget =
     frontier && width
       ? new SerialBudget(Number(cell === "allowance" ? process.env.DX_LOAD2_ALLOWANCE_MS : cell))
       : undefined;
-  const samples: Sample[] = [];
+  const samples: Offer[] = [];
   type Native = {
     command: string;
     op: string;
@@ -177,6 +171,7 @@ export async function live(
     path.join(dir, arm + ".sqlite"),
     budget ? { budgetMs: budget.ms } : undefined,
   );
+  let other: Awaited<ReturnType<typeof isolatedImport>> | undefined;
   try {
     const checks = new Map<string, Seen>();
     const writer = (actor: string) => (actor === "quiet" ? quiet : comp);
@@ -186,7 +181,7 @@ export async function live(
     >();
     for (const actor of [
       "quiet",
-      ...Array.from({ length: frontier ? 10 : 0 }, (_, i) => "live" + i),
+      ...Array.from({ length: allReads ? 10 : 0 }, (_, i) => "live" + i),
     ]) {
       const seed = save(actor, 0, true);
       const initial = await writer(actor).transact(seed.frame.operations, seed.meta);
@@ -218,9 +213,17 @@ export async function live(
         pilots.push({ command: e.command, position: e.position, facts: e.facts, ...v });
       }
     }
+    if (split && width) {
+      const url = process.env.DX_LOAD2_IMPORT_URL;
+      assert(url && url !== process.env.DATOMIC_URL);
+      other = await isolatedImport(url, scope + "-import", dir, arm, subjects, width);
+    }
     const clockBefore = traceTail ? await sampleClock() : undefined;
     const start = performance.now(),
+      bridge = sharedMono(),
       end = start + duration;
+    const isolated = other?.run(bridge, duration);
+    if (isolated) void isolated.catch(() => {});
     let inFlight = 0,
       quietInFlight = 0,
       bulkInFlight = 0,
@@ -230,10 +233,10 @@ export async function live(
     const pending = new Set<Promise<void>>(),
       ordered: any[] = [];
     let fatal: unknown;
-    function launch(actor: string, kind: Sample["kind"], seq: number, due: number) {
+    function launch(actor: string, kind: Offer["kind"], seq: number, due: number) {
       const offered = performance.now(),
         sentinel = actor === "quiet";
-      const s: Sample = {
+      const s: Offer = {
         actor,
         kind,
         seq,
@@ -307,7 +310,7 @@ export async function live(
     }
     let budgetStopped = false;
     const bulk = (async () => {
-      if (!width) return;
+      if (!width || split) return;
       const fixed = frames("thin", subjects, width);
       while (performance.now() < end) {
         const limit = budget?.next();
@@ -346,7 +349,7 @@ export async function live(
       q = 0;
     const nNoisy = Math.floor((rate * duration) / 1000),
       nQuiet = Math.floor((5 * duration) / 1000),
-      nReads = frontier ? 10 * nQuiet : 0;
+      nReads = allReads ? 10 * nQuiet : 0;
     while (noisy < nNoisy || q < nQuiet || read < nReads) {
       const nextNoise = noisy < nNoisy ? (1000 * noisy) / rate : Infinity,
         nextQuiet = q < nQuiet ? 200 * q : Infinity,
@@ -369,8 +372,29 @@ export async function live(
     if (fatal) throw fatal;
     const drained = performance.now() - start;
     const clockAfter = traceTail ? await sampleClock() : undefined;
+    fs.writeFileSync(
+      path.join(dir, arm + ".offers.json"),
+      JSON.stringify({
+        nonce: process.env.TRIPLEX_TRACE_RUN,
+        source: process.env.TRIPLEX_TRACE_SOURCE,
+        slot: process.env.TRIPLEX_TRACE_SLOT,
+        scope,
+        expectedDb,
+        start,
+        duration,
+        clockBefore,
+        clockAfter,
+        budgetMs: budget?.ms,
+        budgetStopped,
+        pilots,
+        native: [...native.values()],
+        ordered,
+        samples,
+      }),
+      { flag: "wx" },
+    );
     assert.equal(peakBulk, width && ordered.length ? 1 : 0);
-    if (width && !budget) assert(ordered.length > 0);
+    if (width && !budget && !split) assert(ordered.length > 0);
     const seen = new Set<string>();
     const proof = await importer.verify(
       false,
@@ -387,9 +411,15 @@ export async function live(
         assert.deepEqual(record(frame, meta, r), expected);
         seen.add(r.commandId);
       },
-      frontier ? 24 : 8,
+      allReads ? 24 : 8,
     );
     assert.equal(seen.size, checks.size);
+    const otherProof = await isolated;
+    if (split && width) {
+      assert(otherProof);
+      factsInWindow = otherProof.facts;
+      completedBulk = otherProof.proof.facts;
+    }
     const observations = [...native.values()],
       published = new Map(observations.map((n) => [n.command, n.position]));
     assert.equal(observations.length, proof.cut);
@@ -397,47 +427,14 @@ export async function live(
     assert.equal(published.size, proof.cut);
     for (const [command, receipt] of checks) assert.equal(published.get(command), receipt.position);
     for (const f of ordered) assert.equal(published.get(f.command), f.position);
-    const stats = (a: Sample[]) => {
-      const ok = a.filter((s) => s.outcome === "verified");
-      return {
-        offered: a.length,
-        ok: ok.length,
-        p99Ms: nearest(ok.map((s) => s.end - s.due)),
-        outcomes: a.reduce(
-          (m, s) => ((m[s.outcome] = (m[s.outcome] ?? 0) + 1), m),
-          {} as Record<string, number>,
-        ),
-      };
-    };
     const neighbors = Object.fromEntries(
       [...new Set(samples.map((s) => s.actor))].map((a) => [
         a,
         {
-          save: stats(samples.filter((s) => s.actor === a && s.kind === "save")),
-          read: stats(samples.filter((s) => s.actor === a && s.kind === "read")),
+          save: offers(samples.filter((s) => s.actor === a && s.kind === "save")),
+          read: offers(samples.filter((s) => s.actor === a && s.kind === "read")),
         },
       ]),
-    );
-    fs.writeFileSync(
-      path.join(dir, arm + ".offers.json"),
-      JSON.stringify({
-        nonce: process.env.TRIPLEX_TRACE_RUN,
-        source: process.env.TRIPLEX_TRACE_SOURCE,
-        slot: process.env.TRIPLEX_TRACE_SLOT,
-        scope,
-        expectedDb,
-        start,
-        duration,
-        clockBefore,
-        clockAfter,
-        budgetMs: budget?.ms,
-        budgetStopped,
-        pilots,
-        native: observations,
-        ordered,
-        samples,
-      }),
-      { flag: "wx" },
     );
     if (traceTail) {
       assert(
@@ -464,16 +461,18 @@ export async function live(
       budgetStopped,
       pilots,
       aboveBudget: budget ? ordered.filter((r) => r.service.ms > budget.ms).length : undefined,
-      committedFrames: ordered.length,
+      committedFrames: otherProof?.proof.observed ?? ordered.length,
       fps: factsInWindow / (duration / 1000),
       neighbors,
-      peakBulk,
+      peakBulk: otherProof?.peak ?? peakBulk,
       proof,
+      isolated: otherProof,
     };
   } finally {
     api.DatomicClient.prototype.transact = original;
     api.DatomicClient.prototype.operation = operation;
     importer.close();
+    if (other) await other.close();
     await quiet.close();
   }
 }

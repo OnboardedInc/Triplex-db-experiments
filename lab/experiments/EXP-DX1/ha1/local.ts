@@ -18,8 +18,10 @@ import {
 } from "../../../bin/lib.mjs";
 import {
   Evidence,
+  loadRoles,
   localRoleMiB,
   modeOf,
+  splitLoad,
   roles,
   root,
   runFile,
@@ -58,7 +60,7 @@ async function recoverLoad(nonce: string, config: any, manager: any, folder: str
       .split("\n")
       .map((l) => JSON.parse(l));
     const roles = events.filter((r) => r.nonce === nonce && r.type === "role").map((r) => r.data);
-    const names = ["pg", "active", "write", "tool"].map((role) => prefix + "-" + role);
+    const names = loadRoles(modeOf(attempt.mode)).map((role) => prefix + "-" + role);
     const reservations = ledger.reservations.filter((r: any) => names.includes(r.container));
     assert.equal(reservations.length, names.length);
     assert(
@@ -159,7 +161,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
   const wanted = (Object.keys(roles) as Role[])
     .filter((r) =>
       mode.startsWith("load-")
-        ? ["pg", "active", "write", "tool"].includes(r)
+        ? loadRoles(mode).includes(r)
         : mode === "replication"
           ? ["pg", "target", "tool", "active", "write"].includes(r)
           : mode === "move" || mode.startsWith("one-") || r !== "target",
@@ -168,7 +170,15 @@ export async function localDrill(opts: any, config: any, manager: any) {
   const people = Number(opts.people ?? 4);
   const smallLogicalCopy =
     mode === "one-account" && Number.isSafeInteger(people) && people > 0 && people <= 256;
-  const forecastBytes = (smallLogicalCopy ? 1.5 : mode.startsWith("one-") ? 3 : 1) * 2 ** 30;
+  const forecastBytes =
+    (smallLogicalCopy
+      ? 1.5
+      : mode.startsWith("one-") || splitLoad(mode)
+        ? 3
+        : mode === "load-tail"
+          ? 2
+          : 1) *
+    2 ** 30;
   const bytes = wanted.reduce((n, [, mb]) => n + mb * 2 ** 20, 0);
   assert(bytes <= info.memBytes);
   let acquired = false,

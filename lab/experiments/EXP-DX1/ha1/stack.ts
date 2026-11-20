@@ -11,6 +11,7 @@ import {
   localRoleMiB,
   loopback,
   roles,
+  splitLoad,
   until,
   type Role,
 } from "./common.ts";
@@ -492,7 +493,9 @@ export class Stack {
   async gateway(role: "write" | "read", site: Site, pg: "pg" | "target", store: string) {
     const size = site.privateAddress ? "1600" : "320";
     const frontier = this.e.mode.startsWith("load-frontier-");
+    const split = splitLoad(this.e.mode);
     const priority = this.e.mode === "load-live" || this.e.mode === "load-tail" || frontier;
+    const grouping = priority || (split && role === "write");
     await this.start(
       role,
       site,
@@ -508,15 +511,15 @@ export class Stack {
                     ? "summary"
                     : "off"),
               "-e",
-              "TX2_GROUP_COMMIT=" + Number(priority),
+              "TX2_GROUP_COMMIT=" + Number(grouping),
               "-e",
               "TX2_LOAD2_TIMING=" + Number(this.e.mode === "load-tail" || frontier),
               "-e",
               "TX2_LOAD2_FRAME_CAPS=" + Number(frontier),
               "-e",
-              "TX2_GROUP_REUSE_PREPARED=" + Number(frontier),
+              "TX2_GROUP_REUSE_PREPARED=" + Number(frontier || split),
               "-e",
-              "TX2_LOAD1_PRIORITY=" + Number(priority),
+              "TX2_LOAD1_PRIORITY=" + Number(grouping),
               "-e",
               "TX2_GROUP_QUEUE_CLOCK=" + Number(this.a === this.b && priority),
               "-e",
