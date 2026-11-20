@@ -3,7 +3,7 @@ From 300,000 to 600,000 people, the reader added zero resident bytes per person,
 For the last 10,000 deep people, the read gateway added 322 bytes per person and the write gateway shrank. The transactor's memory grew in both runs.
 A running gateway opened its first deep record in 132–144 ms. Fresh stacks took 342–491 ms. Most of that difference was inside the gateway.
 At 128 scopes the write gateway had 565 threads and the transactor had 1,097. The last 96 scopes added about four and eight threads each.
-The W1 and HA refreshes each passed all 54,079 native checks. The other refreshes have focused results and their native gates are queued.
+The writer, loader and joined activation refreshes each passed all 54,079 native checks. The last three native gates are queued.
 The physical campaign uses two pairs at each deep size. The field-save tape uses measured per-account rates and the frozen tape keeps its original rules.
 Both memory sweeps finished. Three campaign smokes stopped before the paired trace. The latest seeded all 40 people before SQLite refused the shared filesystem.
 
