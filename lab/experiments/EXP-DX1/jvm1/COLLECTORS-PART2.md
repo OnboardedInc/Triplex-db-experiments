@@ -2,6 +2,8 @@
 
 DX-JVM1 owns `lab/experiments/EXP-DX1/jvm1/launch.mjs`. DX-TAIL1 can import `measuredWriterG1` for its existing G1 arm and point at this file for the exact measured flags. Its Java 21 ZGC arm keeps the legacy generational selector for historical comparison. Java 25 ZGC uses the version-specific profile. The integration campaign imports the same writer settings while retaining its own heap limits and workflow.
 
+TAIL1's Part 3 recorder at `ed2398856` adds event capture through the existing trace options. When reconciling `stack/up.sh` and `w1/bench.ts`, keep `launch.mjs` as the source of role flags and append the recorder options to the existing trace arguments. Keep `PrintFlagsFinal` and the per-role runtime readback in the same launch. [TAIL1 recorder handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/ed23988567c55d641c12135f8dc52ed9e3b71c6f/lab/experiments/EXP-DX1/tail1/RECORDING.md)
+
 | Flags | Reason |
 | --- | --- |
 | `-XX:+UseG1GC`, `-XX:MaxGCPauseMillis=50` for transactor and reader | Choose G1 before the JVM sees placement. The transactor uses Datomic's documented pause goal. The read peer uses the same soft goal for the trial. |
