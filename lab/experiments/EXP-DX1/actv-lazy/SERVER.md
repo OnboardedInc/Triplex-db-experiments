@@ -16,3 +16,5 @@ TX2_SWEEP_STRICT=1 TX2_W0_POINT_JOURNAL=1 TX2_W0_RESTORE_INDEXED_JOURNAL=1 TRIPL
 ```
 
 The loaded windows issue 210 and 1,410 real saves over 60 seconds. They record offered and entered clocks so queued saves and a queued Publish remain included. An independent one-second probe runs even if Publish is still working. The runner keeps each offer, native receipt, returned bytes, physical comparison and ordered receiver proof. It reports misses individually. A production verdict also needs the full fixed-trace interference and fault matrix.
+
+A native 64-person functional smoke exercised all six collector cells, 28 short-window saves and 757 verified recipient effects. This test checked the collector and proof paths. The server timing and full-rate windows remain unrun.

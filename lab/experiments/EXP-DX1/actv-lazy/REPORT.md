@@ -1,11 +1,11 @@
-The joined path now has a 10,000-person test with both notice receipts and stored outputs.
-It durably recorded the debt for 1,650 wage notices in 37 ms with one transaction and four database changes.
-Storing the 2,474 changed wage values took 472 ms. A connected reader returned the first correct answer at 491 ms.
-The original three-rule release stored 3,764 changed values in 1198 ms. It read the entire roster.
-The 10,000-person trial projects 4.4 seconds for the wage change and 11.7 seconds for the three-rule release at 100,000.
-At a million, the one-transaction wage and three-rule releases exceed the gateway’s 4 MiB request limit.
-The new staged path stored the same three-rule changes in 796 ms at 10,000 compact people. The estimate at 100,000 stays above one second.
-For an erased number, keep the fact that a submission was due and pause submission. [Owner decision](RETENTION.md)
+At 10,000 compact people, the account recorded 1,650 wage notices in 37 ms with four database changes.
+The original three-rule release now stores 3,764 concrete changes in 796 ms on that compact fixture. The connected reader answered at 807 ms.
+At 1,000 real deep people, the recipe was durable in 68 ms. Staging 5,759 concrete changes with the notice-only index took 1.052 seconds.
+The deep notice leaves use about 48 bytes per person. A reader-only save adds no notice or index changes.
+Bounded staging removes the single-request limit for a release. The 100,000-person deep estimate for concrete output still exceeds one second.
+Native crashes, two competing releases, same-person writes, changes for everyone or nobody and idle expiry matched the oracle.
+The six-cell server command passed a small native collector check. Server timings remain open.
+The owner still needs to decide whether a durable recipe counts as stored and whether erased submissions should pause or be cancelled.
 
 ### Read path
 
@@ -32,7 +32,7 @@ Staged receipt audit. `stage/checkStage/collectStage` verify the original scoped
 
 The first native staged gate verified a killed writer, an abandoned and collectable stage, a competing release, all-change and empty releases, and an original receipt after lost ACK. The idle boundary gate recorded the expiry event with zero saves and proved one recipient effect after reopening.
 
-Native stage, race and expiry evidence is complete. The 10,000-person comparison isolates ranges, threads, input reuse, staged writes and encoding. The 10,000-deep price and local server-command smoke are queued. [Measured work and estimates](PART6-PRICE.md) · [Deep server command and predictions](SERVER.md)
+Native stage, race and expiry evidence is complete. The 10,000-person comparison isolates ranges, threads, input reuse, staged writes and encoding. The native 64-person server-command smoke checked six cells, 28 saves and 757 ordered effects. The 10,000-deep price is loading its fixture. [Measured work and estimates](PART6-PRICE.md) · [Deep server command and predictions](SERVER.md)
 
 The final staged gate verified both orders of the same-person save and a new deep reader during an abandoned stage. The deep fixture’s independently encoded notice leaf costs 48.2 bytes per person at 10,000. [Evidence checksums](PART6-SHA256SUMS)
 
