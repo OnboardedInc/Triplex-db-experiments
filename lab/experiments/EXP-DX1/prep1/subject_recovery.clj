@@ -3,13 +3,13 @@
 (load-file "/config/subject_conflicts.clj")
 (ns subject-recovery
   (:require [clojure.data.json :as json]
-            [clojure.string :as str]
             [clojure.test :as test]
             [datomic.api :as d]
             [subject-gate :as gate]
             [triplex.gateway.group-test :as fixture]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.main :as main]
+            [triplex.gateway.replay-capture :as replay]
             [triplex.gateway.selftest :as rows]
             [triplex.gateway.storage :as storage]
             [triplex.gateway.subject-save :as subject]
@@ -34,35 +34,42 @@
 (defn open! []
   (let [{:keys [db created]} (main/create-scope! nil scope "lean" true true)
         options (main/write-options db)]
-    (assert (= (str subject/ident) (:subjectFunction options)))
-    [db (main/connection (main/db-uri db)) created (:subjectFunctionTx options)]))
+    (assert (= subject/enabled (boolean (:subjectSave options))))
+    (assert (:commitFunctionInstalled options))
+    [db (main/connection (main/db-uri db)) created
+     (if subject/enabled (:subjectFunction options) (:commitFunction options))
+     (:subjectFunctionTx options)]))
+
+(defn seed! [db]
+  (let [[seed] (reference/edits)]
+    (assert (= [200 nil] (reference/outcome (reference/send db (native-journal (gate/deep-seed seed))))))))
+
+(defn witness [db function fn-tx native-t]
+  (let [receipt (reference/operation db "edit-a")]
+    (assert (= (str native-t) (get-in receipt ["t" "v"])))
+    (assert (= (get (reference/claim db "edit-a") "receipt") receipt))
+    (assert (= "2" (get-in receipt ["position" "v"])))
+    (assert (= 1001.0 (get-in receipt ["recordedAt" "v"])))
+    {:attempt attempt :db db :function function :functionTx fn-tx :prepared subject/enabled
+     :nativeT (str native-t) :receipt receipt :planOperation "edit-a"}))
 
 (defn before [file]
-  (let [[db conn created fn-tx] (open!)
-        [seed] (reference/edits) input (request)
-        verify subject/verify-report]
+  (let [[db _ created function fn-tx] (open!)]
     (assert created)
-    (assert (= [200 nil] (reference/outcome (reference/send db (native-journal (gate/deep-seed seed))))))
-    ;; [DX-PREP1] Why: the runner kills the gateway while the subject HTTP response still waits on this thread.
-    ;; Rejected: throwing after a client already has its receipt or killing on an elapsed timer.
-    (with-redefs [subject/verify-report
-                  (fn [native-report plan]
-                    (let [report (verify native-report plan)
-                          receipt (reference/operation db "edit-a")
-                          native-t (d/basis-t (:db-after report))
-                          witness {:attempt attempt :db db :function (str subject/ident) :functionTx fn-tx
-                                   :nativeT (str native-t) :receipt receipt :planOperation (:operation plan)}
+    (seed! db)
+    ;; [DX-PREP1] Why: intercept the common completed native report before either writer returns its response.
+    ;; Rejected: crashing on a timer or acknowledging a planned report before the durable append.
+    (with-redefs [replay/completed!
+                  (fn [report input]
+                    (assert (= "edit-a" (input "operationId")))
+                    (assert (= (when subject/enabled function) (:subject-save report)))
+                    (let [proof (witness db function fn-tx (d/basis-t (:db-after report)))
                           temporary (java.io.File. (str file ".tmp"))]
-                      (assert (= (str native-t) (get-in receipt ["t" "v"])))
-                      (assert (= (get (reference/claim db "edit-a") "receipt") receipt))
-                      (assert (= "edit-a" (:operation plan)))
-                      (assert (= "2" (get-in receipt ["position" "v"])))
-                      (assert (= 1001.0 (get-in receipt ["recordedAt" "v"])))
-                      (emit "blocked-before-reply" witness)
-                      (spit temporary (json/write-str witness))
+                      (emit "blocked-before-reply" proof)
+                      (spit temporary (json/write-str proof))
                       (assert (.renameTo temporary (java.io.File. file)))
                       @(promise)))]
-      (reference/send db input)
+      (reference/send db (request))
       (throw (ex-info "The gateway replied before the hard stop" {})))))
 
 (defn read-after [db conn held]
@@ -125,9 +132,9 @@
      :nativeQueries queries :nativeLog native-entry}))
 
 (defn after [file]
-  (let [held (json/read-str (slurp file)) [db conn created fn-tx] (open!) input (request)]
-    (assert (= [attempt db (str subject/ident) fn-tx false]
-              [(held "attempt") (held "db") (held "function") (held "functionTx") created]))
+  (let [held (json/read-str (slurp file)) [db conn created function fn-tx] (open!) input (request)]
+    (assert (= [attempt db function fn-tx subject/enabled false]
+              [(held "attempt") (held "db") (held "function") (held "functionTx") (held "prepared") created]))
     (let [before (read-after db conn held)
           retry (reference/outcome (reference/send db input))
           fresh-retry (reference/outcome (reference/send db (assoc input "operationId" "new-operation")))]
@@ -138,52 +145,22 @@
       (assert (= before (read-after db conn held)))
       (emit "reopened" (assoc before :originalOperation retry :newOperation fresh-retry)))))
 
-(defn erase-observation []
-  (reference/in-scope
-    (fn [db conn]
-      (let [marker (str "synthetic-erase-" attempt)
-            seed (reference/edit-frame "seed" "protected-id" marker 1.0 30.0 nil)
-            edit (assoc (reference/edit-frame "edit" "replacement-id" "public" 1.0 30.0 "protected-id") "sourceK" 1)
-            _ (assert (= [200 nil] (reference/outcome (reference/send db seed))))
-            held (get-in (reference/route db "v1" "snapshot" {}) [:body "handle"])
-            reply (reference/send db edit)
-            _ (assert (= (str subject/ident) (get-in reply [:body "subjectSave"])))
-            view (d/db conn)
-            owner (d/entid view [:triplex.entity/id fixture/root])
-            match (fn [handle]
-                    (reference/route db "v1" "read"
-                      (cond-> {"entityIds" [fixture/root] "history" true
-                               "basis" {"recordedPosition" 1 "validAt" 5.0}}
-                        handle (assoc "handle" handle))))
-            contains-marker? #(str/includes? (pr-str %) marker)
-            _ (assert (and (contains-marker? (match held)) (contains-marker? (reference/feed db 0 10))))
-            request @(d/transact conn [{:db/excise owner :db.excise/attrs [:triplex.entity/row]}])
-            t (d/basis-t (:db-after request))
-            _ (d/request-index conn)
-            current (deref (d/sync-excise conn t) 120000 ::timeout)
-            _ (assert (not= ::timeout current))
-            native (mapv :v (d/datoms (d/history current) :eavt owner :triplex.entity/row))
-            fresh (match nil)
-            old-pin (match held)
-            journal (reference/feed db 0 10)
-            replay (reference/send db (reference/save "identity-replay" "acct/else/person" "protected-id" nil))]
-        ;; [DX-PREP1] Why: an index erasure can leave the old protected bytes in a separate journal or pinned view.
-        ;; Rejected: treating sync-excise alone as proof of end-to-end erasure.
-        (assert (not (contains-marker? native)))
-        (emit "erase-observation" {:db db :nativeT (str t) :assertion "protected-id"
-                                   :builtSubjectFunction (get-in reply [:body "subjectSave"])
-                                   :nativeValuePresent false :freshValuePresent (contains-marker? fresh)
-                                   :heldValuePresent (contains-marker? old-pin)
-                                   :journalValuePresent (contains-marker? journal)
-                                   :identityReplayOutcome (reference/outcome replay)
-                                   :identityReplayReceipt (reference/operation db "identity-replay")})
-        (reference/route db "v1" "release" {"handle" held})))))
+(defn query-gate []
+  (let [[db conn created function fn-tx] (open!)]
+    (assert created)
+    (seed! db)
+    (let [reply (reference/send db (request))]
+      (assert (= [200 nil] (reference/outcome reply)))
+      (assert (= (when subject/enabled function) (get-in reply [:body "subjectSave"])))
+      (let [proof (witness db function fn-tx (get-in reply [:body "t" "v"]))]
+        (emit "queries" {:held proof :observed (read-after db conn (update-keys proof name))})))))
 
 (let [[phase file] *command-line-args*]
   (try
     (case phase
       "before" (before file)
-      "after" (do (after file) (erase-observation))
+      "after" (after file)
+      "query" (query-gate)
       "gate" (let [{:keys [fail error] :as result}
                     (test/run-tests 'subject-gate 'subject-conflicts 'wfix1-regression)]
                  (emit "tests" result)

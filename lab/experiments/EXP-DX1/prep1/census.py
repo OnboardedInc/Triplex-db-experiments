@@ -42,6 +42,7 @@ def census(out):
         reasons = Counter()
         routes = Counter()
         observed = set()
+        decisions = {}
         for event in events("PREP1_DECISION "):
             members = event["members"]
             ids = {member["operation"] for member in members}
@@ -53,6 +54,9 @@ def census(out):
             route = event["route"]
             assert route in {"reference", "prepared", "native-refusal", "uncertain-result"}
             routes[route] += len(members)
+            decisions.update({m["operation"]: {"route": route, "reasons": m["reasons"],
+                                               "t": rows[m["operation"]]["t"]["v"]}
+                              for m in members})
             if route == "prepared":
                 assert all(rows[op]["preparedStats"]["guard"] == "basis" for op in ids)
             else:
@@ -60,7 +64,7 @@ def census(out):
                 for member in members:
                     reasons.update(set(member["reasons"]))
         assert observed == offered and routes["prepared"] == result["certifiedSaves"]
-        result.update(routes=routes, reasons=reasons)
+        result.update(routes=routes, reasons=reasons, decisions=decisions)
     return result
 
 

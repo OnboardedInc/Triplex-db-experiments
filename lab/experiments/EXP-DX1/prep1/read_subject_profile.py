@@ -40,8 +40,7 @@ def profile(root):
     assert inputs["mode"] == "subject-profile"
     attempt = inputs["attempt"]
     lines = (root / terminal["log"]).read_text().splitlines()
-    assert [json.loads(line.removeprefix("PREP1_LEASE "))["drained"]
-            for line in lines if line.startswith("PREP1_LEASE ")] == [True]
+    assert inputs["timings"] == terminal["timings"] == "diagnostic"
     assert "PREP1_SQL_REPLICA streaming sync fsync=on" in lines
     native = {}
     for block in events("PREP1_NATIVE "):

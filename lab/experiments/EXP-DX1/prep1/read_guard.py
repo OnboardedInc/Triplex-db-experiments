@@ -44,7 +44,11 @@ def read(out, completed_only=False):
     assert mode in ("profile", "cheap", "census")
     assert mode == (out / "stage/lab/config/datomic/mode").read_text().strip()
     raw = (out / terminal["log"]).read_text().splitlines()
-    lease, = [json.loads(l[12:]) for l in raw if l.startswith("PREP1_LEASE ")]
+    if inputs.get("timings") == "diagnostic":
+        assert not any(l.startswith("PREP1_LEASE ") for l in raw)
+        lease = {"drained": False, "timings": "diagnostic"}
+    else:
+        lease, = [json.loads(l[12:]) for l in raw if l.startswith("PREP1_LEASE ")]
     pressure = sorted(events("PREP1_CPU "), key=lambda r: r["at"])
     sample_clock = [p["at"] for p in pressure]
     assert len(pressure) == len(set(sample_clock))

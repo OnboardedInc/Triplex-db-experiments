@@ -229,9 +229,17 @@ case "$PREP1_MODE" in
       stop_gateway
     done
     ;;
+  subject-query)
+    export WFIX1_URI="$DATOMIC_URI_TEMPLATE" TX2_LEAN_NATIVE_QUERY=1 TX2_LEAN_NATIVE_LOG=1
+    export TX2_SUBJECT_SAVE="$(cat /config/subject)"
+    java_role /config/subject_recovery.clj query &
+    children[2]=$!
+    wait "${children[2]}"
+    ;;
   recovery|subject-recovery)
     if [[ "$PREP1_MODE" == "subject-recovery" ]]; then
-      export WFIX1_URI="$DATOMIC_URI_TEMPLATE" TX2_SUBJECT_SAVE=1 TX2_LEAN_NATIVE_QUERY=1 TX2_LEAN_NATIVE_LOG=1
+      export WFIX1_URI="$DATOMIC_URI_TEMPLATE" TX2_LEAN_NATIVE_QUERY=1 TX2_LEAN_NATIVE_LOG=1
+      export TX2_SUBJECT_SAVE="$(cat /config/subject)"
       recovery=/config/subject_recovery.clj
       java_role "$recovery" gate &
       children[2]=$!
