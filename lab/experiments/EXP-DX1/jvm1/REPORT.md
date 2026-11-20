@@ -2,7 +2,7 @@
 Datomic already supports ZGC on Java 25. Our old image runs Java 21.
 This branch lets all three processes run on either Java version.
 Start with Java 21 and a two-core writer, Java 25 with G1, then Java 25 with ZGC.
-Use `f4accda96582afbdf092088c84be0dc4b5b31c0a` for the server. Budget 78 minutes for those three arms.
+Use `5cc78df3e5b89ce020cc017aee59620f3d34d581` for the server. Budget 78 minutes for those three arms.
 A fourth arm brings the total to 104 minutes and gives G1 the same memory as ZGC.
 ZGC gets 13 GiB more reserved memory in this trial. The server still has to price the gain and check for stalls.
 On the shared Mac, the writer's worst one percent of pauses started at 0.062 ms with ZGC versus 31 ms with two-core G1. The server still needs to measure the effect on saves.
@@ -15,7 +15,7 @@ On the shared Mac, the writer's worst one percent of pauses started at 0.062 ms 
 - The private Linux Java 25 image built under an ordinary token and its gateway suite ran 27 tests with 54,079 successful assertions. The only warning in this run was Clojure's existing `identity` name shadowing. The next SQL startup attempt refused admission during another holder's lease, before starting containers. [Evidence hashes](SHA256SUMS)
 - Mac checks use one ordinary heavy token each. The old replay entry point now directs collector comparisons to the server and startup diagnostics to the small Mac inventory. The optional three-role ZGC boot checks each observed collector under the same small exclusive reservation. No bench server was contacted.
 - The first Java 25 native run confirmed Clojure and SLF4J versions. Three tests needed container-only fixture paths. The host gate now maps just those three paths to unchanged files from its exact Git archive. The first attempt is retained.
-- A subsequent ordinary-token boot verified Temurin 25.0.5+8 in all three SQL-stack roles and cleaned up. The transactor also needed the native-access flag after Netty logged a restricted-library warning. [Boot hashes](SHA256SUMS)
+- Ordinary-token boots verified both Java versions and all three SQL-stack roles and cleaned up. The Java 25 transactor needed the native-access flag after Netty logged a restricted-library warning. Shared-Mac boot and idle memory numbers are recorded as diagnostics. [Boot table](JAVA25.md#diagnostic-startup-and-idle-memory-on-the-shared-mac) · [Hashes](SHA256SUMS)
 - The GC parser was exercised with archived G1 and generational ZGC logs on the shared Mac. The check verified all three G1 roles, the ZGC writer's phase labels and rejection of a log from a different boot. Evidence and hashes are under `evidence/DX-JVM1/part2`.
 - The Java 21 fixed-activity census adds a shared-Mac reference of about 12,651 resident bytes per added untouched person between 10,000 and 30,000 people, mostly in the transactor. The matching ZGC slope is still open. [Census](../int1/P5-EVIDENCE.md)
 - A restore fixture consumed the exact expected bytes and rejected a changed stream. It exercised the stream verifier with a stand-in for PostgreSQL.

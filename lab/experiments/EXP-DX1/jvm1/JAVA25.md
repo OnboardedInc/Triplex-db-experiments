@@ -18,3 +18,15 @@ DX_JAVA=25 DX_DATOMIC_IMAGE_RECEIPT="$IMAGE_RECEIPT" node lab/bin/heavy.mjs --la
 ```
 
 Build a second private receipt with `DX_JAVA=21` to compare the same source and distribution. The inventory measures each role from its container start to all roles ready, then reads its live RSS and cgroup usage after five idle seconds. These are shared-Mac diagnostics. After building the SDK, add `--sdk-gate` to the inventory command to run native gateway selftests and the SDK's opt-in SQL tests on that same owned stack. Add `--zgc` to exercise all three Java 25 SQL processes with ZGC under the small Mac reservation. The standalone SDK and integration unit tests run in Node.
+
+### Diagnostic startup and idle memory on the shared Mac
+
+The two ordinary-token boots used a G1 transactor, Serial writer and G1 reader on one CPU each. Each time measures from that container's start until all roles were ready. The roles start in order and the host load differed between the two attempts. The memory samples are single idle observations. [Boot and flag hashes](SHA256SUMS)
+
+| Role | Java 21 seconds / process RSS MiB / cgroup MiB | Java 25 seconds / process RSS MiB / cgroup MiB |
+| --- | --- | --- |
+| Transactor | 56.1 / 258.3 / 241.8 | 87.8 / 276.2 / 256.7 |
+| Write gateway | 38.4 / 286.3 / 268.8 | 68.3 / 289.3 / 270.2 |
+| Read gateway | 17.5 / 376.8 / 359.4 | 35.7 / 309.5 / 290.2 |
+
+Both peers logged the same Clojure `identity` warning under both versions. The Java 21 transactor emitted no JVM warning. The first Java 25 boot exposed the Netty warning and prompted the explicit transactor flag. Both attempts released their owned containers, volumes and reservations.
