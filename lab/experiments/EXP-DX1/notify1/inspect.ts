@@ -29,6 +29,7 @@ export function inspectPair(dir: string) {
     const pre = JSON.parse(fs.readFileSync(path.join(parent, "preflight-receipt.json"), "utf8"));
     assert.deepEqual(pre.binding, { source, slot, nonce: b.nonce });
     assert.deepEqual(pre.inputPins, result.inputs);
+    if (!fs.existsSync(local)) assert.deepEqual(pre.recipient, b.recipient);
     if (pre.recipient || result.dispatch.recipientPages) {
       assert(
         pre.recipient &&
@@ -37,13 +38,27 @@ export function inspectPair(dir: string) {
       );
       assert.equal(result.baseline.recipientPages, result.dispatch.recipientPages);
       assert.equal(result.baseline.readIntervalMs, result.dispatch.readIntervalMs);
-      if (pre.recipient.route === "isolated") {
+      if (pre.recipient.route === "isolated" || pre.recipient.route === "copied") {
         assert(
           result.dispatch.senderReadPeer === "dedicated" &&
             result.baseline.senderReadPeer === "dedicated",
         );
         for (const arm of [result.dispatch, result.baseline]) {
-          assert(arm.readCount >= 500 && arm.sourceAdvances === arm.foregroundCommits);
+          assert(arm.sourceAdvances === arm.foregroundCommits);
+          if (pre.recipient.route !== "copied" || path.basename(dir) === "deep")
+            assert(arm.readCount >= 500);
+        }
+        if (pre.recipient.route === "copied") {
+          assert(
+            result.dispatch.dispatch.copy?.captures > 0 &&
+              result.dispatch.dispatch.copy.evaluated > 0,
+          );
+          assert(
+            Number.isInteger(pre.recipient.copyWorkers) &&
+              pre.recipient.copyWorkers >= 1 &&
+              pre.recipient.copyWorkers <= 8 &&
+              result.copyWorkers === pre.recipient.copyWorkers,
+          );
         }
       }
     }
@@ -75,6 +90,7 @@ export function inspectPair(dir: string) {
     assert.equal(digest(actual), expected, file);
   }
   const offers = [];
+  const live = [];
   for (const arm of ["dispatch", "baseline"]) {
     const r = result[arm],
       raw = get(arm + "-raw.json");
@@ -88,6 +104,14 @@ export function inspectPair(dir: string) {
     );
     assert.equal(r.readP99, p99(raw.reads.map((v: any) => v.latency)));
     assert.equal(r.saveP99, p99(raw.saves.map((v: any) => v.ackMs)));
+    live.push({
+      reads: raw.reads.filter(
+        (v: { beganMs: number; latency: number }) => v.beganMs + v.latency <= r.duration,
+      ).length,
+      saves: raw.saves.filter(
+        (v: { atMs: number; ackMs: number }) => v.atMs + v.ackMs <= r.duration,
+      ).length,
+    });
     const scheduled = raw.saves.map((v: any) => [v.seq, v.atMs]);
     assert.equal(r.offerDigest, digest(JSON.stringify(scheduled)));
     offers.push(scheduled);
@@ -139,7 +163,9 @@ export function inspectPair(dir: string) {
   assert.equal(result.ratios.read, read);
   assert.equal(result.ratios.commit, write);
   assert.equal(a.deliveriesPerSecond, rate);
-  // [DX-STG1] Why: the operating-point comparison needs both measured tails from the same offered saves, including queue time. Rejected: quoting a drain rate in a window whose live writes missed the limit.
+  // [DX-STG1] Why: the operating point needs matched offers, both tails and
+  // enough completions before the sender stops. Rejected: pricing p99 from
+  // a handful of saves or counting catch-up as live traffic.
   return {
     name: path.basename(dir),
     source,
@@ -154,7 +180,9 @@ export function inspectPair(dir: string) {
     baselineElapsedMs: b.duration,
     readRatio: read,
     commitRatio: write,
-    withinBoth: read <= 1.5 && write <= 1.5,
+    withinBoth:
+      live.every((arm) => arm.reads >= 500 && arm.saves >= 500) && read <= 1.5 && write <= 1.5,
+    live,
     reads: a.readCount,
     saves: a.saveCount,
     readP99: [a.readP99, b.readP99],

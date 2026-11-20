@@ -11,6 +11,22 @@ import { ids } from "../../../bench/lib/world.ts";
 import { generateTrace, traceDigest } from "../../../bench/lib/trace.ts";
 import { frozenDeep } from "../../../bench/lib/deep-profile.ts";
 
+test("the write6 campaigns price the same writer with K and informational P", () => {
+  for (const study of ["pulse", "rates"] as const)
+    assert.deepEqual(modes(study, true, false, true), ["journal-k", "journal-p"]);
+  const k = fieldPolicy("journal-k", true);
+  assert(k.grouping && k.priority && k.prepared && k.predecessor && k.fastReplyAndWire && k.ledger);
+  assert.equal(k.journalVariant, "K");
+  assert.equal(k.packedJournal, false);
+  assert.equal(k.journalAcceptanceEligible, true);
+  assert.deepEqual(fieldPolicy("journal-p", true), {
+    ...k,
+    packedJournal: true,
+    journalVariant: "P",
+    journalAcceptanceEligible: false,
+  });
+});
+
 // [DX-W1] Why: check both real generators and native-counter join failures before a bench builds either population.
 // Rejected: treating a printed launch command or a plausible counter at a neighboring transaction as evidence.
 test("old and new use the same 100k schedules and their own zero controls", () => {

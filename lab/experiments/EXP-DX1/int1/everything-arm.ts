@@ -6,14 +6,14 @@ import path from "node:path";
 import { setTimeout as wait } from "node:timers/promises";
 import { deepSeed } from "../../../bench/lib/deep-trace.ts";
 import {
-  frozenDeep,
   releaseDeepStart,
   requireIdentity,
   type DeepIdentity,
 } from "../../../bench/lib/deep-profile.ts";
-import { fieldPlan } from "./field-plan.ts";
-import { type CampaignCase } from "./everything-plan.ts";
+import { campaignTenant, type CampaignCase } from "./everything-plan.ts";
 import { fileHash } from "../scale1/measurements.ts";
+import { tenantPlan } from "../scale1/tenant-traffic.ts";
+import { tenantRung } from "../scale1/tenants.ts";
 
 export type Arm = {
   source: string;
@@ -28,11 +28,11 @@ export function createArm(source: string, slot: string, c: CampaignCase, smoke: 
   const identity = {
     source,
     slot,
-    people: c.people,
+    people: c.total,
     arm: c.load,
     account: 0,
     nonce: randomUUID(),
-    ...(c.profile === "field" ? { field: true as const } : {}),
+    tenant: campaignTenant(c, smoke),
   };
   requireIdentity(identity);
   return { source, slot, case: c, identity, startedAt: Date.now(), smoke };
@@ -89,6 +89,13 @@ export async function executeArm(
   baseline?: string,
   cpus?: string,
   guest?: "owned-ext4",
+  seed?: {
+    restore?: string;
+    capture?: (ready: {
+      scope: string;
+      seed: { facts: number; people: number; position: number; sha256: string };
+    }) => Promise<void>;
+  },
 ) {
   const { source, slot, identity: id, smoke } = arm;
   assert((arm.case.load === "reader") === Boolean(baseline));
@@ -116,7 +123,7 @@ export async function executeArm(
     "--profile",
     smoke ? "deep-smoke" : "deep",
     "--rung",
-    smoke ? "deep-smoke-40" : arm.case.people === 10000 ? "deep-10k" : "deep-100k",
+    tenantRung(id.tenant!),
     "--output",
     path.join(staging, "ns-report.json"),
     ...(guest ? ["--int1-guest-output"] : []),
@@ -124,6 +131,12 @@ export async function executeArm(
     oracleRoot,
     "--deep-account",
     "0",
+    "--tenant-study",
+    id.tenant!.study,
+    "--tenant-topology",
+    "pooled",
+    "--int1-pooled",
+    arm.case.profile,
     "--deep-nonce",
     id.nonce,
     "--deep-barrier",
@@ -153,7 +166,7 @@ export async function executeArm(
     ...(smoke
       ? ["--history-sample", "12", "--oracle-rate", "0.25", "--oracle-max-reads", "48"]
       : []),
-    ...(id.field ? ["--int1-field"] : []),
+    ...(seed?.restore ? ["--verified-seed-image", seed.restore] : []),
     ...(baseline ? ["--baseline-writes", baseline] : ["--zero-readers"]),
   ];
   const [command, ...args] = cpus ? ["taskset", "-c", cpus, ...argv] : argv;
@@ -191,9 +204,10 @@ export async function executeArm(
     }
     const { identity, ...ready } = read(readyFile);
     assert.deepEqual(identity, id);
-    const expected = id.field ? fieldPlan(0, id.people, smoke) : frozenDeep(0, id.people);
+    const expected = tenantPlan(id.tenant!, id.arm);
     assert.equal(ready.seed.sha256, expected.populationSha256);
     assert.equal(ready.trace, expected.sha256);
+    await seed?.capture?.(ready);
     const start = Date.now() + 10_000;
     assert(start < deadline);
     atomicJson(path.join(barrier, "go.json"), {

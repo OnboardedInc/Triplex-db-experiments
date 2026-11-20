@@ -43,6 +43,7 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
           "power",
           "erasure.test",
           "recovery.test",
+          "activation-recovery.test",
           ...(mode === "schedules"
             ? []
             : mode === "price"
@@ -54,13 +55,29 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
                   "bench-rung",
                   "loaded",
                   "page-control",
-                  ...(["solo", "deep-loaded", "solo-check", "preflight"].includes(mode)
+                  ...([
+                    "solo",
+                    "deep-loaded",
+                    "solo-check",
+                    "preflight",
+                    "audit-check",
+                    "audit-loaded",
+                  ].includes(mode)
                     ? [
                         "solo",
                         "solo-proof",
                         "solo-reference",
                         "reference-traffic",
                         "solo-population",
+                        "solo-policy",
+                        "audit-solo",
+                        "audit-clock",
+                        "audit-cold",
+                        "audit-offers",
+                        "audit-reader",
+                        "audit-replay",
+                        "deep-inputs",
+                        "bm1-collector",
                       ]
                     : []),
                   "v3",
@@ -69,6 +86,16 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
         ].includes(path.basename(p).replace(/\.[^.]+$/, "")) ||
           path.basename(p) === mode + ".ts"),
     ),
+    ...(mode.startsWith("joined-")
+      ? [
+          ...files(path.join(here, "../actv-lazy")).filter((p) => /\.(ts|py)$/.test(p)),
+          ...files(path.join(here, "../notify1")).filter((p) => /\.(ts|py)$/.test(p)),
+          path.join(here, "audit-clock.ts"),
+          path.join(here, "audit-offers.ts"),
+          "lab/experiments/EXP-DX1/import1/source.ts",
+          "lab/experiments/EXP-DX1/scale1/deep-live.ts",
+        ]
+      : []),
     ...files("lab/bench/lib").filter((p) => p.endsWith(".ts")),
     ...files("lab/experiments/EXP-DX1/act1").filter((p) => p.endsWith(".ts")),
     ...["w0", "core", "qualification", "datomic"].flatMap((pkg) =>
@@ -86,9 +113,18 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
     "lab/bench/lib/composition.ts",
     "lab/bench/lib/deep-activation.ts",
     "lab/world/W0/releases/index.json",
-    ...(["preflight", "server", "solo", "solo-check", "deep-loaded"].includes(mode)
+    ...([
+      "preflight",
+      "server",
+      "solo",
+      "solo-check",
+      "deep-loaded",
+      "audit-check",
+      "audit-loaded",
+    ].includes(mode)
       ? [
           "actv-delta/solo-population.json",
+          "bm1/activation_clock.py",
           "scale1/bench.ts",
           "scale1/tenants.ts",
           "scale1/tenant-traffic.ts",

@@ -231,7 +231,7 @@ case "$PREP1_MODE" in
     ;;
   recovery|subject-recovery)
     if [[ "$PREP1_MODE" == "subject-recovery" ]]; then
-      export WFIX1_URI="$DATOMIC_URI_TEMPLATE" TX2_SUBJECT_SAVE=1
+      export WFIX1_URI="$DATOMIC_URI_TEMPLATE" TX2_SUBJECT_SAVE=1 TX2_LEAN_NATIVE_QUERY=1 TX2_LEAN_NATIVE_LOG=1
       recovery=/config/subject_recovery.clj
       java_role "$recovery" gate &
       children[2]=$!

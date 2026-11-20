@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { activePerson } from "./cohort.ts";
+import { ErasureChanged, readErasure } from "../../../bench/lib/datomic-erasure.ts";
 import { DatabaseSync } from "node:sqlite";
 import { Option } from "effect";
 import { canonicalWorld } from "../../../bench/lib/canonical.ts";
@@ -386,7 +387,17 @@ export class Account {
     assert.equal(n, this.count);
     return h.update("]").digest("hex");
   }
-  async world(i: number, p: number, original = false) {
+  async world(
+    i: number,
+    p: number,
+    original = false,
+    checkedCut?: Awaited<ReturnType<typeof readErasure>> | null,
+  ) {
+    // [DX-ERASE1] Why: the import projection discarded assertion IDs when it built W0 worlds.
+    // Rejected: serving or relabelling that projection under a newer erasure sequence.
+    const sequence = (checkedCut === undefined ? await readErasure(this.comp) : checkedCut)?.seq;
+    if (sequence !== undefined && sequence > 0)
+      throw new ErasureChanged("Import projection must be rebuilt from guarded source rows");
     const r = this.db.prepare("SELECT * FROM people WHERE i=? AND born<=?").get(i, p);
     assert(r);
     const b = Number(r.born),

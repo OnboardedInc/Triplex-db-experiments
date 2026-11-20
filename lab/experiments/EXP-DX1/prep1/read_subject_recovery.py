@@ -30,6 +30,16 @@ def inspect(root):
     assert before["receipt"]["position"]["v"] == "2"
     assert before["receipt"]["recordedAt"]["v"] == 1001.0
     assert after["feed"][:2] == ["_tx/edit-a", 2]
+    if "nativeQueries" in after:
+        assert [r["status"] for r in after["nativeQueries"]] == [200, 200, 200]
+        assert [[v[0]["v"] for v in r["body"]["rows"]] for r in after["nativeQueries"]] == [
+            ["old"], ["middle"], [],
+        ]
+        assert after["nativeLog"]["t"] == before["nativeT"]
+        assert {(r["op"], r["assertionId"], r["attribute"])
+                for r in after["nativeLog"]["transaction"]["changes"]} == {
+                    ("retract", "old", ":v"), ("assert", "middle", ":v"),
+                }
     assert after["originalOperation"] == [409, "OperationDuplicate"]
     assert after["newOperation"] == [409, "CommandConflict"]
     assert events("PREP1_STOP ") == [{"attempt": attempt, "gatewayExit": 137}]

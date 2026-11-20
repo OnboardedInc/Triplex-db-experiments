@@ -22,6 +22,7 @@ export async function pageReference(
   save: () => Promise<ReferenceSave>,
   loaded = false,
   seed?: { position: number; worlds: W0.World[] },
+  readWorlds = readDeepWorlds,
 ) {
   const reports = [];
   let seq = 0;
@@ -53,7 +54,9 @@ export async function pageReference(
       version = seq++;
     await event(oracle, { seq: version, basis, doc: rel.doc });
     // [DX-ACT2] Why: freeze the reference at its actual offer, read every native deep world and commit its existing page guards, while a real later source save enters the same account. Rejected: timing records precomputed from the next release.
-    const active = n ? referenceTraffic(rc, t, rel, position, oracle, save, loaded) : undefined;
+    const active = n
+      ? referenceTraffic(rc, t, rel, position, oracle, save, loaded, readWorlds)
+      : undefined;
     let traffic: Awaited<ReturnType<NonNullable<typeof active>["finish"]>> | undefined;
     let end: number, elapsed: number, receipts: number;
     const hashes: string[] = [];
@@ -70,7 +73,7 @@ export async function pageReference(
       } else {
         for (const group of deepGroups(t.first, t.people)) {
           active?.check();
-          const worlds = await readDeepWorlds(rc, group, { position, validAt: V_W0 }, t.key);
+          const worlds = await readWorlds(rc, group, { position, validAt: V_W0 }, t.key);
           for (const w of worlds) records.push(W0.recordOf(evaluate(w, rel, basis)));
         }
       }

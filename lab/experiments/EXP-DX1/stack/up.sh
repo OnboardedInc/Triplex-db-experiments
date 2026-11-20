@@ -487,7 +487,8 @@ for role in "${gateway_roles[@]}"; do
       field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=${DX_W1_PREDECESSOR:-0}")
     fi
     for pair in "TX2_SAVE_LEDGER=${DX_W1_LEDGER:-0}" \
-                "TX2_PACKED_JOURNAL=${DX_W1_PACKED_JOURNAL:-0}" "TX2_GROUP_FAST_REPLY=${DX_W1_FAST_REPLY:-0}"; do
+                "TX2_PACKED_JOURNAL=${DX_W1_PACKED_JOURNAL:-0}" "TX2_GROUP_FAST_REPLY=${DX_W1_FAST_REPLY:-0}" \
+                "TX2_LEAN_NATIVE_QUERY=${DX_W1_JOURNAL_QUERY:-0}" "TX2_LEAN_NATIVE_LOG=${DX_W1_JOURNAL_QUERY:-0}"; do
       [[ ${pair#*=} =~ ^[01]$ ]] || exit 2
       field_policy+=(-e "$pair")
     done

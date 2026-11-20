@@ -52,7 +52,13 @@ function thin(i: number): InputFact[] {
     ];
   });
 }
-export async function seed(store: Store, n: number, population: "default" | "thin" = "default") {
+export async function seed(
+  store: Store,
+  n: number,
+  population: "default" | "thin" = "default",
+  batchRows = 1500,
+) {
+  assert(Number.isSafeInteger(batchRows) && batchRows >= 1500 && batchRows <= 2000);
   assert.equal(await store.head(), 0);
   assert(population !== "thin" || store.profile === "w0");
   const compact = population === "thin" ? thin : own;
@@ -91,7 +97,7 @@ export async function seed(store: Store, n: number, population: "default" | "thi
             validFrom: SEED_VALID_FROM,
           }));
     if (store.profile === "act2-deep") assert.equal(rows.length, deepShape(i).facts);
-    if (batch.length + rows.length > 1500) await flush();
+    if (batch.length + rows.length > batchRows) await flush();
     people.push(i);
     batch.push(...rows);
     facts += rows.length;

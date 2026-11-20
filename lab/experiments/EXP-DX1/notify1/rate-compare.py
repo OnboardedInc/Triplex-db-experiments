@@ -35,6 +35,7 @@ def price(a, obs, control_dir):
     # The paired baseline has no sender. Moving only the sender can reuse it.
     assert (a.get("route","source") == "source") == (b.get("route","source") == "source")
     assert a.get("releases",1) == b.get("releases",1)
+    assert a.get("savePeriodMs",625) == b.get("savePeriodMs",625)
     assert a["shape"] == b["shape"] and a["n"] == b["n"] and a["readers"] == b["readers"]
     assert a["scope"] != b["scope"] and a["receiver"] != b["receiver"] and a["sourceClock"] == b["sourceClock"]
     assert a["pins"] == b["pins"] and a["binding"]["slot"] == b["binding"]["slot"]
@@ -48,8 +49,11 @@ def price(a, obs, control_dir):
     pr = analysis.p99([s["latency"] for s in reads])
     pw = analysis.p99([s["ackMs"] for s in saves])
     baseTail = read_tail(b,reads,analysis.data(control_dir,"foreground",b)) if b["profiled"] else None
-    enoughReads = min(len(reads), len(obs["reads"])) >= 500
-    return dict(baseReadTail=baseTail,control=control_dir.name, readP99=pr,saveP99=pw,readRatio=a["readP99"]/pr,saveRatio=a["saveP99"]/pw,enoughReads=enoughReads,withinBoth=a["readP99"]<=1.5*pr and a["saveP99"]<=1.5*pw,reads=len(reads),saves=len(saves))
+    live_reads = lambda rows: sum(r["beganMs"] + r["latency"] <= a["duration"] for r in rows)
+    live_saves = lambda rows: sum(r["atMs"] + r["ackMs"] <= a["duration"] for r in rows)
+    enoughReads = min(live_reads(reads), live_reads(obs["reads"])) >= 500
+    enoughSaves = min(live_saves(saves), live_saves(obs["saves"])) >= 500
+    return dict(baseReadTail=baseTail,control=control_dir.name, readP99=pr,saveP99=pw,readRatio=a["readP99"]/pr,saveRatio=a["saveP99"]/pw,enoughReads=enoughReads,enoughSaves=enoughSaves,liveReads=[live_reads(obs["reads"]),live_reads(reads)],liveSaves=[live_saves(obs["saves"]),live_saves(saves)],withinBoth=enoughReads and enoughSaves and a["readP99"]<=1.5*pr and a["saveP99"]<=1.5*pw,reads=len(reads),saves=len(saves))
 
 
 def pauses(directory, arm, raw):

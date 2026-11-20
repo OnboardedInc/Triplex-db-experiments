@@ -13,6 +13,7 @@ export function inlineSource(
 ): ReplicaSource {
   return {
     head,
+    erasure: () => client.erasureFrontier(db),
     async capability(basis) {
       const result = await client.request<{ supported?: boolean; declined?: string }>(
         "POST",
@@ -71,7 +72,7 @@ export function inlineSource(
               row.value.type === "json" ? (row.value.value as Record<string, unknown>) : null;
             if (
               !c ||
-              !["assert", "retract"].includes(String(c["op"])) ||
+              !["assert", "retract", "erase"].includes(String(c["op"])) ||
               typeof c["entityId"] !== "string" ||
               !entities.includes(c["entityId"])
             )

@@ -19,6 +19,7 @@ export function referenceTraffic(
   oracle: DomainOracle,
   save: () => Promise<ReferenceSave>,
   loaded: boolean,
+  readWorlds = readDeepWorlds,
 ) {
   const saved: ReferenceSave[] = [],
     q = new OrderedSaves(),
@@ -71,7 +72,7 @@ export function referenceTraffic(
               p = await c.currentPosition(),
               basis = { tx: p, validTime: iso(V_W0) };
             assert(p >= marker);
-            const worlds = await readDeepWorlds(c, ids, { position: p, validAt: V_W0 }, t.key);
+            const worlds = await readWorlds(c, ids, { position: p, validAt: V_W0 }, t.key);
             const actual = worlds.map((w) => [
               w.subject,
               hash(JSON.parse(W0.outputJson(evaluate(w, rel, basis)))),

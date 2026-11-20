@@ -74,6 +74,19 @@ export const TripleValue = Schema.Union([
 ]);
 export type TripleValue = typeof TripleValue.Type;
 
+// [DX-ERASE1] Why: erasure preserves assertion identity without admitting markers as writes.
+// Rejected: accepting a reserved JSON object as an ordinary writable value (it conflates data and absence).
+export const ErasedValue = Schema.Struct({
+  type: Schema.Literal("erased"),
+  valueType: ValueType,
+  erasedAt: Schema.Number,
+  erasureTxId: Schema.String,
+  value: Schema.optional(Schema.Never),
+});
+export type ErasedValue = typeof ErasedValue.Type;
+export const ReadValue = Schema.Union([TripleValue, ErasedValue]);
+export type ReadValue = typeof ReadValue.Type;
+
 export const string = (value: string): StringValue => ({ type: "string", value });
 export const number = (value: number): NumberValue => ({ type: "number", value });
 /** Numbers are excluded: their original integer may already be rounded. */

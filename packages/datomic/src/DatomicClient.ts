@@ -1,3 +1,9 @@
+import {
+  erasureWriteTicket,
+  type ErasureFrontier,
+  type ErasureReceipt,
+  type ErasureSelector,
+} from "./erasure.js";
 import { ByteCache } from "./ByteCache.js";
 import { PredecessorCache, RowCache, estimateRowBytes } from "./RowCache.js";
 import { createHash, randomUUID } from "node:crypto";
@@ -107,6 +113,7 @@ export interface DatomicRequestSample {
   readonly gatewayMicros: number;
   readonly transactMicros: number;
   readonly waited: boolean;
+  readonly erasureSeq?: number;
   readonly datoms?: number;
   readonly position?: number;
 }
@@ -186,6 +193,7 @@ export class DatomicClient {
     faults: 0,
     declines: {} as Record<string, number>,
   };
+  private readonly historicalSessions = new Map<string, string>();
   // [DX-H7] Why: parsed reference IDs repeatedly rebuilt and hashed long database-prefixed keys.
   // Rejected: changing cache identity to an entity ID alone (cross-database collisions).
   private reachKeyDb: string | undefined;
@@ -253,6 +261,7 @@ export class DatomicClient {
       readonly predecessorCacheBytes?: number;
       readonly predecessorAttributes?: readonly string[];
       readonly reachKeyBytes?: number;
+      readonly historicalRevisionReuse?: boolean;
     } = {},
   ) {
     this.reachKeyBudget = cacheOptions.reachKeyBytes ?? 4 * 1024 ** 2;
@@ -296,6 +305,7 @@ export class DatomicClient {
     this.reachKeys.clear();
     this.reachKeyBytes = 0;
     this.reachKeyDb = undefined;
+    this.historicalSessions.clear();
     this.reachCache.clear();
     this.rowCache.clear();
     this.predecessorCache.clear();
@@ -455,6 +465,7 @@ export class DatomicClient {
                   status: res.statusCode ?? 0,
                 };
               const status = res.statusCode ?? 0;
+              const erasureHead = res.headers["x-triplex-erasure-seq"];
               const sample: DatomicRequestSample | undefined =
                 observation || this.onRequest
                   ? {
@@ -474,6 +485,9 @@ export class DatomicClient {
                       gatewayMicros: Number(res.headers["x-tx2-gateway-micros"] ?? NaN),
                       transactMicros: Number(data["transactMicros"] ?? NaN),
                       waited: res.headers["x-tx2-waited"] === "true",
+                      ...(typeof erasureHead === "string"
+                        ? { erasureSeq: Number(erasureHead) }
+                        : {}),
                       ...(typeof data["datoms"] === "number" ? { datoms: data["datoms"] } : {}),
                       ...(data["position"] && typeof data["position"] === "object"
                         ? { position: Number((data["position"] as TaggedValue).v) }
@@ -547,6 +561,67 @@ export class DatomicClient {
     const world = reachResponse(root, found.entities, basis, found.closures[0]![1]);
     return { ...world, entities: found.closures[0]![1].length, requests: found.requests };
   }
+
+  // [DX-RD1] Why: one native union walk for several roots at the identical two-clock cut.
+  // Rejected: batching across unequal valid times or answering a missing root from another cut.
+  async readHistoricalWorlds(
+    scope: string,
+    roots: readonly string[],
+    basis: ResolvedTemporalBasis,
+  ) {
+    if (
+      !roots.length ||
+      roots.length > 16 ||
+      new Set(roots).size !== roots.length ||
+      (basis.recordedAt === undefined && basis.recordedPosition === undefined)
+    )
+      throw new TypeError("Invalid historical read batch");
+    const found = await this.reachEntities(databaseName(scope), roots, basis, true);
+    if (!found) return undefined;
+    for (const entity of found.entities.values()) {
+      if (
+        entity.storedRows.some(
+          (row) =>
+            !Number.isSafeInteger(row.recorded_position) ||
+            row.recorded_position < 1 ||
+            row.recorded_position > found.position,
+        )
+      )
+        throw new TypeError("Historical row outside the selected position");
+    }
+    const worlds = found.closures.map(([root, closure]) => {
+      const result = reachResponse(root, found.entities, basis, closure);
+      let from = -Infinity,
+        to = Infinity;
+      // All reachable entities carry rows outside the requested valid time too. The first
+      // boundary changes either an output row or an edge, so a hit can never cross it.
+      for (const id of closure) {
+        for (const row of found.entities.get(id)!.storedRows) {
+          for (const at of [row.valid_from, row.valid_to]) {
+            if (at === null) continue;
+            if (at <= basis.validAt) from = Math.max(from, at);
+            else to = Math.min(to, at);
+          }
+        }
+      }
+      return { root, ...result, entities: closure.length, from, to };
+    });
+    return { worlds, requests: found.requests, position: found.position, t: found.t };
+  }
+
+  private reachSessionAt(db: string, basis: ResolvedTemporalBasis) {
+    if (!this.cacheOptions.historicalRevisionReuse) return this.reachSession;
+    const key = `${db}/${basis.recordedAt ?? ""}/${basis.recordedPosition ?? ""}`;
+    const found = this.historicalSessions.get(key);
+    if (found) return found;
+    // [DX-RD1] Why: an alternating cut must not overwrite the gateway's remembered revision on every other request.
+    // Rejected: one session per logical caller, or an unbounded session for every recorded instant.
+    if (this.historicalSessions.size >= 8)
+      this.historicalSessions.delete(this.historicalSessions.keys().next().value!);
+    const session = randomUUID();
+    this.historicalSessions.set(key, session);
+    return session;
+  }
   async reachEntities(
     db: string,
     roots: readonly string[],
@@ -589,6 +664,7 @@ export class DatomicClient {
     older: readonly Promise<void>[],
     ingested: () => void,
   ) {
+    const session = this.reachSessionAt(db, basis);
     const page = async (route: string, input: Record<string, unknown>) => {
       if (!gzipRows) return this.request<ReachWire>("POST", route, input);
       const wire = await this.request<ReachPage>("POST", route, { ...input, gzipRows: true });
@@ -601,7 +677,7 @@ export class DatomicClient {
         ...(roots.length === 1 ? { root: roots[0] } : { roots }),
         basis,
         ...(rowPage ? { rowPage: true } : {}),
-        session: this.reachSession,
+        session,
         ...(this.forceFullReach || attempt === 1 ? { full: true } : {}),
       });
       if (response.declined !== undefined) {
@@ -622,10 +698,16 @@ export class DatomicClient {
         )
           throw new TypeError("Reach response basis/shape mismatch");
         const prefix = `${db}\0`;
+        // [DX-RD1] Why: records of different revisions can be in flight concurrently.
+        // Rejected: reusing an inline payload without decoding it, or waiting for a newer revision to repair an older cut.
+        const key = (id: string, rev: number) =>
+          this.cacheOptions.historicalRevisionReuse
+            ? `${prefix}${id.length}:${id}/${rev}`
+            : this.reachKey(db, prefix, id);
         const cache = {
-          get: (id: string) => this.reachCache.get(this.reachKey(db, prefix, id)),
+          get: (id: string, rev: number) => this.reachCache.get(key(id, rev)),
           set: (id: string, entity: CachedEntity) =>
-            this.reachCache.set(this.reachKey(db, prefix, id), entity),
+            this.reachCache.set(key(id, entity.rev), entity),
         };
         const entities = new Map<string, CachedEntity>();
         let missed = false;
@@ -658,7 +740,7 @@ export class DatomicClient {
               cache.set(id, decoded);
             } else {
               this.reachDiagnostics.referenceEntities++;
-              decoded = cache.get(id);
+              decoded = cache.get(id, rev);
               if (decoded?.rev === rev) {
                 this.reachDiagnostics.referenceHits++;
                 // [DX-H7] Why: references are reads too; refresh only the small predecessor cache.
@@ -680,7 +762,7 @@ export class DatomicClient {
           ) as [string, number][];
           const missing = () =>
             references.filter(([id, rev]) => {
-              const found = cache!.get(id);
+              const found = cache.get(id, rev);
               if (found?.rev === rev) {
                 entities.set(id, found);
                 return false;
@@ -701,7 +783,7 @@ export class DatomicClient {
               const repair = await page(`/v2/db/${db}/reach-many`, {
                 roots,
                 need: need.map(([id]) => id),
-                session: this.reachSession,
+                session,
                 basis: { ...basis, recordedPosition: response.position },
                 ...(rowPage ? { rowPage: true } : {}),
               });
@@ -748,7 +830,13 @@ export class DatomicClient {
           )
             throw new TypeError("Reach closure binding mismatch");
         });
-        return { entities, closures: response.closures, requests, position: response.position };
+        return {
+          entities,
+          closures: response.closures,
+          requests,
+          position: response.position,
+          t: response.t,
+        };
       } catch {
         this.reachDiagnostics.faults++;
         return undefined;
@@ -767,6 +855,29 @@ export class DatomicClient {
           if (typeof value === "string")
             this.reachDiagnostics.decodedTextBytes += Buffer.byteLength(value);
     }
+  }
+  declareProtection(db: string, attributes: readonly string[], sealed = false) {
+    return this.request("POST", `/v2/db/${db}/protection`, { attributes, sealed });
+  }
+  async erasureFrontier(db: string): Promise<ErasureFrontier> {
+    const result = await this.request<ErasureFrontier>("GET", `/v2/db/${db}/erasure-frontier`);
+    if (
+      result.database !== db ||
+      typeof result.protected !== "boolean" ||
+      !Number.isSafeInteger(result.seq) ||
+      result.seq < 0 ||
+      !result.erased ||
+      typeof result.erased !== "object" ||
+      Array.isArray(result.erased)
+    )
+      throw new TypeError("Erasure frontier scope or shape mismatch");
+    return result;
+  }
+  erase(db: string, commandId: string, selectors: readonly ErasureSelector[]) {
+    return this.request<ErasureReceipt>("POST", `/v2/db/${db}/erase`, { commandId, selectors });
+  }
+  restoreErasure(db: string) {
+    return this.request("POST", `/v2/db/${db}/restore-erasure`, {});
   }
   health(): Promise<DatomicHealth> {
     return this.request("GET", "/health");
@@ -927,7 +1038,16 @@ export class DatomicClient {
     // [DX-B5-L0] Why: two-argument transact wrappers preserve the input, and this callback never belongs on the wire.
     // Rejected: a third-argument-only callback (the NS publication observer drops it).
     const { onSent: inputSent, ...wireInput } = input;
-    const { rows: inputRows, newIds: ids, ...header } = wireInput;
+    const { rows: inputRows, newIds: ids, ...requestHeader } = wireInput;
+    const ticket = erasureWriteTicket();
+    const header = ticket
+      ? {
+          ...requestHeader,
+          erasureSeq: ticket.sequence,
+          erasureReplay: ticket.replay,
+          erasureSourceDatabase: ticket.sourceDatabase,
+        }
+      : requestHeader;
     onSent ??= inputSent;
     const compact = this.layouts.get(db) === "lean";
     const rowFast = fastPathEnabled("row"),

@@ -1,5 +1,8 @@
 (ns triplex.gateway.feed
-  (:require [triplex.gateway.trace :as trace] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.admission :as admission] [triplex.gateway.codec :as codec])
+  (:require [clojure.data.json :as json] [triplex.gateway.privacy :as privacy] [triplex.gateway.trace :as trace]
+            [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.admission :as admission]
+            [triplex.gateway.codec :as codec] [triplex.gateway.save-ledger :as ledger]
+            [triplex.gateway.packed-journal :as packed] [triplex.gateway.slim :as slim])
   (:import [java.util.concurrent TimeUnit]))
 
 ;; [EXP-DF01] Why: R29/R41 E6 uses reports only as wakeups, always replaying the durable log.
@@ -12,13 +15,51 @@
     (when (> n maximum) (codec/invalid "Log request exceeds budget")) n))
 (defn required [v]
   (when (nil? v) (codec/invalid "Incomplete feed identity annotation")) v)
-(defn fact-change [db tx eid op]
+(defn fact-change [db tx eid op application-only?]
   (let [f (d/entity db eid)
         position (or (get f (if (= op "assert") :f/position :f/retracted-position)) (:triplex.tx/position tx))]
-    {:op op :entity (required (:triplex.entity/id (:f/subject f)))
-     :attribute (required (:triplex.attr/key (:f/attr f))) :assertionId (required (:f/id f))
-     :validFrom (required (:f/valid-from f)) :validTo (:f/valid-to f) :position (str (required position))}))
-(defn project [db {:keys [t data]}]
+    ;; [DX-W1] Why: Q107c treats journal rows as audit data, outside the application change stream.
+    ;; Rejected: delivering an extra domain change for each copy of that change in its own envelope.
+    (when (or (not application-only?) (not= "_Transaction" (:f/entity-type f)))
+      {:op op :entity (required (:triplex.entity/id (:f/subject f)))
+       :attribute (required (:triplex.attr/key (:f/attr f))) :assertionId (required (:f/id f))
+       :validFrom (required (:f/valid-from f)) :validTo (:f/valid-to f) :position (str (required position))})))
+(defn stamp [clock]
+  (if (and (number? clock) (<= 0 clock 9007199254740991) (== clock (long clock)))
+    {:stamp (str (long clock)) :stampStatus "decided"}
+    {:stamp nil :stampStatus "pending-RT01"}))
+(defn project-protected [db {:keys [t]}]
+  (let [cut (d/as-of db t) tx (d/entity cut (d/t->tx t)) p (:triplex.tx/position tx)]
+    (if (nil? p)
+      {:t (str t) :kind "skipped" :reason "non-triplex"}
+      (let [journals (ledger/journals cut (d/t->tx t))
+            rows (mapcat (fn [[e _]]
+                           (map (comp privacy/packed-row slim/row-text)
+                                (concat (map :v (d/datoms cut :eavt e :triplex.entity/row))
+                                        (when (d/entid cut :triplex.journal/packed) (packed/rows cut e)))))
+                         journals)
+            records (group-by :attribute rows)
+            positions (or (seq (sort-by bigint (distinct (map :recorded_position (records ":_tx/position"))))) [p])
+            txids (or (seq (distinct (map :entity_id (records ":_tx/position")))) [(:triplex.tx/id tx)])
+            changes (mapv (fn [r]
+                            (let [c (json/read-str (:value_json r))]
+                              (cond-> {:op (required (get c "op")) :entity (required (get c "entityId"))
+                                       :attribute (required (get c "attribute")) :assertionId (required (get c "tripleId"))
+                                       :validFrom (required (get c "validFrom")) :validTo (get c "validTo")
+                                       :position (str (bigint (:recorded_position r)))}
+                                (= "erase" (get c "op")) (assoc :erasureSeq (str (get c "erasureSeq"))))))
+                          (records ":_tx/change"))
+            clock (required (:triplex.tx/recorded-at tx))]
+        {:t (str t) :kind "commit"
+         :transaction (merge {:positions (mapv #(str (bigint %)) positions)
+                              :txIds (vec txids) :operationId (required (:triplex.tx/operation-id tx))
+                              :commandIds (vec (distinct (map :value_string (records ":_tx/command-id"))))
+                              :changes (vec (sort-by (juxt #(bigint (:position %)) :assertionId :op) changes))}
+                             (stamp clock))}))))
+
+(defn project
+  ([db entry] (project db entry false))
+  ([db {:keys [t data]} application-only?]
   (let [cut (d/as-of db t) tx (d/entity cut (d/t->tx t)) p (:triplex.tx/position tx)]
     (if (nil? p)
       {:t (str t) :kind "skipped" :reason "non-triplex"}
@@ -29,8 +70,8 @@
                                    (cond (= (:a datom) erase-attr) (throw (ex-info "Erasure sequence annotation requires ER01-D" {:status 409 :code "FeedErasureUnsupported"}))
                                          ;; [DX-B2-N5] Why: new facts use the identity datom as the assertion witness; legacy rows may carry both.
                                          ;; Rejected: continuing to watch only the omitted asserted-in attribute (loses new feed assertions).
-                                         (or (= (:a datom) assert-attr) (= (:a datom) id-attr)) (fact-change cut tx (:e datom) "assert")
-                                         (= (:a datom) retract-attr) (fact-change cut tx (:e datom) "retract")))))
+                                         (or (= (:a datom) assert-attr) (= (:a datom) id-attr)) (fact-change cut tx (:e datom) "assert" application-only?)
+                                         (= (:a datom) retract-attr) (fact-change cut tx (:e datom) "retract" application-only?)))))
                          distinct (sort-by (juxt #(bigint (:position %)) :assertionId :op)) vec)
             positions (->> (conj (mapv :position changes) (str p)) distinct (sort-by bigint) vec)
             txids (->> (concat [(:triplex.tx/id tx)]
@@ -38,15 +79,14 @@
                                               (if (= "assert" (:op c)) (:f/tx-id f) (:f/retract-tx-id f)))) changes))
                        (remove nil?) distinct sort vec)
             commands (sort (trace/span "d/q" "peer-call" (d/q '[:find [?id ...] :in $ ?tx :where [?c :triplex.claim/tx ?tx] [?c :triplex.claim/command-id ?id]] cut (d/t->tx t))))
-            stamp (required (:triplex.tx/recorded-at tx))]
+            clock (required (:triplex.tx/recorded-at tx))]
         ;; [EXP-DF01] Why: DA01 fractional legacy record times cannot satisfy FD01's natural stamp.
         ;; Rejected: rounding the annotation or borrowing :db/txInstant (changes the decided record time).
         {:t (str t) :kind "commit"
          :transaction (merge {:positions positions :txIds txids
                               :operationId (required (:triplex.tx/operation-id tx)) :commandIds (vec commands) :changes changes}
-                             (if (and (number? stamp) (<= 0 stamp 9007199254740991) (== stamp (long stamp)))
-                               {:stamp (str (long stamp)) :stampStatus "decided"}
-                               {:stamp nil :stampStatus "pending-RT01"}))}))))
+                             (stamp clock))})))))
+(defn project-application [db entry] (project db entry true))
 
 
 ;; [EXP-DF01] Why: Datomic owns ONE report queue per connection; broadcast wakeups to all polls.
@@ -113,7 +153,10 @@
   ;; [EXP-DF01-R3] Why: isolate the clock seam for exact-nanosecond boundary tests; route always uses the real clock.
   ;; Rejected: redefining the production clock in the real-time reviewer probe (would invalidate its timing window).
   (poll-log-with-clock from limit wait-ms read-page arm-wait #(System/nanoTime)))
-(defn log-page [conn input]
+(defn log-page
+  ([conn input] (log-page conn input project))
+  ([conn input project-entry] (log-page conn input project-entry nil))
+  ([conn input project-entry assert-source!]
   (let [from (natural (get input "fromT" "0")) limit (bounded (get input "limit") 1000 1000)
         wait-ms (bounded (get input "waitMs") 0 30000)]
     (when (zero? limit) (codec/invalid "Empty log limit"))
@@ -122,12 +165,13 @@
         (let [read-page (fn [start n]
                           (admission/execute admission/journals (fn []
                           (let [db (trace/span "d/db" "peer-call" (d/db conn)) end (inc (d/basis-t db))]
+                            (when assert-source! (assert-source! db))
                             (if (>= start end) []
-                              (mapv #(project db %) (take n (d/tx-range (d/log conn) start end))))))))
+                              (mapv #(project-entry db %) (take n (d/tx-range (d/log conn) start end))))))))
               rows (poll-log from limit wait-ms read-page
                      (fn []
                        (let [signal (when watch @(:signal watch))]
                          (fn [remaining-ns]
                            (deref signal (quot (+ remaining-ns 999999) 1000000) false)))))]
           {:fromT (str from) :nextT (if (seq rows) (str (inc (natural (:t (last rows))))) (str from)) :rows rows})
-        (finally (when watch (unsubscribe! conn)))))))
+        (finally (when watch (unsubscribe! conn))))))))

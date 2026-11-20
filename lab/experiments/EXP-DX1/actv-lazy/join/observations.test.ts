@@ -24,3 +24,21 @@ test("a delayed invocation, delayed native head, or stale cold reader records a 
   ])
     assert.equal(timings(o, { ...raw, coldDeadline }).deadlineMiss, true);
 });
+
+test("the one-seed deadline charges a late ingress to the scheduled offer", () => {
+  const offer = {
+    offered: 100,
+    ingress: 190,
+    cutoff: 1100,
+    mode: "owed" as const,
+    deadlineFrom: "scheduled" as const,
+  };
+  const delayed = {
+    ...raw,
+    entered: 190,
+    durable: 1090,
+    first: { ...first, started: 1090, headObserved: 1100, finished: 1120 },
+  };
+  assert.equal(timings(offer, delayed).deadlineMiss, true);
+  assert.throws(() => timings({ ...offer, cutoff: 1190 }, delayed));
+});

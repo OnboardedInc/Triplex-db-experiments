@@ -27,3 +27,10 @@ export function soloPopulation(people: 1000 | 100000, regenerate = false): Inven
   }
   return v;
 }
+
+export function soloScope(nonce: string, people: number, arm?: "reference" | "record" | "stored") {
+  assert([1000, 10000, 100000].includes(people));
+  if (arm) return "delta-audit-" + people + "-" + arm + "-" + nonce;
+  if (people === 10000) return "delta-deep-loaded-" + nonce;
+  return (people === 1000 ? "delta-solo-check-" : "delta-solo-run-") + nonce;
+}

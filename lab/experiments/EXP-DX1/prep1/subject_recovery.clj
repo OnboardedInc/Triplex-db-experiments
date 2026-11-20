@@ -83,7 +83,18 @@
         native-t (parse-long (held "nativeT"))
         data (mapcat :data (d/tx-range (d/log conn) native-t (inc native-t)))
         row-a (d/entid view :triplex.entity/row)
-        eid (d/entid view [:triplex.entity/id fixture/root])]
+        eid (d/entid view [:triplex.entity/id fixture/root])
+        query (fn [position valid-at]
+                (reference/route db "v1" "q"
+                  {"edn" (str "[:find ?id :in $ $rules :where [?f :f/id ?id] [?f :f/attr ?a] "
+                              "[?a :triplex.attr/key \":v\"] "
+                              "[(triplex.gateway.query/visible $ ?f " valid-at " nil " position ")]]")
+                   "relations" [] "basis" {"recordedPosition" position "validAt" valid-at}}))
+        queries (mapv #(apply query %) [[1 5.0] [2 5.0] [2 50.0]])
+        log-response (main/route-handler {:request-method :get :uri (str "/v1/db/" db "/log")
+                                         :query-string (str "fromT=" (dec native-t) "&limit=10")})
+        log-result (json/read-str (:body log-response))
+        native-entry (first (filter #(= (str native-t) (get % "t")) (log-result "rows")))]
     (assert (= ["old" "middle"] (mapv #(get-in (first %) ["id" "v"]) [before after])))
     (assert (= ["_tx/edit-a" 2] (subvec entry 0 2)))
     (assert (empty? (get-in (route "transactions" {"after" 2 "limit" 1}) [:body "transactions"])))
@@ -100,8 +111,18 @@
     (assert (= #{["middle" true] ["old" false]}
                (set (for [x data :when (and (= eid (:e x)) (= row-a (:a x)))]
                       [(:id (lean/decode (:v x))) (:added x)]))))
+    ;; [DX-PREP1] Why: read the recovered edit through the public native query and log adapters.
+    ;; Rejected: treating internal Peer API checks as evidence for the HTTP surfaces.
+    (assert (every? #(= 200 (:status %)) queries))
+    (assert (= [["old"] ["middle"] []]
+               (mapv #(mapv (fn [r] (get-in r [0 "v"])) (get-in % [:body "rows"])) queries)))
+    (assert (= 200 (:status log-response)))
+    (assert (= #{["retract" "old" ":v"] ["assert" "middle" ":v"]}
+               (set (map #(mapv % ["op" "assertionId" "attribute"])
+                         (get-in native-entry ["transaction" "changes"])))))
     {:feed entry :claim claim :nativeT (str native-t)
-     :command command-reply :journal journal-reply :entityTransactions entity-reply}))
+     :command command-reply :journal journal-reply :entityTransactions entity-reply
+     :nativeQueries queries :nativeLog native-entry}))
 
 (defn after [file]
   (let [held (json/read-str (slurp file)) [db conn created fn-tx] (open!) input (request)]

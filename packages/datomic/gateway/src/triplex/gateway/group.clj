@@ -114,7 +114,8 @@
         account (when (= 1 (count accounts)) (first accounts))]
     (when (and hint (seq business) (not= hint account))
       (throw (ex-info "Group account must match every business entity namespace" {:code "InvalidValue" :status 400 :write-policy true})))
-    {:account (or account (if (and (seq authored) (empty? business)) :system :shared)) :bulk (boolean (:bulk p))
+    {:account (or account (if (and (seq authored) (empty? business)) :system :shared))
+     :bulk (boolean (:bulk p))
      :subject (when (= 1 (count business)) (first business))
      :scope-barrier (and policy/priority? (:scope-wide p) (some? (:source p)))
      :keys (set (concat (map #(vector :entity %) (concat owners (:entities p)))
@@ -154,7 +155,6 @@
                        (if (re-find #"TRIPLEX_CONFLICT|TRIPLEX_IDENTITY|TRIPLEX_CLOCK|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|:db.error/(?:unique-conflict|cas-failed)" (str e))
                          {:error e} (throw e))))]
         (recur (or (get-in result [:report :db-after]) view) (next entries) (conj out result))))))
-
 (defn prefix [^String text] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16))))
 (defn materialize [base members]
   (let [last-tx (:tx (peek members))
@@ -222,8 +222,9 @@
   ;; Rejected: searching a transport error's free text for a transaction-function marker.
   (some (fn [cause] (let [data (ex-data cause)]
           (or (true? (:triplex.group/stale data))
-              (and (instance? clojure.lang.ExceptionInfo cause) (contains? #{"TRIPLEX_GROUP_STALE" "TRIPLEX_OPERATION_DUPLICATE" "TRIPLEX_COMMAND_DUPLICATE"}
-                                      (ex-message cause)))
+              (and (instance? clojure.lang.ExceptionInfo cause)
+                   (contains? #{"TRIPLEX_GROUP_STALE" "TRIPLEX_OPERATION_DUPLICATE" "TRIPLEX_COMMAND_DUPLICATE"}
+                              (ex-message cause)))
               (contains? #{:db.error/unique-conflict :db.error/conflicting-datoms :db.error/cas-failed
                            :db.error/not-an-entity :db.error/invalid-data} (:db/error data)))))
         (take-while some? (iterate #(when % (ex-cause %)) e))))
@@ -289,19 +290,28 @@
               (unknown! batch e))
             (finish-group! batch results (:report physical) (count valid) stages (:received-ms physical))))))))
 
+(defn preparable? [batch]
+  (and prepared/enabled (< 1 (count batch)) (every? :eligible batch) (prepared/disjoint? batch)))
+(defn drafted [batch]
+  (mapv #(when-let [pending (:draft %)] (deref pending 0 nil)) batch))
 (defn ready-drafts [batch]
-  (when (and prepared/enabled (< 1 (count batch)) (every? :eligible batch) (prepared/disjoint? batch))
-    (let [drafts (mapv #(when-let [pending (:draft %)] (deref pending 0 nil)) batch)]
+  (when (preparable? batch)
+    (let [drafts (drafted batch)]
       (when (every? some? drafts) drafts))))
 (defn mark-prepared [batch stats]
   (if stage-clock (mapv #(assoc % :prepared-stats stats) batch) batch))
-(defn assemble [batch drafts head]
-  (try (when-let [plan (prepared/assemble batch drafts head)]
+(defn assemble [batch drafts head & [certificate]]
+  (try (when-let [plan (prepared/assemble batch drafts head certificate)]
          (assoc plan :rendered-ns (when stage-clock (str (System/nanoTime)))))
        (catch Exception _ nil)))
 (defn plan [conn batch]
-  (when-let [drafts (ready-drafts batch)]
-    (assemble batch drafts (prepared/head (d/db conn)))))
+  (if (and prepared/basis-enabled (preparable? batch))
+    (let [db (d/db conn)]
+      (try (when-let [certificate (prepared/certify db batch (drafted batch))]
+             (assemble batch (:drafts certificate) (prepared/head db) certificate))
+           (catch Exception _ nil)))
+    (when-let [drafts (ready-drafts batch)]
+      (assemble batch drafts (prepared/head (d/db conn))))))
 (defn start-prepared! [conn plan]
   (let [sent (when stage-clock (str (System/nanoTime)))]
     (merge plan {:submitted-ns sent}
@@ -311,6 +321,7 @@
                    (try (receive! (:future plan)) (catch Exception e {:error e})))
         stats (when stage-clock
                 {:submittedNs (:submitted-ns plan) :renderedNs (:rendered-ns plan)
+                 :guard (:guard plan) :history (:history plan)
                  :afterOperation (:after-operation plan) :observedNs (str (System/nanoTime))})]
     (if-let [error (:error physical)]
       ;; [DX-PREP1] Why: re-evaluate at the authoritative cut after a definite rejection.
@@ -374,17 +385,17 @@
                     policy/priority? (update-in [:rotation rank] rotate a (some #(and (same? %) (= rank (:rank %))) others)))
                 taken (conj out (assoc entry :queued-at-grant (count queue) :runnable-live (boolean live)))]
             (if solo [s taken] (recur s taken (conj selected (:token entry)) priced))))))))
-(defn admit [batch]
-  (mapv (fn [entry] (deliver (:token entry) true) (assoc entry :dispatch (System/nanoTime))) batch))
 (defn preview [state]
   (let [[next batch] (preview-batch state)]
-    ;; [DX-W1] Why: a ready bulk frame gets one physical turn after a bounded run of live turns.
-    ;; Rejected: counting members of one transaction as turns or leaving a ready import behind a permanent live backlog.
+    ;; [DX-W1] Why: count each admitted physical turn once, including a pre-rendered or pipelined live group.
+    ;; Rejected: letting early reservation bypass the bounded bulk grant.
     [(if (and policy/priority? (seq batch))
        (if (= :bulk (:rank (first batch))) (assoc next :live-turns 0)
          (update next :live-turns #(min max-live-turns (inc (or % 0)))))
        next)
      batch]))
+(defn admit [batch]
+  (mapv (fn [entry] (deliver (:token entry) true) (assoc entry :dispatch (System/nanoTime))) batch))
 (defn choose [state]
   (let [[remaining batch] (preview state)]
     [remaining (admit batch)]))
@@ -437,7 +448,9 @@
     (when launch
       (.execute executor (fn []
         (loop [batch launch]
-          (try (if (and prepared/enabled (not= :off prepare-window))
+          ;; [DX-PREP1] Why: the next certified batch must actually observe the first native append.
+          ;; Rejected: guessing the next physical basis for a second native submission.
+          (try (if (and prepared/enabled (not prepared/basis-enabled) (not= :off prepare-window))
                  (execute-window! conn lane batch)
                  (execute! conn batch))
                (catch Throwable t (doseq [e batch] (complete! e {:error t}))))

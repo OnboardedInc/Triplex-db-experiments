@@ -6,6 +6,7 @@ import { pathToFileURL } from "node:url";
 import { REPO, runtimeApi } from "./triplex.ts";
 import { observe } from "./observe.ts";
 import type { CompositionHandle, PullResult } from "./composition.ts";
+import type { InstalledHistory } from "./historical-fallback.ts";
 import type {
   PackedEntity,
   ReadDelta,
@@ -180,6 +181,8 @@ type FallbackWitness = { reason: string; recordedAt?: number; receiptPosition?: 
 export class ReplicaReader {
   readonly index: InstanceType<typeof api.RecentReads>;
   private worlds = new CutCache();
+  installedHistory?: InstalledHistory;
+  historyEpoch = 0;
   // [DX-R3] Why: the host proxy already validates/applies each cut; RYOW can share that same immutable-version index.
   // Rejected: a second main-thread copy of every current/history entry and duplicate per-commit validation/allocation.
   constructor(historyBytes = 64 * 1024 ** 2, index?: InstanceType<typeof api.RecentReads>, worldCacheBytes = 32 * 1024 ** 2, historyCoverage: ReadHistoryCoverage = "global") {
@@ -194,17 +197,32 @@ export class ReplicaReader {
   private waiters = new Set<{ p: number; done(): void }>();
   install(image: ReadImage) {
     this.worlds.clear();
+    this.clearInstalled();
     this.index.install(image);
   }
   apply(delta: ReadDelta) {
-    if (delta.reset) this.worlds.clear();
+    if (delta.reset) { this.worlds.clear(); this.clearInstalled(); }
     traceWork("replica.apply-delta", () => this.index.apply(delta), { position:delta.position, valid:delta.valid }, true);
     this.notify();
   }
   notify(reset = false) {
-    if (reset) this.worlds.clear(); else this.worlds.releasePromotions();
+    if (reset) { this.worlds.clear(); this.clearInstalled(); } else this.worlds.releasePromotions();
     for (const waiter of this.waiters)
       if (this.index.position >= waiter.p || !this.index.valid) waiter.done();
+  }
+  private clearInstalled() { this.historyEpoch++; this.installedHistory?.clear(); }
+  canInstallHistory(basis: ReadBasis) {
+    if (!this.index.valid || !Number.isFinite(basis.validAt) ||
+      (basis.recordedAt !== undefined && !Number.isFinite(basis.recordedAt))) return false;
+    // [DX-RD1] Why: an applied position is a sealed prefix even after the local versions for it are evicted.
+    // Rejected: keeping a fetched result for a position the source has yet to publish.
+    if (basis.recordedPosition !== undefined)
+      return Number.isSafeInteger(basis.recordedPosition) && basis.recordedPosition > 0 && basis.recordedPosition <= this.index.position;
+    const floor = this.index.retainedClockFloor();
+    // [DX-RD1] Why: a strictly later applied clock proves an evicted time can no longer acquire writes.
+    // Rejected: caching an unresolved open clock or adding a receipt-position hint to an authoritative time-only read.
+    return basis.recordedAt !== undefined && floor !== undefined &&
+      (basis.recordedAt < floor || this.index.resolve(basis) !== undefined);
   }
   async wait(p: number, ms: number) {
     if (this.index.position >= p || !this.index.valid) return;
@@ -359,6 +377,8 @@ export class ReplicaReader {
       }
       if (found) missing = "incomplete-public-metadata";
     }
+    const installed = this.installedHistory && this.canInstallHistory(basis) ? this.installedHistory.get(root, basis) : undefined;
+    if (installed) { this.diagnostics.local++; return installed; }
     this.diagnostics.fallback++;
     if (!(basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position)) this.diagnostics.ineligible++;
     const oldest = this.index.retainedClockFloor();
@@ -377,7 +397,14 @@ export class ReplicaReader {
         resolved: cut, floor: this.index.floor, head: this.index.position, oldestClock: oldest, historyBytes: this.index.historyBytes });
     }
     const result = await fallback();
-    return { ...result, route: "fallback", waitedMs, replicaFallbackReason };
+    // [DX-RD1] Why: re-label the route without decoding the fallback lane's lazy public rows on the reader.
+    // Rejected: object spread, which invokes the triples getter for every foreground miss.
+    return Object.defineProperties({} as PullResult, {
+      ...Object.getOwnPropertyDescriptors(result),
+      route: { value: "fallback", enumerable: true },
+      waitedMs: { value: waitedMs, enumerable: true },
+      replicaFallbackReason: { value: replicaFallbackReason, enumerable: true },
+    });
   }
 }
 // [DX-R3] Why: report and control feed placement explicitly; the local host historically used the read URL already.

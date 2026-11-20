@@ -16,6 +16,7 @@ export type Stage = {
   scope: string;
   release: string;
   command: string;
+  erasureSeq?: number;
 };
 export function stageChanges(prefix: string, changes: readonly { entityId: string }[]) {
   return changes.every((c) => c.entityId.startsWith(prefix + "join-stage:"));
@@ -28,6 +29,7 @@ export async function stage(
   release: string,
   parts: string[],
   afterChunk?: (attempt: string) => Promise<void>,
+  erasureSeq?: number,
 ) {
   assert(parts.length);
   const attempt = randomUUID(),
@@ -39,6 +41,7 @@ export async function stage(
       scope: s.scope,
       release,
       command: id,
+      ...(erasureSeq === undefined ? {} : { erasureSeq }),
     };
   let batch: Op[] = [db.put(root(attempt), header)],
     bytes = 0,

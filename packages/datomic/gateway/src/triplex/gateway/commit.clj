@@ -32,8 +32,8 @@
                        end (str "2001a" (subs high 0 25) (char (inc (int (.charAt ^String high 25)))))]
                    (nil? (read-at :w1/new-range (first (d/index-range (d/history db) :triplex.entity/row start end)))))))))))))
 
-;; [DX-W1] Why: a queued retract names a predecessor whose authoritative clock may differ from its proposal.
-;; Rejected: copying a pending client's proposed assertion time into the durable journal.
+;; [DX-WFIX1] Why: the checked stored row owns the time, range, value and identity of the retracted assertion.
+;; Rejected: carrying the client's provisional assertion or maintaining a separate decoder for prepared writes.
 (def recorded-row-code
   '(fn [text]
      (let [[_ _ entity attr kind string number bool datetime data recorded from to _ entity-type _ tx]
@@ -62,7 +62,7 @@
   '(fn [change clock new-ids prior-rows]
      (let [id (get change "tripleId")
            prior (when (and (= "retract" (get change "op")) (not (new-ids id)))
-                   (get prior-rows id))
+                   (when prior-rows (prior-rows id)))
            lean-prior (contains? prior "value")]
        (cond-> change
          lean-prior (dissoc "validTo" "entityType" "assertionTxId")
@@ -174,8 +174,7 @@
                    datom (read-at :w1/new-id (first (d/index-range (d/history db) :triplex.entity/row prefix nil)))]
                (when (and datom (.startsWith ^String (:v datom) prefix)) datom)))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
-     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row
-                   save-ledger timed-retractions packed-journal]} payload
+     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row save-ledger timed-retractions packed-journal]} payload
            operation-id (or (:triplex.tx/operation-id (first ops)) (some :triplex.tx/operation-id ops))
            command-ids (or (:command-ids payload) (keep :triplex.claim/command-id ops))
            ;; [DX-WFIX1] Why: a committed retry can name a predecessor it already retired.
@@ -221,18 +220,20 @@
        (when (and scope-wide (not= h source)) (conflict))
        (doseq [id live]
          (if lean
-           (if-let [row (row-id id)]
-             (when server-clock (vswap! prior-rows assoc id (recorded-row-code (:v row))))
-             (conflict))
+           (when-not (row-id id) (conflict))
            (if-let [e (d/entid db [:f/id id])]
              (do
                (when-not (value e :f/live) (conflict))
                (when (and timed (timed id))
                  (let [negative (into #{} (map :v) (d/datoms db :eavt e :f/negative-zero))
                        number (fn [field v] (if (negative field) -0.0 v))]
+                   ;; [DX-W1] Why: classic facts can omit :f/asserted-in and store the clock on the transaction of :f/id.
+                   ;; Rejected: substituting the retraction clock or retaining a null assertion clock in the journal.
                    (vswap! prior-rows assoc id
                      {"recordedAt" (number :recorded_at (or (value e :f/recorded-at)
-                                                           (value (value e :f/asserted-in) :triplex.tx/recorded-at)))
+                                                           (value (or (value e :f/asserted-in)
+                                                                      (:tx (first (d/datoms db :eavt e :f/id))))
+                                                                  :triplex.tx/recorded-at)))
                       "validFrom" (number :valid_from (value e :f/valid-from))
                       "validTo" (number :valid_to (value e :f/valid-to))}))))
              (conflict))))
@@ -244,7 +245,11 @@
                             (or (when (d/entid db :triplex.group/position) (value e :triplex.group/position))
                                 (value e :triplex.tx/position)))
                           0) source) (conflict)))))
-       (let [replace-value (stamp-rows server-clock clock new-id-set lower provisional final slim-row @prior-rows)]
+       (let [stored (memoize (fn [id]
+                              (if-let [row (get @checked id)]
+                                (recorded-row-code (:v row))
+                                (get @prior-rows id))))
+             replace-value (stamp-rows server-clock clock new-id-set lower provisional final slim-row stored)]
          (let [empty-history (when (and lean (:identity-bounds payload))
                                (let [empty? (history-range-code db ops (:identity-bounds payload))]
                                  (record-range-result empty?) empty?))
