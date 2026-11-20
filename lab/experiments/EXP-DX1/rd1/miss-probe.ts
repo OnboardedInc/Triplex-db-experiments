@@ -7,6 +7,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { performance } from "node:perf_hooks";
 import { fileURLToPath } from "node:url";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
+import { acquireMeasureLease, readMeasureLease } from "../../../bin/heavy-lock.mjs";
 import { LOCKS } from "../../../bin/lib.mjs";
 import { openComposition, type PullResult } from "../../../bench/lib/composition.ts";
 import { ReplicaReadHost, ReplicaReader } from "../../../bench/lib/replica-reads.ts";
@@ -34,6 +35,7 @@ import {
 
 const source = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 const leaseNonce = randomUUID();
+const trial = leaseNonce.replaceAll("-", "");
 const [output, topology = "s3", interval = "3", seatCount = "128", mode = "mechanism"] =
   process.argv.slice(2);
 const seconds = Number(interval),
@@ -612,27 +614,31 @@ async function runInAssignedSlot() {
     await run(process.env.TRIPLEX_TRACE_SLOT, async () => "", "control", output!);
   } else {
     const runSlot = (which: string) =>
-      inLocalSlot(which, async (slot, logs) => {
-        fs.mkdirSync(output!);
-        console.error(
-          JSON.stringify({
-            event: "native-slot-admitted",
-            at: new Date().toISOString(),
-            source,
-            slot,
-          }),
-        );
-        // [DX-RD1] Why: three independent scopes can reuse a single owned stack and measurement window.
-        // Rejected: booting three engines or reusing one scope's replica and session caches across experiments.
-        if (mode === "suite" || mode === "part3") {
-          for (const m of mode === "part3" ? (["curve", "recovery"] as const) : modes) {
-            const destination = path.join(output!, m);
-            fs.mkdirSync(destination);
-            await run(slot, logs, m, destination);
-            if (m === "curve") runBudgets(output!);
-          }
-        } else await run(slot, logs, mode as Mode, output!);
-      });
+      inLocalSlot(
+        which,
+        async (slot, logs) => {
+          fs.mkdirSync(output!);
+          console.error(
+            JSON.stringify({
+              event: "native-slot-admitted",
+              at: new Date().toISOString(),
+              source,
+              slot,
+            }),
+          );
+          // [DX-RD1] Why: three independent scopes can reuse a single owned stack and measurement window.
+          // Rejected: booting three engines or reusing one scope's replica and session caches across experiments.
+          if (mode === "suite" || mode === "part3") {
+            for (const m of mode === "part3" ? (["curve", "recovery"] as const) : modes) {
+              const destination = path.join(output!, m);
+              fs.mkdirSync(destination);
+              await run(slot, logs, m, destination);
+              if (m === "curve") runBudgets(output!);
+            }
+          } else await run(slot, logs, mode as Mode, output!);
+        },
+        trial,
+      );
     if (topology !== "auto") return runSlot(topology!);
     for (const candidate of ["s3", "s2", "s1"]) {
       if (fs.existsSync(path.join(LOCKS, `datomic-${candidate}`))) continue;
@@ -662,8 +668,8 @@ async function withMeasurementWindow() {
   // Rejected: checking that it was free before bootstrap and racing another run during fixtures.
   const deadline = performance.now() + (topology === "auto" ? 240_000 : 0);
   for (;;) {
-    if (fs.existsSync(path.join(LOCKS, "measure-lease")))
-      throw new AdmissionWait("Canonical measurement lease is held");
+    const lease = readMeasureLease();
+    if (lease && !lease.stale) throw new AdmissionWait("Canonical measurement lease is held");
     try {
       fs.mkdirSync(admission);
       break;
@@ -675,6 +681,7 @@ async function withMeasurementWindow() {
     }
   }
   const owner = path.join(admission, "owner.json");
+  let releaseLease: (() => void) | undefined;
   try {
     fs.writeFileSync(
       owner,
@@ -687,8 +694,20 @@ async function withMeasurementWindow() {
       }) + "\n",
       { flag: "wx" },
     );
+    // [DX-RD1] Why: the spike lock excludes other timed spikes and the canonical lease drains heavy work.
+    // Rejected: snapshotting either lock before timing or draining the pool while a spike owns its lock.
+    try {
+      ({ release: releaseLease } = await acquireMeasureLease("DX-RD1 native replay", {
+        holder: `DX-RD1-${trial}`,
+        timeoutMs: 90_000,
+      }));
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "LEASE_TIMEOUT") throw error;
+      throw new AdmissionWait(String(error));
+    }
     await runInAssignedSlot();
   } finally {
+    releaseLease?.();
     if (fs.existsSync(owner)) {
       assert.equal(JSON.parse(fs.readFileSync(owner, "utf8")).leaseNonce, leaseNonce);
       fs.unlinkSync(owner);

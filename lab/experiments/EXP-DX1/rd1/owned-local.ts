@@ -8,15 +8,22 @@ const run = promisify(execFile);
 
 // [DX-RD1] Why: the local probe only leases and cleans up an isolated volume through the existing slot manager.
 // Rejected: reusing a resident or force-removing a previous holder's data.
-export async function inLocalSlot<T>(slot: string, work: (slot: string, logs: () => Promise<string>) => Promise<T>): Promise<T> {
+export async function inLocalSlot<T>(
+  slot: string,
+  work: (slot: string, logs: () => Promise<string>) => Promise<T>,
+  trial = randomBytes(10).toString("hex"),
+): Promise<T> {
   assert(process.platform === "darwin" && /^(s1|s2|s3)$/.test(slot));
   const disk = statfsSync(".");
   assert(disk.bavail * disk.bsize >= 5 * 1024 ** 3, "Host disk floor");
-  const trial = randomBytes(10).toString("hex");
   const holder = `DX-RD1-${trial}`;
   const env = { ...process.env, TX2_EXCLUSIVE_VOLUME_ID: trial };
   const ownership = ["--lane", "datomic", "--slot", slot, "--holder", holder, "--exp", "DX-RD1"];
-  const engine = (command: string, args: string[]) => run(process.execPath, ["lab/bin/engine.mjs", command, ...ownership, ...args], { env, maxBuffer: 96 * 1024 ** 2 });
+  const engine = (command: string, args: string[]) =>
+    run(process.execPath, ["lab/bin/engine.mjs", command, ...ownership, ...args], {
+      env,
+      maxBuffer: 96 * 1024 ** 2,
+    });
   let started = false;
   try {
     const { stdout, stderr } = await engine("up", ["--fresh"]);
