@@ -3249,3 +3249,27 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   leases. Part 4 assigned: the server command first (present grouped writer against per-person writer; 50, 235, 394
   and 620 saves per second; quiet account with matched windows; 1, 2 and 4 write gateways), then the owed gates,
   fair turns for a quiet account.
+
+## 2026-11-20 16:27 UTC (11:27 local, 2026-11-20): DX-ERASE1 part 2 in: erasure publishes in tens of milliseconds on the Mac; the check itself is too expensive as built
+
+- **DX-ERASE1 part 2 (`d0ccf3123`; `erase1/REPORT.md`, `LEDGER.md`, `FAST.md`, `HANDOFF-PART2.md`).** An
+  erasure sequence that every path checks closes the three paths that returned or restored an erased value (a reader
+  on an old pin, import replay, Publish across the erasure) and the neighbours (replica, journal, feed, notice sender
+  and recipient, restore from a backup taken before the erasure): thirteen integration checks pass, including the
+  erased-SSN task that replaces the E-Verify submission (Q36f). Protected values are stored sealed in a detached
+  record with their own key; erasing publishes an identity-only record and removes the keys; the sealed bodies are
+  removed later in paced jobs. Mac, three sizes to 3.99 million facts: publication p99 38 to 80 ms for one fresh
+  value, 114 to 211 ms for 100 people, 257 ms for one person with 416 protected versions; zero index jobs on the
+  request path (the old native path took 11.90 s on the server at 16 million facts).
+- **Costs that fail the bars as built.** With the check on and zero erasures, save p50/p99 went 10.85/36.58 to
+  32.27/63.18 ms and pinned-read p50/p99 2.22/8.99 to 17.08/47.50 ms (reach replies grew 1,428 to 39,592 B because
+  protection disabled the cached closure references). A protected save adds 1.8 to 2.9 ms at the median (one
+  synchronous key file per value). Paced cleanup raised save p99 to 1.28 to 1.50 times its controls (bar 1.25); the
+  first 128-body job wrote 467 leaf segments in 5.68 s.
+- **Open:** bare-metal timing; key rotation; a durable home for the erasure authority that survives the loss of a
+  gateway host; the later INT1 settlement and worker-copy paths; general protected-query semantics.
+- **Part 3 assigned (xhigh):** guarded reads and saves within 5 percent p50 and 1.10 p99 of unguarded; fit the
+  per-person writer and one database (no shared serial step, neighbour account within 1.25 during erasure and
+  cleanup, id reuse closed); the authority and keys in durable shared storage (protected save adds at most 0.3 ms);
+  cleanup admission by measured leaf work, with an owner question if a removal deadline is needed; server command
+  kept current. The prepared server check (3 to 12 min) is on server 1's list.
