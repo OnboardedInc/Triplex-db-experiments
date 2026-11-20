@@ -40,3 +40,5 @@ The clean clone built eight package tasks at `38476511b` and retained a 711-file
 The next owned run passed startup and stopped while copying the staged oracle into the Mac output mount. The guest file-copy primitive returned `EACCES` while transferring file metadata. The retry streams bytes into new files and retains the collector's content checks. The same change covers the driver's cross-device evidence transfer.
 
 [Evidence index](EVIDENCE.md) lists the package and image receipts, first failures and capacity refusals. The ordinary-token fixture remains queued.
+
+The streamed native retry seeded 40 people and 4,890 facts into one Datomic database before the controller stopped at the start barrier. The driver and controller hashed equivalent campaign options in different JavaScript property orders. Both now use the driver's original field order. The fix preserves the seed and tape content and leaves the non-campaign digest unchanged. The engine removed the private volume on failure.

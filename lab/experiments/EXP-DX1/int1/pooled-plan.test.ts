@@ -19,6 +19,15 @@ test("the legacy import splits at complete subjects within the campaign frame li
   assert.equal(new Set(roots).size, people);
 });
 
+test("the driver and controller bind the same campaign with differently ordered options", () => {
+  for (const loaded of campaignCases([4]).filter((c) => c.load === "reader")) {
+    const controller = campaignTenant(loaded, true);
+    const { campaign, study, topology, physical } = controller;
+    const driver = { campaign, study, topology, physical };
+    assert.equal(tenantPlan(controller, "zero").sha256, tenantPlan(driver, "reader").sha256);
+  }
+});
+
 test("the overnight frozen arm keeps the original events in one database with ten accounts", () => {
   const [zero, loaded] = campaignCases([10_000]);
   const a = tenantPlan(campaignTenant(zero!, false), "zero");
