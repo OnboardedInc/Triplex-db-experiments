@@ -13,7 +13,13 @@ import { Histogram } from "../../../bench/lib/hist.ts";
 import { VERDICT_CLOCK } from "../../../trace/instrument.mjs";
 import { campaignWindows, pooledCampaignId } from "../scale1/tenant-traffic.ts";
 import { importDigest, importFrames } from "./pooled-import.ts";
-import { campaignCases, campaignTenant, treatment, type CampaignCase } from "./everything-plan.ts";
+import {
+  campaignCases,
+  campaignTenant,
+  gatewayJvmOptions,
+  treatment,
+  type CampaignCase,
+} from "./everything-plan.ts";
 import { replayRevision } from "../scale1/source.ts";
 import { atomicJson, type Arm } from "./everything-arm.ts";
 
@@ -371,6 +377,24 @@ export async function collect(dir: string, mode: "produce" | "verify") {
       const clean = read(path.join(out, "cleanup/inventory.json"));
       assert(clean.at >= result.endedAt && clean.before.containers.length === 4);
       assert(Object.values(clean.after).every((x) => Array.isArray(x) && x.length === 0));
+      const placement = read(path.join(out, "placement.json"));
+      const launch = read(path.join(out, "gateway-jvm.json"));
+      assert.deepEqual(launch.identity, id);
+      assert(launch.capturedAt >= arm.startedAt && launch.capturedAt <= result.start);
+      assert.deepEqual(
+        launch.vm.map((r: any) => r.role),
+        Object.keys(gatewayJvmOptions),
+      );
+      for (const row of launch.vm) {
+        const role = row.role as keyof typeof gatewayJvmOptions;
+        assert(row.container === placement[role].id);
+        assert(gatewayJvmOptions[role].every((flag) => row.actual.includes(flag)));
+        assert.equal(row.actual.filter((flag: string) => /^-XX:\+Use.*GC$/.test(flag)).length, 1);
+        assert.equal(
+          row.actual.filter((flag: string) => flag.startsWith("-Xmx")).at(-1),
+          "-Xmx384m",
+        );
+      }
     }
     const key = `${c.people}/${c.profile}`,
       zero = prior.get(key);

@@ -10,7 +10,7 @@ import { measurementWindow } from "../thin1/measure.ts";
 import { canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 import { atomicJson, createArm, executeArm } from "./everything-arm.ts";
 import { collect, openPlan } from "./everything-collect.ts";
-import { planSummary, treatment } from "./everything-plan.ts";
+import { gatewayJvmOptions, planSummary, treatment } from "./everything-plan.ts";
 
 const repo = fileURLToPath(new URL("../../../../", import.meta.url));
 const git = (...args: string[]) =>
@@ -125,10 +125,8 @@ async function physicalCases(
       try {
         const { env, engines } = startScaleStack(out, slot, source, false, {
           ...treatment,
-          DX_GW_WRITE_JAVA_OPTS:
-            "-Xms64m -Xmx384m -Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30",
-          DX_GW_READ_JAVA_OPTS:
-            "-Xms64m -Xmx384m -Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30",
+          DX_GW_WRITE_JAVA_OPTS: gatewayJvmOptions["gw-w"].join(" "),
+          DX_GW_READ_JAVA_OPTS: gatewayJvmOptions["gw-r"].join(" "),
         });
         atomicJson(path.join(out, "placement.json"), engines);
         const snapshot = () => scaleHost.snapshot(slot);
@@ -137,6 +135,36 @@ async function physicalCases(
         const capture = !smoke && c.profile === "frozen" && c.load === "zero";
         if (capture) fs.mkdirSync(seedDir);
         if (!capture && !smoke) await restoreSeed(out, "", id.identity, engines, seedDir);
+        const vm = Object.entries(gatewayJvmOptions).map(([role, expected]) => {
+          const container = engines[role].id;
+          const actual = execFileSync(
+            "docker",
+            [
+              "exec",
+              container,
+              "sh",
+              "-ec",
+              [
+                "for p in /proc/[0-9]*; do",
+                '  [ "$(cat "$p/comm" 2>/dev/null)" = java ] || continue',
+                '  tr "\\000" "\\n" < "$p/cmdline" | grep -E "^(-Xm[sx]|-XX:|-Ddatomic.objectCacheMax=)"',
+                "done",
+              ].join("\n"),
+            ],
+            { encoding: "utf8", timeout: 10_000 },
+          )
+            .trim()
+            .split("\n");
+          assert(expected.every((flag) => actual.includes(flag)));
+          assert.equal(actual.filter((flag) => /^-XX:\+Use.*GC$/.test(flag)).length, 1);
+          assert.equal(actual.filter((flag) => flag.startsWith("-Xmx")).at(-1), "-Xmx384m");
+          return { role, container, actual };
+        });
+        atomicJson(path.join(out, "gateway-jvm.json"), {
+          identity: id.identity,
+          capturedAt: Date.now(),
+          vm,
+        });
         const seed = smoke
           ? undefined
           : {

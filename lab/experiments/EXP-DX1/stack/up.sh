@@ -2,6 +2,7 @@
 # [DX-H1] Why: separate peers and durable SQL storage measure the intended topology. Rejected: dev storage (single process).
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/collector.sh"
 prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-write LIST] [--cpus-gw-read LIST] [--gateway-src DIR] [--port-write N] [--port-read N]}
 shift
 [[ "$prefix" =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "DX stack accepts only tx2-dx* prefixes" >&2; exit 2; }
@@ -183,6 +184,11 @@ while (($#)); do
   esac
   shift 2
 done
+explicit_collectors=${DX_STACK_EXPLICIT_GC:-0}
+[[ $explicit_collectors == 0 || $explicit_collectors == 1 ]] || exit 2
+if [[ $explicit_collectors == 1 ]]; then
+  tx_java=$(explicit_gc '-XX:+UseG1GC -XX:MaxGCPauseMillis=50' "$tx_java")
+fi
 if [[ ${DX_BARE_METAL:-0} == 1 ]]; then
   # [DX-BM1] Why: the native read gateway spans cores 4 and 8. Check each requested CPU against this host's actual allocation.
   # Rejected: carrying the eight-CPU Mac VM limit onto the 12-core bench, or allowing unavailable native CPUs.
@@ -483,6 +489,9 @@ for role in w r; do
   elif [[ -z $role_java && -n $heap ]]; then role_java="-Xms256m -Xmx$heap"; fi
   if [[ $role == w ]]; then role_java=${DX_GW_WRITE_JAVA_OPTS:-$role_java}; fi
   if [[ $role == r ]]; then role_java=${DX_GW_READ_JAVA_OPTS:-$role_java}; fi
+  if [[ $explicit_collectors == 1 ]]; then
+    role_java=$(explicit_gc '-XX:+UseG1GC' "$role_java")
+  fi
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
   [[ $role != w ]] || entity_cache_bytes=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-268435456}
   role_trace_java=$trace_gw_java
