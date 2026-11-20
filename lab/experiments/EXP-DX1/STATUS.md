@@ -2409,3 +2409,26 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **Assigned 20:45 local, DX-W1 part 4:** itemise and cut the datoms and bytes of a 1 to 3 fact save (23 datoms and
   7.2 kB measured; target half the native time); a time budget per transaction for the priority 6 ratio at 50, 100 and
   235 saves per second; what limits grouped throughput and the predicted ceiling.
+
+## 2026-11-20 02:05 UTC (21:05 local, 2026-11-19): DX-ACT1 part 5 in: the joined Publish works at 1,000 people
+
+- **DX-ACT1 part 5 (`cff46335b`, Mac VM; `actv-lazy/REPORT.md`, `JOIN.md`, `COST.md`, `STAGES.md`, `RETENTION.md`).** The
+  joined design (LAZY marker + owed-notice event and tail in one native transaction; DELTA's lookups only for
+  notice-making inputs; NOTIFY1's dispatcher) at 1,000 people: wage release durable in 48 ms, first correct answer at
+  58 ms, 166 owed notices recorded, four fact changes and 22.2 KiB, zero people evaluated at Publish. With the 250
+  changed values stored too: 86 / 105 ms. Overtime (no notice index for its inputs, full census) 167 / 177 ms; three-rule
+  release 181 / 194 ms. Native crash and replay gate passed (three kills, 11 census cuts, 21 recipient effects).
+  A connected reader answers 19 ms after durability at 10,000 people (was 36); a fresh process 499 ms, nearly all
+  process start. **Projections from the 1,000-person rung:** storing changed values at 100,000 people 3.9 s (wage),
+  12.0 s (overtime), 13.4 s (three-rule); at 1,000,000 the request passes the gateway's 4 MiB limit. Receipt-only
+  Publish stays one transaction and four changes at any size. Ordinary saves on this path: 5 fact changes
+  (reader-only), 8 (notice input), 10 (changed posting). Deep profile not yet supported on the joined path.
+- **Open with Sam:** (1) does a durable record that determines every changed output count as "durably stored" at the
+  one-second mark, or must the concrete values be written; (2) retention when a number is erased before an owed
+  E-Verify submission is sent (builder recommends keeping a minimal record that a submission was due and pausing).
+- **Lab VM disk:** the pool refused the builder's 10,000-person run on its disk forecast. Removed four seed volumes of
+  closed experiments (DX-H8, DX-H5, DX-B9, DX-H1) and seven superseded DX-THIN1 image builds: VM 64 to 55 GB used,
+  Mac free 27 to 37 GiB.
+- **Assigned 21:05 local, DX-ACT1 part 6:** the 10,000-person joined run; the deep profile; stored outputs inside one
+  second at 100,000 (output ranges for reader-only inputs, parallel evaluation, chunk transactions invisible until
+  the marker); second release while settling; apply W2-ACTAUDIT's findings; one server command with predictions.
