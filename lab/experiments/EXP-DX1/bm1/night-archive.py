@@ -61,8 +61,13 @@ def sources(r):
                 parts[slot]=ROOT/("day-"+batch)/"checkout/state/evidence/DX-T1"/slot
     elif r["item"]==5:parts["rungs"]=root/"build/state/evidence/DX-INT1"/r["tag"]
     elif r["item"]==6:
-        for name in ("preflight","solo-1000","solo-100000","engines"):
-            parts[name]=root/name
+        platform=Path("/var/tmp/triplex-scale1")
+        trial=platform/r["tag"]
+        for file in trial.iterdir() if trial.is_dir() else []:
+            if file.name not in {"compact","summaries.tar.zst","raw.tar.zst"}:
+                parts["delta-campaign/"+file.name]=file
+        for name in ("dedicated.json","delivered.txt"):
+            parts["platform/"+name]=platform/"platform"/name
     for name in ("source","machine","terminal","terminal.json","sources.json","remaining.txt","cleanup.txt","ownership","bootstrap.log"):
         parts["campaign/"+name]=root/name
     parts["bootstrap"]=root/"build/results"

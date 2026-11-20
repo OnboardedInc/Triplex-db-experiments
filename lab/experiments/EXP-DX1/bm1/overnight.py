@@ -23,7 +23,7 @@ ACT = "exp/DX-ACT2-activation-100k"
 # Rejected: inheriting the 24–72 hour limits of standalone research controllers.
 ITEMS = {
     1: (W1, "w1", "502c8897", 4, "grpw1"),
-    6: (ACT, "actv-delta", "d8a921352", 4, "solon19"),
+    6: (ACT, "actv-delta", "eaee4e10", 4, "solon19"),
     2: ("exp/DX-ACT1-activation", "import1", "eb154ca8", 5, "import-bm1n19"),
     3: (W1, "w1", "502c8897", 3, "w1trial01"),
     4: (ACT, "act2", "a9eb03b0", 4, "n19guard"),
@@ -205,7 +205,8 @@ def worker(r):
     repo,node=setup(r,env)
     heavy=[node,"lab/bin/heavy.mjs","--label","DX-BM1-night-"+str(r["item"]),"--",node]
     if r["item"]==6:
-        run("bash",HERE/"delta-preflight.sh","run",root,source,cwd=repo,env=env)
+        run(node,"--import","tsx",EXP/"scale1/bench.ts","launch","2",tag,
+            "activation","--activation-mode","delta",cwd=repo,env=env)
     elif r["item"] in (1,3):
         args=[EXP/"w1/group/server.ts","run",root,source,tag] if r["item"]==1 else [EXP/"w1/bench.ts",root,source,tag]
         run(*heavy,"--experimental-strip-types",*args,cwd=repo,env=env)
@@ -219,8 +220,9 @@ def cleanup(r):
     root,tag,src=Path(r["root"]),r["tag"],r["source"]
     if r["item"] in (1,3) and (root/"active-slot").exists():
         run("bash",Path(r["repo"])/EXP/"w1/release.sh",root,timeout=180)
-    elif r["item"]==6 and (root/"ownership").is_file():
-        run("bash",HERE/"delta-preflight.sh","clean",root,src,timeout=180)
+    elif r["item"]==6:
+        unit="triplex-scale1-"+tag
+        if active(unit):run("systemctl","stop",unit,timeout=620)
     elif r["item"]==2 and (root/"active.json").exists():
         run(root/"build/tools/bin/node","--experimental-strip-types",root/"build/repository"/EXP/"import1/server.ts",
             "--cleanup",root,src,timeout=180)
@@ -245,7 +247,7 @@ def remaining(r):
     root=Path(r["root"])
     if item in (1,3): prefixes=["tx2-dxscale1-w1-"+tag+"-"]
     elif item==5: prefixes=["tx2-dxint1-"+tag+"-"]
-    elif item==6: prefixes=["tx2-dxscale1-bm1"+tag+"-"]
+    elif item==6: prefixes=["tx2-dxscale1-"+tag+"-"]
     else:
         prefixes=["tx2-dxt1-bm1-"+tag+"-"] if item==4 else []
         files=(root/"guarded").glob("*-request.json") if item==4 else root.glob("*/attempt.json")
@@ -294,7 +296,15 @@ def launch(r):
 
 def running(r):
     if active(r["unit"]):return True
-    return r["item"]==5 and active("triplex-int1-"+r["tag"])
+    child = native_unit(r)
+    return bool(child and active(child))
+
+
+def native_unit(request):
+    item, tag = request["item"],request["tag"]
+    if item == 5: return "triplex-int1-"+tag
+    if item == 6: return "triplex-scale1-"+tag
+    return None
 
 
 def restrict_scope(r):
@@ -359,15 +369,22 @@ def result(r):
             put(Path(r["directory"])/"thin-observations.json",{"source":r["source"],"inputs":[digest(f) for f in arms],"arms":actual})
             return "recorded","four measured thin arms"
     elif item==6:
-        check=root/"solo-100000/independent-check.json"
-        if check.is_file():
-            request=get(root/"solo-100000/request.json"); doc=get(check); original=get(root/"solo-100000/result.json")
-            assert original["binding"]==doc["binding"]==request and request["source"]==r["source"]
-            assert request["slot"]=="tx2-dxscale1-bm1"+r["tag"] and original["subjects"]==doc["subjects"]==100000
-            assert doc["offers"]==original["loaded"]["count"]==90 and len(original["accounts"])==1
-            assert original["loaded"]["sha"]==digest(root/"solo-100000/loaded.json")
-            assert original["loaded"]["p99"]==doc["p99"] and len(original["reference"])==2
-            return "recorded",str(check)
+        campaign=Path("/var/tmp/triplex-scale1")/r["tag"]
+        measurement=campaign/"delta-measurement.json"
+        if measurement.is_file():
+            trial=get(campaign/"attempt.json");result=get(measurement)
+            reference=get(campaign/"delta/result.json");outcome=get(campaign/"terminal.json")
+            proof=get(campaign/"preflight.json")
+            request=get(campaign/"delta/request.json")
+            assert request==reference["binding"]==result["binding"]==proof["binding"]
+            assert request["source"]==trial["source"]==outcome["source"]==r["source"]
+            assert request["slot"]==trial["slot"]=="tx2-dxscale1-"+r["tag"]
+            assert request["nonce"]==trial["nonce"]==outcome["nonce"] and outcome["cleanup"] is True
+            assert trial["item"]==2 and trial["activationMode"]=="delta" and outcome["tag"]==r["tag"]
+            assert reference["subjects"]==result["subjects"]==100000 and result["loaded"]["count"]==90
+            assert len(result["accounts"])==1 and result==reference
+            assert result["loaded"]["sha"]==digest(campaign/"delta/loaded.json") and len(result["reference"])==2
+            return "recorded",str(measurement)
     elif item==4 and (root/"guarded/comparison.json").is_file():
         comparison=get(root/"guarded/comparison.json")
         rows=comparison["results"];assert len(rows)>=4
@@ -415,7 +432,7 @@ def fallback(r):
     timer=f"bm1n19-hard-{r['item']}-{r['attempt']}"
     if not active(timer+".timer"):
         targets=[r["unit"]+".service"]
-        if r["item"]==5:targets.append("triplex-int1-"+r["tag"]+".service")
+        if child:=native_unit(r):targets.append(child+".service")
         seconds=max(1,int(r["deadline"]-time.time()))
         run("systemd-run","--no-block","--unit="+timer,"--on-active="+str(seconds)+"s",
             "--timer-property=AccuracySec=1s","/usr/bin/systemctl","stop",*targets)
@@ -446,7 +463,7 @@ def one(item):
                 if time.time()>=limit:
                     timed_out=True
                     if active(r["unit"]):run("systemctl","stop",r["unit"],timeout=210)
-                    if item==5 and active("triplex-int1-"+r["tag"]):run("systemctl","stop","triplex-int1-"+r["tag"],timeout=210)
+                    if (child:=native_unit(r)) and active(child):run("systemctl","stop",child,timeout=620 if item==6 else 210)
                     break
                 restrict_scope(r)
                 time.sleep(5)
@@ -474,6 +491,9 @@ def one(item):
         preflights=[p for p in (root/"preflight-stop.json",root/"preflight/STATUS.json",root/"source-preflight.json") if p.is_file() and ("stop" in p.name or "stopped" in p.read_text()[:8192])]
         if item==5:
             preflights.extend(p for p in (root/"build/state/evidence/DX-INT1"/r["tag"]).glob("*-preflight/STATUS.json") if "stopped" in p.read_text()[:8192])
+        if item==6:
+            failure=Path("/var/tmp/triplex-scale1")/r["tag"]/"preflight-stop.json"
+            if failure.is_file(): preflights.append(failure)
         if item==4 and (root/"logs/smoke.log").is_file() and not (root/"logs/seed.log").is_file():preflights.append(root/"logs/smoke.log")
         if preflights or (item in (1,3) and not (root/"results/arm-1/identity.json").exists()):break
     put(end,entry)
@@ -486,7 +506,7 @@ def main():
     mode=sys.argv[1]
     if mode in {"worker","cleanup"}:
         item,attempt=map(int,sys.argv[2:4]);r=bind(get(NIGHT/f"i{item}"/str(attempt)/"request.json"))
-        if mode=="cleanup" and item==5 and os.environ.get("SERVICE_RESULT")=="success" and active("triplex-int1-"+r["tag"]):return
+        if mode=="cleanup" and (child:=native_unit(r)) and os.environ.get("SERVICE_RESULT")=="success" and active(child):return
         (worker if mode=="worker" else cleanup)(r);return
     assert mode=="run"
     lock=(NIGHT/"campaign.lock").open("a");fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
