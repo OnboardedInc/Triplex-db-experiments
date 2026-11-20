@@ -3401,3 +3401,20 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - The turn then ended with the provider's "flagged for possible cybersecurity risk" error (exit 1, empty last
   message, 3.98 million tokens used). Third occurrence in this project (DX-STG1, W2-WRITEAUDIT before). Resumed with
   a brief in plain product language (people, values, removal requests) and the remaining items 2 to 5.
+
+## 2026-11-20 19:35 UTC (14:35 local, 2026-11-20): DX-TAIL1 part 3 in (two hours, no lease); Mac disk at 7 GiB and being cleared
+
+- **DX-TAIL1 part 3 (`da4c34f48`, based on `exp/DX-INT1` `fa0e3c6fc`; `tail1/REPORT.md`, `RECORDING.md`,
+  `PREDICTIONS-PART3.md`).** Per-event recording for all three Java processes is on by default in the
+  shared-database scorecard launcher; the write gateway defaults to two cores with G1, reader and transactor state
+  their heaps and G1; receipt reuse stays opt-in (16 native tests pass); a Mac trace gate joined all 192 saves to
+  their native transactions; erasure check and five-cut replay pass. From the archived server run: a deep save
+  averaged 12.61 storage segment reads against 0.55 for a thin save; storage reads account for 2.18 ms of the
+  8.26 ms rise in mean transaction evaluation; the rest of the tail is unattributed until the server arms run.
+  Server command: two cache settings on JVM1's sealed seed, up to 17 minutes each. Recording cost (bar under 2
+  percent) unmeasured. DX-TAIL1 is parked until those arms run.
+- **Mac disk.** Free space fell 21 to 7 GiB between 13:55 and 14:30 local. Causes found: builders rebuild a 1.0 to
+  2.6 GB image per variant (37 images, 33 GB in the lab VM); DX-THIN1 keeps eight full source copies. `node_modules`
+  deletions freed nothing (pnpm hard links). Actions: superseded and old images removed, old volumes removed, trim
+  every 15 minutes, 13 GB of DX-T1 evidence being compressed into the Drive archive, a disk rule added to the
+  builders' rule file (at most two images and two source copies each).
