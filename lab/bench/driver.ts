@@ -177,7 +177,9 @@ const rawDir = path.dirname(output);
 fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
 const rollingReadSmoke = flag("rolling-read-smoke");
+const rd1ReadDiagnostic = flag("rd1-read-diagnostic");
 if (rollingReadSmoke) devFlags.push("rolling-read-smoke");
+if (rd1ReadDiagnostic) devFlags.push("rd1-read-diagnostic");
 if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
 if (flag("legacy-empty-basis-broadcast")) devFlags.push("legacy-empty-basis-broadcast");
 const boundedMemoryTrial = process.env.DX_BOUNDED_MEMORY_TRIAL === "1";
@@ -361,7 +363,7 @@ const report: Record<string, any> = latencyReceipt({
   qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v3: final-receipt ACK, minimum 500 commits, four-subject growth",
   verdictClock: VERDICT_CLOCK,
-  verdictPlanId: tenantSpec ? (tenantSpec.live ? liveProfile+"/"+tenantSpec.live : tenantTraceId+"/"+tenantSpec.study) : fullLength ? V3_PLAN_ID : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
+  verdictPlanId: tenantSpec ? (tenantSpec.live ? liveProfile+"/"+tenantSpec.live : tenantTraceId+"/"+tenantSpec.study) : fullLength ? V3_PLAN_ID : rd1ReadDiagnostic ? "rd1-reader-diagnostic/1" : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
   status: "RUNNING",
   startedAt: new Date().toISOString(),
   config,
@@ -453,7 +455,9 @@ const modelJournalContext = {
 const streamReads = (fullLength || rollingReadSmoke) && !config.zeroReaders && lane === "datomic" && config.readPath === "replica" &&
   config.strictRecordClocks && config.replicaThread === "worker" && config.expectedStateRetention === "worker-journal" &&
   !pairPlan && !tenantSpec && config.readRetention !== "raw";
-if (rollingReadSmoke && (!streamReads || profile !== "smoke" || !config.readerLadderOnly || !config.levelS || config.levelS <= config.settleS))
+if (rd1ReadDiagnostic && (!rollingReadSmoke || !config.levelS || config.levelS > 45))
+  throw Error("RD1 read diagnostics require the rolling smoke plan and levels no longer than 45 s");
+if (rollingReadSmoke && ((!streamReads && !(rd1ReadDiagnostic && config.zeroReaders)) || profile !== "smoke" || !config.readerLadderOnly || !config.levelS || config.levelS <= config.settleS))
   throw Error("Rolling read smoke requires the short replica ladder and its worker journal");
 let modelJournal = config.expectedStateRetention === "journal" ? new ModelJournal(modelJournalFile, modelJournalContext) : undefined;
 const modelJournalThread = config.expectedStateRetention === "worker-journal" && !streamReads ? new ModelJournalThread(modelJournalFile, modelJournalContext) : undefined;
@@ -1256,13 +1260,20 @@ async function run() {
   };
 
   // ---------------------------------------------------------------- phases
+  // [DX-RD1] Why: retain the stress, recovery and weighted phases inside one short diagnostic arm and its exact zero control.
+  // Rejected: truncating v3 or including the multi-hour depth-growth phases under a short time budget.
+  const rd1Phases = new Set(["warmup", "baseline", "L256", "L1024", "recovery", "p4mix"]);
+  const keepPhase = (p: ReturnType<typeof nsPlan>[number]) => {
+    if (rd1ReadDiagnostic) return rd1Phases.has(p.name);
+    return !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256));
+  };
   let plan: ReturnType<typeof nsPlan> = tenantSpec && deepId ? tenantPhases(tenantSpec,deepId.arm) : smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
     { name: "presweep", readers: 64, seconds: 100, measured: true, mode: "mixed" },
     { name: "activation", readers: 64, measured: true, mode: "mixed" },
   ] : deepSmoke ? [
     { name: "warmup", readers: config.zeroReaders ? 0 : 1, seconds: 5, measured: false },
     { name: "L4", readers: config.zeroReaders ? 0 : 4, seconds: 25, measured: true, ladder: true, mode: "mixed" },
-  ] : idle ? idle.phases : nsPlan(profile === "deep" || profile === "deep-live" || profile === "deep-smoke" ? "v3" : profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
+  ] : idle ? idle.phases : nsPlan(profile === "deep" || profile === "deep-live" || profile === "deep-smoke" ? "v3" : profile, config.zeroReaders).filter(keepPhase).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
   // [DX-RD1] Why: exercise the real rolling collector and source frontier in a brief owned smoke run.
   // Rejected: weakening the fixed v3 schedule or using a scaled run for a verdict.
   if (rollingReadSmoke) {
@@ -1346,8 +1357,11 @@ async function run() {
       const windows = spec.measured ? [{ name: spec.name, from: start + settle, to }] : [];
       if (spec.name === "L256-A") windows.push({ name: "L256-legacy", from: start + settle, to: start + 45_000 });
       if (spec.name === "L256-D") windows.push({ name: "L256-adjacent", from: to - 45_000 + settle, to });
-      const recovery = spec.pool === "recovery" ? Array.from({ length: (spec.seconds! - 30) / 5 + 1 }, (_, i) =>
-        ({ name: spec.name, from: start + i * 5000, to: start + i * 5000 + 30_000 })) : [];
+      const recoveryWidth = Math.min(30, spec.seconds!);
+      const recovery = spec.pool === "recovery" || spec.name === "recovery"
+        ? Array.from({ length: Math.floor((spec.seconds! - recoveryWidth) / 5) + 1 }, (_, i) =>
+          ({ name: spec.name, from: start + i * 5000, to: start + i * 5000 + recoveryWidth * 1000 }))
+        : [];
       checkedPlan = { windows, recovery };
     }
     await spill?.beginPhase(idx, start, config.settleS * 1000, checkedPlan);
@@ -2270,7 +2284,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   }
 
   const saturated = Object.values(stats).filter((s: any) => s.client.saturated).map((s: any) => s.phase);
-  const stressHeadroom = fullLength && !config.zeroReaders ? ctx.phases.filter(p => p.readers === 1024 && p.measured).map(p => {
+  const stressHeadroom = (fullLength || rd1ReadDiagnostic) && !config.zeroReaders ? ctx.phases.filter(p => p.readers === 1024 && p.measured).map(p => {
     const w = windowOf(p);
     const inside = (samples: { t: number; elu: number }[]) => mean(samples.filter(e => e.t >= w.from && e.t < w.to).map(e => e.elu));
     const readers = Array.from({ length: config.readerThreads }, (_, worker) => inside(workerElu.filter(e => e.worker === worker && e.running! > 0)));
