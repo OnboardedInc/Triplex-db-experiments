@@ -13,7 +13,7 @@ import {
   type QueryContext,
   type QueryPlan,
 } from "@triplex-build/triplex/runtime";
-import type { DatalogQuery } from "@triplex-build/triplex/datalog";
+import type { DatalogQuery, WrappedQuery } from "@triplex-build/triplex/datalog";
 import { isVariable } from "@triplex-build/triplex/datalog";
 import { DatomicClient } from "./DatomicClient.js";
 import { validateTagged, type TaggedValue } from "./codec.js";
@@ -22,6 +22,7 @@ import { compileDatomic } from "./compiler.js";
 import { stagedInput } from "./protocol.js";
 import { finish, page } from "./kernel.js";
 import { assertionValue } from "./rows.js";
+type PageCursor = Parameters<QueryExecutorService["executePage"]>[3];
 
 const decode = (wire: TaggedValue): QueryContext[string] => {
   const value = validateTagged(wire);
@@ -36,6 +37,34 @@ export function makeDatomicQueryExecutor(
   const source = Effect.map(CurrentTransactions, (transactions) =>
     [...transactions.values()].find((s) => s.client === client && s.scopeKey === scopeKey),
   );
+  const evaluateNative = async (q: DatalogQuery, basis: ResolvedTemporalBasis, request: Record<string, unknown>) => {
+    const compiled = traceSync("client.query-planning", () => compileDatomic(q, basis));
+    const wire = await client.request<{ rows: TaggedValue[][]; recordedPosition?: number; database?: string }>(
+      "POST", `/v1/db/${db}/q`, { edn: compiled.edn, basis, ...request },
+    );
+    return { scope: wire.database, position: wire.recordedPosition, rows: wire.rows.map((row) =>
+      Object.fromEntries(compiled.variables.map((v, i) => [v, decode(row[i]!)])),
+    ) };
+  };
+  const onePage = (query: WrappedQuery, basis: ResolvedTemporalBasis, cursor?: PageCursor) =>
+    Effect.gen(function* () {
+      const inner = query.inner;
+      if (process.env["TRIPLEX_DATOMIC_POINT_QUERY"] !== "1" || inner.rules?.length || inner.optionalProjection ||
+          !inner.where.length || !inner.where.every((c) => c.length === 3 && typeof c[0] === "string" && !isVariable(c[0]) &&
+            typeof c[1] === "string" && c[1].startsWith(":"))) return undefined;
+      if (yield* source) return undefined;
+      return yield* Effect.tryPromise({
+        try: async () => {
+          const response = await evaluateNative(inner, basis, { singleRequest: true, timeoutMs: 30000 });
+          const p = response.position;
+          if (response.scope !== db || p === undefined || !Number.isSafeInteger(p) || p < 0 ||
+              (basis.recordedPosition !== undefined && p !== basis.recordedPosition))
+            throw new TypeError("Point query returned a different recorded position");
+          return { position: p, result: page(query, finish(inner, response.rows), cursor) };
+        },
+        catch: (cause) => readFailure(cause, "Datomic point query failed"),
+      });
+    });
   const run = (query: DatalogQuery, basis?: ResolvedTemporalBasis) =>
     Effect.gen(function* () {
       const checked = yield* Effect.try({
@@ -74,21 +103,8 @@ export function makeDatomicQueryExecutor(
             const evaluate = async (q: DatalogQuery): Promise<QueryContext[]> => {
               if (Date.now() - started > 30000)
                 throw new RangeError("Datomic query deadline exceeded");
-              const compiled = traceSync("client.query-planning", () => compileDatomic(q, cut));
-              const wire = await client.request<{ rows: TaggedValue[][] }>(
-                "POST",
-                `/v1/db/${db}/q`,
-                {
-                  edn: compiled.edn,
-                  basis: cut,
-                  relations,
-                  timeoutMs: Math.max(1, 30000 - (Date.now() - started)),
-                  ...pin,
-                },
-              );
-              return wire.rows.map((row) =>
-                Object.fromEntries(compiled.variables.map((v, i) => [v, decode(row[i]!)])),
-              );
+              return (await evaluateNative(q, cut, { relations,
+                timeoutMs: Math.max(1, 30000 - (Date.now() - started)), ...pin })).rows;
             };
             // Adapt the existing XTDB/QLever bounded binary frontier contract, without recursive Datomic rules.
             const rules = checked.rules ?? [];
@@ -191,6 +207,7 @@ export function makeDatomicQueryExecutor(
     ],
   });
   return {
+    executePageAtHead: (query, _debug, basis) => onePage(query, basis),
     execute: (query, _debug, basis) => run(query, basis),
     executePage: (input, _debug, basis, cursor) =>
       Effect.gen(function* () {
@@ -201,6 +218,8 @@ export function makeDatomicQueryExecutor(
               ? cause
               : new ReadError({ message: "Invalid wrapped query", cause }),
         });
+        const direct = basis ? yield* onePage(query, basis, cursor) : undefined;
+        if (direct) return direct.result;
         const result = yield* run(query.inner, basis);
         return page(query, result.results, cursor);
       }),

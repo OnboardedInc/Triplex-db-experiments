@@ -109,15 +109,19 @@ if study == "query6-cost":
     assert writer["predecessorSelected"] is True and writer["selectedFunction"].startswith(":triplex.write/v-")
     samples = arm["samples"]
     assert len(samples) == len({r["id"] for r in samples}) == 64
-    read_samples = {"match": [], "datalog": []}
+    routes = ["match", "datalog", "point"] if len(samples[0]["reads"]) == 3 else ["match", "datalog"]
+    read_samples = {route: [] for route in routes}
+    calls = {"match": ["read"], "point": ["q"], "datalog": ["basis", "snapshot", "q", "release"]}
     for n, sample in enumerate(samples):
         value = f"value:{n}"
         assert [sample["n"], sample["command"], sample["position"], sample["expected"]] == [n, f"save:{n}", n + 2, value]
         assert sample["saved"] > 0 and all(x > 0 for x in sample["write"])
-        assert [r["route"] for r in sample["reads"]] == (["match", "datalog"] if n % 2 == 0 else ["datalog", "match"])
+        assert [r["route"] for r in sample["reads"]] == [routes[(n + i) % len(routes)] for i in range(len(routes))]
         for read in sample["reads"]:
             assert read["value"] == value
-            assert read["calls"] == (["basis", "snapshot", "q", "release"] if read["route"] == "datalog" else ["read"])
+            assert read["calls"] == calls[read["route"]]
+            if "point" in routes:
+                assert len(read["callMs"]) == len(read["calls"]) and all(n > 0 for n in read["callMs"])
             assert all(read[k] > 0 for k in ("readMs", "requestBytes", "responseBytes"))
             read_samples[read["route"]].append(read)
     result = {**binding, "samples": len(samples), "writer": writer,
@@ -127,6 +131,11 @@ if study == "query6-cost":
               "datoms": sorted({r["write"][2] for r in samples}),
               "reads": {route: {k: quantiles([r[k] for r in rows]) for k in ("readMs", "requestBytes", "responseBytes")}
                         for route, rows in read_samples.items()}}
+    if "point" in routes:
+        for route, rows in read_samples.items():
+            result["reads"][route]["stageMs"] = {op: quantiles([r["callMs"][i] for r in rows])
+                                                  for i, op in enumerate(calls[route])}
+        result["pointToMatchP50"] = result["reads"]["point"]["readMs"][0] / result["reads"]["match"]["readMs"][0]
     with (out / ("verified-" + str(uuid.uuid4()) + ".json")).open("x") as f:
         json.dump(result, f, indent=2)
         print(f.name)

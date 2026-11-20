@@ -483,16 +483,22 @@ export function queryCost(url: string, nonce: string) {
       const reads = [];
       // [DX-W1] Why: pair the routes at the same durable cut and alternate the first read.
       // Rejected: comparing two gateway lifecycles, which can differ in cache state and CPU share.
-      for (const route of n % 2 === 0 ? ["match", "datalog"] : ["datalog", "match"]) {
+      const routes = ["match", "datalog", "point"] as const;
+      for (let i = 0; i < routes.length; i++) {
+        const route = routes[(n + i) % routes.length]!;
         requests = [];
+        process.env.TRIPLEX_DATOMIC_POINT_QUERY = route === "point" ? "1" : "0";
         const read = performance.now();
-        const answers =
-          route === "datalog"
-            ? results(await run(t.query(query, { basis })))
-            : (await run(t.match(pattern, basis))).map((row) => ({ "?v": row.value.value }));
+        let answers;
+        if (route === "match") answers = (await run(t.match(pattern, basis))).map((row) => ({ "?v": row.value.value }));
+        else {
+          const answer = await run(t.query(query, { basis, includeBasis: true }));
+          assert.equal(answer.basis?.recordedPosition, committed.position);
+          answers = answer.results;
+        }
         const readMs = performance.now() - read;
         assert.deepEqual(answers, [{ "?v": expected }]);
-        const endpoint = route === "datalog" ? "/q" : "/read";
+        const endpoint = route === "match" ? "/read" : "/q";
         const response = requests.find((entry) => entry.path.endsWith(endpoint));
         assert(response && response.status === 200);
         reads.push({
@@ -500,6 +506,7 @@ export function queryCost(url: string, nonce: string) {
           readMs,
           value: answers[0]?.["?v"],
           calls: requests.map((entry) => entry.path.split("/").at(-1)),
+          callMs: requests.map((entry) => entry.finished - entry.started),
           requestBytes: requests.reduce((sum, entry) => sum + entry.requestBytes, 0),
           responseBytes: requests.reduce((sum, entry) => sum + entry.responseBytes, 0),
         });

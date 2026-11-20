@@ -1,7 +1,7 @@
 (ns triplex.gateway.lean-query
   (:require [datomic.api :as d] [triplex.gateway.canonical :as canonical]
             [triplex.gateway.codec :as codec] [triplex.gateway.lean :as lean]
-            [triplex.gateway.storage :as storage]))
+            [triplex.gateway.storage :as storage] [triplex.gateway.privacy :as privacy]))
 
 (def enabled (= "1" (System/getenv "TX2_LEAN_NATIVE_QUERY")))
 (def identifiers #{:f/id :triplex.entity/id :triplex.attr/key})
@@ -23,6 +23,18 @@
 (defn join-key? [x] (or (canonical/variable? x) (logical-id? x)))
 (defn data-pattern [form] (if (= '$ (first form)) (subvec form 1) form))
 (defn rule-pattern? [form] (= '$rules (first form)))
+
+(defn assert-guarded-query! [query]
+  ;; [DX-W1] Why: a managed scope may query proven public facts and the currently masked journal.
+  ;; Rejected: deleting protected rows from an unconstrained relation (negation and counts would change silently).
+  (let [where (:where query)
+        patterns (when (and (every? vector? where) (not-any? rule-pattern? where)) (mapv data-pattern where))
+        attributes (into {} (keep (fn [[e a v]] (when (and (= :triplex.attr/key a) (join-key? e) (string? v)) [e v]))) patterns)
+        keys (into {} (keep (fn [[e a v]] (when (= :f/attr a) (when-let [key (attributes v)] [e key])))) patterns)
+        facts (set (keep (fn [[e a]] (when (or (fact-attributes a) (#{::row ::scalar ::transaction} a)) e)) patterns))]
+    (when-not (and (seq facts) (every? #(when-let [key (keys %)] (not ((:attrs privacy/*cut*) key))) facts))
+      (throw (ex-info "Query must name public attributes or use Match for protected values"
+                      {:status 409 :code "ErasureQueryUnsupported" :route "q"})))))
 
 (defn visible-row [row valid recorded position]
   (storage/visible? row {"validAt" valid "recordedAt" recorded "recordedPosition" position} false))
@@ -142,8 +154,8 @@
 
 (defn input-budget! []
   (throw (ex-info "Lean query exceeded the row source budget" {:status 422 :code "QueryInputBudgetExceeded" :route "q"})))
-(defn relation [name db query basis deadline]
-  (let [point (point-demands (:where query)) p (select-keys basis ["recordedPosition"])
+(defn relation [name db point basis deadline]
+  (let [p (select-keys basis ["recordedPosition"])
         n (volatile! 0) text (volatile! 0)
         ;; [DX-W1] Why: check the budget as the index is consumed, before grouping one owner's history.
         ;; Rejected: counting the decoded results after a single large history could exhaust the peer.
@@ -157,7 +169,9 @@
                    (concat (lean/rows name db {"history" true "entityIds" (vec (:subjects point))} visit!)
                            (mapcat #(lean/rows name db {"history" true "id" %} visit!) (:ids point)))
                    (lean/rows name db {"history" true} visit!))
-        rows (keep #(when (storage/visible? % p true) (storage/mask-retirement % p)) all-rows)
+        rows (keep #(when (and (storage/visible? % p true)
+                               (or (nil? privacy/*cut*) (not ((:attrs privacy/*cut*) (:attribute %)))))
+                      (privacy/masked (storage/mask-retirement % p))) all-rows)
         ;; Entity stubs created by reference upserts are application identities even when they have no facts.
         identities (when-not point
                      (map (fn [x]

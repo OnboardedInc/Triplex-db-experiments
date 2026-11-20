@@ -421,6 +421,7 @@ try {
   } else if (fieldStudy === "erase6") {
     await observeErasure();
   } else if (fieldStudy === "query6") {
+    process.env.TRIPLEX_DATOMIC_POINT_QUERY = "1";
     const proof = await gateway(false, {
       TX2_SAVE_LEDGER: "1",
       TX2_SMALL_ROWS: "1",

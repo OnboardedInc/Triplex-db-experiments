@@ -271,10 +271,10 @@
                          (finally (when (get input "release") (storage/release! name (get input "handle")))))
             "read" (trace/span "storage/read-rows" "gateway" (storage/read-rows name db input))
             "q" (trace/span "query/run" "gateway"
-                  (do (when privacy/*cut*
+                  (do (when (and privacy/*cut* (not (lean/enabled? (or db (storage/held-db name (get input "handle"))))))
                         (throw (ex-info "Lean queries need current erasure-aware value semantics"
                                         {:status 409 :code "ErasureQueryUnsupported" :route "q"})))
-                      (when (and lean-query/enabled (lean/enabled? (or db (storage/held-db name (get input "handle")))))
+                      (when (and (nil? privacy/*cut*) lean-query/enabled (lean/enabled? (or db (storage/held-db name (get input "handle")))))
                         (lean-query/assert-unprotected! (or db (d/db (connection db-uri)))))
                       (query/run name db input)))
             "operation" (storage/operation db id)
