@@ -11,7 +11,7 @@ function fixture(overrides: Partial<Port> = {}) {
     drain: async () => {
       calls.push("drain");
     },
-    primary: async () => ({ sync: true, flush: "0/04", waitingMs: 0 }),
+    primary: async () => ({ configured: true, sync: true, flush: "0/04", waitingMs: 0 }),
     candidate: async () => ({ cluster: "1", timeline: 1, receive: "0/06", replay: "0/06" }),
     fence: async () => {
       calls.push("fence");
@@ -82,4 +82,15 @@ test("a failed two-copy policy leaves ingress sealed", async () => {
   });
   await assert.rejects(run.run("planned", "two-copy"), /replacement unavailable/);
   assert.deepEqual(calls, ["seal", "drain", "fence", "promote"]);
+});
+
+test("a change in the source commit policy seals the writer without promoting", async () => {
+  const { calls, run } = fixture({
+    primary: async () => ({ configured: false, sync: false, flush: "0/04", waitingMs: 0 }),
+  });
+  await assert.rejects(
+    run.run("fault", "single-copy-after-fence"),
+    /protected commit configuration/,
+  );
+  assert.deepEqual(calls, ["seal"]);
 });

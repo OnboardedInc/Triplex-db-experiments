@@ -377,7 +377,7 @@ async function faultWork(
         const waiting = await pair.sql(
           "pg",
           "select pg_current_wal_flush_lsn(),pid,query from pg_stat_activity where " +
-            "usename='moving' and wait_event='SyncRep' and lower(query) like '%datomic_kvs%' " +
+            "usename='moving' and wait_event='SyncRep' and lower(query) like 'insert%datomic_kvs%' " +
             "order by query_start desc limit 1",
         );
         if (
@@ -387,7 +387,13 @@ async function faultWork(
         )
           return undefined;
         const current = await pair.candidate();
-        if (direction === "reply" && lsn(current.receive) <= lsn(durable.receive)) return undefined;
+        const primaryFlush = lsn(waiting.split("|")[0]!);
+        if (
+          direction === "reply"
+            ? lsn(current.receive) < primaryFlush || lsn(current.receive) <= lsn(durable.receive)
+            : lsn(current.receive) >= primaryFlush
+        )
+          return undefined;
         return { direction, before, packet, waiting, durable, current };
       });
       e.log("fault-trap", trap);

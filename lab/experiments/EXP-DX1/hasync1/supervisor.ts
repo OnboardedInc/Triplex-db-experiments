@@ -34,7 +34,12 @@ export async function wait<T>(label: string, ms: number, probe: () => Promise<T 
   throw Error("Deadline waiting for " + label);
 }
 
-export type PrimarySample = { sync: boolean; flush: string; waitingMs: number };
+export type PrimarySample = {
+  configured: boolean;
+  sync: boolean;
+  flush: string;
+  waitingMs: number;
+};
 export type Candidate = { cluster: string; receive: string; replay: string; timeline: number };
 export type FenceProof = {
   cluster: string;
@@ -80,6 +85,10 @@ export class Supervisor {
       await wait("primary death or blocked synchronous replication", timeouts.detect, async () => {
         // [DX-HASYNC1] Why: a reachable primary can be unable to finish a protected commit. Rejected: TCP connect as a replication health signal.
         const sample = await p.primary();
+        if (sample && !sample.configured) {
+          p.seal();
+          throw Error("Primary changed its protected commit configuration");
+        }
         if (sample?.sync && lsn(sample.flush) > lsn(this.#floor)) this.#floor = sample.flush;
         const bad = !sample || !sample.sync || sample.waitingMs >= timeouts.syncStall;
         misses = bad ? misses + 1 : 0;
@@ -91,7 +100,10 @@ export class Supervisor {
       });
     } else {
       const sample = await p.primary();
-      assert(sample?.sync && sample.waitingMs < timeouts.syncStall, "Plan needs a healthy copy");
+      assert(
+        sample?.configured && sample.sync && sample.waitingMs < timeouts.syncStall,
+        "Plan needs a healthy copy",
+      );
       if (lsn(sample.flush) > lsn(this.#floor)) this.#floor = sample.flush;
       await wait("live pre-cut replay", timeouts.replay, async () => {
         const c = await p.candidate();

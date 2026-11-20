@@ -6,6 +6,7 @@ import { Stack, type Site } from "../ha1/stack.ts";
 import { DatomicClient } from "../../../../packages/datomic/test/ha1-account.ts";
 import { ingress } from "./ingress.ts";
 import type { Checkpoint } from "./seed.ts";
+import type { PowerFence } from "./power-fence.ts";
 import {
   lsn,
   Supervisor,
@@ -53,6 +54,7 @@ export class SyncPair {
   constructor(
     readonly s: Stack,
     readonly base?: { path: string; checkpoint?: Checkpoint },
+    readonly powerFence?: PowerFence,
   ) {
     this.latch = s.e.prefix + "-fence";
     this.primaryData = s.e.prefix + "-pgdata";
@@ -301,16 +303,21 @@ export class SyncPair {
     const row = await this.sql(
       "pg",
       "select current_setting('fsync')='on' and current_setting('synchronous_commit')='on' and " +
-        "current_setting('synchronous_standby_names')='FIRST 1 (sync_b)' and exists " +
+        "current_setting('synchronous_standby_names')='FIRST 1 (sync_b)', exists " +
         "(select 1 from pg_stat_replication where application_name='sync_b' and state='streaming' and sync_state='sync')," +
         "coalesce((select flush_lsn::text from pg_stat_replication where application_name='sync_b'), '0/0')," +
         "coalesce((select max(extract(epoch from (clock_timestamp()-query_start))*1000)::bigint from pg_stat_activity " +
         "where wait_event='SyncRep' and datname='moving'),0) where not pg_is_in_recovery()",
     ).catch(() => undefined);
     if (!row) return undefined;
-    const [sync, flush, waiting] = row.split("|");
+    const [configured, sync, flush, waiting] = row.split("|");
     assert(flush && /^\d+$/.test(waiting ?? ""));
-    return { sync: sync === "t", flush, waitingMs: Number(waiting) };
+    return {
+      configured: configured === "t",
+      sync: sync === "t",
+      flush,
+      waitingMs: Number(waiting),
+    };
   }
   async tx(role: "active" | "standby", site: Site) {
     const s = this.s;
@@ -599,7 +606,13 @@ export class SyncPair {
       drain: () => route.drain(),
       primary: () => this.#primary(),
       candidate: () => this.candidate(),
-      fence: (planned) => this.fence(planned),
+      fence: async (planned) => {
+        if (!planned && this.powerFence) {
+          const { timeline: _timeline, ...owner } = port.identity;
+          return { proof: await this.powerFence(owner) };
+        }
+        return this.fence(planned);
+      },
       promote: () => this.promote(),
       activate: (policy, kind) => this.activate(policy, kind),
       publish: () => route.publish(this.reader),
