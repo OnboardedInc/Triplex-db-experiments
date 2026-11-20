@@ -504,12 +504,14 @@
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
-                        :code (cond (re-find #"TRIPLEX_IMPORT_PREDECESSOR" text) "ImportPredecessorMissing"
+                        :code (cond (re-find #"TRIPLEX_OPERATION_DUPLICATE" text) "OperationDuplicate"
+                                    (re-find #"TRIPLEX_COMMAND_DUPLICATE" text) "CommandConflict"
+                                    (re-find #"TRIPLEX_IMPORT_PREDECESSOR" text) "ImportPredecessorMissing"
                                     (re-find #"TRIPLEX_CLOCK_EXHAUSTED" text) "ClockExhausted"
                                     (re-find #"TRIPLEX_CLOCK" text) "ClockConflict"
                                     (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
-                                    (re-find #"TRIPLEX_COMMAND_DUPLICATE|triplex.claim/command-id" text) "CommandConflict"
-                                    (re-find #"TRIPLEX_OPERATION_DUPLICATE|triplex.tx/operation-id" text) "OperationDuplicate"
+                                    (re-find #"triplex.claim/command-id" text) "CommandConflict"
+                                    (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
                                     (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e))))))
 (defn operation [db id]
   (if-let [{:keys [position t clock]} (group/receipt db id)]

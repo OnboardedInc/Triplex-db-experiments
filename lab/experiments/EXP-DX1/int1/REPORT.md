@@ -27,6 +27,10 @@ The erasure checks compare original typed values, markers, command receipts and 
 
 HA1 merged cleanly from 944b8d4d8. Its earlier reconciliation retained operation and command duplicate checks and the ordered-import predecessor. Sixteen tests passed. Two native arms at 4921611ff independently matched 2,088 frame receipts and 41,832 verified facts at their final cuts. The verifier reread the SQLite frame ledgers and native command positions and tied them to the fresh source, slot, offers, reopened cursor and cleanup. Physical pacing and quiet-account effects remain open.
 
+HASYNC1 conflicted in the HA runners, the cut cache and native error typing. The merge keeps exact cached cut metadata, all ordered-import arms and the three distinct native conflict outcomes. The default waits for a second copy. Policy A is selectable. Sixteen tests and the HA typecheck passed on 9ed520247. Two small pooled native drills kept 201 exact saves and 2,001 reads across failover and a move.
+
+The synchronous recovery recount compares preserved account memberships and seed receipts, the withheld native receipt with its SDK retry and the first protected move's WAL witness. It binds cuts, raw offers, slot and cleanup to both new attempts on the same source. The Mac exercises one machine. Physical P9 requires two.
+
 ## Server work
 
 Run the physical scorecard on the exact merged revision at both ages. The old frozen preflight had two exact arms. The field comparison, compatibility with the aged journal and physical age results remain open. [Earlier campaign and options](P5-EVIDENCE.md)

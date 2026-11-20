@@ -4,6 +4,7 @@ d1e67322c56890c3eac150f7e41ab05580bc1bf2e52c82f39dcc1ad6ec0624f1  int1/p6/act1-p
 25b511de465117639ddbdf679eee4199468f47a36c35ed43bbc4c6b57cc1f434  int1/p6/erase1-build-options.tar.gz
 e846a4aa59e212dabb1e7b92ad56f2769561d56b8781a71a5949dac26d46318f  int1/p6/erase1-removal.tar.gz
 1b0168b20512a55bde1d3da261f85c81390dd5cb3e110c6bd5f2fabdfdd73419  int1/p6/ha1-loader.tar.gz
+87b4df4c306969fe09e4c47d540a3596c2ae202005864f7af0a3aae5603cd515  int1/p6/hasync1-two-copy.tar.gz
 33998bd5a67809a5fa3daf8a5011432801a1f7a51b6d0b55a971209b26ea95e9  int1/p6/interrupted-profiles.tar.gz
 7df132b6464325addfc7b97973e845b6e9ba3b3b79321e4486b20fe7ac9fc49f  int1/p6/mac-prelude.tar.gz
 7d95cc483552aca5bac960d4bd825ae9b373154ac911a182cb877677ae07e426  int1/p6/prep1-recovery.tar.gz

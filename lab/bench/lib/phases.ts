@@ -12,7 +12,7 @@
 export interface PhaseSpec {
   readonly name: string;
   readonly readers: number;
-  readonly seconds?: number;
+  readonly seconds?: number | undefined;
   readonly sweep?: boolean;
   readonly growHistoryTo?: number;
   readonly maxS?: number;

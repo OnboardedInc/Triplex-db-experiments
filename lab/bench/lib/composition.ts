@@ -39,7 +39,7 @@ export interface PulledTriple {
 }
 export interface PullResult {
   readonly replicaFallbackReason?: string | undefined;
-  readonly observation?: import("./observe.ts").Observed;
+  readonly observation?: import("./observe.ts").Observed | undefined;
   readonly triples: readonly PulledTriple[];
   readonly entities: number;
   readonly roundTrips: number;

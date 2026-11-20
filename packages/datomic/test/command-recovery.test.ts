@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { DatomicClient, DatomicHttpError } from "../src/DatomicClient.js";
+import { DatomicClient, DatomicHttpError, DatomicTransportError } from "../src/DatomicClient.js";
 
 const committed = {
   commandId: "edit",
@@ -56,5 +56,16 @@ it("returns the original CAS conflict if the command never committed", async () 
   vi.spyOn(client, "transact").mockRejectedValue(conflict);
   const lookup = vi.spyOn(client, "request").mockResolvedValue({ txId: null });
   await expect(client.transactCommand("s2-test", input)).rejects.toBe(conflict);
+  expect(lookup).toHaveBeenCalledTimes(1);
+});
+
+it("keeps the decision ambiguous when the CAS claim lookup is interrupted", async () => {
+  const client = new DatomicClient("http://localhost");
+  const conflict = new DatomicHttpError(409, "CasConflict", "Predecessor retired");
+  const interrupted = new DatomicTransportError("Reader connection closed");
+  const transact = vi.spyOn(client, "transact").mockRejectedValue(conflict);
+  const lookup = vi.spyOn(client, "request").mockRejectedValue(interrupted);
+  await expect(client.transactCommand("s2-test", input)).rejects.toBe(interrupted);
+  expect(transact).toHaveBeenCalledTimes(1);
   expect(lookup).toHaveBeenCalledTimes(1);
 });
