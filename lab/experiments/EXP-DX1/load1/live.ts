@@ -430,6 +430,11 @@ export async function live(
       const due = Math.min(nextNoise, nextQuiet, nextRead),
         wait = start + due - performance.now();
       if (wait > 0) await delay(wait);
+      // [DX-LOAD3] Why: Node timers can return before the absolute due time.
+      // Rejected: subtracting an early completion from a server p99.
+      if (micro) {
+        while (performance.now() < start + due) await delay(1);
+      }
       if (due === nextQuiet) {
         launch("quiet", "save", q, due);
         launch("quiet", "read", q++, due);

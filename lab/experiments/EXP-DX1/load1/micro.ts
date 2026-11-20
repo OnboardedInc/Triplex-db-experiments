@@ -4,6 +4,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import type { CompositionHandle, Receipt } from "../../../bench/lib/composition.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { sha, type Frame, type SnapshotData } from "./source.ts";
+import { ack, record } from "./oracle.ts";
 
 export const microHz = 130;
 export const microCycleMs = 8;
@@ -132,16 +133,37 @@ export async function temporalExercise(
     const meta = { actor: "bulk-import", commandId, correlationId };
     if (lose) markLost(commandId);
     const result = await comp.transact(operations, meta);
-    if (!result.ok) throw new Error("Temporal exercise " + result.tag, { cause: result.error });
+    let receipt: Receipt;
     if (lose) {
-      // [DX-LOAD3] Why: retry the original application command after its first HTTP reply was discarded.
-      // Rejected: manufacturing a second operation ID as the logical command identity.
+      // [DX-LOAD3] Why: recover the original application command after its first HTTP reply was discarded.
+      // Rejected: treating a duplicate error as a fresh write or requiring the transport to replay a lost reply.
+      const found = await comp.transactionByCommand(commandId);
+      assert(found.ok && found.value);
+      const frame = { first: 0, end: 1, operations };
+      const expected = record(frame, meta, found.value);
+      if (result.ok) assert.deepEqual(ack(frame, result.value), expected);
       const retry = await comp.transact(operations, meta);
-      if (!retry.ok) throw new Error("Retry " + retry.tag, { cause: retry.error });
-      assert.deepEqual(retry.value, result.value);
+      if (retry.ok) assert.deepEqual(ack(frame, retry.value), expected);
+      else assert.equal(retry.tag, "CommandAlreadyCommittedError");
+      const resolved = await comp.transactionByCommand(commandId);
+      assert(resolved.ok && resolved.value);
+      assert.deepEqual(record(frame, meta, resolved.value), expected);
+      receipt = {
+        ...expected,
+        triples: found.value.changes.map((row: any) => ({
+          id: row.tripleId,
+          entityId: row.entityId,
+          attribute: row.attribute,
+          value: row.value,
+          validFrom: row.validFrom,
+        })),
+      };
+    } else {
+      if (!result.ok) throw new Error("Temporal exercise " + result.tag, { cause: result.error });
+      receipt = result.value;
     }
-    commits.set(commandId, { receipt: result.value, operations, correlationId });
-    return result.value;
+    commits.set(commandId, { receipt, operations, correlationId });
+    return receipt;
   }
   const birth = await commit("birth", [a(0, origin)]);
   const back = await commit("backdate", [a(1, origin - 1000)], true);

@@ -173,7 +173,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
   const forecastBytes =
     (smallLogicalCopy
       ? 1.5
-      : mode.startsWith("one-") || splitLoad(mode)
+      : mode.startsWith("one-") || splitLoad(mode) || mode === "load-volume"
         ? 3
         : mode === "load-tail"
           ? 2
