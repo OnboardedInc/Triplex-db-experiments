@@ -73,7 +73,9 @@ export function campaignWindows(s: TenantSpec, arm: string): TenantWindow[] {
   add("neighbors-256", matched, smoke ? 8 : 256, smoke ? 1 : 8, smoke ? 3.5 : 39.4);
   add("publish-control", matched, smoke ? 4 : 64, smoke ? 1 : 8, 3.5);
   add("publish", matched, smoke ? 4 : 64, smoke ? 1 : 8, 3.5);
-  const importSeconds = smoke ? 12 : s.study === "million" ? 5100 : 720;
+  // [DX-INT1] Why: the full deep account needs about 90 minutes at the provisional import floor.
+  // Rejected: a shorter tail that would cut off an import meeting 3,000 facts/s.
+  const importSeconds = smoke ? 12 : s.study === "million" ? 6000 : 720;
   add("import-control", matched, smoke ? 4 : 64, smoke ? 1 : 8, 4.9);
   add("import", matched, smoke ? 4 : 64, smoke ? 1 : 8, 4.9);
   add("import-tail", importSeconds - matched, smoke ? 4 : 64, smoke ? 1 : 8, 4.9);

@@ -31,6 +31,8 @@ Server peaks supplied in the brief were 2.55 GiB for one deep account and 4.67 G
 | RD1 `5f51de7d6` | `42a1c74fe` | No conflict. The fallback code was already merged. This adds the exact handoff and its evidence. |
 | ACT2 `a52f7937c` | `08fb93d9a` | Passed owed Publish priority and observation arguments through the existing erasure sequence and preserved the staged sequence check. |
 | TAIL1 `d6ebbc26e` | Explicit collector option | Carried the launcher and tested JVM settings. The reconciled writer keeps its existing receipt cache and row codec. |
+| ERASE1 guarded Reach `7409a2a03` | `a08f20103` | Retained RD1's historical handlers and verified each guarded reference against the exact position, native cut and erasure sequence. |
+| W1 recorded audit `c45158405` | Recorded-only journal option | The merge applied cleanly. The optional index selects and hydrates at the recorded cut and declines guarded scopes. |
 
 The staged activation, prepared writer and reader carryovers ran 27 tests with 54,079 successful native assertions each at `162da837e`, `99e97df19` and `fbc9a5c46`. The reconciled writer, erasure and Publish merges each ran the same 27 tests with zero failures or errors at `b2880b5e2`, `4367a1ac0` and `08fb93d9a`. Every tested merge is published. The exact `42a1c74fe` reader handoff changed only documentation and shares the preceding native gate. The reused staged activation image has the same source and build inputs. The campaign package sources at `b91234c6a` built Core and the Datomic SDK. Core ran 861 checks and the Datomic suite ran 426 with 52 opt-in cases skipped. Six plan and profile tests, 12 retention tests, 14 focused merge tests and the pooled TypeScript check also ran locally. [Checksums](P5-SHA256SUMS)
 
@@ -55,6 +57,10 @@ The first pooled smoke stopped on the first 2,000-fact legacy seed frame. Replay
 The next executed smoke opened that reader and wrote its ready record. The launcher then rejected the trace digest. The driver and launcher built the same campaign with different property order. Recomputing the saved arm and ready record confirmed the difference. The campaign hash now serializes the four fields in one order. Frozen events and the earlier tenant-profile digests use their existing definitions. [Readiness and cleanup hashes](P5-SHA256SUMS)
 
 The frozen zero-reader smoke then reached its terminal driver record. It checked 39 receipt reads and 40 oracle samples exactly. The collector rejected the absent tenant feed summary. An independent check of the saved consumer database matched all 39 tape writes and ten account challenges to their durable effects at checkpoint 63. The producer now emits the existing tenant feed evidence for the frozen arm too, which the collector requires. The other three smoke arms remain to be collected. [Original driver, consumer and cleanup hashes](P5-SHA256SUMS)
+
+The next frozen zero-reader arm matched all 27 files in a separate collector invocation. The loaded arm checked 8,845 reads exactly and found zero local oracle samples. The validated reader checks the gateway on every pull, so its reads are counted as source reads. The campaign selects the following touched replica and preserves its actual route tags. A sampled local reply is checked against the existing direct sweep source at the same cut. The evidence exporter also transfers guest directories with ordinary host creation modes and verifies their bytes before retiring the guest copy. [Verified prefix, loaded attempt and cleanup hashes](P5-SHA256SUMS)
+
+The full deep import needs about 90 minutes at 3,000 facts per second. Its tail now allows 100 minutes while the matched foreground comparison keeps its original 300-second window.
 
 ## Evidence audit
 

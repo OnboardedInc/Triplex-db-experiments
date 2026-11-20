@@ -62,7 +62,7 @@ export const treatment = {
   DX_INT1_READERS: "touched",
   DX_INT1_DEEP_RELEASE: "ead90",
   DX_STACK_EXPLICIT_GC: "1",
-  DX_TOUCHED_READ_MODE: "validated",
+  DX_TOUCHED_READ_MODE: "following",
   DX_GROUP_COMMIT: "0",
   DX_GROUP_QUEUE_CLOCK: "0",
   DX_GROUP_STAGE_CLOCK: "1",
@@ -93,6 +93,7 @@ export const excluded = {
   parallelPreparation:
     "Exact-basis parity covers its own tape. The joined run also needs the reader and feed schedules verified with it.",
   savedJournalLayouts: "The retained and packed journals need a combined history and feed check.",
+  recordedAuditJournal: "The recorded-only audit option has a separate query contract and declines guarded scopes. The campaign exercises the current journal and pinned world reads.",
   orderedSaveWire: "The matched arm uses the existing compact wire with explicit row identities.",
   fieldCoalesce:
     "A queued replacement must preserve the intermediate row and its native assertion clock.",
@@ -102,6 +103,7 @@ export const excluded = {
   leanOptions:
     "Compact stored rows, lean native projections, history identity ranges, predecessor reuse and fresh row replies need the lean storage shape.",
   gzip: "The matched Mac first-read probe favored plain latency.",
+  validatedPeer: "The pinned check on each pull uses the source route. The counted local reads use the bounded following replica and independently compare actual local rows with the exact source.",
   historicalFallback:
     "RD1's isolated and installed historical modes require separate reach replicas. This pair uses reach-touched.",
   joinedPublish:
