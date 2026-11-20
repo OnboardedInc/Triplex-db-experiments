@@ -438,3 +438,7 @@ f790700a7663dce233340c2096106414ddfd9b2b611d79fb515897b01ab58504  hasync-fleet-s
 5783ee98b3dd8a7965d7602ee1a7bdce9837395c22df4ac8d99a841067b52e4e  hasync-fleet-shared-ea09d833-3458-4114-85ca-7c867948dfef/fleet-inventory.json
 eaa3058dff278d8e52d155e6af842285e6af237a91d4a4d6351dfe27baa4e85c  hasync-fleet-shared-ea09d833-3458-4114-85ca-7c867948dfef/image.json
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  hasync-fleet-shared-ea09d833-3458-4114-85ca-7c867948dfef/tool-console.txt
+e01176b889971e771dfef1a0a13c51085d8d727d42eda3a19ce6eb1e272e5dfc  part3-queue-cd349cfa-03e9-4507-b4d0-d364d444bf22.log
+2c7582e55fef9b8dae2a5ac30a39c95162cb2502de979cc6e2e0a82a853ced5d  replacement-oracle-dry-2SeNxj/hasync-ack-3b1e7186-444a-4b0a-9de2-78609f79580b/attempt.json
+c1612dd38bb4594dfd9d059b7290363ae094879bb8f64508bb73566c2b046a97  replacement-oracle-dry-2SeNxj/hasync-ack-3b1e7186-444a-4b0a-9de2-78609f79580b/replacement-oracle-case.json
+4f5bb5af0da2d64cbd39a7885eed080cc026633e5129513439539d6e1ff6377d  replacement-oracle-dry-2SeNxj/hasync-ack-3b1e7186-444a-4b0a-9de2-78609f79580b/replacement-oracle-expected.json
