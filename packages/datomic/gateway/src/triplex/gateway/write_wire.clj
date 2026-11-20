@@ -39,5 +39,5 @@
                                (finally (Arrays/fill ^bytes clear (byte 0))))]
               (when-not (= [operation attempt] [(get decoded "operationId") (get decoded "attemptId")]) (privacy/unavailable!))
               [true (with-meta decoded (meta input))])
-            (finally (Arrays/fill ^bytes secret (byte 0)))))
+            (finally (Arrays/fill ^bytes secret (byte 0))))))
       (catch Exception _ (privacy/failure! 400 "InvalidProtectedWrite" "The protected write envelope could not be verified")))))

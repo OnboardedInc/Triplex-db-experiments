@@ -167,7 +167,7 @@
                                            (and (= id (get c "tripleId"))
                                                 (= token (get-in c ["value" "value"]))))))))
                          count)))
-        string-bytes (fn [datoms] (reduce + (keep (fn [x] (when (string? (:v x)) (alength (envelope/utf8 (:v x))))) datoms))]
+        string-bytes (fn [datoms] (reduce + (keep (fn [x] (when (string? (:v x)) (alength (envelope/utf8 (:v x))))) datoms)))]
     {:id id :nativeT (str t) :retirementT (str retired-t)
      :retirementDatoms (count (seq retract))
      :retirementTextBytes (string-bytes retract)
