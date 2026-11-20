@@ -710,10 +710,11 @@ async function withMeasurementWindow() {
     // [DX-RD1] Why: the spike lock excludes other timed spikes and the canonical lease drains heavy work.
     // Rejected: snapshotting either lock before timing or draining the pool while a spike owns its lock.
     try {
-      ({ release: releaseLease } = await acquireMeasureLease("DX-RD1 native replay", {
+      const settings = {
         holder: `DX-RD1-${trial}`,
         timeoutMs: 90_000,
-      }));
+      };
+      ({ release: releaseLease } = await acquireMeasureLease("DX-RD1 native replay", settings));
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "LEASE_TIMEOUT") throw error;
       throw new AdmissionWait(String(error));
