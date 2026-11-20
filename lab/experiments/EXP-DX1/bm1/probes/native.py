@@ -49,6 +49,17 @@ def put(file, value):
         out.write("\n")
 
 
+def verified_checkpoint():
+    for file in sorted((NIGHT/"checkpoints").glob("grpw1[ab]-[12]-before-probes/checkpoint.json")):
+        state=get(file)
+        sample=NIGHT/"probes"/file.parent.name.removesuffix("-before-probes")/"bound-seed.json"
+        if state["seed"]["facts"]!=16_245_050 or not sample.is_file() or state["bindingSha256"]!=sha(sample):continue
+        proof=get(sample)
+        keys=("source","slot","nonce","db","seed")
+        if [proof[k] for k in keys]==[state[k] for k in keys]:return file
+    return None
+
+
 def bound_slot(slot):
     return bool(re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-(base|(?:growth|readers|ceil|size|pred)[1-4])",slot))
 
@@ -250,15 +261,16 @@ def case(run_id,mode,ordinal,setting,files_root,expected,staged,profile="full"):
 
 
 def main():
+    global INPUT
     if sys.argv[1:]==["cleanup"]:
         cleanup();return
-    assert sys.argv[1:]==["run"] and sys.platform=="linux" and os.getuid()==0
+    assert len(sys.argv)==3 and sys.argv[1]=="run" and sys.platform=="linux" and os.getuid()==0
+    INPUT=Path(sys.argv[2]);assert INPUT==verified_checkpoint()
     checkpoint=get(INPUT)
     expected_source=(GROUP/"source").read_text().strip()
     assert checkpoint["source"]==expected_source==command("git","rev-parse","HEAD")
-    assert checkpoint["slot"]=="tx2-dxscale1-w1-grpw1a-1" and checkpoint["seed"]["facts"]==16245050
-    assert Path(checkpoint["original"])==GROUP/"results/arm-1"
-    assert checkpoint["bindingSha256"]==sha(NIGHT/"probes/grpw1a-1/bound-seed.json")
+    assert checkpoint["slot"] in {"tx2-dxscale1-w1-grpw1a-1","tx2-dxscale1-w1-grpw1a-2"}
+    assert Path(checkpoint["original"])==GROUP/"results"/("arm-"+checkpoint["slot"][-1])
     assert shutil.disk_usage(NIGHT).free>45*1024**3
     BASE.mkdir(mode=0o700,exist_ok=False)
     experiment=uuid.uuid4().hex[:8]

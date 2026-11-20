@@ -25,10 +25,13 @@ def sha(p):
 def controller(pid, batch, root, source):
     proc = Path("/proc") / str(pid)
     argv = (proc / "cmdline").read_bytes().decode().split("\0")
+    # [DX-BM1] Why: the heavy launcher and its direct child contain the same trailing arguments.
+    # Rejected: matching a command line by the script's presence anywhere in its arguments.
     return ("triplex-w1-" + batch + ".service" in (proc / "cgroup").read_text()
             and argv[0].rsplit("/", 1)[-1] == "node"
-            and any(a.endswith("w1/group/server.ts") for a in argv)
-            and argv[-5:-1] == ["run", str(root), source, batch])
+            and argv[1:] == ["--experimental-strip-types", "lab/experiments/EXP-DX1/w1/group/server.ts",
+                             "run", str(root), source, batch, ""]
+            and (proc / "cwd").resolve(strict=True) == root / "build/repository")
 
 
 def start_ticks(pid):
@@ -95,8 +98,9 @@ def main():
     if mode == "resume":
         resume(directory, batch, root, source)
         return
-    assert mode == "wait" and os.getuid() == 0
-    directory.mkdir(parents=True, exist_ok=False)
+    assert mode in ("wait", "checkpoint") and os.getuid() == 0
+    directory.mkdir(parents=True, exist_ok=True)
+    assert not any(directory.iterdir()), "The checkpoint observer has already entered this attempt"
     assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=HERE, text=True).strip() == operator
     repo = root / "build/repository"
     assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip() == source
@@ -122,6 +126,8 @@ def main():
     assert [p["name"] for p in recorded["phases"]] == ["alone", "one", "nine", "all"]
     assert all(len(p["records"]) == p["count"] and p["wall"] >= 59900 for p in recorded["phases"])
     assert (root / "active-slot").read_text().strip() == slot
+    if mode == "checkpoint" and time.time() + 1080 >= deadline:
+        raise TimeoutError("Not enough time to copy the verified seed before group cleanup")
     group = Path("/sys/fs/cgroup/system.slice/triplex-w1-" + batch + ".service/cgroup.procs")
     matches = []
     for candidate in group.read_text().split():
@@ -162,11 +168,12 @@ def main():
             with (directory / "bound-seed.json").open("x") as f:
                 json.dump({**state, "operator": operator, "seedSha256": sha(seed), "seed": proof, "db": recorded["db"],
                            "scope": recorded["scope"], "grouped": recorded["grouped"], "atVerified": time.time()}, f)
-            if ordinal=="1" and time.time()+600<deadline:
+            if time.time()+1080<deadline:
                 try:
                     capture_checkpoint(arm,directory,identity,recorded,proof,deadline)
                 except Exception as error:
                     (directory/"checkpoint-error.txt").write_text(repr(error)+"\n")
+            if mode == "checkpoint":return
             available = min(1100, int(deadline - time.time()) - 75)
             if available < 75:
                 raise TimeoutError("Reserved cleanup time reached")

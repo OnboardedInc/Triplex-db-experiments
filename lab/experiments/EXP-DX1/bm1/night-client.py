@@ -16,7 +16,7 @@ import time
 ROOT = Path.home()/"Claude/Projects/triplex-db-2/evidence/DX-BM1/overnight"
 REMOTE = "/var/tmp/triplex-bm1/night-n19"
 BRANCHES={1:("w1","exp/DX-W1-commit-tail-reads"),2:("act1","exp/DX-ACT1-activation"),
-          3:("w1","exp/DX-W1-commit-tail-reads"),5:("int1","exp/DX-INT1"),8:("w1","exp/DX-W1-commit-tail-reads")}
+          3:("w1","exp/DX-W1-commit-tail-reads"),8:("w1","exp/DX-W1-commit-tail-reads")}
 DEST=os.environ.get("BENCH_SERVER","")
 KEY=os.environ.get("DX_BENCH_KEY",str(Path.home()/".ssh/triplex_bench_ed25519"))
 SSH=["ssh","-n","-F","/dev/null","-i",KEY,"-o","IdentitiesOnly=yes","-o","ForwardAgent=no",

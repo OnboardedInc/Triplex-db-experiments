@@ -1,5 +1,6 @@
 # DX-BM1 bare-metal bench
 
+**The ten-account individual writer delivered 50.1 saves/s with nine busy neighbors**, below the 150–200 forecast. The quiet account’s p99 rose from 198 ms to 4.00 s (600 saves each). All 16,245,050 seed facts matched. The grouped arm is still seeding.
 At 10,000 subjects, all-commit ACK p99 was **36.11 ms with zero readers and 45.08 ms under load**, against 50 ms. Each arm captured all 38,826 commits. At 256 readers, small and medium commit medians were 6.05 and 7.52 ms against 10 ms.
 **The loaded run is ineligible for a performance verdict.** Its 52 bar readings include 36 MET, 6 MISS, 10 UNJUDGED. At 1,024 readers all six active reader workers reached 99.8–100% event-loop utilization. The sender averaged 4.9%. Goodput was 0.422 of the 256-reader rate against 0.9. Weighted pulls rose from 2,293/s on the earlier retry to 3,490/s, below 4,400/s.
 All 143,900,955 reads matched the model with zero errors. Independent replay matched 351 sampled reads, 18,857 entity queries and the receipts. The Mac copy reproduced those comparisons and recovered the full trace viewer and commit anatomy. The previous 10k retry’s sole error in 89.38 million observations was a socket reset before an answer.
@@ -7,7 +8,6 @@ At 256 readers, writer p99 grew to 1.478 times its matched zero-reader value aga
 **A correct 100,000-subject activation still has no measured cost.** Both private clones passed all 13 native guard schedules. The first R1 run stopped on duplicate answer links for subject 6011 at the retained head. The independent W0 oracle accepted its 165 seed facts and rejected its 175 later facts. The earlier 73.78 s omitted durable guards.
 The revised overnight queue drops the cross-database IMPORT1 test and waits for HA1’s same-database command. DELTA returned its first verified broad/narrow reads in 99/264 ms at 1,000 people. The 100k run is on hold. The audited producer checked one person per timed release, stored outputs and notices later for only two releases, and accepted late offers and stale reads. The collector now requires the ordered R1, R2 and R3 records. [Collector audit](COLLECTORS.md) · [Predictions and outcomes](PREDICTIONS.md) · [Handoff](HANDOFF.md)
 The old/new/old zero-reader comparison was 140.54 / 41.70 / 141.61 ms p99. Both Mac night pairs remain unjudged after the reader hit its 8 GiB limit. Four hours stalled in activation plus eight idle server hours cost about $13.08. [Mac night](MAC-NIGHT-2026-11-18.md)
-**North star.** P1–P4 use v3. P5 requires a real W0 release and durable publication. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
 | Bar (threshold) | Mac H loaded | Mac v3 zero | Linux v3 zero | Linux v3 loaded · ineligible |
 | --- | --- | --- | --- | --- |

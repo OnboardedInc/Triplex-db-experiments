@@ -96,6 +96,21 @@ async function gate(name) {
   assert.equal(JSON.parse(fs.readFileSync(file(name))).nonce, nonce);
 }
 
+async function indexAt(label, head) {
+  const response = await fetch(process.env.DATOMIC_URL + "/v2/db/" + db + "/request-index", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ waitMs: 90_000 }),
+    signal: AbortSignal.timeout(95_000),
+  });
+  assert(response.ok, `Index request returned HTTP ${response.status}`);
+  const receipt = await response.json();
+  assert(receipt.database === db && receipt.completed === true);
+  assert(BigInt(receipt.requestedT) >= BigInt(head.t.v));
+  assert(receipt.completedAtMs >= receipt.requestedAtMs);
+  write(label, { source, slot, nonce, position: Number(head.position.v), receipt });
+}
+
 function convert(input, response, pos, n) {
   return input.rows
     .slice(0, n)
@@ -151,6 +166,9 @@ async function restoreWitness() {
 
 try {
   const initial = await restoreWitness();
+  const before = await writer.basis(db);
+  assert(Number(before.position.v) === initial.through);
+  if (stage === "size") await indexAt("index-before.json", before);
   write("foreground-ready.json", { source, slot, nonce, head: initial.through });
   await gate("timing-gate.json");
   // The size comparison records a no-write baseline from the same indexed version.
@@ -356,19 +374,31 @@ try {
     ...found.map((r) => r.pos),
     ...recovered.map((r) => r.pos),
   );
+  const after = await writer.basis(db);
+  assert(Number(after.position.v) === last);
   if (stage === "size" && last > initial.through) {
-    const response = await fetch(process.env.DATOMIC_URL + "/v2/db/" + db + "/request-index", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ position: last, timeoutMs: 90000 }),
-      signal: AbortSignal.timeout(95000),
-    });
-    if (response.ok) write("index.json", await response.json());
-    else
-      write("index-error.json", {
-        status: response.status,
-        body: (await response.text()).slice(0, 500),
-      });
+    const expected = new Map([...found, ...recovered].map((r) => [r.t, r]));
+    const suffix = { nonce, low: before.t.v, high: after.t.v, commits: [], nonTriplex: 0 };
+    let cursor = String(BigInt(before.t.v) + 1n);
+    while (BigInt(cursor) <= BigInt(after.t.v)) {
+      const page = await writer.log(db, cursor, 128);
+      assert.notEqual(page.nextT, cursor);
+      cursor = page.nextT;
+      for (const row of page.rows) {
+        if (BigInt(row.t) > BigInt(after.t.v)) break;
+        if (row.kind === "skipped") suffix.nonTriplex++;
+        else {
+          const saved = expected.get(row.t);
+          assert(saved && row.transaction.operationId === saved.id);
+          assert.deepEqual(row.transaction.positions, [String(saved.pos)]);
+          expected.delete(row.t);
+          suffix.commits.push({ t: row.t, position: saved.pos, changes: row.transaction.changes.length });
+        }
+      }
+    }
+    assert.equal(expected.size, 0);
+    write("log-suffix.json", suffix);
+    await indexAt("index.json", after);
   }
   write("result.json", {
     plan,

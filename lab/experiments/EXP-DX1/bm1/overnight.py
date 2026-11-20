@@ -13,6 +13,7 @@ import sys
 import time
 import uuid
 from producer_readings import capacity_rung, group_arm
+from import_reading import tail_attempt
 
 ROOT = Path("/var/tmp/triplex-bm1")
 NIGHT = ROOT / "night-n19"
@@ -28,6 +29,7 @@ ITEMS = {
     9: (W1, "w1", "9ce599309", 1, "matchedn19"),
     11: (W1, "w1", "7a6a7e9ef", 1, "ceiln19"),
     12: (W1, "w1", "7a6a7e9ef", 1, "sizen19"),
+    13: ("exp/DX-HA1-failover-move", "load1", "bd2ce3bf9", 2, "loadtailn19"),
     2: ("exp/DX-ACT1-activation", "import1", "eb154ca8", 5, "import-bm1n19"),
     10: (W1, "w1", "9ce599309", 1, "predecessorn19"),
     5: ("exp/DX-INT1", "int1", None, 5, "bm1n19int"),
@@ -35,9 +37,9 @@ ITEMS = {
     6: (ACT, "actv-delta", "eaee4e10", 4, "solon19"),
     3: (W1, "w1", "502c8897", 3, "w1trial01"),
 }
-ORDER = (1, 8, 11, 9, 12, 7, 10, 5)
+ORDER = (1, 8, 11, 9, 12, 7, 10, 13, 5)
 NEXT = {1:"enhanced-pulse", 8:"ceil-live10", 11:"thin-deep", 9:"size-ledger", 12:"readers", 7:"predecessor",
-        10:"int1", 5:"collect", 6:"resume", 4:"collect", 3:"collect"}
+        10:"same-database-import", 13:"int1", 5:"collect", 6:"resume", 4:"collect", 3:"collect"}
 EXP = Path("lab/experiments/EXP-DX1")
 ENV = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
            GIT_TERMINAL_PROMPT="0", DOCKER_HOST="unix:///var/run/docker.sock",
@@ -98,6 +100,29 @@ def collector_cases():
     return json.loads(command("git","show","FETCH_HEAD:"+str(rel),cwd=repo))
 
 
+def registered_sample(item, source):
+    # [DX-BM1] Why: require an identified real sample and the two acceptance records for this executable revision.
+    # Rejected: authorizing an expensive campaign from a matching Git SHA and a boolean alone.
+    record=collector_cases().get(str(item))
+    if not record or record.get("source")!=source or record.get("state")!="verified":
+        raise RuntimeError("No small real producer output has passed this collector for the pinned source")
+    assert record["file"]=={5:"result.json",6:"result.json",13:"tail-128.offers.json"}[item]
+    for key,n in (("source",40),("sampleSource",40),("sha256",64),("producerReceiptSha256",64),("collectorReceiptSha256",64)):
+        assert re.fullmatch(r"[a-f0-9]{"+str(n)+r"}",record[key])
+    assert uuid.UUID(record["sampleAttempt"]).hex==record["sampleAttempt"].replace("-","")
+    assert re.fullmatch(r"[a-z0-9-]{2,80}",record["sampleSlot"])
+    verified=dt.datetime.fromisoformat(record["verifiedAt"]).timestamp()
+    recorded=dt.datetime.fromisoformat(record["sampleRecordedAt"]).timestamp()
+    assert recorded<=verified<=time.time()+2
+    sample=record["evidence"]
+    assert re.fullmatch(r"overnight/collector-tests/(?:int1|ha1|delta)-[a-f0-9]{8,40}",sample)
+    repo=HERE.parents[3]
+    checksums=command("git","show","FETCH_HEAD:"+str(EXP/"bm1/SHA256SUMS"),cwd=repo).splitlines()
+    for name,key in (("producer","producerReceiptSha256"),("collector","collectorReceiptSha256")):
+        assert checksums.count(record[key]+"  "+sample+"/"+name+".json")==1
+    return record
+
+
 def delta_output(folder, binding, subjects, offers, releases):
     # [DX-BM1] Why: agree with checkSolo on the R1 setup reference followed by R2 and R3.
     # Rejected: counting only the two measured sweep arms and rejecting the full producer receipt.
@@ -125,13 +150,14 @@ def complete_output(r):
     item=r["item"]
     if item in (1,8,9,10,11,12):
         if (root/"results/comparison.json").is_file():return True
-        if item in (10,11,12):return any((root/"checkpoint-arms").glob("*/writer.jsonl")) or any((root/"checkpoint-arms").glob("*/result.json"))
+        if item in (10,11,12):return any((root/"checkpoint-arms").glob("*/outcomes.jsonl")) or any((root/"checkpoint-arms").glob("*/result.json"))
         return any((root/"results").glob("arm-*/raw.json")) or any((root/"results").glob("arm-*/summary.json"))
     if item==2:return (root/"terminal.json").is_file()
     if item==3:return (root/"results/arm-4/measurements.json").is_file()
     if item==4:return (root/"guard-output.json").is_file()
     if item==5:return any((root/"build/state/evidence/DX-INT1"/r["tag"]).glob("rung-thin-*/result.json"))
     if item==6:return (Path("/var/tmp/triplex-scale1")/r["tag"]/"delta-measurement.json").is_file()
+    if item==13:return any((root/"run").glob("load-tail-*/arm-*.json")) or any((root/"run").glob("load-tail-*/*.offers.json"))
     return False
 
 
@@ -211,6 +237,7 @@ def preflight(r):
         else:matched_output(smoke,r["source"],tag,small=True)
         proof={"source":r["source"],"item":item,"tag":tag,"file":"comparison.json","sha256":digest(smoke/"results/comparison.json"),
                "at":stamp(),"location":str(smoke)}
+        put(directory/"collector-agreement.json",proof)
         if item==8:
             group=Path("/var/tmp/triplex-w1/grpw1a/results/arm-1")
             identity=group/"identity.json"
@@ -229,9 +256,7 @@ def preflight(r):
         assert any((NIGHT/"checkpoints").glob("grpw1[ab]-[12]-before-probes/checkpoint.json")), "No verified pooled seed is available"
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-small-run-first"})
         return
-    documented=collector_cases().get(str(item))
-    if not documented or documented.get("source")!=r["source"] or documented.get("state")!="verified":
-        raise RuntimeError("No small real producer output has passed this collector for the pinned source")
+    documented=registered_sample(item,r["source"])
     if item==6:
         assert documented["reviewedFindings"]==[1,2] and documented["reportSha256"]==digest(directory/"builder-report.md")
     put(ready,{**documented,"item":item})
@@ -242,7 +267,9 @@ def eligible_delta():
     proof=collector_cases().get("6")
     if not proof or proof.get("state")!="verified" or proof.get("reviewedFindings")!=[1,2]:return False
     head=command("git","-c","credential.helper=","ls-remote","--exit-code",URL,"refs/heads/"+ACT).split()[0]
-    return proof.get("source")==head
+    if proof.get("source")!=head:return False
+    registered_sample(6,head)
+    return True
 
 
 def preflight_worker(r, clean=False):
@@ -264,7 +291,9 @@ def preflight_worker(r, clean=False):
 
 def public_source(item, directory):
     branch, component, minimum, _, _ = ITEMS[item]
-    head = command("git","-c","credential.helper=","ls-remote","--exit-code",URL,"refs/heads/"+branch).split()[0]
+    advertised = command("git","-c","credential.helper=","ls-remote","--exit-code",URL,"refs/heads/"+branch).split()[0]
+    document = collector_cases().get(str(item),{}) if item in (5,13) else {}
+    head = document.get("source",advertised)
     if not re.fullmatch("[a-f0-9]{40}",head):
         raise ValueError("No published head for " + branch)
     repo = NIGHT / ("source-" + head)
@@ -276,11 +305,14 @@ def public_source(item, directory):
     assert command("git","rev-parse","HEAD",cwd=repo)==head and not command("git","status","--porcelain",cwd=repo)
     if minimum:
         run("git","merge-base","--is-ancestor",minimum,head,cwd=repo)
+    if head!=advertised:
+        run("git","-c","credential.helper=","fetch","--quiet","--no-tags","origin","refs/heads/"+branch,cwd=repo,timeout=60)
+        run("git","merge-base","--is-ancestor",head,"FETCH_HEAD",cwd=repo)
     report = repo / EXP / component / "REPORT.md"
     if not report.is_file():
         raise ValueError("The builder has no published report")
     shutil.copyfile(report,directory/"builder-report.md")
-    for name in ("HANDOFF.md","README.md"):
+    for name in ("HANDOFF.md","README.md","PREDICTIONS.md","ISOLATION-BENCH.md"):
         f=report.with_name(name)
         if f.is_file(): shutil.copyfile(f,directory/("builder-"+name.lower()))
     return head,repo
@@ -292,6 +324,7 @@ def coordinates(item,attempt):
     if item == 1: tag += "ab"[attempt-1]
     elif attempt==2: tag += "b"
     if item in (1,3,8,9,10,11,12): root=Path("/var/tmp/triplex-w1")/tag; unit="triplex-w1-"+tag
+    elif item==13: root=Path("/var/tmp/triplex-ha1")/tag;unit="bm1n19-"+tag
     elif item==2: root=Path("/var/tmp/triplex-import1")/tag;unit="triplex-bm1-"+tag
     elif item==4: root=ROOT/("day-"+tag);unit="bm1n19-"+tag
     elif item==6: root=NIGHT/tag; unit="bm1n19-"+tag
@@ -328,7 +361,7 @@ def make(item, attempt, start, deadline):
     else:
         head,repo=public_source(item,directory)
     token="| Item 0 repeat," if item==6 else {8:"| Enhanced pulse,",9:"| Thin/deep matched,",10:"| Predecessor lookup,",
-            11:"| CEIL-SERVER-LIVE10,",12:"| W2-SIZE-LEDGER,"}.get(item,f"| {item} ·")
+            11:"| CEIL-SERVER-LIVE10,",12:"| W2-SIZE-LEDGER,",13:"| HA1 one-host import,"}.get(item,f"| {item} ·")
     forecast=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith(token))
     r=dict(item=item,attempt=attempt,tag=tag,source=head,repo=str(repo),unit=unit,root=str(root),
            directory=str(directory),start=start,deadline=deadline,prediction=forecast,requested=stamp())
@@ -446,10 +479,44 @@ def worker(r):
         mode={10:"pred",11:"ceil",12:"size"}[r["item"]]
         run(sys.executable,HERE/"probes/seeded_campaign.py","run",mode,root,source,cwd=repo,env=env)
     elif r["item"]==2:run(*heavy,"--experimental-strip-types",EXP/"import1/server.ts","--execute",root,source,cwd=repo,env=env)
+    elif r["item"]==13:
+        # [DX-BM1] Why: the supervised one-host command uses the existing machine allocation and survives SSH loss.
+        # Rejected: joining a second host, or letting the SSH controller pull an uncapped raw archive.
+        run(*heavy,"--import","tsx",EXP/"ha1/bench.ts","load-tail",tag,source,"-","-","-",root/"run",
+            str(uuid.uuid4()),"50","deep","one-host",cwd=repo,env=env)
     elif r["item"]==5:
         run(node,"--no-warnings","--experimental-transform-types",repo/EXP/"thin1/queue-bench.ts","--launch",tag,
             stamp(r["deadline"]-10),root/"build","--int1","--row-wire=plain",cwd=repo,env=env)
     else:raise ValueError("This item has no admitted native worker yet")
+
+
+def import_inventory(r):
+    inventory={"containers":[],"networks":[],"volumes":[]}
+    for f in (Path(r["root"])/"run").glob("load-tail-*/attempt.json"):
+        a=get(f)
+        nonce=a["nonce"]
+        assert re.fullmatch(r"[a-f0-9-]{36}",nonce) and f.parent.name=="load-tail-"+nonce
+        assert a["slot"]==r["tag"] and a["source"]["git"]==r["source"] and a["mode"]=="load-tail"
+        prefix="tx2-ha1-"+nonce[:8]
+        selector="label=ha1.attempt="+nonce
+        for name in command("docker","ps","-a","--filter",selector,"--format","{{.Names}}").splitlines():
+            assert name in {prefix+"-"+role for role in ("pg","active","write","tool")}
+            inventory["containers"].append(name)
+        for name in command("docker","network","ls","--filter",selector,"--format","{{.Name}}").splitlines():
+            assert name==prefix
+            inventory["networks"].append(name)
+        event=f.parent/"events.jsonl"
+        if event.is_file():
+            for line in event.read_text().splitlines():
+                try: row=json.loads(line)
+                except json.JSONDecodeError:continue
+                assert row["nonce"]==nonce
+                if row["type"]=="role":
+                    for name in row["data"]["volumes"]:
+                        assert re.fullmatch(r"[a-f0-9]{64}",name)
+                        if command("docker","volume","ls","-q","--filter","name=^"+name+"$")==name:
+                            inventory["volumes"].append(name)
+    return inventory
 
 
 def cleanup(r):
@@ -488,11 +555,20 @@ def cleanup(r):
     elif r["item"]==5:
         unit="triplex-int1-"+tag
         if active(unit):run("systemctl","stop",unit,timeout=200)
+    elif r["item"]==13:
+        # [DX-BM1] Why: systemd invokes this after the group is dead even when the producer's finally block could not run.
+        # Rejected: label-wide removal, which could delete another run after handoff.
+        inventory=import_inventory(r)
+        for name in inventory["containers"]:run("docker","rm","-fv",name,timeout=30)
+        inventory=import_inventory(r)
+        for name in inventory["networks"]:run("docker","network","rm",name,timeout=30)
+        for name in inventory["volumes"]:run("docker","volume","rm",name,timeout=30)
     assert not command("docker","ps","-q"),"A running stack remains on the dedicated machine"
 
 
 def remaining(r):
     item, tag = r["item"],r["tag"]
+    if item==13:return import_inventory(r)
     root=Path(r["root"])
     if item in (10,11,12):
         prefixes=[]
@@ -572,7 +648,9 @@ def matched_probes():
     root=NIGHT/"native-probes"
     request=directory/"request.json"
     unit="bm1n19-native-probes"
-    marker=NIGHT/"checkpoints/grpw1a-1-before-probes/checkpoint.json"
+    sys.path.insert(0,str(HERE/"probes"))
+    from native import verified_checkpoint
+    marker=verified_checkpoint()
     start=time.time()
     if request.is_file():
         row=get(request)
@@ -580,7 +658,9 @@ def matched_probes():
     else:
         source=(Path("/var/tmp/triplex-w1/grpw1a")/"source").read_text().strip()
         assert re.fullmatch("[0-9a-f]{40}",source)
-        row=dict(item=7,attempt=1,source=source,tag="matched-probes",start=start,deadline=start+2400,directory=str(directory),root=str(root))
+        row=dict(item=7,attempt=1,source=source,tag="matched-probes",start=start,deadline=start+2400,directory=str(directory),root=str(root),
+                 checkpoint=marker.name if marker else None,
+                 prediction=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith("| READERS off/on/on/off,")))
         put(request,row)
     assert row["source"]==(Path("/var/tmp/triplex-w1/grpw1a")/"source").read_text().strip()
     status("readers","running",start,"predecessor")
@@ -588,14 +668,14 @@ def matched_probes():
     if terminal.is_file():
         entry=get(terminal)
     else:
-        if marker.is_file() and not root.exists() and not active(unit):
+        if marker and not root.exists() and not active(unit):
             left=max(1,int(row["deadline"]-time.time()))
             command_str=str(HERE/"probes/native.py")
             try:
                 run("systemd-run","--no-block","--unit="+unit,"-p","KillMode=control-group","-p",f"RuntimeMaxSec={left}s",
                     "-p","TimeoutStopSec=60s","-p","StandardOutput=append:"+str(directory/"worker.log"),
                     "-p","StandardError=append:"+str(directory/"worker.log"),
-                    "-p",f"ExecStopPost={sys.executable} {command_str} cleanup",sys.executable,command_str,"run",timeout=30)
+                    "-p",f"ExecStopPost={sys.executable} {command_str} cleanup",sys.executable,command_str,"run",marker,timeout=30)
             except (OSError,subprocess.SubprocessError) as error:
                 atom(directory/"admission-error.txt",repr(error)+"\n")
         while active(unit):
@@ -609,7 +689,7 @@ def matched_probes():
         result=root/"probe-results.json"
         state="incomplete"
         detail="W1 did not produce a fresh, source-bound 100,000-subject checkpoint"
-        if marker.is_file():
+        if marker:
             detail="A matched probe failed before it sealed a reading"
             if result.is_file():
                 evidence=get(result)
@@ -692,6 +772,10 @@ def result(r):
             assert a["resultSha256"]==digest(arm/"result.json") and a["checkpointSha256"]==small["checkpointSha256"]==value["checkpointSha256"]
             assert get(arm/"cleanup.json")=={"slot":a["slot"],"source":r["source"],"remaining":[]}
         return ("recorded" if all(a["completed"] for a in value["arms"]) else "partial"),str(file)
+    elif item==13 and any((root/"run").glob("load-tail-*/observations.json")):
+        path,rows=tail_attempt(root/"run",r)
+        good=all(value["offered"]==value["ok"] for row in rows for intervals in row["neighbors"].values() for value in intervals.values())
+        return ("recorded" if good else "partial"),str(path)
     elif item==2:
         if (root/"terminal.json").is_file():
             doc=get(root/"terminal.json")

@@ -21,17 +21,9 @@ def setup(directory):
     stack.REPO=directory/"build/repository"
     stack.NODE=directory/"build/tools/bin/node"
     stack.BASE_ENV["PATH"]=str(stack.NODE.parent)+":"+stack.BASE_ENV["PATH"]
-    options=[]
-    for f in sorted((stack.NIGHT/"checkpoints").glob("grpw1[ab]-[12]-before-probes/checkpoint.json")):
-        c=stack.get(f)
-        if c["seed"]["facts"]!=16_245_050:continue
-        sample=stack.NIGHT/"probes"/f.parent.name.removesuffix("-before-probes")/"bound-seed.json"
-        if not sample.is_file() or c["bindingSha256"]!=stack.sha(sample):continue
-        proof=stack.get(sample)
-        if (proof["source"],proof["slot"],proof["nonce"],proof["db"])!=(c["source"],c["slot"],c["nonce"],c["db"]):continue
-        options.append(f)
-    if not options:raise RuntimeError("No independently verified pooled checkpoint")
-    stack.INPUT=options[0]
+    selected=stack.verified_checkpoint()
+    if not selected:raise RuntimeError("No independently verified pooled checkpoint")
+    stack.INPUT=selected
     return stack.get(stack.INPUT)
 
 
@@ -51,7 +43,9 @@ def start_roles(slot, directory, env):
 def sql_size(directory,slot,phase):
     query=("SELECT jsonb_build_object('databaseBytes',pg_database_size('datomic'),'relationBytes',"
            "pg_total_relation_size('public.datomic_kvs'),'heapBytes',pg_relation_size('public.datomic_kvs'),"
-           "'indexBytes',pg_indexes_size('public.datomic_kvs'),'walInsert',pg_current_wal_insert_lsn()::text)")
+           "'indexBytes',pg_indexes_size('public.datomic_kvs'),'toastBytes',pg_total_relation_size(c.reltoastrelid),"
+           "'walInsert',pg_current_wal_insert_lsn()::text,'liveKeysEstimate',s.n_live_tup,'deadKeysEstimate',s.n_dead_tup) "
+           "FROM pg_class c JOIN pg_stat_user_tables s ON c.oid=s.relid WHERE c.oid='public.datomic_kvs'::regclass")
     obj=json.loads(stack.pg(slot+"-pg","psql","-U","postgres","-d","datomic","-Atc",query))
     assert min(obj["databaseBytes"],obj["relationBytes"],obj["heapBytes"],obj["indexBytes"])>0
     stack.put(directory/(phase+"-size.json"),obj)
