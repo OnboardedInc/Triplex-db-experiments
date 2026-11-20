@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# [DX-COMPACT1] Why: use one fresh database on a provisioned SQL stack and the exact staged source.
+# [DX-COMPACT1] Why: use one fresh database for the stored-journal and retained-history workload on the exact staged source.
 # Rejected: reusing an incumbent database name or inferring physical-machine throughput from the Mac.
 set -euo pipefail
 [[ $(uname -s) == Linux ]]

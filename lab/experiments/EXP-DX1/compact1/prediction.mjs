@@ -1,18 +1,21 @@
 // [DX-COMPACT1] Why: give a falsifiable one-database forecast for the exact offer schedule.
 // Rejected: scaling the fastest Mac burst to the production database.
-const fixedMs = 2.6;
-const perMemberMs = 0.95;
-const cap = 8;
-const lateGroupProbability = 0.02;
-const lateGroupLowMs = 8;
-const lateGroupHighMs = 28;
-const smallJitterMs = 0.7;
-const meanCycleMs = fixedMs + cap * perMemberMs + smallJitterMs / 2 +
-  lateGroupProbability * (lateGroupLowMs + lateGroupHighMs) / 2;
-const capacity = cap * 1000 / meanCycleMs;
+const packedQuiet = {
+  fixedMs: 2.6, perMemberMs: 0.95, cap: 8, lateGroupProbability: 0.02,
+  lateGroupLowMs: 8, lateGroupHighMs: 28, smallJitterMs: 0.7,
+};
+const journalQuiet = {
+  fixedMs: 2.9, perMemberMs: 1.38, cap: 8, lateGroupProbability: 0.035,
+  lateGroupLowMs: 8, lateGroupHighMs: 45, smallJitterMs: 0.7,
+};
+const journalMixed = {
+  fixedMs: 3.1, perMemberMs: 1.62, cap: 8, lateGroupProbability: 0.04,
+  lateGroupLowMs: 10, lateGroupHighMs: 55, smallJitterMs: 0.7,
+};
 
-/** @param {number} rate @param {number} seconds @param {number} seed */
-function predict(rate, seconds, seed) {
+/** @param {typeof packedQuiet} assumptions @param {number} rate @param {number} seconds @param {number} seed */
+function predict(assumptions, rate, seconds, seed) {
+  const { fixedMs, perMemberMs, cap, lateGroupProbability, lateGroupLowMs, lateGroupHighMs, smallJitterMs } = assumptions;
   let state = seed >>> 0;
   const random = () => {
     state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
@@ -41,9 +44,22 @@ function predict(rate, seconds, seed) {
   return { rate, seconds, offered, batches, p50Ms: q(0.5), p99Ms: q(0.99), maxMs: q(1) };
 }
 
+/** @param {typeof packedQuiet} assumptions */
+function scenario(assumptions) {
+  const { fixedMs, perMemberMs, cap, lateGroupProbability, lateGroupLowMs, lateGroupHighMs, smallJitterMs } = assumptions;
+  const meanCycleMs = fixedMs + cap * perMemberMs + smallJitterMs / 2 +
+    lateGroupProbability * (lateGroupLowMs + lateGroupHighMs) / 2;
+  const capacity = cap * 1000 / meanCycleMs;
+  return {
+    assumptions,
+    grossSaturatedSavesPerSecond: capacity,
+    usefulWithMaintenanceAndHeadroom: capacity * 0.85 * 0.75,
+    openLoop: [predict(assumptions, 235, 60, 1281), predict(assumptions, 394, 60, 1282)],
+  };
+}
+
 console.log(JSON.stringify({
-  assumptions: { fixedMs, perMemberMs, cap, lateGroupProbability, lateGroupLowMs, lateGroupHighMs, smallJitterMs },
-  grossSaturatedSavesPerSecond: capacity,
-  usefulWithMaintenanceAndHeadroom: capacity * 0.85 * 0.75,
-  openLoop: [predict(235, 60, 1281), predict(394, 60, 1282)],
+  packedQuiet: scenario(packedQuiet),
+  journalQuiet: scenario(journalQuiet),
+  journalMixed: scenario(journalMixed),
 }, null, 2));

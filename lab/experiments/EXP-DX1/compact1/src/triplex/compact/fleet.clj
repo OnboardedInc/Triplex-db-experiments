@@ -7,7 +7,7 @@
             [triplex.compact.probe :as probe]
             [triplex.compact.store :as store])
   (:import [java.sql DriverManager]
-           [java.util.concurrent ArrayBlockingQueue CountDownLatch RejectedExecutionException ThreadPoolExecutor TimeUnit]
+           [java.util.concurrent ArrayBlockingQueue Callable CountDownLatch Executors RejectedExecutionException ThreadPoolExecutor TimeUnit]
            [java.util.concurrent.locks LockSupport]))
 
 (defn durability! []
@@ -29,6 +29,81 @@
 
 (defn basis-of-seed [person] (inc (quot person (count f/accounts))))
 
+(defn history-cohort [offset span]
+  (let [n (min 512 span)]
+    (map #(long (+ offset (quot (* % span) n))) (range n))))
+
+(defn live-request [store person width]
+  (let [seed (basis-of-seed person)
+        p (get (:aged store) person seed)]
+    (assoc (probe/correction person (+ 100000 person) width p)
+           :retires (mapv #(vector seed %) (f/replace-ordinals width)))))
+
+(defn age! [store people]
+  ;; [DX-COMPACT1] Why: expose per-subject history while leaving the measured replacement's original field identity available.
+  ;; Rejected: treating a one-event seed as representative of 415 edits.
+  (let [conn (:conn store) revisions (volatile! {})]
+    (doseq [ordinal (range 2 416) cohort (partition-all 8 people)]
+      (let [before (d/db conn)
+            requests (mapv (fn [person]
+                             (let [seed (basis-of-seed person)
+                                   p (get @revisions person seed)
+                                   root (f/root person)]
+                               (f/input (f/account person) root (str "age-" person "-" ordinal) p
+                                        [[root "weeklyMinutes" (+ 1600 ordinal) nil nil]]
+                                        [[p (if (= ordinal 2) 1 0)]])))
+                           cohort)
+            result (store/commit-ready! store (mapv (partial store/prepare store before) requests))]
+        (doseq [[i request receipt] (map vector cohort requests (:outcomes result))]
+          (oracle/require-receipt request (:position receipt) receipt)
+          (assert (= receipt (store/receipt (:view result) (:account request) (:command request))))
+          (vswap! revisions assoc i (:position receipt)))))
+    @revisions))
+
+(defn neighbor-read [store person stop armed]
+  (let [scope (f/account person) owner (f/root person) p (get (:aged store) person)
+        view (store/sync-view store)
+        want (update (probe/expected-world person (basis-of-seed person) 0 0 0 false) :facts
+                     (fn [rows] (mapv #(if (= "weeklyMinutes" (:a %)) (assoc % :v 2015 :tx p) %) rows)))]
+    (.countDown armed)
+    (loop [n 0 maximum 0.0]
+      (if @stop
+        {:count n :maxMs maximum}
+        (let [[ms world] (probe/timed #(store/world store view scope owner :pinned p f/now-valid))]
+          (assert (= (f/sorted-world want) (f/sorted-world world)))
+          (LockSupport/parkNanos 20000000)
+          (recur (inc n) (max maximum ms)))))))
+
+(defn neighbor-import [store writer offset stop]
+  (let [start (System/nanoTime)]
+    (loop [i 0 n 0]
+      (if @stop
+        {:offers i :writtenFacts (* n 160) :elapsedMs (floor/ms (- (System/nanoTime) start))}
+        (let [person (+ i offset)
+              request (probe/seed-request person 160)
+              reply ((:send writer) request)
+              receipt (:receipt reply)]
+          (oracle/require-receipt request (:position receipt) receipt)
+          (assert (= receipt (store/receipt (d/db (:conn store)) (:account request) (:command request))))
+          (wait-until (+ start (quot (* 160000000000 (inc i)) 3000)))
+          (recur (inc i) (inc n)))))))
+
+(defn with-neighbors! [store writer readers offset workload]
+  (let [threads (Executors/newFixedThreadPool 64) stop (volatile! false) armed (CountDownLatch. 64)
+        jobs (mapv (fn [person] (.submit threads ^Callable #(neighbor-read store person stop armed))) readers)
+        loader (future (.await armed) (neighbor-import store writer offset stop))]
+    (try
+      (assert (.await armed 60 TimeUnit/SECONDS))
+      (workload)
+      (vreset! stop true)
+      (let [reads (mapv #(.get % 30 TimeUnit/SECONDS) jobs)
+            imports (deref loader 120000 ::timeout)]
+        (assert (not= ::timeout imports))
+        (assert (every? (comp pos? :count) reads))
+        (floor/emit "fleet-neighbors" {:readers (count reads) :reads (reduce + (map :count reads))
+                                        :maxReadMs (reduce max (map :maxMs reads)) :import imports}))
+      (finally (vreset! stop true) (.shutdownNow threads) (future-cancel loader)))))
+
 (defn offered! [store writer offset rate seconds]
   (let [total (* rate seconds)
         pool (ThreadPoolExecutor. 32 32 0 TimeUnit/SECONDS (ArrayBlockingQueue. 128))
@@ -42,7 +117,7 @@
       ;; Rejected: measuring from worker start, which hides the overload tail.
       (dotimes [i total]
         (let [due (+ start (quot (* 1000000000 i) rate)) person (+ offset i)
-              req (probe/correction person (+ 100000 person) (inc (mod i 3)) (basis-of-seed person))]
+              req (live-request store person (inc (mod i 3)))]
           (wait-until due)
           (try
             (.execute pool
@@ -50,7 +125,7 @@
                         (try
                           (let [result ((:send writer) req)
                                 ack (System/nanoTime)]
-                            (aset results i {:request req :receipt (:receipt result) :ack ack
+                            (aset results i {:request req :receipt (:receipt result) :ack ack :nativeApply (:applyMs result)
                                              :ms (floor/ms (- ack due))}))
                           (catch Exception e (aset results i {:error (str (class e))}))
                           (finally (.countDown complete)))))
@@ -64,14 +139,16 @@
             last-ack (reduce max start (map :ack committed))
             scopes (group-by (comp :account :request) committed)
             window-end (+ start (* seconds 1000000000))
-            in-window (count (filter #(< (:ack %) window-end) committed))]
+            in-window (count (filter #(< (:ack %) window-end) committed))
+            native (vals (group-by (comp :nativeT :receipt) committed))]
         (doseq [{:keys [request receipt]} committed]
           (oracle/require-receipt request (:position receipt) receipt)
           (assert (= receipt (store/receipt db (:account request) (:command request)))))
         (floor/emit "fleet-open" {:rate rate :seconds seconds :offered total :acknowledged (count committed)
                                  :errors errors :allOfferP99 (when (zero? errors) (:p99 (probe/quantiles (map :ms committed))))
                                  :perAccount (into {} (map (fn [[a xs]] [a (assoc (probe/quantiles (map :ms xs)) :count (count xs))]) scopes))
-                                 :physical (count (set (map (comp :nativeT :receipt) committed)))
+                                 :physical (count native) :occupancy (frequencies (map count native))
+                                 :nativeApply (when (seq native) (probe/quantiles (map (comp :nativeApply first) native)))
                                  :inWindowPerSecond (/ (double in-window) seconds)
                                  :lateOrMissing (+ errors (count (filter #(> (:ms %) 50.0) committed)))
                                  :drainMs (floor/ms (max 0 (- last-ack window-end)))
@@ -82,7 +159,7 @@
 (defn saturation! [store writer offset n]
   (let [jobs (mapv (fn [i]
                      (let [person (+ offset i)
-                           request (probe/correction person (+ 100000 person) (inc (mod i 3)) (basis-of-seed person))]
+                           request (live-request store person (inc (mod i 3)))]
                        (fn [] {:request request :receipt (:receipt ((:send writer) request))}))) (range n))
         [ms rows] (probe/timed #(probe/closed-loop 64 jobs))
         db (store/sync-view store)]
@@ -96,7 +173,7 @@
 (defn run! [people-per-account seconds lower higher saturated]
   (let [people (* people-per-account (count f/accounts))]
     (assert (and (pos? people-per-account) (pos? seconds) (pos? lower) (< lower higher) (pos? saturated)))
-    (assert (<= (+ (* (+ lower higher) seconds) saturated) people))
+    (assert (<= (+ (* (+ lower higher) seconds) saturated 64) people))
     (assert (str/starts-with? (System/getenv "DATOMIC_URI_TEMPLATE") "datomic:sql://"))
     (durability!)
     (let [store (probe/open-compact! "fleet" 1024)
@@ -108,11 +185,20 @@
       (assert (every? #(= people-per-account (store/head-position view %)) f/accounts))
       (floor/emit "fleet-seed" (assoc (dissoc seed :revs) :facts (* people 160) :people people :accounts 10
                                      :head (d/basis-t view) :before seed-before :after seed-after))
-      (let [writer (probe/writer store)]
+      (let [staged (assoc (store/with-journal! store) :checkpoint-every 64)
+            first-span (* lower seconds)
+            both (* (+ lower higher) seconds)
+            readers (range (+ both saturated) (+ both saturated 64))
+            aged (vec (concat (history-cohort 0 first-span)
+                              (history-cohort first-span (* higher seconds))
+                              (history-cohort both saturated) readers))
+            stage (assoc staged :aged (age! staged aged))
+            writer (probe/writer stage)]
         (try
-          (offered! store writer 0 lower seconds)
-          (offered! store writer (* lower seconds) higher seconds)
-          (saturation! store writer (* (+ lower higher) seconds) saturated)
+          (floor/emit "fleet-retained" {:subjectEvents 415 :subjects (count (:aged stage)) :journal true :checkpoint 64})
+          (with-neighbors! stage writer readers people #(offered! stage writer 0 lower seconds))
+          (with-neighbors! stage writer readers (+ people 100000) #(offered! stage writer first-span higher seconds))
+          (with-neighbors! stage writer readers (+ people 200000) #(saturation! stage writer both saturated))
           (finally ((:close writer)) (d/release conn)))))))
 
 (defn -main [& sizes]
