@@ -3443,3 +3443,22 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **Mac disk:** 23 untagged leftover images held about 24 GB in the lab VM; removed, and a job now prunes untagged
   images and trims every 10 minutes. DX-T1 evidence (41,958 files, 13,661,923,535 bytes) archived to the Drive
   archive as one verified file and removed locally. Free space 37 GiB.
+
+## 2026-11-20 20:08 UTC (15:08 local, 2026-11-20): DX-AGE1 part 2 in; server 2's queue re-ordered for version 0.1
+
+- **DX-AGE1 part 2 (`51f386561`; server run pinned at `2859d6b15`; `age1/SERVER-RUNG.md`, `GROWTH-MODEL.md`,
+  `SEED-ADOPTION.md`, `AGING-ARMS.md`, `SUCCESSOR-ERASURE.md`).** The tool now adopts a seed made by the
+  SCALE1 loader (Mac check: all 120 product saves matched in durable records, receipts, current and pinned reads,
+  history, feed pages). Grouping several saves per transaction changed the index shape, so the server run keeps one
+  transaction per save. One-billion run forecast: 9.60 h and $10.46 at 24,000 records per second from an estimated
+  430 million starting records (needs about 23,000 to fit; stops after calibration if it cannot fit 9.9 h).
+  Growth model: every index stays at three levels through 8 billion records (EAVT leaves 333,334 at 1 billion,
+  2,666,667 at 8 billion; directory bytes 10 to 80 MB); point reads, feed pages and save lookups predicted flat;
+  backup, verify and restore linear; each row names the observation that would contradict it. Two-era erasure
+  drill passes with the erasure sequence. Part 3 assigned: merge onto `exp/DX-INT1`, scorecard support for the
+  aged database, a fallback target if the server rate is low, comparison with the model when the run reports.
+- **Server 2's queue replaced** (DX-SCALE1 stopped and resumed; server-side services untouched). The old plan was
+  23 hours of pairs for two writers, the second of which is no longer the candidate. New order: seal the
+  ten-account seed (1,000,000 people, 162,456,470 facts, ingest complete 13:15 local); present writer trimmed to
+  four pairs per rate (3 h); DX-PREP1's per-person writer comparison; version 0.1 scorecard fresh; the 1 billion
+  rung; scorecard at 1 billion. Target Saturday about 18:00 local, about $27 more for server 2.
