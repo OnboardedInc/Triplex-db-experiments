@@ -15,11 +15,11 @@ The zero-reader 10k arm acknowledged 56,505 primary commands. Commit p99 was 87.
 
 | Item and arm | Scope | Commit p50 ms | Commit p99 ms | Read p99 ms | Feed p99 ms | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 zero | account 1 | 5.09 · 56505 [5.09, 5.12] | 69.12 · 56505 [65.28, 72.70] | — | 20.09 · 2895 [19.20, 20.35] | Observed · arm-d19-i1-zero-a |
-| 1 reader | account 1 | — | — | — | — | 1,604,464 seeded facts · arm-d19-i1-reader-a |
-| 1 zero | account 1 | 5.12 · 56505 [5.09, 5.12] | 87.04 · 56505 [82.43, 94.21] | — | 19.45 · 2895 [18.82, 20.48] | Observed · arm-d19-i1-zero-b |
-| 1 reader | account 1 | — | — | — | — | exit-code · arm-d19-i1-reader-b |
-| 3 seed | account 1 | — | — | — | — | 16,245,050 seeded facts · arm-p6-i1-seed-a |
+| 1 (earlier) zero | account 1 | 5.09 · 56505 [5.09, 5.12] | 69.12 · 56505 [65.28, 72.70] | — | 20.09 · 2895 [19.20, 20.35] | Observed · arm-d19-i1-zero-a |
+| 1 (earlier) reader | account 1 | — | — | — | — | 1,604,464 seeded facts · arm-d19-i1-reader-a |
+| 1 (earlier) zero | account 1 | 5.12 · 56505 [5.09, 5.12] | 87.04 · 56505 [82.43, 94.21] | — | 19.45 · 2895 [18.82, 20.48] | Observed · arm-d19-i1-zero-b |
+| 1 (earlier) reader | account 1 | — | — | — | — | exit-code · arm-d19-i1-reader-b |
+| 1 seed | account 1 | — | — | — | — | 16,245,050 seeded facts · arm-p6-i1-seed-a |
 
 **Shared resources**
 

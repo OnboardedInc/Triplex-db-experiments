@@ -332,7 +332,8 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       (s) => s.attempt.item === item && modes.includes(s.attempt.mode),
     )) {
       const mode = s.attempt.mode,
-        m = s.summary;
+        m = s.summary,
+        itemName = /^arm-p6-i([1-5])-/.exec(s.tag)?.[1] ?? item + " (earlier)";
       const ids =
         mode === "activation"
           ? ["pooled"]
@@ -343,7 +344,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         const sentinel = id === "account 1",
           c = sentinel ? m?.perScope?.[0]?.commit : m?.commit;
         lines.push(
-          `| ${item} ${mode}${s.delta ? " DELTA" : ""} | ${id} | ${metric(c?.p50)} | ${metric(c?.p99)} | ${metric(s.boundedLatency?.read ?? (s.delta ? { value: s.delta.loaded.readP99, n: s.delta.loaded.checked } : bar(s, "NS-P1-READ-P99-256-MS", sentinel)))} | ${metric(s.boundedLatency?.feedLag ?? bar(s, "NS-P3 lag p99 ms at L256", sentinel))} | ${m?.invalid?.length ? "Unjudged" : m ? "Observed" : s.terminal.service === "success" && s.disk?.facts ? s.disk.facts.toLocaleString("en-US") + " seeded facts" : s.terminal.service} · ${s.tag} |`,
+          `| ${itemName} ${mode}${s.delta ? " DELTA" : ""} | ${id} | ${metric(c?.p50)} | ${metric(c?.p99)} | ${metric(s.boundedLatency?.read ?? (s.delta ? { value: s.delta.loaded.readP99, n: s.delta.loaded.checked } : bar(s, "NS-P1-READ-P99-256-MS", sentinel)))} | ${metric(s.boundedLatency?.feedLag ?? bar(s, "NS-P3 lag p99 ms at L256", sentinel))} | ${m?.invalid?.length ? "Unjudged" : m ? "Observed" : s.terminal.service === "success" && s.disk?.facts ? s.disk.facts.toLocaleString("en-US") + " seeded facts" : s.terminal.service} · ${s.tag} |`,
         );
       }
     }
@@ -508,6 +509,11 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     }
   }
   if (lines.length > 60) lines.splice(lines.indexOf("**Bench measurements**"), 2);
+  while (lines.length > 60) {
+    const historical = lines.findIndex((l) => l.startsWith("| ") && l.includes(" · arm-d19-"));
+    if (historical < 0) break;
+    lines.splice(historical, 1);
+  }
   if (lines.length > 60) throw Error("Owner report exceeds 60 lines");
   const predictionFile = path.join(path.dirname(file), "PREDICTIONS.md");
   if (fs.existsSync(predictionFile)) {

@@ -25,3 +25,5 @@ Forecasts below use the new order. An observation is entered alongside its origi
 | P6.3 · 100,000 people | One account has 75–190 ms commit p99. Page-guard activation exceeds one second. | Pending. |
 | P6.4 · hundred small accounts | Pooled busy-with-low goodput is 3.15–3.40 saves/s and quiet p99 is 0.90–1.25× alone. I expect 100 logical accounts to open in one database. | Pending. |
 | P6.5 · one million people | The pooled seed takes 9.7–12.7 hours at 520–850 PostgreSQL bytes per current fact. | Pending. |
+
+The million-person seed budget projects 47.90 GiB of memory and 350.30 GiB of free disk, including the volume, simultaneous PostgreSQL dump and reserve. It scales the observed 100,000-person pooled seed’s 1.64 GiB client peak, 12.90 GiB of additional volume and 11.94 GiB image, with the measured arm’s headroom rules. The 10,000-person live client’s 8.31 GiB peak, scaled by fact count, would imply more than 900 GiB at one million people. That extrapolation rules out relying on a full in-memory copy at the measured per-fact cost. The bounded live arms need an actual measurement after seeding.
