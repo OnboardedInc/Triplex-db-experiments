@@ -100,9 +100,6 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         raise SystemExit("Lab Docker endpoint does not match the configured endpoint")
     profile["lanes"]["datomic"]["image"] = f"tx2-datomic:dx-prep1-{mode}"
     slots.write_text(json.dumps(profile, indent=2) + "\n")
-    engine_dir = REPO / "runs/engines/prep1"
-    env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots),
-               TX2_ENGINE_DIR=str(engine_dir))
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
     if clojure_inputs:
         source_paths.extend(clojure_inputs)
@@ -120,13 +117,27 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "runner": {str(p.relative_to(REPO)): sha(p) for p in sorted(set(source_paths))},
     }
     record(out / "inputs.json", inputs)
+    run_stage(out, inputs)
 
+
+def run_stage(out, inputs):
+    stage = out / "stage"
+    slots = stage / "lab/config/slots.json"
+    env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots),
+               TX2_ENGINE_DIR=str(REPO / "runs/engines/prep1"))
+    attempt = inputs["attempt"]
+    if any(sha(stage / path) != digest for path, digest in inputs["stage"].items()):
+        raise SystemExit("Staged source bytes changed")
     # [DX-PREP1] Why: retain each refusal and let the existing manager decide whether the shared slot fits.
     # Rejected: borrowing a resident or starting a container before admission.
     for action in ("build", "selftest"):
         for i in range(1, 121):
             disk_floor()
             path = out / f"{action}-{i}.log"
+            if action == "build" and (out / "image.json").is_file():
+                break
+            if path.exists():
+                continue
             args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{out.name}-{action}", "--"]
             args += ["node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-PREP1"]
             if action == "selftest":
@@ -162,4 +173,10 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]).resolve(), *sys.argv[2:])
+    out = Path(sys.argv[1]).resolve()
+    if sys.argv[2:] == ["--resume"]:
+        if (out / "terminal.json").exists():
+            raise SystemExit("Attempt already terminated successfully")
+        run_stage(out, json.loads((out / "inputs.json").read_text()))
+    else:
+        main(out, *sys.argv[2:])

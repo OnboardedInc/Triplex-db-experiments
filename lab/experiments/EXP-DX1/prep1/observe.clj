@@ -144,12 +144,14 @@
     (fn [_ k] (if (instance? java.util.List k)
                 (str "api/entid :avet " (first k))
                 (str "api/entid schema " (if (and (keyword? k) (= "triplex.subject" (namespace k))) "subject-fn" k))))
-    identity))
+    identity)
+  (wrap-lookup! (requiring-resolve 'datomic.builtins/compare-and-swap)
+    (constantly "native/cas :eavt") identity))
 
 (when (= "lookup-profile" mode)
   ;; [DX-PREP1] Why: shared native prefetch can load one leaf for several keys. Measure its real I/O once.
   ;; Rejected: running extra point seeks to split a batch's shared storage reads across individual ids.
-  (doseq [op '[prefetch-identity prefetch-redundancy+uniqueness]]
+  (doseq [op '[prefetch-identity prefetch-redundancy+uniqueness find-avet find-aevt find-eavt get-hook]]
     (wrap-lookup! (ns-resolve 'datomic.db op) (constantly (str "native/" op)) identity))
   (wrap-lookup! (ns-resolve 'datomic.db 'resolve-lookup-ref)
     (constantly "native/resolve-lookup-ref :avet") identity)

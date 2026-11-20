@@ -22,7 +22,7 @@ const depths = lookupProfile ? [24] : subjectProfile
         ? [1, 8, 32, 32, 8, 1]
         : [32, 32];
 const count = lookupProfile ? 96 : subjectProfile ? 30 : guardProbe ? 96 : 192;
-const subjectCount = lookupProfile ? 192 : deep ? 1200 : depths.length * count;
+const subjectCount = lookupProfile ? 1152 : deep ? 1200 : depths.length * count;
 // [DX-PREP1] Why: sample across the same seeded depth as the earlier open-loop experiment.
 // Rejected: a narrow prefix of that database, where all historical lookups can share the same index leaves.
 const subjectFor = (offer: number) => (deep || lookupProfile ? (offer * 67) % subjectCount : offer);
@@ -92,7 +92,7 @@ async function censusWrite(
     return { ack: (await peer.transact(db, input)) as Ack, recovered: false };
   } catch (failure) {
     if (
-      mode !== "census" ||
+      (mode !== "census" && mode !== "lookup-profile") ||
       !(failure instanceof DatomicHttpError) ||
       failure.code !== "OutcomeUnknown"
     )
