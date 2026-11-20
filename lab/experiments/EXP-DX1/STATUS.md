@@ -3048,3 +3048,13 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   the journal restored, 450 saves per second forecast with p99 of 72 and 124 ms) and parallel preparation (no gain at
   depth) are closed as capacity fixes; grouping with the corrected write path (forecast 260 to 350) is what remains,
   to be measured by server 2's ten-account runs.
+
+## 2026-11-20 11:04 UTC (06:04 local, 2026-11-20): server 1 idle 20 minutes again; activation preflight passed; driver told to launch it now
+
+- Server 1 had no container and a load of zero from about 05:44 to 06:05 local (about 0.38 USD) while DX-BM1 repaired a
+  catalog check on the Mac. Before that it had: seeded and verified the thin 1,000,000-person population (8,000,000
+  assertions through 20,834 durable frames; ingestion 28 min 40 s, feed verification 12 min 38 s) and begun sealing
+  its PostgreSQL snapshot; and **passed the repaired activation preflight (all six windows, the shared-census check,
+  the typed 413 refusal, small settlement)**. DX-BM1 was stopped and resumed at 06:05 with one instruction first: launch
+  the 100,000-person activation run now as a detached job; a repair on the Mac never holds the server empty. The idle
+  watcher for server 1 was restarted.
