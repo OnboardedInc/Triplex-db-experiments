@@ -34,6 +34,8 @@ import {
   traceResource,
 } from "./tracing.js";
 
+export type DatomicWriteClass = "live" | "import" | "activation" | "notice";
+
 export class DatomicHttpError extends Error {
   readonly _tag = "DatomicHttpError";
   constructor(
@@ -235,6 +237,7 @@ export class DatomicClient {
     readonly maxResponseBytes = 64 * 1024 ** 2,
     readonly cacheOptions: {
       readonly groupAccount?: string;
+      readonly writeClass?: DatomicWriteClass;
       readonly entityCacheBytes?: number;
       readonly rowCacheBytes?: number;
       readonly predecessorCacheBytes?: number;
@@ -864,6 +867,7 @@ export class DatomicClient {
     input: {
       onSent?: () => void;
       groupAccount?: string;
+      writeClass?: DatomicWriteClass;
       clientId?: string;
       sendSequence?: number;
       replaySafe?: boolean;
@@ -925,6 +929,7 @@ export class DatomicClient {
       compact && fastPathEnabled("history-range") ? historyIdentityBounds(input.newIds) : undefined;
     const body = {
       ...wireInput,
+      ...(this.cacheOptions.writeClass ? { writeClass: this.cacheOptions.writeClass } : {}),
       ...(this.cacheOptions.groupAccount ? { groupAccount: this.cacheOptions.groupAccount } : {}),
       ...(bounds ? { historyIdentityBounds: bounds } : {}),
       rows,
@@ -1010,6 +1015,19 @@ export class DatomicClient {
         };
     }
     return response;
+  }
+  async *transactBulkFrames(
+    db: string,
+    kind: Exclude<DatomicWriteClass, "live">,
+    frames:
+      | Iterable<Parameters<DatomicClient["transact"]>[1]>
+      | AsyncIterable<Parameters<DatomicClient["transact"]>[1]>,
+  ) {
+    // [DX-W1] Why: release the pipeline between independently atomic producer frames, with a durable receipt for each.
+    // Rejected: splitting one application's atomic write or pre-submitting the suffix before the current ACK.
+    if (this.cacheOptions.writeClass && this.cacheOptions.writeClass !== kind)
+      throw new TypeError("Bulk producer class differs from its configured role");
+    for await (const frame of frames) yield await this.transact(db, { ...frame, writeClass: kind });
   }
   // [DX-W1] Why: all retries of one claimed command return its original durable logical receipt, including after an ambiguous transport failure.
   // Rejected: retrying a write after an unknown ACK or returning the last member of its physical transaction.
