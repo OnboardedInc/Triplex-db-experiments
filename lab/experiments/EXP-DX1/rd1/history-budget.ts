@@ -52,7 +52,8 @@ const initial = ids.map((id) => {
   current.set(id, entity);
   return [id, undefined, entity] as const;
 });
-const basePackedBytes = initial.reduce((s, [, , entry]) => s + entry.byteLength, 0);
+const packedBytes = (entry: PackedEntity) => entry.byteLength ?? entry.buffer.byteLength;
+const basePackedBytes = initial.reduce((s, [, , entry]) => s + packedBytes(entry), 0);
 index.apply({
   position: 1,
   recordTime: t0 + 1,
@@ -162,7 +163,7 @@ console.log(
       retainedBytes: index.historyBytes,
       highBytes,
       basePackedBytes,
-      latestPackedBytes: [...current.values()].reduce((n, v) => n + v.byteLength, 0),
+      latestPackedBytes: [...current.values()].reduce((n, v) => n + packedBytes(v), 0),
       subjectsWithRetainedHistory: history.length,
       retainedVersions: history.reduce((n, [, versions]) => n + versions.length, 0),
       historyBytesPerTouched: index.historyBytes / touched.size,
