@@ -46,6 +46,8 @@ export type ReaderConfig = {
   replicaWorldCacheBytes?: number;
   replicaPort?: import("node:worker_threads").MessagePort;
   observationPort?: import("node:worker_threads").MessagePort;
+  historicalPort?: import("node:worker_threads").MessagePort;
+  installedHistoryBytes?: number;
   readPath?: "gateway" | "replica";
   splitTarget?: "pending" | "mixed";
   replicaHistoryMiB?: number;
@@ -89,6 +91,9 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
 
   let comp: CompositionHandle;
   const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader((cfg.replicaHistoryMiB ?? 64) * 1024 ** 2, shared?.index, cfg.replicaWorldCacheBytes ?? 32 * 1024 ** 2, cfg.replicaHistoryCoverage) : undefined;
+  const historyApi = cfg.historicalPort ? await import("./lib/historical-fallback.ts") : undefined;
+  const exactHistory = cfg.historicalPort ? new historyApi!.HistoricalFallbackPort(cfg.historicalPort) : undefined;
+  if (replica && historyApi && cfg.installedHistoryBytes) replica.installedHistory = new historyApi.InstalledHistory(cfg.installedHistoryBytes);
   if (replica && cfg.replicaImage) replica.install(cfg.replicaImage);
   const turn = new ReaderTurn();
   const loopDelay = monitorEventLoopDelay({ resolution: 1 });
@@ -110,12 +115,12 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       replica!.apply(msg.delta);
     }
   });
-  const phases = new Map<number, { reads: number; reasons: Record<string, number>; straddleWait: Histogram; rawLocalSamples: number; rawFallbackSamples: number; timeOnlyReads: number; timeOnlyLocal: number }>();
+  const phases = new Map<number, { reads: number; reasons: Record<string, number>; ages: Record<string, number>; straddleWait: Histogram; rawLocalSamples: number; rawFallbackSamples: number; timeOnlyReads: number; timeOnlyLocal: number }>();
   let activeReads = 0, attemptedReads = 0, completedReads = 0;
   let readErrorCount = 0;
   const readErrors: any[] = [];
-  const finalDiagnostics = () => ({ strictRecordClocks: replica?.index.strictRecordClocks, readAttempts: { attempted: attemptedReads, completed: completedReads, active: activeReads }, readErrors: { count: readErrorCount, retained: readErrors }, gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics,
-    phases: Object.fromEntries([...phases].map(([p, s]) => [p, { reads: s.reads, rawLocalSamples: s.rawLocalSamples, rawFallbackSamples: s.rawFallbackSamples, timeOnlyReads: s.timeOnlyReads, timeOnlyLocal: s.timeOnlyLocal, fallbackReasons: s.reasons, straddleWait: s.straddleWait.toJSON() }])) });
+  const finalDiagnostics = () => ({ strictRecordClocks: replica?.index.strictRecordClocks, readAttempts: { attempted: attemptedReads, completed: completedReads, active: activeReads }, readErrors: { count: readErrorCount, retained: readErrors }, gateway: readerDiagnostics(), replica: replica?.diagnostics, installedHistory: replica?.installedHistory?.diagnostics, turn: turn.diagnostics,
+    phases: Object.fromEntries([...phases].map(([p, s]) => [p, { reads: s.reads, rawLocalSamples: s.rawLocalSamples, rawFallbackSamples: s.rawFallbackSamples, timeOnlyReads: s.timeOnlyReads, timeOnlyLocal: s.timeOnlyLocal, fallbackReasons: s.reasons, basisAgeSample: s.ages, straddleWait: s.straddleWait.toJSON() }])) });
   let phase = -1;
   let mode = "mixed";
   let wanted = 0;
@@ -253,9 +258,10 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
   async function readOnceTraced(subject: number, basis: Basis, kind: number, position: number, ph: number, opts: { keepRows: boolean; sweep?: boolean; straddleSeq?: number; assignedAt?: number; hotPick?: boolean }) {
     activeReads++; attemptedReads++;
     const timed = (attemptedReads & 255) === 1;
+    const sampleAge = (attemptedReads & 1023) === 1;
     const start = nowAbs();
     const t0 = performance.now();
-    const stats = phases.get(ph) ?? { reads: 0, reasons: {}, straddleWait: new Histogram(), rawLocalSamples: 0, rawFallbackSamples: 0, timeOnlyReads: 0, timeOnlyLocal: 0 };
+    const stats = phases.get(ph) ?? { reads: 0, reasons: {}, ages: {}, straddleWait: new Histogram(), rawLocalSamples: 0, rawFallbackSamples: 0, timeOnlyReads: 0, timeOnlyLocal: 0 };
     phases.set(ph, stats);
     const timeOnly = basis.recordedAt !== undefined && basis.recordedPosition === undefined;
     if (timeOnly) stats.timeOnlyReads++;
@@ -276,9 +282,18 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
         }
       : undefined;
     try {
-      const gateway = () => opts.sweep ? comp.sweepPull(ids.placement(subject), basis) : comp.pull(ids.placement(subject), basis, replica ? undefined : between);
+      const root = ids.placement(subject);
+      const gateway = () => opts.sweep ? comp.sweepPull(root, basis) : comp.pull(root, basis, replica ? undefined : between);
+      const miss = exactHistory && replica && !opts.sweep ? async () => {
+        const epoch = replica.historyEpoch;
+        const payload = await exactHistory.pull(root, basis);
+        if (!payload) return gateway();
+        if (replica.historyEpoch === epoch && replica.installedHistory && replica.canInstallHistory(basis))
+          replica.installedHistory.put(root, basis, payload);
+        return historyApi!.historicalResult(payload, false);
+      } : gateway;
       const pr = replica
-        ? await replica.pullAt(ids.placement(subject), basis, gateway, between, false, position)
+        ? await replica.pullAt(root, basis, miss, between, false, position)
         : await gateway();
       if (timeOnly && pr.route === "replica") stats.timeOnlyLocal++;
       // The wait for the straddled command's ACK is the driver's scheduling, not the store's service time.
@@ -296,6 +311,14 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
           throw Error("prepared full-row observation mismatch");
       }
       stats.reads++;
+      // [DX-RD1] Why: measure recorded cut age separately from a past valid-time selection.
+      // Rejected: classifying the 90-day valid-time draw as 90 days of replica history demand.
+      if (sampleAge) {
+        const age = Math.max(0, (start - basis.recordedAt) / 1000);
+        const ageBin = age < 1 ? "<1s" : age < 60 ? "1–60s" : age < 300 ? "1–5m" : age < 600 ? "5–10m" : age < 3600 ? "10–60m" : ">=60m";
+        const key = `${kind}/${ageBin}/${pr.route}`;
+        stats.ages[key] = (stats.ages[key] ?? 0) + 1;
+      }
       if (opts.keepRows) { if (pr.route === "replica") { stats.rawLocalSamples++; rawSamples++; } else stats.rawFallbackSamples++; }
       if (pr.route === "fallback") { const reason = pr.replicaFallbackReason ?? (opts.keepRows ? "oracle-raw" : "gateway"); stats.reasons[reason] = (stats.reasons[reason] ?? 0) + 1; }
       if (split > 0) stats.straddleWait.recordMs(straddleWaitMs);
@@ -469,6 +492,7 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       })));
       cfg.observationPort?.close();
       cfg.replicaPort?.close();
+      exactHistory?.close();
       unsubscribe?.();
       const diagnostics = { ...finalDiagnostics(), costs, threadCpuMs: threadCpuMs() };
       await comp.close().catch(() => {});
