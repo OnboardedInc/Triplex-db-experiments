@@ -31,6 +31,7 @@ import { tenantPlan, tenantPhases, tenantWindows, tenantTraceId, pooledCampaignI
 import { compareTenants } from "./tenant-metrics.ts";
 import { smallTrace, smallId, smallSeconds, smallPhases, smallScope } from "./small-plan.ts";
 import { deepPopulation, DEEP_PROFILE } from "../../../bench/lib/deep-world.ts";
+import { ids } from "../../../bench/lib/world.ts";
 import { DeepCommitMeter } from "../../../bench/lib/deep-commit-meter.ts";
 import { fieldPlan, fieldProfile } from "../int1/field-plan.ts";
 
@@ -355,12 +356,11 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
       .trim()
       .split("\n")
       .map((s) => JSON.parse(s));
+    // [DX-INT1] Why: the pinned placement can still exist at a valid time with no visible stamp.
+    // Rejected: discarding that sample or requiring a retractable field to bind its subject.
     assert(
       reads.every((r) =>
-        r.rows.some(
-          (row: any) =>
-            row[0] === `pl:${String(r.subject).padStart(8, "0")}` && row[1] === ":placement/stamp",
-        ),
+        r.rows.some((row: [string, ...unknown[]]) => row[0] === ids.placement(r.subject)),
       ),
     );
     const independent = compareOracleOutput({
@@ -520,13 +520,11 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   if (id.tenant) {
     const observed = path.join(dir, "tenant-observations.json"),
       cross = report.deep.crossAccount;
-    if (pooled !== "frozen") {
-      hashes["tenant-observations.json"] = await fileHash(observed);
-      assert.equal(hashes["tenant-observations.json"], report.deep.tenantObservationsSha256);
-      tenantEvidence = JSON.parse(fs.readFileSync(observed, "utf8"));
-      assert.deepEqual(tenantEvidence.identity, id);
-      assert(tenantEvidence.database === db && tenantEvidence.traceStart === commonStart);
-    }
+    hashes["tenant-observations.json"] = await fileHash(observed);
+    assert.equal(hashes["tenant-observations.json"], report.deep.tenantObservationsSha256);
+    tenantEvidence = JSON.parse(fs.readFileSync(observed, "utf8"));
+    assert.deepEqual(tenantEvidence.identity, id);
+    assert(tenantEvidence.database === db && tenantEvidence.traceStart === commonStart);
     assert.deepEqual(cross.identity, id);
     assert.equal(cross.database, db);
     assert.deepEqual(cross.proof.receiptProjection, cross.seedProjection);

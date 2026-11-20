@@ -76,6 +76,11 @@
         (is (= [[["assert" "early" ":v"]] [["retract" "early" ":v"] ["assert" "later" ":v"]]]
                (mapv (fn [tx] (mapv #(mapv % ["op" "assertionId" "attribute"]) (get tx "changes"))) feed)))
         (is (= [] (get resumed "rows")))
+        (doseq [[p expected] [[2 [["_tx/edit" 2] ["_tx/seed" 1]]] [1 [["_tx/seed" 1]]]]]
+          (is (= expected
+                 (get (json/read-str (journal/entity-positions (d/db conn) name
+                                      {"entityId" gt/root "limit" 2 "recordedOnly" true
+                                       "basis" {"recordedPosition" p}})) "positions"))))
         (let [[status body :as physical] (native name (str (pattern ":_tx/change")
                          " [(triplex.gateway.query/compare-op \">\" ?f 0)]") "?id" edit-world)]
           (is (if lean? (= [409 "LayoutUnsupported"] [status (get body "code")])

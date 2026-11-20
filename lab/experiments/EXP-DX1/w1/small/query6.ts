@@ -27,12 +27,12 @@ type Layout = "lean" | "legacy";
 const owner = (id: string) => EntityId.make(id);
 const at = 1_000_000_000_000_000;
 const cut = { validAt: at };
-const a = (id: string, attribute: string, value: string): TransactOp => ({
+const a = (id: string, attribute: string, value: string, validFrom = 0): TransactOp => ({
   op: "assert",
   entityId: owner(id),
   attribute: Attribute.make(attribute),
   value: { type: "string", value },
-  validFrom: 0,
+  validFrom,
 });
 
 async function withScope<T>(
@@ -65,19 +65,24 @@ function runtime(
   client: DatomicClient,
   scope: ReturnType<typeof DatabaseScope.test>,
   layout: Layout,
+  clock = 100,
 ) {
   return ManagedRuntime.make(
     Runtime.define({
       name: "query6",
       storage: Layer.succeed(
         StorageAdapter,
-        makeDatomicStorageAdapter(client, scope, { layout, serverRecordTime: false }),
+        makeDatomicStorageAdapter(client, scope, {
+          layout,
+          serverRecordTime: true,
+          recordedJournalReads: true,
+        }),
       ),
       queries: Layer.succeed(QueryExecutor, makeDatomicQueryExecutor(client, scope)),
     }).layer({
       scope,
       capabilities: Capabilities.none,
-      deterministic: { startTime: 100, seed: "query6" },
+      deterministic: { startTime: clock, seed: `query6-${clock}` },
     }),
   );
 }
@@ -95,23 +100,32 @@ const results = <T>(value: { results: readonly T[] }) => value.results;
 export function queryProof(url: string, nonce: string, layout: Layout) {
   return withScope(url, nonce + "-" + layout, layout, async (t, rt, client, db) => {
     const run = rt.runPromise;
-    const first = await run(
-      t.transact([a("j:1", ":j/a", "one"), a("j:1", ":j/b", "two")], {
-        actor: "client",
-        commandId: "c1",
-      }),
-    );
-    const second = await run(
-      t.transact(
-        [
-          a("j:2", ":j/a", "three"),
-          { op: "retract", id: first.triples[1]!.id },
-          a("j:1", ":j/a", "four"),
-          { op: "retract", id: first.triples[0]!.id },
-        ],
-        { actor: "client", commandId: "c2" },
-      ),
-    );
+    // [DX-W1] Why: use the real K writer while the reader's business clock stays at 100.
+    // Rejected: disabling server-assigned record time, which bypasses the K save ledger.
+    const commitAt = async (
+      clock: number,
+      commandId: string,
+      operations: readonly TransactOp[],
+    ) => {
+      const writer = runtime(client, DatabaseScope.test(nonce + "-" + layout), layout, clock);
+      try {
+        const triples = await writer.runPromise(Triples);
+        const receipt = await writer.runPromise(
+          triples.transact(operations, { actor: "client", commandId }),
+        );
+        assert.equal(receipt.instant, clock);
+        return receipt;
+      } finally {
+        await writer.dispose();
+      }
+    };
+    const first = await commitAt(100, "c1", [a("j:1", ":j/a", "one"), a("j:1", ":j/b", "two", 10)]);
+    const second = await commitAt(101, "c2", [
+      a("j:2", ":j/a", "three"),
+      { op: "retract", id: first.triples[1]!.id },
+      a("j:1", ":j/a", "four"),
+      { op: "retract", id: first.triples[0]!.id },
+    ]);
     const fixed = { ...cut, recordedAt: second.instant };
     const selection = { entityId: owner(second.txId) };
     const changes = { ...selection, attribute: Attribute.make(":_tx/change") };
@@ -226,11 +240,11 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
     // Rejected: inferring attribute freshness from the latest scope receipt, which misses both facts.
     const dependencies = await Promise.all(
       [first.instant, second.instant].map((recordedAt) =>
-        run(t.dependencyState([":j/b"], { validAt: -1, recordedAt })),
+        run(t.dependencyState([":j/b"], { validAt: 0, recordedAt })),
       ),
     );
     assert.deepEqual(dependencies, [
-      { sourcePosition: first.position, nextTemporalBoundary: 0 },
+      { sourcePosition: first.position, nextTemporalBoundary: 10 },
       { sourcePosition: second.position },
     ]);
     const typed = {
@@ -243,42 +257,55 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
     assert.deepEqual(typed.one, typed.command);
     assert.deepEqual(typed.page.transactions, [typed.one]);
     assert.deepEqual(typed.ownerPage.transactions, [typed.one]);
-    const next = await run(
-      t.transact(
-        [
-          a("j:0", ":j/a", "arrived later"),
-          {
-            op: "assert",
-            entityId: owner("n:1"),
-            attribute: Attribute.make(":n/i"),
-            value: integer("9007199254740993"),
-            validFrom: 0,
-          },
-          {
-            op: "assert",
-            entityId: owner("n:1"),
-            attribute: Attribute.make(":n/z"),
-            value: { type: "number", value: -0 },
-            validFrom: 0,
-          },
-          {
-            op: "assert",
-            entityId: owner("n:1"),
-            attribute: Attribute.make(":n/p"),
-            value: ref(owner("n:2")),
-            validFrom: 0,
-          },
-          {
-            op: "assert",
-            entityId: owner("n:2"),
-            attribute: Attribute.make(":n/p"),
-            value: ref(owner("n:3")),
-            validFrom: 0,
-          },
-        ],
-        { actor: "client", commandId: "c3" },
+    await assert.rejects(
+      run(
+        t.transact(
+          [
+            {
+              op: "assert",
+              entityId: owner("n:1"),
+              attribute: Attribute.make(":n/value"),
+              value: { type: "number", value: -0 },
+              validFrom: 0,
+            },
+          ],
+          { commandId: "negative-zero" },
+        ),
       ),
+      { _tag: "InvalidTripleError" },
     );
+    assert.equal(await run(t.currentPosition()), second.position);
+    const next = await commitAt(102, "c3", [
+      a("j:0", ":j/a", "arrived later"),
+      {
+        op: "assert",
+        entityId: owner("n:1"),
+        attribute: Attribute.make(":n/i"),
+        value: integer("9007199254740993"),
+        validFrom: 0,
+      },
+      {
+        op: "assert",
+        entityId: owner("n:1"),
+        attribute: Attribute.make(":n/value"),
+        value: { type: "number", value: 0.30000000000000004 },
+        validFrom: 0,
+      },
+      {
+        op: "assert",
+        entityId: owner("n:1"),
+        attribute: Attribute.make(":n/p"),
+        value: ref(owner("n:2")),
+        validFrom: 0,
+      },
+      {
+        op: "assert",
+        entityId: owner("n:2"),
+        attribute: Attribute.make(":n/p"),
+        value: ref(owner("n:3")),
+        validFrom: 0,
+      },
+    ]);
     const page2 = await run(
       t.queryPage({ ...wrapped, cursor: page1.nextCursor }, { basis: fixed }),
     );
@@ -302,10 +329,10 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
       await run(
         t.query(
           {
-            find: ["?int", "?zero"],
+            find: ["?int", "?num"],
             where: [
               ["n:1", ":n/i", "?int"],
-              ["n:1", ":n/z", "?zero"],
+              ["n:1", ":n/value", "?num"],
             ],
           },
           { basis: cut },
@@ -316,7 +343,7 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
       exact[0]?.["?int"] && JSON.stringify(exact[0]["?int"]),
       JSON.stringify(integer("9007199254740993")),
     );
-    assert(Object.is(exact[0]?.["?zero"], -0));
+    assert(Object.is(exact[0]?.["?num"], 0.30000000000000004));
     const recursive = results(
       await run(
         t.query(
@@ -382,7 +409,11 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
       dependencies,
       complete,
       typed: { ...typed, older },
-      exact: { binding: exact[0]?.["?int"], negativeZero: Object.is(exact[0]?.["?zero"], -0) },
+      exact: {
+        binding: exact[0]?.["?int"],
+        number: exact[0]?.["?num"],
+        negativeZeroRejected: true,
+      },
       recursive,
       explainBackend: explain.map((plan) => plan.queryPlan?.backend),
       log: commits.map((row) => row.transaction),

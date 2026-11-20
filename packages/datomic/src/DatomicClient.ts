@@ -173,6 +173,12 @@ export class DatomicClient {
   private lastCommit: { db: string; position: number; t: string } | undefined;
   reachSession = randomUUID();
   readonly reachCache: ByteCache<CachedEntity>;
+  private readonly reachReplySequence = new WeakMap<object, number | null>();
+  private readonly reachSequence = new Map<string, number>();
+  private readonly reachStamps = new WeakMap<
+    CachedEntity,
+    { position: number; t: string; sequence: number }
+  >();
   readonly rowCache: RowCache;
   readonly predecessorCache: PredecessorCache;
   forceFullReach = false;
@@ -307,6 +313,7 @@ export class DatomicClient {
     this.reachKeyDb = undefined;
     this.historicalSessions.clear();
     this.reachCache.clear();
+    this.reachSequence.clear();
     this.rowCache.clear();
     this.predecessorCache.clear();
     this.layouts.clear();
@@ -466,6 +473,20 @@ export class DatomicClient {
                 };
               const status = res.statusCode ?? 0;
               const erasureHead = res.headers["x-triplex-erasure-seq"];
+              if (
+                erasureHead !== undefined &&
+                (path.endsWith("/reach") || path.endsWith("/reach-many"))
+              ) {
+                const sequence = Number(erasureHead);
+                this.reachReplySequence.set(
+                  data,
+                  Number.isSafeInteger(sequence) &&
+                    sequence >= 0 &&
+                    String(sequence) === erasureHead
+                    ? sequence
+                    : null,
+                );
+              }
               const sample: DatomicRequestSample | undefined =
                 observation || this.onRequest
                   ? {
@@ -538,6 +559,16 @@ export class DatomicClient {
   // [DX-B2-N2] Why: bind caches to database and revisions, and repair concurrent inline/reference races once.
   // Rejected: accepting a missing reference as an empty entity.
   private readonly reachInflight = new Set<Promise<void>>();
+  private acceptReachSequence(db: string, sequence: number | null | undefined) {
+    const previous = this.reachSequence.get(db);
+    if (
+      sequence === null ||
+      (previous !== undefined && (sequence === undefined || sequence < previous))
+    )
+      return false;
+    if (sequence !== undefined && sequence !== previous) this.reachSequence.set(db, sequence);
+    return true;
+  }
   async readDemandWorld(
     scope: string,
     root: string,
@@ -666,20 +697,35 @@ export class DatomicClient {
   ) {
     const session = this.reachSessionAt(db, basis);
     const page = async (route: string, input: Record<string, unknown>) => {
-      if (!gzipRows) return this.request<ReachWire>("POST", route, input);
-      const wire = await this.request<ReachPage>("POST", route, { ...input, gzipRows: true });
-      return decodeReachPage(wire, this.maxResponseBytes);
+      const wire = await this.request<ReachPage>("POST", route, {
+        ...input,
+        erasureRefs: true,
+        ...(gzipRows ? { gzipRows: true } : {}),
+      });
+      return {
+        response: gzipRows ? decodeReachPage(wire, this.maxResponseBytes) : (wire as ReachWire),
+        sequence: this.reachReplySequence.get(wire),
+      };
     };
     let requests = 0;
     for (let attempt = 0; attempt < 2; attempt++) {
       requests++;
-      const response = await page(`/v2/db/${db}/${roots.length === 1 ? "reach" : "reach-many"}`, {
-        ...(roots.length === 1 ? { root: roots[0] } : { roots }),
-        basis,
-        ...(rowPage ? { rowPage: true } : {}),
-        session,
-        ...(this.forceFullReach || attempt === 1 ? { full: true } : {}),
-      });
+      const { response, sequence } = await page(
+        `/v2/db/${db}/${roots.length === 1 ? "reach" : "reach-many"}`,
+        {
+          ...(roots.length === 1 ? { root: roots[0] } : { roots }),
+          basis,
+          ...(rowPage ? { rowPage: true } : {}),
+          session,
+          ...(this.forceFullReach || attempt === 1 ? { full: true } : {}),
+        },
+      );
+      // [DX-ERASE1] Why: a delayed response cannot carry the cache back across an observed frontier.
+      // Rejected: waiting until after decoding or reporting rows to check the response sequence.
+      if (sequence === null || !this.acceptReachSequence(db, sequence)) {
+        if (attempt === 0) this.reachDiagnostics.fullRetries++;
+        continue;
+      }
       if (response.declined !== undefined) {
         this.reachDiagnostics.declines[response.declined] =
           (this.reachDiagnostics.declines[response.declined] ?? 0) + 1;
@@ -698,16 +744,34 @@ export class DatomicClient {
         )
           throw new TypeError("Reach response basis/shape mismatch");
         const prefix = `${db}\0`;
-        // [DX-RD1] Why: records of different revisions can be in flight concurrently.
-        // Rejected: reusing an inline payload without decoding it, or waiting for a newer revision to repair an older cut.
+        // [DX-INT1] Why: historical sessions keep their revision keys and guarded references still verify the native cut.
+        // Rejected: letting a revision match override the erasure sequence.
         const key = (id: string, rev: number) =>
           this.cacheOptions.historicalRevisionReuse
             ? `${prefix}${id.length}:${id}/${rev}`
             : this.reachKey(db, prefix, id);
+        const stamp =
+          sequence === undefined
+            ? undefined
+            : { position: response.position, t: response.t, sequence };
         const cache = {
-          get: (id: string, rev: number) => this.reachCache.get(key(id, rev)),
-          set: (id: string, entity: CachedEntity) =>
-            this.reachCache.set(key(id, entity.rev), entity),
+          get: (id: string, rev: number) => {
+            const hit = this.reachCache.get(key(id, rev));
+            if (hit?.rev !== rev) return;
+            if (!stamp) return hit;
+            const old = this.reachStamps.get(hit);
+            if (
+              old?.sequence === stamp.sequence &&
+              old.position === stamp.position &&
+              old.t === stamp.t
+            )
+              return hit;
+            return undefined;
+          },
+          set: (id: string, entity: CachedEntity) => {
+            if (stamp) this.reachStamps.set(entity, stamp);
+            this.reachCache.set(key(id, entity.rev), entity);
+          },
         };
         const entities = new Map<string, CachedEntity>();
         let missed = false;
@@ -741,7 +805,7 @@ export class DatomicClient {
             } else {
               this.reachDiagnostics.referenceEntities++;
               decoded = cache.get(id, rev);
-              if (decoded?.rev === rev) {
+              if (decoded) {
                 this.reachDiagnostics.referenceHits++;
                 // [DX-H7] Why: references are reads too; refresh only the small predecessor cache.
                 // Rejected: replaying row observers (would churn the row LRU on every reader cache hit).
@@ -763,7 +827,7 @@ export class DatomicClient {
           const missing = () =>
             references.filter(([id, rev]) => {
               const found = cache.get(id, rev);
-              if (found?.rev === rev) {
+              if (found) {
                 entities.set(id, found);
                 return false;
               }
@@ -772,6 +836,10 @@ export class DatomicClient {
           if (older.length) {
             this.reachDiagnostics.waits++;
             await Promise.allSettled(older);
+            if (this.reachSequence.get(db) !== sequence) {
+              if (attempt === 0) this.reachDiagnostics.fullRetries++;
+              continue;
+            }
             if (!missing().length) this.reachDiagnostics.waitHits++;
           }
           const need = missing();
@@ -780,14 +848,19 @@ export class DatomicClient {
             this.reachDiagnostics.needEntities += need.length;
             try {
               requests++;
-              const repair = await page(`/v2/db/${db}/reach-many`, {
-                roots,
-                need: need.map(([id]) => id),
-                session,
-                basis: { ...basis, recordedPosition: response.position },
-                ...(rowPage ? { rowPage: true } : {}),
-              });
+              const { response: repair, sequence: repairedSequence } = await page(
+                `/v2/db/${db}/reach-many`,
+                {
+                  roots,
+                  need: need.map(([id]) => id),
+                  session,
+                  basis: { ...basis, recordedPosition: response.position },
+                  ...(rowPage ? { rowPage: true } : {}),
+                },
+              );
               if (
+                !this.acceptReachSequence(db, repairedSequence) ||
+                repairedSequence !== sequence ||
                 repair.declined ||
                 repair.position !== response.position ||
                 repair.t !== response.t ||

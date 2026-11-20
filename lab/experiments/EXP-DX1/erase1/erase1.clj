@@ -6,6 +6,7 @@
             [triplex.gateway.lean :as lean]
             [triplex.gateway.envelope :as envelope]
             [triplex.gateway.privacy :as privacy]
+            [triplex.gateway.reach :as reach]
             [triplex.gateway.main :as main]
             [triplex.gateway.schema :as schema]
             [triplex.gateway.scope :as scope])
@@ -214,6 +215,31 @@
      :keyPresent (privacy/exists? (envelope/key-file name id))
      :bodyPresent (boolean (and e (scope/value db e :triplex.private/body)))}))
 
+(defn reach-parity! [conn input]
+  ;; [DX-ERASE1] Why: compare byte-for-byte at the same synthetic pin, with matching fresh sessions.
+  ;; Rejected: comparing only byte counts across separately seeded databases.
+  (let [name (scope-name! input) db (d/db conn) cut (privacy/cut name db)
+        _ (privacy/verify-data! cut db)
+        _ (check! (and cut (not (:sealed cut)) (= (:seq cut) (get input "sequence"))) "Unexpected parity frontier")
+        base {"roots" [(get input "root")] "basis" (get input "basis") "erasureRefs" true}
+        plain (assoc base "session" (str (java.util.UUID/randomUUID)))
+        guarded (assoc base "session" (str (java.util.UUID/randomUUID)))
+        cold-control (reach/build-response name db plain)
+        cold-guarded (binding [privacy/*cut* cut] (reach/build-response name db guarded))
+        warm-control (reach/build-response name db plain)
+        warm-guarded (binding [privacy/*cut* cut] (reach/build-response name db guarded))
+        entities (get (json/read-str warm-guarded) "entities")
+        refs (count (filter #(= 2 (count %)) entities))]
+    (check! (= cold-control cold-guarded) "Guarded cold Reach bytes differ")
+    (check! (= warm-control warm-guarded) "Guarded warm Reach bytes differ")
+    ;; [DX-ERASE1] Why: a dangling ID has no native entity to remember in either arm.
+    ;; Rejected: demanding a reference for every entity even when both reply bodies agree.
+    (check! (pos? refs) "Guarded Reach still inlines every entity")
+    {:sequence (:seq cut) :pin (get-in base ["basis" "recordedPosition"])
+     :coldBytes (alength (.getBytes ^String cold-guarded "UTF-8"))
+     :warmBytes (alength (.getBytes ^String warm-guarded "UTF-8"))
+     :warmSha256 (privacy/sha256 warm-guarded) :coldSha256 (privacy/sha256 cold-guarded) :refs refs :entities (count entities)}))
+
 (defn handle [{:keys [uri request-method headers body] :as req}]
   (if-not (str/starts-with? uri "/erase1/")
     (main/handler req)
@@ -232,6 +258,7 @@
                  "ciphertext-inventory" (ciphertext-inventory! conn input)
                  "ciphertext-cleanup" (ciphertext-cleanup! conn input)
                  "key-state" (key-state! conn input)
+                 "reach-parity" (reach-parity! conn input)
                  "observe" (observe! conn input)
                  "drop-pin" (do (check! (= conn (:conn @plans)) "Wrong pin owner") (reset! plans nil) {:released true})
                  "index" (let [t (d/basis-t (d/db conn)) clock (System/nanoTime) req (d/request-index conn)

@@ -155,6 +155,10 @@ The two options refuse lean scopes with observed erasure until those surfaces
 can apply the current erasure frontier. `Triples.transactions` uses the typed
 journal path.
 
+`recordedJournalReads: true` selects and hydrates `Triples.transactionsForEntity`
+at its recorded position across both layouts. The option requires a committed
+snapshot and a supported journal.
+
 Optional `getReachRows` and `getReachRowsMany` expose the same ordered closure as
 fast reach while preserving each row's genuine recorded position. As with the
 triple getters, `undefined` means that the caller must use the portable path.

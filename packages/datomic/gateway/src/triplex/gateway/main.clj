@@ -293,7 +293,8 @@
 (defn route-handler [{:keys [uri request-method body] :as request}]
   (if-let [[_ name action] (re-matches #"/v[12]/db/(s2-[A-Za-z0-9_-]+)/(.+)" uri)]
     (try
-      (let [conn (connection (db-uri name)) db (d/db conn)]
+      (let [[conn db] (trace/span "privacy/current-data" "gateway"
+                        (let [conn (connection (db-uri name))] [conn (d/db conn)]))]
         (cond
           (and (= :post request-method) (= action "protection"))
           (response 200 (erase/declare! name conn db (request-json body)))
@@ -302,14 +303,14 @@
           (and (= :post request-method) (= action "restore-erasure"))
           (response 200 (erase/replay-after-restore! name conn))
           :else
-          (let [read-cut (privacy/cut name db)
-                _ (privacy/verify-data! read-cut db)
-                input (when (and (= :post request-method) (= action "transact")) (request-json body))
+          (let [input (when (and (= :post request-method) (= action "transact")) (request-json body))
+                managed-write? (and input (trace/span "privacy/write-policy" "gateway" (privacy/managed? name db)))
                 source (get input "erasureSourceDatabase")
                 _ (when (and source (not (and (string? source) (re-matches #"s2-[A-Za-z0-9_-]+" source))))
                     (codec/invalid "Invalid source scope for protected delivery"))
                 request (cond-> request input (assoc :privacy-input input))
                 run (fn [cut]
+                      (trace/attribute! :erasureGuarded (boolean cut))
                       (binding [privacy/*cut* cut privacy/*database* name privacy/*data* db
                                 privacy/*unseal* (fn [id e a value] (envelope/decode! name (d/db conn) id e a value))]
                         (let [answer (if (and (= :get request-method) (= action "erasure-frontier"))
@@ -317,13 +318,15 @@
                                                       :seq (or (:seq cut) 0) :erased (or (:erased cut) {})})
                                        (route-handler-base request))]
                           (cond-> answer cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))))))]
-            (if (and input (or read-cut source))
+            (if (and input (or managed-write? source))
               ;; [DX-ERASE1] Why: the source cannot publish an erasure between validation and recipient commit.
               ;; Rejected: an HTTP recheck followed by an independent recipient write.
-              (with-privacy-guards (sort (cond-> #{} read-cut (conj name) source (conj source)))
+              (with-privacy-guards (sort (cond-> #{} managed-write? (conj name) source (conj source)))
                 (fn []
-                  (let [current (d/db conn) next (privacy/cut name current)]
-                    (privacy/verify-data! next current)
+                  (let [[current next] (trace/span "privacy/write-frontier" "gateway"
+                                         (let [current (d/db conn)] [current (privacy/cut name current)]))]
+                    (when (and managed-write? (nil? next)) (privacy/unavailable!))
+                    (trace/span "privacy/verify-write" "gateway" (privacy/verify-data! next current))
                     (when (or source (contains? input "erasureSeq"))
                       (if source
                         (let [source-db (d/db (connection (db-uri source)))
@@ -332,7 +335,11 @@
                           (privacy/ensure-seq! source-cut (get input "erasureSeq")))
                         (privacy/ensure-seq! next (get input "erasureSeq"))))
                     (run next))))
-              (do
+              ;; [DX-ERASE1] Why: a guarded write only needs the cut verified inside the writer lock.
+              ;; Rejected: reading and hashing the authority twice on every guarded save.
+              (let [read-cut (when-not input
+                               (trace/span "privacy/frontier" "gateway" (privacy/cut name db)))]
+                (when read-cut (trace/span "privacy/verify-data" "gateway" (privacy/verify-data! read-cut db)))
                 (when (contains? input "erasureSeq") (privacy/ensure-seq! read-cut (get input "erasureSeq")))
                 (run read-cut))))))
       (catch Exception e
