@@ -69,6 +69,7 @@ fs.mkdirSync(store, { recursive: false });
 try {
   const defaults: Record<string, string> = {
     "load-profile": "260",
+    "load-proof": "60",
     "load-quiet": "100000,1000000",
     "load-live": "50,235,390",
     failures: "2000",
@@ -100,7 +101,13 @@ try {
   for (const n of sizes) {
     const e = new Evidence(store, modeOf(mode), tag, shape);
     process.stdout.write("@attempt " + JSON.stringify({ nonce: e.nonce, prefix: e.prefix }) + "\n");
-    await drill(e, a, b, { people: n, scopes: 5, capacity: "two-host" }, () => {});
+    await drill(
+      e,
+      a,
+      b,
+      { people: n, scopes: mode.startsWith("load-") ? 1 : 5, capacity: "two-host" },
+      () => {},
+    );
     if (mode === "move") {
       const { seedFacts, finalBytes, pauseMs, setupThroughCutoverMs } = JSON.parse(
         fs.readFileSync(path.join(e.dir, "move.json"), "utf8"),

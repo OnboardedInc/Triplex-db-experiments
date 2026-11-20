@@ -22,6 +22,24 @@ type Sample = {
 };
 const nearest = (values: number[]) =>
   values.length ? values.sort((a, b) => a - b)[Math.ceil(values.length * 0.99) - 1] : null;
+// [DX-LOAD2] Why: bracket the guest clock with both host timestamps; compare guest-native clocks directly.
+// Rejected: assuming wall time on a VM is the same as the client's clock, or hiding uncertain overlaps.
+async function sampleClock() {
+  const samples = [];
+  for (let i = 0; i < 12; i++) {
+    const send = performance.now(),
+      r = await fetch(process.env.DATOMIC_URL + "/health");
+    assert(r.ok);
+    const { loadClock: guest } = (await r.json()) as {
+      loadClock: { bootId: string; monoMs: number; run: string };
+    };
+    const recv = performance.now();
+    assert(guest?.bootId && Number.isFinite(guest.monoMs));
+    assert.equal(guest.run, process.env.TRIPLEX_TRACE_RUN);
+    samples.push({ send, recv, ...guest });
+  }
+  return samples;
+}
 function save(actor: string, n: number, pin = false) {
   const operations = Array.from({ length: pin ? 1 : 1 + (n % 3) }, (_, j) => ({
     op: "assert" as const,
@@ -44,40 +62,95 @@ export async function live(
   dir: string,
   arm: string,
   server: boolean,
+  traceTail = false,
 ) {
   assert([50, 235, 390].includes(rate));
   const width = Number(arm.split("-")[1]),
-    duration = Number(server ? 60 : 12) * 1000,
-    subjects = server ? 400000 : 20000;
-  const samples: Sample[] = [],
-    native: any[] = [];
+    duration = (traceTail ? 108 : server ? 60 : 12) * 1000,
+    subjects = server || traceTail ? 100000 : 20000;
+  const samples: Sample[] = [];
+  type Native = {
+    command: string;
+    op: string;
+    t: string;
+    position: number;
+    submit: number;
+    end: number;
+    group?: number;
+    grant?: { bulk: boolean; "runnable-live": boolean };
+    queueUs?: number;
+    toEntryMs?: number;
+    serialHold?: { start: number; end: number };
+    recovered?: true;
+  };
+  const native = new Map<string, Native>();
+  const attempted = new Map<string, { command: string; submit: number }>();
+  let invalidReceipt: unknown;
   const expectedDb =
     "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scope))).toString("base64url");
   const original = api.DatomicClient.prototype.transact;
+  const operation = api.DatomicClient.prototype.operation;
   api.DatomicClient.prototype.transact = async function (db, input, onSent) {
     const start = performance.now();
     assert.equal(db, expectedDb);
-    const r: any = await original.call(this, db, input, onSent);
-    assert.equal(input.operationId, r.operationId);
     assert.equal(input.claims.length, 1);
     const command = input.claims[0]!.commandId;
-    const bulk = command.startsWith("load1/");
-    assert(r.bulkGrant && (bulk || !r.bulkGrant.bulk));
-    if (bulk) assert(r.bulkGrant.bulk && !r.bulkGrant["runnable-live"] && r.groupSize === 1);
-    assert(Number.isSafeInteger(r.groupSize) && r.groupSize >= 1 && r.groupSize <= 8);
-    native.push({
-      command,
-      op: r.operationId,
-      t: String(r.t.v),
-      position: Number(r.position.v),
-      group: r.groupSize,
-      grant: r.bulkGrant,
-      queueUs: r.groupQueueMicros,
-      toEntryMs: r.submitToNativeEntryMs,
-      submit: start,
-      end: performance.now(),
-    });
-    return r;
+    attempted.set(input.operationId, { command, submit: start });
+    const reply: any = await original.call(this, db, input, onSent);
+    try {
+      assert.equal(input.operationId, reply.operationId);
+      const bulk = command.startsWith("load1/");
+      assert(reply.bulkGrant && reply.bulkGrant.bulk === bulk);
+      if (bulk) assert(!reply.bulkGrant["runnable-live"] && reply.groupSize === 1);
+      assert(Number.isSafeInteger(reply.groupSize) && reply.groupSize >= 1 && reply.groupSize <= 8);
+      native.set(input.operationId, {
+        command,
+        op: reply.operationId,
+        t: String(reply.t.v),
+        position: Number(reply.position.v),
+        group: reply.groupSize,
+        grant: reply.bulkGrant,
+        queueUs: reply.groupQueueMicros,
+        toEntryMs: reply.submitToNativeEntryMs,
+        serialHold: reply.serialHold,
+        submit: start,
+        end: performance.now(),
+      });
+    } catch (error) {
+      invalidReceipt ??= error;
+      throw error;
+    }
+    return reply;
+  };
+  // [DX-LOAD1] Why: a queued bulk request can lose its HTTP reply yet commit during drain. Rejected: counting it as a miss or fabricating its original grant from the durable receipt.
+  api.DatomicClient.prototype.operation = async function (db, id) {
+    assert.equal(db, expectedDb);
+    const result = await operation.call(this, db, id);
+    if (result.status === "committed" && !native.has(id)) {
+      try {
+        const sent = attempted.get(id);
+        assert(
+          sent &&
+            result.operationId === id &&
+            result.position?.t === "long" &&
+            result.t?.t === "long",
+        );
+        const p = Number(result.position.v);
+        assert(Number.isSafeInteger(p) && p > 0 && BigInt(result.t.v) > 0n);
+        native.set(id, {
+          ...sent,
+          op: id,
+          t: String(result.t.v),
+          position: p,
+          end: performance.now(),
+          recovered: true,
+        });
+      } catch (error) {
+        invalidReceipt ??= error;
+        throw error;
+      }
+    }
+    return result;
   };
   const quiet = await openComposition("reach", "datomic", scope);
   const importer = await Snapshot.open(
@@ -93,6 +166,7 @@ export async function live(
     if (!initial.ok) throw Error(initial.tag);
     const pin = ack(seed.frame, initial.value),
       pinRow = initial.value.triples[0]!;
+    const clockBefore = traceTail ? await sampleClock() : undefined;
     const start = performance.now(),
       end = start + duration;
     const checks = new Map<string, Seen>([[seed.meta.commandId, pin]]);
@@ -223,8 +297,10 @@ export async function live(
       }
     }
     await Promise.all([...pending, bulk]);
+    if (invalidReceipt) throw invalidReceipt;
     if (fatal) throw fatal;
     const drained = performance.now() - start;
+    const clockAfter = traceTail ? await sampleClock() : undefined;
     assert.equal(peakBulk, width ? 1 : 0);
     const seen = new Set<string>();
     const proof = await importer.verify(false, (r) => {
@@ -241,8 +317,13 @@ export async function live(
       seen.add(r.commandId);
     });
     assert.equal(seen.size, checks.size);
-    assert.equal(native.length, proof.cut);
-    assert.equal(new Set(native.map((n) => n.position)).size, proof.cut);
+    const observations = [...native.values()],
+      published = new Map(observations.map((n) => [n.command, n.position]));
+    assert.equal(observations.length, proof.cut);
+    assert.equal(new Set(observations.map((n) => n.position)).size, proof.cut);
+    assert.equal(published.size, proof.cut);
+    for (const [command, receipt] of checks) assert.equal(published.get(command), receipt.position);
+    for (const f of ordered) assert.equal(published.get(f.command), f.position);
     const stats = (a: Sample[]) => {
       const ok = a.filter((s) => s.outcome === "verified");
       return {
@@ -274,12 +355,26 @@ export async function live(
         expectedDb,
         start,
         duration,
-        native,
+        clockBefore,
+        clockAfter,
+        native: observations,
         ordered,
         samples,
       }),
       { flag: "wx" },
     );
+    if (traceTail) {
+      assert(
+        neighbors.quiet!.save.ok >= 500 && neighbors.quiet!.read.ok >= 500,
+        "Tail arm collected fewer than 500 verified quiet saves or reads",
+      );
+      assert(
+        ordered.every(({ command }) =>
+          observations.some((n) => n.command === command && n.serialHold),
+        ),
+        "At least one bulk frame has no measured serial interval",
+      );
+    }
     return {
       scope,
       rate,
@@ -296,6 +391,7 @@ export async function live(
     };
   } finally {
     api.DatomicClient.prototype.transact = original;
+    api.DatomicClient.prototype.operation = operation;
     importer.close();
     await quiet.close();
   }

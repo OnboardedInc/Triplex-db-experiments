@@ -9,6 +9,8 @@
 (defn grouping? [] (or enabled policy/field-only?))
 (defn scheduling? [] (or (grouping?) policy/priority? policy/budget-us))
 (def queue-clock (= "1" (System/getenv "TX2_GROUP_QUEUE_CLOCK")))
+(def load-timing (= "1" (System/getenv "TX2_LOAD2_TIMING")))
+(defn mono-ms [] (/ (double (System/nanoTime)) 1000000.0))
 (def stage-clock (= "1" (System/getenv "TX2_GROUP_STAGE_CLOCK")))
 (def reuse-prepared (= "1" (System/getenv "TX2_GROUP_REUSE_PREPARED")))
 (def batch-limit (policy/limit "TX2_GROUP_MAX_MEMBERS" 8 128))
@@ -151,8 +153,16 @@
              (let [r (deref p ms ::timeout)] (if (= r ::timeout) timeout (unwrap r)))))))
 (defn complete! [entry r] (deliver (:result entry) r))
 (defn alone! [entry]
-  (try (complete! entry {:value (assoc @((:solo entry)) :group-size 1 :bulk-grant (select-keys entry [:bulk :queued-at-grant :runnable-live]) :group-wait-ns (- (:dispatch entry) (:arrived entry)))})
-       (catch Exception e (complete! entry {:error e}))))
+  (try
+    ;; [DX-LOAD2] Why: the nonpreemptible interval starts at dispatch and ends when the peer future resolves.
+    ;; Rejected: sizing a frame from its HTTP response or the time it spent waiting to be dispatched.
+    (let [result @((:solo entry))
+          timing (when load-timing {:start (/ (double (:dispatch entry)) 1000000.0) :end (mono-ms)})]
+      (complete! entry {:value (cond-> (assoc result :group-size 1
+                                          :bulk-grant (select-keys entry [:bulk :queued-at-grant :runnable-live])
+                                          :group-wait-ns (- (:dispatch entry) (:arrived entry)))
+                                 timing (assoc :serial-hold timing))}))
+    (catch Exception e (complete! entry {:error e}))))
 (defn definitive? [e]
   ;; [DX-W1] Why: only an authoritative refused transaction can be submitted again.
   ;; Rejected: searching a transport error's free text for a transaction-function marker.

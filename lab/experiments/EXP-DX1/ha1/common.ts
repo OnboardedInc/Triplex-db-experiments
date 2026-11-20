@@ -27,8 +27,10 @@ export const modes = [
   "one-whole",
   "one-account",
   "load-profile",
+  "load-proof",
   "load-quiet",
   "load-live",
+  "load-tail",
 ] as const;
 export type Mode = (typeof modes)[number];
 export const roles = {
@@ -41,6 +43,14 @@ export const roles = {
   tool: 640,
 } as const;
 export type Role = keyof typeof roles;
+// [DX-LOAD1] Why: peak-rate arms keep several fresh databases in one transactor process. Rejected: reusing the 560 MiB failure-drill cap after a measured cgroup OOM.
+export function localRoleMiB(mode: Mode, role: Role) {
+  if (mode === "load-tail") {
+    if (role === "active") return 1024;
+    if (role === "tool") return 96;
+  }
+  return mode === "load-live" && role === "active" ? 896 : roles[role];
+}
 export function modeOf(s: string): Mode {
   assert(modes.includes(s as Mode), "Unknown HA experiment");
   return s as Mode;
@@ -65,6 +75,9 @@ export function inputs(mode?: Mode) {
   return {
     ...(mode?.startsWith("load-")
       ? {
+          traceSettings: hash(
+            fs.readFileSync(path.join(root, "packages/datomic/gateway/trace.jfc")),
+          ),
           loadSources: hash(
             JSON.stringify([
               ...["lab/bench/lib", "packages/qualification/dist", "packages/w0/dist"].map((dir) =>

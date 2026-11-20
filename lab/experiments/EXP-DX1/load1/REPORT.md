@@ -1,19 +1,14 @@
-# Loading one shared Datomic database
-The original two server loads reached 4,578 and 4,669 facts per second.
-A full batch took about 413 milliseconds from the previous client return.
-About 72 milliseconds were spent applying it. Durable-write waiting overlapped parts of the transaction pipeline.
-The client waited for each reply before submitting its next batch.
-The first experiment measures how much of that interval can be removed without changing a receipt.
-Local and server measurements for the new loader are pending.
-The live-import target is 3,000 facts per second with each neighbour's read and write p99 within 1.5 times its own baseline.
+# Importing beside live traffic
+The earlier run took its slow-save number from only 60 saves. We are repeating it with at least 500 quiet saves in each group.
+All ten of the slowest saves arrived while a bulk frame was still outstanding.
+The two slowest took about 132 milliseconds each. They spent 22 and 5 milliseconds waiting in the gateway queue.
+We are measuring where the rest went before choosing a new frame size.
+The earlier fast loader still handles quiet loads and retries a lost receipt.
+The shared database and two separate-database layouts will get their own comparisons.
+The Mac results are diagnostic. Server predictions and commands will be recorded before any server run.
 
-## Evidence audit
-- `profile.ts` joins each current public command to the actual native operation ID, HTTP position, source, attempt and slot. It checks exact source rows and IDs against a subsequent durable lookup. Each arm starts with a fresh physical database, verifies its final position and seals the actual expected-model journal bytes.
-- `oracle.ts` compares every ordered source fact, validity, stored clock, transaction ID and assertion ID. `run.ts` checks subprocess identity and equal source seals. The HA1 manager checks image, mounts, reservation, cleanup and unchanged executed inputs before emitting observations.
-- W1 is imported from `502c8897d`. Its native range proof rechecks all unique IDs and both bounds against actual ops and serialized history. Group evaluate/materialize/receipt and the client's transactCommand tie each logical receipt to the claimed operation, actual report and stored basis; ordinary writes remain the default. LOAD1 profile mode is solo and reads its metrics datom from that exact transaction.
-- `Snapshot.open/write/verify` binds a native manifest to destination, source generator and packing width, compares the public ACK with the input, and commits only contiguous source progress in SQLite FULL. Reopen verifies stored receipts; final verification reconstructs every frame from source, compares durable lookup and feed to the saved identities and checks the physical rows at one pin. The gap drill withholds a committed checkpoint and checks the exact original after reopen.
-- The named fresh-text wire format derives row IDs and order from the submitted canonical text. The peer repeats the ordinary identity/content validation and rejects duplicate prefixes. Only an empty historical range at the transactor permits skipping the individual history seeks. The existing seed entry point accepts `TX2_DATOMIC_SEED_IN_FLIGHT=1|2|4` for disjoint subject batches on Datomic.
-- The named W1 queue option, `TX2_GROUP_COMMIT=1 TX2_LOAD1_PRIORITY=1`, recognizes the actual claimed import journal. The writer grants bulk singly and chooses runnable live saves first while preserving earlier dependency tokens. Group ACKs are read from their native member records. A non-preemptible bulk commit already executing can still delay a save.
-- `live.ts` binds every native operation and logical position to the same physical database, checks its grant and the original source content, and reconciles the complete feed and pinned quiet reads. Rates include scheduled offers, capacity refusals, errors and drain; only confirmed facts inside the offered window count. The quiet account's baseline uses the same offered reads and writes. Local percentiles are diagnostics.
-- The first image preflight stopped before creating a database. A matched six-arm run then confirmed all 30 batches. A wire-fixture test subsequently caught an ordinary object's property-order change. The ordinary branch now keeps the original wire object and its golden bytes.
-- [Predictions and two-server commands](BENCH.md) were recorded before server access. No new bare-metal measurements have been made.
+In the archived 128-fact arm the client saw 269 frames with a median of 36.28 ms and a p99 of 170.39 ms. For nine of the ten slow saves, the outstanding frame's durable position preceded its save. One save committed before the outstanding frame. The historical native log was truncated to the final control arm.
+
+The new 108-second bookends preserve the 50 offered saves per second, plus five quiet saves and five quiet pinned reads per second. Every published command still reconciles its full receipt and feed, and the importer verifies physical rows at the resulting pin.
+- Audit. The historical analysis checks existing manifest hashes, source, nonce, slot and matching immutable receipt positions. Each new trace is produced by the live attempt's identified containers, checks the recording hash and run/source/slot, and keeps clock uncertainty for any host-to-guest overlap. The existing oracle and stack checks still guard claims, pins, physical rows, counts, identity and cleanup. No published contract pin moved.
+- [Earlier loader report](PART3.md) · [Earlier predictions and commands](BENCH.md) · [Earlier attempt index](EVIDENCE.md)

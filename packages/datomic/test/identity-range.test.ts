@@ -83,3 +83,58 @@ test.each([
     }
   },
 );
+
+test("fresh-only wire requires an upgraded compact decoder and preserves ordinary fallback", async () => {
+  vi.stubEnv("TRIPLEX_DATOMIC_FAST_PATHS", "row,history-range,fresh-texts");
+  vi.resetModules();
+  const { DatomicClient } = await import("../src/DatomicClient.js");
+  const { createPackedRow } = await import("../src/rows.js");
+  const client = new DatomicClient(`http://${crypto.randomUUID()}`);
+  const requests: Record<string, unknown>[] = [];
+  client.request = async <T>(_method: string, route: string, body?: unknown): Promise<T> => {
+    if (route.endsWith("create")) return { db: "db", layout: "lean", schemaHash: "fixture" } as T;
+    requests.push(body as Record<string, unknown>);
+    return { t: { t: "long", v: "1001" }, position: { t: "long", v: "1" }, delta: 0 } as T;
+  };
+  try {
+    await client.create("scope", "lean");
+    const ids = Array.from({ length: 32 }, (_, i) =>
+      i.toString(36).toUpperCase().padStart(26, "0"),
+    );
+    const rows = ids.map((id) =>
+      createPackedRow(
+        { entityId: "subject", attribute: ":value", value: { type: "string", value: "new" } },
+        "tx",
+        1,
+        id,
+        1,
+      ),
+    );
+    const input = {
+      assignRecordTime: false,
+      sourceK: 0,
+      position: 1,
+      operationId: "new",
+      attemptId: "attempt",
+      rows,
+      newIds: ids,
+      claims: [],
+    };
+    await client.transact("db", input);
+    const fresh = requests[0]!;
+    assert.equal(fresh.rowMode, "texts");
+    for (const legacy of ["rows", "newIds", "rowOrder", "rowTexts"])
+      assert(!Object.hasOwn(fresh, legacy));
+    assert.equal((fresh.freshTexts as string[]).length, ids.length);
+    assert.deepEqual(fresh.historyIdentityBounds, [ids[0], ids.at(-1)]);
+    await client.transact("db", { ...input, rows: [...rows, rows[0]!], newIds: [...ids, ids[0]!] });
+    const ordinary = requests[1]!;
+    assert.equal(ordinary.rowMode, "texts");
+    assert(Array.isArray(ordinary.rowOrder));
+    assert(!Object.hasOwn(ordinary, "freshTexts"));
+  } finally {
+    client.close();
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  }
+});

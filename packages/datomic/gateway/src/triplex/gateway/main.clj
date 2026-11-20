@@ -138,7 +138,10 @@
                                (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name input))))}))
       (and (= :get request-method) (= "/health" uri))
       (do (trace/span "d/db" "peer-call" (d/db (connection (db-uri "tx2-health"))))
-          (response 200 {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}))
+          (response 200 (cond-> {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}
+            (= "1" (System/getenv "TX2_LOAD2_TIMING"))
+            (assoc :loadClock {:bootId (get-in trace/identity-fields [:clock :bootId])
+                               :run (:run trace/identity-fields) :monoMs (/ (double (System/nanoTime)) 1000000.0)}))))
       (and (= :post request-method) (= "/v1/db/create" uri))
       (response 200 (let [input (request-json body)] (create-scope! uri-template (get input "scope") (get input "layout" "legacy") true (get input "strictRecordClocks" false))))
       (and (= :post request-method) (= "/v1/db/delete" uri))

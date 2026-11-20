@@ -71,6 +71,9 @@ export async function seedRung(opts: {
 }): Promise<SeedResult> {
   const { comp } = opts;
   const accounts = accountsFor(opts.subjects);
+  const depth = opts.inFlight ?? 1;
+  if (depth !== 1 && comp.backend.name !== "datomic") throw Error("Concurrent seed requires Datomic");
+  if (![1, 2, 4].includes(depth)) throw Error("Seed depth must be 1, 2 or 4");
   const started = performance.now();
   const state = new Map<number, SubjectState>();
   const versionIds = new Map<number, string[]>();
