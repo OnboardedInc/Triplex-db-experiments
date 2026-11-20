@@ -167,10 +167,14 @@ export async function runCells(
           withReaders,
           scopes: placed,
         };
+        // [DX-SCALE1] Why: feed completion follows the entire offered window and its drain.
+        // Rejected: spending the observer's four-minute allowance while a five-minute cell is still offering.
+        const intervalEnd = start + cellSeconds(cell) * 1000;
+        const observerTimeout = Math.ceil(intervalEnd - now()) + 240000;
         const readers = children
           .slice(0, 2)
-          .map((c) => message<ReadResult>(c, (r) => r.key === key));
-        const feed = message<Feed[]>(children[2]!, (r) => r.key === key);
+          .map((c) => message<ReadResult>(c, (r) => r.key === key, observerTimeout));
+        const feed = message<Feed[]>(children[2]!, (r) => r.key === key, observerTimeout);
         // Attach failure handlers immediately. The timed write ledger must be
         // retained even if an independent observer has already failed.
         const observers = Promise.allSettled([...readers, feed]);
@@ -185,7 +189,6 @@ export async function runCells(
           scopes: placed,
           writes: timing.rows,
         });
-        const intervalEnd = start + cellSeconds(cell) * 1000;
         while (now() < intervalEnd) await sleep(Math.ceil(intervalEnd - now()));
         write(path.join(dir, key + "-resources.json"), {
           ...id,
@@ -206,11 +209,19 @@ export async function runCells(
         }
         children[2]!.send({ kind: "finish", key, cuts: ends });
         const observed = await observers;
-        write(path.join(dir, key + "-observers.json"), observed);
+        write(
+          path.join(dir, key + "-observers.json"),
+          observed.map((outcome) =>
+            outcome.status === "fulfilled"
+              ? outcome
+              : { status: outcome.status, reason: String(outcome.reason) },
+          ),
+        );
         const [a, b, f] = observed;
         assert(
           a?.status === "fulfilled" && b?.status === "fulfilled" && f?.status === "fulfilled",
-          "Observer failures after timed writer evidence was sealed",
+          "Observer failures after timed writer evidence was sealed. " +
+            observed.flatMap((o) => (o.status === "rejected" ? [String(o.reason)] : [])).join(" "),
         );
         const full: Observation = {
           ...id,
