@@ -279,6 +279,54 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     .filter((s) => s.attempt.withReaders)
     .at(-1)
     ?.decision?.cells.find((c: any) => c.cell === 39.4)?.read;
+  const firstPlateau = (() => {
+    const tag = "arm-d7-single-zero-b";
+    const stage = stages.find((s) => s.tag === tag);
+    const index = path.join(here, "evidence", "single-first-attempts.sha256");
+    const member = tag + "/plateau-writer.json";
+    const file = path.join(evidence, member);
+    if (!stage || !fs.existsSync(index) || !fs.existsSync(file)) return;
+    // [DX-SCALE1] Why: an intact writer window remains a measured diagnostic after the feed waiter failed.
+    // Rejected: treating a partial arm as a complete save/feed comparison.
+    const bytes = fs.readFileSync(file);
+    const hash = createHash("sha256").update(bytes).digest("hex");
+    assert(
+      fs
+        .readFileSync(index, "utf8")
+        .split("\n")
+        .includes(hash + "  " + member),
+    );
+    const row = JSON.parse(bytes.toString("utf8"));
+    const transfer = load(path.join(evidence, tag), "transfer.json");
+    assert.deepEqual(
+      [row.source, row.slot, row.nonce, row.archive, row.rawIndex],
+      [
+        stage.attempt.source,
+        stage.attempt.slot,
+        stage.attempt.nonce,
+        transfer.raw.sha256,
+        transfer.serverRawIndex,
+      ],
+    );
+    assert(
+      row.key === "r0-23p5" &&
+        row.seconds === 300 &&
+        row.offers === 7050 &&
+        row.inWindow === row.outcomes.acked &&
+        row.inWindow > 0,
+    );
+    return (
+      "The first 100,000-person plateau acknowledged " +
+      row.inWindow.toLocaleString("en-US") +
+      " saves at 23.5/s. Save p99 was " +
+      round(row.p99) +
+      " ms (90% interval " +
+      round(row.p99Interval.low) +
+      "–" +
+      round(row.p99Interval.high) +
+      "). The feed check timed out. [First timing evidence](SINGLE-ATTEMPTS.md)"
+    );
+  })();
   const setup = stages
     .filter(
       (s) =>
@@ -381,7 +429,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
           ? " PostgreSQL added " + round(singleDisk.disk.bytesPerFact) + " bytes/fact."
           : "") +
         " [Decision cells](DECISION-RESULTS.md)"
-      : `One account of 100,000 people — ${cost(one)}.`,
+      : (firstPlateau ?? `One account of 100,000 people — ${cost(one)}.`),
     currentDecision ||
       `Ten full-size accounts await the matched placement screen. ${partialTen?.partial ? `The earlier bounded seed acknowledged ${partialPeople.toLocaleString("en-US")} of 1,000,000 people across ${partialTen.partial.scopes.length} databases.` : ""}${growthLine} [Review response](REVIEW.md)`,
     `The owner's release target is under one second. Page-guard activation for one account is ${ledgerLimit && !a1 ? "unmeasured" : act(a1)}. Activation among ten is ${ledgerLimit && !a10 ? "unmeasured" : act(a10)}.${costLine}${delta ? ` DELTA release-to-correct-read p99 was ${round(delta.loaded.p99)} ms (n=${delta.loaded.count}).` : ""}`,
