@@ -85,6 +85,7 @@ const attempt = randomUUID(),
   policy = { readMode: process.env.DX_TOUCHED_READ_MODE ?? "following", gateways: process.env.DX_INT1_GATEWAYS ?? "original",
     ...(process.env.DX_INT1_PEER_GC === "elastic" ? { peerGc: "elastic" } : {}),
     ...(process.env.DX_INT1_ROW_WIRE === "gzip" ? { rowWire: "gzip" } : {}),
+    ...(process.env.DX_INT1_READER_PAGES === "1" ? { readerPages: true } : {}),
     ...(process.env.DX_INT1_SEED_FEED === "after-sampling" ? { seedFeed: "after-sampling" } : {}) },
   gatewaySource = stack.gatewaySourceSha256 as string,
   binding = digest(

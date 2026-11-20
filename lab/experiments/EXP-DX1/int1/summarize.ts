@@ -66,6 +66,12 @@ function load(dir: string) {
     if (phase.reader.code)
       for (const [file, hash] of Object.entries(phase.reader.code))
         assert.equal(hash, inputs.inputs[file]);
+    if (inputs.policy?.readerPages) {
+      const pages = phase.reader.pages;
+      assert.deepEqual([pages.binding, pages.pid, pages.ticks], [bind, p[0].reader.pages.pid, p[0].reader.pages.ticks]);
+      assert(Number.isSafeInteger(pages.pid) && pages.pid > 1 && Number(pages.ticks) > 0 && pages.mappings > 0);
+      assert(Object.values(pages.rss).every(n => typeof n === "number" && Number.isSafeInteger(n) && n >= 0));
+    }
   }
   return { r, p: Object.fromEntries(p.map((x) => [x.label, x])), bind, inputs };
 }
@@ -130,6 +136,21 @@ const population = [thin, deep].map((dir, i) => {
   assert.equal(x.entries, y.entries);
   assert.equal(x.packed, y.packed);
   assert.equal(x.bytes, y.bytes);
+  if (inputs.policy?.gateways === "demand" && inputs.policy.readMode === "validated") {
+    for (const role of ["readGateway", "writeGateway"]) {
+      const old = before.native[role], current = after.native[role];
+      // [DX-THIN1] Why: equal byte totals could hide imports replacing existing residents. Rejected: certifying zero cold admissions from a stationary byte gauge alone.
+      for (const [cache, fields] of [
+        ["idMemo", ["maps", "entries", "inserts", "misses", "evictions", "estimatedBytes"]],
+        ["entityCache", ["entries", "misses", "evictions", "revisionMisses", "revisionEvictions", "bytes"]],
+      ] as const) {
+        for (const field of fields) {
+          assert(Number.isSafeInteger(old[cache][field]));
+          assert.equal(current[cache][field], old[cache][field], role + "." + cache + "." + field);
+        }
+      }
+    }
+  }
   const n = r.size - a.active;
   return {
     binding: bind,
@@ -148,6 +169,9 @@ const population = [thin, deep].map((dir, i) => {
     oracle: a.replay,
     roles: deltas(before, after, n),
     readerPackedDelta: y.packed - x.packed,
+    ...(inputs.policy?.readerPages ? { readerMappedBytesDelta: Object.fromEntries(
+      Object.keys(before.reader.pages.rss).map(k => [k, after.reader.pages.rss[k] - before.reader.pages.rss[k]]),
+    ) } : {}),
     gatewayCachePerCold: Object.fromEntries(
       ["readGateway", "writeGateway"].map((k) => [
         k,

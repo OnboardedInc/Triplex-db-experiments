@@ -184,7 +184,7 @@ function setup(compact: boolean) {
   write(file, cfg);
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
-  write(cred, { nonce, secret, slots, compact, census, cohort, gwPolicy, readMode, peerGc, seedFeed, rowWire, isolatedVolume: compact });
+  write(cred, { nonce, secret, slots, compact, census, cohort, gwPolicy, readMode, peerGc, seedFeed, rowWire, readerPages: process.env.DX_INT1_READER_PAGES === "1", isolatedVolume: compact });
   return slots;
 }
 function witness(slot: string) {
@@ -250,6 +250,7 @@ function bind() {
       peerGc: attempt.peerGc,
       seedFeed: attempt.seedFeed,
       rowWire: attempt.rowWire,
+      readerPages: attempt.readerPages,
       peers,
       cacheDiagnostic: fs.existsSync(path.join(imageFolder, "diagnostic-jdk.tar.gz")),
     },
@@ -277,6 +278,7 @@ if (action === "--guest") {
     DX_INT1_PEER_GC: stack.managed.peerGc ?? "g1",
     DX_INT1_SEED_FEED: stack.managed.seedFeed ?? "immediate",
     DX_INT1_ROW_WIRE: stack.managed.rowWire ?? "plain",
+    DX_INT1_READER_PAGES: stack.managed.readerPages ? "1" : "0",
     TRIPLEX_DATOMIC_FAST_PATHS: [...(process.env.TRIPLEX_DATOMIC_FAST_PATHS ?? "").split(",").filter(x => x && x !== "demand-gzip"), ...(stack.managed.rowWire === "gzip" ? ["demand-gzip"] : [])].join(","),
   });
   if (stack.managed.compact) {

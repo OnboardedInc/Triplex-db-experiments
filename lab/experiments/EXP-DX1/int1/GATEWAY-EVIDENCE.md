@@ -1,6 +1,6 @@
 # Gateway memory study
 
-The paths in [GATEWAY-SHA256SUMS](GATEWAY-SHA256SUMS) are relative to the durable `evidence/DX-THIN1/int1` directory. Run `shasum -a 256 -c GATEWAY-SHA256SUMS` in that directory. The earlier integrated results have a separate [evidence index](EVIDENCE.md).
+The paths in [GATEWAY-SHA256SUMS](GATEWAY-SHA256SUMS) are relative to the durable `evidence/DX-THIN1/int1` directory. Set `SUMS` to the absolute path of the published manifest, then run `shasum -a 256 -c "$SUMS"` from that durable directory. The earlier integrated results have a separate [evidence index](EVIDENCE.md).
 
 | Raw directory | Population and observations |
 | --- | --- |
@@ -12,11 +12,14 @@ The paths in [GATEWAY-SHA256SUMS](GATEWAY-SHA256SUMS) are relative to the durabl
 | `p3-proof-c` | Native identity eviction, all 23 schedules, Python activation and pinned replay, eight accounts in two placements, and a separate 200-person deep first-read run including both 34-task people. |
 | `p3-compressed-probe-a` | Fresh stack, same 200 deep people, native gzip verified on every actual response, independent probe replay and first-read timings. |
 | `p3-seed-feed-deep-a` | Writer-only import of 2,000 deep people, 40 active. A third histogram follows the complete replay of the 376 original seed transactions and 320,826 facts. |
+| `p3-following-deep-full`, `p3-following-thin-a` | Original following reader with 10,000 deep or 10,000 thin people and the same spread cohort. The live heap, committed V8 spaces, external buffers and charged index were sampled at fixed membership. |
 | `p3-proof-b` | The reader fingerprint changed between workers. The trial rejected the attempt before producing a result. The manager log records removal of its own volume. |
 | `p3-demand-deep-b` | Matched 2,000-person bounded JVM profile with 40 first reads, including the first read to open the scope. |
 | `p3-baseline-thin-a` | 10,000 thin people, 200 active. The same two phases ran on a separate reservation and fresh SQL volume. |
 
 Each phase's compressed histogram contains every JVM class and the independent count and byte totals. The profile JSON carries the JVM start time, heap usage before collection, live weighted peer cache, histogram digest and heap-dump digest. The raw heap dump was deleted inside its slot. Shallow heap bytes and Datomic cache charge overlap. The phase file records scope, reader heap and external buffers, gateway ID and row-cache gauges, RSS, threads and SQL disk. Each first-read row identifies its subject, task class, observed rows, route, requests and duration. The original receipts, actor, record-time cut and Python replay are alongside each run.
+
+The first instrumented runs include files captured between Git commits. Each `inputs.json` identifies the actual source and built JavaScript by digest. The content-addressed archives and indexes in `p3-sources` preserve the exact preimages. Inspecting the complete heap graph again requires a new managed run.
 
 The full population arms also take four unforced samples during cold import. Each sample binds the durable count and position to its scope and slot. For a validated cold read, the raw latency row records the number and body bytes of actual HTTP responses, time to headers, worker time, and the gateway duration when supplied.
 

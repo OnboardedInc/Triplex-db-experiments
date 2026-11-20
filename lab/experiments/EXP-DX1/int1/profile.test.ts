@@ -3,6 +3,18 @@ import test from "node:test";
 import { deepShape } from "../../../bench/lib/deep-world.ts";
 import { activePerson } from "./cohort.ts";
 import { parseHistogram } from "./gateway-profile.ts";
+import { mappedReaderPages } from "./reader.ts";
+
+test("resident page attribution counts every mapping once without retaining its name", () => {
+  const section = (range: string, mode: string, name: string, kb: number) =>
+    `${range} ${mode} 0000 00:00 0 ${name}\nRss: ${kb} kB\nPss: 1 kB\nPrivate_Dirty: 0 kB\nAnonymous: 0 kB`;
+  const sample = [section("a0-b0", "rw-p", "", 4), section("b0-c0", "r-xp", "/lib/fixture", 2), section("c0-d0", "rw-p", "[heap]", 1)].join("\n");
+  const p = mappedReaderPages(sample);
+  assert.deepEqual([p.mappings, p.rss.anonymousData, p.rss.fileCode, p.rss.heap, p.Pss], [3, 4096, 2048, 1024, 3072]);
+  assert(!JSON.stringify(p).includes("fixture"));
+  assert.throws(() => mappedReaderPages(sample.replace("Rss: 2 kB", "")));
+  assert.throws(() => mappedReaderPages(sample.replace("Pss: 1 kB", "Pss: 1 kB\nPss: 0 kB")));
+});
 
 test("the two-percent cold sample includes every deep task class and exact membership", () => {
   const census = (people: number) =>

@@ -13,6 +13,36 @@ import { replicaReply, restoreReplicaReply } from "../../../bench/lib/replica-re
 import { validatedSubjectReader } from "../../../bench/lib/touched-reads.ts";
 import { coldReadProfiler } from "./read-profile.ts";
 
+export function mappedReaderPages(text: string) {
+  const rss = { heap: 0, anonymousData: 0, anonymousCode: 0, stacks: 0, fileData: 0, fileCode: 0, kernel: 0 };
+  const totals = { Pss: 0, Private_Dirty: 0, Anonymous: 0 };
+  const counts = { Rss: 0, Pss: 0, Private_Dirty: 0, Anonymous: 0 };
+  let group: keyof typeof rss = "kernel", mappings = 0;
+  for (const line of text.split("\n")) {
+    const map = /^[a-f\d]+-[a-f\d]+\s+([rwxps-]{4})\s+\S+\s+\S+\s+\d+\s*(.*)$/.exec(line);
+    if (map) {
+      const name = map[2]!, executable = map[1]!.includes("x");
+      if (name === "[heap]") group = "heap";
+      else if (name.startsWith("[stack")) group = "stacks";
+      else if (!name || name.startsWith("[anon")) group = executable ? "anonymousCode" : "anonymousData";
+      else if (name.startsWith("/")) group = executable ? "fileCode" : "fileData";
+      else group = "kernel";
+      mappings++;
+    } else {
+      const field = /^(Rss|Pss|Private_Dirty|Anonymous):\s+(\d+) kB$/.exec(line);
+      if (!field) continue;
+      assert(mappings > 0);
+      const bytes = Number(field[2]) * 1024;
+      const name = field[1] as keyof typeof counts;
+      assert.equal(++counts[name], mappings);
+      if (name === "Rss") rss[group] += bytes;
+      else totals[name] += bytes;
+    }
+  }
+  assert(mappings > 0 && Object.values(counts).every(n => n === mappings));
+  return { mappings, rss, ...totals };
+}
+
 export function processSize(collect = true) {
   const before = process.memoryUsage();
   const spaces = getHeapSpaceStatistics().map(s => ({ name: s.space_name, used: s.space_used_size, committed: s.physical_space_size }));
@@ -90,7 +120,18 @@ export function startReader(binding: string, budget?: number) {
     });
   return {
     open: (scope: string) => ask("open", { scope }),
-    stats: (collect = true) => ask("stats", { collect }),
+    stats: async (collect = true) => {
+      const result = await ask("stats", { collect });
+      if (!collect || process.env.DX_INT1_READER_PAGES !== "1") return result;
+      // [DX-THIN1] Why: sample the bound child from its parent after collection, without allocating the map text in the measured reader. Rejected: subtracting V8 heap capacity from RSS to infer native memory.
+      const pid = child.pid!;
+      const start = () => fs.readFileSync("/proc/" + pid + "/stat", "utf8").split(") ").at(-1)!.split(" ")[19];
+      const ticks = start();
+      assert(child.connected && Number(ticks) > 0);
+      const pages = mappedReaderPages(fs.readFileSync("/proc/" + pid + "/smaps", "utf8"));
+      assert.equal(start(), ticks);
+      return { ...result, pages: { binding, pid, ticks, ...pages } };
+    },
     watermark: (scope: string) => ask("watermark", { scope }),
     pull: async (scope: string, root: string, p: number, v: number, profile = false) => {
       const reply = await ask("pull", { scope, root, p, v, profile });
