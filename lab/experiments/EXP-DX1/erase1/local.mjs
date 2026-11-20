@@ -108,6 +108,8 @@ export async function local(opts, config, manager) {
   assert(typeof holder === "string" && /^DX-[A-Z0-9-]{1,26}$/.test(holder));
   const people = Number(opts.people);
   const mode = String(opts.run ?? "scale");
+  const subjectWriter = process.env.DX_ERASE1_SUBJECT_WRITER;
+  assert(subjectWriter === undefined || subjectWriter === "0" || subjectWriter === "1");
   assert(
     [
       "smoke",
@@ -377,8 +379,8 @@ export async function local(opts, config, manager) {
         "DATOMIC_URI_TEMPLATE=" + uri,
         "-e",
         "GATEWAY_SOURCE_SHA256=" + gateway,
-        ...(process.env.DX_ERASE1_SUBJECT_WRITER === "1"
-          ? ["-e", "TX2_SUBJECT_SAVE=1", "-e", "TX2_INT1_WRITE_READBACK=1"]
+        ...(subjectWriter !== undefined
+          ? ["-e", "TX2_SUBJECT_SAVE=" + subjectWriter, "-e", "TX2_INT1_WRITE_READBACK=1"]
           : []),
         "-e",
         "DX_ERASE_TOKEN=" + token,
@@ -456,6 +458,7 @@ export async function local(opts, config, manager) {
       sourceHash: sha256(JSON.stringify(inputs)),
       freeBytes: diskFloor(),
       host: "mac-vm",
+      timings: "diagnostic",
     };
     run.binding = sha256(JSON.stringify(run));
     write("native", run);
@@ -466,7 +469,6 @@ export async function local(opts, config, manager) {
         DATOMIC_URL: endpoint,
         TRIPLEX_DATOMIC_LAYOUT: "lean",
         TX2_W0_POINT_JOURNAL: "1",
-        DX_ERASE1_SUBJECT_WRITER: process.env.DX_ERASE1_SUBJECT_WRITER ?? "0",
         DX_ERASE_TOKEN: token,
         DX_ERASE_MEASURE:
           mode.endsWith("smoke") || regression ? "" : path.join(vault, "locks", "measure"),

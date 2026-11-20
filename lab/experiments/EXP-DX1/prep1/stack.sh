@@ -2,6 +2,17 @@
 set -euo pipefail
 [[ "${1:-}" == selftest ]]
 cd /opt/datomic
+export PREP1_MODE=$(cat /config/mode)
+export PREP1_ATTEMPT=$(cat /config/attempt)
+if [[ "$PREP1_MODE" == subject-native-suite ]]; then
+  # [DX-PREP1] Why: exercise the stock native suite with the real process setting on fresh memory scopes.
+  # Rejected: adding PostgreSQL and a transactor for tests written to run in one JVM.
+  export DATOMIC_EXT_CLASSPATH=/opt/gateway/src
+  export DATOMIC_JAVA_OPTS="-Xms96m -Xmx768m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError"
+  export TX2_SUBJECT_SAVE="$(cat /config/subject)"
+  printf 'PREP1_SUITE {"attempt":"%s","subject":%s}\n' "$PREP1_ATTEMPT" "$TX2_SUBJECT_SAVE"
+  exec bin/run -m triplex.gateway.selftest
+fi
 work=$(mktemp -d)
 chmod 755 "$work"
 install -d -o 65534 -g 65534 "$work/data" "$work/socket"
@@ -89,7 +100,6 @@ sql -d postgres -c "CREATE ROLE datomic LOGIN PASSWORD '$secret'"
 sql -d postgres -c "CREATE DATABASE datomic TEMPLATE template0"
 sql -d datomic -f bin/sql/postgres-table.sql
 durability
-export PREP1_MODE=$(cat /config/mode)
 if [[ "$PREP1_MODE" == "subject-recovery" || "$PREP1_MODE" == "subject-profile" ]]; then
   # [DX-PREP1] Why: hold each storage commit until the standby has flushed the same WAL.
   # Rejected: a lone primary with fsync enabled (no replica durability).
@@ -119,7 +129,6 @@ object-cache-max=32m
 log-dir=$work
 pid-file=$work/tx.pid
 EOF
-export PREP1_ATTEMPT=$(cat /config/attempt)
 export PREP1_URL="http://$addr:8080"
 export DATOMIC_URI_TEMPLATE="datomic:sql://{db}?jdbc:postgresql://$addr:5432/datomic?user=datomic&password=$secret"
 export DATOMIC_EXT_CLASSPATH=/opt/gateway/src

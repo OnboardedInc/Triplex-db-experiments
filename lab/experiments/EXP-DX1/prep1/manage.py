@@ -31,7 +31,7 @@ def disk_floor():
 
 
 def main(out, mode="ortho", seconds="10", subject="1"):
-    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery", "subject-recovery", "subject-query", "subject-profile"):
+    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery", "subject-recovery", "subject-query", "subject-native-suite", "subject-profile"):
         raise SystemExit("Unknown managed probe mode")
     if subject not in ("0", "1"):
         raise SystemExit("Subject writer setting must be 0 or 1")
@@ -81,7 +81,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     esbuild = REPO / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
     metafile = out / "bundle.json"
     driver = "live.ts" if mode == "live" else "probe.ts"
-    if not clojure_inputs:
+    if not clojure_inputs and mode != "subject-native-suite":
         subprocess.run([
             esbuild, str(EXPERIMENT.relative_to(REPO) / driver), "--bundle", "--platform=node",
             "--format=esm", "--banner:js=import {createRequire} from 'node:module'; const require=createRequire(import.meta.url);",
@@ -100,7 +100,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
     if clojure_inputs:
         source_paths.extend(clojure_inputs)
-    else:
+    elif mode != "subject-native-suite":
         source_paths.extend(REPO / p for p in json.loads(metafile.read_text())["inputs"])
     inputs = {
         "attempt": attempt,
