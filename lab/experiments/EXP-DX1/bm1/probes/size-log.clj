@@ -41,3 +41,8 @@
             suffix)}))]
   (println (str "BM1_SIZE_JSON " (json/write-str (assoc result :database name :low (str low) :high (str high)
                                                   :basis (str (d/basis-t database)) :mode mode)))))
+
+;; [DX-BM1] Why: this disposable peer owns one checked request and has finished its only output.
+;; Rejected: waiting for peer executor threads after the index record has already been written.
+(flush)
+(System/exit 0)

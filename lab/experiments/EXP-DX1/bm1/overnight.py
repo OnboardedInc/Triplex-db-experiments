@@ -16,6 +16,7 @@ from producer_readings import capacity_memory, capacity_rung, group_arm, writer_
 from import_reading import split_output, tail_attempt
 from activation_clock import activation_modes
 from joined_preflight import joined_output, point_readback
+from notice_reading import notice_reading
 
 ROOT = Path("/var/tmp/triplex-bm1")
 NIGHT = ROOT / "night-n19"
@@ -34,6 +35,7 @@ SCALE_PROBES = {18:"ceil", 19:"pred", 20:"pulse", 21:"growth", 22:"size"}
 SEALED_ITEMS = (*SCALE_PROBES, 24)
 HA_SPLIT_SOURCE = "6ef27404ea90081454096337c586302b8600093c"
 HA_SPLIT = {30:"load-split-sql",31:"load-split-pg"}
+NOTICE_SOURCE = "f3454b12ebb60ed9a009e051b785660115f66ea5"
 SCALE_CHECKPOINT = ROOT / "single-n20/checkpoint.json"
 # [DX-BM1] Why: the timeout belongs to the entire item, including its retry and data preparation.
 # Rejected: inheriting the 24–72 hour limits of standalone research controllers.
@@ -60,6 +62,7 @@ ITEMS = {
     13: ("exp/DX-HA1-failover-move", "load1", "bd2ce3bf9", 2, "loadtailn19"),
     30: ("exp/DX-HA1-failover-move", "load1", HA_SPLIT_SOURCE, 1, "single-shared-sql"),
     31: ("exp/DX-HA1-failover-move", "load1", HA_SPLIT_SOURCE, 1, "single-separate-sql"),
+    32: ("exp/DX-STG1-staged-activation", "notify1", NOTICE_SOURCE, 4, "notify-bm1n20"),
     2: ("exp/DX-ACT1-activation", "import1", "eb154ca8", 5, "import-bm1n19"),
     10: (WFIX, "wfix1", WFIX_SOURCE, 1, "predecessorn19"),
     5: ("exp/DX-INT1", "int1", None, 5, "bm1n19int"),
@@ -73,7 +76,7 @@ NEXT = {1:"joined-publish-preflight", 14:"enhanced-pulse", 8:"ceil-live10", 11:"
         10:"same-database-import", 13:"int1", 5:"collect", 6:"resume", 4:"collect", 3:"collect"}
 NEXT.update({18:"predecessor",19:"enhanced-pulse",20:"growth",21:"size-ledger",22:"readers",24:"rd1-pairs",28:"thin-1m",26:"collect",27:"ceil"})
 NEXT[29]="sealed-probes"
-NEXT.update({30:"separate-sql",31:"rd1-pairs"})
+NEXT.update({30:"separate-sql",31:"rd1-pairs",32:"thin-1m"})
 EXP = Path("lab/experiments/EXP-DX1")
 ENV = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
            GIT_TERMINAL_PROMPT="0", DOCKER_HOST="unix:///var/run/docker.sock",
@@ -204,6 +207,7 @@ def complete_output(r):
         return (trial/"delta-measurement.json").is_file() or any((trial/"delta").glob("*/*offers-*.json"))
     if item==13:return any((root/"run").glob("load-tail-*/arm-*.json")) or any((root/"run").glob("load-tail-*/*.offers.json"))
     if item in HA_SPLIT:return any(root.glob("run-*/load-split-*/*.offers.json"))
+    if item==32:return any((notice_dir(r)/"deep").glob("*-raw.json"))
     if item in (14,*REVISED_JOINED):
         return any(any((root/phase).glob("offer-*.json")) for phase in ("smoke","scale"))
     return False
@@ -335,9 +339,15 @@ def preflight(r):
         return
     if item in HA_SPLIT:
         published=directory/"builder-isolation-bench.md"
-        assert HA_SPLIT[item]+" "+r["tag"].removesuffix("b" if r["attempt"]==2 else "")+" one-host" in published.read_text()
+        assert HA_SPLIT[item]+" "+ITEMS[item][4]+" one-host" in published.read_text()
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-50-rate-first",
                    "instructionsSha256":digest(published)})
+        return
+    if item==32:
+        report=directory/"builder-report.md"
+        assert "notify-part5-001 copied 16 0 4" in report.read_text()
+        put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-notice-preflight-first",
+                   "instructionsSha256":digest(report)})
         return
     if item in (14,*REVISED_JOINED):
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"native-preflight-only",
@@ -401,7 +411,7 @@ def public_source(item, directory, retained=None):
     document = collector_cases().get(str(item),{}) if item in (5,13) else {}
     # [DX-BM1] Why: preserve the historical joined check, then pin the current published source per new attempt.
     # Rejected: picking up a different file format or application between the small and large runs.
-    pinned={14:JOINED_REVIEW_SOURCE,**dict.fromkeys(HA_SPLIT,HA_SPLIT_SOURCE)}
+    pinned={14:JOINED_REVIEW_SOURCE,32:NOTICE_SOURCE,**dict.fromkeys(HA_SPLIT,HA_SPLIT_SOURCE)}
     if item==29:
         pinned[29]=os.environ["DX_BM1_ACT_RETRY"]
     if retained:
@@ -429,6 +439,7 @@ def coordinates(item,attempt):
     elif item==2: root=Path("/var/tmp/triplex-import1")/tag;unit="triplex-bm1-"+tag
     elif item==4: root=ROOT/("day-"+tag);unit="bm1n19-"+tag
     elif item==6: root=NIGHT/tag; unit="bm1n19-"+tag
+    elif item==32: root=NIGHT/tag;unit="bm1n20-"+tag
     else: root=Path("/var/tmp/triplex-int1")/tag;unit="triplex-int1-prepare-"+tag
     return tag,root,unit
 
@@ -479,6 +490,7 @@ def make(item, attempt, start, deadline):
             15:"| ACT1 reviewed joined Publish,",16:"| WFIX enhanced pulse,",17:"| ACT1 manifest repair,",27:"| ACT1 typed refusal,",
             24:"| RD1 writer probe,",26:"| INT1 single thin rung,",28:"| RD1 short pairs,",29:"| ACT1 shared-scope repair,",
             30:"| HA1 shared SQL,",31:"| HA1 separate SQL,",
+            32:"| STG1 copied notices,",
             **{i:"| Sealed "+s+"," for i,s in SCALE_PROBES.items()}}.get(item,f"| {item} ·")
     if (item,attempt)==(28,2):
         token="| RD1 mounted retry,"
@@ -641,6 +653,11 @@ def worker(r):
             run(*heavy,"--import","tsx",EXP/"ha1/bench.ts",HA_SPLIT[r["item"]],tag,source,"-","-","-",store,
                 str(uuid.uuid4()),str(rate),"deep","one-host",cwd=repo,env=env)
             put(root/f"reading-{rate}.json",split_run(r,store,rate))
+    elif r["item"]==32:
+        run(*heavy,"--import","tsx",HERE/"probes/notify_gate.mjs","run",tag,source,cwd=repo,env=env,timeout=1300)
+        put(root/"preflight-reading.json",checked_notice(r,small=True))
+        assert r["deadline"]-time.time()>=3600
+        run(node,"--import","tsx",EXP/"notify1/bench.ts","launch",tag,"copied","16","0","4",cwd=repo,env=env,timeout=90)
     elif r["item"]==5:
         run(node,"--no-warnings","--experimental-transform-types",repo/EXP/"thin1/queue-bench.ts","--launch",tag,
             stamp(r["deadline"]-10),root/"build","--int1","--row-wire=plain",cwd=repo,env=env)
@@ -692,6 +709,32 @@ def split_run(r, store, rate):
     return {**row,"campaignSha256":digest(store/"campaign.json")}
 
 
+def notice_dir(r, *, small=False):
+    tag=r["tag"]
+    assert r["item"]==32 and re.fullmatch(r"notify-bm1n20b?",tag)
+    return Path("/var/tmp/triplex-scale1")/(tag+("-smk" if small else ""))
+
+
+def checked_notice(r, *, small=False):
+    folder=notice_dir(r,small=small)
+    slot="tx2-dxscale1-"+folder.name
+    row=notice_reading(folder,r["source"],slot,1000 if small else 100000,r["start"])
+    assert get(folder/"attempt.json")["recipient"]=={"route":"copied","pages":16,"intervalMs":0,"copyWorkers":4}
+    inventory=get(folder/"cleanup/inventory.json")
+    assert not any(inventory["after"].values()) and inventory["at"]>=1000*r["start"]
+    if small:
+        producer=get(folder/"producer-preflight.json")
+    else:
+        terminal=get(folder/"terminal.json")
+        assert (terminal["source"],terminal["slot"],terminal["nonce"],terminal["service"])==(
+            r["source"],slot,row["nonce"],"success")
+        producer=terminal["result"]
+    metrics=("source","slot","nonce","subjects","oracleDigest","oracleEffects",
+             "noticesPerSecond","readRatio","commitRatio","live","withinBoth")
+    assert [producer[k] for k in metrics]==[row[k] for k in metrics]
+    return row
+
+
 def cleanup(r):
     root,tag,src=Path(r["root"]),r["tag"],r["source"]
     mode={10:"pred",11:"ceil",12:"size",**SCALE_PROBES}.get(r["item"])
@@ -703,6 +746,16 @@ def cleanup(r):
         run(sys.executable,HERE/"probes/int1_runner.py","cleanup",Path(r["directory"])/"request.json",timeout=200)
     if r["item"]==28 and (root/"pair-active.json").is_file():
         run(sys.executable,HERE/"probes/rd_pairs.py","cleanup",Path(r["directory"])/"request.json",timeout=150)
+    if r["item"]==32:
+        child=native_unit(r)
+        if active(child):run("systemctl","stop",child,timeout=620)
+        repo=root/"build/repository"
+        node=root/"build/tools/bin/node"
+        prep=dict(ENV,PATH=str(node.parent)+":"+ENV["PATH"])
+        for small,action in ((True,"cleanup"),(False,"cleanup-full")):
+            folder=notice_dir(r,small=small)
+            if (folder/"attempt.json").is_file() and not (folder/"cleanup/inventory.json").is_file():
+                run(node,"--import","tsx",HERE/"probes/notify_gate.mjs",action,tag,src,cwd=repo,env=prep,timeout=200)
     if r["item"] in (14,*REVISED_JOINED) and (root/"stack-owner.json").is_file():
         run(sys.executable,HERE/"joined_preflight.py","cleanup",Path(r["directory"])/"request.json",timeout=170)
     if r["item"] in (1,3,8,9,10,16) and (root/"active-slot").exists():
@@ -762,6 +815,7 @@ def remaining(r):
     elif item in (5,26): prefixes=["tx2-dxint1-"+tag+"-"]
     elif item==28: prefixes=["tx2-dxt1-rd1p3-"+tag+"-"]
     elif item==6: prefixes=["tx2-dxscale1-"+tag+"-"]
+    elif item==32: prefixes=["tx2-dxscale1-"+tag+"-"]
     elif item in (14,*REVISED_JOINED): prefixes=["tx2-dxt1-bm1-"+tag+"-"]
     else:
         prefixes=["tx2-dxt1-bm1-"+tag+"-"] if item==4 else []
@@ -818,6 +872,7 @@ def native_unit(request):
     item, tag = request["item"],request["tag"]
     if item == 5: return "triplex-int1-"+tag
     if item == 6: return "triplex-scale1-"+tag
+    if item == 32: return "triplex-scale1-"+tag
     return None
 
 
@@ -1149,6 +1204,16 @@ def result(r):
         file=Path(r["directory"])/"isolation-readings.json"
         put(file,checked)
         return "recorded",str(file)
+    elif item==32:
+        small=root/"preflight-reading.json"
+        if not small.is_file():
+            return "preflight-refused","The copied-route native preflight did not agree with both collectors."
+        assert get(small)==checked_notice(r,small=True)
+        if not (notice_dir(r)/"deep/result.json").is_file():
+            return "partial","The 1k copied-route proof is retained. The 100k notice result is incomplete."
+        file=Path(r["directory"])/"notice-reading.json"
+        put(file,checked_notice(r))
+        return "recorded",str(file)
     elif item==2:
         if (root/"terminal.json").is_file():
             doc=get(root/"terminal.json")
@@ -1382,7 +1447,7 @@ def one(item, attempts=(1,2)):
                 if time.time()>=limit:
                     timed_out=True
                     if active(r["unit"]):run("systemctl","stop",r["unit"],timeout=210)
-                    if (child:=native_unit(r)) and active(child):run("systemctl","stop",child,timeout=620 if item==6 else 210)
+                    if (child:=native_unit(r)) and active(child):run("systemctl","stop",child,timeout=620 if item in (6,32) else 210)
                     break
                 restrict_scope(r)
                 time.sleep(5)
@@ -1460,7 +1525,7 @@ def main():
                 assert not command("docker","ps","-q")
                 status("seed100","checking-seal",time.time(),"ceil")
                 prepare_receipt(SCALE_CHECKPOINT)
-            scheduled=(27,*SCALE_PROBES,24,30,31,28,26)
+            scheduled=(27,*SCALE_PROBES,24,30,31,28,32,26)
             if retry:=os.environ.get("DX_BM1_ACT_RETRY"):
                 assert re.fullmatch(r"[a-f0-9]{40}",retry)
                 scheduled=(29,*scheduled)

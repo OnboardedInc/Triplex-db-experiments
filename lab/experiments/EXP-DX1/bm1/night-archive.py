@@ -82,6 +82,11 @@ def sources(r):
         for rate in (50,100):
             parts[f"import-{rate}"]=root/f"run-{rate}"
             parts[f"reading-{rate}.json"]=root/f"reading-{rate}.json"
+    elif r["item"]==32:
+        from overnight import notice_dir
+        parts["native-preflight"]=notice_dir(r,small=True)
+        parts["native-notices"]=notice_dir(r)
+        parts["preflight-reading.json"]=root/"preflight-reading.json"
     elif r["item"] in (14,15,17,27,29):
         parts["joined-smoke"]=root/"smoke"
         for name in ("run-owner.json","collector.json","point-check.json","native-clean.json","startup-and-engine.log","engines"):
