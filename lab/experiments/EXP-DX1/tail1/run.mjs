@@ -825,6 +825,9 @@ export async function runTail(options, config, manager) {
       assert.equal(seal.run, slot);
       assert.equal(seal.slot, slot);
       assert.equal(seal.process, "gw-w");
+      assert.equal(seal.type, "jfr-complete");
+      assert.equal(seal.allocationOnly, true);
+      assert(seal.recordingStart <= measuredStart && seal.at >= measuredStart + seconds * 1000);
     } catch (error) {
       signal.throwIfAborted();
       write(path.join(out, "allocation-dump-error.json"), { error: String(error) });

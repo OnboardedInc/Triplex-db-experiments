@@ -40,11 +40,11 @@ Sixteen native gateway tests and the protected-value erasure fixture passed. The
 ## Measurement audit
 
 - The archive extractor checks the compressed SHA-256, ledger identity and each primary ACK. The replay checks the frozen source, population, offers and spacing, and checks the newly populated seed before releasing the driver.
-- The replay binds both Mac locks, reports and offers to source, slot and nonce. It checks collector and CPU count against the fresh JVM boot, exact receipt coverage and independent replay reads. PostgreSQL durability, ACK positions and resend receipts are checked. Resource samples bind the container IDs to their cleanup.
+- The replay binds both Mac locks, reports and offers to source, slot and nonce. It checks the fresh JVM's collector and CPU count, durable SQL settings, exact receipts and independent oracle reads. Allocation samples bind to the recording hash and interval. Resource samples bind container IDs to cleanup.
 - The receipt oracle compares actual assertion IDs and values at five fresh pinned cuts against its hashed case, along with the observed conflict and receipt order. Captures are created in the newly allocated attempt directory.
 - The archive results are historical. The replay is a diagnostic, and the acceptance contract is unchanged.
 Image source pin changes under `packages/datomic/gateway/src/triplex/gateway/`, SHA-256 before → after.
 - `lean.clj` `bafa5d00aaaf87321396674f16d6ffc03faa664100a75ce0024de7287ce58ca2` → `115812796134acf278ec30d71eabd9710fb121e7759475b28df97a43ed815fee`.
 - `storage.clj` `341f45cf51ea1f785292b72eca34951d7fe10c9ace55e69af8fbe9df71234b60` → `144e4ecd3742f1323669e67ddaa14dfd3bd69e22b9366ac5d02bcad1bb2bff66`.
-
+- `jfr.clj` `a703ed7772ab7fcdd62effde8135bc62f6b4325046a0f893a1165c8c08474d94` → `0c435b193a369f6dee40059452a41b9719046bac15bceaf06ac36e514e40994b`.
 Pre-run ranges, the bounded server replay command and the two-core arm selector. [Forecasts](PREDICTIONS.md)

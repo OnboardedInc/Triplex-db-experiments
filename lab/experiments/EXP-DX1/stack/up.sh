@@ -489,8 +489,11 @@ for role in w r; do
     role_trace_java="$role_trace_java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$debug_port"
   fi
   tail1_env=()
-  if [[ $role == w && -n ${DX_TAIL1_ATTEMPT:-} && ${DX_TAIL1_LESS_ALLOCATION:-0} == 1 ]]; then
-    tail1_env=(-e TX2_TAIL1_ROW_DECODE=1)
+  if [[ $role == w && -n ${DX_TAIL1_ATTEMPT:-} ]]; then
+    tail1_env=(-e TRIPLEX_TRACE_ALLOCATION_ONLY=1)
+    if [[ ${DX_TAIL1_LESS_ALLOCATION:-0} == 1 ]]; then
+      tail1_env+=(-e TX2_TAIL1_ROW_DECODE=1)
+    fi
   fi
   docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
     ${ports[@]+"${ports[@]}"} ${tail1_env[@]+"${tail1_env[@]}"} "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$role_jfr" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
