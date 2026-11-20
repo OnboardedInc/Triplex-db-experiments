@@ -2,13 +2,15 @@ Not yet. The per-person writer delivered 111 of 394 offered saves/s in one datab
 A targeted PostgreSQL run found that new assertion IDs account for at least half of the prepared writer’s storage reads.
 The operation and command checks fetched nothing in this run. The owner revision check cost about one fetch per prepared save.
 Every grouped-writer read in the same fixture came from Datomic checking exact business rows and retirement markers.
-The first comparison supports warming assertion history before submission. Its validity checks still belong at the moment of commit.
+The next build will warm assertion history and the owner revision before submission. Together those checks represent at least two-thirds of the reads in the targeted run.
 The Mac results explain where work happens. Capacity still needs a run on the sealed server seed.
 The previous runnable numeric-owner comparison is at `afd94a9fe`. The expanded comparison will replace it.
 The lookup table and raw-evidence checksums are below.
 
 **North star.** P2 durable and exact small saves, P3 the ordered feed, and quiet-account tails in one database. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 **Lookup trace.** The fresh one-CPU SQL run reconciled 106 K and 674 S fetches with the stock Datomic counters. Historical AVET accounts for 350 S fetches in the named check and another 60 were recorded by a lazy AVET iterator under native injection. Three unscoped S EAVT reads have no exact entity key. [Lookup reading](LOOKUP-READING.md) · [Checksums](SHA256SUMS)
+
+**Budget before building.** Moving 60–75% of reported SQL and decode time forecasts 2.62–3.48 ms of apply at 235 and 4.13–5.03 ms at 394. The proposal keeps every native check and all client-supplied IDs. The candidate uses a lookup-only hint and publishes the authoritative receipt. [Lookup decisions and numerical assumptions](LOOKUP-PLAN.md)
 
 **Evidence audit.** The fixture verifies the receipts, journal rows and existing business bytes at adjoining pins. The collector pins staged source and image hashes, slot, attempt, database, native transaction and apply interval. Its output is diagnostic. No acceptance pins moved.
 
