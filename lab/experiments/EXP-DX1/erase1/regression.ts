@@ -161,6 +161,7 @@ export async function regression(
   const root = ids.placement(subject);
   const entityId = taskId(subject, 0);
   const attribute = ":task/field-0";
+  let witnessCut = f.position;
   let before = (await rows(entityId)).find((r) => r.attribute === attribute);
   assert(before && typeof before.value_string === "string" && typeof before.tx_id === "string");
   if (orderedIds) {
@@ -176,7 +177,7 @@ export async function regression(
       false,
       identity,
     );
-    input.sourceK = f.position;
+    input.sourceK = witnessCut;
     const ack = (await client.transact(f.db, input)) as {
       operationId: string;
       position: { v: string };
@@ -188,14 +189,14 @@ export async function regression(
       undefined,
       "Protected writes must take the erasure-fenced reference path",
     );
-    assert.equal(Number(ack.position.v), f.position + 1);
-    f.position = Number(ack.position.v);
+    assert.equal(Number(ack.position.v), witnessCut + 1);
+    witnessCut = Number(ack.position.v);
     before = (await rows(entityId)).find((r) => r.id === identity.assertionId(0));
     assert(
       before &&
         before.tx_id === identity.transactionId &&
         before.value_string === value &&
-        before.recorded_position === f.position,
+        before.recorded_position === witnessCut,
     );
   }
   const w: Witness = {
@@ -213,8 +214,8 @@ export async function regression(
     datomicReplicaSource(client, f.db, () => f.comp.currentPosition()),
     SEED_VALID_FROM,
   );
-  await replica.bootstrap([root], f.position);
-  const heldReplica = await replica.snapshotAt(f.position);
+  await replica.bootstrap([root], witnessCut);
+  const heldReplica = await replica.snapshotAt(witnessCut);
   const hasWitness = (world: ReturnType<typeof replica.world>) =>
     world.some(
       (r) => r.id === w.assertionId && r.value.type === "string" && r.value.value === w.value,
@@ -248,7 +249,7 @@ export async function regression(
   const evidence: Evidence[] = [];
   const verify = (route: string, check: boolean, detail: Record<string, unknown>) => {
     evidence.push({ route, check, detail });
-    output("regression-" + route, { cut: f.position, id: w.assertionId, ...evidence.at(-1) });
+    output("regression-" + route, { cut: witnessCut, id: w.assertionId, ...evidence.at(-1) });
   };
   let beforeArchive = false;
   try {
