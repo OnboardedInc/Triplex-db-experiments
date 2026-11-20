@@ -170,3 +170,18 @@ The full thin seed verified all 8 million assertions through cut 20,834. The fir
 The owner authorized the fresh ACT1 roster at 06:05 EST. `bm1n20-activation-100k` launched `bm1n19-joinedv2n20rb` at 06:05:37 using verified ACT1 `48f557594` and WFIX `4331d6fe8`. The failing `ab8ce484b` attempt remains at `i29-1`. Progress is in `/var/tmp/triplex-bm1/night-n19/i29/2/worker.log` and STATUS. The four-hour cutoff is 10:05:37 EST. The supervisor releases the slot after the six linked windows, exact seed readback and offline receiver checks settle. The separate second 100k settlement price fixture is stopped at that boundary. Collect `i29-2` through the Mac client after cleanup.
 
 The next seed is ERASE1's separate aged target fixture at `856c4c9ae`, as its native stage uses target-only journal transactions. The two collectors matched the builder's checked 24-person sample, including 244.54 and 235.81 ms to a fresh root. Item `i34-1` runs the exact published Linux `server.mjs stage` and `check` commands with its own loopback PostgreSQL and worker lease. It starts after ACT1 cleanup. The total ceiling is four hours, with a 150-minute native stage maximum and 55-minute check maximum. Check STATUS and `sudo tail -n 30 /var/tmp/triplex-bm1/night-n19/i34/1/worker.log` on the bench. Collect `i34-1` through the Mac client. The indexed fixture and native logs stay on the bench if the measurement stops.
+
+### Joined Publish at 100,000
+
+The `i29-2` ACT1 producer began the first offer at 07:59:47 EST after 112 min 4 s of seed preparation and enrolment. The last timed window wrote its terminal record at 08:04:39 EST. The independent seed readback checked 16,045,255 facts at cut 11,669. The Mac copy has 38 original checksummed files in `single-n20/recovered/activation-i29-2-components`. BM1 recomputed every offered-to-durable and first-correct interval and reconciled all 3,240 saves. The final ordered receiver replay is still running.
+
+| Saves/s and mode | Durable / first correct | My forecast | One-second deadline |
+| --- | --- | --- | --- |
+| Quiet receipt-only | 46.14 / 55.97 ms | 80 / 120 ms | MET |
+| 3.5 receipt-only | 53.15 / 63.46 ms | 100 / 140 ms | MET |
+| 23.5 receipt-only | 2.043 / 2.051 s | 140 / 190 ms | MISS |
+| Quiet staged | 13.019 / 13.026 s | 18 / 18.1 s | MISS |
+| 3.5 staged | 14.118 / 14.134 s | 20 / 20.1 s | MISS |
+| 23.5 staged | 18.616 / 18.625 s | 23 / 23.1 s | MISS |
+
+Each cell has one Publish. The loaded windows have 210 or 1,410 audited saves each, according to rate. The busy receipt waited 2,019.56 ms from ingress to entry. Its last older save finished 0.012 ms before that entry. Time from entry to the native ACK was 24.25 ms. The busy staged run had 89 older saves at ingress and waited 4,320.30 ms before entry. These observations include the benchmark's serial admission queue. The full v3 bars remain unjudged.
