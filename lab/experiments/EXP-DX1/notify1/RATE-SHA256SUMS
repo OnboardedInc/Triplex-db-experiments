@@ -266,3 +266,4 @@ ccff0952f3941f2fcae1528434fcd7691d5fd4d550e40ab6a1bbb0cc4d1f24dc  rate/deep-firs
 394aaa74799235afbf9855e5172d9d58ce2e90185d6089d9cc4543c6e5ccd36e  rate/deep-first/traffic.json.gz
 5bc7a56a0a7d5aaf638aaf3adfe0aa6c6ca0c2bf448cb919f58b5b3245972ca4  rate/pace-compare.py
 5e826d9051f1b941e2fad85e20606e54e52fa4de6ac7b6bb4553244ead5bfddb  rate/resume-windows.py
+378c3214a62f2ed17027b7855791f0843160fa9d0f2f11274d5d098bf49561d8  rate/clean1-down.log
