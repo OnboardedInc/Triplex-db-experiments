@@ -7,6 +7,7 @@
 10b60c50bc3f50db8eb07040a78dd433800a9bec6c7760079b981851490a40d7  p4/checks/cleanup/ha1-refresh-87c8b4862f.jsonl
 24686edb4417a7ad222e1b70896e155280f813735ea790fb75318881a86789af  p4/checks/cleanup/integration-corrected-438ad12581.jsonl
 20511547c67c47cbe6c3b6ba290f6289db7a3ef2fe714b487bb9da4975e2d396  p4/checks/cleanup/memory-image-a.jsonl
+d66391509637433b33444099cdf4cd61c3444b42e1cb399006852d13995fe358  p4/checks/cleanup/post-census-memory-image-b.jsonl
 91023d761bc4b1a3ab457e9a9d74dda208e956ee3ce390a23a750bfca1c7cfc1  p4/checks/cleanup/prep1-refresh-a3f23690df.jsonl
 df18c8eccac2486b955afb4c1cca7b06e6b9eb2ccf1fc065f4a7c8f6351489a6  p4/checks/cleanup/rd1-ceb7602d32.jsonl
 acf26752b11798648fedd562016d6fc99d9a08c7ebd4430a93f1bf8cbf8b703e  p4/checks/cleanup/stg1-latest-23917e67a8.jsonl
@@ -15,6 +16,7 @@ df8ea94e5bc9770e7789373fa856cd4c5b35e3ba1cd7ea8bbba656d84daa94b3  p4/checks/clea
 542b412ab532b8531c4b3757016524919391a5c3d2720a526083b80762130ec5  p4/checks/cleanup/w1-collectors-dc303a9324.jsonl
 3f2d6d9fd8b0e782d9fe87538ef4d67241cb174a3326a427141ba66549bdc149  p4/checks/cleanup/w1-refresh-6430f0408d.jsonl
 daed2c5d3c7952b5787667a682d2e34e415ec2d84f922b3d717e73c4e353f94c  p4/checks/early-slope.json
+8e84015dfef2a55c39dce371d267eea4e0328bb239523bb4fa76957f0aa3859b  p4/checks/everything-d-grant-16.log
 8a9c56b9f04bb7a48e78fa6655bb69f032a86d6b7100b8944ddb5f95c476c1fa  p4/checks/everything-plan-check.json
 7c9b842e6bea2b36f33874300f2537e11333393bd06c82ccbfddf4f87def7811  p4/checks/everything-plan-current.json
 0353617750f26063735bb5290d696fd1904e315e9db55623d44ff7d65e051b49  p4/checks/everything-plan-sealed.json
@@ -54,6 +56,9 @@ bf9258d8ac0f7589dcf8fd9539162fb4120f930836a3c1b32eb041c4413b2f08  p4/checks/nati
 fda63dda76b599e41baaec1e9bf910b671372b8228fc20f88b46466de4c0c62b  p4/checks/native/rd1-latest-311a67b032/build-1.log
 7370d587b297d45670f70dd444259e6a9bcb1d563223797e37d0cf666a2d3121  p4/checks/native/rd1-latest-311a67b032/gate.json
 287e37b0298d14654489d527b6cfba2783e3e5f769fddcc91a396b34a30288c6  p4/checks/native/rd1-latest-311a67b032/selftest-1.log
+b5d1911cd70503ba183c2ea632f027b44a0a5a7d775fcfe786e6cb75beed8429  p4/checks/native/refresh-ha1-0dd4cbb24f/build-1.log
+488d35bea8106773036356f24b77847b2ab87b57f63a22fd244bf9e2527c9550  p4/checks/native/refresh-ha1-0dd4cbb24f/gate.json
+6fc0a5852a3ac901cb5a1ff76ccbab71bf17df59a8f4ead3a94523e4ce8e0f8c  p4/checks/native/refresh-ha1-0dd4cbb24f/selftest-1.log
 163a678d1dc7f37b911e381a32c527ab5f1df43e3b9ceac8a06b56a3826b2111  p4/checks/native/refresh-w1-7bbe3e175e/build-1.log
 564f4d6bcb18d1c709f416410cf9d97bb7d64d0c9cf53e0b70682b64704f7a29  p4/checks/native/refresh-w1-7bbe3e175e/gate.json
 48d15a45f89b15932a118096b333f2c2b7b7d4edbc3ac45f1b522adaf278311e  p4/checks/native/refresh-w1-7bbe3e175e/selftest-1.log

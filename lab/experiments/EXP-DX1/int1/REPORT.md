@@ -3,7 +3,7 @@ From 300,000 to 600,000 people, the reader added zero resident bytes per person,
 For the last 10,000 deep people, the read gateway added 322 bytes per person and the write gateway shrank. The transactor's memory grew in both runs.
 A running gateway opened its first deep record in 132–144 ms. Fresh stacks took 342–491 ms. Most of that difference was inside the gateway.
 At 128 scopes the write gateway had 565 threads and the transactor had 1,097. The last 96 scopes added about four and eight threads each.
-The first merged native path passed all 54,079 checks. The latest notice and reader tests passed and the refreshed native gates are queued.
+The W1 and HA refreshes each passed all 54,079 native checks. The other refreshes have focused results and their native gates are queued.
 The physical campaign uses two pairs at each deep size. The field-save tape uses measured per-account rates and the frozen tape keeps its original rules.
 Both memory sweeps finished. Three campaign smokes stopped before the paired trace. The latest seeded all 40 people before SQLite refused the shared filesystem.
 
@@ -37,7 +37,7 @@ The separate deep probes spent 307–445 ms inside a fresh read gateway and 92�
 
 ## Integration and physical command
 
-W1 kept loader timing and priority grants together with installed predecessor variants, prepared writes and service budgets. Its canonical malformed-row rejection is separate from explicitly typed write-policy refusals. HA kept the ordered deep seed witness, file import proof, strip-only snapshot types and both service metrics. ACT1 only conflicted on a field-tape type. The verified tape bytes stayed the same. STG1 keeps the durable notice census for generic source edits and the joined publisher's independently certified activation ranges. SCALE1's launcher remains shared with notice tests. The source cut, resolutions and native gate logs are indexed separately. [Integration evidence](P4-EVIDENCE.md)
+The W1 and HA refreshes merged cleanly. ACT1 and STG1 keep both the committed single-owner witness and the independently certified census or release range. PREP1 uses the stored retraction bytes and early duplicate checks while retaining the loader limits and physical-turn counter. RD1 keeps separate field, frozen and reader diagnostic tags. Malformed rows preserve the canonical transaction rejection and explicit write-policy refusals keep their typed errors. [Integration evidence](P4-EVIDENCE.md)
 
 From the prepared physical checkout run `bash lab/experiments/EXP-DX1/int1/everything.sh BATCH UTC_CUTOFF`. It verifies a small saved native pair for each tape before the full cases and shares the physical queue lock. The field tape offers 3.5/4.9 steady and 23.5/39.4 busy saves per second in one deep account. It preserves the task intents, duplicate and lost-response schedules and business fields, while reporting actual commanded widths. The frozen tape and contract remain byte-identical.
 
