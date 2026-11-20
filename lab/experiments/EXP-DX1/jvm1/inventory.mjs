@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { admission, docker, DOCKER_HOST, listTx2Containers, slotInfo, vmDisk, withPool } from "../../../bin/lib.mjs";
-import { finishNativeRecording, preservePreReadyRecordings, startWalSamples } from "../../../trace/native-recording.mjs";
+import { finishNativeRecording, preservePreReadyRecordings, startWalSamples, verifyNativeRecordingFiles } from "../../../trace/native-recording.mjs";
 
 const holder = "DX-JVM1";
 const stack = path.join(import.meta.dirname, "../stack");
@@ -208,6 +208,12 @@ export async function inventory(options, config, manager) {
         ledger.reservations = ledger.reservations.filter((r) => !(r.holder === holder && r.pid === process.pid && r.container.startsWith(prefix+"-")));
         manager.releaseSlot(slot);
       });
+      const recording = path.join(out, "native-recording.json");
+      if (recordEvents && fs.existsSync(recording)) {
+        const result = JSON.parse(fs.readFileSync(recording, "utf8"));
+        assert(result.nativeLogPrefixes);
+        await verifyNativeRecordingFiles(path.join(out, prefix, "trace/raw"), result);
+      }
     }
   }
 }

@@ -10,11 +10,41 @@ import { postgresEvents, wallBridge } from "./postgres-events.mjs";
 
 const roles = ["gw-w", "gw-r", "tx"];
 const execute = promisify(execFile);
-const digest = async (file) => {
+const jfrFiles = (role) => [role + ".jfr", role + ".jfr.jsonl", role + ".jfr-complete.jsonl"];
+const sqlFiles = ["postgres.log", "postgres-events.jsonl", "postgres-wal.jsonl"];
+const digest = async (file, bytes) => {
   const hash = createHash("sha256");
-  for await (const data of fs.createReadStream(file)) hash.update(data);
+  let seen = 0;
+  const stream = fs.createReadStream(file, bytes === undefined ? undefined : { end: bytes - 1 });
+  for await (const data of stream) {
+    hash.update(data);
+    seen += data.length;
+  }
+  if (bytes !== undefined) assert.equal(seen, bytes, "Incomplete native log prefix");
   return hash.digest("hex");
 };
+
+export async function verifyNativeRecordingFiles(raw, recording) {
+  // [DX-JVM1] Why: historical receipts can still verify their closed recordings and normalized SQL.
+  // Rejected: interpreting their unbounded live-log digests as sealed prefixes.
+  const legacy = recording.nativeLogPrefixes === undefined;
+  if (legacy) {
+    for (const role of roles) assert.match(recording.traceBytes[role + ".jsonl"], /^[a-f0-9]{64}$/);
+  }
+  const files = legacy
+    ? [...roles.map((role) => role + ".jfr"), "postgres-events.jsonl", "postgres-wal.jsonl"]
+    : [...roles.flatMap(jfrFiles), ...sqlFiles];
+  for (const name of files) {
+    assert.equal(await digest(path.join(raw, name)), recording.traceBytes[name], name);
+  }
+  if (legacy) return;
+  for (const role of roles) {
+    const name = role + ".jsonl";
+    const { bytes, sha256 } = recording.nativeLogPrefixes[name];
+    assert(Number.isSafeInteger(bytes) && bytes > 0, name + " has no recorded prefix");
+    assert.equal(await digest(path.join(raw, name), bytes), sha256, name);
+  }
+}
 const read = (file) => JSON.parse(fs.readFileSync(file, "utf8"));
 const walSql =
   "SELECT json_build_object('at',extract(epoch from clock_timestamp())*1000,'wal',(SELECT row_to_json(w) FROM pg_stat_wal w),'ioTiming',current_setting('track_wal_io_timing'),'durable',current_setting('synchronous_commit'));";
@@ -113,6 +143,7 @@ export async function finishNativeRecording(out, raw, identity, engines, deadlin
   }
   const seals = {};
   const traceBytes = {};
+  const nativeLogPrefixes = {};
   for (const role of roles) {
     const jfr = path.join(raw, role + ".jfr");
     const seal = read(jfr + "-complete.jsonl");
@@ -133,14 +164,15 @@ export async function finishNativeRecording(out, raw, identity, engines, deadlin
       seal.events > 0 && seal.clockAnchors?.length >= 2 && seal.fileSha256 === (await digest(jfr)),
     );
     seals[role] = seal;
-    for (const name of [
-      role + ".jfr",
-      role + ".jfr.jsonl",
-      role + ".jfr-complete.jsonl",
-      role + ".jsonl",
-    ]) {
+    for (const name of jfrFiles(role)) {
       traceBytes[name] = await digest(path.join(raw, name));
     }
+    // [DX-JVM1] Why: the live logger keeps sampling while the JVM is serving.
+    // Rejected: labelling a growing JSONL stream with a whole-file digest that changes at shutdown.
+    const name = role + ".jsonl", file = path.join(raw, name);
+    const bytes = fs.statSync(file).size;
+    assert(bytes > 0, name + " has no native log bytes");
+    nativeLogPrefixes[name] = { bytes, sha256: await digest(file, bytes) };
   }
   assert.equal(new Set(roles.map((role) => seals[role].clock.bootId)).size, 1);
   const pg = inspect("pg");
@@ -189,6 +221,7 @@ export async function finishNativeRecording(out, raw, identity, engines, deadlin
       ...binding,
       processes,
       traceBytes,
+      nativeLogPrefixes,
       sqlCoverage,
       walSamples: samples.length,
       mappedWalSamples: timed.length,

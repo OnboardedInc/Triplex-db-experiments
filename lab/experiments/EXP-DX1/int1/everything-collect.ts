@@ -24,6 +24,7 @@ import {
 import { replayRevision } from "../scale1/source.ts";
 import { atomicJson, type Arm } from "./everything-arm.ts";
 import { pooledWriterCpus } from "../jvm1/launch.mjs";
+import { verifyNativeRecordingFiles } from "../../../trace/native-recording.mjs";
 
 const read = (f: string) => JSON.parse(fs.readFileSync(f, "utf8"));
 export function openPlan(
@@ -411,17 +412,7 @@ export async function collect(dir: string, mode: "produce" | "verify") {
       for (const role of ["tx", "gw-w", "gw-r", "pg"])
         assert.equal(recording.processes[role].id, placement[role].id);
       assert(recording.sqlCoverage.qualified > 0 && recording.mappedWalSamples >= 2);
-      for (const file of [
-        "tx.jfr",
-        "gw-w.jfr",
-        "gw-r.jfr",
-        "postgres-events.jsonl",
-        "postgres-wal.jsonl",
-      ])
-        assert.equal(
-          recording.traceBytes[file],
-          await fileHash(path.join(out, "engines", id.slot, "trace", "raw", file)),
-        );
+      await verifyNativeRecordingFiles(path.join(out, "engines", id.slot, "trace", "raw"), recording);
     }
     const key = `${c.people}/${c.profile}`,
       zero = prior.get(key);
