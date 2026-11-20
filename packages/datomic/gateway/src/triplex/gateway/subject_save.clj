@@ -9,6 +9,7 @@
             [triplex.gateway.scope :as scope]))
 
 (def enabled (= "1" (System/getenv "TX2_SUBJECT_SAVE")))
+(def numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_NUMERIC_OWNER")))
 (def erase-generation :triplex.scope/erasure-seq)
 (def mutable-flags #{:triplex.scope/feed-irregular :triplex.scope/position-regular
                      :triplex.scope/irregular :triplex.scope/packed-journals})
@@ -26,6 +27,7 @@
      ;; [DX-PREP1] Why: excision can remove a predecessor without updating its owner revision.
      ;; Rejected: trusting even a recently synced peer after an erase has been requested.
      (when (or (some #(not (mutable-flags %)) changed)
+               owner-witness-check
                (not= installed-at (:tx (first (d/datoms db :eavt (d/entid db ident) :db/fn))))
                (when-let [a (d/entid db :triplex.scope/erasure-ledger)] (value scope a))
                (seq (d/datoms db :aevt :db/excise)))
@@ -62,7 +64,14 @@
                 [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]]
                (map stamp) ops)))))
 
-(def code (walk/postwalk-replace {'stamp-rows commit/compiled-stamp-code 'mutable-flags mutable-flags} body))
+(def code
+  (walk/postwalk-replace {'stamp-rows commit/compiled-stamp-code
+                          'mutable-flags mutable-flags
+                          ;; [DX-PREP1] Why: the numeric owner must still own this public ID in db-before.
+                          ;; Rejected: trusting the peer's lookup alone (an ID change can leave its revision intact).
+                          'owner-witness-check (when numeric-owner?
+                                                 '(not= (:owner-key plan) (value owner :triplex.entity/id)))}
+                         body))
 (def source-hash (schema/sha256 (pr-str code)))
 (def ident (keyword "triplex.subject" (str "v-" (subs source-hash 0 24))))
 
@@ -101,18 +110,23 @@
     (:attribute row)))
 
 (defn render-ops [ops owner subject prior new-ids]
-  (let [prior-rows (into {} (map (fn [[id text]] [id (commit/recorded-row text)])) prior)
+  (let [temp-owner (str "e:" subject)
+        prior-rows (into {} (map (fn [[id text]] [id (commit/recorded-row text)])) prior)
         rewrite #(commit/rewrite-change %1 %2 new-ids prior-rows)]
     (into []
       (keep (fn [op]
               (cond
+                ;; [DX-PREP1] Why: business rows can use the existing number guarded by identity and revision.
+                ;; Rejected: resolving a unique upsert again inside Datomic. The new journal still uses its tempid.
+                (and numeric-owner? (map? op) (= temp-owner (:db/id op)) (= subject (:triplex.entity/id op))) nil
                 (and (vector? op) (= :triplex/assert (first op)))
                 (let [[_ eid attr [tag text position offset kind]] op]
-                  [:db/add eid attr [tag (subs text 0 offset) position offset kind
+                  [:db/add (if (and numeric-owner? (= eid temp-owner)) owner eid)
+                   attr [tag (subs text 0 offset) position offset kind
                                      (small-row/ordinary-plan text offset rewrite)]])
                 (and (vector? op) (= :triplex/retract (first op)))
                 [:db/retract owner :triplex.entity/row (prior (nth op 2))]
-                (and (vector? op) (= :triplex.entity/rev (nth op 2)) (= (str "e:" subject) (second op))) nil
+                (and (vector? op) (= :triplex.entity/rev (nth op 2)) (= temp-owner (second op))) nil
                 :else op)))
       ops)))
 
@@ -164,11 +178,12 @@
                 after (into #{} (map (comp field lean/decode second #(nth % 3))) business)]
             (when (and (= (count live) (count prior) (count before) (count after))
                        (= before after) (not (contains? before nil)))
-              {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
-               :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
-               :provisional provisional :submitted-clock (reduce max (map double clocks))
-               :prefixes (vec (sort (map lean/prefix new-ids)))
-               :ops (render-ops ops owner subject prior (set new-ids))})))))))
+              (cond-> {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
+                       :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
+                       :provisional provisional :submitted-clock (reduce max (map double clocks))
+                       :prefixes (vec (sort (map lean/prefix new-ids)))
+                       :ops (render-ops ops owner subject prior (set new-ids))}
+                numeric-owner? (assoc :owner-key subject)))))))))
 
 (defn replan? [failure]
   (some (fn [cause]

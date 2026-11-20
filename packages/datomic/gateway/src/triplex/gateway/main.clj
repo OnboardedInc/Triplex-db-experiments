@@ -133,6 +133,7 @@
                        :ledger (boolean (or ledger/enabled packed/enabled))
                        :packedJournal (boolean packed/enabled) :fastReply (boolean group/fast-reply)}}
       subject/enabled (assoc :subjectSave true :subjectFunction (when subject-t (str subject/ident))
+                             :subjectNumericOwner subject/numeric-owner?
                              :subjectFunctionTx (some-> subject-t str)))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.

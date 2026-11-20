@@ -64,6 +64,32 @@
             (race-before-submit name conn a #(ref-write name race) [409 "CasConflict"])
             (is (= 3 (storage/head-position (d/db conn))))
             (is (= "winner" (:value_string (lean/decode (:v (lean/by-id (d/db conn) "winner"))))))))))
+    (when subject/numeric-owner?
+      (testing "The resolved owner replaces only the business upsert and a renamed owner cannot commit"
+        (reference/in-scope
+          (fn [name conn]
+            (let [[a] (seed name)
+                  db (d/db conn)
+                  plan (prepared db a)
+                  owner (:owner plan)
+                  prior (with-redefs [subject/numeric-owner? false] (prepared db a))
+                  identity-map {:db/id (str "e:" fixture/root) :triplex.entity/id fixture/root}
+                  first-row? (fn [key op]
+                               (and (vector? op) (= [:db/add key :triplex.entity/row] (subvec op 0 3))))]
+              (is (= fixture/root (:owner-key plan)))
+              (is (nil? (:owner-key prior)))
+              (is (some #{identity-map} (:ops prior)))
+              (is (not-any? #{identity-map} (:ops plan)))
+              (is (some (partial first-row? owner) (:ops plan)))
+              (is (not-any? (partial first-row? (str "e:" fixture/root)) (:ops plan)))
+              (is (some #(= (:journal plan) (:triplex.entity/id %)) (:ops plan)))
+              (race-before-submit name conn a
+                (fn []
+                  @(d/transact conn [[:db/add owner :triplex.entity/id "reassigned-owner"]])
+                  (is (= (:revision plan) (scope/value (d/db conn) owner :triplex.entity/rev))))
+                [409 "CasConflict"])
+              (is (= 2 (storage/head-position (d/db conn))))
+              (is (nil? (d/entid (d/db conn) [:triplex.entity/id fixture/root]))))))))
     (testing "An unrelated logical append advances the clock and does not invalidate the prepared owner"
       (reference/in-scope
         (fn [name conn]

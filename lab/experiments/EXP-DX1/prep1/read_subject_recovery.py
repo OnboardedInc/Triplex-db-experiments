@@ -48,6 +48,7 @@ def inspect(root):
         result.update(nativeTests=tests, replicaFlushes=flushes)
 
     assert before["attempt"] == attempt and before["db"] == db and before["prepared"] == inputs["subject"]
+    assert before.get("numericOwner", False) == inputs.get("numericOwner", False)
     if inputs["subject"]:
         assert re.fullmatch(r":triplex\.subject/v-[0-9a-f]{24}", before["function"])
         assert int(before["functionTx"]) > 0

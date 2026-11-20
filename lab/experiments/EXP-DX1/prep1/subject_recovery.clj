@@ -35,6 +35,7 @@
   (let [{:keys [db created]} (main/create-scope! nil scope "lean" true true)
         options (main/write-options db)]
     (assert (= subject/enabled (boolean (:subjectSave options))))
+    (assert (= (and subject/enabled subject/numeric-owner?) (boolean (:subjectNumericOwner options))))
     (assert (:commitFunctionInstalled options))
     [db (main/connection (main/db-uri db)) created
      (if subject/enabled (:subjectFunction options) (:commitFunction options))
@@ -51,6 +52,7 @@
     (assert (= "2" (get-in receipt ["position" "v"])))
     (assert (= 1001.0 (get-in receipt ["recordedAt" "v"])))
     {:attempt attempt :db db :function function :functionTx fn-tx :prepared subject/enabled
+     :numericOwner subject/numeric-owner?
      :nativeT (str native-t) :receipt receipt :planOperation "edit-a"}))
 
 (defn before [file]
