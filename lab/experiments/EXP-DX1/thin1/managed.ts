@@ -85,12 +85,16 @@ async function prepare() {
   );
   const recipe = path.join(imageFolder, "Dockerfile");
   const original = fs.readFileSync(recipe, "utf8");
+  // [DX-V01] Why: Datomic's pinned base argument must apply to the last stage too.
+  // Rejected: inserting the auxiliary stages before the global FROM argument.
+  const base = original.match(/^ARG DATOMIC_BASE=.+$/m)?.[0];
+  assert(base);
   fs.writeFileSync(
     recipe,
-    (scorecard
+    base + "\n" + (scorecard
       ? `FROM ${pgImage} AS thinpg\nFROM ${nodeImage} AS thinnode\nFROM python:3.13-slim-bookworm@sha256:a5a7017efc5969e00ae2b91c8eb0631049a569652aa4ffc4501769049ae45c72 AS thinpython\n`
       : "FROM postgres:17-alpine AS thinpg\nFROM node:22.23.2-bookworm-slim AS thinnode\n") +
-      original +
+      original.replace(base + "\n", "") +
       (scorecard ? "\nCOPY --from=thinpython /usr/local/ /usr/local/\nRUN python3 -B -I -c 'import hashlib, json, math'\n" : "") +
       "\nCOPY --from=thinpg / /opt/thin-pg/\nCOPY --from=thinnode /usr/local/bin/node /usr/local/bin/node\n" +
       "RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 && printf '%s\\n' '/opt/thin-pg/lib:/opt/thin-pg/usr/lib:/opt/thin-pg/usr/local/lib' > /etc/ld-musl-aarch64.path && cp -a /opt/thin-pg/usr/share/icu/. /usr/share/icu/ && /opt/thin-pg/usr/local/bin/postgres --version && node --version\n",
