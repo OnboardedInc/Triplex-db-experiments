@@ -2,3 +2,4 @@
 2eed47d56a4dae5f03102f1bc56c6956fe0c20bd56c076d256fa332abf331499  part2/heap-inputs.json
 238f3ff34d96dc10f49ddfa1469eeb50555dacb246b7fb18d551cf186d7fb6e6  part2/gc-fixture.log
 c1d03253f4925e39220b8986e4f07fd63c77aafc736095b315d56017bccf6411  part2/gc-fixture.mjs
+83565df207e2c69ac352e6f4766c18b56074ac54cfa8f4ec24215b7e1aac3ea8  part2/restore-fixture.log

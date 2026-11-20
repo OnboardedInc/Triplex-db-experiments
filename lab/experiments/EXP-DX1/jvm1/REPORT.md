@@ -14,6 +14,8 @@ On the shared Mac, the writer's worst one percent of pauses started at 0.062 ms 
 - Official Temurin 25.0.5+8 and the Java 21 base are digest-pinned. The signed Datomic 1.0.7745 distribution includes Clojure 1.12.5 and SLF4J 2.0.17. Java 25 enables the documented Unsafe and peer native-access flags.
 - The shared Mac measurement lease holds the native suite, container builds and SDK setup in the queue. DX-HA1 is waiting for the heavy token held by DX-THIN1. The host accepted both Java 25 collectors and the role flag sets. Live SQL gates and startup memory are pending. No bench server was contacted.
 - The GC parser was exercised with archived G1 and generational ZGC logs on the shared Mac. The check verified all three G1 roles, the ZGC writer's phase labels and rejection of a log from a different boot. Evidence and hashes are under `evidence/DX-JVM1/part2`.
+- The Java 21 fixed-activity census adds a shared-Mac reference of about 12,651 resident bytes per added untouched person between 10,000 and 30,000 people, mostly in the transactor. The matching ZGC slope is still open. [Census](../int1/P5-EVIDENCE.md)
+- A restore fixture consumed the exact expected bytes and rejected a changed stream. It exercised the stream verifier with a stand-in for PostgreSQL.
 - JVM settings live in `launch.mjs`. The integrated runner and TAIL1 arm definition both import the measured writer G1 flags. A selected experiment can still supply its own settings. The acceptance contract and SQL durability are unchanged.
 - One initial push used Git's local author identity. The experiment branch tip was replaced with a commit that uses the generic Codex identity. The earlier remote object may still be retained.
 
