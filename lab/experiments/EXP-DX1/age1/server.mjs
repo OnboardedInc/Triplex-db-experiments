@@ -61,6 +61,7 @@ function admit(config, configFile) {
   assert(safeInteger(config.maxSqlBytes, 10 * GiB, 64 * 1024 * GiB));
   assert(safeInteger(config.copyHeadroomBytes, 25 * GiB, 64 * 1024 * GiB));
   assert(safeInteger(config.bytesPerAddedRecord, 50, 2048));
+  assert([config.peerHeap, config.peerCache, config.copyHeap].every((s) => /^[1-9]\d*[mg]$/.test(s)));
   assert(config.maxHours > 0 && config.maxHours <= (config.target === 1e9 ? 9.9 : 60));
   assert(config.maxUsd > 0 && config.maxUsd <= 74 && config.maxHours * rateUsd <= config.maxUsd);
   assert(digest.test(config.imageSha) && digest.test(config.transferSha));
@@ -104,8 +105,11 @@ function admit(config, configFile) {
   assert(allowJava.includes(options.txPid));
   assert.deepEqual(running, allowJava, "Dedicated server Java process inventory differs");
   const machine = fs.readFileSync("/etc/machine-id", "utf8");
+  const { javaPids, transactorPid, expectedMeasureSettings, ...spec } = config;
+  const { txPid, ...measurePolicy } = expectedMeasureSettings;
   return {
     source: config.source, configSha: fileSha(configFile), datomicSha: config.datomicSha,
+    runSpecSha: sha(JSON.stringify({ spec, measurePolicy })),
     imageSha: config.imageSha, transferSha: config.transferSha, target: config.target,
     machineHash: sha(machine), db: seal.scopes[0].db, options, java: allowJava.map(getProcess),
     output: config.output,
@@ -137,7 +141,7 @@ async function run(configFile, config) {
   const final = path.join(rung, "sealed.json");
   if (fs.existsSync(final)) {
     const saved = read(final);
-    assert.equal(saved.bindingSha, binding.configSha);
+    assert.equal(saved.bindingSha, binding.runSpecSha);
     for (const [file, want] of Object.entries(saved.hashes)) {
       assert.equal(path.basename(file), file);
       assert.equal(fileSha(path.join(rung, saved.attempt, file)), want);
@@ -145,10 +149,20 @@ async function run(configFile, config) {
     console.log(JSON.stringify(saved));
     return;
   }
+  let spent = 0;
+  for (const prior of fs.readdirSync(dir)) {
+    if (!targetSet.includes(Number(prior)) || prior === String(config.target)) continue;
+    const pending = path.join(dir, prior, "admission.json");
+    if (!fs.existsSync(pending)) continue;
+    const previous = read(path.join(dir, prior, "sealed.json"));
+    assert(Number(prior) < config.target && Number.isFinite(previous.usd));
+    spent += previous.usd;
+  }
+  assert(spent + config.maxUsd <= 74, "Rung reserve exceeds remaining campaign budget");
   const admitted = path.join(rung, "admission.json");
   if (!fs.existsSync(admitted)) write(admitted, { started: Date.now(), binding });
   const origin = read(admitted);
-  assert.equal(origin.binding.configSha, binding.configSha);
+  assert.equal(origin.binding.runSpecSha, binding.runSpecSha);
   assert.equal(origin.binding.machineHash, binding.machineHash);
   const deadline = origin.started + config.maxHours * 3_600_000;
   const reserve = config.copyHeadroomBytes;
@@ -305,8 +319,11 @@ async function run(configFile, config) {
     }
     const cut = await peer("seal", "seal-cut", "seal", state, String(config.target));
     assert.deepEqual([cut.t, cut.head, cut.records], [r.t, r.head, r.records]);
-    const result = { attempt, bindingSha: binding.configSha, source: binding.source, target: config.target,
+    const result = { attempt, bindingSha: binding.runSpecSha, source: binding.source, target: config.target,
       head: r.head, t: r.t, records: r.records, cold, structure, endJava,
+      checkpointSha: fileSha(state), seedLedgerSha: fileSha(state + ".population.edn"),
+      measuredBy: r.observedBy, windowsBy: Object.fromEntries(Object.entries(r.windows)
+        .map(([label, window]) => [label, { attempt: window.observedBy, from: window.wallStart, to: window.wallEnd }])),
       copy: { backupMs: backupRun.ms, verifyMs: verify.ms, restoreMs: restore.ms, restoreDb,
         objectCount: Number(/:total-segments (\d+)/.exec(ok)?.[1]),
         backupBytes: Number(execFileSync("du", ["-sb", backupPath], { encoding: "utf8" }).split(/\s/)[0]) },

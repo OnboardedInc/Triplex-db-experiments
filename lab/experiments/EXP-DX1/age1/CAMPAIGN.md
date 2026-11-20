@@ -2,9 +2,11 @@
 
 Keep all accounts in one writable Datomic Pro database. Measure P1 exact pins, P2 durable saves, P3 feed resume and P4 the current read path as history grows. Hold the population fixed. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
+The [checkpointed server rung](SERVER-RUNG.md) is the current plan. It starts from the already sealed SCALE1 database and supersedes the part-one seed, budget and load assumptions below. The [adoption table](SEED-ADOPTION.md) prices that existing seed against a new one. The part-one predictions remain here for comparison.
+
 ## Admission and cost
 
-Reserve one server at $1.09/h under the $130 budget (~119.3 h). Price the initial load independently if a compatible 0.82B base is unavailable. The generator requires its own known subject identities, starting rows, revision and clock ledger. A different load cannot supply that starting point.
+The part-one envelope assumed one server at $1.09/h and $130 available. It priced 0.82B as a compatible starting count. Part two derives the subject identities, rows, revisions and clocks from the sealed SCALE1 decision seed, then reads its actual record count before forecasting.
 
 | Rung | Added records | Added hours / USD at 20,097 records/s | Cumulative USD | What the rung buys |
 | --- | ---: | ---: | ---: | --- |

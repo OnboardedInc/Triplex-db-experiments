@@ -148,6 +148,7 @@
   (let [{:keys [name conn]} db
         commands (mapv (fn [n offer] (let [c (tape/command pop n)] [c (tape/input c) offer]))
                        (iterate inc start) entries)
+        wall-start (System/currentTimeMillis)
         clock (+ (System/nanoTime) 100000000)
         index (volatile! nil)
         seen (mapv (fn [i [c input {:keys [due account]}]]
@@ -172,7 +173,9 @@
                           :serviceMs (scale/percentiles (map :serviceMs rows))})]
     {:all (slice seen) :quiet (slice (filter #(zero? (:account %)) seen))
      :index (some-> job (dissoc :started :finished)) :overlap (slice overlap)
-     :receiptTs (mapv :t seen) :endT (:t (peek seen))}))
+     :receiptTs (mapv :t seen) :endT (:t (peek seen))
+     :observedBy (System/getenv "AGE_ATTEMPT") :wallStart wall-start
+     :wallEnd (System/currentTimeMillis)}))
 
 (def phases [["low" false false] ["busy" true false] ["index-overlap" true true]])
 
@@ -269,6 +272,7 @@
                                            {:io-context :dx-age1/feed-seven}))
             result {:records (scale/records! (:conn db)) :target target :agedRecords aged-records
                     :t (:t measured) :head (+ (tape/seed-head pop) end) :ageSegments (count growth)
+                    :observedBy (System/getenv "AGE_ATTEMPT")
                     :windows (:windows measured) :reads reads :feed feed
                     :settle settling :finalIndex final :peerMemory (scale/peer-memory)
                     :sqlBytes (scale/bytes!)}]
