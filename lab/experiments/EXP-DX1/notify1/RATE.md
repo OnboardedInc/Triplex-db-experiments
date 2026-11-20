@@ -50,3 +50,72 @@ Command on the dedicated server, after review. `DOCKER_HOST=unix:///var/run/dock
 **Evidence audit**
 
 The prior budgets come from the hash-verified paired raw windows in the part 2 manifest. The detailed probe binds every run to its source, exclusive slot, nonce, input bytes and native release receipt. Each active arm checks complete ordered effects and every sender and recipient state against Python W0. The store observer checks pinned cuts, original transaction IDs and returned positions. Relay checks the registered recipient identity, original range, erasure barrier, prior item state and cursor before its atomic effect commit. Its lost-response test overlaps a save, rollback, erasure and concurrent recovery and checks the entire result against Python. The native join checks the JFR file digest, trace and span parents, source tree, guest boot clock and complete matched commit set. The control comparison checks all offers and fixed read schedules. The budget reducer checks raw file hashes, receipts, pinned code, packet counts and coverage of every observed HTTP request. [Rate evidence](RATE-SHA256SUMS)
+
+**Part 5. Native comparison on matched compact traffic**
+
+The account had 10,000 people and four readers. Nine consecutive release changes overlapped an open-loop save every 32 ms. Each active arm used a fresh scope, delivered the full Python-verified 6,336 release notices and was priced against matching offered prefixes from both controls. The test counted live completions inside the window and kept offered-to-ACK times for all matched saves.
+
+| Arm in order | Notices/s | Live reads / saves | Read p99 / closing and opening ratios | Save p99 / closing and opening ratios |
+| --- | ---: | ---: | ---: | ---: |
+| Shared | 222.00 | 1,903 / 891 | 13.57 ms / 1.41× and 1.65× | 168.42 ms / 0.69× and 3.09× |
+| Separate | 211.66 | 1,996 / 935 | 11.67 ms / 1.19× and 1.39× | 309.44 ms / 1.38× and 5.90× |
+| Separate | 261.57 | 1,615 / 756 | 9.69 ms / 1.06× and 1.14× | 86.80 ms / 0.33× and 1.53× |
+| Shared | 277.36 | 1,523 / 713 | 12.54 ms / 1.37× and 1.48× | 100.28 ms / 0.38× and 1.76× |
+
+The control bookends disagree on whether either route reaches the 1.5× limit consistently. The separate peer moved read p99 down in both repeats. On these windows at most six of an arm's fifty slowest saves overlapped a writer gateway pause. The archival deep run with fifty GC-related tails came from a different workload. [Part 5 evidence](PART5-SHA256SUMS)
+
+**Part 5. Shared-floor cost at 100,000 people**
+
+The same fixture would owe 3,685 notices. At 1,024 people per group the census produces 98 recipient commits with 7,957 logical changes. The ordered set produces four with 7,394 changes. Both use six source edits at the save and zero source writes during dispatch. Scaling the measured 10,000-person drain gives about 16 seconds for the census and 39 seconds for cold ordered replay on a comparable stack. The 16-offer samples show neighbouring saves can stall behind cold replay. They are too small to forecast a save p99 at 100,000.
+
+**Part 5. Time per delivered notice**
+
+| Exclusive elapsed ms per notice | Earlier deep sample, 1,797 notices | New separate-gateway repeat, 6,336 notices |
+| --- | ---: | ---: |
+| Source selection and metadata | 0.317 | 0.499 |
+| Pinned source data | 1.416 | 0.656 |
+| W0 evaluation and initial payload | 0.061 | 0.296 |
+| Test recipient state reads | 0.014 | 0.085 |
+| Test recipient commit | 0.623 | 0.842 |
+| Waiting for live-save opportunities | 0.357 | 0.819 |
+| Pacing, startup, local packing and other elapsed time | 0.760 | 0.627 |
+
+The deep sample issued 394 pinned source calls, returned 105.44 MB and evaluated 3,000 people. That is about 35.1 kB per person checked. At 16.5% notice density, a thousand notices per second through the same full scan needs about 6,060 checks per second and 213 MB per second of source replies. The separate compact repeat evaluated 90,000 people over nine changes. It spent roughly one fifth of elapsed time waiting for foreground saves. The recipient commit in both rows includes SQLite's simulated application effects and product ledger/cursor writes. External endpoint or queue latency was outside these runs. [Rate evidence](RATE-SHA256SUMS) · [Part 5 evidence](PART5-SHA256SUMS)
+
+**Part 5. Cold copy with native deep inputs**
+
+Both arms started a fresh sender on its own read peer, checked 1,000 people and delivered the same 799 oracle effects from one release. Both grouped those deliveries in one recipient transaction and used zero source writes. The reference sent 140.47 notices/s and elapsed 5.69 s. The copy sent 173.64/s and elapsed 4.60 s. First effect was at 5.66 and 4.57 s respectively. The four readers completed 3,902 and 3,715 reads. Only eight and six saves finished, so these two short runs price the work.
+
+| Exclusive elapsed ms per delivered notice | Separate peer | Cold copy on separate peer |
+| --- | ---: | ---: |
+| Selecting people and binding the cut | 0.174 | 0.070 |
+| Pinned source data or copy capture | 4.917 | 3.608 |
+| W0 evaluation or local worker visit and evaluation | 0.050 | 0.601 |
+| Assemble payload and ledger changes | 0.030 | 0.022 |
+| Read the test recipient ledger and check the receipt | 0.052 | 0.053 |
+| Test recipient commit | 0.440 | 0.421 |
+| Local effect acknowledgement | <0.001 | <0.001 |
+| Yield to saves | 0.098 | 0.003 |
+| Startup and other elapsed time | 1.356 | 0.981 |
+
+The copy took 16 pinned bulk pages and seven other pinned source reads. It transferred 5.27 MB and packed 22.42 MB into the local source image. The reference took 54 pinned reads and transferred 35.13 MB. The copy evaluated 799 worlds. The rules used 75 ms summed across workers. Worker time includes walking the copied entity graph and starting four threads. The 799 notices carry 31,161 payload bytes and 246,093 bytes with the envelope in both arms. The recipient replayed the sequence against its live ledger before acknowledging. SQLite's local transaction includes test application state, deduplication, cursor and the stored range. The reported acknowledgement is local IPC. Customer transport and processing remain unknown.
+
+The cold capture took 63% of sender wall time. Its measured ceiling alone was roughly 347 people checked per second, or 57 notices/s at 16.5% density, before evaluation and delivery. Reaching 600–900 notices/s with this full capture would need 3,636–5,455 people per second. The gap is 10–16× in source capture alone. Both runs shared a three-core slot, which averaged 1.40 and 1.23 busy cores with zero recorded throttling. A pinned copy removes per-person remote payload reads after capture. A first-seen deep release still pays for bulk source access. [Part 5 evidence](PART5-SHA256SUMS)
+
+**Part 5. Reusing the copy across a compact release train**
+
+The 1,000-person run reused one cold image across 43 consecutive release changes while four readers and 32 ms save offers stayed active. The full oracle matched the 100 people selected per release and their complement. Across the train it delivered 2,914 effects at 139.81/s. The worker scanned 5,200 compact worlds and evaluated 4,300. The live window completed 1,390 reads and 650 saves. Both control prefixes completed 1,390 reads and 651 saves on the same offers.
+
+| 20.84 second window | Read p99 | Save p99 |
+| --- | ---: | ---: |
+| Copied sender | 31.26 ms | 199.81 ms |
+| Opening control, matched prefix | 10.75 ms / 2.91× | 65.76 ms / 3.04× |
+| Closing control, matched prefix | 5.66 ms / 5.52× | 31.45 ms / 6.35× |
+
+The copy cost 70 ms once. Starting worker threads, walking the local data and evaluating cost 14.15 seconds altogether. The rules used 0.70 seconds summed across workers. Packing cost 0.15 seconds, the 43 test recipient commits 2.44, yielding to foreground saves 1.93 and acknowledgements 1.46 ms in total. No writer or sender gateway GC pause overlapped the 50 slowest reads or saves. The trace could not uniquely join the p99 read to an HTTP request. The foreground cost of the extra worker activity remains unresolved. [Part 5 evidence](PART5-SHA256SUMS)
+
+**Part 5. Before the server run**
+
+For one cold 100,000-person deep release, allow 200–333 seconds to capture the source at 300–500 people per second. This range assumes the dedicated server peer can reproduce the Mac's 347 people per second with 64 foreground readers. Allow roughly 30–50 more seconds for local processing and 7–12 for the grouped ledger and effect commits at 16.5% notice density. These assumptions put 16,500 notices at about 40–70/s, or 4–7 minutes. At a million people and the same pace, 165,000 notices take 39–69 minutes. The million-person estimate also assumes sufficient memory. The image alone projects to 2.24 GB at 100,000 and 22.4 GB at a million before transient copies and process overhead. The server's deep fixture is denser at 79.9%, so the same model with more recipient work predicts roughly 190–300 notices/s for that fixture. A real recipient may impose a lower rate.
+
+The forecast is conditional on read and save p99 staying within 1.5× their matched control. The Mac checks leave that condition open. The compact release train tests reuse and live latency. It cannot substitute for a single cold deep release. The server command starts with fresh exactness checks and emits the rate and both tail ratios, with a minimum of 500 completed reads and saves per arm for the latency result. The inspector withheld a within-limits result on the archived window with ratios 1.42× and 0.95× and only 157 completed saves per arm. [Runner](bench.ts) · [Part 5 evidence](PART5-SHA256SUMS)
