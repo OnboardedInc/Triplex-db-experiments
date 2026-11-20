@@ -13,7 +13,8 @@ import { smallId, smallPhases, smallTrace, smallSeconds, smallPeople } from "../
 import { interferenceId, interferencePhases, interferenceTrace, interferenceSeconds } from "../experiments/EXP-DX1/scale1/interference.ts";
 import assert from "node:assert/strict";
 import { DeepActivation } from "./lib/deep-activation.ts";
-import { liveProfile, livePeakWindow, type PeakAlignment } from "../experiments/EXP-DX1/scale1/deep-live.ts";
+import { FieldSaveWriter, liveProfile, livePeakWindow, type PeakAlignment } from "../experiments/EXP-DX1/scale1/deep-live.ts";
+import { fieldPlan, fieldProfile } from "../experiments/EXP-DX1/int1/field-plan.ts";
 import { DEEP_PROFILE, DEEP_RUNGS, deepCells, deepPopulation } from "./lib/deep-world.ts";
 import { DEEP_RATE, deepSeed, type DeepEvent } from "./lib/deep-trace.ts";
 import { DeepWriter } from "./lib/deep-command.ts";
@@ -129,6 +130,7 @@ const devSubjects = opt("subjects");
 if (!["xtdb", "qlever", "datomic"].includes(lane)) throw new Error("--lane xtdb|qlever|datomic is required");
 const deepSmoke = opt("profile") === "deep-smoke";
 const deepLive = opt("profile") === "deep-live";
+const deepField = flag("int1-field");
 const alignment = opt("peak-alignment") as PeakAlignment | undefined;
 if (deepLive || alignment) assert(deepLive && (alignment === "coincident" || alignment === "staggered") && opt("tenant-study") === "interference");
 const deep = opt("profile") === "deep" || deepSmoke || deepLive;
@@ -148,6 +150,7 @@ if (!devSubjects && !Object.hasOwn(availableRungs, rung)) throw new Error(`--run
 const profile = opt("profile", "smoke") as Profile | "deep" | "deep-smoke" | "deep-live";
 const activationOnly = deep && flag("deep-activation"), seedOnly = deep && flag("deep-seed-only");
 const interferenceOnly = deep && flag("deep-interference");
+if (deepField) assert(deep && !tenantSpec && !smallOnly && !activationOnly && !seedOnly && !interferenceOnly);
 if (smallOnly && (activationOnly || seedOnly || interferenceOnly || deepSmoke || flag("zero-readers"))) throw Error("Small scope study requires its separate low-rate arm");
 if (interferenceOnly && (activationOnly || seedOnly || deepSmoke || flag("zero-readers") || rung !== "deep-10k")) throw Error("Interference requires the complete deep-10k cohort");
 if ((activationOnly || seedOnly) && (flag("zero-readers") || activationOnly && seedOnly)) throw Error("Choose one deep arm");
@@ -155,7 +158,7 @@ const fullLength = profile === "v3" || deep && !deepSmoke && !activationOnly && 
 if (!deep && !(profile in PROFILES)) throw new Error(`--profile must be one of ${Object.keys(PROFILES).join("|")}`);
 const rungSubjects = devSubjects ? Number(devSubjects) : availableRungs[rung]!;
 const deepAccount = Number(opt("deep-account", "0"));
-const deepId = deep ? { ...(tenantSpec?{tenant:tenantSpec}:{}), source: process.env.TRIPLEX_TRACE_SOURCE!, slot: process.env.TRIPLEX_TRACE_SLOT!, nonce: opt("deep-nonce")!, people: rungSubjects, account: deepAccount, arm: seedOnly ? "seed" : tenantSpec?.study==="small" ? "small" : tenantSpec && ["smoke","interference"].includes(tenantSpec.study) ? "interference" : smallOnly ? "small" : interferenceOnly ? "interference" : activationOnly ? "activation" : flag("zero-readers") ? "zero" : "reader" } satisfies DeepIdentity : undefined;
+const deepId = deep ? { ...(tenantSpec?{tenant:tenantSpec}:{}), ...(deepField ? { field: true as const } : {}), source: process.env.TRIPLEX_TRACE_SOURCE!, slot: process.env.TRIPLEX_TRACE_SLOT!, nonce: opt("deep-nonce")!, people: rungSubjects, account: deepAccount, arm: seedOnly ? "seed" : tenantSpec?.study==="small" ? "small" : tenantSpec && ["smoke","interference"].includes(tenantSpec.study) ? "interference" : smallOnly ? "small" : interferenceOnly ? "interference" : activationOnly ? "activation" : flag("zero-readers") ? "zero" : "reader" } satisfies DeepIdentity : undefined;
 if (deepId) {
   requireIdentity(deepId);
   if (!opt("deep-barrier") || devSubjects || lane !== "datomic" || opt("seed-manifest") || opt("round-plan") || opt("idle-gaps-ms") || opt("oracle-root") === undefined || opt("seed", deepSeed(deepAccount)) !== deepSeed(deepAccount)) throw Error("Deep requires its named Datomic rung, independent oracle, account seed, and start barrier");
@@ -163,8 +166,8 @@ if (deepId) {
 if(smallOnly) assert.equal(rungSubjects,smallPeople(deepAccount));
 const plannedTenants=tenantSpec&&deepId?tenantPlan(tenantSpec,deepId.arm):undefined;
 const tenantWriters=plannedTenants ? new TenantWriters(plannedTenants.accounts,plannedTenants.events,deepLive) : undefined;
-const deepPlan = plannedTenants ?? (smallOnly ? smallTrace(deepAccount) : interferenceOnly ? interferenceTrace(deepAccount) : deep ? frozenDeep(deepAccount, rungSubjects) : undefined);
-const deepWriter = deepPlan && !tenantSpec ? new DeepWriter(deepPlan.activeSubjects) : undefined;
+const deepPlan = plannedTenants ?? (smallOnly ? smallTrace(deepAccount) : interferenceOnly ? interferenceTrace(deepAccount) : deepField ? fieldPlan(deepAccount, rungSubjects, deepSmoke) : deep ? frozenDeep(deepAccount, rungSubjects) : undefined);
+const deepWriter = deepPlan && !tenantSpec ? new (deepField ? FieldSaveWriter : DeepWriter)(deepPlan.activeSubjects) : undefined;
 const deepWitness = deep ? new DeepSeedWitness() : undefined;
 const cells = deep ? deepCells(rungSubjects) : undefined;
 const output = path.resolve(opt("output") ?? "");
@@ -329,6 +332,7 @@ const log = (line: string) => {
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
 const tenantSources = tenantSpec ? fs.readdirSync(path.join(REPO,"lab/experiments/EXP-DX1/scale1")).filter(f=>(f.startsWith("tenant")&&!f.endsWith("test.ts"))||f==="seed-image.ts"||f==="deep-live.ts"||f==="deep-live-pins.json").map(f=>"lab/experiments/EXP-DX1/scale1/"+f) : [];
 const BENCH_FILES = [...tenantSources,"lab/bench/driver.ts", "lab/trace/instrument.mjs", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
+if (deepField) BENCH_FILES.push("lab/experiments/EXP-DX1/int1/field-plan.ts", "lab/experiments/EXP-DX1/scale1/deep-live.ts");
 if(smallOnly||interferenceOnly) {
   const names=smallOnly?["small-plan.ts","small-pins.json"]:["interference.ts","interference-pins.json"];
   BENCH_FILES.push(...names.map(n=>"lab/experiments/EXP-DX1/scale1/"+n));
@@ -340,14 +344,14 @@ const report: Record<string, any> = latencyReceipt({
   qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v3: final-receipt ACK, minimum 500 commits, four-subject growth",
   verdictClock: VERDICT_CLOCK,
-  verdictPlanId: tenantSpec ? (tenantSpec.live ? liveProfile+"/"+tenantSpec.live : tenantTraceId+"/"+tenantSpec.study) : fullLength ? V3_PLAN_ID : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
+  verdictPlanId: deepField ? fieldProfile : tenantSpec ? (tenantSpec.live ? liveProfile+"/"+tenantSpec.live : tenantTraceId+"/"+tenantSpec.study) : fullLength ? V3_PLAN_ID : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
   status: "RUNNING",
   startedAt: new Date().toISOString(),
   config,
   runTag,
   scope: scopeName,
-  ...(deepId ? { deep: { profile: deepLive ? liveProfile : DEEP_PROFILE, identity: deepId, ...(plannedTenants?{accounts:tenants,logicalTraces:plannedTenants.logical}: {}) } } : {}),
-  generator: { traceSha256: sha256File(deep ? "lab/bench/lib/deep-trace.ts" : "lab/bench/lib/trace.ts"), worldSha256: sha256File(deep ? "lab/bench/lib/deep-world.ts" : "lab/bench/lib/world.ts"), seed: config.seed },
+  ...(deepId ? { deep: { profile: deepField ? fieldProfile : deepLive ? liveProfile : DEEP_PROFILE, identity: deepId, ...(plannedTenants?{accounts:tenants,logicalTraces:plannedTenants.logical}: {}) } } : {}),
+  generator: { traceSha256: sha256File(deepField ? "lab/experiments/EXP-DX1/int1/field-plan.ts" : deep ? "lab/bench/lib/deep-trace.ts" : "lab/bench/lib/trace.ts"), worldSha256: sha256File(deep ? "lab/bench/lib/deep-world.ts" : "lab/bench/lib/world.ts"), seed: config.seed },
   benchSources: Object.fromEntries(BENCH_FILES.map((f) => [f, sha256File(f)])),
   host: { cpus: os.cpus().length, platform: `${process.platform}-${process.arch}`, node: process.version, totalMemBytes: os.totalmem() },
   harnessStorage: { requested: process.env.DX_HARNESS_STORAGE ?? "volume", filesystemType: fs.statfsSync(rawDir).type },
@@ -529,6 +533,25 @@ function main() {
 async function run() {
   cpuProfileClock("start");
   save();
+  if (deepId && process.env.DX_INT1_NATIVE_WRITE_READBACK === "1") {
+    const database = "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url");
+    const observed = { database, nativeCommits: 0, packedRows: 0, rangeRequests: 0, unexpectedFunctions: 0,
+      first: undefined as undefined | { position: number; operationId: string; nativeT: string; function: string } };
+    report.deep.writePath = observed;
+    // [DX-THIN1] Why: bind the installed predecessor function to the actual saved scope and receipt.
+    // Rejected: taking a requested launcher option as evidence of native function selection.
+    observeNativeReceipt((db, input, reply, position) => {
+      if (db !== database || !reply.writePath) return;
+      const info = reply.writePath;
+      assert(info.scheduling === false && typeof info.historyRange === "boolean" && Number.isSafeInteger(info.packedRows) && info.packedRows >= 0);
+      assert(reply.t?.t === "long" && /^\d+$/.test(reply.t.v));
+      observed.first ??= { position, operationId: input.operationId, nativeT: reply.t.v, function: info.function };
+      observed.nativeCommits++;
+      observed.rangeRequests += Number(info.historyRange);
+      observed.packedRows += info.packedRows;
+      observed.unexpectedFunctions += Number(!/^:triplex\.write\/v-[a-f0-9]{24}$/.test(info.function));
+    });
+  }
   const writer = await openComposition(config.composition, lane, scopeName);
   const aux = await openComposition(config.composition, lane, scopeName);
   // History growth (bulk, P4 item 2) writes through its own opening, so a writer admission queue full of
@@ -674,8 +697,8 @@ async function run() {
   const params: TraceParams = { ...TRACE_DEFAULTS, ...seriesParams, burstMultiplier: opt("burst-multiplier") ? config.burstMultiplier : (seriesParams.burstMultiplier ?? TRACE_DEFAULTS.burstMultiplier), steadyFactsPerS: (seriesParams.steadyFactsPerS ?? TRACE_DEFAULTS.steadyFactsPerS) * config.rateScale };
   const idle = config.idleGapsMs ? idlePlan(config.idleGapsMs, config.idleCommits, N,config.idleWarmupCommits) : null;
   const lastTenantWindow = tenantSpec && deepId ? tenantWindows(tenantSpec, deepId.arm).at(-1) : undefined;
-  const traceDurationS = lastTenantWindow ? lastTenantWindow.from + lastTenantWindow.seconds : idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
-  if (deepPlan) Object.assign(params, { sizeClasses: deepPlan.sizeClasses, steadyFactsPerS: (deepLive ? 3.5 : DEEP_RATE) * deepPlan.sizeClasses.reduce((n, c) => n + c.min * c.share, 0) });
+  const traceDurationS = deepField ? (deepSmoke ? 30 : V3_OFFER_SECONDS) : lastTenantWindow ? lastTenantWindow.from + lastTenantWindow.seconds : idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
+  if (deepPlan) Object.assign(params, { sizeClasses: deepPlan.sizeClasses, steadyFactsPerS: (deepLive || deepField ? 3.5 : DEEP_RATE) * deepPlan.sizeClasses.reduce((n, c) => n + c.min * c.share, 0) });
   const events = deepPlan ? deepPlan.events : idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
   if (!tenantSpec && config.receiptCapture === "replica-worker" &&
       events.filter(e => e.stream === "background" && !e.resend && (!deep || e.atMs < V3_OFFER_SECONDS * 1000)).length > MAX_RECEIPT_CAPTURES)
@@ -1201,7 +1224,7 @@ async function run() {
   }
   await sleep(Math.max(0, traceStart - now()));
   if (deep) void watermarkSampler(aux);
-  if (deep && (fullLength || interferenceOnly || smallOnly)) scheduler.setUntil(traceStart + (smallOnly ? smallSeconds : interferenceOnly ? interferenceSeconds : V3_OFFER_SECONDS) * 1000);
+  if (deep && (fullLength || interferenceOnly || smallOnly || deepSmoke && process.env.DX_INT1_NATIVE_WRITE_READBACK === "1")) scheduler.setUntil(traceStart + (deepSmoke ? 30 : smallOnly ? smallSeconds : interferenceOnly ? interferenceSeconds : V3_OFFER_SECONDS) * 1000);
   scheduler.start();
   probeScheduler?.start();
   if (config.probe10PerS > 0) probeTimer = setInterval(() => void overlay("probe10", probeRng.int(N), 10), 1000 / config.probe10PerS);

@@ -456,6 +456,10 @@ for role in w r; do
       field_policy+=(-e "TX2_WRITE_BUDGET_US=$DX_WRITE_BUDGET_US")
     fi
   fi
+  if [[ $role == w && ${DX_INT1_NATIVE_WRITE_READBACK:-0} == 1 ]]; then
+    [[ ${DX_PREDECESSOR_LOOKUP:-0} =~ ^[01]$ ]] || exit 2
+    field_policy+=(-e "TX2_INT1_WRITE_READBACK=1" -e "TX2_PREDECESSOR_LOOKUP=${DX_PREDECESSOR_LOOKUP:-0}")
+  fi
   if [[ $role == w ]]; then cpu=$gw_w port=$port_w; else cpu=$gw_r port=$port_r; fi
   ports=(); [[ $publish == false ]] || ports=(-p "127.0.0.1:$port:8080")
   if [[ $role == w ]]; then mem=${DX_GW_WRITE_MEMORY:-$gw_mem}; heap=${DX_GW_WRITE_HEAP:-}; else mem=${DX_GW_READ_MEMORY:-$gw_mem}; heap=${DX_GW_READ_HEAP:-}; fi

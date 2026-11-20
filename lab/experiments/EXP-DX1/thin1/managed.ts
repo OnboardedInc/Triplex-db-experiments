@@ -11,6 +11,7 @@ const integrated = [
   "int1-thin",
   "int1-deep",
   "int1-proof",
+  "int1-campaign-proof",
   "int1-cold-probe",
   "int1-idle",
   "int1-pooled",
@@ -178,7 +179,8 @@ function setup(compact: boolean) {
         (peerGc === "elastic" ? "-Xms32m -XX:+UseZGC -XX:+ZGenerational -XX:SoftMaxHeapSize=96m -XX:ZUncommitDelay=1" :
           "-Xms64m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps")
         : (compact ? "-Xms128m -Xmx600m" : "-Xms160m -Xmx896m") + " -Ddatomic.objectCacheMax=192m") +
-      (compact ? " -Ddxthin.compact=yes" : "") + (memory ? " -Ddxthin.memory=yes" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
+      (compact ? " -Ddxthin.compact=yes" : "") + (memory ? " -Ddxthin.memory=yes" : "") +
+      (mode === "int1-campaign-proof" ? " -Ddxthin.campaign=yes" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
       " -Ddxthin.secret=" +
       secret +
@@ -331,7 +333,10 @@ if (action === "--guest") {
     process.env.DX_THIN_MEASURE = path.resolve(armRoot, "../../..", "locks", "measure");
   }
   process.argv = [process.execPath, run, "live", mode, rung, out];
-  if (integrated) {
+  if (mode === "int1-campaign-proof") {
+    process.chdir(repo);
+    await (await import("../int1/everything.ts")).localPreflight(out);
+  } else if (integrated) {
     process.chdir(repo);
     await import("../int1/trial.ts");
   } else await import("./trial.ts");

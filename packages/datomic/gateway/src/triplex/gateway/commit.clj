@@ -82,7 +82,15 @@
                             (and journal (= attr ":_tx/instant")) (assoc 8 clock)
                             (and journal (= attr ":_tx/change")) (assoc 9 (assign-change (nth values 9) clock new-ids)))]
                (str (subs text 0 start) (json/write-str values))))
-           (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
+           ;; [DX-THIN1] Why: a queued resend can be stale because this exact command already changed the row.
+           ;; Rejected: returning a CAS error before checking the native identities, or adding those lookups to a valid save.
+           (conflict []
+             (cond
+               (and (:operation-id payload) (d/entid db [:triplex.tx/operation-id (:operation-id payload)]))
+               (throw (ex-info "unique-conflict triplex.tx/operation-id" {}))
+               (some #(d/entid db [:triplex.claim/command-id %]) (:command-ids payload))
+               (throw (ex-info "unique-conflict triplex.claim/command-id" {}))
+               :else (throw (ex-info "TRIPLEX_CONFLICT" {}))))]
      (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row]} payload
            head-v2 (= 2 (value scope :triplex.scope/head-version))
            latest (when head-v2 (newest-commit))

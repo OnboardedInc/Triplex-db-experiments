@@ -212,6 +212,27 @@ async function selftestDatomic(config, opts) {
   }
 }
 
+// [DX-THIN1] Why: release only staged images that this experiment built and whose slots have closed.
+// Rejected: a forced removal or pruning the lab VM's shared image cache.
+async function removeThinImage(config, opts) {
+  if (opts.holder !== 'DX-THIN1' || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
+  const info = slotInfo(config, 'datomic', 'dev');
+  const tag = info.laneConf.image;
+  if (!/^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/.test(tag)) fail('REFUSED', 'Only staged DX-THIN1 image tags may be removed');
+  if (info.laneConf.imageId !== opts['image-id']) fail('REFUSED', 'The staged configuration is pinned to a different image');
+  await withPool(async ledger => {
+    assertMeasureAdmission(opts.holder);
+    const image = assertDatomicImage(info);
+    if (ledger.reservations.some(r => r.holder === opts.holder)) fail('REFUSED', 'Release the holder’s reservations first');
+    const users = docker(['ps', '-a', '--filter', 'ancestor=' + image.Id, '--format', '{{.ID}}']);
+    if (users.trim()) fail('REFUSED', 'The pinned image still has a container');
+    docker(['image', 'rm', tag]);
+    if (docker(['image', 'inspect', tag], { allowFail: true })) fail('ENGINE', 'The staged tag remains');
+    appendEvent({ event: 'datomic-staged-image-removed', holder: opts.holder, imageId: image.Id, tag });
+    console.log(JSON.stringify({ tag, imageId: image.Id, removed: true }));
+  });
+}
+
 /** Effective engine configuration: the bytes the container actually runs with. */
 export function effectiveConfig(config, info) {
   const dir = path.join(ENGINE_DIR, `${info.lane}-${info.slot}${info.role === 'follower' ? '-ro' : ''}`);
@@ -766,6 +787,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'delta') return (await import('../experiments/EXP-DX1/actv-delta/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicSources });
   if (options.lane === 'datomic' && command === 'build') return buildDatomic(config);
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
+  if (options.lane === 'datomic' && command === 'image-remove') return removeThinImage(config, options);
   if (command === 'cpu-sample') {
     const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
     const owner = readOwner(info);

@@ -401,7 +401,7 @@ function clean(dir: string, prefix: string) {
   );
 }
 // [DX-STG1] Why: notification trials use the same cold native stack, placement and cleanup as SCALE1. Rejected: a second server launcher with different durability settings.
-export function startScaleStack(dir: string, prefix: string, source: string, grouped = false) {
+export function startScaleStack(dir: string, prefix: string, source: string, grouped = false, options: NodeJS.ProcessEnv = {}) {
   const env = {
     ...process.env,
     DX_GROUP_COMMIT: grouped ? "1" : "0",
@@ -425,6 +425,7 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
       "-Xms256m -Xmx4g -Ddatomic.objectCacheMax=1536m -Xlog:gc=info:file=/trace/gw-w-gc.log",
     DX_GW_READ_JAVA_OPTS:
       "-Xms256m -Xmx4g -Ddatomic.objectCacheMax=1536m -Xlog:gc=info:file=/trace/gw-r-gc.log",
+    ...options,
   };
   execFileSync(
     "bash",

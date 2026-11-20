@@ -241,6 +241,7 @@
                                 :triplex.claim/command-id (get claim "commandId") :triplex.claim/tx "datomic.tx"
                                 :triplex.claim/tx-id (get claim "txId")}) claims))))]
      [[(commit/entry db input lean) (cond-> {:scope scope :source source :provisional position :span span
+                       :operation-id (get input "operationId") :command-ids (mapv #(get % "commandId") claims)
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
                        :rev-aevt (= "1" (System/getenv "TX2_REV_AEVT"))
@@ -263,6 +264,7 @@
 ;; Source: https://docs.datomic.com/reference/hints.html. Rejected: submitting d/with's
 ;; expanded data (would move invariant checks off the authoritative transaction).
 (def commit-hints? (= "true" (System/getenv "TX2_COMMIT_HINTS")))
+(def writer-readback (= "1" (System/getenv "TX2_INT1_WRITE_READBACK")))
 (defn transaction-hints [conn data timeline]
   (when commit-hints?
     (try
@@ -360,6 +362,13 @@
        :position (codec/encode-value "long" (or (get-in report [:member :position]) (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report))))))
        :delta (- (or (get-in report [:member :position]) (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report))))) (get input "position"))
        :datoms (count (:tx-data report))}
+        ;; [DX-THIN1] Why: report the selected installed function and real packed frames on this receipt.
+        ;; Rejected: claiming a treatment from the requested environment alone.
+        writer-readback (assoc :writePath (let [[ident params] (first data)]
+                                          {:function (str ident) :historyRange (boolean (:identity-bounds params))
+                                           :scheduling (boolean (group/scheduling?))
+                                           :packedRows (count (filter (fn [op] (and (vector? op) (= :triplex/assert (first op))
+                                                                              (vector? (nth op 3 nil)) (= 6 (count (nth op 3))))) (:ops params)))}))
         load-timing (assoc :loadProfile {:rowNs @load-timing :applyMs (get-in report [:io-stats :api-ms])
                        :tx (clojure.edn/read-string (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.load/metrics))})
         group/bulk-priority (assoc :bulkGrant (:bulk-grant report))

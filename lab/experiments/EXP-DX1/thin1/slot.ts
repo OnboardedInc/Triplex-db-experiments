@@ -21,6 +21,7 @@ assert(role === "write" || role === "read");
 const compact = property("compact") === "yes";
 const demand = property("cache") === "demand";
 const memory = property("memory") === "yes";
+const campaign = property("campaign") === "yes";
 assert(!compact || role === "write");
 const address = Object.values(os.networkInterfaces())
   .flat()
@@ -284,6 +285,10 @@ const gateway = (label: "write" | "read", secondary = false) => {
       DATOMIC_URI_TEMPLATE: template,
       ...(demand ? { TX2_ID_CACHE_BYTES: "1048576", TX2_ID_CACHE_ENTRIES: "4096",
         TX2_REACH_SESSION_ENTRIES: "4096", TX2_ENTITY_CACHE_BYTES: "8388608" } : {}),
+      ...(campaign && label === "write" ? {
+        TX2_INT1_WRITE_READBACK: "1", TX2_PREDECESSOR_LOOKUP: "1", TX2_SMALL_ROWS: "1", TX2_GROUP_STAGE_CLOCK: "1",
+        TX2_GROUP_COMMIT: "0", TX2_LIVE_PRIORITY: "0", TX2_FIELD_COALESCE: "0", TX2_GROUP_REUSE_PREPARED: "0",
+      } : {}),
     },
   );
 };
