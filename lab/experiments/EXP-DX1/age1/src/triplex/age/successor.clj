@@ -73,7 +73,11 @@
           _ (d/request-index conn)
           db (deref (d/sync-excise conn t) 120000 nil)]
       (native/check! (and db (<= t (d/basis-t db))) "Excision did not adopt" {:t t})
-      {:t t :remainingRows (reduce + (map #(count (d/datoms (d/history db) :eavt % :triplex.entity/row)) ids))})))
+      {:t t
+       :remainingRows (reduce (fn [total e]
+                                (reduce (fn [n _] (inc n)) total
+                                        (d/datoms (d/history db) :eavt e :triplex.entity/row)))
+                              0 ids)})))
 
 (defn extract-row [row]
   (select-keys row [:id :entity_id :attribute :valid_from :valid_to :recorded_at :recorded_position :tx_id]))
