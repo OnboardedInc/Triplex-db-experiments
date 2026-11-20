@@ -8,9 +8,15 @@ import { stageReplay } from "../scale1/source.ts";
 import { restoreSeed, sealSeed } from "../scale1/seed-image.ts";
 import { measurementWindow } from "../thin1/measure.ts";
 import { canonical, sha256 } from "../../../bench/lib/w0-world.ts";
+import { finishNativeRecording, startWalSamples } from "../../../trace/native-recording.mjs";
 import { atomicJson, createArm, executeArm } from "./everything-arm.ts";
 import { collect, openPlan } from "./everything-collect.ts";
-import { gatewayJvmOptions, planSummary, treatment } from "./everything-plan.ts";
+import {
+  gatewayJvmOptions,
+  planSummary,
+  transactorJvmOptions,
+  treatment,
+} from "./everything-plan.ts";
 
 const repo = fileURLToPath(new URL("../../../../", import.meta.url));
 const git = (...args: string[]) =>
@@ -125,8 +131,11 @@ async function physicalCases(
       try {
         const { env, engines } = startScaleStack(out, slot, source, false, {
           ...treatment,
+          TRIPLEX_TRACE_LEVEL: "summary",
+          TRIPLEX_TRACE_COMPONENTS: "node,gateway,tx-jfr,gw-jfr,postgres",
           DX_GW_WRITE_JAVA_OPTS: gatewayJvmOptions["gw-w"].join(" "),
           DX_GW_READ_JAVA_OPTS: gatewayJvmOptions["gw-r"].join(" "),
+          DX_TX_JAVA_OPTS: transactorJvmOptions.join(" "),
         });
         atomicJson(path.join(out, "placement.json"), engines);
         const snapshot = () => scaleHost.snapshot(slot);
@@ -135,35 +144,45 @@ async function physicalCases(
         const capture = !smoke && c.profile === "frozen" && c.load === "zero";
         if (capture) fs.mkdirSync(seedDir);
         if (!capture && !smoke) await restoreSeed(out, "", id.identity, engines, seedDir);
-        const vm = Object.entries(gatewayJvmOptions).map(([role, expected]) => {
-          const container = engines[role].id;
-          const actual = execFileSync(
-            "docker",
-            [
-              "exec",
-              container,
-              "sh",
-              "-ec",
+        const vm = Object.entries({ ...gatewayJvmOptions, tx: transactorJvmOptions }).map(
+          ([role, expected]) => {
+            const container = engines[role].id;
+            const actual = execFileSync(
+              "docker",
               [
-                "for p in /proc/[0-9]*; do",
-                '  [ "$(cat "$p/comm" 2>/dev/null)" = java ] || continue',
-                '  tr "\\000" "\\n" < "$p/cmdline" | grep -E "^(-Xm[sx]|-XX:|-Ddatomic.objectCacheMax=)"',
-                "done",
-              ].join("\n"),
-            ],
-            { encoding: "utf8", timeout: 10_000 },
-          )
-            .trim()
-            .split("\n");
-          assert(expected.every((flag) => actual.includes(flag)));
-          assert.equal(actual.filter((flag) => /^-XX:\+Use.*GC$/.test(flag)).length, 1);
-          assert.equal(actual.filter((flag) => flag.startsWith("-Xmx")).at(-1), "-Xmx384m");
-          return { role, container, actual };
-        });
+                "exec",
+                container,
+                "sh",
+                "-ec",
+                [
+                  "for p in /proc/[0-9]*; do",
+                  '  [ "$(cat "$p/comm" 2>/dev/null)" = java ] || continue',
+                  '  tr "\\000" "\\n" < "$p/cmdline" | grep -E "^(-Xm[sx]|-XX:|-Ddatomic.objectCacheMax=)"',
+                  "done",
+                ].join("\n"),
+              ],
+              { encoding: "utf8", timeout: 10_000 },
+            )
+              .trim()
+              .split("\n");
+            assert(expected.every((flag) => actual.includes(flag)));
+            assert.equal(actual.filter((flag) => /^-XX:\+Use.*GC$/.test(flag)).length, 1);
+            assert.deepEqual(
+              actual.filter((flag) => flag.startsWith("-Xmx")),
+              expected.filter((flag) => flag.startsWith("-Xmx")),
+            );
+            return { role, container, actual };
+          },
+        );
         atomicJson(path.join(out, "gateway-jvm.json"), {
           identity: id.identity,
           capturedAt: Date.now(),
-          vm,
+          vm: vm.filter((r) => r.role !== "tx"),
+        });
+        atomicJson(path.join(out, "transactor-jvm.json"), {
+          identity: id.identity,
+          capturedAt: Date.now(),
+          vm: vm.find((r) => r.role === "tx"),
         });
         const seed = smoke
           ? undefined
@@ -185,26 +204,48 @@ async function physicalCases(
                   }
                 : { restore: path.join(out, "restored-seed.json") }),
             };
-        exit = await executeArm(
-          id,
-          out,
-          oracle,
-          {
-            ...env,
-            DATOMIC_URL: `http://${engines["gw-w"].address}:8080`,
-            DATOMIC_READ_URLS: `http://${engines["gw-r"].address}:8080`,
-            TRIPLEX_NODE_MAIN_CPUS: scaleHost.planCpus.senders,
-            TRIPLEX_NODE_WORKER_CPUS: scaleHost.planCpus.readers,
-            DX_MODEL_COMPACT: "1",
-            NODE_OPTIONS: `--max-old-space-size=${c.people === 100_000 ? 32_768 : 8_192}`,
-            TRIPLEX_BENCH_SPILL_MAX_BYTES: String(48 * 1024 ** 3),
-          },
-          end,
-          previous(dir, c),
-          [scaleHost.planCpus.senders, scaleHost.planCpus.readers].join(","),
-          undefined,
-          seed,
-        );
+        // [DX-TAIL1] Why: isolate the second writer core from the driver and preserve native clocks before cleanup.
+        // Rejected: changing a running JVM's placement or depending on its launcher to forward shutdown hooks.
+        assert.equal(engines["gw-w"].cpus, "2,5");
+        const readerCpus = scaleHost.planCpus.readers
+          .split(",")
+          .filter((cpu) => cpu !== "5")
+          .join(",");
+        const stopWal = startWalSamples(out, engines.pg.id, id.identity);
+        try {
+          exit = await executeArm(
+            id,
+            out,
+            oracle,
+            {
+              ...env,
+              DATOMIC_URL: `http://${engines["gw-w"].address}:8080`,
+              DATOMIC_READ_URLS: `http://${engines["gw-r"].address}:8080`,
+              TRIPLEX_NODE_MAIN_CPUS: scaleHost.planCpus.senders,
+              TRIPLEX_NODE_WORKER_CPUS: readerCpus,
+              DX_MODEL_COMPACT: "1",
+              NODE_OPTIONS: `--max-old-space-size=${c.people === 100_000 ? 32_768 : 8_192}`,
+              TRIPLEX_BENCH_SPILL_MAX_BYTES: String(48 * 1024 ** 3),
+            },
+            end,
+            previous(dir, c),
+            [scaleHost.planCpus.senders, readerCpus].join(","),
+            undefined,
+            seed,
+          );
+        } finally {
+          await stopWal();
+        }
+        if (exit === 0) {
+          const raw = path.join(out, "engines", slot, "trace", "raw");
+          await finishNativeRecording(
+            out,
+            raw,
+            id.identity,
+            engines,
+            Math.min(Date.now() + 120_000, end),
+          );
+        }
         atomicJson(path.join(out, "after.json"), snapshot());
       } finally {
         scaleHost.clean(out, slot);

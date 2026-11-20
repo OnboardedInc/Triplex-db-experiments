@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import { writeFileSync } from "node:fs";
 import { expect, it, vi } from "vitest";
 import { DatabaseScope, type TripleRow } from "@triplex-build/triplex/runtime";
 import { DatomicClient, DatomicHttpError } from "../src/DatomicClient.js";
@@ -46,6 +47,18 @@ it("roundtrips exact predecessor columns with bounded bytes and attribute admiss
   expect(c.bytes).toBeLessThanOrEqual(2048);
   expect(c.evictions).toBeGreaterThan(0);
   expect(c.has("db\0old")).toBe(false);
+});
+it("admits receipt-only attributes from a settled write and removes its retired identity", () => {
+  const cache = new PredecessorCache(4096, [], [":stamp"]);
+  const assertion = row();
+  cache.remember("db\0old", assertion);
+  cache.retain("db\0old", assertion);
+  expect(cache.has("db\0old")).toBe(false);
+  cache.remember("db\0old", assertion, "receipt");
+  expect(cache.row("db\0old")).toEqual(assertion);
+  expect(Object.is(cache.row("db\0old")!.valid_from, -0)).toBe(true);
+  cache.remember("db\0old", { ...assertion, retracted_at: 20 }, "receipt");
+  expect(cache.has("db\0old")).toBe(false);
 });
 function setup(maxRetries = 0) {
   const client = new DatomicClient("http://localhost:1", 5000, 64 * 1024 ** 2, {
@@ -159,9 +172,9 @@ it("retries a serialization conflict through the existing snapshot fallback", as
 
 // [DX-H7] Why: the real transactor must reject a cached ID retired by another client.
 // Rejected: a mock-only conflict proof or retrying the same stale application precondition forever.
-it.skipIf(process.env.DATOMIC_INTEGRATION !== "1")(
-  "checks evicted and stale predecessors on the lean gateway",
-  async () => {
+it.skipIf(process.env.DATOMIC_INTEGRATION !== "1").each(["snapshot", "receipt"])(
+  "checks evicted and stale predecessors on the lean gateway with %s admission",
+  async (source) => {
     const { Layer, ManagedRuntime } = await import("effect");
     const { Triples } = await import("@triplex-build/triplex");
     const { Runtime, StorageAdapter, QueryExecutor, Capabilities } =
@@ -172,9 +185,13 @@ it.skipIf(process.env.DATOMIC_INTEGRATION !== "1")(
     for (let i = 0; i < 2; i++) {
       const client = new DatomicClient(process.env.DATOMIC_GATEWAY_URL!, 30000, 64 * 1024 ** 2, {
         rowCacheBytes: 1024,
-        predecessorAttributes: [":stamp"],
+        predecessorAttributes: source === "snapshot" ? [":stamp"] : [],
+        receiptPredecessorAttributes: source === "receipt" ? [":stamp"] : [],
       });
-      const adapter = makeDatomicStorageAdapter(client, scope, { layout: "lean", maxRetries: 0 });
+      const adapter = makeDatomicStorageAdapter(client, scope, {
+        layout: "lean",
+        maxRetries: source === "receipt" ? 1 : 0,
+      });
       const runtime = ManagedRuntime.make(
         Runtime.define({
           name: "DX-H7",
@@ -204,8 +221,12 @@ it.skipIf(process.env.DATOMIC_INTEGRATION !== "1")(
       const db = databaseName(scope);
       for (let i = 0; i < 10; i++) a.client.rowCache.set(`noise-${i}`, row(`noise-${i}`));
       expect(a.client.rowCache.has(`${db}\0${old}`)).toBe(false);
+      const interposed = await b.runtime.runPromise(
+        b.triples.transact([{ ...assertStamp("9"), entityId: "other-subject" as never }]),
+      );
       const requests = vi.spyOn(a.client, "request");
       const one = await replace(a, old, "1");
+      expect(one.position).toBe(interposed.position + 1);
       expect(requests).toHaveBeenCalledTimes(1);
       expect(requests.mock.calls[0]![1].endsWith("/transact")).toBe(true);
       const observed = await Effect.runPromise(b.adapter.getByEntity("subject"));
@@ -220,22 +241,118 @@ it.skipIf(process.env.DATOMIC_INTEGRATION !== "1")(
           }),
         ),
       );
-      expect(stale._tag).toBe("Failure");
-      if (stale._tag === "Failure")
+      if (stale._tag !== "Failure") throw Error("A stale predecessor committed");
+      if (source === "receipt") {
+        expect(stale.failure).toMatchObject({
+          _tag: "TransactionConflictError",
+          tripleId: one.triples[0]!.id,
+        });
+        expect(requests.mock.calls.slice(0, 2).map((call) => call[1].split("/").at(-1))).toEqual([
+          "transact",
+          "begin",
+        ]);
+      } else {
         expect(stale.failure).toBeInstanceOf(DatomicSerializationConflict);
-      expect(requests).toHaveBeenCalledTimes(1);
-      if (stale._tag === "Failure")
+        expect(requests).toHaveBeenCalledTimes(1);
         expect(stale.failure.cause).toMatchObject({ status: 409, code: "CasConflict" });
+      }
       const refreshed = await Effect.runPromise(a.adapter.getByEntity("subject"));
       expect(refreshed.map((r) => r.id)).toEqual([two.triples[0]!.id]);
       a.client.rowCache.clear();
       requests.mockClear();
       const three = await replace(a, refreshed[0]!.id, "3");
-      expect(requests).toHaveBeenCalledTimes(1);
+      expect(requests.mock.calls.map((call) => call[1].split("/").at(-1))).toEqual(
+        source === "receipt" ? ["begin", "transact"] : ["transact"],
+      );
+      const retiredKey = db + "\0" + refreshed[0]!.id;
+      if (source === "receipt") expect(a.client.rowCache.has(retiredKey)).toBe(false);
+      expect(a.client.predecessorCache.has(retiredKey)).toBe(false);
       expect(three.retracted).toBe(1);
       expect(three.triples[0]!.value).toEqual({ type: "integer", value: "3" });
       const final = await Effect.runPromise(a.adapter.getByEntity("subject"));
       expect(final.map((r) => r.id)).toEqual([three.triples[0]!.id]);
+      const capture = process.env.DX_TAIL1_RECEIPT_CASE;
+      if (capture && source === "receipt") {
+        const replaced = (id: string, value: string) => ({
+          kind: "transact",
+          operations: [{ op: "retract", id }, assertStamp(value)],
+          meta: { preconditions: [{ _tag: "TripleLive", id }] },
+        });
+        const commits = [
+          [0, seeded],
+          [1, interposed],
+          [2, one],
+          [3, two],
+          [5, three],
+        ] as const;
+        const receipts: unknown[] = commits.map(([command, ack]) => ({
+          command,
+          outcome: "committed",
+          txId: ack.txId,
+          position: ack.position,
+          instant: ack.instant,
+          assertionIds: command >= 2 ? [null, ack.triples[0]!.id] : [ack.triples[0]!.id],
+        }));
+        receipts.splice(4, 0, {
+          command: 4,
+          outcome: "rejected",
+          error: {
+            _tag: stale.failure._tag,
+            tripleId: "tripleId" in stale.failure ? stale.failure.tripleId : null,
+          },
+        });
+        const observedReads = [];
+        for (const [command, ack] of commits) {
+          const actual = await Effect.runPromise(
+            a.adapter.getByEntity("subject", {
+              validAt: 0,
+              recordedAt: ack.instant,
+              recordedPosition: ack.position,
+            }),
+          );
+          observedReads.push({
+            id: "after-" + command,
+            position: ack.position,
+            rows: actual.map((row) => [
+              row.id,
+              row.entity_id,
+              row.attribute,
+              row.value_type,
+              row.value_string,
+            ]),
+          });
+        }
+        writeFileSync(
+          capture,
+          JSON.stringify({
+            case: {
+              format: "triplex-db-2/o-replay-case/1",
+              caseId: scope,
+              defaultScope: "s1",
+              commands: [
+                { kind: "transact", operations: [assertStamp("0")] },
+                {
+                  kind: "transact",
+                  operations: [{ ...assertStamp("9"), entityId: "other-subject" }],
+                },
+                replaced(old, "1"),
+                replaced(one.triples[0]!.id, "2"),
+                replaced(one.triples[0]!.id, "3"),
+                replaced(two.triples[0]!.id, "3"),
+              ],
+              receipts,
+              queries: observedReads.map(({ id, position }) => ({
+                id,
+                kind: "entityTriples",
+                entityId: "subject",
+                cut: { position, validAt: 0 },
+              })),
+            },
+            reads: observedReads,
+          }),
+          { flag: "wx" },
+        );
+      }
     } finally {
       for (const h of handles) await h.runtime.dispose();
       await a.client.delete(scope);

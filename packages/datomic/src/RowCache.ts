@@ -24,16 +24,20 @@ export class PredecessorCache {
   private readonly columns = rowTextColumns.filter((column) => column !== "id");
   readonly enabled: boolean;
   private readonly attributes: ReadonlySet<string> | undefined;
+  private readonly receiptAttributes: ReadonlySet<string>;
   private readonly scopes = new Map<string, string>();
   private nextScope = 0;
   namespaceBytes = 0;
   constructor(
     readonly byteLimit = 32 * 1024 ** 2,
     attributes?: readonly string[],
+    receiptAttributes: readonly string[] = [],
   ) {
     this.entries = new ByteCache<Buffer>(byteLimit, (value) => 64 + value.buffer.byteLength);
     this.attributes = attributes === undefined ? undefined : new Set(attributes);
-    this.enabled = this.attributes === undefined || this.attributes.size > 0;
+    this.receiptAttributes = new Set(receiptAttributes);
+    this.enabled =
+      this.attributes === undefined || this.attributes.size > 0 || this.receiptAttributes.size > 0;
   }
   get bytes() {
     return this.entries.bytes;
@@ -77,11 +81,15 @@ export class PredecessorCache {
     const scoped = this.scoped(key);
     if (scoped !== undefined) this.entries.delete(scoped);
   }
-  remember(key: string, row: TripleRow) {
+  // [DX-TAIL1] Why: only a settled write may admit extra receipt-only columns.
+  // Rejected: widening historical reads or deriving a fresh row from the receipt's position alone.
+  remember(key: string, row: TripleRow, source: "read" | "receipt" = "read") {
     if (
       !this.enabled ||
       row.entity_type === "_Transaction" ||
-      (this.attributes && !this.attributes.has(row.attribute))
+      (this.attributes &&
+        !this.attributes.has(row.attribute) &&
+        !(source === "receipt" && this.receiptAttributes.has(row.attribute)))
     )
       return;
     const cut = key.indexOf("\0");

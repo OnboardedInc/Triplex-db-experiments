@@ -54,7 +54,10 @@
           (let [before (native-counters/status) after (native-counters/install! clock)]
             (when (not= (:status before) (:status after))
               (emit! {:type "native-counter-state" :at (clock) :counters {:indexAdoptions (native-counters/status)}}))))
-        (when jfr-enabled (jfr/clock-sample!)) (flush!)
+        (when jfr-enabled
+          (jfr/clock-sample!)
+          (emit! (assoc (jfr/runtime-sample) :at (clock))))
+        (flush!)
         (when-let [dir (System/getenv "TRIPLEX_TRACE_DIR")]
           (when (and jfr-enabled (.exists (File. (str dir "/.finish")))) (jfr/finish! (:process identity-fields) identity-fields))))) "triplex-trace-flush")]
     (.setDaemon t true) (.start t))

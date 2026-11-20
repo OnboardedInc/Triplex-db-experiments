@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
@@ -21,16 +20,14 @@ import {
   vmDisk,
   withPool,
 } from "../../../bin/lib.mjs";
-import { acquireMeasureLease, readMeasureLease } from "../../../bin/heavy-lock.mjs";
 import { frozenDeep, releaseDeepStart } from "../../../bench/lib/deep-profile.ts";
 import { matchOffers } from "./replay-input.mjs";
 import { arms } from "./arms.mjs";
-import { jvmPolicy } from "../jvm1/policy.mjs";
-import { verifyJvmFlags } from "../jvm1/check-readback.mjs";
 
 const roles = ["pg", "tx", "gw-w", "gw-r"];
 const GiB = 2 ** 30,
   MiB = 2 ** 20;
+const originalHolder = "DX-TAIL1";
 const nameLabel = "tx2.tail1";
 const peerJar = "peer-1.0.7745.jar";
 
@@ -49,6 +46,28 @@ const diskFloor = (directory) => {
   const stat = fs.statfsSync(directory);
   assert(stat.bavail * stat.bsize >= 5 * GiB, "Host disk is below the 5 GiB floor");
 };
+
+// [DX-TAIL1] Why: the added writer CPU must be a separate physical core, and the
+// same core must be idle in the one-core controls. Rejected: assuming Linux CPU IDs encode topology.
+function linuxPlacement(cpus) {
+  const topology = `
+import json, os, pathlib, sys
+allowed = sorted(os.sched_getaffinity(0))
+roles = {int(cpu) for item in sys.argv[1:] for cpu in item.split(",")}
+assert roles.issubset(allowed), "The host affinity omits a required role CPU"
+def core(cpu):
+    path = pathlib.Path(f"/sys/devices/system/cpu/cpu{cpu}/topology")
+    return ((path / "physical_package_id").read_text().strip(), (path / "core_id").read_text().strip())
+assigned = {core(cpu) for cpu in roles}
+spare = [cpu for cpu in allowed if core(cpu) not in assigned]
+assert spare, "No separate physical core available for the second writer CPU"
+extra = 5 if 5 in spare else spare[0]
+workers = [cpu for cpu in spare if core(cpu) != core(extra)]
+assert workers, "No separate CPU available for sender helper threads"
+print(json.dumps({"sender": "3", "workers": ",".join(map(str, workers)), "extraWriter": str(extra)}))
+`;
+  return JSON.parse(execFileSync("python3", ["-c", topology, "3", ...Object.values(cpus)]));
+}
 
 function spawnBound(command, args, { env, log, signal, deadline }) {
   const fd = fs.openSync(log, "wx");
@@ -89,47 +108,6 @@ async function waitFor(probe, child, signal, deadline) {
   }
 }
 
-async function holdMacWindow(identity, signal, deadline, ownLease, holder) {
-  // [DX-TAIL1] Why: older lab runs share this lock around their measured offers.
-  // Rejected: holding it through the deep seed, or taking all four heavy tokens while seeding.
-  const lock = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2", "locks", "measure");
-  const owner = path.join(lock, "owner.json");
-  const waitingAt = Date.now();
-  for (;;) {
-    signal.throwIfAborted();
-    assert(Date.now() < deadline, "Mac timing window unavailable before the replay deadline");
-    const current = readMeasureLease();
-    // [DX-TAIL1] Why: the incoming lease needs this job's heavy token to drain.
-    // Rejected: waiting for that lease while keeping our seed, slot and heavy token.
-    if (current && !current.stale && current.pid !== ownLease?.pid)
-      throw new Error("DX-TAIL1 yielding the heavy token to an incoming measurement lease");
-    try {
-      fs.mkdirSync(lock);
-      break;
-    } catch (error) {
-      if (error.code !== "EEXIST") throw error;
-      console.log("DX-TAIL1 ready, waiting for the shared Mac timing window");
-      await delay(5000, undefined, { signal });
-    }
-  }
-  const record = { pid: process.pid, holder, slot: identity.slot, at: Date.now() };
-  try {
-    write(owner, record);
-  } catch (error) {
-    fs.rmdirSync(lock);
-    throw error;
-  }
-  return {
-    record,
-    waitedMs: record.at - waitingAt,
-    release() {
-      assert.deepEqual(readJson(owner), record);
-      fs.unlinkSync(owner);
-      fs.rmdirSync(lock);
-    },
-  };
-}
-
 function reading(rows) {
   return Object.fromEntries(
     Object.entries(rows).map(([role, id]) => {
@@ -150,7 +128,9 @@ function reading(rows) {
   );
 }
 
-async function reserve(config, manager, names, roleMemory, cpus, signal, diskForecast, leaseHeld, holder) {
+async function reserve(holder, config, manager, names, roleMemory, cpus, signal, diskForecast, admitBy) {
+  const reservedRoles = Object.keys(names);
+  const firstRole = reservedRoles[0];
   for (;;) {
     signal.throwIfAborted();
     diskFloor(REPO);
@@ -167,7 +147,7 @@ async function reserve(config, manager, names, roleMemory, cpus, signal, diskFor
         );
       if (!slot) return "No Datomic exclusive slot";
       const request = {
-        container: names.pg,
+        container: names[firstRole],
         memBytes: Object.values(roleMemory).reduce((sum, n) => sum + n, 0),
         diskForecastBytes: diskForecast,
       };
@@ -183,7 +163,7 @@ async function reserve(config, manager, names, roleMemory, cpus, signal, diskFor
       });
       if (!allowed.ok) return allowed.reasons.join(", ");
       assert(manager.acquireSlot(slot, holder, holder).created);
-      for (const role of roles)
+      for (const role of reservedRoles)
         ledger.reservations.push({
           container: names[role],
           lane: "datomic",
@@ -193,21 +173,178 @@ async function reserve(config, manager, names, roleMemory, cpus, signal, diskFor
           state: "tail1",
           cpus: cpus[role].split(",").length,
           memBytes: roleMemory[role],
-          diskForecastBytes: role === "pg" ? diskForecast : 0,
+          diskForecastBytes: role === firstRole ? diskForecast : 0,
         });
       return slot;
     });
     if (typeof result !== "string") return result;
-    if (leaseHeld) throw new Error("DX-TAIL1 measurement lease released without a slot: " + result);
+    if (Date.now() >= admitBy) throw new Error("DX-TAIL1 admission unavailable: " + result);
     console.log("Waiting for DX-TAIL1 admission: " + result);
     await delay(5000, undefined, { signal });
   }
 }
 
-export async function runTail(options, config, manager, jvmArm) {
-  const holder = jvmArm ? "DX-JVM1" : "DX-TAIL1";
+function validateRecording(recording, identity, start, stop) {
+  const seal = readJson(recording + "-complete.jsonl");
+  assert.equal(seal.fileSha256, sha256File(recording));
+  assert.equal(seal.source, identity.source);
+  assert.equal(seal.run, identity.slot);
+  assert.equal(seal.slot, identity.slot);
+  assert.equal(seal.process, "gw-w");
+  assert.equal(seal.type, "jfr-complete");
+  assert(seal.recordingStart <= start && seal.at >= stop);
+  return seal;
+}
+
+async function decodeAllocation({ host, image, name, nonce, recording, start, stop, out, signal }) {
+  const log = path.join(out, "profile.log");
+  const decoder = spawnBound(
+    "docker",
+    [
+      "-H",
+      host,
+      "run",
+      "--rm",
+      "--pull",
+      "never",
+      "--network",
+      "none",
+      "--read-only",
+      "--name",
+      name,
+      "--label",
+      nameLabel + "=" + nonce,
+      "--memory",
+      "384m",
+      "--memory-swap",
+      "384m",
+      "--cpus",
+      "1",
+      "--tmpfs",
+      "/tmp:size=24m",
+      "--mount",
+      "type=bind,src=" + recording + ",dst=/profile.jfr,readonly",
+      "--mount",
+      "type=bind,src=" +
+        path.join(import.meta.dirname, "profile.clj") +
+        ",dst=/profile.clj,readonly",
+      "-e",
+      "DATOMIC_JAVA_OPTS=-Xms64m -Xmx224m -XX:+UseSerialGC",
+      "-e",
+      "DX_TAIL1_PROFILE_FROM=" + start,
+      "-e",
+      "DX_TAIL1_PROFILE_TO=" + stop,
+      "--entrypoint",
+      "/opt/datomic/bin/run",
+      image,
+      "/profile.clj",
+    ],
+    { env: process.env, log, signal, deadline: Date.now() + 90_000 },
+  );
+  assert.deepEqual(
+    await decoder.done,
+    { code: 0, signal: null },
+    "Allocation profile decode failed",
+  );
+  const profile = JSON.parse(
+    fs
+      .readFileSync(log, "utf8")
+      .split("\n")
+      .filter((line) => line.startsWith("{"))
+      .at(-1),
+  );
+  assert.equal(profile.from, start);
+  assert.equal(profile.to, stop);
+  assert(profile.firstEvent <= start && profile.lastEvent >= stop);
+  return profile;
+}
+
+async function recoverAllocation(options, config, manager, host, image, holder) {
+  const prior = fs.realpathSync(options["recording-attempt"]);
+  const recording = path.join(fs.realpathSync(options["recording-dir"]), "gw-w.jfr");
+  const attempt = readJson(path.join(prior, "attempt.json"));
+  const report = readJson(path.join(prior, "ns-report.json"));
+  const cleanup = readJson(path.join(prior, "cleanup.json"));
+  const measure = readJson(path.join(prior, "measurement.json"));
+  const identity = attempt.identity;
+  assert.deepEqual(cleanup.identity, identity);
+  assert.deepEqual(report.deep.identity, identity);
+  assert.deepEqual(measure.identity, identity);
+  assert.equal(report.status, "DONE");
+  assert.equal(readJson(path.join(prior, "source.json")).datomicImage.image, image);
+  const start = report.traceStartAbsMs,
+    stop = start + attempt.seconds * 1000;
+  const seal = validateRecording(recording, identity, start, stop);
+  const out = path.resolve(options.out);
+  diskFloor(path.dirname(out));
+  fs.mkdirSync(out);
+  const nonce = randomUUID(),
+    name = "tx2-dxscale1-tail1-profile-" + nonce;
+  const controller = new AbortController();
+  const interrupt = () => controller.abort(Error("DX-TAIL1 allocation recovery interrupted"));
+  process.once("SIGINT", interrupt);
+  process.once("SIGTERM", interrupt);
+  let reservation;
+  try {
+    reservation = await reserve(
+      holder,
+      config,
+      manager,
+      { "gw-w": name },
+      { "gw-w": 384 * MiB },
+      { "gw-w": "1" },
+      controller.signal,
+      256 * MiB,
+      false,
+    );
+    // [DX-TAIL1] Why: decode the original sealed recording when text export or the first
+    // reader failed. Rejected: repeating the live workload or presenting the profile as fresh offers.
+    const profile = await decodeAllocation({
+      host,
+      image,
+      name,
+      nonce,
+      recording,
+      start,
+      stop,
+      out,
+      signal: controller.signal,
+    });
+    write(path.join(out, "allocation-recovered.json"), {
+      recordedAttempt: identity,
+      recordingSha256: seal.fileSha256,
+      source: git("rev-parse", "HEAD"),
+      decoderSha256: sha256File(path.join(import.meta.dirname, "profile.clj")),
+      nonce,
+      slot: reservation.slot,
+      image,
+      profile,
+    });
+  } finally {
+    const helper = inspect(name);
+    if (helper) {
+      assert.equal(helper.Config.Labels[nameLabel], nonce);
+      docker(["rm", "-fv", helper.Id]);
+      assert.equal(inspect(helper.Id), null);
+    }
+    if (reservation)
+      await withPool((ledger) => {
+        assert.equal(readOwner(reservation)?.holder, holder);
+        ledger.reservations = ledger.reservations.filter((row) => row.container !== name);
+        manager.releaseSlot(reservation);
+      });
+    process.removeListener("SIGINT", interrupt);
+    process.removeListener("SIGTERM", interrupt);
+  }
+}
+
+export async function runTail(options, config, manager) {
   const invokedAt = Date.now();
-  assert.equal(options.holder, holder);
+  const holder = options.holder;
+  // [DX-INT1] Why: verify the merged recordings on this builder's ordinary, private Mac slot.
+  // Rejected: using another holder's allocation or reusing an archived recording as a fresh run.
+  assert(holder === originalHolder ||
+    (holder === "DX-THIN1" && process.platform === "darwin" && options["event-gate"] === true));
   const mac = process.platform === "darwin";
   assert(mac || (process.platform === "linux" && process.env.DX_BARE_METAL === "1"));
   const host = mac ? DOCKER_HOST : "unix:///var/run/docker.sock";
@@ -217,11 +354,10 @@ export async function runTail(options, config, manager, jvmArm) {
   const arm = options.arm ?? "serial";
   assert(Object.hasOwn(arms, arm), "Unknown DX-TAIL1 arm");
   const variant = arms[arm];
-  // [DX-JVM1] Why: borrow the sealed replay and its receipt checks, with the writer collector fixed.
-  // Rejected: a substitute trace or assigning a trial to the pause builder's reservation.
-  assert(!jvmArm || (mac && arm === "serial" && !options.full && !options.gate &&
-    !options["receipt-predecessors"] && Number(options.seconds ?? 240) === 240));
-  const policy = jvmArm ? jvmPolicy("mac", jvmArm) : undefined;
+  const eventGate = options["event-gate"] === true;
+  const eventBaseline = options["trace-baseline"] === true;
+  assert(!eventBaseline || eventGate);
+  const gate = eventGate || options.gate === true;
   const datomic = path.join(REPO, "lab/config/datomic");
   const peerHash = fs
     .readFileSync(path.join(datomic, "SHA256SUMS"), "utf8")
@@ -260,7 +396,11 @@ export async function runTail(options, config, manager, jvmArm) {
   const buildInputHash = meta.Config.Labels["tx2.build-inputs-sha256"];
   assert.match(buildInputHash, /^[a-f0-9]{64}$/);
   if (build) assert.equal(buildInputHash, build.buildInputsSha256);
-  if (options.gate !== true) {
+  if (options["recording-attempt"]) {
+    assert(mac);
+    return recoverAllocation(options, config, manager, host, image, holder);
+  }
+  if (!gate) {
     // [DX-TAIL1] Why: the exact publication feed needs the real host time domain before offers.
     // Rejected: spending a full seed before discovering a denied boot-ID read, or labelling a fake clock.
     const { openHostFeedClock } = await import(
@@ -275,8 +415,8 @@ export async function runTail(options, config, manager, jvmArm) {
     return;
   }
   const seconds = options.full === true ? 5910 : Number(options.seconds ?? 240);
-  const leaseBeforeSeed = options["lease-before-seed"] === true;
-  assert(!leaseBeforeSeed || (mac && options.gate !== true));
+  assert(options["lease-before-seed"] === undefined, "Use an ordinary heavy token");
+  assert(!mac || seconds <= 240, "Mac replays use a short diagnostic prefix");
   const receiptPredecessors = options["receipt-predecessors"] === true;
   if (receiptPredecessors)
     assert(
@@ -290,8 +430,9 @@ export async function runTail(options, config, manager, jvmArm) {
     archive = fs.realpathSync(options.archive);
   fs.mkdirSync(out, { recursive: false });
   diskFloor(out);
-  const nonce = randomUUID(),
+  const nonce = options["attempt-nonce"] ?? randomUUID(),
     slot = "tx2-dxscale1-tail1-" + nonce;
+  assert.match(nonce, /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/);
   const identity = {
     source: git("rev-parse", "HEAD"),
     slot,
@@ -304,7 +445,7 @@ export async function runTail(options, config, manager, jvmArm) {
   const setup = path.join(out, "stack"),
     attempt = path.join(setup, slot);
   const trace = path.join(attempt, "trace/raw"),
-    raw = path.join(REPO, "runs", holder, nonce);
+    raw = path.join(REPO, "runs", "DX-TAIL1", nonce);
   const barrier = path.join(raw, "barrier"),
     oracle = path.join(raw, "oracle");
   fs.mkdirSync(barrier, { recursive: true });
@@ -322,7 +463,6 @@ export async function runTail(options, config, manager, jvmArm) {
     identity,
     oracle: stageReplay(REPO, oracle),
     source: sourceInventory(REPO),
-    ...(policy ? { jvmPolicy: policy, jvmPolicySha256: sha256File(path.join(import.meta.dirname, "../jvm1/policy.mjs")) } : {}),
     tail1: Object.fromEntries(
       [
         "run.mjs",
@@ -332,6 +472,8 @@ export async function runTail(options, config, manager, jvmArm) {
         "measure.py",
         "arms.mjs",
         "receipt-oracle.py",
+        "event-smoke.ts",
+        "event-joins.mjs",
       ].map((file) => [file, sha256File(path.join(import.meta.dirname, file))]),
     ),
     stackLauncher: Object.fromEntries(
@@ -348,18 +490,19 @@ export async function runTail(options, config, manager, jvmArm) {
       buildReceiptSha256: buildFile ? sha256File(buildFile) : null,
     },
   });
-  const caps = policy?.memory ?? (mac
+  const caps = mac
     ? { pg: 320, tx: 1056, "gw-w": 1408, "gw-r": 768 }
-    : { pg: 6144, tx: 6144, "gw-w": 6144, "gw-r": 6144 });
-  const heaps = policy?.maxHeap ?? (mac
+    : { pg: 6144, tx: 6144, "gw-w": 6144, "gw-r": 6144 };
+  const heaps = mac
     ? { tx: 704, "gw-w": 896, "gw-r": 416 }
-    : { tx: 5120, "gw-w": 4096, "gw-r": 4096 });
-  const cpus = policy?.cpus ?? (mac
+    : { tx: 5120, "gw-w": 4096, "gw-r": 4096 };
+  const cpus = mac
     ? { pg: "0", tx: "0", "gw-w": "1", "gw-r": "2" }
-    : { pg: "1", tx: "0", "gw-w": "2", "gw-r": "4,8" });
+    : { pg: "1", tx: "0", "gw-w": "2", "gw-r": "4,8" };
   // [DX-TAIL1] Why: matched G1 runs change only the writer's available cores.
   // Rejected: giving it a core shared with the reader, sender, storage or transactor.
-  if (variant.writerCores === 2) cpus["gw-w"] += mac ? ",3" : ",5";
+  const linuxClient = mac ? null : linuxPlacement(cpus);
+  if (variant.writerCores === 2) cpus["gw-w"] += "," + (mac ? "3" : linuxClient.extraWriter);
   const gc = (role) =>
     "-Xlog:gc*=info,safepoint=info:file=/trace/" +
     role +
@@ -373,13 +516,20 @@ export async function runTail(options, config, manager, jvmArm) {
     ),
   );
   Object.assign(env, {
-    ...(mac ? {} : { DX_BARE_METAL: "1", DX_BARE_METAL_ROOT: out }),
+    ...(mac
+      ? {}
+      : {
+          DX_BARE_METAL: "1",
+          DX_BARE_METAL_ROOT: out,
+          TRIPLEX_NODE_MAIN_CPUS: linuxClient.sender,
+          TRIPLEX_NODE_WORKER_CPUS: linuxClient.workers,
+        }),
     DX_STACK_EVIDENCE: setup,
-    ...(policy ? { DX_JVM_EVIDENCE: "1", DX_JVM1_TX_PROPERTIES: JSON.stringify(policy.txProperties) } : {}),
-    DX_TAIL1_HOLDER: holder,
     DX_TAIL1_ATTEMPT: nonce,
+    DX_TAIL1_HOLDER: holder,
     DX_TAIL1_IMAGE: image,
     DX_TAIL1_LESS_ALLOCATION: variant.allocation ? "1" : "0",
+    DX_TAIL1_EVENT_TRACE: eventGate ? "1" : "0",
     DX_STACK_WAIT_FOR_TRANSACTOR: "1",
     DX_QUIET_LOGS: "1",
     DX_NATIVE_SETTINGS_READBACK: "1",
@@ -401,90 +551,44 @@ export async function runTail(options, config, manager, jvmArm) {
       (mac ? "32m " : "1536m ") +
       gc("gw-r"),
     TRIPLEX_TRACE_LEVEL: "summary",
+    ...(!eventGate || eventBaseline ? { TRIPLEX_TRACE_COMPONENTS: "node,gateway" } : {}),
     TRIPLEX_TRACE_NODE: "1",
     TRIPLEX_TRACE_GATEWAY: "1",
     TRIPLEX_TRACE_RUN: slot,
     TRIPLEX_TRACE_SLOT: slot,
     TRIPLEX_TRACE_SOURCE: identity.source,
   });
-  if (policy) {
-    for (const [role, name] of [["gw-w", "WRITE"], ["gw-r", "READ"]])
-      env["DX_GW_" + name + "_JAVA_OPTS"] = [...policy.opts[role], gc(role)].join(" ");
-  }
   const controller = new AbortController();
   const interrupt = () => controller.abort(Error("DX-TAIL1 interrupted"));
   process.once("SIGINT", interrupt);
   process.once("SIGTERM", interrupt);
   const signal = controller.signal;
-  let reservation, driver, timer, macWindow, windowTimer, measureLease;
+  let reservation, driver, timer;
   let measuredStart;
-  const releaseMacWindow = () => {
-    const lease = measureLease;
-    measureLease = undefined;
-    lease?.release();
-    if (!macWindow) return;
-    const opened = macWindow;
-    macWindow = undefined;
-    clearTimeout(windowTimer);
-    try {
-      opened.release();
-      write(path.join(out, "timing-window.json"), {
-        identity,
-        openedAt: opened.record.at,
-        closedAt: Date.now(),
-        sharedLockWaitedMs: opened.waitedMs,
-        measurementLease: lease?.owner ?? null,
-        measurementLeaseWaitedMs: lease?.waitedMs ?? null,
-      });
-    } catch (error) {
-      controller.abort(error);
-    }
-  };
-  const takeMeasureLease = async (timeoutMs) => {
-    const active = readMeasureLease();
-    if (active && !active.stale)
-      throw new Error("DX-TAIL1 yielding the heavy token to an incoming measurement lease");
-    try {
-      return await acquireMeasureLease(slot, { holder, timeoutMs, signal });
-    } catch (error) {
-      if (error.code === "LEASE_TIMEOUT")
-        throw new Error("DX-TAIL1 could not drain the heavy tokens for its measured window", {
-          cause: error,
-        });
-      throw error;
-    }
-  };
   try {
-    if (leaseBeforeSeed) {
-      // [DX-TAIL1] Why: obtain the all-token lease before reserving memory after a seeded arm lost
-      // its window on token drain. Rejected: holding the physical timing lock while waiting to seed.
-      measureLease = await takeMeasureLease(20 * 60_000);
-      signal.throwIfAborted();
-    }
     const admissionRequestedAt = Date.now();
     if (mac) {
       const bytes = Object.fromEntries(roles.map((role) => [role, caps[role] * MiB]));
       reservation = await reserve(
+        holder,
         config,
         manager,
         names,
         bytes,
         cpus,
         signal,
-        6 * GiB,
-        leaseBeforeSeed,
-        holder,
+        (gate ? 2 : 6) * GiB,
+        Date.now() + 30_000,
       );
     }
     const latest = mac
-      ? Date.now() + (seconds === 5910 ? 9000 : 2400) * 1000
+      ? Date.now() + 8 * 60_000
       : invokedAt + 29 * 60_000;
     const wPort = reservation?.port ?? 8491,
       rPort = wPort + 10;
     write(path.join(out, "attempt.json"), {
       identity,
       arm,
-      jvmArm: jvmArm ?? null,
       collector: variant.collector,
       receiptPredecessors,
       reservation: reservation?.slot ?? null,
@@ -493,8 +597,8 @@ export async function runTail(options, config, manager, jvmArm) {
       cpus,
       seconds,
       platform: process.platform,
-      leaseBeforeSeed,
-      preseedLeaseWaitedMs: measureLease?.waitedMs ?? null,
+      linuxClient,
+      timing: mac ? "shared-mac-diagnostic" : "bare-metal",
       invokedAt,
       admissionRequestedAt,
       admittedAt: Date.now(),
@@ -521,13 +625,13 @@ export async function runTail(options, config, manager, jvmArm) {
         "--tx-memory",
         caps.tx + "m",
         "--tx-java-opts",
-        (policy?.opts.tx.join(" ") ?? "-Xms256m -Xmx" + heaps.tx + "m -XX:+UseG1GC -XX:MaxGCPauseMillis=50") + " " + gc("tx"),
+        "-Xms256m -Xmx" + heaps.tx + "m -XX:+UseG1GC -XX:MaxGCPauseMillis=50 " + gc("tx"),
         "--object-cache-max",
-        policy ? policy.txObjectCache + "m" : mac ? "160m" : "2560m",
+        mac ? "160m" : "2560m",
         "--memory-index-threshold",
-        policy ? policy.indexThreshold + "m" : mac ? "48m" : "128m",
+        mac ? "48m" : "128m",
         "--memory-index-max",
-        policy ? policy.indexMax + "m" : mac ? "128m" : "512m",
+        mac ? "128m" : "512m",
         "--pg-settings",
         "-c shared_buffers=" +
           (mac ? "64MB" : "1GB") +
@@ -579,57 +683,72 @@ export async function runTail(options, config, manager, jvmArm) {
       docker(["exec", ids.tx, "sha256sum", "/opt/datomic/" + peerJar]).split(/\s+/)[0],
       peerHash,
     );
-    const captureRuntime = (filename) => {
-      const runtimeFlags = {};
-      for (const role of ["gw-w", "gw-r", "tx"]) {
-        const args = docker([
-          "exec",
-          ids[role],
-          "sh",
-          "-c",
-          [
-            "for p in /proc/[0-9]*; do",
-            '  [ "$(cat "$p/comm" 2>/dev/null)" = java ] || continue',
-            '  tr "\\000" "\\n" < "$p/cmdline" | grep -E "^(-Xm[sx]|-XX:|-Xshare:|-Ddatomic\\.)"',
-            "done",
-          ].join("\n"),
-        ]).split("\n");
-        assert.equal(args.filter((arg) => arg.startsWith("-Xmx")).at(-1), "-Xmx" + heaps[role] + "m");
-        const selected = policy?.opts[role] ?? (role === "gw-w" ? variant.flags : ["-XX:+UseG1GC"]);
-        for (const flag of selected) assert(args.includes(flag), role + " did not apply " + flag);
-        runtimeFlags[role] = args;
-      }
-      const startupGc = {};
-      for (const role of ["gw-w", "gw-r", "tx"]) {
-        const log = fs.readFileSync(path.join(trace, role + ".log"), "utf8");
-        const collector = role === "gw-w" ? variant.collector : "G1";
-        const init = log.split("\n").find((line) => {
-          const note = line.split("] ").at(-1);
-          return collector === "ZGC"
-            ? /^Initializing The Z Garbage Collector/.test(note)
-            : note === "Using " + collector;
-        });
-        assert(init, role + " collector did not start as " + collector);
-        const startedAt = Date.parse(readyRuntime[role].startedAt);
-        const initializedAt = Date.parse(init.slice(1, init.indexOf("]")));
-        // [DX-TAIL1] Why: bind collector and CPU readback to the ready container's boot.
-        // Rejected: matching a flag request or a startup line from a previous process.
-        assert(Math.abs(initializedAt - startedAt) <= 15_000, role + " stale JVM startup readback");
-        const active = Number(/CPUs: \d+ total, (\d+) available/.exec(log)?.[1]);
-        assert.equal(active, cpus[role].split(",").length, role + " JVM saw different CPU placement");
-        startupGc[role] = { initializedAt, collector, active };
-      }
-      write(path.join(out, "runtime-flags.json"), {
-        identity,
-        ids,
-        flags: runtimeFlags,
-        readyRuntime,
-        startupGc,
+    const runtimeFlags = {};
+    for (const role of ["gw-w", "gw-r", "tx"]) {
+      const args = docker([
+        "exec",
+        ids[role],
+        "sh",
+        "-c",
+        [
+          "for p in /proc/[0-9]*; do",
+          '  [ "$(cat "$p/comm" 2>/dev/null)" = java ] || continue',
+          '  tr "\\000" "\\n" < "$p/cmdline" | grep -E "^(-Xm[sx]|-XX:)"',
+          "done",
+        ].join("\n"),
+      ]).split("\n");
+      assert.equal(args.filter((arg) => arg.startsWith("-Xmx")).at(-1), "-Xmx" + heaps[role] + "m");
+      const selected = role === "gw-w" ? variant.flags : ["-XX:+UseG1GC"];
+      for (const flag of selected) assert(args.includes(flag), role + " did not apply " + flag);
+      runtimeFlags[role] = args;
+    }
+    const startupGc = {};
+    for (const role of ["gw-w", "gw-r", "tx"]) {
+      const log = fs.readFileSync(path.join(trace, role + ".log"), "utf8");
+      const collector = role === "gw-w" ? variant.collector : "G1";
+      const init = log.split("\n").find((line) => {
+        const note = line.split("] ").at(-1);
+        return collector === "ZGC"
+          ? /^Initializing The Z Garbage Collector/.test(note)
+          : note === "Using " + collector;
       });
-    };
-    if (policy) verifyJvmFlags(path.join(attempt, "config"), policy, ids);
-    captureRuntime(policy ? "seed-runtime-flags.json" : "runtime-flags.json");
-    if (options.gate === true) {
+      assert(init, role + " collector did not start as " + collector);
+      const startedAt = Date.parse(readyRuntime[role].startedAt);
+      const initializedAt = Date.parse(init.slice(1, init.indexOf("]")));
+      // [DX-TAIL1] Why: bind collector and CPU readback to the ready container's boot.
+      // Rejected: matching a flag request or a startup line from a previous process.
+      assert(Math.abs(initializedAt - startedAt) <= 15_000, role + " stale JVM startup readback");
+      const active = Number(/CPUs: \d+ total, (\d+) available/.exec(log)?.[1]);
+      assert.equal(active, cpus[role].split(",").length, role + " JVM saw different CPU placement");
+      startupGc[role] = { initializedAt, collector, active };
+    }
+    write(path.join(out, "runtime-flags.json"), {
+      identity,
+      ids,
+      flags: runtimeFlags,
+      readyRuntime,
+      startupGc,
+    });
+    if (eventGate) {
+      const { observeEventGate } = await import("./event-joins.mjs");
+      await observeEventGate({
+        out,
+        trace,
+        identity,
+        readyRuntime,
+        ids,
+        env,
+        stack,
+        signal,
+        host,
+        eventBaseline,
+        timing: mac ? "shared-mac-diagnostic" : "bare-metal",
+        verifyReadyRuntime,
+        spawnBound,
+      });
+      return;
+    }
+    if (gate) {
       // [DX-TAIL1] Why: use two native writers and an independent replay on their actual receipts.
       // Rejected: exercising only the in-memory adapter or collecting benchmark samples from the gate.
       const suiteEnv = {
@@ -691,7 +810,9 @@ export async function runTail(options, config, manager, jvmArm) {
     driver = spawnBound(
       mac ? process.execPath : "taskset",
       [
-        ...(mac ? [] : ["-c", "3", process.execPath]),
+        // [DX-TAIL1] Why: pin Linux helpers to the same separate cores in every arm.
+        // Rejected: crowding them onto the sending core or the optional writer core.
+        ...(mac ? [] : ["-c", linuxClient.sender + "," + linuxClient.workers, process.execPath]),
         "--max-old-space-size=" + (mac ? "2304" : "6144"),
         "--import",
         "tsx",
@@ -767,79 +888,8 @@ export async function runTail(options, config, manager, jvmArm) {
     assert.deepEqual(ready.identity, identity);
     assert.deepEqual(ready.seed, readJson(input).seed);
     assert.equal(ready.trace, frozenDeep(0, 10000).sha256);
-    if (mac) {
-      const lastStart = latest - seconds * 1000 - 135_000;
-      macWindow = await holdMacWindow(
-        identity,
-        signal,
-        measureLease ? Math.min(lastStart, Date.now() + 120_000) : lastStart,
-        measureLease?.owner,
-        holder,
-      );
-      if (!measureLease) {
-        // [DX-TAIL1] Why: keep the pool stable during offers using the lab's lease,
-        // while other timing users still honor the shared directory.
-        const maxWaitMs = Math.min(120_000, lastStart - Date.now());
-        assert(maxWaitMs > 0, "Insufficient time left to admit the measured window");
-        measureLease = await takeMeasureLease(maxWaitMs);
-      }
-      signal.throwIfAborted();
-      assert.equal(measureLease.owner.label, identity.slot);
-    }
-    if (policy) {
-      // [DX-JVM1] Why: restart on the seeded database and let the first archived offer do the first save.
-      // Rejected: synthetic JIT traffic or timing the initial seed as a user save.
-      const startedAt = Date.now();
-      const jvmRoles = ["tx", "gw-w", "gw-r"];
-      docker(["stop", "--time", "8", ...jvmRoles.map((role) => ids[role])]);
-      const seedLogs = path.join(attempt, "before-restart");
-      fs.mkdirSync(seedLogs);
-      for (const file of fs.readdirSync(trace)) {
-        if (/^(tx|gw-w|gw-r)([-.]|$)/.test(file))
-          fs.renameSync(path.join(trace, file), path.join(seedLogs, file));
-      }
-      for (const role of jvmRoles)
-        docker(["start", ids[role]]);
-      const deadline = Math.min(latest - seconds * 1000 - 135_000, Date.now() + 150_000);
-      while (!(await Promise.all([stack.writeUrl, stack.readUrl].map(async (url) => {
-        try {
-          const response = await fetch(url + "/health", { signal: AbortSignal.timeout(1500) });
-          return response.ok && (await response.json()).gatewaySourceHash === stack.gatewaySourceSha256;
-        } catch { return false; }
-      }))).every(Boolean)) {
-        signal.throwIfAborted();
-        assert(Date.now() < deadline && driver.child.exitCode === null, "Replay restart did not become ready");
-        await delay(500, undefined, { signal });
-      }
-      const readyAt = Date.now();
-      for (const role of jvmRoles) {
-        const m = inspect(ids[role]);
-        assert(m?.State.Running && m.State.StartedAt !== readyRuntime[role].startedAt);
-        readyRuntime[role] = { startedAt: m.State.StartedAt, restarts: m.RestartCount };
-        execFileSync("bash", [
-          path.join(import.meta.dirname, "../jvm1/readback.sh"), ids[role],
-          path.join(attempt, "config", "restart"), role,
-        ], { env, timeout: 15_000 });
-      }
-      verifyReadyRuntime();
-      verifyJvmFlags(path.join(attempt, "config", "restart"), policy, ids);
-      captureRuntime("runtime-flags.json");
-      write(path.join(out, "restart.json"), { identity, ids, startedAt, readyAt, readyRuntime });
-    }
     const { identity: _, ...readyBody } = ready;
     const start = Date.now() + 12_000;
-    if (macWindow) {
-      if (options.full === true) {
-        // [DX-TAIL1] Why: the continuous 98.5-minute diagnostic must preserve the offer gaps.
-        // Rejected: monopolizing the lab lock for all 98.5 minutes or pausing the archived traffic.
-        windowTimer = setTimeout(releaseMacWindow, start + 240_000 - Date.now());
-      } else {
-        windowTimer = setTimeout(
-          () => controller.abort(Error("Mac measured hold reached fifteen minutes")),
-          macWindow.record.at + 890_000 - Date.now(),
-        );
-      }
-    }
     write(path.join(barrier, "go.json"), { ...identity, start, scopes: { s0: readyBody } });
     await waitFor(
       () => fs.existsSync(path.join(barrier, "s0.armed.json")),
@@ -870,7 +920,6 @@ export async function runTail(options, config, manager, jvmArm) {
     clearInterval(timer);
     signal.throwIfAborted();
     sample();
-    releaseMacWindow();
     signal.throwIfAborted();
     verifyReadyRuntime();
     const recording = path.join(trace, "gw-w.jfr");
@@ -880,15 +929,13 @@ export async function runTail(options, config, manager, jvmArm) {
       const until = Date.now() + 30_000;
       while (!fs.existsSync(complete) && Date.now() < until)
         await delay(250, undefined, { signal });
-      const seal = readJson(complete);
-      assert.equal(seal.fileSha256, sha256File(recording));
-      assert.equal(seal.source, identity.source);
-      assert.equal(seal.run, slot);
-      assert.equal(seal.slot, slot);
-      assert.equal(seal.process, "gw-w");
-      assert.equal(seal.type, "jfr-complete");
+      const seal = validateRecording(
+        recording,
+        identity,
+        measuredStart,
+        measuredStart + seconds * 1000,
+      );
       assert.equal(seal.allocationOnly, true);
-      assert(seal.recordingStart <= measuredStart && seal.at >= measuredStart + seconds * 1000);
     } catch (error) {
       signal.throwIfAborted();
       write(path.join(out, "allocation-dump-error.json"), { error: String(error) });
@@ -915,12 +962,10 @@ export async function runTail(options, config, manager, jvmArm) {
     );
   } finally {
     clearInterval(timer);
-    clearTimeout(windowTimer);
     if (driver) {
       driver.stop();
       await driver.done;
     }
-    releaseMacWindow();
     if (fs.existsSync(reportFile))
       fs.copyFileSync(reportFile, path.join(out, "ns-report.json"), fs.constants.COPYFILE_EXCL);
     for (const name of ["s0.ready.json", "s0.armed.json", "release.json"]) {
@@ -972,57 +1017,18 @@ export async function runTail(options, config, manager, jvmArm) {
           // Rejected: adding its CPU or heap to the timed window.
           const recording = path.join(trace, "gw-w.jfr");
           assert(fs.statSync(recording).size > 0, "Missing Java allocation recording");
-          const profileLog = path.join(out, "profile.log");
-          const profile = spawnBound(
-            "docker",
-            [
-              "-H",
-              host,
-              "run",
-              "--rm",
-              "--pull",
-              "never",
-              "--network",
-              "none",
-              "--read-only",
-              "--name",
-              names["gw-w"],
-              "--label",
-              nameLabel + "=" + nonce,
-              "--memory",
-              "384m",
-              "--memory-swap",
-              "384m",
-              "--tmpfs",
-              "/tmp:size=24m",
-              "--mount",
-              "type=bind,src=" + recording + ",dst=/profile.jfr,readonly",
-              "--mount",
-              "type=bind,src=" +
-                path.join(import.meta.dirname, "profile.clj") +
-                ",dst=/profile.clj,readonly",
-              "-e",
-              "DATOMIC_JAVA_OPTS=-Xms64m -Xmx224m -XX:+UseSerialGC",
-              "--entrypoint",
-              "/opt/datomic/bin/run",
-              image,
-              "/profile.clj",
-              String(measuredStart),
-              String(measuredStart + seconds * 1000),
-            ],
-            { env, log: profileLog, signal, deadline: Date.now() + 30_000 },
-          );
-          assert.deepEqual(
-            await profile.done,
-            { code: 0, signal: null },
-            "Allocation profile decode failed",
-          );
-          const profileJson = fs
-            .readFileSync(profileLog, "utf8")
-            .split("\n")
-            .filter((line) => line.startsWith("{"))
-            .at(-1);
-          write(path.join(out, "allocation.json"), JSON.parse(profileJson));
+          const profile = await decodeAllocation({
+            host,
+            image,
+            name: names["gw-w"],
+            nonce,
+            recording,
+            start: measuredStart,
+            stop: measuredStart + seconds * 1000,
+            out,
+            signal,
+          });
+          write(path.join(out, "allocation.json"), profile);
         }
       } catch (error) {
         write(path.join(out, "allocation-decode-error.json"), { error: String(error) });

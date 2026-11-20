@@ -33,6 +33,8 @@ The synchronous recovery recount compares preserved account memberships and seed
 
 JVM1 conflicted in the shared stack launcher. Its launch policy owns image, heap and collector selection. The merge preserves the optional prepared writer, its fixed restore path and its observation hooks. The host Java 25 suite at 1d7196814 passed 54,079 assertions with each collector. The archive binds the runtime release, pinned vendor ZIP, exact Git source, observed collector flags and both fresh outputs. The three-role Java 25 SQL launch remains outside this local gate.
 
+TAIL1 conflicted in the driver, engine, launcher, scorecard plan and recorder files. JVM1 keeps launch policy and TAIL1 supplies recording and the second writer core. The following reader remains selected. The native gate at 9385270c0 matched 192 saves and 960 assertion IDs, with three fresh JVM seals. Three focused parser and startup-artifact tests passed. The gate keeps rejected startup files separately, compares exact receipts and native event positions, and checks the ready processes, source, slot and digests. No acceptance pin or frozen input changed.
+
 ## Server work
 
 Run the physical scorecard on the exact merged revision at both ages. The old frozen preflight had two exact arms. The field comparison, compatibility with the aged journal and physical age results remain open. [Earlier campaign and options](P5-EVIDENCE.md)

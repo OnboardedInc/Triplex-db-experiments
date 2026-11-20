@@ -9,3 +9,9 @@ e846a4aa59e212dabb1e7b92ad56f2769561d56b8781a71a5949dac26d46318f  int1/p6/erase1
 2441573291b8804a5ce5c2b122558ec0edc0cf9fc7ddd9eaf1a3ec5b442680be  int1/p6/jvm1-native25.tar.gz
 7df132b6464325addfc7b97973e845b6e9ba3b3b79321e4486b20fe7ac9fc49f  int1/p6/mac-prelude.tar.gz
 7d95cc483552aca5bac960d4bd825ae9b373154ac911a182cb877677ae07e426  int1/p6/prep1-recovery.tar.gz
+06fe36eed17c39b2e53864e4ad710aa78b447d3fe79e0b6181befddec2ac493f  int1/p6/tail1-before-ready-error.tar.gz
+c3e5384cf4d72b6279cdfcbe31e7fd297fd8467210ba931e9cf12fd11e60acca  int1/p6/tail1-binder-first.tar.gz
+21bbdbf125a88b6b24cb7ce98244059a0964ab6186fb038bbc7261daad01bf7d  int1/p6/tail1-empty-array.tar.gz
+ad29ab3e67cd784f6228dca6f50f636ae55d34c0d8e5c442bfd6960d939c9eac  int1/p6/tail1-jfr-guest-io.tar.gz
+8fb40654a48d9afff1222a6b8719039c43305f72a62687c1b27d20ad2c78f662  int1/p6/tail1-jfr-io.tar.gz
+df6874cd152edc1172224dbc84408e0b25c60eb773a4ccbf068643474bba27a9  int1/p6/tail1-recording.tar.gz

@@ -19,12 +19,24 @@
 (defn unsupported! [route]
   (throw (ex-info (str "Lean layout does not support " route) {:status 409 :code "LayoutUnsupported" :route route})))
 (defn prefix [^String id] (str "2" (format "%04x" (.length id)) id))
-(defn decode [^String text]
-  (let [row (into {:retracted_at nil :retracted_position nil :retract_tx_id nil}
-                  (map (fn [column v] [column (cond (= column :recorded_position) (Long/parseLong v)
-                                                   (and (numbers column) (= v "-0")) -0.0
-                                                   :else v)]) columns (slim/row-columns text)))]
-    (if (= ":_tx/position" (:attribute row)) (assoc row :value_number (double (:recorded_position row))) row)))
+(defn- decode-column [column value]
+  (cond (= column :recorded_position) (Long/parseLong value)
+        (and (numbers column) (= value "-0")) -0.0
+        :else value))
+;; [DX-TAIL1] Why: canonical row texts already decode to a positional vector.
+;; Rejected: building a lazy sequence and one key/value vector per column or changing malformed-input behavior.
+(defn decode
+  ([text] (decode text false))
+  ([^String text direct?]
+   (let [values (slim/row-columns text)
+         live {:retracted_at nil :retracted_position nil :retract_tx_id nil}
+         row (if (and direct? (vector? values) (= (count columns) (count values)))
+               (persistent! (reduce-kv (fn [acc i value]
+                                         (let [column (nth columns i)]
+                                           (assoc! acc column (decode-column column value))))
+                                       (transient live) values))
+               (into live (map (fn [column value] [column (decode-column column value)]) columns values)))]
+     (if (= ":_tx/position" (:attribute row)) (assoc row :value_number (double (:recorded_position row))) row))))
 (defn by-id [db id]
   (let [p (prefix id) datom (first (d/index-range db :triplex.entity/row p nil))]
     (when (and datom (.startsWith ^String (:v datom) p)) datom)))

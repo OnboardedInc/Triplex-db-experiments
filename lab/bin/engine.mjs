@@ -898,6 +898,9 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'status') return status(config);
   if (command === 'jvm-replay') fail('USAGE', 'Use jvm-inventory for a short Mac diagnostic and jvm1/server.ts for collector comparisons');
   if (command === 'jvm-inventory') return (await import('../experiments/EXP-DX1/jvm1/inventory.mjs')).inventory(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
+  // [DX-TAIL1] Why: the split SQL replay needs one pool-admitted private reservation.
+  // Rejected: launching the diagnostic against a resident or managing containers in the benchmark.
+  if (command === 'tail1') return (await import('../experiments/EXP-DX1/tail1/run.mjs')).runTail(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
   // [DX-HA1] Why: destructive process drills need an exclusive, pool-admitted SQL topology. Rejected: killing roles in a resident slot.
   if (command === 'ha1') {
     const { localDrill } = await import('../experiments/EXP-DX1/ha1/local.ts');
