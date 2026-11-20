@@ -120,7 +120,10 @@
   (let [seal (adopt/read-seal! file pin true)
         name (:name seal)
         product (adopt/scope-db name name)
-        aged (adopt/scope-db name clone)
+        clone-uri (System/getenv "AGE_CLONE_URI")
+        _ (native/check! (and clone-uri (.startsWith ^String clone-uri (str "datomic:sql://" clone "?")))
+                         "Restore must be the attempt's private SQL copy" {})
+        aged {:name name :physical clone :conn (d/connect clone-uri)}
         pop (adopt/read-population! aged seal 3 true)
         seed (:seed-head pop)
         saves (* 4 (:active pop))

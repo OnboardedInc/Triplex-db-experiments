@@ -14,7 +14,6 @@ import {
 const experiment = "lab/experiments/EXP-DX1/age1";
 const holder = "DX-AGE1";
 const MiB = 1024 ** 2;
-const caps = { pg: 384, tx: 1024, peer: 1280 };
 const evidence = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2", "evidence", holder);
 const eraseSource = "d0ccf312373141d0d919cc17e18a5989e60b74ce";
 
@@ -114,6 +113,7 @@ export async function local(opts, config, manager) {
   assert.match(opts.run ?? "", /^(fidelity|adopted-fidelity|fidelity-arms|fidelity-arms-load|successor|erased-successor)$/);
   const adopting = opts.run === "adopted-fidelity";
   const erasure = opts.run === "erased-successor";
+  const caps = adopting ? { pg: 384, tx: 896, peer: 1280, clone: 896 } : { pg: 384, tx: 1024, peer: 1280 };
   const heavy = path.join(LOCKS, "heavy");
   const tokens = fs.readdirSync(heavy).filter((name) => /^\d+$/.test(name)).flatMap((name) => {
     try {
@@ -223,29 +223,38 @@ export async function local(opts, config, manager) {
     const password = randomBytes(24).toString("hex"), jdbc = "jdbc:postgresql://" + names.pg + "/postgres";
     const pg = run("pg", postgres, ["-e", "POSTGRES_PASSWORD=" + password], "docker-entrypoint.sh",
       ["postgres", "-c", "shared_buffers=48MB", "-c", "max_wal_size=256MB", "-c", "track_wal_io_timing=on"]);
-    const sql = (query) => docker(["exec", pg, "psql", "-XAt", "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-c", query]);
+    const sql = (query, db = "postgres") => docker(["exec", pg, "psql", "-XAt", "-v", "ON_ERROR_STOP=1",
+      "-U", "postgres", "-d", db, "-c", query]);
     await ready(pg, () => docker(["exec", pg, "pg_isready", "-h", names.pg, "-U", "postgres"], { allowFail: true })?.includes("accepting connections"));
     const settings = opts.run === "fidelity-arms-load"
       ? { "memory-index-threshold": "96m", "memory-index-max": "192m", "object-cache-max": "96m", "index-parallelism": 2 }
       : { "memory-index-threshold": "32m", "memory-index-max": "96m", "object-cache-max": "64m", "index-parallelism": 1 };
-    const props = { protocol: "sql", host: names.tx, port: 4334, "sql-url": jdbc, "sql-driver-class": "org.postgresql.Driver",
-      "sql-user": "postgres", "sql-password": password, ...settings };
     const flags = ["TX2_SAVE_LEDGER=1", "TX2_SMALL_ROWS=1"];
     const logback = "/age/" + experiment + "/logback.xml";
     const classpath = "/age/packages/datomic/gateway/src:/age/" + experiment + "/src";
     const mounted = ["-v", source + ":/age:ro", "-e", "DATOMIC_EXT_CLASSPATH=" + classpath,
       ...flags.flatMap((flag) => ["-e", flag])];
-    const tx = run("tx", datomic, [...mounted, "-e", "AGE_PROPERTIES=" + Object.entries(props).map(([k, v]) => k + "=" + v).join("\n"),
-      "-e", "JAVA_OPTS=-Xms128m -Xmx640m -XX:ActiveProcessorCount=2 -Dlogback.configurationFile=" + logback],
-      "/bin/sh", ["-ceu", 'while [ ! -f /tmp/age.ready ]; do sleep 1; done; printenv AGE_PROPERTIES > /tmp/age.properties; exec /opt/datomic/bin/transactor /tmp/age.properties']);
+    const transactor = (role, url) => {
+      const props = { protocol: "sql", host: names[role], port: 4334, "sql-url": url,
+        "sql-driver-class": "org.postgresql.Driver", "sql-user": "postgres", "sql-password": password, ...settings };
+      return run(role, datomic, [...mounted, "-e", "AGE_PROPERTIES=" + Object.entries(props).map(([k, v]) => k + "=" + v).join("\n"),
+        "-e", "JAVA_OPTS=-Xms128m -Xmx640m -XX:ActiveProcessorCount=2 -Dlogback.configurationFile=" + logback],
+        "/bin/sh", ["-ceu", 'while [ ! -f /tmp/age.ready ]; do sleep 1; done; printenv AGE_PROPERTIES > /tmp/age.properties; exec /opt/datomic/bin/transactor /tmp/age.properties']);
+    };
+    const startTransactor = async (role, id) => {
+      docker(["exec", id, "touch", "/tmp/age.ready"]);
+      await ready(id, () => docker(["exec", id, "bash", "-c", '(exec 3<>/dev/tcp/$1/4334) 2>/dev/null && echo ready',
+        "probe", names[role]], { allowFail: true }) === "ready");
+    };
+    const tx = transactor("tx", jdbc);
     const jars = docker(["exec", tx, "bash", "-ceu", "cd /opt/datomic; find . -name '*1.0.7745.jar' -print0 | sort -z | xargs -0 sha256sum"]);
     const verified = JSON.parse(fs.readFileSync(path.join(source, "lab/config/datomic/verification.json")));
     const peerSha1 = docker(["exec", tx, "bash", "-ceu", "cd /opt/datomic; find . -name peer-1.0.7745.jar -print0 | xargs -0 sha1sum"]).split(/\s+/)[0];
     assert.equal(peerSha1, verified.peerSha1);
     assert.match(jars, /datomic-transactor-pro-1\.0\.7745\.jar/);
-    sql(docker(["exec", tx, "cat", "/opt/datomic/bin/sql/postgres-table.sql"]));
-    docker(["exec", tx, "touch", "/tmp/age.ready"]);
-    await ready(tx, () => docker(["exec", tx, "bash", "-c", '(exec 3<>/dev/tcp/$1/4334) 2>/dev/null && echo ready', "probe", names.tx], { allowFail: true }) === "ready");
+    const ddl = docker(["exec", tx, "cat", "/opt/datomic/bin/sql/postgres-table.sql"]);
+    sql(ddl);
+    await startTransactor("tx", tx);
     const durable = sql("select current_setting('fsync'),current_setting('synchronous_commit'),current_setting('full_page_writes')");
     assert.equal(durable, "on|on|on");
     const peer = run("peer", datomic, [...mounted,
@@ -325,24 +334,25 @@ export async function local(opts, config, manager) {
         ["fixture-cut", attempt, fixture.db, fixture.sha]);
       assert(Number.isSafeInteger(index.t) && index.t > 0);
       const clone = "age-clone-" + attempt;
-      const uri = (name) => "datomic:sql://" + name + "?" + jdbc + "?user=postgres&password=" + password;
+      const cloneSql = "age_clone";
+      const cloneJdbc = jdbc.replace(/\/postgres$/, "/" + cloneSql);
+      assert.notEqual(cloneJdbc, jdbc);
+      const uri = (name, url) => "datomic:sql://" + name + "?" + url + "?user=postgres&password=" + password;
       const command = async (file, ...args) => {
         await capture(["exec", peer, "/opt/datomic/bin/datomic", "-Xms128m", "-Xmx640m", ...args],
           path.join(dir, file), controller.signal);
         assert(fs.readFileSync(path.join(dir, file), "utf8").split("\n").includes(":succeeded"));
       };
       const backup = "file:/tmp/age-fixture-backup";
-      await command("seed-backup.log", "backup-db", uri(fixture.db), backup);
-      // [DX-AGE1] Why: the destination shares this exclusively owned SQL store.
-      // Rejected: restoring to the copy while any transactor for that store is running.
-      owned(tx);
-      docker(["stop", "--time", "20", tx]);
-      assert(!owned(tx).State.Running);
-      await command("seed-clone.log", "restore-db", backup, uri(clone), String(index.t));
-      docker(["start", tx]);
-      await ready(tx, () => docker(["exec", tx, "bash", "-c", '(exec 3<>/dev/tcp/$1/4334) 2>/dev/null && echo ready',
-        "probe", names.tx], { allowFail: true }) === "ready");
-      await capture(["exec", peer, "/opt/datomic/bin/run", "-m", "triplex.age.gate",
+      await command("seed-backup.log", "backup-db", uri(fixture.db, jdbc), backup);
+      // [DX-AGE1] Why: the vendor preserves the database identity when it restores.
+      // Rejected: renaming a restore in the source catalog (collides even with its transactor stopped).
+      sql("CREATE DATABASE " + cloneSql);
+      sql(ddl, cloneSql);
+      await command("seed-clone.log", "restore-db", backup, uri(clone, cloneJdbc), String(index.t));
+      const cloneTx = transactor("clone", cloneJdbc);
+      await startTransactor("clone", cloneTx);
+      await capture(["exec", "-e", "AGE_CLONE_URI=" + uri(clone, cloneJdbc), peer, "/opt/datomic/bin/run", "-m", "triplex.age.gate",
         opts.run, "/tmp/age-fixture.json", fixture.sha, clone], path.join(dir, "probe.log"), controller.signal);
     }
     else {
