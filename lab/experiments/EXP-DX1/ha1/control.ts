@@ -314,7 +314,7 @@ try {
   if (code === 0) {
     assert(nonces.length > 0 && nonces.length === declaration.sizes.length);
     for (const [i, nonce] of nonces.entries()) {
-      const sub = mode + "-" + nonce + "/",
+      const sub: string = mode + "-" + nonce + "/",
         attempt = member(sub + "attempt.json"),
         summary = member(sub + "observations.json"),
         clean = member(sub + "cleanup.json");
