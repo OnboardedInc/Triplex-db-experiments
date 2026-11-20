@@ -1,6 +1,6 @@
 These rate measurements predate the audit fix for affected membership. They measure sending and quiet-window recipe admission. The full-roster fallback can add work after ordinary saves.
 
-The live database can record every notice owed in one transaction. The earlier Mac runs took 21–68 milliseconds.
+The live database recorded the release recipe in one transaction. Quiet-window admission took 21–68 milliseconds.
 Scheduled breaks accounted for 78.5 of the old dispatcher's 97.8 seconds to send 1,000 notices for 10,000 people.
 Writing progress and acknowledgements to the live database was the next largest cost. Running the rules took about 1.5% of the traced run.
 The recipient now saves delivery and progress together. A retry resumes the saved position and uses each person's existing sequence.

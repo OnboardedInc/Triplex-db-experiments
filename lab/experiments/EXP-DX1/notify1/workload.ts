@@ -76,6 +76,8 @@ export async function runWindow(opts: {
   await append(release("first", "R1"));
   opts.phase?.("building the original live R1 ledger");
   await sender().drain();
+  // [DX-STG1] Why: retain the original quiet-window recipe timing as a
+  // component measurement. Rejected: using this timer as activation proof.
   const startClick = performance.now(),
     broad = await append(release("publish", "R2")),
     activationMs = performance.now() - startClick;

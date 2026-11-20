@@ -137,7 +137,7 @@ export function inspectPair(dir: string) {
     slot,
     nonce,
     subjects: n,
-    noticeCommitMs: a.activationMs,
+    quietWindowRecipeMs: a.activationMs,
     changes: a.activation.operations,
     releaseNotices: a.dispatch.deliveries,
     noticesPerSecond: rate,
