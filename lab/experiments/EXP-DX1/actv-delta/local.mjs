@@ -40,6 +40,7 @@ export async function local(opts, config, manager) {
       "audit-faults",
       "joined-admission",
       "joined-load",
+      "joined-server-check",
     ].includes(opts.run),
   );
   const joined = opts.run.startsWith("joined-");

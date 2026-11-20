@@ -3,6 +3,7 @@ import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import { runtimeApi } from "../../../../bench/lib/triplex.ts";
+import { measureW0Http } from "../../../../bench/lib/w0-http.ts";
 import { openStore } from "../store.ts";
 import { seed, valid } from "../fixture.ts";
 import type { Tail } from "../../notify1/journal.ts";
@@ -46,8 +47,15 @@ export async function run(
     const before = a.save("before", edit(1531), valid),
       after = a.save("after", edit(2407), valid),
       observation: PublishObservation = { attempts: [] },
-      released = a.publish("priority", W0.R2.doc, valid, "owed", undefined, { observation });
-    const [saveBefore, saveAfter, receipt] = await Promise.all([before, after, released]);
+      released = measureW0Http(() =>
+        a.publish("priority", W0.R2.doc, valid, "owed", undefined, { observation }),
+      );
+    const [saveBefore, saveAfter, measured] = await Promise.all([before, after, released]);
+    const receipt = measured.value,
+      writes = measured.samples.filter((sample) => String(sample.path).endsWith("/transact"));
+    assert.equal(writes.length, 1, "Queued Publish lost its native request observation");
+    assert.equal(measured.nativeFrames.length, 1);
+    assert(writes[0]!.timeline);
     assert(
       saveBefore.position + 1 === receipt.position && receipt.position + 1 === saveAfter.position,
     );
@@ -122,6 +130,7 @@ export async function run(
           hash: sha256(canonical(sealed.event.value)),
         },
         oracle: exact,
+        nativeRequest: writes[0],
         externalConflicts: crossed,
       }) + "\n",
       { flag: "wx" },

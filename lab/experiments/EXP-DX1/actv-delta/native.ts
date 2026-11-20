@@ -86,6 +86,29 @@ if (mode === "joined-admission") {
   await (await import("../actv-lazy/join/admission-gate.ts")).run(dir, attempt);
 } else if (mode === "joined-load") {
   await (await import("../actv-lazy/join/queue-study.ts")).run(dir, attempt);
+} else if (mode === "joined-server-check") {
+  await (await import("../actv-lazy/join/admission-gate.ts")).run(dir, attempt);
+  const small = path.join(dir, "one-seed");
+  fs.mkdirSync(small);
+  execFileSync(
+    process.execPath,
+    [
+      "--experimental-strip-types",
+      path.join(import.meta.dirname, "../actv-lazy/join/server.ts"),
+      "1000",
+      small,
+      "--one-seed-local",
+    ],
+    {
+      stdio: "inherit",
+      timeout: 600000,
+      env: {
+        ...process.env,
+        TX2_WRITE_OPTIONS_ATTEMPT: attempt.nonce,
+        TX2_W0_RESTORE_INDEXED_JOURNAL: "1",
+      },
+    },
+  );
 } else if (mode !== "schedules") {
   const worker = await import(
     "./" +

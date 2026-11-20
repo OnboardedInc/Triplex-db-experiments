@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { performance } from "node:perf_hooks";
 
 export type AdmissionKind = "publish" | "save";
@@ -41,6 +42,8 @@ export class AccountAdmission {
   }
 
   run<T>(kind: AdmissionKind, work: (turn: AdmissionTurn) => Promise<T>): Promise<T> {
+    // [DX-ACT2] Why: a deferred native request needs the command's own observation context. Rejected: inheriting the context of the preceding turn that drains the queue.
+    const inContext = AsyncLocalStorage.snapshot();
     const offered = performance.now();
     const saveClock = this.saveClock(offered);
     const waitingSaves = this.save.length + Number(this.active?.kind === "save");
@@ -48,21 +51,22 @@ export class AccountAdmission {
       this[kind].push({
         kind,
         order: this.order++,
-        run: async (entered) => {
-          const waitingForSavesMs = this.saveClock(entered) - saveClock;
-          try {
-            resolve(
-              await work({
-                entered,
-                waitingForSavesMs,
-                waitingForPublishesMs: Math.max(0, entered - offered - waitingForSavesMs),
-                waitingSaves,
-              }),
-            );
-          } catch (e) {
-            reject(e);
-          }
-        },
+        run: (entered) =>
+          inContext(async () => {
+            const waitingForSavesMs = this.saveClock(entered) - saveClock;
+            try {
+              resolve(
+                await work({
+                  entered,
+                  waitingForSavesMs,
+                  waitingForPublishesMs: Math.max(0, entered - offered - waitingForSavesMs),
+                  waitingSaves,
+                }),
+              );
+            } catch (e) {
+              reject(e);
+            }
+          }),
       });
       this.pump();
     });

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { AsyncLocalStorage } from "node:async_hooks";
 import test from "node:test";
 import { AccountAdmission, type AdmissionKind } from "./admission.ts";
 
@@ -49,4 +50,21 @@ test("a stream of publishes grants a waiting save after eight turns", async () =
     entered.filter((x) => x !== "save"),
     Array.from({ length: 12 }, (_, i) => String(i)),
   );
+});
+
+test("a waiting Publish retains its own request observer across an active save", async () => {
+  const lane = new AccountAdmission("priority"),
+    context = new AsyncLocalStorage<string>(),
+    hold = Promise.withResolvers<void>();
+  const save = context.run("active-save", () => lane.run("save", () => hold.promise));
+  const publish = context.run("publish", () =>
+    lane.run("publish", async () => {
+      const entry = context.getStore();
+      await Promise.resolve();
+      return [entry, context.getStore()];
+    }),
+  );
+  hold.resolve();
+  await save;
+  assert.deepEqual(await publish, ["publish", "publish"]);
 });

@@ -19,10 +19,18 @@ export const cells = [
 export const campaignCells = (oneSeed: boolean) =>
   oneSeed ? cells.filter(([, rate]) => rate !== 3.5) : cells;
 
+type Collected = {
+  source: string;
+  owner: string;
+  n: number;
+  nonce: string;
+  windows: { index: number; mode: "owed" | "staged"; rate: number; deadlineMiss: boolean }[];
+};
+
 export async function collect(
   root: string,
   expected: { source: string; owner: string; n: number },
-) {
+): Promise<Collected> {
   const get = (file: string) => JSON.parse(readFileSync(join(root, file + ".json"), "utf8"));
   const digest = (file: string) => sha256(readFileSync(join(root, file + ".json")));
   const inputs = get("server-inputs"),
@@ -61,6 +69,23 @@ export async function collect(
       native.strictRecordClocks && native.commitFunctionInstalled && native.options.livePriority,
     );
     assert(/^[a-f0-9]{64}$/.test(native.gatewaySourceHash));
+    if (!inputs.smoke) {
+      const small = "preflight/one-seed/";
+      expectedNames.push(small + "server-collected");
+      const child = get(small + "server-inputs");
+      assert(
+        child.smoke &&
+          child.oneSeed &&
+          child.nonce !== inputs.nonce &&
+          child.gatewayAttempt === inputs.gatewayAttempt &&
+          child.issuedAt >= inputs.issuedAt &&
+          child.issuedAt < inputs.issuedAt + 600000,
+      );
+      assert.deepEqual(
+        get(small + "server-collected"),
+        await collect(join(root, small), { ...expected, n: 1000 }),
+      );
+    }
   }
   assert.deepEqual(names.toSorted(), expectedNames.toSorted());
   assert(Number.isFinite(inputs.issuedAt));

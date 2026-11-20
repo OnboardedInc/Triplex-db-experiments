@@ -90,6 +90,8 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
       ? [
           ...files(path.join(here, "../actv-lazy")).filter((p) => /\.(ts|py)$/.test(p)),
           ...files(path.join(here, "../notify1")).filter((p) => /\.(ts|py)$/.test(p)),
+          path.join(here, "audit-clock.ts"),
+          path.join(here, "audit-offers.ts"),
           "lab/experiments/EXP-DX1/import1/source.ts",
           "lab/experiments/EXP-DX1/scale1/deep-live.ts",
         ]

@@ -27,8 +27,8 @@ import { settlementPrices } from "./settle-price.ts";
 
 const [count, root, flag] = process.argv.slice(2),
   n = Number(count),
-  smoke = flag === "--local",
-  oneSeed = flag === "--one-seed";
+  smoke = flag === "--local" || flag === "--one-seed-local",
+  oneSeed = flag === "--one-seed" || flag === "--one-seed-local";
 assert(flag === undefined || flag === "--settlement" || smoke || oneSeed);
 const plan = campaignCells(oneSeed);
 assert(root && (smoke ? n >= 64 && n <= 1000 : process.platform === "linux" && n === 100000));
@@ -135,6 +135,27 @@ if (!smoke) {
         env: attempt.settlement ? { ...process.env, DX_ACT1_W1_GATE: "1" } : process.env,
       },
     );
+  }
+  if (oneSeed) {
+    // [DX-ACT2] Why: run the exact scheduled one-seed producer and collector at 1,000 before starting the large seed. Rejected: a quiet preflight that never admits Publish behind an active save.
+    const small = join(pre, "one-seed"),
+      remaining = 600000 - (Date.now() - attempt.issuedAt);
+    mkdirSync(small);
+    try {
+      assert(remaining > 0, "Joined preflight exhausted its ten-minute budget");
+      execFileSync(
+        process.execPath,
+        ["--experimental-strip-types", import.meta.filename, "1000", small, "--one-seed-local"],
+        { stdio: "inherit", timeout: remaining },
+      );
+    } catch (error) {
+      save("server-preflight-stop", {
+        source,
+        nonce: attempt.nonce,
+        reason: String(error),
+      });
+      throw error;
+    }
   }
 }
 const store = await openStore("lazy-join-server-" + attempt.nonce, "act2-deep");
@@ -688,6 +709,7 @@ try {
       "server-effect-bytes",
       "server-seed",
       ...(oneSeed ? ["server-native-options"] : []),
+      ...(oneSeed && !smoke ? ["preflight/one-seed/server-collected"] : []),
       ...(!smoke
         ? [
             "preflight/stage-gate",
