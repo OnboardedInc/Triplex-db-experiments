@@ -952,6 +952,10 @@ def check_released(r):
 
 
 def installed(r):
+    # [DX-BM1] Why: the retained ERASE1 data directory exists before its recovered worker is admitted.
+    # Rejected: treating the copied fixture itself as evidence a service already started.
+    if r["item"]==34 and r["attempt"]==2:
+        return active(r["unit"]) or (Path(r["directory"])/"worker.log").is_file()
     return active(r["unit"]) or Path(r["root"]).exists()
 
 

@@ -21,6 +21,19 @@ night, archive, collector = (module(name) for name in ("overnight", "night-archi
 
 
 class OvernightEvidence(unittest.TestCase):
+    def test_erasure_fixture_copy_does_not_mean_worker_was_launched(self):
+        with tempfile.TemporaryDirectory() as temp:
+            folder=Path(temp)
+            root=folder/"indexed-fixture"
+            (root/"pgdata").mkdir(parents=True)
+            directory=folder/"request"
+            directory.mkdir()
+            request=dict(item=34,attempt=2,unit="fixture-resume",root=root,directory=directory)
+            with patch.object(night,"active",return_value=False):
+                self.assertFalse(night.installed(request))
+                (directory/"worker.log").touch()
+                self.assertTrue(night.installed(request))
+
     def test_foreign_request_paths_never_select_a_cleanup_target(self):
         tag, root, unit = night.coordinates(3, 1)
         r = dict(item=3, attempt=1, tag=tag, root=str(root), unit=unit, source="a"*40, start=1,
