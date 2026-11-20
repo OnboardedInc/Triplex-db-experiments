@@ -34,7 +34,7 @@ The eight-fact thin fixture encoded 10.3–10.4 leaf bytes and 100–104 address
 
 The 10,000-deep trial spent about 26 minutes on preparation and reached the contested timing boundary. It yielded its heavy token and removed the volume before either live window. The shared lease also blocked the 1,000-deep fallback and the untimed matrix. Both waiters closed before admission. [Part 7 checksums](PART7-SHA256SUMS)
 
-Transactor and gateway suspension, the fixed 64-reader trace and wider cold-read measurements remain open. BM1 `i33-1` passed all six small cells, the shared census, both settlement rates and the typed bulk refusal. The 100,000-person run still needs a producer that verifies the existing SCALE1 seed or a separate joined seed. [Part 8 evidence](PART8.md)
+Transactor and gateway suspension, the fixed 64-reader trace and wider cold-read measurements remain open. BM1 `i33-1` passed all six small cells, the shared census, both settlement rates and the typed bulk refusal. The owner approved a fresh joined seed and BM1 started the 100,000-person run as `i29-2`. [Part 8 evidence](PART8.md)
 
 ### Server command
 
