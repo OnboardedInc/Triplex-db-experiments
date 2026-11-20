@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
 
-type Bar = { id: string; value: unknown; pass: boolean | null };
+type Bar = { id: string; value: unknown; pass: boolean | null; bar?: string };
 type Row = { name: string; bar: string; reading: string; status: string; samples: string; evidence: string };
 export type Run = {
   source: string;
@@ -46,9 +46,14 @@ const fmt = (value: unknown) => typeof value === "number" && Number.isFinite(val
   : value === null || value === undefined ? "—" : JSON.stringify(value);
 const shown = (checks: Bar[]) => checks.filter((bar) => bar.value !== null && bar.value !== undefined)
   .map((bar) => `${bar.id.replace(/^NS-P\d[ -]/, "")} ${fmt(bar.value)}`).join("; ");
-const result = (checks: Bar[], eligible: boolean) =>
-  !eligible || !checks.length ? "NOT MEASURED" : checks.some((b) => b.pass === false) ? "FAIL"
-    : checks.every((b) => b.pass === true) ? "PASS" : "NOT MEASURED";
+function result(checks: Bar[], eligible: boolean) {
+  // [DX-V01] Why: the driver records fallback share alongside required pinned-read bars.
+  // Rejected: treating a reported-only quantity as an unmeasured obligation.
+  const required = checks.filter((b) => b.bar !== "reported");
+  if (!eligible || !required.length) return "NOT MEASURED";
+  if (required.some((b) => b.pass === false)) return "FAIL";
+  return required.every((b) => b.pass === true) ? "PASS" : "NOT MEASURED";
+}
 
 function unavailable(name: string, bar: string, reason: string): Row {
   return { name, bar, reading: reason, status: "NOT MEASURED", samples: "0", evidence: "—" };

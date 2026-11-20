@@ -6,7 +6,11 @@ import { cleanSource, packageBytes } from "./source.ts";
 
 const [commit, store] = process.argv.slice(2);
 assert(process.platform === "darwin" && commit && store && path.isAbsolute(store));
-const source = cleanSource(commit);
+const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+cleanSource(head);
+assert.match(commit, /^[a-f0-9]{40}$/);
+execFileSync("git", ["merge-base", "--is-ancestor", commit, head]);
+const source = commit;
 const disk = fs.statfsSync(".");
 assert(disk.bavail * disk.bsize >= 5 * 1024 ** 3);
 const staging = path.resolve("runs/DX-V01");

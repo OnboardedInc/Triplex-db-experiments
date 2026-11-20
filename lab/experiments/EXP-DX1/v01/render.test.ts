@@ -35,7 +35,8 @@ test("only current evidence can judge a physical bar and toy reports never judge
     status: "DONE", deep: { identity: { source } }, config: { layout: "legacy" },
     correctness: { reads: 23 }, receiptCapture: { matched: 17, missing: 0, mismatches: 0 },
     priorities: {
-      P1: { bars: [witness] }, P2: { bars: receipt, bandsAtL256: { a: { count: 17 } } },
+      P1: { bars: [witness, { id: "fallback share", value: 0.5, pass: null, bar: "reported" }] },
+      P2: { bars: receipt, bandsAtL256: { a: { count: 17 } } },
       P3: { bars: [witness], lag: { atL256: { count: 13 } } },
       P4: { bars: [witness], weightedMix: { read: { count: 23 } } },
     },
