@@ -2458,3 +2458,26 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   seven of the eight slowest). Revised forecast for one deep account of 100,000: 40 to 75 ms at its peak field-save
   rate, 28 to 48 ms with live priority, the sender fix and the predecessor lookup. The raw archive (281 MB) is being
   copied from server 2 to the Mac so the exact fifty slowest saves can be attributed; part 2 assigned.
+
+## 2026-11-20 03:05 UTC (22:05 local, 2026-11-19): the write ceiling modelled; two more write-path builders; two more reviewers
+
+- **W2-CEILING (analyst; private folder `research/2026-11-20-wave2/CEILING/`).** Load: 49 to 50 saves per second averaged
+  for ten deep accounts, 70.9 with one account at peak and nine at the median, 235 with aligned high minutes, 394 with
+  coincident peaks (neither of the last two is an observed fleet percentile). Present layout with gated grouping
+  cannot pass about 205/s for the larger commit shape or 293/s for field saves whatever the group size (34 to 38% of a
+  save's cost is shareable; asymptote 1.5 to 1.6 times). Routes: (rank 2) compact exact rows and journal, parallel
+  typed preparation and a guarded aggregate append: 500 to 700/s at no more than 18 datoms and 3 kB per save; (rank 3)
+  a fresh compact layout with a thin append: 700 to 1,000/s at 8 to 12 datoms; (rank 5) remove the gateway's
+  speculative reapply from the serial path and overlap preparation: 320 to 450/s at today's payload. Decision rule:
+  one database must prove about 620 saves per second (15% maintenance reserve, 75% usable load) to carry 394 live;
+  two pools of five need 310 each; at 200 each the peak needs four pools; if W1's 90/s isolation threshold holds, five.
+  Most valuable probe: CEIL-SERVER-LIVE10, ten minutes on a seeded server (field saves at 50, 235, 394 per second,
+  current against fair grouped writer), to go to server 2's agent at its next handover.
+- **Launched 22:00 local, `gpt-6.2-sol` at max:** builders **DX-PREP1** (`exp/DX-PREP1-parallel-prepare`: confirm the
+  preparation share, parallel preparation with a minimal guard at the serial point, overlapping groups) and
+  **DX-COMPACT1** (`exp/DX-COMPACT1-compact-save`: the measured floor of a Datomic transaction, a clean-slate compact
+  exact layout, a prototype against the W0 oracle, verdict); reviewers **W2-SCALEAUDIT** (every other queued test on
+  the two servers: collectors, whether profiles are the load they claim, driver limits, fairness of one database
+  against ten) and **W2-WRITEAUDIT** (try to break group commit, priority, coalescing and the predecessor lookup).
+  W2-DEEPTAIL part 2 is attributing the fifty slowest deep saves from the raw archive, now copied to the Mac and
+  verified.
