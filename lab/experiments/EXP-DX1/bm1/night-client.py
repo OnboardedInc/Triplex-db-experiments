@@ -99,7 +99,24 @@ def collect(name):
         assert shutil.disk_usage(directory).free-entry["bytes"]>5*2**30,"Mac evidence-volume floor"
         download(src+"/"+entry["name"],directory/entry["name"],entry["sha256"])
     archive=directory/"summary.tar.zst"
-    unpack(archive,directory,seal)
+    # [DX-BM1] Why: verify every decoded member before publishing the local copy.
+    # Rejected: an extraction interruption leaving files which make every future collection fail.
+    with tempfile.TemporaryDirectory(prefix=".verify-",dir=directory) as location:
+        stage=Path(location)
+        unpack(archive,stage,seal)
+        for original_file in stage.rglob("*"):
+            if not original_file.is_file():continue
+            target=directory/original_file.relative_to(stage)
+            target.parent.mkdir(parents=True,exist_ok=True)
+            assert not target.is_symlink() and target.resolve().is_relative_to(directory.resolve())
+            if target.exists():
+                assert target.is_file()
+                old=hashfile(target)
+                if old==hashfile(original_file):continue
+                rejected=target.with_name(target.name+".rejected-"+old)
+                assert not rejected.exists()
+                target.rename(rejected)
+            original_file.rename(target)
     assert remote("cat "+src+"/TRANSFER.json")==original
     (directory/"TRANSFER.json").write_bytes(original)
     done.write_text(json.dumps({"transfer":hashlib.sha256(original).hexdigest(),"at":time.time(),"slot":seal["slot"],

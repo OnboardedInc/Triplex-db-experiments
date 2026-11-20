@@ -1195,7 +1195,7 @@ def one(item):
             check_released(r)
             try:
                 state,why=result(r)
-            except (TypeError, ValueError, KeyError, AssertionError, OSError) as err:
+            except (TypeError, ValueError, KeyError, AssertionError, OSError, RuntimeError, subprocess.SubprocessError) as err:
                 state="uncollected" if complete_output(r) else "incomplete"
                 why="Producer output kept in its original directory. Collector rejected: "+repr(err)
             entry=dict(item=item,attempt=attempt,tag=r["tag"],source=r["source"],state=state,detail=why,
