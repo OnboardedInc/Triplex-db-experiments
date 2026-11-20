@@ -7,7 +7,7 @@ Use the held SCALE1 decision loader image on a dedicated bare-metal Ubuntu 24.04
 From a clean checkout at the stated revision with Node 22:
 
 ```bash
-COMMIT=d5ac41f8ab6453567f9bbdf278296782426367ed
+COMMIT=909f335a76ed4ceb6cd341b5ff0799d729d38d15
 BUILD=/var/tmp/triplex-v01-adopted-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
@@ -54,3 +54,5 @@ P6 runs after the loaded arm on the same adopted scope. It compares the quiet ac
 P7 samples first demand pulls at the retained loader cut and records empty and restored residency by role. An untouched-person slope under matched activity remains open.
 
 P8 runs the existing fixed 32-fact pacing arm after P6 in the same database under the grouped writer. The fixed cell offers 50 saves per second across its synthetic active accounts and tracks verified import frames, queryable facts and per-account tails. It is a component of P8. The matched pacing controls, deep and wide volumes and per-person-writer pacing remain open.
+
+P9 remains unmeasured in this command. The HASYNC1 one-host rehearsal requires its own verified legacy physical checkpoint and two ten-minute offer windows. SCALE1 supplies a K logical dump. Each qualifying machine-loss or move measurement needs two servers. [Published HASYNC1 procedure](../hasync1/SCORECARD.md)

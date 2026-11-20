@@ -29,3 +29,4 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 - `part2/quiet-p6a/SCORECARD-v0.1.md` and `part2/quiet-p6a/campaign/p6-*/` retain the quiet pair and exact arm observations. `part2/fixture-p6a-1.log` records engine ownership and cleanup.
 - `part2/idle-p7a/SCORECARD-v0.1.md` and its arm archives retain the P7 first exact pulls, residency and thread counts. `part2/fixture-p7a-1.log` records engine ownership and cleanup.
 - `part2/import-p8b/SCORECARD-v0.1.md` and `part2/import-p8b/campaign/p8/` contain the exact suffix verification and its independently replayed offer log. `part2/import-p8a/` and the fixture logs retain the missing bulk-grant failure, the corrected run and both cleanups.
+- `part2/recovery-p9a/fault/` and `part2/recovery-p9a/move/` contain the separate ten-account HASYNC1 diagnostics. Their attempt records, receipt audit, read tapes, recovery events and cleanups bind the two owned slots.

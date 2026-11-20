@@ -1,11 +1,11 @@
-Server 2 should use commit d5ac41f8a.
+Server 2 should use commit 909f335a7.
 It accepts the original SCALE1 image and transfer.
 It records partial observations for rows 1 through 4 and 6 through 8.
 The grouped configuration uses compact layout K.
 The per-person writer can be selected separately.
 Two Mac toy arms matched all 28 saves each.
-The Publish toy check ran. The held-seed Publish row remains open.
-No full-size server run was performed here.
+The Publish, failover and move toy checks ran on their own fixtures.
+Rows 5 and 9 still need held-seed adapters. Server timing is unverified.
 
 ## Part 2 verdict and receipt audit
 
@@ -40,7 +40,7 @@ The fixed-pace import uses the published loader with the starting cut checked by
 
 ## P9 audit
 
-The one-host rehearsal and two-host score use the same HASYNC1 receipt and move checks. The P9 runner requires the native backup manifest, PostgreSQL cluster identity, original legacy basis and ten proof rows in the HASYNC1 population geometry. The held SCALE1 and AGE1 archives use K, namespaced membership and a logical dump. The integrated command keeps that mismatch explicit. There is no path in this change from a local rehearsal to a physical P9 verdict or to the standing no-loss ruling.
+The one-host rehearsal and two-host score use the same HASYNC1 receipt and move checks. The P9 runner requires the native backup manifest, PostgreSQL cluster identity, original legacy basis and ten proof rows in the HASYNC1 population geometry. The held SCALE1 and AGE1 archives use K, namespaced membership and a logical dump. The integrated command keeps that mismatch explicit. There is no path in this change from a local rehearsal to a physical P9 verdict or to the standing no-loss ruling. The published fault and move commands each used one ordinary heavy token and their own ten-person, ten-account fixture. After the withheld ACK fault, all 27 acknowledged receipts matched the survivor. There were 824 exact reads during the fault experiment and 767 in the move experiment, with no wrong or unavailable reads. The first new save after fault took 15.354 seconds and the planned write pause took 13.279 seconds. These times are diagnostic. The engine reported zero remaining containers and networks and removed the owned volumes.
 
 ## Part 2 Publish adapter check
 
