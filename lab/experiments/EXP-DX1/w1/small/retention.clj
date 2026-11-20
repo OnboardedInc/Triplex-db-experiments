@@ -136,11 +136,18 @@
                      (range 24))]
     {:feed-32 feed :pinned-160 pinned}))
 
+(defn collect! [conn t]
+  (let [cutoff (Date.) result (d/gc-storage conn cutoff)
+        result (if (instance? clojure.lang.IDeref result) (deref result 180000 ::timeout) result)]
+    (assert (not= result ::timeout))
+    {:t t :cutoff-ms (.getTime cutoff) :returned (str result)}))
+
 (defn -main [arm dir n-text]
   (let [[name conn] (cost/open arm) n (Long/parseLong n-text)]
     (seed! conn)
     (let [base (index! conn (d/basis-t (d/db conn)))
-          baseline (stats base)]
+          _ (barrier! dir arm "seed-gc" (collect! conn (d/basis-t base)))
+          baseline (stats (d/db conn))]
       (barrier! dir arm "seed" (assoc baseline :subjects subjects :seed-facts (* subjects depth)))
       (let [{:keys [witnesses duration-ms state]} (workload! arm name conn base n)
             db (d/db conn) t (d/basis-t db) last-t (:t (peek witnesses))
@@ -150,17 +157,14 @@
         (assert (= log-datoms (reduce + (map :datoms witnesses))))
         (barrier! dir arm "written" (assoc (stats db) :saves n :duration-ms duration-ms :log-datoms log-datoms))
         (doseq [{:keys [op p t width]} (subvec witnesses 3 6)]
-          (let [data (cost/census conn {:t {"v" (str t)} :position {"t" "long" "v" (str p)} :operationId op}
+          (let [data (cost/census conn {:t {"t" "long" "v" (str t)} :position {"t" "long" "v" (str p)} :operationId op}
                                   {"operationId" op})]
             (cost/emit "retention-shape" {:arm arm :width width :t t :p p :op op :data data})))
         (let [indexed (index! conn t) index-stats (stats indexed)]
           (barrier! dir arm "indexed" index-stats)
           (verify! name conn base indexed witnesses state)
           (cost/emit "retention-read-cost" (assoc (read-cost name conn indexed (:p (first witnesses))) :arm arm))
-          (let [cutoff (Date.) result (d/gc-storage conn cutoff)
-                result (if (instance? clojure.lang.IDeref result) (deref result 180000 ::timeout) result)]
-            (assert (not= result ::timeout))
-            (barrier! dir arm "gc" {:t t :cutoff-ms (.getTime cutoff) :returned (str result)}))
+          (barrier! dir arm "gc" (collect! conn t))
           (let [seen (d/db conn)]
             (verify! name conn base seen witnesses state)
             (assert (= (:history index-stats) (:history (stats seen))))

@@ -53,11 +53,14 @@ def retention():
     points = [e["v"] for e in events if e["k"] == "storage"]
     assert len({p["sql"]["cluster"] for p in points}) == 1
     phases = ["seed", "acked", "written", "indexed", "gc", "observed-gc", "rewritten"]
+    matched_gc = any(x["phase"] == "seed-gc" for x in points)
+    if matched_gc:
+        phases = ["seed-gc", "observed-seed-gc"] + phases
     table = []
     for arm, counts in {"classic": (23, 27, 31), "rows": (23, 27, 31), "ledger": (16, 20, 24), "packed": (14, 16, 18)}.items():
         ps = [r for r in points if r["arm"] == arm]
         assert [r["phase"] for r in ps] == phases
-        seed, ack, tail, index, _, gc, rewritten = ps
+        seed, ack, tail, index, _, gc, rewritten = ps[-7:]
         source, written, adopted = [r["native"] for r in (seed, tail, index)]
         assert source["seed-facts"] == 512 * 160 and source["subjects"] == 512
         assert ack["native"]["saves"] == written["saves"] == n
@@ -76,20 +79,24 @@ def retention():
             assert sample["op"] == "correction-" + str(sample["p"] - source["position"])
             assert len(sample["data"]) == count, (arm, i, len(sample["data"]))
             f = done["widths"][str(i)]
-            assert f["count"] == sum(f["datoms"].values())
-            assert set(f["datoms"]) <= {str(count), str(count + 1)} if arm == "packed" else set(f["datoms"]) == {str(count)}
+            expected = sum((serial % 512) % 3 + 1 == i for serial in range(n))
+            first = int(arm == "packed" and i == 1)
+            assert f["count"] == expected
+            assert f["datoms"] == {str(count): expected - first, **({str(count + 1): 1} if first else {})}
         assert n == sum(r["count"] for r in done["widths"].values())
         (timings,) = [r["data"] for r in observed if r["kind"] == "retention-read-cost" and r["data"]["arm"] == arm]
         for key in ("feed-32", "pinned-160"):
             assert len(timings[key]) == 24 and all(us > 0 and size > 0 for us, size in timings[key])
         pg = lambda r, k: r["sql"][k]
         state = lambda r: {k: (pg(r, k) - pg(seed, k)) / n for k in ("relationBytes", "kvBytes", "packedKvBytes", "keys")}
-        samples = [e["v"] for e in events if e["k"] == "gc-observation" and e["v"]["arm"] == arm]
-        assert samples and samples[-1]["stable"] >= 6
+        for stage_name in (("seed-gc", "gc") if matched_gc else ("gc",)):
+            samples = [e["v"] for e in events if e["k"] == "gc-observation" and e["v"]["arm"] == arm
+                       and e["v"].get("phase", "gc") == stage_name]
+            assert samples and samples[-1]["stable"] >= 6
         assert gc["native"]["t"] == adopted["t"] and pg(gc, "keys") == pg(rewritten, "keys")
         retained = written["log-datoms"] / n
         table.append({
-            "arm": arm, "saves": n, "savesPerSecond": 1000 * n / written["duration-ms"],
+            "arm": arm, "saves": n, "savesPerSecond": 1000 * n / written["duration-ms"], "seedGc": matched_gc,
             "retainedDatomsPerSave": retained, "currentDatomsPerSave": (adopted["current"] - source["current"]) / n,
             "indexSegmentsAdded": adopted["indexSegments"] - source["indexSegments"],
             "walInsertBytesPerSave": (pg(ack, "insertLsn") - pg(seed, "insertLsn")) / n,
@@ -109,24 +116,42 @@ def clocks():
         return datetime.fromisoformat(s).replace(tzinfo=timezone.utc).timestamp() * 1000
 
     append = {}
+    peer_start = {}
     peers = {}
     replies = {}
+    arm_index = 0
     for x in lines:
+        if x.startswith("W1_DATA "):
+            event = json.loads(x[8:])
+            if event["k"] == "capacity":
+                assert event["v"]["arm"] == arm_index
+                arm_index += 1
         if x.startswith("W1_REPLY "):
             t, members, received, lookup, fanout = map(int, x.split()[1:])
-            assert t not in replies
-            replies[t] = (members, received, lookup, fanout)
+            assert (arm_index, t) not in replies
+            replies[(arm_index, t)] = (members, received, lookup, fanout)
         if x.startswith("W1_NATIVE "):
             _, role, at, logger, msg = x.split(maxsplit=4)
             at = instant(at)
             first = re.search(r":firstT (\d+)", msg)
-            msec = re.search(r":msec ([0-9.]+)", msg)
+            msec = re.search(r":msec (\d+(?:\.\d+)?(?:[Ee][+-]?\d+)?)", msg)
+            ids = re.findall(r'#uuid "([a-f0-9-]+)"', msg)
             if role == "transactor" and ":log/add-next" in msg and ":phase :end" in msg and first and msec:
-                append[int(first[1])] = (at, float(msec[1]))
-            if role.startswith("gateway-") and ":peer/accept-new" in msg and ":phase :end" in msg and msec:
-                t = re.search(r":(?:t|basis-t|basisT|lastT|firstT|nextT) (\d+)", msg)
-                if t:
-                    peers[(role, int(t[1]))] = (at, float(msec[1]))
+                if len(ids) == 1:
+                    append.setdefault((arm_index, int(first[1])), []).append((at, float(msec[1]), ids[0]))
+            if role.startswith("gateway-") and ":peer/accept-new" in msg and len(ids) == 1:
+                if ":phase :begin" in msg:
+                    peer_start[(role, ids[0])] = at
+                if ":phase :end" in msg and msec:
+                    peers[(role, ids[0])] = (at, float(msec[1]))
+    pauses = {}
+    for evt in (e["v"] for e in events if e["k"] == "gc-log"):
+        pauses[evt["role"]] = []
+        for x in evt["data"].splitlines():
+            match = re.search(r"^\[([^]]+)\].*Pause.*?([0-9.]+)ms$", x)
+            if match:
+                end = datetime.fromisoformat(match[1]).timestamp() * 1000
+                pauses[evt["role"]].append((end - float(match[2]), end))
     arms = [e["v"] for e in events if e["k"] == "capacity"]
     assert [(r["arm"], r["treatment"]) for r in arms] == list(enumerate([False, True, True, False]))
     table = []
@@ -145,16 +170,25 @@ def clocks():
                 assert all(r["group"] == len(batch) for r in batch)
                 if len(batch) == 1:
                     continue
-                n, received, lookup, whole = replies[t]
+                key = (arm["arm"], t)
+                n, received, lookup, whole = replies[key]
                 assert n == len(batch) and whole >= lookup >= 0
-                tx = append.get(t)
-                peer = peers.get((role, t))
+                candidates = [e for e in append.get(key, []) if 0 <= received - e[0] <= 5000]
+                matched = [e for e in candidates if (role, e[2]) in peers]
+                tx = matched[0] if len(matched) == 1 else None
+                peer = peers.get((role, tx[2])) if tx else None
+                peer_begin = peer_start.get((role, tx[2])) if tx else None
+                overlap = lambda who, lo, hi: sum(max(0, min(end, hi) - max(begin, lo)) for begin, end in pauses.get(who, []))
                 joined.append({"t": t, "members": n, "lookupUs": lookup, "fanoutUs": whole,
                                "logMs": tx[1] if tx else None,
                                "logToPeerFutureMs": received - tx[0] if tx else None,
-                               "peerApplyMs": peer[1] if peer else None})
+                               "logToPeerReceiptMs": peer_begin - tx[0] if tx and peer_begin else None,
+                               "peerApplyMs": peer[1] if peer else None,
+                               "gatewayGcMs": overlap(role, tx[0], received) if tx else None,
+                               "logGcMs": overlap("transactor", tx[0] - tx[1], tx[0]) if tx else None})
             clocks = {k: p50([r[k] for r in joined if r[k] is not None])
-                      for k in ("lookupUs", "fanoutUs", "logMs", "logToPeerFutureMs", "peerApplyMs")}
+                      for k in ("lookupUs", "fanoutUs", "logMs", "logToPeerFutureMs", "logToPeerReceiptMs",
+                                "peerApplyMs", "gatewayGcMs", "logGcMs")}
             table.append({"arm": arm["arm"], "treatment": arm["treatment"], "depth": phase["depth"],
                           "groupedTx": len(joined), "logMatches": sum(j["logMs"] is not None for j in joined),
                           "peerMatches": sum(j["peerApplyMs"] is not None for j in joined),

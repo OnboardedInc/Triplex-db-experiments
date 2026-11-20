@@ -111,3 +111,10 @@ fd16cbce007d4f1c43fe3f652857cff220dd27c77a2f33387b980f87948d219a  DX-W1/small4/e
 8c3bf16a70ad08b99d529585552a7458ade2b0661a25701eea2c82de042e4b69  DX-W1/small4/budget-model-03.json
 b8ccd7c16be7fa784ca9db1448188c50958e7f467d551f6e043ce29e2a7d354a  DX-W1/small4/write4-tests.log
 b503f2c416f4b56ae2ddfcc6ff092b06d2d83c07ea44450012bdb276abb10af9  DX-W1/small4/write4-preflight.log
+40d3b5aab68b4740f3cb88f3b4ec0628884feb6a16077d13a0c2afea14cdfb52  DX-W1/write5-parity-first.log
+a5a5117a2c73be9e0af46fd701f84c94c0050170a0b4bb6a66a6a11b7ed550b1  DX-W1/write5-retention-pilot-01/inputs.json
+1b2235dcdeff6df0a98ee7386a7fde7cc4e4895a88670165064a2ec47d9cc81f  DX-W1/write5-retention-pilot-01/selftest-1.log
+19ff758fef26a9adb7e01a609ee905fb7afd0234a18cb70e23e6cd8dae149c4d  DX-W1/write5-retention-pilot-02/inputs.json
+25cfd6f8858d311b0ea513535759ad21c3e50dcc99498d2b1df12dc05ac78774  DX-W1/write5-retention-pilot-02/selftest-1.log
+5418de7d3bd27217f554b1d56d3cd0302ea17f8615fa909bb6f8c12c5fe343a7  DX-W1/write5-retention-01/inputs.json
+b9590a50ff6952eacf4cac7c371c9b38ac71c9fa6ad9c0d8b0850776b1cd8175  DX-W1/write5-clocks-02/inputs.json

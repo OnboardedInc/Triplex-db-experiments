@@ -261,7 +261,7 @@ try {
         },
       );
       const exit = new Promise<number | null>((resolve) => p.once("exit", resolve));
-      for (const phase of ["seed", "acked", "written", "indexed", "gc"]) {
+      for (const phase of ["seed-gc", "seed", "acked", "written", "indexed", "gc"]) {
         const path = cwd + "/" + arm + "-" + phase;
         const deadline = performance.now() + (phase === "acked" ? 330_000 : 200_000);
         while (!fs.existsSync(path + ".ready")) {
@@ -274,7 +274,7 @@ try {
           sql(database, "-c", "VACUUM FULL datomic_kvs", "-c", "CHECKPOINT");
         }
         emit("storage", { arm, phase, native, sql: measureSql(database) });
-        if (phase === "gc") {
+        if (phase === "gc" || phase === "seed-gc") {
           let stable = 0,
             last = "";
           for (let i = 0; stable < 6 && i < 40; i++) {
@@ -283,10 +283,10 @@ try {
             const key = JSON.stringify([point.keys, point.kvBytes]);
             stable = key === last ? stable + 1 : 0;
             last = key;
-            emit("gc-observation", { arm, point, stable });
+            emit("gc-observation", { arm, phase, point, stable });
           }
           assert(stable >= 6, "Storage GC observation never settled");
-          emit("storage", { arm, phase: "observed-gc", native, sql: measureSql(database) });
+          emit("storage", { arm, phase: "observed-" + phase, native, sql: measureSql(database) });
         }
         fs.writeFileSync(path + ".release", nonce, { flag: "wx" });
       }
