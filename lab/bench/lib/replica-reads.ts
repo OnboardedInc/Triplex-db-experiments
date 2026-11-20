@@ -183,6 +183,7 @@ function materializeWorld(selected: readonly (string | PackedEntity)[], validAt:
   return Object.freeze(rows);
 }
 const statViews = new WeakMap<object, DataView>();
+type FallbackWitness = { reason: string; recordedAt?: number; receiptPosition?: number; resolved?: number; floor: number; head: number; oldestClock?: number; historyBytes: number };
 export class ReplicaReader {
   readonly index: InstanceType<typeof api.RecentReads>;
   private worlds = new CutCache();
@@ -194,7 +195,9 @@ export class ReplicaReader {
     // Rejected: assuming that more weak manifests help a mostly-miss workload.
     this.worlds = new CutCache(worldCacheBytes); this.diagnostics.worldCache = this.worlds.diagnostics;
   }
-  readonly diagnostics = { local: 0, fallback: 0, ahead: 0, caughtUp: 0, waitExpired: 0, ineligible: 0, worldCache: this.worlds.diagnostics };
+  readonly diagnostics = { local: 0, fallback: 0, ahead: 0, caughtUp: 0, waitExpired: 0, ineligible: 0, worldCache: this.worlds.diagnostics,
+    fallbackWitnesses: [] as FallbackWitness[] };
+  private readonly seenFallbackReasons = new Set<string>();
   private waiters = new Set<{ p: number; done(): void }>();
   install(image: ReadImage) {
     this.worlds.clear();
@@ -269,8 +272,9 @@ export class ReplicaReader {
       if (this.index.position >= waitPosition) this.diagnostics.caughtUp++;
       else this.diagnostics.waitExpired++;
     }
+    const cut = this.index.resolve(basis);
+    let missing: "missing-closure-entity" | "incomplete-public-metadata" = "missing-closure-entity";
     if (!rows) {
-      const cut = this.index.resolve(basis);
       const cached = cut === undefined ? undefined : this.worlds.get(root, cut, basis.validAt, waitedMs);
       if (cached) { this.diagnostics.local++; return cached; }
       let intervalFrom = -Infinity, intervalTo = Infinity;
@@ -343,6 +347,7 @@ export class ReplicaReader {
         if (cut !== undefined) this.worlds.put(root, cut, intervalFrom, intervalTo, answer, selected, materializeWorld);
         return answer;
       }
+      if (!complete) missing = "incomplete-public-metadata";
     } else {
       const found = this.index.pull(root, basis);
       if (found && found.rows.every((row: any) => "publicMetadata" in row)) {
@@ -357,14 +362,25 @@ export class ReplicaReader {
           waitedMs,
         };
       }
+      if (found) missing = "incomplete-public-metadata";
     }
     this.diagnostics.fallback++;
     if (!(basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position)) this.diagnostics.ineligible++;
+    const oldest = this.index.retainedClockFloor();
     const replicaFallbackReason = !this.index.valid ? "copy-unavailable" :
+      cut !== undefined ? missing :
       basis.recordedPosition !== undefined && basis.recordedPosition < this.index.floor ? "outside-window" :
-      basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position ? "watermark-timeout" :
+      waitPosition !== undefined && waitPosition > this.index.position ? "watermark-timeout" :
       basis.recordedPosition === undefined && basis.recordedAt !== undefined && !this.index.strictRecordClocks ? "non-strict-record-clock" :
-      basis.recordedPosition === undefined && basis.recordedAt !== undefined && this.index.isOpenClock(basis.recordedAt) ? "open-record-clock" : "unmapped-clock-or-closure";
+      basis.recordedAt !== undefined && oldest !== undefined && basis.recordedAt < oldest ? "before-retained-clock" :
+      basis.recordedPosition === undefined && basis.recordedAt !== undefined && this.index.isOpenClock(basis.recordedAt) ? "open-record-clock" : "unmapped-record-clock";
+    // [DX-RD1] Why: preserve the actual worker window at a miss without logging every closed-loop read.
+    // Rejected: classifying a historical miss as follower lag from the central head alone.
+    if (!this.seenFallbackReasons.has(replicaFallbackReason)) {
+      this.seenFallbackReasons.add(replicaFallbackReason);
+      this.diagnostics.fallbackWitnesses.push({ reason: replicaFallbackReason, recordedAt: basis.recordedAt, receiptPosition: waitPosition,
+        resolved: cut, floor: this.index.floor, head: this.index.position, oldestClock: oldest, historyBytes: this.index.historyBytes });
+    }
     const result = await fallback();
     return { ...result, route: "fallback", waitedMs, replicaFallbackReason };
   }

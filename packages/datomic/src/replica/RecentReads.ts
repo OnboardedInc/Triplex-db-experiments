@@ -56,6 +56,12 @@ export class RecentReads {
       throw new TypeError("Invalid recent-read budget");
   }
   get strictRecordClocks(): boolean { return this.strictClocks; }
+  // [DX-RD1] Why: distinguish a proven evicted time range from an unresolved clock or missing entity.
+  // Rejected: inferring the retained time range from a reader's caller-supplied position hint.
+  retainedClockFloor(): number | undefined {
+    if (!this.valid || !this.strictClocks || !this.timeSafe) return undefined;
+    return this.times.keys().next().value;
+  }
   // [DX-THIN1] Why: the first exact page proves membership starting at this cut only.
   // Rejected: synthesizing a journal or backdating an entity to the bootstrap floor.
   admit(position: number, entries: ReadonlyMap<string, PackedEntity>): void {
