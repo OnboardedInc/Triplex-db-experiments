@@ -24,7 +24,9 @@ Use the same allocated native Linux host, pinned images, built workspace package
 | 2 off | 235 | 235 | 2 | 27.48 | 10.47 | 1.19× |
 | 2 off | 394 | 394 | 2 | 28.00 | 10.74 | 1.22× |
 
-**Original comparison.** Server source `7ca8525a9`. The corrected native admission matched 1,315 offers per writer. The current writer's separate JVM1 result at 235 offered/s delivered 138.6–188.5 saves/s, with quiet tails at 8.56–20.49× solo p99. Different JVM settings account for that range. The original comparison has no fair-credit arm. [Server handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/da7eca837/lab/experiments/EXP-DX1/bm1/HANDOFF.md)
+**Original comparison.** Server source `7ca8525a9`. The corrected native admission matched 1,315 offers per writer. The original comparison has no fair-credit arm. [Server handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/da7eca837/lab/experiments/EXP-DX1/bm1/HANDOFF.md)
+
+**Present writer baseline.** At 235 offered/s, JVM1 reported 138.6–188.5 saves/s across JVM settings over the offer window plus drain. Reopening the copied row clocks gives 143.5–196.6 saves/s inside the 60-second offer window, the denominator PREP1 uses. At 394 the corresponding ranges are 153.3–186.4 and 163.7–189.0. Separate JVM1 quiet-account windows were 215.0 and 358.1 gross offers/s and measured 8.56–20.48× and 7.23–21.54× solo p99. The re-read checks the published transfer manifest, pinned source, row counts and clock order. [Checksums](SHA256SUMS)
 
 **Original forecasts, frozen before the run.** Cells are ordered 50 / 235 / 394 / 620 offered saves/s. Solo p99 is 10 ms for K and 8.8 ms for S. Above-capacity p99 projections assume a full queue. The measured complete-cohort tail is unavailable if any ACK is missing.
 
