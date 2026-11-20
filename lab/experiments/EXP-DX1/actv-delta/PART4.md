@@ -47,6 +47,8 @@ Saves completed entirely during reader traffic averaged 2.82 s across 188 FIFO s
 
 The 23.5 saves/s FIFO window reached the 15-minute limit before writing observations. Its schedule and the timeout are in evidence. The 39.4 saves/s arm did not start. The manager removed the data volume and released the slot. A negative control reproduces the wrong request observer while a save holds the lane. The follow-up requires the queued Publish to retain its own observer and the native race gate to see its write stages.
 
+The next attempt uses the current route's own resolved head and holds 64 background readers through one fixed offer window and all per-offer deadline probes. Both policies get the same exposure. Their outstanding commands may finish after the background reads stop. The attempt takes CPU samples at the end of reader load and after draining, and writes the deadline observations before the drain. This checkpoint alone carries no timing verdict.
+
 ## One-seed server campaign
 
 Use the joined builder path at the same reviewed gateway revision. Its four cells are record and literal staged values, each quiet and at 23.5 offered saves/s. The release document is first authored at its offer. The staged cell charges its source hold and commits all changed values before the marker. Both cells independently reopen the ordered owed-notice recipe. Individually materialized notice entries have a separate field and this command leaves that field empty. The supervised command reserves seven of ninety minutes for cleanup, runs a ten-minute small preflight and gives the producer at most 83 minutes of work. It keeps the partial receipts on an overrun.

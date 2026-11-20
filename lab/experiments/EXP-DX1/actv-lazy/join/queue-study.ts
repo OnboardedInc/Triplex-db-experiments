@@ -133,7 +133,7 @@ async function setup(scope: string, n: number, nonce: string, tape: string): Pro
   const store = await openStore(scope, "act2-deep");
   try {
     await liveGateway(scope, nonce);
-    const fixture = await seed(store, n);
+    const fixture = await seed(store, n, "default", 2000);
     await new JoinedAccount(store).install(fixture.roster, valid, true);
     return { store, fixture, tape: new SourceTape(fixture, tape) };
   } catch (e) {
@@ -209,11 +209,14 @@ async function block(
         offer?: number,
       ) => {
         const invoked = ms(),
-          position = await readers[route]!.head(),
-          learned = ms(),
           id = fixture.roster[person]!;
-        const r = await routes[route]!.readAt(id, { position, validTime: valid });
-        assert.equal(r.basis.tx, position);
+        let learned: number | undefined;
+        // [DX-ACT2] Why: time the current public route's own head read. Rejected: reading a second head just to create an explicit test pin.
+        const r = await routes[route]!.readAt(id, { validTime: valid }, undefined, (stage) => {
+          if (stage === "controls") learned = ms();
+        });
+        assert(learned !== undefined && Number.isSafeInteger(r.basis.tx));
+        const position = r.basis.tx;
         raw.push({
           phase,
           route: paths[route]!,
@@ -278,14 +281,16 @@ async function block(
         }
         await Promise.all(pending);
       });
-      const pending: Promise<unknown>[] = [];
+      const pending: Promise<unknown>[] = [],
+        deadlines: Promise<unknown>[] = [];
+      let loaded: { stop: Awaited<ReturnType<typeof cpu>>; loopP99Ms: number } | undefined;
       try {
         for (const x of schedule) {
           await waitsUntil(x.scheduled);
           const ingress = ms(),
             doc = structuredClone((x.order % 2 ? W0.R3 : W0.R2).doc),
             tweak = doc.rules.find((rule) => rule.id === "PAYCHG")!;
-          Object.assign(tweak.params, { thresholdCents: 1000 + cycle * 1000 + x.order });
+          Object.assign(tweak.params, { thresholdCents: 1001 + cycle * 1000 + x.order });
           const o: Entry = {
             ...x,
             ingress,
@@ -297,7 +302,7 @@ async function block(
           };
           offers.push(o);
           const person = fixture.n - 1 - x.order;
-          pending.push(
+          deadlines.push(
             waitsUntil(x.scheduled + 1000)
               .then(() => Promise.all(paths.map((_, i) => capture(i, person, "deadline", x.order))))
               .catch(keep),
@@ -319,6 +324,7 @@ async function block(
                   txId: r.txId,
                 };
                 o.owed = { at: o.ack.at, position: r.position };
+                assert(o.requests.length >= 1 && o.requests.at(-1)?.timeline);
                 await Promise.all(paths.map((_, i) => capture(i, person, "first", x.order)));
               })
               .catch((e) => {
@@ -326,19 +332,33 @@ async function block(
               }),
           );
         }
+        // [DX-ACT2] Why: both arms get the same offered reader window and all scheduled deadline probes. Rejected: extending background load until a saturated FIFO queue drains, which makes the load depend on the result.
+        await Promise.all([waitsUntil(opened + duration), ...deadlines]);
+        running = false;
+        await Promise.all(background);
+        loaded = { stop: await cpu(attempt), loopP99Ms: delay.percentile(99) / 1e6 };
+        save(join(folder, "deadline-checkpoint.json"), {
+          attempt,
+          scope: store.scope,
+          scheduleCount: count,
+          completedAt: ms(),
+          offers,
+          reads: raw.filter((r) => r.phase === "deadline"),
+          pressure: { start: startCpu, ...loaded },
+        });
         await Promise.all(pending);
-        await waitsUntil(opened + duration);
       } finally {
         running = false;
         await Promise.all(background);
+        await Promise.all(senders);
         delay.disable();
         const stopCpu = await cpu(attempt);
         pressure = {
           start: startCpu,
           stop: stopCpu,
+          loaded,
           nodeEventLoopP99Ms: delay.percentile(99) / 1e6,
         };
-        await Promise.all(senders);
       }
     });
     const compressed = gzipSync(raw.map((x) => JSON.stringify(x) + "\n").join(""));
@@ -456,6 +476,9 @@ async function block(
       schedule: clock.offers,
     };
     save(join(folder, "verified.json"), result);
+    console.log(
+      JSON.stringify({ verifiedCell: cycle, rate, policy, count, missed: clock.misses }),
+    );
     return result;
   } finally {
     await Promise.all(readers.map((r) => r.close()));

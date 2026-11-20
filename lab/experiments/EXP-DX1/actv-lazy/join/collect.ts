@@ -3,6 +3,7 @@ import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { execFileSync } from "node:child_process";
 import { DomainOracle } from "../../../../bench/lib/w0-gates.ts";
+import { runtimeApi } from "../../../../bench/lib/triplex.ts";
 import { canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import { verifyTimings } from "./observations.ts";
 
@@ -65,6 +66,8 @@ export async function collect(
     expectedNames.push("server-native-options");
     const native = get("server-native-options");
     assert(inputs.gatewayAttempt && native.attempt === inputs.gatewayAttempt);
+    const scope = String(runtimeApi.DatabaseScope.test(seal.scope));
+    assert.equal(native.database, "s2-" + Buffer.from(scope).toString("base64url"));
     assert(
       native.strictRecordClocks && native.commitFunctionInstalled && native.options.livePriority,
     );
