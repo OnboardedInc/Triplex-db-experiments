@@ -12,8 +12,10 @@ import { sourceInventory, stageReplay } from "../scale1/source.ts";
 import { fileHash } from "../scale1/measurements.ts";
 import { measure, type Arm } from "./measure.ts";
 import { fieldPolicy, type Mode } from "./field/bench-check.ts";
+import { datomicRuntime } from "../../../config/datomic/runtime.mjs";
 
 import type { jvmPolicy } from "../jvm1/policy.mjs";
+import type { part2Policy } from "../jvm1/launch.mjs";
 import { verifyJvmFlags } from "../jvm1/check-readback.mjs";
 
 const repo = path.resolve(import.meta.dirname, "../../../.."),
@@ -213,7 +215,7 @@ export async function withStack<T>(
   grouped?: boolean,
   fieldMode?: Mode,
   enhanced = false,
-  jvm?: { policy: ReturnType<typeof jvmPolicy>; deadline: number; dump?: string },
+  jvm?: { policy: ReturnType<typeof jvmPolicy> | ReturnType<typeof part2Policy>; deadline: number; dump?: string; javaMajor?: string },
 ) {
   const why = stopReason();
   assert(!why, why);
@@ -313,18 +315,21 @@ export async function withStack<T>(
         .join(",");
   }
 
+  const gcLog = (role: string) => ` -Xlog:gc*=info:file=/trace/${role}.log:time,uptimemillis,level,tags:${jvm?.javaMajor ? "filecount=0" : "filecount=4,filesize=8m"}`;
   if (jvm) {
     // [DX-JVM1] Why: tie the declared JVM arm to the shared stack startup and storage clone.
     // Rejected: updating process placement after the JVM derived its pools and collector.
     const p = jvm.policy;
     Object.assign(env, {
+      DX_JAVA: jvm.javaMajor ?? "21",
+      ...(jvm.javaMajor ? { TRIPLEX_NODE_MAIN_CPUS: p.cpus.sender.split(",")[0], TRIPLEX_NODE_WORKER_CPUS: p.cpus.sender } : {}),
       DX_JVM_EVIDENCE: "1",
       DX_NATIVE_SETTINGS_READBACK: "1",
       DX_JVM1_TX_PROPERTIES: JSON.stringify(p.txProperties),
       DX_GW_WRITE_MEMORY: p.memory["gw-w"] + "m",
       DX_GW_READ_MEMORY: p.memory["gw-r"] + "m",
-      DX_GW_WRITE_JAVA_OPTS: p.opts["gw-w"].join(" ") + " -Xlog:gc*=info:file=/trace/gw-w.log:time,uptimemillis,level,tags:filecount=4,filesize=8m",
-      DX_GW_READ_JAVA_OPTS: p.opts["gw-r"].join(" ") + " -Xlog:gc*=info:file=/trace/gw-r.log:time,uptimemillis,level,tags:filecount=4,filesize=8m",
+      DX_GW_WRITE_JAVA_OPTS: p.opts["gw-w"].join(" ") + gcLog("gw-w"),
+      DX_GW_READ_JAVA_OPTS: p.opts["gw-r"].join(" ") + gcLog("gw-r"),
       ...(jvm.dump ? { DX_JVM1_PG_RESTORE: jvm.dump } : {}),
     });
   }
@@ -346,7 +351,7 @@ export async function withStack<T>(
     "--tx-memory",
     jvm ? jvm.policy.memory.tx + "m" : "6g",
     "--tx-java-opts",
-    jvm ? jvm.policy.opts.tx.join(" ") + " -Xlog:gc*=info:file=/trace/tx.log:time,uptimemillis,level,tags:filecount=4,filesize=8m" : "-Xms256m -Xmx5g -XX:+UseG1GC",
+    jvm ? jvm.policy.opts.tx.join(" ") + gcLog("tx") : "-Xms256m -Xmx5g -XX:+UseG1GC",
     ...(jvm ? ["--memory-index-threshold", jvm.policy.indexThreshold + "m",
       "--memory-index-max", jvm.policy.indexMax + "m"] : []),
     "--object-cache-max",
@@ -367,8 +372,13 @@ export async function withStack<T>(
       assert(image?.Id);
       return image;
     };
-    const peer = imageFor("tx2-datomic:1.0.7745-da00"),
+    const runtime = datomicRuntime(jvm?.javaMajor ?? env.DX_JAVA ?? "21");
+    const peer = imageFor(runtime.tag),
       pg = imageFor("postgres:17-alpine");
+    if (jvm?.javaMajor) {
+      assert.equal(peer.Config.Labels["tx2.java-major"], runtime.major);
+      assert.equal(peer.Config.Labels["tx2.java-base"], runtime.base);
+    }
     assert.equal(
       peer.Config.Labels["tx2.build-inputs-sha256"],
       await fileHash(path.join(buildResults, "IMAGE-INPUTS.SHA256SUMS")),
@@ -450,8 +460,8 @@ export async function withStack<T>(
       }
     }
     env.TX2_ENGINE_CGROUPS = groups.join(",");
-    env.TX2_ENGINE_CPUS = "5";
-    write(path.join(dir, "placements.json"), { engines: roleInfo, sender: jvm?.policy.cpus.sender ?? "3", workerCpus });
+    env.TX2_ENGINE_CPUS = jvm?.javaMajor ? String(roleInfo.reduce((n, role) => n + role.cpus.split(",").length, 0)) : "5";
+    write(path.join(dir, "placements.json"), { engines: roleInfo, sender: jvm?.policy.cpus.sender ?? "3", workerCpus: env.TRIPLEX_NODE_WORKER_CPUS });
     const durable = docker(
       "exec",
       slot + "-pg",
