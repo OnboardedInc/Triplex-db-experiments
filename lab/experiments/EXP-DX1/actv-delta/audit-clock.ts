@@ -67,13 +67,9 @@ export function scoreClock(
     const deadline = o.scheduled + 1000,
       samples = witnesses.get(i) ?? [],
       due = samples.filter((r) => r.phase === "deadline"),
-      first = samples.filter(
+      first = reads.filter(
         (r) =>
-          r.phase === "first" &&
-          o.ack &&
-          r.invoked >= o.ingress &&
-          r.position >= o.ack.position &&
-          r.seq >= o.ack.seq,
+          o.ack && r.invoked >= o.ingress && r.position >= o.ack.position && r.seq >= o.ack.seq,
       );
     for (const route of routes) {
       assert(

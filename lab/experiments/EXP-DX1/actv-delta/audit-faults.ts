@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
+import { setTimeout as delay } from "node:timers/promises";
 import { openComposition } from "../../../bench/lib/composition.ts";
 import { W0 } from "../../../bench/lib/w0-world.ts";
 import { Account } from "./account.ts";
@@ -64,7 +65,13 @@ async function child(c: Case, kind: string, expected: any) {
         assert.deepEqual({ cut: fence.position, hash: fence.hash, nonce: c.nonce }, expected);
         const no = await store.transactionByCommand(db.entity("cmd:event:interrupted"));
         assert(no.ok && no.value === null);
-        const read = await new CurrentDecisions(a, () => validTime).read(subject);
+        const route = new CurrentDecisions(a, () => validTime),
+          until = performance.now() + 950;
+        let read = await route.read(subject);
+        while (read.output.release === W0.R1.hash && performance.now() < until) {
+          await delay(20);
+          read = await route.read(subject);
+        }
         assert(read.position > p && read.output.release === W0.R2.hash);
         const native = await a.seal("interrupted", W0.R2, { durability: "record" });
         assert(native.retry && native.position === read.position);

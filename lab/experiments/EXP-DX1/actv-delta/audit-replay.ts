@@ -37,7 +37,7 @@ export class AuditReplay {
   }
   private async readReceipt(offer: AuditOffer) {
     const cut = offer.ack;
-    if (!cut) return;
+    if (!cut) return null;
     const command = this.account.db.entity("cmd:event:" + offer.id),
       native = await this.source.transactionByCommand(command);
     assert(
@@ -46,7 +46,22 @@ export class AuditReplay {
         native.value.txId === cut.txId &&
         native.value.position === cut.position,
     );
+    const fence = await this.source.transactionByCommand(
+      this.account.db.entity("cmd:fence:" + offer.id),
+    );
+    assert(fence.ok && fence.value && fence.value.position < native.value.position);
+    const admitted = fence.value.changes.filter(
+      (x: any) => x.op === "assert" && x.entityId === this.account.db.entity("fence"),
+    );
+    assert.equal(admitted.length, 1);
+    assert(
+      native.value.changes.some(
+        (x: any) => x.op === "retract" && x.tripleId === admitted[0].tripleId,
+      ),
+    );
     const e = await this.account.db.get<Recipe>("event:" + cut.seq, native.value.position);
+    assert(e.value.sourceCut < native.value.position && e.value.sourceCut >= this.baseline);
+    assert.equal((await this.account.head(e.value.sourceCut)).hash, e.value.parentHash);
     assert(
       e.position === native.value.position &&
         e.value.nativeBasis &&
@@ -55,6 +70,7 @@ export class AuditReplay {
     );
     assert.deepEqual(e.value.next, offer.doc);
     this.pending.push({ seq: cut.seq, p: native.value.position, at: cut.at, doc: offer.doc });
+    return { id: offer.id, txId: cut.txId, position: cut.position, fence: fence.value.position };
   }
   async verify(
     offers: readonly AuditOffer[],
@@ -62,8 +78,13 @@ export class AuditReplay {
     ids: readonly string[],
     decoder: ReturnType<typeof readerProcess>,
   ) {
-    for (const o of offers) await this.readReceipt(o);
-    const until = raw.reduce((p, r) => Math.max(p, r.position), this.baseline);
+    const receipts = [];
+    for (const o of offers) {
+      const receipt = await this.readReceipt(o);
+      if (receipt) receipts.push(receipt);
+    }
+    const acknowledged = offers.reduce((p, o) => Math.max(p, o.ack?.position ?? 0), this.baseline),
+      until = raw.reduce((p, r) => Math.max(p, r.position), acknowledged);
     let doc = this.applied.filter((x) => x.doc).at(-1)?.doc ?? W0.R1.doc;
     this.pending.sort((a, b) => a.p - b.p);
     while (this.pending.length && this.pending[0]!.p <= until) {
@@ -119,6 +140,7 @@ export class AuditReplay {
     return {
       observations: raw.length,
       answers: hash(answerTape),
+      receipts,
       proofs: await this.verifyDurability(offers, ids, decoder),
     };
   }

@@ -5,7 +5,7 @@ The deadline checker now rejects a missing last read and a stale read that arriv
 A new reader can finish an interrupted Publish. A clock worker can catch up after restart with saves idle.
 The earlier crash recovered 11,960 changed rows and 997 owed notices. It proved recovery from the recipe.
 The earlier save comparison measured 6.68% extra database log bytes per fact. The owner’s target was 15%.
-The 204-offer run still missed one second. The raw record-mode clock shows 2.65 seconds at p99. Replay is pending.
+The raw 204-offer record clock was 2.65 seconds at p99. The 1,000-person stored run took 3.47 seconds for the broad release.
 
 | Finding | Decision | Fix | Negative control |
 | --- | --- | --- | --- |
@@ -23,7 +23,7 @@ Account.currentCut observes the durable fence and helps before returning a cut. 
 
 The 23 original native publication schedules and the delayed, time, race, erasure and recovery tests passed at 0d85534c8. At 31acf1616, two native crash stops recovered the original fence before terminal commit and the values, retirements, guards and notices after stored commit. Git and build bytes matched both source inventories, and both slots and volumes were released. [Audit checksums](ACTAUDIT-SHA256SUMS)
 
-The later record arm offered 204 releases over live traffic with 64 readers and two saving neighbors. Its 58,402 raw observations include 48 stale deadline probes and 128 other stale reads. First candidate public read was 2.13 s p99. Record completion was 2.65 s p99 with 34 late offers. Issuer-observed save queueing was 495 ms p99 across 111 offers. Both p99 releases lacked issuer terminal samples, so their queue shares are unknown.
+The later record arm offered 204 releases over live traffic with 64 readers and two saving neighbors. Its 58,402 raw observations include 48 stale deadline probes and 128 other stale reads. First candidate public read was 2.13 s p99. Record completion was 2.65 s p99 with 34 late offers. Issuer-observed save queueing was 495 ms p99 across 111 offers. Both p99 releases lacked issuer terminal samples, so their queue shares are unknown. The full replay was stopped after the deadline failures were saved. Both slot and volume were released.
 
 The earlier 201-release result was 0.843 s p99 to one verified read, with two over one second. Its already-submitted save queue was 605 ms p99 and zero on the release at the read p99. It is diagnostic. Four separate physical WAL arms measured 4,507 → 4,808 bytes per fact and database growth 4,314 → 4,604. Individual native operation counts matched. [Part 3 checksums](PART3-SHA256SUMS)
 
@@ -35,8 +35,10 @@ The bare command stays disabled. The audited command is below. Its preflight ref
 
 The command schedules 45 offers per mode. It has a 160-minute work limit and 20 minutes for shutdown and collection. Three separate 100,000-person seeds project to about 175 minutes at the observed earlier seed rate, before the sweeps or proof. A three-hour completion remains unproved. No bench server was used. No acceptance pins changed.
 
+The preflight independently matched 5,759 changed rows and 799 owed notices for broad in both modes. Its first version suppressed cold probes after a recovery helper finished the fence. A new guard checks the native fence and terminal receipts and preserves the probe. A resumed literal commit returns the original cuts and carries no fresh timing credit.
+
 The exact BM1 parser accepted the prior native 1,000-person output. It refused the same bytes when the reference list omitted R1, reversed the order or repeated R2. The new preflight repeats those checks on its own native output. The clock-only sample that failed integer normalization is retained without a full activation result.
 
 Acceptance sites. The native schedule gate checks the exact TAP names and count, fresh run bytes, the owned slot and source inventory. The crash proof compares Python outputs and notice bytes to fresh reopened commits, all tied to original cut, transaction and slot nonce.
 
-The audit-preflight and SCALE1 collectors rehash read tapes and arm outputs, check independent source, release and notice proofs, require raw probes for every offer and route, and bind source, slot, nonce, population and ordered reference IDs. BM1 reads the same accepted envelope. The latest load tape is diagnostic pending independent replay.
+The audit-preflight and SCALE1 collectors rehash read tapes and arm outputs, check independent source, release and notice proofs, require raw probes for every offer and route, and bind source, slot, nonce, population and ordered reference IDs. BM1 reads the same accepted envelope. The latest load tape remains diagnostic because it missed the deadline and full replay stopped.

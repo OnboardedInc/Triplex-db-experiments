@@ -186,17 +186,16 @@ export async function persistPublication(a: Account, seq: number, cut: number) {
   const record = await decodeOwed(a, seq, cut),
     e = await a.db.get<Recipe>("event:" + seq, cut),
     parts: { position: number; hash: string }[] = [];
-  let lastNotice: { position: number; at: number } | undefined;
+  let reused = false;
+  let lastNotice: { position: number; at: number | null } | undefined;
   for await (const { chunk, notices } of record.chunks) {
     if (!chunk.rows.length && !notices) continue;
-    const cell = await immutable(
-      a.db,
-      "stored:" + seq + ":" + parts.length,
-      chunk,
-      (position, at) => {
-        if (notices) lastNotice = { position, at };
-      },
-    );
+    let at: number | null = null;
+    const cell = await immutable(a.db, "stored:" + seq + ":" + parts.length, chunk, (_, t) => {
+      at = t;
+    });
+    if (at === null) reused = true;
+    if (notices) lastNotice = { position: cell.position, at };
     assert(cell.position > cut);
     parts.push({ position: cell.position, hash: hash(cell.value) });
   }
@@ -214,13 +213,12 @@ export async function persistPublication(a: Account, seq: number, cut: number) {
   const cell = await immutable(a.db, "stored:" + seq, value, (_, t) => {
     at = t;
   });
-  assert(at !== undefined, "stored-mode measurement requires a newly committed guard");
-  return {
-    position: cell.position,
-    digest: cell.hash,
-    at,
-    lastNotice: lastNotice ?? { position: cell.position, at },
-  };
+  const completion = { position: cell.position, digest: cell.hash },
+    notice = lastNotice ?? { position: cell.position, at: at ?? null };
+  // [DX-ACT2] Why: a resumed command binds the original literal parts and guard. Rejected: treating prior durable writes as fresh deadline timestamps.
+  if (reused || at === undefined || notice.at === null)
+    return { ...completion, fresh: false as const, at: null, lastNotice: { ...notice, at: null } };
+  return { ...completion, fresh: true as const, at, lastNotice: { ...notice, at: notice.at } };
 }
 
 export async function openStored(a: Account, seq: number, position: number) {

@@ -16,7 +16,14 @@ import type { Admission, Decision } from "./service.ts";
 import { hash } from "./store.ts";
 
 type Route = { name: string; read(id: string): Promise<Decision> };
-export type AuditOffer = Offered & { phase: string; queuedForSaveMs?: number; nativeMs?: number };
+export type AuditOffer = Offered & {
+  phase: string;
+  queuedForSaveMs?: number;
+  nativeMs?: number;
+  sourceDebtMs?: number;
+  issuerTerminalObserved?: boolean;
+  redundantTerminals?: number;
+};
 export async function waitsUntil(t: number) {
   for (;;) {
     const remaining = t - performance.now();
@@ -184,12 +191,16 @@ export async function auditOffers(
                   x.command === a.db.entity("cmd:fence:" + o.id) ||
                   x.command === a.db.entity("cmd:event:" + o.id),
               );
-              assert(
-                matched.length === 2 && matched.every((x) => x.ok),
-                "ordinary traffic invalidated a seal",
-              );
-              o.queuedForSaveMs = matched.reduce((n, x) => n + x.queuedForSaveMs, 0);
-              o.nativeMs = matched.reduce((n, x) => n + x.serviceMs, 0);
+              const fence = matched.filter((x) => x.command === a.db.entity("cmd:fence:" + o.id)),
+                terminal = matched.filter((x) => x.command === a.db.entity("cmd:event:" + o.id)),
+                issued = terminal.filter((x) => x.ok);
+              assert(fence.length === 1 && fence[0]!.ok && issued.length <= 1);
+              // [DX-ACT2] Why: a native terminal ACK may be issued by a recovery reader in another process. Its journal is verified independently. Rejected: interpreting a missing issuer-side sample as a save invalidating the seal.
+              o.issuerTerminalObserved = issued.length === 1;
+              o.redundantTerminals = terminal.length - issued.length;
+              o.sourceDebtMs = ack.sourceDebtMs;
+              o.queuedForSaveMs = [...fence, ...issued].reduce((n, x) => n + x.queuedForSaveMs, 0);
+              o.nativeMs = [...fence, ...issued].reduce((n, x) => n + x.serviceMs, 0);
             } catch (e) {
               o.error = String(e);
             }
@@ -205,6 +216,10 @@ export async function auditOffers(
               try {
                 if (mode === "stored") {
                   const result = await persistPublication(a, ack.seq, ack.position);
+                  assert(
+                    result.fresh,
+                    "stored-mode clock requires freshly committed parts and guard",
+                  );
                   o.stored = { at: result.at, position: result.position };
                   o.owed = result.lastNotice;
                 }
@@ -245,6 +260,11 @@ export async function auditOffers(
       .map((line) => JSON.parse(line));
     // [DX-ACT2] Why: neither the oracle nor a roster verification warms the measured routes between offers. Rejected: awaiting verification in the offer scheduler.
     s.verified = await verify(all.slice(base, base + 30), reads);
+    fs.writeFileSync(
+      path.join(dir, "replay-" + base + ".json"),
+      JSON.stringify({ binding, rawSha: s.sha, verified: s.verified }) + "\n",
+      { flag: "wx" },
+    );
     reports.push(
       scoreClock(
         turns,

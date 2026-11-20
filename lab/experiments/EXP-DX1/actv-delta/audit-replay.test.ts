@@ -29,6 +29,7 @@ test("independent replay refuses a stored campaign with a broad notice missing",
     const init = await a.bootstrap([id], [w], basis, true, "native");
     const ack = await a.seal("broad", W0.R2, { durability: "stored" });
     const durable = await persistPublication(a, ack.seq, ack.position);
+    assert(durable.fresh);
     const data = await new CurrentDecisions(scope, () => validTime).read(id);
     const offer: AuditOffer = {
       id: "broad",

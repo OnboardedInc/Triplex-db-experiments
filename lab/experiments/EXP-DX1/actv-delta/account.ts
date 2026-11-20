@@ -49,6 +49,7 @@ type Intent = {
   source: string;
   durability?: DurabilityMode;
   clock?: true;
+  helpAfter?: number;
 };
 const intentRequest = (i: Pick<Intent, "doc" | "from" | "valid" | "durability" | "clock">) =>
   hash([
@@ -753,7 +754,8 @@ export class Account {
       const p = await this.db.comp.currentPosition(),
         rows = await this.db.many(["fence", ...(now ? ["head"] : [])], p),
         fence = rows.get("fence") as Cell<Intent> | undefined;
-      if (fence) {
+      // [DX-ACT2] Why: the issuer normally finishes its own fence. Independent routes only compete after a bounded grace for recovery. Rejected: dispatching duplicate terminal writes on every read of a live fence.
+      if (fence && Date.now() >= (fence.value.helpAfter ?? 0)) {
         await this.help(fence);
         continue;
       }
@@ -772,6 +774,11 @@ export class Account {
         .filter((t) => t > at && t <= now)
         .sort()[0];
       if (!due) return p;
+      // A due valid-time boundary still has to be durably recorded before this read returns.
+      if (fence) {
+        await this.help(fence);
+        continue;
+      }
       // [DX-ACT2] Why: recover each effective-time boundary in order from persisted inputs, even if all writers went away. Rejected: changing valid time only on a subsequent save.
       await this.seal("clock-" + due, W0.R1, { valid: due, clock: true, durability: "record" });
     }
@@ -802,6 +809,7 @@ export class Account {
         request,
         ...input,
         source: this.binding,
+        helpAfter: Date.now() + 250,
       },
       key = "claim:" + hash(id);
     await options.beforeCas?.();

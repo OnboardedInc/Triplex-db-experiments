@@ -24,7 +24,7 @@ test("a stalled seal and slow verifier cannot move later offer times or erase th
       if (!seq) await delay(1300);
       rel = doc;
       seq++;
-      for (const kind of ["fence", "event"])
+      for (const kind of seq === 2 ? ["fence"] : ["fence", "event"])
         receipts.push({
           command: "cmd:" + kind + ":" + id,
           ok: true,
@@ -66,6 +66,8 @@ test("a stalled seal and slow verifier cannot move later offer times or erase th
     );
     assert(r.misses >= 1 && r.stale >= 1);
     assert(r.all[0]!.ack!.at - r.all[0]!.scheduled >= 1300);
+    assert.equal(r.all[1]!.issuerTerminalObserved, false);
+    assert.equal(r.all[1]!.error, undefined);
   } finally {
     if (savedLock === undefined) delete process.env.DELTA_MEASURE_LOCK;
     else process.env.DELTA_MEASURE_LOCK = savedLock;

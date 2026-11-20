@@ -168,6 +168,23 @@ export function checkAuditSolo(
         .split("\n")
         .map((line) => JSON.parse(line));
       assert(s.count === reads.length && s.verified.observations === reads.length);
+      assert.deepEqual(read(path.join(folder, "replay-" + base + ".json")), {
+        binding: lit.binding,
+        rawSha: s.sha,
+        verified: s.verified,
+      });
+      const acknowledgements = portion.filter((o: any) => o.ack);
+      assert.equal(s.verified.receipts.length, acknowledgements.length);
+      for (const [k, r] of s.verified.receipts.entries()) {
+        const offer = acknowledgements[k]!;
+        assert.deepEqual(r, {
+          id: offer.id,
+          txId: offer.ack.txId,
+          position: offer.ack.position,
+          fence: r.fence,
+        });
+        assert(Number.isSafeInteger(r.fence) && r.fence > a.seed.position && r.fence < r.position);
+      }
       const plan = read(path.join(folder, "schedule-" + base + ".json"));
       assert.deepEqual(plan, {
         binding: lit.binding,

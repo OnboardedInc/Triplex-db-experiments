@@ -45,6 +45,16 @@ test("a release ACK supplies record mode while stored mode requires the later ac
     const read = await openStored(fresh, ack.seq, end.position);
     assert.equal(end.digest, read.digest);
     assert.deepEqual(read.chunks, []);
+    const prior = await c.currentPosition();
+    const resumed = await persistPublication(fresh, ack.seq, ack.position);
+    assert.deepEqual(resumed, {
+      position: end.position,
+      digest: end.digest,
+      fresh: false,
+      at: null,
+      lastNotice: { position: end.position, at: null },
+    });
+    assert.equal(await c.currentPosition(), prior);
   } finally {
     await c.close();
   }

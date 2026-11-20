@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
+import { setTimeout as delay } from "node:timers/promises";
 import { W0 } from "../../../bench/lib/w0-world.ts";
 import { open } from "../act1/check.ts";
 import { Account } from "./account.ts";
@@ -105,7 +106,13 @@ test("save-first, publish-first and a competing publisher keep the original nati
     );
     const p = await c.currentPosition();
     assert((await r.db.many(["fence"], p)).has("fence"));
-    const recovered = await new CurrentDecisions(r, () => before).read(id);
+    const route = new CurrentDecisions(r, () => before),
+      until = performance.now() + 950;
+    let recovered = await route.read(id);
+    while (recovered.output.release === W0.R1.hash && performance.now() < until) {
+      await delay(20);
+      recovered = await route.read(id);
+    }
     assert(recovered.position > first.position && recovered.position > p);
     assert.equal(recovered.output.release, W0.R2.hash);
     const receipt = await a.seal("paused", W0.R2, { durability: "record" });
