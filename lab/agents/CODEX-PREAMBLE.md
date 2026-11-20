@@ -19,7 +19,7 @@ human is watching this run. Your role and task follow after these rules.
 5. **pnpm** only with `--store-dir /Users/sam/projects/triplex-db-2/.pnpm-store`; never `pnpm config set`.
 6. **Privacy.** Never send the user's email, name or personal details to any website or service; use a generic client name.
 7. **Commits.** Commit on your own branch only; never merge into main. Push your own branch to `origin` (the repository is public: no credentials, personal details, IP addresses, hostnames, home paths or customer names), because bench servers clone it; never push any other branch. End every commit message with:
-   `Co-Authored-By: Codex gpt-6.2-astra <noreply@openai.com>`
+   `Co-Authored-By: Codex gpt-6.2-sol <noreply@openai.com>`
 8. **Code comments** carry the reasoning: `// [EXP-ID] Why: ... Rejected: <alt> (<reason>).`
 9. **Do not spawn other agents.**
 9a. **PASS audit.** Before you commit work that turns observations into a PASS, verdict or receipt, list every place your code does that and
