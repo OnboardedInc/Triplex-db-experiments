@@ -174,8 +174,22 @@ const deepWriter = deepPlan && !tenantSpec ? new (deepField ? FieldSaveWriter : 
 const deepWitness = deep ? new DeepSeedWitness() : undefined;
 const cells = deep ? deepCells(rungSubjects) : undefined;
 const output = path.resolve(opt("output") ?? "");
-if (!output.startsWith(path.join(REPO, "runs") + path.sep)) throw new Error("--output must be under runs/");
 const rawDir = path.dirname(output);
+if (flag("int1-guest-output")) {
+  // [DX-INT1] Why: the managed fixture needs a real Linux device for the unchanged SQLite guard.
+  // Rejected: a FUSE-backed feed ledger or letting arbitrary runs write outside the worktree.
+  assert(process.platform === "linux" && deepSmoke && deepId && !tenantSpec);
+  assert(process.env.DX_THIN_STACK && process.env.DX_THIN_HOST_PID);
+  const stack = JSON.parse(fs.readFileSync(process.env.DX_THIN_STACK, "utf8"));
+  assert(stack.managed?.compact && stack.prefix === deepId.slot && /^tx2-dxthin-/.test(stack.prefix));
+  const info = fs.lstatSync(rawDir);
+  assert.equal(path.dirname(rawDir), fs.realpathSync("/var/tmp"));
+  assert(path.basename(rawDir).startsWith(`int1-arm-${deepId.nonce}-`));
+  assert.equal(path.basename(output), "ns-report.json");
+  assert(info.isDirectory() && info.uid === process.getuid!() && (info.mode & 0o777) === 0o700);
+  assert.equal(fs.statfsSync(rawDir).type, 0xef53);
+  assert.equal(fs.readdirSync(rawDir).length, 0);
+} else if (!output.startsWith(path.join(REPO, "runs") + path.sep)) throw new Error("--output must be under runs/");
 fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
 const rollingReadSmoke = flag("rolling-read-smoke");

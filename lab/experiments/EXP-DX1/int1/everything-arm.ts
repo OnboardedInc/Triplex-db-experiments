@@ -88,15 +88,21 @@ export async function executeArm(
   deadline: number,
   baseline?: string,
   cpus?: string,
+  guest?: "owned-ext4",
 ) {
   const { source, slot, identity: id, smoke } = arm;
   assert((arm.case.load === "reader") === Boolean(baseline));
   const barrier = path.join(output, "barrier");
   fs.mkdirSync(barrier);
   atomicJson(path.join(output, "arm.json"), arm);
-  const work = path.resolve("runs");
+  // [DX-INT1] Why: put the local feed WAL on an actual guest filesystem and export it after the child closes.
+  // Rejected: substituting a shared worktree mount for the independently checked feed device.
+  const work = guest ? fs.realpathSync("/var/tmp") : path.resolve("runs");
+  if (guest) {
+    assert(smoke && process.platform === "linux" && fs.statfsSync(work).type === 0xef53);
+  }
   fs.mkdirSync(work, { recursive: true });
-  const staging = fs.mkdtempSync(path.join(work, "int1-arm-"));
+  const staging = fs.mkdtempSync(path.join(work, `int1-arm-${id.nonce}-`));
   const argv = [
     process.execPath,
     "--no-warnings",
@@ -113,6 +119,7 @@ export async function executeArm(
     smoke ? "deep-smoke-40" : arm.case.people === 10000 ? "deep-10k" : "deep-100k",
     "--output",
     path.join(staging, "ns-report.json"),
+    ...(guest ? ["--int1-guest-output"] : []),
     "--oracle-root",
     oracleRoot,
     "--deep-account",
@@ -159,6 +166,7 @@ export async function executeArm(
       TRIPLEX_TRACE_SLOT: slot,
       TRIPLEX_TRACE_RUN: slot,
       DX_INT1_NATIVE_WRITE_READBACK: "1",
+      ...(guest ? { DX_HARNESS_STORAGE: guest } : {}),
     },
   });
   fs.closeSync(log);

@@ -5,7 +5,7 @@ A running gateway opened its first deep record in 132–144 ms. Fresh stacks too
 At 128 scopes the write gateway had 565 threads and the transactor had 1,097. The last 96 scopes added about four and eight threads each.
 The merged native path passed all 54,079 checks. Malformed rows and genuine write conflicts keep their expected error types.
 The physical campaign uses two pairs at each deep size. The field-save tape uses measured per-account rates and the frozen tape keeps its original rules.
-The larger population sweeps and the corrected campaign smoke are waiting for Mac capacity. Both archived smoke attempts stopped before driver readiness.
+The larger thin sweep has started. Three campaign smokes stopped before the paired trace. The latest seeded all 40 people before SQLite refused the shared filesystem.
 
 ## Mac observations at fixed activity
 
@@ -46,5 +46,5 @@ The campaign keeps the bounded readers and gateways, exact history range, predec
 ## Evidence audit
 
 - The memory collector binds raw phase bytes and ledgers to the attempt, native image and live PIDs. It checks the original people and record positions, fixed admission and gateway counters, and exact first-read and first-save rows. The heap observer binds its challenge to the active slot. The retired-image receipt checks the configured image ID, live reservations and absence of its tag.
-- The combined runner validates the armed scope, original seed and trace and the observed native function on this attempt's actual receipts. The collector rederives the exact offered tape, verifies the sealed oracle files and slot input, reads both original ledgers, recomputes the matched metrics, checks owned cleanup and compares the archived bytes with the producer. An incomplete arm retains its raw output and prevents completion. Eligibility requires all frozen driver checks. Smoke requires zero receipt, read and oracle divergences. The field collector independently groups scheduled offers and actual ACKs by rate window and issues no frozen verdict.
-- Prior full evidence is bound to the Part 3 report at `f06cd0a46`. Local resource observations are diagnostic. The Mac reserved all four heavy permits for another measurement through the recorded cutoff. The repaired smoke and larger census were still queued. [Prior checksums](GATEWAY-SHA256SUMS)
+- The combined runner validates the armed scope, original seed and trace and the observed native function on this attempt's actual receipts. The collector rederives the exact offered tape, verifies the sealed oracle files and slot input, reads both original ledgers, recomputes the matched metrics, checks owned cleanup and compares the archived bytes with the producer. A Mac fixture also checks its recorded guest filesystem. An incomplete arm retains its raw output and prevents completion. Eligibility requires all frozen driver checks. Smoke requires zero receipt, read and oracle divergences. The field collector independently groups scheduled offers and actual ACKs by rate window and issues no frozen verdict.
+- Prior full evidence is bound to the Part 3 report at `f06cd0a46`. Local resource observations are diagnostic. The thin sweep received a slot after the recorded contention. The deep census and the native campaign comparison still need results. [Prior checksums](GATEWAY-SHA256SUMS)

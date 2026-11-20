@@ -32,17 +32,17 @@ export async function localPreflight(dir: string) {
     sha256(canonical([source, stack.containers, stack.prefix, "campaign-fixture"])),
     stack.prefix,
   );
-  fs.mkdirSync(dir);
-  const oracle = path.join(dir, "oracle");
-  atomicJson(path.join(dir, "oracle-source.json"), stageReplay(repo, oracle));
-  atomicJson(path.join(dir, "physical-inputs.json"), {
-    source,
-    slot: stack.prefix,
-    containers: stack.containers,
-    gatewaySource: stack.gatewaySourceSha256,
-  });
-  const cases = openPlan(dir, source, true, "leased-mac");
   try {
+    fs.mkdirSync(dir);
+    const oracle = path.join(dir, "oracle");
+    atomicJson(path.join(dir, "oracle-source.json"), stageReplay(repo, oracle));
+    atomicJson(path.join(dir, "physical-inputs.json"), {
+      source,
+      slot: stack.prefix,
+      containers: stack.containers,
+      gatewaySource: stack.gatewaySourceSha256,
+    });
+    const cases = openPlan(dir, source, true, "leased-mac");
     for (const c of cases) {
       await lease.checkpoint();
       const out = path.join(dir, c.key);
@@ -56,6 +56,8 @@ export async function localPreflight(dir: string) {
           { ...process.env, ...treatment },
           Date.now() + 180_000,
           previous(dir, c),
+          undefined,
+          "owned-ext4",
         ),
         0,
       );
