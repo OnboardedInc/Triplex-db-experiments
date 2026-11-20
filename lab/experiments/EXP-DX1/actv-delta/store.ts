@@ -2,7 +2,16 @@ import assert from "node:assert/strict";
 import { canonical, sha256, V_W0 } from "../../../bench/lib/w0-world.ts";
 import type { OutboxStore } from "../../../bench/lib/w0-outbox.ts";
 
-export type Cell<T = unknown> = { value: T; id: string; hash: string; position: number };
+import { packIndex, unpackIndex } from "./index-patch.ts";
+type Base<T> = { value: T; position: number; hash: string };
+type Encoded = { hash: string; value?: unknown; patch?: string; from?: number; base?: string };
+export type Cell<T = unknown> = {
+  base?: Base<T>;
+  value: T;
+  id: string;
+  hash: string;
+  position: number;
+};
 export type Patch = { key: string; value: unknown; prior?: Cell };
 export const hash = (v: unknown) => sha256(canonical(v));
 export class Conflict extends Error {}
@@ -17,11 +26,58 @@ export class Objects {
   entity(k: string) {
     return "actv-delta:" + this.account + ":" + k;
   }
+  private readonly bases = new Map<string, Base<unknown>>();
+  async decode<T>(key: string, id: string, position: number, raw: string): Promise<Cell<T>> {
+    const wire: Encoded = JSON.parse(raw);
+    let value = wire.value,
+      base: Base<unknown> | undefined;
+    if (wire.patch !== undefined) {
+      assert(
+        (key === "tree" || key.startsWith("page:")) &&
+          !Object.hasOwn(wire, "value") &&
+          Number.isSafeInteger(wire.from) &&
+          wire.from! > 0 &&
+          wire.from! < position &&
+          typeof wire.base === "string",
+        "invalid index patch coordinates",
+      );
+      const k = key + "/" + wire.from + "/" + wire.base;
+      base = this.bases.get(k);
+      if (!base) {
+        let original = (await this.many<unknown>([key], wire.from!)).get(key);
+        if (!original || original.hash !== wire.base || original.position !== wire.from) {
+          const { originalObject } = await import("./recovery.ts");
+          original = await originalObject(
+            this,
+            key,
+            wire.from!,
+            (val) => hash([this.account, key, val]) === wire.base,
+          );
+        }
+        assert(
+          original.position === wire.from && original.hash === wire.base && !original.base,
+          "patch requires immutable full base",
+        );
+        base = { position: original.position, hash: original.hash, value: original.value };
+        if (this.bases.size >= 128) this.bases.delete(this.bases.keys().next().value!);
+        this.bases.set(k, base);
+      }
+      value = unpackIndex(base.value, wire.patch);
+    }
+    assert.equal(hash([this.account, key, value]), wire.hash, "incorrect or misbound object bytes");
+    return {
+      id,
+      position,
+      hash: wire.hash,
+      value: value as T,
+      ...(base ? { base: base as Base<T> } : {}),
+    };
+  }
   async many<T>(keys: readonly string[], position: number): Promise<Map<string, Cell<T>>> {
     const unique = [...new Set(keys)],
       out = new Map<string, Cell<T>>();
-    for (let at = 0; at < unique.length; at += 128) {
-      const batch = unique.slice(at, at + 128),
+    for (let at = 0; at < unique.length; at += 64) {
+      const batch = unique.slice(at, at + 64),
         entities = new Map(batch.map((k) => [this.entity(k), k]));
       const basis = { position, validAt: V_W0 },
         answer = await this.comp.sweepPage([...entities.keys()], basis);
@@ -29,9 +85,7 @@ export class Objects {
       for (const row of answer.rows) {
         const k = entities.get(row.entityId);
         assert(k && !out.has(k) && row.attribute === "delta/object" && row.position <= position);
-        const { value, hash: claimed } = JSON.parse(row.value.value);
-        assert.equal(hash([this.account, k, value]), claimed, "incorrect or misbound object bytes");
-        out.set(k, { id: row.id, position: row.position, hash: claimed, value });
+        out.set(k, await this.decode<T>(k, row.id, row.position, row.value.value));
       }
     }
     return out;
@@ -62,7 +116,18 @@ export class Objects {
       const entityId = this.entity(p.key);
       assert(!assertions.has(entityId), "duplicate object in transaction");
       if (p.prior) ops.push({ op: "retract", id: p.prior.id });
-      const bytes = canonical({ hash: hash([this.account, p.key, p.value]), value: p.value });
+      const content = hash([this.account, p.key, p.value]);
+      let bytes = canonical({ hash: content, value: p.value });
+      if (p.prior && (p.key === "tree" || p.key.startsWith("page:"))) {
+        const b = p.prior.base ?? p.prior,
+          delta = canonical({
+            hash: content,
+            from: b.position,
+            base: b.hash,
+            patch: packIndex(b.value, p.value),
+          });
+        if (Buffer.byteLength(delta) < Buffer.byteLength(bytes)) bytes = delta;
+      }
       assertions.set(entityId, bytes);
       ops.push({
         op: "assert",
@@ -103,6 +168,7 @@ export class Objects {
     return {
       position: result.value.position,
       txId: result.value.txId,
+      ids: new Map(result.value.triples.map((t) => [t.entityId, t.id])),
       assertions: assertions.size,
       operations: ops.length,
       bytes: Buffer.byteLength(JSON.stringify(ops)),

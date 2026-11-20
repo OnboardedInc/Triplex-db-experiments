@@ -26,10 +26,15 @@ const start = stamp(),
   };
 fs.writeFileSync(path.join(dir, "attempt.json"), JSON.stringify(attempt) + "\n", { flag: "wx" });
 process.env.DELTA_ATTEMPT = dir;
-if (mode === "schedules") {
+if (["schedules", "rungs", "crash"].includes(mode!)) {
   for (const [name, files] of [
     ["original", ["../act1/guard.test.ts", "../act1/page.test.ts"]],
     ["delta", ["schedules.test.ts"]],
+    ["fence", ["fence.test.ts"]],
+    ["notify", ["notify-contract.test.ts"]],
+    ["delayed", ["delayed.test.ts"]],
+    ["erasure", ["erasure.test.ts"]],
+    ["recovery", ["recovery.test.ts"]],
   ] as const) {
     const out = path.join(dir, name + ".tap"),
       fd = fs.openSync(out, "wx");
@@ -51,12 +56,19 @@ if (mode === "schedules") {
     const tap = fs.readFileSync(out, "utf8");
     if (name === "original") checkSchedules(tap);
     else {
-      const names = [
-        ...fs
-          .readFileSync(path.join(import.meta.dirname, "schedules.test.ts"), "utf8")
-          .matchAll(/^test\("([^"]+)"/gm),
-      ].map((m) => m[1]);
-      assert(names.length >= 4);
+      const names =
+        name === "delayed"
+          ? [
+              "held pay change",
+              "first item after empty evaluation",
+              "equal transaction with earlier valid time",
+            ].map((s) => "account record / " + s)
+          : [
+              ...fs
+                .readFileSync(path.join(import.meta.dirname, files[0]), "utf8")
+                .matchAll(/^test\(\s*"([^"]+)"/gm),
+            ].map((m) => m[1]);
+      assert.equal(names.length, name === "delta" ? 4 : name === "delayed" ? 3 : 1);
       assert.deepEqual(
         [...tap.matchAll(/^ok \d+ - (.+)$/gm)].map((m) => m[1]),
         names,
@@ -65,8 +77,11 @@ if (mode === "schedules") {
         assert(tap.split("\n").includes(line));
     }
   }
-} else {
-  const worker = await import("./" + mode + ".ts");
+}
+if (mode !== "schedules") {
+  const worker = await import(
+    "./" + (mode === "solo-check" || mode === "deep-loaded" ? "solo" : mode) + ".ts"
+  );
   await worker.run(dir, attempt);
 }
 assert.equal(start, stamp(), "gate sources changed during execution");

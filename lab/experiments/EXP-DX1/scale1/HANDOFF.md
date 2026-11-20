@@ -3,7 +3,7 @@
 Measure one shared Datomic commit pipeline first, followed by the same tenant-local writes through separate databases. The comparison holds the quiet account's offers and reader count fixed. [Targets](../../../TARGETS.md)
 
 <!-- state -->
-The new native seed `arm-p6-i1-seed-a` is running, with an execution ceiling of 08:50:37 UTC November 20. The detached queue `p6-live` advances from its terminal files to staggered and coincident field saves. The new campaign started at 00:49:50 UTC, seven minutes and 33 seconds after the previous queue freed the server. [Previous reader failure](evidence/arm-d19-i1-reader-b-diagnostic.md)
+2026-11-20T02:01:25.346Z · Collected arm-p6-i1-seed-a with service result success, 0 physical-scope report(s) and verified cleanup. arm-p6-i1-pool-staggered-a started at 2026-11-20T01:57:04.299Z with execution ceiling 2026-11-20T11:57:04.299Z.
 <!-- end state -->
 
 With the dedicated destination set in `BENCH_SERVER`, this command shows the queue, bounded units and stage files.

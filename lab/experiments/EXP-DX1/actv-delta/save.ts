@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { W0, canonical } from "../../../bench/lib/w0-world.ts";
+import { W0 } from "../../../bench/lib/w0-world.ts";
 import { expand } from "./dispatch.ts";
-import { Account, type View } from "./account.ts";
+import { Account } from "./account.ts";
 import { hash, type Patch } from "./store.ts";
-import { updatePage } from "./pages.ts";
+import { updatePage, indexAttributes } from "./pages.ts";
 import {
   evaluate,
   resolve,
@@ -14,6 +14,7 @@ import {
   type Mask,
   type Recipe,
 } from "./model.ts";
+import type { PageEdit } from "./index-overlay.ts";
 type Shared = Pick<Body, "seed" | "changes">;
 const refKey = (s: string) => "ref:" + hash(s).slice(0, 2);
 const subjectOf = (e: string) => (e.startsWith("pl:") ? e.split("/")[0]! : undefined);
@@ -28,6 +29,7 @@ export type SaveOptions = {
   nativeOps?: readonly unknown[];
   nativePreconditions?: readonly unknown[];
   originTx?: number;
+  touch?: string;
   trace?: { key: string; value: { token: string } };
 };
 export async function save(
@@ -36,7 +38,7 @@ export async function save(
   edits: readonly Edit[],
   options: SaveOptions = {},
 ) {
-  assert(edits.length > 0 || options.erase);
+  assert(edits.length > 0 || options.erase || (options.touch && W0.isPlacementId(options.touch)));
   for (const e of edits) {
     assert(W0.isInstant(e.from) && (!e.until || (W0.isInstant(e.until) && e.from < e.until)));
     assert(e.e.startsWith("loc:") || e.e.startsWith("jur:") || subjectOf(e.e));
@@ -50,6 +52,7 @@ export async function save(
       options.nativePreconditions ?? [],
       options.originTx ?? null,
       options.trace ?? null,
+      options.touch ?? null,
     ]);
   const result = await account.command(
     id,
@@ -69,6 +72,7 @@ export async function save(
         edits.map((e) => subjectOf(e.e)).filter((s): s is string => !!s),
       );
       if (options.erase) direct.add(options.erase);
+      if (options.touch) direct.add(options.touch);
       const sharedIds = [...new Set(edits.filter((e) => !subjectOf(e.e)).map((e) => e.e))];
       const refs = await account.refs(h, p, [...new Set(sharedIds.map(refKey))]);
       const shared = await db.many<Shared>(
@@ -98,19 +102,33 @@ export async function save(
             .concat(sharedIds.flatMap((e) => refs.get(refKey(e))?.value[e] ?? [])),
         ),
       ];
-      const tree = await account.tree(h, p),
-        newTree = structuredClone(tree.value),
-        pages = await account.pages(h, p, numbers);
+      const touchesLinks = edits.some((e) => e.a === "location" || e.a === "jurisdiction"),
+        indexedChange =
+          h.indexed &&
+          edits.some(
+            (e) =>
+              indexAttributes.has(e.a) &&
+              e.from <= h.indexedAt &&
+              (!e.until || h.indexedAt < e.until),
+          ),
+        needsPages = indexedChange || touchesLinks || sharedIds.length > 0,
+        tree = needsPages ? await account.tree(h, p) : undefined,
+        newTree = tree ? structuredClone(tree.value) : undefined,
+        pages = needsPages ? await account.pages(h, p, numbers, tree) : undefined;
+      const changedPages: PageEdit[] = [];
       const touched = new Set<string>(),
         refAdds = new Map<string, Set<number>>();
-      for (const [n, page] of pages) {
-        const ids = sharedIds.length
-            ? page.value.roster
-            : page.value.roster.filter((s) => direct.has(s)),
-          cells = await db.many<Body>(
-            ids.map((s) => "point:" + s),
-            p,
-          ),
+      for (const n of numbers) {
+        const page = pages?.get(n),
+          ids = sharedIds.length
+            ? page!.value.roster
+            : [...direct].filter((s) => directBodies.get("point:" + s)!.value.page === n),
+          cells = sharedIds.length
+            ? await db.many<Body>(
+                ids.map((s) => "point:" + s),
+                p,
+              )
+            : directBodies,
           masks = await account.masks(ids),
           worlds: W0.World[] = [];
         const prepared = new Map<string, { old: Body; next: Body; mask: Mask | undefined }>();
@@ -154,15 +172,28 @@ export async function save(
           prepared.set(s, { old, next, mask });
           touched.add(s);
         }
-        const previous = await account.views([...prepared.keys()], p, undefined, h);
+        // [DX-ACT2] Why: source and prior publication already share this exact guarded cut. Rejected: reading the same subject and erasure rows twice in one save.
+        const previous = await account.views([...prepared.keys()], p, undefined, h, {
+          rows: cells,
+          masks,
+        });
         for (const s of ids) {
           const key = "point:" + s,
             cell = cells.get(key)!,
             x = prepared.get(s);
           if (!x) continue;
-          const m = options.erase === s ? { from: basis.validTime, tx } : x.mask;
+          const m: Mask | undefined =
+            options.erase === s ? { from: basis.validTime, tx, published: {} } : x.mask;
           if (options.erase === s) {
-            assert(!x.mask, "already erased");
+            assert(!x.mask && m, "already erased");
+            // [DX-ACT2] Why: old domain reads must mask the fact, while an already published notice keeps its actual active/retired state. Rejected: recomputing historical delivery state with an erased input.
+            for (const a of h.activations) {
+              const n = (a as typeof a & { seq?: number }).seq;
+              if (!n) continue;
+              const at = await db.get<Recipe>("event:" + n, p);
+              m.published![n] = stateText((await account.readAt(s, at.position)).state);
+            }
+
             patches.push({ key: "mask:" + s, value: m });
           }
           const w = worldOf(x.next, basis, m),
@@ -170,19 +201,28 @@ export async function save(
             applied = W0.publish(previous.get(s)!.state, [W0.recordOf(o)]);
           x.next.state = stateText(applied.state);
           patches.push({ key, prior: cell, value: account.keys.convert(x.next, "write", m) });
-          for (const ref of references(w)) {
+          for (const ref of touchesLinks ? references(w) : []) {
             const v = refAdds.get(ref) ?? new Set<number>();
             v.add(n);
             refAdds.set(ref, v);
           }
-          worlds.push(w);
+          if (needsPages)
+            worlds.push(
+              h.indexedAt === basis.validTime
+                ? w
+                : worldOf(x.next, { ...basis, validTime: h.indexedAt }, m),
+            );
         }
-        const refreshed = updatePage(page.value, worlds, basis, h.indexed),
+        if (!page || !newTree || (!indexedChange && !touchesLinks && !sharedIds.length)) continue;
+        const refreshed = updatePage(
+            page.value,
+            worlds,
+            { ...basis, validTime: h.indexedAt },
+            h.indexed,
+          ),
           digest = hash(refreshed);
-        if (digest !== newTree.pages[n]) {
-          newTree.pages[n] = digest;
-          patches.push({ key: "page:" + n, prior: page, value: refreshed });
-        }
+        if (digest !== hash(page.value))
+          changedPages.push({ number: n, base: page.physical, next: refreshed });
       }
       const refCells = await db.many<Record<string, number[]>>(
           [...new Set([...refAdds.keys()].map(refKey))],
@@ -200,13 +240,18 @@ export async function save(
         }
       }
       for (const [key, value] of updated) {
-        newTree.refs[key] = hash(value);
+        newTree!.refs[key] = hash(value);
         patches.push({ key, value, prior: refCells.get(key) });
       }
-      const root = hash(newTree);
-      if (root !== h.root) patches.push({ key: "tree", value: newTree, prior: tree });
+      const baseRoot = newTree ? hash(newTree) : (h.baseRoot ?? h.root);
+      if (newTree && tree && baseRoot !== (h.baseRoot ?? h.root))
+        patches.push({ key: "tree", value: newTree, prior: tree });
+      const index = await account.overlay.extend(h.index, p, seq, changedPages),
+        root = index.root ? hash([baseRoot, index.root]) : baseRoot;
+      const { index: previousIndex, baseRoot: previousBase, ...priorHead } = h;
       const event: Recipe = {
         kind: "save",
+        ...(index.delta ? { indexDelta: index.delta } : {}),
         seq,
         parent: h.seq,
         parentHash: head.hash,
@@ -222,7 +267,8 @@ export async function save(
       };
       return {
         head: {
-          ...h,
+          ...priorHead,
+          ...(index.root ? { index: index.root, baseRoot } : {}),
           basis,
           root,
           seq,
@@ -238,6 +284,9 @@ export async function save(
     options.nativeOps,
     options.nativePreconditions,
   );
-  if (options.erase) account.keys.forget(options.erase);
+  if (options.erase) {
+    const mask = await account.db.get<Mask>("mask:" + options.erase, result.position);
+    account.keys.forget(options.erase, hash(mask.value));
+  }
   return result;
 }

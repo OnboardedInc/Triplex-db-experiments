@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { W0, canonical, V_W0 } from "../../../bench/lib/w0-world.ts";
+import { W0, V_W0 } from "../../../bench/lib/w0-world.ts";
 import { mapW0Trace } from "../../../bench/lib/w0-trace.ts";
 import { openW0Window } from "../../../bench/lib/w0-traffic.ts";
 import type { TraceEvent } from "../../../bench/lib/trace.ts";

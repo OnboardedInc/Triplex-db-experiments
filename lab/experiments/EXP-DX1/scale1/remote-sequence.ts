@@ -25,6 +25,7 @@ type Step = {
   retryOf?: string;
   groupControl?: string;
   live?: "staggered" | "coincident";
+  activationMode?: "delta";
   bounded?: true;
   bootstrapCache?: string;
 };
@@ -32,7 +33,6 @@ type Plan = { label: string; steps: Step[]; final: boolean; keepGoing?: true };
 const label = process.argv[2] ?? "";
 const safe = (s: string) => /^[a-z][a-z0-9-]{2,40}$/.test(s);
 const sha = (s: string) => /^[0-9a-f]{40}$/.test(s);
-const operator = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../../..");
 const call = (cmd: string, args: string[], options: { cwd?: string; timeout?: number } = {}) =>
   execFileSync(cmd, args, { encoding: "utf8", timeout: 30000, ...options }).trim();
 const unitState = (unit: string) =>
@@ -83,6 +83,15 @@ function identified(step: Step) {
     );
   if (step.groupControl)
     assert(step.item === 3 && step.mode === "interference" && step.layout === "pooled");
+  if (step.activationMode)
+    assert(
+      step.activationMode === "delta" &&
+        step.item === 2 &&
+        step.mode === "activation" &&
+        step.bounded &&
+        !step.layout &&
+        !step.seedImage,
+    );
   if (step.bootstrapCache) assert(sha(step.bootstrapCache));
 }
 async function prepare(step: Step) {
@@ -147,18 +156,29 @@ async function prepare(step: Step) {
 async function run(step: Step) {
   const base = path.join(root, step.tag),
     attempt = path.join(base, "attempt.json"),
-    unit = "triplex-scale1-" + step.tag;
+    unit = "triplex-scale1-" + step.tag,
+    build = path.join(root, "build-" + step.source),
+    runtime = path.join(build, "repository"),
+    node = path.join(build, "tools/bin/node");
   if (!exists(attempt)) {
     state({ stage: "preparing", step });
-    const build = await prepare(step);
+    assert.equal(await prepare(step), build);
     const prior = step.baseline ? read(path.join(root, step.baseline, "attempt.json")) : null;
     if (prior)
       assert(prior.source === step.source && prior.mode === "zero" && prior.item === step.item);
-    const runtime = path.join(build, "repository");
     const sizing =
-      step.sizing ?? step.sizingChoices?.find((t) => exists(path.join(root, t, "sizing.json")));
+      step.sizing ??
+      step.sizingChoices?.find(
+        (t) =>
+          exists(path.join(root, t, "sizing.json")) ||
+          (step.item === 5 &&
+            step.mode === "seed" &&
+            exists(path.join(root, t, "transfer/seed-image.json")) &&
+            read(path.join(root, t, "terminal.json")).service === "success"),
+      );
     const opts = [
       ...(step.bounded ? ["--bounded-readers"] : []),
+      ...(step.activationMode ? ["--activation-mode", step.activationMode] : []),
       ...(step.live ? ["--profile", "deep-live", "--peak-alignment", step.live] : []),
       ...(step.layout ? ["--account-layout", step.layout] : []),
       ...(step.baseline ? ["--baseline", step.baseline] : []),
@@ -168,14 +188,14 @@ async function run(step: Step) {
     ];
     const args = [
       "--experimental-strip-types",
-      path.join(operator, experiment),
+      path.join(runtime, experiment),
       "launch",
       String(step.item),
       step.tag,
       step.mode,
       ...opts,
     ];
-    const proc = spawnSync(path.join(build, "tools/bin/node"), args, {
+    const proc = spawnSync(node, args, {
       cwd: runtime,
       env: {
         ...process.env,
@@ -201,6 +221,7 @@ async function run(step: Step) {
       a.layout === step.layout &&
       a.live === step.live &&
       a.bounded === step.bounded &&
+      a.activationMode === step.activationMode &&
       a.groupControl === step.groupControl,
   );
   state({ stage: "running", step, ceilingUTC: new Date(a.at + a.ceiling * 1000).toISOString() });
@@ -219,6 +240,22 @@ async function run(step: Step) {
       t.cleanup === true,
   );
   await wait(() => ["inactive", "failed"].includes(unitState(unit)), Date.now() + 180000);
+  if (step.activationMode === "delta") {
+    if (t.service === "success") {
+      call(
+        node,
+        ["--import", "tsx", "lab/experiments/EXP-DX1/actv-delta/verify-campaign.ts", base],
+        { cwd: runtime, timeout: 120000 },
+      );
+    }
+    return {
+      success: t.service === "success",
+      capacity: t.service === "capacity-refused",
+      service: t.service,
+      scopeReports: t.scopeReports,
+      stopReason: t.stopReason,
+    };
+  }
   if (a.item >= 2 && a.spec.people * a.spec.scopes >= 100000 && t.service === "success") {
     const proof = read(path.join(base, "transfer/preflight.json"));
     const binding = { source: a.source, slot: a.slot, nonce: a.nonce };

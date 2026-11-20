@@ -6,7 +6,6 @@ import { fork } from "node:child_process";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   admission,
-  appendEvent,
   docker,
   dockerArgs,
   DOCKER_HOST,
@@ -22,12 +21,24 @@ export async function local(opts, config, manager) {
   assert(
     process.platform === "darwin" && opts.holder === "DX-ACT2" && dockerArgs([])[1] === DOCKER_HOST,
   );
-  assert(["schedules", "price", "rungs", "preflight"].includes(opts.run));
+  assert(
+    [
+      "schedules",
+      "price",
+      "rungs",
+      "controls",
+      "preflight",
+      "loaded",
+      "crash",
+      "solo-check",
+      "deep-loaded",
+    ].includes(opts.run),
+  );
   const dir = path.resolve(opts.out),
     nonce = randomUUID(),
     prefix = "tx2-dxdelta-" + nonce.slice(0, 8);
   fs.mkdirSync(dir, { recursive: false });
-  const caps = { pg: 256, tx: 640, gw: 1024 },
+  const caps = { pg: 256, tx: 896, gw: 1024 },
     labels = ["--label", "delta.attempt=" + nonce],
     names = Object.keys(caps).map((r) => prefix + "-" + r);
   const attempt = { nonce, run: opts.run, prefix, source: process.env.DELTA_SOURCE ?? null };
@@ -52,7 +63,7 @@ export async function local(opts, config, manager) {
           const req = {
             container: prefix,
             memBytes: Object.values(caps).reduce((a, b) => a + b, 0) * 2 ** 20,
-            diskForecastBytes: 4 * 2 ** 30,
+            diskForecastBytes: (opts.run === "deep-loaded" ? 8 : 4) * 2 ** 30,
           };
           const allowed = admission({
             config: { ...config, pool: { ...config.pool, memLimitBytes: limit } },
@@ -173,7 +184,7 @@ export async function local(opts, config, manager) {
       "object-cache-max=64m",
     ].join("\n");
     const boot =
-      "set -eu; cat /opt/datomic/bin/sql/postgres-table.sql; while [ ! -f /tmp/delta.ready ]; do sleep 1; done; printenv DELTA_PROPERTIES > /tmp/delta.properties; exec bin/transactor -Xms128m -Xmx354m -XX:ActiveProcessorCount=2 /tmp/delta.properties";
+      "set -eu; cat /opt/datomic/bin/sql/postgres-table.sql; while [ ! -f /tmp/delta.ready ]; do sleep 1; done; printenv DELTA_PROPERTIES > /tmp/delta.properties; exec bin/transactor -Xms128m -Xmx448m -XX:ActiveProcessorCount=2 /tmp/delta.properties";
     start("tx", image, ["-e", "DELTA_PROPERTIES=" + props], "/bin/sh", ["-c", boot]);
     sql(docker(["exec", tx, "cat", "/opt/datomic/bin/sql/postgres-table.sql"]));
     docker(["exec", tx, "touch", "/tmp/delta.ready"]);
@@ -220,16 +231,8 @@ export async function local(opts, config, manager) {
       "/opt/datomic/bin/run",
       ["-m", "triplex.gateway.main"],
     );
-    const mounted = docker([
-      "exec",
-      gw,
-      "sh",
-      "-c",
-      "cd /opt/gateway/src && find . -type f -exec sha256sum {} +",
-    ])
-      .split("\n")
-      .map((v) => [v.slice(68), v.slice(0, 64)])
-      .sort();
+    const { mountedGateway } = await import("./power.mjs");
+    const mounted = mountedGateway(gw);
     assert.deepEqual(mounted, manifest);
     await wait(gw, async () => {
       const r = await fetch(info.endpoint + "/health", { signal: AbortSignal.timeout(1500) }).catch(
@@ -267,8 +270,34 @@ export async function local(opts, config, manager) {
       },
       stdio: ["inherit", "inherit", "inherit", "ipc"],
     });
-    child.on("message", (m) => {
+    let restarts = 0;
+    child.on("message", async (m) => {
+      if (m?.type === "power") {
+        try {
+          assert(
+            opts.run === "crash" &&
+              m.nonce === nonce &&
+              m.seq === ++restarts &&
+              [1, 2].includes(restarts),
+          );
+          const { recoverPower } = await import("./power.mjs");
+          const recovered = await recoverPower({
+            created,
+            nonce,
+            endpoint: info.endpoint,
+            gateway,
+            sql,
+          });
+          child.send({ id: m.id, recovered });
+        } catch (e) {
+          child.send({ id: m.id, error: String(e) });
+        }
+      }
       if (m?.type === "storage") {
+        if (m.checkpoint) {
+          assert(opts.run === "price" && ["on", "off"].includes(process.env.DELTA_PRICE_ARM));
+          sql("CHECKPOINT");
+        }
         const data = sql(
           "SELECT pg_database_size(current_database()),pg_wal_lsn_diff(pg_current_wal_insert_lsn(),'0/0')",
         )

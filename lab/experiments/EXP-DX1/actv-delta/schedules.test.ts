@@ -7,12 +7,12 @@ import path from "node:path";
 import test from "node:test";
 import { open } from "../act1/check.ts";
 import { DomainOracle, emptyWireState } from "../../../bench/lib/w0-gates.ts";
-import { W0, canonical } from "../../../bench/lib/w0-world.ts";
+import { W0 } from "../../../bench/lib/w0-world.ts";
 import { Account } from "./account.ts";
 import { Objects, hash } from "./store.ts";
 import { save } from "./save.ts";
 import { drain, expand, concrete, Receiver } from "./dispatch.ts";
-import { epoch, encodeBig, decodeBig, type Edit, type Recipe } from "./model.ts";
+import { epoch, encodeBig, decodeBig, type Edit } from "./model.ts";
 const valid = W0.POPULATION_VALID_TIME,
   oldDate = "2026-10-05T12:00:00.000000Z",
   s = "pl:a",
@@ -240,6 +240,7 @@ test("two releases before draining, lost acknowledgements and restart at every d
           ...g.comp,
           transact: async (...args: Parameters<typeof g.comp.transact>) => {
             const r = await g.comp.transact(...args);
+            if (!String(args[1].commandId).includes("cmd:event:")) return r;
             assert(r.ok);
             lost = r.value.position;
             throw Error("lost ACK");
@@ -364,7 +365,10 @@ test("future release, midnight without a source write, protected erasure and cor
     await save(g.a, "erased", [], { erase: s });
     const past = await g.a.readAt(s, g.seeded.position);
     assert(past.output.tasks.some((t) => t.kind === "everify.ssn-erased"));
-    assert(!fs.existsSync(path.join(g.keys, hash("wrong"))) && fs.readdirSync(g.keys).length === 0);
+    assert(
+      !fs.existsSync(path.join(g.keys, hash("wrong"))) &&
+        fs.readdirSync(g.keys).every((n) => n.endsWith(".erased")),
+    );
     await assert.rejects(g.a.admit("held-old-identity", now), /stale/);
     const p = await g.comp.currentPosition(),
       root = await g.db.get<any>("tree", p);

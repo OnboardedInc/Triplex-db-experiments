@@ -1,6 +1,6 @@
+import type { IndexDelta, IndexLink } from "./index-overlay.ts";
 import assert from "node:assert/strict";
-import { W0, canonical } from "../../../bench/lib/w0-world.ts";
-import { sha256 } from "../../../bench/lib/w0-world.ts";
+import { W0 } from "../../../bench/lib/w0-world.ts";
 export const epoch = "2000-01-01T00:00:00.000000Z";
 export type Edit = {
   e: string;
@@ -20,7 +20,17 @@ export type Body = {
   seen: number;
 };
 export type Activation = W0.Activation & { doc: W0.ReleaseDoc };
+export type Epochs = {
+  docs: Record<string, W0.ReleaseDoc>;
+  names: string[];
+  times: string[];
+  epochs: number[][];
+};
 export type Head = {
+  index?: IndexLink;
+  baseRoot?: string;
+  history?: string;
+  seedTx?: number;
   seq: number;
   releaseSeq: number;
   basis: W0.Basis;
@@ -37,6 +47,8 @@ export type Head = {
   compiler: string;
 };
 export type Recipe = {
+  indexDelta?: IndexDelta;
+  history?: Epochs;
   kind: "release" | "clock" | "save" | "seed";
   seq: number;
   parent: number;
@@ -49,6 +61,7 @@ export type Recipe = {
   root: string;
   census: string;
   shape: "packed" | "recipe" | "full" | "live";
+  fullCheck?: { people: number; digest: string };
   packed?: string[];
   flags?: [string, boolean, boolean][];
   subjects?: string[];
@@ -78,7 +91,7 @@ export function seedFacts(w: W0.World, b: W0.Basis) {
   // [DX-ACT2] Why: validate every source assertion before omitting W0's answer-chain ballast from the policy projection. Rejected: dropping unknown facts before W0 validation.
   return w.facts.filter((f) => f.a !== "answers" && !f.e.includes("/ans:"));
 }
-export type Mask = { from: string; tx: number };
+export type Mask = { from: string; tx: number; published?: Record<string, string> };
 export function worldOf(body: Body, b: W0.Basis, mask?: Mask): W0.World {
   const visible = body.changes.filter(
     (c) => c.tx <= b.tx && c.from <= b.validTime && (!c.until || b.validTime < c.until),
