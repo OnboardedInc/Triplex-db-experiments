@@ -1,30 +1,29 @@
 # DX-SCALE1 handoff
 
-The November 20 owner decision sets one Datomic database for all accounts. The current study measures ten full-size deep accounts in that database with the current writer and the audited prepared grouped writer. Both policies use the same ten writer clients, reader seats and feed observer. [Scale review](REVIEW.md) · [Write-path review](WRITE-REVIEW.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 28.02 through 2026-11-20 20:12 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The pooled 162,456,470-fact seed continues on the audited source with its existing 2026-11-21T04:24:01.788Z ceiling. The detached plan contains the published pilot and active pooled seed. The two-database seed and the earlier short timing arms were removed before start. The one-database relay waits on seed completion and the verified transfer. It is pinned to aabec48df and retains the original campaign deadline. At 18:15 UTC the loader ledger recorded 1,000,000 people and 162,456,470 facts across 87,001 acknowledged frames. The independent verifier is checking durable claims, followed by the full feed and image sealing. The final sampled PostgreSQL size during ingestion was 114.24 GiB.
+The pooled seed's full loader ledger has 1,000,000 people, 162,456,470 facts and 87,001 acknowledged frames. The native verifier is checking durable claims, then the complete feed, before writing the immutable image and transfer. The current seed ceiling is 2026-11-21T04:24:01.788Z. The superseded two-writer relay is stopped. The active seed and its original controller were left running.
 <!-- end state -->
 
-With the dedicated destination in `BENCH_SERVER`, this command shows all active stages and their ceilings.
+With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
 
 ```sh
 node --import tsx lab/experiments/EXP-DX1/scale1/control.ts status
 ```
 
-| Order | Arm | Maximum |
+| Order | Item | Allocation |
 | ---: | --- | ---: |
-| Done | Verified 100,000-person image, then identical zero-reader and 64-reader tapes | Both reported at 3:08 a.m. ET |
-| Done | Verified grouped pilot with ten 10,000-person accounts and matched quiet windows | Published at 5:21 a.m. ET |
-| 1 | `arm-d7-wfix-pool-seed` verifies ten 100,000-person accounts in one database | 18 h |
-| 2 | Current writer, 12 matched five-minute pairs at each of 35, 50, 235 and 394 saves/s | 11.5 h |
-| 3 | Prepared grouped writer, same image and tapes | 11.5 h |
-
-The one-database plan is forecast at 34–38 hours from the pilot launch (USD 37.06–41.42). Campaign admission ends by November 21 at 7:09 p.m. ET, followed by controller cleanup. Both writers start from the same immutable seed with 64 reader seats on two worker cores. The 620/s headroom target requires a separately rated arm. [Forecasts](PREDICTIONS.md) · [One-database plan](decision/held-placement.json)
+| 1 | Finish verifying and seal the existing full pooled seed | Existing 18 h native ceiling |
+| 2 | Present writer at 35, 50, 235 and 394 saves/s with matched quiet windows | 3 h maximum |
+| 3 | PREP1 grouped and per-person writers with 1, 2 and 4 write gateways | Six hours of nominal arm ceilings after compatible fast restores |
+| 4 | v0.1 fresh scorecard | 235 minutes |
+| 5 | AGE1 calibration, then age to 1 billion native records if it fits | 9.9 h maximum |
+| 6 | v0.1 scorecard on the sealed 1B database | 235 minutes |
 
 `arm-d7-wfix-pilot-bounded` verified the options on its startup scope. On the restored scope the writer path received a response without the nonce. It recorded zero timed cells and cleaned up. The retry derives both roles from fresh replies at the original cut and verifies the active options through the same SDK clients that carry the measured writes. The pilot seed is reused from its original accepted transfer.
 
-Each audited timed arm reads its actual writer gateway configuration at the restored database cut and binds the options, installed function, source, slot, nonce and clock into the result. The native gate also checks retrievable receipts, full feed changes and pinned field lifetimes. The single-account and matched pilot results are published. The full-size arms keep absolute GC and safepoint logs for all three JVMs and per-save stage evidence. The single-account and pilot archives lack matched JVM pause logs, leaving their slow-save attribution unresolved.
+Each audited timed arm reads its actual writer gateway configuration at the restored database cut and binds the options, installed function, source, slot, nonce and clock into the result. The native gate also checks retrievable receipts, full feed changes and pinned field lifetimes. The single-account and matched pilot results are published. The trimmed present-writer arm keeps absolute GC and safepoint logs for all three JVMs and per-save stage evidence. The single-account and pilot archives lack matched JVM pause logs, leaving their slow-save attribution unresolved.
 
 The first zero-reader and bounded-reader attempts stopped during observer startup because their inherited SDK environment named the retired `fresh-texts` flag. Each recorded zero timed cells. Both replacements use the verified `arm-d7-single-seed` image. The retry relay initially refused the reformatted Mac transfer manifest and then retried using the original server byte digest checked against the same collected content. The corrected launcher passes the stack's selected paths to the observer processes.
 
