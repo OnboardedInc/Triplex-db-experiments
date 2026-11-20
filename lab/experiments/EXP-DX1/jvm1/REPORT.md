@@ -13,7 +13,7 @@ Fresh candidate measurements and a physical timing run are still needed before c
 - [Inventory](INVENTORY.md), [vendor sources](SOURCES.md), [settings and reasons](CONFIGURATION.md), [Mac measurements](MAC.md), [before-run predictions](PREDICTIONS.md), [server command](SERVER.md).
 - The server command measures the shared database using the exact W1 field schedule and a sealed seed. It still needs a physical rehearsal to establish runtime and compare the four arms.
 - DX-JVM1 Mac evidence belongs in the durable experiment directory. Historical DX-TAIL1 figures and hashes are indexed in the Mac and inventory notes. The branch keeps the candidate opt-in.
-- The Mac inventory and dependency setup waited behind other lab measurement leases. Full launch readback, alternating replay, startup timing and candidate measurements have not yet been observed. Historical logs lack complete final HotSpot flags for the bench and do not establish private SQL pool values.
+- Successive measurement leases held off Mac inventory and dependency setup for over an hour. The inventory, setup and replay remain queued. Full launch readback, alternating replay, startup timing and candidate measurements are still pending. Historical logs lack complete final HotSpot flags for the bench and do not establish private SQL pool values.
 - Launchers for T1, SCALE1, W1 and BM1 use the instrumented split-stack path. The managed engine and image entrypoint capture each embedded role separately. The managed image needs a rebuilt source pin before adoption.
 
 ## Evidence audit
