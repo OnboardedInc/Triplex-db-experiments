@@ -106,6 +106,12 @@ export async function measuredPair(
   const pins = inputPins(source);
   const native = process.env.NOTIFY_NATIVE === "1" || deep;
   const sourceEndpoint = process.env.NOTIFY_SENDER_URL;
+  const copyWorkers =
+    process.env.NOTIFY_COPY_WORKERS === undefined
+      ? undefined
+      : Number(process.env.NOTIFY_COPY_WORKERS);
+  if (copyWorkers !== undefined)
+    assert(sourceEndpoint && Number.isInteger(copyWorkers) && copyWorkers >= 1 && copyWorkers <= 8);
   if (sourceEndpoint)
     assert(native && independent && recipientPages && sourceEndpoint !== process.env.DATOMIC_URL);
   const open = (name: string) =>
@@ -158,6 +164,7 @@ export async function measuredPair(
               readIntervalMs,
               priority,
               sourceEndpoint,
+              copyWorkers,
             }
           : undefined,
         duration,
@@ -193,7 +200,11 @@ export async function measuredPair(
   assert(a.readP99 && b.readP99 && a.saveP99 && b.saveP99);
   if (sourceEndpoint) {
     assert(a.senderReadPeer === "dedicated" && b.senderReadPeer === "dedicated");
-    assert(a.readCount >= 500 && b.readCount >= 500, "Too few live reads for the paired tail");
+    // [DX-STG1] Why: the 1k copy preflight checks exact effects and ordered
+    // state, while the deep run prices the tail. Rejected: padding a quick
+    // preflight with idle reads and presenting those as concurrent traffic.
+    if (!copyWorkers || n >= 100000)
+      assert(a.readCount >= 500 && b.readCount >= 500, "Too few live reads for the paired tail");
   }
   const result = {
     diagnostic: true,
@@ -202,6 +213,7 @@ export async function measuredPair(
     slot,
     nonce,
     inputs: pins,
+    copyWorkers,
     profile: a.profile,
     dispatch: a,
     baseline: b,

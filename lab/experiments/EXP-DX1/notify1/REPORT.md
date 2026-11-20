@@ -5,7 +5,7 @@ The smaller list used one recipient commit at 10,000 people. Rebuilding it from 
 The separate gateway lowered read delays in both repeats. Neither gateway met both latency limits consistently.
 Loading one source copy and reading it in parallel raised the cold deep rate from 140 to 174 notices per second.
 Fetching that copy still took nearly two thirds of the sending time. It would need to be more than ten times faster to hit the target.
-The longer copy test sent 140 notices per second and broke both latency limits.
+The longer copy test broke both latency limits. The server estimate is 40–70 notices per second if foreground delays stay within the limits.
 
 | Review finding | Decision | Fix | Regression test |
 | --- | --- | --- | --- |
@@ -45,6 +45,6 @@ Keep the recipient stopped while taking the one-second cut under live saves. Reo
 
 **Server command and evidence**
 
-`DOCKER_HOST=unix:///var/run/docker.sock node --import tsx lab/experiments/EXP-DX1/notify1/bench.ts launch notify-part4-001 isolated 16 14` runs the 1,000-person preflight, shared-floor costs at 1,000 and 100,000, then the 100,000-person deep paired workload on the same server. The plan was checked locally. [Runner](bench.ts)
+`DOCKER_HOST=unix:///var/run/docker.sock node --import tsx lab/experiments/EXP-DX1/notify1/bench.ts launch notify-part5-001 copied 16 0 4` runs a 1,000-person preflight that must demonstrate actual copy work, then shared-floor costs at 1,000 and 100,000 and a 100,000-person deep pair with 64 readers. The 40–70/s estimate implies 4–7 minutes for 16,500 notices and 39–69 minutes for 165,000. The server has yet to establish a rate inside both limits. [Forecast](RATE.md) · [Runner](bench.ts)
 
-The joined gate binds the two source revisions, native slot and original transaction bytes. The cost runner checks the oracle and reopens recipient receipts by ID. The compact verifier binds both world bytes and the original frame with no intervening save. The rate reducers bind the fresh run, slot and receipts, recompute matched tails and count copy pages and completed samples. The copy binds adjacent release frames, census digest, business instant and native snapshot before storing the selection with the recipient cursor. Python checks affected and unchanged people and ordered effects. The lab slot and its volume were removed. No acceptance pins changed. [Part 5 evidence](PART5-SHA256SUMS) · [Part 4 evidence](PART4-SHA256SUMS)
+The joined gate binds two source revisions, native slot and original transaction bytes. The cost runner checks the oracle and reopens recipient receipts by ID. The compact verifier binds both world bytes and the original frame. Rate reducers bind run, slot, receipts, offers, copy pages and samples. A copied selection binds the release pair, census, business instant and native frames. Python checks its complement and ordered effects. The server inspector validates the same attempt and preflight effect proof, worker count, source hashes, raw schedules and 500 live completions of each kind per arm before reporting both limits met. The lab slot and volume were removed. No acceptance pins changed. [Part 5 evidence](PART5-SHA256SUMS) · [Part 4 evidence](PART4-SHA256SUMS)
