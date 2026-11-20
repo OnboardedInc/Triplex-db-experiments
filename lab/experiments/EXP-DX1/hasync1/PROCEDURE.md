@@ -16,17 +16,20 @@ The lab's latch fences its own Docker processes via the management plane. A phys
 
 The explicit single-copy mode restores write service after the first failure. Use strict two-copy mode when every new ACK must survive another machine loss. A third durable copy or a returned standby is required to keep both the protection and the recovery clock in that case.
 
-| Timer                                         |                    Value | Reason                                                                                                |
-| --------------------------------------------- | -----------------------: | ----------------------------------------------------------------------------------------------------- |
-| Health sample / misses                        |               250 ms / 3 | Ignore one delayed probe and detect three consecutive failures.                                       |
-| SQL stall / detection budget                  |               2 s / 15 s | Separate a blocked sync commit from ordinary remote flushes, including detector delays.               |
-| Admin command                                 | 1.8 s client, 1.55 s SQL | Bound a dead probe and leave room for transport. Only controller sessions use the SQL timeout.        |
-| Fence / planned drain                         |                8 s / 4 s | Bound management read-back and settled in-flight requests. An unproved fence leaves the route sealed. |
-| Replay / promotion                            |                 5 s each | Admit a near-current survivor and verify a new timeline promptly.                                     |
-| Datomic heartbeat / broker and peer           |         5 s / 23 s total | Keep the documented heartbeat and allow time for peer discovery and recent log replay.                |
-| SQL connect and host recheck                  |                 1 s each | Prefer prompt failover of new JDBC connections. No SQL socket deadline on commits.                    |
-| WAL connection / sender and receiver / report |     2 s / 5 s each / 1 s | Bound reconnection and surface broken replication while ignoring ordinary link jitter.                |
-| Ingress request / setup poll                  |             15 s / 120 s | Bounded HTTP request outcome and a separately timed initial JVM or database startup.                  |
+| Timer                                         |                            Value | Reason                                                                                                |
+| --------------------------------------------- | -------------------------------: | ----------------------------------------------------------------------------------------------------- |
+| Health sample / misses                        |                       250 ms / 3 | Ignore one delayed probe and detect three consecutive failures.                                       |
+| SQL stall / detection budget                  |                       2 s / 15 s | Separate a blocked sync commit from ordinary remote flushes, including detector delays.               |
+| Admin command                                 |         1.8 s client, 1.55 s SQL | Bound a dead probe and leave room for transport. Only controller sessions use the SQL timeout.        |
+| Fence / planned drain                         |                        8 s / 4 s | Bound management read-back and settled in-flight requests. An unproved fence leaves the route sealed. |
+| Replay / promotion                            |                         5 s each | Admit a near-current survivor and verify a new timeline promptly.                                     |
+| Datomic heartbeat / broker and peer           |                 5 s / 23 s total | Keep the documented heartbeat and allow time for peer discovery and recent log replay.                |
+| SQL connect and host recheck                  |                         1 s each | Prefer prompt failover of new JDBC connections. No SQL socket deadline on commits.                    |
+| WAL connection / sender and receiver / report |             2 s / 5 s each / 1 s | Bound reconnection and surface broken replication while ignoring ordinary link jitter.                |
+| Ingress request / setup poll                  |                     15 s / 120 s | Bounded HTTP request outcome and a separately timed initial JVM or database startup.                  |
+| Planned PostgreSQL stop / rewind              | 2 s shutdown grace / 15 s rewind | Allow a clean checkpoint on A and bound how long A may take to rejoin before the writer stays sealed. |
+
+The planned procedure copies live and checks replay before the writer pause. The new primary opens after the fenced volume returns in a new container as the named synchronous standby. The 30-second observation starts when ingress closes and ends at the first verified two-copy receipt. Copy time grows with physical bytes and WAL generated during the copy. The pause includes the final WAL tail, filesystem scan and changed blocks during rewind, the new transactor's recent log replay, and peer rediscovery.
 
 Local entry point after building the Datomic TypeScript package:
 

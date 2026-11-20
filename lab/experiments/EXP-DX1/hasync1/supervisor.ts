@@ -16,12 +16,14 @@ export const timeouts = {
   heartbeat: 5000,
   request: 15000,
   setup: 120000,
+  rejoin: 15000,
 } as const;
 
 export const lsn = (x: string) => {
   assert.match(x, /^[0-9A-F]+\/[0-9A-F]+$/);
   return BigInt("0x" + x.split("/")[0]) * 2n ** 32n + BigInt("0x" + x.split("/")[1]);
 };
+const plannedReplayBudgetBytes = 16n * 2n ** 20n;
 export async function wait<T>(label: string, ms: number, probe: () => Promise<T | undefined>) {
   const deadline = performance.now() + ms;
   do {
@@ -51,7 +53,7 @@ export type Port = {
   candidate(): Promise<Candidate>;
   fence(planned: boolean): Promise<{ proof: FenceProof; finalFlush?: string }>;
   promote(): Promise<number>;
-  activate(policy: Durability): Promise<void>;
+  activate(policy: Durability, kind: "fault" | "planned"): Promise<void>;
   publish(policy: Durability): void;
   observe(stage: string, observation: unknown): void;
 };
@@ -94,7 +96,10 @@ export class Supervisor {
       await wait("live pre-cut replay", timeouts.replay, async () => {
         const c = await p.candidate();
         this.#candidate(c);
-        return lsn(c.replay) >= lsn(this.#floor) ? true : undefined;
+        return lsn(c.replay) >= lsn(this.#floor) &&
+          lsn(c.receive) - lsn(c.replay) <= plannedReplayBudgetBytes
+          ? true
+          : undefined;
       });
     }
     p.seal();
@@ -131,7 +136,7 @@ export class Supervisor {
     const next = await p.promote();
     assert(next > timeline, "Promotion did not create a new timeline");
     mark("promoted", { next });
-    await p.activate(policy);
+    await p.activate(policy, kind);
     p.publish(policy);
     mark("routed", { policy });
   }

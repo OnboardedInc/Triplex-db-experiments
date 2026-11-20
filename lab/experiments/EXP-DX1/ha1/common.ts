@@ -40,6 +40,7 @@ export const modes = [
   "hasync-restart",
   "hasync-cost-plain",
   "hasync-cost-group",
+  "hasync-move",
 ] as const;
 export type Mode = (typeof modes)[number];
 export const roles = {

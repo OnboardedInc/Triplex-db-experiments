@@ -40,6 +40,8 @@ const pgArgs = [
 type SqlRole = "pg" | "target";
 export class SyncPair {
   readonly latch: string;
+  readonly primaryData: string;
+  readonly transitions: { stage: string; at: number }[] = [];
   route?: Awaited<ReturnType<typeof ingress>>;
   account?: Account;
   cluster = "";
@@ -47,9 +49,9 @@ export class SyncPair {
   writer = "";
   reader = "";
   initialFlush = "";
-  #volumeCreated = false;
   constructor(readonly s: Stack) {
     this.latch = s.e.prefix + "-fence";
+    this.primaryData = s.e.prefix + "-pgdata";
   }
   async docker(
     role: Role,
@@ -90,16 +92,26 @@ export class SyncPair {
       "type=volume,source=" + this.latch + ",target=/ha-fence" + (readOnly ? ",readonly" : ""),
     ];
   }
+  async ownedVolume(name: string) {
+    const s = this.s;
+    assert.equal(
+      await s.a.docker(["volume", "create", "--label", "ha1.attempt=" + s.e.nonce, name]),
+      name,
+    );
+    s.sharedVolumes.add(name);
+  }
+  dataMount() {
+    return [
+      "--mount",
+      "type=volume,source=" + this.primaryData + ",target=/var/lib/postgresql/data",
+    ];
+  }
   async open(
     options: { grouped?: boolean; lean?: boolean; init?: (ac: Account) => Promise<unknown> } = {},
   ) {
     const s = this.s;
-    assert.equal(
-      await s.a.docker(["volume", "create", "--label", "ha1.attempt=" + s.e.nonce, this.latch]),
-      this.latch,
-    );
-    this.#volumeCreated = true;
-    s.sharedVolumes.add(this.latch);
+    await this.ownedVolume(this.latch);
+    await this.ownedVolume(this.primaryData);
     await s.start("tool", s.a, this.volume(false), "/bin/sh", ["-c", "exec sleep infinity"]);
     await s.start(
       "pg",
@@ -110,6 +122,7 @@ export class SyncPair {
         "-e",
         "POSTGRES_PASSWORD=" + s.admin,
         ...this.volume(),
+        ...this.dataMount(),
         ...(s.a === s.b ? ["-p", loopback + "::5432"] : []),
       ],
       "/bin/sh",
@@ -216,12 +229,12 @@ export class SyncPair {
         : undefined;
     });
   }
-  async pgReady(role: SqlRole, recovery: boolean) {
-    await wait("PostgreSQL 17 " + role, timeouts.setup, async () => {
+  async pgReady(role: SqlRole, recovery: boolean, budget: number = timeouts.setup) {
+    await wait("PostgreSQL 17 " + role, budget, async () => {
       const result = await this.sql(
         role,
         "select current_setting('server_version_num')::int/10000, current_setting('fsync')," +
-          "current_setting('synchronous_commit'),pg_is_in_recovery()",
+          "current_setting('synchronous_commit'),pg_is_in_recovery() where current_setting('listen_addresses')='*'",
       ).catch(() => "");
       return result === "17|on|on|" + (recovery ? "t" : "f") ? true : undefined;
     });
@@ -377,7 +390,10 @@ export class SyncPair {
             m.Name === this.latch && m.Destination === "/ha-fence" && m.RW === false,
         ),
       );
-      if (v.State.Running) await this.docker(role, "kill", ["--signal=KILL"]);
+      if (v.State.Running) {
+        if (planned && role === "pg") await this.docker(role, "stop", ["--time=2"], 4000);
+        else await this.docker(role, "kill", ["--signal=KILL"]);
+      }
       const after = await s.view(role, timeouts.control);
       assert.equal(after.State.Running, false);
       assert.equal(after.State.Restarting, false);
@@ -426,7 +442,69 @@ export class SyncPair {
       return /^[0-9A-F]{8}$/.test(tli) ? parseInt(tli, 16) : undefined;
     });
   }
-  async activate(policy: Durability) {
+  async rejoin() {
+    const s = this.s;
+    const start = performance.now();
+    const old = await s.view("pg", timeouts.control);
+    assert.equal(old.State.Running, false);
+    assert(
+      old.Mounts.some(
+        (m: { Name: string; Destination: string; RW: boolean }) =>
+          m.Name === this.primaryData && m.Destination === "/var/lib/postgresql/data" && m.RW,
+      ),
+    );
+    await this.sql("target", "CHECKPOINT", "postgres", 5000);
+    // [DX-HASYNC1] Why: only a new container that first rewinds the fenced disk and verifies recovery may serve A again. Rejected: clearing the old startup interlock.
+    await this.docker("pg", "rm");
+    s.members.delete("pg");
+    const oldHost = s.storageHost("target", s.a);
+    const source =
+      "host=" +
+      oldHost +
+      " port=5432 user=postgres password=" +
+      s.admin +
+      " application_name=sync_a connect_timeout=2 target_session_attrs=read-write";
+    const stream =
+      "host=" +
+      oldHost +
+      " port=5432 user=ha1stream password=" +
+      s.secret +
+      " application_name=sync_a connect_timeout=2";
+    await s.start(
+      "pg",
+      s.a,
+      ["-e", "REJOIN_SOURCE=" + source, "-e", "REJOIN_STREAM=" + stream, ...this.dataMount()],
+      "/bin/sh",
+      [
+        "-ceu",
+        drop +
+          '"$drop" postgres pg_rewind --target-pgdata="$PGDATA" --source-server="$REJOIN_SOURCE" --write-recovery-conf; ' +
+          'printf "primary_conninfo = \'%s\'\\n" "$REJOIN_STREAM" >> "$PGDATA/postgresql.auto.conf"; ' +
+          'test -f "$PGDATA/standby.signal"; exec docker-entrypoint.sh postgres "$@"',
+        "rejoin",
+        ...pgArgs,
+      ],
+      s.a === s.b ? undefined : 5432,
+    );
+    await this.pgReady("pg", true, Math.max(0, timeouts.rejoin - (performance.now() - start)));
+    assert.equal(
+      await this.sql("pg", "select system_identifier from pg_control_system()"),
+      this.cluster,
+    );
+    const m = s.members.get("pg")!;
+    const output = await m.site.docker(["logs", "--tail", "35", m.id], {
+      timeout: timeouts.control,
+    });
+    assert.match(output, /pg_rewind:.*(?:Done!|no rewind required)/);
+    s.e.log("rejoined", {
+      old: old.Id,
+      new: m.id,
+      ms: performance.now() - start,
+      stdout: s.redact(output),
+    });
+  }
+  async activate(policy: Durability, kind: "fault" | "planned") {
+    if (policy === "two-copy" && kind === "planned") await this.rejoin();
     if (policy === "single-copy-after-fence") {
       await this.sql("target", "ALTER SYSTEM SET synchronous_standby_names=''");
       assert.equal(await this.sql("target", "select pg_reload_conf()"), "t");
@@ -480,31 +558,35 @@ export class SyncPair {
       candidate: () => this.candidate(),
       fence: (planned) => this.fence(planned),
       promote: () => this.promote(),
-      activate: (policy) => this.activate(policy),
+      activate: (policy, kind) => this.activate(policy, kind),
       publish: () => route.publish(this.reader),
-      observe: (stage, data) => this.s.e.log(stage, data),
+      observe: (stage, data) => {
+        this.transitions.push({ stage, at: performance.now() });
+        this.s.e.log(stage, data);
+      },
     };
     return new Supervisor(port, this.initialFlush);
   }
   async cleanup() {
     this.route?.close();
     this.account?.close();
-    if (!this.#volumeCreated) return;
     const s = this.s;
-    const owned = await s.a.docker([
-      "volume",
-      "inspect",
-      "--format",
-      '{{index .Labels "ha1.attempt"}}',
-      this.latch,
-    ]);
-    assert.equal(owned, s.e.nonce);
-    await s.a.docker(["volume", "rm", this.latch]);
-    assert.equal(
-      await s.a.docker(["volume", "ls", "-q", "--filter", "name=^" + this.latch + "$"]),
-      "",
-    );
-    s.e.log("fence-volume-removed", { volume: this.latch });
+    for (const volume of s.sharedVolumes) {
+      const owned = await s.a.docker([
+        "volume",
+        "inspect",
+        "--format",
+        '{{index .Labels "ha1.attempt"}}',
+        volume,
+      ]);
+      assert.equal(owned, s.e.nonce);
+      await s.a.docker(["volume", "rm", volume]);
+      assert.equal(
+        await s.a.docker(["volume", "ls", "-q", "--filter", "name=^" + volume + "$"]),
+        "",
+      );
+      s.e.log("owned-volume-removed", { volume });
+    }
   }
 }
 
