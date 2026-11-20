@@ -62,6 +62,7 @@ async function* member(file: string) {
 // [DX-RD1] Why: the service estimate comes from a fixed-ID subsample of bound exchanges, independent of the cohort's throughput.
 // Rejected: deriving service capacity from the slow throughput and using that same number to explain it.
 const roots = new Map<string, any>();
+const local = new Map<string, number[]>();
 for (const file of readerMembers)
   for await (const raw of member(file)) {
     if (raw.name !== "reader.pull" || !sampledTrace(raw.traceId) || raw.attributes?.oracle === true)
@@ -85,6 +86,11 @@ for (const file of readerMembers)
         http,
         gateway: new Map(),
       });
+    else {
+      const timings = local.get(phase.name) ?? [];
+      timings.push(r.end - r.start);
+      local.set(phase.name, timings);
+    }
   }
 for await (const raw of member("trace/raw/gw-r.jsonl.gz")) {
   const root = roots.get(raw.traceId);
@@ -130,6 +136,15 @@ assert(work !== null && workUpper && duration && workUpper > 0 && duration > 0);
 const permits = 2,
   localBaseline = light.rate,
   fastCycleMs = (1024 * 1000) / localBaseline;
+const localTimings = (g: typeof heavy) => {
+  const samples = g.phases.flatMap((p: string) => local.get(p) ?? []).sort((a, b) => a - b);
+  return {
+    n: samples.length,
+    mean: mean(samples),
+    p50: samples[Math.floor(samples.length * 0.5)] ?? null,
+    p99: samples[Math.floor(samples.length * 0.99)] ?? null,
+  };
+};
 const predict = (g: typeof heavy) => ({
   capacityOnly: [workUpper, work].map((s) => Math.min(localBaseline, (permits * 1000) / (g.p * s))),
   cycleOnly: (1024 * 1000) / ((1 - g.p) * fastCycleMs + g.p * duration),
@@ -155,8 +170,8 @@ console.log(
         meanOutsideGatewayMs: mean(estimates.map((r) => r.nonGateway)),
         meanCalls: mean(estimates.map((r) => r.calls)),
       },
-      low: { ...light, ...predict(light) },
-      high: { ...heavy, ...predict(heavy) },
+      low: { ...light, ...predict(light), localRootMs: localTimings(light) },
+      high: { ...heavy, ...predict(heavy), localRootMs: localTimings(heavy) },
       evidence: estimates,
     },
     null,
