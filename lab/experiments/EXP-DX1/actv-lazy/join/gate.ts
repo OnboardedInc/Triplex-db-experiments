@@ -195,13 +195,6 @@ try {
   }
   assert(raced && r.changes.length === 4);
   await check(r, valid, W0.R1.doc);
-  await runSave(
-    "local-after",
-    { e: "loc:x", a: "localMinWageCents", values: [2250] },
-    valid,
-    a,
-    true,
-  );
   const stale = await propose(s, "w0", ids[1]!);
   assert.equal(
     await a.admit(stale, async () => {
@@ -209,6 +202,13 @@ try {
       await check(z, valid, W0.R2.doc);
     }),
     "stale",
+  );
+  await runSave(
+    "local-after",
+    { e: "loc:x", a: "localMinWageCents", values: [2250] },
+    valid,
+    a,
+    true,
   );
   assert.equal(await a.admit(await propose(s, "w0", ids[1]!)), "covered");
   const priorValue = (
