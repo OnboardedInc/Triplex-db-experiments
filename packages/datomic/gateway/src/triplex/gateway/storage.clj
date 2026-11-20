@@ -315,45 +315,19 @@
       ;; A stale speculative basis can reject an otherwise valid ordered commit.
       ;; Hints are optional; only the transactor may make the definitive decision.
       (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))))
-(defn correct-group-clocks [input clocks]
-  ;; [DX-PREP1] Why: a queued retraction may name an assertion whose final clock was first assigned inside this group.
-  ;; Rejected: publishing the caller's provisional assertion clock in the change journal.
-  (let [edits (into {}
-                (keep (fn [[id ^String text]]
-                        (let [offset (+ 5 (Integer/parseInt text 1 5 16) 36)
-                              width (Integer/parseInt text (- offset 4) offset 16)
-                              start (+ offset width 1)
-                              row (lean/decode text)]
-                          (when (= ":_tx/change" (:attribute row))
-                            (let [change (json/read-str (:value_json row))
-                                  observed (clocks (get change "tripleId"))]
-                              (when (and (= "retract" (get change "op")) (some? observed))
-                                (let [value (json/write-str (assoc change "recordedAt" observed))
-                                      cols (assoc (json/read-str (subs text start)) 9 value)]
-                                  [id {:value value :text (str (subs text 0 start) (json/write-str cols))}])))))))
-                (get input "rowTexts"))]
-    (if (empty? edits) input
-      (-> input
-          (update "rowTexts" into (map (fn [[id x]] [id (:text x)])) edits)
-          (update "rows" #(mapv (fn [row]
-                                  (if-let [e (edits (get (get row "id") "v"))]
-                                    (assoc row "value_json" (codec/encode-value "string" (:value e))) row)) %))))))
-
 (defn prepared-for [data input p]
   (let [journals (:journal-entities p)
         safe (and group/reuse-prepared (:lean p) (seq journals)
                   (not-any? #(and (vector? %) (= :triplex.scope/feed-irregular (nth % 2 nil))) (:ops p)))]
-    ;; [DX-W1] Why: the incoming request already compiled the immutable rows. Only journal existence and scope layout can change that compilation.
-    ;; Rejected: comparing speculative and real basis-t numbers, or reusing a stale journal link without its absence check.
+    ;; [DX-INT1] Why: the installed writer stamps predecessor clocks and validity from each speculative db-before.
+    ;; Rejected: rewriting peer row texts, which can be ordered, packed or forwarded without a map.
     (fn [view]
-      (let [corrected (if (and (:lean p) (seq group/*same-group-clocks*))
-                        (correct-group-clocks input group/*same-group-clocks*) input)]
-        (if (and safe (identical? corrected input)
-                 (= (if (:slim-row p) 4 3) (value view (:scope p) :triplex.scope/rows-version))
-                 (= (ffirst data) (commit/entry view input (:lean p)))
-                 (not-any? #(d/entid view [:triplex.entity/id %]) journals))
-          data
-          (tx-data view corrected (:scope p)))))))
+      (if (and safe
+               (= (if (:slim-row p) 4 3) (value view (:scope p) :triplex.scope/rows-version))
+               (= (ffirst data) (commit/entry view input (:lean p)))
+               (not-any? #(d/entid view [:triplex.entity/id %]) journals))
+        data
+        (tx-data view input (:scope p))))))
 (defn submit! [conn data input timeline]
   (let [hints (transaction-hints conn data timeline)
         solo (bound-fn []
@@ -410,6 +384,8 @@
           load-timing (when commit/load-profile (volatile! 0))
           data (try (binding [*load-timing* load-timing] (trace/span "commit.prepare-and-validate" "gateway" (tx-data db input (scope/entity db))))
                     (catch Exception e (reject-ordered! conn input e)))
+          frame-size (group/frame-measurement (second (first data)) input)
+          _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
           start (System/nanoTime)
           ready-ms (when group/queue-clock (System/currentTimeMillis))
           timeline (atom {:requestParsed parsed :payloadPrepared start})
@@ -444,6 +420,7 @@
                        :tx (clojure.edn/read-string (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.load/metrics))})
         group/bulk-priority (assoc :bulkGrant (:bulk-grant report))
         (:serial-hold report) (assoc :serialHold (:serial-hold report))
+        frame-size (assoc :frameSize frame-size)
         (and pred/diagnostic (true? (get input "readProfile"))) (assoc :readProfile (:io-stats report))
         group/stage-clock (assoc :nativeComputeMs (get-in report [:io-stats :api-ms]) :groupStages (:group-stages report)
                                  :preparedStats (:prepared-stats report))

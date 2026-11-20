@@ -12,6 +12,18 @@
 (defn scheduling? [] (or (grouping?) policy/priority? policy/budget-us))
 (def queue-clock (= "1" (System/getenv "TX2_GROUP_QUEUE_CLOCK")))
 (def load-timing (= "1" (System/getenv "TX2_LOAD2_TIMING")))
+(def load-frame-caps (= "1" (System/getenv "TX2_LOAD2_FRAME_CAPS")))
+(defn frame-measurement [p input]
+  (when (and (or load-timing load-frame-caps) (:bulk p))
+    {:rows (+ (count (:new-ids p)) (count (filter #(and (vector? %) (= :triplex/retract (first %))) (:ops p))))
+     :bytes (:wire-bytes (meta input))}))
+(defn bound-frame! [size]
+  ;; [DX-W1] Why: bound actual decoded fresh and retired rows (including journal) and exact HTTP bytes before admitting bulk.
+  ;; Rejected: estimating bytes from input business facts or splitting one atomic write after seeing a receipt.
+  (when (and load-frame-caps size)
+    (when-not (and (number? (:bytes size)) (<= (:rows size) 96) (<= (:bytes size) 65536))
+      (throw (ex-info "Atomic bulk frame exceeds its row or byte limit" {:code "BulkFrameTooLarge" :status 413})))))
+
 (defn mono-ms [] (/ (double (System/nanoTime)) 1000000.0))
 (def stage-clock (= "1" (System/getenv "TX2_GROUP_STAGE_CLOCK")))
 (def reuse-prepared (= "1" (System/getenv "TX2_GROUP_REUSE_PREPARED")))
@@ -116,19 +128,17 @@
        (= true (v db (:scope p) :triplex.scope/position-regular))
        (not (v db (:scope p) :triplex.scope/irregular)) (d/entid db :triplex.group/apply-v1)))
 
-(def ^:dynamic *same-group-clocks* nil)
 (defn evaluate [db entries]
   ;; [DX-W1] Why: evaluate ordinary installed commands sequentially on immutable speculative databases, including duplicate/CAS checks.
   ;; Rejected: concatenated transaction functions (Datomic gives each function the original db-before).
-  (loop [view db entries (seq entries) out [] clocks {}]
+  (loop [view db entries (seq entries) out []]
     (if-not entries out
       (let [entry (first entries)
             result (try
                      (when (d/entid view [:triplex.tx/operation-id (:id entry)])
                        (throw (ex-info ":db.error/unique-conflict triplex.tx/operation-id already committed" {})))
                      (let [started (when stage-clock (System/nanoTime))
-                           data (binding [*same-group-clocks* (select-keys clocks (:live (:params entry)))]
-                                  ((:prepare entry) view))
+                           data ((:prepare entry) view)
                            prepared (when stage-clock (System/nanoTime))
                            report (d/with view data)
                            applied (when stage-clock (System/nanoTime))
@@ -143,8 +153,8 @@
                      (catch Exception e
                        (if (re-find #"TRIPLEX_CONFLICT|TRIPLEX_IDENTITY|TRIPLEX_CLOCK|:db.error/(?:unique-conflict|cas-failed)" (str e))
                          {:error e} (throw e))))]
-        (recur (or (get-in result [:report :db-after]) view) (next entries) (conj out result)
-               (if (:report result) (reduce #(assoc %1 %2 (:clock result)) clocks (:new-ids (:params entry))) clocks))))))
+        (recur (or (get-in result [:report :db-after]) view) (next entries) (conj out result))))))
+
 (defn prefix [^String text] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16))))
 (defn materialize [base members]
   (let [last-tx (:tx (peek members))

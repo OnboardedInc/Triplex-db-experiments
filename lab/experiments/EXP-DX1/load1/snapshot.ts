@@ -42,6 +42,7 @@ export class Snapshot {
     subjects: number,
     width: number,
     file: string,
+    readonly adaptive?: { budgetMs: number },
   ) {
     assert(comp.scopeName && comp.backend.name === "datomic");
     this.comp = comp;
@@ -51,11 +52,22 @@ export class Snapshot {
     this.scope = comp.scopeName;
     if (typeof shape !== "string") assert.equal(subjects, shape.groups);
     this.source = typeof shape === "string" ? sourceId(shape, subjects) : shape.seal;
-    this.binding = sha(JSON.stringify([this.scope, this.source, width]));
+    assert(!adaptive || shape === "thin", "Time-budgeted packing requires the thin source fixture");
+    this.binding = sha(
+      JSON.stringify(
+        adaptive
+          ? [this.scope, this.source, width, "serial-budget-v1", adaptive.budgetMs]
+          : [this.scope, this.source, width],
+      ),
+    );
     this.ledger = new DatabaseSync(file);
     this.ledger.exec(
       "PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA busy_timeout=5000; CREATE TABLE IF NOT EXISTS session(id INTEGER PRIMARY KEY CHECK(id=1), binding TEXT NOT NULL, marker TEXT NOT NULL, cursor INTEGER NOT NULL); CREATE TABLE IF NOT EXISTS frames(first INTEGER PRIMARY KEY, end INTEGER UNIQUE NOT NULL, position INTEGER UNIQUE NOT NULL, body TEXT NOT NULL)",
     );
+    if (adaptive)
+      this.ledger.exec(
+        "CREATE TABLE IF NOT EXISTS packing(first INTEGER PRIMARY KEY, end INTEGER UNIQUE CHECK(end>first))",
+      );
   }
   get namespace() {
     return typeof this.shape === "string" ? "acct/import/" : this.shape.namespace;
@@ -65,10 +77,50 @@ export class Snapshot {
       ? "load1/manifest/import"
       : "load1/manifest/" + sha(this.namespace);
   }
-  private batches(first = 0) {
-    return typeof this.shape === "string"
-      ? frames(this.shape, this.subjects, this.width, first)
-      : this.shape.batches(first);
+  private sourceFrames(first = 0, end = this.subjects) {
+    if (typeof this.shape === "string") return frames(this.shape, end, this.width, first);
+    assert.equal(end, this.subjects);
+    return this.shape.batches(first);
+  }
+  private regenerate(first: number, end: number) {
+    assert(
+      Number.isSafeInteger(first) &&
+        Number.isSafeInteger(end) &&
+        0 <= first &&
+        first < end &&
+        end <= this.subjects,
+    );
+    const source = this.sourceFrames(first, end);
+    const frame = source.next().value;
+    assert(frame && frame.first === first && frame.end === end && source.next().done);
+    return frame;
+  }
+  private *batches(first = 0) {
+    if (!this.adaptive) {
+      yield* this.sourceFrames(first);
+      return;
+    }
+    for (const row of this.ledger
+      .prepare("SELECT first,end FROM packing WHERE first>=? ORDER BY first")
+      .iterate(first)) {
+      yield this.regenerate(Number(row["first"]), Number(row["end"]));
+    }
+  }
+  nextFrame(target: number): Frame | undefined {
+    assert(this.adaptive && Number.isSafeInteger(target) && target > 0 && target <= this.width);
+    const first = this.cursor();
+    const existing = this.ledger.prepare("SELECT end FROM packing WHERE first=?").get(first);
+    if (existing) return this.regenerate(first, Number(existing["end"]));
+    if (first === this.subjects) return;
+    const selected = this.regenerate(first, first + 1);
+    let end = first + 1;
+    while (selected.operations.length < target && end < this.subjects) {
+      const next = this.regenerate(end, end + 1);
+      if (selected.operations.length + next.operations.length > target) break;
+      selected.operations.push(...next.operations);
+      selected.end = ++end;
+    }
+    return this.regenerate(first, selected.end);
   }
   static async open(
     comp: CompositionHandle,
@@ -76,8 +128,9 @@ export class Snapshot {
     subjects: number,
     width: number,
     file: string,
+    adaptive?: { budgetMs: number },
   ) {
-    const run = new Snapshot(comp, shape, subjects, width, file);
+    const run = new Snapshot(comp, shape, subjects, width, file, adaptive);
     try {
       const key = run.manifest;
       const meta = { actor: "bulk-import", commandId: key, correlationId: run.binding };
@@ -134,6 +187,15 @@ export class Snapshot {
         assert(next.done);
       }
       assert.equal(run.cursor(), cursor);
+      if (adaptive) {
+        const unsettled = run.ledger
+          .prepare("SELECT first,end FROM packing WHERE first>=? ORDER BY first")
+          .all(cursor);
+        assert(
+          unsettled.length === 0 || (unsettled.length === 1 && unsettled[0]!["first"] === cursor),
+        );
+        if (unsettled.length) run.regenerate(cursor, Number(unsettled[0]!["end"]));
+      }
       run.ledger.exec("COMMIT");
       return run;
     } catch (e) {
@@ -174,6 +236,16 @@ export class Snapshot {
   async write(f: Frame, hooks: Hooks = {}) {
     const prior = this.entry(f);
     if (prior) return prior;
+    if (this.adaptive) {
+      // [DX-LOAD2] Why: choose and commit the exact source interval before sending. Rejected: resizing an unresolved command after restart.
+      assert.equal(this.cursor(), f.first);
+      assert.deepEqual(f, this.regenerate(f.first, f.end));
+      this.ledger.prepare("INSERT OR IGNORE INTO packing VALUES (?,?)").run(f.first, f.end);
+      assert.equal(
+        this.ledger.prepare("SELECT end FROM packing WHERE first=?").get(f.first)?.["end"],
+        f.end,
+      );
+    }
     const meta = identity(this.scope, this.source, this.width, f);
     await hooks.beforeSend?.(f.first);
     const out = await this.comp
@@ -232,7 +304,7 @@ export class Snapshot {
     return { commands: Number(r["n"]), facts: Number(r["facts"]) };
   }
   // [DX-LOAD1] Why: the feed can publish concurrent disjoint frames in either order. Rejected: validating source order as native order or trusting an acknowledged byte count.
-  async verify(complete = true, extra?: (r: any) => void) {
+  async verify(complete = true, extra?: (r: any) => void, pageSize = extra ? 8 : 1) {
     const cut = await this.comp.currentPosition(),
       byPosition = this.ledger.prepare("SELECT * FROM frames WHERE position=?");
     const last =
@@ -249,20 +321,27 @@ export class Snapshot {
     const fixture = this.batches();
     const positions = this.ledger.prepare("SELECT first FROM frames ORDER BY first").iterate();
     let expectedPrefix = 0;
-    for (const row of positions) {
-      let step = fixture.next();
-      while (!step.done && step.value.first < Number(row["first"])) step = fixture.next();
-      assert(!step.done && step.value.first === Number(row["first"]));
-      const f = step.value,
-        e = this.entry(f)!,
-        original = await lookup(this.comp, f, identity(this.scope, this.source, this.width, f));
-      assert.deepEqual(original, this.summary(e));
-      if (f.first === expectedPrefix) expectedPrefix = f.end;
+    function* verifyFrames() {
+      for (const row of positions) {
+        let step = fixture.next();
+        while (!step.done && step.value.first < Number(row["first"])) step = fixture.next();
+        assert(!step.done && step.value.first === Number(row["first"]));
+        const f = step.value;
+        if (f.first === expectedPrefix) expectedPrefix = f.end;
+        yield f;
+      }
     }
+    // [DX-LOAD2] Why: disjoint claim reads after drain are independent and still check every original receipt.
+    // Rejected: turning the feed alone into a claim-index proof or putting claim audits in the timed window.
+    await windowed(verifyFrames(), this.adaptive ? 4 : 1, async (f) => {
+      const e = this.entry(f)!;
+      const original = await lookup(this.comp, f, identity(this.scope, this.source, this.width, f));
+      assert.deepEqual(original, this.summary(e));
+    });
     assert.equal(this.cursor(), expectedPrefix);
     if (complete) assert.equal(expectedPrefix, this.subjects);
     while (pos < cut) {
-      const page = await this.comp.feedPage(pos, extra ? 8 : 1);
+      const page = await this.comp.feedPage(pos, pageSize);
       assert(page.transactions.length > 0);
       for (const r of page.transactions) {
         if (pos === cut) break;

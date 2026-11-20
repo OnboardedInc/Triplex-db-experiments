@@ -2,16 +2,34 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import { createInterface } from "node:readline";
 import { isIPv4 } from "node:net";
-import { Evidence, head, modeOf, root, runFile } from "./common.ts";
+import { Evidence, head, modeOf, root, runFile, supportsSingleHost } from "./common.ts";
 import { projection, type MovePoint } from "./projection.ts";
 import path from "node:path";
 import { drill } from "./run.ts";
 import type { Site } from "./stack.ts";
 
-const [mode, tag, sha, addrA, addrB, remoteImage, store, campaign, people, shape = "deep"] =
-  process.argv.slice(2);
+const [
+  mode,
+  tag,
+  sha,
+  addrA,
+  addrB,
+  remoteImage,
+  store,
+  campaign,
+  people,
+  shape = "deep",
+  layout = "two-host",
+] = process.argv.slice(2);
+const single = layout === "one-host";
+assert(layout === "two-host" || (single && mode && supportsSingleHost(modeOf(mode))));
 assert(process.platform === "linux" && head() === sha && sha?.match(/^[a-f0-9]{40}$/));
-assert(tag && /^[a-z][a-z0-9-]{2,40}$/.test(tag) && mode && addrA !== addrB);
+assert(
+  tag &&
+    /^[a-z][a-z0-9-]{2,40}$/.test(tag) &&
+    mode &&
+    (single ? addrA === "-" && addrB === "-" : addrA !== addrB),
+);
 export function privateAddress(s: string) {
   assert(isIPv4(s));
   const [a, b] = s.split(".").map(Number);
@@ -21,7 +39,7 @@ export function privateAddress(s: string) {
   );
   return s;
 }
-assert(remoteImage && /^sha256:[a-f0-9]{64}$/.test(remoteImage));
+assert(remoteImage && (single ? remoteImage === "-" : /^sha256:[a-f0-9]{64}$/.test(remoteImage)));
 assert(store && campaign && /^[a-f0-9-]{36}$/.test(campaign));
 const waiters = new Map<number, { ok: (s: string) => void; fail: (err: Error) => void }>();
 let seq = 0;
@@ -49,22 +67,24 @@ const local: Site["docker"] = async (args, opts = {}) => {
 const a: Site = {
   key: "a",
   repo: root,
-  privateAddress: privateAddress(addrA!),
+  ...(single ? {} : { privateAddress: privateAddress(addrA!) }),
   docker: local,
   datomicId: await local(["image", "inspect", "tx2-datomic:1.0.7745-da00", "--format", "{{.Id}}"]),
 };
-const b: Site = {
-  key: "b",
-  repo: root,
-  privateAddress: privateAddress(addrB!),
-  datomicId: remoteImage,
-  docker: async (args, opts = {}) => {
-    const id = ++seq;
-    const reply = new Promise<string>((ok, fail) => waiters.set(id, { ok, fail }));
-    process.stdout.write("@ha1 " + JSON.stringify({ id, args, timeout: opts.timeout }) + "\n");
-    return reply;
-  },
-};
+const b: Site = single
+  ? a
+  : {
+      key: "b",
+      repo: root,
+      privateAddress: privateAddress(addrB!),
+      datomicId: remoteImage,
+      docker: async (args, opts = {}) => {
+        const id = ++seq;
+        const reply = new Promise<string>((ok, fail) => waiters.set(id, { ok, fail }));
+        process.stdout.write("@ha1 " + JSON.stringify({ id, args, timeout: opts.timeout }) + "\n");
+        return reply;
+      },
+    };
 fs.mkdirSync(store, { recursive: false });
 try {
   const defaults: Record<string, string> = {
@@ -72,6 +92,12 @@ try {
     "load-proof": "60",
     "load-quiet": "100000,1000000",
     "load-live": "50,235,390",
+    "load-tail": "50",
+    "load-frontier-low": "50,100",
+    "load-frontier-high": "50,100",
+    "load-frontier-allowance": "50,100",
+    "load-split-sql": "50,100",
+    "load-split-pg": "50,100",
     failures: "2000",
     move: "500,2000,5000",
     replication: "1",
@@ -94,7 +120,7 @@ try {
   );
   fs.writeFileSync(
     path.join(store, "campaign.json"),
-    JSON.stringify({ tag, sha, mode, campaign, sizes, shape }) + "\n",
+    JSON.stringify({ tag, sha, mode, campaign, sizes, shape, layout }) + "\n",
     { flag: "wx" },
   );
   const points: MovePoint[] = [];
@@ -105,7 +131,7 @@ try {
       e,
       a,
       b,
-      { people: n, scopes: mode.startsWith("load-") ? 1 : 5, capacity: "two-host" },
+      { people: n, scopes: mode.startsWith("load-") ? 1 : 5, capacity: layout },
       () => {},
     );
     if (mode === "move") {

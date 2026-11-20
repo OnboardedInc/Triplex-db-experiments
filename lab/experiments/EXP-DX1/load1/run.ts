@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { root, runFile, until } from "../ha1/common.ts";
+import { root, runFile, splitLoad, until } from "../ha1/common.ts";
 import type { Stack } from "../ha1/stack.ts";
+import { replayLive } from "./live-evidence.ts";
 export async function load(s: Stack, people: number) {
   const e = s.e;
   await s.tool();
@@ -28,9 +29,29 @@ export async function load(s: Stack, people: number) {
   await s.database("pg", "moving");
   await s.tx("active", s.a, "pg", "moving");
   await until("active writer", async () => (await s.broker("active")) || undefined);
-  await s.gateway("write", s.b, "pg", "moving");
+  const split = splitLoad(e.mode);
+  const newDesign = split || e.mode === "load-tail" || e.mode.startsWith("load-frontier-");
+  await s.gateway("write", newDesign ? s.a : s.b, "pg", "moving");
   const url = await s.ready("write");
-  const server = s.a !== s.b;
+  let importUrl = "";
+  if (split) {
+    const storage = e.mode === "load-split-pg" ? "target" : "pg";
+    if (storage === "target") await s.postgres(storage, s.b);
+    await s.database(storage, "neighbor");
+    await s.tx("standby", s.b, storage, "neighbor");
+    await until("independent import writer", async () => (await s.broker("standby")) || undefined);
+    await s.gateway("read", s.b, storage, "neighbor");
+    importUrl = await s.ready("read");
+    assert(url !== importUrl);
+    e.log("load-storage-layout", {
+      mode: e.mode,
+      live: ["pg", "active", "write"],
+      import: [storage, "standby", "read"],
+      separateSqlProcesses: storage === "target",
+      hostCount: new Set([s.a, s.b]).size,
+    });
+  }
+  const server = process.platform === "linux";
   const arms =
     e.mode === "load-profile"
       ? ["ordinary-a", "row-a", "range-a", "range-b", "row-b", "ordinary-b"]
@@ -39,31 +60,41 @@ export async function load(s: Stack, people: number) {
         : e.mode === "load-live"
           ? ["live-0-a", "live-128", "live-500", "live-2000", "live-0-b"]
           : e.mode === "load-tail"
-            ? ["tail-0-a", "tail-128", "tail-0-b"]
-            : server
-              ? ["quiet-server-2000-2"]
-              : [
-                  "quiet-a-2000-1",
-                  "classic-a-2000-2",
-                  "quiet-a-2000-2",
-                  "quiet-a-2000-4",
-                  "quiet-a-1024-2",
-                  "quiet-a-3000-2",
-                  "quiet-b-2000-2",
-                  "classic-b-2000-2",
-                  "quiet-b-2000-1",
-                  "proof-gap-1024-2",
-                ];
+            ? server
+              ? ["tail-0-a", "tail-128", "tail-500", "tail-2000", "tail-0-b"]
+              : ["tail-0-a", "tail-128", "tail-0-b"]
+            : e.mode === "load-frontier-low"
+              ? ["frontier-0-a", "frontier-1", "frontier-4", "frontier-8", "frontier-0-b"]
+              : e.mode === "load-frontier-high"
+                ? ["frontier-0-a", "frontier-16", "frontier-32", "frontier-0-b"]
+                : e.mode === "load-frontier-allowance"
+                  ? ["frontier-alone", "frontier-0-a", "frontier-allowance", "frontier-0-b"]
+                  : split
+                    ? ["split-0-a", "split-2000", "split-0-b"]
+                    : server
+                      ? ["quiet-server-2000-2"]
+                      : [
+                          "quiet-a-2000-1",
+                          "classic-a-2000-2",
+                          "quiet-a-2000-2",
+                          "quiet-a-2000-4",
+                          "quiet-a-1024-2",
+                          "quiet-a-3000-2",
+                          "quiet-b-2000-2",
+                          "classic-b-2000-2",
+                          "quiet-b-2000-1",
+                          "proof-gap-1024-2",
+                        ];
   const reports: Array<{ sourceSeal: string; [key: string]: unknown }> = [];
+  let allowance = 0;
   for (const arm of arms) {
     const scope = e.prefix + "-" + arm;
     const cpu = async () =>
       Object.fromEntries(
         await Promise.all(
-          (["active", "write", "pg"] as const).map(async (r) => [
-            r,
-            await s.exec(r, "cat", "/sys/fs/cgroup/cpu.stat"),
-          ]),
+          [...s.members.keys()]
+            .filter((role) => role !== "tool")
+            .map(async (r) => [r, await s.exec(r, "cat", "/sys/fs/cgroup/cpu.stat")]),
         ),
       );
     const before = await cpu();
@@ -85,6 +116,8 @@ export async function load(s: Stack, people: number) {
         env: {
           ...process.env,
           DATOMIC_URL: url,
+          DX_LOAD2_ALLOWANCE_MS: String(allowance),
+          DX_LOAD2_IMPORT_URL: importUrl,
           TRIPLEX_DATOMIC_LAYOUT: "lean",
           DX_SERVER_RECORD_TIME: "1",
           TRIPLEX_TRACE_LEVEL: e.mode === "load-profile" ? "full" : "off",
@@ -104,7 +137,10 @@ export async function load(s: Stack, people: number) {
         },
         timeout: server
           ? 48 * 3600000
-          : Math.max(1, Math.min(240000, 830000 - (performance.now() - e.start))),
+          : Math.max(
+              1,
+              Math.floor(Math.min(split ? 330000 : 240000, 830000 - (performance.now() - e.start))),
+            ),
         maxBuffer: 4 * 2 ** 20,
         encoding: "utf8",
       },
@@ -114,10 +150,28 @@ export async function load(s: Stack, people: number) {
       [r.nonce, r.source, r.slot, r.scope, r.arm],
       [e.nonce, e.source.git, e.slot, scope, arm],
     );
-    assert(
-      Number.isSafeInteger(r.facts) &&
-        (["load-live", "load-tail"].includes(e.mode) ? r.facts >= 0 : r.facts > 0),
-    );
+    if (newDesign) {
+      replayLive(JSON.parse(readFileSync(path.join(e.dir, arm + ".offers.json"), "utf8")), e, r);
+    }
+    const live =
+      ["load-live", "load-tail"].includes(e.mode) || e.mode.startsWith("load-frontier-") || split;
+    assert(Number.isSafeInteger(r.facts) && (live ? r.facts >= 0 : r.facts > 0));
+    if (e.mode === "load-frontier-allowance" && arm === "frontier-alone") {
+      const quiet = r.neighbors.quiet;
+      assert(
+        quiet.save.ok >= 500 &&
+          quiet.read.ok >= 500 &&
+          quiet.save.p99Ms > 0 &&
+          quiet.read.p99Ms > 0,
+      );
+      allowance = Math.min(32, Math.min(quiet.save.p99Ms, quiet.read.p99Ms) * 0.5);
+      e.log("frame-allowance", {
+        controlArm: arm,
+        read: quiet.read.p99Ms * 0.5,
+        save: quiet.save.p99Ms * 0.5,
+        bound: allowance,
+      });
+    }
     if (reports.length) assert.equal(r.sourceSeal, reports[0]!.sourceSeal);
     e.log("load-arm", {
       arm,
@@ -127,6 +181,7 @@ export async function load(s: Stack, people: number) {
       cpuBefore: before,
       cpuAfter: await cpu(),
     });
+    if (newDesign) e.write("arm-" + arm, r);
     reports.push(r);
   }
   if (e.mode === "load-tail") await s.collectLoadTrace();

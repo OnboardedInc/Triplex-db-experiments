@@ -31,6 +31,11 @@ export const modes = [
   "load-quiet",
   "load-live",
   "load-tail",
+  "load-frontier-low",
+  "load-frontier-high",
+  "load-frontier-allowance",
+  "load-split-sql",
+  "load-split-pg",
 ] as const;
 export type Mode = (typeof modes)[number];
 export const roles = {
@@ -44,8 +49,31 @@ export const roles = {
 } as const;
 export type Role = keyof typeof roles;
 // [DX-LOAD1] Why: peak-rate arms keep several fresh databases in one transactor process. Rejected: reusing the 560 MiB failure-drill cap after a measured cgroup OOM.
+// [DX-LOAD2] Why: the same bound campaign can reserve just one machine for a same-host comparison.
+export function supportsSingleHost(mode: Mode) {
+  return mode === "load-tail" || mode.startsWith("load-frontier-") || splitLoad(mode);
+}
+export function splitLoad(mode: string) {
+  return mode === "load-split-sql" || mode === "load-split-pg";
+}
+export function loadRoles(mode: Mode): Role[] {
+  return [
+    "pg",
+    "active",
+    "write",
+    "tool",
+    ...(splitLoad(mode)
+      ? (["standby", "read", ...(mode === "load-split-pg" ? ["target"] : [])] as Role[])
+      : []),
+  ];
+}
 export function localRoleMiB(mode: Mode, role: Role) {
-  if (mode === "load-tail") {
+  if (splitLoad(mode)) {
+    if (role === "active") return 896;
+    if (role === "standby") return 768;
+    if (role === "tool") return 96;
+  }
+  if (mode === "load-tail" || mode.startsWith("load-frontier-")) {
     if (role === "active") return 1024;
     if (role === "tool") return 96;
   }
