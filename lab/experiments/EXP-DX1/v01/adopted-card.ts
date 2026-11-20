@@ -64,12 +64,15 @@ export function writeAdoptedCard(run: Card) {
       String(loaded.p2.receipts), evidence("loaded")]);
   }
   const field = ["P5", "P6", "P7", "P8", "P9"];
+  const gaps: Record<string, string> = {
+    P5: "The published INT1 Publish producer creates its own flat scope. No adapter binds it to the held SCALE1 roster and live release cut.",
+  };
   const text = base.split("\n").map((line) => {
     if (line === "Population ten accounts of four deep people.") return "Population ten deep accounts in one SCALE1 database.";
     const match = /^\| ((P\d) [^|]+|Journal queryable|Receipts) \| ([^|]+) \|/.exec(line);
     const key = match?.[2] ?? match?.[1]?.trim();
     if (!key || !match) return line;
-    const values = rows.get(key) ?? (field.includes(key) ? ["No same-seed adapter for this row at this revision.", "NOT MEASURED", "0", "—"] : undefined);
+    const values = rows.get(key) ?? (field.includes(key) ? [gaps[key] ?? "No same-seed adapter for this row at this revision.", "NOT MEASURED", "0", "—"] : undefined);
     return values ? `| ${match[1]!.trim()} | ${match[3]!.trim()} | ${values.join(" | ")} |` : line;
   }).join("\n").replaceAll("No compatible measurement from this attempt.", run.failure ?? "No compatible measurement from this attempt.");
   const settings = { ...selectedWriter(run.writer), armReadbacks: arms.map((a) => a.settings) };

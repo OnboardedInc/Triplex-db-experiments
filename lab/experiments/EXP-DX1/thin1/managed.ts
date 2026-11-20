@@ -411,7 +411,22 @@ if (action === "--guest") {
         manager(["up", "--slot", readerSlot, "--exp", exp]);
       }
       bind();
-      if (scorecard) console.log(manager(["scorecard-fixture", "--slot", writerSlot, "--scorecard-output", out]));
+      if (scorecard && process.env.DX_V01_MAC_PUBLISH === "1") {
+        // [DX-V01] Why: exercise the existing receipt producer on a bounded isolated toy fixture.
+        // Rejected: timing a second full seed or reporting the private fixture as the held SCALE1 cut.
+        const slot = read(ownerFile(writerSlot));
+        const attempt = read(cred);
+        const output = path.join(out, "publish");
+        fs.mkdirSync(output);
+        execFileSync(process.execPath, ["--no-warnings", "--experimental-transform-types",
+          "lab/experiments/EXP-DX1/actv-lazy/join/server.ts", "64", output, "--receipt-local"], {
+          cwd: repo, stdio: "inherit", timeout: 5 * 60_000,
+          env: { ...process.env, DATOMIC_URL: slot.endpoint, TX2_CONFIG_DIR: dir,
+            TRIPLEX_LAB_SLOT_OWNER: ownerFile(writerSlot), TX2_WRITE_OPTIONS_ATTEMPT: attempt.writeOptionsAttempt,
+            TX2_SWEEP_STRICT: "1", TX2_W0_POINT_JOURNAL: "1", TX2_W0_RESTORE_INDEXED_JOURNAL: "1",
+            TRIPLEX_DATOMIC_LAYOUT: "lean", DX_STRICT_RECORD_CLOCKS: "1", DX_SERVER_RECORD_TIME: "1" },
+        });
+      } else if (scorecard) console.log(manager(["scorecard-fixture", "--slot", writerSlot, "--scorecard-output", out]));
       else execFileSync(
         "colima",
         [

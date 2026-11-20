@@ -6,7 +6,7 @@ import { cleanSource, packageBytes } from "./source.ts";
 
 const [action, commit, argument] = process.argv.slice(2);
 assert(process.platform === "darwin" && commit && argument && path.isAbsolute(argument));
-assert(["--packages", "--image", "--fixture"].includes(action ?? ""));
+assert(["--packages", "--image", "--fixture", "--publish-fixture"].includes(action ?? ""));
 const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 cleanSource(head);
 assert.match(commit, /^[a-f0-9]{40}$/);
@@ -24,6 +24,7 @@ const env = {
     process.env[name] ? [[name, process.env[name]]] : [],
   )),
   DX_V01_MAC_FIXTURE: "1",
+  ...(action === "--publish-fixture" ? { DX_V01_MAC_PUBLISH: "1" } : {}),
   DX_V01_LAB_RUNTIME: runtime,
   DX_INT1_GATEWAYS: "demand",
   DX_TOUCHED_READ_MODE: "following",
@@ -72,8 +73,10 @@ if (action === "--packages") {
       console.error(error);
       process.exitCode = 1;
     }
-    const { writeAdoptedCard } = await import("./adopted-card.ts");
-    writeAdoptedCard({ source: commit, age: "fresh", writer: "grouped", toy: true, campaign,
-      out: fixture, forecast: "Mac diagnostics from the SCALE1 loader fixture." });
+    if (action === "--fixture") {
+      const { writeAdoptedCard } = await import("./adopted-card.ts");
+      writeAdoptedCard({ source: commit, age: "fresh", writer: "grouped", toy: true, campaign,
+        out: fixture, forecast: "Mac diagnostics from the SCALE1 loader fixture." });
+    }
   }
 }
