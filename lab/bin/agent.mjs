@@ -44,7 +44,11 @@ const ROLE_MODEL = { creative: 'gpt-6.2-astra' }; // every other role uses MODEL
 // experiment design at xhigh, no product code. Rejected: running idea work at max (not what he asked) or through Claude.
 // [PROTOCOL 2026-11-19b] Why: Sam, later the same day, for the activation designs: "Have three Astro agents on Macs go
 // brainstorm three different directions" (dictated: Astra agents on max). `deepthinker` is the thinker role at max.
-const EFFORT = { builder: 'max', reviewer: 'max', thinker: 'xhigh', deepthinker: 'max', creative: 'high' }; // the only allowed pairs
+// [PROTOCOL 2026-11-20] Why: Sam, 2026-11-20 morning, after a night of about twenty Sol agents at max: "instead of using max
+// effort sol 6.2, lets go with XHIGH effort instead". Every Sol role now runs at xhigh; `deepthinker` keeps its name (briefs and
+// the ledger refer to it) and is now the same effort as `thinker`. The creative role (Astra) stays at high.
+// Rejected: leaving builders at max (not what he asked).
+const EFFORT = { builder: 'xhigh', reviewer: 'xhigh', thinker: 'xhigh', deepthinker: 'xhigh', creative: 'high' }; // the only allowed pairs
 // Shared state every agent must be able to write: the pnpm store, the durable project folder, git objects and worktree metadata
 // (commits from a worktree write into the main .git), and the main checkout's lock and engine ledgers (lab/bin/lib.mjs LOCKS,
 // ENGINE_DIR), so heavy.mjs and engine.mjs reservations work from inside the sandbox.
