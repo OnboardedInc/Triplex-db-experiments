@@ -15,3 +15,7 @@ Mac measurements are diagnostic.
 - The restored seed check preserves the producer's source identity. It checks the pinned seal bytes, actual dump checksum during restore, exact roster digest, seed position, scope and original command readbacks. Source differs only for the named held-scorecard arm. Inherited restores keep their original equality check.
 - The build receipt records the exact commit, every generated public package file and the locally resolved image IDs. Server startup rechecks those bytes and the PostgreSQL and Node tags against the pinned image references. The builder rejects staged, unstaged and untracked source, hidden index entries, existing build output in the fresh source, and ignored files in copied image inputs. The existing bootstrap checks the Datomic ZIP and stages its image from the selected commit.
 - The Mac gate uses a fresh local clone and the lab's engine manager. The compact slot is private to DX-V01, has a unique volume, mounts only its source and output and runs the existing INT1 proof. Its result is always diagnostic.
+
+## Replacement
+
+`lab/SCORECARD.md` now describes the Datomic release scorecard, and `lab/bin/scorecard.mjs` now starts its dated workload or prints its planning forecast. The old multi-engine scorecard remains accessible in Git history. Acceptance contract files and pins were left as supplied.
