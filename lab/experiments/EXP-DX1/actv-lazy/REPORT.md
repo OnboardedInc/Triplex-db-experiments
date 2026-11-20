@@ -1,11 +1,11 @@
-Use `48f55759494f6a6a04eeb6aa5284dde3e166d431` for the server retry. The shared-geography regression passes and the native census replay is queued.
+Use `48f55759494f6a6a04eeb6aa5284dde3e166d431` for the server retry. The native shared-geography test passed at that exact commit.
 A single write records the new rules and what notices are owed. At 10,000 deep people that write took 38 ms on the Mac.
 A background worker writes the changed values and individual notices in short turns. The recipient can stay offline while it records them.
 Before a value is stored, reads at the receipt’s cut derive it. Stored values serve that same cut. Later saves use the latest source.
 A new release can stop an obsolete value copy. Notices from both releases still get recorded in order.
 A shared wage-floor save covers the full roster when the database cannot prove a smaller affected set.
 On the server, 64 people took 34 ms to the quiet receipt and 47 ms to the first correct answer. All six cells agreed.
-The ten-thousand-person trial reached timing, but the shared lease was held. The receipt and erasure rulings remain open.
+The first local replay waited 55 minutes for a slot. The live timing is still queued. The receipt and erasure rulings remain open.
 
 ### Part 7
 
@@ -13,7 +13,7 @@ The value and notice archives are separate native scopes on the same writer. Fra
 
 The STG1 fallback from `fa53e50cd` keeps generic source edits at full-census coverage. Joined saves may use one person only when the original native command proves the namespace is private. The specific shared floor already took the census path in joined Publish, so that recipe did not omit a person. The previous general save recipe allowed an unproved narrow list. The companion's seven memory tests passed. The joined regression checks both sides of Publish and the unaffected complement before delivery.
 
-BM1 `i27-1` stopped before the large offers because a shared W0 location has an empty owner string. Joined Save passed that string as an owner claim. The repair keeps the strict owner-proof check and plans a census reconcile for either shared geography kind. The planner test reproduced the failure before the fix and passes with it. [Part 8 checksums](PART8-SHA256SUMS)
+BM1 `i27-1` and `i29-1` stopped before the large offers because Joined Save passed an empty geography owner as an owner claim. The repair plans a census reconcile for either shared geography kind. The native test replayed three shared edits with seven affected people and one unchanged person each, three stops, a lost acknowledgement and 35 ordered effects. It removed its volume. [Part 8 checksums](PART8-SHA256SUMS)
 
 ### Second review
 
@@ -34,7 +34,7 @@ The eight-fact thin fixture encoded 10.3–10.4 leaf bytes and 100–104 address
 
 The 10,000-deep trial spent about 26 minutes on preparation and reached the contested timing boundary. It yielded its heavy token and removed the volume before either live window. The shared lease also blocked the 1,000-deep fallback and the untimed matrix. Both waiters closed before admission. [Part 7 checksums](PART7-SHA256SUMS)
 
-The joined shared-floor native rerun, transactor and gateway suspension, fixed 64-reader trace, P6 read and save ratios, and wider cold-read and resident-memory measurements remain unverified. The 100,000-person server run belongs to the bench operator.
+Transactor and gateway suspension, the fixed 64-reader trace, live save and read ratios, and wider cold-read and resident-memory measurements remain unverified. BM1 has published no 100,000-person result for this pin.
 
 ### Server command
 
