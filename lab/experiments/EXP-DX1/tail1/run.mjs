@@ -49,6 +49,28 @@ const diskFloor = (directory) => {
   assert(stat.bavail * stat.bsize >= 5 * GiB, "Host disk is below the 5 GiB floor");
 };
 
+// [DX-TAIL1] Why: the added writer CPU must be a separate physical core, and the
+// same core must be idle in the one-core controls. Rejected: assuming Linux CPU IDs encode topology.
+function linuxPlacement(cpus) {
+  const topology = `
+import json, os, pathlib, sys
+allowed = sorted(os.sched_getaffinity(0))
+roles = {int(cpu) for item in sys.argv[1:] for cpu in item.split(",")}
+assert roles.issubset(allowed), "The host affinity omits a required role CPU"
+def core(cpu):
+    path = pathlib.Path(f"/sys/devices/system/cpu/cpu{cpu}/topology")
+    return ((path / "physical_package_id").read_text().strip(), (path / "core_id").read_text().strip())
+assigned = {core(cpu) for cpu in roles}
+spare = [cpu for cpu in allowed if core(cpu) not in assigned]
+assert spare, "No separate physical core available for the second writer CPU"
+extra = 5 if 5 in spare else spare[0]
+workers = [cpu for cpu in spare if core(cpu) != core(extra)]
+assert workers, "No separate CPU available for sender helper threads"
+print(json.dumps({"sender": "3", "workers": ",".join(map(str, workers)), "extraWriter": str(extra)}))
+`;
+  return JSON.parse(execFileSync("python3", ["-c", topology, "3", ...Object.values(cpus)]));
+}
+
 function spawnBound(command, args, { env, log, signal, deadline }) {
   const fd = fs.openSync(log, "wx");
   const child = spawn(command, args, { cwd: REPO, env, detached: true, stdio: ["ignore", fd, fd] });
@@ -511,7 +533,8 @@ export async function runTail(options, config, manager) {
     : { pg: "1", tx: "0", "gw-w": "2", "gw-r": "4,8" };
   // [DX-TAIL1] Why: matched G1 runs change only the writer's available cores.
   // Rejected: giving it a core shared with the reader, sender, storage or transactor.
-  if (variant.writerCores === 2) cpus["gw-w"] += mac ? ",3" : ",5";
+  const linuxClient = mac ? null : linuxPlacement(cpus);
+  if (variant.writerCores === 2) cpus["gw-w"] += "," + (mac ? "3" : linuxClient.extraWriter);
   const gc = (role) =>
     "-Xlog:gc*=info,safepoint=info:file=/trace/" +
     role +
@@ -525,7 +548,14 @@ export async function runTail(options, config, manager) {
     ),
   );
   Object.assign(env, {
-    ...(mac ? {} : { DX_BARE_METAL: "1", DX_BARE_METAL_ROOT: out }),
+    ...(mac
+      ? {}
+      : {
+          DX_BARE_METAL: "1",
+          DX_BARE_METAL_ROOT: out,
+          TRIPLEX_NODE_MAIN_CPUS: linuxClient.sender,
+          TRIPLEX_NODE_WORKER_CPUS: linuxClient.workers,
+        }),
     DX_STACK_EVIDENCE: setup,
     DX_TAIL1_ATTEMPT: nonce,
     DX_TAIL1_IMAGE: image,
@@ -644,6 +674,7 @@ export async function runTail(options, config, manager) {
       cpus,
       seconds,
       platform: process.platform,
+      linuxClient,
       leaseBeforeSeed,
       preseedLeaseWaitedMs: measureLease?.waitedMs ?? null,
       invokedAt,
@@ -838,7 +869,9 @@ export async function runTail(options, config, manager) {
     driver = spawnBound(
       mac ? process.execPath : "taskset",
       [
-        ...(mac ? [] : ["-c", "3", process.execPath]),
+        // [DX-TAIL1] Why: pin Linux helpers to the same separate cores in every arm.
+        // Rejected: crowding them onto the sending core or the optional writer core.
+        ...(mac ? [] : ["-c", linuxClient.sender + "," + linuxClient.workers, process.execPath]),
         "--max-old-space-size=" + (mac ? "2304" : "6144"),
         "--import",
         "tsx",
