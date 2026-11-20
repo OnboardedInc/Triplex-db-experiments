@@ -36,9 +36,10 @@ test("only current evidence can judge a physical bar and toy reports never judge
     correctness: { reads: 23 }, receiptCapture: { matched: 17, missing: 0, mismatches: 0 },
     priorities: {
       P1: { bars: [witness, { id: "fallback share", value: 0.5, pass: null, bar: "reported" }] },
-      P2: { bars: receipt, bandsAtL256: { a: { count: 17 } } },
+      P2: { bars: [...receipt, { id: "NS-P2 all-primary p99 ms", value: 100, pass: false }], bandsAtL256: { a: { count: 17 } } },
       P3: { bars: [witness], lag: { atL256: { count: 13 } } },
-      P4: { bars: [witness], weightedMix: { read: { count: 23 } } },
+      P4: { bars: [witness, { id: "NS-P4 correct weighted pulls/s whole machine", value: 4000, pass: false }],
+        weightedMix: { read: { count: 23 } }, throughput: { pullsPerSPerQuotaCore: 1500 } },
     },
   };
   const c = { key, profile: "frozen", load: "reader" };
@@ -60,6 +61,7 @@ test("only current evidence can judge a physical bar and toy reports never judge
   write("comparison.json", comparison);
   const physical = render(run, root);
   assert.match(rows(physical)[0]!, /\| PASS \|/);
+  assert.match(rows(physical)[1]!, /\| PASS \|/);
   assert.match(rows(physical)[2]!, /\| NOT MEASURED \|/);
   assert.match(rows(physical)[3]!, /\| NOT MEASURED \|/);
   write("campaign.json", { ...plan, placement: "mac-diagnostic", smoke: true });

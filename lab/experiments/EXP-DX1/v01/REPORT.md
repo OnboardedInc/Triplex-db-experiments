@@ -1,52 +1,44 @@
-The merge table is on the scorecard branch.
-Four outstanding sources merged cleanly in the trial.
-The failover and JVM branches have conflicts.
-The scorecard uses one Datomic database per arm.
-It runs the same writer tape with and without readers.
-It reports measurements and gaps for all nine priorities.
-The physical fresh and one-billion runs are still due.
-Mac measurements are diagnostic.
+The readiness table and merge order are on the scorecard branch.
+Version 0.1 still needs both physical runs on INT1.
+The scorecard reports nine priorities and four correctness checks.
+It uses one Datomic database with all accounts in each arm.
+The two frozen arms take 197 minutes before restore and checks.
+The clean Mac clone built its packages and started Datomic.
+The Mac card contains diagnostic numbers and records gaps.
+Both server runs need compatible sealed inputs.
+
+## Readiness and replacement
+
+[READINESS.md](READINESS.md) preserves each source head, commit count, exact trial conflicts and the ordered merge list. Four outstanding sources trial-merged cleanly and four conflicted at the original INT1 snapshot. The later trials add the scorecard and playground and refresh every source against INT1 `0196b9952`, which includes the opt-in per-person writer and permanent Publish. Only the scorecard branch was pushed from this worktree.
+
+`lab/SCORECARD.md` and `lab/bin/scorecard.mjs` now describe and run the Datomic v0.1 scorecard. Their 2026-11-07 multi-engine versions are in Git history.
+
+The Mac lease marker patch is `5c874bd26`. INT1 took the same tooling and tests as `a79267191`. The normal all-token behaviour remains available without the marker. With the marker, compatibility callers use one ordinary token, reusing the direct parent's token when present, and print one diagnostic line. PAIR records a departure from its measurement conditions. Four focused tests exercised marker present and absent, wrapper reuse, ordinary admission and release.
 
 ## Verdict and receipt audit
 
-- The priority verdicts use only complete physical rows from INT1's verified saved-output collector. The collector reopens the native command ledger, original ready/armed/start records, both offer ledgers and the independent oracle bytes. It checks the actual writes and returned data, compares the exact offered offsets to the frozen plan, and ties each arm to a new nonce, source, slot, matched baseline hash and held seed.
-- Receipt status uses exact captured receipt matches, read-your-own-write, duplicate and lost-ACK bars from the same verified loaded arm. It checks three named witnesses and records the matched denominator. No crash recovery or journal assertion is derived from this receipt row.
-- A scorecard reopens each checked report and compares its SHA-256 to the published comparison index. Source, campaign binding, arm identity, stage and start times must agree. The server uses a new directory and restores the operator-pinned seal for each arm. Missing evidence and toy numbers cannot produce a pass.
-- The restored seed check preserves the producer's source identity. It checks the pinned seal bytes, actual dump checksum during restore, exact roster digest, seed position, scope and original command readbacks. Source differs only for the named held-scorecard arm. Inherited restores keep their original equality check.
-- The build receipt records the exact commit, every generated public package file and the locally resolved image IDs. Server startup rechecks those bytes and the PostgreSQL and Node tags against the pinned image references. The builder rejects staged, unstaged and untracked source, hidden index entries, existing build output in the fresh source, and ignored files in copied image inputs. The existing bootstrap checks the Datomic ZIP and stages its image from the selected commit.
-- The Mac gate uses a fresh local clone and the lab's engine manager. The compact slot is private to DX-V01, has a unique volume, mounts only its source and output and runs the existing INT1 proof. Its result is always diagnostic.
+- **Physical priority rows.** The native saved-output collector reopens the original ready, armed and start records, both offer ledgers and the independent oracle. It checks actual writes and returned bytes and compares offered offsets to the frozen plan. The fresh nonce, source, slot, held seed and matched baseline bind the two arms. The renderer requires the physical plan and pinned seal, checks source, campaign binding, case, arm identity and timestamps and hashes each published raw report again. It uses the verified P1 checks and the P2 size-band checks. For P4 it compares the measured pulls per quota core to 1,100 and leaves the row open when the engine-byte witness is missing. The older aggregate throughput and supplemental P2 percentiles cannot decide these rows. Missing measurements and the Mac diagnostic path emit no verdict.
+- **Receipt row.** Exact captured durable receipts, immediate readback, duplicate and lost-ACK witnesses come from the same verified loaded arm. The renderer requires all three named witnesses, counts matched receipts and checks capture completeness. It reports journal queryability, erasure and machine-loss recovery as unmeasured in this campaign.
+- **Held seal validation.** The operator-pinned manifest and streamed dump are checked against the held SHA-256 and expected roster, scope, logical seed position and command readbacks. Each arm restores a disposable copy. The named held-arm path keeps the producer's source identity while binding the new run to its own source. Normal INT1 restores still require exact source equality.
+- **Build record.** The builder checks an exact clean commit, an unmodified index and tracked image inputs. The receipt identifies all generated package files by SHA-256 and records the resolved local image IDs. Server startup reopens those bytes and checks the mutable PostgreSQL and Node tags against the pinned references while holding the campaign exclusion. The native bootstrap checks the committed Node and Datomic archive digests and stages Datomic from the selected source.
+- **Mac fixture.** Engine admission owns a unique compact slot and volume, checks pinned build inputs and starts the existing INT1 proof. The partial report accepts only recorded toy arms, checking plan, case, source, timestamps, report digest and arm identity. It retains the fixture failure as a nonzero exit. Every Mac number is diagnostic.
 
-## Replacement
+No files under `lab/acceptance/` changed, and none of the changed paths are covered by its SHA-256 pins.
 
-`lab/SCORECARD.md` now describes the Datomic release scorecard, and `lab/bin/scorecard.mjs` now starts its dated workload or prints its planning forecast. The old multi-engine scorecard remains accessible in Git history. Acceptance contract files and pins were left as supplied.
+## Verification
 
-## Verification and open dependencies
+The renderer tests covered all 13 rows, source/time/digest refusals, physical and diagnostic status, and incomplete diagnostic archives. The CLI forecast and help, clean source and dirty checkout refusals, ignored image-input refusal, TypeScript compilation, shell validation and the literal image-reference expansion passed. Ten INT1 plan and profile tests, three retention regressions, the split-read test and four reader-error tests passed. Both Linux Node archive hashes matched the vendor release manifest. [Node release checksums](https://nodejs.org/dist/v22.23.2/SHASUMS256.txt)
 
-- The two renderer regressions passed. Separate checks passed for the forecast, CLI help, TypeScript and shell syntax, clean-source acceptance, dirty source refusal and ignored image-input refusal.
-- The clean-clone Mac diagnostic is queued through the lab heavy runner. The package, image and fixture steps each use one ordinary token. Only the fixture starts a compact owned Datomic slot.
-- [Server handoff](SERVER.md) records the command revision and the USD 3.58–4.27 estimate for 197–235 minutes per age at the existing allocation rate.
-- The held SCALE1 decision image uses a different layout and operation identity scheme. INT1 needs compatible sealed fresh and 1B inputs. Aging in the measured Triplex scope changes the logical seed head and still needs a starting-state replay adapter. No physical runtime or budget result is claimed.
-- The two frozen windows consume 197 minutes of the allocation. Integrated P5/P6/P8 field work, the P7 census and P9 two-machine drill remain separate. The scorecard labels each gap and any unverified correctness gate.
-- The four conflicting branch trials were aborted after recording all conflicted paths. Their resolutions remain with the integration work.
+Fresh Mac clones built eight package tasks and checked the resulting 711 files. The engine manager built the pinned image and started PostgreSQL, Datomic and its gateway. The 40-person fixture seeded all ten accounts in a single database, with 4,890 facts. The first native module and output-mount failures were fixed. A subsequent start barrier failure exposed differing hash input order between the native controller and driver. The corrected controller uses the driver's campaign input order. Each admitted retry used an ordinary token and its own volume. The later fixture evidence records admission as `mac-diagnostic`.
 
-## Mac admission marker
+The first post-fix frozen zero-reader arm verified its archive. Its loaded arm returned 208,939 exact reads, zero wrong results, one TypeError and 90 exact independent samples. The retry returned 4,859 exact reads, zero errors and 42 exact independent samples, all routed through the source. The collector refused both loaded arms. The later INT1 verifier now binds historical samples through the placement identity when a cut has no visible stamp. The pooled legacy following reader now opens from a stable catalog witness. The local replica sample requirement remains in force.
 
-When `lab/locks/NO-MEASURE-LEASE` exists, compatibility callers get one ordinary token, or reuse their direct wrapper's token. They report diagnostic timings, create no lease directory and leave engine admission open. The PAIR gate records the missing lease as a departure instead of treating shared timings as verdict evidence. Four focused tests covered marker present/absent, wrapper reuse, admission and cleanup. The lease fallback itself emits no PASS or receipt.
+The stable catalog witness retry served 50 checked local replica samples and compared 91 exact reads through the independent oracle. Two split reads recorded TypeErrors and the gate refused the loaded arm. A targeted reproduction found that split reads assigned to read-only fallback metadata when combining their exact halves. The fixed reader constructs the result with the combined descriptors in one step and preserves the lazy row getter. Error traces now retain bounded repository-relative code locations without exception text.
 
-The first ordinary-token Mac attempt reached source validation and exposed Git's default stdout limit on this repository's full index. The guard now accepts the larger listing and reads its NUL-delimited flags. It still rejects hidden entries.
+The retained archives produced diagnostic cards with nine priorities, four correctness rows and 39 exact zero-reader receipts. They contain no verdicts and label unverified loaded observations as unavailable. [Evidence index](EVIDENCE.md) locates the native logs, cards, build records and checksums.
 
-The clean clone built eight package tasks at `38476511b` and retained a 711-file output manifest. Its pinned image started PostgreSQL, Datomic and the gateway in the compact owned slot. That attempt stopped at a duplicate TypeScript binding before it seeded. The engine removed the attempted volume. The command now uses a distinct queue descriptor name. Native module compilation covered all twelve changed or reused entry points.
+## Server handoff
 
-The next owned run passed startup and stopped while copying the staged oracle into the Mac output mount. The guest file-copy primitive returned `EACCES` while transferring file metadata. The retry streams bytes into new files and retains the collector's content checks. The same change covers the driver's cross-device evidence transfer.
+[SERVER.md](SERVER.md) pins the runnable revision, build and two invocation commands. Each age has 197 minutes of frozen tape and a 235-minute ceiling. At USD 1.09 per hour the forecast is USD 3.58–4.27 per run, excluding build and seed preparation. Physical duration and cost are unverified.
 
-[Evidence index](EVIDENCE.md) lists the package and image receipts, first failures and capacity refusals. The ordinary-token fixture remains queued.
-
-The streamed native retry seeded 40 people and 4,890 facts into one Datomic database before the controller stopped at the start barrier. The driver and controller hashed equivalent campaign options in different JavaScript property orders. Both now use the driver's original field order. The fix preserves the seed and tape content and leaves the non-campaign digest unchanged. The engine removed the private volume on failure.
-
-The scorecard branch merged the newer INT1 snapshot to carry over its frozen-arm tenant feed evidence and following-mode oracle checks. See the readiness table for the three resolved files. The INT1 branch remained with its owner. The previous Mac attempt's verified seed and rejected barrier are retained separately.
-
-At `627dbacb9`, the Mac frozen zero-reader arm passed its saved-output verifier. The loaded arm checked 208,939 correct reads with zero wrong results and one `TypeError`, which stopped the gate. Its 90 independent oracle samples matched. The error detail contained a cause type without a message. The raw attempts and cleanup are in `native-12/` and `fixture-12.log`. The same source was retried on a fresh volume.
-
-The later INT1 history-sample fix uses the placement identity when an old cut has no visible stamp, then checks all sampled rows with the existing oracle. One saved DX-V01 sample has that shape. The scorecard also retains the exact prebuilt-package check inside the physical campaign lock while preserving the normal INT1 launcher's native preparation path.
-
-The same-source retry checked 4,859 correct reads, zero errors and 42 exact independent samples. The loaded gate still refused because no raw sample was served by the local replica. The pooled following reader now uses the same stable catalog witness as the receipt worker when opening the legacy starting clock, instead of depending on the first concurrently edited person. The local-sample check remains required.
+The held SCALE1 decision image has a different layout and operation identity scheme. INT1 needs compatible sealed fresh and 1B inputs. If aging uses the same measured Triplex journal, the driver also needs a starting-state and oracle replay adapter for the aged logical head. P3 fanout, P4 engine bytes, P5/P6/P8 field coverage, the P7 census and the P9 two-machine drill still need separate or integrated measurements.

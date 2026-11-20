@@ -22,7 +22,7 @@ const bars = [
   "L256 scheduled offer to durable ACK: p50 ≤ 10 ms, p99 ≤ 50 ms in 5–10 and 11–25 bands; p99 ≤ 100 ms in 26–50. Exact immediate readback and receipts; correct progress and bounded queue.",
   "Zero gaps, order violations or duplicate effects; exact resume and affected subjects; three crash points; L256 durable lag p99 ≤ 250 ms.",
   "Weighted p50 ≤ 5 ms, p99 ≤ 25 ms; large p99 ≤ 50 ms; ≥ 1,100 pulls/s/core; depth-10 p99 and engine bytes ≤ 1.1× depth 1.",
-  "100k/account ≤ 100 s and live read/write p99 ≤ 1.5×. Publish < 1 s with permanent record and visible new answers; report background settlement.",
+  "100k/account ≤ 100 s and live read/write p99 ≤ 1.5×. Within 1 s of first seeing a release, its permanent record fixes every answer and owed notice across restart and all reads see the new answers. Report background settlement.",
   "Quiet commit, read and feed p99 each ≤ 1.25× alone during burst, Publish and import; zero wrong reads or expired commands.",
   "≤ 64 resident B/untouched person outside Postgres; cold first-read p99 ≤ 100 ms; report idle bytes and threads per role.",
   "Deep 16M-fact and wide 4.5M-person imports; live read/write p99 ≤ 1.5×; target ≥ 3,000 facts/s.",
@@ -54,6 +54,19 @@ function result(checks: Bar[], eligible: boolean) {
   if (!eligible || !required.length) return "NOT MEASURED";
   if (required.some((b) => b.pass === false)) return "FAIL";
   return required.every((b) => b.pass === true) ? "PASS" : "NOT MEASURED";
+}
+
+function targetBars(priority: number, raw: any) {
+  const checks: Bar[] = raw.bars;
+  // [DX-V01] Why: use the current target file's band and per-core bars.
+  // Rejected: allowing the older whole-machine and all-primary diagnostics to decide these rows.
+  if (priority === 2) return checks.filter((b) => !/^NS-P2 (all-primary|burst )/.test(b.id));
+  if (priority !== 4) return checks;
+  const perCore = raw.throughput?.pullsPerSPerQuotaCore;
+  return [
+    ...checks.filter((b) => !b.id.includes("whole machine") && !b.id.includes("per engine core")),
+    { id: "pulls/s per engine core", value: perCore, pass: Number.isFinite(perCore) ? perCore >= 1100 : null },
+  ];
 }
 
 function unavailable(name: string, bar: string, reason: string): Row {
@@ -168,7 +181,7 @@ export function render(run: Run, destination: string) {
         `${p.P4.weightedMix?.read.count ?? 0} weighted pulls`,
       ];
       for (const i of [0, 1, 2, 3]) {
-        const checks: Bar[] = p[`P${i + 1}`].bars;
+        const checks = targetBars(i + 1, p[`P${i + 1}`]);
         const invalid = !eligible && !run.toy ? item.summary.invalid.join("; ") : "";
         const diagnostic = run.toy ? `Toy samples. ${shown(checks)}`
           : [shown(checks), invalid, i >= 2 ? gaps[i] : ""].filter(Boolean).join(". ");
