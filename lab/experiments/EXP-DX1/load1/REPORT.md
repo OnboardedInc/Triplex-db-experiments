@@ -4,7 +4,7 @@ At the 128-fact cap, server frames took 21.84 ms on average. Datomic applied the
 Several small frames can prepare and collect receipts at once. Only one import frame may hold the writer's turn, and ready saves go first.
 The first two server arms are 16 facts with two in flight, then 24 with two. The forecasts are 3,040 and 3,600 queryable facts per second.
 The forecasts still put quiet reads outside the 1.5× allowance. The single-server run will check every account against two fresh controls.
-The Mac check uses an ordinary slot and checks exact content, original receipts, ordering and restart. Its timings are diagnostic.
+The Mac verified 13,936 facts, reached four and eight frames in flight, and checked order, original receipts and restart. Mac timings are diagnostic.
 Earlier results and the sustained import check are in [part 5](PART5.md).
 
 ## Evidence and predictions
