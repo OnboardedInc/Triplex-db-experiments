@@ -69,11 +69,8 @@ function plan(): Plan {
   assert(Number.isInteger(p.maxHours) && p.maxHours > 0 && p.maxHours <= 40);
   if (p.continuedFrom) {
     assert.match(p.continuedFrom, /^[a-f0-9]{40}$/);
-    assert(p.steps.length === 2 && p.steps.every((s) => s.isolation));
-    assert.deepEqual(
-      p.steps.map((s) => s.mode),
-      ["individual", "prepared"],
-    );
+    assert(p.steps.length === 1 && p.steps[0]?.trimmed && p.steps[0].isolation);
+    assert.equal(p.steps[0].mode, "individual");
   }
   for (const [i, s] of p.steps.entries()) {
     assert(/^arm-d7-[a-z0-9-]{2,24}$/.test(s.tag));
@@ -115,9 +112,19 @@ async function run(p: Plan, s: Step, deadline: number, build: string) {
     released();
     const remaining = Math.floor((deadline - Date.now()) / 1000);
     const large = s.layout !== "single" && s.people === 100000;
-    const h = s.isolation ? 11.5 : s.phase === "seed" ? (large ? 18 : 3) : large ? 5 : 2;
+    const h = s.trimmed
+      ? 3
+      : s.isolation
+        ? 11.5
+        : s.phase === "seed"
+          ? large
+            ? 18
+            : 3
+          : large
+            ? 5
+            : 2;
     assert(
-      remaining > (s.isolation ? 8 : s.phase === "seed" && large ? 6 : 1) * 3600,
+      remaining > (s.trimmed ? 3 : s.isolation ? 8 : s.phase === "seed" && large ? 6 : 1) * 3600,
       "Campaign ceiling leaves too little time to start this arm",
     );
     const ceiling = Math.min(h * 3600, remaining);

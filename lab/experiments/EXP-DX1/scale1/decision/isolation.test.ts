@@ -8,6 +8,8 @@ import { Histogram } from "../../../../bench/lib/hist.ts";
 import { pairedP99 } from "./paired.ts";
 import { summarizeCapture } from "./telemetry.ts";
 import { placementReport } from "./report.ts";
+import { nextTrimPair, trimAgrees, trimRate } from "./trim.ts";
+import type { checkCell } from "./check.ts";
 import {
   cellOrder,
   isolationProfile,
@@ -68,6 +70,34 @@ test("whole-window bootstrap can distinguish a matched 1.25× control from 2×",
   assert(!far.upper95Within125);
   assert.equal(far.primary.draws, 10000);
   assert.equal(far.longer.matchedPairsPerBlock, 2);
+});
+
+test("a rate stops after two agreeing pairs and keeps measuring different loss outcomes", () => {
+  const rate = 35;
+  const points = (loss = 0) =>
+    [1, 6].flatMap((repeat, i) => [
+      { cell: "alone", repeat, quietComplete: true, quiet: { p99: 25 } },
+      {
+        cell: rate,
+        repeat,
+        quietComplete: true,
+        quiet: { p99: 50 + i },
+        goodput: 35 - i * 0.1,
+        capacityBars: false,
+        missing: 0,
+        preDispatchExpiry: loss * i,
+        refused: 0,
+        recovered: 0,
+        uncertain: 0,
+      },
+    ]) as ReturnType<typeof checkCell>[];
+  assert(trimAgrees(points(), rate));
+  assert(!trimAgrees(points(1), rate));
+  const repeat = Array.from({ length: 8 }, (_, i) => 8 + i).find(
+    (r) => trimRate(cellOrder(r, "pooled", true)) === rate,
+  )!;
+  assert.deepEqual(nextTrimPair(repeat, points()), []);
+  assert.equal(nextTrimPair(repeat, points(1)).length, 2);
 });
 
 test("stage coverage joins the received gateway root to the original native t", async () => {
@@ -216,7 +246,7 @@ test("seed replay prices cgroup counter increments only within the observed span
         tag: "fixture",
         attempt: a,
         terminal: {
-        ...a,
+          ...a,
           service: "ceiling",
           endedAt: new Date(a.at + 21 * 60000).toISOString(),
         },

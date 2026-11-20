@@ -1,5 +1,18 @@
 # Predictions for the remaining deep-account campaign
 
+## v0.1 trimmed current writer
+
+The 3-hour cap includes the restore and native evidence export. The SQL restore uses two cores before measurement, then PostgreSQL returns to its single pinned core. The first two rounds give every rate two matched five-minute pairs before later repetitions. The harness drops pairs three and four when both initial pairs agree within 10% on quiet save p99 ratio and ACK rate, with consistent loss counts and absolute-bar outcome. If the ceiling limits later pairs, the completed pairs and their exact denominators remain in the report. Early-stop estimates are descriptive.
+
+| Cell | Current individual writer |
+| --- | --- |
+| TRIM 35 | 34.5–35 durable/s, save p50/p99 6–12 / 70–300 ms, quiet p99 1.8–4.8×, zero expiry. |
+| TRIM 50 | 49–50 durable/s, save p50/p99 6–15 / 70–450 ms, quiet p99 1.9–6.5×, zero expiry. |
+| TRIM 235 | 125–185 durable/s, save p50/p99 8,000–25,000 / 22,000–35,000 ms, quiet p99 5–22× if complete, 5–40% expiry. |
+| TRIM 394 | 125–190 durable/s, save p50/p99 12,000–30,000 / 25,000–36,000 ms, quiet p99 9–35× if complete, 30–65% expiry. |
+
+The prior two-policy isolation plan below is historical. The revised run order, durations and server costs are in the [v0.1 campaign](V01-CAMPAIGN.md).
+
 ## November 20 one-database isolation run
 
 The owner chose one Datomic database. The two-database forecast below is historical. The replacement timings restore the same 162,456,470-fact image for each writer policy. Each rate gets twelve matched five-minute pairs and 12,600 planned sentinel saves on each side. The sentinel offers 3.5/s. There are 64 seats with 19,200 read offers per window. Each rate is tested once per round, with the ten accounts taking turns as sentinel and six pairs in each condition order. Windows use new frozen phases and share the same write intent and read tape within each pair. Natural indexing and GC remain in the workload. The 394/s cell sustains peak-minute demand for five minutes.

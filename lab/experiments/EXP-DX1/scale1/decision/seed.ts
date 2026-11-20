@@ -339,6 +339,7 @@ export async function restore(
   writerBinding: string,
   fromTransfer?: string,
   isolation = false,
+  fasterRestore = false,
 ) {
   const proof = verifiedOrigin(from, id, fromTransfer, isolation);
   const dump = path.join(from, "seed.pgdump");
@@ -352,24 +353,33 @@ export async function restore(
       if (/^(?:gw-w|gw-r|tx)(?:-gc\.log|\.jsonl)$/.test(name))
         fs.renameSync(path.join(raw, name), path.join(raw, "preflight-" + name));
   }
-  const restoredHash = await pgCopy(
-    [
-      "exec",
-      "-i",
-      slot + "-pg",
-      "pg_restore",
-      "--exit-on-error",
-      "--single-transaction",
-      "--if-exists",
-      "--clean",
-      "-U",
-      "postgres",
-      "-d",
-      "datomic",
-    ],
-    fs.createReadStream(dump),
-    "ignore",
-  );
+  // [DX-SCALE1] Why: the trimmed run can decompress and load on distinct cores
+  // before timing. Rejected: using the one-core measurement placement for both restore processes.
+  const restoreStarted = Date.now();
+  if (fasterRestore) docker("update", "--cpuset-cpus", "1,8", slot + "-pg");
+  let restoredHash;
+  try {
+    restoredHash = await pgCopy(
+      [
+        "exec",
+        "-i",
+        slot + "-pg",
+        "pg_restore",
+        "--exit-on-error",
+        "--single-transaction",
+        "--if-exists",
+        "--clean",
+        "-U",
+        "postgres",
+        "-d",
+        "datomic",
+      ],
+      fs.createReadStream(dump),
+      "ignore",
+    );
+  } finally {
+    if (fasterRestore) docker("update", "--cpuset-cpus", "1", slot + "-pg");
+  }
   assert.equal(restoredHash, proof.sha256);
   const restartedAt = Date.now();
   for (const role of ["tx", "gw-w", "gw-r"]) docker("start", slot + "-" + role);
@@ -448,6 +458,7 @@ export async function restore(
       gatewayRoles,
       reopenedAt: Date.now(),
       ...(isolation ? { restartedAt } : {}),
+      ...(fasterRestore ? { restoreMs: restartedAt - restoreStarted } : {}),
       membership,
     });
     return { scopes: proof.scopes, urls: [urls[writer]!, urls[reader]!], restartedAt };

@@ -459,7 +459,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       ? `First recorded engine memory-limit kill was in ${emptied.resources.firstObservedEngineOOM.role}, attempt ${emptied.tag}.`
       : refused
         ? `The first capacity refusal was ${refused.tag} on ${refused.attempt.capacity.limits.join(" and ")}. This was an admission estimate.`
-        : "The owner chose one database. The full-size study uses twelve five-minute matched pairs per rate and writer, with GC and save clocks. The pilot and single-account archives lack matched JVM pause logs. [Forecasts](PREDICTIONS.md)",
+        : "The owner chose one database. The v0.1 current-writer arm uses up to four five-minute matched pairs per rate, with GC and save clocks. The pilot and single-account archives lack matched JVM pause logs. [Campaign](V01-CAMPAIGN.md)",
     archivedWriter ??
       (thresholds.length
         ? "Write-capacity diagnostic. First measured expiry or quiet commit p99 miss by arm " +
@@ -626,7 +626,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "- The single-account comparison checks both fresh attempt identities, the same sealed image hash and identical write-cell inputs. Checkpoint rates verify the attempt, pinned population, per-scope count and sample time before comparing acknowledged progress. Timed cgroup samples bind each named cell. A retry checks the original accepted transfer, image and population. Restored peer checks require the original cut, source and nonce before the same writer clients issue their timed saves.",
     "- " + functionalNote(evidence, path.join(here, "evidence/part4-functional.sha256")),
     "",
-    "The isolation gate replays planned dispositions, exact native feed bytes and pinned field cuts for the same attempt. Paired intervals use exact matched tapes and keep failed outcomes in capacity accounting. The capture checks fresh JVM clocks and binds original response roots to durable transaction positions by source, slot, nonce and boot clock. The continuation verifies the accepted seed transfer and restored image content before either policy. The SDK build, package and decision TypeScript checks, 103 SDK transport tests and seven focused decision checks passed. No acceptance pin changed. The frozen v3 offer digest remains unchanged. [Predictions](PREDICTIONS.md) · [Handoff](HANDOFF.md)",
+    "The isolation gate replays planned dispositions, exact native feed bytes and pinned field cuts for the same attempt. Paired intervals use exact matched tapes and keep failed outcomes in capacity accounting. Trimmed pairing replays the frozen order and recomputes the 10% stop from this attempt’s checked cells. Its cutoff binds the attempt start, ceiling and complete pair boundaries. The capture checks fresh JVM clocks and binds original response roots to durable transaction positions by source, slot, nonce and boot clock. The continuation verifies the accepted seed transfer and restored image content before either policy. The SDK build, package and decision TypeScript checks, 103 SDK transport tests and seven focused decision checks passed. No acceptance pin changed. The frozen v3 offer digest remains unchanged. [Predictions](PREDICTIONS.md) · [Handoff](HANDOFF.md)",
   );
   const interference = stages
     .filter(

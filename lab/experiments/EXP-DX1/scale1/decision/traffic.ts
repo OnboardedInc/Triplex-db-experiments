@@ -18,10 +18,11 @@ import {
   task,
   writeTape,
 } from "./plan.ts";
-import { disk, engineResources, write, type Destination } from "./seed.ts";
+import { disk, engineResources, read, write, type Destination } from "./seed.ts";
 import { play, preload, resolveUncertain } from "./writes.ts";
 import type { Request } from "./server.ts";
 import { checkSpace } from "./telemetry.ts";
+import { nextTrimPair, trimArchiveReserve, trimRepetitions, trimWindowReserve } from "./trim.ts";
 
 function message<T>(child: ChildProcess, match: (m: any) => boolean, timeout = 240000) {
   return new Promise<T>((ok, fail) => {
@@ -150,8 +151,23 @@ export async function runCells(
     );
     const reports: ReturnType<typeof checkCell>[] = [];
     const begin = Date.now();
-    for (const repeat of repetitions(id.layout, request.isolation)) {
-      for (const cell of cellOrder(repeat, id.layout, request.isolation)) {
+    const attempt = read<{ at: number; ceiling: number }>(path.join(dir, "attempt.json"));
+    const deadline = attempt.at + attempt.ceiling * 1000;
+    let stoppedByCeiling: { repeat: number; at: number } | undefined;
+    for (const repeat of request.trimmed
+      ? trimRepetitions
+      : repetitions(id.layout, request.isolation)) {
+      const order = request.trimmed
+        ? nextTrimPair(repeat, reports)
+        : cellOrder(repeat, id.layout, request.isolation);
+      if (request.trimmed && order.length) {
+        const at = Date.now();
+        if (at + trimWindowReserve + trimArchiveReserve >= deadline) {
+          stoppedByCeiling = { repeat, at };
+          break;
+        }
+      }
+      for (const cell of order) {
         const key = cellKey(cell, repeat);
         if (request.isolation) checkSpace(dir);
         status("running " + key);
@@ -282,6 +298,9 @@ export async function runCells(
       from: request.from,
       withReaders: request.withReaders ?? true,
       ...(request.isolation ? { isolation: true } : {}),
+      ...(request.trimmed
+        ? { trimmed: { deadline, stoppedByCeiling: stoppedByCeiling ?? null } }
+        : {}),
       elapsedMs: Date.now() - begin,
       comparisons,
       footprint,

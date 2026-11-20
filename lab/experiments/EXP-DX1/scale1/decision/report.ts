@@ -256,19 +256,21 @@ function recordPredictions(dir: string, trials: Trial[]) {
       for (const comparison of measurement.comparisons) {
         const rate = comparison.rate;
         const cells = measurement.cells.filter((c: any) => c.cell === rate);
-        assert.equal(cells.length, 12);
+        assert(a.trimmed ? cells.length <= 4 : cells.length === 12);
         const total = (field: string) => cells.reduce((n: number, c: any) => n + c[field], 0);
         writeRow(
-          "ISO " + rate,
+          (a.trimmed ? "TRIM " : "ISO ") + rate,
           a.mode === "prepared" ? 3 : 2,
-          fmt(total("inWindow") / total("seconds")) +
-            "/s (n=" +
-            total("inWindow") +
-            "), " +
-            total("preDispatchExpiry") +
-            " pre-dispatch expiries, quiet save p99 " +
-            ratio(comparison.ratios[0]) +
-            ". [Cell results](DECISION-RESULTS.md)",
+          !cells.length
+            ? "Unmeasured at the time ceiling. [Cell results](DECISION-RESULTS.md)"
+            : fmt(total("inWindow") / total("seconds")) +
+                "/s (n=" +
+                total("inWindow") +
+                "), " +
+                total("preDispatchExpiry") +
+                " pre-dispatch expiries, quiet save p99 " +
+                ratio(comparison.ratios[0]) +
+                ". [Cell results](DECISION-RESULTS.md)",
         );
       }
       continue;
@@ -309,7 +311,7 @@ export function placementReport(dir: string, trials: Trial[]) {
   const lines = [
     "# Decision cells",
     "",
-    "Offered rate and goodput use the same rated interval. The historical pilot uses 90-second cells. The full-size one-database study uses 12 five-minute pairs per rate and writer policy. The single account uses 150, 120, 300 and 60 seconds at 3.5, 4.9, 23.5 and 39.4/s, from the same image with and without a 600-second reader dose. p50 and p99 use original durable acknowledgements. Expiry is before SDK dispatch. The sentinel keeps 3.5/s and replays 64 pinned reader seats in both conditions. Every durable feed change is checked.",
+    "Offered rate and goodput use the same rated interval. The historical pilot uses 90-second cells. The full-size v0.1 present-writer arm uses up to four five-minute pairs per rate. The single account uses 150, 120, 300 and 60 seconds at 3.5, 4.9, 23.5 and 39.4/s, from the same image with and without a 600-second reader dose. p50 and p99 use original durable acknowledgements. Expiry is before SDK dispatch. The sentinel keeps 3.5/s and replays 64 pinned reader seats in both conditions. Every durable feed change is checked.",
     "",
     "The primary budget requires p50 ≤10 ms, p99 ≤50 ms, all primary dispositions exact with no expiry, rejection or missing offers, at least 99% of ACKs in the window and at most 1 s of drain. The quiet p99 bar is ≤1.25× for saves, pinned reads and feed lag. November 20 ruling uses one database. Full-size paired intervals preserve five-minute windows, with adjacent-pair blocks as sensitivity.",
     "",
@@ -383,7 +385,9 @@ export function placementReport(dir: string, trials: Trial[]) {
     assert(
       d.mode === a.mode &&
         d.from === a.from &&
-        d.cells.length === (a.isolation ? 96 : a.layout === "single" ? 4 : 10) &&
+        (a.trimmed
+          ? d.cells.length <= 32 && d.cells.length % 2 === 0
+          : d.cells.length === (a.isolation ? 96 : a.layout === "single" ? 4 : 10)) &&
         d.comparisons.length === (a.layout === "single" ? 0 : 4),
     );
     lines.push(
@@ -428,10 +432,41 @@ export function placementReport(dir: string, trials: Trial[]) {
     for (const c of d.comparisons)
       lines.push(
         "| " +
-          [c.rate, ...c.ratios.map(ratio), c.completeCapacity ? "yes" : "no"].join(" | ") +
+          [
+            a.trimmed ? c.rate + " (" + c.pairs + " pairs)" : c.rate,
+            ...(c.ratios.length ? c.ratios.map(ratio) : ["unmeasured", "unmeasured", "unmeasured"]),
+            c.pairs === 0 ? "unmeasured" : c.completeCapacity ? "yes" : "no",
+          ].join(" | ") +
           " |",
       );
     if (a.isolation) {
+      if (a.trimmed) {
+        lines.push(
+          "",
+          "| Cell | Account | Planned | Independently checked ACKs | ACKs in window | Save p50 / p99 ms |",
+          "| --- | ---: | ---: | ---: | ---: | --- |",
+        );
+        for (const c of d.cells)
+          for (const r of c.accounts)
+            lines.push(
+              "| " +
+                [
+                  c.label,
+                  r.account + 1,
+                  r.planned,
+                  r.acked,
+                  r.inWindow,
+                  fmt(r.p50) + " / " + fmt(r.p99),
+                ].join(" | ") +
+                " |",
+            );
+        if (d.trimmed.stoppedByCeiling)
+          lines.push(
+            "",
+            "The execution ceiling stopped admission of additional complete pairs.",
+            "",
+          );
+      }
       lines.push(
         "",
         "| Offered/s | Metric | Paired p99 ms loaded / alone | Paired 90% | Adjacent-pair 90% | Log SE | Leave-one-pair-out | Compatible with 1.25 / 2 | All three upper limits ≤1.25 |",
@@ -630,15 +665,32 @@ export function placementReport(dir: string, trials: Trial[]) {
     return "Full-size placement remains unmeasured. [Decision cells](DECISION-RESULTS.md)";
   }
   const first = recent.summary.comparisons.find(
-    (c: any) => !c.completeCapacity || c.ratios.some((r: any) => r.pass !== true),
+    (c: any) =>
+      c.pairs !== 0 && (!c.completeCapacity || c.ratios.some((r: any) => r.pass === false)),
   );
+  const uncovered = recent.summary.comparisons.filter(
+    (c: any) => c.pairs === 0 || c.ratios.some((r: any) => r.pass === null),
+  );
+  const gaps = uncovered.length
+    ? " At least one quiet metric was unmeasured at " +
+      uncovered.map((c: any) => c.rate).join(", ") +
+      "/s."
+    : "";
   return first
     ? "At full size, the " +
         recent.mode +
-        " pooled arm first missed or left unjudged a declared bar at " +
+        " pooled arm first missed a measured bar at " +
         first.rate +
-        "/s. [Decision cells](DECISION-RESULTS.md)"
-    : "The " +
+        "/s." +
+        gaps +
+        " [Decision cells](DECISION-RESULTS.md)"
+    : gaps
+      ? "At full size, the " +
+        recent.mode +
+        " pooled arm has no measured miss." +
+        gaps +
+        " [Decision cells](DECISION-RESULTS.md)"
+      : "The " +
         recent.mode +
         " pooled arm held the measured windows through 394/s. The 620/s headroom test remains unmeasured. [Decision cells](DECISION-RESULTS.md)";
 }

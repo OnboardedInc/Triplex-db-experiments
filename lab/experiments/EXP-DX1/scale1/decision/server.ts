@@ -31,6 +31,7 @@ export type Request = {
   review: string;
   withReaders?: boolean;
   isolation?: true;
+  trimmed?: true;
 };
 const checkout = path.resolve(import.meta.dirname, "../../../../..");
 const outputRoot = "/var/tmp/triplex-scale1/decision/attempts";
@@ -56,6 +57,7 @@ async function main(dir: string) {
     assert(p.from === "arm-d7-wfix-pool-seed" && p.fromTransfer);
     assert(p.mode === "individual" || p.mode === "prepared");
   }
+  if (p.trimmed) assert(p.isolation && p.mode === "individual");
   if (p.fromTransfer) {
     assert(p.phase === "cells" && reusableSeed(p.people, p.layout, p.isolation));
     assert.match(p.fromTransfer, /^[a-f0-9]{64}$/);
@@ -189,6 +191,7 @@ async function main(dir: string) {
             binding,
             p.fromTransfer,
             p.isolation,
+            p.trimmed,
           );
           const { runCells } = await import("./traffic.ts");
           const capture = p.isolation ? beginCapture(dir, id, restored.restartedAt) : undefined;

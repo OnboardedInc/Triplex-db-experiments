@@ -24,6 +24,7 @@ import { read, verifiedOrigin, write } from "./seed.ts";
 import type { Row } from "./writes.ts";
 import type { Request } from "./server.ts";
 import { traceFiles, summarizeCapture } from "./telemetry.ts";
+import { nextTrimPair, trimArchiveReserve, trimRepetitions, trimWindowReserve } from "./trim.ts";
 
 const exists = fs.existsSync;
 const names = [
@@ -51,7 +52,10 @@ const names = [
   "telemetry-error.json",
 ];
 
-export function checkRecorded(dir: string, a: Request & { slot: string; at: number }) {
+export function checkRecorded(
+  dir: string,
+  a: Request & { slot: string; at: number; ceiling: number },
+) {
   const pin = read(
     path.join(import.meta.dirname, a.layout === "single" ? "single-pins.json" : "pins.json"),
   ).items.find((x: any) => x.seed.people === a.people)!;
@@ -192,8 +196,23 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
   const checks: ReturnType<typeof checkCell>[] = [];
   let scopes = raw.scopes;
   let previousEnd = a.at;
-  for (const r of repetitions(a.layout, a.isolation))
-    for (const c of cellOrder(r, a.layout, a.isolation)) {
+  const deadline = a.at + a.ceiling * 1000;
+  const stop = m.trimmed?.stoppedByCeiling;
+  assert.equal(!!m.trimmed, !!a.trimmed);
+  if (a.trimmed) {
+    assert.equal(m.trimmed.deadline, deadline);
+    if (stop)
+      assert(stop.at < deadline && stop.at + trimWindowReserve + trimArchiveReserve >= deadline);
+  }
+  let sawStop = false;
+  for (const r of a.trimmed ? trimRepetitions : repetitions(a.layout, a.isolation)) {
+    const order = a.trimmed ? nextTrimPair(r, checks) : cellOrder(r, a.layout, a.isolation);
+    if (stop?.repeat === r) {
+      assert(order.length && stop.at >= previousEnd);
+      sawStop = true;
+      break;
+    }
+    for (const c of order) {
       const label = cellKey(c, r),
         full = read<Observation>(path.join(dir, label + "-raw.json"));
       const written = read(path.join(dir, label + "-writer.json"));
@@ -259,6 +278,8 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
       }));
       previousEnd = full.start + cellSeconds(c, a.isolation) * 1000;
     }
+  }
+  assert.equal(sawStop, !!stop);
   assert.deepEqual(m.comparisons, compareCells(checks, a.layout, a.isolation));
   assert.equal(m.cells.length, checks.length);
 }

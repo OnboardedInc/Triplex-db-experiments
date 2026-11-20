@@ -1,21 +1,13 @@
 {
   "steps": [
     {
-      "tag": "arm-d7-onedb-current",
+      "tag": "arm-d7-v01-present",
       "phase": "cells",
       "people": 100000,
       "layout": "pooled",
       "mode": "individual",
       "isolation": true,
-      "from": "arm-d7-wfix-pool-seed"
-    },
-    {
-      "tag": "arm-d7-onedb-prepared",
-      "phase": "cells",
-      "people": 100000,
-      "layout": "pooled",
-      "mode": "prepared",
-      "isolation": true,
+      "trimmed": true,
       "from": "arm-d7-wfix-pool-seed"
     }
   ]

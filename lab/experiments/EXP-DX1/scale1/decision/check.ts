@@ -340,7 +340,7 @@ export function ratios(
   loaded: ReturnType<typeof checkCell>[],
   isolation = false,
 ) {
-  assert(alone.length === (isolation ? 12 : 2) && loaded.length === alone.length);
+  assert((isolation ? alone.length > 0 : alone.length === 2) && loaded.length === alone.length);
   assert(
     alone.every(
       (a, i) =>
@@ -381,7 +381,10 @@ export function ratios(
       });
     return {
       ...contract,
-      paired: invalid ? null : pairedP99(windows(loaded), windows(alone), label),
+      paired:
+        invalid || alone.length < 4 || alone.length % 2
+          ? null
+          : pairedP99(windows(loaded), windows(alone), label),
     };
   });
 }
@@ -396,18 +399,19 @@ export function compareCells(
     const alone = reports.filter(
       (r) => r.cell === "alone" && (!isolation || loaded.some((cell) => cell.repeat === r.repeat)),
     );
-    const measured = ratios(alone, loaded, isolation);
+    const measured = loaded.length ? ratios(alone, loaded, isolation) : [];
     return {
       rate,
+      ...(isolation ? { pairs: loaded.length } : {}),
       ratios: measured,
       ...(isolation
         ? {
-            family95Within125: measured.every(
-              (r) => "paired" in r && r.paired?.family95Within125 === true,
-            ),
+            family95Within125:
+              measured.length === 3 &&
+              measured.every((r) => "paired" in r && r.paired?.family95Within125 === true),
           }
         : {}),
-      completeCapacity: loaded.every((r) => r.capacityBars),
+      completeCapacity: loaded.length > 0 && loaded.every((r) => r.capacityBars),
     };
   });
 }

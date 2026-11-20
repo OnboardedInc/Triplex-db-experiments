@@ -59,9 +59,19 @@ function updateHandoff(line: string) {
     old = fs.readFileSync(file, "utf8"),
     expression = /<!-- state -->[\s\S]*?<!-- end state -->/;
   assert(expression.test(old));
+  const now = new Date();
+  const cost = (((now.getTime() - Date.parse("2026-11-19T18:30:00Z")) / 3600000) * 1.09).toFixed(2);
+  const updated = old.replace(
+    /Server 2 accrued about USD \d+\.\d{2} through [\d-]+ [\d:]+ UTC/,
+    "Server 2 accrued about USD " +
+      cost +
+      " through " +
+      now.toISOString().slice(0, 16).replace("T", " ") +
+      " UTC",
+  );
   fs.writeFileSync(
     file,
-    old.replace(
+    updated.replace(
       expression,
       `<!-- state -->\n${new Date().toISOString()} · ${line}\n<!-- end state -->`,
     ),
