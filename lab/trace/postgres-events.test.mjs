@@ -33,7 +33,7 @@ test("guest wall bridge refuses missing endpoints, clock steps and stale spans",
     ],
   });
   assert.equal(qualified(999), null);
-  assert.equal(qualified(1500).at, 1400);
+  assert.equal(qualified(1500)?.at, 1400);
   assert.equal(qualified(2500), null);
   assert.equal(qualified(6000), null);
   assert.equal(

@@ -25,6 +25,7 @@ const native = {
 
 test("exact database and native t retain the native duration and both residuals", () => {
   const found = bindNativeTransaction(peer, [native, { ...native, databaseHash: "b".repeat(64) }]);
+  assert(found);
   assert.equal(found.parent, "await");
   assert.deepEqual(
     nativeWaitLegs({ ...peer, gatewayRoot: peer.root, peerStart: 20, peerEnd: 38 }, found),
