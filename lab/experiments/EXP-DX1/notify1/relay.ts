@@ -103,12 +103,14 @@ export class Relay {
       e.value.epoch === t.epoch && e.value.parent === cur.parent,
       "Missing original publication",
     );
-    const census = a.censusFor(e);
     const selected = await a.select(e, state, at, sourceAt, cur.start);
-    const ids = selected.coverage
-      ? selected.coverage.ids.slice(cur.start, cur.start + this.pages * width)
-      : await memberRange(source, census, cur.start, e.at, this.pages);
-    const size = selected.coverage?.ids.length ?? census.count;
+    const known =
+      selected.coverage?.ids ??
+      (e.value.selection.kind === "subjects" ? e.value.selection.ids : undefined);
+    const ids = known
+      ? known.slice(cur.start, cur.start + this.pages * width)
+      : await memberRange(source, e.value.census, cur.start, e.at, this.pages);
+    const size = known?.length ?? e.value.census.count;
     assert.equal(ids.length, Math.min(this.pages * width, size - cur.start));
     const ledger = (s: string) => "ledger:" + s;
     const old = await state.rows<string>(ids.map(ledger), at);

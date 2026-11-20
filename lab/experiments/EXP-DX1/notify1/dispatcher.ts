@@ -99,7 +99,8 @@ export class Dispatcher {
     const guard = await db.get<number>("erasure", at),
       start = performance.now();
     const selected = await a.select(e, db, at, at, cursor.start);
-    const census = a.censusFor(e);
+    const memberCount =
+      e.value.selection.kind === "census" ? e.value.census.count : e.value.selection.ids.length;
     // [DX-STG1] Why: joined Publish already binds its release-only range to
     // the original marker. Rejected: using that callback to narrow a save.
     const { ids, size } = selected.coverage
@@ -109,7 +110,7 @@ export class Dispatcher {
         }
       : this.activationRange && e.value.kind === "activation"
         ? await this.activationRange(e, cursor.start)
-        : { ids: await a.members(e, cursor.start), size: census.count };
+        : { ids: await a.members(e, cursor.start), size: memberCount };
     assert(ids.length === Math.min(width, size - cursor.start), "Incomplete delivery source range");
     const subjects = ids;
     const ledgers = await db.rows<string>(subjects.map(ledger), at);

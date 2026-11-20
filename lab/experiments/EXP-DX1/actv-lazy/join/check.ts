@@ -5,6 +5,8 @@ import { DomainOracle } from "../../../../bench/lib/w0-gates.ts";
 import type { Point } from "../decision.ts";
 import type { JoinedAccount } from "./account.ts";
 import { pack, unpack } from "../../notify1/store.ts";
+import type { Tail } from "../../notify1/journal.ts";
+import { width } from "../../notify1/census.ts";
 export const toWire = (d: any) => ({ ...d, seq: Number(d.seq), payload: JSON.parse(d.payload) });
 export class Reference {
   readonly oracle = new DomainOracle(new URL("./oracle.py", import.meta.url).pathname);
@@ -21,6 +23,7 @@ export class Reference {
     seq?: number,
     fold = true,
     allReads = true,
+    proveNotice = false,
   ) {
     const physical = seq === undefined ? undefined : await a.physical(seq),
       stored: any[] = [],
@@ -39,6 +42,9 @@ export class Reference {
       size = 0;
     };
     let changes = 0;
+    const affected: string[] = [],
+      complement: string[] = [];
+    const changedOwners: string[] = [];
     for (let lo = 0; lo < ids.length; lo += 32) {
       const subset = ids.slice(lo, lo + 32),
         ws = subset.map((_, j) => world(lo + j));
@@ -51,6 +57,7 @@ export class Reference {
         if (outputs) assert.equal(outputs[j], o.json);
         digest.update(o.json + "\n");
         changes += o.rows.length;
+        if (o.rows.length) changedOwners.push(o.subject);
         if (
           physical &&
           physical.marker.storage !== "owed" &&
@@ -73,6 +80,13 @@ export class Reference {
           envelope.rawBytes += bytes;
         }
         if (fold) {
+          if (proveNotice) {
+            const previous = this.items.get(o.subject) ?? [];
+            (o.deliveries.length || canonical(previous) !== canonical(o.items)
+              ? affected
+              : complement
+            ).push(o.subject);
+          }
           this.owed.push(...o.deliveries);
           this.items.set(o.subject, o.items);
           this.receivers.set(o.subject, o.receiver);
@@ -88,13 +102,37 @@ export class Reference {
       assert.deepEqual(physical.values, stored);
       assert.equal(physical.marker.output.count, physical.marker.storage === "owed" ? 0 : changes);
     }
+    let coverage;
+    if (proveNotice) {
+      assert(fold);
+      const tail = await a.db.get<Tail>("tail", b.tx);
+      assert.equal(tail.at, b.tx);
+      const event = await a.notices.event(tail.value.sequence, b.tx);
+      const size =
+        event.value.selection.kind === "census"
+          ? event.value.census.count
+          : event.value.selection.ids.length;
+      const selected: string[] = [];
+      for (let from = 0; from < size; from += width)
+        selected.push(...(await a.notices.members(event, from)));
+      if (event.value.selection.kind === "census") assert.deepEqual(selected, ids);
+      const covered = new Set(selected);
+      assert(
+        affected.every((s) => covered.has(s)) && selected.every((s) => ids.includes(s)),
+        "Durable recipe omits affected subject",
+      );
+      coverage = { affected, complement, selected: sha256(canonical(selected)) };
+    }
     return {
       count: ids.length,
       digest: digest.digest("hex"),
       changes,
+      changedOwners: changedOwners.length,
+      changedRoster: sha256(canonical(changedOwners)),
       envelope,
       stored: stored.length,
       owed: this.owed.length,
+      ...(coverage ? { coverage } : {}),
     };
   }
   async receiver(a: JoinedAccount, dispatcher: ReturnType<JoinedAccount["dispatcher"]>) {

@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
-import { execFileSync } from "node:child_process";
+import { createHash, randomUUID } from "node:crypto";
+import { execFile, execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+import { promisify } from "node:util";
 import { W0, canonical, sha256, type WorldRow } from "../../../../bench/lib/w0-world.ts";
-import { ids, type Fact } from "../../../../bench/lib/world.ts";
+import { ids, subjectOf, type Fact } from "../../../../bench/lib/world.ts";
 import { integer, string } from "../../../../bench/lib/deep-world.ts";
 import { makeDeepTrace } from "../../../../bench/lib/deep-trace.ts";
 import { liveArrivals, liveEdits } from "../../scale1/deep-live.ts";
@@ -17,10 +18,14 @@ import { JoinedAccount } from "./account.ts";
 import { rawDeep, replaceDeep } from "./deep.ts";
 import { authoredSeed, authoredWrite, compareSource, expectedPolicy } from "./deep-reference.ts";
 import { Reference } from "./check.ts";
+import { timings, verifyTimings } from "./observations.ts";
+import { cells, collect, format } from "./collect.ts";
+import { settlementPrices } from "./settle-price.ts";
 
 const [count, root, flag] = process.argv.slice(2),
   n = Number(count),
   smoke = flag === "--local";
+assert(flag === undefined || flag === "--settlement" || smoke);
 assert(root && (smoke ? n >= 64 && n <= 1000 : process.platform === "linux" && n === 100000));
 const ownerPath = process.env.TRIPLEX_LAB_SLOT_OWNER!,
   ownerBytes = readFileSync(ownerPath),
@@ -31,8 +36,17 @@ assert(
     owner.container &&
     owner.volume,
 );
-const save = (name: string, data: unknown) =>
-  writeFileSync(join(root, name + ".json"), JSON.stringify(data, null, 2) + "\n", { flag: "wx" });
+const produced = new Map<string, string>();
+const save = (name: string, data: unknown) => {
+  const bytes = JSON.stringify(data, null, 2) + "\n";
+  writeFileSync(join(root, name + ".json"), bytes, {
+    flag: "wx",
+    flush: /^(?:offer|terminal)-/.test(name),
+  });
+  const digest = sha256(bytes);
+  produced.set(name, digest);
+  return digest;
+};
 const git = (...args: string[]) =>
   execFileSync("git", args, { encoding: "utf8", maxBuffer: 32 << 20 }).trim();
 const source = git("rev-parse", "HEAD");
@@ -62,6 +76,8 @@ for (const pkg of ["core", "qualification", "host", "datomic", "w0"]) {
 const config = join(process.env.TX2_CONFIG_DIR ?? ".", "lab/config/slots.json");
 const configDigest = sha256(readFileSync(config));
 const attempt = {
+  format,
+  issuedAt: Date.now(),
   source,
   nonce: randomUUID(),
   owner: sha256(ownerBytes),
@@ -69,6 +85,8 @@ const attempt = {
   volume: owner.volume,
   n,
   smoke,
+  settlement: flag === "--settlement",
+  planned: cells,
   pins,
   build,
   config: configDigest,
@@ -77,11 +95,22 @@ save("server-inputs", attempt);
 if (!smoke) {
   const pre = join(root, "preflight");
   mkdirSync(pre);
-  for (const f of ["stage-gate.ts", "deadline-gate.ts"])
+  const gates = [
+    "stage-gate.ts",
+    "deadline-gate.ts",
+    "future-gate.ts",
+    "gate.ts",
+    ...(attempt.settlement ? ["settle-gate.ts"] : []),
+  ];
+  for (const f of gates)
     execFileSync(
       process.execPath,
       ["--experimental-strip-types", new URL(f, import.meta.url).pathname, pre],
-      { stdio: "inherit", timeout: 180000 },
+      {
+        stdio: "inherit",
+        timeout: 180000,
+        env: attempt.settlement ? { ...process.env, DX_ACT1_W1_GATE: "1" } : process.env,
+      },
     );
 }
 const store = await openStore("lazy-join-server-" + attempt.nonce, "act2-deep");
@@ -104,21 +133,14 @@ const authored = (i: number, p: number) =>
   tape.get(i)?.findLast((x) => x.p <= p)?.rows ?? authoredSeed(i, seeded.seedPosition(i));
 const expected = (i: number, p: number) => expectedPolicy(i, authored(i, p));
 const beforeMs = millis(valid);
-const plan = [
-  ["owed", 0],
-  ["staged", 0],
-  ["owed", 3.5],
-  ["staged", 3.5],
-  ["owed", 23.5],
-  ["staged", 23.5],
-] as const;
+const plan = cells;
 const windows = [];
+const seenReleases = new Set<string>();
 try {
   for (const [index, [mode, rate]] of plan.entries()) {
     const baseline = await account.publish("baseline-" + index, W0.R1.doc, valid, "owed");
     const priorSeq = (await account.notices.observe()).value.sequence;
     const offered = clock() + (smoke ? 200 : rate ? 29000 : 200),
-      cutoff = offered + 1000,
       windowStart = offered - (smoke ? 100 : rate ? 29000 : 0);
     const pending: Promise<unknown>[] = [];
     let tail = Promise.resolve(),
@@ -149,8 +171,11 @@ try {
     const subject = n - index - 1; // Distinct subjects for each first request.
     const probe = async () => {
       const started = clock(),
-        observed = await reader.readAt(seeded.roster[subject]!, { validTime: valid });
-      return { started, finished: clock(), ...observed };
+        position = await readStore.head(),
+        headObserved = clock(),
+        observed = await reader.readAt(seeded.roster[subject]!, { position, validTime: valid });
+      assert.equal(observed.basis.tx, position);
+      return { started, headObserved, finished: clock(), ...observed };
     };
     const delays: number[] = [];
     if (rate)
@@ -207,17 +232,17 @@ try {
         );
       }
     })();
-    const scheduledProbe = (async () => {
-      while (clock() < cutoff) await sleep(Math.max(1, cutoff - clock()));
-      return probe();
-    })();
     await sleep(Math.max(0, offered - clock()));
-    const ingress = clock();
+    const ingress = clock(),
+      cutoff = ingress + 1000;
     // [DX-ACT1] Why: author an unseen document on ingress and schedule the deadline read independently. Rejected: timing after compilation or making the deadline probe wait for the Publish ACK.
     const document = structuredClone(W0.R2.doc),
       days = [1, 2, 4, 5, 6, 7][index]!;
     Object.assign(document.rules.find((r) => r.id === "I9S2")!, { params: { businessDays: days } });
-    save("offer-" + index, {
+    Object.assign(document.rules.find((r) => r.id === "OT")!, {
+      params: { thresholdMinutes: 2411 + index },
+    });
+    const offer = {
       index,
       mode,
       rate,
@@ -227,100 +252,272 @@ try {
       document,
       request: "publish-" + index,
       nonce: attempt.nonce,
-    });
-    const reply = await inOrder(async () => {
-      const entered = clock();
-      const result = await measureW0Http(() =>
-        account.publish("publish-" + index, document, valid, mode, undefined, {
-          workers: 4,
-          sources: "indexed",
-        }),
+    };
+    const offerSha = save("offer-" + index, offer);
+    const scheduledProbe = (async () => {
+      while (clock() < cutoff) await sleep(Math.max(1, cutoff - clock()));
+      const observed = await probe();
+      save("deadline-" + index, { nonce: attempt.nonce, offerSha, observed });
+      return observed;
+    })();
+    // [DX-ACT1] Why: supervise deadline sources even if the writer fails first. Rejected: dropping the offer on an unhandled observer rejection.
+    void scheduledProbe.catch(() => {});
+    const witnessIndices = [subject, n - index - 9, Math.floor(n / 2) - index];
+    const witnessSubjects = witnessIndices.map((i) => seeded.roster[i]!);
+    const nonceAtDeadline = randomUUID();
+    const observeInNewProcess = promisify(execFile)(
+      process.execPath,
+      [
+        "--experimental-strip-types",
+        new URL("./read-witness.ts", import.meta.url).pathname,
+        store.scope,
+        "act2-deep",
+        nonceAtDeadline,
+        valid,
+        "at-" + (performance.timeOrigin + cutoff),
+        ...witnessSubjects,
+      ],
+      { encoding: "utf8", maxBuffer: 16 << 20, timeout: 120000 },
+    );
+    void observeInNewProcess.catch(() => {});
+    let testedCut: number | undefined;
+    try {
+      const reply = await inOrder(async () => {
+        const entered = clock();
+        const result = await measureW0Http(() =>
+          account.publish("publish-" + index, document, valid, mode, undefined, {
+            workers: 4,
+            sources: "indexed",
+          }),
+        );
+        const receipt = store.counters.lastReceipt;
+        const matched =
+          receipt &&
+          receipt.commandId === result.value.commandId &&
+          receipt.txId === result.value.txId &&
+          receipt.position === result.value.position;
+        const durable = matched ? receipt.time : clock();
+        assert(durable >= entered && durable <= clock());
+        return {
+          r: result.value,
+          entered,
+          durable,
+          durableClock: matched ? receipt.clock : "readback",
+          stages: account.lastMaterial,
+          wire: result.samples
+            .filter((x) => String(x.path).endsWith("/transact"))
+            .map((x) => Number(x.requestBytes)),
+        };
+      });
+      const first = await probe();
+      const deadline = await scheduledProbe;
+      testedCut = deadline.basis.tx;
+      await traffic;
+      await Promise.all(pending);
+      if (failure) throw failure;
+      assert(
+        rows.length === delays.length && rows.every((r, i) => i === 0 || rows[i - 1]!.p < r.p),
       );
-      const durable = store.counters.ackObserved;
-      assert(durable >= entered && durable <= clock());
-      return {
-        r: result.value,
-        entered,
-        durable,
-        stages: account.lastMaterial,
-        wire: result.samples
-          .filter((x) => String(x.path).endsWith("/transact"))
-          .map((x) => Number(x.requestBytes)),
-      };
-    });
-    const first = await probe();
-    const deadline = await scheduledProbe;
-    await traffic;
-    await Promise.all(pending);
-    if (failure) throw failure;
-    assert(rows.length === delays.length && rows.every((r, i) => i === 0 || rows[i - 1]!.p < r.p));
-    const final = await store.lookup("joined:publish-" + index);
-    assert.deepEqual(final, reply.r);
-    assert(
-      reply.wire.length === reply.stages.stages + 1 &&
-        reply.wire.every((b) => b > 0 && b <= 4 * 1024 * 1024),
-    );
-    const sequence = priorSeq + 1,
-      physical = await account.physical(sequence),
-      newer = W0.compileRelease(document);
-    assert(
-      physical.marker.release === newer.hash &&
-        physical.marker.seq === sequence &&
-        physical.marker.cut < reply.r.position,
-    );
-    assert(physical.marker.output.count > 0 || mode === "owed");
-    for (const read of [first, deadline]) {
-      const at = read.basis.tx;
-      assert(at >= baseline.position);
-      const release = at >= reply.r.position ? document : W0.R1.doc;
-      const [oracle] = JSON.parse(
+      const final = await store.lookup("joined:publish-" + index);
+      assert.deepEqual(final, reply.r);
+      assert(
+        reply.wire.length === reply.stages.stages + 1 &&
+          reply.wire.every((b) => b > 0 && b <= 4 * 1024 * 1024),
+      );
+      const sequence = priorSeq + 1,
+        physical = await account.physical(sequence),
+        newer = W0.compileRelease(document);
+      assert(!W0.RELEASES_BY_HASH.has(newer.hash) && !seenReleases.has(newer.hash));
+      seenReleases.add(newer.hash);
+      assert(
+        physical.marker.release === newer.hash &&
+          physical.marker.seq === sequence &&
+          physical.marker.cut < reply.r.position,
+      );
+      assert(physical.marker.output.count > 0 || mode === "owed");
+      for (const read of [first, deadline]) {
+        const at = read.basis.tx;
+        assert(at >= baseline.position);
+        const release = at >= reply.r.position ? document : W0.R1.doc;
+        const [oracle] = JSON.parse(
+          await ref.oracle.call("check", {
+            document: release,
+            old: null,
+            basis: read.basis,
+            worlds: [expected(subject, at)],
+            fold: false,
+          }),
+        );
+        assert.equal(read.json, oracle.json);
+      }
+      const cold = JSON.parse((await observeInNewProcess).stdout);
+      assert(
+        cold.scope === store.scope && cold.nonce === nonceAtDeadline && cold.pid !== process.pid,
+      );
+      assert(Number.isSafeInteger(cold.position) && cold.position >= baseline.position);
+      assert.equal(cold.reads.length, witnessSubjects.length);
+      const oracleDeadline = JSON.parse(
         await ref.oracle.call("check", {
-          document: release,
-          old: null,
-          basis: read.basis,
-          worlds: [expected(subject, at)],
+          document: cold.position >= reply.r.position ? document : W0.R1.doc,
+          old: W0.R1.doc,
+          basis: { tx: cold.position, validTime: valid },
+          worlds: witnessIndices.map((i) => expected(i, cold.position)),
           fold: false,
         }),
       );
-      assert.equal(read.json, oracle.json);
+      for (const [i, read] of cold.reads.entries()) {
+        assert.equal(read.subject, witnessSubjects[i]);
+        assert.deepEqual(read.basis, { tx: cold.position, validTime: valid });
+        assert.equal(read.json, oracleDeadline[i].json);
+      }
+      const points = [
+        [subject, first.basis.tx],
+        [subject, deadline.basis.tx],
+        ...witnessIndices.map((i) => [i, cold.position]),
+      ];
+      const samples = [];
+      for (const [person, cut] of points) {
+        compareSource(
+          await rawDeep(readStore, person, { tx: cut, validTime: valid }),
+          authored(person, cut),
+        );
+        samples.push(expected(person, cut));
+      }
+      save("point-inputs-" + index, { nonce: attempt.nonce, baseline: W0.R1.doc, samples });
+      const coldDeadline = {
+        ...cold,
+        started: cold.started - performance.timeOrigin,
+        headObserved: cold.headObserved - performance.timeOrigin,
+        finished: cold.finished - performance.timeOrigin,
+        basis: { tx: cold.position, validTime: valid },
+      };
+      const witnessNonce = randomUUID();
+      const currentCut = await store.head();
+      // [DX-ACT1] Why: a process with no remembered results reopens the exact observed cut. Rejected: taking the new process's later head as evidence for the deadline.
+      const child = await promisify(execFile)(
+        process.execPath,
+        [
+          "--experimental-strip-types",
+          new URL("./read-witness.ts", import.meta.url).pathname,
+          store.scope,
+          "act2-deep",
+          witnessNonce,
+          valid,
+          String(testedCut),
+          ...witnessSubjects,
+        ],
+        { encoding: "utf8", maxBuffer: 16 << 20, timeout: 120000 },
+      );
+      const witness = JSON.parse(child.stdout);
+      assert(
+        witness.scope === store.scope &&
+          witness.nonce === witnessNonce &&
+          witness.pid !== process.pid,
+      );
+      assert.equal(witness.reads.length, witnessSubjects.length);
+      assert.equal(witness.current.length, witnessSubjects.length);
+      const eligible = testedCut >= reply.r.position ? document : W0.R1.doc;
+      const oracleReads = JSON.parse(
+        await ref.oracle.call("check", {
+          document: eligible,
+          old: W0.R1.doc,
+          basis: { tx: testedCut, validTime: valid },
+          worlds: witnessIndices.map((i) => expected(i, testedCut!)),
+          fold: false,
+        }),
+      );
+      for (const [i, read] of witness.reads.entries()) {
+        assert.equal(read.subject, witnessSubjects[i]);
+        assert.deepEqual(read.basis, deadline.basis);
+        assert.equal(read.json, oracleReads[i].json);
+      }
+      const oracleCurrent = JSON.parse(
+        await ref.oracle.call("check", {
+          document,
+          old: W0.R1.doc,
+          basis: { tx: currentCut, validTime: valid },
+          worlds: witnessIndices.map((i) => expected(i, currentCut)),
+          fold: false,
+        }),
+      );
+      for (const [i, read] of witness.current.entries()) {
+        assert.equal(read.subject, witnessSubjects[i]);
+        assert.deepEqual(read.basis, { tx: currentCut, validTime: valid });
+        assert.equal(read.json, oracleCurrent[i].json);
+      }
+      assert(
+        first.basis.tx >= reply.r.position &&
+          first.started >= reply.durable &&
+          deadline.started >= cutoff - 2,
+      );
+      // Track the response, notice-recipe and physical-value frontiers separately. A miss stays in the observation ledger.
+      const result = {
+        index,
+        baseline: baseline.position,
+        mode,
+        rate,
+        offered,
+        ingress,
+        entered: reply.entered,
+        durable: reply.durable,
+        durableClock: reply.durableClock,
+        ...timings(offer, {
+          entered: reply.entered,
+          durable: reply.durable,
+          nativeCut: reply.r.position,
+          first,
+          deadline,
+          coldDeadline,
+        }),
+        coldDeadline,
+        deadline: {
+          ...deadline,
+          onRelease: deadline.basis.tx >= reply.r.position,
+          scheduleLagMs: deadline.started - cutoff,
+        },
+        freshWitness: {
+          ...witness,
+          deadlineChangedRows: oracleReads.map((r: { rows: unknown[] }) => r.rows.length),
+          currentChangedRows: oracleCurrent.map((r: { rows: unknown[] }) => r.rows.length),
+        },
+        first,
+        request: reply.r.commandId,
+        nativeTx: reply.r.txId,
+        nativeCut: reply.r.position,
+        sequence,
+        roster: seeded.rosterHash,
+        release: newer.hash,
+        doc: document,
+        wire: reply.wire,
+        work: reply.stages,
+        writes: rows,
+      };
+      save("window-" + index, result);
+      save("terminal-" + index, {
+        index,
+        nonce: attempt.nonce,
+        offerSha,
+        status: "observed",
+        cut: testedCut,
+        nativeTx: result.nativeTx,
+        deadlineMiss: result.deadlineMiss,
+      });
+      windows.push(result);
+    } catch (error) {
+      const [observed] = await Promise.allSettled([scheduledProbe, observeInNewProcess]);
+      save("terminal-" + index, {
+        index,
+        nonce: attempt.nonce,
+        offerSha,
+        status: "error",
+        cut: testedCut ?? (observed?.status === "fulfilled" ? observed.value.basis.tx : null),
+        elapsed: clock() - offered,
+        error: String(error),
+      });
+      await Promise.allSettled([traffic]);
+      await Promise.allSettled(pending);
+      throw error;
     }
-    assert(
-      first.basis.tx >= reply.r.position &&
-        first.started >= reply.durable &&
-        deadline.started >= cutoff - 2,
-    );
-    // Track the response, notice-recipe and physical-value frontiers separately. A miss stays in the observation ledger.
-    const result = {
-      index,
-      baseline: baseline.position,
-      mode,
-      rate,
-      offered,
-      ingress,
-      entered: reply.entered,
-      durable: reply.durable,
-      offeredToDurableMs: reply.durable - offered,
-      firstCorrectMs: first.finished - offered,
-      noticeRecipeDurableMs: reply.durable - offered,
-      individualOwedDurableMs: null,
-      changedValuesDurableMs: mode === "staged" ? reply.durable - offered : null,
-      deadline: { ...deadline, onRelease: deadline.basis.tx >= reply.r.position },
-      first,
-      request: reply.r.commandId,
-      nativeTx: reply.r.txId,
-      nativeCut: reply.r.position,
-      sequence,
-      roster: seeded.rosterHash,
-      release: newer.hash,
-      doc: document,
-      wire: reply.wire,
-      work: reply.stages,
-      writes: rows,
-      deadlineMiss:
-        first.finished > cutoff || reply.durable > cutoff || deadline.basis.tx < reply.r.position,
-    };
-    save("window-" + index, result);
-    windows.push(result);
   }
   let previous: W0.ReleaseDoc | null = null;
   for (const r of windows) {
@@ -348,6 +545,10 @@ try {
       false,
     );
     assert(proof.count === n && proof.changes > 0 && proof.owed > owedBefore);
+    assert(
+      proof.changedOwners === n && proof.changedRoster === seeded.rosterHash,
+      "All-person edit must change the independently enrolled subjects",
+    );
     save("proof-" + r.index, {
       ...proof,
       notices: proof.owed - owedBefore,
@@ -358,12 +559,48 @@ try {
     });
     previous = r.doc;
   }
+  const nativeSeed = createHash("sha256");
+  let nativeFacts = 0;
+  for (let start = 0; start < n; start += 32) {
+    const people = Array.from({ length: Math.min(32, n - start) }, (_, i) => start + i);
+    const rows = await store.rows(people.map(ids.placement), seeded.cut, valid);
+    const group = new Map<number, WorldRow[]>();
+    for (const row of rows) {
+      const person = subjectOf(row.entityId);
+      assert(person !== null && people.includes(person));
+      const list = group.get(person) ?? [];
+      list.push(row);
+      group.set(person, list);
+    }
+    for (const person of people) {
+      const actual = group.get(person)!;
+      compareSource(actual, authoredSeed(person, seeded.seedPosition(person)));
+      const sorted = actual
+        .map((r) =>
+          canonical([r.entityId, r.attribute, r.value, r.position, r.validFrom, r.validTo ?? null]),
+        )
+        .sort();
+      nativeSeed.update(canonical(sorted) + "\n");
+      nativeFacts += actual.length;
+    }
+  }
+  assert.equal(nativeFacts, seeded.facts);
+  save("server-seed", {
+    nonce: attempt.nonce,
+    n,
+    roster: seeded.rosterHash,
+    sources: seeded.sourceHash,
+    facts: nativeFacts,
+    nativeCut: seeded.cut,
+    nativeSeed: nativeSeed.digest("hex"),
+  });
   // The recipient stays offline through the measured windows. Post-run ordered delivery verifies the already-bound debt.
   const sink = await openStore("lazy-join-recipient-" + attempt.nonce);
   try {
     const dispatch = account.dispatcher(new Documents(sink.comp, "recipient"));
     await dispatch.drain();
     save("server-effects", await ref.receiver(account, dispatch));
+    save("server-effect-bytes", ref.owed);
   } finally {
     await sink.close();
   }
@@ -372,14 +609,49 @@ try {
   for (const [f, h] of Object.entries({ ...pins, ...build }))
     assert.equal(sha256(readFileSync(f)), h, f);
   assert.equal(sha256(readFileSync(config)), configDigest);
+  // [DX-ACT1] Why: seal the exact observation bytes produced from fresh native replies. Rejected: accepting an edited timing field by hashing whatever is on disk at the end.
+  for (const [name, digest] of produced)
+    assert.equal(sha256(readFileSync(join(root, name + ".json"))), digest, name);
+  for (const window of windows) {
+    const read = (name: string) =>
+      JSON.parse(readFileSync(join(root, name + "-" + window.index + ".json"), "utf8"));
+    const terminal = read("terminal"),
+      offer = read("offer"),
+      report = read("window");
+    assert(
+      terminal.status === "observed" &&
+        terminal.nonce === offer.nonce &&
+        terminal.nativeTx === report.nativeTx,
+    );
+    assert.equal(terminal.offerSha, produced.get("offer-" + window.index));
+    verifyTimings(offer, report);
+  }
   const outputs = Object.fromEntries(
     [
       "server-effects",
-      ...(!smoke ? ["preflight/stage-gate", "preflight/idle-deadline"] : []),
-      ...windows.flatMap((r) => ["offer-" + r.index, "window-" + r.index, "proof-" + r.index]),
+      "server-effect-bytes",
+      "server-seed",
+      ...(!smoke
+        ? [
+            "preflight/stage-gate",
+            "preflight/idle-deadline",
+            "preflight/future-gate",
+            "preflight/joined-gate",
+          ]
+        : []),
+      ...(attempt.settlement ? ["preflight/settle-gate"] : []),
+      ...windows.flatMap((r) => [
+        "offer-" + r.index,
+        "terminal-" + r.index,
+        "window-" + r.index,
+        "proof-" + r.index,
+        "deadline-" + r.index,
+        "point-inputs-" + r.index,
+      ]),
     ].map((f) => [f, sha256(readFileSync(join(root, f + ".json")))]),
   );
   save("server-observations", {
+    format,
     source,
     nonce: attempt.nonce,
     n,
@@ -395,6 +667,23 @@ try {
       deadlineMiss: x.deadlineMiss,
     })),
   });
+  save("server-collected", await collect(root, { source, owner: attempt.owner, n }));
+  if (flag === "--settlement") {
+    const extra = join(root, "settlement");
+    mkdirSync(extra);
+    await settlementPrices(extra, n, 60, 64);
+  }
+} catch (error) {
+  save("server-stop", {
+    source,
+    nonce: attempt.nonce,
+    error: String(error),
+    unoffered: plan.flatMap((_, i) => (produced.has("offer-" + i) ? [] : [i])),
+    unmatched: plan.flatMap((_, i) =>
+      produced.has("offer-" + i) && !produced.has("terminal-" + i) ? [i] : [],
+    ),
+  });
+  throw error;
 } finally {
   ref.oracle.close();
   await readStore.close();

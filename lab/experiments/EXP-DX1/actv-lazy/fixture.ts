@@ -40,8 +40,22 @@ const input = (f: InputFact) => ({
   value: triplexValue(f.a, f.v),
   validFrom: 0,
 });
-export async function seed(store: Store, n: number) {
+// [DX-ACT1] Why: use the THIN1 eight-fact applicant shape without creating any release outputs. Rejected: charging empty placeholder people to the thin fixture's denominator.
+function thin(i: number): InputFact[] {
+  const s = W0.placementId(i);
+  return ["source-key", "import-batch", "external-status"].flatMap((field, j) => {
+    const answer = s + "/ans:" + j;
+    return [
+      { e: s, a: "answers", v: answer },
+      { e: answer, a: "field", v: field },
+      ...(j === 2 ? [] : [{ e: answer, a: "value", v: field + "-" + i }]),
+    ];
+  });
+}
+export async function seed(store: Store, n: number, population: "default" | "thin" = "default") {
   assert.equal(await store.head(), 0);
+  assert(population !== "thin" || store.profile === "w0");
+  const compact = population === "thin" ? thin : own;
   const first = await store.input("origin", { kind: "baseline", at: valid });
   let facts = 0,
     sharedPosition = 0,
@@ -49,7 +63,7 @@ export async function seed(store: Store, n: number) {
   const cuts: number[] = [],
     roster = Array.from({ length: n }, (_, i) => W0.placementId(i)),
     source = createHash("sha256");
-  if (store.profile === "w0") {
+  if (store.profile === "w0" && population === "default") {
     sharedPosition = (
       await store.input("geography", { kind: "baseline", at: valid }, shared.map(input))
     ).position;
@@ -68,7 +82,7 @@ export async function seed(store: Store, n: number) {
   for (let i = 0; i < n; i++) {
     const rows =
       store.profile === "w0"
-        ? own(i).map(input)
+        ? compact(i).map(input)
         : deepOwnFacts(i).map((f) => ({
             op: "assert",
             entityId: f.e,
@@ -108,7 +122,7 @@ export async function seed(store: Store, n: number) {
       }));
       return policyWorld(i, rows, { position: end, validAt: millis(valid) });
     }
-    const ownFacts = own(i),
+    const ownFacts = compact(i),
       loc = ownFacts.find((f) => f.a === "location")?.v,
       j = shared.find((f) => f.e === loc && f.a === "jurisdiction")?.v;
     return {
