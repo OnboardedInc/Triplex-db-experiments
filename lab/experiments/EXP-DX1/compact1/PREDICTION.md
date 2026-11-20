@@ -6,6 +6,8 @@ For a bare-metal Datomic Pro 1.0.7745 transactor with synchronous PostgreSQL, te
 
 The model gives a full group of eight a nominal 2.6 ms fixed cycle plus 0.95 ms per member. It applies a uniform 0–0.7 ms perturbation and an 8–28 ms delay to 2% of groups. One ACK gates the next group, with immediate start and no collection timer. These are priors for deeper caches, storage round trips and scheduling tails. The Mac floor separates short native apply from the rest of the durable cycle. Full-size segment misses, replica flush latency and correlated pauses remain open. The model rates a full group at 733/s on average. Multiplying by 0.85 and 0.75 for maintenance and spare capacity gives a planning budget of 467 offers/s. [Datomic's capacity and indexing model](https://docs.datomic.com/operation/capacity.html)
 
+The alternating Mac run subsequently measured 614–742 compact saves/s and 222–252 µs of native apply per save at depth 64 and 1,024 subjects. Those blocks measured the fast path mechanism at a shallow history depth. The pre-registered fleet forecast still needs the paced and saturated tests on 1M subjects. [Mac comparison](MEASUREMENTS.md)
+
 Run this from a clean experiment checkout on the provisioned bare-metal SQL stack:
 
 ```sh
