@@ -33,3 +33,14 @@ North star covers P1–P9 on one Datomic database. Parts come from `origin/main`
 5. HA1; retain INT1's resource admission and rerun the shared-database drill. Then integrate HASYNC1 and recheck move fences, receipt identity and feed resume.
 6. JVM1 and TAIL1; reconcile overlapping launch and driver flags with INT1 and check actual flags and process evidence for all three JVMs.
 7. Recheck the THIN1 and tracing gates already present in INT1. Integrate DX-V01 after review and run the fresh and 1B server scorecards.
+
+## November 20 additions
+
+The [updated v0.1 table](https://github.com/OnboardedInc/Triplex-db-experiments/blob/fcfa01b9a4e0b01ab3659f693cff1321692cc529/lab/V0.1.md) adds the scorecard and playground. The trial below uses the newer INT1 snapshot `0b5ab37c92dedf3846ee5a6c5445e5df00939632`. Git's three-way merge calculated both trees in the DX-V01 worktree without changing its index. The original table records the earlier snapshot.
+
+| Required part | Source and sampled head | Ancestor | Unmerged | Trial merge | Gates on INT1 | Missing |
+| --- | --- | --- | ---: | --- | --- | --- |
+| Scorecard command | `exp/DX-V01-scorecard` `80324197afc2228a3c86de3d199a5095a303f51b` | No | 9 | Clean | INT1 has the fixed pooled campaign and native readback collector. | The scorecard wrapper and build need integration, compatible held seeds and the two physical runs. |
+| Playground dashboard, API and invented data | `exp/DX-PLAY1-playground` `4d393c7ce225bae895601fb77b70ceb11c50476c` | No | 14 | Clean | The branch-specific Datomic playground fixture and browser tests are pending integration. | The clean-clone start, local API and dashboard need a merged-branch gate alongside the small sample and the full hosted data. |
+
+Take the Mac admission marker independently as needed. After the core merges in the ordered list, integrate the playground alongside the scorecard. Run the playground's clean-clone gate on INT1 and run the merged scorecard at both ages.

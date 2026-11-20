@@ -32,3 +32,5 @@ Mac measurements are diagnostic.
 ## Mac admission marker
 
 When `lab/locks/NO-MEASURE-LEASE` exists, compatibility callers get one ordinary token, or reuse their direct wrapper's token. They report diagnostic timings, create no lease directory and leave engine admission open. The PAIR gate records the missing lease as a departure instead of treating shared timings as verdict evidence. Four focused tests covered marker present/absent, wrapper reuse, admission and cleanup. The lease fallback itself emits no PASS or receipt.
+
+The first ordinary-token Mac attempt reached source validation and exposed Git's default stdout limit on this repository's full index. The guard now accepts the larger listing and reads its NUL-delimited flags. It still rejects hidden entries.

@@ -4,7 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
 
-const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8" }).trim();
+const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8", maxBuffer: 64 * 1024 ** 2 }).trim();
 export const pgImage = "postgres:17-alpine@sha256:526f86d93c6ea08fd3f1fe5605650cacc781b2c6013169a0ad8f42c7d3d84f32";
 export const nodeImage = "node:22.23.2-bookworm-slim@sha256:48e4b67d85f87bd551df43704e24d252f56cc5f8e9718841aace50f19948f0f9";
 export const datomicImage = "tx2-datomic:1.0.7745-da00";
@@ -14,7 +14,7 @@ export function cleanSource(expected: string, fresh = false) {
   assert.match(expected, /^[a-f0-9]{40}$/);
   assert.equal(git("rev-parse", "HEAD"), expected, "Checkout does not match requested commit");
   assert.equal(git("status", "--porcelain=v1", "--untracked-files=all", "--ignore-submodules=none"), "", "Checkout has uncommitted inputs");
-  const flags = git("ls-files", "-v").split("\n");
+  const flags = git("ls-files", "-vz").split("\0").filter(Boolean);
   assert(flags.every((line) => line.startsWith("H ")), "Checkout has hidden index entries");
   for (const root of ["lab/config/datomic", "packages/datomic/gateway"]) {
     assert.equal(git("ls-files", "--others", "--", root), "", "Unpinned image input under " + root);
