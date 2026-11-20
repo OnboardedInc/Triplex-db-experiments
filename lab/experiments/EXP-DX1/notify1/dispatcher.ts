@@ -99,15 +99,13 @@ export class Dispatcher {
     const guard = await db.get<number>("erasure", at),
       start = performance.now();
     // [DX-ACT1] Why: a certified release range can skip the census complement while preserving the original event and parent hash. Rejected: rewriting an incoming event to pretend it enrolled fewer people.
+    const census = a.censusFor(e);
     const { ids, size } =
       this.range && e.value.kind === "activation"
         ? await this.range(e, cursor.start)
         : {
             ids: await a.members(e, cursor.start),
-            size:
-              e.value.selection.kind === "census"
-                ? e.value.census.count
-                : e.value.selection.ids.length,
+            size: census.count,
           };
     assert(ids.length === Math.min(width, size - cursor.start), "Incomplete delivery source range");
     const ranges = [{ event: e, ids }];
