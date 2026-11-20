@@ -283,6 +283,20 @@ export async function withStack<T>(
       DX_TX_NATIVE_JFR: "0",
       DX_NATIVE_SETTINGS_READBACK: "0",
     });
+  if (process.env.DX_W1_EVENT_TRACE === "1") {
+    // [DX-TAIL1] Why: the cache extension holds JVM1's field policy fixed and records all three JVMs.
+    // Rejected: applying these recorders to JVM1's original four controls retroactively.
+    assert.equal(grouped, false);
+    Object.assign(env, {
+      TRIPLEX_TRACE_LEVEL: "summary",
+      TRIPLEX_TRACE_COMPONENTS: "node,gateway,tx-jfr,gw-jfr,postgres",
+      TRIPLEX_TRACE_NODE: "1",
+      TRIPLEX_TRACE_GATEWAY: "1",
+      TRIPLEX_TRACE_TX_JFR: "1",
+      DX_TX_NATIVE_JFR: "1",
+      DX_NATIVE_SETTINGS_READBACK: "1",
+    });
+  }
   write(path.join(dir, "identity.json"), arm);
   const args = [
     stack("up"),
