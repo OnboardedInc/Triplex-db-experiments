@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import {
   bucket,
@@ -24,8 +25,26 @@ export const indexInputs = new Set(
     .flatMap((k) => declarations[k].reads.map((a) => a.split(".")[1]!))
     .filter((a) => a !== "startDate"),
 );
+// [DX-ACT1] Why: reopening an unpaid release must run the exact classifier, world mapping and selector that made its promise. Rejected: hashing the declaration table alone (a changed range boundary would retain that identity).
+const code = [
+  "./index.ts",
+  "./account.ts",
+  "../decision.ts",
+  "../../actv-delta/rules.ts",
+  "../../actv-delta/index-patch.ts",
+  "../../notify1/dispatcher.ts",
+  "../../notify1/journal.ts",
+  "../../notify1/census.ts",
+  "../../../../bench/lib/w0-world.ts",
+];
 export const selector = sha256(
-  canonical(["notice-ranges/1", compilerVersion, [...indexed].sort(), [...noticeInputs].sort()]),
+  canonical([
+    "notice-ranges/1",
+    compilerVersion,
+    [...indexed].sort(),
+    [...noticeInputs].sort(),
+    code.map((f) => [f, sha256(readFileSync(new URL(f, import.meta.url)))]),
+  ]),
 );
 export type Entry = { s: string; l: Location; post: Posting[] };
 export const entry = (w: W0.World, b: Point): Entry => {

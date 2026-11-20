@@ -40,10 +40,11 @@ try {
     ["restore-again", W0.R1.doc, "owed"],
     ["overtime-stored", ot, "stored"],
   ] as const;
+  const reader = a.reader();
   let old: W0.ReleaseDoc | null = null;
   const stages = [],
     saves = [];
-  for (const [id, doc, mode] of arms) {
+  for (const [arm, [id, doc, mode]] of arms.entries()) {
     const before = { ...a.stats },
       cpu = process.cpuUsage(),
       t = performance.now();
@@ -51,6 +52,23 @@ try {
       end = performance.now(),
       used = process.cpuUsage(cpu),
       r = m.value;
+    const acknowledged = s.counters.ackObserved;
+    assert(acknowledged >= t && acknowledged <= end);
+    const ordinal = 17 + arm,
+      selected = f.roster[ordinal]!;
+    const first = await reader.readAt(selected, { validTime: valid });
+    const returned = performance.now();
+    assert.equal(first.basis.tx, r.position);
+    const [answer] = JSON.parse(
+      await ref.oracle.call("check", {
+        document: doc,
+        old,
+        basis: first.basis,
+        worlds: [f.world(ordinal)],
+        fold: false,
+      }),
+    );
+    assert.equal(first.json, answer.json);
     const semantic = r.changes.filter((c: any) => !c.entityId.includes("join-output:"));
     assert.equal(semantic.length, 4);
     assert(
@@ -84,6 +102,14 @@ try {
       tx: r.txId,
       p: r.position,
       ms: end - t,
+      durableMs: acknowledged - t,
+      firstCorrectMs: returned - t,
+      first: {
+        subject: selected,
+        position: first.basis.tx,
+        route: first.route,
+        digest: sha256(first.json),
+      },
       cpu: used,
       http: m.requests,
       ...stats,
@@ -150,7 +176,7 @@ try {
       changes: r.changes.length,
       indexChanges: index.length,
       noticeChanges: extra.length - index.length,
-      indexBytes: Buffer.byteLength(bytes(index)),
+      indexBytes: index.length ? Buffer.byteLength(bytes(index)) : 0,
       receiptBytes: Buffer.byteLength(bytes(r)),
     });
   }

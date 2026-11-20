@@ -107,6 +107,14 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
   run("pressure.ts", [dir]);
 } else if (binding.mode === "--joined-proof") {
   run("join/gate.ts", [dir]);
+  const buf = execFileSync(
+    process.execPath,
+    ["--experimental-strip-types", "--test", base + "join/ranges.test.ts"],
+    { encoding: "utf8" },
+  );
+  assert.match(buf, /# pass 1\b/);
+  assert.match(buf, /# fail 0\b/);
+  writeFileSync(join(dir, "ranges.tap"), buf, { flag: "wx" });
 } else if (binding.mode === "--joined-price") {
   assert(["1000", "10000"].includes(binding.size!));
   run("join/price.ts", [dir, binding.size!]);
