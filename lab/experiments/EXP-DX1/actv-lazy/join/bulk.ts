@@ -61,7 +61,7 @@ export class BulkQueue {
       return await work();
     } finally {
       this.inFlight--;
-      this.liveTurns++;
+      this.liveTurns = Math.min(8, this.liveTurns + 1);
       this.pump();
     }
   }

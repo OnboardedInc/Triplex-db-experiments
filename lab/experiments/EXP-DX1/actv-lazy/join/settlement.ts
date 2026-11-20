@@ -9,14 +9,20 @@ export class Settlement {
   private requested = false;
   private running?: Promise<void>;
   private failure?: unknown;
+  private unsubscribe?: () => void;
   private constructor(values: Archive, notices: Archive) {
     this.archive = values;
     this.recorder = new RecordedNotices(notices);
   }
-  static async open(a: JoinedAccount, queue: BulkQueue) {
+  static async open(a: JoinedAccount, queue: BulkQueue, automatic = false) {
     const values = await Archive.open(a, queue);
     try {
-      return new Settlement(values, await Archive.open(a, queue, "notices"));
+      const worker = new Settlement(values, await Archive.open(a, queue, "notices"));
+      if (automatic) {
+        worker.unsubscribe = a.onNotice(() => worker.wake());
+        worker.wake();
+      }
+      return worker;
     } catch (e) {
       await values.close();
       throw e;
@@ -37,7 +43,8 @@ export class Settlement {
   wake() {
     this.requested = true;
     if (this.running) return;
-    this.running = this.run()
+    this.running = Promise.resolve()
+      .then(() => this.run())
       .catch((e) => {
         this.failure = e;
       })
@@ -72,6 +79,7 @@ export class Settlement {
     if (this.failure) throw this.failure;
   }
   async close() {
+    this.unsubscribe?.();
     try {
       await this.idle();
     } finally {

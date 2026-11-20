@@ -117,6 +117,22 @@ try {
   worker.wake();
   await worker.idle();
   assert.equal(await worker.recorder.archive.store.head(), terminal.notices.state.at);
+  const automatic = await Settlement.open(account, queue, true);
+  try {
+    await automatic.idle();
+    const fourth = await account.publish("wake-recording", W0.R1.doc, valid, "owed");
+    const same = await verify(fourth.position, W0.R1.doc, W0.R1.doc, 4);
+    assert.equal(same.changes, 0);
+    await automatic.idle();
+    assert.equal((await automatic.archive.stored(4)).frontier.status, "stored");
+    const at = await automatic.recorder.archive.store.head();
+    assert.deepEqual(
+      (await automatic.recorder.packets(at)).flatMap((p) => p.deliveries.map(toWire)),
+      ref.owed,
+    );
+  } finally {
+    await automatic.close();
+  }
   writeFileSync(
     join(process.argv[2]!, "settle-gate.json"),
     canonical({

@@ -102,9 +102,14 @@ export class JoinedAccount {
   readonly s: Store;
   lastMaterial = emptyMaterial();
   private readonly calendarListeners = new Set<() => void>();
+  private readonly noticeListeners = new Set<() => void>();
   onCalendar(listener: () => void) {
     this.calendarListeners.add(listener);
     return () => this.calendarListeners.delete(listener);
+  }
+  onNotice(listener: () => void) {
+    this.noticeListeners.add(listener);
+    return () => this.noticeListeners.delete(listener);
   }
   readonly notices: Notices;
   readonly stats = {
@@ -414,6 +419,13 @@ export class JoinedAccount {
           )
         )
           for (const wake of this.calendarListeners) wake();
+        if (
+          this.noticeListeners.size &&
+          r.changes.some((c: { entityId: string }) =>
+            c.entityId.startsWith(this.db.prefix + "event:"),
+          )
+        )
+          for (const wake of this.noticeListeners) wake();
         return r;
       } catch (e) {
         const won = await this.original(id, intent);

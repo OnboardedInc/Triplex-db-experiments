@@ -168,6 +168,7 @@ for (const loaded of [false, true]) {
       return {
         tx,
         doc,
+        from: business(offset),
         offerToReturnMs: performance.now() - offer,
         terminal: await worker.settle(2, offer),
       };
@@ -177,7 +178,8 @@ for (const loaded of [false, true]) {
   });
   assert.equal(writes.length, events.length);
   for (const r of reads) {
-    const doc = result && r.p >= result.tx.position ? result.doc : W0.R1.doc;
+    const doc =
+      result && r.p >= result.tx.position && r.time >= result.from ? result.doc : W0.R1.doc;
     const [expected] = JSON.parse(
       await ref.oracle.call("check", {
         document: doc,
