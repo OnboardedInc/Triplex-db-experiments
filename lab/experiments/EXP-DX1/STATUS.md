@@ -2997,3 +2997,23 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **DX-COMPACT1 is parked.** What carries over goes to DX-PREP1 and DX-W1: the 12.34 ms of speculative apply per group
   of eight against a 0.45 to 2.78 ms native function is the gap the incremental path can close without changing the
   stored layout (`compact1/ATTRIBUTION.md`).
+
+## 2026-11-20 09:23 UTC (04:23 local, 2026-11-20): reader bars on bare metal; activation preflight stops twice more; a loaded-Publish test that overloaded itself
+
+- **Server 1 (DX-BM1, in progress).** Sealed 100,000-person deep seed in use. RD1 repaired preflight: 18,320,932 correct
+  loaded reads with a matching independent replay. **Three 10,000-person reader pairs: about 31,700 weighted pulls per
+  second in the first two and 32,448 in the install arm (bar 4,400), zero fallback share in the measured phases**
+  (fresh scopes: closure and global history nearly identical; 14 historical requests in the install arm). GROWTH probe:
+  the predecessor lookup cut SQL reads by 30%, mostly retirement checks; ACK p99 ranges overlapped. Activation at
+  `ab8ce484b`: the server preflight reproduced all six 64-person windows, then failed at the shared `local-before` save
+  (`join/gate.ts:166`: `Notices.plan` asserted because the census path received an empty owner); DX-ACT1 published
+  `48f557594` for it; the 100,000-person command creates its own account and cannot open the sealed SCALE1 seed, so
+  it needs a separate seed; the driver allowed that if the native preflight passes. Running at 04:22 local: DX-HA1's
+  shared-PostgreSQL import isolation campaign.
+- **DX-ACT2 part 4 (`8bddbfe3d`, Mac VM).** The joined Publish goes ahead of waiting saves and includes the save in
+  progress in its durable cut; both save orders verified by the native oracle; none of 1,200 timed Publishes retried.
+  Its loaded test offered four Publishes per second with 64 readers at 39.4 saves per second: record and first-read
+  p99 180.36 s without priority, 40.65 s with; all 1,200 missed one second. Four Publishes per second is not a real
+  workload and the Mac was past capacity: the number is not usable either way. Part 5 assigned: one Publish every
+  5 s (and every 1 s as stress) in steady state, at least 200 per cell, a keeping-up check before each cell; the law
+  and a bare-metal prediction; stop maintaining DELTA apart from the joined path.
