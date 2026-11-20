@@ -53,6 +53,37 @@ def resume(directory, batch, root, source):
     marker.rename(directory / "resumed.json")
 
 
+def capture_checkpoint(arm, directory, identity, recorded, seed, deadline):
+    # [DX-BM1] Why: the post-pricing source is quiescent after W1 verifies its original seed. Save it once so the two diagnostics can start from identical bytes.
+    # Rejected: rebuilding 16 million facts or treating a live volume file copy as a recoverable PostgreSQL database.
+    checkpoint = NIGHT / "checkpoints" / (directory.name + "-before-probes")
+    checkpoint.mkdir(parents=True, exist_ok=False)
+    role=identity["slot"]+"-pg"
+    snapshot=json.loads(subprocess.check_output(["docker","inspect",role]))[0]
+    assert snapshot["Name"]=="/"+role and snapshot["State"]["Running"]
+    assert any(v.get("Name")==identity["slot"]+"-pg-data" for v in snapshot["Mounts"])
+    ident=snapshot["Id"]; owned=recorded["phases"][-1]["lastPosition"]
+    partial=checkpoint/"host.pgdump.partial"
+    with partial.open("xb") as f:
+        subprocess.run(["docker","exec",ident,"pg_dump","-U","postgres","-Fc","-Z1","-d","datomic"],stdout=f,
+                       timeout=min(350,max(1,int(deadline-time.time()-600))),check=True)
+    with partial.open("rb") as source:
+        assert source.read(5)==b"PGDMP";source.seek(0)
+        toc=subprocess.run(["docker","exec","-i",ident,"pg_restore","--list"],stdin=source,
+                           stdout=subprocess.PIPE,timeout=60,check=True).stdout
+    assert b"datomic_kvs" in toc and partial.stat().st_size>0
+    assert json.loads(subprocess.check_output(["docker","inspect",role]))[0]["Id"]==ident
+    (checkpoint/"toc.txt").write_bytes(toc)
+    digest=sha(partial)
+    partial.rename(checkpoint/"host.pgdump")
+    proof={"source":identity["source"],"slot":identity["slot"],"nonce":identity["nonce"],"original":str(arm),
+           "scope":recorded["scope"],"db":recorded["db"],"lastPosition":owned,"seed":seed,
+           "witness":recorded["phases"][-1]["records"][-1],"bindingSha256":sha(directory/"bound-seed.json"),
+           "pgContainer":ident,"bytes":(checkpoint/"host.pgdump").stat().st_size,"dumpSha256":digest,"at":time.time()}
+    (checkpoint/"checkpoint.json").write_text(json.dumps(proof,indent=2)+"\n")
+    (directory/"checkpoint.json").write_text(json.dumps(proof,indent=2)+"\n")
+
+
 def main():
     mode, batch, ordinal, operator = sys.argv[1:]
     assert re.fullmatch(r"grpw1[ab]", batch) and ordinal in ("1", "2")
@@ -131,6 +162,11 @@ def main():
             with (directory / "bound-seed.json").open("x") as f:
                 json.dump({**state, "operator": operator, "seedSha256": sha(seed), "seed": proof, "db": recorded["db"],
                            "scope": recorded["scope"], "grouped": recorded["grouped"], "atVerified": time.time()}, f)
+            if ordinal=="1" and time.time()+600<deadline:
+                try:
+                    capture_checkpoint(arm,directory,identity,recorded,proof,deadline)
+                except Exception as error:
+                    (directory/"checkpoint-error.txt").write_text(repr(error)+"\n")
             available = min(1100, int(deadline - time.time()) - 75)
             if available < 75:
                 raise TimeoutError("Reserved cleanup time reached")

@@ -61,7 +61,7 @@ bench 'sudo -n find /var/tmp/triplex-bm1/night-n19/bundles -mindepth 2 -maxdepth
 BENCH_SERVER="$BENCH_SERVER" python3 lab/experiments/EXP-DX1/bm1/night-client.py collect i1-1
 ```
 
-The server labels the one-account DELTA retry as `0-repeat`, with transfer key `i6`. Other keys match the numbered items. Suffix 1 or 2 is the attempt number. Allow four hours for W1, four for the new one-account DELTA, five for import, three for thin lookup, four for guarded release and five for the active-capacity runs. A shorter terminal arm hands the server to the next item immediately. The original W1 worker finishes timing and full seed verification before any supplemental writes.
+The server labels the one-account DELTA retry as `0-repeat`, with transfer key `i6`. Other keys match the numbered items. Suffix 1 or 2 is the attempt number. Allow four hours for W1, four for the new one-account DELTA, five for import, three for thin lookup, four for guarded release and five for the active-capacity runs. A shorter terminal arm hands the server to the next item immediately. The original W1 worker finishes timing and full seed verification before any supplemental writes. The first verified W1 database is captured with PostgreSQL’s custom-format dump before those writes. Its manifest binds the native container, seed, scope, final position, original receipt, archive bytes and table of contents.
 
 ### Evidence checks
 
