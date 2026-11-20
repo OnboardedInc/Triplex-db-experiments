@@ -148,7 +148,9 @@ export async function executeArm(
     "--reader-threads",
     smoke ? "2" : "6",
     "--seed-batch-facts",
-    "2000",
+    // [DX-THIN1] Why: legacy rows include native attributes and the full journal for each assertion.
+    // Rejected: borrowing SCALE1's 2,000-fact lean-loader frames for the legacy seed.
+    "400",
     "--replica-history-mib",
     "192",
     "--replica-world-cache-mib",

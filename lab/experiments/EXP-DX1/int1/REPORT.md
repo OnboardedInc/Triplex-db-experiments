@@ -3,7 +3,7 @@ The reader and gateways kept the same person-cache entries through 600,000 thin 
 The last 10,000 deep people still added about 322 resident bytes each in the read gateway. We are measuring the heap and native memory behind that change.
 The transactor kept adding memory after its object cache was nearly full. One deep account peaked at 2.55 GiB and loading ten peaked at 4.67 GiB on the server.
 The next Mac run samples both Java heaps at three sizes while the same people stay active.
-The three carryover native suites each passed all 54,079 assertions. Their merges and the memory probe are published.
+The writer, erasure safeguards, fallback reader and Publish priority are now on the shared branch. All six native runs passed 54,079 assertions each.
 The pooled campaign has forecasts for all eight priorities. The small saved-output comparison is still due.
 Lean storage still has open erasure and native query gaps. The campaign must keep those paths out of the judged run.
 
@@ -30,6 +30,6 @@ The earlier scope-cost study is complete. Its measured timing, thread counts and
 
 ## Integration and campaign
 
-The writer, erasure, reader fallback and Publish priority are merged locally. The SDK suite passed 426 tests with 52 opt-in tests skipped. Fourteen focused tests and the pooled TypeScript check passed. The exact native gates and pushes are queued in order. [Merge resolutions and evidence audit](P5-EVIDENCE.md) · [Checksums](P5-SHA256SUMS)
+The exact writer, erasure and Publish native builds each ran 27 tests with zero failures. The reader handoff changed only documentation and shared the erasure build. The SDK suite passed 426 tests with 52 opt-in tests skipped. Fourteen focused tests and the pooled TypeScript check passed. [Merge resolutions and evidence audit](P5-EVIDENCE.md) · [Checksums](P5-SHA256SUMS)
 
 Run `bash lab/experiments/EXP-DX1/int1/everything.sh BATCH UTC_CUTOFF --overnight` for ten accounts of 10,000 people. Omit `--overnight` for both rungs. The current SCALE1 million-person image uses different entity identities and lean storage. Both rungs capture and reuse a compatible legacy seed for their matched arms. [Campaign and options](P5-EVIDENCE.md)
