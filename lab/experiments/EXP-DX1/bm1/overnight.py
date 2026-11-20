@@ -27,7 +27,11 @@ WFIX_SOURCE = "cd2151749d52df47e179a9b6d13d3d62c0f57aef"
 ACT = "exp/DX-ACT2-activation-100k"
 JOINED_REVIEW_SOURCE = "befa95acfa69fe05e1ba96f86ca13141b0a0e3c1"
 JOINED_REVISED_SOURCE = "95a1058d7bfc7515e1f582b87162247ddce645a3"
-REVISED_JOINED = (15, 17)
+REVISED_JOINED = (15, 17, 27)
+JOINED_POLICY_FIX = "5100afc528b8bf188532bc621c81a0fc332dd644"
+SCALE_PROBES = {18:"ceil", 19:"pred", 20:"pulse", 21:"growth", 22:"size"}
+SEALED_ITEMS = (*SCALE_PROBES, 24)
+SCALE_CHECKPOINT = ROOT / "single-n20/checkpoint.json"
 # [DX-BM1] Why: the timeout belongs to the entire item, including its retry and data preparation.
 # Rejected: inheriting the 24–72 hour limits of standalone research controllers.
 ITEMS = {
@@ -35,7 +39,15 @@ ITEMS = {
     14: ("exp/DX-ACT1-activation", "actv-lazy", "befa95acf", .5, "joinedn19"),
     15: ("exp/DX-ACT1-activation", "actv-lazy", JOINED_REVISED_SOURCE, 4, "joinedv2n19"),
     17: ("exp/DX-ACT1-activation", "actv-lazy", JOINED_REVISED_SOURCE, 3.9, "joinedv2n19r"),
+    27: ("exp/DX-ACT1-activation", "actv-lazy", JOINED_POLICY_FIX, 4, "joinedv2n20"),
     16: (WFIX, "wfix1", WFIX_SOURCE, 4, "pulsew4an19"),
+    18: (WFIX, "wfix1", WFIX_SOURCE, 1, "ceiln20"),
+    19: (WFIX, "wfix1", WFIX_SOURCE, 1, "predecessorn20"),
+    20: (WFIX, "wfix1", WFIX_SOURCE, 1.25, "pulsen20"),
+    21: (WFIX, "wfix1", WFIX_SOURCE, 1, "growthn20"),
+    22: (WFIX, "wfix1", WFIX_SOURCE, .75, "sizen20"),
+    24: ("exp/DX-RD1-readers", "rd1", "0eb2e", .75, "readersn20"),
+    26: ("exp/DX-INT1", "int1", "30b278e95", 4, "bm1n20int"),
     8: (W1, "w1", "7a6a7e9ef", 4, "pulsew4a"),
     9: (W1, "w1", "9ce599309", 1, "matchedn19"),
     11: (W1, "w1", "7a6a7e9ef", 1, "ceiln19"),
@@ -52,6 +64,7 @@ ORDER = (1, 14, 8, 11, 9, 15, 17, 16, 12, 7, 10, 13, 5)
 NEXT = {1:"joined-publish-preflight", 14:"enhanced-pulse", 8:"ceil-live10", 11:"thin-deep", 9:"joined-publish", 15:"corrected-pulse",
         17:"collect", 16:"size-ledger", 12:"readers", 7:"predecessor",
         10:"same-database-import", 13:"int1", 5:"collect", 6:"resume", 4:"collect", 3:"collect"}
+NEXT.update({18:"predecessor",19:"enhanced-pulse",20:"growth",21:"size-ledger",22:"readers",24:"thin-1m",26:"collect",27:"ceil"})
 EXP = Path("lab/experiments/EXP-DX1")
 ENV = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
            GIT_TERMINAL_PROMPT="0", DOCKER_HOST="unix:///var/run/docker.sock",
@@ -160,6 +173,12 @@ def delta_output(folder, binding, subjects, offers, releases):
 def complete_output(r):
     root=Path(r["root"])
     item=r["item"]
+    if item in SCALE_PROBES:
+        return any((root/"checkpoint-arms").glob("*/outcomes.jsonl"))
+    if item==24:
+        return any((root/"measurement").glob("block-*/observed.json"))
+    if item==26:
+        return (root/"rung-thin-1m/result.json").is_file()
     if item in (1,8,9,10,11,12,16):
         if (root/"results/comparison.json").is_file():return True
         if item in (10,11,12):return any((root/"checkpoint-arms").glob("*/outcomes.jsonl")) or any((root/"checkpoint-arms").glob("*/result.json"))
@@ -286,6 +305,16 @@ def preflight(r):
         assert verified_checkpoint(allow_single_account=(item==12)), "No verified seed at the requested population is available"
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-small-run-first"})
         return
+    if item in SEALED_ITEMS:
+        assert SCALE_CHECKPOINT.is_file() and r["checkpointSha256"]==digest(SCALE_CHECKPOINT)
+        assert get(SCALE_CHECKPOINT)["seed"]["people"]==100_000
+        put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-small-run-first",
+                   "checkpointSha256":r["checkpointSha256"]})
+        return
+    if item==26:
+        put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-small-run-first",
+                   "format":"int1 direct native rung","size":1000})
+        return
     if item in (14,*REVISED_JOINED):
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"native-preflight-only",
                    "subjects":64,"longRun":"matching native agreement required" if item in REVISED_JOINED else "ACTREVIEW2 FIX FIRST"})
@@ -355,7 +384,7 @@ def public_source(item, directory):
     if not report.is_file():
         raise ValueError("The builder has no published report")
     shutil.copyfile(report,directory/"builder-report.md")
-    for name in ("HANDOFF.md","README.md","PREDICTIONS.md","ISOLATION-BENCH.md","SERVER.md","REVIEW2.md"):
+    for name in ("HANDOFF.md","README.md","PREDICTIONS.md","ISOLATION-BENCH.md","SERVER.md","SERVER1.md","REVIEW2.md","MODEL.md"):
         f=report.with_name(name)
         if f.is_file(): shutil.copyfile(f,directory/("builder-"+name.lower()))
     return head,repo
@@ -366,7 +395,7 @@ def coordinates(item,attempt):
     tag=ITEMS[item][4]
     if item == 1: tag += "ab"[attempt-1]
     elif attempt==2: tag += "b"
-    if item in (1,3,8,9,10,11,12,16): root=Path("/var/tmp/triplex-w1")/tag; unit="triplex-w1-"+tag
+    if item in (1,3,8,9,10,11,12,16,*SEALED_ITEMS): root=Path("/var/tmp/triplex-w1")/tag; unit="triplex-w1-"+tag
     elif item==13: root=Path("/var/tmp/triplex-ha1")/tag;unit="bm1n19-"+tag
     elif item in (14,*REVISED_JOINED): root=NIGHT/tag;unit="bm1n19-"+tag
     elif item==2: root=Path("/var/tmp/triplex-import1")/tag;unit="triplex-bm1-"+tag
@@ -387,9 +416,11 @@ def bind(r):
     if item==1 and attempt==1:valid_repos.add(root/"bootstrap")
     assert Path(r["repo"]) in valid_repos
     if item in REVISED_JOINED:
-        assert r["writerSource"]==WFIX_SOURCE
-        assert Path(r["writerRepo"])==NIGHT/("source-"+WFIX_SOURCE)
+        assert r["writerSource"]==WFIX_SOURCE or (item==27 and re.fullmatch(r"[a-f0-9]{40}",r["writerSource"]))
+        assert Path(r["writerRepo"])==NIGHT/("source-"+r["writerSource"])
         assert re.fullmatch(r"[a-f0-9]{64}",r["reviewSha256"])
+    if item in SEALED_ITEMS:
+        assert re.fullmatch(r"[a-f0-9]{64}",r["checkpointSha256"])
     return r
 
 
@@ -410,17 +441,22 @@ def make(item, attempt, start, deadline):
         head,repo=public_source(item,directory)
     token="| ACT2 audited activation," if item==6 else {8:"| Enhanced pulse,",9:"| Thin/deep matched,",10:"| Predecessor lookup,",
             11:"| CEIL-SERVER-LIVE10,",12:"| W2-SIZE-LEDGER,",13:"| HA1 one-host import,",14:"| ACT1 joined Publish,",
-            15:"| ACT1 reviewed joined Publish,",16:"| WFIX enhanced pulse,",17:"| ACT1 manifest repair,"}.get(item,f"| {item} ·")
+            15:"| ACT1 reviewed joined Publish,",16:"| WFIX enhanced pulse,",17:"| ACT1 manifest repair,",27:"| ACT1 typed refusal,",
+            24:"| RD1 writer probe,",26:"| INT1 single thin rung,",
+            **{i:"| Sealed "+s+"," for i,s in SCALE_PROBES.items()}}.get(item,f"| {item} ·")
     forecast=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith(token))
     r=dict(item=item,attempt=attempt,tag=tag,source=head,repo=str(repo),unit=unit,root=str(root),
            directory=str(directory),start=start,deadline=deadline,prediction=forecast,requested=stamp())
     if item in REVISED_JOINED:
         advertised=command("git","-c","credential.helper=","ls-remote","--exit-code",URL,"refs/heads/"+WFIX).split()[0]
-        writer=checkout_source(WFIX,advertised,WFIX_SOURCE,WFIX_SOURCE)
+        writer_source=advertised if item==27 else WFIX_SOURCE
+        writer=checkout_source(WFIX,advertised,writer_source,WFIX_SOURCE)
         shutil.copyfile(writer/EXP/"wfix1/REPORT.md",directory/"writer-report.md")
         review=repo/EXP/"actv-lazy/REVIEW2.md"
         assert all(re.search(fr"(?m)^{i}\. \*\*.+\*\* Agreed\.",review.read_text()) for i in (2,3,4,5))
-        r.update(writerSource=WFIX_SOURCE,writerRepo=str(writer),reviewSha256=digest(review))
+        r.update(writerSource=writer_source,writerRepo=str(writer),reviewSha256=digest(review))
+    if item in SEALED_ITEMS:
+        r["checkpointSha256"]=digest(SCALE_CHECKPOINT)
     put(request,bind(r))
     return r
 
@@ -432,7 +468,7 @@ def args_request(r):
 def setup(r,env):
     root,source,repo=Path(r["root"]),r["source"],Path(r["repo"])
     root.mkdir(parents=True,exist_ok=True)
-    if r["item"] in (1,3,8,9,10,11,12,16):
+    if r["item"] in (1,3,8,9,10,11,12,16,*SCALE_PROBES):
         for name,value in (("source",source),("machine",digest("/etc/machine-id"))):
             f=root/name
             if f.exists(): assert f.read_text().strip()==value
@@ -536,6 +572,15 @@ def worker(r):
     elif r["item"] in (10,11,12):
         mode={10:"pred",11:"ceil",12:"size"}[r["item"]]
         run(sys.executable,HERE/"probes/seeded_campaign.py","run",mode,root,source,cwd=repo,env=env)
+    elif r["item"] in SCALE_PROBES:
+        assert r["checkpointSha256"]==digest(SCALE_CHECKPOINT)
+        run(sys.executable,HERE/"probes/seeded_campaign.py","run",SCALE_PROBES[r["item"]],root,source,SCALE_CHECKPOINT,
+            cwd=repo,env=env)
+    elif r["item"]==24:
+        assert r["checkpointSha256"]==digest(SCALE_CHECKPOINT)
+        run(sys.executable,HERE/"probes/rd_runner.py","run",root,source,SCALE_CHECKPOINT,cwd=repo,env=env)
+    elif r["item"]==26:
+        run(sys.executable,HERE/"probes/int1_runner.py","run",Path(r["directory"])/"request.json",cwd=repo,env=env)
     elif r["item"]==2:run(*heavy,"--experimental-strip-types",EXP/"import1/server.ts","--execute",root,source,cwd=repo,env=env)
     elif r["item"]==13:
         # [DX-BM1] Why: the supervised one-host command uses the existing machine allocation and survives SSH loss.
@@ -579,8 +624,13 @@ def import_inventory(r):
 
 def cleanup(r):
     root,tag,src=Path(r["root"]),r["tag"],r["source"]
-    if r["item"] in (10,11,12) and (root/"checkpoint-arms/active.json").is_file():
-        run(sys.executable,HERE/"probes/seeded_campaign.py","cleanup",{10:"pred",11:"ceil",12:"size"}[r["item"]],root,src,timeout=150)
+    mode={10:"pred",11:"ceil",12:"size",**SCALE_PROBES}.get(r["item"])
+    if mode and (root/"checkpoint-arms/active.json").is_file():
+        run(sys.executable,HERE/"probes/seeded_campaign.py","cleanup",mode,root,src,timeout=150)
+    if r["item"]==24 and ((root/"checkpoint-arms/active.json").is_file() or (root/"scheduler-before.json").is_file()):
+        run(sys.executable,HERE/"probes/rd_runner.py","cleanup",root,src,SCALE_CHECKPOINT,timeout=150)
+    if r["item"]==26 and (root/"int1-owner.json").is_file():
+        run(sys.executable,HERE/"probes/int1_runner.py","cleanup",Path(r["directory"])/"request.json",timeout=200)
     if r["item"] in (14,*REVISED_JOINED) and (root/"stack-owner.json").is_file():
         run(sys.executable,HERE/"joined_preflight.py","cleanup",Path(r["directory"])/"request.json",timeout=170)
     if r["item"] in (1,3,8,9,10,16) and (root/"active-slot").exists():
@@ -630,14 +680,14 @@ def remaining(r):
     item, tag = r["item"],r["tag"]
     if item==13:return import_inventory(r)
     root=Path(r["root"])
-    if item in (10,11,12):
+    if item in (10,11,12,*SEALED_ITEMS):
         prefixes=[]
         for f in (root/"checkpoint-arms").glob("*/attempt.json"):
             a=get(f)
-            assert a["source"]==r["source"] and re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-(base|(?:ceil|size|pred)[1-4])",a["slot"])
+            assert a["source"]==r["source"] and re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-(base|(?:ceil|size|pred|pulse|growth|readers)[1-5])",a["slot"])
             prefixes.append(a["slot"]+"-")
     elif item in (1,3,8,9,16): prefixes=["tx2-dxscale1-w1-"+tag+"-"]
-    elif item==5: prefixes=["tx2-dxint1-"+tag+"-"]
+    elif item in (5,26): prefixes=["tx2-dxint1-"+tag+"-"]
     elif item==6: prefixes=["tx2-dxscale1-"+tag+"-"]
     elif item in (14,*REVISED_JOINED): prefixes=["tx2-dxt1-bm1-"+tag+"-"]
     else:
@@ -826,7 +876,14 @@ def result(r):
         assert small_replayed=={k:v for k,v in small.items() if k!="writerOptions"}
         small_settlement=settlement(root/"settlement-smoke",64,4,2,r["start"])
         checked=root/"settlement-smoke-check.json"
-        assert get(checked)=={**small_settlement,"gateSha256":digest(root/"settlement-smoke/settle-gate.json")}
+        small_settlement["gateSha256"]=digest(root/"settlement-smoke/settle-gate.json")
+        if item==27:
+            bulk=root/"settlement-smoke/bulk-limit.json"
+            sample=get(bulk)
+            assert sample["status"]==413 and sample["code"]=="BulkFrameTooLarge" and sample["accept"]==sample["start"]+1
+            assert sample["rejectedBytes"]==70000 and sample["tx"]
+            small_settlement["bulkLimitSha256"]=digest(bulk)
+        assert get(checked)==small_settlement
         admission=get(root/"scale-admission.json")
         assert admission["requestSha256"]==cleanup_proof["requestSha256"]
         assert admission["collectorSha256"]==digest(root/"collector.json")
@@ -891,6 +948,82 @@ def result(r):
             assert a["resultSha256"]==digest(arm/"result.json") and a["checkpointSha256"]==small["checkpointSha256"]==value["checkpointSha256"]
             assert get(arm/"cleanup.json")=={"slot":a["slot"],"source":r["source"],"remaining":[]}
         return ("recorded" if all(a["completed"] for a in value["arms"]) else "partial"),str(file)
+    elif item in SCALE_PROBES:
+        sys.path.insert(0,str(HERE/"probes"))
+        from seeded_reading import summarize
+        mode=SCALE_PROBES[item]
+        results=root/"results"
+        small=results/"small-comparison.json"
+        if not small.is_file():
+            return "preflight-refused","The small real output did not seal the writer and collector agreement."
+        assert r["checkpointSha256"]==digest(SCALE_CHECKPOINT)
+        source=r["source"]
+        checked=get(small)
+        assert all(row["completed"] and row["dispositions"]=={"ack":50} for row in checked)
+        def compare(row,is_small):
+            slot=row["directory"]
+            assert slot==row["slot"] and re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-"+mode+r"[1-5]",slot)
+            folder=root/"checkpoint-arms"/slot
+            assert (folder/"clock.json").stat().st_mtime>=r["start"]-1
+            assert row==summarize(folder,mode,source,SCALE_CHECKPOINT,small=is_small)
+        for row in checked:
+            compare(row,True)
+        file=results/"comparison.json"
+        if not file.is_file():
+            return "partial","The matching small result is retained. The full comparison is incomplete."
+        value=get(file)
+        assert (value["source"],value["mode"],value["checkpointSha256"])==(source,mode,r["checkpointSha256"])
+        assert value["smallComparisonSha256"]==digest(small)
+        assert value["smallSha256"]==digest(results/"small-reading.json")
+        modes={"size":["control"],"pulse":["individual","all","compact","prepared","bounded"]}
+        assert [a["setting"] for a in value["arms"]]==modes.get(mode,["control","candidate","candidate","control"])
+        assert len({a["nonce"] for a in checked+value["arms"]})==len(checked+value["arms"])
+        for row in value["arms"]:
+            compare(row,False)
+        return ("recorded" if all(a["completed"] for a in value["arms"]) else "partial"),str(file)
+    elif item==24:
+        sys.path.insert(0,str(HERE/"probes"))
+        from rd_reading import summarize
+        program=root/"build/repository"/EXP/"rd1/writer-probe.ts"
+        spec=r["source"]
+        if not (root/"preflight-reading.json").is_file():
+            return "preflight-refused","The prepared writer probe did not replay its small collector fixture."
+        assert get(root/"preflight-reading.json")==summarize(root/"preflight",spec,"offline-fixture",program,r["start"],offline=True)
+        if not (root/"measurement/result.json").is_file():
+            return "partial","The prepared probe did not finish all four native blocks."
+        file=root/"reading.json"
+        observed=get(file)
+        slot=observed["slot"]
+        assert re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-readers1",slot)
+        work=root/"checkpoint-arms"/slot
+        assert get(work/"cleanup.json")=={"slot":slot,"source":spec,"remaining":[]}
+        reopened=get(work/"reopened-seed.json")
+        seed=get(SCALE_CHECKPOINT)
+        assert r["checkpointSha256"]==digest(SCALE_CHECKPOINT)
+        assert reopened["seedSource"]==seed["source"] and reopened["witness"]==seed["witness"]
+        assert (reopened["db"],reopened["slot"],reopened["source"],reopened["count"])==(seed["db"],slot,spec,4)
+        assert observed==summarize(root/"measurement",spec,slot,program,r["start"])
+        return ("recorded" if observed["nativeComplete"] else "partial"),str(file)
+    elif item==26:
+        if not (root/"small/bm1-reading.json").is_file():
+            return "preflight-refused","The native activation guard or small capacity output did not pass."
+        clean=get(root/"int1-clean.json")
+        access=get(root/"stack-access.json")
+        source,slot=r["source"],access["prefix"]
+        assert (clean["source"],clean["tag"],clean["prefix"],clean["request"],clean["remaining"])==(source,r["tag"],slot,r["requested"],[])
+        assert access["engineSha256"]==digest(root/"engines"/slot/"stack.json")
+        for folder,size in ((root/"small",1000),(root/"rung-thin-1m",1000000)):
+            file=folder/"bm1-reading.json"
+            if not file.is_file():
+                return "partial","The 1k producer/collector agreement is sealed. The 1M rung is incomplete."
+            row=capacity_rung(folder,source,size)
+            assert (folder/"inputs.json").stat().st_mtime>=r["start"]
+            verify=get(folder/"producer-check.json")
+            assert (verify["source"],verify["slot"],verify["people"],verify["binding"],verify["latencyMs"])==(source,slot,size,row["binding"],row["latency"])
+            assert get(file)=={"source":source,"prefix":slot,"attempt":row["attempt"],"resultSha256":digest(folder/"result.json"),
+                               "producerSha256":digest(folder/"producer-check.json"),"latency":row["latency"],
+                               "memory":capacity_memory(folder,row,full=True)}
+        return "recorded",str(file)
     elif item==13 and any((root/"run").glob("load-tail-*/observations.json")):
         path,rows=tail_attempt(root/"run",r)
         good=all(value["offered"]==value["ok"] for row in rows for intervals in row["neighbors"].values() for value in intervals.values())
@@ -1109,20 +1242,42 @@ def main():
             return
         if mode=="cleanup" and (child:=native_unit(r)) and os.environ.get("SERVICE_RESULT")=="success" and active(child):return
         (worker if mode=="worker" else cleanup)(r);return
-    assert mode=="run"
+    assert mode in ("run","run-after-seed")
     lock=(NIGHT/"campaign.lock").open("a");fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     assert (NIGHT/"i0/terminal").is_file()
+    scheduled=ORDER
+    seal_error=None
+    if mode=="run-after-seed":
+        # [DX-BM1] Why: the observation queue only reads a sealed, already released source slot.
+        # Rejected: pg_restore from a live or partially written seed image.
+        (NIGHT/"finished").unlink(missing_ok=True)
+        while active("bm1n20-single-seed"):
+            time.sleep(5)
+        assert not command("docker","ps","-q")
+        status("seed100","checking-seal",time.time(),"ceil")
+        sys.path.insert(0,str(HERE/"probes"))
+        from scale_seed import prepare_receipt
+        try:
+            prepare_receipt(SCALE_CHECKPOINT)
+            scheduled=(27,*SCALE_PROBES,24,26)
+        except (OSError,ValueError,AssertionError,KeyError) as error:
+            # [DX-BM1] Why: keep the original seed evidence and use the next independent population while diagnosing it.
+            # Rejected: repeatedly restoring an unverified image or leaving a usable bench idle after a seal check fails.
+            seal_error=repr(error)
+            atom(ROOT/"single-n20/seal-check-error.txt",traceback.format_exc())
+            status("seed100","seal-check-failed",time.time(),"thin-1m")
+            scheduled=(26,)
     # [DX-BM1] Why: a detached item can advance while the next supervisor is being published.
     # Rejected: assuming the revised queue order describes the lease already held by the old supervisor.
     in_flight=[]
-    for item in ORDER:
+    for item in scheduled:
         folder=NIGHT/f"i{item}"
         if (folder/"outcome.json").is_file() or item==7:
             continue
         if any(running(bind(get(request))) for request in folder.glob("*/request.json")):
             in_flight.append(item)
     assert len(in_flight)<=1,"Multiple items claim the bench"
-    order=(*in_flight,*(item for item in ORDER if item not in in_flight))
+    order=(*in_flight,*(item for item in scheduled if item not in in_flight))
     pending=[item for item in order if not (NIGHT/f"i{item}/outcome.json").is_file()]
     if pending:
         (NIGHT/"finished").unlink(missing_ok=True)
@@ -1132,7 +1287,7 @@ def main():
     for item in order:
         if (NIGHT/f"i{item}/outcome.json").is_file():
             continue
-        if item!=1:
+        if item!=1 and mode!="run-after-seed":
             try:
                 if eligible_delta():one(6)
             except (OSError,ValueError,AssertionError,subprocess.SubprocessError):print(traceback.format_exc(),flush=True)
@@ -1159,6 +1314,9 @@ def main():
             put(directory/"outcome.json",dict(item=item,state="incomplete",detail=str(error),ended=stamp()))
         assert not command("docker","ps","-q"),"Cannot transfer an occupied bench"
     assert not command("docker","ps","-q")
+    if seal_error:
+        status("seed100","needs-seal-verification",time.time(),"hold")
+        return
     atom(ROOT/"STATUS","FREE "+stamp()+"\n")
     atom(NIGHT/"finished",stamp()+"\n")
     print("FREE",stamp(),flush=True)

@@ -78,3 +78,21 @@ The server joined smoke at `befa95acf` was collected under `evidence/DX-BM1/over
 The matched study is sealed under `evidence/DX-BM1/overnight/i9-1`. All 7,092 write rows join their gateway trace by trace ID and native T. The deep checkpoint restored at the witnessed cut. SIZE verified 50 additional receipts before the lean transaction-log route refused. READERS restored the seed and stopped at the missing group-format input before the first block. Predecessor held for a 100k seed. Their evidence keys are `i12-1`, `i7-1` and `i10-1`. Both early joined launches are retained as `i15-1` and `i15-2`. Their replacement uses `i17-1`, with a single reviewed native admission and the same checks as the previous launch.
 
 HA1 completed at 23:54:04 EST. The five raw offer tapes and exact p99 replay are under `i13-1/recovered`. The WFIX native smoke at `882df5487` produced all five active option records and 75 receipts, now reconciled under `i16-1/recovered`. The full pulse did not fit its four-hour limit. INT1 at `61d071669` stopped at 00:00:29 EST before its first database opened because the native launch could not find `lab/bench/lib`. The first stopped status and both inventories are in `i5-1`. Neither capacity rung spent time seeding.
+
+## Sealed seed queue
+
+The bench resumed at 00:17:32 EST on November 20 as `bm1n20-single-seed.service`. The inner `triplex-scale1-arm-d7-bm1-single-n20.service` executes the public SCALE1 `a072629eb` single-account decision seed and owns its own cleanup. It uses the verified two-frame loader. The current lease covers the seed, the next ACT1 native preflight and the clone-based probes. The earlier FREE line is historical.
+
+```sh
+bench 'sudo -n cat /var/tmp/triplex-bm1/STATUS'
+bench 'sudo -n cat /var/tmp/triplex-scale1/decision/attempts/arm-d7-bm1-single-n20/STATUS.json'
+bench 'sudo -n tail -1 /var/tmp/triplex-scale1/decision/attempts/arm-d7-bm1-single-n20/seed-progress.jsonl'
+BENCH_SERVER="$BENCH_SERVER" BM1_TRACE_INDEX="$PWD/lab/bin/trace-store.mjs" \
+  python3 lab/experiments/EXP-DX1/bm1/night-client.py collect-seed
+BENCH_SERVER="$BENCH_SERVER" BM1_TRACE_INDEX="$PWD/lab/bin/trace-store.mjs" \
+  python3 lab/experiments/EXP-DX1/bm1/night-client.py collect i27-1
+```
+
+The seed estimate is 42 min ingest, 38 min verification and 5–8 min sealing. The three-hour seed ceiling is independent of the probe budgets. The after-seed supervisor waits for stack teardown, checks the full native SCALE1 receipt and SHA-256s and reopens a separate copy per probe arm. Its admission order is ACT1 `i27` (4 h), CEIL `i18` (1 h), predecessor `i19` (1 h), pulse `i20` (75 min), GROWTH `i21` (1 h), SIZE `i22` (45 min), READERS `i24` (45 min) and INT1 `i26` (4 h). Those ceilings include setup and cleanup. If the seed check fails, the independent thin rung can begin while the original is preserved. ACT1 has its own unqualified fixture and seeds its separate empty scope after the joined and settlement checks. The four reader-block scopes are separate from the restored deep scope. Collect an item's terminal bundle by substituting the corresponding key above. See STATUS for the live owner and FREE time.
+
+TAIL1 specifies the exact SCALE1 zero-B archive `095971d5126cf567a7db3ff15c3fc718656bf98541a66ea0b05136c4c9bd54bb`; the file is absent from this bench's two evidence roots. The earlier BM1 thin/deep archive and tail reading remain under `overnight/i9-1`; that run lacks a write-gateway pause recording. ERASE1's `stage` prepares two distinct aged cohorts with exclusive journal transactions and interleaves their edits during ingest. Its `check` binds their actual assertion IDs, nonce, source and cut. The SCALE1 pack groups unrelated people in shared frames and cannot supply that staging file. An ERASE1 run needs its own stage or a reviewed producer that can reuse this seed.

@@ -13,18 +13,24 @@ import uuid
 import native as stack
 
 
-def setup(directory,mode):
+def setup(directory,mode,checkpoint_file=None):
     # [DX-BM1] Why: the storage checkpoint and the measured program have distinct source identities.
     # Rejected: opening the old writable database or claiming the restored data was seeded by the new code.
-    assert re.fullmatch(r"/var/tmp/triplex-w1/(?:ceil|size|predecessor)n19b?",str(directory))
+    assert re.fullmatch(r"/var/tmp/triplex-w1/(?:ceil|size|predecessor|growth|pulse)n(?:19|20)b?",str(directory))
     stack.BASE=directory/"checkpoint-arms"
     stack.REPO=directory/"build/repository"
     stack.NODE=directory/"build/tools/bin/node"
     stack.BASE_ENV["PATH"]=str(stack.NODE.parent)+":"+stack.BASE_ENV["PATH"]
-    selected=stack.verified_checkpoint(allow_single_account=(mode=="size"))
+    selected=checkpoint_file or stack.verified_checkpoint(allow_single_account=(mode=="size"))
     if not selected:raise RuntimeError("No independently verified checkpoint at the requested population")
     stack.INPUT=selected
-    return stack.get(stack.INPUT)
+    checkpoint=stack.get(stack.INPUT)
+    if checkpoint_file:
+        from scale_seed import ORIGIN, SOURCE, POPULATION
+        assert checkpoint["kind"]=="scale1-single" and checkpoint["source"]==SOURCE
+        assert checkpoint["seed"]["population"]==POPULATION and Path(checkpoint["dump"])==ORIGIN/"seed.pgdump"
+        assert checkpoint["sourceImageSha256"]==stack.sha(ORIGIN/"image.json")
+    return checkpoint
 
 
 def start_roles(slot, directory, env):
@@ -60,12 +66,22 @@ def until(file, proc, seconds):
 
 
 def arm(mode,setting,ordinal,tag,staged,frozen,expected,profile):
-    fair=mode=="ceil" and setting=="candidate"
+    fair=(mode=="ceil" and setting=="candidate") or (mode=="pulse" and setting!="individual")
+    range_lookup=mode in ("pred","growth") and setting=="candidate"
+    history_range=mode=="growth" and range_lookup
+    small_rows=mode=="pulse" and setting in ("compact","prepared","bounded")
+    prepared=mode=="pulse" and setting in ("prepared","bounded")
+    budget=8000 if mode=="pulse" and setting=="bounded" else None
     settings={
         "DX_GROUP_COMMIT":str(int(fair)),"DX_GROUP_QUEUE_CLOCK":"1","DX_LIVE_PRIORITY":str(int(fair)),
-        "DX_W1_EXTRA":"1","DX_GROUP_MAX_MEMBERS":"8","DX_SMALL_ROWS":"0","DX_GROUP_REUSE_PREPARED":"0",
+        "DX_W1_EXTRA":"1","DX_GROUP_MAX_MEMBERS":"32" if prepared else "8",
+        "DX_SMALL_ROWS":str(int(small_rows)),"DX_GROUP_REUSE_PREPARED":str(int(prepared)),
+        "DX_WRITE_BUDGET_US":str(budget) if budget is not None else "",
+        "DX_PREDECESSOR_LOOKUP":str(int(range_lookup)),
+        "DX_W1_PREDECESSOR":str(int(range_lookup)),
+        "TRIPLEX_DATOMIC_FAST_PATHS":"history-range" if history_range else "",
     }
-    if mode=="pred":
+    if mode=="growth":
         for peer in ("READ","WRITE"):
             key="DX_GW_"+peer+"_JAVA_OPTS"
             settings[key]=stack.BASE_ENV[key]+" -Dbm1.read.attribution=1"
@@ -74,6 +90,24 @@ def arm(mode,setting,ordinal,tag,staged,frozen,expected,profile):
     try:
         stack.reopen(slot,env,frozen,expected,directory)
         start_roles(slot,directory,env)
+        gateway=directory/"engines"/slot/"gateway-files.json"
+        staged_source=staged or stack.REPO/"packages/datomic/gateway"
+        files=stack.files(staged_source)
+        if not staged:
+            files["codec-spec.json"]=stack.sha(stack.REPO/"packages/datomic/src/codec-spec.json")
+        assert files==stack.get(gateway)
+        gateway_hash=stack.sha(gateway)
+        assert stack.get(gateway.with_name("health-w.json"))["gatewaySourceHash"]==gateway_hash
+        desire={"source":owner["source"],"slot":slot,"attempt":chosen,"gatewaySourceHash":gateway_hash,
+                "options":dict(predecessorLookup=range_lookup,groupCommit=fair,livePriority=fair,
+                    fieldCoalesce=False,queueClock=True,stageClock=True,smallRows=small_rows,
+                    reusePrepared=prepared,maxMembers=32 if prepared else 8,budgetMicros=budget,
+                    bulkRows=96,bulkBytes=65536)}
+        if "packedJournal: boolean" in (stack.REPO/"lab/experiments/EXP-DX1/w1/write-options.ts").read_text():
+            desire["historyRange"]=history_range
+            desire["options"].update(ledger=False,packedJournal=False,fastReply=False)
+        stack.put(directory/"writer-expectation.json",desire)
+        env["DX_W1_WRITER_EXPECTATION"]=json.dumps(desire,separators=(",",":"))
         writer=Path(__file__).with_name("seeded.mjs")
         with (directory/"worker.log").open("x") as log:
             args=[stack.NODE,"lab/bin/heavy.mjs","--label","DX-BM1-"+mode,"--","taskset","-c","3",stack.NODE,
@@ -114,8 +148,8 @@ def arm(mode,setting,ordinal,tag,staged,frozen,expected,profile):
 
 
 def main(args):
-    action,mode,root,source=args
-    assert sys.platform=="linux" and os.getuid()==0 and mode in ("ceil","size","pred")
+    action,mode,root,source,*seed_path=args
+    assert sys.platform=="linux" and os.getuid()==0 and mode in ("ceil","size","pred","growth","pulse")
     directory=Path(root)
     if action=="cleanup":
         stack.BASE=directory/"checkpoint-arms"
@@ -124,14 +158,15 @@ def main(args):
         stack.cleanup()
         return
     assert action=="run" and not (directory/"results").exists()
-    checkpoint=setup(directory,mode)
+    assert len(seed_path)<=1
+    checkpoint=setup(directory,mode,Path(seed_path[0]) if seed_path else None)
     assert stack.command("git","rev-parse","HEAD")==source and not stack.command("git","diff","--name-only","HEAD")
     assert shutil.disk_usage(directory).free>32*1024**3
     stack.BASE.mkdir(mode=0o700)
     tag=uuid.uuid4().hex[:8]
     frozen,expected=stack.create_template(tag,checkpoint)
     staged=None
-    if mode=="pred":
+    if mode=="growth":
         staged=directory/"staged-gateway"
         shutil.copytree(stack.REPO/"packages/datomic/gateway",staged)
         shutil.copyfile(stack.REPO/"packages/datomic/src/codec-spec.json",staged/"codec-spec.json")
@@ -144,16 +179,23 @@ def main(args):
     results=directory/"results"
     results.mkdir()
     from seeded_reading import summarize
-    smoke=arm(mode,"control",1,uuid.uuid4().hex[:8],staged,frozen,expected,"smoke")
-    small=summarize(smoke,mode,source,stack.INPUT,small=True)
-    stack.put(results/"small-reading.json",small)
-    assert small["dispositions"]=={"ack":50}
+    smoke_settings={"size":("control",),"pulse":("individual","bounded")}.get(mode,("control","candidate"))
+    small=[]
+    for idx,setting in enumerate(smoke_settings,1):
+        smoke=arm(mode,setting,idx,uuid.uuid4().hex[:8],staged,frozen,expected,"smoke")
+        sample=summarize(smoke,mode,source,stack.INPUT,small=True)
+        assert sample["dispositions"]=={"ack":50} and sample["completed"] is True
+        small.append(sample)
+    stack.put(results/"small-reading.json",small[0])
+    stack.put(results/"small-comparison.json",small)
     rows=[]
-    for n,setting in enumerate(("control",) if mode=="size" else ("control","candidate","candidate","control"),1):
+    full_settings={"size":("control",),"pulse":("individual","all","compact","prepared","bounded")}.get(
+        mode,("control","candidate","candidate","control"))
+    for n,setting in enumerate(full_settings,1):
         case=arm(mode,setting,n,tag,staged,frozen,expected,"full")
         rows.append(summarize(case,mode,source,stack.INPUT))
     stack.put(results/"comparison.json",{"source":source,"mode":mode,"checkpointSha256":stack.sha(stack.INPUT),
-        "smallSha256":stack.sha(results/"small-reading.json"),"arms":rows})
+        "smallSha256":stack.sha(results/"small-reading.json"),"smallComparisonSha256":stack.sha(results/"small-comparison.json"),"arms":rows})
 
 
 if __name__=="__main__":main(sys.argv[1:])

@@ -111,7 +111,7 @@ def recover_matched_dump(root,source):
 
 
 def bound_slot(slot):
-    return bool(re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-(base|(?:growth|readers|ceil|size|pred)[1-4])",slot))
+    return bool(re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-(base|(?:growth|readers|ceil|size|pred|pulse)[1-5])",slot))
 
 
 def env_for(slot, directory):
@@ -140,12 +140,14 @@ def cleanup():
 def stack(ordinal,mode,experiment,staged=None,settings=None):
     tag=mode+str(ordinal) if mode!="base" else "base"
     slot=f"tx2-dxt1-bm1-n19probe-{experiment}-{tag}"
-    if mode not in ("base","growth","readers","ceil","size","pred"):raise ValueError(mode)
+    if mode not in ("base","growth","readers","ceil","size","pred","pulse"):raise ValueError(mode)
     directory=BASE/slot
     directory.mkdir(mode=0o700)
     env=env_for(slot,directory)
     env.update(settings or {})
     ownership={"slot":slot,"source":env["TRIPLEX_TRACE_SOURCE"],"directory":str(directory),"nonce":str(uuid.uuid4())}
+    if settings and "DX_PREDECESSOR_LOOKUP" in settings:
+        env["DX_WRITE_OPTIONS_ATTEMPT"]=ownership["nonce"]
     assert not command("docker","ps","-q")
     assert not command("bash",STACK/"up.sh",slot,"--inventory",env=env)
     put(directory/"attempt.json",ownership)
@@ -191,7 +193,7 @@ def files(root):
 
 def create_template(experiment,checkpoint):
     directory,slot,env,_=stack(0,"base",experiment)
-    dump=INPUT.with_name("host.pgdump")
+    dump=Path(checkpoint["dump"]) if checkpoint.get("kind")=="scale1-single" else INPUT.with_name("host.pgdump")
     assert dump.stat().st_size==checkpoint["bytes"] and sha(dump)==checkpoint["dumpSha256"]
     try:
         run("docker","stop","--time","20",slot+"-gw-r",slot+"-gw-w",slot+"-tx",env=env)

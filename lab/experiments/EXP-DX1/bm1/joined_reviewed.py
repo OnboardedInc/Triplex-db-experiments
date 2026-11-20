@@ -137,7 +137,32 @@ def settlement(output, subjects, seconds, readers, issued_after):
                 pair[field] = by_phase[1] / by_phase[0]
             ratios.append(pair)
         assert ratios == sample["pairs"] == summary["p99Ratios"]
+        overlap = None
+        if "active" in sample:
+            low, high = sample["activeFrom"], sample["activeUntil"]
+            assert 0 <= low and high <= seconds * 1000
+            assert math.isclose(high, min(seconds * 1000,
+                sample["offer"] + max(clock[1:]) - (sample["visible"] - low)), abs_tol=1e-7)
+            def active_reading(group):
+                saves=sorted(r["ack"]-r["offered"] for r in group["writes"] if low<=r["offered"]<high)
+                reads=sorted(r["elapsed"] for r in group["reads"] if low<=r["started"]<high)
+                return dict(saveN=len(saves),readN=len(reads),
+                    saveP99=saves[math.ceil(.99*len(saves))-1] if saves else None,
+                    readP99=reads[math.ceil(.99*len(reads))-1] if reads else None)
+            observed=[]
+            for control,loaded in zip(sample["control"],sample["loaded"],strict=True):
+                base,work=active_reading(control),active_reading(loaded)
+                observed.append({"base":base,"work":work,**{
+                    kind:work[kind+"P99"]/base[kind+"P99"] if work[kind+"P99"] and base[kind+"P99"] else None
+                    for kind in ("save","read")}})
+            assert observed==sample["active"]
+            overlap={"from":low,"until":high,"ratios":observed}
+            assert summary["active"]==overlap
+            for key,field in (("values","valuesClock"),("notices","noticeClock")):
+                end=sample["terminal"][key]
+                assert end["clock"]==summary[field] and end["clock"] in ("native-ack","readback")
+                if end["clock"]=="native-ack":assert end["tx"] and end["position"]>0
         rows.append(dict(rate=rate, markerMs=clock[0], valuesMs=clock[1], noticeMs=clock[2],
-                         p99Ratios=ratios, sha256=digest(path)))
+                         p99Ratios=ratios, overlap=overlap, sha256=digest(path)))
     return dict(subjects=subjects, seconds=seconds, readers=readers, priceSha256=digest(output / "settlement-price.json"),
                 rows=rows)

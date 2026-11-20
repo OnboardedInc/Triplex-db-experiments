@@ -102,8 +102,8 @@ def joined_output(folder, owner, source, start, repo=None):
 def host(r, request, clean=False):
     root = Path(r["root"])
     tag, source = r["tag"], r["source"]
-    revised = r["item"] in (15, 17)
-    assert r["item"] in (14, 15, 17) and re.fullmatch(r"joined(?:v2)?n19r?b?", tag)
+    revised = r["item"] in (15, 17, 27)
+    assert r["item"] in (14, 15, 17, 27) and re.fullmatch(r"joined(?:v2)?n(?:19|20)r?b?", tag)
     assert root == Path("/var/tmp/triplex-bm1/night-n19") / tag
     repo = root / "build/repository"
     stack_repo = Path(r["writerRepo"]) if revised else repo
@@ -204,9 +204,12 @@ def host(r, request, clean=False):
             assert observed["gatewaySourceHash"] == gateway_hash and observed["strictRecordClocks"] is True
             assert observed["rowsVersion"] == 3 and observed["commitFunctionInstalled"] is True
             assert observed["commitFunction"] == ":triplex/commit" and re.fullmatch(r"[a-f0-9]{64}", observed["baseFunctionHash"])
-            assert observed["options"] == dict(predecessorLookup=False, groupCommit=False, livePriority=True,
+            expected_options=dict(predecessorLookup=False, groupCommit=False, livePriority=True,
                 fieldCoalesce=False, queueClock=False, stageClock=False, smallRows=False, reusePrepared=False,
                 maxMembers=8, budgetMicros=None, bulkRows=96, bulkBytes=65536)
+            if "packedJournal: boolean" in (stack_repo / EXP / "w1/write-options.ts").read_text():
+                expected_options.update(ledger=False,packedJournal=False,fastReply=False)
+            assert observed["options"] == expected_options
             return observed
 
         # [DX-BM1] Why: keep the application and live writer identities separately bound to the same slot.
@@ -226,8 +229,15 @@ def host(r, request, clean=False):
             run(*launch, JOIN / "settle-gate.ts", gate, timeout=300)
             witness = get(gate / "settle-gate.json")
             assert witness["nativeClass"] is True and witness["kills"] == 2 and witness["entries"] > 0
+            bulk = None
+            if r["item"] == 27:
+                bulk = get(gate / "bulk-limit.json")
+                assert bulk["status"] == 413 and bulk["code"] == "BulkFrameTooLarge"
+                assert bulk["accept"] == bulk["start"] + 1 and bulk["tx"] and bulk["rejectedBytes"] == 70000
             run(*launch, JOIN / "settle-price.ts", gate, "64", "4", "2", timeout=480)
             check = settlement(gate, 64, 4, 2, r["start"])
+            if bulk:
+                check["bulkLimitSha256"] = digest(gate / "bulk-limit.json")
             save("settlement-smoke-check.json", {**check, "gateSha256": digest(gate / "settle-gate.json")})
         except (AssertionError, OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
             save("preflight-stop.json", dict(**bound, error=repr(error)))

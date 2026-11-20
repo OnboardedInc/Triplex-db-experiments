@@ -1,9 +1,10 @@
 """Verify and summarize the per-offer, per-transaction and PostgreSQL records."""
 import hashlib
 import json
-from collections import Counter, defaultdict
+from collections import Counter
 import math
 from pathlib import Path
+import re
 
 
 def get(path):
@@ -31,6 +32,31 @@ def dist(values):
     return {"n":len(values),"p50":pct(values,50),"p99":pct(values,99)}
 
 
+def storage_accounts(report):
+    # [DX-BM1] Why: native with-io-stats includes child counts in their ancestors, as checked by W1's two same-basis lookups.
+    # Rejected: adding the parent and child I/O counters or inferring them from function wall time.
+    function=report["nested"]["function"]
+    parts=function["nested"]
+    assert set(parts)<={"new-id","new-range","old-live","retirement","retract","owner","revision"}
+    assert {"old-live","retirement"}<=set(parts)
+    assert all(part["io-context"]==name and part["api"]=="lookup" for name,part in parts.items())
+    assert function["io-context"]=="function" and function["api"]=="lookup"
+    counts={name:part["reads"] for name,part in parts.items()}
+    metrics=("sql","avet","eavt","aevt","avet-load","eavt-load","aevt-load","deserialize")
+    total=report["reads"]
+    parent=function["reads"]
+    result={name:{k:row.get(k,0) for k in (*metrics,"w1-calls","sql-ms","deserialize-ms")} for name,row in counts.items()}
+    for key in metrics:
+        child=sum(row.get(key,0) for row in counts.values())
+        inside=parent.get(key,0)
+        full=total.get(key,0)
+        assert 0<=child<=inside<=full, (key,child,inside,full)
+        result.setdefault("functionOther",{})[key]=inside-child
+        result.setdefault("nativeOutsideFunction",{})[key]=full-inside
+        result.setdefault("total",{})[key]=full
+    return result
+
+
 def summarize(directory,mode,source,checkpoint,small=False):
     # [DX-BM1] Why: count scheduled offers and unresolved outcomes before deriving any phase ratio.
     # Rejected: dividing by surviving ACKs or borrowing a native counter from a nearby transaction.
@@ -42,6 +68,18 @@ def summarize(directory,mode,source,checkpoint,small=False):
     assert plan["slot"]==proof["slot"]==clock["slot"] and plan["nonce"]==proof["nonce"]==clock["nonce"]
     assert plan["stage"]==mode and plan["seed"]==sha(checkpoint) and plan["smoke"] is small
     assert get(directory/"cleanup.json")=={"slot":proof["slot"],"source":source,"remaining":[]}
+    options=get(directory/"writer-options.json")
+    expected=get(directory/"writer-expectation.json")
+    observed=options["observed"]
+    variant=mode in ("pred","growth") and plan["setting"]=="candidate"
+    assert options["expected"]==expected and options["historyRange"] is (mode=="growth" and variant)
+    assert [expected[k] for k in ("source","slot","attempt")]==[source,plan["slot"],plan["nonce"]]
+    assert observed["options"]==expected["options"] and observed["options"]["predecessorLookup"] is variant
+    assert observed["position"]==clock["head"] and observed["database"]==plan["db"] and observed["attempt"]==plan["nonce"]
+    gateway=directory/"engines"/plan["slot"]/"gateway-files.json"
+    assert observed["gatewaySourceHash"]==expected["gatewaySourceHash"]==sha(gateway)
+    assert observed["strictRecordClocks"] is True and observed["commitFunctionInstalled"] is True
+    assert re.fullmatch(r":triplex\.write/v-[a-f0-9]{24}" if variant else ":triplex/commit",observed["commitFunction"])
     assert sha(directory/"offers.jsonl")==result["tapeSha256"] and sha(directory/"outcomes.jsonl")==result["outcomesSha256"]
     offers=list(rows(directory/"offers.jsonl"))
     observations=list(rows(directory/"outcomes.jsonl"))
@@ -79,6 +117,14 @@ def summarize(directory,mode,source,checkpoint,small=False):
         group=Counter(r["t"] for r in confirmed)
         clocks=[r["prepare"] for r in confirmed if r.get("prepare") is not None]
         staged={r["t"]:r["stages"] for r in confirmed if r.get("stages") is not None}
+        quiet=[r["ackAt"]-r["offset"] for r in confirmed if r["account"]==9]
+        first=w["from"]*1000
+        midpoint=first+20000
+        splits=None
+        if mode=="ceil" and w["rate"]==235:
+            splits=[{"offered":sum(lo<=r["offset"]<hi for r in n),
+                     "inWindow":sum(lo<=r["offset"]<=r["ackAt"]<hi for r in confirmed)}
+                    for lo,hi in ((first,midpoint),(midpoint,first+40000))]
         cells.append({"rate":w["rate"],"offered":len(n),"ack":len(confirmed),
                       "inWindow":sum(w["from"]*1000<=r["ackAt"]<(w["from"]+w["seconds"])*1000 for r in confirmed),
                       "goal50":sum(x<=50 for x in durations),
@@ -91,11 +137,20 @@ def summarize(directory,mode,source,checkpoint,small=False):
                       "groupSpeculateMs":dist([r["speculativeMicros"]/1000 for r in staged.values()]),
                       "nativeTurns":len(joined),"nativeApplyMs":dist([r["apply-msec"] for r in joined.values()]),
                       "nativeTotalMs":dist([r["msec"] for r in joined.values()]),
-                      "storageReads":sum(r.get("io-stats",{}).get("reads",{}).get("sql",0) for r in joined.values())})
+                      "storageReads":sum(r.get("io-stats",{}).get("reads",{}).get("sql",0) for r in joined.values()),
+                      "quietAckMs":dist(quiet),"subwindows20s":splits})
     measurement={"source":source,"slot":plan["slot"],"nonce":plan["nonce"],"setting":plan["setting"],
                  "resultSha256":sha(directory/"result.json"),"nativeSha256":proof_trace["fileSha256"],
                  "dispositions":dispositions,"checkpointSha256":plan["seed"],"directory":directory.name,"cells":cells,
-                 "recovered":len(result["recovered"]),"completed":len(own)==len(native) and dispositions=={"ack":len(offers)}}
+                 "writerOptionsSha256":sha(directory/"writer-options.json"),"writerOptions":observed,
+                 "recovered":len(result["recovered"]),"allAcknowledged":dispositions=={"ack":len(offers)},
+                 "completed":len(own)==len(native)}
+    if mode=="pulse" and not small:
+        quiet=lambda n: [(o["entity"],o["accountSeq"],o["width"],o["offset"]-60_000*n)
+                         for o in offers if o["cell"]==n and o["account"]==9]
+        assert len(quiet(0))==600 and quiet(0)==quiet(1)
+        alone,busy=[cell["quietAckMs"] for cell in cells]
+        measurement["quietRatio"]=busy["p99"]/alone["p99"] if alone["n"]==busy["n"]==600 else None
     if mode=="ceil":
         assert result["readSha256"]==sha(directory/"reads.jsonl")
         read=list(rows(directory/"reads.jsonl"))
@@ -115,27 +170,68 @@ def summarize(directory,mode,source,checkpoint,small=False):
         initial=get(directory/"index-before.json")
         suffix=get(directory/"log-suffix.json")
         known=successful+result["recovered"]
-        assert suffix["nonce"]==plan["nonce"] and {(r["t"],r["position"]) for r in suffix["commits"]}=={(r["t"],r["pos"]) for r in known}
+        assert [suffix[k] for k in ("source","slot","nonce","db")]==[source,plan["slot"],plan["nonce"],plan["db"]]
+        assert {(r["t"],r["position"],r["operation"]) for r in suffix["commits"]}=={(r["t"],r["pos"],r["id"]) for r in known}
         assert len(suffix["commits"])==len(known) and int(suffix["high"])>=max(int(r["t"]) for r in known)>int(suffix["low"])
+        raw=directory/"native-log.stdout"
+        assert suffix["nativeLogSha256"]==sha(raw) and suffix["scriptSha256"]==sha(Path(__file__).with_name("size-log.clj"))
+        native_log,=[line.removeprefix("BM1_SIZE_JSON ") for line in raw.read_text().splitlines() if line.startswith("BM1_SIZE_JSON ")]
+        log=json.loads(native_log)
+        assert [log[k] for k in ("database","low","high","basis")]==[plan["db"],suffix["low"],suffix["high"],suffix["basis"]]
+        assert all(int(log["low"])<int(r["t"])<=int(log["high"]) for r in log["records"])
+        assert all(a["t"]!=b["t"] and int(a["t"])<int(b["t"]) for a,b in zip(log["records"],log["records"][1:]))
+        assert suffix["nonTriplex"]==sum(not r["claims"] for r in log["records"])
+        direct=[{"t":r["t"],"datoms":r["datoms"],"adds":r["adds"],"retracts":r["retracts"],
+                 "operation":c["operation"],"position":c["position"]} for r in log["records"] for c in r["claims"]]
+        assert direct==suffix["commits"]
+        assert all(r["datoms"]==r["adds"]+r["retracts"] for r in log["records"])
         for reading,position in ((initial,result["headBefore"]),(index,result["last"])):
             assert [reading[k] for k in ("nonce","source","slot","position")]==[plan["nonce"],source,plan["slot"],position]
             assert reading["receipt"]["completed"] is True and reading["receipt"]["database"]==plan["db"]
         indexed=get(directory/"indexed-size.json") if (directory/"indexed-size.json").is_file() else None
-        turns=defaultdict(set)
-        for r in successful:
-            if r.get("datoms") is not None:turns[r["t"]].add(r["datoms"])
-        assert all(len(v)==1 for v in turns.values())
+        turns={row["t"]:row["datoms"] for row in suffix["commits"]}
+        assert all(r.get("datoms") in (None,turns[r["t"]]) for r in successful)
         def lsn(x):
             a,b=x.split("/")
             return (int(a,16)<<32)+int(b,16)
-        measurement["size"]={"nativeDatoms":sum(next(iter(v)) for v in turns.values()),"nativeScope":len(turns),
+        entries=len(turns)
+        assert entries
+        wal=lsn(after["walInsert"])-lsn(before["walInsert"])
+        by_width={width:dist([turns[r["t"]] for r in successful if r["width"]==width])
+                  for width in sorted({r["width"] for r in successful})}
+        measurement["size"]={"nativeDatoms":sum(turns.values()),"nativeScope":entries,
                              "widths":Counter(r["width"] for r in successful),"before":before,"after":after,
-                             "indexed":indexed,"index":index,"walBytes":lsn(after["walInsert"])-lsn(before["walInsert"]),
+                             "indexed":indexed,"index":index,"walBytes":wal,"nativeDatomsByWidth":by_width,
+                             "nativeDatomsPerSave":sum(turns.values())/entries,"walBytesPerSave":wal/entries,
+                             "grossRelationBytesPerSave":(after["relationBytes"]-before["relationBytes"])/entries,
+                             "indexedRelationBytesPerSave":(indexed["relationBytes"]-before["relationBytes"])/entries if indexed else None,
                              "nativeLogEntries":len(suffix["commits"]),"nativeOtherEntries":suffix["nonTriplex"],
-                             "feedChanges":sum(r["changes"] for r in suffix["commits"])}
+                             "nativeAdds":sum(r["adds"] for r in direct),"nativeRetracts":sum(r["retracts"] for r in direct),
+                             "nativeLogSha256":sha(raw)}
         measurement["completed"] &= len(turns)==len(own) and index is not None and indexed is not None
-    if mode=="pred":
+    if mode=="growth":
         assert all("readProfile" in r and "reads" in r["readProfile"] for r in successful)
-        measurement["nativeProfile"]=Counter({k:sum(r["readProfile"]["reads"].get(k,0) for r in successful)
-          for k in {k for r in successful for k in r["readProfile"]["reads"]}})
+        counts,first,decisions={},{},Counter()
+        unattributed=Counter()
+        visited=set()
+        for row in sorted(successful,key=lambda value:value["pos"]):
+            profile=row["readProfile"]
+            seen=row["entity"] in visited
+            visited.add(row["entity"])
+            try:
+                per=storage_accounts(profile)
+                assert per["retirement"]["w1-calls"]==row["width"]
+                if "new-range" in per:
+                    assert variant and per["new-range"]["w1-calls"]==1
+                    decisions["occupied" if per.get("new-id",{}).get("w1-calls") else "empty"]+=1
+                else:
+                    decisions["ineligible" if variant else "disabled"]+=1
+                for name,vals in per.items():
+                    counts.setdefault(name,Counter()).update(vals)
+                    (first.setdefault("repeated" if seen else "first",{})).setdefault(name,Counter()).update(vals)
+            except (AssertionError,KeyError,TypeError):
+                unattributed.update(profile["reads"])
+                decisions["unattributed"]+=1
+        measurement["nativeProfile"]={"counts":counts,"byVisit":first,"decisions":decisions,
+                                      "unattributed":unattributed,"n":len(successful)}
     return measurement

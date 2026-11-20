@@ -41,7 +41,7 @@ def walk(root):
 def sources(r):
     root=Path(r["root"])
     parts={"control":Path(r["directory"])}
-    if r["item"] in (1,3,8,9,10,11,12,16):
+    if r["item"] in (1,3,8,9,10,11,12,16,18,19,20,21,22):
         parts["results"]=root/"results"
         parts["campaign.log"]=root/"campaign.log"
         parts["probes"]=NIGHT/"probes"/(r["tag"]+"-1")
@@ -52,7 +52,7 @@ def sources(r):
             if r["item"]==9:
                 parts["deep-checkpoint"]=NIGHT/"probes"/(r["tag"]+"-3")
                 parts["preflight-checkpoint"]=NIGHT/"probes"/(smoke+"-2")
-        if r["item"] in (10,11,12):
+        if r["item"] in (10,11,12,18,19,20,21,22):
             parts["checkpoint-arms"]=root/"checkpoint-arms"
     elif r["item"]==2:
         for stage in ("proof","screen0","screen1","screen2","screen3","deep","thin","stacks"):
@@ -68,12 +68,17 @@ def sources(r):
                 batch=slot.split("-")[3]
                 parts[slot]=ROOT/("day-"+batch)/"checkout/state/evidence/DX-T1"/slot
     elif r["item"]==5:parts["rungs"]=root/"build/state/evidence/DX-INT1"/r["tag"]
+    elif r["item"] in (24,26):
+        names=("checkpoint-arms","preflight","measurement","preflight-reading.json","reading.json","perf-preflight.txt") if r["item"]==24 else (
+            "engines","activation-preflight","small","rung-thin-1m","int1-clean.json","stack-access.json","engine-logs.txt")
+        for name in names:
+            parts[name]=root/name
     elif r["item"]==13:parts["import"]=root/"run"
-    elif r["item"] in (14,15,17):
+    elif r["item"] in (14,15,17,27):
         parts["joined-smoke"]=root/"smoke"
         for name in ("run-owner.json","collector.json","point-check.json","native-clean.json","startup-and-engine.log","engines"):
             parts["joined-setup/"+name]=root/name
-        if r["item"] in (15,17):
+        if r["item"] in (15,17,27):
             parts["joined-scale"]=root/"scale"
             parts["joined-settlement-smoke"]=root/"settlement-smoke"
             for name in ("preflight-stop.json","settlement-smoke-check.json","scale-admission.json","scale-writer-options.json"):

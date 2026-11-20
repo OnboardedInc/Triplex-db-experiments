@@ -2,14 +2,16 @@
 // Rejected: computing storage capacity from ACK survivors or starting a new population for each rate.
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { setTimeout as wait } from "node:timers/promises";
 
 const [root, stage, setting, seedFile, nonce, profile] = process.argv.slice(2);
-assert(["ceil", "size", "pred"].includes(stage));
-assert(["control", "candidate"].includes(setting));
+assert(["ceil", "size", "pred", "growth", "pulse"].includes(stage));
+assert((stage === "pulse" ? ["individual", "all", "compact", "prepared", "bounded"] :
+  ["control", "candidate"]).includes(setting));
 const smoke = profile === "smoke";
 const load = (f) => import(pathToFileURL(path.join(process.cwd(), f)).href);
 const { DatomicClient } = await load("packages/datomic/dist/index.js");
@@ -20,6 +22,12 @@ const { command } = await load("lab/experiments/EXP-DX1/w1/group/workload.ts");
 const { ids, SEED_VALID_FROM } = await load("lab/bench/lib/world.ts");
 const { accounts } = await load("lab/experiments/EXP-DX1/w1/group/population.ts");
 const seed = JSON.parse(fs.readFileSync(seedFile));
+const scaled = seed.kind === "scale1-single";
+const distributed = stage === "ceil" || stage === "pulse";
+const deep = scaled ? await load("lab/bench/lib/deep-world.ts") : undefined;
+const readOptions = process.env.DX_W1_WRITER_EXPECTATION
+  ? (await load("lab/experiments/EXP-DX1/w1/write-options.ts")).readWriteOptions
+  : undefined;
 const sha = (x) => createHash("sha256").update(x).digest("hex");
 const hashFile = (f) => sha(fs.readFileSync(f));
 const file = (p) => path.join(root, p);
@@ -31,37 +39,60 @@ const db = seed.db,
   cut = { recordedPosition: seed.lastPosition, validAt: SEED_VALID_FROM };
 const intervals = smoke
   ? [{ rate: 50, from: 0, seconds: 1 }]
+  : stage === "pulse"
+    ? [{ rate: 10, from: 0, seconds: 60 }, { rate: 235, from: 60, seconds: 60 }]
   : stage === "ceil"
     ? [
         { rate: 50, from: 0, seconds: 20 },
         { rate: 235, from: 20, seconds: 40 },
         { rate: 394, from: 60, seconds: 60 },
       ]
-    : [{ rate: stage === "size" ? 50 : 39.4, from: 0, seconds: stage === "size" ? 200 : 60 }];
+    : [{ rate: stage === "size" ? 50 : stage === "growth" ? 25 : 39.4, from: 0,
+         seconds: stage === "size" ? 200 : stage === "growth" ? 90 : 60 }];
 const offeredMs = (intervals.at(-1).from + intervals.at(-1).seconds) * 1000,
   drain = smoke ? 2000 : 15000;
-const width = (n) => (stage === "size" ? (n % 10 < 8 ? 2 : n % 2 ? 1 : 3) : 1);
+const width = (n) => stage === "size" ? (n % 10 < 8 ? 2 : n % 2 ? 1 : 3)
+  : scaled ? (n % 20 < 16 ? 1 : n % 20 < 19 ? 2 : 3) : 1;
 const selected = new Map();
 const int = (e, a, n) => ({ e, a, v: { type: "integer", value: String(n) } });
 const text = (e, a, value) => ({ e, a, v: { type: "string", value } });
+const tenant = (account) => "acct/" + accounts[account].key + "/";
+const field = (index) => ":task/field-" + index;
 const tape = [];
 for (const [cell, p] of intervals.entries()) {
-  for (let i = 0; i < Math.floor(p.rate * p.seconds); i++) {
+  const count = Math.floor(p.rate * p.seconds);
+  const phase = [];
+  if (stage === "pulse" && !smoke) {
+    const quiet = 10 * p.seconds;
+    for (let i = 0; i < quiet; i++) phase.push({ account: 9, accountSeq: i, queuedAt: i * 100 });
+    const background = count - quiet;
+    for (let i = 0; i < background; i++)
+      phase.push({ account: i % 9, accountSeq: Math.floor(i / 9), queuedAt: (i + .3) * p.seconds * 1000 / background });
+    phase.sort((a ,b) => a.queuedAt - b.queuedAt);
+  } else {
+    for (let i = 0; i < count; i++) {
+      const account = distributed || (!scaled && stage !== "size") ? i % 10 : 0;
+      phase.push({account, accountSeq: Math.floor(i / (distributed ? 10 : 1)),
+        queuedAt: (i + .1 * ((i % 7) - 3) + .4) * 1000 / p.rate});
+    }
+  }
+  for (const { account, accountSeq, queuedAt } of phase) {
     const ordinal = tape.length;
-    const account = stage === "size" ? 0 : ordinal % 10;
-    const local = (7919 * Math.floor(ordinal / (stage === "size" ? 1 : 10)) + 137 * account) % 400;
-    const entity = ids.placement(accounts[account].first + local);
-    const offset = p.from * 1000 + ((i + 0.1 * ((ordinal % 7) - 3) + 0.4) * 1000) / p.rate;
+    const local = (7919 * accountSeq + 137 * account) % 400;
+    const entity = scaled ? tenant(account) + deep.taskId(local, 0) : ids.placement(accounts[account].first + local);
+    const offset = p.from * 1000 + queuedAt;
     tape.push({
       ordinal,
       cell,
       account,
       entity,
+      local,
+      accountSeq,
       offset,
-      width: width(ordinal),
+      width: width(stage === "pulse" ? accountSeq : ordinal),
       id: "bm1-" + stage + "-" + ordinal,
     });
-    selected.set(entity, account);
+    selected.set(entity, { account, local });
   }
 }
 assert(tape.every((o, i) => !i || o.offset >= tape[i - 1].offset));
@@ -82,6 +113,7 @@ const plan = {
   smoke,
   intervals,
   offers: tape.length,
+  topology: scaled && distributed ? "one-100k-account-plus-nine-active-namespaces" : undefined,
 };
 write("plan.json", plan);
 fs.writeFileSync(file("offers.jsonl"), tape.map((o) => JSON.stringify(o)).join("\n") + "\n", {
@@ -112,6 +144,50 @@ async function indexAt(label, head) {
   write(label, { source, slot, nonce, position: Number(head.position.v), receipt });
 }
 
+function nativeLog(before, after, found, recovered) {
+  const script = new URL("./size-log.clj", import.meta.url);
+  assert.match(slot, /^tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-size[1-4]$/);
+  const output = execFileSync(
+    "docker",
+    ["exec", "-i", "-e", "DATOMIC_JAVA_OPTS=-Xms128m -Xmx768m -Ddatomic.objectCacheMax=64m",
+      slot + "-gw-r", "/opt/datomic/bin/run", "clojure.main", "-", db, before.t.v, after.t.v],
+    { input: fs.readFileSync(script), timeout: 120_000, maxBuffer: 16 << 20, encoding: "utf8" },
+  );
+  fs.writeFileSync(file("native-log.stdout"), output, { flag: "wx" });
+  const line = output.split("\n").filter(s => s.startsWith("BM1_SIZE_JSON "));
+  assert.equal(line.length, 1);
+  const raw = JSON.parse(line[0].slice("BM1_SIZE_JSON ".length));
+  assert.deepEqual([raw.database, raw.low, raw.high], [db, before.t.v, after.t.v]);
+  assert(BigInt(raw.basis) >= BigInt(raw.high));
+  const expected = new Map([...found, ...recovered].map((row) => [row.t, row]));
+  assert.equal(expected.size, found.length + recovered.length);
+  const commits = [];
+  let previous = BigInt(raw.low);
+  for (const event of raw.records) {
+    assert(BigInt(event.t) > previous && BigInt(event.t) <= BigInt(raw.high));
+    assert(event.datoms > 0 && event.datoms === event.adds + event.retracts);
+    previous = BigInt(event.t);
+    if (event.claims.length === 0) {
+      assert(!expected.has(event.t));
+      continue;
+    }
+    const offer = expected.get(event.t);
+    assert(offer, "Unexpected application write in the measured native log suffix");
+    assert.deepEqual(event.claims, [{ operation: offer.id, position: offer.pos }]);
+    if (offer.datoms !== undefined && offer.datoms !== null)
+      assert.equal(event.datoms, offer.datoms);
+    commits.push({ t: event.t, position: offer.pos, datoms: event.datoms, adds: event.adds,
+      retracts: event.retracts, operation: offer.id });
+    expected.delete(event.t);
+  }
+  assert.equal(expected.size, 0);
+  write("log-suffix.json", {
+    nonce, source, slot, db, low: raw.low, high: raw.high, basis: raw.basis, commits,
+    nativeLogSha256: hashFile(file("native-log.stdout")), scriptSha256: sha(fs.readFileSync(script)),
+    nonTriplex: raw.records.length - commits.length,
+  });
+}
+
 function convert(input, response, pos, n) {
   return input.rows
     .slice(0, n)
@@ -120,10 +196,21 @@ function convert(input, response, pos, n) {
 
 async function restoreWitness() {
   const open = await writer.create(seed.scope, "lean", true, 35000);
-  assert(!open.created && open.db === db);
-  const original = await writer.operation(db, seed.witness.id);
-  assert.equal(original.t.v, seed.witness.t);
-  assert.equal(Number(original.position.v), seed.lastPosition);
+  assert(!open.created && open.db === db && open.strictRecordClocks);
+  if (scaled) {
+    const { txId, receipt } = await writer.request("POST", `/v1/db/${db}/claim`, {
+      commandId: seed.witness.commandId, position: seed.lastPosition, receipt: true,
+    });
+    assert.equal(txId, seed.witness.txId);
+    assert.equal(Number(receipt.position.v), seed.lastPosition);
+    assert.equal(Number(receipt.recordedAt.v), Number(seed.witness.recordedAt));
+  } else {
+    const original = await writer.operation(db, seed.witness.id);
+    assert.equal(original.t.v, seed.witness.t);
+    assert.equal(Number(original.position.v), seed.lastPosition);
+  }
+  assert.equal(Number((await writer.basis(db)).position.v), seed.lastPosition);
+  if (scaled) return prepareScaledFields();
   const roster = seed.seed.accounts === 1 ? accounts.slice(0, 1) : accounts;
   const staticRoots = roster.map((a) => ids.placement(a.first + 9999));
   const stable = await peer.rows(db, { entityIds: staticRoots, basis: cut, pattern: {} });
@@ -166,10 +253,60 @@ async function restoreWitness() {
   return { through, fixed };
 }
 
+async function prepareScaledFields() {
+  const staticRoots = [0, 1, 257, 99999].map((i) => tenant(0) + ids.placement(i));
+  const fixed = await peer.rows(db, { entityIds: staticRoots, basis: cut,
+    pattern: { attribute: ":placement/stamp" } });
+  assert.equal(fixed.length, staticRoots.length);
+  assert(fixed.every((row) => staticRoots.includes(row.entity_id) && String(row.value_integer) === "0"));
+  const membership = await peer.rows(db, { entityIds: staticRoots, basis: cut,
+    pattern: { attribute: ":subject/account" } });
+  assert.equal(membership.length, staticRoots.length);
+  assert(membership.every((row) => row.value_string === accounts[0].key));
+  let through = seed.lastPosition;
+  // [DX-BM1] Why: use the single verified 100k account as the base and real stored owner namespaces for the other lanes.
+  // Rejected: labeling different clients on one owner as ten independently scheduled accounts.
+  const extras = [];
+  for (const [entity, { account, local }] of selected) {
+    if (account === 0) continue;
+    extras.push(text(entity, ":subject/account", accounts[account].key));
+    for (let f = 0; f < 3; f++) extras.push({ e: entity, a: field(f), v: deep.fieldValue(local, 0, f, 0) });
+  }
+  for (let i = 0; i < extras.length; i += 200) {
+    const input = command("bm1-shadow-setup-" + i, extras.slice(i, i + 200), [], false);
+    const reply = await peer.transact(db, input);
+    assert(reply.operationId === input.operationId && Number(reply.position.v) === ++through);
+  }
+  const entities = [...selected.keys()];
+  for (let i = 0; i < entities.length; i += 32) {
+    const roots = entities.slice(i, i + 32);
+    const rows = await peer.rows(db, { entityIds: roots, basis: { ...cut, recordedPosition: through }, pattern: {} });
+    for (const entity of roots) {
+      const { local } = selected.get(entity);
+      const fields = Array.from({ length: 3 }, (_, n) => {
+        const matches = rows.filter((r) => r.entity_id === entity && r.attribute === field(n));
+        assert.equal(matches.length, 1);
+        assert.equal(matches[0].value_string, deep.fieldValue(local, 0, n, 0).value);
+        return matches[0];
+      });
+      old.set(entity, fields);
+    }
+  }
+  write("prepared-fields.json", { source, slot, nonce, sealedCut: seed.lastPosition, through,
+    shadowRows: extras.length, ownerKeys: [...new Set([...selected.values()].map(({account}) => accounts[account].key))],
+    subjects: selected.size, fullSourceAccounts: 1 });
+  return { through, fixed };
+}
+
 try {
   const initial = await restoreWitness();
   const before = await writer.basis(db);
   assert(Number(before.position.v) === initial.through);
+  if (readOptions) {
+    const writerOptions = await readOptions(process.env.DATOMIC_URL, db, process.env.DX_W1_WRITER_EXPECTATION);
+    assert.equal(writerOptions.observed.position, initial.through);
+    write("writer-options.json", writerOptions);
+  }
   if (stage === "size") await indexAt("index-before.json", before);
   write("foreground-ready.json", { source, slot, nonce, head: initial.through });
   await gate("timing-gate.json");
@@ -198,12 +335,13 @@ try {
     const submitted = performance.now() - t0;
     const opOld = old.get(o.entity),
       previous = opOld.slice(0, o.width);
-    const facts = [int(o.entity, ":bm1/live-stamp", o.ordinal + 1)];
-    for (let j = 1; j < o.width; j++)
-      facts.push(text(o.entity, ":bm1/live-field" + j, o.id + "-" + j));
+    const facts = scaled
+      ? Array.from({ length: o.width }, (_, j) => ({ e: o.entity, a: field(j), v: deep.fieldValue(o.local, 0, j, o.ordinal + 1) }))
+      : [int(o.entity, ":bm1/live-stamp", o.ordinal + 1),
+          ...Array.from({ length: o.width - 1 }, (_, j) => text(o.entity, ":bm1/live-field" + (j + 1), o.id + "-" + (j + 1)))];
     const input = command(o.id, facts, previous);
     input.groupAccount = accounts[o.account].key;
-    if (stage === "pred") {
+    if (stage === "growth") {
       input.readProfile = true;
       input.predecessorLookup = setting === "candidate";
     }
@@ -224,7 +362,7 @@ try {
           pos > initial.through &&
           Number.isFinite(firstPacket),
       );
-      if (stage === "pred") assert(ack.readProfile?.reads);
+      if (stage === "growth") assert(ack.readProfile?.reads);
       const fresh = convert(input, ack, pos, o.width);
       old.set(o.entity, [...fresh, ...opOld.slice(o.width)]);
       record({
@@ -267,7 +405,9 @@ try {
                 basis: cut,
                 pattern: {},
               });
-              assert(rows.some((o) => o.id === r.id && o.value_string === r.value_string));
+              assert(rows.some((o) => o.id === r.id && o.entity_id === r.entity_id &&
+                o.attribute === r.attribute && o.recorded_position === r.recorded_position &&
+                o.value_type === r.value_type && o.value_integer === r.value_integer));
               fs.writeSync(
                 readBook,
                 JSON.stringify({
@@ -379,27 +519,7 @@ try {
   const after = await writer.basis(db);
   assert(Number(after.position.v) === last);
   if (stage === "size" && last > initial.through) {
-    const expected = new Map([...found, ...recovered].map((r) => [r.t, r]));
-    const suffix = { nonce, low: before.t.v, high: after.t.v, commits: [], nonTriplex: 0 };
-    let cursor = String(BigInt(before.t.v) + 1n);
-    while (BigInt(cursor) <= BigInt(after.t.v)) {
-      const page = await writer.log(db, cursor, 128);
-      assert.notEqual(page.nextT, cursor);
-      cursor = page.nextT;
-      for (const row of page.rows) {
-        if (BigInt(row.t) > BigInt(after.t.v)) break;
-        if (row.kind === "skipped") suffix.nonTriplex++;
-        else {
-          const saved = expected.get(row.t);
-          assert(saved && row.transaction.operationId === saved.id);
-          assert.deepEqual(row.transaction.positions, [String(saved.pos)]);
-          expected.delete(row.t);
-          suffix.commits.push({ t: row.t, position: saved.pos, changes: row.transaction.changes.length });
-        }
-      }
-    }
-    assert.equal(expected.size, 0);
-    write("log-suffix.json", suffix);
+    nativeLog(before, after, found, recovered);
     await indexAt("index.json", after);
   }
   write("result.json", {

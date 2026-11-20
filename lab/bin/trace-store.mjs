@@ -320,6 +320,39 @@ export function registerNightPreflight(dir) {
     html:path.join(dir, "summary.tar.zst"), raw:path.join(dir, "raw.tar.zst")});
 }
 
+// [DX-BM1] Why: bind the indexed sealed seed to the verified source and cut from copied artifacts.
+// Rejected: indexing a bare dump or treating the verified seed as a performance verdict.
+export function registerScaleSeed(dir) {
+  dir = path.resolve(dir);
+  const read = (name) => JSON.parse(fs.readFileSync(path.join(dir, name), "utf8"));
+  const transfer = read("transfer.json"), checkpoint = read("checkpoint.json");
+  const request = read("summaries/request.json"), seed = read("summaries/seed.json");
+  const image = read("summaries/image.json"), terminal = read("summaries/terminal.json");
+  const tag = transfer.tag;
+  const arc = path.join(dir, "summaries.tar.zst");
+  if (!/^[a-f0-9]{40}$/.test(request.source) || !/^[a-f0-9-]{36}$/.test(request.nonce) ||
+      tag !== "arm-d7-bm1-single-n20" || tag !== request.tag || tag !== terminal.tag ||
+      ![transfer, checkpoint, seed, terminal].every((r) => r.source === request.source && r.nonce === request.nonce) ||
+      terminal.service !== "success" || transfer.result !== "success" || !terminal.cleanup ||
+      seed.people !== 100_000 || seed.facts !== 16_245_647 || checkpoint.seed.facts !== seed.facts ||
+      checkpoint.seed.population !== seed.population || seed.slot !== checkpoint.slot || seed.slot !== terminal.slot ||
+      checkpoint.lastPosition !== seed.scopes[0].seedCut || checkpoint.dumpSha256 !== image.sha256 ||
+      checkpoint.sourceImageSha256 !== hash(path.join(dir, "summaries/image.json")) ||
+      !(seed.started <= seed.completed && seed.completed <= Date.parse(terminal.endedAt)) ||
+      transfer.summary.name !== "summaries.tar.zst" || transfer.summary.bytes !== fs.statSync(arc).size ||
+      transfer.summary.sha256 !== hash(arc)) throw Error("Unbound SCALE1 seed archive");
+  for (const [name, expected] of Object.entries(transfer.summaryFiles)) {
+    if (!/^[a-zA-Z0-9_-]+\.json$/.test(name) || hash(path.join(dir, "summaries", name)) !== expected)
+      throw Error("Changed SCALE1 summary member: " + name);
+  }
+  const raw = path.join(dir, "raw.tar.zst");
+  if (fs.existsSync(raw) && (transfer.raw?.name !== "raw.tar.zst" || hash(raw) !== transfer.raw.sha256))
+    throw Error("Changed SCALE1 raw archive");
+  return registerRow({date:terminal.endedAt, tag, source:request.source, subjects:seed.people,
+    result:`Sealed single-account SCALE1 seed with ${seed.facts.toLocaleString("en-US")} verified facts.`,
+    html:arc, raw, bundle:true});
+}
+
 export function archive(tag, to) {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]+$/.test(tag)) throw Error("Invalid tag");
   const all = rows(),
@@ -373,6 +406,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     console.log(JSON.stringify(registerIncompleteBenchmark(arg)));
   else if (command === "register-night-bundle")
     console.log(JSON.stringify(registerNightBundle(arg)));
+  else if (command === "register-scale-seed")
+    console.log(JSON.stringify(registerScaleSeed(arg)));
   else if (command === "register-night-preflight")
     console.log(JSON.stringify(registerNightPreflight(arg)));
   else if (command === "list")

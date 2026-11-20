@@ -10,6 +10,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import tempfile
 import threading
 import time
 
@@ -40,23 +41,28 @@ def download(src,dest,expected):
     tmp.replace(dest)
 
 
-def unpack(archive,stage,seal):
+def extract(archive,stage):
     child=subprocess.Popen(["zstd","-qdc",archive],stdout=subprocess.PIPE)
     try:
         seen=set()
         with tarfile.open(fileobj=child.stdout,mode="r|") as members:
             for member in members:
-                name=Path(member.name)
                 if member.isdir():continue
-                assert member.isfile() and not name.is_absolute() and ".." not in name.parts and member.name not in seen
+                name=Path(member.name)
+                assert member.isfile() and not name.is_absolute() and ".." not in name.parts and name.as_posix() not in seen
                 dest=stage/name;dest.parent.mkdir(parents=True,exist_ok=True)
                 assert not dest.is_symlink() and dest.resolve().is_relative_to(stage.resolve())
                 with dest.open("wb") as f:shutil.copyfileobj(members.extractfile(member),f)
-                seen.add(member.name)
+                seen.add(name.as_posix())
         assert child.wait()==0
     finally:
         child.stdout.close()
         if child.poll() is None:child.kill();child.wait()
+    return seen
+
+
+def unpack(archive,stage,seal):
+    seen=extract(archive,stage)
     index=stage/"summary-members.json"
     assert hashfile(index)==seal["summaryMembersSha256"]
     rows=json.loads(index.read_bytes())
@@ -73,7 +79,7 @@ def unpack(archive,stage,seal):
 
 
 def collect(name):
-    assert re.fullmatch(r"i(?:[1-9]|1[0-7])-[12]",name)
+    assert re.fullmatch(r"i(?:[1-9]|[12][0-9])-[12]",name)
     directory=ROOT/name
     src=REMOTE+"/bundles/"+name
     original=remote("cat "+src+"/TRANSFER.json")
@@ -108,6 +114,61 @@ def index_bundle(directory):
     if index and not receipt.exists():
         proof=subprocess.check_output(["node",index,"register-night-bundle",str(directory)],timeout=120)
         receipt.write_bytes(proof)
+
+
+def collect_seed():
+    sys.path.insert(0,str(Path(__file__).with_name("probes")))
+    from scale_seed import ORIGIN, SOURCE, TAG, FACTS, PEOPLE, POPULATION
+
+    directory=ROOT.parent/"single-n20/seed"
+    directory.mkdir(parents=True, exist_ok=True)
+    seal_file=ORIGIN/"transfer.json"
+    seal_bytes=remote("cat "+str(seal_file))
+    seal=json.loads(seal_bytes)
+    assert (seal["tag"],seal["source"])==(TAG,SOURCE) and re.fullmatch(r"[a-f0-9-]{36}",seal["nonce"])
+    compact=seal["summary"]
+    assert compact["name"]=="summaries.tar.zst" and 0<compact["bytes"]<2**30
+    archive=directory/compact["name"]
+    download(str(ORIGIN/compact["name"]),archive,compact["sha256"])
+    assert compact["bytes"]==archive.stat().st_size
+    members=directory/"summaries"
+    assert all(re.fullmatch(r"[a-zA-Z0-9_-]+\.json",name) for name in seal["summaryFiles"])
+    if not members.is_dir():
+        tmp=Path(tempfile.mkdtemp(prefix=".summaries-",dir=directory))
+        assert extract(archive,tmp)==set(seal["summaryFiles"])
+        assert all(hashfile(tmp/name)==expected for name,expected in seal["summaryFiles"].items())
+        tmp.rename(members)
+    assert all(hashfile(members/name)==expected for name,expected in seal["summaryFiles"].items())
+    def read(name):
+        return json.loads((members/(name+".json")).read_bytes())
+    attempt, request, terminal=map(read,("attempt","request","terminal"))
+    assert request=={key:attempt[key] for key in request}
+    assert [terminal[key] for key in ("source","tag","nonce","slot")] == [SOURCE,TAG,seal["nonce"],attempt["slot"]]
+    assert terminal["service"]==seal["result"] and terminal["cleanup"] is True
+    assert read("cleanup")==dict(containers=[],networks=[],volumes=[])
+    raw=seal["raw"]
+    if raw and compact["bytes"]+raw["bytes"]<2**30 and shutil.disk_usage(directory).free-raw["bytes"]>5*2**30:
+        assert raw["name"]=="raw.tar.zst" and 0<raw["bytes"]
+        download(str(ORIGIN/raw["name"]),directory/raw["name"],raw["sha256"])
+        assert (directory/raw["name"]).stat().st_size==raw["bytes"]
+    if terminal["service"]=="success":
+        image, seed, pre=map(read,("image","seed","preflight"))
+        assert seed=={key:value for key,value in image.items() if key not in ("bytes","sha256")}
+        assert (seed["facts"],seed["people"],seed["population"])==(FACTS,PEOPLE,POPULATION)
+        assert seed["nonce"]==pre["nonce"]==seal["nonce"] and attempt["at"]<=pre["at"]<=seed["started"]<=seed["completed"]
+        checkpoint=remote("cat /var/tmp/triplex-bm1/single-n20/checkpoint.json")
+        verified=json.loads(checkpoint)
+        assert [verified[k] for k in ("source","slot","nonce","dumpSha256","sourceImageSha256")] == [SOURCE,terminal["slot"],seal["nonce"],image["sha256"],hashfile(members/"image.json")]
+        (directory/"checkpoint.json").write_bytes(checkpoint)
+    assert remote("cat "+str(seal_file))==seal_bytes
+    (directory/"transfer.json").write_bytes(seal_bytes)
+    manifest=sorted(p for p in directory.rglob("*") if p.is_file() and p.name not in {"SHA256SUMS","indexed.json"} and ".summaries-" not in p.as_posix())
+    (directory/"SHA256SUMS").write_text("".join(f"{hashfile(p)}  {p.relative_to(directory)}\n" for p in manifest))
+    index=os.environ.get("BM1_TRACE_INDEX")
+    if index and terminal["service"]=="success":
+        proof=subprocess.check_output(["node",index,"register-scale-seed",str(directory)],timeout=120)
+        (directory/"indexed.json").write_bytes(proof)
+    print("Collected",TAG,terminal["service"],flush=True)
 
 
 def submit(item,attempt):
@@ -151,6 +212,8 @@ def main():
     assert sys.platform=="darwin" and re.fullmatch(r"[a-z0-9_-]+@[A-Za-z0-9.-]+",DEST)
     if len(sys.argv)==3 and sys.argv[1]=="collect":
         collect(sys.argv[2]);return
+    if sys.argv[1:]==["collect-seed"]:
+        collect_seed();return
     assert sys.argv[1:]==["watch"]
     for item in BRANCHES:
         for attempt in (1,2):
