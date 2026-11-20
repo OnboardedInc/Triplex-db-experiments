@@ -48,6 +48,8 @@ The option list is emitted by `node --experimental-transform-types lab/experimen
 
 The first pooled smoke stopped on the first 2,000-fact legacy seed frame. Replaying its input through the same SDK encoder produced 6,106,388 wire bytes including the journal, above the 4,194,304-byte cap. The first 400-fact frame encoded to 1,147,505 bytes. The smaller frames seeded all 40 people, 4,890 facts. The reader then refused the legacy layout as designed for inline replicas. The opt-in campaign uses the existing legacy-compatible journal and row projections. Bootstrap checks the stored strict-clock policy, current unprotected scope, complete journal boundary and agreeing native positions on both selectors. This additional reader path still needs the pooled saved-output test. Both failed attempts closed and removed their volumes. [Attempt and wire probe hashes](P5-SHA256SUMS)
 
+The next executed smoke opened that reader and wrote its ready record. The launcher then rejected the trace digest. The driver and launcher built the same campaign with different property order. Recomputing the saved arm and ready record confirmed the difference. The campaign hash now serializes the four fields in one order. Frozen events and the earlier tenant-profile digests use their existing definitions. [Readiness and cleanup hashes](P5-SHA256SUMS)
+
 ## Evidence audit
 
 - The integration gates match the live engine lease, exact source archive, build-input and image hashes, and fresh native test output. The gate runner reopens those bytes before each branch push. The documentation-only reader handoff matches the tested runtime inputs byte for byte.
