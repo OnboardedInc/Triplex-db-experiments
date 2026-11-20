@@ -2,9 +2,9 @@ The first prepared writer moved much of its work into the database’s single wr
 The new option proves the group’s inputs against one database version on the gateway.
 The database compares that version once before applying the group.
 A later write makes the group replay through the fixed writer.
-A scope with a recorded excision request uses the fixed writer.
-The new timing records separate writer CPU, storage reads and waiting.
+The SQL restart recovered both original receipts without writing them again.
 The merged write fixes passed 98 database assertions.
+Lean erasure left values in the change feed and allowed ID reuse under either owner.
 The server comparison is staged for the fixed source.
 
 **North star.** P2 durable saves, P1 exact cuts, P3 exact feed and P6 account isolation. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
@@ -21,7 +21,9 @@ The server comparison is staged for the fixed source.
 | Physical excision | Historical excision requests exclude a basis from certification | SQL excision between proof and apply and a fresh proof after the watermark |
 
 **Scheduling.** Prepared drafts can start while another group is pending. A certified submission refreshes them against the actual prior append. Both the full witness and W1 reference paths remain available. Definitive refusal replays through W1. A lost reply resolves from its durable identity.
-**Fix integration.** WFIX through `0f92704d2` carries ordered admission, scope-maintenance ownership, SDK duplicate recovery and readback. Both writers use the stored-row stamper, including compact journal rows. Same-subject chains continue through the reference writer. With the basis option enabled, `wfix-01` passed all 98 native assertions, including the resend receipt and the interior stored retraction, along with 12 SDK and two W1 readback/feed tests. The Datomic SQL restart, erasure and parity reruns are pending.
+**Fix integration.** WFIX through `0f92704d2` carries ordered admission, scope-maintenance ownership, SDK duplicate recovery and readback. Both writers use the stored-row stamper, including compact journal rows. Same-subject chains continue through the reference writer. With the basis option enabled, `wfix-01` passed all 98 native assertions, including the resend receipt and the interior stored retraction, along with 12 SDK and two W1 readback/feed tests.
+**SQL restart.** In `recovery-02`, a certified group committed at native t=1044. The process stopped with zero replies, and PostgreSQL and the transactor restarted on the same data. Both receipts returned at positions 9 and 10 and clocks 1008 and 1009. Replacements with the original operation ID or a fresh ID under the same claim resolved to their original receipts. The head stayed at 10, and pinned rows, stored retractions and the resumed feed matched the fixture.
+**Lean erasure failed.** In two independent scopes, the actual excision watermark reached t=1054. Certified data prepared before excision was refused and a fresh certificate declined. Native row history lost the marker, while the journal kept it. The first reuse of the ID under either owner committed at position 12. This reproduces the reference limitation and blocks lean promotion.
 **Evidence audit.** `manage.py` binds frozen files, image, slot and attempt. `observe.clj` captures native times and read counters by attempt. `probe.ts` checks receipt/feed and pinned rows, and `read_guard.py` joins them to exact native t, append and pressure before interpreting measurements. `gate.py` checks fresh scope, source and JAR hashes and pinned O-REPLAY answers. `read_recovery.py` binds the stopped process, SQL durability, exact native t, original claims, pinned rows, full feed and excision watermark. The gateway publishes a prepared ACK from the real native report after matching operation, position, clock and t.
 **Evidence.** Attempt directories sit under `evidence/DX-PREP1` in the durable lab evidence root. Acceptance content hashes are unchanged. [Checksums](SHA256SUMS)
 
