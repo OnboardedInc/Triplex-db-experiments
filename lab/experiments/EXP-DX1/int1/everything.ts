@@ -254,8 +254,8 @@ async function physicalCases(
 async function physicalCampaign(dir: string, cutoff: string, overnight: boolean, held?: {folder: string; hash: string}) {
   scaleHost.physical();
   const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"),
-    held = fs.statSync(`/proc/${process.ppid}/fd/9`);
-  assert(held.ino === lock.ino && held.dev === lock.dev, "Use the shared queue wrapper");
+    queueFd = fs.statSync(`/proc/${process.ppid}/fd/9`);
+  assert(queueFd.ino === lock.ino && queueFd.dev === lock.dev, "Use the shared queue wrapper");
   const end = Date.parse(cutoff),
     tag = path.basename(dir);
   assert(/^[a-z][a-z0-9-]{2,24}$/.test(tag) && end > Date.now() + 60_000);
