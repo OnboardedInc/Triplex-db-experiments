@@ -14,6 +14,7 @@ const bytes = fs.readFileSync(reportFile),
   traceSummary = JSON.parse(fs.readFileSync(summaryFile, "utf8"));
 const reference = traceSummary.clockAlignment.reference,
   { source, tag } = traceSummary;
+assert(/^\w{40}$/.test(source) && reference?.bootId);
 assert(
   report.verdictPlanId === "ns-v3/2" &&
     report.correctness.violations === 0 &&
@@ -94,12 +95,17 @@ for await (const raw of member("trace/raw/gw-r.jsonl.gz")) {
       raw.slot === tag &&
       raw.clock?.bootId === reference.bootId,
   );
+  const parent = root.http.get(raw.parent);
+  if (parent.attributes?.responseTraceparent !== `00-${raw.traceId}-${raw.root}-01`) continue;
   const q = raw.spans.find((s: any) => s.name === "gateway.admission-wait"),
     w = raw.spans.find((s: any) => s.name === "gateway.admitted-work");
-  if (q && w && raw.attributes?.status === 200) {
+  if (q && raw.truncated === 0 && raw.attributes?.status === 200) {
     assert(!root.gateway.has(raw.parent));
+    const work = w ? w.end - w.start : 0;
+    // In summary a complete gateway record may omit admitted work shorter than 0.5 ms.
     root.gateway.set(raw.parent, {
-      work: w.end - w.start,
+      work,
+      workUpper: w ? work : 0.5,
       queue: q.end - q.start,
       wall: raw.end - raw.start,
     });
@@ -112,21 +118,25 @@ const complete = [...roots.values()]
     duration: r.duration,
     calls: r.http.size,
     work: sum([...r.gateway.values()].map((e) => e.work)),
+    workUpper: sum([...r.gateway.values()].map((e) => e.workUpper)),
     queue: sum([...r.gateway.values()].map((e) => e.queue)),
     nonGateway: r.duration - sum([...r.gateway.values()].map((e) => e.wall)),
   }));
 const estimates = complete.filter((r) => heavy.phases.includes(r.phase));
 const work = mean(estimates.map((r) => r.work)),
+  workUpper = mean(estimates.map((r) => r.workUpper)),
   duration = mean(estimates.map((r) => r.duration));
-assert(work && duration && work > 0 && duration > 0);
+assert(work !== null && workUpper && duration && workUpper > 0 && duration > 0);
 const permits = 2,
   localBaseline = light.rate,
   fastCycleMs = (1024 * 1000) / localBaseline;
 const predict = (g: typeof heavy) => ({
-  capacityOnly: Math.min(localBaseline, (permits * 1000) / (g.p * work)),
+  capacityOnly: [workUpper, work].map((s) => Math.min(localBaseline, (permits * 1000) / (g.p * s))),
   cycleOnly: (1024 * 1000) / ((1 - g.p) * fastCycleMs + g.p * duration),
   workImpliedByThroughputMs: (permits * 1000) / g.missesPerS,
   residenceImpliedAtUnchangedLocalCycleMs: ((1024 * 1000) / g.rate - (1 - g.p) * fastCycleMs) / g.p,
+  nonFallbackCycleImpliedAtObservedMissResidenceMs:
+    ((1024 * 1000) / g.rate - g.p * duration) / (1 - g.p),
 });
 console.log(
   JSON.stringify(
@@ -139,7 +149,7 @@ console.log(
       fullyJoined: complete.length,
       sampledHeavy: estimates.length,
       heavySample: {
-        meanWorkMs: work,
+        meanWorkMs: [work, workUpper],
         meanResidenceMs: duration,
         meanQueueMs: mean(estimates.map((r) => r.queue)),
         meanOutsideGatewayMs: mean(estimates.map((r) => r.nonGateway)),

@@ -140,6 +140,8 @@ const byAge = Object.fromEntries(
 );
 const recent = Array.from({ length: subjects }, (_, i) => head - ((i * 619) % 2_000));
 const last2000Mix = routes(recent);
+const history = index.image().history;
+assert(history.every(([id]) => touched.has(Number(id.slice("rd1-".length)))));
 console.log(
   JSON.stringify(
     {
@@ -160,7 +162,11 @@ console.log(
       retainedBytes: index.historyBytes,
       highBytes,
       basePackedBytes,
+      latestPackedBytes: [...current.values()].reduce((n, v) => n + v.byteLength, 0),
+      subjectsWithRetainedHistory: history.length,
+      retainedVersions: history.reduce((n, [, versions]) => n + versions.length, 0),
       historyBytesPerTouched: index.historyBytes / touched.size,
+      historyBytesPerSubjectWithRetainedHistory: index.historyBytes / history.length,
       historyBytesPerUntouched: 0,
       estimatedFrozenMixFallbackShare: 0.15 * last2000Mix.fallbackShare,
       last2000Mix,
