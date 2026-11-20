@@ -3374,3 +3374,20 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   stall can extend it). Fresh census, PostgreSQL restart, public query and erasure gates unverified (blocked by the
   lease jam). Part 5 assigned: those gates without the lease, merge with `exp/DX-INT1`, compare the server result
   with every forecast when it lands.
+
+## 2026-11-20 19:08 UTC (14:08 local, 2026-11-20): DX-HA1 part 5 in: import inside one database is predicted to miss priority 8 narrowly with one frame in flight
+
+- **DX-HA1 part 5 (`bbd1a0bb7`; `load1/REPORT.md`, `MICRO-SERVER.md`, `EVIDENCE5.md`).** Overnight server,
+  one shared database: 128 / 500 / 2,000 facts per frame gave quiet save p99 48.58 / 88.05 / 223.07 ms against
+  controls of 21.31 before and 10.92 after (5,491 facts per second at 128); native apply p50 3.43 / 18.20 / 84.00
+  ms; six of the twelve slowest saves at 128 overlapped an import transaction; the controls themselves differ 2x
+  (four saves in the first control queued behind native transactions of 36.7 to 61.4 ms). Model for 16 / 24 / 32
+  facts per frame with one frame outstanding: 1,950 / 2,850 / 3,440 queryable facts per second and quiet save
+  ratios 1.28 / 1.47 / 1.74 (bars 3,000 and 1.5): every width misses one bar. Mac diagnostic (not a verdict): 844
+  to 935 facts per second. Mac correctness check under one ordinary token: 154,016 facts across 4,813 frames
+  verified, lost reply recovered the original receipt.
+- **Part 6 assigned:** split the 8 ms frame interval by stage; keep two to eight small frames in flight if the
+  serial apply (about 1 ms) is not what fills the interval, with predictions first; server arms of at most 90
+  minutes in one database; merge onto `exp/DX-INT1`; supply the priority 8 and 9 scorecard commands.
+- Housekeeping note: the image prune at 13:33 local used an age filter and removed the PostgreSQL base image, which
+  DX-HA1 had to restore. Future prunes exclude base images.
