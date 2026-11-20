@@ -3168,3 +3168,19 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   transactor and both gateways, inventoried, chosen, measured, made explicit in every launcher). DX-TAIL1's newest
   report: both server peers started on one core without a collector flag (so Serial); in the archived run the
   transactor logged 1,397 pauses up to 251 ms and the read gateway 198 up to 169 ms.
+
+## 2026-11-20 12:13 UTC (07:13 local, 2026-11-20): W3-ISOLATE part 2 in: the quiet account waits behind neighbours' turns in the gateway
+
+- **W3-ISOLATE part 2 (`research/2026-11-20-onedb/ISOLATE/`: `TAIL-SAMPLES.tsv`, `QUEUE-WAITS.tsv`, `attribute.py`; all 32
+  archive members rehashed).** Pilot at 35 saves per second, quiet account 3.768 times alone on 630 saves per side.
+  For the 50 slowest loaded saves the gateway's queue was the largest measured delay in 28; 31 of 36 quiet queue
+  waits of at least 8 ms overlapped a neighbour's turn; one pair of neighbour saves spent 566 ms redoing work, with a
+  long gap that may be a pause (three send-active holes are pause candidates; no JVM logs exist for the attempt).
+  Removing the three quiet saves nearest those gaps still leaves about three times. Alone, 40 of the 50 slowest
+  saves spent most of their time inside the database and clustered near startup; a 200 ms gap by itself did not
+  make the slowest saves worse. Model: removing duplicate group preparation on the old queue gives 2.43 times at 35
+  saves per second; the prepared design with a shorter durable log gives 1.10 / 1.14 / 1.19 / 1.22 live-only at
+  35 / 100 / 235 / 394, and 1.30 at 394 with the target import dose. The next run must capture all three JVMs' pause
+  logs, socket and peer clocks, native apply and the durable log, and keep natural cold saves in the test.
+- This points at the same build as W3-DESIGN's first design (DX-PREP1 part 3, running): prepare each save once, give a
+  quiet account the next turn, shorten the wait for the durable write.
