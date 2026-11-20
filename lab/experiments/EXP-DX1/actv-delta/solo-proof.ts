@@ -6,7 +6,7 @@ import { W0 } from "../../../bench/lib/w0-world.ts";
 import { percentile } from "../../../bench/lib/w0-traffic.ts";
 import { keyFor } from "../scale1/tenants.ts";
 import { hash } from "./store.ts";
-import { soloPopulation } from "./solo-population.ts";
+import { soloPopulation, soloScope } from "./solo-population.ts";
 import { sources } from "./binding.ts";
 import type { Identity } from "./server.ts";
 export function checkSolo(dir: string, b: Identity, n: number, count: number, mode: string) {
@@ -14,7 +14,7 @@ export function checkSolo(dir: string, b: Identity, n: number, count: number, mo
     r = JSON.parse(file("result.json").toString()),
     bytes = file("loaded.json"),
     x = JSON.parse(bytes.toString()),
-    scope = (n === 10000 ? "delta-deep-loaded-" : "delta-solo-") + b.nonce,
+    scope = soloScope(b.nonce, n),
     key = keyFor(0);
   assert.deepEqual(r.binding, b);
   assert.equal(r.source, hash(sources(mode)));

@@ -22,11 +22,27 @@ import { loadedOffers, Timeline, type TrafficArm } from "./loaded.ts";
 import { iso } from "./v3.ts";
 import { seedFacts } from "./model.ts";
 import { expand, concrete } from "./dispatch.ts";
-import { soloPopulation } from "./solo-population.ts";
+import { soloPopulation, soloScope } from "./solo-population.ts";
 import { pageReference } from "./solo-reference.ts";
 import { headSha, stamp } from "./binding.ts";
 import type { Identity } from "./server.ts";
 
+export async function openFreshSource(binding: Identity, people: number) {
+  const scope = soloScope(binding.nonce, people),
+    c = await openComposition("reach", "datomic", scope);
+  try {
+    assert.equal(c.scopeName, scope);
+    assert.equal(
+      await c.currentPosition(),
+      0,
+      "large or preflight source already contains commands",
+    );
+    return c;
+  } catch (e) {
+    await c.close();
+    throw e;
+  }
+}
 export async function solo(
   dir: string,
   b: Identity,
@@ -43,7 +59,7 @@ export async function solo(
   assert([1000, 10000, 100000].includes(n));
   const expectedSeed = n === 1000 || n === 100000 ? soloPopulation(n) : undefined;
   const code = stamp(),
-    scope = (n === 10000 ? "delta-deep-loaded-" : "delta-solo-") + b.nonce,
+    scope = soloScope(b.nonce, n),
     target = { index: 0, key: keyFor(0), first: 0, people: n },
     neighbors =
       n === 10000
@@ -55,7 +71,7 @@ export async function solo(
           }))
         : [],
     accounts = [target, ...neighbors];
-  const source = await openComposition("reach", "datomic", scope),
+  const source = await openFreshSource(b, n),
     url = process.env.DATOMIC_URL;
   if (process.env.DELTA_READER_URL) process.env.DATOMIC_URL = process.env.DELTA_READER_URL;
   let rc: CompositionHandle;

@@ -8,9 +8,9 @@ import { validatePreflight } from "../act2/preflight-runner.ts";
 import { headSha, stamp } from "./binding.ts";
 import { hash } from "./store.ts";
 import type { Identity } from "./server.ts";
-import { solo } from "./solo.ts";
+import { solo, openFreshSource } from "./solo.ts";
 import { measured } from "./measure-lock.ts";
-import { soloPopulation } from "./solo-population.ts";
+import { soloPopulation, soloScope } from "./solo-population.ts";
 import { checkSolo } from "./solo-proof.ts";
 function status(dir: string, binding: Identity, stage: string, reason?: string) {
   const file = path.join(dir, "STATUS.json");
@@ -61,7 +61,19 @@ async function check(dir: string, binding: Identity) {
     });
     const checkedSolo = checkSolo(dir, binding, 1000, 6, "preflight");
     assert.deepEqual(checkedSolo, deep);
+    stage = "opening the large destination on the same stack";
+    progress(stage);
+    // [DX-ACT2] Why: both stages use the same attempt and server. Exercise the actual large-source opener and require an empty, distinct physical scope after the populated preflight. Rejected: proving only that the small database worked.
+    const destination = await openFreshSource(binding, 100000);
+    let emptyLarge;
+    try {
+      emptyLarge = { scope: destination.scopeName, position: await destination.currentPosition() };
+      assert(emptyLarge.scope !== deep.scope && emptyLarge.position === 0);
+    } finally {
+      await destination.close();
+    }
     const proof = {
+      emptyLarge,
       binding,
       windows: checked,
       populations,
@@ -110,8 +122,10 @@ export function guardDelta(dir: string, binding: Identity, env: NodeJS.ProcessEn
       proof.elapsedMs > 0 &&
         performance.now() - start < 600000 &&
         proof.people === 1000 &&
-        proof.scope === "delta-solo-" + binding.nonce,
+        proof.scope === soloScope(binding.nonce, 1000),
     );
+    assert.deepEqual(proof.emptyLarge, { scope: soloScope(binding.nonce, 100000), position: 0 });
+    assert.notEqual(proof.scope, proof.emptyLarge.scope);
     const fresh = checkSolo(dir, binding, 1000, 6, "preflight");
     assert.deepEqual(observed, fresh);
     assert.equal(proof.code, stampForPreflight());

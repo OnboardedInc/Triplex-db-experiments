@@ -5,7 +5,7 @@ Two of the 201 releases took over a second. The slowest took 1.295 seconds.
 After the database restarted, a fresh reader recovered all 11,960 changed rows and 997 owed notices from the broad release.
 The narrow release recovered all 38 flag changes and owed no notices. Neither release had written a concrete output chunk.
 The indexes added 6.68% to database log bytes per saved fact, below the 15% target. Both arms wrote the same number of records on every save.
-The 1,000-person server preflight passed locally in 4 minutes 52 seconds. The 100,000-person result still requires a server run.
+The first preflight shared a database name with the large run. They now use separate names. The corrected native preflight is pending.
 
 **Loaded publication and evidence audit**
 
@@ -45,3 +45,5 @@ The release runner admits one 100,000-person account, checks its 16,245,647 actu
 The 600-second preflight regenerates both population inventories before any large seed, runs both live-window oracle checks, reopens the full fallback, exercises both publishers on 1,000 deep subjects and validates the source, nonce, slot, result hashes and raw observation count. The parent writes the failing stage and reason to STATUS.json. Locally this took 291.6 s. Both reference sweeps accepted 61 saves, including a 55-save burst. Their 5,664 live reads matched Python. DELTA verified 9,024 background reads and every row and notice at both source cuts. The preflight rejects a changed nonce or a missing timing row.
 
 checkSolo and the SCALE1 launcher compare the fresh native seed and membership, raw per-offer bytes and recomputed p99, all three reference releases and both complete oracle proofs against the request, source and slot. The three-hour Linux campaign has 64 readers and 55-save, one-second bursts on top of 1.6 steady saves/s. All Mac timings are diagnostic.
+
+The earlier native preflight left its seed at position 74 under the old large-run name. The new preflight opens the same large source as the runner and checks its native position is zero after the populated 1,000-person check. The parent validates the exact destination derived from the same bound attempt.
