@@ -4,6 +4,7 @@ import { W0, sha256 } from "../../../bench/lib/w0-world.ts";
 import type { Budget } from "./budget.ts";
 import { type Census, installCensus, memberPage, width } from "./census.ts";
 import type { CommittedRanges, Coverage } from "./ranges.ts";
+import type { ReleaseCopy } from "./copy-plan.ts";
 import {
   Documents,
   hash,
@@ -23,6 +24,7 @@ export interface Inputs {
   worlds(subjects: string[], cut: Cut): Promise<W0.World[]>;
   ranges?: Pick<CommittedRanges, "suggest">;
   ownedCommand?(event: Event, owner: string): Promise<boolean>;
+  releaseCopy?: Pick<ReleaseCopy, "suggest" | "results">;
 }
 export type Selection = { kind: "census" } | { kind: "subjects"; ids: string[] };
 export interface Request {
@@ -270,7 +272,7 @@ export class Notices {
       : e.value.selection.ids.slice(start, start + width);
   }
   async coverage(e: Event, ledger: Documents, at: number) {
-    if (e.value.kind !== "reconcile") return;
+    if (e.value.kind === "erase") return;
     const row = await ledger.row<string>("range:" + e.value.sequence, at);
     if (!row) return;
     const saved = unpack<{ assertion: string; recipe: string; coverage: Coverage }>(row.value);
@@ -282,7 +284,8 @@ export class Notices {
     if (e.value.selection.kind === "subjects") return { coverage: undefined };
     const previous = await this.coverage(e, ledger, at);
     if (previous || start !== 0) return { coverage: previous };
-    const coverage = await this.inputs.ranges?.suggest(this, e, sourceAt);
+    const planner = e.value.kind === "activation" ? this.inputs.releaseCopy : this.inputs.ranges;
+    const coverage = await planner?.suggest(this, e, sourceAt);
     return {
       coverage,
       write: coverage

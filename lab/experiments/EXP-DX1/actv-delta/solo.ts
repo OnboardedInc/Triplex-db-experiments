@@ -8,7 +8,7 @@ import {
   type Receipt,
 } from "../../../bench/lib/composition.ts";
 import { W0, V_W0 } from "../../../bench/lib/w0-world.ts";
-import { deepGroups, readDeepWorlds } from "../../../bench/lib/deep-activation.ts";
+import { deepGroups } from "../../../bench/lib/deep-activation.ts";
 import { makeDeepTrace } from "../../../bench/lib/deep-trace.ts";
 import { subjectOf } from "../../../bench/lib/world.ts";
 import type { SubjectState } from "../../../bench/lib/commands.ts";
@@ -22,17 +22,42 @@ import { loadedOffers, Timeline, type TrafficArm } from "./loaded.ts";
 import { iso } from "./v3.ts";
 import { seedFacts } from "./model.ts";
 import { expand, concrete } from "./dispatch.ts";
-import { soloPopulation } from "./solo-population.ts";
+import { soloPopulation, soloScope } from "./solo-population.ts";
+import { scopedDeepPolicy, scopedOvertimeRows } from "./solo-policy.ts";
 import { pageReference } from "./solo-reference.ts";
 import { headSha, stamp } from "./binding.ts";
 import type { Identity } from "./server.ts";
+import { compareWorlds, DeepInputs } from "./deep-inputs.ts";
+import { AuditReplay } from "./audit-replay.ts";
+import { auditOffers } from "./audit-offers.ts";
+import { readerProcess } from "./audit-reader.ts";
+import type { DurabilityMode } from "./model.ts";
 
+type Arm = "reference" | DurabilityMode;
+
+export async function openFreshSource(binding: Identity, people: number, arm?: Arm) {
+  const scope = soloScope(binding.nonce, people, arm),
+    c = await openComposition("reach", "datomic", scope);
+  try {
+    assert.equal(c.scopeName, scope);
+    assert.equal(
+      await c.currentPosition(),
+      0,
+      "large or preflight source already contains commands",
+    );
+    return c;
+  } catch (e) {
+    await c.close();
+    throw e;
+  }
+}
 export async function solo(
   dir: string,
   b: Identity,
   n: number,
   count: number,
   stage: (s: string) => void,
+  arm?: Arm,
 ) {
   const timings: { stage: string; startMs: number }[] = [],
     begin = performance.now();
@@ -43,7 +68,7 @@ export async function solo(
   assert([1000, 10000, 100000].includes(n));
   const expectedSeed = n === 1000 || n === 100000 ? soloPopulation(n) : undefined;
   const code = stamp(),
-    scope = (n === 10000 ? "delta-deep-loaded-" : "delta-solo-") + b.nonce,
+    scope = soloScope(b.nonce, n, arm),
     target = { index: 0, key: keyFor(0), first: 0, people: n },
     neighbors =
       n === 10000
@@ -55,21 +80,22 @@ export async function solo(
           }))
         : [],
     accounts = [target, ...neighbors];
-  const source = await openComposition("reach", "datomic", scope),
+  const source = await openFreshSource(b, n, arm),
     url = process.env.DATOMIC_URL;
   if (process.env.DELTA_READER_URL) process.env.DATOMIC_URL = process.env.DELTA_READER_URL;
   let rc: CompositionHandle;
   try {
-    rc = await openComposition("reach", "datomic", scope);
+    rc = arm ? source : await openComposition("reach", "datomic", scope);
   } finally {
     process.env.DATOMIC_URL = url;
   }
   const pipe = writerPipeline(source),
     bind = hash([b, code, target]),
-    bridge = new DeepAccount(pipe.comp, target.key, bind),
-    read = new DeepAccount(rc, target.key, bind),
     oracle = emptyAudit(),
-    pageOracle = emptyAudit();
+    pageOracle = emptyAudit(),
+    inputs = arm ? new DeepInputs() : undefined;
+  let cold: CompositionHandle | undefined;
+  let remote: ReturnType<typeof readerProcess> | undefined;
   try {
     const byAccount = accounts.map((a) =>
         makeDeepTrace("delta-solo-deep", a.people, 1800)
@@ -118,7 +144,10 @@ export async function solo(
         ...source,
         transact: async (ops, meta) => {
           const r = await source.transact(ops, meta);
-          if (r.ok) observe(r.value);
+          if (r.ok) {
+            inputs?.ingestSeed(ops, r.value);
+            observe(r.value);
+          }
           return r;
         },
       },
@@ -130,34 +159,59 @@ export async function solo(
         seed.facts === expectedSeed.facts && seed.sha256 === expectedSeed.sha256,
         "native seed differs from the verified single-account fixture",
       );
-    const ids = Array.from({ length: n }, (_, i) => W0.placementId(i)),
-      basis = { tx: seed.position, validTime: iso(V_W0) },
+    const policy = await scopedDeepPolicy(source, seed.position),
+      bridge = new DeepAccount(pipe.comp, target.key, bind, policy.read),
+      read = new DeepAccount(rc, target.key, bind, policy.read),
+      ids = Array.from({ length: n }, (_, i) => W0.placementId(i)),
+      basis = { tx: policy.catalog.position, validTime: iso(V_W0) },
       worlds: W0.World[] = [];
     enter("checking the source and building ordinary indexes");
     for (const group of deepGroups(0, n)) {
-      const batch = await readDeepWorlds(
+      const batch = await policy.read(
         rc,
         group,
-        { position: seed.position, validAt: V_W0 },
+        { position: policy.catalog.position, validAt: V_W0 },
         target.key,
       );
-      for (const o of [oracle, pageOracle])
-        assert.equal(await query(o, "source", batch), hash(batch.map((w) => w.subject)));
+      const expected = inputs
+        ? group.map((i) => inputs.world(i, policy.catalog.position, V_W0, policy.catalog.position))
+        : batch;
+      if (inputs)
+        compareWorlds(
+          batch.map((w) => ({ subject: w.subject, facts: seedFacts(w, basis) })),
+          expected,
+        );
+      for (const o of arm === "reference" ? [pageOracle] : arm ? [oracle] : [oracle, pageOracle])
+        assert.equal(await query(o, "source", expected), hash(batch.map((w) => w.subject)));
       worlds.push(...batch.map((w) => ({ subject: w.subject, facts: seedFacts(w, basis) })));
     }
-    const ready = await bridge.control.bootstrap(ids, worlds, basis);
+    const ready = await bridge.control.bootstrap(
+      ids,
+      worlds,
+      basis,
+      true,
+      arm ? "native" : undefined,
+    );
     await event(oracle, { seq: 0, basis, doc: W0.R1.doc });
-    const timeline = new Timeline(oracle, basis, ready.position);
+    const timeline = new Timeline(oracle, basis, ready.position),
+      auditReplay = arm
+        ? new AuditReplay(source, bridge.control, oracle, basis, ready.position)
+        : undefined;
     const services = [bridge];
     for (const neighbor of neighbors) {
-      const service = new DeepAccount(pipe.comp, neighbor.key, hash([b, code, neighbor])),
+      const service = new DeepAccount(
+          pipe.comp,
+          neighbor.key,
+          hash([b, code, neighbor]),
+          policy.read,
+        ),
         small: W0.World[] = [];
       for (const group of deepGroups(neighbor.first, neighbor.people))
         small.push(
-          ...(await readDeepWorlds(
+          ...(await policy.read(
             rc,
             group,
-            { position: seed.position, validAt: V_W0 },
+            { position: policy.catalog.position, validAt: V_W0 },
             neighbor.key,
           )),
         );
@@ -165,6 +219,8 @@ export async function solo(
         small.map((w) => w.subject),
         small,
         basis,
+        true,
+        arm ? "native" : undefined,
       );
       services.push(service);
     }
@@ -177,17 +233,33 @@ export async function solo(
       assert(st?.stampId && st.addressId);
       const from = V_W0 - 4000000 + Math.floor(e.atMs),
         cmd = w.build(b.nonce, e, st, from),
-        saved = await service.commit(e.subject, cmd, V_W0, from);
+        saved = await service.commit(e.subject, cmd, V_W0, from),
+        ackAt = performance.now();
       assert(!saved.duplicate);
       observe(saved.receipt);
       const p = saved.receipt.position,
-        [raw] = await readDeepWorlds(rc, [e.subject], { position: p, validAt: V_W0 }, a.key);
+        [raw] = await policy.read(rc, [e.subject], { position: p, validAt: V_W0 }, a.key);
       const repair = await rc.transactionByCommand(
         service.db.entity("cmd:event:repair-" + cmd.commandId),
       );
       assert(repair.ok && repair.value);
       const head = (await service.control.head(repair.value.position)).value;
       assert(raw && head.basis.tx === p);
+      let worldAfter = raw;
+      if (inputs) {
+        await inputs.save(
+          source,
+          service.db.entity("cmd:source:" + cmd.commandId),
+          e.subject,
+          cmd,
+          saved.receipt,
+        );
+        worldAfter = inputs.world(e.subject, p, V_W0, policy.catalog.position);
+        compareWorlds(
+          [{ subject: raw.subject, facts: seedFacts(raw, { tx: p, validTime: iso(V_W0) }) }],
+          [worldAfter],
+        );
+      }
       if (e.ackLoss) {
         const claim = await rc.transactionByCommand(
           service.db.entity("cmd:source:" + cmd.commandId),
@@ -196,41 +268,113 @@ export async function solo(
       }
       return {
         seq: head.seq,
-        item: { p, subject: raw.subject, worldAfter: raw, tx: p },
+        item: { p, subject: raw.subject, worldAfter, tx: p },
+        ackAt,
         receipt: saved.receipt,
       };
     }
     enter("running two page-guard reference releases with live source saves");
-    const reference = await pageReference(
-      rc,
-      pipe.comp,
-      target,
-      ids,
-      pageOracle,
-      async () => {
-        const s = await writeReal();
-        await timeline.add(s.seq, s.item);
-        return s.item;
-      },
-      true,
-      { position: seed.position, worlds },
-    );
+    const reference =
+      arm && arm !== "reference"
+        ? []
+        : await pageReference(
+            rc,
+            pipe.comp,
+            target,
+            ids,
+            pageOracle,
+            async () => {
+              const s = await writeReal();
+              if (!arm) await timeline.add(s.seq, s.item);
+              return s.item;
+            },
+            true,
+            { position: policy.catalog.position, worlds },
+            policy.read,
+          );
+    if (arm === "reference") {
+      const result = {
+        binding: b,
+        scope,
+        seed,
+        policy: policy.catalog,
+        subjects: n,
+        reference,
+        loaded: undefined,
+        proofs: [],
+      };
+      fs.writeFileSync(path.join(dir, "result.json"), JSON.stringify(result) + "\n", {
+        flag: "wx",
+      });
+      return result;
+    }
     worlds.length = 0;
     enter("offering releases to sixty-four readers and bursting saves");
     const arms: TrafficArm[] = accounts.map((a, i) => ({
       name: a.key,
       write: async (_ordinal, record) => {
         const s = await writeReal(i);
-        if (i === 0) await record(s.seq, s.item);
-        else {
+        if (i === 0) {
+          if (auditReplay) auditReplay.sourceSave(s.item.p, s.seq, s.item.worldAfter, s.ackAt);
+          else await record(s.seq, s.item);
+        } else {
           const actual = await services[i]!.decisionsAt([s.item.subject], s.item.p);
-          const expected = W0.evaluateWorld(s.item.worldAfter, W0.R1, actual.head.basis);
+          const expected = W0.evaluateWorld(s.item.worldAfter, W0.R1, {
+            ...actual.head.basis,
+            tx: arm ? s.item.p : actual.head.basis.tx,
+          });
           assert(!W0.isFailure(expected));
           assert.equal(W0.outputJson(actual.out.get(s.item.subject)!), W0.outputJson(expected));
         }
       },
     }));
-    const reader = new CurrentDecisions(read);
+    if (arm) {
+      try {
+        if (process.env.DELTA_READER_URL) process.env.DATOMIC_URL = process.env.DELTA_READER_URL;
+        cold = await openComposition("reach", "datomic", scope);
+      } finally {
+        process.env.DATOMIC_URL = url;
+      }
+      const publicRead = new CurrentDecisions(
+        new DeepAccount(cold, target.key, bind, policy.read),
+        () => iso(V_W0),
+      );
+      remote = readerProcess({ scope, account: target.key, binding: bind, seed: seed.position });
+      const decoder = remote;
+      const timed = await auditOffers(
+        bridge.control,
+        [{ name: "public", read: (id) => publicRead.read(id) }, decoder],
+        ids,
+        arms,
+        pipe.samples,
+        count,
+        arm,
+        dir,
+        { ...b, scope, digest: bind },
+        async () => {},
+        (offers, raw) => auditReplay!.verify(offers, raw, ids, decoder),
+      );
+      const result = {
+        binding: b,
+        scope,
+        source: code,
+        mode: arm,
+        seed,
+        policy: policy.catalog,
+        subjects: n,
+        loaded: timed,
+        reference,
+        proofs: [],
+        timings: [...timings, { stage: "complete", startMs: performance.now() - begin }],
+        accounts,
+      };
+      assert.equal(stamp(), code);
+      fs.writeFileSync(path.join(dir, "result.json"), JSON.stringify(result) + "\n", {
+        flag: "wx",
+      });
+      return result;
+    }
+    const reader = new CurrentDecisions(read, null);
     const loaded = await loadedOffers(
       bridge.control,
       reader,
@@ -260,6 +404,7 @@ export async function solo(
         })),
       );
       assert.deepEqual(owed, all.notices);
+      if (o.label === "narrow") assert.deepEqual(all.rows, scopedOvertimeRows(n));
       proofs.push({
         seq: o.seq,
         position: o.position,
@@ -268,6 +413,7 @@ export async function solo(
         rows: x.rows,
         notices: x.notices,
         all: all.digest,
+        rowsDigest: hash(all.rows),
         event: x.event,
         parts: x.digest,
       });
@@ -281,6 +427,7 @@ export async function solo(
       accounts,
       subjects: n,
       seed,
+      policy: policy.catalog,
       trace: hash(JSON.stringify(events)),
       timings: [...timings, { stage: "complete", startMs: performance.now() - begin }],
       reference,
@@ -299,7 +446,12 @@ export async function solo(
   } finally {
     oracle.close();
     pageOracle.close();
-    await Promise.all([source.close(), rc.close()]);
+    await Promise.all([
+      source.close(),
+      ...(rc === source ? [] : [rc.close()]),
+      ...(cold ? [cold.close()] : []),
+      ...(remote ? [remote.close()] : []),
+    ]);
   }
 }
 export async function run(dir: string, attempt: any) {

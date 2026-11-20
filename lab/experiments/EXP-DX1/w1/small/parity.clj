@@ -128,7 +128,11 @@
                     retired (->> full (filter #(= ":_tx/change" (:attribute %))) (map #(json/read-str (:value_json %)))
                                  (filter #(= "retract" (get % "op"))) first)
                     page (get (json/read-str (journal/page conn name {"after" 1 "limit" 1})) "transactions")]
-                (is (= [1000.0 1001.0 0.0] (mapv retired ["recordedAt" "retractedAt" "validFrom"])))
+                (is (= {"op" "retract" "tripleId" "old" "entityId" owner "attribute" ":v"
+                        "value" {"type" "string" "value" "old"}
+                        "recordedAt" 1000.0 "retractedAt" 1001.0 "validFrom" 0.0
+                        "assertionTxId" "_tx/seed"}
+                       retired))
                 (is (= [[tx 2 rows]] page))
                 (is (= rows (get (json/read-str (journal/entity db name {"txId" tx "basis" {"recordedPosition" 2 "validAt" 1.0}})) "rows")))
                 (is (= [] (get (json/read-str (journal/entity db name {"txId" tx "basis" {"recordedPosition" 1 "validAt" 1.0}})) "rows")))

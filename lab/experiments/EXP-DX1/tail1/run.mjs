@@ -335,7 +335,7 @@ export async function runTail(options, config, manager, jvmArm) {
       ].map((file) => [file, sha256File(path.join(import.meta.dirname, file))]),
     ),
     stackLauncher: Object.fromEntries(
-      ["up.sh", "collector.sh"].map((file) => [
+      ["up.sh", "../jvm1/launch.mjs", "../../../config/datomic/runtime.mjs"].map((file) => [
         file,
         sha256File(path.join(import.meta.dirname, "../stack", file)),
       ]),

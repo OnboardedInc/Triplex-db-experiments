@@ -54,9 +54,9 @@
     (fn [form]
       (cond
         (and (seq? form) (= 'assign-row (first form)) (vector? (second form)))
-        ;; [DX-INT1] Why: layout pricing replaces only the JSON column splice.
-        ;; Rejected: maintaining a second definition of an authoritative retraction change.
         '(assign-row [text offset clock new-ids prior-rows]
+           ;; [DX-THIN1] Why: splicing uses the checked predecessor metadata from the serial writer.
+           ;; Rejected: reconstructing a retraction from the proposed journal text.
            (triplex.gateway.layout-replay/splice-row text offset clock
              #(assign-change % clock new-ids prior-rows)))
         (and (seq? form) (= 'identity-row (first form)) (vector? (second form)))
@@ -86,11 +86,12 @@
                  (for [[e xs] (sort-by key rows)] [:db/add e :triplex.replay/packed (pack-rows (mapv #(nth % 3) xs))])))))
 (defn expand [shape db payload]
   (let [journals (set (map #(str "e:" %) (:journal-entities payload)))
-        retired (set (map #(nth % 2) (filter #(and (vector? %) (= :triplex/retract (first %))) (:ops payload))))
-        timed (set (:timed-retractions payload))
-        payload (if (= shape "C") (-> payload (update :live #(vec (remove (fn [id] (and (retired id) (not (timed id)))) %)))
-                                      (assoc :replay/watermark (when (:replay/head payload)
-                                                               (value db (:replay/head payload) :triplex.replay/max-row-id)))) payload)
+        ;; [DX-THIN1] Why: preserve the writer's serial checks for every claimed live assertion.
+        ;; Rejected: stripping untimed predecessors from the replay payload before validating it.
+        payload (if (= shape "C")
+                  (assoc payload :replay/watermark (when (:replay/head payload)
+                                                    (value db (:replay/head payload) :triplex.replay/max-row-id)))
+                  payload)
         base ((if (= shape "C") @expand-c @expand-a) db payload)
         packed (if (contains? #{"B" "C"} shape) (pack base journals) base)]
     (case shape

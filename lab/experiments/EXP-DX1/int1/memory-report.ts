@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { gunzipSync } from "node:zlib";
 import { canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 import { deepPopulation } from "../../../bench/lib/deep-world.ts";
 import { activePerson } from "./cohort.ts";
 import { memoryPlan } from "./memory-plan.ts";
+import { nativePools, parseHistogram } from "./gateway-profile.ts";
 
 const roles = [
   "reader",
@@ -209,6 +211,44 @@ function verify(dir: string) {
   const n = plan.points.at(-1)! - plan.points.at(-2)!;
   const cache = load("memory-object-cache.json");
   assert(cache.binding === binding && cache.position === measured.end);
+  const nativeProfiles = input.policy.nativePools
+    ? populations.map(({ people, position }) => {
+        const phase = `people-${people}`;
+        const data = load(phase + "-profile.json");
+        assert.deepEqual([data.binding, data.phase, data.position], [binding, phase, position]);
+        assert.deepEqual(data.samples.map((s: any) => s.role), ["write", "read", "transactor"]);
+        const samples = data.samples.map((sample: any) => {
+          assert.equal(sample.source, input.gatewaySource);
+          assert.equal(sample.containerId, input.containers[0].id);
+          assert.equal(sample.nonce, input.slot.replace("tx2-dxthin-", ""));
+          assert.match(sample.witness, /^[a-f0-9-]{36}$/);
+          assert.equal(sample.filename, phase + "-" + sample.role + ".histogram.gz");
+          const compressed = fs.readFileSync(path.join(dir, sample.filename));
+          assert.equal(sha256(compressed), sample.sha256);
+          const text = gunzipSync(compressed).toString();
+          assert(text.startsWith(sample.pid + ":"));
+          assert.deepEqual(parseHistogram(text), sample.summary);
+          for (const when of ["before", "after"] as const) {
+            assert.deepEqual(nativePools(sample[when].nmt, sample.pid), sample.native[when]);
+          }
+          if (sample.role === "transactor") {
+            const proc = first.native.observations.write.roles.transactor;
+            assert.deepEqual([sample.pid, sample.startTicks], [proc.pid, proc.ticks]);
+          }
+          return { role: sample.role, pid: sample.pid, ticks: sample.startTicks,
+            witness: sample.witness, liveHeapBytes: sample.summary.bytes,
+            before: sample.before, after: sample.after,
+            chargedObjectCacheBytes: sample.chargedBytes, native: sample.native };
+        });
+        return { people, position, samples };
+      })
+    : [];
+  if (nativeProfiles.length) {
+    const identities = nativeProfiles.map((p) => p.samples.map((s: any) => [s.role, s.pid, s.ticks]));
+    assert(identities.every((row) => canonical(row) === canonical(identities[0])));
+    const challenges = nativeProfiles.flatMap((p) => p.samples.map((s: any) => s.witness));
+    assert.equal(new Set(challenges).size, challenges.length);
+  }
   return {
     source: input.source,
     attempt: input.attempt,
@@ -223,6 +263,7 @@ function verify(dir: string) {
       ]),
     ),
     cache,
+    ...(nativeProfiles.length ? { nativeProfiles } : {}),
   };
 }
 

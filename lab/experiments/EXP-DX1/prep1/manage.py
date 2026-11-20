@@ -30,9 +30,9 @@ def disk_floor():
         raise SystemExit("Host free disk below 5 GiB")
 
 
-def main(out, mode="ortho"):
-    if mode not in ("ortho", "prepare", "two", "live"):
-        raise SystemExit("Mode must be ortho, prepare, two or live")
+def main(out, mode="ortho", seconds="10"):
+    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "recovery"):
+        raise SystemExit("Unknown managed probe mode")
     out.mkdir()
     attempt = str(uuid.uuid4())
     stage = out / "stage"
@@ -49,8 +49,16 @@ def main(out, mode="ortho"):
     config = stage / files[1]
     (config / "attempt").write_text(attempt + "\n")
     (config / "mode").write_text(mode + "\n")
+    if mode == "live":
+        if not 1 <= int(seconds) <= 60:
+            raise SystemExit("Live window must be 1 to 60 seconds")
+        (config / "seconds").write_text(seconds + "\n")
     shutil.copyfile(EXPERIMENT / "stack.sh", config / "entrypoint.sh")
     shutil.copyfile(EXPERIMENT / "observe.clj", config / "observe.clj")
+    if mode == "recovery":
+        for source in (EXPERIMENT / "gate.clj", EXPERIMENT / "recovery.clj",
+                       EXPERIMENT.parent / "wfix1/regression.clj"):
+            shutil.copyfile(source, config / source.name)
     recipe = config / "Dockerfile"
     recipe.write_text("FROM postgres:17-alpine AS prep_pg\nFROM node:22.23.2-bookworm-slim AS prep_node\n"
                       + recipe.read_text() + """
@@ -64,11 +72,12 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     esbuild = REPO / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
     metafile = out / "bundle.json"
     driver = "live.ts" if mode == "live" else "probe.ts"
-    subprocess.run([
-        esbuild, str(EXPERIMENT.relative_to(REPO) / driver), "--bundle", "--platform=node",
-        "--format=esm", "--banner:js=import {createRequire} from 'node:module'; const require=createRequire(import.meta.url);",
-        "--metafile=" + str(metafile), "--outfile=" + str(config / "probe.mjs"),
-    ], cwd=REPO, check=True)
+    if mode != "recovery":
+        subprocess.run([
+            esbuild, str(EXPERIMENT.relative_to(REPO) / driver), "--bundle", "--platform=node",
+            "--format=esm", "--banner:js=import {createRequire} from 'node:module'; const require=createRequire(import.meta.url);",
+            "--metafile=" + str(metafile), "--outfile=" + str(config / "probe.mjs"),
+        ], cwd=REPO, check=True)
 
     slots = stage / files[0]
     profile = json.loads(slots.read_text())
@@ -79,8 +88,11 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     engine_dir = REPO / "runs/engines/prep1"
     env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots),
                TX2_ENGINE_DIR=str(engine_dir))
-    source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh")]
-    source_paths.extend(REPO / p for p in json.loads(metafile.read_text())["inputs"])
+    source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
+    if mode == "recovery":
+        source_paths.append(EXPERIMENT.parent / "wfix1/regression.clj")
+    else:
+        source_paths.extend(REPO / p for p in json.loads(metafile.read_text())["inputs"])
     inputs = {
         "attempt": attempt,
         "mode": mode,
@@ -97,8 +109,10 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         for i in range(1, 121):
             disk_floor()
             path = out / f"{action}-{i}.log"
-            args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{action}", "--",
-                    "node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-PREP1"]
+            args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{action}", "--"]
+            if action == "selftest" and mode in ("profile", "cheap"):
+                args += ["node", str((EXPERIMENT / "measure.mjs").relative_to(REPO))]
+            args += ["node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-PREP1"]
             if action == "selftest":
                 args += ["--scratch-gib", "1"]
             with path.open("x") as log:

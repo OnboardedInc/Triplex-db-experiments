@@ -31,6 +31,7 @@ import {
 } from './lib.mjs';
 import { readMeasureLease } from './heavy-lock.mjs';
 import { datomicRuntime, javaCompatibility, readVariantReceipt } from '../config/datomic/runtime.mjs';
+import { launchOptions } from '../experiments/EXP-DX1/jvm1/launch.mjs';
 
 // [EXP-M01] Why (R22 section 3; RULINGS Q60c): a `--cpus 2` quota is itself a noise source on this host (the busiest
 // slot used 1.9 cores while 77% of its 100 ms CFS periods were throttled). A slot with "regime": "cpuset" gets a
@@ -267,16 +268,6 @@ async function removeThinImage(config, opts) {
   });
 }
 
-// [DX-JVM1] Why: select an explicit collector at JVM startup and expose the pinned CPU count.
-// Rejected: changing HotSpot's collector via taskset placement alone.
-function placedDatomicJvm(options, cpus, vmCpus, fallback) {
-  const collectors = options.match(/(?:^|\s)-XX:\+Use(?:Serial|Parallel|G1|Z|Shenandoah|Epsilon)GC(?=\s|$)/g) ?? [];
-  if (collectors.length > 1) fail('CONFIG', 'Multiple Datomic GC selectors');
-  const cpu = parseCpuset(cpus, vmCpus).length;
-  if (!options.includes('-XX:ActiveProcessorCount=')) options += ' -XX:ActiveProcessorCount=' + cpu;
-  return collectors.length ? options : options + ' ' + fallback;
-}
-
 function recordDatomicJvms(info, eff) {
   if (info.lane !== 'datomic') return;
   const m = inspect(info.container);
@@ -334,8 +325,12 @@ export function effectiveConfig(config, info) {
     const sources = datomicSources(root);
     const transactor = path.join(dir, 'transactor.properties');
     const entrypoint = path.join(dir, 'entrypoint.sh');
+    const jvm = (role, options, cpus, control) => launchOptions(role, parseCpuset(cpus, config.vm.cpus).length,
+      options + ' ' + javaCompatibility(runtime.major, role).join(' '), control);
     fs.copyFileSync(path.join(root, 'lab/config/datomic/transactor.properties'), transactor);
-    fs.copyFileSync(path.join(root, 'lab/config/datomic/entrypoint.sh'), entrypoint);
+    // [DX-JVM1] Why: bind the launch script separately while keeping the legacy Java 21 image source pin.
+    // Rejected: modifying the resident config or mounting the canonical uninstrumented script.
+    fs.copyFileSync(path.join(REPO, 'lab/config/datomic/entrypoint.sh'), entrypoint);
     let reader, readerGateway;
     if (info.readerPort !== undefined) {
       const p = info.readerPort;
@@ -373,7 +368,7 @@ export function effectiveConfig(config, info) {
       const gc = role => ' -Xlog:gc*,safepoint:file=/data/log/' + role + '-gc.log:time,uptimemillis,tags:filecount=0';
       readerGateway = {
         port: p, publish: `127.0.0.1:${p}:8081`, cpus: info.readerCpus,
-        opts: placedDatomicJvm(info.readerOpts + ' ' + javaCompatibility(runtime.major, 'gw-r').join(' '), info.readerCpus, config.vm.cpus, '-XX:+UseG1GC') + gc('reader'), writerGc: gc('writer'),
+        opts: jvm('gw-r', info.readerOpts, info.readerCpus) + gc('reader'), writerGc: gc('writer'),
         source: sha256(body), entrypoint: sha256(script),
       };
     }
@@ -398,7 +393,7 @@ export function effectiveConfig(config, info) {
       buildInputsSha256: info.laneConf.buildInputsSha256, sourceInputsSha256: sources.sha256,
       gatewaySourceSha256: sha256(JSON.stringify(sources.gateway)), configMountMode: 'ro',
       entrypointSha256: sha256File(entrypoint),
-      transactorOpts: placedDatomicJvm(info.transactorOpts + ' ' + javaCompatibility(runtime.major, 'tx').join(' '), info.txCpus, config.vm.cpus, '-XX:+UseG1GC -XX:MaxGCPauseMillis=50') + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: placedDatomicJvm(info.gatewayOpts + ' ' + javaCompatibility(runtime.major, 'gw-w').join(' '), info.gwCpus, config.vm.cpus, info.slot === 'dev' ? '-XX:+UseSerialGC' : '-XX:+UseG1GC') + (readerGateway?.writerGc ?? ''),
+      transactorOpts: jvm('tx', info.transactorOpts, info.txCpus) + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: jvm('gw-w', info.gatewayOpts, info.gwCpus, info.slot === 'dev' ? 'serial' : 'default') + (readerGateway?.writerGc ?? ''),
       ...(readerGateway ? { readerGateway } : {}),
       ...(trace ? { trace } : {}),
       txCpus: info.txCpus, gwCpus: info.gwCpus, profile: info.slot === 'dev' ? 'dev' : 'exclusive',
@@ -914,6 +909,8 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   }
   // [DX-ACT2] Why: the SQL activation experiment must reserve its small roles in the shared pool and remove only its private volumes. Rejected: launching a bench stack outside the slot manager.
   if (command === 'delta') return (await import('../experiments/EXP-DX1/actv-delta/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicSources });
+  // [DX-ERASE1] Why: storage GC and excision need an owned SQL volume. Rejected: exercising irreversible maintenance on a resident.
+  if (command === 'erase1') return (await import('../experiments/EXP-DX1/erase1/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicTree });
   if (options.lane === 'datomic' && command === 'build') return buildDatomic(config, options);
   if (options.lane === 'datomic' && ['up', 'selftest'].includes(command)) {
     const runtime = datomicRuntime();

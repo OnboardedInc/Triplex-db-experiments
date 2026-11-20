@@ -1,6 +1,12 @@
 import assert from "node:assert/strict";
 
-type Offer = { offered: number; ingress: number; cutoff: number; mode: "owed" | "staged" };
+type Offer = {
+  offered: number;
+  ingress: number;
+  cutoff: number;
+  mode: "owed" | "staged";
+  deadlineFrom?: "scheduled";
+};
 type Read = { started: number; headObserved: number; finished: number; basis: { tx: number } };
 type Raw = {
   entered: number;
@@ -33,7 +39,10 @@ export function timings(o: Offer, r: Raw) {
     ].every(Number.isFinite),
   );
   assert(
-    cutoff === ingress + 1000 && ingress >= offered - 2 && entered >= ingress && durable >= entered,
+    cutoff === (o.deadlineFrom === "scheduled" ? offered : ingress) + 1000 &&
+      ingress >= offered - 2 &&
+      entered >= ingress &&
+      durable >= entered,
   );
   assert(
     first.started >= durable && first.finished >= first.started && first.basis.tx >= nativeCut,

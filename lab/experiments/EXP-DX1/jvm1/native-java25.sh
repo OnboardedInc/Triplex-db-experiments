@@ -44,7 +44,7 @@ grep -Fx 'LIBRARIES 1.12.5 2.0.17' "$out/compatibility.log"
 for gc in G1 Z; do
   "$java" "${base[@]}" "-XX:+Use${gc}GC" --sun-misc-unsafe-memory-access=allow --enable-native-access=ALL-UNNAMED \
     "$spec" -cp "$classpath" clojure.main -m triplex.gateway.selftest > "$out/native-$gc.log" 2>&1
-  grep -E '^Ran [0-9]+ tests containing [0-9]+ assertions\.$' "$out/native-$gc.log"
+  grep -Fx 'Ran 27 tests containing 54079 assertions.' "$out/native-$gc.log"
   grep -Fx '0 failures, 0 errors.' "$out/native-$gc.log"
 done
 (cd "$out"; tail -1 native-inputs.txt | shasum -a 256 -c)

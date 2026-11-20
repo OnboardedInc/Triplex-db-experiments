@@ -1,30 +1,29 @@
-# DX-JVM1
-The writer remains on one core with Serial during this comparison.
-The proposal gives the transaction process three server cores and asks it to do smaller index jobs.
-The read process gets three cores and keeps its larger cache.
-All three processes record the Java settings they actually started with.
-The server command compares four configurations and reports the cost to a quiet account.
-The earlier Mac run showed pauses in all three processes. Those times describe the shared Mac.
-Fresh candidate measurements and a physical timing run are still needed before choosing defaults.
+# DX-JVM1 · Java 25 and ZGC
+Datomic already supports ZGC on Java 25. Our old image runs Java 21.
+This branch lets all three processes run on either Java version.
+Start with Java 21 and a two-core writer, Java 25 with G1, then Java 25 with ZGC.
+Use the integration merge on `exp/DX-JVM1-settings`. Budget 78 minutes for those three arms.
+A fourth arm brings the total to 104 minutes and gives G1 the same memory as ZGC.
+ZGC gets 13 GiB more reserved memory in this trial. The server still has to price the gain and check for stalls.
+The archived Mac result measured only the writer on ZGC. It cannot decide which setup should ship.
 
-## Evidence and operation
+## Settings and evidence
 
-- P1, P2, P6 and P8 cover pinned reads, durable save time, quiet-account delay and import interference. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
-- [Inventory](INVENTORY.md), [vendor sources](SOURCES.md), [settings and reasons](CONFIGURATION.md), [Mac measurements](MAC.md), [before-run predictions](PREDICTIONS.md), [server command](SERVER.md).
-- The server command measures the shared database using the exact W1 field schedule and a sealed seed. It still needs a physical rehearsal to establish runtime and compare the four arms.
-- DX-JVM1 Mac evidence belongs in the durable experiment directory. Historical DX-TAIL1 figures and hashes are indexed in the Mac and inventory notes. The branch keeps the candidate opt-in.
-- Successive measurement leases held off Mac inventory and dependency setup for over an hour. The inventory, setup and replay remain queued. Full launch readback, alternating replay, startup timing and candidate measurements are still pending. Historical logs lack complete final HotSpot flags for the bench and do not establish private SQL pool values.
-- Launchers for T1, SCALE1, W1 and BM1 use the instrumented split-stack path. The managed engine and image entrypoint capture each embedded role separately. The managed image needs a rebuilt source pin before adoption.
+- [Part 2 compatibility](JAVA25.md) · [Exact flags and rationale](COLLECTORS-PART2.md) · [Before-run forecasts and heap inputs](PREDICTIONS-PART2.md) · [Server command](SERVER.md)
+- [Part 1 inventory](INVENTORY.md) · [Sources](SOURCES.md) · [Configuration](CONFIGURATION.md) · [Mac measurements](MAC.md) · [Forecasts](PREDICTIONS.md)
+- Official Temurin 25.0.5+8 and the Java 21 base are digest-pinned. The signed Datomic 1.0.7745 distribution includes Clojure 1.12.5 and SLF4J 2.0.17. Java 25 enables the documented Unsafe and peer native-access flags.
+- The shared Mac measurement lease has held the native suite, container build and SDK setup in the queue. The host accepted both Java 25 collectors and the role flag sets. Live SQL gates and startup memory are pending. No bench server was contacted.
+- JVM settings live in `launch.mjs`. The integrated runner and TAIL1 arm definition both import the measured writer G1 flags. A selected experiment can still supply its own settings. The acceptance contract and SQL durability are unchanged.
 
 ## Evidence audit
 
-- JVM readback checks one selected collector, full flag output, VM initialization, unchanged container restart metadata and process start ticks. Experiment profiles additionally validate effective heap, flags, placement and cgroup caps against the chosen role.
-- The Mac replay checks the archive hash, full offer identities and spacing, balanced source/slot/nonce receipts, readiness, distinct post-restart JVM boots, cleanup and sampled oracle answers. Its restart and index analysis binds the measured interval to those same process identities and acknowledged writes.
-- `server.ts` checks the sealed seed identity, dump bytes, seed cut, every W1 offer and durable field or journal answer before publishing `field-summary.json`. The Part 2 historic read probe also compares returned rows with the frozen seed population during each window.
-- Part 2 `result.json` and `comparison.json` additionally require fresh output, matching prepared image and actual JVM flags, identical process identity before and after, unrotated UTC-offset GC logs from the arm's own boot, hashed observed evidence, seed consistency, owned cleanup, and the arm time budget. These are measurements without an acceptance verdict.
-- Static checks covered Bash and Node syntax and all eight platform/arm profile readback fixtures with a stale-container rejection. No acceptance verdict was promoted. The runtime readback and benchmarks require live validation. The acceptance contract was left intact.
-- Image source byte changes, before → after:
-  - `lab/config/datomic/entrypoint.sh` `93ade9ed9cf4c741230b217b8c8a42b148a8d7152a1ee887ea7fca515cfe9c2d` → `e704d4148351a0680c067d45d7f703e993c0b7a61d19f75c6381f354f606b9f2`.
-  - `lab/config/datomic/transactor.properties` `762126e7626dae616553c9675fc5453ef7da01c10362e735982920aefef609cc` → `404281c4d749f2bd785297d592d1a052f6215ec79a4ccf2fe859a65753b29628`.
-  - `packages/datomic/gateway/src/triplex/gateway/jfr.clj` `a703ed7772ab7fcdd62effde8135bc62f6b4325046a0f893a1165c8c08474d94` → `0c435b193a369f6dee40059452a41b9719046bac15bceaf06ac36e514e40994b`.
-  - `packages/datomic/gateway/src/triplex/gateway/native_settings.clj` `0c3a527e0487f05cf93a033da059ed3175ab704f8fb510475ac120fe03c2b755` → `f77e08c1f8ad493c8faad2dfc79149562db19e1135de78f7340c46e77d8ea90b`.
+- Variant build receipt compares ZIP, signature and staging bytes, binds current source and the exact Java parent, and verifies the resulting image identity and labels. Launchers verify runtime flags from fresh process startup, bind container ID and start ticks, and capture collector and memory constraints.
+- `native-java25.sh` archives the exact source, verifies vendor bytes and Java version, and requires all 27 native tests and 54,079 assertions with zero failures or errors. The SQL inventory collects a fresh startup and checks stable JVM identities around the SDK command.
+- The Mac replay checks archive hash, schedules, source, reserved slot, distinct boots, receipts, oracle samples and owned cleanup. Its historical timings are shared-Mac diagnostics.
+- `server.ts` verifies the sealed seed, exact input digest and cut, W1 offers and durable results, and sampled reader contents before `field-summary.json`. The final result also checks fresh flags and GC log bytes, process identities, timings and owned cleanup. Counts and latency are measurements.
+- Image source changes from the integration base, old → new SHA-256:
+  - `lab/config/datomic/Dockerfile` `de1947c60e1cd169a285a877ce113a5585633df7c8bccf1669f7e7dd6f79664a` → `aa80d3a2ae0984db6f39fadf3ccb3015f2deaac704dfb9ad2bb74683836a2167`
+  - `lab/config/datomic/entrypoint.sh` `93ade9ed9cf4c741230b217b8c8a42b148a8d7152a1ee887ea7fca515cfe9c2d` → `8b762dbb668e91ae76b2121791671a04488eabf7666f59deb47d789824d265e3`
+  - `lab/config/datomic/transactor.properties` `762126e7626dae616553c9675fc5453ef7da01c10362e735982920aefef609cc` → `404281c4d749f2bd785297d592d1a052f6215ec79a4ccf2fe859a65753b29628`
+  - `packages/datomic/gateway/src/triplex/gateway/jfr.clj` `a703ed7772ab7fcdd62effde8135bc62f6b4325046a0f893a1165c8c08474d94` → `0c435b193a369f6dee40059452a41b9719046bac15bceaf06ac36e514e40994b`
+  - `packages/datomic/gateway/src/triplex/gateway/native_settings.clj` `0c3a527e0487f05cf93a033da059ed3175ab704f8fb510475ac120fe03c2b755` → `f77e08c1f8ad493c8faad2dfc79149562db19e1135de78f7340c46e77d8ea90b`

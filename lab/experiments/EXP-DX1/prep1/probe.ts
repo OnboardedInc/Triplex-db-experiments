@@ -4,14 +4,23 @@ import { decodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import type { Fact } from "../../../bench/lib/world.ts";
 import { command } from "../w1/group/workload.ts";
 
-const depths = process.env.PREP1_MODE === "ortho" ? [1, 8, 32, 32, 8, 1] : [32, 32];
-const count = 192;
+const mode = process.env.PREP1_MODE;
+const arm = process.env.PREP1_ARM;
+const guardProbe = mode === "profile" || mode === "cheap";
+const depths = guardProbe ? [32] : mode === "ortho" ? [1, 8, 32, 32, 8, 1] : [32, 32];
+const count = guardProbe ? 96 : 192;
 const depth = 160;
 const attempt = process.env.PREP1_ATTEMPT!;
-const scope = JSON.stringify(["triplex-scope-v1", "test", "prep1", attempt, 0]);
+const scope = JSON.stringify([
+  "triplex-scope-v1",
+  "test",
+  "prep1",
+  guardProbe ? `${attempt}-${arm}` : attempt,
+  0,
+]);
 const c = new DatomicClient(process.env.PREP1_URL!, 35000);
 const emit = (kind: string, data: unknown) =>
-  console.log("PREP1_PROBE " + JSON.stringify({ attempt, kind, data }));
+  console.log("PREP1_PROBE " + JSON.stringify({ attempt, kind, data, arm }));
 const now = () => process.hrtime.bigint().toString();
 const facts = (i: number, size: number, value: string): Fact[] =>
   Array.from({ length: size }, (_, j) => ({

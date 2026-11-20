@@ -83,3 +83,57 @@ test("logical saves, physical commits, journalled changes and native datoms use 
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("the campaign reopens native path options and checks each command against its receipt", async () => {
+  const db = "fixture",
+    meter = new DeepCommitMeter(db);
+  const identity = {
+    source: "a".repeat(40),
+    slot: "tx2-dxscale1-test",
+    nonce: randomUUID(),
+    account: 0,
+    people: 10000,
+    arm: "zero" as const,
+  };
+  const writer = ":triplex.write/v-" + "b".repeat(24);
+  const put = (p: number, scheduling = false) => {
+    const input = { position: p - 1, operationId: `op-${p}`, rows: [] };
+    meter.observe(
+      db,
+      input,
+      {
+        t: { t: "long", v: String(p + 99) },
+        position: { t: "long", v: String(p) },
+        delta: 1,
+        datoms: 4,
+        operationId: input.operationId,
+        writePath: { function: writer, historyRange: p === 2, scheduling, packedRows: p },
+      },
+      p,
+      [`cmd-${p}`],
+    );
+  };
+  put(2);
+  put(1);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "deep-path-"));
+  try {
+    const file = path.join(dir, "path.jsonl");
+    meter.seal(file, identity);
+    const restored = await DeepCommitMeter.read(file, identity, db, 2);
+    assert.deepEqual(restored.writePath(), {
+      database: db,
+      nativeCommits: 2,
+      packedRows: 3,
+      rangeRequests: 1,
+      unexpectedFunctions: 0,
+      first: { position: 1, operationId: "op-1", nativeT: "100", function: writer },
+    });
+    restored.verifyCommand(2, "cmd-2");
+    assert.throws(() => restored.verifyCommand(2, "cmd-1"), /native command receipt/);
+    assert.throws(() => restored.verifyCommand(3, "cmd-2"), /native command receipt/);
+    put(3, true);
+    assert.throws(() => meter.writePath());
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

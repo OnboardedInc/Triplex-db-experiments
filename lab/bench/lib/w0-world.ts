@@ -46,6 +46,10 @@ export function triplexValue(a: string, v: any): any {
   throw new TypeError("unsupported W0 value");
 }
 export function factValue(v: any): any {
+  if (v?.type === "erased") {
+    if (!Number.isSafeInteger(v.erasedAt)) throw new TypeError("Invalid erased instant");
+    return { erasedAt: new Date(v.erasedAt).toISOString().replace(/Z$/, "000Z") };
+  }
   if (!v || !["integer", "boolean", "ref", "string", "json"].includes(v.type))
     throw new TypeError("unsupported Triplex value");
   if (v.type !== "integer") return v.value;

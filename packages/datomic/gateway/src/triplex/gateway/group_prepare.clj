@@ -1,5 +1,6 @@
 (ns triplex.gateway.group-prepare
-  (:require [datomic.api :as d]
+  (:require [clojure.walk :as walk]
+            [datomic.api :as d]
             [triplex.gateway.commit :as commit]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.scope :as scope])
@@ -7,7 +8,11 @@
 
 (def enabled (= "1" (System/getenv "TX2_PARALLEL_PREPARE")))
 (def guard-ident :triplex.group/apply-prepared-v1)
-(def guard-code
+(def basis-enabled (= "basis" (System/getenv "TX2_PREPARE_GUARD")))
+(def basis-ident :triplex.group/apply-v1)
+(def profile-mode (System/getenv "TX2_PREPARE_PROFILE"))
+(def profile-ident :triplex.group/profile-prepared-v1)
+(def guard-form
   '(letfn [(datom [e a] (when e (first (d/datoms db :eavt e a))))
            (v [e a] (:v (datom e a)))
            (lookup [id] (d/entid db [:triplex.entity/id id]))
@@ -19,42 +24,67 @@
              (when-not ok (throw (ex-info "TRIPLEX_GROUP_STALE" {:triplex.group/stale true}))))]
      (let [scope (get witness :scope)
            tx (d/t->tx (d/basis-t db))
-           newest (if (v tx :triplex.tx/position) tx
-                    (let [x (first (d/rseek-datoms db :aevt :triplex.tx/position tx))]
-                      (when (= (:a x) (d/entid db :triplex.tx/position)) (:e x))))
-           clock (v newest :triplex.tx/max-recorded-at)
+           head (measure-check :head nil
+                  (let [newest (if (v tx :triplex.tx/position) tx
+                                 (let [x (first (d/rseek-datoms db :aevt :triplex.tx/position tx))]
+                                   (when (= (:a x) (d/entid db :triplex.tx/position)) (:e x))))
+                        clock (v newest :triplex.tx/max-recorded-at)]
+                    [(or (v newest :triplex.tx/position) 0)
+                     (when clock (Double/doubleToRawLongBits (double clock)))
+                     (v newest :triplex.tx/operation-id)]))
            historical (d/history db)]
-       (doseq [[a expected] (get witness :flags)] (expect (= expected (v scope a))))
-       (expect (= (get witness :head)
-                  [(or (v newest :triplex.tx/position) 0)
-                   (when clock (Double/doubleToRawLongBits (double clock)))
-                   (v newest :triplex.tx/operation-id)]))
-       (doseq [member (get witness :members)]
-         (let [[ident fn-tx] (get member :function)]
-           (expect (= fn-tx (:tx (datom (d/entid db ident) :db/fn)))))
-         (doseq [[id eid rev] (get member :entities)]
-           (expect (and (= eid (lookup id)) (= rev (v eid :triplex.entity/rev)))))
-         (doseq [[eid prefix text] (get member :retirements)]
-           (expect (and (= text (seek eid :triplex.entity/row prefix))
-                        (nil? (seek eid :triplex.entity/retired prefix)))))
-         (doseq [^String prefix (get member :new-prefixes)]
-           (let [old (first (d/index-range historical :triplex.entity/row prefix nil))]
-             (expect (not (and old (.startsWith ^String (:v old) prefix))))))
-         (expect (nil? (lookup (get member :journal)))))
+       (measure-check :scope nil
+         (doseq [[a expected] (get witness :flags)] (expect (= expected (v scope a)))))
+       (expect (= (get witness :head) head))
+       (doseq [[i member] (map-indexed vector (get witness :members))]
+         (measure-check :function i
+           (let [[ident fn-tx] (get member :function)]
+             (expect (= fn-tx (:tx (datom (d/entid db ident) :db/fn))))))
+         (measure-check :revisions i
+           (doseq [[id eid rev] (get member :entities)]
+             (expect (and (= eid (lookup id)) (= rev (v eid :triplex.entity/rev))))))
+         (measure-check :retirements i
+           (doseq [[eid prefix text] (get member :retirements)]
+             (expect (and (= text (seek eid :triplex.entity/row prefix))
+                          (nil? (seek eid :triplex.entity/retired prefix))))))
+         (measure-check :history i
+           (doseq [^String prefix (get member :new-prefixes)]
+             (let [old (first (d/index-range historical :triplex.entity/row prefix nil))]
+               (expect (not (and old (.startsWith ^String (:v old) prefix)))))))
+         (measure-check :journal i
+           (expect (nil? (lookup (get member :journal))))))
        ops)))
 
+(defn expand-guard [profile?]
+  (let [body (walk/postwalk
+               (fn [form]
+                 (if (and (seq? form) (= 'measure-check (first form)))
+                   (let [[_ check i expression] form]
+                     (if profile? (list 'profile-visit check i (list 'fn [] expression)) expression))
+                   form))
+               guard-form)]
+    (if profile?
+      (list 'let '[instrument (ns-resolve 'triplex.prep1.observe 'profile-guard)]
+        (list 'instrument 'db 'witness 'ops
+              (list 'fn '[profile-visit] body)))
+      body)))
+(def guard-code (expand-guard false))
+(defn active-guard []
+  (if (#{"time" "reads"} profile-mode) profile-ident guard-ident))
+
 (defn install! [conn db]
-  (if (and enabled (not (d/entid db guard-ident)))
-    (:db-after @(d/transact conn [{:db/ident guard-ident
-                                  :db/fn (d/function {:lang :clojure :params '[db witness ops]
-                                                     :requires '[[datomic.api :as d]]
-                                                     :code guard-code})}]))
-    db))
+  (let [ident (active-guard)]
+    (if (and enabled (not (d/entid db ident)))
+      (:db-after @(d/transact conn [{:db/ident ident
+                                    :db/fn (d/function {:lang :clojure :params '[db witness ops]
+                                                       :requires '[[datomic.api :as d]]
+                                                       :code (if (= ident profile-ident) (expand-guard true) guard-code)})}]))
+      db)))
 
 (def flags [:triplex.scope/key :triplex.scope/schema-hash :triplex.scope/commit-fn-hash
             :triplex.scope/rows-version :triplex.scope/head-version :triplex.scope/feed-version
             :triplex.scope/feed-irregular :triplex.scope/strict-record-clocks
-            :triplex.scope/position-regular :triplex.scope/irregular])
+            :triplex.scope/position-regular :triplex.scope/irregular :triplex.scope/packed-journals])
 (defn scope-flags [db eid] (mapv #(vector % (scope/value db eid %)) flags))
 (defn head [db]
   (let [latest (scope/newest-commit db)
@@ -95,18 +125,16 @@
     (when (and subject (re-matches #"acct/[A-Za-z0-9_-]{1,64}/.+" subject)
                (:lean p) (not (:slim-row p)) (= 1 (:span p)) (:assign-record-time p)
                (not (:scope-wide p)) (not (:position-irregular p)) (not (:irregular p))
-               (not (:identity-bounds p))
-               ;; [DX-INT1] Why: the reference writer owns ledger conversion and timed predecessors.
-               ;; Rejected: preparing a shape whose final journal depends on authoritative predecessor metadata.
-               (not-any? p [:save-ledger :packed-journal :timed-retractions])
-               (<= (count ops) 256)
+               (not (:save-ledger p)) (not (:packed-journal p))
+               (not (:identity-bounds p)) (<= (count ops) 256)
                (#{:triplex/commit (first (commit/variants [true false]))} ident) fn-tx
                (= 1 (count journal-entities)) (every? small-op? ops))
       (let [signature (scope-flags db scope)
             by-flag (into {} signature)
             lookup #(d/entid db [:triplex.entity/id %])
             owner (lookup subject)
-            entity-ids (into #{subject} entities)
+            predicates (set entities)
+            entity-ids (conj predicates subject)
             revisions (mapv (fn [id] (let [eid (lookup id)]
                                        [id eid (when eid (scope/value db eid :triplex.entity/rev))])) entity-ids)
             maps (filter map? ops)
@@ -116,23 +144,31 @@
             asserted (filter #(and (vector? %) (= :triplex/assert (first %))) ops)
             clocks (concat times record-clocks)]
         (when (and (some? (:triplex.scope/key by-flag)) owner
+                   (= commit/source-hash (:triplex.scope/commit-fn-hash by-flag))
                    (= 3 (:triplex.scope/rows-version by-flag)) (= 2 (:triplex.scope/head-version by-flag))
                    (= true (:triplex.scope/strict-record-clocks by-flag)) (= true (:triplex.scope/position-regular by-flag))
                    (= 2 (:triplex.scope/feed-version by-flag)) (not (:triplex.scope/feed-irregular by-flag))
-                   (not (:triplex.scope/irregular by-flag))
+                   (not (:triplex.scope/irregular by-flag)) (not (:triplex.scope/packed-journals by-flag))
                    (= #{subject journal} upserts) (not (lookup journal))
                    (= 1 (count claims)) (= journal (:triplex.claim/tx-id (first claims)))
                    (= (count asserted) (count new-ids)) (= (set new-ids) (into #{} (map row-id) asserted))
                    (= (count retired) (count live)) (= (set live) (into #{} (map #(nth % 2)) retired))
                    (every? #(= subject (second %)) retired)
-                   (every? (fn [[id _ rev]] (or (nil? source) (not (contains? (set entities) id))
-                                                 (<= (or rev 0) source))) revisions)
+                   (every? (fn [[id eid rev]]
+                             (or (nil? source) (not (predicates id))
+                                 (and (or (nil? eid) (some? rev)) (<= (or rev 0) source)))) revisions)
                    (seq clocks) (every? #(and (number? %) (Double/isFinite (double %))) clocks))
           (let [retirements (mapv #(retire db owner %) retired)]
             (when (every? some? retirements)
               {:scope scope :flags signature :provisional provisional :operations ops
+               :basis (d/basis-t db) :owner [subject owner]
                :new-ids (set new-ids) :submitted-clock (reduce max (map double clocks))
                :id (:triplex.tx/id (first ops)) :operation (:triplex.tx/operation-id (first ops))
+               ;; [DX-PREP1] Why: the exact stored row whose bytes the guard rechecks also owns the journal times.
+               ;; Rejected: carrying a separate provisional predecessor clock.
+               :retirement-times (into {} (map (fn [[_ prefix text]]
+                                                 [(subs prefix 5) (commit/recorded-row text)]))
+                                       retirements)
                :witness {:function [ident fn-tx] :entities revisions
                          :journal journal :retirements retirements :new-prefixes (mapv lean/prefix new-ids)}})))))))
 
@@ -140,20 +176,60 @@
   (let [threads (max 2 (min 4 (.availableProcessors (Runtime/getRuntime))))]
     (ThreadPoolExecutor. threads threads 0 TimeUnit/SECONDS (ArrayBlockingQueue. 256)
       (reify ThreadFactory (newThread [_ f] (doto (Thread. f "triplex-prepare") (.setDaemon true)))))))
-(defn schedule! [conn entry]
+(defn run-proof! [f]
   (let [result (promise)]
     (try
       (.execute executor (fn []
-                           (try (deliver result (draft (d/db conn) entry))
+                           (try (deliver result (f))
                                 (catch Exception _ (deliver result nil)))))
       result
       (catch RejectedExecutionException _ nil))))
 
+(defn schedule! [conn entry] (run-proof! #(draft (d/db conn) entry)))
+(defn await-proof [pending deadline]
+  (when pending
+    (deref pending (max 0 (quot (- deadline (System/nanoTime)) 1000000)) nil)))
+
+(defn empty-history-range? [historical prefixes]
+  ;; [DX-PREP1] Why: the exclusive successor of the highest ASCII prefix includes all its encoded row suffixes.
+  ;; Rejected: a bare upper ID or an assumed ordering for non-ASCII IDs (use exact per-ID seeks there).
+  (when (and (seq prefixes) (every? #(re-matches #"[ -~]+" %) prefixes))
+    (let [ordered (sort prefixes)
+          ^String high (last ordered)
+          end (str (subs high 0 (dec (.length high))) (char (inc (int (.charAt high (dec (.length high)))))))]
+      (nil? (first (d/index-range historical :triplex.entity/row (first ordered) end))))))
+(defn unused-prefix? [historical ^String prefix]
+  (let [old (first (d/index-range historical :triplex.entity/row prefix nil))]
+    (not (and old (.startsWith ^String (:v old) prefix)))))
+(defn certify [db entries drafts]
+  ;; [DX-PREP1] Why: a physical-basis guard carries all peer validation through one native comparison. A prior
+  ;; excision request can still change old index views asynchronously at this basis, so decline those scopes.
+  ;; Rejected: relying on a logical head or subject revisions to fence raw metadata, historical IDs or excision.
+  (let [historical (d/history db)]
+    (when-not (first (d/datoms historical :aevt :db/excise))
+      (let [basis (d/basis-t db)
+            deadline (+ (System/nanoTime) 100000000)
+            tasks (mapv (fn [entry original]
+                          (when-not (= basis (:basis original))
+                            (run-proof! #(draft db entry)))) entries drafts)
+            current (mapv (fn [original task]
+                            (if (= basis (:basis original)) original (await-proof task deadline)))
+                          drafts tasks)]
+        (when (every? some? current)
+          (let [per-member (mapv #(get-in % [:witness :new-prefixes]) current)
+                covered (empty-history-range? historical (mapcat identity per-member))]
+            (when (or covered
+                      (let [checks (mapv (fn [prefixes]
+                                           (run-proof! #(every? (partial unused-prefix? historical) prefixes)))
+                                         per-member)]
+                        (every? #(true? (await-proof % deadline)) checks)))
+              {:drafts current :basis basis :history (if covered :range :points)})))))))
+
 (defn assign-clock [prior submitted]
   (if prior (max submitted (+ (double prior) 1.0) (Math/nextUp (double prior))) submitted))
-(defn render [{:keys [id operations provisional new-ids witness]} member position clock]
+(defn render [{:keys [id operations provisional new-ids witness retirement-times]} member position clock]
   (let [physical "datomic.tx"
-        stamp (commit/stamp true clock new-ids (dec provisional) provisional position false {})
+        stamp (commit/stamp true clock new-ids (dec provisional) provisional position false retirement-times)
         old (into {} (map (fn [[eid prefix text]] [prefix [eid text]]) (:retirements witness)))
         tx-metadata [[:db/add physical :triplex.group/members member]
                      [:db/add member :triplex.group/physical physical]
@@ -184,7 +260,18 @@
       (let [more (:keys entry)]
         (when-not (some keys more) (recur (into keys more) (next entries))))
       true)))
-(defn assemble [entries drafts starting-head]
+(defn resolved-owner [operations [subject eid]]
+  ;; [DX-PREP1] Why: the certified snapshot already resolved this existing owner and its stable EID.
+  ;; Rejected: another unique upsert and lookup on the writer, or replacing arbitrary string values.
+  (let [tempid (str "e:" subject)]
+    (into [] (keep (fn [op]
+                     (cond
+                       (and (map? op) (= tempid (:db/id op))) nil
+                       (and (vector? op) (= :db/add (first op)) (= tempid (second op))) (assoc op 1 eid)
+                       (and (vector? op) (= :triplex.group/touched (nth op 2 nil))
+                            (= tempid (nth op 3 nil))) (assoc op 3 eid)
+                       :else op))) operations)))
+(defn assemble [entries drafts starting-head & [certificate]]
   (let [[position clock] starting-head
         scope (:scope (first drafts)) signature (:flags (first drafts))]
     (when (and (<= (+ position (count drafts)) 9007199254740991)
@@ -194,9 +281,16 @@
           (let [positions (range (inc position) (+ position 1 (count drafts)))
                 members (concat (map #(str "prep1/m/" %) (range (dec (count drafts)))) ["datomic.tx"])
                 data (into [[:db/add "datomic.tx" :triplex.tx/max-recorded-at (last clocks)]]
-                           (mapcat render drafts members positions clocks))
+                           (mapcat (fn [draft member position clock]
+                                     (let [ops (render draft member position clock)]
+                                       (if certificate (resolved-owner ops (:owner draft)) ops)))
+                                   drafts members positions clocks))
                 witness {:scope scope :flags signature :head (head-witness starting-head)
-                         :members (mapv :witness drafts)}]
-            {:data [[guard-ident witness data]]
-             :results (mapv (fn [draft p c] {:id (:id draft) :position p :clock c}) drafts positions clocks)
+                         :members (mapv :witness drafts)
+                         :profile profile-mode}]
+            {:data [(if certificate
+                      [basis-ident (:basis certificate) data]
+                      [(active-guard) witness data])]
+             :guard (if certificate :basis :full) :history (:history certificate)
+             :results (mapv (fn [m p c] {:id (:id m) :position p :clock c}) drafts positions clocks)
              :next-head [(last positions) (last clocks) (:id (peek entries))]}))))))

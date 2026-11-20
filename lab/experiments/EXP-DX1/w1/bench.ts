@@ -17,6 +17,7 @@ import { datomicRuntime } from "../../../config/datomic/runtime.mjs";
 import type { jvmPolicy } from "../jvm1/policy.mjs";
 import type { part2Policy } from "../jvm1/launch.mjs";
 import { verifyJvmFlags } from "../jvm1/check-readback.mjs";
+import type { WriterExpectation } from "./write-options.ts";
 
 const repo = path.resolve(import.meta.dirname, "../../../.."),
   GiB = 1024 ** 3;
@@ -266,6 +267,8 @@ export async function withStack<T>(
     TRIPLEX_TRACE_TX_JFR: "1",
     TRIPLEX_DATOMIC_LAYOUT: "lean",
     TRIPLEX_DATOMIC_FAST_PATHS: arm.lookup === "range" ? "history-range" : "",
+    DX_PREDECESSOR_LOOKUP: arm.lookup === "range" ? "1" : "0",
+    DX_WRITE_OPTIONS_ATTEMPT: arm.nonce,
     DX_SERVER_RECORD_TIME: "1",
     DX_STRICT_RECORD_CLOCKS: "1",
     DX_MODEL_COMPACT: "1",
@@ -302,10 +305,11 @@ export async function withStack<T>(
       DX_W1_EXTRA: String(Number(enhanced)),
       DX_SMALL_ROWS: String(Number(policy.compact)),
       DX_GROUP_REUSE_PREPARED: String(Number(policy.prepared)),
-      DX_W1_PREDECESSOR: String(Number(policy.predecessor)),
+      DX_PREDECESSOR_LOOKUP: String(Number(policy.predecessor)),
       DX_W1_LEDGER: String(Number(policy.ledger)),
       DX_W1_PACKED_JOURNAL: String(Number(policy.packedJournal)),
       DX_W1_FAST_REPLY: String(Number(policy.fastReplyAndWire)),
+      DX_W1_JOURNAL_QUERY: String(Number(Boolean(policy.journalVariant))),
       DX_GROUP_MAX_MEMBERS: String(policy.maxMembers),
       DX_WRITE_BUDGET_US: policy.budgetMicros === null ? "" : String(policy.budgetMicros),
     });
@@ -396,6 +400,32 @@ export async function withStack<T>(
         get(path.join(engines, "health-" + role + ".json")).gatewaySourceHash,
         gatewayHash,
       );
+    const expectation: WriterExpectation = {
+      source: arm.source,
+      slot,
+      attempt: arm.nonce,
+      gatewaySourceHash: gatewayHash,
+      historyRange: arm.lookup === "range",
+      options: {
+        predecessorLookup: policy?.predecessor ?? arm.lookup === "range",
+        groupCommit: grouped ?? false,
+        livePriority: policy?.priority ?? false,
+        fieldCoalesce: policy?.subjectOnly ?? false,
+        queueClock: grouped !== undefined,
+        stageClock: policy?.stageClock ?? false,
+        smallRows: policy?.compact ?? false,
+        reusePrepared: policy?.prepared ?? false,
+        maxMembers: policy?.maxMembers ?? 8,
+        budgetMicros: policy?.budgetMicros ?? null,
+        bulkRows: 96,
+        bulkBytes: 65536,
+        ledger: (policy?.ledger ?? false) || (policy?.packedJournal ?? false),
+        packedJournal: policy?.packedJournal ?? false,
+        fastReply: policy?.fastReplyAndWire ?? false,
+      },
+    };
+    write(path.join(dir, "writer-expectation.json"), expectation);
+    env.DX_W1_WRITER_EXPECTATION = JSON.stringify(expectation);
     const groups: string[] = [];
     const roleInfo = roles.map((role) => {
       const info = JSON.parse(docker("inspect", slot + "-" + role))[0];
@@ -443,6 +473,10 @@ export async function withStack<T>(
             writer.Config.Env.includes("TX2_PREDECESSOR_LOOKUP=" + Number(policy.predecessor)),
           );
           assert(writer.Config.Env.includes("TX2_SAVE_LEDGER=" + Number(policy.ledger)));
+          if (policy.journalVariant) {
+            assert(writer.Config.Env.includes("TX2_LEAN_NATIVE_QUERY=1"));
+            assert(writer.Config.Env.includes("TX2_LEAN_NATIVE_LOG=1"));
+          }
           assert(writer.Config.Env.includes("TX2_PACKED_JOURNAL=" + Number(policy.packedJournal)));
           assert(
             writer.Config.Env.includes("TX2_GROUP_FAST_REPLY=" + Number(policy.fastReplyAndWire)),

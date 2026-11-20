@@ -14,6 +14,7 @@ export async function inventory(options, config, manager) {
   assert.equal(process.platform, "darwin");
   assert.equal(process.env.DOCKER_HOST, DOCKER_HOST);
   assert.equal(options.holder, holder);
+  const sdkGate = options["sdk-gate"] === true;
   const caps = { pg: 320, tx: 1056, "gw-w": 1408, "gw-r": 768 };
   const cpus = { pg: "0", tx: "0", "gw-w": "1", "gw-r": "2" };
   const prefix = "tx2-dxt1-jvm1-" + randomUUID();
@@ -37,6 +38,7 @@ export async function inventory(options, config, manager) {
     DX_GW_READ_MEMORY: caps["gw-r"] + "m",
     DX_GW_WRITE_JAVA_OPTS: "-Xms256m -Xmx896m -XX:+UseSerialGC -Ddatomic.objectCacheMax=32m",
     DX_GW_READ_JAVA_OPTS: "-Xms256m -Xmx416m -XX:+UseG1GC -Ddatomic.objectCacheMax=32m",
+    ...(sdkGate ? { DX_SERVER_RECORD_TIME: "1", DX_STRICT_RECORD_CLOCKS: "1", DX_GATEWAY_SELFTEST: "1" } : {}),
   });
   let slot;
   try {
@@ -78,10 +80,11 @@ export async function inventory(options, config, manager) {
       }
     }
     const source = execFileSync("git", ["rev-parse", "HEAD"], {encoding:"utf8"}).trim();
-    const files = [import.meta.filename, path.join(import.meta.dirname, "readback.sh"), path.join(stack, "up.sh")];
+    const files = [import.meta.filename, path.join(import.meta.dirname, "readback.sh"), path.join(import.meta.dirname, "launch.mjs"), path.join(stack, "up.sh")];
     write("attempt.json", {prefix, source, slot:slot.slot, at:new Date(), caps, cpus, files:Object.fromEntries(files.map((file) => [path.basename(file), createHash("sha256").update(fs.readFileSync(file)).digest("hex")]))});
     const child = spawn("bash", [
-      path.join(stack,"up.sh"), prefix, "--no-publish",
+      path.join(stack,"up.sh"), prefix,
+      ...(sdkGate ? ["--port-write", String(slot.port), "--port-read", String(slot.port + 10)] : ["--no-publish"]),
       "--cpus-tx", cpus.tx, "--cpus-pg", cpus.pg, "--cpus-gw-write", cpus["gw-w"], "--cpus-gw-read", cpus["gw-r"],
       "--pg-memory", caps.pg+"m", "--tx-memory", caps.tx+"m",
       "--tx-java-opts", "-Xms256m -Xmx704m -XX:+UseG1GC -XX:MaxGCPauseMillis=50",
@@ -117,6 +120,25 @@ export async function inventory(options, config, manager) {
         startupToAllReadyMs: readyAt - Date.parse(startedAt), processRssKiB:Number(rss), cgroupBytes:Number(memory)};
     }
     write("idle-boot.json", {prefix, source, slot:slot.slot, readyAt, sampledAt:Date.now(), roles});
+    if (sdkGate) {
+      const root = path.resolve(import.meta.dirname, "../../../.."), pkg = path.join(root, "packages/datomic");
+      const log = fs.openSync(path.join(out, "sdk-sql.log"), "wx");
+      try {
+        execFileSync(process.execPath, [path.join(root, "node_modules/vitest/vitest.mjs"), "run", "--maxWorkers=1"], {
+          cwd: pkg, timeout: 600_000, stdio: ["ignore", log, log], env: {
+            ...env, DATOMIC_INTEGRATION: "1", DATOMIC_URL: "http://127.0.0.1:" + slot.port,
+            DATOMIC_READ_URLS: "http://127.0.0.1:" + (slot.port + 10),
+          },
+        });
+      } finally { fs.closeSync(log); }
+      for (const [role, identity] of Object.entries(roles)) {
+        const post = path.join(out, "post-sdk");
+        execFileSync("bash", [path.join(import.meta.dirname, "readback.sh"), identity.id, post, role], { env, timeout: 30_000 });
+        assert.deepEqual(fs.readFileSync(path.join(post, role + ".process.txt")),
+          fs.readFileSync(path.join(out, prefix, "config", role + ".process.txt")));
+      }
+      assert.equal(execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(), source);
+    }
   } finally {
     process.removeListener("SIGINT", stop);
     process.removeListener("SIGTERM", stop);

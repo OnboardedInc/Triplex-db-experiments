@@ -7,6 +7,7 @@ import os from "node:os";
 import { setTimeout as wait } from "node:timers/promises";
 import { queueTrial, fieldTrial } from "../field/traffic.ts";
 import { capacityTrial } from "../small/capacity.ts";
+import { queryCost, queryProof } from "../small/query6.ts";
 import { exact, recovery, runArm } from "./workload.ts";
 
 // [DX-W1] Why: the manager's ephemeral isolated reservation includes PostgreSQL, transactor, gateway and client under one cap.
@@ -158,6 +159,19 @@ async function gateway(grouped: boolean, extra: NodeJS.ProcessEnv = {}) {
   return p;
 }
 const emit = (k: string, v: unknown) => console.log("W1_DATA " + JSON.stringify({ nonce, k, v }));
+async function observeErasure() {
+  const peer = start(home + "/bin/run", ["-m", "triplex.gateway.erase6"], {
+    W1_ATTEMPT: nonce,
+    DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
+    DATOMIC_URI_TEMPLATE: uri,
+    TX2_SAVE_LEDGER: "1",
+    TX2_LEAN_NATIVE_QUERY: "1",
+    TX2_LEAN_NATIVE_LOG: "1",
+    DATOMIC_JAVA_OPTS:
+      jvm + " -Ddatomic.objectCacheMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
+  });
+  assert.equal(await new Promise<number | null>((resolve) => peer.once("exit", resolve)), 0);
+}
 const measureSql = (database: string): { keys: number; kvBytes: number; relationBytes: number } =>
   JSON.parse(
     sql(
@@ -404,6 +418,26 @@ try {
         role: "transactor",
         data: fs.readFileSync(cwd + "/transactor-gc.log", "utf8"),
       });
+  } else if (fieldStudy === "erase6") {
+    await observeErasure();
+  } else if (fieldStudy === "query6") {
+    const proof = await gateway(false, {
+      TX2_SAVE_LEDGER: "1",
+      TX2_LEAN_NATIVE_QUERY: "1",
+      TX2_LEAN_NATIVE_LOG: "1",
+    });
+    for (const layout of ["legacy", "lean"] as const)
+      emit("query-proof", { layout, ...(await queryProof(url, nonce, layout)) });
+    await stop(proof);
+    for (const [i, covered] of [false, true, true, false].entries()) {
+      const g = await gateway(false, {
+        TX2_SAVE_LEDGER: "1",
+        TX2_LEAN_NATIVE_QUERY: covered ? "1" : "0",
+      });
+      emit("query-cost", await queryCost(url, nonce + "-cost-" + i, "lean", covered));
+      await stop(g);
+    }
+    await observeErasure();
   } else if (fieldStudy === "queue") {
     for (const [i, priority] of [false, true, true, false].entries()) {
       const gw = await gateway(true, { TX2_LIVE_PRIORITY: priority ? "1" : "0" });

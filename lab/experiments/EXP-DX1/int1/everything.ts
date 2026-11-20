@@ -5,11 +5,12 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { scaleHost, startScaleStack } from "../scale1/bench.ts";
 import { stageReplay } from "../scale1/source.ts";
+import { restoreSeed, sealSeed } from "../scale1/seed-image.ts";
 import { measurementWindow } from "../thin1/measure.ts";
 import { canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 import { atomicJson, createArm, executeArm } from "./everything-arm.ts";
 import { collect, openPlan } from "./everything-collect.ts";
-import { planSummary, treatment } from "./everything-plan.ts";
+import { gatewayJvmOptions, planSummary, treatment } from "./everything-plan.ts";
 
 const repo = fileURLToPath(new URL("../../../../", import.meta.url));
 const git = (...args: string[]) =>
@@ -78,6 +79,7 @@ async function physicalCases(
   tag: string,
   topology: string[][],
   smoke: boolean,
+  overnight: boolean,
 ) {
   const oracle = path.join(dir, "oracle");
   atomicJson(path.join(dir, "oracle-source.json"), stageReplay(repo, oracle));
@@ -86,7 +88,9 @@ async function physicalCases(
     topology,
     placement: scaleHost.planCpus,
   });
-  const cases = openPlan(dir, source, smoke, "physical");
+  const cases = openPlan(dir, source, smoke, "physical", overnight);
+  const seeds = path.join(dir, "seeds");
+  if (!smoke) fs.mkdirSync(seeds);
   let interrupted = false;
   const interrupt = () => {
     interrupted = true;
@@ -96,7 +100,7 @@ async function physicalCases(
   try {
     for (const [i, c] of cases.entries()) {
       assert(!interrupted && Date.now() + 60_000 < end);
-      const minimum = (c.people === 100000 ? 70 : 30) * 1024 ** 3;
+      const minimum = (c.people === 100000 ? 240 : smoke ? 10 : 45) * 1024 ** 3;
       for (const folder of [repo, dir]) {
         const space = fs.statfsSync(folder);
         assert(
@@ -121,14 +125,66 @@ async function physicalCases(
       try {
         const { env, engines } = startScaleStack(out, slot, source, false, {
           ...treatment,
-          DX_GW_WRITE_JAVA_OPTS:
-            "-Xms64m -Xmx384m -Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30",
-          DX_GW_READ_JAVA_OPTS:
-            "-Xms64m -Xmx384m -Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30",
+          DX_GW_WRITE_JAVA_OPTS: gatewayJvmOptions["gw-w"].join(" "),
+          DX_GW_READ_JAVA_OPTS: gatewayJvmOptions["gw-r"].join(" "),
         });
         atomicJson(path.join(out, "placement.json"), engines);
         const snapshot = () => scaleHost.snapshot(slot);
         atomicJson(path.join(out, "before.json"), snapshot());
+        const seedDir = path.join(seeds, String(c.people));
+        const capture = !smoke && c.profile === "frozen" && c.load === "zero";
+        if (capture) fs.mkdirSync(seedDir);
+        if (!capture && !smoke) await restoreSeed(out, "", id.identity, engines, seedDir);
+        const vm = Object.entries(gatewayJvmOptions).map(([role, expected]) => {
+          const container = engines[role].id;
+          const actual = execFileSync(
+            "docker",
+            [
+              "exec",
+              container,
+              "sh",
+              "-ec",
+              [
+                "for p in /proc/[0-9]*; do",
+                '  [ "$(cat "$p/comm" 2>/dev/null)" = java ] || continue',
+                '  tr "\\000" "\\n" < "$p/cmdline" | grep -E "^(-Xm[sx]|-XX:|-Ddatomic.objectCacheMax=)"',
+                "done",
+              ].join("\n"),
+            ],
+            { encoding: "utf8", timeout: 10_000 },
+          )
+            .trim()
+            .split("\n");
+          assert(expected.every((flag) => actual.includes(flag)));
+          assert.equal(actual.filter((flag) => /^-XX:\+Use.*GC$/.test(flag)).length, 1);
+          assert.equal(actual.filter((flag) => flag.startsWith("-Xmx")).at(-1), "-Xmx384m");
+          return { role, container, actual };
+        });
+        atomicJson(path.join(out, "gateway-jvm.json"), {
+          identity: id.identity,
+          capturedAt: Date.now(),
+          vm,
+        });
+        const seed = smoke
+          ? undefined
+          : {
+              ...(capture
+                ? {
+                    capture: async (ready: {
+                      scope: string;
+                      seed: { facts: number; people: number; position: number; sha256: string };
+                    }) => {
+                      const proof = await sealSeed(
+                        seedDir,
+                        slot,
+                        { identity: id.identity, ...ready },
+                        engines.pg.id,
+                      );
+                      atomicJson(path.join(out, "captured-seed.json"), proof);
+                    },
+                  }
+                : { restore: path.join(out, "restored-seed.json") }),
+            };
         exit = await executeArm(
           id,
           out,
@@ -139,10 +195,15 @@ async function physicalCases(
             DATOMIC_READ_URLS: `http://${engines["gw-r"].address}:8080`,
             TRIPLEX_NODE_MAIN_CPUS: scaleHost.planCpus.senders,
             TRIPLEX_NODE_WORKER_CPUS: scaleHost.planCpus.readers,
+            DX_MODEL_COMPACT: "1",
+            NODE_OPTIONS: `--max-old-space-size=${c.people === 100_000 ? 32_768 : 8_192}`,
+            TRIPLEX_BENCH_SPILL_MAX_BYTES: String(48 * 1024 ** 3),
           },
           end,
           previous(dir, c),
           [scaleHost.planCpus.senders, scaleHost.planCpus.readers].join(","),
+          undefined,
+          seed,
         );
         atomicJson(path.join(out, "after.json"), snapshot());
       } finally {
@@ -167,7 +228,7 @@ async function physicalCases(
   }
 }
 
-async function physicalCampaign(dir: string, cutoff: string) {
+async function physicalCampaign(dir: string, cutoff: string, overnight: boolean) {
   scaleHost.physical();
   const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"),
     held = fs.statSync(`/proc/${process.ppid}/fd/9`);
@@ -192,14 +253,14 @@ async function physicalCampaign(dir: string, cutoff: string) {
   const preflight = path.join(dir, "preflight");
   fs.mkdirSync(preflight);
   // [DX-THIN1] Why: consume the separately saved terminal bytes before admitting a long arm. Rejected: a collector that was only tested on synthesized summary JSON.
-  await physicalCases(preflight, end, source, tag + "-check", topology, true);
+  await physicalCases(preflight, end, source, tag + "-check", topology, true, overnight);
   assert.equal((await collect(preflight, "verify")).source, source);
-  await physicalCases(dir, end, source, tag, topology, false);
+  await physicalCases(dir, end, source, tag, topology, false, overnight);
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   process.chdir(repo);
-  const [action = "--plan", dest, cutoff] = process.argv.slice(2);
+  const [action = "--plan", dest, cutoff, selection = "--both"] = process.argv.slice(2);
   if (action === "--plan") console.log(JSON.stringify(planSummary(), null, 2));
   else if (action === "--verify") {
     assert(dest);
@@ -215,6 +276,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     );
   } else {
     assert(action === "--run" && dest && cutoff && path.isAbsolute(dest));
-    await physicalCampaign(dest, cutoff);
+    assert(["--both", "--overnight"].includes(selection));
+    await physicalCampaign(dest, cutoff, selection === "--overnight");
   }
 }

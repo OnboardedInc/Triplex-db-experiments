@@ -2,9 +2,15 @@
 # [DX-H1] Why: separate peers and durable SQL storage measure the intended topology. Rejected: dev storage (single process).
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/collector.sh"
 prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-write LIST] [--cpus-gw-read LIST] [--gateway-src DIR] [--port-write N] [--port-read N]}
 shift
+repo=$(cd "$(dirname "$0")/../../../.." && pwd)
+runtime_tool="$repo/lab/config/datomic/runtime.mjs"
+jvm_tool="$repo/lab/experiments/EXP-DX1/jvm1/launch.mjs"
+final_flags=' -XX:+PrintFlagsFinal -Xlog:gc+init=info,cds=info:stdout:uptimemillis,level,tags'
+probe_options() {
+  node "$jvm_tool" gw-w 1 "$1 $final_flags $(node "$runtime_tool" compatibility gw-w)" serial
+}
 [[ "$prefix" =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "DX stack accepts only tx2-dx* prefixes" >&2; exit 2; }
 # [DX-T1] Why: read owned startup logs through the same scoped runner, before a health deadline expires.
 # Rejected: reaching an unrelated Docker context or losing the first JVM startup error behind retries.
@@ -104,10 +110,10 @@ PAIR_LEASE
   trap 'docker rm -f "$prefix-probe" >/dev/null 2>&1 || true' EXIT
   trap 'exit 143' TERM INT
   docker run --rm --pull never --name "$prefix-probe" --network none --memory 768m --memory-swap 768m --cpuset-cpus 0 \
-    -e 'DATOMIC_JAVA_OPTS=-Xms64m -Xmx512m -XX:+UseSerialGC' -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+    -e "DATOMIC_JAVA_OPTS=$(probe_options '-Xms64m -Xmx512m')" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)" \
     -v "$PWD/packages/datomic/gateway:/opt/gateway:ro" --entrypoint /opt/datomic/bin/run \
-    "$(node "$repo/lab/config/datomic/runtime.mjs" image)" -m triplex.gateway.sql-pair-probe
+    "$(node "$runtime_tool" image)" -m triplex.gateway.sql-pair-probe
   exit
 fi
 # [DX-T1-11] Why: size the sealed seed read-only before admitting a clone; disk headroom is an observed limit.
@@ -141,11 +147,11 @@ INPUT_LEASE
   trap 'exit 143' TERM INT
   input_dir=$(cd "$(dirname "$2")" && pwd)
   docker run --rm --pull never --name "$prefix-probe" --network none --read-only --memory 768m --memory-swap 768m \
-    --tmpfs /tmp:rw,size=64m -e 'DATOMIC_JAVA_OPTS=-Xms64m -Xmx512m -XX:+UseSerialGC -Dtriplex.codec.spec=/opt/spec/codec-spec.json' \
+    --tmpfs /tmp:rw,size=64m -e "DATOMIC_JAVA_OPTS=$(probe_options '-Xms64m -Xmx512m -Dtriplex.codec.spec=/opt/spec/codec-spec.json')" \
     -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)" \
     -v "$input_dir:/inputs:ro" -v "$PWD/packages/datomic/gateway:/opt/gateway:ro" \
     -v "$PWD/packages/datomic/src/codec-spec.json:/opt/spec/codec-spec.json:ro" --entrypoint /opt/datomic/bin/run \
-    tx2-datomic:1.0.7745-da00 -m triplex.gateway.layout-input-audit "/inputs/$(basename "$2")"
+    "$(node "$runtime_tool" image)" -m triplex.gateway.layout-input-audit "/inputs/$(basename "$2")"
   exit
 fi
 tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume=
@@ -184,19 +190,18 @@ while (($#)); do
   esac
   shift 2
 done
-tx_java=$(explicit_gc '-XX:+UseG1GC -XX:MaxGCPauseMillis=50' "$tx_java")
 # bin/run reads DATOMIC_JAVA_OPTS. Preserve precedence across the common and per-role options.
 peer_java() {
-  local heap=$1 override=$2 fallback=$3 options=$gw_java
+  local heap=$1 override=$2 options=$gw_java
   if [[ -z $options && ${DX_INT1_GATEWAYS:-original} == demand ]]; then
     options="-Xms64m -Xmx${heap:-384m} $demand_peer"
   elif [[ -z $options && -n $heap ]]; then
     options="-Xms256m -Xmx$heap"
   fi
-  explicit_gc "$fallback" "${override:-$options}"
+  printf '%s' "${override:-$options}"
 }
-gw_w_java=$(peer_java "${DX_GW_WRITE_HEAP:-}" "${DX_GW_WRITE_JAVA_OPTS:-}" '-XX:+UseSerialGC')
-gw_r_java=$(peer_java "${DX_GW_READ_HEAP:-}" "${DX_GW_READ_JAVA_OPTS:-}" '-XX:+UseG1GC')
+gw_w_java=$(peer_java "${DX_GW_WRITE_HEAP:-}" "${DX_GW_WRITE_JAVA_OPTS:-}")
+gw_r_java=$(peer_java "${DX_GW_READ_HEAP:-}" "${DX_GW_READ_JAVA_OPTS:-}")
 if [[ ${DX_BARE_METAL:-0} == 1 ]]; then
   # [DX-BM1] Why: the native read gateway spans cores 4 and 8. Check each requested CPU against this host's actual allocation.
   # Rejected: carrying the eight-CPU Mac VM limit onto the 12-core bench, or allowing unavailable native CPUs.
@@ -219,30 +224,13 @@ else
     [[ "$cpus" =~ ^[0-7](,[0-7])*$ || "$cpus" =~ ^[0-7]-[0-7]$ ]] || { echo "only VM CPUs 0 through 7 are allowed" >&2; exit 2; }
   done
 fi
-# [DX-JVM1] Why: pin HotSpot's processor count from the declared startup placement.
-# Rejected: relying on container CPU discovery to size process pools without recording the choice.
-placed_java() {
-  local options=$1 cpu_list=$2 count
-  if [[ " $options" != *" -XX:ActiveProcessorCount="* ]]; then
-    count=$(python3 - "$cpu_list" <<'CPU_COUNT'
-import sys
-ranges=[tuple(map(int,part.split('-'))) for part in sys.argv[1].split(',')]
-print(sum(r[-1]-r[0]+1 for r in ranges))
-CPU_COUNT
-)
-    options="$options -XX:ActiveProcessorCount=$count"
-  fi
-  printf '%s' "$options"
-}
-tx_java=$(placed_java "$tx_java" "$tx")
-gw_w_java=$(placed_java "$gw_w_java" "$gw_w")
-gw_r_java=$(placed_java "$gw_r_java" "$gw_r")
 for port in "$port_w" "$port_r"; do
   [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1024 && "$port" -le 65535 && "$port" != 15442 && "$port" != 17019 ]] || exit 2
 done
-repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 stack_labels=()
-runtime_tool="$repo/lab/config/datomic/runtime.mjs"
+tx_java=$(node "$jvm_tool" tx "$tx" "$tx_java")
+gw_w_java=$(node "$jvm_tool" gw-w "$gw_w" "$gw_w_java")
+gw_r_java=$(node "$jvm_tool" gw-r "$gw_r" "$gw_r_java")
 java_major=$(node "$runtime_tool" major)
 java_base=$(node "$runtime_tool" base)
 datomic_image=$(node "$runtime_tool" image)
@@ -403,13 +391,13 @@ fi
 # Rejected: mocking the server-clock serial point or silently skipping the gateway's normal selftests.
 if [[ ${DX_GATEWAY_SELFTEST:-0} == 1 ]]; then
   docker run --rm --pull never --name "$prefix-selftest" --network none --memory 1500m --memory-swap 1500m \
-    -e "DATOMIC_JAVA_OPTS=-Xms128m -Xmx1g -XX:+UseSerialGC" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -v "$src:/opt/gateway:ro" \
+    -e "DATOMIC_JAVA_OPTS=$(probe_options '-Xms128m -Xmx1g')" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -v "$src:/opt/gateway:ro" \
     --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.selftest > "$attempt/gateway-selftests.log" 2>&1
 fi
 if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
   mkdir -p "$attempt/trace/preflight"
   docker run --rm --pull never --name "$prefix-trace-check" --network none --memory 768m --memory-swap 768m \
-    -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=-Xms128m -Xmx512m -XX:+UseSerialGC -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e TRIPLEX_TRACE_DIR=/test-trace -e TRIPLEX_TRACE_TEST_JFR=1 -v "$attempt/trace/preflight:/test-trace" -v "$src:/opt/gateway:ro" \
+    -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=$(probe_options '-Xms128m -Xmx512m -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0')" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e TRIPLEX_TRACE_DIR=/test-trace -e TRIPLEX_TRACE_TEST_JFR=1 -v "$attempt/trace/preflight:/test-trace" -v "$src:/opt/gateway:ro" \
     --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.trace-test > "$attempt/gateway-trace-tests.log" 2>&1
 fi
 docker network create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-net" >/dev/null
@@ -503,7 +491,6 @@ if [[ -n ${DX_JVM1_PG_RESTORE:-} ]]; then
 fi
 # [DX-JVM1] Why: emit the real JVM's final flags and GC startup identity to its own container log.
 # Rejected: a second JVM running outside the live cgroup or inferring collector from affinity.
-final_flags=' -XX:+PrintFlagsFinal -Xlog:gc+init=info,cds=info:stdout:uptimemillis,level,tags'
 docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
   -e "JAVA_OPTS=$tx_java$trace_tx_java$final_flags" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor "$datomic_image" /dxh1/sql.properties >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
@@ -525,15 +512,24 @@ for role in w r; do
   # [DX-W1] Why: bootstrap is finished on the other peer before the single authoritative writer admits live traffic.
   # Rejected: allowing a large labeled import through the live writer's frame cap during measurement.
   field_policy=()
+  if [[ $role == w && -n ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
+    [[ ${DX_PREDECESSOR_LOOKUP:-} =~ ^[01]$ && $DX_WRITE_OPTIONS_ATTEMPT =~ ^[a-f0-9-]{36}$ ]] || exit 2
+    field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=$DX_PREDECESSOR_LOOKUP" -e "TX2_WRITE_OPTIONS_ATTEMPT=$DX_WRITE_OPTIONS_ATTEMPT")
+  fi
   if [[ -n ${DX_LIVE_PRIORITY:-} ]]; then
     [[ $DX_LIVE_PRIORITY =~ ^[01]$ && ${DX_FIELD_COALESCE:-0} =~ ^[01]$ ]] || exit 2
-    if [[ $role == w ]]; then field_policy=(-e "TX2_LIVE_PRIORITY=$DX_LIVE_PRIORITY" -e "TX2_FIELD_COALESCE=${DX_FIELD_COALESCE:-0}"); fi
+    if [[ $role == w ]]; then field_policy+=(-e "TX2_LIVE_PRIORITY=$DX_LIVE_PRIORITY" -e "TX2_FIELD_COALESCE=${DX_FIELD_COALESCE:-0}"); fi
   fi
   if [[ $role == w && ${DX_W1_EXTRA:-0} == 1 ]]; then
     [[ ${DX_SMALL_ROWS:-0} =~ ^[01]$ && ${DX_GROUP_REUSE_PREPARED:-0} =~ ^[01]$ && ${DX_GROUP_MAX_MEMBERS:-8} =~ ^[1-9][0-9]{0,2}$ ]] || exit 2
     field_policy+=(-e "TX2_GROUP_STAGE_CLOCK=1" -e "TX2_SMALL_ROWS=${DX_SMALL_ROWS:-0}" -e "TX2_GROUP_REUSE_PREPARED=${DX_GROUP_REUSE_PREPARED:-0}" -e "TX2_GROUP_MAX_MEMBERS=${DX_GROUP_MAX_MEMBERS:-8}")
-    for pair in "TX2_PREDECESSOR_LOOKUP=${DX_W1_PREDECESSOR:-0}" "TX2_SAVE_LEDGER=${DX_W1_LEDGER:-0}" \
-                "TX2_PACKED_JOURNAL=${DX_W1_PACKED_JOURNAL:-0}" "TX2_GROUP_FAST_REPLY=${DX_W1_FAST_REPLY:-0}"; do
+    if [[ -z ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
+      [[ ${DX_W1_PREDECESSOR:-0} =~ ^[01]$ ]] || exit 2
+      field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=${DX_W1_PREDECESSOR:-0}")
+    fi
+    for pair in "TX2_SAVE_LEDGER=${DX_W1_LEDGER:-0}" \
+                "TX2_PACKED_JOURNAL=${DX_W1_PACKED_JOURNAL:-0}" "TX2_GROUP_FAST_REPLY=${DX_W1_FAST_REPLY:-0}" \
+                "TX2_LEAN_NATIVE_QUERY=${DX_W1_JOURNAL_QUERY:-0}" "TX2_LEAN_NATIVE_LOG=${DX_W1_JOURNAL_QUERY:-0}"; do
       [[ ${pair#*=} =~ ^[01]$ ]] || exit 2
       field_policy+=(-e "$pair")
     done

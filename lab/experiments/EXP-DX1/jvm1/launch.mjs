@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { pathToFileURL } from "node:url";
 
 export const roles = ["tx", "gw-w", "gw-r"];
 export const part2Arms = ["j21-g1-writer2", "j25-g1", "j25-zgc", "j25-g1-zgc-memory"];
@@ -14,6 +15,60 @@ export const measuredWriterG1 = Object.freeze([
   "-XX:G1MaxNewSizePercent=25",
   "-XX:ConcGCThreads=1",
 ]);
+
+const baseline = {
+  tx: ["-XX:+UseG1GC", "-XX:MaxGCPauseMillis=50"],
+  "gw-w": measuredWriterG1,
+  "gw-r": ["-XX:+UseG1GC", "-XX:MaxGCPauseMillis=50"],
+};
+const general = [
+  "-XX:+ExitOnOutOfMemoryError", "-XX:-AlwaysPreTouch", "-XX:-UseLargePages",
+  "-XX:-UseTransparentHugePages", "-Xshare:auto", "-XX:+TieredCompilation",
+  "-XX:CICompilerCount=2", "-XX:CompileThresholdScaling=1", "-Ddatomic.txTimeoutMsec=10000",
+];
+const optionKey = (option) => option.match(/^-XX:[+-]?(\w+)(?:=|$)|^(-Xms|-Xmx|-Xshare:)|^(-D[^=]+)=/)?.slice(1).find(Boolean) ?? option;
+
+// [DX-JVM1] Why: one role policy completes the explicitly chosen flags, preserving deliberate arm overrides.
+// Rejected: duplicated fallbacks in the Mac and physical launchers or relying on a processor-dependent collector.
+export function launchOptions(role, coreCount, options, control = "default") {
+  assert(roles.includes(role) && Number.isInteger(coreCount) && coreCount > 0);
+  assert(control === "default" || (role === "gw-w" && control === "serial"));
+  const flags = options.trim().split(/\s+/).filter(Boolean);
+  const keys = new Set(flags.map(optionKey));
+  const collectors = flags.filter((flag) => /^-XX:\+Use(Serial|Parallel|G1|Z|Shenandoah|Epsilon)GC$/.test(flag));
+  assert(collectors.length <= 1, "Select exactly one JVM collector");
+  const collectorDefaults = control === "serial" ? ["-XX:+UseSerialGC"] : baseline[role];
+  const collector = collectors[0] ?? collectorDefaults[0];
+  assert(!flags.includes(collector.replace("+", "-")), "Selected JVM collector was disabled");
+  const specified = collector === "-XX:+UseG1GC" ? [
+    ...(collectors.length ? [`-XX:MaxGCPauseMillis=${role === "gw-w" ? 25 : 50}`] : collectorDefaults),
+    "-XX:ParallelGCThreads=" + coreCount, "-XX:ConcGCThreads=1", "-XX:+UseDynamicNumberOfGCThreads",
+  ] : collectors.length ? [] : [collector];
+  const heap = flags.findLast((flag) => /^-Xmx\d+[kmg]?$/i.test(flag))?.slice(4) ?? "1g";
+  const defaults = [
+    "-Xms256m", "-Xmx" + heap, "-XX:MaxDirectMemorySize=" + heap,
+    "-XX:ActiveProcessorCount=" + coreCount, ...specified, ...general,
+  ];
+  for (const flag of defaults) {
+    const key = optionKey(flag);
+    if (keys.has(key)) continue;
+    flags.push(flag);
+    keys.add(key);
+  }
+  return flags.join(" ");
+}
+
+if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
+  const [, , role, cpus, options, control] = process.argv;
+  const ids = new Set();
+  for (const part of cpus.split(",")) {
+    assert(/^\d+(?:-\d+)?$/.test(part));
+    const [first, last = first] = part.split("-").map(Number);
+    assert(first <= last && last < 4096);
+    for (let i = first; i <= last; i++) ids.add(i);
+  }
+  console.log(launchOptions(role, ids.size, options, control));
+}
 
 export function collectorOptions(major, collector, role, cores) {
   assert(roles.includes(role) && Number.isInteger(cores) && cores > 0);
@@ -73,15 +128,7 @@ export function part2Policy(arm) {
       ...collectorOptions(javaMajor, collector, role, cores),
       ...(collector === "ZGC" ? ["-XX:SoftMaxHeapSize=" + softHeap[role] + "m"] : []),
       "-XX:MaxDirectMemorySize=256m",
-      "-XX:+ExitOnOutOfMemoryError",
-      "-XX:-AlwaysPreTouch",
-      "-XX:-UseLargePages",
-      "-XX:-UseTransparentHugePages",
-      "-Xshare:auto",
-      "-XX:+TieredCompilation",
-      "-XX:CICompilerCount=2",
-      "-XX:CompileThresholdScaling=1",
-      "-Ddatomic.txTimeoutMsec=10000",
+      ...general,
       ...(role === "tx" ? [] : [
         "-Ddatomic.objectCacheMax=" + peers[role] + "m",
         "-Ddatomic.readConcurrency=8",

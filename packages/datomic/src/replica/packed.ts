@@ -1,4 +1,4 @@
-import type { TripleValue } from "@triplex-build/triplex";
+import type { ReadValue } from "@triplex-build/triplex";
 import type { SweepRow } from "../sweepRows.js";
 
 const encoder = new TextEncoder();
@@ -57,7 +57,7 @@ export function packEntity(revision: number, rows: readonly ReplicaRow[]): Packe
       intern(r.id),
       intern(r.attribute),
       intern(v.type),
-      v.type === "blob"
+      v.type === "blob" || v.type === "erased"
         ? intern(JSON.stringify(tag(v)))
         : v.type === "json"
           ? intern(JSON.stringify(tag(v.value)))
@@ -132,16 +132,26 @@ export function unpackEntity(
     const numeric = view.getFloat64(o + 40, true);
     // [DX-R3-P8] Why: reuse only when every encoded input to the decoded row is byte-identical.
     // Rejected: assertion IDs/revisions or ordinary numeric JSON keys (miss metadata edits and signed zero).
-    const key = memo ? JSON.stringify([includeMetadata, entityId,
-      dictionary[view.getUint32(o, true)], dictionary[view.getUint32(o + 4, true)], type,
-      type === "number" || type === "datetime" || type === "boolean" ? null : text,
-      ...[16, 24, 32, 40].map(offset => view.getBigUint64(o + offset, true).toString(16)),
-      dictionary[view.getUint32(o + 48, true)]]) : undefined;
+    const key = memo
+      ? JSON.stringify([
+          includeMetadata,
+          entityId,
+          dictionary[view.getUint32(o, true)],
+          dictionary[view.getUint32(o + 4, true)],
+          type,
+          type === "number" || type === "datetime" || type === "boolean" ? null : text,
+          ...[16, 24, 32, 40].map((offset) => view.getBigUint64(o + offset, true).toString(16)),
+          dictionary[view.getUint32(o + 48, true)],
+        ])
+      : undefined;
     const remembered = key === undefined ? undefined : memo!.get(key);
-    if (remembered) { rows.push(remembered); continue; }
+    if (remembered) {
+      rows.push(remembered);
+      continue;
+    }
     const value =
-      type === "blob"
-        ? (untag(JSON.parse(text)) as TripleValue)
+      type === "blob" || type === "erased"
+        ? (untag(JSON.parse(text)) as ReadValue)
         : ({
             type,
             value:
@@ -152,7 +162,7 @@ export function unpackEntity(
                   : type === "boolean"
                     ? numeric === 1
                     : text,
-          } as TripleValue);
+          } as ReadValue);
     const metadata = JSON.parse(dictionary[view.getUint32(o + 48, true)]!);
     const publicMetadata =
       metadata === null

@@ -1,14 +1,25 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { createInterface } from "node:readline";
 import { cohort, fileHash, readScope, type ScopeMeasurement } from "../scale1/measurements.ts";
 import { canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 import { requireIdentity } from "../../../bench/lib/deep-profile.ts";
-import { distribution, percentile } from "../../../bench/lib/verdict-statistics.ts";
-import { verdictMs, VERDICT_CLOCK } from "../../../trace/instrument.mjs";
-import { fieldPlan, fieldProfile, fieldWindows } from "./field-plan.ts";
-import { campaignCases, treatment, type CampaignCase } from "./everything-plan.ts";
+import {
+  histogramDistribution,
+  percentile,
+  ratioBar,
+} from "../../../bench/lib/verdict-statistics.ts";
+import { Histogram } from "../../../bench/lib/hist.ts";
+import { VERDICT_CLOCK } from "../../../trace/instrument.mjs";
+import { campaignWindows, pooledCampaignId } from "../scale1/tenant-traffic.ts";
+import { importDigest, importFrames } from "./pooled-import.ts";
+import {
+  campaignCases,
+  campaignTenant,
+  gatewayJvmOptions,
+  treatment,
+  type CampaignCase,
+} from "./everything-plan.ts";
 import { replayRevision } from "../scale1/source.ts";
 import { atomicJson, type Arm } from "./everything-arm.ts";
 
@@ -18,6 +29,7 @@ export function openPlan(
   source: string,
   smoke: boolean,
   placement: "leased-mac" | "physical",
+  overnight = false,
 ) {
   const plan = {
     source,
@@ -25,7 +37,8 @@ export function openPlan(
     placement,
     treatment,
     createdAt: Date.now(),
-    cases: campaignCases(smoke ? [40] : undefined),
+    overnight,
+    cases: campaignCases(smoke ? [4] : overnight ? [10_000] : undefined),
     oracle: read(path.join(dir, "oracle-source.json")),
     placementInputs: read(path.join(dir, "physical-inputs.json")),
   };
@@ -56,8 +69,8 @@ function originalArm(out: string, c: CampaignCase, plan: ReturnType<typeof read>
   const id = arm.identity;
   requireIdentity(id);
   assert.deepEqual(
-    [id.source, id.slot, id.people, id.arm, id.account, Boolean(id.field)],
-    [arm.source, arm.slot, c.people, c.load, 0, c.profile === "field"],
+    [id.source, id.slot, id.people, id.arm, id.account, id.tenant],
+    [arm.source, arm.slot, c.total, c.load, 0, campaignTenant(c, arm.smoke)],
   );
   return arm;
 }
@@ -93,62 +106,166 @@ async function checkInputs(dir: string, plan: ReturnType<typeof read>) {
 }
 
 async function fieldStats(out: string, arm: Arm, raw: ScopeMeasurement) {
-  const start = raw.interval.from;
-  const rows = fieldWindows((raw.interval.to - start) / 1000).map((w) => ({
-    ...w,
-    scheduled: 0,
-    offered: 0,
-    acknowledged: 0,
-    acknowledgedInWindow: 0,
-    expired: 0,
-    lastAcknowledgedAt: 0,
-    latencies: [] as number[],
-  }));
-  const at = (ms: number) => {
-    const seconds = (ms - start) / 1000;
-    return rows.find((w) => seconds >= w.start && seconds < w.end);
+  const geometry = campaignWindows(arm.identity.tenant!, arm.identity.arm);
+  const evidence = raw.tenantEvidence;
+  assert(evidence && evidence.windows.length === geometry.length);
+  const quiet = "account-001";
+  const keys = ["commit", "read", "feed"] as const;
+  const clock = {
+    commit: VERDICT_CLOCK,
+    read: "reader/service-ms",
+    feed: "publication-to-durable-effect/1",
   };
-  for (const event of fieldPlan(arm.identity.account, arm.case.people, arm.smoke).events) {
-    if (!event.resend) at(start + event.atMs)!.scheduled++;
-  }
-  for await (const line of createInterface({
-    input: fs.createReadStream(path.join(out, "ns-writes.jsonl")),
-    crlfDelay: Infinity,
-  })) {
-    if (!line) continue;
-    const row = JSON.parse(line);
-    if (row.stream !== "background" || row.resend) continue;
-    // [DX-THIN1] Why: report scheduled cohorts and receipt-time goodput using the verified sender ledger.
-    // Rejected: assigning delayed completions to the nominal arrival window's throughput.
-    const w = at(row.scheduledAt);
-    assert(w);
-    w.offered++;
-    if (row.expired) w.expired++;
-    if (row.outcome !== "committed") continue;
-    w.acknowledged++;
-    w.latencies.push(verdictMs(row));
-    w.lastAcknowledgedAt = Math.max(w.lastAcknowledgedAt, row.ackPublishedAt);
-    const acknowledged = at(row.ackPublishedAt);
-    if (acknowledged) acknowledged.acknowledgedInWindow++;
-  }
-  assert.equal(
-    rows.reduce((sum, w) => sum + w.acknowledged, 0),
-    raw.committed,
+  const distributions = Object.fromEntries(
+    geometry.map((w, i) => {
+      const window = evidence.windows[i];
+      assert.equal(window.name, w.name);
+      assert.equal(window.start, raw.interval.from + w.from * 1000);
+      assert.equal(window.to, window.start + w.seconds * 1000);
+      const group = window.accounts[quiet];
+      return [
+        w.name,
+        Object.fromEntries(
+          keys.map((k) => [k, histogramDistribution(Histogram.fromJSON(group[k]), clock[k])]),
+        ),
+      ];
+    }),
   );
-  return rows.map(({ latencies, lastAcknowledgedAt, ...w }) => {
-    const d = distribution(latencies, VERDICT_CLOCK);
-    return {
-      ...w,
-      missingOffers: w.scheduled - w.offered,
-      acknowledgedPerSecond: w.acknowledgedInWindow / (w.end - w.start),
-      lastScheduledAckAfterWindowMs:
-        w.scheduled === w.acknowledged
-          ? Math.max(0, lastAcknowledgedAt - start - w.end * 1000)
-          : null,
-      p50Ms: latencies.length ? percentile(d, 0.5) : null,
-      p99Ms: latencies.length ? percentile(d, 0.99) : null,
-    };
-  });
+  const ratios = [];
+  const effects = [];
+  if (arm.case.load === "reader") {
+    for (const [control, tested] of [
+      ["quiet-alone", "neighbors-64"],
+      ["quiet-alone", "neighbors-256"],
+      ["publish-control", "publish"],
+      ["import-control", "import"],
+    ] as const) {
+      const base = geometry.find((w) => w.name === control)!,
+        run = geometry.find((w) => w.name === tested)!;
+      assert(
+        base.seconds === run.seconds &&
+          base.seats?.[0] === run.seats?.[0] &&
+          base.rates?.[0] === run.rates?.[0],
+      );
+      const dirty = [control, tested].some((name) => {
+        const found = evidence.windows.find((w: any) => w.name === name).accounts[quiet];
+        return found.fullExpired || found.failed || found.incorrectReads || found.missingFeed;
+      });
+      const values = keys.map((k) =>
+        ratioBar(
+          "P6 quiet " + k + " during " + tested,
+          distributions[tested]![k]!,
+          distributions[control]![k]!,
+          1.25,
+          {
+            invalid: arm.smoke ? "short saved output" : dirty ? "quiet traffic incomplete" : null,
+            minimum: 500,
+          },
+        ),
+      );
+      ratios.push({ control, tested, quietSeats: run.seats![0], values });
+    }
+    const published = raw.report.deep.r2,
+      checked = raw.report.deep.activationOracle,
+      release = geometry.find((w) => w.name === "publish")!;
+    const releaseStart = raw.interval.from + release.from * 1000;
+    assert(
+      checked?.checked === arm.case.people && checked.guardComparisons === 2 * arm.case.people,
+    );
+    assert(published.layout === "page-cut" && published.coverage.size === arm.case.people);
+    assert(
+      published.publicationPosition > published.cut.position &&
+        published.endedAt >= releaseStart &&
+        published.endedAt <= releaseStart + release.seconds * 1000,
+    );
+    assert(
+      published.mutations.length === Math.min(arm.case.people, 10) &&
+        published.mutations.every((m: { position: number }) => m.position > published.cut.position),
+    );
+    effects.push({
+      name: "publish",
+      account: "account-002",
+      wallMs: published.wallMs,
+      startedAt: releaseStart,
+      endedAt: published.endedAt,
+      coverage: published.coverage,
+      cut: published.cut,
+      reference: "publish-control",
+    });
+    const imported = raw.report.deep.pooledImport;
+    const importFile = path.join(out, "int1-import.jsonl");
+    assert.equal(await fileHash(importFile), imported.sha256);
+    assert(
+      imported.format === "int1-import/1" &&
+        imported.incomingAccount === "account-011" &&
+        imported.people === arm.case.people,
+    );
+    const importWindow = geometry.find((w) => w.name === "import")!;
+    assert(
+      imported.start >= raw.interval.from + importWindow.from * 1000 &&
+        imported.endedAt <= raw.interval.to &&
+        imported.endedAt > imported.start,
+    );
+    const frames = fs.readFileSync(importFile, "utf8").trimEnd().split("\n");
+    const native = new Map<number, string[]>(
+      fs
+        .readFileSync(path.join(out, "deep-native-commits.jsonl"), "utf8")
+        .trimEnd()
+        .split("\n")
+        .map((line) => JSON.parse(line))
+        .filter((row) => row.position)
+        .map((row) => [row.position, row.commands]),
+    );
+    let count = 0,
+      total = 0,
+      position = 0;
+    for (const wanted of importFrames(arm.case.people)) {
+      const frame = JSON.parse(frames[count]!);
+      assert(
+        frame.commandId === raw.report.runTag + ":import:" + count &&
+          frame.position > position &&
+          frame.sentAt >= imported.start &&
+          frame.sentAt <= frame.ackAt &&
+          frame.ackAt <= imported.endedAt &&
+          native.get(frame.position)?.includes(frame.commandId),
+      );
+      assert.equal(frame.facts, wanted.length);
+      assert.equal(frame.rows, importDigest(wanted));
+      count++;
+      position = frame.position;
+      total += frame.facts;
+    }
+    assert.deepEqual(
+      [imported.facts, imported.frames, imported.position],
+      [total, count, position],
+    );
+    assert.equal(frames.length, count);
+    assert.equal(imported.factsPerSecond, (total * 1000) / (imported.endedAt - imported.start));
+    effects.push({ name: "import", ...imported, reference: "import-control" });
+  }
+  const windows = evidence.windows.map((w: any) => ({
+    name: w.name,
+    start: w.start,
+    to: w.to,
+    accounts: Object.fromEntries(
+      Object.entries(w.accounts).map(([account, data]: [string, any]) => [
+        account,
+        {
+          offered: data.fullOffered,
+          acked: data.acked,
+          expired: data.fullExpired,
+          incorrectReads: data.incorrectReads,
+          p99Ms: Object.fromEntries(
+            keys.map((k) => [
+              k,
+              percentile(histogramDistribution(Histogram.fromJSON(data[k]), clock[k]), 0.99),
+            ]),
+          ),
+        },
+      ]),
+    ),
+  }));
+  return { windows, ratios, effects, feed: evidence.feed };
 }
 
 function checkPreflight(raw: ScopeMeasurement) {
@@ -177,6 +294,19 @@ function checkPreflight(raw: ScopeMeasurement) {
       oracle.modelCorrectOnSameReads === oracle.reads &&
       oracle.mismatchCount === 0,
   );
+  // [DX-INT1] Why: the short tapes exercise resume and corrections, while the lost-ACK event lies outside their window.
+  // Rejected: letting matching archive bytes admit an incomplete feed or requiring an unoffered event.
+  const feed = raw.report.priorities.P3;
+  assert.equal(feed.notReachedAtStop.count, 0);
+  assert.equal(feed.counts.incompleteChanges, 0);
+  assert.deepEqual(
+    raw.invalid.filter(
+      (id) =>
+        id.startsWith("NS-P3 ") ||
+        (id.startsWith("NS-P2 ") && id !== "NS-P2 lost ACKs return the original receipt"),
+    ),
+    [],
+  );
 }
 
 // [DX-THIN1] Why: recompute from saved native evidence using the same code at production and collection. Rejected: accepting the producer's declared p99 or counting archives without checking their contents.
@@ -184,7 +314,11 @@ export async function collect(dir: string, mode: "produce" | "verify") {
   const { binding, ...plan } = read(path.join(dir, "campaign.json"));
   assert.equal(sha256(canonical(plan)), binding);
   assert.match(plan.source, /^[a-f0-9]{40}$/);
-  assert.deepEqual(plan.cases, campaignCases(plan.smoke ? [40] : undefined));
+  assert.equal(typeof plan.overnight, "boolean");
+  assert.deepEqual(
+    plan.cases,
+    campaignCases(plan.smoke ? [4] : plan.overnight ? [10_000] : undefined),
+  );
   assert.deepEqual(plan.treatment, treatment);
   assert(plan.placement === "physical" || (plan.placement === "leased-mac" && plan.smoke));
   await checkInputs(dir, plan);
@@ -233,22 +367,48 @@ export async function collect(dir: string, mode: "produce" | "verify") {
       exercised &&
         exercised.database === raw.report.deep.database &&
         exercised.nativeCommits > 0 &&
-        exercised.rangeRequests > 0,
+        exercised.rangeRequests === 0 &&
+        exercised.packedRows === 0,
     );
-    if (id.field) assert(exercised.packedRows > 0);
     assert.equal(exercised.unexpectedFunctions, 0);
-    assert.match(exercised.first.function, /^:triplex\.write\/v-[a-f0-9]{24}$/);
+    assert.equal(exercised.first.function, ":triplex/commit");
     assert.deepEqual(raw.report.deep.identity, id);
     if (plan.placement === "physical") {
       const clean = read(path.join(out, "cleanup/inventory.json"));
       assert(clean.at >= result.endedAt && clean.before.containers.length === 4);
       assert(Object.values(clean.after).every((x) => Array.isArray(x) && x.length === 0));
+      const placement = read(path.join(out, "placement.json"));
+      const launch = read(path.join(out, "gateway-jvm.json"));
+      assert.deepEqual(launch.identity, id);
+      assert(launch.capturedAt >= arm.startedAt && launch.capturedAt <= result.start);
+      assert.deepEqual(
+        launch.vm.map((r: any) => r.role),
+        Object.keys(gatewayJvmOptions),
+      );
+      for (const row of launch.vm) {
+        const role = row.role as keyof typeof gatewayJvmOptions;
+        assert(row.container === placement[role].id);
+        assert(gatewayJvmOptions[role].every((flag) => row.actual.includes(flag)));
+        assert.equal(row.actual.filter((flag: string) => /^-XX:\+Use.*GC$/.test(flag)).length, 1);
+        assert.equal(
+          row.actual.filter((flag: string) => flag.startsWith("-Xmx")).at(-1),
+          "-Xmx384m",
+        );
+      }
     }
     const key = `${c.people}/${c.profile}`,
       zero = prior.get(key);
     if (c.load === "zero") prior.set(key, raw);
     else {
-      assert(zero && raw.id.nonce !== zero.id.nonce && raw.scope !== zero.scope);
+      assert(zero && raw.id.nonce !== zero.id.nonce);
+      if (raw.scope === zero.scope) {
+        assert(plan.placement === "physical" && raw.report.deep.restoredSeed);
+        const origin =
+          zero.report.deep.restoredSeed?.origin ??
+          read(path.join(dir, `${c.people}-frozen-zero`, "captured-seed.json"));
+        assert.deepEqual(raw.report.deep.restoredSeed.origin, origin);
+        if (!zero.report.deep.restoredSeed) assert.deepEqual(origin.identity, zero.id);
+      }
       assert.equal(raw.report.deep.trace, zero.report.deep.trace);
       assert.equal(raw.report.deep.seed.sha256, zero.report.deep.seed.sha256);
       assert.equal(raw.offered, zero.offered);
@@ -258,7 +418,11 @@ export async function collect(dir: string, mode: "produce" | "verify") {
     const { summary } = cohort([raw], 1, zero?.values, zero?.invalid.join(", ") || null);
     const observed = result.code === 0 && raw.report.status === "DONE";
     const eligible =
-      observed && !plan.smoke && !id.field && !raw.invalid.length && !zero?.invalid.length;
+      observed &&
+      !plan.smoke &&
+      c.profile === "frozen" &&
+      !raw.invalid.length &&
+      !zero?.invalid.length;
     const { pooledBars, jointObligations, perScope, ...observations } = summary;
     const row = {
       binding,
@@ -273,9 +437,9 @@ export async function collect(dir: string, mode: "produce" | "verify") {
       files: await index(out),
       summary: {
         ...observations,
-        profile: id.field ? fieldProfile : summary.profile,
+        profile: c.profile === "field" ? pooledCampaignId + "/field" : summary.profile,
         ...(eligible ? { pooledBars, jointObligations, perScope } : {}),
-        ...(id.field ? { rateWindows: await fieldStats(out, arm, raw) } : {}),
+        ...(c.profile === "field" ? { field: await fieldStats(out, arm, raw) } : {}),
       },
     };
     const stored = path.join(out, "recorded.json");

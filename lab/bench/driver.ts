@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import {seedAddress} from "./lib/world.ts";
-import {tenantAccounts, accountOfSubject as tenantOf, tenantQueries, tenantRows, tenantFacts, tenantRung, TenantWriters,type TenantSpec,type TenantEvent} from "../experiments/EXP-DX1/scale1/tenants.ts";
-import {tenantPlan,tenantPhases,tenantWindows,tenantReaders,tenantTraceId} from "../experiments/EXP-DX1/scale1/tenant-traffic.ts";
+import {tenantAccounts, accountOfSubject as tenantOf, tenantCatalog, tenantQueries, tenantRows, tenantFacts, tenantRung, TenantWriters,type TenantSpec,type TenantEvent} from "../experiments/EXP-DX1/scale1/tenants.ts";
+import {tenantPlan,tenantPhases,tenantWindows,tenantReaders,tenantTraceId,pooledCampaignId} from "../experiments/EXP-DX1/scale1/tenant-traffic.ts";
 import {checkImage} from "../experiments/EXP-DX1/scale1/seed-image.ts";
 import {MembershipProof,tenantRelease} from "../experiments/EXP-DX1/scale1/tenant-proof.ts";
 import {challengeTenants} from "../experiments/EXP-DX1/scale1/tenant-checks.ts";
 import {tenantFeedAt} from "../experiments/EXP-DX1/scale1/tenant-feed.ts";
 import {tenantObservations} from "../experiments/EXP-DX1/scale1/tenant-metrics.ts";
+import { runImport } from "../experiments/EXP-DX1/int1/pooled-import.ts";
 import {TenantScheduler} from "../experiments/EXP-DX1/scale1/tenant-scheduler.ts";
 import type {SchedulerOptions} from "./lib/scheduler.ts";
 import { smallId, smallPhases, smallTrace, smallSeconds, smallPeople } from "../experiments/EXP-DX1/scale1/small-plan.ts";
@@ -95,6 +96,7 @@ import { SpillThread } from "./lib/spill-thread.ts";
 import { judgeReadCode, VERDICTS, wasHot } from "./lib/read-judgment.ts";
 import { ReadWindow } from "./lib/read-window.ts";
 import type { ReadWindowPlan } from "./lib/stream-reads.ts";
+import type { HistoricalFallbackThread, HistoricalMode } from "./lib/historical-fallback.ts";
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import { ReadRecords, type ObservationRecords } from "./lib/read-records.ts";
 import { checkWithOracleWorker } from "./lib/oracle-thread.ts";
@@ -135,16 +137,22 @@ if (!["xtdb", "qlever", "datomic"].includes(lane)) throw new Error("--lane xtdb|
 const deepSmoke = opt("profile") === "deep-smoke";
 const deepLive = opt("profile") === "deep-live";
 const deepField = flag("int1-field");
+const pooledCampaign = opt("int1-pooled") as TenantSpec["campaign"];
+const pooledFrozen = pooledCampaign === "frozen", pooledField = pooledCampaign === "field";
 const alignment = opt("peak-alignment") as PeakAlignment | undefined;
 if (deepLive || alignment) assert(deepLive && (alignment === "coincident" || alignment === "staggered") && opt("tenant-study") === "interference");
 const deep = opt("profile") === "deep" || deepSmoke || deepLive;
 const tenantSpec: TenantSpec | undefined = opt("tenant-study") ? {
   ...(alignment ? {live:alignment}:{}),
+  ...(pooledCampaign ? {campaign:pooledCampaign}:{}),
   study: opt("tenant-study") as TenantSpec["study"],
   topology: opt("tenant-topology") as TenantSpec["topology"],
   physical: Number(opt("deep-account", "0")),
 } : undefined;
 if(tenantSpec)assert(deep&&["pooled","separate"].includes(tenantSpec.topology)&&["interference","small","million","smoke"].includes(tenantSpec.study));
+if(pooledCampaign)assert((pooledFrozen || pooledField) && tenantSpec?.topology === "pooled" &&
+  !deepField && !deepLive && !flag("deep-activation") && !flag("deep-seed-only") && !flag("deep-interference") &&
+  !flag("deep-small-scopes") && (deepSmoke === (tenantSpec.study === "smoke")));
 const tenants=tenantSpec?tenantAccounts(tenantSpec):undefined;
 const tenantMembership=tenants ? new MembershipProof() : undefined;
 const tenantSize = tenants?.reduce((people, account) => people + account.people, 0) ?? 0;
@@ -158,18 +166,18 @@ if (deepField) assert(deep && !tenantSpec && !smallOnly && !activationOnly && !s
 if (smallOnly && (activationOnly || seedOnly || interferenceOnly || deepSmoke || flag("zero-readers"))) throw Error("Small scope study requires its separate low-rate arm");
 if (interferenceOnly && (activationOnly || seedOnly || deepSmoke || flag("zero-readers") || rung !== "deep-10k")) throw Error("Interference requires the complete deep-10k cohort");
 if ((activationOnly || seedOnly) && (flag("zero-readers") || activationOnly && seedOnly)) throw Error("Choose one deep arm");
-const fullLength = profile === "v3" || deep && !deepSmoke && !activationOnly && !seedOnly && !interferenceOnly && !smallOnly && !tenantSpec;
+const fullLength = profile === "v3" || deep && !deepSmoke && !activationOnly && !seedOnly && !interferenceOnly && !smallOnly && (!tenantSpec || pooledFrozen);
 if (!deep && !(profile in PROFILES)) throw new Error(`--profile must be one of ${Object.keys(PROFILES).join("|")}`);
 const rungSubjects = devSubjects ? Number(devSubjects) : availableRungs[rung]!;
 const deepAccount = Number(opt("deep-account", "0"));
-const deepId = deep ? { ...(tenantSpec?{tenant:tenantSpec}:{}), ...(deepField ? { field: true as const } : {}), source: process.env.TRIPLEX_TRACE_SOURCE!, slot: process.env.TRIPLEX_TRACE_SLOT!, nonce: opt("deep-nonce")!, people: rungSubjects, account: deepAccount, arm: seedOnly ? "seed" : tenantSpec?.study==="small" ? "small" : tenantSpec && ["smoke","interference"].includes(tenantSpec.study) ? "interference" : smallOnly ? "small" : interferenceOnly ? "interference" : activationOnly ? "activation" : flag("zero-readers") ? "zero" : "reader" } satisfies DeepIdentity : undefined;
+const deepId = deep ? { ...(tenantSpec?{tenant:tenantSpec}:{}), ...(deepField ? { field: true as const } : {}), source: process.env.TRIPLEX_TRACE_SOURCE!, slot: process.env.TRIPLEX_TRACE_SLOT!, nonce: opt("deep-nonce")!, people: rungSubjects, account: deepAccount, arm: seedOnly ? "seed" : tenantSpec?.study==="small" ? "small" : tenantSpec && !pooledCampaign && ["smoke","interference"].includes(tenantSpec.study) ? "interference" : smallOnly ? "small" : interferenceOnly ? "interference" : activationOnly ? "activation" : flag("zero-readers") ? "zero" : "reader" } satisfies DeepIdentity : undefined;
 if (deepId) {
   requireIdentity(deepId);
   if (!opt("deep-barrier") || devSubjects || lane !== "datomic" || opt("seed-manifest") || opt("round-plan") || opt("idle-gaps-ms") || opt("oracle-root") === undefined || opt("seed", deepSeed(deepAccount)) !== deepSeed(deepAccount)) throw Error("Deep requires its named Datomic rung, independent oracle, account seed, and start barrier");
 }
 if(smallOnly) assert.equal(rungSubjects,smallPeople(deepAccount));
 const plannedTenants=tenantSpec&&deepId?tenantPlan(tenantSpec,deepId.arm):undefined;
-const tenantWriters=plannedTenants ? new TenantWriters(plannedTenants.accounts,plannedTenants.events,deepLive) : undefined;
+const tenantWriters=plannedTenants ? new TenantWriters(plannedTenants.accounts,plannedTenants.events,deepLive || pooledField) : undefined;
 const deepPlan = plannedTenants ?? (smallOnly ? smallTrace(deepAccount) : interferenceOnly ? interferenceTrace(deepAccount) : deepField ? fieldPlan(deepAccount, rungSubjects, deepSmoke) : deep ? frozenDeep(deepAccount, rungSubjects) : undefined);
 // [DX-TAIL1] Why: a continuous diagnostic prefix preserves original arrival intervals and subject predecessors.
 // Rejected: shortening idle gaps, which changes heap aging and offered load.
@@ -190,7 +198,7 @@ const rawDir = path.dirname(output);
 if (flag("int1-guest-output")) {
   // [DX-INT1] Why: the managed fixture needs a real Linux device for the unchanged SQLite guard.
   // Rejected: a FUSE-backed feed ledger or letting arbitrary runs write outside the worktree.
-  assert(process.platform === "linux" && deepSmoke && deepId && !tenantSpec);
+  assert(process.platform === "linux" && deepSmoke && deepId && (!tenantSpec || tenantSpec.campaign === pooledCampaign));
   assert(process.env.DX_THIN_STACK && process.env.DX_THIN_HOST_PID);
   const stack = JSON.parse(fs.readFileSync(process.env.DX_THIN_STACK, "utf8"));
   assert(stack.managed?.compact && stack.prefix === deepId.slot && /^tx2-dxthin-/.test(stack.prefix));
@@ -206,7 +214,9 @@ fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
 if (tailReplay) devFlags.push("tail1-replay");
 const rollingReadSmoke = flag("rolling-read-smoke");
+const rd1ReadDiagnostic = flag("rd1-read-diagnostic");
 if (rollingReadSmoke) devFlags.push("rolling-read-smoke");
+if (rd1ReadDiagnostic) devFlags.push("rd1-read-diagnostic");
 if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
 if (flag("legacy-empty-basis-broadcast")) devFlags.push("legacy-empty-basis-broadcast");
 const boundedMemoryTrial = process.env.DX_BOUNDED_MEMORY_TRIAL === "1";
@@ -235,6 +245,9 @@ const config = {
   replicaWorldCacheMiB: Number(opt("replica-world-cache-mib", "32")),
   replicaHistoryMiB: Number(opt("replica-history-mib", "64")),
   replicaHistoryCoverage: opt("replica-history-coverage", "global") as "global" | "closure",
+  historicalFallback: opt("replica-historical-fallback", "off") as HistoricalMode,
+  historicalFallbackActive: Number(opt("replica-fallback-active", "4")),
+  installedHistoryMiB: Number(opt("replica-installed-history-mib", "32")),
   replicaPeer: opt("replica-peer", "reader") as "reader" | "writer",
   // [DX-R3-P9] Why: retain the established fallback until the bounded worker passes native stress; the unbounded worker had 112 errors.
   // Rejected: promoting from zero-reader captures alone.
@@ -335,6 +348,11 @@ if (!["pending", "mixed"].includes(config.splitTarget) || !Number.isSafeInteger(
   throw Error("invalid split-target or replica-history-mib");
 if (!["global", "closure"].includes(config.replicaHistoryCoverage) || config.replicaHistoryCoverage === "closure" && config.readPath !== "replica")
   throw Error("Replica history coverage requires global, or closure with the replica reader");
+if (!["off", "lane", "batch", "revision", "install"].includes(config.historicalFallback) ||
+    !Number.isSafeInteger(config.historicalFallbackActive) || config.historicalFallbackActive < 1 || config.historicalFallbackActive > 16 ||
+    !Number.isSafeInteger(config.installedHistoryMiB) || config.installedHistoryMiB < 1 || config.installedHistoryMiB > 512 ||
+    config.historicalFallback !== "off" && (lane !== "datomic" || config.readPath !== "replica" || config.composition !== "reach" || config.sharedReaderIndex || !process.env.DATOMIC_READ_URLS))
+  throw Error("Historical fallback requires separate Datomic reach readers and the read gateway");
 if (!["reader", "writer"].includes(config.replicaPeer) || !["main", "worker"].includes(config.replicaThread)) throw Error("invalid replica peer/thread");
 if (!["loop", "fair"].includes(config.replicaYield) || !["legacy", "inline"].includes(config.replicaFeed))
   throw Error("invalid replica-yield or replica-feed control");
@@ -358,7 +376,7 @@ const bulkManifest = config.seedManifest ? JSON.parse(fs.readFileSync(path.resol
 if (bulkManifest && (bulkManifest.subjects !== rungSubjects || bulkManifest.lane !== lane || bulkManifest.seed !== config.seed))
   throw new Error(`--seed-manifest is for ${bulkManifest.lane}/${bulkManifest.subjects} subjects/seed ${bulkManifest.seed}, not ${lane}/${rungSubjects}/${config.seed}`);
 const restoredSeed=opt("verified-seed-image")?JSON.parse(fs.readFileSync(opt("verified-seed-image")!,"utf8")):undefined;
-if(restoredSeed){assert(deepId && ["reader","activation"].includes(deepId.arm));assert.deepEqual(restoredSeed.identity,deepId);checkImage(restoredSeed.origin,deepId);}
+if(restoredSeed){assert(deepId && (pooledCampaign || ["reader","activation"].includes(deepId.arm)));assert.deepEqual(restoredSeed.identity,deepId);checkImage(restoredSeed.origin,deepId);}
 const scopeName = restoredSeed?.origin.scope ?? (bulkManifest ? bulkManifest.scope : `ns-${lane}-${config.rung.replace(/[^a-z0-9]/gi, "")}-${runTag}`);
 const now = () => performance.timeOrigin + performance.now();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -372,6 +390,7 @@ const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(
 const tenantSources = tenantSpec ? fs.readdirSync(path.join(REPO,"lab/experiments/EXP-DX1/scale1")).filter(f=>(f.startsWith("tenant")&&!f.endsWith("test.ts"))||f==="seed-image.ts"||f==="deep-live.ts"||f==="deep-live-pins.json").map(f=>"lab/experiments/EXP-DX1/scale1/"+f) : [];
 const BENCH_FILES = [...tenantSources,"lab/bench/driver.ts", "lab/trace/instrument.mjs", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 if (deepField) BENCH_FILES.push("lab/experiments/EXP-DX1/int1/field-plan.ts", "lab/experiments/EXP-DX1/scale1/deep-live.ts");
+if (pooledCampaign) BENCH_FILES.push("lab/experiments/EXP-DX1/int1/field-plan.ts", "lab/experiments/EXP-DX1/int1/pooled-import.ts");
 if(smallOnly||interferenceOnly) {
   const names=smallOnly?["small-plan.ts","small-pins.json"]:["interference.ts","interference-pins.json"];
   BENCH_FILES.push(...names.map(n=>"lab/experiments/EXP-DX1/scale1/"+n));
@@ -383,13 +402,13 @@ const report: Record<string, any> = latencyReceipt({
   qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v3: final-receipt ACK, minimum 500 commits, four-subject growth",
   verdictClock: VERDICT_CLOCK,
-  verdictPlanId: deepField ? fieldProfile : tenantSpec ? (tenantSpec.live ? liveProfile+"/"+tenantSpec.live : tenantTraceId+"/"+tenantSpec.study) : fullLength ? V3_PLAN_ID : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
+  verdictPlanId: deepField ? fieldProfile : pooledField || pooledFrozen && deepSmoke ? pooledCampaignId + "/" + pooledCampaign : fullLength ? V3_PLAN_ID : tenantSpec ? (tenantSpec.live ? liveProfile+"/"+tenantSpec.live : tenantTraceId+"/"+tenantSpec.study) : rd1ReadDiagnostic ? "rd1-reader-diagnostic/1" : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
   status: "RUNNING",
   startedAt: new Date().toISOString(),
   config,
   runTag,
   scope: scopeName,
-  ...(deepId ? { deep: { profile: deepField ? fieldProfile : deepLive ? liveProfile : DEEP_PROFILE, identity: deepId, ...(plannedTenants?{accounts:tenants,logicalTraces:plannedTenants.logical}: {}) } } : {}),
+  ...(deepId ? { deep: { profile: deepField ? fieldProfile : pooledField ? pooledCampaignId + "/field" : deepLive ? liveProfile : DEEP_PROFILE, identity: deepId, ...(plannedTenants?{accounts:tenants,logicalTraces:plannedTenants.logical}: {}) } } : {}),
   ...(tailReplay ? { tailReplay } : {}),
   generator: { traceSha256: sha256File(deepField ? "lab/experiments/EXP-DX1/int1/field-plan.ts" : deep ? "lab/bench/lib/deep-trace.ts" : "lab/bench/lib/trace.ts"), worldSha256: sha256File(deep ? "lab/bench/lib/deep-world.ts" : "lab/bench/lib/world.ts"), seed: config.seed },
   benchSources: Object.fromEntries(BENCH_FILES.map((f) => [f, sha256File(f)])),
@@ -475,8 +494,10 @@ const modelJournalContext = {
 // Rejected: advancing an observation frontier in irregular-clock, paired or externally written scopes.
 const streamReads = (fullLength || rollingReadSmoke) && !config.zeroReaders && lane === "datomic" && config.readPath === "replica" &&
   config.strictRecordClocks && config.replicaThread === "worker" && config.expectedStateRetention === "worker-journal" &&
-  !pairPlan && !tenantSpec && config.readRetention !== "raw";
-if (rollingReadSmoke && (!streamReads || profile !== "smoke" || !config.readerLadderOnly || !config.levelS || config.levelS <= config.settleS))
+  !pairPlan && (!tenantSpec || pooledFrozen) && config.readRetention !== "raw";
+if (rd1ReadDiagnostic && (!rollingReadSmoke || !config.levelS || config.levelS > 45))
+  throw Error("RD1 read diagnostics require the rolling smoke plan and levels no longer than 45 s");
+if (rollingReadSmoke && ((!streamReads && !(rd1ReadDiagnostic && config.zeroReaders)) || profile !== "smoke" || !config.readerLadderOnly || !config.levelS || config.levelS <= config.settleS))
   throw Error("Rolling read smoke requires the short replica ladder and its worker journal");
 let modelJournal = config.expectedStateRetention === "journal" ? new ModelJournal(modelJournalFile, modelJournalContext) : undefined;
 const modelJournalThread = config.expectedStateRetention === "worker-journal" && !streamReads ? new ModelJournalThread(modelJournalFile, modelJournalContext) : undefined;
@@ -567,6 +588,7 @@ function straddleCandidate(range?: { first: number; people: number }): { subject
 }
 const overlayCount: Record<string, number> = {};
 let feed: FeedConsumer | SideThread | null = null;
+let historicalFallback: HistoricalFallbackThread | undefined;
 let feedWind: { target: number; checkpointAtStop: number; inFlightAtFeedTarget: number } | null = null;
 const lateGrowth: { cmd: any; v: number; pending: Promise<any> }[] = [];
 let coordinate: (position: number) => any = (position) => ({ stream: "unknown", epoch: 0, offset: position, ordinal: 0 });
@@ -574,6 +596,7 @@ let coordinate: (position: number) => any = (position) => ({ stream: "unknown", 
 function main() {
   return run().catch((error) => {
     void flushTracing();
+    void historicalFallback?.close();
     report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
     report.status = "ERROR";
     report.error = String(error?.stack ?? error);
@@ -587,26 +610,22 @@ function main() {
 async function run() {
   cpuProfileClock("start");
   save();
-  if (deepId && process.env.DX_INT1_NATIVE_WRITE_READBACK === "1") {
-    const database = "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url");
-    const observed = { database, nativeCommits: 0, packedRows: 0, rangeRequests: 0, unexpectedFunctions: 0,
-      first: undefined as undefined | { position: number; operationId: string; nativeT: string; function: string } };
-    report.deep.writePath = observed;
-    // [DX-THIN1] Why: bind the installed predecessor function to the actual saved scope and receipt.
-    // Rejected: taking a requested launcher option as evidence of native function selection.
-    observeNativeReceipt((db, input, reply, position) => {
-      if (db !== database || !reply.writePath) return;
-      const info = reply.writePath;
-      assert(info.scheduling === false && typeof info.historyRange === "boolean" && Number.isSafeInteger(info.packedRows) && info.packedRows >= 0);
-      assert(reply.t?.t === "long" && /^\d+$/.test(reply.t.v));
-      observed.first ??= { position, operationId: input.operationId, nativeT: reply.t.v, function: info.function };
-      observed.nativeCommits++;
-      observed.rangeRequests += Number(info.historyRange);
-      observed.packedRows += info.packedRows;
-      observed.unexpectedFunctions += Number(!/^:triplex\.write\/v-[a-f0-9]{24}$/.test(info.function));
+  const campaignMeter = deepId && process.env.DX_INT1_NATIVE_WRITE_READBACK === "1"
+    ? new DeepCommitMeter("s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url")) : undefined;
+  if (campaignMeter) {
+    // [DX-INT1] Why: retain the returned path with its native ID, including the seed before reader setup.
+    // Rejected: counting options from configuration or treating a duplicate lookup as a new native receipt.
+    observeNativeReceipt((db, input, reply, position, commands) => {
+      if (db === campaignMeter.database && reply.writePath !== undefined)
+        campaignMeter.observe(db, input, reply, position, commands);
     });
   }
   const writer = await openComposition(config.composition, lane, scopeName);
+  if (lane === "datomic" && process.env.DX_W1_WRITER_EXPECTATION) {
+    const { readWriteOptions } = await import("../experiments/EXP-DX1/w1/write-options.ts");
+    const db = "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url");
+    report.writerOptions = await readWriteOptions(writer.backend.url, db, process.env.DX_W1_WRITER_EXPECTATION);
+  }
   const aux = await openComposition(config.composition, lane, scopeName);
   // History growth (bulk, P4 item 2) writes through its own opening, so a writer admission queue full of
   // trace commands cannot starve it; a command that outlives the phase is resolved at wind-down.
@@ -708,16 +727,17 @@ async function run() {
     report.deep.trace = deepPlan.sha256;
     save();
   }
-  const tenantReleasePhase = tenantSpec && !tenantSpec.live && (tenantSpec.study === "interference" || tenantSpec.study === "million" && activationOnly);
-  const releaseTarget = tenantReleasePhase ? tenants!.find(a => a.index === 1) : undefined;
+  const pooledPublish = pooledField && !config.zeroReaders;
+  const tenantReleasePhase = tenantSpec && !pooledCampaign && !tenantSpec.live && (tenantSpec.study === "interference" || tenantSpec.study === "million" && activationOnly);
+  const releaseTarget = tenantReleasePhase || pooledPublish ? tenants!.find(a => a.index === 1) : undefined;
   const nextRelease = config.composition === "reach-touched" && process.env.DX_INT1_DEEP_RELEASE === "ead90" ? "ead90" : "standard";
   const activation = releaseTarget
     ? new DeepActivation(rawDir, releaseTarget.people, runTag + ":" + releaseTarget.key, releaseTarget.first, nextRelease, releaseTarget, Number(opt("deep-evaluators") ?? 2))
     : activationOnly && !tenantSpec ? new DeepActivation(rawDir, rungSubjects, runTag, 0, nextRelease) : undefined;
-  const measureBurst = tenantSpec?.study === "interference";
-  const meter = (activation || measureBurst) && config.composition !== "memory"
-    ? new DeepCommitMeter("s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url")) : undefined;
-  if (meter) observeNativeReceipt(meter.observe.bind(meter));
+  const measureBurst = tenantSpec?.study === "interference" && !pooledCampaign;
+  const meter = campaignMeter ?? ((activation || measureBurst) && config.composition !== "memory"
+    ? new DeepCommitMeter("s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url")) : undefined);
+  if (meter && !campaignMeter) observeNativeReceipt(meter.observe.bind(meter));
   if (deepId) atomicWrite(path.join(rawDir, "seed-observed.json"), JSON.stringify({ identity: deepId, scope: scopeName, seed: report.deep.seed, trace: report.deep.trace }));
   if (seedOnly) {
     report.status = "SEEDED"; save(); samplersOn = false; clearInterval(eluTimer);
@@ -752,8 +772,8 @@ async function run() {
   const params: TraceParams = { ...TRACE_DEFAULTS, ...seriesParams, burstMultiplier: opt("burst-multiplier") ? config.burstMultiplier : (seriesParams.burstMultiplier ?? TRACE_DEFAULTS.burstMultiplier), steadyFactsPerS: (seriesParams.steadyFactsPerS ?? TRACE_DEFAULTS.steadyFactsPerS) * config.rateScale };
   const idle = config.idleGapsMs ? idlePlan(config.idleGapsMs, config.idleCommits, N,config.idleWarmupCommits) : null;
   const lastTenantWindow = tenantSpec && deepId ? tenantWindows(tenantSpec, deepId.arm).at(-1) : undefined;
-  const traceDurationS = deepField ? (deepSmoke ? 30 : V3_OFFER_SECONDS) : lastTenantWindow ? lastTenantWindow.from + lastTenantWindow.seconds : idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
-  if (deepPlan) Object.assign(params, { sizeClasses: deepPlan.sizeClasses, steadyFactsPerS: (deepLive || deepField ? 3.5 : DEEP_RATE) * deepPlan.sizeClasses.reduce((n, c) => n + c.min * c.share, 0) });
+  const traceDurationS = deepField || pooledFrozen ? (deepSmoke ? 30 : V3_OFFER_SECONDS) : lastTenantWindow ? lastTenantWindow.from + lastTenantWindow.seconds : idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
+  if (deepPlan) Object.assign(params, { sizeClasses: deepPlan.sizeClasses, steadyFactsPerS: (deepLive || deepField || pooledField ? 3.5 : DEEP_RATE) * deepPlan.sizeClasses.reduce((n, c) => n + c.min * c.share, 0) });
   const events = deepPlan ? deepPlan.events : idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
   if (!tenantSpec && config.receiptCapture === "replica-worker" &&
       events.filter(e => e.stream === "background" && !e.resend && (!deep || e.atMs < V3_OFFER_SECONDS * 1000)).length > MAX_RECEIPT_CAPTURES)
@@ -771,20 +791,31 @@ async function run() {
   // [DX-INT1] Why: six reading workers own their demand sets, while the independent sender receipt worker retains its ordered capture and fallback.
   // Rejected: handing all six a population image, or routing receipt observation back through the sender.
   const demandReaders = config.composition === "reach-touched";
+  // [DX-THIN1] Why: the catalog proves the legacy clock before offers without loading a person's rows.
+  // Rejected: using a subject selected for the cold-read measurements as the startup witness.
+  const replicaClockWitness = demandReaders && tenantSpec?.campaign && process.env.DX_INT1_LEGACY_TOUCHED === "1"
+    ? tenantCatalog : undefined;
+  if (!config.zeroReaders && config.historicalFallback !== "off" && !demandReaders) {
+    const { HistoricalFallbackThread } = await import("./lib/historical-fallback.ts");
+    historicalFallback = new HistoricalFallbackThread({ mode: config.historicalFallback,
+      scope: String(runtimeApi.DatabaseScope.test(scopeName)), endpoint: process.env.DATOMIC_READ_URLS!.split(",")[0]!, active: config.historicalFallbackActive });
+    if ((await historicalFallback.snapshot()).requested !== 0)
+      throw Error("Historical fallback lane handled a request before reader startup");
+  }
   const afterReaderImages = Boolean(deep && !demandReaders && !config.zeroReaders && !config.sharedReaderIndex && pairPlan?.readers !== 0);
   const replicaHost = config.readPath === "replica" ? config.replicaThread === "worker"
     ? await (await import("./lib/replica-thread.ts")).ReplicaThread.open({ scope: scopeName, appliedLogPath: spill ? `${spill.directory}-copy-applied.jsonl` : undefined,
       composition: config.composition, roots: demandReaders ? [] : Array.from({ length: N }, (_, i) => ids.placement(i)),
       initial: { position: seed.lastPosition, instant: seed.lastInstant }, feed: config.replicaFeed,
       worldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, fallbackThread: config.replicaFallbackThread, historyBytes: config.replicaHistoryMiB * 1024 ** 2, historyCoverage: config.replicaHistoryCoverage, peer: config.replicaPeer,
-      sharedReaderIndex: config.sharedReaderIndex, afterReaderImages,
+      sharedReaderIndex: config.sharedReaderIndex, afterReaderImages, firstReadRoot: replicaClockWitness,
       receiptSpill: config.receiptCapture === "replica-worker" ? spill!.connect() : undefined,
       ...(config.sharedReaderIndex ? { worker: 0, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2 } : {}),
     }, aux)
     : await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
       scopeName, demandReaders ? [] : Array.from({ length: N }, (_, i) => ids.placement(i)), aux,
       { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed,
-      config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer, undefined, demandReaders ? "touched" : "all", undefined, Date.now(), false, config.replicaHistoryCoverage) : undefined;
+      config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer, undefined, demandReaders ? "touched" : "all", replicaClockWitness, Date.now(), false, config.replicaHistoryCoverage) : undefined;
   const receiptThread = config.receiptCapture === "replica-worker" && replicaHost && "captureReceipt" in replicaHost
     ? replicaHost : undefined;
   let copyApplications: { position: number; at: number }[] = [];
@@ -804,7 +835,8 @@ async function run() {
       return remote.pull(root, basis);
     };
   }
-  const workerCfg = (w: number) => ({ deep, replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, traceEvery: config.readerTraceEvery, replicaHistoryMiB: config.replicaHistoryMiB, replicaHistoryCoverage: config.replicaHistoryCoverage, replicaYield: config.replicaYield, readPath: demandReaders ? "gateway" : config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: demandReaders ? undefined : mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ deep, replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, traceEvery: config.readerTraceEvery, replicaHistoryMiB: config.replicaHistoryMiB, replicaHistoryCoverage: config.replicaHistoryCoverage, replicaYield: config.replicaYield, readPath: demandReaders ? "gateway" : config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: demandReaders ? undefined : mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare,
+    installedHistoryBytes: config.historicalFallback === "install" && w < config.readerThreads ? Math.floor(config.installedHistoryMiB * 1024 ** 2 / config.readerThreads) : undefined });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const readerLives: { worker: number; life: ReaderLifecycle }[] = [];
@@ -844,9 +876,10 @@ async function run() {
       worker = directReplica.startSharedReader(cfg, observationPort);
     } else {
       const replicaPort = directReplica?.connect();
+      const historicalPort = w < config.readerThreads ? historicalFallback?.connect() : undefined;
       worker = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), {
-        workerData: { ...cfg, observationPort, replicaPort, readerEntrypoint: true },
-        transferList: [...(observationPort ? [observationPort] : []), ...(replicaPort ? [replicaPort] : [])],
+        workerData: { ...cfg, observationPort, replicaPort, historicalPort, readerEntrypoint: true },
+        transferList: [...(observationPort ? [observationPort] : []), ...(replicaPort ? [replicaPort] : []), ...(historicalPort ? [historicalPort] : [])],
         env: process.env,
       });
     }
@@ -904,14 +937,16 @@ async function run() {
   const basisTimer = sendBasis ? setInterval(broadcast, 100) : undefined;
   const setReaders = (phase: number, wantedReaders: number, mode: string) => {
     const readers = config.maxReaders === null ? wantedReaders : Math.min(wantedReaders, config.maxReaders);
-    if (tenants && tenantSpec && deepId && phase >= 0) {
-      const stage = tenantWindows(tenantSpec, deepId.arm)[phase]!;
-      const sets = Array.from({length: workers.length}, () => [] as {first:number; people:number; interReadMs:number; key:string}[]);
+    const stage = tenantSpec && deepId && phase >= 0 ? tenantWindows(tenantSpec, deepId.arm)[phase] : undefined;
+    if (tenants && stage) {
+      const sets = Array.from({length: workers.length}, () => [] as {first:number; people:number; interReadMs:number; key:string; matched?:boolean}[]);
       for (const a of tenants) {
         const count = tenantReaders(stage, a.index);
         for (let j = 0; j < count && workers.length; j++) {
           const set = sets[(j + a.index) % workers.length]!;
-          set.push({first:a.first, people:a.people, key:a.key, interReadMs:stage.pattern==="low" || stage.pattern==="busy-low" && a.index!==0 ? 15000 : 0});
+          const matched = pooledField && a.index === 0;
+          set.push({first:a.first, people:a.people, key:a.key, ...(matched ? {matched} : {}),
+            interReadMs:matched ? 1_000 : stage.pattern==="low" || stage.pattern==="busy-low" && a.index!==0 ? 15000 : 0});
         }
       }
       assert.equal(sets.reduce((sum,x)=>sum+x.length,0), readers);
@@ -1289,13 +1324,20 @@ async function run() {
   };
 
   // ---------------------------------------------------------------- phases
-  let plan: ReturnType<typeof nsPlan> = tenantSpec && deepId ? tenantPhases(tenantSpec,deepId.arm) : smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
+  // [DX-RD1] Why: retain the stress, recovery and weighted phases inside one short diagnostic arm and its exact zero control.
+  // Rejected: truncating v3 or including the multi-hour depth-growth phases under a short time budget.
+  const rd1Phases = new Set(["warmup", "baseline", "L256", "L1024", "recovery", "p4mix"]);
+  const keepPhase = (p: ReturnType<typeof nsPlan>[number]) => {
+    if (rd1ReadDiagnostic) return rd1Phases.has(p.name);
+    return !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256));
+  };
+  let plan: ReturnType<typeof nsPlan> = pooledFrozen && !deepSmoke ? nsPlan("v3", config.zeroReaders) : tenantSpec && deepId ? tenantPhases(tenantSpec,deepId.arm) : smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
     { name: "presweep", readers: 64, seconds: 100, measured: true, mode: "mixed" },
     { name: "activation", readers: 64, measured: true, mode: "mixed" },
   ] : deepSmoke ? [
     { name: "warmup", readers: config.zeroReaders ? 0 : 1, seconds: 5, measured: false },
     { name: "L4", readers: config.zeroReaders ? 0 : 4, seconds: 25, measured: true, ladder: true, mode: "mixed" },
-  ] : idle ? idle.phases : nsPlan(profile === "deep" || profile === "deep-live" || profile === "deep-smoke" ? "v3" : profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
+  ] : idle ? idle.phases : nsPlan(profile === "deep" || profile === "deep-live" || profile === "deep-smoke" ? "v3" : profile, config.zeroReaders).filter(keepPhase).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
   // [DX-RD1] Why: exercise the real rolling collector and source frontier in a brief owned smoke run.
   // Rejected: weakening the fixed v3 schedule or using a scaled run for a verdict.
   if (rollingReadSmoke) {
@@ -1312,6 +1354,8 @@ async function run() {
     return [{ ...phase, seconds: Math.min(phase.seconds!, shortTail.seconds - phase.traceFromS) }];
   });
   const phases: any[] = [];
+  let pooledImport: Promise<void> | undefined;
+  let pooledImportError: unknown;
   // [DX-B2-N3] Why: identify a completed indexing job inside each P1 level, not unbound log words.
   // Rejected: issuing maintenance after readers stop.
   const indexClient = lane === "datomic" ? new (await import(pathToFileURL(path.join(REPO,"packages/datomic/dist/index.js")).href)).DatomicClient(process.env["DATOMIC_URL"] ?? "http://127.0.0.1:8493", 601000) : null;
@@ -1326,7 +1370,7 @@ async function run() {
   }
   await sleep(Math.max(0, traceStart - now()));
   if (deep) void watermarkSampler(aux);
-  if (deep && (fullLength || interferenceOnly || smallOnly || deepSmoke && process.env.DX_INT1_NATIVE_WRITE_READBACK === "1")) scheduler.setUntil(traceStart + (deepSmoke ? 30 : smallOnly ? smallSeconds : interferenceOnly ? interferenceSeconds : tailReplay?.seconds ?? V3_OFFER_SECONDS) * 1000);
+  if (deep && (pooledCampaign || fullLength || interferenceOnly || smallOnly || deepSmoke && process.env.DX_INT1_NATIVE_WRITE_READBACK === "1")) scheduler.setUntil(traceStart + (pooledCampaign ? traceDurationS : deepSmoke ? 30 : smallOnly ? smallSeconds : interferenceOnly ? interferenceSeconds : tailReplay?.seconds ?? V3_OFFER_SECONDS) * 1000);
   scheduler.start();
   probeScheduler?.start();
   if (config.probe10PerS > 0) probeTimer = setInterval(() => void overlay("probe10", probeRng.int(N), 10), 1000 / config.probe10PerS);
@@ -1383,8 +1427,11 @@ async function run() {
       const windows = spec.measured ? [{ name: spec.name, from: start + settle, to }] : [];
       if (spec.name === "L256-A") windows.push({ name: "L256-legacy", from: start + settle, to: start + 45_000 });
       if (spec.name === "L256-D") windows.push({ name: "L256-adjacent", from: to - 45_000 + settle, to });
-      const recovery = spec.pool === "recovery" ? Array.from({ length: (spec.seconds! - 30) / 5 + 1 }, (_, i) =>
-        ({ name: spec.name, from: start + i * 5000, to: start + i * 5000 + 30_000 })) : [];
+      const recoveryWidth = Math.min(30, spec.seconds!);
+      const recovery = spec.pool === "recovery" || spec.name === "recovery"
+        ? Array.from({ length: Math.floor((spec.seconds! - recoveryWidth) / 5) + 1 }, (_, i) =>
+          ({ name: spec.name, from: start + i * 5000, to: start + i * 5000 + recoveryWidth * 1000 }))
+        : [];
       checkedPlan = { windows, recovery };
     }
     await spill?.beginPhase(idx, start, config.settleS * 1000, checkedPlan);
@@ -1397,7 +1444,7 @@ async function run() {
     })() : null;
     log(`phase ${spec.name}: ${entry.readers} readers at trace ${entry.traceStartS.toFixed(0)}s; writer pending ${scheduler.pending}`);
     if (spec.growHistoryTo) entry.history = await growHistory(spec.growHistoryTo, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
-    else if (spec.name === "activation" && activation) {
+    else if ((spec.name === "activation" || spec.name === "publish" && pooledPublish) && activation) {
       report.deep.r2 = await activation.execute(writer, "R2", (receipt, ops, actor) => {
         modelWriter.bindReceipt(ops, receipt, actor);
         noteAck(receipt, -1, { seq: receipt.position, stream: "deep-activation", correction: false, correctionValidFrom: null, stamp: -1, subjects: [] });
@@ -1406,11 +1453,28 @@ async function run() {
         assert(positions.every(p => p > cut.position), "Missing post-capture mutation"); return people.map((subject,k) => ({ subject, position: positions[k] }));
       });
       save();
+      if (spec.name === "publish") {
+        assert(report.deep.r2.endedAt <= start + spec.seconds! * 1000, "Publish exceeded its observation window");
+        await sleep(Math.max(0, start + spec.seconds! * 1000 - now()));
+      }
     }
     else if (spec.name === "activation" && tenantReleasePhase) { /* [DX-SCALE1] Why: wait on the target’s measured release below. Rejected: holding neighbors for the whole ceiling. */ }
     else if (spec.sweep) entry.sweep = await runSweep(idx, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
     else if (spec.seconds) {
+      if (spec.name === "import" && pooledPublish) {
+        const tail = plan[idx + 1]!;
+        assert(tail.name === "import-tail");
+        pooledImport = runImport(growthComp, path.join(rawDir, "int1-import.jsonl"), runTag,
+          tenants![0]!.people, start + (spec.seconds + tail.seconds!) * 1000,
+          (r) => noteAck(r, -1, {seq:r.position, stream:"campaign-import", correction:false,
+            correctionValidFrom:null, stamp:-1, subjects:[]}),
+        ).then(imported => { report.deep.pooledImport = imported; }, error => { pooledImportError = error; });
+      }
       await sleep(Math.max(0, start + spec.seconds * 1000 - now()));
+      if (spec.name === "import-tail" && pooledImport) {
+        await pooledImport;
+        if (pooledImportError) throw pooledImportError;
+      }
       if (!config.zeroReaders && /^p4h(1|3|10)$/.test(spec.name)) {
         const deadline = now() + 120_000;
         while ((settledReadCounts.get(idx) ?? 0) < 10_000 && now() < deadline) await sleep(250);
@@ -1514,6 +1578,13 @@ async function run() {
   for (const w of workers) w.postMessage({ type: "stop" });
   await Promise.race([Promise.all(stopped), sleep(40_000)]);
   for (const w of workers) await w.terminate();
+  if (historicalFallback) {
+    const stats = await historicalFallback.snapshot();
+    await historicalFallback.close();
+    if (stats.queued || stats.active || stats.requested !== stats.replied + stats.declined + stats.errors)
+      throw Error("Historical fallback requests did not drain exactly");
+    report.historicalFallback = stats;
+  }
   clearInterval(basisTimer);
   if (preparedSweeper) { preparedSweeper.worker.postMessage({ type: "stop" }); await preparedSweeper.worker.terminate(); }
   deepStage("closing replica");
@@ -1750,6 +1821,7 @@ async function run() {
       report.deep.allBurstQueue = meter.burst(writes, w.start + config.settleS * 1000, w.end);
     }
     report.deep.nativeReceipts = meter.seal(path.join(rawDir, "deep-native-commits.jsonl"), deepId);
+    if (campaignMeter) report.deep.writePath = campaignMeter.writePath(Boolean(pooledCampaign));
   }
   const incompleteHistory = !tenantSpec && !deepSmoke && !interferenceOnly && !smallOnly && !activation && !config.readerLadderOnly && !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
   if (incompleteHistory) finalizationErrors.push("History comparison is ineligible: incomplete growth, indexing or fewer than 10,000 correct pulls per depth");
@@ -2031,7 +2103,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const background = writes.filter((w) => w.stream === "background" && !w.resend);
   const baseline = loadBaselineWrites();
   const lagRows = feed!.lags;
-  if(tenants && deepId) {
+  if(tenants && deepId && !pooledFrozen) {
     const source=JSON.stringify({route:"A0-control",dir:rawDir,epoch:scopeName+"#0"});
     const view=tenantFeedAt(path.join(rawDir,"consumer.db"),tenants,source,feedWind!.target,report.deep.r1?.publicationPosition??report.deep.seed.position);
     for (const [position, members] of view.matched) {
@@ -2302,21 +2374,22 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   }
 
   const saturated = Object.values(stats).filter((s: any) => s.client.saturated).map((s: any) => s.phase);
-  const stressHeadroom = fullLength && !config.zeroReaders ? ctx.phases.filter(p => p.readers === 1024 && p.measured).map(p => {
+  const stressHeadroom = (fullLength || rd1ReadDiagnostic) && !config.zeroReaders ? ctx.phases.filter(p => p.readers === 1024 && p.measured).map(p => {
     const w = windowOf(p);
     const inside = (samples: { t: number; elu: number }[]) => mean(samples.filter(e => e.t >= w.from && e.t < w.to).map(e => e.elu));
     const readers = Array.from({ length: config.readerThreads }, (_, worker) => inside(workerElu.filter(e => e.worker === worker && e.running! > 0)));
     const sender = inside(mainElu), collector = spill ? inside(spillElu) : null;
     const feedConsumer = feed instanceof SideThread ? inside(feed.elus) : null;
-    const roles = [sender, ...(spill ? [collector] : []), ...(feed instanceof SideThread ? [feedConsumer] : []), ...readers];
-    return { phase: p.name, readers, sender, collector, feedConsumer, limit: 0.70, eligible: roles.every(elu => elu !== null && elu <= 0.70) };
+    const historicalLane = historicalFallback ? inside(historicalFallback.elus) : null;
+    const roles = [sender, ...(spill ? [collector] : []), ...(feed instanceof SideThread ? [feedConsumer] : []), ...(historicalFallback ? [historicalLane] : []), ...readers];
+    return { phase: p.name, readers, sender, collector, feedConsumer, historicalLane, limit: 0.70, eligible: roles.every(elu => elu !== null && elu <= 0.70) };
   }) : [];
   const total = records.length + (checked?.compared ?? 0), ok = verdicts.reduce((n, code) => n + Number(code === 0), checked?.verdicts[0] ?? 0), errs = verdicts.reduce((n, code) => n + Number(code === 1), checked?.verdicts[1] ?? 0);
   report.correctness = { reads: total, correct: ok, violations: total - ok - errs, errors: errs, violationKinds, violationSample, rule: "a read is correct when its :placement/stamp and whole-world multiset digest equal the expected-state model at the basis the driver requested (receipt instant R, valid time V); errors and wrong answers are never goodput" };
   report.readerDiagnostics = workerDiagnostics;
   report.readerFinalDiagnostics = readerFinalDiagnostics;
   report.expectedStateCache = { ...expectations.diagnostics, rolling: checked?.expectationCache };
-  report.client = { series: {main:mainElu,readers:workerElu,collector:spillElu}, stressHeadroom,
+  report.client = { series: {main:mainElu,readers:workerElu,collector:spillElu,historicalLane:historicalFallback?.elus}, stressHeadroom,
     burstMainEluMean: mean(mainElu.filter(e => overlapsBurst((e.t - ctx.traceStart)/1000, (e.t - ctx.traceStart)/1000 + 0.001, report.trace.params)).map(e=>e.elu)),
     peakProcessBytes: process.resourceUsage().maxRSS * 1024, saturatedPhases: saturated, invalid: saturated.length > 0 || stressHeadroom.some(p => !p.eligible), processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "Measured windows retain the 0.90 limit. Full stress windows require sampled sender, collector, feed consumer and active reader means at or below 0.70 for roles present in the run." };
   report.phases = ctx.phases.map((p) => ({ ...p, stats: strip(stats[p.name]) }));

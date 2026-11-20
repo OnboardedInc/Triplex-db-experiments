@@ -19,13 +19,18 @@ import { rawDeep, replaceDeep } from "./deep.ts";
 import { authoredSeed, authoredWrite, compareSource, expectedPolicy } from "./deep-reference.ts";
 import { Reference } from "./check.ts";
 import { timings, verifyTimings } from "./observations.ts";
-import { cells, collect, format } from "./collect.ts";
+import { campaignCells, collect, format } from "./collect.ts";
+import { AccountAdmission, type PublishObservation } from "./admission.ts";
+import { liveGateway } from "./admission-gate.ts";
+import type { Tail } from "../../notify1/journal.ts";
 import { settlementPrices } from "./settle-price.ts";
 
 const [count, root, flag] = process.argv.slice(2),
   n = Number(count),
-  smoke = flag === "--local";
-assert(flag === undefined || flag === "--settlement" || smoke);
+  smoke = flag === "--local" || flag === "--one-seed-local",
+  oneSeed = flag === "--one-seed" || flag === "--one-seed-local";
+assert(flag === undefined || flag === "--settlement" || smoke || oneSeed);
+const plan = campaignCells(oneSeed);
 assert(root && (smoke ? n >= 64 && n <= 1000 : process.platform === "linux" && n === 100000));
 const ownerPath = process.env.TRIPLEX_LAB_SLOT_OWNER!,
   ownerBytes = readFileSync(ownerPath),
@@ -75,6 +80,8 @@ for (const pkg of ["core", "qualification", "host", "datomic", "w0"]) {
 }
 const config = join(process.env.TX2_CONFIG_DIR ?? ".", "lab/config/slots.json");
 const configDigest = sha256(readFileSync(config));
+const gatewayAttempt = oneSeed ? process.env.TX2_WRITE_OPTIONS_ATTEMPT : undefined;
+if (oneSeed) assert(gatewayAttempt, "Supply the reserved gateway's write-options attempt");
 const attempt = {
   format,
   issuedAt: Date.now(),
@@ -86,12 +93,26 @@ const attempt = {
   n,
   smoke,
   settlement: flag === "--settlement",
-  planned: cells,
+  planned: plan,
+  ...(oneSeed ? { oneSeed, workBudgetMs: 83 * 60000, gatewayAttempt } : {}),
   pins,
   build,
   config: configDigest,
 };
 save("server-inputs", attempt);
+// [DX-ACT2] Why: a single large seed and four cells share an 83-minute work horizon with seven minutes available to the slot supervisor. Rejected: letting a slow seed silently turn a 90-minute campaign into the old multi-seed job.
+const budget = oneSeed
+  ? setTimeout(() => {
+      save("server-budget-stop", {
+        source,
+        nonce: attempt.nonce,
+        at: Date.now(),
+        reason: "83-minute work budget expired",
+      });
+      process.exit(124);
+    }, 83 * 60000)
+  : undefined;
+budget?.unref();
 if (!smoke) {
   const pre = join(root, "preflight");
   mkdirSync(pre);
@@ -102,25 +123,53 @@ if (!smoke) {
     "gate.ts",
     ...(attempt.settlement ? ["settle-gate.ts"] : []),
   ];
-  for (const f of gates)
+  for (const f of gates) {
+    const remaining = 600000 - (Date.now() - attempt.issuedAt);
+    assert(!oneSeed || remaining > 0, "Joined preflight exhausted its ten-minute budget");
     execFileSync(
       process.execPath,
       ["--experimental-strip-types", new URL(f, import.meta.url).pathname, pre],
       {
         stdio: "inherit",
-        timeout: 180000,
+        timeout: oneSeed ? Math.min(180000, remaining) : 180000,
         env: attempt.settlement ? { ...process.env, DX_ACT1_W1_GATE: "1" } : process.env,
       },
     );
+  }
+  if (oneSeed) {
+    // [DX-ACT2] Why: run the exact scheduled one-seed producer and collector at 1,000 before starting the large seed. Rejected: a quiet preflight that never admits Publish behind an active save.
+    const small = join(pre, "one-seed"),
+      remaining = 600000 - (Date.now() - attempt.issuedAt);
+    mkdirSync(small);
+    try {
+      assert(remaining > 0, "Joined preflight exhausted its ten-minute budget");
+      execFileSync(
+        process.execPath,
+        ["--experimental-strip-types", import.meta.filename, "1000", small, "--one-seed-local"],
+        { stdio: "inherit", timeout: remaining },
+      );
+    } catch (error) {
+      save("server-preflight-stop", {
+        source,
+        nonce: attempt.nonce,
+        reason: String(error),
+      });
+      throw error;
+    }
+  }
 }
 const store = await openStore("lazy-join-server-" + attempt.nonce, "act2-deep");
 const readStore = await openStore(store.scope, "act2-deep", "read");
-const ref = new Reference();
+const ref = new Reference(oneSeed ? 4 : 1);
 type Change = { p: number; rows: WorldRow[] };
 const tape = new Map<number, Change[]>();
 const clock = () => performance.now();
-const seeded = await seed(store, n);
-const account = new JoinedAccount(store),
+if (oneSeed) {
+  assert(gatewayAttempt);
+  save("server-native-options", await liveGateway(store.scope, gatewayAttempt));
+}
+const seeded = await seed(store, n, "default", oneSeed ? 2000 : 1500);
+const account = new JoinedAccount(store, oneSeed ? new AccountAdmission("priority") : undefined),
   reader = new JoinedAccount(readStore).reader();
 await account.install(seeded.roster, valid, true);
 const numberOfSaves = smoke ? 250 : 3500;
@@ -133,7 +182,6 @@ const authored = (i: number, p: number) =>
   tape.get(i)?.findLast((x) => x.p <= p)?.rows ?? authoredSeed(i, seeded.seedPosition(i));
 const expected = (i: number, p: number) => expectedPolicy(i, authored(i, p));
 const beforeMs = millis(valid);
-const plan = cells;
 const windows = [];
 const seenReleases = new Set<string>();
 try {
@@ -168,6 +216,7 @@ try {
       );
       return actual;
     };
+    const submit = <T>(go: () => Promise<T>) => (oneSeed ? go() : inOrder(go));
     const subject = n - index - 1; // Distinct subjects for each first request.
     const probe = async () => {
       const started = clock(),
@@ -188,17 +237,11 @@ try {
         await sleep(Math.max(0, target - clock()));
         const command = events[eventNumber++]!;
         assert(command);
-        const go = inOrder(async () => {
+        const go = submit(async () => {
           const entered = clock(),
-            p = await store.head(),
-            old = await rawDeep(store, command.subject, { tx: p, validTime: valid });
-          const correct = authored(command.subject, p);
-          compareSource(old, correct);
-          const root = ids.placement(command.subject);
-          const stamp = old.find((r) => r.entityId === root && r.attribute === ":placement/stamp");
-          assert(stamp);
+            root = ids.placement(command.subject);
           const fields: Fact[] = [
-            { e: root, a: ":placement/stamp", v: integer(Number(stamp.value.value) + 1) },
+            { e: root, a: ":placement/stamp", v: integer(command.seq + 1) },
             ...liveEdits(command.subject, command.seq, command.kind, command.deep),
           ];
           if (command.correction)
@@ -207,9 +250,36 @@ try {
               a: ":worker/address",
               v: string("correction-" + command.seq),
             });
-          const ops = replaceDeep(old, fields, beforeMs);
-          const r = await account.saveDeep("live-" + command.seq, command.subject, ops, valid);
-          const next = authoredWrite(correct, fields, r.position, beforeMs);
+          let r;
+          if (oneSeed) {
+            r = await account.saveDeep(
+              "live-" + command.seq,
+              command.subject,
+              { fields, from: beforeMs },
+              valid,
+            );
+          } else {
+            const p = await store.head(),
+              old = await rawDeep(store, command.subject, { tx: p, validTime: valid });
+            compareSource(old, authored(command.subject, p));
+            const stamp = old.find(
+              (x) => x.entityId === root && x.attribute === ":placement/stamp",
+            );
+            assert(stamp);
+            fields[0] = { ...fields[0]!, v: integer(Number(stamp.value.value) + 1) };
+            r = await account.saveDeep(
+              "live-" + command.seq,
+              command.subject,
+              replaceDeep(old, fields, beforeMs),
+              valid,
+            );
+          }
+          const next = authoredWrite(
+            authored(command.subject, r.position - 1),
+            fields,
+            r.position,
+            beforeMs,
+          );
           const bucket = tape.get(command.subject) ?? [];
           bucket.push({ p: r.position, rows: next });
           tape.set(command.subject, bucket);
@@ -234,7 +304,7 @@ try {
     })();
     await sleep(Math.max(0, offered - clock()));
     const ingress = clock(),
-      cutoff = ingress + 1000;
+      cutoff = (oneSeed ? offered : ingress) + 1000;
     // [DX-ACT1] Why: author an unseen document on ingress and schedule the deadline read independently. Rejected: timing after compilation or making the deadline probe wait for the Publish ACK.
     const document = structuredClone(W0.R2.doc),
       days = [1, 2, 4, 5, 6, 7][index]!;
@@ -249,6 +319,7 @@ try {
       offered,
       ingress,
       cutoff,
+      ...(oneSeed ? { deadlineFrom: "scheduled" as const } : {}),
       document,
       request: "publish-" + index,
       nonce: attempt.nonce,
@@ -282,12 +353,14 @@ try {
     void observeInNewProcess.catch(() => {});
     let testedCut: number | undefined;
     try {
-      const reply = await inOrder(async () => {
-        const entered = clock();
+      const reply = await submit(async () => {
+        const entered = clock(),
+          observation: PublishObservation = { attempts: [] };
         const result = await measureW0Http(() =>
           account.publish("publish-" + index, document, valid, mode, undefined, {
             workers: 4,
             sources: "indexed",
+            observation,
           }),
         );
         const receipt = store.counters.lastReceipt;
@@ -300,7 +373,8 @@ try {
         assert(durable >= entered && durable <= clock());
         return {
           r: result.value,
-          entered,
+          entered: observation.turn?.entered ?? entered,
+          admission: observation,
           durable,
           durableClock: matched ? receipt.clock : "readback",
           stages: account.lastMaterial,
@@ -324,7 +398,9 @@ try {
         reply.wire.length === reply.stages.stages + 1 &&
           reply.wire.every((b) => b > 0 && b <= 4 * 1024 * 1024),
       );
-      const sequence = priorSeq + 1,
+      const sequence = oneSeed
+          ? (await account.db.get<Tail>("tail", reply.r.position)).value.sequence
+          : priorSeq + 1,
         physical = await account.physical(sequence),
         newer = W0.compileRelease(document);
       assert(!W0.RELEASES_BY_HASH.has(newer.hash) && !seenReleases.has(newer.hash));
@@ -490,6 +566,7 @@ try {
         doc: document,
         wire: reply.wire,
         work: reply.stages,
+        ...(oneSeed ? { admission: reply.admission } : {}),
         writes: rows,
       };
       save("window-" + index, result);
@@ -631,6 +708,8 @@ try {
       "server-effects",
       "server-effect-bytes",
       "server-seed",
+      ...(oneSeed ? ["server-native-options"] : []),
+      ...(oneSeed && !smoke ? ["preflight/one-seed/server-collected"] : []),
       ...(!smoke
         ? [
             "preflight/stage-gate",
@@ -685,7 +764,8 @@ try {
   });
   throw error;
 } finally {
-  ref.oracle.close();
+  clearTimeout(budget);
+  ref.close();
   await readStore.close();
   await store.close();
 }

@@ -48,9 +48,10 @@ awk '/^\[Global flags\]$/ { collecting=1; next }
 [[ $(wc -l < "$flags") -gt 100 ]]
 collector=$(awk '$2 ~ /^Use(Serial|Parallel|G1|Z|Shenandoah|Epsilon)GC$/ && $4 == "true" {print $2}' "$flags")
 [[ $collector =~ ^Use(Serial|Parallel|G1|Z|Shenandoah|Epsilon)GC$ ]]
-grep -E '\[gc,init[[:space:]]*\].*(Version:|CPUs:|Memory:|Large Page Support:|Heap (Min|Initial|Max) Capacity:)' "$logs" > "$output/$role.gc-init.txt"
+grep -E '\[gc,init[[:space:]]*\].*(Version:|CPUs:|Memory:|Large Page Support:|(Min|Initial|Max|Soft Max) Capacity:)' "$logs" > "$output/$role.gc-init.txt"
 grep -q 'Version:' "$output/$role.gc-init.txt"
 grep -E '\[cds[[:space:]]*\]' "$logs" > "$output/$role.cds.txt" || :
+grep -E '^WARNING:' "$logs" > "$output/$role.warnings.txt" || :
 grep -q 'CPUs:' "$output/$role.gc-init.txt"
 [[ $proc == "$(snapshot)" ]]
 [[ $before == "$(docker inspect --format '{{.Id}} {{.Image}} {{.State.StartedAt}} {{.RestartCount}} {{.State.Running}}' "$id")" ]]
