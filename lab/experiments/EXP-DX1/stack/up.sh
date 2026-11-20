@@ -107,7 +107,7 @@ PAIR_LEASE
     -e 'DATOMIC_JAVA_OPTS=-Xms64m -Xmx512m -XX:+UseSerialGC' -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)" \
     -v "$PWD/packages/datomic/gateway:/opt/gateway:ro" --entrypoint /opt/datomic/bin/run \
-    tx2-datomic:1.0.7745-da00 -m triplex.gateway.sql-pair-probe
+    "$(node "$repo/lab/config/datomic/runtime.mjs" image)" -m triplex.gateway.sql-pair-probe
   exit
 fi
 # [DX-T1-11] Why: size the sealed seed read-only before admitting a clone; disk headroom is an observed limit.
@@ -242,7 +242,13 @@ for port in "$port_w" "$port_r"; do
 done
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 stack_labels=()
-datomic_image=tx2-datomic:1.0.7745-da00
+runtime_tool="$repo/lab/config/datomic/runtime.mjs"
+java_major=$(node "$runtime_tool" major)
+java_base=$(node "$runtime_tool" base)
+datomic_image=$(node "$runtime_tool" image)
+tx_java="$tx_java $(node "$runtime_tool" compatibility tx)"
+gw_w_java="$gw_w_java $(node "$runtime_tool" compatibility gw-w)"
+gw_r_java="$gw_r_java $(node "$runtime_tool" compatibility gw-r)"
 if [[ -n ${DX_TAIL1_ATTEMPT:-} ]]; then
   # [DX-TAIL1] Why: bind the owned stack to the reservation and reject name reuse at cleanup.
   # Rejected: inferring ownership from the slot number alone.
@@ -276,7 +282,19 @@ fi
 for role in pg tx gw-w gw-r extract; do
   if docker container inspect "$prefix-$role" >/dev/null 2>&1; then echo "container already exists: $prefix-$role" >&2; exit 2; fi
 done
-docker image inspect "$datomic_image" postgres:17-alpine >/dev/null
+# [DX-JVM1] Why: bind all roles to one immutable image and the promised Temurin release before starting them.
+# Rejected: trusting a mutable tag or filling a Java 25 run from the Java 21 image.
+image_meta=$(docker image inspect --format '{{.Id}}|{{index .Config.Labels "tx2.java-major"}}|{{index .Config.Labels "tx2.java-base"}}|{{index .Config.Labels "tx2.build-inputs-sha256"}}' "$datomic_image")
+IFS='|' read -r datomic_image image_major image_base image_hash <<< "$image_meta"
+[[ $datomic_image =~ ^sha256:[a-f0-9]{64}$ ]]
+if [[ $java_major != 21 || -n $image_major && $image_major != '<no value>' ]]; then
+  [[ $image_major == "$java_major" && $image_base == "$java_base" ]]
+fi
+if [[ -n ${DX_DATOMIC_IMAGE_RECEIPT:-} ]]; then
+  [[ $image_hash == "$(node "$runtime_tool" input-hash)" ]]
+fi
+printf '%s\n' "$image_meta" > "$attempt/config/java-image.txt"
+docker image inspect postgres:17-alpine >/dev/null
 if [[ -z "$src" ]]; then
   src="$evidence/stage/$prefix"
   mkdir -p "$src"
@@ -576,6 +594,7 @@ for role in w r; do
 done
 for role in tx gw-w gw-r; do
   bash "$repo/lab/experiments/EXP-DX1/jvm1/readback.sh" "$prefix-$role" "$attempt/config" "$role"
+  grep -F "Version: $(node "$runtime_tool" version)" "$attempt/config/$role.gc-init.txt" >/dev/null
 done
 if [[ $native_readback == 1 ]]; then
   for role in tx gw-w gw-r; do

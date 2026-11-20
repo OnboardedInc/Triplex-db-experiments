@@ -5,6 +5,9 @@ cd /opt/datomic
 export DATOMIC_EXT_CLASSPATH=/opt/gateway/src
 if [[ "${1:-}" == selftest ]]; then
   export DATOMIC_JAVA_OPTS="-Xms512m -Xmx768m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError -XX:+UseSerialGC -XX:+PrintFlagsFinal -Xlog:gc+init=info,cds=info:stdout:uptimemillis,level,tags"
+  if [[ ${DX_JAVA:-21} == 25 ]]; then
+    export DATOMIC_JAVA_OPTS="$DATOMIC_JAVA_OPTS --sun-misc-unsafe-memory-access=allow --enable-native-access=ALL-UNNAMED"
+  fi
   exec bin/run -m triplex.gateway.selftest
 fi
 command -v taskset

@@ -26,6 +26,8 @@ export async function inventory(options, config, manager) {
   const write = (file, value) => fs.writeFileSync(path.join(out, file), JSON.stringify(value, null, 2) + "\n", {flag:"wx"});
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(DX_|TRIPLEX_|DATOMIC_|TX2_|JAVA_OPTS$|JAVA_TOOL_OPTIONS$|_JAVA_OPTIONS$|JDK_JAVA_OPTIONS$)/.test(key)));
   Object.assign(env, {
+    DX_JAVA: process.env.DX_JAVA ?? "21",
+    ...(process.env.DX_DATOMIC_IMAGE_RECEIPT ? { DX_DATOMIC_IMAGE_RECEIPT: process.env.DX_DATOMIC_IMAGE_RECEIPT } : {}),
     DX_STACK_EVIDENCE: out,
     DX_STACK_WAIT_FOR_TRANSACTOR: "1",
     DX_JVM_EVIDENCE: "1",
@@ -45,7 +47,11 @@ export async function inventory(options, config, manager) {
       const disk = fs.statfsSync(out);
       assert(disk.bavail * disk.bsize >= 5 * 2 ** 30, "Host disk below lab floor");
       slot = await withPool((ledger) => {
-        manager.assertMeasureAdmission(holder);
+        try { manager.assertMeasureAdmission(holder); }
+        catch (error) {
+          if (error.code === "REFUSED") return;
+          throw error;
+        }
         const running = listTx2Containers({ all: true });
         const candidate = ["s1", "s2", "s3"].map((id) => slotInfo(config, "datomic", id))
           .find((info) => !fs.existsSync(info.lockDir) && !running.some((row) => row.name === info.container));
@@ -89,6 +95,28 @@ export async function inventory(options, config, manager) {
       child.on("close", resolve);
     });
     assert.equal(status, 0, "Inventory stack startup did not complete");
+    const stackConfig = JSON.parse(fs.readFileSync(path.join(out, prefix, "stack.json"), "utf8"));
+    const readyAt = Date.now();
+    await delay(5000, undefined, {signal:controller.signal});
+    const roles = {};
+    for (const c of stackConfig.containers.filter((c) => !c.name.endsWith("-pg"))) {
+      const before = docker(["inspect", "--format", "{{.Id}} {{.State.StartedAt}} {{.RestartCount}} {{.State.Running}}", c.id]);
+      const role = c.name.slice(prefix.length + 1);
+      const observed = fs.readFileSync(path.join(out, prefix, "config", role + ".process.txt"), "utf8");
+      const startedAt = /^startedAt=(.+)$/m.exec(observed)?.[1];
+      const restarts = /^restarts=(\d+)$/m.exec(observed)?.[1];
+      assert.equal(before, [c.id, startedAt, restarts, true].join(" "));
+      const pid = /^pid=(\d+)$/m.exec(observed)?.[1];
+      assert(pid);
+      const rss = docker(["exec", c.id, "awk", "/^VmRSS:/ {print $2}", "/proc/" + pid + "/status"]);
+      const memory = docker(["exec", c.id, "cat", "/sys/fs/cgroup/memory.current"]);
+      assert.match(rss, /^\d+$/);
+      assert.match(memory, /^\d+$/);
+      assert.equal(docker(["inspect", "--format", "{{.Id}} {{.State.StartedAt}} {{.RestartCount}} {{.State.Running}}", c.id]), before);
+      roles[role] = {id:c.id, imageId:c.imageId, pid:Number(pid), startedAt,
+        startupToAllReadyMs: readyAt - Date.parse(startedAt), processRssKiB:Number(rss), cgroupBytes:Number(memory)};
+    }
+    write("idle-boot.json", {prefix, source, slot:slot.slot, readyAt, sampledAt:Date.now(), roles});
   } finally {
     process.removeListener("SIGINT", stop);
     process.removeListener("SIGTERM", stop);
