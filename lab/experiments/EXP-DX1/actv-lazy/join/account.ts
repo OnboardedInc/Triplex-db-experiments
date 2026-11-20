@@ -973,7 +973,8 @@ export class JoinedAccount {
       async (p) => {
         const { meta, c, tail } = await this.state(p);
         assert(at >= c.at);
-        const owner = classified.owner,
+        // [DX-ACT1] Why: W0 gives shared geography an empty owner, which means the whole census at this boundary. Rejected: passing the empty string as an owned-reconcile proof.
+        const owner = classified.owner || undefined,
           direct = W0.isPlacementId(edit.e),
           addr = owner ? await this.db.get<number>(address(owner), p) : undefined;
         const active = await this.intervals(edit, p, from, !!meta.scheduled || from < at);
@@ -1050,7 +1051,7 @@ export class JoinedAccount {
               validTime: at,
               selection: owner ? { kind: "subjects", ids: [owner] } : { kind: "census" },
             },
-            owner ?? undefined,
+            owner,
           );
           ops.push(...plan.operations);
         }

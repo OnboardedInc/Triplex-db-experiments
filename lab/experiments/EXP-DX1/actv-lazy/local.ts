@@ -132,6 +132,8 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
   run("join/server.ts", ["64", dir, "--local"]);
 } else if (binding.mode === "--joined-settle-proof") {
   run("join/settle-gate.ts", [dir]);
+} else if (binding.mode === "--joined-shared-proof") {
+  run("join/gate.ts", [dir]);
 } else if (binding.mode === "--joined-part7") {
   for (const f of ["settle-gate.ts", "future-gate.ts", "gate.ts"]) run("join/" + f, [dir]);
   process.env.NOTIFY_NATIVE = "1";
