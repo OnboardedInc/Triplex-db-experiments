@@ -215,3 +215,14 @@ TAIL1's archive pin matches the public experiment's 281,491,079-byte synthetic a
 HA1's new `load-micro` uses one Datomic database per arm, with all live participants and the import in that database. The current command uses one serving gateway for writes and reads, and one transactor. The producer and BM1 replayed all five saved Mac tapes, each with 11,880 fixed live offers. The source-bound summary is in `evidence/DX-BM1/day-n20/ha1-micro-agreement`. The three cap treatments were 16/24/32 facts and yielded 844/836/935 independently queryable facts/s on that Mac. The historical separate-database comparisons are out of the current queue.
 
 The retained thin million-person image uses the INT1 `0dd4cbb24` lean roster. The stock integrated campaign expects another legacy, namespaced seed. The retained-seed reader uses the original source's validated reader, population ledger and gateway budgets. It runs a fresh small restore and companion API/collector check before the matched active-only and full-size observations. Both profiles admit precisely the same 20,000 spread-cohort people. The baseline creates only those 20,000 roots. The full arm restores the sealed 1M image and checks each reader answer against the saved assertion ledger. Three natural RSS samples precede the save loop. Profile differences are paired whole-process RSS estimates. PostgreSQL's summed RSS can count shared pages more than once.
+
+The INT1 image is present on the bench by its original immutable ID. The supervisor `bm1n20-int1-capacity` waits for JVM1 and any higher-priority TAIL1 job to stop. `bm1n20-rd1-aged` waits for it, builds the pinned RD1 checkout and runs the 24-person native preflight. The full reader curve uses one 10,000-person database, 10,000 native saves between the older cuts and the head, and the same read gateway in the direct and worker arms. Read shares are 0%, 1% and 5%. A 24-root lookup cohort shares two old cuts to match RD1's original experiment. This diagnostic exposes the benefit of reuse for that workload.
+
+Collect terminal run files from the Mac with the appropriate producer SHA. Both original files and the large snapshots remain in place on the bench.
+
+```sh
+export BENCH_SERVER
+python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect jvm1 46880aa47d7c580c400b457df0c8baf9e971e78a /var/tmp/triplex-bm1/day-n20-collector
+python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect int1-capacity 0dd4cbb24f10dad80e4263fd0c04159ce512b251 /var/tmp/triplex-bm1/day-n20-collector
+python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect rd1-aged 5f51de7d6ab09b884df61f5c260db7f6688726c1 /var/tmp/triplex-bm1/day-n20-collector
+```

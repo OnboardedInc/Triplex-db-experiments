@@ -755,9 +755,9 @@ def worker(r):
     else:raise ValueError("This item has no admitted native worker yet")
 
 
-def import_inventory(r):
+def import_inventory(r, *, mode_override=None):
     inventory={"containers":[],"networks":[],"volumes":[]}
-    mode=HA_SPLIT.get(r["item"],"load-tail")
+    mode=mode_override or HA_SPLIT.get(r["item"],"load-tail")
     root=Path(r["root"])
     stores=(root/"run",) if r["item"]==13 else (root/"run-50",root/"run-100")
     for f in (f for store in stores for f in store.glob(mode+"-*/attempt.json")):
