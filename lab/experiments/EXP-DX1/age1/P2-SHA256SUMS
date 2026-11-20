@@ -61,3 +61,8 @@ e8e034c4ec531b9817626a5308ed9727e9406c7e748228ede075ce433927b7ed  p2-mac-i-adopt
 02ef0a9addc3fbb7ef1ca965695e235691d4d2a821178c446768584977059d7b  p2-mac-i-adopted-fidelity/seed-clone.log
 d25692d7e9b8a4d376062d1595714f1e34e9c7e7bee366b1fa76be06b55b4b6a  p2-mac-i-adopted-fidelity/seed-index.log
 611106aa226de262e4125f8bc44f1bad0ad25909c9581df27d2ac0476ee921ba  p2-mac-i-adopted-fidelity/tx.log
+5e000e8b19769bbd6cacfcefd9ad105f1331f89da9dfb5faf9d02f12893a31a0  p2-mac-f-erased-successor/binding.json
+db97b371ebeaa9634a21688c22c1c0b611c081162d1be7ebf36291ae4b8c5109  p2-mac-f-erased-successor/cleanup.json
+2900c3c3dcd1af4eb36e115f1d624b57372fa63f24e6acc4ef32a8aeddacf4a5  p2-mac-f-erased-successor/pg.log
+a74130af5735ff89a2619e6a8c78d67b8e70a34dda2c0156e6681ae4c503c9f6  p2-mac-f-erased-successor/probe.log
+390da1d8c2573e039fcb6e2000fee3faf441dea86338049a9dfb3b734e8318f1  p2-mac-f-erased-successor/tx.log
