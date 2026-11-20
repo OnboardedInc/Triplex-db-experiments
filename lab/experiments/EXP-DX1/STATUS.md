@@ -2348,3 +2348,21 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   saves of one subject, the reads on replaced rows); DX-HA1 part 3 (the loader's 330 ms outside the database, live
   import pacing in one shared database); DX-SCALE1 part 5 (a `deep-live` profile at the real rates); DX-BM1 part 4
   (overnight queue with the analysts' short probes and a prediction before each item).
+
+## 2026-11-20 00:55 UTC (19:55 local, 2026-11-19): every Codex agent stopped on the account's usage limit
+
+- At 00:52 UTC all agents exited 1 with "You've hit your usage limit ... try again at Nov 23rd, 2026 10:00 AM". Stopped
+  mid-task: DX-BM1 (server 1 queue), DX-SCALE1 (server 2 campaign), DX-W1 part 3, DX-HA1 part 3, DX-ACT1 part 5,
+  DX-ACT2 part 3, DX-STG1 part 3, DX-THIN1 part 3. Their sessions resume with
+  `node lab/bin/agent.mjs resume --id <ID> --prompt <the same brief>`; the briefs are in the private project folder
+  under `agents/prompts/` (`DX-BM1-resume3.md`, `DX-SCALE1-resume5.md`, `DX-W1-resume2.md`, `DX-HA1-resume2.md`,
+  `DX-ACT1-resume4.md`, `DX-ACT2-resume2.md`, `DX-STG1-resume2.md`, `DX-THIN1-resume2.md`). Uncommitted work is left in
+  each worktree untouched.
+- Detached on the servers, with no agent driving: server 1 `triplex-w1-grpw1a` (group commit, ten accounts in one
+  scope); server 2 `triplex-scale1-arm-p6-i1-seed-a` (ten-account pooled seed for the `deep-live` arms). When each
+  goes idle the orchestrator collects summaries and, if agents are not back, deletes the server.
+- **Deep population, first bare-metal number (DX-SCALE1, before the stop):** 10,000 deep subjects, zero readers, 56,505
+  commits verified, commit p99 87.04 ms [82.43, 94.21] against 36.11 ms for the thin population on the same hardware
+  and sender. The reader arm failed twice in the bench (replica coverage, then the 64 GiB observation allowance after
+  381,428,503 reads). `deep-live` (real field-save rates) is frozen and pushed (`4dc32a41`).
+- Waiting for Sam: buy Codex credits, let Claude agents take over, or pause until 2026-11-23.
