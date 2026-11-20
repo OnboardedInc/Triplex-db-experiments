@@ -50,4 +50,6 @@ N is millions of seed facts. Fits are least squares on the log of the three poin
 
 Across 0 to 415 saves, matched history grew by about 13 packed datoms per save. PostgreSQL deletion totals combine two requests and ordinary generations, so these observations cannot identify a per-person reclaim rate. The latency table shows the observed tails by size and history. Those tails vary with the available overlap samples and shared-host load.
 
+Using the same three-point log fit, the aged full-block ratios to their paired controls scale as `0.99 × N^0.26` and `1.92 × N^0.52` for save p50 and p99, and `0.97 × N^0.20` and `1.03 × N^0.56` for read p50 and p99. The zero-edit exponents are 0.19, 0.26, 0.15 and 0.12 in the same order. A comparison of the two histories includes their different job overlap and warmup. Treat the exponents as descriptions of these blocks. Allocated bytes freed by ordinary GC fit zero at all three rungs. Stored-value deletion and offline relation shrink fit roughly `29.6 MB × N^0.44` and `276 MB × N^1.32` across both requests and ordinary activity.
+
 The 25,000-person run completed under the same 2.875 GiB private stack cap and a 6 GiB disk reservation. It is the largest local run attempted under the shared scheduling window.

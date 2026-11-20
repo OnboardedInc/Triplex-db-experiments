@@ -25,11 +25,16 @@ def qs(samples):
 
 def check(directory):
     load = lambda f: json.loads((directory/(f+'.json')).read_text())
-    inputs, native, outcome, cleanup = map(load, ('inputs','native','result','cleanup'))
-    assert inputs['nonce'] == native['nonce'] == outcome['nonce'] == cleanup['nonce']
-    assert native['binding'] == outcome['binding']
-    assert cleanup['released'] and not cleanup['errors'] and cleanup['removedNetwork']
-    assert set(cleanup['removedContainers']) == set(native['containers'].values())
+    native, outcome = map(load, ('native','result'))
+    assert native['nonce'] == outcome['nonce'] and native['binding'] == outcome['binding']
+    if native['slot'] == 'prepared':
+        assert re.fullmatch('[a-f0-9]{64}', native['stageSha256'])
+        assert native['people'] == outcome['people'] == 100000
+    else:
+        inputs, cleanup = map(load, ('inputs','cleanup'))
+        assert inputs['nonce'] == native['nonce'] == cleanup['nonce']
+        assert cleanup['released'] and not cleanup['errors'] and cleanup['removedNetwork']
+        assert set(cleanup['removedContainers']) == set(native['containers'].values())
     assert load('driver-exit') == {'code': 0, 'signal': None}
     lines = (directory/'tx.log').read_text().splitlines()
     entries = []
@@ -47,8 +52,10 @@ def check(directory):
         end = job_finished + req['offset']['low'] - 1
         data = load('traffic-erase-'+str(i))['data']
         control = load('traffic-control-'+str(i))['data']
-        assert load('fresh-'+str(i))['data']['t'] == t
-        assert len(data['saved']) == len(control['saved']) == (8 if inputs['mode']=='smoke' else 500)
+        fresh = load('fresh-'+str(i))
+        assert fresh['binding'] == native['binding'] and fresh['data']['t'] == t
+        assert fresh['data']['snapshot']['basis'] >= t
+        assert len(data['saved']) == len(control['saved']) == (8 if native['mode']=='smoke' else 500)
         per_index = {re.search(r'(?<!\S):index :([a-z]+)',l)[1]: log_number(l,'written')
                      for l in lines if ':event :index/merged-index,' in l and log_number(l,'as-of-t')==native_t}
         samples = {name:{'control':qs(control[name]), 'whole':qs(data[name]),

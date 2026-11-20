@@ -147,7 +147,11 @@
   (case mode
     "gateway" (do
                 (d/create-database (main/db-uri "tx2-health"))
-                (jetty/run-jetty handle {:port 8080 :join? true :min-threads 8 :max-threads 48}))
+                ;; [DX-ERASE1] Why: bare-metal diagnostics bind to the prepared loopback interface.
+                ;; Rejected: exposing native fixture controls on the server's public interfaces.
+                (jetty/run-jetty handle (cond-> {:port 8080 :join? true :min-threads 8 :max-threads 48}
+                                         (System/getenv "DX_ERASE_BIND_HOST")
+                                         (assoc :host (System/getenv "DX_ERASE_BIND_HOST")))))
     "fresh" (let [input (json/read-str (slurp *in*)) conn (connect! input d/connect)
                   t (get input "t") plan (into {} (map (fn [[k v]] [(keyword k) v])) (get input "plan"))
                   db (until (d/sync-excise conn t))]

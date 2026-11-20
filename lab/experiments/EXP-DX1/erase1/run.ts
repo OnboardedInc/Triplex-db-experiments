@@ -16,7 +16,15 @@ import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { ids, SEED_VALID_FROM, subjectOf } from "../../../bench/lib/world.ts";
 
 type Layout = "smoke" | "scale" | "batch" | "overlap";
-type Attempt = { binding: string; nonce: string; people: number; mode: Layout; slot: string };
+type Attempt = {
+  binding: string;
+  nonce: string;
+  people: number;
+  mode: Layout;
+  slot: string;
+  source?: string;
+  stageSha256?: string;
+};
 type Row = Receipt["triples"][number];
 type Fact = ReturnType<typeof deepOwnFacts>[number];
 type Acc = {
@@ -28,6 +36,15 @@ type Acc = {
 };
 type Sample = { start: number; end: number; ms: number; position: number; subject: number };
 type Window = { start: number; end: number };
+type Staged = {
+  facts: number;
+  head: Omit<Receipt, "triples">;
+  fieldIds: [number, string[]][];
+  groups: Acc[];
+  inputDigest: string;
+};
+const action = process.argv[3] ?? "run";
+assert(["run", "stage", "check"].includes(action));
 const dir = process.argv[2]!;
 const run: Attempt = JSON.parse(fs.readFileSync(path.join(dir, "native.json"), "utf8"));
 const output = (name: string, v: unknown) =>
@@ -208,6 +225,7 @@ class Fixture {
   readonly scope: string;
   readonly db: string;
   private saveCounter = 0;
+  private resumed = false;
   private live = new Map<number, string[]>();
   private head: Receipt | undefined;
   facts = 0;
@@ -230,8 +248,52 @@ class Fixture {
       recordedAt: this.head.instant,
     };
   }
+  stage(groups: Acc[]): Staged {
+    assert(this.head);
+    const { position, txId, instant } = this.head;
+    const fieldIds: [number, string[]][] = bystanders().map((subject) => {
+      const ids = this.live.get(subject);
+      assert(ids && ids.length === 2 && ids.every((id) => typeof id === "string"));
+      return [subject, ids];
+    });
+    return {
+      facts: this.facts,
+      head: { position, txId, instant },
+      fieldIds,
+      groups,
+      inputDigest: this.inputs.copy().digest("hex"),
+    };
+  }
+  // [DX-ERASE1] Why: stage loading is outside the 55-minute server clock, and the live writer resumes at the recorded receipt.
+  // Rejected: generating new assertion IDs or seeding inside the timed check.
+  restore(stage: Staged) {
+    assert(!this.head && this.facts === 0);
+    assert(
+      Number.isSafeInteger(stage.head.position) &&
+        stage.head.position > 0 &&
+        Number.isFinite(stage.head.instant),
+    );
+    assert.equal(typeof stage.head.txId, "string");
+    assert.deepEqual(
+      stage.fieldIds.map(([i]) => i),
+      bystanders(),
+    );
+    assert(
+      stage.fieldIds.every(
+        ([, ids]) =>
+          ids.length === 2 && new Set(ids).size === 2 && ids.every((id) => typeof id === "string"),
+      ),
+    );
+    assert.match(stage.inputDigest, /^[a-f0-9]{64}$/);
+    this.resumed = true;
+    this.live = new Map(stage.fieldIds);
+    this.facts = stage.facts;
+    this.head = { ...stage.head, triples: [] };
+    // Preserve the original write IDs. Staged checks use a fresh command namespace.
+    this.inputs.update(`stage:${stage.inputDigest}\n`);
+  }
   async write(facts: Fact[], retired: string[], actor: string) {
-    const commandId = `e1-${run.nonce}-${++this.saveCounter}`;
+    const commandId = `e1-${run.nonce}-${this.resumed ? "check-" : ""}${++this.saveCounter}`;
     const operations = [...retired.map((id) => ({ op: "retract", id })), ...assertOps(facts)];
     const start = wall(),
       tick = performance.now();
@@ -581,45 +643,93 @@ async function collect(f: Fixture, label: string, full: boolean) {
   return result;
 }
 
+async function restoreFixture(f: Fixture, staged: Staged) {
+  f.restore(staged);
+  assert.equal(await f.comp.currentPosition(), f.position);
+  const head = (await f.comp.feedPage(f.position - 1, 1)).transactions[0];
+  assert.equal(head?.position, f.position);
+  assert.equal(head.txId, staged.head.txId);
+  for (const [subject, pair] of staged.fieldIds) {
+    const view = await f.comp.pull(ids.placement(subject), f.basis());
+    const actual = view.triples.filter(
+      (r) =>
+        r.entityId === taskId(subject, 0) && (r.attribute === field(0) || r.attribute === field(1)),
+    );
+    assert.deepEqual(
+      actual.sort((a, b) => a.attribute.localeCompare(b.attribute)).map((r) => r.id),
+      pair,
+    );
+  }
+}
+
 async function scale() {
   const fixtureName = "erase1-" + run.nonce;
   const comp = await openComposition("reach", "datomic", fixtureName);
-  const f = new Fixture(comp, fixtureName);
+  let f = new Fixture(comp, fixtureName);
   let reader: CompositionHandle | undefined;
   try {
-    assert.equal(await comp.currentPosition(), 0);
-    const groups = blocks();
-    const reserved = new Set(groups.flatMap((g) => g.people));
-    // [DX-ERASE1] Why: write the target's history between seed batches to reach several log regions.
-    // Rejected: appending every revision after the main seed, which artificially clusters the purge.
-    for (const group of groups) await f.seed(group.people, group);
-    const chunk = Math.min(800, Math.max(100, Math.floor(run.people / 16)));
-    for (let first = 0; first < run.people; first += chunk) {
-      const n = Math.min(chunk, run.people - first);
-      await f.seed(Array.from({ length: n }, (_, j) => first + j).filter((i) => !reserved.has(i)));
-      for (const group of groups)
-        for (const [i, subject] of group.people.entries())
-          for (
-            let revision = Math.floor((group.depths[i]! * first) / run.people) + 1;
-            revision <= Math.floor((group.depths[i]! * (first + n)) / run.people);
-            revision++
-          )
-            await f.edit(subject, revision, group);
-      progress("seed", { people: first + n, facts: f.facts, position: f.position });
+    let groups: Acc[];
+    if (action === "check") {
       await getParent("guard");
+      const rawStage = fs.readFileSync(process.argv[4]!);
+      assert.equal(createHash("sha256").update(rawStage).digest("hex"), run.stageSha256);
+      const staged = JSON.parse(rawStage.toString()) as Attempt & { data: Staged };
+      assert(
+        staged.nonce === run.nonce && staged.people === run.people && staged.source === run.source,
+      );
+      assert.deepEqual(
+        staged.data.groups.map(({ people, depths }) => [people, depths]),
+        blocks().map(({ people, depths }) => [people, depths]),
+      );
+      groups = staged.data.groups;
+      await restoreFixture(f, staged.data);
+    } else {
+      assert.equal(await comp.currentPosition(), 0);
+      groups = blocks();
+      const reserved = new Set(groups.flatMap((g) => g.people));
+      // [DX-ERASE1] Why: write the target's history between seed batches to reach several log regions.
+      // Rejected: appending every revision after the main seed, which artificially clusters the purge.
+      for (const group of groups) await f.seed(group.people, group);
+      const chunk = Math.min(800, Math.max(100, Math.floor(run.people / 16)));
+      for (let first = 0; first < run.people; first += chunk) {
+        const n = Math.min(chunk, run.people - first);
+        await f.seed(
+          Array.from({ length: n }, (_, j) => first + j).filter((i) => !reserved.has(i)),
+        );
+        for (const group of groups)
+          for (const [i, subject] of group.people.entries())
+            for (
+              let revision = Math.floor((group.depths[i]! * first) / run.people) + 1;
+              revision <= Math.floor((group.depths[i]! * (first + n)) / run.people);
+              revision++
+            )
+              await f.edit(subject, revision, group);
+        progress("seed", { people: first + n, facts: f.facts, position: f.position });
+        await getParent("guard");
+      }
+      for (const group of groups)
+        progress("aged", {
+          people: group.people.length,
+          fieldSaves: group.depths.reduce((a, b) => a + b, 0),
+          position: f.position,
+        });
     }
-    for (const group of groups)
-      progress("aged", {
-        people: group.people.length,
-        fieldSaves: group.depths.reduce((a, b) => a + b, 0),
-        position: f.position,
-      });
     const basis = f.basis();
     assert.equal(
       f.facts,
       Array.from({ length: run.people }, (_, i) => deepShape(i).facts).reduce((a, b) => a + b, 0),
     );
     output("seed", { facts: f.facts, basis, inputDigest: f.inputs.copy().digest("hex"), groups });
+    if (action === "stage") {
+      await collect(f, "stage-gc", true);
+      output("staged", f.stage(groups));
+      return;
+    }
+    if (run.mode === "smoke") {
+      const stage = JSON.parse(JSON.stringify(f.stage(groups))) as Staged;
+      f = new Fixture(comp, fixtureName);
+      await restoreFixture(f, stage);
+    }
     if (run.mode === "overlap") {
       const { importWork, publishWork, replayErased } = await import("./scenarios.ts");
       const group = groups[1]!;
