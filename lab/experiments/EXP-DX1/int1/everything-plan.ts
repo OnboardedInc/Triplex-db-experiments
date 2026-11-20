@@ -57,6 +57,7 @@ export function campaignTenant(c: CampaignCase, smoke: boolean) {
 // Rejected: trusting inherited environment flags or claiming an audited group configuration is eligible.
 export const treatment = {
   DX_INT1_GATEWAYS: "demand",
+  DX_INT1_LEGACY_TOUCHED: "1",
   DX_INT1_SEED_ERRORS: "1",
   DX_INT1_READERS: "touched",
   DX_INT1_DEEP_RELEASE: "ead90",

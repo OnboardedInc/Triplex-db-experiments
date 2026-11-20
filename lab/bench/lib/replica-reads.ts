@@ -493,19 +493,41 @@ export class ReplicaReadHost {
     // [DX-R3] Why: the initial image has no earlier journal clock proof; compare the gateway's actual selected cuts.
     // Rejected: trusting a caller-supplied timestamp/position pair for imported or irregular scopes.
     const witness = population === "touched" ? firstReadRoot : roots[0];
-    if (witness !== undefined && initial.position > 0)
-      times.set(initial.position, await bootstrapSourceClock(source, times, clockEnds, witness, initial.position));
+    const legacyRequested = population === "touched" && process.env.DX_INT1_LEGACY_TOUCHED === "1" &&
+      process.env.TRIPLEX_DATOMIC_LAYOUT === "legacy" && (db.layout ?? "legacy") === "legacy" &&
+      db.strictRecordClocks === true;
+    const validateInitialClock = async () => {
+      if (witness !== undefined && initial.position > 0)
+        times.set(initial.position, await bootstrapSourceClock(source, times, clockEnds, witness, initial.position));
+    };
+    if (!legacyRequested) await validateInitialClock();
     // [DX-R3] Why: admission follows the actual source capability, never the requested creation policy.
     // Rejected: treating old sealed seeds as strict when reopening them cannot change their contract.
     const capability = await client.request("POST", `/v2/db/${db.db}/reach-many`, {
       replicaCapability: true, basis: { recordedPosition: initial.position, validAt: Date.now() },
     });
+    const legacy = legacyRequested && capability.declined === "replica-layout";
     if (population === "touched") {
-      if (capability.supported !== true) throw new api.Replica.UnsupportedScope(capability.declined ?? "missing-capability");
-      source.capability = api.Replica.source(client, db.db, () => comp.currentPosition(), Date.now()).capability!;
+      if (legacy) {
+        // [DX-THIN1] Why: the synthetic legacy campaign uses the existing position-bound row and journal projections.
+        // Rejected: bypassing the inline replica's layout guard without proof of the selected clock and journal cut.
+        source.capability = async ({ recordedPosition: position }) => {
+          if (witness === undefined || position === undefined || position <= 0) return "legacy-replica-witness";
+          if ((await source.erasure?.())?.protected !== false) return "legacy-replica-protection";
+          const instant = await bootstrapSourceClock(source, times, clockEnds, witness, position, true);
+          if (!Number.isFinite(instant) || clockEnds.get(position) !== position) return "legacy-replica-journal-cut";
+          if ((await source.erasure?.())?.protected !== false) return "legacy-replica-protection";
+          times.set(position, instant);
+          return undefined;
+        };
+      } else {
+        if (capability.supported !== true) throw new api.Replica.UnsupportedScope(capability.declined ?? "missing-capability");
+        if (legacyRequested) await validateInitialClock();
+        source.capability = api.Replica.source(client, db.db, () => comp.currentPosition(), Date.now()).capability!;
+      }
     }
     const host = new ReplicaReadHost(source, times, historyBytes,
-      capability.supported === true && capability.strictRecordClocks === true, clockEnds, timings,
+      legacy || (capability.supported === true && capability.strictRecordClocks === true), clockEnds, timings,
       afterReaderImages || roots.length > 10_000 || process.env.DX_BOUNDED_MEMORY_TRIAL === "1", population, validAt, historyCoverage);
     await host.replica.bootstrap(roots, initial.position);
     host.closeClient = () => client.close();
@@ -559,13 +581,20 @@ function mapOptions(row: PullResult["triples"][number], convert: (value: any) =>
 
 // [DX-R3] Why: a read peer may still be catching up at bootstrap; retry the same exact two-cut proof before declining.
 // Rejected: nearest-time admission or accepting different native cuts (would weaken the original clock rule).
-export async function bootstrapClock(source: { page(...args: any[]): Promise<any> }, root: string, initial: { position: number; instant: number }, budgetMs = 2000) {
+export async function bootstrapClock(source: { page(...args: any[]): Promise<any> }, root: string, initial: { position: number; instant: number }, budgetMs = 2000, exactPosition = false) {
   const deadline = performance.now() + budgetMs;
   for (;;) {
     const validAt = Date.now();
     const p = await source.page([root], { recordedPosition: initial.position, validAt }, true);
     const r = await source.page([root], { recordedAt: initial.instant, validAt }, true);
-    if (!p.declined && !r.declined && typeof p.t === "string" && p.t.length > 0 && p.t === r.t) return initial.instant;
+    const exact = !exactPosition || (
+      p.position === initial.position && r.position === initial.position &&
+      Array.isArray(p.entities) && p.entities.some((entry: unknown) =>
+        Array.isArray(entry) && entry[0] === root && Array.isArray(entry[2]) && entry[2].length > 0) &&
+      Array.isArray(p.closures) && JSON.stringify(p.entities) === JSON.stringify(r.entities) &&
+      JSON.stringify(p.closures) === JSON.stringify(r.closures)
+    );
+    if (exact && !p.declined && !r.declined && typeof p.t === "string" && p.t.length > 0 && p.t === r.t) return initial.instant;
     if (performance.now() >= deadline) return NaN;
     await new Promise(resolve => setTimeout(resolve, 5));
   }
@@ -590,10 +619,10 @@ export function boundedReplicaFeed<T extends { feed(after: number, limit: number
 
 // [DX-R3-P8] Why: equal native cuts do not prove an arbitrary caller clock equals the journal clock.
 // Rejected: admitting a future caller instant at the head (a later strict commit could still be below that instant).
-export async function bootstrapSourceClock(source: { feed(after: number, limit: number, waitMs: number): Promise<any>; page(...args: any[]): Promise<any> }, times: Map<number, number>, ends: Map<number, number>, root: string, position: number) {
+export async function bootstrapSourceClock(source: { feed(after: number, limit: number, waitMs: number): Promise<any>; page(...args: any[]): Promise<any> }, times: Map<number, number>, ends: Map<number, number>, root: string, position: number, exactPosition = false) {
   times.delete(position); ends.delete(position);
   await source.feed(Math.max(0, position - 1), 1, 0);
   const instant = times.get(position);
   return instant !== undefined && Number.isFinite(instant)
-    ? bootstrapClock(source, root, { position, instant }) : NaN;
+    ? bootstrapClock(source, root, { position, instant }, 2000, exactPosition) : NaN;
 }

@@ -3,7 +3,7 @@ The reader and gateways kept the same person-cache entries through 600,000 thin 
 The last 10,000 deep people still added about 322 resident bytes each in the read gateway. We are measuring the heap and native memory behind that change.
 The transactor kept adding memory after its object cache was nearly full. A saved ten-account traffic run reached 5.37 GiB in its 6 GiB container.
 The next Mac run samples both Java heaps at three sizes while the same people stay active.
-The writer, erasure safeguards, fallback reader and Publish priority are now on the shared branch. All six native runs passed 54,079 assertions each.
+The writer, erasure safeguards, fallback reader and Publish priority are on the shared branch. Six native suites and all 13 checks in the small erasure regression passed.
 The pooled campaign has forecasts for all eight priorities. The small saved-output comparison is still due.
 Lean storage still has open erasure and native query gaps. The campaign must keep those paths out of the judged run.
 
