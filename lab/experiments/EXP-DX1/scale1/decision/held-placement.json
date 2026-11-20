@@ -2,7 +2,7 @@
   "maxHours": 40,
   "steps": [
     { "tag": "arm-d7-wfix-pilot-seed", "phase": "seed", "people": 10000, "layout": "pooled", "mode": "individual" },
-    { "tag": "arm-d7-wfix-pilot-bounded", "phase": "cells", "people": 10000, "layout": "pooled", "mode": "bounded", "from": "arm-d7-wfix-pilot-seed" },
+    { "tag": "arm-d7-wfix-pilot-b", "phase": "cells", "people": 10000, "layout": "pooled", "mode": "bounded", "from": "arm-d7-wfix-pilot-seed" },
     { "tag": "arm-d7-wfix-pool-seed", "phase": "seed", "people": 100000, "layout": "pooled", "mode": "individual" },
     { "tag": "arm-d7-wfix-pool-current", "phase": "cells", "people": 100000, "layout": "pooled", "mode": "individual", "from": "arm-d7-wfix-pool-seed" },
     { "tag": "arm-d7-wfix-pool-prepared", "phase": "cells", "people": 100000, "layout": "pooled", "mode": "prepared", "from": "arm-d7-wfix-pool-seed" },
