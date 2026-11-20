@@ -19,6 +19,6 @@ const result = await verifyCase(out, spec, source, stack.prefix, stack, {
 }, "plain");
 // [DX-BM1] Why: verifyCase writes and returns the versioned summary inside its account envelope.
 // Rejected: letting the large run start after hashing a receipt with different top-level fields.
-const written = JSON.parse(fs.readFileSync(path.join(out, "rung-summary.json")));
-assert.deepEqual(result.summary, written);
-process.stdout.write(JSON.stringify(written) + "\n");
+const written = fs.readFileSync(path.join(out, "rung-summary.json"), "utf8");
+assert.equal(JSON.stringify(result.summary, null, 2) + "\n", written);
+process.stdout.write(written);
