@@ -103,12 +103,9 @@ export class Relay {
       e.value.epoch === t.epoch && e.value.parent === cur.parent,
       "Missing original publication",
     );
-    const sel = e.value.selection;
-    const ids =
-      sel.kind === "subjects"
-        ? sel.ids
-        : await memberRange(source, e.value.census, cur.start, e.at, this.pages);
-    const size = sel.kind === "subjects" ? sel.ids.length : e.value.census.count;
+    const census = a.censusFor(e);
+    const ids = await memberRange(source, census, cur.start, e.at, this.pages);
+    const size = census.count;
     assert.equal(ids.length, Math.min(this.pages * width, size - cur.start));
     const ledger = (s: string) => "ledger:" + s;
     const old = await state.rows<string>(ids.map(ledger), at);
@@ -117,7 +114,7 @@ export class Relay {
     const start = performance.now();
     try {
       // [DX-STG1] Why: overlap at most two pinned native pages and fold them in census order, leaving an admission opportunity before each pair. Rejected: firing an entire account's reads at the foreground gateway.
-      const interval = sel.kind === "census" ? this.readIntervalMs : 0;
+      const interval = this.readIntervalMs;
       const quantum = interval ? 16 : 2 * width;
       for (let i = 0; i < ids.length; i += quantum) {
         if (interval) {

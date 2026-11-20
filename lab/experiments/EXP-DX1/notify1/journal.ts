@@ -196,7 +196,10 @@ export class Notices {
       request: req.id,
       kind: req.kind,
       census: old.census,
-      selection: req.selection,
+      // [DX-STG1] Why: generic source ops do not attest the full reverse dependency
+      // closure at the predecessor and committed cuts, including valid-time changes.
+      // Rejected: trusting the caller's subjects or the edited entity's owner.
+      selection: { kind: "census" },
       inputs: old.inputs,
       evaluator: interpreter,
       sourceBefore: tail.at,
@@ -232,12 +235,18 @@ export class Notices {
       [...sourceChecks, ...p.preconditions],
     );
   }
+  censusFor(e: Event): Census {
+    // [DX-STG1] Why: an event already written with the old caller list can
+    // contain real unpaid debt outside that list. Rejected: advancing its
+    // cursor or retroactively treating an already paid span as a whole census.
+    assert(e.value.selection.kind === "census", "Legacy selection lacks coverage proof");
+    return e.value.census;
+  }
   async members(e: Event, start: number) {
-    const selection = e.value.selection;
-    if (selection.kind === "subjects") return selection.ids.slice(start, start + width);
-    return memberPage(this.db, e.value.census, start, e.at);
+    return memberPage(this.db, this.censusFor(e), start, e.at);
   }
   async work(e: Event, ids: string[], at: number): Promise<Work[]> {
+    this.censusFor(e);
     const markers = await this.db.rows<Erased>(
       ids.map((s) => "erased:" + s),
       at,

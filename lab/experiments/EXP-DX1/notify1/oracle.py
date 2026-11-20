@@ -14,8 +14,9 @@ for line in sys.stdin.buffer:
     if msg['op'] == 'inspect':
         result = [{'items': items.get(s, []), 'receiver': receivers.get(s, {'effects': [], 'projection': []})} for s in arg]
     else:
-        assert msg['op'] == 'fold'
+        assert msg['op'] in ('fold', 'coverage')
         result = []
+        affected = []
         policy = releases
         if 'document' in arg:
             actual = w0.Release(arg['document'])
@@ -28,10 +29,15 @@ for line in sys.stdin.buffer:
             out = w0.run_op('evaluate', {'basis': arg['basis'], 'release': arg['release'], 'world': world}, policy)
             assert 'error' not in out, out
             record = {k: out[k] for k in ('basis', 'release', 'subject', 'workItems')}
-            pub = w0.run_op('publish', {'state': {'items': items.get(s, []), 'subjects': [], 'pending': []}, 'evaluations': [record]}, releases)
+            before = items.get(s, [])
+            pub = w0.run_op('publish', {'state': {'items': before, 'subjects': [], 'pending': []}, 'evaluations': [record]}, releases)
+            if before != pub['state']['items']:
+                affected.append(s)
             items[s] = pub['state']['items']
             recv = w0.run_op('receive', {'state': receivers.get(s, {'effects': [], 'projection': []}), 'deliveries': pub['deliveries']}, releases)
             assert recv['applied']['effects'] == pub['deliveries']
             receivers[s] = recv['state']
             result.extend(pub['deliveries'])
+        if msg['op'] == 'coverage':
+            result = {'affected': affected, 'deliveries': result}
     print(jsontok.canonical(result), flush=True)
