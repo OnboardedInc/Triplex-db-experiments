@@ -10,7 +10,7 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 here=lab/experiments/EXP-DX1/prep1
 stack=lab/experiments/EXP-DX1/stack
-mode=${1:?expected run, owner, fair or arm}
+mode=${1:?expected run, storage, owner, fair or arm}
 out=${2:?provide an absolute new output directory}
 source=${3:?provide the pinned Git commit}
 [[ "$out" == /* && "$source" =~ ^[a-f0-9]{40}$ && $(git rev-parse HEAD) == "$source" && -z $(git status --porcelain) ]]
@@ -25,10 +25,19 @@ export DX_NATIVE_SETTINGS_READBACK=1 DX_QUIET_LOGS=1 TRIPLEX_TRACE_LEVEL=off
 unset DX_WRITE_BUDGET_US
 export DX_GW_WRITE_ENTITY_CACHE_BYTES=268435456 DX_GW_READ_ENTITY_CACHE_BYTES=268435456
 producer=(node --import tsx "$here/server-produce.ts")
+tx_memory=10g tx_cache=2g
+tx_java='-Xms1g -Xmx6g -XX:+UseG1GC -XX:MaxGCPauseMillis=50'
+if [[ $mode == arm && ${DX_PREP1_CAMPAIGN:-comparison} == storage ]]; then
+  # [DX-PREP1] Why: reserve the same JVM and container budget for every cache comparison.
+  # Rejected: changing the heap or CPU as well as the object cache between the two S arms.
+  tx_memory=30g
+  if [[ ${4:-} == 1-cache-S ]]; then tx_cache=16g; fi
+  tx_java="-Xms1g -Xmx24g -XX:+UseG1GC -XX:MaxGCPauseMillis=50 -Ddatomic.objectCacheMax=$tx_cache"
+fi
 up_args=(--port-write 8491 --port-read 8495 --cpus-tx "${DX_PREP1_TX_CPUS:-0}" --cpus-pg "${DX_PREP1_PG_CPUS:-1}"
   --cpus-gw-write "${DX_PREP1_WRITE_CPUS:-2-5}" --cpus-gw-read "${DX_PREP1_READ_CPUS:-6}"
-  --pg-memory 8g --tx-memory 10g --tx-java-opts '-Xms1g -Xmx6g -XX:+UseG1GC -XX:MaxGCPauseMillis=50'
-  --object-cache-max 2g --memory-index-threshold 256m --memory-index-max 1g
+  --pg-memory 8g --tx-memory "$tx_memory" --tx-java-opts "$tx_java"
+  --object-cache-max "$tx_cache" --memory-index-threshold 256m --memory-index-max 1g
   --pg-settings '-c shared_buffers=2GB -c track_wal_io_timing=on')
 nonce() { cat /proc/sys/kernel/random/uuid; }
 clean() {
@@ -47,12 +56,14 @@ clean() {
 on_exit() { ret=$?; trap - EXIT; clean; exit "$ret"; }
 trap on_exit EXIT
 trap 'exit 143' TERM INT
-if [[ $mode == fair || $mode == owner ]]; then
+if [[ $mode == fair || $mode == owner || $mode == storage ]]; then
   [[ $# == 4 ]]
   # [DX-PREP1] Why: cap time from seed verification through the last cleanup.
   # Rejected: four independent timeouts that let restore and teardown exceed the hour.
-  exec timeout --kill-after=40s 3520s bash "$here/server.sh" "$mode-timed" "$out" "$source" "$4"
-elif [[ $mode == fair-timed || $mode == owner-timed ]]; then
+  total=3520
+  if [[ $mode == storage ]]; then total=5320; fi
+  exec timeout --kill-after=40s "${total}s" bash "$here/server.sh" "$mode-timed" "$out" "$source" "$4"
+elif [[ $mode == fair-timed || $mode == owner-timed || $mode == storage-timed ]]; then
   [[ $# == 4 && $4 == /* && ! -e $out && -z $(docker ps -q) ]]
   parent=$(realpath -e "$4")
   [[ -d $parent && -f $parent/SEAL.sha256 && $(head -c 5 "$parent/seed.pgdump") == PGDMP ]]
@@ -80,16 +91,21 @@ PY
   (cd "$out"; head -n 2 comparison.SEAL.sha256; sha256sum plan.json) > "$out/SEAL.sha256"
   chmod a-w "$out"/{comparison.SEAL.sha256,SEAL.sha256,source,plan.json,prefix}
   cells=(1-off-S 1-on-S 2-on-S 2-off-S)
+  arm_limit=830
   if [[ $mode == owner-timed ]]; then cells=(1-group-K 1-old-S 1-fixed-S); fi
+  if [[ $mode == storage-timed ]]; then
+    cells=(1-group-K 1-old-S 1-fixed-S 1-prefetch-S 1-cache-S)
+    arm_limit=950
+  fi
   for cell in "${cells[@]}"; do
     owned="tx2-dxprep1-$tag-${cell,,}"
-    timeout --foreground --kill-after=20s 830s bash "$here/server.sh" arm "$out" "$source" "$cell"
+    timeout --foreground --kill-after=20s "${arm_limit}s" bash "$here/server.sh" arm "$out" "$source" "$cell"
     unset owned
   done
 elif [[ $mode == run ]]; then
   [[ $# == 3 && -z $(docker ps -q) ]]
   export DX_PREP1_CAMPAIGN=comparison
-  export TX2_SUBJECT_NUMERIC_OWNER=0
+  export TX2_SUBJECT_NUMERIC_OWNER=0 TX2_SUBJECT_PREFETCH=0
   mkdir "$out"
   tag=$(nonce); tag=${tag%%-*}
   printf '%s\n' "$tag" > "$prefix_file"
@@ -130,6 +146,8 @@ elif [[ $mode == arm ]]; then
     [[ $cell =~ ^(1|2)-(off|on)-S$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == owner ]]; then
     [[ $cell =~ ^1-(group-K|old-S|fixed-S)$ && $(cat "$out/source") == "$source" ]]
+  elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == storage ]]; then
+    [[ $cell =~ ^1-(group-K|old-S|fixed-S|prefetch-S|cache-S)$ && $(cat "$out/source") == "$source" ]]
   else
     [[ $cell =~ ^(1|2|4)-(0-K|1-S|2-S|3-K)$ ]]
   fi
@@ -139,9 +157,10 @@ elif [[ $mode == arm ]]; then
   export DX_PREP1_DUMP="$dump" DX_PREP1_DUMP_SHA=$(awk '$2=="seed.pgdump" {print $1}' "$out/SEAL.sha256")
   export DX_PREP1_WRITERS=${cell%%-*}
   export DX_PREP1_SUBJECT=0 DX_GROUP_COMMIT=1 DX_LIVE_PRIORITY=1
-  export TX2_SUBJECT_NUMERIC_OWNER=0
+  export TX2_SUBJECT_NUMERIC_OWNER=0 TX2_SUBJECT_PREFETCH=0
   if [[ $cell == *-S ]]; then export DX_PREP1_SUBJECT=1 DX_GROUP_COMMIT=0 DX_LIVE_PRIORITY=0; fi
-  if [[ $cell == 1-fixed-S ]]; then export TX2_SUBJECT_NUMERIC_OWNER=1; fi
+  if [[ $cell == 1-fixed-S || $cell == 1-prefetch-S ]]; then export TX2_SUBJECT_NUMERIC_OWNER=1; fi
+  if [[ $cell == 1-prefetch-S ]]; then export TX2_SUBJECT_PREFETCH=1; fi
   export DX_WRITE_OPTIONS_ATTEMPT=$(nonce)
   # Hold total configured writer heap and the writer CPU mask fixed across peer counts.
   export DX_GW_WRITE_JAVA_OPTS="-Xms$((512/DX_PREP1_WRITERS))m -Xmx$((4096/DX_PREP1_WRITERS))m -XX:+UseG1GC"

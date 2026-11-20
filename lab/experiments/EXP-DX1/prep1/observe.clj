@@ -142,7 +142,12 @@
         (let [[index key attribute] args]
           (if (= 'index-range op) (str "api/range :avet " index)
             (str "api/" op " " index " " (if (= :eavt index) attribute key)))))
-      (fn [rows] (seq rows) rows)))
+      (fn [rows]
+        ;; [DX-PREP1] Why: an Iterable can allocate a fresh seek per traversal.
+        ;; Rejected: discarding the realized sequence and observing a duplicate seek.
+        (let [result (seq rows)]
+          (when result (first result))
+          result))))
   (wrap-lookup! (requiring-resolve 'datomic.api/entid)
     (fn [_ k] (if (instance? java.util.List k)
                 (str "api/entid :avet " (first k))

@@ -21,6 +21,8 @@ import {
   ownerPrediction,
   prediction,
   seconds,
+  storageArms,
+  storagePrediction,
   type Arm,
 } from "./server-tape.ts";
 
@@ -34,6 +36,7 @@ type Ack = {
   txn?: unknown;
   subjectSave?: string;
   subjectReplan?: boolean;
+  subjectHintsAttached?: boolean;
   nativeComputeMs?: number;
   nativeIoStats?: unknown;
   timeline: Record<string, number>;
@@ -53,8 +56,15 @@ const answer = ":field/answer-prep1",
 const requestedCredits = Number(process.env.DX_PREP1_FAIR_CREDITS ?? 0);
 assert([0, 1, 2, 6].includes(requestedCredits));
 const campaign = process.env.DX_PREP1_CAMPAIGN ?? "comparison";
-assert(campaign === "comparison" || campaign === "fair" || campaign === "owner");
-const campaignArms = campaign === "owner" ? ownerArms : campaign === "fair" ? fairArms : arms;
+assert(
+  campaign === "comparison" ||
+    campaign === "fair" ||
+    campaign === "owner" ||
+    campaign === "storage",
+);
+const campaignArms = { comparison: arms, fair: fairArms, owner: ownerArms, storage: storageArms }[
+  campaign
+];
 const campaignSeconds = campaign === "comparison" ? seconds : fairSeconds;
 const creditsFor = (arm: Arm) => (arm.writer === "S" ? (arm.credits ?? requestedCredits) : 0);
 const root = (a: number, p: number) => ids.placement(accounts[a]!.first + p);
@@ -421,7 +431,15 @@ async function armRun(
         [b, !b, !b, true, true, true, false, false, false, true, true, false, null, 8],
       );
       assert.equal(Boolean(got.subjectNumericOwner), Boolean(arm.numericOwner));
+      assert.equal(Boolean(got.subjectPrefetch), Boolean(arm.prefetch));
       if (b) assert.match(got.subjectFunction, /^:triplex\.subject\/v-[0-9a-f]{24}$/);
+      if (campaign === "storage" && b)
+        assert.equal(
+          got.subjectFunction,
+          arm.numericOwner
+            ? ":triplex.subject/v-164887e4b4f0bb61c4213179"
+            : ":triplex.subject/v-b437f5017e1f10be90d166de",
+        );
       options.push(got);
     }
     const opened = await reader.create(baseline.scope, "lean", true, 35_000);
@@ -521,9 +539,16 @@ async function preflight(out: string, arm: Arm) {
         position: { v: String(tick) },
         t: { v: String(t) },
         recordedAt: { v: clock },
-        timeline: { payloadPrepared: 20, submitted: 25, completed: 30, responsePrepared: 40 },
+        timeline: {
+          payloadPrepared: 20,
+          submitted: 25,
+          completed: 30,
+          responsePrepared: 40,
+          ...(arm.prefetch ? { subjectHintsStarted: 21, subjectHintsFinished: 24 } : {}),
+        },
         writePath: { function: arm.writer === "S" ? "mock/subject" : "mock/grouped" },
         ...(arm.writer === "S" ? { subjectSave: "mock/subject" } : {}),
+        ...(arm.prefetch ? { subjectHintsAttached: true } : {}),
       };
     },
   } as unknown as DatomicClient;
@@ -605,9 +630,11 @@ else if (action === "arm") {
           predicted:
             campaign === "owner"
               ? ownerPrediction(arm, rate, label.endsWith("-alone"))
-              : campaign === "fair"
-                ? fairPrediction(arm, rate, label.endsWith("-alone"))
-                : prediction(arm.writers, arm.writer, rate, label.endsWith("-alone")),
+              : campaign === "storage"
+                ? storagePrediction(arm, rate, label.endsWith("-alone"))
+                : campaign === "fair"
+                  ? fairPrediction(arm, rate, label.endsWith("-alone"))
+                  : prediction(arm.writers, arm.writer, rate, label.endsWith("-alone")),
         })),
       })),
     }),

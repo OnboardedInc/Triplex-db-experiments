@@ -228,9 +228,13 @@ case "$PREP1_MODE" in
     done
     ;;
   lookup-profile)
-    for arm in A1 B1; do
-      subject=0
-      if [[ "$arm" == B1 ]]; then subject=1; fi
+    arms=(A1 B1)
+    if [[ $TX2_SUBJECT_PREFETCH == 1 ]]; then arms=(B1 C1); fi
+    for arm in "${arms[@]}"; do
+      subject=1
+      if [[ "$arm" == A1 ]]; then subject=0; fi
+      export TX2_SUBJECT_PREFETCH=0
+      if [[ "$arm" == C1 ]]; then export TX2_SUBJECT_PREFETCH=1; fi
       subject_workers 1 "$subject"
       PREP1_ARM="$arm" node /config/probe.mjs
       stop_subject_workers 1

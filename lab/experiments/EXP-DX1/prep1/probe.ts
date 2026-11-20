@@ -12,15 +12,17 @@ const lookupProfile = mode === "lookup-profile";
 const subjectProbe = subjectProfile || lookupProfile;
 const deep = mode === "profile" || mode === "census";
 const guardProbe = deep || mode === "cheap";
-const depths = lookupProfile ? [24] : subjectProfile
-  ? [1, 2, 4, 6].flatMap((n) => [n, n, n])
-  : mode === "census"
-    ? [8]
-    : guardProbe
-      ? [32]
-      : mode === "ortho"
-        ? [1, 8, 32, 32, 8, 1]
-        : [32, 32];
+const depths = lookupProfile
+  ? [24]
+  : subjectProfile
+    ? [1, 2, 4, 6].flatMap((n) => [n, n, n])
+    : mode === "census"
+      ? [8]
+      : guardProbe
+        ? [32]
+        : mode === "ortho"
+          ? [1, 8, 32, 32, 8, 1]
+          : [32, 32];
 const count = lookupProfile ? 96 : subjectProfile ? 30 : guardProbe ? 96 : 192;
 const subjectCount = lookupProfile ? 1152 : deep ? 1200 : depths.length * count;
 // [DX-PREP1] Why: sample across the same seeded depth as the earlier open-loop experiment.
@@ -58,6 +60,7 @@ type Ack = {
   datoms: number;
   subjectSave?: string;
   subjectReplan?: boolean;
+  subjectHintsAttached?: boolean;
   requestBytes: number;
   nativeComputeMs: number;
   submitToNativeEntryMs: number;
@@ -161,6 +164,7 @@ try {
         database: string;
         position: number;
         subjectSave?: boolean;
+        subjectPrefetch?: boolean;
         subjectFunction?: string;
         subjectFunctionTx?: string;
         options: { groupCommit: boolean; livePriority: boolean; fieldCoalesce: boolean };
@@ -168,7 +172,8 @@ try {
       assert.equal(observed.database, db);
       assert.equal(observed.position, seedHead.position);
       assert.equal(peers.length, Number(arm![1]));
-      assert.equal(!!observed.subjectSave, arm!.startsWith("B"));
+      assert.equal(!!observed.subjectSave, !arm!.startsWith("A"));
+      assert.equal(!!observed.subjectPrefetch, arm === "C1");
       assert.equal(observed.options.groupCommit, arm!.startsWith("A"));
       assert.equal(observed.options.livePriority, arm!.startsWith("A"));
       assert.equal(observed.options.fieldCoalesce, false);

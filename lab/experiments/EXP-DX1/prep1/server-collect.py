@@ -37,7 +37,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     assert {k: v for k, v in arm.items() if k != "cells"} == header["arm"]
     assert plan["seconds"] == header["seconds"]
     campaign = plan.get("campaign", "comparison")
-    assert campaign in ("comparison", "fair", "owner")
+    assert campaign in ("comparison", "fair", "owner", "storage")
     followup = campaign != "comparison"
     fair_credits = header.get("fairCredits", 0)
     assert fair_credits in (0, 1, 2, 6) and (not fair_credits or arm["writer"] == "S")
@@ -52,6 +52,16 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 for a in plan["arms"]] == [
             ("1-group-K", 1, "K", False, False), ("1-old-S", 1, "S", False, False),
             ("1-fixed-S", 1, "S", False, True),
+        ]
+        assert fair_credits == 0
+    if campaign == "storage":
+        assert [(a["id"], a["writers"], a["writer"], a["reverse"], a["numericOwner"], a["prefetch"], a["cacheGiB"])
+                for a in plan["arms"]] == [
+            ("1-group-K", 1, "K", False, False, False, 2),
+            ("1-old-S", 1, "S", False, False, False, 2),
+            ("1-fixed-S", 1, "S", False, True, False, 2),
+            ("1-prefetch-S", 1, "S", False, True, True, 2),
+            ("1-cache-S", 1, "S", False, False, False, 16),
         ]
         assert fair_credits == 0
     if followup:
@@ -91,11 +101,20 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert option["attempt"] == header["nonce"] and option["gatewaySourceHash"] == header["gatewaySource"]
             assert bool(option.get("subjectSave")) == (arm["writer"] == "S")
             assert bool(option.get("subjectNumericOwner")) == bool(arm.get("numericOwner"))
+            assert bool(option.get("subjectPrefetch")) == bool(arm.get("prefetch"))
             assert option["options"]["groupCommit"] == (arm["writer"] == "K")
         assert re.fullmatch(r"[0-9a-f-]{36}", (directory / "boot-id").read_text().strip())
         for role in roles:
             assert (native_path.parent / f"prep1-gc-{role}.log").stat().st_size > 0
             assert (native_path.parent / f"{role}-native-settings.json").stat().st_size > 0
+        if campaign == "storage":
+            tx_jvm = read(native_path.parent / "tx-native-settings.json")
+            assert (tx_jvm["run"], tx_jvm["slot"], tx_jvm["source"], tx_jvm["process"]) == (
+                header["slot"], header["slot"], header["commit"], "tx")
+            assert tx_jvm["jvm"]["objectCacheMax"] == f'{arm["cacheGiB"]}g'
+            assert 23 << 30 <= tx_jvm["jvm"]["maxHeapBytes"] <= 24 << 30
+            tx_container, = [container for container in stack["containers"] if container["name"] == header["slot"] + "-tx"]
+            assert tx_container["memory"] == 30 << 30
 
     native, end, block_no = {}, False, 0
     with native_path.open() as file:
@@ -132,7 +151,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         in_window, stages_by_save, flush_ms = 0, collections.defaultdict(list), {}
         turns = collections.defaultdict(list)
         turn_appends = collections.defaultdict(set)
-        prepared = 0
+        prepared, hinted = 0, 0
+        native_io = collections.defaultdict(list)
         for i, (r, offer) in enumerate(zip(rows, tape, strict=True)):
             assert (r["ordinal"], r["id"], r["due"], r["account"], r["person"]) == (
                 i, f"{label}-{i}", offer[0], offer[1], offer[2])
@@ -153,6 +173,20 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 stages_by_save["httpRoundTrip"].append(r["end"] - r["sent"])
                 if ack.get("nativeComputeMs") is not None:
                     stages_by_save["nativeCompute"].append(ack["nativeComputeMs"])
+                if "subjectHintsStarted" in stages:
+                    assert arm.get("prefetch")
+                    assert stages["payloadPrepared"] <= stages["subjectHintsStarted"] <= stages["subjectHintsFinished"] <= stages["submitted"]
+                    stages_by_save["hintPreparationMs"].append((stages["subjectHintsFinished"] - stages["subjectHintsStarted"]) / 1000)
+                if ack.get("subjectHintsAttached"):
+                    assert arm.get("prefetch") and ack.get("subjectSave") and "subjectHintsFinished" in stages
+                    hinted += 1
+                if campaign == "storage" and not fixture:
+                    reads = ack["nativeIoStats"]["reads"]
+                    width = ack.get("groupSize", 1)
+                    assert 1 <= width <= 8
+                    native_io["applyMs"].append(ack["nativeComputeMs"] / width)
+                    for counter in ("sql", "sql-ms", "deserialize-ms", "eavt-load", "aevt-load", "avet-load"):
+                        native_io[counter].append(reads.get(counter, 0) / width)
                 if ack.get("subjectSave"):
                     assert arm["writer"] == "S" and ack["subjectSave"] == ack["writePath"]["function"]
                     if not fixture:
@@ -198,6 +232,9 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                         "accountP99Ms": pair, "completedOnlyP99Ms": {a: p99(times[a]) for a in counts},
                         "worstAccountP99Ms": max(pair.values()) if all(v is not None for v in pair.values()) else None,
                         "stageP99Ms": {key: p99(samples) for key, samples in stages_by_save.items()},
+                        "hintsAttached": hinted,
+                        "nativeIoPerSave": {key: {"mean": sum(samples) / len(samples), "p99": p99(samples)}
+                                            for key, samples in native_io.items()},
                         "appendP99Ms": p99(list(flush_ms.values())),
                         "fairTurns": len(turns), "maxAppendsPerTurn": max(map(len, turn_appends.values()), default=0),
                         "nativeT": len(joined), "appends": len(block_ids),
@@ -221,6 +258,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     return {"fixture": fixture, "source": header["commit"], "nonce": header["nonce"], "slot": header["slot"],
             "seedSha": header["seedSha"], "dumpSha": header["dumpSha"], "planSha": sha(plan_path),
             "fairCredits": fair_credits, "numericOwner": bool(arm.get("numericOwner")),
+            "prefetch": bool(arm.get("prefetch")), "cacheGiB": arm.get("cacheGiB"),
             "rawSha256": {path.name: sha(path) for path in kept}, "cells": metrics}
 
 

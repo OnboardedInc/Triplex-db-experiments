@@ -12,6 +12,8 @@ export type Arm = {
   reverse: boolean;
   credits?: 0 | 1;
   numericOwner?: boolean;
+  prefetch?: boolean;
+  cacheGiB?: 2 | 16;
 };
 export const arms: Arm[] = widths.flatMap((writers) =>
   (["K", "S", "S", "K"] as const).map((writer, repeat) => ({
@@ -33,6 +35,27 @@ export const ownerArms: Arm[] = [
   { id: "1-group-K", writers: 1, writer: "K", reverse: false, numericOwner: false },
   { id: "1-old-S", writers: 1, writer: "S", reverse: false, numericOwner: false },
   { id: "1-fixed-S", writers: 1, writer: "S", reverse: false, numericOwner: true },
+];
+export const storageArms: Arm[] = [
+  ...ownerArms.map((arm): Arm => ({ ...arm, cacheGiB: 2, prefetch: false })),
+  {
+    id: "1-prefetch-S",
+    writers: 1,
+    writer: "S",
+    reverse: false,
+    numericOwner: true,
+    prefetch: true,
+    cacheGiB: 2,
+  },
+  {
+    id: "1-cache-S",
+    writers: 1,
+    writer: "S",
+    reverse: false,
+    numericOwner: false,
+    prefetch: false,
+    cacheGiB: 16,
+  },
 ];
 const shortened = (arm: Arm) => arm.credits !== undefined || arm.numericOwner !== undefined;
 export const operation = (label: string, ordinal: number) => `${label}-${ordinal}`;
@@ -136,6 +159,51 @@ export function ownerPrediction(arm: Arm, rate: number, quietOnly: boolean) {
     p99Ms: quietOnly ? solo : null,
     quietP99Ms,
     quietRatio: quietP99Ms / solo,
+  };
+}
+
+export function storagePrediction(arm: Arm, rate: number, quietOnly: boolean) {
+  const index = Number(rate === 394);
+  const old = ownerPrediction(arm, rate, quietOnly);
+  // [DX-PREP1] Why: price only the reads that the lookup trace says are movable.
+  // Rejected: treating a 16 GiB cache or an attached hint as proof of a storage-free apply.
+  const treatment = arm.prefetch
+    ? {
+        delivery: [195, 155],
+        solo: [45, 14],
+        loaded: [810, 1070],
+        sql: [4.4, 4],
+        compute: [3, 4.6],
+      }
+    : arm.cacheGiB === 16
+      ? {
+          delivery: [210, 185],
+          solo: [35, 12],
+          loaded: [700, 880],
+          sql: [2.2, 2.2],
+          compute: [2.1, 3.6],
+        }
+      : null;
+  const solo = treatment?.solo[index] ?? ownerPrediction(arm, rate, true).quietP99Ms;
+  const quietP99Ms = quietOnly ? solo : (treatment?.loaded[index] ?? old.quietP99Ms);
+  return {
+    serving: quietOnly ? 3.5 : (treatment?.delivery[index] ?? old.serving),
+    savesPerAppend: quietOnly || arm.writer === "S" ? 1 : 8,
+    p99Ms: quietOnly ? solo : null,
+    quietP99Ms,
+    quietRatio: quietP99Ms / solo,
+    sqlReadsPerSave: quietOnly
+      ? arm.writer === "K"
+        ? 14
+        : (treatment?.sql[index] ?? (arm.numericOwner ? 9 : 10))
+      : (treatment?.sql[index] ??
+        (arm.writer === "K" ? 0.05 : (index ? 10 : 11) - Number(!!arm.numericOwner) * 0.7)),
+    nativeApplyMsPerSave: quietOnly
+      ? arm.writer === "K"
+        ? 12
+        : (treatment?.compute[index] ?? (arm.numericOwner ? 6.3 : 6.9))
+      : (treatment?.compute[index] ??
+        (arm.writer === "K" ? 0.19 : (index ? 8.62 : 6.91) - Number(!!arm.numericOwner) * 0.5)),
   };
 }
 

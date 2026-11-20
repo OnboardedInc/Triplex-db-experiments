@@ -8,6 +8,8 @@ import {
   fairSeconds,
   ownerArms,
   ownerPrediction,
+  storageArms,
+  storagePrediction,
 } from "./server-tape.ts";
 
 test("the four fair-policy arms share their sealed field inputs and matched quiet arrivals", () => {
@@ -78,5 +80,26 @@ test("grouped, original prepared and numeric-owner arms share the same shortened
     assert(schedule.every(({ duration }) => duration === 60));
     assert.equal(ownerPrediction(arm, 394, true).serving, 3.5);
     assert(ownerPrediction(arm, 394, false).serving < 394);
+  }
+});
+
+test("the five storage arms reuse the real field tape and isolate the cache and hint changes", () => {
+  const [grouped, old, numeric, hinted, cache] = storageArms;
+  assert.deepEqual({ ...cache, id: old.id, cacheGiB: old.cacheGiB }, old);
+  assert.deepEqual({ ...hinted, id: numeric.id, prefetch: false }, numeric);
+  assert.equal(grouped.writer, "K");
+  const expected = cells(grouped).map(({ label, tapeSha, duration }) => [label, tapeSha, duration]);
+  for (const arm of storageArms) {
+    const schedule = cells(arm);
+    assert.deepEqual(
+      schedule.map(({ label, tapeSha, duration }) => [label, tapeSha, duration]),
+      expected,
+    );
+    for (const { label, rate } of schedule) {
+      const alone = label.endsWith("-alone");
+      const prediction = storagePrediction(arm, rate, alone);
+      assert.equal(alone ? prediction.serving : prediction.p99Ms, alone ? 3.5 : null);
+      assert(prediction.sqlReadsPerSave >= 0 && prediction.nativeApplyMsPerSave > 0);
+    }
   }
 });

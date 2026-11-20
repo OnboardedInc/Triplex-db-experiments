@@ -15,7 +15,8 @@
                :configuration (System/getProperty "logback.configurationFile")
                ;; [DX-T1-12] Why: bind the effective compiler/heap policy without recording arbitrary JVM arguments or secrets. Rejected: an environment string as proof the VM accepted a flag.
                :jvm {:compileThresholdScaling (try (.getValue (.getVMOption (ManagementFactory/getPlatformMXBean HotSpotDiagnosticMXBean) "CompileThresholdScaling")) (catch Throwable _ nil))
-                     :maxHeapBytes (.maxMemory (Runtime/getRuntime))}
+                     :maxHeapBytes (.maxMemory (Runtime/getRuntime))
+                     :objectCacheMax (System/getProperty "datomic.objectCacheMax")}
                :loggers (into {} (map (fn [name] [name (str (.getEffectiveLevel (LoggerFactory/getLogger name)))]) logger-names))}]
       (.mkdirs (File. dir))
       (spit (File. dir (str process "-native-settings.json")) (str (json/write-str row) "\n")))))
