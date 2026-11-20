@@ -9,6 +9,7 @@ import {
 } from "../../../../packages/datomic/dist/index.js";
 import { type CompositionHandle } from "../../../bench/lib/composition.ts";
 import { policyWorld } from "../../../bench/lib/deep-activation.ts";
+import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { ids as nativeIds } from "../../../bench/lib/world.ts";
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { keyFor } from "../scale1/tenants.ts";
@@ -253,12 +254,22 @@ export class ReleaseCopy {
       const begin = performance.timeOrigin + performance.now();
       const client = new DatomicClient(this.source.backend.url, 35000, 64 * 1024 ** 2);
       try {
-        const db = "s2-" + Buffer.from(this.source.scopeName!).toString("base64url");
+        // [DX-STG1] Why: the replica endpoint names the branded Triplex scope.
+        // Rejected: encoding just the fixture label, which selects another database.
+        const scope = runtimeApi.DatabaseScope.test(this.source.scopeName!);
+        const db = "s2-" + Buffer.from(String(scope)).toString("base64url");
         const source = Replica.source(client, db, () => this.source.currentPosition(), validAt);
         const fetch = source.page;
         source.page = (...args) => {
           this.stats.pages++;
-          return fetch(...args);
+          return a.budget
+            ? a.budget.http(
+                "copy-page",
+                "source",
+                () => fetch(...args),
+                (result) => ({ cut: result.position, roots: args[0].length }),
+              )
+            : fetch(...args);
         };
         const replica = new Replica(source, validAt);
         await replica.bootstrap(

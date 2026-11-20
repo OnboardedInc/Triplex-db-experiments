@@ -113,6 +113,11 @@ def stats(d):
         rr=[r for r in rows if r.get("role")==role]
         samples=[s for r in rr for s in r["samples"]]
         counts[role]={"writes":sum(r["kind"]=="write" for r in rr),"pinned":sum(r["kind"]=="pinned" for r in rr),"roots":sum(r.get("roots",0) for r in rr),"heads":sum(r["kind"]=="head" for r in rr),"lookups":sum(r["kind"]=="lookup" for r in rr),"http":sum(r["requests"] for r in rr),"httpSamples":len(samples),"wireIn":sum(q["requestBytes"] for q in samples),"wireOut":sum(q["responseBytes"] for q in samples),"opBytes":sum(r.get("opBytes",0) for r in rr)}
+        if role=="source" and "copy" in m:
+            pages=[r for r in rr if r["kind"]=="copy-page"]
+            assert len(pages)==m["copy"]["pages"]
+            counts[role]["replicaPages"]=len(pages)
+            counts[role]["replicaWireOut"]=sum(q["responseBytes"] for r in pages for q in r["samples"])
         wal=[r["wal"] for r in rr if "wal" in r]
         if wal:
             assert len(wal)==counts[role]["writes"]
