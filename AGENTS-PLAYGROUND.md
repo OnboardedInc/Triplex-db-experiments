@@ -2,6 +2,8 @@
 
 Run `pnpm playground start` from the repository root using Node 22.18+, pnpm 10.11 and a running Docker daemon. Use the loopback address printed after seeding. The process stays in the foreground. Run `pnpm playground stop` from another terminal to remove its database and service. Downloaded dependency caches can be reused.
 
+Start a prepared snapshot with `pnpm playground start --tier NAME --data SOURCE`. `SOURCE` is the directory or HTTPS base containing its `manifest.json`. `PLAYGROUND_DATA_URL` can supply the source instead. Startup verifies the archive and compares generated records at two historical cuts and the current cut before enabling the actions. Use `pnpm playground start --tier full --replay --data SOURCE` for the compact history bundle.
+
 ## HTTP and MCP
 
 - Fetch `/openapi.json` for action names and input schemas. Send JSON objects to `POST /api/{action}` with `Content-Type: application/json`.

@@ -1,11 +1,11 @@
-The playground branch contains a dashboard, a local JSON API and MCP tools.
-The small fixture has a deep account, a wide account and three small accounts in one database.
-Its people, employment records, forms and documents are invented.
-The full generator keeps five weeks of field-level saves and emits a checksummed object manifest.
-The wide account uses about four million people at four facts each to match the deep account's fact count.
-No Cloudflare bucket was created and no dataset was uploaded.
-Erasure is unavailable because the merged native query route refuses protected scopes.
-Continuous compliance scenarios are reserved for the owner's follow-up.
+The playground can start from the Git fixture or a prepared database snapshot.
+Snapshot startup checks files and compares generated people at three points in time.
+The small fixture still has five invented accounts in one database.
+The full plan has one hundred thousand deep people and about four million thin people.
+The snapshot builder produces local files and does not upload them.
+The clean-clone workflow runs only when started by hand.
+Erasure stays unavailable because the integration branch refuses protected native queries.
+Continuous compliance scenarios remain reserved for the owner.
 
 ## Start and explore
 
@@ -13,6 +13,8 @@ Continuous compliance scenarios are reserved for the owner's follow-up.
 pnpm playground start
 pnpm playground stop
 ```
+
+For a prepared tier, use `pnpm playground start --tier NAME --data SOURCE`. Supply a local snapshot directory or an HTTPS object base containing its manifest. The Git fixture retains its replay path. The older compact history bundle remains available with `--tier full --replay`.
 
 Open the printed loopback address. Pick an account and a person to compare the current graph with an earlier cut. Try a save, duplicate receipt and stale conflict. The live feed resumes at its native cursor. Publish shows the first answer and reports materialization progress. The right panel shows returned records, available timing spans, and JSON request and reply. The dashboard and both MCP transports call the same action service. [Agent guide](../../../../AGENTS-PLAYGROUND.md) · [Data model](DATA-MODEL.md) · [Full-tier size and upload](SIZE.md)
 
@@ -35,7 +37,7 @@ The `live-12` gate passed on source commit `3f2db8cc9` in a fresh database. It c
 
 Earlier attempts are retained. A live dump produced a different row digest while Datomic was still running. The first Chromium launch was denied by the macOS sandbox. Later Chromium attempts reached an unavailable transactor during Publish even though its container was still running. The final path uses the reader for the feed watch, checks transactor liveness and quiesces the owned Datomic processes before dumping. All Mac timings are diagnostic.
 
-The full-population artifacts, replay and restore are unmeasured. The local start command supports the generated object bundle. The database dump is a gate probe. The lab gate exercised the portable stack launcher and teardown through `engine.mjs`. A standalone clean-clone run on an independent plain Docker installation was outside this gate. The final merge into the v0.1 integration branch and that branch's gate belong to the orchestrator. [Size and startup paths](SIZE.md)
+The full-population artifacts, replay and restore remain unmeasured. The `live-12` lab gate exercised the portable launcher and teardown through `engine.mjs`. The manual workflow covers a separate clean clone on plain Docker once dispatched. [Size and startup paths](SIZE.md)
 
 The release demo uses the shared ConfigStore and the HTTP package's configuration descriptors. An intentionally small status rule provides a visible answer and durable background materialization. The standalone Foldkit explorer continues to serve the generic Triples view. The Datomic dashboard has its own workspace panel for commit positions, traces, native query and Publish.
 
