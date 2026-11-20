@@ -2,17 +2,18 @@
 Datomic already supports ZGC on Java 25. Our old image runs Java 21.
 This branch lets all three processes run on either Java version.
 Start with Java 21 and a two-core writer, Java 25 with G1, then Java 25 with ZGC.
-Use `cda347c1140e8aac7849e2e8256c4f60a2d515cd` for the server. Budget 78 minutes for those three arms.
+Use `286a5fbe0da2b5e33c3185955a7462b3f4504317` for the server. Budget 78 minutes for those three arms.
 A fourth arm brings the total to 104 minutes and gives G1 the same memory as ZGC.
 ZGC gets 13 GiB more reserved memory in this trial. The server still has to price the gain and check for stalls.
-The archived Mac result measured only the writer on ZGC. It cannot decide which setup should ship.
+On the shared Mac, the writer's worst one percent of pauses started at 0.062 ms with ZGC versus 31 ms with two-core G1. The server still needs to measure the effect on saves.
 
 ## Settings and evidence
 
 - [Part 2 compatibility](JAVA25.md) · [Exact flags and rationale](COLLECTORS-PART2.md) · [Before-run forecasts and heap inputs](PREDICTIONS-PART2.md) · [Server command](SERVER.md)
 - [Part 1 inventory](INVENTORY.md) · [Sources](SOURCES.md) · [Configuration](CONFIGURATION.md) · [Mac measurements](MAC.md) · [Forecasts](PREDICTIONS.md)
 - Official Temurin 25.0.5+8 and the Java 21 base are digest-pinned. The signed Datomic 1.0.7745 distribution includes Clojure 1.12.5 and SLF4J 2.0.17. Java 25 enables the documented Unsafe and peer native-access flags.
-- The shared Mac measurement lease has held the native suite, container build and SDK setup in the queue. The host accepted both Java 25 collectors and the role flag sets. Live SQL gates and startup memory are pending. No bench server was contacted.
+- The shared Mac measurement lease holds the native suite, container builds and SDK setup in the queue. DX-HA1 is waiting for the heavy token held by DX-THIN1. The host accepted both Java 25 collectors and the role flag sets. Live SQL gates and startup memory are pending. No bench server was contacted.
+- The GC parser was exercised with archived G1 and generational ZGC logs on the shared Mac. The check verified all three G1 roles, the ZGC writer's phase labels and rejection of a log from a different boot. Evidence and hashes are under `evidence/DX-JVM1/part2`.
 - JVM settings live in `launch.mjs`. The integrated runner and TAIL1 arm definition both import the measured writer G1 flags. A selected experiment can still supply its own settings. The acceptance contract and SQL durability are unchanged.
 - One initial push used Git's local author identity. The experiment branch tip was replaced with a commit that uses the generic Codex identity. The earlier remote object may still be retained.
 
