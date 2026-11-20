@@ -3087,3 +3087,26 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   lease. Part 5 assigned: the two open memory terms in one database; keep the merged branch current (single write
   branch, erasure fixes, reader worker, collector settings, Publish priority); `everything.sh` reworked for ten deep
   accounts in one database.
+
+## 2026-11-20 11:49 UTC (06:49 local, 2026-11-20): W3-DESIGN in: the prepared subject save; two builders restarted on it
+
+- **W3-DESIGN (`gpt-6.2-astra` high; private folder `research/2026-11-20-onedb/DESIGN/`: SUMMARY, ANALYSIS, PLAN, `model.py`).**
+  Reading of DX-PREP1's run: 96 different people edited, ten groups fell back before submission, none lost a conflict
+  inside Datomic: the whole-database guard was conservative, not contended. Four designs, in build order: (1) the
+  prepared subject save: each save prepared once by a worker, one native compare-and-set on the subject's revision
+  and guards on shared dependencies at the serial point, order-dependent fields stamped there, ordinary business
+  and journal rows kept (native queries and Q107-S hold), several gateways preparing in parallel: model 697 saves per
+  second at two logical saves per log append (383 at one), worst-account p99 28 ms at 394 per second, but 1.85
+  times alone for a quiet account with bunched arrivals and an import; (2) a fenced single publisher certifying
+  worker results against the ordered prefix: 683 per second; (3) a journal-first writer with secondary indexes built
+  after acknowledgement: 716 falling to 559; (4) original facts stored in pages inside the same database
+  (conditional on a native-query ruling): 6.73 billion records in three years at two members per transaction.
+  Storage is the harder limit: at 50 saves per second for three years even the three journal records of a one-field
+  replacement add 14.19 billion records; the smallest decision for Sam is whether to qualify one database beyond
+  Datomic's approximate ten-billion guidance while keeping all native queries. No design has yet shown the isolation
+  bar, years of retention or one-second durable activation. Stop: the whole-database draft refresh, repeated group
+  execution, the journal-free compact benchmark.
+- **Restarted on it:** DX-PREP1 part 3 (PLAN steps 1 to 4: reason histogram for every declined member; the narrow writer
+  with a per-subject compare-and-set; publication, durability and query gates before capacity; each stage priced);
+  DX-HA1 part 5 (explain the bare-metal import result from its evidence; small frames of 16 to 32 facts at about 130
+  per second with live saves first; what the import triggers besides its frames).
