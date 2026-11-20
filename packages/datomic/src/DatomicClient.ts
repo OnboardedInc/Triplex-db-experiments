@@ -921,7 +921,8 @@ export class DatomicClient {
     const encodeStart = performance.now();
     // [DX-B5-L0] Why: two-argument transact wrappers preserve the input, and this callback never belongs on the wire.
     // Rejected: a third-argument-only callback (the NS publication observer drops it).
-    const { onSent: inputSent, rows: inputRows, newIds: ids, ...header } = input;
+    const { onSent: inputSent, ...wireInput } = input;
+    const { rows: inputRows, newIds: ids, ...header } = wireInput;
     onSent ??= inputSent;
     const compact = this.layouts.get(db) === "lean";
     const rowFast = fastPathEnabled("row"),
@@ -991,7 +992,9 @@ export class DatomicClient {
       ) &&
       new Set(inputRows.map((r) => r.id)).size === inputRows.length;
     const body = {
-      ...header,
+      // [DX-INT1] Why: updating the existing legacy keys preserves the frozen request bytes.
+      // Rejected: rebuilding the legacy header in compact-field order.
+      ...(fresh || ordered ? header : wireInput),
       ...(this.cacheOptions.writeClass ? { writeClass: this.cacheOptions.writeClass } : {}),
       ...(this.cacheOptions.groupAccount ? { groupAccount: this.cacheOptions.groupAccount } : {}),
       ...(bounds ? { historyIdentityBounds: bounds } : {}),
