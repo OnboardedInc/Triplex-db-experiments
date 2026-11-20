@@ -38,6 +38,8 @@ Use the same allocated native Linux host, pinned images, built workspace package
 
 **Readout.** The verified one-gateway prefix measures 179.5 versus 140.6 saves/s for grouped and per-person at 235 offered. The copied per-person cells show native apply and storage reads as the next limit. [Server reading](SERVER-READING.md)
 
+**Candidate.** Remove the repeat native identity upsert by using the owner number already resolved on the gateway, with an exact identity and revision check. The forecast is 6.4–6.9 ms per save at 235 offered, with an apply-only ceiling of 145–156/s. [Lookup audit and candidate forecasts](SERVER-READING.md#predictions-before-implementation)
+
 **Evidence audit.** The launcher verifies and rechecks the sealed bytes, binds the new plan to its commit, starts a fresh slot per arm, and waits for owned cleanup before publishing a summary. The producer reads back settings and the installed function on each gateway, verifies the restored cut, and checks receipt and stored journal content against each offer. The collector verifies those bindings, joins each receipt to the same-attempt native append, checks one append at most per one-credit turn, and retains raw hashes and pause logs. Six tests and strict TypeScript passed. The four source-bound fixtures joined 2,548 simulated saves to their append records and rejected a changed fair-credit setting. The follow-up used no physical server here. [Checksums](SHA256SUMS)
 
 Part 5's [gated handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/94b930a73/lab/experiments/EXP-DX1/prep1/REPORT.md) records the off/on writer gates, both original receipts after restart and all 13 erasure routes. No acceptance pins moved.
