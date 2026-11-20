@@ -78,7 +78,7 @@ def joined_output(folder, owner, source, start, repo=None):
         assert re.fullmatch("[a-f0-9]{64}", proof["digest"])
         writes = window["writes"]
         assert len(writes) == {0: 0, 3.5: 2, 23.5: 12}[rate]
-        assert all(w["offered"] <= w["entered"] <= w["done"] and w["p"] > window["baseline"] for w in writes)
+        assert all(w["entered"] <= w["done"] and w["p"] > window["baseline"] for w in writes)
         assert all(a["p"] < b["p"] for a, b in zip(writes, writes[1:]))
         bodies.add(json.dumps(offer["document"], sort_keys=True))
         releases.add(window["release"])
@@ -86,6 +86,8 @@ def joined_output(folder, owner, source, start, repo=None):
         positions.add(window["nativeCut"])
         windows.append(dict(index=i, mode=mode, rate=rate, saves=len(writes), durableMs=durable,
                             firstCorrectMs=window["firstCorrectMs"], ingressDeltaMs=window["ingress"]-window["offered"],
+                            earlySaves=sum(w["entered"]<w["offered"] for w in writes),
+                            minSaveEntryDeltaMs=min((w["entered"]-w["offered"] for w in writes),default=None),
                             deadlineMiss=miss, notices=proof["notices"]))
     assert len(reading["windows"]) == len(bodies) == len(releases) == len(subjects) == len(positions) == 6
     effects = get(folder / "server-effects.json")

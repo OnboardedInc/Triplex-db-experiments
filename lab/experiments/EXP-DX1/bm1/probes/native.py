@@ -73,6 +73,43 @@ def verified_checkpoint(allow_single_account=False):
     return None
 
 
+def recover_matched_dump(root,source):
+    # [DX-BM1] Why: the completed capture survived the earlier pg_restore input-offset error.
+    # Rejected: repeating the timed arm, or accepting a dump without its source, native owner and exact seed readback.
+    assert root.parent==GROUP.parent and re.fullmatch(r"matchedn19b?",root.name)
+    name=root.name+"-3"
+    folder=NIGHT/"checkpoints"/(name+"-before-probes")
+    receipt=folder/"checkpoint.json"
+    partial=folder/"host.pgdump.partial"
+    if receipt.is_file() or not partial.is_file():return
+    arm=root/"results/arm-3"
+    source_output=arm/"field-output.json"
+    identity=get(arm/"identity.json")
+    error=get(arm/"checkpoint-dump-error.json")["error"]
+    assert "Command failed" in error and "held-seed.py" in error
+    assert identity["source"]==source and identity["slot"]=="tx2-dxscale1-w1-"+name and identity["population"]=="deep"
+    assert get(arm/"cleanup.json")=={"containers":[],"networks":[],"volumes":[]}
+    bound=NIGHT/"probes"/name/"bound-seed.json"
+    head=get(bound)
+    assert head["fieldOutputSha256"]==sha(source_output) and get(source_output)["arm"]==identity
+    assert [head[k] for k in ("source","slot","nonce")]==[identity[k] for k in ("source","slot","nonce")]
+    assert head["seed"]["people"]==10000 and head["seed"]["facts"]==get(source_output)["seedFacts"]
+    assert source_output.stat().st_mtime<=bound.stat().st_mtime<=partial.stat().st_mtime
+    with partial.open("rb",buffering=0) as stream:assert stream.read(5)==b"PGDMP"
+    stack=get(arm/"engines"/identity["slot"]/"stack.json")
+    assert stack["prefix"]==identity["slot"]
+    pg,= [c for c in stack["containers"] if c["name"]==identity["slot"]+"-pg"]
+    assert re.fullmatch(r"[a-f0-9]{64}",pg["id"])
+    obj=dict(source=source,slot=identity["slot"],nonce=identity["nonce"],original=str(arm),scope=head["scope"],db=head["db"],
+             lastPosition=head["lastPosition"],seed=head["seed"],witness=head["witness"],bindingSha256=sha(bound),
+             pgContainer=pg["id"],bytes=partial.stat().st_size,dumpSha256=sha(partial),at=time.time(),validation="restore-required")
+    final=folder/"host.pgdump"
+    if not final.is_file():os.link(partial,final)
+    assert partial.samefile(final)
+    put(receipt,obj)
+    put(NIGHT/"probes"/name/"recovered-checkpoint.json",obj)
+
+
 def bound_slot(slot):
     return bool(re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-(base|(?:growth|readers|ceil|size|pred)[1-4])",slot))
 
@@ -158,6 +195,11 @@ def create_template(experiment,checkpoint):
     assert dump.stat().st_size==checkpoint["bytes"] and sha(dump)==checkpoint["dumpSha256"]
     try:
         run("docker","stop","--time","20",slot+"-gw-r",slot+"-gw-w",slot+"-tx",env=env)
+        with dump.open("rb",buffering=0) as stream:
+            catalog=subprocess.run(["docker","exec","-i",slot+"-pg","pg_restore","--list"],cwd=REPO,env=env,stdin=stream,
+                                   stdout=subprocess.PIPE,check=True,timeout=60).stdout
+        assert b"datomic_kvs" in catalog
+        (directory/"restore-catalog.txt").write_bytes(catalog)
         with dump.open("rb") as stream:
             run("docker","exec","-i",slot+"-pg","pg_restore","-U","postgres","--exit-on-error","--clean","--if-exists",
                 "-d","datomic",stdin=stream,timeout=420,env=env)
@@ -169,7 +211,8 @@ def create_template(experiment,checkpoint):
         expected=files(target)
         assert expected==files(pgdata) and (target/"PG_VERSION").read_text().strip()=="17"
         put(BASE/"frozen-files.json",expected)
-        put(BASE/"snapshot.json",{"checkpointSha256":sha(INPUT),"dumpSha256":checkpoint["dumpSha256"],"filesSha256":sha(BASE/"frozen-files.json")})
+        put(BASE/"snapshot.json",{"checkpointSha256":sha(INPUT),"dumpSha256":checkpoint["dumpSha256"],
+            "filesSha256":sha(BASE/"frozen-files.json"),"restoreCatalogSha256":sha(directory/"restore-catalog.txt")})
         return target, expected
     finally:
         cleanup()

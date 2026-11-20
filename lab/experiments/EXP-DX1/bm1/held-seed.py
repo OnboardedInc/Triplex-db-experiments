@@ -70,7 +70,9 @@ def capture_checkpoint(arm, directory, identity, head, seed, deadline):
     with partial.open("xb") as f:
         subprocess.run(["docker","exec",ident,"pg_dump","-U","postgres","-Fc","-Z1","-d","datomic"],stdout=f,
                        timeout=min(350,max(1,int(deadline-time.time()-60))),check=True)
-    with partial.open("rb") as source:
+    # [DX-BM1] Why: pg_restore inherits the OS offset. A buffered seek may leave it after the first block.
+    # Rejected: passing a Python buffered handle after reading the archive signature.
+    with partial.open("rb",buffering=0) as source:
         assert source.read(5)==b"PGDMP";source.seek(0)
         toc=subprocess.run(["docker","exec","-i",ident,"pg_restore","--list"],stdin=source,
                            stdout=subprocess.PIPE,timeout=60,check=True).stdout

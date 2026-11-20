@@ -797,9 +797,16 @@ def result(r):
     elif item==8 and (root/"results/comparison.json").is_file():
         pulse_output(root,r["source"],r["tag"],Path(r["repo"])/EXP/"w1/small/predictions.json",r["start"])
         return "recorded",str(root/"results/comparison.json")
-    elif item==9 and (root/"results/comparison.json").is_file():
-        matched_output(root,r["source"],r["tag"],r["start"])
-        return "recorded",str(root/"results/comparison.json")
+    elif item==9:
+        sys.path.insert(0,str(HERE/"probes"))
+        from native import recover_matched_dump
+        try:
+            recover_matched_dump(root,r["source"])
+        except (OSError,AssertionError,KeyError,ValueError) as error:
+            atom(Path(r["directory"])/"checkpoint-recovery-error.txt",repr(error)+"\n")
+        if (root/"results/comparison.json").is_file():
+            matched_output(root,r["source"],r["tag"],r["start"])
+            return "recorded",str(root/"results/comparison.json")
     elif item in (10,11,12) and (root/"results/comparison.json").is_file():
         file=root/"results/comparison.json"
         value=get(file)
