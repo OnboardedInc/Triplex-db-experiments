@@ -152,3 +152,12 @@ e048941b1cc441a33516771f87d7d23314daca1171dfc76d00c3aa3f92d8f764  DX-W1/write5-r
 76b63de9a172e7bd64bafc16e5c16e9685e1313040b1f90b17942131fc4a7e7f  DX-W1/write5-retention-04/selftest-1.log
 262e43c72078da9a8ef81d3dd91159edf96bf2adda986f3ab9f9b8fa29b977a3  DX-W1/write5-retention-04/terminal.json
 418245994e78c2ddfb0d5dc80b971998378b36c256ff2710ebd3f7e50565a6c5  DX-W1/write5-retention-04/diagnostic-summary.json
+1fc21b585d31e63d33fc5f6e8537f8146ea95f3f4132338ff02a9df44681736b  DX-W1/write5-ledger-oracle/inputs.json
+3935a92340cf00bd5d6220738190f53b2f8731ec44235f0ae5cc1538da68eda0  DX-W1/write5-ledger-oracle/build-1.log
+7755b923cb4d3d5b82140c30fa8dc3efe16369a5e9ddcece1fd41d55b1c1edb4  DX-W1/write5-ledger-oracle/selftest-1.log
+5e3bb84e702f9107ce226d098d928174e636e16c77cbd7ffad4a2178530b82e2  DX-W1/write5-ledger-oracle/terminal.json
+edcefa228ac79073e4b62d47c4f1144ec34fa58d1a6b001e3c407202308cbc6d  DX-W1/write5-ledger-oracle/verify-071e2122-97b8-4178-aceb-7dda6baca53b/verified.json
+849d178f71f4a04a59bb96654cc9f5825af61bf6ef6a145061b8bacdc81d2c60  DX-W1/write5-ledger-oracle/verify-071e2122-97b8-4178-aceb-7dda6baca53b/oracle-answer-0.json
+d14ebcb7d31454dc60280713074a4c1d24edb030d9ce71b20b9aa99d93b792e1  DX-W1/write5-ledger-oracle/verify-071e2122-97b8-4178-aceb-7dda6baca53b/oracle-answer-1.json
+825f838b7498720b7a7f4f392b8dde48045efd72f3ed8be6140713f9aa1657e2  DX-W1/write5-ledger-oracle/verify-071e2122-97b8-4178-aceb-7dda6baca53b/oracle-case-0.json
+278cfab5d4effbe1f7b40517ddc2e57bca5f822842e8b4a21819ed5cc7d733ed  DX-W1/write5-ledger-oracle/verify-071e2122-97b8-4178-aceb-7dda6baca53b/oracle-case-1.json
