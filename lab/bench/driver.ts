@@ -2015,7 +2015,9 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   };
   const stats: Record<string, any> = {};
   for (const phase of ctx.phases) if (phase.end && phase.measured) stats[phase.name] = levelStats(phase);
-  if (fullLength) {
+  // [DX-TAIL1] Why: a diagnostic prefix retains its real phases and exact receipt checks.
+  // Rejected: inventing members for the full-duration acceptance pools.
+  if (fullLength && !shortTail) {
     const windows = scheduledV3Windows();
     for (const name of ["L256", "L1024"] as const) {
       const members = ctx.phases.filter(p => p.pool === name).map(p => stats[p.name]);
@@ -2043,7 +2045,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const unmatched = (r: any) => (r?.basis?.startsWith("UNMATCHED") ? false : null);
   const p1 = {
     ladder: ladder.map(strip),
-    adjacentStressGoodput:fullLength?{endOfLast256:strip(stats["L256-adjacent"]),firstStress:strip(stats["L1024-1"]),
+    adjacentStressGoodput:fullLength&&!shortTail?{endOfLast256:strip(stats["L256-adjacent"]),firstStress:strip(stats["L1024-1"]),
       ratio:ratio(stats["L1024-1"]?.goodputPerS,stats["L256-adjacent"]?.goodputPerS),diagnosticOnly:true}:null,
     recovery,
     writerWaitAttribution: { method: "matched-phase comparison against the zero-reader run of the same trace", baselineRun: config.baselineWrites, engineWaitEvidence: lane === "xtdb" ? "none exposed: XTDB has no read-path locks (TARGETS 1.1 P1 item 5)" : lane === "datomic" ? "not exposed: Datomic transactor/write-queue wait metrics unavailable" : "not exposed: no QLever broker queue in this composition" },

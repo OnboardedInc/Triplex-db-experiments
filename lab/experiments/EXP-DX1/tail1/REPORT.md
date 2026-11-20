@@ -5,7 +5,7 @@ The original write gateway used Serial GC. The read gateway and transactor used 
 The Mac replay checks the same offers in the same order with the same gaps.
 The short replay schedules 5,110 primary saves in four minutes, including the first burst.
 The full schedule takes 98.5 minutes at its original pace.
-Two Mac attempts verified the 10,000-person seed. A host permission error and a startup restart check stopped them before the first offer.
+The Mac Serial replay matched 4,926 saves. Another 163 expired and 21 produced no recorded outcome.
 
 North star P2 scheduled offer to durable ACK, including the 10 ms p50 and 50 ms p99 bars at the rated reader load, and P6 quiet-account p99 / alone p99 ≤1.25. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
@@ -29,7 +29,7 @@ Serial is the archived write collector. Tuned G1 has a 25 ms target, 2 MiB regio
 
 The allocation arm keeps Serial, decodes the existing positional row vector into a transient map, and removes per-prefix Formatter allocation. Speculative transaction hints stay off. Timed arm comparisons and the allocation profile are pending.
 
-Mac startup and seed pauses in C were 1,647 (260.62/554.44 ms p99/max) at the writer, 312 (71.12/116.95 ms) at the reader, and 2,316 (163.19/1,838.79 ms) at the transactor. C failed the host boot-ID read. In E the writer restarted before readiness and the conservative guard refused the ready JVM. The guard now binds the same process from readiness through drain. Both attempts released their slots. [Evidence manifest](SHA256SUMS)
+Mac Serial F retained 4,926 receipts in 240 s (20.53/s), below 5,000. Completed ACK p50/p99/p99.9/max was 2.14/29.81/30.25/32.20 s. The writer/reader/transactor logged 150/342/241 pauses with maximums of 338.54/502.65/227.88 ms. Final analysis aborted on absent later phases. The harness now skips those pools for prefixes and records the raw observations before checking the exit. [Evidence manifest](SHA256SUMS)
 
 ## Receipt reuse
 

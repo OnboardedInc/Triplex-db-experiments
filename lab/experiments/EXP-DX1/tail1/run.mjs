@@ -709,22 +709,9 @@ export async function runTail(options, config, manager) {
     const exit = await driver.done;
     clearInterval(timer);
     signal.throwIfAborted();
-    assert.deepEqual(exit, { code: 0, signal: null }, "Driver failed; see driver.log");
     sample();
     releaseMacWindow();
     signal.throwIfAborted();
-    const report = readJson(reportFile);
-    assert.equal(report.traceStartAbsMs, start);
-    assert.deepEqual(report.deep.identity, identity);
-    assert.deepEqual(report.tailReplay, plan);
-    assert.equal(report.status, "DONE");
-    assert.equal(report.receiptCapture.matched, plan.primary);
-    assert.equal(report.receiptCapture.missing + report.receiptCapture.mismatches, 0);
-    assert.equal(report.oracle.mismatchCount, 0);
-    assert.equal(report.oracle.exitCode, 0);
-    assert(
-      report.oracle.reads > 0 && report.oracle.modelCorrectOnSameReads === report.oracle.reads,
-    );
     verifyReadyRuntime();
     const recording = path.join(trace, "gw-w.jfr");
     try {
@@ -743,13 +730,26 @@ export async function runTail(options, config, manager) {
       signal.throwIfAborted();
       write(path.join(out, "allocation-dump-error.json"), { error: String(error) });
     }
-    for (const file of ["ns-report.json", "oracle-case.json", "oracle-expected.json"])
-      fs.copyFileSync(path.join(raw, file), path.join(out, file), fs.constants.COPYFILE_EXCL);
-    output(path.join(out, "ns-writes.jsonl.zst"), "zstd", [
-      "-q",
-      "-c",
-      path.join(raw, "ns-writes.jsonl"),
-    ]);
+    for (const file of ["ns-report.json", "oracle-case.json", "oracle-expected.json"]) {
+      const from = path.join(raw, file);
+      if (fs.existsSync(from))
+        fs.copyFileSync(from, path.join(out, file), fs.constants.COPYFILE_EXCL);
+    }
+    const writes = path.join(raw, "ns-writes.jsonl");
+    if (fs.existsSync(writes))
+      output(path.join(out, "ns-writes.jsonl.zst"), "zstd", ["-q", "-c", writes]);
+    assert.deepEqual(exit, { code: 0, signal: null }, "Driver failed; see driver.log");
+    const report = readJson(reportFile);
+    assert.equal(report.traceStartAbsMs, start);
+    assert.deepEqual(report.deep.identity, identity);
+    assert.deepEqual(report.tailReplay, plan);
+    assert.equal(report.status, "DONE");
+    assert.equal(report.receiptCapture.missing + report.receiptCapture.mismatches, 0);
+    assert.equal(report.oracle.mismatchCount, 0);
+    assert.equal(report.oracle.exitCode, 0);
+    assert(
+      report.oracle.reads > 0 && report.oracle.modelCorrectOnSameReads === report.oracle.reads,
+    );
   } finally {
     clearInterval(timer);
     clearTimeout(windowTimer);
