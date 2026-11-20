@@ -24,6 +24,8 @@ ENV = dict(os.environ, DOCKER_HOST="unix:///var/run/docker.sock")
 NEXT = {
     "jvm25": "5a96527807fd646fbc866b33dc72565481c409e0",
     "tail-backlog": "da4c34f48f3749afcacfe45ac51a727ab0a2160a",
+    "jvm25-retry": "5a96527807fd646fbc866b33dc72565481c409e0",
+    "tail-backlog-integrated": "5a96527807fd646fbc866b33dc72565481c409e0",
 }
 
 

@@ -29,7 +29,7 @@ status() {
 if [[ $action == queue ]]; then
   exec 9<> "$base/night-n20-rest.lock"
   flock -n 9 || exit 75
-  wait_terminal bm1n20-night-reordered.service || exit 75
+  wait_terminal bm1n20-night-recovery.service || exit 75
   # [DX-BM1] Why: give the fresh PREP1 handoff and the retained-roster check one bounded decision window.
   # Rejected: allowing a missing publication to strand the ready erasure and import commands.
   item=queue

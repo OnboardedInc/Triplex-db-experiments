@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import math
 from pathlib import Path
 import subprocess
 import sys
@@ -28,7 +29,7 @@ import { createHash } from 'node:crypto';
 import { fieldPlan } from './lab/experiments/EXP-DX1/w1/field/bench-check.ts';
 const [item, mode] = process.argv.slice(1);
 const plans = fieldPlan();
-let chosen = item === 'tail-backlog' ? plans.filter((p) => p.label === 'solo394') : plans;
+let chosen = item.startsWith('tail-backlog') ? plans.filter((p) => p.label === 'solo394') : plans;
 if (mode === 'small') chosen = chosen.slice(0, 1).map((p) => ({ ...p, schedule: p.schedule.slice(0,8) }));
 console.log(JSON.stringify(chosen.map((p) => ({...p, sha: createHash('sha256').update(JSON.stringify(p.schedule)).digest('hex')}))));
 '''
@@ -70,11 +71,12 @@ def collect(item, repo, campaign, small):
     pins = dict(logicalDumpSha256=seed["dumpSha256"],seedCut=seed["seedCut"],
                 physicalManifestSha256=sha(control.parent/"day-n20-jvm1/cold-postgres.json"))
     outputs = []
-    mode = "results/" if item == "jvm25" else ""
+    java = item.startswith("jvm25")
+    mode = "results/" if java else ""
     manifest = campaign/(mode+"comparison.json")
     comparison = read(manifest)
     assert comparison["source"] == pin
-    if item == "jvm25":
+    if java:
         names = tuple(r["name"] for r in comparison["results"])
         assert names == expected_names[:1] if small else names in (expected_names[:3],expected_names)
     else:
@@ -90,7 +92,7 @@ def collect(item, repo, campaign, small):
         start = request_file.stat().st_mtime
         if "startedAt" in request:
             assert request["startedAt"]/1000 <= start
-        completed = directory/("field-summary.json" if item == "jvm25" else "joined.json")
+        completed = directory/("field-summary.json" if java else "joined.json")
         assert start <= completed.stat().st_mtime <= request["deadline"]/1000 + 1
         assert completed.stat().st_mtime <= manifest.stat().st_mtime
         placed = read(directory/"placements.json")["engines"]
@@ -98,7 +100,8 @@ def collect(item, repo, campaign, small):
         assert read(directory/"cleanup.json") == {"containers":[],"volumes":[],"networks":[]}
         roles = {r["role"]: {"id":r["id"],"cores":len(r["cpus"].split(","))} for r in placed if r["role"]!="pg"}
         n = 0
-        if item == "jvm25":
+        counters = None
+        if java:
             assert read(directory/"result.json") == result and result["dumpSha256"] == seed["dumpSha256"]
             assert result["evidenceSha256"] == sha(directory/"field-summary.json")
             for raw, plan in zip(result["jvm"]["reads"], plans, strict=True):
@@ -122,6 +125,18 @@ def collect(item, repo, campaign, small):
             joined = read(joined_file)["joined"]
             assert result["sha256"] == sha(joined_file) and len(joined) == n
             assert {int(r["t"]) for r in joined} == {int(r["t"]) for r in phase["phase"]["rows"]}
+            # [DX-BM1] Why: report observed transactor read/decode separately from native apply.
+            # Rejected: substituting a gateway counter or charging zero when the native event lacks the read map.
+            reads = [r["native"]["io-stats"]["reads"] for r in joined
+                     if isinstance(r["native"].get("io-stats"),dict) and isinstance(r["native"]["io-stats"].get("reads"),dict)]
+            def distribution(values):
+                v=sorted(values)
+                return dict(n=len(v),mean=sum(v)/len(v),p50=v[math.ceil(len(v)*.50)-1],p99=v[math.ceil(len(v)*.99)-1]) if v else {"n":0}
+            counters = {"sqlReads":distribution(r.get("sql",0) for r in reads),
+                        "deserializeMs":distribution(r.get("deserialize-ms",0) for r in reads),
+                        "decodeRecorded":sum("deserialize-ms" in r for r in reads),
+                        "ackMs":distribution(r["ackMs"] for r in joined),
+                        "applyMs":distribution(r["native"]["apply-msec"] for r in joined if isinstance(r["native"].get("apply-msec"),(int,float)))}
             for role in roles:
                 log = directory/"engines"/slot/"trace/raw"/(role+".log")
                 with log.open("rb") as stream:
@@ -129,7 +144,7 @@ def collect(item, repo, campaign, small):
                     assert b"Using G1" in stream.read(4096)
                 roles[role].update(collector="G1", pauseLogSha256=sha(log))
         assert set(roles) == {"tx","gw-r","gw-w"}
-        outputs.append(dict(name=name, slot=slot, n=n, roles=roles, restoreSha256=clone))
+        outputs.append(dict(name=name, slot=slot, n=n, roles=roles, restoreSha256=clone, nativeCounters=counters))
     return dict(producer=pin, small=small, comparisonSha256=sha(manifest), arms=outputs)
 
 

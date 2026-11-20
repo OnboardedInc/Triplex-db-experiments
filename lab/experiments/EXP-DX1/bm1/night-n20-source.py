@@ -10,6 +10,8 @@ BASE = Path("lab/experiments/EXP-DX1")
 PRODUCERS = {
     "jvm25": ("5a96527807fd646fbc866b33dc72565481c409e0", BASE/"jvm1/server.ts"),
     "tail-backlog": ("da4c34f48f3749afcacfe45ac51a727ab0a2160a", BASE/"tail1/backlog-server.ts"),
+    "jvm25-retry": ("5a96527807fd646fbc866b33dc72565481c409e0", BASE/"jvm1/server.ts"),
+    "tail-backlog-integrated": ("5a96527807fd646fbc866b33dc72565481c409e0", BASE/"tail1/backlog-server.ts"),
 }
 SEED_SOURCE = "46880aa47d7c580c400b457df0c8baf9e971e78a"
 
@@ -26,7 +28,7 @@ def build(item, repo):
         assert text.count(before) == 1, before
         text = text.replace(before, after)
 
-    if item == "jvm25":
+    if item.startswith("jvm25"):
         replace('for (let i = 0; i < 60; i++) {', 'for (let i = 0; i < (process.env.BM1_JVM25_SMALL ? 2 : 60); i++) {')
         replace('    for (const window of fieldPlan()) {', '''    const small = process.env.BM1_JVM25_SMALL;
     const windows = small ? fieldPlan().slice(0, 1).map((w) => ({ ...w, schedule: w.schedule.slice(0, 8) })) : fieldPlan();
@@ -53,11 +55,30 @@ def build(item, repo):
         replace('    const { label, schedule } = windows[0];',
                 '    const { label } = windows[0];\n    const schedule = process.env.BM1_TAIL_SMALL ? windows[0].schedule.slice(0, 8) : windows[0].schedule;')
         replace('schedule.length === 2364,','schedule.length === (process.env.BM1_TAIL_SMALL ? 8 : 2364),')
+    shared_sha = None
+    if item in ("jvm25-retry", "tail-backlog-integrated"):
+        if item.startswith("jvm25"):
+            replace('"../w1/bench.ts"','"../w1/.bm1-n20-bench.ts"')
+        else:
+            replace('"../w1/bench.ts"','"../w1/.bm1-n20-bench.ts"')
+            exact = PRODUCERS["tail-backlog"][0]
+            assert original == subprocess.check_output(["git","show",f"{exact}:{entry}"],cwd=repo)
+        w1 = BASE/"w1/bench.ts"
+        original_w1=(repo/w1).read_bytes()
+        assert original_w1==subprocess.check_output(["git","show",f"{pin}:{w1}"],cwd=repo)
+        old='TRIPLEX_NODE_WORKER_CPUS: p.cpus.sender,'
+        assert original_w1.count(old.encode())==1
+        # [DX-BM1] Why: keep the three declared sender CPUs while assigning the main core exclusively.
+        # Rejected: ignoring affinity verification or borrowing a JVM core for Node helpers.
+        tuned = original_w1.replace(old.encode(),b'TRIPLEX_NODE_WORKER_CPUS: p.cpus.sender.split(",").slice(1).join(","),')
+        with (repo/w1.with_name(".bm1-n20-bench.ts")).open("xb") as stream:
+            stream.write(tuned)
+        shared_sha=hashlib.sha256(tuned).hexdigest()
     target = repo/entry.with_name(".bm1-n20-"+entry.name)
     with target.open("x") as stream:
         stream.write(text)
     return {"source": pin, "original": hashlib.sha256(original).hexdigest(),
-            "adapted": hashlib.sha256(target.read_bytes()).hexdigest(), "entry": str(target)}
+            "adapted": hashlib.sha256(target.read_bytes()).hexdigest(), "entry": str(target), "sharedStackSha256":shared_sha}
 
 
 if __name__ == "__main__":

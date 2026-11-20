@@ -17,6 +17,8 @@ MAC = Path.home()/"Claude/Projects/triplex-db-2/evidence"
 SLOTS = {
     "jvm25": ("night-n20-jvm25", ("small", "campaign", "restore-proofs", "adapter.json", "small-agreement.json", "collector.json")),
     "tail-backlog": ("night-n20-tail-backlog", ("small", "campaign", "restore-proofs", "adapter.json", "small-agreement.json", "collector.json")),
+    "jvm25-retry": ("night-n20-jvm25-retry", ("small", "campaign", "restore-proofs", "adapter.json", "small-agreement.json", "collector.json")),
+    "tail-backlog-integrated": ("night-n20-tail-backlog-integrated", ("small", "campaign", "restore-proofs", "adapter.json", "small-agreement.json", "collector.json")),
     "erasure": ("night-n20-erasure", ("adapter.json", "measured", "guarded", "stage", "control-stage", "checkpoint.json", "collector.json",
                                         "stack.json", "erase-clean.json", "measurement-failures.json", "fast-transactor-gc.log", "fast-gateway-gc.log",
                                         "guarded-transactor-gc.log", "guarded-gateway-gc.log", "transactor.log", "postgres.log", "gateway.log")),
