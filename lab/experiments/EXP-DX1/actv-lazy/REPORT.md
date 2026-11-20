@@ -1,4 +1,4 @@
-Use `ab8ce484b4320af2c8cbfa5a28b698aa737f3e32` for the server run. The Mac settlement preflight passed at that exact commit.
+Use `48f55759494f6a6a04eeb6aa5284dde3e166d431` for the server retry. The shared-geography regression passes and the native census replay is queued.
 A single write records the new rules and what notices are owed. At 10,000 deep people that write took 38 ms on the Mac.
 A background worker writes the changed values and individual notices in short turns. The recipient can stay offline while it records them.
 Before a value is stored, reads at the receipt’s cut derive it. Stored values serve that same cut. Later saves use the latest source.
@@ -12,6 +12,8 @@ The ten-thousand-person trial reached timing, but the shared lease was held. The
 The value and notice archives are separate native scopes on the same writer. Frames bind their receipt, exact source cut, release and cursor. The W1 queue has live priority and fair bulk turns. A service estimate bounds submitted work per frame. The measured P6 ratios must still decide whether that allowance is sufficient. [Design and receipt audit](PART7.md)
 
 The STG1 fallback from `fa53e50cd` keeps generic source edits at full-census coverage. Joined saves may use one person only when the original native command proves the namespace is private. The specific shared floor already took the census path in joined Publish, so that recipe did not omit a person. The previous general save recipe allowed an unproved narrow list. The companion's seven memory tests passed. The joined regression checks both sides of Publish and the unaffected complement before delivery.
+
+BM1 `i27-1` stopped before the large offers because a shared W0 location has an empty owner string. Joined Save passed that string as an owner claim. The repair keeps the strict owner-proof check and plans a census reconcile for either shared geography kind. The planner test reproduced the failure before the fix and passes with it. [Part 8 checksums](PART8-SHA256SUMS)
 
 ### Second review
 
