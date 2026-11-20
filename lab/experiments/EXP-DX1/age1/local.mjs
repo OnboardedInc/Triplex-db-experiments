@@ -1,7 +1,6 @@
 // @ts-nocheck -- [EXP-CHECKJS] Docker inspection and lab reservation records are validated at runtime.
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
-import { acquireMeasureLease, readMeasureLease } from "../../../bin/heavy-lock.mjs";
 import { randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import { createServer } from "node:net";
@@ -17,7 +16,6 @@ const holder = "DX-AGE1";
 const MiB = 1024 ** 2;
 const caps = { pg: 384, tx: 1024, peer: 1280 };
 const evidence = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2", "evidence", holder);
-const labRoot = path.join(evidence, "../..");
 const eraseSource = "d0ccf312373141d0d919cc17e18a5989e60b74ce";
 
 function hashTree(dir, relative = "") {
@@ -90,57 +88,10 @@ async function fixturePort(peer) {
   };
 }
 
-export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60 * 1000) {
+export async function local(opts, config, manager) {
   assert.equal(process.platform, "darwin");
   assert.equal(opts.holder, holder);
   assert.equal(dockerArgs([])[1], DOCKER_HOST);
-  if (opts.run === "p2-small") {
-    const outer = readMeasureLease();
-    assert(outer?.pid === process.ppid && outer.holder === holder && !outer.stale,
-      "Small gates require the heavy wrapper's measurement lease");
-    assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,31}$/);
-    const failures = [];
-    for (const run of ["adopted-fidelity", "fidelity-arms", "fidelity-arms-load", "erased-successor"]) {
-      try { await local({ ...opts, run, out: opts.out + "-" + run }, config, manager, stopAt); }
-      catch (error) { failures.push({ run, error }); }
-    }
-    if (failures.length) throw new AggregateError(failures.map((x) => x.error),
-      "Small gates failed: " + failures.map((x) => x.run).join(", "));
-    return;
-  }
-  if (opts.run === "sequence") {
-    const outer = readMeasureLease();
-    assert(outer?.pid === process.ppid && outer.holder === holder && !outer.stale,
-      "Sequence requires the heavy wrapper's measurement lease");
-    assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,34}$/);
-    const fidelity = opts.out + "-fidelity";
-    await local({ ...opts, run: "fidelity", out: fidelity }, config, manager, stopAt);
-    const dir = path.join(evidence, fidelity);
-    const binding = JSON.parse(fs.readFileSync(path.join(dir, "binding.json"), "utf8"));
-    const cleanup = JSON.parse(fs.readFileSync(path.join(dir, "cleanup.json"), "utf8"));
-    assert.equal(binding.attempt, cleanup.attempt);
-    assert.equal(binding.slot, cleanup.slotReleased);
-    const mark = "DX_AGE1 ";
-    const body = fs.readFileSync(path.join(dir, "probe.log"), "utf8").split("\n").find((line) => line.startsWith(mark));
-    assert(body, "Missing fidelity result");
-    const observation = JSON.parse(body.slice(mark.length));
-    assert.equal(observation.event, "fidelity");
-    assert.equal(observation.attempt, binding.attempt);
-    assert(observation.growth.recordsPerSecond > 0);
-    const max = Math.max(12000, Math.min(180000, Math.floor(observation.growth.recordsPerSecond * 420 / 20)));
-    const saves = opts.saves ?? [Math.floor(max / 12), Math.floor(max / 4), max].join(",");
-    // [DX-AGE1] Why: keep one bounded window while cleaning each private stack between phases.
-    // Rejected: mixing other experiments into timed rungs or carrying fidelity databases into the storage census.
-    let failure;
-    try {
-      await local({ ...opts, saves, run: "scale", out: opts.out + "-scale" }, config, manager, stopAt - 75000);
-    } catch (error) {
-      failure = error;
-    }
-    await local({ ...opts, run: "successor", out: opts.out + "-successor" }, config, manager, stopAt);
-    if (failure) throw failure;
-    return;
-  }
   const image = (ref) => docker(["image", "inspect", "--format", "{{.Id}}", ref]);
   const selectImage = () => {
     // [DX-AGE1] Why: use the read-back build record when the lab rotates the Datomic image.
@@ -160,11 +111,23 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
     return;
   }
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
-  assert.match(opts.run ?? "", /^(fidelity|adopted-fidelity|fidelity-arms|fidelity-arms-load|scale|successor|erased-successor)$/);
+  assert.match(opts.run ?? "", /^(fidelity|adopted-fidelity|fidelity-arms|fidelity-arms-load|successor|erased-successor)$/);
   const adopting = opts.run === "adopted-fidelity";
   const erasure = opts.run === "erased-successor";
-  const measure = opts.run === "scale" ? await import("./measure.mjs") : null;
-  const spec = measure?.scaleOptions(opts);
+  const heavy = path.join(LOCKS, "heavy");
+  const tokens = fs.readdirSync(heavy).filter((name) => /^\d+$/.test(name)).flatMap((name) => {
+    try {
+      const token = JSON.parse(fs.readFileSync(path.join(heavy, name, "owner.json"), "utf8"));
+      return token.pid === process.ppid ? [token] : [];
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+      return [];
+    }
+  });
+  // [DX-AGE1] Why: a correctness gate needs one ordinary heavy token.
+  // Rejected: reserving every token to collect Mac timings that are diagnostic.
+  assert.equal(tokens.length, 1, "Run each small gate under one ordinary heavy token");
+  assert.equal(tokens[0].label, holder);
   const revision = git(["rev-parse", "HEAD"]);
   const pin = opts.source ?? revision;
   assert.match(pin, /^[0-9a-f]{40}$/);
@@ -175,24 +138,16 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
   const created = new Map(), volumes = new Set();
   const names = Object.fromEntries(Object.keys(caps).map((r) => [r, prefix + "-" + r]));
   const labels = ["--label", "age.attempt=" + attempt, "--label", "tx2.holder=" + holder];
-  const lock = path.join(labRoot, "locks", "measure");
   const controller = new AbortController();
   const stop = () => controller.abort(new Error("Interrupted"));
   process.once("SIGTERM", stop);
   process.once("SIGINT", stop);
-  let slot, net, locked = false, deadline, watch, lease;
+  let slot, net, deadline, watch;
   const write = (file, body) => fs.writeFileSync(path.join(dir, file), JSON.stringify(body, null, 2) + "\n", { flag: "wx" });
-  const forecast = (opts.run === "scale" ? 12 : 1) * GiB;
+  const forecast = GiB;
   const floor = () => {
     const stats = fs.statfsSync(dir);
     assert(stats.bavail * stats.bsize >= 5 * GiB, "Host disk is below the 5 GiB floor");
-  };
-  const releaseMeasure = () => {
-    if (!locked) return;
-    assert.equal(JSON.parse(fs.readFileSync(path.join(lock, "owner.json"))).attempt, attempt);
-    fs.unlinkSync(path.join(lock, "owner.json"));
-    fs.rmdirSync(lock);
-    locked = false;
   };
   const owned = (id) => {
     const meta = inspect(id);
@@ -201,52 +156,38 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
   };
   try {
     floor();
-    // [DX-AGE1] Why: a competing lease can wait for this wrapper's token. Rejected: sleeping indefinitely while both holders wait.
-    manager.assertMeasureAdmission(holder);
-    const outer = readMeasureLease();
-    const parentOwnsLease = outer?.pid === process.ppid && outer.holder === holder && !outer.stale;
-    if (!parentOwnsLease) lease = await acquireMeasureLease(holder + " " + opts.run, { holder, pollMs: 1000, timeoutMs: 45000 });
     const datomic = image(selectImage()), postgres = image("postgres:17-alpine");
     const source = stage(dir, pin, erasure);
     const sources = new Map(hashTree(source));
-    if (measure) assert.equal(sources.get(experiment + "/measure.mjs"), sha256(fs.readFileSync(new URL("./measure.mjs", import.meta.url))));
+    const slotDeadline = Date.now() + 120000;
     while (!slot) {
       controller.signal.throwIfAborted();
       floor();
-      try {
-        fs.mkdirSync(lock);
-        fs.writeFileSync(path.join(lock, "owner.json"), JSON.stringify({ id: holder, pid: process.pid, attempt, at: new Date().toISOString() }), { flag: "wx" });
-        locked = true;
-        await withPool((ledger) => {
-          manager.assertMeasureAdmission(holder);
-          const live = listTx2Containers({ all: true });
-          const candidate = ["s1", "s2", "s3"].map((key) => slotInfo(config, "datomic", key))
-            .find((info) => !fs.existsSync(info.lockDir) && !live.some((row) => row.name === info.container));
-          if (!candidate) return;
-          const allowed = admission({
-            config, reservations: ledger.reservations, running: live, diskUsedBytes: vmDisk(config).usedBytes,
-            request: { container: prefix, memBytes: Object.values(caps).reduce((a, b) => a + b) * MiB, diskForecastBytes: forecast },
-          });
-          if (!allowed.ok) return;
-          assert(manager.acquireSlot(candidate, holder, attempt).created);
-          slot = candidate;
-          for (const [role, memory] of Object.entries(caps)) ledger.reservations.push({
-            container: names[role], lane: "datomic", slot: slot.slot, holder, pid: process.pid,
-            state: "age1", cpus: 2, memBytes: memory * MiB, diskForecastBytes: role === "pg" ? forecast : 0,
-          });
+      await withPool((ledger) => {
+        manager.assertMeasureAdmission(holder);
+        const live = listTx2Containers({ all: true });
+        const candidate = ["s1", "s2", "s3"].map((key) => slotInfo(config, "datomic", key))
+          .find((info) => !fs.existsSync(info.lockDir) && !live.some((row) => row.name === info.container));
+        if (!candidate) return;
+        const allowed = admission({
+          config, reservations: ledger.reservations, running: live, diskUsedBytes: vmDisk(config).usedBytes,
+          request: { container: prefix, memBytes: Object.values(caps).reduce((a, b) => a + b) * MiB, diskForecastBytes: forecast },
         });
-      } catch (error) {
-        if (error.code !== "EEXIST") throw error;
-      }
+        if (!allowed.ok) return;
+        assert(manager.acquireSlot(candidate, holder, attempt).created);
+        slot = candidate;
+        for (const [role, memory] of Object.entries(caps)) ledger.reservations.push({
+          container: names[role], lane: "datomic", slot: slot.slot, holder, pid: process.pid,
+          state: "age1", cpus: 2, memBytes: memory * MiB, diskForecastBytes: role === "pg" ? forecast : 0,
+        });
+      });
       if (!slot) {
-        releaseMeasure();
-        console.log("[age1] waiting for the exclusive measurement window and Datomic slot");
-        await sleep(30000);
+        assert(Date.now() < slotDeadline, "No Datomic correctness slot before deadline");
+        console.log("[age1] waiting for a Datomic correctness slot");
+        await sleep(15000);
       }
     }
-    const remaining = stopAt - Date.now();
-    assert(remaining > 0, "Measurement window expired before boot");
-    deadline = setTimeout(() => controller.abort(new Error("Measurement window expired")), remaining);
+    deadline = setTimeout(() => controller.abort(new Error("Correctness gate deadline reached")), 7 * 60 * 1000);
     watch = setInterval(() => {
       try { floor(); } catch (error) { controller.abort(error); }
     }, 5000);
@@ -323,10 +264,9 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
     assert.deepEqual(actual, sources);
     write("binding.json", { attempt, phase: opts.run, slot: slot.slot, source: pin, sourceHashes: Object.fromEntries(sources),
       eraseSource: erasure ? eraseSource : undefined,
-      settings, flags, spec, measurementLease: lease?.owner ?? outer, roleImages: { datomic, postgres }, jars, peerSha1, durable, caps,
+      settings, flags, timings: "diagnostic", heavyToken: tokens[0], roleImages: { datomic, postgres }, jars, peerSha1, durable, caps,
       roles: Object.fromEntries(created), ownerHash: sha256(fs.readFileSync(slot.ownerFile)), startedAt: new Date().toISOString() });
-    if (measure) await measure.measure({ attempt, dir, peer, tx, pg, jdbc, password, capture, signal: controller.signal, floor, write }, spec);
-    else if (adopting) {
+    if (adopting) {
       const loaderPin = "04e864ae07af65b952d015cb9907a35bc66ecf09";
       const loader = path.join(dir, "loader-source");
       fs.mkdirSync(loader);
@@ -438,8 +378,6 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
       });
       write("cleanup.json", { attempt, rolesRemoved: created.size, volumesRemoved: volumes.size, slotReleased: slot?.slot ?? null });
     } finally {
-      releaseMeasure();
-      lease?.release();
       process.removeListener("SIGTERM", stop);
       process.removeListener("SIGINT", stop);
     }
