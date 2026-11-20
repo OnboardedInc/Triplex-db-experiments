@@ -17,7 +17,7 @@ def load(path):
     return json.loads(path.read_bytes())
 
 
-def timed_gc(directory, role, start, stop):
+def timed_gc(directory, role, start, stop, history, indexes):
     files = sorted(directory.glob(f"{role}.log*"))
     assert files, f"Missing JVM log for {role}"
     log = "\n".join(p.read_text() for p in files)
@@ -25,6 +25,7 @@ def timed_gc(directory, role, start, stop):
     assert collector, f"Missing initial collector settings for {role}"
     initialized = [line.rsplit("] ", 1)[-1] for line in log.splitlines() if "[gc,init]" in line]
     events = []
+    cohorts = {"history": [], "explicit-index": [], "outside-known-overlays": []}
     allocation_stalls = []
     for line in log.splitlines():
         stamp = re.match(r"\[([^\]]+)\]", line)
@@ -35,9 +36,16 @@ def timed_gc(directory, role, start, stop):
         if stall and start <= at < stop:
             allocation_stalls.append(float(stall[1]))
         for event in pauses(line):
-            if at >= start and at - event["ms"] < stop:
+            begin = at - event["ms"]
+            if at >= start and begin < stop:
                 events.append(event)
+                def overlaps(intervals):
+                    return any(begin < right and at >= left for left, right in intervals)
+                cohort = ("history" if overlaps(history) else "explicit-index" if overlaps(indexes)
+                          else "outside-known-overlays")
+                cohorts[cohort].append(event)
     return {"collector": collector[1], "init": initialized, "window": describe(events),
+            "byKnownOverlay": {name: describe(group) for name, group in cohorts.items()},
             "allocationStalls": {"count": len(allocation_stalls), "ms": quantiles(allocation_stalls)}}
 
 
@@ -138,12 +146,14 @@ def measure(out):
         alloc = load(allocation)
         assert alloc["from"] == start and alloc["to"] == stop
         groups = alloc["groups"]
+    history = [(p["actualStart"], p["actualEnd"]) for p in report["phases"] if p["name"].startswith(("p4h", "grow"))]
+    indexes = [(j["driverRequestedAtMs"], j["driverCompletedAtMs"]) for j in report["maintenance"]["events"]]
     write_json(out / "measurement.json", {
         "identity": identity, "archive": archive["archive"], "arm": attempt["arm"], "seconds": attempt["seconds"],
         "saves": len(saved), "replays": len(observed) - len(saved),
         "savesPerSecond": len(saved) / max(attempt["seconds"], (max(r["ackPublishedAt"] for r in saved.values()) - start) / 1000),
         "ackMs": quantiles([r["verdictMs"] for r in saved.values()]), "cpuMemory": cpu_memory,
-        "gc": {role: timed_gc(trace, role, start, stop) for role in ("gw-w", "gw-r", "tx")},
+        "gc": {role: timed_gc(trace, role, start, stop, history, indexes) for role in ("gw-w", "gw-r", "tx")},
         "gatewayRequests": dict(requests), "requestsPerSave": requests.total() / len(saved),
         "transactJoinMissing": sum("transact" not in exchanges[trace_id] for trace_id in saved),
         "allocationSampleWeightBytesPerSave": sum(g["weightBytes"] for g in groups.values()) / len(saved) if groups else None,

@@ -5,7 +5,7 @@ The original write gateway used Serial GC. The read gateway and transactor used 
 The Mac replay checks the same offers in the same order with the same gaps.
 The short run covers the first four minutes, including the first burst and 5,110 saves.
 The full schedule takes 98.5 minutes at its original pace.
-Fresh JVM measurements are pending.
+One Mac attempt verified all 10,000 people and 1,604,464 seed facts. A denied host clock read stopped it before the first offer.
 
 North star P2 scheduled offer to durable ACK, including the 10 ms p50 and 50 ms p99 bars at the rated reader load, and P6 quiet-account p99 / alone p99 ≤1.25. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
@@ -29,13 +29,13 @@ Serial is the archived write collector. Tuned G1 has a 25 ms target, 2 MiB regio
 
 The allocation arm keeps Serial and decodes the existing positional row vector into a transient map. It reuses the exact row wire format and removes per-prefix Formatter allocation. Speculative transaction hints stay off in these controls.
 
-The first Mac launch found the Datomic tag missing and released its slot before seeding. The old image ID was also absent. The retry uses the existing SCALE1 build receipt and checks the running peer JAR against the distribution pin.
+The first Mac launch found the Datomic tag missing. The retained SCALE1 build passed image and peer JAR readback. Serial attempt C released its slot after the host clock error. The next attempt preflights that permission and gives the write peer 128 MiB more container headroom after C restarted once during seeding.
 
 ## Receipt reuse
 
 The TypeScript write adapter already skips `/begin` when every hinted live row is cached. The new opt-in keeps the deep fields eligible for that path only after a bound receipt settles. Known retirement evicts their cache entries. Datomic rechecks the exact live IDs at the serial point, and unsupported reads and conflicts use the existing snapshot path.
 
-Eleven focused tests and the Datomic type check passed. The native gate captures a save after an intervening writer, a rejected stale receipt and five pinned reads for O-REPLAY. It also runs the protected-value erasure fixture on the native stack. The native gate and request-count comparison are pending.
+Sixteen native gateway tests and the protected-value erasure fixture passed. The eligible save used one request after a different writer committed. An intervening retirement caused the stale save to retry through `/begin` and return a typed conflict. All five pinned reads matched O-REPLAY. Replay-wide request and latency deltas are pending.
 
 ## Measurement audit
 

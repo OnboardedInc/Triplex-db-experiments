@@ -5,6 +5,7 @@ import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
+import { pathToFileURL } from "node:url";
 import {
   admission,
   DOCKER_HOST,
@@ -211,6 +212,14 @@ export async function runTail(options, config, manager) {
   const buildInputHash = meta.Config.Labels["tx2.build-inputs-sha256"];
   assert.match(buildInputHash, /^[a-f0-9]{64}$/);
   if (build) assert.equal(buildInputHash, build.buildInputsSha256);
+  if (options.gate !== true) {
+    // [DX-TAIL1] Why: the exact publication feed needs the real host time domain before offers.
+    // Rejected: spending a full seed before discovering a denied boot-ID read, or labelling a fake clock.
+    const { openHostFeedClock } = await import(
+      pathToFileURL(path.join(REPO, "packages/host/dist/feed/index.js"))
+    );
+    openHostFeedClock();
+  }
   if (options.preflight === true) {
     const postgres = docker(["image", "inspect", "postgres:17-alpine", "--format", "{{.Id}}"]);
     assert.match(postgres, /^sha256:[a-f0-9]{64}$/);
@@ -281,7 +290,7 @@ export async function runTail(options, config, manager) {
     },
   });
   const caps = mac
-    ? { pg: 320, tx: 1056, "gw-w": 1280, "gw-r": 768 }
+    ? { pg: 320, tx: 1056, "gw-w": 1408, "gw-r": 768 }
     : { pg: 6144, tx: 6144, "gw-w": 6144, "gw-r": 6144 };
   const heaps = mac
     ? { tx: 704, "gw-w": 896, "gw-r": 416 }
@@ -579,6 +588,13 @@ export async function runTail(options, config, manager) {
       latest - seconds * 1000 - 135_000,
     );
     const ready = readJson(readyFile);
+    for (const role of roles) {
+      const m = inspect(ids[role]);
+      assert(
+        m?.State.Running && !m.State.OOMKilled && m.RestartCount === 0,
+        role + " restarted during seeding",
+      );
+    }
     assert.deepEqual(ready.identity, identity);
     assert.deepEqual(ready.seed, readJson(input).seed);
     assert.equal(ready.trace, frozenDeep(0, 10000).sha256);
