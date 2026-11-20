@@ -45,3 +45,5 @@ For the same compact distribution, subtract the measured request preparation and
 | Three-rule W0 release, staged compact | About 8 s | About 80 s |
 
 The result at 10,000 is inside one second on this compact fixture. The projection misses at 100,000. Staging overcomes the aggregate request limit and still has a cost per encoded chunk. The current implementation bounds staged value bytes to 128 KiB per transaction and checks that every measured actual request fits the 4 MiB native gateway limit.
+
+The 10,000-deep runner loads its 1.6 million release-independent facts before acquiring the timing window. Its priced saves and release offers share a single bounded timing lease.
