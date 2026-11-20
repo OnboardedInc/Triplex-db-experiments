@@ -26,7 +26,15 @@ cleanup() {
     [[ -f $base/active-slot ]] || continue
     read -r slot < "$base/active-slot"
     [[ $slot =~ ^tx2-dxt1-jvm1-[0-9a-f-]{36}$ ]] || return 2
-    [[ $(find "$base/results" -name identity.json -exec jq -r --arg source "$source" '. | select(.source == $source) | .slot' {} + | grep -Fx "$slot") == "$slot" ]] || return 2
+    python3 - "$base" "$source" "$slot" <<'PY' || return 2
+import json
+from pathlib import Path
+import sys
+
+base, source, slot = sys.argv[1:]
+identities = [json.loads(file.read_bytes()) for file in Path(base, "results").glob("*/identity.json")]
+assert sum(row["source"] == source and row["slot"] == slot for row in identities) == 1
+PY
     # [DX-BM1] Why: a killed producer cannot run its finally block, but the source and slot must still match.
     # Rejected: clearing the whole Docker daemon or deleting the files from the failed arm.
     for line in pg tx gw-w gw-r; do
@@ -57,7 +65,17 @@ fi
 # [DX-BM1] Why: the next native phase starts as soon as the existing seed service has exited.
 # Rejected: querying Docker on a timer while its seed verifier is still using the server.
 while systemctl is-active --quiet bm1n20-jvm1-seed.service; do sleep 10; done
-if [[ ! -s $root/seed/seed.json ]] || ! jq -e '. == {"containers":[],"networks":[],"volumes":[]}' "$root/seed/results/seed/cleanup.json" >/dev/null; then
+if ! python3 - "$root/seed" <<'PY'
+import json
+from pathlib import Path
+import sys
+
+seed = Path(sys.argv[1])
+assert (seed / "seed.json").stat().st_size > 0
+cleanup = json.loads((seed / "results/seed/cleanup.json").read_bytes())
+assert cleanup == {"containers": [], "networks": [], "volumes": []}
+PY
+then
   status seed-incomplete next-ready-item
   exit 1
 fi
