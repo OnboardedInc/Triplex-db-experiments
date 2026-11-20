@@ -112,13 +112,13 @@
 (def lookup-limit 1024)
 
 (defn lookup! [check f]
-  (if (and *lookups* (not *inside-lookup*) (<= (vswap! *lookup-count* inc) lookup-limit))
+  (if (and *lookups* (not *inside-lookup*) (<= (swap! *lookup-count* inc) lookup-limit))
     (let [start (System/nanoTime)
           sample (binding [*inside-lookup* true]
                    (io/throw-if-ex!
                      (io/with-io-stats f {:io-context :prep1/native-lookup :api :native-lookup})))
           elapsed (- (System/nanoTime) start)]
-      (vswap! *lookups* update check
+      (swap! *lookups* update check
               (fn [{:keys [calls wallNs reads]}]
                 {:calls (inc (or calls 0)) :wallNs (+ (or wallNs 0) elapsed)
                  :reads (merge-with + reads (get-in sample [:io-stats :reads]))}))
@@ -151,6 +151,13 @@
   (wrap-lookup! (requiring-resolve 'datomic.builtins/compare-and-swap)
     (constantly "native/cas :eavt") identity))
 
+(defn outside-read! [index counter n]
+  (when (and *outside-reads* (not *inside-lookup*) (= :sql counter))
+    (let [frames (into [] (comp (map #(.getClassName ^StackTraceElement %))
+                                (filter #(re-find #"^datomic\.(?:db|builtins|index|iter)\$" %))
+                                (take 6)) (.getStackTrace (Thread/currentThread)))]
+      (swap! *outside-reads* update (str @index " " (str/join " / " frames)) (fnil + 0) n))))
+
 (when (= "lookup-profile" mode)
   ;; [DX-PREP1] Why: shared native prefetch can load one leaf for several keys. Measure its real I/O once.
   ;; Rejected: running extra point seeks to split a batch's shared storage reads across individual ids.
@@ -166,15 +173,15 @@
   (let [index (ns-resolve 'datomic.measure.io-stats '*io-index*)]
     (alter-var-root #'io/inc!
       (fn [inc-io!]
-        (fn [counter & args]
+        (fn
           ;; [DX-PREP1] Why: key remaining physical misses on the calling engine frame.
           ;; Rejected: assigning all unmatched I/O to the last authored check.
-          (when (and *outside-reads* (not *inside-lookup*) (= :sql counter))
-            (let [frames (into [] (comp (map #(.getClassName ^StackTraceElement %))
-                                        (filter #(re-find #"^datomic\.(?:db|builtins|index|iter)\$" %))
-                                        (take 6)) (.getStackTrace (Thread/currentThread)))]
-              (vswap! *outside-reads* update (str @index " " (str/join " / " frames)) (fnil + 0) (or (first args) 1))))
-          (apply inc-io! counter args)))))
+          ([counter]
+           (outside-read! index counter 1)
+           (inc-io! counter))
+          ([counter ^long n]
+           (outside-read! index counter n)
+           (.invokePrim ^clojure.lang.IFn$OLO inc-io! counter n))))))
   (wrap-lookup! (ns-resolve 'datomic.db 'resolve-lookup-ref)
     (constantly "native/resolve-lookup-ref :avet") identity)
   (alter-var-root (ns-resolve 'datomic.db 'create-unique-value-validator)
@@ -197,7 +204,7 @@
           ;; [DX-PREP1] Why: the apply and append can run on different native threads.
           ;; Rejected: requiring the appender's thread name on an apply worker. Join by t and clock containment.
           @api
-          (binding [*lookups* (volatile! {}) *lookup-count* (volatile! 0) *outside-reads* (volatile! {})]
+          (binding [*lookups* (atom {}) *lookup-count* (atom 0) *outside-reads* (atom {})]
             (let [basis-t (requiring-resolve 'datomic.api/basis-t)
                   start (System/nanoTime) before (cpu)
                   sample (io/throw-if-ex!
