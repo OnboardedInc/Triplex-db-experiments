@@ -91,26 +91,33 @@ type Version = { base: number; digest: string; patch: string };
 export const baseKey = (i: number) => "join-index-base:" + i;
 export const leafKey = (i: number) => "join-index:" + i;
 export const address = (s: string) => "join-member:" + s;
-export async function loadLeaf(db: Documents, i: number, p: number) {
+export async function loadLeaves(db: Documents, first: number, count: number, p: number) {
+  assert(Number.isInteger(count) && count > 0 && count <= 16);
+  const ns = Array.from({ length: count }, (_, j) => first + j);
   const rows = await db.rows<{ packed: string; sum: string } | Version>(
-      [baseKey(i), leafKey(i)],
-      p,
-    ),
-    base = rows.get(baseKey(i))!,
-    rev = rows.get(leafKey(i));
-  assert(base && "packed" in base.value);
-  assert.equal(sha256(base.value.packed), base.value.sum);
-  const { entries: initial, sorted } = unpack<{ entries: Entry[]; sorted: Leaf }>(
-    base.value.packed,
+    ns.flatMap((i) => [baseKey(i), leafKey(i)]),
+    p,
   );
-  let entries = initial;
-  if (rev) {
-    const v = rev.value as Version;
-    assert.equal(v.base, base.at);
-    entries = unpackIndex(initial, v.patch) as Entry[];
-    assert.equal(sha256(canonical(entries)), v.digest);
-  }
-  return { entries, initial, base, rev, sorted: rev ? leaf(entries) : sorted };
+  return ns.map((i) => {
+    const base = rows.get(baseKey(i)),
+      rev = rows.get(leafKey(i));
+    assert(base && "packed" in base.value);
+    assert.equal(sha256(base.value.packed), base.value.sum);
+    const { entries: initial, sorted } = unpack<{ entries: Entry[]; sorted: Leaf }>(
+      base.value.packed,
+    );
+    let entries = initial;
+    if (rev) {
+      const v = rev.value as Version;
+      assert.equal(v.base, base.at);
+      entries = unpackIndex(initial, v.patch) as Entry[];
+      assert.equal(sha256(canonical(entries)), v.digest);
+    }
+    return { entries, initial, base, rev, sorted: rev ? leaf(entries) : sorted };
+  });
+}
+export async function loadLeaf(db: Documents, i: number, p: number) {
+  return (await loadLeaves(db, i, 1, p))[0]!;
 }
 export function leafChange(
   db: Documents,

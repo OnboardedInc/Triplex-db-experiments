@@ -17,7 +17,7 @@ import {
 } from "../../notify1/journal.ts";
 import { Documents, pack, unpack, type Row, type Op } from "../../notify1/store.ts";
 import { Dispatcher } from "../../notify1/dispatcher.ts";
-import { memberPage, memberRange, width, type Census } from "../../notify1/census.ts";
+import { memberRange, width, type Census } from "../../notify1/census.ts";
 import { CLOCK, RELEASE, Conflict, fact, millis, value, type Store } from "../store.ts";
 import { calculate, worldsAt, type Proposal, type Point } from "../decision.ts";
 import { LazyReader, rosterRoot, rosterSeal } from "../read.ts";
@@ -28,6 +28,7 @@ import {
   selector,
   address,
   loadLeaf,
+  loadLeaves,
   leafChange,
   baseOp,
   indexInputs,
@@ -308,11 +309,13 @@ export class JoinedAccount {
     for (;;) {
       const old = await this.original(id, intent);
       if (old) return old;
-      if (through) await this.advance(through);
       const p = await this.s.head();
       if (through) {
         const due = (await this.db.get<string[]>("join-calendar", p)).value[0];
-        if (due && due <= through) continue;
+        if (due && due <= through) {
+          await this.advance(through);
+          continue;
+        }
       }
       const body = await plan(p);
       try {
@@ -347,15 +350,19 @@ export class JoinedAccount {
     if (mode === "none") return [];
     if (mode === "all") return this.roster(meta.census, p);
     const out: string[] = [];
-    for (let i = 0; i < Math.ceil(meta.census.count / width); i++) {
-      const [page, members] = await Promise.all([
-        loadLeaf(this.db, i, p),
-        memberPage(this.db, meta.census, i * width, p),
+    const pages = Math.ceil(meta.census.count / width);
+    // [DX-ACT1] Why: the source sweep accepts multiple roots at one cut. Rejected: two serial request round trips for each 64-person index leaf.
+    for (let i = 0; i < pages; i += 16) {
+      const count = Math.min(16, pages - i);
+      const [batch, members] = await Promise.all([
+        loadLeaves(this.db, i, count, p),
+        memberRange(this.db, meta.census, i * width, p, count),
       ]);
-      this.stats.indexPages++;
-      const l = page.sorted;
-      assert.deepEqual(l.ids, members);
-      out.push(...hits(l, old!, next, { tx: p, validTime: at }).ids);
+      for (const [j, page] of batch.entries()) {
+        this.stats.indexPages++;
+        assert.deepEqual(page.sorted.ids, members.slice(j * width, (j + 1) * width));
+        out.push(...hits(page.sorted, old!, next, { tx: p, validTime: at }).ids);
+      }
     }
     assert.deepEqual(out, [...new Set(out)].sort());
     return out;
@@ -406,8 +413,6 @@ export class JoinedAccount {
   ) {
     const next = W0.compileRelease(doc);
     assert(["owed", "stored", "envelopes"].includes(storage) && W0.isInstant(at));
-    const prior = await this.original(id, h([this.s.scope, id, ["publish", doc, at, storage]]));
-    if (prior) return prior;
     return this.command(
       id,
       ["publish", doc, at, storage],
@@ -585,9 +590,7 @@ export class JoinedAccount {
     const from = edit.from ?? at;
     assert(W0.isInstant(from) && from <= at);
     assert(many.has(edit.a) || edit.values.length <= 1);
-    const args = ["save", edit, at],
-      prior = await this.original(id, h([this.s.scope, id, args]));
-    if (prior) return prior;
+    const args = ["save", edit, at];
     return this.command(
       id,
       args,
