@@ -21,7 +21,9 @@ The files below are relative to the durable Triplex lab vault's `evidence/DX-HAS
 | `hasync-index-0ab1716f`      | `70559dfad` | First failed scheduled read run. 24.04 s gap, 578 late reads, raw timing retained before settlement.        |
 | `hasync-move-5ad73ad2`       | `70559dfad` | 65 cut offers were refused and later settled. 13.56 s to a new scheduled protected save.                     |
 | `hasync-commit-616d65f3`     | `70559dfad` | Mid-commit fault with 106 precisely settled offers and a separate trapped operation.                         |
-| `hasync-import-2049db80`     | `70559dfad` | Cut killed the import before any of its rows became visible. The original ID later published it once.       |
+| `hasync-import-2049db80`     | `70559dfad` | Survivor reported the interrupted import absent. A same-ID retry published it once.       |
+| `hasync-index-9da8ae55`      | `0d093d3a8` | Fixed field-page probes. 14.56 s to a new write, 81 exact offers settled, 0.183 s longest read gap. |
+| `hasync-restart-6124c3dd`    | `0d093d3a8` | Both original writers and a new boot container with the original disk exited 74. Verified a replacement standby and its first two-copy receipt. |
 
 ## Where the code publishes outcomes
 

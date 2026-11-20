@@ -4,7 +4,7 @@ In the first Mac run that withheld a save reply, new saves resumed after 18.55 s
 The system refused 90 saves during that cut. All 90 settled after retry with the same command ID.
 In the first planned move with scheduled traffic, a new save arrived after 13.56 seconds.
 The first index drill exposed a 24.04-second gap when reads pulled a wide diagnostic record on every offer.
-The revised drill reads a small field page on schedule and checks the wide record separately.
+The revised index drill read field pages on schedule. Its longest read gap was 0.18 seconds.
 You can reopen on one copy with an alarm, wait for the second copy, or run three data machines.
 
 ## Availability
@@ -18,6 +18,8 @@ Five saves and fifty reads are offered per second per system. The one-second cal
 | 2,000-fact import | 17.00 s | 16.6 s | 83 | 88 | 0.039 s |
 | Planned move | 13.56 s | 13.0 s | 65 | 65 | 0.053 s |
 | Index fault, first attempt | 23.41 s | 23.0 s | 115 | Ledger incomplete | 24.04 s |
+| Index fault, field-page probes | 14.56 s | 13.8 s | 69 | 74 | 0.183 s |
+| Old writer and disk returned | 14.66 s | 14.4 s | 72 | 72 | 0.087 s |
 
 Offers are counted from the fault up to the first scheduled on-time save sent to the new writer. Every save in those windows was refused. No offer in those windows timed out or returned a late receipt. Read outcomes and offers outside the cut remain in the raw evidence. [Independent recount](v2/recount-local.ts)
 
@@ -27,7 +29,7 @@ The earlier Part 1 campaign kept all 73 acknowledged receipts and recorded 1,234
 
 - Deep scale rungs target 100,549, 1,000,464 and 2,704,806 active facts, with three retire-and-replace edits on every fifth subject. Timings split recent Datomic log replay, broker readiness, peer synchronization, first-touch reads and PostgreSQL rewind. [Scale forecasts](SCALE.md) · [Scale driver](v2/scale-local.ts)
 - The fleet runs 1, 4 or 10 Datomic systems, each with an active and standby transactor. The PostgreSQL alternatives are one shared pair with separate SQL schemas and roles or a pair per system. Cgroup readings report idle memory and cores by role. [Fleet driver](v2/fleet.ts)
-- The post-crash choice determines whether fresh writes are protected. A full standby rebuild is forecast at 45–180 s at 16M and 7–27 min at 160M. The independent controller protocol passed reboot, stale-ticket, unreachable-readback and simulated clock-skew checks. Physical boot and interlock qualification are separate. [Fence](FENCE.md)
+- The old writer and the fresh container carrying its original disk refused startup. The replacement made a new write safe on two copies 1.33 s after its small copy began, ending a 17.59 s one-copy window. Full rebuild forecasts are 45–180 s at 16M and 7–27 min at 160M. The controller protocol passed reboot and simulated clock-skew checks. [Fence](FENCE.md)
 
 ## Paired bench
 
