@@ -12,7 +12,7 @@ cleanSource(head);
 assert.match(commit, /^[a-f0-9]{40}$/);
 execFileSync("git", ["merge-base", "--is-ancestor", commit, head]);
 const disk = fs.statfsSync(".");
-assert(disk.bavail * disk.bsize >= 5 * 1024 ** 3);
+assert(disk.bavail * disk.bsize >= 10 * 1024 ** 3);
 const staging = path.resolve("runs/DX-V01");
 fs.mkdirSync(staging, { recursive: true });
 const checkout = action === "--packages" ? fs.mkdtempSync(path.join(staging, "mac-")) : fs.realpathSync(argument);

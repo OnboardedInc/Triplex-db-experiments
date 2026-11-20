@@ -48,6 +48,14 @@ The existing INT1 `actv-lazy/join/server.ts 64 --receipt-local` producer and its
 
 The published producer opens a flat synthetic scope and loads its own fixture. It has no input for the held namespaced SCALE1 scope. The server card names that gap and leaves P5 unmeasured.
 
+## Part 2 final card check
+
+The card puts the selected writer, layout K, Java settings, actual gateway readbacks and forecast above the rows. It renders nine priority rows followed by four standing correctness rows. Physical cards with input records recheck the source, age label, writer and original image digest against each arm. The input record is linked from the card. The formatter preserves the individual observation denominators and never substitutes zero for an absent percentile.
+
+Four renderer tests and eleven published loader and recovery tests passed. Re-rendering the exact retained native import campaign checked all thirteen rows and all emitted local evidence links. The covered rows carry diagnostic clocks. The current physical command supplies partial observations for P1 through P4 and P6 through P8. P5 needs the published flat fixture adapted to the held namespaced pool. P9 needs a held K checkpoint format and time budget compatible with its rehearsal, plus two servers for any qualifying fault or move result. The integrated erasure witness, complete receipt retry coverage and physical no-loss check remain open.
+
+The latest INT1 state acknowledged the quiet pair and first-read baseline and reserved marginal P7 work for a growing-population census. The held scorecard reports its measured boot difference and cold-read samples. The deployable source stays pinned in the server handoff while the owner of INT1 integrates the subsequent commits.
+
 ## Part 1 report
 
 The readiness table and merge order are on the scorecard branch.
@@ -95,4 +103,4 @@ The final clean clone at `ac7698b07` verified both frozen arms. The loaded arm c
 
 [SERVER.md](SERVER.md) pins the runnable revision, build and two invocation commands. Each age has 197 minutes of frozen tape and a 235-minute ceiling. At USD 1.09 per hour the forecast is USD 3.58–4.27 per run, excluding build and seed preparation. Physical duration and cost are unverified.
 
-The held SCALE1 decision image has a different layout and operation identity scheme. INT1 needs compatible sealed fresh and 1B inputs. If aging uses the same measured Triplex journal, the driver also needs a starting-state and oracle replay adapter for the aged logical head. P3 fanout, P4 engine bytes, P5/P6/P8 field coverage, the P7 census and the P9 two-machine drill still need separate or integrated measurements.
+At the end of Part 1, the held SCALE1 image had a different layout and operation identity scheme from the INT1 input format. The Part 2 adoption above supersedes that original input requirement. If aging uses the same measured Triplex journal, the driver also needs a starting-state and oracle replay adapter for the aged logical head. P3 fanout, P4 engine bytes, P5/P6/P8 field coverage, the P7 census and the P9 two-machine drill still need separate or integrated measurements.

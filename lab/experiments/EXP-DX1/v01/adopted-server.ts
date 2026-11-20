@@ -114,7 +114,7 @@ async function readJvm(engines: Record<string, { id: string }>) {
   for (const role of ["tx", "gw-w", "gw-r"]) {
     const id = engines[role]!.id;
     const args = execFileSync("docker", ["exec", id, "sh", "-ec",
-      'java -version 2>&1; for p in /proc/[0-9]*; do [ "$(cat "$p/comm" 2>/dev/null)" = java ] || continue; tr "\\000" "\\n" < "$p/cmdline" | grep -E "^(-X|--enable-native-access|--sun-misc)" ; done'],
+      'java -version 2>&1; for p in /proc/[0-9]*; do [ "$(cat "$p/comm" 2>/dev/null)" = java ] || continue; tr "\\000" "\\n" < "$p/cmdline" | grep -E "^(-X|-Ddatomic[.]|-Dlogback[.]|--enable-native-access|--sun-misc)" ; done'],
     { encoding: "utf8", timeout: 10000 });
     assert.match(args, /version "25\./);
     assert.match(args, /-XX:\+UseG1GC/);

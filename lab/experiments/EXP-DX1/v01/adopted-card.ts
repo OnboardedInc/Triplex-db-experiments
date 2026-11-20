@@ -5,7 +5,7 @@ import { createHash } from "node:crypto";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import { render as emptyCard } from "./render.ts";
 import type { adoptedArm } from "./adopted.ts";
-import { selectedWriter, type Age, type Writer } from "./profile.ts";
+import { physicalJvm, selectedWriter, type Age, type Writer } from "./profile.ts";
 
 type Card = { source: string; age: Age; writer: Writer; toy: boolean; campaign: string; out: string; forecast: string; failure?: string };
 type Observation = Awaited<ReturnType<typeof adoptedArm>>;
@@ -32,8 +32,14 @@ export function writeAdoptedCard(run: Card) {
     }
     return [{ ...x, dispatchToFeed: feed.summary(), tape: raw.tape }];
   };
-  const arms = [...readArm("zero", false), ...readArm("loaded", true)];
-  const [zero, loaded] = arms;
+  const [zero] = readArm("zero", false), [loaded] = readArm("loaded", true);
+  const arms = [zero, loaded].filter((arm) => arm !== undefined);
+  const inputsFile = path.join(run.campaign, "input.json");
+  if (!run.toy && fs.existsSync(inputsFile)) {
+    const input = JSON.parse(fs.readFileSync(inputsFile, "utf8"));
+    assert.deepEqual([input.source, input.age, input.writer], [run.source, run.age, run.writer]);
+    for (const arm of arms) assert.equal(arm.seed.imageSha256, input.imagePin);
+  }
   if (zero && loaded) {
     assert(!zero.loaded && loaded.loaded && zero.firstCut === loaded.firstCut);
     assert.deepEqual([zero.seed.originalCut, zero.tapeSha256], [loaded.seed.originalCut, loaded.tapeSha256]);
@@ -101,8 +107,8 @@ export function writeAdoptedCard(run: Card) {
     const latency = Object.values(r.neighbors as Record<string, { read: { offered: number; ok: number; p99Ms: number }; save: { offered: number; ok: number; p99Ms: number } }>);
     const reads = latency.map((x) => x.read), saves = latency.map((x) => x.save);
     const totals = (rs: typeof reads) => rs.reduce((n, x) => n + x.ok, 0) + "/" + rs.reduce((n, x) => n + x.offered, 0);
-    const max = (rs: typeof reads) => tag(Math.max(...rs.map((x) => x.p99Ms ?? 0)));
-    rows.set("P8", [`Fixed-pace physical scope import: ${tag(r.fps)} facts/s, ${r.queryableFacts} queryable by the window end, ${r.proof.facts} verified. Highest per-account p99 ${max(saves)} ms for saves and ${max(reads)} ms for reads. Matched pacing controls and held-roster contention remain open.`,
+    const max = (rs: typeof reads) => tag(Math.max(...rs.map((x) => x.p99Ms).filter((x) => Number.isFinite(x))));
+    rows.set("P8", [`The fixed-pace import in the adopted scope recorded ${tag(r.fps)} facts/s, ${r.queryableFacts} queryable by the window end, ${r.proof.facts} verified. Highest per-account p99 ${max(saves)} ms for saves and ${max(reads)} ms for reads. Matched pacing controls and held-roster contention remain open.`,
       run.toy ? "DIAGNOSTIC" : "NOT MEASURED", `${r.proof.observed} exact frames, ${totals(saves)} saves and ${totals(reads)} reads`,
       "[import arm](" + path.relative(run.out, importPath) + ")"]);
   }
@@ -110,18 +116,26 @@ export function writeAdoptedCard(run: Card) {
   const gaps: Record<string, string> = {
     P5: "The published INT1 Publish producer creates its own flat scope. No adapter binds it to the held SCALE1 roster and live release cut.",
     P6: "No verified same-scope alone and 235-save quiet-account pair from this attempt.",
-    P9: "One-host rehearsal requires the published HASYNC1 legacy PostgreSQL base backup, compatible ten-account proofs and two 10-minute windows. The held SCALE1 K archive is a logical dump. Qualifying fault and move measurements: needs two servers.",
+    P9: "One-host rehearsal requires the published HASYNC1 legacy PostgreSQL base backup, compatible ten-account proofs and two 10-minute windows. The held SCALE1 K archive is a logical dump. Each qualifying fault or move measurement needs two servers.",
     P8: run.writer === "subject" ? "The published pacing oracle requires grouped writer grant metadata." : "No verified fixed-pace import arm from this attempt.",
   };
   const text = base.split("\n").map((line) => {
-    if (line === "Population ten accounts of four deep people.") return "Population ten deep accounts in one SCALE1 database.";
+    if (line === "Population ten accounts of four deep people.") {
+      if (run.toy) return "Population ten deep accounts in one SCALE1 toy database.";
+      return "Population ten deep accounts of 100,000 people in one SCALE1 database." +
+        (fs.existsSync(inputsFile) ? " [Held seal and run inputs](campaign/input.json)." : "");
+    }
     const match = /^\| ((P\d) [^|]+|Journal queryable|Receipts) \| ([^|]+) \|/.exec(line);
     const key = match?.[2] ?? match?.[1]?.trim();
     if (!key || !match) return line;
     const values = rows.get(key) ?? (field.includes(key) ? [gaps[key] ?? "No same-seed adapter for this row at this revision.", "NOT MEASURED", "0", "—"] : undefined);
     return values ? `| ${match[1]!.trim()} | ${match[3]!.trim()} | ${values.join(" | ")} |` : line;
   }).join("\n").replaceAll("No compatible measurement from this attempt.", run.failure ?? "No compatible measurement from this attempt.");
-  const settings = { ...selectedWriter(run.writer), armReadbacks: arms.map((a) => a.settings) };
+  const settings = {
+    ...selectedWriter(run.writer),
+    ...(run.toy ? {} : { physicalJvm: physicalJvm() }),
+    armReadbacks: arms.map((a) => a.settings),
+  };
   fs.writeFileSync(path.join(run.out, "SCORECARD-v0.1.md"),
-    text.replace("{}", JSON.stringify(settings, null, 2)), { flag: "wx", mode: 0o600 });
+    text.replace("```json\n{}\n```", "```json\n" + JSON.stringify(settings, null, 2) + "\n```"), { flag: "wx", mode: 0o600 });
 }
