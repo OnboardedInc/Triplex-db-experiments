@@ -50,3 +50,5 @@ f0af694dae27b35d87afd314e508ae74a170b2d048607e6d3dd0ff87b02be950  serial-f/incom
 73c1b9126b46f71cf3387d914d2c2f7bca641bb29f4d99f0e93d10e9f345ee0e  serial-f/original-spool/oracle-case.json
 5cd68d1899dec54e8df085c45b47350aca86fd855617b9af73f29ebf4b123a8a  serial-f/original-spool/oracle-expected.json
 cc2ec2d2476f54490f07a9a86795a22967c893541171a545bae2b3af002913f9  serial-f/original-spool/ns-full-read-samples.jsonl
+764b5a998b195663627727d4dfd326dcffce2913345375b06ae5deabed5a63d2  bm1-i9-1-v2/TOP50.tsv
+5afb4423983f94844aaaafeb28a1ab42e518665851f50ce929832489cfeb516f  bm1-i9-1-v2/observations.json
