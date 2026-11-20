@@ -183,7 +183,7 @@ export class LazyReader {
         stage?.("return");
         return { json: saved, basis: b, route: "exact-cache", subject };
       }
-      const archived = await this.archive?.(subject, b, c, latest);
+      const archived = this.archive && (await this.archive(subject, b, c, latest));
       if (archived !== undefined) {
         // [DX-ACT1] Why: reopened output bytes still need the current erasure frontier fence. Rejected: treating an immutable archive page as permission to return data removed from every pin.
         if (!(await stable())) continue;

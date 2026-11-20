@@ -12,6 +12,7 @@ assert(pinned === undefined || (Number.isSafeInteger(pinned) && pinned >= 0));
 const store = await openStore(scope, profile, "read");
 try {
   const reader = new LazyReader(store, profile, 0, undefined, "shared-cut");
+  const untouched = { memoBytes: reader.bytes, memory: process.memoryUsage() };
   async function sample(position?: number) {
     const results = [];
     for (const subject of ids) {
@@ -49,7 +50,7 @@ try {
     const current = await sample(),
       reads = pinned === undefined ? current : await sample(pinned);
     process.stdout.write(
-      JSON.stringify({ scope, nonce, profile, pid: process.pid, current, reads }),
+      JSON.stringify({ scope, nonce, profile, pid: process.pid, untouched, current, reads }),
     );
   }
 } finally {

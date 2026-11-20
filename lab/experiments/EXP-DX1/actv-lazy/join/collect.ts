@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { execFileSync } from "node:child_process";
 import { DomainOracle } from "../../../../bench/lib/w0-gates.ts";
 import { canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import { verifyTimings } from "./observations.ts";
@@ -38,9 +39,23 @@ export async function collect(
     "server-seed",
     ...cells.flatMap((_, i) => outputTypes.map((name) => name + "-" + i)),
   ];
-  if (!inputs.smoke) expectedNames.push("preflight/stage-gate", "preflight/idle-deadline");
+  if (!inputs.smoke)
+    expectedNames.push(
+      "preflight/stage-gate",
+      "preflight/idle-deadline",
+      "preflight/future-gate",
+      "preflight/joined-gate",
+    );
+  if (inputs.settlement) expectedNames.push("preflight/settle-gate");
   assert.deepEqual(names.toSorted(), expectedNames.toSorted());
-  for (const name of names) assert.equal(digest(name), seal.outputs[name], name);
+  assert(Number.isFinite(inputs.issuedAt));
+  for (const name of names) {
+    assert(
+      statSync(join(root, name + ".json")).mtimeMs >= inputs.issuedAt - 2000,
+      "Stale file " + name,
+    );
+    assert.equal(digest(name), seal.outputs[name], name);
+  }
   assert.deepEqual(
     files.filter((f) => /^(offer|terminal)-\d+\.json$/.test(f)).sort(),
     cells.flatMap((_, i) => ["offer-" + i + ".json", "terminal-" + i + ".json"]).sort(),
@@ -131,4 +146,14 @@ export async function collect(
   } finally {
     oracle.close();
   }
+}
+
+if (import.meta.filename === process.argv[1]) {
+  const [root, subjects] = process.argv.slice(2);
+  assert(root && subjects && process.env.TRIPLEX_LAB_SLOT_OWNER);
+  const source = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+  const owner = sha256(readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER));
+  process.stdout.write(
+    JSON.stringify(await collect(root, { source, owner, n: Number(subjects) })) + "\n",
+  );
 }

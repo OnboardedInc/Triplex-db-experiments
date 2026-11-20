@@ -8,6 +8,8 @@ The archive reader uses a stored response only at the receipt's exact record and
 
 Bulk frames carry W1's `activation` or `notice` class on the native claim. The producer uses round-robin turns across ready accounts, live preference, a bounded bulk turn after eight completed live saves, and a duty cycle. Each frame is constrained by an 8 ms W1 estimate and the native row and byte limits. The estimate cannot preempt a submitted database commit. P6 needs observed live and neighbour p99 ratios, including stalls and backlog.
 
+W1 implements its native queue per Datomic connection. The application queue shares admission across the source, archives and neighbour in these trials. A production installation needs the same admission ownership across hosts to preserve the one-in-flight bulk bound.
+
 The six component windows keep the receiver offline and leave the individual notice clock empty. The optional settlement windows price both durable endpoints and report ordinary save and read ratios at 3.5 and 23.5 saves per second. They use a separate account with matched address and stamp saves for the loaded and control windows. The retained W0 source witnesses are unaffected by these two edits. This diagnostic does not replace the frozen interference trace.
 
 ## Evidence audit

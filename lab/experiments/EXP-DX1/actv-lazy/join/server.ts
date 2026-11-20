@@ -77,6 +77,7 @@ const config = join(process.env.TX2_CONFIG_DIR ?? ".", "lab/config/slots.json");
 const configDigest = sha256(readFileSync(config));
 const attempt = {
   format,
+  issuedAt: Date.now(),
   source,
   nonce: randomUUID(),
   owner: sha256(ownerBytes),
@@ -84,6 +85,8 @@ const attempt = {
   volume: owner.volume,
   n,
   smoke,
+  settlement: flag === "--settlement",
+  planned: cells,
   pins,
   build,
   config: configDigest,
@@ -92,11 +95,22 @@ save("server-inputs", attempt);
 if (!smoke) {
   const pre = join(root, "preflight");
   mkdirSync(pre);
-  for (const f of ["stage-gate.ts", "deadline-gate.ts"])
+  const gates = [
+    "stage-gate.ts",
+    "deadline-gate.ts",
+    "future-gate.ts",
+    "gate.ts",
+    ...(attempt.settlement ? ["settle-gate.ts"] : []),
+  ];
+  for (const f of gates)
     execFileSync(
       process.execPath,
       ["--experimental-strip-types", new URL(f, import.meta.url).pathname, pre],
-      { stdio: "inherit", timeout: 180000 },
+      {
+        stdio: "inherit",
+        timeout: 180000,
+        env: attempt.settlement ? { ...process.env, DX_ACT1_W1_GATE: "1" } : process.env,
+      },
     );
 }
 const store = await openStore("lazy-join-server-" + attempt.nonce, "act2-deep");
@@ -617,7 +631,15 @@ try {
       "server-effects",
       "server-effect-bytes",
       "server-seed",
-      ...(!smoke ? ["preflight/stage-gate", "preflight/idle-deadline"] : []),
+      ...(!smoke
+        ? [
+            "preflight/stage-gate",
+            "preflight/idle-deadline",
+            "preflight/future-gate",
+            "preflight/joined-gate",
+          ]
+        : []),
+      ...(attempt.settlement ? ["preflight/settle-gate"] : []),
       ...windows.flatMap((r) => [
         "offer-" + r.index,
         "terminal-" + r.index,
@@ -651,6 +673,17 @@ try {
     mkdirSync(extra);
     await settlementPrices(extra, n, 60, 64);
   }
+} catch (error) {
+  save("server-stop", {
+    source,
+    nonce: attempt.nonce,
+    error: String(error),
+    unoffered: plan.flatMap((_, i) => (produced.has("offer-" + i) ? [] : [i])),
+    unmatched: plan.flatMap((_, i) =>
+      produced.has("offer-" + i) && !produced.has("terminal-" + i) ? [i] : [],
+    ),
+  });
+  throw error;
 } finally {
   ref.oracle.close();
   await readStore.close();

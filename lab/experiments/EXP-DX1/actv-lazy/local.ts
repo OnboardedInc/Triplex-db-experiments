@@ -145,6 +145,13 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
 } else if (binding.mode === "--joined-settle-price") {
   assert(["64", "1000", "10000"].includes(binding.size!));
   run("join/settle-price.ts", [dir, binding.size!, binding.size === "64" ? "3" : "60"]);
+} else if (binding.mode === "--joined-size") {
+  const [profile, n] = binding.size!.split(":");
+  assert((profile === "thin" || profile === "deep") && ["1000", "10000", "100000"].includes(n!));
+  run("join/scope-price.ts", [dir, n!, profile]);
+} else if (binding.mode === "--joined-fixed") {
+  assert(["45", "180"].includes(binding.size!));
+  run("join/interference.ts", [dir, binding.size!]);
 } else if (binding.mode === "--joined-deep") {
   assert(["1000", "10000"].includes(binding.size!));
   run("join/deep-price.ts", [dir, binding.size!]);

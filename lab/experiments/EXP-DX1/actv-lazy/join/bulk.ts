@@ -48,11 +48,12 @@ export class BulkQueue {
   private liveTurns = 0;
   private writing = false;
   private timer?: ReturnType<typeof setTimeout>;
-  readonly service: number[] = [];
   readonly duty: number;
-  constructor(duty = 0.5) {
+  private readonly observe?: (ms: number) => void;
+  constructor(duty = 0.5, observe?: (ms: number) => void) {
     assert(duty > 0 && duty <= 1);
     this.duty = duty;
+    this.observe = observe;
   }
   async live<T>(work: () => Promise<T>) {
     this.inFlight++;
@@ -100,7 +101,7 @@ export class BulkQueue {
     void turn().finally(() => {
       const done = performance.now(),
         elapsed = done - start;
-      this.service.push(elapsed);
+      this.observe?.(elapsed);
       this.availableAt = done + elapsed * (1 / this.duty - 1);
       this.writing = false;
       this.pump();

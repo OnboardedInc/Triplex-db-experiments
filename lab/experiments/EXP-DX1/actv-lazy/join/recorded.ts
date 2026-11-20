@@ -147,12 +147,11 @@ export class RecordedNotices {
       this.activation = undefined;
     }
   }
-  async packets(at: number) {
+  private async *orderedPackets(at: number) {
     const b = this.archive,
       a = b.source,
       db = b.db;
     const state = (await db.get<Cursor>(stateKey, at)).value;
-    const packets: Packet[] = [];
     let previous = hash([a.db.prefix, state.epoch, "receiver-genesis"]),
       entries = 0;
     const head = await a.s.head();
@@ -173,16 +172,20 @@ export class RecordedNotices {
         if (bound?.value.sequence !== p.event) bound = await a.notices.event(p.event, head);
         assert(p.position === bound.at && p.recipe === hash(bound.value) && p.through > p.start);
         entries += p.deliveries.length;
-        packets.push(p);
         previous = hash(p);
+        yield p;
       }
     }
     assert(state.entries === entries && state.previous === previous);
-    return packets;
+  }
+  async packets(at: number) {
+    const recorded: Packet[] = [];
+    for await (const packet of this.orderedPackets(at)) recorded.push(packet);
+    return recorded;
   }
   async deliver(sink: Documents, at: number) {
     let effects = 0;
-    for (const packet of await this.packets(at))
+    for await (const packet of this.orderedPackets(at))
       if (await receiveOrdered(sink, this.archive.source.db.prefix, packet, hash(packet)))
         effects += packet.deliveries.length;
     return effects;

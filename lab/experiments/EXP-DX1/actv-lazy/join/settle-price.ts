@@ -153,7 +153,8 @@ export async function settlementPrices(out: string, n: number, seconds = 60, rea
   const a = new JoinedAccount(source),
     quiet = new JoinedAccount(neighbour),
     ref = new Reference(),
-    queue = new BulkQueue(0.6);
+    services: number[] = [],
+    queue = new BulkQueue(0.6, (ms) => services.push(ms));
   const f = await seed(source, n),
     nearby = await seed(neighbour, 64);
   const settle = await Settlement.open(a, queue);
@@ -198,7 +199,7 @@ export async function settlementPrices(out: string, n: number, seconds = 60, rea
           });
           const published = await queue.live(() => a.publish("trial-" + i, doc, valid, "owed"));
           const visible = performance.now(),
-            after = queue.service.length;
+            after = services.length;
           const [terminal, loaded] = await Promise.all([settle.settle(seq + 1, offer), also]);
           return { control, loaded, offer, visible, after, terminal, published, doc };
         },
@@ -266,7 +267,7 @@ export async function settlementPrices(out: string, n: number, seconds = 60, rea
         pairs,
         control,
         loaded,
-        bulkService: queue.service.slice(after),
+        bulkService: services.slice(after),
         receiverOffline: true,
       };
       result.push(row);

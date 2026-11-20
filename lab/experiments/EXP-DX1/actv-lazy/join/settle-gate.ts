@@ -9,7 +9,7 @@ import { seed, valid } from "../fixture.ts";
 import { openStore } from "../store.ts";
 import { JoinedAccount } from "./account.ts";
 import { Reference, toWire } from "./check.ts";
-import { BulkQueue } from "./bulk.ts";
+import { BulkQueue, bulkClaim } from "./bulk.ts";
 import { Settlement } from "./settlement.ts";
 
 const store = await openStore("lazy-settle-gate-" + randomUUID(), "act2-deep");
@@ -41,6 +41,22 @@ function kill(sequence: number, path: "values" | "notices") {
   assert.equal(r.signal, "SIGKILL", r.stderr || r.error?.message);
 }
 try {
+  const nativeClass = process.env.DX_ACT1_W1_GATE === "1";
+  if (nativeClass) {
+    const archive = worker.archive,
+      p = await archive.store.head();
+    const command = "width-refusal",
+      tooLarge = archive.db.put(command, "v".repeat(70000));
+    // [DX-ACT1] Why: witness the gateway's own bulk policy on an otherwise valid write. Rejected: inferring the enabled queue from an environment variable.
+    await assert.rejects(
+      bulkClaim(archive.store.scope, command, "activation", () =>
+        archive.store.commit(command, "lazy/settlement", [tooLarge], p),
+      ),
+      /bulk frame|BulkFrameTooLarge|row or byte/i,
+    );
+    assert.equal(await archive.store.lookup(command), null);
+    assert.equal(await archive.store.head(), p);
+  }
   const first = await account.publish("first", W0.R1.doc, valid, "owed");
   await verify(first.position, W0.R1.doc, null, 1);
   const second = await account.publish("next", W0.R2.doc, valid, "owed"),
@@ -111,6 +127,7 @@ try {
       second: second.txId,
       third: third.txId,
       kills: 2,
+      nativeClass,
       matchedRead: sha256(before.json),
       partial: partial.frontier.through,
       rows: stored.frontier.changes,
