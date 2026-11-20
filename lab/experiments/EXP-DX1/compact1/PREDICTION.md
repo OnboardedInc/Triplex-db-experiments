@@ -10,7 +10,7 @@ The alternating Mac run subsequently measured 614â€“742 compact saves/s and 222â
 
 The 16M-fact Mac load sampled 88 untouched subjects. Most rebuilt quickly, with p95 of 12.74 ms, and one took 194.44 ms. A save on an untouched subject also rebuilds its projection before entering the writer. That cost and its correlation across accounts are the main risks to the predicted tail. The fleet command sends edits to distinct subjects using the same cold preparation path. [Import and cold read evidence](COST.md)
 
-Run this from a clean experiment checkout on the provisioned bare-metal SQL stack:
+Run the command from a clean experiment checkout on the provisioned bare-metal SQL stack.
 
 ```sh
 bash lab/experiments/EXP-DX1/compact1/bench-server.sh

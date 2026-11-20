@@ -10,7 +10,8 @@ set -euo pipefail
 [[ $DATOMIC_URI_TEMPLATE == datomic:sql://*'{db}'* ]]
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 repo=$(git -C "$here" rev-parse --show-toplevel)
-git -C "$repo" diff --quiet HEAD -- lab/experiments/EXP-DX1/compact1 packages/datomic/gateway lab/world/W0/schema.json
+git -C "$repo" diff --quiet HEAD -- lab/experiments/EXP-DX1/compact1 packages/datomic/gateway \
+  packages/datomic/src/codec-spec.json lab/world/W0/schema.json
 if [[ -n $(git -C "$repo" ls-files --others --exclude-standard -- lab/experiments/EXP-DX1/compact1 packages/datomic/gateway) ]]; then
   echo 'Use a clean compact runtime checkout' >&2
   exit 1
