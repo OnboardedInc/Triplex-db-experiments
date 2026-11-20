@@ -2313,3 +2313,38 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   (deep) bytes and the write gateway 4,089 to 44,789; the touched reader's index grows 0 bytes. Part 3 running.
 - **Sam's decisions (SAM-decisions):** one-second definition accepted; no prepared releases (staging closed); understand
   and predict before running. Five max-effort analysts launched 18:53 to 18:58 local.
+
+## 2026-11-20 00:45 UTC (19:45 local, 2026-11-19): five analysts' predictions; the real save rate is ten times the estimate
+
+- **Production count (private sizing file, no customer named here):** the deepest account wrote 525,208 saves in 29.8
+  hours, one per field change (415 per active person, 19 per subtask): 4.9 per second averaged; per active minute
+  median 3.5, p99 23.5, p99.9 34.3, maximum 39.4 per second. Platform saves run at about 385,000 a day and more than
+  half of all saves ever made happened since mid-August. The earlier estimate (0.5 averaged, 1.6 in working hours)
+  came from an unrepresentative sample of older tasks and was about ten times too low. Ten deep accounts: about 50
+  per second averaged, 235 at the p99 minute, about 390 if peaks coincide. The frozen v3 trace (1.1 steady, 55 in
+  bursts) is too quiet in steady state.
+- **Analysts (private folder `research/2026-11-19-predictions/`, written before the runs they predict):**
+  QUEUE: at least 34.7 of the 41.7 ms p99 save is another subject's earlier save still being applied; ten deep accounts
+  in one database about 150 saves/s ungrouped and 200 grouped; a quiet account's p99 at 12 to 30 times baseline under
+  nine bursting neighbours, 2 to 6 times with grouping and fair turns; one hundred small accounts stay within 1.25.
+  GROWTH: serial-point reads 0.28 per save at 10,000 subjects and 0.95 at 100,000, mostly from checking rows a save
+  replaces (at most 29% from the new-identity check); one deep account predicted at 5.5 to 10 ms median and 75 to
+  190 ms p99 with the 1,280 MiB cache; live traffic grew the deep runs by about 4.7 kB per new business assertion.
+  LOAD: a 2,000-fact batch takes 413 ms of which Datomic applies 72 ms and the log writer waits 13 ms; the loader is
+  synchronous and client and writer each use half a core; 160 million facts predicted at 10.8 h (9.7 to 12.7); tonight's
+  import predicted at 2,600 facts/s with neighbours at 1.6 (read) and 1.4 (commit) times.
+  HA: a synchronous copy on a second machine in the same site (ping 0.089 ms) predicted to add 0.23 to 0.74 ms per
+  save; first write after transactor loss 9 to 29 s at 16 million facts and 9 to 35 s at 160 million; restore from a
+  staged Postgres backup 7 to 24 minutes at 160 million.
+  READERS: writer p99 rose from 28.93 to 42.75 ms at 256 readers, all 22 slowest saves waiting on Datomic, physical cause
+  not identifiable from the traces (a four-block on/off probe is specified); the server sent 5,609 of 150,078 weighted
+  pulls to the gateway where the Mac served all locally; twelve reader workers predicted to reach 33,000 reads/s at
+  1,024 clients, 48% of the 256-client rate.
+- **DX-ACT1 part 4 (`cda33229`, LAZY, Mac VM):** one durable account write, zero subject visits; durable at 254 ms, first
+  correct read in a fresh process 1.205 s at 10,000 subjects; recording 1,650 owed notices took 25.6 s because LAZY
+  cannot know who is owed without evaluating. Part 5: stage budget for that second; the join of LAZY's write, DELTA's
+  lookups (only for notice-making inputs) and DX-STG1's owed record; the erasure question for Sam.
+- **Assigned 19:40 local:** DX-W1 part 3 (priority classes and fair turns in the one queue, coalescing queued field
+  saves of one subject, the reads on replaced rows); DX-HA1 part 3 (the loader's 330 ms outside the database, live
+  import pacing in one shared database); DX-SCALE1 part 5 (a `deep-live` profile at the real rates); DX-BM1 part 4
+  (overnight queue with the analysts' short probes and a prediction before each item).
