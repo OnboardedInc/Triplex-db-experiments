@@ -108,6 +108,8 @@ export async function local(opts, config, manager) {
   assert(typeof holder === "string" && /^DX-[A-Z0-9-]{1,26}$/.test(holder));
   const people = Number(opts.people);
   const mode = String(opts.run ?? "scale");
+  const subjectWriter = process.env.DX_ERASE1_SUBJECT_WRITER;
+  assert(subjectWriter === undefined || subjectWriter === "0" || subjectWriter === "1");
   assert(
     [
       "smoke",
@@ -403,6 +405,9 @@ export async function local(opts, config, manager) {
         "DATOMIC_URI_TEMPLATE=" + uri,
         "-e",
         "GATEWAY_SOURCE_SHA256=" + gateway,
+        ...(subjectWriter !== undefined
+          ? ["-e", "TX2_SUBJECT_SAVE=" + subjectWriter, "-e", "TX2_INT1_WRITE_READBACK=1"]
+          : []),
         "-e",
         "DX_ERASE_TOKEN=" + token,
         "-e",
