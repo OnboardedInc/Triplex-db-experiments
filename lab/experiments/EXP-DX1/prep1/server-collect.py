@@ -36,6 +36,9 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     arm = next(a for a in plan["arms"] if a["id"] == header["arm"]["id"])
     assert {k: arm[k] for k in ("id", "writers", "writer", "reverse")} == header["arm"]
     assert plan["seconds"] == header["seconds"]
+    fair_credits = header.get("fairCredits", 0)
+    assert fair_credits in (0, 1, 2, 6) and (not fair_credits or arm["writer"] == "S")
+    assert fair_credits == (plan.get("fairCredits", 0) if arm["writer"] == "S" else 0)
     roles = ["tx", "gw-r", "gw-w"] + [f"gw-w{i}" for i in range(2, arm["writers"] + 1)]
     if not fixture:
         assert header["seconds"] == 144
@@ -83,7 +86,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 native[t] = (block_no, row, member)
     assert end
 
-    metrics, used_native, cut, last_clock = [], set(), header["head"], -math.inf
+    metrics, used_native, cut, last_clock, last_turn = [], set(), header["head"], -math.inf, 0
     for expected in arm["cells"]:
         label = expected["label"]
         result = read(directory / (label + ".json"))
@@ -95,6 +98,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         rows = sorted(result["rows"], key=lambda r: r["ordinal"])
         times, counts, block_ids, joined = collections.defaultdict(list), collections.Counter(), set(), set()
         in_window, stages_by_save, flush_ms = 0, collections.defaultdict(list), {}
+        turns = collections.defaultdict(list)
+        turn_appends = collections.defaultdict(set)
         prepared = 0
         for i, (r, offer) in enumerate(zip(rows, tape, strict=True)):
             assert (r["ordinal"], r["id"], r["due"], r["account"], r["person"]) == (
@@ -103,6 +108,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             if "sent" in r:
                 assert r["sent"] >= r["due"] and r["end"] >= r["sent"]
                 assert 0 <= r["peer"] < arm["writers"]
+                if fair_credits:
+                    turns[r["fairTurn"]].append(r)
             ack, receipt = r.get("ack"), r.get("receipt")
             if ack:
                 assert receipt and not r.get("reason")
@@ -131,6 +138,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 stages_by_save["nativeWork"].append((member["applied-at"] - member["started-at"]) / 1e6)
                 stages_by_save["nativeReadyToAppend"].append((chunk["start"] - member["applied-at"]) / 1e6)
                 flush_ms[block] = (chunk["end"] - chunk["start"]) / 1e6
+                if fair_credits:
+                    turn_appends[r["fairTurn"]].add(block)
                 joined.add(receipt["t"])
                 block_ids.add(block)
         assert used_native.isdisjoint(joined)
@@ -140,6 +149,12 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert pos == cut + 1 and clock > last_clock
             cut, last_clock = pos, clock
         assert cut == result["after"]
+        last_reply = -math.inf
+        for turn, members in sorted(turns.items()):
+            assert turn == last_turn + 1 and len(members) <= fair_credits
+            assert min(r["sent"] for r in members) >= last_reply
+            last_reply = max(r["end"] for r in members)
+            last_turn = turn
         pair = {a: p99(times[a]) if counts[a] == len(times[a]) else None for a in counts}
         metrics.append({"cell": label, "offered": len(rows), "durable": len(positions), "inWindow": in_window,
                         "confirmedPerSecond": in_window / result["seconds"], "prepared": prepared,
@@ -149,6 +164,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                         "accountP99Ms": pair, "completedOnlyP99Ms": {a: p99(times[a]) for a in counts},
                         "stageP99Ms": {key: p99(samples) for key, samples in stages_by_save.items()},
                         "appendP99Ms": p99(list(flush_ms.values())),
+                        "fairTurns": len(turns), "maxAppendsPerTurn": max(map(len, turn_appends.values()), default=0),
                         "nativeT": len(joined), "appends": len(block_ids),
                         "savesPerAppend": len(positions) / len(block_ids) if block_ids else None,
                         "drainMs": max(0, result["drained"] - result["seconds"] * 1000)})
@@ -167,6 +183,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         kept.extend(native_path.parent / f"{role}-native-settings.json" for role in roles)
     return {"fixture": fixture, "source": header["commit"], "nonce": header["nonce"], "slot": header["slot"],
             "seedSha": header["seedSha"], "dumpSha": header["dumpSha"], "planSha": sha(plan_path),
+            "fairCredits": fair_credits,
             "rawSha256": {path.name: sha(path) for path in kept}, "cells": metrics}
 
 

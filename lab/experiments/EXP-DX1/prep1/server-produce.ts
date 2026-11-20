@@ -6,6 +6,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { DatomicClient, DatomicHttpError } from "../../../../packages/datomic/dist/index.js";
 import { decodeRowText, encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import { ids, type Fact } from "../../../bench/lib/world.ts";
+import { FairTurns } from "./fair-turns.ts";
 import { checkJournal } from "../w1/field/journal.ts";
 import { accounts, pooledDigest } from "../w1/group/population.ts";
 import { command, seedPooled } from "../w1/group/workload.ts";
@@ -37,6 +38,8 @@ type Seed = {
 };
 const answer = ":field/answer-prep1",
   note = ":field/note";
+const requestedCredits = Number(process.env.DX_PREP1_FAIR_CREDITS ?? 0);
+assert([0, 1, 2, 6].includes(requestedCredits));
 const root = (a: number, p: number) => ids.placement(accounts[a]!.first + p);
 const fact = (e: string, a: string, value: string): Fact => ({
   e,
@@ -117,6 +120,7 @@ async function phase(
   fields: Map<string, Row[]>,
   frozen: Set<string>,
   cell: ReturnType<typeof cells>[number],
+  fair?: FairTurns,
 ) {
   const inputs = new Map<string, Input>();
   const rows: {
@@ -127,6 +131,7 @@ async function phase(
     due: number;
     end: number;
     peer?: number;
+    fairTurn?: number;
     sent?: number;
     reason?: string;
     ack?: Ack;
@@ -141,80 +146,106 @@ async function phase(
   const phaseWallMs = Date.now();
   let turn = 0,
     nextPeer = 0;
+  const deadline = cell.duration * 1000 + 1000;
+  const pick = (account: number) => {
+    const index = queues[account]!.findIndex((n) => {
+      const o = cell.tape[n]!;
+      const e = root(o.account, o.person);
+      return !busy.has(e) && !frozen.has(e);
+    });
+    if (index >= 0) return { account, index, due: cell.tape[queues[account]![index]!]!.ms };
+  };
   function dispatch() {
-    while (pending.size < 96 && elapsed() <= cell.duration * 1000 + 1000) {
-      let ordinal: number | undefined;
+    if (elapsed() > deadline) return;
+    if (fair) {
+      fair.dispatch(
+        () =>
+          accounts.flatMap(({ index }) => {
+            const ready = pick(index);
+            return ready ? [ready] : [];
+          }),
+        grant,
+      );
+      return;
+    }
+    while (pending.size < 96 && elapsed() <= deadline) {
+      let granted = false;
       for (let i = 0; i < queues.length; i++) {
-        const a = (turn + i) % queues.length;
-        const j = queues[a]!.findIndex((n) => {
-          const o = cell.tape[n]!;
-          const e = root(o.account, o.person);
-          return !busy.has(e) && !frozen.has(e);
-        });
-        if (j < 0) continue;
-        ordinal = queues[a]!.splice(j, 1)[0]!;
-        turn = (a + 1) % queues.length;
+        const candidate = pick((turn + i) % queues.length);
+        if (!candidate) continue;
+        turn = (candidate.account + 1) % queues.length;
+        grant(candidate);
+        granted = true;
         break;
       }
-      if (ordinal === undefined) break;
-      const n = ordinal,
-        o = cell.tape[n]!,
-        e = root(o.account, o.person),
-        id = operation(cell.label, n);
-      const facts = [fact(e, answer, `${o.subtask}/${o.ordinal}`)];
-      if (o.extra) facts.push(fact(e, note, id));
-      const previous = fields.get(e)!;
-      const old = previous.filter((r) => r.attribute === answer || o.extra);
-      const input = command(id, facts, old);
-      input.sourceK = Math.max(head, ...previous.map((r) => r.recorded_position));
-      input.groupAccount = accounts[o.account]!.key;
-      input.writeClass = "live";
-      inputs.set(id, input);
-      busy.add(e);
-      const sent = elapsed(),
-        peer = nextPeer++ % clients.length;
-      const record = {
-        id,
-        ordinal: n,
-        account: o.account,
-        person: o.person,
-        due: o.ms,
-        peer,
-        sent,
-      };
-      const work = (async () => {
-        let ack: Ack;
-        try {
-          ack = (await clients[peer]!.transact(db, input)) as Ack;
-        } catch (err) {
-          // [DX-PREP1] Why: the next same-person offer cannot speculate on a failed or uncertain predecessor.
-          // Rejected: sending a later edit against a row whose retirement is unknown.
-          frozen.add(e);
-          rows.push({
-            ...record,
-            end: elapsed(),
-            reason: err instanceof DatomicHttpError ? err.code : "transport",
-          });
-          return;
-        }
-        const end = elapsed();
-        assert.equal(ack.operationId, id);
-        assert(ack.writePath?.function && Number(ack.t.v) > 0 && Number.isFinite(ack.recordedAt.v));
-        assert(Number(ack.position.v) > input.sourceK!);
-        fields.set(e, [
-          ...previous.filter((r) => !old.includes(r)),
-          ...input.rows
-            .slice(0, facts.length)
-            .map((r) => assigned(r, Number(ack.position.v), ack.recordedAt.v)),
-        ]);
-        rows.push({ ...record, end, ack });
-      })().finally(() => {
-        pending.delete(work);
-        busy.delete(e);
-        dispatch();
-      });
-      pending.add(work);
+      if (!granted) break;
     }
+  }
+  function grant({ account, index }: NonNullable<ReturnType<typeof pick>>, fairTurn?: number) {
+    const ordinal = queues[account]!.splice(index, 1)[0]!;
+    const n = ordinal,
+      o = cell.tape[n]!,
+      e = root(o.account, o.person),
+      id = operation(cell.label, n);
+    const facts = [fact(e, answer, `${o.subtask}/${o.ordinal}`)];
+    if (o.extra) facts.push(fact(e, note, id));
+    const previous = fields.get(e)!;
+    const old = previous.filter((r) => r.attribute === answer || o.extra);
+    const input = command(id, facts, old);
+    input.sourceK = Math.max(head, ...previous.map((r) => r.recorded_position));
+    input.groupAccount = accounts[o.account]!.key;
+    input.writeClass = "live";
+    inputs.set(id, input);
+    busy.add(e);
+    const sent = elapsed(),
+      peer = nextPeer++ % clients.length;
+    const record = {
+      id,
+      ordinal: n,
+      account: o.account,
+      person: o.person,
+      due: o.ms,
+      peer,
+      fairTurn,
+      sent,
+    };
+    let known = false;
+    const work = (async () => {
+      let ack: Ack;
+      try {
+        ack = (await clients[peer]!.transact(db, input)) as Ack;
+      } catch (err) {
+        // [DX-PREP1] Why: the next same-person offer cannot speculate on a failed or uncertain predecessor.
+        // Rejected: sending a later edit against a row whose retirement is unknown.
+        known =
+          err instanceof DatomicHttpError && err.status < 500 && err.code !== "OperationDuplicate";
+        frozen.add(e);
+        rows.push({
+          ...record,
+          end: elapsed(),
+          reason: err instanceof DatomicHttpError ? err.code : "transport",
+        });
+        return;
+      }
+      const end = elapsed();
+      assert.equal(ack.operationId, id);
+      assert(ack.writePath?.function && Number(ack.t.v) > 0 && Number.isFinite(ack.recordedAt.v));
+      assert(Number(ack.position.v) > input.sourceK!);
+      fields.set(e, [
+        ...previous.filter((r) => !old.includes(r)),
+        ...input.rows
+          .slice(0, facts.length)
+          .map((r) => assigned(r, Number(ack.position.v), ack.recordedAt.v)),
+      ]);
+      rows.push({ ...record, end, ack });
+      known = true;
+    })().finally(() => {
+      pending.delete(work);
+      busy.delete(e);
+      fair?.resolved(known);
+      dispatch();
+    });
+    pending.add(work);
   }
   for (const [n, o] of cell.tape.entries()) {
     while (elapsed() < o.ms) await sleep(Math.ceil(o.ms - elapsed()));
@@ -371,6 +402,8 @@ async function armRun(
     const opened = await reader.create(baseline.scope, "lean", true, 35_000);
     assert(!opened.created && opened.db === baseline.db);
     assert.equal(await basis(reader, baseline.db), baseline.head);
+    const fairCredits = arm.writer === "S" ? requestedCredits : 0;
+    const fair = fairCredits ? new FairTurns(accounts.length, fairCredits) : undefined;
     const { scope, db, head } = baseline;
     save(out + "/header.json", {
       arm,
@@ -383,6 +416,7 @@ async function armRun(
       seedSha: digest(bytes),
       dumpSha: process.env.DX_PREP1_DUMP_SHA,
       options,
+      fairCredits,
       seconds,
       gatewaySource: stack.gatewaySourceSha256,
     });
@@ -390,7 +424,7 @@ async function armRun(
       frozen = new Set<string>();
     let cut = head;
     for (const cell of cells(arm)) {
-      const result = await phase(clients, reader, db, cut, fields, frozen, cell);
+      const result = await phase(clients, reader, db, cut, fields, frozen, cell, fair);
       cut = result.after;
       save(`${out}/${cell.label}.json`, result);
     }
@@ -419,6 +453,7 @@ async function preflight(out: string) {
         );
     }
   const db = "mock-prep1";
+  const fair = requestedCredits ? new FairTurns(accounts.length, requestedCredits) : undefined;
   // [DX-PREP1] Why: exercise the real sender, row encoder, feed checker and file writer without a lease.
   // Rejected: hand-writing a fixture with the collector's expected verdict.
   const fake = {
@@ -480,13 +515,14 @@ async function preflight(out: string) {
     seedSha: "mock-seal",
     dumpSha: "mock-dump",
     seconds: 1,
+    fairCredits: requestedCredits,
     fixture: true,
   };
   save(out + "/header.json", header);
   for (const cell of allCells)
     save(
       out + "/" + cell.label + ".json",
-      await phase([fake], fake, db, p, fields, new Set(), cell),
+      await phase([fake], fake, db, p, fields, new Set(), cell, fair),
     );
   save(out + "/complete.json", { nonce, slot: header.slot, commit: header.commit, cut: p });
   blocks.push({ attempt: nonce, dropped: 0, end: true });
@@ -521,6 +557,7 @@ else if (action === "plan") {
   console.log(
     JSON.stringify({
       seconds: duration,
+      fairCredits: requestedCredits,
       tapes,
       arms: arms.map((arm) => ({
         ...arm,
