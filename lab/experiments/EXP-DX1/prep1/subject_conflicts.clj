@@ -47,7 +47,8 @@
                   (fn [c tx & opts]
                     (when (= subject/ident (ffirst tx)) (swap! submitted inc))
                     (apply native c tx opts))]
-      (is (= expected (reference/outcome (reference/send name input)))))
+      (let [reply (reference/send name input)]
+        (is (= expected (reference/outcome reply)) (pr-str reply))))
     (is (= 1 @submitted))
     (is (= {"status" "absent"} (reference/operation name id)))
     (is (nil? (get (reference/claim name (get-in input ["claims" 0 "commandId"])) "receipt")))
@@ -101,7 +102,7 @@
         (reference/in-scope
           (fn [name conn]
             (let [[a] (seed name)]
-              (race-before-submit name conn a #(@(d/transact conn [(change (d/db conn))])) [409 "CasConflict"])
+              (race-before-submit name conn a #(deref (d/transact conn [(change (d/db conn))])) [409 "CasConflict"])
               (is (= 2 (storage/head-position (d/db conn)))))))))
     (testing "Point absence, cross-subject retirement and uniqueness predicates keep the reference cut"
       (doseq [[label alter competing]

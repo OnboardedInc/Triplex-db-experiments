@@ -4,7 +4,7 @@ Fifteen saves used the old prepared writer. Ten groups switched paths before sub
 The old trace shows zero submitted retries and cannot identify why each group switched paths.
 The new writer prepares the rows before checking one person's revision and assigning the order and time at commit.
 It keeps the ordinary records and journal and uses the existing writer for other save shapes.
-The first 21 byte comparisons matched. The shared Mac lease is holding up the live checks.
+The first native run matched the deep replacement and all 96 independent saves. Three race fixtures need a rerun.
 The model is still a forecast. There is no new capacity result.
 
 **North star.** P2 durable small saves, P6 per-account tails and P8 live progress during import. Exact historical reads, native rows and the ordered feed are part of this experiment. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
@@ -17,7 +17,7 @@ The owner revision is updated by every typed write to that owner's rows and is t
 
 `subject_gate.clj` compares native stored row bytes and additions/retractions, pins and match reads, journal content and the original receipts on a 256-field subject, with speculative execution blocked. It also checks 96 disjoint edits on ten accounts for receipt and journal parity. `subject_conflicts.clj` stages actual Datomic writes between preparation and submission. It also exercises reference admission for cross-subject and scope-wide predicates. There is no native verdict while these tests are queued.
 
-`subject-format-01` checked 21 exact byte comparisons against the fixed stamper and evaluated the generated revision, position and clock operations against synthetic reads. Its source hashes bind `b7b3b97af`. `subject-sdk-03` passed 12 SDK checks for replacement receipt recovery, ordered sends and the oversize-body suffix. Neither check ran Datomic. The current native attempt `subject-native-04` uses the verified source snapshot from `subject-native-03`. `subject-recovery-01` is the SQL attempt. The three older native attempts were canceled in the queue.
+`subject-format-01` matched 21 byte comparisons against the fixed stamper. `subject-sdk-03` passed 12 checks for original receipt recovery, ordered sends and the oversize-body suffix. Neither ran Datomic. Native `subject-native-04` ran 758 assertions against `b7b3b97af`. The deep replacement, 96 independent saves, same-owner conflict, historical-ID rejection and WFIX suites had no failures. Six assertions failed in three race fixtures because their callback invoked the returned transaction report as a function before native submission. The corrected fixtures require fresh results. No SQL durability conclusion yet.
 
 **Step 3.** The SQL runner holds the subject response after the real native commit, kills the gateway, verifies the synchronous standby flushed through the primary's cut, restarts Datomic and both SQL instances, then checks the old receipt, four journal routes, Datalog over native rows, log and earlier cuts. The lean public HTTP native query and log routes already decline on INT1. ERASE1's independent tests found leaks through an old pin, journals and restore on the integration baseline. The managed runner now checks pins, journal bytes and ID reuse after actual lean excision. The full ERASE1 restore, replica, import, Publish and outbox suite and protection remain open on this branch.
 

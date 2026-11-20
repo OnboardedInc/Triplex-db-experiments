@@ -11,6 +11,8 @@ from read_probe import distribution, managed_events, ms
 
 
 def profile(root):
+    if not __debug__:
+        raise RuntimeError("Assertions are required for source and transaction binding")
     inputs, terminal, events = managed_events(root)
     assert inputs["mode"] == "subject-profile"
     attempt = inputs["attempt"]

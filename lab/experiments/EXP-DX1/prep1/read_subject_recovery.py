@@ -9,6 +9,8 @@ from read_probe import managed_events
 
 
 def inspect(root):
+    if not __debug__:
+        raise RuntimeError("Assertions are required for source and transaction binding")
     inputs, terminal, events = managed_events(root)
     attempt = inputs["attempt"]
     assert inputs["mode"] == "subject-recovery"
@@ -17,7 +19,7 @@ def inspect(root):
         "tests", "blocked-before-reply", "reopened", "erase-observation"
     ]
     result = tests["value"]
-    assert result["test"] > 0 and result["pass"] > 6 and result["fail"] == result["error"] == 0
+    assert result["test"] == 7 and result["pass"] > 6 and result["fail"] == result["error"] == 0
     before, after = held["value"], reopened["value"]
     assert before["attempt"] == attempt
     assert re.fullmatch(r":triplex\.subject/v-[0-9a-f]{24}", before["function"])
