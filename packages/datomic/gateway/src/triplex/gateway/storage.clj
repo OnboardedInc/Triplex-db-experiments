@@ -246,6 +246,18 @@
       ;; A stale speculative basis can reject an otherwise valid ordered commit.
       ;; Hints are optional; only the transactor may make the definitive decision.
       (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))))
+(defn prepared-for [data input p]
+  (let [journals (:journal-entities p)
+        safe (and group/reuse-prepared (:lean p) (seq journals)
+                  (not-any? #(and (vector? %) (= :triplex.scope/feed-irregular (nth % 2 nil))) (:ops p)))]
+    ;; [DX-W1] Why: the incoming request already compiled the immutable rows. Only journal existence and scope layout can change that compilation.
+    ;; Rejected: comparing speculative and real basis-t numbers, or reusing a stale journal link without its absence check.
+    (fn [view]
+      (if (and safe (= (if (:slim-row p) 4 3) (value view (:scope p) :triplex.scope/rows-version))
+               (= (ffirst data) (commit/entry view input (:lean p)))
+               (not-any? #(d/entid view [:triplex.entity/id %]) journals))
+        data
+        (tx-data view input (:scope p))))))
 (defn submit! [conn data input timeline]
   (let [hints (transaction-hints conn data timeline)
         solo (bound-fn []
@@ -257,7 +269,7 @@
                        ;; [DX-T1-12] Why: return native tx-with reads on this exact report without synchronous logging; the map is not peer-storage I/O.
                        ;; Source: https://docs.datomic.com/clojure/index.html#datomic.api/transact-async
                        ;; Rejected: infer per-commit storage reads from a concurrent process-wide cache delta.
-                       options (concat (when hints [:hints hints]) (when (or trace/enabled (and pred/diagnostic (true? (get input "readProfile")))) [:io-context :triplex.gateway/commit]))
+                       options (concat (when hints [:hints hints]) (when (or trace/enabled group/stage-clock (and pred/diagnostic (true? (get input "readProfile")))) [:io-context :triplex.gateway/commit]))
                        future (try (trace/span "d/transact-async" "peer-call" (apply d/transact-async conn (group/instrument data) options))
                                    ;; [DX-R3-P7] Why: a definitive synchronous clock refusal resolves this turn,
                                    ;; just like a failed transaction future; the retry owns the next sequence.
@@ -274,7 +286,7 @@
         submit (if-not (group/scheduling?) solo
                  (fn [] (try (let [p (second (first data)) current (d/db conn) work (when (or policy/priority? policy/budget-us) (policy/work p input)) class (group/classify current p input)]
                    (group/submit! conn (merge class work {:id (get input "operationId") :params p :eligible (and (not (and pred/diagnostic (true? (get input "readProfile")))) (group/eligible? current p))
-                     :prepare (fn [view] (tx-data view input (:scope p))) :solo solo})))
+                     :prepare (prepared-for data input p) :original-data (when group/stage-clock data) :solo solo})))
                    (catch Exception e (group/outcome-future (deliver (promise) {:error e}))))))]
     (if-let [client (get input "clientId")]
       (order/enqueue! client (get input "sendSequence") (get input "operationId") submit order/gap-ms order/buffer-limit [conn input])
@@ -323,6 +335,7 @@
        :delta (- (or (get-in report [:member :position]) (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report))))) (get input "position"))
        :datoms (count (:tx-data report))}
         (and pred/diagnostic (true? (get input "readProfile"))) (assoc :readProfile (:io-stats report))
+        group/stage-clock (assoc :nativeComputeMs (get-in report [:io-stats :api-ms]) :groupStages (:group-stages report))
         stamp (assoc :requestBytes (policy/request-size input) :preparedOps (count (:ops (second (first data)))) :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
     (catch Exception e

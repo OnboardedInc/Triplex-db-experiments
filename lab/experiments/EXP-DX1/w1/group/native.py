@@ -10,14 +10,15 @@ import uuid
 java, distribution, output = map(lambda x:Path(x).resolve(),sys.argv[1:4])
 gate_name = sys.argv[4] if len(sys.argv) == 5 else "group"
 gate = Path("lab/experiments/EXP-DX1/w1/field") / (gate_name + "_test.clj")
-if gate_name in ("small", "budget"):
-    gate = gate.parent.parent / "small" / ("parity.clj" if gate_name == "small" else "budget_test.clj")
+if gate_name in ("small", "budget", "prepared"):
+    gate = gate.parent.parent / "small" / ("parity.clj" if gate_name == "small" else gate.name)
 prefix, count, checks = {
     "group": ("W1_NATIVE ", 4, 281),
     "policy": ("W1_FIELD_POLICY ", 3, 357),
     "predecessor": ("W1_PREDECESSOR ", 3, 350),
     "small": ("W1_SMALL_PARITY ", 1, 282),
     "budget": ("W1_BUDGET ", 1, 9),
+    "prepared": ("W1_PREPARED ", 1, 266),
 }[gate_name]
 output.mkdir()
 source=Path("packages/datomic/gateway/src").resolve()

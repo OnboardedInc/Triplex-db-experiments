@@ -90,6 +90,56 @@ def layouts(nonce, by_kind):
     return {"arms": arm_summary, "shapes": shapes}
 
 
+def capacity(nonce, events):
+    assert [e["k"] for e in events] == ["sql", *["capacity"] * 4, "finished"]
+    result = []
+    for i, (e, fast) in enumerate(zip(events[1:-1], (False, True, True, False), strict=True)):
+        arm = e["v"]
+        suffix = f"{nonce}-capacity-{i}"
+        assert arm["prepared"] is fast and arm["nonce"] == suffix
+        assert arm["db"] == managed.db_name(suffix, "field")
+        assert json.loads(arm["scope"]) == ["triplex-scope-v1", "test", "field", suffix, 0]
+        assert [p["depth"] for p in arm["phases"]] == [1, 8, 32, 64, 128]
+        for index, p in enumerate(arm["phases"]):
+            n = 192
+            depth, start = p["depth"], p["first"]
+            rows = p["rows"]
+            assert len(rows) == n and start == (n + 12) * index + 13
+            assert {r["i"] for r in rows} == set(range(n))
+            tx = defaultdict(list)
+            previous = 0
+            for j, r in enumerate(rows):
+                assert r["id"] == f'd{depth}-save-{r["i"]}' and r["width"] == 1 + r["i"] % 3
+                assert r["p"] == start + j and r["clock"] > previous
+                assert all(r[k] >= 0 for k in ("prepareMs", "queueMs", "nativeQueueMs", "computeMs", "appMs"))
+                assert r["bytes"] > 0 and r["datoms"] > 0 and 0 < r["appMs"] <= p["durationMs"]
+                tx[r["t"]].append(r)
+                previous = r["clock"]
+            assert p["physical"] == len(tx)
+            new_plan = "walBytes" in p
+            sums = Counter()
+            for g in tx.values():
+                assert len(g) <= depth
+                assert all(r["p"] == g[0]["p"] + j and r["group"] == len(g) for j, r in enumerate(g))
+                s = g[0]["stages"]
+                assert all((r["datoms"], r["computeMs"], r["stages"]) ==
+                           (g[0]["datoms"], g[0]["computeMs"], s) for r in g)
+                if len(g) > 1:
+                    assert s and min(s.values()) >= 0
+                    if new_plan:
+                        assert s["reused"] == (len(g) if fast else 0)
+                        assert s["prepareMicros"] + s["speculativeMicros"] <= s["evaluateMicros"]
+                    sums.update(s)
+                sums.update({"computeMs": g[0]["computeMs"], "datoms": g[0]["datoms"]})
+            if new_plan:
+                assert p["walBytes"] > 0
+            result.append({"arm": i, "prepared": fast, "depth": depth, "logical": n,
+                           "throughput": n * 1000 / p["durationMs"], "physical": len(tx),
+                           "largest": max(map(len, tx.values())), "stages": dict(sums),
+                           "walBytes": p.get("walBytes"), "requestBytes": sum(r["bytes"] for r in rows)})
+    return {"arms": result}
+
+
 if __name__ == "__main__":
     out, target = map(Path, sys.argv[1:])
     nonce, lines, events, study, sources, binding = managed.load(out)
@@ -99,9 +149,12 @@ if __name__ == "__main__":
             row = json.loads(line[9:])
             assert row["attempt"] == nonce
             by_kind[row["kind"]].append(row["data"])
-    assert [e["k"] for e in events] == ["sql", "finished"]
-    assert study in ("small-cost", "small-layout")
-    result = costs(nonce, by_kind) if study == "small-cost" else layouts(nonce, by_kind)
+    if study == "small-capacity":
+        result = capacity(nonce, events)
+    else:
+        assert [e["k"] for e in events] == ["sql", "finished"]
+        assert study in ("small-cost", "small-layout")
+        result = costs(nonce, by_kind) if study == "small-cost" else layouts(nonce, by_kind)
     with target.open("x") as f:
         json.dump({"binding": binding, "analysis": managed.filehash(Path(__file__)), **result}, f, indent=2)
         f.write("\n")

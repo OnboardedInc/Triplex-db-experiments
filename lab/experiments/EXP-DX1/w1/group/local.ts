@@ -6,6 +6,7 @@ import net from "node:net";
 import os from "node:os";
 import { setTimeout as wait } from "node:timers/promises";
 import { queueTrial, fieldTrial } from "../field/traffic.ts";
+import { capacityTrial } from "../small/capacity.ts";
 import { exact, recovery, runArm } from "./workload.ts";
 
 // [DX-W1] Why: the manager's ephemeral isolated reservation includes PostgreSQL, transactor, gateway and client under one cap.
@@ -237,6 +238,29 @@ try {
       },
     );
     assert.equal(await new Promise<number | null>((resolve) => p.once("exit", resolve)), 0);
+  } else if (fieldStudy === "small-capacity") {
+    for (const [i, prepared] of [false, true, true, false].entries()) {
+      const gw = await gateway(true, {
+        TX2_SMALL_ROWS: "1",
+        TX2_LIVE_PRIORITY: "1",
+        TX2_GROUP_STAGE_CLOCK: "1",
+        TX2_GROUP_MAX_MEMBERS: "128",
+        TX2_GROUP_REUSE_PREPARED: prepared ? "1" : "0",
+      });
+      emit(
+        "capacity",
+        await capacityTrial(url, nonce + "-capacity-" + i, prepared, () =>
+          Number(
+            sql(
+              "datomic",
+              "-c",
+              "SELECT pg_wal_lsn_diff(pg_current_wal_insert_lsn(),'0/0')::bigint",
+            ),
+          ),
+        ),
+      );
+      await stop(gw);
+    }
   } else if (fieldStudy === "queue") {
     for (const [i, priority] of [false, true, true, false].entries()) {
       const gw = await gateway(true, { TX2_LIVE_PRIORITY: priority ? "1" : "0" });

@@ -12,7 +12,7 @@ import uuid
 
 parser = argparse.ArgumentParser()
 parser.add_argument("destination", type=Path)
-parser.add_argument("--field", choices=["queue","growth","small-cost","small-layout"])
+parser.add_argument("--field", choices=["queue","growth","small-cost","small-layout","small-capacity"])
 args = parser.parse_args()
 repo = Path.cwd()
 out = args.destination.resolve()
