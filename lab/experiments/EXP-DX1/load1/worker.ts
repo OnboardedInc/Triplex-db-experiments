@@ -13,10 +13,18 @@ try {
         ? await (await import("./file-proof.ts")).proveFile(comp, scope, Number(people), dir, arm)
         : mode === "load-quiet"
           ? await (await import("./quiet.ts")).quiet(comp, scope, Number(people), dir, arm)
-          : mode === "load-live"
+          : mode === "load-live" || mode === "load-tail"
             ? await (
                 await import("./live.ts")
-              ).live(comp, scope, Number(people), dir, arm, capacity === "server")
+              ).live(
+                comp,
+                scope,
+                Number(people),
+                dir,
+                arm,
+                capacity === "server",
+                mode === "load-tail",
+              )
             : undefined;
   assert(result);
   console.log(

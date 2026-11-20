@@ -310,6 +310,7 @@
        " Use a greater commit time. To preserve old history times, use a fresh non-strict scope, or load a strict scope in increasing commit times, one clock per commit."))
 (defn commit! [name conn db input]
   (when trace/tx-jfr-enabled (trace/attribute! :databaseHash (schema/sha256 name)))
+  (when group/load-timing (trace/attribute! :operationId (get input "operationId")))
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (reject-ordered! conn input (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
   (try
@@ -343,6 +344,7 @@
         load-timing (assoc :loadProfile {:rowNs @load-timing :applyMs (get-in report [:io-stats :api-ms])
                        :tx (clojure.edn/read-string (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.load/metrics))})
         group/bulk-priority (assoc :bulkGrant (:bulk-grant report))
+        (:serial-hold report) (assoc :serialHold (:serial-hold report))
         stamp (assoc :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
     (catch Exception e

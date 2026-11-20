@@ -22,6 +22,24 @@ type Sample = {
 };
 const nearest = (values: number[]) =>
   values.length ? values.sort((a, b) => a - b)[Math.ceil(values.length * 0.99) - 1] : null;
+// [DX-LOAD2] Why: bracket the guest clock with both host timestamps; compare guest-native clocks directly.
+// Rejected: assuming wall time on a VM is the same as the client's clock, or hiding uncertain overlaps.
+async function sampleClock() {
+  const samples = [];
+  for (let i = 0; i < 12; i++) {
+    const send = performance.now(),
+      r = await fetch(process.env.DATOMIC_URL + "/health");
+    assert(r.ok);
+    const { loadClock: guest } = (await r.json()) as {
+      loadClock: { bootId: string; monoMs: number; run: string };
+    };
+    const recv = performance.now();
+    assert(guest?.bootId && Number.isFinite(guest.monoMs));
+    assert.equal(guest.run, process.env.TRIPLEX_TRACE_RUN);
+    samples.push({ send, recv, ...guest });
+  }
+  return samples;
+}
 function save(actor: string, n: number, pin = false) {
   const operations = Array.from({ length: pin ? 1 : 1 + (n % 3) }, (_, j) => ({
     op: "assert" as const,
@@ -44,11 +62,12 @@ export async function live(
   dir: string,
   arm: string,
   server: boolean,
+  traceTail = false,
 ) {
   assert([50, 235, 390].includes(rate));
   const width = Number(arm.split("-")[1]),
-    duration = Number(server ? 60 : 12) * 1000,
-    subjects = server ? 400000 : 20000;
+    duration = (traceTail ? 108 : server ? 60 : 12) * 1000,
+    subjects = server || traceTail ? 100000 : 20000;
   const samples: Sample[] = [];
   type Native = {
     command: string;
@@ -61,6 +80,7 @@ export async function live(
     grant?: { bulk: boolean; "runnable-live": boolean };
     queueUs?: number;
     toEntryMs?: number;
+    serialHold?: { start: number; end: number };
     recovered?: true;
   };
   const native = new Map<string, Native>();
@@ -92,6 +112,7 @@ export async function live(
         grant: reply.bulkGrant,
         queueUs: reply.groupQueueMicros,
         toEntryMs: reply.submitToNativeEntryMs,
+        serialHold: reply.serialHold,
         submit: start,
         end: performance.now(),
       });
@@ -145,6 +166,7 @@ export async function live(
     if (!initial.ok) throw Error(initial.tag);
     const pin = ack(seed.frame, initial.value),
       pinRow = initial.value.triples[0]!;
+    const clockBefore = traceTail ? await sampleClock() : undefined;
     const start = performance.now(),
       end = start + duration;
     const checks = new Map<string, Seen>([[seed.meta.commandId, pin]]);
@@ -278,6 +300,7 @@ export async function live(
     if (invalidReceipt) throw invalidReceipt;
     if (fatal) throw fatal;
     const drained = performance.now() - start;
+    const clockAfter = traceTail ? await sampleClock() : undefined;
     assert.equal(peakBulk, width ? 1 : 0);
     const seen = new Set<string>();
     const proof = await importer.verify(false, (r) => {
@@ -332,12 +355,26 @@ export async function live(
         expectedDb,
         start,
         duration,
+        clockBefore,
+        clockAfter,
         native: observations,
         ordered,
         samples,
       }),
       { flag: "wx" },
     );
+    if (traceTail) {
+      assert(
+        neighbors.quiet!.save.ok >= 500 && neighbors.quiet!.read.ok >= 500,
+        "Tail arm collected fewer than 500 verified quiet saves or reads",
+      );
+      assert(
+        ordered.every(({ command }) =>
+          observations.some((n) => n.command === command && n.serialHold),
+        ),
+        "At least one bulk frame has no measured serial interval",
+      );
+    }
     return {
       scope,
       rate,
