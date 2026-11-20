@@ -13,6 +13,9 @@ export type WriterOptions = {
   budgetMicros: number | null;
   bulkRows: number;
   bulkBytes: number;
+  ledger: boolean;
+  packedJournal: boolean;
+  fastReply: boolean;
 };
 
 export type WriterExpectation = {
@@ -20,6 +23,7 @@ export type WriterExpectation = {
   slot: string;
   attempt: string;
   gatewaySourceHash: string;
+  historyRange: boolean;
   options: WriterOptions;
 };
 
@@ -47,7 +51,9 @@ export function verifyWriteOptions(
   assert.equal(observed.attempt, expected.attempt);
   assert.equal(observed.gatewaySourceHash, expected.gatewaySourceHash);
   assert.deepEqual(observed.options, expected.options);
-  assert.equal(historyRange, expected.options.predecessorLookup);
+  // [DX-WFIX1] Why: the field arms can select native predecessor lookup with the ordinary SDK identity wire.
+  // Rejected: using the SDK history-range flag as evidence of the installed native function.
+  assert.equal(historyRange, expected.historyRange);
   assert.equal(observed.strictRecordClocks, true);
   assert.equal(observed.rowsVersion, 3);
   assert.equal(observed.commitFunctionInstalled, true);

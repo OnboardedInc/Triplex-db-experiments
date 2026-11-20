@@ -302,8 +302,70 @@ export async function local(opts, config, manager) {
       },
       stdio: ["inherit", "inherit", "inherit", "ipc"],
     });
+    let studyImage, restoredBlock = -1;
+    async function restoreStudyImage(m) {
+      assert(lease && opts.run === "joined-load" && m.nonce === nonce);
+      assert.deepEqual(readMeasureLease(), lease.owner);
+      assert.equal(createHash("sha256").update(fs.readFileSync(info.ownerFile)).digest("hex"), binding.ownerHash);
+      for (const [role, id] of created) {
+        const observed = inspect(id);
+        assert(observed?.State.Running && observed.Name === "/" + prefix + "-" + role);
+        assert.equal(observed.Config.Labels["delta.attempt"], nonce);
+      }
+      const pgId = created.get("pg");
+      const dump = "/tmp/dx-act2-r1.pgdump";
+      const digest = () => docker(["exec", pgId, "sha256sum", dump]).split(/\s+/)[0];
+      if (m.action === "seal") {
+        assert(!studyImage);
+        assert(docker(["exec", pgId, "test", "!", "-e", dump], { allowFail: true }) !== null);
+        // [DX-ACT2] Why: the same private R1 cut is the starting state for every arm. Rejected: accumulating hundreds of earlier releases on the second policy's account.
+        docker(["exec", pgId, "pg_dump", "-U", "postgres", "-Fc", "-Z1", "-d", "postgres", "-f", dump]);
+        studyImage = {
+          sha256: digest(),
+          bytes: Number(docker(["exec", pgId, "stat", "-c", "%s", dump])),
+          nonce, ownerHash: binding.ownerHash,
+        };
+        assert(/^[a-f0-9]{64}$/.test(studyImage.sha256) && studyImage.bytes > 0);
+        write("seed-image", studyImage);
+        return studyImage;
+      }
+      assert(m.action === "restore" && studyImage && m.sha256 === studyImage.sha256);
+      assert(Number.isSafeInteger(m.block) && m.block > restoredBlock);
+      assert.equal(digest(), studyImage.sha256);
+      // [DX-ACT2] Why: replace only the derived fixture on this owned SQL volume, with both Datomic roles stopped. Rejected: restoring under a live peer that can retain the previous native cut.
+      for (const role of ["gw", "tx"]) docker(["stop", "--time", "20", created.get(role)]);
+      for (const role of ["gw", "tx"]) assert(!inspect(created.get(role)).State.Running);
+      docker(["exec", pgId, "pg_restore", "--exit-on-error", "--single-transaction",
+        "--if-exists", "--clean", "-U", "postgres", "-d", "postgres", dump]);
+      docker(["start", created.get("tx")]);
+      await wait(tx, () =>
+        docker(["exec", tx, "bash", "-c", "(exec 3<>/dev/tcp/$1/4334) 2>/dev/null && echo ready",
+          "probe", tx], { allowFail: true }) === "ready",
+      );
+      docker(["start", created.get("gw")]);
+      await wait(gw, async () => {
+        const r = await fetch(info.endpoint + "/health", { signal: AbortSignal.timeout(1500) }).catch(
+          () => undefined,
+        );
+        if (!r?.ok) return false;
+        assert.equal((await r.json()).gatewaySourceHash, gateway);
+        return true;
+      });
+      assert.equal(sql("select current_setting('fsync'),current_setting('synchronous_commit')"), "on|on");
+      restoredBlock = m.block;
+      const proof = { image: studyImage, block: m.block, restoredAt: Date.now() };
+      write("restored-" + m.block, proof);
+      return proof;
+    }
     let restarts = 0;
     child.on("message", async (m) => {
+      if (m?.type === "joinedImage") {
+        try {
+          child.send({ id: m.id, image: await restoreStudyImage(m) });
+        } catch (e) {
+          child.send({ id: m.id, error: String(e) });
+        }
+      }
       if (m?.type === "cpu") {
         try {
           assert(lease && opts.run === "joined-load" && m.nonce === nonce);

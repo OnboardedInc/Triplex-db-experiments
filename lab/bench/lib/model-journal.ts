@@ -54,6 +54,12 @@ export function journalReceipt(
   return { kind: "receipt", operations, receipt: receiptOptions(receipt, false), actor };
 }
 
+export function applyJournalEntry(model: Model, entry: JournalEntry) {
+  if (entry.kind === "receipt") model.bindReceipt(entry.operations, receiptOptions(entry.receipt, true), entry.actor);
+  else if (entry.kind === "commit") model.addCommit(entry.subject, entry.commit);
+  else throw Error("Unknown model journal entry");
+}
+
 // [DX-T1-7] Why: the independent expectation model is read only after drain; keep its receipt graph off the timed writer heap.
 // Rejected: dropping observations, judging early, changing the acknowledgement timestamp, or weakening full-row comparison.
 export class ModelJournal {
@@ -225,10 +231,7 @@ export class ModelJournal {
       while (offset < seal.bytes) {
         const row: JournalEntry & { seq: number } = frame();
         if (row.seq !== frames++) throw Error("Model journal sequence mismatch");
-        if (row.kind === "receipt")
-          model.bindReceipt(row.operations, receiptOptions(row.receipt, true), row.actor);
-        else if (row.kind === "commit") model.addCommit(row.subject, row.commit);
-        else throw Error("Unknown model journal entry");
+        applyJournalEntry(model, row);
       }
       if (frames !== seal.frames || digest.digest("hex") !== seal.sha256)
         throw Error("Model journal content mismatch");

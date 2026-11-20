@@ -430,9 +430,11 @@ export function attribute(root, gateways = [], events = [], remotes = []) {
   }
   // [DX-T1-4] Why: only the exact submitted peer span owns this native transaction-function event.
   // Rejected: assigning a coincident JVM event to whichever commit has the nearest timestamp.
+  const indexed = events instanceof TraceReportIndex;
+  const functions = indexed ? [...events.functions(root)] : events;
   const parents = new Set(all.map((s) => s.id));
   all.push(
-    ...events.filter(
+    ...functions.filter(
       (e) =>
         e.nativeType === "triplex.TransactionFunction" &&
         e.process === "tx" &&
@@ -492,7 +494,7 @@ export function attribute(root, gateways = [], events = [], remotes = []) {
     if (selected && ["typescript", "gateway", "peer-call"].includes(selected.layer))
       eligible.push({ start, end, selected });
   }
-  const pauses = events.filter(
+  const pauses = (indexed ? events.pauses(root, eligible) : events).filter(
     (e) =>
       !e.estimated &&
       ["typescript-gc", "gateway-gc"].includes(e.layer) &&
@@ -1094,7 +1096,7 @@ async function buildIndexedReport(
       ...attribute(
         root,
         gateways,
-        [...index.overlap(root.start, root.end, "pause", "1")],
+        index,
         children.filter((child) => !child.name.startsWith("gateway ")),
       ),
       ...phaseOf(root, phases),
@@ -1131,20 +1133,7 @@ async function buildIndexedReport(
           ...cpuProfile.window(late.start, late.end),
         };
     }
-    const sameThread = [];
-    for (const event of index.overlap(
-      root.start,
-      root.end,
-      "work",
-      "e.process IS ? AND e.thread IS ?",
-      root.process ?? null,
-      root.thread ?? null,
-    )) {
-      if (event.traceId && event.traceId === row.traceId) continue;
-      const wallMs = Math.min(event.end, root.end) - Math.max(event.start, root.start);
-      keepSlow(sameThread, { name: event.name, wallMs }, 5);
-    }
-    row.overlappingWork = sameThread.map(({ name, wallMs }) => ({ name, overlapMs: wallMs }));
+    row.overlappingWork = index.topWork(root).map(({ name, wall }) => ({ name, overlapMs: wall }));
     if (manifest?.requiredJfr && !manifest.requiredJfr.includes("gw-w"))
       row.layers["gateway-gc"] = null;
     if (root.kind === "commit") {

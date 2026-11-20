@@ -71,6 +71,29 @@ function registerRecoveredTrace(dir, original) {
   const summary = JSON.parse(fs.readFileSync(path.join(dir, "trace-summary.json"), "utf8"));
   const report = JSON.parse(fs.readFileSync(path.join(original, "driver/ns-report.json"), "utf8"));
   const html = path.join(dir, "trace.html");
+  if (manifest.hostPlatform === "linux-bare-metal" && fs.existsSync(path.join(original, "BM1-RENDER-INTERRUPTION.json"))) {
+    // [DX-BM1] Why: the native controller retained the renderer stop while its recovered viewer describes the same completed driver.
+    // Rejected: replacing the original failure row or accepting a viewer from a different set of recorded bytes.
+    const stopped = JSON.parse(fs.readFileSync(path.join(original, "BM1-RENDER-INTERRUPTION.json"), "utf8"));
+    const seal = new Map(fs.readFileSync(path.join(dir, "SHA256SUMS"), "utf8").trim().split("\n")
+      .map((line) => [line.slice(66), line.slice(0, 64)]));
+    if (manifest.tag !== tag || manifest.slot !== tag || !/^[a-f0-9]{40}$/.test(manifest.source) ||
+        stopped.source !== manifest.source || stopped.slot !== tag || stopped.driverStatus !== "DONE" ||
+        stopped.reportSha256 !== hash(path.join(original, "driver/ns-report.json")) ||
+        stopped.rawManifestSha256 !== hash(path.join(original, "trace/SHA256SUMS")) ||
+        report.status !== "DONE" || summary.source !== manifest.source || summary.tag !== tag)
+      throw Error("Foreign interrupted native renderer");
+    for (const file of ["trace-run.json", "head.txt", "source-build-hashes.json", "driver/ns-report.json",
+      "driver/ns-writes.jsonl", "input/ns-report.json", "input/ns-writes.jsonl", "trace/SHA256SUMS"]) {
+      if (hash(path.join(dir, file)) !== seal.get(file) || hash(path.join(original, file)) !== seal.get(file))
+        throw Error("Recovered native input differs: " + file);
+    }
+    for (const file of ["trace-summary.json", "trace.html", "TRACE-REPORT.md", "COMMIT-ANATOMY.md", "commit-anatomy.json"])
+      if (hash(path.join(dir, file)) !== seal.get(file)) throw Error("Recovered native export differs: " + file);
+    return registerRow({date: new Date().toISOString(), tag: tag + "-viewer", source: manifest.source,
+      subjects: report.seed.seededSubjects, result: summary.complete ? "Offline trace viewer reconstructed from the sealed native arm." :
+        "Offline trace viewer reconstructed. Trace coverage is incomplete.", html, raw: path.join(original, "trace/raw")});
+  }
   if (manifest.tag !== tag || manifest.slot !== tag || !/^[a-f0-9]{40}$/.test(manifest.source) ||
       manifest.source !== summary.source || summary.tag !== tag || summary.complete !== false ||
       report.status !== "RUNNING" || !fs.statSync(html).size)
@@ -92,7 +115,7 @@ export function registerActivation(dir) {
   dir = path.resolve(dir);
   const tag = path.basename(dir);
   const transfer = path.join(dir, "transfer", "collection-tag.txt");
-  if (!/^tx2-dxt1-bm1-[a-z0-9]+-(?:smoke|activation(?:-[ab])?)$/.test(tag) ||
+  if (!/^tx2-dxt1-bm1-[a-z0-9]+-(?:seed|smoke|activation(?:-[ab])?)$/.test(tag) ||
       fs.readFileSync(transfer, "utf8").trim() !== tag)
     throw Error("Unbound activation collection");
   const attemptFile = path.join(dir, "activation-attempt.json");
@@ -104,6 +127,33 @@ export function registerActivation(dir) {
       (attempt.run !== tag || attempt.slot !== tag || attempt.source !== source ||
        !/^[a-f0-9]{40}$/.test(source ?? "") || !/^[a-f0-9-]{36}$/.test(attempt.nonce ?? "")))
     throw Error("Foreign activation attempt");
+  if (tag.endsWith("-seed")) {
+    // [DX-BM1] Why: a pristine seed is a separate preparation item whose complete transfer must be indexed even if the next release fails.
+    // Rejected: requiring an activation receipt for a stage that deliberately stopped before R1.
+    if (!attempt || attempt.scope !== "dxt1-w0-100000-" + tag || attempt.subjects !== 100000)
+      throw Error("Unbound pristine seed attempt");
+    const file = path.join(dir, "pristine-seed.json");
+    if (fs.existsSync(file)) {
+      const seed = JSON.parse(fs.readFileSync(file, "utf8"));
+      const last = (name) => JSON.parse(fs.readFileSync(path.join(dir, name), "utf8").trimEnd().split("\n").at(-1));
+      const written = last("driver.log"), observed = last("seed-readback.log");
+      if (seed.source !== source || seed.slot !== tag || seed.nonce !== attempt.nonce || seed.scope !== attempt.scope ||
+          seed.subjects !== 100000 || seed.position !== 4338757 ||
+          seed.worlds !== "sha256:fec1d7cedee2b2f18c77e78210e4e9ed14fffb72e9629545155c7307e969c760" ||
+          written.event !== "chunk-seeded" || written.throughPosition !== seed.position || written.endSubjects !== seed.subjects ||
+          observed.event !== "chunk-readback" || observed.scope !== seed.scope ||
+          observed.N !== seed.subjects || observed.endSubjects !== seed.subjects || observed.counts?.position !== seed.position ||
+          observed.fingerprint?.basisTx !== seed.position || observed.fingerprint?.worlds !== seed.worlds || observed.expected !== seed.worlds ||
+          !/^[a-f0-9]{64}$/.test(seed.pgFilesSha256) ||
+          ["activation-attempt.json", "source.SHA256SUMS", "driver.log", "seed-readback.log"]
+            .some((name) => seed.inputs?.[name] !== hash(path.join(dir, name))))
+        throw Error("Pristine seed evidence differs from its seal");
+    }
+    return registerRow({date: new Date().toISOString(), tag, source, subjects: attempt.subjects,
+      result: fs.existsSync(file) ? "W0 seed preparation and readback archived." : "Partial W0 seed preparation archived.",
+      html: fs.existsSync(file) ? file : path.join(dir, "transfer/reports.tar.zst"),
+      raw: path.join(dir, "state/trace/raw")});
+  }
   const result = fs.existsSync(checkFile) ? JSON.parse(fs.readFileSync(checkFile, "utf8")) : null;
   const logFile = path.join(dir, attempt?.sealedCut === undefined ? "activation.log" : "driver.log");
   if (result &&

@@ -2,6 +2,7 @@
 # [DX-H1] Why: separate peers and durable SQL storage measure the intended topology. Rejected: dev storage (single process).
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/collector.sh"
 prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-write LIST] [--cpus-gw-read LIST] [--gateway-src DIR] [--port-write N] [--port-read N]}
 shift
 [[ "$prefix" =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "DX stack accepts only tx2-dx* prefixes" >&2; exit 2; }
@@ -148,6 +149,17 @@ INPUT_LEASE
   exit
 fi
 tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume=
+if [[ ${DX_INT1_GATEWAYS:-original} == demand ]]; then
+  # [DX-THIN1] Why: apply the same peer limits on ordinary stack launches and the physical queue. Rejected: tuning only the Mac diagnostic container.
+  demand_peer='-Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps'
+  DX_GW_WRITE_ENTITY_CACHE_BYTES=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-8388608}
+  DX_GW_READ_ENTITY_CACHE_BYTES=${DX_GW_READ_ENTITY_CACHE_BYTES:-8388608}
+  DX_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-1048576}
+  DX_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-4096}
+  DX_GW_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-4096}
+  DX_INDEX_THRESHOLD=${DX_INDEX_THRESHOLD:-8m}
+  DX_INDEX_MAX=${DX_INDEX_MAX:-32m}
+fi
 # [DX-S3] Why: tune placement, heap and durable storage without changing existing callers.
 # Rejected: replacing defaults globally (would change other agents' measurements).
 # [orchestrator merge] Flags (DX-S3) win; DX_* environment variables (DX-H3) are the fallback; then the old defaults.
@@ -172,6 +184,11 @@ while (($#)); do
   esac
   shift 2
 done
+explicit_collectors=${DX_STACK_EXPLICIT_GC:-0}
+[[ $explicit_collectors == 0 || $explicit_collectors == 1 ]] || exit 2
+if [[ $explicit_collectors == 1 ]]; then
+  tx_java=$(explicit_gc '-XX:+UseG1GC -XX:MaxGCPauseMillis=50' "$tx_java")
+fi
 if [[ ${DX_BARE_METAL:-0} == 1 ]]; then
   # [DX-BM1] Why: the native read gateway spans cores 4 and 8. Check each requested CPU against this host's actual allocation.
   # Rejected: carrying the eight-CPU Mac VM limit onto the 12-core bench, or allowing unavailable native CPUs.
@@ -444,18 +461,37 @@ for role in w r; do
   if [[ $role == w && ${DX_W1_EXTRA:-0} == 1 ]]; then
     [[ ${DX_SMALL_ROWS:-0} =~ ^[01]$ && ${DX_GROUP_REUSE_PREPARED:-0} =~ ^[01]$ && ${DX_GROUP_MAX_MEMBERS:-8} =~ ^[1-9][0-9]{0,2}$ ]] || exit 2
     field_policy+=(-e "TX2_GROUP_STAGE_CLOCK=1" -e "TX2_SMALL_ROWS=${DX_SMALL_ROWS:-0}" -e "TX2_GROUP_REUSE_PREPARED=${DX_GROUP_REUSE_PREPARED:-0}" -e "TX2_GROUP_MAX_MEMBERS=${DX_GROUP_MAX_MEMBERS:-8}")
+    if [[ -z ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
+      [[ ${DX_W1_PREDECESSOR:-0} =~ ^[01]$ ]] || exit 2
+      field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=${DX_W1_PREDECESSOR:-0}")
+    fi
+    for pair in "TX2_SAVE_LEDGER=${DX_W1_LEDGER:-0}" \
+                "TX2_PACKED_JOURNAL=${DX_W1_PACKED_JOURNAL:-0}" "TX2_GROUP_FAST_REPLY=${DX_W1_FAST_REPLY:-0}" \
+                "TX2_LEAN_NATIVE_QUERY=${DX_W1_JOURNAL_QUERY:-0}" "TX2_LEAN_NATIVE_LOG=${DX_W1_JOURNAL_QUERY:-0}"; do
+      [[ ${pair#*=} =~ ^[01]$ ]] || exit 2
+      field_policy+=(-e "$pair")
+    done
     if [[ -n ${DX_WRITE_BUDGET_US:-} ]]; then
       [[ $DX_WRITE_BUDGET_US =~ ^[1-9][0-9]{0,5}$ ]] || exit 2
       field_policy+=(-e "TX2_WRITE_BUDGET_US=$DX_WRITE_BUDGET_US")
     fi
   fi
+  if [[ $role == w && ${DX_INT1_NATIVE_WRITE_READBACK:-0} == 1 ]]; then
+    [[ ${DX_PREDECESSOR_LOOKUP:-0} =~ ^[01]$ ]] || exit 2
+    field_policy+=(-e "TX2_INT1_WRITE_READBACK=1" -e "TX2_PREDECESSOR_LOOKUP=${DX_PREDECESSOR_LOOKUP:-0}")
+  fi
   if [[ $role == w ]]; then cpu=$gw_w port=$port_w; else cpu=$gw_r port=$port_r; fi
   ports=(); [[ $publish == false ]] || ports=(-p "127.0.0.1:$port:8080")
   if [[ $role == w ]]; then mem=${DX_GW_WRITE_MEMORY:-$gw_mem}; heap=${DX_GW_WRITE_HEAP:-}; else mem=${DX_GW_READ_MEMORY:-$gw_mem}; heap=${DX_GW_READ_HEAP:-}; fi
   # bin/run reads DATOMIC_JAVA_OPTS, not JAVA_OPTS (DX-S3). An explicit --gw-java-opts wins; else DX_GW_*_HEAP; else the launcher default (1g).
-  role_java=$gw_java; [[ -n $role_java || -z $heap ]] || role_java="-Xms256m -Xmx$heap"
+  role_java=$gw_java
+  if [[ -z $role_java && ${DX_INT1_GATEWAYS:-original} == demand ]]; then role_java="-Xms64m -Xmx${heap:-384m} $demand_peer"
+  elif [[ -z $role_java && -n $heap ]]; then role_java="-Xms256m -Xmx$heap"; fi
   if [[ $role == w ]]; then role_java=${DX_GW_WRITE_JAVA_OPTS:-$role_java}; fi
   if [[ $role == r ]]; then role_java=${DX_GW_READ_JAVA_OPTS:-$role_java}; fi
+  if [[ $explicit_collectors == 1 ]]; then
+    role_java=$(explicit_gc '-XX:+UseG1GC' "$role_java")
+  fi
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
   [[ $role != w ]] || entity_cache_bytes=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-268435456}
   role_trace_java=$trace_gw_java
@@ -468,6 +504,7 @@ for role in w r; do
     ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" "${trace_env[@]}" ${field_policy[@]+"${field_policy[@]}"} -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_GW_JFR" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \
+    -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \
     -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
   ok=false
   health_deadline=$((SECONDS + 180))

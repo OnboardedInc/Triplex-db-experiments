@@ -212,6 +212,27 @@ async function selftestDatomic(config, opts) {
   }
 }
 
+// [DX-THIN1] Why: release only staged images that this experiment built and whose slots have closed.
+// Rejected: a forced removal or pruning the lab VM's shared image cache.
+async function removeThinImage(config, opts) {
+  if (opts.holder !== 'DX-THIN1' || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
+  const info = slotInfo(config, 'datomic', 'dev');
+  const tag = info.laneConf.image;
+  if (!/^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/.test(tag)) fail('REFUSED', 'Only staged DX-THIN1 image tags may be removed');
+  if (info.laneConf.imageId !== opts['image-id']) fail('REFUSED', 'The staged configuration is pinned to a different image');
+  await withPool(async ledger => {
+    assertMeasureAdmission(opts.holder);
+    const image = assertDatomicImage(info);
+    if (ledger.reservations.some(r => r.holder === opts.holder)) fail('REFUSED', 'Release the holder’s reservations first');
+    const users = docker(['ps', '-a', '--filter', 'ancestor=' + image.Id, '--format', '{{.ID}}']);
+    if (users.trim()) fail('REFUSED', 'The pinned image still has a container');
+    docker(['image', 'rm', tag]);
+    if (docker(['image', 'inspect', tag], { allowFail: true })) fail('ENGINE', 'The staged tag remains');
+    appendEvent({ event: 'datomic-staged-image-removed', holder: opts.holder, imageId: image.Id, tag });
+    console.log(JSON.stringify({ tag, imageId: image.Id, removed: true }));
+  });
+}
+
 /** Effective engine configuration: the bytes the container actually runs with. */
 export function effectiveConfig(config, info) {
   const dir = path.join(ENGINE_DIR, `${info.lane}-${info.slot}${info.role === 'follower' ? '-ro' : ''}`);
@@ -251,6 +272,47 @@ export function effectiveConfig(config, info) {
     const entrypoint = path.join(dir, 'entrypoint.sh');
     fs.copyFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/transactor.properties'), transactor);
     fs.copyFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/entrypoint.sh'), entrypoint);
+    let reader, readerGateway;
+    if (info.readerPort !== undefined) {
+      const p = info.readerPort;
+      if (info.mode !== 'exclusive' || !Number.isInteger(p) || p < 1024 || p > 65535
+        || config.forbiddenPorts.includes(p)
+        || Object.values(config.slots).some(lane => Object.values(lane).some(s => s.port === p))
+        || config.reservedPortRanges.some(r => p >= r.from && p <= r.to))
+        fail('CONFIG', 'Invalid dedicated Datomic reader port');
+      const pcs = parseCpuset(info.readerCpus, config.vm.cpus);
+      if (!info.cpusetCpus || !info.readerOpts || pcs.some(c => !parseCpuset(info.cpusetCpus, config.vm.cpus).includes(c))
+        || cpusetOverlap(info.readerCpus, info.txCpus, config.vm.cpus).length
+        || cpusetOverlap(info.readerCpus, info.gwCpus, config.vm.cpus).length)
+        fail('CONFIG', 'Dedicated Datomic reader requires its own CPUs inside the slot cap');
+      reader = path.join(dir, 'dedicated-reader.clj');
+      // [DX-STG1] Why: use a separate peer JVM and heap against the identical
+      // transactor. Rejected: claiming a second connection isolates gateway GC.
+      const body = `(require '[triplex.gateway.main :as gateway] '[ring.adapter.jetty :as jetty] '[clojure.string :as str])
+(defn read-peer [req]
+  (if (some #(str/ends-with? (:uri req) %) ["/transact" "/delete" "/request-index"])
+    {:status 405 :headers {"Content-Type" "application/json"} :body "{}"}
+    (gateway/handler req)))
+(jetty/run-jetty read-peer {:port 8081 :host "0.0.0.0" :join? true :min-threads 8 :max-threads 128})
+`;
+      fs.writeFileSync(reader, body);
+      let script = fs.readFileSync(entrypoint, 'utf8');
+      if (!script.includes('wait -n "$tx" "$gw" || true')) fail('CONFIG', 'Unknown Datomic slot launcher');
+      script = script.replace("gw=''", "gw=''\nreader=''")
+        .replace('kill "$tx" 2>/dev/null', '[[ -z "$reader" ]] || kill "$reader" 2>/dev/null || true; kill "$tx" 2>/dev/null')
+        .replace('wait -n "$tx" "$gw" || true', [
+          'DATOMIC_JAVA_OPTS="$READER_JAVA_OPTS" taskset -c "$READER_CPUS" bin/run -i /config/dedicated-reader.clj &',
+          'reader=$!',
+          'wait -n "$tx" "$gw" "$reader" || true',
+        ].join('\n'));
+      fs.writeFileSync(entrypoint, script);
+      const gc = role => ' -Xlog:gc*,safepoint:file=/data/log/' + role + '-gc.log:time,uptimemillis,tags:filecount=0';
+      readerGateway = {
+        port: p, publish: `127.0.0.1:${p}:8081`, cpus: info.readerCpus,
+        opts: info.readerOpts + gc('reader'), writerGc: gc('writer'),
+        source: sha256(body), entrypoint: sha256(script),
+      };
+    }
     let trace;
     if (info.traceRun) {
       if (info.mode !== 'exclusive' || !/^[a-z0-9-]{8,60}$/.test(info.traceRun) || !/^[a-f0-9]{40}$/.test(info.traceSource))
@@ -271,7 +333,8 @@ export function effectiveConfig(config, info) {
       lane: 'datomic', slot: info.slot, image: info.laneConf.image, imageId: info.laneConf.imageId,
       buildInputsSha256: info.laneConf.buildInputsSha256, sourceInputsSha256: sources.sha256,
       gatewaySourceSha256: sha256(JSON.stringify(sources.gateway)), configMountMode: 'ro',
-      transactorOpts: info.transactorOpts + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: info.gatewayOpts,
+      transactorOpts: info.transactorOpts + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: info.gatewayOpts + (readerGateway?.writerGc ?? ''),
+      ...(readerGateway ? { readerGateway } : {}),
       ...(trace ? { trace } : {}),
       txCpus: info.txCpus, gwCpus: info.gwCpus, profile: info.slot === 'dev' ? 'dev' : 'exclusive',
       memBytes: info.memBytes, cpus: info.cpus, ...pin,
@@ -284,7 +347,7 @@ export function effectiveConfig(config, info) {
       for (const cpu of [...parseCpuset(info.txCpus, config.vm.cpus), ...parseCpuset(info.gwCpus, config.vm.cpus)])
         if (!allowed.includes(cpu)) fail('CONFIG', 'Datomic JVM CPUs outside container cpuset');
     }
-    return { effective, sha256: sha256(JSON.stringify(effective)), files: { transactor, entrypoint } };
+    return { effective, sha256: sha256(JSON.stringify(effective)), files: { transactor, entrypoint, ...(reader ? { reader } : {}) } };
   }
   // QLever: repo qlever-start.sh with the slot's query memory (-m). Port stays 7019 inside.
   const original = fs.readFileSync(path.join(CONFIG_DIR, 'qlever-start.sh'), 'utf8');
@@ -354,7 +417,7 @@ export function runArgs(info, eff, holder) {
     '--health-cmd', e.health, '--health-interval', '5s', '--health-timeout', '3s', '--health-start-period', '20s', '--health-retries', '3',
   ];
   if (info.lane === 'datomic')
-    return [...common, ...(e.trace ? ['-v', e.trace.dir + ':/lab-trace', '-e', 'TRIPLEX_TRACE_DIR=/lab-trace', '-e', 'TRIPLEX_TRACE_LEVEL=summary', '-e', 'TRIPLEX_TRACE_TX_JFR=1', '-e', 'TRIPLEX_TRACE_RUN=' + e.trace.run, '-e', 'TRIPLEX_TRACE_SOURCE=' + e.trace.source, '-e', 'TRIPLEX_TRACE_SLOT=' + info.container] : []), '-v', `${eff.files.transactor}:/config/transactor.properties:ro`, '-v', `${eff.files.entrypoint}:/config/entrypoint.sh:ro`, '-e', `TRANSACTOR_JAVA_OPTS=${e.transactorOpts}`, '-e', `GATEWAY_JAVA_OPTS=${e.gatewayOpts}`,
+    return [...common, ...(e.readerGateway ? ['-p', e.readerGateway.publish, '-v', eff.files.reader + ':/config/dedicated-reader.clj:ro', '-e', 'READER_CPUS=' + e.readerGateway.cpus, '-e', 'READER_JAVA_OPTS=' + e.readerGateway.opts] : []), ...(e.trace ? ['-v', e.trace.dir + ':/lab-trace', '-e', 'TRIPLEX_TRACE_DIR=/lab-trace', '-e', 'TRIPLEX_TRACE_LEVEL=summary', '-e', 'TRIPLEX_TRACE_TX_JFR=1', '-e', 'TRIPLEX_TRACE_RUN=' + e.trace.run, '-e', 'TRIPLEX_TRACE_SOURCE=' + e.trace.source, '-e', 'TRIPLEX_TRACE_SLOT=' + info.container] : []), '-v', `${eff.files.transactor}:/config/transactor.properties:ro`, '-v', `${eff.files.entrypoint}:/config/entrypoint.sh:ro`, '-e', `TRANSACTOR_JAVA_OPTS=${e.transactorOpts}`, '-e', `GATEWAY_JAVA_OPTS=${e.gatewayOpts}`,
       '-e', `TX_CPUS=${e.txCpus}`, '-e', `GW_CPUS=${e.gwCpus}`, '-e', `DATOMIC_PROFILE=${e.profile}`,
       '-e', `GATEWAY_SOURCE_SHA256=${e.gatewaySourceSha256}`, info.laneConf.imageId];
   if (info.lane === 'xtdb')
@@ -381,10 +444,14 @@ export async function probe(info) {
   }
   if (info.lane === 'datomic') {
     try {
-      const response = await fetch(`${info.endpoint}/health`, { signal: AbortSignal.timeout(3000) });
-      const body = await response.json();
       const expected = sha256(JSON.stringify(datomicSources().gateway));
-      return { ok: response.ok && body.datomicVersion === '1.0.7745' && body.gatewaySourceHash === expected, why: `gateway HTTP ${response.status}` };
+      const peers = [info.endpoint, ...(info.readerPort ? [`http://127.0.0.1:${info.readerPort}`] : [])];
+      const results = await Promise.all(peers.map(async endpoint => {
+        const response = await fetch(`${endpoint}/health`, { signal: AbortSignal.timeout(3000) });
+        const body = await response.json();
+        return { ok: response.ok && body.datomicVersion === '1.0.7745' && body.gatewaySourceHash === expected, status: response.status };
+      }));
+      return { ok: results.every(r => r.ok), why: `gateway HTTP ${results.map(r => r.status).join('/')}` };
     } catch (error) { return { ok: false, why: `gateway ${error.message}` }; }
   }
   try {
@@ -440,6 +507,14 @@ export function slotCpu(holder, lane, slot) {
     psiUsec: Number(raw.match(/^some .*total=(\d+)/m)?.[1]), groupUsec: Number(raw.match(/^usage_usec (\d+)/m)?.[1]),
     throttledUsec: Number(raw.match(/^throttled_usec (\d+)/m)?.[1]), devices, quota: raw.trim().split('\n').at(-1) };
 }
+export function slotGatewayGc(holder, lane, slot) {
+  const info = slotInfo(loadSlots(), lane, slot), owner = readOwner(info);
+  if (!owner || info.mode !== 'exclusive' || owner.holder !== holder || !owner.readerEndpoint)
+    fail('REFUSED', 'Gateway GC observations require the dedicated peer holder');
+  return Object.fromEntries(['writer', 'reader'].map(role => [role,
+    docker(['exec', info.container, 'tail', '-c', '1048576', `/data/log/${role}-gc.log`]),
+  ]));
+}
 /** VM-wide PSI cpu line, read inside any running container (/proc/pressure is not namespaced). */
 function vmPsi(container) {
   try { return execFileSync('docker', dockerArgs(['exec', container, 'cat', '/proc/pressure/cpu']), { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 15_000 }).split('\n')[0].trim(); }
@@ -467,6 +542,13 @@ function exportsFor(info) {
   return lines.join('\n');
 }
 
+function checkIsolatedVolume(info, owner) {
+  const standard = info.container + '-data';
+  // [DX-THIN1] Why: both generations of private names require their exact owner. Rejected: a prefix check that misses a retained older mount or refuses a stock owner without volume metadata.
+  if ((info.volume !== standard || (owner?.volume && owner.volume !== standard)) && owner?.volume !== info.volume)
+    fail('REFUSED', 'Isolated volume requires its exact slot owner');
+}
+
 /** Acquire (or confirm) the persistent slot lock. dev is a shared resident; s* are exclusive. */
 function acquireSlot(info, holder, experiment) {
   fs.mkdirSync(path.dirname(info.lockDir), { recursive: true });
@@ -476,7 +558,7 @@ function acquireSlot(info, holder, experiment) {
     let owner = readOwner(info);
     for (let i = 0; !owner && i < 25; i++) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 200); owner = readOwner(info); }
     if (!owner) fail('REFUSED', `${info.lockDir} exists without owner.json; inspect and remove it by hand if abandoned`);
-    if ((process.env.TX2_EXCLUSIVE_VOLUME_ID || owner.volume?.startsWith(info.container + '-data-')) && owner.volume !== info.volume) fail('REFUSED', 'Existing slot owns a different volume');
+    checkIsolatedVolume(info, owner);
     if (owner.holder !== holder && info.mode !== 'resident')
       fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}" (${owner.experiment ?? 'no experiment'}) since ${owner.createdAt}`);
     return { owner, created: false };
@@ -484,6 +566,7 @@ function acquireSlot(info, holder, experiment) {
   const owner = {
     format: OWNER_FORMAT, lane: info.lane, slot: info.slot, mode: info.mode, container: info.container, volume: info.volume,
     endpoint: info.endpoint, port: info.port, holder, experiment: experiment ?? null, pid: process.pid, worktree: REPO, createdAt: now(),
+    ...(info.readerPort ? { readerEndpoint: `http://127.0.0.1:${info.readerPort}` } : {}),
   };
   atomicJson(info.ownerFile, owner);
   appendEvent({ event: 'slot-acquired', slot: `${info.lane}-${info.slot}`, holder });
@@ -576,8 +659,7 @@ async function up(config, info, opts) {
 async function down(config, info, opts) {
   const holder = defaultHolder(opts);
   const owner = readOwner(info);
-  if ((process.env.TX2_EXCLUSIVE_VOLUME_ID || owner?.volume?.startsWith(info.container + '-data-')) && owner?.volume !== info.volume)
-    fail('REFUSED', 'Isolated volume cleanup requires its exact slot owner');
+  checkIsolatedVolume(info, owner);
   if (owner && owner.holder !== holder && !opts.force)
     fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}"; pass --force only if you own it`);
   // [EXP-X05] A follower outliving its writer would block the next writer start (volumeGuard) and keep
@@ -751,10 +833,18 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const command = positional[0];
   const config = loadSlots();
   if (command === 'status') return status(config);
+  // [DX-HA1] Why: destructive process drills need an exclusive, pool-admitted SQL topology. Rejected: killing roles in a resident slot.
+  if (command === 'ha1') {
+    const { localDrill } = await import('../experiments/EXP-DX1/ha1/local.ts');
+    return localDrill(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
+  }
   // [DX-ACT2] Why: the SQL activation experiment must reserve its small roles in the shared pool and remove only its private volumes. Rejected: launching a bench stack outside the slot manager.
   if (command === 'delta') return (await import('../experiments/EXP-DX1/actv-delta/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicSources });
+  // [DX-ERASE1] Why: storage GC and excision need an owned SQL volume. Rejected: exercising irreversible maintenance on a resident.
+  if (command === 'erase1') return (await import('../experiments/EXP-DX1/erase1/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicTree });
   if (options.lane === 'datomic' && command === 'build') return buildDatomic(config);
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
+  if (options.lane === 'datomic' && command === 'image-remove') return removeThinImage(config, options);
   if (command === 'cpu-sample') {
     const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
     const owner = readOwner(info);

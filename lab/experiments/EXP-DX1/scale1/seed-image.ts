@@ -49,15 +49,23 @@ async function archiveStream(child: ReturnType<typeof spawn>, input: Readable, o
 export function checkImage(s: Seal, dest: DeepIdentity) {
   requireIdentity(dest);
   requireIdentity(s.identity);
+  const origin = s.identity.tenant;
+  const target = dest.tenant;
+  const campaign = Boolean(origin?.campaign);
   assert(
-    s.identity.tenant?.study === "million" &&
-      s.identity.tenant.topology === "pooled" &&
-      s.identity.arm === "zero",
+    origin?.topology === "pooled" &&
+      ((origin.study === "million" && s.identity.arm === "zero") ||
+        (origin.study === "interference" && s.identity.arm === (campaign ? "zero" : "seed"))),
   );
-  assert.deepEqual(dest.tenant, s.identity.tenant);
+  // [DX-THIN1] Why: all tapes start from the same sealed population and original assertion identities.
+  // Rejected: accepting an unrelated namespaced field-study seed because its aggregate fact count matches.
+  if (campaign) {
+    assert(origin.campaign === "frozen" && target?.campaign && s.identity.arm === "zero");
+    assert.deepEqual([origin.study, origin.topology, origin.physical], [target.study, target.topology, target.physical]);
+  } else assert.deepEqual(target, origin);
   assert(
     dest.source === s.identity.source &&
-      s.scope === tenantScope(s.identity.tenant, s.identity.nonce),
+    s.scope === tenantScope(origin, s.identity.nonce),
   );
   assert.equal(s.runTag, "deep-" + s.identity.nonce + "-s0");
   assert.equal(s.seed.people, dest.people);
@@ -77,7 +85,8 @@ export async function sealSeed(
   pgId: string,
 ) {
   assert(
-    prefix === source.identity.slot && path.basename(dir) === prefix.slice("tx2-dxscale1-".length),
+    prefix === source.identity.slot && (source.identity.tenant?.campaign ||
+      path.basename(dir) === prefix.slice("tx2-dxscale1-".length)),
   );
   assert.equal(docker(["inspect", "--format", "{{.Name}}", pgId]), "/" + prefix + "-pg");
   const temp = path.join(dir, "seed.pgdump.partial"),
@@ -107,16 +116,22 @@ export async function restoreSeed(
   target: string,
   id: DeepIdentity,
   engines: Record<string, { id: string; address: string }>,
+  campaignSeed?: string,
 ) {
   assert(
-    id.slot === "tx2-dxscale1-" + path.basename(dir) && ["reader", "activation"].includes(id.arm),
+    campaignSeed ? Boolean(id.tenant?.campaign) && /^tx2-dxscale1-int1-/.test(id.slot) :
+      id.slot === "tx2-dxscale1-" + path.basename(dir) && ["reader", "activation"].includes(id.arm),
   );
   const parent = path.dirname(dir),
-    source = path.join(parent, target);
-  assert(path.dirname(source) === parent && source !== dir);
+    source = campaignSeed ?? path.join(parent, target);
+  if (campaignSeed) {
+    assert(fs.realpathSync(source) === source && path.dirname(source) === path.join(parent, "seeds"));
+    assert(path.basename(source) === String(id.people / 10));
+  } else assert(path.dirname(source) === parent && source !== dir);
   const proof: Seal = JSON.parse(fs.readFileSync(path.join(source, "seed-image.json"), "utf8"));
   checkImage(proof, id);
-  assert(proof.identity.nonce !== id.nonce && proof.identity.slot === "tx2-dxscale1-" + target);
+  assert(proof.identity.nonce !== id.nonce &&
+    (campaignSeed ? proof.identity.slot !== id.slot : proof.identity.slot === "tx2-dxscale1-" + target));
   const file = path.join(source, "seed.pgdump");
   assert(fs.statSync(file).size === proof.bytes);
   for (const role of ["pg", "tx", "gw-w", "gw-r"])

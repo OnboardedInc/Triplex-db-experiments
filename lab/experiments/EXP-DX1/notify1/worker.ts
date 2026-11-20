@@ -8,6 +8,7 @@ import { Relay } from "./relay.ts";
 import { Notices } from "./journal.ts";
 import { Fixture } from "./fixture.ts";
 import { Documents } from "./store.ts";
+import type { Tail } from "./journal.ts";
 import { deepInputs } from "./deep.ts";
 
 export interface Job {
@@ -23,6 +24,9 @@ export interface Job {
   recipientPages?: number;
   releases?: number;
   readIntervalMs?: number;
+  sourceEndpoint?: string;
+  publicationPosition?: number;
+  copyWorkers?: number;
 }
 export function recipient(name: string, directory?: string) {
   return directory ? sqliteStore(directory, name) : openComposition("reach", "datomic", name);
@@ -67,9 +71,19 @@ export function separate(
 if (process.argv[1] === import.meta.filename) {
   process.once("message", async (job: Job) => {
     const send = (data: unknown) => process.send!({ epoch: job.epoch, ...(data as object) });
-    const source = await openComposition("reach", "datomic", job.source),
-      receiver = await recipient(job.recipient, job.directory);
+    const inherited = process.env.DATOMIC_URL;
+    if (job.sourceEndpoint) {
+      assert(job.recipientPages && job.directory && job.publicationPosition);
+      assert(job.sourceEndpoint !== inherited);
+      process.env.DATOMIC_URL = job.sourceEndpoint;
+    }
+    const source = await openComposition("reach", "datomic", job.source).finally(() => {
+      if (inherited === undefined) delete process.env.DATOMIC_URL;
+      else process.env.DATOMIC_URL = inherited;
+    });
+    const receiver = await recipient(job.recipient, job.directory);
     try {
+      if (job.sourceEndpoint) assert.equal(source.backend.url, job.sourceEndpoint);
       const budget = job.profileDir
         ? new (await import("./budget.ts")).Budget({
             epoch: job.epoch,
@@ -77,13 +91,36 @@ if (process.argv[1] === import.meta.filename) {
             dir: job.profileDir,
           })
         : undefined;
-      const src = budget?.store(source, "source") ?? source;
-      const a = new Notices(
-        src,
-        "account",
-        job.deep ? deepInputs(src, job.subjects) : new Fixture(src),
-      );
+      // [DX-STG1] Why: this peer has no write-queue class because progress is
+      // committed at the recipient. Rejected: silently retrying on the writer.
+      const transport = job.sourceEndpoint
+        ? {
+            ...source,
+            transact: async (): Promise<never> => {
+              throw Error("Dedicated sender cannot write source");
+            },
+          }
+        : source;
+      const src = budget?.store(transport, "source") ?? transport;
+      if (job.copyWorkers) assert(job.sourceEndpoint && job.recipientPages);
+      const copy = job.copyWorkers
+        ? new (await import("./copy-plan.ts")).ReleaseCopy(
+            src,
+            job.subjects,
+            job.deep,
+            job.copyWorkers,
+          )
+        : undefined;
+      const inputs = job.deep ? deepInputs(src, job.subjects) : new Fixture(src, job.subjects);
+      if (copy) Object.assign(inputs, { releaseCopy: copy });
+      const a = new Notices(src, "account", inputs);
       assert.equal((await a.observe()).value.epoch, job.epoch);
+      if (job.publicationPosition) {
+        const cut = await a.db.get<Tail>("tail", job.publicationPosition);
+        assert.equal(cut.value.epoch, job.epoch);
+        assert.equal(cut.value.sequence, (job.releases ?? 1) + 1);
+        assert.equal(cut.at, job.publicationPosition);
+      }
       const sink = new Documents(budget?.store(receiver, "receiver") ?? receiver, "effects");
       const d = job.recipientPages
         ? new Relay(a, sink, job.recipientPages, job.readIntervalMs)
@@ -108,13 +145,17 @@ if (process.argv[1] === import.meta.filename) {
         gapMs: job.gap,
         grant,
         afterReceive: async () => {
-          send({ kind: "effect" });
+          await new Promise<void>((resolve, reject) => {
+            process.send!({ epoch: job.epoch, kind: "effect" }, (error) =>
+              error ? reject(error) : resolve(),
+            );
+          });
         },
       });
       const cpu = process.cpuUsage();
       budget?.mark("child-total-cpu", performance.timeOrigin + performance.now(), { cpu });
       budget?.finish();
-      send({ kind: "done", metrics });
+      send({ kind: "done", metrics: { ...metrics, ...(copy ? { copy: copy.stats } : {}) } });
     } catch (e) {
       send({ kind: "error", message: String(e) });
       process.exitCode = 1;

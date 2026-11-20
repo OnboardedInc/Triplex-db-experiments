@@ -11,6 +11,14 @@ import { pageWireState } from "./w0-page-check.ts";
 import { W0, canonical, type WorldRow, type PositionBasis } from "./w0-world.ts";
 import { ids, subjectOf } from "./world.ts";
 import { taskId } from "./deep-world.ts";
+import {
+  tenantRows,
+  tenantRowsId,
+  type Account as TenantAccount,
+} from "../../experiments/EXP-DX1/scale1/tenants.ts";
+import { DeepProjectionIndex } from "./deep-projection-index.ts";
+import { buildIndex, eadRelease, selectRelease, type SelectorCut } from "./w0-selector.ts";
+import { selectorOracle } from "./w0-selector-oracle.ts";
 
 const pageSize = 32;
 export const businessTime = (ms: number) => new Date(ms).toISOString().replace(/Z$/, "000Z");
@@ -136,9 +144,9 @@ export async function activateDeepRelease(
   name: Release,
   startedAt: number,
   prior?: Cut,
+  release: W0.CompiledRelease = W0[name],
 ) {
-  const release = W0[name],
-    entity = `deep-release:${run}`;
+  const entity = `deep-release:${run}`;
   const ops = [
     ...(name === "R2" ? [{ op: "retract", id: prior!.assertion }] : []),
     {
@@ -170,23 +178,85 @@ export class DeepActivation {
   private readonly directory: string;
   private readonly subjects: number;
   private readonly run: string;
+  private readonly nextRelease: W0.CompiledRelease;
   private readonly firstSubject: number;
+  private readonly tenant?: TenantAccount;
   private readonly workers: number;
   private readonly accountKey?: string;
   constructor(
     directory: string,
     people: number,
     run: string,
-    firstSubject = 0,
+    first: number | "standard" | "ead90" = 0,
+    next: "standard" | "ead90" = "standard",
+    tenant?: TenantAccount,
     workers = 1,
-    accountKey?: string,
   ) {
-    this.accountKey = accountKey;
+    this.firstSubject = typeof first === "number" ? first : 0;
+    if (typeof first === "string") next = first;
+    this.tenant = tenant;
+    this.accountKey = tenant?.key;
     this.workers = workers;
-    this.firstSubject = firstSubject;
+    if (tenant) assert(tenant.first === this.firstSubject && tenant.people === people);
+    this.nextRelease = next === "ead90" ? eadRelease() : W0.R2;
     this.directory = directory;
     this.subjects = people;
     this.run = run;
+  }
+  private projection(comp: CompositionHandle) {
+    if (comp.name !== "reach-touched") return undefined;
+    const code = ["deep-activation", "deep-projection-index", "deep-world", "w0-selector"].map(
+      (name) => hash(fs.readFileSync(new URL("./" + name + ".ts", import.meta.url), "utf8")),
+    );
+    const tenant = this.tenant;
+    const schema = tenant
+      ? [
+          tenantRowsId,
+          tenant,
+          hash(
+            fs.readFileSync(
+              new URL("../../experiments/EXP-DX1/scale1/tenants.ts", import.meta.url),
+              "utf8",
+            ),
+          ),
+        ]
+      : "deep/1";
+    const binding = hash(
+      canonical([
+        this.run,
+        comp.scopeName,
+        comp.backend.url,
+        this.firstSubject,
+        this.subjects,
+        schema,
+        ...code,
+      ]),
+    );
+    // [DX-INT1] Why: a pooled release certifies only its account's owned facts; the tenant roster verifies durable catalog and shard assertions.
+    // Rejected: generating pooled task values from a global ordinal or including another account in the release.
+    const seedFor = tenant
+      ? (i: number) =>
+          i < tenant.first || i >= tenant.first + tenant.people
+            ? undefined
+            : tenantRows(tenant, i - tenant.first).filter((f) => subjectOf(f.e) === i)
+      : undefined;
+    return new DeepProjectionIndex(
+      path.join(this.directory, "deep-policy.sqlite"),
+      binding,
+      policyWorld,
+      seedFor,
+    );
+  }
+  async finishImport(comp: CompositionHandle, cut: PositionBasis) {
+    const projection = this.projection(comp);
+    if (!projection) return;
+    const started = performance.now();
+    try {
+      const input = await projection.catchUp(comp, cut);
+      return { ...input, wallMs: performance.now() - started, diskBytes: projection.diskBytes };
+    } finally {
+      projection.close();
+    }
   }
   async execute(
     comp: CompositionHandle,
@@ -205,9 +275,11 @@ export class DeepActivation {
         return r;
       },
     };
-    const release = W0[name],
+    const release = name === "R1" ? W0.R1 : this.nextRelease,
       startedAt = Date.now();
-    const cut = await activateDeepRelease(observed, this.run, name, startedAt, this.cuts.get("R1"));
+    const markerStarted = performance.now();
+    const cut = await activateDeepRelease(observed, this.run, name, startedAt, this.cuts.get("R1"), release);
+    const markerMs = performance.now() - markerStarted;
     this.cuts.set(name, cut);
     const mutation = captured?.(cut);
     mutation?.catch(() => {});
@@ -218,36 +290,111 @@ export class DeepActivation {
     const roster = Array.from({ length: this.subjects }, (_, i) =>
       W0.placementId(this.firstSubject + i),
     );
+    const projection = this.projection(comp);
+    const binding = projection?.binding;
+    const selection = { full: 0, candidates: 0, excluded: 0 };
+    const policyBasis = { tx: cut.position, validTime: businessTime(cut.validAt) };
+    const basis = { position: cut.position, validAt: cut.validAt };
+    let changes;
+    const evaluationStarted = performance.now();
     try {
-      const groups = deepGroups(this.firstSubject, this.subjects);
-      const basis = { tx: cut.position, validTime: businessTime(cut.validAt) };
-      for await (const { group, records: evaluated } of deepEvaluations(
-        groups,
-        name,
-        basis,
-        this.workers,
-        (group) => readDeepWorlds(comp, group, cut, this.accountKey),
-      )) {
-        const bytes = evaluated
-          .map((r, j) => JSON.stringify([group[j], r.worldSha256, r.outputSha256]) + "\n")
-          .join("");
-        fs.writeFileSync(fd, bytes);
-        sum.update(bytes);
-        for (const r of evaluated) records.push(r.record);
-        if ((group[0]! - this.firstSubject) % (pageSize * 32) === 0)
-          console.log(
-            JSON.stringify({
-              event: "deep-activation-progress",
-              release: name,
-              through: records.length,
-            }),
-          );
+      if (projection && binding) {
+        changes = await projection.catchUp(comp, basis);
+        const width = 256;
+        for (let n = 0; n < this.subjects; n += width) {
+          const group = Array.from({ length: Math.min(width, this.subjects - n) }, (_, j) => this.firstSubject + n + j);
+          const lines: string[] = [];
+          const worlds = await projection.worlds(comp, group, basis);
+          const members = group.map((i) => W0.placementId(i));
+          const byId = new Map(group.map((i) => [W0.placementId(i), worlds.get(i)!]));
+          const sealCut: SelectorCut = {
+            scope: comp.scopeName!,
+            generation: binding,
+            source: cut.txId,
+            basis: policyBasis,
+            frontier: cut.position,
+            erasure: this.run,
+          };
+          const file = path.join(this.directory, "deep-" + name + "-selector.sqlite");
+          const checkpoint = file + ".cursor";
+          const index =
+            release.hash === this.nextRelease.hash && release.hash !== W0.R2.hash
+              ? {
+                  file,
+                  seal: buildIndex(
+                    file,
+                    sealCut,
+                    members,
+                    members.map((id) => byId.get(id)!),
+                  ),
+                }
+              : undefined;
+          const page = selectRelease({
+            index,
+            checkpoint,
+            attempt: binding + "/" + cut.txId + "/" + n,
+            cut: sealCut,
+            roster: members,
+            release,
+            world: (id) => byId.get(id)!,
+            onPage: (rows) => {
+              for (const row of rows) {
+                const i = this.firstSubject + n + row.ordinal;
+                assert.equal(row.subject, W0.placementId(i));
+                lines.push(
+                  JSON.stringify([
+                    i,
+                    hash(canonical(worlds.get(i)!)),
+                    hash(W0.outputJson(row.output)),
+                  ]) + "\n",
+                );
+                records.push(W0.recordOf(row.output));
+              }
+            },
+          });
+          assert.equal(page.subjects, group.length);
+          selection.candidates += page.candidates;
+          selection.excluded += page.excluded;
+          selection.full += page.full;
+          fs.unlinkSync(checkpoint);
+          if (index) fs.unlinkSync(file);
+          const bytes = lines.join("");
+          fs.writeFileSync(fd, bytes);
+          sum.update(bytes);
+        }
+      } else {
+        const groups = deepGroups(this.firstSubject, this.subjects);
+        const basis = { tx: cut.position, validTime: businessTime(cut.validAt) };
+        for await (const { group, records: evaluated } of deepEvaluations(
+          groups,
+          name,
+          basis,
+          this.workers,
+          (group) => readDeepWorlds(comp, group, cut, this.accountKey),
+        )) {
+          const bytes = evaluated
+            .map((r, j) => JSON.stringify([group[j], r.worldSha256, r.outputSha256]) + "\n")
+            .join("");
+          fs.writeFileSync(fd, bytes);
+          sum.update(bytes);
+          for (const r of evaluated) records.push(r.record);
+          if ((group[0]! - this.firstSubject) % (pageSize * 32) === 0)
+            console.log(
+              JSON.stringify({
+                event: "deep-activation-progress",
+                release: name,
+                through: records.length,
+              }),
+            );
+        }
       }
       fs.fsyncSync(fd);
     } finally {
+      projection?.close();
       fs.closeSync(fd);
     }
     // [DX-SCALE1] Why: ACT1's page claims must bind a range to the entire independently ordered account roster, release and cut. Rejected: treating each 32-person gateway read as a separate complete release.
+    const evaluationMs = performance.now() - evaluationStarted;
     const result = await publishChanged(observed, records, {
       layout: "page-cut",
       frameSize: 256,
@@ -258,6 +405,8 @@ export class DeepActivation {
         basis: { tx: BigInt(cut.position), validTime: businessTime(cut.validAt) },
       },
     });
+    if (projection)
+      assert.equal(selection.full + selection.candidates + selection.excluded, this.subjects);
     const coverage = result.coverage;
     assert(
       coverage &&
@@ -276,8 +425,56 @@ export class DeepActivation {
             r.position > cut.position,
         ),
     );
+    const cost = {
+      evaluationMs,
+      evaluationCommits: 0,
+      markerMs,
+      markerCommits: 1,
+      publicationMs: result.wallMs,
+      stateReadMs: result.stateReadMs,
+      bodyFacts: 0,
+      guardFacts: 0,
+      changedSubjects: 0,
+      subjects: this.subjects,
+      bodyPrepareMs: 0,
+      guardPrepareMs: 0,
+      mixedPages: 0,
+      mixedCommitMs: 0,
+      guardOnlyPages: 0,
+      guardOnlyCommitMs: 0,
+    };
+    const pageTimings: { position: number; txId: string; bodies: number; timing: unknown }[] = [];
     const claims = result.responses.map((r) => {
       assert(r.committed && "span" in r && r.span, "Missing immutable page range");
+      assert("timing" in r && r.timing);
+      const t = r.timing;
+      // [DX-SCALE1] Why: guard and changed-item facts can share the same native commit. Charge its observed time once and verify the accepted body count from the actual returned rows. Rejected: splitting joint durability time in proportion to fact counts.
+      assert(
+        t &&
+          t.receiptTxId === r.txId &&
+          t.receiptPosition === r.position &&
+          "bodyFacts" in t &&
+          t.operations === t.bodyFacts + t.guardFacts,
+      );
+      assert(
+        t.guardFacts >= 1 &&
+          t.guardFacts <= 2 &&
+          t.bodyFacts >= r.bodies &&
+          t.bodyFacts <= 2 * r.bodies,
+      );
+      cost.bodyFacts += t.bodyFacts;
+      cost.guardFacts += t.guardFacts;
+      cost.changedSubjects += r.bodies;
+      cost.bodyPrepareMs += t.bodyPrepareMs;
+      cost.guardPrepareMs += t.guardPrepareMs;
+      if (r.bodies) {
+        cost.mixedPages++;
+        cost.mixedCommitMs += t.publishCommitMs;
+      } else {
+        cost.guardOnlyPages++;
+        cost.guardOnlyCommitMs += t.publishCommitMs;
+      }
+      pageTimings.push({ position: r.position, txId: r.txId, bodies: r.bodies, timing: t });
       return {
         span: r.span,
         input: r.input,
@@ -294,14 +491,23 @@ export class DeepActivation {
       ),
       coverage.receipts,
     );
-    fs.writeFileSync(
-      path.join(this.directory, "deep-" + name + "-page-claims.json"),
-      canonical(claims),
-      { flag: "wx" },
-    );
+    const claimBytes = canonical(claims);
+    fs.writeFileSync(path.join(this.directory, "deep-" + name + "-page-claims.json"), claimBytes, {
+      flag: "wx",
+    });
     const publicationPosition = Math.max(...claims.map((r) => Number(r.position)));
     const endedAt = Date.now(),
       mutations = await mutation;
+    const timingBytes = JSON.stringify({
+      release: release.hash,
+      cut: cut.position,
+      pages: pageTimings,
+    });
+    fs.writeFileSync(
+      path.join(this.directory, "deep-" + name + "-page-timings.json"),
+      timingBytes,
+      { flag: "wx" },
+    );
     return {
       release: release.hash,
       cut,
@@ -309,9 +515,15 @@ export class DeepActivation {
       publications: result.commits,
       publicationPosition,
       layout: "page-cut",
-      evaluators: this.workers,
+      ...(projection
+        ? { selection, projection: changes, sourceWorldPulls: projection.sourceWorldPulls }
+        : {}),
+      evaluators: projection ? 1 : this.workers,
       coverage,
       changed: result.changed,
+      cost,
+      claimSha256: hash(claimBytes),
+      timingSha256: hash(timingBytes),
       startedAt,
       endedAt,
       wallMs: endedAt - startedAt,
@@ -321,8 +533,19 @@ export class DeepActivation {
   }
   async verify(
     comp: CompositionHandle,
-    r1: { outputSha256: string; publicationPosition: number; changed: number },
-    r2: { outputSha256: string; publicationPosition: number; changed: number; mutations?: unknown },
+    r1: {
+      outputSha256: string;
+      publicationPosition: number;
+      changed: number;
+      cost?: { changedSubjects: number };
+    },
+    r2: {
+      outputSha256: string;
+      publicationPosition: number;
+      changed: number;
+      cost?: { changedSubjects: number };
+      mutations?: unknown;
+    },
   ) {
     const sourceCuts = [this.cuts.get("R1")!, this.cuts.get("R2")!] as const,
       final = await comp.currentPosition();
@@ -342,7 +565,7 @@ export class DeepActivation {
       assert(
         rows[0]!.id === c.assertion &&
           rows[0]!.position === c.position &&
-          rows[0]!.value.value === [W0.R1.hash, W0.R2.hash][k],
+          rows[0]!.value.value === [W0.R1.hash, this.nextRelease.hash][k],
       );
     }
     const logs = ["R1", "R2"].map((release, k) => {
@@ -386,9 +609,13 @@ export class DeepActivation {
         );
       }
     }
-    const oracle = new DomainOraclePool(new URL("./w0-oracle.py", import.meta.url).pathname, 2);
-    let checked = 0,
-      itemChanges = 0;
+    const oracleFile =
+      this.nextRelease.hash === W0.R2.hash
+        ? new URL("./w0-oracle.py", import.meta.url).pathname
+        : selectorOracle(this.directory, this.nextRelease);
+    const oracle = new DomainOraclePool(oracleFile, 2);
+    let checked = 0;
+    const changedItems = [0, 0];
     const changed = [0, 0];
     try {
       for (let n = 0; n < this.subjects; n += pageSize) {
@@ -459,11 +686,10 @@ export class DeepActivation {
               const actual = pageWireState(rows, subject);
               assert.equal(canonical(actual), canonical(published.state));
               changed[k]! += Number(canonical(published.state) !== canonical(previous));
-              if (k === 1)
-                itemChanges += Number(
-                  published.deliveries.length > 0 ||
-                    canonical(published.state.items) !== canonical(previous.items),
-                );
+              changedItems[k]! += Number(
+                published.deliveries.length > 0 ||
+                  canonical(published.state.items) !== canonical(previous.items),
+              );
               previous = published.state;
             }
             checked++;
@@ -477,14 +703,22 @@ export class DeepActivation {
     }
     assert.equal(checked, this.subjects);
     assert.deepEqual(changed, [r1.changed, r2.changed]);
+    for (const [i, release] of [r1, r2].entries())
+      if (release.cost)
+        assert.equal(
+          release.cost.changedSubjects,
+          changedItems[i],
+          "Stored changed bodies differ from the independent release result",
+        );
     return {
       checked,
       guardComparisons: checked * 2,
       changed: changed[1],
-      itemChanges,
+      itemChanges: changedItems[1],
+      changedItemsByRelease: changedItems,
       finalPosition: final,
       domain: "O-DOMAIN",
-      releaseHashes: [W0.R1.hash, W0.R2.hash],
+      releaseHashes: [W0.R1.hash, this.nextRelease.hash],
     };
   }
 }

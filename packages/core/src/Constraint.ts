@@ -226,7 +226,7 @@ export const evaluateFacts = (
       if (rule._tag === "Unique") {
         const claims = new Map<string, Set<string>>();
         for (const fact of typedFacts) {
-          if (fact.attribute !== rule.attribute) continue;
+          if (fact.attribute !== rule.attribute || fact.value.type === "erased") continue;
           const identity = yield* valueKey(fact);
           const claimants = claims.get(identity) ?? new Set<string>();
           claimants.add(fact.entityId as string);
@@ -253,7 +253,7 @@ export const evaluateFacts = (
       }
 
       for (const fact of typedFacts) {
-        if (fact.attribute !== rule.attribute) continue;
+        if (fact.attribute !== rule.attribute || fact.value.type === "erased") continue;
         const identity = yield* valueKey(fact);
         const validTarget =
           fact.value.type === "ref" &&
@@ -316,7 +316,7 @@ const patternMatches = (
       return false;
     }
     if (pattern.value !== undefined) {
-      return sameMutationValue(triple.value, pattern.value);
+      return triple.value.type !== "erased" && sameMutationValue(triple.value, pattern.value);
     }
     return true;
   });

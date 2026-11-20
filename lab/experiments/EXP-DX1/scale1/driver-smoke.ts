@@ -24,14 +24,16 @@ fs.writeFileSync(
   JSON.stringify({ source, tree, oracle: stageReplay(process.cwd(), oracle) }),
 );
 const activation = process.argv.includes("--activation"),
-  zero = process.argv.includes("--zero");
+  zero = process.argv.includes("--zero"),
+  readerStartup = process.argv.includes("--reader-startup");
 assert(!(activation && zero));
 const topology = process.argv.includes("--pooled")
   ? "pooled"
   : process.argv.includes("--separate")
     ? "separate"
     : null;
-const physical = topology === "pooled" ? [0] : [0, 1];
+if (readerStartup) assert(!topology && !activation && !zero);
+const physical = topology === "pooled" || readerStartup ? [0] : [0, 1];
 const clients = physical.map((account) => {
   const out = path.join(dir, `s${account}`);
   fs.mkdirSync(out);
@@ -70,7 +72,7 @@ const clients = physical.map((account) => {
       "--reader-basis-wire",
       "delta",
       "--reader-threads",
-      "1",
+      readerStartup ? "6" : "1",
       "--oracle-root",
       oracle,
       "--output",
@@ -211,6 +213,14 @@ try {
           r.deep.activationTraffic.trafficHeldThrough >=
             Math.max(...reports.map((peer) => peer.deep.r2.endedAt)),
       );
+  if (readerStartup) {
+    const r = reports[0],
+      local = r.rawLocalSamples.find((p: any) => p.phase === "L4");
+    // [DX-SCALE1] Why: successful worker startup alone can conceal gateway fallback on every read. Rejected: accepting READY without a real replica payload compared to the source at the same cut.
+    assert(r.config.readerThreads === 6 && r.readerLifecycle.length === 6);
+    assert(r.readerLifecycle.every((w: any) => w.stopped && !w.failures.length));
+    assert(local?.ok && local.compared > 0 && local.compared === local.samples);
+  }
   for (const r of reports) {
     assert(
       r.traceStartAbsMs === start &&

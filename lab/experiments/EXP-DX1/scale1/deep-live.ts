@@ -34,7 +34,7 @@ const vector = (rate: (i: number) => number) => Array.from({ length: 10 }, (_, i
 // [DX-SCALE1] Why: five minutes at each load resolves queue capacity near 150 and 200/s while the sentinel stays at its own exact rate. Rejected: treating the peak-minute population as a sustained operating rate.
 export function liveWindows(alignment: PeakAlignment): TenantWindow[] {
   assert(alignment === "staggered" || alignment === "coincident");
-  const windows: (TenantWindow & { rates: number[] })[] = [];
+  const windows: TenantWindow[] = [];
   let from = 0;
   const add = (name: string, seconds: number, rates: number[]) => {
     windows.push({

@@ -1,4 +1,4 @@
-import { traceSync, traceWork, traceAsync } from "./tracing.ts";
+import { traceSync, traceWork, traceAsync, currentTrace, traceLevel } from "./tracing.ts";
 import { initializeReplicaClient } from "./replica-initialize.ts";
 import { CutCache } from "./cut-cache.ts";
 import { Option } from "effect";
@@ -6,11 +6,13 @@ import { pathToFileURL } from "node:url";
 import { REPO, runtimeApi } from "./triplex.ts";
 import { observe } from "./observe.ts";
 import type { CompositionHandle, PullResult } from "./composition.ts";
+import type { InstalledHistory } from "./historical-fallback.ts";
 import type {
   PackedEntity,
   ReadDelta,
   ReadImage,
   ReadBasis,
+  ReadHistoryCoverage,
 } from "../../../packages/datomic/dist/index.js";
 
 const api = await import(pathToFileURL(`${REPO}/packages/datomic/dist/index.js`).href);
@@ -113,15 +115,7 @@ export function prepareEntity(id: string, packed: PackedEntity, slabs?: Bootstra
     if (from >= to) continue;
     let part = rowParts.get(row);
     if (!part) {
-    const o = observe({
-      triples: [row.publicMetadata ? publicRow(row) : row],
-      entities: 1,
-      depth: 0,
-      roundTrips: 0,
-      route: "replica",
-      language: "packed",
-      waitedMs: 0,
-    });
+    const o = observe({ triples: [row.publicMetadata ? publicRow(row) : row] });
     part = {
       a: parseInt(o.digest.slice(0, 8), 16),
       b: parseInt(o.digest.slice(8, 16), 16),
@@ -183,32 +177,52 @@ function materializeWorld(selected: readonly (string | PackedEntity)[], validAt:
   return Object.freeze(rows);
 }
 const statViews = new WeakMap<object, DataView>();
+type FallbackWitness = { reason: string; recordedAt?: number; receiptPosition?: number; resolved?: number; floor: number; head: number; oldestClock?: number; historyBytes: number };
 export class ReplicaReader {
   readonly index: InstanceType<typeof api.RecentReads>;
   private worlds = new CutCache();
+  installedHistory?: InstalledHistory;
+  historyEpoch = 0;
   // [DX-R3] Why: the host proxy already validates/applies each cut; RYOW can share that same immutable-version index.
   // Rejected: a second main-thread copy of every current/history entry and duplicate per-commit validation/allocation.
-  constructor(historyBytes = 64 * 1024 ** 2, index?: InstanceType<typeof api.RecentReads>, worldCacheBytes = 32 * 1024 ** 2) {
-    this.index = index ?? new api.RecentReads(20_000, historyBytes);
+  constructor(historyBytes = 64 * 1024 ** 2, index?: InstanceType<typeof api.RecentReads>, worldCacheBytes = 32 * 1024 ** 2, historyCoverage: ReadHistoryCoverage = "global") {
+    this.index = index ?? new api.RecentReads(20_000, historyBytes, false, historyCoverage);
     // [DX-R3-P9] Why: measure the existing cache against a direct packed walk without changing any answer or basis rule.
     // Rejected: assuming that more weak manifests help a mostly-miss workload.
     this.worlds = new CutCache(worldCacheBytes); this.diagnostics.worldCache = this.worlds.diagnostics;
   }
-  readonly diagnostics = { local: 0, fallback: 0, ahead: 0, caughtUp: 0, waitExpired: 0, ineligible: 0, worldCache: this.worlds.diagnostics };
+  readonly diagnostics = { local: 0, fallback: 0, ahead: 0, caughtUp: 0, waitExpired: 0, ineligible: 0, worldCache: this.worlds.diagnostics,
+    fallbackWitnesses: [] as FallbackWitness[] };
+  private readonly seenFallbackReasons = new Set<string>();
   private waiters = new Set<{ p: number; done(): void }>();
   install(image: ReadImage) {
     this.worlds.clear();
+    this.clearInstalled();
     this.index.install(image);
   }
   apply(delta: ReadDelta) {
-    if (delta.reset) this.worlds.clear();
+    if (delta.reset) { this.worlds.clear(); this.clearInstalled(); }
     traceWork("replica.apply-delta", () => this.index.apply(delta), { position:delta.position, valid:delta.valid }, true);
     this.notify();
   }
   notify(reset = false) {
-    if (reset) this.worlds.clear(); else this.worlds.releasePromotions();
+    if (reset) { this.worlds.clear(); this.clearInstalled(); } else this.worlds.releasePromotions();
     for (const waiter of this.waiters)
       if (this.index.position >= waiter.p || !this.index.valid) waiter.done();
+  }
+  private clearInstalled() { this.historyEpoch++; this.installedHistory?.clear(); }
+  canInstallHistory(basis: ReadBasis) {
+    if (!this.index.valid || !Number.isFinite(basis.validAt) ||
+      (basis.recordedAt !== undefined && !Number.isFinite(basis.recordedAt))) return false;
+    // [DX-RD1] Why: an applied position is a sealed prefix even after the local versions for it are evicted.
+    // Rejected: keeping a fetched result for a position the source has yet to publish.
+    if (basis.recordedPosition !== undefined)
+      return Number.isSafeInteger(basis.recordedPosition) && basis.recordedPosition > 0 && basis.recordedPosition <= this.index.position;
+    const floor = this.index.retainedClockFloor();
+    // [DX-RD1] Why: a strictly later applied clock proves an evicted time can no longer acquire writes.
+    // Rejected: caching an unresolved open clock or adding a receipt-position hint to an authoritative time-only read.
+    return basis.recordedAt !== undefined && floor !== undefined &&
+      (basis.recordedAt < floor || this.index.resolve(basis) !== undefined);
   }
   async wait(p: number, ms: number) {
     if (this.index.position >= p || !this.index.valid) return;
@@ -225,7 +239,8 @@ export class ReplicaReader {
       this.waiters.add(waiter);
     });
   }
-  async pullAt(root: string, basis: ReadBasis, fallback: () => Promise<PullResult>, between?: () => Promise<void>, rows = false, receiptPosition?: number): Promise<PullResult> {
+  pullAt(root: string, basis: ReadBasis, fallback: () => Promise<PullResult>, between?: () => Promise<void>, rows = false, receiptPosition?: number): Promise<PullResult> {
+    if (traceLevel === "off" || !currentTrace()) return this.pullAtTraced(root, basis, fallback, between, rows, receiptPosition);
     return traceAsync("replica.pull-at", () => this.pullAtTraced(root, basis, fallback, between, rows, receiptPosition));
   }
   private async pullAtTraced(
@@ -268,9 +283,12 @@ export class ReplicaReader {
       if (this.index.position >= waitPosition) this.diagnostics.caughtUp++;
       else this.diagnostics.waitExpired++;
     }
-    if (!rows) {
-      const cut = this.index.resolve(basis);
-      const cached = cut === undefined ? undefined : this.worlds.get(root, cut, basis.validAt, waitedMs);
+    const cut = this.index.resolve(basis);
+    let missing: "missing-closure-entity" | "incomplete-public-metadata" = "missing-closure-entity";
+    // [DX-RD1] Why: the exact time/position check already selected the cut, synchronously on this isolate.
+    // Rejected: using the caller's position hint or repeating the clock-map search before visiting entities.
+    if (!rows && cut !== undefined) {
+      const cached = this.worlds.get(root, cut, basis.validAt, waitedMs);
       if (cached) { this.diagnostics.local++; return cached; }
       let intervalFrom = -Infinity, intervalTo = Infinity;
       const total = { a: 0, b: 0, n: 0, bytes: 0, stamp: -1, stamps: 0 };
@@ -280,7 +298,7 @@ export class ReplicaReader {
       let materialized: PullResult["triples"] | undefined;
       const found = this.index.visit(
         root,
-        basis,
+        { recordedPosition: cut, validAt: basis.validAt },
         (id: string, packed: PackedEntity, validAt: number) => {
           selected.push(id, packed);
           const prepared = packed as Prepared;
@@ -339,11 +357,12 @@ export class ReplicaReader {
             bytes: total.bytes,
           },
         };
-        if (cut !== undefined) this.worlds.put(root, cut, intervalFrom, intervalTo, answer, selected, materializeWorld);
+        this.worlds.put(root, cut, intervalFrom, intervalTo, answer, selected, materializeWorld);
         return answer;
       }
-    } else {
-      const found = this.index.pull(root, basis);
+      if (!complete) missing = "incomplete-public-metadata";
+    } else if (cut !== undefined) {
+      const found = this.index.pull(root, { recordedPosition: cut, validAt: basis.validAt });
       if (found && found.rows.every((row: any) => "publicMetadata" in row)) {
         this.diagnostics.local++;
         return {
@@ -356,16 +375,36 @@ export class ReplicaReader {
           waitedMs,
         };
       }
+      if (found) missing = "incomplete-public-metadata";
     }
+    const installed = this.installedHistory && this.canInstallHistory(basis) ? this.installedHistory.get(root, basis) : undefined;
+    if (installed) { this.diagnostics.local++; return installed; }
     this.diagnostics.fallback++;
     if (!(basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position)) this.diagnostics.ineligible++;
+    const oldest = this.index.retainedClockFloor();
     const replicaFallbackReason = !this.index.valid ? "copy-unavailable" :
+      cut !== undefined ? missing :
       basis.recordedPosition !== undefined && basis.recordedPosition < this.index.floor ? "outside-window" :
-      basis.recordedPosition !== undefined && basis.recordedPosition > this.index.position ? "watermark-timeout" :
+      waitPosition !== undefined && waitPosition > this.index.position ? "watermark-timeout" :
       basis.recordedPosition === undefined && basis.recordedAt !== undefined && !this.index.strictRecordClocks ? "non-strict-record-clock" :
-      basis.recordedPosition === undefined && basis.recordedAt !== undefined && this.index.isOpenClock(basis.recordedAt) ? "open-record-clock" : "unmapped-clock-or-closure";
+      basis.recordedAt !== undefined && oldest !== undefined && basis.recordedAt < oldest ? "before-retained-clock" :
+      basis.recordedPosition === undefined && basis.recordedAt !== undefined && this.index.isOpenClock(basis.recordedAt) ? "open-record-clock" : "unmapped-record-clock";
+    // [DX-RD1] Why: preserve the actual worker window at a miss without logging every closed-loop read.
+    // Rejected: classifying a historical miss as follower lag from the central head alone.
+    if (!this.seenFallbackReasons.has(replicaFallbackReason)) {
+      this.seenFallbackReasons.add(replicaFallbackReason);
+      this.diagnostics.fallbackWitnesses.push({ reason: replicaFallbackReason, recordedAt: basis.recordedAt, receiptPosition: waitPosition,
+        resolved: cut, floor: this.index.floor, head: this.index.position, oldestClock: oldest, historyBytes: this.index.historyBytes });
+    }
     const result = await fallback();
-    return { ...result, route: "fallback", waitedMs, replicaFallbackReason };
+    // [DX-RD1] Why: re-label the route without decoding the fallback lane's lazy public rows on the reader.
+    // Rejected: object spread, which invokes the triples getter for every foreground miss.
+    return Object.defineProperties({} as PullResult, {
+      ...Object.getOwnPropertyDescriptors(result),
+      route: { value: "fallback", enumerable: true },
+      waitedMs: { value: waitedMs, enumerable: true },
+      replicaFallbackReason: { value: replicaFallbackReason, enumerable: true },
+    });
   }
 }
 // [DX-R3] Why: report and control feed placement explicitly; the local host historically used the read URL already.
@@ -381,17 +420,18 @@ export class ReplicaReadHost {
   private clockEnds: Map<number, number>;
   readonly timings: Map<number, { availableAt?: number; receivedAt: number }>;
   private closeClient: (() => void) | undefined;
+  private beginAfterImages?: () => void;
   private listeners = new Set<(delta: ReadDelta) => void>();
   private constructor(
     source: any, times: Map<number, number>, historyBytes: number, strictRecordClocks: boolean,
-    clockEnds: Map<number, number>, timings: Map<number, { availableAt?: number; receivedAt: number }>,
-    compactBootstrap: boolean, population: "all" | "touched", validAt: number,
+    clockEnds = new Map<number, number>(), timings = new Map<number, { availableAt?: number; receivedAt: number }>(),
+    compactBootstrap = false, population: "all" | "touched" = "all", validAt = Date.now(), historyCoverage: ReadHistoryCoverage = "global",
   ) {
-    this.index = new api.RecentReads(20_000, historyBytes, strictRecordClocks);
+    this.index = new api.RecentReads(20_000, historyBytes, strictRecordClocks, historyCoverage);
     this.times = times;
     this.clockEnds = clockEnds;
     this.timings = timings;
-    this.replica = new api.Replica(source, validAt, population);
+    this.replica = new api.Replica(source, validAt, population, population === "touched" ? Number(process.env.DX_TOUCHED_RETAIN_BYTES ?? 16 * 1024 ** 2) : Infinity);
     if (population === "touched") this.replica.onAdmission = (p: number, entries: ReadonlyMap<string, PackedEntity>) => {
       this.index.admit(p, new Map(Array.from(entries, ([id, entity]) => [id, prepareEntity(id, entity)])));
     };
@@ -404,18 +444,19 @@ export class ReplicaReadHost {
       if (update.reset && !update.valid) times.clear();
       // [DX-T1-15] Why: before the first reader subscribes, prepare the verified bootstrap in the retained index directly.
       // Rejected: keeping both full deltas alive, or delivering an unprepared delta to an already subscribed reader.
-      const slabs = compactBootstrap && update.reset && update.valid && !this.listeners.size ? new BootstrapStatsSlabs() : undefined;
+      const slabs = compactBootstrap && update.reset && update.valid ? new BootstrapStatsSlabs() : undefined;
+      const prepareInIndex = slabs && !this.listeners.size;
       const delta: ReadDelta = {
         ...update,
-        changes: slabs ? update.changes : update.changes.map(([id, previous, entity]: any) => [
+        changes: prepareInIndex ? update.changes : update.changes.map(([id, previous, entity]: any) => [
           id,
           previous,
-          prepareEntity(id, entity),
+          prepareEntity(id, entity, slabs),
         ]),
         ...(clock !== undefined && (!update.reset || Number.isFinite(clock)) ? { recordTime: clock, clockEnd: clockEnds.get(update.position) } : {}),
       };
       traceSync("replica.apply-delta", () => this.index.apply(delta,
-        slabs ? (id: string, entity: PackedEntity) => prepareEntity(id, entity, slabs) : undefined));
+        prepareInIndex ? (id: string, entity: PackedEntity) => prepareEntity(id, entity, slabs) : undefined));
       if (delta.valid && population === "all") this.applied.push({ position: delta.position, at: performance.timeOrigin + performance.now(), ...timings.get(delta.position) });
       timings.delete(delta.position);
       times.delete(update.position);
@@ -435,6 +476,8 @@ export class ReplicaReadHost {
     population: "all" | "touched" = "all",
     firstReadRoot?: string,
     validAt = Date.now(),
+    afterReaderImages = false,
+    historyCoverage: ReadHistoryCoverage = "global",
   ) {
     const client = new api.DatomicClient(
       endpoint,
@@ -446,32 +489,64 @@ export class ReplicaReadHost {
     );
     const timed = api.timedReplicaSource(client, db.db, () => comp.currentPosition(), population === "all" && feed === "inline" ? validAt : undefined);
     const { times, clockEnds, timings } = timed;
-    const source = boundedReplicaFeed(timed.source);
+    const source = boundedReplicaFeed(timed.source, afterReaderImages);
     // [DX-R3] Why: the initial image has no earlier journal clock proof; compare the gateway's actual selected cuts.
     // Rejected: trusting a caller-supplied timestamp/position pair for imported or irregular scopes.
     const witness = population === "touched" ? firstReadRoot : roots[0];
-    if (witness !== undefined && initial.position > 0)
-      times.set(initial.position, await bootstrapSourceClock(source, times, clockEnds, witness, initial.position));
+    const legacyRequested = population === "touched" && process.env.DX_INT1_LEGACY_TOUCHED === "1" &&
+      process.env.TRIPLEX_DATOMIC_LAYOUT === "legacy" && (db.layout ?? "legacy") === "legacy" &&
+      db.strictRecordClocks === true;
+    const validateInitialClock = async () => {
+      if (witness !== undefined && initial.position > 0)
+        times.set(initial.position, await bootstrapSourceClock(source, times, clockEnds, witness, initial.position));
+    };
+    if (!legacyRequested) await validateInitialClock();
     // [DX-R3] Why: admission follows the actual source capability, never the requested creation policy.
     // Rejected: treating old sealed seeds as strict when reopening them cannot change their contract.
     const capability = await client.request("POST", `/v2/db/${db.db}/reach-many`, {
       replicaCapability: true, basis: { recordedPosition: initial.position, validAt: Date.now() },
     });
+    const legacy = legacyRequested && capability.declined === "replica-layout";
     if (population === "touched") {
-      if (capability.supported !== true) throw new api.Replica.UnsupportedScope(capability.declined ?? "missing-capability");
-      source.capability = api.Replica.source(client, db.db, () => comp.currentPosition(), Date.now()).capability!;
+      if (legacy) {
+        // [DX-THIN1] Why: the synthetic legacy campaign uses the existing position-bound row and journal projections.
+        // Rejected: bypassing the inline replica's layout guard without proof of the selected clock and journal cut.
+        source.capability = async ({ recordedPosition: position }) => {
+          if (witness === undefined || position === undefined || position <= 0) return "legacy-replica-witness";
+          if ((await source.erasure?.())?.protected !== false) return "legacy-replica-protection";
+          const instant = await bootstrapSourceClock(source, times, clockEnds, witness, position, true);
+          if (!Number.isFinite(instant) || clockEnds.get(position) !== position) return "legacy-replica-journal-cut";
+          if ((await source.erasure?.())?.protected !== false) return "legacy-replica-protection";
+          times.set(position, instant);
+          return undefined;
+        };
+      } else {
+        if (capability.supported !== true) throw new api.Replica.UnsupportedScope(capability.declined ?? "missing-capability");
+        if (legacyRequested) await validateInitialClock();
+        source.capability = api.Replica.source(client, db.db, () => comp.currentPosition(), Date.now()).capability!;
+      }
     }
     const host = new ReplicaReadHost(source, times, historyBytes,
-      capability.supported === true && capability.strictRecordClocks === true, clockEnds, timings,
-      roots.length > 10_000 || process.env.DX_BOUNDED_MEMORY_TRIAL === "1", population, validAt);
+      legacy || (capability.supported === true && capability.strictRecordClocks === true), clockEnds, timings,
+      afterReaderImages || roots.length > 10_000 || process.env.DX_BOUNDED_MEMORY_TRIAL === "1", population, validAt, historyCoverage);
     await host.replica.bootstrap(roots, initial.position);
     host.closeClient = () => client.close();
-    host.replica.start();
+    if (afterReaderImages) {
+      // [DX-SCALE1] Why: cloning the seed into six readers blocked the first feed request for 219 seconds. Rejected: stretching the deadline or issuing traffic during setup.
+      host.beginAfterImages = () => { client.agent.destroy(); host.replica.start(); };
+    } else host.replica.start();
     return host;
     } catch (error) {
       client.close();
       throw error;
     }
+  }
+  followAfterImages(seedPosition: number) {
+    if (!this.beginAfterImages || !this.index.valid || this.index.position !== seedPosition)
+      throw Error("Reader images must share the original verified seed cut");
+    const begin = this.beginAfterImages;
+    this.beginAfterImages = undefined;
+    begin();
   }
   subscribe(listener: (delta: ReadDelta) => void) {
     this.listeners.add(listener);
@@ -506,13 +581,20 @@ function mapOptions(row: PullResult["triples"][number], convert: (value: any) =>
 
 // [DX-R3] Why: a read peer may still be catching up at bootstrap; retry the same exact two-cut proof before declining.
 // Rejected: nearest-time admission or accepting different native cuts (would weaken the original clock rule).
-export async function bootstrapClock(source: { page(...args: any[]): Promise<any> }, root: string, initial: { position: number; instant: number }, budgetMs = 2000) {
+export async function bootstrapClock(source: { page(...args: any[]): Promise<any> }, root: string, initial: { position: number; instant: number }, budgetMs = 2000, exactPosition = false) {
   const deadline = performance.now() + budgetMs;
   for (;;) {
     const validAt = Date.now();
     const p = await source.page([root], { recordedPosition: initial.position, validAt }, true);
     const r = await source.page([root], { recordedAt: initial.instant, validAt }, true);
-    if (!p.declined && !r.declined && typeof p.t === "string" && p.t.length > 0 && p.t === r.t) return initial.instant;
+    const exact = !exactPosition || (
+      p.position === initial.position && r.position === initial.position &&
+      Array.isArray(p.entities) && p.entities.some((entry: unknown) =>
+        Array.isArray(entry) && entry[0] === root && Array.isArray(entry[2]) && entry[2].length > 0) &&
+      Array.isArray(p.closures) && JSON.stringify(p.entities) === JSON.stringify(r.entities) &&
+      JSON.stringify(p.closures) === JSON.stringify(r.closures)
+    );
+    if (exact && !p.declined && !r.declined && typeof p.t === "string" && p.t.length > 0 && p.t === r.t) return initial.instant;
     if (performance.now() >= deadline) return NaN;
     await new Promise(resolve => setTimeout(resolve, 5));
   }
@@ -520,16 +602,27 @@ export async function bootstrapClock(source: { page(...args: any[]): Promise<any
 
 // [DX-R3-P8] Why: four journals bound CPU/packing bursts between long polls without changing ordered content.
 // Rejected: waiting to pack sixteen growing hot worlds before requesting the next page.
-export function boundedReplicaFeed<T extends { feed(after: number, limit: number, waitMs: number): Promise<any> }>(source: T): T {
-  return { ...source, feed: (after: number, limit: number, waitMs: number) => source.feed(after, Math.min(limit, 4), waitMs) };
+export function boundedReplicaFeed<T extends { feed(after: number, limit: number, waitMs: number): Promise<any> }>(source: T, retryDroppedSocket = false): T {
+  return { ...source, async feed(after: number, limit: number, waitMs: number) {
+    const fetch = () => source.feed(after, Math.min(limit, 4), waitMs);
+    try { return await fetch(); }
+    catch (error) {
+      // [DX-SCALE1] Why: a read-only poll may lose its connection while a seed image is distributed. Rejected: retrying malformed bytes, advancing the cursor or silently swallowing repeated failures.
+      if (!retryDroppedSocket || !(error instanceof Error) || !(error instanceof api.DatomicTransportError)) throw error;
+      const code = (error.cause as NodeJS.ErrnoException | undefined)?.code;
+      if (code !== "ECONNRESET" && code !== "EPIPE" && error.message !== "Gateway deadline exceeded") throw error;
+      process.stderr.write(`Replica feed retry at position ${after}: ${code ?? "deadline"}\n`);
+      return fetch();
+    }
+  } };
 }
 
 // [DX-R3-P8] Why: equal native cuts do not prove an arbitrary caller clock equals the journal clock.
 // Rejected: admitting a future caller instant at the head (a later strict commit could still be below that instant).
-export async function bootstrapSourceClock(source: { feed(after: number, limit: number, waitMs: number): Promise<any>; page(...args: any[]): Promise<any> }, times: Map<number, number>, ends: Map<number, number>, root: string, position: number) {
+export async function bootstrapSourceClock(source: { feed(after: number, limit: number, waitMs: number): Promise<any>; page(...args: any[]): Promise<any> }, times: Map<number, number>, ends: Map<number, number>, root: string, position: number, exactPosition = false) {
   times.delete(position); ends.delete(position);
   await source.feed(Math.max(0, position - 1), 1, 0);
   const instant = times.get(position);
   return instant !== undefined && Number.isFinite(instant)
-    ? bootstrapClock(source, root, { position, instant }) : NaN;
+    ? bootstrapClock(source, root, { position, instant }, 2000, exactPosition) : NaN;
 }

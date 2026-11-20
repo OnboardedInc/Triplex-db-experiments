@@ -317,7 +317,7 @@ async function witness(
       ? tenantAccounts({ study: "small", topology: "pooled", physical: 0 })[account]!.first
       : 0;
   const scope = nameOf(b, account, layout),
-    c = await openComposition("reach", "datomic", scope);
+    c = await openComposition(process.env.DX_INT1_READERS === "touched" ? "reach-touched" : "reach", "datomic", scope);
   try {
     const position = await c.currentPosition();
     assert(position > 0);

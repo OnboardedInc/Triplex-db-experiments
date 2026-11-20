@@ -10,7 +10,12 @@ import { inputPins, measuredPair } from "./rung.ts";
 export async function preflight(
   dir: string,
   binding: { source: string; slot: string; nonce: string },
-  recipient?: { pages: number; intervalMs: number },
+  recipient?: {
+    pages: number;
+    intervalMs: number;
+    route?: "recipient" | "isolated" | "copied";
+    copyWorkers?: number;
+  },
 ) {
   try {
     const pins = inputPins(binding.source);
@@ -42,6 +47,14 @@ export async function preflight(
         proof.eventCounts[1]! > 0 &&
         proof.effects === proof.eventCounts.reduce((a, b) => a + b, 0),
     );
+    if (recipient?.route === "copied") {
+      assert.equal(pair.copyWorkers, recipient.copyWorkers);
+      const copy = pair.dispatch.dispatch.copy;
+      assert(
+        copy && copy.captures > 0 && copy.evaluated > 0,
+        "No copy-backed work in the native preflight",
+      );
+    }
     const receipt = {
       binding,
       recipient: recipient ?? null,

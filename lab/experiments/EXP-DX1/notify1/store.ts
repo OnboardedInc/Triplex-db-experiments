@@ -7,7 +7,8 @@ import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 export type Store = Pick<
   CompositionHandle,
   "currentPosition" | "sweepPage" | "transactionByCommand" | "transact" | "scopeName"
->;
+> &
+  Partial<Pick<CompositionHandle, "feedPage" | "backend">>;
 export type Op =
   | {
       op: "assert";
@@ -160,6 +161,6 @@ export class Documents {
     if (prior) return prior;
     if (result.tag === "TransactionConflictError")
       throw new Conflict("Serial precondition changed");
-    throw Error(result.tag + " " + String(result.error?.message ?? ""));
+    throw Error(result.tag + " " + String(result.error?.message ?? ""), { cause: result.error });
   }
 }

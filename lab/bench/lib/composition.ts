@@ -84,6 +84,7 @@ export interface Assignments {
 }
 
 export interface CompositionHandle {
+  touchedUsage?(): { bytes: number; limit: number; evictions: number; admissions: number; entries: number; packed: number; history: number; position?: number };
   readonly scopeName?: string;
   sweepPage(
     subjects: readonly string[],

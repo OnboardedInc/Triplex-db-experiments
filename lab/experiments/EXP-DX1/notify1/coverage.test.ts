@@ -8,6 +8,7 @@ import { memoryComposition } from "../../../bench/lib/memory.ts";
 import { DomainOracle } from "../../../bench/lib/w0-gates.ts";
 import { W0, reachableRows, triplexValue, worldOf } from "../../../bench/lib/w0-world.ts";
 import { Dispatcher } from "./dispatcher.ts";
+import { CommittedRanges } from "./ranges.ts";
 import {
   assertDeadlinePublication,
   captureDeadlineCut,
@@ -44,13 +45,19 @@ const open = (scope: string) =>
     ? openComposition("reach", "datomic", scope)
     : Promise.resolve(memoryComposition("datomic", scope));
 
-async function fixture(t: TestContext, roster = subjects) {
+async function fixture(
+  t: TestContext,
+  roster = subjects,
+  indexed = false,
+  extra: typeof seed = [],
+  wages?: ConstructorParameters<typeof CommittedRanges>[2],
+) {
   const epoch = randomUUID(),
     src = await open("coverage-" + epoch);
   t.after(() => src.close());
   const receiver = await open("coverage-sink-" + epoch);
   t.after(() => receiver.close());
-  const facts = roster.includes("pl:c") ? [...seed, ...subjectFacts("pl:c", 2500)] : seed;
+  const facts = [...seed, ...extra, ...(roster.includes("pl:c") ? subjectFacts("pl:c", 1900) : [])];
   const initial = await src.transact(
     facts.map((f) => put(f)),
     { commandId: "seed" },
@@ -59,6 +66,7 @@ async function fixture(t: TestContext, roster = subjects) {
   const seeded = initial.value;
   const a = new Notices(src, "account", {
     identity: "raw-shared-wage-fixture",
+    ...(indexed ? { ranges: new CommittedRanges(roster, true, wages) } : {}),
     roster: async () => roster,
     worlds: async (ids, cut) => {
       const basis = { position: cut.position, validAt: Date.parse(cut.validTime) };
@@ -107,7 +115,7 @@ async function fixture(t: TestContext, roster = subjects) {
 }
 
 test("a shared local floor correction covers both readers of the edge", async (t) => {
-  const { a, worker, publish, floor } = await fixture(t);
+  const { a, worker, publish, floor } = await fixture(t, subjects, true);
   const oracle = new DomainOracle(new URL("./oracle.py", import.meta.url).pathname);
   t.after(() => oracle.close());
   const live = await a.append(await a.observe(), publish);
@@ -143,13 +151,56 @@ test("a shared local floor correction covers both readers of the edge", async (t
     { verified: proof.effects, delivered: (await worker.effects()).map((d) => d.subject) },
     { verified: expected.length, delivered: subjects },
   );
-  assert.deepEqual((await a.event(2, saved.position)).value.selection, { kind: "census" });
+  const event = await a.event(2, saved.position);
+  assert.deepEqual(event.value.selection, { kind: "census" });
+  assert.deepEqual((await a.coverage(event, a.db, await a.db.head()))?.ids, subjects);
+  assert.equal(worker.metrics.certified, 1);
+});
+
+test("a joined posting missing a person triggers the full census", async (t) => {
+  const roster = [...subjects, "pl:c"];
+  const { a, worker, publish, floor } = await fixture(
+    t,
+    roster,
+    true,
+    [],
+    async () =>
+      new Map([
+        [
+          "loc:a",
+          [
+            { subject: "pl:a", value: 1750 },
+            { subject: "pl:c", value: 1900 },
+          ],
+        ],
+      ]),
+  );
+  const live = await a.append(await a.observe(), publish);
+  const save: Request = { ...publish, id: "floor-missing-posting", kind: "reconcile" };
+  const correction = floor("localMinWageCents", 1800);
+  const saved = await a.append(await a.observe(), save, correction.ops, correction.checks);
+  await worker.drain();
+  const proof = await verify(
+    worker,
+    roster,
+    [
+      { req: publish, receipt: live },
+      { req: save, receipt: saved },
+    ],
+    correction.witness(saved),
+  );
+  assert.equal(worker.metrics.fallback, 1);
+  assert.deepEqual(proof.coverage[1], {
+    affected: hash(subjects),
+    complement: hash(["pl:c"]),
+    selected: hash(roster),
+  });
 });
 
 for (const first of ["save", "publish"] as const) {
   test("a backdated two-hop floor save is complete when " + first + " commits first", async (t) => {
     const roster = [...subjects, "pl:c"];
-    const { a, worker, publish, floor } = await fixture(t, roster);
+    const { a, worker, publish, floor } = await fixture(t, roster, true);
     const initial: Request = { ...publish, id: "initial", release: "R1" };
     const events: Offered[] = [
       { req: initial, receipt: await a.append(await a.observe(), initial) },
@@ -197,7 +248,7 @@ for (const first of ["save", "publish"] as const) {
     assert.deepEqual(proof.coverage[first === "save" ? 1 : 2], {
       affected: hash(subjects),
       complement: hash(["pl:c"]),
-      selected: hash(roster),
+      selected: hash(subjects),
     });
     assert.deepEqual(
       (await worker.effects()).map((d) => [d.subject, d.seq]),
@@ -462,3 +513,101 @@ for (const saved of ["late", "missing notice", "complete"] as const) {
     },
   );
 }
+
+test("reparenting checks the old and new jurisdiction and keeps an equal-wage neighbour out", async (t) => {
+  const roster = [...subjects, "pl:c"];
+  const { a, worker, publish } = await fixture(t, roster, true, [
+    { e: "jur:b", a: "stateMinWageCents", v: 1900 },
+  ]);
+  const initial = await a.append(await a.observe(), publish);
+  await worker.drain();
+  const linked = (
+    await a.db.store.sweepPage(["loc:a"], {
+      position: initial.position,
+      validAt: Date.parse(valid),
+    })
+  ).rows.find((r) => r.entityId === "loc:a" && r.attribute === "jurisdiction")!;
+  const save: Request = { ...publish, id: "link", kind: "reconcile" };
+  const receipt = await a.append(
+    await a.observe(),
+    save,
+    [{ op: "retract", id: linked.id }, put({ e: "loc:a", a: "jurisdiction", v: "jur:b" })],
+    [{ _tag: "TripleLive", id: linked.id }],
+  );
+  await worker.drain();
+  const witness = async (ids: string[], cut: Cut) =>
+    ids.map((subject) => {
+      const source = [
+        ...seed,
+        ...subjectFacts("pl:c", 1900),
+        { e: "jur:b", a: "stateMinWageCents", v: 1900 },
+      ];
+      return {
+        subject,
+        facts: source
+          .filter((f) => !W0.isPlacementId(f.e) || f.e === subject)
+          .filter((f) => f.e !== (cut.position >= receipt.position ? "jur:a" : "jur:b"))
+          .map((f) =>
+            f.a === "jurisdiction" && cut.position >= receipt.position
+              ? { ...f, v: "jur:b", tx: receipt.position }
+              : { ...f, tx: 1 },
+          ),
+      };
+    });
+  const proof = await verify(
+    worker,
+    roster,
+    [
+      { req: publish, receipt: initial },
+      { req: save, receipt },
+    ],
+    witness,
+  );
+  assert.deepEqual(proof.coverage[1], {
+    affected: hash(subjects),
+    complement: hash(["pl:c"]),
+    selected: hash(subjects),
+  });
+});
+
+test("a business clock boundary outside the save sends through the census", async (t) => {
+  const roster = [...subjects, "pl:c"];
+  const document = "pl:c/doc:x";
+  const extra = [
+    { e: "pl:c", a: "documents", v: document },
+    { e: document, a: "docType", v: "ead" },
+    { e: document, a: "expiresOn", v: valid.slice(0, 10) },
+  ];
+  const { a, worker, publish, floor } = await fixture(t, roster, true, extra);
+  const initial = await a.append(await a.observe(), publish);
+  await worker.drain();
+  const save: Request = {
+    ...publish,
+    id: "advance-shared-floor",
+    kind: "reconcile",
+    validTime: W0.endOfDay(W0.parseDate(valid.slice(0, 10))),
+  };
+  const correction = floor("localMinWageCents", 1800);
+  const receipt = await a.append(await a.observe(), save, correction.ops, correction.checks);
+  await worker.drain();
+  const witness = async (ids: string[], cut: Cut) =>
+    (await correction.witness(receipt)(ids, cut)).map((world) => ({
+      ...world,
+      facts: world.facts.filter((f) => world.subject === "pl:c" || f.e !== document),
+    }));
+  const proof = await verify(
+    worker,
+    roster,
+    [
+      { req: publish, receipt: initial },
+      { req: save, receipt },
+    ],
+    witness,
+  );
+  assert.equal(worker.metrics.fallback, 1);
+  assert.deepEqual(proof.coverage[1], {
+    affected: hash(roster),
+    complement: hash([]),
+    selected: hash(roster),
+  });
+});

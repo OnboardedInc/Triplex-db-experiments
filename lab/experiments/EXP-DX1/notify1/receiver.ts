@@ -1,3 +1,5 @@
+import { ErasureChanged, withErasure } from "../../../bench/lib/datomic-erasure.ts";
+import type { ErasureFrontier } from "../../../../packages/datomic/dist/index.js";
 import assert from "node:assert/strict";
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { Documents, hash, pack, unpack, type Op, type Check } from "./store.ts";
@@ -12,7 +14,17 @@ export async function receiveOrdered(
   digest: string,
   grant?: () => Promise<void>,
   checkpoint?: { binding: string; ops: Op[]; checks: Check[] },
+  frontier?: () => Promise<ErasureFrontier | undefined>,
 ) {
+  const requireFrontier = async () => {
+    if (frontier || p.erasureSeq !== undefined) {
+      const state = await frontier?.();
+      if (!state || state.seq !== p.erasureSeq)
+        throw new ErasureChanged("Receiver erasure frontier unavailable or stale");
+      return state;
+    }
+  };
+  await requireFrontier();
   assert.equal(hash(p), digest);
   assert(p.account === account && p.deliveries.length > 0);
   const origin = hash([p.account, p.epoch]),
@@ -54,16 +66,23 @@ export async function receiveOrdered(
   const ack = { batch: p.batch, digest };
   // [DX-STG1] Why: a single receiver transaction stores the actual ordered effects with deduplication and progress. Rejected: acknowledging a non-idempotent external call whose result can be lost.
   await grant?.();
-  await db.commit(
-    id,
-    intent,
-    [
-      ...ops,
-      ...db.change(key, head, ack),
-      db.put("effects:" + origin + ":" + p.batch, pack(p.deliveries)),
-      ...(checkpoint?.ops ?? []),
-    ],
-    [db.guard(key, head), ...(checkpoint?.checks ?? [])],
+  const authority = await requireFrontier();
+  await withErasure(
+    authority?.seq,
+    () =>
+      db.commit(
+        id,
+        intent,
+        [
+          ...ops,
+          ...db.change(key, head, ack),
+          db.put("effects:" + origin + ":" + p.batch, pack(p.deliveries)),
+          ...(authority ? [db.put("effect-erasure:" + origin + ":" + p.batch, authority.seq)] : []),
+          ...(checkpoint?.ops ?? []),
+        ],
+        [db.guard(key, head), ...(checkpoint?.checks ?? [])],
+      ),
+    authority?.database,
   );
   return true;
 }

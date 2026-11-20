@@ -18,6 +18,18 @@ import {
 import { tenantPlan, tenantWindows, tenantReaders } from "./tenant-traffic.ts";
 import { MembershipProof } from "./tenant-proof.ts";
 import { installTenantViews, tenantFeedAt } from "./tenant-feed.ts";
+
+test("a seed-only million-person attempt binds the complete population and schedules no traffic", () => {
+  const spec = { study: "million", topology: "pooled", physical: 0 } as const;
+  const plan = tenantPlan(spec, "seed");
+  assert.equal(
+    plan.accounts.reduce((n, a) => n + a.people, 0),
+    1000000,
+  );
+  assert.equal(plan.populationSha256, tenantSeedPin(spec));
+  assert.deepEqual(plan.events, []);
+  assert.deepEqual(tenantWindows(spec, "seed"), []);
+});
 import { openComposition } from "../../../bench/lib/composition.ts";
 import { seedOps } from "../../../bench/lib/commands.ts";
 import { ids } from "../../../bench/lib/world.ts";
@@ -208,6 +220,9 @@ test("interference uses actual acknowledged throughput and keeps a missing quiet
     read: hist(n, x),
     feed: hist(n, 2),
     commit: hist(n, x),
+    fullOffered: n,
+    fullExpired: 0,
+    offered: n,
     acked: n,
     expired: 0,
     failed: 0,
@@ -228,9 +243,16 @@ test("interference uses actual acknowledged throughput and keeps a missing quiet
     checkpoint: 1,
   };
   const phases = [
-    { name: "one", from: 0, to: 350000, accounts: { "account-001": one, "account-002": empty } },
+    {
+      name: "one",
+      start: 0,
+      from: 0,
+      to: 350000,
+      accounts: { "account-001": one, "account-002": empty },
+    },
     {
       name: "two",
+      start: 360000,
       from: 360000,
       to: 710000,
       accounts: { "account-001": busy, "account-002": group(500, 1) },

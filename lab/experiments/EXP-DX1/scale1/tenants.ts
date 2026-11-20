@@ -1,3 +1,4 @@
+import { FieldSaveWriter, type PeakAlignment } from "./deep-live.ts";
 import { MembershipProof } from "./tenant-proof.ts";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -11,16 +12,25 @@ import { ids, subjectOf, type Fact } from "../../../bench/lib/world.ts";
 import { smallPeople } from "./small-plan.ts";
 export type TenantStudy = "interference" | "small" | "million" | "smoke";
 export type Topology = "pooled" | "separate";
-export type TenantSpec = { study: TenantStudy; topology: Topology; physical: number };
+export type TenantSpec = {
+  study: TenantStudy;
+  topology: Topology;
+  physical: number;
+  live?: PeakAlignment;
+  campaign?: "frozen" | "field";
+};
 export type Account = { index: number; key: string; first: number; people: number };
 export type TenantEvent = DeepEvent & { tenant: number; localSubject: number; localSeq: number };
 export const keyFor = (i: number) => "account-" + String(i + 1).padStart(3, "0");
 export const tenantRowsId = "deep-tenant-membership/1";
-const catalog = "tenant:catalog",
-  accountRoot = (a: Account) => "tenant:directory:" + a.key,
+export const tenantCatalog = "tenant:catalog";
+const accountRoot = (a: Account) => "tenant:directory:" + a.key,
   shard = (a: Account, n: number) => "tenant:roster:" + a.key + ":" + Math.floor(n / 256);
 export function tenantAccounts(spec: TenantSpec): Account[] {
-  const total = spec.study === "small" ? 100 : spec.study === "smoke" ? 2 : 10;
+  if (spec.campaign) {
+    assert(spec.topology === "pooled" && spec.study !== "small" && !spec.live);
+  }
+  const total = spec.study === "small" ? 100 : spec.study === "smoke" && !spec.campaign ? 2 : 10;
   assert(
     Number.isInteger(spec.physical) &&
       spec.physical >= 0 &&
@@ -84,7 +94,7 @@ export function tenantRows(a: Account, local: number): Fact[] {
   );
   if (local % 256 === 0)
     rows.push({ e: accountRoot(a), a: ":tenant/shard", v: string(shard(a, local)) });
-  if (local === 0) rows.push({ e: catalog, a: ":tenant/account", v: string(a.key) });
+  if (local === 0) rows.push({ e: tenantCatalog, a: ":tenant/account", v: string(a.key) });
   return rows;
 }
 export const tenantFacts = (accounts: readonly Account[]) =>
@@ -108,14 +118,18 @@ export function tenantSeedPin(spec: TenantSpec) {
 }
 export class TenantWriters {
   private readonly active: Set<number>;
-  private readonly writers = new Map<number, DeepWriter>();
-  constructor(privateAccounts: readonly Account[], events: readonly TenantEvent[]) {
+  private readonly writers = new Map<number, Pick<DeepWriter, "build" | "bind">>();
+  constructor(
+    privateAccounts: readonly Account[],
+    events: readonly TenantEvent[],
+    fieldSaves = false,
+  ) {
     this.accounts = privateAccounts;
     this.active = new Set(events.map((e) => e.subject));
     for (const a of this.accounts)
       this.writers.set(
         a.index,
-        new DeepWriter(
+        new (fieldSaves ? FieldSaveWriter : DeepWriter)(
           new Set(events.filter((e) => e.tenant === a.index).map((e) => e.localSubject)),
         ),
       );
@@ -187,7 +201,7 @@ export async function tenantQueries(
     for (const row of r.rows) observed.add(row);
     return r.rows;
   };
-  const directory = await read([catalog]);
+  const directory = await read([tenantCatalog]);
   assert.deepEqual(
     directory
       .filter((f) => f.attribute === ":tenant/account")
@@ -262,7 +276,12 @@ export async function tenantQueries(
   };
 }
 export function tenantRung(spec: TenantSpec) {
-  return "tenant-" + spec.study + "-" + tenantAccounts(spec).reduce((s, a) => s + a.people, 0);
+  return (
+    (spec.live ? "deep-live-" + spec.live + "-" : "tenant-") +
+    spec.study +
+    "-" +
+    tenantAccounts(spec).reduce((s, a) => s + a.people, 0)
+  );
 }
 export function tenantScope(spec: TenantSpec, nonce: string) {
   return (

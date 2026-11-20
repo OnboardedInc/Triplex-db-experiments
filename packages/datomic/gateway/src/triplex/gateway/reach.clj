@@ -1,5 +1,5 @@
 (ns triplex.gateway.reach
-  (:require [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission])
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission] [triplex.gateway.save-ledger :as ledger])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger LongAdder]))
 (set! *warn-on-reflection* false)
 
@@ -202,7 +202,7 @@
         rev (if eid (if cached (:rev cached)
                       (long (cache/revision (:revision-view cfg) eid
                         (fn [] (let [revision (read-datom)] (vreset! witness revision)
-                                 (if revision (long (:v revision)) 0)))))) 0)
+                                 (long (or (:v revision) (ledger/implicit-position db eid) 0))))))) 0)
         value (if eid
                 (if (pos? rev)
                   (cache/lookup (cache/parsed-key name (:cache-generation cfg) eid rev) #(parse-entity db cfg eid rev (- 100000 (aget counts 0))))
@@ -221,7 +221,8 @@
 (defn read-entity-legacy [name db cfg id valid ^longs counts]
   (let [eid (entity-id db name id cfg) valid (double valid)
         rev (if eid (long (cache/revision (:revision-view cfg) eid
-                           (fn [] (long (or (:v (first (d/datoms db :eavt eid (:rev cfg)))) 0))))) 0)
+                           (fn [] (long (or (:v (first (d/datoms db :eavt eid (:rev cfg))))
+                                           (ledger/implicit-position db eid) 0))))) 0)
         value (if eid
                 (if (pos? rev)
                   (cache/lookup (cache/parsed-key name (:cache-generation cfg) eid rev)
@@ -266,7 +267,7 @@
           row-page? (true? (get input "rowPage"))
           entity-limit (if row-page? 50000 5000)
           entities (LinkedHashMap.) closures (ArrayList.) counts (long-array 1)
-          session-state (session-map name (get input "session") epoch)
+          session-state (when-not privacy/*cut* (session-map name (get input "session") epoch))
           generation (when session-state @session-state)
           ^ConcurrentHashMap remembered (:entries generation) out (StringBuilder. 65536)]
       (when-not (and (vector? roots) (<= 1 (count roots) (if need 50000 5000))) (decline! "roots"))
@@ -312,7 +313,9 @@
               (.append out \[) (append-string! out id) (.append out \,) (.append out rev)
               (when inline
                 (.append out \,)
-                (let [^String fragment (nth entry 4)] (.append out fragment))
+                (if privacy/*cut*
+                  (append-strings! out (mapv privacy/text texts))
+                  (.append out ^String (nth entry 4)))
                 ;; Overflow pages are entirely inline and leave the bounded map empty.
                 (when (and remembered eid (<= (.size entities) session-entry-limit)) (remember! generation eid rev)))
               (.append out \]))))

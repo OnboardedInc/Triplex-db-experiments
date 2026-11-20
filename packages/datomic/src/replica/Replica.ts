@@ -1,3 +1,4 @@
+import type { ErasureFrontier } from "../erasure.js";
 import { traceAsync, traceSync, tracedRequest } from "../tracing.js";
 import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
 import { type ReachWire } from "../reach.js";
@@ -22,6 +23,7 @@ export interface ReplicaJournal {
 }
 export interface ReplicaSource {
   head(): Promise<number>;
+  erasure?(): Promise<ErasureFrontier>;
   capability?(basis: ResolvedTemporalBasis): Promise<string | undefined>;
   page(roots: readonly string[], basis: ResolvedTemporalBasis, need?: boolean): Promise<ReachWire>;
   feed(
@@ -51,7 +53,10 @@ export class ReplicaSnapshot {
   private shared: ReplicaImage | undefined;
   readonly position: number;
   readonly validAt: number;
-  constructor(image: ReplicaImage) {
+  constructor(
+    image: ReplicaImage,
+    private readonly privacy?: () => Promise<ErasureFrontier>,
+  ) {
     this.entities = image.shared
       ? new OverlayTable(new SharedIndex(image.shared), new Map(image.entities))
       : new Map(image.entities);
@@ -60,9 +65,13 @@ export class ReplicaSnapshot {
     this.validAt = image.validAt;
   }
   image(): ReplicaImage {
+    if (this.privacy)
+      throw new ReplicaInvalid("Protected replica images stay in the source process");
     return { position: this.position, validAt: this.validAt, entities: [...this.entities] };
   }
   sharedImage(): ReplicaImage {
+    if (this.privacy)
+      throw new ReplicaInvalid("Protected replica images stay in the source process");
     return (this.shared ??= {
       position: this.position,
       validAt: this.validAt,
@@ -77,9 +86,38 @@ export class ReplicaSnapshot {
     for (const e of this.entities.values()) n += e.byteLength ?? e.buffer.byteLength;
     return n;
   }
+  async readWorld(subjectId: string): Promise<SweepRow[]> {
+    const frontier = await this.privacy?.();
+    if (this.privacy && !frontier?.protected)
+      throw new ReplicaInvalid("Erasure frontier unavailable");
+    return applyErasure(walk(this.entities, this.validAt, subjectId), frontier);
+  }
   world(subjectId: string): SweepRow[] {
+    if (this.privacy)
+      throw new ReplicaInvalid("Protected snapshot requires an erasure-checked read");
     return walk(this.entities, this.validAt, subjectId);
   }
+}
+function applyErasure(rows: SweepRow[], frontier: ErasureFrontier | undefined) {
+  if (!frontier?.protected) return rows;
+  return rows.map((row) => {
+    const erased = Object.hasOwn(frontier.erased, row.id) && frontier.erased[row.id];
+    if (erased) return { ...row, value: erased };
+    if (row.attribute === ":_tx/change" && row.value.type === "json") {
+      const change = row.value.value as Record<string, unknown>;
+      const id = change?.["tripleId"];
+      if (
+        typeof id === "string" &&
+        Object.hasOwn(change, "value") &&
+        Object.hasOwn(frontier.erased, id)
+      )
+        return {
+          ...row,
+          value: { type: "json" as const, value: { ...change, value: frontier.erased[id] } },
+        };
+    }
+    return row;
+  });
 }
 export interface ReplicaUpdate {
   readonly position: number;
@@ -88,6 +126,7 @@ export interface ReplicaUpdate {
   readonly changes: readonly (readonly [string, PackedEntity | undefined, PackedEntity])[];
 }
 export class Replica {
+  private protection: (() => Promise<ErasureFrontier>) | undefined;
   static readonly UnsupportedScope = ReplicaUnsupportedScope;
   static source(
     client: DatomicClient,
@@ -102,6 +141,34 @@ export class Replica {
   onUpdate: ((update: ReplicaUpdate) => void) | undefined;
   onAdmission: ((position: number, entries: ReadonlyMap<string, PackedEntity>) => void) | undefined;
   private applying = false;
+  private charged = 0;
+  private evictionCount = 0;
+  private admittedCount = 0;
+  get retention() {
+    return {
+      bytes: this.charged,
+      limit: this.byteBudget,
+      evictions: this.evictionCount,
+      admissions: this.admittedCount,
+      entries: this.entities.delta.size,
+    };
+  }
+  private charge(entries: ReadonlyMap<string, PackedEntity>) {
+    let bytes = 0;
+    for (const [id, e] of entries)
+      bytes += (e.byteLength ?? e.buffer.byteLength) + 256 + 2 * id.length;
+    return bytes;
+  }
+  // [DX-INT1] Why: drop a complete generation so a shared reference or retained predecessor cannot survive as a false hit.
+  // Rejected: retiring just the root while its history, prepared views and closure remain reachable.
+  private evictGeneration() {
+    this.entities = new OverlayTable(new Map());
+    this.baseImage = undefined;
+    this.slabs = new Slabs();
+    this.charged = 0;
+    this.evictionCount++;
+    this.onUpdate?.({ position: this.watermark, valid: true, reset: true, changes: [] });
+  }
   private entities = new OverlayTable(new Map<string, PackedEntity>());
   private baseImage: SharedIndexImage | undefined;
   private slabs = new Slabs();
@@ -119,12 +186,15 @@ export class Replica {
     Set<{ resolve(view: ReplicaSnapshot): void; reject(e: unknown): void }>
   >();
   private view(): ReplicaSnapshot {
-    return new ReplicaSnapshot({
-      position: this.watermark,
-      validAt: this.validAt,
-      entities: this.baseImage ? [...this.entities.delta] : [...this.entities],
-      ...(this.baseImage ? { shared: this.baseImage } : {}),
-    });
+    return new ReplicaSnapshot(
+      {
+        position: this.watermark,
+        validAt: this.validAt,
+        entities: this.baseImage ? [...this.entities.delta] : [...this.entities],
+        ...(this.baseImage ? { shared: this.baseImage } : {}),
+      },
+      this.protection,
+    );
   }
   private rejectCaptures(error: unknown) {
     for (const requests of this.captures.values())
@@ -135,9 +205,16 @@ export class Replica {
     readonly source: ReplicaSource,
     readonly validAt: number,
     readonly population: "all" | "touched" = "all",
+    readonly byteBudget: number = Infinity,
   ) {
+    if (
+      byteBudget !== Infinity &&
+      (!Number.isSafeInteger(byteBudget) || byteBudget < 1 || population !== "touched")
+    )
+      throw new TypeError("Invalid touched reader byte budget");
     if (!Number.isFinite(validAt)) throw new TypeError("Explicit valid time required");
-    if (population !== "all" && population !== "touched") throw new TypeError("Unknown replica population");
+    if (population !== "all" && population !== "touched")
+      throw new TypeError("Unknown replica population");
   }
   // [DX-S5] Why: hand an already verified immutable image to a follower/read isolate without re-reading or duplicating its packed base.
   // Rejected: private-field access in the harness or a second 4.6 GB bootstrap for every reader worker.
@@ -177,7 +254,7 @@ export class Replica {
         ids.add(id);
       }
       for (const [id, , next] of update.changes) this.entities.set(id, next);
-      this.onUpdate?.(update);
+      if (!this.protection) this.onUpdate?.(update);
       this.advance(update.position);
     } catch (error) {
       this.invalidate(error);
@@ -308,7 +385,9 @@ export class Replica {
         previous ??
           (current?.revision === rev && equalBytes(current, packed)
             ? current
-            : this.slabs.put(packed)),
+            : this.byteBudget === Infinity
+              ? this.slabs.put(packed)
+              : packed),
       );
       received.add(id);
     }
@@ -338,6 +417,10 @@ export class Replica {
   bootstrap(roots: readonly string[], p?: number): Promise<void> {
     return this.exclusive(async () => {
       try {
+        const identity = await this.source.erasure?.();
+        if (this.protection && !identity?.protected)
+          throw new ReplicaInvalid("Erasure frontier unavailable");
+        if (identity?.protected) this.protection = () => this.source.erasure!();
         this.rejectCaptures(new ReplicaInvalid("Replica rebuilt before requested snapshot"));
         this.valid = false;
         const cut = p ?? (await this.source.head());
@@ -355,6 +438,7 @@ export class Replica {
         if (unique.length !== roots.length) throw new ReplicaInvalid("Duplicate bootstrap root");
         this.roots = unique;
         this.configured = true;
+        this.charged = 0;
         this.slabs = new Slabs();
         const next = new Map<string, PackedEntity>();
         await this.load(unique, cut, next);
@@ -362,12 +446,13 @@ export class Replica {
         this.entities = new OverlayTable(new SharedIndex(this.baseImage));
         this.roots = unique;
         this.valid = true;
-        this.onUpdate?.({
-          position: cut,
-          reset: true,
-          valid: true,
-          changes: Array.from(next, ([id, e]) => [id, undefined, e] as const),
-        });
+        if (!this.protection)
+          this.onUpdate?.({
+            position: cut,
+            reset: true,
+            valid: true,
+            changes: Array.from(next, ([id, e]) => [id, undefined, e] as const),
+          });
         this.advance(cut);
       } catch (e) {
         this.invalidate(e);
@@ -380,11 +465,16 @@ export class Replica {
   async admit(root: string, p: number, validAt: number): Promise<boolean> {
     position(p);
     if (!Number.isFinite(validAt)) throw new TypeError("Explicit valid time required");
-    const table = this.entities, generation = this.captureEpoch;
+    const table = this.entities,
+      generation = this.captureEpoch;
     // [DX-THIN1] Why: a long poll can overlap a real first read. A journal already selecting its hot subset cannot.
     // Rejected: installing after that selection (the first write to a newly admitted entity could be missed).
-    const current = () => this.valid && !this.applying && this.watermark === p &&
-      this.entities === table && this.captureEpoch === generation;
+    const current = () =>
+      this.valid &&
+      !this.applying &&
+      this.watermark === p &&
+      this.entities === table &&
+      this.captureEpoch === generation;
     if (this.population !== "touched" || !current()) return false;
     const page = await this.source.page([root], { recordedPosition: p, validAt });
     if (!current() || page.declined !== undefined) return false;
@@ -394,7 +484,11 @@ export class Replica {
     const reachable = new Map<string, PackedEntity>();
     walk(loaded, validAt, root, reachable);
     const closure = page.closures[0]![1];
-    if (reachable.size !== loaded.size || closure.length !== reachable.size || closure.some(id => !reachable.has(id)))
+    if (
+      reachable.size !== loaded.size ||
+      closure.length !== reachable.size ||
+      closure.some((id) => !reachable.has(id))
+    )
       throw new ReplicaInvalid("Admission closure mismatch");
     for (const [id, entity] of loaded) {
       const present = table.get(id);
@@ -404,8 +498,21 @@ export class Replica {
       loaded.delete(id);
     }
     try {
-      for (const [id, entity] of loaded) table.set(id, entity);
-      if (loaded.size) this.onAdmission?.(p, loaded);
+      let add = loaded;
+      if (this.byteBudget !== Infinity) {
+        const whole = this.charge(reachable);
+        if (whole > this.byteBudget) return false;
+        if (this.charged + this.charge(add) > this.byteBudget) {
+          this.evictGeneration();
+          add = reachable;
+        }
+        this.charged += this.charge(add);
+      }
+      for (const [id, entity] of add) this.entities.set(id, entity);
+      if (add.size) {
+        if (!this.protection) this.onAdmission?.(p, add);
+        this.admittedCount += add.size;
+      }
       return true;
     } catch (error) {
       return this.invalidate(error);
@@ -458,17 +565,26 @@ export class Replica {
             tx.replacement.incremental === true,
           );
         else await this.load(tx.entities, tx.position, changes, true);
+        if (this.byteBudget !== Infinity) {
+          const charge = this.charge(changes);
+          if (this.charged + charge > this.byteBudget) {
+            this.evictGeneration();
+            changes.clear();
+          } else this.charged += charge;
+        }
         const replaced = [...changes].map(([id, e]) => [id, this.entities.get(id), e] as const);
         for (const [id, e] of changes) this.entities.set(id, e);
         traceSync(
           "replica.publish",
-          () =>
-            this.onUpdate?.({
-              position: tx.position,
-              reset: false,
-              valid: true,
-              changes: replaced,
-            }),
+          () => {
+            if (!this.protection)
+              this.onUpdate?.({
+                position: tx.position,
+                reset: false,
+                valid: true,
+                changes: replaced,
+              });
+          },
           "typescript",
           { position: tx.position },
         );
@@ -515,7 +631,16 @@ export class Replica {
       return this.view();
     });
   }
+  async readWorld(subjectId: string): Promise<SweepRow[]> {
+    if (!this.valid) throw new ReplicaInvalid("Replica requires rebuild");
+    const frontier = await this.protection?.();
+    if (this.protection && !frontier?.protected)
+      throw new ReplicaInvalid("Erasure frontier unavailable");
+    return applyErasure(walk(this.entities, this.validAt, subjectId), frontier);
+  }
   world(subjectId: string): SweepRow[] {
+    if (this.protection)
+      throw new ReplicaInvalid("Protected replica requires an erasure-checked read");
     if (!this.valid) throw new ReplicaInvalid("Replica requires rebuild");
     return walk(this.entities, this.validAt, subjectId);
   }
@@ -525,11 +650,14 @@ export class Replica {
     // Rejected: cloning the entire accumulated overlay for every live read (100k profiles spent most CPU copying/counting and collecting it).
     const entities = new Map<string, PackedEntity>();
     walk(this.entities, this.validAt, subjectId, entities);
-    return new ReplicaSnapshot({
-      position: this.watermark,
-      validAt: this.validAt,
-      entities: [...entities],
-    });
+    return new ReplicaSnapshot(
+      {
+        position: this.watermark,
+        validAt: this.validAt,
+        entities: [...entities],
+      },
+      this.protection,
+    );
   }
   start(): void {
     if (!this.configured) throw new ReplicaInvalid("Bootstrap roots required before following");

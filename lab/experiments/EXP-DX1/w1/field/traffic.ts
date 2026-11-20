@@ -161,6 +161,7 @@ export async function fieldPhase(
   schedule: Offer[],
   pooled: boolean,
   senders: Map<string, number>,
+  denseJournalIds = false,
 ) {
   const pending: Promise<void>[] = [],
     rows: Observed[] = [],
@@ -221,7 +222,7 @@ export async function fieldPhase(
       prior = last.get(root);
     const f = [fact(root, attr, e.subtask + "/" + e.ordinal)];
     if (e.extra) f.push(fact(root, ":field/note", id));
-    const input = command(id, f, prior ? [prior] : []);
+    const input = command(id, f, prior ? [prior] : [], true, denseJournalIds);
     expected.set(id, {
       root,
       tx: input.claims[0]!.txId,

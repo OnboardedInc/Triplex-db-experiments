@@ -160,9 +160,47 @@ async function collect(tag: string) {
       path.join(os.homedir(), "Claude", "Projects", "triplex-db-2", "evidence"),
     dir = path.join(evidence, "DX-SCALE1", tag);
   fs.mkdirSync(dir, { recursive: true });
+  const remoteAttempt = JSON.parse(sudo("cat", root + "/" + tag + "/attempt.json"));
+  assert(
+    remoteAttempt.tag === tag &&
+      remoteAttempt.source === entry.source &&
+      remoteAttempt.nonce === entry.nonce,
+  );
+  const priorBytes = fs.readdirSync(path.dirname(dir)).reduce((total, other) => {
+    const otherDir = path.join(path.dirname(dir), other),
+      identity = path.join(otherDir, "summaries/attempt.json");
+    if (
+      other === tag ||
+      !fs.existsSync(identity) ||
+      JSON.parse(fs.readFileSync(identity, "utf8")).item !== remoteAttempt.item
+    )
+      return total;
+    return (
+      total +
+      fs.statSync(path.join(otherDir, "summaries.tar.zst")).size +
+      fs.statSync(path.join(otherDir, "transfer.json")).size +
+      fs
+        .readdirSync(path.dirname(identity), { recursive: true, encoding: "utf8" })
+        .reduce((sum, f) => {
+          const stat = fs.lstatSync(path.join(path.dirname(identity), f));
+          return sum + (stat.isFile() ? stat.size : 0);
+        }, 0)
+    );
+  }, 0);
+  // [DX-SCALE1] Why: the Mac's 500 MiB transfer budget covers all attempts and arms of this item. Rejected: downloading a raw archive when its compressed size happens to fit.
+  const unpacked = Number(sudo("du", "-sb", "--", root + "/" + tag + "/transfer").split(/\s/)[0]);
+  assert(Number.isSafeInteger(unpacked) && unpacked > 0);
+  assert(
+    priorBytes +
+      entry.summary.bytes +
+      unpacked +
+      Buffer.byteLength(JSON.stringify(entry, null, 2)) <
+      500 * 1024 ** 2,
+    "Item summary transfers would exceed 500 MiB",
+  );
   const transfer = async (spec: { name: string; bytes: number; sha256: string }) => {
     assert(
-      ["summaries.tar.zst", "raw.tar.zst"].includes(spec.name) &&
+      spec.name === "summaries.tar.zst" &&
         Number.isSafeInteger(spec.bytes) &&
         spec.bytes > 0 &&
         /^[a-f0-9]{64}$/.test(spec.sha256),
@@ -171,8 +209,7 @@ async function collect(tag: string) {
     if (!fs.existsSync(local)) {
       const stat = fs.statfsSync(dir);
       // [DX-SCALE1] Why: small terminal summaries must remain collectible as other Mac jobs consume disk. Rejected: applying the raw-archive headroom to the compact evidence needed to diagnose a failed arm.
-      const headroom =
-        spec.name === "raw.tar.zst" ? 5 * 1024 ** 3 : Math.max(64 * 1024 ** 2, 6 * spec.bytes);
+      const headroom = Math.max(64 * 1024 ** 2, 6 * spec.bytes);
       assert(stat.bavail * stat.bsize > spec.bytes + headroom);
       const tmp = local + `.${process.pid}.partial`;
       const fd = fs.openSync(tmp, "wx");
@@ -214,11 +251,7 @@ async function collect(tag: string) {
   assert.equal(terminal.cleanup, true);
   if (entry.raw) {
     assert.equal(entry.raw.name, "raw.tar.zst");
-    const available = fs.statfsSync(dir);
-    const copy =
-      entry.raw.bytes < 2 * 1024 ** 3 &&
-      available.bsize * available.bavail > entry.raw.bytes + 5 * 1024 ** 3;
-    if (copy) await transfer(entry.raw);
+    const copy = fs.existsSync(path.join(dir, entry.raw.name));
     fs.writeFileSync(
       path.join(dir, "raw-location.json"),
       JSON.stringify({
@@ -228,8 +261,8 @@ async function collect(tag: string) {
         archive: entry.raw,
         copyOnMac: copy,
         reason: copy
-          ? "size and free space verified"
-          : "retained compressed on the server under the transfer budget",
+          ? "retained from an earlier collection"
+          : "compressed raw archive retained on the assigned server",
       }) + "\n",
     );
   }

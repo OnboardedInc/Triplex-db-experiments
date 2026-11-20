@@ -41,7 +41,7 @@ const rootCommand =
 if (mode === "--plan") {
   console.log(rootCommand);
   console.log(
-    "Default budget is three hours on the prepared 12-core BM1 server. Each fresh clone of the sealed seed runs the oracle restart schedules first, then 100,000 subjects with 256 live readers and the frozen writer trace.",
+    "Default budget is three hours on the prepared 12-core BM1 server. Each fresh clone of the sealed pristine seed runs the oracle restart schedules first, then 100,000 subjects with 256 live readers and the frozen writer trace.",
   );
   console.log(
     "Run the EAD full/selector pair, standard guard-fact, fourth-arm page coverage and a fresh incorrect historical control. --workers 1,2,3,4,5 repeats the page arm on fresh clones. --hours 6 budgets the longer ladder.",
@@ -245,8 +245,8 @@ if (mode === "--plan") {
       console.log(arm + " " + out);
       if (batchOwner) {
         const statusFile = join(root, ".STATUS-" + slot);
-          const next = trials[ordinal+1]?.arm ?? process.env.DX_BM1_AFTER_GUARDED ?? "collect";
-          assert.ok([...trials.map(t=>t.arm),"pair","collect"].includes(next));
+        const next = trials[ordinal + 1]?.arm ?? process.env.DX_BM1_AFTER_GUARDED ?? "collect";
+        assert.ok([...trials.map(t=>t.arm), "pair", "collect"].includes(next));
         writeFileSync(statusFile, "item=" + arm + " state=running since=" + stamp(Date.now()) + " next=" + next + "\n", {flag: "wx"});
         chmodSync(statusFile, 0o644);
         renameSync(statusFile, join(root, "STATUS"));
@@ -290,6 +290,7 @@ if (mode === "--plan") {
           rawSha256: sha(readFileSync(join(out, "act1-sweep.json"))),
         };
         writable(join(output, arm + "-w" + workers + ".json"), verified);
+        if (batchOwner && !existsSync(join(output, arm + ".json"))) writable(join(output, arm + ".json"), verified);
         writable(join(out, "act1-verified.json"), verified);
         results.push(result);
       } catch (error) {
@@ -305,8 +306,9 @@ if (mode === "--plan") {
         );
       }
     }
-    assert.equal(results.length,trials.length,"Incomplete guarded activation series");
-    writable(join(output, "comparison.json"), { results, workerFinding: workerFinding(results) });
+    assert.equal(results.length, trials.length, "Incomplete guarded activation series");
+    writable(join(output, "comparison.json"), batchOwner ? results : { results, workerFinding: workerFinding(results) });
+    if (batchOwner) writable(join(output, "worker-finding.json"), { workerFinding: workerFinding(results) });
     console.log(JSON.stringify({ output, results }, null, 2));
   } finally {
     if (lock !== undefined) closeSync(lock);

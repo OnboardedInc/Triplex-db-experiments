@@ -1,3 +1,9 @@
+import {
+  readErasure,
+  recheckErasure,
+  verifySameErasureAuthority,
+  withErasure,
+} from "../../../bench/lib/datomic-erasure.ts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { setImmediate as yieldTurn, setTimeout as sleep } from "node:timers/promises";
@@ -95,6 +101,9 @@ export class Relay {
       previous: hash([source.prefix, t.epoch, "receiver-genesis"]),
     };
     if (cur.event > Math.min(opts.through ?? t.sequence, t.sequence)) return false;
+    const authority = await readErasure(source.store);
+    const sourceSequence = authority?.seq;
+    if (authority) verifySameErasureAuthority(source.store, this.sink.store);
     const [e, erasure] = await Promise.all([
       a.event(cur.event, sourceAt),
       source.get<number>("erasure", sourceAt),
@@ -103,18 +112,30 @@ export class Relay {
       e.value.epoch === t.epoch && e.value.parent === cur.parent,
       "Missing original publication",
     );
-    const census = a.censusFor(e);
-    const ids = await memberRange(source, census, cur.start, e.at, this.pages);
-    const size = census.count;
+    const selectionStart = performance.timeOrigin + performance.now();
+    const selected = await a.select(e, state, at, sourceAt, cur.start);
+    const known =
+      selected.coverage?.ids ??
+      (e.value.selection.kind === "subjects" ? e.value.selection.ids : undefined);
+    const ids = known
+      ? known.slice(cur.start, cur.start + this.pages * width)
+      : await memberRange(source, e.value.census, cur.start, e.at, this.pages);
+    const size = known?.length ?? e.value.census.count;
     assert.equal(ids.length, Math.min(this.pages * width, size - cur.start));
+    a.budget?.mark("range-select", selectionStart);
+    // [DX-STG1] Why: resume the persisted range at its own offset, even when
+    // the in-memory copy is gone. Rejected: switching to a census offset.
+    const copied =
+      erasure.value === 0 && selected.coverage ? a.inputs.releaseCopy?.results(e, ids) : undefined;
     const ledger = (s: string) => "ledger:" + s;
     const old = await state.rows<string>(ids.map(ledger), at);
     const ops = [] as ReturnType<Documents["change"]>;
+    if (selected.write) ops.push(selected.write);
     const deliveries: W0.Delivery[] = [];
     const start = performance.now();
     try {
       // [DX-STG1] Why: overlap at most two pinned native pages and fold them in census order, leaving an admission opportunity before each pair. Rejected: firing an entire account's reads at the foreground gateway.
-      const interval = this.readIntervalMs;
+      const interval = selected.coverage ? 0 : this.readIntervalMs;
       const quantum = interval ? 16 : 2 * width;
       for (let i = 0; i < ids.length; i += quantum) {
         if (interval) {
@@ -125,14 +146,22 @@ export class Relay {
             a.budget?.mark("read-pacing", began);
           }
         }
-        await opts.grant?.();
+        if (!copied) await opts.grant?.();
         this.lastRead = performance.now();
         const groups = (
           interval
             ? [ids.slice(i, i + quantum)]
             : [ids.slice(i, i + width), ids.slice(i + width, i + 2 * width)]
         ).filter((g) => g.length);
-        const records = await Promise.all(groups.map((group) => a.work(e, group, sourceAt)));
+        let offset = i;
+        const records = copied
+          ? groups.map((group) => {
+              const work = copied.slice(offset, offset + group.length);
+              offset += group.length;
+              return work;
+            })
+          : await Promise.all(groups.map((group) => a.work(e, group, sourceAt)));
+        const fold = performance.timeOrigin + performance.now();
         for (const [j, group] of groups.entries())
           for (const [k, s] of group.entries()) {
             const prev = old.get(ledger(s)),
@@ -149,6 +178,7 @@ export class Relay {
               ops.push(...state.change(ledger(s), prev, pack(result.state.items)));
             deliveries.push(...result.deliveries);
           }
+        a.budget?.mark("publish-and-pack", fold);
       }
     } catch (error) {
       if ((await source.get<number>("erasure", await source.head())).id !== erasure.id)
@@ -158,6 +188,7 @@ export class Relay {
     // [DX-STG1] Why: erasure seals the historical work before destroying its evidence. If it moved during our reads, repeat at the new barrier. After this check a later erasure can only preserve the already-computed debt. Rejected: a cross-database source CAS that would put every batch back on the live write queue.
     if ((await source.get<number>("erasure", await source.head())).id !== erasure.id)
       throw new Conflict("Erasure changed during evaluation");
+    if (sourceSequence !== undefined) await recheckErasure(source.store, sourceSequence);
     const through = cur.start + ids.length,
       done = through === size;
     const next: Cursor = {
@@ -169,6 +200,7 @@ export class Relay {
     let packet: Packet | undefined;
     if (deliveries.length) {
       packet = {
+        ...(sourceSequence === undefined ? {} : { erasureSeq: sourceSequence }),
         epoch: t.epoch,
         account: source.prefix,
         batch: cur.batch + 1,
@@ -190,19 +222,33 @@ export class Relay {
     await opts.grant?.();
     const apply = performance.now();
     try {
+      const receiverStart = performance.timeOrigin + performance.now();
       if (packet) {
         if (
-          !(await receiveOrdered(this.sink, source.prefix, packet, next.previous, undefined, {
-            binding,
-            ops,
-            checks,
-          }))
+          !(await receiveOrdered(
+            this.sink,
+            source.prefix,
+            packet,
+            next.previous,
+            undefined,
+            {
+              binding,
+              ops,
+              checks,
+            },
+            sourceSequence === undefined ? undefined : () => readErasure(source.store),
+          ))
         )
           return true;
         a.budget?.packet(packet);
       } else {
-        await state.commit("checkpoint:" + cur.event + ":" + cur.start, binding, ops, checks);
+        await withErasure(
+          sourceSequence,
+          () => state.commit("checkpoint:" + cur.event + ":" + cur.start, binding, ops, checks),
+          authority?.database,
+        );
       }
+      a.budget?.mark("receiver-service", receiverStart);
     } catch (error) {
       if (error instanceof assert.AssertionError) {
         const settled = await state.row<Cursor>("cursor", await state.head());
@@ -218,11 +264,18 @@ export class Relay {
     this.metrics.receiverMs += performance.now() - apply;
     this.metrics.sinkWrites++;
     this.metrics.visits++;
-    this.metrics.evaluations += ids.length;
+    if (selected.write) {
+      this.metrics.certified++;
+      this.metrics.selectionEvaluations += selected.coverage!.evaluated;
+    } else if (cur.start === 0 && e.value.kind === "reconcile") this.metrics.fallback++;
+    this.metrics.evaluations += copied ? 0 : ids.length;
     if (packet) {
       this.metrics.packets++;
       this.metrics.deliveries += deliveries.length;
+      const ack = performance.timeOrigin + performance.now();
       await opts.afterReceive?.(packet);
+      this.metrics.ackMs += performance.timeOrigin + performance.now() - ack;
+      a.budget?.mark("effect-ack", ack);
     }
     return true;
   }

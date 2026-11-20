@@ -1,3 +1,4 @@
+import { liveWindows, type PeakAlignment } from "./deep-live.ts";
 import assert from "node:assert/strict";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import {
@@ -15,6 +16,9 @@ const blank = () => ({
   commit: new Histogram(),
   read: new Histogram(),
   feed: new Histogram(),
+  offered: 0,
+  fullOffered: 0,
+  fullExpired: 0,
   acked: 0,
   expired: 0,
   failed: 0,
@@ -39,6 +43,7 @@ export function tenantObservations(
 ) {
   const result = phases.map((p) => ({
     name: p.name,
+    start: p.start,
     from: Math.min(p.end, p.start + settleMs),
     to: p.end,
     by: new Map(accounts.map((a) => [a.key, blank()])),
@@ -58,9 +63,17 @@ export function tenantObservations(
     if (w.stream !== "background" || w.resend) continue;
     const account = accountOfSubject(accounts, w.subject);
     assert(w.tenant === account.index);
+    const full = result
+      .find((p) => w.scheduledAt >= p.start && w.scheduledAt < p.to)
+      ?.by.get(account.key);
+    if (full) {
+      full.fullOffered++;
+      if (w.expired) full.fullExpired++;
+    }
     const population = result
       .find((p) => w.scheduledAt >= p.from && w.scheduledAt < p.to)
       ?.by.get(account.key);
+    if (population) population.offered++;
     if (w.expired || w.outcome !== "committed") {
       if (population) {
         population.failed++;
@@ -101,6 +114,7 @@ export function tenantObservations(
     },
     windows: result.map((p) => ({
       name: p.name,
+      start: p.start,
       from: p.from,
       to: p.to,
       accounts: Object.fromEntries(
@@ -123,12 +137,20 @@ export function compareTenants(
   data: Observations[],
   all: readonly Account[],
   invalid: string | null,
+  alignment?: PeakAlignment,
 ) {
   assert(data.length);
   const names = data[0]!.windows.map((p) => p.name);
   assert(data.every((x) => JSON.stringify(x.windows.map((p) => p.name)) === JSON.stringify(names)));
   const sentinel = "account-001";
+  const geometry = alignment ? liveWindows(alignment) : undefined;
+  if (geometry)
+    assert.deepEqual(
+      names,
+      geometry.map((w) => w.name),
+    );
   let alone: Series | undefined;
+  let baselineFault = false;
   const windows = names.map((name, i) => {
     const first = data[0]!.windows[i]!,
       by: Record<string, Series> = {};
@@ -145,8 +167,18 @@ export function compareTenants(
     const metrics = Object.fromEntries(
       Object.entries(by).map(([a, b]) => {
         for (const k of keys) summed[k].merge(Histogram.fromJSON(b[k]));
-        for (const k of ["acked", "failed", "expired", "incorrectReads", "missingFeed"] as const)
-          summed[k] += b[k];
+        for (const k of [
+          "fullOffered",
+          "fullExpired",
+          "offered",
+          "acked",
+          "failed",
+          "expired",
+          "incorrectReads",
+          "missingFeed",
+        ] as const)
+          summed[k] +=
+            b[k] ?? (k === "offered" ? Histogram.fromJSON(b.commit).count + b.failed : 0);
         const percentiles = Object.fromEntries(
           keys.map((k) => [k, quantile(b, k, name + "/" + a + "/" + k)]),
         );
@@ -170,6 +202,9 @@ export function compareTenants(
         return [
           a,
           {
+            fullOffered: b.fullOffered,
+            fullExpired: b.fullExpired,
+            offered: b.offered,
             acked: b.acked,
             failed: b.failed,
             expired: b.expired,
@@ -188,11 +223,19 @@ export function compareTenants(
         ];
       }),
     );
-    if (i === 0) alone = by[sentinel];
+    if (i === 0) {
+      alone = by[sentinel];
+      baselineFault = !!(
+        baselineFault ||
+        summed.failed ||
+        summed.incorrectReads ||
+        summed.missingFeed
+      );
+    }
     const quiet = by[sentinel]!,
       faults =
         invalid ||
-        (summed.failed || summed.incorrectReads || summed.missingFeed
+        (baselineFault || summed.failed || summed.incorrectReads || summed.missingFeed
           ? "incomplete operations, feed or reads"
           : null);
     const ratios = keys.map((k) => ({
@@ -216,6 +259,19 @@ export function compareTenants(
       from: first.from,
       to: first.to,
       seconds,
+      fullOffered: summed.fullOffered,
+      fullExpired: summed.fullExpired,
+      fullOfferedPerS: summed.fullOffered / ((first.to - (first.start ?? first.from)) / 1000),
+      offered: summed.offered,
+      expired: summed.expired,
+      failed: summed.failed,
+      offeredPerS: seconds > 0 ? summed.offered / seconds : null,
+      ...(geometry
+        ? {
+            sentinelRate: geometry[i]!.rates![0],
+            nominalOfferedPerS: geometry[i]!.rates!.reduce((a, b) => a + b, 0),
+          }
+        : {}),
       acked: summed.acked,
       sustainedCommitsPerS: seconds > 0 ? summed.acked / seconds : null,
       ratios,
@@ -238,6 +294,18 @@ export function compareTenants(
   );
   return {
     windows,
+    ...(alignment
+      ? {
+          loadBoundary: invalid
+            ? {
+                lowestObservedFailure: null,
+                highestLowerObservedWithinBar: null,
+                unjudged: invalid,
+              }
+            : liveBoundary(windows),
+          ninePeakQuiet: pooledQuietPeaks(windows, invalid),
+        }
+      : {}),
     firstQuietMiss: quietMiss
       ? {
           name: quietMiss.name,
@@ -256,4 +324,75 @@ export function compareTenants(
         }
       : null,
   };
+}
+
+// [DX-SCALE1] Why: the lowest observed failing offered rate and the highest lower observed keeping pace bracket the limit. Rejected: extrapolating capacity from a clipped p99 or calling the busiest tenant quiet.
+export function liveBoundary(
+  windows: {
+    name: string;
+    offered: number;
+    expired: number;
+    failed: number;
+    offeredPerS: number | null;
+    fullOfferedPerS?: number;
+    fullExpired?: number;
+    sustainedCommitsPerS: number | null;
+    sentinelRate?: number;
+    nominalOfferedPerS?: number;
+    ratios: { pass: boolean | null; id: string }[];
+  }[],
+) {
+  const points = windows
+    .filter((w) => w.name !== "alone" && w.offered > 0 && w.offeredPerS !== null)
+    .map((w) => ({
+      window: w.name,
+      offeredPerS: w.fullOfferedPerS ?? w.offeredPerS!,
+      nominal: w.nominalOfferedPerS,
+      ackPerS: w.sustainedCommitsPerS,
+      expired: w.fullExpired ?? w.expired,
+      failed: w.failed,
+      quiet: w.sentinelRate === 3.5,
+      quietMiss: w.sentinelRate === 3.5 && w.ratios.some((r) => r.pass === false),
+      quietMet: w.sentinelRate === 3.5 && w.ratios.every((r) => r.pass === true),
+    }))
+    .sort((a, b) => a.offeredPerS - b.offeredPerS);
+  const first = points.find((p) => p.expired > 0 || p.quietMiss) ?? null;
+  const lower =
+    points
+      .filter((p) => p.failed === 0 && p.quietMet && (!first || p.offeredPerS < first.offeredPerS))
+      .at(-1) ?? null;
+  return { lowestObservedFailure: first, highestLowerObservedWithinBar: lower };
+}
+
+function pooledQuietPeaks(
+  windows: {
+    name: string;
+    accounts: Record<string, any>;
+    quietHistograms: Record<string, any>;
+    expired: number;
+    failed: number;
+    ratios: { status: string }[];
+  }[],
+  invalid: string | null,
+) {
+  const baseline = windows[0]!,
+    repeats = windows.filter((w) => /^nine-peak-[123]$/.test(w.name));
+  assert(baseline.name === "alone" && repeats.length === 3);
+  return keys.map((key) => {
+    const merged = new Histogram();
+    for (const w of repeats) merged.merge(Histogram.fromJSON(w.quietHistograms[key]));
+    const dirty = [baseline, ...repeats].some(
+      (w) => w.failed || Object.values(w.accounts).some((a) => a.incorrectReads || a.missingFeed),
+    );
+    return ratioBar(
+      "deep-live/nine-peak/" + key,
+      histogramDistribution(merged, clock[key]),
+      histogramDistribution(Histogram.fromJSON(baseline.quietHistograms[key]), clock[key]),
+      1.25,
+      {
+        minimum: key === "commit" ? 500 : 1,
+        invalid: invalid ?? (dirty ? "incomplete quiet or neighbor observations" : null),
+      },
+    );
+  });
 }

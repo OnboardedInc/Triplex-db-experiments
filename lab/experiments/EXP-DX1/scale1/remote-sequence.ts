@@ -5,6 +5,7 @@ import path from "node:path";
 import { execFileSync, spawnSync } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
+import { validatePreflight } from "../act2/preflight-runner.ts";
 const root = "/var/tmp/triplex-scale1";
 const experiment = "lab/experiments/EXP-DX1/scale1/bench.ts";
 const read = (f: string) => JSON.parse(fs.readFileSync(f, "utf8"));
@@ -22,6 +23,8 @@ type Step = {
   sizingChoices?: string[];
   when?: { tag: string; action: "live" | "seed-only" };
   retryOf?: string;
+  groupControl?: string;
+  live?: "staggered" | "coincident";
   bootstrapCache?: string;
 };
 type Plan = { label: string; steps: Step[]; final: boolean };
@@ -65,11 +68,20 @@ function identified(step: Step) {
     step.seedImage,
     step.sizing,
     step.retryOf,
+    step.groupControl,
     step.when?.tag,
     ...(step.sizingChoices ?? []),
   ])
     if (tag) assert(safe(tag));
   if (step.layout) assert(step.item >= 3 && ["pooled", "separate"].includes(step.layout));
+  if (step.live)
+    assert(
+      step.item === 3 &&
+        step.mode === "interference" &&
+        ["staggered", "coincident"].includes(step.live),
+    );
+  if (step.groupControl)
+    assert(step.item === 3 && step.mode === "interference" && step.layout === "pooled");
   if (step.bootstrapCache) assert(sha(step.bootstrapCache));
 }
 async function prepare(step: Step) {
@@ -145,9 +157,11 @@ async function run(step: Step) {
     const sizing =
       step.sizing ?? step.sizingChoices?.find((t) => exists(path.join(root, t, "sizing.json")));
     const opts = [
+      ...(step.live ? ["--profile", "deep-live", "--peak-alignment", step.live] : []),
       ...(step.layout ? ["--account-layout", step.layout] : []),
       ...(step.baseline ? ["--baseline", step.baseline] : []),
       ...(step.seedImage ? ["--seed-image", step.seedImage] : []),
+      ...(step.groupControl ? ["--group-control", step.groupControl] : []),
       ...(sizing ? ["--sizing", sizing] : []),
     ];
     const args = [
@@ -182,7 +196,9 @@ async function run(step: Step) {
       a.mode === step.mode &&
       a.source === step.source &&
       a.tag === step.tag &&
-      a.layout === step.layout,
+      a.layout === step.layout &&
+      a.live === step.live &&
+      a.groupControl === step.groupControl,
   );
   state({ stage: "running", step, ceilingUTC: new Date(a.at + a.ceiling * 1000).toISOString() });
   await wait(
@@ -200,24 +216,46 @@ async function run(step: Step) {
       t.cleanup === true,
   );
   await wait(() => ["inactive", "failed"].includes(unitState(unit)), Date.now() + 180000);
+  if (a.item >= 2 && a.spec.people * a.spec.scopes >= 100000 && t.service === "success") {
+    const proof = read(path.join(base, "transfer/preflight.json"));
+    const binding = { source: a.source, slot: a.slot, nonce: a.nonce };
+    validatePreflight(proof, binding);
+    const disk = read(path.join(base, "transfer/preflight-disk.json"));
+    assert.deepEqual(disk.binding, binding);
+    assert(disk.before.at >= a.at && disk.after.at >= disk.before.at);
+  }
   let verified = t.scopeReports === a.spec.scopes;
   if (step.mode === "seed" && exists(path.join(base, "seed-disk.json"))) {
     const d = read(path.join(base, "seed-disk.json")),
       state = read(path.join(base, "partial.json"));
     const actual = state.scopes ?? [];
+    const tenantSeed = [3, 5].includes(a.item) && a.layout === "pooled";
+    const study = a.item === 3 ? "interference" : "million";
     const pins = read(
       path.join(
         root,
         "build-" + a.source,
-        "repository/lab/experiments/EXP-DX1/scale1/profile.json",
+        "repository/lab/experiments/EXP-DX1/scale1/" +
+          (tenantSeed ? "tenant-seeds.json" : "profile.json"),
       ),
     );
     verified =
       state.tag === a.tag &&
       actual.length > 0 &&
+      actual.length === a.capacity.seedScopeLimit &&
       actual.every((r: any) => {
         if (!/^s[0-9]+$/.test(r.scope)) return false;
         const seed = read(path.join(base, "transfer", r.scope, "seed-observed.json"));
+        if (tenantSeed)
+          assert.deepEqual(seed.identity.tenant, {
+            study,
+            topology: "pooled",
+            physical: 0,
+          });
+        else assert.equal(seed.identity.tenant, undefined);
+        const expected = tenantSeed
+          ? pins[study + "/pooled/0"]
+          : pins.find((p: any) => p.people === r.people)?.population;
         return (
           r.status === "SEEDED" &&
           r.facts > 0 &&
@@ -227,7 +265,8 @@ async function run(step: Step) {
           seed.identity.slot === a.slot &&
           seed.identity.account === Number(r.scope.slice(1)) &&
           seed.seed.people === r.people &&
-          seed.seed.sha256 === pins.find((p: any) => p.people === r.people)?.population
+          r.people === a.spec.people &&
+          seed.seed.sha256 === expected
         );
       }) &&
       actual.reduce((n: number, r: any) => n + r.facts, 0) === d.facts &&
@@ -267,6 +306,8 @@ async function run(step: Step) {
       summary.nonce === a.nonce &&
       summary.slot === a.slot &&
       summary.scopeCount === a.spec.scopes &&
+      summary.perScope.length === a.spec.scopes &&
+      new Set(summary.perScope.map((s: any) => s.account)).size === a.spec.scopes &&
       summary.perScope.every((s: any) => {
         const o = s.observations;
         assert(Number.isInteger(s.account) && s.account >= 0 && s.account < a.spec.scopes);
@@ -275,14 +316,33 @@ async function run(step: Step) {
         );
         assert.equal(createHash("sha256").update(bytes).digest("hex"), s.hashes.report);
         const run = JSON.parse(bytes.toString("utf8"));
+        // [DX-SCALE1] Why: a deadline witnessed for a planned field save answers the capacity question while correctness still covers all ACKs, reads and feed effects. Rejected: calling missing offers, unbound losses or an oracle failure a saturation result.
+        const expiredLoad =
+          !!step.live &&
+          run.deep?.identity?.tenant?.live === step.live &&
+          summary.profile === "deep-live/1" &&
+          Number.isSafeInteger(o.expired) &&
+          o.expired > 0 &&
+          o.missing === 0 &&
+          o.committed + o.expired === o.primaries &&
+          run.writer?.expired === o.expired &&
+          run.writer?.pendingAtEnd === 0;
+
         return (
           run.status === "DONE" &&
           !run.finalizationErrors?.length &&
           !run.invalidReasons?.length &&
           s.invalid.every(
             (r: string) =>
-              r === "Attempt did not finish every check or a load generator saturated" &&
-              run.client?.invalid,
+              (r === "Attempt did not finish every check or a load generator saturated" &&
+                run.client?.invalid) ||
+              (expiredLoad &&
+                r ===
+                  "0 missing offers, " +
+                    o.expired +
+                    " unsuccessful primaries, " +
+                    o.expired +
+                    " expired"),
           ) &&
           o.correctness.reads > 0 &&
           o.correctness.reads === o.correctness.correct &&
@@ -295,10 +355,12 @@ async function run(step: Step) {
           o.oracle.reads > 0 &&
           o.oracle.reads === o.oracle.modelCorrectOnSameReads &&
           o.missing === 0 &&
-          o.committed === o.primaries
+          (o.committed === o.primaries || expiredLoad)
         );
       })
-    : t.scopeReports === 0;
+    : verified &&
+      t.scopeReports === 0 &&
+      (step.mode === "seed" || exists(path.join(base, "database-limit.json")));
   return {
     success: t.service === "success" && verified && correctness,
     capacity: t.service === "capacity-refused",
@@ -307,6 +369,28 @@ async function run(step: Step) {
     correctness,
     invalid: summary?.invalid,
   };
+}
+// [DX-SCALE1] Why: a reader fix needs a fresh zero on the same source; both attempts remain in the item's failure count. Rejected: comparing different revisions or letting another item bypass a failure.
+export function resumesItem(failed: Step, retry: Step, next?: Step) {
+  if (
+    retry.item !== failed.item ||
+    retry.layout !== failed.layout ||
+    retry.live !== failed.live ||
+    retry.retryOf !== failed.tag
+  )
+    return false;
+  if (retry.mode === failed.mode) return true;
+  return (
+    failed.mode === "reader" &&
+    retry.mode === "zero" &&
+    retry.source !== failed.source &&
+    next?.item === retry.item &&
+    next.mode === "reader" &&
+    next.layout === retry.layout &&
+    next.source === retry.source &&
+    next.baseline === retry.tag &&
+    next.retryOf === failed.tag
+  );
 }
 // [DX-SCALE1] Why: each phase must survive a disconnected Mac, release its systemd cgroup and retain an independently identifiable terminal attempt. Rejected: a background SSH stream or proceeding after a second failed experiment.
 async function main() {
@@ -335,7 +419,7 @@ async function main() {
       if (
         !last.success &&
         !last.capacity &&
-        (step.item !== last.item || step.mode !== last.mode || step.retryOf !== last.tag)
+        !resumesItem(last, step, p.steps[p.steps.indexOf(step) + 1])
       ) {
         state({ stage: "first-failure-needs-retry", item: last.item, ledger });
         process.exitCode = 1;

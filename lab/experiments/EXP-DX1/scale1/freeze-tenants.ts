@@ -12,9 +12,9 @@ import { tenantPlan, tenantWindows } from "./tenant-traffic.ts";
 // [DX-SCALE1] Why: freeze ordered seed contents separately from each account's offers and each arm's exact reader schedule. Rejected: building an expected digest from the measured attempt at startup.
 const modes: Record<TenantStudy, string[]> = {
   smoke: ["interference"],
-  interference: ["interference"],
+  interference: ["interference", "seed"],
   small: ["small"],
-  million: ["zero", "reader", "activation"],
+  million: ["zero", "reader", "activation", "seed"],
 };
 const choice = process.argv[2] ?? "check";
 assert(["check", "write", "check-offers", "write-windows"].includes(choice));

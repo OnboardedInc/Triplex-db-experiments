@@ -1,6 +1,7 @@
 (ns triplex.gateway.query
   (:require [datomic.api :as d] [triplex.gateway.canonical :as canonical] [triplex.gateway.codec :as codec]
-            [triplex.gateway.storage :as storage]))
+            [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean]
+            [triplex.gateway.lean-query :as lean-query] [triplex.gateway.storage :as storage]))
 
 ;; [EXP-DA01] Why: scalar channels preserve Triplex families without numeric text coercion. Rejected: native recursive rules and unrestricted classpath functions.
 (defn scalar [db eid]
@@ -40,13 +41,28 @@
     (if (every? safe-clause? where) :f/subject :f/live)))
 (defn encode [v]
   (codec/encode-value (cond (integer? v) "long" (number? v) "double" (boolean? v) "bool" :else "string") v))
+(defn lean-run [name db query input timeout]
+  (let [rewritten (lean-query/prepare query) deadline (+ (System/nanoTime) (* timeout 1000000))]
+    (admission/execute admission/reads
+      (fn []
+        (let [source (lean-query/relation name db rewritten (get input "basis") deadline)
+              remaining (quot (- deadline (System/nanoTime)) 1000000)]
+          (when-not (pos? remaining) (lean-query/input-budget!))
+          (d/query {:query rewritten :args [source (get input "relations" [])] :timeout remaining}))))))
 (defn run [name current input]
+  (when (and (not lean-query/enabled) (lean/enabled? (or current (storage/held-db name (get input "handle")))))
+    (lean/unsupported! "q"))
   (let [query (canonical/parse (get input "edn"))
         timeout (long (get input "timeoutMs" 5000))
         _ (when-not (<= 1 timeout 30000) (codec/invalid "Query timeout out of bounds"))
         db (storage/read-db name current input)
         route (query-route query)
         _ (storage/assert-subject-route! db (get input "basis") route)
-        result (d/query {:query query :args [db (get input "relations" [])] :timeout timeout})]
+        lean? (lean/enabled? db)
+        result (if lean?
+                 (lean-run name db query input timeout)
+                 (d/query {:query query :args [db (get input "relations" [])] :timeout timeout}))]
     (when (> (count result) 100000) (codec/invalid "Query row budget exceeded"))
+    (when (and lean? (some lean-query/logical-id? (mapcat identity result)))
+      (lean-query/unsupported! "a stable Triplex identity projection instead of a physical Datomic entity number"))
     {:route (if (= route :f/live) "live" "history") :rows (mapv #(mapv encode %) result)}))

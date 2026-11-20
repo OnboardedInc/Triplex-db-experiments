@@ -29,7 +29,8 @@ test('pool admits the two dev engines when only they run', () => {
 });
 
 test('pool counts external research probes and refuses with their names', () => {
-  const running = [{ name: 'tx2-probe-r7', running: true, memBytes: 5 * GiB }, { name: 'tx2-probe-r8', running: true, memBytes: 5 * GiB }];
+  const halfPool = Math.ceil(config.pool.memLimitBytes / 2);
+  const running = [{ name: 'tx2-probe-r7', running: true, memBytes: halfPool }, { name: 'tx2-probe-r8', running: true, memBytes: halfPool }];
   const verdict = lib.admission({ config, reservations: [], running, request: { container: 'tx2-xtdb-dev', memBytes: 3 * GiB, diskForecastBytes: GiB }, diskUsedBytes: 0 });
   assert.equal(verdict.ok, false);
   assert.match(verdict.reasons[0], /memory/);
@@ -50,9 +51,9 @@ test('a reserved container counts once even while it also runs', () => {
   assert.equal(verdict.memUsed, 3 * GiB);
 });
 
-test('disk forecast refuses past the 50 GiB used limit', () => {
+test('disk forecast refuses when both grants exceed the configured used limit', () => {
   const verdict = lib.admission({ config, reservations: [{ container: 'tx2-xtdb-dev', memBytes: GiB, diskForecastBytes: 8 * GiB, holder: 'a' }], running: [],
-    request: { container: 'tx2-xtdb-s1', memBytes: GiB, diskForecastBytes: 8 * GiB }, diskUsedBytes: 40 * GiB });
+    request: { container: 'tx2-xtdb-s1', memBytes: GiB, diskForecastBytes: 8 * GiB }, diskUsedBytes: config.pool.diskUsedLimitBytes - 10 * GiB });
   assert.equal(verdict.ok, false);
   assert.match(verdict.reasons[0], /disk/);
 });
@@ -378,7 +379,7 @@ test('Datomic addition leaves every existing slot effective-config hash unchange
   for (const lane of ['xtdb', 'qlever']) for (const [i, slot] of ['dev', 's1', 's2', 's3'].entries())
     assert.equal(effectiveConfig(config, lib.slotInfo(config, lane, slot)).sha256, expected[lane][i]);
 });
-test('Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist with an exclusive slot', async () => {
+test('Datomic resident is parkable, pins separate JVM CPUs and counts against an exclusive grant', async () => {
   const { effectiveConfig } = await import('../engine.mjs');
   const info = lib.slotInfo(config, 'datomic', 'dev');
   assert.equal(info.parkable, true);
@@ -395,9 +396,25 @@ test('Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist w
   const reservations = ['xtdb', 'qlever', 'datomic'].map(lane => {
     const s = lib.slotInfo(config, lane, 'dev'); return { container: s.container, memBytes: s.memBytes, diskForecastBytes: 0 };
   });
-  const verdict = lib.admission({ config, reservations, running: [], request: { container: 'tx2-xtdb-s1', memBytes: 3.5 * GiB, diskForecastBytes: 0 }, diskUsedBytes: 0 });
+  // [DX-THIN1] Why: test both sides of the same grant as the real pool size changes. Rejected: a fixed sum that already fits and never exercises refusal.
+  const request = { container: 'tx2-xtdb-s1', memBytes: 3.5 * GiB, diskForecastBytes: 0 };
+  const other = { container: 'tx2-other-work', memBytes: config.pool.memLimitBytes - reservations.reduce((n,r) => n + r.memBytes,0) - request.memBytes + 1, diskForecastBytes: 0 };
+  if (other.memBytes > 0) reservations.push(other);
+  const verdict = lib.admission({ config, reservations, running: [], request, diskUsedBytes: 0 });
   assert.equal(verdict.ok, false);
   assert.match(verdict.reasons.join(' '), /memory/);
+  assert.equal(lib.admission({ config, reservations: reservations.filter(r => r.container !== info.container), running: [], request, diskUsedBytes: 0 }).ok, true);
+});
+
+test('isolated Datomic runs preserve the acquired mount across both naming conventions', () => {
+  const nonce = 'a'.repeat(20), clone = structuredClone(config);
+  const slot = lib.slotInfo(clone, 'datomic', 's1', nonce);
+  assert.equal(slot.volume, slot.container + '-data-' + nonce);
+  clone.slots.datomic.s1.attemptVolumeNonce = nonce;
+  const prior = lib.slotInfo(clone, 'datomic', 's1');
+  assert.equal(prior.volume, slot.container + '-' + nonce + '-data');
+  assert.equal(prior.lockDir, slot.lockDir);
+  assert.throws(() => lib.slotInfo(clone, 'datomic', 's1', nonce), /one attempt volume/);
 });
 
 // [EXP-M01R] Why: production requires heavy.mjs around the gate; its parent permit must not deadlock an all-token lease. Rejected: testing an unwrapped lease only.
