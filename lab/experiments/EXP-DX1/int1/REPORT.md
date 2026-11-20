@@ -31,6 +31,8 @@ HASYNC1 conflicted in the HA runners, the cut cache and native error typing. The
 
 The synchronous recovery recount compares preserved account memberships and seed receipts, the withheld native receipt with its SDK retry and the first protected move's WAL witness. It binds cuts, raw offers, slot and cleanup to both new attempts on the same source. The Mac exercises one machine. Physical P9 requires two.
 
+JVM1 conflicted in the shared stack launcher. Its launch policy owns image, heap and collector selection. The merge preserves the optional prepared writer, its fixed restore path and its observation hooks. The host Java 25 suite at 1d7196814 passed 54,079 assertions with each collector. The archive binds the runtime release, pinned vendor ZIP, exact Git source, observed collector flags and both fresh outputs. The three-role Java 25 SQL launch remains outside this local gate.
+
 ## Server work
 
 Run the physical scorecard on the exact merged revision at both ages. The old frozen preflight had two exact arms. The field comparison, compatibility with the aged journal and physical age results remain open. [Earlier campaign and options](P5-EVIDENCE.md)

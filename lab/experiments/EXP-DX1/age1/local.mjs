@@ -30,7 +30,11 @@ function hashTree(dir, relative = "") {
 function stage(dir, revision, erasure) {
   const source = path.join(dir, "source");
   fs.mkdirSync(source);
-  const inputs = [experiment, "lab/bin/engine.mjs", "lab/bin/lib.mjs", "lab/bin/heavy.mjs", "lab/bin/heavy-lock.mjs",
+  // [DX-AGE1] Why: the merged engine loads the JVM policy before admitting an AGE1 slot.
+  // Rejected: binding only the top-level engine file while using different launch-policy bytes.
+  const provisioner = ["lab/bin/engine.mjs", "lab/bin/lib.mjs", "lab/bin/heavy.mjs", "lab/bin/heavy-lock.mjs",
+    "lab/config/datomic/runtime.mjs", "lab/experiments/EXP-DX1/jvm1/launch.mjs"];
+  const inputs = [experiment, ...provisioner,
     "lab/config/datomic/verification.json", "packages/datomic/gateway", "packages/datomic/src/codec-spec.json"];
   const archive = execFileSync("git", ["archive", revision, ...inputs], { cwd: REPO, maxBuffer: 16 * MiB });
   execFileSync("tar", ["-xf", "-", "-C", source], { input: archive });
@@ -40,10 +44,8 @@ function stage(dir, revision, erasure) {
     const sourceBytes = execFileSync("git", ["archive", eraseSource, ...privateModules], { cwd: REPO });
     execFileSync("tar", ["-xf", "-", "-C", source], { input: sourceBytes });
   }
-  const launcher = path.join(REPO, experiment, "local.mjs");
-  const manager = path.join(REPO, "lab", "bin", "engine.mjs");
-  for (const file of [launcher, manager, ...["lib.mjs", "heavy.mjs", "heavy-lock.mjs"].map((name) => path.join(REPO, "lab/bin", name))])
-    assert.equal(sha256(fs.readFileSync(file)), sha256(fs.readFileSync(path.join(source, path.relative(REPO, file)))), "running launcher differs from its source pin");
+  for (const file of [path.join(experiment, "local.mjs"), ...provisioner])
+    assert.equal(sha256(fs.readFileSync(path.join(REPO, file))), sha256(fs.readFileSync(path.join(source, file))), "running launcher differs from its source pin");
   return source;
 }
 

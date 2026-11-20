@@ -134,7 +134,11 @@
             (let [started (millis (.getStartTime r))]
               (when (= "RUNNING" (str (.getState r))) (clock-sample!) (.stop r))
               (.dump r (Paths/get file (make-array String 0)))
-              (let [exported (export! file process identity)]
+              ;; [DX-TAIL1] Why: the allocation reader consumes the sealed binary recording.
+              ;; Rejected: emitting an expanded text copy of every allocation sample before sealing.
+              (let [exported (if (= "1" (System/getenv "TRIPLEX_TRACE_ALLOCATION_ONLY"))
+                               {:allocationOnly true}
+                               (export! file process identity))]
                 (spit (str file "-complete.jsonl")
                   (str (json/write-str (merge identity exported {:type "jfr-complete" :role process :fileSha256 (sha256 file) :recordingStart started
                                                        :at (millis (java.time.Instant/now))})) "\n")))))

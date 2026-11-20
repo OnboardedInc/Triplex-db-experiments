@@ -120,9 +120,20 @@ PY_DATOMIC
 docker pull --platform "linux/$arch" node:22.23.2-bookworm-slim
 docker pull --platform "linux/$arch" postgres:17-alpine
 build_hash=$(sha256sum "$work/results/IMAGE-INPUTS.SHA256SUMS" | cut -d' ' -f1)
-node lab/bin/heavy.mjs --label DX-T1-native-image -- docker build --platform "linux/$arch" --build-arg "BUILD_INPUTS_SHA256=$build_hash" -t tx2-datomic:1.0.7745-da00 "$work/image"
-docker image inspect tx2-datomic:1.0.7745-da00 node:22.23.2-bookworm-slim postgres:17-alpine > "$work/results/images.json"
-[[ $(docker image inspect --format '{{.Architecture}}' tx2-datomic:1.0.7745-da00) == "$arch" ]] || exit 2
+# [DX-JVM1] Why: a prepared checkout can compare both JREs against the same signed vendor archive.
+# Rejected: replacing the Java 21 tag before the matched comparison.
+java_tag() { DX_JAVA=$1 node lab/config/datomic/runtime.mjs "$2"; }
+[[ ${DX_JAVA:-21} == 21 || $DX_JAVA == 25 ]]
+majors=(21)
+[[ ${DX_JAVA:-21} != 25 ]] || majors+=(25)
+images=(node:22.23.2-bookworm-slim postgres:17-alpine)
+for major in "${majors[@]}"; do
+  tag=$(java_tag "$major" tag)
+  node lab/bin/heavy.mjs --label "DX-T1-native-image-$major" -- docker build --platform "linux/$arch"     --build-arg "BUILD_INPUTS_SHA256=$build_hash" --build-arg "DATOMIC_BASE=$(java_tag "$major" base)"     --build-arg "DATOMIC_JAVA_MAJOR=$major" --build-arg "DATOMIC_JAVA_VERSION=$(java_tag "$major" version)"     -t "$tag" "$work/image"
+  [[ $(docker image inspect --format '{{.Architecture}}' "$tag") == "$arch" ]]
+  images+=("$tag")
+done
+docker image inspect "${images[@]}" > "$work/results/images.json"
 lscpu > "$work/results/lscpu.txt";lsblk -o NAME,TYPE,SIZE,FSTYPE,MOUNTPOINTS > "$work/results/disks.txt"
 [[ $mode != --prepare ]] || exit 0
 export DX_COMPILER_POLICY=early DX_NATIVE_GATES=0
