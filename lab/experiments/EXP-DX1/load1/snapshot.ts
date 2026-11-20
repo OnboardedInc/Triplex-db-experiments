@@ -43,6 +43,7 @@ export class Snapshot {
     width: number,
     file: string,
     readonly adaptive?: { budgetMs: number },
+    readonly orderedStride?: number,
   ) {
     assert(comp.scopeName && comp.backend.name === "datomic");
     this.comp = comp;
@@ -57,7 +58,9 @@ export class Snapshot {
       JSON.stringify(
         adaptive
           ? [this.scope, this.source, width, "serial-budget-v1", adaptive.budgetMs]
-          : [this.scope, this.source, width],
+          : orderedStride
+            ? [this.scope, this.source, width, "ordered-pipeline-v1", orderedStride]
+            : [this.scope, this.source, width],
       ),
     );
     this.ledger = new DatabaseSync(file);
@@ -76,6 +79,19 @@ export class Snapshot {
     return this.namespace === "acct/import/"
       ? "load1/manifest/import"
       : "load1/manifest/" + sha(this.namespace);
+  }
+  frameIdentity(f: Frame) {
+    const meta = identity(this.scope, this.source, this.width, f);
+    if (!this.orderedStride) return meta;
+    const sequence = f.first / this.orderedStride;
+    assert(Number.isSafeInteger(sequence) && sequence >= 0);
+    assert.equal(f.end - f.first, this.orderedStride);
+    const commandId = `load1/pipeline-${this.binding}/${sequence}`;
+    return {
+      ...meta,
+      commandId,
+      correlationId: sha(JSON.stringify([commandId, meta.correlationId])),
+    };
   }
   private sourceFrames(first = 0, end = this.subjects) {
     if (typeof this.shape === "string") return frames(this.shape, end, this.width, first);
@@ -129,8 +145,13 @@ export class Snapshot {
     width: number,
     file: string,
     adaptive?: { budgetMs: number },
+    orderedStride?: number,
   ) {
-    const run = new Snapshot(comp, shape, subjects, width, file, adaptive);
+    assert(
+      !orderedStride ||
+        (!adaptive && typeof shape !== "string" && shape.namespace === "acct/import/"),
+    );
+    const run = new Snapshot(comp, shape, subjects, width, file, adaptive, orderedStride);
     try {
       const key = run.manifest;
       const meta = { actor: "bulk-import", commandId: key, correlationId: run.binding };
@@ -147,6 +168,7 @@ export class Snapshot {
           "Checkpoint belongs to different source or storage",
         );
       let m = await marker();
+      const existingManifest = Boolean(m);
       if (!m) {
         assert(!checkpoint, "Original destination manifest is missing");
         const out = await comp.transact([], meta);
@@ -179,7 +201,7 @@ export class Snapshot {
           assert(Number(next.value["first"]) >= f.first);
           if (Number(next.value["first"]) !== f.first) continue;
           const saved = run.entry(f)!;
-          const original = await lookup(comp, f, identity(run.scope, run.source, width, f));
+          const original = await lookup(comp, f, run.frameIdentity(f));
           assert.deepEqual(original, run.summary(saved));
           if (cursor === f.first) cursor = f.end;
           next = stored.next();
@@ -197,6 +219,17 @@ export class Snapshot {
         if (unsettled.length) run.regenerate(cursor, Number(unsettled[0]!["end"]));
       }
       run.ledger.exec("COMMIT");
+      if (orderedStride && existingManifest) {
+        // [DX-HA1] Why: settle any durable suffix before assigning a replacement HTTP send sequence.
+        // Rejected: resending a committed claim that the SDK may resolve without sending its sequence.
+        for (const frame of run.batches(run.cursor())) {
+          if (frame.first < run.cursor()) continue;
+          const meta = run.frameIdentity(frame);
+          const original = await lookup(comp, frame, meta);
+          if (!original) break;
+          run.checkpoint(frame, meta, original);
+        }
+      }
       return run;
     } catch (e) {
       run.close();
@@ -218,7 +251,7 @@ export class Snapshot {
       .get(f.first);
     if (!row) return;
     const e: Entry = JSON.parse(String(row["body"])),
-      meta = identity(this.scope, this.source, this.width, f);
+      meta = this.frameIdentity(f);
     assert.deepEqual(
       [e.first, e.end, e.facts, e.command, e.digest, e.position],
       [
@@ -246,7 +279,7 @@ export class Snapshot {
         f.end,
       );
     }
-    const meta = identity(this.scope, this.source, this.width, f);
+    const meta = this.frameIdentity(f);
     await hooks.beforeSend?.(f.first);
     const out = await this.comp
       .transact(f.operations, meta)
@@ -262,6 +295,9 @@ export class Snapshot {
       seen = original;
     }
     hooks.beforeCheckpoint?.(f.first);
+    return this.checkpoint(f, meta, seen);
+  }
+  private checkpoint(f: Frame, meta: ReturnType<typeof identity>, seen: Seen) {
     const entry: Entry = {
       first: f.first,
       end: f.end,
@@ -307,16 +343,13 @@ export class Snapshot {
   async verify(
     complete = true,
     extra?: (r: any) => void,
-    { pageSize = extra ? 8 : 1, readDepth = 1 } = {},
+    { pageSize = extra ? 8 : 1, readDepth = 1, assertionSweep = false } = {},
   ) {
     const cut = await this.comp.currentPosition(),
       byPosition = this.ledger.prepare("SELECT * FROM frames WHERE position=?");
-    const last =
-      typeof this.shape === "string"
-        ? undefined
-        : (await this.comp.feedPage(cut - 1, 1)).transactions[0];
-    if (typeof this.shape !== "string")
-      assert(last?.position === cut && Number.isFinite(last.instant));
+    const perSubject = typeof this.shape !== "string" && !assertionSweep;
+    const last = !perSubject ? undefined : (await this.comp.feedPage(cut - 1, 1)).transactions[0];
+    if (perSubject) assert(last?.position === cut && Number.isFinite(last.instant));
     const lastInstant = last?.instant as number;
     let pos = 0,
       observed = 0,
@@ -339,11 +372,43 @@ export class Snapshot {
     // Rejected: turning the feed alone into a claim-index proof or putting claim audits in the timed window.
     await windowed(verifyFrames(), this.adaptive ? 4 : readDepth, async (f) => {
       const e = this.entry(f)!;
-      const original = await lookup(this.comp, f, identity(this.scope, this.source, this.width, f));
+      const original = await lookup(this.comp, f, this.frameIdentity(f));
       assert.deepEqual(original, this.summary(e));
     });
     assert.equal(this.cursor(), expectedPrefix);
     if (complete) assert.equal(expectedPrefix, this.subjects);
+    const validAt = typeof this.shape === "string" ? SEED_VALID_FROM : this.shape.validAt;
+    const basis = { position: cut, validAt };
+    let sweepIds = new Set<string>();
+    let sweepExpected = new Map<string, string>();
+    async function flushSweep(comp: CompositionHandle) {
+      if (!sweepIds.size) return;
+      const ids = [...sweepIds];
+      const pages = Array.from({ length: Math.ceil(ids.length / 64) }, (_, j) =>
+        ids.slice(j * 64, (j + 1) * 64),
+      );
+      const observed = new Map<string, string>();
+      await windowed(pages, readDepth, async (subjects) => {
+        const page = await comp.sweepPage(subjects, basis);
+        assert.deepEqual(page.reportedBasis, basis);
+        for (const v of page.rows) {
+          if (!sweepIds.has(v.entityId)) continue;
+          const body = JSON.stringify([
+            v.entityId,
+            v.attribute,
+            v.value,
+            v.validFrom,
+            v.validTo ?? null,
+            v.position,
+          ]);
+          if (observed.has(v.id)) assert.equal(observed.get(v.id), body);
+          observed.set(v.id, body);
+        }
+      });
+      assert.deepEqual(observed, sweepExpected);
+      sweepIds = new Set();
+      sweepExpected = new Map();
+    }
     while (pos < cut) {
       const page = await this.comp.feedPage(pos, pageSize);
       assert(page.transactions.length > 0);
@@ -367,11 +432,22 @@ export class Snapshot {
         }
         const f = this.batches(Number(row["first"])).next().value as Frame;
         const e = this.entry(f)!;
-        assert.deepEqual(
-          record(f, identity(this.scope, this.source, this.width, f), r),
-          this.summary(e),
-        );
-        if (typeof this.shape !== "string") {
+        assert.deepEqual(record(f, this.frameIdentity(f), r), this.summary(e));
+        if (assertionSweep) {
+          // [DX-LOAD3] Why: batch independent reads at one exact cut after the timed window.
+          // Rejected: replacing a full typed readback with a sample when frame count rises.
+          for (const [i, o] of f.operations.entries()) {
+            assert.equal(o.op, "assert");
+            sweepIds.add(o.entityId);
+            const id = r.changes[i].tripleId;
+            assert(!sweepExpected.has(id));
+            sweepExpected.set(
+              id,
+              JSON.stringify([o.entityId, o.attribute, o.value, o.validFrom, null, e.position]),
+            );
+          }
+          if (sweepIds.size >= 512) await flushSweep(this.comp);
+        } else if (typeof this.shape !== "string") {
           const expected = new Map<string, string>(),
             observed = new Map<string, string>();
           const entities = new Set(f.operations.map((o) => o.entityId));
@@ -441,6 +517,7 @@ export class Snapshot {
         facts += f.operations.length;
       }
     }
+    await flushSweep(this.comp);
     assert.equal(marker, 1);
     assert.equal(pos, cut);
     assert.deepEqual(this.totals(), { commands: observed, facts });

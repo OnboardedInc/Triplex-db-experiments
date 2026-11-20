@@ -9,11 +9,14 @@ import { createInterface } from "node:readline";
 import { pipeline } from "node:stream/promises";
 import { Satellite } from "./satellite.ts";
 import { replayLive } from "../load1/live-evidence.ts";
+import { pacedArms } from "../load1/pacing.ts";
+import { pipelineArms, pipelineComparison } from "../load1/pipeline.ts";
 import { head, modeOf, root, runFile, supportsSingleHost } from "./common.ts";
 
 const [action, tag, layout = "two-host", extra] = process.argv.slice(2),
   mode = modeOf(action ?? "");
 assert(tag && /^[a-z][a-z0-9-]{2,40}$/.test(tag), "Expected experiment and a new attempt tag");
+assert(mode !== "native-checks");
 assert(!extra && (layout === "two-host" || (layout === "one-host" && supportsSingleHost(mode))));
 const single = layout === "one-host";
 const sites = single ? [0] : [0, 1];
@@ -29,7 +32,12 @@ assert(
       addrs.every((s) => s && /^\d+(?:\.\d+){3}$/.test(s))),
 );
 
-const hours = Number(process.env["HA1_BENCH_HOURS"] ?? 6);
+const pipelineTrial = mode === "load-pipeline";
+const pacedTrial = mode === "load-paced";
+const shortCampaign = pipelineTrial || pacedTrial;
+const hours = Number(process.env["HA1_BENCH_HOURS"] ?? (shortCampaign ? 1 : 6));
+assert(!shortCampaign || (single && hours === 1 && !process.env["HA1_PEOPLE"]));
+const deadline = Date.now() + 90 * 60_000;
 assert(Number.isInteger(hours) && hours >= 1 && hours <= 72);
 const sha = head(),
   base = "/var/tmp/triplex-ha1",
@@ -41,9 +49,10 @@ const url = execFileSync("git", ["remote", "get-url", "origin"], {
   encoding: "utf8",
 }).trim();
 assert.equal(url, "https://github.com/OnboardedInc/Triplex-db-experiments.git");
-const branch = "exp/DX-HA1-failover-move",
-  git = (...args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
-assert.equal(git("branch", "--show-current"), branch);
+const git = (...args: string[]) =>
+  execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
+const branch = git("branch", "--show-current");
+assert(["exp/DX-HA1-failover-move", "exp/DX-INT1"].includes(branch));
 assert.equal(
   git("status", "--porcelain", "--untracked-files=normal"),
   "",
@@ -54,6 +63,7 @@ const advertised = execFileSync(
   ["-c", "credential.helper=", "ls-remote", url, "refs/heads/" + branch],
   {
     encoding: "utf8",
+    timeout: 30000,
     env: {
       ...process.env,
       GIT_CONFIG_GLOBAL: "/dev/null",
@@ -89,7 +99,7 @@ const remote = async (i: number, ...args: string[]) =>
   (
     await runFile("ssh", argv(i, ["sudo", "-n", ...args]), {
       encoding: "utf8",
-      timeout: 2400000,
+      timeout: shortCampaign ? Math.max(1, Math.min(25 * 60_000, deadline - Date.now())) : 2400000,
       maxBuffer: 16 * 2 ** 20,
     })
   ).stdout.trim();
@@ -160,6 +170,11 @@ try {
         "--format",
         "{{.Id}}",
       );
+  // [DX-HA1] Why: the installation shares the server budget. Rejected: granting a fresh 90 minutes after setup.
+  const runtime = shortCampaign
+    ? Math.min(3600, Math.floor((deadline - Date.now() - 5 * 60_000) / 1000))
+    : hours * 3600;
+  assert(runtime > 0, "Server window expired before dispatch");
   const campaign = randomUUID(),
     nonces: string[] = [];
   const store = base + "/" + tag,
@@ -172,7 +187,7 @@ try {
       "--pipe",
       "--collect",
       "--unit=triplex-ha1-" + tag,
-      "--property=RuntimeMaxSec=" + hours + "h",
+      "--property=RuntimeMaxSec=" + runtime,
       "--property=KillMode=control-group",
       "--working-directory=" + src,
       bin,
@@ -275,8 +290,15 @@ try {
     copy.once("close", ok);
   });
   const file = path.join(evidence, "raw.tar.gz");
-  await pipeline(copy.stdout, createWriteStream(file, { flags: "wx" }));
-  assert.equal(await copied, 0);
+  const transferTimeout = shortCampaign
+    ? setTimeout(() => copy.kill("SIGTERM"), Math.max(1, deadline - Date.now() - 30_000))
+    : undefined;
+  try {
+    await pipeline(copy.stdout, createWriteStream(file, { flags: "wx" }));
+    assert.equal(await copied, 0);
+  } finally {
+    clearTimeout(transferTimeout);
+  }
   const digest = createHash("sha256");
   for await (const chunk of createReadStream(file)) digest.update(chunk);
   assert.equal(digest.digest("hex"), expected);
@@ -295,7 +317,7 @@ try {
   if (code === 0) {
     assert(nonces.length > 0 && nonces.length === declaration.sizes.length);
     for (const [i, nonce] of nonces.entries()) {
-      const sub = mode + "-" + nonce + "/",
+      const sub: string = mode + "-" + nonce + "/",
         attempt = member(sub + "attempt.json"),
         summary = member(sub + "observations.json"),
         clean = member(sub + "cleanup.json");
@@ -311,11 +333,36 @@ try {
       assert.equal(summary.profile.people, declaration.sizes[i]);
       assert.equal(summary.profile.capacity, layout);
       assert.deepEqual(clean, { nonce, containers: 0, networks: 0 });
-      if (supportsSingleHost(mode)) {
+      if (mode.startsWith("load-") && supportsSingleHost(mode)) {
         for (const arm of summary.result) {
           assert(/^[a-z0-9-]+$/.test(arm.arm) && arm.rate === declaration.sizes[i]);
-          replayLive(member(sub + arm.arm + ".offers.json"), attempt, arm);
+          replayLive(
+            member(sub + arm.arm + ".offers.json"),
+            attempt,
+            arm,
+            false,
+            pacedTrial ? summary.result[0]?.neighbors : undefined,
+          );
         }
+      }
+      if (shortCampaign) {
+        const order = pacedTrial ? pacedArms : pipelineArms;
+        const name = pacedTrial ? "load-paced" : "load-pipeline";
+        const bookends = [order[0]!, order.at(-1)!];
+        // [DX-HA1] Why: compare every published cell to its actual matched offers and controls.
+        // Rejected: an early two-cell observation as the complete campaign.
+        assert.deepEqual(
+          summary.result.map((r: { arm: string }) => r.arm),
+          order,
+        );
+        assert.deepEqual(
+          member(sub + name + "-early.json"),
+          pipelineComparison(summary.result.slice(0, 3), bookends),
+        );
+        assert.deepEqual(
+          member(sub + name + "-comparison.json"),
+          pipelineComparison(summary.result, bookends),
+        );
       }
     }
   }
