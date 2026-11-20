@@ -16,6 +16,15 @@ type Trial = {
 const roles = ["tx", "pg", "gw-w", "gw-r"] as const;
 const sameAttempt = (a: any, x: any) =>
   x?.source === a.source && x.slot === a.slot && x.nonce === a.nonce;
+type SeedSample = {
+  at: number;
+  scope: number;
+  persons: number;
+  commands: number;
+  facts: number;
+  bytes: number;
+  resources: Record<(typeof roles)[number], { peak: number }>;
+};
 const fmt = (v: unknown, precision = 2) =>
   typeof v === "number" && Number.isFinite(v) ? v.toFixed(precision) : "unmeasured";
 const metric = (x: any, stem: "p50" | "p99") => {
@@ -42,6 +51,100 @@ const ratio = (r: any) =>
         : "") +
       (r.pass === null ? ", descriptive" : "") +
       ")";
+
+function seedProgress(t: Trial, lines: string[]) {
+  const a = t.attempt;
+  const terminalAt = Date.parse(t.terminal.endedAt);
+  assert(Number.isFinite(terminalAt) && terminalAt >= a.at);
+  const pins = JSON.parse(
+    fs.readFileSync(
+      path.join(import.meta.dirname, a.layout === "single" ? "single-pins.json" : "pins.json"),
+      "utf8",
+    ),
+  );
+  const population = pins.items.find((p: any) => p.seed.people === a.people)?.seed.digest;
+  const scope = layoutOf(a.layout).map((accounts) => ({
+    people: accounts.length * a.people,
+    facts: accounts.length * factsFor(a.people),
+    samples: [] as SeedSample[],
+  }));
+  // [DX-SCALE1] Why: a failed seed leaves valid acknowledged progress with a measured clock.
+  // Rejected: counting projected rows as committed or using a later scope's samples as an earlier scope's throughput.
+  for (const s of t.loaderProgress?.records ?? []) {
+    const limit = scope[s.scope];
+    if (
+      !limit ||
+      !population ||
+      !sameAttempt(a, s) ||
+      s.population !== population ||
+      s.people !== a.people ||
+      s.layout !== a.layout ||
+      !Number.isFinite(s.at) ||
+      s.at < a.at ||
+      s.at > terminalAt
+    )
+      continue;
+    assert(Number.isSafeInteger(s.persons) && s.persons >= 0 && s.persons <= limit.people);
+    assert(Number.isSafeInteger(s.facts) && s.facts >= 0 && s.facts <= limit.facts);
+    assert(Number.isSafeInteger(s.commands) && s.commands >= 0);
+    const last = limit.samples.at(-1);
+    assert(
+      !last ||
+        (s.at > last.at &&
+          s.persons >= last.persons &&
+          s.facts >= last.facts &&
+          s.commands >= last.commands),
+    );
+    limit.samples.push(s);
+  }
+  const records = scope.flatMap((s) => s.samples);
+  if (!records.length) return;
+  const rate = (a: SeedSample, b: SeedSample) =>
+    a === b
+      ? "unmeasured"
+      : fmt(((b.facts - a.facts) * 1000) / (b.at - a.at)) +
+        " (n=" +
+        (b.commands - a.commands) +
+        " frames, " +
+        fmt((b.at - a.at) / 1000, 1) +
+        " s)";
+  lines.push(
+    "Loader checkpoints record acknowledged progress before the independent claim and feed verification.",
+    "",
+    "| Scope | Latest sampled people | Latest sampled facts | Early facts/s | Late facts/s | PostgreSQL GiB at last sample |",
+    "| ---: | ---: | ---: | --- | --- | ---: |",
+  );
+  for (const [i, s] of scope.entries()) {
+    const first = s.samples[0],
+      last = s.samples.at(-1);
+    if (!first || !last) continue;
+    const samples = s.samples;
+    lines.push(
+      "| " +
+        [
+          i + 1,
+          last.persons,
+          last.facts,
+          rate(first, samples[Math.min(5, samples.length - 1)]!),
+          rate(samples[Math.max(0, samples.length - 6)]!, last),
+          fmt(last.bytes / 1024 ** 3),
+        ].join(" | ") +
+        " |",
+    );
+  }
+  const peaks = roles.map((role) =>
+    Math.max(...records.map((s) => s.resources?.[role]?.peak ?? 0)),
+  );
+  lines.push(
+    "",
+    "Observed ingest cgroup peaks in GiB, from " + records.length + " progress snapshots.",
+    "",
+    "| Transactor | PostgreSQL | Write gateway | Read gateway |",
+    "| ---: | ---: | ---: | ---: |",
+    "| " + peaks.map((n) => (n > 0 ? fmt(n / 1024 ** 3) : "unmeasured")).join(" | ") + " |",
+    "",
+  );
+}
 
 function recordPredictions(dir: string, trials: Trial[]) {
   const file = path.join(dir, "PREDICTIONS.md");
@@ -194,23 +297,8 @@ export function placementReport(dir: string, trials: Trial[]) {
           " bytes per fact (one physical seed).",
         "",
       );
-      const ingest = t.loaderProgress?.records?.filter(
-        (s: any) => sameAttempt(a, s) && s.population === seed.population && s.at >= seed.started,
-      );
-      if (ingest?.length) {
-        const sampled = roles.map((role) =>
-          Math.max(...ingest.map((s: any) => s.resources?.[role]?.peak ?? 0)),
-        );
-        lines.push(
-          "Observed ingest cgroup peaks in GiB, from " + ingest.length + " progress snapshots.",
-          "",
-          "| Transactor | PostgreSQL | Write gateway | Read gateway |",
-          "| ---: | ---: | ---: | ---: |",
-          "| " + sampled.map((n) => (n > 0 ? fmt(n / 1024 ** 3) : "unmeasured")).join(" | ") + " |",
-          "",
-        );
-      }
     }
+    if (a.phase === "seed" && t.loaderProgress) seedProgress(t, lines);
     if (!d || t.terminal.service !== "success") {
       if (!seed || t.terminal.service !== "success")
         lines.push(

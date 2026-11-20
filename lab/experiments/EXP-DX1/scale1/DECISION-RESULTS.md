@@ -16,6 +16,12 @@ Terminal status exit-code. Cells with a sealed writer ledger 0. Matched decision
 
 16,245,050 current facts across 1 database(s). Ingest took 0.67 hours at 6771.32 facts/s. Exact claim and feed verification took 0.61 hours. PostgreSQL added 724.59 bytes per fact (one physical seed).
 
+Loader checkpoints record acknowledged progress before the independent claim and feed verification.
+
+| Scope | Latest sampled people | Latest sampled facts | Early facts/s | Late facts/s | PostgreSQL GiB at last sample |
+| ---: | ---: | ---: | --- | --- | ---: |
+| 1 | 97953 | 15894555 | 6765.09 (n=1089 frames, 300.6 s) | 6762.92 (n=1090 frames, 300.8 s) | 10.69 |
+
 Observed ingest cgroup peaks in GiB, from 40 progress snapshots.
 
 | Transactor | PostgreSQL | Write gateway | Read gateway |
@@ -27,6 +33,12 @@ Observed ingest cgroup peaks in GiB, from 40 progress snapshots.
 100000 deep people per account, single layout, individual writer. Source `daf289fab1bc94593a2a62f0999ceecff3600c84`. Audited write path.
 
 16,245,647 current facts across 1 database(s). Ingest took 0.69 hours at 6540.77 facts/s. Exact claim and feed verification took 0.62 hours. PostgreSQL added 723.42 bytes per fact (one physical seed).
+
+Loader checkpoints record acknowledged progress before the independent claim and feed verification.
+
+| Scope | Latest sampled people | Latest sampled facts | Early facts/s | Late facts/s | PostgreSQL GiB at last sample |
+| ---: | ---: | ---: | --- | --- | ---: |
+| 1 | 99515 | 16134995 | 6663.46 (n=1075 frames, 301.2 s) | 6324.05 (n=1020 frames, 301.1 s) | 10.82 |
 
 Observed ingest cgroup peaks in GiB, from 42 progress snapshots.
 
@@ -121,6 +133,12 @@ Cgroup peaks in GiB through each sampled cell, including that arm's restore and 
 10000 deep people per account, pooled layout, individual writer. Source `e1a3f01a7c5adcc7c017ee4363a40ed667338994`. Audited write path.
 
 16,245,050 current facts across 1 database(s). Ingest took 0.68 hours at 6598.71 facts/s. Exact claim and feed verification took 0.61 hours. PostgreSQL added 722.81 bytes per fact (one physical seed).
+
+Loader checkpoints record acknowledged progress before the independent claim and feed verification.
+
+| Scope | Latest sampled people | Latest sampled facts | Early facts/s | Late facts/s | PostgreSQL GiB at last sample |
+| ---: | ---: | ---: | --- | --- | ---: |
+| 1 | 97929 | 15887435 | 6603.04 (n=1065 frames, 301.1 s) | 6585.98 (n=1061 frames, 300.7 s) | 10.68 |
 
 Observed ingest cgroup peaks in GiB, from 41 progress snapshots.
 
