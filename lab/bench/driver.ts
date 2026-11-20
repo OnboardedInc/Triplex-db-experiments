@@ -94,6 +94,7 @@ import { SpillThread } from "./lib/spill-thread.ts";
 import { judgeReadCode, VERDICTS, wasHot } from "./lib/read-judgment.ts";
 import { ReadWindow } from "./lib/read-window.ts";
 import type { ReadWindowPlan } from "./lib/stream-reads.ts";
+import type { HistoricalFallbackThread, HistoricalMode } from "./lib/historical-fallback.ts";
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import { ReadRecords, type ObservationRecords } from "./lib/read-records.ts";
 import { checkWithOracleWorker } from "./lib/oracle-thread.ts";
@@ -193,7 +194,9 @@ if (flag("int1-guest-output")) {
 fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
 const rollingReadSmoke = flag("rolling-read-smoke");
+const rd1ReadDiagnostic = flag("rd1-read-diagnostic");
 if (rollingReadSmoke) devFlags.push("rolling-read-smoke");
+if (rd1ReadDiagnostic) devFlags.push("rd1-read-diagnostic");
 if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
 if (flag("legacy-empty-basis-broadcast")) devFlags.push("legacy-empty-basis-broadcast");
 const boundedMemoryTrial = process.env.DX_BOUNDED_MEMORY_TRIAL === "1";
@@ -222,6 +225,9 @@ const config = {
   replicaWorldCacheMiB: Number(opt("replica-world-cache-mib", "32")),
   replicaHistoryMiB: Number(opt("replica-history-mib", "64")),
   replicaHistoryCoverage: opt("replica-history-coverage", "global") as "global" | "closure",
+  historicalFallback: opt("replica-historical-fallback", "off") as HistoricalMode,
+  historicalFallbackActive: Number(opt("replica-fallback-active", "4")),
+  installedHistoryMiB: Number(opt("replica-installed-history-mib", "32")),
   replicaPeer: opt("replica-peer", "reader") as "reader" | "writer",
   // [DX-R3-P9] Why: retain the established fallback until the bounded worker passes native stress; the unbounded worker had 112 errors.
   // Rejected: promoting from zero-reader captures alone.
@@ -322,6 +328,11 @@ if (!["pending", "mixed"].includes(config.splitTarget) || !Number.isSafeInteger(
   throw Error("invalid split-target or replica-history-mib");
 if (!["global", "closure"].includes(config.replicaHistoryCoverage) || config.replicaHistoryCoverage === "closure" && config.readPath !== "replica")
   throw Error("Replica history coverage requires global, or closure with the replica reader");
+if (!["off", "lane", "batch", "revision", "install"].includes(config.historicalFallback) ||
+    !Number.isSafeInteger(config.historicalFallbackActive) || config.historicalFallbackActive < 1 || config.historicalFallbackActive > 16 ||
+    !Number.isSafeInteger(config.installedHistoryMiB) || config.installedHistoryMiB < 1 || config.installedHistoryMiB > 512 ||
+    config.historicalFallback !== "off" && (lane !== "datomic" || config.readPath !== "replica" || config.composition !== "reach" || config.sharedReaderIndex || !process.env.DATOMIC_READ_URLS))
+  throw Error("Historical fallback requires separate Datomic reach readers and the read gateway");
 if (!["reader", "writer"].includes(config.replicaPeer) || !["main", "worker"].includes(config.replicaThread)) throw Error("invalid replica peer/thread");
 if (!["loop", "fair"].includes(config.replicaYield) || !["legacy", "inline"].includes(config.replicaFeed))
   throw Error("invalid replica-yield or replica-feed control");
@@ -370,7 +381,7 @@ const report: Record<string, any> = latencyReceipt({
   qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v3: final-receipt ACK, minimum 500 commits, four-subject growth",
   verdictClock: VERDICT_CLOCK,
-  verdictPlanId: deepField ? fieldProfile : tenantSpec ? (tenantSpec.live ? liveProfile+"/"+tenantSpec.live : tenantTraceId+"/"+tenantSpec.study) : fullLength ? V3_PLAN_ID : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
+  verdictPlanId: deepField ? fieldProfile : tenantSpec ? (tenantSpec.live ? liveProfile+"/"+tenantSpec.live : tenantTraceId+"/"+tenantSpec.study) : fullLength ? V3_PLAN_ID : rd1ReadDiagnostic ? "rd1-reader-diagnostic/1" : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
   status: "RUNNING",
   startedAt: new Date().toISOString(),
   config,
@@ -462,7 +473,9 @@ const modelJournalContext = {
 const streamReads = (fullLength || rollingReadSmoke) && !config.zeroReaders && lane === "datomic" && config.readPath === "replica" &&
   config.strictRecordClocks && config.replicaThread === "worker" && config.expectedStateRetention === "worker-journal" &&
   !pairPlan && !tenantSpec && config.readRetention !== "raw";
-if (rollingReadSmoke && (!streamReads || profile !== "smoke" || !config.readerLadderOnly || !config.levelS || config.levelS <= config.settleS))
+if (rd1ReadDiagnostic && (!rollingReadSmoke || !config.levelS || config.levelS > 45))
+  throw Error("RD1 read diagnostics require the rolling smoke plan and levels no longer than 45 s");
+if (rollingReadSmoke && ((!streamReads && !(rd1ReadDiagnostic && config.zeroReaders)) || profile !== "smoke" || !config.readerLadderOnly || !config.levelS || config.levelS <= config.settleS))
   throw Error("Rolling read smoke requires the short replica ladder and its worker journal");
 let modelJournal = config.expectedStateRetention === "journal" ? new ModelJournal(modelJournalFile, modelJournalContext) : undefined;
 const modelJournalThread = config.expectedStateRetention === "worker-journal" && !streamReads ? new ModelJournalThread(modelJournalFile, modelJournalContext) : undefined;
@@ -553,6 +566,7 @@ function straddleCandidate(range?: { first: number; people: number }): { subject
 }
 const overlayCount: Record<string, number> = {};
 let feed: FeedConsumer | SideThread | null = null;
+let historicalFallback: HistoricalFallbackThread | undefined;
 let feedWind: { target: number; checkpointAtStop: number; inFlightAtFeedTarget: number } | null = null;
 const lateGrowth: { cmd: any; v: number; pending: Promise<any> }[] = [];
 let coordinate: (position: number) => any = (position) => ({ stream: "unknown", epoch: 0, offset: position, ordinal: 0 });
@@ -560,6 +574,7 @@ let coordinate: (position: number) => any = (position) => ({ stream: "unknown", 
 function main() {
   return run().catch((error) => {
     void flushTracing();
+    void historicalFallback?.close();
     report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
     report.status = "ERROR";
     report.error = String(error?.stack ?? error);
@@ -762,6 +777,13 @@ async function run() {
   // [DX-INT1] Why: six reading workers own their demand sets, while the independent sender receipt worker retains its ordered capture and fallback.
   // Rejected: handing all six a population image, or routing receipt observation back through the sender.
   const demandReaders = config.composition === "reach-touched";
+  if (!config.zeroReaders && config.historicalFallback !== "off" && !demandReaders) {
+    const { HistoricalFallbackThread } = await import("./lib/historical-fallback.ts");
+    historicalFallback = new HistoricalFallbackThread({ mode: config.historicalFallback,
+      scope: String(runtimeApi.DatabaseScope.test(scopeName)), endpoint: process.env.DATOMIC_READ_URLS!.split(",")[0]!, active: config.historicalFallbackActive });
+    if ((await historicalFallback.snapshot()).requested !== 0)
+      throw Error("Historical fallback lane handled a request before reader startup");
+  }
   const afterReaderImages = Boolean(deep && !demandReaders && !config.zeroReaders && !config.sharedReaderIndex && pairPlan?.readers !== 0);
   const replicaHost = config.readPath === "replica" ? config.replicaThread === "worker"
     ? await (await import("./lib/replica-thread.ts")).ReplicaThread.open({ scope: scopeName, appliedLogPath: spill ? `${spill.directory}-copy-applied.jsonl` : undefined,
@@ -795,7 +817,8 @@ async function run() {
       return remote.pull(root, basis);
     };
   }
-  const workerCfg = (w: number) => ({ deep, replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, traceEvery: config.readerTraceEvery, replicaHistoryMiB: config.replicaHistoryMiB, replicaHistoryCoverage: config.replicaHistoryCoverage, replicaYield: config.replicaYield, readPath: demandReaders ? "gateway" : config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: demandReaders ? undefined : mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ deep, replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, traceEvery: config.readerTraceEvery, replicaHistoryMiB: config.replicaHistoryMiB, replicaHistoryCoverage: config.replicaHistoryCoverage, replicaYield: config.replicaYield, readPath: demandReaders ? "gateway" : config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: demandReaders ? undefined : mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare,
+    installedHistoryBytes: config.historicalFallback === "install" && w < config.readerThreads ? Math.floor(config.installedHistoryMiB * 1024 ** 2 / config.readerThreads) : undefined });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const readerLives: { worker: number; life: ReaderLifecycle }[] = [];
@@ -835,9 +858,10 @@ async function run() {
       worker = directReplica.startSharedReader(cfg, observationPort);
     } else {
       const replicaPort = directReplica?.connect();
+      const historicalPort = w < config.readerThreads ? historicalFallback?.connect() : undefined;
       worker = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), {
-        workerData: { ...cfg, observationPort, replicaPort, readerEntrypoint: true },
-        transferList: [...(observationPort ? [observationPort] : []), ...(replicaPort ? [replicaPort] : [])],
+        workerData: { ...cfg, observationPort, replicaPort, historicalPort, readerEntrypoint: true },
+        transferList: [...(observationPort ? [observationPort] : []), ...(replicaPort ? [replicaPort] : []), ...(historicalPort ? [historicalPort] : [])],
         env: process.env,
       });
     }
@@ -1278,13 +1302,20 @@ async function run() {
   };
 
   // ---------------------------------------------------------------- phases
+  // [DX-RD1] Why: retain the stress, recovery and weighted phases inside one short diagnostic arm and its exact zero control.
+  // Rejected: truncating v3 or including the multi-hour depth-growth phases under a short time budget.
+  const rd1Phases = new Set(["warmup", "baseline", "L256", "L1024", "recovery", "p4mix"]);
+  const keepPhase = (p: ReturnType<typeof nsPlan>[number]) => {
+    if (rd1ReadDiagnostic) return rd1Phases.has(p.name);
+    return !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256));
+  };
   let plan: ReturnType<typeof nsPlan> = tenantSpec && deepId ? tenantPhases(tenantSpec,deepId.arm) : smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
     { name: "presweep", readers: 64, seconds: 100, measured: true, mode: "mixed" },
     { name: "activation", readers: 64, measured: true, mode: "mixed" },
   ] : deepSmoke ? [
     { name: "warmup", readers: config.zeroReaders ? 0 : 1, seconds: 5, measured: false },
     { name: "L4", readers: config.zeroReaders ? 0 : 4, seconds: 25, measured: true, ladder: true, mode: "mixed" },
-  ] : idle ? idle.phases : nsPlan(profile === "deep" || profile === "deep-live" || profile === "deep-smoke" ? "v3" : profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
+  ] : idle ? idle.phases : nsPlan(profile === "deep" || profile === "deep-live" || profile === "deep-smoke" ? "v3" : profile, config.zeroReaders).filter(keepPhase).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
   // [DX-RD1] Why: exercise the real rolling collector and source frontier in a brief owned smoke run.
   // Rejected: weakening the fixed v3 schedule or using a scaled run for a verdict.
   if (rollingReadSmoke) {
@@ -1368,8 +1399,11 @@ async function run() {
       const windows = spec.measured ? [{ name: spec.name, from: start + settle, to }] : [];
       if (spec.name === "L256-A") windows.push({ name: "L256-legacy", from: start + settle, to: start + 45_000 });
       if (spec.name === "L256-D") windows.push({ name: "L256-adjacent", from: to - 45_000 + settle, to });
-      const recovery = spec.pool === "recovery" ? Array.from({ length: (spec.seconds! - 30) / 5 + 1 }, (_, i) =>
-        ({ name: spec.name, from: start + i * 5000, to: start + i * 5000 + 30_000 })) : [];
+      const recoveryWidth = Math.min(30, spec.seconds!);
+      const recovery = spec.pool === "recovery" || spec.name === "recovery"
+        ? Array.from({ length: Math.floor((spec.seconds! - recoveryWidth) / 5) + 1 }, (_, i) =>
+          ({ name: spec.name, from: start + i * 5000, to: start + i * 5000 + recoveryWidth * 1000 }))
+        : [];
       checkedPlan = { windows, recovery };
     }
     await spill?.beginPhase(idx, start, config.settleS * 1000, checkedPlan);
@@ -1499,6 +1533,13 @@ async function run() {
   for (const w of workers) w.postMessage({ type: "stop" });
   await Promise.race([Promise.all(stopped), sleep(40_000)]);
   for (const w of workers) await w.terminate();
+  if (historicalFallback) {
+    const stats = await historicalFallback.snapshot();
+    await historicalFallback.close();
+    if (stats.queued || stats.active || stats.requested !== stats.replied + stats.declined + stats.errors)
+      throw Error("Historical fallback requests did not drain exactly");
+    report.historicalFallback = stats;
+  }
   clearInterval(basisTimer);
   if (preparedSweeper) { preparedSweeper.worker.postMessage({ type: "stop" }); await preparedSweeper.worker.terminate(); }
   deepStage("closing replica");
@@ -2285,21 +2326,22 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   }
 
   const saturated = Object.values(stats).filter((s: any) => s.client.saturated).map((s: any) => s.phase);
-  const stressHeadroom = fullLength && !config.zeroReaders ? ctx.phases.filter(p => p.readers === 1024 && p.measured).map(p => {
+  const stressHeadroom = (fullLength || rd1ReadDiagnostic) && !config.zeroReaders ? ctx.phases.filter(p => p.readers === 1024 && p.measured).map(p => {
     const w = windowOf(p);
     const inside = (samples: { t: number; elu: number }[]) => mean(samples.filter(e => e.t >= w.from && e.t < w.to).map(e => e.elu));
     const readers = Array.from({ length: config.readerThreads }, (_, worker) => inside(workerElu.filter(e => e.worker === worker && e.running! > 0)));
     const sender = inside(mainElu), collector = spill ? inside(spillElu) : null;
     const feedConsumer = feed instanceof SideThread ? inside(feed.elus) : null;
-    const roles = [sender, ...(spill ? [collector] : []), ...(feed instanceof SideThread ? [feedConsumer] : []), ...readers];
-    return { phase: p.name, readers, sender, collector, feedConsumer, limit: 0.70, eligible: roles.every(elu => elu !== null && elu <= 0.70) };
+    const historicalLane = historicalFallback ? inside(historicalFallback.elus) : null;
+    const roles = [sender, ...(spill ? [collector] : []), ...(feed instanceof SideThread ? [feedConsumer] : []), ...(historicalFallback ? [historicalLane] : []), ...readers];
+    return { phase: p.name, readers, sender, collector, feedConsumer, historicalLane, limit: 0.70, eligible: roles.every(elu => elu !== null && elu <= 0.70) };
   }) : [];
   const total = records.length + (checked?.compared ?? 0), ok = verdicts.reduce((n, code) => n + Number(code === 0), checked?.verdicts[0] ?? 0), errs = verdicts.reduce((n, code) => n + Number(code === 1), checked?.verdicts[1] ?? 0);
   report.correctness = { reads: total, correct: ok, violations: total - ok - errs, errors: errs, violationKinds, violationSample, rule: "a read is correct when its :placement/stamp and whole-world multiset digest equal the expected-state model at the basis the driver requested (receipt instant R, valid time V); errors and wrong answers are never goodput" };
   report.readerDiagnostics = workerDiagnostics;
   report.readerFinalDiagnostics = readerFinalDiagnostics;
   report.expectedStateCache = { ...expectations.diagnostics, rolling: checked?.expectationCache };
-  report.client = { series: {main:mainElu,readers:workerElu,collector:spillElu}, stressHeadroom,
+  report.client = { series: {main:mainElu,readers:workerElu,collector:spillElu,historicalLane:historicalFallback?.elus}, stressHeadroom,
     burstMainEluMean: mean(mainElu.filter(e => overlapsBurst((e.t - ctx.traceStart)/1000, (e.t - ctx.traceStart)/1000 + 0.001, report.trace.params)).map(e=>e.elu)),
     peakProcessBytes: process.resourceUsage().maxRSS * 1024, saturatedPhases: saturated, invalid: saturated.length > 0 || stressHeadroom.some(p => !p.eligible), processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "Measured windows retain the 0.90 limit. Full stress windows require sampled sender, collector, feed consumer and active reader means at or below 0.70 for roles present in the run." };
   report.phases = ctx.phases.map((p) => ({ ...p, stats: strip(stats[p.name]) }));
