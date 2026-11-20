@@ -88,7 +88,7 @@
       (into {} (map #(str/split % #" " 2))
             (str/split-lines (String. buffer 0 n StandardCharsets/US_ASCII))))))
 
-(when (#{"profile" "cheap"} mode)
+(when (#{"profile" "cheap" "census"} mode)
   ;; [DX-PREP1] Why: join samples to each native apply on the same VM monotonic clock.
   ;; Rejected: applying a whole-run CPU average to every group.
   (doto (Thread.

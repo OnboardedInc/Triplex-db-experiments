@@ -41,7 +41,7 @@ def read(out, completed_only=False):
     inputs, terminal, events = (failed_diagnostic if completed_only else managed_events)(out)
     attempt = inputs["attempt"]
     mode = inputs["mode"]
-    assert mode in ("profile", "cheap")
+    assert mode in ("profile", "cheap", "census")
     assert mode == (out / "stage/lab/config/datomic/mode").read_text().strip()
     raw = (out / terminal["log"]).read_text().splitlines()
     lease, = [json.loads(l[12:]) for l in raw if l.startswith("PREP1_LEASE ")]
@@ -75,6 +75,8 @@ def read(out, completed_only=False):
         by_arm[entry["arm"]].append((entry["kind"], entry["data"]))
     if mode == "profile":
         assert list(by_arm) == ["time", "reads", "reference", "cheap"]
+    elif mode == "census":
+        assert list(by_arm) == ["reference", "cheap"]
     elif completed_only:
         names = ["reference", "cheap", "cheap2", "reference2", "guard", "time", "reads"]
         last = next(reversed(by_arm))
@@ -90,7 +92,7 @@ def read(out, completed_only=False):
             profile[key] = entry
     else:
         assert not any(line.startswith("PREP1_GUARD ") for line in raw)
-    subject_count = 1200 if mode == "profile" else 96
+    subject_count = 1200 if mode in ("profile", "census") else 96
     initial_position = subject_count // 8
     results = {}
     for arm, observations in by_arm.items():
@@ -165,7 +167,7 @@ def read(out, completed_only=False):
         assert samples
         if arm in ("time", "reads"):
             assert any("guardMs" in sample for sample in samples)
-        if arm.startswith("cheap"):
+        if arm.startswith("cheap") and mode != "census":
             assert any(s["path"] == "prepared" and s["guardMode"] == "basis" for s in samples)
         paths = defaultdict(list)
         for sample in samples:

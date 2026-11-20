@@ -113,9 +113,12 @@ case "$PREP1_MODE" in
       stop_gateway
     done
     ;;
-  profile|cheap)
+  profile|cheap|census)
     if [[ "$PREP1_MODE" == profile ]]; then
       arms=(time reads reference cheap)
+    elif [[ "$PREP1_MODE" == census ]]; then
+      export TX2_PREPARE_CENSUS="$PREP1_ATTEMPT"
+      arms=(reference cheap)
     else
       arms=(reference cheap cheap2 reference2 guard time reads)
     fi

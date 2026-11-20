@@ -1,6 +1,7 @@
 (ns triplex.gateway.group
   (:require [datomic.api :as d] [triplex.gateway.write-policy :as policy] [triplex.gateway.schema :as schema]
             [triplex.gateway.lean :as lean] [triplex.gateway.group-prepare :as prepared]
+            [triplex.gateway.prepare-trace :as census]
             [triplex.gateway.save-ledger :as ledger] [clojure.string :as str])
   (:import [java.util WeakHashMap] [java.util.concurrent Executors ThreadFactory]))
 
@@ -279,8 +280,9 @@
   (if (and prepared/basis-enabled (preparable? batch))
     (let [db (d/db conn)]
       (try (when-let [certificate (prepared/certify db batch (drafted batch))]
-             (assemble batch (:drafts certificate) (prepared/head db) certificate))
-           (catch Exception _ nil)))
+             (or (assemble batch (:drafts certificate) (prepared/head db) certificate)
+                 (census/note! :all :dependency-mismatch)))
+           (catch Exception _ (census/note! :all :dependency-mismatch))))
     (when-let [drafts (ready-drafts batch)]
       (assemble batch drafts (prepared/head (d/db conn))))))
 (defn start-prepared! [conn plan]
@@ -299,17 +301,30 @@
     (if-let [error (:error physical)]
       ;; [DX-PREP1] Why: re-evaluate at the authoritative cut after a definite rejection.
       ;; Rejected: retrying a write whose lost response could hide a successful durable append.
-      (do (if (definitive? error)
+      (do (when census/*reasons*
+            (let [reason (if (definitive? error) :native-refusal :uncertain-result)]
+              (census/note! :all reason)
+              (census/emit! batch @census/*reasons* reason)))
+          (if (definitive? error)
             (execute-reference! conn (mark-prepared batch (assoc stats :path "reference" :replays 1)))
             (unknown! batch error))
           false)
-      (do (finish-group! (mark-prepared batch (assoc stats :path "prepared" :replays 0))
+      (do (when census/*reasons* (census/emit! batch @census/*reasons* :prepared))
+          (finish-group! (mark-prepared batch (assoc stats :path "prepared" :replays 0))
                          (:results plan) (:report physical) (count batch) nil (:received-ms physical))
           true))))
 (defn execute! [conn batch]
-  (if-let [candidate (plan conn batch)]
-    (finish-prepared! conn batch (start-prepared! conn candidate))
-    (execute-reference! conn batch)))
+  (if-not (and census/attempt prepared/basis-enabled)
+    (if-let [candidate (plan conn batch)]
+      (finish-prepared! conn batch (start-prepared! conn candidate))
+      (execute-reference! conn batch))
+    (binding [census/*reasons* (volatile! {})]
+      (if-let [candidate (plan conn batch)]
+        (finish-prepared! conn batch (start-prepared! conn candidate))
+        (do (when-not (preparable? batch) (census/note! :all :shape))
+            (when (empty? @census/*reasons*) (census/note! :all :dependency-mismatch))
+            (census/emit! batch (update @census/*reasons* :all (fnil conj []) :batch-declined) :reference)
+            (execute-reference! conn batch))))))
 
 (defn next-entry
   ([state] (next-entry state realized?))

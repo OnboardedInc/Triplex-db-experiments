@@ -31,7 +31,7 @@ def disk_floor():
 
 
 def main(out, mode="ortho", seconds="10"):
-    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "recovery"):
+    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery"):
         raise SystemExit("Unknown managed probe mode")
     out.mkdir()
     attempt = str(uuid.uuid4())
@@ -110,7 +110,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
             disk_floor()
             path = out / f"{action}-{i}.log"
             args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{out.name}-{action}", "--"]
-            if action == "selftest" and mode in ("profile", "cheap"):
+            if action == "selftest" and mode in ("profile", "cheap", "census"):
                 args += ["node", str((EXPERIMENT / "measure.mjs").relative_to(REPO))]
             args += ["node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-PREP1"]
             if action == "selftest":

@@ -6,13 +6,14 @@ import { command } from "../w1/group/workload.ts";
 
 const mode = process.env.PREP1_MODE;
 const arm = process.env.PREP1_ARM;
-const guardProbe = mode === "profile" || mode === "cheap";
+const deep = mode === "profile" || mode === "census";
+const guardProbe = deep || mode === "cheap";
 const depths = guardProbe ? [32] : mode === "ortho" ? [1, 8, 32, 32, 8, 1] : [32, 32];
 const count = guardProbe ? 96 : 192;
-const subjectCount = mode === "profile" ? 1200 : depths.length * count;
+const subjectCount = deep ? 1200 : depths.length * count;
 // [DX-PREP1] Why: sample across the same seeded depth as the earlier open-loop experiment.
 // Rejected: a narrow prefix of that database, where all historical lookups can share the same index leaves.
-const subjectFor = (offer: number) => (mode === "profile" ? (offer * 67) % subjectCount : offer);
+const subjectFor = (offer: number) => (deep ? (offer * 67) % subjectCount : offer);
 const depth = 160;
 const attempt = process.env.PREP1_ATTEMPT!;
 const scope = JSON.stringify([
