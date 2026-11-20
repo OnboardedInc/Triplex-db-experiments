@@ -35,7 +35,7 @@ import {
 } from "../../../bench/lib/historical-fallback.ts";
 
 const source = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
-const nonce = randomUUID();
+const leaseNonce = randomUUID();
 const [output, topology = "s3", interval = "3", seatCount = "128", mode = "mechanism"] =
   process.argv.slice(2);
 const seconds = Number(interval),
@@ -49,10 +49,14 @@ assert(
     seats <= 1024,
 );
 assert(Number.isFinite(seconds) && seconds >= 1 && seconds <= 20);
-assert(["mechanism", "control", "treatments", "recovery"].includes(mode ?? ""));
+type Mode = "mechanism" | "control" | "treatments" | "recovery";
+const modes = ["mechanism", "treatments", "recovery"] as const;
+assert(mode === "suite" || mode === "control" || modes.some((m) => m === mode));
 const samples = [0, 1, 2, 4, 10] as const;
-const order: { share: number; treatment: HistoricalMode; transition?: boolean; low?: boolean }[] =
-  mode === "treatments"
+function armsFor(
+  mode: Mode,
+): { share: number; treatment: HistoricalMode; transition?: boolean; low?: boolean }[] {
+  return mode === "treatments"
     ? (
         [
           "off",
@@ -77,6 +81,7 @@ const order: { share: number; treatment: HistoricalMode; transition?: boolean; l
           { share: 0, treatment: "off", low: true },
         ]
       : [...samples, ...[...samples].reverse()].map((share) => ({ share, treatment: "off" }));
+}
 const clock = () => performance.timeOrigin + performance.now();
 const cpu = () => {
   const t = process.threadCpuUsage();
@@ -258,53 +263,54 @@ function timing(
   };
 }
 
-async function run(slot: string, logs: () => Promise<string>) {
-  const scope = `rd1-miss-${nonce}`,
+async function run(slot: string, logs: () => Promise<string>, mode: Mode, output: string) {
+  const nonce = randomUUID(),
+    scope = `rd1-miss-${nonce}`,
     fx = await fixture(scope);
-  const endpoint = process.env.DATOMIC_READ_URLS?.split(",")[0] ?? process.env.DATOMIC_URL!;
-  const scopeKey = String(runtimeApi.DatabaseScope.test(scope));
-  const host = await ReplicaReadHost.open(scope, fx.roots, fx.runtime, fx.head, "inline", 0);
-  const image = host.index.image();
-  assert(image.floor === fx.head.position && image.strictRecordClocks);
-  await host.close();
-  let retained = image;
-  if (mode === "recovery") {
-    const middle = fx.cuts[1]!;
-    const history = await ReplicaReadHost.open(
-      scope,
-      fx.roots,
-      fx.runtime,
-      { position: middle.position, instant: middle.basis.recordedAt },
-      "inline",
-      192 * 1024 ** 2,
-      "reader",
-      endpoint,
-      "all",
-      undefined,
-      Date.now(),
-      false,
-      "closure",
-    );
-    try {
-      const deadline = performance.now() + 10_000;
-      while (history.index.position < fx.head.position && performance.now() < deadline)
-        await sleep(5);
-      assert(
-        history.index.position === fx.head.position && history.index.floor === middle.position,
-      );
-      assert(
-        history.index.historyBytes > 0 && history.index.resolve(middle.basis) === middle.position,
-      );
-      retained = history.index.image();
-    } finally {
-      await history.close();
-    }
-  }
-  const arms: Record<string, any>[] = [],
-    allMisses: Miss[][] = [];
-  const referenceHead = fx.cuts.at(-1)!;
   try {
-    for (const { share: oldPer200, treatment, transition, low } of order) {
+    const endpoint = process.env.DATOMIC_READ_URLS?.split(",")[0] ?? process.env.DATOMIC_URL!;
+    const scopeKey = String(runtimeApi.DatabaseScope.test(scope));
+    const host = await ReplicaReadHost.open(scope, fx.roots, fx.runtime, fx.head, "inline", 0);
+    const image = host.index.image();
+    await host.close();
+    assert(image.floor === fx.head.position && image.strictRecordClocks);
+    let retained = image;
+    if (mode === "recovery") {
+      const middle = fx.cuts[1]!;
+      const history = await ReplicaReadHost.open(
+        scope,
+        fx.roots,
+        fx.runtime,
+        { position: middle.position, instant: middle.basis.recordedAt },
+        "inline",
+        192 * 1024 ** 2,
+        "reader",
+        endpoint,
+        "all",
+        undefined,
+        Date.now(),
+        false,
+        "closure",
+      );
+      try {
+        const deadline = performance.now() + 10_000;
+        while (history.index.position < fx.head.position && performance.now() < deadline)
+          await sleep(5);
+        assert(
+          history.index.position === fx.head.position && history.index.floor === middle.position,
+        );
+        assert(
+          history.index.historyBytes > 0 && history.index.resolve(middle.basis) === middle.position,
+        );
+        retained = history.index.image();
+      } finally {
+        await history.close();
+      }
+    }
+    const arms: Record<string, any>[] = [],
+      allMisses: Miss[][] = [];
+    const referenceHead = fx.cuts.at(-1)!;
+    for (const { share: oldPer200, treatment, transition, low } of armsFor(mode)) {
       const client = new DatomicClient(endpoint);
       const misses = new Map<string, Miss>();
       const chosen = treatment === "install" && transition ? retained : image;
@@ -616,11 +622,19 @@ async function runInAssignedSlot() {
       "Prepared control requires an isolated scope and explicit slot identity",
     );
     fs.mkdirSync(output!);
-    await run(process.env.TRIPLEX_TRACE_SLOT, async () => "");
+    await run(process.env.TRIPLEX_TRACE_SLOT, async () => "", "control", output!);
   } else
     await inLocalSlot(topology!, async (slot, logs) => {
       fs.mkdirSync(output!);
-      await run(slot, logs);
+      // [DX-RD1] Why: three independent scopes can reuse a single owned stack and measurement window.
+      // Rejected: booting three engines or reusing one scope's replica and session caches across experiments.
+      if (mode === "suite") {
+        for (const m of modes) {
+          const destination = path.join(output!, m);
+          fs.mkdirSync(destination);
+          await run(slot, logs, m, destination);
+        }
+      } else await run(slot, logs, mode as Mode, output!);
     });
 }
 
@@ -638,7 +652,7 @@ else {
         id: "DX-RD1",
         pid: process.pid,
         topology,
-        nonce,
+        leaseNonce,
         at: new Date().toISOString(),
       }) + "\n",
       { flag: "wx" },
@@ -646,7 +660,7 @@ else {
     await runInAssignedSlot();
   } finally {
     if (fs.existsSync(owner)) {
-      assert.equal(JSON.parse(fs.readFileSync(owner, "utf8")).nonce, nonce);
+      assert.equal(JSON.parse(fs.readFileSync(owner, "utf8")).leaseNonce, leaseNonce);
       fs.unlinkSync(owner);
     }
     fs.rmdirSync(admission);
