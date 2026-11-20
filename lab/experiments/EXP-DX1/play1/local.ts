@@ -268,6 +268,12 @@ export async function local(
       );
       console.log(browser.output.stdout);
     }
+    const transactor = JSON.parse(
+      await installed(["inspect", "--format", "{{json .State}}", prefix + "-tx"]),
+    ) as { Running: boolean; OOMKilled: boolean; ExitCode: number };
+    await writeFile(join(out, "transactor-state.json"), JSON.stringify(transactor) + "\n", {
+      flag: "wx",
+    });
     const snapshot = await dumpProbe(installed, prefix, out);
     await writeFile(
       join(out, "size.json"),
@@ -286,6 +292,7 @@ export async function local(
       { flag: "wx" },
     );
     if (browser && "error" in browser) throw browser.error;
+    assert(transactor.Running && !transactor.OOMKilled, "The transactor did not stay alive");
     for (const [name, sha256] of Object.entries(sourceHashes))
       assert.equal(hash(await readFile(join(repo, name))), sha256, "Source drifted: " + name);
     await writeFile(

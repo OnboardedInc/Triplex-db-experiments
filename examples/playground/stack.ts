@@ -8,7 +8,7 @@ import { inflateRawSync } from "node:zlib";
 
 export const repo = resolve(import.meta.dirname, "../..");
 export const loopback = "127.0.0.1";
-export const caps = { pg: 256, tx: 1024, write: 640, read: 640 } as const;
+export const caps = { pg: 256, tx: 1280, write: 640, read: 640 } as const;
 const config = join(repo, "lab/config/datomic");
 const version = "1.0.7745";
 const packageName = "datomic-pro-" + version;
@@ -307,15 +307,20 @@ export class Stack {
       "-e",
       "DATOMIC_EXT_CLASSPATH=/opt/gateway/src",
     ];
+    // [DX-PLAY1] Why: the vendor transactor reads JVM limits from its arguments, as in the lab launcher.
+    // Rejected: a generic JAVA_OPTS variable that leaves the vendor heap defaults in effect.
     await docker([
       "create",
       ...runnable("tx", tx),
       ...sources,
-      "-e",
-      "JAVA_OPTS=-Xms128m -Xmx640m -XX:+ExitOnOutOfMemoryError",
       "--entrypoint",
       "/opt/datomic/bin/transactor",
       image,
+      "-Xms128m",
+      "-Xmx640m",
+      "-XX:MaxMetaspaceSize=160m",
+      "-XX:MaxDirectMemorySize=128m",
+      "-XX:+ExitOnOutOfMemoryError",
       "/tmp/sql.properties",
     ]);
     await docker(["cp", localConfig, `${tx}:/tmp/sql.properties`]);
