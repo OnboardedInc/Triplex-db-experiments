@@ -188,7 +188,10 @@ it.skipIf(process.env.DATOMIC_INTEGRATION !== "1").each(["snapshot", "receipt"])
         predecessorAttributes: source === "snapshot" ? [":stamp"] : [],
         receiptPredecessorAttributes: source === "receipt" ? [":stamp"] : [],
       });
-      const adapter = makeDatomicStorageAdapter(client, scope, { layout: "lean", maxRetries: 0 });
+      const adapter = makeDatomicStorageAdapter(client, scope, {
+        layout: "lean",
+        maxRetries: source === "receipt" ? 1 : 0,
+      });
       const runtime = ManagedRuntime.make(
         Runtime.define({
           name: "DX-H7",
@@ -238,12 +241,21 @@ it.skipIf(process.env.DATOMIC_INTEGRATION !== "1").each(["snapshot", "receipt"])
           }),
         ),
       );
-      expect(stale._tag).toBe("Failure");
-      if (stale._tag === "Failure")
+      if (stale._tag !== "Failure") throw Error("A stale predecessor committed");
+      if (source === "receipt") {
+        expect(stale.failure).toMatchObject({
+          _tag: "TransactionConflictError",
+          tripleId: one.triples[0]!.id,
+        });
+        expect(requests.mock.calls.slice(0, 2).map((call) => call[1].split("/").at(-1))).toEqual([
+          "transact",
+          "begin",
+        ]);
+      } else {
         expect(stale.failure).toBeInstanceOf(DatomicSerializationConflict);
-      expect(requests).toHaveBeenCalledTimes(1);
-      if (stale._tag === "Failure")
+        expect(requests).toHaveBeenCalledTimes(1);
         expect(stale.failure.cause).toMatchObject({ status: 409, code: "CasConflict" });
+      }
       const refreshed = await Effect.runPromise(a.adapter.getByEntity("subject"));
       expect(refreshed.map((r) => r.id)).toEqual([two.triples[0]!.id]);
       a.client.rowCache.clear();
@@ -284,7 +296,10 @@ it.skipIf(process.env.DATOMIC_INTEGRATION !== "1").each(["snapshot", "receipt"])
         receipts.splice(4, 0, {
           command: 4,
           outcome: "rejected",
-          category: "transaction-conflict",
+          error: {
+            _tag: stale.failure._tag,
+            tripleId: "tripleId" in stale.failure ? stale.failure.tripleId : null,
+          },
         });
         const observedReads = [];
         for (const [command, ack] of commits) {
