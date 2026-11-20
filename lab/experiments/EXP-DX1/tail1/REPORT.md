@@ -27,7 +27,7 @@ Archived ACK p50/p99/p99.9/max was 5.10/86.74/447.17/602.04 ms by exact rank, an
 
 Serial is the archived write collector. Tuned G1 has a 25 ms target, 2 MiB regions, a 1 MiB humongous-object threshold and a 5–25% adaptive young generation. The Java 21 ZGC peer arm is diagnostic. Datomic documents ZGC support on Java 25 and recommends G1 at 50 ms for the transactor. Every arm uses that same transactor, SQL durability and role caps. [G1](https://docs.oracle.com/en/java/javase/21/gctuning/garbage-first-garbage-collector-tuning.html) · [Datomic defaults](https://docs.datomic.com/operation/transactor.html#running-the-transactor) · [Datomic ZGC support](https://docs.datomic.com/changes/pro.html#1-0-7705)
 
-The allocation arm keeps Serial, decodes the existing positional row vector into a transient map, and removes per-prefix Formatter allocation. Speculative transaction hints stay off. Timed arm comparisons and the allocation profile are pending.
+The allocation arm keeps Serial, decodes the positional row vector into a transient map, and removes per-prefix Formatter allocation. Speculative transaction hints stay off. Tuned G1 was still queued behind a lab measurement lease at report time. The full Mac replay, allocation profile and matched comparisons remain open.
 
 Mac Serial F retained 4,926 receipts in 240 s (20.53/s). Completed ACK p50/p99/p99.9/max was 2.14/29.81/30.25/32.20 s. All fifty slowest completed saves spent their largest interval queued before dispatch. Writer/reader/transactor logged 150/342/241 pauses with maximums of 338.54/502.65/227.88 ms. Rounded writer heap growth was 59.05 MiB/s and 2.55 MiB per covered ACK. Final analysis aborted on absent later phases. [Evidence manifest](SHA256SUMS)
 
