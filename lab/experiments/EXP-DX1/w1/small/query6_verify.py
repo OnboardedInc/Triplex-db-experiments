@@ -103,7 +103,7 @@ assert lean["exact"] == {"binding": {"type": "integer", "value": "90071992547409
 assert lean["counts"] == [2, 2]
 assert lean["order"] == [[{"?s": "j:1", "?v": "four"}], [{"?s": "j:2", "?v": "three"}]]
 assert lean["complete"] == lean["order"][0] + lean["order"][1]
-assert lean["dependencies"] == [{"sourcePosition": 1, "nextTemporalBoundary": 0}, {"sourcePosition": 2}]
+assert lean["dependencies"] == [{"sourcePosition": 1, "nextTemporalBoundary": 10}, {"sourcePosition": 2}]
 assert lean["explainBackend"] == ["datomic-datalog", "datomic-datalog"]
 assert lean["recursive"] == [{"?y": "n:2"}, {"?y": "n:3"}]
 assert lean["optional"] == [{"?b": None, "?subject": "j:1"}, {"?b": None, "?subject": "j:2"}]
@@ -117,9 +117,9 @@ assert first["instant"] < second["instant"] < third["instant"]
 assert len({r["txId"] for r in (first, second, third)}) == 3
 
 
-def a(ref, entity, attr, v):
+def a(ref, entity, attr, v, valid_from=0):
     return {"op": "assert", "ref": ref, "entityId": entity, "attribute": attr,
-            "value": {"type": "string", "value": v}, "validFrom": 0, "createdBy": "client"}
+            "value": {"type": "string", "value": v}, "validFrom": valid_from, "createdBy": "client"}
 
 
 def r(ref):
@@ -129,7 +129,7 @@ def r(ref):
 case = {"format": "triplex-db-2/o-replay-case/1", "caseId": "DX-W1-query-" + nonce, "defaultScope": "s",
         "adapter": {"schemaVersion": 1}, "receipts": [], "commands": [], "queries": []}
 for i, (receipt, ops) in enumerate(zip((first, second), (
-        [a("A1", "j:1", ":j/a", "one"), a("A2", "j:1", ":j/b", "two")],
+        [a("A1", "j:1", ":j/a", "one"), a("A2", "j:1", ":j/b", "two", 10)],
         [a("A3", "j:2", ":j/a", "three"), r("A2"), a("A4", "j:1", ":j/a", "four"), r("A1")],
 ), strict=True)):
     command = "c" + str(i + 1)

@@ -27,12 +27,12 @@ type Layout = "lean" | "legacy";
 const owner = (id: string) => EntityId.make(id);
 const at = 1_000_000_000_000_000;
 const cut = { validAt: at };
-const a = (id: string, attribute: string, value: string): TransactOp => ({
+const a = (id: string, attribute: string, value: string, validFrom = 0): TransactOp => ({
   op: "assert",
   entityId: owner(id),
   attribute: Attribute.make(attribute),
   value: { type: "string", value },
-  validFrom: 0,
+  validFrom,
 });
 
 async function withScope<T>(
@@ -96,7 +96,7 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
   return withScope(url, nonce + "-" + layout, layout, async (t, rt, client, db) => {
     const run = rt.runPromise;
     const first = await run(
-      t.transact([a("j:1", ":j/a", "one"), a("j:1", ":j/b", "two")], {
+      t.transact([a("j:1", ":j/a", "one"), a("j:1", ":j/b", "two", 10)], {
         actor: "client",
         commandId: "c1",
       }),
@@ -226,11 +226,11 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
     // Rejected: inferring attribute freshness from the latest scope receipt, which misses both facts.
     const dependencies = await Promise.all(
       [first.instant, second.instant].map((recordedAt) =>
-        run(t.dependencyState([":j/b"], { validAt: -1, recordedAt })),
+        run(t.dependencyState([":j/b"], { validAt: 0, recordedAt })),
       ),
     );
     assert.deepEqual(dependencies, [
-      { sourcePosition: first.position, nextTemporalBoundary: 0 },
+      { sourcePosition: first.position, nextTemporalBoundary: 10 },
       { sourcePosition: second.position },
     ]);
     const typed = {
