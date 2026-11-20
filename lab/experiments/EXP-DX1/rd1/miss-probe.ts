@@ -373,6 +373,15 @@ async function run(slot: string, logs: () => Promise<string>) {
           bytes: s.responseBytes,
         });
       };
+      // [DX-RD1] Why: time the fallback path after its isolate has loaded, as in the driver.
+      // Rejected: a priming read before the first measurement (it would populate gateway and replica caches).
+      try {
+        if (lane) assert.equal((await lane.snapshot()).requested, 0);
+      } catch (error) {
+        port?.close();
+        await lane?.close();
+        throw error;
+      }
       const start = clock(),
         until = start + seconds * 1000,
         stop = until + (transition ? seconds * 1000 : 0),

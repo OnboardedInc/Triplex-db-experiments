@@ -1,6 +1,6 @@
 # DX-RD1 server 1 commands
 
-Use the pushed `exp/DX-RD1-readers` source and the existing owned stack. Each formal comparison gets a fresh tag and its own zero arm. The pre-run forecasts give the four expected ratios and rates for every setting. [Forecasts](PREDICTIONS-P2.md)
+Start the server comparisons after reviewing the controlled Mac mechanism result. Use the pushed `exp/DX-RD1-readers` source and the existing owned stack. Each formal comparison gets a fresh tag and its own zero arm. [Report](REPORT.md) · [Pre-run forecasts](PREDICTIONS-P2.md)
 
 ```bash
 pair() {
@@ -23,7 +23,7 @@ pair revision --replica-history-coverage closure --replica-history-mib 192 --rep
 pair install --replica-history-coverage closure --replica-history-mib 192 --replica-historical-fallback install --replica-installed-history-mib 32
 ```
 
-The optional worker admits four native batches at once and retains no more than 16 logical calls per batch. Capture `client.stressHeadroom`, `historicalFallback`, `readerFinalDiagnostics` and both absolute ladder rates. If the highest sustained reader, collector or fallback-worker ELU exceeds 0.70, the arm stays unjudged. Keep the offers unchanged and compare local six, remote six and remote twelve as described in the forecast. A remote relay remains a separate implementation.
+The optional worker admits four native batches at once and retains no more than 16 logical calls per batch. Capture `client.stressHeadroom`, `historicalFallback`, `readerFinalDiagnostics` and both absolute ladder rates. Use the batch census to measure how frequently the actual record and valid clocks coincide. If the highest sustained reader, collector or fallback-worker ELU exceeds 0.70, the arm stays unjudged. Keep the offers unchanged and compare local six, remote six and remote twelve as described in the forecast. A remote relay remains a separate implementation.
 
 For the ten-minute writer diagnostic, prepare the same two peers with `TRIPLEX_TRACE_LEVEL=full`, `TRIPLEX_TRACE_COMPONENTS=node,gateway,tx-jfr,gw-jfr`, `DX_TX_NATIVE_JFR=1`, PostgreSQL WAL timing and scheduler stats. Retain write-peer unified GC logs with wall and uptime stamps, for example `-Xlog:gc*,safepoint:stdout:time,uptimemillis,level,tags`. Use the same gateway JVM options in every block.
 
