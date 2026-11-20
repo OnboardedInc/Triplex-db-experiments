@@ -44,13 +44,13 @@ export async function load(s: Stack, people: number) {
               "quiet-a-2000-2",
               "quiet-a-2000-4",
               "quiet-a-1024-2",
-              "quiet-a-4096-2",
+              "quiet-a-3000-2",
               "quiet-b-2000-2",
               "classic-b-2000-2",
               "quiet-b-2000-1",
               "proof-gap-1024-2",
             ];
-  const reports = [];
+  const reports: Array<{ sourceSeal: string; [key: string]: unknown }> = [];
   for (const arm of arms) {
     const scope = e.prefix + "-" + arm;
     const cpu = async () =>

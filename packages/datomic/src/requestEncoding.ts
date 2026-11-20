@@ -9,7 +9,7 @@ export function largeRequestBody(body: unknown): boolean {
   if (typeof body !== "object" || body === null)
     return typeof body === "string" && body.length > 512 * 1024;
   if (isProxy(body)) return false;
-  for (const key of ["rowOrder", "rows", "ids"]) {
+  for (const key of ["rowOrder", "rows", "ids", "freshTexts"]) {
     const d = Object.getOwnPropertyDescriptor(body, key);
     if (d && "value" in d && !isProxy(d.value) && Array.isArray(d.value) && d.value.length >= 512)
       return true;

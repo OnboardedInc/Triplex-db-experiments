@@ -897,7 +897,7 @@ export class DatomicClient {
       new Set(input.rows.map((r) => r.id)).size === input.rows.length;
     const { rows: wireRows, newIds: wireIds, ...header } = wireInput;
     const body = {
-      ...header,
+      ...(fresh ? header : wireInput),
       ...(this.cacheOptions.groupAccount ? { groupAccount: this.cacheOptions.groupAccount } : {}),
       ...(bounds ? { historyIdentityBounds: bounds } : {}),
       ...(fresh
