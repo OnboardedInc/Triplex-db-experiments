@@ -3,7 +3,7 @@ A background worker writes the changed values and individual notices in short tu
 Before a value is stored, reads at the receipt’s cut derive it. Stored values serve that same cut. Later saves use the latest source.
 A new release can stop an obsolete value copy. Notices from both releases still get recorded in order.
 A shared wage-floor save covers the full roster when the database cannot prove a smaller affected set.
-The earlier server command remains on hold while the revised producer and its collector run together on native storage.
+The new collector checked six small native cells and rejected an edited time and answer. The scaled run remains on hold for the current preflight.
 The ten-thousand-person settlement timings and live-traffic ratios still need the reserved lab slot.
 The owner still needs to rule on whether the receipt counts as stored and what to do with an owed notice after erasure.
 
