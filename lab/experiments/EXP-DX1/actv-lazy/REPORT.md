@@ -30,7 +30,9 @@ The deep notice leaf used 48.2 bytes per person, plus about 101.3 bytes of durab
 
 The eight-fact thin fixture encoded 10.3–10.4 leaf bytes and 100–104 address bytes per person in three 64-person pages, including offsets near one million and 4.5 million. This calculation did not load those populations. Thirty-two small tests passed, and two queue tests separately exercised live preference and fair turns. The first native collector attempt caught a working-tree change at startup and released its volume. The replacement runs from a frozen checkout. [Part 7 checksums](PART7-SHA256SUMS)
 
-The 10,000-deep trial spent about 26 minutes on preparation and reached the contested timing boundary. It yielded its heavy token and removed the volume before either live window. The 1,000-deep fallback uses one bounded reservation for the paired comparison. [Part 7 checksums](PART7-SHA256SUMS)
+The 10,000-deep trial spent about 26 minutes on preparation and reached the contested timing boundary. It yielded its heavy token and removed the volume before either live window. The shared lease also blocked the 1,000-deep fallback and the untimed matrix. Both waiters closed before admission. [Part 7 checksums](PART7-SHA256SUMS)
+
+The joined shared-floor native rerun, transactor and gateway suspension, fixed 64-reader trace, P6 read and save ratios, and wider cold-read and resident-memory measurements remain unverified. The 100,000-person server run belongs to the bench operator.
 
 ### Server command
 
