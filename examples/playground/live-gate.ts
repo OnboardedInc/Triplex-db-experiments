@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
+import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import type { Reply } from "./actions.ts";
-import { attrs, expected, generate } from "./fixture.ts";
+import { attrs, expected, generate, loadFixture } from "./fixture.ts";
 import { setTimeout as delay } from "node:timers/promises";
 import { repo } from "./stack.ts";
 
@@ -249,4 +251,11 @@ async function stdioCall(port: string, subject: object) {
       .join("\n") + "\n",
   );
   return result;
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
+  const url = process.argv[2];
+  assert(url && /^http:\/\/127\.0\.0\.1:\d+$/.test(url), "Use the fresh local playground address");
+  const results = await liveGate(url, loadFixture().checksum);
+  console.log(JSON.stringify(results, null, 2));
 }

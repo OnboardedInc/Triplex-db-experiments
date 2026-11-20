@@ -58,3 +58,8 @@ The orchestrator confirmed that the superseded plan commit used the generic lab 
 - A restored instance checks the exact Datomic scope, head and checkpoint carried by the archive. Before exposing API actions it compares the independently generated person and owned-record values, cardinalities and keys at the current cut and both earlier cuts. The fresh restore gate also reads the first person through the HTTP API.
 - The snapshot runner writes its evidence after the checked read, measured memory and storage observations, confirmed owned-resource inventory and shutdown of its original API address. The Mac adapter binds the gate to a committed source tree, manifest digest, unique run and live reservation owner before sealing.
 - Export waits for a fresh Datomic index job on the exact source database and checks that its requested native tick covers the named snapshot head. The subsequent shutdown quiesces the owned processes before measuring and exporting PostgreSQL.
+- The manual workflow binds the checkout to the dispatched commit, requires empty initial inventory, exercises expected fixture results on a fresh loopback server, then compares Docker inventory and requires the runtime directory and listener to disappear.
+
+## Manual clean-clone workflow
+
+Once the workflow file is on the repository's default branch, open Actions, choose **Playground clean clone**, select the branch to test and click **Run workflow**. The CLI equivalent is `gh workflow run playground-clean-clone.yml --ref exp/DX-INT1` after the playground is merged there. This implementation did not dispatch the workflow. [GitHub manual workflow documentation](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)

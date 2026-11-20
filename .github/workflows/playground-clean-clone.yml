@@ -1,0 +1,69 @@
+name: Playground clean clone
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clean-clone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install the checked out workspace
+        run: pnpm install --store-dir "$RUNNER_TEMP/playground-pnpm-store" --frozen-lockfile
+      - name: Start, exercise and stop the playground
+        env:
+          PLAYGROUND_PNPM_STORE: ${{ runner.temp }}/playground-pnpm-store
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          work="$RUNNER_TEMP/playground"
+          mkdir "$work"
+
+          inventory() {
+            docker ps --all --quiet --filter label=triplex.playground &&
+              docker volume ls --quiet --filter label=triplex.playground &&
+              docker network ls --quiet --filter label=triplex.playground &&
+            docker image ls --quiet --filter label=triplex.playground
+          }
+          inventory > "$work/before"
+          test ! -s "$work/before"
+          test ! -e .runtime/playground
+          cleanup() {
+            status=$?
+            trap - EXIT
+            set +e
+            if ! pnpm --config.store-dir="$PLAYGROUND_PNPM_STORE" playground stop; then
+              status=1
+              kill -TERM "$start_pid" 2>/dev/null || true
+            fi
+            wait "$start_pid" || status=1
+            if ! inventory > "$work/after" || ! cmp "$work/before" "$work/after" ||
+                test -e .runtime/playground || curl --silent --output /dev/null --max-time 2 "$url/health"; then
+              status=1
+            fi
+            cat "$work/start.log"
+            exit "$status"
+          }
+
+          url=http://127.0.0.1:4186
+          pnpm --config.store-dir="$PLAYGROUND_PNPM_STORE" playground start > "$work/start.log" 2>&1 &
+          start_pid=$!
+          trap cleanup EXIT
+          for attempt in {1..360}; do
+            if curl --silent --fail --output /dev/null --max-time 2 "$url/health"; then break; fi
+            kill -0 "$start_pid"
+            sleep 2
+          done
+          curl --silent --fail --output /dev/null --max-time 2 "$url/health"
+          node examples/playground/live-gate.ts "$url"
