@@ -3474,3 +3474,23 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   lean/storage). Ordered merge list recorded there.
 - DX-THIN1 part 6 assigned (xhigh): take the lease switch, merge in that order one part per commit with gates,
   keep `int1/V0.1-STATE.md` current, memory terms move to scorecard rows, at most two source copies on disk.
+
+## 2026-11-20 20:38 UTC (15:38 local, 2026-11-20): DX-W1 part 6 in: layout K answers the documented queries; a paged-query fault found; protected values still stored in clear in K
+
+- **DX-W1 part 6 (`db11c8d04`; server code head `9289362b1`; `w1/REPORT.md`).** Behind
+  `TX2_LEAN_NATIVE_QUERY=1`, lean K matches classic and the independent oracle at explicit cuts for joins, logic,
+  rules, aggregates, optional values, numerics, complete results, plans and both cursor forms; `/log` behind
+  `TX2_LEAN_NATIVE_LOG=1`. A query naming its entities seeks; a broad query reads stored histories (admitted up
+  to 100,000 input datoms or 16 Mi characters); programs projecting physical fact ids, raw bytes or arbitrary
+  attribute selectors get a typed decline (lean never allocated classic fact ids). **Fault in both layouts:** a
+  page with an implicit clock returned empty at reader clock 100 after a durable save at 102. Mac diagnostic: point
+  read 4.81/87.32 ms p50/p99 through Match, 89.61/474.62 ms through paged Datalog (four calls); 17 records per
+  save. All eight reviewed write fixes integrated (1,747 native assertions, 12 SDK tests). K keeps a protected
+  value in the row text (an indexed value) and both journal change bodies; after a native excision the held read
+  and the journal still returned it, the new native routes refused. Options priced, not built: a journal index at
+  3 or 7 records per save; reified journal facts at 21 or 49. Forecast with the grouped writer: 275 to 385 saves
+  per second, quiet ratio 2.4 to 5.0 at 235 offered.
+- **Part 7 assigned (xhigh):** fix the implicit-clock page fault with a failing test first; opaque references and
+  sealed bodies for protected values in K with ERASE1's thirteen route checks ported; a point query in one call
+  (within 1.5 times Match); `QUERY-SUPPORT.md` as an owner decision table; merge onto `exp/DX-INT1` with the
+  default settings stated.
