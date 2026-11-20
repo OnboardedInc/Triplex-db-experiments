@@ -120,6 +120,24 @@ def replay(observed, grouped, label):
 
 
 raw = args.log.read_bytes()
+binding = args.binding.read_bytes()
+if args.binding.suffix == ".json":
+    inputs = json.loads(binding)
+    assert inputs["attempt"] == args.attempt
+    for name, digest in inputs["stage"].items():
+        assert sha((args.binding.parent / "config" / name).read_bytes()) == digest
+    terminal = json.loads((args.binding.parent / "selftest-terminal.json").read_bytes())
+    assert terminal["slot"] == "tx2-datomic-selftest" and terminal["holder"] == "DX-WFIX1"
+    assert terminal["attempt"] == args.attempt and terminal["log"] == args.log.name
+    assert terminal["sha256"] == sha(raw) and terminal["image"].startswith("sha256:")
+    source = inputs["git"]
+else:
+    assert (args.binding.parent / "attempt").read_text().strip() == args.attempt
+    for line in binding.decode().splitlines():
+        digest, name = line.split("  ", 1)
+        assert sha((args.binding.parent / name).read_bytes()) == digest
+    source = (args.binding.parent / "source").read_text().strip()
+assert len(source) == 40
 cases = []
 for line in raw.splitlines():
     if line.startswith(b"WFIX1_REPLAY "):
@@ -132,6 +150,6 @@ for line in raw.splitlines():
         if event["event"] == "recovered":
             cases.append(replay(event["value"]["observed"], True, "sql"))
 assert len(cases) in (1, 3)
-save("compared.json", dict(attempt=args.attempt, bindings=sha(args.binding.read_bytes()),
+save("compared.json", dict(attempt=args.attempt, source=source, bindings=sha(binding),
                            raw=sha(raw), oracleSource=revision, oraclePin=sha(pin.read_bytes()),
                            verifier=sha(Path(__file__).read_bytes()), cases=cases))
