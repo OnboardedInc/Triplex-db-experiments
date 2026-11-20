@@ -10,7 +10,17 @@ import { FairTurns } from "./fair-turns.ts";
 import { checkJournal } from "../w1/field/journal.ts";
 import { accounts, pooledDigest } from "../w1/group/population.ts";
 import { command, seedPooled } from "../w1/group/workload.ts";
-import { arms, cells, operation, prediction, seconds, type Arm } from "./server-tape.ts";
+import {
+  arms,
+  cells,
+  fairArms,
+  fairPrediction,
+  fairSeconds,
+  operation,
+  prediction,
+  seconds,
+  type Arm,
+} from "./server-tape.ts";
 
 type Input = Parameters<DatomicClient["transact"]>[1];
 type Row = Input["rows"][number];
@@ -40,6 +50,11 @@ const answer = ":field/answer-prep1",
   note = ":field/note";
 const requestedCredits = Number(process.env.DX_PREP1_FAIR_CREDITS ?? 0);
 assert([0, 1, 2, 6].includes(requestedCredits));
+const campaign = process.env.DX_PREP1_CAMPAIGN ?? "comparison";
+assert(campaign === "comparison" || campaign === "fair");
+const campaignArms = campaign === "fair" ? fairArms : arms;
+const campaignSeconds = campaign === "fair" ? fairSeconds : seconds;
+const creditsFor = (arm: Arm) => (arm.writer === "S" ? (arm.credits ?? requestedCredits) : 0);
 const root = (a: number, p: number) => ids.placement(accounts[a]!.first + p);
 const fact = (e: string, a: string, value: string): Fact => ({
   e,
@@ -360,6 +375,12 @@ async function armRun(
     baseline.seeds.map((s) => [s.account, s.subjects, s.facts]),
     accounts.map((a) => [a.index, 10000, 1_624_505]),
   );
+  const schedule = cells(arm);
+  const fields = new Map(baseline.fields);
+  if (arm.credits !== undefined)
+    for (const { tape } of schedule)
+      for (const offer of tape)
+        assert(fields.has(root(offer.account, offer.person)), "sealed predecessor missing");
   const stack = load<{ gatewaySourceSha256: string; prefix: string }>(stackPath);
   assert.equal(stack.prefix, slot);
   assert.equal(urls.length, arm.writers);
@@ -403,7 +424,7 @@ async function armRun(
     const opened = await reader.create(baseline.scope, "lean", true, 35_000);
     assert(!opened.created && opened.db === baseline.db);
     assert.equal(await basis(reader, baseline.db), baseline.head);
-    const fairCredits = arm.writer === "S" ? requestedCredits : 0;
+    const fairCredits = creditsFor(arm);
     const fair = fairCredits ? new FairTurns(accounts.length, fairCredits) : undefined;
     const { scope, db, head } = baseline;
     save(out + "/header.json", {
@@ -418,13 +439,12 @@ async function armRun(
       dumpSha: process.env.DX_PREP1_DUMP_SHA,
       options,
       fairCredits,
-      seconds,
+      seconds: campaignSeconds,
       gatewaySource: stack.gatewaySourceSha256,
     });
-    const fields = new Map(baseline.fields),
-      frozen = new Set<string>();
+    const frozen = new Set<string>();
     let cut = head;
-    for (const cell of cells(arm)) {
+    for (const cell of schedule) {
       const result = await phase(clients, reader, db, cut, fields, frozen, cell, fair);
       cut = result.after;
       save(`${out}/${cell.label}.json`, result);
@@ -436,9 +456,8 @@ async function armRun(
   }
 }
 
-async function preflight(out: string) {
-  const arm = arms[1]!,
-    allCells = cells(arm, 1);
+async function preflight(out: string, arm: Arm) {
+  const allCells = cells(arm, 1);
   const fields = new Map<string, Row[]>();
   const feed: [string, number, string[]][] = [],
     blocks: unknown[] = [];
@@ -453,7 +472,8 @@ async function preflight(out: string) {
         ]);
     }
   const db = "mock-prep1";
-  const fair = requestedCredits ? new FairTurns(accounts.length, requestedCredits) : undefined;
+  const credits = creditsFor(arm);
+  const fair = credits ? new FairTurns(accounts.length, credits) : undefined;
   // [DX-PREP1] Why: exercise the real sender, row encoder, feed checker and file writer without a lease.
   // Rejected: hand-writing a fixture with the collector's expected verdict.
   const fake = {
@@ -515,14 +535,23 @@ async function preflight(out: string) {
     seedSha: "mock-seal",
     dumpSha: "mock-dump",
     seconds: 1,
-    fairCredits: requestedCredits,
+    fairCredits: credits,
     fixture: true,
   };
   save(out + "/header.json", header);
   for (const cell of allCells)
     save(
       out + "/" + cell.label + ".json",
-      await phase([fake], fake, db, p, fields, new Set(), cell, fair),
+      await phase(
+        Array<DatomicClient>(arm.writers).fill(fake),
+        fake,
+        db,
+        p,
+        fields,
+        new Set(),
+        cell,
+        fair,
+      ),
     );
   save(out + "/complete.json", { nonce, slot: header.slot, commit: header.commit, cut: p });
   blocks.push({ attempt: nonce, dropped: 0, end: true });
@@ -535,14 +564,17 @@ const [action, ...args] = process.argv.slice(2);
 if (action === "seed") await seed(args[0]!, args[1]!, args[2]!);
 else if (action === "arm") {
   const [id, file, out, slot, commit, nonce, stack, reader, ...urls] = args;
-  const arm = arms.find((a) => a.id === id);
+  const arm = campaignArms.find((a) => a.id === id);
   assert(arm && file && out && slot && commit && nonce && stack && reader);
   await armRun(arm, file, out, slot, commit, nonce, stack, reader, urls);
-} else if (action === "preflight") await preflight(args[0]!);
-else if (action === "plan") {
-  const duration = args[0] ? Number(args[0]) : seconds;
+} else if (action === "preflight") {
+  const arm = campaignArms.find((a) => a.id === (args[1] ?? "1-1-S"));
+  assert(arm && args[0]);
+  await preflight(args[0], arm);
+} else if (action === "plan") {
+  const duration = args[0] ? Number(args[0]) : campaignSeconds;
   const tapes = Object.fromEntries(
-    cells(arms[0]!, duration).map(({ label, tape }) => [
+    cells(campaignArms[0]!, duration).map(({ label, tape }) => [
       label,
       tape.map(({ ms, account, person, subtask, ordinal, extra }) => [
         ms,
@@ -558,15 +590,19 @@ else if (action === "plan") {
     JSON.stringify({
       seconds: duration,
       fairCredits: requestedCredits,
+      ...(campaign === "fair" ? { campaign } : {}),
       tapes,
-      arms: arms.map((arm) => ({
+      arms: campaignArms.map((arm) => ({
         ...arm,
         cells: cells(arm, duration).map(({ label, rate, tape, tapeSha }) => ({
           label,
           rate,
           tapeSha,
           offered: tape.length,
-          predicted: prediction(arm.writers, arm.writer, rate, label.endsWith("-alone")),
+          predicted:
+            campaign === "fair"
+              ? fairPrediction(arm, rate, label.endsWith("-alone"))
+              : prediction(arm.writers, arm.writer, rate, label.endsWith("-alone")),
         })),
       })),
     }),

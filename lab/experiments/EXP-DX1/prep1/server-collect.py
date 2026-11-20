@@ -34,14 +34,25 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     for key in ("nonce", "slot", "commit"):
         assert complete[key] == header[key]
     arm = next(a for a in plan["arms"] if a["id"] == header["arm"]["id"])
-    assert {k: arm[k] for k in ("id", "writers", "writer", "reverse")} == header["arm"]
+    assert {k: v for k, v in arm.items() if k != "cells"} == header["arm"]
     assert plan["seconds"] == header["seconds"]
+    followup = plan.get("campaign") == "fair"
     fair_credits = header.get("fairCredits", 0)
     assert fair_credits in (0, 1, 2, 6) and (not fair_credits or arm["writer"] == "S")
-    assert fair_credits == (plan.get("fairCredits", 0) if arm["writer"] == "S" else 0)
+    assert fair_credits == (arm.get("credits", plan.get("fairCredits", 0)) if arm["writer"] == "S" else 0)
+    if followup:
+        assert [(a["id"], a["writers"], a["writer"], a["reverse"], a["credits"]) for a in plan["arms"]] == [
+            ("1-off-S", 1, "S", False, 0), ("1-on-S", 1, "S", False, 1),
+            ("2-on-S", 2, "S", True, 1), ("2-off-S", 2, "S", True, 0),
+        ]
+        phases = ("loaded", "alone") if arm["reverse"] else ("alone", "loaded")
+        assert [(c["label"], c["rate"], c["offered"]) for c in arm["cells"]] == [
+            (f"r{rate}-{phase}", rate, round((3.5 if phase == "alone" else rate) * plan["seconds"]))
+            for rate in (235, 394) for phase in phases
+        ]
     roles = ["tx", "gw-r", "gw-w"] + [f"gw-w{i}" for i in range(2, arm["writers"] + 1)]
     if not fixture:
-        assert header["seconds"] == 144
+        assert header["seconds"] == (60 if followup else 144)
         assert re.fullmatch(r"[0-9a-f]{40}", header["commit"])
         for key in ("seedSha", "dumpSha", "gatewaySource"):
             assert re.fullmatch(r"[0-9a-f]{64}", header[key])
@@ -50,6 +61,16 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         assert header["seedSha"] == seal["seed.json"] == sha(directory.parent / "seed.json")
         assert header["dumpSha"] == seal["seed.pgdump"]
         assert seal["plan.json"] == sha(plan_path)
+        if followup:
+            # [DX-PREP1] Why: bind each mode to the earlier immutable seed and this fresh source.
+            # Rejected: comparing two restores merely because they name the same population.
+            original = (directory.parent / "comparison.SEAL.sha256").read_text().splitlines()
+            assert len(original) == 3 and all(re.fullmatch(r"[a-f0-9]{64}  " + re.escape(name), line)
+                for line, name in zip(original, ("seed.json", "seed.pgdump", "plan.json"), strict=True))
+            assert original[:2] == [
+                seal[name] + "  " + name for name in ("seed.json", "seed.pgdump")
+            ]
+            assert header["commit"] == (directory.parent / "source").read_text().strip()
         stack = read(native_path.parents[2] / "stack.json")
         assert stack["prefix"] == header["slot"]
         assert stack["gatewaySourceSha256"] == header["gatewaySource"]
@@ -155,6 +176,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert min(r["sent"] for r in members) >= last_reply
             last_reply = max(r["end"] for r in members)
             last_turn = turn
+        if followup and fair_credits:
+            assert all(len(blocks) == 1 for blocks in turn_appends.values())
         pair = {a: p99(times[a]) if counts[a] == len(times[a]) else None for a in counts}
         metrics.append({"cell": label, "offered": len(rows), "durable": len(positions), "inWindow": in_window,
                         "confirmedPerSecond": in_window / result["seconds"], "prepared": prepared,
@@ -162,6 +185,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                         "missingAcks": sum(counts.values()) - sum(map(len, times.values())),
                         "outcomes": dict(collections.Counter(r.get("reason", "acked") for r in rows)),
                         "accountP99Ms": pair, "completedOnlyP99Ms": {a: p99(times[a]) for a in counts},
+                        "worstAccountP99Ms": max(pair.values()) if all(v is not None for v in pair.values()) else None,
                         "stageP99Ms": {key: p99(samples) for key, samples in stages_by_save.items()},
                         "appendP99Ms": p99(list(flush_ms.values())),
                         "fairTurns": len(turns), "maxAppendsPerTurn": max(map(len, turn_appends.values()), default=0),
@@ -181,6 +205,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     if not fixture:
         kept.extend(native_path.parent / f"prep1-gc-{role}.log" for role in roles)
         kept.extend(native_path.parent / f"{role}-native-settings.json" for role in roles)
+        if followup:
+            kept.extend(directory.parent / name for name in ("comparison.SEAL.sha256", "SEAL.sha256", "source"))
     return {"fixture": fixture, "source": header["commit"], "nonce": header["nonce"], "slot": header["slot"],
             "seedSha": header["seedSha"], "dumpSha": header["dumpSha"], "planSha": sha(plan_path),
             "fairCredits": fair_credits,

@@ -2,9 +2,17 @@ import assert from "node:assert/strict";
 import { offers, sha, type Offer } from "../w1/field/schedule.ts";
 
 export const seconds = 144;
+export const fairSeconds = 60;
 export const rates = [50, 235, 394, 620] as const;
 export const widths = [1, 2, 4] as const;
-export const arms = widths.flatMap((writers) =>
+export type Arm = {
+  id: string;
+  writers: number;
+  writer: "K" | "S";
+  reverse: boolean;
+  credits?: 0 | 1;
+};
+export const arms: Arm[] = widths.flatMap((writers) =>
   (["K", "S", "S", "K"] as const).map((writer, repeat) => ({
     id: `${writers}-${repeat}-${writer}`,
     writers,
@@ -12,10 +20,17 @@ export const arms = widths.flatMap((writers) =>
     reverse: repeat % 2 === 1,
   })),
 );
-export type Arm = (typeof arms)[number];
+// [DX-PREP1] Why: two peers match the four-peer capacity forecast with half the processes.
+// Rejected: picking a width after seeing the original measured rows.
+export const fairArms: Arm[] = [
+  { id: "1-off-S", writers: 1, writer: "S", reverse: false, credits: 0 },
+  { id: "1-on-S", writers: 1, writer: "S", reverse: false, credits: 1 },
+  { id: "2-on-S", writers: 2, writer: "S", reverse: true, credits: 1 },
+  { id: "2-off-S", writers: 2, writer: "S", reverse: true, credits: 0 },
+];
 export const operation = (label: string, ordinal: number) => `${label}-${ordinal}`;
 
-export function cells(arm: Arm, duration = seconds) {
+function newCells(arm: Arm, duration: number) {
   const quiet = offers(3.5, duration, [0]);
   return rates
     .flatMap((rate) => {
@@ -34,6 +49,51 @@ export function cells(arm: Arm, duration = seconds) {
       return arm.reverse ? [loaded, alone] : [alone, loaded];
     })
     .map((cell) => ({ ...cell, tapeSha: sha(cell.tape) }));
+}
+
+export function cells(arm: Arm, duration = arm.credits === undefined ? seconds : fairSeconds) {
+  if (arm.credits === undefined) return newCells(arm, duration);
+  return newCells(arm, seconds)
+    .filter(({ rate }) => rate === 235 || rate === 394)
+    .map((cell) => {
+      const alone = cell.label.endsWith("-alone");
+      const quietCount = Math.round(3.5 * duration);
+      const remaining = alone ? 0 : cell.rate * duration - quietCount;
+      // [DX-PREP1] Why: every shortened arm must edit predecessors from the existing sealed population.
+      // Rejected: drawing new random subject lanes at a different duration.
+      const tape = Array.from({ length: alone ? 1 : 10 }, (_, account) => {
+        const count =
+          account === 0 ? quietCount : Math.floor(remaining / 9) + Number(account <= remaining % 9);
+        const prefix = cell.tape.filter((o) => o.account === account).slice(0, count);
+        assert.equal(prefix.length, count);
+        const divisor = Math.max(1, (prefix.at(-1)?.ms ?? 0) / (duration * 1000 - 1));
+        return prefix.map((o) => ({ ...o, ms: o.ms / divisor }));
+      })
+        .flat()
+        .sort((a, b) => a.ms - b.ms || a.account - b.account || a.person - b.person);
+      assert.equal(tape.length, alone ? quietCount : cell.rate * duration);
+      return { ...cell, duration, tape, tapeSha: sha(tape) };
+    });
+}
+
+export function fairPrediction(arm: Arm, rate: number, quietOnly: boolean) {
+  const capacity = arm.credits ? 125 : arm.writers === 1 ? 383 : 697;
+  const quietP99Ms = quietOnly
+    ? 8.8
+    : arm.credits
+      ? rate === 235
+        ? 22
+        : 25
+      : rate === 235
+        ? 10.47
+        : 10.74;
+  return {
+    serving: quietOnly ? 3.5 : Math.min(capacity, rate),
+    savesPerAppend: quietOnly || arm.credits || arm.writers === 1 ? 1 : 2,
+    p99Ms: quietOnly ? 8.8 : rate > capacity ? null : rate === 235 ? 27.48 : 28,
+    quietP99Ms,
+    quietRatio: Number((quietP99Ms / 8.8).toFixed(2)),
+  };
 }
 
 export function prediction(writers: number, writer: string, rate: number, quietOnly: boolean) {
