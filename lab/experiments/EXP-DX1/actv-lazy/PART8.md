@@ -33,3 +33,15 @@ BM1 `ff02be51a` seals `overnight/i33-1` at the report's first-line pin. The copi
 Quiet staged values took 242 ms to durable and 251 ms to the first correct connected answer. At 23.5 saves/s they took 270 and 276 ms. In the separate four-second settlement blocks, values and individual notices became durable 557 and 1,046 ms after the receipt at 3.5 saves/s, and 293 and 966 ms at 23.5 saves/s. The true overlap held only 3 and 23 primary saves per side. These are preflight clocks.
 
 The owner approved the separate joined roster. BM1 `54744f440` records that `i29-2` began at 11:05:37 UTC with the first-line pin and WFIX `4331d6fe8`. The earlier failing attempt remains in `i29-1`. The server operator collects the native timing and readback after cleanup.
+
+## Server observations at 100,000 people
+
+BM1 `2cd820e8c` copied the component evidence from `i29-2` under `single-n20/recovered/activation-i29-2-components`. Its manifest digest is `b1e0e6026ef91939214d2af785ff1bc1104c9f4af737ea77026732426fb4528e`. All 38 local member hashes match. The checked clocks describe one Publish per cell. The independent readback matched all 16,045,255 source facts and 3,240 save receipts. Final ordered delivery replay is still running.
+
+| Saves per second | Receipt and first correct answer | Staged values and first correct answer |
+| ---: | ---: | ---: |
+| 0 | 46.14 / 55.97 ms | 13.019 / 13.026 s |
+| 3.5 | 53.15 / 63.46 ms | 14.118 / 14.134 s |
+| 23.5 | 2.043 / 2.051 s | 18.616 / 18.625 s |
+
+Every release affected all 100,000 people. The concrete change count ranged from 489,852 to 490,407. The proof listed 42,871 owed effects per release. The busy receipt waited 2,019.56 ms behind 50 earlier saves and reached native ACK 24.25 ms after entry. The busy staged cell waited 4,320.30 ms behind 89 earlier saves. The priority queue can pass saves that have yet to start. An in-progress save and shared native contention still contribute to the clock. These single-offer windows leave the full trace and the priority path at scale unmeasured.
