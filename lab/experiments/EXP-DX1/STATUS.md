@@ -3303,3 +3303,13 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - Consequence for the queue: server time goes first to (1) per-person writer against grouped writer on ten accounts
   in one database, (2) the scorecard on the merged branch, (3) the 1 billion rung. Builders are told at their next
   handover that work counts for version 0.1 only once merged on `exp/DX-INT1`.
+
+## 2026-11-20 16:47 UTC (11:47 local, 2026-11-20): version 0.1 gains a playground; DX-V01 and DX-PLAY1 launched
+
+- Sam added a demo playground to version 0.1 (verbatim in the decisions file; `lab/V0.1.md` at 78d73af74): dashboard to
+  query and change data with timings and returned records, test data stored in the repository, and a local API for
+  local agents.
+- **DX-V01** (xhigh, `exp/DX-V01-scorecard`, base `exp/DX-INT1`): readiness table of what is not merged, then the
+  one-command scorecard for the nine priorities. The `lab/SCORECARD.md` on the merged branch dates from 2026-11-07
+  and describes engines no longer used.
+- **DX-PLAY1** (xhigh, `exp/DX-PLAY1-playground`, base `exp/DX-INT1`): the playground.
