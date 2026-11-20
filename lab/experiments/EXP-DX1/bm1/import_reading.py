@@ -6,7 +6,7 @@ import math
 from pathlib import Path
 import re
 
-from producer_readings import digest, get, nearest
+from producer_readings import digest, get
 
 
 TAIL_ARMS = ("tail-0-a", "tail-128", "tail-500", "tail-2000", "tail-0-b")
@@ -41,8 +41,11 @@ def tail_arm(directory, attempt, name):
         neighbors[actor] = {}
         for kind in ("save", "read"):
             rows = kinds[kind]
-            values = [r["end"] - r["due"] for r in rows if r["outcome"] == "verified"]
-            neighbors[actor][kind] = dict(offered=len(rows), ok=len(values), p99Ms=nearest(values, 99) if values else None,
+            # [DX-BM1] Why: preserve the signed offer clock within the verified scheduler tolerance.
+            # Rejected: clamping an early reply to zero or rejecting the complete producer ledger.
+            values = sorted(r["end"] - r["due"] for r in rows if r["outcome"] == "verified")
+            p99 = values[(99 * len(values) + 99) // 100 - 1] if values else None
+            neighbors[actor][kind] = dict(offered=len(rows), ok=len(values), p99Ms=p99,
                                           outcomes=dict(Counter(r["outcome"] for r in rows)))
     frames = tape["ordered"]
     assert len({r["command"] for r in frames}) == len(frames)
