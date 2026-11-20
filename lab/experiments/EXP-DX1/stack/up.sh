@@ -210,10 +210,13 @@ for port in "$port_w" "$port_r"; do
 done
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 stack_labels=()
+datomic_image=tx2-datomic:1.0.7745-da00
 if [[ -n ${DX_TAIL1_ATTEMPT:-} ]]; then
   # [DX-TAIL1] Why: bind the owned stack to the reservation and reject name reuse at cleanup.
   # Rejected: inferring ownership from the slot number alone.
   [[ $prefix == tx2-dxscale1-tail1-* && $DX_TAIL1_ATTEMPT =~ ^[a-f0-9-]{36}$ ]]
+  [[ $DX_TAIL1_IMAGE =~ ^sha256:[a-f0-9]{64}$ ]]
+  datomic_image=$DX_TAIL1_IMAGE
   stack_labels=(--label tx2.holder=DX-TAIL1 --label "tx2.tail1=$DX_TAIL1_ATTEMPT")
 fi
 network_tuning=()
@@ -240,7 +243,7 @@ fi
 for role in pg tx gw-w gw-r extract; do
   if docker container inspect "$prefix-$role" >/dev/null 2>&1; then echo "container already exists: $prefix-$role" >&2; exit 2; fi
 done
-docker image inspect tx2-datomic:1.0.7745-da00 postgres:17-alpine >/dev/null
+docker image inspect "$datomic_image" postgres:17-alpine >/dev/null
 if [[ -z "$src" ]]; then
   src="$evidence/stage/$prefix"
   mkdir -p "$src"
@@ -270,7 +273,7 @@ print(hashlib.sha256(data).hexdigest())
 PY
 )
 # Copy only from the already-local image; never start its inherited entrypoint.
-docker create --name "$prefix-extract" ${stack_labels[@]+"${stack_labels[@]}"} --pull never tx2-datomic:1.0.7745-da00 >/dev/null
+docker create --name "$prefix-extract" ${stack_labels[@]+"${stack_labels[@]}"} --pull never "$datomic_image" >/dev/null
 trap 'docker rm -f "$prefix-extract" >/dev/null 2>&1 || true' EXIT
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   docker cp "$prefix-extract:/opt/datomic/bin/sql/$file" "$attempt/sql/$file"
@@ -340,13 +343,13 @@ fi
 if [[ ${DX_GATEWAY_SELFTEST:-0} == 1 ]]; then
   docker run --rm --pull never --name "$prefix-selftest" --network none --memory 1500m --memory-swap 1500m \
     -e "DATOMIC_JAVA_OPTS=-Xms128m -Xmx1g" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -v "$src:/opt/gateway:ro" \
-    --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.selftest > "$attempt/gateway-selftests.log" 2>&1
+    --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.selftest > "$attempt/gateway-selftests.log" 2>&1
 fi
 if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
   mkdir -p "$attempt/trace/preflight"
   docker run --rm --pull never --name "$prefix-trace-check" --network none --memory 768m --memory-swap 768m \
     -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=-Xms128m -Xmx512m -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e TRIPLEX_TRACE_DIR=/test-trace -e TRIPLEX_TRACE_TEST_JFR=1 -v "$attempt/trace/preflight:/test-trace" -v "$src:/opt/gateway:ro" \
-    --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.trace-test > "$attempt/gateway-trace-tests.log" 2>&1
+    --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.trace-test > "$attempt/gateway-trace-tests.log" 2>&1
 fi
 docker network create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-net" >/dev/null
 # [DX-T1-14] Why: activation uses a byte-verified fresh clone under the holder's lease; a sealed source is never writable.
@@ -431,7 +434,7 @@ for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
 done
 fi
 docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
-  -e "JAVA_OPTS=$tx_java$trace_tx_java" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
+  -e "JAVA_OPTS=$tx_java$trace_tx_java" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor "$datomic_image" /dxh1/sql.properties >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 # [DX-BM1] Why: avoid probing catalog creation before the SQL transactor announces startup.
 # Rejected: treating an early location read failure as a missing database, or unbounded health fetches.
@@ -474,7 +477,7 @@ for role in w r; do
     -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \
     -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \
-    -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
+    -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.main >/dev/null
   ok=false
   health_deadline=$((SECONDS + 180))
   while (( SECONDS < health_deadline )); do

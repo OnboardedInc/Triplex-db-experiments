@@ -170,6 +170,17 @@ export async function runTail(options, config, manager) {
   const arm = options.arm ?? "serial";
   assert(Object.hasOwn(arms, arm), "Unknown DX-TAIL1 arm");
   const variant = arms[arm];
+  // [DX-TAIL1] Why: the pinned local image may have no mutable tag.
+  // Rejected: retagging or rebuilding the image shared by other holders.
+  const image = docker([
+    "image",
+    "inspect",
+    mac ? config.lanes.datomic.imageId : config.lanes.datomic.image,
+    "--format",
+    "{{.Id}}",
+  ]);
+  assert.match(image, /^sha256:[a-f0-9]{64}$/);
+  if (mac) assert.equal(image, config.lanes.datomic.imageId);
   const seconds = options.full === true ? 5910 : Number(options.seconds ?? 240);
   assert(mac || seconds <= 900, "The server diagnostic is a bounded prefix");
   const out = path.resolve(options.out),
@@ -238,6 +249,7 @@ export async function runTail(options, config, manager) {
     ...(mac ? {} : { DX_BARE_METAL: "1", DX_BARE_METAL_ROOT: out }),
     DX_STACK_EVIDENCE: setup,
     DX_TAIL1_ATTEMPT: nonce,
+    DX_TAIL1_IMAGE: image,
     DX_TAIL1_LESS_ALLOCATION: variant.allocation ? "1" : "0",
     DX_STACK_WAIT_FOR_TRANSACTOR: "1",
     DX_QUIET_LOGS: "1",
@@ -347,7 +359,7 @@ export async function runTail(options, config, manager) {
       assert(m?.State.Running && row?.id === m.Id && m.Config.Labels[nameLabel] === nonce);
       assert.equal(row.memory, caps[role] * MiB);
       assert.equal(row.cpuset, cpus[role]);
-      if (role !== "pg") assert.equal(row.imageId, config.lanes.datomic.imageId);
+      if (role !== "pg") assert.equal(row.imageId, image);
       ids[role] = m.Id;
     }
     for (const key of ["fsync", "synchronous_commit", "full_page_writes"])
@@ -560,7 +572,7 @@ export async function runTail(options, config, manager) {
               "DATOMIC_JAVA_OPTS=-Xms64m -Xmx224m",
               "--entrypoint",
               "/opt/datomic/bin/run",
-              config.lanes.datomic.imageId,
+              image,
               "/profile.clj",
               String(measuredStart),
               String(measuredStart + seconds * 1000),
