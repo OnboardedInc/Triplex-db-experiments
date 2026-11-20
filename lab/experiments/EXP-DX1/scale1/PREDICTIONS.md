@@ -28,6 +28,8 @@ Forecasts below use the new order. An observation is entered alongside its origi
 
 The million-person seed budget projects 47.90 GiB of memory and 350.30 GiB of free disk, including the volume, simultaneous PostgreSQL dump and reserve. It scales the observed 100,000-person pooled seed’s 1.64 GiB client peak, 12.90 GiB of additional volume and 11.94 GiB image, with the measured arm’s headroom rules. The 10,000-person live client’s 8.31 GiB peak, scaled by fact count, would imply more than 900 GiB at one million people. That extrapolation rules out relying on a full in-memory copy at the measured per-fact cost. The bounded live arms need an actual measurement after seeding.
 
+The original staggered arm had pre-dispatch expiry at 175/s after none through 155/s, compared with the 150/s forecast. At 35/s all 10,500 offers were acknowledged in the window and account 1’s commit p99 was 2.51× alone. Matched read and feed ratios remain unmeasured. [Staggered capacity](STAGGERED-CAPACITY.md)
+
 ## Full-size placement screen
 
 Pre-run engineering ranges for the named 1–3 business-field tape. Cells are two 90-second repetitions at each rate with 60 seconds of offered reads in each repetition. Each repeat has its own 90-second quiet control. The quiet account keeps 3.5 saves/s. At total 235 and 394/s the other nine are slightly hotter than the observed individual rates. The test preserves aggregate demand with a quiet observer, so 394 here describes a sentinel stress test. The preceding staggered arm remains a separate write-capacity reading.

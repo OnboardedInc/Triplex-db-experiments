@@ -37,6 +37,14 @@ function windowTable(run: Run, lines: string[]) {
   const m = run.summary;
   if (!m) {
     lines.push("The attempt ended with " + run.terminal.service + ".");
+    if (
+      run.attempt.live === "staggered" &&
+      run.attempt.bounded &&
+      fs.existsSync(new URL("./evidence/" + run.tag + "-writer.sha256", import.meta.url))
+    )
+      lines.push(
+        "The complete trace rows recover the writer windows. [Staggered capacity](STAGGERED-CAPACITY.md)",
+      );
     return;
   }
   if (m.tenants) {
@@ -140,7 +148,10 @@ function windowTable(run: Run, lines: string[]) {
           : "No sampled steady load recorded a judged ratio above 1.25×.",
       );
     } else if (run.attempt.bounded) {
-      lines.push("", "This arm measures write capacity. Matched isolation, in-window durable goodput and drain are unmeasured.");
+      lines.push(
+        "",
+        "This arm measures write capacity. Matched isolation, in-window durable goodput and drain are unmeasured.",
+      );
     }
     lines.push(
       "The pinned roster counted " +

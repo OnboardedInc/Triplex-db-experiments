@@ -5,7 +5,7 @@ One account of 100,000 people — awaiting a completed bare-metal arm.
 Full-size placement remains unmeasured. [Decision cells](DECISION-RESULTS.md)
 The owner's release target is under one second. Page-guard activation for one account is unmeasured. Activation among ten is unmeasured.
 The first shared resource to reach its limit is still unknown.
-Ten 10,000-person accounts seeded 16,245,050 facts in one database (730.45 PostgreSQL bytes/fact, one seed). The field-save profile offers 35/s steady, 235/s at its five-minute plateau and 394/s at coincident peaks.
+The smaller staggered run acknowledged 10,500 offers at 35/s with account 1 commit p99 at 2.51× alone. The first 1,924 pre-dispatch expiries occurred at 175/s. [Staggered capacity](STAGGERED-CAPACITY.md)
 Scope-level interference observations are available. [Scope measurements](SCOPES.md)
 Three changes to test are shortening write-gateway GC pauses, reusing verified predecessor preparation and grouping ready saves. Their effects on the full account are unmeasured.
 The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. PostgreSQL grew by 593.30 bytes per fact and the volume including WAL grew by 1213.96 bytes per fact (one seed).

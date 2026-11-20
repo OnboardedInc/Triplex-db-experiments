@@ -5,6 +5,7 @@
 Layout pooled. Evidence tag arm-p6-i1-pool-staggered-a. Runtime a4b2331e966113aaab02d51a3c65aca1be804fe4.
 
 The attempt ended with exit-code.
+The complete trace rows recover the writer windows. [Staggered capacity](STAGGERED-CAPACITY.md)
 
 Peak cgroup memory and busiest three consecutive CPU samples across the execution (one core = 100%).
 

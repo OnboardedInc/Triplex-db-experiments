@@ -270,6 +270,41 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
   }
   const delta = deltas.at(-1)?.delta;
   const fieldTrials = stages.filter((s) => s.tag.startsWith("arm-p6-i1-") && s.attempt.live);
+  const archivedWriter = fieldTrials
+    .flatMap((s) => {
+      const manifest = path.join(here, "evidence", s.tag + "-writer.sha256"),
+        report = path.join(evidence, s.tag, "archived-writer.json");
+      if (!fs.existsSync(manifest) || !fs.existsSync(report)) return [];
+      const bytes = fs.readFileSync(report);
+      const expected = fs.readFileSync(manifest, "utf8").split("\n")[0];
+      assert.equal(
+        expected,
+        createHash("sha256").update(bytes).digest("hex") + "  " + s.tag + "/archived-writer.json",
+      );
+      const recovered = JSON.parse(bytes.toString("utf8"));
+      assert.deepEqual(
+        [recovered.source, recovered.slot, recovered.nonce, recovered.archive],
+        [s.attempt.source, s.attempt.slot, s.attempt.nonce, s.terminal.rawArchive.sha256],
+      );
+      const alone = recovered.windows.find((w: any) => w.name === "alone"),
+        steady = recovered.windows.find((w: any) => w.name === "ten-steady"),
+        expiry = recovered.windows.find((w: any) => w.expired > 0);
+      assert(alone?.quiet.n >= 500 && steady?.quiet.n >= 500 && expiry?.planned > expiry.expired);
+      return [
+        "The smaller staggered run acknowledged " +
+          steady.good.toLocaleString("en-US") +
+          " offers at " +
+          round(steady.offeredPerS, 0) +
+          "/s with account 1 commit p99 at " +
+          round(steady.quiet.p99 / alone.quiet.p99) +
+          "× alone. The first " +
+          expiry.expired.toLocaleString("en-US") +
+          " pre-dispatch expiries occurred at " +
+          round(expiry.offeredPerS, 0) +
+          "/s. [Staggered capacity](STAGGERED-CAPACITY.md)",
+      ];
+    })
+    .at(-1);
   const thresholds = fieldTrials.flatMap((s) => {
     const b = s.summary?.tenants?.loadBoundary;
     if (!b || b.unjudged) return [];
@@ -308,18 +343,19 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       : refused
         ? `The first capacity refusal was ${refused.tag} on ${refused.attempt.capacity.limits.join(" and ")}. This was an admission estimate.`
         : "The first shared resource to reach its limit is still unknown.",
-    thresholds.length
-      ? "Write-capacity diagnostic. First measured expiry or quiet commit p99 miss by arm " +
-        thresholds.join(", ") +
-        ". [Scope measurements](SCOPES.md)"
-      : (setup
-          ? "Ten 10,000-person accounts seeded " +
-            setup.disk.facts.toLocaleString("en-US") +
-            " facts in one database (" +
-            round(setup.disk.bytesPerFact) +
-            " PostgreSQL bytes/fact, one seed). "
-          : "") +
-        "The field-save profile offers 35/s steady, 235/s at its five-minute plateau and 394/s at coincident peaks.",
+    archivedWriter ??
+      (thresholds.length
+        ? "Write-capacity diagnostic. First measured expiry or quiet commit p99 miss by arm " +
+          thresholds.join(", ") +
+          ". [Scope measurements](SCOPES.md)"
+        : (setup
+            ? "Ten 10,000-person accounts seeded " +
+              setup.disk.facts.toLocaleString("en-US") +
+              " facts in one database (" +
+              round(setup.disk.bytesPerFact) +
+              " PostgreSQL bytes/fact, one seed). "
+            : "") +
+          "The field-save profile offers 35/s steady, 235/s at its five-minute plateau and 394/s at coincident peaks."),
     "Three changes to test are shortening write-gateway GC pauses, reusing verified predecessor preparation and grouping ready saves. Their effects on the full account are unmeasured.",
     `The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. ${base?.disk ? `PostgreSQL grew by ${round(base.disk.bytesPerFact)} bytes per fact and the volume including WAL grew by ${round(base.disk.volumeBytesPerFact)} bytes per fact (one seed).` : "The first observed seed used 594.29 PostgreSQL bytes per fact and 1,214.95 allocated volume bytes per fact, including WAL (n=1 fresh stack)."}`,
     "",
