@@ -4,6 +4,12 @@ import fs from "node:fs";
 import { createInterface } from "node:readline";
 import type { DeepIdentity } from "./deep-profile.ts";
 
+type NativeWritePath = {
+  function: string;
+  historyRange: boolean;
+  scheduling: boolean;
+  packedRows: number;
+};
 type NativeCut = {
   position: number;
   t: string;
@@ -12,6 +18,7 @@ type NativeCut = {
   size: number;
   datoms: number;
   facts: number;
+  writePath?: NativeWritePath;
 };
 export class DeepCommitMeter {
   private readonly positions = new Map<number, NativeCut>();
@@ -50,6 +57,7 @@ export class DeepCommitMeter {
           n + Number(r.entity_type === "_Transaction" && r.attribute === ":_tx/change"),
         0,
       ),
+      ...(reply.writePath === undefined ? {} : { writePath: reply.writePath }),
     };
     this.add(row);
   }
@@ -71,6 +79,12 @@ export class DeepCommitMeter {
         Number.isSafeInteger(row.facts) &&
         row.facts >= 0,
     );
+    if (row.writePath !== undefined) {
+      const { function: writer, historyRange, scheduling, packedRows } = row.writePath;
+      assert(typeof writer === "string" && writer.length > 0);
+      assert(typeof historyRange === "boolean" && typeof scheduling === "boolean");
+      assert(Number.isSafeInteger(packedRows) && packedRows >= 0);
+    }
     const prior = this.positions.get(position);
     if (prior) {
       assert.deepEqual(prior, row);
@@ -100,6 +114,43 @@ export class DeepCommitMeter {
     }
     assert(previous >= 0 && verified.positions.size === positions);
     return verified;
+  }
+
+  // [DX-INT1] Why: derive the selected path from the actual receipt rows both before and after export.
+  // Rejected: trusting launcher flags or accepting a report with no matching native receipt.
+  writePath() {
+    let first: NativeCut | undefined;
+    let packedRows = 0,
+      rangeRequests = 0,
+      unexpectedFunctions = 0;
+    for (const row of this.positions.values()) {
+      const path = row.writePath;
+      assert(path && !path.scheduling && row.size === 1);
+      if (!first || row.position < first.position) first = row;
+      packedRows += path.packedRows;
+      rangeRequests += Number(path.historyRange);
+      unexpectedFunctions += Number(!/^:triplex\.write\/v-[a-f0-9]{24}$/.test(path.function));
+    }
+    return {
+      database: this.database,
+      nativeCommits: this.positions.size,
+      packedRows,
+      rangeRequests,
+      unexpectedFunctions,
+      first: first && {
+        position: first.position,
+        operationId: first.operation,
+        nativeT: first.t,
+        function: first.writePath!.function,
+      },
+    };
+  }
+
+  verifyCommand(position: number, command: string) {
+    assert(
+      this.positions.get(position)?.commands.includes(command),
+      "Missing native command receipt",
+    );
   }
 
   // [DX-SCALE1] Why: multiple logical receipts can name a single native transaction. Verify its complete ordered membership and count its physical datoms once. Rejected: treating ACK count as disk commits or multiplying group datoms by the number of saves.

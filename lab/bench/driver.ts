@@ -588,23 +588,14 @@ function main() {
 async function run() {
   cpuProfileClock("start");
   save();
-  if (deepId && process.env.DX_INT1_NATIVE_WRITE_READBACK === "1") {
-    const database = "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url");
-    const observed = { database, nativeCommits: 0, packedRows: 0, rangeRequests: 0, unexpectedFunctions: 0,
-      first: undefined as undefined | { position: number; operationId: string; nativeT: string; function: string } };
-    report.deep.writePath = observed;
-    // [DX-THIN1] Why: bind the installed predecessor function to the actual saved scope and receipt.
-    // Rejected: taking a requested launcher option as evidence of native function selection.
-    observeNativeReceipt((db, input, reply, position) => {
-      if (db !== database || !reply.writePath) return;
-      const info = reply.writePath;
-      assert(info.scheduling === false && typeof info.historyRange === "boolean" && Number.isSafeInteger(info.packedRows) && info.packedRows >= 0);
-      assert(reply.t?.t === "long" && /^\d+$/.test(reply.t.v));
-      observed.first ??= { position, operationId: input.operationId, nativeT: reply.t.v, function: info.function };
-      observed.nativeCommits++;
-      observed.rangeRequests += Number(info.historyRange);
-      observed.packedRows += info.packedRows;
-      observed.unexpectedFunctions += Number(!/^:triplex\.write\/v-[a-f0-9]{24}$/.test(info.function));
+  const campaignMeter = deepId && process.env.DX_INT1_NATIVE_WRITE_READBACK === "1"
+    ? new DeepCommitMeter("s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url")) : undefined;
+  if (campaignMeter) {
+    // [DX-INT1] Why: retain the returned path with its native ID, including the seed before reader setup.
+    // Rejected: counting options from configuration or treating a duplicate lookup as a new native receipt.
+    observeNativeReceipt((db, input, reply, position, commands) => {
+      if (db === campaignMeter.database && reply.writePath !== undefined)
+        campaignMeter.observe(db, input, reply, position, commands);
     });
   }
   const writer = await openComposition(config.composition, lane, scopeName);
@@ -721,9 +712,9 @@ async function run() {
     ? new DeepActivation(rawDir, releaseTarget.people, runTag + ":" + releaseTarget.key, releaseTarget.first, nextRelease, releaseTarget, Number(opt("deep-evaluators") ?? 2))
     : activationOnly && !tenantSpec ? new DeepActivation(rawDir, rungSubjects, runTag, 0, nextRelease) : undefined;
   const measureBurst = tenantSpec?.study === "interference";
-  const meter = (activation || measureBurst) && config.composition !== "memory"
-    ? new DeepCommitMeter("s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url")) : undefined;
-  if (meter) observeNativeReceipt(meter.observe.bind(meter));
+  const meter = campaignMeter ?? ((activation || measureBurst) && config.composition !== "memory"
+    ? new DeepCommitMeter("s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url")) : undefined);
+  if (meter && !campaignMeter) observeNativeReceipt(meter.observe.bind(meter));
   if (deepId) atomicWrite(path.join(rawDir, "seed-observed.json"), JSON.stringify({ identity: deepId, scope: scopeName, seed: report.deep.seed, trace: report.deep.trace }));
   if (seedOnly) {
     report.status = "SEEDED"; save(); samplersOn = false; clearInterval(eluTimer);
@@ -1776,6 +1767,7 @@ async function run() {
       report.deep.allBurstQueue = meter.burst(writes, w.start + config.settleS * 1000, w.end);
     }
     report.deep.nativeReceipts = meter.seal(path.join(rawDir, "deep-native-commits.jsonl"), deepId);
+    if (campaignMeter) report.deep.writePath = campaignMeter.writePath();
   }
   const incompleteHistory = !tenantSpec && !deepSmoke && !interferenceOnly && !smallOnly && !activation && !config.readerLadderOnly && !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
   if (incompleteHistory) finalizationErrors.push("History comparison is ineligible: incomplete growth, indexing or fewer than 10,000 correct pulls per depth");

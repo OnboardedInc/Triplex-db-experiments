@@ -48,18 +48,22 @@ export const treatment = {
 } as const;
 
 export const excluded = {
-  grouping: "The write audit reproduced a stale retraction clock in a grouped replacement.",
-  reusePrepared: "The selected writer uses ordinary serial turns until grouped change bytes pass.",
-  parallelPreparation: "The guarded overlap and fast member replies need a verified grouped arm.",
+  grouping:
+    "The refreshed writer fixed the audited retry and retraction cases. The joined trace and maximum group frame still need a combined SQL proof.",
+  reusePrepared: "Prepared reuse and parallel preparation need the same combined proof.",
+  parallelPreparation:
+    "Exact-basis parity covers its own tape. The joined run also needs the reader and feed schedules verified with it.",
   savedJournalLayouts: "The retained and packed journals need a combined history and feed check.",
   orderedSaveWire: "The matched arm uses the existing compact wire with explicit row identities.",
   fieldCoalesce:
     "A queued replacement must preserve the intermediate row and its native assertion clock.",
   priorityAndBudget:
-    "The audited chooser can strand an eligible live write behind a scoped import, and account hints can refuse notice progress.",
+    "The refreshed ownership and rotation checks cover targeted cases. This single-account pair holds the admitted writer queue fixed.",
   slimRows:
     "A separate stored layout would prevent reuse of the same enabled packed-row path and prior lean evidence.",
   gzip: "The matched Mac first-read probe favored plain latency.",
+  historicalFallback:
+    "RD1's isolated and installed historical modes require separate reach replicas. This pair uses reach-touched.",
   loadAndActivation:
     "Load and release experiments have their own offered schedule and exactness gates. The paired P1–P4 profile holds those treatments fixed.",
   keepWarm: "Omitted under the frozen workload rule.",

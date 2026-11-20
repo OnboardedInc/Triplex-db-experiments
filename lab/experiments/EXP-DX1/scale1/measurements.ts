@@ -138,6 +138,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   const offered = expected.size,
     values: Quantities = { all: [], L256: [], L1024: [], presweep: [], activation: [] };
   const seenPositions = new Set<number>(),
+    nativeCommands = new Map<number, string>(),
     invalid: string[] =
       duration > 7200 ? ["Activation exceeded the frozen 7,200-second live traffic horizon"] : [];
   const mixPhases = id.tenant
@@ -277,6 +278,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     assert(Number.isFinite(ms) && ms >= 0 && w.verdictClock === VERDICT_CLOCK);
     assert(Number.isSafeInteger(w.position) && !seenPositions.has(w.position));
     seenPositions.add(w.position);
+    if (report.deep.writePath) nativeCommands.set(w.position, w.commandId);
     const minute = Math.floor((w.ackPublishedAt - commonStart) / 60000);
     if (minute >= 0 && minute < ackMinutes.length) ackMinutes[minute]++;
     committed++;
@@ -376,7 +378,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   if (
     report.config.composition !== "memory" &&
     report.benchSources["lab/bench/lib/deep-commit-meter.ts"] &&
-    (report.deep.r2 || allBurst)
+    (report.deep.r2 || allBurst || report.deep.writePath)
   ) {
     const seal = report.deep.nativeReceipts,
       file = path.join(dir, "deep-native-commits.jsonl");
@@ -385,6 +387,10 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     hashes["deep-native-commits.jsonl"] = await fileHash(file);
     assert.equal(hashes["deep-native-commits.jsonl"], seal.sha256);
     const meter = await DeepCommitMeter.read(file, id, db, seal.positions);
+    if (report.deep.writePath) {
+      assert.deepEqual(report.deep.writePath, meter.writePath());
+      for (const [position, command] of nativeCommands) meter.verifyCommand(position, command);
+    }
     if (allBurst)
       assert.deepEqual(
         report.deep.allBurstQueue,
