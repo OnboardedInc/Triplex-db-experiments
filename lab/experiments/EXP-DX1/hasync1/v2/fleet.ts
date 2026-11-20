@@ -221,6 +221,8 @@ export async function fleet(s: Stack, pair: SyncPair, count: number) {
       "-e",
       "GATEWAY_SOURCE_SHA256=" + s.e.source.gateway,
       "-e",
+      "HA1_FLEET_HTTP=1",
+      "-e",
       "DATOMIC_JAVA_OPTS=-Xms64m -Xmx" +
         (bench ? "512" : "192") +
         "m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=36m",
