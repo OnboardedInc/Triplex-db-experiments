@@ -74,6 +74,7 @@ def erasure_observation():
     assert json.loads(base64.urlsafe_b64decode(key + "=" * (-len(key) % 4)))[3] == nonce
     assert 0 < int(record["assertT"]) < int(record["eraseT"])
     assert record["pinnedCode"] == record["freshCode"] == "ErasureQueryUnsupported"
+    assert record["indexCode"] == record["envelopeCode"] == "ErasureQueryUnsupported"
     assert record["feedCode"] == record["pastLogCode"] == "FeedErasureUnsupported"
     assert all(type(record[k]) is bool for k in ("heldCleartext", "historyPresent", "journalCleartext"))
     return record
@@ -99,11 +100,12 @@ for layout, arm in zip(("legacy", "lean"), (legacy, lean), strict=True):
     arm["log"] = [{k: v for k, v in row.items() if k != "operationId"} for row in arm["log"]]
 compare({k: v for k, v in legacy.items() if k not in ("db", "layout", "physical")},
         {k: v for k, v in lean.items() if k not in ("db", "layout", "physical")})
-assert lean["exact"] == {"binding": {"type": "integer", "value": "9007199254740993"}, "negativeZero": True}
+assert lean["exact"] == {"binding": {"type": "integer", "value": "9007199254740993"},
+                         "number": 0.30000000000000004, "negativeZeroRejected": True}
 assert lean["counts"] == [2, 2]
 assert lean["order"] == [[{"?s": "j:1", "?v": "four"}], [{"?s": "j:2", "?v": "three"}]]
 assert lean["complete"] == lean["order"][0] + lean["order"][1]
-assert lean["dependencies"] == [{"sourcePosition": 1, "nextTemporalBoundary": 0}, {"sourcePosition": 2}]
+assert lean["dependencies"] == [{"sourcePosition": 1, "nextTemporalBoundary": 10}, {"sourcePosition": 2}]
 assert lean["explainBackend"] == ["datomic-datalog", "datomic-datalog"]
 assert lean["recursive"] == [{"?y": "n:2"}, {"?y": "n:3"}]
 assert lean["optional"] == [{"?b": None, "?subject": "j:1"}, {"?b": None, "?subject": "j:2"}]
@@ -117,9 +119,9 @@ assert first["instant"] < second["instant"] < third["instant"]
 assert len({r["txId"] for r in (first, second, third)}) == 3
 
 
-def a(ref, entity, attr, v):
+def a(ref, entity, attr, v, valid_from=0):
     return {"op": "assert", "ref": ref, "entityId": entity, "attribute": attr,
-            "value": {"type": "string", "value": v}, "validFrom": 0, "createdBy": "client"}
+            "value": {"type": "string", "value": v}, "validFrom": valid_from, "createdBy": "client"}
 
 
 def r(ref):
@@ -129,7 +131,7 @@ def r(ref):
 case = {"format": "triplex-db-2/o-replay-case/1", "caseId": "DX-W1-query-" + nonce, "defaultScope": "s",
         "adapter": {"schemaVersion": 1}, "receipts": [], "commands": [], "queries": []}
 for i, (receipt, ops) in enumerate(zip((first, second), (
-        [a("A1", "j:1", ":j/a", "one"), a("A2", "j:1", ":j/b", "two")],
+        [a("A1", "j:1", ":j/a", "one"), a("A2", "j:1", ":j/b", "two", 10)],
         [a("A3", "j:2", ":j/a", "three"), r("A2"), a("A4", "j:1", ":j/a", "four"), r("A1")],
 ), strict=True)):
     command = "c" + str(i + 1)
@@ -233,7 +235,7 @@ for i, (event, covered) in enumerate(zip(events[3:7], (False, True, True, False)
         assert [sample["n"], sample["command"], sample["position"], sample["expected"]] == [
             n, f"save:{n}", n + 2, f"value:{n}"]
         assert sample["saved"] > 0 and sample["readMs"] > 0 and all(x > 0 for x in sample["read"])
-        assert all(x > 0 for x in sample["write"][:2])
+        assert all(x > 0 for x in sample["write"])
     costs.append({"covered": covered, "saveMs": quantiles([r["saved"] for r in samples]),
                   "readMs": quantiles([r["readMs"] for r in samples]),
                   "requestBytes": quantiles([r["write"][0] for r in samples]),
