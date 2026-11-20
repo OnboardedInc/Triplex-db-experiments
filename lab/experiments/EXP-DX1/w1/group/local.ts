@@ -430,6 +430,7 @@ try {
     for (const layout of ["legacy", "lean"] as const)
       emit("query-proof", { layout, ...(await queryProof(url, nonce, layout)) });
     await stop(proof);
+  } else if (fieldStudy === "query6-cost") {
     for (const [i, covered] of [false, true, true, false].entries()) {
       const g = await gateway(false, {
         TX2_SAVE_LEDGER: "1",

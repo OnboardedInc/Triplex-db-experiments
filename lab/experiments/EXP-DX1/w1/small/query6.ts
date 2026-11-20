@@ -325,20 +325,19 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
       }),
     );
     assert.equal(older.transactions[0]?.txId, first.txId);
-    const exact = results(
-      await run(
-        t.query(
-          {
-            find: ["?int", "?num"],
-            where: [
-              ["n:1", ":n/i", "?int"],
-              ["n:1", ":n/value", "?num"],
-            ],
-          },
-          { basis: cut },
-        ),
-      ),
-    );
+    const numerics: DatalogQuery = {
+      find: ["?int", "?num"],
+      where: [
+        ["n:1", ":n/i", "?int"],
+        ["n:1", ":n/value", "?num"],
+      ],
+    };
+    // [DX-W1] Why: capture the implicit cursor clock and prove numeric parity at the acknowledged cut.
+    // Rejected: letting the deterministic reader's old wall time stand in for the write's recorded time.
+    const implicit = await run(t.query(numerics, { basis: cut, includeBasis: true }));
+    assert.equal(implicit.basis?.recordedPosition, next.position);
+    const latest = { ...cut, recordedAt: next.instant };
+    const exact = results(await run(t.query(numerics, { basis: latest })));
     assert.equal(
       exact[0]?.["?int"] && JSON.stringify(exact[0]["?int"]),
       JSON.stringify(integer("9007199254740993")),
@@ -361,7 +360,7 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
               },
             ],
           }),
-          { basis: cut },
+          { basis: latest },
         ),
       ),
     );
@@ -414,6 +413,7 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
         number: exact[0]?.["?num"],
         negativeZeroRejected: true,
       },
+      implicitNumericPage: { recordedAt: implicit.basis?.recordedAt, results: implicit.results },
       recursive,
       explainBackend: explain.map((plan) => plan.queryPlan?.backend),
       log: commits.map((row) => row.transaction),
@@ -425,8 +425,18 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
 // [DX-W1] Why: use identical saves and verify every recorded result outside each latency sample.
 // Rejected: attributing differences in row count or an unverified acknowledgement to query coverage.
 export function queryCost(url: string, nonce: string, layout: Layout, covered: boolean) {
-  return withScope(url, nonce, layout, async (t, rt, client) => {
+  return withScope(url, nonce, layout, async (t, rt, client, db) => {
     const run = rt.runPromise;
+    const writer = await client.request<{
+      database: string;
+      ledger: boolean;
+      packedJournal: boolean;
+      leanNativeQuery: boolean;
+      installedDefinitionMatches: boolean;
+    }>("GET", `/v2/db/${db}/write-options`);
+    assert.equal(writer.database, db);
+    assert(writer.ledger && !writer.packedJournal && writer.installedDefinitionMatches);
+    assert.equal(writer.leanNativeQuery, covered);
     const seed = await run(
       t.transact(Array.from({ length: 48 }, (_, i) => a("e:" + i, ":field", "seed"))),
     );
@@ -488,6 +498,6 @@ export function queryCost(url: string, nonce: string, layout: Layout, covered: b
         read: [response.requestBytes, response.responseBytes],
       });
     }
-    return { nonce, covered, layout, samples };
+    return { db, nonce, covered, layout, writer, samples };
   });
 }

@@ -80,6 +80,21 @@ def erasure_observation():
     return record
 
 
+def quantiles(values):
+    values = sorted(values)
+    return [values[math.ceil(q*len(values))-1] for q in (.5, .99)]
+
+
+def summarize_cost(samples):
+    return {"samples": len(samples), "saveMs": quantiles([r["saved"] for r in samples]),
+            "readMs": quantiles([r["readMs"] for r in samples]),
+            "requestBytes": quantiles([r["write"][0] for r in samples]),
+            "ackBytes": quantiles([r["write"][1] for r in samples]),
+            "readRequestBytes": quantiles([r["read"][0] for r in samples]),
+            "readReplyBytes": quantiles([r["read"][1] for r in samples]),
+            "datoms": sorted({r["write"][2] for r in samples})}
+
+
 if study == "erase6":
     assert [e["k"] for e in events] == ["sql", "finished"]
     with (out / ("observation-" + str(uuid.uuid4()) + ".json")).open("x") as f:
@@ -87,8 +102,34 @@ if study == "erase6":
         print(f.name)
     sys.exit(0)
 
+if study == "query6-cost":
+    assert [e["k"] for e in events] == ["sql", *["query-cost"] * 4, "finished"]
+    costs, pooled = [], {False: [], True: []}
+    for i, (event, covered) in enumerate(zip(events[1:5], (False, True, True, False), strict=True)):
+        arm = event["v"]
+        assert arm["nonce"] == f"{nonce}-cost-{i}" and arm["layout"] == "lean" and arm["covered"] is covered
+        key = arm["db"][3:]
+        assert json.loads(base64.urlsafe_b64decode(key + "=" * (-len(key) % 4)))[3] == arm["nonce"]
+        writer = arm["writer"]
+        assert writer["database"] == arm["db"] and writer["installedDefinitionMatches"] is True
+        assert writer["ledger"] is True and writer["packedJournal"] is False and writer["leanNativeQuery"] is covered
+        samples = arm["samples"]
+        assert len(samples) == len({r["id"] for r in samples}) == 64
+        for n, sample in enumerate(samples):
+            assert [sample["n"], sample["command"], sample["position"], sample["expected"]] == [
+                n, f"save:{n}", n + 2, f"value:{n}"]
+            assert sample["saved"] > 0 and sample["readMs"] > 0 and all(x > 0 for x in sample["read"] + sample["write"])
+        pooled[covered].extend(samples)
+        costs.append({"covered": covered, **summarize_cost(samples)})
+    result = {**binding, "costs": costs, "pooled": {str(k): summarize_cost(v) for k, v in pooled.items()},
+              "erasure": erasure_observation()}
+    with (out / ("verified-" + str(uuid.uuid4()) + ".json")).open("x") as f:
+        json.dump(result, f, indent=2)
+        print(f.name)
+    sys.exit(0)
+
 assert study == "query6"
-assert [e["k"] for e in events] == ["sql", "query-proof", "query-proof", *["query-cost"] * 4, "finished"]
+assert [e["k"] for e in events] == ["sql", "query-proof", "query-proof", "finished"]
 
 legacy, lean = (e["v"] for e in events[1:3])
 for layout, arm in zip(("legacy", "lean"), (legacy, lean), strict=True):
@@ -220,28 +261,7 @@ for row, record in zip(lean["log"][:2], expected["feed"]["transactions"], strict
                c["position"] == str(record["position"]) for c in row["changes"])
 
 
-def quantiles(values):
-    values = sorted(values)
-    return [values[math.ceil(q*len(values))-1] for q in (.5, .99)]
-
-
-costs = []
-for i, (event, covered) in enumerate(zip(events[3:7], (False, True, True, False), strict=True)):
-    arm = event["v"]
-    assert arm["nonce"] == f"{nonce}-cost-{i}" and arm["layout"] == "lean" and arm["covered"] is covered
-    samples = arm["samples"]
-    assert len(samples) == len({r["id"] for r in samples}) == 64
-    for n, sample in enumerate(samples):
-        assert [sample["n"], sample["command"], sample["position"], sample["expected"]] == [
-            n, f"save:{n}", n + 2, f"value:{n}"]
-        assert sample["saved"] > 0 and sample["readMs"] > 0 and all(x > 0 for x in sample["read"])
-        assert all(x > 0 for x in sample["write"])
-    costs.append({"covered": covered, "saveMs": quantiles([r["saved"] for r in samples]),
-                  "readMs": quantiles([r["readMs"] for r in samples]),
-                  "requestBytes": quantiles([r["write"][0] for r in samples]),
-                  "ackBytes": quantiles([r["write"][1] for r in samples]),
-                  "datoms": sorted({r["write"][2] or 0 for r in samples})})
-proof = {**binding, "oracle": revision, "case": sha(queries), "expected": sha(answer), "costs": costs,
-         "erasure": erasure_observation()}
+proof = {**binding, "oracle": revision, "case": sha(queries), "expected": sha(answer),
+         "implicitNumericPage": lean["implicitNumericPage"]}
 (attempt / "verified.json").write_text(json.dumps(proof, indent=2) + "\n")
 print(attempt / "verified.json")

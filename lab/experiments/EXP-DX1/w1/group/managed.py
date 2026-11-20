@@ -12,7 +12,7 @@ import uuid
 
 parser = argparse.ArgumentParser()
 parser.add_argument("destination", type=Path)
-parser.add_argument("--field", choices=["queue","growth","small-cost","small-layout","small-capacity","retention","ledger-proof","write-clock","query6","erase6"])
+parser.add_argument("--field", choices=["queue","growth","small-cost","small-layout","small-capacity","retention","ledger-proof","write-clock","query6","query6-cost","erase6"])
 parser.add_argument("--offers", type=int, default=10000)
 args = parser.parse_args()
 if args.field == "retention" and not 64 <= args.offers <= 10000:
@@ -40,7 +40,7 @@ if args.field:
     if args.field == "retention":
         shutil.copy2(experiment.parent / "small/retention.clj", cfg / "packages/datomic/gateway/src/triplex/gateway/retention.clj")
         (container / "offers").write_text(str(args.offers) + "\n")
-    if args.field in ("erase6", "query6"):
+    if args.field in ("erase6", "query6-cost"):
         shutil.copy2(experiment.parent / "small/erase6.clj", cfg / "packages/datomic/gateway/src/triplex/gateway/erase6.clj")
 esbuild = repo / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
 subprocess.run([esbuild, experiment / "local.ts", "--bundle", "--platform=node", "--format=esm",
