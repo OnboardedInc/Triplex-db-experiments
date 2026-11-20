@@ -83,6 +83,32 @@
        "claims" [{"commandId" command "txId" tx "timestamp" clock}]
        "rows" (mapv storage/wire-row (concat fresh olds))})))
 
+(defn import-input [person]
+  (let [tx (str "_tx/import-" person)
+        command (str "import-" person)
+        facts (mapv #(assoc % :tx_id tx) (seed-rows person 160))
+        stamp (fn [i a typ v]
+                (assoc (row (tagged (+ 300000000000 (* person 1000) i)) tx a typ v tx 1) :entity_type "_Transaction"))
+        entities (sort (set (map :entity_id facts)))
+        rows (into facts
+                   (concat [(assoc (stamp 0 ":_tx/position" "number" nil) :value_number 1.0)
+                            (assoc (stamp 1 ":_tx/instant" "datetime" nil) :value_datetime clock)
+                            (stamp 2 ":_tx/command-id" "string" command)]
+                           (map-indexed #(stamp (+ 3 %1) ":_tx/changed-entity" "ref" %2) entities)
+                           (map-indexed
+                             (fn [i r]
+                               (assoc (stamp (+ 300 i) ":_tx/change" "json" nil)
+                                      :value_json (json/write-str {:op "assert" :tripleId (:id r)
+                                                                   :entityId (:entity_id r) :attribute (:attribute r)
+                                                                   :value {:type (:value_type r) :value (:value_string r)}
+                                                                   :validFrom (:valid_from r) :recordedAt clock :assertionTxId tx})))
+                             facts)))]
+    (fixture/row-input
+      {"operationId" command "position" 1 "span" 1 "assignRecordTime" true
+       "scopeWide" false "entities" entities "groupAccount" (f/account person) "writeClass" "import"
+       "newIds" (mapv :id rows) "claims" [{"commandId" command "txId" tx "timestamp" clock}]
+       "rows" (mapv storage/wire-row rows)})))
+
 (defn save! [{:keys [name conn]} in]
   (let [r (storage/commit! name conn (d/db conn) in)]
     (assert (= (get in "operationId") (:operationId r)))

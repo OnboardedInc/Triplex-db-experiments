@@ -220,7 +220,41 @@ function ablation() {
   return { incumbent: binding.incumbent, options: head.options, modes: groups };
 }
 
-const reducers = { surface, history, erasure, ablation };
+function mixed() {
+  assert.equal(rows[0].kind, "mixed-start");
+  assert.equal(last.kind, "mixed-end");
+  assert.match(binding.incumbent ?? "", /^[0-9a-f]{40}$/);
+  assert.equal(rows[0].people, 640);
+  assert.equal(rows[0].options.livePriority, true);
+  const samples = of("mixed-window");
+  const order = [["corrected", false], ["compact", false], ["corrected", true], ["compact", true]];
+  assert.deepEqual(samples.map((s) => [s.path, s.importing]), [...order, ...order.slice().reverse()]);
+  assert.deepEqual(samples.map((s) => s.block), [0, 0, 0, 0, 1, 1, 1, 1]);
+  assert.equal(samples.length, last.windows);
+  const windows = samples.map((s) => {
+    assert.equal(s.readers, 64);
+    assert.equal(s.liveOffered, 96);
+    assert.equal(s.liveMs.length, 96);
+    assert.equal(s.importOffered, s.importing ? 24 : 0);
+    assert.equal(s.misses.length, s.liveOffered - s.liveAck + s.importOffered - s.importAck);
+    assert(s.importOverlap <= s.importAck);
+    assert(s.readerOverlap <= s.readers);
+    assert.equal(s.factsOverlapped, s.importOverlap * 160);
+    return { path: s.path, block: s.block, importing: s.importing, readers: s.readers, readerOverlap: s.readerOverlap,
+      liveOffered: s.liveOffered, liveAck: s.liveAck, livePerSecond: s.liveAck * 1000 / s.windowMs,
+      write: stats(s.liveMs), read: stats(s.readMs), importOffered: s.importOffered, importAck: s.importAck,
+      importOverlap: s.importOverlap, factsPerSecond: s.factsOverlapped * 1000 / s.windowMs,
+      errors: s.misses };
+  });
+  const tailRatios = [];
+  for (const path of ["corrected", "compact"]) for (const block of [0, 1]) {
+    const [x, y] = [false, true].map((v) => windows.find((w) => w.path === path && w.block === block && w.importing === v));
+    tailRatios.push({ path, block, write: y.write.p99 / x.write.p99, read: y.read.p99 / x.read.p99 });
+  }
+  return { incumbent: binding.incumbent, activeOptions: rows[0].options, windows, tailRatios };
+}
+
+const reducers = { surface, history, erasure, ablation, mixed };
 assert(reducers[binding.phase], "unexpected probe phase");
 console.log(JSON.stringify({ attempt: binding.attempt, source: binding.sourceHash,
   raw: hash(read("probe.log")), ...reducers[binding.phase]() }, null, 2));
