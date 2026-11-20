@@ -3588,3 +3588,24 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
   deep people and 3.5 saves per second: values written after 216 s, individual notices after 254 s. Open: deep
   settlement at 23.5 saves per second, interference trace, memory bar, pooled Publish at both scorecard ages,
   protected inputs in notices. Not run-critical beyond the pinned candidate: parked. Ten agents running.
+
+## 2026-11-20 21:28 UTC (16:28 local, 2026-11-20): DX-PLAY1 part 2 and DX-HA1 part 6 in; both parked; eight agents running
+
+- **DX-PLAY1 part 2 (`c5330503d`, includes `exp/DX-INT1` `53c595f02`; `play1/SIZE.md`).** Start from a
+  restored snapshot works (`pnpm playground start --tier NAME --data SOURCE`): all 13 actions, both tool
+  transports, Chromium and cleanup pass; startup checks the current cut and two earlier cuts. Three Mac sizing
+  rungs (48/1,920, 96/3,840, 192/7,680 deep/wide people; 350 to 1,050 retained saves): download 23.71 to 80.56 MB,
+  restore 1.90 to 7.73 s, first checked read 31.6 to 53.0 s. Its fit: 1,016 compressed bytes per initial fact and
+  23,018 per retained save, giving a 5 GB tier of 246 deep and 9,840 wide people with 75,810 saves (1.83 GB,
+  sensitivity 0.07 to 4.99). **Orchestrator's check:** the per-save term is about fifteen times DX-W1's 1,531
+  settled bytes per save and comes from small databases whose index jobs rewrite most segments, dumped with
+  unreachable segments included; the tier table is not ready for Sam. Server 2 reference measured now: 115.4 GB of
+  PostgreSQL data for 162,456,470 facts (710 bytes per fact, no history). Clean-clone workflow written, not
+  started. Erasure still unavailable in the playground. Parked; redo logged in `NEXT-WEEK.md` item 21.
+- **DX-HA1 part 6 (`e1b5d34d2`, `exp/DX-INT1` merged in; `load1/MICRO-ATTRIBUTION.md`).** Attribution of the
+  server import run: quiet saves at p99 spent 18 to 25 ms in the writer queue; gateway pauses overlapped 7 to 10
+  of the 12 slowest reads per arm; CPU contention and storage wait not separable from the archive. Next server run
+  (15 to 25 minutes): feedback-paced against fixed-rate import at 32 facts per frame, one frame outstanding. Mac:
+  33,952 imported facts and 5,040 live offers verified; failover, planned move and 65 native tests pass after the
+  merge; planned-move pause 22.79 and 31.74 s on the Mac (bar 30 s, open on bare metal). Parked.
+- Running: DX-BM1, DX-SCALE1, DX-V01, DX-THIN1, DX-AGE1, DX-PREP1, DX-JVM1, DX-W1 (eight).

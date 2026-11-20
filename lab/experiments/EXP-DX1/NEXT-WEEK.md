@@ -22,7 +22,14 @@ defined in `lab/V0.1.md` on main.
 
 ## Follow-ups from results already in
 
-8. **Import interference in one database.** Small frames reach the rate (2,002 to 3,983 facts per second) and slow
+8. **Import interference in one database (DX-HA1 finished part 6 at `e1b5d34d2` on 2026-11-20 and is parked;
+   `load1/MICRO-ATTRIBUTION.md`, `MICRO-SERVER.md`).** Its attribution of the server run: a quiet save at p99 spent
+   18 to 25 ms in the write gateway's queue; gateway pauses overlapped 7 to 10 of the 12 slowest reads in each import
+   arm; the archive cannot separate CPU contention from storage wait. Its next server run (15 to 25 minutes, on
+   server 1's queue) compares a feedback-paced import with a fixed rate at 32 facts per frame; forecast 2,000 to
+   2,880 facts per second with quiet save p99 14 to 24 ms under feedback. If pacing cannot hold both bars, the next
+   candidate is import on its own gateway process. Planned-move pause on the Mac was 22.79 and 31.74 s (bar 30 s):
+   needs bare metal. Earlier text: Small frames reach the rate (2,002 to 3,983 facts per second) and slow
    a quiet account's saves 3 to 7 times (bar 1.5). After DX-HA1's attribution: build the fix it points to (import
    on its own gateway process or capped pool, a rate that backs off on live p99) and rerun.
 9. **Quiet-account isolation with the present writer fails by about ten times** at 235 offered saves per second
@@ -59,7 +66,14 @@ defined in `lab/V0.1.md` on main.
 18. Three-machine failover (option C) on real servers.
 19. Moving every account to a successor database, on servers.
 20. Production key custody and rotation for erasure (15 minute rotation window).
-21. Playground: full data tier build on a server, upload, clean-clone workflow run, erasure switched on, larger
+21. **Playground data size (DX-PLAY1 finished part 2 at `c5330503d` on 2026-11-20 and is parked).** Snapshot
+    start works and passed the full gate. Its sizing fit (23,018 compressed bytes per retained save) is about
+    fifteen times DX-W1's 1,531 settled bytes per save at scale: its three small test databases (350 to 1,050
+    saves) carry the index segments each small index job rewrote, and a PostgreSQL dump copies unreachable
+    segments too. Redo the sizing with Datomic's own backup (reachable segments only) or after storage garbage
+    collection, at sizes of thousands of people, before the tier table goes to Sam. Reference from server 2: ten
+    full-size accounts, 162,456,470 facts, 115.4 GB of PostgreSQL data, 710 bytes per fact before any history.
+    Then: full data tier build on a server, upload, clean-clone workflow run, erasure switched on, larger
     load panel, continuous compliance scenarios.
 22. Version 0.1 write-up: README for the merged branch, the scorecard at both ages with every failing line's cause
     and next step, known limits (query support lists, failover policy, import).
