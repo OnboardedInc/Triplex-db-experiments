@@ -2432,3 +2432,29 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **Assigned 21:05 local, DX-ACT1 part 6:** the 10,000-person joined run; the deep profile; stored outputs inside one
   second at 100,000 (output ranges for reader-only inputs, parallel evaluation, chunk transactions invisible until
   the marker); second release while settling; apply W2-ACTAUDIT's findings; one server command with predictions.
+
+## 2026-11-20 02:35 UTC (21:35 local, 2026-11-19): activation tests audited: three critical faults; deep tail is not depth
+
+- **W2-ACTAUDIT (reviewer; private folder `research/2026-11-20-wave2/ACTAUDIT/`, FINDINGS.md with file and line).**
+  Verdict "fix first": treat the coming 100,000-subject DELTA number as a one-read measurement. Critical: (1) DELTA's
+  clock stops after the terminal ACK and one verified read; changed values and owed notices are written only after all
+  offers, for the first two releases; (2) the deadline checker accepts missed offers and stale current reads (a Mac
+  fixture with 90 offers at 1,700 ms and seven stale reads passed); (3) BM1's overnight collector requires two
+  reference records where the producer writes three, so a valid result would be discarded after hours and retried.
+  High: (4) DELTA's latest route can return the old release after its effective time; (5) the oracle accepts the
+  product's own release basis; (6) the 100,000 timing path is warm and repeated; (7) races and crash recovery are not
+  covered; (8) NOTIFY1 can omit an owed notice for a shared-fact save and verify the omission as success (reproduced:
+  two people under a raised local floor, one selected, one never notified); (9) NOTIFY1's 21 to 68 ms is recipe
+  admission in a quiet window; (10) ACT1's guarded sweep and LAZY's stored trial measure different work from the
+  headline. Medium: (11) the closed staged prototype can publish an expired certificate.
+- **Action 21:30 local:** DX-BM1, DX-ACT2 and DX-STG1 were stopped and resumed with the findings. Server 1 does not run
+  the DELTA activation items until findings 1 and 2 are fixed and producer and collector pass on the same small saved
+  output; it runs W1's quiet-account pulse, the matched thin against deep probe, imports, the predecessor arm, the
+  analysts' probes and the thin 1,000,000 run meanwhile. Nothing had been spent on the faulty command: server 1 was
+  still on the group-commit job.
+- **W2-DEEPTAIL (analyst; `research/2026-11-20-wave2/DEEPTAIL/`).** The 87.04 ms deep p99 is not depth: deep saves read
+  30.99 to 33.10 ms p99 in the first 900 s, level with thin (32.84). The tail came with long queues ahead of the write
+  gateway, some during the bench's own history-growth overlay (about 53 extra transactions per second for 9.48 s;
+  seven of the eight slowest). Revised forecast for one deep account of 100,000: 40 to 75 ms at its peak field-save
+  rate, 28 to 48 ms with live priority, the sender fix and the predecessor lookup. The raw archive (281 MB) is being
+  copied from server 2 to the Mac so the exact fifty slowest saves can be attributed; part 2 assigned.
