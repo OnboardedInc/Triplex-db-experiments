@@ -86,6 +86,7 @@ for n, grouped in enumerate([False, True]):
     case["commands"].append({"kind":"transact","operations":[{"op":"assert","ref":"lost","entityId":root,"attribute":":proof/value","value":{"type":"string","value":"durable"},"validFrom":0}],"meta":{"commandId":"lost-reply"}})
     case["receipts"].append({"outcome":"unknown","resolvedOutcome":"committed","position":lost["position"],"instant":lost["recordedAt"],"txId":lost["txId"],"assertionIds":[token("lost-reply/f0")]})
     case["queries"].append({"id":"p18","kind":"entityTriples","entityId":root,"cut":{"position":18,"validAt":1}})
+    case["queries"] += [{"id":f"feed-{after}", "kind":"transactions", "after":after, "limit":1} for after in range(18)]
     for index,record in enumerate(case["receipts"]): record["command"]=index
     assert (len(set(r["t"] for r in proof["receipts"]))<17)==grouped
     filename = f"oracle-case-{n}.json"
@@ -94,14 +95,22 @@ for n, grouped in enumerate([False, True]):
     subprocess.run([sys.executable,"-I",oracle/"lab/oracles/replay/cli.py",report/filename,"-o",answer],check=True)
     doc = json.loads(answer.read_text())
     assert doc["verdict"] == "PASS" and doc["receiptConsistency"]["violations"] == []
-    assert len(doc["queries"]) == 18 and len(doc["commandOutcomes"]) == 20
+    assert len(doc["queries"]) == 36 and len(doc["commandOutcomes"]) == 20
     assert all(item["verdict"] == "PASS" for item in doc["commandOutcomes"])
     assert doc["commandOutcomes"][6]["expected"]["errorTag"] == "TransactionConflictError"
     assert doc["commandOutcomes"][18]["expected"]["transactionId"] == original["txId"]
-    for i,q in enumerate(doc["queries"]):
+    for i,q in enumerate(doc["queries"][:18]):
         assert q["id"]=="p"+str(i+1)
         expected=sorted([r["id"],r["entityId"],r["attribute"],r["value"]["value"],r["recordedPosition"]] for r in q["result"]["snapshot"])
         assert expected==sorted((proof["views"]+[proof["lostView"]])[i])
+    assert len(proof["journals"]) == len(proof["operationReceipts"]) == 18
+    for i, q in enumerate(doc["queries"][18:]):
+        assert q["id"] == f"feed-{i}"
+        wanted, = q["result"]["transactions"]
+        actual = proof["journals"][i]
+        def ordered(journal):
+            return {**journal, "changes": sorted(journal["changes"], key=lambda c: (c["op"], c["tripleId"]))}
+        assert ordered(wanted) == ordered(actual)
     original, resolved=proof["idempotency"]["original"], proof["idempotency"]["resolved"]
     witness=proof["witness"]
     assert [original["commandId"],original["operationId"],original["txId"],original["position"],original["recordedAt"],original["t"]]==[witness["id"],witness["id"],"_tx/"+token("transaction/"+witness["id"]),witness["p"],witness["clock"],witness["t"]]

@@ -11,6 +11,7 @@ import { runArm, seedPooled } from "../group/workload.ts";
 import { pooledDigest } from "../group/population.ts";
 import { verifyPopulation } from "../group/seed-readback.ts";
 import { fieldPhase, scopeKey } from "./traffic.ts";
+import { readWriteOptions, verifyWriteOptions } from "../write-options.ts";
 import {
   modes,
   fieldPolicy,
@@ -54,6 +55,12 @@ async function fieldArm(
     const { head: seedHead, seeds } = await seedPooled(seed, init.db);
     const open = await c.create(scope, "lean", true, 35000);
     assert(!open.created && open.db === init.db);
+    const writerOptions = await readWriteOptions(
+      url,
+      init.db,
+      process.env.DX_W1_WRITER_EXPECTATION,
+    );
+    assert.equal(writerOptions.observed.position, seedHead);
     await opened?.(c, init.db);
     const phases = [],
       senders = new Map<string, number>();
@@ -75,7 +82,7 @@ async function fieldArm(
       head += p.offered;
       phases.push(p);
     }
-    return { nonce, scope, db: init.db, seeds, phases };
+    return { nonce, scope, db: init.db, seeds, phases, writerOptions };
   } finally {
     c.close();
     seed.close();
@@ -264,11 +271,23 @@ if (action === "worker") {
         assert.equal(check.digest, pooledDigest);
         const first = raw.phases[0];
         assert.equal(check.seedCut, first.headBefore ?? first.firstPosition - 1);
+        const writerExpectation = path.join(attempt, "writer-expectation.json");
+        const expected = read(writerExpectation);
+        assert.deepEqual(raw.writerOptions.expected, expected);
+        verifyWriteOptions(
+          raw.writerOptions.observed,
+          raw.db,
+          expected,
+          raw.writerOptions.historyRange,
+        );
+        assert.equal(raw.writerOptions.observed.position, check.seedCut);
         return {
           arm,
           mode,
           ...(enhanced ? { policy } : {}),
           db: raw.db,
+          writerOptions: raw.writerOptions,
+          writerExpectationSha256: await fileHash(writerExpectation),
           scope: raw.scope,
           seed: pooledDigest,
           seedFacts: check.facts,

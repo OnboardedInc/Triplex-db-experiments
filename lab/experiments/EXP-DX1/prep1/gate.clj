@@ -2,6 +2,7 @@
   (:require [clojure.data.json :as json]
             [clojure.walk :as walk]
             [datomic.api :as d]
+            [triplex.gateway.commit :as commit]
             [triplex.gateway.group :as group]
             [triplex.gateway.group-prepare :as prepared]
             [triplex.gateway.group-test :as fixture]
@@ -54,6 +55,7 @@
       {:error (or (:code (ex-data error)) (str error))}
       {:receipt (group/receipt (:db-after value) (:id entry))
        :size (:group-size value) :path (get-in value [:prepared-stats :path])
+       :guard (get-in value [:prepared-stats :guard])
        :replays (get-in value [:prepared-stats :replays])})))
 (defn group! [conn descriptors & [inject]]
   (let [db (d/db conn)
@@ -67,7 +69,7 @@
     (mapv output entries)))
 (defn with-scope [name parallel? packed? f]
   (with-redefs [prepared/enabled parallel? group/enabled true group/stage-clock true
-                group/reuse-prepared true small/enabled packed?
+                group/reuse-prepared true group/fast-reply packed? small/enabled packed?
                 main/uri-template (or (System/getenv "PREP1_URI") "datomic:mem://{db}")]
     (let [key (json/write-str ["triplex-scope-v1" "test" "prep1-gate" (str attempt "-" name) 0])
           db (:db (main/create-scope! nil key "lean" true true))
@@ -115,12 +117,13 @@
                      [id p (sort (map :id facts))
                       (vec (sort-by #(get % "op")
                          (keep #(when (= ":_tx/change" (:attribute %)) (json/read-str (:value_json %))) facts)))])) feed)}))
-(defn arm [salt parallel? packed?]
-  (with-scope (str salt "-" parallel?) parallel? packed?
+(defn arm [salt parallel? packed? & [basis?]]
+  (with-scope (str salt "-" (if basis? "basis" parallel?)) parallel? packed?
     (fn [name conn]
       (let [seed (seed! name conn)
             groups (tape seed salt)
-            outputs (mapv #(group! conn %) groups)
+            outputs (with-redefs [prepared/basis-enabled (boolean basis?)]
+                      (mapv #(group! conn %) groups))
             commands (vec (concat seed (mapcat identity groups)))
             observed (observe name conn commands)]
         (assert (= (count commands) (count (:snapshots observed))))
@@ -128,6 +131,8 @@
         (assert (= [4 4 2] (mapv #(-> % first :size) outputs)))
         (assert (= (if parallel? ["prepared" "prepared" nil] [nil nil nil])
                    (mapv #(-> % first :path) outputs)))
+        (assert (= (if parallel? (if basis? [:basis :basis nil] [:full :full nil]) [nil nil nil])
+                   (mapv #(-> % first :guard) outputs)))
         (assert (apply = (map (comp :t :receipt) (peek outputs))))
         (merge observed {:db name :commands commands :groups outputs})))))
 
@@ -232,20 +237,92 @@
             (emit "window" {:window window :scenario scenario :db db :calls @calls
                             :replies replies :receipts saved})))))))
 
-(try
-  (doseq [salt [17 43 503 2601]]
-    (let [packed? (odd? (quot salt 10))
-          a (arm salt false packed?)
-          b (arm salt true packed?)
-          semantic #(-> % (dissoc :db :groups) (update :receipts (fn [rs] (mapv (fn [r] (dissoc r :t)) rs))))]
-      (assert (= (semantic a) (semantic b)))
-      (emit "pair" {:salt salt :packed packed? :reference a :prepared b})))
-  (refusal-and-recovery)
-  (windows)
-  (emit "finished" {})
-  (shutdown-agents)
-  (System/exit 0)
-  (catch Throwable error
-    (.printStackTrace error)
+(def basis-cases [:unchanged :unrelated :scope :feed :head :function :revision :predicate :retired :journal :history :claim])
+(defn change-after-proof [conn mode seed a]
+  (let [base (d/db conn)
+        owner (d/entid base [:triplex.entity/id (owners 0)])
+        initial (:add (seed 0))
+        outside (assoc (step "outside" 0 nil) :owner "acct/outside/person")]
+    (when-not (#{:unchanged :claim} mode)
+      @(d/transact conn
+         (case mode
+           :unrelated [[:db/add "datomic.tx" :db/doc "after certification"]]
+           :scope [[:db/add (first (map :e (d/datoms base :aevt :triplex.scope/key)))
+                    :triplex.scope/schema-hash "changed during certification"]]
+           :feed [[:db/add (first (map :e (d/datoms base :aevt :triplex.scope/key)))
+                   :triplex.scope/feed-irregular true]]
+           :head (storage/tx-data base (request outside))
+           :function (let [[ident body] (commit/variants [true false])]
+                       [{:db/id (d/entid base ident)
+                         :db/fn (d/function {:lang :clojure :params '[db payload]
+                                            :requires '[[datomic.api :as d] [clojure.data.json :as json]]
+                                            :code (list 'do body)})}])
+           :revision [[:db/add owner :triplex.entity/rev 40]]
+           :predicate [[:db/add (d/entid base [:triplex.entity/id (owners 2)]) :triplex.entity/rev 40]]
+           :retired [[:db/add owner :triplex.entity/retired
+                      (str (lean/prefix initial) "0000000000000008"
+                           (format "%016x" (Double/doubleToRawLongBits 1007.0)) "_tx/seed-7")]]
+           :journal [{:db/id "occupied-journal" :triplex.entity/id (str "_tx/" (:id a))}]
+           :history [[:db/add (d/entid base [:triplex.entity/id (owners 2)]) :triplex.entity/row
+                      (rows/row-text (assoc (fixture/row (:add a) (owners 2) ":v" "occupied" "_tx/seed-2")
+                                            :recorded_position 3 :recorded_at 1002.0))]])))))
+
+(defn basis-fences []
+  (doseq [mode basis-cases]
+    (with-scope (str "basis-" (name mode)) true false
+      (fn [name conn]
+        (with-redefs [prepared/basis-enabled true]
+          (let [seed (seed! name conn)
+                a (cond-> (step "a" 0 (:add (seed 0)) 8)
+                    (= mode :claim) (assoc :claim "seed-2"))
+                b (step "b" 1 (:add (seed 1)) 8)
+                db (d/db conn)
+                a-input (cond-> (request a) (= mode :predicate) (update "entities" conj (owners 2)))
+                entries (mapv #(submitted conn db %) [a-input (request b)])
+                proof (group/plan conn entries)
+                tx-data (:data proof)
+                expected-basis (d/basis-t db)
+                _ (assert (= :basis (:guard proof)))
+                _ (assert (= [prepared/basis-ident expected-basis] (subvec (first tx-data) 0 2)))
+                _ (assert (not (prepared/empty-history-range? (d/history db)
+                                  [(lean/prefix "fact-a") (lean/prefix (:add (seed 7)))])))
+                _ (assert (not (prepared/empty-history-range? (d/history db)
+                                  [(lean/prefix "fact-a") (lean/prefix "fact-\u00e9a")])))
+                _ (change-after-proof conn mode seed a)
+                moved (d/basis-t (d/db conn))
+                _ (assert (= (= moved expected-basis) (contains? #{:unchanged :claim} mode)))
+                _ (group/finish-prepared! conn entries (group/start-prepared! conn proof))
+                [x y :as replies] (mapv output entries)
+                [first-save second-save :as saved] (mapv #(group/receipt (d/db conn) %) ["a" "b"])]
+            (assert (= (if (= mode :unchanged) 0 1) (:replays y)))
+            (assert (= (if (= mode :unchanged) "prepared" "reference") (:path y)))
+            (assert (= (not (#{:revision :predicate :retired :history :claim} mode)) (some? first-save)))
+            (when-not first-save (assert (:error x)))
+            (assert (= second-save (:receipt y)))
+            (assert (= (:position second-save) (storage/head-position (d/db conn))))
+            (when (= mode :history)
+              (let [view (d/db conn)]
+                (assert (not (prepared/unused-prefix? (d/history view) (lean/prefix (:add a)))))))
+            (emit "basis" {:mode mode :db name :basis expected-basis :observedBasis moved
+                           :historyPath (:history proof) :replies replies :receipts saved})))))))
+
+(when-not (= "1" (System/getenv "PREP1_GATE_LIBRARY"))
+  (try
+    (doseq [salt [17 43 503 2601]]
+      (let [packed? (odd? (quot salt 10))
+            a (arm salt false packed?)
+            b (arm salt true packed?)
+            c (arm salt true packed? true)
+            semantic #(-> % (dissoc :db :groups) (update :receipts (fn [rs] (mapv (fn [r] (dissoc r :t)) rs))))]
+        (assert (= (semantic a) (semantic b) (semantic c)))
+        (emit "pair" {:salt salt :packed packed? :reference a :prepared b :basis c})))
+    (refusal-and-recovery)
+    (windows)
+    (basis-fences)
+    (emit "finished" {})
     (shutdown-agents)
-    (System/exit 1)))
+    (System/exit 0)
+    (catch Throwable error
+      (.printStackTrace error)
+      (shutdown-agents)
+      (System/exit 1))))
