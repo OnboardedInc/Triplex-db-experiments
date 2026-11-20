@@ -36,7 +36,9 @@ The owner approved the separate joined roster. BM1 `54744f440` records that `i29
 
 ## Server observations at 100,000 people
 
-BM1 `2cd820e8c` copied the component evidence from `i29-2` under `single-n20/recovered/activation-i29-2-components`. Its manifest digest is `b1e0e6026ef91939214d2af785ff1bc1104c9f4af737ea77026732426fb4528e`. All 38 local member hashes match. The checked clocks describe one Publish per cell. The independent readback matched all 16,045,255 source facts and 3,240 save receipts. Final ordered delivery replay is still running.
+BM1 `2cd820e8c` copied the component evidence from `i29-2` under `single-n20/recovered/activation-i29-2-components`. Its manifest digest is `b1e0e6026ef91939214d2af785ff1bc1104c9f4af737ea77026732426fb4528e`. All 38 local member hashes match. The checked clocks describe one Publish per cell. The independent readback matched all 16,045,255 source facts and 3,240 save receipts.
+
+BM1 `20747b816` closed `overnight/i29-2` after verifying all 342,881 ordered receiver effects. The terminal transfer matches `e272ac70a56e0b596794830d825ac9a0a8de2a019be1a4bdb818f27b43a36039` and the 100,000-person collector matches `4369c26e2baa9e14979afbed665475a81746aca271b57e286bca232a35b8a1c7`. The close hook binds the completed native source, nonce, actual writer slot and gateway options before stopping the separate second seed. Cleanup finished and the server admitted its next experiment. The separate 100,000-person background price has no observation.
 
 | Saves per second | Receipt and first correct answer | Staged values and first correct answer |
 | ---: | ---: | ---: |
