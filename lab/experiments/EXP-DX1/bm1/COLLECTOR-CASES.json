@@ -1,1 +1,17 @@
-{}
+{
+  "5": {
+    "collectorReceiptSha256": "64820336f586d10437f3ddcd1267dc73d2ed687656745f1feb1870ae2f4277ab",
+    "file": "result.json",
+    "producerReceiptSha256": "1c4556d1614de05edaf39e17ba45a97694e2652791e4ca7b31ec9c5a86834dcf",
+    "receipt": {
+      "file": "latency-samples.json",
+      "sha256": "296de69fa2751fc00eb43c16242069024d955f0384bf57cf9a052da417a81f01"
+    },
+    "sampleAttempt": "ac9bf9a7-973a-4f98-aa25-25cb413729e1",
+    "sampleSlot": "tx2-dxthin-f49ebc79cf898c773dbe",
+    "sampleSource": "636088d70d8d6bff341d8796e80885dc9fe92ccd",
+    "sha256": "e9abb16af733d6e1285cf03ddbd5a7ba69d4f729aedebeca433e5da6b156308e",
+    "source": "cfec11ea108d65d29946a10dacbdd3c1f6b495f7",
+    "state": "verified"
+  }
+}

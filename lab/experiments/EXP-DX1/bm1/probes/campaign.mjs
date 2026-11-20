@@ -51,11 +51,14 @@ async function checkReceipt(client, db, id, ack) {
 }
 
 async function pulseSmall() {
-  const prediction = "lab/experiments/EXP-DX1/w1/field/predictions.json";
+  const { modes, fieldPolicy } = await load("lab/experiments/EXP-DX1/w1/field/bench-check.ts");
+  const prediction = "lab/experiments/EXP-DX1/w1/small/predictions.json";
   const predictionSha256 = sha(prediction);
   fs.copyFileSync(prediction, path.join(results, "predictions.json"), fs.constants.COPYFILE_EXCL);
   const arms = [];
-  for (const [i, grouped] of [false, true].entries()) {
+  for (const [i, mode] of modes("pulse", true).entries()) {
+    const policy = fieldPolicy(mode, true),
+      grouped = policy.grouping;
     const directory = path.join(results, "arm-" + (i + 1));
     const arm = newArm(directory, `tx2-dxscale1-w1-${tag}-${i + 1}`, "deep");
     const run = await withStack(
@@ -101,7 +104,7 @@ async function pulseSmall() {
                 const subject = ids.placement(accounts[account].first + j);
                 const body = command(
                   id,
-                  Array.from({ length: 8 }, (_, k) =>
+                  Array.from({ length: 1 + (j % 3) }, (_, k) =>
                     fact(subject, ":save/field" + k, `${id}-${k}`),
                   ),
                 );
@@ -122,7 +125,7 @@ async function pulseSmall() {
                   t: ack.t.v,
                   bytes: ack.requestBytes,
                   clock: ack.recordedAt.v,
-                  businessFacts: 8,
+                  businessFacts: 1 + (j % 3),
                   ack,
                 };
               }),
@@ -153,7 +156,8 @@ async function pulseSmall() {
           });
           return {
             arm,
-            mode: grouped ? "all" : "individual",
+            mode,
+            policy,
             scope,
             db,
             predictionSha256,
@@ -171,12 +175,19 @@ async function pulseSmall() {
         }
       },
       grouped,
-      grouped ? "all" : "individual",
+      mode,
+      true,
     );
     write(path.join(directory, "summary.json"), run);
     arms.push(run);
   }
-  write(path.join(results, "comparison.json"), { source, study: "pulse", predictionSha256, arms });
+  write(path.join(results, "comparison.json"), {
+    source,
+    study: "pulse",
+    enhanced: true,
+    predictionSha256,
+    arms,
+  });
 }
 
 async function fieldCut(directory, arm, population, subjects, seconds) {
@@ -283,6 +294,13 @@ async function fieldWorker(directory, population, subjects, seconds) {
         );
     const bySubject = new Map(),
       obs = [];
+    const file = path.join(directory, "writer.jsonl");
+    write(path.join(directory, "offers.json"), tape);
+    function record(outcome) {
+      obs.push(outcome);
+      const { ack, ...reading } = outcome;
+      fs.appendFileSync(file, JSON.stringify(reading) + "\n");
+    }
     const t0 = performance.now() + 100;
     for (const event of tape) {
       const due = t0 + event.due;
@@ -290,49 +308,80 @@ async function fieldWorker(directory, population, subjects, seconds) {
       const id = "bm1-matched-" + String(event.i).padStart(6, "0"),
         entity = ids.placement(event.subject);
       const previous = bySubject.get(entity) ?? Promise.resolve();
-      const work = previous.then(async () => {
-        const old = witness.get(entity),
-          facts = Array.from({ length: 5 }, (_, j) =>
-            fact(entity, ":bm1/field/" + j, id + "-" + j),
+      const work = previous
+        .then(async () => {
+          if (performance.now() - due >= 30000) {
+            record({
+              id,
+              entity,
+              ordinal: event.i,
+              due: event.due,
+              disposition: "expired-before-submit",
+            });
+            return;
+          }
+          const old = witness.get(entity),
+            facts = Array.from({ length: 5 }, (_, j) =>
+              fact(entity, ":bm1/field/" + j, id + "-" + j),
+            );
+          assert.equal(old.length, 5);
+          const normalized = command(id, facts, old);
+          let traceId;
+          const start = performance.now();
+          const ack = await tracedRequest(
+            "commit",
+            "bm1.field-cut",
+            { commandId: id },
+            async () => {
+              traceId = currentTrace()?.traceId;
+              return c.transact(db, normalized);
+            },
           );
-        assert.equal(old.length, 5);
-        const normalized = command(id, facts, old);
-        let traceId;
-        const start = performance.now();
-        const ack = await tracedRequest("commit", "bm1.field-cut", { commandId: id }, async () => {
-          traceId = currentTrace()?.traceId;
-          return c.transact(db, normalized);
-        });
-        const end = performance.now(),
-          pos = Number(ack.position.v);
-        assert(ack.operationId === id && pos > seedCut && Number(ack.t.v) > 0 && traceId);
-        const fresh = normalized.rows
-          .slice(0, 5)
-          .map((r) => ({ ...r, recorded_at: ack.recordedAt.v, recorded_position: pos }));
-        witness.set(entity, fresh);
-        obs.push({
-          id,
-          entity,
-          ordinal: event.i,
-          due: event.due,
-          started: start - t0,
-          ackMs: end - due,
-          traceId,
-          pos,
-          t: ack.t.v,
-          bytes: ack.requestBytes,
-          ints: digest(JSON.stringify([id, facts, old.map((r) => r.attribute)])),
-          fresh: fresh.map((r) => r.id),
-          old: old.map((r) => r.id),
-          values: facts.map((f) => f.v.value),
-          ack,
-        });
-      });
+          const end = performance.now(),
+            pos = Number(ack.position.v);
+          assert(ack.operationId === id && pos > seedCut && Number(ack.t.v) > 0 && traceId);
+          const fresh = normalized.rows
+            .slice(0, 5)
+            .map((r) => ({ ...r, recorded_at: ack.recordedAt.v, recorded_position: pos }));
+          witness.set(entity, fresh);
+          record({
+            id,
+            entity,
+            ordinal: event.i,
+            due: event.due,
+            started: start - t0,
+            ackMs: end - due,
+            traceId,
+            pos,
+            t: ack.t.v,
+            bytes: ack.requestBytes,
+            ints: digest(JSON.stringify([id, facts, old.map((r) => r.attribute)])),
+            fresh: fresh.map((r) => r.id),
+            old: old.map((r) => r.id),
+            values: facts.map((f) => f.v.value),
+            ack,
+            disposition: "ack",
+          });
+        })
+        .catch((error) =>
+          record({
+            id,
+            entity,
+            ordinal: event.i,
+            due: event.due,
+            disposition: "submitted-without-ack",
+            reason: String(error),
+          }),
+        );
       bySubject.set(entity, work);
     }
     await Promise.all(bySubject.values());
     const elapsed = performance.now() - t0;
     assert.equal(obs.length, tape.length);
+    assert(
+      obs.every((r) => r.disposition === "ack"),
+      "The partial writer ledger contains non-ACK dispositions",
+    );
     assert.equal(new Set(obs.map((s) => s.pos)).size, obs.length);
     for (const r of obs) {
       await checkReceipt(c, db, r.id, r.ack);
@@ -347,15 +396,7 @@ async function fieldWorker(directory, population, subjects, seconds) {
       );
       assert(r.old.every((id) => !read.some((row) => row.id === id)));
     }
-    const file = path.join(directory, "writer.jsonl");
-    fs.writeFileSync(
-      file,
-      obs
-        .sort((a, b) => a.ordinal - b.ordinal)
-        .map(({ ack, ...r }) => JSON.stringify(r))
-        .join("\n") + "\n",
-      { flag: "wx" },
-    );
+    obs.sort((a, b) => a.ordinal - b.ordinal);
     return {
       arm,
       people: subjects,

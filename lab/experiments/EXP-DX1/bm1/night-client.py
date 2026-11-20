@@ -68,11 +68,12 @@ def unpack(archive,stage,seal):
     assert seal["requestSha256"]==hashfile(stage/"control/request.json") and seal["terminalSha256"]==hashfile(stage/"control/terminal.json")
     assert request["source"]==terminal["source"]==seal["source"] and request["tag"]==terminal["tag"]==seal["slot"]
     assert terminal["clean"] is True and terminal["ended"]==seal["ended"]
+    if "measurementState" in seal:assert seal["measurementState"]==terminal.get("state")
     assert request["start"]<=dt.datetime.fromisoformat(terminal["ended"].replace("Z","+00:00")).timestamp()+1<=seal["sealedAt"]+2
 
 
 def collect(name):
-    assert re.fullmatch(r"i(?:[1-9]|10)-[12]",name)
+    assert re.fullmatch(r"i(?:[1-9]|1[0-2])-[12]",name)
     directory=ROOT/name
     src=REMOTE+"/bundles/"+name
     original=remote("cat "+src+"/TRANSFER.json")
@@ -94,7 +95,8 @@ def collect(name):
     unpack(archive,directory,seal)
     assert remote("cat "+src+"/TRANSFER.json")==original
     (directory/"TRANSFER.json").write_bytes(original)
-    done.write_text(json.dumps({"transfer":hashlib.sha256(original).hexdigest(),"at":time.time(),"slot":seal["slot"]})+"\n")
+    done.write_text(json.dumps({"transfer":hashlib.sha256(original).hexdigest(),"at":time.time(),"slot":seal["slot"],
+                               "measurementState":seal.get("measurementState"),"rawDisposition":seal["rawDisposition"]})+"\n")
     index_bundle(directory)
     print("Collected",name,seal["slot"],flush=True)
 
@@ -131,6 +133,7 @@ def submit(item,attempt):
     exp="lab/experiments/EXP-DX1/"
     if item in (1,3,8):
         args=["--experimental-strip-types",exp+"w1/control.ts"]+({1:["--group"],8:["--pulse"]}.get(item,[]))+[r["tag"]]
+        if item==8:args.append("--enhanced")
     elif item==2:args=["--experimental-strip-types",exp+"import1/control.ts","--campaign",r["tag"]]
     else:
         stop=dt.datetime.fromtimestamp(r["deadline"]-10,dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -155,9 +158,14 @@ def main():
     while True:
         try:
             lines=remote(f'for f in {REMOTE}/bundles/i*/TRANSFER.json; do test -f "$f" && basename "$(dirname "$f")"; done; test ! -f {REMOTE}/finished || echo FINISHED; true').decode().splitlines()
+            failed=False
             for name in lines:
-                if name!="FINISHED":collect(name)
-            if "FINISHED" in lines:break
+                if name=="FINISHED":continue
+                try:collect(name)
+                except (OSError,AssertionError,subprocess.SubprocessError) as error:
+                    failed=True
+                    print("Collection pending:",name,repr(error),flush=True)
+            if "FINISHED" in lines and not failed:break
         except (OSError,AssertionError,subprocess.SubprocessError) as error:
             print("Collection pending:",repr(error),flush=True)
         time.sleep(660)

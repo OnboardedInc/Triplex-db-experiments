@@ -12,6 +12,7 @@ import subprocess
 import sys
 import time
 import uuid
+from producer_readings import capacity_rung, group_arm
 
 ROOT = Path("/var/tmp/triplex-bm1")
 NIGHT = ROOT / "night-n19"
@@ -23,8 +24,10 @@ ACT = "exp/DX-ACT2-activation-100k"
 # Rejected: inheriting the 24–72 hour limits of standalone research controllers.
 ITEMS = {
     1: (W1, "w1", "502c8897", 4, "grpw1"),
-    8: (W1, "w1", "9ce599309", 4, "pulsew1a"),
+    8: (W1, "w1", "7a6a7e9ef", 4, "pulsew4a"),
     9: (W1, "w1", "9ce599309", 1, "matchedn19"),
+    11: (W1, "w1", "7a6a7e9ef", 1, "ceiln19"),
+    12: (W1, "w1", "7a6a7e9ef", 1, "sizen19"),
     2: ("exp/DX-ACT1-activation", "import1", "eb154ca8", 5, "import-bm1n19"),
     10: (W1, "w1", "9ce599309", 1, "predecessorn19"),
     5: ("exp/DX-INT1", "int1", None, 5, "bm1n19int"),
@@ -32,8 +35,9 @@ ITEMS = {
     6: (ACT, "actv-delta", "eaee4e10", 4, "solon19"),
     3: (W1, "w1", "502c8897", 3, "w1trial01"),
 }
-ORDER = (1, 8, 9, 2, 10, 7, 5)
-NEXT = {1:"pulse", 8:"thin-deep", 9:"import", 2:"predecessor", 10:"probes", 5:"collect", 6:"resume", 4:"collect", 3:"collect"}
+ORDER = (1, 8, 11, 9, 12, 7, 10, 5)
+NEXT = {1:"enhanced-pulse", 8:"ceil-live10", 11:"thin-deep", 9:"size-ledger", 12:"readers", 7:"predecessor",
+        10:"int1", 5:"collect", 6:"resume", 4:"collect", 3:"collect"}
 EXP = Path("lab/experiments/EXP-DX1")
 ENV = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
            GIT_TERMINAL_PROMPT="0", DOCKER_HOST="unix:///var/run/docker.sock",
@@ -119,47 +123,31 @@ def delta_output(folder, binding, subjects, offers, releases):
 def complete_output(r):
     root=Path(r["root"])
     item=r["item"]
-    if item in (1,8,9,10):return (root/"results/comparison.json").is_file()
+    if item in (1,8,9,10,11,12):
+        if (root/"results/comparison.json").is_file():return True
+        if item in (10,11,12):return any((root/"checkpoint-arms").glob("*/writer.jsonl")) or any((root/"checkpoint-arms").glob("*/result.json"))
+        return any((root/"results").glob("arm-*/raw.json")) or any((root/"results").glob("arm-*/summary.json"))
     if item==2:return (root/"terminal.json").is_file()
     if item==3:return (root/"results/arm-4/measurements.json").is_file()
     if item==4:return (root/"guard-output.json").is_file()
-    if item==5:return any((root/"build/state/evidence/DX-INT1"/r["tag"]).glob("*/SHA256SUMS"))
+    if item==5:return any((root/"build/state/evidence/DX-INT1"/r["tag"]).glob("rung-thin-*/result.json"))
     if item==6:return (Path("/var/tmp/triplex-scale1")/r["tag"]/"delta-measurement.json").is_file()
     return False
 
 
-def pulse_output(root, source, tag, prediction, *, small=False):
-    # [DX-BM1] Why: bind each quiet and neighbor cohort to the producer rows, not merely its final file name.
+def pulse_output(root, source, tag, prediction, start, *, small=False):
+    # [DX-BM1] Why: bind each quiet and neighbor cohort to the producer rows and registered treatment.
     # Rejected: trusting a throughput scalar whose originating arm or schedule is unknown.
     directory=root/"results"
     result=get(directory/"comparison.json")
     prediction_sha=digest(prediction)
-    assert result["study"]=="pulse" and result["source"]==source and result["predictionSha256"]==prediction_sha
-    assert digest(directory/"predictions.json")==prediction_sha
-    assert [a["mode"] for a in result["arms"]]==["individual","all"]
+    assert result["study"]=="pulse" and result["enhanced"] is True and result["source"]==source
+    assert result["predictionSha256"]==prediction_sha==digest(directory/"predictions.json")
+    assert [a["mode"] for a in result["arms"]]==get(prediction)["pulse"]["arms"]
     for i,arm in enumerate(result["arms"],1):
         arm_dir=directory/f"arm-{i}"
-        who=get(arm_dir/"identity.json")
-        assert arm["arm"]==who and who["source"]==source and who["slot"]==f"tx2-dxscale1-w1-{tag}-{i}"
-        assert arm["predictionSha256"]==prediction_sha
-        assert get(arm_dir/"cleanup.json")==dict(containers=[],volumes=[],networks=[])
-        assert digest(arm_dir/"raw.json")==arm["rawSha256"] and digest(arm_dir/"seed-readback.json")==arm["seedReadbackSha256"]
-        assert arm==get(arm_dir/"summary.json")
-        raw=get(arm_dir/"raw.json")
-        check=get(arm_dir/"seed-readback.json")
-        assert raw["nonce"]==who["nonce"] and raw["scope"]==arm["scope"] and raw["db"]==arm["db"]
-        assert check["facts"]==arm["seedFacts"] and check["digest"]==arm["seed"]
-        assert check["seedCut"]+1==raw["phases"][0]["firstPosition"]
-        if not small:
-            assert check["facts"]==16_245_050 and check["digest"]=="2720380f5b5e6f31fd632380e6ef6d16acc4d646735962d2cb908e0ab40e1146"
-        assert [p["name"] for p in arm["phases"]]==[p["name"] for p in raw["phases"]]==["alone","nine"]
-        for p,events in zip(arm["phases"],raw["phases"]):
-            records=events["records"]
-            quiet=[row for row in records if row["probe"]]
-            assert len(quiet)==(3 if small else 600) and len({row["id"] for row in records})==len(records)
-            assert len(records)==p["count"] and p["physical"]==len({row["t"] for row in records})
-            assert p["wall"]>0 and p["throughput"]==len(records)*1000/p["wall"]
-            assert p["quietP99Ratio"]==p["quietMs"]["p99"]/arm["phases"][0]["quietMs"]["p99"]
+        group_arm(arm_dir,arm,source,f"tx2-dxscale1-w1-{tag}-{i}",start,pulse=True,small=small)
+        assert arm["predictionSha256"]==prediction_sha and arm["policy"]==get(arm_dir/"field-options.json")
     return result
 
 
@@ -179,8 +167,8 @@ def matched_output(root, source, tag, *, small=False):
         assert sample["people"]==(64 if small else 10000) and sample["offers"]==sample["seedRootsChecked"]==n
         assert sample["rowsPerOffer"]==[5,5] and sample["rate"]==39.4
         assert sample["writerSha256"]==digest(arm/"writer.jsonl")
-        with (arm/"writer.jsonl").open() as stream:rows=[json.loads(line) for line in stream]
-        assert len(rows)==n and [row["ordinal"] for row in rows]==list(range(n))
+        with (arm/"writer.jsonl").open() as stream:rows=sorted((json.loads(line) for line in stream),key=lambda row:row["ordinal"])
+        assert len(rows)==n and [row["ordinal"] for row in rows]==list(range(n)) and all(row["disposition"]=="ack" for row in rows)
         assert len({row["traceId"] for row in rows})==len({row["pos"] for row in rows})==n
         assert all(len(row["fresh"])==len(row["old"])==5 and row["pos"]>sample["seedCut"] for row in rows)
         ordered=sorted(row["ackMs"] for row in rows)
@@ -219,11 +207,27 @@ def preflight(r):
             if active(unit):run("systemctl","stop",unit,timeout=115)
         assert not (smoke/"active-slot").exists() and not command("docker","ps","-q")
         if item==8:
-            pulse_output(smoke,r["source"],tag,Path(r["repo"])/EXP/"w1/field/predictions.json",small=True)
+            pulse_output(smoke,r["source"],tag,Path(r["repo"])/EXP/"w1/small/predictions.json",r["start"],small=True)
         else:matched_output(smoke,r["source"],tag,small=True)
         proof={"source":r["source"],"item":item,"tag":tag,"file":"comparison.json","sha256":digest(smoke/"results/comparison.json"),
                "at":stamp(),"location":str(smoke)}
+        if item==8:
+            group=Path("/var/tmp/triplex-w1/grpw1a/results/arm-1")
+            identity=group/"identity.json"
+            raw=group/"raw.json"
+            if identity.is_file():
+                observed=(raw.stat().st_mtime if raw.is_file() else time.time())-identity.stat().st_mtime
+                # The external controller creates five fresh verified databases. An optimistic lower bound uses half the observed seed/offer time.
+                # [DX-BM1] Why: accelerate the entire run before spending hours on a known-truncated baseline.
+                # Rejected: letting the first two fresh seeds consume the full ceiling with no enhanced treatment.
+                seconds_five=max(0,observed-600)*2.5
+                if seconds_five>r["deadline"]-time.time():
+                    raise RuntimeError(f"Enhanced pulse needs five fresh seeds. Half the observed pace still takes {seconds_five/3600:.2f} h before readback, beyond the remaining ceiling.")
         put(ready,proof)
+        return
+    if item in (10,11,12):
+        assert any((NIGHT/"checkpoints").glob("grpw1[ab]-[12]-before-probes/checkpoint.json")), "No verified pooled seed is available"
+        put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-small-run-first"})
         return
     documented=collector_cases().get(str(item))
     if not documented or documented.get("source")!=r["source"] or documented.get("state")!="verified":
@@ -287,7 +291,7 @@ def coordinates(item,attempt):
     tag=ITEMS[item][4]
     if item == 1: tag += "ab"[attempt-1]
     elif attempt==2: tag += "b"
-    if item in (1,3,8,9,10): root=Path("/var/tmp/triplex-w1")/tag; unit="triplex-w1-"+tag
+    if item in (1,3,8,9,10,11,12): root=Path("/var/tmp/triplex-w1")/tag; unit="triplex-w1-"+tag
     elif item==2: root=Path("/var/tmp/triplex-import1")/tag;unit="triplex-bm1-"+tag
     elif item==4: root=ROOT/("day-"+tag);unit="bm1n19-"+tag
     elif item==6: root=NIGHT/tag; unit="bm1n19-"+tag
@@ -323,7 +327,8 @@ def make(item, attempt, start, deadline):
         shutil.copyfile(repo/EXP/"w1/REPORT.md",directory/"builder-report.md")
     else:
         head,repo=public_source(item,directory)
-    token="| Item 0 repeat," if item==6 else {8:"| Quiet pulse,",9:"| Thin/deep matched,",10:"| Predecessor lookup,"}.get(item,f"| {item} ·")
+    token="| Item 0 repeat," if item==6 else {8:"| Enhanced pulse,",9:"| Thin/deep matched,",10:"| Predecessor lookup,",
+            11:"| CEIL-SERVER-LIVE10,",12:"| W2-SIZE-LEDGER,"}.get(item,f"| {item} ·")
     forecast=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith(token))
     r=dict(item=item,attempt=attempt,tag=tag,source=head,repo=str(repo),unit=unit,root=str(root),
            directory=str(directory),start=start,deadline=deadline,prediction=forecast,requested=stamp())
@@ -338,7 +343,7 @@ def args_request(r):
 def setup(r,env):
     root,source,repo=Path(r["root"]),r["source"],Path(r["repo"])
     root.mkdir(parents=True,exist_ok=True)
-    if r["item"] in (1,3,8,9,10):
+    if r["item"] in (1,3,8,9,10,11,12):
         for name,value in (("source",source),("machine",digest("/etc/machine-id"))):
             f=root/name
             if f.exists(): assert f.read_text().strip()==value
@@ -433,10 +438,13 @@ def worker(r):
             "activation","--activation-mode","delta",cwd=repo,env=env)
     elif r["item"] in (1,3,8):
         args=[EXP/"w1/group/server.ts","run",root,source,tag] if r["item"]==1 else [EXP/"w1/bench.ts",root,source,tag]
-        if r["item"]==8:args=[EXP/"w1/field/server.ts","run",root,source,tag,"pulse"]
+        if r["item"]==8:args=[EXP/"w1/field/server.ts","run",root,source,tag,"pulse","--enhanced"]
         run(*heavy,"--experimental-strip-types",*args,cwd=repo,env=env)
     elif r["item"]==9:
         run(*heavy,"--import","tsx",HERE/"probes/campaign.mjs",root,source,tag,"matched",cwd=repo,env=env)
+    elif r["item"] in (10,11,12):
+        mode={10:"pred",11:"ceil",12:"size"}[r["item"]]
+        run(sys.executable,HERE/"probes/seeded_campaign.py","run",mode,root,source,cwd=repo,env=env)
     elif r["item"]==2:run(*heavy,"--experimental-strip-types",EXP/"import1/server.ts","--execute",root,source,cwd=repo,env=env)
     elif r["item"]==5:
         run(node,"--no-warnings","--experimental-transform-types",repo/EXP/"thin1/queue-bench.ts","--launch",tag,
@@ -446,6 +454,8 @@ def worker(r):
 
 def cleanup(r):
     root,tag,src=Path(r["root"]),r["tag"],r["source"]
+    if r["item"] in (10,11,12) and (root/"checkpoint-arms/active.json").is_file():
+        run(sys.executable,HERE/"probes/seeded_campaign.py","cleanup",{10:"pred",11:"ceil",12:"size"}[r["item"]],root,src,timeout=150)
     if r["item"] in (1,3,8,9,10) and (root/"active-slot").exists():
         run("bash",Path(r["repo"])/EXP/"w1/release.sh",root,timeout=180)
     elif r["item"]==6:
@@ -484,7 +494,13 @@ def cleanup(r):
 def remaining(r):
     item, tag = r["item"],r["tag"]
     root=Path(r["root"])
-    if item in (1,3,8,9,10): prefixes=["tx2-dxscale1-w1-"+tag+"-"]
+    if item in (10,11,12):
+        prefixes=[]
+        for f in (root/"checkpoint-arms").glob("*/attempt.json"):
+            a=get(f)
+            assert a["source"]==r["source"] and re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-(base|(?:ceil|size|pred)[1-4])",a["slot"])
+            prefixes.append(a["slot"]+"-")
+    elif item in (1,3,8,9): prefixes=["tx2-dxscale1-w1-"+tag+"-"]
     elif item==5: prefixes=["tx2-dxint1-"+tag+"-"]
     elif item==6: prefixes=["tx2-dxscale1-"+tag+"-"]
     else:
@@ -567,7 +583,7 @@ def matched_probes():
         row=dict(item=7,attempt=1,source=source,tag="matched-probes",start=start,deadline=start+2400,directory=str(directory),root=str(root))
         put(request,row)
     assert row["source"]==(Path("/var/tmp/triplex-w1/grpw1a")/"source").read_text().strip()
-    status("probes","running",start,5)
+    status("readers","running",start,"predecessor")
     terminal=directory/"terminal.json"
     if terminal.is_file():
         entry=get(terminal)
@@ -598,9 +614,10 @@ def matched_probes():
             if result.is_file():
                 evidence=get(result)
                 assert evidence["source"]==row["source"] and evidence["checkpoint"]==digest(marker)
-                assert start<=evidence["started"]<=time.time()
+                assert start<=evidence["started"]<=time.time() and set(evidence["results"])=={"readers"}
                 detail={name:r["outcome"] for name,r in evidence["results"].items()}
-                state="observed" if all(len(r["readings"])==4 for r in evidence["results"].values()) else "incomplete"
+                readers=evidence["results"]["readers"]
+                state="observed" if len(readers["readings"])==4 and len({x["binding"]["nonce"] for x in readers["readings"]})==4 else "partial"
         entry=dict(item=7,attempt=1,tag=row["tag"],source=row["source"],state=state,detail=detail,ended=stamp(),clean=True)
         put(terminal,entry)
     try:
@@ -613,6 +630,18 @@ def matched_probes():
 
 def restrict_scope(r):
     root=Path(r["root"])
+    if r["item"]==5:
+        day=root/"build/state/evidence/DX-INT1"/r["tag"]
+        if (day/"batch.json").is_file():
+            batch=get(day/"batch.json")
+            assert batch["source"]==r["source"] and batch["unit"]=="triplex-int1-"+r["tag"]
+            # [DX-BM1] Why: the native controller opens this log exclusively before the third timed rung.
+            # Rejected: editing the pinned producer or timing the unrequested pooled placements.
+            boundary=day/"pooled-100.log"
+            if not boundary.exists():
+                try:
+                    with boundary.open("x") as file:file.write("BM1 completes after the two thin rungs.\n")
+                except FileExistsError:pass
     if r["item"]==3:
         target=root/"results/arm-5"
         if target.parent.is_dir() and not target.exists():
@@ -634,22 +663,35 @@ def result(r):
             assert obj["source"]==r["source"] and [a["grouped"] for a in obj["arms"]]==[False,True]
             for index,a in enumerate(obj["arms"],1):
                 path=root/"results"/("arm-"+str(index))
-                assert a["arm"]==get(path/"identity.json") and a["arm"]["source"]==r["source"]
-                assert a["arm"]["slot"]=="tx2-dxscale1-w1-"+r["tag"]+"-"+str(index) and a["arm"]["nonce"]+"-load"==json.loads(a["scope"])[3]
-                assert a["seed"]=="2720380f5b5e6f31fd632380e6ef6d16acc4d646735962d2cb908e0ab40e1146" and len(a["seeds"])==10
-                assert a["rawSha256"]==digest(path/"raw.json") and a["seedReadbackSha256"]==digest(path/"seed-readback.json")
-                assert get(path/"cleanup.json")==dict(containers=[],volumes=[],networks=[])
-                assert [p["name"] for p in a["phases"]]==["alone","one","nine","all"]
-                for p in a["phases"]:
-                    assert p["count"]==sum(v["count"] for v in p["byAccount"].values()) and p["wall"]>0
-                    assert p["quietP99Ratio"]==p["quietMs"]["p99"]/a["phases"][0]["quietMs"]["p99"]
+                raw=group_arm(path,a,r["source"],f"tx2-dxscale1-w1-{r['tag']}-{index}",r["start"])
+                assert raw["grouped"] is a["grouped"]
             return "recorded",str(f)
+        first=root/"results/arm-1/summary.json"
+        if first.is_file():
+            a=get(first)
+            group_arm(first.parent,a,r["source"],f"tx2-dxscale1-w1-{r['tag']}-1",r["start"])
+            return "partial","The individual arm completed and verified. The grouped comparison is missing."
     elif item==8 and (root/"results/comparison.json").is_file():
-        pulse_output(root,r["source"],r["tag"],Path(r["repo"])/EXP/"w1/field/predictions.json")
+        pulse_output(root,r["source"],r["tag"],Path(r["repo"])/EXP/"w1/small/predictions.json",r["start"])
         return "recorded",str(root/"results/comparison.json")
     elif item==9 and (root/"results/comparison.json").is_file():
         matched_output(root,r["source"],r["tag"])
         return "recorded",str(root/"results/comparison.json")
+    elif item in (10,11,12) and (root/"results/comparison.json").is_file():
+        file=root/"results/comparison.json"
+        value=get(file)
+        assert value["source"]==r["source"] and value["mode"]=={10:"pred",11:"ceil",12:"size"}[item]
+        assert value["smallSha256"]==digest(root/"results/small-reading.json")
+        small=get(root/"results/small-reading.json")
+        assert small["source"]==r["source"] and small["dispositions"]=={"ack":50} and small["completed"] is True
+        assert [a["setting"] for a in value["arms"]]==(["control"] if item==12 else ["control","candidate","candidate","control"])
+        assert len({a["nonce"] for a in value["arms"]})==len(value["arms"])
+        for a in value["arms"]:
+            assert a["source"]==r["source"] and re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-(?:ceil|size|pred)[1-4]",a["directory"])
+            arm=root/"checkpoint-arms"/a["directory"]
+            assert a["resultSha256"]==digest(arm/"result.json") and a["checkpointSha256"]==small["checkpointSha256"]==value["checkpointSha256"]
+            assert get(arm/"cleanup.json")=={"slot":a["slot"],"source":r["source"],"remaining":[]}
+        return ("recorded" if all(a["completed"] for a in value["arms"]) else "partial"),str(file)
     elif item==2:
         if (root/"terminal.json").is_file():
             doc=get(root/"terminal.json")
@@ -718,21 +760,25 @@ def result(r):
     elif item==5:
         directory=root/"build/state/evidence/DX-INT1"/r["tag"]
         if (directory/"batch.json").is_file():
-            b=get(directory/"batch.json");assert b["source"]==r["source"] and b["unit"]=="triplex-int1-"+r["tag"]
-            completed=[]
-            for f in directory.glob("*/SHA256SUMS"):
-                if f.stat().st_size:
-                    sums=dict((line[66:],line[:64]) for line in f.read_text().splitlines())
-                    for name in ("inputs.json","result.json"):
-                        if name not in sums:break
-                        assert sums[name]==digest(f.parent/name)
-                    else:
-                        inputs=get(f.parent/"inputs.json");result=get(f.parent/"result.json")
-                        assert inputs["source"]==r["source"] and result["source"]==r["source"] and result["slot"]==inputs["slot"]
-                        completed.append(result.get("size"))
-            if {1000000,4000000}.issubset(completed):
+            b=get(directory/"batch.json");assert b["source"]==r["source"] and b["unit"]=="triplex-int1-"+r["tag"] and b["rowWire"]=="plain"
+            completed={}
+            for key,size in (("thin-1m",1_000_000),("thin-4m",4_000_000)):
+                case=directory/("rung-"+key)
+                seal=case/"SHA256SUMS"
+                if not seal.is_file():continue
+                assert seal.stat().st_mtime>=r["start"]-2
+                lines=seal.read_text().splitlines()
+                sums=dict((line[66:],line[:64]) for line in lines)
+                assert len(sums)==len(lines) and {"inputs.json","result.json","latency-samples.json"}.issubset(sums)
+                for name,expected in sums.items():
+                    file=(case/name).resolve()
+                    assert file.is_relative_to(case.resolve()) and file.is_file() and digest(file)==expected
+                observed=capacity_rung(case,r["source"],size)
+                assert re.fullmatch(rf"tx2-dxint1-{r['tag']}-{key}-[a-f0-9]{{12}}",observed["slot"])
+                completed[key]=observed["latency"]
+            if len(completed)==2:
                 return "recorded",str(directory)
-            return "incomplete","Completed thin populations: "+str(completed)
+            return ("partial" if completed else "incomplete"),"Verified thin populations: "+", ".join(completed)
     return "incomplete","No complete builder comparison"
 
 

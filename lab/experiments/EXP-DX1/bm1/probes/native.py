@@ -50,7 +50,7 @@ def put(file, value):
 
 
 def bound_slot(slot):
-    return bool(re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-(base|growth[1-4]|readers[1-4])",slot))
+    return bool(re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-(base|(?:growth|readers|ceil|size|pred)[1-4])",slot))
 
 
 def env_for(slot, directory):
@@ -76,13 +76,14 @@ def cleanup():
     marker.unlink()
 
 
-def stack(ordinal,mode,experiment,staged=None):
+def stack(ordinal,mode,experiment,staged=None,settings=None):
     tag=mode+str(ordinal) if mode!="base" else "base"
     slot=f"tx2-dxt1-bm1-n19probe-{experiment}-{tag}"
-    if mode not in ("base","growth","readers"):raise ValueError(mode)
+    if mode not in ("base","growth","readers","ceil","size","pred"):raise ValueError(mode)
     directory=BASE/slot
     directory.mkdir(mode=0o700)
     env=env_for(slot,directory)
+    env.update(settings or {})
     ownership={"slot":slot,"source":env["TRIPLEX_TRACE_SOURCE"],"directory":str(directory),"nonce":str(uuid.uuid4())}
     assert not command("docker","ps","-q")
     assert not command("bash",STACK/"up.sh",slot,"--inventory",env=env)
@@ -199,7 +200,7 @@ def counters(directory, slot, phase):
     put(directory/(phase+"-counters.json"),snapshot)
 
 
-def case(run_id,mode,ordinal,setting,files_root,expected,staged):
+def case(run_id,mode,ordinal,setting,files_root,expected,staged,profile="full"):
     dir,slot,env,identity=stack(ordinal,mode,run_id,staged if mode=="growth" else None)
     try:
         reopen(slot,env,files_root,expected,dir)
@@ -217,7 +218,7 @@ def case(run_id,mode,ordinal,setting,files_root,expected,staged):
         env.update(TRIPLEX_TRACE_DIR=str(raw),TRIPLEX_DATOMIC_LAYOUT="lean",TRIPLEX_DATOMIC_FAST_PATHS="history-range" if mode=="growth" and setting=="on" else "")
         with (dir/"foreground.log").open("x") as log:
             args=[NODE,"lab/bin/heavy.mjs","--label","DX-BM1-native-"+mode,"--","taskset","-c","3",NODE,
-                  "--import","tsx",SCRIPT/"foreground.mjs",dir,mode,setting,INPUT,identity["nonce"]]
+                  "--import","tsx",SCRIPT/"foreground.mjs",dir,mode,setting,INPUT,identity["nonce"],profile]
             proc=subprocess.Popen(list(map(str,args)),cwd=REPO,env=env,stdout=log,stderr=subprocess.STDOUT)
             try:
                 deadline=time.time()+60
@@ -264,14 +265,13 @@ def main():
     put(BASE/"plan.json",{"source":expected_source,"experiment":experiment,"checkpoint":sha(INPUT),
         "sequence":["off","on","on","off"],"growthOff":"individual","growthOn":"range","started":time.time()})
     root, expected=create_template(experiment,checkpoint)
-    staged=BASE/"gateway-growth"
-    with (BASE/"staged-sources.json").open("x") as out:
-        run(sys.executable,SCRIPT/"stage-gateway.py",REPO,staged,expected_source,stdout=out)
+    small=case(uuid.uuid4().hex[:8],"readers",1,"off",root,expected,None,"smoke")
+    run(NODE,SCRIPT/"read-probe.mjs",BASE,"--smoke",small,timeout=90)
     records=[]
-    for mode in ("readers","growth"):
+    for mode in ("readers",):
         try:
             for ordinal,setting in enumerate(("off","on","on","off"),1):
-                records.append({"mode":mode,"setting":setting,"directory":case(experiment,mode,ordinal,setting,root,expected,staged)})
+                records.append({"mode":mode,"setting":setting,"directory":case(experiment,mode,ordinal,setting,root,expected,None)})
         except (OSError,subprocess.SubprocessError,AssertionError,RuntimeError) as error:
             records.append({"mode":mode,"error":repr(error)})
     put(BASE/"recorded.json",records)

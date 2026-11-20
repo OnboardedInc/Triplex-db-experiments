@@ -30,7 +30,7 @@ function checkedReads(io) {
   return io.reads;
 }
 
-async function arm(directory, mode, setting) {
+async function arm(directory, mode, setting, smoke = false) {
   assert.equal(path.dirname(directory), root);
   const info = get(path.join(directory, "foreground.json"));
   const request = get(path.join(directory, "attempt.json"));
@@ -56,7 +56,13 @@ async function arm(directory, mode, setting) {
   assert(
     info.errors.length === 0 && info.eligible === info.offers && offers.length === info.eligible,
   );
-  assert(info.interval >= 89900 && info.interval < 120000 && info.gatewayReadsDuringInterval === 0);
+  const duration = smoke ? 4000 : 90000;
+  assert(
+    info.limitMs === duration &&
+      info.interval >= duration - 100 &&
+      info.interval < duration + 30000 &&
+      info.gatewayReadsDuringInterval === 0,
+  );
   const writes = tape
     .trim()
     .split("\n")
@@ -86,7 +92,9 @@ async function arm(directory, mode, setting) {
   const completion = get(path.join(raw, "tx.jfr-complete.jsonl"));
   assert.equal(aligned(completion).type, "jfr-complete");
   assert.equal(completion.role, "tx");
-  assert(completion.recordingStart <= info.startedAt && completion.at >= info.startedAt + 89900);
+  assert(
+    completion.recordingStart <= info.startedAt && completion.at >= info.startedAt + duration - 100,
+  );
   assert.equal(completion.fileSha256, await hashFile(path.join(raw, "tx.jfr")));
   const client = new Map(),
     gateways = new Map(),
@@ -158,7 +166,7 @@ async function arm(directory, mode, setting) {
   });
   const before = get(path.join(directory, "before-counters.json"));
   const after = get(path.join(directory, "after-counters.json"));
-  assert(before.at * 1000 <= info.startedAt && after.at * 1000 >= info.startedAt + 89900);
+  assert(before.at * 1000 <= info.startedAt && after.at * 1000 >= info.startedAt + duration - 100);
   assert.deepEqual(before.cpus, after.cpus);
   const affinity = Object.fromEntries(
     Object.entries(before.processes).map(([role, v]) => {
@@ -381,9 +389,17 @@ function decision(mode, arms) {
   };
 }
 
+if (process.argv[3] === "--smoke") {
+  const reading = await arm(process.argv[4], "readers", "off", true);
+  assert.equal(reading.n, 3);
+  fs.writeFileSync(path.join(root, "small-reading.json"), JSON.stringify(reading, null, 2) + "\n", {
+    flag: "wx",
+  });
+  process.exit(0);
+}
 const plan = get(path.join(root, "recorded.json")),
   results = {};
-for (const mode of ["readers", "growth"]) {
+for (const mode of ["readers"]) {
   const readings = [],
     unavailable = [];
   for (const entry of plan.filter((r) => r.mode === mode)) {

@@ -8,7 +8,9 @@ import { pathToFileURL } from "node:url";
 import { spawn } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 
-const [armDir, mode, setting, checkpointFile, nonce] = process.argv.slice(2);
+const [armDir, mode, setting, checkpointFile, nonce, profile] = process.argv.slice(2);
+const smoke = profile === "smoke",
+  limitMs = smoke ? 4000 : 90000;
 assert(["growth", "readers"].includes(mode));
 assert(["off", "on"].includes(setting));
 assert.match(nonce, /^[a-f0-9-]+$/);
@@ -32,7 +34,7 @@ const sha = (value) =>
 const plan = generateTrace({ seed: "ns-v2", subjects: 10000, durationS: 7200 }).filter(
   (e) => !e.resend,
 );
-const shots =
+const fullShots =
   mode === "readers"
     ? plan
         .filter((e) => e.atMs >= 240000 && e.atMs < 330000)
@@ -41,7 +43,8 @@ const shots =
         .filter((e) => e.atMs >= 120000 && e.atMs < 180000)
         .slice(0, 2250)
         .map((e, i) => ({ ...e, at: i * 40 }));
-assert(mode === "growth" ? shots.length === 2250 : shots.length >= 70);
+assert(mode === "growth" ? fullShots.length === 2250 : fullShots.length >= 70);
+const shots = smoke ? fullShots.slice(0, 3).map((e, i) => ({ ...e, at: i * 500 })) : fullShots;
 const slot = process.env.TRIPLEX_TRACE_SLOT,
   source = process.env.TRIPLEX_TRACE_SOURCE;
 assert.equal(checkpoint.source, source);
@@ -171,7 +174,7 @@ try {
   write("go.json", { at: startAt });
   await sleep(Math.max(0, startAt - Date.now()));
   const start = performance.now(),
-    end = start + 90000;
+    end = start + limitMs;
   try {
     for (const [i, e] of tape.entries()) {
       const due = start + e.at;
@@ -294,6 +297,7 @@ try {
   write("foreground.json", {
     binding,
     startedAt: startAt,
+    limitMs,
     interval,
     offers: tape.length,
     eligible: result.length,
