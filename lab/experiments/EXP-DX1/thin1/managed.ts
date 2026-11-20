@@ -57,7 +57,7 @@ const manager = (args: string[]) => {
 };
 const ownerFile = (s: string) => path.join(main, "lab/locks/datomic-" + s + "/owner.json");
 const run = fileURLToPath(import.meta.url);
-function prepare() {
+async function prepare() {
   fs.mkdirSync(dir);
   fs.mkdirSync(path.dirname(imageFolder), { recursive: true });
   fs.cpSync(path.join(repo, "lab/config/datomic"), imageFolder, { recursive: true });
@@ -109,12 +109,12 @@ function prepare() {
     );
   }
   const cfg = read(path.join(main, "lab/config/slots.json"));
+  const { verifiedTree } = await import(new URL("../../../bin/datomic-context.mjs", import.meta.url).href);
+  // [DX-THIN1] Why: keep old and new private images addressable across a native gateway merge. Rejected: reusing a tag derived only from the launcher when the gateway or codec changes.
   cfg.lanes.datomic.image =
     "tx2-dxthin-managed:" +
     createHash("sha256")
-      .update(fs.readFileSync(recipe))
-      .update(fs.readFileSync(path.join(imageFolder, "slot.ts")))
-      .update(fs.readFileSync(path.join(imageFolder, "cache-charge.ts")))
+      .update(JSON.stringify([verifiedTree(imageFolder), verifiedTree(path.join(dir, "packages/datomic/gateway")), verifiedTree(path.join(dir, "packages/datomic/src"))]))
       .digest("hex")
       .slice(0, 16);
   write(file, cfg);
@@ -330,7 +330,7 @@ if (action === "--guest") {
   } else await import("./trial.ts");
 } else {
   assert.equal(process.platform, "darwin");
-  if (action === "--build") prepare();
+  if (action === "--build") await prepare();
   else if (action === "--bind") bind();
   else if (action === "--arm" || action === "--arm-compact") {
     const compact = action === "--arm-compact";

@@ -46,3 +46,15 @@ The diagnostic `DX_INT1_SEED_FEED=after-sampling` stores an ordered change diges
 | 2,000 deep, bounded | 2% touched | 0.274 / 7.102 / 28.639 / 55.089 | 0.000 / 0.000 / 29.697 / 59.056 |
 
 ID counts the positive entity-name memo. Rows includes parsed rows, revisions and recent entries. Native is the Datomic object-cache weight. Live is the sum of the JVM class histogram. The live total includes objects in the other columns. The bounded read peer started both populations at the same 63 KB. The bounded write peer reached 29.845 MB in the thin seed and 30.173 MB in the deep seed.
+
+## Where observations become evidence
+
+| Check | Content, freshness and binding |
+| --- | --- |
+| `DatomicClient.readDemandWorld`, `reachResponse` and `validatedSubjectReader.pull` | Check the returned closure, active row positions and immutable revisions at the requested database and cut. A repair must identify the original native transaction. The two halves of a pinned split must have equal rows. |
+| `Account.issue`, `verifySeedFeed` and `verify` | Compare the issued operations and assigned assertion IDs with the actual transaction, command, instant and feed changes. The deferred seal covers all seed positions and facts. Reads compare every original row at the requested position. |
+| `trial.replay`, `activate`, `regularDeepProof` and `placementProof` | Rebuild the Python input from that attempt's ledger. Check the returned case binding, exact rows and guard states, complete roster, cutoff and original source position. The ordinary publisher also checks a neighboring tenant. |
+| `checkSchedules`, `proveEvictedIdentities` and `deepColdProbe` | The native schedule transcript must contain every named outcome. The identity probe verifies both live evictions, three actual error codes, the pinned data and unchanged heads on distinct commands. The deep probe uses a fresh scope, validates every returned world, and records every first read. |
+| `thin1/managed.ts`, `nativeMetrics`, `gatewayProfiles` and `cache-charge.ts` | Match the image, source and codec, current slot owner, nonce, fresh role challenge, PID and process start. Reconcile the complete histogram to JVM totals. Traverse the observed heap's Datomic weigher and retain its digest. |
+| `inspectProfiles`, `coldReadProfiler`, `mappedReaderPages` and `summarize.ts` | Reopen the raw histograms, process evidence and independent seed ledger. Bind the live gateway and child identities to the same input. Recompute the membership, original wire samples, counters and percentiles. Optional map accounting requires one complete set of kernel counters per mapping. |
+| `control.ts`, `thin1/queue-bench.ts`, `verifyCase`, `verifyPages`, `verifyLatencies` and `verifyDeepColdProbe` | Check the published tree and actual compiled files, physical placement, native inputs, case nonce, complete page/member receipts, original account intents, Python replay and each selected source world. Recompute both latency quantiles, the wire treatment and the cross-placement output comparison. |
