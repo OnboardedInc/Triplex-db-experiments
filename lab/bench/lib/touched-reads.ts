@@ -8,6 +8,7 @@ import { isDeepStrictEqual } from "node:util";
 import { runtimeApi } from "./triplex.ts";
 import type { Basis, CompositionHandle, PullResult } from "./composition.ts";
 import { ReplicaReader, ReplicaReadHost, replicaEndpoint } from "./replica-reads.ts";
+import { tenantCatalog } from "../../experiments/EXP-DX1/scale1/tenants.ts";
 
 function unavailable(error: unknown) {
   return (
@@ -99,6 +100,9 @@ export function touchedComposition(base: CompositionHandle): CompositionHandle {
   let live: ReplicaReadHost | undefined;
   const open = async (root: string) => {
     const position = await base.currentPosition();
+    // [DX-V01] Why: the pooled legacy tape uses the stable catalog to prove its starting clock.
+    // Rejected: letting the first concurrently edited person choose whether the worker can start following.
+    const witness = process.env.DX_INT1_LEGACY_TOUCHED === "1" ? tenantCatalog : root;
     try {
       const host = await ReplicaReadHost.open(
         scope,
@@ -110,7 +114,7 @@ export function touchedComposition(base: CompositionHandle): CompositionHandle {
         "reader",
         replicaEndpoint(process.env, "reader"),
         "touched",
-        root,
+        witness,
       );
       const reader = new ReplicaReader(undefined, host.index);
       host.subscribe((delta) => reader.notify(delta.reset));
