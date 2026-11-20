@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
+import { writeScorecard } from "./scorecard.mjs";
 
 const here = import.meta.dirname;
 const repo = path.resolve(here, "../../../..");
@@ -147,6 +148,8 @@ async function run(configFile, config) {
   const rung = path.join(dir, String(config.target));
   fs.mkdirSync(rung, { recursive: true });
   const final = path.join(rung, "sealed.json");
+  const state = path.join(parent, "age1-" + sha(binding.db) + ".edn");
+  const scorecard = path.join(rung, "aged-scorecard.json");
   if (fs.existsSync(final)) {
     const saved = read(final);
     assert.equal(saved.bindingSha, binding.runSpecSha);
@@ -154,7 +157,10 @@ async function run(configFile, config) {
       assert.equal(path.basename(file), file);
       assert.equal(fileSha(path.join(rung, saved.attempt, file)), want);
     }
-    console.log(JSON.stringify(saved));
+    // [DX-AGE1] Why: the physical seal survives a stop before the handoff rename.
+    // Rejected: restarting the rung and repeating windows after a valid seal.
+    const handoff = writeScorecard(final, fileSha(final), state, scorecard);
+    console.log(JSON.stringify({ ...saved, scorecard: handoff }));
     return;
   }
   const admitted = path.join(rung, "admission.json");
@@ -180,7 +186,6 @@ async function run(configFile, config) {
   };
   const home = env.AGE_DATOMIC_HOME;
   const java = env.AGE_JAVA;
-  const state = path.join(parent, "age1-" + sha(binding.db) + ".edn");
   const gcFlags = (tag) => "-Xlog:gc*,safepoint:file=" + path.join(logDir, tag + "-gc.log") +
     ":time,uptime,pid,level,tags";
   let stopped, active;
@@ -330,6 +335,8 @@ async function run(configFile, config) {
     }
     const cut = await peer("seal", "seal-cut", "seal", state, String(config.target));
     assert.deepEqual([cut.t, cut.head, cut.records], [r.t, r.head, r.records]);
+    const scorecardCut = await peer("scorecard-cut", "scorecard-cut", "scorecard-cut", state, binding.db,
+      String(r.t), String(r.head), String(r.records));
     const result = { attempt, bindingSha: binding.runSpecSha, source: binding.source, target: config.target,
       head: r.head, t: r.t, records: r.records, cold, structure, endJava,
       checkpointSha: fileSha(state), seedLedgerSha: fileSha(state + ".population.edn"),
@@ -343,7 +350,8 @@ async function run(configFile, config) {
     finishJvmLogs();
     const hashes = Object.fromEntries(fs.readdirSync(logDir).map((f) => [f, fileSha(path.join(logDir, f))]));
     write(final, { ...result, usd: result.hours * rateUsd, hashes });
-    console.log(JSON.stringify({ event: "sealed", ...result, usd: result.hours * rateUsd }));
+    const handoff = writeScorecard(final, fileSha(final), state, scorecard, scorecardCut);
+    console.log(JSON.stringify({ event: "sealed", ...result, usd: result.hours * rateUsd, scorecard: handoff }));
   } finally {
     clearInterval(watcher);
     if (external.length) try { finishJvmLogs(); } catch {}

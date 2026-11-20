@@ -130,9 +130,15 @@
         seed (:seed-head pop)
         saves (* 4 (:active pop))
         cuts [0 1 (dec (:active pop)) (:active pop) (dec saves) saves]
-        select-fields #(filterv (comp adopt/fields :attribute) %)]
+        select-fields #(filterv (comp adopt/fields :attribute) %)
+        observe (requiring-resolve 'triplex.age.scorecard/observe!)
+        initial {:population pop :t (:seed-t pop) :observed saves}
+        final-head (+ seed saves)]
     (equal! pop (adopt/read-population! product seal 3 true)
             "Restored seed identities, values, clock or record count differ")
+    (let [refusal (try (observe initial aged (:seed-t pop) final-head (:seed-records pop)) nil
+                       (catch clojure.lang.ExceptionInfo e (.getMessage e)))]
+      (equal! "Expected quiescent rung cut" refusal "A fresh seed escaped the aged cut check"))
     (doseq [n (range saves)
             :let [c (tape/command pop n)
                   reply (storage/commit! name (:conn product) (d/db (:conn product)) (tape/input c))]]
@@ -161,6 +167,12 @@
               cut [nil (+ seed (min saves (+ s 5)))]]
         (equal! (feed product (+ seed s) 7 cut) (feed aged (+ seed s) 7 cut)
                 "Adopted journal feed differs"))
+      (let [conn (:conn aged)
+            t (:t growth)
+            _ (d/request-index conn)
+            _ (native/check! (deref (d/sync-index conn t) 120000 nil) "Aged fixture index did not settle" {})
+            observed (observe (assoc initial :t t) aged t final-head (+ (:seed-records pop) (:records growth)))]
+        (native/emit "scorecard-fixture" observed))
       (native/emit "adopted-fidelity"
                    {:source (:source seal) :manifestSha pin :seedRecords (:seed-records pop)
                     :facts (:facts seal) :seedT (:seed-t pop) :seedHead seed :saves saves
