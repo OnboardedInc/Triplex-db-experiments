@@ -1,15 +1,15 @@
 The live database can record every notice owed in one transaction. The earlier Mac runs took 21–68 milliseconds.
-The old dispatcher spent 78.5 of its 97.8 seconds on scheduled breaks. It sent 1,000 notices for 10,000 people.
+Scheduled breaks accounted for 78.5 of the old dispatcher's 97.8 seconds to send 1,000 notices for 10,000 people.
 Writing progress and acknowledgements to the live database was the next largest cost. Running the rules took about 1.5% of the traced run.
 The recipient now saves delivery and progress together. A retry resumes the saved position and uses each person's existing sequence.
 The new dispatcher sent 338 notices per second in two short tests. The slowest reads exceeded the agreed limit at that speed.
-The plans for the server estimate the rate from how many people the dispatcher must inspect for each notice.
+The longer Mac run with 64 readers sent 46 notices per second within both relative limits. Saves were already taking seconds in its controls.
 For the broad release that owes 9,798 notices, the deep workload points to 35–55 notices per second, about 3–5 minutes to finish sending.
 All timings so far are from the Mac. The server dispatcher has never run.
 
 **1. Cost of one delivered notice** · [Targets](../../../TARGETS.md) · [Part 2 measurements and recovery audit](PART2.md)
 
-Fresh Mac captures used four pinned readers, 1.6 offered saves/s, 64 subjects per batch, a separate cold worker, FULL SQLite and 20 ms between turns. Each processed the full R1 ledger before measuring a new R2 publication. The 1k/10k arms delivered 100/1,000 release notices. All submitted effects and sender and recipient states matched Python W0.
+The earlier 1k trials paused 32 times for 100 ms, accounting for 3.20 s of 6.07/4.82 s (53%/66%). The fresh Mac traces used four pinned readers, 1.6 saves/s, 64 subjects per batch, a cold worker, FULL SQLite and 20 ms between turns. The 1k/10k arms sent 100/1,000 R2 notices after establishing R1. All effects and sender and recipient states matched Python W0.
 
 | Per notice                                | 1,000 subjects | 10,000 subjects |
 | ----------------------------------------- | -------------: | --------------: |
@@ -41,7 +41,7 @@ In the profiled 1k pair, 100 deliveries generated 1,802 SQLite WAL frames in 16 
 
 **4. Prediction for a dedicated server**
 
-Predict 350–550 checked subjects/s per full-census worker with 64 foreground readers on a separate gateway, if it brings dispatcher service time near the four-reader deep probe. That probe checked 471/s and delivered 282 notices/s across three releases. Source reads took 49% of 6.38 s and returned 105 MB. Rule evaluation took 1.7%, receiver commits 18%. With 64 readers sharing the Mac writer gateway the calibration checked 128/s and yielded 8.64 of 23.45 s to live saves.
+Predict 350–550 checked subjects/s per worker with 64 readers on a separate gateway if it restores the four-reader deep service time. That probe checked 471/s and delivered 282 notices/s over three releases. Pinned reads took 49% of 6.38 s and returned 105 MB. Rules took 1.7%, receiver commits 18%. With 64 readers sharing the Mac writer gateway, the nine-release run sent 4,791 notices at 46.2/s and checked 86.8 subjects/s. It yielded to saves for 58.6 of 103.7 s. Against both controls, read p99 was 1.04–1.11× and save p99 was .96–1.06× (188 matched saves per comparison). Absolute p99s were 96 ms and 2.46 s.
 For both tails within 1.5×, the predicted range is 35–55 notices/s at 9.798% density or 280–440/s at the local deep R2 density of 79.9%. The gateway isolation assumption needs the server comparison. The 14 ms cadence nominally caps a worker at 1,143 subjects/s. At 9.798% density, 1,000 notices/s would need about 10,200 evaluations/s or a selector that skips unaffected subjects. P5 needs 500 saves per side. This command measures one diagnostic pair.
 Command on the dedicated server, after review. `DOCKER_HOST=unix:///var/run/docker.sock node --import tsx lab/experiments/EXP-DX1/notify1/bench.ts launch notify-rate-001 recipient 16 14` uses an exact 1,000-person preflight before the 100,000-person traffic pair. The local plan was checked. [Runner](bench.ts)
 
