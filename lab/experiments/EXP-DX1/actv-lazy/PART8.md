@@ -21,3 +21,9 @@ The four peer queue tests passed from `2d026eb29`. The queue gives a receipt Pub
 The first native proof received its slot after 55 minutes. The initial settlement pilot queued at 08:28:47 UTC and never reserved an engine. A new measurement lease froze its admission during two gaps. After two hours the replacement queued for the native lease before trying to reserve its engine. It still runs through the heavy wrapper under that same process's lease. Both waiters have the same pinned product source. Only the replacement can proceed to seed a pilot account.
 
 The peer branch imported the geography repair and proved both ingress orders using the shared queue at `bc01028b0`. The 1,000-person one-seed preflight used the same priority path. Its later `a52f7937c` diagnostic resets the native R1 cut between policy blocks to keep growing release history out of the comparison. Those are peer results. The measured settlement route here has its own inputs and clocks.
+
+## Server handoff at 64 people
+
+BM1 `ff02be51a` seals `overnight/i33-1` at the report's first-line pin. The copied transfer matches digest `dd0873f8ecd3aff14e22d9815f77f08afe348168775f78878463b278813a3272`. Its preflight admission binds the component collector, the shared census proof and the settlement verifier. The settlement verifier binds the price data, two-kill gate and typed HTTP 413 with a successful smaller retry. The independent collector matched six windows and 757 effects.
+
+Quiet staged values took 242 ms to durable and 251 ms to the first correct connected answer. At 23.5 saves/s they took 270 and 276 ms. In the separate four-second settlement blocks, values and individual notices became durable 557 and 1,046 ms after the receipt at 3.5 saves/s, and 293 and 966 ms at 23.5 saves/s. The true overlap held only 3 and 23 primary saves per side. These are preflight clocks. BM1 made no 100,000-person offers and the selected source still constructs a separate joined deep scope.

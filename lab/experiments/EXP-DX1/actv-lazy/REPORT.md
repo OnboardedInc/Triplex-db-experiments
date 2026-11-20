@@ -1,10 +1,10 @@
-Use `48f55759494f6a6a04eeb6aa5284dde3e166d431` for the server retry. The native shared-geography test passed at that exact commit.
+Use `48f55759494f6a6a04eeb6aa5284dde3e166d431`. The Mac shared-geography gate and the server's 64-person preflight passed at that exact commit.
 A single write records the new rules and what notices are owed. At 10,000 deep people that write took 38 ms on the Mac.
 A background worker writes the changed values and individual notices in short turns. The recipient can stay offline while it records them.
 Before a value is stored, reads at the receipt’s cut derive it. Stored values serve that same cut. Later saves use the latest source.
 A new release can stop an obsolete value copy. Notices from both releases still get recorded in order.
 A shared wage-floor save covers the full roster when the database cannot prove a smaller affected set.
-On the server, 64 people took 34 ms to the quiet receipt and 47 ms to the first correct answer. All six cells agreed.
+On the server, 64 people took 42 ms to the quiet receipt and 58 ms to the first correct answer. At 23.5 saves per second those took 85 and 93 ms.
 The first local replay waited 55 minutes for a slot. The live timing pilot has waited over two hours. The receipt and erasure rulings remain open.
 
 ### Part 7
@@ -34,7 +34,7 @@ The eight-fact thin fixture encoded 10.3–10.4 leaf bytes and 100–104 address
 
 The 10,000-deep trial spent about 26 minutes on preparation and reached the contested timing boundary. It yielded its heavy token and removed the volume before either live window. The shared lease also blocked the 1,000-deep fallback and the untimed matrix. Both waiters closed before admission. [Part 7 checksums](PART7-SHA256SUMS)
 
-Transactor and gateway suspension, the fixed 64-reader trace, live ratios and wider cold-read measurements remain open. BM1 queued `i33-1` at the first-line pin. Its existing 100,000-person SCALE1 seed needs a compatible producer or a separate joined seed. [Local run design](PART8.md)
+Transactor and gateway suspension, the fixed 64-reader trace and wider cold-read measurements remain open. BM1 `i33-1` passed all six small cells, the shared census, both settlement rates and the typed bulk refusal. The 100,000-person run still needs a producer that verifies the existing SCALE1 seed or a separate joined seed. [Part 8 evidence](PART8.md)
 
 ### Server command
 
