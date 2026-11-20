@@ -3,9 +3,7 @@
 Measure one shared Datomic commit pipeline first, followed by the same tenant-local writes through separate databases. The comparison holds the quiet account's offers and reader count fixed. [Targets](../../../TARGETS.md)
 
 <!-- state -->
-The owner restarted the campaign with the ten-account native seed first. The pooled setup is `arm-p6-i1-seed-a`, followed by staggered and coincident field saves. The earlier stop below belongs to the previous queue.
-
-The campaign stopped at 00:42:17 UTC November 20 (19:42:17 ET November 19) after item 1’s second failed reader. The first attempt missed local-replica coverage. The retry reached its 64 GiB observation limit at 00:39:48 UTC. Its stack was released at 00:40:24 UTC and the verified 11,090,251,343-byte raw archive completed on the server at 00:42:11 UTC. The server is free. Items 2–5 and their six new field-save executions are unstarted. The four compact transfers are indexed. [Failure evidence](evidence/arm-d19-i1-reader-b-diagnostic.md)
+The new native seed `arm-p6-i1-seed-a` is running, with an execution ceiling of 08:50:37 UTC November 20. The detached queue `p6-live` advances from its terminal files to staggered and coincident field saves. The new campaign started at 00:49:50 UTC, seven minutes and 33 seconds after the previous queue freed the server. [Previous reader failure](evidence/arm-d19-i1-reader-b-diagnostic.md)
 <!-- end state -->
 
 With the dedicated destination set in `BENCH_SERVER`, this command shows the queue, bounded units and stage files.
@@ -16,18 +14,18 @@ node --import tsx lab/experiments/EXP-DX1/scale1/control.ts status
 
 | Order | Population and layout | Work | Maximum per execution |
 | --- | --- | --- | --- |
-| 1 | 10,000 people in one database | Zero, then readers | 4 h each |
-| 2 | 100,000 people in one database | Zero, readers, guarded release | 8 h, 8 h, 10 h |
-| 3 | Ten accounts of 10,000 in one database, then ten databases | 1, 2, 5 and 10 live, neighbor bursts, all-ten burst and one release. A third pooled arm enables group commit for the matched all-ten burst. The six deep-live executions repeat the two peak alignments in pooled individual, pooled grouped and separate individual configurations. | 10 h per arm |
+| 1 | Ten accounts of 10,000 in one database, then ten databases | Staggered and coincident field-save peaks with group commit off and on in the pooled database, then with group commit off in ten databases. | 8 h setup and up to 10 h per arm |
+| 2 | Existing 10,000-person deep and thin zero arms | Commit stages, storage reads and transaction sizes. [Comparison](COMMIT-ANATOMY.md) | Archived result |
+| 3 | 100,000 people in one database | Zero, bounded readers, guarded release and DELTA if its on-slot preflight verifies. | 8 h, 8 h, 10 h, 3 h |
 | 4 | 90 accounts of 100 and ten of 2,000 in one database, then 100 databases | Idle footprint, sentinel load and restart | 4 h per layout |
-| 5 | Ten accounts of 100,000 in one database | Serial seed, zero, readers, one guarded release. If only seeding fits, the zero-offer fallback records growth and the resource limit. | 24 h per execution |
+| 5 | Ten accounts of 100,000 in one database | Serial seed, then zero, bounded readers and one guarded release as capacity allows. Seed progress and resource ceilings are recorded. | 24 h per execution |
 
-Each detached arm has its own systemd unit, source, nonce, cgroup ceiling, disk floor and exact-prefix cleanup. The queue rechecks terminal and transfer files before advancing. The original pair used `f0a80d99a748fcd9ccbe66eadcee50e84f5307a3`. The reader retry names the zero control on its corrected revision. The live plan records the exact public runtime for each arm, both layouts for items 3 and 4 and the single million-person seed for item 5. The server clock is UTC. The first account is the quiet sentinel. The second performs the release.
+Each detached arm has its own systemd unit, source, nonce, cgroup ceiling, disk floor and exact-prefix cleanup. The queue rechecks terminal and transfer files before advancing. The server clock is UTC. The first account is the quiet sentinel. The second performs the pooled release. For a loaded arm, 64 readers use two worker cores for ten minutes. The model checks every observation and the evidence retains one in 100, plus every error and mismatch.
 
-The detached `triplex-scale1-part4-handoff` unit checks both terminal receipts from the replacement pair before loading the integrated public controller. The continuation includes the all-ten-burst group-commit arm and closes on the second failure of any item. Source builds start between measured arms.
+The detached `triplex-scale1-p6-handoff` unit checks the seed’s terminal files before loading the published controller. The controller records freshly fetched branch heads before each arm. It measures group commit with the fixture’s existing account keys. Fair turns require verified ownership on nested task entities, which the frozen fixture does not supply. Source builds start between measured arms.
 
-Use `control.ts collect TAG` after each terminal arm. Collection verifies manifest bytes, transfers summaries and anatomy within a cumulative limit of 500 MiB per item, and registers the attempt in the durable trace index. Every raw archive stays compressed on the server. An item’s second failed attempt ends the campaign.
+Use `control.ts collect TAG` after each terminal arm. Collection verifies manifest bytes, transfers summaries and anatomy within a cumulative limit of 500 MiB per item, and registers the attempt in the durable trace index. Raw archives remain compressed on the server. A failed item yields to the next independent item and stays eligible for retry.
 
 ACT2 runs the 1,000-subject native preflight on each qualifying fresh stack before the large seed. Its release checks bind the public runtime, slot and attempt nonce. The two-account identity regression and 100,000-subject failure that prompted the preflight are documented in the [ACT2 report](../act2/REPORT.md).
 
-The before-run forecasts for items 2–5 and their verified observations are in [PREDICTIONS.md](PREDICTIONS.md). The six field-save executions belong to item 3.
+The forecasts and their verified observations use the current item numbers in [PREDICTIONS.md](PREDICTIONS.md).

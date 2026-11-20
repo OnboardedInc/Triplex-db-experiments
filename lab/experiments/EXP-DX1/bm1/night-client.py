@@ -72,7 +72,7 @@ def unpack(archive,stage,seal):
 
 
 def collect(name):
-    assert re.fullmatch(r"i[1-6]-[12]",name)
+    assert re.fullmatch(r"i[1-7]-[12]",name)
     directory=ROOT/name
     src=REMOTE+"/bundles/"+name
     original=remote("cat "+src+"/TRANSFER.json")
@@ -82,6 +82,7 @@ def collect(name):
     done=directory/"collected.json"
     if done.is_file():
         assert json.loads(done.read_bytes())["transfer"]==hashlib.sha256(original).hexdigest()
+        index_bundle(directory)
         return
     for part in ("summary","raw"):
         if not seal[part]:continue
@@ -94,7 +95,16 @@ def collect(name):
     assert remote("cat "+src+"/TRANSFER.json")==original
     (directory/"TRANSFER.json").write_bytes(original)
     done.write_text(json.dumps({"transfer":hashlib.sha256(original).hexdigest(),"at":time.time(),"slot":seal["slot"]})+"\n")
+    index_bundle(directory)
     print("Collected",name,seal["slot"],flush=True)
+
+
+def index_bundle(directory):
+    index=os.environ.get("BM1_TRACE_INDEX")
+    receipt=directory/"indexed.json"
+    if index and not receipt.exists():
+        proof=subprocess.check_output(["node",index,"register-night-bundle",str(directory)],timeout=120)
+        receipt.write_bytes(proof)
 
 
 def submit(item,attempt):

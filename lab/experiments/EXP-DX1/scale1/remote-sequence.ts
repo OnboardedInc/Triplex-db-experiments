@@ -398,7 +398,7 @@ export function resumesItem(failed: Step, retry: Step, next?: Step) {
     next.retryOf === failed.tag
   );
 }
-// [DX-SCALE1] Why: each phase must survive a disconnected Mac, release its systemd cgroup and retain an independently identifiable terminal attempt. Rejected: a background SSH stream or proceeding after a second failed experiment.
+// [DX-SCALE1] Why: each phase must release its cgroup and retain its own terminal attempt, even with the Mac disconnected. Rejected: a background SSH stream that owns the stack.
 async function main() {
   assert(safe(label) && process.platform === "linux" && process.getuid?.() === 0);
   const dir = path.join(root, "queues", label),
@@ -415,14 +415,30 @@ async function main() {
       process.exitCode = 2;
       return;
     }
-    const step = p.steps.find((s) => !ledger.some((r) => r.tag === s.tag));
+    const remaining = p.steps.filter((s) => !ledger.some((r) => r.tag === s.tag));
+    const ready = p.keepGoing
+      ? remaining.filter((s) =>
+          [s.baseline, s.groupControl, s.seedImage].every(
+            (required) =>
+              !required || ledger.some((r) => r.tag === required && r.success && !r.skipped),
+          ),
+        )
+      : remaining;
+    // [DX-SCALE1] Why: on failure, use the box for the next independent item and then return to the earlier arms. Rejected: treating a missing control as a measurement or blocking unrelated work.
+    const step =
+      (p.keepGoing && ready.find((s) => !failures.some((r) => r.item === s.item))) || ready[0];
     if (!step) {
       const pending = failures.filter(
         (f) => !ledger.some((r) => r.retryOf === f.tag && (r.success || r.capacity)),
       );
       state({
-        stage: !p.final ? "plan-consumed" : pending.length ? "finished-with-failures" : "complete",
+        stage: !p.final
+          ? "plan-consumed"
+          : pending.length || remaining.length
+            ? "finished-with-failures"
+            : "complete",
         ledger,
+        deferred: remaining.map((s) => s.tag),
       });
 
       return;
@@ -462,17 +478,6 @@ async function main() {
     }
     let outcome;
     try {
-      // [DX-SCALE1] Why: preserve an unrun dependency as an unresolved attempt and advance to independent comparisons. Rejected: stalling every later item after one missing control.
-      if (p.keepGoing) {
-        for (const required of [step.baseline, step.groupControl, step.seedImage]) {
-          if (!required) continue;
-          const result = ledger.find((r) => r.tag === required);
-          assert(
-            result?.success && !result.skipped,
-            "Required verified arm unavailable: " + required,
-          );
-        }
-      }
       outcome = await run(step);
     } catch (e) {
       outcome = { success: false, capacity: false, error: String(e) };

@@ -23,7 +23,7 @@ ACT = "exp/DX-ACT2-activation-100k"
 # Rejected: inheriting the 24–72 hour limits of standalone research controllers.
 ITEMS = {
     1: (W1, "w1", "502c8897", 4, "grpw1"),
-    6: (ACT, "actv-delta", "d8a921352", 4, "solon19"),
+    6: (ACT, "actv-delta", "eaee4e10", 4, "solon19"),
     2: ("exp/DX-ACT1-activation", "import1", "eb154ca8", 5, "import-bm1n19"),
     3: (W1, "w1", "502c8897", 3, "w1trial01"),
     4: (ACT, "act2", "a9eb03b0", 4, "n19guard"),
@@ -176,14 +176,16 @@ def setup(r,env):
 def stage_guard(r,env):
     root,tag,repo=Path(r["root"]),r["tag"],Path(r["repo"])
     logs=root/"logs";logs.mkdir(parents=True,exist_ok=True)
-    stop=stamp(r["deadline"]-25)
+    stop=stamp(r["deadline"]-30)
     runner=repo/EXP/"bm1/queue-day.sh"
-    atom(logs/"after-guarded.txt","collect\n")
     atom(logs/"source.txt",r["source"]+"\n")
-    for stage in ("setup","smoke","seed","guarded"):
+    inherited=ROOT/"day-p3/pristine/seed.json"
+    seed_batch="p3" if inherited.is_file() and get(inherited)["source"]==r["source"] else tag
+    stages=("setup","smoke") if seed_batch=="p3" else ("setup","smoke","seed")
+    for stage in stages:
         remaining=int(r["deadline"]-time.time()-25)
         if remaining<30:raise TimeoutError("guarded item ceiling")
-        cap=min(remaining,{"setup":1800,"smoke":1800,"seed":14400,"guarded":10800}[stage])
+        cap=min(remaining,{"setup":1800,"smoke":1800,"seed":14400}[stage])
         unit="triplex-bm1-"+tag+"-"+stage
         atom(root/"active-item",stage+"\n")
         status(4,stage,time.time(),5)
@@ -193,8 +195,51 @@ def stage_guard(r,env):
             "/bin/bash",str(runner),"--item",tag,stop,stage,stamp(time.time()+cap)],env=env,check=True)
         assert (logs/(stage+"-cleanup/result")).read_text().strip()=="clean"
         (root/"active-item").unlink()
-        if stage=="seed": assert (root/"pristine/seed.json").is_file()
-        if stage=="guarded": assert (root/"guarded/comparison.json").is_file()
+    checkout=root/"checkout/repository"
+    assert command("git","rev-parse","HEAD",cwd=checkout)==r["source"]
+    seed=ROOT/("day-"+seed_batch)/"pristine/seed.json"
+    assert seed.is_file(),"The 100k pristine PostgreSQL seed is missing"
+    hours=min(3,(r["deadline"]-time.time()-120)/3600)
+    if hours<.5:raise TimeoutError("No time remains for the published guarded command")
+    put(root/"guard-plan.json",{"source":r["source"],"seedBatch":seed_batch,"seedSha256":digest(seed),"stop":stop})
+    env=dict(env,DX_BM1_PRISTINE_BATCH=seed_batch,DX_BARE_METAL="1",PATH=str(root/"checkout/tools/bin")+":"+env["PATH"])
+    # [DX-BM1] Why: the published standalone runner owns all four corrected arms and the historical control.
+    # Rejected: the old three-arm wrapper, which rejects the fourth arm's request after it is written.
+    atom(root/"active-item","standalone\n")
+    status(4,"guarded",time.time(),5)
+    node=root/"checkout/tools/bin/node"
+    run(node,"lab/bin/heavy.mjs","--label","DX-BM1-guarded-100k","--",node,"--experimental-strip-types",
+        EXP/"act1/bench.ts","--execute","--hours",str(hours),cwd=checkout,env=env)
+
+
+def guarded_children(r):
+    root=Path(r["root"])
+    plan=root/"guard-plan.json"
+    if not plan.is_file():return {}
+    conditions=get(plan)
+    assert conditions["source"]==r["source"] and re.fullmatch(r"[0-9a-f]{64}",conditions["seedSha256"])
+    children={}
+    for f in (root/"checkout/repository/runs/act1-requests").glob("tx2-dxt1-bm1-act*-activation-a.json"):
+        a=get(f)
+        slot=a["slot"]
+        assert a["source"]==r["source"] and a["seedSha256"]==conditions["seedSha256"] and f.stem==slot
+        assert a["arm"] in {"narrow-full","narrow-selector","standard-full","standard-pages","standard-historical"}
+        assert re.fullmatch(r"tx2-dxt1-bm1-act[0-9a-f]{9}-activation-a",slot)
+        assert f.stat().st_mtime>=r["start"]-1
+        children[slot]=f
+    return children
+
+
+def guard_output(r):
+    children=guarded_children(r)
+    matches=[]
+    for directory in ROOT.glob("act1-*"):
+        if not directory.is_dir() or not re.fullmatch(r"act1-[0-9a-f]{12}",directory.name):continue
+        files=list(directory.glob("*-request.json"))
+        if files and all(get(f).get("slot") in children and f.read_bytes()==children[get(f)["slot"]].read_bytes() for f in files):
+            matches.append(directory)
+    assert len(matches)<=1
+    return matches[0] if matches else None
 
 
 def worker(r):
@@ -205,34 +250,47 @@ def worker(r):
     repo,node=setup(r,env)
     heavy=[node,"lab/bin/heavy.mjs","--label","DX-BM1-night-"+str(r["item"]),"--",node]
     if r["item"]==6:
-        run("bash",HERE/"delta-preflight.sh","run",root,source,cwd=repo,env=env)
+        run(node,"--import","tsx",EXP/"scale1/bench.ts","launch","2",tag,
+            "activation","--activation-mode","delta",cwd=repo,env=env)
     elif r["item"] in (1,3):
         args=[EXP/"w1/group/server.ts","run",root,source,tag] if r["item"]==1 else [EXP/"w1/bench.ts",root,source,tag]
         run(*heavy,"--experimental-strip-types",*args,cwd=repo,env=env)
     elif r["item"]==2:run(*heavy,"--experimental-strip-types",EXP/"import1/server.ts","--execute",root,source,cwd=repo,env=env)
     else:
         run(node,"--no-warnings","--experimental-transform-types",repo/EXP/"thin1/queue-bench.ts","--launch",tag,
-            stamp(r["deadline"]-10),root/"build","--int1","--row-wire=gzip",cwd=repo,env=env)
+            stamp(r["deadline"]-10),root/"build","--int1","--row-wire=plain",cwd=repo,env=env)
 
 
 def cleanup(r):
     root,tag,src=Path(r["root"]),r["tag"],r["source"]
     if r["item"] in (1,3) and (root/"active-slot").exists():
         run("bash",Path(r["repo"])/EXP/"w1/release.sh",root,timeout=180)
-    elif r["item"]==6 and (root/"ownership").is_file():
-        run("bash",HERE/"delta-preflight.sh","clean",root,src,timeout=180)
+    elif r["item"]==6:
+        unit="triplex-scale1-"+tag
+        if active(unit):run("systemctl","stop",unit,timeout=620)
     elif r["item"]==2 and (root/"active.json").exists():
         run(root/"build/tools/bin/node","--experimental-strip-types",root/"build/repository"/EXP/"import1/server.ts",
             "--cleanup",root,src,timeout=180)
     elif r["item"]==4 and (root/"active-item").exists():
         stage=(root/"active-item").read_text().strip()
-        assert stage in {"setup","smoke","seed","guarded"}
-        unit="triplex-bm1-"+tag+"-"+stage
-        if active(unit):run("systemctl","stop",unit,timeout=190)
         runner=Path(r["repo"])/EXP/"bm1/queue-day.sh"
-        if not (root/"logs"/(stage+"-cleanup/result")).exists():
-            run("bash",runner,"--cleanup",tag,stamp(r["deadline"]-25),stage,"retry",timeout=180)
-        assert (root/"logs"/(stage+"-cleanup/result")).read_text().strip()=="clean"
+        if stage=="standalone":
+            for slot in guarded_children(r):
+                child=slot.removeprefix("tx2-dxt1-bm1-").removesuffix("-activation-a")
+                unit="triplex-bm1-"+child+"-activation-a"
+                if active(unit):run("systemctl","stop",unit,timeout=190)
+                logs=ROOT/("day-"+child)/"logs"
+                if not (logs/"activation-a-cleanup/result").is_file():
+                    run("bash",runner,"--cleanup",child,stamp(r["deadline"]-25),"activation-a","retry",timeout=180)
+                assert (logs/"activation-a-cleanup/result").read_text().strip()=="clean"
+            if output:=guard_output(r):put(root/"guard-output.json",{"directory":str(output),"source":r["source"]})
+        else:
+            assert stage in {"setup","smoke","seed"}
+            unit="triplex-bm1-"+tag+"-"+stage
+            if active(unit):run("systemctl","stop",unit,timeout=190)
+            if not (root/"logs"/(stage+"-cleanup/result")).exists():
+                run("bash",runner,"--cleanup",tag,stamp(r["deadline"]-25),stage,"retry",timeout=180)
+            assert (root/"logs"/(stage+"-cleanup/result")).read_text().strip()=="clean"
         (root/"active-item").unlink(missing_ok=True)
     elif r["item"]==5:
         unit="triplex-int1-"+tag
@@ -245,19 +303,17 @@ def remaining(r):
     root=Path(r["root"])
     if item in (1,3): prefixes=["tx2-dxscale1-w1-"+tag+"-"]
     elif item==5: prefixes=["tx2-dxint1-"+tag+"-"]
-    elif item==6: prefixes=["tx2-dxscale1-bm1"+tag+"-"]
+    elif item==6: prefixes=["tx2-dxscale1-"+tag+"-"]
     else:
         prefixes=["tx2-dxt1-bm1-"+tag+"-"] if item==4 else []
-        files=(root/"guarded").glob("*-request.json") if item==4 else root.glob("*/attempt.json")
+        if item==4:prefixes.extend(s+"-" for s in guarded_children(r))
+        files=() if item==4 else root.glob("*/attempt.json")
         for f in files:
             a=get(f)
             assert a.get("source")==r["source"]
             if item==2:
                 assert a["tag"]==tag and re.fullmatch("tx2-dximport-[a-f0-9]{20}",a["prefix"])
                 prefixes.append(a["prefix"]+"-")
-            else:
-                assert re.fullmatch(r"tx2-dxt1-bm1-act[0-9a-f]{9}-activation-a",a["slot"])
-                prefixes.append(a["slot"]+"-")
     names={
         "containers":command("docker","ps","-a","--format","{{.Names}}").splitlines(),
         "networks":command("docker","network","ls","--format","{{.Name}}").splitlines(),
@@ -294,7 +350,82 @@ def launch(r):
 
 def running(r):
     if active(r["unit"]):return True
-    return r["item"]==5 and active("triplex-int1-"+r["tag"])
+    child = native_unit(r)
+    return bool(child and active(child))
+
+
+def native_unit(request):
+    item, tag = request["item"],request["tag"]
+    if item == 5: return "triplex-int1-"+tag
+    if item == 6: return "triplex-scale1-"+tag
+    return None
+
+
+def matched_probes():
+    # [DX-BM1] Why: keep the native comparison tied to the verified W1 seed after the primary activation retry.
+    # Rejected: rebuilding the large population for a six-minute contrast or claiming a mismatched seed comparison.
+    work=NIGHT/"i7"
+    work.mkdir(exist_ok=True)
+    end=work/"outcome.json"
+    if end.is_file():return
+    directory=work/"1"
+    directory.mkdir(exist_ok=True)
+    root=NIGHT/"native-probes"
+    request=directory/"request.json"
+    unit="bm1n19-native-probes"
+    marker=NIGHT/"checkpoints/grpw1a-1-before-probes/checkpoint.json"
+    start=time.time()
+    if request.is_file():
+        row=get(request)
+        start=row["start"]
+    else:
+        source=(Path("/var/tmp/triplex-w1/grpw1a")/"source").read_text().strip()
+        assert re.fullmatch("[0-9a-f]{40}",source)
+        row=dict(item=7,attempt=1,source=source,tag="matched-probes",start=start,deadline=start+2400,directory=str(directory),root=str(root))
+        put(request,row)
+    assert row["source"]==(Path("/var/tmp/triplex-w1/grpw1a")/"source").read_text().strip()
+    status("probes","running",start,2)
+    terminal=directory/"terminal.json"
+    if terminal.is_file():
+        entry=get(terminal)
+    else:
+        if marker.is_file() and not root.exists() and not active(unit):
+            left=max(1,int(row["deadline"]-time.time()))
+            command_str=str(HERE/"probes/native.py")
+            try:
+                run("systemd-run","--no-block","--unit="+unit,"-p","KillMode=control-group","-p",f"RuntimeMaxSec={left}s",
+                    "-p","TimeoutStopSec=60s","-p","StandardOutput=append:"+str(directory/"worker.log"),
+                    "-p","StandardError=append:"+str(directory/"worker.log"),
+                    "-p",f"ExecStopPost={sys.executable} {command_str} cleanup",sys.executable,command_str,"run",timeout=30)
+            except (OSError,subprocess.SubprocessError) as error:
+                atom(directory/"admission-error.txt",repr(error)+"\n")
+        while active(unit):
+            if time.time()>row["deadline"]:
+                run("systemctl","stop",unit,timeout=115)
+                break
+            time.sleep(5)
+        if (root/"active.json").is_file():run(sys.executable,HERE/"probes/native.py","cleanup",timeout=125)
+        assert not command("docker","ps","-q")
+        assert not (root/"active.json").exists()
+        result=root/"probe-results.json"
+        state="incomplete"
+        detail="W1 did not produce a fresh, source-bound 100,000-subject checkpoint"
+        if marker.is_file():
+            detail="A matched probe failed before it sealed a reading"
+            if result.is_file():
+                evidence=get(result)
+                assert evidence["source"]==row["source"] and evidence["checkpoint"]==digest(marker)
+                assert start<=evidence["started"]<=time.time()
+                detail={name:r["outcome"] for name,r in evidence["results"].items()}
+                state="observed" if all(len(r["readings"])==4 for r in evidence["results"].values()) else "incomplete"
+        entry=dict(item=7,attempt=1,tag=row["tag"],source=row["source"],state=state,detail=detail,ended=stamp(),clean=True)
+        put(terminal,entry)
+    try:
+        run(sys.executable,HERE/"night-archive.py",request,timeout=360)
+    except (OSError,subprocess.SubprocessError) as error:
+        atom(directory/"collection-error.txt",repr(error)+"\n")
+    put(end,entry)
+    print(stamp(),entry,flush=True)
 
 
 def restrict_scope(r):
@@ -359,27 +490,43 @@ def result(r):
             put(Path(r["directory"])/"thin-observations.json",{"source":r["source"],"inputs":[digest(f) for f in arms],"arms":actual})
             return "recorded","four measured thin arms"
     elif item==6:
-        check=root/"solo-100000/independent-check.json"
-        if check.is_file():
-            request=get(root/"solo-100000/request.json"); doc=get(check); original=get(root/"solo-100000/result.json")
-            assert original["binding"]==doc["binding"]==request and request["source"]==r["source"]
-            assert request["slot"]=="tx2-dxscale1-bm1"+r["tag"] and original["subjects"]==doc["subjects"]==100000
-            assert doc["offers"]==original["loaded"]["count"]==90 and len(original["accounts"])==1
-            assert original["loaded"]["sha"]==digest(root/"solo-100000/loaded.json")
-            assert original["loaded"]["p99"]==doc["p99"] and len(original["reference"])==2
-            return "recorded",str(check)
-    elif item==4 and (root/"guarded/comparison.json").is_file():
-        comparison=get(root/"guarded/comparison.json")
-        rows=comparison["results"];assert len(rows)>=4
-        for row in rows:
-            assert re.fullmatch(r"tx2-dxt1-bm1-act[a-f0-9]{9}-activation-a",row["slot"])
-            batch=row["slot"].split("-")[3]
-            out=ROOT/("day-"+batch)/"checkout/state/evidence/DX-T1"/row["slot"]
-            raw=get(out/"act1-sweep.json");verified=get(out/"act1-verified.json")
-            assert verified["rawSha256"]==digest(out/"act1-sweep.json")
-            assert raw["source"]==r["source"] and raw["slot"]==row["slot"] and raw["checked"]==100000 and raw["statesCompared"]==100000
-            assert row["comparedSha256"]==verified["comparedSha256"]
-        return "recorded",str(root/"guarded/comparison.json")
+        campaign=Path("/var/tmp/triplex-scale1")/r["tag"]
+        measurement=campaign/"delta-measurement.json"
+        if measurement.is_file():
+            trial=get(campaign/"attempt.json");result=get(measurement)
+            reference=get(campaign/"delta/result.json");outcome=get(campaign/"terminal.json")
+            proof=get(campaign/"preflight.json")
+            request=get(campaign/"delta/request.json")
+            assert request==reference["binding"]==result["binding"]==proof["binding"]
+            assert request["source"]==trial["source"]==outcome["source"]==r["source"]
+            assert request["slot"]==trial["slot"]=="tx2-dxscale1-"+r["tag"]
+            assert request["nonce"]==trial["nonce"]==outcome["nonce"] and outcome["cleanup"] is True
+            assert trial["item"]==2 and trial["activationMode"]=="delta" and outcome["tag"]==r["tag"]
+            assert reference["subjects"]==result["subjects"]==100000 and result["loaded"]["count"]==90
+            assert len(result["accounts"])==1 and result==reference
+            assert result["loaded"]["sha"]==digest(campaign/"delta/loaded.json") and len(result["reference"])==2
+            return "recorded",str(measurement)
+    elif item==4:
+        directory=guard_output(r)
+        if directory:
+            children=guarded_children(r)
+            results=[]
+            for slot,request in children.items():
+                batch=slot.split("-")[3]
+                out=ROOT/("day-"+batch)/"checkout/state/evidence/DX-T1"/slot
+                if not (out/"act1-verified.json").is_file():continue
+                raw=get(out/"act1-sweep.json");verified=get(out/"act1-verified.json");arm=get(request)
+                assert verified["rawSha256"]==digest(out/"act1-sweep.json")
+                assert raw["source"]==r["source"] and raw["slot"]==slot and raw["checked"]==raw["statesCompared"]==100000
+                assert verified==get(directory/(arm["arm"]+"-w"+str(arm["workers"])+".json"))
+                assert raw["act1"]["arm"]==verified["arm"]==arm["arm"]
+                results.append(verified)
+            comparison=directory/"comparison.json"
+            if comparison.is_file():
+                report=get(comparison)
+                assert len(results)==5 and {row["slot"] for row in results}=={row["slot"] for row in report["results"]}
+                return "recorded",str(comparison)
+            if results:return "incomplete","Verified guarded arms: "+", ".join(row["arm"] for row in results)
     elif item==5:
         directory=root/"build/state/evidence/DX-INT1"/r["tag"]
         if (directory/"batch.json").is_file():
@@ -415,7 +562,7 @@ def fallback(r):
     timer=f"bm1n19-hard-{r['item']}-{r['attempt']}"
     if not active(timer+".timer"):
         targets=[r["unit"]+".service"]
-        if r["item"]==5:targets.append("triplex-int1-"+r["tag"]+".service")
+        if child:=native_unit(r):targets.append(child+".service")
         seconds=max(1,int(r["deadline"]-time.time()))
         run("systemd-run","--no-block","--unit="+timer,"--on-active="+str(seconds)+"s",
             "--timer-property=AccuracySec=1s","/usr/bin/systemctl","stop",*targets)
@@ -446,7 +593,7 @@ def one(item):
                 if time.time()>=limit:
                     timed_out=True
                     if active(r["unit"]):run("systemctl","stop",r["unit"],timeout=210)
-                    if item==5 and active("triplex-int1-"+r["tag"]):run("systemctl","stop","triplex-int1-"+r["tag"],timeout=210)
+                    if (child:=native_unit(r)) and active(child):run("systemctl","stop",child,timeout=620 if item==6 else 210)
                     break
                 restrict_scope(r)
                 time.sleep(5)
@@ -474,7 +621,14 @@ def one(item):
         preflights=[p for p in (root/"preflight-stop.json",root/"preflight/STATUS.json",root/"source-preflight.json") if p.is_file() and ("stop" in p.name or "stopped" in p.read_text()[:8192])]
         if item==5:
             preflights.extend(p for p in (root/"build/state/evidence/DX-INT1"/r["tag"]).glob("*-preflight/STATUS.json") if "stopped" in p.read_text()[:8192])
-        if item==4 and (root/"logs/smoke.log").is_file() and not (root/"logs/seed.log").is_file():preflights.append(root/"logs/smoke.log")
+        if item==6:
+            failure=Path("/var/tmp/triplex-scale1")/r["tag"]/"preflight-stop.json"
+            if failure.is_file(): preflights.append(failure)
+        if item==4:
+            smoke=root/"logs/smoke-cleanup/result"
+            seed=root/"checkout/state/evidence/DX-T1"/("tx2-dxt1-bm1-"+r["tag"]+"-seed")
+            if (root/"logs/smoke.log").is_file() and not smoke.is_file():preflights.append(root/"logs/smoke.log")
+            if (seed/"STATUS.json").is_file() and "large seed stopped" in (seed/"STATUS.json").read_text():preflights.append(seed/"STATUS.json")
         if preflights or (item in (1,3) and not (root/"results/arm-1/identity.json").exists()):break
     put(end,entry)
     print(stamp(),entry,flush=True)
@@ -486,7 +640,7 @@ def main():
     mode=sys.argv[1]
     if mode in {"worker","cleanup"}:
         item,attempt=map(int,sys.argv[2:4]);r=bind(get(NIGHT/f"i{item}"/str(attempt)/"request.json"))
-        if mode=="cleanup" and item==5 and os.environ.get("SERVICE_RESULT")=="success" and active("triplex-int1-"+r["tag"]):return
+        if mode=="cleanup" and (child:=native_unit(r)) and os.environ.get("SERVICE_RESULT")=="success" and active(child):return
         (worker if mode=="worker" else cleanup)(r);return
     assert mode=="run"
     lock=(NIGHT/"campaign.lock").open("a");fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -507,6 +661,12 @@ def main():
                 check_released(request)
             put(directory/"outcome.json",dict(item=item,state="incomplete",detail=str(error),ended=stamp()))
         assert not command("docker","ps","-q"),"Cannot transfer an occupied bench"
+        if item==6:
+            try:
+                matched_probes()
+            except Exception:
+                print(traceback.format_exc(),flush=True)
+                assert not active("bm1n19-native-probes") and not command("docker","ps","-q")
     assert not command("docker","ps","-q")
     atom(ROOT/"STATUS","FREE "+stamp()+"\n")
     atom(NIGHT/"finished",stamp()+"\n")

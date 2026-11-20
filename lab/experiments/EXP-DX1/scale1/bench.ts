@@ -426,7 +426,8 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   const env = {
     ...process.env,
     DX_GROUP_COMMIT: attempt.groupControl ? "1" : "0",
-    DX_LIVE_PRIORITY: attempt.bounded && attempt.groupControl ? "1" : "0",
+    // [DX-SCALE1] Why: the frozen deep fixture puts verified account facts on root subjects, and saves also touch unqualified task entities. Rejected: enabling W1 priority with unverified account classes, which makes these saves compete as bulk and prevents grouping.
+    DX_LIVE_PRIORITY: "0",
     DX_GROUP_QUEUE_CLOCK: "0",
     DX_BARE_METAL: "1",
     DX_BARE_METAL_ROOT: dir,
@@ -1466,7 +1467,9 @@ async function main() {
   const refs =
     publication === "lazy"
       ? ["exp/DX-ACT1-activation"]
-      : ["exp/DX-BM1-bare-metal", "exp/DX-ACT1-activation"];
+      : bounded || (mode === "seed" && item >= 3)
+        ? ["exp/DX-BM1-bare-metal"]
+        : ["exp/DX-BM1-bare-metal", "exp/DX-ACT1-activation"];
   if (item >= 2 && publication !== "lazy") {
     call("git", [
       "merge-base",
@@ -1476,7 +1479,7 @@ async function main() {
     ]);
     refs.push("exp/DX-ACT2-activation-100k");
   }
-  if (item === 3 && getopt("account-layout") === "pooled") {
+  if (item >= 2 && publication !== "lazy") {
     call("git", [
       "merge-base",
       "--is-ancestor",
