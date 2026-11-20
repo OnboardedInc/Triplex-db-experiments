@@ -68,7 +68,7 @@ async function fixturePort(peer) {
   const proxy = createServer((socket) => {
     sockets.add(socket);
     const child = spawn("docker", dockerArgs(["exec", "-i", peer, "bash", "-ceu",
-      'exec 3<>/dev/tcp/127.0.0.1/8080; cat <&3 & reader=$!; trap "kill $reader 2>/dev/null || true" EXIT; cat >&3']),
+      'exec 3<>/dev/tcp/localhost/8080; cat <&3 & reader=$!; trap "kill $reader 2>/dev/null || true" EXIT; cat >&3']),
     { stdio: ["pipe", "pipe", "ignore"] });
     socket.pipe(child.stdin);
     child.stdout.pipe(socket);
@@ -80,12 +80,12 @@ async function fixturePort(peer) {
   });
   await new Promise((resolve, reject) => {
     proxy.once("error", reject);
-    proxy.listen(0, "127.0.0.1", resolve);
+    proxy.listen(0, "localhost", resolve);
   });
   const port = proxy.address().port;
   assert(![15442, 17019].includes(port));
   return {
-    url: "http://127.0.0.1:" + port,
+    url: "http://localhost:" + port,
     close: () => { for (const s of sockets) s.destroy(); proxy.close(); },
   };
 }
@@ -334,6 +334,7 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
         "lab/experiments/EXP-DX1/load1"];
       const archive = execFileSync("git", ["archive", loaderPin, ...files], { cwd: REPO, maxBuffer: 16 * MiB });
       execFileSync("tar", ["-xf", "-", "-C", loader], { input: archive });
+      fs.writeFileSync(path.join(loader, "package.json"), '{"type":"module"}\n', { flag: "wx" });
       const loaderHashes = Object.fromEntries(hashTree(loader));
       fs.symlinkSync(path.join(REPO, "node_modules"), path.join(loader, "node_modules"));
       const builds = Object.fromEntries(["core", "datomic", "qualification", "testkit"].map((pkg) =>
@@ -353,9 +354,22 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
           if (await fetch(transport.url + "/health", { signal: AbortSignal.timeout(500) }).then((r) => r.ok, () => false)) break;
           await sleep(1000);
         }
-        fixture = JSON.parse(execFileSync(process.execPath, ["--import", "tsx",
-          path.join(source, experiment, "scale1-fixture.mjs"), loader, dir, attempt, transport.url, REPO, loaderPin],
-          { cwd: REPO, encoding: "utf8", timeout: 180000, signal: controller.signal }));
+        const stdout = path.join(dir, "fixture-loader.json");
+        const out = fs.openSync(stdout, "wx");
+        const err = fs.openSync(path.join(dir, "fixture-loader.log"), "wx");
+        try {
+          await new Promise((resolve, reject) => {
+            const child = spawn(process.execPath, ["--import", "tsx", path.join(source, experiment, "scale1-fixture.mjs"),
+              loader, dir, attempt, transport.url, REPO, loaderPin],
+              { cwd: REPO, stdio: ["ignore", out, err], signal: controller.signal });
+            child.once("error", reject);
+            child.once("exit", (code) => code === 0 ? resolve() : reject(Error("SCALE1 fixture writer failed")));
+          });
+        } finally {
+          fs.closeSync(out);
+          fs.closeSync(err);
+        }
+        fixture = JSON.parse(fs.readFileSync(stdout, "utf8"));
       } finally {
         transport.close();
       }
@@ -379,7 +393,15 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
       };
       const backup = "file:/tmp/age-fixture-backup";
       await command("seed-backup.log", "backup-db", uri(fixture.db), backup);
+      // [DX-AGE1] Why: the destination shares this exclusively owned SQL store.
+      // Rejected: restoring to the copy while any transactor for that store is running.
+      owned(tx);
+      docker(["stop", "--time", "20", tx]);
+      assert(!owned(tx).State.Running);
       await command("seed-clone.log", "restore-db", backup, uri(clone), String(index.t));
+      docker(["start", tx]);
+      await ready(tx, () => docker(["exec", tx, "bash", "-c", '(exec 3<>/dev/tcp/$1/4334) 2>/dev/null && echo ready',
+        "probe", names.tx], { allowFail: true }) === "ready");
       await capture(["exec", peer, "/opt/datomic/bin/run", "-m", "triplex.age.gate",
         opts.run, "/tmp/age-fixture.json", fixture.sha, clone], path.join(dir, "probe.log"), controller.signal);
     }

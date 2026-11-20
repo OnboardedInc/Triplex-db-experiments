@@ -3,6 +3,7 @@
             [datomic.api :as d]
             [triplex.age.adopt :as adopt]
             [triplex.age.native :as native]
+            [triplex.age.structure :as structure]
             [triplex.age.tape :as tape]
             [triplex.gateway.group :as group]
             [triplex.gateway.journal :as journal]
@@ -241,7 +242,15 @@
                   (str label " feed page differs"))))
       (native/emit "fidelity-arms" {:setting setting :growth growth :saves saves :cuts cuts
                                     :active (:active pop) :arms arms :logicalDatoms
-                                    (reduce + (for [n (range saves)] (+ 12 (* 4 (tape/width n pop)))))}))))
+                                    (reduce + (for [n (range saves)] (+ 12 (* 4 (tape/width n pop)))))})
+      (doseq [label (remove #{"product-group"} arms)
+              :let [conn (:conn (databases label))
+                    t (d/basis-t (d/db conn))
+                    _ (d/request-index conn)
+                    indexed (deref (d/sync-index conn t) 120000 nil)]]
+        (native/check! indexed "Small fidelity index did not settle" {:label label :t t})
+        (native/emit "arm-index-census" {:setting setting :arm label :requestedT t
+                                        :census (structure/measure! (d/db conn))})))))
 
 (defn -main [mode & args]
   (try
