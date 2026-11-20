@@ -39,7 +39,7 @@ W1 kept loader timing and priority grants together with installed predecessor va
 
 From the prepared physical checkout run `bash lab/experiments/EXP-DX1/int1/everything.sh BATCH UTC_CUTOFF`. It verifies a small saved native pair for each tape before the full cases and shares the physical queue lock. The field tape offers 3.5/4.9 steady and 23.5/39.4 busy saves per second in one deep account. It preserves the task intents, duplicate and lost-response schedules and business fields, while reporting actual commanded widths. The frozen tape and contract remain byte-identical.
 
-The campaign keeps the bounded readers and gateways, exact history range, predecessor reuse at the verified scope, compact rows and the sender and reader paths in the merged branch. It excludes grouping, field coalescing, prepared group reuse and priority or budget scheduling under the write audit. It uses plain responses after the latency comparison. Activation, bulk import and failover use separate workloads. [Forecasts](PREDICTIONS.md)
+The campaign keeps the bounded readers and gateways, exact history range, predecessor reuse at the verified scope, compact rows and the sender and reader paths in the merged branch. It excludes grouping, parallel preparation, coalescing and queue policies until the combined writer proves exact. The retained-journal and ordered-save candidates need their combined checks. The plain wire gave the better first-read timing. Activation, bulk import and failover use separate workloads. [Forecasts](PREDICTIONS.md)
 
 ## Evidence audit
 

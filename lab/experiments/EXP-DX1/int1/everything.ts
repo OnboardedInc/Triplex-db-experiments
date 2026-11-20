@@ -116,7 +116,6 @@ async function physicalCases(
       try {
         const { env, engines } = startScaleStack(out, slot, source, false, {
           ...treatment,
-          DX_WRITE_BUDGET_US: "",
           DX_GW_WRITE_JAVA_OPTS:
             "-Xms64m -Xmx384m -Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30",
           DX_GW_READ_JAVA_OPTS:

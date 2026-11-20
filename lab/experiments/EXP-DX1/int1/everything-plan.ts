@@ -30,6 +30,12 @@ export const treatment = {
   DX_GROUP_QUEUE_CLOCK: "0",
   DX_GROUP_STAGE_CLOCK: "1",
   DX_W1_EXTRA: "1",
+  DX_W1_PREDECESSOR: "1",
+  DX_W1_LEDGER: "0",
+  DX_W1_PACKED_JOURNAL: "0",
+  DX_W1_FAST_REPLY: "0",
+  DX_WRITE_BUDGET_US: "",
+  DX_SLIM_ROWS: "0",
   DX_INT1_NATIVE_WRITE_READBACK: "1",
   DX_GROUP_REUSE_PREPARED: "0",
   DX_FIELD_COALESCE: "0",
@@ -44,6 +50,9 @@ export const treatment = {
 export const excluded = {
   grouping: "The write audit reproduced a stale retraction clock in a grouped replacement.",
   reusePrepared: "The selected writer uses ordinary serial turns until grouped change bytes pass.",
+  parallelPreparation: "The guarded overlap and fast member replies need a verified grouped arm.",
+  savedJournalLayouts: "The retained and packed journals need a combined history and feed check.",
+  orderedSaveWire: "The matched arm uses the existing compact wire with explicit row identities.",
   fieldCoalesce:
     "A queued replacement must preserve the intermediate row and its native assertion clock.",
   priorityAndBudget:
