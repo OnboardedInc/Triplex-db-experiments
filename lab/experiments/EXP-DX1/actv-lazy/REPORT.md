@@ -3,7 +3,7 @@ A background worker writes the changed values and individual notices in short tu
 Before a value is stored, reads at the receipt’s cut derive it. Stored values serve that same cut. Later saves use the latest source.
 A new release can stop an obsolete value copy. Notices from both releases still get recorded in order.
 A shared wage-floor save covers the full roster when the database cannot prove a smaller affected set.
-The new collector checked six small native cells and rejected an edited time and answer. The scaled run remains on hold for the current preflight.
+On the server, 64 people took 34 ms to the quiet receipt and 47 ms to the first correct answer. All six cells agreed.
 The ten-thousand-person settlement timings and live-traffic ratios still need the reserved lab slot.
 The owner still needs to rule on whether the receipt counts as stored and what to do with an owed notice after erasure.
 
@@ -26,6 +26,8 @@ The eight-fact thin fixture encoded 10.3–10.4 leaf bytes and 100–104 address
 ### Server command
 
 Hold until the version-matched native preflight completes. Use the managed W1 slot with live priority enabled. [Environment and predictions](SERVER.md)
+
+BM1 `34badc007`, evidence `i14-1` and `i17-1`, replayed 30 point answers and 757 effects. The settlement gate found `Store.commit` had reduced a gateway policy failure to its adapter's generic message. The repair returns the original typed refusal after checking for a committed receipt. The strengthened W1 gate checks the refusal and then admits the same command with a smaller body.
 
 ```sh
 TX2_SWEEP_STRICT=1 TX2_W0_POINT_JOURNAL=1 TX2_W0_RESTORE_INDEXED_JOURNAL=1 TRIPLEX_DATOMIC_LAYOUT=lean node lab/bin/heavy.mjs --label DX-ACT1 -- node --experimental-strip-types lab/experiments/EXP-DX1/actv-lazy/join/server.ts 100000 "$DX_LAZY_OUT" --settlement

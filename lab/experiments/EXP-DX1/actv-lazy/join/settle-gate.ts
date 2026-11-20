@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { DatomicHttpError } from "../../../../../packages/datomic/dist/index.js";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import { Documents } from "../../notify1/store.ts";
 import { seed, valid } from "../fixture.ts";
@@ -47,15 +48,44 @@ try {
       p = await archive.store.head();
     const command = "width-refusal",
       tooLarge = archive.db.put(command, "v".repeat(70000));
+    let refusal!: DatomicHttpError;
     // [DX-ACT1] Why: witness the gateway's own bulk policy on an otherwise valid write. Rejected: inferring the enabled queue from an environment variable.
     await assert.rejects(
       bulkClaim(archive.store.scope, command, "activation", () =>
         archive.store.commit(command, "lazy/settlement", [tooLarge], p),
       ),
-      /bulk frame|BulkFrameTooLarge|row or byte/i,
+      (error) => {
+        assert(error instanceof DatomicHttpError);
+        assert.equal(error.status, 413);
+        assert.equal(error.code, "BulkFrameTooLarge");
+        refusal = error;
+        return true;
+      },
     );
     assert.equal(await archive.store.lookup(command), null);
     assert.equal(await archive.store.head(), p);
+    const smaller = () =>
+      bulkClaim(archive.store.scope, command, "activation", () =>
+        archive.store.commit(command, "lazy/settlement", [archive.db.put(command, "v")], p),
+      );
+    const reserved = await smaller();
+    assert.equal(reserved.position, p + 1);
+    assert.equal((await archive.db.get<string>(command, reserved.position)).value, "v");
+    assert.deepEqual(await smaller(), reserved);
+    writeFileSync(
+      join(process.argv[2]!, "bulk-limit.json"),
+      canonical({
+        scope: archive.store.scope,
+        start: p,
+        rejectedBytes: 70000,
+        status: refusal.status,
+        code: refusal.code,
+        command,
+        accept: reserved.position,
+        tx: reserved.txId,
+      }) + "\n",
+      { flag: "wx" },
+    );
   }
   const first = await account.publish("first", W0.R1.doc, valid, "owed");
   await verify(first.position, W0.R1.doc, null, 1);
