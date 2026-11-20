@@ -29,7 +29,13 @@ const DURABLE = '/Users/sam/Claude/Projects/triplex-db-2/agents';
 // instead of just 6.1. It's new!" Verified accepted by codex-cli 0.169.0. Rejected: staying on gpt-6.1-sol.
 // [PROTOCOL 2026-11-19] Why: Sam, 2026-11-19: "Can you start to use Codex, Codex Astra 6.2, on things when you build with it,
 // as opposed to Sol?" Verified accepted by codex-cli 0.169.0 (`gpt-6.2-astra`). Rejected: staying on gpt-6.2-sol.
-const MODEL = 'gpt-6.2-astra';
+// [PROTOCOL 2026-11-19c] Why: Sam, after resetting the Codex usage limit that ten Astra agents at max had exhausted:
+// "can you switch from using Astra on Max to using 6.2 Sol on Max? If you have a harder problem you could use 6.2 Astra on
+// high ... but really only do that for the most creative ones." So Sol is the model for every role, and the one
+// exception is the `creative` role (Astra at high), for problems that need an inventive design. Rejected: keeping Astra
+// as the default (it used the account's allowance in an afternoon).
+const MODEL = 'gpt-6.2-sol';
+const ROLE_MODEL = { creative: 'gpt-6.2-astra' }; // every other role uses MODEL
 // [PROTOCOL 2026-11-12] Why: Sam on resuming, 2026-11-12: "only use codex sol agents on max effort to build things? you should
 // not use claude for things I want to save your usage". Both roles now run at max; no Claude agent is launched for this work.
 // Rejected: keeping medium for builders (the 2026-11-09 setting, superseded by this instruction).
@@ -38,7 +44,7 @@ const MODEL = 'gpt-6.2-astra';
 // experiment design at xhigh, no product code. Rejected: running idea work at max (not what he asked) or through Claude.
 // [PROTOCOL 2026-11-19b] Why: Sam, later the same day, for the activation designs: "Have three Astro agents on Macs go
 // brainstorm three different directions" (dictated: Astra agents on max). `deepthinker` is the thinker role at max.
-const EFFORT = { builder: 'max', reviewer: 'max', thinker: 'xhigh', deepthinker: 'max' }; // the only allowed pairs
+const EFFORT = { builder: 'max', reviewer: 'max', thinker: 'xhigh', deepthinker: 'max', creative: 'high' }; // the only allowed pairs
 // Shared state every agent must be able to write: the pnpm store, the durable project folder, git objects and worktree metadata
 // (commits from a worktree write into the main .git), and the main checkout's lock and engine ledgers (lab/bin/lib.mjs LOCKS,
 // ENGINE_DIR), so heavy.mjs and engine.mjs reservations work from inside the sandbox.
@@ -66,7 +72,8 @@ function parse(argv) {
 
 function run(role, id, promptFile, cwd, addDirs, resumeSession) { // promptFile is reassigned to the composed copy below
   const effort = EFFORT[role];
-  if (!effort) fail(`role must be builder, reviewer, thinker or deepthinker (got ${role})`);
+  const model = ROLE_MODEL[role] ?? MODEL;
+  if (!effort) fail(`role must be builder, reviewer, thinker, deepthinker or creative (got ${role})`);
   if (!existsSync(promptFile)) fail(`prompt file ${promptFile} does not exist`);
   const dir = join(DURABLE, id);
   mkdirSync(dir, { recursive: true });
@@ -75,10 +82,10 @@ function run(role, id, promptFile, cwd, addDirs, resumeSession) { // promptFile 
   // [PROTOCOL 2026-11-08] Why: the lab rules travel with every prompt, so no Codex agent can miss them (lab/PROTOCOL.md 1).
   const preamble = readFileSync(join(REPO, 'lab', 'agents', 'CODEX-PREAMBLE.md'), 'utf8');
   const roleText = role === 'thinker' || role === 'deepthinker'
-    ? `\n## Your role: researcher and experiment designer (Codex ${MODEL}, ${effort} effort), id ${id}\nRead, search, reason and write the documents the brief asks for. You build no product code and run no containers.\n`
-    : role === 'builder'
-    ? `\n## Your role: code builder (Codex ${MODEL}, ${effort} effort), id ${id}\nImplement the task in your worktree, run its gates, commit, report. A separate reviewer will try to break your work.\n`
-    : `\n## Your role: adversarial reviewer (Codex ${MODEL}, ${effort} effort), id ${id}\nTry to break the claim; do not fix the code under review. Your own tools and results go under lab/verify/ on your branch. Verdict: ACCEPT, FIX-FIRST or REJECT, with findings (severity, file:line, reproduction, proposed fix).\n`;
+    ? `\n## Your role: researcher and experiment designer (Codex ${model}, ${effort} effort), id ${id}\nRead, search, reason and write the documents the brief asks for. You build no product code and run no containers.\n`
+    : role === 'builder' || role === 'creative'
+    ? `\n## Your role: code builder (Codex ${model}, ${effort} effort), id ${id}\nImplement the task in your worktree, run its gates, commit, report. A separate reviewer will try to break your work.\n`
+    : `\n## Your role: adversarial reviewer (Codex ${model}, ${effort} effort), id ${id}\nTry to break the claim; do not fix the code under review. Your own tools and results go under lab/verify/ on your branch. Verdict: ACCEPT, FIX-FIRST or REJECT, with findings (severity, file:line, reproduction, proposed fix).\n`;
   writeFileSync(promptCopy, `${preamble}${roleText}\n## Your task\n\n${readFileSync(promptFile, 'utf8')}`);
   promptFile = promptCopy;
   const last = join(dir, `last-${stamp}.md`);
@@ -86,13 +93,13 @@ function run(role, id, promptFile, cwd, addDirs, resumeSession) { // promptFile 
   const writable = [...new Set([...ALWAYS_WRITABLE, ...addDirs])];
   // `codex exec resume` accepts neither -s nor --add-dir (codex-cli 0.160.0), so the sandbox, network and writable roots are passed as
   // config keys on both paths; the same policy then holds for a launch and for every resume of it.
-  const base = ['-m', MODEL, '-c', `model_reasoning_effort="${effort}"`, '-c', 'sandbox_mode="workspace-write"',
+  const base = ['-m', model, '-c', `model_reasoning_effort="${effort}"`, '-c', 'sandbox_mode="workspace-write"',
     '-c', 'sandbox_workspace_write.network_access=true',
     '-c', `sandbox_workspace_write.writable_roots=${JSON.stringify(writable)}`, '-o', last];
   const args = resumeSession
     ? ['exec', 'resume', resumeSession, ...base, '-']
     : ['exec', '-C', cwd, ...base, '-'];
-  ledger({ event: resumeSession ? 'resume' : 'launch', id, role, model: MODEL, effort, cwd, prompt: promptCopy, log: logPath, last });
+  ledger({ event: resumeSession ? 'resume' : 'launch', id, role, model, effort, cwd, prompt: promptCopy, log: logPath, last });
   const log = createWriteStream(logPath);
   const child = spawn('codex', args, { cwd, stdio: ['pipe', 'pipe', 'pipe'], env: { ...process.env, DOCKER_HOST: 'unix:///Users/sam/.colima/triplex2/docker.sock' } });
   let session = resumeSession ?? null;
@@ -106,7 +113,7 @@ function run(role, id, promptFile, cwd, addDirs, resumeSession) { // promptFile 
   child.on('close', (code) => {
     log.end();
     ledger({ event: 'exit', id, role, effort, code, session, last });
-    process.stdout.write(`${id} (${role}, ${MODEL} ${effort}) exited ${code}; last message: ${last}\n`);
+    process.stdout.write(`${id} (${role}, ${model} ${effort}) exited ${code}; last message: ${last}\n`);
     if (existsSync(last)) process.stdout.write(readFileSync(last, 'utf8').slice(-4000) + '\n');
     process.exit(code ?? 1);
   });
