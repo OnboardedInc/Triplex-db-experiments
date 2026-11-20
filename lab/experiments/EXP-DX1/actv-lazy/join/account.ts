@@ -8,14 +8,31 @@ import {
   many,
   triplexValue,
 } from "../../../../bench/lib/w0-world.ts";
-import { projection, type Difference } from "../../actv-delta/rules.ts";
+import {
+  Evaluation,
+  emptyMaterial,
+  encode,
+  decode,
+  compact,
+  encodedHash,
+  type Stored,
+} from "./material.ts";
+import {
+  stage,
+  stageActor,
+  stageChanges,
+  stageKey,
+  checkStage,
+  collectStage,
+  type Stage,
+} from "./staging.ts";
 import {
   Notices,
   type Tail,
   type Request,
   type Event as NoticeEvent,
 } from "../../notify1/journal.ts";
-import { Documents, pack, unpack, type Row, type Op } from "../../notify1/store.ts";
+import { Documents, type Row, type Op } from "../../notify1/store.ts";
 import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
 import { CLOCK, RELEASE, Conflict, fact, millis, value, type Store } from "../store.ts";
@@ -34,8 +51,15 @@ import {
   baseOp,
   indexInputs,
   noticeInputs,
+  outputInputs,
 } from "./index.ts";
-type Storage = "owed" | "stored" | "envelopes";
+export type Storage = "owed" | "stored" | "envelopes" | "staged";
+export type PublishOptions = {
+  workers?: number;
+  sources?: "census" | "native" | "indexed";
+  codec?: "legacy" | "compact";
+  afterChunk?: (attempt: string) => Promise<void>;
+};
 export type Edit = { e: string; a: string; values: W0.Fact["v"][]; from?: string };
 type Meta = {
   epoch: string;
@@ -44,6 +68,7 @@ type Meta = {
   source: number;
   compiler: string;
   scheduled: boolean;
+  expanded?: boolean;
 };
 type Marker = {
   joined: string;
@@ -56,12 +81,13 @@ type Marker = {
   from: string;
   kind: "activation";
   storage: Storage;
+  stage?: Stage;
+  codec?: "compact";
   output: { count: number; chunks: number; hash: string; owners: number };
   notice: string;
   census: string;
   compiler: string;
 };
-type Stored = { subject: string; rows: Difference[]; json?: string };
 const h = (v: unknown) => sha256(canonical(v));
 const stamp = (t: number) =>
   new Date(Math.floor(t))
@@ -71,30 +97,14 @@ const stamp = (t: number) =>
       (_, x) => x + String(Math.round((t - Math.floor(t)) * 1000)).padStart(3, "0") + "Z",
     );
 const dataKey = (seq: number, i: number) => "join-output:" + seq + ":" + i;
-function evaluate(world: W0.World, r: W0.CompiledRelease, b: Point) {
-  const o = W0.evaluateWorld(world, r, b);
-  if (W0.isFailure(o)) throw Error(o.error);
-  return o;
-}
-function delta(
-  world: W0.World,
-  old: W0.CompiledRelease | undefined,
-  next: W0.CompiledRelease,
-  b: Point,
-  full: boolean,
-): Stored | undefined {
-  const o = evaluate(world, next, b),
-    before = old ? projection(evaluate(world, old, b)) : new Map<string, string>(),
-    after = projection(o),
-    rows: Difference[] = [];
-  for (const k of [...new Set([...before.keys(), ...after.keys()])].sort())
-    if (before.get(k) !== after.get(k)) rows.push([k, before.get(k) ?? null, after.get(k) ?? null]);
-  return rows.length || full
-    ? { subject: world.subject, rows, ...(full ? { json: W0.outputJson(o) } : {}) }
-    : undefined;
-}
 export class JoinedAccount {
   readonly s: Store;
+  lastMaterial = emptyMaterial();
+  private readonly calendarListeners = new Set<() => void>();
+  onCalendar(listener: () => void) {
+    this.calendarListeners.add(listener);
+    return () => this.calendarListeners.delete(listener);
+  }
   readonly notices: Notices;
   readonly stats = { indexPages: 0, worlds: 0, outputBytes: 0, noticeIndexBytes: 0 };
   constructor(s: Store) {
@@ -117,6 +127,10 @@ export class JoinedAccount {
     assert(m.compiler === selector && m.census && m.epoch && m.source > 0 && m.source < p);
     return m;
   }
+  collect(attempt: string) {
+    return collectStage(this.s, this.db, attempt);
+  }
+
   private async roster(c: Census, p: number) {
     const ids: string[] = [];
     for (let i = 0; i < c.count; i += width * 16)
@@ -143,6 +157,7 @@ export class JoinedAccount {
           );
         assert(
           allowed ||
+            (t.actor === stageActor && stageChanges(this.db.prefix, t.changes)) ||
             (setup &&
               t.actor === "lazy/join-index" &&
               t.changes.every((v: any) => v.entityId.startsWith(this.db.prefix + "join-"))),
@@ -151,13 +166,17 @@ export class JoinedAccount {
       }
     }
   }
-  async install(ids: string[], at: string) {
+  async install(ids: string[], at: string, expanded = false) {
     ids = [...ids];
     const s = this.s,
       p = await s.head(),
       existing = await this.db.row<Meta>("join-meta", p);
     if (existing) {
-      assert(existing.value.census.members === h(ids) && existing.value.valid === at);
+      assert(
+        existing.value.census.members === h(ids) &&
+          existing.value.valid === at &&
+          !!existing.value.expanded === expanded,
+      );
       assert.deepEqual(await this.roster(existing.value.census, p), ids);
       await this.state(p);
       return existing.value;
@@ -226,7 +245,7 @@ export class JoinedAccount {
       const base = baseOp(
         this.db,
         i,
-        ws.map((w) => entry(w, b)),
+        ws.map((w) => entry(w, b, expanded)),
       );
       this.stats.noticeIndexBytes += Buffer.byteLength(base.value.value);
       const ops = [base, ...group.map((id) => this.db.put(address(id), i))];
@@ -251,6 +270,7 @@ export class JoinedAccount {
         source,
         compiler: selector,
         scheduled,
+        expanded,
       },
       now = await s.head();
     await this.suffix(source, now, true);
@@ -322,7 +342,7 @@ export class JoinedAccount {
   private async command(
     id: string,
     args: unknown,
-    plan: (p: number) => Promise<{ ops: any[]; context: object }>,
+    plan: (p: number) => Promise<{ ops: any[]; context: object; expected?: number }>,
     hook?: () => Promise<void>,
     through?: string,
   ) {
@@ -347,11 +367,17 @@ export class JoinedAccount {
           "joined:" + id,
           "lazy/join",
           body.ops,
-          p,
+          body.expected ?? p,
           { ...body.context, intent },
           hook,
         );
-        assert.equal(r.position, p + 1);
+        assert.equal(r.position, (body.expected ?? p) + 1);
+        if (
+          r.changes.some(
+            (c: { entityId: string }) => c.entityId === this.db.prefix + "join-calendar",
+          )
+        )
+          for (const wake of this.calendarListeners) wake();
         return r;
       } catch (e) {
         const won = await this.original(id, intent);
@@ -368,9 +394,11 @@ export class JoinedAccount {
     next: W0.CompiledRelease,
     kind: "notice" | "output",
     envelopes = false,
+    fromIndex?: Map<string, W0.World>,
   ) {
     const valid = at >= meta.valid && !(await this.db.row("join-invalid", p)),
-      mode = envelopes ? "all" : strategy(old, next, kind, valid);
+      expanded = kind === "output" && !!meta.expanded,
+      mode = envelopes ? "all" : strategy(old, next, kind, valid, expanded);
     if (mode === "none") return [];
     if (mode === "all") return this.roster(meta.census, p);
     const out: string[] = [];
@@ -385,7 +413,16 @@ export class JoinedAccount {
       for (const [j, page] of batch.entries()) {
         this.stats.indexPages++;
         assert.deepEqual(page.sorted.ids, members.slice(j * width, (j + 1) * width));
-        out.push(...hits(page.sorted, old!, next, { tx: p, validTime: at }).ids);
+        const ids = hits(page.sorted, old!, next, { tx: p, validTime: at }, expanded).ids;
+        out.push(...ids);
+        if (fromIndex && expanded) {
+          const entries = new Map(page.entries.map((entry) => [entry.s, entry]));
+          for (const id of ids) {
+            const facts = entries.get(id)?.facts;
+            assert(facts, "Missing input projection on indexed page");
+            fromIndex.set(id, { subject: id, facts });
+          }
+        }
       }
     }
     assert.deepEqual(out, [...new Set(out)].sort());
@@ -399,12 +436,25 @@ export class JoinedAccount {
     assert(
       m.notice === h(e.value) &&
         m.seq === e.value.sequence &&
-        m.cut === e.at - 1 &&
+        e.value.sourceBefore === e.at - 1 &&
+        (m.stage ? m.cut < e.at - 1 : m.cut === e.at - 1) &&
         m.compiler === selector &&
         m.census === e.value.census.members &&
         m.joined === e.value.epoch &&
         m.release === e.value.nextHash,
     );
+    if (m.stage) {
+      assert(
+        m.storage === "staged" &&
+          m.stage.scope === this.s.scope &&
+          m.stage.cut === m.cut &&
+          m.stage.release === m.release &&
+          m.stage.hash === m.output.hash &&
+          m.stage.chunks === m.output.chunks &&
+          m.stage.command === e.value.request,
+      );
+      await checkStage(this.db, m.stage, e.at);
+    }
     return m;
   }
   dispatcher(sink: Documents) {
@@ -434,13 +484,19 @@ export class JoinedAccount {
     at: string,
     storage: Storage = "stored",
     hook?: () => Promise<void>,
+    options: PublishOptions = {},
   ) {
     doc = structuredClone(doc);
     const next = W0.compileRelease(doc);
-    assert(["owed", "stored", "envelopes"].includes(storage) && W0.isInstant(at));
+    assert(["owed", "stored", "envelopes", "staged"].includes(storage) && W0.isInstant(at));
+    const workers = options.workers ?? 1,
+      small = storage === "staged" && options.codec !== "legacy";
+    assert(Number.isInteger(workers) && workers >= 1 && workers <= 8);
+    const priceStart = performance.now();
+    this.lastMaterial = emptyMaterial();
     return this.command(
       id,
-      ["publish", doc, at, storage],
+      ["publish", doc, at, storage, options.sources ?? "native", workers, small],
       async (p) => {
         const { meta, c, tail } = await this.state(p);
         assert(at >= c.at);
@@ -455,51 +511,96 @@ export class JoinedAccount {
           from: at,
           selection: { kind: "census" },
         };
-        const np = this.notices.plan({ ...tail, at: p }, req);
-        assert(np.recipe.oldHash === (old?.hash ?? null));
+        const clock = emptyMaterial(),
+          begin = performance.now();
+        clock.prepMs = begin - priceStart;
+        const indexed = options.sources === "indexed" ? new Map<string, W0.World>() : undefined;
         const ids =
           storage === "owed"
             ? []
-            : await this.choose(meta, p, at, old, next, "output", storage === "envelopes");
-        const ops: Op[] = [],
-          hashes: string[] = [];
-        let count = 0,
-          owners = 0,
-          part: Stored[] = [],
-          bytes = 0;
+            : options.sources === "census"
+              ? await this.roster(meta.census, p)
+              : await this.choose(
+                  meta,
+                  p,
+                  at,
+                  old,
+                  next,
+                  "output",
+                  storage === "envelopes",
+                  indexed,
+                );
+        clock.selectionMs = performance.now() - begin;
+        const parts: string[] = [],
+          body: Stored[] = [];
+        let bytes = 0,
+          count = 0,
+          owners = 0;
         const flush = () => {
-          if (!part.length) return;
-          const packed = pack(part);
-          hashes.push(sha256(packed));
-          ops.push(this.db.put(dataKey(np.recipe.sequence, ops.length), packed));
+          if (!body.length) return;
+          const start = performance.now();
+          const packed = encode(body, small);
+          parts.push(packed);
           this.stats.outputBytes += Buffer.byteLength(packed);
-          part = [];
+          clock.encodeMs += performance.now() - start;
+          body.length = 0;
           bytes = 0;
         };
-        for (let i = 0; i < ids.length; i += width) {
-          const ws = await worldsAt(this.s, this.s.profile, ids.slice(i, i + width), {
-            tx: p,
-            validTime: at,
-          });
-          this.stats.worlds += ws.length;
-          for (const w of ws) {
-            const change = delta(
-              w,
-              old,
-              next,
-              { tx: p + 1, validTime: at },
-              storage === "envelopes",
+        const evaluation = new Evaluation(workers, old, next, storage === "envelopes");
+        const materialStart = performance.now();
+        try {
+          for (let start = 0; start < ids.length; start += width * workers) {
+            const work = Array.from(
+              { length: Math.min(workers, Math.ceil((ids.length - start) / width)) },
+              (_, j) => ids.slice(start + j * width, start + (j + 1) * width),
             );
-            if (!change) continue;
-            const size = Buffer.byteLength(canonical(change));
-            if (bytes + size > 96000) flush();
-            part.push(change);
-            bytes += size;
-            owners++;
-            count += change.rows.length;
+            const results = await Promise.all(
+              work.map(async (group, j) => {
+                const t = performance.now();
+                const snap = group.every((x) => indexed?.has(x))
+                  ? group.map((x) => indexed!.get(x)!)
+                  : await worldsAt(this.s, this.s.profile, group, { tx: p, validTime: at });
+                if (!group.every((x) => indexed?.has(x))) this.stats.worlds += snap.length;
+                clock.readMs += performance.now() - t;
+                return evaluation.page(j, { worlds: snap, basis: { tx: p + 1, validTime: at } });
+              }),
+            );
+            for (const result of results) {
+              clock.evaluateMs += result.evaluateMs;
+              for (const row of result.rows) {
+                const t = performance.now();
+                const size = Buffer.byteLength(canonical(small ? compact(row) : row));
+                clock.encodeMs += performance.now() - t;
+                if (bytes + size > (storage === "staged" ? 90000 : 96000)) flush();
+                body.push(row);
+                bytes += size;
+                owners++;
+                count += row.rows.length;
+              }
+            }
           }
+          flush();
+        } finally {
+          await evaluation.close();
         }
-        flush();
+        clock.materialMs = performance.now() - materialStart;
+        const ops: Op[] = [];
+        let header: Stage | undefined,
+          expected = p;
+        if (storage === "staged" && parts.length) {
+          const t = performance.now();
+          const written = await stage(this.s, this.db, p, id, next.hash, parts, options.afterChunk);
+          header = written.header;
+          expected = written.predecessor;
+          clock.stages = written.writes;
+          clock.stageWriteMs = performance.now() - t;
+        }
+        const np = this.notices.plan({ ...tail, at: expected }, req);
+        assert(np.recipe.oldHash === (old?.hash ?? null));
+        if (storage !== "staged")
+          for (const [j, bytes] of parts.entries())
+            ops.push(this.db.put(dataKey(np.recipe.sequence, j), bytes));
+        this.lastMaterial = clock;
         const m: Marker = {
           joined: meta.epoch,
           seq: np.recipe.sequence,
@@ -511,14 +612,22 @@ export class JoinedAccount {
           from: at,
           kind: "activation",
           storage,
-          output: { count, chunks: ops.length, hash: h(hashes), owners },
+          output: { count, chunks: parts.length, hash: encodedHash(parts), owners },
+          ...(header ? { stage: header } : {}),
+          ...(small ? { codec: "compact" as const } : {}),
           notice: h(np.recipe),
           census: meta.census.members,
           compiler: selector,
         };
         return {
           ops: [fact(RELEASE, "lazy/activation", m), ...np.operations, ...ops],
-          context: { epoch: meta.epoch, notice: m.notice, output: m.output },
+          expected,
+          context: {
+            epoch: meta.epoch,
+            notice: m.notice,
+            output: m.output,
+            stage: header?.attempt ?? null,
+          },
         };
       },
       hook,
@@ -533,14 +642,14 @@ export class JoinedAccount {
       values: Stored[] = [];
     for (let i = 0; i < m.output.chunks; i += width) {
       const keys = Array.from({ length: Math.min(width, m.output.chunks - i) }, (_, j) =>
-        dataKey(seq, i + j),
+        m.stage ? stageKey(m.stage.attempt, i + j) : dataKey(seq, i + j),
       );
       const rows = await this.db.rows<string>(keys, e.at);
       for (const k of keys) {
         const r = rows.get(k);
-        assert(r?.at === e.at);
+        assert(r && (m.stage ? r.at > m.cut && r.at < e.at : r.at === e.at));
         hashes.push(sha256(r.value));
-        values.push(...unpack<Stored[]>(r.value));
+        values.push(...decode(r.value, m.codec === "compact"));
       }
     }
     assert(
@@ -657,10 +766,13 @@ export class JoinedAccount {
           ...(c.clock ? [{ op: "retract" as const, id: c.clock.id }] : []),
           fact(CLOCK, "lazy/slot", { joined: meta.epoch, kind: "source", at }),
         ];
-        if (impact.posting && !(await this.db.row("join-invalid", p))) {
+        if (
+          (impact.posting || (meta.expanded && impact.output)) &&
+          !(await this.db.row("join-invalid", p))
+        ) {
           const leaf = await loadLeaf(this.db, addr.value, p);
           assert(leaf.entries.some((x) => x.s === subject));
-          const updated = entry(anticipated, basis);
+          const updated = entry(anticipated, basis, meta.expanded);
           ops.push(
             ...leafChange(
               this.db,
@@ -749,7 +861,7 @@ export class JoinedAccount {
           ...(c.clock ? [{ op: "retract", id: c.clock.id }] : []),
           fact(CLOCK, "lazy/slot", { joined: meta.epoch, kind: "source", at }),
         ];
-        if (indexInputs.has(edit.a)) {
+        if (indexInputs.has(edit.a) || (meta.expanded && outputInputs.has(edit.a))) {
           const invalid = await this.db.row("join-invalid", p);
           if (!invalid) {
             if (!direct || !addr || isReference(edit.a) || at < meta.valid || from !== at)
@@ -765,7 +877,7 @@ export class JoinedAccount {
                   ...normalized.map((v): W0.Fact => ({ e: edit.e, a: edit.a, v, tx: p + 1 })),
                 ],
               };
-              const updated = entry(next, { tx: p + 1, validTime: at });
+              const updated = entry(next, { tx: p + 1, validTime: at }, meta.expanded);
               assert(leaf.entries.some((x) => x.s === edit.e));
               ops.push(
                 ...leafChange(

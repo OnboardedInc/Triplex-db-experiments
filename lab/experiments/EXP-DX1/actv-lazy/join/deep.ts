@@ -96,6 +96,14 @@ export function replaceDeep(rows: readonly WorldRow[], fields: readonly Fact[], 
   const ops: Op[] = [];
   for (const f of fields) {
     const prior = rows.filter((r) => r.entityId === f.e && r.attribute === f.a);
+    if (f.v.type === "ref") {
+      assert(
+        !prior.some((r) => r.value.type === "ref" && r.value.value === f.v.value),
+        "Duplicate deep link",
+      );
+      ops.push({ op: "assert", entityId: f.e, attribute: f.a, value: f.v, validFrom: at });
+      continue;
+    }
     assert(prior.length <= 1);
     const old = prior[0];
     if (old) {

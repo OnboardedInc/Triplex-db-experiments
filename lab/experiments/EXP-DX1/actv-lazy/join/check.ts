@@ -58,7 +58,10 @@ export class Reference {
         )
           stored.push({
             subject: o.subject,
-            rows: o.rows,
+            rows:
+              physical.marker.codec === "compact"
+                ? o.rows.map(([k, , v]: [string, string | null, string | null]) => [k, null, v])
+                : o.rows,
             ...(physical.marker.storage === "envelopes" ? { json: o.json } : {}),
           });
         if (physical && physical.marker.storage !== "owed") {
