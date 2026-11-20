@@ -3739,3 +3739,15 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
   (skip four gateways and repeats); then the transactor cache arms; Java 25 and ZGC; DX-PREP1's next comparison;
   Publish under load; erasure; import pacing.
 - Running: DX-BM1, DX-SCALE1, DX-V01, DX-PREP1 (four).
+
+## 2026-11-20 22:41 UTC (17:41 local, 2026-11-20): DX-V01 part 2 in: the scorecard accepts the held seed; server 2 still verifying its seed
+
+- **DX-V01 part 2 (`4fece9022`; server runs `790d9e96e`; `v01/SERVER.md`).** The scorecard accepts the held
+  SCALE1 seed, checks DX-AGE1's identity for the 1 billion run, uses layout K with the queryable journal and a
+  selectable grouped or per-person writer; 235 minutes and up to $4.27 per age. Mac toy run filled all 13 output
+  rows with diagnostic values for priorities 1 to 4 and 6 to 8. Priorities 5 and 9 print NOT MEASURED on the held
+  seed (their published runners use incompatible fixtures; qualifying failover evidence needs two servers).
+  Parked. Three agents running (DX-BM1, DX-SCALE1, DX-PREP1).
+- **Server 2:** the seed's verification has run since 13:13 local on one core: it is checking the durable feed at
+  about 4.9 positions per second (position 35,750 of 87,001 at 17:41 local), so about 2.9 more hours, then the
+  image and transfer. The present-writer run starts after that (about 21:00 local). Seed ceiling 23:24 local.

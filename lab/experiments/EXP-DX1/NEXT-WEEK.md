@@ -82,6 +82,11 @@ defined in `lab/V0.1.md` on main.
     full-size accounts, 162,456,470 facts, 115.4 GB of PostgreSQL data, 710 bytes per fact before any history.
     Then: full data tier build on a server, upload, clean-clone workflow run, erasure switched on, larger
     load panel, continuous compliance scenarios.
+21a. **Scorecard rows 5 and 9 on the held seed** (DX-V01 parked 2026-11-20 at `4fece9022`, server commit
+    `790d9e96e`): the Publish and failover runners use fixtures the SCALE1 seed does not match, so those rows print
+    NOT MEASURED; make them adopt the held seed. Also: the seed verifier on server 2 is single-threaded (about five
+    feed positions per second, about 7.5 hours for 87,001 frames at $1.09 an hour); make it parallel or sampled
+    before any future full-size seed.
 22. Version 0.1 write-up: README for the merged branch, the scorecard at both ages with every failing line's cause
     and next step, known limits (query support lists, failover policy, import).
 23. Housekeeping: archive older DX-BM1 evidence bundles (18.7 GB in 44 files) to the Drive archive; remove
