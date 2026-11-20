@@ -28,7 +28,7 @@ The audited base was the remote head `7a6a7e9ef` at dispatch. The exact review f
 
 **Related writes** The import loader, joined Publish and notice sender recovered the original receipt when the relevant state advanced. Layout replay used the offered predecessor metadata. Commit `09088a27f` fixed it and passed the native regression. [RELATED.md](RELATED.md)
 
-**Mac SQL** Attempt `sql-01` started after 62m54s from image readiness. Its gateway bytes match `cd2151749`. Attempt `sql-merged-03` started after 82m14s in admission, including 79m07s after image readiness. It used the merged writer and staged layout replay decoder. Both PostgreSQL 17 runs recovered the original receipts after a pre-reply gateway kill at t=1014 and kept head 3. Pinned O-REPLAY matched the merged run's full raw feed, resumed page and pinned reads. Both wire profiles stored all 1,800 rows in solo and in real eight-member groups. The largest profile sent 4,194,304 bytes per member.
+**Mac SQL** Attempt `sql-01` started after 62m54s from image readiness. Its gateway bytes match `cd2151749`. Attempt `sql-merged-03` started after 82m14s in admission, including 79m07s after image readiness. Its 49 staged gateway and codec files match `09088a27f`. Both PostgreSQL 17 runs recovered the original receipts after a pre-reply gateway kill at t=1014 and kept head 3. Pinned O-REPLAY matched the merged run's full raw feed, resumed page and pinned reads. Both wire profiles stored all 1,800 rows in solo and in real eight-member groups. The largest profile sent 4,194,304 bytes per member.
 
 Native excision reached its watermark and cleared native row text. Each of four separate merged scopes retained all four journal entries, accepted all three ID reuses and advanced from head 4 to 7. This held with and without the predecessor option and for both the same and a different owner. Lean value erasure remains unqualified.
 
@@ -37,12 +37,13 @@ Native excision reached its watermark and cleared native row text. Each of four 
 - `commit.clj`, `group.clj`, `storage.clj` check both durable identities before CAS on the serialized basis. Group ACKs read the member by operation ID from the actual native report and match its position, clock and physical t. Duplicate paths do not publish.
 - `DatomicClient.transactCommand` checks the claimed command, committed status and typed tuple on a fresh request to the attempted database. A CAS with no such receipt keeps its original error.
 - `write-options.ts` checks the running gateway’s nonce, source, scope, installed function and active options against the arm before timing. The raw result and arm expectation are hashed.
-- `field/journal.ts`, `group/verify.py`, `verify_replay.py` compare full changes and cursors against the offered tape. The oracle comparison binds its pinned files, raw feed, fresh attempt, slot and source preimages.
+- `field/journal.ts`, `group/verify.py`, `verify_replay.py` compare full changes and cursors against the offered tape. The oracle comparison binds its pinned files, raw feed, fresh attempt, slot and source preimages. `group/native.py` binds the packed group parity to source digests, the local runtime and a new attempt.
 - `sql.mjs` and `sql_gate.clj` bind the pre-reply native witness to the managed attempt and fresh recovery, check exact tuple and row content, and require SQL durability settings to read back.
 - `sql-01/check-recovered.py` checks the witnessed stop, durable tuples, decoded changes and wide rows against the nonce, holder, image, actual gateway bytes and pinned oracle output. It retains the erasure failure and the scope of the owner test.
 - `check-sql-merged.py` checks the same bindings with the raw oracle result and compares the full wide rows, receipts, reused IDs and retained journal values in the four independent erasure probes.
 - `port-prepared.py` binds its three input files to the frozen merge tree. The serialized guard verifies command and operation identities, the selected function, basis, revisions and exact predecessor row bytes before using a prepared write.
 - `layout_replay.clj` compares full logical deltas at the same captured basis. Shape C now calls the serialized writer's change encoder, and the regression compares fresh outputs on a single scoped database.
+- `related-paths.test.mjs` compares the original tuples and import assertion digest after a forced state change against the frozen branch inputs.
 
 **Evidence** The durable folder is `evidence/DX-WFIX1/`. [SHA256SUMS](SHA256SUMS) indexes the baseline reproduction, regression logs, oracle comparisons and TypeScript tests.
 

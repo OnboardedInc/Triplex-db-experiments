@@ -2,11 +2,11 @@
 
 | Path | Frozen branch head | Check |
 | --- | --- | --- |
-| Import loader | `c5cb9553b` | `load1/snapshot.ts:228–255` checks saved frames first and resolves any tagged or thrown write failure with its original command. The adaptive checkpoint test loses the reply, advances the destination and recovers the same tuple and assertion digest. |
-| Joined Publish | `1f1d371ae` | `actv-lazy/join/account.ts:383–435` resolves the command before the mutable plan and again after a failed plan. The test covers an already committed command and a winner appearing between the first lookup and the stale valid-time check. |
-| Notice sender | `172ca4a8f` | `notify1/journal.ts:225–237` resolves the command before checking the live tail. `notify1/store.ts:145–164` reads the original after a serial rejection. The test confirms both return the same receipt after the tail advances. |
+| Import loader | `6ef27404e` | `load1/snapshot.ts:228–255` checks saved frames first and resolves any tagged or thrown write failure with its original command. The adaptive checkpoint test loses the reply, advances the destination and recovers the same tuple and assertion digest. |
+| Joined Publish | `26bc49c58` | `actv-lazy/join/account.ts:397–438` resolves the command before the mutable plan and again after a failed plan. The test covers an already committed command and a winner appearing between the first lookup and the stale valid-time check. |
+| Notice sender | `f3454b12e` | `notify1/journal.ts:227–239` resolves the command before checking the live tail. `notify1/store.ts:145–164` reads the original after a serial rejection. The test confirms both return the same receipt after the tail advances. |
 
-No additional identity-order defect reproduced in these three paths. The ordered receiver also looks up the original before checking progress and repeats that lookup if the cursor has moved. The lazy acknowledgement verifies the scope generation, which the source writes only at its first position.
+All three tests passed at these heads and at the initial snapshots (`c5cb9553b`, `1f1d371ae`, `172ca4a8f`). No additional identity-order defect reproduced. The ordered receiver also looks up the original before checking progress and repeats that lookup if the cursor has moved. The lazy acknowledgement verifies the scope generation, which the source writes only at its first position.
 
 The separate Datomic layout replay's shape C spliced change times from the offer at `layout_replay.clj:40–53` and skipped the predecessor check at lines 86–92 on `0f92704d2`. The native test read a wrong assertion clock and value directly, then hit an encoder arity error in the full replay. Commit `09088a27f` gives the splicer the writer's checked predecessor and the full logical delta matched the serialized reference at the same pin. The rerun passed all three assertions. [layout_replay_test.clj](layout_replay_test.clj)
 
