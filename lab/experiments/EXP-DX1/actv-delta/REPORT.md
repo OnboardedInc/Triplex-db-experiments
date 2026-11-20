@@ -9,12 +9,12 @@ The two timing modes now have separate databases and a raw read log. The final l
 
 | Finding | Decision | Fix | Negative control |
 | --- | --- | --- | --- |
-| 1 Durable endpoints | Accepted | 0d85534c8 and 5744dd0a4 | The old ACK had no owed assertion |
-| 2 Deadlines | Accepted | 5744dd0a4 | Missing final route probe and stale pre-ACK return |
+| 1 Durable endpoints | Accepted | 0d85534c8, 5744dd0a4, f199db819 | Release ACK alone, and a stored proof with an owed notice removed |
+| 2 Deadlines | Accepted | 5744dd0a4 and f199db819 | Missing final route probe, stale pre-ACK return, delayed seal and slow verifier |
 | 3 Collector | Accepted | BM1 c07040e4b and DELTA 5744dd0a4 | Two references must fail and three exact ordered identities must agree |
 | 4 Effective time | Accepted | 0d85534c8 | Future wage release and midnight expiry without a save |
 | 5 Independent source basis | Accepted | 0d85534c8 and 5744dd0a4 | Terminal position differs from the proposed ordinal |
-| 6 Cold arms | Accepted | 5744dd0a4 | Reject a previously observed witness or previously published offer |
+| 6 Cold arms | Accepted | 5744dd0a4 and f199db819 | The cold-witness check rejects an earlier read of the same person |
 | 7 Interrupted Publish | Accepted | 0d85534c8 and 5744dd0a4 | Save first, interrupted issuer, competing Publish, save after |
 
 OwedRecord names the original event, predecessor, source cut, index and census. Its native assertion is verified at the same cut as the release. DecodeOwed opens those bytes with dispatch idle. PersistPublication writes literal domain changes and item states, then commits the account guard with hashes and native positions for every chunk. OpenStored verifies those exact cuts and bytes. Independent Python equality is still required in the campaign before a completion receives credit.
