@@ -5,7 +5,7 @@ A ready save can pass an unrelated wait, and the scheduler grants a ready bulk f
 Two subjects with different stored owners get separate queue capacity.
 A request rejected for its size leaves the next sequence available for the sender.
 The measurement requires a live readback of the writer and compares the full changes in the feed.
-The PostgreSQL checks are waiting for a Mac lab slot.
+On Mac PostgreSQL, recovery and eight maximum-size saves passed. Full value erasure remains unsupported.
 
 **North star** P2 durable saves, P3 exact feed and P6/P8 account progress. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
@@ -24,7 +24,9 @@ The audited base was the remote head `7a6a7e9ef` at dispatch. The exact review f
 
 **Checks** The receipt and retraction fixture went from 10 failures to 64 successful assertions. The combined native run passed 98 assertions across seven tests. Pinned O-REPLAY matched the raw feed, resumed page, pinned rows and durable tuples in all three modes. Sixteen SDK and eight W1 tests passed, along with the Datomic and W1 typechecks.
 
-**Mac SQL open** The first managed image built. Attempt `sql-03` combines build and execution under one heavy grant and was still queued at handoff. All four lab slots were occupied. The process-stop, native submission-size and erasure cases have no Mac SQL result yet.
+**Mac SQL** Attempt `sql-01` started PostgreSQL 17 after 62m54s from image readiness. The staged gateway files match `cd2151749` byte for byte. The gateway died after the native commit at t=1014 with zero edit replies. Restart recovered the two exact receipts, head 3 and the pinned rows, changes and resumed page from O-REPLAY. Both wire profiles stored all 1,800 rows in solo and in real eight-member groups. The largest profile sent 4,194,304 bytes per member.
+
+Native excision reached its watermark and cleared native row text in both paths. Four journal entries retained their original values, each first ID reuse succeeded, and the head advanced. Lean value erasure remains unqualified. The first probe reused each ID twice in the same scope, so the second owner check was masked by the first reuse. A second managed attempt queues fresh, separate scopes for each owner check.
 
 **Receipt and verdict audit**
 
@@ -33,6 +35,7 @@ The audited base was the remote head `7a6a7e9ef` at dispatch. The exact review f
 - `write-options.ts` checks the running gateway’s nonce, source, scope, installed function and active options against the arm before timing. The raw result and arm expectation are hashed.
 - `field/journal.ts`, `group/verify.py`, `verify_replay.py` compare full changes and cursors against the offered tape. The oracle comparison binds its pinned files, raw feed, fresh attempt, slot and source preimages.
 - `sql.mjs` and `sql_gate.clj` bind the pre-reply native witness to the managed attempt and fresh recovery, check exact tuple and row content, and require SQL durability settings to read back.
+- `sql-01/check-recovered.py` checks the witnessed stop, durable tuples, decoded changes and wide rows against the nonce, holder, image, actual gateway bytes and pinned oracle output. It retains the erasure failure and the scope of the owner test.
 
 **Evidence** The durable folder is `evidence/DX-WFIX1/`. [SHA256SUMS](SHA256SUMS) indexes the baseline reproduction, regression logs, oracle comparisons and TypeScript tests.
 
