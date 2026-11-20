@@ -5,7 +5,7 @@ Two of the 201 releases took over a second. The slowest took 1.295 seconds.
 After the database restarted, a fresh reader recovered all 11,960 changed rows and 997 owed notices from the broad release.
 The narrow release recovered all 38 flag changes and owed no notices. Neither release had written a concrete output chunk.
 The indexes added 6.68% to database log bytes per saved fact, below the 15% target. Both arms wrote the same number of records on every save.
-The small preflight now leaves the large database empty. The deep fixture also now exercises real overtime changes. Native verification of that fixture is pending.
+The 1,000-person preflight took four minutes and left the large database empty. Both publishers verified real overtime changes. The server result remains open.
 
 **Loaded publication and evidence audit**
 
@@ -42,7 +42,7 @@ No acceptance pins or frozen workloads changed. Part 2’s original evidence is 
 `DOCKER_HOST=unix:///var/run/docker.sock node --import tsx lab/experiments/EXP-DX1/scale1/bench.ts launch 2 delta-$(date -u +%Y%m%d%H%M%S) activation --activation-mode delta`
 
 The release runner admits one 100,000-person account, checks its 16,245,647 actual seed assertions against the separate-account inventory and verifies native membership. Both page-guard reference releases read the actual deep source after Publish with live readers and saves. DELTA runs 90 loaded releases, 30 each broad, narrow and rollback. The same physical seed serves both arms. Expected duration is about two hours on the server. The prior 349-second seed at 10,000 projects to 58 minutes for this single account. The hard budget is 160 minutes of work plus up to ten minutes each for shutdown and evidence. [Original seed timing](../act2/REPORT.md)
-The 600-second preflight regenerates both population inventories before any large seed, runs both live-window oracle checks, reopens the full fallback, exercises both publishers on 1,000 deep subjects and validates the source, nonce, slot, result hashes and raw observation count. The parent writes the failing stage and reason to STATUS.json. The scope-isolation run took 226.9 s and checked 15,872 DELTA reads and 5,504 page-guard live reads. The first deep projection yielded zero narrow changes, so it is superseded by the regional fixture. The preflight rejects a changed nonce or a missing timing row.
+The 600-second preflight regenerates both population inventories before any large seed, runs both live-window oracle checks, reopens the full fallback, exercises both publishers on 1,000 deep subjects and validates the source, nonce, slot, result hashes and raw observation count. The parent writes the failing stage and reason to STATUS.json. The corrected fixture passed locally in 240.7 s with 15,360 exact DELTA reads, 5,216 exact page-guard live reads, 5,759 broad output rows, 799 broad notices and three narrow flag removals. The previous deep projection yielded zero narrow changes. The preflight rejects a changed nonce or a missing timing row.
 
 checkSolo and the SCALE1 launcher compare the fresh native seed and membership, raw per-offer bytes and recomputed p99, all three reference releases and both complete oracle proofs against the request, source and slot. The three-hour Linux campaign has 64 readers and 55-save, one-second bursts on top of 1.6 steady saves/s. All Mac timings are diagnostic.
 
