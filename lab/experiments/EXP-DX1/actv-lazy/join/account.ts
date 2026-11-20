@@ -36,7 +36,14 @@ import {
 } from "./index.ts";
 type Storage = "owed" | "stored" | "envelopes";
 export type Edit = { e: string; a: string; values: W0.Fact["v"][]; from?: string };
-type Meta = { epoch: string; census: Census; valid: string; source: number; compiler: string };
+type Meta = {
+  epoch: string;
+  census: Census;
+  valid: string;
+  source: number;
+  compiler: string;
+  scheduled: boolean;
+};
 type Marker = {
   joined: string;
   seq: number;
@@ -144,6 +151,7 @@ export class JoinedAccount {
     }
   }
   async install(ids: string[], at: string) {
+    ids = [...ids];
     const s = this.s,
       p = await s.head(),
       existing = await this.db.row<Meta>("join-meta", p);
@@ -162,6 +170,7 @@ export class JoinedAccount {
     assert.equal(seal.length, 1);
     assert.deepEqual(value(seal[0]!), rosterSeal(ids));
     const days = new Set<string>();
+    let scheduled = false;
     let atPos = 0,
       source = 0;
     while (atPos < p) {
@@ -180,7 +189,10 @@ export class JoinedAccount {
             const date = W0.parseDate(row.value.value);
             if (date >= 0) days.add(W0.endOfDay(date));
           }
-          if (row.validFrom > millis(at)) days.add(stamp(row.validFrom));
+          if (row.validFrom > millis(at)) {
+            scheduled = true;
+            days.add(stamp(row.validFrom));
+          }
           if (row.validTo != null && row.validTo > millis(at)) days.add(stamp(row.validTo));
         }
       }
@@ -229,7 +241,14 @@ export class JoinedAccount {
         },
       );
     }
-    const meta: Meta = { epoch: c.generation, census, valid: at, source, compiler: selector },
+    const meta: Meta = {
+        epoch: c.generation,
+        census,
+        valid: at,
+        source,
+        compiler: selector,
+        scheduled,
+      },
       now = await s.head();
     await this.suffix(source, now, true);
     await s.commit(
@@ -304,7 +323,9 @@ export class JoinedAccount {
     hook?: () => Promise<void>,
     through?: string,
   ) {
-    assert(/^[a-zA-Z0-9_.:-]{1,145}$/.test(id));
+    assert(
+      /^[a-zA-Z0-9_.:-]{1,145}$/.test(id) || (!through && /^deadline\/[a-f0-9]{64}$/.test(id)),
+    );
     const intent = h([this.s.scope, id, args]);
     for (;;) {
       const old = await this.original(id, intent);
@@ -317,8 +338,8 @@ export class JoinedAccount {
           continue;
         }
       }
-      const body = await plan(p);
       try {
+        const body = await plan(p);
         const r = await this.s.commit(
           "joined:" + id,
           "lazy/join",
@@ -411,6 +432,7 @@ export class JoinedAccount {
     storage: Storage = "stored",
     hook?: () => Promise<void>,
   ) {
+    doc = structuredClone(doc);
     const next = W0.compileRelease(doc);
     assert(["owed", "stored", "envelopes"].includes(storage) && W0.isInstant(at));
     return this.command(
@@ -544,7 +566,7 @@ export class JoinedAccount {
         calendar = await this.db.get<string[]>("join-calendar", p),
         due = calendar.value[0];
       if (!due || due > at) return;
-      const id = "deadline:" + sha256(due);
+      const id = "deadline/" + sha256(due);
       await this.command(id, ["deadline", due], async (k) => {
         const { meta, c, tail } = await this.state(k),
           cal = await this.db.get<string[]>("join-calendar", k);
@@ -562,7 +584,7 @@ export class JoinedAccount {
             ...this.notices.plan(
               { ...tail, at: k },
               {
-                id,
+                id: "boundary-" + sha256(due),
                 kind: "reconcile",
                 release: tail.value.release,
                 validTime: due,
@@ -575,7 +597,33 @@ export class JoinedAccount {
       });
     }
   }
+  private async intervals(edit: Edit, p: number, from: string, scan: boolean) {
+    const after = millis(from);
+    if (!scan)
+      return (await this.s.rows([edit.e], p, from)).filter(
+        (r) => r.entityId === edit.e && r.attribute === edit.a,
+      );
+    // [DX-ACT1] Why: a dated replacement can intersect versions already closed at today's business time. Rejected: a current-only lookup (it can leave competing assertions in the corrected interval).
+    const found = new Map<string, { id: string; value: unknown; validFrom: number }>();
+    let afterTx = 0;
+    while (afterTx < p) {
+      const page = await this.s.comp.feedPage(afterTx, 24);
+      assert(page.transactions.length);
+      for (const tx of page.transactions) {
+        if (tx.position > p) break;
+        assert.equal(tx.position, ++afterTx);
+        for (const r of tx.changes) {
+          if (r.entityId !== edit.e || r.attribute !== edit.a) continue;
+          if (r.op === "retract") found.delete(r.tripleId);
+          else if (r.validTo == null || r.validTo > after)
+            found.set(r.tripleId, { id: r.tripleId, value: r.value, validFrom: r.validFrom });
+        }
+      }
+    }
+    return [...found.values()];
+  }
   async save(id: string, edit: Edit, at: string) {
+    edit = structuredClone(edit);
     assert(W0.isInstant(at) && edit.a !== "ssn", "Protected input requires a retention ruling");
     const classified = W0.classify(edit.e);
     assert(classified && Array.isArray(edit.values), "Invalid W0 entity");
@@ -600,16 +648,20 @@ export class JoinedAccount {
         const owner = classified.owner,
           direct = W0.isPlacementId(edit.e),
           addr = owner ? await this.db.get<number>(address(owner), p) : undefined;
-        // [DX-ACT1] Why: replace only actual source assertions at the authored valid cut. Rejected: deleting future or differently bounded versions without an explicit temporal operation.
-        const active = (await this.s.rows([edit.e], p, at)).filter(
-          (r) => r.entityId === edit.e && r.attribute === edit.a,
-        );
-        assert(
-          active.every((r) => r.validTo == null && r.validFrom <= millis(from)),
-          "Overlapping source interval",
-        );
+        const active = await this.intervals(edit, p, from, !!meta.scheduled || from < at);
+        // [DX-ACT1] Why: preserve the prior value before the authored change while retaining the original record-time snapshot. Rejected: retracting an unbounded assertion and losing its entire earlier valid interval.
         const ops: any[] = [
           ...active.map((r) => ({ op: "retract", id: r.id })),
+          ...active
+            .filter((r) => r.validFrom < millis(from))
+            .map((r) => ({
+              op: "assert",
+              entityId: edit.e,
+              attribute: edit.a,
+              value: r.value,
+              validFrom: r.validFrom,
+              validTo: millis(from),
+            })),
           ...normalized.map((v) => ({
             op: "assert",
             entityId: edit.e,
