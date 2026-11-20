@@ -31,7 +31,7 @@ function stage(dir, revision, erasure) {
   const source = path.join(dir, "source");
   fs.mkdirSync(source);
   const inputs = [experiment, "lab/bin/engine.mjs", "lab/bin/lib.mjs", "lab/bin/heavy.mjs", "lab/bin/heavy-lock.mjs",
-    "lab/config/datomic/verification.json", "packages/datomic/gateway/src", "packages/datomic/src/codec-spec.json"];
+    "lab/config/datomic/verification.json", "packages/datomic/gateway", "packages/datomic/src/codec-spec.json"];
   const archive = execFileSync("git", ["archive", revision, ...inputs], { cwd: REPO, maxBuffer: 16 * MiB });
   execFileSync("tar", ["-xf", "-", "-C", source], { input: archive });
   if (erasure) {
@@ -110,7 +110,7 @@ export async function local(opts, config, manager) {
     return;
   }
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
-  assert.match(opts.run ?? "", /^(fidelity|adopted-fidelity|fidelity-arms|fidelity-arms-load|successor|erased-successor)$/);
+  assert.match(opts.run ?? "", /^(fidelity|adopted-fidelity|fidelity-arms|fidelity-arms-load|successor|erased-successor|native-suite)$/);
   const adopting = opts.run === "adopted-fidelity";
   const erasure = opts.run === "erased-successor";
   const caps = adopting ? { pg: 384, tx: 896, peer: 1280, clone: 896 } : { pg: 384, tx: 1024, peer: 1280 };
@@ -355,7 +355,14 @@ export async function local(opts, config, manager) {
       await capture(["exec", "-e", "AGE_CLONE_URI=" + uri(clone, cloneJdbc), peer, "/opt/datomic/bin/run", "-m", "triplex.age.gate",
         opts.run, "/tmp/age-fixture.json", fixture.sha, clone], path.join(dir, "probe.log"), controller.signal);
     }
-    else {
+    else if (opts.run === "native-suite") {
+      // [DX-AGE1] Why: run INT1's native suite and compile the rung against the archived gateway source.
+      // Rejected: blessing an older shared image's embedded gateway or building a replacement image.
+      await capture(["exec", peer, "/bin/bash", "-ceu",
+        'cp /age/packages/datomic/gateway/{codec-vectors,history-range-case}.json /opt/gateway/; ' +
+        'exec /opt/datomic/bin/run -e "(require (quote triplex.age.rung)) (triplex.gateway.selftest/-main)"'],
+      path.join(dir, "probe.log"), controller.signal);
+    } else {
       const ns = erasure ? "triplex.age.erased-successor"
         : opts.run === "successor" ? "triplex.age.successor" : "triplex.age.gate";
       const args = opts.run.startsWith("fidelity-arms")
