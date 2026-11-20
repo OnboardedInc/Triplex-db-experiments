@@ -29,13 +29,13 @@ Serial is the archived write collector. Tuned G1 has a 25 ms target, 2 MiB regio
 
 The allocation arm keeps Serial, decodes the positional row vector into a transient map and removes per-prefix Formatter allocation. Two-core G1 holds tuning fixed. Mac Serial was explicit. Both BM1 peers started on one core without a collector flag, so Serial is the expected choice even for the reader expanded after launch. The BM1 transactor specified G1. [Collector evidence and readback](COLLECTORS.md)
 
-Mac Serial F retained 4,926 receipts in 240 s (20.53/s). Completed ACK p50/p99/p99.9/max was 2.14/29.81/30.25/32.20 s. All fifty slowest completed saves spent their largest interval queued before dispatch. Writer/reader/transactor logged 150/342/241 pauses with maximums of 338.54/502.65/227.88 ms. Rounded writer heap growth was 59.05 MiB/s and 2.55 MiB per covered ACK. Final analysis aborted on absent later phases. [Evidence manifest](SHA256SUMS)
+Mac Serial C verified 5,110 receipts and 48 oracle reads. The writer pause p99 was 175 ms. Client p99 was 20.9 seconds, and all fifty longest saves spent most of that time queued before dispatch. The earlier Serial F analysis aborted with 4,926 receipts. [Mac observations](MAC.md)
 
 ## Receipt reuse
 
 The TypeScript write adapter already skips `/begin` when every hinted live row is cached. The new opt-in keeps the deep fields eligible for that path only after a bound receipt settles. Known retirement evicts their cache entries. Datomic rechecks the exact live IDs at the serial point, and unsupported reads and conflicts use the existing snapshot path.
 
-Sixteen native gateway tests and the protected-value erasure fixture passed. The eligible save used one request after a different writer committed. An intervening retirement sent the stale save through `/begin` and returned a typed conflict. All five pinned reads matched O-REPLAY. Mac Serial F averaged 1.30 gateway requests per completed save. The matched receipt delta is pending.
+Sixteen native gateway tests and the protected-value erasure fixture passed. The eligible save used one request after a different writer committed. An intervening retirement sent the stale save through `/begin` and returned a typed conflict. All five pinned reads matched O-REPLAY. Mac Serial C averaged 1.292 gateway requests per verified save. The matched receipt delta is pending.
 
 ## Measurement audit
 
