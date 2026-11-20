@@ -33,7 +33,6 @@ const names = [
   "field-options.json",
   "image.json",
   "seed.json",
-  "seed-progress.jsonl",
   "error.json",
   "STATUS.json",
   "placements.json",
@@ -259,6 +258,25 @@ export async function packageAttempt(dir: string) {
   assert(!exists(path.join(dir, "transfer.json")), "Already packaged");
   fs.mkdirSync(resultDir, { recursive: true });
   for (const f of files) fs.copyFileSync(path.join(dir, f), path.join(resultDir, f));
+  const progress = path.join(dir, "seed-progress.jsonl");
+  if (exists(progress)) {
+    // [DX-SCALE1] Why: the compact transfer verifies JSON members, while the loader appends durable progress records. Rejected: making a sealed seed unusable because its diagnostic stream has a different format.
+    const records = [],
+      rejectedLines = [];
+    for (const [index, line] of fs.readFileSync(progress, "utf8").trimEnd().split("\n").entries()) {
+      try {
+        const r = JSON.parse(line);
+        assert(r.source === a.source && r.slot === a.slot && r.nonce === a.nonce && r.at >= a.at);
+        records.push(r);
+      } catch {
+        rejectedLines.push(index + 1);
+      }
+    }
+    fs.writeFileSync(
+      path.join(resultDir, "seed-progress.json"),
+      JSON.stringify({ records, rejectedLines, rawSha256: await fileHash(progress) }) + "\n",
+    );
+  }
   fs.writeFileSync(path.join(resultDir, "terminal.json"), JSON.stringify(terminal) + "\n");
   const archive = path.join(dir, "summaries.tar.zst");
   execFileSync("tar", ["-I", "zstd -3", "-cf", archive + ".partial", "-C", resultDir, "."], {
@@ -273,7 +291,7 @@ export async function packageAttempt(dir: string) {
         name.endsWith("-raw.json") ||
         name.endsWith("-writer.json") ||
         name.endsWith("-observers.json") ||
-        ["initial.json", "observers.log"].includes(name),
+        ["initial.json", "observers.log", "seed-progress.jsonl"].includes(name),
     );
   const rawIndex = await Promise.all(
     rawNames.map(async (name) => ({

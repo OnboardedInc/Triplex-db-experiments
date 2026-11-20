@@ -58,7 +58,7 @@ The 16.25-million-fact predecessor needed 40.0 minutes to ingest and 36.5 more t
 
 ## Single full-size account first
 
-The two field-save arms start from the same verified image. They use the same offers for 150, 120, 300 and 60 s. The reader arm has 64 seats on two cores and 600 active seconds over its four cells. The projected single-account job takes 70–105 min, costing USD 1.27–1.91. The full placement budget above is held until the single-account results are reported. Q106f sets tiered deployment pending a new owner ruling.
+The two field-save arms start from the same verified image. They use the same offers for 150, 120, 300 and 60 s. The reader arm has 64 seats on two cores and 600 active seconds over its four cells. The projected single-account job takes 70–105 min, costing USD 1.27–1.91. The completed 83-minute predecessor seed revises this estimate to 110–125 min with both restored arms, or USD 2.00–2.27. The full placement budget above is held until the single-account results are reported. Q106f sets tiered deployment pending a new owner ruling.
 
 | Cell | Exact offered rate | Zero-reader forecast | Bounded-reader forecast |
 | --- | ---: | --- | --- |

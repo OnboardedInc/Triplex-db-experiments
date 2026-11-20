@@ -3,7 +3,7 @@
 The current decision screen measures ten full-size deep accounts together, then partitions the same logical rows and tapes across two Datomic databases on the same server. Each topology gets the same ten writer clients, reader seats and feed observer. [Scale review](REVIEW.md) · [Write-path review](WRITE-REVIEW.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The original 10,000-per-account seed is finishing exact readback on the unfixed writer. Its original ceiling is 06:45 UTC November 20. The old controller admits no successor. The audited single-account seed and two matched arms are the next allocation.
+The original 10,000-per-account seed completed and cleaned up. Repackaging verified the original image identity and normalized the progress records for compact transfer. The audited single-account seed with both reader conditions is next.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows all active stages and their ceilings.
