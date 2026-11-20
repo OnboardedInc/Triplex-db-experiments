@@ -5,7 +5,7 @@ Before a value is stored, reads at the receipt’s cut derive it. Stored values 
 A new release can stop an obsolete value copy. Notices from both releases still get recorded in order.
 A shared wage-floor save covers the full roster when the database cannot prove a smaller affected set.
 On the server, 64 people took 34 ms to the quiet receipt and 47 ms to the first correct answer. All six cells agreed.
-The ten-thousand-person settlement timing and live-traffic ratios need a reserved slot. The receipt and erasure rulings remain open.
+The ten-thousand-person trial reached timing, but the shared lease was held. The receipt and erasure rulings remain open.
 
 ### Part 7
 
@@ -29,6 +29,8 @@ On the Mac, 10,000 deep people took 38 ms to the receipt and 49 ms to the first 
 The deep notice leaf used 48.2 bytes per person, plus about 101.3 bytes of durable addresses. That is an encoded storage count. P7 measures resident bytes outside Postgres. The first-read and resident-account evidence must be reported separately. [Part 5 read stages](STAGES.md) · [Retention choice](RETENTION.md)
 
 The eight-fact thin fixture encoded 10.3–10.4 leaf bytes and 100–104 address bytes per person in three 64-person pages, including offsets near one million and 4.5 million. This calculation did not load those populations. Thirty-two small tests passed, and two queue tests separately exercised live preference and fair turns. The first native collector attempt caught a working-tree change at startup and released its volume. The replacement runs from a frozen checkout. [Part 7 checksums](PART7-SHA256SUMS)
+
+The 10,000-deep trial spent about 26 minutes on preparation and reached the contested timing boundary. It yielded its heavy token and removed the volume before either live window. The 1,000-deep fallback uses one bounded reservation for the paired comparison. [Part 7 checksums](PART7-SHA256SUMS)
 
 ### Server command
 
