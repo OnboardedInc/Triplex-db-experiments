@@ -1,4 +1,4 @@
-Server candidate `5100afc528b8bf188532bc621c81a0fc332dd644` is pushed. The Mac settlement preflight is waiting for the shared lease.
+Use `ab8ce484b4320af2c8cbfa5a28b698aa737f3e32` for the server run. The Mac settlement preflight passed at that exact commit.
 A single write records the new rules and what notices are owed. At 10,000 deep people that write took 38 ms on the Mac.
 A background worker writes the changed values and individual notices in short turns. The recipient can stay offline while it records them.
 Before a value is stored, reads at the receipt’s cut derive it. Stored values serve that same cut. Later saves use the latest source.
@@ -32,9 +32,9 @@ The eight-fact thin fixture encoded 10.3–10.4 leaf bytes and 100–104 address
 
 ### Server command
 
-Hold until the version-matched native preflight completes. Use the managed W1 slot with live priority enabled. [Environment and predictions](SERVER.md)
+Use the pinned checkout on the first line and the managed W1 slot with live priority enabled. [Environment and predictions](SERVER.md)
 
-BM1 `34badc007`, evidence `i14-1` and `i17-1`, replayed 30 point answers and 757 effects. The settlement gate found `Store.commit` had reduced a gateway policy failure to its adapter's generic message. The repair returns the original typed refusal after checking for a committed receipt. The strengthened W1 gate checks the refusal and then admits the same command with a smaller body.
+BM1 `34badc007`, evidence `i14-1` and `i17-1`, replayed 30 point answers and 757 effects. `Store.commit` had discarded the adapter's typed cause. The Mac W1 gate got HTTP 413 `BulkFrameTooLarge` with no head change and accepted and replayed the smaller retry. The same native run matched 199 stored changes, 118 ordered notices, two worker kills and two automatic wakeups. Its volume was removed. [Checksums](PART7-SHA256SUMS)
 
 ```sh
 TX2_SWEEP_STRICT=1 TX2_W0_POINT_JOURNAL=1 TX2_W0_RESTORE_INDEXED_JOURNAL=1 TRIPLEX_DATOMIC_LAYOUT=lean node lab/bin/heavy.mjs --label DX-ACT1 -- node --experimental-strip-types lab/experiments/EXP-DX1/actv-lazy/join/server.ts 100000 "$DX_LAZY_OUT" --settlement
