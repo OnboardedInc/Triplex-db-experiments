@@ -267,7 +267,7 @@ export function registerNightBundle(dir) {
       !(request.start <= Date.parse(terminal.ended) / 1000 + 1 &&
         Date.parse(terminal.ended) / 1000 <= transfer.sealedAt + 1 && transfer.sealedAt <= collected.at + 1) ||
       collected.transfer !== hash(path.join(dir, "TRANSFER.json")) ||
-      !["recorded", "deep-recorded-thin-cut", "observed", "incomplete"].includes(terminal.state) ||
+      !["recorded", "deep-recorded-thin-cut", "observed", "incomplete", "preflight-refused", "uncollected"].includes(terminal.state) ||
       transfer.requestSha256 !== hash(path.join(dir, "control/request.json")) ||
       transfer.terminalSha256 !== hash(path.join(dir, "control/terminal.json")) ||
       transfer.summaryMembersSha256 !== hash(path.join(dir, "summary-members.json")))

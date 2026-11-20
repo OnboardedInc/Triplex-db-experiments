@@ -16,7 +16,7 @@ import time
 ROOT = Path.home()/"Claude/Projects/triplex-db-2/evidence/DX-BM1/overnight"
 REMOTE = "/var/tmp/triplex-bm1/night-n19"
 BRANCHES={1:("w1","exp/DX-W1-commit-tail-reads"),2:("act1","exp/DX-ACT1-activation"),
-          3:("w1","exp/DX-W1-commit-tail-reads"),5:("int1","exp/DX-INT1")}
+          3:("w1","exp/DX-W1-commit-tail-reads"),5:("int1","exp/DX-INT1"),8:("w1","exp/DX-W1-commit-tail-reads")}
 DEST=os.environ.get("BENCH_SERVER","")
 KEY=os.environ.get("DX_BENCH_KEY",str(Path.home()/".ssh/triplex_bench_ed25519"))
 SSH=["ssh","-n","-F","/dev/null","-i",KEY,"-o","IdentitiesOnly=yes","-o","ForwardAgent=no",
@@ -72,7 +72,7 @@ def unpack(archive,stage,seal):
 
 
 def collect(name):
-    assert re.fullmatch(r"i[1-7]-[12]",name)
+    assert re.fullmatch(r"i(?:[1-9]|10)-[12]",name)
     directory=ROOT/name
     src=REMOTE+"/bundles/"+name
     original=remote("cat "+src+"/TRANSFER.json")
@@ -108,8 +108,9 @@ def index_bundle(directory):
 
 
 def submit(item,attempt):
-    path=REMOTE+f"/i{item}/{attempt}/request.json"
-    waiting="while ! test -f "+path+"; do if test -f "+REMOTE+f"/i{item}/outcome.json || test -f "+REMOTE+"/finished; then exit 86; fi; sleep 4; done; cat "+path
+    base=REMOTE+f"/i{item}/{attempt}"
+    path=base+"/request.json"
+    waiting="while ! test -f "+base+"/admission-ready.json; do if test -f "+base+"/terminal.json || test -f "+REMOTE+f"/i{item}/outcome.json || test -f "+REMOTE+"/finished; then exit 86; fi; sleep 4; done; cat "+path
     while True:
         try: data=remote(waiting,timeout=3600);break
         except subprocess.TimeoutExpired:continue
@@ -128,8 +129,8 @@ def submit(item,attempt):
     head=subprocess.check_output(["git","rev-parse","HEAD"],cwd=repo,text=True).strip()
     assert head==r["source"],"Builder published another revision after native admission"
     exp="lab/experiments/EXP-DX1/"
-    if item in (1,3):
-        args=["--experimental-strip-types",exp+"w1/control.ts"]+(["--group"] if item==1 else [])+[r["tag"]]
+    if item in (1,3,8):
+        args=["--experimental-strip-types",exp+"w1/control.ts"]+({1:["--group"],8:["--pulse"]}.get(item,[]))+[r["tag"]]
     elif item==2:args=["--experimental-strip-types",exp+"import1/control.ts","--campaign",r["tag"]]
     else:
         stop=dt.datetime.fromtimestamp(r["deadline"]-10,dt.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

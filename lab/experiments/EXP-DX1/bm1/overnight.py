@@ -23,12 +23,17 @@ ACT = "exp/DX-ACT2-activation-100k"
 # Rejected: inheriting the 24–72 hour limits of standalone research controllers.
 ITEMS = {
     1: (W1, "w1", "502c8897", 4, "grpw1"),
-    6: (ACT, "actv-delta", "eaee4e10", 4, "solon19"),
+    8: (W1, "w1", "9ce599309", 4, "pulsew1a"),
+    9: (W1, "w1", "9ce599309", 1, "matchedn19"),
     2: ("exp/DX-ACT1-activation", "import1", "eb154ca8", 5, "import-bm1n19"),
-    3: (W1, "w1", "502c8897", 3, "w1trial01"),
-    4: (ACT, "act2", "a9eb03b0", 4, "n19guard"),
+    10: (W1, "w1", "9ce599309", 1, "predecessorn19"),
     5: ("exp/DX-INT1", "int1", None, 5, "bm1n19int"),
+    4: (ACT, "act2", "a9eb03b0", 4, "n19guard"),
+    6: (ACT, "actv-delta", "eaee4e10", 4, "solon19"),
+    3: (W1, "w1", "502c8897", 3, "w1trial01"),
 }
+ORDER = (1, 8, 9, 2, 10, 7, 5)
+NEXT = {1:"pulse", 8:"thin-deep", 9:"import", 2:"predecessor", 10:"probes", 5:"collect", 6:"resume", 4:"collect", 3:"collect"}
 EXP = Path("lab/experiments/EXP-DX1")
 ENV = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
            GIT_TERMINAL_PROMPT="0", DOCKER_HOST="unix:///var/run/docker.sock",
@@ -79,6 +84,180 @@ def digest(p):
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
+def collector_cases():
+    repo=HERE.parents[3]
+    rel=EXP/"bm1/COLLECTOR-CASES.json"
+    # [DX-BM1] Why: a new source-bound smoke can admit the next item without restarting an active queue.
+    # Rejected: reading an arbitrary file or changing the running supervisor's checkout.
+    run("git","-c","credential.helper=","fetch","--quiet","--no-tags","--depth=1",URL,"refs/heads/exp/DX-BM1-bare-metal",
+        cwd=repo,timeout=45)
+    return json.loads(command("git","show","FETCH_HEAD:"+str(rel),cwd=repo))
+
+
+def delta_output(folder, binding, subjects, offers, releases):
+    # [DX-BM1] Why: agree with checkSolo on the R1 setup reference followed by R2 and R3.
+    # Rejected: counting only the two measured sweep arms and rejecting the full producer receipt.
+    result=get(folder/"result.json")
+    request=get(folder/"request.json")
+    assert request==binding==result["binding"]
+    assert re.fullmatch("[a-f0-9]{40}",binding["source"]) and re.fullmatch("[a-f0-9-]{36}",binding["nonce"])
+    assert result["subjects"]==result["target"]["people"]==subjects
+    assert len(result["accounts"])==1 and result["loaded"]["count"]==offers
+    reference=result["reference"]
+    assert [row["release"] for row in reference]==[releases[key] for key in ("R1","R2","R3")]
+    assert all(row["people"]==subjects and row["receipts"]>0 and row["position"]>0 and row["end"]>=row["position"] for row in reference)
+    assert all(a["position"]<b["position"] for a,b in zip(reference,reference[1:]))
+    loaded=folder/"loaded.json"
+    assert result["loaded"]["sha"]==digest(loaded)
+    tape=get(loaded)["offers"]
+    with (folder/"offers.ndjson").open() as stream:
+        rows=[json.loads(line) for line in stream]
+    assert len(tape)==offers and rows==[{"nonce":binding["nonce"],**row} for row in tape]
+    return result
+
+
+def complete_output(r):
+    root=Path(r["root"])
+    item=r["item"]
+    if item in (1,8,9,10):return (root/"results/comparison.json").is_file()
+    if item==2:return (root/"terminal.json").is_file()
+    if item==3:return (root/"results/arm-4/measurements.json").is_file()
+    if item==4:return (root/"guard-output.json").is_file()
+    if item==5:return any((root/"build/state/evidence/DX-INT1"/r["tag"]).glob("*/SHA256SUMS"))
+    if item==6:return (Path("/var/tmp/triplex-scale1")/r["tag"]/"delta-measurement.json").is_file()
+    return False
+
+
+def pulse_output(root, source, tag, prediction, *, small=False):
+    # [DX-BM1] Why: bind each quiet and neighbor cohort to the producer rows, not merely its final file name.
+    # Rejected: trusting a throughput scalar whose originating arm or schedule is unknown.
+    directory=root/"results"
+    result=get(directory/"comparison.json")
+    prediction_sha=digest(prediction)
+    assert result["study"]=="pulse" and result["source"]==source and result["predictionSha256"]==prediction_sha
+    assert digest(directory/"predictions.json")==prediction_sha
+    assert [a["mode"] for a in result["arms"]]==["individual","all"]
+    for i,arm in enumerate(result["arms"],1):
+        arm_dir=directory/f"arm-{i}"
+        who=get(arm_dir/"identity.json")
+        assert arm["arm"]==who and who["source"]==source and who["slot"]==f"tx2-dxscale1-w1-{tag}-{i}"
+        assert arm["predictionSha256"]==prediction_sha
+        assert get(arm_dir/"cleanup.json")==dict(containers=[],volumes=[],networks=[])
+        assert digest(arm_dir/"raw.json")==arm["rawSha256"] and digest(arm_dir/"seed-readback.json")==arm["seedReadbackSha256"]
+        assert arm==get(arm_dir/"summary.json")
+        raw=get(arm_dir/"raw.json")
+        check=get(arm_dir/"seed-readback.json")
+        assert raw["nonce"]==who["nonce"] and raw["scope"]==arm["scope"] and raw["db"]==arm["db"]
+        assert check["facts"]==arm["seedFacts"] and check["digest"]==arm["seed"]
+        assert check["seedCut"]+1==raw["phases"][0]["firstPosition"]
+        if not small:
+            assert check["facts"]==16_245_050 and check["digest"]=="2720380f5b5e6f31fd632380e6ef6d16acc4d646735962d2cb908e0ab40e1146"
+        assert [p["name"] for p in arm["phases"]]==[p["name"] for p in raw["phases"]]==["alone","nine"]
+        for p,events in zip(arm["phases"],raw["phases"]):
+            records=events["records"]
+            quiet=[row for row in records if row["probe"]]
+            assert len(quiet)==(3 if small else 600) and len({row["id"] for row in records})==len(records)
+            assert len(records)==p["count"] and p["physical"]==len({row["t"] for row in records})
+            assert p["wall"]>0 and p["throughput"]==len(records)*1000/p["wall"]
+            assert p["quietP99Ratio"]==p["quietMs"]["p99"]/arm["phases"][0]["quietMs"]["p99"]
+    return result
+
+
+def matched_output(root, source, tag, *, small=False):
+    directory=root/"results"
+    result=get(directory/"comparison.json")
+    assert result["source"]==source and result["small"] is small and result["study"]=="thin-deep"
+    arms=result["arms"]
+    assert [a["population"] for a in arms]==(["thin"] if small else ["thin","deep","deep","thin"])
+    n=39 if small else 1773
+    for i,sample in enumerate(arms,1):
+        arm=directory/f"arm-{i}"
+        identity=get(arm/"identity.json")
+        assert sample==get(arm/"field-output.json")==get(arm/"summary.json")
+        assert identity==sample["arm"] and identity["source"]==source and identity["slot"]==f"tx2-dxscale1-w1-{tag}-{i}"
+        assert get(arm/"cleanup.json")==dict(containers=[],volumes=[],networks=[])
+        assert sample["people"]==(64 if small else 10000) and sample["offers"]==sample["seedRootsChecked"]==n
+        assert sample["rowsPerOffer"]==[5,5] and sample["rate"]==39.4
+        assert sample["writerSha256"]==digest(arm/"writer.jsonl")
+        with (arm/"writer.jsonl").open() as stream:rows=[json.loads(line) for line in stream]
+        assert len(rows)==n and [row["ordinal"] for row in rows]==list(range(n))
+        assert len({row["traceId"] for row in rows})==len({row["pos"] for row in rows})==n
+        assert all(len(row["fresh"])==len(row["old"])==5 and row["pos"]>sample["seedCut"] for row in rows)
+        ordered=sorted(row["ackMs"] for row in rows)
+        assert ordered[0]>=0 and sample["ms"]["p99"]==ordered[(99*n+99)//100-1]
+    assert len({(a["tapeSha256"],a["intentSha256"]) for a in arms})==1
+    return result
+
+
+def preflight(r):
+    # [DX-BM1] Why: a full seed starts only after the producer's own files reach the matching collector.
+    # Rejected: treating a local synthetic schema test or an exit status as a full-branch admission.
+    item=r["item"]
+    if item==1 and r["attempt"]==1:return
+    directory=Path(r["directory"])
+    ready=directory/"admission-ready.json"
+    if ready.is_file():
+        proof=get(ready)
+        assert proof["source"]==r["source"] and proof["item"]==item
+        if item in (8,9):assert proof["sha256"]==digest(Path(proof["location"])/"results/comparison.json")
+        return
+    if item in (8,9):
+        tag={8:"pulsesmk",9:"matchedsmk"}[item]+str(r["attempt"])
+        smoke=Path("/var/tmp/triplex-w1")/tag
+        proof=get(smoke/"results/comparison.json") if (smoke/"results/comparison.json").is_file() else None
+        if proof is None:
+            unit="bm1n19-collector-"+tag
+            if not active(unit):
+                assert not smoke.exists(),"Native smoke did not produce its comparison file"
+                log=directory/"collector-preflight.log"
+                entry=[sys.executable,str(Path(__file__).resolve()),"preflight-worker",str(item),str(r["attempt"])]
+                run("systemd-run","--no-block","--unit="+unit,"-p","KillMode=control-group","-p","RuntimeMaxSec=720s",
+                    "-p","TimeoutStopSec=90s","-p","StandardOutput=append:"+str(log),"-p","StandardError=append:"+str(log),
+                    "-p",f"ExecStopPost={sys.executable} {Path(__file__).resolve()} preflight-clean {item} {r['attempt']}",*entry)
+            deadline=min(r["deadline"]-90,time.time()+720)
+            while active(unit) and time.time()<deadline:time.sleep(3)
+            if active(unit):run("systemctl","stop",unit,timeout=115)
+        assert not (smoke/"active-slot").exists() and not command("docker","ps","-q")
+        if item==8:
+            pulse_output(smoke,r["source"],tag,Path(r["repo"])/EXP/"w1/field/predictions.json",small=True)
+        else:matched_output(smoke,r["source"],tag,small=True)
+        proof={"source":r["source"],"item":item,"tag":tag,"file":"comparison.json","sha256":digest(smoke/"results/comparison.json"),
+               "at":stamp(),"location":str(smoke)}
+        put(ready,proof)
+        return
+    documented=collector_cases().get(str(item))
+    if not documented or documented.get("source")!=r["source"] or documented.get("state")!="verified":
+        raise RuntimeError("No small real producer output has passed this collector for the pinned source")
+    if item==6:
+        assert documented["reviewedFindings"]==[1,2] and documented["reportSha256"]==digest(directory/"builder-report.md")
+    put(ready,{**documented,"item":item})
+
+
+def eligible_delta():
+    if (NIGHT/"i6/outcome.json").exists():return False
+    proof=collector_cases().get("6")
+    if not proof or proof.get("state")!="verified" or proof.get("reviewedFindings")!=[1,2]:return False
+    head=command("git","-c","credential.helper=","ls-remote","--exit-code",URL,"refs/heads/"+ACT).split()[0]
+    return proof.get("source")==head
+
+
+def preflight_worker(r, clean=False):
+    item=r["item"]
+    assert item in (8,9)
+    tag={8:"pulsesmk",9:"matchedsmk"}[item]+str(r["attempt"])
+    smoke=Path("/var/tmp/triplex-w1")/tag
+    smoke_r={**r,"root":str(smoke),"tag":tag}
+    if clean:
+        cleanup(smoke_r)
+        assert not any(remaining(smoke_r).values())
+        return
+    env=dict(ENV)
+    repo,node=setup(smoke_r,env)
+    mode="pulse-small" if item==8 else "matched-small"
+    run(node,"lab/bin/heavy.mjs","--label","DX-BM1-collector-"+mode,"--",node,"--import","tsx",HERE/"probes/campaign.mjs",
+        smoke,r["source"],tag,mode,cwd=repo,env=env)
+
+
 def public_source(item, directory):
     branch, component, minimum, _, _ = ITEMS[item]
     head = command("git","-c","credential.helper=","ls-remote","--exit-code",URL,"refs/heads/"+branch).split()[0]
@@ -108,7 +287,7 @@ def coordinates(item,attempt):
     tag=ITEMS[item][4]
     if item == 1: tag += "ab"[attempt-1]
     elif attempt==2: tag += "b"
-    if item in (1,3): root=Path("/var/tmp/triplex-w1")/tag; unit="triplex-w1-"+tag
+    if item in (1,3,8,9,10): root=Path("/var/tmp/triplex-w1")/tag; unit="triplex-w1-"+tag
     elif item==2: root=Path("/var/tmp/triplex-import1")/tag;unit="triplex-bm1-"+tag
     elif item==4: root=ROOT/("day-"+tag);unit="bm1n19-"+tag
     elif item==6: root=NIGHT/tag; unit="bm1n19-"+tag
@@ -144,7 +323,7 @@ def make(item, attempt, start, deadline):
         shutil.copyfile(repo/EXP/"w1/REPORT.md",directory/"builder-report.md")
     else:
         head,repo=public_source(item,directory)
-    token="| Item 0 repeat," if item==6 else f"| {item} ·"
+    token="| Item 0 repeat," if item==6 else {8:"| Quiet pulse,",9:"| Thin/deep matched,",10:"| Predecessor lookup,"}.get(item,f"| {item} ·")
     forecast=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith(token))
     r=dict(item=item,attempt=attempt,tag=tag,source=head,repo=str(repo),unit=unit,root=str(root),
            directory=str(directory),start=start,deadline=deadline,prediction=forecast,requested=stamp())
@@ -159,7 +338,7 @@ def args_request(r):
 def setup(r,env):
     root,source,repo=Path(r["root"]),r["source"],Path(r["repo"])
     root.mkdir(parents=True,exist_ok=True)
-    if r["item"] in (1,3):
+    if r["item"] in (1,3,8,9,10):
         for name,value in (("source",source),("machine",digest("/etc/machine-id"))):
             f=root/name
             if f.exists(): assert f.read_text().strip()==value
@@ -252,18 +431,22 @@ def worker(r):
     if r["item"]==6:
         run(node,"--import","tsx",EXP/"scale1/bench.ts","launch","2",tag,
             "activation","--activation-mode","delta",cwd=repo,env=env)
-    elif r["item"] in (1,3):
+    elif r["item"] in (1,3,8):
         args=[EXP/"w1/group/server.ts","run",root,source,tag] if r["item"]==1 else [EXP/"w1/bench.ts",root,source,tag]
+        if r["item"]==8:args=[EXP/"w1/field/server.ts","run",root,source,tag,"pulse"]
         run(*heavy,"--experimental-strip-types",*args,cwd=repo,env=env)
+    elif r["item"]==9:
+        run(*heavy,"--import","tsx",HERE/"probes/campaign.mjs",root,source,tag,"matched",cwd=repo,env=env)
     elif r["item"]==2:run(*heavy,"--experimental-strip-types",EXP/"import1/server.ts","--execute",root,source,cwd=repo,env=env)
-    else:
+    elif r["item"]==5:
         run(node,"--no-warnings","--experimental-transform-types",repo/EXP/"thin1/queue-bench.ts","--launch",tag,
             stamp(r["deadline"]-10),root/"build","--int1","--row-wire=plain",cwd=repo,env=env)
+    else:raise ValueError("This item has no admitted native worker yet")
 
 
 def cleanup(r):
     root,tag,src=Path(r["root"]),r["tag"],r["source"]
-    if r["item"] in (1,3) and (root/"active-slot").exists():
+    if r["item"] in (1,3,8,9,10) and (root/"active-slot").exists():
         run("bash",Path(r["repo"])/EXP/"w1/release.sh",root,timeout=180)
     elif r["item"]==6:
         unit="triplex-scale1-"+tag
@@ -301,7 +484,7 @@ def cleanup(r):
 def remaining(r):
     item, tag = r["item"],r["tag"]
     root=Path(r["root"])
-    if item in (1,3): prefixes=["tx2-dxscale1-w1-"+tag+"-"]
+    if item in (1,3,8,9,10): prefixes=["tx2-dxscale1-w1-"+tag+"-"]
     elif item==5: prefixes=["tx2-dxint1-"+tag+"-"]
     elif item==6: prefixes=["tx2-dxscale1-"+tag+"-"]
     else:
@@ -384,7 +567,7 @@ def matched_probes():
         row=dict(item=7,attempt=1,source=source,tag="matched-probes",start=start,deadline=start+2400,directory=str(directory),root=str(root))
         put(request,row)
     assert row["source"]==(Path("/var/tmp/triplex-w1/grpw1a")/"source").read_text().strip()
-    status("probes","running",start,2)
+    status("probes","running",start,5)
     terminal=directory/"terminal.json"
     if terminal.is_file():
         entry=get(terminal)
@@ -461,6 +644,12 @@ def result(r):
                     assert p["count"]==sum(v["count"] for v in p["byAccount"].values()) and p["wall"]>0
                     assert p["quietP99Ratio"]==p["quietMs"]["p99"]/a["phases"][0]["quietMs"]["p99"]
             return "recorded",str(f)
+    elif item==8 and (root/"results/comparison.json").is_file():
+        pulse_output(root,r["source"],r["tag"],Path(r["repo"])/EXP/"w1/field/predictions.json")
+        return "recorded",str(root/"results/comparison.json")
+    elif item==9 and (root/"results/comparison.json").is_file():
+        matched_output(root,r["source"],r["tag"])
+        return "recorded",str(root/"results/comparison.json")
     elif item==2:
         if (root/"terminal.json").is_file():
             doc=get(root/"terminal.json")
@@ -494,17 +683,16 @@ def result(r):
         measurement=campaign/"delta-measurement.json"
         if measurement.is_file():
             trial=get(campaign/"attempt.json");result=get(measurement)
-            reference=get(campaign/"delta/result.json");outcome=get(campaign/"terminal.json")
+            outcome=get(campaign/"terminal.json")
             proof=get(campaign/"preflight.json")
             request=get(campaign/"delta/request.json")
-            assert request==reference["binding"]==result["binding"]==proof["binding"]
+            assert request==result["binding"]==proof["binding"]
             assert request["source"]==trial["source"]==outcome["source"]==r["source"]
             assert request["slot"]==trial["slot"]=="tx2-dxscale1-"+r["tag"]
             assert request["nonce"]==trial["nonce"]==outcome["nonce"] and outcome["cleanup"] is True
             assert trial["item"]==2 and trial["activationMode"]=="delta" and outcome["tag"]==r["tag"]
-            assert reference["subjects"]==result["subjects"]==100000 and result["loaded"]["count"]==90
-            assert len(result["accounts"])==1 and result==reference
-            assert result["loaded"]["sha"]==digest(campaign/"delta/loaded.json") and len(result["reference"])==2
+            releases=get(Path(r["repo"])/"lab/world/W0/releases/index.json")
+            assert result==delta_output(campaign/"delta",request,100000,90,releases)
             return "recorded",str(measurement)
     elif item==4:
         directory=guard_output(r)
@@ -552,7 +740,7 @@ def fallback(r):
     # [DX-BM1] Why: Mac controllers use authenticated SSH for launch. Their published native commands can still progress on this host during a link or laptop outage.
     # Rejected: copying a private SSH key to the server or losing the remaining queue when a client exits.
     attempt=Path(r["directory"])
-    if r["item"] not in (4,6):
+    if r["item"] in (1,2,3,5,8):
         limit=time.time()+45
         while not installed(r) and time.time()<limit:time.sleep(2)
     if not installed(r):launch(r)
@@ -582,10 +770,20 @@ def one(item):
     for attempt in (1,2):
         if time.time()>=limit-90:break
         r=make(item,attempt,start,limit);sub=Path(r["directory"]);terminal=sub/"terminal.json"
+        if not terminal.is_file() and not installed(r):
+            status(item,"collector-preflight",start,NEXT[item])
+            try:
+                preflight(r)
+            except (RuntimeError,AssertionError,ValueError,KeyError,OSError,subprocess.SubprocessError) as error:
+                atom(sub/"collector-preflight-error.txt",repr(error)+"\n")
+                check_released(r)
+                entry=dict(item=item,attempt=attempt,tag=r["tag"],source=r["source"],state="preflight-refused",detail=str(error),
+                           timedOut=False,ended=stamp(),clean=True)
+                put(terminal,entry)
         if terminal.exists():
             entry=get(terminal)
         else:
-            status("0-repeat" if item==6 else item,"running",start,{1:"0-repeat",6:2,2:3,3:4,4:5,5:"collect"}[item])
+            status("0-repeat" if item==6 else item,"running",start,NEXT[item])
             missing=not (sub/"admitted").exists()
             if missing:fallback(r)
             timed_out=False
@@ -602,17 +800,20 @@ def one(item):
             try:
                 state,why=result(r)
             except (TypeError, ValueError, KeyError, AssertionError, OSError) as err:
-                state,why="incomplete","Archived inputs failed comparison: "+repr(err)
+                state="uncollected" if complete_output(r) else "incomplete"
+                why="Producer output kept in its original directory. Collector rejected: "+repr(err)
             entry=dict(item=item,attempt=attempt,tag=r["tag"],source=r["source"],state=state,detail=why,
                        timedOut=timed_out,ended=stamp(),clean=True,serviceResult=command("systemctl","show",r["unit"],"-p","Result","--value"))
             put(terminal,entry)
         bundle=NIGHT/"bundles"/f"i{item}-{attempt}"/"TRANSFER.json"
         if not bundle.is_file():
-            status("0-repeat" if item==6 else item,"collecting",start,{1:"0-repeat",6:2,2:3,3:4,4:5,5:"collect"}[item])
+            status("0-repeat" if item==6 else item,"collecting",start,NEXT[item])
             try:
                 run(sys.executable,HERE/"night-archive.py",sub/"request.json",timeout=1200)
             except (OSError,subprocess.SubprocessError) as err:
                 atom(sub/"collection-error.txt",repr(err)+"\n")
+                if complete_output(r):
+                    entry={**entry,"state":"uncollected","detail":"Producer output retained. Transfer archive did not seal."}
         timer=f"bm1n19-hard-{item}-{attempt}.timer"
         if active(timer):run("systemctl","stop",timer)
         if entry["state"]!="incomplete" or entry["timedOut"]:break
@@ -638,14 +839,28 @@ def main():
     assert sys.platform=="linux" and os.getuid()==0 and NIGHT.is_dir()
     assert subprocess.run(["systemd-detect-virt","--quiet"]).returncode==1
     mode=sys.argv[1]
-    if mode in {"worker","cleanup"}:
+    if mode in {"worker","cleanup","preflight-worker","preflight-clean"}:
         item,attempt=map(int,sys.argv[2:4]);r=bind(get(NIGHT/f"i{item}"/str(attempt)/"request.json"))
+        if mode.startswith("preflight-"):
+            preflight_worker(r,mode=="preflight-clean")
+            return
         if mode=="cleanup" and (child:=native_unit(r)) and os.environ.get("SERVICE_RESULT")=="success" and active(child):return
         (worker if mode=="worker" else cleanup)(r);return
     assert mode=="run"
     lock=(NIGHT/"campaign.lock").open("a");fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     assert (NIGHT/"i0/terminal").is_file()
-    for item in ITEMS:
+    for item in ORDER:
+        if item!=1:
+            try:
+                if eligible_delta():one(6)
+            except (OSError,ValueError,AssertionError,subprocess.SubprocessError):print(traceback.format_exc(),flush=True)
+        if item==7:
+            try:
+                matched_probes()
+            except Exception:
+                print(traceback.format_exc(),flush=True)
+                assert not active("bm1n19-native-probes") and not command("docker","ps","-q")
+            continue
         try:
             one(item)
         except Exception as error:
@@ -661,12 +876,6 @@ def main():
                 check_released(request)
             put(directory/"outcome.json",dict(item=item,state="incomplete",detail=str(error),ended=stamp()))
         assert not command("docker","ps","-q"),"Cannot transfer an occupied bench"
-        if item==6:
-            try:
-                matched_probes()
-            except Exception:
-                print(traceback.format_exc(),flush=True)
-                assert not active("bm1n19-native-probes") and not command("docker","ps","-q")
     assert not command("docker","ps","-q")
     atom(ROOT/"STATUS","FREE "+stamp()+"\n")
     atom(NIGHT/"finished",stamp()+"\n")

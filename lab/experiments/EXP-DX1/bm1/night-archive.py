@@ -41,11 +41,14 @@ def walk(root):
 def sources(r):
     root=Path(r["root"])
     parts={"control":Path(r["directory"])}
-    if r["item"] in (1,3):
+    if r["item"] in (1,3,8,9,10):
         parts["results"]=root/"results"
         parts["campaign.log"]=root/"campaign.log"
         parts["probes"]=NIGHT/"probes"/(r["tag"]+"-1")
         parts["second-probes"]=NIGHT/"probes"/(r["tag"]+"-2")
+        if r["item"] in (8,9):
+            smoke={8:"pulsesmk",9:"matchedsmk"}[r["item"]]+str(r["attempt"])
+            parts["preflight"]=Path("/var/tmp/triplex-w1")/smoke/"results"
     elif r["item"]==2:
         for stage in ("proof","screen0","screen1","screen2","screen3","deep","thin","stacks"):
             parts[stage]=root/stage

@@ -44,7 +44,7 @@ The November 19 evening dispatch replaced the deferred SCALE1 handback. Its serv
 
 Item 0 began at 19:01:16 EST on ACT2 `6eb4a3e3831f9352d0f56495cd5c881c81a30f9d`. Its 1k gate took 143.889 s and its scoped cleanup finished at 19:06:26. The published launcher refused the one-account 100k workload at the population check. The verified summary and 297,236-byte raw archive are under `evidence/DX-BM1/overnight/i0`.
 
-Item 1 began at 19:12:21 EST, group `grpw1a`, W1 `502c8897deb9af8233d72dfc6cc2d62f601f0fca`. The separate systemd ceiling stops this unit by 23:11:31 EST. ACT2 subsequently published the one-account command `scale1/bench.ts launch 2 solon19 activation --activation-mode delta` at `eaee4e10`. The command runs the 1k preflight and both page-guard reference releases. It follows W1, before import, the thin lookup comparison, guarded release and 2% active capacity. The original W1 alone and nine-neighbor phases provide Q-PULSE. Additional open-loop production rates and the same-database import probe use verified W1 seeds between timing and teardown. [Predictions and outcomes](PREDICTIONS.md)
+Item 1 began at 19:12:21 EST, group `grpw1a`, W1 `502c8897deb9af8233d72dfc6cc2d62f601f0fca`. The separate systemd ceiling stops the unit by 23:11:31 EST. ACTAUDIT moved both 100k DELTA commands out of the queue until the publisher proves the deadline and durable output. The revised order is the quiet pulse, thin/deep match, import, predecessor lookup, short seed probes and two thin capacity rungs. The separate field-rates campaign belongs to the other server. Each new long run requires a small verified producer output. [Collector audit](COLLECTORS.md) · [Predictions and outcomes](PREDICTIONS.md)
 
 ```sh
 bench 'cat /var/tmp/triplex-bm1/STATUS'
@@ -52,10 +52,10 @@ bench 'sudo -n tail -12 /var/tmp/triplex-w1/grpw1a/campaign.log'
 bench 'systemctl show triplex-w1-grpw1a -p ActiveState -p Result -p ExecMainStatus'
 ```
 
-The detached Linux supervisor is `bm1n19-campaign-v4.service`. It adopts the existing W1 unit and reads each later builder's public head and report at admission. It gives the Mac controller 45 seconds to launch through SSH, then uses the same published native worker locally when the client is unavailable. Each item has an overall deadline and an independent systemd timer for controllers whose default exceeds it. The Linux supervisor checks resource names, native lock release and terminal evidence before advancing. The Mac dispatcher and collector use `night-client.py watch` and inspect sealed bundles every eleven minutes. Summaries are always collected. The raw-archive ceiling is strictly below 1 GiB.
+The detached Linux supervisor is `bm1n19-campaign-v5.service`. It adopts the existing W1 unit and reads each later builder's public head and report at admission. It verifies a small producer output before emitting a ready receipt. The Mac controller gets 45 seconds to launch the authorized command through SSH, then the supervisor uses the published native worker locally when the client is unavailable. Each item has an overall deadline and an independent systemd timer where needed. The Linux supervisor checks resource names, native lock release and terminal evidence before advancing. The Mac collector uses `night-client.py watch` and inspects sealed bundles every eleven minutes. The raw-archive ceiling is strictly below 1 GiB.
 
 ```sh
-bench 'systemctl show bm1n19-campaign-v4.service -p ActiveState -p Result -p NRestarts'
+bench 'systemctl show bm1n19-campaign-v5.service -p ActiveState -p Result -p NRestarts'
 bench 'sudo -n tail -15 /var/tmp/triplex-bm1/night-n19/campaign.log'
 bench 'sudo -n find /var/tmp/triplex-bm1/night-n19/bundles -mindepth 2 -maxdepth 2 -name TRANSFER.json'
 BENCH_SERVER="$BENCH_SERVER" python3 lab/experiments/EXP-DX1/bm1/night-client.py collect i1-1

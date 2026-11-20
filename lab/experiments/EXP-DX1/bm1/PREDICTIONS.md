@@ -20,3 +20,9 @@
 | HA forecast used as context, 00:27 | The analyst measured local 8 KiB flush p99 of 0.088 ms and predicts two extra network round trips for synchronous off-host storage. All queue experiments use the local durable path. A two-host failover has no scheduled measurement tonight. | Outside this campaign |
 
 The W1 builder published a separate Mac result at `9ce59930` after the entries above were recorded. In 640 old-path replacements on its 3.85M-fact fixture, old-live and retirement-marker checks accounted for 2,501 of 7,281 SQL reads (34%). New IDs accounted for 148 (2%). The forecast above remains the original forecast for the bench population. The Mac result points to both old-row checks and native apply, and lowers the expectation that a one-range identity check alone will reduce total SQL substantially.
+
+| Audit queue addition, recorded before admission | Prediction | Observed |
+| --- | --- | --- |
+| Quiet pulse, 02:10 UTC | The W1 registered pulse predicts 150–200 and 210–285 durable saves/s for individual and grouped submission. With nine neighbors it predicts quiet-account p99 of 12–30× and 2–6× alone. Both forecast ranges are above 1.25×. | Pending |
+| Thin/deep matched, 02:10 UTC | Deep minus thin ACK p99 of −5 to +15 ms. The saved early prefix measured 32.84 ms thin and 30.99–33.10 ms deep before late maintenance. The new comparison fixes five assertions, five retirements, 39.4 offers/s, zero readers and no background overlay. | Pending |
+| Predecessor lookup, 02:10 UTC | At 100k deep, expect 15–35% fewer native SQL object reads and 3–14 ms lower ACK p99 at 39.4/s. W1’s 100k Mac fixture reduced serial reads by about 30%, while server ACK tails also contain upstream waits. | Pending |
