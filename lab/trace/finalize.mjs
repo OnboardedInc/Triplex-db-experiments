@@ -184,7 +184,7 @@ for (const destination of [run, ...(copy ? [copy] : [])]) {
   fs.writeFileSync(path.join(destination, "SHA256SUMS"), reportHashes);
   fs.writeFileSync(path.join(destination, "INDEX.md"), indexText);
 }
-if (!skipRegister) registerRun(run);
+if (!skipRegister) await registerRun(run);
 console.log(
   JSON.stringify({
     tag: result.tag,

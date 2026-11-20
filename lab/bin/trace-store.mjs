@@ -3,15 +3,17 @@
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { gunzipSync } from "node:zlib";
 import { pathToFileURL } from "node:url";
 import { filesUnder } from "../trace/report.mjs";
+import { atomicJson, withDirLock } from "./lib.mjs";
 const base =
   process.env.TRIPLEX_TRACE_EVIDENCE ??
   path.join(os.homedir(), "Claude/Projects/triplex-db-2/evidence");
 const registry = path.join(base, ".trace-index.json");
 const index = path.join(base, "TRACE-INDEX.md");
+const catalogLock = path.join(base, ".trace-index.lock");
 function rows() {
   return fs.existsSync(registry) ? JSON.parse(fs.readFileSync(registry, "utf8")) : [];
 }
@@ -30,11 +32,10 @@ function hash(file) {
   }
 }
 function save(all) {
-  fs.mkdirSync(base, { recursive: true });
-  fs.writeFileSync(registry + ".tmp", JSON.stringify(all, null, 2) + "\n");
-  fs.renameSync(registry + ".tmp", registry);
+  atomicJson(registry, all);
+  const temporary = `${index}.${randomUUID()}.tmp`;
   fs.writeFileSync(
-    index + ".tmp",
+    temporary,
     "# Trace index\n\n| date | tag | code | subjects | result | timeline | raw traces | bytes |\n| --- | --- | --- | ---: | --- | --- | --- | ---: |\n" +
       all
         .map(
@@ -44,7 +45,7 @@ function save(all) {
         .join("\n") +
       "\n",
   );
-  fs.renameSync(index + ".tmp", index);
+  fs.renameSync(temporary, index);
 }
 // [DX-T1] Why: index only an observed run and checksum the raw files before moving anything.
 // Rejected: deletion on age or an archive claim before destination bytes have been verified.
@@ -243,12 +244,16 @@ function registerIncompleteBenchmark(dir) {
 }
 
 function registerRow(row) {
-  const all = rows();
-  const old = all.find((r) => r.tag === row.tag);
-  if (old && old.html !== row.html && (old.raw !== row.raw || fs.existsSync(old.html)))
-    throw Error("Duplicate trace tag at another path");
-  save([...all.filter((r) => r.tag !== row.tag), row]);
-  return row;
+  // [DX-BM1] Why: collectors may verify archives in parallel but publish from the same durable catalog.
+  // Rejected: unique temp files alone (a concurrent stale read could still lose an entry).
+  return withDirLock(catalogLock, () => {
+    const all = rows();
+    const old = all.find((r) => r.tag === row.tag);
+    if (old && old.html !== row.html && (old.raw !== row.raw || fs.existsSync(old.html)))
+      throw Error("Duplicate trace tag at another path");
+    save([...all.filter((r) => r.tag !== row.tag), row]);
+    return row;
+  }, { quiet: true });
 }
 
 // [DX-BM1] Why: the catalog follows the original named attempt and the actual transferred bytes.
@@ -353,10 +358,9 @@ export function registerScaleSeed(dir) {
     html:arc, raw, bundle:true});
 }
 
-export function archive(tag, to) {
+export async function archive(tag, to) {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]+$/.test(tag)) throw Error("Invalid tag");
-  const all = rows(),
-    row = all.find((r) => r.tag === tag);
+  const row = rows().find((r) => r.tag === tag);
   if (!row) throw Error("Unknown trace tag");
   if (row.bundle) throw Error("This trace is already a sealed benchmark bundle");
   const lock = path.join(base, "../locks/measure");
@@ -384,9 +388,15 @@ export function archive(tag, to) {
     manifest.map((f) => `${f.sha256}  ${f.name}`).join("\n") + "\n",
   );
   const source = row.raw;
-  row.raw = target;
-  row.archivedFrom = source;
-  save(all);
+  await withDirLock(catalogLock, () => {
+    const all = rows();
+    const current = all.find((r) => r.tag === tag);
+    if (!current || current.raw !== source || current.source !== row.source)
+      throw Error("Trace source changed during archive copy");
+    current.raw = target;
+    current.archivedFrom = source;
+    save(all);
+  }, { quiet: true });
   // Only files just copied and verified can be removed; reports stay where they were.
   for (const f of manifest) fs.unlinkSync(path.join(source, f.name));
   fs.writeFileSync(
@@ -397,19 +407,19 @@ export function archive(tag, to) {
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
   const [command, arg, ...rest] = process.argv.slice(2);
-  if (command === "register") console.log(JSON.stringify(registerRun(arg)));
-  else if (command === "register-sender-comparison") console.log(JSON.stringify(registerSenderComparison(arg)));
+  if (command === "register") console.log(JSON.stringify(await registerRun(arg)));
+  else if (command === "register-sender-comparison") console.log(JSON.stringify(await registerSenderComparison(arg)));
   else if (command === "register-recovered" && rest.length === 1)
-    console.log(JSON.stringify(registerRecoveredTrace(arg, rest[0])));
-  else if (command === "register-activation") console.log(JSON.stringify(registerActivation(arg)));
+    console.log(JSON.stringify(await registerRecoveredTrace(arg, rest[0])));
+  else if (command === "register-activation") console.log(JSON.stringify(await registerActivation(arg)));
   else if (command === "register-incomplete-benchmark")
-    console.log(JSON.stringify(registerIncompleteBenchmark(arg)));
+    console.log(JSON.stringify(await registerIncompleteBenchmark(arg)));
   else if (command === "register-night-bundle")
-    console.log(JSON.stringify(registerNightBundle(arg)));
+    console.log(JSON.stringify(await registerNightBundle(arg)));
   else if (command === "register-scale-seed")
-    console.log(JSON.stringify(registerScaleSeed(arg)));
+    console.log(JSON.stringify(await registerScaleSeed(arg)));
   else if (command === "register-night-preflight")
-    console.log(JSON.stringify(registerNightPreflight(arg)));
+    console.log(JSON.stringify(await registerNightPreflight(arg)));
   else if (command === "list")
     console.log(
       rows()
@@ -419,6 +429,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   else if (command === "archive") {
     const i = rest.indexOf("--to");
     if (i < 0 || !rest[i + 1]) throw Error("archive TAG --to DIR");
-    console.log(JSON.stringify(archive(arg, rest[i + 1])));
+    console.log(JSON.stringify(await archive(arg, rest[i + 1])));
   } else throw Error("trace-store.mjs list | archive TAG --to DIR | register RUN_DIR | register-recovered RENDER_DIR ORIGINAL_RUN_DIR | register-activation RUN_DIR | register-incomplete-benchmark RUN_DIR | register-night-bundle BUNDLE_DIR");
 }
