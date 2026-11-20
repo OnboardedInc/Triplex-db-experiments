@@ -28,6 +28,16 @@ def point_readback(folder, repo, reading):
     return result
 
 
+def writer_observation(folder, endpoint):
+    scope = get(folder / "server-observations.json")["scope"]
+    key = json.dumps(["triplex-scope-v1", "test", "test", scope, 0], separators=(",", ":")).encode()
+    db = "s2-" + base64.urlsafe_b64encode(key).decode().rstrip("=")
+    with urlopen(endpoint + f"/v1/db/{db}/write-options", timeout=35) as response:
+        observed = json.load(response)
+    assert observed["database"] == db
+    return observed
+
+
 def joined_output(folder, owner, source, start, repo=None):
     # [DX-BM1] Why: require all six real cells and replay their offer, clock and native proof identities.
     # Rejected: granting a 100k or deadline result from the small smoke or from the aggregate file alone.
@@ -195,12 +205,8 @@ def host(r, request, clean=False):
             assert get(engine / f"health-{role}.json")["gatewaySourceHash"] == gateway_hash
 
         def writer_options(folder):
-            scope = get(folder / "server-observations.json")["scope"]
-            key = json.dumps(["triplex-scope-v1", "test", "test", scope, 0], separators=(",", ":")).encode()
-            db = "s2-" + base64.urlsafe_b64encode(key).decode().rstrip("=")
-            with urlopen(write_url + f"/v1/db/{db}/write-options", timeout=35) as response:
-                observed = json.load(response)
-            assert observed["database"] == db and observed["attempt"] == env["DX_WRITE_OPTIONS_ATTEMPT"]
+            observed = writer_observation(folder, write_url)
+            assert observed["attempt"] == env["DX_WRITE_OPTIONS_ATTEMPT"]
             assert observed["gatewaySourceHash"] == gateway_hash and observed["strictRecordClocks"] is True
             assert observed["rowsVersion"] == 3 and observed["commitFunctionInstalled"] is True
             assert observed["commitFunction"] == ":triplex/commit" and re.fullmatch(r"[a-f0-9]{64}", observed["baseFunctionHash"])

@@ -15,7 +15,7 @@ import uuid
 from producer_readings import capacity_agreement, capacity_memory, capacity_rung, group_arm, writer_options
 from import_reading import split_output, tail_attempt
 from activation_clock import activation_modes
-from joined_preflight import joined_output, point_readback
+from joined_preflight import joined_output, point_readback, writer_observation
 from notice_reading import notice_reading
 
 ROOT = Path("/var/tmp/triplex-bm1")
@@ -549,6 +549,45 @@ def make(item, attempt, start, deadline):
 
 def args_request(r):
     return [sys.executable,str(Path(__file__).resolve()),"worker",str(r["item"]),str(r["attempt"])]
+
+
+def component_completion(r):
+    root=Path(r["root"])
+    scale=root/"scale"
+    assert (r["item"],r["attempt"],r["source"])==(29,2,JOINED_GEOGRAPHY_SOURCE)
+    inputs, observations, producer, seed=map(get,(scale/"server-inputs.json",scale/"server-observations.json",
+                                                 scale/"server-collected.json",scale/"server-seed.json"))
+    for row in (inputs,observations,producer):
+        assert row["source"]==r["source"] and row["n"]==100_000 and row["nonce"]==inputs["nonce"]
+        assert row["owner"]==digest(root/"run-owner.json")
+    assert inputs["slot"]=="tx2-dxt1-bm1-"+r["tag"] and inputs["settlement"] is True
+    assert r["start"]<=inputs["issuedAt"]/1000 and seed["nonce"]==inputs["nonce"] and seed["n"]==100_000
+    assert observations["windows"]==producer["windows"]
+    assert [(w["index"],w["mode"],w["rate"]) for w in producer["windows"]]==[
+        (i,mode,rate) for i,(mode,rate) in enumerate((("owed",0),("staged",0),("owed",3.5),("staged",3.5),
+                                                     ("owed",23.5),("staged",23.5)))]
+    for path in ("server-effects","server-seed",*(f"{kind}-{i}" for i in range(6) for kind in ("offer","terminal","proof"))):
+        assert digest(scale/(path+".json"))==observations["outputs"][path]
+    return {"source":r["source"],"slot":inputs["slot"],"nonce":inputs["nonce"],
+            "requestSha256":digest(Path(r["directory"])/"request.json"),"completedSha256":digest(scale/"server-collected.json")}
+
+
+def close_extra_settlement(r):
+    root=Path(r["root"])
+    scale=root/"scale"
+    if not (scale/"server-collected.json").is_file() or not (scale/"settlement").is_dir():
+        return False
+    # [DX-BM1] Why: the requested six windows have their complete receipts before the separate second 100k seed starts.
+    # Rejected: interrupting timed Publish or waiting for an unrequested second native population.
+    completed=component_completion(r)
+    writer=writer_observation(scale,get(root/"run-owner.json")["endpoint"])
+    small=get(root/"collector.json")["writerOptions"]
+    assert writer["database"]!=small["database"]
+    assert all(writer[key]==small[key] for key in ("options","attempt","gatewaySourceHash","baseFunctionHash","strictRecordClocks"))
+    put(root/"scale-writer-options.json",writer)
+    put(root/"component-only-close.json",{**completed,"writerSha256":digest(root/"scale-writer-options.json"),"closedAt":stamp()})
+    run("systemctl","stop",r["unit"],timeout=210)
+    return True
 
 
 def setup(r,env):
@@ -1090,6 +1129,13 @@ def result(r):
         large=collect(root/"scale",owner,r["source"],100000,admission["issuedAt"],repo,node,env=ENV)
         assert large["nonce"]!=small["nonce"]
         put(directory/"joined-scale-observations.json",large)
+        if (closed:=root/"component-only-close.json").is_file():
+            receipt=get(closed)
+            completed=component_completion(r)
+            assert {key:receipt[key] for key in completed}==completed
+            assert receipt["writerSha256"]==digest(root/"scale-writer-options.json")
+            assert r["start"]<=dt.datetime.fromisoformat(receipt["closedAt"]).timestamp()<=r["deadline"]
+            return "observed","All six requested 100,000-person windows independently replayed. The separate settlement seed was stopped after proof."
         if not (root/"scale/settlement/settlement-price.json").is_file():
             return "partial","Six 100,000-person component windows verified. The separate offline settlement did not seal."
         large_settlement=settlement(root/"scale/settlement",100000,60,64,admission["issuedAt"])
@@ -1537,6 +1583,11 @@ def one(item, attempts=(1,2)):
             if missing:fallback(r)
             timed_out=False
             while running(r):
+                if (item,attempt)==(29,2) and os.environ.get("DX_BM1_COMPONENT_ONLY")=="1":
+                    try:
+                        if close_extra_settlement(r):break
+                    except (OSError,AssertionError,ValueError,KeyError,subprocess.SubprocessError):
+                        atom(sub/"component-close-error.txt",traceback.format_exc())
                 if time.time()>=limit:
                     timed_out=True
                     if active(r["unit"]):run("systemctl","stop",r["unit"],timeout=210)
