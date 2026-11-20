@@ -3670,3 +3670,33 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
   rate is 8,000 to 16,000 records per second: 620 to 800 million records in the same 9.9 hours (a full doubling
   from 430 million needs at least 17,300 per second). Growth comparison open until the run reports. Parked; five
   agents running (DX-BM1, DX-SCALE1, DX-V01, DX-THIN1, DX-JVM1).
+
+## 2026-11-20 22:13 UTC (17:13 local, 2026-11-20): the first per-person arm lost to the present writer on server 1; DX-PREP1 resumed to find out why; DX-JVM1 part 3 in
+
+- **Arm 1-1-S (per-person writer, one write gateway, source `7ca8525a9`) against arm 1-0-K (present grouped
+  writer), read from the raw cells by the orchestrator before the driver's summary** (copied to
+  `evidence/DX-BM1/day-n20/prep1-tenant-early/`, archive 23,422,604 bytes, sha256 `55efa10f…9b90`):
+
+  | Offered per s | K stored per s in window / expired | S stored per s in window / expired |
+  | ---: | --- | --- |
+  | 50 | 50.0 / 0 | 50.0 / 0 |
+  | 235 | 179.5 / 7,715 of 33,840 | 140.6 / 13,351 |
+  | 394 | 181.7 / 30,303 of 56,736 | 111.1 / 40,485 |
+  | 620 | 171.9 / 64,276 of 89,280 | 140.1 / 68,903 |
+
+  At 50 offered, due-to-end p99 over all accounts: K 259 ms, S 1,368 ms; account 0: K 221 ms, S 1,568 ms. The
+  forecast for S with one gateway was 383 per second and 27 to 28 ms.
+- **What the rows show at 235 offered:** K commits groups of eight in 1.18 ms of native compute with no storage
+  reads; S spends 4.01 ms of native compute on one save and reads and decodes eight index segments from storage
+  inside the transactor (`sql` 8, `sql-ms` 1.23, `deserialize-ms` 2.26, `avet-load` 8). The serial step is
+  about 4 ms per save in S against about 0.15 ms in K, which caps S near 250 per second before anything else; more
+  gateways cannot raise that. Arms with two and four gateways are still running.
+- **DX-PREP1 part 7 assigned (run-critical; five agents running with it):** confirm or correct this reading from
+  the raw rows; explain why the per-person function reads storage; predict then fix the cheapest candidate; a
+  60 minute server command comparing K, S as it was and S fixed.
+- **DX-JVM1 part 3 (`b35baa3ee`; tested code `5a9652780`).** The eight Java 25 failures were the tests'
+  own (deadlines, a stub that blocked the ordered sender, a worker path); after fixes all twelve focused tests pass
+  on Java 21 G1, Java 25 G1 and Java 25 ZGC; launch settings reconciled with DX-TAIL1's and `exp/DX-INT1`.
+  Recommendation for version 0.1 for now: Java 21 with G1 and two cores for the writer (128 MiB memory-index
+  threshold: 149 to 189 saves per second at 235 offered). Memory reserved: 24 GiB for the G1 arms, 37 GiB for ZGC.
+  The three Java 25 server arms are still to run. Parked.
