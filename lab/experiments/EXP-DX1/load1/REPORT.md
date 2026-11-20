@@ -1,26 +1,42 @@
-# Importing beside live traffic
-The earlier 4.72× result used only 60 quiet saves. The repeat had 540 per group.
-All ten of the slowest saves arrived while a bulk frame was still outstanding.
-The two slowest took about 132 milliseconds each. They spent 22 and 5 milliseconds waiting in the gateway queue.
-The longer run found slow saves behind both bulk frames and long garbage-collection pauses.
-The earlier fast loader still handles quiet loads and retries a lost receipt.
-The shared-database test will now reduce frame size when a commit consumes too much of the latency allowance.
-The Mac results are diagnostic. Server predictions and commands will be recorded before any server run.
+# Can imports leave neighbouring accounts alone?
+The longer repeat found slow saves behind bulk frames, garbage collection and waits elsewhere in the write path.
+At 50 saves per second, the best tested pacing setting loaded 2,137 facts per second and still slowed the quiet account.
+Giving the importer its own database and writer increased loading to 5,167–5,537 facts per second.
+With one PostgreSQL process the quiet account stayed within the limit, but some other accounts slowed down.
+Two PostgreSQL processes on the same Mac still shared the machine’s resources. The quiet account’s slow saves took twice as long.
+Splitting databases also makes cross-account queries and release order something the application has to coordinate.
+One- and two-machine commands are ready. The Mac timings are diagnostic, and the full-sized decision remains open.
 
-In the archived 128-fact arm the client saw 269 frames with a median of 36.28 ms and a p99 of 170.39 ms. For nine of the ten slow saves, the outstanding frame's durable position preceded its save. One save committed before the outstanding frame. The historical native log was truncated to the final control arm.
+## Shared database
 
-The new 108-second bookends preserve the 50 offered saves per second, plus five quiet saves and five quiet pinned reads per second. Every published command still reconciles its full receipt and feed, and the importer verifies physical rows at the resulting pin.
-- Audit. The historical analysis checks existing manifest hashes, source, nonce, slot and matching immutable receipt positions. Each new trace is produced by the live attempt's identified containers, checks the recording hash and run/source/slot, and keeps clock uncertainty for any host-to-guest overlap. The existing oracle and stack checks still guard claims, pins, physical rows, counts, identity and cleanup. No published contract pin moved.
-- [Earlier loader report](PART3.md) · [Earlier predictions and commands](BENCH.md) · [Earlier attempt index](EVIDENCE.md)
+The earlier 4.72× used 60 quiet saves, so its p99 was the maximum. All ten slowest offers arrived with a bulk reply outstanding. Nine of those frames committed first. The two slowest saves took about 132 ms and waited 22 and 5 ms in the gateway queue. [Earlier report](PART3.md)
 
-The 108-second import produced 3,082 facts/s. Its quiet read/save p99 was 95.6/154.6 ms. The first control was 22.4/96.8 ms, and the post-import control changed sharply. Report the two controls separately. That drift made the pooled denominator misleading.
-Across 2,775 native frames, exclusive hold p50/p99 was 15.6/69.2 ms, native apply 4.4/39.8 ms, writer log-path parks ≥5 ms 0/13.8 ms, and native log completion to peer return about 3.3/13.3 ms.
-- Extended-tail examples. One 255 ms save overlapped a 228 ms bulk hold and 150 ms of transactor GC. A 248 ms save had no bulk hold and overlapped 145 ms of GC. Another 152 ms save overlapped a 119 ms bulk hold with 6.4 ms native work. The collector overflowed after preserving the native recording, all three offer tapes and completed row proofs. Gateway GC, preparation and precise index adoption could not be attributed from this attempt. Collection now transfers bounded chunks.
-- The time-budget arm keeps whole subjects and one bulk receipt in flight. It stores the exact chosen boundary before sending, keeps W1's 96 stored rows and 64 KiB as hard caps, and reduces the estimated width when a dispatch-to-peer interval exceeds budget. The budget cannot preempt work already accepted. It refuses more work if even the minimum often exceeds budget.
-- [Tail evidence checksums](PART4-SHA256SUMS)
-- Split layouts use independent Datomic writers and gateways. The first shares PostgreSQL with a different SQL database and role. The second runs another PostgreSQL. The bulk client has its own event loop. Every live account replays the same scheduled saves and pinned reads in the bookends and the candidate.
-- Split verification binds both physical destinations, checks the isolated cursor against original receipts and pinned rows, and recomputes the offered tape and p99 from the retained outcomes. Exactness is required before publishing an arm observation.
+The repeat collected 540 quiet saves and 540 reads in each of three 108-second arms. The 128-fact cap loaded 3,082 facts/s. Quiet read/save p99 was 95.6/154.6 ms versus 22.4/96.8 first and 203.3/247.9 last. Control drift makes a single pooled ratio misleading. Across 2,775 bulk frames the median held 120 facts. Hold p50/p99 was 15.6/69.2 ms, native apply 4.4/39.8 ms, writer log-path parks of at least 5 ms 0/13.8 ms and native completion to peer return about 3.3/13.3 ms.
 
-The first 50/s shared run verified five cells. The 1/4/8 ms settings imported 0/0/596 facts/s. Its 11.06 ms budget came from half the matched no-import read p99 and imported 2,137 facts/s. Quiet read/save p99 reached 51.6/166.4 ms against 22.1/91.7 in the first control. This still missed both bars. A fractional Node deadline prevented the final control from starting. Each completed cell keeps its own checked tape and proof. The new allowance campaign has a dedicated quiet-alone reference.
+One 255 ms save overlapped a 228 ms bulk hold and 150 ms of transactor GC. A 248 ms save had no bulk hold and overlapped 145 ms of GC. Another 152 ms save overlapped a 119 ms bulk hold with 6.4 ms in native processing. The saved recording puts this delay after native completion and before peer return. The collector overflowed after saving the native recording, exact worker results and offer tapes. Gateway GC and frame preparation were unavailable, and one process-wide 736 ms index job had no attributable interval. Chunked collection fixes the overflow. Index backpressure becomes possible when new memory-index data outruns the headroom available during a merge. [Datomic capacity planning](https://docs.datomic.com/operation/capacity.html)
 
-Separate PostgreSQL on the same Mac imported 5,167 facts/s at 50 offered saves/s. All 11,880 offers completed in each arm. Quiet read/save p99 was 76.3/412.4 ms against 53.7/197.1 and 77.9/205.6 in controls. The largest paired ratios were 3.46× read and 2.21× save. Two database stacks sharing this VM exceeded the isolation bar even with separate SQL.
+A frame compiles before admission, carries whole subjects, and waits behind ready live saves. One bulk frame is outstanding. W1’s bounds are 96 stored rows and 64 KiB. We adapt using dispatch-to-peer time and persist the chosen boundary before submission. DX-PREP1’s work applies to existing single-owner saves. It excludes bulk. Its eight-save groups spent about 117 ms preparing the members versus 2 ms appending. GC, catch-up and indexing can overrun a size estimate.
+
+| Offered saves/s | Budget | Facts/s | Quiet read/save p99 ms | Ratios versus first control |
+|---:|---:|---:|---:|---:|
+| 50 | Control | 0 | 22.1 / 91.7 | 1.00 / 1.00 |
+| 50 | 1 ms | 0 | 18.0 / 34.9 | 0.81 / 0.38 |
+| 50 | 4 ms | 0 | 16.2 / 57.3 | 0.73 / 0.63 |
+| 50 | 8 ms | 596 | 21.2 / 88.6 | 0.96 / 0.97 |
+| 50 | 11.06 ms | 2,137 | 51.6 / 166.4 | 2.33 / 1.82 |
+
+The 1 and 4 ms plans stopped after the smallest group repeatedly exceeded budget. At 8 ms, 206/2,842 frames exceeded budget before the plan stopped. At 11.06 ms, 416/9,050 exceeded it. The latter budget came from half of the matched control’s quiet read p99. An integer deadline fix preserves the completed cells and allows the final control to start in subsequent runs. The dedicated allowance campaign uses a quiet-alone reference.
+
+## Independent Datomic database and transactor
+
+| At 50 saves/s | Facts/s | Quiet read/save p99 ms | Quiet ratios vs both controls | Largest ratios across accounts vs both controls |
+|---|---:|---:|---:|---:|
+| Shared PostgreSQL | 5,537 | 36.4 / 124.0 | 0.89–1.26 / 0.89–1.13 | 1.79–2.51 read / 1.29–2.06 save |
+| Separate PostgreSQL | 5,167 | 76.3 / 412.4 | 0.98–1.42 / 2.01–2.09 | 2.57–3.46 read / 2.17–2.21 save |
+
+All 11,880 offered reads and saves completed exactly in each split arm. The 108-second comparison includes ten writing accounts plus the quiet one at 5 saves/s. Every account offers 5 pinned reads/s. Each importer has its own process and gateway. Shared SQL used separate SQL databases and roles. Separate SQL added 192 MiB of container budget on top of the extra writer and gateway’s 1.41 GiB. Both used one VM and disk, with different control tails and image IDs. The Datomic JARs and mounted gateway sources were bound in each run. The placement order leaves the difference between the two SQL layouts unresolved.
+
+Account-local pins and receipts remain useful. Cross-account reads need coordinated cuts or a materialized view, and release activation needs explicit coordination across independent commit streams. The earlier move copied and verified 1,280–20,480 facts online in 2.76–18 s and fenced for 0.47–0.71 s with one three-fact delta. Extrapolating the top rung gives about 3.5–3.9 hours of live copying for 16 million facts, with two copies during overlap and a bounded final suffix. [Move evidence](../ha1/REPORT.md)
+
+- Audit. Retrospective uses archived file hashes and exact receipt positions. Native capture binds original recording bytes to the identified role, attempt, source and slot. Each live arm verifies schedule, reads and durable receipts at exact cuts, then replays per-account metrics from the saved offers. The split child checks every original claim and every stored row. Adaptive retry checks original frame boundaries and receipts at reopen. The stack validates mounts, images and cleanup. The bench receiver verifies archive hash, revision, layout and attempt before replaying offer tapes. No acceptance pins or frozen trace changed.
+- [One- and two-server commands and forecasts](ISOLATION-BENCH.md) · [Part 4 evidence checksums](PART4-SHA256SUMS) · [Part 3](PART3.md).
