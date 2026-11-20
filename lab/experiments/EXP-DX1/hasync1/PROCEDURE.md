@@ -33,18 +33,14 @@ The planned procedure copies live and checks replay before the writer pause. The
 
 The lab allows 6 minutes to restore each prepared deep checkpoint. The fault injector budgets 5 seconds to find its SQL lock owner, 10 to see the Datomic SQL wait, and 7 to confirm an asymmetric WAL cut. Its lock can hold for 35 seconds so it remains in place until the abrupt stop. The oracle process has a 30-second budget for the small witness replay. The existing client polls pinned reads every 80 ms and resolves ambiguous writes every 130 ms for up to 150 seconds. That retry ceiling preserves outcomes even when a timing target is missed. [Fault driver](faults.ts) · [Existing client fixture](../../../../packages/datomic/test/ha1-account.ts)
 
-Local entry point after building the Datomic TypeScript package:
+Run one Mac correctness fixture at a time after building the Datomic TypeScript package. The attempt records its timings as diagnostics.
 
 ```sh
-node lab/bin/heavy.mjs --label DX-HASYNC1 -- node --import tsx lab/bin/engine.mjs ha1 --holder DX-HASYNC1 --slot auto --experiment hasync-smoke --people 8
+node lab/bin/heavy.mjs --label DX-HASYNC1 -- node --import tsx lab/bin/engine.mjs ha1 --holder DX-HASYNC1 --slot auto --experiment hasync-ack --people 8 --diagnostic
 ```
 
 The scheduled-load driver starts 900 ms before the cut and samples at five field saves and 50 pinned reads per second per system. It keeps offering for 1.5 seconds after routing, up to 90 seconds total. The caller deadline is one second. The 5.5-second wire deadline exposes late completions and still bounds outstanding requests. At most 32 saves and 64 reads are dispatched at a time per system. The raw stream distinguishes sender admission, gateway refusal and wire timeout.
 
 The fleet role sampler waits 11 seconds between cgroup readings to cover two Datomic heartbeat intervals. Its PostgreSQL admin SQL budget is three seconds. After promotion, each native Datomic broker and its gateway share the usual 23-second readiness budget. The independent controller retains its own durable revocation and reads the power or storage interlock before returning isolation. [Fence](FENCE.md)
 
-The local scale controller admits each engine invocation separately through the heavy runner. It retains one private checkpoint for the three drills at each rung and removes it after their resources have closed.
-
-```sh
-node --import tsx lab/experiments/EXP-DX1/hasync1/v2/scale-local.ts 740 6300 17000
-```
+Use the paired campaign for the fleet and edited size measurements. It retains a distinct checkpoint for each edited size and audits its receipt ledger before and after each cut. [Paired campaign](BENCH.md)

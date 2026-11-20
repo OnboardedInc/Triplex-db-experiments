@@ -31,6 +31,7 @@ The files below are relative to the durable Triplex lab vault's `evidence/DX-HAS
 | `hasync-fleet-dedicated-bf166e22` | `a20076137` | One system on a dedicated SQL pair. 19.87 s to a new save and 110 scheduled saves settled. |
 | `hasync-fleet-shared-7d4c9384` | `a20076137` | Four systems on one pair. The last new save took 12.02 s, all 284 scheduled saves settled, and all cells had at most a 0.082 s gap between on-time reads. |
 | `hasync-fleet-dedicated-7ab527b7` | `a20076137` | Four systems on four pairs. The last new save took 22.25 s, all 480 scheduled saves settled, and all cells had at most a 0.093 s gap between on-time reads. |
+| `hasync-ack-a977938a` | `7192b5dff` | Ordinary-token correctness drill. The first caller lost its reply, the original command returned its original receipt on resend, and the oracle verified both read cuts. All 91 scheduled saves settled. |
 
 ## Where the code publishes outcomes
 
@@ -55,3 +56,5 @@ The synthetic preflight `replacement-oracle-dry-2SeNxj` exposed an oracle receip
 The first queue log starts at 05:12:17 UTC. `part3-queue-a4793ada-0092-4c00-b402-6c3fc4541402.log` retains the four completed fleet reservations and subsequent pre-start refusals. The resumed controller uses the standard lab measurement lease ahead of the heavy and engine gates for the ten-system reservations. It waits for the required slots to be free before its bounded drain, and its lease releases when the process exits. The launcher versions and the controller are covered by the manifest. [Checksums](SHA256SUMS)
 
 The 13:40 local rule ended the Mac fleet and size queue. Current Mac attempts require the ordinary heavy token and the normal engine reservation. Each diagnostic marker names its own nonce, source, slot and mode. It attaches a timing classification, while content checks remain in the drill and independent replay. The serial server collector rechecks archived before and after seed seals, backup manifests and receipt counts against the declared same-source checkpoint before calculating growth from the independently recounted offer streams. [Mac admission](../ha1/local.ts) · [Server collector](../ha1/control.ts)
+
+The ordinary queue first requested admission at 18:33:58 UTC. The withheld-reply drill began at 18:51:09 UTC and released its owned resources at completion. Its saved operation returned `OperationDuplicate`, the changed envelope with the same command returned `CommandConflict`, and the rebuilt SDK resolved the exact original receipt. Both queue logs before that admission and the stable attempt files are retained. [SDK specification](SDK-RETRY.md)

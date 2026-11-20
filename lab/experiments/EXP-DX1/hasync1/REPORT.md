@@ -1,7 +1,7 @@
 # Failover correctness and server measurements
 
-In the first Mac run that withheld a save reply, new saves resumed after 18.55 seconds.
-The system refused 90 saves during that cut. All 90 settled after retry with the same command ID.
+A saved edit whose reply was lost returned the original receipt when resent after failover.
+The edit appeared once in the change history. Earlier and later reads both returned the expected value.
 In the first planned move with scheduled traffic, a new save arrived after 13.56 seconds.
 Four systems on one shared storage pair resumed saves within 12.03 seconds and within 64 milliseconds of one another.
 With a separate storage pair for each of the four systems, the last resumed at 22.25 seconds.
@@ -23,7 +23,7 @@ Five saves and fifty reads are offered per second per system. The one-second cal
 
 Offers are counted from the fault up to the first scheduled on-time save sent to the new writer. Every save in those windows was refused. No offer in those windows timed out or returned a late receipt. Read outcomes and offers outside the cut remain in the raw evidence. [Independent recount](v2/recount-local.ts)
 
-The earlier retries appended facts. The new test resends a replacement whose predecessor was already retired. The native duplicate guard and SDK claim recovery are ported from the write-path fix. [SDK retry contract and test](SDK-RETRY.md)
+The live Mac retry exercised a committed replacement that had retired its predecessor. It recovered the original receipt and settled all 91 scheduled saves, including 76 same-ID retries. The earlier scheduled traffic only appended facts. [SDK retry contract and test](SDK-RETRY.md)
 
 The earlier Part 1 campaign kept all 73 acknowledged receipts and recorded 1,234 good reads. Its separate grouping and synchronous-flush measurements remain available. [Part 1 report](https://github.com/OnboardedInc/Triplex-db-experiments/blob/e61905198/lab/experiments/EXP-DX1/hasync1/REPORT.md)
 
