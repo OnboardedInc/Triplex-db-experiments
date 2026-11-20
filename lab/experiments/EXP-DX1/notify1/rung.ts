@@ -104,6 +104,9 @@ export async function measuredPair(
 ) {
   const pins = inputPins(source);
   const native = process.env.NOTIFY_NATIVE === "1" || deep;
+  const sourceEndpoint = process.env.NOTIFY_SENDER_URL;
+  if (sourceEndpoint)
+    assert(native && independent && recipientPages && sourceEndpoint !== process.env.DATOMIC_URL);
   const open = (name: string) =>
     native
       ? openComposition("reach", "datomic", name)
@@ -153,6 +156,7 @@ export async function measuredPair(
               recipientPages,
               readIntervalMs,
               priority,
+              sourceEndpoint,
             }
           : undefined,
         duration,
@@ -186,6 +190,10 @@ export async function measuredPair(
       a.proof.eventCounts[1] === a.dispatch.deliveries,
   );
   assert(a.readP99 && b.readP99 && a.saveP99 && b.saveP99);
+  if (sourceEndpoint) {
+    assert(a.senderReadPeer === "dedicated" && b.senderReadPeer === "dedicated");
+    assert(a.readCount >= 500 && b.readCount >= 500, "Too few live reads for the paired tail");
+  }
   const result = {
     diagnostic: true,
     n,

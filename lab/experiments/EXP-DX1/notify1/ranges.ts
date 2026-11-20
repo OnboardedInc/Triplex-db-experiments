@@ -166,15 +166,13 @@ export class CommittedRanges {
   private ready = Promise.resolve();
   readonly censusHash: string;
   readonly rawW0: boolean;
-  constructor(
-    roster: readonly string[],
-    rawW0: boolean,
-    private readonly wages?: WagePostings,
-  ) {
+  private readonly wages?: WagePostings;
+  constructor(roster: readonly string[], rawW0: boolean, wages?: WagePostings) {
     assert.deepEqual([...new Set(roster)].sort(), roster);
     this.censusHash = hash(roster);
     this.rawW0 = rawW0;
     this.enrolled = new Set(roster);
+    this.wages = wages;
   }
   private facts(tx: Native) {
     return tx.changes.filter((c) => {

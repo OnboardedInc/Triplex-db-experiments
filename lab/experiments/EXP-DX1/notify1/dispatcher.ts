@@ -64,16 +64,14 @@ export class Dispatcher {
   readonly notices: Notices;
   readonly sink: Documents;
   readonly metrics = emptyMetrics();
-  constructor(
-    notices: Notices,
-    sink: Documents,
-    private readonly activationRange?: (
-      event: Event,
-      start: number,
-    ) => Promise<{ ids: string[]; size: number }>,
-  ) {
+  private readonly activationRange?: (
+    event: Event,
+    start: number,
+  ) => Promise<{ ids: string[]; size: number }>;
+  constructor(notices: Notices, sink: Documents, activationRange?: Dispatcher["activationRange"]) {
     this.notices = notices;
     this.sink = sink;
+    this.activationRange = activationRange;
   }
   async derive(
     tail: Row<Tail>,

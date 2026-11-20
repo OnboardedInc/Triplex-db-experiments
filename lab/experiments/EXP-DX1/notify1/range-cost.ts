@@ -15,6 +15,13 @@ import { wireDelivery } from "./verify.ts";
 import { recipient } from "./worker.ts";
 
 type Value = { e: string; a: string; v: number | string; from: number; to?: number; tx: number };
+type Change = {
+  op: string;
+  entityId: string;
+  attribute: string;
+  validFrom: number;
+  tripleId: string;
+};
 const at = Date.parse(W0.POPULATION_VALID_TIME),
   instant = (ms: number) => new Date(ms).toISOString().replace(/Z$/, "000Z");
 const put = ({ e, a, v, from, to }: Value): Op => ({
@@ -92,7 +99,7 @@ async function arm(n: number, mode: string, scope: string, dir: string, native: 
         const result = await rx.transact(...args);
         if (result.ok) {
           const command = args[1]?.commandId;
-          assert(command);
+          assert(typeof command === "string");
           transactions.set(result.value.position, { command, txId: result.value.txId });
         }
         return result;
@@ -133,7 +140,7 @@ async function arm(n: number, mode: string, scope: string, dir: string, native: 
           receipt.value.txId === saved.txId &&
           receipt.value.position === saved.position,
       );
-      const asserted = receipt.value.changes.find(
+      const asserted = (receipt.value.changes as Change[]).find(
         (c) =>
           c.op === "assert" && c.entityId === e && c.attribute === attr && c.validFrom === from,
       );
@@ -266,7 +273,9 @@ async function arm(n: number, mode: string, scope: string, dir: string, native: 
       const receipt = await rx.transactionByCommand(command);
       assert(receipt.ok && receipt.value.position === pos && receipt.value.txId === txId);
       receiverChanges += receipt.value.changes.length;
-      receiverAssertions += receipt.value.changes.filter((op) => op.op === "assert").length;
+      receiverAssertions += (receipt.value.changes as Change[]).filter(
+        (op) => op.op === "assert",
+      ).length;
     }
     assert.equal(w1 - w0, saveAcks.length);
     return {

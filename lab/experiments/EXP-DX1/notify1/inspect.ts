@@ -37,6 +37,15 @@ export function inspectPair(dir: string) {
       );
       assert.equal(result.baseline.recipientPages, result.dispatch.recipientPages);
       assert.equal(result.baseline.readIntervalMs, result.dispatch.readIntervalMs);
+      if (pre.recipient.route === "isolated") {
+        assert(
+          result.dispatch.senderReadPeer === "dedicated" &&
+            result.baseline.senderReadPeer === "dedicated",
+        );
+        for (const arm of [result.dispatch, result.baseline]) {
+          assert(arm.readCount >= 500 && arm.sourceAdvances === arm.foregroundCommits);
+        }
+      }
     }
     if (path.basename(dir) === "notice-preflight") {
       assert.equal(pre.noticeAttempt, nonce);
