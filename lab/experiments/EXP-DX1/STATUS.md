@@ -3204,3 +3204,35 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   the six timed windows are still ahead.
 - **Mac disk fell to 18 GiB:** removed 18 lab images older than three hours and seven finished analysts' worktrees;
   37 to 39 GiB free. `dx-thin1`'s worktree holds 18 GB.
+
+## 2026-11-20 15:27 UTC (10:27 local, 2026-11-20): bare metal: activation at 100,000 deep people; erasure at 16 million facts; server 1 idle a third time
+
+- **DX-BM1 (`223d23cb7`; `bm1/REPORT.md`, `HANDOFF.md`, `PREDICTIONS.md`).** Joined Publish at `48f557594` on its own verified
+  seed (16,045,255 facts), one Publish per window, all six windows replayed independently, all 3,240 scheduled saves
+  with native ACK rows, 342,881 ordered recipient effects matched:
+
+  | Window | Durable receipt | First correct answer | Staged values (durable / first answer) |
+  |---|---:|---:|---|
+  | Quiet | 46.14 ms | 55.97 ms | 13.019 / 13.026 s |
+  | 3.5 saves per second | 53.15 ms | 63.46 ms | 14.118 / 14.134 s |
+  | 23.5 saves per second | 2.043 s | 2.051 s | 18.616 / 18.625 s |
+
+  At 23.5 the Publish waited 2.020 s behind 50 earlier saves in the driver's queue and received its native ACK 24 ms
+  after entry: queue order, not database time. Under Sam's ruling of today (the durable record counts as stored)
+  the receipt-only windows are the judged ones: met quiet and at 3.5; missed at 23.5 in queue order. Each number is
+  one Publish.
+- **Erasure on bare metal:** one person with 415 prior saves in a 100,000-person account took 11.90 s to a fresh root
+  (index job 8.55 s; predicted 4 to 12 s); a person without that history 2.56 s; fresh peers found no selected
+  values; a held gateway view still returned the value 14.18 s after the request (the known Q24 violation).
+- **Also in that report:** import with the importer in its own database on one host (800,000 facts in 71 to 74 s; with
+  shared PostgreSQL the quiet account stayed inside 1.5 but another account reached 2.92 times save p99 at 100
+  saves per second; with separate PostgreSQL the quiet read limit was exceeded at 50 and the quiet save limit at
+  100): controls only now that one database is decided. Matched deep against thin: in 49 of the 50 slowest deep saves
+  the largest interval was the peer's wait outside the save's own evaluation, and gateway activity bounds any single
+  write-gateway pause to 29 ms there; the transactor's log lacks individual pause times. Deep seed image 12.68 GB,
+  thin million 2.91 GB restoring in 119 s. STG1's 100,000 launcher needs about 192 GiB of memory on a 93 GiB host.
+- **Server 1 was released at 10:15:58 local with an empty inventory and sat idle until about 10:30** (third time; about
+  0.25 USD). DX-BM1 resumed at xhigh with an ordered queue of seven items (Java settings comparison first, then the
+  write gateway's collector arms, activation under load with Publish priority, thin 1,000,000 capacity, aged reader
+  arms, small-frame imports in one database, the prepared subject save) and the rule that it ends its turn only when
+  all are done or blocked on a named builder, leaving a useful seed running.
