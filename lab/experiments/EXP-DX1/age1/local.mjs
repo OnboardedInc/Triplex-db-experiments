@@ -358,8 +358,8 @@ export async function local(opts, config, manager) {
     else if (opts.run === "native-suite") {
       // [DX-AGE1] Why: run INT1's native suite and compile the rung against the archived gateway source.
       // Rejected: blessing an older shared image's embedded gateway or building a replacement image.
-      await capture(["exec", peer, "/bin/bash", "-ceu",
-        'cp /age/packages/datomic/gateway/{codec-vectors,history-range-case}.json /opt/gateway/; ' +
+      await capture(["exec", "-e", "TX2_SAVE_LEDGER=0", "-e", "TX2_SMALL_ROWS=0", peer, "/bin/bash", "-ceu",
+        'cp /age/packages/datomic/gateway/{codec-cases,codec-vectors,history-range-case}.json /opt/gateway/; ' +
         'exec /opt/datomic/bin/run -e "(require (quote triplex.age.rung)) (triplex.gateway.selftest/-main)"'],
       path.join(dir, "probe.log"), controller.signal);
     } else {
