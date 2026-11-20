@@ -6,6 +6,7 @@ import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { parseArgs } from "node:util";
 import { loadFixture } from "./fixture.ts";
+import type { Reply } from "./actions.ts";
 import { dockerClient, loopback, port, repo, Stack } from "./stack.ts";
 
 const usage = `pnpm playground start [--port 4186] [--write-port 8486] [--read-port 8487] [--larger | --tier full --data SOURCE]
@@ -258,7 +259,7 @@ async function mcp() {
       body: JSON.stringify(body),
       signal: AbortSignal.timeout(40_000),
     });
-    return { status: response.status, reply: await response.json() };
+    return { status: response.status, reply: (await response.json()) as Reply };
   });
 }
 

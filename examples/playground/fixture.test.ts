@@ -181,7 +181,8 @@ test("the static dashboard, JSON and MCP share a loopback listener", async () =>
       params: { name: "accounts", arguments: {} },
     });
     assert.equal(result.status, 200);
-    assert.equal((await result.json()).result.structuredContent.position, 0);
+    const rpc = (await result.json()) as { result: { structuredContent: { position: number } } };
+    assert.equal(rpc.result.structuredContent.position, 0);
     assert.deepEqual(observed, ["accounts", "accounts"]);
   } finally {
     await server.close();

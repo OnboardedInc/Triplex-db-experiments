@@ -29,16 +29,17 @@ export function port(value: string): number {
   return n;
 }
 
-export type Docker = (args: string[]) => Promise<string>;
+export type Docker = (args: string[], settings?: { buildxDirectory: string }) => Promise<string>;
 export function dockerClient(host?: string, context?: string): Docker {
   const args = context ? ["--context", context] : host ? ["--host", host] : [];
-  return async (command) => {
+  return async (command, settings) => {
     try {
       return (
         await exec("docker", [...args, ...command], {
           timeout: 10 * 60_000,
           maxBuffer: 4 * 1024 ** 2,
           encoding: "utf8",
+          ...(settings ? { env: { ...process.env, BUILDX_CONFIG: settings.buildxDirectory } } : {}),
         })
       ).stdout.trim();
     } catch (error) {
@@ -105,7 +106,13 @@ async function buildImage(docker: Docker, dir: string, prefix: string) {
       join(build, "gateway/codec-spec.json"),
     );
     await cp(join(config, "Dockerfile"), join(build, "Dockerfile"));
-    await docker(["build", "--label", `${ownership}=${prefix}`, "-t", prefix, build]);
+    // [DX-PLAY1] Why: the builder's CLI activity metadata belongs to this owned run.
+    // Rejected: allowing a linked checkout to update the user's global Docker buildx state.
+    const buildxDirectory = join(dir, "buildx");
+    await mkdir(buildxDirectory);
+    await docker(["build", "--label", `${ownership}=${prefix}`, "-t", prefix, build], {
+      buildxDirectory,
+    });
     return prefix;
   } finally {
     await rm(build, { recursive: true, force: true });
