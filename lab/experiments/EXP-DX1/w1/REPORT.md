@@ -1,4 +1,4 @@
-The write branch is exp/DX-W1-commit-tail-reads. The last measured writer is 67bc5285c.
+The server branch is exp/DX-W1-commit-tail-reads. This report covers code head 0ed7bcd8b.
 K keeps separate changed-subject and change rows. The new query option reads those same rows.
 The option adds zero records or bytes to a save. The local PostgreSQL timing run is queued.
 A query for one named entity can seek to it. A broad query still has to read stored histories.
@@ -15,7 +15,7 @@ The compatibility and erasure gaps still limit what the earlier write numbers ca
 
 **Evidence audit.** The native runner checks exact fixture results, expected test count, a new attempt nonce, all loaded gateway sources and the exact Datomic and Java inputs. The managed verifier compares Classic and K after a fresh SQL slot, projects the pinned O-REPLAY case from the independent offered operations and receipt identities, and checks the source, image, slot and nonce. Its write timings require exact receipt and persisted row readback. The new native feed binds identities to the durable transaction at the requested log t. No acceptance claim is made from pending attempts.
 
-**One writer.** Integrated DX-WFIX1 through `4331d6fe8`. The cross-run freezes DX-W1 `67bc5285c` and DX-WFIX1 `d83214271`. WFIX's first six native cases found 11 assertion failures on DX-W1, and its SDK cases found three. DX-W1's packed, priority and predecessor cases and commit-order test passed on the other writer. The options and control preflights exposed an absent API and a missing staged fixture dependency respectively. [WFIX fixtures](../wfix1/REPORT.md)
+**One writer.** Integrated DX-WFIX1 through `4331d6fe8`. The cross-run freezes DX-W1 `67bc5285c` and DX-WFIX1 `d83214271`. WFIX's first six native cases found 11 assertion failures on DX-W1, and its SDK cases found three. DX-W1's layout, packed, priority and predecessor cases and commit-order test passed on the other writer. The options witness lacked its API on the old DX-W1 source. Six DX-W1 controller cases then passed with a complete fixture export on `4331d6fe8`. [WFIX fixtures](../wfix1/REPORT.md)
 
 | Finding | Resolution on the combined branch |
 | --- | --- |
@@ -37,3 +37,5 @@ The compatibility and erasure gaps still limit what the earlier write numbers ca
 **Pulse.** `node --experimental-strip-types lab/experiments/EXP-DX1/w1/control.ts --pulse pulsew6a --write6`.
 **Field rates.** `node --experimental-strip-types lab/experiments/EXP-DX1/w1/control.ts --field-rates fldw6a --write6`.
 **Forecast.** K estimates 275–385 durable saves/s at saturation and a quiet-account p99 ratio of 2.4–5.0 at 235 offered saves/s. P estimates 205–330 and 3.0–8.5. Both use the same writer options. K is the eligible journal policy. P is informational. The writer proof checks a measured command's original operation and claim, its exact typed and ordinary journal rows, and its native log offset. The report seals that witness with source, slot, attempt, seed and forecast hashes. These are server handoffs. [Predictions](small/write6-predictions.json)
+
+**Local evidence.** Both launch plans and nine controller, writer-receipt and journal-mutation tests passed. The query test uses O-REPLAY `45bfa59b8`, which models R-JNL-5. Its standalone journal case passed. Mac SQL and the combined native gates are queued. The old measurements apply to their original layout and source. The acceptance files and their pinned paths are unchanged. [Evidence hashes](WRITE6-SHA256SUMS)
