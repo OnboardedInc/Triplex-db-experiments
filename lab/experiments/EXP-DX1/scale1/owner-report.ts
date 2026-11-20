@@ -275,10 +275,19 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       : [];
   });
   const singleDisk = single.find((s) => s.seed)?.seed;
-  const singleReadPeak = single
-    .filter((s) => s.attempt.withReaders)
-    .at(-1)
-    ?.decision?.cells.find((c: any) => c.cell === 39.4)?.read;
+  const singleReader = single.filter((s) => s.attempt.withReaders && s.decision).at(-1);
+  const singleReadCell = singleReader?.decision.cells.find((c: any) => c.cell === 39.4);
+  const singleReadPeak = singleReadCell?.read;
+  const singlePeakMemory = singleReader?.decisionResources.find(
+    (s) =>
+      s.key === singleReadCell?.label &&
+      s.source === singleReader.attempt.source &&
+      s.slot === singleReader.attempt.slot &&
+      s.nonce === singleReader.attempt.nonce &&
+      s.population === singleReader.decision.population &&
+      s.start >= singleReader.attempt.at &&
+      s.afterAt >= s.start + singleReadCell.seconds * 1000,
+  )?.after;
   const firstPlateau = (() => {
     const tag = "arm-d7-single-zero-b";
     const stage = stages.find((s) => s.tag === tag);
@@ -427,6 +436,17 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
           : "") +
         (singleDisk
           ? " PostgreSQL added " + round(singleDisk.disk.bytesPerFact) + " bytes/fact."
+          : "") +
+        (singlePeakMemory
+          ? " Cgroup peaks with readers were " +
+            round(singlePeakMemory.tx.peak / 1024 ** 3) +
+            " GiB transactor, " +
+            round(singlePeakMemory.pg.peak / 1024 ** 3) +
+            " GiB PostgreSQL, " +
+            round(singlePeakMemory["gw-w"].peak / 1024 ** 3) +
+            " GiB write gateway and " +
+            round(singlePeakMemory["gw-r"].peak / 1024 ** 3) +
+            " GiB read gateway."
           : "") +
         " [Decision cells](DECISION-RESULTS.md)"
       : (firstPlateau ?? `One account of 100,000 people — ${cost(one)}.`),

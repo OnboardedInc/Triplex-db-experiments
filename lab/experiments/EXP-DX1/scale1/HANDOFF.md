@@ -3,7 +3,7 @@
 The current decision screen measures ten full-size deep accounts together, then partitions the same logical rows and tapes across two Datomic databases on the same server. Each topology gets the same ten writer clients, reader seats and feed observer. [Scale review](REVIEW.md) · [Write-path review](WRITE-REVIEW.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-2026-11-20T08:08:22.166Z · Collected arm-d7-single-read-c with service result success, 1 physical-scope report(s) and verified cleanup.
+2026-11-20T08:08:59.854Z · Both single-account conditions were verified and published. The grouped pilot is preparing its audited runtime with a six-hour campaign guard.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows all active stages and their ceilings.
@@ -14,14 +14,14 @@ node --import tsx lab/experiments/EXP-DX1/scale1/control.ts status
 
 | Order | Arm | Maximum |
 | ---: | --- | ---: |
-| Done | Verify and seal one 100,000-person account on WFIX1 | Sealed at 1:38 a.m. ET |
-| 1 | `arm-d7-single-zero-c` replays 3.5, 4.9, 23.5 and 39.4 saves/s from that image without readers | 2 h |
-| 2 | `arm-d7-single-read-c` replays the same tape and image with 64 seats on two cores for 600 s | 2 h |
-| Held | Audited grouped 10k prerequisite, then full pooled and split placement | After reporting the single-account result |
+| Done | Verified 100,000-person image, then identical zero-reader and 64-reader tapes | Both reported at 3:08 a.m. ET |
+| 1 | `arm-d7-wfix-pilot-seed` verifies ten 10,000-person accounts in one database | 3 h |
+| 2 | `arm-d7-wfix-pilot-bounded` uses 35, 50, 235 and 394 saves/s with matched quiet windows and the audited bounded writer | 2 h |
+| Held | Ten 100,000-person accounts pooled, then split five and five across two databases | After the pilot verifies |
 
-The corrected single-account sequence has a five-hour guard from setup. The held placement plan is forecast at 35–39 hours (USD 38.15–42.51), with a 40-hour guard. Its pooled and split restores retain the same logical data, tape and resource placement. The 620/s headroom target requires a separately measured arm if all four placement cells hold. [Forecasts](PREDICTIONS.md) · [Held queue](decision/held-placement.json)
+The placement plan including the pilot is forecast at 35–39 hours (USD 38.15–42.51), with a 40-hour guard. Its pooled and split restores retain the same logical data, tape and resource placement. The 620/s headroom target requires a separately measured arm if all four placement cells hold. [Forecasts](PREDICTIONS.md) · [Held queue](decision/held-placement.json)
 
-Each audited timed arm reads its actual writer gateway configuration at the restored database cut and binds the options, installed function, source, slot, nonce and clock into the result. The native gate also checks retrievable receipts, full feed changes and pinned field lifetimes. The wider placement queue waits for the single-account result to be collected and reported. The existing Q106f tiered-storage ruling remains an input while the owner clarifies placement.
+Each audited timed arm reads its actual writer gateway configuration at the restored database cut and binds the options, installed function, source, slot, nonce and clock into the result. The native gate also checks retrievable receipts, full feed changes and pinned field lifetimes. The single-account result is published. The wider placement queue waits for the pilot's matched result. The existing Q106f tiered-storage ruling remains an input while the owner clarifies placement.
 
 The first zero-reader and bounded-reader attempts stopped during observer startup because their inherited SDK environment named the retired `fresh-texts` flag. Each recorded zero timed cells. Both replacements use the verified `arm-d7-single-seed` image. The retry relay initially refused the reformatted Mac transfer manifest and then retried using the original server byte digest checked against the same collected content. The corrected launcher passes the stack's selected paths to the observer processes.
 
