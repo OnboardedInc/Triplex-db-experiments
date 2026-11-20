@@ -2,10 +2,10 @@
 Datomic already supports ZGC on Java 25. Our old image runs Java 21.
 This branch lets all three processes run on either Java version.
 Start with Java 21 and a two-core writer, Java 25 with G1, then Java 25 with ZGC.
-Use `1ca08c6fb76d9b92662cac9191629420dae2d36e` for the server. Budget 78 minutes for those three arms.
+Use `9db1746cd13c76e5facdf4bac13255d01329351b` for the server. Budget 78 minutes for those three arms.
 A fourth arm brings the total to 104 minutes and gives G1 the same memory as ZGC.
 ZGC gets 13 GiB more reserved memory in this trial. The server still has to price the gain and check for stalls.
-On the shared Mac, the writer's worst one percent of pauses started at 0.062 ms with ZGC versus 31 ms with two-core G1. The server still needs to measure the effect on saves.
+On the shared Mac, 99% of writer pauses were at most 0.062 ms with ZGC and 31 ms with two-core G1. The server still needs to measure the effect on saves.
 
 ## Settings and evidence
 
@@ -13,12 +13,12 @@ On the shared Mac, the writer's worst one percent of pauses started at 0.062 ms 
 - [Part 1 inventory](INVENTORY.md) · [Sources](SOURCES.md) · [Configuration](CONFIGURATION.md) · [Mac measurements](MAC.md) · [Forecasts](PREDICTIONS.md)
 - Official Temurin 25.0.5+8 and the Java 21 base are digest-pinned. The signed Datomic 1.0.7745 distribution includes Clojure 1.12.5 and SLF4J 2.0.17. Java 25 enables both compatibility flags for all three classpath launches.
 - The private Linux Java 25 image built under an ordinary token and its gateway suite ran 27 tests with 54,079 successful assertions. The only warning in this run was Clojure's existing `identity` name shadowing. The next SQL startup attempt refused admission during another holder's lease, before starting containers. [Evidence hashes](SHA256SUMS)
-- The final Java 25 image with the Netty flag also built. The Node build, 861 Core tests, 426 SDK tests and all eight focused INT1 integration tests finished. Fifty-two SDK SQL cases require a live stack and were skipped in that run. The repository-wide CheckJS reported diagnostics outside the JVM launch files. [Gate hashes](SHA256SUMS)
-- The host-native Java 25 gate passed with G1 and ZGC, each with 27 tests and 54,079 assertions. The retention tests and W1 type check passed. [Gate hashes](SHA256SUMS)
+- The Java 25 image, 861 Core tests, 434 SDK tests, eight focused INT1 integration tests, and W1 type check reached their expected results at `d1987c09b`. The three retention tests passed earlier. The broad CheckJS run reported diagnostics outside the JVM launch files. [Gate hashes](SHA256SUMS)
+- The exact `d1987c09b` host-native Java 25 gate passed with G1 and ZGC, each with 27 tests and 54,079 assertions. The later INT1 oracle identity merge touched historical SCALE1 sample validation and evidence files. [Gate hashes](SHA256SUMS)
 - Mac checks use one ordinary heavy token each. The old replay entry point now directs collector comparisons to the server and startup diagnostics to the small Mac inventory. The optional three-role ZGC boot checks each observed collector under the same small exclusive reservation. No bench server was contacted.
 - The first Java 25 native run confirmed Clojure and SLF4J versions. Three tests needed container-only fixture paths. The host gate now maps just those three paths to unchanged files from its exact Git archive. The first attempt is retained.
 - Ordinary-token boots verified both Java versions and all three SQL-stack roles and cleaned up. The Java 25 transactor needed the native-access flag after Netty logged a restricted-library warning. Shared-Mac boot and idle memory numbers are recorded as diagnostics. [Boot table](JAVA25.md#diagnostic-startup-and-idle-memory-on-the-shared-mac) · [Hashes](SHA256SUMS)
-- The live Java 25 ZGC boot verified all three collectors and cleared the transactor warning. I interrupted the first SQL SDK run after finding that its harness omitted `DATOMIC_GATEWAY_URL`. The harness now directs both writer endpoint variables to the owned slot. The stopped stack cleaned up.
+- The live Java 25 ZGC boot verified all three collectors and cleared the transactor warning. I interrupted the first SQL SDK run after finding that its harness omitted `DATOMIC_GATEWAY_URL`. The harness now directs both writer endpoint variables to the owned slot. The stopped stack cleaned up. All exclusive slots were held at the final retries, leaving the 52 live SQL cases unverified.
 - The GC parser was exercised with archived G1 and generational ZGC logs on the shared Mac. The check verified all three G1 roles, the ZGC writer's phase labels and rejection of a log from a different boot. Evidence and hashes are under `evidence/DX-JVM1/part2`.
 - The Java 21 fixed-activity census adds a shared-Mac reference of about 12,651 resident bytes per added untouched person between 10,000 and 30,000 people, mostly in the transactor. The matching ZGC slope is still open. [Census](../int1/P5-EVIDENCE.md)
 - A restore fixture consumed the exact expected bytes and rejected a changed stream. It exercised the stream verifier with a stand-in for PostgreSQL.
