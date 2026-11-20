@@ -8,9 +8,13 @@
 (def seed-frame 12)
 
 (defn population [deep thin]
-  (assert (and (pos? deep) (pos? thin)))
-  {:deep deep :thin thin :people (+ (* 10 deep) (* 4 thin))
-   :active (+ (* 10 (dec deep)) (* 4 (dec thin)))})
+  (assert (and (pos? deep) (pos? thin) (or (> deep 1) (> thin 1))))
+  (let [people (+ (* 10 deep) (* 4 thin))
+        deep-active (* 10 (min (dec deep) 20000))
+        thin-active (* 4 (min (dec thin) 5000))]
+    {:deep deep :thin thin :people people :deep-active deep-active :thin-active thin-active
+     :active (+ deep-active thin-active)
+     :round-ms (if (>= people 1000000) (quot day-ms 3) (* 2 day-ms))}))
 
 (defn person [{:keys [deep thin people]} i]
   (assert (<= 0 i (dec people)))
@@ -39,16 +43,17 @@
 
 ;; [DX-AGE1] Why: one immutable tape indexes predecessors without a history-sized in-memory state.
 ;; Rejected: random selection with retained commands or a workload that grows its person population each rung.
-(defn owner-index [{:keys [deep active]} n]
-  (let [slot (mod n active) deep-active (* 10 (dec deep))]
+(defn owner-index [{:keys [deep active deep-active]} n]
+  (let [slot (mod n active)]
     (if (< slot deep-active) (+ 10 slot) (+ (* 10 deep) 4 (- slot deep-active)))))
 
 (defn width [n pop] (inc (mod (+ (quot n (:active pop)) (mod n (:active pop))) 3)))
-(defn logical-clock [pop n]
-  ;; An initial year passes before the first edit. Each subsequent round covers two simulated days.
+(defn logical-clock [{:keys [active round-ms]} n]
+  ;; [DX-AGE1] Why: retain hundreds of edits per active person when the seed has millions of idle people.
+  ;; Rejected: sweeping every seeded resident before any active owner receives a second edit.
   (double (+ seed-clock (* 365 day-ms)
-             (* (quot n (:active pop)) 2 day-ms)
-             (quot (* (mod n (:active pop)) 2 day-ms) (:active pop)))))
+             (* (quot n active) round-ms)
+             (quot (* (mod n active) round-ms) active))))
 
 (defn edit-row [pop n j]
   (let [i (owner-index pop n) pos (+ (seed-head pop) (inc n))]
@@ -100,10 +105,10 @@
 (defn expected-person [pop i saves]
   (let [origin (mapv #(seed-row pop i %) (range (:fields (person pop i))))
         deep-people (* 10 (:deep pop))
-        slot (cond (< i 10) nil
-                   (< i deep-people) (- i 10)
-                   (< i (+ deep-people 4)) nil
-                   :else (- i 14))]
+        thin-start (+ deep-people 4)
+        slot (cond (<= 10 i (+ 9 (:deep-active pop))) (- i 10)
+                   (<= thin-start i (+ (dec thin-start) (:thin-active pop)))
+                   (+ (:deep-active pop) (- i thin-start)))]
     ;; [DX-AGE1] Why: derive the current oracle from chronological field updates in the last complete cycle.
     ;; Rejected: reading expected values back from either database or reusing the predecessor selection.
     (if (and slot (> saves slot))

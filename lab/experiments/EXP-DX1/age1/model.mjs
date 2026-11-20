@@ -130,7 +130,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const [mode, data, active] = process.argv.slice(2);
   assert(["rates", "measurements", "targets"].includes(mode));
   const result = mode === "rates"
-    ? (data ?? "10000,20000,50000,100000").split(",").map((rate) => ({ rate: Number(rate), rungs: schedule(Number(rate)) }))
+    ? (data ?? "10000,20000,50000,100000").split(",").map((rate) => ({ rate: Number(rate), rungs: schedule(Number(rate), active === undefined ? 820e6 : Number(active)) }))
     : mode === "targets" ? targetSaves(Number(data), Number(active)) : summarize(path.resolve(data));
   console.log(JSON.stringify(result, null, 2));
 }
