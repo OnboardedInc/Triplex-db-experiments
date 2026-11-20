@@ -10,6 +10,29 @@ import sys
 from read_probe import distribution, managed_events, ms
 
 
+def matched_ratios(rows):
+    metrics = ("savesPerAppend", "nativeApplyMsPerSave", "nativeCpuMsPerSave", "appendMsPerSave",
+               "medianPeerPreparationMs", "closedLoopSavesPerSec")
+    pairs = defaultdict(lambda: {"A": [], "B": []})
+    for cell in rows:
+        key = (int(cell["arm"][1]), cell["width"], cell["outstanding"])
+        pairs[key][cell["arm"][0]].append(cell)
+    result = []
+    for (peers, width, outstanding), arms in sorted(pairs.items()):
+        assert len(arms["A"]) == len(arms["B"]) == 2
+        ratios = {}
+        for key in metrics:
+            grouped, prepared = ([cell[key] for cell in arms[arm]] for arm in "AB")
+            # [DX-PREP1] Why: each ratio uses both repeats from the same offer shape and peer cap.
+            # Rejected: dividing two pooled medians or treating missing native CPU as zero.
+            ratios[key] = (median(prepared) / median(grouped)
+                           if all(value is not None for value in grouped + prepared)
+                           and median(grouped) > 0 else None)
+        result.append({"peers": peers, "width": width, "outstanding": outstanding,
+                       "preparedOverGrouped": ratios})
+    return result
+
+
 def profile(root):
     if not __debug__:
         raise RuntimeError("Assertions are required for source and transaction binding")
@@ -134,7 +157,8 @@ def profile(root):
         whole_arm_wal[f"{arm}/{node}"] = {k: float(edges["after"][k]) - float(edges["before"][k])
                                          for k in ("wal_sync", "wal_sync_time", "wal_write", "wal_bytes")}
     return {"attempt": attempt, "image": terminal["image"], "head": inputs["head"],
-            "cells": rows, "wholeArmWalIncludingSeedReadbackAndCleanup": whole_arm_wal,
+            "cells": rows, "matchedRatios": matched_ratios(rows),
+            "wholeArmWalIncludingSeedReadbackAndCleanup": whole_arm_wal,
             "above1_6msPerSave": [{"arm": r["arm"], "width": r["width"], "outstanding": r["outstanding"],
                                   "apply": r["nativeApplyMsPerSave"] > 1.6,
                                   "append": r["appendMsPerSave"] > 1.6}
