@@ -3,7 +3,7 @@
 The November 20 owner decision sets one Datomic database for all accounts. The current study measures ten full-size deep accounts in that database with the current writer and the audited prepared grouped writer. Both policies use the same ten writer clients, reader seats and feed observer. [Scale review](REVIEW.md) · [Write-path review](WRITE-REVIEW.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The pooled 162,456,470-fact seed continues on the audited source with its existing 2026-11-21T04:24:01.788Z ceiling. The detached plan contains the published pilot and active pooled seed. The two-database seed and the earlier short timing arms were removed before start.
+The pooled 162,456,470-fact seed continues on the audited source with its existing 2026-11-21T04:24:01.788Z ceiling. The detached plan contains the published pilot and active pooled seed. The two-database seed and the earlier short timing arms were removed before start. The one-database relay waits on seed completion and the verified transfer. It is pinned to aabec48df and retains the original campaign deadline.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows all active stages and their ceilings.
