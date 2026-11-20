@@ -8,4 +8,17 @@ I chose client-ordered IDs, option (c). Assigning IDs from a server position wou
 
 The gateway recognizes the exact contiguous block and the matching journal entity before it chooses the ordered path. A client cannot provide unchecked bounds. The serialized function seeks the containing interval in historical AVET and compares actual assertion identity prefixes. The result covers earlier and retired rows across every owner. An unrelated value in a lexical gap does not reserve one of the submitted IDs. A bounded scan falls back to the original exact per-ID checks if it finds an unusually crowded interval. The journal still has a serial identity check and ordinary native uniqueness handling. Native transaction and journal rows remain queryable using their original layouts.
 
-Existing IDs, including caller-assigned or nonordered IDs, continue to use the previous logic. A dispersed legacy interval can cost its covering probe plus one historical AVET seek per new ID when other rows occupy the interval. A seek can hit memory or load storage. The earlier diagnostic charged 3.65 SQL reads per save directly to that check, plus 0.63 under the lazy AVET iterator. A retry of an already committed command resolves through the original operation or claim and does not allocate new IDs or repeat the history check. A fresh command attempting to reuse a retired ID still runs the historical check.
+Existing IDs, including caller-assigned or nonordered IDs, continue to use the previous logic. A dispersed legacy interval can cost its covering probe plus one historical AVET seek per new ID when other rows occupy the interval. A seek can hit memory or load storage. The earlier diagnostic charged 3.65 SQL reads per save directly to that check, plus 0.63 under the lazy AVET iterator. A retry of an already committed command resolves through the original operation or claim and persists no new IDs. A fresh command attempting to reuse a retired ID still runs the historical check.
+
+## Owner revision at the server cache size
+
+The copied single-gateway server arm had a 2 GiB transactor object cache. All the durably acknowledged S saves in these cells carry their native storage counters. Since the revision CAS uses EAVT, the total EAVT loads across all work in a save give an upper bound on its storage reads. An EAVT load can also come from a different native check.
+
+| Gross offered/s | Prepared acknowledgements | EAVT loads | Saves with any EAVT load | EAVT loads/save |
+| ---: | ---: | ---: | ---: | ---: |
+| 50 | 7,200 | 313 | 273 | 0.043 |
+| 235 | 20,489 | 3,085 | 2,983 | 0.151 |
+| 394 | 16,251 | 3,877 | 3,505 | 0.239 |
+| 620 | 20,377 | 3,760 | 3,531 | 0.185 |
+
+At 235 and 394, at least 85.4% and 78.4% of saves did their CAS without an EAVT storage fetch. The earlier 32 MiB diagnostic with disjoint owners measured 0.99 CAS fetches/save. I kept the existing owner revision for this round. The server tape revisits people and cannot establish a cache-residency guarantee for a million uniformly touched owners. A new revision entity would also need atomic updates on grouped, legacy and prepared writes. [Bound archive reading](SERVER-READING.md) · [Checksums](SHA256SUMS)

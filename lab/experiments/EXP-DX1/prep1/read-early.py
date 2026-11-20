@@ -76,7 +76,8 @@ def phases(root, arm, header, plan, members, official):
             reads = a.get("nativeIoStats", {}).get("reads", {})
             metrics = {"compute": a["nativeComputeMs"], "sql": reads.get("sql", 0),
                        "decode": reads.get("deserialize-ms", 0), "sqlMs": reads.get("sql-ms", 0),
-                       "avetLoad": reads.get("avet-load", 0), "datoms": a["datoms"], "group": width}
+                       "avetLoad": reads.get("avet-load", 0), "eavtLoad": reads.get("eavt-load", 0),
+                       "datoms": a["datoms"], "group": width}
             # [DX-PREP1] Why: price the largest possible saving on matching individual writes.
             # Rejected: subtracting separate medians or treating this accounting residual as measured CPU.
             metrics["applyLessSqlAndDecode"] = max(0, metrics["compute"] - metrics["decode"] - metrics["sqlMs"])
@@ -116,6 +117,7 @@ def phases(root, arm, header, plan, members, official):
             "prepared": sum(bool(r["ack"].get("subjectSave")) for r in done),
             "replans": sum(bool(r["ack"].get("subjectReplan")) for r in done),
             "sqlPositiveTx": sum(v > 0 for v in per_tx["sql"]),
+            "eavtPositiveTx": sum(v > 0 for v in per_tx["eavtLoad"]),
             "reasons": counts, "phaseWallMs": c["phaseWallMs"], "drained": c["drained"], "after": cut,
             "perSave": {k:stats(v) for k,v in per_save.items()}, "perTx": {k:stats(v) for k,v in per_tx.items()},
             "clocks": {k: stats(v) for k,v in per_clock.items()}, "byAccount": by_account,
