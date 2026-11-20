@@ -10,7 +10,7 @@ import { inputPins, measuredPair } from "./rung.ts";
 export async function preflight(
   dir: string,
   binding: { source: string; slot: string; nonce: string },
-  recipient?: { pages: number; intervalMs: number },
+  recipient?: { pages: number; intervalMs: number; route?: "recipient" | "isolated" },
 ) {
   try {
     const pins = inputPins(binding.source);

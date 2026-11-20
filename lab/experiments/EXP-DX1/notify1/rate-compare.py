@@ -48,7 +48,8 @@ def price(a, obs, control_dir):
     pr = analysis.p99([s["latency"] for s in reads])
     pw = analysis.p99([s["ackMs"] for s in saves])
     baseTail = read_tail(b,reads,analysis.data(control_dir,"foreground",b)) if b["profiled"] else None
-    return dict(baseReadTail=baseTail,control=control_dir.name, readP99=pr,saveP99=pw,readRatio=a["readP99"]/pr,saveRatio=a["saveP99"]/pw,withinBoth=a["readP99"]<=1.5*pr and a["saveP99"]<=1.5*pw,reads=len(reads),saves=len(saves))
+    enoughReads = min(len(reads), len(obs["reads"])) >= 500
+    return dict(baseReadTail=baseTail,control=control_dir.name, readP99=pr,saveP99=pw,readRatio=a["readP99"]/pr,saveRatio=a["saveP99"]/pw,enoughReads=enoughReads,withinBoth=a["readP99"]<=1.5*pr and a["saveP99"]<=1.5*pw,reads=len(reads),saves=len(saves))
 
 
 def pauses(directory, arm, raw):

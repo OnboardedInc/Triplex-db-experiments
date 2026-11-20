@@ -10,11 +10,18 @@ import { W0, reachableRows, sha256, triplexValue, worldOf } from "../../../bench
 import { Notices, type Cut, type Request } from "./journal.ts";
 import { CommittedRanges } from "./ranges.ts";
 import { Relay } from "./relay.ts";
-import { Documents, hash, parse, type Op } from "./store.ts";
+import { Documents, hash, parse, type Op, type Store } from "./store.ts";
 import { wireDelivery } from "./verify.ts";
 import { recipient } from "./worker.ts";
 
 type Value = { e: string; a: string; v: number | string; from: number; to?: number; tx: number };
+type Change = {
+  op: string;
+  entityId: string;
+  attribute: string;
+  validFrom: number;
+  tripleId: string;
+};
 const at = Date.parse(W0.POPULATION_VALID_TIME),
   instant = (ms: number) => new Date(ms).toISOString().replace(/Z$/, "000Z");
 const put = ({ e, a, v, from, to }: Value): Op => ({
@@ -31,7 +38,7 @@ async function arm(n: number, mode: string, scope: string, dir: string, native: 
   const src: CompositionHandle = native
     ? await openComposition("reach", "datomic", scope)
     : memoryComposition("datomic", scope);
-  const rx = await recipient("rx-" + scope, dir);
+  const rx = await recipient("act1-rx-" + scope, dir);
   const oracle = new DomainOracle(new URL("./oracle.py", import.meta.url).pathname);
   try {
     const ids = Array.from({ length: n }, (_, i) => W0.placementId(i)),
@@ -85,7 +92,20 @@ async function arm(n: number, mode: string, scope: string, dir: string, native: 
         return people.map((s) => worldOf(s, reachableRows([s], page.rows)));
       },
     });
-    const sink = new Documents(rx, "effects"),
+    const transactions = new Map<number, { command: string; txId: string }>();
+    const measuredRecipient: Store = {
+      ...rx,
+      async transact(...args) {
+        const result = await rx.transact(...args);
+        if (result.ok) {
+          const command = args[1]?.commandId;
+          assert(typeof command === "string");
+          transactions.set(result.value.position, { command, txId: result.value.txId });
+        }
+        return result;
+      },
+    };
+    const sink = new Documents(measuredRecipient, "effects"),
       relay = new Relay(a, sink, 16);
     const request = (id: string, kind: Request["kind"], validTime: string): Request => ({
       id,
@@ -112,21 +132,22 @@ async function arm(n: number, mode: string, scope: string, dir: string, native: 
       const saved = await a.append(tail, request(id, "reconcile", instant(valid)), ops, [
         { _tag: "TripleLive", id: previous },
       ]);
-      const admissionMs = performance.now() - started;
+      const ackedAt = performance.now(),
+        admissionMs = ackedAt - started;
       const receipt = await src.transactionByCommand(a.db.command("event-command:" + id));
       assert(
         receipt.ok &&
           receipt.value.txId === saved.txId &&
           receipt.value.position === saved.position,
       );
-      const asserted = receipt.value.changes.find(
+      const asserted = (receipt.value.changes as Change[]).find(
         (c) =>
           c.op === "assert" && c.entityId === e && c.attribute === attr && c.validFrom === from,
       );
       assert(asserted);
       active.set(k, asserted.tripleId);
       versions.set(k, [...versions.get(k)!, { ...change, tx: saved.position }]);
-      return { ...saved, admissionMs, writes: receipt.value.changes.length };
+      return { ...saved, ackedAt, admissionMs, writes: receipt.value.changes.length };
     }
     const source = await save("floor", location(1), "localMinWageCents", 1875);
     const r0 = await rx.currentPosition(),
@@ -141,8 +162,8 @@ async function arm(n: number, mode: string, scope: string, dir: string, native: 
     for (let j = 0; j < 16; j++) {
       const offer = start + 10 + j * 65;
       await sleep(Math.max(0, offer - performance.now()));
-      await save("live-" + j, ids[2 + j]!, "payRateCents", 1790);
-      saveAcks.push(performance.now() - offer);
+      const saved = await save("live-" + j, ids[2 + j]!, "payRateCents", 1790);
+      saveAcks.push(saved.ackedAt - offer);
     }
     const drainMs = await actual;
     if (mode === "control") await sample.drain({ through: 2 });
@@ -247,14 +268,14 @@ async function arm(n: number, mode: string, scope: string, dir: string, native: 
     }
     let receiverAssertions = 0,
       receiverChanges = 0;
-    for (let pos = r0; pos < r1; ) {
-      const page = await rx.feedPage(pos, Math.min(32, r1 - pos));
-      assert(page.transactions.length);
-      for (const tx of page.transactions) {
-        assert.equal(tx.position, ++pos);
-        receiverChanges += tx.changes.length;
-        receiverAssertions += tx.changes.filter((op) => op.op === "assert").length;
-      }
+    for (let pos = r0 + 1; pos <= r1; pos++) {
+      const { command, txId } = transactions.get(pos)!;
+      const receipt = await rx.transactionByCommand(command);
+      assert(receipt.ok && receipt.value.position === pos && receipt.value.txId === txId);
+      receiverChanges += receipt.value.changes.length;
+      receiverAssertions += (receipt.value.changes as Change[]).filter(
+        (op) => op.op === "assert",
+      ).length;
     }
     assert.equal(w1 - w0, saveAcks.length);
     return {

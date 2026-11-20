@@ -50,6 +50,7 @@ async function fixture(
   roster = subjects,
   indexed = false,
   extra: typeof seed = [],
+  wages?: ConstructorParameters<typeof CommittedRanges>[2],
 ) {
   const epoch = randomUUID(),
     src = await open("coverage-" + epoch);
@@ -65,7 +66,7 @@ async function fixture(
   const seeded = initial.value;
   const a = new Notices(src, "account", {
     identity: "raw-shared-wage-fixture",
-    ...(indexed ? { ranges: new CommittedRanges(roster, true) } : {}),
+    ...(indexed ? { ranges: new CommittedRanges(roster, true, wages) } : {}),
     roster: async () => roster,
     worlds: async (ids, cut) => {
       const basis = { position: cut.position, validAt: Date.parse(cut.validTime) };
@@ -154,6 +155,46 @@ test("a shared local floor correction covers both readers of the edge", async (t
   assert.deepEqual(event.value.selection, { kind: "census" });
   assert.deepEqual((await a.coverage(event, a.db, await a.db.head()))?.ids, subjects);
   assert.equal(worker.metrics.certified, 1);
+});
+
+test("a joined posting missing a person triggers the full census", async (t) => {
+  const roster = [...subjects, "pl:c"];
+  const { a, worker, publish, floor } = await fixture(
+    t,
+    roster,
+    true,
+    [],
+    async () =>
+      new Map([
+        [
+          "loc:a",
+          [
+            { subject: "pl:a", value: 1750 },
+            { subject: "pl:c", value: 1900 },
+          ],
+        ],
+      ]),
+  );
+  const live = await a.append(await a.observe(), publish);
+  const save: Request = { ...publish, id: "floor-missing-posting", kind: "reconcile" };
+  const correction = floor("localMinWageCents", 1800);
+  const saved = await a.append(await a.observe(), save, correction.ops, correction.checks);
+  await worker.drain();
+  const proof = await verify(
+    worker,
+    roster,
+    [
+      { req: publish, receipt: live },
+      { req: save, receipt: saved },
+    ],
+    correction.witness(saved),
+  );
+  assert.equal(worker.metrics.fallback, 1);
+  assert.deepEqual(proof.coverage[1], {
+    affected: hash(subjects),
+    complement: hash(["pl:c"]),
+    selected: hash(roster),
+  });
 });
 
 for (const first of ["save", "publish"] as const) {

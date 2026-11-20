@@ -21,7 +21,7 @@ export interface Inputs {
   identity: string;
   roster(cut: Cut): Promise<string[]>;
   worlds(subjects: string[], cut: Cut): Promise<W0.World[]>;
-  ranges?: CommittedRanges;
+  ranges?: Pick<CommittedRanges, "suggest">;
 }
 export type Selection = { kind: "census" } | { kind: "subjects"; ids: string[] };
 export interface Request {
