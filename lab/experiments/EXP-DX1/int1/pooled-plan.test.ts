@@ -5,6 +5,7 @@ import { V3_OFFER_SECONDS } from "../../../bench/lib/phases.ts";
 import { campaignCases, campaignTenant, treatment } from "./everything-plan.ts";
 import { importFrames, legacyFrameFacts } from "./pooled-import.ts";
 import { campaignWindows, tenantPlan } from "../scale1/tenant-traffic.ts";
+import { tenantCatalog, tenantRows } from "../scale1/tenants.ts";
 
 test("the legacy import splits at complete subjects within the campaign frame limit", () => {
   const people = 256;
@@ -24,6 +25,8 @@ test("the overnight frozen arm keeps the original events in one database with te
   const b = tenantPlan(campaignTenant(loaded!, false), "reader");
   assert.equal(a.sha256, b.sha256);
   assert.equal(a.accounts.length, 10);
+  const catalog = a.accounts.flatMap((account) => tenantRows(account, 0).filter((row) => row.e === tenantCatalog));
+  assert.deepEqual(catalog.map((row) => row.v), a.accounts.map((account) => ({ type: "string", value: account.key })));
   assert.equal(
     a.accounts.reduce((n, x) => n + x.people, 0),
     100_000,

@@ -26,8 +26,8 @@ af766d70dc995ed36d3819f492fd0321485481c4e48699f66ff577fd1a552b62  int1/p5-checks
 78e07537434878ff189b86109c7e4e9b8a207ba046f535fb4641ec58a85a7b1d  int1/p5-checks/p5-w1-b2880b5e2c/build-1.log
 90ef36a3f2def6622c556ad13f0c6d720185642b237bae1757a0dc8d8f00eb15  int1/p5-checks/p5-w1-b2880b5e2c/gate.json
 af766d70dc995ed36d3819f492fd0321485481c4e48699f66ff577fd1a552b62  int1/p5-checks/p5-w1-b2880b5e2c/selftest-1.log
+90528911105f4f9c81f7160a5336be0a67b7f6f8b3d1773461c4481e8b6f8be3  int1/p5-checks/pin-audit-375.json
 a3fa14a5c12eb8d203e5beeabd516973350d8303ff21c268d6fa993d343fb873  int1/p5-checks/pin-audit-b.json
-c85e54e765b6fe5cfc61ba05e89af882fb13a7a5faf6dcb99a38247d2452440c  int1/p5-checks/pin-audit-bf6.json
 5ea57aea4712e578b3fbbbc3cc124531e63b56d85ce03ebcbcdff8b612640659  int1/p5-checks/pooled-plan-final.json
 2cfbb3e9d86ed69bbb3dedc25d5956312ed9cbcc59714ad37be160af73f8b327  int1/p5-checks/pooled-plan.json
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  int1/p5-checks/pooled-typecheck-b.log

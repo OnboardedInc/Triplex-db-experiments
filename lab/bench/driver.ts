@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import {seedAddress} from "./lib/world.ts";
-import {tenantAccounts, accountOfSubject as tenantOf, tenantQueries, tenantRows, tenantFacts, tenantRung, TenantWriters,type TenantSpec,type TenantEvent} from "../experiments/EXP-DX1/scale1/tenants.ts";
+import {tenantAccounts, accountOfSubject as tenantOf, tenantCatalog, tenantQueries, tenantRows, tenantFacts, tenantRung, TenantWriters,type TenantSpec,type TenantEvent} from "../experiments/EXP-DX1/scale1/tenants.ts";
 import {tenantPlan,tenantPhases,tenantWindows,tenantReaders,tenantTraceId,pooledCampaignId} from "../experiments/EXP-DX1/scale1/tenant-traffic.ts";
 import {checkImage} from "../experiments/EXP-DX1/scale1/seed-image.ts";
 import {MembershipProof,tenantRelease} from "../experiments/EXP-DX1/scale1/tenant-proof.ts";
@@ -777,6 +777,10 @@ async function run() {
   // [DX-INT1] Why: six reading workers own their demand sets, while the independent sender receipt worker retains its ordered capture and fallback.
   // Rejected: handing all six a population image, or routing receipt observation back through the sender.
   const demandReaders = config.composition === "reach-touched";
+  // [DX-THIN1] Why: the catalog proves the legacy clock before offers without loading a person's rows.
+  // Rejected: using a subject selected for the cold-read measurements as the startup witness.
+  const replicaClockWitness = demandReaders && tenantSpec?.campaign && process.env.DX_INT1_LEGACY_TOUCHED === "1"
+    ? tenantCatalog : undefined;
   if (!config.zeroReaders && config.historicalFallback !== "off" && !demandReaders) {
     const { HistoricalFallbackThread } = await import("./lib/historical-fallback.ts");
     historicalFallback = new HistoricalFallbackThread({ mode: config.historicalFallback,
@@ -790,14 +794,14 @@ async function run() {
       composition: config.composition, roots: demandReaders ? [] : Array.from({ length: N }, (_, i) => ids.placement(i)),
       initial: { position: seed.lastPosition, instant: seed.lastInstant }, feed: config.replicaFeed,
       worldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, fallbackThread: config.replicaFallbackThread, historyBytes: config.replicaHistoryMiB * 1024 ** 2, historyCoverage: config.replicaHistoryCoverage, peer: config.replicaPeer,
-      sharedReaderIndex: config.sharedReaderIndex, afterReaderImages,
+      sharedReaderIndex: config.sharedReaderIndex, afterReaderImages, firstReadRoot: replicaClockWitness,
       receiptSpill: config.receiptCapture === "replica-worker" ? spill!.connect() : undefined,
       ...(config.sharedReaderIndex ? { worker: 0, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2 } : {}),
     }, aux)
     : await (await import("./lib/replica-reads.ts")).ReplicaReadHost.open(
       scopeName, demandReaders ? [] : Array.from({ length: N }, (_, i) => ids.placement(i)), aux,
       { position: seed.lastPosition, instant: seed.lastInstant }, config.replicaFeed,
-      config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer, undefined, demandReaders ? "touched" : "all", undefined, Date.now(), false, config.replicaHistoryCoverage) : undefined;
+      config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer, undefined, demandReaders ? "touched" : "all", replicaClockWitness, Date.now(), false, config.replicaHistoryCoverage) : undefined;
   const receiptThread = config.receiptCapture === "replica-worker" && replicaHost && "captureReceipt" in replicaHost
     ? replicaHost : undefined;
   let copyApplications: { position: number; at: number }[] = [];
