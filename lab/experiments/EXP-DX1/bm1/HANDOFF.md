@@ -303,9 +303,11 @@ python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect prep1-tenant 7ca8525
 
 ## Friday evening queue
 
-**Server 1 estimated running cost at 16:06 EST is $57.34** at $1.09/hr since Wednesday 11:27 EST. The orchestrator owns the release. The absolute remaining window ends Saturday at 12:00 EST.
+**Server 1 estimated running cost at 17:20 EST is $58.73** at $1.09/hr since Wednesday 11:27 EST. The orchestrator owns the release. The absolute remaining window ends Saturday at 12:00 EST.
 
 PREP1 is using the ten-account seed stage of the published `7ca8525a9` experiment. The evening supervisor waits for that unit and its cleanup. It then dispatches JVM1 `608420dca` and TAIL1 `da4c34f48`, each against the original `46880aa47` verified 16,245,050-fact seed. The Java 21 G1, Java 25 G1 and Java 25 ZGC comparison keeps writer/transactor/reader placement fixed across arms. It adds the optional larger-memory G1 arm only if the first three complete in under 80 minutes. The cache pair uses Java 21 G1 and varies the transactor cache from 256 to 2,560 MiB. The bare-metal adapter recognizes the physical-host check's expected status 1 and admits the exact previously sealed sibling-branch seed by its pinned provenance. It does not reinterpret another snapshot as the old one.
+
+PREP1 sealed its own 17.49 GB dump at 16:19 EST. The completed first one-gateway K/S pair delivered 181.7/111.1 saves/s within the 394/s window (56,736 offers per arm). It achieved 7.988/1.002 durable saves per append and left 30,303/40,485 offers without ACKs. Quiet-account p99 ratios were 8.03×/86.53×. The builder's original forecasts were 255/383 saves/s and 14.53×/1.22×. Both arms used all 504 quiet-account receipts per reported quiet p99, and high-rate loss makes some complete-cohort tails unavailable. These are first-replicate readings. The mirrored and multi-gateway measurements are in progress.
 
 The checked cold clone from the afternoon avoids the measured six-minute startup barrier. The cold-copy shim hashes every streamed byte of the original 22.26 GB dump, compares the bound seed and physical manifest, checks every restored file on the fresh PG container and records its immutable ID. Each producer still checks its own original restore digest and reopens its verified cut. Eight native offers per small arm must agree with the independent collector before long timing. All committed starting states, phase outputs, pause logs and scoped cleanup are checked per source and run. The benchmark writer layout and single-database workloads remain fixed.
 
