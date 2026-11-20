@@ -2543,3 +2543,37 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   with R1, R2, R3 in order); the 100,000 activation stays on hold for the producer's fixes. Server 2: the pooled seed
   finished (16,245,050 current facts in 56 min 40 s, 730 PostgreSQL bytes per fact) and the first staggered
   real-rate write arm is running.
+
+## 2026-11-20 02:18 UTC (21:18 local, 2026-11-19): memory per subject; the fifty slowest deep saves are gateway GC; second review redirects both servers
+
+- **DX-THIN1 part 3 (`f06cd0a46` on `exp/DX-INT1`, Mac VM; `int1/REPORT.md`).** With the validated touched-only reader
+  and bounded gateway caches, resident bytes per untouched person, old to new: reader 225 to 3 (thin) and 1,718 to
+  net release (deep); read gateway 2,390 to 49 and 53,025 to 2,936; write gateway 4,089 to 534 and 44,789 to 3,783
+  (target 64). Transactor 4,606 / 50,775 and PostgreSQL 13,450 / 152,747 bytes per added thin / deep person (which
+  configured cache these fill is part 4's question). Deep first read p99 90.03 ms in one exchange (bar 100), thin
+  13.79 ms; opening a fresh scope 132 to 144 ms; an idle scope costs the write gateway 2.42 MB and four threads, the
+  transactor 1.41 MB and about eight threads. Merged branch carries all four builders' work; one native assertion
+  fails on error typing. Part 4 assigned: memory at three populations (bounded cache or per-person cost), the cost
+  of 1 to 128 scopes, keeping the branch merged, the everything-on judged command with predictions.
+- **W2-DEEPTAIL part 2 (from the raw archive; `research/2026-11-20-wave2/DEEPTAIL/TOP50.tsv`).** All fifty slowest deep
+  saves ran into garbage collection in the write gateway: 42 hit a pause directly, 8 waited behind an earlier save of
+  the same subject; 24 inside the bench's history-growth windows, 26 outside. Without those windows the deep p99 is
+  59.65 ms (headline 87.04) against thin 32.38 ms by the same filter; typical save 5.04 ms deep, 4.37 thin. Forecast:
+  shorter pauses 4 to 8 ms off the p99, skipping the extra snapshot request another 2 to 5. Builder **DX-TAIL1**
+  launched (`exp/DX-TAIL1-gc-pauses`: replay the archived offers with GC logging in all three JVMs, tuned G1 against
+  generational ZGC against less allocation, the snapshot request, predictions and a thirty-minute server command).
+- **W2-SCALEAUDIT (reviewer, still extending; `research/2026-11-20-wave2/SCALEAUDIT/`).** Verdict "fix first": (1) no
+  queued run tests ten 100,000-person deep accounts in one database at the real field-save rates (the real-rate arms
+  use ten accounts of 10,000; the million-person item uses the old stream, pooled only); (2) the quiet account has
+  readers only in the last 600 s of a 5,340 s run and the boundary logic never tests absolute p50, p99 or drain, so
+  the arm cannot give a priority 6 verdict; (3) as ACTAUDIT 3; (4) the queued IMPORT1 campaign imports into one of
+  ten separate databases and so measures the wrong isolation question for hours; (5) collectors treat "archive
+  written" as "measurement complete"; (6) deep archives include deliberate competing work; (7) the two layouts get
+  different client and cache conditions; (8) a scheduled save can expire before Datomic sees it.
+- **Action:** DX-BM1 and DX-SCALE1 were stopped and resumed with the findings (the servers' running jobs untouched).
+  Server 1: IMPORT1 removed; queue is the enhanced quiet-account pulse, CEIL-SERVER-LIVE10, matched thin against deep,
+  the size ledger probe, the readers' probe, the predecessor arm, thin 1,000,000 and 4,000,000 with predictions,
+  activation when its test passes. Server 2: the running staggered arm is a write-capacity reading only; fix the
+  quiet account's matched windows; then build the decisive run (one verified full-size seed with the faster loader,
+  open-loop cells at 35, 50, 235 and 394 saves per second, one database against two of five), predictions and cost
+  written first.
