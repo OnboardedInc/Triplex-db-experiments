@@ -19,7 +19,7 @@ import { DEEP_RATE, deepSeed, type DeepEvent } from "./lib/deep-trace.ts";
 import { DeepWriter } from "./lib/deep-command.ts";
 import { DeepSeedWitness, deepBarrier, confirmDeepStart, finishDeepActivations, frozenDeep, requireIdentity, type DeepIdentity } from "./lib/deep-profile.ts";
 import { configureWriterHeap } from "./lib/writer-heap.ts";
-import { suffixDelta } from "./lib/basis-window.ts";
+import { HotSubjects, ReceiptBasisRing } from "./lib/basis-window.ts";
 import { DeferredPublications } from "./lib/deferred-publication.ts";
 import { cpuProfileClock } from "./lib/cpu-profile.ts";
 import { beginTrace, withTrace, finishTrace, traceSync, traceWork, flushTracing, traceAsync, traceInterval, traceNow, currentTraceStep, traceResource, type Trace } from "./lib/tracing.ts";
@@ -72,7 +72,7 @@ import { WRITER_CACHE_BUDGET_MIB, WRITER_PREDECESSOR_CACHE_MIB } from "./lib/pre
 import { ProbeThread } from "./lib/probe-thread.ts";
 import { SideThread } from "./lib/side-thread.ts";
 import { commitBreakdown } from "./lib/commit-breakdown.ts";
-import { completedMaintenanceInWindow, requestIndex } from "./lib/maintenance.ts";
+import { completedMaintenanceInWindow, requestIndex, scheduleMaintenanceBins } from "./lib/maintenance.ts";
 import { feedLagWithinBar } from "./lib/feed-lag.ts";
 import { historyDepthsComplete, observeFinalHead, mutationsAfterCapture } from "./lib/completion.ts";
 import { alignAssertIds } from "./lib/receipt.ts";
@@ -486,9 +486,10 @@ function retainRead(r: ReadRecord) {
 }
 const workerDiagnostics: { worker: number; t: number; diagnostics: unknown; memory: unknown; threadCpuMs: number | null }[] = [];
 const workerElu: { worker: number; t: number; elu: number; running?: number; activeMs?: number; idleMs?: number }[] = [];
-const acked: { instant: number; position: number; txId: string; at: number }[] = [];
+const acked = new ReceiptBasisRing<{ instant: number; position: number; txId: string; at: number }>();
+let highestAckedPosition = 0;
 const ackOf = new Map<number, { at: number; instant: number; subject: number; subjects?: number[]; seq: number; stream: string; correction: boolean; correctionValidFrom: number | null; stamp: number }>();
-const lastWriteAt = new Map<number, number>();
+const hotSubjects = new HotSubjects();
 const recordedCommands: RecordedCommand[] = [];
 const writes: any[] = [];
 const outcomes = new Map<string, any>();
@@ -680,6 +681,7 @@ async function run() {
   const historyList = historySample.filter((i) => i < N);
   const historyVersion = new Map<number, number>(historyList.map((i) => [i, 0]));
   latestInstant = seed.lastInstant;
+  highestAckedPosition = seed.lastPosition;
   acked.push({ instant: seed.lastInstant, position: seed.lastPosition, txId: "seed-end", at: now() });
   if (!pairPlan && !deep) void watermarkSampler(aux);
 
@@ -820,18 +822,18 @@ async function run() {
     const attrs = { mode: config.readerBasisWire, workers: workers.length, added: 0, window: 0, wallMs: 0 };
     return traceWork("driver.reader-basis.broadcast", () => {
     const t = now();
-    const hot: number[] = [];
-    for (const [subject, at] of lastWriteAt) if (t - at <= 60_000) hot.push(subject);
-    const recent = acked.filter((a) => t - a.at <= 3_600_000).slice(-2000);
-    const window = recent.length ? recent : acked.slice(-1);
+    const hot = hotSubjects.snapshot(t);
     // [DX-T1-6] Why: the sampled stall is structured-cloning unchanged receipt windows; transmit only their exact appended suffix.
     // Rejected: reducing retention, skipping broadcasts or choosing a different read basis to hide client overhead.
-    const delta = config.readerBasisWire === "delta" ? suffixDelta(window, acked.length, basisCursor) : null;
+    const delta = config.readerBasisWire === "delta" ? acked.delta(t, basisCursor) : null;
+    const window = delta ? undefined : acked.snapshot(t);
     for (const w of workers) w.postMessage(delta ? { type: "basis-delta", delta, hot } : { type: "basis", acked: window, hot });
     basisCursor = acked.length;
     basisBroadcast.ticks++; basisBroadcast.messages += workers.length;
-    basisBroadcast.ackItems += workers.length * (delta?.added.length ?? window.length);
-    attrs.added = delta?.added.length ?? window.length; attrs.window = window.length; attrs.wallMs = now() - t;
+    attrs.added = delta?.added.length ?? window!.length;
+    attrs.window = delta ? delta.end - delta.start : window!.length;
+    basisBroadcast.ackItems += workers.length * attrs.added;
+    attrs.wallMs = now() - t;
     basisBroadcast.wall.recordMs(attrs.wallMs);
     }, attrs, true);
   };
@@ -879,8 +881,9 @@ async function run() {
     const at = now();
     ackOf.set(receipt.position, { at, instant: receipt.instant, subject, ...info });
     acked.push({ instant: receipt.instant, position: receipt.position, txId: receipt.txId, at });
+    highestAckedPosition = Math.max(highestAckedPosition, receipt.position);
     latestInstant = Math.max(latestInstant, receipt.instant);
-    if (subject >= 0) lastWriteAt.set(subject, at);
+    if (subject >= 0) hotSubjects.update(subject, at);
     if (feed instanceof SideThread) feed.ack(receipt.position, { instant: receipt.instant, ackAt: at, subject, ...info, subjects: info.subjects ?? [subject] });
     else feed?.ackArrived(receipt.position);
     return at;
@@ -1166,7 +1169,7 @@ async function run() {
     probeThread = new ProbeThread({dir:rawDir,epoch:`${scopeName}#0`,lane,composition:config.composition,scope:scopeName});
     await probeThread.ready;
   }
-  const feedTarget = setInterval(() => { if (feed) feed.lifeMaxTarget = acked.length ? acked[acked.length - 1]!.position : 0; }, 100);
+  const feedTarget = setInterval(() => { if (feed) feed.lifeMaxTarget = acked.latest?.position ?? 0; }, 100);
   const feedDone = feed ? feed.run() : Promise.resolve();
   // [DX-H1] Why: retain a failing feed as a caught driver failure during wind-down. Rejected: an unhandled rejection that leaves status RUNNING.
   // [DX-B4-T4] Why: a failed consumer must retain the complete diagnostic report and a failing exit.
@@ -1190,7 +1193,7 @@ async function run() {
     ? new OpenLoopScheduler<ProbeJob>(probeEvents.map((ev) => ({ key: ev.seq, scheduledAt: traceStart + ev.atMs, ev })), {
         maxInFlight: pairPlan.probe.maxInFlight, deadlineMs: pairPlan.probe.deadlineMs, now,
         exec: async (job) => {
-          const latest = acked[acked.length - 1]!;
+          const latest = acked.latest!;
           const basis = { recordedAt: latest.instant, validAt: Math.floor(now()) };
           const start = now();
           const t0 = performance.now();
@@ -1309,18 +1312,11 @@ async function run() {
     }
     await spill?.beginPhase(idx, start, config.settleS * 1000, checkedPlan);
     setReaders(idx, spec.readers, spec.mode ?? "mixed");
-    const indexJob = indexClient && /^L[0-9]+(?:-[A-Z0-9]+)?$/.test(spec.name) && spec.seconds ? (async () => {
+    const indexJob = indexClient && /^L[0-9]+(?:-[A-Z0-9]+)?$/.test(spec.name) && spec.seconds ? (() => {
       const delay = Math.min(config.settleS * 1000, Math.max(0, spec.seconds! * 1000 - 1000));
-      while (now() < start + delay) await sleep(Math.max(1, start + delay - now()));
-      const stop = start + spec.seconds! * 1000;
-      do {
-        const waitMs = Math.max(1, Math.min(fullLength ? 44900 : 600000, Math.floor(stop - now() - 100)));
+      return scheduleMaintenanceBins(start + delay, start + spec.seconds! * 1000, fullLength, now, sleep, async waitMs => {
         datomicMaintenanceJobs.push(await requestIndex(indexClient, indexDb, spec.name, now, waitMs));
-        if (!fullLength) break;
-        const next = start + delay + (Math.floor((now() - start - delay) / 45000) + 1) * 45000;
-        if (next >= stop) break;
-        await sleep(Math.max(0, next - now()));
-      } while (now() < stop - 100);
+      });
     })() : null;
     log(`phase ${spec.name}: ${entry.readers} readers at trace ${entry.traceStartS.toFixed(0)}s; writer pending ${scheduler.pending}`);
     if (spec.growHistoryTo) entry.history = await growHistory(spec.growHistoryTo, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
@@ -1472,7 +1468,7 @@ async function run() {
   report.splitEvidence = { rule: config.splitTarget,
     ...(spill?.checked?.splits ?? await (await import("./lib/split-evidence.ts")).completeSplitEvidence(splitDirectory, replicaHost && "applied" in replicaHost ? replicaHost.applied : [])) };
   deepStage("draining the feed");
-  const lastAcked = Math.max(acked.reduce((max,a)=>Math.max(max,a.position),seed.lastPosition), await writer.currentPosition().catch(() => 0));
+  const lastAcked = Math.max(highestAckedPosition, await writer.currentPosition().catch(() => 0));
   const feedDeadline = now() + 120_000;
   while (feed && !feedFailure && feed.checkpoint < lastAcked && now() < feedDeadline) await sleep(100);
   feedWind = feed ? { target: lastAcked, checkpointAtStop: feed.checkpoint, inFlightAtFeedTarget } : null;
@@ -1752,7 +1748,7 @@ async function run() {
   /** P5: one shared basis, exact coverage, post-capture mutations; evaluate and publish are fail-closed seams. */
   async function runSweep(idx: number, maxS: number) {
     const list = sweepList(N, config.sweepMax);
-    const last = acked[acked.length - 1]!;
+    const last = acked.latest!;
     const basis = { recordedAt: last.instant, validAt: Math.floor(now()) };
     const release = stubRelease();
     const mutRng = new Rng(seedOf(`p5mut:${config.seed}`));
