@@ -3273,3 +3273,23 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   cleanup, id reuse closed); the authority and keys in durable shared storage (protected save adds at most 0.3 ms);
   cleanup admission by measured leaf work, with an owner question if a removal deadline is needed; server command
   kept current. The prepared server check (3 to 12 min) is on server 1's list.
+
+## 2026-11-20 16:36 UTC (11:36 local, 2026-11-20): DX-AGE1 part 1 in: the aging tool is faithful; the Mac cannot reach an informative size; billions cost more than the budget as priced
+
+- **DX-AGE1 part 1 (`e44ea53dc`; `age1/REPORT.md`, `OBSERVATIONS.md`, `CAMPAIGN.md`).** The native aging tool
+  (layout K, one native transaction per save, full journal) matched the product save path on 112 saves: durable
+  records, receipts, current and old pinned reads, feed pages. Two complete Mac rungs, 360,314 and 1,260,314
+  records, with verified native backup and restore at each; storage grew near-linearly (202 to 233 allocated SQL
+  bytes per record); latency, memory, indexing and recovery growth laws cannot be separated at these sizes (two
+  points, large Mac variance). Third rung timed out. Load rate 4,115 to 20,097 records per second.
+- **Server campaign as priced** (one server at $1.09 per hour, from a compatible 0.82 billion record seed, age-only):
+  $2.71 / $17.78 / $47.91 / $108.17 cumulative to 1 / 2 / 4 / 8 billion at 20,097 records per second;
+  $9.28 / $60.81 / $163.89 / $370.04 at 5,875. The tool cannot yet start from server 2's seed. Eight billion does
+  not fit the $200 budget at either rate once committed spend (about $126) is counted.
+- **Successor move:** all 14 test accounts moved at one cut with reads, feed continuation and the original receipt
+  kept; erasure failed with native excision (held views kept values in both eras, journal rows lost), the same
+  fault DX-ERASE1 part 2 closes with the erasure sequence.
+- **Part 2 assigned (xhigh):** adopt the sealed seed a server already holds; raise the aging rate with a proof of
+  what differs; a structural growth model with predictions per index at 0.16 to 8 billion records; one unattended
+  server command for the 1 billion rung in under ten server hours; successor erasure on DX-ERASE1's design. No more
+  Mac ladders. Owner decision pending once the server rate is known: how far past 1 billion to pay for.
