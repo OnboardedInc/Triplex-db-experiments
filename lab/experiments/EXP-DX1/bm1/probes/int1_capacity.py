@@ -21,7 +21,8 @@ HERE = Path(__file__).resolve().parent
 spec = spec_from_file_location("thin_seed", HERE / "thin-seed.py")
 seed = module_from_spec(spec)
 spec.loader.exec_module(seed)
-ROOT = seed.ROOT.parents[1] / "day-n20-int1-capacity"
+READ_ONLY = os.environ.get("BM1_INT1_RETRY") == "1"
+ROOT = seed.ROOT.parents[1] / ("day-n20-int1-capacity-retry" if READ_ONLY else "day-n20-int1-capacity")
 EXP = seed.EXP
 REPO = seed.REPO
 NODE = seed.NODE
@@ -117,13 +118,13 @@ def collect_mode(directory):
     assert reading["requestSha256"] == sha(directory / "request.json")
     assert read(directory / "cleanup.json") == dict(slot=request["slot"], nonce=request["nonce"],
         remaining=[], requestSha256=reading["requestSha256"])
-    assert all(reading[k] == request[k] for k in ("source", "mode", "slot", "people"))
+    assert all(reading[k] == request[k] for k in ("source", "mode", "slot", "people", "readOnly"))
     assert (directory / "observations.jsonl").stat().st_mtime >= request["start"]
     assert (directory / "reading.json").stat().st_mtime >= (directory / "observations.jsonl").stat().st_mtime
     people = reading["people"]
-    n = 20 if people == 1000 else 1000
+    n = 0 if reading["readOnly"] else (20 if people == 1000 else 1000)
     cohort = cohort_for(people)
-    chosen = cohort[::len(cohort) // n]
+    chosen = cohort[::len(cohort) // n] if n else []
     cut = reading["seedCut"]
     if reading["mode"] != "hot":
         assert cut == request["seed"]["cut"] and reading["scope"] == request["seed"]["scope"]
@@ -207,7 +208,7 @@ def collect_mode(directory):
 
     result = {**reading, "observationsSha256": sha(raw), "resources": measures, "roles": roles,
               "timingMs": {phase: dict(n=len(values), p50=percentile(values, .5), p99=percentile(values, .99))
-                           for phase, values in timing.items()}}
+                           for phase, values in timing.items() if values}}
     write(directory / "collector.json", result)
     return result
 
@@ -246,7 +247,7 @@ def boot(mode, sealed):
         copy = directory / "oracle.sqlite"
         shutil.copyfile(seed.ROOT/name/"population.sqlite", copy)
         retained = {**retained, "ledger": str(copy)}
-    request = dict(slot=slot, nonce=nonce, source=seed.SOURCE, mode=mode, people=people, seed=retained,
+    request = dict(slot=slot, nonce=nonce, source=seed.SOURCE, mode=mode, people=people, seed=retained, readOnly=READ_ONLY,
                    start=time.time(), snapshotSha256=sealed["snapshot"]["sha256"])
     write(directory / "request.json", request)
     write(RUN, request)
@@ -338,6 +339,11 @@ def run():
     assert sealed["source"] == seed.SOURCE and sealed["requestSha256"] == sha(seed.REQUEST)
     assert sealed["slot"] == original["slot"] and sealed["nonce"] == original["nonce"]
     assert sealed["recoverySha256"] == sha(seed.ROOT/"recovery/result.json")
+    if READ_ONLY:
+        previous = ROOT.with_name("day-n20-int1-capacity")/"small"
+        assert read(previous/"cleanup.json")["remaining"] == []
+        assert "OutcomeUnknown" in (ROOT.parent/"day-n20-jvm1/int1-queue.log").read_text() or "Commit outcome unknown" in (ROOT.parent/"day-n20-jvm1/int1-queue.log").read_text()
+        assert not (previous/"reading.json").is_file()
     ROOT.mkdir()
     with (ROOT.parent/"night-n19/campaign.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)

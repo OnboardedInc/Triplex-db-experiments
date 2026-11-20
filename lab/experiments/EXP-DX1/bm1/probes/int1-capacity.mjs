@@ -33,7 +33,7 @@ const { startReader, processSize } = await code("lab/experiments/EXP-DX1/int1/re
 const { activePerson } = await code("lab/experiments/EXP-DX1/int1/cohort.ts");
 const { nativeMetrics } = await code("lab/experiments/EXP-DX1/thin1/native-metrics.ts");
 const cohort = Array.from({ length: people / 50 }, (_, i) => activePerson(i, people, true));
-const maxSaves = small ? 20 : 1000;
+const maxSaves = request.readOnly ? 0 : small ? 20 : 1000;
 const hot = mode === "hot";
 const scope = hot ? slot + "-hot" : seed.scope;
 const binding = digest([source, slot, scope, mode, people, request.nonce, request.snapshotSha256]);
@@ -106,7 +106,7 @@ try {
   await capture("after-activity");
   assert.equal(await comp.currentPosition(), cut + maxSaves);
   save("reading.json", {
-    source, slot, scope, mode, people, seedCut: cut, finalCut: account.head, binding,
+    source, slot, scope, mode, people, readOnly: request.readOnly, seedCut: cut, finalCut: account.head, binding,
     cohortSha256: digest(cohort), saves: maxSaves, firstReads: cohort.length, reads: account.reads,
     snapshotLabels: snapshots.map((row) => row.label), requestSha256: sha(fs.readFileSync(requestFile)),
   });

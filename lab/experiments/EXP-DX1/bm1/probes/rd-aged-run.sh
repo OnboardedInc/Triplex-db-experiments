@@ -3,7 +3,7 @@ set -euo pipefail
 
 action=${1:?usage: rd-aged-run.sh run|cleanup ROOT}
 root=${2:?}
-[[ $root == /var/tmp/triplex-bm1/day-n20-rd1-aged ]]
+[[ $root == /var/tmp/triplex-bm1/day-n20-rd1-aged || $root == /var/tmp/triplex-bm1/day-n20-rd1-aged-retry ]]
 source=5f51de7d6ab09b884df61f5c260db7f6688726c1
 repo=$root/build/repository
 entry=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/rd-aged.py

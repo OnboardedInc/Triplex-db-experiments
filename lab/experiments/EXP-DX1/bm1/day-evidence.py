@@ -14,11 +14,14 @@ SERVER = Path("/var/tmp/triplex-bm1")
 MAC = Path.home()/"Claude/Projects/triplex-db-2/evidence"
 SLOTS = {
     "jvm1": ("day-n20-jvm1", ("seed/seed.json", "seed/results", "small/results", "campaign/results",
-                             "seed.log", "campaign.log", "retry.log", "cold-postgres.json", "retry",
+                             "seed.log", "campaign.log", "retry.log", "retry-resumed.log", "failed-unit.txt",
+                             "cold-postgres.json", "retry",
                              "build/results/lscpu.txt", "build/results/images.json",
                              "build/results/IMAGE-INPUTS.SHA256SUMS", "build/results/disks.txt")),
     "int1-capacity": ("day-n20-int1-capacity", ("small", "hot", "full", "comparison.json")),
+    "int1-capacity-retry": ("day-n20-int1-capacity-retry", ("small", "hot", "full", "comparison.json")),
     "rd1-aged": ("day-n20-rd1-aged", ("small", "full", "worker.log")),
+    "rd1-aged-retry": ("day-n20-rd1-aged-retry", ("small", "full", "worker.log")),
     "tail1": ("day-n20-tail1", ("serial", "g1", "g1-2core", "zgc", "campaign.log")),
     "ha1-micro": ("day-n20-ha1-micro", ("run", "collector.json", "worker.log", "cleanup.json")),
     "prep1": ("day-n20-prep1", ("adapter", "smoke", "campaign", "native-small-agreement.json", "worker.log")),

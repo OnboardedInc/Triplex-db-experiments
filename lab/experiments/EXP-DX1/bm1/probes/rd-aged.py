@@ -52,7 +52,7 @@ assert((nativeSize === 24 && agingWrites === 32) || (nativeSize === 10_000 && ag
         op: "assert" as const, entityId: root, attribute: ":rd1/age-" + j,
         value: { type: "string" as const, value: i + "/" + j }, validFrom: SEED_VALID_FROM,
       }));
-      const operations = [...previous.map((tripleId) => ({ op: "retract" as const, tripleId })), ...additions];
+      const operations = [...previous.map((id) => ({ op: "retract" as const, id })), ...additions];
       const start = clock();
       const result = await commit(operations, "age-" + i);
       const end = clock();

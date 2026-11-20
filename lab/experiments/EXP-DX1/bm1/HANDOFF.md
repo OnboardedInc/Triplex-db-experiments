@@ -220,6 +220,10 @@ The INT1 image is present on the bench by its original immutable ID. The supervi
 
 The HA1 microframe service follows RD1. PREP1's published report now names source `7ca8525a9` and the native command. Its detached service first checks a short real K/S tape against the native append and three JVMs. Only then can the unmodified producer prepare its ten-account field seed and start the 12 measured arms. The builder still has the SQL restart and erasure gates open. The separate ACT1 settlement-price producer currently puts the live neighbour in a different native database. The current one-database queue needs an ACT1 counterpart with both accounts in the same scope.
 
+The sealed JVM1 dump is 22,257,097,252 bytes, with SHA-256 `34e3e707453eaf7d78b0ed6bd01c5eeef31cbdee21addff50621b94958ba2202`. The small eight-save replay passed. The present arm stopped at the six-minute logical restore ceiling before any timed offer. The first provisioning retry reached its PostgreSQL stack and stopped during Java setup. Cleanup reported an unset home variable. The resumed service now restores into that already-owned PG container and uses checked cold clones for transient arms. The source and timing profiles are still pinned to `46880aa47`.
+
+The first INT1 restore returned all 20 small reads correctly and could not resolve its first subsequent write. The retry prices reads and memory on the same 20,000 active people, without measured saves. The RD1 first native fixture stopped at its first attempted retraction because the adapter used the wrong request field. Its fresh retry uses `id`. The first attempt files remain in their own roots. A single detached supervisor, `bm1n20-friday-remaining`, now starts INT1, RD1, HA1 and PREP1 sequentially after JVM1's cleanup. Independent waiting units had raced the JVM1 restart during their handoff and left HA1 and PREP1 unstarted.
+
 Collect terminal run files from the Mac with the appropriate producer SHA. Both original files and the large snapshots remain in place on the bench.
 
 ```sh
