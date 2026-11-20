@@ -2633,3 +2633,19 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   worktrees). Removed: an 8.4 GB leftover trace-render index and a 3.3 GB derived chrome trace under
   `evidence/DX-BM1/drv1a/offline-render/`, five finished analysts' worktrees, two finished functional-check volumes
   (`tx2-datomic-s2-data`, `tx2-datomic-s3-data`) and dangling images. VM 69 to 37 GB used; Mac free 57 GiB.
+
+## 2026-11-20 02:48 UTC (21:48 local, 2026-11-19): DX-HASYNC1 part 1 in: zero acknowledged writes lost in seven fault drills (Mac, small)
+
+- **DX-HASYNC1 part 1 (`e61905198`, Mac VM, eight subjects and 1,280 facts per run; `hasync1/REPORT.md`, `PROCEDURE.md`,
+  `BENCH.md`).** Scripted failover with a synchronous PostgreSQL standby, a standby transactor and fencing. Seven
+  drills (primary killed while updating the log pointer, after the log write with the reply withheld, during an
+  index job, during a 2,000-fact import; WAL cut either way; old primary restarted): 73 of 73 earlier receipts kept,
+  first new write after 11.95 to 22.22 s (bar 60), 1,234 pinned reads answered during the cuts, no duplicate saves in
+  the feed, both fenced processes refused to restart; the withheld write returned its original receipt. Planned move:
+  writes paused 9.18 s (bar 30), 0.91 s of live copy; predicted 18 to 29 s at 16 million facts and 21 to 38 s at 160
+  million (the upper value misses the bar). Synchronous copy cost in the Mac's noise; prediction for bare metal +0.23
+  to 0.74 ms per isolated save. After a sudden loss new writes rest on one durable copy until a standby rejoins. A
+  whole-machine loss needs an independent reboot-safe fence. Two-server command forecast 66 to 84 minutes, unrun.
+- **Assigned, part 2:** open-loop saves and reads through every drill (the true unavailable interval; review finding
+  14); growth with size at three sizes; growth with 1, 4 and 10 Datomic systems on one machine pair; the degraded
+  window's options for Sam and the fence.
