@@ -15,11 +15,16 @@ const study =
       : undefined;
 const grouped = process.argv[2] === "--group";
 const batch = process.argv[grouped || study ? 3 : 2];
-const enhanced = process.argv[4] === "--enhanced";
+const write5 = process.argv[4] === "--write5";
+const enhanced = process.argv[4] === "--enhanced" || write5;
 assert(process.argv[4] === undefined || (study && enhanced && process.argv.length === 5));
 if (batch === "--plan") {
   if (enhanced && study) {
-    console.log("Matched 1–3 fact saves with extra arms", modes(study, true).join(", "));
+    console.log("Matched 1–3 fact saves with extra arms", modes(study, true, write5).join(", "));
+    if (write5)
+      console.log(
+        "The packed-journal arm is informational. Forecasts are in small/write5-predictions.json.",
+      );
     console.log(
       "The prepared arm allows 32 members. The bounded arm prices each turn at up to 8,000 estimated microseconds.",
     );
@@ -134,7 +139,7 @@ test "$(git -C "$dir/bootstrap" rev-parse HEAD)" = "$sha"
 bash "$dir/bootstrap/lab/experiments/EXP-DX1/t1/bare-metal.sh" --prepare "$sha" "$dir/build"
 export PATH="$dir/build/tools/bin:$PATH"
 cd "$dir/build/repository"
-node lab/bin/heavy.mjs --label DX-W1-native -- node --experimental-strip-types ${study ? "lab/experiments/EXP-DX1/w1/field/server.ts run" : grouped ? "lab/experiments/EXP-DX1/w1/group/server.ts run" : "lab/experiments/EXP-DX1/w1/bench.ts"} "$dir" "$sha" "$batch"${study ? " " + study + (enhanced ? " --enhanced" : "") : ""}
+node lab/bin/heavy.mjs --label DX-W1-native -- node --experimental-strip-types ${study ? "lab/experiments/EXP-DX1/w1/field/server.ts run" : grouped ? "lab/experiments/EXP-DX1/w1/group/server.ts run" : "lab/experiments/EXP-DX1/w1/bench.ts"} "$dir" "$sha" "$batch"${study ? " " + study + (write5 ? " --write5" : enhanced ? " --enhanced" : "") : ""}
 sha256sum "$dir/results/comparison.json" > "$dir/comparison.sha256"`;
 const launch = `set -euo pipefail
 root=$1; dir=$2; sha=$3; batch=$4; unit=$5; url=$6; machine=$7; script=$8
@@ -181,13 +186,17 @@ for (;;) {
   const collected = JSON.parse(bytes);
   const { arms: rows, pairs } = collected;
   if (study) {
-    validateComparison(collected, study, source, batch, enhanced);
+    validateComparison(collected, study, source, batch, enhanced, write5);
     const expected = createHash("sha256")
       .update(
         fs.readFileSync(
           path.join(
             import.meta.dirname,
-            enhanced ? "small/predictions.json" : "field/predictions.json",
+            write5
+              ? "small/write5-predictions.json"
+              : enhanced
+                ? "small/predictions.json"
+                : "field/predictions.json",
           ),
         ),
       )
@@ -206,6 +215,7 @@ for (;;) {
       for (const [name, hash] of [
         ["raw.json", row.rawSha256],
         ["seed-readback.json", row.seedReadbackSha256],
+        ...(write5 ? [["write-options.json", row.writeOptionsSha256]] : []),
       ])
         assert.equal(sudo("sha256sum", armDir + "/" + name).split(/\s/)[0], hash);
     }

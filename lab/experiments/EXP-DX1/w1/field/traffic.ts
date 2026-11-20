@@ -160,6 +160,7 @@ export async function fieldPhase(
   schedule: Offer[],
   pooled: boolean,
   senders: Map<string, number>,
+  denseJournalIds = false,
 ) {
   const pending: Promise<void>[] = [],
     rows: Observed[] = [],
@@ -169,7 +170,13 @@ export async function fieldPhase(
     inflight = new Map<number, number>();
   const expected = new Map<
     string,
-    { root: string; tx: string; fresh: Input["rows"][number]; old?: string; changes: string[] }
+    {
+      root: string;
+      tx: string;
+      fresh: Input["rows"][number];
+      old?: string;
+      changes: Record<string, unknown>[];
+    }
   >();
   const attr = ":field/answer-" + label;
   let offered = 0,
@@ -220,18 +227,15 @@ export async function fieldPhase(
       prior = last.get(root);
     const f = [fact(root, attr, e.subtask + "/" + e.ordinal)];
     if (e.extra) f.push(fact(root, ":field/note", id));
-    const input = command(id, f, prior ? [prior] : []);
+    const input = command(id, f, prior ? [prior] : [], true, denseJournalIds);
     expected.set(id, {
       root,
       tx: input.claims[0]!.txId,
       fresh: input.rows[0]!,
       old: prior?.id,
-      changes: [
-        ...input.rows
-          .filter((r) => r.entity_type !== "_Transaction" && r.retracted_at === null)
-          .map((r) => "assert/" + r.id),
-        ...(prior ? ["retract/" + prior.id] : []),
-      ],
+      changes: input.rows
+        .filter((r) => r.attribute === ":_tx/change" && r.entity_type === "_Transaction")
+        .map((r) => JSON.parse(r.value_json!)),
     });
     last.set(root, input.rows[0]!);
     input.writeClass = "live";
@@ -300,14 +304,32 @@ export async function fieldPhase(
   const h = await c.begin(db);
   assert.equal(h.position, head + rows.length);
   await c.release(db, h.handle);
-  for (const r of [rows.at(0), rows.at(-1)])
-    if (r) assert.equal((await c.operation(db, r.id)).t?.v, r.t);
+  if (denseJournalIds) {
+    for (let i = 0; i < rows.length; i += 48)
+      await Promise.all(
+        rows.slice(i, i + 48).map(async (r) => {
+          const receipt = await c.operation(db, r.id);
+          assert.equal(receipt.status, "committed");
+          assert.equal(receipt.operationId, r.id);
+          assert.equal(Number(receipt.position?.v), r.p);
+          assert.equal(receipt.t?.v, r.t);
+          assert.equal(receipt.recordedAt?.v, r.clock);
+          assert.equal(await c.claim(db, r.id, r.p), expected.get(r.id)!.tx);
+        }),
+      );
+  } else
+    for (const r of [rows.at(0), rows.at(-1)])
+      if (r) assert.equal((await c.operation(db, r.id)).t?.v, r.t);
   {
     const ordered = [...rows].sort((a, b) => a.p - b.p),
       byId = new Map(ordered.map((r) => [r.id, r]));
     const retired = new Map<string, Observed>();
+    const asserted = new Map<string, number>();
     for (const r of ordered) {
-      const old = expected.get(r.id)!.old;
+      const intent = expected.get(r.id)!;
+      for (const change of intent.changes)
+        if (change.op === "assert") asserted.set(String(change.tripleId), r.clock);
+      const old = intent.old;
       if (old) retired.set(old, r);
     }
     // [DX-W1] Why: check every receipt's journal and the old/new lifetime of the exact field. A smaller physical count alone cannot prove lossless coalescing.
@@ -339,14 +361,22 @@ export async function fieldPhase(
           fields("changed-entity").map((r) => r.value_string),
           [intent.root],
         );
+        const sortChanges = (xs: Record<string, unknown>[]) =>
+          xs.sort((a, b) => String(a.tripleId).localeCompare(String(b.tripleId)));
+        const wanted = intent.changes.map((change) =>
+          change.op === "assert"
+            ? { ...change, recordedAt: observed.clock }
+            : denseJournalIds
+              ? {
+                  ...change,
+                  recordedAt: asserted.get(String(change.tripleId)),
+                  retractedAt: observed.clock,
+                }
+              : change,
+        );
         assert.deepEqual(
-          fields("change")
-            .map((r) => {
-              const x = JSON.parse(r.value_json!);
-              return x.op + "/" + x.tripleId;
-            })
-            .sort(),
-          [...intent.changes].sort(),
+          sortChanges(fields("change").map((r) => JSON.parse(r.value_json!))),
+          sortChanges(wanted),
         );
       }
     }

@@ -295,9 +295,17 @@ export async function withStack<T>(
       DX_W1_EXTRA: String(Number(enhanced)),
       DX_SMALL_ROWS: String(Number(policy.compact)),
       DX_GROUP_REUSE_PREPARED: String(Number(policy.prepared)),
+      DX_W1_PREDECESSOR: String(Number(policy.predecessor)),
+      DX_W1_LEDGER: String(Number(policy.ledger)),
+      DX_W1_PACKED_JOURNAL: String(Number(policy.packedJournal)),
+      DX_W1_FAST_REPLY: String(Number(policy.fastReplyAndWire)),
       DX_GROUP_MAX_MEMBERS: String(policy.maxMembers),
       DX_WRITE_BUDGET_US: policy.budgetMicros === null ? "" : String(policy.budgetMicros),
     });
+    if (policy.fastReplyAndWire)
+      env.TRIPLEX_DATOMIC_FAST_PATHS = [env.TRIPLEX_DATOMIC_FAST_PATHS, "save-wire"]
+        .filter(Boolean)
+        .join(",");
   }
   write(path.join(dir, "identity.json"), arm);
   const args = [
@@ -390,6 +398,14 @@ export async function withStack<T>(
           assert(writer.Config.Env.includes("TX2_GROUP_STAGE_CLOCK=1"));
           assert(writer.Config.Env.includes("TX2_SMALL_ROWS=" + Number(policy.compact)));
           assert(writer.Config.Env.includes("TX2_GROUP_REUSE_PREPARED=" + Number(policy.prepared)));
+          assert(
+            writer.Config.Env.includes("TX2_PREDECESSOR_LOOKUP=" + Number(policy.predecessor)),
+          );
+          assert(writer.Config.Env.includes("TX2_SAVE_LEDGER=" + Number(policy.ledger)));
+          assert(writer.Config.Env.includes("TX2_PACKED_JOURNAL=" + Number(policy.packedJournal)));
+          assert(
+            writer.Config.Env.includes("TX2_GROUP_FAST_REPLY=" + Number(policy.fastReplyAndWire)),
+          );
           assert(writer.Config.Env.includes("TX2_GROUP_MAX_MEMBERS=" + policy.maxMembers));
           const budget = writer.Config.Env.find((s: string) =>
             s.startsWith("TX2_WRITE_BUDGET_US="),

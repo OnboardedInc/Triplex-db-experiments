@@ -53,21 +53,22 @@ export async function capacityTrial(
   nonce: string,
   prepared: boolean,
   readWal: () => number,
+  profile?: { fastReplyAndWire: boolean },
 ) {
-  const c = new DatomicClient(url, 35000);
+  const c = new DatomicClient(url, 35000, undefined, { saveWire: profile?.fastReplyAndWire });
   const scope = scopeKey(nonce);
   try {
     const { db, created } = await c.create(scope, "lean", true, 35000);
     assert(created);
     const phases = [];
-    for (const depth of [1, 8, 32, 64, 128]) {
+    for (const depth of profile ? [64, 128] : [1, 8, 32, 64, 128]) {
       const commands: {
         entity: string;
         seed: ReturnType<typeof command>;
         replacement: ReturnType<typeof command>;
         width: number;
       }[] = [];
-      const count = 192;
+      const count = profile ? 384 : 192;
       for (let i = 0; i < count; i++) {
         const id = `d${depth}-save-${i}`;
         const entity = `acct/a${i % 10}/d${depth}/p${i}`;
