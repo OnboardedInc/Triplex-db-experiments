@@ -155,6 +155,9 @@ function setup(compact: boolean) {
   const gwPolicy = process.env.DX_INT1_GATEWAYS ?? "original";
   const readMode = process.env.DX_TOUCHED_READ_MODE ?? "following";
   const peerGc = process.env.DX_INT1_PEER_GC ?? "g1";
+  const smallHeap = process.env.DX_INT1_PEER_HEAP === "128m";
+  assert([undefined, "default", "128m"].includes(process.env.DX_INT1_PEER_HEAP));
+  assert(!smallHeap || (gwPolicy === "demand" && peerGc === "g1"));
   const seedFeed = process.env.DX_INT1_SEED_FEED ?? "immediate";
   const rowWire = process.env.DX_INT1_ROW_WIRE ?? "plain";
   assert(rowWire === "plain" || (rowWire === "gzip" && readMode === "validated"));
@@ -167,7 +170,7 @@ function setup(compact: boolean) {
     assert(!fs.existsSync(ownerFile(slot)), "Exclusive slot is in use");
     const settings = (cfg.slots.datomic[slot] = { ...original[slot] });
     settings.gatewayOpts =
-      (gwPolicy === "demand" ? "-Xmx384m -Ddxthin.cache=demand -Ddatomic.objectCacheMax=32m " +
+      (gwPolicy === "demand" ? (smallHeap ? "-Xmx128m" : "-Xmx384m") + " -Ddxthin.cache=demand -Ddatomic.objectCacheMax=32m " +
         (peerGc === "elastic" ? "-Xms32m -XX:+UseZGC -XX:+ZGenerational -XX:SoftMaxHeapSize=96m -XX:ZUncommitDelay=1" :
           "-Xms64m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps")
         : (compact ? "-Xms128m -Xmx600m" : "-Xms160m -Xmx896m") + " -Ddatomic.objectCacheMax=192m") +
@@ -184,7 +187,12 @@ function setup(compact: boolean) {
   write(file, cfg);
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
-  write(cred, { nonce, secret, slots, compact, census, cohort, gwPolicy, readMode, peerGc, seedFeed, rowWire, readerPages: process.env.DX_INT1_READER_PAGES === "1", isolatedVolume: compact });
+  write(cred, {
+    nonce, secret, slots, compact, census, cohort,
+    gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
+    readerPages: process.env.DX_INT1_READER_PAGES === "1",
+    isolatedVolume: compact,
+  });
   return slots;
 }
 function witness(slot: string) {
@@ -248,6 +256,7 @@ function bind() {
       census: attempt.census, cohort: attempt.cohort,
       gwPolicy: attempt.gwPolicy, readMode: attempt.readMode,
       peerGc: attempt.peerGc,
+      smallHeap: attempt.smallHeap,
       seedFeed: attempt.seedFeed,
       rowWire: attempt.rowWire,
       readerPages: attempt.readerPages,
@@ -276,6 +285,7 @@ if (action === "--guest") {
     DX_TOUCHED_READ_MODE: stack.managed.readMode ?? "following",
     DX_INT1_GATEWAYS: stack.managed.gwPolicy ?? "original",
     DX_INT1_PEER_GC: stack.managed.peerGc ?? "g1",
+    DX_INT1_PEER_HEAP: stack.managed.smallHeap ? "128m" : "default",
     DX_INT1_SEED_FEED: stack.managed.seedFeed ?? "immediate",
     DX_INT1_ROW_WIRE: stack.managed.rowWire ?? "plain",
     DX_INT1_READER_PAGES: stack.managed.readerPages ? "1" : "0",

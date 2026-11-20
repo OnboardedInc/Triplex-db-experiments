@@ -13,6 +13,7 @@ The paths in [GATEWAY-SHA256SUMS](GATEWAY-SHA256SUMS) are relative to the durabl
 | `p3-compressed-probe-a` | Fresh stack, same 200 deep people, native gzip verified on every actual response, independent probe replay and first-read timings. |
 | `p3-seed-feed-deep-a` | Writer-only import of 2,000 deep people, 40 active. A third histogram follows the complete replay of the 376 original seed transactions and 320,826 facts. |
 | `p3-following-deep-full`, `p3-following-thin-a` | Original following reader with 10,000 deep or 10,000 thin people and the same spread cohort. The live heap, committed V8 spaces, external buffers and charged index were sampled at fixed membership. |
+| `p3-elastic-deep-a` | Same 2,000-person deep cohort, cache budgets and validated reads as the bounded G1 control. The JVM reported a generational Z heap. |
 | `p3-proof-b` | The reader fingerprint changed between workers. The trial rejected the attempt before producing a result. The manager log records removal of its own volume. |
 | `p3-demand-deep-b` | Matched 2,000-person bounded JVM profile with 40 first reads, including the first read to open the scope. |
 | `p3-baseline-thin-a` | 10,000 thin people, 200 active. The same two phases ran on a separate reservation and fresh SQL volume. |
@@ -28,6 +29,8 @@ On the physical queue, the first wide case measures 200 previously unread deep p
 At the original deep seed, both JVMs held exactly 27,889 live `datomic.db.Datum` objects (1,115,560 shallow bytes each). The read peer had zero parsed entity keys and no reach configuration. The write peer had one 96-byte reach configuration and one 72-byte empty ID-map object. After demand, the read peer had 1,477 parsed keys (59,080 shallow bytes), two configurations and two ID-map objects. The class histogram excludes their referents from those shallow sizes. The ID memo maps entity names to native IDs. Assertion-ID uniqueness comes from the durable history. Native storage pages can serve multiple people. The write role also served the driver's independent receipt-feed checks during import.
 
 The optional managed `DX_INT1_PEER_GC=elastic` comparison keeps the peer cache, row and session budgets identical and uses a 96 MiB soft heap target with generational ZGC. The default bounded profile uses G1. The JVM profile records the actual collector and charge.
+
+At the deep seed, the write gateway used 396.6 MiB RSS with ZGC and 311.4 MiB with G1. Its native cache charged 29.871 MB and 30.173 MB respectively. Median cold-read latency was 20.17 vs 12.08 ms in these 40-person samples. `DX_INT1_PEER_HEAP=128m` separately caps the G1 heap. Its profile checker measures the reserved address range of each live JVM.
 
 The diagnostic `DX_INT1_SEED_FEED=after-sampling` stores an ordered change digest from the issued operations and their assigned IDs. It measures a writer-only seed first and then reads and verifies every original feed position. A third sample measures the same JVMs after that replay with no intervening writes. The histogram checker requires the original attempt, scope, full seed fact count and matching feed proof. The default full-population comparisons run the feed verifier during import.
 

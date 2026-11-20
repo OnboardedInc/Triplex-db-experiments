@@ -60,6 +60,11 @@ export function inspectProfiles(dir: string) {
     assert.deepEqual(profile.samples.map((s: any) => s.role).sort(), ["read","write"]);
     for (const s of profile.samples) {
       assert.equal(s.containerId, input.containers[0].id);
+      if (input.policy?.peerHeap === "128m") {
+        // [DX-THIN1] Why: G1 reports the reserved heap address range on the live JVM. Rejected: reading a requested heap cap back from the launch environment.
+        const range = /garbage-first heap[^\n]*\[(0x[\da-f]+),\s*(0x[\da-f]+)\)/i.exec(s.before.heap);
+        assert(range && BigInt(range[2]!) - BigInt(range[1]!) === 128n * 1024n ** 2n);
+      }
       if (input.gatewaySource) assert.equal(s.source,input.gatewaySource);
       assert.equal(input.slot, "tx2-dxthin-" + s.nonce);
       assert(!witnesses.has(s.witness));
