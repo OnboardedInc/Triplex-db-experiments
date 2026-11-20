@@ -12,6 +12,11 @@ import { sourceInventory, stageReplay } from "../scale1/source.ts";
 import { fileHash } from "../scale1/measurements.ts";
 import { measure, type Arm } from "./measure.ts";
 import { fieldPolicy, type Mode } from "./field/bench-check.ts";
+import { datomicRuntime } from "../../../config/datomic/runtime.mjs";
+
+import type { jvmPolicy } from "../jvm1/policy.mjs";
+import type { part2Policy } from "../jvm1/launch.mjs";
+import { verifyJvmFlags } from "../jvm1/check-readback.mjs";
 import type { WriterExpectation } from "./write-options.ts";
 
 const repo = path.resolve(import.meta.dirname, "../../../.."),
@@ -211,6 +216,12 @@ export async function withStack<T>(
   grouped?: boolean,
   fieldMode?: Mode,
   enhanced = false,
+  jvm?: {
+    policy: ReturnType<typeof jvmPolicy> | ReturnType<typeof part2Policy>;
+    deadline: number;
+    seed?: { dump: string; sha256: string };
+    javaMajor?: string;
+  },
 ) {
   const why = stopReason();
   assert(!why, why);
@@ -237,7 +248,8 @@ export async function withStack<T>(
   const empty = { containers: [], volumes: [], networks: [] };
   assert.deepEqual(resources(), empty);
   const env: NodeJS.ProcessEnv = {
-    ...process.env,
+    ...(jvm ? Object.fromEntries(Object.entries(process.env).filter(([key]) =>
+      !/^(DX_|TX2_|TRIPLEX_|DATOMIC_|JAVA_OPTS$|JAVA_TOOL_OPTIONS$|JDK_JAVA_OPTIONS$|_JAVA_OPTIONS$|NODE_OPTIONS$)/.test(key))) : process.env),
     DX_BARE_METAL: "1",
     DX_BARE_METAL_ROOT: dir,
     DX_STACK_EVIDENCE: path.join(dir, "engines"),
@@ -311,35 +323,63 @@ export async function withStack<T>(
         .filter(Boolean)
         .join(",");
   }
+
+  const gcLog = (role: string) => ` -Xlog:gc*=info:file=/trace/${role}.log:time,uptimemillis,level,tags:${jvm?.javaMajor ? "filecount=0" : "filecount=4,filesize=8m"}`;
+  if (jvm) {
+    // [DX-JVM1] Why: tie the declared JVM arm to the shared stack startup and storage clone.
+    // Rejected: updating process placement after the JVM derived its pools and collector.
+    const p = jvm.policy;
+    if (jvm.javaMajor) {
+      assert(p.cpus.sender);
+      // [DX-JVM1] Why: reserve space for Linux and the bounded field sender beside 37 GiB of engine caps.
+      // Rejected: allowing the generic 32 GiB sender heap in this memory comparison.
+      Object.assign(env, { TRIPLEX_NODE_MAIN_CPUS: p.cpus.sender.split(",")[0],
+        TRIPLEX_NODE_WORKER_CPUS: p.cpus.sender, NODE_OPTIONS: "--max-old-space-size=3072" });
+    }
+    Object.assign(env, {
+      DX_JAVA: jvm.javaMajor ?? "21",
+      DX_JVM_EVIDENCE: "1",
+      DX_NATIVE_SETTINGS_READBACK: "1",
+      DX_JVM1_TX_PROPERTIES: JSON.stringify(p.txProperties),
+      DX_GW_WRITE_MEMORY: p.memory["gw-w"] + "m",
+      DX_GW_READ_MEMORY: p.memory["gw-r"] + "m",
+      DX_GW_WRITE_JAVA_OPTS: p.opts["gw-w"].join(" ") + gcLog("gw-w"),
+      DX_GW_READ_JAVA_OPTS: p.opts["gw-r"].join(" ") + gcLog("gw-r"),
+      ...(jvm.seed ? { DX_JVM1_PG_RESTORE: jvm.seed.dump, DX_JVM1_PG_RESTORE_SHA256: jvm.seed.sha256 } : {}),
+    });
+  }
   write(path.join(dir, "identity.json"), arm);
   const args = [
     stack("up"),
     slot,
     "--no-publish",
     "--cpus-tx",
-    "0",
+    jvm?.policy.cpus.tx ?? "0",
     "--cpus-pg",
-    "1",
+    jvm?.policy.cpus.pg ?? "1",
     "--cpus-gw-write",
-    "2",
+    jvm?.policy.cpus["gw-w"] ?? "2",
     "--cpus-gw-read",
-    "4",
+    jvm?.policy.cpus["gw-r"] ?? (availableParallelism() >= 12 ? "4,8" : "4"),
     "--pg-memory",
-    "6g",
+    jvm ? jvm.policy.memory.pg + "m" : "6g",
     "--tx-memory",
-    "6g",
+    jvm ? jvm.policy.memory.tx + "m" : "6g",
     "--tx-java-opts",
-    "-Xms256m -Xmx5g -XX:+UseG1GC",
+    jvm ? jvm.policy.opts.tx.join(" ") + gcLog("tx") : "-Xms256m -Xmx5g -XX:+UseG1GC",
+    ...(jvm ? ["--memory-index-threshold", jvm.policy.indexThreshold + "m",
+      "--memory-index-max", jvm.policy.indexMax + "m"] : []),
     "--object-cache-max",
-    "1280m",
+    jvm ? jvm.policy.txObjectCache + "m" : "1280m",
     "--pg-settings",
     "-c shared_buffers=1GB -c synchronous_commit=on -c fsync=on -c full_page_writes=on -c track_io_timing=on",
   ];
   const activeSlot = path.resolve(dir, "../../active-slot");
   fs.writeFileSync(activeSlot, slot + "\n", { flag: "wx" });
   try {
-    execFileSync("bash", args, { cwd: repo, env, timeout: 600000, stdio: "inherit" });
-    if (availableParallelism() >= 12) docker("update", "--cpuset-cpus", "4,8", slot + "-gw-r");
+    const startupBudget = jvm ? Math.min(360_000, jvm.deadline - Date.now()) : 600_000;
+    assert(startupBudget > 0);
+    execFileSync("bash", args, { cwd: repo, env, timeout: startupBudget, stdio: "inherit" });
     const buildResults = path.resolve(repo, "../results"),
       images = get(path.join(buildResults, "images.json"));
     const imageFor = (tag: string) => {
@@ -347,8 +387,13 @@ export async function withStack<T>(
       assert(image?.Id);
       return image;
     };
-    const peer = imageFor("tx2-datomic:1.0.7745-da00"),
+    const runtime = datomicRuntime(jvm?.javaMajor ?? env.DX_JAVA ?? "21");
+    const peer = imageFor(runtime.tag),
       pg = imageFor("postgres:17-alpine");
+    if (jvm?.javaMajor) {
+      assert.equal(peer.Config.Labels["tx2.java-major"], runtime.major);
+      assert.equal(peer.Config.Labels["tx2.java-base"], runtime.base);
+    }
     assert.equal(
       peer.Config.Labels["tx2.build-inputs-sha256"],
       await fileHash(path.join(buildResults, "IMAGE-INPUTS.SHA256SUMS")),
@@ -396,6 +441,10 @@ export async function withStack<T>(
     const roleInfo = roles.map((role) => {
       const info = JSON.parse(docker("inspect", slot + "-" + role))[0];
       assert.equal(info.Image, role === "pg" ? pg.Id : peer.Id);
+      if (jvm) {
+        assert.equal(info.HostConfig.CpusetCpus, jvm.policy.cpus[role]);
+        assert.equal(info.HostConfig.Memory, jvm.policy.memory[role] * 2 ** 20);
+      }
       const group = fs
         .readFileSync(`/proc/${info.State.Pid}/cgroup`, "utf8")
         .trim()
@@ -411,10 +460,13 @@ export async function withStack<T>(
         role,
         id: info.Id,
         image: info.Image,
+        ...(jvm ? { startedAt: info.State.StartedAt, restarts: info.RestartCount } : {}),
         cpus: info.HostConfig.CpusetCpus,
         bytes: info.HostConfig.Memory,
       };
     });
+    if (jvm) verifyJvmFlags(path.join(engines, "config"), jvm.policy,
+      Object.fromEntries(roleInfo.map((info) => [info.role, info.id])));
     if (grouped !== undefined) {
       const writer = JSON.parse(docker("inspect", slot + "-gw-w"))[0];
       assert(writer.Config.Env.includes("TX2_GROUP_COMMIT=" + Number(grouped)));
@@ -453,8 +505,8 @@ export async function withStack<T>(
       }
     }
     env.TX2_ENGINE_CGROUPS = groups.join(",");
-    env.TX2_ENGINE_CPUS = "5";
-    write(path.join(dir, "placements.json"), { engines: roleInfo, sender: "3", workerCpus });
+    env.TX2_ENGINE_CPUS = jvm?.javaMajor ? String(roleInfo.reduce((n, role) => n + role.cpus.split(",").length, 0)) : "5";
+    write(path.join(dir, "placements.json"), { engines: roleInfo, sender: jvm?.policy.cpus.sender ?? "3", workerCpus: env.TRIPLEX_NODE_WORKER_CPUS });
     const durable = docker(
       "exec",
       slot + "-pg",
