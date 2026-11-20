@@ -1,6 +1,6 @@
 (ns triplex.gateway.storage
   (:require [triplex.gateway.group :as group] [triplex.gateway.commit :as commit] [triplex.gateway.predecessor :as pred] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
-  (:require [triplex.gateway.replay-capture :as replay-capture])
+  (:require [triplex.gateway.replay-capture :as replay-capture] [triplex.gateway.small-row :as small-row])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -113,6 +113,10 @@
          source (when-some [p (get input "sourceK")] (safe-position p)) position (safe-position (get input "position"))
          span (safe-position (or (get input "span") (when source (- position source))))
          lower (- position span) claims (get input "claims") sample (or (first fresh) (first old))
+         rows-version (value db scope :triplex.scope/rows-version)
+         packed-rows (and small-row/enabled (= rows-version 3) (= span 1) (= 1 (count claims))
+                          (not= false (get input "assignRecordTime")) (true? (value db scope :triplex.scope/strict-record-clocks))
+                          (<= (count old) 3) (<= 1 (count (remove #(= "_Transaction" (:entity_type %)) fresh)) 3))
          metadata {:position position
                    :recorded-at (cond (seq fresh) (:recorded_at sample) (seq old) (:retracted_at sample)
                                       (seq claims) (get (first claims) "timestamp") :else (double (System/currentTimeMillis)))
@@ -174,10 +178,13 @@
                            (let [text (get-in input ["rowTexts" (:id row)])]
                              (when-not (and (string? text) (.startsWith ^String text (row-prefix (:id row))))
                                (codec/invalid "Missing or mismatched row text"))
-                             [(if (and (not lean) (> (.length ^String text) 8000))
-                                [:db/add (str "e:" (:entity_id row)) :triplex.entity/row-overflow true]
-                                [(if lean :triplex/assert :db/add) (str "e:" (:entity_id row)) :triplex.entity/row [:triplex/row text (:recorded_position row)
-                                  (+ 44 (.length ^String (:id row)) (if (= "ref" (:value_type row)) (.length ^String (:value_string row)) 0)) :row]])]))) fresh)
+                             (if (and (not lean) (> (.length ^String text) 8000))
+                               [[:db/add (str "e:" (:entity_id row)) :triplex.entity/row-overflow true]]
+                                (let [offset (+ 44 (.length ^String (:id row)) (if (= "ref" (:value_type row)) (.length ^String (:value_string row)) 0))
+                                      plan (when packed-rows (small-row/prepare text offset (:recorded_position row) new-ids))]
+                                  [[(if lean :triplex/assert :db/add) (str "e:" (:entity_id row)) :triplex.entity/row
+                                   (if plan [:triplex/row (subs text 0 offset) (:recorded_position row) offset :row plan]
+                                     [:triplex/row text (:recorded_position row) offset :row])]]))))) fresh)
                ;; [DX-B5-L2] Why: Datomic cancels add/retract pairs in one physical tx; preserve born-retired rows with a marker.
                ;; Rejected: dropping their history, or assigning their retirement to a later synthetic transaction.
                (when lean
@@ -218,7 +225,7 @@
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
                        :rev-aevt (= "1" (System/getenv "TX2_REV_AEVT"))
-                       :lean lean :slim-row (= 4 (value db scope :triplex.scope/rows-version)) :ops ops :times times :new-ids (vec new-ids) :assign-record-time (not= false (get input "assignRecordTime"))
+                       :lean lean :slim-row (= 4 rows-version) :ops ops :times times :new-ids (vec new-ids) :assign-record-time (not= false (get input "assignRecordTime"))
                        ;; [DX-R3] Why: strict scopes also order empty/claim-only commits and every imported claim clock.
                        ;; Rejected: checking row timestamps only (a supported SPI commit can have no rows).
                        :record-clocks (vec (cons (:recorded-at metadata) (map #(get % "timestamp") claims)))

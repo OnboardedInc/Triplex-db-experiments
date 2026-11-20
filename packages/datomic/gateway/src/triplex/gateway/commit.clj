@@ -130,18 +130,23 @@
                    (and (instance? java.util.List x) (= :triplex/position (first x))) (shifted (second x))
                    (and (instance? java.util.List x) (= :triplex/double-position (first x))) (double (shifted (second x)))
                    (and (instance? java.util.List x) (= :triplex/row (first x)))
-                   (let [[_ text p offset kind] x
-                         text (if (and (not= 0 delta) (< lower p (inc provisional)))
-                                (str (subs text 0 offset) (if (= p provisional) final-digits (digits (shifted p)))
-                                     (subs text (+ offset 16))) text)]
-                     (let [assigned (if-not server-clock text
+                   (let [[_ text p offset kind packed] x]
+                     (if packed
+                       (do
+                         (when-not server-clock (throw (ex-info "Packed row requires server clock" {})))
+                         (str text (if (= p provisional) final-digits (digits (shifted p)))
+                              (apply str (interpose (Double/toString (double clock)) packed))))
+                       (let [text (if (and (not= 0 delta) (< lower p (inc provisional)))
+                                    (str (subs text 0 offset) (if (= p provisional) final-digits (digits (shifted p)))
+                                         (subs text (+ offset 16))) text)
+                             assigned (if-not server-clock text
                                       (case kind
                                         :row (assign-row text offset clock new-id-set)
                                         :retirement (str (subs text 0 (+ offset 16))
                                                          (format "%016x" (Double/doubleToRawLongBits clock))
                                                          (subs text (+ offset 32)))
                                         text))]
-                       (if (and slim-row (= kind :row)) (slim-row-code assigned offset) assigned)))
+                         (if (and slim-row (= kind :row)) (slim-row-code assigned offset) assigned))))
                    (instance? java.util.Map x) (into {} (map (fn [[k v]] [k (replace-value v)]) x))
                    (instance? java.util.List x) (mapv replace-value x)
                    :else x))]

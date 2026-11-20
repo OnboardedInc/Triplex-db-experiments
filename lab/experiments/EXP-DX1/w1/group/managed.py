@@ -12,7 +12,7 @@ import uuid
 
 parser = argparse.ArgumentParser()
 parser.add_argument("destination", type=Path)
-parser.add_argument("--field", choices=["queue","growth"])
+parser.add_argument("--field", choices=["queue","growth","small-cost","small-layout"])
 args = parser.parse_args()
 repo = Path.cwd()
 out = args.destination.resolve()
@@ -31,6 +31,8 @@ container = cfg / "lab/config/datomic"
 if args.field:
     (container / "field-study").write_text(args.field)
     shutil.copy2(experiment.parent / "field/field_probe.clj", cfg / "packages/datomic/gateway/src/triplex/gateway/field_probe.clj")
+    if args.field in ("small-cost", "small-layout"):
+        shutil.copy2(experiment.parent / "small/native_cost.clj", cfg / "packages/datomic/gateway/src/triplex/gateway/native_cost.clj")
 esbuild = repo / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
 subprocess.run([esbuild, experiment / "local.ts", "--bundle", "--platform=node", "--format=esm",
                 "--banner:js=import {createRequire as w1Require} from 'node:module'; const require=w1Require(import.meta.url);",
@@ -54,7 +56,7 @@ env = dict(os.environ, TX2_CONFIG_DIR=str(cfg), TX2_SLOTS_FILE=str(slots), TX2_E
 assert env.get("DOCKER_HOST") == s["dockerHost"]
 files = {str(f.relative_to(cfg)):digest(f) for f in cfg.rglob("*") if f.is_file()}
 (out / "inputs.json").write_text(json.dumps({"head":subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip(),
-    "stage":files,"runner":{str(f):digest(f) for folder in ([experiment,experiment.parent / "field"] if args.field else [experiment]) for f in folder.iterdir() if f.is_file()}},indent=2)+"\n")
+    "stage":files,"runner":{str(f):digest(f) for folder in ([experiment,experiment.parent / "field",experiment.parent / "small"] if args.field else [experiment]) for f in folder.iterdir() if f.is_file()}},indent=2)+"\n")
 scratch = 8 if args.field == "growth" else 1
 for action in ["build","selftest"]:
     for attempt in range(1,121):
