@@ -419,7 +419,7 @@ export async function live(
         assert.deepEqual(record(frame, meta, r), expected);
         seen.add(r.commandId);
       },
-      allReads ? 24 : 8,
+      { pageSize: allReads ? 24 : 8 },
     );
     assert.equal(seen.size, checks.size);
     const otherProof = await isolated;

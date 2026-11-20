@@ -109,7 +109,10 @@ async function run() {
       if (failure) throw failure;
       assert(!disconnect.signal.aborted);
       assert(facts > 0 && peak === 2);
-      const proof = await loader.verify(false, undefined, width <= 128 ? 16 : 2);
+      const proof = await loader.verify(false, undefined, {
+        pageSize: width <= 128 ? 16 : 2,
+        readDepth: 4,
+      });
       assert.equal(
         proof.facts,
         issued.reduce((n, r) => n + r.facts, 0),
