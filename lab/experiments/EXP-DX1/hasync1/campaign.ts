@@ -21,7 +21,7 @@ const suiteMs = 85 * 60000;
 
 export async function campaign(
   store: string,
-  sites: { a: Site; b: Site },
+  assignSites: (nonce: string, sourceOnB: boolean) => { a: Site; b: Site },
   identity: {
     tag: string;
     sha: string;
@@ -34,7 +34,7 @@ export async function campaign(
     secret: randomBytes(18).toString("hex"),
     admin: randomBytes(18).toString("hex"),
   };
-  const checkpoints = new Map<"legacy" | "lean", Checkpoint>();
+  fs.mkdirSync(path.join(store, "seed"), { mode: 0o700 });
   fs.writeFileSync(
     path.join(store, "campaign.json"),
     JSON.stringify({
@@ -46,7 +46,7 @@ export async function campaign(
     }) + "\n",
     { flag: "wx" },
   );
-  for (const mode of trials) {
+  const run = async (mode: (typeof trials)[number], checkpoint?: Checkpoint) => {
     assert(performance.now() < end, "The campaign reached its 85-minute working deadline");
     const e = new Evidence(store, mode, identity.tag);
     process.stdout.write(
@@ -54,7 +54,7 @@ export async function campaign(
     );
     const layout =
       mode === "hasync-seed-lean" || mode.startsWith("hasync-cost") ? "lean" : "legacy";
-    const checkpoint = checkpoints.get(layout);
+    const sites = assignSites(e.nonce, layout === "lean");
     const profile = { people: subjects, scopes: 1, capacity: "two-host" };
     const result = await drill(e, sites.a, sites.b, profile, () => {}, {
       path: path.join(store, "seed"),
@@ -62,13 +62,27 @@ export async function campaign(
       credentials,
       ...(checkpoint ? { checkpoint } : {}),
     });
-    if (mode.startsWith("hasync-seed")) {
-      const cp = result as Checkpoint;
-      assert.equal(cp.people, subjects);
-      assert.equal(cp.layout, layout);
-      assert(cp.facts >= 16000000 && cp.manifest.match(/^[a-f0-9]{64}$/));
-      checkpoints.set(layout, cp);
-    }
+    return result;
+  };
+  // [DX-HASYNC1] Why: the measured serial cost of two full populations can exhaust the bench allocation. Rejected: budgeting two cold imports at twice the known loader rate.
+  const seeds = await Promise.allSettled([run("hasync-seed-legacy"), run("hasync-seed-lean")]);
+  const checkpoints = seeds.map((seed, index) => {
+    if (seed.status === "rejected") throw seed.reason;
+    const cp = seed.value as Checkpoint;
+    assert.equal(cp.people, subjects);
+    assert.equal(cp.layout, index === 0 ? "legacy" : "lean");
+    assert(cp.facts >= 16000000 && cp.manifest.match(/^[a-f0-9]{64}$/));
+    return cp;
+  });
+  const timings: { mode: string; measuredMs: number; targetMs: number }[] = [];
+  for (const mode of trials.slice(2)) {
+    const result = await run(mode, checkpoints[mode.startsWith("hasync-cost") ? 1 : 0]);
+    if (mode.startsWith("hasync-cost")) continue;
+    const moving = mode === "hasync-move";
+    const observation = result as { firstWritePauseMs?: number; firstNewMs?: number };
+    const measuredMs = moving ? observation.firstWritePauseMs : observation.firstNewMs;
+    assert(typeof measuredMs === "number" && Number.isFinite(measuredMs) && measuredMs > 0);
+    timings.push({ mode, measuredMs, targetMs: moving ? 30000 : 60000 });
   }
   const measured = performance.now() - now;
   fs.writeFileSync(
@@ -78,6 +92,7 @@ export async function campaign(
       measured,
       trials: trials.length,
       subjects,
+      timings,
     }) + "\n",
     { flag: "wx" },
   );

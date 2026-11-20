@@ -54,17 +54,21 @@ const localImage = await local([
   "--format",
   "{{.Id}}",
 ]);
-const satellite: Site["docker"] = async (args, opts = {}) => {
-  const id = ++seq;
-  const reply = new Promise<string>((ok, fail) => waiters.set(id, { ok, fail }));
-  process.stdout.write("@ha1 " + JSON.stringify({ id, args, timeout: opts.timeout }) + "\n");
-  return reply;
-};
+const manage =
+  (nonce?: string): Site["docker"] =>
+  async (args, opts = {}) => {
+    const id = ++seq;
+    const reply = new Promise<string>((ok, fail) => waiters.set(id, { ok, fail }));
+    process.stdout.write(
+      "@ha1 " + JSON.stringify({ id, args, nonce, timeout: opts.timeout }) + "\n",
+    );
+    return reply;
+  };
 const a: Site = {
   key: "a",
   repo: root,
   privateAddress: privateAddress(addrA!),
-  docker: sync ? satellite : local,
+  docker: sync ? manage() : local,
   datomicId: sync ? remoteImage : localImage,
 };
 const b: Site = {
@@ -72,14 +76,21 @@ const b: Site = {
   repo: root,
   privateAddress: privateAddress(addrB!),
   datomicId: sync ? localImage : remoteImage,
-  docker: sync ? local : satellite,
+  docker: sync ? local : manage(),
 };
 fs.mkdirSync(store, { recursive: false });
 try {
   if (sync) {
     const { campaign: run } = await import("../hasync1/campaign.ts");
     assert(shape === "deep" && (!people || people === "100000"));
-    await run(store, { a, b }, { tag, sha: sha!, campaign });
+    await run(
+      store,
+      (nonce, sourceOnB) => {
+        const primaryHost = { ...a, docker: manage(nonce) };
+        return sourceOnB ? { a: b, b: primaryHost } : { a: primaryHost, b };
+      },
+      { tag, sha: sha!, campaign },
+    );
   } else {
     const defaults: Record<string, string> = {
       "load-profile": "260",

@@ -31,6 +31,8 @@ The explicit single-copy mode restores write service after the first failure. Us
 
 The planned procedure copies live and checks replay before the writer pause. The new primary opens after the fenced volume returns in a new container as the named synchronous standby. The 30-second observation starts when ingress closes and ends at the first verified two-copy receipt. Copy time grows with physical bytes and WAL generated during the copy. The pause includes the final WAL tail, filesystem scan and changed blocks during rewind, the new transactor's recent log replay, and peer rediscovery.
 
+The lab allows 6 minutes to restore each prepared deep checkpoint. The fault injector budgets 5 seconds to find its SQL lock owner, 10 to see the Datomic SQL wait, and 7 to confirm an asymmetric WAL cut. Its lock can hold for 35 seconds so it remains in place until the abrupt stop. The oracle process has a 30-second budget for the small witness replay. The existing client polls pinned reads every 80 ms and resolves ambiguous writes every 130 ms for up to 150 seconds. That retry ceiling preserves outcomes even when a timing target is missed. [Fault driver](faults.ts) · [Existing client fixture](../../../../packages/datomic/test/ha1-account.ts)
+
 Local entry point after building the Datomic TypeScript package:
 
 ```sh

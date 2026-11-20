@@ -105,6 +105,7 @@ const lease = base + "/campaign.lock",
 const dockerOpts = ["docker", "-H", "unix:///var/run/docker.sock"];
 let attempt: { nonce: string; prefix: string; mode?: string } | undefined;
 let satellite: Satellite | undefined;
+const trialSatellites = new Map<string, Satellite>();
 const store = base + "/" + tag;
 let seedDirCreated = false;
 let suiteArchiveVerified = false;
@@ -221,6 +222,7 @@ try {
         [pgImage, remoteImage],
         sync ? store + "/seed" : undefined,
       );
+      if (sync) trialSatellites.set(attempt.nonce, satellite);
       continue;
     }
     if (!line.startsWith("@ha1 ")) {
@@ -229,6 +231,8 @@ try {
     }
     const msg = JSON.parse(line.slice(5));
     assert(attempt && Number.isSafeInteger(msg.id) && Array.isArray(msg.args));
+    const activeTrial = sync ? trialSatellites.get(msg.nonce) : satellite;
+    assert(activeTrial, "Unknown attempt on the management channel");
     const req = msg.args as string[];
     assert(
       [
@@ -250,7 +254,7 @@ try {
       try {
         const timeout = msg.timeout ?? 2400000;
         assert(Number.isSafeInteger(timeout) && timeout > 0 && timeout <= 2400000);
-        const out = await satellite!.call(req, (args) =>
+        const out = await activeTrial.call(req, (args) =>
           args[0] === "logs"
             ? remoteTimed(
                 satelliteSite,
@@ -275,7 +279,7 @@ try {
     pending.add(task);
     void task.finally(() => pending.delete(task));
   }
-  await Promise.allSettled([...pending]);
+  await Promise.allSettled(pending);
   const code = await done;
   const evidence = path.join(
     process.env["TRIPLEX_TRACE_EVIDENCE"] ??
@@ -286,7 +290,17 @@ try {
   fs.mkdirSync(path.dirname(evidence), { recursive: true });
   fs.mkdirSync(evidence);
   const archive = store + ".tar.gz";
-  await remote(observerSite, "tar", "-C", base, "-czf", archive, tag);
+  // Snapshot data stays in the owned scratch directory and is omitted from the receipt archive.
+  await remote(
+    observerSite,
+    "tar",
+    ...(sync ? ["--exclude=" + tag + "/seed"] : []),
+    "-C",
+    base,
+    "-czf",
+    archive,
+    tag,
+  );
   const expected = (await remote(observerSite, "sha256sum", archive)).split(/\s/)[0]!;
   if (sync) assert(Number(await remote(observerSite, "stat", "-c", "%s", archive)) <= 2 ** 30);
   const copy = spawn("ssh", argv(observerSite, ["sudo", "-n", "cat", archive]), {
@@ -316,12 +330,16 @@ try {
   );
   if (code === 0) {
     assert(nonces.length > 0 && nonces.length === declaration.sizes.length);
+    const timings = new Map<string, { measuredMs: number; targetMs: number }>();
     if (sync) {
       assert.deepEqual(trialModes, declaration.trials);
       assert.equal(trialModes.length, 12);
       const suite = member("suite.json");
       assert(suite.measured <= 85 * 60000 && suite.trials === 12 && suite.subjects === 100000);
       assert.deepEqual([suite.tag, suite.sha, suite.campaign], [tag, sha, campaign]);
+      assert.equal(suite.timings.length, 8);
+      for (const timing of suite.timings) timings.set(timing.mode, timing);
+      assert.equal(timings.size, 8);
     }
     for (const [i, nonce] of nonces.entries()) {
       const trial = sync ? trialModes[i] : mode;
@@ -341,6 +359,16 @@ try {
       assert.equal(summary.profile.people, declaration.sizes[i]);
       assert.equal(summary.profile.capacity, "two-host");
       assert.deepEqual(clean, { nonce, containers: 0, networks: 0 });
+      if (sync && trial && !trial.startsWith("hasync-seed") && !trial.startsWith("hasync-cost")) {
+        const timing = timings.get(trial);
+        const moving = trial === "hasync-move";
+        assert(timing);
+        assert.equal(timing.targetMs, moving ? 30000 : 60000);
+        assert.equal(
+          timing.measuredMs,
+          moving ? summary.result.firstWritePauseMs : summary.result.firstNewMs,
+        );
+      }
     }
     suiteArchiveVerified = sync;
   }
@@ -397,9 +425,9 @@ try {
     if (leftovers || nets || active || volumes)
       console.error("Bench lease retained; inspect attempt resources on site " + i);
     else {
-      if (sync && i === satelliteSite && seedDirCreated && suiteArchiveVerified) {
+      if (sync && seedDirCreated && suiteArchiveVerified) {
         await remote(i, "rm", "-r", "--", store + "/seed");
-        await remote(i, "rmdir", store);
+        if (i === satelliteSite) await remote(i, "rmdir", store);
       }
       await remote(i, "rmdir", lease);
     }
