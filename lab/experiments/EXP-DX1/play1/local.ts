@@ -40,6 +40,16 @@ type Manager = {
 
 async function dumpProbe(docker: Docker, prefix: string, out: string) {
   const pg = prefix + "-pg";
+  const writers = [prefix + "-write", prefix + "-read", prefix + "-tx"];
+  // [DX-PLAY1] Why: compare the dump to the same immutable rows. Datomic indexing can
+  // write new SQL values even after the last API call. Rejected: hashing a moving catalog.
+  for (const name of writers)
+    assert.equal(
+      await docker(["inspect", "--format", '{{index .Config.Labels "triplex.playground"}}', name]),
+      prefix,
+    );
+  await docker(["stop", "--time", "10", ...writers]);
+
   const sql = (db: string, cmd: string) =>
     docker([
       "exec",
@@ -227,6 +237,30 @@ export async function local(
     await writeFile(join(out, "actions.json"), JSON.stringify(stats, null, 2) + "\n", {
       flag: "wx",
     });
+    if (options.browser) {
+      const browser = await run(
+        process.execPath,
+        [
+          "node_modules/@playwright/test/cli.js",
+          "test",
+          "--config=playwright.playground.config.ts",
+          "--output",
+          join(out, "browser"),
+        ],
+        {
+          cwd: repo,
+          timeout: 180_000,
+          env: { ...process.env, PLAYGROUND_TEST_URL: instance.server.url },
+        },
+      ).catch(async (error: { stdout?: string; stderr?: string }) => {
+        await writeFile(join(out, "browser.txt"), (error.stdout ?? "") + (error.stderr ?? ""), {
+          flag: "wx",
+        });
+        throw error;
+      });
+      await writeFile(join(out, "browser.txt"), browser.stdout + browser.stderr, { flag: "wx" });
+      console.log(browser.stdout);
+    }
     const snapshot = await dumpProbe(installed, prefix, out);
     await writeFile(
       join(out, "size.json"),
@@ -244,23 +278,6 @@ export async function local(
       ) + "\n",
       { flag: "wx" },
     );
-    if (options.browser) {
-      const browser = await run(
-        process.execPath,
-        [
-          "node_modules/@playwright/test/cli.js",
-          "test",
-          "--config=playwright.playground.config.ts",
-        ],
-        {
-          cwd: repo,
-          timeout: 180_000,
-          env: { ...process.env, PLAYGROUND_TEST_URL: instance.server.url },
-        },
-      );
-      await writeFile(join(out, "browser.txt"), browser.stdout + browser.stderr, { flag: "wx" });
-      console.log(browser.stdout);
-    }
     for (const [name, sha256] of Object.entries(sourceHashes))
       assert.equal(hash(await readFile(join(repo, name))), sha256, "Source drifted: " + name);
     await writeFile(
