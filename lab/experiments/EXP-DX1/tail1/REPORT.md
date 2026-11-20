@@ -21,13 +21,13 @@ The archive and its ledger match their published hashes. All 58,138 scheduled ev
 
 The writer clock fit puts 237 pauses outside known overlays, including eight full collections with a 449.37 ms maximum. The five history windows contain 27 pauses, including two full collections and a 454.27 ms maximum. Seven young pauses overlap other explicit index requests. The full collections report allocation failure. The archived reader and transactor totals span startup through shutdown.
 The writer heap grew about 21.36 MiB/s between Serial pauses, or 2.21 MiB per primary offer across 55,795 covered offers. This estimate uses rounded heap occupancy and includes feed and maintenance traffic. Archived maximum heaps were 3.87/4/5 GiB for writer/reader/transactor in 6 GiB containers.
-Archived ACK p50/p99/p99.9/max was 5.10/86.74/447.17/602.04 ms by exact rank, and 4.62/39.43/152.68/191.82 ms in the first 240 seconds. The analyst found a `/begin` on 21,130 of 56,505 primary saves (37.4%).
+Archived ACK p50/p99/p99.9/max was 5.10/86.74/447.17/602.04 ms by exact rank, and 4.62/39.43/152.68/191.82 ms in the first 240 seconds. That prefix contains 58 writer pauses, including two full collections, and tops out at 154.05 ms. The analyst found `/begin` on 21,130 of 56,505 primary saves (37.4%).
 
 ## Collector arms
 
 Serial is the archived write collector. Tuned G1 has a 25 ms target, 2 MiB regions, a 1 MiB humongous-object threshold and a 5–25% adaptive young generation. The Java 21 ZGC peer arm is diagnostic. Datomic documents ZGC support on Java 25 and recommends G1 at 50 ms for the transactor. Every arm uses that same transactor, SQL durability and role caps. [G1](https://docs.oracle.com/en/java/javase/21/gctuning/garbage-first-garbage-collector-tuning.html) · [Datomic defaults](https://docs.datomic.com/operation/transactor.html#running-the-transactor) · [Datomic ZGC support](https://docs.datomic.com/changes/pro.html#1-0-7705)
 
-The allocation arm keeps Serial and decodes the existing positional row vector into a transient map. It reuses the exact row wire format and removes per-prefix Formatter allocation. Speculative transaction hints stay off in these controls.
+The allocation arm keeps Serial, decodes the existing positional row vector into a transient map, and removes per-prefix Formatter allocation. Speculative transaction hints stay off. Timed arm comparisons and the allocation profile are pending.
 
 Mac startup and seed pauses in C were 1,647 (260.62/554.44 ms p99/max) at the writer, 312 (71.12/116.95 ms) at the reader, and 2,316 (163.19/1,838.79 ms) at the transactor. C failed the host boot-ID read. In E the writer restarted before readiness and the conservative guard refused the ready JVM. The guard now binds the same process from readiness through drain. Both attempts released their slots. [Evidence manifest](SHA256SUMS)
 
