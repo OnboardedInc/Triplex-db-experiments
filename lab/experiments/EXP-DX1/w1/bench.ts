@@ -14,6 +14,7 @@ import { measure, type Arm } from "./measure.ts";
 import { fieldPolicy, type Mode } from "./field/bench-check.ts";
 
 import type { jvmPolicy } from "../jvm1/policy.mjs";
+import { verifyJvmFlags } from "../jvm1/check-readback.mjs";
 
 const repo = path.resolve(import.meta.dirname, "../../../.."),
   GiB = 1024 ** 3;
@@ -339,7 +340,7 @@ export async function withStack<T>(
     "--cpus-gw-write",
     jvm?.policy.cpus["gw-w"] ?? "2",
     "--cpus-gw-read",
-    jvm?.policy.cpus["gw-r"] ?? "4",
+    jvm?.policy.cpus["gw-r"] ?? (availableParallelism() >= 12 ? "4,8" : "4"),
     "--pg-memory",
     jvm ? jvm.policy.memory.pg + "m" : "6g",
     "--tx-memory",
@@ -359,7 +360,6 @@ export async function withStack<T>(
     const startupBudget = jvm ? Math.min(360_000, jvm.deadline - Date.now()) : 600_000;
     assert(startupBudget > 0);
     execFileSync("bash", args, { cwd: repo, env, timeout: startupBudget, stdio: "inherit" });
-    if (!jvm && availableParallelism() >= 12) docker("update", "--cpuset-cpus", "4,8", slot + "-gw-r");
     const buildResults = path.resolve(repo, "../results"),
       images = get(path.join(buildResults, "images.json"));
     const imageFor = (tag: string) => {
@@ -414,6 +414,8 @@ export async function withStack<T>(
         bytes: info.HostConfig.Memory,
       };
     });
+    if (jvm) verifyJvmFlags(path.join(engines, "config"), jvm.policy,
+      Object.fromEntries(roleInfo.map((info) => [info.role, info.id])));
     if (grouped !== undefined) {
       const writer = JSON.parse(docker("inspect", slot + "-gw-w"))[0];
       assert(writer.Config.Env.includes("TX2_GROUP_COMMIT=" + Number(grouped)));

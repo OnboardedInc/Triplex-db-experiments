@@ -233,6 +233,34 @@ async function removeThinImage(config, opts) {
   });
 }
 
+// [DX-JVM1] Why: select an explicit collector at JVM startup and expose the pinned CPU count.
+// Rejected: changing HotSpot's collector via taskset placement alone.
+function placedDatomicJvm(options, cpus, vmCpus, fallback) {
+  const collectors = options.match(/(?:^|\s)-XX:\+Use(?:Serial|Parallel|G1|Z|Shenandoah|Epsilon)GC(?=\s|$)/g) ?? [];
+  if (collectors.length > 1) fail('CONFIG', 'Multiple Datomic GC selectors');
+  const cpu = parseCpuset(cpus, vmCpus).length;
+  if (!options.includes('-XX:ActiveProcessorCount=')) options += ' -XX:ActiveProcessorCount=' + cpu;
+  return collectors.length ? options : options + ' ' + fallback;
+}
+
+function recordDatomicJvms(info, eff) {
+  if (info.lane !== 'datomic') return;
+  const m = inspect(info.container);
+  if (!m?.State.Running || m.Image !== eff.effective.imageId
+    || m.Config.Labels?.['tx2.config-sha256'] !== eff.sha256)
+    fail('REFUSED', 'Datomic runtime identity differs from the launch');
+  const out = fs.mkdtempSync(path.join(path.dirname(eff.files.entrypoint), 'jvm-'));
+  const roles = ['tx', 'gw-w', ...(eff.effective.readerGateway ? ['gw-r'] : [])];
+  for (const role of roles) {
+    execFileSync('bash', [path.join(REPO, 'lab/experiments/EXP-DX1/jvm1/readback.sh'), m.Id, out, role, 'shared'],
+      { env: { ...process.env, DOCKER_HOST: process.env.TX2_DOCKER_HOST ?? DOCKER_HOST }, timeout: 15_000 });
+  }
+  atomicJson(path.join(out, 'identity.json'), {
+    configSha256: eff.sha256, id: m.Id, image: m.Image, startedAt: m.State.StartedAt, roles
+  });
+  process.stderr.write(`[lab] JVM final flags: ${out}\n`);
+}
+
 /** Effective engine configuration: the bytes the container actually runs with. */
 export function effectiveConfig(config, info) {
   const dir = path.join(ENGINE_DIR, `${info.lane}-${info.slot}${info.role === 'follower' ? '-ro' : ''}`);
@@ -301,7 +329,7 @@ export function effectiveConfig(config, info) {
       script = script.replace("gw=''", "gw=''\nreader=''")
         .replace('kill "$tx" 2>/dev/null', '[[ -z "$reader" ]] || kill "$reader" 2>/dev/null || true; kill "$tx" 2>/dev/null')
         .replace('wait -n "$tx" "$gw" || true', [
-          'DATOMIC_JAVA_OPTS="$READER_JAVA_OPTS" taskset -c "$READER_CPUS" bin/run -i /config/dedicated-reader.clj &',
+          'DATOMIC_JAVA_OPTS="$READER_JAVA_OPTS $jvm_flags -Dtriplex.jvm.role=gw-r" taskset -c "$READER_CPUS" bin/run -i /config/dedicated-reader.clj > >(tee "$jvm_dir/gw-r.log") 2>&1 &',
           'reader=$!',
           'wait -n "$tx" "$gw" "$reader" || true',
         ].join('\n'));
@@ -309,7 +337,7 @@ export function effectiveConfig(config, info) {
       const gc = role => ' -Xlog:gc*,safepoint:file=/data/log/' + role + '-gc.log:time,uptimemillis,tags:filecount=0';
       readerGateway = {
         port: p, publish: `127.0.0.1:${p}:8081`, cpus: info.readerCpus,
-        opts: info.readerOpts + gc('reader'), writerGc: gc('writer'),
+        opts: placedDatomicJvm(info.readerOpts, info.readerCpus, config.vm.cpus, '-XX:+UseG1GC') + gc('reader'), writerGc: gc('writer'),
         source: sha256(body), entrypoint: sha256(script),
       };
     }
@@ -333,7 +361,8 @@ export function effectiveConfig(config, info) {
       lane: 'datomic', slot: info.slot, image: info.laneConf.image, imageId: info.laneConf.imageId,
       buildInputsSha256: info.laneConf.buildInputsSha256, sourceInputsSha256: sources.sha256,
       gatewaySourceSha256: sha256(JSON.stringify(sources.gateway)), configMountMode: 'ro',
-      transactorOpts: info.transactorOpts + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: info.gatewayOpts + (readerGateway?.writerGc ?? ''),
+      entrypointSha256: sha256File(entrypoint),
+      transactorOpts: placedDatomicJvm(info.transactorOpts, info.txCpus, config.vm.cpus, '-XX:+UseG1GC -XX:MaxGCPauseMillis=50') + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: placedDatomicJvm(info.gatewayOpts, info.gwCpus, config.vm.cpus, info.slot === 'dev' ? '-XX:+UseSerialGC' : '-XX:+UseG1GC') + (readerGateway?.writerGc ?? ''),
       ...(readerGateway ? { readerGateway } : {}),
       ...(trace ? { trace } : {}),
       txCpus: info.txCpus, gwCpus: info.gwCpus, profile: info.slot === 'dev' ? 'dev' : 'exclusive',
@@ -590,6 +619,7 @@ async function up(config, info, opts) {
     if (existing?.State.Running && !opts.fresh) {
       const ready = await waitReady(info, 60_000);
       recordCgroup(info);
+      recordDatomicJvms(info, eff);
       process.stderr.write(`[lab] ${info.container} already running (${ready.why})\n`);
       process.stdout.write(exportsFor(info) + '\n');
       return;
@@ -638,6 +668,7 @@ async function up(config, info, opts) {
       }
       const ready = await waitReady(info);
       const cgroup = recordCgroup(info);
+      recordDatomicJvms(info, eff);
       await withPool(async ledger => {
         const entry = ledger.reservations.find(item => item.container === info.container);
         if (entry) Object.assign(entry, { state: 'running', pid: null, configSha256: eff.sha256, readyAt: now(), regime: regimeOf(info), cpuset: cgroup?.cpuset ?? null });

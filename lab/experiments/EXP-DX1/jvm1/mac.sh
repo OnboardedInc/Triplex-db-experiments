@@ -18,3 +18,4 @@ for cell in 01-present 02-candidate 03-present 04-candidate; do
     --archive "$archive" --image-receipt "$image" --out "$out/$cell" 2>&1 | tee "$out/$cell.log"
   python3 lab/experiments/EXP-DX1/tail1/measure.py "$out/$cell"
 done
+python3 lab/experiments/EXP-DX1/jvm1/compare.py "$out"

@@ -5,6 +5,8 @@ set -euo pipefail
 container=${1:?}
 output=${2:?}
 role=${3:?}
+mode=${4:-split}
+[[ $mode == split || $mode == shared ]]
 mkdir -p "$output"
 before=$(docker inspect --format '{{.Id}} {{.Image}} {{.State.StartedAt}} {{.RestartCount}} {{.State.Running}}' "$container")
 read -r id image started restarts running <<< "$before"
@@ -14,6 +16,9 @@ snapshot() {
     java_pid=
     for dir in /proc/[0-9]*; do
       if [[ $(cat "$dir/comm" 2>/dev/null || :) == java ]]; then
+        if [[ $2 == shared ]] && ! tr "\000" "\n" < "$dir/cmdline" | grep -Fqx -- "-Dtriplex.jvm.role=$1"; then
+          continue
+        fi
         [[ -z $java_pid ]]
         java_pid=${dir##*/}
       fi
@@ -24,12 +29,18 @@ snapshot() {
     for name in memory.max memory.swap.max cpu.max cpuset.cpus.effective; do
       printf "%s=%s\n" "$name" "$(cat "/sys/fs/cgroup/$name")"
     done
-  '
+  ' bash "$role" "$mode"
 }
 proc=$(snapshot)
 logs=$(mktemp "$output/.$role.XXXXXX")
 trap 'rm -f "$logs"' EXIT
-docker logs --since "$started" "$id" > "$logs" 2>&1
+if [[ $mode == shared ]]; then
+  jvm_dir=$(docker exec "$id" cat /run/tx2-jvm-evidence)
+  [[ $jvm_dir =~ ^/data/log/jvm\.[A-Za-z0-9]{8}$ ]]
+  docker exec "$id" cat "$jvm_dir/$role.log" > "$logs"
+else
+  docker logs --since "$started" "$id" > "$logs" 2>&1
+fi
 flags="$output/$role.flags.txt"
 awk '/^\[Global flags\]$/ { collecting=1; next }
   collecting && /[{][a-zA-Z0-9]/ && /[}][[:space:]]*[{]/ && /=/ { print; next }
@@ -39,6 +50,7 @@ collector=$(awk '$2 ~ /^Use(Serial|Parallel|G1|Z|Shenandoah|Epsilon)GC$/ && $4 =
 [[ $collector =~ ^Use(Serial|Parallel|G1|Z|Shenandoah|Epsilon)GC$ ]]
 grep -E '\[gc,init[[:space:]]*\].*(Version:|CPUs:|Memory:|Large Page Support:|Heap (Min|Initial|Max) Capacity:)' "$logs" > "$output/$role.gc-init.txt"
 grep -q 'Version:' "$output/$role.gc-init.txt"
+grep -E '\[cds[[:space:]]*\]' "$logs" > "$output/$role.cds.txt" || :
 grep -q 'CPUs:' "$output/$role.gc-init.txt"
 [[ $proc == "$(snapshot)" ]]
 [[ $before == "$(docker inspect --format '{{.Id}} {{.Image}} {{.State.StartedAt}} {{.RestartCount}} {{.State.Running}}' "$id")" ]]

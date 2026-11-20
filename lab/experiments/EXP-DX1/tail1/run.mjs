@@ -26,6 +26,7 @@ import { frozenDeep, releaseDeepStart } from "../../../bench/lib/deep-profile.ts
 import { matchOffers } from "./replay-input.mjs";
 import { arms } from "./arms.mjs";
 import { jvmPolicy } from "../jvm1/policy.mjs";
+import { verifyJvmFlags } from "../jvm1/check-readback.mjs";
 
 const roles = ["pg", "tx", "gw-w", "gw-r"];
 const GiB = 2 ** 30,
@@ -626,6 +627,7 @@ export async function runTail(options, config, manager, jvmArm) {
         startupGc,
       });
     };
+    if (policy) verifyJvmFlags(path.join(attempt, "config"), policy, ids);
     captureRuntime(policy ? "seed-runtime-flags.json" : "runtime-flags.json");
     if (options.gate === true) {
       // [DX-TAIL1] Why: use two native writers and an independent replay on their actual receipts.
@@ -820,6 +822,7 @@ export async function runTail(options, config, manager, jvmArm) {
         ], { env, timeout: 15_000 });
       }
       verifyReadyRuntime();
+      verifyJvmFlags(path.join(attempt, "config", "restart"), policy, ids);
       captureRuntime("runtime-flags.json");
       write(path.join(out, "restart.json"), { identity, ids, startedAt, readyAt, readyRuntime });
     }

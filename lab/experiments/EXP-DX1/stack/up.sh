@@ -219,6 +219,24 @@ else
     [[ "$cpus" =~ ^[0-7](,[0-7])*$ || "$cpus" =~ ^[0-7]-[0-7]$ ]] || { echo "only VM CPUs 0 through 7 are allowed" >&2; exit 2; }
   done
 fi
+# [DX-JVM1] Why: pin HotSpot's processor count from the declared startup placement.
+# Rejected: relying on container CPU discovery to size process pools without recording the choice.
+placed_java() {
+  local options=$1 cpu_list=$2 count
+  if [[ " $options" != *" -XX:ActiveProcessorCount="* ]]; then
+    count=$(python3 - "$cpu_list" <<'CPU_COUNT'
+import sys
+ranges=[tuple(map(int,part.split('-'))) for part in sys.argv[1].split(',')]
+print(sum(r[-1]-r[0]+1 for r in ranges))
+CPU_COUNT
+)
+    options="$options -XX:ActiveProcessorCount=$count"
+  fi
+  printf '%s' "$options"
+}
+tx_java=$(placed_java "$tx_java" "$tx")
+gw_w_java=$(placed_java "$gw_w_java" "$gw_w")
+gw_r_java=$(placed_java "$gw_r_java" "$gw_r")
 for port in "$port_w" "$port_r"; do
   [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1024 && "$port" -le 65535 && "$port" != 15442 && "$port" != 17019 ]] || exit 2
 done
@@ -302,6 +320,7 @@ import json,os,pathlib,sys
 root=pathlib.Path(sys.argv[1]); prefix=sys.argv[2]
 settings={'protocol':'sql','host':prefix+'-tx','alt-host':prefix+'-tx',
 'sql-url':'jdbc:postgresql://'+prefix+'-pg:5432/datomic','sql-user':'datomic','sql-password':'datomic',
+'write-concurrency':'4','read-concurrency':'8','index-parallelism':'1','heartbeat-interval-msec':'5000',
 'memory-index-threshold':sys.argv[3],'memory-index-max':sys.argv[4],'object-cache-max':sys.argv[5],'encrypt-channel':sys.argv[6]}
 # [DX-JVM1] Why: tune only approved non-durability properties in this experiment.
 # Rejected: accepting arbitrary properties from an inherited environment.
@@ -466,10 +485,7 @@ if [[ -n ${DX_JVM1_PG_RESTORE:-} ]]; then
 fi
 # [DX-JVM1] Why: emit the real JVM's final flags and GC startup identity to its own container log.
 # Rejected: a second JVM running outside the live cgroup or inferring collector from affinity.
-final_flags=''
-if [[ ${DX_JVM_EVIDENCE:-0} == 1 ]]; then
-  final_flags=' -XX:+PrintFlagsFinal -Xlog:gc+init=info:stdout:uptimemillis,level,tags'
-fi
+final_flags=' -XX:+PrintFlagsFinal -Xlog:gc+init=info,cds=info:stdout:uptimemillis,level,tags'
 docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
   -e "JAVA_OPTS=$tx_java$trace_tx_java$final_flags" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor "$datomic_image" /dxh1/sql.properties >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
@@ -558,11 +574,9 @@ for role in w r; do
   done
   if [[ $ok != true ]]; then docker logs "$prefix-gw-$role" > "$attempt/gateway-$role.log" 2>&1; echo "gateway $role failed; see $attempt" >&2; exit 1; fi
 done
-if [[ -n $final_flags ]]; then
-  for role in tx gw-w gw-r; do
-    bash "$repo/lab/experiments/EXP-DX1/jvm1/readback.sh" "$prefix-$role" "$attempt/config" "$role"
-  done
-fi
+for role in tx gw-w gw-r; do
+  bash "$repo/lab/experiments/EXP-DX1/jvm1/readback.sh" "$prefix-$role" "$attempt/config" "$role"
+done
 if [[ $native_readback == 1 ]]; then
   for role in tx gw-w gw-r; do
     ready=false
