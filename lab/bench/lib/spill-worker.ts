@@ -1,4 +1,3 @@
-import { traceWork, flushTracing } from "./tracing.ts";
 import fs from "node:fs";
 import { parentPort as port, workerData as cfg } from "node:worker_threads";
 import { BatchSequence } from "./reader-lifecycle.ts";
@@ -7,11 +6,12 @@ import { R, type ReadRecord } from "./observe.ts";
 import { Histogram } from "./hist.ts";
 import { SpillBudget } from "./spill-budget.ts";
 import { unpackReadBatch } from "./read-batch.ts";
-import { StreamReads } from "./stream-reads.ts";
 import { performance } from "node:perf_hooks";
+const tracing = process.env.TRIPLEX_NODE_WORKER_CPUS ||
+    (process.env.TRIPLEX_TRACE_LEVEL && process.env.TRIPLEX_TRACE_LEVEL !== "off") ? await import("./tracing.ts") : undefined;
 const budget = cfg.maxBytes === undefined ? undefined : new SpillBudget(cfg.maxBytes);
 const records = new ReadRecords(cfg.directory, false, budget);
-const stream = cfg.stream ? new StreamReads(cfg.stream) : undefined;
+const stream = cfg.stream ? new (await import("./stream-reads.ts")).StreamReads(cfg.stream) : undefined;
 const starts = new Map<number, number>();
 const phases = new Map<number, { reads: number; errors: number; settled: number; read: Histogram; wait: Histogram; routes: Record<string, number> }>();
 let senderRows = 0;
@@ -64,7 +64,8 @@ port!.on("message", async m => {
   try {
     if (m.type === "connect") { const sequence = new BatchSequence(); m.port.on("message", (batch: any) => {
       sequence.accept(batch.id);
-      traceWork("spill.retain-batch", () => retain(batch.packed ? unpackReadBatch(batch.packed) : batch.records, batch.samples, batch.splitEvents));
+      const work = () => retain(batch.packed ? unpackReadBatch(batch.packed) : batch.records, batch.samples, batch.splitEvents);
+      if (tracing) tracing.traceWork("spill.retain-batch", work); else work();
       // [DX-R3] Why: reader shutdown must acknowledge the exact retained prefix before parent finalization crosses ports.
       // Rejected: relying on FIFO ordering between unrelated MessagePorts.
       if (batch.packed) {
@@ -85,7 +86,7 @@ port!.on("message", async m => {
       const value = stream!.seal(m.through, m.at, m.frames);
       port!.postMessage({ type: "reply", id: m.id, value });
     }
-    if (m.type === "trace-close") { await flushTracing(); port!.postMessage({ type: "reply", id: m.id }); }
+    if (m.type === "trace-close") { await tracing?.flushTracing(); port!.postMessage({ type: "reply", id: m.id }); }
     if (m.type === "checkpoint") { records.checkpoint(); reportProgress(); port!.postMessage({ type: "reply", id: m.id }); }
   } catch (error) { if (m.id) port!.postMessage({ type: "reply", id: m.id, error: String(error) }); else throw error; }
 });

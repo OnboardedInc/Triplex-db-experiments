@@ -26,6 +26,7 @@ export async function inLocalSlot<T>(slot: string, work: (slot: string) => Promi
     assert(endpoint, "Slot manager omitted the Datomic endpoint");
     process.env.DATOMIC_URL = endpoint;
     process.env.DATOMIC_READ_URLS = endpoint;
+    process.env.TRIPLEX_DATOMIC_LAYOUT ??= "lean";
     return await work(`datomic-${slot}-${trial}`);
   } finally {
     try {

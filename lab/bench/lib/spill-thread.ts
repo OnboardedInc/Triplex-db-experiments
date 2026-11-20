@@ -92,6 +92,10 @@ export class SpillThread {
     this.flush();
     await this.rpc("checkpoint");
   }
+  async abort() {
+    this.closing = true;
+    await this.worker.terminate();
+  }
   async finish(frontier?: { through: number; at: number }) {
     try {
       await this.checkpoint();
@@ -103,7 +107,7 @@ export class SpillThread {
           throw Error("Terminal streaming model or observation count differs from the collector");
       }
       await this.rpc("trace-close");
-    } finally { this.closing = true; await this.worker.terminate(); }
+    } finally { await this.abort(); }
     return new ReadRecords(this.directory, true);
   }
 }
