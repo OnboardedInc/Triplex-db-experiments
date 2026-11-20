@@ -207,8 +207,11 @@ export async function fieldPhase(
       root = pooled
         ? ids.placement(roster[e.account]!.first + e.person)
         : "acct/a" + e.account + "/p" + e.person;
-    const remaining = start + e.ms - performance.now();
-    if (remaining > 0) await wait(remaining);
+    let remaining = start + e.ms - performance.now();
+    while (remaining > 0) {
+      await wait(Math.ceil(remaining));
+      remaining = start + e.ms - performance.now();
+    }
     const id = label + "-" + e.account + "-" + e.person + "-" + e.ordinal,
       prior = last.get(root);
     const f = [fact(root, attr, e.subtask + "/" + e.ordinal)];
@@ -244,8 +247,7 @@ export async function fieldPhase(
   }
   assert.equal(settled, offered);
   assert.equal(rows.length + failures.length, schedule.length);
-  const wall = performance.now() - start,
-    counts = physical(rows, head);
+  const wall = performance.now() - start;
   const byAccount = Object.fromEntries(
     [...new Set(schedule.map((e) => e.account))].map((a) => {
       const rs = rows.filter((r) => r.account === a);
@@ -253,6 +255,12 @@ export async function fieldPhase(
         a,
         {
           acked: rs.length,
+          p50Ms: rs.length
+            ? quantile(
+                rs.map((r) => r.end - r.due),
+                0.5,
+              )
+            : null,
           p99Ms: rs.length
             ? quantile(
                 rs.map((r) => r.end - r.due),
@@ -263,12 +271,34 @@ export async function fieldPhase(
       ];
     }),
   );
+  const result = {
+    label,
+    offered,
+    failures,
+    headBefore: head,
+    wall,
+    peakBacklog,
+    scheduleSha256: sha(schedule),
+    rows,
+    byAccount,
+    perSecond: (1000 * rows.length) / wall,
+    p99Ms: rows.length
+      ? quantile(
+          rows.map((r) => r.end - r.due),
+          0.99,
+        )
+      : null,
+  };
+  // [DX-W1] Why: preserve the offered work and actual replies on an ambiguous or failed arm.
+  // Rejected: timing only the surviving acknowledgements as a successful run.
+  if (failures.length) return { ...result, counts: null, readback: null };
+  const counts = physical(rows, head);
   const h = await c.begin(db);
   assert.equal(h.position, head + rows.length);
   await c.release(db, h.handle);
   for (const r of [rows.at(0), rows.at(-1)])
     if (r) assert.equal((await c.operation(db, r.id)).t?.v, r.t);
-  if (!failures.length) {
+  {
     const ordered = [...rows].sort((a, b) => a.p - b.p),
       byId = new Map(ordered.map((r) => [r.id, r]));
     const retired = new Map<string, Observed>();
@@ -348,25 +378,7 @@ export async function fieldPhase(
       }
     }
   }
-  return {
-    label,
-    offered,
-    failures,
-    counts,
-    headBefore: head,
-    wall,
-    peakBacklog,
-    scheduleSha256: sha(schedule),
-    rows,
-    byAccount,
-    perSecond: (1000 * rows.length) / wall,
-    p99Ms: rows.length
-      ? quantile(
-          rows.map((r) => r.end - r.due),
-          0.99,
-        )
-      : null,
-  };
+  return { ...result, counts, readback: { journalEntries: rows.length, fields: expected.size } };
 }
 export async function fieldTrial(url: string, nonce: string, only: boolean) {
   const c = new DatomicClient(url, 35000);
@@ -390,6 +402,7 @@ export async function fieldTrial(url: string, nonce: string, only: boolean) {
       phases.push(p);
       head += p.rows.length;
       assert.deepEqual(p.failures, []);
+      assert(p.counts);
       if (only) assert.equal(p.counts.logical - p.counts.native, p.counts.sameSubjectShared);
       else assert.equal(p.counts.logical, p.counts.native);
     }

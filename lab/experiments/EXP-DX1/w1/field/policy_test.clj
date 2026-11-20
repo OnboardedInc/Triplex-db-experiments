@@ -43,8 +43,11 @@
   (with-redefs [policy/field-only? true group/enabled false]
     (let [e (fn [i s] {:id i :subject s :account "one" :predecessors [] :eligible true :keys #{} :token (promise)})
           [s one] (group/choose {:queue [(e 1 "a") (e 2 "a") (e 3 "b") (e 4 "a")] :accounts ["one"] :tails {}})
-          [s two] (group/choose s) [_ three] (group/choose s)]
-      (is (= [[1 2 4] [3] []] (mapv #(mapv :id %) [one two three]))))
+          [s two] (group/choose s) [_ three] (group/choose s)
+          [_ across] (group/choose {:queue [(e 5 "a") (assoc (e 6 "a") :account "other")]
+                                    :accounts ["one" "other"] :tails {}})]
+      (is (= [[1 2 4] [3] []] (mapv #(mapv :id %) [one two three])))
+      (is (= [5] (mapv :id across))))
     (is (= (gt/run-arm false) (gt/run-arm true)))))
 
 (deftest same-field-across-independent-work
@@ -53,11 +56,14 @@
           name (:db (main/create-scope! nil scope "lean" true true))
           conn (main/connection (main/db-uri name)) lane (group/lane-for conn)
           execute group/execute! started (promise) release (promise)
-          fields (fn [id new old] (assoc (gt/input {:id id :add new :remove old}) "writeClass" "live"))
-          intents (into [(fields "edit0" "value0" nil)
+          sender (str (java.util.UUID/randomUUID))
+          fields (fn [i old]
+                   (assoc (gt/input {:id (str "edit" i) :add (str "value" i) :remove old})
+                          "writeClass" "live" "clientId" sender "sendSequence" (inc i)))
+          intents (into [(fields 0 nil)
                          (frame "independent" "other" "live")
                          (frame "quiet" "quiet" "live")]
-                        (for [i (range 1 10)] (fields (str "edit" i) (str "value" i) (str "value" (dec i)))))
+                        (for [i (range 1 10)] (fields i (str "value" (dec i)))))
           ids (mapv #(get % "operationId") intents)]
       (try
         (with-redefs [group/execute! (fn [c batch]
