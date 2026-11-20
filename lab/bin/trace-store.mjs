@@ -358,6 +358,48 @@ export function registerScaleSeed(dir) {
     html:arc, raw, bundle:true});
 }
 
+// [DX-BM1] Why: record the exact thin fixture collection and its cleanup even when the seed fails.
+// Rejected: indexing the snapshot as a P7 measurement or substituting a successful 1k gate for 1M.
+export function registerThinFixture(dir) {
+  dir = path.resolve(dir);
+  const read = (name) => JSON.parse(fs.readFileSync(path.join(dir, name), "utf8"));
+  const transfer = read("transfer.json"), request = read("request.json"), cleanup = read("cleanup.json");
+  const tag = request.slot;
+  if (transfer.schema !== "bm1-thin-fixture/1" || !/^[a-f0-9]{40}$/.test(request.source) ||
+      !/^[a-f0-9]{12}$/.test(request.nonce) || tag !== "tx2-dxbm1-thin-" + request.nonce ||
+      transfer.source !== request.source || cleanup.source !== request.source ||
+      cleanup.slot !== tag || cleanup.nonce !== request.nonce ||
+      !Array.isArray(cleanup.remaining) || cleanup.remaining.length !== 0 ||
+      !["request.json", "cleanup.json", "worker.log"].every((name) => Object.hasOwn(transfer.files, name)))
+    throw Error("Unbound thin fixture");
+  for (const [name, info] of Object.entries(transfer.files)) {
+    const file = path.resolve(dir, name);
+    if (!file.startsWith(dir + path.sep) || !fs.lstatSync(file).isFile() ||
+        !fs.realpathSync(file).startsWith(fs.realpathSync(dir) + path.sep) ||
+        fs.statSync(file).size !== info.bytes || hash(file) !== info.sha256 ||
+        (name !== "prepare.log" && info.modified + 1 < request.start))
+      throw Error("Changed thin fixture file: " + name);
+  }
+  const sealed = Object.hasOwn(transfer.files, "seal.json");
+  if (sealed) {
+    const seal = read("seal.json"), full = read("full/verified.json");
+    if (seal.source !== request.source || seal.slot !== tag || seal.nonce !== request.nonce ||
+        full.source !== request.source || full.slot !== tag || full.nonce !== request.nonce ||
+        full.people !== 1_000_000 || full.facts !== 8_000_000 || full.feed.facts !== full.facts ||
+        seal.requestSha256 !== transfer.files["request.json"].sha256 ||
+        seal.fullSha256 !== transfer.files["full/verified.json"].sha256 ||
+        seal.smallSha256 !== transfer.files["small/verified.json"].sha256 ||
+        full.resultSha256 !== transfer.files["full/seed.json"].sha256 ||
+        seal.snapshot.sha256 !== transfer.snapshot?.sha256 || seal.snapshot.bytes !== transfer.snapshot?.bytes)
+      throw Error("Unbound thin fixture seal");
+  }
+  return registerRow({date:new Date(transfer.files["cleanup.json"].modified * 1000).toISOString(),
+    tag, source:request.source, subjects:sealed ? 1_000_000 : null,
+    result:sealed ? "Sealed quiet INT1 seed with 8,000,000 verified facts." : "INT1 fixture incomplete. Native evidence retained.",
+    html:path.join(dir, sealed ? "seal.json" : "worker.log"),
+    raw:path.join(dir, "seed.pgdump"), bundle:true});
+}
+
 export async function archive(tag, to) {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]+$/.test(tag)) throw Error("Invalid tag");
   const row = rows().find((r) => r.tag === tag);
@@ -418,6 +460,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     console.log(JSON.stringify(await registerNightBundle(arg)));
   else if (command === "register-scale-seed")
     console.log(JSON.stringify(await registerScaleSeed(arg)));
+  else if (command === "register-thin-fixture")
+    console.log(JSON.stringify(await registerThinFixture(arg)));
   else if (command === "register-night-preflight")
     console.log(JSON.stringify(await registerNightPreflight(arg)));
   else if (command === "list")

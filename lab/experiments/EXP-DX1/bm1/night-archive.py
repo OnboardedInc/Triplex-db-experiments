@@ -87,14 +87,14 @@ def sources(r):
         parts["native-preflight"]=notice_dir(r,small=True)
         parts["native-notices"]=notice_dir(r)
         parts["preflight-reading.json"]=root/"preflight-reading.json"
-    elif r["item"] in (14,15,17,27,29):
+    elif r["item"] in (14,15,17,27,29,33):
         parts["joined-smoke"]=root/"smoke"
         for name in ("run-owner.json","collector.json","point-check.json","native-clean.json","startup-and-engine.log","engines"):
             parts["joined-setup/"+name]=root/name
-        if r["item"] in (15,17,27,29):
+        if r["item"] in (15,17,27,29,33):
             parts["joined-scale"]=root/"scale"
             parts["joined-settlement-smoke"]=root/"settlement-smoke"
-            if r["item"]==29:parts["joined-shared-scope-smoke"]=root/"shared-scope-smoke"
+            if r["item"] in (29,33):parts["joined-shared-scope-smoke"]=root/"shared-scope-smoke"
             for name in ("preflight-stop.json","settlement-smoke-check.json","scale-admission.json","scale-writer-options.json"):
                 parts["joined-setup/"+name]=root/name
     elif r["item"]==6:

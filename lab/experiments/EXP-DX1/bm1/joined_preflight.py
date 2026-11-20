@@ -102,8 +102,8 @@ def joined_output(folder, owner, source, start, repo=None):
 def host(r, request, clean=False):
     root = Path(r["root"])
     tag, source = r["tag"], r["source"]
-    revised = r["item"] in (15, 17, 27, 29)
-    assert r["item"] in (14, 15, 17, 27, 29) and re.fullmatch(r"joined(?:v2)?n(?:19|20)r?b?", tag)
+    revised = r["item"] in (15, 17, 27, 29, 33)
+    assert r["item"] in (14, 15, 17, 27, 29, 33) and re.fullmatch(r"joined(?:v2)?n(?:19|20)[rs]?b?", tag)
     assert root == Path("/var/tmp/triplex-bm1/night-n19") / tag
     repo = root / "build/repository"
     stack_repo = Path(r["writerRepo"]) if revised else repo
@@ -224,7 +224,7 @@ def host(r, request, clean=False):
             # Rejected: writing one combined receipt only after all stages return.
             save("collector.json", small)
             shared_scope = {}
-            if r["item"]==29:
+            if r["item"] in (29,33):
                 # [DX-BM1] Why: the 64-person component grid never exercises the shared-location save in the scale gate.
                 # Rejected: inferring census coverage from the independent small settlement alone.
                 shared=root/"shared-scope-smoke"
@@ -243,7 +243,7 @@ def host(r, request, clean=False):
             witness = get(gate / "settle-gate.json")
             assert witness["nativeClass"] is True and witness["kills"] == 2 and witness["entries"] > 0
             bulk = None
-            if r["item"] in (27,29):
+            if r["item"] in (27,29,33):
                 bulk = get(gate / "bulk-limit.json")
                 assert bulk["status"] == 413 and bulk["code"] == "BulkFrameTooLarge"
                 assert bulk["accept"] == bulk["start"] + 1 and bulk["tx"] and bulk["rejectedBytes"] == 70000
@@ -259,13 +259,17 @@ def host(r, request, clean=False):
         review = repo / EXP / "actv-lazy/REVIEW2.md"
         assert digest(review) == r["reviewSha256"]
         assert all(re.search(fr"(?m)^{i}\. \*\*.+\*\* Agreed\.", review.read_text()) for i in (2, 3, 4, 5))
-        scale = root / "scale"
-        scale.mkdir()
         issued = time.time()
+        if r["item"]==33:
+            shared_scope["purpose"]="native-preflight"
         save("scale-admission.json", {**bound, "reviewSha256": r["reviewSha256"],
                                      "collectorSha256": digest(root / "collector.json"),
                                      "settlementSmokeSha256": digest(root / "settlement-smoke-check.json"),
                                      "issuedAt": issued, **shared_scope})
+        if r["item"]==33:
+            return
+        scale = root / "scale"
+        scale.mkdir()
         remaining = int(r["deadline"] - time.time() - 40)
         assert remaining >= 1800, "Less than 30 minutes remains after the reviewed native preflight"
         run(*launch, JOIN / "server.ts", "100000", scale, "--settlement", timeout=remaining)

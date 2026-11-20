@@ -28,8 +28,10 @@ WFIX_SOURCE = "cd2151749d52df47e179a9b6d13d3d62c0f57aef"
 ACT = "exp/DX-ACT2-activation-100k"
 JOINED_REVIEW_SOURCE = "befa95acfa69fe05e1ba96f86ca13141b0a0e3c1"
 JOINED_REVISED_SOURCE = "95a1058d7bfc7515e1f582b87162247ddce645a3"
-REVISED_JOINED = (15, 17, 27, 29)
-TYPED_JOINED = (27, 29)
+REVISED_JOINED = (15, 17, 27, 29, 33)
+TYPED_JOINED = (27, 29, 33)
+JOINED_GEOGRAPHY_SOURCE = "48f55759494f6a6a04eeb6aa5284dde3e166d431"
+WFIX_VERIFIED_SOURCE = "4331d6fe8e2240d1cab6fdca7ca8287226043bb9"
 JOINED_POLICY_FIX = "5100afc528b8bf188532bc621c81a0fc332dd644"
 SCALE_PROBES = {18:"ceil", 19:"pred", 20:"pulse", 21:"growth", 22:"size"}
 SEALED_ITEMS = (*SCALE_PROBES, 24)
@@ -46,6 +48,7 @@ ITEMS = {
     17: ("exp/DX-ACT1-activation", "actv-lazy", JOINED_REVISED_SOURCE, 3.9, "joinedv2n19r"),
     27: ("exp/DX-ACT1-activation", "actv-lazy", JOINED_POLICY_FIX, 4, "joinedv2n20"),
     29: ("exp/DX-ACT1-activation", "actv-lazy", JOINED_POLICY_FIX, 4, "joinedv2n20r"),
+    33: ("exp/DX-ACT1-activation", "actv-lazy", JOINED_GEOGRAPHY_SOURCE, .5, "joinedv2n20s"),
     16: (WFIX, "wfix1", WFIX_SOURCE, 4, "pulsew4an19"),
     18: (WFIX, "wfix1", WFIX_SOURCE, 1, "ceiln20"),
     19: (WFIX, "wfix1", WFIX_SOURCE, 1, "predecessorn20"),
@@ -76,6 +79,7 @@ NEXT = {1:"joined-publish-preflight", 14:"enhanced-pulse", 8:"ceil-live10", 11:"
         10:"same-database-import", 13:"int1", 5:"collect", 6:"resume", 4:"collect", 3:"collect"}
 NEXT.update({18:"predecessor",19:"enhanced-pulse",20:"growth",21:"size-ledger",22:"readers",24:"rd1-pairs",28:"thin-1m",26:"collect",27:"ceil"})
 NEXT[29]="sealed-probes"
+NEXT[33]="review"
 NEXT.update({30:"separate-sql",31:"rd1-pairs",32:"thin-1m"})
 EXP = Path("lab/experiments/EXP-DX1")
 ENV = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
@@ -411,7 +415,7 @@ def public_source(item, directory, retained=None):
     document = collector_cases().get(str(item),{}) if item in (5,13) else {}
     # [DX-BM1] Why: preserve the historical joined check, then pin the current published source per new attempt.
     # Rejected: picking up a different file format or application between the small and large runs.
-    pinned={14:JOINED_REVIEW_SOURCE,32:NOTICE_SOURCE,**dict.fromkeys(HA_SPLIT,HA_SPLIT_SOURCE)}
+    pinned={14:JOINED_REVIEW_SOURCE,32:NOTICE_SOURCE,33:JOINED_GEOGRAPHY_SOURCE,**dict.fromkeys(HA_SPLIT,HA_SPLIT_SOURCE)}
     if item==29:
         pinned[29]=os.environ["DX_BM1_ACT_RETRY"]
     if retained:
@@ -498,7 +502,7 @@ def make(item, attempt, start, deadline):
             15:"| ACT1 reviewed joined Publish,",16:"| WFIX enhanced pulse,",17:"| ACT1 manifest repair,",27:"| ACT1 typed refusal,",
             24:"| RD1 writer probe,",26:"| INT1 single thin rung,",28:"| RD1 short pairs,",29:"| ACT1 shared-scope repair,",
             30:"| HA1 shared SQL,",31:"| HA1 separate SQL,",
-            32:"| STG1 copied notices,",
+            32:"| STG1 copied notices,",33:"| ACT1 geography gate,",
             **{i:"| Sealed "+s+"," for i,s in SCALE_PROBES.items()}}.get(item,f"| {item} ·")
     if (item,attempt)==(28,2):
         token="| RD1 mounted retry,"
@@ -512,7 +516,7 @@ def make(item, attempt, start, deadline):
     if item in REVISED_JOINED:
         advertised=command("git","-c","credential.helper=","ls-remote","--exit-code",URL,"refs/heads/"+WFIX).split()[0]
         writer_source=advertised if item in TYPED_JOINED else WFIX_SOURCE
-        writer=checkout_source(WFIX,advertised,writer_source,WFIX_SOURCE)
+        writer=checkout_source(WFIX,advertised,writer_source,WFIX_VERIFIED_SOURCE if item==33 else WFIX_SOURCE)
         shutil.copyfile(writer/EXP/"wfix1/REPORT.md",directory/"writer-report.md")
         review=repo/EXP/"actv-lazy/REVIEW2.md"
         assert all(re.search(fr"(?m)^{i}\. \*\*.+\*\* Agreed\.",review.read_text()) for i in (2,3,4,5))
@@ -1042,8 +1046,11 @@ def result(r):
         assert admission["collectorSha256"]==digest(root/"collector.json")
         assert admission["settlementSmokeSha256"]==digest(checked)
         assert admission["reviewSha256"]==r["reviewSha256"]
-        if item==29:
+        if item in (29,33):
             assert admission["sharedScopeSha256"]==digest(root/"shared-scope-smoke/joined-gate.json")
+        if item==33:
+            assert admission["purpose"]=="native-preflight" and not (root/"scale").exists()
+            return "observed","The six native windows, typed refusal, shared census and small settlement all replayed at the exact pin."
         if not (root/"scale/server-collected.json").is_file():
             return "partial","The six revised native preflight cells and small settlement matched. The 100,000-person producer did not seal."
         large=collect(root/"scale",owner,r["source"],100000,admission["issuedAt"],repo,node,env=ENV)
@@ -1555,9 +1562,23 @@ def main():
             return
         if mode=="cleanup" and (child:=native_unit(r)) and os.environ.get("SERVICE_RESULT")=="success" and active(child):return
         (worker if mode=="worker" else cleanup)(r);return
-    assert mode in ("run","run-after-seed")
+    assert mode in ("run","run-after-seed","run-geography-preflight")
+    if mode=="run-geography-preflight":
+        while active("bm1n20-thin-fixture"):
+            time.sleep(5)
+        assert (ROOT/"STATUS").read_text().startswith("item=thin-fixture state=")
+        assert get(ROOT/"single-n20/thin-fixture/cleanup.json")["remaining"]==[]
+        assert not command("docker","ps","-q")
     lock=(NIGHT/"campaign.lock").open("a");fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     assert (NIGHT/"i0/terminal").is_file()
+    if mode=="run-geography-preflight":
+        # [DX-BM1] Why: verify the published shared-geography repair while authorization for its separate deep roster is pending.
+        # Rejected: starting a 100k scope that cannot use the sealed SCALE1 snapshot.
+        (NIGHT/"finished").unlink(missing_ok=True)
+        one(33,(1,))
+        assert not command("docker","ps","-q")
+        status(33,"preflight-finished",time.time(),"review")
+        return
     scheduled=ORDER
     seal_error=None
     if mode=="run-after-seed":

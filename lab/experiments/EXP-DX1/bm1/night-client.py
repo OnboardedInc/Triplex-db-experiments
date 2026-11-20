@@ -188,6 +188,73 @@ def collect_seed():
     print("Collected",TAG,terminal["service"],flush=True)
 
 
+def collect_thin_fixture():
+    from importlib.util import module_from_spec, spec_from_file_location
+    spec=spec_from_file_location("thin_seed", Path(__file__).with_name("probes")/"thin-seed.py")
+    seed=module_from_spec(spec)
+    sys.path.insert(0,str(Path(__file__).parent))
+    spec.loader.exec_module(seed)
+    directory=ROOT.parent/"single-n20/thin-fixture"
+    names=("request.json","stack-access.json","small/seed.json","small/verified.json","small/population.sqlite",
+           "full/seed.json","full/verified.json","seal.json","cleanup.json","dump-toc.txt","worker.log",
+           "prepare.log","engine-logs.txt","seed.pgdump")
+    # [DX-BM1] Why: collect a terminal small or full result from the exact native attempt, including failed ones.
+    # Rejected: using the presence of a dump as proof that its seed verified or its stack exited.
+    lines=remote(f"cd {seed.ROOT}; for f in {' '.join(names)}; do "
+                 "if test -f \"$f\"; then stat -c '%s %Y' \"$f\" | tr '\\n' ' '; sha256sum \"$f\"; fi; done",
+                 timeout=150).decode().splitlines()
+    members={}
+    for row in lines:
+        size, modified, sha, name=row.split()
+        assert name in names and name not in members and re.fullmatch("[a-f0-9]{64}",sha)
+        members[name]={"bytes":int(size),"modified":int(modified),"sha256":sha}
+    assert {"request.json","cleanup.json","worker.log"} <= members.keys()
+    snapshot=members.pop("seed.pgdump",None)
+    copied=sum(m["bytes"] for m in members.values())
+    assert 0<copied<2**30
+    directory.mkdir(parents=True,exist_ok=True)
+    if snapshot and copied+snapshot["bytes"]<2**30 and shutil.disk_usage(directory).free-snapshot["bytes"]>5*2**30:
+        members["seed.pgdump"]=snapshot
+    transfer={"schema":"bm1-thin-fixture/1","source":seed.SOURCE,"files":members,"snapshot":snapshot}
+    manifest=directory/"transfer.json"
+    if manifest.is_file():
+        assert json.loads(manifest.read_bytes())==transfer
+    for name, meta in members.items():
+        dest=directory/name
+        dest.parent.mkdir(parents=True,exist_ok=True)
+        download(str(seed.ROOT/name),dest,meta["sha256"])
+        assert dest.stat().st_size==meta["bytes"]
+    def read(name):
+        return json.loads((directory/name).read_bytes())
+    request, cleanup=map(read,("request.json","cleanup.json"))
+    assert request["source"]==cleanup["source"]==seed.SOURCE
+    assert request["slot"]==cleanup["slot"]=="tx2-dxbm1-thin-"+request["nonce"]
+    assert cleanup["nonce"]==request["nonce"] and cleanup["remaining"]==[]
+    assert all(m["modified"]+1>=request["start"] for name,m in members.items() if name!="prepare.log")
+    if "small/verified.json" in members:
+        assert read("small/verified.json")==seed.reconcile(directory/"small",request,directory/"stack-access.json",1000)
+    if "seal.json" in members:
+        seal, full, stack=map(read,("seal.json","full/verified.json","stack-access.json"))
+        assert all(s["source"]==seed.SOURCE and s["slot"]==request["slot"] and s["nonce"]==request["nonce"]
+                   for s in (seal,full))
+        assert snapshot and seal["snapshot"]=={k:snapshot[k] for k in ("bytes","sha256")}
+        assert seal["postgresId"] in {c["id"] for c in stack["containers"]}
+        assert seal["requestSha256"]==members["request.json"]["sha256"]
+        assert seal["smallSha256"]==members["small/verified.json"]["sha256"]
+        assert seal["fullSha256"]==members["full/verified.json"]["sha256"]
+        assert full["resultSha256"]==members["full/seed.json"]["sha256"]
+        assert full["people"]==1_000_000 and full["facts"]==full["feed"]["facts"]==8_000_000
+    if not manifest.is_file():
+        with manifest.open("x") as stream:
+            json.dump(transfer,stream,indent=2)
+            stream.write("\n")
+    index=os.environ.get("BM1_TRACE_INDEX")
+    if index:
+        row=subprocess.check_output(["node",index,"register-thin-fixture",str(directory)],timeout=120)
+        (directory/"indexed.json").write_bytes(row)
+    print("Collected thin fixture", "sealed" if "seal.json" in members else "incomplete", flush=True)
+
+
 def submit(item,attempt):
     base=REMOTE+f"/i{item}/{attempt}"
     path=base+"/request.json"
@@ -231,6 +298,8 @@ def main():
         collect(sys.argv[2]);return
     if sys.argv[1:]==["collect-seed"]:
         collect_seed();return
+    if sys.argv[1:]==["collect-thin-fixture"]:
+        collect_thin_fixture();return
     assert sys.argv[1:]==["watch"]
     for item in BRANCHES:
         for attempt in (1,2):
