@@ -54,13 +54,16 @@
 
 ;; [DX-AGE1] Why: one immutable tape indexes predecessors without a history-sized in-memory state.
 ;; Rejected: random selection with retained commands or a workload that grows its person population each rung.
-(defn owner-index [{:keys [deep active deep-active adopted]} n]
+(defn owner-index [{:keys [deep active deep-active adopted probes]} n]
   (let [slot (mod n active)]
-    (cond adopted slot
+    (cond (contains? probes n) (:owner (probes n))
+          adopted slot
           (< slot deep-active) (+ 10 slot)
           :else (+ (* 10 deep) 4 (- slot deep-active)))))
 
-(defn width [n pop] (inc (mod (+ (quot n (:active pop)) (mod n (:active pop))) 3)))
+(defn standard-width [n pop]
+  (inc (mod (+ (quot n (:active pop)) (mod n (:active pop))) 3)))
+(defn width [n pop] (or (get-in pop [:probes n :width]) (standard-width n pop)))
 (defn logical-clock [{:keys [active round-ms origin-clock]} n]
   ;; [DX-AGE1] Why: retain hundreds of edits per active person when the seed has millions of idle people.
   ;; Rejected: sweeping every seeded resident before any active owner receives a second edit.
@@ -83,11 +86,21 @@
                            :valid_to (:valid_to original)) new)))
 
 (defn previous-edit [pop n j]
-  (loop [candidate (- n (:active pop))]
+  (if-let [probe (get (:probes pop) n)]
+    (get (:fields probe) j)
+    (loop [candidate (- n (:active pop))]
     (cond
       (neg? candidate) nil
-      (< j (width candidate pop)) candidate
-      :else (recur (- candidate (:active pop))))))
+      (and (not (contains? (:probes pop) candidate)) (< j (width candidate pop))) candidate
+      :else (recur (- candidate (:active pop)))))))
+
+(defn previous-save [pop n]
+  (if-let [probe (get (:probes pop) n)]
+    (:prior probe)
+    (loop [at (- n (:active pop))]
+      (cond (neg? at) nil
+            (contains? (:probes pop) at) (recur (- at (:active pop)))
+            :else at))))
 
 (defn command [pop n]
   (let [i (owner-index pop n) owner (:owner (person pop i))
@@ -98,9 +111,9 @@
         prior (mapv (fn [j p] (if p (edit-row pop p j) (seed-row pop i j))) (range w) preceding)
         stored (when (:adopted pop)
                  (mapv #(when (nil? %2) (nth (:texts (person pop i)) %1)) (range w) preceding))
-        prior-rev (if (< n (:active pop))
-                    (or (:revision (person pop i)) (seed-position i))
-                    (+ (seed-head pop) (inc (- n (:active pop)))))
+        prior-rev (if-let [p (previous-save pop n)]
+                    (+ (seed-head pop) (inc p))
+                    (or (:revision (person pop i)) (seed-position i)))
         journal-row (fn [j attr value]
                       (assoc (row (id "B" (+ (* n 16) j)) tx attr value tx pos clock)
                              :entity_type "_Transaction"))
@@ -148,3 +161,18 @@
                     (reduce (fn [acc j] (assoc acc j (edit-row pop n j))) rows (range (width n pop)))))
                 origin (range (max 0 (- round 2)) (inc round))))
       origin)))
+
+(defn expected-adopted [pop i saves]
+  (let [n (if (< i (:active pop))
+            (when (> saves i)
+              (loop [at (+ i (* (:active pop) (quot (- (dec saves) i) (:active pop))))]
+                (cond (neg? at) nil
+                      (contains? (:probes pop) at) (recur (- at (:active pop)))
+                      :else at)))
+            (reduce (fn [found [at p]] (if (and (< at saves) (= i (:owner p))) at found))
+                    nil (sort-by key (:probes pop))))]
+    (if (nil? n)
+      (mapv #(seed-row pop i %) (range 3))
+      (mapv (fn [j] (if-let [p (if (< j (width n pop)) n (previous-edit pop n j))]
+                     (edit-row pop p j)
+                     (seed-row pop i j))) (range 3)))))

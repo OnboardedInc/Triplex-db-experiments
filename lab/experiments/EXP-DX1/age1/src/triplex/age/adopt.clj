@@ -137,26 +137,29 @@
     ;; [DX-AGE1] Why: interleave fixed samples across accounts and locate them by the source's exact IDs.
     ;; Rejected: walking all 162M facts or creating a new active population alongside the seed.
     (let [actives (for [j (range per-account), account (range 10)
-                        :let [local (quot (* j (dec people-per-account)) per-account)]]
+                        :let [local (quot (* j (- people-per-account 2)) per-account)]]
                     (subject! db position clock account local))
+          probes (map #(subject! db position clock % (- people-per-account 2)) (range 10))
           idle (map #(subject! db position clock % (dec people-per-account)) (range 10))
-          ledger (into (vec actives) idle)]
+          ledger (into (vec actives) (concat probes idle))]
       {:seed-head position :seed-t seed-t :origin-clock clock :active (* 10 per-account)
        :people (count ledger) :adopted ledger :round-ms (quot tape/day-ms 3) :seal seal
        :seed-records (when initial? (:datoms (d/db-stats db)))})))
 
-(defn write-ledger! [file population]
+(defn persist! [file population replace?]
   (let [target (Path/of file (make-array String 0))
         parent (.getParent (.toAbsolutePath target))
         partial (Files/createTempFile parent "age-ledger-" ".partial"
                                       (make-array java.nio.file.attribute.FileAttribute 0))]
-    (native/check! (not (Files/exists target (make-array java.nio.file.LinkOption 0)))
+    (native/check! (or replace? (not (Files/exists target (make-array java.nio.file.LinkOption 0))))
                    "Ledger already exists" {})
     (try
       (Files/writeString partial (str (pr-str population) "\n")
                          (into-array java.nio.file.OpenOption
                                      [StandardOpenOption/WRITE StandardOpenOption/SYNC]))
-      (Files/move partial target (into-array java.nio.file.CopyOption [StandardCopyOption/ATOMIC_MOVE]))
+      (Files/move partial target (into-array java.nio.file.CopyOption
+                                           (cond-> [StandardCopyOption/ATOMIC_MOVE]
+                                             replace? (conj StandardCopyOption/REPLACE_EXISTING))))
       (finally (Files/deleteIfExists partial)))))
 
 (defn read-ledger [file] (edn/read-string (slurp file)))
