@@ -330,7 +330,10 @@ export class Stack {
           (site.privateAddress ? "1400" : "288") +
           "m -XX:ActiveProcessorCount=2 /tmp/ha1.properties",
       ],
-      this.a !== this.b && (this.e.mode === "failures" || this.e.mode === "one-failover")
+      this.a !== this.b &&
+        (this.e.mode === "failures" ||
+          this.e.mode === "one-failover" ||
+          this.e.mode.startsWith("load-"))
         ? 4334
         : undefined,
     );
@@ -363,6 +366,12 @@ export class Stack {
         ...(this.e.mode.startsWith("load-")
           ? [
               "TRIPLEX_TRACE_LEVEL=" + (this.e.mode === "load-profile" ? "full" : "off"),
+              "-e",
+              "TX2_GROUP_COMMIT=" + Number(this.e.mode === "load-live"),
+              "-e",
+              "TX2_LOAD1_PRIORITY=" + Number(this.e.mode === "load-live"),
+              "-e",
+              "TX2_GROUP_QUEUE_CLOCK=" + Number(this.e.mode === "load-live"),
               "-e",
               "TRIPLEX_TRACE_JFR=0",
               "-e",

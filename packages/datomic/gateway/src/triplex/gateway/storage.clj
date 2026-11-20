@@ -111,10 +111,23 @@
   (if-not *load-timing* (input-rows input lean new-ids)
     (let [start (System/nanoTime) rows (input-rows input lean new-ids)]
       (vreset! *load-timing* (- (System/nanoTime) start)) rows)))
+(defn expand-fresh [input lean]
+  (if-not (= "fresh-texts-v1" (get input "rowMode")) input
+    (let [texts (get input "freshTexts")]
+      (when-not (and lean (vector? texts) (seq texts)
+                     (not-any? #(contains? input %) ["rows" "newIds" "rowOrder" "rowTexts"]))
+        (codec/invalid "Mixed fresh batch encodings"))
+      (let [ids (mapv (fn [s]
+                        (when-not (and (string? s) (> (.length ^String s) 5) (= \2 (.charAt ^String s 0)))
+                          (codec/invalid "Invalid fresh row prefix"))
+                        (subs s 5 (+ 5 (Integer/parseInt s 1 5 16)))) texts)]
+        (when-not (= (count ids) (count (set ids))) (codec/invalid "Duplicate fresh row ID"))
+        ;; [DX-LOAD1] Why: ordinary compact validation compares each decoded row ID with the actual prefix. Rejected: a client assertion of empty history or a second source of row order.
+        (assoc input "rowMode" "texts" "newIds" ids "rowOrder" ids "rowTexts" (zipmap ids texts) "rows" [])))))
 (defn tx-data
   ([db input] (tx-data db input (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([db input scope]
-   (let [lean (lean? db) new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
+   (let [lean (lean? db) input (expand-fresh input lean) new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
          fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
          source (when-some [p (get input "sourceK")] (safe-position p)) position (safe-position (get input "position"))
          span (safe-position (or (get input "span") (when source (- position source))))
@@ -230,6 +243,11 @@
                        :record-clocks (vec (cons (:recorded-at metadata) (map #(get % "timestamp") claims)))
                        :replay-safe (true? (get input "replaySafe")) :irregular irregular :position-irregular irregular
                        :journal-entities (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))}
+                       (and group/bulk-priority
+                         (some (fn [r] (and (= "_Transaction" (:entity_type r)) (= ":_tx/actor" (:attribute r))
+                                            (#{"bulk-import" "bulk-seed"} (:value_string r))
+                                            (some #(= (:entity_id r) (get % "txId")) claims))) fresh))
+                       (assoc :bulk true)
                        (and lean (get input "historyIdentityBounds"))
                        (assoc :identity-bounds (get input "historyIdentityBounds")))]])))
 ;; [DX-B10] Why: only contiguous client sequences enter Datomic, even when HTTP arrivals reorder.
@@ -272,7 +290,7 @@
                    (swap! timeline assoc :submitted (System/nanoTime)) future))
         submit (if-not (group/scheduling?) solo
                  (fn [] (try (let [p (second (first data)) current (d/db conn) work (when policy/priority? (policy/work p input)) class (group/classify current p input)]
-                   (group/submit! conn (merge class work {:id (get input "operationId") :params p :eligible (group/eligible? current p)
+                   (group/submit! conn (merge class work {:id (get input "operationId") :params p :eligible (and (not (:bulk p)) (group/eligible? current p))
                      :prepare (fn [view] (tx-data view input (:scope p))) :solo solo})))
                    (catch Exception e (group/outcome-future (deliver (promise) {:error e}))))))]
     (if-let [client (get input "clientId")]
@@ -324,6 +342,7 @@
        :datoms (count (:tx-data report))}
         load-timing (assoc :loadProfile {:rowNs @load-timing :applyMs (get-in report [:io-stats :api-ms])
                        :tx (clojure.edn/read-string (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.load/metrics))})
+        group/bulk-priority (assoc :bulkGrant (:bulk-grant report))
         stamp (assoc :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
     (catch Exception e

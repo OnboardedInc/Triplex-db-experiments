@@ -927,33 +927,57 @@ export class DatomicClient {
       : input.rows.map(encodeRow);
     const bounds =
       compact && fastPathEnabled("history-range") ? historyIdentityBounds(input.newIds) : undefined;
+    // [DX-LOAD1] Why: an append-only lean batch carries the same new ID in the text prefix, map key and two arrays. Rejected: omitting IDs on mixed/retired input or trusting an empty subject at the peer.
+    const fresh =
+      compact &&
+      fastPathEnabled("fresh-texts") &&
+      input.rows.length >= 32 &&
+      input.rows.length === input.newIds.length &&
+      new Set(input.newIds).size === input.rows.length &&
+      input.rows.every(
+        (r) =>
+          isNew(r.id) &&
+          r.retracted_at === null &&
+          r.retracted_position === null &&
+          r.retract_tx_id === null,
+      ) &&
+      new Set(input.rows.map((r) => r.id)).size === input.rows.length;
+    const { rows: wireRows, newIds: wireIds, ...header } = wireInput;
     const body = {
-      ...wireInput,
+      ...(fresh ? header : wireInput),
       ...(this.cacheOptions.writeClass ? { writeClass: this.cacheOptions.writeClass } : {}),
       ...(this.cacheOptions.groupAccount ? { groupAccount: this.cacheOptions.groupAccount } : {}),
       ...(bounds ? { historyIdentityBounds: bounds } : {}),
-      rows,
-      ...(compact ? { rowMode: "texts", rowOrder: input.rows.map((row) => row.id) } : {}),
-      rowTexts: Object.fromEntries(
-        input.rows
-          .filter((r) => isNew(r.id))
-          .map((r) => [
-            r.id,
-            (rowFast ? encodeRowTextFast : encodeRowText)(
-              rowFast &&
-                r.retracted_at === null &&
-                r.retracted_position === null &&
-                r.retract_tx_id === null
-                ? r
-                : {
-                    ...r,
-                    retracted_at: null,
-                    retracted_position: null,
-                    retract_tx_id: null,
-                  },
+      ...(fresh
+        ? {
+            rowMode: "fresh-texts-v1",
+            freshTexts: wireRows.map((r) => (rowFast ? encodeRowTextFast : encodeRowText)(r)),
+          }
+        : {
+            newIds: wireIds,
+            rows,
+            ...(compact ? { rowMode: "texts", rowOrder: input.rows.map((row) => row.id) } : {}),
+            rowTexts: Object.fromEntries(
+              input.rows
+                .filter((r) => isNew(r.id))
+                .map((r) => [
+                  r.id,
+                  (rowFast ? encodeRowTextFast : encodeRowText)(
+                    rowFast &&
+                      r.retracted_at === null &&
+                      r.retracted_position === null &&
+                      r.retract_tx_id === null
+                      ? r
+                      : {
+                          ...r,
+                          retracted_at: null,
+                          retracted_position: null,
+                          retract_tx_id: null,
+                        },
+                  ),
+                ]),
             ),
-          ]),
-      ),
+          }),
     };
     endSpan(encodeSpan);
     this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;

@@ -68,6 +68,9 @@ const b: Site = {
 fs.mkdirSync(store, { recursive: false });
 try {
   const defaults: Record<string, string> = {
+    "load-profile": "260",
+    "load-quiet": "100000,1000000",
+    "load-live": "50,235,390",
     failures: "2000",
     move: "500,2000,5000",
     replication: "1",
@@ -83,7 +86,9 @@ try {
     sizes.length &&
       sizes.every(
         (n) =>
-          Number.isSafeInteger(n) && n > 0 && n <= (mode.startsWith("one-") ? 1500000 : 100000),
+          Number.isSafeInteger(n) &&
+          n > 0 &&
+          n <= (mode.startsWith("one-") || mode === "load-quiet" ? 1500000 : 100000),
       ),
   );
   fs.writeFileSync(

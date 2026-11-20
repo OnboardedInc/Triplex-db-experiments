@@ -5,6 +5,7 @@
 ;; [DX-W1] Why: an idle scope dispatches immediately; only work accumulated behind an in-flight append can share its successor.
 ;; Rejected: a collection timer or an unbounded burst queue.
 (def enabled (= "1" (System/getenv "TX2_GROUP_COMMIT")))
+(def bulk-priority (= "1" (System/getenv "TX2_LOAD1_PRIORITY")))
 (defn grouping? [] (or enabled policy/field-only?))
 (defn scheduling? [] (or (grouping?) policy/priority?))
 (def queue-clock (= "1" (System/getenv "TX2_GROUP_QUEUE_CLOCK")))
@@ -62,7 +63,7 @@
         account (when (= 1 (count accounts)) (first accounts))]
     (when (and hint (seq business) (not= hint account))
       (throw (ex-info "Group account must match every business entity namespace" {:code "InvalidValue" :status 400})))
-    {:account (or account :shared)
+    {:account (or account :shared) :bulk (boolean (:bulk p))
      :subject (when (= 1 (count business)) (first business))
      :scope-barrier (and policy/priority? (:scope-wide p) (some? (:source p)))
      :keys (set (concat (map #(vector :entity %) (concat owners (:entities p)))
@@ -141,7 +142,7 @@
              (let [r (deref p ms ::timeout)] (if (= r ::timeout) timeout (unwrap r)))))))
 (defn complete! [entry r] (deliver (:result entry) r))
 (defn alone! [entry]
-  (try (complete! entry {:value (assoc @((:solo entry)) :group-size 1 :group-wait-ns (- (:dispatch entry) (:arrived entry)))})
+  (try (complete! entry {:value (assoc @((:solo entry)) :group-size 1 :bulk-grant (select-keys entry [:bulk :queued-at-grant :runnable-live]) :group-wait-ns (- (:dispatch entry) (:arrived entry)))})
        (catch Exception e (complete! entry {:error e}))))
 (defn definitive? [e]
   ;; [DX-W1] Why: only an authoritative refused transaction can be submitted again.
@@ -172,7 +173,7 @@
                 (let [report (:report physical) saved (try (receipt (:db-after report) (:id entry)) (catch Exception _ nil))]
                   (if (and (= (:position saved) (:position result)) (= (:clock saved) (:clock result))
                            (= (:t saved) (d/basis-t (:db-after report))))
-                    (complete! entry {:value (assoc report :member saved :group-size (count valid)
+                    (complete! entry {:value (assoc report :member saved :group-size (count valid) :bulk-grant (select-keys entry [:bulk :queued-at-grant :runnable-live])
                                                :group-wait-ns (- (:dispatch entry) (:arrived entry)))})
                     (complete! entry {:error (ex-info "Durable member receipt unavailable" {:status 503 :code "OutcomeUnknown"})})))))))))))
 
@@ -191,7 +192,12 @@
 (defn choose [state]
   (loop [{:keys [queue accounts tails] :as state} state out []]
     (if (or (empty? queue) (= (count out) batch-limit)) [state out]
-      (let [entry (next-entry state) _ (assert entry "Oldest pending command must be eligible")
+      (let [live (when (and bulk-priority (not policy/priority?))
+                   (some (fn [account]
+                           (some (fn [e] (when (and (= account (:account e)) (not (:bulk e))
+                                                   (every? realized? (:predecessors e))) e)) queue))
+                         accounts))
+            entry (or live (next-entry state)) _ (assert entry "Oldest pending command must be eligible")
             a (:account entry) rank (:rank entry)
             solo (or (not (:eligible entry)) (and policy/priority? (or (= rank :bulk) (not (grouping?)))))]
         (if (and (seq out)
@@ -202,7 +208,7 @@
                 remaining (reduce (fn [m k] (if (identical? (:token entry) (get m k)) (dissoc m k) m)) tails (:keys entry))
                 s (cond-> (assoc state :queue others :tails remaining :accounts (rotate accounts a (some same? others)))
                     policy/priority? (update-in [:rotation rank] rotate a (some #(and (same? %) (= rank (:rank %))) others)))
-                taken (conj out (assoc entry :dispatch (System/nanoTime)))]
+                taken (conj out (assoc entry :dispatch (System/nanoTime) :queued-at-grant (count queue) :runnable-live (boolean live)))]
             (deliver (:token entry) true)
             (if solo [s taken] (recur s taken))))))))
 (defn submit! [conn entry]
@@ -222,7 +228,7 @@
                          (cond-> policy/priority? (update-in [:rotation (:rank e)] join-turn (:account e))
                                  (:scope-barrier e) (assoc :barrier token))
                          (update :tails into (map #(vector % token) (:keys e)))))) nil)
-                       (do (swap! lane assoc :active true) (deliver token true) [(assoc e :dispatch (System/nanoTime))])))))]
+                       (do (swap! lane assoc :active true) (deliver token true) [(assoc e :dispatch (System/nanoTime) :queued-at-grant 0 :runnable-live false)])))))]
     (when launch
       (.execute executor (fn []
         (loop [batch launch]

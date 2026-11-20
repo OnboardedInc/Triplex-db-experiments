@@ -7,6 +7,7 @@ import {
   appendEvent,
   dockerArgs,
   DOCKER_HOST,
+  LOCKS,
   listTx2Containers,
   readOwner,
   slotInfo,
@@ -182,6 +183,47 @@ export async function localDrill(opts: any, config: any, manager: any) {
         return (out.stdout + (args[0] === "logs" ? out.stderr : "")).trim();
       },
     };
+    if (mode.startsWith("load-")) {
+      try {
+        // [DX-LOAD1] Why: the shared VM rotates built images; bind the immutable digest to the engine's build event and image label. Rejected: running a mutable tag or changing the shared config for another builder.
+        const builds = fs
+          .readFileSync(path.join(LOCKS, "events.jsonl"), "utf8")
+          .trim()
+          .split("\n")
+          .map((l) => JSON.parse(l))
+          .filter((x) => x.event === "datomic-build")
+          .reverse();
+        let chosen;
+        for (const b of builds) {
+          assert(
+            /^sha256:[0-9a-f]{64}$/.test(b.imageId) && /^[0-9a-f]{64}$/.test(b.buildInputsSha256),
+          );
+          const exists = await site
+            .docker([
+              "image",
+              "inspect",
+              b.imageId,
+              "--format",
+              '{{.Id}} {{index .Config.Labels "tx2.build-inputs-sha256"}}',
+            ])
+            .catch(() => undefined);
+          if (exists === undefined) continue;
+          assert.equal(exists, b.imageId + " " + b.buildInputsSha256);
+          chosen = b;
+          break;
+        }
+        assert(chosen, "No locally present engine-built Datomic distribution");
+        site.datomicId = chosen.imageId;
+        e!.write("image", {
+          nonce: e!.nonce,
+          image: chosen.imageId,
+          buildInputs: chosen.buildInputsSha256,
+        });
+      } catch (error) {
+        clean = true;
+        throw error;
+      }
+    }
     await drill(e!, site, site, { people, scopes: 3, capacity: "local" }, () => {
       clean = true;
     });
