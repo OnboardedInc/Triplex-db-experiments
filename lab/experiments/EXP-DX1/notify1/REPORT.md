@@ -4,8 +4,8 @@ At 1,000 people the first floor change drained in 145 ms with a roster scan and 
 At 10,000 people it took 1.59 and 3.87 seconds. Replaying the source history to build the smaller set delayed nearby saves.
 The smaller set used one recipient transaction at 10,000 people. The roster scan used ten.
 The sender proved 19 of 20 cases at each size. Crossing a scheduled time boundary required the roster scan.
-The alternating run compares the shared and separate gateways with 500 live reads and 500 live saves in every arm.
-The earlier server forecast is 60–90 notices per second, or 31–46 minutes for 165,000 notices once the release reaches the front of the queue.
+The separate gateway lowered read p99 in both repeats. It sent 212–262 notices per second. The shared gateway sent 222–277.
+All four arms met both latency limits against the closing control. None met both against the opening control.
 
 | Review finding | Decision | Fix | Regression test |
 | --- | --- | --- | --- |
@@ -27,9 +27,9 @@ The declared mix was 16 direct pay edits, a local floor edit, a backdated state 
 
 **Sending and live latency**
 
-The old 338/s result exceeded the read limit and the fast windows contained five saves each. The longer 46/s deep result met both ratios with 188 matched saves. The earlier slow reads spent most of their time waiting for the gateway's first byte and reported zero pinned-basis waits. DEEPTAIL separately matched 42 of 50 slow deep saves to writer gateway garbage collection and eight to a prior save held by one of those pauses. [Prior measurements](RATE.md)
+Each 10k active compact arm delivered 6,336 notices with 1,523–1,996 completed reads and 713–935 completed saves. The offer period was 32 ms. The 1.5× limit gave different results across the controls because matching write p99s were 52–57 ms at the opening and 224–263 ms at the closing. The separate sender's read p99 was 9.69–11.67 ms and the shared sender's was 12.54–13.57 ms. [Exact ratios and budgets](RATE.md)
 
-The new sender uses a separate peer, heap and CPU placement against the same transactor. The native gateway was ready in 3 minutes 5 seconds. The joined check got a heavy-job permit 8 minutes 51 seconds after that. The two cost runs followed. The alternating arms compare both gateways against matching prefixes with at least 500 completed reads and saves. [Rate runner](rate-arm.ts)
+The separate sender uses its own JVM against the same transactor. The native slot was ready in 3 minutes 5 seconds. The joined check got a heavy-job permit 8 minutes 51 seconds later. The cost and gateway jobs entered at 23:16 and 23:25 local. Each gateway arm checks exact ordered effects and requires the source to advance only for live saves. [Rate runner](rate-arm.ts)
 
 The forecast assumes 350–550 checks per second on deep inputs, based on 471 per second with four foreground readers on the earlier Mac test. At 16.5% notice density that implies about 58–91 notices per second. At the earlier deep fixture's 79.9% it implies about 280–440 per second. Pinned reads and gateway service bound this rate. The 14 ms cadence caps a worker at 1,143 checks per second before work. The earlier receiver commit share was 18%. The forecast assumes the release has reached the front of the queue and both p99 ratios stay within 1.5×.
 

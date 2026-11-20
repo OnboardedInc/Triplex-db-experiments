@@ -50,3 +50,16 @@ Command on the dedicated server, after review. `DOCKER_HOST=unix:///var/run/dock
 **Evidence audit**
 
 The prior budgets come from the hash-verified paired raw windows in the part 2 manifest. The detailed probe binds every run to its source, exclusive slot, nonce, input bytes and native release receipt. Each active arm checks complete ordered effects and every sender and recipient state against Python W0. The store observer checks pinned cuts, original transaction IDs and returned positions. Relay checks the registered recipient identity, original range, erasure barrier, prior item state and cursor before its atomic effect commit. Its lost-response test overlaps a save, rollback, erasure and concurrent recovery and checks the entire result against Python. The native join checks the JFR file digest, trace and span parents, source tree, guest boot clock and complete matched commit set. The control comparison checks all offers and fixed read schedules. The budget reducer checks raw file hashes, receipts, pinned code, packet counts and coverage of every observed HTTP request. [Rate evidence](RATE-SHA256SUMS)
+
+**Part 5. Native comparison on matched compact traffic**
+
+The account had 10,000 people and four readers. Nine consecutive release changes overlapped an open-loop save every 32 ms. Each active arm used a fresh scope, delivered the full Python-verified 6,336 release notices and was priced against matching offered prefixes from both controls. The test counted live completions inside the window and kept offered-to-ACK times for all matched saves.
+
+| Arm in order | Notices/s | Live reads / saves | Read p99 / closing and opening ratios | Save p99 / closing and opening ratios |
+| --- | ---: | ---: | ---: | ---: |
+| Shared | 222.00 | 1,903 / 891 | 13.57 ms / 1.41× and 1.65× | 168.42 ms / 0.69× and 3.09× |
+| Separate | 211.66 | 1,996 / 935 | 11.67 ms / 1.19× and 1.39× | 309.44 ms / 1.38× and 5.90× |
+| Separate | 261.57 | 1,615 / 756 | 9.69 ms / 1.06× and 1.14× | 86.80 ms / 0.33× and 1.53× |
+| Shared | 277.36 | 1,523 / 713 | 12.54 ms / 1.37× and 1.48× | 100.28 ms / 0.38× and 1.76× |
+
+The control bookends disagree on whether either route reaches the 1.5× limit consistently. The separate peer moved read p99 down in both repeats. On these windows at most six of an arm's fifty slowest saves overlapped a writer gateway pause. The archival deep run with fifty GC-related tails came from a different workload. [Part 5 evidence](PART5-SHA256SUMS)
