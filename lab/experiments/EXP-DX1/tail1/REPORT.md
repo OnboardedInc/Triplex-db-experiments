@@ -29,17 +29,17 @@ Serial is the archived write collector. Tuned G1 has a 25 ms target, 2 MiB regio
 
 The allocation arm keeps Serial, decodes the positional row vector into a transient map and removes per-prefix Formatter allocation. Two-core G1 holds tuning fixed. Mac Serial was explicit. Both BM1 peers started on one core without a collector flag, so Serial is the expected choice even for the reader expanded after launch. The BM1 transactor specified G1. [Collector evidence and readback](COLLECTORS.md)
 
-Mac Serial C verified 5,110 receipts and 48 oracle reads. The writer pause p99 was 175 ms. Client p99 was 20.9 seconds, and all fifty longest saves spent most of that time queued before dispatch. The earlier Serial F analysis aborted with 4,926 receipts. [Mac observations](MAC.md)
+All five collector arms verified 5,110 saves each. Writer pause p99 was 146–175 ms for Serial, 121 ms with lower allocation, 63 ms for one-core G1, 31 ms for two-core G1 and 0.062 ms for ZGC. Serial client p99 varied from 4.54 to 20.85 seconds. [Mac observations](MAC.md)
 
 ## Receipt reuse
 
 The TypeScript write adapter already skips `/begin` when every hinted live row is cached. The new opt-in keeps the deep fields eligible for that path only after a bound receipt settles. Known retirement evicts their cache entries. Datomic rechecks the exact live IDs at the serial point, and unsupported reads and conflicts use the existing snapshot path.
 
-Sixteen native gateway tests and the protected-value erasure fixture passed. The eligible save used one request after a different writer committed. An intervening retirement sent the stale save through `/begin` and returned a typed conflict. All five pinned reads matched O-REPLAY. Mac Serial C averaged 1.292 gateway requests per verified save. The matched receipt delta is pending.
+Sixteen native tests and the erasure fixture passed. A different writer's commit still allowed one request. An intervening retirement forced `/begin` and returned a typed conflict. All five pinned reads matched O-REPLAY. The first Mac pair cut snapshots from 1,218 to 422 on 3,654 shared saves, with 1,456 offers missing a commit. [Receipt results](MAC.md)
 
 ## Measurement audit
 
-- The archive extractor checks the compressed SHA-256, ledger identity and each primary ACK. The replay checks the frozen source, population, offers and spacing, and checks the newly populated seed before releasing the driver.
+- The archive extractor checks compressed SHA-256, ledger identity and each primary ACK. The replay checks the frozen seed and offer spacing. The receipt comparison joins matching offers and request roots to each run's timestamps, source and slot.
 - The replay binds both Mac locks, reports and offers to source, slot and nonce. It checks JVM startup, durable SQL, exact receipts and independent oracle reads. Allocation profiles check the recording hash, captured interval and source. Recovery records its own decoder and reservation with the original attempt.
 - The receipt oracle compares actual assertion IDs and values at five fresh pinned cuts against its hashed case, along with the observed conflict and receipt order. Captures are created in the newly allocated attempt directory.
 - The archive results are historical. The replay is a diagnostic, and the acceptance contract is unchanged.
