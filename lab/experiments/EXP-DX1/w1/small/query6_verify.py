@@ -117,7 +117,7 @@ if study == "query6-cost":
         assert [r["route"] for r in sample["reads"]] == (["match", "datalog"] if n % 2 == 0 else ["datalog", "match"])
         for read in sample["reads"]:
             assert read["value"] == value
-            assert read["calls"][-1] == ("q" if read["route"] == "datalog" else "read")
+            assert read["calls"] == (["basis", "snapshot", "q", "release"] if read["route"] == "datalog" else ["read"])
             assert all(read[k] > 0 for k in ("readMs", "requestBytes", "responseBytes"))
             read_samples[read["route"]].append(read)
     result = {**binding, "samples": len(samples), "writer": writer,
