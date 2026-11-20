@@ -29,12 +29,19 @@
      :retracted_position (Long/parseLong text end (+ end 16) 10)
      :retracted_at (reach/bits text (+ end 16))
      :retract_tx_id (subs text (+ end 32))}))
-(defn history-entity [db eid]
+(defn history-entity
+  ([db eid] (history-entity db eid nil))
+  ([db eid visit-text!]
   (let [history (d/history db)
+        scan (fn [source a]
+               (let [datoms (d/datoms source :eavt eid a)]
+                 (if visit-text!
+                   (map (fn [datom] (visit-text! (:v datom)) datom) datoms)
+                   datoms)))
         markers (into {} (map (fn [datom]
                                (let [^String text (:v datom) end (+ 5 (Integer/parseInt text 1 5 16))]
-                                 [(subs text 0 end) text])) (d/datoms db :eavt eid :triplex.entity/retired)))
-        grouped (group-by :v (d/datoms history :eavt eid :triplex.entity/row))]
+                                 [(subs text 0 end) text])) (scan db :triplex.entity/retired)))
+        grouped (group-by :v (scan history :triplex.entity/row))]
     (map (fn [[text datoms]]
            (let [row (decode text) retired (first (filter #(not (:added %)) datoms))
                  ^String marker (get markers (prefix (:id row)))]
@@ -44,13 +51,15 @@
                          (assoc row :retracted_at (ledger/clock db tx)
                                     :retracted_position (value db tx :triplex.tx/position)
                                     :retract_tx_id (ledger/tx-id db tx)))
-               :else row))) grouped)))
+               :else row))) grouped))))
 (defn live-texts [db eid]
   (let [retired (set (map (fn [datom] (let [^String text (:v datom)] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))
                           (d/datoms db :eavt eid :triplex.entity/retired)))]
     (remove (fn [datom] (let [^String text (:v datom)] (retired (subs text 0 (+ 5 (Integer/parseInt text 1 5 16))))))
             (d/datoms db :eavt eid :triplex.entity/row))))
-(defn rows [name db input]
+(defn rows
+  ([name db input] (rows name db input nil))
+  ([name db input visit-text!]
   (let [history? (true? (get input "history")) basis (get input "basis")
         selection (when-not history?
               (try (reach/select-db name db basis)
@@ -67,4 +76,4 @@
       (mapcat (fn [eid]
                 (cond inner (map #(decode (:v %)) (:datoms (group-cut/entity-slice inner eid)))
                       cut (map #(decode (:v %)) (live-texts source eid))
-                      :else (history-entity db eid))) eids))))
+                      :else (history-entity db eid visit-text!))) eids)))))

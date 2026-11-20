@@ -16,7 +16,8 @@
 (defn assert-unprotected! [db]
   ;; [DX-W1] Why: old pins can still own plaintext after a native excision.
   ;; Rejected: assuming row absence at the selected data cut is current erasure evidence.
-  (when (or (and (d/entid db :db/excise) (seq (d/datoms db :aevt :db/excise)))
+  (when (or (System/getenv "TRIPLEX_ERASURE_DIRECTORY")
+            (and (d/entid db :db/excise) (seq (d/datoms db :aevt :db/excise)))
             (and (d/entid db :triplex.scope/erasure-ledger)
                  (some :v (d/datoms db :aevt :triplex.scope/erasure-ledger))))
     (throw (ex-info "Lean queries need current erasure-aware value semantics"
@@ -132,20 +133,22 @@
   (throw (ex-info "Lean query exceeded the row source budget" {:status 422 :code "QueryInputBudgetExceeded" :route "q"})))
 (defn relation [name db query basis deadline]
   (let [point (point-demands (:where query)) p (select-keys basis ["recordedPosition"])
-        all-rows (if point
-                   (concat (lean/rows name db {"history" true "entityIds" (:subjects point)})
-                           (mapcat #(lean/rows name db {"history" true "id" %}) (:ids point)))
-                   (lean/rows name db {"history" true}))
         n (volatile! 0) text (volatile! 0)
-        rows (keep (fn [row]
-                     (when (or (> (vswap! n inc) 100000)
-                               (> (vswap! text + (reduce + (map count (filter string? (vals row))))) (* 16 1024 1024))
-                               (>= (System/nanoTime) deadline)) (input-budget!))
-                     (when (storage/visible? row p true) (storage/mask-retirement row p))) all-rows)
+        ;; [DX-W1] Why: check the budget as the index is consumed, before grouping one owner's history.
+        ;; Rejected: counting the decoded results after a single large history could exhaust the peer.
+        visit! (fn [^String value]
+                 (when (or (> (vswap! n inc) 100000)
+                           (> (vswap! text + (.length value)) (* 16 1024 1024))
+                           (>= (System/nanoTime) deadline)) (input-budget!)))
+        all-rows (if point
+                   (concat (lean/rows name db {"history" true "entityIds" (:subjects point)} visit!)
+                           (mapcat #(lean/rows name db {"history" true "id" %} visit!) (:ids point)))
+                   (lean/rows name db {"history" true} visit!))
+        rows (keep #(when (storage/visible? % p true) (storage/mask-retirement % p)) all-rows)
         ;; Entity stubs created by reference upserts are application identities even when they have no facts.
         identities (when-not point
                      (map (fn [x]
-                            (when (or (> (vswap! n inc) 100000) (>= (System/nanoTime) deadline)) (input-budget!))
+                            (visit! (:v x))
                             [[:triplex.entity/id (:v x)] :triplex.entity/id (:v x)])
                           (d/datoms db :aevt :triplex.entity/id)))]
     (into #{} (concat (mapcat facts rows) identities))))
