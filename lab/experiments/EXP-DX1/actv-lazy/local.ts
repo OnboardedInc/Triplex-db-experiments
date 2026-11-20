@@ -150,6 +150,18 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
 } else if (binding.mode === "--joined-settle-price") {
   assert(["64", "1000", "10000"].includes(binding.size!));
   run("join/settle-price.ts", [dir, binding.size!, binding.size === "64" ? "3" : "60"]);
+} else if (binding.mode === "--joined-settle-prepare" || binding.mode === "--joined-settle-block") {
+  const [n, rate] = binding.size!.split(":");
+  assert(["64", "1000", "10000"].includes(n!) && ["3.5", "23.5"].includes(rate!));
+  const prepare = binding.mode === "--joined-settle-prepare";
+  run("join/settle-price.ts", [
+    dir,
+    n!,
+    n === "64" ? "3" : "180",
+    "4",
+    prepare ? "--prepare" : "--resume",
+    prepare ? rate! : process.env.DX_JOIN_PREPARATION!,
+  ]);
 } else if (binding.mode === "--joined-size") {
   const [profile, n] = binding.size!.split(":");
   assert((profile === "thin" || profile === "deep") && ["1000", "10000", "100000"].includes(n!));
