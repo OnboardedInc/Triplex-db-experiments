@@ -15,3 +15,5 @@
 | `replayLive` and controller | Recompute offer denominators, timing, throughput, grants, one outstanding frame and marker high-water; verify native position identities. | Read the current arm's tape and require exact schedule coverage; the receiver reads the transferred current campaign. | Attempt scope/nonce/revision/slot, frame shape and original ordered receipt positions. The worker separately enforces the full storage oracle. |
 
 The experiment adds no acceptance verdict. No contract pin moved.
+
+The first Mac attempt `1b3dfba9-4ddc-4fe5-8744-8aa74fdfd6ff` verified 11,880 control offers before the final readback rejected unsupported depth eight. This attempt produced no completed arm. The cleanup removed all its containers and networks. The next attempt uses the existing supported depth four.

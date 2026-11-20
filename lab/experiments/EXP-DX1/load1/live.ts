@@ -537,7 +537,7 @@ export async function live(
         assert.deepEqual(record(frame, meta, r), expected);
         seen.add(r.commandId);
       },
-      { pageSize: micro ? 64 : allReads ? 24 : 8, readDepth: micro ? 8 : 1, assertionSweep: micro },
+      { pageSize: micro ? 64 : allReads ? 24 : 8, readDepth: micro ? 4 : 1, assertionSweep: micro },
     );
     assert.equal(seen.size, checks.size + temporalSeen.size);
     if (micro && width) {
