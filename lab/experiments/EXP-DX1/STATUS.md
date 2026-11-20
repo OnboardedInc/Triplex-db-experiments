@@ -3418,3 +3418,28 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   deletions freed nothing (pnpm hard links). Actions: superseded and old images removed, old volumes removed, trim
   every 15 minutes, 13 GB of DX-T1 evidence being compressed into the Drive archive, a disk rule added to the
   builders' rule file (at most two images and two source copies each).
+
+## 2026-11-20 19:47 UTC (14:47 local, 2026-11-20): DX-PLAY1 part 1 and DX-HASYNC1 part 3 in; Mac disk back to 37 GiB
+
+- **DX-PLAY1 part 1 (`562236274`; `play1/REPORT.md`, `SIZE.md`, `DATA-MODEL.md`, `AGENTS-PLAYGROUND.md`).**
+  `pnpm playground start` serves a dashboard, 13 JSON actions with OpenAPI, and tool-server access over standard
+  input and local HTTP from one action service, on 127.0.0.1. Live gate on the small fixture (16 deep people at
+  165.6 facts, 160 wide, three small accounts; 29,540 compressed bytes in the repository) passed every action, both
+  tool transports and a Chromium run of the dashboard; a quiesced PostgreSQL dump restored all 885 rows exactly;
+  teardown left nothing. Full set specified, not generated: 100,000 deep people, about 4 million wide, 35 days,
+  30.8 million saves; about 3 to 5 GB as compact objects but more than 8.5 hours to replay; snapshot size
+  unmeasured. Erasure shown as unavailable (native query route refuses protected scopes on the base). Clean clone
+  on plain Docker unverified. No bucket created, nothing uploaded. The superseded first commit carried the generic
+  lab identity only. Part 2 assigned: start from a snapshot, measured size tiers for the owner's choice, a
+  hand-started clean-clone workflow, merge onto `exp/DX-INT1`.
+- **DX-HASYNC1 part 3 (`a9f076753`; `hasync1/REPORT.md`, `OWNER-DECISION.md`, `SDK-RETRY.md`, `BENCH.md`).**
+  Eight Mac drills under ordinary tokens: every acknowledged save kept; 782 scheduled saves settled once (689 by
+  resending the identical command); 7,779 scheduled reads correct within one second; the old disk could not start
+  as a writer; planned move paused saves 13.56 s. Owner decision written: A reopen on one copy (resume 12 to 38 s,
+  a second failure can lose saves from the one-copy window), B hold saves until a second copy is ready (45 to 180 s
+  at 16 million facts, 7 to 27 minutes at 160 million), C three machines (18 to 50 s, about $314 a month for the
+  third machine, untested). Two-server suite forecast 82 to 89 minutes. Part 4 assigned: merge onto
+  `exp/DX-INT1`, priority 9 scorecard commands, suite trimmed so the first 30 minutes give the four numbers.
+- **Mac disk:** 23 untagged leftover images held about 24 GB in the lab VM; removed, and a job now prunes untagged
+  images and trims every 10 minutes. DX-T1 evidence (41,958 files, 13,661,923,535 bytes) archived to the Drive
+  archive as one verified file and removed locally. Free space 37 GiB.
