@@ -1,11 +1,11 @@
-All ten accounts stay in one Datomic database.
-The saved run returned 96 receipts in 13 writes.
-Fifteen saves used the old prepared writer. Ten groups switched paths before submitting.
-The old trace shows zero submitted retries and cannot identify why each group switched paths.
-The new writer prepares the rows before checking one person's revision and assigning the order and time at commit.
-It keeps the ordinary records and journal and uses the existing writer for other save shapes.
-The native tests passed the deep replacement, all 96 independent saves and the conflict cases.
-The model is still a forecast. There is no new capacity result.
+Server source `7ca8525a9ea0c3810c7af6ba0b5a0e15552dd534`.
+Server command `DX_BARE_METAL=1 bash lab/experiments/EXP-DX1/prep1/server.sh run "$OUT" 7ca8525a9ea0c3810c7af6ba0b5a0e15552dd534`.
+It compares both writers on the same sealed database of ten accounts with 10,000 deep people each.
+Each writer gets the same field saves and quiet-account arrivals with one, two and four gateways.
+The model puts the new writer near 383 saves per second with one save per append and 697 with two.
+At 394 offered saves per second, the two-save model predicts a 28 ms p99 and a quiet-account slowdown of 1.22×.
+The saved preflight joined 1,315 mock saves to the matching receipts and append records.
+The native correctness checks passed in Part 3. The SQL restart and erasure checks are still pending.
 
 **North star.** P2 durable small saves, P6 per-account tails and P8 live progress during import. Exact historical reads, native rows and the ordered feed are part of this experiment. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
@@ -23,13 +23,19 @@ The owner revision is updated by every typed write to that owner's rows and is t
 
 **Step 4.** The closed-loop Mac runner uses disjoint one-, two- and three-field edits at 1/2/4/6 outstanding. Each 1/2/4-peer comparison uses the same slot CPU cap and 768 MiB combined Java heap. It joins receipts to native apply, CPU, log blocks and CPU pressure and captures the first reply after 30 seconds of idle. The two PostgreSQL flush counters cover whole arms including seeding, readback and cleanup. The append wall time includes both synchronous writes. The profile waits for an exclusive measurement lease. A subject stage exceeding 1.6 ms/save or persistent fallback calls for further diagnosis. No measured ceiling is available.
 
-**Step 5 forecast, before the run.** The design model predicts 383/s with one logical save per append and 697/s with two. At 50/235/394/620 offered, if there are two per append and the model's stage times hold, expect all offers to settle and worst-account p99 of 27.34/27.48/28.00/28.36 ms. The 620 rung needs at least 1.74 saves per append. With one per append, the 394 and 620 queues grow. The prior W1 grouped ceiling of 210–300/s implies 50, 210–235, 210–300 and 210–300 settled/s at the four rates. The predicted quiet-account ratio is about 1.07× in the regular tape and 1.85× with bunched arrivals and import. The latter remains outside the 1.25× target.
+**Predictions before the server run.** Each row is ordered by gross offers of 50, 235, 394 and 620 saves/s. Both repeats share a forecast. The quiet-alone forecast is 3.5 saves/s in every cell with p99 of 10 ms for K and 8.8 ms for S. Values above a writer's capacity are uncensored queue projections. The collector reports the complete-cohort p99 as unavailable if any ACK is missing.
 
-Once the publication and erasure gates clear, run the command from the built branch with both gateway URLs and the same source digest in `DX_PREP1_SOURCE_SHA256` and `DX_PREP1_OPTIONS_ATTEMPT` set to the matched startup nonce. Both gateways need write readback and predecessor lookup, with ordinary lean rows and journals. Enable W1 grouping and live priority on `K_URL`. Enable `TX2_SUBJECT_SAVE=1` on `SUBJECT_URL` with live priority and grouping off. The command rotates through ten account queues under one dispatch cap and matches 525 quiet offers per window. It uses a synthetic seed and does not exercise import or the full 162M-fact target.
+| Writer and peers | Settled/s | Worst-account p99 (ms) | Quiet loaded / alone |
+| --- | --- | --- | --- |
+| K with 1, 2 or 4 | 50 / 235 / 255 / 255 | 30 / 30 / 77,739 / 204,086 | 4.20 / 13.76 / 14.53 / 22.00 |
+| S with 1 | 50 / 235 / 383 / 383 | 27.34 / 27.48 / 4,122 / 88,244 | 1.11 / 1.19 / 1.22 / 1.26 |
+| S with 2 or 4 | 50 / 235 / 394 / 620 | 27.34 / 27.48 / 28.00 / 28.36 | 1.11 / 1.19 / 1.22 / 1.26 |
 
-```sh
-DX_PREP1_SUBJECT_COMPARE=1 node --experimental-strip-types lab/experiments/EXP-DX1/prep1/live.ts "$K_URL" "$SUBJECT_URL" 150 "$ATTEMPT"
-```
+The quiet forecasts assume the faster shared append and reply in the isolation model (1.10× / 1.14× / 1.19× / 1.22× at 35 / 100 / 235 / 394). Treat 620's 1.26× as an extrapolation and the quiet ratios in saturated cells as conditional on quiet service holding up. The 620 rung needs at least 1.74 saves per append.
+
+**Handoff.** On the allocated native Linux host, check out the exact source above and have the pinned stack images and workspace package builds ready. Set `OUT` to a new absolute directory outside the checkout. Run as root with an empty benchmark Docker host and seven disjoint CPU IDs for the default masks. The harness restores one SQL archive per arm, runs K/S/S/K at 1/2/4 peers and alternates the order of the matched 144-second alone and loaded windows. Each matched quiet window offers the same 504 saves. Windows continue from the previous cut within an arm. There is no import stream in this comparison. The per-arm deadline leaves time to collect the native log and stop the stack inside 30 minutes.
+
+**Server evidence audit.** The producer reopens the sealed scope and checks the configured writer, source digest, installed function, nonce and initial cut on every writing peer. It compares each durable receipt against expected journal changes, position and clock. The collector binds all offers and receipts to the saved tape, checks the restored seed seal and effective durability, and joins native t to complete append records, per-save stage clocks and pause logs for all JVMs. The preflight uses the real producer and collector with a synthetic transport and makes no storage claim. A fixture with a changed receipt clock was rejected. No server arm was run here.
 
 **Evidence audit.** `census.py` validates the frozen probe, scoped offers, exact operation IDs and contiguous receipt positions, then joins them through the retained native t and append record. Fresh reasons are per operation and bound to the run nonce. `subject/verify-report` ties the operation, command, journal, owner, time and position to the committed native t before returning a receipt. The in-memory gate checks expected receipts, conflicts and row bytes on new scoped databases under a frozen source tree and attempt ID. The SQL readers bind the immutable attempt, image source, holder and slot to raw bytes, matching native t and operation, and both restart epochs. Profile output is diagnostic. [Checksums](SHA256SUMS)
 
