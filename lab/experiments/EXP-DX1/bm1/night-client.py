@@ -79,7 +79,7 @@ def unpack(archive,stage,seal):
 
 
 def collect(name):
-    assert re.fullmatch(r"i(?:[1-9]|[12][0-9])-[12]",name)
+    assert re.fullmatch(r"i[1-9][0-9]{0,2}-[12]",name)
     directory=ROOT/name
     src=REMOTE+"/bundles/"+name
     original=remote("cat "+src+"/TRANSFER.json")

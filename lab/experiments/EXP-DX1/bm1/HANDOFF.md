@@ -141,3 +141,14 @@ RD1 `ba07d040` finished its three 115-second 10k comparisons at 04:06 EST. `over
 | Closure plus 32 MiB install | 32,448 (584,070) | 1.024 | 121,448 | 1.320 [0.366, 4.133] |
 
 Each weighted phase and both reader levels reported zero fallback share. The install lane handled 14 requests over its entire run. The fresh scopes stayed before the first scheduled burst, unlike the long Linux v3 run at 3,490 weighted pulls/s. The short tests show strong local-read capacity and did not excite the history path enough to price an old-cut treatment. All three writer ratios are unjudged with 17 saves per side. The revised supervisor launched HA1 shared SQL at 04:06 EST.
+
+### One-host import isolation
+
+The exact `6ef27404e` shared-PostgreSQL job finished at 04:21 EST. `overnight/i30-1` contains all six native tapes, their two independent collectors and the importer’s separate receipt stream. Import reached every one of the fixture’s 800,000 facts. The resulting 7,407 facts/s over a 108-second window is a floor for this setup because the fixture ran out of work.
+
+| PostgreSQL layout and live dose | Last import ACK s | Live offers per arm | Quiet read p99 ms and ratios | Quiet save p99 ms and ratios | Worst read/save ratios against either bookend |
+| --- | ---: | ---: | --- | --- | --- |
+| Shared, 50 saves/s | 70.68 | 11,880 | 4.44, 1.17× / 1.22× | 7.92, 0.89× / 1.45× | 2.24× / 1.56× |
+| Shared, 100 saves/s | 72.88 | 17,280 | 4.87, 0.88× / 1.08× | 11.93, 1.34× / 1.14× | 1.43× / 2.92× |
+
+All quiet p99s used 540 samples per bookend or active window. All accounts verified every scheduled offer in both shared-PostgreSQL rate blocks. The shared results are separate Datomic pipelines inside one PostgreSQL process, on one storage device. They price the synthetic fixture and leave the full Priority 8 imports open. The client initially refused the new two-digit item number. The preserved archive and all member hashes verified after correcting the key parser.

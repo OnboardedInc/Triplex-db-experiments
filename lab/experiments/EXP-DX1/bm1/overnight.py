@@ -1554,13 +1554,15 @@ def main():
             if repair is not None:
                 repaired[item]=repair
     order=(*in_flight,*(item for item in scheduled if retry_restores or item not in in_flight))
-    pending=[item for item in order if not (NIGHT/f"i{item}/outcome.json").is_file() or item in repaired or
-             (retry_restores and restore_refusal(item))]
+    pending=list(dict.fromkeys(item for item in order if not (NIGHT/f"i{item}/outcome.json").is_file() or item in repaired or
+                              (retry_restores and restore_refusal(item))))
     if pending:
         (NIGHT/"finished").unlink(missing_ok=True)
-    if in_flight and len(pending)>1:
-        item=in_flight[0]
-        NEXT[item]=ITEMS[pending[1]][4] if pending[1] in ITEMS else "readers"
+        # [DX-BM1] Why: show the next still-pending item after an adoption or skip.
+        # Rejected: advertising an earlier queue entry that is already recorded.
+        for item,following in zip(pending,pending[1:]):
+            NEXT[item]=ITEMS[following][4] if following in ITEMS else "readers"
+        NEXT[pending[-1]]="collect"
     for index,item in enumerate(order):
         adopted=retry_restores and index<len(in_flight)
         folder=NIGHT/f"i{item}"
