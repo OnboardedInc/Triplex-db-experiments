@@ -17,3 +17,11 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 | `field-regression-45.log`, `fixture-45.log`, `native-45/` | Matched short field geometry check and a repeated local-sample shortfall. |
 | `reader-retry-51.log` | Bounded exact-cut retry and protection refusal checks. |
 | `fixture-51.log`, `native-51/scorecard/SCORECARD-v0.1.md`, `native-51/campaign/` | Final 13-row diagnostic card, two verified frozen arms, one missing field publication, and cleanup. |
+
+
+## Part 2 SCALE1 adoption
+
+- `part2/packages-a3.log` and `part2/package-build-a3.json` identify the clean native package build.
+- `part2/image-build-a3.log` identifies the pinned compact image. The original build and launcher failures are preserved in `part2/image-a1.log` and `part2/fixture-a2-1.log`.
+- `part2/fixture-a3-1.log` and `part2/adoption-a3/campaign/` contain both native arms, exact loader receipts, observations, writer settings and cleanup.
+- `part2/adoption-a3/recalculated/SCORECARD-v0.1.md` is the current diagnostic renderer applied to the retained native evidence.

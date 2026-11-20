@@ -1,18 +1,28 @@
-The second scorecard candidate adopts the pooled SCALE1 format.
-The grouped writer uses compact layout K with a queryable journal.
-The server may also select the integrated per-person writer.
-This step covers adopted seed checks and partial readings for rows 1 through 4.
-The short pair offers the same writes in both arms.
-Aged offers require the live AGE1 check on the restored database.
-The Mac proof uses a toy seed made by the SCALE1 loader.
-The server handoff will name the verified revision.
+Server 2 should use commit 6350fd83f.
+It accepts the original SCALE1 image and transfer.
+It records partial observations for rows 1 through 4.
+The grouped configuration uses compact layout K.
+The per-person writer can be selected separately.
+Two Mac toy arms matched all 28 saves each.
+Rows 5 through 9 still need held-seed execution.
+No full-size server run was performed here.
 
 ## Part 2 verdict and receipt audit
 
 - The fresh adoption reads the exact operator-pinned SCALE1 image and transfer. The transfer binds the producer, nonce, successful terminal result and image digest. The restore checks the exact dump hash while streaming it onto a private slot. Both peers check the original logical cut, stored scope, loader manifest receipt, terminal loader command and exact pinned members and fields. The aged branch checks the original fresh identity against the AGE1 bundle and calls the published fresh-peer verifier on the actual restored database before offers.
-- Each arm starts with a fresh UUID used by the selected gateway and write commands. The installed writer function and concrete options must agree with the source-bound live gateway and held cut. The archive compares every journal change and transaction identity to the original acknowledged operation and expected prior rows. It refreshes a sample of receipt and claim lookups after the tape and records the denominators.
+- Each physical arm binds a fresh UUID to the selected gateway and write commands. The compact Mac stack binds the common gateway challenge and independently loaded scope of each arm. The installed writer function and concrete options must agree with the source-bound live gateway and held cut. The archive compares every journal change and transaction identity to the original acknowledged operation and expected prior rows. It refreshes a sample of receipt and claim lookups after the tape and records the denominators.
 - The card rejects mismatched source, arm type and changed observation bytes and requires the matched arm tapes and starting cuts to agree. It reports diagnostic components with explicit gaps. This revision creates no new PASS path.
 - No acceptance file changed. The transferred code comes from the SCALE1 and AGE1 branches and keeps the original sources and command formats.
+
+## Part 2 adoption gate
+
+The SCALE1 plan and fixed writer came from `2a431952a`. The AGE1 toy loader and aged verifier came from `7d7f192d4`. The application integrates INT1 `cebffdf08`, including its pinned Java policy and opt-in per-person writer.
+
+The native Mac gate ran at `3667de30c`, with one ordinary heavy token and no lease. The existing SCALE1 loader made two independent 80-person, ten-account fixtures. Each arm reopened logical cut 6 and checked 20 membership rows and 60 field witnesses before offers. Both matched all 28 saves and journal entries. The loaded arm checked 15,415 pinned field reads with zero errors and sampled 10 exact current pulls. The readbacks confirmed the grouped K settings and captured all three live JVM argument lists. The engine removed the private volume and released the slot.
+
+The first image failed because the merged Docker recipe's global base argument followed the auxiliary stages. The next start revealed that the engine overlaid the compact launcher with the canonical one. The final gate used the verified compact entrypoint. A low-level inspection found the loader's future logical clock in the original journal delta. The published renderer recomputes dispatch-to-observation on one host clock from the retained operations and never uses the logical clock as latency.
+
+[Server command](SERVER.md) pins the application and shows both age inputs. The 12-minute offered pair yields only components of P1–P4. Full-world straddle and recovery, commit band coverage, durable effects and crash resume, and matched history bytes remain open. No full-size restore, Java 25 campaign or AGE1 sealed cut was verified here.
 
 ## Part 1 report
 

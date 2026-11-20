@@ -1,41 +1,48 @@
-# Run the v0.1 scorecard on the allotted server
+# Run the v0.1 scorecard
 
-Use one idle, dedicated bare-metal Linux server. The existing INT1 placement requires 12 distinct allowed physical cores numbered 0 through 11, at least 240 GiB free for the disposable restore, WAL, and evidence, and the native Docker socket. Use the rated host from the BM1/SCALE1 handoff. Build ahead of the scored allocation.
+Use the held SCALE1 decision loader image on a dedicated bare-metal Ubuntu 24.04 server. The process uses the existing native queue lock, 12 allowed physical cores numbered 0 through 11, and disposable PostgreSQL restores. The original archive stays immutable. Allow at least 240 GiB of free scratch for fresh and 320 GiB for 1B.
 
-## Build
+## Build ahead of the allocation
 
-Run this from a clean clone of the scorecard revision with Node 22 available. The command creates a fresh checkout and toolchain in a new build directory. It will refuse an existing build directory, changed or hidden source inputs, or unpinned files in the image context.
+From a clean checkout at the stated revision with Node 22:
 
 ```bash
-COMMIT=ac7698b0771f17b0253e73d8b6b74b573898c79c
-BUILD=/var/tmp/triplex-v01-build
+COMMIT=6350fd83f8e2de08fd8fac8dca50adb90d48934b
+BUILD=/var/tmp/triplex-v01-adopted-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
 ```
 
-## Run once at each age
+The build pins Node, PostgreSQL, the Datomic distribution and the Java 25 native image. The scorecard verifies the resolved image IDs and generated package SHA-256s before startup and under the native queue lock.
 
-Let `SEALED_FRESH` and `SEALED_1B` name the operator-held, read-only seed directories, and `FRESH_SEAL_SHA256` and `AGED_SEAL_SHA256` their trusted manifest digests from provisioning. Each directory contains the original INT1 `seed-image.json` and its `seed.pgdump`, for a pooled million-person frozen campaign using the legacy journal and original receipt identities. The original database and dump are kept unchanged. The worker restores each arm independently. The restore checks the manifest and streamed dump bytes, and the driver verifies the expected starting scope, population, journal and recorded seed commands before issuing offers.
+## Fresh SCALE1
+
+Set `SCALE1_IMAGE` to the held decision arm directory containing `image.json`, `transfer.json` and `seed.pgdump`. Use the original transfer SHA-256 and its independently recorded `summaryFiles["image.json"]` digest. Keep the directory's published tag. The producer had ten accounts, 1,000,000 people, 162,456,470 current business facts and logical cut 87,002.
 
 ```bash
 cd "$BUILD/repository"
-sudo env "PATH=$BUILD/tools/bin:$PATH" \
-  "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
-  "$BUILD/tools/bin/node" lab/bin/scorecard.mjs \
-  --commit "$COMMIT" --age fresh --seed "$SEALED_FRESH" \
-  --seal-sha256 "$FRESH_SEAL_SHA256" --out /var/tmp/triplex-v01-fresh
-
-sudo env "PATH=$BUILD/tools/bin:$PATH" \
-  "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
-  "$BUILD/tools/bin/node" lab/bin/scorecard.mjs \
-  --commit "$COMMIT" --age 1B --seed "$SEALED_1B" \
-  --seal-sha256 "$AGED_SEAL_SHA256" --out /var/tmp/triplex-v01-1b
+sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
+  "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --commit "$COMMIT" \
+  --age fresh --writer grouped --seed "$SCALE1_IMAGE" \
+  --image-sha256 "$SCALE1_IMAGE_SHA256" --transfer-sha256 "$SCALE1_TRANSFER_SHA256" \
+  --out /var/tmp/triplex-v01-adopted-fresh
 ```
 
-Use `--hourly-usd RATE` when the allocation differs from USD 1.09/hour. The fixed tape takes 197 minutes across both arms. The run allocation is capped at 235 minutes per age, or USD 3.58–4.27 per run and up to USD 8.54 across both at the default rate. The restore, exact seed replay and evidence collection must fit within the remaining 38 minutes. The scorecard is still written after an incomplete campaign, with a nonzero command exit and the failure log retained. The estimate excludes build time and seed preparation.
+Set `--writer subject` on a separate attempt to use the integrated per-person writer. The card records grouping, compact rows, queryable K journal, installed commit function and all JVM role settings from startup readback.
 
-`--age` records the operator's label. Seed production and the record count belong to the provisioning evidence. The SCALE1 decision image uses a different layout and lacks the INT1 command identities expected by this tape. The driver refuses that input. A compatible pre-sealed INT1 image at each age is an outstanding dependency.
+## Aged 1B
 
-The physical run measures the frozen P1–P4 pair. P3 dependency fanout and P4 engine-side read bytes lack complete gates. The matched P5/P6/P8 field campaign exceeds the remaining window after the frozen pair. The scorecard calls out the missing P7 population census, wide import, P9 two-machine drill and unavailable correctness witnesses. It preserves the command log, native arm archives and a link to each published observation. Keep these directories with the final Markdown to retain working evidence links.
+Use the original SCALE1 image inputs, the AGE1 handoff bundle and an independently prepared PostgreSQL dump of that exact sealed aged cut. Supply `AGE_JAVA` and `AGE_DATOMIC_HOME` for the pinned AGE1 checker. The bundle's native database identity, logical and physical cuts, history count, receipts and replay ledger are checked against the restored peer before writes.
 
-The held-image verifier expects the original logical seed head on the timed scope. Aging that appends through the same Triplex journal needs an explicit starting-state and oracle replay extension before it can use this command. Treat the fresh and 1B runtime forecasts as unverified until an operator completes both sealed runs.
+```bash
+sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
+  "AGE_JAVA=$AGE_JAVA" "AGE_DATOMIC_HOME=$AGE_DATOMIC_HOME" \
+  "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --commit "$COMMIT" \
+  --age 1B --writer grouped --seed "$SCALE1_IMAGE" \
+  --image-sha256 "$SCALE1_IMAGE_SHA256" --transfer-sha256 "$SCALE1_TRANSFER_SHA256" \
+  --aged-bundle "$AGE_HANDOFF_JSON" --aged-bundle-sha256 "$AGE_HANDOFF_SHA256" \
+  --aged-dump "$AGED_PGDUMP" --aged-dump-sha256 "$AGED_DUMP_SHA256" \
+  --out /var/tmp/triplex-v01-adopted-1b
+```
+
+The budget is 235 minutes per age and up to USD 4.27 at USD 1.09 per hour. The first stage uses at most 105 minutes including both restores, 12 minutes of matched offers and collection. Budgets for P5 through P9 are 25, 30, 15, 25 and 20 minutes, with 15 minutes reserved for cleanup. The base card reports shortened P1–P4 observations and names the bars that still need qualifying evidence. Preserve the output directory with its campaign archives.
