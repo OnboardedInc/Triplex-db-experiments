@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
 import { metricEndpoint, type Stack } from "../thin1/native-metrics.ts";
+import { heapResidency } from "../thin1/heap-residency.ts";
 
 export function parseHistogram(raw: string) {
   const total = raw.match(/^Total\s+(\d+)\s+(\d+)\s*$/m);
@@ -98,6 +99,12 @@ export async function gatewayProfiles(
       before: nativePools(data.before.nmt, data.pid),
       after: nativePools(data.after.nmt, data.pid),
     } : undefined;
+    if (native) {
+      for (const when of ["before", "after"] as const) {
+        const state = data[when];
+        assert.deepEqual(heapResidency(state.heap, state.mappings), state.residency);
+      }
+    }
     const filename = phase + "-" + role + ".histogram.gz",
       bytes = gzipSync(histogram);
     fs.writeFileSync(path.join(dir, filename), bytes, { flag: "wx" });

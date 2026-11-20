@@ -8,6 +8,7 @@ import { deepPopulation } from "../../../bench/lib/deep-world.ts";
 import { activePerson } from "./cohort.ts";
 import { memoryPlan } from "./memory-plan.ts";
 import { nativePools, parseHistogram } from "./gateway-profile.ts";
+import { heapResidency } from "../thin1/heap-residency.ts";
 
 const roles = [
   "reader",
@@ -230,6 +231,10 @@ function verify(dir: string) {
           assert.deepEqual(parseHistogram(text), sample.summary);
           for (const when of ["before", "after"] as const) {
             assert.deepEqual(nativePools(sample[when].nmt, sample.pid), sample.native[when]);
+            if (input.policy.nativeResidency) {
+              const state = sample[when];
+              assert.deepEqual(heapResidency(state.heap, state.mappings), state.residency);
+            }
           }
           if (sample.role === "transactor") {
             const proc = first.native.observations.write.roles.transactor;
