@@ -21,7 +21,8 @@ import {
 } from "./model.ts";
 import { hash } from "./stack.ts";
 
-type ObjectEntry = { file: string; bytes: number; sha256: string; records: number };
+export type VerifiedObject = { file: string; bytes: number; sha256: string };
+type ObjectEntry = VerifiedObject & { records: number };
 export type Frame =
   | { kind: "catalog"; subject: Subject }
   | { kind: "person"; person: Person }
@@ -53,7 +54,12 @@ export function minuteSaves(rank: number) {
   return rank === 1438 ? 2060 : 2364;
 }
 
-function* saves(day: number, accounts: Profile[], sample: boolean): Generator<Frame> {
+export function* saves(
+  day: number,
+  accounts: Profile[],
+  sample: boolean,
+  include = (_account: Profile, _index: number) => true,
+): Generator<Frame> {
   const max = sample ? 180 : 1440;
   for (let min = 0; min < max; min++) {
     const rankedMinute = (min * 137 + day * 103) % 1440;
@@ -63,6 +69,7 @@ function* saves(day: number, accounts: Profile[], sample: boolean): Generator<Fr
         const active = Math.min(account.count, 1900);
         const base = (day * 2 * 1440 + min * 2 + idx) * 2400 + save;
         const n = ((draw(base) % active) * 7919 + day * 1901) % account.count;
+        if (!include(account, n)) continue;
         const root = personId(account, n);
         const rootEdit = idx === 1 || save % 6 === 0;
         const target = rootEdit ? root : root + "/placement:1/task:1/subtask:1/field:1";
@@ -96,7 +103,7 @@ function* saves(day: number, accounts: Profile[], sample: boolean): Generator<Fr
   }
 }
 
-async function sha256(file: string) {
+export async function sha256(file: string) {
   const digest = createHash("sha256");
   for await (const bytes of createReadStream(file)) digest.update(bytes);
   return digest.digest("hex");
@@ -208,14 +215,14 @@ function parseManifest(content: Buffer) {
   return m;
 }
 
-async function verified(path: string, entry: ObjectEntry) {
+async function verified(path: string, entry: VerifiedObject) {
   const metadata = await stat(path).catch(() => null);
   return Boolean(
     metadata?.isFile() && metadata.size === entry.bytes && (await sha256(path)) === entry.sha256,
   );
 }
 
-async function fetchObject(base: URL, dir: string, entry: ObjectEntry, signal?: AbortSignal) {
+async function fetchObject(base: URL, dir: string, entry: VerifiedObject, signal?: AbortSignal) {
   const path = join(dir, entry.file);
   if (await verified(path, entry)) return path;
   const part = path + ".part";
@@ -268,7 +275,7 @@ async function fetchObject(base: URL, dir: string, entry: ObjectEntry, signal?: 
   return path;
 }
 
-export async function openBundle(source: string, cache: string, signal?: AbortSignal) {
+export async function manifestReader(source: string, cache: string, signal?: AbortSignal) {
   const remote = /^https?:\/\//.test(source) ? new URL(source) : undefined;
   if (
     remote &&
@@ -297,20 +304,41 @@ export async function openBundle(source: string, cache: string, signal?: AbortSi
         return Buffer.concat(buffers);
       })()
     : await readFile(join(resolve(source), "manifest.json"));
-  const manifest = parseManifest(initial);
   const checksum = hash(initial);
   const directory = remote ? join(cache, checksum) : resolve(source);
   if (remote) await mkdir(directory, { recursive: true, mode: 0o700 });
-  const inputs: string[] = [];
-  for (const entry of manifest.objects) {
-    signal?.throwIfAborted();
-    if (remote) inputs.push(await fetchObject(remote, directory, entry, signal));
-    else {
-      const file = join(directory, entry.file);
-      if (!(await verified(file, entry))) throw new Error("Invalid bundle object: " + entry.file);
-      inputs.push(file);
-    }
-  }
+  return {
+    initial,
+    checksum,
+    async objects(entries: VerifiedObject[]) {
+      const inputs: string[] = [];
+      for (const entry of entries) {
+        signal?.throwIfAborted();
+        if (remote) inputs.push(await fetchObject(remote, directory, entry, signal));
+        else {
+          const file = join(directory, entry.file);
+          if (!(await verified(file, entry)))
+            throw new Error("Invalid bundle object: " + entry.file);
+          inputs.push(file);
+        }
+      }
+      return inputs;
+    },
+  };
+}
+
+export async function openBundle(source: string, cache: string, signal?: AbortSignal) {
+  const reader = await manifestReader(source, cache, signal);
+  return readBundle(reader, signal);
+}
+
+export async function readBundle(
+  reader: Awaited<ReturnType<typeof manifestReader>>,
+  signal?: AbortSignal,
+) {
+  const manifest = parseManifest(reader.initial);
+  const inputs = await reader.objects(manifest.objects);
+  const { checksum } = reader;
   // [DX-PLAY1] Why: every object is verified before the first import write, with record counts checked at consumption.
   // Rejected: trusting downloaded bytes based on a complete HTTP response or importing an unverified partial shard.
   return {

@@ -39,7 +39,7 @@ The full-population artifacts, replay and restore are unmeasured. The local star
 
 The release demo uses the shared ConfigStore and the HTTP package's configuration descriptors. An intentionally small status rule provides a visible answer and durable background materialization. The standalone Foldkit explorer continues to serve the generic Triples view. The Datomic dashboard has its own workspace panel for commit positions, traces, native query and Publish.
 
-The initial plan push inherited a local Git identity. Its branch was immediately rewritten with a generic identity, and subsequent commits use that identity. Remote retention of the superseded commit could not be checked.
+The orchestrator confirmed that the superseded plan commit used the generic lab identity.
 
 ## Observation audit
 
@@ -51,3 +51,9 @@ The initial plan push inherited a local Git identity. Its branch was immediately
 - The native gate exercises every action in one fresh scope and records the matching source and fixture identities plus the exact slot and attempt. The dump probe checks all three Datomic containers' attempt labels before stopping them, then compares restored keys and values with that attempt's quiesced PostgreSQL database and records the dump SHA-256.
 - Teardown inventories only the unique attempt label, checks zero owned Docker resources, rejects the former health endpoint, and releases the exact holder and slot. A failed cleanup preserves the reservation for investigation.
 - No acceptance files or paths named in the acceptance checksum pins changed.
+
+## Snapshot observation audit
+
+- Startup binds the requested tier to the manifest, verifies chunk names, order, sizes and SHA-256, and hashes again after copying each object into the isolated PostgreSQL container. The selected PostgreSQL and Datomic versions and fact codec constrain the restore format.
+- A restored instance checks the exact Datomic scope, head and checkpoint carried by the archive. Before exposing API actions it compares the independently generated person and owned-record values, cardinalities and keys at the current cut and both earlier cuts. The fresh restore gate also reads the first person through the HTTP API.
+- The snapshot runner writes its evidence after the checked read, measured memory and storage observations, confirmed owned-resource inventory and shutdown of its original API address. The Mac adapter binds the gate to a committed source tree, manifest digest, unique run and live reservation owner before sealing.

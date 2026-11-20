@@ -27,11 +27,19 @@ import {
 } from "@triplex-build/triplex-datomic";
 import { Effect, Layer, ManagedRuntime, Scheduler } from "effect";
 import { type Action, ActionError, type Payload, type Result } from "./actions.ts";
-import { attrs, personAt, type Fixture, type Person } from "./fixture.ts";
+import { attrs, currentAt, earlyAt, personAt, type Fixture, type Person } from "./fixture.ts";
 import { observe, requestSamples } from "./timings.ts";
 import { hash } from "./stack.ts";
 import { personId, personName, type Profile, type Subject } from "./model.ts";
 import type { Frame, Manifest } from "./bundle.ts";
+import {
+  snapshotProfiles,
+  snapshotSamples,
+  type Checkpoint,
+  type Restore,
+  type SeedFrame,
+  type SeedPlan,
+} from "./snapshot.ts";
 
 type Row = Awaited<ReturnType<DatomicClient["rows"]>>[number];
 const PersonSchema = EntityType.make("Person", {
@@ -47,7 +55,13 @@ type Policy = { label: string; reviewStatus: string };
 type StackUrls = { write: string; read: string };
 export type Source =
   | { fixture: Fixture; checksum: string }
-  | { manifest: Manifest; checksum: string; frames: () => AsyncGenerator<Frame> };
+  | { manifest: Manifest; checksum: string; frames: () => AsyncGenerator<Frame> }
+  | {
+      fixtureInfo: Pick<Manifest, "accounts" | "earlyAt" | "currentAt">;
+      checksum: string;
+      frames: () => AsyncGenerator<SeedFrame>;
+    }
+  | Restore;
 
 export const ERASE_UNAVAILABLE =
   "The merged gateway protects reads with an erasure frontier, but its native Datalog route refuses protected scopes. A marker across every playground read path is unavailable on this base.";
@@ -192,13 +206,24 @@ export class Playground {
   readonly loadPerson = "load:playground:isolated";
   private loadActive = false;
   private earlyPosition = 0;
+  private middlePosition = 0;
   private firstRelease: Result | undefined;
+  readonly seedCounts = { initialFacts: 0, saves: 0 };
 
   readonly source: Source;
   constructor(source: Source, urls: StackUrls, run: string) {
     this.source = source;
-    this.fixture = "fixture" in source ? source.fixture : source.manifest;
-    const scope = DatabaseScope.test("import-history-" + run);
+    this.fixture =
+      "inputs" in source
+        ? { accounts: snapshotProfiles(source.manifest.plan), earlyAt, currentAt }
+        : "fixture" in source
+          ? source.fixture
+          : "fixtureInfo" in source
+            ? source.fixtureInfo
+            : source.manifest;
+    const scope = DatabaseScope.test(
+      "import-history-" + ("inputs" in source ? source.manifest.run : run),
+    );
     this.scope = scope;
     this.db = "s2-" + Buffer.from(scope).toString("base64url");
     this.writer = new DatomicClient(urls.write, 8000);
@@ -253,6 +278,7 @@ export class Playground {
   }
 
   async seed(signal?: AbortSignal) {
+    if ("inputs" in this.source) return this.verifySnapshot(this.source);
     await this.run(Effect.asVoid(Triples));
     if ("fixture" in this.source) await this.seedSmall(this.source.fixture, signal);
     else await this.seedBundle(this.source.frames, signal);
@@ -262,11 +288,15 @@ export class Playground {
     );
   }
 
-  private async seedBundle(frames: () => AsyncGenerator<Frame>, signal: AbortSignal | undefined) {
+  private async seedBundle(
+    frames: () => AsyncGenerator<SeedFrame>,
+    signal: AbortSignal | undefined,
+  ) {
     let ops: TransactOp[] = [];
     let batch = 0;
     const flush = async () => {
       if (!ops.length) return;
+      this.seedCounts.initialFacts += ops.length;
       this.earlyPosition = (
         await this.import(ops, "seed:bundle:" + batch++, this.fixture.earlyAt)
       ).position;
@@ -291,6 +321,10 @@ export class Playground {
           "seed:" + frame.id,
           frame.validAt,
         );
+        this.seedCounts.saves++;
+      } else if (frame.kind === "middle") {
+        await flush();
+        this.middlePosition = await this.head();
       } else if (frame.kind === "release") {
         await flush();
         const account = this.accounts.get(frame.account);
@@ -319,6 +353,7 @@ export class Playground {
   private async seedSmall(fixture: Fixture, signal: AbortSignal | undefined) {
     const batch = (ops: TransactOp[], section: string, index: number, at: number) => {
       signal?.throwIfAborted();
+      if (at === this.fixture.earlyAt) this.seedCounts.initialFacts += ops.length;
       return this.import(ops, `seed:${section}:${index}`, at);
     };
 
@@ -372,6 +407,8 @@ export class Playground {
         );
       }
       const day = (validAt - this.fixture.earlyAt) / 86_400_000;
+      this.seedCounts.saves += edits.length;
+      if (day <= 17) this.middlePosition = await this.head();
       if (day === 14 || day === 28) {
         await this.seedRelease(
           deep,
@@ -383,6 +420,82 @@ export class Playground {
         );
       }
     }
+  }
+
+  async snapshotCheckpoint(plan: SeedPlan): Promise<Checkpoint> {
+    const early = this.earlyPosition;
+    const middle = this.middlePosition;
+    if (!early || middle <= early) throw new Error("The snapshot must have two earlier cuts");
+    const contents = JSON.stringify({
+      plan,
+      early,
+      middle,
+      firstRelease: this.firstRelease,
+      releases: [...this.releases.values()],
+    });
+    const committed = await this.transact(
+      [
+        stringFact(
+          "playground:snapshot",
+          ":playground/checkpoint",
+          contents,
+          this.fixture.currentAt,
+        ),
+      ],
+      { actor: "playground-seed", commandId: "seed:snapshot-checkpoint" },
+    );
+    return { early, middle, head: committed.position };
+  }
+
+  private async verifySnapshot(source: Restore) {
+    const { plan, checkpoint } = source.manifest;
+    const { early, middle, head } = checkpoint;
+    if ((await this.head()) !== head)
+      throw new Error("Restored Datomic scope or head differs from the snapshot");
+    const marker = await this.rows("playground:snapshot", head, undefined, this.writer);
+    if (marker.length !== 1 || marker[0]!.attribute !== ":playground/checkpoint")
+      throw new Error("Restored Datomic snapshot checkpoint is missing");
+    const data = JSON.parse(marker[0]!.value_string!) as {
+      plan: SeedPlan;
+      early: number;
+      middle: number;
+      firstRelease: Result;
+      releases: Release[];
+    };
+    if (
+      hash(JSON.stringify(data.plan)) !== hash(JSON.stringify(plan)) ||
+      data.early !== early ||
+      data.middle !== middle
+    )
+      throw new Error("Restored generator checkpoint differs from the snapshot manifest");
+    // [DX-PLAY1] Why: every cut compares all sampled person and child values independently of the dump.
+    // Rejected: trusting the database name, the checkpoint fact or a successful pg_restore as proof of correctness.
+    for (const [i, cut] of snapshotSamples(plan).entries()) {
+      const position = [early, middle, head][i]!;
+      for (const [id, expected] of cut.byPerson) {
+        const rows = fields(
+          await this.reader.rows(this.db, {
+            entityIds: [...expected.keys()],
+            basis: { recordedPosition: position, validAt: cut.at },
+          }),
+        );
+        let expectedCount = 0;
+        for (const attrs of expected.values()) expectedCount += attrs.size;
+        const keys = new Set(rows.map((r) => JSON.stringify([r.entityId, r.attribute])));
+        if (
+          rows.length !== expectedCount ||
+          keys.size !== expectedCount ||
+          rows.some((r) => expected.get(r.entityId)?.get(r.attribute) !== r.value)
+        )
+          throw new Error(
+            "Restored values differ from the generator for " + id + " at " + position,
+          );
+      }
+    }
+    this.earlyPosition = early;
+    this.middlePosition = middle;
+    for (const release of data.releases) this.releases.set(release.id, release);
+    this.firstRelease = data.firstRelease;
   }
 
   personRows(person: Person, position: number, validAt = this.fixture.currentAt) {

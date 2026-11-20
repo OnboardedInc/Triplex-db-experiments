@@ -9,6 +9,8 @@ import { promisify } from "node:util";
 import { openInstance } from "../../../../examples/playground/instance.ts";
 import { loadFixture } from "../../../../examples/playground/fixture.ts";
 import { liveGate } from "../../../../examples/playground/live-gate.ts";
+import { runSnapshot } from "../../../../examples/playground/snapshot-run.ts";
+import { checkPlan, type SeedPlan } from "../../../../examples/playground/snapshot.ts";
 import {
   caps,
   dockerClient,
@@ -121,7 +123,15 @@ async function dumpProbe(docker: Docker, prefix: string, out: string) {
 }
 
 export async function local(
-  options: { holder?: string; out?: string; browser?: boolean; portable?: boolean },
+  options: {
+    holder?: string;
+    out?: string;
+    browser?: boolean;
+    portable?: boolean;
+    snapshot?: string;
+    deep?: string;
+    daily?: string;
+  },
   config: Config,
   manager: Manager,
 ) {
@@ -142,6 +152,14 @@ export async function local(
   process.once("SIGTERM", abort);
   process.once("SIGINT", abort);
   const fixture = loadFixture();
+  const plan: SeedPlan =
+    options.deep === undefined
+      ? "small"
+      : {
+          deep: Number(options.deep),
+          daily: options.daily === "real" ? "real" : Number(options.daily),
+        };
+  checkPlan(plan);
   const sources = [
     "package.json",
     "pnpm-lock.yaml",
@@ -162,7 +180,7 @@ export async function local(
     while (!slot) {
       shutdown.signal.throwIfAborted();
       const disk = statfsSync(repo);
-      assert(disk.bavail * disk.bsize >= 5 * 2 ** 30, "Below host disk floor");
+      assert(disk.bavail * disk.bsize >= 10 * 2 ** 30, "Below the 10 GiB playground build floor");
       await withPool((ledger) => {
         // [DX-PLAY1] Why: ordinary correctness holds one heavy token.
         // Rejected: waiting for a foreign measurement lease while that owner drains this token.
@@ -233,6 +251,31 @@ export async function local(
       network: [],
       image: [],
     });
+    if (options.snapshot) {
+      const sourceHead = git(["rev-parse", "HEAD"]);
+      assert.equal(git(["status", "--porcelain"]), "", "Snapshot gates need committed source");
+      await runSnapshot({
+        ...stackOptions,
+        plan,
+        out,
+        tier: options.snapshot,
+        sourceHead,
+        slot: slot.slot,
+        timingClass: "laptop diagnostic",
+        beforeSeal: () => {
+          assert.equal(git(["rev-parse", "HEAD"]), sourceHead);
+          assert.equal(
+            git(["status", "--porcelain"]),
+            "",
+            "Snapshot source changed during the gate",
+          );
+          const owner = readOwner(slot!);
+          assert.equal(owner?.holder, holder);
+          assert.equal(owner?.pid, process.pid);
+        },
+      });
+      return;
+    }
     instance = await openInstance(stackOptions);
     const ready = await instance.ready;
     console.log("Playground ready", instance.server.url, Math.round(ready.seedMs) + " ms seed");

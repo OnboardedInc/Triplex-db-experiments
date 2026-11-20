@@ -5,13 +5,14 @@ import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
 import { inflateRawSync } from "node:zlib";
+import type { Restore } from "./snapshot.ts";
 
 export const repo = resolve(import.meta.dirname, "../..");
 export const loopback = "127.0.0.1";
 export const caps = { pg: 256, tx: 1280, write: 640, read: 640 } as const;
 const config = join(repo, "lab/config/datomic");
-const version = "1.0.7745";
-const packageName = "datomic-pro-" + version;
+export const datomicVersion = "1.0.7745";
+const packageName = "datomic-pro-" + datomicVersion;
 const ownership = "triplex.playground";
 const exec = promisify(execFile);
 const sqlFiles = ["postgres-db.sql", "postgres-table.sql", "postgres-user.sql"];
@@ -89,7 +90,7 @@ async function buildImage(docker: Docker, dir: string, prefix: string) {
   try {
     const expected = (await readFile(join(config, "SHA256SUMS"), "utf8")).split(/\s/)[0];
     const response = await fetch(
-      `https://datomic-pro-downloads.s3.amazonaws.com/${version}/${packageName}.zip`,
+      `https://datomic-pro-downloads.s3.amazonaws.com/${datomicVersion}/${packageName}.zip`,
       {
         signal: AbortSignal.timeout(180_000),
       },
@@ -164,7 +165,7 @@ export class Stack {
     this.traceDir = join(opts.directory, "traces");
   }
 
-  async start(gatewaySpans = true) {
+  async start(gatewaySpans = true, restore?: Restore) {
     const { docker, prefix, directory, ports, signal, cachedImage } = this.#opts;
     const pg = prefix + "-pg";
     const tx = prefix + "-tx";
@@ -172,6 +173,10 @@ export class Stack {
     const volume = prefix + "-data";
     const extract = prefix + "-extract";
     const gateway = join(repo, "packages/datomic/gateway");
+    const codecFile = join(repo, "packages/datomic/src/codec-spec.json");
+    const codec = hash(await readFile(codecFile));
+    if (restore && restore.manifest.codec !== codec)
+      throw new Error("The snapshot was built with a different fact codec");
     await mkdir(this.traceDir, { recursive: true });
     const sourceFiles = (
       await readdir(join(gateway, "src"), { recursive: true, withFileTypes: true })
@@ -259,6 +264,7 @@ export class Stack {
       ]);
       await rm(local);
     }
+    const restoreMs = restore ? await this.restore(restore) : undefined;
     const localConfig = join(directory, "sql.properties");
     const template = join(directory, "sql-template.properties");
     await docker([
@@ -299,11 +305,7 @@ export class Stack {
     ];
     const sources = [
       ...mount(join(gateway, "src"), "/opt/gateway/src", true),
-      ...mount(
-        join(repo, "packages/datomic/src/codec-spec.json"),
-        "/opt/gateway/codec-spec.json",
-        true,
-      ),
+      ...mount(codecFile, "/opt/gateway/codec-spec.json", true),
       "-e",
       "DATOMIC_EXT_CLASSPATH=/opt/gateway/src",
     ];
@@ -412,11 +414,7 @@ export class Stack {
         "sha256sum",
         "/opt/gateway/codec-spec.json",
       ]);
-      if (
-        hash(JSON.stringify(actualFiles)) !== source ||
-        mountedCodec.split(/\s/)[0] !==
-          hash(await readFile(join(repo, "packages/datomic/src/codec-spec.json")))
-      )
+      if (hash(JSON.stringify(actualFiles)) !== source || mountedCodec.split(/\s/)[0] !== codec)
         throw new Error("Running gateway sources do not match the playground checkout");
       const address = await docker(["port", name, "8080/tcp"]);
       if (!/^127\.0\.0\.1:\d+$/.test(address))
@@ -428,14 +426,120 @@ export class Stack {
           const res = await fetch(urls[role] + "/health", { signal: AbortSignal.timeout(1500) });
           if (!res.ok) return;
           const body = (await res.json()) as { datomicVersion: string; gatewaySourceHash: string };
-          if (body.datomicVersion === version && body.gatewaySourceHash === source) return true;
+          if (body.datomicVersion === datomicVersion && body.gatewaySourceHash === source)
+            return true;
           throw new Error("Live gateway identity differs from the playground source");
         },
         `Datomic ${role} gateway did not become ready`,
         signal,
       );
     }
-    return { ...urls, source };
+    return { ...urls, source, codec, ...(restoreMs === undefined ? {} : { restoreMs }) };
+  }
+
+  private async restore(snapshot: Restore) {
+    const { docker, prefix, signal } = this.#opts;
+    const pg = prefix + "-pg";
+    const stage = "/tmp/playground-restore";
+    const start = performance.now();
+    await docker(["exec", pg, "mkdir", stage]);
+    try {
+      // [DX-PLAY1] Why: verify the bytes that reached PostgreSQL before applying any catalog entry.
+      // Rejected: trusting a completed Docker copy of a previously hashed but mutable local file.
+      for (const [i, path] of snapshot.inputs.entries()) {
+        signal?.throwIfAborted();
+        const { file, bytes, sha256 } = snapshot.manifest.objects[i]!;
+        const target = stage + "/" + file;
+        await docker(["cp", path, pg + ":" + target]);
+        const size = await docker(["exec", pg, "stat", "-c", "%s", target]);
+        const digest = await docker(["exec", pg, "sha256sum", target]);
+        if (Number(size) !== bytes || digest.split(/\s/)[0] !== sha256)
+          throw new Error("Staged snapshot object failed verification: " + file);
+      }
+      signal?.throwIfAborted();
+      // Concatenating in the container lets pg_restore stream one custom-format archive.
+      await docker([
+        "exec",
+        pg,
+        "sh",
+        "-c",
+        "set -eu; export LC_ALL=C; cat /tmp/playground-restore/postgres-*.dump-part | pg_restore --exit-on-error --single-transaction --clean --if-exists -U postgres -d datomic",
+      ]);
+      return performance.now() - start;
+    } finally {
+      await docker(["exec", pg, "rm", "-rf", stage]);
+    }
+  }
+
+  async databaseBytes() {
+    const { docker, prefix } = this.#opts;
+    return Number(
+      await docker([
+        "exec",
+        prefix + "-pg",
+        "psql",
+        "-XAt",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-U",
+        "postgres",
+        "-d",
+        "datomic",
+        "-c",
+        "SELECT pg_database_size(current_database())",
+      ]),
+    );
+  }
+
+  async memoryPeaks() {
+    const { docker, prefix } = this.#opts;
+    return Object.fromEntries(
+      await Promise.all(
+        Object.keys(caps).map(async (role) => {
+          const bytes = await docker([
+            "exec",
+            prefix + "-" + role,
+            "sh",
+            "-c",
+            "cat /sys/fs/cgroup/memory.peak 2>/dev/null || cat /sys/fs/cgroup/memory/memory.max_usage_in_bytes 2>/dev/null || true",
+          ]);
+          return [role, bytes ? Number(bytes) : null];
+        }),
+      ),
+    );
+  }
+
+  async dump(local: string) {
+    const { docker, prefix } = this.#opts;
+    const roles = [prefix + "-write", prefix + "-read", prefix + "-tx"];
+    for (const name of roles) {
+      const owner = await docker([
+        "inspect",
+        "--format",
+        '{{index .Config.Labels "triplex.playground"}}',
+        name,
+      ]);
+      if (owner !== prefix) throw new Error("Snapshot role ownership changed");
+    }
+    await docker(["stop", "--time", "10", ...roles]);
+    const pg = prefix + "-pg";
+    const file = "/tmp/playground-export.dump";
+    await docker([
+      "exec",
+      pg,
+      "pg_dump",
+      "-U",
+      "postgres",
+      "-Fc",
+      "-Z",
+      "6",
+      "-d",
+      "datomic",
+      "-f",
+      file,
+    ]);
+    await docker(["cp", pg + ":" + file, local]);
+    await docker(["exec", pg, "rm", file]);
   }
 
   async inventory() {
@@ -452,15 +556,19 @@ export class Stack {
     ) as Record<(typeof types)[number], string[]>;
   }
 
-  async stop() {
+  async stop(keepImage = false) {
     const { docker } = this.#opts;
     const live = await this.inventory();
     if (live.ps.length) await docker(["rm", "-fv", ...live.ps]);
     if (live.volume.length) await docker(["volume", "rm", ...live.volume]);
     if (live.network.length) await docker(["network", "rm", ...live.network]);
-    if (live.image.length) await docker(["image", "rm", ...live.image]);
+    if (!keepImage && live.image.length) await docker(["image", "rm", ...live.image]);
     const remaining = await this.inventory();
-    if (Object.values(remaining).some((items) => items.length))
+    if (
+      Object.entries(remaining).some(
+        ([kind, items]) => (!keepImage || kind !== "image") && items.length,
+      )
+    )
       throw new Error(
         "Playground cleanup left owned Docker resources: " + JSON.stringify(remaining),
       );

@@ -9,7 +9,7 @@ import { loadFixture } from "./fixture.ts";
 import type { Reply } from "./actions.ts";
 import { dockerClient, loopback, port, repo, Stack } from "./stack.ts";
 
-const usage = `pnpm playground start [--port 4186] [--write-port 8486] [--read-port 8487] [--larger | --tier full --data SOURCE]
+const usage = `pnpm playground start [--port 4186] [--write-port 8486] [--read-port 8487] [--larger | --tier NAME --data SOURCE [--replay]]
 pnpm playground stop
 node examples/playground/cli.ts mcp [--port 4186]`;
 const { values, positionals } = parseArgs({
@@ -21,6 +21,7 @@ const { values, positionals } = parseArgs({
     larger: { type: "boolean" },
     tier: { type: "string", default: "small" },
     data: { type: "string" },
+    replay: { type: "boolean" },
     help: { type: "boolean", short: "h" },
   },
 });
@@ -111,10 +112,12 @@ function dockerSettings() {
 async function start() {
   if (existsSync(state))
     throw new Error("The playground already has a run. Use pnpm playground stop first.");
+  const { readSnapshot, tierName } = await import("./snapshot.ts");
   if (
-    !["small", "full"].includes(values.tier) ||
+    !tierName.test(values.tier) ||
     (values.larger && values.tier !== "small") ||
-    (values.data && values.tier !== "full")
+    (values.data && values.tier === "small") ||
+    (values.replay && values.tier !== "full")
   )
     throw new Error(usage);
   const settings = dockerSettings();
@@ -146,8 +149,8 @@ async function start() {
     process.once("SIGTERM", stop);
     await writeFile(file, JSON.stringify(owner), { mode: 0o600, flag: "wx" });
     const source = values.data ?? process.env["PLAYGROUND_DATA_URL"];
-    if (values.tier === "full" && !source)
-      throw new Error("Set PLAYGROUND_DATA_URL or pass --data for the full tier");
+    if (values.tier !== "small" && !source)
+      throw new Error("Set PLAYGROUND_DATA_URL or pass --data for the chosen tier");
     const fixture = async (signal: AbortSignal) => {
       // [DX-PLAY1] Why: the clean-clone path installs and builds only its committed workspace inputs.
       // Rejected: needing generated dist files, a global tsx install or an unpublished package.
@@ -176,9 +179,12 @@ async function start() {
         signal,
       );
       if (values.tier === "small") return loadFixture(values.larger);
-      const bundle = await (
-        await import("./bundle.ts")
-      ).openBundle(source!, join(repo, ".cache/playground-data"), signal);
+      const { manifestReader, readBundle } = await import("./bundle.ts");
+      const reader = await manifestReader(source!, join(repo, ".cache/playground-data"), signal);
+      const format = (JSON.parse(reader.initial.toString("utf8")) as { version: number }).version;
+      if (!values.replay && format !== 2) return readSnapshot(reader, values.tier);
+      if (values.tier !== "full") throw new Error("A replay bundle requires --tier full");
+      const bundle = await readBundle(reader, signal);
       if (bundle.manifest.tier !== "full") throw new Error("Full tier requires a full manifest");
       return bundle;
     };

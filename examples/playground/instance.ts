@@ -36,8 +36,12 @@ export async function openInstance(options: InstanceOptions) {
     attemptedStack = true;
     // [DX-PLAY1] Why: a full replay can create millions of gateway logs before the UI is ready.
     // Rejected: charging an unbounded trace archive to the dataset's local disk budget.
-    const gatewaySpans = !("manifest" in fixture && fixture.manifest.tier === "full");
-    const urls = await stack.start(gatewaySpans);
+    const restored = "inputs" in fixture;
+    const gatewaySpans =
+      !restored &&
+      !("fixtureInfo" in fixture) &&
+      !("manifest" in fixture && fixture.manifest.tier === "full");
+    const urls = await stack.start(gatewaySpans, restored ? fixture : undefined);
     const stackMs = performance.now() - started;
     const seedStart = performance.now();
     process.env["TRIPLEX_TRACE_LEVEL"] = "full";
@@ -51,7 +55,14 @@ export async function openInstance(options: InstanceOptions) {
       new Timings(gatewaySpans ? stack.traceDir : undefined, options.prefix, urls.source),
       options.onFault,
     );
-    return { stackMs, seedMs: performance.now() - seedStart, gatewaySource: urls.source, urls };
+    return {
+      stackMs,
+      seedMs: performance.now() - seedStart,
+      gatewaySource: urls.source,
+      urls,
+      seedCounts: playground.seedCounts,
+      snapshotCheckpoint: playground.snapshotCheckpoint.bind(playground),
+    };
   })();
   let closing: Promise<Awaited<ReturnType<Stack["stop"]>>> | undefined;
   return {
@@ -59,14 +70,14 @@ export async function openInstance(options: InstanceOptions) {
     ready,
     signal,
     stack,
-    close: () =>
+    close: (keepImage = false) =>
       (closing ??= (async () => {
         shutdown.abort();
         await ready.catch(() => {});
         await server.close();
         await playground?.close();
         const empty = attemptedStack
-          ? await stack.stop()
+          ? await stack.stop(keepImage)
           : { ps: [], volume: [], network: [], image: [] };
         await rm(options.directory, { recursive: true, force: true });
         return empty;
