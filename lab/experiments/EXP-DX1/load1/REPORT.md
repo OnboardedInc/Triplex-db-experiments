@@ -1,49 +1,25 @@
-# Can imports leave neighbouring accounts alone?
-The longer repeat found slow saves behind bulk frames, garbage collection and waits elsewhere in the write path.
-The best tested shared-database pacing loaded 2,137 facts per second at 50 saves/s and 1,477 at 100 saves/s.
-Giving the importer its own database and writer increased loading to 5,167–5,537 facts per second.
-With one PostgreSQL process the quiet account stayed within the limit, but some other accounts slowed down.
-Two PostgreSQL processes on the same Mac still shared the machine’s resources. The quiet account’s slow saves took twice as long.
-Splitting databases also makes cross-account queries and release order something the application has to coordinate.
-One- and two-machine commands are ready. The Mac timings are diagnostic, and the full-sized decision remains open.
+# DX-HA1 · Import pacing in one database
 
-## Shared database
+On bare metal, 32 facts per frame loaded 3,983 facts per second. The quiet account's p99 rose to 37.59 ms for saves and 15.98 ms for reads.
+The quiet saves at p99 spent 18–25 ms in the writer queue. Many of the slowest reads overlapped a pause in the shared gateway.
+The two no-import controls differed by 1.9× for saves. Against the faster control, all three earlier frame sizes missed the neighbour limit.
+The next server run compares feedback with fixed pacing at 32 facts per frame. Both keep one frame outstanding in the same database.
+[Server command](MICRO-SERVER.md) · [Attribution and forecast](MICRO-ATTRIBUTION.md)
+Allow 15–25 minutes on one server. The allocation includes setup, tests and collection within 90 minutes.
 
-The earlier 4.72× used 60 quiet saves, so its p99 was the maximum. All ten slowest offers arrived with a bulk reply outstanding. Nine of those frames committed first. The two slowest saves took about 132 ms and waited 22 and 5 ms in the gateway queue. [Earlier report](PART3.md)
+## Evidence and earlier pipeline experiment
 
-The repeat collected 540 quiet saves and 540 reads in each of three 108-second arms. The 128-fact cap loaded 3,082 facts/s. Quiet read/save p99 was 95.6/154.6 ms versus 22.4/96.8 first and 203.3/247.9 last. Control drift makes a single pooled ratio misleading. Across 2,775 bulk frames the median held 120 facts. Hold p50/p99 was 15.6/69.2 ms, native apply 4.4/39.8 ms, writer log-path parks of at least 5 ms 0/13.8 ms and native completion to peer return about 3.3/13.3 ms.
+- The archived means sum to 21.84 ms across 4,943 frame matches. The 8 ms required at 24 facts is a target. The [stage split and forecasts](PREDICTIONS-PART6.md) describe how to falsify the model.
+- The client counts every frame through the durable checkpoint. Pressure from two pending live saves halves the window, and four reduce it to one. The gateway schedules ready live saves ahead of queued bulk requests. It releases a bulk turn only when its peer future resolves.
+- A cluster-side predecessor check refuses a suffix whose earlier frame has no committed claim. Durable frame identity combines the source, scope, width and ordinal with the exact original content. Client checkpoint replay looks up each original receipt.
+- [Evidence and receipt audit](EVIDENCE6.md) · [Archived measurements and checksum](SHA256SUMS.part6)
 
-One 255 ms save overlapped a 228 ms bulk hold and 150 ms of transactor GC. A 248 ms save had no bulk hold and overlapped 145 ms of GC. Another 152 ms save overlapped a 119 ms bulk hold with 6.4 ms in native processing. The saved recording puts this delay after native completion and before peer return. The collector overflowed after saving the native recording, exact worker results and offer tapes. Gateway GC and frame preparation were unavailable, and one process-wide 736 ms index job had no attributable interval. The new chunked collector’s repeat waited 47 minutes behind another active measurement lease and ended in the queue. The 32 MiB indexing threshold and 96 MiB maximum leave 64 MiB for growth during a merge before Datomic can throttle writes. [Datomic capacity planning](https://docs.datomic.com/operation/capacity.html)
+[Part 5](PART5.md) preserves the single-frame frontier and four-minute sustained import check.
 
-A frame compiles before admission, carries whole subjects, and waits behind ready live saves. One bulk frame is outstanding. W1’s bounds are 96 stored rows and 64 KiB. We adapt using dispatch-to-peer time and persist the chosen boundary before submission. DX-PREP1’s work applies to existing single-owner saves. It excludes bulk. Its eight-save groups spent about 117 ms preparing the members versus 2 ms appending. GC, catch-up and indexing can overrun a size estimate.
+## Version 0.1 intake
 
-| Offered saves/s | Budget | Facts/s | Quiet read/save p99 ms | Ratios versus control |
-|---:|---:|---:|---:|---:|
-| 50 | 1 ms | 0 | 18.0 / 34.9 | 0.81 / 0.38 |
-| 50 | 4 ms | 0 | 16.2 / 57.3 | 0.73 / 0.63 |
-| 50 | 8 ms | 596 | 21.2 / 88.6 | 0.96 / 0.97 |
-| 50 | 8.16 ms from quiet alone | 250 | 27.3 / 85.0 | 1.79–2.14 / 1.01–2.17 |
-| 50 | 11.06 ms | 2,137 | 51.6 / 166.4 | 2.33 / 1.82 |
-| 50 | 16 ms | 401 | 48.7 / 211.7 | 1.69 / 0.99 |
-| 50 | 32 ms | 1,774 | 171.2 / 156.3 | 5.95 / 0.73 |
-| 100 | 1 ms | 0 | 27.7 / 107.0 | 1.22 / 1.59 |
-| 100 | 4 ms | 1 | 30.9 / 99.6 | 1.36 / 1.48 |
-| 100 | 8 ms | 0 | 21.5 / 82.7 | 0.95 / 1.23 |
-| 100 | 16 ms | 1,477 | 110.2 / 247.6 | 2.17 / 1.39 |
-| 100 | 32 ms | 647 | 357.9 / 578.7 | 7.04 / 3.24 |
+- Merged INT1 revision `a08f20103`. Core passed 861 checks, Datomic passed 434 with 52 opt-in tests skipped, and the focused and retention checks passed 34. The managed import verified 11,472 facts on the merged code.
+- The shared database recovered in all four transactor fault cells. Every observed historical probe succeeded, 742 in total. These runs checked receipts and feed resume in addition to the reads. [Exact attempts and hashes](EVIDENCE6.md)
 
-At 50/s the first controls were 22.1/91.7 ms read/save at 1–11.06 ms and 28.8/213.7 ms at 16–32 ms. The 1 and 4 ms plans stopped after the smallest group repeatedly exceeded budget. At 8 ms, 206/2,842 frames exceeded budget before the plan stopped. At 11.06 ms, 416/9,050 exceeded it. The latter budget came from half of the matched control’s quiet read p99. An integer deadline fix preserves the completed cells and allows the final control to start in subsequent runs. Quiet alone measured 16.33/45.05 ms, allowing 8.16 ms. It overshot 75 of 1,155 frames before stopping. The table compares it with both loaded no-import bookends. At 50/s, 16 ms stopped after 27 s and averaged 1,602 facts/s while active. The 32 ms arm had no misses, and the last control missed nine. The low-budget 100/s control missed 192 offers, so those ratios use the complete last control at 22.7/67.2 ms. At 100/s, 16 and 32 ms use the complete first control at 50.8/178.6 ms. The 16 ms arm had 195/5,955 budget overruns with no missed offers. The 32 ms arm missed 385/17,280 offers despite verified quiet replies. The last control missed 50 and reached 263.7/302.1 ms quiet read/save p99. The common host and accumulated database work limit comparisons across those conditions.
-
-## Independent Datomic database and transactor
-
-| At 50 saves/s | Facts/s | Quiet read/save p99 ms | Quiet ratios vs both controls | Largest ratios across accounts vs both controls |
-|---|---:|---:|---:|---:|
-| Shared PostgreSQL | 5,537 | 36.4 / 124.0 | 0.89–1.26 / 0.89–1.13 | 1.79–2.51 read / 1.29–2.06 save |
-| Separate PostgreSQL | 5,167 | 76.3 / 412.4 | 0.98–1.42 / 2.01–2.09 | 2.57–3.46 read / 2.17–2.21 save |
-
-All 11,880 offered reads and saves completed exactly in each split arm. The 108-second comparison includes ten writing accounts plus the quiet one at 5 saves/s. Every account offers 5 pinned reads/s. Each importer has its own process and gateway. Shared SQL used separate SQL databases and roles. Separate SQL added 192 MiB of container budget on top of the extra writer and gateway’s 1.41 GiB. Both used one VM and disk, with different control tails and image IDs. The Datomic JARs and mounted gateway sources were bound in each run. The placement order leaves the difference between the two SQL layouts unresolved.
-
-Account-local pins and receipts remain useful. Cross-account reads need coordinated cuts or a materialized view, and release activation needs explicit coordination across independent commit streams. The earlier move copied and verified 1,280–20,480 facts online in 2.76–18 s and fenced for 0.47–0.71 s with one three-fact delta. Extrapolating the top rung gives about 3.5–3.9 hours of live copying for 16 million facts, with two copies during overlap and a bounded final suffix. [Move evidence](../ha1/REPORT.md)
-
-- Audit. Retrospective uses archived file hashes and exact receipt positions. Native capture binds original recording bytes to the identified role, attempt, source and slot. Each live arm verifies schedule, reads and durable receipts at exact cuts, then replays per-account metrics from the saved offers. The split child checks every original claim and every stored row. Adaptive retry checks original frame boundaries and receipts at reopen. The stack validates mounts, images and cleanup. The bench receiver verifies archive hash, revision, layout and attempt before replaying offer tapes. No acceptance pins or frozen trace changed.
-- [One- and two-server commands and forecasts](ISOLATION-BENCH.md) · [Part 4 evidence](PART4-EVIDENCE.md) · [Part 3](PART3.md).
+- The planned whole-database move verified all 266 receipts and all 316 pinned-read probes. The shared Mac pause was 31.74 seconds, of which 21.17 seconds was transactor startup. The 30-second target remains open on bare metal.
+- P8 uses the [single-server import matrix](MICRO-SERVER.md) and its per-account comparison. P9 uses the [single-server shared-database fault command](../ha1/BENCH.md#version-01-recovery-row-on-one-server). Host loss, synchronous commit cost and whole-database relocation need the paired runs described there.

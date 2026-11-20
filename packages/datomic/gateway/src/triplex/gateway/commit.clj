@@ -174,7 +174,7 @@
                    datom (read-at :w1/new-id (first (d/index-range (d/history db) :triplex.entity/row prefix nil)))]
                (when (and datom (.startsWith ^String (:v datom) prefix)) datom)))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
-     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row save-ledger timed-retractions packed-journal]} payload
+     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row save-ledger timed-retractions packed-journal import-predecessor]} payload
            operation-id (or (:triplex.tx/operation-id (first ops)) (some :triplex.tx/operation-id ops))
            command-ids (or (:command-ids payload) (keep :triplex.claim/command-id ops))
            ;; [DX-WFIX1] Why: a committed retry can name a predecessor it already retired.
@@ -199,6 +199,10 @@
            has-packed (and (d/entid db :triplex.scope/packed-journals) (value scope :triplex.scope/packed-journals))
            ops (if merge-ledger
                  (save-ledger-code ops (first journal-entities) save-ledger) ops)
+           ;; [DX-HA1] Why: the previous durable claim must exist on the serial basis after any failure.
+           ;; Rejected: trusting enqueue order to prove that an earlier future actually committed.
+           _ (when (and import-predecessor (not (d/entid db [:triplex.claim/command-id import-predecessor])))
+               (throw (ex-info "TRIPLEX_IMPORT_PREDECESSOR" {})))
            _ (when (not= (boolean slim-row) (= 4 (value scope :triplex.scope/rows-version)))
                (throw (ex-info "TRIPLEX_SLIM_LAYOUT_MISMATCH" {})))
            _ (when (and strict-clocks (some #(or (not (number? %)) (not (Double/isFinite (double %)))) (concat times record-clocks)))

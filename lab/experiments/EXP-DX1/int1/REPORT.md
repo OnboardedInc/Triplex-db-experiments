@@ -21,6 +21,12 @@ The ACT1 merge was clean. Its legacy gate needed the gateway's omitted legacy la
 
 The Publish gate independently compares pinned results and ordered effects to the oracle, checks the durable marker and the exact HTTP writer setting, and binds the new namespace, slot, runtime and cleanup to the attempt. Its source and JSON digests are in the archive. Physical Publish timing and the pooled receipt-only campaign remain open.
 
+ERASE1 conflicted in the local evidence fields and the SDK cache lookup. The merge kept the diagnostic field and both the native cut and removal sequence in the cache stamp. It also retained the new comparison flag. Ten SDK tests passed. All 13 routes, two refused ID reuses, three accepted parallel saves and two refused deferred writes passed on the runtime tree at e04de8d7f.
+
+The erasure checks compare original typed values, markers, command receipts and unchanged destination heads. Four fresh attempts bind these observations to the source, image, owner, slot and cleanup, including the restore helper. The first build invocation failed before starting SQL and is archived separately.
+
+HA1 merged cleanly from 944b8d4d8. Its earlier reconciliation retained operation and command duplicate checks and the ordered-import predecessor. Sixteen tests passed. Two native arms at 4921611ff independently matched 2,088 frame receipts and 41,832 verified facts at their final cuts. The verifier reread the SQLite frame ledgers and native command positions and tied them to the fresh source, slot, offers, reopened cursor and cleanup. Physical pacing and quiet-account effects remain open.
+
 ## Server work
 
 Run the physical scorecard on the exact merged revision at both ages. The old frozen preflight had two exact arms. The field comparison, compatibility with the aged journal and physical age results remain open. [Earlier campaign and options](P5-EVIDENCE.md)
