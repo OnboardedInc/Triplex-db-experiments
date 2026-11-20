@@ -122,13 +122,13 @@ export class Account {
   readonly db: Objects;
   readonly binding: string;
   readonly settleSource?: (debtId: string) => Promise<unknown>;
-  readonly settlingDebt: boolean;
+  private readonly settlingDebt?: Cell<{ command: string }>;
   constructor(
     db: Objects,
     binding: string,
     keyDir?: string,
     settleSource?: (debtId: string) => Promise<unknown>,
-    settlingDebt = false,
+    settlingDebt?: Cell<{ command: string }>,
   ) {
     this.settleSource = settleSource;
     this.settlingDebt = settlingDebt;
@@ -631,10 +631,26 @@ export class Account {
     const key = "claim:" + hash(id);
     for (let attempt = 0; attempt < 32; attempt++) {
       const p = await this.db.comp.currentPosition(),
-        cells = await this.db.many([key, "fence", "head"], p),
+        cells = await this.db.many(
+          [key, "fence", "head", ...(this.settlingDebt ? ["deep-debt"] : [])],
+          p,
+        ),
         prev = cells.get(key) as Cell<Claim> | undefined,
         fence = cells.get("fence") as Cell<Intent> | undefined;
       if (prev) return this.replay(prev, id, request);
+      const debt = this.settlingDebt;
+      if (debt) {
+        const live = cells.get("deep-debt") as Cell<{ command: string }> | undefined;
+        assert(
+          live &&
+            live.id === debt.id &&
+            live.hash === debt.hash &&
+            live.position === debt.position &&
+            id === "repair-" + live.value.command &&
+            (!fence || live.position < fence.position),
+          "source repair identity does not match the fenced debt",
+        );
+      }
       if (fence && !this.settlingDebt) {
         await this.help(fence);
         continue;
@@ -650,8 +666,17 @@ export class Account {
           v,
           fence,
           false,
-          nativeOps,
-          nativePreconditions,
+          debt ? [{ op: "retract", id: debt.id }, ...nativeOps] : nativeOps,
+          debt
+            ? [
+                {
+                  _tag: "EntityState",
+                  entityId: this.db.entity("deep-debt"),
+                  tripleIds: [debt.id],
+                },
+                ...nativePreconditions,
+              ]
+            : nativePreconditions,
         );
       } catch (e) {
         if (!(e instanceof Conflict)) throw e;
