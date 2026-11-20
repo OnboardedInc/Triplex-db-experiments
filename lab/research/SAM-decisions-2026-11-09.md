@@ -696,3 +696,23 @@ Orchestrator's reading: a correction. I had told Sam and the restarted agents th
 would not add agents beyond eight. That was the wrong lesson from the limit: the cause was Astra, not the number of
 agents. From now every open problem gets an agent on Sol at max as soon as it has no owner, with no cap on the count;
 Astra is used only when a problem needs it and I say why.
+
+## 2026-11-20 about 06:35 local: one database stays the goal; the receipt question; notices later; Java and Rust
+
+Sam, verbatim, in reply to the overnight summary (which asked whether "the November 9 tiered ruling" stands):
+- "1. No I want to keep pushing having it all on one database, I never ruled we'd split it up I ruled that we'd make it
+  all one database because datomic can handle billions and billions of records."
+- "2. what does permanent record vs. "writing" mean? those seem like the same thing"
+- "3. these should go out quickly, but we can deal with that later."
+- "what is using Java? would rewriting things in rust anywhere help?"
+
+Orchestrator's reading and correction: (1) **One Datomic database for all accounts is the goal and stays the goal.**
+Sam is right about the record: on 2026-11-09 he approved a batch of the orchestrator's recommendations in one
+sentence ("everything you recommended"); "tiered tenant isolation" was one row in that batch (Q78e, compiled as Q106f).
+The orchestrator presented that row overnight as "your ruling" and built a recommendation on it. That was a
+misstatement. His explicit statements (2026-11-19: "It feels like we should be figuring out how to do one"; today)
+say one database. Q106f is superseded for layout: no brief proposes splitting accounts across databases as the
+answer; the work is to make one database carry the load, and every obstacle found is a problem to solve, reported as
+a miss with its cause when unsolved. (2) The durable-record question was put in words he could not tell apart; it
+is re-asked with a concrete example. (3) Notifications must go out quickly; the bar is set later. (4) He asked what
+runs on Java and whether Rust would help anywhere (earlier constraint: TypeScript only); answered in the reply.
