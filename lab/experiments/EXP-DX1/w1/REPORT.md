@@ -14,3 +14,18 @@ The compatibility and erasure gaps still limit what the earlier write numbers ca
 **Remaining read work.** Broad compatibility input is capped at 100,000 rows and identities or 16 Mi characters. An AVET journal projection would add 3 or 7 index datoms for one- and three-field replacements. A key with a five-byte type and length prefix, attribute name and 26-byte assertion ID would add about 134 or 302 value bytes before encoding and index overhead. Indexed subject history also needs one changed-owner ref per logical save or a proved complete existing index. A physical journal projection needs 24 or 56 fact datoms before optional fields and dictionary upserts. Preserving original physical transaction references would require replay into a new scope or recorded source coordinates.
 
 **Evidence audit.** The native runner checks exact fixture results, expected test count, a new attempt nonce, all loaded gateway sources and the exact Datomic and Java inputs. The managed verifier compares Classic and K after a fresh SQL slot, projects the pinned O-REPLAY case from the independent offered operations and receipt identities, and checks the source, image, slot and nonce. Its write timings require exact receipt and persisted row readback. The new native feed binds identities to the durable transaction at the requested log t. No acceptance claim is made from pending attempts.
+
+**One writer.** Integrated DX-WFIX1 through `4331d6fe8`. The cross-run freezes DX-W1 `67bc5285c` and DX-WFIX1 `d83214271`. WFIX's first six native cases found 11 assertion failures on DX-W1, and its SDK cases found three. DX-W1's packed, priority and predecessor cases and commit-order test passed on the other writer. The options and control preflights exposed an absent API and a missing staged fixture dependency respectively. [WFIX fixtures](../wfix1/REPORT.md)
+
+| Finding | Resolution on the combined branch |
+| --- | --- |
+| 1. Replacement resend | WFIX checks both durable identities before CAS on every serial path. Its SDK resolves an older gateway's CAS once through the same durable claim and operation. |
+| 2. Retraction content | WFIX uses the checked predecessor row for identity, value, assertion Tx ID, record clock and valid range. It retains DX-W1 packed-group coverage and fixes the separate layout replay splicer. |
+| 3. Scope maintenance | WFIX uses a separate system account and retains dependency keys for checkpoint and release frames. |
+| 4. Fair turns | WFIX preserves ready-member bypass and the eight-live-turn bulk grant, and resets the turn counter at idle. |
+| 5. Account owners | WFIX classifies actual authored owners with the persisted membership fallback. DX-W1's multi-account test remains. |
+| 6. Ordered byte cap | WFIX spends a sequence on dispatch and retains the established 400 `InvalidValue` response for a local UTF-8 preflight failure. |
+| 7. Writer proof | WFIX binds live function readback and request options to the exact reopened scope, source, slot and attempt. The older write5 readback remains for those comparisons. |
+| 8. Feed evidence | WFIX compares full change bodies, cut and command and tests deliberate mutations and resume. The DX-W1 full durable readback remains. |
+
+**Writer evidence audit.** Serial identity recovery and the SDK use the committed command and its original native operation, cut and clock. The group reply remains bound to the actual durable group. WFIX's launcher verifies the selected transaction definition from the reopened measured database. Its journal validator compares each measured command's complete changes from the committed position and its resumed page. Raw regression outcomes keep their source, attempt and hashes.
