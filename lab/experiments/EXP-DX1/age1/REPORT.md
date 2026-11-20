@@ -1,5 +1,5 @@
-Keep `2859d6b15` for queued aging. Use `4850fb83a` for the corrected scorecard exporter.
-Take `4850fb83a` for the INT1 merge.
+Keep `2859d6b15` for queued aging. Use `93ad03aa3` for the corrected scorecard exporter.
+Take `93ad03aa3` for the INT1 merge.
 The merged Mac check matched all 120 saves and rejected the fresh database as an aged input.
 At 24,000 records per second from the estimated 430 million, the run would take 9.60 hours and cost $10.46.
 The driver reads the real starting count and continues only if the observed rate fits the 9.9-hour cap.
@@ -38,12 +38,12 @@ The SDK build, source parsing, rate and count tests, and historical log join com
 
 ## Part 3 integration
 
-Merged INT1 through `53c595f02` into AGE1. AGE1 uses ordinary tokens. PREP1 added authoritative predecessor metadata to compact journals. AGE1 matches that encoder while the handoff accepts the queued pin's earlier journal. The native suite passed 27 tests with 54,079 assertions on the final merge. The PREP1 solo arms matched 21,436 new datoms and the grouped arm matched its separate 28,135-datom reference. Archived Mac attempts retain their internal paths and verified file bytes. [Archive checksums](EVIDENCE-ARCHIVES.sha256)
+Merged INT1 through `cebffdf08` into AGE1. The engine keeps AGE1 and the JVM inventory routes. The Mac gates use ordinary tokens and bind the JVM launch files. PREP1 added authoritative predecessor metadata to compact journals. AGE1 matches that encoder while the handoff accepts the queued pin's earlier journal. The final native suite passed 27 tests and 54,079 assertions. At `7d7f192d4` the solo arms matched 21,436 new datoms and grouping matched its separate 28,135-datom reference. Archives retain their original paths and verified bytes. [Archive checksums](EVIDENCE-ARCHIVES.sha256)
 
-The 1B export binds the hashed seal, immutable checkpoint, roster, restore readback, manifest, attempt and source. Its preflight checks the live catalog ID, count and clocks, both cuts, exact rows and feed bytes, and the final receipt from a fresh tagged peer. At `4850fb83a` the SCALE1 fixture matched 120 product saves and 2,400 added datoms, refused the fresh cut, and accepted the restored aged cut at 28,819 datoms. The v0.1 driver still has to select this input. [Scorecard handoff](SCORECARD-HANDOFF.md)
+The 1B export binds the hashed seal, immutable checkpoint, roster, restore readback, manifest, attempt and source. Its preflight checks the live catalog ID, count and clocks, both cuts, exact rows and feed bytes, and the final receipt from a fresh tagged peer. At `93ad03aa3` the SCALE1 fixture matched 120 product saves and 2,400 added datoms, refused the fresh cut and accepted the restored aged cut at 28,819 datoms. The v0.1 driver still has to select this input. [Scorecard handoff](SCORECARD-HANDOFF.md)
 
 At 8–16k/s and a 430M seed, about 620–800M fits with three hours reserved. A true doubling needs more than 17.3k/s. An 800M diagnostic can check the proposed tree shape and fixed-width paths when a matched fresh baseline exists. It cannot certify 1B or settle long-run timing laws. [Budget and diagnostic plan](FALLBACK.md)
 
 SCALE1 staged the AGE1 launcher and updated its disk admission at `2a431952a`. The verified full-seed transfer, AGE1 calibration and measurements have yet to appear. [Server comparison](GROWTH-READOUT.md)
 
-The merged package build, 861 Core tests, 436 SDK tests, 17 pooled tests, three retention tests and the pooled TypeScript check completed. The SDK skipped 52 opt-in cases. The root JS gate still flags inherited scripts and unregistered paths, with zero AGE1-specific diagnostics. No acceptance pins changed.
+The merged package build, 861 Core tests, 437 SDK tests, 17 pooled tests, three retention tests and the pooled TypeScript check completed. The SDK skipped 52 opt-in cases. The root JS gate still flags inherited scripts and unregistered paths, with zero AGE1-specific diagnostics. No acceptance pins changed.
