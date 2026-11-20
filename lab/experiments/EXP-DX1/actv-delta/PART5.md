@@ -15,3 +15,19 @@ Save-only admission requires the offered ACK rate within a one-save boundary all
 - The publication result reopens each native receipt and checks the document, predecessor, previous release and notice recipe. A skipped offer must have no native command. Python compares each recorded response at its actual cut from the independently authored seed and save tape.
 - Each measured summary requires 200 scheduled offers and retains every miss. The four stage clocks add to the record endpoint per offer. A busy or elapsed slot remains in the p99 denominator. The rejected-rate summaries carry their save-only screen and no Publish latency.
 - The independent order gate seeds an eight-person scope in this slot. It binds the new release and old source cut to saves on both sides, compares both cuts with Python, and checks the complete receipt on replay. A second schedule holds Publish's native turn before offering the save. The externally raced command must stop at three conflicts and leave no receipt.
+
+## The latency law and bare-metal forecast
+
+Use one clock from scheduled offer to completion. Let `q` be scheduled offer to admitted turn, `t` admitted turn to native ACK, `l` ACK to the first matching reader's release controls, and `r` release controls to that response. The record endpoint is `q + t + l + r`. Charging reader work only after the ACK when the two overlap makes this equal to `max(native ACK, first exact response) - scheduled offer`. The transaction term includes source-cut lookup, planning and the native write. Busy slots still count as misses.
+
+For save-only arrival rate `λ` and service time `S`, FIFO save load is `ρ = λ E[S]`. A stable FIFO with Poisson offers has the M/G/1 waiting distribution. A priority Publish can pass waiting saves, so the save term is the residual of the one active save. At an independent arrival its unconditional tail is `P(wait > x) = λ E[(S - x)+]`. Both models require headroom. An already submitted native job from another scope, scheduler stalls or a previous Publish contribute additional delay.
+
+The 100,000-person inputs are the 64-seat single-account rows in `a37ad6097:lab/experiments/EXP-DX1/scale1/DECISION-RESULTS.md`, source `0ac9404095`. The forecast fits a lognormal to the stated save median and p99 as a proxy for service. It computes the priority residual and samples the FIFO distribution with 512,000 fixed-seed draws. A fixed 120 ms covers the transaction and reader terms, with 60–170 ms as a sensitivity range from the earlier joined probes. These values describe a single isolated receipt Publish. They assume the end-to-end service of joined saves is comparable to the reported field-save service.
+
+| Saves/s | SCALE1 save p50 / p99 (ms) | Fitted save load | Added mean save service before saturation (ms) | FIFO / priority queue p99 (ms) | Predicted FIFO / priority record p99 (ms) | Priority sensitivity (ms) |
+| --- | --- | --- | --- | --- | --- | --- |
+| 3.5 | 11.26 / 74.24 | 0.055 | 270.1 | 25 / 24 | 145 / 144 | 84–194 |
+| 23.5 | 3.57 / 34.05 | 0.134 | 36.8 | 23 / 20 | 143 / 140 | 80–190 |
+| 39.4 | 3.34 / 46.85 | 0.251 | 19.0 | 64 / 49 | 184 / 169 | 109–219 |
+
+The bare-metal writer rows measure field saves and pinned reads. Joined saves also do source and policy work. An extra 19 ms of mean service at the peak would exhaust the model's capacity. Separate neighbours and a one-second stream of offers can change the tail. The forecast covers the record and first exact response, with literal stored output and individually recorded notices using their own clocks.
