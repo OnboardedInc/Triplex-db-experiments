@@ -52,7 +52,8 @@ def timed_gc(directory, role, start, stop, history, indexes):
 def measure(out):
     attempt, report = load(out / "attempt.json"), load(out / "ns-report.json")
     identity = attempt["identity"]
-    assert report["deep"]["identity"] == identity == load(out / "cleanup.json")["identity"]
+    cleanup = load(out / "cleanup.json")
+    assert report["deep"]["identity"] == identity == cleanup["identity"]
     assert report["status"] == "DONE" and not report["finalizationErrors"]
     assert report["verdictClock"] == "ack/1"
     assert report["oracle"]["exitCode"] == 0 and report["oracle"]["mismatchCount"] == 0
@@ -70,13 +71,12 @@ def measure(out):
     assert stack["prefix"] == identity["slot"]
     assert all(stack["durability"][key] == "on" for key in ("fsync", "synchronous_commit", "full_page_writes"))
     ids = {row["name"].removeprefix(identity["slot"] + "-"): row["id"] for row in stack["containers"]}
-    flags = out / "runtime-flags.json"
-    if flags.exists():
-        effective = load(flags)
-        assert effective["identity"] == identity and effective["ids"] == ids
-    # [DX-TAIL1] Why: the initial control predates the argument readback. Its
-    # mounted native startup record still proves the exact process and heap.
-    # Rejected: filling absent flags from the arm's desired settings.
+    effective = load(out / "runtime-flags.json")
+    assert effective["identity"] == identity and effective["ids"] == ids
+    assert {row["role"]: row["id"] for row in cleanup["stopped"]} == ids
+    for row in cleanup["stopped"]:
+        ready = effective["readyRuntime"][row["role"]]
+        assert not row["oom"] and all(row[key] == ready[key] for key in ("startedAt", "restarts"))
     jvm = {}
     for role in ("gw-w", "gw-r", "tx"):
         row = load(dir / "config" / (role + "-native-settings.json"))

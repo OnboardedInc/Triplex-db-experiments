@@ -471,6 +471,7 @@ export async function runTail(options, config, manager) {
     );
     const stack = readJson(path.join(attempt, "stack.json"));
     const ids = {};
+    const readyRuntime = {};
     for (const role of roles) {
       const m = inspect(names[role]),
         row = stack.containers.find((c) => c.name === names[role]);
@@ -479,7 +480,23 @@ export async function runTail(options, config, manager) {
       assert.equal(row.cpuset, cpus[role]);
       if (role !== "pg") assert.equal(row.imageId, image);
       ids[role] = m.Id;
+      readyRuntime[role] = { startedAt: m.State.StartedAt, restarts: m.RestartCount };
     }
+    // [DX-TAIL1] Why: bind the ready JVMs across seeding and offers, even if an initial
+    // launcher attempt exited before readiness. Rejected: discarding seals based on pre-ready restarts.
+    const verifyReadyRuntime = () => {
+      for (const role of roles) {
+        const m = inspect(ids[role]);
+        const expected = readyRuntime[role];
+        assert(
+          m?.State.Running &&
+            !m.State.OOMKilled &&
+            m.State.StartedAt === expected.startedAt &&
+            m.RestartCount === expected.restarts,
+          role + " restarted after readiness",
+        );
+      }
+    };
     for (const key of ["fsync", "synchronous_commit", "full_page_writes"])
       assert.equal(stack.durability[key], "on");
     assert.equal(
@@ -505,7 +522,12 @@ export async function runTail(options, config, manager) {
       for (const flag of selected) assert(args.includes(flag), role + " did not apply " + flag);
       runtimeFlags[role] = args;
     }
-    write(path.join(out, "runtime-flags.json"), { identity, ids, flags: runtimeFlags });
+    write(path.join(out, "runtime-flags.json"), {
+      identity,
+      ids,
+      flags: runtimeFlags,
+      readyRuntime,
+    });
     if (options.gate === true) {
       // [DX-TAIL1] Why: use two native writers and an independent replay on their actual receipts.
       // Rejected: exercising only the in-memory adapter or collecting benchmark samples from the gate.
@@ -639,13 +661,7 @@ export async function runTail(options, config, manager) {
       latest - seconds * 1000 - 135_000,
     );
     const ready = readJson(readyFile);
-    for (const role of roles) {
-      const m = inspect(ids[role]);
-      assert(
-        m?.State.Running && !m.State.OOMKilled && m.RestartCount === 0,
-        role + " restarted during seeding",
-      );
-    }
+    verifyReadyRuntime();
     assert.deepEqual(ready.identity, identity);
     assert.deepEqual(ready.seed, readJson(input).seed);
     assert.equal(ready.trace, frozenDeep(0, 10000).sha256);
@@ -709,10 +725,7 @@ export async function runTail(options, config, manager) {
     assert(
       report.oracle.reads > 0 && report.oracle.modelCorrectOnSameReads === report.oracle.reads,
     );
-    for (const role of roles) {
-      const m = inspect(ids[role]);
-      assert(m?.State.Running && !m.State.OOMKilled && m.RestartCount === 0);
-    }
+    verifyReadyRuntime();
     const recording = path.join(trace, "gw-w.jfr");
     try {
       fs.writeFileSync(path.join(trace, ".finish"), "", { flag: "wx" });
@@ -767,7 +780,13 @@ export async function runTail(options, config, manager) {
         );
         docker(["rm", "-v", m.Id]);
         assert.equal(inspect(m.Id), null);
-        stopped.push({ role, id: m.Id, oom: m.State.OOMKilled, restarts: m.RestartCount });
+        stopped.push({
+          role,
+          id: m.Id,
+          startedAt: m.State.StartedAt,
+          oom: m.State.OOMKilled,
+          restarts: m.RestartCount,
+        });
       }
       for (const [kind, suffix] of [
         ["volume", "pg-data"],

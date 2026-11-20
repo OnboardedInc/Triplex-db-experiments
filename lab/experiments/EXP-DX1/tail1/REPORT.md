@@ -5,7 +5,7 @@ The original write gateway used Serial GC. The read gateway and transactor used 
 The Mac replay checks the same offers in the same order with the same gaps.
 The short replay schedules 5,110 primary saves in four minutes, including the first burst.
 The full schedule takes 98.5 minutes at its original pace.
-One Mac attempt verified all 10,000 people and 1,604,464 seed facts. A denied host clock read stopped it before the first offer.
+Two Mac attempts verified the 10,000-person seed. A host permission error and a startup restart check stopped them before the first offer.
 
 North star P2 scheduled offer to durable ACK, including the 10 ms p50 and 50 ms p99 bars at the rated reader load, and P6 quiet-account p99 / alone p99 ≤1.25. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
@@ -29,7 +29,7 @@ Serial is the archived write collector. Tuned G1 has a 25 ms target, 2 MiB regio
 
 The allocation arm keeps Serial and decodes the existing positional row vector into a transient map. It reuses the exact row wire format and removes per-prefix Formatter allocation. Speculative transaction hints stay off in these controls.
 
-During Mac startup and seeding, the writer logged 1,647 pauses (260.62/554.44 ms p99/max), the reader 312 (71.12/116.95 ms), and the transactor 2,316 (163.19/1,838.79 ms). The writer restarted once. All C resources were released. The retry preflights the host clock and adds 128 MiB writer container headroom at the same heap limit. [Evidence manifest](SHA256SUMS)
+Mac startup and seed pauses in C were 1,647 (260.62/554.44 ms p99/max) at the writer, 312 (71.12/116.95 ms) at the reader, and 2,316 (163.19/1,838.79 ms) at the transactor. C failed the host boot-ID read. In E the writer restarted before readiness and the conservative guard refused the ready JVM. The guard now binds the same process from readiness through drain. Both attempts released their slots. [Evidence manifest](SHA256SUMS)
 
 ## Receipt reuse
 
