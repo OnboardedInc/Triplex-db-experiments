@@ -21,8 +21,19 @@ The operator-held SCALE1 directory supplies `image.json`, `seed.pgdump`, and the
 
 The twelve-arm command also gives each arm 1,740 seconds including restore. A single-account 11.76 GiB restore took about eight minutes. The full database occupied 114 GiB at the last ingest sample, so a streamed SQL restore per arm is likely to breach the 29-minute bound. Adopt one verified native restore as an immutable physical template and use fresh, independently verified disposable copies under the same cache and placement conditions, or supply a measured faster restore path and a revised cost. Retain the original SQL archive either way. This is an adoption request for PREP1, not a result from that writer.
 
+PREP1's published pre-run model gives settled saves/s, worst-account p99 in ms, then the quiet ratio. Both repetitions use the same forecast. Each observation will be recorded beside it. The controlled alone rates are 3.5/s with forecast p99 10 ms for K and 8.8 ms for S.
+
+| Offers/s | K at 1, 2 or 4 gateways | S at 1 gateway | S at 2 or 4 gateways |
+| ---: | --- | --- | --- |
+| 50 | 50 / 30 / 4.20× | 50 / 27.34 / 1.11× | 50 / 27.34 / 1.11× |
+| 235 | 235 / 30 / 13.76× | 235 / 27.48 / 1.19× | 235 / 27.48 / 1.19× |
+| 394 | 255 / 77,739 / 14.53× | 383 / 4,122 / 1.22× | 394 / 28 / 1.22× |
+| 620 | 255 / 204,086 / 22.00× | 383 / 88,244 / 1.26× | 620 / 28.36 / 1.26× |
+
 ## Scorecard and aging dependencies
 
 The current `v01/SERVER.md` is published but explicitly refuses SCALE1. It needs the INT1 `seed-image.json`, the original campaign's journal and command identities, and the exact starting logical seed head. The fresh wrapper must verify the SCALE1 population, source seal, typed fields and original receipt claims using a named adopted tape. The aged wrapper also needs an exact oracle for the AGE1 append prefix and the physical and logical cuts in its final seal. Do not relabel either input as INT1. The existing command alone leaves both scorecards unmeasured.
 
 AGE1 `2859d6b15` supports SCALE1 adoption once the image and transfer are sealed. Its deployment needs an exclusively held restored SQL stack, the expected transactor settings and observed JVM PIDs, JDK, and a separate SQL restore database using the official Datomic tables. Both JDBC destinations and credentials stay in the operator environment. Its native count and bounded rate calibration determine whether it continues.
+
+The AGE1 exporter at `4d0c68aab` adds the aged logical replay and cut bundle. It can run against the sealed `2859d6b15` rung before stopping its transactor. Scorecard still needs to consume and independently check that bundle. Server 2's spare NVMe has no visible partitions, mount, filesystem signature or owner. The projected backup and restored-copy reserves need a separate filesystem. Initialization is pending authorization.

@@ -77,6 +77,46 @@ function updateHandoff(line: string) {
     ),
   );
 }
+function recordV01Bundle(
+  tag: string,
+  at: number,
+  terminalAt: string,
+  outcome: string,
+  bundle: { bytes: number; sha256: string },
+) {
+  if (tag !== "arm-d7-wfix-pool-seed" && !tag.startsWith("arm-d7-v01-present")) return;
+  assert(Number.isSafeInteger(bundle.bytes) && bundle.bytes > 0);
+  assert.match(bundle.sha256, /^[a-f0-9]{64}$/);
+  const hours = (Date.parse(terminalAt) - at) / 3600000;
+  assert(Number.isFinite(hours) && hours > 0);
+  const file = path.join(repo, "lab/experiments/EXP-DX1/scale1/V01-CAMPAIGN.md");
+  const previous = fs.readFileSync(file, "utf8");
+  const header = "## Received result bundles";
+  const row =
+    "| " +
+    [
+      tag,
+      outcome,
+      hours.toFixed(2),
+      (hours * 1.09).toFixed(2),
+      bundle.bytes,
+      "`" + bundle.sha256 + "`",
+    ].join(" | ") +
+    " |";
+  if (previous.includes(row + "\n")) return;
+  assert(!previous.includes("| " + tag + " |"));
+  fs.appendFileSync(
+    file,
+    (previous.includes(header)
+      ? ""
+      : "\n" +
+        header +
+        "\n\n| Attempt | Terminal status | Native hours | USD | Compressed bytes | SHA-256 |\n" +
+        "| --- | --- | ---: | ---: | ---: | --- |\n") +
+      row +
+      "\n",
+  );
+}
 function state() {
   const script =
     'date -u; systemctl list-units --all --no-pager "triplex-scale1-*"; test ! -d "$1" || find "$1" -mindepth 2 -maxdepth 2 -name STATUS.json -print -exec cat {} \\;';
@@ -84,7 +124,7 @@ function state() {
     "sh",
     "-c",
     script +
-      '; for f in "$1"/queues/*/state.json "$1"/decision/state.json "$1"/decision/attempts/*/STATUS.json; do test ! -f "$f" || cat "$f"; done',
+      '; for f in "$1"/queues/*/state.json "$1"/decision/state.json "$1"/decision/attempts/*/STATUS.json "$1"/age-v01-*/STATUS.json; do test ! -f "$f" || cat "$f"; done',
     "state",
     root,
   );
@@ -297,6 +337,7 @@ async function collect(tag: string) {
   if (fs.existsSync(proof)) assert.equal(fs.readFileSync(proof, "utf8"), bytes);
   else fs.writeFileSync(proof, bytes, { flag: "wx" });
   updateReport(path.join(evidence, "DX-SCALE1"));
+  recordV01Bundle(tag, remoteAttempt.at, terminal.endedAt, terminal.service, entry.summary);
   const live = remote("systemctl", ...activeUnitArgs, "triplex-scale1-arm-*.service");
   const current = /triplex-scale1-(arm-[a-z0-9-]+)\.service/.exec(live)?.[1];
   let activity = "";

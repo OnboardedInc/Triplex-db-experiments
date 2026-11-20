@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 28.02 through 2026-11-20 20:12 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 28.36 through 2026-11-20 20:31 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The pooled seed's full loader ledger has 1,000,000 people, 162,456,470 facts and 87,001 acknowledged frames. The native verifier is checking durable claims, then the complete feed, before writing the immutable image and transfer. The current seed ceiling is 2026-11-21T04:24:01.788Z. The superseded two-writer relay is stopped. The active seed and its original controller were left running.
+The pooled seed's full loader ledger has 1,000,000 people, 162,456,470 facts and 87,001 acknowledged frames. The native verifier is checking durable claims, then the complete feed, before writing the immutable image and transfer. The current seed ceiling is 2026-11-21T04:24:01.788Z. The superseded two-writer relay is stopped. The active seed and its original controller were left running. The detached v0.1 present-writer relay is waiting for the verified seed transfer. It is pinned to 46deaaedb with a three-hour native ceiling.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
