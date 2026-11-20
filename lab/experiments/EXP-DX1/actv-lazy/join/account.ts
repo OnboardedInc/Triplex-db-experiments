@@ -931,6 +931,7 @@ export class JoinedAccount {
     person: number,
     submitted: readonly Op[] | { fields: readonly Fact[]; from: number },
     at: string,
+    observation?: PublishObservation,
   ) {
     assert(
       this.s.profile === "act2-deep" &&
@@ -1009,6 +1010,8 @@ export class JoinedAccount {
       },
       undefined,
       at,
+      false,
+      observation,
     );
   }
   async save(id: string, edit: Edit, at: string) {

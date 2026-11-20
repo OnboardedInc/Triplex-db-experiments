@@ -167,6 +167,7 @@ async function block(
         receipts: [] as {
           command: string;
           started: number;
+          entered: number;
           served: number;
           scheduled: number;
           position: number;
@@ -246,16 +247,26 @@ async function block(
           await waitsUntil(scheduled);
           const edit = t.tape.fields(),
             command = `study-save-${cycle}-${index}-${k}`,
-            started = ms();
+            started = ms(),
+            observation: PublishObservation = { attempts: [] };
           pending.push(
             writer
-              .saveDeep(command, edit.person, { fields: edit.fields, from: edit.from }, valid)
+              .saveDeep(
+                command,
+                edit.person,
+                { fields: edit.fields, from: edit.from },
+                valid,
+                observation,
+              )
               .then((r: Receipt) => {
+                assert(observation.turn);
+                const served = ms();
                 t.tape.committed(edit.person, edit.fields, r);
                 receipts.push({
                   command,
                   started,
-                  served: ms(),
+                  entered: observation.turn.entered,
+                  served,
                   scheduled,
                   position: r.position,
                   txId: r.txId,
@@ -316,8 +327,10 @@ async function block(
           );
         }
         await Promise.all(pending);
+        await waitsUntil(opened + duration);
       } finally {
         running = false;
+        await Promise.all(background);
         delay.disable();
         const stopCpu = await cpu(attempt);
         pressure = {
@@ -325,7 +338,7 @@ async function block(
           stop: stopCpu,
           nodeEventLoopP99Ms: delay.percentile(99) / 1e6,
         };
-        await Promise.all([...background, ...senders]);
+        await Promise.all(senders);
       }
     });
     const compressed = gzipSync(raw.map((x) => JSON.stringify(x) + "\n").join(""));
@@ -430,6 +443,13 @@ async function block(
       record: finite(clocks),
       first: finite(firsts),
       observations: raw.length,
+      saveService: saves.map(({ receipts }) => {
+        const service = receipts.map((r) => r.served - r.entered);
+        return {
+          ...finite(service),
+          mean: service.length ? service.reduce((sum, ms) => sum + ms, 0) / service.length : null,
+        };
+      }),
       components,
       receiptChecks,
       raw: sha256(compressed),
