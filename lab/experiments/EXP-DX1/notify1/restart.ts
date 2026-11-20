@@ -5,12 +5,23 @@ import { Fixture } from "./fixture.ts";
 import { Notices, type Cut } from "./journal.ts";
 import { Documents } from "./store.ts";
 import { Dispatcher } from "./dispatcher.ts";
+import { Relay } from "./relay.ts";
+import { recipient } from "./worker.ts";
 
 const input = JSON.parse(fs.readFileSync(0, "utf8")),
   { scope, nonce, subject, erased, action } = input;
-assert(/^notify-[0-9a-f-]+$/.test(scope) && nonce && Number.isSafeInteger(erased));
+assert(
+  (action === "recipient-page"
+    ? scope === "notice-relay-" + nonce
+    : /^notify-[0-9a-f-]+$/.test(scope)) &&
+    nonce &&
+    Number.isSafeInteger(erased),
+);
 const comp = await openComposition("reach", "datomic", scope),
-  sink = await openComposition("reach", "datomic", scope + "-sink");
+  sink =
+    action === "recipient-page"
+      ? await recipient("act1-notify-" + nonce, process.env.NOTIFY_DIR!)
+      : await openComposition("reach", "datomic", scope + "-sink");
 try {
   const fixture = new Fixture(comp);
   const account = new Notices(comp, "account", {
@@ -25,7 +36,10 @@ try {
     },
   });
   const dispatch = new Dispatcher(account, new Documents(sink, "sink"));
-  if (action === "effect-before-ack") {
+  if (action === "recipient-page") {
+    assert.equal((await account.observe()).value.epoch, nonce);
+    assert(await new Relay(account, new Documents(sink, "effects"), 2).turn({}));
+  } else if (action === "effect-before-ack") {
     await assert.rejects(
       dispatch.drain({
         afterReceive: async () => {

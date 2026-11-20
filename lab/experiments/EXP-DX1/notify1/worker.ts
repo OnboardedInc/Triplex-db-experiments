@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { openComposition } from "../../../bench/lib/composition.ts";
 import { sqliteStore } from "../act1/sqlite.ts";
 import { Dispatcher, type Metrics } from "./dispatcher.ts";
+import { Relay } from "./relay.ts";
 import { Notices } from "./journal.ts";
 import { Fixture } from "./fixture.ts";
 import { Documents } from "./store.ts";
@@ -19,6 +20,7 @@ export interface Job {
   gap: number;
   priority: boolean;
   profileDir?: string;
+  recipientPages?: number;
 }
 export function recipient(name: string, directory?: string) {
   return directory ? sqliteStore(directory, name) : openComposition("reach", "datomic", name);
@@ -80,10 +82,10 @@ if (process.argv[1] === import.meta.filename) {
         job.deep ? deepInputs(src, job.subjects) : new Fixture(src),
       );
       assert.equal((await a.observe()).value.epoch, job.epoch);
-      const d = new Dispatcher(
-        a,
-        new Documents(budget?.store(receiver, "receiver") ?? receiver, "effects"),
-      );
+      const sink = new Documents(budget?.store(receiver, "receiver") ?? receiver, "effects");
+      const d = job.recipientPages
+        ? new Relay(a, sink, job.recipientPages)
+        : new Dispatcher(a, sink);
       a.budget = budget;
       if (budget) budget.enabled = true;
       const grant = job.priority

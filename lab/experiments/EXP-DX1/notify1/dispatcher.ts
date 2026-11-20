@@ -40,7 +40,7 @@ export interface Metrics {
   ackMs: number;
   conflicts: number;
 }
-const metrics = (): Metrics => ({
+export const emptyMetrics = (): Metrics => ({
   visits: 0,
   evaluations: 0,
   deliveries: 0,
@@ -57,7 +57,7 @@ const ledger = (s: string) => "ledger:" + s;
 export class Dispatcher {
   readonly notices: Notices;
   readonly sink: Documents;
-  readonly metrics = metrics();
+  readonly metrics = emptyMetrics();
   constructor(notices: Notices, sink: Documents) {
     this.notices = notices;
     this.sink = sink;
@@ -225,6 +225,7 @@ export class Dispatcher {
       db.row<Cursor>("cursor", at),
     ]);
     if (!cursor?.value.pending) {
+      assert(!tail.value.recipient, "Account uses the registered recipient checkpoint");
       if (through !== undefined && (cursor?.value.event ?? 1) > through) return false;
       return this.derive(tail, cursor, at, grant, through);
     }

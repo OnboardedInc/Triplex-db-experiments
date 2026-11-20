@@ -3,7 +3,7 @@ import { DomainOracle } from "../../../bench/lib/w0-gates.ts";
 import { canonical, W0 } from "../../../bench/lib/w0-world.ts";
 import type { Dispatcher } from "./dispatcher.ts";
 import type { Request, Cut } from "./journal.ts";
-import { hash, parse, unpack, type Ack } from "./store.ts";
+import { hash, parse, unpack, type Ack, type Documents } from "./store.ts";
 
 export interface Offered {
   req: Request;
@@ -12,7 +12,9 @@ export interface Offered {
 export const wireDelivery = (d: W0.Delivery) => ({ ...d, payload: JSON.parse(d.payload) });
 const wireItems = (ds: W0.ItemState[]) => ds.map((d) => ({ ...d, payload: JSON.parse(d.payload) }));
 export async function verify(
-  worker: Dispatcher,
+  worker: Pick<Dispatcher, "notices" | "sink" | "effects"> & {
+    ledgerStore?(epoch: string): Documents;
+  },
   ids: string[],
   events: Offered[],
   worlds: (s: string[], cut: Cut) => Promise<W0.World[]>,
@@ -20,10 +22,11 @@ export async function verify(
   const a = worker.notices,
     oracle = new DomainOracle(new URL("./oracle.py", import.meta.url).pathname);
   const effects: any[] = [],
-    at = await a.db.head(),
     sinkAt = await worker.sink.head();
   const identity = await a.observe(),
     origin = hash([a.db.prefix, identity.value.epoch]);
+  const ledger = worker.ledgerStore?.(identity.value.epoch) ?? a.db,
+    at = await ledger.head();
   assert.equal(identity.value.sequence, events.length);
   let comparisons = 0,
     previous = 0;
@@ -77,7 +80,7 @@ export async function verify(
       const group = ids.slice(n, n + 64),
         expect = parse<any[]>(await oracle.call("inspect", group));
       const [ledgers, receivers] = await Promise.all([
-        a.db.rows<string>(
+        ledger.rows<string>(
           group.map((s) => "ledger:" + s),
           at,
         ),

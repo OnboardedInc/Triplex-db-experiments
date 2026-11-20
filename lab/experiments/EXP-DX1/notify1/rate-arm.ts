@@ -14,7 +14,8 @@ import { runWindow } from "./workload.ts";
 const { slotCpu }: { slotCpu(holder: string, lane: string, slot: string): unknown } = await import(
   new URL("../../../bin/engine.mjs", import.meta.url).href
 );
-const [mode, size, pause, duration, shape = "fixture", pages = "1"] = process.argv.slice(2);
+const [mode, size, pause, duration, shape = "fixture", pages = "1", route = "source"] =
+  process.argv.slice(2);
 const n = Number(size),
   gap = Number(pause),
   ms = Number(duration),
@@ -31,7 +32,14 @@ assert(
     ms >= 0 &&
     (mode === "baseline") === ms > 0,
 );
-assert(batchPages === 1);
+assert(
+  ["source", "recipient"].includes(route) &&
+    Number.isInteger(batchPages) &&
+    batchPages >= 1 &&
+    batchPages <= 32 &&
+    (route === "recipient" || batchPages === 1),
+);
+const recipientPages = route === "recipient" ? batchPages : undefined;
 const dir = process.env.NOTIFY_DIR!,
   binding = JSON.parse(fs.readFileSync(path.join(dir, "binding.json"), "utf8"));
 const ownerBytes = fs.readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!),
@@ -72,6 +80,7 @@ try {
     priority: mode !== "idle",
     idle: mode === "idle",
     budget,
+    recipientPages,
     cpuSnapshot: () => slotCpu(owner.holder, owner.lane, owner.slot),
     duration: mode === "baseline" ? ms : undefined,
     workerJob: {
@@ -84,6 +93,7 @@ try {
       gap,
       priority: mode !== "idle",
       profileDir: profiled ? dir : undefined,
+      recipientPages,
     },
     phase: (stage) => console.log(stage),
   });
@@ -115,6 +125,7 @@ try {
     gap,
     shape,
     batchPages,
+    route,
     profiled,
     sourceClock: owner.createdAt,
     raw: sha256(raw),

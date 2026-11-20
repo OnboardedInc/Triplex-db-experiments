@@ -39,9 +39,14 @@ export class Budget {
     try {
       const m = await withTrace(tr, () => measureW0Http(f));
       const data = detail(m.value);
+      const socket: Record<string, number> = {};
+      for (const span of tr?.spans ?? [])
+        if (span.name.startsWith("socket."))
+          socket[span.name] = (socket[span.name] ?? 0) + span.end - span.start;
       this.mark(kind, start, {
         role,
         trace: tr?.traceId,
+        socket,
         ...data,
         requests: m.requests,
         samples: m.samples,
@@ -53,25 +58,24 @@ export class Budget {
     }
   }
   store<T extends Store>(base: T, role: string): T {
-    const meter = this;
     return {
       ...base,
       currentPosition: () =>
-        meter.http(
+        this.http(
           "head",
           role,
           () => base.currentPosition(),
           (position) => ({ position }),
         ),
       transactionByCommand: (id: string) =>
-        meter.http(
+        this.http(
           "lookup",
           role,
           () => base.transactionByCommand(id),
           () => ({}),
         ),
       sweepPage: (roots: string[], basis: any) =>
-        meter.http(
+        this.http(
           "pinned",
           role,
           () => base.sweepPage(roots, basis),
@@ -88,7 +92,7 @@ export class Budget {
           },
         ),
       transact: (ops: Op[], meta: any) =>
-        meter.http(
+        this.http(
           "write",
           role,
           () => base.transact(ops, meta),

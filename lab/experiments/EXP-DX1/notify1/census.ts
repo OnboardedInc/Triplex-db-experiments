@@ -40,14 +40,32 @@ export async function installCensus(db: Documents, subjects: string[]) {
   return census;
 }
 export async function memberPage(db: Documents, c: Census, start: number, at: number) {
+  return memberRange(db, c, start, at, 1);
+}
+export async function memberRange(
+  db: Documents,
+  c: Census,
+  start: number,
+  at: number,
+  pages: number,
+) {
   assert(Number.isInteger(start) && start >= 0 && start <= c.count && start % width === 0);
+  assert(Number.isInteger(pages) && pages >= 1 && pages <= 32);
   if (start === c.count) return [];
-  const row = await db.get<Page>("members:" + c.id + ":" + start, at),
-    p = row.value;
-  assert(
-    p.census === c.id &&
-      p.ordinal === start &&
-      p.members.length === Math.min(width, c.count - start),
+  const keys = Array.from(
+    { length: Math.min(pages, Math.ceil((c.count - start) / width)) },
+    (_, i) => "members:" + c.id + ":" + (start + i * width),
   );
-  return p.members;
+  const rows = await db.rows<Page>(keys, at);
+  return keys.flatMap((key, i) => {
+    const ordinal = start + i * width,
+      p = rows.get(key)?.value;
+    assert(
+      p &&
+        p.census === c.id &&
+        p.ordinal === ordinal &&
+        p.members.length === Math.min(width, c.count - ordinal),
+    );
+    return p.members;
+  });
 }

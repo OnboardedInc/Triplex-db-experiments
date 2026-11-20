@@ -16,6 +16,7 @@ export function inputPins(revision?: string): Record<string, string> {
     [
       "budget.ts",
       "rate-arm.ts",
+      "relay.ts",
       "census.ts",
       "deep.ts",
       "dispatcher.ts",

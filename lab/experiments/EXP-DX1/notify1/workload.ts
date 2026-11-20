@@ -3,6 +3,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 import { W0, sha256 } from "../../../bench/lib/w0-world.ts";
 import { Dispatcher } from "./dispatcher.ts";
+import { Relay } from "./relay.ts";
 import { Notices, type Inputs, type Cut, type Request } from "./journal.ts";
 import { Documents, hash, type Op, type Check, type Store } from "./store.ts";
 import { type Offered, verify } from "./verify.ts";
@@ -43,6 +44,7 @@ export async function runWindow(opts: {
   budget?: Budget;
   cpuSnapshot?: () => unknown;
   idle?: boolean;
+  recipientPages?: number;
 }) {
   const { profile: p, source, receiver, epoch } = opts;
   const a = new Notices(source, "account", p.inputs),
@@ -55,7 +57,10 @@ export async function runWindow(opts: {
     from: p.validTime,
     validTime: p.validTime,
   });
-  await a.create(epoch, p.validTime);
+  const sender = () =>
+    opts.recipientPages ? new Relay(a, sink, opts.recipientPages) : new Dispatcher(a, sink);
+  if (opts.recipientPages) await new Relay(a, sink, opts.recipientPages).create(epoch, p.validTime);
+  else await a.create(epoch, p.validTime);
   const history: Offered[] = [];
   const append = async (req: Request) => {
     const t = await a.observe(),
@@ -66,7 +71,7 @@ export async function runWindow(opts: {
   };
   await append(release("first", "R1"));
   opts.phase?.("building the original live R1 ledger");
-  await new Dispatcher(a, sink).drain();
+  await sender().drain();
   const startClick = performance.now(),
     broad = await append(release("publish", "R2")),
     activationMs = performance.now() - startClick;
@@ -101,7 +106,7 @@ export async function runWindow(opts: {
   let through = broad.receipt.position,
     latestValid = p.validTime,
     duration = opts.duration ?? Infinity;
-  const worker = new Dispatcher(a, sink),
+  const worker = sender(),
     prepared = new Map<number, { req: Request; ops: Op[]; checks: Check[]; initial: Offered }>();
   const cpuBefore = opts.cpuSnapshot?.(),
     processBefore = process.cpuUsage();
@@ -289,12 +294,13 @@ export async function runWindow(opts: {
   }
   let proof;
   if (opts.duration === undefined) {
-    await new Dispatcher(a, sink).drain();
+    await sender().drain();
     proof = await verify(worker, p.ids, history, p.witness.bind(p));
     assert.equal(proof.eventCounts[1], dispatch.deliveries);
   }
   return {
     epoch,
+    recipientPages: opts.recipientPages ?? null,
     startedAt: performance.timeOrigin + start,
     processCpu,
     cpuBefore,

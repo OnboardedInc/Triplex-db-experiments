@@ -32,6 +32,7 @@ export interface Request {
   selection: Selection;
 }
 export interface Tail {
+  recipient?: { sink: string; identity: string };
   custom?: { hash: string; definition: number };
   epoch: string;
   census: Census;
@@ -86,12 +87,13 @@ export class Notices {
     this.db = new Documents(store, account);
     this.inputs = inputs;
   }
-  async create(epoch: string, validTime: string) {
+  async create(epoch: string, validTime: string, recipient?: Tail["recipient"]) {
     assert(epoch && W0.isInstant(validTime));
     const at = await this.db.head(),
       roster = await this.inputs.roster({ position: at, validTime });
     const census = await installCensus(this.db, roster);
     const tail: Tail = {
+      ...(recipient ? { recipient } : {}),
       epoch,
       census,
       sequence: 0,
