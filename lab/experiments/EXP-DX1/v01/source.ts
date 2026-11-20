@@ -22,6 +22,7 @@ export function cleanSource(expected: string, fresh = false) {
   if (fresh) {
     assert(!fs.existsSync("node_modules"), "Build from a fresh clone");
     for (const pkg of packages) assert(!fs.existsSync(`packages/${pkg}/dist`), "Existing package output " + pkg);
+    assert.equal(git("ls-files", "--others", "--directory"), "", "Fresh clone has unpinned files");
   }
   return expected;
 }

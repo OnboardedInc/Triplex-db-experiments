@@ -267,7 +267,7 @@ function bind() {
   assert(peers[0]!.source === peers[1]!.source);
   write(manifest, {
     prefix: "tx2-dxthin-" + attempt.nonce,
-    writeUrl: scorecard ? "http://127.0.0.1:8080" : peers[0]!.endpoint,
+    writeUrl: scorecard ? "http://" + peers[0]!.address + ":8080" : peers[0]!.endpoint,
     readUrl: peers[1]!.endpoint,
     gatewaySourceSha256: peers[0]!.source,
     buildInputsSha256: cfg.lanes.datomic.buildInputsSha256,

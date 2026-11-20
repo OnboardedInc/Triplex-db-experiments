@@ -140,8 +140,9 @@ export function render(run: Run, destination: string) {
       ];
       for (const i of [0, 1, 2, 3]) {
         const checks: Bar[] = p[`P${i + 1}`].bars;
+        const invalid = !eligible && !run.toy ? item.summary.invalid.join("; ") : "";
         const diagnostic = run.toy ? `Toy samples. ${shown(checks)}`
-          : `${shown(checks)}${i >= 2 ? ". " + gaps[i] : ""}`;
+          : [shown(checks), invalid, i >= 2 ? gaps[i] : ""].filter(Boolean).join(". ");
         Object.assign(rows[i]!, {
           reading: diagnostic || "No applicable observations.",
           status: run.toy ? "DIAGNOSTIC" : i < 2 || checks.some((b) => b.pass === false)
