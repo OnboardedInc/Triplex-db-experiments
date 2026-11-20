@@ -4,6 +4,10 @@ The paths in [GATEWAY-SHA256SUMS](GATEWAY-SHA256SUMS) are relative to the durabl
 
 | Raw directory | Population and observations |
 | --- | --- |
+| `p3-final-thin`, `p3-final-deep` | Refreshed integration source `d0a909ba4`. The full imports hold 2,000 or 200 admissions fixed while adding 98,000 thin or 9,800 deep people. Includes reader mapping counts, pinned replay and every timed first read. The thin run also includes the moving set. |
+| `p3-final-idle` | One idle scope and then eight in the same measured processes on the refreshed source. |
+| `p3-final-proof` | All 23 publication schedules, original pinned rows, ID eviction and conflict preservation, page guards, and two 200-person deep probes using plain and gzip responses in separate fresh scopes. |
+| `p3-checks` | The final census, independent replay, gate logs and native image identity, source-pin audit, private-volume cleanup logs and physical-queue plans. The `latest-gates` index binds the refreshed source and each tested package tree to its result. |
 | `p3-demand-thin-b` | Matched 10,000-person bounded JVM profile with 200 first reads. |
 | `p3-baseline-deep-a` | 2,000 deep people, 40 active. Both native gateway JVMs were sampled after the complete seed and again after all 40 reads and writes. |
 | `p3-census-thin-b` | 100,000 thin people, 2,000 active. Includes all 1,000 cold timings, actual HTTP exchanges and an 8,000-read moving-set run at 128 KiB. |
@@ -25,7 +29,7 @@ The first instrumented runs include files captured between Git commits. Each `in
 
 The full population arms also take four unforced samples during cold import. Each sample binds the durable count and position to its scope and slot. For a validated cold read, the raw latency row records the number and body bytes of actual HTTP responses, time to headers, worker time, and the gateway duration when supplied.
 
-On the physical queue, the first wide case measures 200 previously unread deep people in a separate fresh scope after saving its wide measurements. Their source ordinals represent the 10,000-person distribution, with 20, 160, 6, 12 and 2 people with 4, 5, 10, 11 and 34 tasks. The collector recomputes membership, p50/p99, original receipt binding and Python replay. `inspect-profiles.ts DIR...` independently checks the measured JVM histogram totals, peer charges, process identities and cold-read samples.
+On the physical queue, the first wide case saves its wide measurements and then measures the same 200 previously unread deep people in a fresh scope for each wire format. Their source ordinals represent the 10,000-person distribution, with 20, 160, 6, 12 and 2 people with 4, 5, 10, 11 and 34 tasks. The collector recomputes membership, p50/p99, original receipt binding and Python replay. `inspect-profiles.ts DIR...` independently checks the measured JVM histogram totals, peer charges, process identities and cold-read samples.
 
 At the original deep seed, both JVMs held exactly 27,889 live `datomic.db.Datum` objects (1,115,560 shallow bytes each). The read peer had zero parsed entity keys and no reach configuration. The write peer had one 96-byte reach configuration and one 72-byte empty ID-map object. After demand, the read peer had 1,477 parsed keys (59,080 shallow bytes), two configurations and two ID-map objects. The class histogram excludes their referents from those shallow sizes. The ID memo maps entity names to native IDs. Assertion-ID uniqueness comes from the durable history. Native storage pages can serve multiple people. The write role also served the driver's independent receipt-feed checks during import.
 
