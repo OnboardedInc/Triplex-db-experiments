@@ -49,7 +49,7 @@ export function inspectPair(dir: string) {
     assert(Object.hasOwn(result.inputs, file));
   }
   for (const [file, expected] of Object.entries(result.inputs)) {
-    assert(/^[a-z]+\.(ts|py)$/.test(file));
+    assert(/^[a-z-]+\.(ts|py)$/.test(file));
     const actual = execFileSync("git", [
       "show",
       source + ":lab/experiments/EXP-DX1/notify1/" + file,

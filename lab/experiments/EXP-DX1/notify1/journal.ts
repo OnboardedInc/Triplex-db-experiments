@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { W0, sha256 } from "../../../bench/lib/w0-world.ts";
+import type { Budget } from "./budget.ts";
 import { type Census, installCensus, memberPage, width } from "./census.ts";
 import {
   Documents,
@@ -78,6 +79,7 @@ export const interpreter = hash([
 const releaseIdentity = (r: Release) => W0[r].hash;
 const receiptsAt = (s: string, n: number) => "erase-proof:" + hash(s) + ":" + n;
 export class Notices {
+  budget?: Budget;
   readonly db: Documents;
   readonly inputs: Inputs;
   constructor(store: Store, account: string, inputs: Inputs) {
@@ -272,6 +274,7 @@ export class Notices {
       assert.equal(policy.hash, e.value.nextHash);
     }
     const by = new Map<string, Work>();
+    const began = this.budget ? performance.timeOrigin + performance.now() : 0;
     for (const world of worlds) {
       const result = W0.evaluateWorld(world, policy, {
         tx: e.at,
@@ -280,6 +283,7 @@ export class Notices {
       if ("error" in result) throw Error(result.error + " for " + world.subject);
       by.set(world.subject, result.workItems);
     }
+    this.budget?.mark("kernel", began, { evaluations: worlds.length });
     return ids.map((s) => {
       const sealed = proofs.get(receiptsAt(s, e.value.sequence))?.value;
       if (!sealed) return by.get(s)!;

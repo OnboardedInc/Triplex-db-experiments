@@ -18,6 +18,7 @@ export interface Job {
   epoch: string;
   gap: number;
   priority: boolean;
+  profileDir?: string;
 }
 export function recipient(name: string, directory?: string) {
   return directory ? sqliteStore(directory, name) : openComposition("reach", "datomic", name);
@@ -65,22 +66,38 @@ if (process.argv[1] === import.meta.filename) {
     const source = await openComposition("reach", "datomic", job.source),
       receiver = await recipient(job.recipient, job.directory);
     try {
+      const budget = job.profileDir
+        ? new (await import("./budget.ts")).Budget({
+            epoch: job.epoch,
+            role: "worker",
+            dir: job.profileDir,
+          })
+        : undefined;
+      const src = budget?.store(source, "source") ?? source;
       const a = new Notices(
-        source,
+        src,
         "account",
-        job.deep ? deepInputs(source, job.subjects) : new Fixture(source),
+        job.deep ? deepInputs(src, job.subjects) : new Fixture(src),
       );
       assert.equal((await a.observe()).value.epoch, job.epoch);
-      const d = new Dispatcher(a, new Documents(receiver, "effects"));
+      const d = new Dispatcher(
+        a,
+        new Documents(budget?.store(receiver, "receiver") ?? receiver, "effects"),
+      );
+      a.budget = budget;
+      if (budget) budget.enabled = true;
       const grant = job.priority
-        ? () =>
-            new Promise<void>((resolve) => {
+        ? async () => {
+            const t = performance.timeOrigin + performance.now();
+            await new Promise<void>((resolve) => {
               process.once("message", (m: any) => {
                 assert(m.kind === "granted" && m.epoch === job.epoch);
                 resolve();
               });
               send({ kind: "grant" });
-            })
+            });
+            budget?.mark("foreground-grant", t);
+          }
         : undefined;
       const metrics = await d.drain({
         through: 2,
@@ -90,6 +107,9 @@ if (process.argv[1] === import.meta.filename) {
           send({ kind: "effect" });
         },
       });
+      const cpu = process.cpuUsage();
+      budget?.mark("child-total-cpu", performance.timeOrigin + performance.now(), { cpu });
+      budget?.finish();
       send({ kind: "done", metrics });
     } catch (e) {
       send({ kind: "error", message: String(e) });

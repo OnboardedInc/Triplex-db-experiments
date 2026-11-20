@@ -6,6 +6,7 @@ import { Dispatcher } from "./dispatcher.ts";
 import { Notices, type Inputs, type Cut, type Request } from "./journal.ts";
 import { Documents, hash, type Op, type Check, type Store } from "./store.ts";
 import { type Offered, verify } from "./verify.ts";
+import type { Budget } from "./budget.ts";
 
 export type Offer = {
   atMs: number;
@@ -39,6 +40,9 @@ export async function runWindow(opts: {
   pace: number;
   priority?: boolean;
   phase?: (s: string) => void;
+  budget?: Budget;
+  cpuSnapshot?: () => unknown;
+  idle?: boolean;
 }) {
   const { profile: p, source, receiver, epoch } = opts;
   const a = new Notices(source, "account", p.inputs),
@@ -75,11 +79,20 @@ export async function runWindow(opts: {
   const changes = claim.value.changes as { entityId: string; op: string }[];
   assert(changes.length === 4 && changes.every((x) => x.entityId.startsWith(a.db.prefix)));
   const packetReaders = opts.readers;
-  const saves: { seq: number; atMs: number; ackMs: number; position: number }[] = [],
+  const saves: {
+      seq: number;
+      atMs: number;
+      ackMs: number;
+      position: number;
+      beganMs: number;
+      appendMs: number;
+      txId: string;
+    }[] = [],
     reads: {
       ordinal: number;
       atMs: number;
       latency: number;
+      beganMs: number;
       subject: string;
       position: number;
       world: string;
@@ -90,6 +103,9 @@ export async function runWindow(opts: {
     duration = opts.duration ?? Infinity;
   const worker = new Dispatcher(a, sink),
     prepared = new Map<number, { req: Request; ops: Op[]; checks: Check[]; initial: Offered }>();
+  const cpuBefore = opts.cpuSnapshot?.(),
+    processBefore = process.cpuUsage();
+  if (opts.budget) opts.budget.enabled = true;
   const start = performance.now();
   opts.phase?.(
     opts.duration === undefined ? "dispatching with live traffic" : "matched baseline traffic",
@@ -118,6 +134,7 @@ export async function runWindow(opts: {
       while (performance.now() - start < e.atMs && e.atMs < duration)
         await sleep(Math.min(50, e.atMs - (performance.now() - start)));
       if (e.atMs >= duration) break;
+      const beganMs = performance.now() - start;
       const cached = prepared.get(e.seq),
         t = await a.observe();
       const req: Request = cached?.req ?? {
@@ -129,6 +146,7 @@ export async function runWindow(opts: {
         selection: { kind: "subjects", ids: [W0.placementId(e.subject)] },
       };
       const input = cached ?? (await p.write(e, { position: t.at, validTime: req.validTime }));
+      const appendMs = performance.now() - start;
       const ack = await a.append(t, req, input.ops, input.checks);
       if (!cached) {
         const entry = { req, receipt: ack };
@@ -147,6 +165,9 @@ export async function runWindow(opts: {
         atMs: e.atMs,
         ackMs: performance.now() - start - e.atMs,
         position: ack.position,
+        beganMs,
+        appendMs,
+        txId: ack.txId,
       });
     }
   };
@@ -175,6 +196,7 @@ export async function runWindow(opts: {
         ordinal: reader,
         atMs: scheduled,
         latency: end - t,
+        beganMs: t - start,
         subject,
         position,
         validTime,
@@ -218,8 +240,9 @@ export async function runWindow(opts: {
   };
   const jobs = [
     run(),
-    writeLoop(),
-    ...Array.from({ length: packetReaders }, (_, i) => readLoop(i)),
+    ...(opts.idle
+      ? []
+      : [writeLoop(), ...Array.from({ length: packetReaders }, (_, i) => readLoop(i))]),
   ];
   try {
     await Promise.all(jobs);
@@ -229,6 +252,9 @@ export async function runWindow(opts: {
     await Promise.allSettled(jobs);
     throw e;
   }
+  const processCpu = process.cpuUsage(processBefore),
+    cpuAfter = opts.cpuSnapshot?.();
+  opts.budget?.finish();
   assert(
     Number.isFinite(duration) && p.offers.at(-1)!.atMs > duration,
     "Offered trace ended before measured window",
@@ -269,6 +295,10 @@ export async function runWindow(opts: {
   }
   return {
     epoch,
+    startedAt: performance.timeOrigin + start,
+    processCpu,
+    cpuBefore,
+    cpuAfter,
     firstEffectMs,
     lastEffectMs,
     dispatcherProcess: opts.workerJob ? "separate" : "application",

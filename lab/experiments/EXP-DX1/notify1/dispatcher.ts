@@ -135,6 +135,7 @@ export class Dispatcher {
         throw error;
       },
     );
+    const publicationStart = a.budget ? performance.timeOrigin + performance.now() : 0;
     // [DX-STG1] Why: a batch of ordinary saves can revisit a subject. Fold every transition into its predecessor before storing final items and the full delivery list. Rejected: coalescing to the last payload, which loses reversions.
     for (const [r, range] of ranges.entries()) {
       for (const [i, s] of range.ids.entries()) {
@@ -155,6 +156,7 @@ export class Dispatcher {
         ? []
         : db.change(ledger(s), ledgers.get(ledger(s)), pack(states.get(s))),
     );
+    a.budget?.mark("publish-and-pack", publicationStart);
     this.metrics.evaluationMs += performance.now() - start;
     const last = ranges.at(-1)!.event,
       through = cursor.start + ids.length,
@@ -206,6 +208,7 @@ export class Dispatcher {
     return true;
   }
   async receive(p: Packet, digest: string, grant?: () => Promise<void>) {
+    this.notices.budget?.packet(p);
     if (await receiveOrdered(this.sink, this.notices.db.prefix, p, digest, grant))
       this.metrics.sinkWrites++;
   }
@@ -261,8 +264,11 @@ export class Dispatcher {
         if (!(e instanceof Conflict)) throw e;
         this.metrics.conflicts++;
       }
-      if (opts.gapMs) await sleep(opts.gapMs);
-      else await yieldTurn();
+      if (opts.gapMs) {
+        const start = this.notices.budget ? performance.timeOrigin + performance.now() : 0;
+        await sleep(opts.gapMs);
+        this.notices.budget?.mark("sleep", start);
+      } else await yieldTurn();
     }
   }
   async effects() {

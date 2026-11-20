@@ -14,6 +14,8 @@ export function inputPins(revision?: string): Record<string, string> {
   const base = new URL("./", import.meta.url);
   const observed = Object.fromEntries(
     [
+      "budget.ts",
+      "rate-arm.ts",
       "census.ts",
       "deep.ts",
       "dispatcher.ts",
