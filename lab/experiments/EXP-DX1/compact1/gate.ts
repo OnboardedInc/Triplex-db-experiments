@@ -114,8 +114,11 @@ assert.equal(cleanup.attempt, binding.attempt);
 assert.equal(cleanup.slotReleased, binding.slot);
 assert.equal(cleanup.rolesRemoved, 3);
 assert.deepEqual(binding.durability.slice(0, 3), ["on", "on", "on"]);
+const steps = JSON.parse(read("steps.json").toString());
+for (const step of ["oracle", "recovery", "sdk"]) assert.equal(steps[step], "completed");
 for (const [file, digest] of Object.entries(binding.sources)) assert.equal(hash(read("source/" + file)), digest);
 assert.equal(hash(JSON.stringify(binding.sources)), binding.sourceHash);
+assert.equal(hash(fs.readFileSync(new URL(import.meta.url))), binding.sources["gate.ts"]);
 function observations(file: string) {
   return read(file).toString().split("\n").filter((l) => l.startsWith("COMPACT ")).map((l) => {
     const data = JSON.parse(l.slice(8));
@@ -155,9 +158,12 @@ for (const [i, fixture] of fixtures.entries()) {
   }
 }
 
-const oracleEntrypoint = new URL("../../../bench/lib/w0-oracle.py", import.meta.url).pathname;
-const oracleModule = new URL("../../../oracles/domain/w0.py", import.meta.url).pathname;
-const result = spawnSync("python3", ["-I", oracleEntrypoint], {
+const oracleEntrypoint = "lab/bench/lib/w0-oracle.py";
+const oracleModule = "lab/oracles/domain/w0.py";
+const oracleInputs = Object.fromEntries(Object.entries(binding.sources).filter(([file]) => file.startsWith("lab/")));
+assert(oracleInputs[oracleEntrypoint] && oracleInputs[oracleModule] && oracleInputs["lab/oracles/domain/jsontok.py"]);
+assert.equal(Object.keys(oracleInputs).filter((file) => file.startsWith("lab/world/W0/releases/")).length, 4);
+const result = spawnSync("python3", ["-I", "-B", path.join(dir, "source", oracleEntrypoint)], {
   input: requests.map(canonical).join("\n") + "\n", encoding: "utf8", maxBuffer: 32 * 1024 * 1024,
 });
 assert.equal(result.status, 0, result.stderr);
@@ -198,7 +204,6 @@ assert(sdk.requests >= 11);
 console.log(JSON.stringify({
   attempt: binding.attempt, source: binding.sourceHash, fixtures: fixtures.length,
   frozenExactCoordinates: unchanged, recutCoordinates: fixtures.length - unchanged, domainResponses: lines.length,
-  caseIds: fixtures.map((x) => x.id), oracle: hash(fs.readFileSync(oracleEntrypoint)),
-  oracleModule: hash(fs.readFileSync(oracleModule)), oracleResponsesSha256: hash(result.stdout),
+  caseIds: fixtures.map((x) => x.id), oracleInputs, oracleResponsesSha256: hash(result.stdout),
   probe: hash(read("probe.log")), recovery: hash(read("recovery.log")), sdk: hash(read("sdk.json")),
 }, null, 2));

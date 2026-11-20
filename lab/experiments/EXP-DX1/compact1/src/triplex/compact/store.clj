@@ -320,6 +320,9 @@
 (defn command-fingerprint [account root command expected additions retirements meta]
   (sha (canonical [1 account root command expected additions retirements meta])))
 
+(defn revision [db account root]
+  (position db (head db (subject-id db account root))))
+
 (defn prepare [store db {:keys [account root command expected adds retires meta]}]
   (require! (and (string? account) (re-matches #"[a-z0-9-]{1,32}" account)
                  (string? command) (re-matches #"[a-zA-Z0-9_-]{1,64}" command)
@@ -329,14 +332,20 @@
                  (vector? adds) (vector? retires) (<= (+ (count adds) (count retires)) 512)
                  (every? #(and (vector? %) (= 2 (count %)) (every? integer? %) (pos? (first %)) (<= 0 (second %))) retires))
             :InvalidCommand)
-  (let [fingerprint (command-fingerprint account root command expected adds retires meta)
+  ;; [DX-COMPACT1] Why: the client may have received a valid revision from a different peer.
+  ;; Rejected: declining an ahead-of-peer revision before a synchronized read, or synchronizing every ordinary save.
+  (let [observed (revision db account root)
+        ahead? (< observed expected)
+        db (if ahead? (sync-view store) db)
+        current (if ahead? (revision db account root) observed)
+        fingerprint (command-fingerprint account root command expected adds retires meta)
         existing (receipt db account command)
         kind (first meta)
         request {:account account :root root :command command :expected expected :fingerprint fingerprint :kind kind}]
     (require! (account-id db account) :UnknownAccount)
     (cond
       existing (assoc request :resolved (if (= fingerprint (:fingerprint existing)) existing {:error "IdempotencyConflict"}))
-      (not= expected (position db (head db (subject-id db account root))))
+      (not= expected current)
       (assoc request :resolved {:error "Conflict"})
       :else
       (do
@@ -359,6 +368,12 @@
           (assoc request :body body :expected-account (when (= kind "publish") (second meta))
                  :protected (boolean (some #(protected? (nth % 2)) encoded))))))))
 
+(defn no-new-members? [error]
+  (some (fn [cause]
+          (or (= :NoNewMembers (:code (ex-data cause)))
+              (and (instance? clojure.lang.ExceptionInfo cause) (= "NoNewMembers" (ex-message cause)))))
+        (take-while some? (iterate ex-cause error))))
+
 (defn commit-ready! [store prepared]
   (require! (and (<= 1 (count prepared) 128)
                  (<= (reduce + (map #(if-let [body (:body %)] (utf8 body) 0) prepared)) 65536)) :FrameTooLarge)
@@ -368,9 +383,11 @@
         report (when (seq pending)
                  (try (tx! conn [[:compact/append-v1 pending]])
                       (catch Exception e
-                        (when-not (str/includes? (str e) "NoNewMembers") (throw e)))))
+                        (when-not (no-new-members? e) (throw e)))))
         elapsed (- (System/nanoTime) start)
-        db (or (:db-after report) (d/db conn))
+        ;; [DX-COMPACT1] Why: an all-duplicate or refused append supplies no db-after, and the peer may lag the native turn.
+        ;; Rejected: resolving an ambiguous or stale local receipt as a conflict.
+        db (or (:db-after report) (if (seq pending) (sync-view store) (d/db conn)))
         outcomes (mapv (fn [{:keys [account root command fingerprint resolved kind]}]
                          (let [r (or resolved (receipt db account command))]
                            (cond

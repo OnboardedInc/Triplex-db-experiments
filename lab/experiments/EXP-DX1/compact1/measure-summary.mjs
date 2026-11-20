@@ -8,6 +8,8 @@ import { createHash } from "node:crypto";
 
 const dir = process.argv[2];
 assert(dir, "provide a durable attempt directory");
+const component = process.argv[3] ?? "all";
+assert(["all", "benchmark", "load"].includes(component));
 const hash = (data) => createHash("sha256").update(data).digest("hex");
 const read = (file) => fs.readFileSync(path.join(dir, file), "utf8");
 const binding = JSON.parse(read("binding.json"));
@@ -148,6 +150,7 @@ function load(rows) {
   assert.equal(load.people, 2000);
   assert.equal(load.facts, 320000);
   assert.equal(load.txs, 250);
+  assert(load.before.inserted <= load.after.inserted && load.after.inserted <= load.afterIndex.inserted);
   assert.equal(reads.length, Math.ceil(load.people / 23));
   reads.forEach((row, i) => {
     assert.equal(row.person, i * 23);
@@ -167,17 +170,26 @@ function load(rows) {
   };
 }
 
-const rows = logRows(read("probe.log"));
 const output = { attempt: binding.attempt, source: binding.sourceHash, phase: binding.phase };
 if (binding.phase === "layout") {
-  const sizes = rows.filter((x) => x.kind === "layout-census");
+  assert.equal(component, "all");
+  const sizes = logRows(read("probe.log")).filter((x) => x.kind === "layout-census");
   assert.deepEqual(sizes.map((r) => r.facts), [1, 3, 25]);
   for (const row of sizes) assert.equal(row.datoms, 11);
   output.sizes = sizes.map(({ facts, datoms, bodyBytes, valueBytes, fressianBytes }) => ({ facts, datoms, bodyBytes, valueBytes, fressianBytes }));
 } else if (binding.phase === "prototype") {
-  output.benchmark = bench(logRows(read("benchmark.log")));
-  output.load = load(logRows(read("load.log")));
-} else if (binding.phase === "load") output.load = load(rows);
-else throw Error("expected layout, prototype or load");
+  const steps = JSON.parse(read("steps.json"));
+  if (component !== "load") {
+    assert.equal(steps.benchmark, "completed");
+    output.benchmark = bench(logRows(read("benchmark.log")));
+  }
+  if (component !== "benchmark") {
+    assert.equal(steps.load, "completed");
+    output.load = load(logRows(read("load.log")));
+  }
+} else if (binding.phase === "load") {
+  assert.notEqual(component, "benchmark");
+  output.load = load(logRows(read("probe.log")));
+} else throw Error("expected layout, prototype or load");
 
 console.log(JSON.stringify(output, null, 2));

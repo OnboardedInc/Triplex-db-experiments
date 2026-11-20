@@ -116,6 +116,9 @@
     (assert (< (:recorded r1) (:recorded r2) (:recorded r3)))
     (assert (= r2 (store/save! store edit)))
     (assert (= {:error "IdempotencyConflict"} (store/save! store (assoc edit :retires []))))
+    (let [ahead (f/input account root "ahead-of-peer" (:position r2) [] [])]
+      (assert (= 1 (store/revision before account root)))
+      (assert (string? (:body (store/prepare store before ahead)))))
     (let [latest (store/sync-view store)
           a-feed (store/feed store latest account 1 1)
           h (store/history store latest account root)]

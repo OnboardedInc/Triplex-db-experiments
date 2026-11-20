@@ -55,6 +55,10 @@ function copySources(dir, phase) {
     if (phase === "prototype") {
       copy("lab/world/W0/cases", "cases");
       for (const name of ["client.ts", "sdk-check.ts", "gate.ts"]) copy(path.join(experiment, name), name);
+      // [DX-COMPACT1] Why: run Python against the same immutable source input as both readers.
+      // Rejected: hashing the current checkout's oracle only after it has run.
+      for (const relative of ["lab/bench/lib/w0-oracle.py", "lab/oracles/domain/w0.py",
+        "lab/oracles/domain/jsontok.py", "lab/world/W0/releases"]) copy(relative, relative);
     }
   }
   return sources;
