@@ -2,7 +2,13 @@ import { mkdir, open, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { attrs, currentAt, earlyAt, expected, loadFixture, personAt } from "./fixture.ts";
 import { catalogs, personId, profiles, token, type Profile } from "./model.ts";
-import { manifestReader, saves, type Frame, type VerifiedObject } from "./bundle.ts";
+import {
+  manifestReader,
+  maxManifestBytes,
+  saves,
+  type Frame,
+  type VerifiedObject,
+} from "./bundle.ts";
 import { datomicVersion, hash } from "./stack.ts";
 
 export type Shape = { deep: number; daily: number | "real" };
@@ -35,7 +41,8 @@ export const middleAt = earlyAt + 18 * dayMs - 1;
 const chunkSize = 64 * 2 ** 20;
 export const tierName = /^[a-z][a-z0-9-]{0,38}$/;
 const digest = /^[a-f0-9]{64}$/;
-const chunkName = (index: number) => "postgres-" + String(index).padStart(4, "0") + ".dump-part";
+const chunkName = (index: number, width = 5) =>
+  "postgres-" + String(index).padStart(width, "0") + ".dump-part";
 
 function natural(n: unknown, min: number, max: number): n is number {
   return typeof n === "number" && Number.isSafeInteger(n) && n >= min && n <= max;
@@ -185,7 +192,7 @@ export function snapshotSamples(plan: SeedPlan) {
 }
 
 export function parseSnapshot(bytes: Buffer, tier: string): SnapshotManifest {
-  if (bytes.length > 128_000) throw new Error("Snapshot manifest is too large");
+  if (bytes.length > maxManifestBytes) throw new Error("Snapshot manifest is too large");
   const manifest = JSON.parse(bytes.toString("utf8")) as SnapshotManifest;
   if (
     !manifest ||
@@ -198,10 +205,11 @@ export function parseSnapshot(bytes: Buffer, tier: string): SnapshotManifest {
     !/^tx2-dxplay1-[a-f0-9]{12}$/.test(manifest.run) ||
     !Array.isArray(manifest.objects) ||
     manifest.objects.length === 0 ||
-    manifest.objects.length > 1024 ||
+    manifest.objects.length > 32768 ||
+    (manifest.objects[0]?.file === chunkName(0, 4) && manifest.objects.length > 10_000) ||
     manifest.objects.some(
       (entry, index) =>
-        entry.file !== chunkName(index) ||
+        entry.file !== chunkName(index, manifest.objects[0]?.file === chunkName(0, 4) ? 4 : 5) ||
         !digest.test(entry.sha256) ||
         !natural(entry.bytes, 1, chunkSize) ||
         (index < manifest.objects.length - 1 && entry.bytes !== chunkSize),

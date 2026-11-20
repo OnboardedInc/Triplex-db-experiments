@@ -24,6 +24,7 @@ type Options = Omit<StackOptions, "directory"> & {
   slot?: string;
   beforeSeal?: () => void;
   maxBytes?: number;
+  verifyBrowser?: (url: string) => Promise<void>;
 };
 
 export async function runSnapshot(options: Options) {
@@ -109,7 +110,13 @@ export async function runSnapshot(options: Options) {
     const databaseBytes = await restored.stack.databaseBytes();
     assert(databaseBytes > 0 && sourceBytes > 0);
     const restorePeaks = await restored.stack.memoryPeaks();
-    if (plan === "small") await liveGate(restored.server.url, snapshot.checksum);
+    if (plan === "small") {
+      const verified = await liveGate(restored.server.url, snapshot.checksum);
+      await writeFile(join(out, "actions.json"), JSON.stringify(verified, null, 2) + "\n", {
+        flag: "wx",
+      });
+    }
+    await options.verifyBrowser?.(restored.server.url);
     assert.deepEqual(await restored.close(), inventory);
     await assert.rejects(
       fetch(restored.server.url + "/health", { signal: AbortSignal.timeout(3000) }),
@@ -138,6 +145,7 @@ export async function runSnapshot(options: Options) {
       firstReadMs,
       buildPeaks,
       restorePeaks,
+      browser: options.verifyBrowser !== undefined,
       cleanup: inventory,
     };
     // [DX-PLAY1] Why: seal measurements only after the fresh restored process verifies and shuts down.

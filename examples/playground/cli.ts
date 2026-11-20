@@ -7,11 +7,11 @@ import { setTimeout as delay } from "node:timers/promises";
 import { parseArgs } from "node:util";
 import { loadFixture } from "./fixture.ts";
 import type { Reply } from "./actions.ts";
-import { dockerClient, loopback, port, repo, Stack } from "./stack.ts";
+import { dockerClient, loopback, memoryScale, port, repo, Stack } from "./stack.ts";
 
-const usage = `pnpm playground start [--port 4186] [--write-port 8486] [--read-port 8487] [--larger | --tier NAME --data SOURCE [--replay]]
+const usage = `pnpm playground start [--port 4186] [--write-port 8486] [--read-port 8487] [--memory-scale 1|2|4] [--larger | --tier NAME --data SOURCE [--replay]]
 pnpm playground stop
-pnpm playground snapshot --tier NAME --deep N --daily N|real --out DIRECTORY [--max-bytes N]
+pnpm playground snapshot --tier NAME --deep N --daily N|real --out DIRECTORY [--max-bytes N] [--memory-scale 1|2|4]
 node examples/playground/cli.ts mcp [--port 4186]`;
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -27,6 +27,7 @@ const { values, positionals } = parseArgs({
     daily: { type: "string" },
     out: { type: "string" },
     "max-bytes": { type: "string" },
+    "memory-scale": { type: "string", default: "1" },
     help: { type: "boolean", short: "h" },
   },
 });
@@ -203,6 +204,7 @@ async function start() {
       docker: dockerClient(owner.dockerHost, owner.context),
       directory,
       ports,
+      memoryScale: memoryScale(values["memory-scale"]),
       apiPort: ports.api,
       signal: abort.signal,
       fixture,
@@ -270,6 +272,7 @@ async function makeSnapshot() {
       signal: abort.signal,
       docker: dockerClient(settings.dockerHost, settings.context),
       ports: { write: 0, read: 0 },
+      memoryScale: memoryScale(values["memory-scale"]),
       ...(maxBytes === undefined ? {} : { maxBytes }),
       beforeSeal: () => {
         if (git("rev-parse", "HEAD") !== sourceHead || git("status", "--porcelain"))

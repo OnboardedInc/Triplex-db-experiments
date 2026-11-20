@@ -40,6 +40,30 @@ type Manager = {
   assertMeasureAdmission: (holder: string) => void;
 };
 
+async function browserGate(out: string, url: string) {
+  const result = await run(
+    process.execPath,
+    [
+      "node_modules/@playwright/test/cli.js",
+      "test",
+      "--config=playwright.playground.config.ts",
+      "--output",
+      join(out, "browser"),
+    ],
+    { cwd: repo, timeout: 180_000, env: { ...process.env, PLAYGROUND_TEST_URL: url } },
+  ).then(
+    (output) => ({ output }),
+    (error: Error & { stdout?: string; stderr?: string }) => ({ output: error, error }),
+  );
+  await writeFile(
+    join(out, "browser.txt"),
+    (result.output.stdout ?? "") + (result.output.stderr ?? ""),
+    { flag: "wx" },
+  );
+  console.log(result.output.stdout);
+  return "error" in result ? result.error : undefined;
+}
+
 async function dumpProbe(docker: Docker, prefix: string, out: string) {
   const pg = prefix + "-pg";
   const writers = [prefix + "-write", prefix + "-read", prefix + "-tx"];
@@ -262,6 +286,14 @@ export async function local(
         sourceHead,
         slot: slot.slot,
         timingClass: "laptop diagnostic",
+        ...(options.browser
+          ? {
+              verifyBrowser: async (url: string) => {
+                const error = await browserGate(out, url);
+                if (error) throw error;
+              },
+            }
+          : {}),
         beforeSeal: () => {
           assert.equal(git(["rev-parse", "HEAD"]), sourceHead);
           assert.equal(
@@ -283,34 +315,7 @@ export async function local(
     await writeFile(join(out, "actions.json"), JSON.stringify(stats, null, 2) + "\n", {
       flag: "wx",
     });
-    const browser = options.browser
-      ? await run(
-          process.execPath,
-          [
-            "node_modules/@playwright/test/cli.js",
-            "test",
-            "--config=playwright.playground.config.ts",
-            "--output",
-            join(out, "browser"),
-          ],
-          {
-            cwd: repo,
-            timeout: 180_000,
-            env: { ...process.env, PLAYGROUND_TEST_URL: instance.server.url },
-          },
-        ).then(
-          (output) => ({ output }),
-          (error: Error & { stdout?: string; stderr?: string }) => ({ output: error, error }),
-        )
-      : undefined;
-    if (browser) {
-      await writeFile(
-        join(out, "browser.txt"),
-        (browser.output.stdout ?? "") + (browser.output.stderr ?? ""),
-        { flag: "wx" },
-      );
-      console.log(browser.output.stdout);
-    }
+    const browserError = options.browser ? await browserGate(out, instance.server.url) : undefined;
     const transactor = JSON.parse(
       await installed(["inspect", "--format", "{{json .State}}", prefix + "-tx"]),
     ) as { Running: boolean; OOMKilled: boolean; ExitCode: number };
@@ -334,7 +339,7 @@ export async function local(
       ) + "\n",
       { flag: "wx" },
     );
-    if (browser && "error" in browser) throw browser.error;
+    if (browserError) throw browserError;
     assert(transactor.Running && !transactor.OOMKilled, "The transactor did not stay alive");
     for (const [name, sha256] of Object.entries(sourceHashes))
       assert.equal(hash(await readFile(join(repo, name))), sha256, "Source drifted: " + name);

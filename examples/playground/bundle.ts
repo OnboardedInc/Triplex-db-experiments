@@ -22,6 +22,7 @@ import {
 import { hash } from "./stack.ts";
 
 export type VerifiedObject = { file: string; bytes: number; sha256: string };
+export const maxManifestBytes = 6 * 2 ** 20;
 type ObjectEntry = VerifiedObject & { records: number };
 export type Frame =
   | { kind: "catalog"; subject: Subject }
@@ -61,11 +62,12 @@ export function* saves(
   include = (_account: Profile, _index: number) => true,
 ): Generator<Frame> {
   const max = sample ? 180 : 1440;
+  const large = accounts.slice(0, 2);
   for (let min = 0; min < max; min++) {
     const rankedMinute = (min * 137 + day * 103) % 1440;
     const count = minuteSaves(rankedMinute);
     for (let save = 0; save < count; save += sample ? 237 : 1) {
-      for (const [idx, account] of accounts.slice(0, 2).entries()) {
+      for (const [idx, account] of large.entries()) {
         const active = Math.min(account.count, 1900);
         const base = (day * 2 * 1440 + min * 2 + idx) * 2400 + save;
         const n = ((draw(base) % active) * 7919 + day * 1901) % account.count;
@@ -298,12 +300,13 @@ export async function manifestReader(source: string, cache: string, signal?: Abo
         let length = 0;
         for await (const bytes of Readable.fromWeb(res.body as never)) {
           length += bytes.length;
-          if (length > 128_000) throw new Error("Bundle manifest is too large");
+          if (length > maxManifestBytes) throw new Error("Bundle manifest is too large");
           buffers.push(bytes);
         }
         return Buffer.concat(buffers);
       })()
     : await readFile(join(resolve(source), "manifest.json"));
+  if (initial.length > maxManifestBytes) throw new Error("Bundle manifest is too large");
   const checksum = hash(initial);
   const directory = remote ? join(cache, checksum) : resolve(source);
   if (remote) await mkdir(directory, { recursive: true, mode: 0o700 });

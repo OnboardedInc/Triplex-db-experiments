@@ -1,8 +1,8 @@
 The playground can start from the Git fixture or a prepared database snapshot.
 Snapshot startup checks files and compares generated people at three points in time.
-The small fixture still has five invented accounts in one database.
-The full plan has one hundred thousand deep people and about four million thin people.
-The snapshot builder produces local files and does not upload them.
+The small fixture and all three larger snapshots restored correctly on the Mac.
+The 5 GB option is forecast at 246 deep people and 9,840 wide people.
+The full population choices exceed 5 GB in the sizing model.
 The clean-clone workflow runs only when started by hand.
 Erasure stays unavailable because the integration branch refuses protected native queries.
 Continuous compliance scenarios remain reserved for the owner.
@@ -38,6 +38,8 @@ The `live-12` gate passed on source commit `3f2db8cc9` in a fresh database. It c
 Earlier attempts are retained. A live dump produced a different row digest while Datomic was still running. The first Chromium launch was denied by the macOS sandbox. Later Chromium attempts reached an unavailable transactor during Publish even though its container was still running. The final path uses the reader for the feed watch, checks transactor liveness and quiesces the owned Datomic processes before dumping. All Mac timings are diagnostic.
 
 The full-population artifacts, replay and restore remain unmeasured. The `live-12` lab gate exercised the portable launcher and teardown through `engine.mjs`. The manual workflow covers a separate clean clone on plain Docker once dispatched. [Size and startup paths](SIZE.md)
+
+The part 2 small snapshot restored and ran all 13 actions on the source used for the sizing ladder, `734890a2c`. The three individual-save samples measured 19,278, 34,862 and 66,010 initial facts. The first 96-person attempt failed with a Datomic read error. Subsequent runs passed after the playground bounded config reads to committed subject IDs and rebuilt against the integration ref. The fit selects 246 deep people and 9,840 wide people at the 5 GB sensitivity ceiling. Its upper build forecast is 2.21 hours, so I retained the one-command server recipe and did not build the selected tier on the Mac. No bucket or upload was created. [Sizing table and command](SIZE.md)
 
 The release demo uses the shared ConfigStore and the HTTP package's configuration descriptors. An intentionally small status rule provides a visible answer and durable background materialization. The standalone Foldkit explorer continues to serve the generic Triples view. The Datomic dashboard has its own workspace panel for commit positions, traces, native query and Publish.
 

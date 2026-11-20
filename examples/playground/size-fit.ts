@@ -165,7 +165,7 @@ function forecast(samples: Sample[]) {
         Math.max(...samples.map((row) => row.restorePeaks[role] ?? 0)),
       ]),
     ),
-    coldLocalBaseMs: samples.map((row) => row.firstReadMs - row.restoreMs),
+    cachedLocalBaseMs: samples.map((row) => row.firstReadMs - row.restoreMs),
     choices: choices.map(([tier, plan]) => {
       const data = shapeData(plan);
       return {

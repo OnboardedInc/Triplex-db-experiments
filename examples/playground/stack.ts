@@ -10,6 +10,10 @@ import type { Restore } from "./snapshot.ts";
 export const repo = resolve(import.meta.dirname, "../..");
 export const loopback = "127.0.0.1";
 export const caps = { pg: 256, tx: 1280, write: 640, read: 640 } as const;
+export function memoryScale(value: string): 1 | 2 | 4 {
+  if (value === "1" || value === "2" || value === "4") return Number(value) as 1 | 2 | 4;
+  throw new Error("Choose a memory scale of 1, 2 or 4");
+}
 const config = join(repo, "lab/config/datomic");
 export const datomicVersion = "1.0.7745";
 const packageName = "datomic-pro-" + datomicVersion;
@@ -32,9 +36,12 @@ export function port(value: string): number {
 
 export type Docker = (
   args: string[],
-  settings?: { buildxDirectory?: string; timeoutMs?: number },
+  settings?: { buildxDirectory?: string; timeoutMs?: number; signal?: AbortSignal },
 ) => Promise<string>;
-const archiveCommand = { timeoutMs: 2 * 60 * 60_000 };
+const archiveCommand = (signal?: AbortSignal) => ({
+  timeoutMs: 24 * 60 * 60_000,
+  ...(signal ? { signal } : {}),
+});
 export function dockerClient(host?: string, context?: string): Docker {
   const args = context ? ["--context", context] : host ? ["--host", host] : [];
   return async (command, settings) => {
@@ -44,6 +51,7 @@ export function dockerClient(host?: string, context?: string): Docker {
           timeout: settings?.timeoutMs ?? 10 * 60_000,
           maxBuffer: 4 * 1024 ** 2,
           encoding: "utf8",
+          ...(settings?.signal ? { signal: settings.signal } : {}),
           ...(settings?.buildxDirectory
             ? { env: { ...process.env, BUILDX_CONFIG: settings.buildxDirectory } }
             : {}),
@@ -134,6 +142,7 @@ export interface StackOptions {
   ports: Ports;
   signal?: AbortSignal;
   cachedImage?: string;
+  memoryScale?: 1 | 2 | 4;
 }
 
 class ContainerExited extends Error {}
@@ -173,6 +182,7 @@ export class Stack {
 
   async start(gatewaySpans = true, restore?: Restore) {
     const { docker, prefix, directory, ports, signal, cachedImage } = this.#opts;
+    const scale = this.#opts.memoryScale ?? 1;
     const pg = prefix + "-pg";
     const tx = prefix + "-tx";
     const network = prefix + "-net";
@@ -212,9 +222,9 @@ export class Stack {
       "--network",
       network,
       "--memory",
-      caps[role] + "m",
+      caps[role] * scale + "m",
       "--memory-swap",
-      caps[role] + "m",
+      caps[role] * scale + "m",
       "--cpus",
       "2",
       "--ulimit",
@@ -325,7 +335,7 @@ export class Stack {
       "/opt/datomic/bin/transactor",
       image,
       "-Xms128m",
-      "-Xmx640m",
+      `-Xmx${640 * scale}m`,
       "-XX:MaxMetaspaceSize=160m",
       "-XX:MaxDirectMemorySize=128m",
       "-XX:+ExitOnOutOfMemoryError",
@@ -370,7 +380,7 @@ export class Stack {
           ? [...mount(this.traceDir, "/trace"), "-e", "TRIPLEX_TRACE_DIR=/trace"]
           : []),
         "-e",
-        "DATOMIC_JAVA_OPTS=-Xms64m -Xmx352m -Ddatomic.objectCacheMax=32m -XX:+ExitOnOutOfMemoryError",
+        `DATOMIC_JAVA_OPTS=-Xms64m -Xmx${352 * scale}m -Ddatomic.objectCacheMax=32m -XX:+ExitOnOutOfMemoryError`,
         "-e",
         `DATOMIC_URI_TEMPLATE=datomic:sql://{db}?${sqlUrl}?user=datomic&password=${secret}`,
         "-e",
@@ -472,7 +482,7 @@ export class Stack {
           "-c",
           "set -eu; export LC_ALL=C; cat /tmp/playground-restore/postgres-*.dump-part | pg_restore --exit-on-error --single-transaction --clean --if-exists -U postgres -d datomic",
         ],
-        archiveCommand,
+        archiveCommand(signal),
       );
       return performance.now() - start;
     } finally {
@@ -519,7 +529,7 @@ export class Stack {
   }
 
   async dump(local: string) {
-    const { docker, prefix } = this.#opts;
+    const { docker, prefix, signal } = this.#opts;
     const roles = [prefix + "-write", prefix + "-read", prefix + "-tx"];
     for (const name of roles) {
       const owner = await docker([
@@ -535,9 +545,9 @@ export class Stack {
     const file = "/tmp/playground-export.dump";
     await docker(
       ["exec", pg, "pg_dump", "-U", "postgres", "-Fc", "-Z", "6", "-d", "datomic", "-f", file],
-      archiveCommand,
+      archiveCommand(signal),
     );
-    await docker(["cp", pg + ":" + file, local], archiveCommand);
+    await docker(["cp", pg + ":" + file, local], archiveCommand(signal));
     await docker(["exec", pg, "rm", file]);
   }
 
