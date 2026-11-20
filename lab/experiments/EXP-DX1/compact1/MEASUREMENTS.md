@@ -11,3 +11,13 @@ The current read prices an already touched subject. The pinned read revisits the
 The domain checker runs both current and pinned worlds through unchanged independent O-DOMAIN. Some frozen cases put several owners at one supplied logical position. Those cases replay in the same prerequisite order on separate subject saves and are compared at their explicitly remapped positions. The remaining exact-position cases compare to the frozen output. A separate temporal fixture tests an interior physical group cut, two microsecond boundaries, durable duplicate resolution after a deliberately dropped native result, predecessor metadata in the feed, and the erased marker at a pre-erasure coordinate. The TypeScript driver calls the experimental gateway through its exact wire requests and checks command claims and both read paths.
 
 [PASS audit and evidence binding](AUDIT.md) · [Checksums](SHA256SUMS)
+
+## Reproduce the SQL comparison
+
+```sh
+node lab/bin/heavy.mjs --label DX-COMPACT1 -- node lab/bin/engine.mjs compact-probe --holder DX-COMPACT1 --run prototype --image tx2-datomic:dx-w1-small-cost-69a7e6cd --out prototype-new
+node --experimental-strip-types lab/experiments/EXP-DX1/compact1/gate.ts "$attempt_dir"
+node lab/experiments/EXP-DX1/compact1/measure-summary.mjs "$attempt_dir"
+```
+
+Use the created durable attempt directory for `attempt_dir`. The runner keeps the domain, benchmark, recovery, SDK and loader logs separate and records their individual exits. A result used for comparison must include its complete arm sequence and cleanup record.

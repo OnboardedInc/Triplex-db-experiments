@@ -34,6 +34,7 @@
     "../lab/experiments/EXP-DX1/compact1/floor-summary.mjs",
     "../lab/experiments/EXP-DX1/compact1/local-engine.mjs",
     "../lab/experiments/EXP-DX1/compact1/measure-summary.mjs",
+    "../lab/experiments/EXP-DX1/compact1/prediction.mjs",
     "../examples/config-explorer/smoke.mjs",
     "../experiments/qlever-native-count-inventory-v1/runner.mjs",
     "../experiments/qlever-native-fault-preflight-v1/runner.mjs",
