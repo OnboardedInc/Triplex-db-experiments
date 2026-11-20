@@ -5,7 +5,7 @@ Publish waited less for saves and longer for earlier Publishes. The Mac was also
 The joined path gives Publish a turn ahead of waiting saves and lets a save already in progress finish.
 Publish then reads the saved facts and records the release and what it owes in one write.
 The native race check passed. A save before Publish changed its answers. A save after it changed later reads.
-The proposed server command uses one large seed. Its ninety-minute finish still needs proof.
+The one-seed command passed its 1,000-person rehearsal. Its ninety-minute finish at full size still needs proof.
 
 North star P5 with P1 and P2 under load. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
@@ -17,6 +17,6 @@ For DX-ACT1, merge `exp/DX-ACT2-activation-100k` from joined head `26bc49c58`. T
 
 The first paired local test verified every receipt and read for 200 offers per policy at 3.5 saves/s. Neither arm met the deadline. The 23.5 saves/s FIFO cell exceeded the 15-minute measurement limit before it sealed observations. The 39.4 saves/s cells did not start. The timing observer lost native request stages after the application queue. The independent receipts, public bytes and application clocks remain available. [Measurements and CPU pressure](PART4.md#matched-local-comparison)
 
-The server has one large seed and four cells covering record and stored output in quiet and loaded conditions. It budgets 83 minutes for work and seven for supervisor cleanup. The seed analogue was 56.6 minutes. The planning range is 70–100 minutes with proof and cleanup. The prior command's three cold seeds are out of this plan. [Command and forecast](PART4.md#one-seed-server-campaign)
+The server has one large seed and four cells covering record and stored output in quiet and loaded conditions. The local 1,000-person rehearsal verified all four with the same producer and collector on `2d026eb29`. There were no deadline misses and the loaded windows kept 12 saves each. The 100,000-person command budgets 83 minutes for work and seven for cleanup. Current projection is 70–100 minutes with proof and cleanup. [Command and forecast](PART4.md#one-seed-server-campaign)
 
 Receipt audit. `admission-gate.ts` matches the new native transaction, source cut, before and after oracle answers and bounded negative conflict to the same fresh scope, gateway options and slot. It requires one native request in that Publish's own observer. `queue-study.ts` checks each fresh native receipt and Python answer against the planned scope and attempt before scoring deadlines. `join/collect.ts` binds input and output hashes, gateway options and both endpoint clocks to the exact source, nonce and owner. It recursively checks the 1,000-person producer and collector from the same slot and source before accepting the larger bundle. Acceptance pins, W0 and the frozen trace are intact.
