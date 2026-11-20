@@ -1,7 +1,7 @@
 All accounts stay in one Datomic database.
 The aging tool writes a full journal and keeps one native transaction per save.
 Two Mac databases matched on 112 saves, including old reads and feed pages.
-The larger fixed-population measurements are running.
+The first ladder wrote 300,000 records at about 20,100 per second.
 The server forecast depends on the rate of those complete writes.
 The successor rehearsal checks a single move for every account.
 The erasure drill tracks whether old copies can still return a value.
@@ -35,3 +35,5 @@ The successor prototype carries all 14 test accounts at one logical cut. It chec
 ## Evidence to date
 
 The first two admission attempts started zero roles. Fidelity-c started an isolated SQL stack and stopped before any test writes on a Clojure compile error. Cleanup removed all three owned roles and the volume. The fix compiled all three entry namespaces on the Mac. Pure rendering and oracle checks used no database transactions. JavaScript syntax, target inversion, budget arithmetic and fits were checked locally. The retried fidelity gate matched 2,236 durable records after equivalent 4,948-record seeds, all 42 people at seven cuts, current and retired rows, and the complete paged feed. The short native arm ran at 11,597 records/s. The sustained measurement and repricing remain open. [Evidence hashes](SHA256SUMS)
+
+The ladder then stopped at the guest memory read before publishing a complete rung. The successor reached the first excision and stopped while counting a Datomic iterator. Both attempts removed all owned roles and volumes. The fixes are queued together for a fresh Mac run.
