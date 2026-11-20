@@ -31,6 +31,7 @@ export async function observeEventGate({
   stack,
   signal,
   eventBaseline,
+  timing,
   verifyReadyRuntime,
   spawnBound,
 }) {
@@ -83,6 +84,7 @@ export async function observeEventGate({
       identity,
       ids,
       eventBaseline,
+      timing,
       ledgerSha256: sha256File(ledger),
       p50Ms,
       p99Ms,
@@ -218,6 +220,7 @@ export async function observeEventGate({
     identity,
     ids,
     ledgerSha256: sha256File(ledger),
+    timing,
     capture,
     p50Ms,
     p99Ms,

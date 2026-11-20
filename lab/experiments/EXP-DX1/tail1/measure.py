@@ -77,7 +77,7 @@ def measure(out, incomplete=False):
         assert report["oracle"]["modelCorrectOnSameReads"] == report["oracle"]["reads"] > 0
     start = report["traceStartAbsMs"]
     stop = start + attempt["seconds"] * 1000
-    if attempt["platform"] == "darwin":
+    if attempt["platform"] == "darwin" and attempt.get("timing") != "shared-mac-diagnostic":
         lock = load(out / "timing-window.json")
         assert lock["identity"] == identity and lock["openedAt"] <= start
         locked_seconds = 240 if attempt["seconds"] == 5910 else attempt["seconds"]
@@ -195,7 +195,7 @@ def measure(out, incomplete=False):
     write_json(out / ("incomplete-measurement.json" if incomplete else "measurement.json"), {
         "identity": identity, "archive": archive["archive"], "arm": attempt["arm"], "seconds": attempt["seconds"],
         "driverStatus": report["status"], "sampleFloorMet": len(saved) >= 5000,
-        "saves": len(saved), "primaryOutcomes": dict(primary_outcomes), "resendOutcomes": dict(resend_outcomes),
+        "timing": attempt.get("timing", "historical"), "saves": len(saved), "primaryOutcomes": dict(primary_outcomes), "resendOutcomes": dict(resend_outcomes),
         "resolvedLostAcks": lost_ack["returnedOriginal"] if lost_ack else None,
         "savesPerSecond": len(saved) / max(attempt["seconds"], (max(r["ackPublishedAt"] for r in saved.values()) - start) / 1000),
         "ackMs": quantiles([r["verdictMs"] for r in saved.values()]), "cpuMemory": cpu_memory,

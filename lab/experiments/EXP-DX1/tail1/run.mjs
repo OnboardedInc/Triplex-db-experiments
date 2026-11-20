@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
@@ -21,7 +20,6 @@ import {
   vmDisk,
   withPool,
 } from "../../../bin/lib.mjs";
-import { acquireMeasureLease, readMeasureLease } from "../../../bin/heavy-lock.mjs";
 import { frozenDeep, releaseDeepStart } from "../../../bench/lib/deep-profile.ts";
 import { matchOffers } from "./replay-input.mjs";
 import { arms } from "./arms.mjs";
@@ -110,47 +108,6 @@ async function waitFor(probe, child, signal, deadline) {
   }
 }
 
-async function holdMacWindow(identity, signal, deadline, ownLease) {
-  // [DX-TAIL1] Why: older lab runs share this lock around their measured offers.
-  // Rejected: holding it through the deep seed, or taking all four heavy tokens while seeding.
-  const lock = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2", "locks", "measure");
-  const owner = path.join(lock, "owner.json");
-  const waitingAt = Date.now();
-  for (;;) {
-    signal.throwIfAborted();
-    assert(Date.now() < deadline, "Mac timing window unavailable before the replay deadline");
-    const current = readMeasureLease();
-    // [DX-TAIL1] Why: the incoming lease needs this job's heavy token to drain.
-    // Rejected: waiting for that lease while keeping our seed, slot and heavy token.
-    if (current && !current.stale && current.pid !== ownLease?.pid)
-      throw new Error("DX-TAIL1 yielding the heavy token to an incoming measurement lease");
-    try {
-      fs.mkdirSync(lock);
-      break;
-    } catch (error) {
-      if (error.code !== "EEXIST") throw error;
-      console.log("DX-TAIL1 ready, waiting for the shared Mac timing window");
-      await delay(5000, undefined, { signal });
-    }
-  }
-  const record = { pid: process.pid, holder, slot: identity.slot, at: Date.now() };
-  try {
-    write(owner, record);
-  } catch (error) {
-    fs.rmdirSync(lock);
-    throw error;
-  }
-  return {
-    record,
-    waitedMs: record.at - waitingAt,
-    release() {
-      assert.deepEqual(readJson(owner), record);
-      fs.unlinkSync(owner);
-      fs.rmdirSync(lock);
-    },
-  };
-}
-
 function reading(rows) {
   return Object.fromEntries(
     Object.entries(rows).map(([role, id]) => {
@@ -171,7 +128,7 @@ function reading(rows) {
   );
 }
 
-async function reserve(config, manager, names, roleMemory, cpus, signal, diskForecast, leaseHeld) {
+async function reserve(config, manager, names, roleMemory, cpus, signal, diskForecast, admitBy) {
   const reservedRoles = Object.keys(names);
   const firstRole = reservedRoles[0];
   for (;;) {
@@ -221,7 +178,7 @@ async function reserve(config, manager, names, roleMemory, cpus, signal, diskFor
       return slot;
     });
     if (typeof result !== "string") return result;
-    if (leaseHeld) throw new Error("DX-TAIL1 measurement lease released without a slot: " + result);
+    if (Date.now() >= admitBy) throw new Error("DX-TAIL1 admission unavailable: " + result);
     console.log("Waiting for DX-TAIL1 admission: " + result);
     await delay(5000, undefined, { signal });
   }
@@ -453,8 +410,8 @@ export async function runTail(options, config, manager) {
     return;
   }
   const seconds = options.full === true ? 5910 : Number(options.seconds ?? 240);
-  const leaseBeforeSeed = options["lease-before-seed"] === true;
-  assert(!leaseBeforeSeed || (mac && (eventGate || !gate)));
+  assert(options["lease-before-seed"] === undefined, "Use an ordinary heavy token");
+  assert(!mac || seconds <= 240, "Mac replays use a short diagnostic prefix");
   const receiptPredecessors = options["receipt-predecessors"] === true;
   if (receiptPredecessors)
     assert(
@@ -600,58 +557,9 @@ export async function runTail(options, config, manager) {
   process.once("SIGINT", interrupt);
   process.once("SIGTERM", interrupt);
   const signal = controller.signal;
-  let reservation, driver, timer, macWindow, windowTimer, measureLease;
+  let reservation, driver, timer;
   let measuredStart;
-  const releaseMacWindow = () => {
-    const lease = measureLease;
-    measureLease = undefined;
-    lease?.release();
-    if (!macWindow) return;
-    const opened = macWindow;
-    macWindow = undefined;
-    clearTimeout(windowTimer);
-    try {
-      opened.release();
-      write(path.join(out, "timing-window.json"), {
-        identity,
-        openedAt: opened.record.at,
-        closedAt: Date.now(),
-        sharedLockWaitedMs: opened.waitedMs,
-        measurementLease: lease?.owner ?? null,
-        measurementLeaseWaitedMs: lease?.waitedMs ?? null,
-      });
-    } catch (error) {
-      controller.abort(error);
-    }
-  };
-  const takeMeasureLease = async (timeoutMs) => {
-    const active = readMeasureLease();
-    if (active && !active.stale)
-      throw new Error("DX-TAIL1 yielding the heavy token to an incoming measurement lease");
-    try {
-      return await acquireMeasureLease(slot, { holder, timeoutMs, signal });
-    } catch (error) {
-      if (error.code === "LEASE_TIMEOUT")
-        throw new Error("DX-TAIL1 could not drain the heavy tokens for its measured window", {
-          cause: error,
-        });
-      throw error;
-    }
-  };
   try {
-    if (leaseBeforeSeed) {
-      // [DX-TAIL1] Why: obtain the all-token lease before reserving memory after a seeded arm lost
-      // its window on token drain. Rejected: holding the physical timing lock while waiting to seed.
-      const parent = readMeasureLease();
-      if (parent?.pid === process.ppid && !parent.stale) {
-        assert.equal(parent.holder, holder);
-        assert.equal(parent.label, holder + ":" + nonce);
-        measureLease = { owner: parent, waitedMs: null, release() {} };
-      } else {
-        measureLease = await takeMeasureLease(20 * 60_000);
-      }
-      signal.throwIfAborted();
-    }
     const admissionRequestedAt = Date.now();
     if (mac) {
       const bytes = Object.fromEntries(roles.map((role) => [role, caps[role] * MiB]));
@@ -662,12 +570,12 @@ export async function runTail(options, config, manager) {
         bytes,
         cpus,
         signal,
-        6 * GiB,
-        leaseBeforeSeed,
+        (gate ? 2 : 6) * GiB,
+        Date.now() + 30_000,
       );
     }
     const latest = mac
-      ? Date.now() + (seconds === 5910 ? 9000 : 2400) * 1000
+      ? Date.now() + 8 * 60_000
       : invokedAt + 29 * 60_000;
     const wPort = reservation?.port ?? 8491,
       rPort = wPort + 10;
@@ -683,8 +591,7 @@ export async function runTail(options, config, manager) {
       seconds,
       platform: process.platform,
       linuxClient,
-      leaseBeforeSeed,
-      preseedLeaseWaitedMs: measureLease?.waitedMs ?? null,
+      timing: mac ? "shared-mac-diagnostic" : "bare-metal",
       invokedAt,
       admissionRequestedAt,
       admittedAt: Date.now(),
@@ -816,10 +723,6 @@ export async function runTail(options, config, manager) {
       startupGc,
     });
     if (eventGate) {
-      if (mac) {
-        assert(measureLease, "The event-cost comparison needs the pre-seed measurement lease");
-        macWindow = await holdMacWindow(identity, signal, Date.now() + 120_000, measureLease.owner);
-      }
       const { observeEventGate } = await import("./event-joins.mjs");
       await observeEventGate({
         out,
@@ -832,6 +735,7 @@ export async function runTail(options, config, manager) {
         signal,
         host,
         eventBaseline,
+        timing: mac ? "shared-mac-diagnostic" : "bare-metal",
         verifyReadyRuntime,
         spawnBound,
       });
@@ -977,39 +881,8 @@ export async function runTail(options, config, manager) {
     assert.deepEqual(ready.identity, identity);
     assert.deepEqual(ready.seed, readJson(input).seed);
     assert.equal(ready.trace, frozenDeep(0, 10000).sha256);
-    if (mac) {
-      const lastStart = latest - seconds * 1000 - 135_000;
-      macWindow = await holdMacWindow(
-        identity,
-        signal,
-        measureLease ? Math.min(lastStart, Date.now() + 120_000) : lastStart,
-        measureLease?.owner,
-      );
-      if (!measureLease) {
-        // [DX-TAIL1] Why: keep the pool stable during offers using the lab's lease,
-        // while other timing users still honor the shared directory.
-        const maxWaitMs = Math.min(120_000, lastStart - Date.now());
-        assert(maxWaitMs > 0, "Insufficient time left to admit the measured window");
-        measureLease = await takeMeasureLease(maxWaitMs);
-      }
-      signal.throwIfAborted();
-      assert([identity.slot, holder + ":" + identity.nonce].includes(measureLease.owner.label));
-      assert.deepEqual(readMeasureLease(), measureLease.owner);
-    }
     const { identity: _, ...readyBody } = ready;
     const start = Date.now() + 12_000;
-    if (macWindow) {
-      if (options.full === true) {
-        // [DX-TAIL1] Why: the continuous 98.5-minute diagnostic must preserve the offer gaps.
-        // Rejected: monopolizing the lab lock for all 98.5 minutes or pausing the archived traffic.
-        windowTimer = setTimeout(releaseMacWindow, start + 240_000 - Date.now());
-      } else {
-        windowTimer = setTimeout(
-          () => controller.abort(Error("Mac measured hold reached fifteen minutes")),
-          macWindow.record.at + 890_000 - Date.now(),
-        );
-      }
-    }
     write(path.join(barrier, "go.json"), { ...identity, start, scopes: { s0: readyBody } });
     await waitFor(
       () => fs.existsSync(path.join(barrier, "s0.armed.json")),
@@ -1040,7 +913,6 @@ export async function runTail(options, config, manager) {
     clearInterval(timer);
     signal.throwIfAborted();
     sample();
-    releaseMacWindow();
     signal.throwIfAborted();
     verifyReadyRuntime();
     const recording = path.join(trace, "gw-w.jfr");
@@ -1083,12 +955,10 @@ export async function runTail(options, config, manager) {
     );
   } finally {
     clearInterval(timer);
-    clearTimeout(windowTimer);
     if (driver) {
       driver.stop();
       await driver.done;
     }
-    releaseMacWindow();
     if (fs.existsSync(reportFile))
       fs.copyFileSync(reportFile, path.join(out, "ns-report.json"), fs.constants.COPYFILE_EXCL);
     for (const name of ["s0.ready.json", "s0.armed.json", "release.json"]) {

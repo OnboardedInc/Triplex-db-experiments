@@ -33,8 +33,7 @@ The command offers 5,254 events, including 5,110 primary saves, at the original 
 Use the existing lab Docker endpoint and the same archive and image-receipt variables. The Mac feed clock requires permission to read the host boot identity. `--preflight` checks the image and clock before any reservation or seed. Give every attempt a new output directory.
 
 ```sh
-dx_tail1_nonce=$(node -p 'require("node:crypto").randomUUID()')
-node lab/bin/heavy.mjs --measure-holder DX-TAIL1 --label "DX-TAIL1:$dx_tail1_nonce" -- node lab/bin/engine.mjs tail1 --holder DX-TAIL1 --arm serial --seconds 240 --lease-before-seed --attempt-nonce "$dx_tail1_nonce" --archive "$DX_TAIL1_ARCHIVE" --image-receipt "$DX_TAIL1_IMAGE_RECEIPT" --out "$DX_TAIL1_OUTPUT"
+node lab/bin/heavy.mjs --label DX-TAIL1 -- node lab/bin/engine.mjs tail1 --holder DX-TAIL1 --event-gate --arm g1-2core --archive "$DX_TAIL1_ARCHIVE" --image-receipt "$DX_TAIL1_IMAGE_RECEIPT" --out "$DX_TAIL1_OUTPUT"
 ```
 
-Alternate Serial controls with tuned G1, generational ZGC, the smaller allocation path and two-core G1. Each uses 5,110 primary offers and 144 resends in the same four-minute prefix. Run the G1 receipt option between two G1 controls. Keep expiry and outcome counts beside the commit quantiles. The formal lease can cover seeding in a crowded queue. The shared physical timing lock starts after the seed and covers the timed offers. `--full` retains the 98.5-minute schedule, and the physical lock covers its first four minutes. `--gate` runs the native exactness checks in an independent stack. [Mac observations](MAC.md)
+The small gate checks native transaction joins and labels Mac timings diagnostic. Use `--gate` for the receipt and erasure checks. The full archived comparison now belongs on bare metal. The earlier Mac collector measurements remain historical. [Mac observations](MAC.md)
