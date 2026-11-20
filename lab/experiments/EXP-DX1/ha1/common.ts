@@ -27,6 +27,7 @@ export const modes = [
   "one-whole",
   "one-account",
   "load-profile",
+  "load-proof",
   "load-quiet",
   "load-live",
 ] as const;

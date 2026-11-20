@@ -63,7 +63,9 @@ async function recoverLoad(nonce: string, config: any, manager: any, folder: str
     const objects = live.map((r: any) => {
       assert(names.includes(r.name) && r.labels["tx2.holder"] === "DX-HA1");
       assert.equal(r.labels["tx2.managed-by"], "lab/bin/engine.mjs");
-      const view = JSON.parse(docker(["inspect", "--type", "container", r.name]))[0];
+      const inspected = docker(["inspect", "--type", "container", r.name]);
+      assert(inspected);
+      const view = JSON.parse(inspected)[0];
       const expected = roles.find((v: any) => prefix + "-" + v.role === r.name);
       assert(expected && view.Id === expected.id && view.Image === expected.image);
       assert(
@@ -81,9 +83,11 @@ async function recoverLoad(nonce: string, config: any, manager: any, folder: str
       "--filter",
       "label=ha1.attempt=" + nonce,
     ]);
-    assert(!networkIds.includes("\n"));
+    assert(networkIds !== null && !networkIds.includes("\n"));
     if (networkIds) {
-      const network = JSON.parse(docker(["network", "inspect", networkIds]))[0];
+      const inspected = docker(["network", "inspect", networkIds]);
+      assert(inspected);
+      const network = JSON.parse(inspected)[0];
       assert.equal(network.Name, prefix);
       assert.equal(network.Labels["ha1.attempt"], nonce);
       assert(
@@ -321,9 +325,15 @@ export async function localDrill(opts: any, config: any, manager: any) {
         throw error;
       }
     }
-    await drill(e!, site, site, { people, scopes: 3, capacity: "local" }, () => {
-      clean = true;
-    });
+    await drill(
+      e!,
+      site,
+      site,
+      { people, scopes: mode.startsWith("load-") ? 1 : 3, capacity: "local" },
+      () => {
+        clean = true;
+      },
+    );
   } finally {
     if (measured) {
       const f = path.join(parentLease, "owner.json");

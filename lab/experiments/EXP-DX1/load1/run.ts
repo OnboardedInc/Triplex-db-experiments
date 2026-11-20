@@ -34,22 +34,24 @@ export async function load(s: Stack, people: number) {
   const arms =
     e.mode === "load-profile"
       ? ["ordinary-a", "row-a", "range-a", "range-b", "row-b", "ordinary-b"]
-      : e.mode === "load-live"
-        ? ["live-0-a", "live-128", "live-500", "live-2000", "live-0-b"]
-        : server
-          ? ["quiet-server-2000-2"]
-          : [
-              "quiet-a-2000-1",
-              "classic-a-2000-2",
-              "quiet-a-2000-2",
-              "quiet-a-2000-4",
-              "quiet-a-1024-2",
-              "quiet-a-3000-2",
-              "quiet-b-2000-2",
-              "classic-b-2000-2",
-              "quiet-b-2000-1",
-              "proof-gap-1024-2",
-            ];
+      : e.mode === "load-proof"
+        ? ["proof-file"]
+        : e.mode === "load-live"
+          ? ["live-0-a", "live-128", "live-500", "live-2000", "live-0-b"]
+          : server
+            ? ["quiet-server-2000-2"]
+            : [
+                "quiet-a-2000-1",
+                "classic-a-2000-2",
+                "quiet-a-2000-2",
+                "quiet-a-2000-4",
+                "quiet-a-1024-2",
+                "quiet-a-3000-2",
+                "quiet-b-2000-2",
+                "classic-b-2000-2",
+                "quiet-b-2000-1",
+                "proof-gap-1024-2",
+              ];
   const reports: Array<{ sourceSeal: string; [key: string]: unknown }> = [];
   for (const arm of arms) {
     const scope = e.prefix + "-" + arm;

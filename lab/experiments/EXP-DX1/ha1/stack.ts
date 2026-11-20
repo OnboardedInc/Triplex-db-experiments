@@ -68,7 +68,10 @@ export class Stack {
     const image = pgRoles.has(role) ? this.pgIds.get(site)! : site.datomicId;
     const cross = this.a !== this.b;
     let published: string[] = [];
-    if (port && (cross || port === 8080)) {
+    if (!cross && port === 8080 && this.e.mode.startsWith("load-")) {
+      // [DX-LOAD1] Why: the VM assigns a free port at container start. Rejected: probing the Mac's socket table for a port used by the VM.
+      published = ["-p", loopback + "::" + port];
+    } else if (port && (cross || port === 8080)) {
       let hostPort = port;
       if (port === 8080) {
         if (cross) hostPort = role === "read" ? 28481 : 28480;
@@ -371,7 +374,7 @@ export class Stack {
               "-e",
               "TX2_LOAD1_PRIORITY=" + Number(this.e.mode === "load-live"),
               "-e",
-              "TX2_GROUP_QUEUE_CLOCK=" + Number(this.e.mode === "load-live"),
+              "TX2_GROUP_QUEUE_CLOCK=" + Number(this.a === this.b && this.e.mode === "load-live"),
               "-e",
               "TRIPLEX_TRACE_JFR=0",
               "-e",

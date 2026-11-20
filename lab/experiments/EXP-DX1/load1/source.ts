@@ -1,3 +1,4 @@
+import { bytes, type Assertion } from "./export.ts";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
@@ -7,10 +8,17 @@ import { seedOps } from "../../../bench/lib/commands.ts";
 
 export const sha = (s: string | Buffer) => createHash("sha256").update(s).digest("hex");
 export type Shape = "seed" | "deep" | "thin";
+export interface SnapshotData {
+  seal: string;
+  groups: number;
+  namespace: string;
+  validAt: number;
+  batches(first?: number): Generator<Frame, void>;
+}
 export interface Frame {
   first: number;
   end: number;
-  operations: ReturnType<typeof seedOps>;
+  operations: Array<Omit<Assertion, "ref" | "op"> & { op: string }>;
 }
 const definition = sha(
   [
@@ -56,7 +64,7 @@ export function* frames(
   subjects: number,
   width: number,
   first = 0,
-): Generator<Frame> {
+): Generator<Frame, void> {
   assert(
     Number.isSafeInteger(subjects) &&
       subjects > 0 &&
@@ -91,6 +99,10 @@ export function identity(scope: string, source: string, width: number, frame: Fr
   return {
     commandId,
     actor: "bulk-import",
-    correlationId: sha(JSON.stringify([commandId, frame.end, frame.operations])),
+    correlationId: sha(
+      frame.operations.some((o) => Object.is(o.value.value, -0) || Object.is(o.validFrom, -0))
+        ? bytes([commandId, frame.end, frame.operations])
+        : JSON.stringify([commandId, frame.end, frame.operations]),
+    ),
   };
 }

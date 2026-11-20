@@ -64,6 +64,9 @@ export async function seedRung(opts: {
 }): Promise<SeedResult> {
   const { comp } = opts;
   const accounts = accountsFor(opts.subjects);
+  const depth = opts.inFlight ?? 1;
+  if (depth !== 1 && comp.backend.name !== "datomic") throw Error("Concurrent seed requires Datomic");
+  if (![1, 2, 4].includes(depth)) throw Error("Seed depth must be 1, 2 or 4");
   const started = performance.now();
   const state = new Map<number, SubjectState>();
   const versionIds = new Map<number, string[]>();
@@ -125,8 +128,6 @@ export async function seedRung(opts: {
   }
   opts.log(`seed: ${accounts} shared account worlds in ${((performance.now() - started) / 1000).toFixed(1)} s`);
   // 2. subjects, version 0
-  const depth = opts.inFlight ?? 1;
-  if (depth !== 1 && comp.backend.name !== "datomic") throw Error("Concurrent seed requires Datomic");
   let stoppedEarly = false;
   function* batches() {
     let batch: Fact[] = [], members: number[] = [];

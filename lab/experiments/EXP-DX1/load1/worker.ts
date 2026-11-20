@@ -9,13 +9,15 @@ try {
   const result =
     mode === "load-profile"
       ? await profile(comp, scope, Number(people), dir, arm)
-      : mode === "load-quiet"
-        ? await (await import("./quiet.ts")).quiet(comp, scope, Number(people), dir, arm)
-        : mode === "load-live"
-          ? await (
-              await import("./live.ts")
-            ).live(comp, scope, Number(people), dir, arm, capacity === "server")
-          : undefined;
+      : mode === "load-proof"
+        ? await (await import("./file-proof.ts")).proveFile(comp, scope, Number(people), dir, arm)
+        : mode === "load-quiet"
+          ? await (await import("./quiet.ts")).quiet(comp, scope, Number(people), dir, arm)
+          : mode === "load-live"
+            ? await (
+                await import("./live.ts")
+              ).live(comp, scope, Number(people), dir, arm, capacity === "server")
+            : undefined;
   assert(result);
   console.log(
     JSON.stringify({
