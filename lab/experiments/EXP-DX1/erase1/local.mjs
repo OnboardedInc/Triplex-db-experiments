@@ -115,6 +115,8 @@ export async function local(opts, config, manager) {
       "regression",
       "ledger-regression",
       "ledger-overhead",
+      "fast-smoke",
+      "fast",
     ].includes(mode),
   );
   assert(Number.isSafeInteger(people) && people >= 12 && people <= 100_000);
@@ -162,6 +164,8 @@ export async function local(opts, config, manager) {
       abort.signal.throwIfAborted();
       diskFloor();
       await withPool((ledger) => {
+        // [DX-ERASE1] Why: a newly claimed measurement lease must be able to drain this waiting heavy permit.
+        // Rejected: sleeping on a frozen pool while the measurement owner waits for our permit.
         manager.assertMeasureAdmission(holder);
         const live = listTx2Containers({ all: true });
         if (live.some((c) => c.name === "tx2-datomic-dev" && c.running)) return;
@@ -195,8 +199,6 @@ export async function local(opts, config, manager) {
             memBytes: caps[role] * MiB,
             diskForecastBytes: role === "pg" ? forecast : 0,
           });
-      }).catch((error) => {
-        if (error.code !== "REFUSED") throw error;
       });
       if (!info) {
         if (Math.floor((Date.now() - waitingSince) / 5000) % 6 === 0)
@@ -363,9 +365,10 @@ export async function local(opts, config, manager) {
         "-v",
         import.meta.dirname + ":/erase1:ro",
         ...(archiveDir ? ["-v", archiveDir + ":/dx-archive"] : []),
-        ...(mode.startsWith("ledger-")
+        ...(mode.startsWith("ledger-") || mode.startsWith("fast")
           ? ["-v", "/dx-authority", "-e", "TRIPLEX_ERASURE_DIRECTORY=/dx-authority"]
           : []),
+        ...(mode.startsWith("fast") ? ["-e", "TRIPLEX_ERASURE_SHRED_GRACE_MS=0"] : []),
         "-p",
         new URL(endpoint).hostname + ":" + info.port + ":8080",
         "-e",
@@ -460,7 +463,7 @@ export async function local(opts, config, manager) {
         TX2_W0_POINT_JOURNAL: "1",
         DX_ERASE_TOKEN: token,
         DX_ERASE_MEASURE:
-          mode === "smoke" || regression ? "" : path.join(vault, "locks", "measure"),
+          mode.endsWith("smoke") || regression ? "" : path.join(vault, "locks", "measure"),
       },
       stdio: ["ignore", "inherit", "inherit", "ipc"],
     });

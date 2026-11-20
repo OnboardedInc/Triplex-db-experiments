@@ -4,10 +4,13 @@
             [datomic.api :as d]
             [ring.adapter.jetty :as jetty]
             [triplex.gateway.lean :as lean]
+            [triplex.gateway.envelope :as envelope]
+            [triplex.gateway.privacy :as privacy]
             [triplex.gateway.main :as main]
             [triplex.gateway.schema :as schema]
             [triplex.gateway.scope :as scope])
-  (:import [java.security MessageDigest]
+  (:import [java.nio.file Files]
+           [java.security MessageDigest]
            [java.time Instant]
            [java.util Date HexFormat]))
 
@@ -128,6 +131,89 @@
       (check! (= before positive) "Held database value changed")
       {:held positive :fresh fresh :latest latest :log raw-log :t t :plan plan})))
 
+(defn ciphertext-inventory! [conn input]
+  (let [name (scope-name! input) db (d/db conn) id (get input "id") canary (get input "canary")
+        target (lean/by-id (d/history db) id)
+        _ (check! (and target (string? canary) (not-empty canary)) "Missing inventory control")
+        parsed (lean/decode (:v target))
+        asserted (d/entid db [:triplex.tx/position (get input "assertionPosition")])
+        retirement (d/entid db [:triplex.tx/position (get input "retractionPosition")])
+        _ (check! (and asserted retirement (< asserted retirement)) "Missing distinct native assertion and retirement positions")
+        t (d/tx->t asserted)
+        retired-t (d/tx->t retirement)
+        pull (fn [basis]
+               (let [part (first (d/tx-range (d/log conn) basis (inc basis)))]
+                 (check! (= basis (:t part)) "Wrong native log slice") (:data part)))
+        append (pull t) retract (pull retired-t)
+        logs (keep (fn [x] (when (string? (:v x)) (:v x))) (concat append retract))
+        envelope-id (d/entid db [:triplex.private/id id])
+        body (scope/value db envelope-id :triplex.private/body)
+        value (envelope/decode! name db id (:entity_id parsed) (:attribute parsed) (:value_string parsed))
+        row-attr (d/entid db :triplex.entity/row)
+        references (fn [datoms]
+                     (let [token (envelope/token id)]
+                       (->> datoms
+                         (filter #(and (:added %) (= row-attr (:a %)))) (map #(lean/decode (:v %)))
+                         (filter (fn [r]
+                                   (or (and (= id (:id r)) (= token (:value_string r)))
+                                       (when (= ":_tx/change" (:attribute r))
+                                         (let [c (json/read-str (:value_json r))]
+                                           (and (= id (get c "tripleId"))
+                                                (= token (get-in c ["value" "value"]))))))))
+                         count)))]
+    {:id id :nativeT (str t) :retirementT (str retired-t)
+     :body (boolean (and (string? body) (seq body)))
+     :keyBytes (Files/size (envelope/key-file name id))
+     :references (references append) :retirementReferences (references retract) :unsealed (= canary value)
+     :plaintext (boolean (some #(str/includes? % canary) (conj (vec logs) (:v target))))}))
+
+(defn ciphertext-cleanup! [conn input]
+  (let [name (scope-name! input) ids (get input "ids")
+        db (d/db conn) state (privacy/cut name db)
+        _ (privacy/verify-data! state db)
+        _ (check! (and (:sealed state) (vector? ids) (<= 1 (count ids) 2000)
+                       (= (count ids) (count (set ids))) (every? (:erased state) ids)) "Cleanup requires bounded published erasures")
+        history (d/history db)
+        candidates (mapv (fn [id] [id (d/entid db [:triplex.private/id id])]) ids)
+        history-count (fn [at e]
+                        (if e (count (seq (d/datoms at :eavt e :triplex.private/body))) 0))
+        matched (reduce + (map #(history-count history (second %)) candidates))
+        _ (check! (<= matched 2000) "Cleanup would exceed 2,000 matched datoms")
+        selected (filter (fn [[_ e]] (pos? (history-count history e))) candidates)
+        started (wall-ms)
+        _ (envelope/erase-keys! name (mapv (fn [id] {"assertionId" id}) ids))
+        shred (wall-ms)
+        _ (check! (not-any? #(privacy/exists? (envelope/key-file name %)) ids) "Key files survive their shred")
+        _ (doseq [[_ e] selected]
+            (check! (= 1 (history-count history e)) "Assertion has multiple envelope bodies"))]
+    (if (seq selected)
+      (let [report (until (d/transact conn (mapv (fn [[_ e]]
+                      {:db/id (d/tempid :db.part/user) :db/excise e :db.excise/attrs [:triplex.private/body]})
+                    selected)))
+            t (d/basis-t (:db-after report))
+            asked (wall-ms)
+            requested (d/request-index conn)
+            after (until (d/sync-excise conn t))
+            finished (wall-ms)
+            _ (check! (and (>= (d/basis-t after) t)
+                           (every? #(zero? (history-count (d/history after) (second %))) selected))
+                      "Cleanup did not reach exact absence for the scheduled ciphertext")]
+        {:ids ids :matched matched :keysAbsent (count ids) :requestedIndex requested
+         :startedAt started :shreddedAt shred :indexAskedAt asked :finishedAt finished
+         :t (str t) :seq (:seq state)})
+      {:ids ids :matched matched :keysAbsent (count ids)
+       :startedAt started :shreddedAt shred :finishedAt (wall-ms) :seq (:seq state)})))
+
+(defn key-state! [conn input]
+  (let [name (scope-name! input) id (get input "id")
+        db (d/db conn) state (privacy/cut name db)
+        _ (privacy/verify-data! state db)
+        _ (check! (and (:sealed state) (contains? (:erased state) id)) "Key state requires a published identity")
+        e (d/entid db [:triplex.private/id id])]
+    {:id id :seq (:seq state) :now (wall-ms)
+     :keyPresent (privacy/exists? (envelope/key-file name id))
+     :bodyPresent (boolean (and e (scope/value db e :triplex.private/body)))}))
+
 (defn handle [{:keys [uri request-method headers body] :as req}]
   (if-not (str/starts-with? uri "/erase1/")
     (main/handler req)
@@ -143,6 +229,9 @@
                  "prepare" (prepare! conn input)
                  "erase" (erase! conn input)
                  "regression-excise" (regression-excise! conn input)
+                 "ciphertext-inventory" (ciphertext-inventory! conn input)
+                 "ciphertext-cleanup" (ciphertext-cleanup! conn input)
+                 "key-state" (key-state! conn input)
                  "observe" (observe! conn input)
                  "drop-pin" (do (check! (= conn (:conn @plans)) "Wrong pin owner") (reset! plans nil) {:released true})
                  "index" (let [t (d/basis-t (d/db conn)) clock (System/nanoTime) req (d/request-index conn)
@@ -160,6 +249,7 @@
 (defn -main [mode]
   (case mode
     "gateway" (do
+                (envelope/start!)
                 (d/create-database (main/db-uri "tx2-health"))
                 ;; [DX-ERASE1] Why: bare-metal diagnostics bind to the prepared loopback interface.
                 ;; Rejected: exposing native fixture controls on the server's public interfaces.

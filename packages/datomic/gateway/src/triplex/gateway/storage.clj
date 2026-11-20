@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [triplex.gateway.privacy :as privacy] [clojure.edn] [triplex.gateway.group :as group] [triplex.gateway.commit :as commit] [triplex.gateway.predecessor :as pred] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [clojure.edn] [triplex.gateway.group :as group] [triplex.gateway.commit :as commit] [triplex.gateway.predecessor :as pred] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:require [triplex.gateway.replay-capture :as replay-capture] [triplex.gateway.small-row :as small-row]
             [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed] [clojure.data.json :as json])
   (:import [java.util UUID]))
@@ -153,6 +153,8 @@
          input (ordered-row-texts (expand-fresh input lean))
          new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
          _ (privacy/validate-write! privacy/*cut* input rows)
+         protected (envelope/protect privacy/*database* privacy/*cut* input rows)
+         input (:input protected) rows (:rows protected)
          fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
          timed-rows (when (seq old) (into {} (keep (fn [r] (when-let [id (timed-retraction r)] [(:id r) id]))) fresh))
          source (when-some [p (get input "sourceK")] (safe-position p)) position (safe-position (get input "position"))
@@ -180,6 +182,7 @@
                [{:db/id "datomic.tx" :triplex.tx/position (marker position)
                  :triplex.tx/operation-id (get input "operationId") :triplex.tx/id (or (:id metadata) "")
                  :triplex.tx/recorded-at [:triplex/record-time (finite! (:recorded-at metadata))]}]
+               (:bodies protected)
                ;; [DX-ERASE1] Why: a late native write is fenced even if its peer request timed out.
                ;; Rejected: releasing the gateway lock and trusting the delayed transactor outcome.
                (when-let [seq (:seq privacy/*cut*)]
@@ -326,7 +329,9 @@
                   (not-any? #(and (vector? %) (= :triplex.scope/feed-irregular (nth % 2 nil))) (:ops p)))]
     ;; [DX-INT1] Why: the installed writer stamps predecessor clocks and validity from each speculative db-before.
     ;; Rejected: rewriting peer row texts, which can be ordered, packed or forwarded without a map.
-    (fn [view]
+    ;; [DX-ERASE1] Why: group workers rebuild protected rows under the same verified erasure and envelope bindings.
+    ;; Rejected: capturing just the input frame (a fallback could rebuild unsealed rows on a different thread).
+    (bound-fn [view]
       (if (and safe
                (= (if (:slim-row p) 4 3) (value view (:scope p) :triplex.scope/rows-version))
                (= (ffirst data) (commit/entry view input (:lean p)))
@@ -490,6 +495,8 @@
           (when-not tx (unavailable! "No physical transaction covers the requested position"))
           (d/as-of db (d/tx->t tx)))))))
 (defn read-db [name current input]
+  (when (and (:sealed privacy/*cut*) (contains? input "staged"))
+    (privacy/failure! 409 "ProtectedPreviewUnavailable" "A protected row preview requires a guarded save"))
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
                (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(trace/span "d/with" "peer-call" (d/with held (tx-data held staged))))) held))
@@ -585,6 +592,8 @@
 ;; [DX-B5-L2] Why: retain one visibility/masking rule for both physical layouts.
 ;; Rejected: interpreting interior logical positions as physical transaction cuts.
 (defn read-rows [name current input]
+  (when (and (:sealed privacy/*cut*) (contains? input "staged"))
+    (privacy/failure! 409 "ProtectedPreviewUnavailable" "A protected row preview requires a guarded save"))
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
                (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(trace/span "d/with" "peer-call" (d/with held (tx-data held staged))))) held)) current)]

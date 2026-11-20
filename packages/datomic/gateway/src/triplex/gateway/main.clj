@@ -1,5 +1,5 @@
 (ns triplex.gateway.main
-  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
             [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed] [triplex.gateway.erase :as erase])
   (:gen-class))
@@ -262,7 +262,8 @@
                     (codec/invalid "Invalid source scope for protected delivery"))
                 request (cond-> request input (assoc :privacy-input input))
                 run (fn [cut]
-                      (binding [privacy/*cut* cut privacy/*database* name privacy/*data* db]
+                      (binding [privacy/*cut* cut privacy/*database* name privacy/*data* db
+                                privacy/*unseal* (fn [id e a value] (envelope/decode! name (d/db conn) id e a value))]
                         (let [answer (if (and (= :get request-method) (= action "erasure-frontier"))
                                        (response 200 {:database name :protected (boolean cut)
                                                       :seq (or (:seq cut) 0) :erased (or (:erased cut) {})})
@@ -293,6 +294,7 @@
 
 (defn handler [request] (trace/handler route-handler request))
 (defn -main [& _]
+  (envelope/start!)
   (d/create-database (db-uri "tx2-health"))
   ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.
   ;; Rejected: per-read initialization barriers.

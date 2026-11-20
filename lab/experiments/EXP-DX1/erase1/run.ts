@@ -22,7 +22,9 @@ type Layout =
   | "overlap"
   | "regression"
   | "ledger-regression"
-  | "ledger-overhead";
+  | "ledger-overhead"
+  | "fast"
+  | "fast-smoke";
 type Attempt = {
   binding: string;
   nonce: string;
@@ -215,7 +217,7 @@ function blocks() {
     run.mode === "smoke" || run.mode.endsWith("regression") || run.mode === "ledger-overhead"
       ? 5
       : 415;
-  return [makeGroup(mid - 1, 1, 0), makeGroup(mid, 1, history)];
+  return [makeGroup(mid - 1, 1, 0), makeGroup(mid, 1, run.mode.startsWith("fast") ? 0 : history)];
 }
 function makeGroup(first: number, n: number, depth: number): Acc {
   return {
@@ -710,10 +712,11 @@ async function scale() {
   let f = new Fixture(comp, fixtureName);
   let reader: CompositionHandle | undefined;
   try {
-    if (run.mode === "ledger-regression") {
+    if (run.mode === "ledger-regression" || (run.mode.startsWith("fast") && action !== "check")) {
       const authority = new DatomicClient(process.env.DATOMIC_URL!);
       try {
-        await authority.declareProtection(f.db, [field(0)]);
+        const sealed = run.mode.startsWith("fast");
+        await authority.declareProtection(f.db, sealed ? [":privacy/field"] : [field(0)], sealed);
       } finally {
         authority.close();
       }
@@ -764,6 +767,23 @@ async function scale() {
         getParent,
         output,
         run.mode === "ledger-regression",
+      );
+      return;
+    }
+    if (run.mode.startsWith("fast")) {
+      const { fast } = await import("./fast.ts");
+      await measured(() =>
+        fast(
+          f,
+          run.people,
+          f.facts,
+          run.nonce,
+          diag,
+          storage,
+          () => getParent("guard"),
+          output,
+          ...(run.mode === "fast-smoke" ? ([2, 8] as const) : []),
+        ),
       );
       return;
     }

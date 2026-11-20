@@ -1,5 +1,6 @@
 (ns triplex.gateway.erase
   (:require [clojure.data.json :as json] [datomic.api :as d]
+            [triplex.gateway.envelope :as envelope]
             [triplex.gateway.lean :as lean] [triplex.gateway.privacy :as privacy]
             [triplex.gateway.scope :as scope])
   (:import [java.util UUID]))
@@ -44,19 +45,23 @@
 
 (defn- matches [db policy selector]
   (if-let [id (get selector "id")]
-    (let [record (lean/by-id (d/history db) id)
-          row (when record (lean/decode (:v record)))]
+    (let [private-id (when (:sealed policy) (d/entid db [:triplex.private/id id]))
+          row (if private-id (envelope/assertion-identity db private-id)
+                (when-let [record (lean/by-id (d/history db) id)] (lean/decode (:v record))))]
       (when-not row (privacy/failure! 404 "UnknownAssertion" "No assertion matches this identity"))
       (when-not ((:attrs policy) (:attribute row))
         (privacy/failure! 400 "EraseNotProtected" "The assertion attribute is outside the protected policy"))
+      (when (and (:sealed policy) (nil? private-id)) (privacy/unavailable!))
       [row])
-    (let [attribute (get selector "attribute")
-          e (d/entid db [:triplex.entity/id (get selector "entityId")])]
+    (let [attribute (get selector "attribute") owner (get selector "entityId")]
       (when (and attribute (not ((:attrs policy) attribute)))
         (privacy/failure! 400 "EraseNotProtected" "The attribute is outside the protected policy"))
-      (when e
-        (filter #(and ((:attrs policy) (:attribute %)) (or (nil? attribute) (= attribute (:attribute %))))
-                (lean/history-entity db e))))))
+      ;; [DX-ERASE1] Why: erase seeks the detached protected history for this owner.
+      ;; Rejected: decoding the owner's ordinary rows and traversing their retired value history.
+      (let [rows (if (:sealed policy)
+                   (map #(envelope/assertion-identity db (:e %)) (d/datoms db :avet :triplex.private/entity owner))
+                   (when-let [e (d/entid db [:triplex.entity/id owner])] (lean/history-entity db e)))]
+        (filter #(and ((:attrs policy) (:attribute %)) (or (nil? attribute) (= attribute (:attribute %)))) rows)))))
 
 (defn make-entry [name db state command selectors]
   (let [position (inc (scope/head-position db (scope/entity db)))
@@ -118,7 +123,7 @@
                      :triplex.claim/tx-id tx}
                     [:db/cas head :triplex.scope/erasure-seq (dec (get entry "seq")) (get entry "seq")]]
                     (not (scope/head-v2? current head))
-                    (conj [:db/cas head :triplex.scope/position (dec position) position])) 
+                    (conj [:db/cas head :triplex.scope/position (dec position) position]))
               report (deref (d/transact conn ops) 5000 ::timeout)]
           (when (= ::timeout report) (privacy/unavailable!))
           (let [db (:db-after report) t (d/basis-t db)]

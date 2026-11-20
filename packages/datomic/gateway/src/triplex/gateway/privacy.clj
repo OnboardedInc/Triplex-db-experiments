@@ -11,6 +11,7 @@
 (def ^:dynamic *cut* nil)
 (def ^:dynamic *database* nil)
 (def ^:dynamic *data* nil)
+(def ^:dynamic *unseal* nil)
 (def cache (atom {}))
 (def local-guards (atom {}))
 (def zeros (apply str (repeat 64 "0")))
@@ -33,7 +34,7 @@
 (defn exists? [^Path p]
   (Files/exists p (make-array LinkOption 0)))
 
-(defn- sync-directory! [^Path p]
+(defn sync-directory! [^Path p]
   (with-open [c (FileChannel/open p (into-array StandardOpenOption [StandardOpenOption/READ]))]
     (.force c true)))
 
@@ -169,17 +170,23 @@
 
 (defn masked [row]
   (if-not *cut* row
-    (cond
-      (= ":_tx/change" (:attribute row))
-      (let [change (json/read-str (:value_json row))
-            marker (get-in *cut* [:erased (get change "tripleId")])]
-        (if (and marker (contains? change "value"))
-          (assoc row :value_json (json/write-str (assoc change "value" marker))) row))
-      :else
-      (if-let [marker (get-in *cut* [:erased (:id row)])]
-        (assoc (reduce #(assoc %1 %2 nil) row payload-cols)
-               :value_type "erased" :value_json (json/write-str marker))
-        row))))
+    (let [sealed? (:sealed *cut*) attrs (:attrs *cut*)]
+      (cond
+        (= ":_tx/change" (:attribute row))
+        (let [change (json/read-str (:value_json row)) id (get change "tripleId")
+              attr (get change "attribute") marker (get-in *cut* [:erased id])
+              value (when (contains? change "value")
+                      (or marker (when (and sealed? (attrs attr))
+                                   {"type" "string" "value" (*unseal* id (get change "entityId") attr
+                                                                  (get-in change ["value" "value"]))})))]
+          (if value (assoc row :value_json (json/write-str (assoc change "value" value))) row))
+        :else
+        (if-let [marker (get-in *cut* [:erased (:id row)])]
+          (assoc (reduce #(assoc %1 %2 nil) row payload-cols)
+                 :value_type "erased" :value_json (json/write-str marker))
+          (if (and sealed? (attrs (:attribute row)))
+            (assoc row :value_string (*unseal* (:id row) (:entity_id row) (:attribute row) (:value_string row)))
+            row))))))
 
 (defn encode [row]
   ;; Same v2 row fields and header as rowText.ts. Preserve signed zero and the fixed position token.
@@ -207,7 +214,7 @@
   (zipmap columns (json/read-str (subs text (packed-tail text)))))
 
 (defn text [^String bytes]
-  (if (and *cut* (seq (:erased *cut*)))
+  (if (and *cut* (or (:sealed *cut*) (seq (:erased *cut*))))
     (let [end (packed-tail bytes)
           values (json/read-str (subs bytes end))
           row (zipmap columns values)
