@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 
 const archiveHash = "095971d5126cf567a7db3ff15c3fc718656bf98541a66ea0b05136c4c9bd54bb";
 const ledgerHash = "e86d069642e297f4099814b2307570bff1f5d9db753f7929a3c4e4514ea3cdfa";
-const keys = [
+const keys = /** @type {const} */ ([
   "seq",
   "resend",
   "subject",
@@ -12,8 +12,15 @@ const keys = [
   "active",
   "correction",
   "ackLoss",
-];
+]);
 
+/** @typedef {import("../../../bench/lib/deep-trace.ts").DeepEvent} DeepOffer */
+/** @typedef {Pick<DeepOffer, (typeof keys)[number]> & {offsetMs: number}} ArchiveOffer */
+/**
+ * @param {{archive: string, ledger: string, trace: string, seed: {sha256: string, facts: number, people: number}, start: number, seconds: number, offers: ArchiveOffer[]}} archive
+ * @param {ReturnType<typeof import("../../../bench/lib/deep-profile.ts").frozenDeep>} plan
+ * @param {number} seconds
+ */
 export function matchOffers(archive, plan, seconds) {
   assert.equal(archive.archive, archiveHash);
   assert.equal(archive.ledger, ledgerHash);
@@ -24,6 +31,7 @@ export function matchOffers(archive, plan, seconds) {
   assert.equal(archive.seconds, 5910);
   assert(Number.isSafeInteger(archive.start) && archive.start > 0);
   assert(seconds === 5910 || (Number.isSafeInteger(seconds) && seconds >= 180 && seconds <= 900));
+  /** @param {DeepOffer} a @param {DeepOffer} b */
   const order = (a, b) => a.atMs - b.atMs || a.seq - b.seq || Number(a.resend) - Number(b.resend);
   const events = plan.events
     .filter((e) => e.stream === "background" && e.atMs < seconds * 1000)
@@ -33,6 +41,7 @@ export function matchOffers(archive, plan, seconds) {
   let primary = 0;
   for (const [i, e] of events.entries()) {
     const row = rows[i];
+    assert(row, "Missing archived offer");
     for (const key of keys) assert.equal(e[key], row[key], `Archived offer ${i}, ${key}`);
     assert(Math.abs(e.atMs - row.offsetMs) < 0.001, `Archived offer ${i} changed spacing`);
     if (!e.resend) primary++;

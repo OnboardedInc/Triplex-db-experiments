@@ -13,6 +13,9 @@
     "lib": ["ESNext"]
   },
   "files": [
+    "../lab/experiments/EXP-DX1/tail1/arms.mjs",
+    "../lab/experiments/EXP-DX1/tail1/replay-input.mjs",
+    "../lab/experiments/EXP-DX1/tail1/run.mjs",
     "../lab/trace/instrument.mjs",
     "../lab/trace/harness-volume.mjs",
     "../lab/trace/trial.mjs",
