@@ -44,6 +44,10 @@ export function campaignCases(people: readonly number[] = populations) {
 }
 export type CampaignCase = ReturnType<typeof campaignCases>[number];
 
+export function scorecardCases() {
+  return campaignCases([100_000]).filter((c) => c.profile === "frozen");
+}
+
 export function campaignTenant(c: CampaignCase, smoke: boolean) {
   return {
     topology: "pooled",

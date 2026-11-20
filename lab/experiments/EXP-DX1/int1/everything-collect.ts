@@ -17,6 +17,7 @@ import {
   campaignCases,
   campaignTenant,
   gatewayJvmOptions,
+  scorecardCases,
   treatment,
   type CampaignCase,
 } from "./everything-plan.ts";
@@ -30,6 +31,7 @@ export function openPlan(
   smoke: boolean,
   placement: "leased-mac" | "physical",
   overnight = false,
+  heldSeal?: string,
 ) {
   const plan = {
     source,
@@ -38,7 +40,8 @@ export function openPlan(
     treatment,
     createdAt: Date.now(),
     overnight,
-    cases: campaignCases(smoke ? [4] : overnight ? [10_000] : undefined),
+    ...(heldSeal ? { heldSeal } : {}),
+    cases: heldSeal ? scorecardCases() : campaignCases(smoke ? [4] : overnight ? [10_000] : undefined),
     oracle: read(path.join(dir, "oracle-source.json")),
     placementInputs: read(path.join(dir, "physical-inputs.json")),
   };
@@ -317,8 +320,12 @@ export async function collect(dir: string, mode: "produce" | "verify") {
   assert.equal(typeof plan.overnight, "boolean");
   assert.deepEqual(
     plan.cases,
-    campaignCases(plan.smoke ? [4] : plan.overnight ? [10_000] : undefined),
+    plan.heldSeal ? scorecardCases() : campaignCases(plan.smoke ? [4] : plan.overnight ? [10_000] : undefined),
   );
+  if (plan.heldSeal) {
+    assert(!plan.smoke && !plan.overnight && plan.placement === "physical");
+    assert.equal(await fileHash(path.join(dir, "held-seal.json")), plan.heldSeal);
+  }
   assert.deepEqual(plan.treatment, treatment);
   assert(plan.placement === "physical" || (plan.placement === "leased-mac" && plan.smoke));
   await checkInputs(dir, plan);
@@ -356,6 +363,9 @@ export async function collect(dir: string, mode: "produce" | "verify") {
     );
     assert.deepEqual(released.armed.s0.identity, id);
     const raw = await readScope(out, id, result.start, result.code);
+    if (plan.heldSeal) {
+      assert.deepEqual(raw.report.deep.restoredSeed?.origin, read(path.join(dir, "held-seal.json")));
+    }
     if (plan.placement === "leased-mac") {
       assert.deepEqual(raw.report.harnessStorage, {
         requested: "owned-ext4",
@@ -383,16 +393,17 @@ export async function collect(dir: string, mode: "produce" | "verify") {
       assert(launch.capturedAt >= arm.startedAt && launch.capturedAt <= result.start);
       assert.deepEqual(
         launch.vm.map((r: any) => r.role),
-        Object.keys(gatewayJvmOptions),
+        [...Object.keys(gatewayJvmOptions), ...(plan.heldSeal ? ["tx"] : [])],
       );
       for (const row of launch.vm) {
-        const role = row.role as keyof typeof gatewayJvmOptions;
+        const role = row.role as keyof typeof gatewayJvmOptions | "tx";
         assert(row.container === placement[role].id);
-        assert(gatewayJvmOptions[role].every((flag) => row.actual.includes(flag)));
+        const flags = role === "tx" ? ["-Xmx5g", "-XX:+UseG1GC"] : gatewayJvmOptions[role];
+        assert(flags.every((flag) => row.actual.includes(flag)));
         assert.equal(row.actual.filter((flag: string) => /^-XX:\+Use.*GC$/.test(flag)).length, 1);
         assert.equal(
           row.actual.filter((flag: string) => flag.startsWith("-Xmx")).at(-1),
-          "-Xmx384m",
+          role === "tx" ? "-Xmx5g" : "-Xmx384m",
         );
       }
     }
