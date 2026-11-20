@@ -59,11 +59,31 @@ for component, root in (("gateway", "packages/datomic/gateway"), ("config", "lab
     for item in built["sources"][component]:
         assert inputs["stage"][root + "/" + item["path"]] == item["sha256"]
 nonce = (stage / "lab/config/datomic/attempt").read_text().strip()
-assert (stage / "lab/config/datomic/field-study").read_text() == "query6"
-events = [json.loads(line[8:]) for line in raw.read_text().splitlines() if line.startswith("W1_DATA ")]
-assert [e["k"] for e in events] == ["sql", "query-proof", "query-proof", *["query-cost"] * 4, "finished"]
+study = (stage / "lab/config/datomic/field-study").read_text()
+lines = raw.read_text().splitlines()
+events = [json.loads(line[8:]) for line in lines if line.startswith("W1_DATA ")]
 assert all(e["nonce"] == nonce for e in events) and events[-1]["v"] == {"nonce": nonce}
 assert events[0]["v"] == [[k, "on"] for k in ("fsync", "synchronous_commit", "full_page_writes")]
+binding = {"slot": terminal["slot"], "image": slot["imageId"], "attempt": nonce,
+           "inputs": sha(out / "inputs.json"), "raw": sha(raw), "verifier": sha(Path(__file__))}
+
+if study == "erase6":
+    assert [e["k"] for e in events] == ["sql", "finished"]
+    (record,) = [json.loads(line[10:]) for line in lines if line.startswith("W1_ERASE6 ")]
+    assert record["attempt"] == nonce and record["id"] == "canary-identity"
+    key = record["db"][3:]
+    assert json.loads(base64.urlsafe_b64decode(key + "=" * (-len(key) % 4)))[3] == nonce
+    assert 0 < int(record["assertT"]) < int(record["eraseT"])
+    assert record["pinnedCode"] == record["freshCode"] == "ErasureQueryUnsupported"
+    assert record["feedCode"] == "FeedErasureUnsupported"
+    assert all(type(record[k]) is bool for k in ("heldCleartext", "historyPresent", "journalCleartext"))
+    with (out / ("observation-" + str(uuid.uuid4()) + ".json")).open("x") as f:
+        json.dump({**binding, "observation": record}, f, indent=2)
+        print(f.name)
+    sys.exit(0)
+
+assert study == "query6"
+assert [e["k"] for e in events] == ["sql", "query-proof", "query-proof", *["query-cost"] * 4, "finished"]
 
 legacy, lean = (e["v"] for e in events[1:3])
 for layout, arm in zip(("legacy", "lean"), (legacy, lean), strict=True):
@@ -210,8 +230,6 @@ for i, (event, covered) in enumerate(zip(events[3:7], (False, True, True, False)
                   "requestBytes": quantiles([r["write"][0] for r in samples]),
                   "ackBytes": quantiles([r["write"][1] for r in samples]),
                   "datoms": sorted({r["write"][2] or 0 for r in samples})})
-proof = {"slot": terminal["slot"], "image": slot["imageId"], "attempt": nonce, "inputs": sha(out / "inputs.json"),
-         "raw": sha(raw), "oracle": revision, "case": sha(queries), "expected": sha(answer),
-         "verifier": sha(Path(__file__)), "costs": costs}
+proof = {**binding, "oracle": revision, "case": sha(queries), "expected": sha(answer), "costs": costs}
 (attempt / "verified.json").write_text(json.dumps(proof, indent=2) + "\n")
 print(attempt / "verified.json")

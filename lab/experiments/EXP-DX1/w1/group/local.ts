@@ -405,6 +405,18 @@ try {
         role: "transactor",
         data: fs.readFileSync(cwd + "/transactor-gc.log", "utf8"),
       });
+  } else if (fieldStudy === "erase6") {
+    const peer = start(home + "/bin/run", ["-m", "triplex.gateway.erase6"], {
+      W1_ATTEMPT: nonce,
+      DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
+      DATOMIC_URI_TEMPLATE: uri,
+      TX2_SAVE_LEDGER: "1",
+      TX2_LEAN_NATIVE_QUERY: "1",
+      TX2_LEAN_NATIVE_LOG: "1",
+      DATOMIC_JAVA_OPTS:
+        jvm + " -Ddatomic.objectCacheMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
+    });
+    assert.equal(await new Promise<number | null>((resolve) => peer.once("exit", resolve)), 0);
   } else if (fieldStudy === "query6") {
     const proof = await gateway(false, {
       TX2_SAVE_LEDGER: "1",
