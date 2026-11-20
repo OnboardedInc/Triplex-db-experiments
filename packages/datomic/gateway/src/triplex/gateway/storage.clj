@@ -227,6 +227,7 @@
                        :rev-aevt (= "1" (System/getenv "TX2_REV_AEVT"))
                        :lean lean :slim-row (= 4 rows-version) :ops ops :times times :new-ids (vec new-ids) :assign-record-time (not= false (get input "assignRecordTime"))
                        :command-ids (mapv #(get % "commandId") claims)
+                       :owners (vec (distinct (map :entity_id rows)))
                        ;; [DX-R3] Why: strict scopes also order empty/claim-only commits and every imported claim clock.
                        ;; Rejected: checking row timestamps only (a supported SPI commit can have no rows).
                        :record-clocks (vec (cons (:recorded-at metadata) (map #(get % "timestamp") claims)))

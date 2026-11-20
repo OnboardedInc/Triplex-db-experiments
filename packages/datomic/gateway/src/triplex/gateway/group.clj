@@ -57,14 +57,18 @@
 (defn classify [db p input]
   (let [journals (set (:journal-entities p))
         owners (set (keep #(when (map? %) (:triplex.entity/id %)) (:ops p)))
-        business (remove journals owners)
+        authored (remove journals (or (:owners p) owners))
+        ;; [DX-WFIX1] Why: the core reserves system entities within this verified database scope.
+        ;; Rejected: assigning scope maintenance to a caller-supplied account (or removing its dependency keys).
+        system? #(.startsWith ^String % "_triplex/")
+        business (remove system? authored)
         hint (get input "groupAccount")
         accounts (set (map #(or (second (re-matches #"acct/([A-Za-z0-9_-]{1,64})/.+" %))
                                 (when (and hint (:lean p)) (persisted-account db %))) business))
         account (when (= 1 (count accounts)) (first accounts))]
     (when (and hint (seq business) (not= hint account))
       (throw (ex-info "Group account must match every business entity namespace" {:code "InvalidValue" :status 400 :write-policy true})))
-    {:account (or account :shared)
+    {:account (or account (if (and (seq authored) (empty? business)) :system :shared))
      :subject (when (= 1 (count business)) (first business))
      :scope-barrier (and policy/priority? (:scope-wide p) (some? (:source p)))
      :keys (set (concat (map #(vector :entity %) (concat owners (:entities p)))
