@@ -145,10 +145,10 @@ export async function localDrill(opts: any, config: any, manager: any) {
   assert(
     previousPg === undefined ||
       (diagnostic &&
-        mode === "load-volume" &&
+        (mode === "load-volume" || mode === "load-pipeline") &&
         typeof previousPg === "string" &&
         /^sha256:[a-f0-9]{64}$/.test(previousPg)),
-    "--prepare-postgres expects the prior image ID for a local diagnostic volume check",
+    "--prepare-postgres expects the prior image ID for a local diagnostic import check",
   );
   const slots = (opts.slot === "auto" ? ["s2", "s3", "s1"] : [opts.slot]).map((id) =>
     slotInfo(config, "datomic", id),

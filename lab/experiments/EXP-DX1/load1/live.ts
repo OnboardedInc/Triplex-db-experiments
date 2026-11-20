@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
@@ -12,7 +13,7 @@ import { maxBulkFacts, SerialBudget } from "./budget.ts";
 import { isolatedImport } from "./isolated.ts";
 import { sharedMono } from "./split-import.ts";
 import { microLoad, splitLoad } from "../ha1/common.ts";
-import { offers, type Offer } from "./live-evidence.ts";
+import { offers, pipelineTimings, type Offer } from "./live-evidence.ts";
 import { ack, record, type Seen } from "./oracle.ts";
 import {
   FrameCredits,
@@ -26,6 +27,7 @@ import {
   volumeWindow,
 } from "./micro.ts";
 import type { Frame } from "./source.ts";
+import { pipelineDuration, pipelineHz, pipelineLimit, PipelineCredits } from "./pipeline.ts";
 
 // [DX-LOAD2] Why: bracket the guest clock with both host timestamps; compare guest-native clocks directly.
 // Rejected: assuming wall time on a VM is the same as the client's clock, or hiding uncertain overlaps.
@@ -73,19 +75,33 @@ export async function live(
     frontier = mode.startsWith("load-frontier-");
   const split = splitLoad(mode),
     micro = microLoad(mode),
-    volume = mode === "load-volume";
+    volume = mode === "load-volume",
+    pipeline = mode === "load-pipeline",
+    depth = pipeline ? Number(arm.split("-")[2]) || 0 : 0;
+  let sender = pipeline ? randomUUID() : undefined;
+  let sequence = 0;
+  const sends = new Map<string, number>();
   const alone = frontier && arm === "frontier-alone";
   const allReads = (split || frontier || micro) && !alone;
   const diagnosticVolume = volume && !server;
-  const rates = diagnosticVolume ? [10, 50] : split || frontier ? [50, 100] : [50, 235, 390];
+  const rates =
+    pipeline && !server
+      ? [10]
+      : diagnosticVolume
+        ? [10, 50]
+        : split || frontier
+          ? [50, 100]
+          : [50, 235, 390];
   assert(rates.includes(rate));
   const cell = alone ? "0" : arm.split("-")[1],
     width = frontier && cell !== "0" ? maxBulkFacts : Number(cell),
     duration = volume
       ? volumeWindow(arm, !server)
-      : micro
-        ? microDuration
-        : (traceTail || split || frontier ? 108 : server ? 60 : 12) * 1000,
+      : pipeline
+        ? pipelineDuration(!server)
+        : micro
+          ? microDuration
+          : (traceTail || split || frontier ? 108 : server ? 60 : 12) * 1000,
     subjects = micro
       ? volume
         ? server
@@ -95,6 +111,12 @@ export async function live(
       : server || traceTail || split || frontier
         ? 100000
         : 20000;
+  const hz = pipeline ? pipelineHz : microHz;
+  assert(
+    !pipeline ||
+      (width === 0 && depth === 0) ||
+      ([16, 24].includes(width) && [1, 2, 4, 8].includes(depth)),
+  );
   const fixture = micro ? microFixture(subjects, width || 24) : undefined;
   const budget =
     frontier && width
@@ -132,7 +154,9 @@ export async function live(
   const attempted = new Map<string, { command: string; submit: number }>();
   let invalidReceipt: unknown,
     loseReplyFor = "",
-    lostReplies = 0;
+    lostReplies = 0,
+    missingCommand = "",
+    missingCode: string | undefined;
   const expectedDb =
     "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scope))).toString("base64url");
   const original = api.DatomicClient.prototype.transact;
@@ -143,7 +167,19 @@ export async function live(
     assert.equal(input.claims.length, 1);
     const command = input.claims[0]!.commandId;
     attempted.set(input.operationId, { command, submit: start });
-    const reply: any = await original.call(this, db, input, onSent);
+    const sendSequence = sends.get(command);
+    const reply: any = await original
+      .call(
+        this,
+        db,
+        sendSequence === undefined ? input : { ...input, clientId: sender, sendSequence },
+        onSent,
+      )
+      .catch((error: unknown) => {
+        if (command === missingCommand && error instanceof api.DatomicHttpError)
+          missingCode = error.code;
+        throw error;
+      });
     try {
       assert.equal(input.operationId, reply.operationId);
       const bulk = command.startsWith("load1/");
@@ -208,14 +244,17 @@ export async function live(
   };
   const quiet = await openComposition("reach", "datomic", scope);
   const writerForImport = micro ? await openComposition("reach", "datomic", scope) : comp;
-  const importer = await Snapshot.open(
-    writerForImport,
-    fixture ?? "thin",
-    subjects,
-    budget ? maxBulkFacts : micro ? width || 24 : Math.max(width, 128),
-    path.join(dir, arm + ".sqlite"),
-    budget ? { budgetMs: budget.ms } : undefined,
-  );
+  const openImporter = () =>
+    Snapshot.open(
+      writerForImport,
+      fixture ?? "thin",
+      subjects,
+      budget ? maxBulkFacts : micro ? width || 24 : Math.max(width, 128),
+      path.join(dir, arm + ".sqlite"),
+      budget ? { budgetMs: budget.ms } : undefined,
+      depth ? width / 8 : undefined,
+    );
+  let importer = await openImporter();
   let other: Awaited<ReturnType<typeof isolatedImport>> | undefined;
   try {
     const checks = new Map<string, Seen>();
@@ -271,6 +310,7 @@ export async function live(
     if (isolated) void isolated.catch(() => {});
     let inFlight = 0,
       quietInFlight = 0,
+      pendingSaves = 0,
       bulkInFlight = 0,
       peakBulk = 0,
       factsInWindow = 0,
@@ -297,6 +337,7 @@ export async function live(
       }
       if (sentinel) quietInFlight++;
       else inFlight++;
+      if (kind === "save") pendingSaves++;
       const work = (async () => {
         if (kind === "read") {
           const { receipt: pin, row: pinRow } = pins.get(actor)!;
@@ -349,6 +390,7 @@ export async function live(
           s.end = performance.now() - start;
           if (sentinel) quietInFlight--;
           else inFlight--;
+          if (kind === "save") pendingSaves--;
           pending.delete(work);
         });
       pending.add(work);
@@ -370,8 +412,123 @@ export async function live(
       fatal ??= error;
     });
     const credits = micro ? new FrameCredits(start) : undefined;
+    let resumeCursor: number | undefined;
+    const pipelineChecks = { missingPredecessor: false };
+    const exerciseTemporal = async () => {
+      assert.equal(bulkInFlight, 0);
+      bulkInFlight++;
+      try {
+        const tested = await temporalExercise(writerForImport, (command) => {
+          loseReplyFor = command;
+        });
+        for (const [command, receipt] of tested) temporalSeen.set(command, receipt);
+      } finally {
+        bulkInFlight--;
+      }
+    };
+    const submitPipeline = async () => {
+      let fixed = fixture!.batches(importer.cursor());
+      let staged = fixed.next().value;
+      const admitted = new Set<Promise<void>>();
+      const pace = new PipelineCredits(start);
+      const settled = new Map<number, NonNullable<typeof lastFrame>>();
+      // [DX-HA1] Why: advance the sampled marker only when every earlier checkpoint is durable.
+      // Rejected: treating out-of-order HTTP completion as a queryable prefix.
+      try {
+        while (staged && performance.now() < end && !fatal) {
+          if (!server && resumeCursor === undefined && sequence >= 4) {
+            await Promise.all(admitted);
+            if (fatal) break;
+            const expected = importer.cursor();
+            const resumed = await openImporter();
+            assert.equal(resumed.cursor(), expected);
+            importer.close();
+            importer = resumed;
+            resumeCursor = expected;
+            sender = randomUUID();
+            sequence = 0;
+            fixed = fixture!.batches(resumed.cursor());
+            staged = fixed.next().value;
+            assert(staged);
+          }
+          if (!temporalSeen.size && performance.now() - start >= duration / 3) {
+            await Promise.all(admitted);
+            if (fatal) break;
+            await exerciseTemporal();
+          }
+          await pace.wait(end);
+          const limit = pipelineLimit(depth, pendingSaves);
+          if (admitted.size >= limit) {
+            // Pressure can fall through a live completion before the oldest import reply.
+            await Promise.race([...admitted, delay(1)]);
+            continue;
+          }
+          const at = performance.now();
+          if (at >= end || fatal) break;
+          const f = staged;
+          const command = importer.frameIdentity(f).commandId;
+          sends.set(command, ++sequence);
+          if (f.first === 0) loseReplyFor = command;
+          const pressure = { outstanding: admitted.size, pendingSaves, limit };
+          pace.consume(at);
+          peakBulk = Math.max(peakBulk, admitted.size + 1);
+          const work = (async () => {
+            try {
+              const entry = await importer.write(f);
+              const done = performance.now();
+              if (done <= end) factsInWindow += entry.facts;
+              completedBulk += entry.facts;
+              const recovered = !server && byCommand.get(entry.command)?.recovered;
+              const service = recovered ? undefined : measure(entry.command);
+              settled.set(f.end, { frame: f, position: entry.position, ids: entry.ids });
+              let next: NonNullable<typeof lastFrame> | undefined;
+              while ((next = settled.get((lastFrame?.frame.end ?? 0) + width / 8))) {
+                lastFrame = next;
+                settled.delete(next.frame.end);
+              }
+              ordered.push({
+                first: f.first,
+                end: f.end,
+                command: entry.command,
+                position: entry.position,
+                facts: entry.facts,
+                offer: at - start,
+                ack: done - start,
+                service,
+                pressure,
+              });
+            } catch (error) {
+              fatal ??= error;
+            } finally {
+              sends.delete(command);
+              admitted.delete(work);
+            }
+          })();
+          admitted.add(work);
+          staged = fixed.next().value;
+        }
+      } finally {
+        await Promise.all(admitted);
+      }
+      ordered.sort((a, b) => a.first - b.first);
+      assert.equal(settled.size, 0);
+      assert.equal(lastFrame?.frame.end, importer.cursor());
+      if (!server && !fatal) {
+        const missing = fixed.next().value;
+        assert(staged && missing);
+        const meta = importer.frameIdentity(missing);
+        missingCommand = meta.commandId;
+        const refused = await writerForImport.transact(missing.operations, meta);
+        assert(!refused.ok, "The transactor accepted a missing predecessor");
+        assert.equal(missingCode, "ImportPredecessorMissing");
+        const absent = await writerForImport.transactionByCommand(meta.commandId);
+        assert(absent.ok && !absent.value, "The rejected suffix was published");
+        pipelineChecks.missingPredecessor = true;
+      }
+    };
     const bulk = (async () => {
       if (!width || split) return;
+      if (pipeline) return submitPipeline();
       const fixed = fixture?.batches(importer.cursor()) ?? frames("thin", subjects, width);
       let staged = fixed.next().value;
       while (performance.now() < end) {
@@ -383,13 +540,7 @@ export async function live(
         const f = budget ? importer.nextFrame(limit!) : staged;
         if (!f || (credits && !(await credits.grant(end)))) break;
         if (micro && !temporalSeen.size && performance.now() - start >= duration / 3) {
-          assert.equal(bulkInFlight, 0);
-          bulkInFlight++;
-          const tested = await temporalExercise(writerForImport, (command) => {
-            loseReplyFor = command;
-          });
-          for (const [command, receipt] of tested) temporalSeen.set(command, receipt);
-          bulkInFlight--;
+          await exerciseTemporal();
           if (performance.now() >= end) break;
         }
         const offered = performance.now();
@@ -474,7 +625,8 @@ export async function live(
         native: [...native.values()],
         ...(micro
           ? {
-              hz: microHz,
+              hz,
+              ...(pipeline ? { depth, resumeCursor, pipelineChecks } : {}),
               windowFacts: factsInWindow,
               cycleBudget: microCycleMs,
               markers,
@@ -550,7 +702,11 @@ export async function live(
     );
     assert.equal(seen.size, checks.size + temporalSeen.size);
     if (micro && width) {
-      assert.equal(lostReplies, 1);
+      assert.equal(lostReplies, pipeline ? 2 : 1);
+      if (pipeline) {
+        assert(ordered.every((frame, i) => i === 0 || ordered[i - 1].position < frame.position));
+        if (!server) assert(resumeCursor && pipelineChecks.missingPredecessor);
+      }
       assert.equal(temporalSeen.size, 3);
       assert(markers.some((m) => m.done <= duration));
     }
@@ -605,7 +761,16 @@ export async function live(
       fps: factsInWindow / (duration / 1000),
       ...(micro
         ? {
-            offeredFrames: Math.floor((duration * microHz) / 1000),
+            offeredFrames: Math.floor((duration * hz) / 1000),
+            ...(pipeline
+              ? {
+                  depth,
+                  resumeCursor,
+                  pipelineChecks,
+                  limitedOffers: ordered.filter((f) => f.pressure.limit < depth).length,
+                  pipelineTiming: pipelineTimings(ordered, observations),
+                }
+              : {}),
             queryableFacts: (markers.findLast((m) => m.done <= duration)?.end ?? 0) * 8,
             cycleOverBudget: ordered.filter((r) => r.ack - r.offer > microCycleMs).length,
             framesWithoutService: ordered.filter((r) => !r.service).length,

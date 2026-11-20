@@ -39,6 +39,7 @@ export class Snapshot {
     readonly width: number,
     file: string,
     readonly adaptive?: { budgetMs: number },
+    readonly orderedStride?: number,
   ) {
     assert(comp.scopeName && comp.backend.name === "datomic");
     this.scope = comp.scopeName;
@@ -49,7 +50,9 @@ export class Snapshot {
       JSON.stringify(
         adaptive
           ? [this.scope, this.source, width, "serial-budget-v1", adaptive.budgetMs]
-          : [this.scope, this.source, width],
+          : orderedStride
+            ? [this.scope, this.source, width, "ordered-pipeline-v1", orderedStride]
+            : [this.scope, this.source, width],
       ),
     );
     this.ledger = new DatabaseSync(file);
@@ -68,6 +71,19 @@ export class Snapshot {
     return this.namespace === "acct/import/"
       ? "load1/manifest/import"
       : "load1/manifest/" + sha(this.namespace);
+  }
+  frameIdentity(f: Frame) {
+    const meta = identity(this.scope, this.source, this.width, f);
+    if (!this.orderedStride) return meta;
+    const sequence = f.first / this.orderedStride;
+    assert(Number.isSafeInteger(sequence) && sequence >= 0);
+    assert.equal(f.end - f.first, this.orderedStride);
+    const commandId = `load1/pipeline-${this.binding}/${sequence}`;
+    return {
+      ...meta,
+      commandId,
+      correlationId: sha(JSON.stringify([commandId, meta.correlationId])),
+    };
   }
   private sourceFrames(first = 0, end = this.subjects) {
     if (typeof this.shape === "string") return frames(this.shape, end, this.width, first);
@@ -121,8 +137,13 @@ export class Snapshot {
     width: number,
     file: string,
     adaptive?: { budgetMs: number },
+    orderedStride?: number,
   ) {
-    const run = new Snapshot(comp, shape, subjects, width, file, adaptive);
+    assert(
+      !orderedStride ||
+        (!adaptive && typeof shape !== "string" && shape.namespace === "acct/import/"),
+    );
+    const run = new Snapshot(comp, shape, subjects, width, file, adaptive, orderedStride);
     try {
       const key = run.manifest;
       const meta = { actor: "bulk-import", commandId: key, correlationId: run.binding };
@@ -171,7 +192,7 @@ export class Snapshot {
           assert(Number(next.value["first"]) >= f.first);
           if (Number(next.value["first"]) !== f.first) continue;
           const saved = run.entry(f)!;
-          const original = await lookup(comp, f, identity(run.scope, run.source, width, f));
+          const original = await lookup(comp, f, run.frameIdentity(f));
           assert.deepEqual(original, run.summary(saved));
           if (cursor === f.first) cursor = f.end;
           next = stored.next();
@@ -210,7 +231,7 @@ export class Snapshot {
       .get(f.first);
     if (!row) return;
     const e: Entry = JSON.parse(String(row["body"])),
-      meta = identity(this.scope, this.source, this.width, f);
+      meta = this.frameIdentity(f);
     assert.deepEqual(
       [e.first, e.end, e.facts, e.command, e.digest, e.position],
       [
@@ -238,7 +259,7 @@ export class Snapshot {
         f.end,
       );
     }
-    const meta = identity(this.scope, this.source, this.width, f);
+    const meta = this.frameIdentity(f);
     await hooks.beforeSend?.(f.first);
     const out = await this.comp
       .transact(f.operations, meta)
@@ -328,7 +349,7 @@ export class Snapshot {
     // Rejected: turning the feed alone into a claim-index proof or putting claim audits in the timed window.
     await windowed(verifyFrames(), this.adaptive ? 4 : readDepth, async (f) => {
       const e = this.entry(f)!;
-      const original = await lookup(this.comp, f, identity(this.scope, this.source, this.width, f));
+      const original = await lookup(this.comp, f, this.frameIdentity(f));
       assert.deepEqual(original, this.summary(e));
     });
     assert.equal(this.cursor(), expectedPrefix);
@@ -388,10 +409,7 @@ export class Snapshot {
         }
         const f = this.batches(Number(row["first"])).next().value as Frame;
         const e = this.entry(f)!;
-        assert.deepEqual(
-          record(f, identity(this.scope, this.source, this.width, f), r),
-          this.summary(e),
-        );
+        assert.deepEqual(record(f, this.frameIdentity(f), r), this.summary(e));
         if (assertionSweep) {
           // [DX-LOAD3] Why: batch independent reads at one exact cut after the timed window.
           // Rejected: replacing a full typed readback with a sample when frame count rises.

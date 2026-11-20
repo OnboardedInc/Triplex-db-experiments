@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { pipelineDuration, pipelineHz, pipelineLimit } from "./pipeline.ts";
 import type { Seen } from "./oracle.ts";
 import { microCycleMs, microDuration, microHz, volumeWindow } from "./micro.ts";
 
@@ -29,17 +30,23 @@ export interface OfferTape {
     offer: number;
     ack: number;
     service?: { ms: number; rows: number; bytes: number };
+    pressure?: { outstanding: number; pendingSaves: number; limit: number };
   }[];
   native: {
     command: string;
     position: number;
     recovered?: boolean;
     queueUs?: number;
+    toEntryMs?: number;
+    frameSize?: { rows: number; bytes: number };
     serialHold?: { start: number; end: number };
     grant?: { bulk: boolean; "runnable-live": boolean };
   }[];
   markers?: { first: number; end: number; position: number; digest: string; done: number }[];
   hz?: number;
+  depth?: number;
+  resumeCursor?: number;
+  pipelineChecks?: { missingPredecessor: boolean };
   lostReplies?: number;
   temporal?: { command: string; position: number }[];
 }
@@ -70,6 +77,26 @@ export function offers(rows: Offer[]): Measure {
   };
 }
 
+export function pipelineTimings(ordered: OfferTape["ordered"], native: OfferTape["native"]) {
+  const describe = (values: number[]) => ({
+    count: values.length,
+    p50: percentile(values, 0.5),
+    p99: percentile(values, 0.99),
+    max: percentile(values, 1),
+  });
+  const holds = ordered.flatMap(({ service }) => (service ? [service] : []));
+  const quiet = native.filter(({ command }) => /^save\/quiet\/\d+$/.test(command));
+  return {
+    frameCycleMs: describe(ordered.map((r) => r.ack - r.offer)),
+    peerHoldMs: describe(holds.map((r) => r.ms)),
+    frameWireBytes: describe(holds.map((r) => r.bytes)),
+    storedRows: describe(holds.map((r) => r.rows)),
+    quietQueueMs: describe(
+      quiet.flatMap(({ queueUs }) => (queueUs === undefined ? [] : [queueUs / 1000])),
+    ),
+  };
+}
+
 // [DX-LOAD2] Why: compare the same scheduled tape and recompute its timing from retained offers.
 // Rejected: granting a fast p99 to a cell that made fewer offers, omitted late responses, or changed their pinned workload.
 export function replayLive(
@@ -92,12 +119,19 @@ export function replayLive(
     offeredFrames?: number;
     temporal?: number;
     width?: number;
+    depth?: number;
+    peakBulk?: number;
+    resumeCursor?: number;
+    pipelineChecks?: { missingPredecessor: boolean };
+    limitedOffers?: number;
+    pipelineTiming?: ReturnType<typeof pipelineTimings>;
   },
   mac = false,
 ) {
-  const micro = attempt.mode === "load-micro" || attempt.mode === "load-volume";
+  const pipeline = attempt.mode === "load-pipeline";
+  const micro = pipeline || attempt.mode === "load-micro" || attempt.mode === "load-volume";
   if (
-    !/^(load-tail|load-micro|load-volume|load-frontier-(low|high|allowance)|load-split-(sql|pg))$/.test(
+    !/^(load-tail|load-micro|load-volume|load-pipeline|load-frontier-(low|high|allowance)|load-split-(sql|pg))$/.test(
       attempt.mode,
     )
   )
@@ -110,13 +144,17 @@ export function replayLive(
       attempt.source.git,
       attempt.slot,
       prefix + "-" + arm.arm,
-      attempt.mode === "load-volume" ? volumeWindow(arm.arm, mac) : microDuration,
+      attempt.mode === "load-volume"
+        ? volumeWindow(arm.arm, mac)
+        : pipeline
+          ? pipelineDuration(mac)
+          : microDuration,
     ],
   );
   assert.equal(arm.scope, tape.scope);
   assert.equal(arm.duration, tape.duration);
   assert(Number.isFinite(tape.start));
-  const diagnosticVolume = mac && attempt.mode === "load-volume";
+  const diagnosticVolume = mac && (pipeline || attempt.mode === "load-volume");
   assert((diagnosticVolume ? [10, 50] : [50, 100]).includes(arm.rate));
   if (attempt.mode === "load-tail") assert.equal(arm.rate, 50);
   const alone = arm.arm === "frontier-alone";
@@ -194,17 +232,58 @@ export function replayLive(
     }
   }
   if (micro) {
-    assert.equal(tape.hz, microHz);
-    assert.equal(arm.offeredFrames, Math.floor((arm.duration * microHz) / 1000));
+    const hz = pipeline ? pipelineHz : microHz;
+    assert.equal(tape.hz, hz);
+    assert.equal(arm.offeredFrames, Math.floor((arm.duration * hz) / 1000));
     assert.equal(arm.framesWithoutService, tape.ordered.filter((r) => !r.service).length);
     let first = 0;
     let lastAck = 0;
+    let lastPosition = 0;
+    let lastHold = 0;
+    if (pipeline) {
+      const depth = Number(arm.arm.split("-")[2]) || 0;
+      assert.equal(tape.depth, depth);
+      assert.equal(arm.depth, depth);
+      assert.equal(arm.resumeCursor, tape.resumeCursor);
+      assert.deepEqual(arm.pipelineChecks, tape.pipelineChecks);
+      if (mac && depth) {
+        assert(tape.resumeCursor && tape.resumeCursor >= (4 * arm.width!) / 8);
+        assert.equal(tape.pipelineChecks?.missingPredecessor, true);
+      }
+      // [DX-HA1] Why: independently reconstruct each admission from completed HTTP frames and offered live saves.
+      // Rejected: trusting the worker's reported peak depth or hiding unserved live pressure behind the credit cap.
+      const lives = tape.samples.filter((r) => r.kind === "save" && r.end > r.offered);
+      const active = [];
+      let peak = 0;
+      let limited = 0;
+      let liveStarts = 0;
+      let liveEnds = 0;
+      const starts = lives.map((r) => r.offered).sort((a, b) => a - b);
+      const ends = lives.map((r) => r.end).sort((a, b) => a - b);
+      for (const f of tape.ordered) {
+        while (starts[liveStarts] !== undefined && starts[liveStarts]! < f.offer) liveStarts++;
+        while (ends[liveEnds] !== undefined && ends[liveEnds]! <= f.offer) liveEnds++;
+        const pendingSaves = liveStarts - liveEnds;
+        const limit = pipelineLimit(depth, pendingSaves);
+        for (let i = active.length - 1; i >= 0; i--) if (active[i]! <= f.offer) active.splice(i, 1);
+        assert.deepEqual(f.pressure, { outstanding: active.length, pendingSaves, limit });
+        assert(active.length < limit);
+        if (limit < depth) limited++;
+        active.push(f.ack);
+        peak = Math.max(peak, active.length);
+      }
+      assert.equal(arm.peakBulk, peak);
+      assert.equal(arm.limitedOffers, limited);
+      assert.deepEqual(arm.pipelineTiming, pipelineTimings(tape.ordered, tape.native));
+    }
     const byPosition = new Map<number, (typeof tape.ordered)[number]>();
     for (const row of tape.ordered) {
       assert.equal(row.first, first);
       assert.equal(row.facts, arm.width);
       assert.equal(row.facts, (row.end - row.first) * 8);
-      assert(row.offer >= lastAck);
+      assert(pipeline || row.offer >= lastAck);
+      if (pipeline) assert(row.position > lastPosition);
+      lastPosition = row.position;
       first = row.end;
       lastAck = row.ack;
       const n = recorded.get(row.command)!;
@@ -212,6 +291,11 @@ export function replayLive(
       else {
         assert(n.grant?.bulk && !n.grant["runnable-live"] && n.serialHold);
         assert.equal(row.service?.ms, n.serialHold.end - n.serialHold.start);
+        if (pipeline) {
+          assert.deepEqual({ rows: row.service.rows, bytes: row.service.bytes }, n.frameSize);
+          assert(n.serialHold.start >= lastHold, "Bulk peer submissions overlapped");
+          lastHold = n.serialHold.end;
+        }
         assert(row.service.ms > 0 && row.service.rows <= 96 && row.service.bytes <= 65536);
       }
       assert(!byPosition.has(row.position));
@@ -231,7 +315,7 @@ export function replayLive(
     }
     const last = tape.markers?.findLast((m) => m.done <= arm.duration);
     assert.equal(arm.queryableFacts, (last?.end ?? 0) * 8);
-    assert.equal(tape.lostReplies, arm.width ? 1 : 0);
+    assert.equal(tape.lostReplies, arm.width ? (pipeline ? 2 : 1) : 0);
     assert.equal(tape.temporal?.length, arm.temporal);
     assert.equal(arm.temporal, arm.width ? 3 : 0);
     for (const r of tape.temporal ?? [])

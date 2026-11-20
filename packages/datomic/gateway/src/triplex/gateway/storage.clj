@@ -124,6 +124,15 @@
         (when-not (= (count ids) (count (set ids))) (codec/invalid "Duplicate fresh row ID"))
         ;; [DX-LOAD1] Why: ordinary compact validation compares each decoded row ID with the actual prefix. Rejected: a client assertion of empty history or a second source of row order.
         (assoc input "rowMode" "texts" "newIds" ids "rowOrder" ids "rowTexts" (zipmap ids texts) "rows" [])))))
+(def import-pipeline? (= "1" (System/getenv "TX2_IMPORT_PIPELINE")))
+(defn import-predecessor [claims]
+  (when import-pipeline?
+    (let [ids (filter #(.startsWith ^String % "load1/pipeline-") (keep #(get % "commandId") claims))]
+      (when (seq ids)
+        (let [[_ stream ordinal] (re-matches #"load1/(pipeline-[a-f0-9]{64})/(0|[1-9][0-9]{0,14})" (first ids))]
+          (when-not (and stream (= 1 (count claims))) (codec/invalid "Invalid ordered import claim"))
+          (let [n (Long/parseLong ordinal)]
+            (if (zero? n) "load1/manifest/import" (str "load1/" stream "/" (dec n)))))))))
 (defn tx-data
   ([db input] (tx-data db input (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([db input scope]
@@ -132,6 +141,7 @@
          source (when-some [p (get input "sourceK")] (safe-position p)) position (safe-position (get input "position"))
          span (safe-position (or (get input "span") (when source (- position source))))
          lower (- position span) claims (get input "claims") sample (or (first fresh) (first old))
+         predecessor (import-predecessor claims)
          metadata {:position position
                    :recorded-at (cond (seq fresh) (:recorded_at sample) (seq old) (:retracted_at sample)
                                       (seq claims) (get (first claims) "timestamp") :else (double (System/currentTimeMillis)))
@@ -248,6 +258,7 @@
                                             (#{"bulk-import" "bulk-seed"} (:value_string r))
                                             (some #(= (:entity_id r) (get % "txId")) claims))) fresh))
                        (assoc :bulk true)
+                       predecessor (assoc :import-predecessor predecessor)
                        (and lean (get input "historyIdentityBounds"))
                        (assoc :identity-bounds (get input "historyIdentityBounds")))]])))
 ;; [DX-B10] Why: only contiguous client sequences enter Datomic, even when HTTP arrivals reorder.
@@ -366,9 +377,10 @@
       (let [text (str e)]
         (when (or (#{"OutcomeUnknown" "WriteQueueFull" "InvalidValue" "BulkFrameTooLarge"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
-                       {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
+                       {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
-                        :code (cond (re-find #"TRIPLEX_CLOCK_EXHAUSTED" text) "ClockExhausted"
+                        :code (cond (re-find #"TRIPLEX_IMPORT_PREDECESSOR" text) "ImportPredecessorMissing"
+                                    (re-find #"TRIPLEX_CLOCK_EXHAUSTED" text) "ClockExhausted"
                                     (re-find #"TRIPLEX_CLOCK" text) "ClockConflict"
                                     (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
                                     (re-find #"triplex.claim/command-id" text) "CommandConflict"

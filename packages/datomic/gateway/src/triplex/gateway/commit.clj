@@ -76,7 +76,7 @@
                             (and journal (= attr ":_tx/change")) (assoc 9 (assign-change (nth values 9) clock new-ids)))]
                (str (subs text 0 start) (json/write-str values))))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
-     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row]} payload
+     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row import-predecessor]} payload
            head-v2 (= 2 (value scope :triplex.scope/head-version))
            latest (when head-v2 (newest-commit))
            h (if head-v2 (or (when latest (value latest :triplex.tx/position)) 0)
@@ -89,6 +89,10 @@
            strict-clocks (and (d/entid db :triplex.scope/strict-record-clocks)
                               (true? (value scope :triplex.scope/strict-record-clocks)))
            server-clock (and strict-clocks (not= false assign-record-time))
+           ;; [DX-HA1] Why: the previous durable claim must exist on the serial basis after any failure.
+           ;; Rejected: trusting enqueue order to prove that an earlier future actually committed.
+           _ (when (and import-predecessor (not (d/entid db [:triplex.claim/command-id import-predecessor])))
+               (throw (ex-info "TRIPLEX_IMPORT_PREDECESSOR" {})))
            _ (when (not= (boolean slim-row) (= 4 (value scope :triplex.scope/rows-version)))
                (throw (ex-info "TRIPLEX_SLIM_LAYOUT_MISMATCH" {})))
            _ (when (and strict-clocks (some #(or (not (number? %)) (not (Double/isFinite (double %)))) (concat times record-clocks)))

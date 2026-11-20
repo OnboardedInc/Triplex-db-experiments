@@ -553,6 +553,9 @@ export class Stack {
               "-e",
               "TX2_LOAD2_FRAME_CAPS=" + Number(frontier),
               "-e",
+
+              "TX2_IMPORT_PIPELINE=" + Number(this.e.mode === "load-pipeline"),
+              "-e",
               "TX2_GROUP_REUSE_PREPARED=" + Number(frontier || split),
               "-e",
               "TX2_LOAD1_PRIORITY=" + Number(grouping),

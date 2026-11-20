@@ -1,6 +1,6 @@
 # Preregistered predictions for pipelined import frames
 
-The archived bare-metal run `i13-1/tail-128` has 4,943 matched 128-fact frames. Elapsed from offer through durable local cursor update was 19.52 ms p50 and 49.94 ms p99. Among those frames, average elapsed was 23.85 ms.
+The archived bare-metal run `i13-1/tail-128` has 4,943 matched 128-fact frames. Elapsed from offer through durable local cursor update was 19.52 ms p50 and 49.94 ms p99. Among those frames, average elapsed was 21.84 ms.
 
 | Stage | p50 ms | Mean ms | p99 ms |
 |---|---:|---:|---:|

@@ -29,7 +29,10 @@ assert(
       addrs.every((s) => s && /^\d+(?:\.\d+){3}$/.test(s))),
 );
 
-const hours = Number(process.env["HA1_BENCH_HOURS"] ?? 6);
+const pipelineTrial = mode === "load-pipeline";
+const hours = Number(process.env["HA1_BENCH_HOURS"] ?? (pipelineTrial ? 1 : 6));
+assert(!pipelineTrial || (single && hours === 1 && !process.env["HA1_PEOPLE"]));
+const deadline = Date.now() + 90 * 60_000;
 assert(Number.isInteger(hours) && hours >= 1 && hours <= 72);
 const sha = head(),
   base = "/var/tmp/triplex-ha1",
@@ -89,7 +92,7 @@ const remote = async (i: number, ...args: string[]) =>
   (
     await runFile("ssh", argv(i, ["sudo", "-n", ...args]), {
       encoding: "utf8",
-      timeout: 2400000,
+      timeout: pipelineTrial ? Math.max(1, Math.min(25 * 60_000, deadline - Date.now())) : 2400000,
       maxBuffer: 16 * 2 ** 20,
     })
   ).stdout.trim();
@@ -160,6 +163,11 @@ try {
         "--format",
         "{{.Id}}",
       );
+  // [DX-HA1] Why: the installation shares the server budget. Rejected: granting a fresh 90 minutes after setup.
+  const runtime = pipelineTrial
+    ? Math.min(3600, Math.floor((deadline - Date.now() - 5 * 60_000) / 1000))
+    : hours * 3600;
+  assert(runtime > 0, "Server window expired before dispatch");
   const campaign = randomUUID(),
     nonces: string[] = [];
   const store = base + "/" + tag,
@@ -172,7 +180,7 @@ try {
       "--pipe",
       "--collect",
       "--unit=triplex-ha1-" + tag,
-      "--property=RuntimeMaxSec=" + hours + "h",
+      "--property=RuntimeMaxSec=" + runtime,
       "--property=KillMode=control-group",
       "--working-directory=" + src,
       bin,
