@@ -10,8 +10,8 @@ import uuid
 java, distribution, output = map(lambda x:Path(x).resolve(),sys.argv[1:4])
 gate_name = sys.argv[4] if len(sys.argv) == 5 else "group"
 gate = Path("lab/experiments/EXP-DX1/w1/field") / (gate_name + "_test.clj")
-if gate_name in ("small", "budget", "prepared"):
-    gate = gate.parent.parent / "small" / ("parity.clj" if gate_name == "small" else gate.name)
+if gate_name in ("small", "budget", "prepared", "packed-group"):
+    gate = gate.parent.parent / "small" / {"small": "parity.clj", "packed-group": "packed_group.clj"}.get(gate_name, gate.name)
 prefix, count, checks = {
     "group": ("W1_NATIVE ", 4, 281),
     "policy": ("W1_FIELD_POLICY ", 3, 357),
@@ -19,6 +19,7 @@ prefix, count, checks = {
     "small": ("W1_SMALL_PARITY ", 2, 641),
     "budget": ("W1_BUDGET ", 1, 9),
     "prepared": ("W1_PREPARED ", 1, 266),
+    "packed-group": ("W1_PACKED_GROUP ", 1, 17),
 }[gate_name]
 output.mkdir()
 source=Path("packages/datomic/gateway/src").resolve()
@@ -29,6 +30,8 @@ def inputs():
     files = [codec,*sorted(source.rglob("*.clj")),Path(__file__).resolve()]
     if gate_name != "group":
         files.append(gate.resolve())
+    if gate_name == "packed-group":
+        files.extend([gate.with_name("native_cost.clj").resolve(), (gate.parent.parent / "field/field_probe.clj").resolve()])
     return {str(file.relative_to(Path.cwd())):sha(file) for file in files}
 before=inputs()
 jars=[distribution/"peer-1.0.7745.jar",distribution/"datomic-transactor-pro-1.0.7745.jar",*sorted((distribution/"lib").glob("*.jar"))]
