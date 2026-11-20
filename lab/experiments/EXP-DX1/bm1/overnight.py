@@ -524,6 +524,8 @@ def make(item, attempt, start, deadline):
         token="| STG1 retained preflight,"
     if (item,attempt)==(26,2):
         token="| INT1 Docker top retry,"
+    if (item,attempt)==(34,2):
+        token="| ERASE1 retained fixture,"
     forecast=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith(token))
     r=dict(item=item,attempt=attempt,tag=tag,source=head,repo=str(repo),unit=unit,root=str(root),
            directory=str(directory),start=start,deadline=deadline,prediction=forecast,requested=stamp())
@@ -688,7 +690,15 @@ def worker(r):
     env=dict(ENV)
     if r["item"]==4:
         stage_guard(r,env);return
-    repo,node=setup(r,env)
+    if (r["item"],r["attempt"])==(34,2):
+        first=root.with_name("erasen20")/"build"
+        assert (root/"pgdata/PG_VERSION").read_text().strip()=="17"
+        assert (first/"results/bootstrap.exit").read_text().strip()=="0"
+        (root/"build").symlink_to(first,target_is_directory=True)
+        repo,node=first/"repository",first/"tools/bin/node"
+        assert command("git","rev-parse","HEAD",cwd=repo)==source and not command("git","status","--porcelain",cwd=repo)
+    else:
+        repo,node=setup(r,env)
     heavy=[node,"lab/bin/heavy.mjs","--label","DX-BM1-night-"+str(r["item"]),"--",node]
     if r["item"] in (14,*REVISED_JOINED):
         run(sys.executable,HERE/"joined_preflight.py","run",Path(r["directory"])/"request.json",cwd=repo,env=env)
@@ -1094,6 +1104,18 @@ def result(r):
         staged=get(root/"stage-witness.json")
         assert {k:proof[k] for k in staged if k!="stagedSha256"}=={k:v for k,v in staged.items() if k!="stagedSha256"}
         assert staged["stagedSha256"]==digest(stage)
+        if r["attempt"]==2:
+            restored=get(root/"restore-witness.json")
+            original=get(root.with_name("erasen20")/"stage-witness.json")
+            assert restored["priorRequestSha256"]==original["requestSha256"]
+            assert restored["stagedSha256"]==original["stagedSha256"]==staged["stagedSha256"]
+            assert restored["physicalFilesSha256"]==digest(root/"before-recovery-sha256.json")
+            assert restored["requestSha256"]==proof["requestSha256"] and restored["prefix"]==proof["prefix"]
+            assert restored["source"]==proof["source"] and restored["nonce"]==proof["nonce"]
+            request_at=dt.datetime.fromisoformat(r["requested"]).timestamp()
+            assert request_at<=restored["startedAt"]<=r["deadline"]
+            assert all(request_at<=(root/name).stat().st_mtime for name in (
+                "measured/native.json","measured/result.json","collector.json","erase-clean.json"))
         replay=command(sys.executable,HERE/"probes/erase-reading.py",root/"measured",root/"producer.json",stage,r["source"],timeout=150)
         assert json.loads(replay)==get(checked) and checked.stat().st_mtime>=r["start"]
         return "recorded","The prepared ERASE1 fixture, both native erasure clocks, original traffic and two fresh peers replayed."
@@ -1654,7 +1676,7 @@ def main():
             return
         if mode=="cleanup" and (child:=native_unit(r)) and os.environ.get("SERVICE_RESULT")=="success" and active(child):return
         (worker if mode=="worker" else cleanup)(r);return
-    assert mode in ("run","run-after-seed","run-geography-preflight")
+    assert mode in ("run","run-after-seed","run-geography-preflight","run-erase-resume")
     if mode=="run-geography-preflight":
         while active("bm1n20-thin-fixture"):
             time.sleep(5)
@@ -1663,6 +1685,23 @@ def main():
         assert not command("docker","ps","-q")
     lock=(NIGHT/"campaign.lock").open("a");fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     assert (NIGHT/"i0/terminal").is_file()
+    if mode=="run-erase-resume":
+        while active("bm1n20-erase-fixture-copy"):
+            time.sleep(3)
+        assert command("systemctl","show","bm1n20-erase-fixture-copy.service","-p","Result","--value")=="success"
+        assert (ROOT/"STATUS").read_text().startswith("item=34 state=copying-indexed-fixture ")
+        assert not command("docker","ps","-q")
+        folder=NIGHT/"i34"
+        end=folder/"outcome.json"
+        original=folder/"original-setup-outcome.json"
+        assert not original.exists() and get(end)["state"]=="partial" and get(end)["clean"] is True
+        end.rename(original)
+        (NIGHT/"finished").unlink(missing_ok=True)
+        one(34,(2,))
+        assert not command("docker","ps","-q")
+        atom(ROOT/"STATUS","FREE "+stamp()+"\n")
+        atom(NIGHT/"finished",stamp()+"\n")
+        return
     if mode=="run-geography-preflight":
         # [DX-BM1] Why: verify the published shared-geography repair while authorization for its separate deep roster is pending.
         # Rejected: starting a 100k scope that cannot use the sealed SCALE1 snapshot.

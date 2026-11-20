@@ -29,8 +29,10 @@ def managed(request, cleanup=False):
     root = Path(request["root"])
     source = request["source"]
     tag = request["tag"]
-    assert source == SOURCE and request["item"] == 34 and tag == "erasen20"
+    assert source == SOURCE and request["item"] == 34 and tag in ("erasen20","erasen20b")
     assert root == Path("/var/tmp/triplex-bm1/night-n19") / tag
+    resume = tag == "erasen20b"
+    old = root.with_name("erasen20")
     repo = root / "build/repository"
     node = root / "build/tools/bin/node"
     experiment = repo / EXP / "erase1"
@@ -55,7 +57,7 @@ def managed(request, cleanup=False):
         owner = get(owner_file)
         nonce = owner["nonce"]
         assert re.fullmatch(r"[a-f0-9-]{36}", nonce)
-        prefix = "tx2-dxbm1-erasen20-" + nonce.replace("-", "")[:12]
+        prefix = "tx2-dxbm1-" + tag + "-" + nonce.replace("-", "")[:12]
         assert owner == {"source": source, "nonce": nonce, "prefix": prefix, "requestSha256": digest(request_file)}
         for name in (prefix+"-java", prefix+"-pg"):
             ids = output("docker","ps","-aq","--no-trunc","--filter","name=^/"+name+"$").splitlines()
@@ -70,7 +72,11 @@ def managed(request, cleanup=False):
                                        stderr=subprocess.STDOUT,timeout=25)
                     except (OSError,subprocess.SubprocessError) as error:
                         print(f"PostgreSQL log capture failed: {error!r}",file=log)
-            run("docker","rm","-f",ident,timeout=60)
+            try:
+                if name.endswith("-pg"):
+                    run("docker","stop","--time","25",ident,timeout=45)
+            finally:
+                run("docker","rm","-f",ident,timeout=60)
             assert not output("docker","ps","-aq","--filter","id="+ident)
         assert not output("docker","ps","-q")
         save(root/"erase-clean.json",{**owner,"remaining":[]})
@@ -82,8 +88,23 @@ def managed(request, cleanup=False):
     for port in (PGPORT, TXPORT, WEBPORT):
         with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as probe:
             probe.bind((LOOPBACK,port))
-    nonce = str(uuid.uuid4())
-    prefix = "tx2-dxbm1-erasen20-" + nonce.replace("-", "")[:12]
+    first = None
+    if resume:
+        old_request = request_file.parents[1]/"1/request.json"
+        recorded = get(old_request)
+        archived = get(old/"erase-clean.json")
+        first = get(old/"stage-witness.json")
+        assert archived == {key:first[key] for key in archived if key!="remaining"} | {"remaining":[]}
+        assert first["requestSha256"] == digest(old_request) and recorded["source"] == source
+        assert first["stagedSha256"] == digest(old/"stage/staged.json")
+        assert get(old/"stage/driver-exit.json") == {"code":0,"signal":None}
+        assert get(old/"measured/driver-exit.json") == {"code":1,"signal":None}
+        assert not (old/"measured/seed.json").exists()
+        assert "Terminating process - Heartbeat failed" in (old/"transactor.log").read_text()
+        nonce = first["nonce"]
+    else:
+        nonce = str(uuid.uuid4())
+    prefix = "tx2-dxbm1-" + tag + "-" + nonce.replace("-", "")[:12]
     owner = {"source": source, "nonce": nonce, "prefix": prefix, "requestSha256": digest(request_file)}
     save(owner_file,owner)
     label = "tx2.erase1.holder="+nonce
@@ -97,11 +118,14 @@ def managed(request, cleanup=False):
     # [DX-BM1] Why: the official Linux erasure wrapper launches a fresh native peer on the bench host.
     # Rejected: borrowing a Java process, changing a global Java install, or using a different Datomic distribution.
     jre = root/"jdk"
-    jre.mkdir()
-    helper = output("docker","create","--pull","never","--network","none","--label",label,
-                    "--name",prefix+"-java",image["Id"])
-    run("docker","cp",helper+":"+java_home+"/.",jre,timeout=180)
-    run("docker","rm",helper,timeout=30)
+    if resume:
+        jre.symlink_to(old/"jdk",target_is_directory=True)
+    else:
+        jre.mkdir()
+        helper = output("docker","create","--pull","never","--network","none","--label",label,
+                        "--name",prefix+"-java",image["Id"])
+        run("docker","cp",helper+":"+java_home+"/.",jre,timeout=180)
+        run("docker","rm",helper,timeout=30)
     datomic = root/"build/image/datomic"
     codec = repo/"packages/datomic/src/codec-spec.json"
     files = repo/"packages/datomic/gateway"
@@ -113,10 +137,32 @@ def managed(request, cleanup=False):
         output(node,"--input-type=module","-e",tree,files).encode()).hexdigest()
     db = "erase1_" + nonce.replace("-", "")
     pgdata = root/"pgdata"
-    pgdata.mkdir(mode=0o700)
+    password = secrets.token_hex(24)
+    if resume:
+        # [DX-BM1] Why: compare the copied indexed fixture before starting its separate recovery.
+        # Rejected: mutating the retained first attempt or rebuilding sixteen million already verified facts.
+        def files_at(directory):
+            members=sorted(directory.rglob("*"))
+            assert not any(f.is_symlink() for f in members)
+            return {f.relative_to(directory).as_posix():digest(f) for f in members if f.is_file()}
+        before=max(time.time(), request["start"])
+        manifest=files_at(old/"pgdata")
+        assert manifest and files_at(pgdata)==manifest and (pgdata/"PG_VERSION").read_text().strip()=="17"
+        shutil.copytree(old/"stage",root/"stage")
+        assert digest(root/"stage/staged.json")==first["stagedSha256"]
+        proof=root/"before-recovery-sha256.json"
+        save(proof,manifest)
+        save(root/"restore-witness.json",{**owner,"priorRequestSha256":first["requestSha256"],
+             "stagedSha256":first["stagedSha256"],"physicalFilesSha256":digest(proof),"startedAt":before})
+        (pgdata/"postmaster.pid").unlink(missing_ok=True)
+        password, = [row.split("=",1)[1] for row in (old/"transactor.properties").read_text().splitlines()
+                     if row.startswith("sql-password=")]
+        assert re.fullmatch(r"[0-9a-f]{48}",password)
+    else:
+        pgdata.mkdir(mode=0o700)
     env.update(DX_ERASE_NONCE=nonce, DX_ERASE_TOKEN=secrets.token_hex(24), DX_ERASE_BIND_HOST=LOOPBACK,
                DATOMIC_URL=f"http://{LOOPBACK}:{WEBPORT}", PGHOST=LOOPBACK, PGPORT=str(PGPORT),
-               PGDATABASE=db, PGUSER="postgres", PGPASSWORD=secrets.token_hex(24),
+               PGDATABASE=db, PGUSER="postgres", PGPASSWORD=password,
                DX_ERASE_DATOMIC_HOME=str(datomic), DX_ERASE_SQL_DATA=str(pgdata),
                DX_ERASE_TX_LOG=str(root/"transactor.log"), JAVA_HOME=str(jre), GATEWAY_SOURCE_SHA256=gateway_hash,
                DATOMIC_EXT_CLASSPATH=str(files/"src")+":"+str(experiment),
@@ -145,8 +191,11 @@ def managed(request, cleanup=False):
             return True
 
     wait_until(lambda: output("pg_isready","-q",timeout=3) == "", "PostgreSQL")
-    with (datomic/"bin/sql/postgres-table.sql").open("rb") as ddl:
-        run("psql","-Xq","-v","ON_ERROR_STOP=1",stdin=ddl,timeout=45)
+    if resume:
+        assert output("psql","-XAtq","-c","SELECT nonce FROM dx_erase1_scratch")==nonce
+    else:
+        with (datomic/"bin/sql/postgres-table.sql").open("rb") as ddl:
+            run("psql","-Xq","-v","ON_ERROR_STOP=1",stdin=ddl,timeout=45)
     assert Path(output("psql","-XAtq","-c","SHOW data_directory")).resolve() == pgdata.resolve()
     props = root/"transactor.properties"
     with os.fdopen(os.open(props,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600),"w") as stream:
@@ -173,11 +222,12 @@ def managed(request, cleanup=False):
     save(root/"stack.json",{**owner,"pgContainer":pg,"images":{"postgres":pg_image["Id"],"tool":image["Id"]},
                           "gateway":gateway_hash,"peer":peer_pin})
     heavy = (node,"lab/bin/heavy.mjs","--label","DX-BM1","--","taskset","-c","3",node)
-    run(*heavy,experiment/"server.mjs","stage",root/"stage",timeout=9000)
+    if not resume:
+        run(*heavy,experiment/"server.mjs","stage",root/"stage",timeout=9000)
     stage = root/"stage/staged.json"
     staged = get(stage)
     assert staged["source"] == source and staged["nonce"] == nonce and staged["people"] == 100_000
-    assert stage.stat().st_mtime >= request["start"]
+    assert stage.stat().st_mtime >= (recorded if resume else request)["start"]
     save(root/"stage-witness.json",{**owner,"stagedSha256":digest(stage)})
     remaining = int(request["deadline"]-time.time()-90)
     assert remaining >= 1800, "Less than 30 minutes left for the native erasure check"

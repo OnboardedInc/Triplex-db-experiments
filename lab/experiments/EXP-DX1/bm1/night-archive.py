@@ -89,7 +89,8 @@ def sources(r):
         parts["preflight-reading.json"]=root/"preflight-reading.json"
     elif r["item"]==34:
         for name in ("stage","measured","erase-clean.json","stack.json","stage-witness.json",
-                     "producer.json","collector.json","transactor.log","gateway.log","postgres.log"):
+                     "producer.json","collector.json","transactor.log","gateway.log","postgres.log",
+                     "fixture-copy.log","restore-witness.json","before-recovery-sha256.json"):
             parts[name]=root/name
     elif r["item"] in (14,15,17,27,29,33):
         parts["joined-smoke"]=root/"smoke"
