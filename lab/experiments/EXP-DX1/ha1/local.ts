@@ -8,6 +8,7 @@ import {
   docker,
   dockerArgs,
   DOCKER_HOST,
+  LabError,
   LOCKS,
   listTx2Containers,
   pidAlive,
@@ -123,7 +124,9 @@ async function recoverLoad(nonce: string, config: any, manager: any, folder: str
 export async function localDrill(opts: any, config: any, manager: any) {
   assert.equal(process.platform, "darwin");
   const mode = modeOf(opts.experiment);
-  const holder = mode.startsWith("hasync-") ? "DX-HASYNC1" : "DX-HA1";
+  const syncMode = mode.startsWith("hasync-");
+  const holder = syncMode ? "DX-HASYNC1" : "DX-HA1";
+  const diagnostic = syncMode || opts.diagnostic === true;
   assert.equal(opts.holder, holder);
   assert.equal(dockerArgs([])[1], DOCKER_HOST);
   const folder = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
@@ -147,6 +150,14 @@ export async function localDrill(opts: any, config: any, manager: any) {
       shape,
       faultCell,
     );
+    if (diagnostic)
+      attempt.write("diagnostic", {
+        nonce: attempt.nonce,
+        slot,
+        source: attempt.source,
+        mode,
+        timing: "diagnostic",
+      });
     console.log(attempt.dir);
     return attempt;
   }
@@ -190,12 +201,12 @@ export async function localDrill(opts: any, config: any, manager: any) {
   );
   let reserved = false,
     clean = false;
-  const parentLease = path.join(folder, "locks", "measure");
-  let measured = false;
+  // [DX-HASYNC1] Why: correctness only needs the owned slot and one heavy token. Rejected: taking a measurement lock for Mac diagnostic clocks.
+  const parentLease = diagnostic ? undefined : path.join(folder, "locks", "measure");
   try {
     for (;;) {
       // [DX-HASYNC1] Why: a queued exclusive lab window needs this process's heavy token to drain. Rejected: holding the token while waiting for that same window to finish.
-      if (mode.startsWith("hasync-")) manager.assertMeasureAdmission(opts.holder);
+      if (diagnostic) manager.assertMeasureAdmission(opts.holder);
       const disk = fs.statfsSync(root);
       if (disk.bavail * disk.bsize < 5 * 2 ** 30) {
         e = declare(opts.slot);
@@ -209,19 +220,21 @@ export async function localDrill(opts: any, config: any, manager: any) {
       }
       if (
         slots.filter((slot) => !fs.existsSync(slot.lockDir)).length >= slotsNeeded &&
-        !fs.existsSync(parentLease)
+        (!parentLease || !fs.existsSync(parentLease))
       ) {
         try {
           await withPool((ledger: any) => {
             manager.assertMeasureAdmission(opts.holder);
-            try {
-              fs.mkdirSync(parentLease);
-            } catch (err: any) {
-              if (err.code === "EEXIST") return;
-              throw err;
+            if (parentLease) {
+              try {
+                fs.mkdirSync(parentLease);
+              } catch (err: any) {
+                if (err.code === "EEXIST") return;
+                throw err;
+              }
             }
             // [DX-HA1] Why: hold the measurement timer while checking capacity and binding the winning slot. Rejected: hashing a candidate before mkdir while a competing run can claim the timer.
-            const inode = fs.statSync(parentLease).ino;
+            const inode = parentLease && fs.statSync(parentLease).ino;
             let ownedFile = false;
             try {
               const live = listTx2Containers({ all: true });
@@ -265,18 +278,20 @@ export async function localDrill(opts: any, config: any, manager: any) {
               )
                 return;
               e = declare(nominated.map((slot) => slot.slot).join("+"));
-              fs.writeFileSync(
-                path.join(parentLease, "owner.json"),
-                JSON.stringify({
-                  id: holder,
-                  pid: process.pid,
-                  nonce: e.nonce,
-                  slot: info.slot,
-                  at: new Date().toISOString(),
-                }),
-                { flag: "wx" },
-              );
-              ownedFile = true;
+              if (parentLease) {
+                fs.writeFileSync(
+                  path.join(parentLease, "owner.json"),
+                  JSON.stringify({
+                    id: holder,
+                    pid: process.pid,
+                    nonce: e.nonce,
+                    slot: info.slot,
+                    at: new Date().toISOString(),
+                  }),
+                  { flag: "wx" },
+                );
+                ownedFile = true;
+              }
               for (const candidate of nominated) {
                 const slot = manager.acquireSlot(candidate, opts.holder, holder);
                 assert(slot.created);
@@ -294,10 +309,9 @@ export async function localDrill(opts: any, config: any, manager: any) {
                   cpus: 1.5,
                   diskForecastBytes: role === forecastRole ? req.diskForecastBytes : 0,
                 });
-              measured = true;
               reserved = true;
             } finally {
-              if (!measured) {
+              if (parentLease && !reserved) {
                 assert.equal(fs.statSync(parentLease).ino, inode);
                 if (ownedFile) {
                   const file = path.join(parentLease, "owner.json");
@@ -309,10 +323,15 @@ export async function localDrill(opts: any, config: any, manager: any) {
             }
           });
         } catch (err: any) {
-          if (err.code !== "REFUSED" || measured || mode.startsWith("hasync-")) throw err;
+          if (err.code !== "REFUSED" || reserved || diagnostic) throw err;
         }
       }
       if (reserved) break;
+      if (diagnostic)
+        throw new LabError(
+          "REFUSED",
+          "Diagnostic slot unavailable. Release the ordinary heavy token before retrying.",
+        );
       await sleep(5000);
     }
     const site: Site = {
@@ -377,14 +396,14 @@ export async function localDrill(opts: any, config: any, manager: any) {
       e!,
       site,
       site,
-      { people, scopes, capacity: "local" },
+      { people, scopes, capacity: diagnostic ? "local-diagnostic" : "local" },
       () => {
         clean = true;
       },
       sync,
     );
   } finally {
-    if (measured) {
+    if (parentLease && reserved) {
       const f = path.join(parentLease, "owner.json");
       assert.equal(JSON.parse(fs.readFileSync(f, "utf8")).nonce, e!.nonce);
       fs.unlinkSync(f);
