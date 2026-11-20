@@ -15,7 +15,7 @@ Part 1 at `e44ea53dc` matched 112 saves and reached 360,314 and 1,260,314 record
 - [Aging arms](AGING-ARMS.md) joins 15,000 native acknowledgements in each original Mac sample. It adds measured client stage timers, a rolling pipeline, W1-shaped physical groups and larger load-only index settings. Adopted solo K retains the intended index workload. Server rates remain predictions.
 - [Growth model](GROWTH-MODEL.md) predicts level count, leaf count, directory count and serialized-size estimates per index. It names a counterexample measurement for each operation and includes a separate directory-census peer.
 - [Server rung](SERVER-RUNG.md) describes one Linux command and its setup, stopping conditions, exact-prefix restart, quiet and busy schedules, index overlap, fresh JVM reads, pauses and backup/restore seal. The campaign ends at 1B. The 20k prior misses the time cap on the estimated seed.
-- The release scorecard is a separate bare-metal run on merged INT1. Its current verifier needs a starting-state and oracle replay extension for SCALE1 seed command identities and the aged head. This branch has not merged into INT1. [v0.1 handoff](CAMPAIGN.md)
+- The release scorecard is a separate bare-metal run on merged INT1. Its current verifier needs a starting-state and oracle replay extension for SCALE1 seed command identities and the aged head. The ten-deep-account source census does not cover the thin and small accounts in the v0.1 population. This branch has not merged into INT1. [v0.1 handoff](CAMPAIGN.md)
 - [Successor erasure](SUCCESSOR-ERASURE.md) describes the source-pinned detached cipher and shared frontier. The test forces a partial publication, then checks replay, held cuts, the ordinary feed and detached-key removal.
 
 ## Evidence checks
@@ -29,3 +29,6 @@ Part 1 at `e44ea53dc` matched 112 saves and reached 360,314 and 1,260,314 record
 ## Verification
 
 The SDK build, source parsing, rate and count tests, and historical log join completed. The pinned SCALE1 source produced five frames with 9,690 facts for 80 people, and the Clojure adopter validated that fixture manifest. The small SQL-backed gates use one ordinary heavy token per run. Any Mac timing is diagnostic. [Evidence manifest](P2-SHA256SUMS)
+
+- The larger load-settings arm verified 1,072 saves and 21,436 logical datoms and took a settled per-index census. Its slot, containers and volume were released. `p2-mac-d-fidelity-arms-load`
+- Retained failures cover the missing W0 build, a PostgreSQL image unavailable at container creation, JSON escaping in the opaque-token probe, and the grouped revision-retraction census. Setup and oracle failures remain distinct from completed comparisons.
