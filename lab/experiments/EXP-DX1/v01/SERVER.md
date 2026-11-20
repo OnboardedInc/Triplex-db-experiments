@@ -7,7 +7,7 @@ Use the held SCALE1 decision loader image on a dedicated bare-metal Ubuntu 24.04
 From a clean checkout at the stated revision with Node 22:
 
 ```bash
-COMMIT=f99c9832b4bf337cb9c5cbbb8b5caf36cf199015
+COMMIT=83bb5c7d058b23b61425ce3c65d16e98ef67f2ee
 BUILD=/var/tmp/triplex-v01-adopted-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
@@ -50,3 +50,5 @@ The budget is 235 minutes per age and up to USD 4.27 at USD 1.09 per hour. The f
 The INT1 Publish command was exercised on its own 64-person Mac fixture. It requires a held-scope adapter before it can supply this scorecard's P5 evidence.
 
 P6 runs after the loaded arm on the same adopted scope. It compares the quiet account alone and at 235 aggregate offers per second, with identical quiet offer and read schedules. It reports age-matched commit, pinned field read and journal-observation components. The P6 obligation also needs durable feed effects and Publish and import overlap.
+
+P7 samples first demand pulls at the retained loader cut and records empty and restored residency by role. An untouched-person slope under matched activity remains open.

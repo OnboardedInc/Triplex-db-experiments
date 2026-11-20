@@ -27,3 +27,4 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 - `part2/adoption-a3/recalculated/SCORECARD-v0.1.md` is the current diagnostic renderer applied to the retained native evidence.
 - `part2/publish-p5a/` retains the original ACT1 producer and collector outputs. `part2/fixture-p5a-1.log` records engine ownership and cleanup.
 - `part2/quiet-p6a/SCORECARD-v0.1.md` and `part2/quiet-p6a/campaign/p6-*/` retain the quiet pair and exact arm observations. `part2/fixture-p6a-1.log` records engine ownership and cleanup.
+- `part2/idle-p7a/SCORECARD-v0.1.md` and its arm archives retain the P7 first exact pulls, residency and thread counts. `part2/fixture-p7a-1.log` records engine ownership and cleanup.

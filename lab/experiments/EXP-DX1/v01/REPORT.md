@@ -1,6 +1,6 @@
-Server 2 should use commit f99c9832b.
+Server 2 should use commit 83bb5c7d0.
 It accepts the original SCALE1 image and transfer.
-It records partial observations for rows 1 through 4 and 6.
+It records partial observations for rows 1 through 4, 6 and 7.
 The grouped configuration uses compact layout K.
 The per-person writer can be selected separately.
 Two Mac toy arms matched all 28 saves each.
@@ -32,7 +32,7 @@ The P6 Mac pair reused the actual loaded SCALE1 toy scope. The alone arm matched
 
 ## P7 audit
 
-The residency adapter uses the INT1 physical role census and the compact guest's resident mapping reader. The first demand pull is pinned to the original loader cut and checks the exact rooted membership and first task field. The empty and restored observations, roster denominator, and first-read counts are in the digested arm archive. These two boot points supply a resident difference per roster person. The activity-matched slope remains unmeasured and the adapter emits no verdict.
+The residency adapter uses the INT1 physical role census and the compact guest's resident mapping reader. The first demand pull is pinned to the original loader cut and checks the exact rooted membership and first task field. The empty and restored observations, roster denominator, and first-read counts are in the digested arm archive. These two boot points supply a resident difference per roster person. The activity-matched slope remains unmeasured and the adapter emits no verdict. The Mac toy loader supplied ten distinct exact first pulls at 12.623 ms p99 with zero declined. The transactor and write and read gateways reported 115, 64 and 61 threads after restore. The engine removed the private volume and released the slot.
 
 ## Part 2 Publish adapter check
 
