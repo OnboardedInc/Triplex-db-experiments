@@ -147,6 +147,15 @@
         (when-not (= (count ids) (count (set ids))) (codec/invalid "Duplicate fresh row ID"))
         ;; [DX-LOAD1] Why: ordinary compact validation compares each decoded row ID with the actual prefix. Rejected: a client assertion of empty history or a second source of row order.
         (assoc input "rowMode" "texts" "newIds" ids "rowOrder" ids "rowTexts" (zipmap ids texts) "rows" [])))))
+(def import-pipeline? (= "1" (System/getenv "TX2_IMPORT_PIPELINE")))
+(defn import-predecessor [claims]
+  (when import-pipeline?
+    (let [ids (filter #(and (string? %) (.startsWith ^String % "load1/pipeline-")) (keep #(get % "commandId") claims))]
+      (when (seq ids)
+        (let [[_ stream ordinal] (re-matches #"load1/(pipeline-[a-f0-9]{64})/(0|[1-9][0-9]{0,14})" (first ids))]
+          (when-not (and stream (= 1 (count claims))) (codec/invalid "Invalid ordered import claim"))
+          (let [n (Long/parseLong ordinal)]
+            (if (zero? n) "load1/manifest/import" (str "load1/" stream "/" (dec n)))))))))
 (defn tx-data
   ([db input] (tx-data db input (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([db input scope]
@@ -171,6 +180,7 @@
                               (packed/identity-run (keep (fn [r] (when (and (= "_Transaction" (:entity_type r))
                                                                            (#{":_tx/change" ":_tx/changed-entity"} (:attribute r))) (:id r))) fresh)))
          packed-journal-set (set packed-journal-ids)
+         predecessor (import-predecessor claims)
          metadata {:position position
                    :recorded-at (cond (seq fresh) (:recorded_at sample) (seq old) (:retracted_at sample)
                                       (seq claims) (get (first claims) "timestamp") :else (double (System/currentTimeMillis)))
@@ -311,6 +321,7 @@
                                             (#{"bulk-import" "bulk-seed"} (:value_string r))
                                             (some #(= (:entity_id r) (get % "txId")) claims))) fresh))
                        (assoc :bulk true)
+                       predecessor (assoc :import-predecessor predecessor)
                        (and lean (get input "historyIdentityBounds"))
                        (assoc :identity-bounds (get input "historyIdentityBounds")))]])))
 ;; [DX-B10] Why: only contiguous client sequences enter Datomic, even when HTTP arrivals reorder.
@@ -435,9 +446,12 @@
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
           ;; [DX-PREP1] Why: the unordered subject arm submits one native transaction and uses its actual durable report.
           ;; Rejected: bypassing protected-scope erasure or live/import admission, or applying the draft speculatively.
-          subject-plan (when (and subject/enabled (nil? privacy/*cut*)
+          subject-plan (when (and subject/enabled (not (:sealed privacy/*cut*))
                                   (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
-                         (trace/span "subject.prepare" "gateway" (subject/plan db data input)))
+                         (trace/span "subject.prepare" "gateway"
+                           (if privacy/*cut*
+                             (subject/plan db data input (:seq privacy/*cut*))
+                             (subject/plan db data input))))
           start (System/nanoTime)
           ready-ms (when group/queue-clock (System/currentTimeMillis))
           timeline (atom {:requestParsed parsed :payloadPrepared start})
@@ -486,15 +500,18 @@
       (let [text (str e)]
         ;; [DX-THIN1] Why: preserve explicitly typed policy errors and the established transaction rejection for malformed row ordering.
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
-        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasedAssertionIdentity" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
-                       {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
+                       {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
-                        :code (cond (re-find #"TRIPLEX_CLOCK_EXHAUSTED" text) "ClockExhausted"
+                        :code (cond (re-find #"TRIPLEX_OPERATION_DUPLICATE" text) "OperationDuplicate"
+                                    (re-find #"TRIPLEX_COMMAND_DUPLICATE" text) "CommandConflict"
+                                    (re-find #"TRIPLEX_IMPORT_PREDECESSOR" text) "ImportPredecessorMissing"
+                                    (re-find #"TRIPLEX_CLOCK_EXHAUSTED" text) "ClockExhausted"
                                     (re-find #"TRIPLEX_CLOCK" text) "ClockConflict"
                                     (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
-                                    (re-find #"TRIPLEX_COMMAND_DUPLICATE|triplex.claim/command-id" text) "CommandConflict"
-                                    (re-find #"TRIPLEX_OPERATION_DUPLICATE|triplex.tx/operation-id" text) "OperationDuplicate"
+                                    (re-find #"triplex.claim/command-id" text) "CommandConflict"
+                                    (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
                                     (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e))))))
 (defn operation [db id]
   (if-let [{:keys [position t clock]} (group/receipt db id)]

@@ -13,6 +13,14 @@
     "lib": ["ESNext"]
   },
   "files": [
+    "../lab/config/datomic/runtime.mjs",
+    "../lab/experiments/EXP-DX1/jvm1/check-readback.mjs",
+    "../lab/experiments/EXP-DX1/jvm1/inventory.mjs",
+    "../lab/experiments/EXP-DX1/jvm1/launch.mjs",
+    "../lab/experiments/EXP-DX1/jvm1/policy.mjs",
+    "../lab/experiments/EXP-DX1/tail1/arms.mjs",
+    "../lab/experiments/EXP-DX1/tail1/replay-input.mjs",
+    "../lab/experiments/EXP-DX1/tail1/run.mjs",
     "../lab/trace/instrument.mjs",
     "../lab/trace/harness-volume.mjs",
     "../lab/trace/trial.mjs",

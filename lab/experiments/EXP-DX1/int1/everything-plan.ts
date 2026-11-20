@@ -1,3 +1,4 @@
+import { measuredWriterG1 } from "../jvm1/launch.mjs";
 import { fieldRates } from "./field-plan.ts";
 import { pooledCampaignId, campaignWindows } from "../scale1/tenant-traffic.ts";
 
@@ -16,16 +17,7 @@ const gatewayHeap = [
 // [DX-THIN1] Why: keep TAIL1's measured collector selection even when the serving CPU mask changes.
 // Rejected: relying on JVM startup ergonomics or bringing in the unrelated receipt-cache variant.
 export const gatewayJvmOptions = {
-  "gw-w": [
-    ...gatewayHeap,
-    "-XX:+UseG1GC",
-    "-XX:MaxGCPauseMillis=25",
-    "-XX:G1HeapRegionSize=2m",
-    "-XX:+UnlockExperimentalVMOptions",
-    "-XX:G1NewSizePercent=5",
-    "-XX:G1MaxNewSizePercent=25",
-    "-XX:ConcGCThreads=1",
-  ],
+  "gw-w": [...gatewayHeap, ...measuredWriterG1],
   "gw-r": [...gatewayHeap, "-XX:+UseG1GC"],
 } as const;
 
@@ -65,7 +57,6 @@ export const treatment = {
   DX_INT1_SEED_ERRORS: "1",
   DX_INT1_READERS: "touched",
   DX_INT1_DEEP_RELEASE: "ead90",
-  DX_STACK_EXPLICIT_GC: "1",
   DX_TOUCHED_READ_MODE: "following",
   DX_GROUP_COMMIT: "0",
   DX_GROUP_QUEUE_CLOCK: "0",

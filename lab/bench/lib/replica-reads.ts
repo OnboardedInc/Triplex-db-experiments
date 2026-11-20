@@ -177,7 +177,7 @@ function materializeWorld(selected: readonly (string | PackedEntity)[], validAt:
   return Object.freeze(rows);
 }
 const statViews = new WeakMap<object, DataView>();
-type FallbackWitness = { reason: string; recordedAt?: number; receiptPosition?: number; resolved?: number; floor: number; head: number; oldestClock?: number; historyBytes: number };
+type FallbackWitness = { reason: string; recordedAt?: number | undefined; receiptPosition?: number | undefined; resolved?: number | undefined; floor: number; head: number; oldestClock?: number | undefined; historyBytes: number };
 export class ReplicaReader {
   readonly index: InstanceType<typeof api.RecentReads>;
   private worlds = new CutCache();
@@ -417,10 +417,9 @@ export class ReplicaReadHost {
   readonly index: InstanceType<typeof api.RecentReads>;
   readonly replica: InstanceType<typeof api.Replica>;
   private times: Map<number, number>;
-  private clockEnds: Map<number, number>;
   readonly timings: Map<number, { availableAt?: number; receivedAt: number }>;
   private closeClient: (() => void) | undefined;
-  private beginAfterImages?: () => void;
+  private beginAfterImages: (() => void) | undefined;
   private listeners = new Set<(delta: ReadDelta) => void>();
   private constructor(
     source: any, times: Map<number, number>, historyBytes: number, strictRecordClocks: boolean,
@@ -429,7 +428,6 @@ export class ReplicaReadHost {
   ) {
     this.index = new api.RecentReads(20_000, historyBytes, strictRecordClocks, historyCoverage);
     this.times = times;
-    this.clockEnds = clockEnds;
     this.timings = timings;
     this.replica = new api.Replica(source, validAt, population, population === "touched" ? Number(process.env.DX_TOUCHED_RETAIN_BYTES ?? 16 * 1024 ** 2) : Infinity);
     if (population === "touched") this.replica.onAdmission = (p: number, entries: ReadonlyMap<string, PackedEntity>) => {

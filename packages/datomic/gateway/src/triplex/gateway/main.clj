@@ -305,6 +305,10 @@
                 source (get input "erasureSourceDatabase")
                 _ (when (and source (not (and (string? source) (re-matches #"s2-[A-Za-z0-9_-]+" source))))
                     (codec/invalid "Invalid source scope for protected delivery"))
+                independent (when (and managed-write? subject/enabled (nil? source)
+                                       (not (contains? input "erasureSeq"))
+                                       (not (true? (get input "erasureReplay"))))
+                              (let [cut (privacy/cut name db)] (when-not (:sealed cut) cut)))
                 request (cond-> request input (assoc :privacy-input input))
                 run (fn [cut]
                       (trace/attribute! :erasureGuarded (boolean cut))
@@ -315,7 +319,13 @@
                                                       :seq (or (:seq cut) 0) :erased (or (:erased cut) {})})
                                        (route-handler-base request))]
                           (cond-> answer cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))))))]
-            (if (and input (or managed-write? source))
+            (cond
+              independent
+              ;; [DX-ERASE1] Why: the native transaction checks the verified sequence with the person's revision.
+              ;; Rejected: holding the scope's writer lock while preparing or saving an unrelated person.
+              (do (privacy/verify-data! independent db) (run independent))
+
+              (and input (or managed-write? source))
               ;; [DX-ERASE1] Why: the source cannot publish an erasure between validation and recipient commit.
               ;; Rejected: an HTTP recheck followed by an independent recipient write.
               (with-privacy-guards (sort (cond-> #{} managed-write? (conj name) source (conj source)))
@@ -334,6 +344,7 @@
                     (run next))))
               ;; [DX-ERASE1] Why: a guarded write only needs the cut verified inside the writer lock.
               ;; Rejected: reading and hashing the authority twice on every guarded save.
+              :else
               (let [read-cut (when-not input
                                (trace/span "privacy/frontier" "gateway" (privacy/cut name db)))]
                 (when read-cut (trace/span "privacy/verify-data" "gateway" (privacy/verify-data! read-cut db)))
