@@ -100,7 +100,8 @@ for layout, arm in zip(("legacy", "lean"), (legacy, lean), strict=True):
     arm["log"] = [{k: v for k, v in row.items() if k != "operationId"} for row in arm["log"]]
 compare({k: v for k, v in legacy.items() if k not in ("db", "layout", "physical")},
         {k: v for k, v in lean.items() if k not in ("db", "layout", "physical")})
-assert lean["exact"] == {"binding": {"type": "integer", "value": "9007199254740993"}, "negativeZero": True}
+assert lean["exact"] == {"binding": {"type": "integer", "value": "9007199254740993"},
+                         "number": 0.30000000000000004, "negativeZeroRejected": True}
 assert lean["counts"] == [2, 2]
 assert lean["order"] == [[{"?s": "j:1", "?v": "four"}], [{"?s": "j:2", "?v": "three"}]]
 assert lean["complete"] == lean["order"][0] + lean["order"][1]
@@ -234,7 +235,7 @@ for i, (event, covered) in enumerate(zip(events[3:7], (False, True, True, False)
         assert [sample["n"], sample["command"], sample["position"], sample["expected"]] == [
             n, f"save:{n}", n + 2, f"value:{n}"]
         assert sample["saved"] > 0 and sample["readMs"] > 0 and all(x > 0 for x in sample["read"])
-        assert all(x > 0 for x in sample["write"][:2])
+        assert all(x > 0 for x in sample["write"])
     costs.append({"covered": covered, "saveMs": quantiles([r["saved"] for r in samples]),
                   "readMs": quantiles([r["readMs"] for r in samples]),
                   "requestBytes": quantiles([r["write"][0] for r in samples]),
