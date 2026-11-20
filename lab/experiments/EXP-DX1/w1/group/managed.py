@@ -12,8 +12,11 @@ import uuid
 
 parser = argparse.ArgumentParser()
 parser.add_argument("destination", type=Path)
-parser.add_argument("--field", choices=["queue","growth","small-cost","small-layout","small-capacity"])
+parser.add_argument("--field", choices=["queue","growth","small-cost","small-layout","small-capacity","retention","ledger-proof","write-clock"])
+parser.add_argument("--offers", type=int, default=10000)
 args = parser.parse_args()
+if args.field == "retention" and not 64 <= args.offers <= 10000:
+    parser.error("retention requires 64 to 10000 offers")
 repo = Path.cwd()
 out = args.destination.resolve()
 out.mkdir()
@@ -30,9 +33,13 @@ container = cfg / "lab/config/datomic"
 (container / "attempt").write_text(str(uuid.uuid4())+"\n")
 if args.field:
     (container / "field-study").write_text(args.field)
-    shutil.copy2(experiment.parent / "field/field_probe.clj", cfg / "packages/datomic/gateway/src/triplex/gateway/field_probe.clj")
-    if args.field in ("small-cost", "small-layout"):
+    if args.field in ("growth", "small-cost", "small-layout", "retention"):
+        shutil.copy2(experiment.parent / "field/field_probe.clj", cfg / "packages/datomic/gateway/src/triplex/gateway/field_probe.clj")
+    if args.field in ("small-cost", "small-layout", "retention"):
         shutil.copy2(experiment.parent / "small/native_cost.clj", cfg / "packages/datomic/gateway/src/triplex/gateway/native_cost.clj")
+    if args.field == "retention":
+        shutil.copy2(experiment.parent / "small/retention.clj", cfg / "packages/datomic/gateway/src/triplex/gateway/retention.clj")
+        (container / "offers").write_text(str(args.offers) + "\n")
 esbuild = repo / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
 subprocess.run([esbuild, experiment / "local.ts", "--bundle", "--platform=node", "--format=esm",
                 "--banner:js=import {createRequire as w1Require} from 'node:module'; const require=w1Require(import.meta.url);",

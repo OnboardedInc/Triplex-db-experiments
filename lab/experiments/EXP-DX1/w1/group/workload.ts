@@ -69,7 +69,13 @@ const dist = (xs: number[]) => ({
   p99: quantile(xs, 0.99),
   max: Math.max(...xs),
 });
-export function command(id: string, facts: Fact[], old: Input["rows"] = [], publish = true): Input {
+export function command(
+  id: string,
+  facts: Fact[],
+  old: Input["rows"] = [],
+  publish = true,
+  denseJournalIds = false,
+): Input {
   const tx = txFor(id),
     subjects = [...new Set([...facts.map((f) => f.e), ...old.map((r) => r.entity_id)])];
   const rows = facts.map((f, i) =>
@@ -86,6 +92,7 @@ export function command(id: string, facts: Fact[], old: Input["rows"] = [], publ
       1,
     ),
   );
+  let packedOrdinal = 0;
   const journal = (
     suffix: string,
     a: string,
@@ -101,7 +108,9 @@ export function command(id: string, facts: Fact[], old: Input["rows"] = [], publ
       },
       tx,
       clock,
-      token(id + "/j" + suffix),
+      denseJournalIds && (a === "change" || a === "changed-entity")
+        ? token(id + "/journal-run").slice(0, 25) + String.fromCharCode(65 + packedOrdinal++)
+        : token(id + "/j" + suffix),
       1,
     );
   if (publish) {
@@ -112,12 +121,21 @@ export function command(id: string, facts: Fact[], old: Input["rows"] = [], publ
         attribute: f.a,
         value: f.v,
         tripleId: rows[i]!.id,
+        ...(denseJournalIds ? { validFrom: rows[i]!.valid_from, validTo: rows[i]!.valid_to } : {}),
       })),
       ...old.map((r) => ({
         op: "retract",
         entityId: r.entity_id,
         attribute: r.attribute,
         tripleId: r.id,
+        ...(denseJournalIds
+          ? {
+              recordedAt: r.recorded_at,
+              retractedAt: clock,
+              validFrom: r.valid_from,
+              validTo: r.valid_to,
+            }
+          : {}),
       })),
     ];
     rows.push(
@@ -385,7 +403,13 @@ export async function runArm(
   nonce: string,
   grouped: boolean,
   server: boolean,
-  options: { pulse?: boolean; smallPulse?: boolean; bootstrapUrl?: string } = {},
+  options: {
+    pulse?: boolean;
+    smallPulse?: boolean;
+    bootstrapUrl?: string;
+    denseJournalIds?: boolean;
+    opened?: (client: DatomicClient, db: string) => Promise<void>;
+  } = {},
 ) {
   const client = new DatomicClient(url, 35_000),
     key = scope(nonce, "load"),
@@ -400,6 +424,7 @@ export async function runArm(
       const opened = await client.create(key, "lean", true, 35000);
       assert(!opened.created && opened.db === db);
     }
+    await options.opened?.(client, db);
     const phases = [];
     for (const name of options.pulse
       ? ["alone", "nine"]
@@ -418,7 +443,7 @@ export async function runArm(
         const facts = Array.from({ length: options.smallPulse ? 1 + (i % 3) : 8 }, (_, j) =>
           fact(root, ":save/field" + j, id + "-" + j),
         );
-        const input = command(id, facts);
+        const input = command(id, facts, [], true, options.denseJournalIds);
         if (server) Object.assign(input, { groupAccount: accounts[a]!.key });
         const ack = await write(client, db, input),
           end = performance.now();

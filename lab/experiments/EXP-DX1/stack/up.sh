@@ -418,6 +418,11 @@ for role in w r; do
   if [[ $role == w && ${DX_W1_EXTRA:-0} == 1 ]]; then
     [[ ${DX_SMALL_ROWS:-0} =~ ^[01]$ && ${DX_GROUP_REUSE_PREPARED:-0} =~ ^[01]$ && ${DX_GROUP_MAX_MEMBERS:-8} =~ ^[1-9][0-9]{0,2}$ ]] || exit 2
     field_policy+=(-e "TX2_GROUP_STAGE_CLOCK=1" -e "TX2_SMALL_ROWS=${DX_SMALL_ROWS:-0}" -e "TX2_GROUP_REUSE_PREPARED=${DX_GROUP_REUSE_PREPARED:-0}" -e "TX2_GROUP_MAX_MEMBERS=${DX_GROUP_MAX_MEMBERS:-8}")
+    for pair in "TX2_PREDECESSOR_LOOKUP=${DX_W1_PREDECESSOR:-0}" "TX2_SAVE_LEDGER=${DX_W1_LEDGER:-0}" \
+                "TX2_PACKED_JOURNAL=${DX_W1_PACKED_JOURNAL:-0}" "TX2_GROUP_FAST_REPLY=${DX_W1_FAST_REPLY:-0}"; do
+      [[ ${pair#*=} =~ ^[01]$ ]] || exit 2
+      field_policy+=(-e "$pair")
+    done
     if [[ -n ${DX_WRITE_BUDGET_US:-} ]]; then
       [[ $DX_WRITE_BUDGET_US =~ ^[1-9][0-9]{0,5}$ ]] || exit 2
       field_policy+=(-e "TX2_WRITE_BUDGET_US=$DX_WRITE_BUDGET_US")

@@ -3,13 +3,35 @@ import { ids } from "../../../../bench/lib/world.ts";
 import { accounts, pooledDigest } from "../group/population.ts";
 import { offers, quantile, sha } from "./schedule.ts";
 export type Study = "pulse" | "rates";
-export type Mode = "individual" | "subject" | "all" | "compact" | "prepared" | "bounded";
-export function modes(s: Study, enhanced = false): Mode[] {
+export type Mode =
+  | "individual"
+  | "subject"
+  | "all"
+  | "compact"
+  | "prepared"
+  | "bounded"
+  | "indexed"
+  | "ledger"
+  | "packed"
+  | "reply-wire";
+export function modes(s: Study, enhanced = false, write5 = false): Mode[] {
   const original: Mode[] = s === "pulse" ? ["individual", "all"] : ["individual", "subject", "all"];
+  if (write5)
+    return [
+      ...original,
+      "compact",
+      "prepared",
+      "bounded",
+      "indexed",
+      "ledger",
+      "packed",
+      "reply-wire",
+    ];
   return enhanced ? [...original, "compact", "prepared", "bounded"] : original;
 }
 export function fieldPolicy(mode: Mode, enhanced = false) {
-  const advanced = mode === "prepared" || mode === "bounded";
+  const predecessor = ["indexed", "ledger", "packed", "reply-wire"].includes(mode),
+    advanced = mode === "prepared" || mode === "bounded" || predecessor;
   return {
     grouping: mode !== "individual" && mode !== "subject",
     priority: mode !== "individual",
@@ -19,6 +41,10 @@ export function fieldPolicy(mode: Mode, enhanced = false) {
     maxMembers: advanced ? 32 : 8,
     budgetMicros: mode === "bounded" ? 8000 : null,
     stageClock: enhanced,
+    predecessor,
+    ledger: mode === "ledger" || mode === "packed" || mode === "reply-wire",
+    packedJournal: mode === "packed",
+    fastReplyAndWire: mode === "reply-wire",
   };
 }
 const all = Array.from({ length: 10 }, (_, i) => i);
@@ -271,13 +297,15 @@ export function validateComparison(
   source: string,
   batch: string,
   enhanced = false,
+  write5 = false,
 ) {
   assert.equal(result.study, study);
   assert.equal(result.source, source);
   assert.equal(result.enhanced ?? false, enhanced);
+  assert.equal(result.write5 ?? false, write5);
   assert.deepEqual(
     result.arms.map((a: any) => a.mode),
-    modes(study, enhanced),
+    modes(study, enhanced, write5),
   );
   for (const [i, r] of result.arms.entries()) {
     assert.equal(r.arm.slot, "tx2-dxscale1-w1-" + batch + "-" + (i + 1));
@@ -287,6 +315,7 @@ export function validateComparison(
     assert.equal(r.seed, pooledDigest);
     assert.equal(r.seedFacts, 16_245_050);
     if (enhanced) assert.deepEqual(r.policy, fieldPolicy(r.mode, true));
+    if (write5) assert.match(r.writeOptionsSha256, /^[a-f0-9]{64}$/);
     assert(r.phases.every((p: any) => Number.isFinite(p.quietP99Ratio) && p.quietP99Ratio > 0));
     assert.deepEqual(
       r.phases.map((p: any) => p.label ?? p.name),

@@ -133,7 +133,9 @@
      :predecessorRequested (boolean pred/enabled) :predecessorSelected (= selected variant)
      :selectedFunction (str selected) :selectedDefinitionSha256 (schema/sha256 (str actual))
      :installedDefinitionMatches (and actual (= (str actual) (str expected)))
-     :ledger (boolean ledger/enabled) :packedJournal (boolean packed/enabled)
+     :ledger (boolean (or ledger/enabled packed/enabled)) :packedJournal (boolean packed/enabled)
+     :packedJournalCount (if (d/entid db :triplex.journal/packed)
+                           (reduce (fn [n _] (inc n)) 0 (d/datoms db :aevt :triplex.journal/packed)) 0)
      :fastReply (boolean group/fast-reply)}))
 (defn route-handler [{:keys [request-method uri body query-string]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
