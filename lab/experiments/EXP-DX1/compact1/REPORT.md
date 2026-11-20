@@ -1,15 +1,15 @@
 The packed edit can be found by its owner, command or position.
 Searching by a field across people needs an extra index.
 The 11-record write leaves out the stored journal rows that raw queries use.
-Putting those rows back takes 18 records for a one-field replacement.
-An eight-save batch can share the cost of publishing a search index.
+Putting those rows back takes 18 records and 2,500 bytes for a one-field replacement.
+The targeted search index matched nine cases and added about two records per changed link.
 Deep accounts need isolation at the storage layer.
 The earlier speed measurements compared two paths that do different work.
 Build the incremental writer first and make whole accounts movable between databases.
 
 **North star.** P2 durable field saves, with P1/P3/P4 exact historical and current reads and P5 atomic publication. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 **Review.** The 11-datom primitive drops required raw facts. The matched-speed claim needs stronger comparable paths. Checkpoints address the measured replay slope. [Finding-by-finding response](REVIEW-RESPONSE.md)
-**Query contract.** The ledger lists direct reads, the targeted W0 projection, general queries it cannot answer, and the Q107-S stored journal variant. [Query surfaces](QUERY-SURFACES.md)
+**Query contract.** The W0 reverse projector matched nine independently checked affected cases. Eight-save pages cost 0.375 datoms/save with no link changes and 2.375 for each edge replacement. Immediate-poll lag measured 30–37 ms p99. The Q107-S witnesses wrote 18/24/90 datoms. General business queries need a separate projection and adapter. [Query surfaces](QUERY-SURFACES.md)
 **Floor.** 1,440 factorial and 3,840 burst transactions matched the requested bytes and durable log. Fixed native apply was 0.160 ms, plus 1.74 µs/datom, 2.49 µs/KiB and 0.70 µs/warm index seek. Durable peer coefficients were 2.136 ms, 4.80 µs, 67.82 µs and 1.33 µs. [Floor and settings](FLOOR.md)
 **Ceiling.** The first baseline reached 1,696–2,790 minimal tx/s at depth 64. Native apply occupied 22–25% of the one-member deep bursts and up to 80% in a larger group. Across three settings the highest bare rate was 68,471 simple members/s with 128 per native transaction. Two indexing threads led the eight-member blocks and the larger threshold deferred index adoption. The baseline repeat drift limits attribution. [Floor and settings](FLOOR.md)
 **Layout.** Event, claim, server clock, owner and account position are durable together. The subject chain reconstructs exact validity, receipt, retirement, history and both read paths. Grouping saves account-head replacements and one native instant. [Obligations](LAYOUT.md) · [Native size census](CENSUS.md)
