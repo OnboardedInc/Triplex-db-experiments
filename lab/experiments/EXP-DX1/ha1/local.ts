@@ -194,6 +194,8 @@ export async function localDrill(opts: any, config: any, manager: any) {
   let measured = false;
   try {
     for (;;) {
+      // [DX-HASYNC1] Why: a queued exclusive lab window needs this process's heavy token to drain. Rejected: holding the token while waiting for that same window to finish.
+      if (mode.startsWith("hasync-")) manager.assertMeasureAdmission(opts.holder);
       const disk = fs.statfsSync(root);
       if (disk.bavail * disk.bsize < 5 * 2 ** 30) {
         e = declare(opts.slot);
@@ -307,7 +309,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
             }
           });
         } catch (err: any) {
-          if (err.code !== "REFUSED" || measured) throw err;
+          if (err.code !== "REFUSED" || measured || mode.startsWith("hasync-")) throw err;
         }
       }
       if (reserved) break;

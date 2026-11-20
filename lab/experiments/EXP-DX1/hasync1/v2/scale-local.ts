@@ -3,7 +3,7 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { root } from "../../ha1/common.ts";
+import { root, sleep } from "../../ha1/common.ts";
 
 const folder = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
 const evidence = path.join(folder, "evidence", "DX-HASYNC1");
@@ -14,10 +14,17 @@ const rungs = process.argv.slice(2).map(Number);
 assert(rungs.length && rungs.every((n) => Number.isSafeInteger(n) && n >= 5 && n <= 100000));
 assert.equal(process.platform, "darwin");
 
-async function run(arm: string, people: number, checkpoint?: string) {
+async function attempt(arm: string, people: number, checkpoint?: string) {
+  const disk = fs.statfsSync(root);
+  assert(disk.bavail * disk.bsize >= 5 * 2 ** 30, "Host disk floor");
   const child = spawn(
     process.execPath,
     [
+      "lab/bin/heavy.mjs",
+      "--label",
+      "DX-HASYNC1-scale-" + arm,
+      "--",
+      process.execPath,
       "--import",
       "tsx",
       "lab/bin/engine.mjs",
@@ -39,7 +46,7 @@ async function run(arm: string, people: number, checkpoint?: string) {
     stdout += chunk.toString();
     process.stdout.write(chunk);
   });
-  const status = await new Promise((resolve, reject) => {
+  const status = await new Promise<number | null>((resolve, reject) => {
     child.once("error", reject);
     child.once("close", resolve);
   });
@@ -51,6 +58,14 @@ async function run(arm: string, people: number, checkpoint?: string) {
     JSON.stringify({ arm, people, status, dir: dirs[0] && path.basename(dirs[0]) }) + "\n",
   );
   return { status, dir: dirs[0] };
+}
+
+async function run(arm: string, people: number, checkpoint?: string) {
+  for (;;) {
+    const result = await attempt(arm, people, checkpoint);
+    if (result.status !== 3 || result.dir) return result;
+    await sleep(5000);
+  }
 }
 
 let error = false;

@@ -164,7 +164,9 @@ export async function fleet(s: Stack, pair: SyncPair, count: number) {
         urls.join(",") +
         "/" +
         storage +
-        "?targetServerType=primary&connectTimeout=1&hostRecheckSeconds=1",
+        "?targetServerType=primary&connectTimeout=1&hostRecheckSeconds=1&currentSchema=%22" +
+        db(i) +
+        "%22",
       "sql-driver-class=org.postgresql.Driver",
       "sql-user=" + db(i),
       "sql-password=" + s.secret,
@@ -213,7 +215,7 @@ export async function fleet(s: Stack, pair: SyncPair, count: number) {
         storage +
         "?user={db}&password=" +
         s.secret +
-        "&connectTimeout=1",
+        "&connectTimeout=1&currentSchema=%22{db}%22",
       "-e",
       "GATEWAY_SOURCE_SHA256=" + s.e.source.gateway,
       "-e",

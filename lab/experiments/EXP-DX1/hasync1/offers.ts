@@ -411,27 +411,27 @@ export async function driveOffers(
             if (!job) return;
             const [key, input] = job;
             const found = await ac.r.operation(ac.db, input.operationId);
+            let receipt: Receipt;
+            const disposition = found.status === "committed" ? "original" : "retried";
             if (found.status === "committed") {
-              settlements.push({
-                key,
-                disposition: "original",
-                receipt: ac.remember(input, found),
-              });
+              receipt = ac.remember(input, found);
             } else {
               assert(
                 !ac.receipts.has(input.operationId),
                 "Acknowledged offer missing from survivor",
               );
-              const receipt = await ac.send(input);
-              settlements.push({ key, disposition: "retried", receipt });
+              receipt = await ac.send(input);
             }
-            await ac.pinned(ac.receipts.get(input.operationId)!);
+            await ac.pinned(receipt);
+            settlements.push({ key, disposition, receipt });
           }
         }),
       );
       e.write("traffic-" + label + "-settlement", {
         nonce: e.nonce,
         database: ac.db,
+        source: e.source,
+        slot: e.slot,
         raw: rawName,
         settlements,
       });
