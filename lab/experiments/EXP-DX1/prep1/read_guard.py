@@ -73,6 +73,17 @@ def read(out, completed_only=False):
             key = append["db"], str(member["t"])
             assert key not in native
             native[key] = (member, append)
+    recovered = [json.loads(line.removeprefix("PREP1_SEED_RECOVERED "))
+                 for line in raw if line.startswith("PREP1_SEED_RECOVERED ")]
+    assert len({(row["db"], row["stored"]["operationId"]) for row in recovered}) == len(recovered)
+    for row in recovered:
+        receipt = row["stored"]
+        position = int(receipt["position"]["v"])
+        assert mode == "census" and row["attempt"] == attempt
+        assert row["db"] == scoped_db(attempt, row["arm"])[1]
+        assert 1 <= position <= 150 and receipt["status"] == "committed"
+        assert receipt["operationId"] == f"seed-{8 * (position - 1)}"
+        assert (row["db"], receipt["t"]["v"]) in native
 
     by_arm = defaultdict(list)
     for entry in events("PREP1_PROBE "):
@@ -80,7 +91,8 @@ def read(out, completed_only=False):
     if mode == "profile":
         assert list(by_arm) == ["time", "reads", "reference", "cheap"]
     elif mode == "census":
-        assert list(by_arm) == ["reference", "cheap"]
+        entrypoint = (out / "stage/lab/config/datomic/entrypoint.sh").read_text()
+        assert list(by_arm) == (["cheap"] if "arms=(cheap)" in entrypoint else ["reference", "cheap"])
     elif completed_only:
         names = ["reference", "cheap", "cheap2", "reference2", "guard", "time", "reads"]
         last = next(reversed(by_arm))
@@ -198,7 +210,8 @@ def read(out, completed_only=False):
     return {"attempt": attempt, "selftestCompleted": not completed_only,
             "source": inputs["head"], "inputSha256": sha(out / "inputs.json"),
             "image": terminal["image"], "slot": terminal["slot"], "rawSha256": terminal["sha256"],
-            "verifierSha256": sha(Path(__file__)), "lease": lease, "arms": results}
+            "verifierSha256": sha(Path(__file__)), "lease": lease, "seedRepliesRecovered": len(recovered),
+            "arms": results}
 
 
 if __name__ == "__main__":

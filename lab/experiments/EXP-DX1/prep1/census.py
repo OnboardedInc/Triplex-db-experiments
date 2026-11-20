@@ -14,7 +14,8 @@ def census(out):
     inputs, terminal, events = managed_events(out)
     saved = inputs["mode"] == "profile"
     assert saved or inputs["mode"] == "census"
-    arm = read(out)["arms"]["cheap"]
+    guard = read(out)
+    arm = guard["arms"]["cheap"]
     block, = [event["data"] for event in events("PREP1_PROBE ")
               if event["arm"] == "cheap" and event["kind"] == "block"]
     offered = {f"edit-{i}" for i in range(96)}
@@ -29,6 +30,7 @@ def census(out):
     result = {"attempt": inputs["attempt"], "source": inputs["head"], "image": terminal["image"],
               "slot": terminal["slot"], "logSha256": terminal["sha256"], "verifierSha256": sha(Path(__file__)),
               "physicalWrites": len(physical), "receipts": len(rows), "distinctSubjects": 96,
+              "seedRepliesRecovered": guard["seedRepliesRecovered"],
               "certifiedSaves": sum(p["size"] for p in physical if p["variant"] == "basis" and not p["replays"]),
               "submittedReplays": sum(p["replays"] for p in physical), "turns": physical}
     if saved:

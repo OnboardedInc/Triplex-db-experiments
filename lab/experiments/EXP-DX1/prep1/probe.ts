@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { setTimeout as sleep } from "node:timers/promises";
-import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
+import { DatomicClient, DatomicHttpError } from "../../../../packages/datomic/dist/index.js";
 import { decodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import type { Fact } from "../../../bench/lib/world.ts";
 import { command } from "../w1/group/workload.ts";
@@ -76,6 +76,39 @@ type Ack = {
   timeline: { payloadPrepared: number; completed: number; responsePrepared: number };
 };
 
+async function seedBatch(
+  db: string,
+  input: Parameters<DatomicClient["transact"]>[1],
+  position: number,
+) {
+  try {
+    const ack = (await c.transact(db, input)) as Ack;
+    assert.equal(ack.operationId, input.operationId);
+    assert.equal(Number(ack.position.v), position);
+  } catch (failure) {
+    if (
+      mode !== "census" ||
+      !(failure instanceof DatomicHttpError) ||
+      failure.code !== "OutcomeUnknown"
+    )
+      throw failure;
+    // [DX-PREP1] Why: under concurrent Mac work the seed reply can miss the gateway's wait budget.
+    // Rejected: sending another seed transaction or extending the driver's edit timing to include recovery.
+    for (let i = 0; i < 60; i++) {
+      const stored = await c.operation(db, input.operationId);
+      if (stored.status === "committed") {
+        assert.equal(stored.operationId, input.operationId);
+        assert.equal(Number(stored.position?.v), position);
+        assert(Number(stored.t?.v) > 0);
+        console.log("PREP1_SEED_RECOVERED " + JSON.stringify({ attempt, db, arm, stored }));
+        return;
+      }
+      await sleep(500);
+    }
+    throw failure;
+  }
+}
+
 // [DX-PREP1] Why: each block edits existing rows in disjoint, equally deep ten-account cohorts.
 // Rejected: posting fresh entities or rewriting a preceding block's measured payload.
 try {
@@ -86,12 +119,16 @@ try {
     const batch = Array.from({ length: 8 }, (_, j) =>
       command(`seed-${i + j}`, facts(i + j, depth, "original"), [], false),
     );
-    await c.transact(db, {
-      ...batch[0]!,
-      entities: batch.flatMap((x) => x.entities ?? []),
-      newIds: batch.flatMap((x) => x.newIds),
-      rows: batch.flatMap((x) => x.rows),
-    });
+    await seedBatch(
+      db,
+      {
+        ...batch[0]!,
+        entities: batch.flatMap((x) => x.entities ?? []),
+        newIds: batch.flatMap((x) => x.newIds),
+        rows: batch.flatMap((x) => x.rows),
+      },
+      i / 8 + 1,
+    );
     seeds.push(...batch.map((x) => x.rows.slice(0, 3)));
   }
   const seedHead = await c.begin(db);

@@ -223,7 +223,9 @@ case "$PREP1_MODE" in
       arms=(time reads reference cheap)
     elif [[ "$PREP1_MODE" == census ]]; then
       export TX2_PREPARE_CENSUS="$PREP1_ATTEMPT"
-      arms=(reference cheap)
+      # [DX-PREP1] Why: the decision trace already distinguishes the prepared and reference routes.
+      # Rejected: seeding a second deep benchmark arm for a routing census.
+      arms=(cheap)
     else
       arms=(reference cheap cheap2 reference2 guard time reads)
     fi
