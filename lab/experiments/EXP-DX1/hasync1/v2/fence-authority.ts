@@ -115,7 +115,7 @@ export class FenceAuthority {
       const j = this.#read();
       assert.deepEqual(ownerOf(request), j.owner);
       assert.match(request.challenge, /^[a-f0-9-]{36}$/);
-      // Persist revocation before attempting the hardware mutation. Any restart or partial failure denies boot.
+      // [DX-HASYNC1] Why: revocation must survive a crash inside the interlock operation. Rejected: journaling only after the hardware responds.
       const going: Journal = {
         ...j,
         phase: "revoking",

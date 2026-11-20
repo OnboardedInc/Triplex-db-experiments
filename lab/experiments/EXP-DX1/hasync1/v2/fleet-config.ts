@@ -16,7 +16,7 @@ export function fleetCaps(mode: Mode, systems: number, bench: boolean) {
   ]);
   for (let i = 0; i < systems; i++) {
     for (const side of ["a", "b"] as const) {
-      caps.set(txRole(side, i), bench ? 640 : 240);
+      caps.set(txRole(side, i), bench ? 640 : 288);
       if (dedicated || i === 0) caps.set(pgRole(side, i), bench ? 192 : dedicated ? 64 : 128);
     }
   }

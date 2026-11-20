@@ -25,6 +25,8 @@ The files below are relative to the durable Triplex lab vault's `evidence/DX-HAS
 | `hasync-index-9da8ae55`      | `0d093d3a8` | Fixed field-page probes. 14.56 s to a new write, 81 exact offers settled, 0.183 s longest read gap. |
 | `hasync-restart-6124c3dd`    | `0d093d3a8` | Both original writers and a new boot container with the original disk exited 74. Verified a replacement standby and its first two-copy receipt. |
 | `hasync-fleet-shared-3bf2d6c8` | `0d093d3a8` | First setup failure. The vendor table script transfers ownership to postgres, so cell-role bootstrap stopped before the cut. |
+| `hasync-fleet-shared-ea09d833` | `514fa5644` | A container startup probe accepted the temporary bootstrap listener before PostgreSQL restarted. |
+| `hasync-fleet-dedicated-2d7dea95` | `514fa5644` | SQL bootstrap completed. Datomic rejected the undersized memory index configuration at startup. |
 
 ## Where the code publishes outcomes
 

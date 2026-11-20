@@ -39,4 +39,6 @@ node --import tsx lab/experiments/EXP-DX1/ha1/control.ts hasync-suite hasync-p9-
 
 Forecast 75–85 minutes on the released pair with prepared builds and the stated copy and load rates. The 18-cell campaign tests a 16M edited population, fleet recovery and idle load, standby replacement, every fault shape and save cost. The bare-metal run is pending. [Forecast and schedule](BENCH.md)
 
-The observations are Mac diagnostics. The evidence index lists each gate and the content, freshness and binding checks. No acceptance pins moved. [Evidence and audit](EVIDENCE.md) · [Checksums](SHA256SUMS)
+The remaining scheduled directional cuts, edited deep runs and fleet timing are pending shared Mac admission. The fleet's first setup failure and fix are recorded. Physical power and management interlock qualification are also pending.
+
+Scoped TypeScript and 19 focused tests passed. The timings are Mac diagnostics. The evidence index records each gate and its content, freshness and binding checks. No acceptance pins moved. [Evidence and audit](EVIDENCE.md) · [Checksums](SHA256SUMS)

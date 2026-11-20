@@ -143,9 +143,11 @@ export async function fleet(s: Stack, pair: SyncPair, count: number) {
     await wait("fleet PostgreSQL " + role, timeouts.setup, async () => {
       const r = await sql(
         role,
-        "select current_setting('server_version_num')::int/10000,pg_is_in_recovery()",
+        "select current_setting('server_version_num')::int/10000,current_setting('fsync')," +
+          "current_setting('synchronous_commit'),pg_is_in_recovery() where current_setting('listen_addresses')='*'",
       ).catch(() => "");
-      return r === "17|" + (primary ? "f" : "t") ? true : undefined;
+      // [DX-HASYNC1] Why: the image briefly opens its bootstrap SQL socket before the permanent listener. Rejected: considering a successful local SQL probe sufficient for readiness.
+      return r === "17|on|on|" + (primary ? "f" : "t") ? true : undefined;
     });
   };
   const startTx = async (side: "a" | "b", i: number) => {
@@ -171,9 +173,9 @@ export async function fleet(s: Stack, pair: SyncPair, count: number) {
       "sql-user=" + db(i),
       "sql-password=" + s.secret,
       "heartbeat-interval-msec=" + timeouts.heartbeat,
-      "memory-index-threshold=8m",
-      "memory-index-max=28m",
-      "object-cache-max=24m",
+      "memory-index-threshold=32m",
+      "memory-index-max=96m",
+      "object-cache-max=32m",
     ];
     await s.start(
       role,
@@ -185,7 +187,7 @@ export async function fleet(s: Stack, pair: SyncPair, count: number) {
         (side === "a" ? guard : "") +
           'printf "%s\\n" "$PROPS" > /tmp/fleet.properties; ' +
           "exec bin/transactor -Xms48m -Xmx" +
-          (bench ? "320" : "112") +
+          (bench ? "320" : "192") +
           "m -XX:ActiveProcessorCount=2 /tmp/fleet.properties",
       ],
       bench ? port(i) : undefined,
@@ -370,7 +372,7 @@ export async function fleet(s: Stack, pair: SyncPair, count: number) {
       const ac = sys.account;
       ac.changeEndpoint(sys.route.url, reader);
       await ac.pinned(sys.pin);
-      // Use a protected application transaction to verify every independent route before injecting the fault.
+      // [DX-HASYNC1] Why: verify every route accepted an actual protected save before the cut. Rejected: counting a health response as a working data cell.
       sys.pin = await ac.send(ac.intent("protected", 3));
       await ac.pinned(sys.pin);
     }
