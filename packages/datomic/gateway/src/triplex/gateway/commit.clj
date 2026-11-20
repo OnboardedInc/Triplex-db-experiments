@@ -56,6 +56,23 @@
   (walk/postwalk-replace {'lean-columns-code slim/row-columns-code} recorded-row-code))
 (def recorded-row (recorded-row-decoder))
 
+;; [DX-PREP1] Why: the reference and the subject worker normalize the stored predecessor the same way.
+;; Rejected: independently rebuilding the journal change and risking different raw bytes.
+(def change-code
+  '(fn [change clock new-ids prior-rows]
+     (let [id (get change "tripleId")
+           prior (when (and (= "retract" (get change "op")) (not (new-ids id)))
+                   (get prior-rows id))
+           lean-prior (contains? prior "value")]
+       (cond-> change
+         lean-prior (dissoc "validTo" "entityType" "assertionTxId")
+         lean-prior (merge prior)
+         (and prior (not lean-prior)) (merge (select-keys prior (keys change)))
+         (new-ids id) (assoc "recordedAt" clock)
+         (or lean-prior (contains? change "retractedAt")) (assoc "retractedAt" clock)))))
+(defmacro change-rewriter [] change-code)
+(def rewrite-change (change-rewriter))
+
 ;; [DX-INT1] Why: reference and prepared saves use the same position and clock transformations.
 ;; Rejected: separately maintaining the packed rows and authoritative predecessor metadata.
 (def stamp-code
@@ -65,18 +82,7 @@
            final-digits (digits final)
            shifted (fn [p] (if (< lower p (inc provisional)) (+ p delta) p))]
        (letfn [(assign-change [text clock new-ids prior-rows]
-                 (let [change (json/read-str text)
-                       id (get change "tripleId")
-                       prior (when (and (= "retract" (get change "op")) (not (new-ids id)))
-                               (get prior-rows id))
-                       lean-prior (contains? prior "value")
-                       change (cond-> change
-                                lean-prior (dissoc "validTo" "entityType" "assertionTxId")
-                                lean-prior (merge prior)
-                                (and prior (not lean-prior)) (merge (select-keys prior (keys change)))
-                                (new-ids id) (assoc "recordedAt" clock)
-                                (or lean-prior (contains? change "retractedAt")) (assoc "retractedAt" clock))]
-                   (json/write-str change)))
+                 (json/write-str (rewrite-change-code (json/read-str text) clock new-ids prior-rows)))
                (assign-row [text offset clock new-ids prior-rows]
              (let [start (- offset 2) values (json/read-str (subs text start))
                    attr (nth values 3) journal (= "_Transaction" (nth values 14))
@@ -122,7 +128,8 @@
                    :else x))]
          replace-value))))
 
-(def compiled-stamp-code (walk/postwalk-replace {'slim-row-code slim/encoder-code} stamp-code))
+(def compiled-stamp-code
+  (walk/postwalk-replace {'slim-row-code slim/encoder-code 'rewrite-change-code change-code} stamp-code))
 (defmacro row-stamper [] compiled-stamp-code)
 (def stamp (row-stamper))
 

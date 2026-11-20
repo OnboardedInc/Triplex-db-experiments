@@ -5,6 +5,7 @@
             [triplex.gateway.group-prepare :as prepared]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.schema :as schema]
+            [triplex.gateway.small-row :as small-row]
             [triplex.gateway.scope :as scope]))
 
 (def enabled (= "1" (System/getenv "TX2_SUBJECT_SAVE")))
@@ -14,7 +15,7 @@
 
 (def body
   '(let [{:keys [scope flags function owner revision journal operation command ops provisional
-                 submitted-clock new-ids prefixes prior-rows]} plan
+                 submitted-clock prefixes]} plan
          value (fn [e a] (:v (first (d/datoms db :eavt e a))))
          [ident installed-at] function
          changed (into #{} (keep (fn [[a v]] (when (not= v (value scope a)) a))) flags)]
@@ -56,7 +57,7 @@
                              submitted-clock))]
        (when (> final 9007199254740991) (throw (ex-info "Invalid commit span" {})))
        (when-not (Double/isFinite clock) (throw (ex-info "TRIPLEX_CLOCK_EXHAUSTED" {})))
-       (let [stamp (stamp-rows true clock (set new-ids) (dec provisional) provisional final false prior-rows)]
+       (let [stamp (stamp-rows true clock #{} (dec provisional) provisional final false nil)]
          (into [[:db/cas owner :triplex.entity/rev revision final]
                 [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]]
                (map stamp) ops)))))
@@ -98,6 +99,22 @@
              (not= "ref" (:value_type row))
              (string? (:attribute row)) (not (.startsWith ^String (:attribute row) ":_")))
     (:attribute row)))
+
+(defn render-ops [ops owner subject prior new-ids]
+  (let [prior-rows (into {} (map (fn [[id text]] [id (commit/recorded-row text)])) prior)
+        rewrite #(commit/rewrite-change %1 %2 new-ids prior-rows)]
+    (into []
+      (keep (fn [op]
+              (cond
+                (and (vector? op) (= :triplex/assert (first op)))
+                (let [[_ eid attr [tag text position offset kind]] op]
+                  [:db/add eid attr [tag (subs text 0 offset) position offset kind
+                                     (small-row/ordinary-plan text offset rewrite)]])
+                (and (vector? op) (= :triplex/retract (first op)))
+                [:db/retract owner :triplex.entity/row (prior (nth op 2))]
+                (and (vector? op) (= :triplex.entity/rev (nth op 2)) (= (str "e:" subject) (second op))) nil
+                :else op)))
+      ops)))
 
 (defn plan [db [[commit-ident p]] input]
   (let [{:keys [scope source entities live ops new-ids times record-clocks journal-entities provisional]} p
@@ -150,14 +167,8 @@
               {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
                :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
                :provisional provisional :submitted-clock (reduce max (map double clocks))
-               :new-ids (set new-ids) :prefixes (vec (sort (map lean/prefix new-ids)))
-               :prior-rows (into {} (map (fn [[id text]] [id (commit/recorded-row text)])) prior)
-               :ops (into [] (keep (fn [op]
-                       (cond
-                         (and (vector? op) (= :triplex/assert (first op))) (assoc op 0 :db/add)
-                         (and (vector? op) (= :triplex/retract (first op))) [:db/retract owner :triplex.entity/row (prior (nth op 2))]
-                         (and (vector? op) (= :triplex.entity/rev (nth op 2)) (= (str "e:" subject) (second op))) nil
-                         :else op))) ops)})))))))
+               :prefixes (vec (sort (map lean/prefix new-ids)))
+               :ops (render-ops ops owner subject prior (set new-ids))})))))))
 
 (defn replan? [failure]
   (some (fn [cause]
