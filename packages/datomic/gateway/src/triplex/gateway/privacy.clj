@@ -235,6 +235,10 @@
     (let [new-ids (set (get input "newIds"))
           importing (or (true? (get input "erasureReplay"))
                         (some #(and (= ":_tx/actor" (:attribute %)) (= "bulk-import" (:value_string %))) rows))]
+      ;; [DX-ERASE1] Why: the identity list survives native removal and data restores.
+      ;; Rejected: checking only native row history (it cannot find a row whose contents were physically removed).
+      (when (some #(contains? (:erased state) %) new-ids)
+        (failure! 409 "ErasedAssertionIdentity" "A removed assertion identity cannot be reused"))
       (doseq [r rows :when (and (new-ids (:id r)) ((:attrs state) (:attribute r)))]
         (when-not (= "string" (:value_type r))
           (failure! 400 "ProtectedTypeUnsupported" "This protected scope accepts string assertions"))

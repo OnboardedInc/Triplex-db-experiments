@@ -1,3 +1,9 @@
+import {
+  ErasureChanged,
+  readErasure,
+  recheckErasure,
+  verifySameErasureAuthority,
+} from "../../../../bench/lib/datomic-erasure.ts";
 import assert from "node:assert/strict";
 import { W0, canonical } from "../../../../bench/lib/w0-world.ts";
 import { width } from "../../notify1/census.ts";
@@ -20,6 +26,7 @@ type Cursor = {
   batch: number;
   previous: string;
   entries: number;
+  erasureSeq?: number;
 };
 
 // [DX-ACT1] Why: retain ordered notice debt for every accepted receipt, even if output settlement becomes obsolete. Rejected: coupling creation of individual notices to a recipient's availability.
@@ -49,6 +56,7 @@ export class RecordedNotices {
     const b = this.archive,
       a = b.source,
       db = b.db;
+    const authority = await readErasure(a.s.comp);
     const sourceAt = await a.s.head(),
       at = await b.store.head(),
       tail = await a.notices.event(through, sourceAt);
@@ -59,7 +67,7 @@ export class RecordedNotices {
       controls.generation === t.epoch && controls.masks.length === 0,
       "Protected source notice needs a retention rule",
     );
-    const current = prior?.value ?? {
+    const current: Cursor = prior?.value ?? {
       epoch: t.epoch,
       event: 1,
       start: 0,
@@ -69,6 +77,8 @@ export class RecordedNotices {
       previous: hash([a.db.prefix, t.epoch, "receiver-genesis"]),
     };
     assert(current.epoch === t.epoch);
+    if (prior && current.erasureSeq !== authority?.seq)
+      throw new ErasureChanged("Recorded notices belong to an earlier removal sequence");
     if (current.event > through) {
       assert(prior);
       return { current, at: prior.at };
@@ -113,6 +123,7 @@ export class RecordedNotices {
           start: current.start,
           through: end,
           deliveries,
+          ...(authority ? { erasureSeq: authority.seq } : {}),
         }
       : undefined;
     const next: Cursor = {
@@ -123,6 +134,7 @@ export class RecordedNotices {
       start: done ? 0 : end,
       parent: done ? hash(e.value) : current.parent,
       entries: current.entries + deliveries.length,
+      ...(authority ? { erasureSeq: authority.seq } : {}),
     };
     ops.push(...db.change(stateKey, prior, next));
     if (packet) ops.push(db.put(packetKey(packet.batch), pack(packet)));
@@ -132,6 +144,7 @@ export class RecordedNotices {
       ops,
       at,
       next,
+      authority,
     );
     return next.event > through ? { current: next, at: ack.position } : undefined;
   }
@@ -176,6 +189,7 @@ export class RecordedNotices {
         assert(p.position === bound.at && p.recipe === hash(bound.value) && p.through > p.start);
         entries += p.deliveries.length;
         previous = hash(p);
+        await recheckErasure(a.s.comp, p.erasureSeq);
         yield p;
       }
     }
@@ -188,9 +202,24 @@ export class RecordedNotices {
   }
   async deliver(sink: Documents, at: number) {
     let effects = 0;
-    for await (const packet of this.orderedPackets(at))
-      if (await receiveOrdered(sink, this.archive.source.db.prefix, packet, hash(packet)))
+    const source = this.archive.source;
+    for await (const packet of this.orderedPackets(at)) {
+      const frontier =
+        packet.erasureSeq === undefined ? undefined : () => readErasure(source.s.comp);
+      if (frontier) verifySameErasureAuthority(source.s.comp, sink.store);
+      if (
+        await receiveOrdered(
+          sink,
+          source.db.prefix,
+          packet,
+          hash(packet),
+          undefined,
+          undefined,
+          frontier,
+        )
+      )
         effects += packet.deliveries.length;
+    }
     return effects;
   }
 }

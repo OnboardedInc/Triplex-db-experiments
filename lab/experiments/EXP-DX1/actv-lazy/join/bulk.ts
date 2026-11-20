@@ -1,9 +1,14 @@
 import assert from "node:assert/strict";
-import { DatomicClient } from "../../../../../packages/datomic/dist/index.js";
+import {
+  DatomicClient,
+  withDatomicErasureSequence,
+  type ErasureFrontier,
+} from "../../../../../packages/datomic/dist/index.js";
 import { runtimeApi } from "../../../../bench/lib/triplex.ts";
 
 export type BulkClass = "activation" | "notice";
-const classByClaim = new Map<string, BulkClass>();
+type SourceTicket = Pick<ErasureFrontier, "seq" | "database">;
+const workByClaim = new Map<string, { kind: BulkClass; ticket?: SourceTicket }>();
 let installed = false;
 export const bulkWireLimit = 64 * 1024;
 export const bulkUs = (rows: number, bytes: number) =>
@@ -15,28 +20,34 @@ export async function bulkClaim<T>(
   claim: string,
   kind: BulkClass,
   send: () => Promise<T>,
+  ticket?: SourceTicket,
 ) {
   if (!installed) {
     installed = true;
     const original = DatomicClient.prototype.transact;
     DatomicClient.prototype.transact = function (db, input, onSent) {
-      const claims = input.claims.map((entry) => classByClaim.get(db + "/" + entry.commandId));
-      const kind = claims.find((x) => x !== undefined);
-      if (!kind) return original.call(this, db, input, onSent);
+      const claims = input.claims.map((entry) => workByClaim.get(db + "/" + entry.commandId));
+      const work = claims.find((x) => x !== undefined);
+      if (!work) return original.call(this, db, input, onSent);
       assert(claims.length === 1 && input.rows.length <= 96, "Invalid bulk claim frame");
-      const wire = { ...input, writeClass: kind };
-      return original.call(this, db, wire, onSent);
+      const wire = { ...input, writeClass: work.kind };
+      // [DX-ERASE1] Why: a queued Effect can resume in another context, so bring the source cut with the destination's exact claim.
+      // Rejected: relying on the enqueueing fiber's ambient removal sequence.
+      const invoke = () => original.call(this, db, wire, onSent);
+      return work.ticket
+        ? withDatomicErasureSequence(work.ticket.seq, invoke, false, work.ticket.database)
+        : invoke();
     };
   }
   const db =
     "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scope))).toString("base64url");
   const key = db + "/" + claim;
-  assert(!classByClaim.has(key), "Bulk claim already in flight in this process");
-  classByClaim.set(key, kind);
+  assert(!workByClaim.has(key), "Bulk claim already in flight in this process");
+  workByClaim.set(key, { kind, ...(ticket ? { ticket } : {}) });
   try {
     return await send();
   } finally {
-    classByClaim.delete(key);
+    workByClaim.delete(key);
   }
 }
 

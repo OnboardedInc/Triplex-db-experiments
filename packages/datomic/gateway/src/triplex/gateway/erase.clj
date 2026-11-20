@@ -5,6 +5,29 @@
             [triplex.gateway.scope :as scope])
   (:import [java.util UUID]))
 
+;; [DX-ERASE1] Why: an independent prepared save may advance the database after removal selects its rows.
+;; Rejected: a peer-only head check (it cannot prove the selection on the serialized transaction cut).
+(def ^:private cut-guard :triplex.erase/check-position-v1)
+(def ^:private cut-moved "TRIPLEX_ERASE_HEAD_MOVED")
+(def ^:private cut-guard-code
+  '(let [value (fn [e a] (:v (first (d/datoms db :eavt e a))))
+         v2 (and (d/entid db :triplex.scope/head-version) (= 2 (value scope :triplex.scope/head-version)))
+         tx (d/t->tx (d/basis-t db))
+         row (when v2 (first (d/rseek-datoms db :aevt :triplex.tx/position tx)))
+         position (if v2
+                    (if (= (:a row) (d/entid db :triplex.tx/position)) (:v row) 0)
+                    (value scope :triplex.scope/position))]
+     (when-not (= previous position) (throw (ex-info "TRIPLEX_ERASE_HEAD_MOVED" {})))
+     []))
+
+(defn- install-cut-guard! [conn db]
+  (if (d/entid db cut-guard) db
+    (let [report (deref (d/transact conn [{:db/ident cut-guard
+                :db/fn (d/function {:lang "clojure" :params '[db scope previous]
+                                    :requires '[[datomic.api :as d]] :code cut-guard-code})}]) 5000 ::timeout)]
+      (when (= ::timeout report) (privacy/unavailable!))
+      (:db-after report))))
+
 (defn sync! [conn]
   (let [db (deref (d/sync conn) 2000 ::timeout)]
     (when (= db ::timeout) (privacy/unavailable!))
@@ -17,7 +40,7 @@
     (privacy/register! name attrs sealed?)
     (privacy/guard name
       (fn []
-        (when-not (privacy/enabled? (sync! conn))
+        (when-not (privacy/enabled? (install-cut-guard! conn (sync! conn)))
           (let [written (deref (d/transact conn [[:db/add (scope/entity db) :triplex.scope/erasure-ledger true]
                                       [:db/add (scope/entity db) :triplex.scope/erasure-seq 0]]) 5000 ::timeout)]
             (when (= written ::timeout) (privacy/unavailable!))))))
@@ -101,7 +124,8 @@
   (str "privacy-" (privacy/sha256 (get entry "commandId"))))
 
 (defn apply-native! [conn current entry]
-  (let [eid (d/entid current [:triplex.tx/operation-id (operation-id entry)])
+  (let [current (install-cut-guard! conn current)
+        eid (d/entid current [:triplex.tx/operation-id (operation-id entry)])
         raw (json/write-str entry)
         position (get entry "position")
         tx (get entry "txId")
@@ -112,9 +136,10 @@
         (when-not (= raw (scope/value current eid :triplex.tx/erasure-record)) (privacy/unavailable!))
         (d/tx->t eid))
       (do
-        (when-not (= position (inc (scope/head-position current head))) (privacy/unavailable!))
+        (when-not (= position (inc (scope/head-position current head))) (throw (ex-info cut-moved {})))
         (let [ops (cond->
-                   [{:db/id "datomic.tx" :triplex.tx/position position :triplex.tx/operation-id (operation-id entry)
+                   [[cut-guard head (dec position)]
+                    {:db/id "datomic.tx" :triplex.tx/position position :triplex.tx/operation-id (operation-id entry)
                      :triplex.tx/id tx :triplex.tx/recorded-at stamp :triplex.tx/max-recorded-at stamp
                      :triplex.tx/erasure-record raw :triplex.tx/journals ["privacy-journal"]}
                     {:db/id "privacy-journal" :triplex.entity/id tx :triplex.journal/position position
@@ -155,12 +180,21 @@
                   _ (when (and pending (not= [command selectors] (mapv #(get pending %) ["commandId" "selectors"])))
                       (privacy/unavailable!))
                   _ (when (and (not pending) (d/entid db [:triplex.claim/command-id command]))
-                      (privacy/failure! 409 "EraseCommandConflict" "The command identity is already claimed"))
-                  entry (or pending (make-entry name db current command selectors))]
-              (when-not pending (privacy/prepare! name entry))
-              (apply-native! conn db entry)
-              (privacy/publish! name current entry)
-              (response (d/db conn) entry))))))))
+                      (privacy/failure! 409 "EraseCommandConflict" "The command identity is already claimed"))]
+              (loop [view db prepared pending]
+                (let [entry (or prepared (make-entry name view current command selectors))
+                      _ (when-not prepared (privacy/prepare! name entry))
+                      moved (try (apply-native! conn view entry) false
+                                  (catch Exception error
+                                    (if (some #(= cut-moved (ex-message %)) (take-while some? (iterate ex-cause error)))
+                                      true
+                                      (throw error))))]
+                  (if moved
+                    (let [next (sync! conn)
+                          committed (d/entid next [:triplex.tx/operation-id (operation-id entry)])]
+                      (recur next (when committed entry)))
+                    (do (privacy/publish! name current entry)
+                        (response (d/db conn) entry))))))))))))
 
 (defn replay-after-restore! [name conn]
   ;; [DX-ERASE1] Why: data rollback must replay the external prefix before any route becomes eligible.
