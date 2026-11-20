@@ -30,13 +30,15 @@ def disk_floor():
         raise SystemExit("Host free disk below 5 GiB")
 
 
-def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0"):
+def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefetch="0"):
     if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery", "subject-recovery", "subject-query", "subject-native-suite", "subject-profile", "lookup-profile"):
         raise SystemExit("Unknown managed probe mode")
     if subject not in ("0", "1"):
         raise SystemExit("Subject writer setting must be 0 or 1")
     if numeric_owner not in ("0", "1") or (numeric_owner == "1" and subject != "1"):
         raise SystemExit("Numeric owner mode requires the prepared writer")
+    if prefetch not in ("0", "1") or (prefetch == "1" and subject != "1"):
+        raise SystemExit("Prefetch requires the prepared writer")
     out.mkdir()
     attempt = str(uuid.uuid4())
     stage = out / "stage"
@@ -55,6 +57,7 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0"):
     (config / "mode").write_text(mode + "\n")
     (config / "subject").write_text(subject + "\n")
     (config / "subject-owner").write_text(numeric_owner + "\n")
+    (config / "subject-prefetch").write_text(prefetch + "\n")
     if mode == "live":
         if not 1 <= int(seconds) <= 60:
             raise SystemExit("Live window must be 1 to 60 seconds")
@@ -111,6 +114,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "timings": "diagnostic",
         "subject": subject == "1",
         "numericOwner": numeric_owner == "1",
+        "prefetch": prefetch == "1",
         "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
         "stage": {str(p.relative_to(stage)): sha(p) for p in sorted(stage.rglob("*"))
                   if p.is_file() and p != slots},

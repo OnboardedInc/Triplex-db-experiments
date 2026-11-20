@@ -5,6 +5,7 @@ cd /opt/datomic
 export PREP1_MODE=$(cat /config/mode)
 export PREP1_ATTEMPT=$(cat /config/attempt)
 export TX2_SUBJECT_NUMERIC_OWNER=$(cat /config/subject-owner)
+export TX2_SUBJECT_PREFETCH=$(cat /config/subject-prefetch)
 if [[ "$PREP1_MODE" == subject-native-suite ]]; then
   # [DX-PREP1] Why: exercise the stock native suite with the real process setting on fresh memory scopes.
   # Rejected: adding PostgreSQL and a transactor for tests written to run in one JVM.

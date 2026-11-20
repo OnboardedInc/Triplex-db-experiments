@@ -30,7 +30,8 @@ def inspect(root):
         assert inputs["mode"] == "subject-recovery"
         assert labels == ["tests", "blocked-before-reply", "reopened"]
         tests, before, after = values
-        assert tests["test"] == 7 and tests["pass"] > 6 and tests["fail"] == tests["error"] == 0
+        assert tests["test"] == (8 if "prefetch" in inputs else 7)
+        assert tests["pass"] > 6 and tests["fail"] == tests["error"] == 0
         assert events("PREP1_STOP ") == [{"attempt": attempt, "gatewayExit": 137}]
         lines = (root / terminal["log"]).read_text().splitlines()
         assert lines.count("PREP1_SQL_REPLICA streaming sync fsync=on") == 2
@@ -49,6 +50,7 @@ def inspect(root):
 
     assert before["attempt"] == attempt and before["db"] == db and before["prepared"] == inputs["subject"]
     assert before.get("numericOwner", False) == inputs.get("numericOwner", False)
+    assert before.get("prefetch", False) == inputs.get("prefetch", False)
     if inputs["subject"]:
         assert re.fullmatch(r":triplex\.subject/v-[0-9a-f]{24}", before["function"])
         assert int(before["functionTx"]) > 0

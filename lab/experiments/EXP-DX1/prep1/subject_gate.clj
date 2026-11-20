@@ -30,7 +30,8 @@
          frequencies)))
 
 (defn run-replacement [enabled]
-  (with-redefs [subject/enabled enabled group/enabled false policy/priority? false policy/field-only? false policy/budget-us nil]
+  (with-redefs [subject/enabled enabled subject/prefetch? false group/enabled false
+                policy/priority? false policy/field-only? false policy/budget-us nil]
     (reference/in-scope
       (fn [name conn]
         (let [[seed a b] (reference/edits)

@@ -10,9 +10,26 @@
 
 (def enabled (= "1" (System/getenv "TX2_SUBJECT_SAVE")))
 (def numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_NUMERIC_OWNER")))
+(def prefetch? (= "1" (System/getenv "TX2_SUBJECT_PREFETCH")))
 (def erase-generation :triplex.scope/erasure-seq)
 (def mutable-flags #{:triplex.scope/feed-irregular :triplex.scope/position-regular
                      :triplex.scope/irregular :triplex.scope/packed-journals})
+
+;; [DX-PREP1] Why: owner CAS protects predecessor bytes, but an assertion identity is global, including retired rows.
+;; Rejected: owner revision or a present-only index for new IDs (another owner can consume the ID).
+(def history-guard
+  '(let [history (d/history db)
+        lo (first prefixes) hi (last prefixes)
+        empty-range (and (= (subs lo 0 5) (subs hi 0 5)) (< (int (last hi)) 127)
+                         (let [end (str (subs hi 0 (dec (count hi))) (char (inc (int (last hi)))))]
+                           (nil? (first (d/index-range history :triplex.entity/row lo end)))))]
+    (when (and (not empty-range)
+               (some (fn [^String prefix]
+                       (when-let [datom (first (d/index-range history :triplex.entity/row prefix nil))]
+                         (.startsWith ^String (:v datom) prefix)))
+                     prefixes))
+      ;; The reference establishes error precedence if a predecessor also changed.
+      (throw (ex-info "TRIPLEX_SUBJECT_REPLAN" {})))))
 
 (def body
   '(let [{:keys [scope flags function owner revision journal operation command ops provisional
@@ -34,20 +51,7 @@
        (throw (ex-info "TRIPLEX_CONFLICT" {:triplex.subject/stale true})))
      (when (or (seq changed) (d/entid db [:triplex.entity/id journal]))
        (throw (ex-info "TRIPLEX_SUBJECT_REPLAN" {})))
-     ;; [DX-PREP1] Why: owner CAS protects predecessor bytes, but an assertion identity is global, including retired rows.
-     ;; Rejected: owner revision or a present-only index for new IDs (another owner can consume the ID).
-     (let [history (d/history db)
-           lo (first prefixes) hi (last prefixes)
-           empty-range (and (= (subs lo 0 5) (subs hi 0 5)) (< (int (last hi)) 127)
-                            (let [end (str (subs hi 0 (dec (count hi))) (char (inc (int (last hi)))))]
-                              (nil? (first (d/index-range history :triplex.entity/row lo end)))))]
-       (when (and (not empty-range)
-                  (some (fn [^String prefix]
-                          (when-let [datom (first (d/index-range history :triplex.entity/row prefix nil))]
-                            (.startsWith ^String (:v datom) prefix)))
-                        prefixes))
-         ;; The reference establishes error precedence if a predecessor also changed.
-         (throw (ex-info "TRIPLEX_SUBJECT_REPLAN" {}))))
+     check-history
      (let [native-tx (d/t->tx (d/basis-t db))
            latest (if (value native-tx :triplex.tx/position)
                     native-tx
@@ -67,6 +71,7 @@
 (def code
   (walk/postwalk-replace {'stamp-rows commit/compiled-stamp-code
                           'mutable-flags mutable-flags
+                          'check-history history-guard
                           ;; [DX-PREP1] Why: the numeric owner must still own this public ID in db-before.
                           ;; Rejected: trusting the peer's lookup alone (an ID change can leave its revision intact).
                           'owner-witness-check (when numeric-owner?
@@ -75,18 +80,38 @@
 (def source-hash (schema/sha256 (pr-str code)))
 (def ident (keyword "triplex.subject" (str "v-" (subs source-hash 0 24))))
 
+;; [DX-PREP1] Why: capture the two dominant segment keys without evaluating or stamping a command again.
+;; Rejected: speculative apply of the whole save (duplicates normalization and produces an unused draft).
+(def prefetch-code
+  (walk/postwalk-replace {'check-history history-guard}
+    '(do (first (d/datoms db :eavt owner :triplex.entity/rev))
+         check-history
+         [])))
+(def prefetch-ident
+  (keyword "triplex.subject" (str "prefetch-" (subs (schema/sha256 (pr-str prefetch-code)) 0 24))))
+
 (defn installed [db]
   (when-let [eid (d/entid db ident)]
     (:tx (first (d/datoms db :eavt eid :db/fn)))))
 
 (defn install! [conn db]
-  (if (and enabled (not (and (installed db) (d/entid db erase-generation))))
-    (:db-after @(d/transact conn (cond-> []
-      (not (d/entid db erase-generation)) (conj (schema/attr erase-generation :db.type/long))
-      (not (installed db)) (conj {:db/ident ident :db/fn (d/function
-        {:lang :clojure :params '[db plan] :requires '[[datomic.api :as d] [clojure.data.json :as json]]
-         :code code})}))))
-    db))
+  (if-not enabled
+    db
+    (let [missing (cond-> []
+                    (not (d/entid db erase-generation))
+                    (conj (schema/attr erase-generation :db.type/long))
+                    (not (installed db))
+                    (conj {:db/ident ident :db/fn (d/function
+                      {:lang :clojure :params '[db plan] :requires '[[datomic.api :as d] [clojure.data.json :as json]]
+                       :code code})})
+                    (and prefetch? (not (d/entid db prefetch-ident)))
+                    (conj {:db/ident prefetch-ident :db/fn (d/function
+                      {:lang :clojure :params '[db owner prefixes] :requires '[[datomic.api :as d]]
+                       :code prefetch-code})}))]
+      (if (seq missing) (:db-after @(d/transact conn missing)) db))))
+
+(defn lookup-hints [db {:keys [owner prefixes]}]
+  (:hints (d/with db [[prefetch-ident owner prefixes]] :return-hints true)))
 
 (defn scope-witness [db scope-id]
   (into (prepared/scope-flags db scope-id)

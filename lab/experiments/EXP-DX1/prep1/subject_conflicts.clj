@@ -54,6 +54,45 @@
     (is (nil? (get (reference/claim name (get-in input ["claims" 0 "commandId"])) "receipt")))
     (is (not-any? #(= (get-in input ["claims" 0 "txId"]) (first %)) (reference/feed name 2 10)))))
 
+(deftest lookup-only-hints-and-authoritative-cas
+  (when subject/prefetch?
+    (with-redefs [subject/enabled true group/enabled false policy/priority? false policy/field-only? false policy/budget-us nil]
+      (reference/in-scope
+        (fn [name conn]
+          (let [[a b] (seed name)
+                lookup d/with
+                hint subject/lookup-hints
+                native d/transact-async
+                attached (atom nil)
+                first-ack (with-redefs [d/with
+                                       (fn [db data & opts]
+                                         (is (= subject/prefetch-ident (ffirst data)))
+                                         (is (= [:return-hints true] (vec opts)))
+                                         (let [result (apply lookup db data opts)]
+                                           (is (some? (:hints result)))
+                                           (is (every? #(= (d/entid db :db/txInstant) (:a %)) (:tx-data result)))
+                                           (reset! attached (:hints result))
+                                           result))
+                                       d/transact-async
+                                       (fn [c data & opts]
+                                         (is (= subject/ident (ffirst data)))
+                                         (is (identical? @attached (:hints (apply hash-map opts))))
+                                         (apply native c data opts))]
+                            (reference/send name a))]
+            (is (= [200 nil] (reference/outcome first-ack)))
+            (is (true? (get-in first-ack [:body "subjectHintsAttached"])))
+            ;; [DX-PREP1] Why: a valid hint can survive a competing write but never its stale receipt.
+            ;; Rejected: testing stale input only before hints existed.
+            (with-redefs [subject/lookup-hints
+                          (fn [db plan]
+                            (let [hints (hint db plan)]
+                              (is (some? hints))
+                              (ref-write name (reference/edit-frame "after-hint" "hint-winner" "winner" 2.0 12.0 "middle"))
+                              hints))]
+              (is (= [409 "CasConflict"] (reference/outcome (reference/send name b)))))
+            (is (= {"status" "absent"} (reference/operation name "edit-b")))
+            (is (= 4 (storage/head-position (d/db conn))))))))))
+
 (deftest dependency-matrix
   (with-redefs [subject/enabled true group/enabled false policy/priority? false policy/field-only? false policy/budget-us nil]
     (testing "A true same-person writer changes the revision and invalidates the planned predecessor"
