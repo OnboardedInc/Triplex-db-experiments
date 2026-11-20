@@ -557,10 +557,17 @@ def component_completion(r):
     assert (r["item"],r["attempt"],r["source"])==(29,2,JOINED_GEOGRAPHY_SOURCE)
     inputs, observations, producer, seed=map(get,(scale/"server-inputs.json",scale/"server-observations.json",
                                                  scale/"server-collected.json",scale/"server-seed.json"))
+    owner_file=root/"run-owner.json"
+    owner=get(owner_file)
+    prefix="tx2-dxt1-bm1-"+r["tag"]
     for row in (inputs,observations,producer):
         assert row["source"]==r["source"] and row["n"]==100_000 and row["nonce"]==inputs["nonce"]
-        assert row["owner"]==digest(root/"run-owner.json")
-    assert inputs["slot"]=="tx2-dxt1-bm1-"+r["tag"] and inputs["settlement"] is True
+        assert row["owner"]==digest(owner_file)
+    # [DX-BM1] Why: the component producer records the writer container as its slot.
+    # Rejected: comparing that field to the orchestration prefix without the role suffix.
+    assert owner["prefix"]==prefix and owner["source"]==r["source"]
+    assert inputs["slot"]==owner["container"]==prefix+"-gw-w" and inputs["volume"]==owner["volume"]==prefix+"-pg-data"
+    assert inputs["settlement"] is True
     assert r["start"]<=inputs["issuedAt"]/1000 and seed["nonce"]==inputs["nonce"] and seed["n"]==100_000
     assert observations["windows"]==producer["windows"]
     assert [(w["index"],w["mode"],w["rate"]) for w in producer["windows"]]==[
@@ -568,7 +575,7 @@ def component_completion(r):
                                                      ("owed",23.5),("staged",23.5)))]
     for path in ("server-effects","server-seed",*(f"{kind}-{i}" for i in range(6) for kind in ("offer","terminal","proof"))):
         assert digest(scale/(path+".json"))==observations["outputs"][path]
-    return {"source":r["source"],"slot":inputs["slot"],"nonce":inputs["nonce"],
+    return {"source":r["source"],"slot":prefix,"writerContainer":inputs["slot"],"nonce":inputs["nonce"],
             "requestSha256":digest(Path(r["directory"])/"request.json"),"completedSha256":digest(scale/"server-collected.json")}
 
 
