@@ -9,7 +9,7 @@ import { createInterface } from "node:readline";
 import { pipeline } from "node:stream/promises";
 import { Satellite } from "./satellite.ts";
 import { hash, head, modeOf, root, runFile } from "./common.ts";
-import { benchTrials, subjects, workingMs } from "../hasync1/v2/bench-plan.ts";
+import { benchTrials, seeds, subjects, workingMs } from "../hasync1/v2/bench-plan.ts";
 import { recountTraffic } from "../hasync1/offers.ts";
 
 const [action, tag] = process.argv.slice(2),
@@ -162,6 +162,7 @@ try {
     await remote(satelliteSite, "mkdir", store);
     await remote(satelliteSite, "mkdir", "-m", "700", store + "/seed");
     seedDirCreated = true;
+    await remote(satelliteSite, "mkdir", "-m", "700", store + "/seed/full");
   }
   const remoteArgs = [
     "sudo",
@@ -215,12 +216,13 @@ try {
         trials.set(attempt.nonce, sequence);
       }
       nonces.push(attempt.nonce);
+      const key = sync ? benchTrials[attempt.sequence!]?.checkpoint : undefined;
       satellite = new Satellite(
         attempt.nonce,
         attempt.prefix,
         src,
         [pgImage, remoteImage],
-        sync ? store + "/seed" : undefined,
+        sync ? store + "/seed" + (key ? "/" + key : "") : undefined,
         attempt.mode?.startsWith("hasync-fleet-") ?? false,
       );
       if (sync) trialSatellites.set(attempt.nonce, satellite);
@@ -354,6 +356,8 @@ try {
     );
     const has = (name: string) => members.has(tag + "/" + name);
     const checks = [];
+    const sizePoints: { mode: string; nonce: string; facts: number; ms: number }[] = [];
+    const checkpoints = new Map<keyof typeof seeds, { nonce: string; observation: any }>();
     const replacements = [];
     const suite = has("suite.json") ? member("suite.json") : undefined;
     if (suite) {
@@ -370,6 +374,26 @@ try {
         ),
       );
     }
+    for (const [nonce, sequence] of trials) {
+      const t = benchTrials[sequence]!;
+      const key = t.checkpoint;
+      if (!key || t.mode !== seeds[key].mode) continue;
+      const sub = t.mode + "-" + nonce + "/";
+      if (has(sub + "observations.json")) {
+        const observation = member(sub + "observations.json");
+        const seed = observation.result;
+        assert.deepEqual(
+          [observation.nonce, observation.slot, observation.source.git],
+          [nonce, tag, sha],
+        );
+        assert.equal(seed.people, t.people);
+        assert.equal(
+          seed.seal,
+          hash(JSON.stringify({ receipts: seed.receipts, history: seed.history ?? null })),
+        );
+        checkpoints.set(key, { nonce, observation });
+      }
+    }
     for (const nonce of nonces) {
       const expectedTrial = benchTrials[trials.get(nonce)!]!;
       const sub = expectedTrial.mode + "-" + nonce + "/";
@@ -378,6 +402,18 @@ try {
         [attempt.nonce, attempt.mode, attempt.slot, attempt.shape, attempt.source.git],
         [nonce, expectedTrial.mode, tag, "deep", sha],
       );
+      const key = expectedTrial.checkpoint;
+      const baseline =
+        key && expectedTrial.mode !== seeds[key].mode ? checkpoints.get(key) : undefined;
+      const events = has(sub + "events.jsonl")
+        ? raw(sub + "events.jsonl")
+            .trim()
+            .split("\n")
+            .filter(Boolean)
+            .map((line) => JSON.parse(line))
+        : [];
+      assert(events.every((event) => event.nonce === nonce));
+      let phases;
       if (has(sub + "observations.json")) {
         const obs = member(sub + "observations.json"),
           clean = member(sub + "cleanup.json");
@@ -388,6 +424,43 @@ try {
           capacity: "two-host",
         });
         assert.deepEqual(clean, { nonce, containers: 0, networks: 0 });
+        if (key && expectedTrial.mode !== seeds[key].mode) {
+          // [DX-HASYNC1] Why: each recovery must read the exact edited snapshot prepared for its own rung. Rejected: binding it by subject count or layout alone.
+          assert(baseline);
+          const seed = baseline.observation.result;
+          assert.deepEqual(obs.source, baseline.observation.source);
+          for (const stage of ["before", "after"])
+            assert(
+              events.some(
+                ({ type, data }) =>
+                  type === "seed-identity" &&
+                  data.stage === stage &&
+                  data.manifest === seed.manifest &&
+                  data.seal === seed.seal &&
+                  data.receipts === seed.receipts.length,
+              ),
+            );
+          const stageMs = (type: string) => events.find((event) => event.type === type)?.ms;
+          const between = (start: string, end: string) => {
+            const a = stageMs(start),
+              b = stageMs(end);
+            return typeof a === "number" && typeof b === "number" ? b - a : null;
+          };
+          if (seed.history)
+            phases = {
+              replayMs: obs.result.nativeReplay.reduce(
+                (n: number, entry: { ms: number }) => n + entry.ms,
+                0,
+              ),
+              replayBytes: obs.result.nativeReplay.reduce(
+                (n: number, entry: { bytes: number }) => n + entry.bytes,
+                0,
+              ),
+              brokerMs: between("promoted", "broker-ready"),
+              peerMs: between("broker-ready", "peer-ready"),
+              rewindMs: events.find((event) => event.type === "rejoined")?.data.ms ?? null,
+            };
+        }
         if (expectedTrial.mode === "hasync-ack") {
           // [DX-HASYNC1] Why: bind replacement settlement to the archived caller bytes and oracle. Rejected: treating a successful worker exit or a summary count as a receipt.
           const scope = JSON.stringify([
@@ -398,7 +471,13 @@ try {
             0,
           ]);
           const db = "s2-" + Buffer.from(scope).toString("base64url");
-          const binding: { nonce: string; slot: string; source: unknown; scope: string; db: string } = {
+          const binding: {
+            nonce: string;
+            slot: string;
+            source: unknown;
+            scope: string;
+            db: string;
+          } = {
             nonce,
             slot: tag,
             source: attempt.source,
@@ -443,7 +522,7 @@ try {
           assert.equal(oracle.caseId, settled.oracle.case);
           assert.equal(oracle.caseSha256, hash(oracleCase));
           assert.equal(oracle.oracle.id, "O-REPLAY");
-          assert.equal(oracle.oracle.sourceSha256, settled.oracle.source);
+          assert.deepEqual(oracle.oracle.sourceSha256, settled.oracle.source);
           assert.equal(oracle.verdict, "PASS");
           assert.equal(hash(oracleBytes), settled.oracle.output);
           replacements.push({ nonce, db, receipt: settled.receipt, oracle: settled.oracle.output });
@@ -463,11 +542,7 @@ try {
         }
         const timing = member(sub + leaf + "-timing.json");
         assert.equal(timing.raw, leaf + ".jsonl");
-        const anchor =
-          expectedTrial.people === subjects
-            ? [...trials].find(([, sequence]) => sequence === 0)?.[0]
-            : nonce;
-        assert(anchor);
+        const anchor = baseline?.nonce ?? nonce;
         const scopeKey = label.startsWith("cell-")
           ? (10 + Number(label.slice(5))).toString(36)
           : "tx2-ha1-" + anchor.slice(0, 8) + "-sync";
@@ -484,6 +559,13 @@ try {
         });
         assert.equal(counts.plan.label, label);
         if (code === 0) assert.equal(counts.read["wrong"], 0);
+        if (phases && baseline && counts.faultToNewWriteMs !== null)
+          sizePoints.push({
+            mode: expectedTrial.mode,
+            nonce,
+            facts: baseline.observation.result.facts,
+            ms: counts.faultToNewWriteMs,
+          });
         checks.push({
           nonce,
           label,
@@ -491,11 +573,33 @@ try {
           newWriteMs: counts.faultToNewWriteMs,
           gapMs: counts.writeGapMs,
           readGapMs: counts.maxReadGapMs,
+          ...(phases && baseline
+            ? {
+                facts: baseline.observation.result.facts as number,
+                phases,
+                firstDeepServiceMs: counts.firstDeepServiceMs,
+              }
+            : {}),
           fate: counts.during,
           targetMs: expectedTrial.mode === "hasync-move" ? 30000 : 60000,
         });
       }
     }
+    const sizeFits = ["hasync-ack", "hasync-index", "hasync-move"].flatMap((mode) => {
+      const points = sizePoints.filter((point) => point.mode === mode);
+      const sizes = new Set(points.map((point) => point.facts));
+      if (code === 0) assert.equal(sizes.size, 3);
+      if (sizes.size < 2) return [];
+      const x = points.map((point) => Math.log2(point.facts));
+      const centerX = x.reduce((sum, value) => sum + value, 0) / points.length;
+      const centerY = points.reduce((sum, point) => sum + point.ms, 0) / points.length;
+      const covariance = points.reduce(
+        (sum, point, i) => sum + (x[i]! - centerX) * (point.ms - centerY),
+        0,
+      );
+      const spread = x.reduce((sum, value) => sum + (value - centerX) ** 2, 0);
+      return [{ mode, points, millisecondsPerDoubling: covariance / spread }];
+    });
     fs.writeFileSync(
       path.join(evidence, "recount.json"),
       JSON.stringify(
@@ -503,6 +607,7 @@ try {
           ...declaration,
           sha256: expected,
           checks,
+          sizeFits,
           replacements,
         },
         null,

@@ -6,7 +6,7 @@ import { Evidence } from "../ha1/common.ts";
 import { drill } from "../ha1/run.ts";
 import type { Site } from "../ha1/stack.ts";
 import type { Checkpoint } from "./seed.ts";
-import { benchTrials, subjects, workingMs } from "./v2/bench-plan.ts";
+import { benchTrials, seeds, subjects, workingMs } from "./v2/bench-plan.ts";
 
 export async function campaign(
   store: string,
@@ -21,6 +21,7 @@ export async function campaign(
   };
   const seedDir = path.join(store, "seed");
   fs.mkdirSync(seedDir, { mode: 0o700 });
+  for (const key of Object.keys(seeds)) fs.mkdirSync(path.join(seedDir, key), { mode: 0o700 });
   const write = (f: string, data: unknown) =>
     fs.writeFileSync(path.join(store, f + ".json"), JSON.stringify(data, null, 2) + "\n", {
       flag: "wx",
@@ -35,14 +36,12 @@ export async function campaign(
   const status: { sequence: number; nonce: string; elapsedMs: number; complete: boolean }[] = [];
   const run = async (sequence: number, checkpoint?: Checkpoint) => {
     assert(performance.now() < end, "Campaign reached its 85-minute working deadline");
-    const { mode, people, systems } = benchTrials[sequence]!;
+    const { mode, people, systems, checkpoint: key } = benchTrials[sequence]!;
     const e = new Evidence(store, mode, identity.tag);
     process.stdout.write(
       "@attempt " + JSON.stringify({ nonce: e.nonce, prefix: e.prefix, mode, sequence }) + "\n",
     );
-    const cost = mode.startsWith("hasync-cost"),
-      seed = mode.startsWith("hasync-seed");
-    const sites = assignSites(e.nonce, cost || mode === "hasync-seed-lean");
+    const sites = assignSites(e.nonce, key ? seeds[key].sourceOnB : false);
     const start = performance.now();
     let result: unknown;
     let complete = false;
@@ -53,9 +52,9 @@ export async function campaign(
         sites.b,
         { people, scopes: systems, capacity: "two-host" },
         () => {},
-        checkpoint || seed
+        key
           ? {
-              path: seedDir,
+              path: path.join(seedDir, key),
               deadline: end - 26 * 60000,
               credentials,
               ...(checkpoint ? { checkpoint } : {}),
@@ -77,24 +76,30 @@ export async function campaign(
     }
   };
   try {
-    const cells = await Promise.allSettled([run(0), run(1)]);
-    for (const c of cells) if (c.status === "rejected") throw c.reason;
-    const checkpoints = cells.map((c, i) => {
-      assert(c.status === "fulfilled");
-      if (!c.value) return undefined;
-      const cp = c.value as Checkpoint;
-      assert.equal(cp.people, benchTrials[i]!.people);
-      assert.equal(cp.layout, i === 0 ? "legacy" : "lean");
-      assert.equal(Boolean(cp.history), i === 0);
-      assert.match(cp.manifest, /^[a-f0-9]{64}$/);
-      return cp;
-    });
-    for (let i = 2; i < benchTrials.length; i++) {
+    const checkpoints = new Map<keyof typeof seeds, Checkpoint>();
+    const seedOn = async (sourceOnB: boolean) => {
+      for (const [i, trial] of benchTrials.entries()) {
+        const key = trial.checkpoint;
+        if (!key || trial.mode !== seeds[key].mode || seeds[key].sourceOnB !== sourceOnB) continue;
+        const value = await run(i);
+        if (!value) continue;
+        const cp = value as Checkpoint;
+        assert.equal(cp.people, trial.people);
+        assert.equal(cp.layout, key === "cost" ? "lean" : "legacy");
+        assert.equal(Boolean(cp.history), key !== "cost");
+        assert.match(cp.manifest, /^[a-f0-9]{64}$/);
+        checkpoints.set(key, cp);
+      }
+    };
+    // [DX-HASYNC1] Why: smaller checkpoints fit under the full seed without running timed faults alongside a loader. Rejected: sharing one backup directory across edited rungs.
+    for (const preparation of await Promise.allSettled([seedOn(false), seedOn(true)]))
+      if (preparation.status === "rejected") throw preparation.reason;
+    for (let i = 0; i < benchTrials.length; i++) {
       const trial = benchTrials[i]!;
-      const required =
-        trial.people === subjects ? 0 : trial.mode.startsWith("hasync-cost") ? 1 : null;
-      const checkpoint = required === null ? undefined : checkpoints[required];
-      if (required === null || checkpoint) await run(i, checkpoint);
+      const key = trial.checkpoint;
+      if (key && trial.mode === seeds[key].mode) continue;
+      const checkpoint = key && checkpoints.get(key);
+      if (!key || checkpoint) await run(i, checkpoint);
     }
     assert(
       status.length === benchTrials.length && status.every((s) => s.complete),

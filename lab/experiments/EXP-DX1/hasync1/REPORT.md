@@ -1,4 +1,4 @@
-# Failover under scheduled traffic
+# Failover correctness and server measurements
 
 In the first Mac run that withheld a save reply, new saves resumed after 18.55 seconds.
 The system refused 90 saves during that cut. All 90 settled after retry with the same command ID.
@@ -11,7 +11,7 @@ Choose A to reopen on one copy, B to wait for a replacement, or C to keep three 
 
 Five saves and fifty reads are offered per second per system. The one-second caller deadline classifies late answers separately from refusals and timeouts. Clients keep each pending command durably and resubmit its original ID and payload until a receipt is confirmed.
 
-| Mac case | First on-time new save | Unavailable at 200 ms sampling | Offers refused during cut | Total retried | Longest on-time read gap |
+| Earlier Mac diagnostic | First on-time new save | Unavailable at 200 ms sampling | Offers refused during cut | Total retried | Longest on-time read gap |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Withheld reply | 18.55 s | 18.0 s | 90 | 90 | 0.093 s |
 | Mid-commit | 18.90 s | 18.6 s | 93 | 98 | 0.063 s |
@@ -29,17 +29,19 @@ The earlier Part 1 campaign kept all 73 acknowledged receipts and recorded 1,234
 
 ## Size, systems and fencing
 
-- Deep scale rungs target 100,549, 1,000,464 and 2,704,806 active facts, with three retire-and-replace edits on every fifth subject. Timings split recent Datomic log replay, broker readiness, peer synchronization, first-touch reads and PostgreSQL rewind. [Scale forecasts](SCALE.md) · [Scale driver](v2/scale-local.ts)
+- The edited server size rungs target 100,549, 1,000,464 and 16,045,255 active facts, with three retire-and-replace edits on every fifth subject. Timings split Datomic log replay, broker readiness, peer synchronization, first-touch reads and PostgreSQL rewind. [Scale forecasts](SCALE.md) · [Server plan](v2/bench-plan.ts)
 - The fleet runs 1, 4 or 10 Datomic systems, each with an active and standby transactor. The PostgreSQL alternatives are one shared pair with separate SQL schemas and roles or a pair per system. Cgroup readings report idle memory and cores by role. [Fleet driver](v2/fleet.ts)
 - The old writer and the fresh container carrying its original disk refused startup. The replacement made a new write safe on two copies 1.33 s after its small copy began, ending a 17.59 s one-copy window. Full rebuild forecasts are 45–180 s at 16M and 7–27 min at 160M. The controller protocol passed reboot and simulated clock-skew checks. [Fence](FENCE.md)
 
 ## Paired bench
 
 ```sh
-node --import tsx lab/experiments/EXP-DX1/ha1/control.ts hasync-suite hasync-p9-v3
+node --import tsx lab/experiments/EXP-DX1/ha1/control.ts hasync-suite hasync-p9-v4
 ```
 
-Forecast 75–85 minutes plus up to four for launch and collection on the released pair with prepared builds. The 18 cells cover a 16M edited population, fleet recovery, idle load, standby replacement, stale-predecessor retry, every fault shape and save cost. The collector checks the retry receipt against the attempt's saved body, database, slot, source and oracle. The bare-metal run is pending. [Forecast and schedule](BENCH.md)
+Forecast 78–85 minutes plus up to four for launch and collection with prepared builds. The 23 cells cover 100K, 1M and 16M edited facts, both fleet layouts, standby replacement, stale-predecessor retry, directional cuts and save cost. The collector binds the three growth rungs to their own seed manifests and the retry receipt to its saved body, database, slot, source and oracle. The bare-metal run is pending. [Forecast and schedule](BENCH.md)
+
+Version 0.1 still needs integration on `exp/DX-INT1` and the failover and move gates on its shared database at both scorecard ages. [Merge readiness](https://github.com/OnboardedInc/Triplex-db-experiments/blob/exp/DX-V01-scorecard/lab/experiments/EXP-DX1/v01/READINESS.md)
 
 The four exploratory fleet cells waited a combined 4 hours 3 minutes 7 seconds. The earlier queue was stopped before either ten-system run. Fleet and size measurements use the two-server campaign. Mac correctness trials take one ordinary heavy token and write a source-, slot- and nonce-bound diagnostic marker. Physical power and its independent fence are unverified. [Fleet measurements](SCALE.md)
 
