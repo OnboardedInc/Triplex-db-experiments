@@ -6,6 +6,7 @@
             [triplex.gateway.group :as group]
             [triplex.gateway.group-test :as fixture]
             [triplex.gateway.lean :as lean]
+            [triplex.gateway.main :as main]
             [triplex.gateway.scope :as scope]
             [triplex.gateway.storage :as storage]
             [triplex.gateway.subject-save :as subject]
@@ -53,6 +54,30 @@
     (is (= {"status" "absent"} (reference/operation name id)))
     (is (nil? (get (reference/claim name (get-in input ["claims" 0 "commandId"])) "receipt")))
     (is (not-any? #(= (get-in input ["claims" 0 "txId"]) (first %)) (reference/feed name 2 10)))))
+
+(deftest ordered-block-collision-keeps-old-ids-reserved
+  (when subject/ordered-ids?
+    (with-redefs [subject/enabled true group/enabled false policy/priority? false policy/field-only? false policy/budget-us nil]
+      (reference/in-scope
+        (fn [name conn]
+          (let [[a] (seed name)
+                input (gate/ordered-frame a gate/ordered-token)
+                id (str gate/ordered-token "04")
+                legacy #(on other (reference/edit-frame %1 %2 "legacy" 0.0 nil %3))]
+            (is (true? (:subjectOrderedIds (main/write-options name))))
+            (ref-write name (legacy "legacy-occupy" id nil))
+            (ref-write name (legacy "legacy-retire" "replacement" id))
+            (let [db (d/db conn)
+                  input (from input 4)
+                  plan (prepared db input)
+                  ready (subject/ordered-bounds (:journal plan) (:prefixes plan))]
+              (is (= (str "2001c" gate/ordered-token "00") (first ready)))
+              (is (= ready (:ordered-bounds plan)))
+              (is (nil? (lean/by-id db id)))
+              (is (some? (lean/by-id (d/history db) id)))
+              (is (= [400 "IdentityConflict"] (reference/outcome (reference/send name input))))
+              (is (= {"status" "absent"} (reference/operation name "edit-a")))
+              (is (= 4 (storage/head-position (d/db conn)))))))))))
 
 (deftest lookup-only-hints-and-authoritative-cas
   (when subject/prefetch?

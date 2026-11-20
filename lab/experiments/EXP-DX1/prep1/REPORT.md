@@ -1,4 +1,4 @@
-Not yet. The per-person writer reached 111 of 394 offered saves/s in one database. The lookup-only hint preserved correctness but failed to take most storage reads off the serial thread.
+Not yet. The per-person writer reached 111 of 394 offered saves/s in one database. The new client-ordered ID path needs its small-cache diagnostic and server run.
 The five-arm server comparison uses source `d3bd6a8b3e6924ebf5c1b53e77a5ca2d78d6b2f2`.
 Run `DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-storage -- bash lab/experiments/EXP-DX1/prep1/server.sh storage "$OUT" d3bd6a8b3e6924ebf5c1b53e77a5ca2d78d6b2f2 "$SEALED"`.
 Set `SEALED` to the earlier comparison’s sealed campaign directory and `OUT` to a new absolute directory. The hard limit is 89 minutes 20 seconds.
@@ -8,6 +8,10 @@ With native prefetch enabled, the hint arm fetched 976 segments against 457 with
 The fifth arm changes only the old per-person writer’s object cache from 2 to 16 GiB. It can show whether cache alone takes the reads off the critical path.
 
 **North star.** Durable, exact small saves and quiet-account tails in one database. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+
+**Ordered IDs.** One client-minted ULID carries the journal and a contiguous run of new assertion IDs, including journal facts. The transactor checks their exact historical range, and legacy callers retain their previously assigned IDs. Client clock skew and delayed submissions can still fetch an older leaf. [Design and SDK contract](ORDERED-IDS.md)
+
+**Ordered ID audit.** The new acknowledgement field is emitted only from the fresh native report after verification of the operation, journal, command claim, owner revision and committed position. The gateway computes bounds from the exact typed rows sent in that transaction. The new fixture checks retired-ID reuse under a different owner, the original claim and journal after restart, and matching pinned and native query bytes. The package build and two client identity tests passed.
 
 **Why reads happen.** The Mac trace reconciled 106 K and 674 S fetches to stock native counts. K’s were all native AEVT row/retirement redundancy. S’s historical AVET check accounted for 350 fetches within its span, owner CAS for 95, and another 60 appeared under lazy AVET iteration. Operation and command point checks fetched no SQL on this tape. Three unscoped S EAVT entity keys were unavailable. In the earlier server run, the grouped arm reached 179.5 and 181.7 saves/s and the per-person arm reached 140.6 and 111.1 at 235 and 394 offered. [Lookup table](LOOKUP-READING.md) · [Server reading](SERVER-READING.md)
 

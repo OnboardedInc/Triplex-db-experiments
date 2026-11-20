@@ -11,6 +11,7 @@
 (def enabled (= "1" (System/getenv "TX2_SUBJECT_SAVE")))
 (def numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_NUMERIC_OWNER")))
 (def prefetch? (= "1" (System/getenv "TX2_SUBJECT_PREFETCH")))
+(def ordered-ids? (= "1" (System/getenv "TX2_SUBJECT_ORDERED_IDS")))
 (def erase-generation :triplex.scope/erasure-seq)
 (def mutable-flags #{:triplex.scope/feed-irregular :triplex.scope/position-regular
                      :triplex.scope/irregular :triplex.scope/packed-journals})
@@ -30,6 +31,31 @@
                      prefixes))
       ;; The reference establishes error precedence if a predecessor also changed.
       (throw (ex-info "TRIPLEX_SUBJECT_REPLAN" {})))))
+
+;; [DX-PREP1] Why: one containing interval proves global absence for the whole ordered save.
+;; Rejected: skipping history (another owner may have used a supplied ID) or rejecting unrelated IDs in the interval.
+(def ordered-history-guard
+  (walk/postwalk-replace {'legacy-check history-guard}
+    '(if-let [[start end] (:ordered-bounds plan)]
+       (let [wanted (set prefixes) width (count start)]
+         (loop [rows (seq (d/index-range (d/history db) :triplex.entity/row start end)) inspected 0]
+           (when-let [datom (first rows)]
+             (if (= inspected 128)
+               legacy-check
+               (let [^String text (:v datom)]
+                 (when (and (>= (.length text) width) (contains? wanted (subs text 0 width)))
+                   (throw (ex-info "TRIPLEX_SUBJECT_REPLAN" {})))
+                 (recur (next rows) (inc inspected)))))))
+       legacy-check)))
+
+(defn ordered-bounds [journal prefixes]
+  (when-let [[_ token] (re-matches #"_tx/([0-7][0-9A-HJKMNP-TV-Z]{25})" journal)]
+    (let [base (str "2001c" token) n (count prefixes)]
+      (when (and (<= 1 n 256)
+                 (= prefixes (mapv #(str base (.charAt "0123456789ABCDEF" (quot % 16))
+                                                (.charAt "0123456789ABCDEF" (rem % 16))) (range n))))
+        (let [hi (peek prefixes)]
+          [(first prefixes) (str (subs hi 0 (dec (count hi))) (char (inc (int (last hi)))))])))))
 
 (def body
   '(let [{:keys [scope flags function owner revision journal operation command ops provisional
@@ -71,7 +97,7 @@
 (def code
   (walk/postwalk-replace {'stamp-rows commit/compiled-stamp-code
                           'mutable-flags mutable-flags
-                          'check-history history-guard
+                          'check-history (if ordered-ids? ordered-history-guard history-guard)
                           ;; [DX-PREP1] Why: the numeric owner must still own this public ID in db-before.
                           ;; Rejected: trusting the peer's lookup alone (an ID change can leave its revision intact).
                           'owner-witness-check (when numeric-owner?
@@ -203,12 +229,14 @@
                 after (into #{} (map (comp field lean/decode second #(nth % 3))) business)]
             (when (and (= (count live) (count prior) (count before) (count after))
                        (= before after) (not (contains? before nil)))
-              (cond-> {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
-                       :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
-                       :provisional provisional :submitted-clock (reduce max (map double clocks))
-                       :prefixes (vec (sort (map lean/prefix new-ids)))
-                       :ops (render-ops ops owner subject prior (set new-ids))}
-                numeric-owner? (assoc :owner-key subject)))))))))
+              (let [prefixes (vec (sort (map lean/prefix new-ids)))]
+                (cond-> {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
+                         :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
+                         :provisional provisional :submitted-clock (reduce max (map double clocks))
+                         :prefixes prefixes
+                         :ops (render-ops ops owner subject prior (set new-ids))}
+                  numeric-owner? (assoc :owner-key subject)
+                  ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))
 
 (defn replan? [failure]
   (some (fn [cause]
@@ -221,7 +249,7 @@
          (= (second (:function plan)) (installed db))
          (not (seq (d/datoms db :aevt :db/excise))))))
 
-(defn verify-report [report {:keys [operation command journal owner]}]
+(defn verify-report [report {:keys [operation command journal owner ordered-bounds]}]
   (let [db (:db-after report) t (d/basis-t db) tx (d/t->tx t)
         cmd (d/entid db [:triplex.claim/command-id command])
         journal-eid (d/entid db [:triplex.entity/id journal])
@@ -237,4 +265,5 @@
                    journal-eid (= journal-eid (scope/value db tx :triplex.tx/journals))
                    (= position (scope/value db journal-eid :triplex.journal/position)))
       (throw (ex-info "Prepared subject receipt unavailable" {:status 503 :code "OutcomeUnknown"})))
-    (assoc report :subject-save (str ident))))
+    (cond-> (assoc report :subject-save (str ident))
+      ordered-bounds (assoc :subject-ordered-ids true))))

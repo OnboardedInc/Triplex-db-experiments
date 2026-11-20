@@ -16,6 +16,29 @@
             [triplex.gateway.write-policy :as policy]
             [wfix1-regression :as reference]))
 
+(def ordered-token "01J00000000000000000000001")
+(defn ordered-frame [input token]
+  (let [before (get-in input ["claims" 0 "txId"])
+        tx (str "_tx/" token)
+        new-ids (input "newIds")
+        ids (zipmap new-ids (map #(str token (format "%02X" %)) (range)))
+        rename-tx #(if (= % before) tx %)
+        rename-id #(get ids % %)
+        change (fn [raw]
+                 (let [m (json/read-str raw)]
+                   (json/write-str (cond-> (update m "tripleId" rename-id)
+                                     (contains? m "assertionTxId") (update "assertionTxId" rename-tx)
+                                     (contains? m "retractionTxId") (update "retractionTxId" rename-tx)))))
+        rename-row (fn [wire]
+                     (let [row (storage/decode-row wire)]
+                       (storage/wire-row
+                         (cond-> (-> row (update :id rename-id) (update :entity_id rename-tx)
+                                         (update :tx_id rename-tx) (update :retract_tx_id rename-tx))
+                           (= ":_tx/change" (:attribute row)) (update :value_json change)))))]
+    (rows/row-input (-> input (assoc-in ["claims" 0 "txId"] tx)
+                        (assoc "newIds" (mapv ids new-ids))
+                        (update "rows" #(mapv rename-row %))))))
+
 (defn deep-seed [input]
   (let [business (for [i (range 256)]
                    (fixture/row (str "deep/" i) fixture/root (str ":depth/" i)

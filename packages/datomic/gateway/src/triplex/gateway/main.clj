@@ -134,6 +134,7 @@
                        :packedJournal (boolean packed/enabled) :fastReply (boolean group/fast-reply)}}
       subject/enabled (assoc :subjectSave true :subjectFunction (when subject-t (str subject/ident))
                              :subjectNumericOwner subject/numeric-owner?
+                             :subjectOrderedIds subject/ordered-ids?
                              :subjectPrefetch (boolean (and subject/prefetch? (d/entid db subject/prefetch-ident)))
                              :subjectFunctionTx (some-> subject-t str)))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})

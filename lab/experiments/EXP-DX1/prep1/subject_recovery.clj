@@ -30,13 +30,20 @@
                   row))
               facts)))))
 (defn request []
-  (let [[_ a] (reference/edits)] (native-journal (assoc a "sourceK" 1))))
+  (let [[_ a] (reference/edits)
+        frame (native-journal (assoc a "sourceK" 1))]
+    (if subject/ordered-ids? (gate/ordered-frame frame gate/ordered-token) frame)))
+(defn expected-journal []
+  (if subject/ordered-ids? (str "_tx/" gate/ordered-token) "_tx/edit-a"))
+(defn expected-assertion []
+  (if subject/ordered-ids? (str gate/ordered-token "04") "middle"))
 (defn open! []
   (let [{:keys [db created]} (main/create-scope! nil scope "lean" true true)
         options (main/write-options db)]
     (assert (= subject/enabled (boolean (:subjectSave options))))
     (assert (= (and subject/enabled subject/numeric-owner?) (boolean (:subjectNumericOwner options))))
     (assert (= (and subject/enabled subject/prefetch?) (boolean (:subjectPrefetch options))))
+    (assert (= (and subject/enabled subject/ordered-ids?) (boolean (:subjectOrderedIds options))))
     (assert (:commitFunctionInstalled options))
     [db (main/connection (main/db-uri db)) created
      (if subject/enabled (:subjectFunction options) (:commitFunction options))
@@ -47,13 +54,15 @@
     (assert (= [200 nil] (reference/outcome (reference/send db (native-journal (gate/deep-seed seed))))))))
 
 (defn witness [db function fn-tx native-t]
-  (let [receipt (reference/operation db "edit-a")]
+  (let [receipt (reference/operation db "edit-a")
+        claim (reference/claim db "edit-a")]
     (assert (= (str native-t) (get-in receipt ["t" "v"])))
-    (assert (= (get (reference/claim db "edit-a") "receipt") receipt))
+    (assert (= (claim "receipt") receipt))
+    (assert (= (expected-journal) (claim "txId")))
     (assert (= "2" (get-in receipt ["position" "v"])))
     (assert (= 1001.0 (get-in receipt ["recordedAt" "v"])))
     {:attempt attempt :db db :function function :functionTx fn-tx :prepared subject/enabled
-     :numericOwner subject/numeric-owner? :prefetch subject/prefetch?
+     :numericOwner subject/numeric-owner? :prefetch subject/prefetch? :orderedIds subject/ordered-ids?
      :nativeT (str native-t) :receipt receipt :planOperation "edit-a"}))
 
 (defn before [file]
@@ -67,6 +76,7 @@
                     (assert (= "edit-a" (input "operationId")))
                     (assert (= (when subject/enabled function) (:subject-save report)))
                     (assert (= subject/prefetch? (boolean (:subject-hints-attached report))))
+                    (assert (= subject/ordered-ids? (boolean (:subject-ordered-ids report))))
                     (let [proof (witness db function fn-tx (d/basis-t (:db-after report)))
                           temporary (java.io.File. (str file ".tmp"))]
                       (emit "blocked-before-reply" proof)
@@ -87,12 +97,13 @@
         page (:body (route "transactions" {"after" 1 "limit" 1}))
         entry (first (page "transactions"))
         command-reply (route "command" {"commandId" "edit-a"})
-        journal-reply (route "journal" {"txId" "_tx/edit-a"})
+        journal (expected-journal) assertion (expected-assertion)
+        journal-reply (route "journal" {"txId" journal})
         entity-reply (route "entity-transactions" {"entityId" fixture/root "limit" 10
                                                   "basis" {"recordedPosition" 2 "validAt" 5.0}})
         audit-basis {"recordedOnly" true "basis" {"recordedPosition" 2}}
         audit-entity (route "entity-transactions" (assoc audit-basis "entityId" fixture/root "limit" 10))
-        audit-journal (route "journal" (assoc audit-basis "txId" "_tx/edit-a"))
+        audit-journal (route "journal" (assoc audit-basis "txId" journal))
         claim (reference/claim db "edit-a")
         native-t (parse-long (held "nativeT"))
         data (mapcat :data (d/tx-range (d/log conn) native-t (inc native-t)))
@@ -109,34 +120,34 @@
                                          :query-string (str "fromT=" (dec native-t) "&limit=10")})
         log-result (json/read-str (:body log-response))
         native-entry (first (filter #(= (str native-t) (get % "t")) (log-result "rows")))]
-    (assert (= ["old" "middle"] (mapv #(get-in (first %) ["id" "v"]) [before after])))
-    (assert (= ["_tx/edit-a" 2] (subvec entry 0 2)))
+    (assert (= ["old" assertion] (mapv #(get-in (first %) ["id" "v"]) [before after])))
+    (assert (= [journal 2] (subvec entry 0 2)))
     (assert (empty? (get-in (route "transactions" {"after" 2 "limit" 1}) [:body "transactions"])))
     (assert (= 1000.0 (get-in (reference/changes entry) ["retract" "recordedAt"])))
     (assert (= 1001.0 (get-in (reference/changes entry) ["retract" "retractedAt"])))
     (assert (= [200 200 200] (mapv :status [command-reply journal-reply entity-reply])))
-    (assert (= {"txId" "_tx/edit-a"} (:body command-reply)))
+    (assert (= {"txId" journal} (:body command-reply)))
     (assert (= (set (nth entry 2)) (set (get-in journal-reply [:body "rows"]))))
-    (assert (= [["_tx/edit-a" 2] ["_tx/seed" 1]] (get-in entity-reply [:body "positions"])))
+    (assert (= [[journal 2] ["_tx/seed" 1]] (get-in entity-reply [:body "positions"])))
     ;; [DX-PREP1] Why: the merged recorded-cut audit must see a save through either writer.
     ;; Rejected: passing only the default journal route, which can hide regressions in the opt-in audit.
     (assert (= entity-reply audit-entity))
     (assert (= (set (nth entry 2)) (set (get-in audit-journal [:body "rows"]))))
     (assert (= 200 (:status audit-journal)))
     (assert (= (held "receipt") (claim "receipt")))
-    (assert (= #{"middle"} (set (for [text (d/q '[:find [?row ...] :in $ ?e :where [?e :triplex.entity/row ?row]] view eid)
+    (assert (= #{assertion} (set (for [text (d/q '[:find [?row ...] :in $ ?e :where [?e :triplex.entity/row ?row]] view eid)
                                          :let [row (lean/decode text)]
                                          :when (= ":v" (:attribute row))] (:id row)))))
-    (assert (= #{["middle" true] ["old" false]}
+    (assert (= #{[assertion true] ["old" false]}
                (set (for [x data :when (and (= eid (:e x)) (= row-a (:a x)))]
                       [(:id (lean/decode (:v x))) (:added x)]))))
     ;; [DX-PREP1] Why: read the recovered edit through the public native query and log adapters.
     ;; Rejected: treating internal Peer API checks as evidence for the HTTP surfaces.
     (assert (every? #(= 200 (:status %)) queries))
-    (assert (= [["old"] ["middle"] []]
+    (assert (= [["old"] [assertion] []]
                (mapv #(mapv (fn [r] (get-in r [0 "v"])) (get-in % [:body "rows"])) queries)))
     (assert (= 200 (:status log-response)))
-    (assert (= #{["retract" "old" ":v"] ["assert" "middle" ":v"]}
+    (assert (= #{["retract" "old" ":v"] ["assert" assertion ":v"]}
                (set (map #(mapv % ["op" "assertionId" "attribute"])
                          (get-in native-entry ["transaction" "changes"])))))
     {:feed entry :claim claim :nativeT (str native-t)
@@ -165,6 +176,7 @@
     (let [reply (reference/send db (request))]
       (assert (= [200 nil] (reference/outcome reply)))
       (assert (= (when subject/enabled function) (get-in reply [:body "subjectSave"])))
+      (assert (= subject/ordered-ids? (boolean (get-in reply [:body "subjectOrderedIds"]))))
       (let [proof (witness db function fn-tx (get-in reply [:body "t" "v"]))]
         (emit "queries" {:held proof :observed (read-after db conn (update-keys proof name))})))))
 

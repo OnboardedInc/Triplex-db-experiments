@@ -30,7 +30,7 @@ def inspect(root):
         assert inputs["mode"] == "subject-recovery"
         assert labels == ["tests", "blocked-before-reply", "reopened"]
         tests, before, after = values
-        assert tests["test"] == (8 if "prefetch" in inputs else 7)
+        assert tests["test"] == (9 if "orderedIds" in inputs else 8 if "prefetch" in inputs else 7)
         assert tests["pass"] > 6 and tests["fail"] == tests["error"] == 0
         assert events("PREP1_STOP ") == [{"attempt": attempt, "gatewayExit": 137}]
         lines = (root / terminal["log"]).read_text().splitlines()
@@ -51,6 +51,8 @@ def inspect(root):
     assert before["attempt"] == attempt and before["db"] == db and before["prepared"] == inputs["subject"]
     assert before.get("numericOwner", False) == inputs.get("numericOwner", False)
     assert before.get("prefetch", False) == inputs.get("prefetch", False)
+    ordered = inputs.get("orderedIds", False)
+    assert before.get("orderedIds", False) == ordered
     if inputs["subject"]:
         assert re.fullmatch(r":triplex\.subject/v-[0-9a-f]{24}", before["function"])
         assert int(before["functionTx"]) > 0
@@ -62,15 +64,19 @@ def inspect(root):
     assert before["planOperation"] == before["receipt"]["operationId"] == "edit-a"
     assert before["receipt"]["position"]["v"] == "2"
     assert before["receipt"]["recordedAt"]["v"] == 1001.0
-    assert after["feed"][:2] == ["_tx/edit-a", 2]
+    token = "01J00000000000000000000001"
+    journal = "_tx/" + token if ordered else "_tx/edit-a"
+    assertion = token + "04" if ordered else "middle"
+    assert after["feed"][:2] == [journal, 2]
+    assert after["claim"]["txId"] == journal
     assert [r["status"] for r in after["nativeQueries"]] == [200, 200, 200]
     assert [[v[0]["v"] for v in r["body"]["rows"]] for r in after["nativeQueries"]] == [
-        ["old"], ["middle"], [],
+        ["old"], [assertion], [],
     ]
     assert after["nativeLog"]["t"] == before["nativeT"]
     assert {(r["op"], r["assertionId"], r["attribute"])
             for r in after["nativeLog"]["transaction"]["changes"]} == {
-                ("retract", "old", ":v"), ("assert", "middle", ":v"),
+                ("retract", "old", ":v"), ("assert", assertion, ":v"),
             }
     committed = [member for block in events("PREP1_NATIVE ") if block["db"] == db
                  for member in block["members"] if str(member["t"]) == before["nativeT"]]
