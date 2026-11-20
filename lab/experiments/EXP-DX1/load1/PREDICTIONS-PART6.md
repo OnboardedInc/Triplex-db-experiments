@@ -1,6 +1,6 @@
 # Preregistered predictions for pipelined import frames
 
-The archived bare-metal run `i13-1/tail-128` has 4,943 matched 128-fact frames. Elapsed from offer through durable local cursor update was 19.52 ms p50 and 49.94 ms p99. Among those frames, average elapsed was 21.84 ms.
+The archived bare-metal run `i13-1/tail-128` has 4,943 matched frames capped at 128 facts (4,940 held 120 facts). Elapsed from offer through durable local cursor update was 19.52 ms p50 and 49.94 ms p99. Among those frames, average elapsed was 21.84 ms.
 
 | Stage | p50 ms | Mean ms | p99 ms |
 |---|---:|---:|---:|
@@ -15,7 +15,7 @@ The archived bare-metal run `i13-1/tail-128` has 4,943 matched 128-fact frames. 
 | Native end to peer return | 1.98 | 2.17 | 7.90 |
 | SDK receipt and durable cursor | 1.06 | 1.10 | 1.60 |
 
-Means sum per frame. Percentiles should be read individually. The archived traffic used 128-fact frames. The 8-ms completion interval for a 24-fact frame is a throughput requirement and the 8.4-ms single-frame estimate is a forecast. The HTTP round trip, peer return and SQLite fsync are separate measured intervals. The native remainder includes other transaction work and offers no per-command split for disk and peer apply. The [archive audit](EVIDENCE5.md) documents clock bounds and source binding.
+Means sum per frame. Percentiles should be read individually. The archived traffic used the 128-fact cap. The 8-ms completion interval for a 24-fact frame is a throughput requirement and the 8.4-ms single-frame estimate is a forecast. The HTTP round trip, peer return and SQLite fsync are separate measured intervals. The native remainder includes other transaction work and offers no per-command split for disk and peer apply. The [archive audit](EVIDENCE5.md) documents clock bounds and source binding.
 
 ## One database with 50 noisy saves/s, 5 quiet saves/s and 55 reads/s
 

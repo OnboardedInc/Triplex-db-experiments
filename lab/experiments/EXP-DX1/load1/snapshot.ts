@@ -160,6 +160,7 @@ export class Snapshot {
           "Checkpoint belongs to different source or storage",
         );
       let m = await marker();
+      const existingManifest = Boolean(m);
       if (!m) {
         assert(!checkpoint, "Original destination manifest is missing");
         const out = await comp.transact([], meta);
@@ -210,6 +211,17 @@ export class Snapshot {
         if (unsettled.length) run.regenerate(cursor, Number(unsettled[0]!["end"]));
       }
       run.ledger.exec("COMMIT");
+      if (orderedStride && existingManifest) {
+        // [DX-HA1] Why: settle any durable suffix before assigning a replacement HTTP send sequence.
+        // Rejected: resending a committed claim that the SDK may resolve without sending its sequence.
+        for (const frame of run.batches(run.cursor())) {
+          if (frame.first < run.cursor()) continue;
+          const meta = run.frameIdentity(frame);
+          const original = await lookup(comp, frame, meta);
+          if (!original) break;
+          run.checkpoint(frame, meta, original);
+        }
+      }
       return run;
     } catch (e) {
       run.close();
@@ -275,6 +287,9 @@ export class Snapshot {
       seen = original;
     }
     hooks.beforeCheckpoint?.(f.first);
+    return this.checkpoint(f, meta, seen);
+  }
+  private checkpoint(f: Frame, meta: ReturnType<typeof identity>, seen: Seen) {
     const entry: Entry = {
       first: f.first,
       end: f.end,

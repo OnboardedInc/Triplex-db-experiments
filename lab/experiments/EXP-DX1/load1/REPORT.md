@@ -1,6 +1,6 @@
 # DX-HA1 · More small import frames in flight
 
-The server's 128-fact frames took 21.84 ms on average. Datomic applied the frame in 4.08 ms and the writer held its turn for about 11 ms.
+At the 128-fact cap, server frames took 21.84 ms on average. Datomic applied the frame in 4.08 ms and the writer held its turn for about 11 ms.
 Several small frames can prepare and collect receipts at once. Only one import frame may hold the writer's turn, and ready saves go first.
 The first two server arms are 16 facts with two in flight, then 24 with two. The forecasts are 3,040 and 3,600 queryable facts per second.
 The forecasts still put quiet reads outside the 1.5× allowance. The single-server run will check every account against two fresh controls.

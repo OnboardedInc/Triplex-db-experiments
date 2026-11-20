@@ -650,7 +650,8 @@ export async function live(
     );
     if (invalidReceipt) throw invalidReceipt;
     if (fatal) throw fatal;
-    assert.equal(peakBulk, width && ordered.length ? 1 : 0);
+    if (pipeline && width) assert(peakBulk > 0 && peakBulk <= depth);
+    else assert.equal(peakBulk, width && ordered.length ? 1 : 0);
     if (width && !budget && !split) assert(ordered.length > 0);
     const seen = new Set<string>();
     const proof = await importer.verify(
