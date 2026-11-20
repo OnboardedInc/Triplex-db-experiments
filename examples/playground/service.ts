@@ -42,6 +42,33 @@ import {
 } from "./snapshot.ts";
 
 type Row = Awaited<ReturnType<DatomicClient["rows"]>>[number];
+const configTypes = ConfigStore.System.entityType;
+type ConfigSubjects = Partial<
+  Record<(typeof configTypes)[keyof typeof configTypes], readonly string[]>
+>;
+
+class PlaygroundWriter extends DatomicClient {
+  configSubjects: ConfigSubjects | undefined = {};
+
+  override rows(db: string, input: Record<string, unknown>) {
+    const type = (input["pattern"] as { entityType?: keyof ConfigSubjects } | undefined)
+      ?.entityType;
+    // [DX-PLAY1] Why: this private scope's only config writes return their exact stored subjects.
+    // Rejected: scanning and decoding every person and journal row for each ConfigStore type.
+    if (
+      this.configSubjects &&
+      type &&
+      Object.values(configTypes).includes(type) &&
+      !input["id"] &&
+      !input["entityIds"] &&
+      !input["handle"] &&
+      !input["staged"] &&
+      !input["history"]
+    )
+      return super.rows(db, { ...input, entityIds: this.configSubjects[type] ?? [] });
+    return super.rows(db, input);
+  }
+}
 const PersonSchema = EntityType.make("Person", {
   attributes: {
     name: Attribute.use(Attribute.text(attrs.name), { required: true }),
@@ -192,7 +219,7 @@ type Release = {
 };
 
 export class Playground {
-  readonly writer: DatomicClient;
+  readonly writer: PlaygroundWriter;
   readonly reader: DatomicClient;
   readonly store: ReturnType<typeof runtime>;
   readonly db: string;
@@ -226,7 +253,7 @@ export class Playground {
     );
     this.scope = scope;
     this.db = "s2-" + Buffer.from(scope).toString("base64url");
-    this.writer = new DatomicClient(urls.write, 8000);
+    this.writer = new PlaygroundWriter(urls.write, 8000);
     this.reader = new DatomicClient(urls.read, 8000);
     this.writer.onRequest = this.reader.onRequest = observe;
     this.store = runtime(this.writer, scope);
@@ -432,6 +459,7 @@ export class Playground {
       middle,
       firstRelease: this.firstRelease,
       releases: [...this.releases.values()],
+      configSubjects: this.writer.configSubjects,
     });
     const committed = await this.transact(
       [
@@ -483,6 +511,7 @@ export class Playground {
       middle: number;
       firstRelease: Result;
       releases: Release[];
+      configSubjects?: ConfigSubjects;
     };
     if (
       hash(JSON.stringify(data.plan)) !== hash(JSON.stringify(plan)) ||
@@ -517,6 +546,7 @@ export class Playground {
     this.earlyPosition = early;
     this.middlePosition = middle;
     for (const release of data.releases) this.releases.set(release.id, release);
+    this.writer.configSubjects = data.configSubjects;
     this.firstRelease = data.firstRelease;
   }
 
@@ -653,8 +683,12 @@ export class Playground {
     policy: Policy,
     importAt?: number,
   ): Promise<Result> {
-    if (this.publishing.has(account.id) || this.running.has(account.id))
-      throw new ActionError(409, "PublishBusy", "This account already has a release in progress");
+    if (this.publishing.size || this.running.has(account.id))
+      throw new ActionError(
+        409,
+        "PublishBusy",
+        "A release is committing or this account is still writing",
+      );
     this.publishing.add(account.id);
     const startedAt = performance.now();
     try {
@@ -674,7 +708,22 @@ export class Playground {
       });
       const published = await this.run(
         importAt === undefined ? commit : withDatomicImportClock(this.scope, importAt, commit),
-      );
+      ).catch((error: unknown) => {
+        this.writer.configSubjects = undefined;
+        throw error;
+      });
+      const stored = published.store;
+      this.writer.configSubjects = {
+        [configTypes.object]: [...stored.objects.keys()].map(ConfigStore.entityId.object),
+        [configTypes.type]: [...stored.schemas.keys()].map(ConfigStore.entityId.type),
+        [configTypes.revision]: stored.revisions.map((revision) =>
+          ConfigStore.entityId.revision(revision.id),
+        ),
+        [configTypes.snapshot]: stored.snapshots.map((snapshot) =>
+          ConfigStore.entityId.snapshot(snapshot.id),
+        ),
+        [configTypes.ref]: [...stored.refs.keys()].map(ConfigStore.entityId.ref),
+      };
       const schema = await this.run(
         ConfigApi.compile(published.snapshot, { operations: { Person: ["read"] } }),
       );

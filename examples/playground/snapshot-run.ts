@@ -148,6 +148,9 @@ export async function runSnapshot(options: Options) {
     });
     keepBundle = !!options.keepBundle;
     return receipt;
+  } catch (error) {
+    console.error("Snapshot gate failure", error);
+    throw error;
   } finally {
     if (!buildClosed) await initial.close();
     if (restored) await restored.close();
