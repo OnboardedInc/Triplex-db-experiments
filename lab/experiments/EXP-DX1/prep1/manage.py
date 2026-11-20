@@ -30,9 +30,11 @@ def disk_floor():
         raise SystemExit("Host free disk below 5 GiB")
 
 
-def main(out, mode="ortho", seconds="10"):
-    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "recovery"):
+def main(out, mode="ortho", seconds="10", subject="1"):
+    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery", "subject-recovery", "subject-query", "subject-native-suite", "subject-profile"):
         raise SystemExit("Unknown managed probe mode")
+    if subject not in ("0", "1"):
+        raise SystemExit("Subject writer setting must be 0 or 1")
     out.mkdir()
     attempt = str(uuid.uuid4())
     stage = out / "stage"
@@ -49,15 +51,22 @@ def main(out, mode="ortho", seconds="10"):
     config = stage / files[1]
     (config / "attempt").write_text(attempt + "\n")
     (config / "mode").write_text(mode + "\n")
+    (config / "subject").write_text(subject + "\n")
     if mode == "live":
         if not 1 <= int(seconds) <= 60:
             raise SystemExit("Live window must be 1 to 60 seconds")
         (config / "seconds").write_text(seconds + "\n")
     shutil.copyfile(EXPERIMENT / "stack.sh", config / "entrypoint.sh")
     shutil.copyfile(EXPERIMENT / "observe.clj", config / "observe.clj")
-    if mode == "recovery":
-        for source in (EXPERIMENT / "gate.clj", EXPERIMENT / "recovery.clj",
-                       EXPERIMENT.parent / "wfix1/regression.clj"):
+    clojure_driver = {
+        "recovery": ("gate.clj", "recovery.clj"),
+        "subject-recovery": ("subject_gate.clj", "subject_conflicts.clj", "subject_recovery.clj"),
+        "subject-query": ("subject_gate.clj", "subject_conflicts.clj", "subject_recovery.clj"),
+    }.get(mode, ())
+    clojure_inputs = [EXPERIMENT / name for name in clojure_driver]
+    if clojure_inputs:
+        clojure_inputs.append(EXPERIMENT.parent / "wfix1/regression.clj")
+        for source in clojure_inputs:
             shutil.copyfile(source, config / source.name)
     recipe = config / "Dockerfile"
     recipe.write_text("FROM postgres:17-alpine AS prep_pg\nFROM node:22.23.2-bookworm-slim AS prep_node\n"
@@ -72,7 +81,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     esbuild = REPO / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
     metafile = out / "bundle.json"
     driver = "live.ts" if mode == "live" else "probe.ts"
-    if mode != "recovery":
+    if not clojure_inputs and mode != "subject-native-suite":
         subprocess.run([
             esbuild, str(EXPERIMENT.relative_to(REPO) / driver), "--bundle", "--platform=node",
             "--format=esm", "--banner:js=import {createRequire} from 'node:module'; const require=createRequire(import.meta.url);",
@@ -89,13 +98,15 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots),
                TX2_ENGINE_DIR=str(engine_dir))
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
-    if mode == "recovery":
-        source_paths.append(EXPERIMENT.parent / "wfix1/regression.clj")
-    else:
+    if clojure_inputs:
+        source_paths.extend(clojure_inputs)
+    elif mode != "subject-native-suite":
         source_paths.extend(REPO / p for p in json.loads(metafile.read_text())["inputs"])
     inputs = {
         "attempt": attempt,
         "mode": mode,
+        "timings": "diagnostic",
+        "subject": subject == "1",
         "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
         "stage": {str(p.relative_to(stage)): sha(p) for p in sorted(stage.rglob("*"))
                   if p.is_file() and p != slots},
@@ -109,9 +120,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         for i in range(1, 121):
             disk_floor()
             path = out / f"{action}-{i}.log"
-            args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{action}", "--"]
-            if action == "selftest" and mode in ("profile", "cheap"):
-                args += ["node", str((EXPERIMENT / "measure.mjs").relative_to(REPO))]
+            args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{out.name}-{action}", "--"]
             args += ["node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-PREP1"]
             if action == "selftest":
                 args += ["--scratch-gib", "1"]
@@ -126,12 +135,17 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
                     image = json.loads(slots.read_text())["lanes"]["datomic"]["imageId"]
                     record(out / "terminal.json", {"attempt": attempt, "exit": code, "image": image,
                                                   "holder": "DX-PREP1", "slot": "tx2-datomic-selftest",
-                                                  "log": path.name, "sha256": sha(path)})
+                                                  "log": path.name, "sha256": sha(path),
+                                                  "timings": "diagnostic"})
                 print(f"{action} finished", flush=True)
                 break
-            lines = path.read_text(errors="replace")
-            if action == "selftest" and any(x in lines for x in
-                    ("pool refuses selftest", "selftest already owned/running", "measurement lease")):
+            diagnostics = path.read_text(errors="replace").splitlines()
+            # [DX-PREP1] Why: retry only an admission refusal after the child exits.
+            # Rejected: matching an earlier queue message and rerunning a failing diagnostic image.
+            refused = any(line.startswith("[lab] REFUSED: ") and any(reason in line for reason in
+                          ("pool refuses selftest", "selftest already owned/running", "measurement lease"))
+                          for line in diagnostics)
+            if action == "selftest" and refused:
                 print(f"{action} waiting for reservation ({i})", flush=True)
                 time.sleep(15)
                 continue

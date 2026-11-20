@@ -227,6 +227,16 @@ fi
 for port in "$port_w" "$port_r"; do
   [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1024 && "$port" -le 65535 && "$port" != 15442 && "$port" != 17019 ]] || exit 2
 done
+repo=$(cd "$(dirname "$0")/../../../.." && pwd)
+prepw=${DX_PREP1_WRITERS:-1}
+if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && $prefix == tx2-dxprep1-* && $prepw =~ ^(1|2|4)$ && $publish == true ]]
+  [[ ${DX_PREP1_SUBJECT:-0} =~ ^[01]$ && -z $seed_volume ]]
+  (( port_w + prepw - 1 < port_r ))
+  [[ -z ${DX_PREP1_DUMP:-} || -f $DX_PREP1_DUMP ]]
+else
+  [[ $prepw == 1 && -z ${DX_PREP1_DUMP:-} ]]
+fi
 stack_labels=()
 tx_java=$(node "$jvm_tool" tx "$tx" "$tx_java")
 gw_w_java=$(node "$jvm_tool" gw-w "$gw_w" "$gw_w_java")
@@ -510,10 +520,23 @@ assert digest.hexdigest() == expected, 'Restored dump bytes differ from the seal
 print(digest.hexdigest())
 PG_RESTORE
 fi
-# [DX-JVM1] Why: emit the real JVM's final flags and GC startup identity to its own container log.
-# Rejected: a second JVM running outside the live cgroup or inferring collector from affinity.
-docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
-  -e "JAVA_OPTS=$tx_java$trace_tx_java$final_flags" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor "$datomic_image" /dxh1/sql.properties >/dev/null
+tx_start=(--entrypoint /opt/datomic/bin/transactor "$datomic_image" /dxh1/sql.properties)
+prep_tx=()
+if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
+  if [[ -n ${DX_PREP1_DUMP:-} ]]; then
+    [[ -z ${DX_JVM1_PG_RESTORE:-} ]]
+    # [DX-PREP1] Why: restore the same sealed bytes before any peer or transactor opens the arm.
+    # Rejected: clearing rows in a warm database or measuring an incremental restore.
+    docker exec -i "$prefix-pg" pg_restore --clean --if-exists --exit-on-error --single-transaction -U postgres -d datomic < "$DX_PREP1_DUMP" > "$attempt/restore.log" 2>&1
+  fi
+  cp "$repo/lab/experiments/EXP-DX1/prep1/observe.clj" "$attempt/config/prep1-observe.clj"
+  prep_tx=(-e "PREP1_ATTEMPT=${DX_WRITE_OPTIONS_ATTEMPT:?}" -e PREP1_MODE=subject-server)
+  trace_tx_java+=' -Xlog:gc*,safepoint*=debug:file=/trace/prep1-gc-tx.log:time,uptimemillis,level,tags,pid,tid:filecount=0'
+  tx_start=(--entrypoint /bin/bash "$datomic_image" -c
+    'exec java -server $JAVA_OPTS -cp "$(bin/classpath)" clojure.main -i /dxh1/prep1-observe.clj -m datomic.launcher /dxh1/sql.properties')
+fi
+docker run -d --pull never --name "$prefix-tx" "${stack_labels[@]}" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
+  -e "JAVA_OPTS=$tx_java$trace_tx_java$final_flags" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" "${prep_tx[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" "${tx_start[@]}" >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 # [DX-BM1] Why: avoid probing catalog creation before the SQL transactor announces startup.
 # Rejected: treating an early location read failure as a missing database, or unbounded health fetches.
@@ -529,19 +552,23 @@ if [[ ${DX_STACK_WAIT_FOR_TRANSACTOR:-0} == 1 ]]; then
     { echo "Transactor startup timed out; see $attempt/tx-startup-wait.log" >&2; exit 1; }
 fi
 # A ready transactor is checked by gateway health, which creates and syncs a real SQL database.
-for role in w r; do
+gateway_roles=(w r)
+if [[ $prepw -ge 2 ]]; then gateway_roles+=(w2); fi
+if [[ $prepw == 4 ]]; then gateway_roles+=(w3 w4); fi
+for role in "${gateway_roles[@]}"; do
+  mode=$role; if [[ $role == w* ]]; then mode=w; fi
   # [DX-W1] Why: bootstrap is finished on the other peer before the single authoritative writer admits live traffic.
   # Rejected: allowing a large labeled import through the live writer's frame cap during measurement.
   field_policy=()
-  if [[ $role == w && -n ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
+  if [[ $mode == w && -n ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
     [[ ${DX_PREDECESSOR_LOOKUP:-} =~ ^[01]$ && $DX_WRITE_OPTIONS_ATTEMPT =~ ^[a-f0-9-]{36}$ ]] || exit 2
     field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=$DX_PREDECESSOR_LOOKUP" -e "TX2_WRITE_OPTIONS_ATTEMPT=$DX_WRITE_OPTIONS_ATTEMPT")
   fi
   if [[ -n ${DX_LIVE_PRIORITY:-} ]]; then
     [[ $DX_LIVE_PRIORITY =~ ^[01]$ && ${DX_FIELD_COALESCE:-0} =~ ^[01]$ ]] || exit 2
-    if [[ $role == w ]]; then field_policy+=(-e "TX2_LIVE_PRIORITY=$DX_LIVE_PRIORITY" -e "TX2_FIELD_COALESCE=${DX_FIELD_COALESCE:-0}"); fi
+    if [[ $mode == w ]]; then field_policy+=(-e "TX2_LIVE_PRIORITY=$DX_LIVE_PRIORITY" -e "TX2_FIELD_COALESCE=${DX_FIELD_COALESCE:-0}"); fi
   fi
-  if [[ $role == w && ${DX_W1_EXTRA:-0} == 1 ]]; then
+  if [[ $mode == w && ${DX_W1_EXTRA:-0} == 1 ]]; then
     [[ ${DX_SMALL_ROWS:-0} =~ ^[01]$ && ${DX_GROUP_REUSE_PREPARED:-0} =~ ^[01]$ && ${DX_GROUP_MAX_MEMBERS:-8} =~ ^[1-9][0-9]{0,2}$ ]] || exit 2
     field_policy+=(-e "TX2_GROUP_STAGE_CLOCK=1" -e "TX2_SMALL_ROWS=${DX_SMALL_ROWS:-0}" -e "TX2_GROUP_REUSE_PREPARED=${DX_GROUP_REUSE_PREPARED:-0}" -e "TX2_GROUP_MAX_MEMBERS=${DX_GROUP_MAX_MEMBERS:-8}")
     if [[ -z ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
@@ -559,20 +586,27 @@ for role in w r; do
       field_policy+=(-e "TX2_WRITE_BUDGET_US=$DX_WRITE_BUDGET_US")
     fi
   fi
-  if [[ $role == w && ${DX_INT1_NATIVE_WRITE_READBACK:-0} == 1 ]]; then
+  if [[ $mode == w && ${DX_INT1_NATIVE_WRITE_READBACK:-0} == 1 ]]; then
     [[ ${DX_PREDECESSOR_LOOKUP:-0} =~ ^[01]$ ]] || exit 2
     field_policy+=(-e "TX2_INT1_WRITE_READBACK=1" -e "TX2_PREDECESSOR_LOOKUP=${DX_PREDECESSOR_LOOKUP:-0}")
   fi
-  if [[ $role == w ]]; then cpu=$gw_w port=$port_w; else cpu=$gw_r port=$port_r; fi
+  if [[ $mode == w ]]; then
+    cpu=$gw_w port=$port_w
+    if [[ $role != w ]]; then port=$((port_w + ${role#w} - 1)); fi
+  else cpu=$gw_r port=$port_r; fi
   ports=(); [[ $publish == false ]] || ports=(-p "127.0.0.1:$port:8080")
-  if [[ $role == w ]]; then
+  if [[ $mode == w ]]; then
     mem=${DX_GW_WRITE_MEMORY:-$gw_mem}; role_java=$gw_w_java
   else
     mem=${DX_GW_READ_MEMORY:-$gw_mem}; role_java=$gw_r_java
   fi
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
-  [[ $role != w ]] || entity_cache_bytes=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-268435456}
+  [[ $mode != w ]] || entity_cache_bytes=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-268435456}
   role_trace_java=$trace_gw_java
+  if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
+    role_trace_java+=" -Xlog:gc*,safepoint*=debug:file=/trace/prep1-gc-gw-$role.log:time,uptimemillis,level,tags,pid,tid:filecount=0"
+    if [[ $mode == w ]]; then field_policy+=(-e "TX2_SUBJECT_SAVE=${DX_PREP1_SUBJECT:-0}" -e TX2_SUBJECT_PROFILE=1); fi
+  fi
   role_jfr=$TRIPLEX_TRACE_GW_JFR
   if [[ $role == w && -n ${DX_TAIL1_ATTEMPT:-} ]]; then
     # [DX-TAIL1] Why: dump the allocation recording from the owning live JVM.
@@ -632,8 +666,8 @@ PY_CHANNEL
 fi
 node "$repo/lab/trace/components.mjs" > "$attempt/trace-components.json"
 docker exec "$prefix-pg" psql -X -At -U postgres -d datomic -c "SHOW log_min_duration_statement; SHOW track_io_timing; SHOW track_wal_io_timing;" > "$attempt/postgres-trace-settings.txt"
-docker inspect "$prefix-pg" "$prefix-tx" "$prefix-gw-w" "$prefix-gw-r" > "$attempt/containers.json"
-for role in pg tx gw-w gw-r; do docker exec "$prefix-$role" cat /proc/sys/net/ipv4/tcp_slow_start_after_idle > "$attempt/tcp-idle-$role.txt"; done
+docker inspect "$prefix-pg" "$prefix-tx" "${gateway_roles[@]/#/$prefix-gw-}" > "$attempt/containers.json"
+for role in pg tx "${gateway_roles[@]/#/gw-}"; do docker exec "$prefix-$role" cat /proc/sys/net/ipv4/tcp_slow_start_after_idle > "$attempt/tcp-idle-$role.txt"; done
 if [[ ${DX_IDLE_SENTINEL:-0} == 1 ]]; then
   [[ $prefix == tx2-dxt1-* ]] || exit 2
   docker volume create --label "triplex.owner=$prefix" "$prefix-idle-disk" >/dev/null

@@ -9,6 +9,7 @@ import { Snapshot } from "./snapshot.ts";
 import { windowed } from "../../../bench/lib/load-window.ts";
 import { frames, identity, type Frame } from "./source.ts";
 import { record } from "./oracle.ts";
+import { microFixture } from "./micro.ts";
 
 test("a failed frame drains all admitted work and schedules no new frame", async () => {
   const entered: number[] = [],
@@ -81,74 +82,110 @@ test("time pacing reduces over-budget frames and rejects a sustained minimum-fra
   for (let i = 0; i < 6; i++) budget.observe(8, 9);
   assert.equal(budget.next(), undefined);
 });
-test("an unresolved adaptive frame keeps its original boundary and receipt on reopen", async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dx-load-budget-"));
-  const saved = new Map<string, any>();
-  let sends = 0;
-  const fake = {
-    scopeName: "budget-scope",
-    backend: { name: "datomic" },
-    async transactionByCommand(command: string) {
-      return { ok: true, value: saved.get(command) };
-    },
-    async transact(operations: Frame["operations"], meta: ReturnType<typeof identity>) {
-      if (saved.has(meta.commandId)) return { ok: false, tag: "Duplicate" };
-      const position = ++sends,
-        instant = 1000 + position,
-        txId = "tx" + position;
-      const changes = operations.map((op, i) => ({
-        ...op,
-        tripleId: "id" + position + "-" + i,
-        recordedAt: instant,
-        assertionTxId: txId,
-      }));
-      saved.set(meta.commandId, { ...meta, position, instant, txId, changes });
-      return {
-        ok: true,
-        value: {
-          position,
-          instant,
-          txId,
-          triples: changes.map((o) => ({
-            ...o,
-            id: o.tripleId,
-            validTo: { _tag: "None" },
-            txId: { value: txId },
-          })),
-        },
-      };
-    },
-  } as unknown as CompositionHandle;
-  const open = (budgetMs: number) =>
-    Snapshot.open(fake, "thin", 30, 32, path.join(dir, "cursor.sqlite"), { budgetMs });
-  try {
-    let writer = await open(8);
-    const before = writer.nextFrame(32)!;
-    assert(before.end > 1);
-    await assert.rejects(
-      writer.write(before, {
-        beforeCheckpoint() {
-          throw Error("lost checkpoint");
-        },
+for (const mode of ["adaptive", "ordered"] as const)
+  test(`an unresolved ${mode} frame keeps its original boundary and receipt on reopen`, async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dx-load-budget-"));
+    const saved = new Map<string, any>();
+    let sends = 0;
+    const fake = {
+      scopeName: "budget-scope",
+      backend: { name: "datomic" },
+      async transactionByCommand(command: string) {
+        return { ok: true, value: saved.get(command) };
+      },
+      async transact(operations: Frame["operations"], meta: ReturnType<typeof identity>) {
+        if (saved.has(meta.commandId)) return { ok: false, tag: "Duplicate" };
+        const position = ++sends,
+          instant = 1000 + position,
+          txId = "tx" + position;
+        const changes = operations.map((op, i) => ({
+          ...op,
+          tripleId: "id" + position + "-" + i,
+          recordedAt: instant,
+          assertionTxId: txId,
+        }));
+        saved.set(meta.commandId, { ...meta, position, instant, txId, changes });
+        return {
+          ok: true,
+          value: {
+            position,
+            instant,
+            txId,
+            triples: changes.map((o) => ({
+              ...o,
+              id: o.tripleId,
+              validTo: { _tag: "None" },
+              txId: { value: txId },
+            })),
+          },
+        };
+      },
+    } as unknown as CompositionHandle;
+    const file = path.join(dir, "cursor.sqlite");
+    const fixture = microFixture(30, 24);
+    const open = (variant: number) =>
+      mode === "adaptive"
+        ? Snapshot.open(fake, "thin", 30, 32, file, { budgetMs: variant })
+        : Snapshot.open(
+            fake,
+            microFixture(30, variant === 8 ? 24 : 16),
+            30,
+            variant === 8 ? 24 : 16,
+            file,
+            undefined,
+            variant === 8 ? 3 : 2,
+          );
+    try {
+      let writer = await open(8);
+      const before = mode === "adaptive" ? writer.nextFrame(32)! : fixture.batches().next().value!;
+      assert(before);
+      assert(before.end > 1);
+      await assert.rejects(
+        writer.write(before, {
+          beforeCheckpoint() {
+            throw Error("lost checkpoint");
+          },
+        }),
+        /lost checkpoint/,
+      );
+      assert.equal(writer.cursor(), 0);
+      const durable = await fake.transactionByCommand(writer.frameIdentity(before).commandId);
+      assert(durable.ok && durable.value);
+      writer.close();
+      await assert.rejects(open(16), /different source or storage/);
+      writer = await open(8);
+      if (mode === "adaptive") assert.deepEqual(writer.nextFrame(1), before);
+      else assert.equal(writer.cursor(), before.end);
+      const after = await writer.write(before);
+      assert.equal(after.txId, durable.value.txId);
+      assert.equal(after.position, durable.value.position);
+      assert.equal(sends, 2);
+      assert.equal(writer.cursor(), before.end);
+      writer.close();
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+test("paced import counts a missing scheduled save and protects each account independently", async () => {
+  const { reviewPace } = await import("./pacing.ts");
+  const verdict = { offered: 40, ok: 40, p99Ms: 10 };
+  const accounts = [...Array.from({ length: 10 }, (_, i) => "live" + i), "quiet"];
+  const baseline = Object.fromEntries(accounts.map((a) => [a, { save: verdict, read: verdict }]));
+  const samples = accounts.flatMap((actor, i) =>
+    (["save", "read"] as const).flatMap((kind) =>
+      Array.from({ length: 40 }, (_, seq) => {
+        const due = seq * 200 + (actor === "quiet" ? 0 : i * 20);
+        return { actor, kind, seq, due, offered: due, end: due + 11, outcome: "verified" };
       }),
-      /lost checkpoint/,
-    );
-    assert.equal(writer.cursor(), 0);
-    const durable = await fake.transactionByCommand(
-      identity(writer.scope, writer.source, 32, before).commandId,
-    );
-    assert(durable.ok && durable.value);
-    writer.close();
-    await assert.rejects(open(16), /different source or storage/);
-    writer = await open(8);
-    assert.deepEqual(writer.nextFrame(1), before);
-    const after = await writer.write(writer.nextFrame(1)!);
-    assert.equal(after.txId, durable.value.txId);
-    assert.equal(after.position, durable.value.position);
-    assert.equal(sends, 2);
-    assert.equal(writer.cursor(), before.end);
-    writer.close();
-  } finally {
-    fs.rmSync(dir, { recursive: true, force: true });
-  }
+    ),
+  );
+  assert.equal(reviewPace(baseline, samples, 50, 8000, 88).next, 96);
+  const oneSlow = [{ ...samples[0]!, end: 14 }, ...samples.slice(1)];
+  assert.equal(reviewPace(baseline, oneSlow, 50, 8000, 88).next, 96);
+  const slow = samples.map((row, i) => (i < 4 ? { ...row, end: row.due + 14 } : row));
+  assert.equal(reviewPace(baseline, slow, 50, 8000, 110).next, 88);
+  const missing = reviewPace(baseline, samples.slice(1), 50, 8000, 110);
+  assert.equal(missing.next, 88);
+  assert.equal(missing.incomplete, 1);
 });

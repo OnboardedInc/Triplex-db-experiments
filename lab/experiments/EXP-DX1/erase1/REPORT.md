@@ -1,11 +1,11 @@
-Pinned reads now reuse cached replies while checking for erasure.
-The warm reply was 1,428 bytes with or without the guard, even after another person was erased.
-All thirteen native erasure checks passed, including restore from an old backup.
-The Mac controls drifted, so the read and save timing targets still need bare metal.
-Across three Mac sizes, one fresh value took 38 to 80 milliseconds p99 to erase. A batch of 100 took 114 to 211.
-One person with 416 protected versions took 257 milliseconds at the largest size.
-Cleanup still slowed saves. A protected save added about two to three milliseconds at the median.
-The prepared 100,000-person server check still uses the Part 2 commit `d0ccf312373141d0d919cc17e18a5989e60b74ce`.
+Run the prepared server comparison from commit `4054f548469e57b6aa82b06e93711c39b6867f7c`.
+Pinned reads now reuse cached replies while checking for removal.
+The warm reply was 1,428 bytes with or without the check, even after another person's value was removed.
+All thirteen native removal checks passed with the per-person writer enabled.
+Two other people saved while one person's save was paused. The check also refused a save planned before removal.
+A removed row's original ID could not restore it, even after Datomic had physically removed the row.
+Two deferred Publish writes were refused after removal. Neither destination advanced and the earlier archive closed to reads.
+The Mac timings are diagnostic. The read, save and quiet-account targets still need the prepared bare-metal comparisons.
 
 # DX-ERASE1 · What erasing a person costs
 
@@ -13,7 +13,7 @@ The prepared 100,000-person server check still uses the Part 2 commit `d0ccf3123
 
 Part 3 started with one ordinary Mac token and paired diagnostic traces. Forced inline replies added about 38 KB and 5.21 ms of median SDK decoding. The save shift concentrated in first-byte and native commit waits. The median lock acquisition was 0.08 ms. Six local cache tests reproduced stale or mismatched reference use on the starting code. [Stage attribution, predictions and evidence audit](PREDICTIONS-PART3.md)
 
-The candidate binds cache references to the pin and erasure sequence, and verifies the save frontier once under the existing lock. The six cache checks, thirteen native checks and exact Reach reply-byte comparisons passed. Timing ratios and surrounding controls are diagnostic. The one-database writer fit, shared authority, cleanup comparison and server update remain open. [Guard change and evidence](GUARD-PART3.md)
+The candidate binds cache references to the pin and erasure sequence, and verifies the save frontier once under the existing lock. The six cache checks, thirteen native checks and exact Reach reply-byte comparisons passed. Timing ratios and surrounding controls are diagnostic. The shared authority and cleanup comparison remain open. [Guard change and evidence](GUARD-PART3.md)
 
 Part 2. [Regression tests and red evidence](REGRESSIONS.md) · [Ledger implementation, latency and receipt audit](LEDGER.md). The guarded Mac run verified all thirteen checks, including the joined stage race, actual backup restore, and the erased-SSN task. Save request bodies stayed at 7,442 B. Save p99 rose 1.73× and pinned read p99 rose 5.28× in the matched Mac comparison. Forcing full read responses accounted for the increased wire bytes.
 
@@ -21,7 +21,7 @@ Part 2. [Regression tests and red evidence](REGRESSIONS.md) · [Ledger implement
 
 The two layout branches reviewed the erasure work. W1 ported the regression and identified the clear copies in K. COMPACT1 implemented detached envelopes with a test vault. [Current copy inventory and requirements](HANDOFF-PART2.md)
 
-The prepared 100,000-person check now measures detached publication and paced cleanup. The forecast uses all three sizes. [Server command and prediction](MODEL.md#prepared-detached-erasure-check)
+The prepared comparison adds both removal-check phases and their surrounding control blocks. The small Mac smoke verified 2,500 saves, the pinned reads and the sealed value's marker. The detached publication and cleanup study remains available as a separate check. [Server commands and predictions](MODEL.md)
 
 Part 1 measurements and handoff follow.
 
@@ -33,6 +33,6 @@ Part 1 measurements and handoff follow.
 
 The Mac results are diagnostic. The original Part 1 paired scale blocks each contain 500 saves, with 5–115 entirely within the index jobs. The local fixture-resume smoke checked the recorded seed and both excision arms. The original Part 1 experiment predates the verified SSN rule in Part 2.
 
-The replica, notice and joined-Publish tests use the integration versions in their bound revisions. The later settlement and worker-copy paths in INT1, general protected query semantics and production key custody remain open.
+The one-database checks cover independent saves, removal and cleanup next to a quiet account, removed ID reuse, and work after a Publish receipt. The quiet smoke verified 40 save receipts in the native feed. Sealed writes still use the file-key lock. General protected query semantics, rebuild of refused archive work and production key custody remain open. [Writer checks and evidence](WRITER-PART3.md)
 
 The server launcher passed syntax, lint, focused typing and local argument preflights. The evidence hashes and removal of all three private stacks were verified. Acceptance files and hash-pinned paths are unchanged.

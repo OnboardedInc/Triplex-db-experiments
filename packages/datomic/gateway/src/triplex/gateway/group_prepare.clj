@@ -3,6 +3,7 @@
             [datomic.api :as d]
             [triplex.gateway.commit :as commit]
             [triplex.gateway.lean :as lean]
+            [triplex.gateway.prepare-trace :as census]
             [triplex.gateway.scope :as scope])
   (:import [java.util.concurrent ArrayBlockingQueue RejectedExecutionException ThreadFactory ThreadPoolExecutor TimeUnit]))
 
@@ -186,18 +187,20 @@
       (catch RejectedExecutionException _ nil))))
 
 (defn schedule! [conn entry] (run-proof! #(draft (d/db conn) entry)))
-(defn await-proof [pending deadline]
-  (when pending
-    (deref pending (max 0 (quot (- deadline (System/nanoTime)) 1000000)) nil)))
+(defn await-proof
+  ([pending deadline] (await-proof pending deadline nil))
+  ([pending deadline missed]
+   (if pending (deref pending (max 0 (quot (- deadline (System/nanoTime)) 1000000)) missed) missed)))
 
-(defn empty-history-range? [historical prefixes]
+(defn history-range [historical prefixes]
   ;; [DX-PREP1] Why: the exclusive successor of the highest ASCII prefix includes all its encoded row suffixes.
   ;; Rejected: a bare upper ID or an assumed ordering for non-ASCII IDs (use exact per-ID seeks there).
   (when (and (seq prefixes) (every? #(re-matches #"[ -~]+" %) prefixes))
     (let [ordered (sort prefixes)
           ^String high (last ordered)
           end (str (subs high 0 (dec (.length high))) (char (inc (int (.charAt high (dec (.length high)))))))]
-      (nil? (first (d/index-range historical :triplex.entity/row (first ordered) end))))))
+      (if (first (d/index-range historical :triplex.entity/row (first ordered) end)) :occupied :empty))))
+(defn empty-history-range? [historical prefixes] (= :empty (history-range historical prefixes)))
 (defn unused-prefix? [historical ^String prefix]
   (let [old (first (d/index-range historical :triplex.entity/row prefix nil))]
     (not (and old (.startsWith ^String (:v old) prefix)))))
@@ -206,23 +209,41 @@
   ;; excision request can still change old index views asynchronously at this basis, so decline those scopes.
   ;; Rejected: relying on a logical head or subject revisions to fence raw metadata, historical IDs or excision.
   (let [historical (d/history db)]
-    (when-not (first (d/datoms historical :aevt :db/excise))
+    (if (first (d/datoms historical :aevt :db/excise))
+      (census/note! :all :dependency-mismatch)
       (let [basis (d/basis-t db)
             deadline (+ (System/nanoTime) 100000000)
-            tasks (mapv (fn [entry original]
+            tasks (mapv (fn [i entry original]
                           (when-not (= basis (:basis original))
-                            (run-proof! #(draft db entry)))) entries drafts)
-            current (mapv (fn [original task]
-                            (if (= basis (:basis original)) original (await-proof task deadline)))
-                          drafts tasks)]
+                            (census/note! i (if original :wrong-basis :draft-absent))
+                            (run-proof! #(draft db entry)))) (range) entries drafts)
+            current (mapv (fn [i original task]
+                            (if (= basis (:basis original)) original
+                              (if-not census/*reasons* (await-proof task deadline)
+                                (let [result (await-proof task deadline ::timeout)]
+                                  (cond
+                                    (or (nil? task) (= ::timeout result)) (census/note! i :timeout)
+                                    (nil? result) (census/note! i :dependency-mismatch)
+                                    :else result)))))
+                          (range) drafts tasks)]
         (when (every? some? current)
           (let [per-member (mapv #(get-in % [:witness :new-prefixes]) current)
-                covered (empty-history-range? historical (mapcat identity per-member))]
+                range-state (history-range historical (mapcat identity per-member))
+                covered (= :empty range-state)]
             (when (or covered
-                      (let [checks (mapv (fn [prefixes]
+                      (let [_ (census/note! :all (if (= :occupied range-state) :occupied-history-range :unsupported-history-range))
+                            checks (mapv (fn [prefixes]
                                            (run-proof! #(every? (partial unused-prefix? historical) prefixes)))
                                          per-member)]
-                        (every? #(true? (await-proof % deadline)) checks)))
+                        (every? true?
+                          (map (fn [i task]
+                                  (if-not census/*reasons* (await-proof task deadline)
+                                    (let [result (await-proof task deadline ::timeout)]
+                                      (cond
+                                        (or (nil? task) (= ::timeout result)) (census/note! i :point-read-timeout)
+                                        (false? result) (census/note! i :occupied-id)
+                                        (nil? result) (census/note! i :dependency-mismatch)
+                                        :else result)))) (range) checks))))
               {:drafts current :basis basis :history (if covered :range :points)})))))))
 
 (defn assign-clock [prior submitted]

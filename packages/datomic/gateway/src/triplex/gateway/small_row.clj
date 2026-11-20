@@ -28,20 +28,33 @@
   (let [q (json/write-str s)]
     (subs q 1 (dec (.length ^String q)))))
 
-(defn- change-tokens [change new-ids]
-  (let [change (cond-> change
-                 (new-ids (get change "tripleId")) (assoc "recordedAt" clock-slot)
-                 (contains? change "retractedAt") (assoc "retractedAt" clock-slot))]
-    (if (map? change)
-      (let [pieces (split-clock
-                     (concat ["{"]
-                       (mapcat identity
-                         (interpose [","]
-                           (for [[k v] change]
-                             [(json/write-str k) ":" (if (identical? v clock-slot) clock-slot (json/write-str v))])))
-                       ["}"]))]
-        (concat ["\""] (interpose clock-slot (map escaped-fragment pieces)) ["\""]))
-      [(json/write-str (json/write-str change))])))
+(defn- change-tokens [change]
+  (if (map? change)
+    (let [pieces (split-clock
+                   (concat ["{"]
+                     (mapcat identity
+                       (interpose [","]
+                         (for [[k v] change]
+                           [(json/write-str k) ":" (if (identical? v clock-slot) clock-slot (json/write-str v))])))
+                     ["}"]))]
+      (concat ["\""] (interpose clock-slot (map escaped-fragment pieces)) ["\""]))
+    [(json/write-str (json/write-str change))]))
+
+(defn ordinary-plan [^String text offset rewrite]
+  ;; [DX-PREP1] Why: stage canonical row and journal byte fragments on the peer.
+  ;; Rejected: parsing every row's JSON again in the transactor just to insert one clock and one position.
+  (let [values (json/read-str (subs text (- offset 2)))
+        attr (nth values 3) journal (= "_Transaction" (nth values 14))]
+    (split-clock
+      (concat ["\""]
+        (mapcat (fn [i]
+                  (cons "," (cond
+                    (or (= i 10) (and (= i 8) journal (= attr ":_tx/instant"))) [clock-slot]
+                    (and (= i 9) journal (= attr ":_tx/change"))
+                    (change-tokens (rewrite (json/read-str (nth values i)) clock-slot))
+                    :else [(json/write-str (nth values i))])))
+                (range 1 (count values)))
+        ["]"]))))
 
 ;; [DX-W1] Why: keep the indexed identity, validity, ref and fixed position, and stage the exact clock slots off the serial point.
 ;; Rejected: per-row compression on the transactor, or recreating published journal identities from the business facts.
@@ -75,7 +88,10 @@
               tokens (map (fn [[_ i v]]
                             (cond
                               (or (= i 10) (and instant (= i 8))) [clock-slot]
-                              (and changed (= i 9)) (if predecessor [predecessor-slot] (change-tokens change new-ids))
+                              (and changed (= i 9)) (if predecessor [predecessor-slot]
+                                (change-tokens (cond-> change
+                                   (new-ids (get change "tripleId")) (assoc "recordedAt" clock-slot)
+                                   (contains? change "retractedAt") (assoc "retractedAt" clock-slot))))
                               :else [(json/write-str v)])) slots)
               tokens (concat [(str "\"!1" (format "%04x" mask) "[")]
                              (mapcat identity (interpose [","] tokens)) ["]"])]

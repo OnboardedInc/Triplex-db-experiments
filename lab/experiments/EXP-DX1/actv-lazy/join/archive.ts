@@ -1,10 +1,15 @@
+import {
+  readErasure,
+  recheckErasure,
+  verifySameErasureAuthority,
+} from "../../../../bench/lib/datomic-erasure.ts";
 import assert from "node:assert/strict";
 import { W0, canonical } from "../../../../bench/lib/w0-world.ts";
 import { memberPage, width } from "../../notify1/census.ts";
 import { Documents, hash, pack, unpack, type Op } from "../../notify1/store.ts";
 import type { Store } from "../store.ts";
 import { Conflict, openStore } from "../store.ts";
-import { worldsAt, winner, type Point } from "../decision.ts";
+import { worldsAt, winner } from "../decision.ts";
 import { LazyReader } from "../read.ts";
 import { JoinedAccount, type Marker } from "./account.ts";
 import { address } from "./index.ts";
@@ -62,19 +67,34 @@ export class Archive {
   close() {
     return this.store.close();
   }
-  async write(kind: BulkClass, id: string, ops: Op[], at: number, context: unknown) {
+  async write(
+    kind: BulkClass,
+    id: string,
+    ops: Op[],
+    at: number,
+    context: unknown,
+    authority: Awaited<ReturnType<typeof readErasure>>,
+  ) {
     // [DX-ACT1] Why: constrain native preparation and durable turns independently of page count. Rejected: a multi-megabyte atomic frame or assuming a timeout can preempt a durable native transaction.
     const estimatedWire = 4096 + 3 * Buffer.byteLength(canonical(ops));
     assert(
       estimatedWire < bulkWireLimit && bulkUs(ops.length * 5 + 16, estimatedWire) <= 8000,
       "Bulk batch exceeds W1 service estimate",
     );
+    if (authority) verifySameErasureAuthority(this.source.s.comp, this.store.comp);
+    // [DX-ERASE1] Why: admission can wait after a page was derived, so the same ticket belongs on the destination commit.
+    // Rejected: a source read immediately before enqueueing (removal can publish while the batch waits).
     return this.queue.submit(this.source.s.scope, () =>
-      bulkClaim(this.store.scope, id, kind, () =>
-        this.store.commit(id, "lazy/settlement", ops, at, context),
+      bulkClaim(
+        this.store.scope,
+        id,
+        kind,
+        () => this.store.commit(id, "lazy/settlement", ops, at, context),
+        authority,
       ),
     );
   }
+
   async values(sequence: number) {
     const r = await this.source.receipt(sequence);
     assert.equal(r.marker.storage, "owed");
@@ -88,6 +108,7 @@ export class Archive {
     const r = await a.receipt(sequence, sourceAt),
       { marker: m, event: e, census } = r;
     assert.equal(m.storage, "owed");
+    const authority = await recheckErasure(s.comp, m.erasureSeq);
     const identity = identityOf(s.scope, m, e.at),
       key = progressKey(sequence),
       prior = await this.db.row<Progress>(key, at);
@@ -116,6 +137,7 @@ export class Archive {
         ops,
         at,
         next,
+        authority,
       );
       return next;
     };
@@ -208,6 +230,7 @@ export class Archive {
       previous === frontier.hash &&
         frontier.changes === output.reduce((n, row) => n + row.changes.length, 0),
     );
+    await recheckErasure(this.source.s.comp, marker.erasureSeq);
     return { frontier, output };
   }
   reader() {
@@ -245,6 +268,7 @@ export class Archive {
               parsed.release === r.release &&
               canonical(parsed.basis) === canonical(b),
           );
+          await recheckErasure(s.comp, marker.erasureSeq);
           return row.json;
         }
       },
