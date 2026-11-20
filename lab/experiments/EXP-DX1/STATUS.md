@@ -2935,3 +2935,19 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   rest on lean until that is closed. Part 6 assigned: every documented query surface tested on lean with K and made
   to answer as classic does, with its cost; one write-path branch reconciling its fixes with DX-WFIX1's; erasure
   copies on lean with K.
+
+## 2026-11-20 07:24 UTC (02:24 local, 2026-11-20): DX-WFIX1 part 2 in: storage gates pass; erasure on the lean layout leaves the value in the journal
+
+- **DX-WFIX1 part 2 (`4331d6fe8` on `exp/DX-WFIX1-write-path-fixes`; `wfix1/REPORT.md`, `PORTS.md`).** Waited 82 min 14 s for a
+  lab slot. On Mac PostgreSQL: both original receipts survived a kill after the native commit and before either
+  reply; eight 4 MiB saves committed in one group. Merged DX-W1's newest head (regressions and pinned replay oracle
+  pass); DX-COMPACT1 merges cleanly; tested merge recipes for DX-PREP1 and DX-INT1 pass their prepared-writer gates
+  (four separately configured integration tests skipped). Same defect classes sought elsewhere: the import loader,
+  the joined Publish and the notice sender each recovered their original receipts after state advanced; a separate
+  layout replay encoder used the wrong predecessor metadata (fixed, native regression passes).
+- **Erasure on the lean layout is not qualified.** Native excision reached its watermark and cleared the native row
+  text, but in each of four merged scopes all four journal entries kept the value, and all three reuses of the
+  erased row's ids were accepted (head 4 to 7), with and without the predecessor option and for the same and a
+  different owner. With DX-ERASE1's three findings this makes the lean layout fail ruling Q24 in four ways; DX-ERASE1
+  (erasure sequence and envelopes) and DX-W1 part 6 item 3 (where a K save copies a protected value) own the fix.
+- **DX-WFIX1 is finished and parked.** The single write-path branch is DX-W1's to name in part 6.
