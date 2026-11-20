@@ -1,6 +1,6 @@
 All accounts stay in one Datomic database.
 The aging tool writes a full journal and keeps one native transaction per save.
-Two Mac admissions ended before any database started. A new attempt is queued.
+The first Mac stack stopped at a compile error. The fix compiled locally and is queued for SQL.
 Larger ages have no measurements from this run yet.
 The server forecast depends on the rate of those complete writes.
 The successor rehearsal checks a single move for every account.
@@ -34,4 +34,4 @@ The successor prototype carries all 14 test accounts at one logical cut. It chec
 
 ## Evidence to date
 
-The durable DX-AGE1 evidence root has cleanup receipts for fidelity-a and fidelity-b. Both record zero owned roles and volumes. The first attempt yielded its heavy token. The second lost a measurement-lease race. JavaScript syntax, target inversion, budget arithmetic and the fit implementation were checked locally. The Datomic gates and measured-rate server repricing remain open.
+The first two admission attempts started zero roles. Fidelity-c started an isolated SQL stack and stopped before any test writes on a Clojure compile error. Cleanup removed all three owned roles and the volume. The fix compiled all three entry namespaces on the Mac. Pure rendering and oracle checks used no database transactions. JavaScript syntax, target inversion, budget arithmetic and fits were checked locally. The SQL gates and measured-rate repricing remain open. [Evidence hashes](SHA256SUMS)
