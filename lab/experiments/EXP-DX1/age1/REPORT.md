@@ -5,7 +5,7 @@ Two complete Mac rungs reached 360,314 and 1,260,314 records.
 The measured rate varied enough that the server budget should plan through two billion.
 All 14 test accounts moved together and kept their old reads, feed and receipts.
 Held old views still returned erased values, and excision removed their journal rows.
-Mac timing ratios varied. A smaller three-rung run is queued.
+The larger Mac rung timed out. The shared lab schedule kept a third matched run from starting.
 
 # DX-AGE1
 
@@ -36,4 +36,4 @@ The successor prototype carries all 14 test accounts at one logical cut. It chec
 
 The first two admission attempts started zero roles. Fidelity-c started an isolated SQL stack and stopped before any test writes on a Clojure compile error. Cleanup removed all three owned roles and the volume. The fix compiled all three entry namespaces on the Mac. Pure rendering and oracle checks used no database transactions. JavaScript syntax, target inversion, budget arithmetic and fits were checked locally. The retried fidelity gate matched 2,236 durable records after equivalent 4,948-record seeds, all 42 people at seven cuts, current and retired rows, and the complete paged feed. The short native arm ran at 11,597 records/s. The second ladder verified two complete rungs and stopped its third at the time limit. [Measured results](OBSERVATIONS.md) [Evidence hashes](SHA256SUMS)
 
-The ladder then stopped at the guest memory read before publishing a complete rung. The successor reached the first excision and stopped while counting a Datomic iterator. Both attempts removed all owned roles and volumes. The fresh Mac run completed two rungs and the successor drill. All owned roles and volumes were removed. A shorter third run is queued for matched growth fits.
+The ladder then stopped at the guest memory read before publishing a complete rung. The successor reached the first excision and stopped while counting a Datomic iterator. Both attempts removed all owned roles and volumes. The fresh Mac run completed two rungs and the successor drill. All owned roles and volumes were removed. The shorter retry was withdrawn before admission after repeated competing leases. The fully measured ceiling is 1,260,314 records. The partial third load added 900,000 confirmed records. The timed window and admission set this limit. No bench server was rented or contacted.

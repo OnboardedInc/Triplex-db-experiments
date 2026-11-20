@@ -31,7 +31,7 @@ The two complete rungs have per-metric flat, logarithmic and linear fits in the 
 
 The 50/s ordered writer fell behind its offer schedule on the first rung. Busy p99 fell from 3.17 s to 0.37 s as the database grew. Ten and 43 save intervals overlapped the requested index windows, respectively. Queue depth and sampling variability limit any causal comparison. The idle and hot probes used fixed deep owners. First-peer samples retain PostgreSQL and guest caches. Absolute clocks are specific to this Mac, its runtime caps and the single writer.
 
-The 180,000-save rung timed out after 105,264 tape saves. Its nine complete load segments added 900,000 records at 10,700 records/s, after two measured rungs averaging 5,875 records/s. These segments preserve exact native receipts but have no complete read, index, memory or copy set. The early separate 300,000-record load sustained 20,097 records/s over 14.93 seconds. [Evidence hashes](SHA256SUMS)
+The 180,000-save target timed out after 105,264 tape saves. The shared measurement schedule kept a smaller three-rung retry from starting during the run. Its nine complete load segments added 900,000 records at 10,700 records/s, after two measured rungs averaging 5,875 records/s. These segments preserve exact native receipts but have no complete read, index, memory or copy set. The early separate 300,000-record load sustained 20,097 records/s over 14.93 seconds. [Evidence hashes](SHA256SUMS)
 
 ## Successor
 
