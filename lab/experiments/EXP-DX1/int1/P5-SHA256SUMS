@@ -5,7 +5,14 @@
 2f541ecef40b791b2641f2b20994edac0d437249d65fcd656354caa26fea13ee  int1/p5-checks/p5-from-built-stg1-162da837ec/build-reused.log
 e4dc0f2252676859a73280c6d725c9f0285f894263b9a20081eff40f9ea8908c  int1/p5-checks/p5-from-built-stg1-162da837ec/gate.json
 af766d70dc995ed36d3819f492fd0321485481c4e48699f66ff577fd1a552b62  int1/p5-checks/p5-from-built-stg1-162da837ec/selftest-1.log
+bea9447a132e8b44c079855c8ddcb9ae7c088734cc8a3fac05fe7ca617082050  int1/p5-checks/p5-serial-prep1-99e97df199/build-1.log
+a73d5e2dd96fd7af408dee0f9b3dcdee1623eec8ba9db44dab34b60dd9edc611  int1/p5-checks/p5-serial-prep1-99e97df199/gate.json
+af766d70dc995ed36d3819f492fd0321485481c4e48699f66ff577fd1a552b62  int1/p5-checks/p5-serial-prep1-99e97df199/selftest-1.log
+5b79d41535e3265ca06c018f3c8723e9751097b429b7268b5baf84b92388b57e  int1/p5-checks/p5-serial-rd1-fbc9a5c464/build-1.log
+7e54726379919703cc9b5673a659b9490d03598cd2eda7ee0e35b4c73e3e153e  int1/p5-checks/p5-serial-rd1-fbc9a5c464/gate.json
+af766d70dc995ed36d3819f492fd0321485481c4e48699f66ff577fd1a552b62  int1/p5-checks/p5-serial-rd1-fbc9a5c464/selftest-1.log
 a3fa14a5c12eb8d203e5beeabd516973350d8303ff21c268d6fa993d343fb873  int1/p5-checks/pin-audit-b.json
+f9b3c5a8bcb39ab2ed6cae65e519a583b29dfb7da110466519b9d1a5def28f19  int1/p5-checks/pin-audit-final.json
 5ea57aea4712e578b3fbbbc3cc124531e63b56d85ce03ebcbcdff8b612640659  int1/p5-checks/pooled-plan-final.json
 2cfbb3e9d86ed69bbb3dedc25d5956312ed9cbcc59714ad37be160af73f8b327  int1/p5-checks/pooled-plan.json
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  int1/p5-checks/pooled-typecheck-b.log

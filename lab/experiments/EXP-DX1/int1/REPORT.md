@@ -3,7 +3,7 @@ The reader and gateways kept the same person-cache entries through 600,000 thin 
 The last 10,000 deep people still added about 322 resident bytes each in the read gateway. We are measuring the heap and native memory behind that change.
 The transactor kept adding memory after its object cache was nearly full. One deep account peaked at 2.55 GiB and loading ten peaked at 4.67 GiB on the server.
 The next Mac run samples both Java heaps at three sizes while the same people stay active.
-The staged activation suite passed all 54,079 native assertions and is published. Two earlier native gates remain in the queue.
+The three carryover native suites each passed all 54,079 assertions. Their merges and the memory probe are published.
 The pooled campaign has forecasts for all eight priorities. The small saved-output comparison is still due.
 Lean storage still has open erasure and native query gaps. The campaign must keep those paths out of the judged run.
 
