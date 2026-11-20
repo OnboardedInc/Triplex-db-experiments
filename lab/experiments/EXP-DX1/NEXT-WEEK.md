@@ -39,8 +39,15 @@ defined in `lab/V0.1.md` on main.
     Deep accounts: read gateway 322 B per person and transactor growth, as scorecard rows.
 11. **Why deep saves queue inside Datomic** (12.61 storage segment reads per deep save against 0.55 thin): after
     the two cache arms, attribute the remaining tail with the per-event recording.
-12. **Paged query without an explicit cut can miss a just-stored save** (both layouts): fix in progress in
-    DX-W1 part 7; confirm merged and add to the scorecard's correctness rows.
+12. **Paged query without an explicit cut could miss a just-stored save** (both layouts): fixed in DX-W1 part 7
+    (`eb529d629`, zero extra stored records); confirm it is on `exp/DX-INT1` and add it to the scorecard's
+    correctness rows. Left open by DX-W1 (parked 2026-11-20 at `25c9eeb79`): converting a scope that already holds
+    protected values in clear (the gateway refuses the conversion and leaves the data readable); the
+    clean-consumer packaging check; bare-metal timing of the one-request point query.
+12a. **A query cannot filter by the value of a protected field** once an account has a removal policy (typed
+    refusal `ErasureQueryUnsupported`; a direct read of the field still works). If the product needs "find the
+    person with this SSN" or duplicate-SSN detection, that needs a design (for example a keyed digest index). Ask
+    Sam whether it does.
 13. **Erasure (DX-ERASE1 stopped 2026-11-20 16:20 local by the provider's content filter for the second time that
     day, at `1d6e9afcc`; not resumed under the weekend rule; two modified files are uncommitted in its worktree).**
     Landed that afternoon: parallel saves and deferred Publish work stay safe across a removal (`9fdad4ed2`),

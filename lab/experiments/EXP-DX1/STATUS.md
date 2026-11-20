@@ -3623,3 +3623,18 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
 - **Part 2 assigned (run-critical; eight agents running with it):** adopt the SCALE1 seed with DX-AGE1's adoption
   step; version 0.1 settings with every setting printed; rows 5 to 9 by calling the other builders' published
   commands inside a 235 minute budget; first usable version (rows 1 to 4 on the real seed) within two hours.
+
+## 2026-11-20 21:43 UTC (16:43 local, 2026-11-20): DX-W1 part 7 in (one hour); parked; seven agents running
+
+- **DX-W1 part 7 (`25c9eeb79`; tested code for `exp/DX-INT1` `eb529d629`; `w1/REPORT.md`,
+  `QUERY-SUPPORT.md`).** Implicit pages now use the committed position in both layouts: with a durable save at
+  clock 102 and a reader at 100 both match the independent oracle; zero extra stored records. Protected values in
+  layout K: all thirteen route checks pass including backup restore; a protected replacement stores 22 records
+  against 17 for a plain save; a planted value is absent from the captured save requests, the retained index, the
+  stored journal and the feed. A point query in one request: 3.04 ms p50 against 2.14 ms for Match on the same Mac
+  run (1.42 times; bar 1.5; diagnostic). Query support for version 0.1 written as three lists (seeks; reads
+  histories up to 100,000 input datoms; declined). New stated limit: in an account with a removal policy a query
+  cannot filter on a protected field's value (`ErasureQueryUnsupported`). Recommendation on journal indexing:
+  keep layout K as is for version 0.1; add the narrower index (3 or 7 records per save) only if the 1 billion run
+  shows a frequent journal query that needs it. Open: converting scopes that already hold clear protected values.
+- Running: DX-BM1, DX-SCALE1, DX-V01, DX-THIN1, DX-AGE1, DX-PREP1, DX-JVM1 (seven).
