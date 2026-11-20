@@ -112,9 +112,9 @@
     (let [start (System/nanoTime) rows (input-rows input lean new-ids)]
       (vreset! *load-timing* (- (System/nanoTime) start)) rows)))
 (defn expand-fresh [input lean]
-  (if-not (= "fresh-texts-v1" (get input "rowMode")) input
+  (if-not (contains? input "freshTexts") input
     (let [texts (get input "freshTexts")]
-      (when-not (and lean (vector? texts) (seq texts)
+      (when-not (and lean (= "texts" (get input "rowMode")) (vector? texts) (seq texts)
                      (not-any? #(contains? input %) ["rows" "newIds" "rowOrder" "rowTexts"]))
         (codec/invalid "Mixed fresh batch encodings"))
       (let [ids (mapv (fn [s]

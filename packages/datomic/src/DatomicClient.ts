@@ -902,7 +902,8 @@ export class DatomicClient {
       ...(bounds ? { historyIdentityBounds: bounds } : {}),
       ...(fresh
         ? {
-            rowMode: "fresh-texts-v1",
+            // [DX-LOAD1] Why: older gateways reject compact requests missing rowOrder and rowTexts. Rejected: a new rowMode that falls through to a successful empty legacy write.
+            rowMode: "texts",
             freshTexts: wireRows.map((r) => (rowFast ? encodeRowTextFast : encodeRowText)(r)),
           }
         : {
