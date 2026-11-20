@@ -16,4 +16,4 @@ Paths in the checksum manifest are relative to the durable DX-HA1/load1 evidence
 
 Replay a completed comparison with `node --import tsx lab/experiments/EXP-DX1/load1/compare.ts "$ATTEMPT_DIR"`. The reader requires original observation, cleanup and offer bytes. It recomputes scheduled dose, p99, ratios, misses and windowed throughput against both retained controls. The per-arm files from the partial pacing attempt survive independently of the failed overall receipt.
 
-All Mac timings are diagnostic. [Placement and forecasts](ISOLATION-BENCH.md) · [Findings](REPORT.md)
+The retry of the extended trace remained behind another campaign’s active measurement lease for 47 minutes. It ended before acquiring a slot or starting an engine. Gateway and per-save index attribution remain open. All Mac timings are diagnostic. [Placement and forecasts](ISOLATION-BENCH.md) · [Findings](REPORT.md)
