@@ -62,6 +62,8 @@ The frozen zero-reader smoke then reached its terminal driver record. It checked
 
 The next frozen zero-reader arm matched all 27 files in a separate collector invocation. The loaded arm checked 8,845 reads exactly and found zero local oracle samples. The validated reader checks the gateway on every pull, so its reads are counted as source reads. The campaign selects the following touched replica and preserves its actual route tags. A sampled local reply is checked against the existing direct sweep source at the same cut. The evidence exporter also transfers guest directories with ordinary host creation modes and verifies their bytes before retiring the guest copy. [Verified prefix, loaded attempt and cleanup hashes](P5-SHA256SUMS)
 
+The following-reader run saved both terminal frozen arms. Its loaded arm checked 1,259,918 reads against the driver model, 91 independent oracle samples and 50 local row sets against the pinned source. The collector rejected one historical sample whose placement still existed without a visible stamp. It now binds the subject to the placement and checks every expected row through the independent oracle. Replaying the original saved bytes found no invalid checks. [Saved loaded arm and replay hashes](P5-SHA256SUMS)
+
 The full deep import needs about 90 minutes at 3,000 facts per second. Its tail now allows 100 minutes while the matched foreground comparison keeps its original 300-second window.
 
 ## Evidence audit
