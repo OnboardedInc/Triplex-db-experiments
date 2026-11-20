@@ -10,7 +10,8 @@
             [triplex.gateway.main :as main]
             [triplex.gateway.selftest :as rows]
             [triplex.gateway.small-row :as small]
-            [triplex.gateway.storage :as storage]))
+            [triplex.gateway.storage :as storage]
+            [triplex.gateway.write-policy :as policy]))
 
 (def attempt (System/getenv "PREP1_ATTEMPT"))
 (def owners (mapv #(str "acct/a" % "/person") (range 8)))
@@ -38,7 +39,8 @@
         p (second (first data))
         result (promise)
         base (merge (group/classify db p input)
-                    {:id (get input "operationId") :data data :params p :result result
+                    {:id (get input "operationId") :data data :params p :result result :token (promise)
+                     :rank :live :predecessors []
                      :eligible (group/eligible? db p)
                      :prepare (storage/prepared-for data input p)
                      :solo #(d/transact-async conn data)
@@ -178,6 +180,58 @@
           (assert (and (second saved) (= (:position (second saved)) (storage/head-position durable))))
           (emit "witness" {:mode mode :db name :results results :receipts saved}))))))
 
+(defn windows []
+  (doseq [window [:prepare :two] scenario [:ordinary :moved :lost]]
+    (with-scope (str (name window) "-" (name scenario)) true false
+      (fn [db conn]
+        (let [seed (seed! db conn)
+              cuts (tape seed 17)
+              first-group (first cuts) second-group (second cuts)
+              basis (d/db conn)
+              first-entries (mapv #(submitted conn basis (request %)) first-group)
+              second-entries (mapv #(submitted conn basis (request %)) second-group)
+              order (mapv :account second-entries)
+              lane (atom {:queue second-entries :accounts order :rotation {:live order} :tails {}})
+              calls (atom []) n (atom 0)
+              send group/send!
+              outside (assoc (step "outside" 0 nil) :owner "acct/outside/person")]
+          (with-redefs [group/batch-limit 4 group/prepare-window window policy/priority? true
+                        group/send!
+                        (fn [c ops]
+                          (if (not= prepared/guard-ident (ffirst ops))
+                            (send c ops)
+                            (let [i (swap! n inc)]
+                              (swap! calls conj [:send i])
+                              (when (and (= 1 i) (= :moved scenario))
+                                @(d/transact-async c (storage/tx-data (d/db c) (request outside))))
+                              (let [f (send c ops)]
+                                (when (and (= :two window) (= :moved scenario) (= 2 i))
+                                  ;; Force the second attempt to reach the stale cut before the first group's replay.
+                                  (try @f (catch Exception _ nil)))
+                                (delay
+                                  (swap! calls conj [:await i])
+                                  (let [report @f]
+                                    (if (and (= :lost scenario) (= i 1))
+                                      (throw (ex-info "after native commit" {}))
+                                      report)))))))]
+            (group/execute-window! conn lane first-entries))
+          (let [entries (into first-entries second-entries)
+                replies (mapv output entries)
+                saved (mapv #(group/receipt (d/db conn) (:id %)) entries)
+                start (if (= :moved scenario) 10 9)
+                seq-expected (if (= window :two) [[:send 1] [:send 2] [:await 1] [:await 2]]
+                                               [[:send 1] [:await 1] [:send 2] [:await 2]])]
+            (assert (empty? (:queue @lane)))
+            (assert (= (vec (range start (+ start 8))) (mapv :position saved)))
+            (assert (= seq-expected @calls))
+            (assert (= (if (= :lost scenario) (repeat 4 "OutcomeUnknown") (repeat 4 nil))
+                       (map :error (take 4 replies))))
+            (assert (every? #(and (nil? (:error %)) (:receipt %)) (drop 4 replies)))
+            (assert (= (if (= :moved scenario) (if (= :two window) [1 1] [1 0]) [(if (= :lost scenario) nil 0) 0])
+                       (mapv #(-> replies (nth %) :replays) [0 4])))
+            (emit "window" {:window window :scenario scenario :db db :calls @calls
+                            :replies replies :receipts saved})))))))
+
 (try
   (doseq [salt [17 43 503 2601]]
     (let [packed? (odd? (quot salt 10))
@@ -187,6 +241,7 @@
       (assert (= (semantic a) (semantic b)))
       (emit "pair" {:salt salt :packed packed? :reference a :prepared b})))
   (refusal-and-recovery)
+  (windows)
   (emit "finished" {})
   (shutdown-agents)
   (System/exit 0)

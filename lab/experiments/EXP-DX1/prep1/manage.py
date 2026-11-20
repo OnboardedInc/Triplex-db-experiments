@@ -30,7 +30,9 @@ def disk_floor():
         raise SystemExit("Host free disk below 5 GiB")
 
 
-def main(out):
+def main(out, mode="ortho"):
+    if mode not in ("ortho", "prepare", "two", "live"):
+        raise SystemExit("Mode must be ortho, prepare, two or live")
     out.mkdir()
     attempt = str(uuid.uuid4())
     stage = out / "stage"
@@ -46,6 +48,7 @@ def main(out):
 
     config = stage / files[1]
     (config / "attempt").write_text(attempt + "\n")
+    (config / "mode").write_text(mode + "\n")
     shutil.copyfile(EXPERIMENT / "stack.sh", config / "entrypoint.sh")
     shutil.copyfile(EXPERIMENT / "observe.clj", config / "observe.clj")
     recipe = config / "Dockerfile"
@@ -60,8 +63,9 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     disk_floor()
     esbuild = REPO / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
     metafile = out / "bundle.json"
+    driver = "live.ts" if mode == "live" else "probe.ts"
     subprocess.run([
-        esbuild, str(EXPERIMENT.relative_to(REPO) / "probe.ts"), "--bundle", "--platform=node",
+        esbuild, str(EXPERIMENT.relative_to(REPO) / driver), "--bundle", "--platform=node",
         "--format=esm", "--banner:js=import {createRequire} from 'node:module'; const require=createRequire(import.meta.url);",
         "--metafile=" + str(metafile), "--outfile=" + str(config / "probe.mjs"),
     ], cwd=REPO, check=True)
@@ -70,7 +74,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     profile = json.loads(slots.read_text())
     if os.environ.get("DOCKER_HOST") != profile["dockerHost"]:
         raise SystemExit("Lab Docker endpoint does not match the configured endpoint")
-    profile["lanes"]["datomic"]["image"] = "tx2-datomic:dx-prep1"
+    profile["lanes"]["datomic"]["image"] = f"tx2-datomic:dx-prep1-{mode}"
     slots.write_text(json.dumps(profile, indent=2) + "\n")
     engine_dir = REPO / "runs/engines/prep1"
     env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots),
@@ -79,6 +83,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     source_paths.extend(REPO / p for p in json.loads(metafile.read_text())["inputs"])
     inputs = {
         "attempt": attempt,
+        "mode": mode,
         "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
         "stage": {str(p.relative_to(stage)): sha(p) for p in sorted(stage.rglob("*"))
                   if p.is_file() and p != slots},
@@ -92,7 +97,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         for i in range(1, 121):
             disk_floor()
             path = out / f"{action}-{i}.log"
-            args = ["node", "lab/bin/heavy.mjs", "--label", f"DX-PREP1-{action}", "--",
+            args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{action}", "--",
                     "node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-PREP1"]
             if action == "selftest":
                 args += ["--scratch-gib", "1"]
@@ -122,4 +127,4 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
 
 
 if __name__ == "__main__":
-    main(Path(sys.argv[1]).resolve())
+    main(Path(sys.argv[1]).resolve(), *sys.argv[2:])
