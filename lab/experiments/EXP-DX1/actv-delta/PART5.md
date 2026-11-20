@@ -31,3 +31,11 @@ The 100,000-person inputs are the 64-seat single-account rows in `a37ad6097:lab/
 | 39.4 | 3.34 / 46.85 | 0.251 | 19.0 | 64 / 49 | 184 / 169 | 109–219 |
 
 The bare-metal writer rows measure field saves and pinned reads. Joined saves also do source and policy work. An extra 19 ms of mean service at the peak would exhaust the model's capacity. Separate neighbours and a one-second stream of offers can change the tail. The forecast covers the record and first exact response, with literal stored output and individually recorded notices using their own clocks.
+
+## Joined handoff
+
+DX-ACT1 can merge `bc01028b0`, whose base includes the complete joined candidate `541326043` and the shared-geography change `48f557594`. The priority implementation is `9895f926b`, with the queued observer fix in `eb08bd32f`. The two ingress orders were verified natively at `bc01028b0` with reviewed WFIX1 `882df5487`. A save at 12 preceded Publish at 13 with cut 12. The waiting save committed at 14. Holding Publish first then committed at 15 with cut 14 and put the later save at 16. Python matched both cuts in each order. The external contender still stopped at three conflicts.
+
+The `--one-seed` server path already shares one priority admission instance between the writer and receipt Publish and defers physical save planning to the admitted turn. For other joined entry points, use that same wiring. The original settlement runner has its own producer loop. It must share the scope's admission instance before its timings describe this priority treatment. The gate and this run exercised the joined account and its oracle, without running the server command.
+
+DELTA's two-step fence, helping reader, compact mirror and old server campaign are historical experiments. Keep their reproducers for their evidence. Joined already consumes the declaration compiler and posting codec in `actv-delta/rules.ts` and `index-patch.ts`. Joined also reuses the audited deadline checker. Keep those single shared implementations at their current paths while the selector fingerprints those paths and bytes. The BM1 compatibility collector and DELTA WAL price remain historical qualifications. A future joined WAL claim needs a matched write-price run. No DELTA publication runtime needs to be ported.
