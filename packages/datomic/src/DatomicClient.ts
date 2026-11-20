@@ -1133,14 +1133,6 @@ export class DatomicClient {
     const { onSent: inputSent, ...wireInput } = input;
     const { rows: inputRows, newIds: ids, ...requestHeader } = wireInput;
     const ticket = erasureWriteTicket();
-    const header = ticket
-      ? {
-          ...requestHeader,
-          erasureSeq: ticket.sequence,
-          erasureReplay: ticket.replay,
-          erasureSourceDatabase: ticket.sourceDatabase,
-        }
-      : requestHeader;
     onSent ??= inputSent;
     const compact = this.layouts.get(db) === "lean";
     const rowFast = fastPathEnabled("row"),
@@ -1212,7 +1204,20 @@ export class DatomicClient {
     const body = {
       // [DX-INT1] Why: updating the existing legacy keys preserves the frozen request bytes.
       // Rejected: rebuilding the legacy header in compact-field order.
-      ...(fresh || ordered ? header : wireInput),
+      ...(fresh || ordered ? requestHeader : wireInput),
+      // [DX-ERASE1] Why: the source removal sequence fences every wire form.
+      // Rejected: adding the ticket only to compact writes (legacy and mixed frames can also replay protected values).
+      ...(ticket
+        ? {
+            erasureSeq: ticket.sequence,
+            erasureReplay: ticket.replay,
+            ...(ticket.sourceDatabase === undefined
+              ? {}
+              : {
+                  erasureSourceDatabase: ticket.sourceDatabase,
+                }),
+          }
+        : {}),
       ...(this.cacheOptions.writeClass ? { writeClass: this.cacheOptions.writeClass } : {}),
       ...(this.cacheOptions.groupAccount ? { groupAccount: this.cacheOptions.groupAccount } : {}),
       ...(bounds ? { historyIdentityBounds: bounds } : {}),
@@ -1385,6 +1390,8 @@ export class DatomicClient {
           }
         } catch (readError) {
           if (!(readError instanceof DatomicTransportError)) throw readError;
+          // [DX-HASYNC1] Why: an interrupted claim lookup keeps the decision unknown. Rejected: returning a definite conflict without reading the claim.
+          if (cas) throw readError;
         }
         if (cas) break;
         const left = deadline - performance.now();

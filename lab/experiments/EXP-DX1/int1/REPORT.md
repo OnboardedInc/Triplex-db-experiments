@@ -1,37 +1,36 @@
-All accounts will share one Datomic database.
-The reader and gateways kept the same person-cache entries through 600,000 thin people and 40,000 deep people at fixed activity.
-The read gateway still holds about 62 MiB of live Java objects at 10,000 and 30,000 deep people. Its resident memory rose by 18 MiB.
-The transactor committed 211 MiB more to its Java heap while its object-cache charge stayed flat. A saved ten-account run reached 5.37 GiB in its 6 GiB container.
-The final Mac import stopped at 49,469 confirmed people after an ambiguous write. We have two complete profiles and no measured resident plateau.
-The writer, erasure safeguards, fallback reader and Publish priority are on the shared branch. Eight native suites and all 13 checks in the small erasure regression passed.
-The pooled campaign has forecasts for all eight priorities. The saved frozen baseline matched, and the loaded arm verified 50 local samples against the source. The field proof is still due.
-Lean storage still has open erasure and native query gaps. The campaign must keep those paths out of the judged run.
+Every account will share one Datomic database.
+The Mac now checks correctness with one ordinary slot at a time. Quiet-machine timing belongs on the servers.
+The shared branch keeps the write history queryable and the per-person writer optional.
+The durable Publish record is the point we count as stored. Background work settles values and notices afterward.
+The read gateway held about 62 MiB of live Java objects at both deep sizes. Its resident memory still grew.
+The transactor's Java heap grew while its object-cache charge held steady. The larger physical test will look for the plateau.
+The fresh and billion-record runs need matching sealed inputs and the merged scorecard.
+The merge table records what has been taken, what ran on this branch and what is still due.
 
-## One-database work
+## Integration
 
-Pooled forecasts for the two population rungs and every bar through P8. [Forecasts](P5-PREDICTIONS.md) · [Bars](https://github.com/OnboardedInc/Triplex-db-experiments/blob/7a0b6080b924437a6067c6457faa511448f39e26/lab/TARGETS.md)
+[Current v0.1 merge and gate table](V0.1-STATE.md). [Earlier integration and memory evidence](P5-EVIDENCE.md). [Compressed part 6 evidence](V0.1-SHA256SUMS).
 
-The fixed-activity census keeps three natural RSS samples at each population before requesting Java class histograms and Native Memory Tracking. The observer checks the target role, live PID and start time, challenge and image. The report reopens the compressed bytes and checks the totals, native pools, actual roster, pinned cut and unchanged admission counters. All Mac timings are diagnostic.
+The Mac admission patch came from 5c874bd26. Both marker tests used isolated temporary lock directories. The shared jobs used one ordinary token per command. The lease-disable path emits no verdict or receipt.
 
-The transactor census uses a 840 MiB Java heap, a configured 192 MiB object cache and memory-index threshold/maximum of 8/32 MiB. The read gateway uses a 384 MiB heap, a 32 MiB peer cache, an 8 MiB row budget and a 1 MiB identity budget. Native committed bytes, live heap and OS residency have different denominators.
+The restart released the interrupted owned slot, removed its volume and retired four scratch source copies. The interrupted-profiles archive retains the first complete resident-page checkpoint and the earlier saved-output comparison. The two physical memory terms are still open.
 
-The two census checkpoints attribute most of the transactor’s 223 MiB RSS increase to a 211 MiB increase in committed heap. Its tracked memory outside the heap grew 1.83 MiB. The read gateway’s heap commitment grew 1 MiB and its tracked memory outside the heap grew 2.44 MiB. Its residual RSS and the plateau are still open. [Native pool table](P5-EVIDENCE.md)
+The PREP1 merge kept the singular diagnostic timing field in the erasure harness. The four fairness checks and 724 native assertions passed on the runtime tree at 4f5105dc3. The fresh SQL recovery witness compared the exact original receipt, the feed, the native log and three pinned query results across restart. It checked the current attempt, image, source hashes, slot, durable native cut and two synchronous WAL flushes before recording the verified result. The report amendment changes only documentation and the checksums. No acceptance pins, bars or frozen inputs changed.
 
-## Previous observations
+The ACT1 merge was clean. Its legacy gate needed the gateway's omitted legacy layout field decoded as legacy and smaller seed frames. Both failed attempts are retained. The successful runtime tree at 783a2b917 matched both save and Publish orders, three typed predecessor conflicts, settlement across two stops and three shared-save worker stops.
 
-| Role | Thin RSS MiB at 100,000 / 300,000 / 600,000 | Last B/person | Deep RSS MiB at 10,000 / 30,000 / 40,000 | Last B/person |
-| --- | ---: | ---: | ---: | ---: |
-| Reader | 140.68 / 140.68 / 140.68 | 0 | 140.88 / 140.88 / 141.00 | 13.1 |
-| Read gateway | 310.07 / 325.21 / 324.18 | −3.6 | 314.78 / 326.00 / 329.07 | 321.5 |
-| Write gateway | 325.52 / 322.20 / 324.68 | 8.7 | 329.18 / 337.62 / 327.12 | −1,100.6 |
-| Transactor | 773.46 / 916.64 / 1,038.64 | 426.4 | 830.21 / 981.41 / 1,020.79 | 4,129.6 |
-| PostgreSQL | 1,378.63 / 1,663.68 / 1,831.46 | 586.5 | 1,785.60 / 1,873.73 / 1,868.75 | −523.1 |
-| Driver | 227.68 / 235.13 / 237.45 | 8.1 | 287.36 / 398.68 / 461.55 | 6,592.9 |
+The Publish gate independently compares pinned results and ordered effects to the oracle, checks the durable marker and the exact HTTP writer setting, and binds the new namespace, slot, runtime and cleanup to the attempt. Its source and JSON digests are in the archive. Physical Publish timing and the pooled receipt-only campaign remain open.
 
-The earlier scope-cost study is complete. Its measured timing, thread counts and source bindings are preserved with the rest of part 4. [Evidence](P4-EVIDENCE.md) · [Checksums](P4-SHA256SUMS)
+ERASE1 conflicted in the local evidence fields and the SDK cache lookup. The merge kept the diagnostic field and both the native cut and removal sequence in the cache stamp. It also retained the new comparison flag. Ten SDK tests passed. All 13 routes, two refused ID reuses, three accepted parallel saves and two refused deferred writes passed on the runtime tree at e04de8d7f.
 
-## Integration and campaign
+The erasure checks compare original typed values, markers, command receipts and unchanged destination heads. Four fresh attempts bind these observations to the source, image, owner, slot and cleanup, including the restore helper. The first build invocation failed before starting SQL and is archived separately.
 
-Each native build ran 27 tests and 54,079 assertions with zero failures. The reader handoff changed only documentation and shared the preceding build. The latest writer merge passed 861 Core and 434 Datomic SDK tests, with 52 opt-in SDK cases skipped. The pooled TypeScript check passed. [Merge resolutions and evidence audit](P5-EVIDENCE.md) · [Checksums](P5-SHA256SUMS)
+HA1 merged cleanly from 944b8d4d8. Its earlier reconciliation retained operation and command duplicate checks and the ordered-import predecessor. Sixteen tests passed. Two native arms at 4921611ff independently matched 2,088 frame receipts and 41,832 verified facts at their final cuts. The verifier reread the SQLite frame ledgers and native command positions and tied them to the fresh source, slot, offers, reopened cursor and cleanup. Physical pacing and quiet-account effects remain open.
 
-Run `bash lab/experiments/EXP-DX1/int1/everything.sh BATCH UTC_CUTOFF --overnight` for ten accounts of 10,000 people. Omit `--overnight` for both rungs. The command prepares the exact public revision before starting the preflight. The current SCALE1 million-person image uses different entity identities and lean storage. Both rungs capture and reuse a compatible legacy seed for their matched arms. [Campaign and options](P5-EVIDENCE.md)
+HASYNC1 conflicted in the HA runners, the cut cache and native error typing. The merge keeps exact cached cut metadata, all ordered-import arms and the three distinct native conflict outcomes. The default waits for a second copy. Policy A is selectable. Sixteen tests and the HA typecheck passed on 9ed520247. Two small pooled native drills kept 201 exact saves and 2,001 reads across failover and a move.
+
+The synchronous recovery recount compares preserved account memberships and seed receipts, the withheld native receipt with its SDK retry and the first protected move's WAL witness. It binds cuts, raw offers, slot and cleanup to both new attempts on the same source. The Mac exercises one machine. Physical P9 requires two.
+
+## Server work
+
+Run the physical scorecard on the exact merged revision at both ages. The old frozen preflight had two exact arms. The field comparison, compatibility with the aged journal and physical age results remain open. [Earlier campaign and options](P5-EVIDENCE.md)

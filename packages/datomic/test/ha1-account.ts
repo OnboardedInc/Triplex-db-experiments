@@ -50,14 +50,17 @@ export class Account {
     readonly key: string,
     write: string,
     read: string,
+    scopeKey = key,
+    writeTimeout = 2200,
+    scopeText?: string,
   ) {
-    this.scope = JSON.stringify(["triplex-scope-v1", "ha1", key, "test", 0]);
+    this.scope = scopeText ?? JSON.stringify(["triplex-scope-v1", "ha1", scopeKey, "test", 0]);
     this.db = "s2-" + Buffer.from(this.scope).toString("base64url");
-    this.w = new DatomicClient(write, 2200);
+    this.w = new DatomicClient(write, writeTimeout);
     this.r = new DatomicClient(read, 2600);
   }
-  async open() {
-    const v = await this.w.create(this.scope, "legacy", false, 45000);
+  async open(layout: "legacy" | "lean" = "legacy", strict = false) {
+    const v = await this.w.create(this.scope, layout, strict, 45000);
     assert(v.created && v.db === this.db);
     this.schema = v.schemaHash;
     const b = await this.w.basis(this.db);

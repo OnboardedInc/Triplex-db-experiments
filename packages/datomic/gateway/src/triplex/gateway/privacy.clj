@@ -69,7 +69,7 @@
 (defn managed? [name db]
   (or (enabled? db) (and root (exists? (path name "head.json")))))
 
-(defn register! [name attributes sealed?]
+(defn register! [name attributes sealed? install!]
   (when-not (and (vector? attributes) (seq attributes) (= (count attributes) (count (set attributes)))
                  (every? #(and (string? %) (seq %) (not (.startsWith ^String % ":_tx/"))) attributes))
     (failure! 400 "InvalidProtectedAttributes" "Expected distinct declared protected attributes"))
@@ -79,12 +79,15 @@
     (sync-directory! (.getParent parent))
     (guard name
       (fn []
-        (if (exists? p)
-          (let [prior (json/read-str (Files/readString p))]
-            (when-not (and (= attributes (get prior "attributes")) (= (boolean sealed?) (get prior "sealed")))
-              (failure! 409 "ProtectionPolicyMismatch" "The protected attribute policy is immutable")))
-          (replace! p (json/write-str {"database" name "seq" 0 "seal" zeros
-                                      "attributes" attributes "sealed" (boolean sealed?)})))))))
+        (let [prior (when (exists? p) (json/read-str (Files/readString p)))]
+          (when (and prior (not (and (= attributes (get prior "attributes")) (= (boolean sealed?) (get prior "sealed")))))
+            (failure! 409 "ProtectionPolicyMismatch" "The protected attribute policy is immutable"))
+          ;; [DX-W1] Why: a rejected declaration must leave an occupied scope readable under its prior policy.
+          ;; Rejected: publishing a new policy before the native empty-scope check succeeds.
+          (install!)
+          (when-not prior
+            (replace! p (json/write-str {"database" name "seq" 0 "seal" zeros
+                                        "attributes" attributes "sealed" (boolean sealed?)}))))))))
 
 (defn- entry-path [name seq] (path name (str "erase-" seq ".json")))
 
@@ -235,6 +238,10 @@
     (let [new-ids (set (get input "newIds"))
           importing (or (true? (get input "erasureReplay"))
                         (some #(and (= ":_tx/actor" (:attribute %)) (= "bulk-import" (:value_string %))) rows))]
+      ;; [DX-ERASE1] Why: the identity list survives native removal and data restores.
+      ;; Rejected: checking only native row history (it cannot find a row whose contents were physically removed).
+      (when (some #(contains? (:erased state) %) new-ids)
+        (failure! 409 "ErasedAssertionIdentity" "A removed assertion identity cannot be reused"))
       (doseq [r rows :when (and (new-ids (:id r)) ((:attrs state) (:attribute r)))]
         (when-not (= "string" (:value_type r))
           (failure! 400 "ProtectedTypeUnsupported" "This protected scope accepts string assertions"))

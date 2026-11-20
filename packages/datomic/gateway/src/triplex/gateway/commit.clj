@@ -35,29 +35,46 @@
 ;; [DX-WFIX1] Why: the checked stored row owns the time, range, value and identity of the retracted assertion.
 ;; Rejected: carrying the client's provisional assertion or maintaining a separate decoder for prepared writes.
 (def recorded-row-code
-  '(fn [^String text]
+  '(fn [text]
      (let [[_ _ entity attr kind string number bool datetime data recorded from to _ entity-type _ tx]
            (lean-columns-code text)
            number-field (fn [x] (if (= "-0" x) -0.0 x))
            value {"type" kind "value" (case kind
-                                      ("ref" "integer" "string" "blob") string
-                                      "number" (number-field number)
-                                      "boolean" (not (zero? bool))
-                                      "datetime" (number-field datetime)
-                                      "json" (json/read-str data))}]
-       (cond-> {"entityId" entity "attribute" attr "value" (if (= "blob" kind) (merge (json/read-str data) value) value)
+                 ("ref" "integer" "string" "blob") string
+                 "number" (number-field number)
+                 "boolean" (not (zero? bool))
+                 "datetime" (number-field datetime)
+                 "json" (json/read-str data))}
+           value (if (= "blob" kind) (merge (json/read-str data) value) value)]
+       (cond-> {"entityId" entity "attribute" attr "value" value
                 "recordedAt" (number-field recorded) "validFrom" (number-field from)}
          (some? to) (assoc "validTo" (number-field to))
          entity-type (assoc "entityType" entity-type)
          tx (assoc "assertionTxId" tx)))))
 
-(def compiled-recorded-row
+(defmacro recorded-row-decoder []
   (walk/postwalk-replace {'lean-columns-code slim/row-columns-code} recorded-row-code))
-(defmacro recorded-row-decoder [] compiled-recorded-row)
 (def recorded-row (recorded-row-decoder))
 
-;; [DX-PREP1] Why: the reference and prepared writers stamp the same authoritative row and journal values.
-;; Rejected: a second encoder with different position, clock or retraction rules.
+;; [DX-PREP1] Why: the reference and the subject worker normalize the stored predecessor the same way.
+;; Rejected: independently rebuilding the journal change and risking different raw bytes.
+(def change-code
+  '(fn [change clock new-ids prior-rows]
+     (let [id (get change "tripleId")
+           prior (when (and (= "retract" (get change "op")) (not (new-ids id)))
+                   (when prior-rows (prior-rows id)))
+           lean-prior (contains? prior "value")]
+       (cond-> change
+         lean-prior (dissoc "validTo" "entityType" "assertionTxId")
+         lean-prior (merge prior)
+         (and prior (not lean-prior)) (merge (select-keys prior (keys change)))
+         (new-ids id) (assoc "recordedAt" clock)
+         (or lean-prior (contains? change "retractedAt")) (assoc "retractedAt" clock)))))
+(defmacro change-rewriter [] change-code)
+(def rewrite-change (change-rewriter))
+
+;; [DX-INT1] Why: reference and prepared saves use the same position and clock transformations.
+;; Rejected: separately maintaining the packed rows and authoritative predecessor metadata.
 (def stamp-code
   '(fn [server-clock clock new-id-set lower provisional final slim-row prior-rows]
      (let [delta (- final provisional)
@@ -65,25 +82,15 @@
            final-digits (digits final)
            shifted (fn [p] (if (< lower p (inc provisional)) (+ p delta) p))]
        (letfn [(assign-change [text clock new-ids prior-rows]
-                 (let [change (json/read-str text)
-                       id (get change "tripleId")
-                       prior (when (and (= "retract" (get change "op")) (not (new-ids id))) (prior-rows id))
-                       full (contains? prior "entityId")
-                       change (cond-> change
-                                full (dissoc "validTo" "entityType" "assertionTxId")
-                                full (merge prior)
-                                (and prior (not full)) (merge (select-keys prior (keys change)))
-                                (new-ids id) (assoc "recordedAt" clock)
-                                (or full (contains? change "retractedAt")) (assoc "retractedAt" clock))]
-                   (json/write-str change)))
+                 (json/write-str (rewrite-change-code (json/read-str text) clock new-ids prior-rows)))
                (assign-row [text offset clock new-ids prior-rows]
-                 (let [start (- offset 2) values (json/read-str (subs text start))
-                       attr (nth values 3) journal (= "_Transaction" (nth values 14))
-                       values (cond-> (assoc values 10 clock)
-                                (and journal (= attr ":_tx/instant")) (assoc 8 clock)
-                                (and journal (= attr ":_tx/change")) (assoc 9 (assign-change (nth values 9) clock new-ids prior-rows)))]
-                   (str (subs text 0 start) (json/write-str values))))
-               (replace-value [x]
+             (let [start (- offset 2) values (json/read-str (subs text start))
+                   attr (nth values 3) journal (= "_Transaction" (nth values 14))
+                   values (cond-> (assoc values 10 clock)
+                            (and journal (= attr ":_tx/instant")) (assoc 8 clock)
+                            (and journal (= attr ":_tx/change")) (assoc 9 (assign-change (nth values 9) clock new-ids prior-rows)))]
+               (str (subs text 0 start) (json/write-str values))))
+           (replace-value [x]
                  (cond
                    (and (instance? java.util.List x) (= :triplex/record-time (first x))) (if server-clock clock (second x))
                    (and (instance? java.util.List x) (= :triplex/change (first x))) (if server-clock (assign-change (second x) clock new-id-set prior-rows) (second x))
@@ -121,8 +128,9 @@
                    :else x))]
          replace-value))))
 
-(defmacro row-stamper []
-  (walk/postwalk-replace {'slim-row-code slim/encoder-code} stamp-code))
+(def compiled-stamp-code
+  (walk/postwalk-replace {'slim-row-code slim/encoder-code 'rewrite-change-code change-code} stamp-code))
+(defmacro row-stamper [] compiled-stamp-code)
 (def stamp (row-stamper))
 
 ;; [DX-B3-M2] Why: the serial point belongs in Datomic, after parallel client staging.
@@ -166,11 +174,11 @@
                    datom (read-at :w1/new-id (first (d/index-range (d/history db) :triplex.entity/row prefix nil)))]
                (when (and datom (.startsWith ^String (:v datom) prefix)) datom)))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
-     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row save-ledger timed-retractions packed-journal]} payload
+     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row save-ledger timed-retractions packed-journal import-predecessor]} payload
            operation-id (or (:triplex.tx/operation-id (first ops)) (some :triplex.tx/operation-id ops))
            command-ids (or (:command-ids payload) (keep :triplex.claim/command-id ops))
-           ;; [DX-WFIX1] Why: a durable retry may still name the assertion its first attempt retired.
-           ;; Rejected: returning a predecessor conflict before checking the serialized claims.
+           ;; [DX-WFIX1] Why: a committed retry can name a predecessor it already retired.
+           ;; Rejected: checking identities only at ingress (a queued request can hold a stale basis).
            _ (when (and operation-id (d/entid db [:triplex.tx/operation-id operation-id]))
                (throw (ex-info "TRIPLEX_OPERATION_DUPLICATE" {})))
            _ (when (some #(d/entid db [:triplex.claim/command-id %]) command-ids)
@@ -197,6 +205,10 @@
            has-packed (and (d/entid db :triplex.scope/packed-journals) (value scope :triplex.scope/packed-journals))
            ops (if merge-ledger
                  (save-ledger-code ops (first journal-entities) save-ledger) ops)
+           ;; [DX-HA1] Why: the previous durable claim must exist on the serial basis after any failure.
+           ;; Rejected: trusting enqueue order to prove that an earlier future actually committed.
+           _ (when (and import-predecessor (not (d/entid db [:triplex.claim/command-id import-predecessor])))
+               (throw (ex-info "TRIPLEX_IMPORT_PREDECESSOR" {})))
            _ (when (not= (boolean slim-row) (= 4 (value scope :triplex.scope/rows-version)))
                (throw (ex-info "TRIPLEX_SLIM_LAYOUT_MISMATCH" {})))
            _ (when (and strict-clocks (some #(or (not (number? %)) (not (Double/isFinite (double %)))) (concat times record-clocks)))
@@ -334,12 +346,12 @@
 (defn expand-code
   ([observe] (expand-code observe false false))
   ([observe optimized? measured?]
-   (let [expanded (walk/postwalk-replace {'slim-row-code slim/encoder-code 'history-range-code history-range-code
-                                          'stamp-rows (walk/postwalk-replace {'slim-row-code slim/encoder-code} stamp-code)
+   (let [expanded (walk/postwalk-replace {'stamp-rows compiled-stamp-code
+                                          'history-range-code history-range-code
                                           'save-ledger-code ledger/rewrite-code
                                           'packed-identity-code packed/identity-code
                                           'packed-encode-code packed/compiled-encode
-                                          'recorded-row-code compiled-recorded-row
+                                          'recorded-row-code (walk/postwalk-replace {'lean-columns-code slim/row-columns-code} recorded-row-code)
                                           'record-range-result observe} operation-code)
          op (if optimized? (list pred/normalization expanded) expanded)]
      (pred/expand (list 'read-at :w1/function op) optimized? measured?))))
