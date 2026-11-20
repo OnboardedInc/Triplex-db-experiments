@@ -7,7 +7,8 @@
             [datomic.log :as log]
             [datomic.measure.io-stats :as io]
             [datomic.transaction :as tx])
-  (:import [java.lang.management ManagementFactory ThreadMXBean]
+  (:import [datomic Datom]
+           [java.lang.management ManagementFactory ThreadMXBean]
            [java.util.concurrent ArrayBlockingQueue]
            [java.util.concurrent.atomic AtomicLong]))
 
@@ -42,12 +43,22 @@
                            (:triplex.tx/operation-id %)) ops)]
     (vswap! profile assoc :scope (get (into {} (:flags witness)) :triplex.scope/key)
             :operation operation :basis (d/basis-t snapshot) :mode (:profile witness)
-            :members (count (:members witness)))
+            :members (count (:members witness))
+            :witnessCounts {:flags (count (:flags witness))
+                            :members (mapv (fn [m] {:revisions (count (:entities m))
+                                                   :retirements (count (:retirements m))
+                                                   :history (count (:new-prefixes m))})
+                                           (:members witness))}
+            :validators (into {}
+                          (mapcat (fn [[attr key]]
+                                    (let [a (d/entid snapshot attr)]
+                                      (map-indexed (fn [i value] [[a value] [key i]]) (keep #(when (map? %) (get % attr)) ops)))))
+                          [[:triplex.claim/command-id :claim] [:triplex.tx/operation-id :operation]]))
     (let [start (System/nanoTime) tcpu (cpu)
           result (f #(portion! profile read? %1 %2 %3))
           cpu-ns (- (cpu) tcpu) end (System/nanoTime)]
       (vswap! profile assoc :start start :end end :cpuNs cpu-ns)
-      (when-not *profile* (retain! "PREP1_GUARD" @profile))
+      (when-not *profile* (retain! "PREP1_GUARD" (dissoc @profile :validators)))
       result)))
 
 (defn proc-stat [path]
@@ -66,7 +77,7 @@
     (.setDaemon true)
     (.start)))
 
-(when (= "profile" mode)
+(when (#{"profile" "cheap"} mode)
   ;; [DX-PREP1] Why: measure native uniqueness and its shared prefetch, including reads after the authored function returns.
   ;; Rejected: adding duplicate read traffic inside the guard as a proxy for uniqueness.
   (alter-var-root #'db/with-tx
@@ -74,15 +85,24 @@
       (fn [& args]
         (binding [*profile* (volatile! {:checks []})]
           (let [result (apply apply-tx args)]
-            (when (:mode @*profile*) (retain! "PREP1_GUARD" @*profile*))
+            (when (:mode @*profile*) (retain! "PREP1_GUARD" (dissoc @*profile* :validators)))
             result)))))
-  (doseq [[sym phase] [['unique-violator :unique] ['prefetch-redundancy+uniqueness :unique-prefetch]]]
-    (alter-var-root (ns-resolve 'datomic.db sym)
-      (fn [original]
-        (fn [& args]
-          (if-let [p (and *profile* (:mode @*profile*) *profile*)]
-            (portion! p (= "reads" (:mode @p)) phase nil #(apply original args))
-            (apply original args)))))))
+  (alter-var-root (ns-resolve 'datomic.db 'prefetch-redundancy+uniqueness)
+    (fn [original]
+      (fn [& args]
+        (if-let [p (and *profile* (:mode @*profile*) *profile*)]
+          (portion! p (= "reads" (:mode @p)) :unique-prefetch nil #(apply original args))
+          (apply original args)))))
+  (alter-var-root (ns-resolve 'datomic.db 'create-unique-value-validator)
+    (fn [factory]
+      (fn [snapshot]
+        (let [validate (factory snapshot)]
+          (if-not *profile*
+            validate
+            (fn [^Datom datom]
+              (if-let [[check member] (get (:validators @*profile*) [(.a datom) (.v datom)])]
+                (portion! *profile* (= "reads" (:mode @*profile*)) check member #(validate datom))
+                (validate datom)))))))))
 
 (alter-var-root #'log/append
   (fn [append]

@@ -58,11 +58,10 @@ def read(out):
             native[key] = (member, append)
 
     profile = {}
-    if mode == "profile":
-        for entry in events("PREP1_GUARD "):
-            key = entry["scope"], entry["operation"]
-            assert key not in profile
-            profile[key] = entry
+    for entry in events("PREP1_GUARD "):
+        key = entry["scope"], entry["operation"]
+        assert key not in profile
+        profile[key] = entry
 
     by_arm = defaultdict(list)
     for entry in events("PREP1_PROBE "):
@@ -70,7 +69,7 @@ def read(out):
     if mode == "profile":
         assert list(by_arm) == ["reference", "guard", "time", "reads"]
     else:
-        assert list(by_arm) == ["reference", "guard", "cheap", "cheap2"]
+        assert list(by_arm) == ["reference", "guard", "cheap", "cheap2", "reads"]
     results = {}
     for arm, observations in by_arm.items():
         assert [kind for kind, _ in observations] == ["seed", "block", "finished"]
@@ -122,6 +121,7 @@ def read(out):
                 sample["guardMs"] = ms(observed["end"] - observed["start"])
                 sample["guardCpuMs"] = ms(observed["cpuNs"])
                 sample["checks"] = observed["checks"]
+                sample["witnessCounts"] = observed.get("witnessCounts")
                 by_check = defaultdict(list)
                 for section in observed["checks"]:
                     assert section["start"] <= section["end"] <= applied_end
@@ -139,12 +139,23 @@ def read(out):
                                         "reads": reads})
             samples.append(sample)
         assert samples
+        if arm in ("time", "reads"):
+            assert any("guardMs" in sample for sample in samples)
+        if arm.startswith("cheap"):
+            assert any(s["path"] == "prepared" and s["guardMode"] == "basis" for s in samples)
+        paths = defaultdict(list)
+        for sample in samples:
+            paths[sample["guardMode"] if sample["path"] == "prepared" else "reference"].append(sample)
         results[arm] = {
             "groups": len(samples), "applyMs": distribution([s["applyMs"] for s in samples]),
             "appendMs": distribution([s["appendMs"] for s in samples]),
             "vmSomeAvg10": distribution([s["pressure"]["vmSomeAvg10"] for s in samples]),
             "vmSomeIntervalPercent": distribution([s["pressure"]["vmSomeIntervalPercent"] for s in samples]),
             "throttledUsec": distribution([s["pressure"]["throttled_usec"] for s in samples]),
+            "drainedSavesPerSecond": 96e9 / (int(block["end"]) - int(block["start"])),
+            "byPath": {str(k): {"groups": len(v), "applyMs": distribution([s["applyMs"] for s in v]),
+                                "vmSomeAvg10": distribution([s["pressure"]["vmSomeAvg10"] for s in v])}
+                       for k, v in paths.items()},
             "byCheck": {k: {"groups": len(v), "calls": median(s["count"] for s in v),
                             "wallMs": median(s["wallMs"] for s in v), "cpuMs": median(s["cpuMs"] for s in v),
                             "wallPerCallMs": median(s["wallMs"] / s["count"] for s in v),

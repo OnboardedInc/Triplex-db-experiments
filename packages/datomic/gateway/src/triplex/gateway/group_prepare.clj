@@ -8,6 +8,8 @@
 
 (def enabled (= "1" (System/getenv "TX2_PARALLEL_PREPARE")))
 (def guard-ident :triplex.group/apply-prepared-v1)
+(def basis-enabled (= "basis" (System/getenv "TX2_PREPARE_GUARD")))
+(def basis-ident :triplex.group/apply-v1)
 (def profile-mode (System/getenv "TX2_PREPARE_PROFILE"))
 (def profile-ident :triplex.group/profile-prepared-v1)
 (def guard-form
@@ -160,6 +162,7 @@
                 timed (set (:timed-retractions p))]
             (when (every? some? retirements)
               {:scope scope :flags signature :provisional provisional :operations ops
+               :basis (d/basis-t db) :owner [subject owner]
                :new-ids (set new-ids) :submitted-clock (reduce max (map double clocks))
                :id (:triplex.tx/id (first ops)) :operation (:triplex.tx/operation-id (first ops))
                ;; [DX-PREP1] Why: the exact stored row whose bytes the guard rechecks also owns the journal times.
@@ -175,14 +178,54 @@
   (let [threads (max 2 (min 4 (.availableProcessors (Runtime/getRuntime))))]
     (ThreadPoolExecutor. threads threads 0 TimeUnit/SECONDS (ArrayBlockingQueue. 256)
       (reify ThreadFactory (newThread [_ f] (doto (Thread. f "triplex-prepare") (.setDaemon true)))))))
-(defn schedule! [conn entry]
+(defn run-proof! [f]
   (let [result (promise)]
     (try
       (.execute executor (fn []
-                           (try (deliver result (draft (d/db conn) entry))
+                           (try (deliver result (f))
                                 (catch Exception _ (deliver result nil)))))
       result
       (catch RejectedExecutionException _ nil))))
+
+(defn schedule! [conn entry] (run-proof! #(draft (d/db conn) entry)))
+(defn await-proof [pending deadline]
+  (when pending
+    (deref pending (max 0 (quot (- deadline (System/nanoTime)) 1000000)) nil)))
+
+(defn empty-history-range? [historical prefixes]
+  ;; [DX-PREP1] Why: the exclusive successor of the highest ASCII prefix includes all its encoded row suffixes.
+  ;; Rejected: a bare upper ID or an assumed ordering for non-ASCII IDs (use exact per-ID seeks there).
+  (when (and (seq prefixes) (every? #(re-matches #"[ -~]+" %) prefixes))
+    (let [ordered (sort prefixes)
+          ^String high (last ordered)
+          end (str (subs high 0 (dec (.length high))) (char (inc (int (.charAt high (dec (.length high)))))))]
+      (nil? (first (d/index-range historical :triplex.entity/row (first ordered) end))))))
+(defn unused-prefix? [historical ^String prefix]
+  (let [old (first (d/index-range historical :triplex.entity/row prefix nil))]
+    (not (and old (.startsWith ^String (:v old) prefix)))))
+(defn certify [db entries drafts]
+  ;; [DX-PREP1] Why: a physical-basis guard carries all peer validation through one native comparison. A prior
+  ;; excision request can still change old index views asynchronously at this basis, so decline those scopes.
+  ;; Rejected: relying on a logical head or subject revisions to fence raw metadata, historical IDs or excision.
+  (let [historical (d/history db)]
+    (when-not (first (d/datoms historical :aevt :db/excise))
+      (let [basis (d/basis-t db)
+            deadline (+ (System/nanoTime) 100000000)
+            tasks (mapv (fn [entry original]
+                          (when-not (= basis (:basis original))
+                            (run-proof! #(draft db entry)))) entries drafts)
+            current (mapv (fn [original task]
+                            (if (= basis (:basis original)) original (await-proof task deadline)))
+                          drafts tasks)]
+        (when (every? some? current)
+          (let [per-member (mapv #(get-in % [:witness :new-prefixes]) current)
+                covered (empty-history-range? historical (mapcat identity per-member))]
+            (when (or covered
+                      (let [checks (mapv (fn [prefixes]
+                                           (run-proof! #(every? (partial unused-prefix? historical) prefixes)))
+                                         per-member)]
+                        (every? #(true? (await-proof % deadline)) checks)))
+              {:drafts current :basis basis :history (if covered :range :points)})))))))
 
 (defn assign-clock [prior submitted]
   (if prior (max submitted (+ (double prior) 1.0) (Math/nextUp (double prior))) submitted))
@@ -219,7 +262,18 @@
       (let [more (:keys entry)]
         (when-not (some keys more) (recur (into keys more) (next entries))))
       true)))
-(defn assemble [entries drafts starting-head]
+(defn resolved-owner [operations [subject eid]]
+  ;; [DX-PREP1] Why: the certified snapshot already resolved this existing owner and its stable EID.
+  ;; Rejected: another unique upsert and lookup on the writer, or replacing arbitrary string values.
+  (let [tempid (str "e:" subject)]
+    (into [] (keep (fn [op]
+                     (cond
+                       (and (map? op) (= tempid (:db/id op))) nil
+                       (and (vector? op) (= :db/add (first op)) (= tempid (second op))) (assoc op 1 eid)
+                       (and (vector? op) (= :triplex.group/touched (nth op 2 nil))
+                            (= tempid (nth op 3 nil))) (assoc op 3 eid)
+                       :else op))) operations)))
+(defn assemble [entries drafts starting-head & [certificate]]
   (let [[position clock] starting-head
         scope (:scope (first drafts)) signature (:flags (first drafts))]
     (when (and (<= (+ position (count drafts)) 9007199254740991)
@@ -229,10 +283,16 @@
           (let [positions (range (inc position) (+ position 1 (count drafts)))
                 members (concat (map #(str "prep1/m/" %) (range (dec (count drafts)))) ["datomic.tx"])
                 data (into [[:db/add "datomic.tx" :triplex.tx/max-recorded-at (last clocks)]]
-                           (mapcat render drafts members positions clocks))
+                           (mapcat (fn [draft member position clock]
+                                     (let [ops (render draft member position clock)]
+                                       (if certificate (resolved-owner ops (:owner draft)) ops)))
+                                   drafts members positions clocks))
                 witness {:scope scope :flags signature :head (head-witness starting-head)
                          :members (mapv :witness drafts)
                          :profile profile-mode}]
-            {:data [[(active-guard) witness data]]
+            {:data [(if certificate
+                      [basis-ident (:basis certificate) data]
+                      [(active-guard) witness data])]
+             :guard (if certificate :basis :full) :history (:history certificate)
              :results (mapv (fn [m p c] {:id (:id m) :position p :clock c}) drafts positions clocks)
              :next-head [(last positions) (last clocks) (:id (peek entries))]}))))))

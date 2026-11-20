@@ -31,7 +31,7 @@ def disk_floor():
 
 
 def main(out, mode="ortho", seconds="10"):
-    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap"):
+    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "recovery"):
         raise SystemExit("Unknown managed probe mode")
     out.mkdir()
     attempt = str(uuid.uuid4())
@@ -55,6 +55,10 @@ def main(out, mode="ortho", seconds="10"):
         (config / "seconds").write_text(seconds + "\n")
     shutil.copyfile(EXPERIMENT / "stack.sh", config / "entrypoint.sh")
     shutil.copyfile(EXPERIMENT / "observe.clj", config / "observe.clj")
+    if mode == "recovery":
+        for source in (EXPERIMENT / "gate.clj", EXPERIMENT / "recovery.clj",
+                       EXPERIMENT.parent / "wfix1/regression.clj"):
+            shutil.copyfile(source, config / source.name)
     recipe = config / "Dockerfile"
     recipe.write_text("FROM postgres:17-alpine AS prep_pg\nFROM node:22.23.2-bookworm-slim AS prep_node\n"
                       + recipe.read_text() + """
@@ -68,11 +72,12 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     esbuild = REPO / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
     metafile = out / "bundle.json"
     driver = "live.ts" if mode == "live" else "probe.ts"
-    subprocess.run([
-        esbuild, str(EXPERIMENT.relative_to(REPO) / driver), "--bundle", "--platform=node",
-        "--format=esm", "--banner:js=import {createRequire} from 'node:module'; const require=createRequire(import.meta.url);",
-        "--metafile=" + str(metafile), "--outfile=" + str(config / "probe.mjs"),
-    ], cwd=REPO, check=True)
+    if mode != "recovery":
+        subprocess.run([
+            esbuild, str(EXPERIMENT.relative_to(REPO) / driver), "--bundle", "--platform=node",
+            "--format=esm", "--banner:js=import {createRequire} from 'node:module'; const require=createRequire(import.meta.url);",
+            "--metafile=" + str(metafile), "--outfile=" + str(config / "probe.mjs"),
+        ], cwd=REPO, check=True)
 
     slots = stage / files[0]
     profile = json.loads(slots.read_text())
@@ -84,7 +89,10 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots),
                TX2_ENGINE_DIR=str(engine_dir))
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
-    source_paths.extend(REPO / p for p in json.loads(metafile.read_text())["inputs"])
+    if mode == "recovery":
+        source_paths.append(EXPERIMENT.parent / "wfix1/regression.clj")
+    else:
+        source_paths.extend(REPO / p for p in json.loads(metafile.read_text())["inputs"])
     inputs = {
         "attempt": attempt,
         "mode": mode,

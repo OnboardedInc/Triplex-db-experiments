@@ -261,19 +261,28 @@
               (unknown! batch e))
             (finish-group! batch results (:report physical) (count valid) stages (:received-ms physical))))))))
 
+(defn preparable? [batch]
+  (and prepared/enabled (< 1 (count batch)) (every? :eligible batch) (prepared/disjoint? batch)))
+(defn drafted [batch]
+  (mapv #(when-let [pending (:draft %)] (deref pending 0 nil)) batch))
 (defn ready-drafts [batch]
-  (when (and prepared/enabled (< 1 (count batch)) (every? :eligible batch) (prepared/disjoint? batch))
-    (let [drafts (mapv #(when-let [pending (:draft %)] (deref pending 0 nil)) batch)]
+  (when (preparable? batch)
+    (let [drafts (drafted batch)]
       (when (every? some? drafts) drafts))))
 (defn mark-prepared [batch stats]
   (if stage-clock (mapv #(assoc % :prepared-stats stats) batch) batch))
-(defn assemble [batch drafts head]
-  (try (when-let [plan (prepared/assemble batch drafts head)]
+(defn assemble [batch drafts head & [certificate]]
+  (try (when-let [plan (prepared/assemble batch drafts head certificate)]
          (assoc plan :rendered-ns (when stage-clock (str (System/nanoTime)))))
        (catch Exception _ nil)))
 (defn plan [conn batch]
-  (when-let [drafts (ready-drafts batch)]
-    (assemble batch drafts (prepared/head (d/db conn)))))
+  (if (and prepared/basis-enabled (preparable? batch))
+    (let [db (d/db conn)]
+      (try (when-let [certificate (prepared/certify db batch (drafted batch))]
+             (assemble batch (:drafts certificate) (prepared/head db) certificate))
+           (catch Exception _ nil)))
+    (when-let [drafts (ready-drafts batch)]
+      (assemble batch drafts (prepared/head (d/db conn))))))
 (defn start-prepared! [conn plan]
   (let [sent (when stage-clock (str (System/nanoTime)))]
     (merge plan {:submitted-ns sent}
@@ -285,6 +294,7 @@
                         (catch Exception e {:error e})))
         stats (when stage-clock
                 {:submittedNs (:submitted-ns plan) :renderedNs (:rendered-ns plan)
+                 :guard (:guard plan) :history (:history plan)
                  :afterOperation (:after-operation plan) :observedNs (str (System/nanoTime))})]
     (if-let [error (:error physical)]
       ;; [DX-PREP1] Why: re-evaluate at the authoritative cut after a definite rejection.
@@ -406,7 +416,9 @@
     (when launch
       (.execute executor (fn []
         (loop [batch launch]
-          (try (if (and prepared/enabled (not= :off prepare-window))
+          ;; [DX-PREP1] Why: the next certified batch must actually observe the first native append.
+          ;; Rejected: guessing the next physical basis for a second native submission.
+          (try (if (and prepared/enabled (not prepared/basis-enabled) (not= :off prepare-window))
                  (execute-window! conn lane batch)
                  (execute! conn batch))
                (catch Throwable t (doseq [e batch] (complete! e {:error t}))))

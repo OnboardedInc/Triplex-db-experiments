@@ -48,16 +48,17 @@ def managed_events(out):
     raw = out / terminal["log"]
     assert sha(raw) == terminal["sha256"]
     lines = raw.read_text().splitlines()
+    boots = 2 if inputs["mode"] == "recovery" else 1
     assert [line for line in lines if line.startswith("PREP1_SQL ")] == [
         f"PREP1_SQL {key} on" for key in ("fsync", "synchronous_commit", "full_page_writes")
-    ]
+    ] * boots
 
     def events(prefix):
         rows = [json.loads(line[len(prefix):]) for line in lines if line.startswith(prefix)]
         assert rows and all(r["attempt"] == attempt for r in rows)
         return rows
 
-    assert events("PREP1_NATIVE_END ") == [{"attempt": attempt, "dropped": 0}]
+    assert events("PREP1_NATIVE_END ") == [{"attempt": attempt, "dropped": 0}] * boots
     return inputs, terminal, events
 
 
