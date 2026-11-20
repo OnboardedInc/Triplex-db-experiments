@@ -138,7 +138,9 @@
                            (> (vswap! text + (.length value)) (* 16 1024 1024))
                            (>= (System/nanoTime) deadline)) (input-budget!)))
         all-rows (if point
-                   (concat (lean/rows name db {"history" true "entityIds" (:subjects point)} visit!)
+                   ;; [DX-W1] Why: the shared reader receives a vector of entity IDs, as it does on the wire.
+                   ;; Rejected: a hash set, which the pinned Clojure distinct implementation cannot destructure.
+                   (concat (lean/rows name db {"history" true "entityIds" (vec (:subjects point))} visit!)
                            (mapcat #(lean/rows name db {"history" true "id" %} visit!) (:ids point)))
                    (lean/rows name db {"history" true} visit!))
         rows (keep #(when (storage/visible? % p true) (storage/mask-retirement % p)) all-rows)
@@ -148,6 +150,4 @@
                             (visit! (:v x))
                             [[:triplex.entity/id (:v x)] :triplex.entity/id (:v x)])
                           (d/datoms db :aevt :triplex.entity/id)))]
-    ;; [DX-W1] Why: Datomic's negation plan indexes tuple sources by row position.
-    ;; Rejected: passing the deduplication set to d/query (basic joins pass, not-join can call nth on it).
-    (vec (into #{} (concat (mapcat facts rows) identities)))))
+    (into #{} (concat (mapcat facts rows) identities))))
