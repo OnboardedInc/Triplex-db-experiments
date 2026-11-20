@@ -185,3 +185,14 @@ test("the real collector port verifies more rows than its byte allowance can spo
     assert(Number(spill.diskBudget?.peakBytes) < 32_768);
   } finally { await spill.abort(); fs.rmSync(tmp, { recursive: true }); }
 });
+
+test("terminal observation bytes include the final raw chunk and checkpoint", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dx-rd1-raw-port-"));
+  const spill = new SpillThread(path.join(dir, "spill"), 2 * 1024 ** 2);
+  try {
+    spill.push(record(1, 10, 100));
+    const file = await spill.finish();
+    assert.equal(file.length, 1);
+    assert(Number(spill.diskBudget?.bytes) >= file.encodedBytes);
+  } finally { await spill.abort(); fs.rmSync(dir, { recursive: true }); }
+});

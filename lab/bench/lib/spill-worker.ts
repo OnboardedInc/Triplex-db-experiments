@@ -20,8 +20,8 @@ const changed = new Set<number>();
 let pendingSamples: any[] = [];
 let pendingSampleRecords: ReadRecord[] = [];
 let elu = performance.eventLoopUtilization();
-function reportProgress() {
-  if (!changed.size && !pendingSamples.length) return;
+function reportProgress(force = false) {
+  if (!force && !changed.size && !pendingSamples.length) return;
   const next = performance.eventLoopUtilization();
   const client = performance.eventLoopUtilization(next, elu);
   elu = next;
@@ -100,6 +100,6 @@ port!.on("message", async m => {
       port!.postMessage({ type: "reply", id: m.id, value });
     }
     if (m.type === "trace-close") { await tracing?.flushTracing(); port!.postMessage({ type: "reply", id: m.id }); }
-    if (m.type === "checkpoint") { records.checkpoint(); reportProgress(); port!.postMessage({ type: "reply", id: m.id }); }
+    if (m.type === "checkpoint") { records.checkpoint(); reportProgress(true); port!.postMessage({ type: "reply", id: m.id }); }
   } catch (error) { if (m.id) port!.postMessage({ type: "reply", id: m.id, error: String(error) }); else throw error; }
 });

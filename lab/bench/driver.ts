@@ -2259,7 +2259,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   report.expectedStateCache = { ...expectations.diagnostics, rolling: checked?.expectationCache };
   report.client = { series: {main:mainElu,readers:workerElu,collector:spillElu}, stressHeadroom,
     burstMainEluMean: mean(mainElu.filter(e => overlapsBurst((e.t - ctx.traceStart)/1000, (e.t - ctx.traceStart)/1000 + 0.001, report.trace.params)).map(e=>e.elu)),
-    peakProcessBytes: process.resourceUsage().maxRSS * 1024, saturatedPhases: saturated, invalid: saturated.length > 0 || stressHeadroom.some(p => !p.eligible), processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "Measured windows retain the 0.90 limit. Full stress windows require sampled sender, collector and active reader means at or below 0.70." };
+    peakProcessBytes: process.resourceUsage().maxRSS * 1024, saturatedPhases: saturated, invalid: saturated.length > 0 || stressHeadroom.some(p => !p.eligible), processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "Measured windows retain the 0.90 limit. Full stress windows require sampled sender, collector, feed consumer and active reader means at or below 0.70 for roles present in the run." };
   report.phases = ctx.phases.map((p) => ({ ...p, stats: strip(stats[p.name]) }));
   report.priorities = { P1: p1, P2: p2, P3: p3, P4: p4, P5: p5 };
   report.pooledPhases = Object.fromEntries(["L256", "L1024", "L256-legacy"].filter(n => stats[n]).map(n => [n, strip(stats[n])]));
