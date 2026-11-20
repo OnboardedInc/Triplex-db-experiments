@@ -17,6 +17,7 @@ class Connection extends Context.Service<Connection, DatomicClient>()(
 export function makeDatomicRuntime(options: {
   readonly url: string;
   readonly groupAccount?: string;
+  readonly writeClass?: import("./DatomicClient.js").DatomicWriteClass;
   readonly layout?: "lean" | "legacy";
   readonly entityCacheBytes?: number;
   readonly rowCacheBytes?: number;

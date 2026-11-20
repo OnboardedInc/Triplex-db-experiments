@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.group :as group] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:require [triplex.gateway.replay-capture :as replay-capture])
   (:import [java.util UUID]))
 
@@ -264,9 +264,9 @@
                                          clojure.lang.IBlockingDeref (deref [_ _ _] (throw e)))
                                        (throw e))))]
                    (swap! timeline assoc :submitted (System/nanoTime)) future))
-        submit (if-not group/enabled solo
-                 (fn [] (try (let [p (second (first data)) current (d/db conn) class (group/classify current p input)]
-                   (group/submit! conn (merge class {:id (get input "operationId") :params p :eligible (group/eligible? current p)
+        submit (if-not (group/scheduling?) solo
+                 (fn [] (try (let [p (second (first data)) current (d/db conn) work (when policy/priority? (policy/work p input)) class (group/classify current p input)]
+                   (group/submit! conn (merge class work {:id (get input "operationId") :params p :eligible (group/eligible? current p)
                      :prepare (fn [view] (tx-data view input (:scope p))) :solo solo})))
                    (catch Exception e (group/outcome-future (deliver (promise) {:error e}))))))]
     (if-let [client (get input "clientId")]
@@ -320,7 +320,7 @@
     (catch Exception e
       (replay-capture/discard! input)
       (let [text (str e)]
-        (when (or (#{"OutcomeUnknown" "WriteQueueFull" "InvalidValue"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (#{"OutcomeUnknown" "WriteQueueFull" "InvalidValue" "BulkFrameTooLarge"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))

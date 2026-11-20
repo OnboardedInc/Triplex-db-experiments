@@ -1,10 +1,12 @@
 (ns triplex.gateway.group
-  (:require [datomic.api :as d] [triplex.gateway.schema :as schema] [triplex.gateway.lean :as lean])
+  (:require [datomic.api :as d] [triplex.gateway.write-policy :as policy] [triplex.gateway.schema :as schema] [triplex.gateway.lean :as lean])
   (:import [java.util WeakHashMap] [java.util.concurrent Executors ThreadFactory]))
 
 ;; [DX-W1] Why: an idle scope dispatches immediately; only work accumulated behind an in-flight append can share its successor.
 ;; Rejected: a collection timer or an unbounded burst queue.
 (def enabled (= "1" (System/getenv "TX2_GROUP_COMMIT")))
+(defn grouping? [] (or enabled policy/field-only?))
+(defn scheduling? [] (or (grouping?) policy/priority?))
 (def queue-clock (= "1" (System/getenv "TX2_GROUP_QUEUE_CLOCK")))
 (def batch-limit 8)
 (def pending-limit 256)
@@ -22,7 +24,7 @@
 (def guard '(if (= expected (d/basis-t db)) ops (throw (ex-info "TRIPLEX_GROUP_STALE" {:triplex.group/stale true}))))
 (defn install! [conn db]
   (let [ops (concat
-              (when (and enabled (not (d/entid db :triplex.group/apply-v1)))
+              (when (and (grouping?) (not (d/entid db :triplex.group/apply-v1)))
                 (conj group-schema {:db/ident :triplex.group/apply-v1
                   :db/fn (d/function {:lang :clojure :params '[db expected ops] :requires '[[datomic.api :as d]] :code guard})}))
               (when (and queue-clock (not (d/entid db :triplex.diagnostic/queue-clock)))
@@ -61,6 +63,8 @@
     (when (and hint (seq business) (not= hint account))
       (throw (ex-info "Group account must match every business entity namespace" {:code "InvalidValue" :status 400})))
     {:account (or account :shared)
+     :subject (when (= 1 (count business)) (first business))
+     :scope-barrier (and policy/priority? (:scope-wide p) (some? (:source p)))
      :keys (set (concat (map #(vector :entity %) (concat owners (:entities p)))
                         (map #(vector :id %) (concat (:new-ids p) (:live p)))
                         [[:operation (get input "operationId")]]
@@ -172,32 +176,51 @@
                                                :group-wait-ns (- (:dispatch entry) (:arrived entry)))})
                     (complete! entry {:error (ex-info "Durable member receipt unavailable" {:status 503 :code "OutcomeUnknown"})})))))))))))
 
+(defn next-entry [{:keys [queue accounts rotation]}]
+  (let [ready (fn [owners rank]
+                (some (fn [account]
+                    (let [e (first (filter #(and (= account (:account %)) (or (nil? rank) (= rank (:rank %)))) queue))]
+                      (when (and e (every? realized? (:predecessors e))) e))) owners))]
+    (if policy/priority?
+      (or (ready (:live rotation) :live) (ready (:bulk rotation) :bulk))
+      (ready accounts nil))))
+(defn rotate [owners account more?]
+  (cond-> (filterv #(not= account %) owners) more? (conj account)))
+(defn join-turn [owners account]
+  (if (some #{account} owners) owners (conj (or owners []) account)))
 (defn choose [state]
   (loop [{:keys [queue accounts tails] :as state} state out []]
     (if (or (empty? queue) (= (count out) batch-limit)) [state out]
-      (let [candidate (some (fn [account]
-                       (let [entry (first (filter #(= account (:account %)) queue))]
-                         (when (and entry (every? realized? (:predecessors entry))) entry))) accounts)
-            _ (assert candidate "A pending scope must have an eligible oldest entry")]
-        (if (and (seq out) (not (:eligible candidate))) [state out]
-          (let [others (filterv #(not (identical? % candidate)) queue) a (:account candidate)
-                accounts (cond-> (filterv #(not= a %) accounts) (some #(= a (:account %)) others) (conj a))
-                tails (reduce (fn [m k] (if (identical? (:token candidate) (get m k)) (dissoc m k) m)) tails (:keys candidate))
-                s (assoc state :queue others :accounts accounts :tails tails)
-                selected (conj out (assoc candidate :dispatch (System/nanoTime)))]
-            (deliver (:token candidate) true)
-            (if (:eligible candidate) (recur s selected) [s selected])))))))
+      (let [entry (next-entry state) _ (assert entry "Oldest pending command must be eligible")
+            a (:account entry) rank (:rank entry)
+            solo (or (not (:eligible entry)) (and policy/priority? (or (= rank :bulk) (not (grouping?)))))]
+        (if (and (seq out)
+                 (or solo (and policy/field-only?
+                               (or (nil? (:subject entry)) (not= (:subject entry) (:subject (first out))))))) [state out]
+          (let [others (filterv #(not (identical? % entry)) queue)
+                same? #(= a (:account %))
+                remaining (reduce (fn [m k] (if (identical? (:token entry) (get m k)) (dissoc m k) m)) tails (:keys entry))
+                s (cond-> (assoc state :queue others :tails remaining :accounts (rotate accounts a (some same? others)))
+                    policy/priority? (update-in [:rotation rank] rotate a (some #(and (same? %) (= rank (:rank %))) others)))
+                taken (conj out (assoc entry :dispatch (System/nanoTime)))]
+            (deliver (:token entry) true)
+            (if solo [s taken] (recur s taken))))))))
 (defn submit! [conn entry]
-  (let [lane (lane-for conn) p (promise) token (promise)
+  (let [entry (merge {:rank :live} entry) lane (lane-for conn) p (promise) token (promise)
         launch (locking lane
                  (let [{:keys [active queue tails]} @lane]
-                   (when (or (>= (count queue) pending-limit) (>= (count (filter #(= (:account %) (:account entry)) queue)) 128))
+                   (when (or (>= (count queue) pending-limit)
+                             (and policy/priority? (= :bulk (:rank entry)) (>= (count (filter #(= :bulk (:rank %)) queue)) 64)) (>= (count (filter #(= (:account %) (:account entry)) queue)) 128))
                      (throw (ex-info "Account write queue full" {:status 429 :code "WriteQueueFull"})))
                    (let [e (assoc entry :result p :token token :arrived (System/nanoTime)
-                                        :predecessors (vec (keep tails (:keys entry))))]
+                                        :predecessors (vec (distinct (concat (keep tails (:keys entry))
+                                          (when (:scope-barrier entry) (map :token queue))
+                                          (when-let [b (:barrier @lane)] [b])))))]
                      (if active
                        (do (swap! lane (fn [s] (-> s (update :queue conj e)
-                         (update :accounts #(if (some #{(:account e)} %) % (conj % (:account e))))
+                         (update :accounts join-turn (:account e))
+                         (cond-> policy/priority? (update-in [:rotation (:rank e)] join-turn (:account e))
+                                 (:scope-barrier e) (assoc :barrier token))
                          (update :tails into (map #(vector % token) (:keys e)))))) nil)
                        (do (swap! lane assoc :active true) (deliver token true) [(assoc e :dispatch (System/nanoTime))])))))]
     (when launch
