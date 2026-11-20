@@ -2577,3 +2577,24 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   quiet account's matched windows; then build the decisive run (one verified full-size seed with the faster loader,
   open-loop cells at 35, 50, 235 and 394 saves per second, one database against two of five), predictions and cost
   written first.
+
+## 2026-11-20 02:38 UTC (21:38 local, 2026-11-19): retention analysis in; two standing rulings bear on tonight's findings
+
+- **W2-RETAIN (analyst; private folder `research/2026-11-20-wave2/RETAIN/`).** At 30 records per save the recent rate
+  fills one mixed database to ten billion in about 72 days; at 12 per save about 181 days; at 8 about 271. A smaller
+  save buys time; the durable bound is a count-based move or rollover (start preparing at seven billion, operate
+  below eight). Recommendation: reversible save packing and a stable account and position directory; production
+  design starts with one deep account per storage silo (the existing tiering ruling Q106f), test two deep accounts
+  per database as the largest first pooled comparison; older edits kept in sealed Datomic backups that can be read
+  without a running writer; protected values under per-person keys that can be destroyed. Eight one-line decisions
+  for Sam (ANALYSIS section 5). Most valuable probe: 10,000 identical field saves in the current and compact
+  formats, counting records and settled bytes.
+- **Standing rulings the orchestrator had not carried into tonight's briefs** (Sam, 2026-11-09): **Q106f** lane D tenancy
+  is tiered (R32: small tenants pooled per cell, each large tenant its own Datomic system); **Q107-S** option C on
+  every lane: per-change and per-changed-entity journal triples stay stored and queryable ("way 2"); a miss caused by
+  the journal's cost is reported as a miss with a TODO, not worked around. Sam's 2026-11-19 lean toward one database
+  ("That's my guess") is later than Q106f; tonight's evidence (write ceiling, quiet-account ratio, imports, record
+  count) agrees with Q106f. Both go to Sam as questions.
+- **Correction to DX-W1 part 5:** item 1 was assigned without Q107-S. Stopped and resumed: variant K keeps way 2 (the
+  only one eligible for an acceptance claim), variant P derives the journal facts on read (informational, off by
+  default), reported side by side.
