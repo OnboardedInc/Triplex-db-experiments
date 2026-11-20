@@ -19,3 +19,12 @@ Mac measurements are diagnostic.
 ## Replacement
 
 `lab/SCORECARD.md` now describes the Datomic release scorecard, and `lab/bin/scorecard.mjs` now starts its dated workload or prints its planning forecast. The old multi-engine scorecard remains accessible in Git history. Acceptance contract files and pins were left as supplied.
+
+## Verification and open dependencies
+
+- The two renderer regressions passed. Separate checks passed for the forecast, CLI help, TypeScript and shell syntax, clean-source acceptance, dirty source refusal and ignored image-input refusal.
+- The clean-clone Mac diagnostic is queued through the lab heavy runner. It requires the exclusive measurement lease and its own compact Datomic slot.
+- [Server handoff](SERVER.md) records the command revision and the USD 3.58–4.27 estimate for 197–235 minutes per age at the existing allocation rate.
+- The held SCALE1 decision image uses a different layout and operation identity scheme. INT1 needs compatible sealed fresh and 1B inputs. Aging in the measured Triplex scope changes the logical seed head and still needs a starting-state replay adapter. No physical runtime or budget result is claimed.
+- The two frozen windows consume 197 minutes of the allocation. Integrated P5/P6/P8 field work, the P7 census and P9 two-machine drill remain separate. The scorecard labels each gap and any unverified correctness gate.
+- The four conflicting branch trials were aborted after recording all conflicted paths. Their resolutions remain with the integration work.
