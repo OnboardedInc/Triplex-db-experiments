@@ -67,7 +67,7 @@
     (mapv output entries)))
 (defn with-scope [name parallel? packed? f]
   (with-redefs [prepared/enabled parallel? group/enabled true group/stage-clock true
-                group/reuse-prepared true small/enabled packed?
+                group/reuse-prepared true group/fast-reply packed? small/enabled packed?
                 main/uri-template (or (System/getenv "PREP1_URI") "datomic:mem://{db}")]
     (let [key (json/write-str ["triplex-scope-v1" "test" "prep1-gate" (str attempt "-" name) 0])
           db (:db (main/create-scope! nil key "lean" true true))

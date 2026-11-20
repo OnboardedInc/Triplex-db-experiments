@@ -1,5 +1,5 @@
 (ns triplex.gateway.group-cut
-  (:require [datomic.api :as d] [triplex.gateway.scope :as scope]))
+  (:require [datomic.api :as d] [triplex.gateway.scope :as scope] [triplex.gateway.save-ledger :as ledger]))
 ;; [DX-W1] Why: one physical t can contain multiple distinct strict clocks and positions.
 ;; Rejected: using the end of that physical transaction for a pull or feed page at its first receipt.
 (defn value [db e a] (:v (first (d/datoms db :eavt e a))))
@@ -9,7 +9,7 @@
           time-p (when boundary
                    (let [tx (:e boundary)
                          eligible (for [link (d/datoms db :eavt tx :triplex.group/members)
-                                        :let [e (:v link)] :when (<= (value db e :triplex.tx/recorded-at) r)]
+                                        :let [e (:v link)] :when (<= (ledger/clock db e) r)]
                                     (value db e :triplex.group/position))]
                      (if (seq eligible) (reduce max eligible)
                        (let [before (d/as-of db (dec (d/tx->t tx)))]
@@ -26,7 +26,7 @@
 (defn prefix-end [^String text] (+ 5 (Integer/parseInt text 1 5 16)))
 (defn entity-slice [{:keys [position before after members]} eid]
   (let [revision (reduce (fn [rev [m p]] (if (first (d/datoms after :eavt m :triplex.group/touched eid)) (max rev p) rev))
-                         (or (value before eid :triplex.entity/rev) 0) members)
+                         (or (value before eid :triplex.entity/rev) (ledger/implicit-position before eid) 0) members)
         retired (into #{} (keep (fn [x] (let [^String marker (:v x) i (prefix-end marker)]
                                          (when (<= (Long/parseLong marker i (+ i 16) 10) position) (subs marker 0 i)))))
                              (d/datoms after :eavt eid :triplex.entity/retired))

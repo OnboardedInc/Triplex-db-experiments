@@ -54,7 +54,7 @@
 (def flags [:triplex.scope/key :triplex.scope/schema-hash :triplex.scope/commit-fn-hash
             :triplex.scope/rows-version :triplex.scope/head-version :triplex.scope/feed-version
             :triplex.scope/feed-irregular :triplex.scope/strict-record-clocks
-            :triplex.scope/position-regular :triplex.scope/irregular])
+            :triplex.scope/position-regular :triplex.scope/irregular :triplex.scope/packed-journals])
 (defn scope-flags [db eid] (mapv #(vector % (scope/value db eid %)) flags))
 (defn head [db]
   (let [latest (scope/newest-commit db)
@@ -95,6 +95,7 @@
     (when (and subject (re-matches #"acct/[A-Za-z0-9_-]{1,64}/.+" subject)
                (:lean p) (not (:slim-row p)) (= 1 (:span p)) (:assign-record-time p)
                (not (:scope-wide p)) (not (:position-irregular p)) (not (:irregular p))
+               (not (:save-ledger p)) (not (:packed-journal p))
                (not (:identity-bounds p)) (<= (count ops) 256)
                (#{:triplex/commit (first (commit/variants [true false]))} ident) fn-tx
                (= 1 (count journal-entities)) (every? small-op? ops))
@@ -102,7 +103,8 @@
             by-flag (into {} signature)
             lookup #(d/entid db [:triplex.entity/id %])
             owner (lookup subject)
-            entity-ids (into #{subject} entities)
+            predicates (set entities)
+            entity-ids (conj predicates subject)
             revisions (mapv (fn [id] (let [eid (lookup id)]
                                        [id eid (when eid (scope/value db eid :triplex.entity/rev))])) entity-ids)
             maps (filter map? ops)
@@ -112,23 +114,32 @@
             asserted (filter #(and (vector? %) (= :triplex/assert (first %))) ops)
             clocks (concat times record-clocks)]
         (when (and (some? (:triplex.scope/key by-flag)) owner
+                   (= commit/source-hash (:triplex.scope/commit-fn-hash by-flag))
                    (= 3 (:triplex.scope/rows-version by-flag)) (= 2 (:triplex.scope/head-version by-flag))
                    (= true (:triplex.scope/strict-record-clocks by-flag)) (= true (:triplex.scope/position-regular by-flag))
                    (= 2 (:triplex.scope/feed-version by-flag)) (not (:triplex.scope/feed-irregular by-flag))
-                   (not (:triplex.scope/irregular by-flag))
+                   (not (:triplex.scope/irregular by-flag)) (not (:triplex.scope/packed-journals by-flag))
                    (= #{subject journal} upserts) (not (lookup journal))
                    (= 1 (count claims)) (= journal (:triplex.claim/tx-id (first claims)))
                    (= (count asserted) (count new-ids)) (= (set new-ids) (into #{} (map row-id) asserted))
                    (= (count retired) (count live)) (= (set live) (into #{} (map #(nth % 2)) retired))
                    (every? #(= subject (second %)) retired)
-                   (every? (fn [[id _ rev]] (or (nil? source) (not (contains? (set entities) id))
-                                                 (<= (or rev 0) source))) revisions)
+                   (every? (fn [[id eid rev]]
+                             (or (nil? source) (not (predicates id))
+                                 (and (or (nil? eid) (some? rev)) (<= (or rev 0) source)))) revisions)
                    (seq clocks) (every? #(and (number? %) (Double/isFinite (double %))) clocks))
-          (let [retirements (mapv #(retire db owner %) retired)]
+          (let [retirements (mapv #(retire db owner %) retired)
+                timed (set (:timed-retractions p))]
             (when (every? some? retirements)
               {:scope scope :flags signature :provisional provisional :operations ops
                :new-ids (set new-ids) :submitted-clock (reduce max (map double clocks))
                :id (:triplex.tx/id (first ops)) :operation (:triplex.tx/operation-id (first ops))
+               ;; [DX-PREP1] Why: the exact stored row whose bytes the guard rechecks also owns the journal times.
+               ;; Rejected: carrying a separate provisional predecessor clock.
+               :retirement-times (into {} (keep (fn [[_ prefix text]]
+                                                  (let [id (subs prefix 5)]
+                                                    (when (timed id) [id (commit/recorded-row text)]))))
+                                       retirements)
                :witness {:function [ident fn-tx] :entities revisions
                          :journal journal :retirements retirements :new-prefixes (mapv lean/prefix new-ids)}})))))))
 
@@ -147,9 +158,9 @@
 
 (defn assign-clock [prior submitted]
   (if prior (max submitted (+ (double prior) 1.0) (Math/nextUp (double prior))) submitted))
-(defn render [{:keys [id operations provisional new-ids witness]} member position clock]
+(defn render [{:keys [id operations provisional new-ids witness retirement-times]} member position clock]
   (let [physical "datomic.tx"
-        stamp (commit/stamp true clock new-ids (dec provisional) provisional position false)
+        stamp (commit/stamp true clock new-ids (dec provisional) provisional position false retirement-times)
         old (into {} (map (fn [[eid prefix text]] [prefix [eid text]]) (:retirements witness)))
         tx-metadata [[:db/add physical :triplex.group/members member]
                      [:db/add member :triplex.group/physical physical]
@@ -194,5 +205,5 @@
                 witness {:scope scope :flags signature :head (head-witness starting-head)
                          :members (mapv :witness drafts)}]
             {:data [[guard-ident witness data]]
-             :results (mapv (fn [p c] {:position p :clock c}) positions clocks)
+             :results (mapv (fn [m p c] {:id (:id m) :position p :clock c}) drafts positions clocks)
              :next-head [(last positions) (last clocks) (:id (peek entries))]}))))))

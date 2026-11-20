@@ -13,6 +13,7 @@ type Receipt = {
   recordedAt: { v: number };
   t: { v: string };
   groupSize?: number;
+  writerFunction?: string;
   preparedStats?: {
     path: string;
     replays: number;
@@ -133,6 +134,7 @@ async function phase(
           const result = (await c.transact(db, input)) as Receipt;
           const end = elapsed();
           assert.equal(result.operationId, s.id);
+          assert.match(result.writerFunction ?? "", /^:triplex\.write\/v-[0-9a-f]{24}$/);
           bySubject.set(s.subject, [
             ...input.rows.slice(0, s.width).map((r) => ({
               ...r,

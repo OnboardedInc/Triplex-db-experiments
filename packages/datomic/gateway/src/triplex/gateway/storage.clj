@@ -1,6 +1,7 @@
 (ns triplex.gateway.storage
   (:require [triplex.gateway.group :as group] [triplex.gateway.commit :as commit] [triplex.gateway.predecessor :as pred] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
-  (:require [clojure.data.json :as json] [triplex.gateway.replay-capture :as replay-capture] [triplex.gateway.small-row :as small-row])
+  (:require [triplex.gateway.replay-capture :as replay-capture] [triplex.gateway.small-row :as small-row]
+            [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed] [clojure.data.json :as json])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -99,17 +100,40 @@
            (when (:entity_type row) {:f/entity-type (:entity_type row)}) value)))
  ;; [EXP-DX1] Why: live row datoms are exact write-time wire values. Rejected: rebuilding values on every pull.
 (defn row-prefix [^String id] (str "2" (format "%04x" (.length id)) id))
+(defn ordered-row-texts [input]
+  ;; [DX-W1] Why: the frame order and encoded identity provide both index keys from one wire array.
+  ;; Rejected: inferring order from a JSON object or changing the meaning of an irregular SPI request.
+  (if (= "assertions-first-v1" (get input "rowOrder"))
+    (let [texts (get input "rowTexts") retired (get input "rows")]
+      (when-not (and (= "texts" (get input "rowMode")) (vector? texts) (vector? retired) (not (contains? input "newIds")))
+        (codec/invalid "Invalid ordered row frame"))
+      (let [ids (mapv (fn [^String text]
+                       (when-not (and (string? text) (> (.length text) 5) (.startsWith text "2"))
+                         (codec/invalid "Invalid ordered row text"))
+                       (let [end (+ 5 (Integer/parseInt text 1 5 16))]
+                         (subs text 5 end))) texts)
+            tail (mapv #(codec/decode-value (get % "id")) retired)]
+        (assoc input "newIds" ids "rowTexts" (zipmap ids texts) "rowOrder" (into ids tail))))
+    input))
 (defn row-datom [db eid ^String prefix]
   (let [datom (first (d/seek-datoms db :eavt eid :triplex.entity/row prefix))]
     (when (and datom (= eid (:e datom)) (= (d/entid db :triplex.entity/row) (:a datom))
                (.startsWith ^String (:v datom) prefix)) (:v datom))))
+(defn timed-retraction [row]
+  (when (and (= "_Transaction" (:entity_type row)) (= ":_tx/change" (:attribute row)))
+    (let [change (try (json/read-str (:value_json row)) (catch Exception _ nil))]
+      (when (and (= "retract" (get change "op"))
+                 (some #(contains? change %) ["recordedAt" "validFrom" "validTo"]))
+        (get change "tripleId")))))
  ;; [DX-B3-M2] Why: prepare all row encoding and fact maps off the transactor's serial point.
 ;; Rejected: resolving row retractions in the gateway (stale exact row text after another commit).
 (defn tx-data
   ([db input] (tx-data db input (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([db input scope]
-   (let [lean (lean? db) new-ids (set (get input "newIds")) rows (input-rows input lean new-ids)
+   (let [input (ordered-row-texts input)
+         lean (lean? db) new-ids (set (get input "newIds")) rows (input-rows input lean new-ids)
          fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
+         timed-rows (when (seq old) (into {} (keep (fn [r] (when-let [id (timed-retraction r)] [(:id r) id]))) fresh))
          source (when-some [p (get input "sourceK")] (safe-position p)) position (safe-position (get input "position"))
          span (safe-position (or (get input "span") (when source (- position source))))
          lower (- position span) claims (get input "claims") sample (or (first fresh) (first old))
@@ -117,6 +141,10 @@
          packed-rows (and small-row/enabled (= rows-version 3) (= span 1) (= 1 (count claims))
                           (not= false (get input "assignRecordTime")) (true? (value db scope :triplex.scope/strict-record-clocks))
                           (<= (count old) 3) (<= 1 (count (remove #(= "_Transaction" (:entity_type %)) fresh)) 3))
+         packed-journal-ids (when (and packed/enabled ledger/enabled packed-rows)
+                              (packed/identity-run (keep (fn [r] (when (and (= "_Transaction" (:entity_type r))
+                                                                           (#{":_tx/change" ":_tx/changed-entity"} (:attribute r))) (:id r))) fresh)))
+         packed-journal-set (set packed-journal-ids)
          metadata {:position position
                    :recorded-at (cond (seq fresh) (:recorded_at sample) (seq old) (:retracted_at sample)
                                       (seq claims) (get (first claims) "timestamp") :else (double (System/currentTimeMillis)))
@@ -181,7 +209,9 @@
                              (if (and (not lean) (> (.length ^String text) 8000))
                                [[:db/add (str "e:" (:entity_id row)) :triplex.entity/row-overflow true]]
                                 (let [offset (+ 44 (.length ^String (:id row)) (if (= "ref" (:value_type row)) (.length ^String (:value_string row)) 0))
-                                      plan (when packed-rows (small-row/prepare text offset (:recorded_position row) new-ids))]
+                                      plan (when (and packed-rows (not (contains? timed-rows (:id row)))
+                                                      (not (packed-journal-set (:id row))))
+                                             (small-row/prepare text offset (:recorded_position row) new-ids))]
                                   [[(if lean :triplex/assert :db/add) (str "e:" (:entity_id row)) :triplex.entity/row
                                    (if plan [:triplex/row (subs text 0 offset) (:recorded_position row) offset :row plan]
                                      [:triplex/row text (:recorded_position row) offset :row])]]))))) fresh)
@@ -220,7 +250,17 @@
                (map (fn [entity] {:db/id (str "e:" entity) :triplex.entity/id entity}) (distinct (map :entity_id old)))
                (map (fn [claim] {:db/id (str "c:" (get claim "commandId"))
                                 :triplex.claim/command-id (get claim "commandId") :triplex.claim/tx "datomic.tx"
-                                :triplex.claim/tx-id (get claim "txId")}) claims))))]
+                                :triplex.claim/tx-id (get claim "txId")}) claims))))
+         journals (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))
+         [claim] claims
+         command (get claim "commandId")
+         journal (:id metadata)
+         merge-ledger (and ledger/enabled (= rows-version 3) (= 1 span (count claims) (count journals))
+                           (= journal (first journals) (get claim "txId")) (string? command)
+                           (not irregular) (not-any? #(= journal (:entity_id %)) old)
+                           (not-any? #(and (= journal (:entity_id %)) (not= "_Transaction" (:entity_type %))) fresh)
+                           (some #(= [:db/add "datomic.tx" :triplex.tx/journals (str "e:" journal)] %) ops)
+                           (not-any? #(and (vector? %) (= :triplex.scope/feed-irregular (nth % 2 nil))) ops))]
      [[(commit/entry db input lean) (cond-> {:scope scope :source source :provisional position :span span
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
@@ -230,7 +270,10 @@
                        ;; Rejected: checking row timestamps only (a supported SPI commit can have no rows).
                        :record-clocks (vec (cons (:recorded-at metadata) (map #(get % "timestamp") claims)))
                        :replay-safe (true? (get input "replaySafe")) :irregular irregular :position-irregular irregular
-                       :journal-entities (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))}
+                       :journal-entities journals}
+                       merge-ledger (assoc :save-ledger command)
+                       (and merge-ledger (seq packed-journal-ids)) (assoc :packed-journal packed-journal-ids)
+                       (seq timed-rows) (assoc :timed-retractions (vec (distinct (vals timed-rows))))
                        (and lean (get input "historyIdentityBounds"))
                        (assoc :identity-bounds (get input "historyIdentityBounds")))]])))
 ;; [DX-B10] Why: only contiguous client sequences enter Datomic, even when HTTP arrivals reorder.
@@ -246,30 +289,6 @@
       ;; A stale speculative basis can reject an otherwise valid ordered commit.
       ;; Hints are optional; only the transactor may make the definitive decision.
       (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))))
-(defn correct-group-clocks [input clocks]
-  ;; [DX-PREP1] Why: a queued retraction may name an assertion whose final clock was first assigned inside this group.
-  ;; Rejected: publishing the caller's provisional assertion clock in the change journal.
-  (let [edits (into {}
-                (keep (fn [[id ^String text]]
-                        (let [offset (+ 5 (Integer/parseInt text 1 5 16) 36)
-                              width (Integer/parseInt text (- offset 4) offset 16)
-                              start (+ offset width 1)
-                              row (lean/decode text)]
-                          (when (= ":_tx/change" (:attribute row))
-                            (let [change (json/read-str (:value_json row))
-                                  observed (clocks (get change "tripleId"))]
-                              (when (and (= "retract" (get change "op")) (some? observed))
-                                (let [value (json/write-str (assoc change "recordedAt" observed))
-                                      cols (assoc (json/read-str (subs text start)) 9 value)]
-                                  [id {:value value :text (str (subs text 0 start) (json/write-str cols))}])))))))
-                (get input "rowTexts"))]
-    (if (empty? edits) input
-      (-> input
-          (update "rowTexts" into (map (fn [[id x]] [id (:text x)])) edits)
-          (update "rows" #(mapv (fn [row]
-                                  (if-let [e (edits (get (get row "id") "v"))]
-                                    (assoc row "value_json" (codec/encode-value "string" (:value e))) row)) %))))))
-
 (defn prepared-for [data input p]
   (let [journals (:journal-entities p)
         safe (and group/reuse-prepared (:lean p) (seq journals)
@@ -277,14 +296,11 @@
     ;; [DX-W1] Why: the incoming request already compiled the immutable rows. Only journal existence and scope layout can change that compilation.
     ;; Rejected: comparing speculative and real basis-t numbers, or reusing a stale journal link without its absence check.
     (fn [view]
-      (let [corrected (if (and (:lean p) (seq group/*same-group-clocks*))
-                        (correct-group-clocks input group/*same-group-clocks*) input)]
-        (if (and safe (identical? corrected input)
-                 (= (if (:slim-row p) 4 3) (value view (:scope p) :triplex.scope/rows-version))
-                 (= (ffirst data) (commit/entry view input (:lean p)))
-                 (not-any? #(d/entid view [:triplex.entity/id %]) journals))
-          data
-          (tx-data view corrected (:scope p)))))))
+      (if (and safe (= (if (:slim-row p) 4 3) (value view (:scope p) :triplex.scope/rows-version))
+               (= (ffirst data) (commit/entry view input (:lean p)))
+               (not-any? #(d/entid view [:triplex.entity/id %]) journals))
+        data
+        (tx-data view input (:scope p))))))
 (defn submit! [conn data input timeline]
   (let [hints (transaction-hints conn data timeline)
         solo (bound-fn []
@@ -313,8 +329,7 @@
         submit (if-not (group/scheduling?) solo
                  (fn [] (try (let [p (second (first data)) current (d/db conn) work (when (or policy/priority? policy/budget-us) (policy/work p input)) class (group/classify current p input)]
                    (group/submit! conn (merge class work {:id (get input "operationId") :params p :eligible (and (not (and pred/diagnostic (true? (get input "readProfile")))) (group/eligible? current p))
-                     :prepare (prepared-for data input p) :data data
-                     :original-data (when group/stage-clock data) :solo solo})))
+                     :prepare (prepared-for data input p) :data data :original-data (when group/stage-clock data) :solo solo})))
                    (catch Exception e (group/outcome-future (deliver (promise) {:error e}))))))]
     (if-let [client (get input "clientId")]
       (order/enqueue! client (get input "sendSequence") (get input "operationId") submit order/gap-ms order/buffer-limit [conn input])
@@ -354,7 +369,7 @@
       (trace/attribute! :transactionIoStats (:io-stats report))
       (trace/attribute! :peerStorageReadsStatus "not exposed: transaction io-stats describe transactor tx-with, not independent peer reads")
       (cond-> {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
-       :recordedAt (codec/encode-value "double" (or (get-in report [:member :clock]) (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.tx/recorded-at)))
+       :recordedAt (codec/encode-value "double" (or (get-in report [:member :clock]) (ledger/clock (:db-after report) (d/t->tx (d/basis-t (:db-after report))))))
        :transactMicros transact-micros
        :timeline (into {} (map (fn [[k v]] [k (/ (- v parsed) 1000.0)])
                               (assoc @timeline :completed completed :responsePrepared (System/nanoTime))))
@@ -364,7 +379,7 @@
        :datoms (count (:tx-data report))}
         (and pred/diagnostic (true? (get input "readProfile"))) (assoc :readProfile (:io-stats report))
         group/stage-clock (assoc :nativeComputeMs (get-in report [:io-stats :api-ms]) :groupStages (:group-stages report)
-                                 :preparedStats (:prepared-stats report))
+                                 :preparedStats (:prepared-stats report) :writerFunction (str (ffirst data)))
         stamp (assoc :requestBytes (policy/request-size input) :preparedOps (count (:ops (second (first data)))) :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
     (catch Exception e
@@ -553,7 +568,7 @@
     (try
       (merge snapshot
         {:t (codec/encode-value "long" (d/basis-t db))
-         :claim (when command (when-let [eid (d/entid db [:triplex.claim/command-id command])] (value db eid :triplex.claim/tx-id)))
+         :claim (when command (when-let [eid (d/entid db [:triplex.claim/command-id command])] (ledger/claim-tx-id db eid)))
          :rows (if (lean/enabled? db)
                  (vec (mapcat #(:rows (read-rows name db {"id" %})) ids))
                  (mapv wire-row

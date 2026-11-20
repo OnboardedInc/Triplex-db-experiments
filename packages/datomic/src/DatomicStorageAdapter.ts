@@ -188,13 +188,14 @@ export const makeDatomicStorageAdapter = (
         options.indexedJournalReads !== false &&
         !state &&
         !history &&
-        basis === undefined &&
+        (basis === undefined || client.supportsJournalCuts(db)) &&
         pattern.entityType === "_Transaction" &&
         pattern.entityId
       ) {
         const direct = yield* read(() =>
           client.request<{ declined?: string; rows: string[] }>("POST", `/v2/db/${db}/journal`, {
             txId: pattern.entityId,
+            ...(basis === undefined ? {} : { basis }),
           }),
         );
         if (!direct.declined)
@@ -330,7 +331,7 @@ export const makeDatomicStorageAdapter = (
           // [DX-T1-5] Why: server-assigned strict clocks eliminate timestamp tickets and client-wide send head-of-line waits.
           // Rejected: queueing strict writes by a provisional client timestamp after the transactor owns record time.
           const readyAt = performance.now();
-          const submit = (sendSequence?: number, sent?: () => void) => {
+          const submit = (sendSequence?: number, sent?: (published?: boolean) => void) => {
             if (state.serverRecordTime) client.commitDiagnostics.serverAssignedSubmissions++;
             else {
               client.commitDiagnostics.clientOrderedSubmissions++;
@@ -859,6 +860,23 @@ export const makeDatomicStorageAdapter = (
           if (result.txId !== null && typeof result.txId !== "string")
             throw new TypeError("Invalid command lookup");
           return result.txId;
+        });
+      }),
+    getTransactionPositionsByEntity: (entityId, limit, basis, beforePosition) =>
+      Effect.gen(function* () {
+        if ((yield* current) || !client.supportsJournalCuts(db)) return undefined;
+        return yield* read(async () => {
+          const result = await client.request<{
+            declined?: string;
+            positions: [string, number][];
+          }>("POST", `/v2/db/${db}/entity-transactions`, {
+            entityId,
+            limit,
+            basis,
+            ...(beforePosition === undefined ? {} : { beforePosition }),
+          });
+          if (result.declined) return undefined;
+          return result.positions.map(([transactionId, position]) => ({ transactionId, position }));
         });
       }),
     getReachRows: (root, basis) =>

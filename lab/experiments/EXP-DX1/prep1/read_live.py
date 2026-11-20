@@ -93,6 +93,7 @@ if __name__ == "__main__":
     if not __debug__:
         raise SystemExit("Verification requires enabled assertions")
     directory = Path(sys.argv[1])
+    result = read_live(directory)
     with (directory / "live-summary.json").open("x") as stream:
-        json.dump(read_live(directory), stream, indent=2)
+        json.dump(result, stream, indent=2)
         stream.write("\n")
