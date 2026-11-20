@@ -129,6 +129,8 @@ export interface StackOptions {
   cachedImage?: string;
 }
 
+class ContainerExited extends Error {}
+
 async function waitFor<T>(
   poll: () => Promise<T | undefined>,
   message: string,
@@ -142,6 +144,7 @@ async function waitFor<T>(
       const ready = await poll();
       if (ready !== undefined) return ready;
     } catch (error) {
+      if (error instanceof ContainerExited) throw error;
       recent = error instanceof Error ? error.message : String(error);
     }
     await delay(750, undefined, { signal });
@@ -257,24 +260,38 @@ export class Stack {
       await rm(local);
     }
     const localConfig = join(directory, "sql.properties");
+    const template = join(directory, "sql-template.properties");
+    await docker([
+      "cp",
+      extract + ":/opt/datomic/config/samples/sql-transactor-template.properties",
+      template,
+    ]);
     const sqlUrl = `jdbc:postgresql://${pg}:5432/datomic`;
+    const settings = new Map(
+      Object.entries({
+        protocol: "sql",
+        host: tx,
+        "alt-host": tx,
+        "sql-url": sqlUrl,
+        "sql-user": "datomic",
+        "sql-password": secret,
+        "memory-index-threshold": "8m",
+        "memory-index-max": "32m",
+        "object-cache-max": "64m",
+        "encrypt-channel": "true",
+      }),
+    );
+    // [DX-PLAY1] Why: keep the vendor's SQL driver, port and required settings as in the lab
+    // launcher. Rejected: reconstructing a minimal properties file with incomplete defaults.
+    const defaults = (await readFile(template, "utf8"))
+      .split(/\r?\n/)
+      .filter((line) => !settings.has(line.split("=")[0]!.trim()));
     await writeFile(
       localConfig,
-      [
-        "protocol=sql",
-        `host=${tx}`,
-        `alt-host=${tx}`,
-        `sql-url=${sqlUrl}`,
-        "sql-user=datomic",
-        `sql-password=${secret}`,
-        "memory-index-threshold=8m",
-        "memory-index-max=32m",
-        "object-cache-max=64m",
-        "encrypt-channel=true",
-        "",
-      ].join("\n"),
+      [...defaults, ...[...settings].map(([k, v]) => k + "=" + v), ""].join("\n"),
       { mode: 0o600 },
     );
+    await rm(template);
     await docker(["rm", "-v", extract]);
     const mount = (a: string, b: string, ro = false) => [
       "--mount",
@@ -304,8 +321,18 @@ export class Stack {
     await docker(["cp", localConfig, `${tx}:/tmp/sql.properties`]);
     await rm(localConfig);
     await docker(["start", tx]);
+    const checkAlive = async (name: string) => {
+      const status = await docker(["inspect", "--format", "{{.State.Status}}", name]);
+      if (status === "exited" || status === "dead") {
+        const raw = await docker(["logs", "--tail", "40", name]).catch(() => "");
+        throw new ContainerExited(
+          name + " exited" + (raw ? ": " + raw.replaceAll(secret, "[redacted]") : ""),
+        );
+      }
+    };
     await waitFor(
       async () => {
+        await checkAlive(tx);
         await docker(["exec", tx, "bash", "-c", `(exec 3<>/dev/tcp/${tx}/4334) 2>/dev/null`]);
         return true;
       },
@@ -392,6 +419,7 @@ export class Stack {
       urls[role] = "http://" + address;
       await waitFor(
         async () => {
+          await checkAlive(name);
           const res = await fetch(urls[role] + "/health", { signal: AbortSignal.timeout(1500) });
           if (!res.ok) return;
           const body = (await res.json()) as { datomicVersion: string; gatewaySourceHash: string };
