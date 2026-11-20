@@ -167,9 +167,13 @@
                (when (and timed (timed id))
                  (let [negative (into #{} (map :v) (d/datoms db :eavt e :f/negative-zero))
                        number (fn [field v] (if (negative field) -0.0 v))]
+                   ;; [DX-W1] Why: classic facts can omit :f/asserted-in and store the clock on the transaction of :f/id.
+                   ;; Rejected: substituting the retraction clock or retaining a null assertion clock in the journal.
                    (vswap! prior-rows assoc id
                      {"recordedAt" (number :recorded_at (or (value e :f/recorded-at)
-                                                           (value (value e :f/asserted-in) :triplex.tx/recorded-at)))
+                                                           (value (or (value e :f/asserted-in)
+                                                                      (:tx (first (d/datoms db :eavt e :f/id))))
+                                                                  :triplex.tx/recorded-at)))
                       "validFrom" (number :valid_from (value e :f/valid-from))
                       "validTo" (number :valid_to (value e :f/valid-to))}))))
              (conflict))))

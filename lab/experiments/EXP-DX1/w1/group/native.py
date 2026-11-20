@@ -20,7 +20,7 @@ prefix, count, checks = {
     "budget": ("W1_BUDGET ", 1, 9),
     "prepared": ("W1_PREPARED ", 1, 266),
     "packed-group": ("W1_PACKED_GROUP ", 1, 17),
-    "query6": ("W1_QUERY6 ", 2, 34),
+    "query6": ("W1_QUERY6 ", 2, 36),
 }[gate_name]
 output.mkdir()
 source=Path("packages/datomic/gateway/src").resolve()

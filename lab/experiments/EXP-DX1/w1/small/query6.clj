@@ -104,10 +104,14 @@
                        (native name (pattern ":_tx/change") "?id ?value" earlier {"handle" held})
                        (native name (str "[?f :f/id ?id] [?f :f/subject _] (not-join [?f] [?f :f/live _])") "?id" edit-world)
                        (native name disjunction "?id ?value" edit-world)]
-              result (mapv answer queries)]
+              result (mapv answer queries)
+              retired (some (fn [[[_ id] [_ text]]] (when (= "edit/change-1" id) (json/read-str text))) (nth result 2))]
           (is (= [3 2 2 2 1 1 1 2] (mapv count result)))
           (is (= [[ ["string" "later"] ["string" "later"] ]] (vec (nth result 4))))
           (is (= (nth result 2) (peek result)))
+          (is (= {"op" "retract" "tripleId" "early" "entityId" gt/root "attribute" ":v"
+                  "value" {"type" "string" "value" "early"} "recordedAt" 1000.0 "validFrom" 0.0
+                  "assertionTxId" "_tx/seed" "retractedAt" 1001.0 "retractionTxId" "_tx/edit"} retired))
           (storage/release! name held)
           {:queries result :feed feed :match [(match ":_tx/change" edit-world) (match ":_tx/changed-entity" earlier)]}))
       (finally (gateway/delete-scope! nil scope)))))
