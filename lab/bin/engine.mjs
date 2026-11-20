@@ -135,7 +135,8 @@ async function buildDatomic(config, opts) {
   if (isolated) {
     if (opts.holder !== 'DX-JVM1' || fs.existsSync(isolated))
       fail('REFUSED', 'An isolated JVM build requires the assigned holder and a fresh receipt path');
-    assertMeasureAdmission(opts.holder);
+    // [DX-JVM1] Why: this image build reserves no engine slot and finishes under its ordinary heavy token.
+    // Rejected: checking slot admission again after the build has a token (races a pending lease drain).
   } else if (runtime.major !== '21') {
     fail('REFUSED', 'Build the alternate JRE with --variant-receipt and a private tag');
   }
