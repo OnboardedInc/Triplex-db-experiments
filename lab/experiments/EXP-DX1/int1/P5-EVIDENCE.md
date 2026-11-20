@@ -31,6 +31,8 @@ Server peaks supplied in the brief were 2.55 GiB for one deep account and 4.67 G
 | RD1 `5f51de7d6` | `42a1c74fe` | No conflict. The fallback code was already merged. This adds the exact handoff and its evidence. |
 | ACT2 `a52f7937c` | `08fb93d9a` | Passed owed Publish priority and observation arguments through the existing erasure sequence and preserved the staged sequence check. |
 | TAIL1 `d6ebbc26e` | Explicit collector option | Carried the launcher and tested JVM settings. The reconciled writer keeps its existing receipt cache and row codec. |
+| ERASE1 guarded Reach `7409a2a03` | `a08f20103` | Retained RD1's historical handlers and verified each guarded reference against the exact position, native cut and erasure sequence. |
+| W1 recorded audit `c45158405` | Recorded-only journal option | The merge applied cleanly. The optional index selects and hydrates at the recorded cut and declines guarded scopes. |
 
 The staged activation, prepared writer and reader carryovers ran 27 tests with 54,079 successful native assertions each at `162da837e`, `99e97df19` and `fbc9a5c46`. The reconciled writer, erasure and Publish merges each ran the same 27 tests with zero failures or errors at `b2880b5e2`, `4367a1ac0` and `08fb93d9a`. Every tested merge is published. The exact `42a1c74fe` reader handoff changed only documentation and shares the preceding native gate. The reused staged activation image has the same source and build inputs. The campaign package sources at `b91234c6a` built Core and the Datomic SDK. Core ran 861 checks and the Datomic suite ran 426 with 52 opt-in cases skipped. Six plan and profile tests, 12 retention tests, 14 focused merge tests and the pooled TypeScript check also ran locally. [Checksums](P5-SHA256SUMS)
 

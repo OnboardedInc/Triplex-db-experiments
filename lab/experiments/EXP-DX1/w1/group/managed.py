@@ -86,7 +86,10 @@ for action in ["build","selftest"]:
             print(action, "complete", flush=True)
             break
         err = logfile.read_text(errors="replace")
-        if action == "selftest" and any(msg in err for msg in ["pool refuses selftest","selftest already owned/running","measurement lease","active measurement"]):
+        # [DX-W1] Why: preserve the first actual engine failure after a queued wait.
+        # Rejected: retrying a test failure because an earlier line mentions a measurement lease.
+        final = err.strip().splitlines()[-1] if err.strip() else ""
+        if action == "selftest" and final.startswith("[lab] REFUSED:") and any(msg in final for msg in ["pool refuses selftest","selftest already owned/running","measurement lease","active measurement"]):
             if "disk:" in err and args.field == "growth": scratch = 3 if scratch == 8 else 1
             time.sleep(15)
             continue

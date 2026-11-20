@@ -93,6 +93,7 @@ export const excluded = {
   parallelPreparation:
     "Exact-basis parity covers its own tape. The joined run also needs the reader and feed schedules verified with it.",
   savedJournalLayouts: "The retained and packed journals need a combined history and feed check.",
+  recordedAuditJournal: "The recorded-only audit option has a separate query contract and declines guarded scopes. The campaign exercises the current journal and pinned world reads.",
   orderedSaveWire: "The matched arm uses the existing compact wire with explicit row identities.",
   fieldCoalesce:
     "A queued replacement must preserve the intermediate row and its native assertion clock.",
