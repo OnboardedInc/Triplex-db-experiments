@@ -3576,3 +3576,15 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
   into scheduled indexing, measured). Two modified files remain uncommitted in its worktree. It is not
   run-critical, so under Sam's weekend rule it stays stopped; logged in `NEXT-WEEK.md` item 13 with the note to
   use a fresh session. Eleven agents running.
+
+## 2026-11-20 21:26 UTC (16:26 local, 2026-11-20): DX-ACT1 part 8 in; Publish priority is on the one branch; parked
+
+- **DX-ACT1 part 8 (`9ae32c676`; merged on `exp/DX-INT1` at `0196b9952`; server candidate `acc0f5c39`;
+  `actv-lazy/REPORT.md`, `SERVER.md`).** A new release now passes waiting saves in its own account (the active
+  save finishes first), which is the fix for the 2.020 s wait behind 50 saves measured at 23.5 saves per second.
+  Native role and save-order checks pass; a 64-reader trace prefix matched 53,886 reads; at 25,000 thin people
+  Publish wrote four changes and visited no subjects; while values are written in the background a reader computes
+  the same answer from the release and its recorded cut (recovery gate compared both). Mac diagnostic at 10,000
+  deep people and 3.5 saves per second: values written after 216 s, individual notices after 254 s. Open: deep
+  settlement at 23.5 saves per second, interference trace, memory bar, pooled Publish at both scorecard ages,
+  protected inputs in notices. Not run-critical beyond the pinned candidate: parked. Ten agents running.

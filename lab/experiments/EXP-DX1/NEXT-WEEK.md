@@ -42,7 +42,10 @@ defined in `lab/V0.1.md` on main.
     `exp/DX-INT1`, the server arms. Start it in a fresh session with a summary, not a resume: the filter has now
     ended the same session twice. Original list: durable home for the erasure sequence and keys (survives losing a gateway host), a protected save
     within 0.3 ms of a plain one, cleanup neighbours do not feel, protected values as references in layout K.
-14. **Publish:** thirty or more Publishes per rate under load with Publish priority on a server; background writing
+14. **Publish (DX-ACT1 finished part 8 at `9ae32c676` on 2026-11-20 and is parked; code on `exp/DX-INT1` at
+    `0196b9952`; server candidate `acc0f5c39`).** Left open by it: the deep settlement run at 23.5 saves per second
+    (hit its Mac cap before either end was verified), the full interference trace, the resident-memory bar, pooled
+    Publish at both scorecard ages, and whether notices keep protected inputs. Original list: thirty or more Publishes per rate under load with Publish priority on a server; background writing
     time and the notification sending rate reported; bars for both are Sam's to set later; same-database
     settlement price (the existing producer put the live neighbour in a different database).
 15. **Aged reads:** the isolated installer held 100 and 98 percent on a server with two reused old cuts; repeat with
