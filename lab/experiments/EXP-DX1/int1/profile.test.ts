@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { deepShape } from "../../../bench/lib/deep-world.ts";
 import { activePerson } from "./cohort.ts";
-import { parseHistogram } from "./gateway-profile.ts";
+import { nativePools, parseHistogram } from "./gateway-profile.ts";
 import { mappedReaderPages } from "./reader.ts";
 
 test("resident page attribution counts every mapping once without retaining its name", () => {
@@ -39,4 +39,18 @@ test("a live histogram requires every ordinal and both totals", () => {
     raw.replace("Total", "Partial"),
   ])
     assert.throws(() => parseHistogram(bad));
+});
+
+test("native tracking binds its pool counters to the sampled JVM", () => {
+  const raw = [
+    "9:",
+    "Total: reserved=2048KB, committed=768KB",
+    "- Java Heap (reserved=1024KB, committed=512KB)",
+    "- GC (reserved=128KB, committed=96KB)",
+    "- Thread (reserved=128KB, committed=80KB)",
+    "- Metaspace (reserved=128KB, committed=64KB)",
+  ].join("\n");
+  assert.equal(nativePools(raw, 9).pools["Java Heap"]?.committed, 512 * 1024);
+  assert.throws(() => nativePools(raw, 10));
+  assert.throws(() => nativePools(raw.replace("GC (", "missing ("), 9));
 });

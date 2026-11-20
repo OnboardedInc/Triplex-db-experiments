@@ -164,6 +164,11 @@ function setup(compact: boolean) {
   const rowWire = process.env.DX_INT1_ROW_WIRE ?? "plain";
   const memoryPoints = process.env.DX_INT1_MEMORY_POINTS;
   const memory = memoryPlan(memoryPoints, mode ?? "", Number(rung));
+  const nativePools = process.env.DX_INT1_NATIVE_POOLS === "1";
+  if (nativePools) {
+    assert(memory && !memory.scopes && mode === "int1-deep");
+    assert(fs.existsSync(path.join(imageFolder, "diagnostic-jdk.tar.gz")));
+  }
   if (memory) assert(compact && gwPolicy === "demand" && readMode === "validated");
   assert(rowWire === "plain" || (rowWire === "gzip" && readMode === "validated"));
   assert(["immediate","after-sampling"].includes(seedFeed));
@@ -180,14 +185,16 @@ function setup(compact: boolean) {
           "-Xms64m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps")
         : (compact ? "-Xms128m -Xmx600m" : "-Xms160m -Xmx896m") + " -Ddatomic.objectCacheMax=192m") +
       (compact ? " -Ddxthin.compact=yes" : "") + (memory ? " -Ddxthin.memory=yes" : "") +
-      (mode === "int1-campaign-proof" ? " -Ddxthin.campaign=yes" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
+      (mode === "int1-campaign-proof" ? " -Ddxthin.campaign=yes" : "") +
+      (nativePools ? " -Ddxthin.nativePools=yes -XX:NativeMemoryTracking=summary" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
       " -Ddxthin.secret=" +
       secret +
       " -Ddxthin.role=" +
       role;
     settings.transactorOpts =
-      (compact ? "-Xms192m -Xmx840m" : "-Xms256m -Xmx1170m") + " -XX:+ExitOnOutOfMemoryError";
+      (compact ? "-Xms192m -Xmx840m" : "-Xms256m -Xmx1170m") + " -XX:+ExitOnOutOfMemoryError" +
+      (nativePools ? " -XX:NativeMemoryTracking=summary" : "");
     if (role === "read") settings.memBytes = Math.min(settings.memBytes, 1536 * 1024 ** 2);
   }
   write(file, cfg);
@@ -196,7 +203,7 @@ function setup(compact: boolean) {
   write(cred, {
     nonce, secret, slots, compact, census, cohort,
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
-    memoryPoints,
+    memoryPoints, nativePools,
     readerPages: process.env.DX_INT1_READER_PAGES === "1",
     isolatedVolume: compact,
   });
@@ -267,6 +274,7 @@ function bind() {
       seedFeed: attempt.seedFeed,
       rowWire: attempt.rowWire,
       memoryPoints: attempt.memoryPoints,
+      nativePools: attempt.nativePools,
       readerPages: attempt.readerPages,
       peers,
       cacheDiagnostic: fs.existsSync(path.join(imageFolder, "diagnostic-jdk.tar.gz")),
@@ -298,6 +306,7 @@ if (action === "--guest") {
     DX_INT1_ROW_WIRE: stack.managed.rowWire ?? "plain",
     DX_INT1_READER_PAGES: stack.managed.readerPages ? "1" : "0",
     ...(stack.managed.memoryPoints ? { DX_INT1_MEMORY_POINTS: stack.managed.memoryPoints } : {}),
+    DX_INT1_NATIVE_POOLS: stack.managed.nativePools ? "1" : "0",
     TRIPLEX_DATOMIC_FAST_PATHS: [...(process.env.TRIPLEX_DATOMIC_FAST_PATHS ?? "").split(",").filter(x => x && x !== "demand-gzip"), ...(stack.managed.rowWire === "gzip" ? ["demand-gzip"] : [])].join(","),
   });
   if (stack.managed.compact) {
