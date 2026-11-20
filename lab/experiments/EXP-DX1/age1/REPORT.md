@@ -1,13 +1,13 @@
-Keep `2859d6b15` for the queued aging run. The exporter has moved to `9ccb08626`.
-Take `9ccb08626` for the INT1 merge candidate. The last Mac checks are running.
-The Mac check on the server revision adopted a small copy and matched all 120 saves.
+Keep `2859d6b15` for queued aging. Use `4850fb83a` for the corrected scorecard exporter.
+Take `4850fb83a` for the INT1 merge.
+The merged Mac check matched all 120 saves and rejected the fresh database as an aged input.
 At 24,000 records per second from the estimated 430 million, the run would take 9.60 hours and cost $10.46.
 The driver reads the real starting count and continues only if the observed rate fits the 9.9-hour cap.
 The rate needs to reach about 23,000 records per second if the starting count is 430 million.
 The model predicts bigger index directories while the lookup trees keep their depth.
 The successor drill erased a protected value across both eras, including views held before the move.
 
-# DX-AGE1 part 2
+# DX-AGE1
 
 Part 1 at `e44ea53dc` matched 112 saves and reached 360,314 and 1,260,314 records. Its successor preserved reads, receipts and feed but raw held views retained erased values. Part 2 uses the Mac only for small correctness. [Part 1 observations](OBSERVATIONS.md)
 
@@ -38,12 +38,12 @@ The SDK build, source parsing, rate and count tests, and historical log join com
 
 ## Part 3 integration
 
-Merged INT1 through `990badf25` into AGE1. The shared heavy runner uses the INT1 implementation and AGE1 uses ordinary tokens. PREP1 changed compact retraction journals to include the verified predecessor. AGE1 uses the same encoder and keeps the queued pin's earlier layout readable. The native suite mounted exact source and passed 27 tests with 54,079 assertions at `94e424800`. Archived Mac attempts retain entry-by-entry byte checks and their original internal paths. [Archive checksums](EVIDENCE-ARCHIVES.sha256)
+Merged INT1 through `53c595f02` into AGE1. AGE1 uses ordinary tokens. PREP1 added authoritative predecessor metadata to compact journals. AGE1 matches that encoder while the handoff accepts the queued pin's earlier journal. The native suite passed 27 tests with 54,079 assertions on the final merge. The PREP1 solo arms matched 21,436 new datoms and the grouped arm matched its separate 28,135-datom reference. Archived Mac attempts retain their internal paths and verified file bytes. [Archive checksums](EVIDENCE-ARCHIVES.sha256)
 
-The 1B seal exports the exact roster, database identity and original and final replay ledgers. The queued revision can use the exporter after sealing. The export binds the exact hashed seal, immutable checkpoint, roster, restore readback, manifest, attempt and source. The preflight checks live count and clocks, both cuts, fixed row and feed witnesses and the final receipt from a fresh tagged peer. The Mac fixture checks that the old head is refused and exercises the positive comparison only at small size. The v0.1 driver still has to select this input. [Scorecard handoff](SCORECARD-HANDOFF.md)
+The 1B export binds the hashed seal, immutable checkpoint, roster, restore readback, manifest, attempt and source. Its preflight checks the live catalog ID, count and clocks, both cuts, exact rows and feed bytes, and the final receipt from a fresh tagged peer. At `4850fb83a` the SCALE1 fixture matched 120 product saves and 2,400 added datoms, refused the fresh cut, and accepted the restored aged cut at 28,819 datoms. The v0.1 driver still has to select this input. [Scorecard handoff](SCORECARD-HANDOFF.md)
 
 At 8–16k/s and a 430M seed, about 620–800M fits with three hours reserved. A true doubling needs more than 17.3k/s. An 800M diagnostic can check the proposed tree shape and fixed-width paths when a matched fresh baseline exists. It cannot certify 1B or settle long-run timing laws. [Budget and diagnostic plan](FALLBACK.md)
 
-SCALE1 has staged the AGE1 launcher at `551c5aa5a` and identified pending authorization for the backup filesystem. The AGE1 measurement comparison remains pending. [Server comparison](GROWTH-READOUT.md)
+SCALE1 staged the AGE1 launcher and updated its disk admission at `2a431952a`. The verified full-seed transfer, AGE1 calibration and measurements have yet to appear. [Server comparison](GROWTH-READOUT.md)
 
-The merged package build, 861 Core tests, 434 SDK tests, 17 pooled tests, three retention tests and the pooled TypeScript check completed. The SDK skipped 52 opt-in cases. The root JS gate still flags inherited scripts and 141 unregistered paths already present on INT1. There were zero AGE1-specific diagnostics. No acceptance pins changed.
+The merged package build, 861 Core tests, 436 SDK tests, 17 pooled tests, three retention tests and the pooled TypeScript check completed. The SDK skipped 52 opt-in cases. The root JS gate still flags inherited scripts and unregistered paths, with zero AGE1-specific diagnostics. No acceptance pins changed.

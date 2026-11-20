@@ -1,6 +1,6 @@
 # Server comparison for DX-AGE1
 
-The predictions were recorded in `51f386561` before Server 2 reached AGE1. The SCALE1 publication at `551c5aa5a` has staged an AGE1 host command. It says the backup and restored-copy reserve requires a separate filesystem whose initialization is pending authorization. It contains no AGE1 calibration, sealed rung or matched fresh reference.
+The predictions were recorded in `51f386561` before Server 2 reached AGE1. The SCALE1 publication at `2a431952a` updates disk admission using the measured seed size and both copy reservations. There is still no verified full-seed transfer, AGE1 calibration, sealed rung or matched fresh reference in the published evidence.
 
 Use the actual settled history count and exact cuts from the SCALE1 and AGE1 seals. Record the measurement source, attempt, slot, scope, clock, policy and bytes. A matched size comparison needs identical read inputs and owner edit depth, cache state, save width and offer pattern, index debt or copy conditions for the specific row. Carry confidence intervals and sample counts with timing comparisons. A missing comparison cannot establish flat growth.
 
