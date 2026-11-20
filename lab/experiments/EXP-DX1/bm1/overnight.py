@@ -344,9 +344,9 @@ def public_source(item, directory):
     branch, component, minimum, _, _ = ITEMS[item]
     advertised = command("git","-c","credential.helper=","ls-remote","--exit-code",URL,"refs/heads/"+branch).split()[0]
     document = collector_cases().get(str(item),{}) if item in (5,13) else {}
-    # [DX-BM1] Why: replay the explicit joined-report revision and its matching readback code.
-    # Rejected: picking up an unreviewed file format between the small and large runs.
-    pinned={14:JOINED_REVIEW_SOURCE,15:JOINED_REVISED_SOURCE}
+    # [DX-BM1] Why: preserve the historical joined check, then pin the current published source per new attempt.
+    # Rejected: picking up a different file format or application between the small and large runs.
+    pinned={14:JOINED_REVIEW_SOURCE}
     head = pinned.get(item,document.get("source",advertised))
     repo = checkout_source(branch,advertised,head,minimum)
     report = repo / EXP / component / "REPORT.md"
@@ -385,7 +385,7 @@ def bind(r):
     if item==1 and attempt==1:valid_repos.add(root/"bootstrap")
     assert Path(r["repo"]) in valid_repos
     if item==15:
-        assert r["source"]==JOINED_REVISED_SOURCE and r["writerSource"]==WFIX_SOURCE
+        assert r["writerSource"]==WFIX_SOURCE
         assert Path(r["writerRepo"])==NIGHT/("source-"+WFIX_SOURCE)
         assert re.fullmatch(r"[a-f0-9]{64}",r["reviewSha256"])
     return r
