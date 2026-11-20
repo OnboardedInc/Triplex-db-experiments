@@ -92,6 +92,7 @@ export interface DatomicRequestSample {
   readonly headers: number;
   readonly reusedSocket: boolean;
   readonly gatewayTimeline?: unknown;
+  readonly gatewayTraceparent?: string;
   readonly responseBytes: number;
   readonly requestBytes: number;
   readonly serializeMicros: number;
@@ -125,6 +126,9 @@ export class DatomicClient {
   // [DX-B2-N3] Why: opt-in transport observations measure real calls without a second HTTP request.
   // Rejected: inferring gateway CPU or transact time from client wall latency.
   onRequest?: (sample: DatomicRequestSample) => void;
+  // [DX-SCALE1] Why: keep a refused HTTP write joinable to its exact gateway request.
+  // Rejected: changing the existing success-only timing callback's denominator.
+  onRequestFailure?: (sample: DatomicRequestSample) => void;
   onCommit?: (sample: DatomicCommitSample) => void;
   readonly agent: http.Agent;
   private activeObservation: DatomicCommitAttempt | undefined;
@@ -443,7 +447,7 @@ export class DatomicClient {
                 };
               const status = res.statusCode ?? 0;
               const sample: DatomicRequestSample | undefined =
-                observation || this.onRequest
+                observation || this.onRequest || this.onRequestFailure
                   ? {
                       path,
                       operationId,
@@ -454,6 +458,9 @@ export class DatomicClient {
                       headers,
                       reusedSocket: req.reusedSocket,
                       gatewayTimeline: data["timeline"],
+                      ...(typeof res.headers["traceparent"] === "string"
+                        ? { gatewayTraceparent: res.headers["traceparent"] }
+                        : {}),
                       responseBytes: size,
                       requestBytes: byteLength,
                       serializeMicros,
@@ -468,7 +475,8 @@ export class DatomicClient {
                     }
                   : undefined;
               if (sample) observation?.requests.push(sample);
-              if (status < 200 || status >= 300)
+              if (status < 200 || status >= 300) {
+                if (sample) this.onRequestFailure?.(sample);
                 reject(
                   new DatomicHttpError(
                     status,
@@ -478,7 +486,7 @@ export class DatomicClient {
                     typeof data["route"] === "string" ? data["route"] : undefined,
                   ),
                 );
-              else {
+              } else {
                 if (sample) this.onRequest?.(sample);
                 resolve(data as T);
               }

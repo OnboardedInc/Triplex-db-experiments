@@ -8,6 +8,7 @@ import { SEED_VALID_FROM } from "../../../../bench/lib/world.ts";
 import { Histogram } from "../../../../bench/lib/hist.ts";
 import {
   field,
+  quietFor,
   readTape,
   readWindow,
   sampleEvery,
@@ -40,6 +41,7 @@ export type Begin = {
   repeat: number;
   cell: Cell;
   withReaders: boolean;
+  isolation?: boolean;
   scopes: Scope[];
 };
 export type Finish = { kind: "finish"; key: string; cuts: Record<string, number> };
@@ -82,12 +84,13 @@ export function decodeFeed(db: string, row: Wire, seen: number): Feed {
 
 // [DX-SCALE1] Why: the two readers issue the same fixed seat tape at the initial durable basis for every cell. Rejected: a closed-loop fastest-reader distribution or materializing all read responses.
 async function readCell(client: DatomicClient, role: number, m: Begin): Promise<ReadResult> {
-  const scope = m.scopes.find((s) => s.accounts.includes(0))!;
+  const account = quietFor(m.repeat, m.isolation);
+  const scope = m.scopes.find((s) => s.accounts.includes(account))!;
   assert(scope);
-  const ops = readTape(m.people, m.repeat, m.cell, m.withReaders).filter(
+  const ops = readTape(m.people, m.repeat, m.cell, m.withReaders, m.isolation).filter(
     (x) => x.seat % 2 === role,
   );
-  const window = readWindow(m.cell);
+  const window = readWindow(m.cell, m.isolation);
   const active = new Map<number, Promise<void>>();
   const samples: ReadResult["samples"] = [];
   const latency = new Histogram();
@@ -100,7 +103,7 @@ async function readCell(client: DatomicClient, role: number, m: Begin): Promise<
     }
     const query = async () => {
       try {
-        const entity = task(0, op.subject);
+        const entity = task(account, op.subject);
         const got = await client.rows(scope.db, {
           entityIds: [entity],
           pattern: { attribute: field(0) },

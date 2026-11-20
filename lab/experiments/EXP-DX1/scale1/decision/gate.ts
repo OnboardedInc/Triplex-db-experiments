@@ -16,6 +16,7 @@ export async function nativeProbe(
   writeUrl: string,
   readUrl: string,
   binding: string,
+  stageCapture = false,
 ) {
   const scope = "dx-scale-decision-probe-" + id.nonce;
   const comp = await openComposition("reach", "datomic", scope);
@@ -80,6 +81,12 @@ export async function nativeProbe(
         };
         testCases.push({ o, prior: prior.slice(0, e.width), body: expectedSave(o, e, prior) });
       }
+    const capture = new Map<string, string>();
+    if (stageCapture)
+      w.onRequest = (s) => {
+        if (s.operationId && s.gatewayTraceparent && Number.isFinite(s.written))
+          capture.set(s.operationId, s.gatewayTraceparent);
+      };
     const responses = await Promise.all(
       testCases.map(async ({ o, body, prior }) => {
         const a = (await w.transact(db, body.input)) as {
@@ -87,9 +94,18 @@ export async function nativeProbe(
           position: { v: string };
           t: { v: string };
           recordedAt: { v: number };
+          timeline?: Record<string, number>;
+          readyToNativeEntryMs?: number;
         };
         assert.equal(a.operationId, o.id);
         assert(Number(a.position.v) > 1 && Number(a.t.v) > 0);
+        if (stageCapture) {
+          assert.match(capture.get(o.id) ?? "", /^00-[a-f0-9]{32}-[a-f0-9]{16}-0[01]$/);
+          assert(
+            Number.isFinite(a.timeline?.payloadPrepared) && Number.isFinite(a.timeline?.completed),
+          );
+          assert(Number.isFinite(a.readyToNativeEntryMs));
+        }
         return {
           a,
           tx: body.input.claims[0]!.txId,
@@ -157,6 +173,7 @@ export async function nativeProbe(
       feedHash: sha(feed),
       nativeTransactions: new Set(expected.map((x) => x.a.t.v)).size,
       pinnedAccounts: oracle.length,
+      ...(stageCapture ? { stageCaptures: capture.size } : {}),
     };
   } finally {
     r.close();

@@ -51,6 +51,7 @@ type Plan = {
   bootstrapCache: string;
   steps: Step[];
   maxHours: number;
+  continuedFrom?: string;
 };
 
 function plan(): Plan {
@@ -66,6 +67,14 @@ function plan(): Plan {
       new Set(p.steps.map((s) => s.tag)).size === p.steps.length,
   );
   assert(Number.isInteger(p.maxHours) && p.maxHours > 0 && p.maxHours <= 40);
+  if (p.continuedFrom) {
+    assert.match(p.continuedFrom, /^[a-f0-9]{40}$/);
+    assert(p.steps.length === 2 && p.steps.every((s) => s.isolation));
+    assert.deepEqual(
+      p.steps.map((s) => s.mode),
+      ["individual", "prepared"],
+    );
+  }
   for (const [i, s] of p.steps.entries()) {
     assert(/^arm-d7-[a-z0-9-]{2,24}$/.test(s.tag));
     assert(
@@ -74,11 +83,15 @@ function plan(): Plan {
     );
     if (s.layout === "single") assert(s.people === 100000 && s.mode === "individual");
     assert((typeof s.withReaders === "boolean") === (s.layout === "single" && s.phase === "cells"));
+    if (s.isolation) {
+      assert(p.continuedFrom && s.layout === "pooled" && s.people === 100000);
+      assert(s.phase === "cells" && s.from === "arm-d7-wfix-pool-seed" && s.fromTransfer);
+    }
     if (s.phase === "cells") {
       assert(["individual", "bounded", "prepared"].includes(s.mode));
       const earlier = p.steps.slice(0, i).find((q) => q.tag === s.from);
       if (s.fromTransfer) {
-        assert(reusableSeed(s.people, s.layout) && !earlier);
+        assert(reusableSeed(s.people, s.layout, s.isolation) && !earlier);
         assert.match(s.from ?? "", /^arm-d7-[a-z0-9-]{2,24}$/);
         assert.match(s.fromTransfer, /^[a-f0-9]{64}$/);
       } else {
@@ -102,9 +115,9 @@ async function run(p: Plan, s: Step, deadline: number, build: string) {
     released();
     const remaining = Math.floor((deadline - Date.now()) / 1000);
     const large = s.layout !== "single" && s.people === 100000;
-    const h = s.phase === "seed" ? (large ? 18 : 3) : large ? 5 : 2;
+    const h = s.isolation ? 11.5 : s.phase === "seed" ? (large ? 18 : 3) : large ? 5 : 2;
     assert(
-      remaining > (s.phase === "seed" && large ? 6 : 1) * 3600,
+      remaining > (s.isolation ? 8 : s.phase === "seed" && large ? 6 : 1) * 3600,
       "Campaign ceiling leaves too little time to start this arm",
     );
     const ceiling = Math.min(h * 3600, remaining);
@@ -112,6 +125,7 @@ async function run(p: Plan, s: Step, deadline: number, build: string) {
       const receipt = fs.readFileSync(path.join(attempts, s.from, "transfer.json"));
       const src = JSON.parse(receipt.toString("utf8"));
       assert(src.result === "success" && src.tag === s.from);
+      if (s.isolation) assert.equal(src.source, p.continuedFrom);
       if (s.fromTransfer)
         assert.equal(createHash("sha256").update(receipt).digest("hex"), s.fromTransfer);
       else assert.equal(src.source, p.source);
@@ -209,7 +223,7 @@ async function run(p: Plan, s: Step, deadline: number, build: string) {
           cwd: repo,
           env: { ...process.env, PATH: pathEnv },
           encoding: "utf8",
-          timeout: 600000,
+          timeout: s.isolation ? 1_800_000 : 600_000,
         },
       );
       fs.writeFileSync(path.join(dir, "package.log"), check);
@@ -247,7 +261,7 @@ async function main() {
   const startedFile = path.join(base, "started.json");
   if (!exists(startedFile)) put(startedFile, { start: Date.now(), source: first.source });
   const started = read(startedFile);
-  assert.equal(started.source, first.source);
+  assert.equal(started.source, first.continuedFrom ?? first.source);
   const deadline = started.start + first.maxHours * 3600000;
   progress({
     stage: "preparing published decision runtime",
@@ -292,7 +306,11 @@ async function main() {
     const s = p.steps.find(
       (s) =>
         !results.some((r) => r.tag === s.tag) &&
-        (s.layout === "single" || s.people === 10000 || pilotComplete) &&
+        (s.layout === "single" ||
+          s.people === 10000 ||
+          pilotComplete ||
+          (s.isolation &&
+            results.some((r) => r.tag === "arm-d7-wfix-pilot-b" && r.outcome === "success"))) &&
         (!s.from || results.some((r) => r.tag === s.from && r.outcome === "success")),
     );
     if (!s) {

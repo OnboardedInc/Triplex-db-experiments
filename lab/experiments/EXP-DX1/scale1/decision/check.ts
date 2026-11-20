@@ -16,6 +16,8 @@ import {
   expiryMs,
   field,
   operationId,
+  quietFor,
+  rates,
   readTape,
   readWindow,
   sampleEvery,
@@ -24,7 +26,9 @@ import {
   writeTape,
   type Cell,
   type Density,
+  type Layout,
 } from "./plan.ts";
+import { pairedP99 } from "./paired.ts";
 import type { Feed, ReadResult, Scope } from "./observer.ts";
 import { expectedJournal, expectedSave, type Save, type Row } from "./writes.ts";
 export const clock = "scheduled-offer";
@@ -45,6 +49,7 @@ export type Observation = {
   cell: Cell;
   repeat: number;
   withReaders?: boolean;
+  isolation?: boolean;
   start: number;
   nonce: string;
   source: string;
@@ -57,13 +62,13 @@ export type Observation = {
 
 export type OracleRows = Map<string, Row[]>[];
 export function checkCell(x: Observation, model: OracleRows) {
-  const program = writeTape(x.people, x.cell, x.repeat);
+  const program = writeTape(x.people, x.cell, x.repeat, x.isolation);
   const plan = new Map(program.map((w) => [operationId(x.nonce, w.version), w]));
   const byCommand = new Map(x.writes.map((w) => [w.id, w]));
   assert.equal(byCommand.size, x.writes.length);
   const missing = program.length - x.writes.length;
   assert(missing >= 0);
-  const seconds = cellSeconds(x.cell);
+  const seconds = cellSeconds(x.cell, x.isolation);
   const upper = x.start + seconds * 1000;
   const f = new Map(x.feed.map((m) => [m.id, m]));
   assert.equal(f.size, x.feed.length);
@@ -163,8 +168,9 @@ export function checkCell(x: Observation, model: OracleRows) {
       if (i) assert(g[i - 1]!.receipt!.clock < w.receipt!.clock);
     }
   }
-  const window = readWindow(x.cell);
-  const readPlan = readTape(x.people, x.repeat, x.cell, x.withReaders ?? true);
+  const window = readWindow(x.cell, x.isolation);
+  const sentinel = quietFor(x.repeat, x.isolation);
+  const readPlan = readTape(x.people, x.repeat, x.cell, x.withReaders ?? true, x.isolation);
   assert.equal(x.reads.length, 2);
   const sample = new Map<number, ReadResult["samples"][number]>();
   const sampled = x.reads.flatMap((r) => r.samples);
@@ -175,7 +181,10 @@ export function checkCell(x: Observation, model: OracleRows) {
     if (!r.error) {
       assert((r.ordinal + 1) % sampleEvery === 0 && r.start);
       assert(r.start >= x.start + window.from && r.start < x.start + window.from + window.duration);
-      assert.equal(r.digest, sha([task(0, op.subject), field(0), fieldValue(op.subject, 0, 0, 0)]));
+      assert.equal(
+        r.digest,
+        sha([task(sentinel, op.subject), field(0), fieldValue(op.subject, 0, 0, 0)]),
+      );
     }
     sample.set(op.ordinal, r);
   }
@@ -189,13 +198,14 @@ export function checkCell(x: Observation, model: OracleRows) {
   for (const r of x.reads) readHist.merge(Histogram.fromJSON(r.latency));
   assert.equal(readHist.count + readErrors, readPlan.length);
   const label = cellKey(x.cell, x.repeat);
-  const quiet = acked.filter((w) => w.account === 0);
+  const quiet = acked.filter((w) => w.account === sentinel);
   const commitLatency = (w: Save) => w.end! - w.due;
   const quietLat = quiet.map(commitLatency);
   const feedLat = quiet.map((w) => Math.max(0, f.get(w.id)!.seen - w.end!));
   const inWindow = acked.filter((w) => w.end! < upper).length;
-  const drainMs = Math.max(0, ...acked.map((w) => w.end! - upper));
-  const dispositionDrainMs = Math.max(0, ...x.writes.map((w) => w.end! - upper));
+  const drain = (rows: Save[]) => rows.reduce((max, w) => Math.max(max, w.end! - upper), 0);
+  const drainMs = drain(acked);
+  const dispositionDrainMs = drain(x.writes);
   const beforeDispatch = x.writes.filter((w) => w.status === "expired-before-dispatch").length;
   const expiryCauses = Object.fromEntries(
     ["timer", "same-subject", "in-flight-limit", "unresolved-predecessor", "dispatch"].map(
@@ -246,6 +256,11 @@ export function checkCell(x: Observation, model: OracleRows) {
     gatewayQueue: measure("gateway-queue", (w) =>
       typeof w.stage?.groupQueueMicros === "number" ? w.stage.groupQueueMicros / 1000 : undefined,
     ),
+    preparation: measure("preparation", (w) =>
+      typeof w.stage?.timeline?.payloadPrepared === "number"
+        ? w.stage.timeline.payloadPrepared / 1000
+        : undefined,
+    ),
     nativeEntry: measure("native-entry", (w) => w.stage?.submitToNativeEntryMs),
     nativeCompute: measure("native-compute", (w) => w.stage?.nativeComputeMs),
   };
@@ -276,7 +291,32 @@ export function checkCell(x: Observation, model: OracleRows) {
     stages,
     sampledReadPlan: sha(readPlan),
     readErrors,
-    quietComplete: quiet.length === program.filter((w) => w.account === 0).length,
+    quietComplete: quiet.length === program.filter((w) => w.account === sentinel).length,
+    ...(x.isolation
+      ? {
+          sentinel,
+          quietPlanned: program.filter((w) => w.account === sentinel).length,
+          quietOutcomes: x.writes
+            .filter((w) => w.account === sentinel)
+            .reduce<Record<string, number>>((counts, w) => {
+              counts[w.status] = (counts[w.status] ?? 0) + 1;
+              return counts;
+            }, {}),
+          accounts: [...new Set(program.map((w) => w.account))].map((account) => {
+            const outcomes = x.writes.filter((w) => w.account === account);
+            const commits = outcomes.filter((w) => w.status === "acked");
+            const latency = distribution(commits.map(commitLatency), clock);
+            return {
+              account,
+              planned: program.filter((w) => w.account === account).length,
+              acked: commits.length,
+              inWindow: commits.filter((w) => w.end! < upper).length,
+              p50: percentile(latency, 0.5),
+              p99: percentile(latency, 0.99),
+            };
+          }),
+        }
+      : {}),
     qualifiedInputs: groupsEligible,
     capacityBars:
       groupsEligible &&
@@ -298,8 +338,9 @@ export function checkCell(x: Observation, model: OracleRows) {
 export function ratios(
   alone: ReturnType<typeof checkCell>[],
   loaded: ReturnType<typeof checkCell>[],
+  isolation = false,
 ) {
-  assert(alone.length === 2 && loaded.length === 2);
+  assert(alone.length === (isolation ? 12 : 2) && loaded.length === alone.length);
   assert(
     alone.every(
       (a, i) =>
@@ -325,9 +366,48 @@ export function ratios(
     };
     const a = d(loaded),
       b = d(alone);
-    return ratioBar("decision/" + loaded[0]!.cell + "/" + k, a, b, 1.25, {
+    const label = "decision/" + loaded[0]!.cell + "/" + k;
+    const contract = ratioBar(label, a, b, 1.25, {
       minimum: 500,
       invalid: invalid ? "incomplete quiet outcomes in a matched window" : undefined,
     });
+    if (!isolation) return contract;
+    const windows = (rs: typeof loaded) =>
+      rs.map((r) => {
+        if (k === "read") return Histogram.fromJSON(r.distributions.read);
+        const h = new Histogram();
+        for (const v of r.distributions[k]) h.recordMs(v);
+        return h;
+      });
+    return {
+      ...contract,
+      paired: invalid ? null : pairedP99(windows(loaded), windows(alone), label),
+    };
+  });
+}
+
+export function compareCells(
+  reports: ReturnType<typeof checkCell>[],
+  layout: Layout,
+  isolation = false,
+) {
+  return (layout === "single" ? [] : rates).map((rate) => {
+    const loaded = reports.filter((r) => r.cell === rate);
+    const alone = reports.filter(
+      (r) => r.cell === "alone" && (!isolation || loaded.some((cell) => cell.repeat === r.repeat)),
+    );
+    const measured = ratios(alone, loaded, isolation);
+    return {
+      rate,
+      ratios: measured,
+      ...(isolation
+        ? {
+            family95Within125: measured.every(
+              (r) => "paired" in r && r.paired?.family95Within125 === true,
+            ),
+          }
+        : {}),
+      completeCapacity: loaded.every((r) => r.capacityBars),
+    };
   });
 }

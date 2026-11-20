@@ -15,6 +15,7 @@ import {
 } from "./plan.ts";
 import { ingest, restore, seal, read, write, update, type Destination } from "./seed.ts";
 import { nativeProbe } from "./gate.ts";
+import { beginCapture, endCapture } from "./telemetry.ts";
 
 type Mode = "individual" | "bounded" | "prepared";
 export type Request = {
@@ -29,6 +30,7 @@ export type Request = {
   fromTransfer?: string;
   review: string;
   withReaders?: boolean;
+  isolation?: true;
 };
 const checkout = path.resolve(import.meta.dirname, "../../../../..");
 const outputRoot = "/var/tmp/triplex-scale1/decision/attempts";
@@ -49,8 +51,13 @@ async function main(dir: string) {
   assert((typeof p.withReaders === "boolean") === (p.layout === "single" && p.phase === "cells"));
   assert(["individual", "bounded", "prepared"].includes(p.mode));
   assert(["seed", "cells"].includes(p.phase));
+  if (p.isolation) {
+    assert(p.phase === "cells" && p.layout === "pooled" && p.people === 100000);
+    assert(p.from === "arm-d7-wfix-pool-seed" && p.fromTransfer);
+    assert(p.mode === "individual" || p.mode === "prepared");
+  }
   if (p.fromTransfer) {
-    assert(p.phase === "cells" && reusableSeed(p.people, p.layout));
+    assert(p.phase === "cells" && reusableSeed(p.people, p.layout, p.isolation));
     assert.match(p.fromTransfer, /^[a-f0-9]{64}$/);
   }
   assert(
@@ -64,12 +71,19 @@ async function main(dir: string) {
   assert.equal(git("status", "--porcelain", "--untracked-files=no"), "");
 
   const assets = read(
-    path.join(import.meta.dirname, p.layout === "single" ? "single-pins.json" : "pins.json"),
+    path.join(
+      import.meta.dirname,
+      p.isolation
+        ? "isolation-pins.json"
+        : p.layout === "single"
+          ? "single-pins.json"
+          : "pins.json",
+    ),
   );
-  assert.equal(assets.profile, profileFor(p.layout));
+  assert.equal(assets.profile, profileFor(p.layout, p.isolation));
   const pin = assets.items.find((x: any) => x.seed.people === p.people);
   assert(pin && /^[a-f0-9]{64}$/.test(pin.seed.digest));
-  assert.deepEqual(pin.tapes, workloadPins(p.people, p.layout));
+  assert.deepEqual(pin.tapes, workloadPins(p.people, p.layout, p.isolation));
   const slot = "tx2-dxscale1-" + p.tag;
   const id: Destination = {
     source: p.source,
@@ -155,7 +169,10 @@ async function main(dir: string) {
         const binding = env.DX_W1_WRITER_EXPECTATION;
         assert(binding);
         status("checking fresh native field and feed preflight");
-        write(path.join(dir, "preflight.json"), await nativeProbe(id, writeUrl, readUrl, binding));
+        write(
+          path.join(dir, "preflight.json"),
+          await nativeProbe(id, writeUrl, readUrl, binding, p.isolation),
+        );
         if (p.phase === "seed") {
           status("verifying canonical population bytes");
           assert.deepEqual(populationPins(p.people, p.layout), pin.seed);
@@ -171,24 +188,49 @@ async function main(dir: string) {
             id,
             binding,
             p.fromTransfer,
+            p.isolation,
           );
           const { runCells } = await import("./traffic.ts");
-          await runCells(
-            dir,
-            p,
-            id,
-            restored.scopes,
-            restored.urls[0]!,
-            restored.urls[1]!,
-            binding,
-            status,
-          );
+          const capture = p.isolation ? beginCapture(dir, id, restored.restartedAt) : undefined;
+          const timing = () =>
+            runCells(
+              dir,
+              p,
+              id,
+              restored.scopes,
+              restored.urls[0]!,
+              restored.urls[1]!,
+              binding,
+              status,
+            );
+          if (capture) {
+            let timingFailed = false;
+            try {
+              await timing();
+            } catch (e) {
+              timingFailed = true;
+              throw e;
+            } finally {
+              status("archiving JVM and native stage clocks");
+              try {
+                await endCapture(dir, id, capture);
+              } catch (e) {
+                write(path.join(dir, "telemetry-error.json"), {
+                  ...id,
+                  at: Date.now(),
+                  reason: String(e),
+                });
+                if (!timingFailed) throw e;
+              }
+            }
+          } else await timing();
         }
       },
       fieldPolicy(p.mode, true).grouping,
       p.mode,
       true,
       "4,8",
+      p.isolation,
     );
     status("arm ended");
   } catch (e) {

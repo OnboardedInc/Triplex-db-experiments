@@ -212,6 +212,7 @@ export async function withStack<T>(
   fieldMode?: Mode,
   enhanced = false,
   readerGatewayCpus?: "4,8",
+  stageCapture = false,
 ) {
   const why = stopReason();
   assert(!why, why);
@@ -311,6 +312,23 @@ export async function withStack<T>(
         .filter(Boolean)
         .join(",");
   }
+  // [DX-SCALE1] Why: retain complete save spans and JVM pauses with absolute
+  // clocks while sampling fast reads. Rejected: enabling full read traces.
+  const gc = (role: string) =>
+    " -Xlog:gc,gc+init,safepoint:file=/trace/" +
+    role +
+    "-gc.log:utctime,uptime,level,tags:filecount=0";
+  if (stageCapture) {
+    Object.assign(env, {
+      TRIPLEX_TRACE_LEVEL: "summary",
+      TRIPLEX_TRACE_COMPONENTS: "gateway,tx-jfr",
+      TRIPLEX_TRACE_GATEWAY: "1",
+      TRIPLEX_TRACE_TX_JFR: "1",
+      DX_TX_NATIVE_JFR: "1",
+    });
+    env.DX_GW_WRITE_JAVA_OPTS += gc("gw-w");
+    env.DX_GW_READ_JAVA_OPTS += gc("gw-r");
+  }
   write(path.join(dir, "identity.json"), arm);
   const args = [
     stack("up"),
@@ -329,7 +347,7 @@ export async function withStack<T>(
     "--tx-memory",
     "6g",
     "--tx-java-opts",
-    "-Xms256m -Xmx5g -XX:+UseG1GC",
+    "-Xms256m -Xmx5g -XX:+UseG1GC" + (stageCapture ? gc("tx") : ""),
     "--object-cache-max",
     "1280m",
     "--pg-settings",

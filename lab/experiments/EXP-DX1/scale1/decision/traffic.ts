@@ -6,14 +6,13 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { DatomicClient } from "../../../../../packages/datomic/dist/index.js";
 import { readWriteOptions } from "../../w1/write-options.ts";
 import { SEED_VALID_FROM } from "../../../../bench/lib/world.ts";
-import { checkCell, ratios, type Observation } from "./check.ts";
+import { checkCell, compareCells, type Observation } from "./check.ts";
 import { now, type Begin, type Feed, type ReadResult, type Scope } from "./observer.ts";
 import {
   cellKey,
   cellOrder,
   cellSeconds,
   field,
-  rates,
   repetitions,
   sha,
   task,
@@ -22,6 +21,7 @@ import {
 import { disk, engineResources, write, type Destination } from "./seed.ts";
 import { play, preload, resolveUncertain } from "./writes.ts";
 import type { Request } from "./server.ts";
+import { checkSpace } from "./telemetry.ts";
 
 function message<T>(child: ChildProcess, match: (m: any) => boolean, timeout = 240000) {
   return new Promise<T>((ok, fail) => {
@@ -150,9 +150,10 @@ export async function runCells(
     );
     const reports: ReturnType<typeof checkCell>[] = [];
     const begin = Date.now();
-    for (const repeat of repetitions(id.layout)) {
-      for (const cell of cellOrder(repeat, id.layout)) {
+    for (const repeat of repetitions(id.layout, request.isolation)) {
+      for (const cell of cellOrder(repeat, id.layout, request.isolation)) {
         const key = cellKey(cell, repeat);
+        if (request.isolation) checkSpace(dir);
         status("running " + key);
         const before = engineResources(id.slot),
           countBefore = disk(id.slot);
@@ -167,11 +168,12 @@ export async function runCells(
           repeat,
           cell,
           withReaders,
+          ...(request.isolation ? { isolation: true } : {}),
           scopes: placed,
         };
         // [DX-SCALE1] Why: feed completion follows the entire offered window and its drain.
         // Rejected: spending the observer's four-minute allowance while a five-minute cell is still offering.
-        const intervalEnd = start + cellSeconds(cell) * 1000;
+        const intervalEnd = start + cellSeconds(cell, request.isolation) * 1000;
         const observerTimeout = Math.ceil(intervalEnd - now()) + 240000;
         const readers = children
           .slice(0, 2)
@@ -181,12 +183,19 @@ export async function runCells(
         // retained even if an independent observer has already failed.
         const observers = Promise.allSettled([...readers, feed]);
         for (const c of children) c.send(m);
-        const timing = await play(prepared, writeTape(id.people, cell, repeat), start, id.nonce);
+        const timing = await play(
+          prepared,
+          writeTape(id.people, cell, repeat, request.isolation),
+          start,
+          id.nonce,
+          request.isolation,
+        );
         write(path.join(dir, key + "-writer.json"), {
           ...id,
           key,
           cell,
           repeat,
+          ...(request.isolation ? { isolation: true } : {}),
           start,
           scopes: placed,
           writes: timing.rows,
@@ -230,6 +239,7 @@ export async function runCells(
           cell,
           repeat,
           withReaders,
+          ...(request.isolation ? { isolation: true } : {}),
           start,
           scopes: placed,
           writes: timing.rows,
@@ -259,22 +269,19 @@ export async function runCells(
         write(path.join(dir, key + "-result.json"), { ...id, rawSemanticHash: sha(full), ...row });
         reports.push(result);
         for (const s of scopes) s.cut = ends[s.db]!;
+        // [DX-SCALE1] Why: each matched window gets the same reset after durable feed/readback.
+        // Rejected: overlapping the previous offered or draining work with the next control.
+        if (request.isolation) await sleep(5000);
       }
     }
-    const comparisons = (id.layout === "single" ? [] : rates).map((rate) => ({
-      rate,
-      ratios: ratios(
-        reports.filter((r) => r.cell === "alone"),
-        reports.filter((r) => r.cell === rate),
-      ),
-      completeCapacity: reports.filter((r) => r.cell === rate).every((r) => r.capacityBars),
-    }));
+    const comparisons = compareCells(reports, id.layout, request.isolation);
     const footprint = { ...reference, after: disk(id.slot), endedMemory: process.memoryUsage() };
     write(path.join(dir, "measurement.json"), {
       ...id,
       mode: request.mode,
       from: request.from,
       withReaders: request.withReaders ?? true,
+      ...(request.isolation ? { isolation: true } : {}),
       elapsedMs: Date.now() - begin,
       comparisons,
       footprint,

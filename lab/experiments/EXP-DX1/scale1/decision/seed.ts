@@ -299,13 +299,18 @@ export async function seal(dir: string, seed: Awaited<ReturnType<typeof ingest>>
   write(path.join(dir, "image.json"), { ...seed, bytes, sha256 });
 }
 
-export function verifiedOrigin(from: string, id: Destination, fromTransfer?: string): SeedProof {
+export function verifiedOrigin(
+  from: string,
+  id: Destination,
+  fromTransfer?: string,
+  isolation = false,
+): SeedProof {
   const bytes = fs.readFileSync(path.join(from, "image.json"));
   const proof = JSON.parse(bytes.toString("utf8")) as SeedProof;
   // [DX-SCALE1] Why: an observer startup failure can reuse the original verified image with a fresh runtime.
   // Rejected: relabeling the original seed with the retry source or repeating the durable load.
   if (fromTransfer) {
-    assert(reusableSeed(id.people, id.layout));
+    assert(reusableSeed(id.people, id.layout, isolation));
     const receipt = fs.readFileSync(path.join(from, "transfer.json"));
     assert.equal(createHash("sha256").update(receipt).digest("hex"), fromTransfer);
     const t = JSON.parse(receipt.toString("utf8"));
@@ -333,11 +338,20 @@ export async function restore(
   id: Destination,
   writerBinding: string,
   fromTransfer?: string,
+  isolation = false,
 ) {
-  const proof = verifiedOrigin(from, id, fromTransfer);
+  const proof = verifiedOrigin(from, id, fromTransfer, isolation);
   const dump = path.join(from, "seed.pgdump");
   const slot = id.slot;
   for (const role of ["gw-r", "gw-w", "tx"]) docker("stop", "--time", "20", slot + "-" + role);
+  if (isolation) {
+    const raw = path.join(dir, "engines", slot, "trace/raw");
+    // [DX-SCALE1] Why: the measured JVMs must create fresh recorder files after restore.
+    // Rejected: mixing startup gate clocks with the replacement JVMs.
+    for (const name of fs.readdirSync(raw))
+      if (/^(?:gw-w|gw-r|tx)(?:-gc\.log|\.jsonl)$/.test(name))
+        fs.renameSync(path.join(raw, name), path.join(raw, "preflight-" + name));
+  }
   const restoredHash = await pgCopy(
     [
       "exec",
@@ -357,6 +371,7 @@ export async function restore(
     "ignore",
   );
   assert.equal(restoredHash, proof.sha256);
+  const restartedAt = Date.now();
   for (const role of ["tx", "gw-w", "gw-r"]) docker("start", slot + "-" + role);
   const urls = ["gw-w", "gw-r"].map((role) => {
     const c = JSON.parse(docker("inspect", slot + "-" + role))[0];
@@ -432,9 +447,10 @@ export async function restore(
       ...(fromTransfer ? { fromTransfer } : {}),
       gatewayRoles,
       reopenedAt: Date.now(),
+      ...(isolation ? { restartedAt } : {}),
       membership,
     });
-    return { scopes: proof.scopes, urls: [urls[writer]!, urls[reader]!] };
+    return { scopes: proof.scopes, urls: [urls[writer]!, urls[reader]!], restartedAt };
   } finally {
     for (const peer of peers) peer.close();
   }

@@ -1,6 +1,6 @@
 # Write-path review
 
-The single-account runtime includes WFIX1 at `cd2151749`. The zero-reader and bounded-reader arms use the same 100,000-person image and frozen offers. The placement study waits for these results. Q106f currently assigns large accounts their own Datomic systems and pools small ones. [Handoff](HANDOFF.md) · [Forecasts](PREDICTIONS.md)
+The single-account runtime includes WFIX1 at `cd2151749`. The zero-reader and bounded-reader arms use the same 100,000-person image and frozen offers. The placement study waits for these results. The November 20 owner decision places all accounts in one database. The one-database study uses the corrected individual and prepared grouped writers against the same original restored image. [Handoff](HANDOFF.md) · [Forecasts](PREDICTIONS.md)
 
 The next grouped arm uses WFIX1 `6b83caa71` or later. The merge takes WFIX1's compact JSON escaping and legacy retirement behavior and its synchronized native function readback. The grouped pilot uses bounded mode with compact rows and prepared reuse. Predecessor lookup, retained ledger, packed journal and fast reply stay off for that comparison. Each flag is included in the live gateway readback and checked at the restored cut. The current single-account retries use the same writer revision and original verified image.
 

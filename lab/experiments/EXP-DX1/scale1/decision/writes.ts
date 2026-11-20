@@ -47,6 +47,9 @@ export type Save = {
   enqueued: number;
   dispatched?: number;
   sent?: number;
+  responseHeaders?: number;
+  responseTrace?: string;
+  predecessor?: string;
   end?: number;
   status:
     | "offered"
@@ -153,19 +156,34 @@ function bind(o: Save, a: Ack, candidate: ReturnType<typeof expectedSave>) {
 }
 
 // [DX-SCALE1] Why: all tapes are open-loop, and a start deadline is evaluated before allocating the gateway request. Rejected: a single closed promise chain or counting an upstream expiration as a native commit limit.
-export async function play(scopes: Sender[], tape: Write[], start: number, nonce: string) {
+export async function play(
+  scopes: Sender[],
+  tape: Write[],
+  start: number,
+  nonce: string,
+  capture = false,
+) {
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
     active = scopes.map(() => 0),
-    owned = new Set<string>(),
+    owned = new Map<string, string>(),
     pending = new Set<Promise<void>>(),
     rows: Save[] = [];
-  const quarantined = new Set<string>();
+  const quarantined = new Map<string, string>();
+  const queuedTail = new Map<string, string>();
   const unresolved = new Map<Save, ReturnType<typeof expectedSave>>();
   const inFlightSends = new Map<string, Save>();
   const observe: NonNullable<DatomicClient["onRequest"]> = (response) => {
     const save = inFlightSends.get(response.operationId ?? "");
-    if (save && response.path === `/v1/db/${save.db}/transact` && Number.isFinite(response.written))
+    if (
+      save &&
+      response.path === `/v1/db/${save.db}/transact` &&
+      Number.isFinite(response.written)
+    ) {
       save.sent = performance.timeOrigin + response.written;
+      if (capture && Number.isFinite(response.headers))
+        save.responseHeaders = performance.timeOrigin + response.headers;
+      if (capture && response.gatewayTraceparent) save.responseTrace = response.gatewayTraceparent;
+    }
   };
   const expire = (entry: Save, cause: NonNullable<Save["expiryCause"]>) => {
     entry.status = "expired-before-dispatch";
@@ -174,13 +192,20 @@ export async function play(scopes: Sender[], tape: Write[], start: number, nonce
     assert(!entry.dispatched && !entry.sent);
   };
   const key = (r: Save) => r.account + "/" + r.subject;
+  const predecessor = (r: Save) => owned.get(key(r)) ?? quarantined.get(key(r));
+  const dequeue = (row: Save) => {
+    const k = key(row);
+    if (queuedTail.get(k) === row.id) queuedTail.delete(k);
+  };
 
   function pump(account: number) {
     const q = queues[account]!,
       sender = scopes[account]!;
     while (q[0] && now() >= q[0].row.due + expiryMs) {
       const { row } = q.shift()!;
+      dequeue(row);
       const k = key(row);
+      if (capture) row.predecessor ??= predecessor(row);
       const cause = quarantined.has(k)
         ? "unresolved-predecessor"
         : owned.has(k)
@@ -194,12 +219,13 @@ export async function play(scopes: Sender[], tape: Write[], start: number, nonce
       const next = q.findIndex((x) => !owned.has(key(x.row)) && !quarantined.has(key(x.row)));
       if (next < 0) break;
       const { e, row } = q.splice(next, 1)[0]!;
+      dequeue(row);
       if (now() >= row.due + expiryMs) {
         expire(row, "dispatch");
         continue;
       }
       const candidate = expectedSave(row, e, sender.rows.get(task(row.account, row.subject))!);
-      owned.add(key(row));
+      owned.set(key(row), row.id);
       active[account]!++;
       row.dispatched = now();
       row.status = "pending";
@@ -231,7 +257,7 @@ export async function play(scopes: Sender[], tape: Write[], start: number, nonce
           }
           row.status = "uncertain";
           unresolved.set(row, candidate);
-          quarantined.add(key(row));
+          quarantined.set(key(row), row.id);
         })
         .finally(() => {
           inFlightSends.delete(row.id);
@@ -245,7 +271,10 @@ export async function play(scopes: Sender[], tape: Write[], start: number, nonce
   }
 
   // [DX-SCALE1] Why: record the actual socket flush for successful requests, with a bounded map of active operations. Rejected: using the publication callback's error and finally notifications as packet timestamps.
-  for (const s of scopes) s.client.onRequest = observe;
+  for (const s of scopes) {
+    s.client.onRequest = observe;
+    if (capture) s.client.onRequestFailure = observe;
+  }
   try {
     // Ten clients with the same per-account request cap serve either placement.
     for (const e of tape) {
@@ -266,9 +295,11 @@ export async function play(scopes: Sender[], tape: Write[], start: number, nonce
         pending: active[e.account],
         status: "offered",
       };
+      if (capture) row.predecessor = queuedTail.get(key(row)) ?? predecessor(row);
       rows.push(row);
       if (row.enqueued >= due + expiryMs) expire(row, "timer");
       else {
+        if (capture) queuedTail.set(key(row), row.id);
         q.push({ e, row });
         pump(e.account);
       }
@@ -279,7 +310,10 @@ export async function play(scopes: Sender[], tape: Write[], start: number, nonce
     }
     return { rows, unresolved };
   } finally {
-    for (const s of scopes) delete s.client.onRequest;
+    for (const s of scopes) {
+      delete s.client.onRequest;
+      if (capture) delete s.client.onRequestFailure;
+    }
   }
 }
 

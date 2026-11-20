@@ -4,7 +4,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileHash } from "../measurements.ts";
 import { summaryFiles } from "../source.ts";
-import { checkCell, ratios, type Observation } from "./check.ts";
+import { checkCell, compareCells, type Observation } from "./check.ts";
 import {
   activeSubjects,
   cellKey,
@@ -14,7 +14,6 @@ import {
   field,
   layoutOf,
   repetitions,
-  rates,
   sha,
   task,
 } from "./plan.ts";
@@ -24,6 +23,7 @@ import { verifyWriteOptions, type WriterReadback } from "../../w1/write-options.
 import { read, verifiedOrigin, write } from "./seed.ts";
 import type { Row } from "./writes.ts";
 import type { Request } from "./server.ts";
+import { traceFiles, summarizeCapture } from "./telemetry.ts";
 
 const exists = fs.existsSync;
 const names = [
@@ -46,6 +46,9 @@ const names = [
   "unit.json",
   "writer-expectation.json",
   "writer-readbacks.json",
+  "telemetry-start.json",
+  "telemetry-end.json",
+  "telemetry-error.json",
 ];
 
 export function checkRecorded(dir: string, a: Request & { slot: string; at: number }) {
@@ -70,6 +73,7 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
       preflight.pinnedAccounts === 2 &&
       preflight.scope === "dx-scale-decision-probe-" + a.nonce,
   );
+  if (a.isolation) assert.equal(preflight.stageCaptures, 6);
   assert.deepEqual(read(path.join(dir, "field-options.json")), fieldPolicy(a.mode, true));
   assert.deepEqual(read(path.join(dir, "durability.json")), { settings: "on|on|on" });
   const expectation = read(path.join(dir, "writer-expectation.json"));
@@ -124,7 +128,12 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
   assert.equal(restored.fromTransfer, a.fromTransfer);
   assert.deepEqual(
     restored.origin,
-    verifiedOrigin(path.join(path.dirname(dir), a.from!), restored.identity, a.fromTransfer),
+    verifiedOrigin(
+      path.join(path.dirname(dir), a.from!),
+      restored.identity,
+      a.fromTransfer,
+      a.isolation,
+    ),
   );
   assert.deepEqual(raw.scopes, restored.origin.scopes);
   const peer = restored.gatewayRoles;
@@ -183,8 +192,8 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
   const checks: ReturnType<typeof checkCell>[] = [];
   let scopes = raw.scopes;
   let previousEnd = a.at;
-  for (const r of repetitions(a.layout))
-    for (const c of cellOrder(r, a.layout)) {
+  for (const r of repetitions(a.layout, a.isolation))
+    for (const c of cellOrder(r, a.layout, a.isolation)) {
       const label = cellKey(c, r),
         full = read<Observation>(path.join(dir, label + "-raw.json"));
       const written = read(path.join(dir, label + "-writer.json"));
@@ -195,6 +204,7 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
       assert(
         full.cell === c &&
           full.repeat === r &&
+          full.isolation === a.isolation &&
           full.withReaders === m.withReaders &&
           full.start >= previousEnd &&
           full.start >= readbacks.at,
@@ -204,13 +214,35 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
       assert.deepEqual(full.scopes, written.scopes);
       // Recovery annotates one original issued command. It may not rewrite the measured clock.
       assert.deepEqual(
-        full.writes.map((w) => [w.id, w.due, w.enqueued, w.dispatched, w.sent, w.end]),
-        written.writes.map((w: any) => [w.id, w.due, w.enqueued, w.dispatched, w.sent, w.end]),
+        full.writes.map((w) => [
+          w.id,
+          w.due,
+          w.enqueued,
+          w.dispatched,
+          w.sent,
+          w.end,
+          w.predecessor,
+          w.responseHeaders,
+          w.responseTrace,
+        ]),
+        written.writes.map((w: any) => [
+          w.id,
+          w.due,
+          w.enqueued,
+          w.dispatched,
+          w.sent,
+          w.end,
+          w.predecessor,
+          w.responseHeaders,
+          w.responseTrace,
+        ]),
       );
       const stats = checkCell(full, model);
       const pinRows = read(path.join(dir, label + "-cuts.json"));
       bound(pinRows);
-      assert(pinRows.at >= full.start + cellSeconds(c) * 1000 && pinRows.key === label);
+      assert(
+        pinRows.at >= full.start + cellSeconds(c, a.isolation) * 1000 && pinRows.key === label,
+      );
       assert.deepEqual(
         pinRows.pins,
         stats.cuts.map((c) => ({ ...c, values: [c.before, c.after] })),
@@ -223,21 +255,12 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
       checks.push(stats);
       scopes = scopes.map((s: any) => ({
         ...s,
-        cut: Math.max(s.cut, ...full.feed.filter((x) => x.db === s.db).map((x) => x.position)),
+        cut: full.feed.reduce((cut, x) => (x.db === s.db ? Math.max(cut, x.position) : cut), s.cut),
       }));
-      previousEnd = full.start + cellSeconds(c) * 1000;
+      previousEnd = full.start + cellSeconds(c, a.isolation) * 1000;
     }
-  assert.deepEqual(
-    m.comparisons,
-    (a.layout === "single" ? [] : rates).map((rate) => ({
-      rate,
-      ratios: ratios(
-        checks.filter((r) => r.cell === "alone"),
-        checks.filter((r) => r.cell === rate),
-      ),
-      completeCapacity: checks.filter((r) => r.cell === rate).every((r) => r.capacityBars),
-    })),
-  );
+  assert.deepEqual(m.comparisons, compareCells(checks, a.layout, a.isolation));
+  assert.equal(m.cells.length, checks.length);
 }
 
 export async function packageAttempt(dir: string) {
@@ -256,13 +279,22 @@ export async function packageAttempt(dir: string) {
     ...fs
       .readdirSync(dir)
       .filter((f) =>
-        /^r[01]-(?:alone|35|50|235|394|3p5|4p9|23p5|39p4)-(?:result|resources|cuts)\.json$/.test(f),
+        /^r\d{1,2}-(?:alone|35|50|235|394|3p5|4p9|23p5|39p4)-(?:result|resources|cuts)\.json$/.test(
+          f,
+        ),
       ),
   ];
   let checkError: string | undefined;
   if (unit.result === "success") {
     try {
       checkRecorded(dir, a);
+      if (a.isolation) {
+        const summary = await summarizeCapture(dir, a);
+        const name = "telemetry-summary.json";
+        if (exists(path.join(dir, name))) assert.deepEqual(read(path.join(dir, name)), summary);
+        else write(path.join(dir, name), summary);
+        files.push(name);
+      }
     } catch (e) {
       checkError = String(e);
     }
@@ -319,7 +351,8 @@ export async function packageAttempt(dir: string) {
         name.endsWith("-writer.json") ||
         name.endsWith("-observers.json") ||
         ["initial.json", "observers.log", "seed-progress.jsonl"].includes(name),
-    );
+    )
+    .concat(a.isolation ? traceFiles(dir, a.slot) : []);
   const rawIndex = await Promise.all(
     rawNames.map(async (name) => ({
       name,
@@ -337,9 +370,11 @@ export async function packageAttempt(dir: string) {
       execFileSync(
         "tar",
         ["-I", "zstd -1 -T2", "-cf", packed + ".partial", "-C", dir, ...rawNames],
-        { timeout: 120000 },
+        { timeout: a.isolation ? 900000 : 120000 },
       );
-      execFileSync("zstd", ["-tq", packed + ".partial"], { timeout: 120000 });
+      execFileSync("zstd", ["-tq", packed + ".partial"], {
+        timeout: a.isolation ? 300000 : 120000,
+      });
       fs.renameSync(packed + ".partial", packed);
     }
     actualArchive = {

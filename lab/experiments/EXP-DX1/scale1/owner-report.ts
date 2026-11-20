@@ -34,6 +34,7 @@ type Stage = {
   restored: any;
   decisionResources: any[];
   loaderProgress: any;
+  telemetry: any;
   boundedLatency: { read: any; feedLag: any } | null;
 };
 const load = (dir: string, f: string) =>
@@ -119,8 +120,9 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         decision: load(dir, "measurement.json"),
         restored: load(dir, "restored.json"),
         decisionResources: Object.keys(transfer.summaryFiles).flatMap((name) =>
-          /^r[01]-[a-z0-9]+-resources\.json$/.test(name) ? [load(dir, name)] : [],
+          /^r\d{1,2}-[a-z0-9]+-resources\.json$/.test(name) ? [load(dir, name)] : [],
         ),
+        telemetry: load(dir, "telemetry-summary.json"),
         loaderProgress: load(dir, "seed-progress.json"),
         boundedLatency: boundedLatency(dir, attempt, summary),
       });
@@ -457,7 +459,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       ? `First recorded engine memory-limit kill was in ${emptied.resources.firstObservedEngineOOM.role}, attempt ${emptied.tag}.`
       : refused
         ? `The first capacity refusal was ${refused.tag} on ${refused.attempt.capacity.limits.join(" and ")}. This was an admission estimate.`
-        : "The first shared resource to reach its limit is still unknown.",
+        : "The owner chose one database. The full-size study uses twelve five-minute matched pairs per rate and writer, with GC and save clocks. The pilot and single-account archives lack matched JVM pause logs. [Forecasts](PREDICTIONS.md)",
     archivedWriter ??
       (thresholds.length
         ? "Write-capacity diagnostic. First measured expiry or quiet commit p99 miss by arm " +
@@ -624,7 +626,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "- The single-account comparison checks both fresh attempt identities, the same sealed image hash and identical write-cell inputs. Checkpoint rates verify the attempt, pinned population, per-scope count and sample time before comparing acknowledged progress. Timed cgroup samples bind each named cell. A retry checks the original accepted transfer, image and population. Restored peer checks require the original cut, source and nonce before the same writer clients issue their timed saves.",
     "- " + functionalNote(evidence, path.join(here, "evidence/part4-functional.sha256")),
     "",
-    "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. [Predictions and observations](PREDICTIONS.md) are recorded for each item. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
+    "The isolation gate replays planned dispositions, exact native feed bytes and pinned field cuts for the same attempt. Paired intervals use exact matched tapes and keep failed outcomes in capacity accounting. The capture checks fresh JVM clocks and binds original response roots to durable transaction positions by source, slot, nonce and boot clock. The continuation verifies the accepted seed transfer and restored image content before either policy. No acceptance pin changed. The frozen v3 offer digest remains unchanged. [Predictions](PREDICTIONS.md) · [Handoff](HANDOFF.md)",
   );
   const interference = stages
     .filter(

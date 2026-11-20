@@ -8,10 +8,12 @@ import type { SnapshotData, Frame } from "../../load1/source.ts";
 
 export const profile = "deep-field-decision/1";
 export const singleProfile = "deep-field-single/1";
+export const isolationProfile = "deep-field-isolation/1";
 export const density = [10000, 100000] as const;
 export type Density = (typeof density)[number];
 export type Layout = "pooled" | "split5" | "single";
 export const rates = [35, 50, 235, 394] as const;
+export const pairsPerRate = 12;
 export const accounts = Array.from({ length: 10 }, (_, i) => i);
 export const quiet = 0;
 export const quietRate = 3.5;
@@ -30,13 +32,24 @@ type SingleRate = (typeof singleRates)[number];
 export type Cell = (typeof cells)[number] | SingleRate;
 const singleSeconds = { 3.5: 150, 4.9: 120, 23.5: 300, 39.4: 60 };
 const solo = (cell: Cell): cell is SingleRate => singleRates.includes(cell as SingleRate);
-export const cellSeconds = (cell: Cell) => (solo(cell) ? singleSeconds[cell] : seconds);
-export const readWindow = (cell: Cell | undefined) =>
-  cell !== undefined && solo(cell)
-    ? { from: 7500, duration: cellSeconds(cell) * 1000 - 7500 }
-    : { from: readFromMs, duration: readForMs };
-export const profileFor = (layout: Layout) => (layout === "single" ? singleProfile : profile);
-export const repetitions = (layout: Layout) => (layout === "single" ? [0] : [0, 1]);
+export const cellSeconds = (cell: Cell, isolation = false) =>
+  isolation ? 300 : solo(cell) ? singleSeconds[cell] : seconds;
+export const readWindow = (cell: Cell | undefined, isolation = false) =>
+  isolation
+    ? { from: 0, duration: 300000 }
+    : cell !== undefined && solo(cell)
+      ? { from: 7500, duration: cellSeconds(cell) * 1000 - 7500 }
+      : { from: readFromMs, duration: readForMs };
+export const profileFor = (layout: Layout, isolation = false) =>
+  isolation ? isolationProfile : layout === "single" ? singleProfile : profile;
+export const repetitions = (layout: Layout, isolation = false) =>
+  isolation
+    ? Array.from({ length: pairsPerRate * rates.length }, (_, i) => i)
+    : layout === "single"
+      ? [0]
+      : [0, 1];
+export const quietFor = (repeat: number, isolation = false) =>
+  isolation ? Math.floor(repeat / rates.length) % accounts.length : quiet;
 export const field = (i: number) => ":task/field-" + i;
 export const sha = (x: unknown) => createHash("sha256").update(JSON.stringify(x)).digest("hex");
 // [DX-SCALE1] Why: recovery must resolve the exact operation ID through the gateway's path segment. Rejected: sending a slash-delimited tape key through an encoded path.
@@ -52,8 +65,8 @@ export const layoutOf = (layout: Layout) =>
     : layout === "pooled"
       ? [accounts]
       : [accounts.slice(0, 5), accounts.slice(5)];
-export const reusableSeed = (people: Density, layout: Layout) =>
-  layout === "single" || (layout === "pooled" && people === 10000);
+export const reusableSeed = (people: Density, layout: Layout, isolation = false) =>
+  layout === "single" || (layout === "pooled" && (people === 10000 || isolation));
 export const factsFor = (people: Density) =>
   deepPopulation(people).facts + 2 * people + Math.ceil(people / 256) + 1;
 
@@ -179,23 +192,32 @@ export function activeSubjects(people: Density) {
   return preferred.get(people)!;
 }
 
-function count(cell: Cell, account: number) {
+function count(cell: Cell, account: number, repeat: number, isolation: boolean) {
+  const duration = cellSeconds(cell, isolation);
   if (solo(cell)) return account === 0 ? Math.round(cell * cellSeconds(cell)) : 0;
-  if (account === quiet) return quietRate * seconds;
+  const sentinel = quietFor(repeat, isolation);
+  if (account === sentinel) return quietRate * duration;
   if (cell === "alone") return 0;
-  const others = (cell - quietRate) * seconds;
-  return Math.floor((others + 9 - account) / 9);
+  const others = (cell - quietRate) * duration;
+  const rank = account < sentinel ? account : account - 1;
+  return Math.floor((others + 8 - rank) / 9);
 }
 
 // [DX-SCALE1] Why: fixed per-account offers and jitter are independent of completions. The quiet account replays identical offsets, subjects and widths in each repeat. Rejected: changing its dose when the queue grows.
-export function writeTape(people: Density, cell: Cell, repeat: number): Write[] {
+export function writeTape(people: Density, cell: Cell, repeat: number, isolation = false): Write[] {
   const subjects = activeSubjects(people),
     choose = zipf(people / 50);
   return (solo(cell) ? [0] : accounts)
     .flatMap((account) => {
-      const n = count(cell, account);
+      const n = count(cell, account, repeat, isolation);
       const rng = new Rng(
-        seedOf((solo(cell) ? singleProfile : profile) + "/offers/" + repeat + "/" + account),
+        seedOf(
+          profileFor(solo(cell) ? "single" : "pooled", isolation) +
+            "/offers/" +
+            repeat +
+            "/" +
+            account,
+        ),
       );
       return Array.from({ length: n }, (_, ordinal) => {
         const r = rng.next(),
@@ -205,7 +227,7 @@ export function writeTape(people: Density, cell: Cell, repeat: number): Write[] 
           account,
           ordinal,
           subject: subjects[account]![index]!,
-          ms: (1000 * cellSeconds(cell) * (ordinal + rng.next())) / n,
+          ms: (1000 * cellSeconds(cell, isolation) * (ordinal + rng.next())) / n,
           width: w < 0.8 ? 1 : w < 0.95 ? 2 : 3,
           version: repeat + "/" + cell + "/" + account + "/" + ordinal,
         };
@@ -215,18 +237,24 @@ export function writeTape(people: Density, cell: Cell, repeat: number): Write[] 
 }
 
 export type Read = { seat: number; ordinal: number; subject: number; ms: number };
-export function readTape(people: Density, repeat: number, cell?: Cell, enabled = true): Read[] {
+export function readTape(
+  people: Density,
+  repeat: number,
+  cell?: Cell,
+  enabled = true,
+  isolation = false,
+): Read[] {
   if (!enabled) return [];
   const rng = new Rng(
     seedOf(
-      (cell !== undefined && solo(cell) ? singleProfile : profile) +
+      profileFor(cell !== undefined && solo(cell) ? "single" : "pooled", isolation) +
         "/reads/" +
         repeat +
         "/" +
         people,
     ),
   );
-  const { from, duration } = readWindow(cell);
+  const { from, duration } = readWindow(cell, isolation);
   return Array.from({ length: (readers * duration) / 1000 }, (_, ordinal) => ({
     seat: ordinal % readers,
     ordinal,
@@ -235,20 +263,38 @@ export function readTape(people: Density, repeat: number, cell?: Cell, enabled =
   }));
 }
 
-export const cellOrder = (repeat: number, layout: Layout = "pooled"): Cell[] =>
-  layout === "single"
-    ? [...singleRates]
-    : repeat === 0
-      ? [...cells]
-      : ["alone", ...[...rates].reverse()];
+// [DX-SCALE1] Why: each rate gets one pair per round and six of each order.
+// Rejected: using one shared early control for four later loads.
+function isolationPair(repeat: number): Cell[] {
+  const round = Math.floor(repeat / rates.length);
+  const order = [...rates];
+  const shuffle = new Rng(seedOf(isolationProfile + "/round/" + round));
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(shuffle.next() * (i + 1));
+    [order[i], order[j]] = [order[j]!, order[i]!];
+  }
+  const rate = order[repeat % rates.length]!;
+  const direction = new Rng(seedOf(isolationProfile + "/order/" + rate + "/" + (round >> 1)));
+  return direction.next() < 0.5 === (round % 2 === 0) ? ["alone", rate] : [rate, "alone"];
+}
+export const cellOrder = (repeat: number, layout: Layout = "pooled", isolation = false): Cell[] =>
+  isolation
+    ? isolationPair(repeat)
+    : layout === "single"
+      ? [...singleRates]
+      : repeat === 0
+        ? [...cells]
+        : ["alone", ...[...rates].reverse()];
 export const cellKey = (cell: Cell, repeat: number) =>
   "r" + repeat + "-" + String(cell).replace(".", "p");
-export const workloadPins = (people: Density, layout: Layout = "pooled") =>
+export const workloadPins = (people: Density, layout: Layout = "pooled", isolation = false) =>
   Object.fromEntries(
-    repetitions(layout).flatMap((r) => [
+    repetitions(layout, isolation).flatMap((r) => [
       ...(layout === "single"
         ? singleRates.map((c) => ["read/" + c, sha(readTape(people, r, c))] as const)
-        : [["read/" + r, sha(readTape(people, r))] as const]),
-      ...cellOrder(r, layout).map((c) => [cellKey(c, r), sha(writeTape(people, c, r))] as const),
+        : [["read/" + r, sha(readTape(people, r, undefined, true, isolation))] as const]),
+      ...cellOrder(r, layout, isolation).map(
+        (c) => [cellKey(c, r), sha(writeTape(people, c, r, isolation))] as const,
+      ),
     ]),
   );

@@ -2,6 +2,8 @@
 
 Reviewed SCALEAUDIT against `dca84ad5c` and the live attempt on `a4b2331e9`. I found no material error in the five assigned findings. Two qualifications matter for interpreting the archived result.
 
+The November 20 decision supersedes the comparative layout proposal below. The full-size seed stays pooled. Twelve longer matched pairs per rate and policy replace the two short repeats. An exact 620/s trial remains a separate headroom measurement.
+
 | Finding | What the original code does | Decision study |
 | --- | --- | --- |
 | 1 | `tenants.ts:28–43,287–306` gives the old field-rate arm ten 10,000-person accounts and admits item 5 only in one database. `tenant-traffic.ts:101–151` restricts that field-rate tape to the smaller study. | A distinct profile runs ten 100,000-person accounts on the same logical evidence in one or two databases. It builds the split only after the one-database decision arm. Both outcomes are deep-only capacity measurements. Full mixed residents, import and failover require their own evidence before choosing production placement. |

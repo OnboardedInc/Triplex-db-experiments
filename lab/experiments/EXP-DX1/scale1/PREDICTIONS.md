@@ -1,5 +1,24 @@
 # Predictions for the remaining deep-account campaign
 
+## November 20 one-database isolation run
+
+The owner chose one Datomic database. The two-database forecast below is historical. The replacement timings restore the same 162,456,470-fact image for each writer policy. Each rate gets twelve matched five-minute pairs and 12,600 planned sentinel saves on each side. The sentinel offers 3.5/s. There are 64 seats with 19,200 read offers per window. Each rate is tested once per round, with the ten accounts taking turns as sentinel and six pairs in each condition order. Windows use new frozen phases and share the same write intent and read tape within each pair. Natural indexing and GC remain in the workload. The 394/s cell sustains peak-minute demand for five minutes.
+
+Forecasts below give in-window durable saves/s, completed p50/p99 in ms, then quiet save p99 relative to alone. The current writer and WFIX1 prepared grouping are incumbent cases. The design study's 28 ms and 1.07× at 394/s forecasts refer to its proposed writer. The small audited pilot puts the incumbent outside that range. Five-minute windows can increase queue depth and capture more pauses than the pilot.
+
+| Cell | Current individual writer | WFIX1 prepared grouping |
+| --- | --- | --- |
+| ISO 35 | 34.5–35/s, 6–12 / 70–300 ms, 1.8–4.8×. Zero expiry. | 34.5–35/s, 5–11 / 65–250 ms, 1.6–4.5×. Zero expiry. |
+| ISO 50 | 49–50/s, 6–15 / 70–450 ms, 1.9–6.5×. Zero expiry. | 49–50/s, 5–14 / 65–500 ms, 1.7–6.0×. Zero expiry. |
+| ISO 235 | 125–185/s, 8,000–25,000 / 22,000–35,000 ms, 5–22×. Expect 5–40% expiry and over 1 s drain. | 155–231/s, 40–17,000 / 1,000–35,000 ms, 3–16×. Expect 0–32% expiry. |
+| ISO 394 | 125–190/s, 12,000–30,000 / 25,000–36,000 ms, 9–35×. Expect 30–65% expiry. | 185–285/s, 5,000–28,000 / 18,000–36,000 ms, 5–25×. Expect 12–53% expiry and 15–40 s drain. |
+
+Alone expect 3.48–3.50/s, p50 4–10 ms and p99 25–80 ms. For the load expect read/feed p99 ratios of 1.0–1.7× at 35–50/s, and 1.2–5× at 235–394/s. The primary interval uses 10,000 whole-pair resamples. A two-pair block sensitivity and leave-one-pair-out range show the effect of clustered pauses. I expect log-ratio SE of 0.08–0.20. The 1.25×/2× distinction stays unresolved if both values fit the paired intervals. The three upper limits use a 5% family error budget.
+
+The active pooled seed and one verification/export cost roughly 14 hours. Two policies cost 16 rated hours, roughly 2.7 hours of restores, and about 1.5–3.5 hours of preflight, drain, checks and telemetry packaging. The campaign estimate from pilot launch is 34–38 hours at USD 1.09/h (USD 37.06–41.42). The original 40-hour guard caps spend at USD 43.60. Either arm has an 11.5-hour native ceiling. The 620/s headroom arm, mixed wide/small residents, imports, release, and aged-database effects need other cells.
+
+## Earlier forecasts
+
 These forecasts were recorded during the 10,000-person reader retry and before items 2–5. Engineering ranges below are predictions. The measured tables use the existing sample counts and 90% intervals. Item 1 already had two completed zero-reader measurements, so it has no retrospective prediction.
 
 | Item | Forecast before execution | Observation |

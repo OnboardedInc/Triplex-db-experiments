@@ -12,6 +12,7 @@ type Trial = {
   restored?: any;
   loaderProgress?: any;
   decisionResources?: any[];
+  telemetry?: any;
 };
 const roles = ["tx", "pg", "gw-w", "gw-r"] as const;
 const sameAttempt = (a: any, x: any) =>
@@ -205,6 +206,27 @@ function recordPredictions(dir: string, trials: Trial[]) {
         );
       continue;
     }
+    if (a.isolation) {
+      for (const comparison of measurement.comparisons) {
+        const rate = comparison.rate;
+        const cells = measurement.cells.filter((c: any) => c.cell === rate);
+        assert.equal(cells.length, 12);
+        const total = (field: string) => cells.reduce((n: number, c: any) => n + c[field], 0);
+        writeRow(
+          "ISO " + rate,
+          a.mode === "prepared" ? 3 : 2,
+          fmt(total("inWindow") / total("seconds")) +
+            "/s (n=" +
+            total("inWindow") +
+            "), " +
+            total("preDispatchExpiry") +
+            " pre-dispatch expiries, quiet save p99 " +
+            ratio(comparison.ratios[0]) +
+            ". [Cell results](DECISION-RESULTS.md)",
+        );
+      }
+      continue;
+    }
     const column =
       a.people === 10000 ? 2 : (a.layout === "pooled" ? 3 : 5) + Number(a.mode === "prepared");
     for (const comparison of measurement.comparisons) {
@@ -241,9 +263,9 @@ export function placementReport(dir: string, trials: Trial[]) {
   const lines = [
     "# Decision cells",
     "",
-    "Offered rate and goodput use the same rated interval. Capacity comparisons use 90-second cells. The single account uses 150, 120, 300 and 60 seconds at 3.5, 4.9, 23.5 and 39.4/s respectively, from the same restored image with and without a 600-second reader dose. p50 and p99 use original durable acknowledgements. Expiry is before SDK dispatch. Socket timestamps cover successful HTTP responses. The placement sentinel keeps 3.5/s and replays 64 identical pinned reader seats in the quiet control and loaded cells. Every durable feed change is checked.",
+    "Offered rate and goodput use the same rated interval. The historical pilot uses 90-second cells. The full-size one-database study uses 12 five-minute pairs per rate and writer policy. The single account uses 150, 120, 300 and 60 seconds at 3.5, 4.9, 23.5 and 39.4/s, from the same image with and without a 600-second reader dose. p50 and p99 use original durable acknowledgements. Expiry is before SDK dispatch. The sentinel keeps 3.5/s and replays 64 pinned reader seats in both conditions. Every durable feed change is checked.",
     "",
-    "The primary budget requires p50 ≤10 ms, p99 ≤50 ms, all primary dispositions exact with no expiry, rejection or missing offers, at least 99% of ACKs in the window and at most 1 s of drain. A quiet comparison requires 500 observations on each side and p99 ≤1.25× for saves, pinned reads and feed lag. The two layouts share one PostgreSQL, transactor JVM, physical cores and gateways. The two-database layout has two native commit pipelines inside that JVM.",
+    "The primary budget requires p50 ≤10 ms, p99 ≤50 ms, all primary dispositions exact with no expiry, rejection or missing offers, at least 99% of ACKs in the window and at most 1 s of drain. The quiet p99 bar is ≤1.25× for saves, pinned reads and feed lag. November 20 ruling uses one database. Full-size paired intervals preserve five-minute windows, with adjacent-pair blocks as sensitivity.",
     "",
   ];
   const pooled: { tag: string; mode: string; people: number; summary: any }[] = [];
@@ -315,7 +337,7 @@ export function placementReport(dir: string, trials: Trial[]) {
     assert(
       d.mode === a.mode &&
         d.from === a.from &&
-        d.cells.length === (a.layout === "single" ? 4 : 10) &&
+        d.cells.length === (a.isolation ? 96 : a.layout === "single" ? 4 : 10) &&
         d.comparisons.length === (a.layout === "single" ? 0 : 4),
     );
     lines.push(
@@ -354,7 +376,7 @@ export function placementReport(dir: string, trials: Trial[]) {
     if (a.layout !== "single")
       lines.push(
         "",
-        "| Offered/s | Quiet save ratio | Quiet read ratio | Quiet feed ratio | Both absolute cells within budget |",
+        "| Offered/s | Quiet save ratio | Quiet read ratio | Quiet feed ratio | All loaded cells within absolute budget |",
         "| ---: | --- | --- | --- | --- |",
       );
     for (const c of d.comparisons)
@@ -363,10 +385,71 @@ export function placementReport(dir: string, trials: Trial[]) {
           [c.rate, ...c.ratios.map(ratio), c.completeCapacity ? "yes" : "no"].join(" | ") +
           " |",
       );
+    if (a.isolation) {
+      lines.push(
+        "",
+        "| Offered/s | Metric | Paired p99 ms loaded / alone | Paired 90% | Adjacent-pair 90% | Log SE | Leave-one-pair-out | Compatible with 1.25 / 2 | All three upper limits ≤1.25 |",
+        "| ---: | --- | --- | --- | --- | ---: | --- | --- | --- |",
+      );
+      const interval = (p: any) => (p ? "[" + fmt(p.low) + ", " + fmt(p.high) + "]" : "unmeasured");
+      for (const c of d.comparisons)
+        for (const [i, r] of c.ratios.entries()) {
+          const p = r.paired;
+          lines.push(
+            "| " +
+              [
+                c.rate,
+                ["save", "read", "feed"][i],
+                p ? fmt(p.loadedP99) + " / " + fmt(p.aloneP99) : "unmeasured",
+                interval(p?.primary),
+                interval(p?.longer),
+                fmt(p?.primary.logSE),
+                p ? p.leaveOnePairOut.map((x: number) => fmt(x)).join("–") : "unmeasured",
+                p
+                  ? [p.compatibleWith125, p.compatibleWith200]
+                      .map((b) => (b ? "yes" : "no"))
+                      .join(" / ")
+                  : "unmeasured",
+                p ? (c.family95Within125 ? "yes" : "no") : "unmeasured",
+              ].join(" | ") +
+              " |",
+          );
+        }
+      const telemetry = t.telemetry;
+      assert(sameAttempt(a, telemetry));
+      lines.push(
+        "",
+        "Effective JVMs from the restored process startup logs.",
+        "",
+        "| JVM | Collector | Available cores | Captured pauses |",
+        "| --- | --- | ---: | ---: |",
+      );
+      for (const [role, j] of Object.entries(telemetry.jvms as Record<string, any>))
+        lines.push("| " + [role, j.collector, j.activeProcessors, j.pauses].join(" | ") + " |");
+      lines.push(
+        "",
+        "| Cell | HTTP trace / native completion joined | ACKs |",
+        "| --- | ---: | ---: |",
+      );
+      for (const c of d.cells) {
+        const capture = telemetry.cells[c.label];
+        assert.equal(capture.acked, c.acked);
+        lines.push(
+          "| " +
+            [c.label, capture.gatewayJoined + " / " + capture.nativeJoined, c.acked].join(" | ") +
+            " |",
+        );
+      }
+      lines.push(
+        "",
+        "Absolute GC logs and per-save offer, socket, gateway, native and reply clocks are in the raw archive. The compact capture gives every join denominator and keeps seven ranked quiet saves per window. Missing joins leave that stage unmeasured. Native entry uses a millisecond transaction stamp.",
+        "",
+      );
+    }
     lines.push("");
     lines.push(
-      "| Cell | SDK timer p99 ms | Admission p99 ms | Request send p99 ms | Gateway queue p99 ms | Native entry p99 ms | Native compute p99 ms | Logical saves / native tx |",
-      "| --- | --- | --- | --- | --- | --- | --- | --- |",
+      "| Cell | SDK timer p99 ms | Admission p99 ms | Request send p99 ms | Gateway queue p99 ms | Preparation p99 ms | Native entry p99 ms | Native compute p99 ms | Logical saves / native tx |",
+      "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
     );
     for (const c of d.cells)
       lines.push(
@@ -378,6 +461,7 @@ export function placementReport(dir: string, trials: Trial[]) {
               "admission",
               "requestSend",
               "gatewayQueue",
+              "preparation",
               "nativeEntry",
               "nativeCompute",
             ].map((k) => metric(c.stages?.[k], "p99")),
