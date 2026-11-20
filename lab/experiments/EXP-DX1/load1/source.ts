@@ -56,7 +56,7 @@ export function* frames(
   subjects: number,
   width: number,
   first = 0,
-): Generator<Frame> {
+): Generator<Frame, void> {
   assert(
     Number.isSafeInteger(subjects) &&
       subjects > 0 &&

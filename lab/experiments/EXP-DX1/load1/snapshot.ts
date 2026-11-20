@@ -23,14 +23,22 @@ export class Snapshot {
   readonly binding: string;
   readonly source: string;
   readonly scope: string;
+  readonly comp: CompositionHandle;
+  readonly shape: Shape;
+  readonly subjects: number;
+  readonly width: number;
   private constructor(
-    readonly comp: CompositionHandle,
-    readonly shape: Shape,
-    readonly subjects: number,
-    readonly width: number,
+    comp: CompositionHandle,
+    shape: Shape,
+    subjects: number,
+    width: number,
     file: string,
   ) {
     assert(comp.scopeName && comp.backend.name === "datomic");
+    this.comp = comp;
+    this.shape = shape;
+    this.subjects = subjects;
+    this.width = width;
     this.scope = comp.scopeName;
     this.source = sourceId(shape, subjects);
     this.binding = sha(JSON.stringify([this.scope, this.source, width]));
