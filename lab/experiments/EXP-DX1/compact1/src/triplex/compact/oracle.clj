@@ -73,8 +73,10 @@
                             {:from (nth metadata 2) :release (nth metadata 3) :tx position}))]
       (assert (= (mapv :position feed) (vec (range 1 (inc final)))))
       (assert (= (mapv :command feed) (mapv #(str "case-" %) (range 1 (inc final)))))
-      (floor/emit "oracle-case" {:case id :op op :position final :validTime valid :nativeT (d/basis-t latest)
-                                 :pinned (read-all :pinned) :current (read-all :current) :activations activations}))))
+      (let [row {:case id :op op :position final :validTime valid :nativeT (d/basis-t latest)
+                 :pinned (read-all :pinned) :current (read-all :current) :activations activations}]
+        (floor/emit "oracle-case" row)
+        row))))
 
 (defn rejected? [code f]
   (try (f) false (catch clojure.lang.ExceptionInfo e (= code (:code (ex-data e))))))

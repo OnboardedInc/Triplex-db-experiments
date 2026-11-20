@@ -2,7 +2,7 @@
 // [DX-COMPACT1] Why: reserve the three live processes against one exclusive lab slot.
 // Rejected: attaching a retained volume or running an unbudgeted Docker stack.
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
@@ -28,10 +28,10 @@ function capture(args, file, signal) {
   });
 }
 
-function copySources(dir, phase) {
+function copySources(dir, phase, tree = REPO) {
   const sources = {};
   const copy = (relative, target) => {
-    const from = path.join(REPO, relative);
+    const from = path.join(tree, relative);
     if (fs.statSync(from).isDirectory()) {
       for (const name of fs.readdirSync(from).sort()) copy(path.join(relative, name), path.join(target, name));
       return;
@@ -52,7 +52,7 @@ function copySources(dir, phase) {
     copy("packages/datomic/gateway/src", "src");
     copy("packages/datomic/src/codec-spec.json", "codec-spec.json");
     copy("lab/world/W0/schema.json", "schema.json");
-    if (phase === "prototype") {
+    if (phase === "prototype" || phase === "surface") {
       copy("lab/world/W0/cases", "cases");
       for (const name of ["client.ts", "sdk-check.ts", "gate.ts"]) copy(path.join(experiment, name), name);
       // [DX-COMPACT1] Why: run Python against the same immutable source input as both readers.
@@ -62,6 +62,24 @@ function copySources(dir, phase) {
     }
   }
   return sources;
+}
+
+function pinnedSources(dir, phase, commit) {
+  // [DX-COMPACT1] Why: an admitted attempt must use the named revision even if the worktree advanced while queued.
+  // Rejected: attaching the current working tree after a long semaphore wait.
+  const tree = fs.mkdtempSync(path.join(dir, "stage-"));
+  try {
+    const args = ["archive", "--format=tar", commit, path.relative(REPO, import.meta.dirname), "lab/bin/engine.mjs"];
+    if (phase !== "floor") args.push("packages/datomic/gateway/src", "packages/datomic/src/codec-spec.json", "lab/world/W0");
+    if (phase === "prototype" || phase === "surface") args.push("lab/bench/lib/w0-oracle.py", "lab/oracles/domain/w0.py", "lab/oracles/domain/jsontok.py");
+    const archive = spawnSync("git", args, { cwd: REPO, maxBuffer: 32 * MiB });
+    assert.equal(archive.status, 0, archive.stderr?.toString());
+    const unpack = spawnSync("tar", ["-xf", "-", "-C", tree], { input: archive.stdout });
+    assert.equal(unpack.status, 0, unpack.stderr?.toString());
+    return copySources(dir, phase, tree);
+  } finally {
+    fs.rmSync(tree, { recursive: true, force: true });
+  }
 }
 
 async function measureLock(root, prefix, signal) {
@@ -98,7 +116,7 @@ export async function runCompactProbe(opts, config, manager) {
   const phase = opts.run;
   const profile = opts.profile ?? "baseline";
   const loadPeople = Number(opts.people ?? "2000");
-  assert(["floor", "layout", "prototype", "benchmark", "load"].includes(phase));
+  assert(["floor", "layout", "prototype", "benchmark", "load", "surface"].includes(phase));
   assert(["baseline", "large-index", "parallel-index"].includes(profile));
   assert(opts.people === undefined || (phase === "load" && [2000, 100000].includes(loadPeople)));
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
@@ -110,9 +128,9 @@ export async function runCompactProbe(opts, config, manager) {
   const dir = path.join(parent, opts.out);
   fs.mkdirSync(dir);
   const write = (file, data) => fs.writeFileSync(path.join(dir, file), JSON.stringify(data, null, 2) + "\n", { flag: "wx" });
-  const sourceCommit = git(["rev-parse", "HEAD"]);
-  const sources = copySources(dir, phase);
-  assert.equal(git(["rev-parse", "HEAD"]), sourceCommit);
+  assert(!opts.source || /^[a-f0-9]{40}$/.test(opts.source));
+  const sourceCommit = git(["rev-parse", "--verify", (opts.source ?? "HEAD") + "^{commit}"]);
+  const sources = pinnedSources(dir, phase, sourceCommit);
   const sourceHash = sha256(JSON.stringify(sources));
   const attempt = randomUUID();
   const prefix = "tx2-dxcompact-" + attempt.slice(0, 12);
@@ -265,7 +283,7 @@ export async function runCompactProbe(opts, config, manager) {
       owner: sha256(fs.readFileSync(slot.ownerFile)), startedAt: new Date().toISOString(),
     };
     write("binding.json", binding);
-    const namespace = phase === "floor" ? "triplex.compact.floor" : "triplex.compact.probe";
+    const namespace = ["floor", "surface"].includes(phase) ? "triplex.compact." + phase : "triplex.compact.probe";
     const invoke = (step, file, args = []) =>
       capture(["exec", peerId, "/opt/datomic/bin/run", "-m", namespace, step, ...args], path.join(dir, file), abort.signal);
     if (phase !== "prototype") await invoke(phase, "probe.log", phase === "load" ? [String(loadPeople)] : []);

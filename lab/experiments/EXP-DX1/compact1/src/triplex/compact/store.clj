@@ -2,11 +2,12 @@
   (:require [clojure.data.json :as json]
             [clojure.edn :as edn]
             [clojure.string :as str]
-            [datomic.api :as d])
+            [datomic.api :as d]
+            [triplex.compact.journal-rows :as journal])
   (:import [java.nio.charset StandardCharsets]
            [java.security MessageDigest SecureRandom]
            [java.time Instant LocalDate]
-           [java.util Arrays Base64 HexFormat LinkedHashMap]
+           [java.util Arrays Base64 HexFormat LinkedHashMap UUID]
            [javax.crypto Cipher]
            [javax.crypto.spec GCMParameterSpec SecretKeySpec]))
 
@@ -35,6 +36,7 @@
 (def schema
   [(attr :compact/account :db.type/string :db.unique/identity)
    (attr :compact/epoch :db.type/long)
+   (attr :compact/source :db.type/string)
    (attr :compact/subject :db.type/string :db.unique/identity)
    (attr :compact/head :db.type/ref)
    (attr :compact/erased :db.type/long)
@@ -58,7 +60,7 @@
   (let [wall (* 1000 (System/currentTimeMillis))
         accounts (volatile! {}) subjects (volatile! {})
         claims (volatile! #{}) ops (transient [])]
-    (doseq [[idx {:keys [account root command expected body kind expected-account protected]}] (map-indexed vector requests)]
+    (doseq [[idx {:keys [account root command expected body kind expected-account protected journal-rows]}] (map-indexed vector requests)]
       (let [command-key (compound account command)]
         (when-not (or (@claims command-key) (lookup db :compact/command command-key))
           (let [a (or (@accounts account)
@@ -84,6 +86,8 @@
                   (conj! ops [:db/add sid :compact/subject subject-key]))
                 (conj! ops {:db/id event :compact/command command-key :compact/position (position-key account p)
                             :compact/subject-ref sid :compact/recorded clock :compact/body body})
+                (when journal-rows
+                  (conj! ops (assoc (journal/transaction account command p clock journal-rows) :db/id event)))
                 (when (:previous prior)
                   (conj! ops [:db/add event :compact/previous (:previous prior)]))
                 (when (= kind "erase") (conj! ops [:db/add sid :compact/erased clock]))))))))
@@ -106,8 +110,15 @@
         installed (value db (d/entid db :compact/append-v1) :db/fn)]
     ;; [DX-COMPACT1] Why: compare the installed function's actual signature and executable form.
     ;; Rejected: equality of JVM object strings or presence of an ident alone.
-    (require! (= (function-spec (:db/fn (peek schema))) (function-spec installed)) :UnexpectedAppendFunction))
-  (tx! conn (mapv #(hash-map :compact/account % :compact/epoch 0) accounts)))
+    (require! (= (function-spec (:db/fn (peek schema))) (function-spec installed)) :UnexpectedAppendFunction)
+    (require! (not-any? #(account-id db %) accounts) :AccountAlreadyProvisioned)
+    (when (seq accounts)
+      (let [source (str (UUID/randomUUID))]
+        (tx! conn (mapv #(hash-map :compact/account % :compact/epoch 0 :compact/source source) accounts))))))
+
+(defn with-journal! [store]
+  (tx! (:conn store) journal/schema)
+  (assoc store :journal? true))
 
 (defn layout []
   (let [world (json/read-str (slurp (or (System/getenv "COMPACT_W0_SCHEMA") "/compact/schema.json")))
@@ -323,6 +334,32 @@
 (defn revision [db account root]
   (position db (head db (subject-id db account root))))
 
+(defn time-ms [s]
+  (when s
+    (let [t (Instant/parse s)]
+      (+ (* 1000.0 (.getEpochSecond t)) (/ (.getNano t) 1000000.0)))))
+
+(defn journal-fact [account root [suffix code value from to]]
+  (let [entity (str root suffix)
+        attr (attribute code)
+        type (get (config entity attr) "type")
+        typed (cond
+                (protected? value) {:type "json" :value {:protected true}}
+                (= type "ref") {:type "ref" :value (str "acct/" account "/" value)}
+                (= type "instant") {:type "datetime" :value (time-ms value)}
+                (integer? value) {:type "number" :value value}
+                (boolean? value) {:type "boolean" :value value}
+                :else {:type "string" :value value})]
+    {:entity (str "acct/" account "/" entity) :entityType (kind-of entity) :attribute attr
+     :value typed :from (time-ms from) :to (time-ms to)}))
+
+(defn journal-plan [account root projection encoded retires]
+  {:adds (mapv #(journal-fact account root %) encoded)
+   :retires (mapv (fn [id]
+                    (let [{:keys [suffix code value from to recorded]} (get-in projection [:facts id])]
+                      (assoc (journal-fact account root [suffix code value from to]) :id id :recorded recorded)))
+                  retires)})
+
 (defn prepare [store db {:keys [account root command expected adds retires meta]}]
   (require! (and (string? account) (re-matches #"[a-z0-9-]{1,32}" account)
                  (string? command) (re-matches #"[a-zA-Z0-9_-]{1,64}" command)
@@ -365,8 +402,9 @@
               body (canonical [1 fingerprint encoded retires meta])]
           (when projection (validate-delta! projection encoded retires root))
           (require! (<= (utf8 body) 65536) :FrameTooLarge)
-          (assoc request :body body :expected-account (when (= kind "publish") (second meta))
-                 :protected (boolean (some #(protected? (nth % 2)) encoded))))))))
+          (cond-> (assoc request :body body :expected-account (when (= kind "publish") (second meta))
+                         :protected (boolean (some #(protected? (nth % 2)) encoded)))
+            (:journal? store) (assoc :journal-rows (journal-plan account root projection encoded retires))))))))
 
 (defn no-new-members? [error]
   (some (fn [cause]
