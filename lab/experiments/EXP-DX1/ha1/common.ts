@@ -31,6 +31,8 @@ export const modes = [
   "load-quiet",
   "load-live",
   "load-tail",
+  "load-frontier-low",
+  "load-frontier-high",
 ] as const;
 export type Mode = (typeof modes)[number];
 export const roles = {
@@ -45,7 +47,7 @@ export const roles = {
 export type Role = keyof typeof roles;
 // [DX-LOAD1] Why: peak-rate arms keep several fresh databases in one transactor process. Rejected: reusing the 560 MiB failure-drill cap after a measured cgroup OOM.
 export function localRoleMiB(mode: Mode, role: Role) {
-  if (mode === "load-tail") {
+  if (mode === "load-tail" || mode.startsWith("load-frontier-")) {
     if (role === "active") return 1024;
     if (role === "tool") return 96;
   }

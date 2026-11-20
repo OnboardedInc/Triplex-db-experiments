@@ -8,6 +8,7 @@ import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { frames, sha, sourceId } from "./source.ts";
 import { Snapshot } from "./snapshot.ts";
+import { maxBulkFacts, SerialBudget } from "./budget.ts";
 import { ack, record, type Seen } from "./oracle.ts";
 
 type Sample = {
@@ -62,12 +63,19 @@ export async function live(
   dir: string,
   arm: string,
   server: boolean,
-  traceTail = false,
+  mode = "load-live",
 ) {
-  assert([50, 235, 390].includes(rate));
-  const width = Number(arm.split("-")[1]),
-    duration = (traceTail ? 108 : server ? 60 : 12) * 1000,
-    subjects = server || traceTail ? 100000 : 20000;
+  const traceTail = mode === "load-tail",
+    frontier = mode.startsWith("load-frontier-");
+  assert((frontier ? [50, 100] : [50, 235, 390]).includes(rate));
+  const cell = arm.split("-")[1],
+    width = frontier && cell !== "0" ? maxBulkFacts : Number(cell),
+    duration = (traceTail || frontier ? 108 : server ? 60 : 12) * 1000,
+    subjects = server || traceTail || frontier ? 100000 : 20000;
+  const budget =
+    frontier && width
+      ? new SerialBudget(Number(cell === "allowance" ? process.env.DX_LOAD2_ALLOWANCE_MS : cell))
+      : undefined;
   const samples: Sample[] = [];
   type Native = {
     command: string;
@@ -81,9 +89,16 @@ export async function live(
     queueUs?: number;
     toEntryMs?: number;
     serialHold?: { start: number; end: number };
+    frameSize?: { rows: number; bytes: number };
     recovered?: true;
   };
   const native = new Map<string, Native>();
+  const byCommand = new Map<string, Native>();
+  const retain = (n: Native) => {
+    assert(!byCommand.has(n.command) || byCommand.get(n.command)?.op === n.op);
+    native.set(n.op, n);
+    byCommand.set(n.command, n);
+  };
   const attempted = new Map<string, { command: string; submit: number }>();
   let invalidReceipt: unknown;
   const expectedDb =
@@ -103,7 +118,7 @@ export async function live(
       assert(reply.bulkGrant && reply.bulkGrant.bulk === bulk);
       if (bulk) assert(!reply.bulkGrant["runnable-live"] && reply.groupSize === 1);
       assert(Number.isSafeInteger(reply.groupSize) && reply.groupSize >= 1 && reply.groupSize <= 8);
-      native.set(input.operationId, {
+      retain({
         command,
         op: reply.operationId,
         t: String(reply.t.v),
@@ -113,6 +128,7 @@ export async function live(
         queueUs: reply.groupQueueMicros,
         toEntryMs: reply.submitToNativeEntryMs,
         serialHold: reply.serialHold,
+        frameSize: reply.frameSize,
         submit: start,
         end: performance.now(),
       });
@@ -137,7 +153,7 @@ export async function live(
         );
         const p = Number(result.position.v);
         assert(Number.isSafeInteger(p) && p > 0 && BigInt(result.t.v) > 0n);
-        native.set(id, {
+        retain({
           ...sent,
           op: id,
           t: String(result.t.v),
@@ -157,19 +173,54 @@ export async function live(
     comp,
     "thin",
     subjects,
-    Math.max(width, 128),
+    budget ? maxBulkFacts : Math.max(width, 128),
     path.join(dir, arm + ".sqlite"),
+    budget ? { budgetMs: budget.ms } : undefined,
   );
   try {
-    const seed = save("quiet", 0, true),
-      initial = await quiet.transact(seed.frame.operations, seed.meta);
-    if (!initial.ok) throw Error(initial.tag);
-    const pin = ack(seed.frame, initial.value),
-      pinRow = initial.value.triples[0]!;
+    const checks = new Map<string, Seen>();
+    const writer = (actor: string) => (actor === "quiet" ? quiet : comp);
+    const pins = new Map<
+      string,
+      { receipt: Seen; row: import("../../../bench/lib/composition.ts").Receipt["triples"][number] }
+    >();
+    for (const actor of [
+      "quiet",
+      ...Array.from({ length: frontier ? 10 : 0 }, (_, i) => "live" + i),
+    ]) {
+      const seed = save(actor, 0, true);
+      const initial = await writer(actor).transact(seed.frame.operations, seed.meta);
+      if (!initial.ok) throw Error(initial.tag);
+      const receipt = ack(seed.frame, initial.value);
+      checks.set(seed.meta.commandId, receipt);
+      pins.set(actor, { receipt, row: initial.value.triples[0]! });
+    }
+    const measure = (command: string) => {
+      const measured = byCommand.get(command);
+      assert(measured?.serialHold && measured.frameSize);
+      const { serialHold, frameSize } = measured;
+      assert(
+        frameSize.rows > 0 &&
+          frameSize.rows <= 96 &&
+          frameSize.bytes > 0 &&
+          frameSize.bytes <= 65536,
+      );
+      return { ms: serialHold.end - serialHold.start, ...frameSize };
+    };
+    const pilots = [];
+    if (budget) {
+      for (let i = 0; i < 8; i++) {
+        const f = importer.nextFrame(1);
+        assert(f);
+        const e = await importer.write(f);
+        const v = measure(e.command);
+        budget.observe(e.facts, v.ms);
+        pilots.push({ command: e.command, position: e.position, facts: e.facts, ...v });
+      }
+    }
     const clockBefore = traceTail ? await sampleClock() : undefined;
     const start = performance.now(),
       end = start + duration;
-    const checks = new Map<string, Seen>([[seed.meta.commandId, pin]]);
     let inFlight = 0,
       quietInFlight = 0,
       bulkInFlight = 0,
@@ -200,7 +251,8 @@ export async function live(
       else inFlight++;
       const work = (async () => {
         if (kind === "read") {
-          const r = await quiet.pull(pinRow.entityId, {
+          const { receipt: pin, row: pinRow } = pins.get(actor)!;
+          const r = await writer(actor).pull(pinRow.entityId, {
             recordedPosition: pin.position,
             recordedAt: pin.instant,
             validAt: SEED_VALID_FROM,
@@ -230,7 +282,7 @@ export async function live(
           s.outcome = "verified";
         } else {
           const { frame, meta } = save(actor, seq),
-            h = sentinel ? quiet : comp;
+            h = writer(actor);
           const out = await h.transact(frame.operations, meta);
           if (!out.ok) {
             s.outcome = out.tag;
@@ -253,10 +305,18 @@ export async function live(
         });
       pending.add(work);
     }
+    let budgetStopped = false;
     const bulk = (async () => {
       if (!width) return;
-      for (const f of frames("thin", subjects, width)) {
-        if (performance.now() >= end) break;
+      const fixed = frames("thin", subjects, width);
+      while (performance.now() < end) {
+        const limit = budget?.next();
+        if (budget && limit === undefined) {
+          budgetStopped = true;
+          break;
+        }
+        const f = budget ? importer.nextFrame(limit!) : fixed.next().value;
+        if (!f) break;
         const offered = performance.now();
         bulkInFlight++;
         peakBulk = Math.max(peakBulk, bulkInFlight);
@@ -265,6 +325,8 @@ export async function live(
         const done = performance.now();
         if (done <= end) factsInWindow += entry.facts;
         completedBulk += entry.facts;
+        const service = budget ? measure(entry.command) : undefined;
+        if (service) budget!.observe(entry.facts, service.ms);
         ordered.push({
           first: f.first,
           end: f.end,
@@ -273,24 +335,30 @@ export async function live(
           facts: entry.facts,
           offer: offered - start,
           ack: done - start,
+          service,
         });
       }
     })().catch((e) => {
       fatal ??= e;
     });
     let noisy = 0,
+      read = 0,
       q = 0;
     const nNoisy = Math.floor((rate * duration) / 1000),
-      nQuiet = Math.floor((5 * duration) / 1000);
-    while (noisy < nNoisy || q < nQuiet) {
+      nQuiet = Math.floor((5 * duration) / 1000),
+      nReads = frontier ? 10 * nQuiet : 0;
+    while (noisy < nNoisy || q < nQuiet || read < nReads) {
       const nextNoise = noisy < nNoisy ? (1000 * noisy) / rate : Infinity,
-        nextQuiet = q < nQuiet ? 200 * q : Infinity;
-      const due = Math.min(nextNoise, nextQuiet),
+        nextQuiet = q < nQuiet ? 200 * q : Infinity,
+        nextRead = read < nReads ? 20 * read : Infinity;
+      const due = Math.min(nextNoise, nextQuiet, nextRead),
         wait = start + due - performance.now();
       if (wait > 0) await delay(wait);
-      if (nextQuiet <= nextNoise) {
+      if (due === nextQuiet) {
         launch("quiet", "save", q, due);
         launch("quiet", "read", q++, due);
+      } else if (due === nextRead) {
+        launch("live" + (read % 10), "read", read++, due);
       } else {
         launch("live" + (noisy % 10), "save", noisy, nextNoise);
         noisy++;
@@ -301,21 +369,26 @@ export async function live(
     if (fatal) throw fatal;
     const drained = performance.now() - start;
     const clockAfter = traceTail ? await sampleClock() : undefined;
-    assert.equal(peakBulk, width ? 1 : 0);
+    assert.equal(peakBulk, width && ordered.length ? 1 : 0);
+    if (width && !budget) assert(ordered.length > 0);
     const seen = new Set<string>();
-    const proof = await importer.verify(false, (r) => {
-      const parts = String(r.commandId).split("/");
-      assert(parts[0] === "save" && parts.length === 3 && !seen.has(r.commandId));
-      const { frame, meta } = save(
-        parts[1]!,
-        parts[2] === "pin" ? 0 : Number(parts[2]),
-        parts[2] === "pin",
-      );
-      const expected = checks.get(r.commandId);
-      assert(expected, "Unacknowledged live command committed; outcome requires resolution");
-      assert.deepEqual(record(frame, meta, r), expected);
-      seen.add(r.commandId);
-    });
+    const proof = await importer.verify(
+      false,
+      (r) => {
+        const parts = String(r.commandId).split("/");
+        assert(parts[0] === "save" && parts.length === 3 && !seen.has(r.commandId));
+        const { frame, meta } = save(
+          parts[1]!,
+          parts[2] === "pin" ? 0 : Number(parts[2]),
+          parts[2] === "pin",
+        );
+        const expected = checks.get(r.commandId);
+        assert(expected, "Unacknowledged live command committed; outcome requires resolution");
+        assert.deepEqual(record(frame, meta, r), expected);
+        seen.add(r.commandId);
+      },
+      frontier ? 24 : 8,
+    );
     assert.equal(seen.size, checks.size);
     const observations = [...native.values()],
       published = new Map(observations.map((n) => [n.command, n.position]));
@@ -357,6 +430,9 @@ export async function live(
         duration,
         clockBefore,
         clockAfter,
+        budgetMs: budget?.ms,
+        budgetStopped,
+        pilots,
         native: observations,
         ordered,
         samples,
@@ -384,6 +460,11 @@ export async function live(
       elapsedMs: drained,
       facts: factsInWindow,
       completedBulk,
+      budgetMs: budget?.ms,
+      budgetStopped,
+      pilots,
+      aboveBudget: budget ? ordered.filter((r) => r.service.ms > budget.ms).length : undefined,
+      committedFrames: ordered.length,
       fps: factsInWindow / (duration / 1000),
       neighbors,
       peakBulk,

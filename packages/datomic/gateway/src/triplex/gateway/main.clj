@@ -120,7 +120,9 @@
   (let [bytes (.readNBytes ^java.io.InputStream body 4194305)]
     (when (> (alength bytes) 4194304) (codec/invalid "Request too large"))
     (let [start (System/nanoTime) input (trace/span "gateway.request-parse" "gateway" (json/read-str (String. bytes "UTF-8")))]
-      (.set request-parse-micros (quot (- (System/nanoTime) start) 1000)) input)))
+      (.set request-parse-micros (quot (- (System/nanoTime) start) 1000))
+      (if (= "1" (System/getenv "TX2_LOAD2_TIMING"))
+        (with-meta input {:wire-bytes (alength bytes)}) input))))
 (defn route-handler [{:keys [request-method uri body query-string]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try

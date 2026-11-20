@@ -40,21 +40,33 @@ export async function load(s: Stack, people: number) {
           ? ["live-0-a", "live-128", "live-500", "live-2000", "live-0-b"]
           : e.mode === "load-tail"
             ? ["tail-0-a", "tail-128", "tail-0-b"]
-            : server
-              ? ["quiet-server-2000-2"]
-              : [
-                  "quiet-a-2000-1",
-                  "classic-a-2000-2",
-                  "quiet-a-2000-2",
-                  "quiet-a-2000-4",
-                  "quiet-a-1024-2",
-                  "quiet-a-3000-2",
-                  "quiet-b-2000-2",
-                  "classic-b-2000-2",
-                  "quiet-b-2000-1",
-                  "proof-gap-1024-2",
-                ];
+            : e.mode === "load-frontier-low"
+              ? [
+                  "frontier-0-a",
+                  "frontier-1",
+                  "frontier-4",
+                  "frontier-8",
+                  "frontier-allowance",
+                  "frontier-0-b",
+                ]
+              : e.mode === "load-frontier-high"
+                ? ["frontier-0-a", "frontier-16", "frontier-24", "frontier-32", "frontier-0-b"]
+                : server
+                  ? ["quiet-server-2000-2"]
+                  : [
+                      "quiet-a-2000-1",
+                      "classic-a-2000-2",
+                      "quiet-a-2000-2",
+                      "quiet-a-2000-4",
+                      "quiet-a-1024-2",
+                      "quiet-a-3000-2",
+                      "quiet-b-2000-2",
+                      "classic-b-2000-2",
+                      "quiet-b-2000-1",
+                      "proof-gap-1024-2",
+                    ];
   const reports: Array<{ sourceSeal: string; [key: string]: unknown }> = [];
+  let allowance = 0;
   for (const arm of arms) {
     const scope = e.prefix + "-" + arm;
     const cpu = async () =>
@@ -85,6 +97,7 @@ export async function load(s: Stack, people: number) {
         env: {
           ...process.env,
           DATOMIC_URL: url,
+          DX_LOAD2_ALLOWANCE_MS: String(allowance),
           TRIPLEX_DATOMIC_LAYOUT: "lean",
           DX_SERVER_RECORD_TIME: "1",
           TRIPLEX_TRACE_LEVEL: e.mode === "load-profile" ? "full" : "off",
@@ -114,10 +127,23 @@ export async function load(s: Stack, people: number) {
       [r.nonce, r.source, r.slot, r.scope, r.arm],
       [e.nonce, e.source.git, e.slot, scope, arm],
     );
-    assert(
-      Number.isSafeInteger(r.facts) &&
-        (["load-live", "load-tail"].includes(e.mode) ? r.facts >= 0 : r.facts > 0),
-    );
+    const live = ["load-live", "load-tail"].includes(e.mode) || e.mode.startsWith("load-frontier-");
+    assert(Number.isSafeInteger(r.facts) && (live ? r.facts >= 0 : r.facts > 0));
+    if (e.mode.startsWith("load-frontier-") && arm === "frontier-0-a") {
+      const quiet = r.neighbors.quiet;
+      assert(
+        quiet.save.ok >= 500 &&
+          quiet.read.ok >= 500 &&
+          quiet.save.p99Ms > 0 &&
+          quiet.read.p99Ms > 0,
+      );
+      allowance = Math.min(32, Math.min(quiet.save.p99Ms, quiet.read.p99Ms) * 0.5);
+      e.log("solo-allowance", {
+        read: quiet.read.p99Ms * 0.5,
+        save: quiet.save.p99Ms * 0.5,
+        bound: allowance,
+      });
+    }
     if (reports.length) assert.equal(r.sourceSeal, reports[0]!.sourceSeal);
     e.log("load-arm", {
       arm,

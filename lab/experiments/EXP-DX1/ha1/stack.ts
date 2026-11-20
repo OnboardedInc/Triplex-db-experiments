@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
-import { gunzipSync } from "node:zlib";
+import { createGunzip } from "node:zlib";
 import {
   clock,
   Evidence,
@@ -317,23 +317,48 @@ export class Stack {
       );
       assert(completion.events > 0 && completion.clockSamples >= 2);
       const files = [process + ".jfr", process + ".jfr.jsonl", process + ".jsonl"];
-      for (const name of [...files, marker]) {
+      fs.writeFileSync(path.join(this.e.dir, marker), result + "\n", { flag: "wx" });
+      for (const name of files) {
         const file = loadTraceDir + "/" + name;
-        const packed = await this.exec(
-          role,
-          "sh",
-          "-ceu",
-          'gzip -c "$1" | base64 -w0',
-          "copy",
-          file,
-        );
-        assert(packed && /^[A-Za-z0-9+/]+={0,2}$/.test(packed));
-        const data = gunzipSync(Buffer.from(packed, "base64"));
-        if (name.endsWith(".jfr")) assert.equal(hash(data), completion.fileSha256);
-        if (name === marker) assert.deepEqual(JSON.parse(data.toString()), completion);
-        fs.writeFileSync(path.join(this.e.dir, name + ".gz"), Buffer.from(packed, "base64"), {
-          flag: "wx",
-        });
+        const zipped = file + ".ha.gz";
+        await this.exec(role, "sh", "-ceu", 'gzip -c "$1" > "$2"', "pack", file, zipped);
+        const bytes = Number(await this.exec(role, "stat", "-c", "%s", zipped));
+        assert(Number.isSafeInteger(bytes) && bytes > 0);
+        const dest = path.join(this.e.dir, name + ".gz");
+        const blockBytes = 2 ** 20;
+        const fd = fs.openSync(dest, "wx");
+        const digest = createHash("sha256");
+        try {
+          // [DX-LOAD2] Why: transfer the closed recording in bounded management messages.
+          // Rejected: base64 of one long JFR export overflowing the shell reader after a completed run.
+          for (let offset = 0; offset < bytes; offset += blockBytes) {
+            const packed = await this.exec(
+              role,
+              "sh",
+              "-ceu",
+              'dd if="$1" bs=1048576 skip="$2" count=1 status=none | base64 -w0',
+              "copy",
+              zipped,
+              String(offset / blockBytes),
+            );
+            const raw = Buffer.from(packed, "base64");
+            assert.equal(raw.length, Math.min(blockBytes, bytes - offset));
+            assert.equal(fs.writeSync(fd, raw), raw.length);
+            digest.update(raw);
+          }
+          assert.equal(
+            digest.digest("hex"),
+            (await this.exec(role, "sha256sum", zipped)).split(" ")[0],
+          );
+        } finally {
+          fs.closeSync(fd);
+        }
+        if (name.endsWith(".jfr")) {
+          const uncompressed = createHash("sha256");
+          for await (const part of fs.createReadStream(dest).pipe(createGunzip()))
+            uncompressed.update(part);
+          assert.equal(uncompressed.digest("hex"), completion.fileSha256);
+        }
       }
     }
   }
@@ -466,7 +491,8 @@ export class Stack {
   }
   async gateway(role: "write" | "read", site: Site, pg: "pg" | "target", store: string) {
     const size = site.privateAddress ? "1600" : "320";
-    const priority = this.e.mode === "load-live" || this.e.mode === "load-tail";
+    const frontier = this.e.mode.startsWith("load-frontier-");
+    const priority = this.e.mode === "load-live" || this.e.mode === "load-tail" || frontier;
     await this.start(
       role,
       site,
@@ -483,6 +509,12 @@ export class Stack {
                     : "off"),
               "-e",
               "TX2_GROUP_COMMIT=" + Number(priority),
+              "-e",
+              "TX2_LOAD2_TIMING=" + Number(this.e.mode === "load-tail" || frontier),
+              "-e",
+              "TX2_LOAD2_FRAME_CAPS=" + Number(frontier),
+              "-e",
+              "TX2_GROUP_REUSE_PREPARED=" + Number(frontier),
               "-e",
               "TX2_LOAD1_PRIORITY=" + Number(priority),
               "-e",

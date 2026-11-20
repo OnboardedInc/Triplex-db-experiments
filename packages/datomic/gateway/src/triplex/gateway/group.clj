@@ -8,6 +8,19 @@
 (def bulk-priority (= "1" (System/getenv "TX2_LOAD1_PRIORITY")))
 (def queue-clock (= "1" (System/getenv "TX2_GROUP_QUEUE_CLOCK")))
 (def load-timing (= "1" (System/getenv "TX2_LOAD2_TIMING")))
+(def load-frame-caps (= "1" (System/getenv "TX2_LOAD2_FRAME_CAPS")))
+(def reuse-prepared (= "1" (System/getenv "TX2_GROUP_REUSE_PREPARED")))
+(defn frame-measurement [p input]
+  (when (and (or load-timing load-frame-caps) (:bulk p))
+    {:rows (+ (count (:new-ids p)) (count (filter #(and (vector? %) (= :triplex/retract (first %))) (:ops p))))
+     :bytes (:wire-bytes (meta input))}))
+(defn bound-frame! [size]
+  ;; [DX-W1] Why: bound actual decoded fresh and retired rows (including journal) and exact HTTP bytes before admitting bulk.
+  ;; Rejected: estimating bytes from input business facts or splitting one atomic write after seeing a receipt.
+  (when (and load-frame-caps size)
+    (when-not (and (number? (:bytes size)) (<= (:rows size) 96) (<= (:bytes size) 65536))
+      (throw (ex-info "Atomic bulk frame exceeds its row or byte limit" {:code "BulkFrameTooLarge" :status 413})))))
+
 (defn mono-ms [] (/ (double (System/nanoTime)) 1000000.0))
 (def batch-limit 8)
 (def pending-limit 256)

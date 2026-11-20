@@ -263,6 +263,17 @@
       ;; A stale speculative basis can reject an otherwise valid ordered commit.
       ;; Hints are optional; only the transactor may make the definitive decision.
       (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))))
+(defn prepared-for [data input p]
+  (let [journals (:journal-entities p)
+        safe (and group/reuse-prepared (:lean p) (seq journals)
+                  (not-any? #(and (vector? %) (= :triplex.scope/feed-irregular (nth % 2 nil))) (:ops p)))]
+    ;; [DX-W1] Why: reuse the immutable payload from cf481293a when the speculative view preserves layout and journal absence.
+    ;; Rejected: reconstructing every live member inside the scheduler or reusing a link to an already published journal.
+    (fn [view]
+      (if (and safe (lean? view) (= (if (:slim-row p) 4 3) (value view (:scope p) :triplex.scope/rows-version))
+               (not-any? #(d/entid view [:triplex.entity/id %]) journals))
+        data
+        (tx-data view input (:scope p))))))
 (defn submit! [conn data input timeline]
   (let [hints (transaction-hints conn data timeline)
         solo (bound-fn []
@@ -291,7 +302,7 @@
         submit (if-not group/enabled solo
                  (fn [] (try (let [p (second (first data)) current (d/db conn) class (group/classify current p input)]
                    (group/submit! conn (merge class {:id (get input "operationId") :params p :eligible (and (not (:bulk p)) (group/eligible? current p))
-                     :prepare (fn [view] (tx-data view input (:scope p))) :solo solo})))
+                     :prepare (prepared-for data input p) :solo solo})))
                    (catch Exception e (group/outcome-future (deliver (promise) {:error e}))))))]
     (if-let [client (get input "clientId")]
       (order/enqueue! client (get input "sendSequence") (get input "operationId") submit order/gap-ms order/buffer-limit [conn input])
@@ -318,6 +329,8 @@
           load-timing (when commit/load-profile (volatile! 0))
           data (try (binding [*load-timing* load-timing] (trace/span "commit.prepare-and-validate" "gateway" (tx-data db input (scope/entity db))))
                     (catch Exception e (reject-ordered! conn input e)))
+          frame-size (group/frame-measurement (second (first data)) input)
+          _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
           start (System/nanoTime)
           ready-ms (when group/queue-clock (System/currentTimeMillis))
           timeline (atom {:requestParsed parsed :payloadPrepared start})
@@ -345,12 +358,13 @@
                        :tx (clojure.edn/read-string (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.load/metrics))})
         group/bulk-priority (assoc :bulkGrant (:bulk-grant report))
         (:serial-hold report) (assoc :serialHold (:serial-hold report))
+        frame-size (assoc :frameSize frame-size)
         stamp (assoc :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
     (catch Exception e
       (replay-capture/discard! input)
       (let [text (str e)]
-        (when (or (#{"OutcomeUnknown" "WriteQueueFull" "InvalidValue"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (#{"OutcomeUnknown" "WriteQueueFull" "InvalidValue" "BulkFrameTooLarge"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
