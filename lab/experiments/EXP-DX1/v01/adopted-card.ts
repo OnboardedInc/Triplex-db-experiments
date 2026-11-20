@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
+import { Histogram } from "../../../bench/lib/hist.ts";
 import { render as emptyCard } from "./render.ts";
 import type { adoptedArm } from "./adopted.ts";
 import { selectedWriter, type Age, type Writer } from "./profile.ts";
@@ -18,7 +19,17 @@ export function writeAdoptedCard(run: Card) {
     assert.deepEqual([x.source, x.fixture, x.loaded], [run.source, run.toy, arm === "loaded"]);
     assert(x.startedAt <= x.start && x.start < x.endedAt && x.seed.head === x.firstCut);
     assert.equal(createHash("sha256").update(bytes).digest("hex"), x.observationsSha256);
-    return [x];
+    const raw = JSON.parse(bytes.toString());
+    const dispatch = new Map<string, number>(raw.writes.filter((r: any) => r.receipt && Number.isFinite(r.dispatched))
+      .map((r: any) => [r.id, r.dispatched]));
+    const feed = new Histogram();
+    for (const entry of raw.journal) {
+      const due = dispatch.get(entry.id);
+      // [DX-V01] Why: the seed or AGE1 can carry logical clocks ahead of the host.
+      // Rejected: subtracting the logical record instant and clamping a negative duration to zero.
+      if (due !== undefined && Number.isFinite(entry.seen) && entry.seen >= due) feed.recordMs(entry.seen - due);
+    }
+    return [{ ...x, dispatchToFeed: feed.summary() }];
   });
   const [zero, loaded] = arms;
   if (zero && loaded) {
@@ -37,11 +48,13 @@ export function writeAdoptedCard(run: Card) {
   const rows = new Map<string, string[]>();
   if (loaded) {
     const phases = loaded.p1.map((p) => `L${p.seats} ${tag(p.goodput)}/s, p99 ${tag(p.read.p99Ms)} ms, ${p.errors} errors`).join("; ");
-    rows.set("P1", [`${phases}. Exact seed-cut field probes; the full world and recovery bar remains open.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
+    const baseline = zero?.p2.latency.p99Ms;
+    const ratio = baseline && loaded.p2.latency.p99Ms !== null ? loaded.p2.latency.p99Ms / baseline : null;
+    rows.set("P1", [`${phases}. Whole-tape writer p99 ratio ${tag(ratio)}. Exact seed-cut field probes; full-world and recovery coverage remain open.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
       String(loaded.p1.reduce((a, p) => a + p.read.count, 0)), evidence("loaded")]);
     rows.set("P2", [`Scheduled offer to ACK p50 ${tag(loaded.p2.latency.p50Ms)} ms, p99 ${tag(loaded.p2.latency.p99Ms)} ms. ${loaded.p2.receipts}/${loaded.p2.offered} receipts. This tape edits 1–3 fields.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
       String(loaded.p2.receipts), evidence("loaded")]);
-    rows.set("P3", [`${loaded.p3.entries} ordered exact changes; delivery p99 ${tag(loaded.p3.lag.p99Ms)} ms. Durable effects and crash resume are open.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
+    rows.set("P3", [`${loaded.p3.entries} ordered exact changes; dispatch-to-observation p99 ${tag(loaded.dispatchToFeed.p99Ms)} ms across ${loaded.dispatchToFeed.count} observations. Durable effects and crash resume are open.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
       String(loaded.p3.entries), evidence("loaded")]);
     if (loaded.p4?.observed.count) rows.set("P4", [`Current demand pulls p50 ${tag(loaded.p4.observed.p50Ms)} ms, p99 ${tag(loaded.p4.observed.p99Ms)} ms. History depth and engine bytes remain open.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
       String(loaded.p4.observed.count), evidence("loaded")]);

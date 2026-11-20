@@ -159,13 +159,12 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const saves = writes.rows.filter((r) => r.receipt);
     const byPosition = new Map(feed.map((r) => [r.position, r]));
     assert.equal(feed.length, saves.length);
-    const saveHistogram = new Histogram(), feedHistogram = new Histogram();
+    const saveHistogram = new Histogram();
     for (const row of saves) {
       const r = row.receipt!, actual = byPosition.get(r.p);
       assert(actual);
       assert.deepEqual([actual.id, actual.tx, actual.clock, actual.digest], [row.id, r.tx, r.clock, r.digest]);
       saveHistogram.recordMs(row.end! - row.due);
-      feedHistogram.recordMs(Math.max(0, actual.seen - r.clock));
     }
     for (const row of saves.filter((_, i) => i === 0 || i === saves.length - 1 || i % 100 === 0)) {
       const op = await writerClient.operation(seed.scope.db, row.id), r = row.receipt!;
@@ -180,7 +179,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       loaded, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
       observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java },
       p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
-      p3: { entries: feed.length, lag: feedHistogram.summary() }, p4: pulls };
+      p3: { entries: feed.length }, p4: pulls };
     jsonFile(path.join(out, "arm.json"), result);
     return result;
   } finally {
