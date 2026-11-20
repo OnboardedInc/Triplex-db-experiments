@@ -73,6 +73,10 @@ def sources(r):
             "engines","activation-preflight","small","rung-thin-1m","int1-clean.json","stack-access.json","engine-logs.txt")
         for name in names:
             parts[name]=root/name
+    elif r["item"]==28:
+        for file in root.iterdir() if root.is_dir() else []:
+            if file.name=="evidence" or file.name.endswith((".json",".log")):
+                parts[file.name]=file
     elif r["item"]==13:parts["import"]=root/"run"
     elif r["item"] in (14,15,17,27):
         parts["joined-smoke"]=root/"smoke"

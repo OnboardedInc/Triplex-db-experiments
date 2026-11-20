@@ -47,6 +47,7 @@ ITEMS = {
     21: (WFIX, "wfix1", WFIX_SOURCE, 1, "growthn20"),
     22: (WFIX, "wfix1", WFIX_SOURCE, .75, "sizen20"),
     24: ("exp/DX-RD1-readers", "rd1", "0eb2e", .75, "readersn20"),
+    28: ("exp/DX-RD1-readers", "rd1", "7affa420c", 2, "rdpairn20"),
     26: ("exp/DX-INT1", "int1", "30b278e95", 4, "bm1n20int"),
     8: (W1, "w1", "7a6a7e9ef", 4, "pulsew4a"),
     9: (W1, "w1", "9ce599309", 1, "matchedn19"),
@@ -64,7 +65,7 @@ ORDER = (1, 14, 8, 11, 9, 15, 17, 16, 12, 7, 10, 13, 5)
 NEXT = {1:"joined-publish-preflight", 14:"enhanced-pulse", 8:"ceil-live10", 11:"thin-deep", 9:"joined-publish", 15:"corrected-pulse",
         17:"collect", 16:"size-ledger", 12:"readers", 7:"predecessor",
         10:"same-database-import", 13:"int1", 5:"collect", 6:"resume", 4:"collect", 3:"collect"}
-NEXT.update({18:"predecessor",19:"enhanced-pulse",20:"growth",21:"size-ledger",22:"readers",24:"thin-1m",26:"collect",27:"ceil"})
+NEXT.update({18:"predecessor",19:"enhanced-pulse",20:"growth",21:"size-ledger",22:"readers",24:"rd1-pairs",28:"thin-1m",26:"collect",27:"ceil"})
 EXP = Path("lab/experiments/EXP-DX1")
 ENV = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
            GIT_TERMINAL_PROMPT="0", DOCKER_HOST="unix:///var/run/docker.sock",
@@ -179,6 +180,8 @@ def complete_output(r):
         return any((root/"measurement").glob("block-*/observed.json"))
     if item==26:
         return (root/"rung-thin-1m/result.json").is_file()
+    if item==28:
+        return any((root/"evidence").glob("tx2-dxt1-rd1p3-*/driver/ns-report.json"))
     if item in (1,8,9,10,11,12,16):
         if (root/"results/comparison.json").is_file():return True
         if item in (10,11,12):return any((root/"checkpoint-arms").glob("*/outcomes.jsonl")) or any((root/"checkpoint-arms").glob("*/result.json"))
@@ -315,6 +318,12 @@ def preflight(r):
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-small-run-first",
                    "format":"int1 direct native rung","size":1000})
         return
+    if item==28:
+        published=Path(r["directory"])/"builder-server1.md"
+        assert "--rd1-read-diagnostic" in published.read_text()
+        put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-small-run-first",
+                   "format":"reader-diagnostic/1","size":1000,"instructionsSha256":digest(published)})
+        return
     if item in (14,*REVISED_JOINED):
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"native-preflight-only",
                    "subjects":64,"longRun":"matching native agreement required" if item in REVISED_JOINED else "ACTREVIEW2 FIX FIRST"})
@@ -395,7 +404,7 @@ def coordinates(item,attempt):
     tag=ITEMS[item][4]
     if item == 1: tag += "ab"[attempt-1]
     elif attempt==2: tag += "b"
-    if item in (1,3,8,9,10,11,12,16,*SEALED_ITEMS): root=Path("/var/tmp/triplex-w1")/tag; unit="triplex-w1-"+tag
+    if item in (1,3,8,9,10,11,12,16,28,*SEALED_ITEMS): root=Path("/var/tmp/triplex-w1")/tag; unit="triplex-w1-"+tag
     elif item==13: root=Path("/var/tmp/triplex-ha1")/tag;unit="bm1n19-"+tag
     elif item in (14,*REVISED_JOINED): root=NIGHT/tag;unit="bm1n19-"+tag
     elif item==2: root=Path("/var/tmp/triplex-import1")/tag;unit="triplex-bm1-"+tag
@@ -442,7 +451,7 @@ def make(item, attempt, start, deadline):
     token="| ACT2 audited activation," if item==6 else {8:"| Enhanced pulse,",9:"| Thin/deep matched,",10:"| Predecessor lookup,",
             11:"| CEIL-SERVER-LIVE10,",12:"| W2-SIZE-LEDGER,",13:"| HA1 one-host import,",14:"| ACT1 joined Publish,",
             15:"| ACT1 reviewed joined Publish,",16:"| WFIX enhanced pulse,",17:"| ACT1 manifest repair,",27:"| ACT1 typed refusal,",
-            24:"| RD1 writer probe,",26:"| INT1 single thin rung,",
+            24:"| RD1 writer probe,",26:"| INT1 single thin rung,",28:"| RD1 short pairs,",
             **{i:"| Sealed "+s+"," for i,s in SCALE_PROBES.items()}}.get(item,f"| {item} ·")
     forecast=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith(token))
     r=dict(item=item,attempt=attempt,tag=tag,source=head,repo=str(repo),unit=unit,root=str(root),
@@ -581,6 +590,8 @@ def worker(r):
         run(sys.executable,HERE/"probes/rd_runner.py","run",root,source,SCALE_CHECKPOINT,cwd=repo,env=env)
     elif r["item"]==26:
         run(sys.executable,HERE/"probes/int1_runner.py","run",Path(r["directory"])/"request.json",cwd=repo,env=env)
+    elif r["item"]==28:
+        run(sys.executable,HERE/"probes/rd_pairs.py","run",Path(r["directory"])/"request.json",cwd=repo,env=env)
     elif r["item"]==2:run(*heavy,"--experimental-strip-types",EXP/"import1/server.ts","--execute",root,source,cwd=repo,env=env)
     elif r["item"]==13:
         # [DX-BM1] Why: the supervised one-host command uses the existing machine allocation and survives SSH loss.
@@ -631,6 +642,8 @@ def cleanup(r):
         run(sys.executable,HERE/"probes/rd_runner.py","cleanup",root,src,SCALE_CHECKPOINT,timeout=150)
     if r["item"]==26 and (root/"int1-owner.json").is_file():
         run(sys.executable,HERE/"probes/int1_runner.py","cleanup",Path(r["directory"])/"request.json",timeout=200)
+    if r["item"]==28 and (root/"pair-active.json").is_file():
+        run(sys.executable,HERE/"probes/rd_pairs.py","cleanup",Path(r["directory"])/"request.json",timeout=150)
     if r["item"] in (14,*REVISED_JOINED) and (root/"stack-owner.json").is_file():
         run(sys.executable,HERE/"joined_preflight.py","cleanup",Path(r["directory"])/"request.json",timeout=170)
     if r["item"] in (1,3,8,9,10,16) and (root/"active-slot").exists():
@@ -688,6 +701,7 @@ def remaining(r):
             prefixes.append(a["slot"]+"-")
     elif item in (1,3,8,9,16): prefixes=["tx2-dxscale1-w1-"+tag+"-"]
     elif item in (5,26): prefixes=["tx2-dxint1-"+tag+"-"]
+    elif item==28: prefixes=["tx2-dxt1-rd1p3-"+tag+"-"]
     elif item==6: prefixes=["tx2-dxscale1-"+tag+"-"]
     elif item in (14,*REVISED_JOINED): prefixes=["tx2-dxt1-bm1-"+tag+"-"]
     else:
@@ -1024,6 +1038,25 @@ def result(r):
                                "producerSha256":digest(folder/"producer-check.json"),"latency":row["latency"],
                                "memory":capacity_memory(folder,row,full=True)}
         return "recorded",str(file)
+    elif item==28:
+        sys.path.insert(0,str(HERE/"probes"))
+        from rd_pairs import PLANS, summarize
+        results={}
+        for i,name in enumerate(("small","global","closure","install")):
+            file=root/(name+"-reading.json")
+            if not file.is_file():
+                if name=="small":return "preflight-refused","The 1k native RD1 pair did not reproduce the report and matched writer evidence."
+                continue
+            stored=get(file)
+            cle=get(root/(name+"-cleanup.json"))
+            assert cle=={"name":name,"source":r["source"],"request":r["requested"],"start":stored["start"],"remaining":[]}
+            assert stored==summarize(root,r,name,1000 if i==0 else 10000,*PLANS[max(i-1,0)],stored["start"])
+            if i==0 and not all(a["complete"] for a in stored["arms"]):
+                return "preflight-refused","The small native pair left one arm incomplete."
+            results[name]=stored
+        output=Path(r["directory"])/"reader-pairs.json"
+        put(output,results)
+        return ("recorded" if len(results)==4 and all(a["complete"] for row in results.values() for a in row["arms"]) else "partial"),str(output)
     elif item==13 and any((root/"run").glob("load-tail-*/observations.json")):
         path,rows=tail_attempt(root/"run",r)
         good=all(value["offered"]==value["ok"] for row in rows for intervals in row["neighbors"].values() for value in intervals.values())
@@ -1259,7 +1292,7 @@ def main():
         from scale_seed import prepare_receipt
         try:
             prepare_receipt(SCALE_CHECKPOINT)
-            scheduled=(27,*SCALE_PROBES,24,26)
+            scheduled=(27,*SCALE_PROBES,24,28,26)
         except (OSError,ValueError,AssertionError,KeyError) as error:
             # [DX-BM1] Why: keep the original seed evidence and use the next independent population while diagnosing it.
             # Rejected: repeatedly restoring an unverified image or leaving a usable bench idle after a seal check fails.
