@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { W0, canonical, sha256, type WorldRow } from "../../../../bench/lib/w0-world.ts";
@@ -50,12 +50,17 @@ const files = git(
   "pnpm-lock.yaml",
 ).split("\n");
 const pins = Object.fromEntries(files.map((f) => [f, sha256(readFileSync(f))]));
-const build = Object.fromEntries(
-  ["core", "qualification", "host", "datomic", "w0"].map((pkg) => {
-    const root = new URL("../../../../../packages/" + pkg + "/dist/index.js", import.meta.url);
-    return [pkg, sha256(readFileSync(root))];
-  }),
-);
+const build: Record<string, string> = {};
+for (const pkg of ["core", "qualification", "host", "datomic", "w0"]) {
+  const root = "packages/" + pkg + "/dist";
+  for (const file of readdirSync(root, { recursive: true, encoding: "utf8" }))
+    if (file.endsWith(".js")) {
+      const path = join(root, file);
+      build[path] = sha256(readFileSync(path));
+    }
+}
+const config = join(process.env.TX2_CONFIG_DIR ?? ".", "lab/config/slots.json");
+const configDigest = sha256(readFileSync(config));
 const attempt = {
   source,
   nonce: randomUUID(),
@@ -66,6 +71,7 @@ const attempt = {
   smoke,
   pins,
   build,
+  config: configDigest,
 };
 save("server-inputs", attempt);
 if (!smoke) {
@@ -363,10 +369,13 @@ try {
   }
   assert.equal(sha256(readFileSync(ownerPath)), attempt.owner);
   assert.equal(git("rev-parse", "HEAD"), source);
-  for (const [f, h] of Object.entries(pins)) assert.equal(sha256(readFileSync(f)), h);
+  for (const [f, h] of Object.entries({ ...pins, ...build }))
+    assert.equal(sha256(readFileSync(f)), h, f);
+  assert.equal(sha256(readFileSync(config)), configDigest);
   const outputs = Object.fromEntries(
     [
       "server-effects",
+      ...(!smoke ? ["preflight/stage-gate", "preflight/idle-deadline"] : []),
       ...windows.flatMap((r) => ["offer-" + r.index, "window-" + r.index, "proof-" + r.index]),
     ].map((f) => [f, sha256(readFileSync(join(root, f + ".json")))]),
   );
