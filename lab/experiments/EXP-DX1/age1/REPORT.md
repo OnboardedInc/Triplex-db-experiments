@@ -1,5 +1,5 @@
 Keep commit `2859d6b15` for the queued one-billion server run.
-Take `d83694ea9` for the INT1 merge candidate. The merged Mac checks are queued.
+Take `e90e8cd72` for the INT1 merge candidate. The Mac native reruns are queued.
 The Mac check on the server revision adopted a small copy and matched all 120 saves.
 At 24,000 records per second from the estimated 430 million, the run would take 9.60 hours and cost $10.46.
 The driver reads the real starting count and continues only if the observed rate fits the 9.9-hour cap.
@@ -44,4 +44,6 @@ The 1B seal exports the exact roster, database identity and original and final r
 
 At 8–16k/s and a 430M seed, about 620–800M fits with three hours reserved. A true doubling needs more than 17.3k/s. An 800M diagnostic can check the proposed tree shape and fixed-width paths when a matched fresh baseline exists. It cannot certify 1B or settle long-run timing laws. [Budget and diagnostic plan](FALLBACK.md)
 
-SCALE1 has published the current-writer plan at `46deaaedb`. The AGE1 measurement comparison remains pending. [Server comparison](GROWTH-READOUT.md)
+SCALE1 has staged the AGE1 launcher at `551c5aa5a` and identified pending authorization for the backup filesystem. The AGE1 measurement comparison remains pending. [Server comparison](GROWTH-READOUT.md)
+
+The merged package build, 861 Core tests, 434 SDK tests, 17 pooled tests, three retention tests and the pooled TypeScript check completed. The SDK skipped 52 opt-in cases. The root JS gate still flags inherited scripts and 141 unregistered paths already present on INT1. There were zero AGE1-specific diagnostics. No acceptance pins changed.
