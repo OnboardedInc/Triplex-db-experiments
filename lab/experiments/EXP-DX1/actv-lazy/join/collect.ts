@@ -16,6 +16,9 @@ export const cells = [
   ["staged", 23.5],
 ] as const;
 
+export const campaignCells = (oneSeed: boolean) =>
+  oneSeed ? cells.filter(([, rate]) => rate !== 3.5) : cells;
+
 export async function collect(
   root: string,
   expected: { source: string; owner: string; n: number },
@@ -30,6 +33,9 @@ export async function collect(
     assert(inputs[key] === value && seal[key] === value);
   assert.equal(inputs.nonce, seal.nonce);
   assert.equal(seal.scope, "lazy-join-server-" + inputs.nonce);
+  const plan = campaignCells(inputs.oneSeed === true);
+  assert.deepEqual(inputs.planned, plan);
+  if (inputs.oneSeed) assert(!inputs.settlement && inputs.workBudgetMs === 83 * 60000);
   const files = readdirSync(root),
     names = Object.keys(seal.outputs);
   const outputTypes = ["offer", "terminal", "window", "proof", "deadline", "point-inputs"];
@@ -37,7 +43,7 @@ export async function collect(
     "server-effects",
     "server-effect-bytes",
     "server-seed",
-    ...cells.flatMap((_, i) => outputTypes.map((name) => name + "-" + i)),
+    ...plan.flatMap((_, i) => outputTypes.map((name) => name + "-" + i)),
   ];
   if (!inputs.smoke)
     expectedNames.push(
@@ -47,6 +53,15 @@ export async function collect(
       "preflight/joined-gate",
     );
   if (inputs.settlement) expectedNames.push("preflight/settle-gate");
+  if (inputs.oneSeed) {
+    expectedNames.push("server-native-options");
+    const native = get("server-native-options");
+    assert(inputs.gatewayAttempt && native.attempt === inputs.gatewayAttempt);
+    assert(
+      native.strictRecordClocks && native.commitFunctionInstalled && native.options.livePriority,
+    );
+    assert(/^[a-f0-9]{64}$/.test(native.gatewaySourceHash));
+  }
   assert.deepEqual(names.toSorted(), expectedNames.toSorted());
   assert(Number.isFinite(inputs.issuedAt));
   for (const name of names) {
@@ -58,7 +73,7 @@ export async function collect(
   }
   assert.deepEqual(
     files.filter((f) => /^(offer|terminal)-\d+\.json$/.test(f)).sort(),
-    cells.flatMap((_, i) => ["offer-" + i + ".json", "terminal-" + i + ".json"]).sort(),
+    plan.flatMap((_, i) => ["offer-" + i + ".json", "terminal-" + i + ".json"]).sort(),
   );
   const effects = get("server-effects"),
     payloads = get("server-effect-bytes");
@@ -74,13 +89,14 @@ export async function collect(
   const oracle = new DomainOracle(new URL("./oracle.py", import.meta.url).pathname);
   try {
     const windows = [];
-    for (const [i, [mode, rate]] of cells.entries()) {
+    for (const [i, [mode, rate]] of plan.entries()) {
       const o = get("offer-" + i),
         t = get("terminal-" + i),
         w = get("window-" + i),
         p = get("proof-" + i);
       const points = get("point-inputs-" + i),
         d = get("deadline-" + i);
+      if (inputs.oneSeed) assert.equal(o.deadlineFrom, "scheduled");
       assert.deepEqual([o.index, o.mode, o.rate, o.nonce], [i, mode, rate, inputs.nonce]);
       assert.deepEqual(
         [w.index, w.mode, w.rate, w.offered, w.ingress, w.doc],
