@@ -114,6 +114,7 @@ function replay(tape: Offer[], budget: number, tail: Tail, bulk: boolean) {
 
 const quiet = offers(3.5, seconds, [9]);
 const cells = [];
+const search = [];
 for (const rate of [50, 100, 235]) {
   const schedule = [...quiet, ...offers((rate - 3.5) / 9, seconds, accountIds.slice(0, 9))].sort(
     (a, b) => a.ms - b.ms || a.account - b.account,
@@ -138,6 +139,23 @@ for (const rate of [50, 100, 235]) {
       }
     }
   }
+  if (rate === 235) {
+    // [DX-W1] Why: live-only grouping is constant between these exact small/wide batch costs.
+    // Rejected: relying on a sparse grid to rule out a better live-only result inside an interval.
+    const breakpoints = new Set<number>();
+    for (let small = 0; small <= 8; small++)
+      for (let wide = 0; small + wide <= 8; wide++) {
+        const micros = 2400 + 2600 * small + 3650 * wide;
+        if (micros >= 6050) breakpoints.add(micros);
+      }
+    for (const tail of ["short", "saved"] as const)
+      for (const micros of [...breakpoints].sort((a, b) => a - b)) {
+        const budget = (micros + 0.000001) / 1000;
+        const baseline = replay(quiet, budget, tail, false);
+        const trial = replay(schedule, budget, tail, false);
+        search.push({ micros, tail, ...trial, quietRatio: trial.quietP99Ms / baseline.quietP99Ms });
+      }
+  }
 }
 fs.writeFileSync(
   output,
@@ -146,6 +164,7 @@ fs.writeFileSync(
     assumption:
       "Fair live turns at 3.5/s quiet and nine neighbors. A ready bulk frame consumes the chosen budget. Short tails cap extra per save at 1.25ms. Saved gaps contribute 65% of their above-median work.",
     cells,
+    search,
   }) + "\n",
   { flag: "wx" },
 );

@@ -6,7 +6,7 @@ import path from "node:path";
 import test from "node:test";
 import { driverArgs, matrix } from "./bench.ts";
 import { readNative, nativeReadout, type Arm } from "./measure.ts";
-import { fieldPlan, validateArm } from "./field/bench-check.ts";
+import { fieldPlan, fieldPolicy, modes, validateArm } from "./field/bench-check.ts";
 import { ids } from "../../../bench/lib/world.ts";
 import { generateTrace, traceDigest } from "../../../bench/lib/trace.ts";
 import { frozenDeep } from "../../../bench/lib/deep-profile.ts";
@@ -81,6 +81,44 @@ test("field-rate windows preserve the anonymized minute counts and matched quiet
     );
     assert(phase.schedule.every((e, i, s) => e.ms < 60_000 && (!i || s[i - 1]!.ms <= e.ms)));
   }
+});
+
+test("enhanced arms retain the controls and add independent layout and budget decisions", () => {
+  assert.deepEqual(modes("pulse"), ["individual", "all"]);
+  assert.deepEqual(modes("pulse", true), ["individual", "all", "compact", "prepared", "bounded"]);
+  assert.deepEqual(modes("rates", true), [
+    "individual",
+    "subject",
+    "all",
+    "compact",
+    "prepared",
+    "bounded",
+  ]);
+  assert.deepEqual(fieldPolicy("compact", true), { ...fieldPolicy("all", true), compact: true });
+  assert.deepEqual(fieldPolicy("bounded", true), {
+    ...fieldPolicy("prepared", true),
+    budgetMicros: 8000,
+  });
+  const enhanced = fieldPlan(true);
+  assert.deepEqual(enhanced.slice(0, fieldPlan().length), fieldPlan());
+  assert.deepEqual(
+    enhanced
+      .slice(-3)
+      .map((p) => [p.label, p.schedule.length, p.schedule.filter((e) => e.account === 9).length]),
+    [
+      ["budget50", 3000, 210],
+      ["budget100", 6000, 210],
+      ["budget235", 14100, 210],
+    ],
+  );
+  const pred = JSON.parse(
+    fs.readFileSync(new URL("./small/predictions.json", import.meta.url), "utf8"),
+  );
+  assert.equal(pred.beforeServerRun, true);
+  assert.equal(pred.common.preparedMaxMembers, fieldPolicy("prepared").maxMembers);
+  assert.equal(pred.common.boundedBudgetMicros, fieldPolicy("bounded").budgetMicros);
+  assert.deepEqual(pred.pulse.arms, modes("pulse", true));
+  assert.deepEqual(pred.rates.arms, modes("rates", true));
 });
 
 test("pulse recount refuses a different scope, subject, or duplicate logical position", () => {

@@ -30,6 +30,10 @@ type Response = {
   position: { v: string };
   t: { v: string };
   recordedAt: { v: number };
+  requestBytes?: number;
+  preparedOps?: number;
+  nativeComputeMs?: number;
+  groupStages?: Record<string, number> | null;
   submitToNativeEntryMs: number;
   readyToNativeEntryMs: number;
   groupQueueMicros?: number;
@@ -381,7 +385,7 @@ export async function runArm(
   nonce: string,
   grouped: boolean,
   server: boolean,
-  options: { pulse?: boolean; bootstrapUrl?: string } = {},
+  options: { pulse?: boolean; smallPulse?: boolean; bootstrapUrl?: string } = {},
 ) {
   const client = new DatomicClient(url, 35_000),
     key = scope(nonce, "load"),
@@ -411,7 +415,7 @@ export async function runArm(
         const id = name + "-" + (probe ? "q-" : "") + a + "-" + i,
           root = server ? ids.placement(accounts[a]!.first + (i % 10000)) : rootFor(a, i % 128),
           start = performance.now();
-        const facts = Array.from({ length: 8 }, (_, j) =>
+        const facts = Array.from({ length: options.smallPulse ? 1 + (i % 3) : 8 }, (_, j) =>
           fact(root, ":save/field" + j, id + "-" + j),
         );
         const input = command(id, facts);
@@ -433,7 +437,10 @@ export async function runArm(
                 subject: root,
                 businessFacts: facts.length,
                 clock: ack.recordedAt.v,
-                bytes: (ack as Response & { requestBytes: number }).requestBytes,
+                bytes: ack.requestBytes,
+                ops: ack.preparedOps,
+                nativeComputeMs: ack.nativeComputeMs,
+                groupStages: ack.groupStages,
               }
             : {}),
           id,

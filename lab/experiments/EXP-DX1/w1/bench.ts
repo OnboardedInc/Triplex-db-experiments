@@ -11,6 +11,7 @@ import { releaseDeepStart, type DeepIdentity } from "../../../bench/lib/deep-pro
 import { sourceInventory, stageReplay } from "../scale1/source.ts";
 import { fileHash } from "../scale1/measurements.ts";
 import { measure, type Arm } from "./measure.ts";
+import { fieldPolicy, type Mode } from "./field/bench-check.ts";
 
 const repo = path.resolve(import.meta.dirname, "../../../.."),
   GiB = 1024 ** 3;
@@ -207,7 +208,8 @@ export async function withStack<T>(
   arm: Arm,
   run: (env: NodeJS.ProcessEnv) => Promise<T>,
   grouped?: boolean,
-  fieldMode?: "individual" | "subject" | "all",
+  fieldMode?: Mode,
+  enhanced = false,
 ) {
   const why = stopReason();
   assert(!why, why);
@@ -284,11 +286,19 @@ export async function withStack<T>(
       DX_TX_NATIVE_JFR: "0",
       DX_NATIVE_SETTINGS_READBACK: "0",
     });
-  if (fieldMode)
+  const policy = fieldMode ? fieldPolicy(fieldMode, enhanced) : undefined;
+  if (policy) {
+    assert.equal(grouped, policy.grouping);
     Object.assign(env, {
-      DX_LIVE_PRIORITY: fieldMode === "individual" ? "0" : "1",
-      DX_FIELD_COALESCE: fieldMode === "subject" ? "1" : "0",
+      DX_LIVE_PRIORITY: String(Number(policy.priority)),
+      DX_FIELD_COALESCE: String(Number(policy.subjectOnly)),
+      DX_W1_EXTRA: String(Number(enhanced)),
+      DX_SMALL_ROWS: String(Number(policy.compact)),
+      DX_GROUP_REUSE_PREPARED: String(Number(policy.prepared)),
+      DX_GROUP_MAX_MEMBERS: String(policy.maxMembers),
+      DX_WRITE_BUDGET_US: policy.budgetMicros === null ? "" : String(policy.budgetMicros),
     });
+  }
   write(path.join(dir, "identity.json"), arm);
   const args = [
     stack("up"),
@@ -376,6 +386,20 @@ export async function withStack<T>(
           writer.Config.Env.includes("TX2_LIVE_PRIORITY=" + Number(fieldMode !== "individual")),
         );
         assert(writer.Config.Env.includes("TX2_FIELD_COALESCE=" + Number(fieldMode === "subject")));
+        if (enhanced && policy) {
+          assert(writer.Config.Env.includes("TX2_GROUP_STAGE_CLOCK=1"));
+          assert(writer.Config.Env.includes("TX2_SMALL_ROWS=" + Number(policy.compact)));
+          assert(writer.Config.Env.includes("TX2_GROUP_REUSE_PREPARED=" + Number(policy.prepared)));
+          assert(writer.Config.Env.includes("TX2_GROUP_MAX_MEMBERS=" + policy.maxMembers));
+          const budget = writer.Config.Env.find((s: string) =>
+            s.startsWith("TX2_WRITE_BUDGET_US="),
+          );
+          assert.equal(
+            budget,
+            policy.budgetMicros === null ? undefined : "TX2_WRITE_BUDGET_US=" + policy.budgetMicros,
+          );
+          write(path.join(dir, "field-options.json"), policy);
+        }
       }
     }
     env.TX2_ENGINE_CGROUPS = groups.join(",");

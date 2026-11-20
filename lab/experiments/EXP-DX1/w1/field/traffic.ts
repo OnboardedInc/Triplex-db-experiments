@@ -18,6 +18,8 @@ type Ack = {
   recordedAt: { v: number };
   requestBytes: number;
   preparedOps: number;
+  nativeComputeMs?: number;
+  groupStages?: Record<string, number> | null;
   transactMicros: number;
   groupSize?: number;
   groupQueueMicros?: number;
@@ -66,6 +68,8 @@ async function record(
     size: r.groupSize ?? 1,
     bytes: r.requestBytes,
     ops: r.preparedOps,
+    nativeComputeMs: r.nativeComputeMs,
+    groupStages: r.groupStages,
     prepareMs: r.timeline.payloadPrepared / 1000,
     awaitMs: r.transactMicros / 1000,
     gatewayQueueMs: (r.groupQueueMicros ?? 0) / 1000,

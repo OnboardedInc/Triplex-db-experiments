@@ -3,9 +3,24 @@ import { ids } from "../../../../bench/lib/world.ts";
 import { accounts, pooledDigest } from "../group/population.ts";
 import { offers, quantile, sha } from "./schedule.ts";
 export type Study = "pulse" | "rates";
-export type Mode = "individual" | "subject" | "all";
-export const modes = (s: Study): Mode[] =>
-  s === "pulse" ? ["individual", "all"] : ["individual", "subject", "all"];
+export type Mode = "individual" | "subject" | "all" | "compact" | "prepared" | "bounded";
+export function modes(s: Study, enhanced = false): Mode[] {
+  const original: Mode[] = s === "pulse" ? ["individual", "all"] : ["individual", "subject", "all"];
+  return enhanced ? [...original, "compact", "prepared", "bounded"] : original;
+}
+export function fieldPolicy(mode: Mode, enhanced = false) {
+  const advanced = mode === "prepared" || mode === "bounded";
+  return {
+    grouping: mode !== "individual" && mode !== "subject",
+    priority: mode !== "individual",
+    subjectOnly: mode === "subject",
+    compact: mode === "compact" || advanced,
+    prepared: advanced,
+    maxMembers: advanced ? 32 : 8,
+    budgetMicros: mode === "bounded" ? 8000 : null,
+    stageClock: enhanced,
+  };
+}
 const all = Array.from({ length: 10 }, (_, i) => i);
 const scope = (nonce: string, study: Study) =>
   JSON.stringify([
@@ -15,7 +30,7 @@ const scope = (nonce: string, study: Study) =>
     nonce + "-load",
     0,
   ]);
-export function fieldPlan() {
+export function fieldPlan(enhanced = false) {
   const plan = [];
   for (const rate of [3.5, 4.9, 23.5, 39.4]) {
     const tag = String(Math.round(rate * 10));
@@ -30,9 +45,58 @@ export function fieldPlan() {
         baseline: "solo35",
       });
   }
+  if (enhanced)
+    for (const rate of [50, 100, 235]) {
+      const background = rate * 60 - 210;
+      plan.push({
+        label: "budget" + rate,
+        schedule: [
+          ...all
+            .slice(0, 9)
+            .flatMap((account) =>
+              offers(Math.floor((background + 8 - account) / 9) / 60, 60, [account]),
+            ),
+          ...offers(3.5, 60, [9]),
+        ].sort((a, b) => a.ms - b.ms || a.account - b.account),
+        baseline: "solo35",
+      });
+    }
   return plan;
 }
-export function validateArm(raw: any, mode: Mode, study: Study, nonce: string) {
+function confirmBudget(g: { bytes: number; ops: number }[], budget: number | null) {
+  if (budget === null) return;
+  const estimate = g.reduce(
+    (n, r) => n + 1100 + 45 * r.ops + Math.ceil((70 * r.bytes) / 1024),
+    2400,
+  );
+  assert(estimate <= budget);
+}
+function measuredStages(batches: Map<string, any[]>, logical: number) {
+  let native = 0;
+  const stages: Record<string, number> = {};
+  for (const members of batches.values()) {
+    const first = members[0]!;
+    assert(Number.isFinite(first.nativeComputeMs) && first.nativeComputeMs >= 0);
+    native += first.nativeComputeMs;
+    if (members.length > 1) {
+      const s = first.groupStages;
+      assert(s && Number.isInteger(s.reused) && s.reused >= 0 && s.reused <= members.length);
+      for (const k of [
+        "evaluateMicros",
+        "prepareMicros",
+        "speculativeMicros",
+        "materializeMicros",
+        "awaitMicros",
+        "reused",
+      ]) {
+        assert(Number.isFinite(s[k]) && s[k] >= 0);
+        stages[k] = (stages[k] ?? 0) + s[k];
+      }
+    }
+  }
+  return { nativeMsPerSave: native / logical, groupStageTotals: stages };
+}
+export function validateArm(raw: any, mode: Mode, study: Study, nonce: string, enhanced = false) {
   assert.equal(raw.nonce, nonce);
   assert.equal(raw.scope, scope(nonce, study));
   assert.equal(raw.db, "s2-" + Buffer.from(raw.scope).toString("base64url"));
@@ -41,13 +105,14 @@ export function validateArm(raw: any, mode: Mode, study: Study, nonce: string) {
     all.map((i) => [i, 10000, 1624505]),
   );
   const summary = [],
-    baselines = new Map<string, number>();
+    baselines = new Map<string, number>(),
+    policy = fieldPolicy(mode, enhanced);
   if (study === "pulse") {
     assert.deepEqual(
       raw.phases.map((p: any) => p.name),
       ["alone", "nine"],
     );
-    assert.equal(raw.grouped, mode === "all");
+    assert.equal(raw.grouped, policy.grouping);
     assert.equal(raw.phases[0].lastPosition + 1, raw.phases[1].firstPosition);
     for (const p of raw.phases) {
       const rows = p.records as any[],
@@ -57,9 +122,10 @@ export function validateArm(raw: any, mode: Mode, study: Study, nonce: string) {
       assert(p.wall >= 59_900);
       for (const r of rows) {
         const prefix = r.probe ? p.name + "-q-9-" : p.name + "-" + r.account + "-";
-        assert(r.id.startsWith(prefix) && r.businessFacts === 8 && r.bytes > 0);
+        assert(r.id.startsWith(prefix) && r.bytes > 0);
         const i = Number(r.id.slice(prefix.length));
         assert(Number.isInteger(i) && i >= 0 && r.id === prefix + i);
+        assert.equal(r.businessFacts, enhanced ? 1 + (i % 3) : 8);
         assert.equal(r.subject, ids.placement(accounts[r.account]!.first + (i % 10000)));
         if (r.probe) {
           assert.equal(r.account, 9);
@@ -84,8 +150,9 @@ export function validateArm(raw: any, mode: Mode, study: Study, nonce: string) {
       }
       assert.equal(p.physical, byNative.size);
       for (const g of byNative.values()) {
-        assert(g.length <= 8);
+        assert(g.length <= policy.maxMembers);
         assert(g.every((r, i) => r.size === g.length && r.pos === g[0].pos + i));
+        confirmBudget(g, policy.budgetMicros);
       }
       for (const account of new Set(rows.map((r) => r.account))) {
         const owned = rows.filter((r) => r.account === account);
@@ -96,7 +163,8 @@ export function validateArm(raw: any, mode: Mode, study: Study, nonce: string) {
       }
       assert.equal(p.throughput, (1000 * rows.length) / p.wall);
       if (mode === "individual") assert.equal(p.physical, p.count);
-      if (mode === "all" && p.name === "nine") assert(p.physical < p.count);
+      if (policy.grouping && policy.budgetMicros === null && p.name === "nine")
+        assert(p.physical < p.count);
       const p99 = quantile(
         probes.map((r) => r.scheduled),
         0.99,
@@ -108,10 +176,11 @@ export function validateArm(raw: any, mode: Mode, study: Study, nonce: string) {
         quietP99Ratio: p99 / raw.phases[0].quietMs.p99,
         nativePerSecond: (1000 * p.physical) / p.wall,
         rowsSha256: sha(records),
+        ...(enhanced ? measuredStages(byNative, rows.length) : {}),
       });
     }
   } else {
-    const plan = fieldPlan();
+    const plan = fieldPlan(enhanced);
     assert.deepEqual(
       raw.phases.map((p: any) => p.label),
       plan.map((p) => p.label),
@@ -143,7 +212,8 @@ export function validateArm(raw: any, mode: Mode, study: Study, nonce: string) {
       });
       let same = 0;
       for (const g of byT.values()) {
-        assert(g.length <= 8);
+        assert(g.length <= policy.maxMembers);
+        confirmBudget(g, policy.budgetMicros);
         assert(g.every((r, i) => r.p === g[0].p + i && r.size === g.length));
         same += g.length - new Set(g.map((r) => r.account + "/" + r.person)).size;
       }
@@ -189,17 +259,25 @@ export function validateArm(raw: any, mode: Mode, study: Study, nonce: string) {
         ),
         payloadBytes: rs.reduce((n, r) => n + r.bytes, 0),
         sameSubjectPercent: (100 * same) / p.offered,
+        ...(enhanced ? measuredStages(byT, p.offered) : {}),
       });
     }
   }
   return summary;
 }
-export function validateComparison(result: any, study: Study, source: string, batch: string) {
+export function validateComparison(
+  result: any,
+  study: Study,
+  source: string,
+  batch: string,
+  enhanced = false,
+) {
   assert.equal(result.study, study);
   assert.equal(result.source, source);
+  assert.equal(result.enhanced ?? false, enhanced);
   assert.deepEqual(
     result.arms.map((a: any) => a.mode),
-    modes(study),
+    modes(study, enhanced),
   );
   for (const [i, r] of result.arms.entries()) {
     assert.equal(r.arm.slot, "tx2-dxscale1-w1-" + batch + "-" + (i + 1));
@@ -208,10 +286,11 @@ export function validateComparison(result: any, study: Study, source: string, ba
     assert.equal(r.db, "s2-" + Buffer.from(r.scope).toString("base64url"));
     assert.equal(r.seed, pooledDigest);
     assert.equal(r.seedFacts, 16_245_050);
+    if (enhanced) assert.deepEqual(r.policy, fieldPolicy(r.mode, true));
     assert(r.phases.every((p: any) => Number.isFinite(p.quietP99Ratio) && p.quietP99Ratio > 0));
     assert.deepEqual(
       r.phases.map((p: any) => p.label ?? p.name),
-      study === "pulse" ? ["alone", "nine"] : fieldPlan().map((p) => p.label),
+      study === "pulse" ? ["alone", "nine"] : fieldPlan(enhanced).map((p) => p.label),
     );
     for (const k of ["rawSha256", "seedReadbackSha256", "predictionSha256"])
       assert.match(r[k], /^[a-f0-9]{64}$/);

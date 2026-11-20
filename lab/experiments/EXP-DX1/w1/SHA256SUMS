@@ -108,3 +108,6 @@ a85e50006a29eb552c43e39bd4b82bbe7763269b6cb4184d70f47d7339a17d88  DX-W1/small4/c
 78aec63e499f0ba4be18d79bcacb0f8ffb45ca5e257c64d5c926484e44092740  DX-W1/small4/capacity-02/selftest-1.log
 e0357052a45aa5a7ad1296a54fd3a9a189a9bb5998f21f2ed70b08a754d7b3ba  DX-W1/small4/capacity-02/verified.json
 fd16cbce007d4f1c43fe3f652857cff220dd27c77a2f33387b980f87948d219a  DX-W1/small4/engine-state/datomic-build/7cc3c6625f0cf40ad8b33fd2faddfad11f8ddd90814ab1feae35b727af155445-36445-1795140212517/build-receipt.json
+8c3bf16a70ad08b99d529585552a7458ade2b0661a25701eea2c82de042e4b69  DX-W1/small4/budget-model-03.json
+b8ccd7c16be7fa784ca9db1448188c50958e7f467d551f6e043ce29e2a7d354a  DX-W1/small4/write4-tests.log
+b503f2c416f4b56ae2ddfcc6ff092b06d2d83c07ea44450012bdb276abb10af9  DX-W1/small4/write4-preflight.log

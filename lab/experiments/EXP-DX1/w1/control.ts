@@ -6,7 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
-import { validateComparison } from "./field/bench-check.ts";
+import { modes, validateComparison } from "./field/bench-check.ts";
 const study =
   process.argv[2] === "--pulse"
     ? "pulse"
@@ -15,7 +15,18 @@ const study =
       : undefined;
 const grouped = process.argv[2] === "--group";
 const batch = process.argv[grouped || study ? 3 : 2];
+const enhanced = process.argv[4] === "--enhanced";
+assert(process.argv[4] === undefined || (study && enhanced && process.argv.length === 5));
 if (batch === "--plan") {
+  if (enhanced && study) {
+    console.log("Matched 1–3 fact saves with extra arms", modes(study, true).join(", "));
+    console.log(
+      "The prepared arm allows 32 members. The bounded arm prices each turn at up to 8,000 estimated microseconds.",
+    );
+    if (study === "rates")
+      console.log("Adds matched quiet-account windows at 50, 100 and 235 offered saves/s.");
+    process.exit(0);
+  }
   console.log(
     study
       ? study === "pulse"
@@ -123,7 +134,7 @@ test "$(git -C "$dir/bootstrap" rev-parse HEAD)" = "$sha"
 bash "$dir/bootstrap/lab/experiments/EXP-DX1/t1/bare-metal.sh" --prepare "$sha" "$dir/build"
 export PATH="$dir/build/tools/bin:$PATH"
 cd "$dir/build/repository"
-node lab/bin/heavy.mjs --label DX-W1-native -- node --experimental-strip-types ${study ? "lab/experiments/EXP-DX1/w1/field/server.ts run" : grouped ? "lab/experiments/EXP-DX1/w1/group/server.ts run" : "lab/experiments/EXP-DX1/w1/bench.ts"} "$dir" "$sha" "$batch"${study ? " " + study : ""}
+node lab/bin/heavy.mjs --label DX-W1-native -- node --experimental-strip-types ${study ? "lab/experiments/EXP-DX1/w1/field/server.ts run" : grouped ? "lab/experiments/EXP-DX1/w1/group/server.ts run" : "lab/experiments/EXP-DX1/w1/bench.ts"} "$dir" "$sha" "$batch"${study ? " " + study + (enhanced ? " --enhanced" : "") : ""}
 sha256sum "$dir/results/comparison.json" > "$dir/comparison.sha256"`;
 const launch = `set -euo pipefail
 root=$1; dir=$2; sha=$3; batch=$4; unit=$5; url=$6; machine=$7; script=$8
@@ -170,14 +181,23 @@ for (;;) {
   const collected = JSON.parse(bytes);
   const { arms: rows, pairs } = collected;
   if (study) {
-    validateComparison(collected, study, source, batch);
+    validateComparison(collected, study, source, batch, enhanced);
     const expected = createHash("sha256")
-      .update(fs.readFileSync(path.join(import.meta.dirname, "field/predictions.json")))
+      .update(
+        fs.readFileSync(
+          path.join(
+            import.meta.dirname,
+            enhanced ? "small/predictions.json" : "field/predictions.json",
+          ),
+        ),
+      )
       .digest("hex");
     assert.equal(collected.predictionSha256, expected);
     for (const [i, row] of rows.entries()) {
       const armDir = dir + "/results/arm-" + (i + 1);
       assert.deepEqual(JSON.parse(sudo("cat", armDir + "/identity.json")), row.arm);
+      if (enhanced)
+        assert.deepEqual(JSON.parse(sudo("cat", armDir + "/field-options.json")), row.policy);
       assert.deepEqual(JSON.parse(sudo("cat", armDir + "/cleanup.json")), {
         containers: [],
         volumes: [],
