@@ -52,7 +52,7 @@ function copySources(dir, phase, tree = REPO) {
     copy("packages/datomic/gateway/src", "src");
     copy("packages/datomic/src/codec-spec.json", "codec-spec.json");
     copy("lab/world/W0/schema.json", "schema.json");
-    if (phase === "prototype" || phase === "surface") {
+    if (["prototype", "surface", "erasure"].includes(phase)) {
       copy("lab/world/W0/cases", "cases");
       for (const name of ["client.ts", "sdk-check.ts", "gate.ts"]) copy(path.join(experiment, name), name);
       // [DX-COMPACT1] Why: run Python against the same immutable source input as both readers.
@@ -71,7 +71,7 @@ function pinnedSources(dir, phase, commit) {
   try {
     const args = ["archive", "--format=tar", commit, path.relative(REPO, import.meta.dirname), "lab/bin/engine.mjs"];
     if (phase !== "floor") args.push("packages/datomic/gateway/src", "packages/datomic/src/codec-spec.json", "lab/world/W0");
-    if (phase === "prototype" || phase === "surface") args.push("lab/bench/lib/w0-oracle.py", "lab/oracles/domain/w0.py", "lab/oracles/domain/jsontok.py");
+    if (["prototype", "surface", "erasure"].includes(phase)) args.push("lab/bench/lib/w0-oracle.py", "lab/oracles/domain/w0.py", "lab/oracles/domain/jsontok.py");
     const archive = spawnSync("git", args, { cwd: REPO, maxBuffer: 32 * MiB });
     assert.equal(archive.status, 0, archive.stderr?.toString());
     const unpack = spawnSync("tar", ["-xf", "-", "-C", tree], { input: archive.stdout });
@@ -116,7 +116,7 @@ export async function runCompactProbe(opts, config, manager) {
   const phase = opts.run;
   const profile = opts.profile ?? "baseline";
   const loadPeople = Number(opts.people ?? "2000");
-  assert(["floor", "layout", "prototype", "benchmark", "load", "surface", "history"].includes(phase));
+  assert(["floor", "layout", "prototype", "benchmark", "load", "surface", "history", "erasure"].includes(phase));
   assert(["baseline", "large-index", "parallel-index"].includes(profile));
   assert(opts.people === undefined || (phase === "load" && [2000, 100000].includes(loadPeople)));
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
@@ -283,7 +283,7 @@ export async function runCompactProbe(opts, config, manager) {
       owner: sha256(fs.readFileSync(slot.ownerFile)), startedAt: new Date().toISOString(),
     };
     write("binding.json", binding);
-    const namespace = ["floor", "surface", "history"].includes(phase) ? "triplex.compact." + phase : "triplex.compact.probe";
+    const namespace = ["floor", "surface", "history", "erasure"].includes(phase) ? "triplex.compact." + phase : "triplex.compact.probe";
     const invoke = (step, file, args = []) =>
       capture(["exec", peerId, "/opt/datomic/bin/run", "-m", namespace, step, ...args], path.join(dir, file), abort.signal);
     if (phase === "history") {
@@ -293,6 +293,9 @@ export async function runCompactProbe(opts, config, manager) {
           await invoke("sample", `history-${mode}-${strategy}.log`, [strategy, mode]);
         }
       }
+    } else if (phase === "erasure") {
+      await invoke("erasure", "probe.log");
+      await invoke("recover", "erasure-recovery.log");
     } else if (phase !== "prototype") await invoke(phase, "probe.log", phase === "load" ? [String(loadPeople)] : []);
     else {
       // [DX-COMPACT1] Why: an independent probe can still produce useful evidence after another probe fails.

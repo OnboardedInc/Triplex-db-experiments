@@ -179,8 +179,11 @@
     (assert (= raw (get-in (read-world store account other :current 3 f/now-valid) [:facts 0 :v])))
     (assert (= r1 (store/save! store in)))
     (assert (= r3 (store/save! store erased)))
-    (assert (= :triplex.compact.store/destroyed (get @(:keys vault) [account root])))
-    (assert (rejected? :KeyDestroyed #(seal root)))
+    (assert (= (:recorded r3) (get-in @(:state vault) [:revoked [account root 0]])))
+    (assert (nil? (get-in @(:state vault) [:keys [account root a 0]])))
+    (assert (= [{:op "erase" :id [1 0] :e root :a a}]
+               (:changes (first (store/feed store latest account 2 1)))))
+    (assert (= (:recorded r3) (nth (seal root) 2)))
     (assert (not (clojure.string/includes? body raw)))
     (let [records (d/tx-range (d/log (:conn store)) (:nativeT r1) (inc (:nativeT r3)))]
       (assert (not-any? #(and (string? %) (clojure.string/includes? % raw))

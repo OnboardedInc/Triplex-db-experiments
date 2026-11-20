@@ -28,7 +28,6 @@ const parse = (file) => {
   return data;
 };
 const rows = parse("probe.log");
-}
 const of = (kind) => rows.filter((r) => r.kind === kind);
 const last = rows.at(-1);
 function q(values, percentile) {
@@ -128,7 +127,43 @@ function history() {
     bytesPerCheckpoint: last.bytes / last.checkpoints, steadyBytesPerSave: last.bytes / last.checkpoints / 64, matrix };
 }
 
-const reducers = { surface, history };
+function erasure() {
+  assert.equal(last.kind, "erasure-end");
+  const proof = of("erasure-proof")[0];
+  assert.deepEqual(proof.ids, [{ op: "erase", id: [1, 0], e: "pl:a", a: "ssn" }]);
+  assert.deepEqual(proof.empty, [[], []]);
+  assert.deepEqual([proof.original.position, proof.erasure.position, proof.repeat.position, proof.fresh.position], [1, 3, 4, 6]);
+  const recovery = parse("erasure-recovery.log");
+  assert.deepEqual(recovery[0].receipt, proof.erasure);
+  assert.deepEqual(recovery[0].marker, proof.marker);
+  assert.equal(recovery[0].head, last.head);
+  assert.deepEqual(of("owner-retirement").map((r) => r.facts), [513, 2000]);
+  const cases = path.join(dir, "source/cases");
+  const fixture = JSON.parse(fs.readFileSync(path.join(cases, fs.readdirSync(cases).find((x) => x.startsWith("C07-")))));
+  const c07 = of("erasure-c07")[0];
+  const input = { ...fixture.input, world: c07.world, basis: { ...fixture.input.basis, tx: c07.position } };
+  const test = spawnSync("python3", ["-I", "-B", path.join(dir, "source/lab/bench/lib/w0-oracle.py")],
+    { input: JSON.stringify({ op: "evaluate", input }) + "\n", encoding: "utf8" });
+  assert.equal(test.status, 0, test.stderr);
+  const result = JSON.parse(test.stdout);
+  for (const key of ["tasks", "flags", "workItems", "dependencies"]) assert.deepEqual(result[key], fixture.expected[key]);
+  const samples = of("protected-price");
+  assert.equal(samples.length, last.priceSamples);
+  for (const [i, row] of samples.entries()) {
+    assert.equal(row.i, i);
+    assert.equal(row.block, Math.floor(i / 16));
+    assert.equal(row.protected, [0, 3, 5, 6].includes(row.block));
+    assert.equal(row.datoms, row.protected ? 13 : 11);
+  }
+  const perArm = (protect) => {
+    const arm = samples.filter((a) => a.protected === protect);
+    return Object.fromEntries(["datoms", "valueBytes", "fressianBytes", "prepareMs", "ackMs", "nativeMs"]
+      .map((k) => [k, stats(arm.map((a) => a[k]))]));
+  };
+  return { basis: last.head, ledger: last.ledgerHead, c07: hash(test.stdout), plain: perArm(false), protected: perArm(true) };
+}
+
+const reducers = { surface, history, erasure };
 assert(reducers[binding.phase], "unexpected probe phase");
 console.log(JSON.stringify({ attempt: binding.attempt, source: binding.sourceHash,
   raw: hash(read("probe.log")), ...reducers[binding.phase]() }, null, 2));

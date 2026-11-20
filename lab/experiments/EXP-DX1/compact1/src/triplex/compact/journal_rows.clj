@@ -31,10 +31,13 @@
     to (assoc :validTo to)
     (= op "retract") (assoc :retractedAt (millis clock) :retractionTxId (tx-id account p))))
 
-(defn transaction [account command p clock {:keys [adds retires]}]
+(defn transaction [account command p clock {:keys [adds retires erases]}]
   (let [tx (tx-id account p)
         changes (into (mapv (fn [i row] (change account p clock "assert" (assoc row :id [p i]))) (range) adds)
-                      (map #(change account p clock "retract" %) retires))
+                      (concat (map #(change account p clock "retract" %) retires)
+                              (for [{:keys [id e a]} erases]
+                                {:op "erase" :tripleId (fact-id account id)
+                                 :entityId (str "acct/" account "/" e) :attribute a})))
         entities (sort (into #{} (map :entityId) changes))
         payload (concat [[":_tx/position" "number" :value_number (double p)]
                          [":_tx/instant" "datetime" :value_datetime (millis clock)]

@@ -36,6 +36,7 @@
         {:attr attr :target target :source (str root suffix) :id [p ordinal] :from from :to to}))))
 
 (defn mutations [{:keys [account id]} db after p]
+  (store/require-codebook! db account)
   (store/require! (= id (store/value db (store/account-id db account) :compact/source)) :WrongProjectionSource)
   (store/require! (<= 0 after p (store/head-position db account)) :InvalidProjectionCut)
   (vec
