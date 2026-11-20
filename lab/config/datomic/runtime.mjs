@@ -25,11 +25,13 @@ export function datomicRuntime(major = process.env.DX_JAVA ?? "21") {
   return runtimes[major];
 }
 
-/** @param {string} major @param {string} role */
-export function javaCompatibility(major, role) {
+/** @param {string} major */
+export function javaCompatibility(major) {
   datomicRuntime(major);
+  // [DX-JVM1] Why: the SQL transactor also invokes Netty's classpath native loader on Java 25.
+  // Rejected: using only the peer's documented flag and leaving restricted access implicit on the transactor.
   return major === "25"
-    ? ["--sun-misc-unsafe-memory-access=allow", ...(role === "tx" ? [] : ["--enable-native-access=ALL-UNNAMED"])]
+    ? ["--sun-misc-unsafe-memory-access=allow", "--enable-native-access=ALL-UNNAMED"]
     : [];
 }
 
@@ -51,7 +53,7 @@ export function readVariantReceipt(file, runtime = datomicRuntime()) {
 
 if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
   const runtime = datomicRuntime(), field = process.argv[2];
-  if (field === "compatibility") console.log(javaCompatibility(runtime.major, process.argv[3]).join(" "));
+  if (field === "compatibility") console.log(javaCompatibility(runtime.major).join(" "));
   else if (field === "input-hash") console.log(readVariantReceipt(process.env.DX_DATOMIC_IMAGE_RECEIPT, runtime).buildInputsSha256);
   else if (field === "image") console.log(process.env.DX_DATOMIC_IMAGE_RECEIPT
     ? readVariantReceipt(process.env.DX_DATOMIC_IMAGE_RECEIPT, runtime).imageId : runtime.tag);

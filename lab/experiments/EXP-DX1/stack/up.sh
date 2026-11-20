@@ -9,7 +9,7 @@ runtime_tool="$repo/lab/config/datomic/runtime.mjs"
 jvm_tool="$repo/lab/experiments/EXP-DX1/jvm1/launch.mjs"
 final_flags=' -XX:+PrintFlagsFinal -Xlog:gc+init=info,cds=info:stdout:uptimemillis,level,tags'
 probe_options() {
-  node "$jvm_tool" gw-w 1 "$1 $final_flags $(node "$runtime_tool" compatibility gw-w)" serial
+  node "$jvm_tool" gw-w 1 "$1 $final_flags $(node "$runtime_tool" compatibility)" serial
 }
 [[ "$prefix" =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "DX stack accepts only tx2-dx* prefixes" >&2; exit 2; }
 # [DX-T1] Why: read owned startup logs through the same scoped runner, before a health deadline expires.
@@ -234,9 +234,10 @@ gw_r_java=$(node "$jvm_tool" gw-r "$gw_r" "$gw_r_java")
 java_major=$(node "$runtime_tool" major)
 java_base=$(node "$runtime_tool" base)
 datomic_image=$(node "$runtime_tool" image)
-tx_java="$tx_java $(node "$runtime_tool" compatibility tx)"
-gw_w_java="$gw_w_java $(node "$runtime_tool" compatibility gw-w)"
-gw_r_java="$gw_r_java $(node "$runtime_tool" compatibility gw-r)"
+java_compatibility=$(node "$runtime_tool" compatibility)
+tx_java="$tx_java $java_compatibility"
+gw_w_java="$gw_w_java $java_compatibility"
+gw_r_java="$gw_r_java $java_compatibility"
 if [[ -n ${DX_TAIL1_ATTEMPT:-} ]]; then
   # [DX-TAIL1] Why: bind the owned stack to the reservation and reject name reuse at cleanup.
   # Rejected: inferring ownership from the slot number alone.

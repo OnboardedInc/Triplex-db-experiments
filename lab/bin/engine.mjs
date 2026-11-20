@@ -326,7 +326,7 @@ export function effectiveConfig(config, info) {
     const transactor = path.join(dir, 'transactor.properties');
     const entrypoint = path.join(dir, 'entrypoint.sh');
     const jvm = (role, options, cpus, control) => launchOptions(role, parseCpuset(cpus, config.vm.cpus).length,
-      options + ' ' + javaCompatibility(runtime.major, role).join(' '), control);
+      options + ' ' + javaCompatibility(runtime.major).join(' '), control);
     fs.copyFileSync(path.join(root, 'lab/config/datomic/transactor.properties'), transactor);
     // [DX-JVM1] Why: bind the launch script separately while keeping the legacy Java 21 image source pin.
     // Rejected: modifying the resident config or mounting the canonical uninstrumented script.
