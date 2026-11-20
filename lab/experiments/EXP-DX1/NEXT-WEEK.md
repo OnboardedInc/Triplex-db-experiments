@@ -34,7 +34,13 @@ defined in `lab/V0.1.md` on main.
     the two cache arms, attribute the remaining tail with the per-event recording.
 12. **Paged query without an explicit cut can miss a just-stored save** (both layouts): fix in progress in
     DX-W1 part 7; confirm merged and add to the scorecard's correctness rows.
-13. **Erasure:** durable home for the erasure sequence and keys (survives losing a gateway host), a protected save
+13. **Erasure (DX-ERASE1 stopped 2026-11-20 16:20 local by the provider's content filter for the second time that
+    day, at `1d6e9afcc`; not resumed under the weekend rule; two modified files are uncommitted in its worktree).**
+    Landed that afternoon: parallel saves and deferred Publish work stay safe across a removal (`9fdad4ed2`),
+    removal records and sealing material kept outside data backups (`dec122118`), a measurement of folding removed
+    bodies into scheduled index work (`1d6e9afcc`). Still open: finish and report those three, merge onto
+    `exp/DX-INT1`, the server arms. Start it in a fresh session with a summary, not a resume: the filter has now
+    ended the same session twice. Original list: durable home for the erasure sequence and keys (survives losing a gateway host), a protected save
     within 0.3 ms of a plain one, cleanup neighbours do not feel, protected values as references in layout K.
 14. **Publish:** thirty or more Publishes per rate under load with Publish priority on a server; background writing
     time and the notification sending rate reported; bars for both are Sam's to set later; same-database

@@ -3567,3 +3567,12 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
   DX-THIN1 (the merged branch the scorecard runs on); DX-PREP1 (reads the writer comparison, follow-up arm);
   DX-AGE1 (1 billion rung support); DX-JVM1 (Java 25 arms tonight). When the others finish (DX-HA1, DX-ERASE1,
   DX-ACT1, DX-W1, DX-PLAY1) they are not resumed unless a run is blocked on them.
+
+## 2026-11-20 21:22 UTC (16:22 local, 2026-11-20): DX-ERASE1 stopped again by the provider's content filter; not resumed (weekend rule)
+
+- DX-ERASE1 exited 1 at about 16:20 local with the same "flagged for possible cybersecurity risk" error, 67 minutes
+  after its resume, having pushed `9fdad4ed2` (parallel saves and deferred Publish work safe across a removal),
+  `dec122118` (removal records and sealing material outside data backups) and `1d6e9afcc` (removed bodies folded
+  into scheduled indexing, measured). Two modified files remain uncommitted in its worktree. It is not
+  run-critical, so under Sam's weekend rule it stays stopped; logged in `NEXT-WEEK.md` item 13 with the note to
+  use a fresh session. Eleven agents running.
