@@ -41,6 +41,25 @@ export const modes = [
   "load-frontier-allowance",
   "load-split-sql",
   "load-split-pg",
+  "hasync-smoke",
+  "hasync-commit",
+  "hasync-ack",
+  "hasync-index",
+  "hasync-import",
+  "hasync-cut-wal",
+  "hasync-cut-reply",
+  "hasync-restart",
+  "hasync-cost-plain",
+  "hasync-cost-group",
+  "hasync-move",
+  "hasync-seed-legacy",
+  "hasync-seed-lean",
+  "hasync-seed-edited",
+  "hasync-fleet-shared",
+  "hasync-fleet-dedicated",
+  "hasync-suite",
+  "hasync-scale",
+  "hasync-p9",
 ] as const;
 export type Mode = (typeof modes)[number];
 export const roles = {
@@ -52,7 +71,7 @@ export const roles = {
   read: 672,
   tool: 640,
 } as const;
-export type Role = keyof typeof roles;
+export type Role = keyof typeof roles | `fleet-${"a" | "b"}-${"pg" | "tx"}${number}`;
 // [DX-LOAD1] Why: peak-rate arms keep several fresh databases in one transactor process. Rejected: reusing the 560 MiB failure-drill cap after a measured cgroup OOM.
 // [DX-LOAD2] Why: the same bound campaign can reserve just one machine for a same-host comparison.
 export function microLoad(mode: string) {
@@ -65,6 +84,7 @@ export function microLoad(mode: string) {
 }
 export function supportsSingleHost(mode: Mode) {
   return (
+    mode === "hasync-p9" ||
     mode === "one-failover" ||
     mode === "load-tail" ||
     mode.startsWith("load-frontier-") ||
@@ -97,7 +117,7 @@ export function localRoleMiB(mode: Mode, role: Role) {
     if (role === "active") return 1024;
     if (role === "tool") return 96;
   }
-  return mode === "load-live" && role === "active" ? 896 : roles[role];
+  return mode === "load-live" && role === "active" ? 896 : (roles[role as keyof typeof roles] ?? 0);
 }
 export function modeOf(s: string): Mode {
   assert(modes.includes(s as Mode), "Unknown HA experiment");
@@ -144,14 +164,14 @@ export function inputs(mode?: Mode) {
         }
       : {}),
     git: head(),
-    experiment: treeCode(),
+    experiment: treeCode(mode),
     gateway: tree(path.join(root, "packages/datomic/gateway/src")),
     codec: hash(fs.readFileSync(path.join(root, "packages/datomic/src/codec-spec.json"))),
     client: tree(path.join(root, "packages/datomic/dist")),
     core: tree(path.join(root, "packages/core/dist")),
   };
 }
-function treeCode() {
+function treeCode(mode?: Mode) {
   const paths = fs
     .readdirSync(import.meta.dirname)
     .filter((f) => f.endsWith(".ts"))
@@ -164,6 +184,23 @@ function treeCode() {
       "packages/datomic/test/ha1-account.ts",
     ].map((f) => path.join(root, f)),
   );
+  if (mode?.startsWith("hasync-")) {
+    const dir = path.join(import.meta.dirname, "../hasync1");
+    for (const f of fs
+      .readdirSync(dir, { recursive: true, encoding: "utf8" })
+      .filter((name) => name.endsWith(".ts")))
+      paths.push(path.join(dir, f));
+    for (const f of fs
+      .readdirSync(path.join(root, "lab/oracles/replay"))
+      .filter((name) => name.endsWith(".py")))
+      paths.push(path.join(root, "lab/oracles/replay", f));
+    for (const f of ["deep-command", "deep-trace", "deep-world", "world", "trace", "rng"])
+      paths.push(path.join(root, "lab/bench/lib", f + ".ts"));
+    for (const f of ["tenants", "small-plan", "deep-live", "tenant-proof"])
+      paths.push(path.join(root, "lab/experiments/EXP-DX1/scale1", f + ".ts"));
+    for (const f of ["ack-audit", "runner", "score", "seed", "suite", "verify"])
+      paths.push(path.join(root, "lab/experiments/EXP-DX1/p9", f + ".ts"));
+  }
   return hash(
     JSON.stringify(paths.sort().map((f) => [path.relative(root, f), hash(fs.readFileSync(f))])),
   );
@@ -185,7 +222,7 @@ export class Evidence {
     slot: string,
     shape: "deep" | "mixed" = "deep",
     faultCell: "all" | "tail-burst" = "all",
-    holder = "DX-HA1",
+    holder = mode.startsWith("hasync-") ? "DX-HASYNC1" : "DX-HA1",
   ) {
     assert(
       shape === "deep" || ["one-failover", "one-backup", "one-sync", "one-whole"].includes(mode),

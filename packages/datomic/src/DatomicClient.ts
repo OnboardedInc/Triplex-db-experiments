@@ -1370,6 +1370,8 @@ export class DatomicClient {
           }
         } catch (readError) {
           if (!(readError instanceof DatomicTransportError)) throw readError;
+          // [DX-HASYNC1] Why: an interrupted claim lookup keeps the decision unknown. Rejected: returning a definite conflict without reading the claim.
+          if (cas) throw readError;
         }
         if (cas) break;
         const left = deadline - performance.now();

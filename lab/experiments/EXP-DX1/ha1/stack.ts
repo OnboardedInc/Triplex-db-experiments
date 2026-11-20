@@ -26,7 +26,8 @@ export interface Site {
   docker: (args: string[], opts?: { timeout?: number }) => Promise<string>;
 }
 type Member = { site: Site; id: string; image: string; role: Role; volumes: string[] };
-const pgRoles = new Set<Role>(["pg", "target"]);
+const postgresRole = (role: Role) =>
+  role === "pg" || role === "target" || /^fleet-[ab]-pg\d+$/.test(role);
 const loadTraceDir = "/tmp/load2-trace";
 const javaRecording =
   " -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0";
@@ -34,15 +35,26 @@ export class Stack {
   readonly members = new Map<Role, Member>();
   readonly networks = new Map<Site, string>();
   readonly pgIds = new Map<Site, string>();
-  readonly secret = randomBytes(18).toString("hex");
-  readonly admin = randomBytes(18).toString("hex");
+  readonly secret: string;
+  readonly admin: string;
   readonly e: Evidence;
   readonly a: Site;
   readonly b: Site;
-  constructor(e: Evidence, a: Site, b: Site) {
+  readonly sharedVolumes = new Set<string>();
+  readonly holder: string;
+  constructor(
+    e: Evidence,
+    a: Site,
+    b: Site,
+    credentials?: { secret: string; admin: string },
+    readonly caps?: ReadonlyMap<Role, number>,
+  ) {
     this.e = e;
     this.a = a;
     this.b = b;
+    this.secret = credentials?.secret ?? randomBytes(18).toString("hex");
+    this.admin = credentials?.admin ?? randomBytes(18).toString("hex");
+    this.holder = e.holder;
   }
   name(r: Role) {
     return this.e.prefix + "-" + r;
@@ -81,16 +93,18 @@ export class Stack {
     entry: string,
     argv: string[],
     port?: number,
+    externalPort?: number,
   ) {
     assert(!this.members.has(role));
-    const image = pgRoles.has(role) ? this.pgIds.get(site)! : site.datomicId;
+    const image = postgresRole(role) ? this.pgIds.get(site)! : site.datomicId;
     const cross = this.a !== this.b;
+    const server = process.platform === "linux";
     let published: string[] = [];
     if (!cross && port === 8080 && this.e.mode.startsWith("load-")) {
       // [DX-LOAD1] Why: the VM assigns a free port at container start. Rejected: probing the Mac's socket table for a port used by the VM.
       published = ["-p", loopback + "::" + port];
     } else if (port && (cross || port === 8080)) {
-      let hostPort = port;
+      let hostPort = externalPort ?? port;
       if (port === 8080) {
         if (cross) hostPort = role === "read" ? 28481 : 28480;
         else {
@@ -108,9 +122,11 @@ export class Stack {
       // [DX-HA1] Why: an explicit port survives a gateway container restart. Rejected: ephemeral Docker publication that silently moves the client endpoint.
       published = ["-p", (site.privateAddress ?? loopback) + ":" + hostPort + ":" + port];
     }
-    const server = process.platform === "linux";
-    const mb = server ? roles[role] * 4 : localRoleMiB(this.e.mode, role);
-    const mounts = pgRoles.has(role)
+    const mb =
+      this.caps?.get(role) ??
+      (server ? (roles[role as keyof typeof roles] ?? 0) * 4 : localRoleMiB(this.e.mode, role));
+    assert(mb > 0);
+    const mounts = postgresRole(role)
       ? []
       : [
           "-v",
@@ -130,7 +146,7 @@ export class Stack {
       "--label",
       "ha1.attempt=" + this.e.nonce,
       "--label",
-      "tx2.holder=" + this.e.holder,
+      "tx2.holder=" + this.holder,
       "--label",
       "tx2.managed-by=lab/bin/engine.mjs",
       "--memory",
@@ -157,7 +173,7 @@ export class Stack {
     m.volumes = view.Mounts.filter((v: any) => v.Type === "volume").map((v: any) => v.Name);
     this.e.log("role", { role, site: site.key, id, image, volumes: m.volumes, capMiB: mb });
     await site.docker(["start", id]);
-    if (!pgRoles.has(role)) {
+    if (!postgresRole(role)) {
       for (const dest of ["/opt/gateway/src", "/opt/gateway/codec-spec.json"]) {
         const mount = view.Mounts.find((m: any) => m.Destination === dest);
         assert(mount && mount.Type === "bind" && mount.RW === false);
@@ -191,11 +207,14 @@ export class Stack {
       this.e.log("mounted-inputs", { id, role, gateway, codec });
     }
   }
-  async view(role: Role) {
+  async view(role: Role, timeout?: number) {
     const m = this.members.get(role)!;
-    const v = JSON.parse(await m.site.docker(["inspect", "--type", "container", m.id]))[0];
+    const v = JSON.parse(
+      await m.site.docker(["inspect", "--type", "container", m.id], timeout ? { timeout } : {}),
+    )[0];
     assert.equal(v.Id, m.id);
     assert.equal(v.Config.Labels["ha1.attempt"], this.e.nonce);
+    assert.equal(v.Config.Labels["tx2.holder"], this.holder);
     return v;
   }
   async exec(role: Role, ...args: string[]) {
@@ -228,7 +247,11 @@ export class Stack {
     await m.site.docker(["rm", "-fv", m.id]);
     assert.equal(await m.site.docker(["ps", "-aq", "--no-trunc", "--filter", "id=" + m.id]), "");
     for (const v of m.volumes)
-      assert.equal(await m.site.docker(["volume", "ls", "-q", "--filter", "name=^" + v + "$"]), "");
+      if (!this.sharedVolumes.has(v))
+        assert.equal(
+          await m.site.docker(["volume", "ls", "-q", "--filter", "name=^" + v + "$"]),
+          "",
+        );
     this.members.delete(role);
   }
   async cleanup() {
@@ -252,7 +275,7 @@ export class Stack {
       });
       const raw = await m.site.docker(["logs", "--tail", "180", m.id]).catch(() => "(unavailable)");
       fs.writeFileSync(path.join(this.e.dir, role + "-console.txt"), this.redact(raw));
-      if (!pgRoles.has(role) && role !== "tool") {
+      if (!postgresRole(role) && role !== "tool") {
         const log = await this.exec(
           role,
           "sh",
@@ -418,7 +441,7 @@ export class Stack {
       this.secret
     );
   }
-  async sql(role: "pg" | "target", query: string, db = "postgres") {
+  async sql(role: Role, query: string, db = "postgres") {
     return this.exec(
       role,
       "psql",
@@ -510,15 +533,16 @@ export class Stack {
         : undefined,
     );
   }
-  async broker(role: "active" | "standby") {
+  async broker(role: Role, port = 4334) {
     return (
       (await this.exec(
         role,
         "bash",
         "-c",
-        "if (exec 3<>/dev/tcp/$1/4334) 2>/dev/null; then echo active; else echo closed; fi",
+        "if (exec 3<>/dev/tcp/$1/$2) 2>/dev/null; then echo active; else echo closed; fi",
         "probe",
         this.name(role),
+        String(port),
       )) === "active"
     );
   }
