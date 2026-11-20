@@ -143,7 +143,7 @@ export function placementReport(dir: string, trials: Trial[]) {
     "The primary budget requires p50 ≤10 ms, p99 ≤50 ms, all primary dispositions exact with no expiry, rejection or missing offers, at least 99% of ACKs in the window and at most 1 s of drain. A quiet comparison requires 500 observations on each side and p99 ≤1.25× for saves, pinned reads and feed lag. The two layouts share one PostgreSQL, transactor JVM, physical cores and gateways. The two-database layout has two native commit pipelines inside that JVM.",
     "",
   ];
-  const pooled: { tag: string; mode: string; summary: any }[] = [];
+  const pooled: { tag: string; mode: string; people: number; summary: any }[] = [];
   const single: Trial[] = [];
   for (const t of trials) {
     const d = t.decision,
@@ -331,8 +331,8 @@ export function placementReport(dir: string, trials: Trial[]) {
       lines.push("");
     }
     if (a.layout === "single") single.push(t);
-    if (a.people === 100000 && a.layout === "pooled")
-      pooled.push({ tag: t.tag, mode: a.mode, summary: d });
+    if (a.layout === "pooled")
+      pooled.push({ tag: t.tag, mode: a.mode, people: a.people, summary: d });
   }
   const reader = single.filter((t) => t.attempt.withReaders).at(-1);
   const zero =
@@ -379,9 +379,31 @@ export function placementReport(dir: string, trials: Trial[]) {
   }
   fs.writeFileSync(path.join(dir, "DECISION-RESULTS.md"), lines.join("\n").trimEnd() + "\n");
   recordPredictions(dir, trials);
-  const recent = pooled.at(-1);
-  if (!recent)
+  const recent = pooled.filter((r) => r.people === 100000).at(-1);
+  if (!recent) {
+    const pilot = pooled.filter((r) => r.people === 10000).at(-1);
+    if (pilot) {
+      // [DX-SCALE1] Why: report the first tested miss and keep the two populations distinct.
+      // Rejected: inferring the full-size boundary from a smaller audited scope.
+      const firstMiss = pilot.summary.comparisons.find(
+        (c: any) => !c.completeCapacity || c.ratios.some((r: any) => r.pass !== true),
+      );
+      const firstExpiry = pilot.summary.cells
+        .filter((c: any) => c.preDispatchExpiry)
+        .sort((a: any, b: any) => a.offered - b.offered)[0];
+      return (
+        "The audited 10,000-person-per-account pilot " +
+        (firstMiss
+          ? "first missed or left unjudged a declared bar at " + firstMiss.rate + "/s."
+          : "held the measured windows through 394/s.") +
+        (firstExpiry
+          ? " Pre-dispatch expiry first appeared at " + firstExpiry.offered + "/s."
+          : "") +
+        " Full-size placement remains unmeasured. [Decision cells](DECISION-RESULTS.md)"
+      );
+    }
     return "Full-size placement remains unmeasured. [Decision cells](DECISION-RESULTS.md)";
+  }
   const first = recent.summary.comparisons.find(
     (c: any) => !c.completeCapacity || c.ratios.some((r: any) => r.pass !== true),
   );
