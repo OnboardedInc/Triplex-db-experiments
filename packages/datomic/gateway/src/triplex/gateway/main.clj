@@ -308,7 +308,7 @@
                 independent (when (and managed-write? subject/enabled (nil? source)
                                        (not (contains? input "erasureSeq"))
                                        (not (true? (get input "erasureReplay"))))
-                              (let [cut (privacy/cut name db)] (when-not (:sealed cut) cut)))
+                              (let [cut (privacy/cut name db)] (when (or (not (:sealed cut)) (envelope/shared?)) cut)))
                 request (cond-> request input (assoc :privacy-input input))
                 run (fn [cut]
                       (trace/attribute! :erasureGuarded (boolean cut))

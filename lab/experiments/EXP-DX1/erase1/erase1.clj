@@ -182,9 +182,11 @@
         _ (check! (<= matched 2000) "Cleanup would exceed 2,000 matched datoms")
         selected (filter (fn [[_ e]] (pos? (history-count history e))) candidates)
         started (wall-ms)
-        _ (envelope/erase-keys! name (mapv (fn [id] {"assertionId" id}) ids))
+        keys (select-keys (into {} (for [entry (vals (:commands state)) r (get entry "identities")]
+                                    [(get r "assertionId") (get r "keyHandle")])) ids)
+        _ (envelope/erase-keys! name (mapv (fn [id] {"assertionId" id "keyHandle" (keys id)}) ids))
         shred (wall-ms)
-        _ (check! (not-any? #(privacy/exists? (envelope/key-file name %)) ids) "Key files survive their shred")
+        _ (check! (not-any? #(envelope/key-present? name % (keys %)) ids) "Keys survive their shred")
         _ (doseq [[_ e] selected]
             (check! (= 1 (history-count history e)) "Assertion has multiple envelope bodies"))]
     (if (seq selected)
@@ -210,9 +212,12 @@
         db (d/db conn) state (privacy/cut name db)
         _ (privacy/verify-data! state db)
         _ (check! (and (:sealed state) (contains? (:erased state) id)) "Key state requires a published identity")
-        e (d/entid db [:triplex.private/id id])]
+        e (d/entid db [:triplex.private/id id])
+        handle (some (fn [entry] (some #(when (= id (get % "assertionId")) (get % "keyHandle"))
+                                        (get entry "identities"))) (vals (:commands state)))
+        _ (check! (or (not (envelope/shared?)) (string? handle)) "Removal did not retain the exact key handle")]
     {:id id :seq (:seq state) :now (wall-ms)
-     :keyPresent (privacy/exists? (envelope/key-file name id))
+     :keyPresent (envelope/key-present? name id handle)
      :bodyPresent (boolean (and e (scope/value db e :triplex.private/body)))}))
 
 (defn reach-parity! [conn input]
@@ -262,6 +267,7 @@
                  "ciphertext-inventory" (ciphertext-inventory! conn input)
                  "ciphertext-cleanup" (ciphertext-cleanup! conn input)
                  "key-state" (key-state! conn input)
+                 "authority-kind" {:database (scope-name! input) :shared (envelope/shared?)}
                  "reach-parity" (reach-parity! conn input)
                  "observe" (observe! conn input)
                  "drop-pin" (do (check! (= conn (:conn @plans)) "Wrong pin owner") (reset! plans nil) {:released true})

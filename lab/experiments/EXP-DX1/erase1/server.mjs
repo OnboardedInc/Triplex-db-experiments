@@ -10,6 +10,7 @@ import { verifiedTree } from "../../../bin/datomic-context.mjs";
 const [command, location, staged, control, ...extra] = process.argv.slice(2);
 const guardComparison = command === "check-guarded";
 const neighbourCheck = command === "check-neighbours";
+const authorityCost = command === "check-authority-cost";
 const seedRole = command === "stage-control" ? "control" : undefined;
 assert(
   process.platform === "linux" &&
@@ -21,11 +22,14 @@ assert(
       "stage-control",
       "check-guarded",
       "check-neighbours",
+      "check-authority-cost",
     ].includes(command),
 );
 const action = command.startsWith("stage") ? "stage" : "check";
 const mode =
-  command.endsWith("-fast") || guardComparison || neighbourCheck || seedRole ? "fast" : "scale";
+  command.endsWith("-fast") || guardComparison || neighbourCheck || authorityCost || seedRole
+    ? "fast"
+    : "scale";
 assert(location && !extra.length && (action === "check" ? staged : staged === undefined));
 assert(guardComparison === Boolean(control));
 const dir = path.resolve(location);
@@ -101,6 +105,7 @@ const attempt = {
   seedRole,
   guardComparison,
   neighbourCheck,
+  authorityCost,
 };
 const health = await fetch(new URL("/health", endpoint));
 assert(health.ok);
@@ -149,7 +154,7 @@ if (action === "stage") {
   // Rejected: reusing a staged native-excision seed (its rows were created without that authority).
   assert.equal(plan.mode, mode);
   stageSha256 = sums(raw);
-  if (guardComparison || neighbourCheck) {
+  if (guardComparison || neighbourCheck || authorityCost) {
     // [DX-ERASE1] Why: the held sealed copy may have been built at an earlier reviewed source.
     // Rejected: accepting a staged manifest by name or restaging the full sealed fixture inside the timed check.
     const sealedSha = env("DX_ERASE_SEALED_SHA256");
@@ -277,7 +282,9 @@ try {
             ? "guarded-comparison.json"
             : neighbourCheck
               ? "quiet-comparison.json"
-              : "fast-result.json",
+              : authorityCost
+                ? "authority-saves.json"
+                : "fast-result.json",
         ),
         "utf8",
       ),
@@ -286,7 +293,7 @@ try {
     assert.equal(observed.nonce, nonce);
     assert.equal(observed.mode, mode);
     assert.equal(observed.people, attempt.people);
-    if (guardComparison || neighbourCheck) {
+    if (guardComparison || neighbourCheck || authorityCost) {
       if (guardComparison) assert.equal(observed.controlSha256, controlSha256);
       assert.equal(observed.stageSha256, stageSha256);
       assert.equal(observed.attempt, attempt.attempt);

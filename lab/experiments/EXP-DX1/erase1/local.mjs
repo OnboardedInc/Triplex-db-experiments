@@ -109,7 +109,7 @@ export async function local(opts, config, manager) {
   assert(typeof holder === "string" && /^DX-[A-Z0-9-]{1,26}$/.test(holder));
   const people = Number(opts.people);
   const mode = String(opts.run ?? "scale");
-  const subjectWriter = mode === "ledger-parallel" ? "1" : process.env.DX_ERASE1_SUBJECT_WRITER;
+  const subjectWriter = mode.endsWith("-parallel") ? "1" : process.env.DX_ERASE1_SUBJECT_WRITER;
   assert(subjectWriter === undefined || subjectWriter === "0" || subjectWriter === "1");
   assert(
     [
@@ -119,6 +119,9 @@ export async function local(opts, config, manager) {
       "overlap",
       "regression",
       "ledger-regression",
+      "ledger-authority-regression",
+      "ledger-authority-parallel",
+      "fast-authority-regression",
       "ledger-overhead",
       "ledger-profile",
       "ledger-match",
@@ -148,6 +151,7 @@ export async function local(opts, config, manager) {
   const roles = Object.keys(caps);
   const names = Object.fromEntries(roles.map((r) => [r, prefix + "-" + r]));
   const regression = mode.endsWith("regression");
+  const sharedAuthority = mode.includes("-authority-");
   // [DX-ERASE1] Why: stage evidence must join the peer and SDK from the same fresh attempt.
   // Rejected: comparing an aggregate HTTP span from an earlier run.
   const profile = mode === "ledger-profile";
@@ -376,59 +380,74 @@ export async function local(opts, config, manager) {
         { allowFail: true },
       ) === "ready";
     await ready("tx", txReady);
-    start(
-      "gw",
-      image,
-      [
-        "-v",
-        path.join(REPO, "packages/datomic/gateway/src") + ":/opt/gateway/src:ro",
-        "-v",
-        path.join(REPO, "packages/datomic/src/codec-spec.json") +
-          ":/opt/gateway/codec-spec.json:ro",
-        "-v",
-        import.meta.dirname + ":/erase1:ro",
-        ...(mode === "ledger-parallel"
-          ? ["-v", path.resolve(import.meta.dirname, "../wfix1") + ":/erase1-writer-check:ro"]
-          : []),
-        ...(archiveDir ? ["-v", archiveDir + ":/dx-archive"] : []),
-        ...(profile
-          ? [
-              "-v",
-              traceDir + ":/dx-trace",
-              "-e",
-              "TRIPLEX_TRACE_DIR=/dx-trace",
-              ...Object.entries({
-                ...traceEnv,
-                TRIPLEX_TRACE_SLOT: info.slot,
-                TRIPLEX_TRACE_PROCESS: "gateway",
-              }).flatMap(([k, v]) => ["-e", k + "=" + v]),
-            ]
-          : []),
-        ...(mode.startsWith("ledger-") || mode.startsWith("fast") || mode === "guard-prepared-smoke"
-          ? ["-v", "/dx-authority", "-e", "TRIPLEX_ERASURE_DIRECTORY=/dx-authority"]
-          : []),
-        ...(mode.startsWith("fast") ? ["-e", "TRIPLEX_ERASURE_SHRED_GRACE_MS=0"] : []),
-        "-p",
-        new URL(endpoint).hostname + ":" + info.port + ":8080",
-        "-e",
-        "DATOMIC_URI_TEMPLATE=" + uri,
-        "-e",
-        "GATEWAY_SOURCE_SHA256=" + gateway,
-        ...(subjectWriter !== undefined
-          ? ["-e", "TX2_SUBJECT_SAVE=" + subjectWriter, "-e", "TX2_INT1_WRITE_READBACK=1"]
-          : []),
-        "-e",
-        "DX_ERASE_TOKEN=" + token,
-        "-e",
-        "DX_ERASE_NONCE=" + nonce,
-        "-e",
-        "DATOMIC_EXT_CLASSPATH=/opt/gateway/src:/erase1",
-        "-e",
-        "DATOMIC_JAVA_OPTS=-Xms192m -Xmx736m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=96m",
-      ],
-      "/opt/datomic/bin/run",
-      ["-m", "erase1", "gateway"],
-    );
+    const wrap = sharedAuthority ? randomBytes(32).toString("base64") : undefined;
+    const authorityUri =
+      "jdbc:postgresql://" + names.pg + "/removal_authority?user=postgres&password=" + password;
+    if (sharedAuthority) sql("CREATE DATABASE removal_authority");
+    const startGateway = () =>
+      start(
+        "gw",
+        image,
+        [
+          "-v",
+          path.join(REPO, "packages/datomic/gateway/src") + ":/opt/gateway/src:ro",
+          "-v",
+          path.join(REPO, "packages/datomic/src/codec-spec.json") +
+            ":/opt/gateway/codec-spec.json:ro",
+          "-v",
+          import.meta.dirname + ":/erase1:ro",
+          ...(mode.endsWith("-parallel")
+            ? ["-v", path.resolve(import.meta.dirname, "../wfix1") + ":/erase1-writer-check:ro"]
+            : []),
+          ...(archiveDir ? ["-v", archiveDir + ":/dx-archive"] : []),
+          ...(profile
+            ? [
+                "-v",
+                traceDir + ":/dx-trace",
+                "-e",
+                "TRIPLEX_TRACE_DIR=/dx-trace",
+                ...Object.entries({
+                  ...traceEnv,
+                  TRIPLEX_TRACE_SLOT: info.slot,
+                  TRIPLEX_TRACE_PROCESS: "gateway",
+                }).flatMap(([k, v]) => ["-e", k + "=" + v]),
+              ]
+            : []),
+          ...(sharedAuthority
+            ? [
+                "-e",
+                "TRIPLEX_ERASURE_JDBC=" + authorityUri,
+                "-e",
+                "TRIPLEX_ERASURE_WRAPPING_KEY=" + wrap,
+              ]
+            : mode.startsWith("ledger-") ||
+                mode.startsWith("fast") ||
+                mode === "guard-prepared-smoke"
+              ? ["-v", "/dx-authority", "-e", "TRIPLEX_ERASURE_DIRECTORY=/dx-authority"]
+              : []),
+          ...(mode.startsWith("fast") ? ["-e", "TRIPLEX_ERASURE_SHRED_GRACE_MS=0"] : []),
+          "-p",
+          new URL(endpoint).hostname + ":" + info.port + ":8080",
+          "-e",
+          "DATOMIC_URI_TEMPLATE=" + uri,
+          "-e",
+          "GATEWAY_SOURCE_SHA256=" + gateway,
+          ...(subjectWriter !== undefined
+            ? ["-e", "TX2_SUBJECT_SAVE=" + subjectWriter, "-e", "TX2_INT1_WRITE_READBACK=1"]
+            : []),
+          "-e",
+          "DX_ERASE_TOKEN=" + token,
+          "-e",
+          "DX_ERASE_NONCE=" + nonce,
+          "-e",
+          "DATOMIC_EXT_CLASSPATH=/opt/gateway/src:/erase1",
+          "-e",
+          "DATOMIC_JAVA_OPTS=-Xms192m -Xmx736m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=96m",
+        ],
+        "/opt/datomic/bin/run",
+        ["-m", "erase1", "gateway"],
+      );
+    startGateway();
     const gatewayReady = async () => {
       const r = await fetch(endpoint + "/health", { signal: AbortSignal.timeout(2000) }).catch(
         () => null,
@@ -546,7 +565,32 @@ export async function local(opts, config, manager) {
             ],
             { input: JSON.stringify(msg.plan) },
           );
-        else if (msg.op === "archive") {
+        else if (msg.op === "replace-gateway") {
+          assert(sharedAuthority);
+          assert.equal(
+            msg.scope,
+            JSON.stringify(["triplex-scope-v1", "test", "test", `erase1-${nonce}`, 0]),
+          );
+          // [DX-ERASE1] Why: losing the process and its writable filesystem must not lose either key or removal.
+          // Rejected: restarting the existing container and accidentally retaining local state.
+          const before = owned.get("gw");
+          const old = inspect(before);
+          assert(
+            old.Config.Labels[label] === nonce && !old.Mounts.some((m) => m.Type === "volume"),
+          );
+          fs.writeFileSync(
+            path.join(dir, "gateway-before-replacement.log"),
+            docker(["logs", before]),
+          );
+          docker(["rm", "-f", before]);
+          assert(!inspect(before));
+          owned.delete("gw");
+          startGateway();
+          await ready("gw", gatewayReady);
+          const after = owned.get("gw");
+          assert.notEqual(after, before);
+          result = { before, after };
+        } else if (msg.op === "archive") {
           // [DX-ERASE1] Why: preserve a real pre-erasure data backup inside the owned stack.
           // Rejected: constructing a replacement assertion as a stand-in for restore (it loses original history and IDs).
           assert.equal(

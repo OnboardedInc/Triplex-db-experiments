@@ -435,7 +435,8 @@
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
           ;; [DX-PREP1] Why: the unordered subject arm submits one native transaction and uses its actual durable report.
           ;; Rejected: bypassing protected-scope erasure or live/import admission, or applying the draft speculatively.
-          subject-plan (when (and subject/enabled (not (:sealed privacy/*cut*))
+          subject-plan (when (and subject/enabled
+                                  (or (not (:sealed privacy/*cut*)) (envelope/shared?))
                                   (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
                          (trace/span "subject.prepare" "gateway"
                            (if privacy/*cut*

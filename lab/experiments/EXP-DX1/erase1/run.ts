@@ -26,6 +26,9 @@ type Layout =
   | "overlap"
   | "regression"
   | "ledger-regression"
+  | "ledger-authority-regression"
+  | "ledger-authority-parallel"
+  | "fast-authority-regression"
   | "ledger-overhead"
   | "ledger-profile"
   | "ledger-match"
@@ -49,6 +52,7 @@ type Attempt = {
   seedRole?: "control";
   guardComparison?: boolean;
   neighbourCheck?: boolean;
+  authorityCost?: boolean;
 };
 type Row = Receipt["triples"][number];
 type Fact = ReturnType<typeof deepOwnFacts>[number];
@@ -878,24 +882,34 @@ async function scale() {
       await derivedRegression(run.binding, output);
       return;
     }
-    const sealed = run.mode.startsWith("fast") || run.guardComparison;
+    const parallel = run.mode.endsWith("-parallel");
+    const sealed =
+      run.mode.startsWith("fast") ||
+      run.guardComparison ||
+      run.mode === "ledger-authority-parallel";
     if (
-      ["ledger-regression", "ledger-reuse", "ledger-parallel"].includes(run.mode) ||
+      parallel ||
+      ["ledger-regression", "ledger-authority-regression", "ledger-reuse"].includes(run.mode) ||
       (sealed && action !== "check" && !run.seedRole)
     ) {
       const authority = new DatomicClient(process.env.DATOMIC_URL!);
       try {
         await authority.declareProtection(
           f.db,
-          sealed ? [":privacy/field"] : [run.mode === "ledger-parallel" ? ":v" : field(0)],
+          parallel ? [":v"] : sealed ? [":privacy/field"] : [field(0)],
           sealed,
         );
       } finally {
         authority.close();
       }
     }
-    if (run.mode === "ledger-parallel") {
+    if (parallel) {
       output("parallel-writer", await diag("parallel-writer", { scope: f.scope }));
+      return;
+    }
+    if (run.mode === "fast-authority-regression") {
+      const { checkSharedAuthority } = await import("./authority.ts");
+      await checkSharedAuthority(f, run.nonce, getParent, diag, output);
       return;
     }
     let groups: Acc[];
@@ -936,6 +950,11 @@ async function scale() {
       await quietNeighbours(f, run.nonce, diag, output, action === "check");
       return;
     }
+    if (run.authorityCost) {
+      const { compareSharedAuthoritySaves } = await import("./authority.ts");
+      await compareSharedAuthoritySaves(f, run.nonce, diag, output, 500);
+      return;
+    }
     if (run.mode === "ledger-reuse") {
       const { checkErasedIdentity } = await import("./reuse.ts");
       await checkErasedIdentity(f, field(0), run.nonce, diag, output);
@@ -956,7 +975,7 @@ async function scale() {
         diag,
         getParent,
         output,
-        run.mode === "ledger-regression",
+        run.mode.startsWith("ledger-"),
       );
       return;
     }

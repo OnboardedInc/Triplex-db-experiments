@@ -38,6 +38,7 @@
     (when-not (and (lean/enabled? db) (or (privacy/enabled? db) (= 0 (scope/head-position db (scope/entity db)))))
       (privacy/failure! 409 "ProtectedScopeNeedsMigration" "Declare protection before saving into the scope"))
     (privacy/register! name attrs sealed?)
+    (envelope/provision! name sealed?)
     (privacy/guard name
       (fn []
         (when-not (privacy/enabled? (install-cut-guard! conn (sync! conn)))
@@ -47,8 +48,9 @@
     {:database name :attributes attrs :sealed sealed? :erasure {:seq (:seq (privacy/cut name (sync! conn)))}}))
 
 (defn identity [row]
-  {"assertionId" (:id row) "entity" (:entity_id row) "attribute" (:attribute row)
-   "valueType" (:value_type row) "validFrom" (:valid_from row) "validTo" (:valid_to row)})
+  (cond-> {"assertionId" (:id row) "entity" (:entity_id row) "attribute" (:attribute row)
+           "valueType" (:value_type row) "validFrom" (:valid_from row) "validTo" (:valid_to row)}
+    (:key_handle row) (assoc "keyHandle" (:key_handle row))))
 
 (defn- invalid! []
   (privacy/failure! 400 "InvalidEraseCommand" "Provide a bounded erase-only command and identity selectors"))
@@ -159,7 +161,7 @@
   (let [native (d/entid db [:triplex.tx/operation-id (operation-id entry)])]
     (when-not native (privacy/unavailable!))
     {:seq (get entry "seq") :erasedAt (get entry "erasedAt") :txId (get entry "txId")
-     :t (str (d/tx->t native)) :position (get entry "position") :identities (get entry "identities")}))
+     :t (str (d/tx->t native)) :position (get entry "position") :identities (mapv #(dissoc % "keyHandle") (get entry "identities"))}))
 
 (defn erase! [name conn input]
   (let [selectors (selectors! input)
