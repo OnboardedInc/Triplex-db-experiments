@@ -30,6 +30,7 @@ const [
   interval = "0",
   concurrency = "4",
   savePeriod = "625",
+  copyThreads = "4",
 ] = process.argv.slice(2);
 const n = Number(size),
   gap = Number(pause),
@@ -48,7 +49,7 @@ assert(
     (mode === "baseline") === ms > 0,
 );
 assert(
-  ["source", "recipient", "isolated"].includes(route) &&
+  ["source", "recipient", "isolated", "copied"].includes(route) &&
     Number.isInteger(batchPages) &&
     batchPages >= 1 &&
     batchPages <= 32 &&
@@ -77,8 +78,12 @@ assert(
     binding.slot === owner.container &&
     owner.endpoint === process.env.DATOMIC_URL,
 );
-const sourceEndpoint = route === "isolated" ? (owner.readerEndpoint as string) : undefined;
-if (route === "isolated") {
+const copied = route === "copied";
+const copyWorkers = copied ? Number(copyThreads) : undefined;
+if (copied) assert(Number.isInteger(copyWorkers) && copyWorkers! >= 1 && copyWorkers! <= 8);
+const sourceEndpoint =
+  copied || route === "isolated" ? (owner.readerEndpoint as string) : undefined;
+if (copied || route === "isolated") {
   assert(sourceEndpoint && sourceEndpoint !== owner.endpoint, "Exclusive reader peer required");
   const response = await fetch(new URL("/health", sourceEndpoint));
   assert(response.ok, "Exclusive reader peer is unavailable");
@@ -143,6 +148,7 @@ try {
       releases: Number(train),
       readIntervalMs: Number(interval),
       sourceEndpoint,
+      copyWorkers,
     },
     phase: (stage) => console.log(stage),
   });

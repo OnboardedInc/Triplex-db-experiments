@@ -26,6 +26,7 @@ export interface Job {
   readIntervalMs?: number;
   sourceEndpoint?: string;
   publicationPosition?: number;
+  copyWorkers?: number;
 }
 export function recipient(name: string, directory?: string) {
   return directory ? sqliteStore(directory, name) : openComposition("reach", "datomic", name);
@@ -101,11 +102,18 @@ if (process.argv[1] === import.meta.filename) {
           }
         : source;
       const src = budget?.store(transport, "source") ?? transport;
-      const a = new Notices(
-        src,
-        "account",
-        job.deep ? deepInputs(src, job.subjects) : new Fixture(src, job.subjects),
-      );
+      if (job.copyWorkers) assert(job.sourceEndpoint && job.recipientPages);
+      const copy = job.copyWorkers
+        ? new (await import("./copy-plan.ts")).ReleaseCopy(
+            src,
+            job.subjects,
+            job.deep,
+            job.copyWorkers,
+          )
+        : undefined;
+      const inputs = job.deep ? deepInputs(src, job.subjects) : new Fixture(src, job.subjects);
+      if (copy) Object.assign(inputs, { releaseCopy: copy });
+      const a = new Notices(src, "account", inputs);
       assert.equal((await a.observe()).value.epoch, job.epoch);
       if (job.publicationPosition) {
         const cut = await a.db.get<Tail>("tail", job.publicationPosition);
@@ -137,13 +145,17 @@ if (process.argv[1] === import.meta.filename) {
         gapMs: job.gap,
         grant,
         afterReceive: async () => {
-          send({ kind: "effect" });
+          await new Promise<void>((resolve, reject) => {
+            process.send!({ epoch: job.epoch, kind: "effect" }, (error) =>
+              error ? reject(error) : resolve(),
+            );
+          });
         },
       });
       const cpu = process.cpuUsage();
       budget?.mark("child-total-cpu", performance.timeOrigin + performance.now(), { cpu });
       budget?.finish();
-      send({ kind: "done", metrics });
+      send({ kind: "done", metrics: { ...metrics, ...(copy ? { copy: copy.stats } : {}) } });
     } catch (e) {
       send({ kind: "error", message: String(e) });
       process.exitCode = 1;

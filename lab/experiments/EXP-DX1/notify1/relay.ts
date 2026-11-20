@@ -103,6 +103,7 @@ export class Relay {
       e.value.epoch === t.epoch && e.value.parent === cur.parent,
       "Missing original publication",
     );
+    const selectionStart = performance.timeOrigin + performance.now();
     const census = a.censusFor(e);
     const selected = await a.select(e, state, at, sourceAt, cur.start);
     const ids = selected.coverage
@@ -110,6 +111,11 @@ export class Relay {
       : await memberRange(source, census, cur.start, e.at, this.pages);
     const size = selected.coverage?.ids.length ?? census.count;
     assert.equal(ids.length, Math.min(this.pages * width, size - cur.start));
+    a.budget?.mark("range-select", selectionStart);
+    // [DX-STG1] Why: resume the persisted range at its own offset, even when
+    // the in-memory copy is gone. Rejected: switching to a census offset.
+    const copied =
+      erasure.value === 0 && selected.coverage ? a.inputs.releaseCopy?.results(e, ids) : undefined;
     const ledger = (s: string) => "ledger:" + s;
     const old = await state.rows<string>(ids.map(ledger), at);
     const ops = [] as ReturnType<Documents["change"]>;
@@ -129,14 +135,22 @@ export class Relay {
             a.budget?.mark("read-pacing", began);
           }
         }
-        await opts.grant?.();
+        if (!copied) await opts.grant?.();
         this.lastRead = performance.now();
         const groups = (
           interval
             ? [ids.slice(i, i + quantum)]
             : [ids.slice(i, i + width), ids.slice(i + width, i + 2 * width)]
         ).filter((g) => g.length);
-        const records = await Promise.all(groups.map((group) => a.work(e, group, sourceAt)));
+        let offset = i;
+        const records = copied
+          ? groups.map((group) => {
+              const work = copied.slice(offset, offset + group.length);
+              offset += group.length;
+              return work;
+            })
+          : await Promise.all(groups.map((group) => a.work(e, group, sourceAt)));
+        const fold = performance.timeOrigin + performance.now();
         for (const [j, group] of groups.entries())
           for (const [k, s] of group.entries()) {
             const prev = old.get(ledger(s)),
@@ -153,6 +167,7 @@ export class Relay {
               ops.push(...state.change(ledger(s), prev, pack(result.state.items)));
             deliveries.push(...result.deliveries);
           }
+        a.budget?.mark("publish-and-pack", fold);
       }
     } catch (error) {
       if ((await source.get<number>("erasure", await source.head())).id !== erasure.id)
@@ -194,6 +209,7 @@ export class Relay {
     await opts.grant?.();
     const apply = performance.now();
     try {
+      const receiverStart = performance.timeOrigin + performance.now();
       if (packet) {
         if (
           !(await receiveOrdered(this.sink, source.prefix, packet, next.previous, undefined, {
@@ -207,6 +223,7 @@ export class Relay {
       } else {
         await state.commit("checkpoint:" + cur.event + ":" + cur.start, binding, ops, checks);
       }
+      a.budget?.mark("receiver-service", receiverStart);
     } catch (error) {
       if (error instanceof assert.AssertionError) {
         const settled = await state.row<Cursor>("cursor", await state.head());
@@ -226,11 +243,14 @@ export class Relay {
       this.metrics.certified++;
       this.metrics.selectionEvaluations += selected.coverage!.evaluated;
     } else if (cur.start === 0 && e.value.kind === "reconcile") this.metrics.fallback++;
-    this.metrics.evaluations += ids.length;
+    this.metrics.evaluations += copied ? 0 : ids.length;
     if (packet) {
       this.metrics.packets++;
       this.metrics.deliveries += deliveries.length;
+      const ack = performance.timeOrigin + performance.now();
       await opts.afterReceive?.(packet);
+      this.metrics.ackMs += performance.timeOrigin + performance.now() - ack;
+      a.budget?.mark("effect-ack", ack);
     }
     return true;
   }

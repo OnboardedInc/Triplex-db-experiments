@@ -28,6 +28,7 @@ export interface Packet {
 }
 type Receipt = { batch: number; digest: string };
 export interface Metrics {
+  copy?: import("./copy-plan.ts").ReleaseCopy["stats"];
   visits: number;
   evaluations: number;
   selectionEvaluations: number;

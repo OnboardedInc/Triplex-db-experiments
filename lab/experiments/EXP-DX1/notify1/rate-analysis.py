@@ -68,7 +68,7 @@ def data(d,role,a):
 
 def partition(rows,start,duration):
     changes=[(start,False,""),(start+duration,False,"")]
-    categories=["sleep","read-pacing","foreground-grant","kernel","publish-and-pack","source-derive","source-ack","receiver-write","receiver-state","source-ledger","source-data","source-metadata"]
+    categories=["sleep","read-pacing","foreground-grant","copy-capture","copy-workers","kernel","publish-and-pack","receiver-write","receiver-state","receiver-service","effect-ack","range-select","source-derive","source-ack","source-ledger","source-data","source-metadata"]
     for r in rows:
         k=r["kind"]
         if k=="write": k="receiver-write" if r["role"]=="receiver" else "source-ack" if r["operation"]=="cursor" else "source-derive"
@@ -121,7 +121,7 @@ def stats(d):
         assert counts[role]["http"]==len(samples)
     packets=[r for r in rows if r["kind"]=="deliveries"]
     assert sum(r["count"] for r in packets)==ds and len({r["batch"] for r in packets})==m["packets"]
-    counts.update(deliveries=ds,evaluations=sum(r["evaluations"] for r in rows if r["kind"]=="kernel"),payloadBytes=sum(r["payloadBytes"] for r in packets),deliveryBytes=sum(r["deliveryBytes"] for r in packets))
+    counts.update(deliveries=ds,evaluations=sum(r["evaluations"] for r in rows if r["kind"] in ("kernel","copy-workers")),payloadBytes=sum(r["payloadBytes"] for r in packets),deliveryBytes=sum(r["deliveryBytes"] for r in packets))
     assert counts["evaluations"]==m["evaluations"] + m.get("selectionEvaluations", 0)
     out["ms"]=partition(rows,a["startedAt"],a["duration"])
     out["gateway"]={}
