@@ -53,7 +53,7 @@ export class SyncPair {
   initialFlush = "";
   constructor(
     readonly s: Stack,
-    readonly base?: { path: string; checkpoint?: Checkpoint },
+    readonly base?: { path: string; checkpoint?: Checkpoint; ownerUid?: number; ownerGid?: number },
     readonly powerFence?: PowerFence,
   ) {
     this.latch = s.e.prefix + "-fence";
@@ -150,7 +150,7 @@ export class SyncPair {
         "-ceu",
         guard +
           (cp
-            ? 'actual=$(sha256sum "/base/$BASE_LAYOUT/backup_manifest"); test "${actual%% *}" = "$BASE_MANIFEST"; cp -a "/base/$BASE_LAYOUT/." "$PGDATA/"; '
+            ? 'actual=$(sha256sum "/base/$BASE_LAYOUT/backup_manifest"); test "${actual%% *}" = "$BASE_MANIFEST"; pg_verifybackup "/base/$BASE_LAYOUT"; cp -a "/base/$BASE_LAYOUT/." "$PGDATA/"; '
             : "") +
           'exec docker-entrypoint.sh postgres "$@"',
         "primary",
@@ -179,7 +179,10 @@ export class SyncPair {
       assert(cp.basis.t.t === "long");
       ac.cursor = String(BigInt(cp.basis.t.v) + 1n);
       ac.schema = cp.basis.schemaHash;
-      assert.equal(hash(JSON.stringify(cp.receipts)), cp.seal);
+      assert.equal(
+        hash(JSON.stringify({ receipts: cp.receipts, history: cp.history ?? null })),
+        cp.seal,
+      );
     } else await ac.open(options.lean ? "lean" : "legacy", options.lean ?? false);
     const setup = cp ?? (await options.init?.(ac));
     assert.match(
@@ -546,7 +549,7 @@ export class SyncPair {
       timeout: timeouts.control,
     });
     assert.match(output, /pg_rewind:.*(?:Done!|no rewind required)/);
-    s.e.log("rejoined", {
+    this.mark("rejoined", {
       old: old.Id,
       new: m.id,
       ms: performance.now() - start,
@@ -573,9 +576,10 @@ export class SyncPair {
     );
     const brokerStart = performance.now();
     await this.waitBroker("standby", timeouts.broker);
+    this.mark("broker-ready", { ms: performance.now() - brokerStart });
     const peer = new DatomicClient(this.reader, timeouts.control);
     try {
-      await wait(
+      const synced = await wait(
         "gateway synchronized on the new transactor",
         Math.max(0, timeouts.broker - (performance.now() - brokerStart)),
         async () => {
@@ -588,9 +592,36 @@ export class SyncPair {
           return v?.database === this.account!.db && /^\d+$/.test(v.basis) ? v : undefined;
         },
       );
+      this.mark("peer-ready", { basis: synced.basis, ms: performance.now() - brokerStart });
     } finally {
       peer.close();
     }
+  }
+  mark(stage: string, data: unknown) {
+    this.transitions.push({ stage, at: performance.now() });
+    this.s.e.log(stage, data);
+  }
+  async replaySince(floor: string) {
+    const native = await this.s.exec("standby", "sh", "-ceu", "cat log/*.log");
+    const entries = [
+      ...native.matchAll(
+        /:event :log\/catchup, :bytes (\d+), :tail-t (\d+), :index-t (\d+), :msec (\d+)/g,
+      ),
+    ]
+      .map(([, bytes, tail, index, ms]) => ({
+        bytes: Number(bytes),
+        tail: tail!,
+        index: index!,
+        ms: Number(ms),
+      }))
+      .filter((entry) => BigInt(entry.tail) >= BigInt(floor));
+    this.s.e.write("native-replay", {
+      nonce: this.s.e.nonce,
+      database: this.account!.db,
+      floor,
+      entries,
+    });
+    return entries;
   }
   supervisor() {
     const route = this.route!;
@@ -616,10 +647,7 @@ export class SyncPair {
       promote: () => this.promote(),
       activate: (policy, kind) => this.activate(policy, kind),
       publish: () => route.publish(this.reader),
-      observe: (stage, data) => {
-        this.transitions.push({ stage, at: performance.now() });
-        this.s.e.log(stage, data);
-      },
+      observe: (stage, data) => this.mark(stage, data),
     };
     return new Supervisor(port, this.initialFlush);
   }
@@ -628,7 +656,10 @@ export class SyncPair {
     const cp = this.base.checkpoint;
     const { auditSeed } = await import("./seed.ts");
     const receipts = await auditSeed(this.account!, cp.receipts);
-    this.s.e.log("seed-identity", { stage, seal: cp.seal, manifest: cp.manifest, receipts });
+    const edits = cp.history
+      ? await (await import("./v2/history.ts")).auditHistory(this.account!, cp.history)
+      : 0;
+    this.s.e.log("seed-identity", { stage, seal: cp.seal, manifest: cp.manifest, receipts, edits });
   }
   async cleanup() {
     this.route?.close();

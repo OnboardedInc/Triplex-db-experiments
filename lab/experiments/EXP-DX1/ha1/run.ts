@@ -20,6 +20,8 @@ export async function drill(
     checkpoint?: Checkpoint;
     deadline: number;
     credentials: { secret: string; admin: string };
+    ownerUid?: number;
+    ownerGid?: number;
   },
 ) {
   const s = new Stack(e, a, b, sync?.credentials);
@@ -36,7 +38,7 @@ export async function drill(
       const { SyncPair } = await import("../hasync1/pair.ts");
       const pair = new SyncPair(s, sync);
       cleanupShared = () => pair.cleanup();
-      if (e.mode === "hasync-seed-legacy" || e.mode === "hasync-seed-lean") {
+      if (e.mode.startsWith("hasync-seed-")) {
         assert(sync);
         const { buildCheckpoint } = await import("../hasync1/seed.ts");
         result = await buildCheckpoint(
@@ -44,6 +46,7 @@ export async function drill(
           e.mode === "hasync-seed-lean" ? "lean" : "legacy",
           profile.people,
           sync.deadline,
+          e.mode === "hasync-seed-edited",
         );
       } else if (e.mode === "hasync-smoke") {
         const { smoke } = await import("../hasync1/smoke.ts");

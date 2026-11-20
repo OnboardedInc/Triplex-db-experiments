@@ -18,6 +18,7 @@ import {
 } from "../../../bin/lib.mjs";
 import { Evidence, modeOf, roles, root, runFile, sleep } from "./common.ts";
 import { drill } from "./run.ts";
+import { localCheckpoint } from "../hasync1/v2/local-checkpoint.ts";
 import type { Site } from "./stack.ts";
 
 async function recoverLoad(nonce: string, config: any, manager: any, folder: string) {
@@ -161,7 +162,16 @@ export async function localDrill(opts: any, config: any, manager: any) {
   const people = Number(opts.people ?? 4);
   const smallLogicalCopy =
     mode === "one-account" && Number.isSafeInteger(people) && people > 0 && people <= 256;
-  const forecastBytes = (smallLogicalCopy ? 1.5 : mode.startsWith("one-") ? 3 : 1) * 2 ** 30;
+  const checkpointRun = opts.checkpoint !== undefined || mode === "hasync-seed-edited";
+  const forecastBytes =
+    (checkpointRun
+      ? Math.max(2, Math.ceil(people / 2500))
+      : smallLogicalCopy
+        ? 1.5
+        : mode.startsWith("one-")
+          ? 3
+          : 1) *
+    2 ** 30;
   const bytes = wanted.reduce((n, [, mb]) => n + mb * 2 ** 20, 0);
   assert(bytes <= info.memBytes);
   let acquired = false,
@@ -329,6 +339,9 @@ export async function localDrill(opts: any, config: any, manager: any) {
         throw error;
       }
     }
+    clean = true;
+    const sync = localCheckpoint(e!, folder, opts.checkpoint, people);
+    clean = false;
     await drill(
       e!,
       site,
@@ -337,6 +350,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
       () => {
         clean = true;
       },
+      sync,
     );
   } finally {
     if (measured) {

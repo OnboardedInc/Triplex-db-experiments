@@ -17,6 +17,7 @@ import { replayEvidence } from "./replay.ts";
 import { lsn, timeouts, wait } from "./supervisor.ts";
 import { walLink } from "./wal-link.ts";
 import { driveOffers } from "./offers.ts";
+import { historyRead } from "./v2/history.ts";
 
 export const faultModes = [
   "hasync-commit",
@@ -278,6 +279,10 @@ async function faultWork(
       pin = await ac.send(ac.intent("index-tail-" + i, 160, witness));
       selected.push(ac.inputs.at(-1)!);
     }
+    const people = pair.base?.checkpoint?.people ?? 0;
+    // [DX-HASYNC1] Why: vary recently written data independently while the indexed corpus grows. Rejected: attributing log replay to every fact already in the index.
+    for (let i = 8; i < Math.min(80, Math.ceil(people / 200)); i++)
+      await ac.send(ac.intent("index-extra-" + i, 160, "index-extra-" + i));
   }
   await ac.pinned(pin);
   const ackedBefore = ac.inputs.filter((i) => ac.receipts.has(i.operationId));
@@ -302,7 +307,11 @@ async function faultWork(
     ),
   });
   const start = async () => {
-    offered = await driveOffers(e, ac, pin, { writer: pair.route!.url, reader: pair.reader });
+    offered = await driveOffers(e, ac, pin, {
+      writer: pair.route!.url,
+      reader: pair.reader,
+      deepRead: historyRead(ac, pair.base?.checkpoint),
+    });
     await offered.lead();
   };
   const monitor = pinnedLoop(ac, pin);
@@ -441,6 +450,7 @@ async function faultWork(
     }
     const freshInput = ac.intent("new-writer", 10, witness);
     const fresh = await ac.send(freshInput);
+    const nativeReplay = await pair.replaySince(checkpoint.requested);
     const firstNewAt =
       resolution && initialStatus === "absent"
         ? ac.arrivals.get(resolution.operationId)!
@@ -461,7 +471,7 @@ async function faultWork(
     const replay = await replayEvidence(e, ac, selected);
     const feed = await auditFeed(
       ac,
-      auditSeed ? ac.inputs : [...selected, ...traffic.inputs],
+      auditSeed ? ac.inputs : ac.inputs.filter((input) => ac.receipts.has(input.operationId)),
       auditSeed ? ac.cursor : baseline.t.v,
     );
     const report = {
@@ -475,6 +485,7 @@ async function faultWork(
       restart,
       firstNewMs: firstNewAt - from,
       availability,
+      nativeReplay,
       offersRetried: traffic.settlements.filter((s) => s.disposition === "retried").length,
       polls,
       repeat,

@@ -5,6 +5,7 @@ import type { SyncPair } from "./pair.ts";
 import { lsn, timeouts, wait } from "./supervisor.ts";
 import { driveOffers } from "./offers.ts";
 import { auditFeed } from "./faults.ts";
+import { historyRead } from "./v2/history.ts";
 
 export async function moveDrill(
   pair: SyncPair,
@@ -33,6 +34,7 @@ export async function moveDrill(
   const offered = await driveOffers(pair.s.e, ac, old, {
     writer: pair.route!.url,
     reader: pair.reader,
+    deepRead: historyRead(ac, pair.base?.checkpoint),
   });
   await offered.lead();
   const monitor = pinnedLoop(ac, old);
@@ -58,6 +60,7 @@ export async function moveDrill(
     const availability = await offered.finish(marks(), true);
     const fresh = await first;
     const at = ac.arrivals.get(command.operationId)!;
+    const nativeReplay = await pair.replaySince(checkpoint.requested);
     const samples = await monitor.finish();
     const during = samples.filter((v) => v.start >= sealed.at && v.end <= at);
     assert(during.length && during.every((v) => v.code === "ok"));
@@ -93,6 +96,7 @@ export async function moveDrill(
       witness,
       fresh,
       stages: pair.transitions,
+      nativeReplay,
       firstWritePauseMs: at - sealed.at,
       availability,
       offersRetried: traffic.settlements.filter((s) => s.disposition === "retried").length,

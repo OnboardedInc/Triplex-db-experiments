@@ -43,6 +43,7 @@ export const modes = [
   "hasync-move",
   "hasync-seed-legacy",
   "hasync-seed-lean",
+  "hasync-seed-edited",
   "hasync-suite",
 ] as const;
 export type Mode = (typeof modes)[number];
@@ -117,7 +118,9 @@ function treeCode(mode?: Mode) {
   );
   if (mode?.startsWith("hasync-")) {
     const dir = path.join(import.meta.dirname, "../hasync1");
-    for (const f of fs.readdirSync(dir).filter((name) => name.endsWith(".ts")))
+    for (const f of fs
+      .readdirSync(dir, { recursive: true, encoding: "utf8" })
+      .filter((name) => name.endsWith(".ts")))
       paths.push(path.join(dir, f));
     for (const f of fs
       .readdirSync(path.join(root, "lab/oracles/replay"))

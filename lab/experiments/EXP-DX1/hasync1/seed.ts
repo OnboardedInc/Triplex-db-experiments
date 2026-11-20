@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { deepOwnFacts, deepPopulation, deepShape } from "../../../bench/lib/deep-world.ts";
-import { SEED_VALID_FROM, type Fact } from "../../../bench/lib/world.ts";
+import type { Fact } from "../../../bench/lib/world.ts";
 import {
   immutable,
   type DatomicClient,
@@ -11,6 +11,7 @@ import { hash } from "../ha1/common.ts";
 import { drop } from "../ha1/one-backup.ts";
 import { requestIndex, type Account } from "../ha1/one-db.ts";
 import type { SyncPair } from "./pair.ts";
+import { deepRow, editHistory, shouldEdit, type History } from "./v2/history.ts";
 
 type Layout = "legacy" | "lean";
 type TripleRow = Input["rows"][number];
@@ -25,35 +26,9 @@ export type Checkpoint = {
   facts: number;
   seedMs: number;
   receipts: Receipt[];
+  history?: History;
   seal: string;
 };
-
-function toRow(fact: Fact, id: string, tx: string, stamp: number): TripleRow {
-  const v = fact.v;
-  return {
-    id,
-    entity_id: "deep/" + fact.e,
-    entity_type: "Subject",
-    attribute: fact.a,
-    value_type: v.type,
-    value_string:
-      typeof v.value === "string" ? (v.type === "ref" ? "deep/" + v.value : v.value) : null,
-    value_number: null,
-    value_datetime: v.type === "datetime" ? v.value : null,
-    value_boolean: v.type === "boolean" ? Number(v.value) : null,
-    value_json: v.type === "blob" ? JSON.stringify({ mimeType: v.mimeType, size: v.size }) : null,
-    recorded_at: stamp,
-    recorded_position: 1,
-    valid_from: SEED_VALID_FROM,
-    valid_to: null,
-    created_by: null,
-    retracted_at: null,
-    retracted_position: null,
-    retract_tx_id: null,
-    schema_version: 1,
-    tx_id: tx,
-  };
-}
 
 function* frames(n: number) {
   let frame: Fact[] = [];
@@ -90,11 +65,13 @@ export async function buildCheckpoint(
   layout: Layout,
   people: number,
   deadline: number,
+  withHistory = false,
 ) {
   const start = performance.now();
   const { ac } = await pair.open({ lean: layout === "lean", writeTimeout: 15000 });
   const generator = frames(people);
   const results: Receipt[] = [];
+  const editable: { row: TripleRow; receipt: Receipt }[] = [];
   let seq = 0;
   let facts = 0;
   const lanes = Array.from({ length: 4 }, async () => {
@@ -106,7 +83,7 @@ export async function buildCheckpoint(
       const op = ac.key + "-deep-" + k;
       const tx = op + "/tx",
         stamp = 500000 + k;
-      const rows = block.value.map((r, i) => toRow(r, op + "/" + i, tx, stamp));
+      const rows = block.value.map((r, i) => deepRow(r, op + "/" + i, tx, stamp));
       const input: Input = {
         operationId: op,
         attemptId: op + "/first",
@@ -122,8 +99,11 @@ export async function buildCheckpoint(
       const r = immutable(await ac.w.transact(ac.db, input));
       assert.equal(r.operationId, op);
       results[k] = r;
+      if (withHistory)
+        for (const row of rows.filter(shouldEdit))
+          editable.push({ row: { ...row, recorded_position: Number(r.position.v) }, receipt: r });
       facts += rows.length;
-      if (k % 256 === 0)
+      if (k % 64 === 0)
         pair.s.e.log("seed-progress", { frames: k, facts, ms: performance.now() - start });
     }
   });
@@ -133,18 +113,31 @@ export async function buildCheckpoint(
   assert.equal(facts, model.facts);
   assert.equal(results.filter(Boolean).length, seq);
   assert.equal(new Set(results.map((r) => r.position.v)).size, seq);
-  await auditSeed(ac, results);
-  await requestIndex(ac);
+  if (withHistory) assert.equal(editable.length, Math.ceil(people / 5));
+  const history = withHistory ? await editHistory(pair.s.e, ac, editable, deadline) : undefined;
+  const all = [...results, ...(history?.receipts ?? [])];
+  await auditSeed(ac, all);
+  const indexed = await requestIndex(ac);
   const basis = await ac.w.basis(ac.db);
-  pair.s.e.write("seed-ledger", { layout, model, results, basis });
+  pair.s.e.write("seed-ledger", { layout, model, results, indexed, basis });
   const out = "/base/" + layout;
   // [DX-HASYNC1] Why: reused inputs must be a consistent PostgreSQL snapshot with checked files and replayable WAL. Rejected: copying a live PGDATA directory.
   const cmd =
     drop +
     'install -d -m 700 -o postgres -g postgres "$1"; ' +
     '"$drop" postgres pg_basebackup -U postgres --checkpoint=fast -D "$1" -X stream --manifest-checksums=SHA256; ' +
-    'pg_verifybackup "$1" >/dev/null; sha256sum "$1/backup_manifest"; du -sk "$1"';
-  const shell = await pair.s.exec("pg", "sh", "-ceu", cmd, "capture", out);
+    'pg_verifybackup "$1" >/dev/null; sha256sum "$1/backup_manifest"; du -sk "$1"; ' +
+    'if test -n "$2"; then chown -R "$2:$3" "$1"; fi';
+  const shell = await pair.s.exec(
+    "pg",
+    "sh",
+    "-ceu",
+    cmd,
+    "capture",
+    out,
+    String(pair.base?.ownerUid ?? ""),
+    String(pair.base?.ownerGid ?? ""),
+  );
   const [manifest, , kb] = shell.split(/\s+/);
   assert(manifest && /^[a-f0-9]{64}$/.test(manifest));
   assert(kb && /^\d+$/.test(kb));
@@ -159,8 +152,9 @@ export async function buildCheckpoint(
     people,
     facts,
     seedMs: performance.now() - start,
-    receipts: results,
-    seal: hash(JSON.stringify(results)),
+    receipts: all,
+    ...(history ? { history } : {}),
+    seal: hash(JSON.stringify({ receipts: all, history: history ?? null })),
   };
   return checkpoint;
 }

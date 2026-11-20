@@ -25,6 +25,7 @@ type Offer = {
   result: Result;
   code?: string;
   receipt?: Receipt;
+  deep?: { subject: number; t: string; sha256: string };
 };
 type Plan = {
   nonce: string;
@@ -81,7 +82,7 @@ export function summarizeOffers(plan: Plan, rows: Offer[], stopAt: number, marks
     fault === undefined || routed === undefined
       ? undefined
       : saves
-          .filter((r) => r.due >= fault && (r.sent ?? -1) >= routed && r.result === "acknowledged")
+          .filter((r) => r.due >= fault && (r.called ?? -1) >= routed && r.result === "acknowledged")
           .sort((a, b) => a.finished - b.finished)[0];
   const cut = {
     low: last?.finished ?? (fault === undefined ? null : plan.start),
@@ -98,6 +99,10 @@ export function summarizeOffers(plan: Plan, rows: Offer[], stopAt: number, marks
       .sort((a, b) => a - b),
     stopAt,
   ];
+  const deep = reads.filter((r) => r.deep !== undefined);
+  const deepAfterRoute = deep
+    .filter((r) => r.result === "acknowledged" && routed !== undefined && r.due >= routed)
+    .sort((a, b) => a.finished - b.finished);
   const maxReadGapMs = Math.max(...answerTimes.slice(1).map((t, i) => t - answerTimes[i]!));
   return {
     plan,
@@ -113,6 +118,17 @@ export function summarizeOffers(plan: Plan, rows: Offer[], stopAt: number, marks
     during: count(during),
     duringKeys: during.map((o) => o.key),
     maxReadGapMs,
+    ...(deep.length
+      ? {
+          deep: count(deep),
+          firstDeepAfterRouteMs: deepAfterRoute.length
+            ? deepAfterRoute[0]!.finished - routed!
+            : null,
+          firstDeepServiceMs: deepAfterRoute.length
+            ? deepAfterRoute[0]!.finished - deepAfterRoute[0]!.due
+            : null,
+        }
+      : {}),
     maxDispatchLagMs: Math.max(0, ...rows.map((r) => (r.called ?? r.finished) - r.due)),
     neverCalled: rows.filter((r) => r.called === null).length,
   };
@@ -140,18 +156,33 @@ export function recountTraffic(
       (x) => x.nonce === nonce && x.slot === slot && x.database === database,
     ),
   );
-  const definitions = new Map<string, { kind: Kind; ordinal: number; due: number }>();
+  const definitions = new Map<
+    string,
+    { kind: Kind; ordinal: number; due: number; deep?: Offer["deep"] }
+  >();
   const rows: Offer[] = [];
   for (const line of lines) {
     const d = line.data;
     if (line.stage === "offer") {
       assert(!definitions.has(d.key));
       if (d.kind === "save") assert.match(d.inputSha256, /^[a-f0-9]{64}$/);
-      else immutable(d.pin);
-      definitions.set(d.key, { kind: d.kind, ordinal: d.ordinal, due: d.due });
+      else {
+        immutable(d.pin);
+        if (d.deep) {
+          assert(Number.isSafeInteger(d.deep.subject) && d.deep.subject >= 0);
+          assert.match(d.deep.t, /^\d+$/);
+          assert.match(d.deep.sha256, /^[0-9a-f]{64}$/);
+        }
+      }
+      definitions.set(d.key, { kind: d.kind, ordinal: d.ordinal, due: d.due, deep: d.deep });
     } else {
       assert.equal(line.stage, "outcome");
-      assert.deepEqual(definitions.get(d.key), { kind: d.kind, ordinal: d.ordinal, due: d.due });
+      assert.deepEqual(definitions.get(d.key), {
+        kind: d.kind,
+        ordinal: d.ordinal,
+        due: d.due,
+        deep: d.deep,
+      });
       definitions.delete(d.key);
       rows.push(d);
     }
@@ -171,7 +202,14 @@ export async function driveOffers(
     rate?: number;
     writer: string;
     reader: string;
-    read?: (client: DatomicClient, ordinal: number) => Promise<void>;
+    deepRead?:
+      | ((ordinal: number) =>
+          | {
+              identity: NonNullable<Offer["deep"]>;
+              query: (client: DatomicClient) => Promise<void>;
+            }
+          | undefined)
+      | undefined;
   },
 ) {
   const label = options.label ?? "field";
@@ -213,6 +251,7 @@ export async function driveOffers(
   function dispatch(kind: Kind, ordinal: number, due: number) {
     const key = label + "-" + kind + "-" + ordinal;
     const input = kind === "save" ? ac.intent(key, 1 + (ordinal % 3), key) : undefined;
+    const probe = kind === "read" ? options.deepRead?.(ordinal) : undefined;
     if (input) inputs.set(key, input);
     log("offer", {
       key,
@@ -221,8 +260,10 @@ export async function driveOffers(
       due,
       inputSha256: input ? hash(JSON.stringify(input)) : null,
       pin: input ? null : pin,
+      deep: probe?.identity,
     });
     const save = (v: Offer) => {
+      if (probe) v.deep = probe.identity;
       offers.push(v);
       log("outcome", v);
     };
@@ -252,10 +293,10 @@ export async function driveOffers(
       try {
         if (input) {
           const raw = await clients.save.transact(ac.db, input, () => {
-            sent = performance.now();
+            sent ??= performance.now();
           });
           receipt = ac.remember(input, raw);
-        } else await (options.read?.(clients.read, ordinal) ?? ac.pinned(pin, clients.read));
+        } else await (probe?.query(clients.read) ?? ac.pinned(pin, clients.read));
         result = "acknowledged";
       } catch (error) {
         code = errorCode(error) ?? "value-mismatch";
