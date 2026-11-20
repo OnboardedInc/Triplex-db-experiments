@@ -1,9 +1,10 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+import { promisify } from "node:util";
 import { W0, canonical, sha256, type WorldRow } from "../../../../bench/lib/w0-world.ts";
 import { ids, type Fact } from "../../../../bench/lib/world.ts";
 import { integer, string } from "../../../../bench/lib/deep-world.ts";
@@ -32,7 +33,10 @@ assert(
     owner.volume,
 );
 const save = (name: string, data: unknown) =>
-  writeFileSync(join(root, name + ".json"), JSON.stringify(data, null, 2) + "\n", { flag: "wx" });
+  writeFileSync(join(root, name + ".json"), JSON.stringify(data, null, 2) + "\n", {
+    flag: "wx",
+    flush: /^(?:offer|terminal)-/.test(name),
+  });
 const git = (...args: string[]) =>
   execFileSync("git", args, { encoding: "utf8", maxBuffer: 32 << 20 }).trim();
 const source = git("rev-parse", "HEAD");
@@ -211,13 +215,15 @@ try {
       while (clock() < cutoff) await sleep(Math.max(1, cutoff - clock()));
       return probe();
     })();
+    // [DX-ACT1] Why: supervise the independent deadline observer even if the writer fails first. Rejected: dropping the offer on an unhandled observer rejection.
+    void scheduledProbe.catch(() => {});
     await sleep(Math.max(0, offered - clock()));
     const ingress = clock();
     // [DX-ACT1] Why: author an unseen document on ingress and schedule the deadline read independently. Rejected: timing after compilation or making the deadline probe wait for the Publish ACK.
     const document = structuredClone(W0.R2.doc),
       days = [1, 2, 4, 5, 6, 7][index]!;
     Object.assign(document.rules.find((r) => r.id === "I9S2")!, { params: { businessDays: days } });
-    save("offer-" + index, {
+    const offer = {
       index,
       mode,
       rate,
@@ -227,100 +233,191 @@ try {
       document,
       request: "publish-" + index,
       nonce: attempt.nonce,
-    });
-    const reply = await inOrder(async () => {
-      const entered = clock();
-      const result = await measureW0Http(() =>
-        account.publish("publish-" + index, document, valid, mode, undefined, {
-          workers: 4,
-          sources: "indexed",
-        }),
+    };
+    save("offer-" + index, offer);
+    const offerSha = sha256(readFileSync(join(root, "offer-" + index + ".json")));
+    let testedCut: number | undefined;
+    try {
+      const reply = await inOrder(async () => {
+        const entered = clock();
+        const result = await measureW0Http(() =>
+          account.publish("publish-" + index, document, valid, mode, undefined, {
+            workers: 4,
+            sources: "indexed",
+          }),
+        );
+        const durable = store.counters.ackObserved;
+        assert(durable >= entered && durable <= clock());
+        return {
+          r: result.value,
+          entered,
+          durable,
+          stages: account.lastMaterial,
+          wire: result.samples
+            .filter((x) => String(x.path).endsWith("/transact"))
+            .map((x) => Number(x.requestBytes)),
+        };
+      });
+      const first = await probe();
+      const deadline = await scheduledProbe;
+      testedCut = deadline.basis.tx;
+      await traffic;
+      await Promise.all(pending);
+      if (failure) throw failure;
+      assert(
+        rows.length === delays.length && rows.every((r, i) => i === 0 || rows[i - 1]!.p < r.p),
       );
-      const durable = store.counters.ackObserved;
-      assert(durable >= entered && durable <= clock());
-      return {
-        r: result.value,
-        entered,
-        durable,
-        stages: account.lastMaterial,
-        wire: result.samples
-          .filter((x) => String(x.path).endsWith("/transact"))
-          .map((x) => Number(x.requestBytes)),
-      };
-    });
-    const first = await probe();
-    const deadline = await scheduledProbe;
-    await traffic;
-    await Promise.all(pending);
-    if (failure) throw failure;
-    assert(rows.length === delays.length && rows.every((r, i) => i === 0 || rows[i - 1]!.p < r.p));
-    const final = await store.lookup("joined:publish-" + index);
-    assert.deepEqual(final, reply.r);
-    assert(
-      reply.wire.length === reply.stages.stages + 1 &&
-        reply.wire.every((b) => b > 0 && b <= 4 * 1024 * 1024),
-    );
-    const sequence = priorSeq + 1,
-      physical = await account.physical(sequence),
-      newer = W0.compileRelease(document);
-    assert(
-      physical.marker.release === newer.hash &&
-        physical.marker.seq === sequence &&
-        physical.marker.cut < reply.r.position,
-    );
-    assert(physical.marker.output.count > 0 || mode === "owed");
-    for (const read of [first, deadline]) {
-      const at = read.basis.tx;
-      assert(at >= baseline.position);
-      const release = at >= reply.r.position ? document : W0.R1.doc;
-      const [oracle] = JSON.parse(
+      const final = await store.lookup("joined:publish-" + index);
+      assert.deepEqual(final, reply.r);
+      assert(
+        reply.wire.length === reply.stages.stages + 1 &&
+          reply.wire.every((b) => b > 0 && b <= 4 * 1024 * 1024),
+      );
+      const sequence = priorSeq + 1,
+        physical = await account.physical(sequence),
+        newer = W0.compileRelease(document);
+      assert(
+        physical.marker.release === newer.hash &&
+          physical.marker.seq === sequence &&
+          physical.marker.cut < reply.r.position,
+      );
+      assert(physical.marker.output.count > 0 || mode === "owed");
+      for (const read of [first, deadline]) {
+        const at = read.basis.tx;
+        assert(at >= baseline.position);
+        const release = at >= reply.r.position ? document : W0.R1.doc;
+        const [oracle] = JSON.parse(
+          await ref.oracle.call("check", {
+            document: release,
+            old: null,
+            basis: read.basis,
+            worlds: [expected(subject, at)],
+            fold: false,
+          }),
+        );
+        assert.equal(read.json, oracle.json);
+      }
+      const witnessIndices = [subject, n - index - 9, Math.floor(n / 2) - index];
+      const witnessSubjects = witnessIndices.map((i) => seeded.roster[i]!);
+      const witnessNonce = randomUUID();
+      const currentCut = await store.head();
+      // [DX-ACT1] Why: a process with no remembered results reopens the exact observed cut. Rejected: taking the new process's later head as evidence for the deadline.
+      const child = await promisify(execFile)(
+        process.execPath,
+        [
+          "--experimental-strip-types",
+          new URL("./read-witness.ts", import.meta.url).pathname,
+          store.scope,
+          "act2-deep",
+          witnessNonce,
+          valid,
+          String(testedCut),
+          ...witnessSubjects,
+        ],
+        { encoding: "utf8", maxBuffer: 16 << 20, timeout: 120000 },
+      );
+      const witness = JSON.parse(child.stdout);
+      assert(
+        witness.scope === store.scope &&
+          witness.nonce === witnessNonce &&
+          witness.pid !== process.pid,
+      );
+      assert.equal(witness.reads.length, witnessSubjects.length);
+      assert.equal(witness.current.length, witnessSubjects.length);
+      const eligible = testedCut >= reply.r.position ? document : W0.R1.doc;
+      const oracleReads = JSON.parse(
         await ref.oracle.call("check", {
-          document: release,
-          old: null,
-          basis: read.basis,
-          worlds: [expected(subject, at)],
+          document: eligible,
+          old: W0.R1.doc,
+          basis: { tx: testedCut, validTime: valid },
+          worlds: witnessIndices.map((i) => expected(i, testedCut!)),
           fold: false,
         }),
       );
-      assert.equal(read.json, oracle.json);
+      for (const [i, read] of witness.reads.entries()) {
+        assert.equal(read.subject, witnessSubjects[i]);
+        assert.deepEqual(read.basis, deadline.basis);
+        assert.equal(read.json, oracleReads[i].json);
+      }
+      const oracleCurrent = JSON.parse(
+        await ref.oracle.call("check", {
+          document,
+          old: W0.R1.doc,
+          basis: { tx: currentCut, validTime: valid },
+          worlds: witnessIndices.map((i) => expected(i, currentCut)),
+          fold: false,
+        }),
+      );
+      for (const [i, read] of witness.current.entries()) {
+        assert.equal(read.subject, witnessSubjects[i]);
+        assert.deepEqual(read.basis, { tx: currentCut, validTime: valid });
+        assert.equal(read.json, oracleCurrent[i].json);
+      }
+      assert(
+        first.basis.tx >= reply.r.position &&
+          first.started >= reply.durable &&
+          deadline.started >= cutoff - 2,
+      );
+      // Track the response, notice-recipe and physical-value frontiers separately. A miss stays in the observation ledger.
+      const result = {
+        index,
+        baseline: baseline.position,
+        mode,
+        rate,
+        offered,
+        ingress,
+        entered: reply.entered,
+        durable: reply.durable,
+        offeredToDurableMs: reply.durable - offered,
+        firstCorrectMs: first.finished - offered,
+        noticeRecipeDurableMs: reply.durable - offered,
+        individualOwedDurableMs: null,
+        changedValuesDurableMs: mode === "staged" ? reply.durable - offered : null,
+        deadline: { ...deadline, onRelease: deadline.basis.tx >= reply.r.position },
+        freshWitness: {
+          ...witness,
+          deadlineChangedRows: oracleReads.map((r: { rows: unknown[] }) => r.rows.length),
+          currentChangedRows: oracleCurrent.map((r: { rows: unknown[] }) => r.rows.length),
+        },
+        first,
+        request: reply.r.commandId,
+        nativeTx: reply.r.txId,
+        nativeCut: reply.r.position,
+        sequence,
+        roster: seeded.rosterHash,
+        release: newer.hash,
+        doc: document,
+        wire: reply.wire,
+        work: reply.stages,
+        writes: rows,
+        deadlineMiss:
+          first.finished > cutoff || reply.durable > cutoff || deadline.basis.tx < reply.r.position,
+      };
+      save("window-" + index, result);
+      save("terminal-" + index, {
+        index,
+        nonce: attempt.nonce,
+        offerSha,
+        status: "observed",
+        cut: testedCut,
+        nativeTx: result.nativeTx,
+        deadlineMiss: result.deadlineMiss,
+      });
+      windows.push(result);
+    } catch (error) {
+      save("terminal-" + index, {
+        index,
+        nonce: attempt.nonce,
+        offerSha,
+        status: "error",
+        cut: testedCut ?? null,
+        elapsed: clock() - offered,
+        error: String(error),
+      });
+      await Promise.allSettled([traffic, scheduledProbe]);
+      await Promise.allSettled(pending);
+      throw error;
     }
-    assert(
-      first.basis.tx >= reply.r.position &&
-        first.started >= reply.durable &&
-        deadline.started >= cutoff - 2,
-    );
-    // Track the response, notice-recipe and physical-value frontiers separately. A miss stays in the observation ledger.
-    const result = {
-      index,
-      baseline: baseline.position,
-      mode,
-      rate,
-      offered,
-      ingress,
-      entered: reply.entered,
-      durable: reply.durable,
-      offeredToDurableMs: reply.durable - offered,
-      firstCorrectMs: first.finished - offered,
-      noticeRecipeDurableMs: reply.durable - offered,
-      individualOwedDurableMs: null,
-      changedValuesDurableMs: mode === "staged" ? reply.durable - offered : null,
-      deadline: { ...deadline, onRelease: deadline.basis.tx >= reply.r.position },
-      first,
-      request: reply.r.commandId,
-      nativeTx: reply.r.txId,
-      nativeCut: reply.r.position,
-      sequence,
-      roster: seeded.rosterHash,
-      release: newer.hash,
-      doc: document,
-      wire: reply.wire,
-      work: reply.stages,
-      writes: rows,
-      deadlineMiss:
-        first.finished > cutoff || reply.durable > cutoff || deadline.basis.tx < reply.r.position,
-    };
-    save("window-" + index, result);
-    windows.push(result);
   }
   let previous: W0.ReleaseDoc | null = null;
   for (const r of windows) {
@@ -376,7 +473,12 @@ try {
     [
       "server-effects",
       ...(!smoke ? ["preflight/stage-gate", "preflight/idle-deadline"] : []),
-      ...windows.flatMap((r) => ["offer-" + r.index, "window-" + r.index, "proof-" + r.index]),
+      ...windows.flatMap((r) => [
+        "offer-" + r.index,
+        "terminal-" + r.index,
+        "window-" + r.index,
+        "proof-" + r.index,
+      ]),
     ].map((f) => [f, sha256(readFileSync(join(root, f + ".json")))]),
   );
   save("server-observations", {
