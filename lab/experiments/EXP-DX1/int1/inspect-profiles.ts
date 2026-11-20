@@ -45,6 +45,7 @@ export function inspectProfiles(dir: string) {
       }
       assert(count > 0 && facts === account.facts);
       assert.equal(count, ledger.prepare("SELECT count(DISTINCT born) AS n FROM people").get()!.n);
+      assert.equal(ledger.prepare("SELECT p FROM seed_feed EXCEPT SELECT born FROM people LIMIT 1").get(), undefined);
       assert.deepEqual(proof.checks, [{ count, facts, sha256: seal.digest("hex") }]);
     } finally { ledger.close(); }
     stages.push(["after-seed-feed-proof","after-seed-feed-proof"]);

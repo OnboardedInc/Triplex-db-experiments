@@ -302,6 +302,7 @@ export class Account {
       count++; facts += actual.length;
     }
     assert.equal(count, this.db.prepare("SELECT count(DISTINCT born) AS n FROM people").get()!.n);
+    assert.equal(this.db.prepare("SELECT p FROM seed_feed EXCEPT SELECT born FROM people LIMIT 1").get(), undefined);
     assert.equal(facts,this.facts);
     return { count, facts, sha256: seal.digest("hex") };
   }

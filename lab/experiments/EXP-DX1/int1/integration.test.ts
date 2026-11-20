@@ -53,6 +53,9 @@ test("the import-only observer replays every original seed identity after sampli
     corrupt = true;
     await assert.rejects(a.verifySeedFeed(async () => {}));
     corrupt = false;
+    db.exec("INSERT INTO seed_feed SELECT 999,txid,changes,hash FROM seed_feed WHERE p=1");
+    await assert.rejects(a.verifySeedFeed(async () => {}));
+    db.exec("DELETE FROM seed_feed WHERE p=999");
     db.exec("DELETE FROM seed_feed WHERE p=1");
     await assert.rejects(a.verifySeedFeed(async () => {}));
   } finally { db.close(); await comp.close(); }
