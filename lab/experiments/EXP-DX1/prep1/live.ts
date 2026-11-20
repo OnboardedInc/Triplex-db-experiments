@@ -15,6 +15,9 @@ type Receipt = {
   t: { v: string };
   groupSize?: number;
   writerFunction?: string;
+  writePath?: { function: string };
+  subjectSave?: string;
+  subjectReplan?: boolean;
   preparedStats?: {
     path: string;
     replays: number;
@@ -38,20 +41,33 @@ const fields = (subject: string, size: number, value: string): Fact[] =>
     v: { type: "string", value: `${value}/${j}` },
   }));
 const roots = Array.from({ length: 1200 }, (_, i) => `acct/a${i % 10}/p${i}`);
+const subjectComparison = process.env.DX_PREP1_SUBJECT_COMPARE === "1";
+const quietSavesPerSecond = 3.5;
 
-function schedule(rate: number, seconds: number, block: number): Save[] {
-  let random = 207 | 0;
-  const jitter = () => {
+function jitterFrom(seed: number) {
+  let random = seed;
+  return () => {
     random = Math.imul(random, 1664525) + 1013904223;
     return (random >>> 0) / 2 ** 32;
   };
+}
+
+function schedule(rate: number, seconds: number, block: number, quietOnly = false): Save[] {
   const total = seconds * rate;
+  const quiet = Math.round(quietSavesPerSecond * seconds);
+  const legacyJitter = jitterFrom(207);
   return roots
     .slice(0, 10)
     .flatMap((_, account) => {
-      const count = Math.floor(total / 10) + Number(account < total % 10);
+      const jitter = subjectComparison ? jitterFrom(207 + account) : legacyJitter;
+      if (quietOnly && account !== 0) return [];
+      const count = subjectComparison
+        ? account === 0
+          ? quiet
+          : Math.floor((total - quiet) / 9) + Number(account <= (total - quiet) % 9)
+        : Math.floor(total / 10) + Number(account < total % 10);
       return Array.from({ length: count }, (_, serial) => ({
-        id: `live-${block}-${account}-${serial}`,
+        id: `${quietOnly ? "quiet" : "live"}-${block}-${account}-${serial}`,
         subject: roots[((serial * 67) % 120) * 10 + account]!,
         at: ((serial + jitter()) * seconds * 1000) / count,
         account,
@@ -107,6 +123,8 @@ async function phase(
   const pending = new Set<Promise<void>>();
   const runningSubjects = new Set<string>();
   const waiting: Save[] = [];
+  const accountQueues = Array.from({ length: 10 }, () => [] as Save[]);
+  let nextAccount = 0;
   const records: {
     id: string;
     account: number;
@@ -133,15 +151,34 @@ async function phase(
   };
   const startNs = process.hrtime.bigint();
   const elapsed = () => Number(process.hrtime.bigint() - startNs) / 1e6;
+  const takeReady = (queue: Save[]) => {
+    const i = queue.findIndex((s) => !runningSubjects.has(s.subject) && !frozen.has(s.subject));
+    return i === -1 ? undefined : queue.splice(i, 1)[0];
+  };
+  const take = () => {
+    if (!subjectComparison) return takeReady(waiting);
+    // [DX-PREP1] Why: one dispatch budget rotates across ready accounts under the same offered tape.
+    // Rejected: letting a burst from one account occupy every newly freed sender.
+    for (let i = 0; i < accountQueues.length; i++) {
+      const account = (nextAccount + i) % accountQueues.length;
+      const save = takeReady(accountQueues[account]!);
+      if (save) {
+        nextAccount = (account + 1) % accountQueues.length;
+        return save;
+      }
+    }
+    return undefined;
+  };
   const pump = () => {
     // [DX-PREP1] Why: fixed sender capacity makes the same offered load observable under overload.
     // Rejected: shifting scheduled offers to the time a socket or same-subject predecessor becomes ready.
     while (pending.size < 96) {
-      const i = waiting.findIndex((x) => !runningSubjects.has(x.subject) && !frozen.has(x.subject));
-      if (i < 0) break;
-      const s = waiting.splice(i, 1)[0]!;
+      const s = take();
+      if (!s) break;
       const old = bySubject.get(s.subject)!;
       const input = command(s.id, fields(s.subject, s.width, s.id), old.slice(0, s.width));
+      if (subjectComparison)
+        input.sourceK = Math.max(basis.position, ...old.map((r) => r.recorded_position));
       inputs.set(s.id, input);
       runningSubjects.add(s.subject);
       const sent = elapsed();
@@ -150,7 +187,10 @@ async function phase(
           const result = (await c.transact(db, input)) as Receipt;
           const end = elapsed();
           assert.equal(result.operationId, s.id);
-          assert.match(result.writerFunction ?? "", /^:triplex\.write\/v-[0-9a-f]{24}$/);
+          assert.match(
+            result.writePath?.function ?? result.writerFunction ?? "",
+            /^:triplex\.(?:write|subject)\/v-[0-9a-f]{24}$/,
+          );
           remember(bySubject, input, result);
           records.push({
             id: s.id,
@@ -188,13 +228,13 @@ async function phase(
       await wait(Math.ceil(remaining));
       remaining = save.at - elapsed();
     }
-    waiting.push(save);
+    (subjectComparison ? accountQueues[save.account]! : waiting).push(save);
     pump();
   }
   while (pending.size) await Promise.all([...pending]);
   // [DX-PREP1] Why: until a lost acknowledgement resolves, a later save cannot safely name that subject's predecessor.
   // Rejected: sending another edit against the last acknowledged row and counting the resulting CAS failure as load.
-  for (const s of waiting) {
+  for (const s of subjectComparison ? accountQueues.flat() : waiting) {
     assert(frozen.has(s.subject));
     const end = elapsed();
     records.push({
@@ -240,7 +280,10 @@ async function phase(
           .filter((r) => r.attribute === ":_tx/change")
           .map((r) => {
             const x = JSON.parse(r.value_json!);
-            if (assigned && x.op === "assert") x.recordedAt = decoded[0]!.recorded_at;
+            if (assigned) {
+              if (x.op === "assert") x.recordedAt = decoded[0]!.recorded_at;
+              if (subjectComparison && x.op === "retract") x.retractedAt = decoded[0]!.recorded_at;
+            }
             return x;
           })
           .sort((a, b) => String(a.tripleId).localeCompare(String(b.tripleId)));
@@ -268,6 +311,20 @@ async function phase(
   for (const [subject, rows] of committed) bySubject.set(subject, rows);
   const acked = records.filter((r) => r.result);
   const inWindow = acked.filter((r) => r.end <= seconds * 1000).length;
+  const perAccount = Array.from({ length: 10 }, (_, account) => {
+    const offered = records.filter((r) => r.account === account);
+    const received = offered.filter((r) => r.result);
+    return {
+      account,
+      offered: offered.length,
+      received: received.length,
+      p99CompletedMs: percentile(
+        received.map((r) => r.end - r.due),
+        0.99,
+      ),
+      beyond50msOrMissing: offered.filter((r) => !r.result || r.end - r.due > 50).length,
+    };
+  });
   const outcomes = Object.fromEntries(
     [...new Set(records.map((r) => r.outcome))].map((k) => [
       k,
@@ -283,6 +340,9 @@ async function phase(
     inWindowPerSecond: inWindow / seconds,
     afterDrain: observed.size,
     recovered: observed.size - acked.length,
+    subjectSaves: acked.filter((r) => r.result?.subjectSave).length,
+    subjectReplans: acked.filter((r) => r.result?.subjectReplan).length,
+    perAccount,
     outcomes,
     drained,
     p99CompletedMs: percentile(
@@ -298,7 +358,7 @@ async function phase(
 const [first, second, secondsArg, attemptId, selectedArm] = process.argv.slice(2);
 assert(first && second && secondsArg);
 const seconds = Number(secondsArg);
-assert(Number.isSafeInteger(seconds) && seconds > 0 && seconds <= 60);
+assert(Number.isSafeInteger(seconds) && seconds > 0 && seconds <= (subjectComparison ? 1800 : 60));
 const attempt = attemptId || randomUUID();
 assert(selectedArm === undefined || /^[0-3]$/.test(selectedArm));
 
@@ -310,6 +370,9 @@ async function checkWriter(c: DatomicClient, db: string, arm: number) {
   const options = await c.request<
     WriterObservation & {
       preparedWriter: null | { mode: string; guard: string; installed: boolean };
+      subjectSave?: boolean;
+      subjectFunction?: string;
+      subjectFunctionTx?: string;
     }
   >("GET", `/v1/db/${db}/write-options`);
   assert.equal(options.database, db);
@@ -320,6 +383,23 @@ async function checkWriter(c: DatomicClient, db: string, arm: number) {
   assert.equal(options.strictRecordClocks, true);
   assert.equal(options.commitFunctionInstalled, true);
   assert.match(options.commitFunction, /^:triplex\.write\/v-[a-f0-9]{24}$/);
+  if (subjectComparison) {
+    const on = arm === 1 || arm === 2;
+    assert.equal(!!options.subjectSave, on);
+    if (on) {
+      assert.match(options.subjectFunction ?? "", /^:triplex\.subject\/v-[a-f0-9]{24}$/);
+      assert.match(options.subjectFunctionTx ?? "", /^[1-9][0-9]*$/);
+    }
+    assert.equal(options.options.groupCommit, !on);
+    assert.equal(options.options.livePriority, !on);
+    assert.equal(options.options.fieldCoalesce, false);
+    assert.equal(options.options.budgetMicros, null);
+    assert.equal(options.options.smallRows, false);
+    assert.equal(options.options.packedJournal, false);
+    assert.equal(options.options.ledger, false);
+    console.log("PREP1_WRITER " + JSON.stringify({ arm, attempt, observed: options }));
+    return;
+  }
   assert.deepEqual(
     options.preparedWriter,
     arm === 1 || arm === 2
@@ -356,12 +436,35 @@ for (const [arm, url] of [first, second, second, first].entries()) {
     // [DX-PREP1] Why: both server arms must price the same fixed source on fresh opened scopes.
     // Rejected: assuming the supplied URLs, environment or requested flag prove the installed writer.
     if (selectedArm === undefined) await checkWriter(c, db, arm);
-    const tapes = [50, 235, 394].map((rate, block) => schedule(rate, seconds, block));
+    const rates = subjectComparison ? [50, 235, 394, 620] : [50, 235, 394];
+    const tapes = rates.map((rate, block) => schedule(rate, seconds, block));
     const seeded = await seed(c, db, [...new Set(tapes.flat().map((x) => x.subject))].sort());
     const frozen = new Set<string>();
-    for (const [block, rate] of [50, 235, 394].entries()) {
-      const result = await phase(c, db, seeded, frozen, tapes[block]!, seconds);
-      console.log("PREP1_LIVE " + JSON.stringify({ attempt, db, arm, rate, seconds, ...result }));
+    for (const [block, rate] of rates.entries()) {
+      const alone = subjectComparison ? schedule(rate, seconds, block, true) : null;
+      if (alone)
+        assert.deepEqual(
+          alone.map(({ at, subject, width }) => [at, subject, width]),
+          tapes[block]!.filter((s) => s.account === 0).map(({ at, subject, width }) => [
+            at,
+            subject,
+            width,
+          ]),
+        );
+      const windows = alone ? (arm % 2 ? [true, false] : [false, true]) : [false];
+      for (const quietOnly of windows) {
+        const result = await phase(
+          c,
+          db,
+          seeded,
+          frozen,
+          quietOnly ? alone! : tapes[block]!,
+          seconds,
+        );
+        console.log(
+          "PREP1_LIVE " + JSON.stringify({ attempt, db, arm, rate, seconds, quietOnly, ...result }),
+        );
+      }
     }
     await c.delete(scope);
   } finally {

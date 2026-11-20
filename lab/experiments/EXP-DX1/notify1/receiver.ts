@@ -54,7 +54,7 @@ export async function receiveOrdered(
     if (!by.has(d.subject)) by.set(d.subject, []);
     by.get(d.subject)!.push(d);
   }
-  const ops = [];
+  const ops: Op[] = [];
   for (const [subject, ds] of by) {
     const k = inbox(origin, subject),
       prior = rows.get(k),

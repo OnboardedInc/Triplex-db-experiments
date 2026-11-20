@@ -79,9 +79,15 @@ export async function openStore(
   const key = String(runtimeApi.DatabaseScope.test(scope)),
     client = new DatomicClient(process.env.DATOMIC_URL!);
   try {
-    const policy = await client.create(key, "lean", true);
+    // [DX-INT1] Why: verify the permanent record on the same storage layout as the pooled campaign.
+    // Rejected: comparing lean-only Publish results to the legacy journal arm.
+    const layout = process.env.TRIPLEX_DATOMIC_LAYOUT ?? "lean";
+    assert(layout === "lean" || layout === "legacy");
+    const policy = await client.create(key, layout, true);
     assert(
-      policy.strictRecordClocks && policy.db === "s2-" + Buffer.from(key).toString("base64url"),
+      (policy.layout ?? "legacy") === layout &&
+        policy.strictRecordClocks &&
+        policy.db === "s2-" + Buffer.from(key).toString("base64url"),
     );
   } finally {
     client.close();
@@ -117,7 +123,8 @@ export async function openStore(
   };
   async function lookup(id: string) {
     const r = await comp.transactionByCommand(id);
-    assert(r.ok);
+    // [DX-ACT1] Why: a receipt lookup can fail while the gateway or transactor is stopped. Rejected: replacing the adapter error with an assertion that loses its cause.
+    if (!r.ok) throw r.error;
     return r.value;
   }
   async function commit(

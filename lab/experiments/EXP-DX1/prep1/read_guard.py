@@ -8,7 +8,7 @@ from pathlib import Path
 from statistics import median
 import sys
 
-from read_probe import managed_events, sha
+from read_probe import frozen_inputs, managed_events, run_events, sha
 
 
 def scoped_db(attempt, arm):
@@ -24,14 +24,31 @@ def ms(ns):
     return ns / 1e6
 
 
-def read(out):
-    inputs, terminal, events = managed_events(out)
+def failed_diagnostic(out):
+    # [DX-PREP1] Why: the first timed arm aborted after all uninstrumented arms finished.
+    # Rejected: dropping verified comparison data or creating a successful terminal record for the run.
+    inputs, image = frozen_inputs(out)
+    assert inputs["mode"] == "cheap" and not (out / "terminal.json").exists()
+    log = out / "selftest-1.log"
+    lines = log.read_text().splitlines()
+    assert "DatomicHttpError: Group durability is unknown" in lines
+    assert lines[-1] == "[lab] ENGINE: Datomic selftest failed"
+    return inputs, {"log": log.name, "slot": "tx2-datomic-selftest", "image": image["imageId"],
+                    "sha256": sha(log)}, run_events(inputs, lines)
+
+
+def read(out, completed_only=False):
+    inputs, terminal, events = (failed_diagnostic if completed_only else managed_events)(out)
     attempt = inputs["attempt"]
     mode = inputs["mode"]
-    assert mode in ("profile", "cheap")
+    assert mode in ("profile", "cheap", "census")
     assert mode == (out / "stage/lab/config/datomic/mode").read_text().strip()
     raw = (out / terminal["log"]).read_text().splitlines()
-    lease, = [json.loads(l[12:]) for l in raw if l.startswith("PREP1_LEASE ")]
+    if inputs.get("timings") == "diagnostic":
+        assert not any(l.startswith("PREP1_LEASE ") for l in raw)
+        lease = {"drained": False, "timings": "diagnostic"}
+    else:
+        lease, = [json.loads(l[12:]) for l in raw if l.startswith("PREP1_LEASE ")]
     pressure = sorted(events("PREP1_CPU "), key=lambda r: r["at"])
     sample_clock = [p["at"] for p in pressure]
     assert len(pressure) == len(set(sample_clock))
@@ -56,30 +73,55 @@ def read(out):
             key = append["db"], str(member["t"])
             assert key not in native
             native[key] = (member, append)
-
-    profile = {}
-    for entry in events("PREP1_GUARD "):
-        key = entry["scope"], entry["operation"]
-        assert key not in profile
-        profile[key] = entry
+    recovered = [json.loads(line.removeprefix("PREP1_SEED_RECOVERED "))
+                 for line in raw if line.startswith("PREP1_SEED_RECOVERED ")]
+    assert len({(row["db"], row["stored"]["operationId"]) for row in recovered}) == len(recovered)
+    for row in recovered:
+        receipt = row["stored"]
+        position = int(receipt["position"]["v"])
+        assert mode == "census" and row["attempt"] == attempt
+        assert row["db"] == scoped_db(attempt, row["arm"])[1]
+        assert 1 <= position <= 150 and receipt["status"] == "committed"
+        assert receipt["operationId"] == f"seed-{8 * (position - 1)}"
+        assert (row["db"], receipt["t"]["v"]) in native
 
     by_arm = defaultdict(list)
     for entry in events("PREP1_PROBE "):
         by_arm[entry["arm"]].append((entry["kind"], entry["data"]))
     if mode == "profile":
-        assert list(by_arm) == ["reference", "guard", "time", "reads"]
+        assert list(by_arm) == ["time", "reads", "reference", "cheap"]
+    elif mode == "census":
+        entrypoint = (out / "stage/lab/config/datomic/entrypoint.sh").read_text()
+        assert list(by_arm) == (["cheap"] if "arms=(cheap)" in entrypoint else ["reference", "cheap"])
+    elif completed_only:
+        names = ["reference", "cheap", "cheap2", "reference2", "guard", "time", "reads"]
+        last = next(reversed(by_arm))
+        assert last in ("time", "reads") and list(by_arm) == names[:names.index(last) + 1]
+        assert [kind for kind, _ in by_arm.pop(last)] == ["seed"]
     else:
         assert list(by_arm) == ["reference", "cheap", "cheap2", "reference2", "guard", "time", "reads"]
+    profile = {}
+    if "time" in by_arm or "reads" in by_arm:
+        for entry in events("PREP1_GUARD "):
+            key = entry["scope"], entry["operation"]
+            assert key not in profile
+            profile[key] = entry
+    else:
+        assert not any(line.startswith("PREP1_GUARD ") for line in raw)
+    subject_count = 1200 if mode in ("profile", "census") else 96
+    initial_position = subject_count // 8
     results = {}
     for arm, observations in by_arm.items():
         assert [kind for kind, _ in observations] == ["seed", "block", "finished"]
         seed, block, finished = (value for _, value in observations)
         scope, db = scoped_db(attempt, arm)
-        assert (seed["db"], seed["scope"], seed["subjects"], seed["facts"], seed["position"]) == (db, scope, 96, 15360, 12)
-        assert (block["db"], block["head"], block["outstanding"], finished["db"], finished["head"]) == (db, 12, 32, db, 108)
+        assert (seed["db"], seed["scope"], seed["subjects"], seed["facts"], seed["position"]) == (
+            db, scope, subject_count, subject_count * 160, initial_position)
+        assert (block["db"], block["head"], block["outstanding"], finished["db"], finished["head"]) == (
+            db, initial_position, 32, db, initial_position + 96)
         assert {e["index"] for e in block["rows"]} == set(range(96))
         groups = defaultdict(list)
-        for i, e in enumerate(block["rows"], 13):
+        for i, e in enumerate(block["rows"], initial_position + 1):
             ack = e["ack"]
             assert ack["operationId"] == f"edit-{e['index']}" and int(ack["position"]["v"]) == i
             groups[ack["t"]["v"]].append(e)
@@ -141,7 +183,7 @@ def read(out):
         assert samples
         if arm in ("time", "reads"):
             assert any("guardMs" in sample for sample in samples)
-        if arm.startswith("cheap"):
+        if arm.startswith("cheap") and mode != "census":
             assert any(s["path"] == "prepared" and s["guardMode"] == "basis" for s in samples)
         paths = defaultdict(list)
         for sample in samples:
@@ -165,16 +207,20 @@ def read(out):
             "physical": physical, "samples": samples,
         }
     assert not profile
-    return {"attempt": attempt, "source": inputs["head"], "inputSha256": sha(out / "inputs.json"),
+    return {"attempt": attempt, "selftestCompleted": not completed_only,
+            "source": inputs["head"], "inputSha256": sha(out / "inputs.json"),
             "image": terminal["image"], "slot": terminal["slot"], "rawSha256": terminal["sha256"],
-            "verifierSha256": sha(Path(__file__)), "lease": lease, "arms": results}
+            "verifierSha256": sha(Path(__file__)), "lease": lease, "seedRepliesRecovered": len(recovered),
+            "arms": results}
 
 
 if __name__ == "__main__":
     if not __debug__:
         raise SystemExit("Verification requires enabled assertions")
     out = Path(sys.argv[1])
-    data = read(out)
+    args = sys.argv[2:]
+    assert args in ([], ["--completed-only"])
+    data = read(out, bool(args))
     with (out / "guard-summary.json").open("x") as stream:
         json.dump(data, stream, indent=2)
         stream.write("\n")
