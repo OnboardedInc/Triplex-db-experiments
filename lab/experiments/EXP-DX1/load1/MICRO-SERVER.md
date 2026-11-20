@@ -1,4 +1,17 @@
-# Single-server microframe prediction
+# Single-server test for small imports with several frames in flight
+
+Use the published branch with the [preregistered predictions](PREDICTIONS-PART6.md). Expect 30–45 minutes, with 18 minutes of offered activity. The runner caps the bare-metal campaign at 60 minutes and budgets up to 25 minutes to prepare, with 5 minutes reserved for collecting evidence. The controller binds the exact published revision and verifies the transferred archive.
+
+```sh
+HA1_BENCH_HOURS=1 node --import tsx lab/experiments/EXP-DX1/ha1/control.ts load-pipeline load-pipeline-001 one-host
+```
+
+- Start with a live-only control. Run 16 facts at depth 2 and then 24 at depth 2. These are the two closest predicted candidates at the throughput target. The early report gives their progress and all eleven read and save p99s against the leading control. Use the trailing control for the paired comparison.
+- Then run 16 and 24 facts at depth 1, followed by those widths at depth 4 and depth 8. Finish with the matched live-only control. Each cell has identical offered live work and one fresh Datomic database shared by all eleven live accounts and the importer.
+- Read `load-pipeline-early.json` and `load-pipeline-comparison.json` in the attempt, with both controls and every account's offered and verified denominators. A candidate needs at least 3,000 independently queryable facts/s, every live offer verified, and both p99 ratios within 1.5 for every account against each fresh control. Read the frame/hold/queue distributions and exact wire-byte counts in each arm to test the explanation.
+- One server is enough for these paired controls. This checkout uses the part 5 lean fixture. The version 0.1 row still needs the selected integrated layout and frozen workload on the fresh and billion-record seeds.
+
+# Earlier single-frame experiment
 
 At 50 aggregate noisy saves/s plus the quiet account, predict 1,950 / 2,850 / 3,440 queryable facts/s for 16 / 24 / 32 facts/frame. These correspond to observed mean frame intervals of about 8.2 / 8.4 / 9.3 ms. At 130 frames/s the hard ceilings are 2,080 / 3,120 / 4,160. Twenty-four facts need 125 successful frames/s and 8 ms between completions. Two matched 108-second live-only controls bracket every arm.
 

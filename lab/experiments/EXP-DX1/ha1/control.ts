@@ -9,6 +9,7 @@ import { createInterface } from "node:readline";
 import { pipeline } from "node:stream/promises";
 import { Satellite } from "./satellite.ts";
 import { replayLive } from "../load1/live-evidence.ts";
+import { pipelineArms, pipelineComparison } from "../load1/pipeline.ts";
 import { head, modeOf, root, runFile, supportsSingleHost } from "./common.ts";
 
 const [action, tag, layout = "two-host", extra] = process.argv.slice(2),
@@ -57,6 +58,7 @@ const advertised = execFileSync(
   ["-c", "credential.helper=", "ls-remote", url, "refs/heads/" + branch],
   {
     encoding: "utf8",
+    timeout: 30000,
     env: {
       ...process.env,
       GIT_CONFIG_GLOBAL: "/dev/null",
@@ -283,8 +285,15 @@ try {
     copy.once("close", ok);
   });
   const file = path.join(evidence, "raw.tar.gz");
-  await pipeline(copy.stdout, createWriteStream(file, { flags: "wx" }));
-  assert.equal(await copied, 0);
+  const transferTimeout = pipelineTrial
+    ? setTimeout(() => copy.kill("SIGTERM"), Math.max(1, deadline - Date.now() - 30_000))
+    : undefined;
+  try {
+    await pipeline(copy.stdout, createWriteStream(file, { flags: "wx" }));
+    assert.equal(await copied, 0);
+  } finally {
+    clearTimeout(transferTimeout);
+  }
   const digest = createHash("sha256");
   for await (const chunk of createReadStream(file)) digest.update(chunk);
   assert.equal(digest.digest("hex"), expected);
@@ -324,6 +333,22 @@ try {
           assert(/^[a-z0-9-]+$/.test(arm.arm) && arm.rate === declaration.sizes[i]);
           replayLive(member(sub + arm.arm + ".offers.json"), attempt, arm);
         }
+      }
+      if (pipelineTrial) {
+        // [DX-HA1] Why: compare every published cell to its actual matched offers and controls.
+        // Rejected: an early two-cell observation as the complete campaign.
+        assert.deepEqual(
+          summary.result.map((r: { arm: string }) => r.arm),
+          pipelineArms,
+        );
+        assert.deepEqual(
+          member(sub + "load-pipeline-early.json"),
+          pipelineComparison(summary.result.slice(0, 3)),
+        );
+        assert.deepEqual(
+          member(sub + "load-pipeline-comparison.json"),
+          pipelineComparison(summary.result),
+        );
       }
     }
   }
