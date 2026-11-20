@@ -4,7 +4,7 @@ Writing progress and acknowledgements to the live database was the next largest 
 The recipient now saves delivery and progress together. A retry resumes the saved position and uses each person's existing sequence.
 The new dispatcher sent 338 notices per second in two short tests. The slowest reads exceeded the agreed limit at that speed.
 The plans for the server estimate the rate from how many people the dispatcher must inspect for each notice.
-For the broad release that owes 9,798 notices, the initial server estimate is 80–105 notices per second, about 1½–2 minutes to finish sending.
+For the broad release that owes 9,798 notices, the deep workload points to 35–55 notices per second, about 3–5 minutes to finish sending.
 All timings so far are from the Mac. The server dispatcher has never run.
 
 **1. Cost of one delivered notice** · [Targets](../../../TARGETS.md) · [Part 2 measurements and recovery audit](PART2.md)
@@ -29,11 +29,11 @@ Sequence numbers come from the live sender ledger. The receiver checks its own s
 - **(b) Evaluation.** Ten whole-world W0 calls per notice covered 11 rule families each and consumed 1.52% of wall time. Pinned world reads, sender ledger reads and packing raised that to 6.14%. Source metadata reads added 14.72%.
 - **(c) Receiver.** Its commit consumed 3.95% and receiver state reads .96%. Source checkpoint and ACK writes together consumed 28.04%. Both dominant costs were outside the receiver.
 - **(d) CPU.** The no-dispatch control used .066 of three slot cores and the VM was 1.44% busy. With dispatch the slot used .492 cores, the VM was 7.19% busy and the quota throttled for zero seconds. Neither window exhausted the VM. With no live traffic or intentional pause the original dispatcher reached 85.27/s. An initial idle control that waited for disabled saves was discarded.
-- **(e) Live latency.** At 50.92/s the read p99 was 26.40 vs 6.72 ms (3.93×) and the save p99 was 46.71 vs 34.61 ms (1.35×) for 1,310 reads and 32 identical offers. The p99 read spent 26.01 ms in HTTP, including .51 ms of reported gateway work. The control spent 6.25 ms in HTTP. Both read directly from the writer at the exact requested position. The wire, gateway admission and client scheduling share the unseparated remainder. In the earlier 1k shared-stack run the save limit broke first (3.29× vs 1.32× reads).
+- **(e) Live latency.** At 50.92/s, read p99 broke first at 26.40 vs 6.72 ms (3.93×). Save p99 was 46.71 vs 34.61 ms (1.35×), with 32 matched saves. The p99 read spent 26.01 ms in HTTP, including .51 ms of reported gateway work. An earlier 1k shared-stack run broke the save limit first (3.29× vs 1.32× reads). A noisier Mac control let 58.34/s meet both ratios. In that socket repeat every pinned sample had zero basis waits. Matched slow reads spent a median 93%/98% waiting for first byte with dispatch/without, with transport and gateway scheduling unresolved within that interval.
 
 **3. Changes and alternating comparison**
 
-The named recipient mode registers one subscriber generation before publication. The sender item ledger, effects, deduplication and cursor commit together at the recipient. A lost reply reopens that cursor. Erasure preserves already-owed bytes or makes a concurrent attempt retry. Native LAZY and DELTA frame adapters applied all 133 and 134 oracle effects in two and four packets, including pay sequences 1–4.
+Enrollment registers one recipient generation once. Publication still writes four changes. The sender ledger, effects, deduplication and cursor commit together at the recipient. A lost reply reopens that cursor. A racing save or rollback joins the existing debt in source order. Erasure preserves owed bytes or makes the attempt retry. Native LAZY `3d3c05d7` and DELTA `d8a92135` applied all 133 and 134 oracle effects in two and four packets, including pay sequences 1–4.
 The active order was A, B, C, C, B, A with fresh accounts, matched offers, no-dispatch controls at both ends and the same 20 ms pause. A checkpoints 64 subjects at the source. B moves that checkpoint to the recipient. C checks 1,024 subjects there, in pairs of pinned reads.
 
 A delivered 54.99/55.49 notices/s, B 102.75/106.26, and C 338.53/338.01. Per 1,000 notices, source/recipient transactions fell from 314/157 to 0/157 to 0/10. Scheduled breaks fell from 6.28 s to .20 s. A met both limits against both bookends. B met the later control only. C missed a limit against each control and had five saves per run.
@@ -41,8 +41,8 @@ In the profiled 1k pair, 100 deliveries generated 1,802 SQLite WAL frames in 16 
 
 **4. Prediction for a dedicated server**
 
-Predict 800–1,050 checked subjects/s per full-census worker with 64 foreground readers on a separate gateway. This assumes 50–66 of the paced 16-person pages/s after group commits and save yields, against a nominal 71/s cadence and Mac unpaced 3,380 subjects/s on the compact fixture. At 9.798% density the estimate is 80–105 notices/s. At the earlier 1k deep preflight's 79.9% density it is 640–840/s, conditional on the recipient's durable write rate and the actual large-fixture density.
-The cadence nominally caps each worker at 1,143 subjects/s. At 9.798% density, 1,000 notices/s would take about 10,200 evaluations/s or a selector that skips unaffected subjects. The server test must check both p99s against 1.5×. P5 needs 500 saves per side. The existing command measures one diagnostic pair.
+Predict 350–550 checked subjects/s per full-census worker with 64 foreground readers on a separate gateway, if it brings dispatcher service time near the four-reader deep probe. That probe checked 471/s and delivered 282 notices/s across three releases. Source reads took 49% of 6.38 s and returned 105 MB. Rule evaluation took 1.7%, receiver commits 18%. With 64 readers sharing the Mac writer gateway the calibration checked 128/s and yielded 8.64 of 23.45 s to live saves.
+For both tails within 1.5×, the predicted range is 35–55 notices/s at 9.798% density or 280–440/s at the local deep R2 density of 79.9%. The gateway isolation assumption needs the server comparison. The 14 ms cadence nominally caps a worker at 1,143 subjects/s. At 9.798% density, 1,000 notices/s would need about 10,200 evaluations/s or a selector that skips unaffected subjects. P5 needs 500 saves per side. This command measures one diagnostic pair.
 Command on the dedicated server, after review. `DOCKER_HOST=unix:///var/run/docker.sock node --import tsx lab/experiments/EXP-DX1/notify1/bench.ts launch notify-rate-001 recipient 16 14` uses an exact 1,000-person preflight before the 100,000-person traffic pair. The local plan was checked. [Runner](bench.ts)
 
 **Evidence audit**
