@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] Dynamic JSON measurements and indexed numeric arrays; the analyzer asserts the observed schema.
 // [DX-COMPACT1] Why: calculate effects from balanced native measurements and preserve cell counts.
 // Rejected: fitting all per-transaction tails to a single latency-by-size slope.
 import assert from "node:assert/strict";
