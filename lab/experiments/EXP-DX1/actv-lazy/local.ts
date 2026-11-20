@@ -36,6 +36,7 @@ const tracked = git(
   "packages/datomic/gateway",
   "packages/w0/src",
   "lab/bin/engine.mjs",
+  "lab/bin/heavy-lock.mjs",
   "lab/bin/lib.mjs",
   "pnpm-lock.yaml",
 )
