@@ -23,6 +23,7 @@ export function inputPins(revision?: string): Record<string, string> {
       "fixture.ts",
       "journal.ts",
       "oracle.py",
+      "ranges.ts",
       "receiver.ts",
       "rung.ts",
       "store.ts",

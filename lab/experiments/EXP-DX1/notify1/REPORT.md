@@ -1,5 +1,5 @@
 A shared wage-floor save used to notify one of the two people it affected. The old check accepted that result.
-The same save now records the whole roster whenever a smaller list cannot be proved.
+The sender can now prove a smaller set from the committed location and pay records. It checks the whole roster when that proof fails.
 The new check asks Python which people changed and which stayed the same. It catches a missing person even in an old stored event.
 The 21–68 milliseconds measured saving the recipe in a quiet window. That timing did not include storing individual notices or changed answers.
 The old sender spent 78.5 of 97.8 seconds on scheduled breaks. Writing progress and acknowledgements to the live database was the next largest cost.
@@ -17,6 +17,8 @@ For an isolated 9,798-notice release, the server estimate is 35–55 per second 
 **Affected membership**
 
 The old code accepted any syntax-valid list of subject IDs. The source and journal save together, but the list lacked proof of the source dependency closure at both the predecessor and committed cuts and both business instants. The new event covers the complete enrolled census. An existing unproved narrowed event stops before cursor advancement or erasure can remove its source evidence. Historical scopes that already advanced past such an event need a separate repair audit.
+
+The ordered selector uses contiguous source assertions and retractions to maintain location, jurisdiction and pay postings. It uses the same exclusive pay bound as DELTA and joined Publish, then compares complete old and new work-item identities and payloads. A jurisdiction move checks the old and new edge even if pay stays fixed. A crossed validity or expiry boundary, an intervening native edit, or an unrecognized input leaves the census in force. The cursor and its exact range commit together. Python checks the whole roster independently and rejects either an omitted change or an extra unchanged person in a certified range.
 
 **Deadline check and companion handoff**
 

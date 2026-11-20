@@ -3,6 +3,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { W0, sha256 } from "../../../bench/lib/w0-world.ts";
 import type { Budget } from "./budget.ts";
 import { type Census, installCensus, memberPage, width } from "./census.ts";
+import type { CommittedRanges, Coverage } from "./ranges.ts";
 import {
   Documents,
   hash,
@@ -20,6 +21,7 @@ export interface Inputs {
   identity: string;
   roster(cut: Cut): Promise<string[]>;
   worlds(subjects: string[], cut: Cut): Promise<W0.World[]>;
+  ranges?: CommittedRanges;
 }
 export type Selection = { kind: "census" } | { kind: "subjects"; ids: string[] };
 export interface Request {
@@ -244,6 +246,33 @@ export class Notices {
   }
   async members(e: Event, start: number) {
     return memberPage(this.db, this.censusFor(e), start, e.at);
+  }
+  async coverage(e: Event, ledger: Documents, at: number) {
+    if (e.value.kind !== "reconcile") return;
+    const row = await ledger.row<string>("range:" + e.value.sequence, at);
+    if (!row) return;
+    const saved = unpack<{ assertion: string; recipe: string; coverage: Coverage }>(row.value);
+    assert(saved.assertion === e.id && saved.recipe === hash(e.value));
+    return saved.coverage;
+  }
+  async select(e: Event, ledger: Documents, at: number, sourceAt: number, start: number) {
+    this.censusFor(e);
+    const previous = await this.coverage(e, ledger, at);
+    if (previous || start !== 0) return { coverage: previous };
+    const coverage = await this.inputs.ranges?.suggest(this, e, sourceAt);
+    return {
+      coverage,
+      write: coverage
+        ? ledger.put(
+            "range:" + e.value.sequence,
+            pack({
+              assertion: e.id,
+              recipe: hash(e.value),
+              coverage,
+            }),
+          )
+        : undefined,
+    };
   }
   async work(e: Event, ids: string[], at: number): Promise<Work[]> {
     this.censusFor(e);

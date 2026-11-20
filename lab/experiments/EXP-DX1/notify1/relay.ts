@@ -104,17 +104,21 @@ export class Relay {
       "Missing original publication",
     );
     const census = a.censusFor(e);
-    const ids = await memberRange(source, census, cur.start, e.at, this.pages);
-    const size = census.count;
+    const selected = await a.select(e, state, at, sourceAt, cur.start);
+    const ids = selected.coverage
+      ? selected.coverage.ids.slice(cur.start, cur.start + this.pages * width)
+      : await memberRange(source, census, cur.start, e.at, this.pages);
+    const size = selected.coverage?.ids.length ?? census.count;
     assert.equal(ids.length, Math.min(this.pages * width, size - cur.start));
     const ledger = (s: string) => "ledger:" + s;
     const old = await state.rows<string>(ids.map(ledger), at);
     const ops = [] as ReturnType<Documents["change"]>;
+    if (selected.write) ops.push(selected.write);
     const deliveries: W0.Delivery[] = [];
     const start = performance.now();
     try {
       // [DX-STG1] Why: overlap at most two pinned native pages and fold them in census order, leaving an admission opportunity before each pair. Rejected: firing an entire account's reads at the foreground gateway.
-      const interval = this.readIntervalMs;
+      const interval = selected.coverage ? 0 : this.readIntervalMs;
       const quantum = interval ? 16 : 2 * width;
       for (let i = 0; i < ids.length; i += quantum) {
         if (interval) {
@@ -218,6 +222,10 @@ export class Relay {
     this.metrics.receiverMs += performance.now() - apply;
     this.metrics.sinkWrites++;
     this.metrics.visits++;
+    if (selected.write) {
+      this.metrics.certified++;
+      this.metrics.selectionEvaluations += selected.coverage!.evaluated;
+    } else if (cur.start === 0 && e.value.kind === "reconcile") this.metrics.fallback++;
     this.metrics.evaluations += ids.length;
     if (packet) {
       this.metrics.packets++;

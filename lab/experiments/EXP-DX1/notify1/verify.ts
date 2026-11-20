@@ -4,7 +4,7 @@ import { canonical, W0 } from "../../../bench/lib/w0-world.ts";
 import { memberPage, width } from "./census.ts";
 import type { Dispatcher } from "./dispatcher.ts";
 import type { Request, Cut } from "./journal.ts";
-import { hash, parse, unpack, type Ack, type Documents } from "./store.ts";
+import { hash, parse, transportHash, unpack, type Ack, type Documents } from "./store.ts";
 
 export interface Offered {
   req: Request;
@@ -34,6 +34,7 @@ export async function verify(
   let comparisons = 0,
     previous = 0,
     parent = hash([a.db.prefix, identity.value.epoch, identity.value.census]);
+  let predecessor: string | undefined;
   let previousPolicy: string | null = null;
   const counts: number[] = [];
   const coverage: { affected: string; complement: string; selected: string }[] = [];
@@ -82,10 +83,20 @@ export async function verify(
       parent = hash(row.value);
       const selection = row.value.selection;
       assert(selection.kind === "subjects" || selection.kind === "census");
-      const selected = selection.kind === "subjects" ? new Set(selection.ids) : census;
-      if (selection.kind === "subjects")
+      const exact = await a.coverage(row, ledger, at);
+      if (exact)
         assert(
-          selected.size === selection.ids.length && selection.ids.every((s) => census.has(s)),
+          exact.parent === predecessor &&
+            exact.txId === receipt.txId &&
+            exact.edits === transportHash(r.changes),
+          "Ordered range identifies a different source commit",
+        );
+      predecessor = row.id;
+      const idsSelected = exact?.ids ?? (selection.kind === "subjects" ? selection.ids : ids);
+      const selected = new Set(idsSelected);
+      if (idsSelected !== ids)
+        assert(
+          selected.size === idsSelected.length && idsSelected.every((s) => census.has(s)),
           "Invalid durable subject selection",
         );
       const before = effects.length,
@@ -122,6 +133,8 @@ export async function verify(
         effects.push(...expected.deliveries);
         comparisons += list.length;
       }
+      if (exact)
+        assert.deepEqual(exact.ids, affected, "Ordered range includes unaffected subjects");
       coverage.push({
         affected: hash(affected),
         complement: hash(complement),
