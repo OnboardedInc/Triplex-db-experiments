@@ -2742,3 +2742,22 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   second (260 to 360) against W1's 210 to 300 and the analyst's 320 to 450.
 - **Assigned, part 2:** profile the guard inside the transactor; target under 0.5 ms per member or a plain statement
   that the design buys latency, not capacity; merge DX-WFIX1; lean erasure and restart gates; one server command.
+
+## 2026-11-20 04:35 UTC (23:35 local, 2026-11-19): DX-ERASE1 part 1 in: erasure is timed; three paths return or restore an erased value
+
+- **DX-ERASE1 part 1 (`66bfef517`, Mac VM; `erase1/REPORT.md`, `READ-PATH.md`, `SCALE.md`, `OVERLAP.md`, `MODEL.md`,
+  `HANDOFF.md`).** Datomic excision removed selected values from new reads in 0.56 to 3.39 s across three sizes; at
+  3.99 million facts one person with 415 edits meant 5,725 selected datoms, 372 leaf and 33 directory segment writes
+  and 3.39 s; 10 and 100 people in one request 0.94 and 1.89 s. At 0.99 million facts one save took 1.38 s inside
+  the index job against a 28.9 ms control p99. Storage garbage collection removes obsolete values; PostgreSQL frees
+  disk only in a separate rewrite. Forecast: 4 to 12 s for one indexed 16-million-fact account; 0.7 to 33 minutes
+  after a year of ten accounts in one database. **Violations of ruling Q24 found in the merged code:** a new request
+  on an already-open gateway handle still obtained the value 9.8 s after the request; a late import replay restored
+  an erased value; a Publish that started before the erasure committed from an input projection that still held it.
+  Requirements handed to DX-W1 and DX-COMPACT1: protected bodies in envelopes under erasable keys, a durable erasure
+  sequence every read checks, 100 ms p99 for one person and 1 s for 100, no Datomic index job on the request path.
+- **Standing ruling noticed:** Q36f (kept): an erased SSN produces its own task and blocks E-Verify submission. The
+  retention question put to Sam twice tonight (pause or cancel an owed E-Verify submission after erasure) is
+  therefore already ruled as "blocked"; the builder's recommendation agrees with it.
+- **Assigned, part 2:** the three violations and their neighbours as permanent regression tests; the erasure ledger
+  and sequence checked on every path; the envelope prototype measured against the budgets; paced cleanup.
