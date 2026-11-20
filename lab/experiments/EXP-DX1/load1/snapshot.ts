@@ -296,7 +296,11 @@ export class Snapshot {
     return { commands: Number(r["n"]), facts: Number(r["facts"]) };
   }
   // [DX-LOAD1] Why: the feed can publish concurrent disjoint frames in either order. Rejected: validating source order as native order or trusting an acknowledged byte count.
-  async verify(complete = true, extra?: (r: any) => void, pageSize = extra ? 8 : 1) {
+  async verify(
+    complete = true,
+    extra?: (r: any) => void,
+    { pageSize = extra ? 8 : 1, readDepth = 1 } = {},
+  ) {
     const cut = await this.comp.currentPosition(),
       byPosition = this.ledger.prepare("SELECT * FROM frames WHERE position=?");
     const last =
@@ -325,7 +329,7 @@ export class Snapshot {
     }
     // [DX-LOAD2] Why: disjoint claim reads after drain are independent and still check every original receipt.
     // Rejected: turning the feed alone into a claim-index proof or putting claim audits in the timed window.
-    await windowed(verifyFrames(), this.adaptive ? 4 : 1, async (f) => {
+    await windowed(verifyFrames(), this.adaptive ? 4 : readDepth, async (f) => {
       const e = this.entry(f)!;
       const original = await lookup(this.comp, f, identity(this.scope, this.source, this.width, f));
       assert.deepEqual(original, this.summary(e));
@@ -401,8 +405,13 @@ export class Snapshot {
             owned = new Set(ids),
             got = new Map<string, string>(),
             basis = { position: cut, validAt: SEED_VALID_FROM };
-          for (let j = 0; j < ids.length; j += 64) {
-            const p = await this.comp.sweepPage(ids.slice(j, j + 64), basis);
+          // [DX-LOAD2] Why: these independent reads use the same immutable cut and exhaust every exact row.
+          // Rejected: sampling imported subjects or holding the VM lease for unnecessary serial read back.
+          const groups = Array.from({ length: Math.ceil(ids.length / 64) }, (_, j) =>
+            ids.slice(j * 64, (j + 1) * 64),
+          );
+          await windowed(groups, readDepth, async (group) => {
+            const p = await this.comp.sweepPage(group, basis);
             assert.deepEqual(p.reportedBasis, basis);
             for (const v of p.rows)
               if (owned.has(v.entityId))
@@ -417,7 +426,7 @@ export class Snapshot {
                     v.position,
                   ]),
                 );
-          }
+          });
           assert.deepEqual(got, expected);
         }
         observed++;
