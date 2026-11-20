@@ -60,29 +60,53 @@ inputs = {str(f.relative_to(stage)): sha(f) for f in stage.rglob("*") if f.is_fi
     "stage": inputs, "runner": sha(Path(__file__)),
 }, indent=2) + "\n")
 
-for action in ("build", "selftest"):
-    for number in range(1, 121):
-        if shutil.disk_usage(root).free < 5 * 1024**3:
-            sys.exit("Below the host disk floor")
-        log = out / f"{action}-{number}.log"
-        cmd = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-WFIX1-{action}",
-               "--", "node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-WFIX1"]
-        if action == "selftest":
-            cmd.extend(["--scratch-gib", "1"])
-        with log.open("x") as stream:
-            result = subprocess.run(cmd, stdout=stream, stderr=subprocess.STDOUT, env=env)
-        if action == "selftest" and result.returncode and any(message in log.read_text(errors="replace") for message in (
-            "pool refuses selftest", "selftest already owned/running", "measurement lease", "active measurement"
-        )):
-            time.sleep(10)
-            continue
-        assert all(sha(stage / file) == digest for file, digest in inputs.items())
-        with (out / f"{action}-terminal.json").open("x") as stream:
-            json.dump({"attempt": attempt, "action": action, "exit": result.returncode,
-                       "image": json.loads(slots.read_text())["lanes"]["datomic"]["imageId"],
-                       "slot": "tx2-datomic-selftest", "holder": "DX-WFIX1", "log": log.name, "sha256": sha(log)}, stream)
-        if result.returncode:
-            sys.exit(f"{action} failed ({log.name})")
-        break
-    else:
-        sys.exit("Lab admission deadline reached")
+# [DX-WFIX1] Why: a granted heavy turn can build and immediately try the managed SQL slot.
+# Rejected: releasing that turn between build and selftest (a second wait can outlast the build).
+launch = r"""
+set -u
+if [ "$1" = build ]; then
+  node lab/bin/engine.mjs build --lane datomic --holder DX-WFIX1 >"$2" 2>&1
+  result=$?
+  printf '%s\n' "$result" >"$3"
+  if [ "$result" -ne 0 ]; then exit "$result"; fi
+fi
+node lab/bin/engine.mjs selftest --lane datomic --holder DX-WFIX1 --scratch-gib 1 >"$4" 2>&1
+"""
+
+
+def record(action, log, code):
+    assert all(sha(stage / file) == digest for file, digest in inputs.items())
+    with (out / f"{action}-terminal.json").open("x") as stream:
+        json.dump({"attempt": attempt, "action": action, "exit": code,
+                   "image": json.loads(slots.read_text())["lanes"]["datomic"]["imageId"],
+                   "slot": "tx2-datomic-selftest", "holder": "DX-WFIX1", "log": log.name, "sha256": sha(log)}, stream)
+
+
+build_log, build_code = out / "build-1.log", out / "build.exit"
+for number in range(1, 121):
+    if shutil.disk_usage(root).free < 5 * 1024**3:
+        sys.exit("Below the host disk floor")
+    stage_action = "selftest" if build_code.exists() else "build"
+    log = out / f"selftest-{number}.log"
+    command = ["node", "lab/bin/heavy.mjs", "--poll-ms", "113", "--label", "DX-WFIX1-sql",
+               "--", "bash", "-c", launch, "_", stage_action, build_log, build_code, log]
+    with (out / f"admission-{number}.log").open("x") as stream:
+        result = subprocess.run(command, stdout=stream, stderr=subprocess.STDOUT, env=env)
+    if stage_action == "build" and build_code.exists():
+        code = int(build_code.read_text())
+        record("build", build_log, code)
+        if code:
+            sys.exit("Managed SQL image build failed")
+    if not log.exists():
+        sys.exit("Heavy job exited before starting the managed SQL stack")
+    if result.returncode and any(message in log.read_text(errors="replace") for message in (
+        "pool refuses selftest", "selftest already owned/running", "measurement lease", "active measurement"
+    )):
+        time.sleep(10)
+        continue
+    record("selftest", log, result.returncode)
+    if result.returncode:
+        sys.exit(f"Managed SQL gate failed ({log.name})")
+    break
+else:
+    sys.exit("Lab admission deadline reached")
