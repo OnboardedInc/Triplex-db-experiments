@@ -24,9 +24,13 @@ The audited base was the remote head `7a6a7e9ef` at dispatch. The exact review f
 
 **Checks** The receipt and retraction fixture went from 10 failures to 64 successful assertions. The combined native run passed 98 assertions across seven tests. Pinned O-REPLAY matched the raw feed, resumed page, pinned rows and durable tuples in all three modes. Sixteen SDK and eight W1 tests passed, along with the Datomic and W1 typechecks.
 
+**Integration** DX-W1 was merged through `6c0d81454`. The SDK and W1 regressions passed on the integrated source. The one- and three-fact narrow wire frames decoded byte for byte to the ordinary payloads. The downstream snapshots, per-finding results and tested merge steps are in [PORTS.md](PORTS.md).
+
+**Related writes** The import loader, joined Publish and notice sender recovered the original receipt when the relevant state advanced. The layout replay exposed a separate encoder that skipped the checked predecessor. Its native regression is queued.
+
 **Mac SQL** Attempt `sql-01` started PostgreSQL 17 after 62m54s from image readiness. The staged gateway files match `cd2151749` byte for byte. The gateway died after the native commit at t=1014 with zero edit replies. Restart recovered the two exact receipts, head 3 and the pinned rows, changes and resumed page from O-REPLAY. Both wire profiles stored all 1,800 rows in solo and in real eight-member groups. The largest profile sent 4,194,304 bytes per member.
 
-Native excision reached its watermark and cleared native row text in both paths. Four journal entries retained their original values, each first ID reuse succeeded, and the head advanced. Lean value erasure remains unqualified. The first probe reused each ID twice in the same scope, so the second owner check was masked by the first reuse. A second managed attempt queues fresh, separate scopes for each owner check.
+Native excision reached its watermark and cleared native row text in both paths. Four journal entries retained their original values, each first ID reuse succeeded, and the head advanced. Lean value erasure remains unqualified. The first probe reused each ID twice in the same scope, so the second owner check was masked by the first reuse. Attempt `sql-merged-03` built and is waiting for a selftest slot. It uses fresh, separate scopes for each owner check.
 
 **Receipt and verdict audit**
 
@@ -36,7 +40,8 @@ Native excision reached its watermark and cleared native row text in both paths.
 - `field/journal.ts`, `group/verify.py`, `verify_replay.py` compare full changes and cursors against the offered tape. The oracle comparison binds its pinned files, raw feed, fresh attempt, slot and source preimages.
 - `sql.mjs` and `sql_gate.clj` bind the pre-reply native witness to the managed attempt and fresh recovery, check exact tuple and row content, and require SQL durability settings to read back.
 - `sql-01/check-recovered.py` checks the witnessed stop, durable tuples, decoded changes and wide rows against the nonce, holder, image, actual gateway bytes and pinned oracle output. It retains the erasure failure and the scope of the owner test.
+- `port-prepared.py` binds its three input files to the frozen merge tree. The serialized guard verifies command and operation identities, the selected function, basis, revisions and exact predecessor row bytes before using a prepared write.
 
 **Evidence** The durable folder is `evidence/DX-WFIX1/`. [SHA256SUMS](SHA256SUMS) indexes the baseline reproduction, regression logs, oracle comparisons and TypeScript tests.
 
-No acceptance pins moved. The parallel DX-W1 branch advanced after dispatch and owns integration. No bench servers were used.
+No acceptance pins moved. Only the assigned branch was pushed. No bench servers were used.
