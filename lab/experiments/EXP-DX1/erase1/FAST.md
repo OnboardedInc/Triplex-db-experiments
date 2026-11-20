@@ -26,6 +26,31 @@ Two later jobs each matched and removed the exact bodies they were given, 128 an
 
 Earlier attempts are retained. The first hit a reserved Clojure symbol. The second was stopped while still waiting for admission. The third exposed a Datomic Iterable counting error. Its two log witnesses also resolved to the same native t. The final smoke checks distinct, acknowledged assertion and retirement positions. [Evidence checksums](P2-FAST-SHA256SUMS)
 
+## Matched scale measurements
+
+These are request-to-durable-acknowledgement times on the Mac, in milliseconds. Publication precedes the reply. The aged column reports the one owner with 416 protected versions and includes the old-pin marker follow-up. The p99 columns use 100 fresh assertions per one-person arm and 100 requests per 100-person arm. Each batch gives every target one new assertion, and earlier rounds leave retained identities.
+
+| Seed facts | One p50 / p99 | 100 p50 / p99 | Aged ACK / old-pin marker | Key file absent by after aged ACK |
+| ---: | ---: | ---: | ---: | ---: |
+| 94,848 | 13.4 / 79.7 | 44.7 / 114.2 | 55.0 / 64.6 | 15.7 |
+| 993,335 | 12.8 / 38.4 | 48.7 / 124.0 | 52.3 / 58.9 | 119.3 |
+
+Both attempts finished on executable source `856c4c9ae`. The 4M-fact attempt is queued. The raw transactor logs show no nonempty excision during these publication windows. Ordinary index activity may run concurrently. The API calls no index function before acknowledging. The one aged observation at each size cannot establish aged p99. [Evidence checksums](P2-FAST-SHA256SUMS)
+
+| Seed facts | Save p99 ratio before / after | Read p99 ratio before / after | Feed p99 ratio before / after | In-index saves / max ms |
+| ---: | ---: | ---: | ---: | ---: |
+| 94,848 | 1.25 / 2.61 | 0.80 / 1.61 | 0.78 / 1.74 | 71 / 59.9 |
+| 993,335 | 1.06 / 1.34 | 0.70 / 0.88 | 0.67 / 1.00 | 359 / 200.0 |
+
+Each control, cleanup and protected-save block verified 500 saves on the native feed. Traffic cleanup used 128-body jobs and a 150 ms pause. In-index samples fit wholly inside the transactor's native build interval, with the clock uncertainty trimmed from both ends. All 10,516 bodies were eventually verified absent at each size, with up to 2,000 matched datoms per later job. The first job alone took 0.92 and 2.97 s at the two sizes and wrote 181 and 457 leaf segments. Both cleanup save comparisons exceeded 1.25× against the later control. The different control tails make the magnitude uncertain.
+
+| Seed facts | Plain save p50 / p99 before and after (ms) | Protected save p50 / p99 (ms) | Extra SQL value bytes per save vs later control |
+| ---: | --- | ---: | ---: |
+| 94,848 | 6.95 / 28.04 and 6.66 / 13.42 | 9.55 / 22.55 | 262 |
+| 993,335 | 7.19 / 27.47 and 6.92 / 21.74 | 8.99 / 23.05 | 258 |
+
+The protected replacement added five native datoms and one separate 32-byte key file. The file adds its filesystem allocation and synchronous persistence cost. Median request bodies stayed within 2 B of 4,921 B. The SQL measurements count aggregate KVS values. Earlier quiet or indexed material can still affect the storage deltas. This is the cost of the file-based prototype.
+
 ## Evidence checks
 
 - `ciphertext-inventory!` verifies the original value through the real envelope, and checks the exact native assertion and retirement transactions for that identity. `key-state!` uses the current scope sequence and returns independent evidence about the key file and body.

@@ -2,10 +2,10 @@ The merged code let a reader, an import and a Publish keep using erased data.
 The new ledger made all three honor the erasure in the integration tests.
 The replica, journal, feed and notice routes also honored the ledger in those tests.
 The restored backup refused reads until it caught up, then showed the erased marker.
-A detached-key test published one person's erasure in 78 milliseconds on the Mac.
+On the Mac, the new erasure took 80 milliseconds p99 or less at the two measured sizes.
 It confirmed the key file was gone while the encrypted copy was still stored.
-The small cleanup test slowed saves. The full timing blocks are queued.
-The owner can still use old read pins and see which values were erased.
+Cleanup still slowed saves. The four-million-fact run is queued.
+Old read pins still show which fields were erased.
 
 # DX-ERASE1 · What erasing a person costs
 
@@ -13,7 +13,7 @@ The owner can still use old read pins and see which values were erased.
 
 Part 2. [Regression tests and red evidence](REGRESSIONS.md) · [Ledger implementation, latency and receipt audit](LEDGER.md). The guarded Mac run verified all thirteen checks, including the joined stage race, actual backup restore, and the erased-SSN task. Save request bodies stayed at 7,442 B. Save p99 rose 1.73× and pinned read p99 rose 5.28× in the matched Mac comparison. Forcing full read responses accounted for the increased wire bytes.
 
-[Detached envelopes and native smoke](FAST.md). The prototype publishes before native cleanup. Mac timings describe this setup. Key-store rotation and physical scans remain open.
+[Detached envelopes and Mac measurements](FAST.md). The prototype publishes before native cleanup. Mac timings describe this setup. Key-store rotation and physical scans remain open.
 
 Part 1 measurements and handoff follow.
 
