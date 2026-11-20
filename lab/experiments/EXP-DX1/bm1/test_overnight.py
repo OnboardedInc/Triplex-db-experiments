@@ -69,6 +69,31 @@ class OvernightEvidence(unittest.TestCase):
                 (root/"results/arm-5").mkdir()
             self.assertFalse((root/"active-slot").exists())
 
+    def test_guard_cleanup_selects_only_slots_requested_by_the_named_checkout(self):
+        with tempfile.TemporaryDirectory() as temp:
+            top=Path(temp)
+            root=top/"day-guard"
+            entries=root/"checkout/repository/runs/act1-requests"
+            entries.mkdir(parents=True)
+            suite=top/"act1-aaaaaaaaaaaa"
+            suite.mkdir()
+            source="c"*40
+            seed="d"*64
+            slot="tx2-dxt1-bm1-act000000000-activation-a"
+            (root/"guard-plan.json").write_text(json.dumps({"source":source,"seedSha256":seed}))
+            request={"source":source,"seedSha256":seed,"slot":slot,"arm":"standard-pages","workers":2}
+            owned=entries/(slot+".json")
+            external=suite/"standard-pages-w2-request.json"
+            for f in (owned,external):f.write_text(json.dumps(request))
+            arm={"source":source,"root":str(root),"start":time.time()-1}
+            with patch.object(night,"ROOT",top):
+                self.assertEqual(night.guarded_children(arm),{slot:owned})
+                self.assertEqual(night.guard_output(arm),suite)
+                external.write_text(json.dumps({**request,"source":"e"*40}))
+                self.assertIsNone(night.guard_output(arm))
+                owned.write_text(external.read_text())
+                with self.assertRaises(AssertionError):night.guarded_children(arm)
+
 
 if __name__ == "__main__":
     unittest.main()

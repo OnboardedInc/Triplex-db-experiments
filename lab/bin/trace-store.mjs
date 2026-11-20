@@ -14,7 +14,9 @@ const index = path.join(base, "TRACE-INDEX.md");
 function rows() {
   return fs.existsSync(registry) ? JSON.parse(fs.readFileSync(registry, "utf8")) : [];
 }
-const bytes = (dir) => filesUnder(dir).reduce((sum, f) => sum + fs.statSync(f).size, 0);
+const bytes = (location) => fs.statSync(location, { throwIfNoEntry: false })?.isFile()
+  ? fs.statSync(location).size
+  : filesUnder(location).reduce((sum, f) => sum + fs.statSync(f).size, 0);
 function hash(file) {
   const fd = fs.openSync(file, "r");
   const digest = createHash("sha256"), block = Buffer.allocUnsafe(1024 * 1024);
@@ -247,11 +249,53 @@ function registerRow(row) {
   save([...all.filter((r) => r.tag !== row.tag), row]);
   return row;
 }
+
+// [DX-BM1] Why: the catalog follows the original named attempt and the actual transferred bytes.
+// Rejected: indexing a service log as a measurement or accepting a summary from a different attempt.
+export function registerNightBundle(dir) {
+  dir = path.resolve(dir);
+  const read = (f) => JSON.parse(fs.readFileSync(path.join(dir, f), "utf8"));
+  const transfer = read("TRANSFER.json"), request = read("control/request.json"), terminal = read("control/terminal.json");
+  const collected = read("collected.json"), index = read("summary-members.json");
+  const tag = `dx-bm1-n19-${transfer.slot}`;
+  if (transfer.schema !== "bm1-night-transfer/1" || !/^dx-bm1-n19-[a-z0-9-]+$/.test(tag) ||
+      !/^[a-f0-9]{40}$/.test(transfer.source) || path.basename(dir) !== `i${transfer.item}-${transfer.attempt}` ||
+      transfer.source !== request.source || transfer.source !== terminal.source ||
+      transfer.slot !== request.tag || transfer.slot !== terminal.tag || transfer.item !== request.item ||
+      transfer.attempt !== request.attempt || !terminal.clean || terminal.ended !== transfer.ended ||
+      !(request.start <= Date.parse(terminal.ended) / 1000 + 1 &&
+        Date.parse(terminal.ended) / 1000 <= transfer.sealedAt + 1 && transfer.sealedAt <= collected.at + 1) ||
+      collected.transfer !== hash(path.join(dir, "TRANSFER.json")) ||
+      !["recorded", "deep-recorded-thin-cut", "observed", "incomplete"].includes(terminal.state) ||
+      transfer.requestSha256 !== hash(path.join(dir, "control/request.json")) ||
+      transfer.terminalSha256 !== hash(path.join(dir, "control/terminal.json")) ||
+      transfer.summaryMembersSha256 !== hash(path.join(dir, "summary-members.json")))
+    throw Error("Unbound overnight transfer");
+  for (const [name, file] of Object.entries(index)) {
+    const actual = path.resolve(dir, name);
+    if (!actual.startsWith(dir + path.sep) || !fs.lstatSync(actual).isFile() ||
+        !fs.realpathSync(actual).startsWith(fs.realpathSync(dir) + path.sep) ||
+        fs.statSync(actual).size !== file.bytes || hash(actual) !== file.sha256)
+      throw Error("Changed overnight summary member: " + name);
+  }
+  for (const [kind, file] of Object.entries({summary:transfer.summary, raw:transfer.raw})) {
+    if (!file && kind === "raw") continue;
+    const actual = path.join(dir, kind + ".tar.zst");
+    if (file.name !== path.basename(actual) || fs.statSync(actual).size !== file.bytes || hash(actual) !== file.sha256)
+      throw Error("Changed overnight archive: " + kind);
+  }
+  const raw = path.join(dir, "raw.tar.zst");
+  return registerRow({date:terminal.ended, tag, source:transfer.source,
+    subjects:null, result:`Overnight attempt ${transfer.attempt}. ${terminal.state}. ${transfer.rawDisposition}.`,
+    html:path.join(dir, "summary.tar.zst"), raw, bundle:true});
+}
+
 export function archive(tag, to) {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]+$/.test(tag)) throw Error("Invalid tag");
   const all = rows(),
     row = all.find((r) => r.tag === tag);
   if (!row) throw Error("Unknown trace tag");
+  if (row.bundle) throw Error("This trace is already a sealed benchmark bundle");
   const lock = path.join(base, "../locks/measure");
   if (fs.existsSync(lock)) throw Error("Refusing archive during a measurement hold");
   const target = path.resolve(to, tag, "trace/raw");
@@ -297,6 +341,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
   else if (command === "register-activation") console.log(JSON.stringify(registerActivation(arg)));
   else if (command === "register-incomplete-benchmark")
     console.log(JSON.stringify(registerIncompleteBenchmark(arg)));
+  else if (command === "register-night-bundle")
+    console.log(JSON.stringify(registerNightBundle(arg)));
   else if (command === "list")
     console.log(
       rows()
@@ -307,5 +353,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     const i = rest.indexOf("--to");
     if (i < 0 || !rest[i + 1]) throw Error("archive TAG --to DIR");
     console.log(JSON.stringify(archive(arg, rest[i + 1])));
-  } else throw Error("trace-store.mjs list | archive TAG --to DIR | register RUN_DIR | register-recovered RENDER_DIR ORIGINAL_RUN_DIR | register-activation RUN_DIR | register-incomplete-benchmark RUN_DIR");
+  } else throw Error("trace-store.mjs list | archive TAG --to DIR | register RUN_DIR | register-recovered RENDER_DIR ORIGINAL_RUN_DIR | register-activation RUN_DIR | register-incomplete-benchmark RUN_DIR | register-night-bundle BUNDLE_DIR");
 }

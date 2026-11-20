@@ -14,7 +14,7 @@ LIMIT = 1024**3
 ROOT = Path("/var/tmp/triplex-bm1")
 NIGHT = ROOT / "night-n19"
 EXCLUDE = {".git","node_modules",".pnpm-store","pnpm-store","tools","docker-config","corepack","downloads",
-           "image","repository","build-cache",".turbo","dist","pgdata","postgres","pristine"}
+           "image","repository","build-cache",".turbo","dist","pgdata","postgres","pristine","frozen-pgdata","gateway-growth"}
 METADATA = {"SHA256SUMS","STATUS","source","machine","terminal","active-slot","native.json",
             "identity.json","inputs.json","result.json","comparison.json","measurements.json","resources.json",
             "act1-sweep.json","act1-verified.json","summary.json","ns-report.json","commit-anatomy.json",
@@ -50,13 +50,13 @@ def sources(r):
         for stage in ("proof","screen0","screen1","screen2","screen3","deep","thin","stacks"):
             parts[stage]=root/stage
     elif r["item"]==4:
-        for name in ("logs","guarded"):
+        for name in ("logs","guard-plan.json","guard-output.json"):
             parts[name]=root/name
-        parts["activation"]=root/"checkout/state/evidence/DX-T1"
-        for f in (root/"guarded").glob("*-request.json"):
-            row=json.loads(f.read_bytes()); slot=row.get("slot","")
-            import re
-            if row.get("source")==r["source"] and re.fullmatch(r"tx2-dxt1-bm1-act[0-9a-f]{9}-activation-a",slot):
+        parts["seed-and-smoke"]=root/"checkout/state/evidence/DX-T1"
+        if (root/"guard-plan.json").is_file():
+            from overnight import guarded_children, guard_output
+            if output:=guard_output(r):parts["guarded"]=output
+            for slot in guarded_children(r):
                 batch=slot.split("-")[3]
                 parts[slot]=ROOT/("day-"+batch)/"checkout/state/evidence/DX-T1"/slot
     elif r["item"]==5:parts["rungs"]=root/"build/state/evidence/DX-INT1"/r["tag"]
@@ -68,6 +68,8 @@ def sources(r):
                 parts["delta-campaign/"+file.name]=file
         for name in ("dedicated.json","delivered.txt"):
             parts["platform/"+name]=platform/"platform"/name
+    elif r["item"]==7:
+        parts["probes"]=root
     for name in ("source","machine","terminal","terminal.json","sources.json","remaining.txt","cleanup.txt","ownership","bootstrap.log"):
         parts["campaign/"+name]=root/name
     parts["bootstrap"]=root/"build/results"
