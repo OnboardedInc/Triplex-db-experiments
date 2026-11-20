@@ -24,6 +24,7 @@ export function makeDatomicRuntime(options: {
   readonly admissionQueue?: boolean;
   readonly maxRetries?: number;
   readonly serverRecordTime?: boolean;
+  readonly recordedJournalReads?: boolean;
   readonly resolutionTimeoutMs?: number;
 }): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> {
   const connection = Layer.effect(

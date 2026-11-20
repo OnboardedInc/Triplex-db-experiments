@@ -13,8 +13,11 @@ d86cb49dd44ce17a9da506b4e732433d5755f98bac9a709da0462523638defc5  int1/p5-checks
 96f615998445a09d8e903d3f3b8e4f2b70cd25085d70f456e82c11665565bc2d  int1/p5-checks/erase-guard-integrated-8.log
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  int1/p5-checks/erase-guard-types.log
 453d8ef8517d0301cbc7ad374b8b262a22a15f484389f2cf0bb915094f8055b1  int1/p5-checks/erase-refresh-sdk-2.log
+a43e12a63879ef6548104f4cd3908ef0549238293a52ecabbd300f7422ebed56  int1/p5-checks/following-sdk-1.log
+966a36e96bfeb1812e20483796b626572fa4cf5dd0ef61eec15552abb048447e  int1/p5-checks/following-sdk-retry-1.log
 cc4a6ba3987e4ab8407110ab0f566e5c1aed88b033b76da4d262f476e4b7b498  int1/p5-checks/frozen-feed-reproduction.json
 18f65a960a8b3b1763e2ca5406aa1a8252ee5ee16069c6d1dcb743bcf94b16c3  int1/p5-checks/full-import-window.log
+6f4e8e05cfa6c7e57429eac2ebbe8c52f08fa4aa6e5e89d4878fdd8794b45e34  int1/p5-checks/image-retirement.jsonl
 3807b082b37493e604ef3aad10eecb58909799663c25a791dcc183d1e34871e8  int1/p5-checks/legacy-frame-probe-2.log
 cf2d64c637d54f74dc3de306b56c0e8bb82aaaf68769bb9193bec2687e43066e  int1/p5-checks/legacy-frame-probe.mjs
 cfacc1e6f2293430c4e30b6edec701c695efbda735192370a0338128e0440ad8  int1/p5-checks/memory-mapping-build.log
@@ -25,6 +28,9 @@ f8ef87b6cecd761d01f48f9b73810e2e90d8f5cbe64abbb8df8ecbed16c94f9d  int1/p5-checks
 ad613224ffbd2a3264cf32e8700b315e065ebcf60ecf9b422936d8c2513081f2  int1/p5-checks/p5-act2-08fb93d9ae/build-1.log
 4a3c34234e4a7ef81de827ad4aa3e0d366c06c67fa194273b5e212075bb890f0  int1/p5-checks/p5-act2-08fb93d9ae/gate.json
 bd871934b76bf0f08af35b8530dd5ab8c4df0bb0f035ef71eb77a8c0e683202d  int1/p5-checks/p5-act2-08fb93d9ae/selftest-1.log
+f070da2ee7612aaa967c4e7b2b8ccc415ddcc5c6d6e3252903e1bc55324af8ab  int1/p5-checks/p5-erase-guard2-a08f201035/build-1.log
+086518b5f275e1c9d82d40cc64e574ff246d6b029ccbdde0f705965b993723b6  int1/p5-checks/p5-erase-guard2-a08f201035/gate.json
+c79296bbed1979e20b6208ef6994e224f73be263abb289d4b0167cfa9abc5073  int1/p5-checks/p5-erase-guard2-a08f201035/selftest-1.log
 4bded07a7a764e03600cc7f7e608beb925dd59db6562aed28bf661e7f1f3f48a  int1/p5-checks/p5-erase1-4367a1ac02/build-1.log
 09f81342b2928fac0037fa7dd989677f4d9e59c475aea320e891990c42d6ff85  int1/p5-checks/p5-erase1-4367a1ac02/gate.json
 bd871934b76bf0f08af35b8530dd5ab8c4df0bb0f035ef71eb77a8c0e683202d  int1/p5-checks/p5-erase1-4367a1ac02/selftest-1.log
@@ -33,6 +39,9 @@ e4dc0f2252676859a73280c6d725c9f0285f894263b9a20081eff40f9ea8908c  int1/p5-checks
 af766d70dc995ed36d3819f492fd0321485481c4e48699f66ff577fd1a552b62  int1/p5-checks/p5-from-built-stg1-162da837ec/selftest-1.log
 aaf8347dc9e21bc00bf5c27654677aae248ef25830c0a1646a0c995976d7ea6c  int1/p5-checks/p5-int1-erase-ledger-retry.log
 6bc3aa7a7aad59f033f5b987545b689342107afcd2b9b89973e0c4bee13116b5  int1/p5-checks/p5-int1-erase-ledger.log
+7f137a09ccbb5ae8278b9d37ad27417a0ddf67e24ce1c4aae34e151bef50b124  int1/p5-checks/p5-recorded-audit-897e39a05b/build-1.log
+4c07fae36643faa68c479f98861a0541eb2df193cf81947958f4aef9772c3fa5  int1/p5-checks/p5-recorded-audit-897e39a05b/gate.json
+1e36242d6436c68c5facab061313ee3ef792d7358fd3d8f50f9e94b6fbf8575a  int1/p5-checks/p5-recorded-audit-897e39a05b/selftest-1.log
 bea9447a132e8b44c079855c8ddcb9ae7c088734cc8a3fac05fe7ca617082050  int1/p5-checks/p5-serial-prep1-99e97df199/build-1.log
 a73d5e2dd96fd7af408dee0f9b3dcdee1623eec8ba9db44dab34b60dd9edc611  int1/p5-checks/p5-serial-prep1-99e97df199/gate.json
 af766d70dc995ed36d3819f492fd0321485481c4e48699f66ff577fd1a552b62  int1/p5-checks/p5-serial-prep1-99e97df199/selftest-1.log
@@ -49,7 +58,12 @@ abc2575cdd557ac9f897fd09929122aff44e56d5c46ae5763ec278449aba13a4  int1/p5-checks
 2cfbb3e9d86ed69bbb3dedc25d5956312ed9cbcc59714ad37be160af73f8b327  int1/p5-checks/pooled-plan.json
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  int1/p5-checks/pooled-typecheck-b.log
 14fd7e9256a7e07ac98fc3735bc172624433a9ed750dd961a77a2f8b1ee3bf18  int1/p5-checks/pooled-units-b.log
+2701a660a569dc500b83c4b485b855fb1bfcb47a64e725ff78547ec498649c14  int1/p5-checks/recorded-core.log
+671271628c6892a76de9edb97195947537324aeed99f21eb19fabc76d05ab460  int1/p5-checks/recorded-datomic.log
+f4ee0b8e1631395074c4a7be223ff1fecd1a18c5bff7f7273e3d767803190940  int1/p5-checks/residency-first-cut.json
+dfe42aff1a40b555341ee034c150d675c6593ba9961e42f759715751825e4037  int1/p5-checks/residency-summary.py
 c51d3760152ab8e918050be801d20977ed89372fc3117075146c13ed5405e199  int1/p5-checks/retention-gate.log
+5a1dc3b27b6b01e76fa36c285d6de3635ecbc3d0885a64e7ee185dbba358b35d  int1/p5-checks/retired-initial-campaign.json
 66adc2263b5a99f5724b91b1afbb0726bffca33a3c3e66767751f3009fb5a80b  int1/p5-checks/retired-worktrees.json
 b97613398660d22aeba5c74510d56aaf48262ea345d0c2ae4bba7f5d16feb7b9  int1/p5-checks/scale1-staggered-pools.json
 5f79458e48c189fde34b7965f2099c9431732b789bd56d215c6d22e3d3986576  int1/p5-checks/trace-binding-reproduction.json
@@ -66,6 +80,11 @@ f82e015062d7596a04e9eebc851c863f25826cd90844d9da5f322b81737f0bc0  int1/p5-native
 86c2508041dcc63ad6a792c02ffac47abba466a4adedd1f72b05bff023698b7b  int1/p5-native-pools/phases.jsonl
 becf61e7cfa275d8d4dd7cdf59bf38850623dd8891c50e01a6546783c4f1ee02  int1/p5-native-pools/population.sqlite
 895eb11bd8e668f03de236db45f1dc35e117a4976a08991bbc922c9d05c1d77d  int1/p5-native-pools/slot-cleanup.log
+b75dc0f0e1a8572cba347f763f8599df8cf68fdb7695de88375e7bdff26b58d9  int1/p5-native-residency/inputs.json
+87b6d4e2f2e47207c0321bc7a3140a65642a7891a78ab2b89ae0f569762ae483  int1/p5-native-residency/people-10000-profile.json
+081cf8a13b41f4f8e6ecac59a4394a1ea2fbbe4dbeaee334c87a55033e53016e  int1/p5-native-residency/people-10000-read.histogram.gz
+0813949ce53d4522c72bd4a3cfb0fcffa6e07875dc9b0d6ea0dc834bef5177b5  int1/p5-native-residency/people-10000-transactor.histogram.gz
+4d56866d0368788419247dbce7b1e02132f5649ca7615badf1ee88a3a7bebf0e  int1/p5-native-residency/people-10000-write.histogram.gz
 ff6e10a8a8a2226ad23e2efe3294516903589b236d3c14a2c32325ac64ccd9a0  int1/p5-pooled-smoke/4-frozen-zero/arm.json
 4670a911d0c77f3972bcd295e081fd2fdf619321813a8ab2775667eb5ee0b765  int1/p5-pooled-smoke/4-frozen-zero/driver.log
 281855c98f1d087fc69d0df8a3cad462600e1836f17b1a4a35c39b42d9a31bed  int1/p5-pooled-smoke/4-frozen-zero/expected-model-deep-ff5d52ef-2fa7-4eaf-bee4-6911ed3ce215-s0.bin
