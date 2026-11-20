@@ -4,7 +4,7 @@ import path from "node:path";
 import { randomBytes, randomUUID, createHash } from "node:crypto";
 import { fork } from "node:child_process";
 import { availableParallelism, loadavg } from "node:os";
-import { acquireMeasureLease, readMeasureLease } from "../../../bin/heavy-lock.mjs";
+import { acquireMeasureLease, HEAVY_SLOTS, readMeasureLease } from "../../../bin/heavy-lock.mjs";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   admission,
@@ -59,11 +59,17 @@ export async function local(opts, config, manager) {
   const limit = Math.min(config.pool.memLimitBytes, 15 * 2 ** 30);
   try {
     // [DX-ACT2] Why: drain every lab heavy token and freeze other admissions before the matched timing. Rejected: relying on an idle-looking container count while another experiment starts.
-    if (opts.run === "joined-load")
-      lease = await acquireMeasureLease("DX-ACT2 joined comparison", {
-        holder: opts.holder,
-        pollMs: 5000,
-      });
+    if (opts.run === "joined-load") {
+      const parent = readMeasureLease();
+      // The outer heavy wrapper retains the lease throughout this exact child and cleans it on exit.
+      if (parent?.pid === process.ppid && parent.holder === opts.holder && !parent.stale)
+        lease = { owner: parent, tokens: HEAVY_SLOTS };
+      else
+        lease = await acquireMeasureLease("DX-ACT2 joined comparison", {
+          holder: opts.holder,
+          pollMs: 5000,
+        });
+    }
     while (!info) {
       const stat = fs.statfsSync(".");
       assert(stat.bavail * stat.bsize >= 5 * 2 ** 30, "host disk below floor");
@@ -397,7 +403,7 @@ export async function local(opts, config, manager) {
       volumesRemoved: volumes.size,
       slotReleased: info?.slot ?? null,
     });
-    lease?.release();
+    lease?.release?.();
   }
 }
 
