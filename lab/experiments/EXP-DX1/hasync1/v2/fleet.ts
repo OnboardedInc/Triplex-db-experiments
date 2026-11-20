@@ -271,6 +271,7 @@ export async function fleet(s: Stack, pair: SyncPair, count: number) {
     for (let i = 0; i < count; i++) {
       const q = identifier(db(i));
       const role = sqlOn("a", fromFields(i));
+      // [DX-HASYNC1] Why: the vendor DDL grants to postgres and public. Rejected: running it as the cell role, which cannot transfer table ownership to postgres.
       await sql(
         role,
         "CREATE ROLE " +
@@ -289,13 +290,12 @@ export async function fleet(s: Stack, pair: SyncPair, count: number) {
           storage +
           " SET search_path TO " +
           q +
-          "; " +
-          "SET ROLE " +
-          q +
           "; SET search_path TO " +
           q +
           "; " +
-          ddl,
+          ddl +
+          "; REVOKE ALL ON TABLE datomic_kvs FROM PUBLIC; GRANT ALL ON TABLE datomic_kvs TO " +
+          q,
         storage,
       );
       assert.equal(await sql(role, "SELECT count(*) FROM " + q + ".datomic_kvs", storage), "0");

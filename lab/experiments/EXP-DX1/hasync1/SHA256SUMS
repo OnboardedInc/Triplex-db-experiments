@@ -413,3 +413,11 @@ e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  hasync-restart
 9423378841b3d1a3eb003571b7f7d455446432821d35eba7cbb9ed1b75c7cbd8  hasync-restart-6124c3dd-8b31-43f6-b9f8-2ce758e64267/traffic-field.jsonl
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  hasync-restart-6124c3dd-8b31-43f6-b9f8-2ce758e64267/write-console.txt
 40110ee3a2ca07ce74832708962268db81d5e8d273021c44e16957d5ec4460e5  hasync-restart-6124c3dd-8b31-43f6-b9f8-2ce758e64267/write-datomic.txt
+7bd61a59f8ac3aa43b319cb011170cf142af533ad246e5cb52511e24a0e76e61  hasync-fleet-shared-3bf2d6c8-421b-4bc6-9f3b-0eb60a2586c4/attempt.json
+f252ee9b80f9e4ec5440d15f3a30b206142b693767ac71e68f9ec718f7ac8397  hasync-fleet-shared-3bf2d6c8-421b-4bc6-9f3b-0eb60a2586c4/cleanup.json
+5bd767bbebe8cd624e7cb0e25a0d225e5ae368e3752cbd0804e43f431ce3dc40  hasync-fleet-shared-3bf2d6c8-421b-4bc6-9f3b-0eb60a2586c4/events.jsonl
+403ac3a31e3822fb0b054997a80d419e7a35c994edcf1c79bb49d7669a9c391f  hasync-fleet-shared-3bf2d6c8-421b-4bc6-9f3b-0eb60a2586c4/failure.json
+838cb851ffb2f28f2758797101ee0fa36f7b0a7d34ba444751a730b69469c6db  hasync-fleet-shared-3bf2d6c8-421b-4bc6-9f3b-0eb60a2586c4/fleet-a-pg0-console.txt
+508a39a6ffef745fa610e4e021dea50368f761e641490323a26a96c80e322df9  hasync-fleet-shared-3bf2d6c8-421b-4bc6-9f3b-0eb60a2586c4/fleet-inventory.json
+275ade4de3486040545a1ba692102c2afd49b9df04e7e264a0b7d123aa3bd3f4  hasync-fleet-shared-3bf2d6c8-421b-4bc6-9f3b-0eb60a2586c4/image.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  hasync-fleet-shared-3bf2d6c8-421b-4bc6-9f3b-0eb60a2586c4/tool-console.txt
