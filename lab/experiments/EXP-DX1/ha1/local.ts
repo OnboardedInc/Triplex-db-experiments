@@ -17,7 +17,6 @@ import {
   vmDisk,
   withPool,
 } from "../../../bin/lib.mjs";
-import { acquireMeasureLease, readMeasureLease } from "../../../bin/heavy-lock.mjs";
 import {
   Evidence,
   loadRoles,
@@ -140,6 +139,8 @@ export async function localDrill(opts: any, config: any, manager: any) {
   if (typeof opts.recover === "string") return recoverLoad(opts.recover, config, manager, folder);
   assert(["auto", "s1", "s2", "s3"].includes(opts.slot));
   const mode = modeOf(opts.experiment);
+  const diagnostic = opts.diagnostic === true;
+  assert(!microLoad(mode) || diagnostic, "Use --diagnostic for Mac import trials");
   const slots = (opts.slot === "auto" ? ["s2", "s3", "s1"] : [opts.slot]).map((id) =>
     slotInfo(config, "datomic", id),
   );
@@ -189,31 +190,9 @@ export async function localDrill(opts: any, config: any, manager: any) {
     clean = false;
   const parentLease = path.join(folder, "locks", "measure");
   let measured = false;
-  let formal: Awaited<ReturnType<typeof acquireMeasureLease>> | undefined;
   const admissionRetry = (reason: string) =>
     new LabError("REFUSED", "DX-HA1 admission retry: " + reason);
   try {
-    if (microLoad(mode)) {
-      const disk = fs.statfsSync(root);
-      assert(disk.bavail * disk.bsize >= 5 * 2 ** 30, "Host disk floor");
-      const owner = readMeasureLease();
-      // [DX-LOAD3] Why: a foreign claimant drains heavy tokens, including the wrapper's token.
-      // Rejected: waiting inside the wrapper for a lease whose owner is waiting on us.
-      const inherited =
-        owner && !owner.stale && owner.holder === opts.holder && owner.pid === process.ppid;
-      if (!inherited) {
-        if (owner && !owner.stale) throw admissionRetry("measurement lease busy");
-        try {
-          const leaseOptions = { holder: String(opts.holder), timeoutMs: 30000 };
-          formal = await acquireMeasureLease(mode, leaseOptions);
-          assert(formal.owner?.holder === opts.holder && formal.owner.pid === process.pid);
-        } catch (error: any) {
-          if (error.code === "LEASE_TIMEOUT") throw admissionRetry(error.message);
-          throw error;
-        }
-      }
-    }
-    const admitUntil = performance.now() + 30000;
     for (;;) {
       const disk = fs.statfsSync(root);
       if (disk.bavail * disk.bsize < 5 * 2 ** 30) {
@@ -226,18 +205,25 @@ export async function localDrill(opts: any, config: any, manager: any) {
         });
         throw Error("Host disk floor");
       }
-      if (slots.some((slot) => !fs.existsSync(slot.lockDir)) && !fs.existsSync(parentLease)) {
+      if (
+        slots.some((slot) => !fs.existsSync(slot.lockDir)) &&
+        (diagnostic || !fs.existsSync(parentLease))
+      ) {
         try {
           await withPool((ledger: any) => {
             manager.assertMeasureAdmission(opts.holder);
-            try {
-              fs.mkdirSync(parentLease);
-            } catch (err: any) {
-              if (err.code === "EEXIST") return;
-              throw err;
+            // [DX-LOAD3] Why: slot ownership is enough for diagnostic correctness and role traces.
+            // Rejected: draining heavy tokens or taking the shared timing lock for Mac diagnostics.
+            let inode: number | undefined;
+            if (!diagnostic) {
+              try {
+                fs.mkdirSync(parentLease);
+              } catch (err: any) {
+                if (err.code === "EEXIST") return;
+                throw err;
+              }
+              inode = fs.statSync(parentLease).ino;
             }
-            // [DX-HA1] Why: hold the measurement timer while checking capacity and binding the winning slot. Rejected: hashing a candidate before mkdir while a competing run can claim the timer.
-            const inode = fs.statSync(parentLease).ino;
             let ownedFile = false;
             try {
               const live = listTx2Containers({ all: true });
@@ -270,18 +256,20 @@ export async function localDrill(opts: any, config: any, manager: any) {
               )
                 return;
               e = declare(info.slot);
-              fs.writeFileSync(
-                path.join(parentLease, "owner.json"),
-                JSON.stringify({
-                  id: "DX-HA1",
-                  pid: process.pid,
-                  nonce: e.nonce,
-                  slot: info.slot,
-                  at: new Date().toISOString(),
-                }),
-                { flag: "wx" },
-              );
-              ownedFile = true;
+              if (!diagnostic) {
+                fs.writeFileSync(
+                  path.join(parentLease, "owner.json"),
+                  JSON.stringify({
+                    id: "DX-HA1",
+                    pid: process.pid,
+                    nonce: e.nonce,
+                    slot: info.slot,
+                    at: new Date().toISOString(),
+                  }),
+                  { flag: "wx" },
+                );
+                ownedFile = true;
+              }
               const slot = manager.acquireSlot(info, opts.holder, "DX-HA1");
               assert(slot.created);
               acquired = true;
@@ -297,10 +285,10 @@ export async function localDrill(opts: any, config: any, manager: any) {
                   cpus: 1.5,
                   diskForecastBytes: role === "pg" ? req.diskForecastBytes : 0,
                 });
-              measured = true;
+              measured = !diagnostic;
               reserved = true;
             } finally {
-              if (!measured) {
+              if (inode !== undefined && !measured) {
                 assert.equal(fs.statSync(parentLease).ino, inode);
                 if (ownedFile) {
                   const file = path.join(parentLease, "owner.json");
@@ -312,12 +300,12 @@ export async function localDrill(opts: any, config: any, manager: any) {
             }
           });
         } catch (err: any) {
-          if (err.code !== "REFUSED" || measured) throw err;
+          if (err.code !== "REFUSED" || measured || acquired) throw err;
+          if (diagnostic) throw admissionRetry(err.message);
         }
       }
       if (reserved) break;
-      if (microLoad(mode) && performance.now() > admitUntil)
-        throw admissionRetry("no fitting VM slot");
+      if (diagnostic) throw admissionRetry("no fitting VM slot");
       await sleep(5000);
     }
     const site: Site = {
@@ -379,7 +367,12 @@ export async function localDrill(opts: any, config: any, manager: any) {
       e!,
       site,
       site,
-      { people, scopes: mode.startsWith("load-") ? 1 : 3, capacity: "local" },
+      {
+        people,
+        scopes: mode.startsWith("load-") ? 1 : 3,
+        capacity: diagnostic ? "local-diagnostic" : "local",
+        ...(diagnostic ? { timing: "diagnostic" as const } : {}),
+      },
       () => {
         clean = true;
       },
@@ -406,6 +399,5 @@ export async function localDrill(opts: any, config: any, manager: any) {
       });
     if (acquired && (!reserved || clean) && readOwner(info)?.pid === process.pid)
       manager.releaseSlot(info);
-    formal?.release();
   }
 }

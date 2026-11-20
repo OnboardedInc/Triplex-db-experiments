@@ -57,7 +57,9 @@ export async function load(s: Stack, people: number) {
     e.mode === "load-micro"
       ? ["micro-0-a", "micro-24", "micro-16", "micro-32", "micro-0-b"]
       : e.mode === "load-volume"
-        ? ["volume-32"]
+        ? server
+          ? ["volume-0-a", "volume-32", "volume-0-b"]
+          : ["volume-32"]
         : e.mode === "load-profile"
           ? ["ordinary-a", "row-a", "range-a", "range-b", "row-b", "ordinary-b"]
           : e.mode === "load-proof"
@@ -146,7 +148,7 @@ export async function load(s: Stack, people: number) {
               1,
               Math.floor(
                 Math.min(
-                  e.mode === "load-volume" ? 790000 : split ? 330000 : 240000,
+                  e.mode === "load-volume" ? 490000 : split ? 330000 : 240000,
                   830000 - (performance.now() - e.start),
                 ),
               ),
@@ -161,7 +163,12 @@ export async function load(s: Stack, people: number) {
       [e.nonce, e.source.git, e.slot, scope, arm],
     );
     if (newDesign) {
-      replayLive(JSON.parse(readFileSync(path.join(e.dir, arm + ".offers.json"), "utf8")), e, r);
+      replayLive(
+        JSON.parse(readFileSync(path.join(e.dir, arm + ".offers.json"), "utf8")),
+        e,
+        r,
+        !server,
+      );
     }
     const live =
       ["load-live", "load-tail"].includes(e.mode) ||

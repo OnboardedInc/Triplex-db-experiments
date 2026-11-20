@@ -23,7 +23,7 @@ import {
   queryMarker,
   temporalExercise,
   temporalPrefix,
-  volumeDuration,
+  volumeWindow,
 } from "./micro.ts";
 import type { Frame } from "./source.ts";
 
@@ -80,13 +80,15 @@ export async function live(
   const cell = alone ? "0" : arm.split("-")[1],
     width = frontier && cell !== "0" ? maxBulkFacts : Number(cell),
     duration = volume
-      ? volumeDuration
+      ? volumeWindow(arm, !server)
       : micro
         ? microDuration
         : (traceTail || split || frontier ? 108 : server ? 60 : 12) * 1000,
     subjects = micro
       ? volume
-        ? 360000
+        ? server
+          ? 600000
+          : 180000
         : 60000
       : server || traceTail || split || frontier
         ? 100000

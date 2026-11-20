@@ -9,7 +9,14 @@ import { ack, record } from "./oracle.ts";
 export const microHz = 130;
 export const microCycleMs = 8;
 export const microDuration = 108000;
-export const volumeDuration = 540000;
+export const volumeMacDuration = 240000;
+export const volumeServerDuration = 900000;
+
+export function volumeWindow(arm: string, mac: boolean) {
+  if (arm === "volume-0-a" || arm === "volume-0-b") return microDuration;
+  assert.equal(arm, "volume-32");
+  return mac ? volumeMacDuration : volumeServerDuration;
+}
 
 // [DX-LOAD3] Why: the three widths pack exactly two, three or four complete eight-fact subjects.
 // Rejected: padding a frame to its budget or splitting a subject between receipts.

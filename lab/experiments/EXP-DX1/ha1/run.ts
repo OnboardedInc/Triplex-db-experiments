@@ -12,7 +12,7 @@ export async function drill(
   e: Evidence,
   a: Site,
   b: Site,
-  profile: { people: number; scopes: number; capacity: string },
+  profile: { people: number; scopes: number; capacity: string; timing?: "diagnostic" },
   release: () => void,
 ) {
   const s = new Stack(e, a, b);
@@ -65,6 +65,7 @@ export async function drill(
       ? {
           people: profile.people,
           capacity: profile.capacity,
+          ...(profile.timing ? { timing: profile.timing } : {}),
           seedShape: e.shape,
           sourceDatabases: 1,
         }

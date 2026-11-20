@@ -17,3 +17,21 @@ HA1_BENCH_HOURS=2 node --import tsx lab/experiments/EXP-DX1/ha1/control.ts load-
 ```
 
 An arm reports chronological offers, measured gateway hold/queue and exact frame bytes, committed and independently queryable prefixes, and original receipts across a deliberately discarded reply. A bar comparison requires every originally offered live save and read to verify and every neighbouring account's p99 to be inside its own controls.
+
+## Sustained shared-database import
+
+After the short frontier, run one 15-minute 32-fact import between two 108-second controls. Keep all eleven live accounts and the importer in the same database in each arm. Predict 2.7–3.1 million queryable facts in the import window, with the last third retaining at least 85% of the first third's rate. Predict about 250–310 index adoptions and a sampled memory-index peak below 80 MiB at the 32/96 MiB settings. The shorter bare-metal import had roughly one adoption per 12,200 facts at 2,000 facts per frame. Three thousand facts per second remains plausible in this arm. The preregistered neighbour p99 predictions are 19 ms for saves and 8.5 ms for reads, above 1.5 times the earlier faster control. Compare all accounts against both fresh controls, including any missed offers.
+
+```sh
+HA1_BENCH_HOURS=2 node --import tsx lab/experiments/EXP-DX1/ha1/control.ts load-volume load-volume-001 one-host
+```
+
+Read novelty, direct index adoption, background job duration, and per-JVM stops in each third. Compare the last third's goodput and neighbour p99 with the first third and the two controls. The fresh and one-billion-record version 0.1 status comes from the integrated scorecard.
+
+## Mac correctness and trace check
+
+```sh
+node lab/bin/heavy.mjs --label DX-HA1 -- node --import tsx lab/bin/engine.mjs ha1 --slot auto --holder DX-HA1 --experiment load-volume --people 50 --diagnostic
+```
+
+This checks four minutes of sustained work with an ordinary heavy token and one VM slot. The oracle checks original claims, every typed row, temporal queries and retries. Local elapsed values are diagnostic and can include activity from other builders.

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import type { Seen } from "./oracle.ts";
-import { microCycleMs, microDuration, microHz, volumeDuration } from "./micro.ts";
+import { microCycleMs, microDuration, microHz, volumeWindow } from "./micro.ts";
 
 export interface Offer {
   actor: string;
@@ -92,6 +92,7 @@ export function replayLive(
     temporal?: number;
     width?: number;
   },
+  mac = false,
 ) {
   const micro = attempt.mode === "load-micro" || attempt.mode === "load-volume";
   if (
@@ -108,7 +109,7 @@ export function replayLive(
       attempt.source.git,
       attempt.slot,
       prefix + "-" + arm.arm,
-      attempt.mode === "load-volume" ? volumeDuration : microDuration,
+      attempt.mode === "load-volume" ? volumeWindow(arm.arm, mac) : microDuration,
     ],
   );
   assert.equal(arm.scope, tape.scope);

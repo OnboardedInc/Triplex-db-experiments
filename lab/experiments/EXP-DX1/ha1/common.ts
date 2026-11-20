@@ -147,7 +147,6 @@ function treeCode() {
     ...[
       "lab/bin/engine.mjs",
       "lab/bin/lib.mjs",
-      "lab/bin/heavy-lock.mjs",
       "lab/bin/heavy.mjs",
       "packages/datomic/test/ha1-account.ts",
     ].map((f) => path.join(root, f)),
