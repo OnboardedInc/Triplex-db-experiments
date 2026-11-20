@@ -131,3 +131,6 @@ e33f7cbe826f253c8729398ae635fc4a8fdf58865133ca6f1d658aa275c461ed  drv1a/offline-
 00d2baf79c8c749bf686affd644edcf067efa4b873b12ae75294517eb4bf87ac  drv1a/p3r-final-audit.log
 84f9d8627d8d20423de00d9141cf415a8385dcd19b228dd4bcd054af7eb96c48  drv1a/p3r-reconstructed-study/tx2-dxt1-bm1-p3r-pair-session/MEASUREMENTS.json
 d53e6b7661f48e7de6040f2a63178c98332a7fa8b550d9e51054bee5649cdc67  drv1a/p3r-reconstructed-study/tx2-dxt1-bm1-p3r-pair-session/MEASUREMENTS.md
+0abd5c5d9a7d9993196a46c73cd57ae296c8955210e004319b580653a0b03ffa  overnight/replica-fixture-b/result.json
+84e05d710f1a6d18c3ac061036cc8b9af9df35780d6204eb1ca227b561246f9d  overnight/replica-fixture-c/result.json
+1f7dff6f8154addb03cba132c420121cc687b82afad0b3bc461efae5f7750346  overnight/native-staged-guide.json

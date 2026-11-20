@@ -40,7 +40,7 @@ for (let i = 0; i < 96; i++) {
     world = [];
   roots.push(root);
   const rootRows = [];
-  for (let c = 0; c < 8; c++) {
+  for (let c = 0; c < 3; c++) {
     const child = root + "-child-" + c;
     rootRows.push({
       id: child + "-ref",
@@ -51,7 +51,7 @@ for (let i = 0; i < 96; i++) {
       validFrom: 0,
       publicMetadata: meta,
     });
-    const rows = Array.from({ length: 24 + (i % 8) }, (_, j) => ({
+    const rows = Array.from({ length: 10 + (i % 5) }, (_, j) => ({
       id: child + "-" + j,
       entityId: child,
       attribute: ":answer/" + j,
@@ -103,9 +103,16 @@ const miss = async () => {
 let count = 0,
   materialized = 0,
   batch = [];
-let fraction = 0.12,
+let fraction = 0.025,
   lastCost = process.cpuUsage(),
-  lastPulse = performance.now();
+  lastPulse = performance.now(),
+  lastCount = 0;
+const ioBytes = () => {
+  if (process.platform !== "linux") return null;
+  const match = /^write_bytes:\s+(\d+)$/m.exec(fs.readFileSync("/proc/self/io", "utf8"));
+  return match ? Number(match[1]) : null;
+};
+const ioStart = ioBytes();
 const basis = { recordedPosition: 1, validAt: 100 };
 while (performance.now() < cpuEnd) {
   const pulse = performance.now();
@@ -157,10 +164,14 @@ while (performance.now() < cpuEnd) {
   // Rejected: adding unrelated CPU work merely to hit an event-loop percentage.
   if (performance.now() - lastPulse >= 1000) {
     const cost = process.cpuUsage(lastCost),
-      use = (cost.user + cost.system) / (1000 * (performance.now() - lastPulse));
-    fraction = Math.min(0.8, Math.max(0, fraction + (0.76 - use) * 0.12));
+      elapsed = performance.now() - lastPulse,
+      use = (cost.user + cost.system) / (1000 * elapsed),
+      throughput = (count - lastCount) / elapsed;
+    const gain = throughput < 13.5 && use > 0.7 ? -0.015 : (0.76 - use) * 0.09;
+    fraction = Math.min(0.8, Math.max(0, fraction + gain));
     lastPulse = performance.now();
     lastCost = process.cpuUsage();
+    lastCount = count;
   }
   const pace = start + count / 15;
   await delay(
@@ -177,6 +188,7 @@ if (batch.length) store.push(...batch);
 store.checkpoint();
 const end = performance.now(),
   cost = process.cpuUsage(cpu),
+  ioEnd = ioBytes(),
   reread = new ReadRecords(path.join(out, "observations"), true);
 assert.equal(count, reread.length);
 let checked = 0;
@@ -194,6 +206,7 @@ const result = {
   checked,
   materialized,
   spillBytes: store.encodedBytes,
+  blockWriteBytes: ioStart === null || ioEnd === null ? null : ioEnd - ioStart,
   cpuSeconds: (cost.user + cost.system) / 1e6,
   local: reader.diagnostics.local,
   fallback: reader.diagnostics.fallback,

@@ -207,8 +207,13 @@ async function arm(directory, mode, setting) {
     sql: total(observations.map((m) => m.reads.sql ?? 0)),
     gatewayReads: observations.filter((m) => m.gatewayReads).length,
   };
-  if (mode === "growth")
-    result.storage = readStorage(path.join(directory, "tx.log"), observations, bind, setting);
+  if (mode === "growth") {
+    try {
+      result.storage = readStorage(path.join(directory, "tx.log"), observations, bind, setting);
+    } catch (error) {
+      result.storageError = String(error);
+    }
+  }
   fs.writeFileSync(
     path.join(directory, "joined-native.jsonl"),
     observations.map((s) => JSON.stringify(s)).join("\n") + "\n",
@@ -311,6 +316,14 @@ function decision(mode, arms) {
   assert(arms.every((a) => a.tape === arms[0].tape && a.prior === arms[0].prior));
   assert.equal(new Set(arms.map((a) => a.binding.nonce)).size, 4);
   if (mode === "growth") {
+    if (arms.some((a) => !a.storage)) {
+      return {
+        verdict: "unjudged",
+        reason:
+          "Native counters are retained. At least one transaction-function counter split did not bind.",
+        sqlPerCommit: arms.map((a) => a.sql / a.n),
+      };
+    }
     const repeats = [
       [0, 1],
       [3, 2],

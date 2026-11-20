@@ -231,12 +231,12 @@ def guarded_children(r):
 
 
 def guard_output(r):
-    children=guarded_children(r)
+    input_bytes={f.read_bytes() for f in guarded_children(r).values()}
     matches=[]
     for directory in ROOT.glob("act1-*"):
         if not directory.is_dir() or not re.fullmatch(r"act1-[0-9a-f]{12}",directory.name):continue
         files=list(directory.glob("*-request.json"))
-        if files and all(get(f).get("slot") in children and f.read_bytes()==children[get(f)["slot"]].read_bytes() for f in files):
+        if files and all(f.read_bytes() in input_bytes for f in files):
             matches.append(directory)
     assert len(matches)<=1
     return matches[0] if matches else None

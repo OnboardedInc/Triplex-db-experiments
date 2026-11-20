@@ -96,9 +96,13 @@ def stack(ordinal,mode,experiment,staged=None):
           "--tx-java-opts","-Xms256m -Xmx5g -XX:+UseG1GC",
           "--pg-settings","-c shared_buffers=1GB -c synchronous_commit=on -c fsync=on -c full_page_writes=on -c track_io_timing=on -c track_wal_io_timing=on"]
     if staged:args+=["--gateway-src",staged]
-    run(*args,timeout=240,env=env)
-    # The named W1 source accepts CPUs up to 7 in stack/up.sh, then gives the read peer its second core.
-    run("docker","update","--cpuset-cpus","4,8",slot+"-gw-r",env=env)
+    try:
+        run(*args,timeout=240,env=env)
+        # The named W1 source accepts CPUs up to 7 in stack/up.sh, then gives the read peer its second core.
+        run("docker","update","--cpuset-cpus","4,8",slot+"-gw-r",env=env)
+    except (OSError, subprocess.SubprocessError):
+        cleanup()
+        raise
     return directory,slot,env,ownership
 
 

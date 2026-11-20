@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { createHash } from "node:crypto";
+import { gunzipSync } from "node:zlib";
 import { pathToFileURL } from "node:url";
 import { filesUnder } from "../trace/report.mjs";
 const base =
@@ -290,6 +291,34 @@ export function registerNightBundle(dir) {
     html:path.join(dir, "summary.tar.zst"), raw, bundle:true});
 }
 
+// [DX-BM1] Why: the first DELTA 1k reading precedes the later transfer schema but its raw observations still have a verifiable identity.
+// Rejected: replacing the refused 100k admission with the subsequent attempt's outcome.
+export function registerNightPreflight(dir) {
+  dir = path.resolve(dir);
+  const read = (f) => fs.readFileSync(path.join(dir, f));
+  const sums = new Map(read("TRANSFER.sha256").toString().trim().split("\n").map((line) => [line.slice(66),line.slice(0,64)]));
+  const [slot, source, nonce] = read("ownership").toString().trim().split(/\s+/);
+  const request = JSON.parse(read("preflight/request.json")), result = JSON.parse(read("preflight/result.json"));
+  const verified = JSON.parse(read("preflight/proof.json")), state = JSON.parse(read("preflight/STATUS.json"));
+  const [outcome, ended] = read("terminal").toString().trim().split(/\s+/);
+  const [exit, launchSource, launchEnd] = read("launch.exit").toString().trim().split(/\s+/);
+  const binds = (r) => r.source === source && r.nonce === nonce && r.slot === slot;
+  const packed = read("preflight/samples.ndjson.gz");
+  const values = packed.length <= 256 * 1024 ? gunzipSync(packed, { maxOutputLength: 8 * 1024 ** 2 }) : null;
+  if (slot !== "tx2-dxscale1-bm1n19delta" || !/^[a-f0-9]{40}$/.test(source) || !/^[a-f0-9-]{36}$/.test(nonce) ||
+      ![request, result.binding, verified.binding, verified.windows.binding, state.binding].every(binds) ||
+      result.subjects !== 1000 || verified.people !== 1000 || verified.windows.subjects !== 1000 || state.stage !== "verified" ||
+      result.offers.length !== 2 || !values || createHash("sha256").update(values).digest("hex") !== result.samplesSha256 ||
+      values.toString().trim().split("\n").length !== result.sampleCount || read("remaining.txt").length ||
+      outcome !== "large-scope-preflight-refused" || exit !== "1" || launchSource !== source || launchEnd !== ended ||
+      !(Date.parse(ended) >= Date.parse(read("cleanup.txt").toString().trim().split(/\s+/)[1])) ||
+      !["summary.tar.zst", "raw.tar.zst"].every((name) => hash(path.join(dir, name)) === sums.get(name)))
+    throw Error("Unbound DELTA preflight evidence");
+  return registerRow({date:ended, tag:slot, source, subjects:1000, bundle:true,
+    result:"The 1,000-subject DELTA preflight verified. The original launcher declined the requested 100,000-subject workload.",
+    html:path.join(dir, "summary.tar.zst"), raw:path.join(dir, "raw.tar.zst")});
+}
+
 export function archive(tag, to) {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]+$/.test(tag)) throw Error("Invalid tag");
   const all = rows(),
@@ -343,6 +372,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.ar
     console.log(JSON.stringify(registerIncompleteBenchmark(arg)));
   else if (command === "register-night-bundle")
     console.log(JSON.stringify(registerNightBundle(arg)));
+  else if (command === "register-night-preflight")
+    console.log(JSON.stringify(registerNightPreflight(arg)));
   else if (command === "list")
     console.log(
       rows()
