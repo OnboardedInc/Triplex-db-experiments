@@ -279,6 +279,9 @@
       "adopted-fidelity" (apply adopted-fidelity! args)
       "index-fixture" (apply index-fixture! args)
       "fidelity-arms" (apply fidelity-arms! args)
+      "native-suite" (do
+                       (require 'triplex.age.scorecard)
+                       ((requiring-resolve 'triplex.gateway.selftest/-main)))
       (throw (ex-info "Unknown gate" {:mode mode})))
     (shutdown-agents)
     (System/exit 0)

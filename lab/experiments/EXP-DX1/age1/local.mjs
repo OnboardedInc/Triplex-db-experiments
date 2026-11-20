@@ -360,7 +360,7 @@ export async function local(opts, config, manager) {
       // Rejected: blessing an older shared image's embedded gateway or building a replacement image.
       await capture(["exec", "-e", "TX2_SAVE_LEDGER=0", "-e", "TX2_SMALL_ROWS=0", peer, "/bin/bash", "-ceu",
         'cp /age/packages/datomic/gateway/{codec-cases,codec-vectors,history-range-case}.json /opt/gateway/; ' +
-        'exec /opt/datomic/bin/run -e "(require (quote triplex.age.rung)) (triplex.gateway.selftest/-main)"'],
+        'exec /opt/datomic/bin/run -m triplex.age.gate native-suite'],
       path.join(dir, "probe.log"), controller.signal);
     } else {
       const ns = erasure ? "triplex.age.erased-successor"
