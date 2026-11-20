@@ -2804,3 +2804,19 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   comparison, obligations kept and lost, long histories, untested cases, whether 730 follows). Part 2 assigned: the
   query surfaces and a projection priced; long histories and checkpoints; erasure envelopes; how much of the gain is
   layout and how much is work not done at the serial point; mixed traffic and the loader on the corrected path.
+
+## 2026-11-20 05:00 UTC (00:00 local, 2026-11-20): DX-RD1 part 2 in: fallback fixes built, explanation incomplete, Mac measurements blocked
+
+- **DX-RD1 part 2 (`0eb2e0f0f`; `rd1/REPORT.md`, `SERVER1.md`).** Built: a bounded fallback worker (gateway calls and
+  decoding off the workers that serve local reads; a held HTTP reply test confirms an unrelated local read still
+  finishes), same-cut batching, reuse of complete answers for closed cuts, demand-installed history, capture of the
+  write gateway's pauses in the four-block probe. 418 Datomic tests, 25 bench tests and 13 package checks pass.
+  Frozen-offer replay: a 192 MiB history budget covered the sampled 20-minute cuts; at 64 MiB 1.93% of eight-minute
+  cuts fell back. **The collapse is not fully explained:** the slow server blocks completed about 224 gateway
+  fallbacks per second and 4,114 reads per second overall, while the gateway's archived service times predict 18,200
+  to 27,700; sampled misses spent about 0.73 s each outside the gateway. Both native Mac attempts timed out waiting
+  for the shared measurement window. Part 3 assigned: locate the 0.73 s from the archived traces; the fallback curve,
+  history budget and recovery measurements when the window frees; a unit test that would have caught the collapse.
+- **Mac capacity:** twelve cores, eight given to the lab VM (busy-waiting under `nohlt`), fifteen agent processes on
+  the rest; CPU pressure in the VM 15 to 30%. Builders that need a timed native arm are queueing for the one
+  measurement window; three have ended a part with measurements owed tonight (DX-STG1, DX-WFIX1, DX-RD1).
