@@ -9,6 +9,7 @@ import { createInterface } from "node:readline";
 import { pipeline } from "node:stream/promises";
 import { Satellite } from "./satellite.ts";
 import { replayLive } from "../load1/live-evidence.ts";
+import { pacedArms } from "../load1/pacing.ts";
 import { pipelineArms, pipelineComparison } from "../load1/pipeline.ts";
 import { head, modeOf, root, runFile, supportsSingleHost } from "./common.ts";
 
@@ -32,8 +33,10 @@ assert(
 );
 
 const pipelineTrial = mode === "load-pipeline";
-const hours = Number(process.env["HA1_BENCH_HOURS"] ?? (pipelineTrial ? 1 : 6));
-assert(!pipelineTrial || (single && hours === 1 && !process.env["HA1_PEOPLE"]));
+const pacedTrial = mode === "load-paced";
+const shortCampaign = pipelineTrial || pacedTrial;
+const hours = Number(process.env["HA1_BENCH_HOURS"] ?? (shortCampaign ? 1 : 6));
+assert(!shortCampaign || (single && hours === 1 && !process.env["HA1_PEOPLE"]));
 const deadline = Date.now() + 90 * 60_000;
 assert(Number.isInteger(hours) && hours >= 1 && hours <= 72);
 const sha = head(),
@@ -96,7 +99,7 @@ const remote = async (i: number, ...args: string[]) =>
   (
     await runFile("ssh", argv(i, ["sudo", "-n", ...args]), {
       encoding: "utf8",
-      timeout: pipelineTrial ? Math.max(1, Math.min(25 * 60_000, deadline - Date.now())) : 2400000,
+      timeout: shortCampaign ? Math.max(1, Math.min(25 * 60_000, deadline - Date.now())) : 2400000,
       maxBuffer: 16 * 2 ** 20,
     })
   ).stdout.trim();
@@ -168,7 +171,7 @@ try {
         "{{.Id}}",
       );
   // [DX-HA1] Why: the installation shares the server budget. Rejected: granting a fresh 90 minutes after setup.
-  const runtime = pipelineTrial
+  const runtime = shortCampaign
     ? Math.min(3600, Math.floor((deadline - Date.now() - 5 * 60_000) / 1000))
     : hours * 3600;
   assert(runtime > 0, "Server window expired before dispatch");
@@ -287,7 +290,7 @@ try {
     copy.once("close", ok);
   });
   const file = path.join(evidence, "raw.tar.gz");
-  const transferTimeout = pipelineTrial
+  const transferTimeout = shortCampaign
     ? setTimeout(() => copy.kill("SIGTERM"), Math.max(1, deadline - Date.now() - 30_000))
     : undefined;
   try {
@@ -333,23 +336,32 @@ try {
       if (mode.startsWith("load-") && supportsSingleHost(mode)) {
         for (const arm of summary.result) {
           assert(/^[a-z0-9-]+$/.test(arm.arm) && arm.rate === declaration.sizes[i]);
-          replayLive(member(sub + arm.arm + ".offers.json"), attempt, arm);
+          replayLive(
+            member(sub + arm.arm + ".offers.json"),
+            attempt,
+            arm,
+            false,
+            pacedTrial ? summary.result[0]?.neighbors : undefined,
+          );
         }
       }
-      if (pipelineTrial) {
+      if (shortCampaign) {
+        const order = pacedTrial ? pacedArms : pipelineArms;
+        const name = pacedTrial ? "load-paced" : "load-pipeline";
+        const bookends = [order[0]!, order.at(-1)!];
         // [DX-HA1] Why: compare every published cell to its actual matched offers and controls.
         // Rejected: an early two-cell observation as the complete campaign.
         assert.deepEqual(
           summary.result.map((r: { arm: string }) => r.arm),
-          pipelineArms,
+          order,
         );
         assert.deepEqual(
-          member(sub + "load-pipeline-early.json"),
-          pipelineComparison(summary.result.slice(0, 3)),
+          member(sub + name + "-early.json"),
+          pipelineComparison(summary.result.slice(0, 3), bookends),
         );
         assert.deepEqual(
-          member(sub + "load-pipeline-comparison.json"),
-          pipelineComparison(summary.result),
+          member(sub + name + "-comparison.json"),
+          pipelineComparison(summary.result, bookends),
         );
       }
     }

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { pipelineDuration, pipelineHz, pipelineLimit } from "./pipeline.ts";
+import { pacedHz, reviewMs, reviewPace, type Baseline, type PaceDecision } from "./pacing.ts";
 import type { Seen } from "./oracle.ts";
 import { microCycleMs, microDuration, microHz, volumeWindow } from "./micro.ts";
 
@@ -45,6 +46,7 @@ export interface OfferTape {
   markers?: { first: number; end: number; position: number; digest: string; done: number }[];
   hz?: number;
   depth?: number;
+  pace?: { baseline?: Baseline; decisions: PaceDecision[] };
   resumeCursor?: number;
   pipelineChecks?: { missingPredecessor: boolean };
   lostReplies?: number;
@@ -125,13 +127,17 @@ export function replayLive(
     pipelineChecks?: { missingPredecessor: boolean };
     limitedOffers?: number;
     pipelineTiming?: ReturnType<typeof pipelineTimings>;
+    pacingDecisions?: PaceDecision[];
   },
   mac = false,
+  paceBaseline?: Baseline,
 ) {
   const pipeline = attempt.mode === "load-pipeline";
-  const micro = pipeline || attempt.mode === "load-micro" || attempt.mode === "load-volume";
+  const paced = attempt.mode === "load-paced";
+  const micro =
+    pipeline || paced || attempt.mode === "load-micro" || attempt.mode === "load-volume";
   if (
-    !/^(load-tail|load-micro|load-volume|load-pipeline|load-frontier-(low|high|allowance)|load-split-(sql|pg))$/.test(
+    !/^(load-tail|load-micro|load-volume|load-pipeline|load-paced|load-frontier-(low|high|allowance)|load-split-(sql|pg))$/.test(
       attempt.mode,
     )
   )
@@ -146,7 +152,7 @@ export function replayLive(
       prefix + "-" + arm.arm,
       attempt.mode === "load-volume"
         ? volumeWindow(arm.arm, mac)
-        : pipeline
+        : pipeline || paced
           ? pipelineDuration(mac)
           : microDuration,
     ],
@@ -154,7 +160,7 @@ export function replayLive(
   assert.equal(arm.scope, tape.scope);
   assert.equal(arm.duration, tape.duration);
   assert(Number.isFinite(tape.start));
-  const diagnosticVolume = mac && (pipeline || attempt.mode === "load-volume");
+  const diagnosticVolume = mac && (pipeline || paced || attempt.mode === "load-volume");
   assert((diagnosticVolume ? [10, 50] : [50, 100]).includes(arm.rate));
   if (attempt.mode === "load-tail") assert.equal(arm.rate, 50);
   const alone = arm.arm === "frontier-alone";
@@ -232,10 +238,44 @@ export function replayLive(
     }
   }
   if (micro) {
-    const hz = pipeline ? pipelineHz : microHz;
+    const hz = pipeline ? pipelineHz : paced ? pacedHz : microHz;
     assert.equal(tape.hz, hz);
     assert.equal(arm.offeredFrames, Math.floor((arm.duration * hz) / 1000));
     assert.equal(arm.framesWithoutService, tape.ordered.filter((r) => !r.service).length);
+    if (paced) {
+      assert(tape.pace);
+      const feedback = arm.arm.endsWith("-feedback");
+      if (feedback) assert(paceBaseline);
+      assert.deepEqual(tape.pace.baseline, feedback ? paceBaseline : undefined);
+      assert.deepEqual(arm.pacingDecisions, tape.pace.decisions);
+      assert.deepEqual(arm.pipelineTiming, pipelineTimings(tape.ordered, tape.native));
+      assert.equal(arm.peakBulk, arm.width ? 1 : 0);
+      let current = pacedHz,
+        previous = -Infinity,
+        i = 0;
+      for (const row of tape.ordered) {
+        while (i < tape.pace.decisions.length && tape.pace.decisions[i]!.at <= row.offer) {
+          const decision: PaceDecision = tape.pace.decisions[i]!;
+          assert(feedback && paceBaseline && decision.at === (i + 1) * reviewMs);
+          assert.deepEqual(
+            decision,
+            reviewPace(paceBaseline, tape.samples, arm.rate, decision.at, current),
+          );
+          current = decision.next;
+          i++;
+        }
+        if (feedback) assert.equal(i, Math.floor(row.offer / reviewMs));
+        assert(row.offer - previous + 1e-6 >= 1000 / current);
+        previous = row.offer;
+      }
+      for (; i < tape.pace.decisions.length; i++) {
+        const at = (i + 1) * reviewMs;
+        assert(feedback && paceBaseline && at < tape.duration);
+        const decision = reviewPace(paceBaseline, tape.samples, arm.rate, at, current);
+        assert.deepEqual(tape.pace.decisions[i], decision);
+        current = decision.next;
+      }
+    }
     let first = 0;
     let lastAck = 0;
     let lastPosition = 0;

@@ -46,10 +46,14 @@ type Cell = { arm: string; neighbors: Record<string, Neighbour>; queryableFacts:
 
 // [DX-HA1] Why: publish both controls for each account and count unavailable latency samples.
 // Rejected: a single pooled percentile or classifying a dropped offer as a fast operation.
-export function pipelineComparison(cells: Cell[]) {
+export function pipelineComparison(
+  cells: Cell[],
+  bookends = ["pipeline-0-a", "pipeline-0-b"],
+  duration = microDuration,
+) {
   const before = cells[0]!;
-  const after = cells.at(-1)?.arm === "pipeline-0-b" ? cells.at(-1) : undefined;
-  assert.equal(before.arm, "pipeline-0-a");
+  const after = cells.at(-1)?.arm === bookends[1] ? cells.at(-1) : undefined;
+  assert.equal(before.arm, bookends[0]);
   return cells.slice(1, after ? -1 : undefined).map((cell) => {
     const accounts = Object.entries(cell.neighbors).map(([account, values]) => {
       return {
@@ -72,7 +76,7 @@ export function pipelineComparison(cells: Cell[]) {
     assert.equal(accounts.length, 11);
     return {
       arm: cell.arm,
-      queryableFactsPerSecond: (cell.queryableFacts * 1000) / microDuration,
+      queryableFactsPerSecond: (cell.queryableFacts * 1000) / duration,
       accounts,
     };
   });

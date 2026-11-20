@@ -166,3 +166,25 @@ for (const mode of ["adaptive", "ordered"] as const)
       fs.rmSync(dir, { recursive: true, force: true });
     }
   });
+
+test("paced import counts a missing scheduled save and protects each account independently", async () => {
+  const { reviewPace } = await import("./pacing.ts");
+  const verdict = { offered: 40, ok: 40, p99Ms: 10 };
+  const accounts = [...Array.from({ length: 10 }, (_, i) => "live" + i), "quiet"];
+  const baseline = Object.fromEntries(accounts.map((a) => [a, { save: verdict, read: verdict }]));
+  const samples = accounts.flatMap((actor, i) =>
+    (["save", "read"] as const).flatMap((kind) =>
+      Array.from({ length: 40 }, (_, seq) => {
+        const due = seq * 200 + (actor === "quiet" ? 0 : i * 20);
+        return { actor, kind, seq, due, offered: due, end: due + 11, outcome: "verified" };
+      }),
+    ),
+  );
+  assert.equal(reviewPace(baseline, samples, 50, 8000, 88).next, 96);
+  const outlier = { ...samples[0]!, end: 14 };
+  const slow = [outlier, ...samples.slice(1)];
+  assert.equal(reviewPace(baseline, slow, 50, 8000, 110).next, 88);
+  const missing = reviewPace(baseline, samples.slice(1), 50, 8000, 110);
+  assert.equal(missing.next, 88);
+  assert.equal(missing.incomplete, 1);
+});

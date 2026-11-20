@@ -26,6 +26,7 @@ import {
   temporalPrefix,
   volumeWindow,
 } from "./micro.ts";
+import { pacedHz, TailPacer, type Baseline } from "./pacing.ts";
 import type { Frame } from "./source.ts";
 import { pipelineDuration, pipelineHz, pipelineLimit, PipelineCredits } from "./pipeline.ts";
 
@@ -77,6 +78,7 @@ export async function live(
     micro = microLoad(mode),
     volume = mode === "load-volume",
     pipeline = mode === "load-pipeline",
+    paced = mode === "load-paced",
     depth = pipeline ? Number(arm.split("-")[2]) || 0 : 0;
   let sender = pipeline ? randomUUID() : undefined;
   let sequence = 0;
@@ -85,7 +87,7 @@ export async function live(
   const allReads = (split || frontier || micro) && !alone;
   const diagnosticVolume = volume && !server;
   const rates =
-    pipeline && !server
+    (pipeline || paced) && !server
       ? [10]
       : diagnosticVolume
         ? [10, 50]
@@ -97,7 +99,7 @@ export async function live(
     width = frontier && cell !== "0" ? maxBulkFacts : Number(cell),
     duration = volume
       ? volumeWindow(arm, !server)
-      : pipeline
+      : pipeline || paced
         ? pipelineDuration(!server)
         : micro
           ? microDuration
@@ -111,7 +113,12 @@ export async function live(
       : server || traceTail || split || frontier
         ? 100000
         : 20000;
-  const hz = pipeline ? pipelineHz : microHz;
+  const hz = pipeline ? pipelineHz : paced ? pacedHz : microHz;
+  const feedback = paced && arm.endsWith("-feedback");
+  const baseline = feedback
+    ? (JSON.parse(process.env.DX_LOAD_PACED_BASELINE ?? "null") as Baseline)
+    : undefined;
+  if (feedback) assert(baseline);
   assert(
     !pipeline ||
       (width === 0 && depth === 0) ||
@@ -411,7 +418,8 @@ export async function live(
     })().catch((error) => {
       fatal ??= error;
     });
-    const credits = micro ? new FrameCredits(start) : undefined;
+    const credits = micro && !paced ? new FrameCredits(start) : undefined;
+    const pacer = paced && width ? new TailPacer(start, duration, rate, baseline) : undefined;
     let resumeCursor: number | undefined;
     const pipelineChecks = { missingPredecessor: false };
     const exerciseTemporal = async () => {
@@ -543,7 +551,8 @@ export async function live(
           await exerciseTemporal();
           if (performance.now() >= end) break;
         }
-        const offered = performance.now();
+        const offered = pacer ? await pacer.grant(samples) : performance.now();
+        if (offered === undefined) break;
         bulkInFlight++;
         peakBulk = Math.max(peakBulk, bulkInFlight);
         const writing = importer.write(f);
@@ -557,7 +566,8 @@ export async function live(
         completedBulk += entry.facts;
         // [DX-LOAD3] Why: a busy diagnostic can recover an exact commit with no original timing reply.
         // Rejected: inventing its hold or repeating a committed rectangle to produce telemetry.
-        const recoveredWithoutTiming = diagnosticVolume && byCommand.get(entry.command)?.recovered;
+        const recoveredWithoutTiming =
+          (diagnosticVolume || (paced && !server)) && byCommand.get(entry.command)?.recovered;
         const service =
           (budget || micro) && !recoveredWithoutTiming ? measure(entry.command) : undefined;
         if (micro) lastFrame = { frame: f, position: entry.position, ids: entry.ids };
@@ -627,6 +637,7 @@ export async function live(
           ? {
               hz,
               ...(pipeline ? { depth, resumeCursor, pipelineChecks } : {}),
+              ...(paced ? { pace: { baseline, decisions: pacer?.decisions ?? [] } } : {}),
               windowFacts: factsInWindow,
               cycleBudget: microCycleMs,
               markers,
@@ -769,6 +780,12 @@ export async function live(
                   resumeCursor,
                   pipelineChecks,
                   limitedOffers: ordered.filter((f) => f.pressure.limit < depth).length,
+                  pipelineTiming: pipelineTimings(ordered, observations),
+                }
+              : {}),
+            ...(paced
+              ? {
+                  pacingDecisions: pacer?.decisions ?? [],
                   pipelineTiming: pipelineTimings(ordered, observations),
                 }
               : {}),

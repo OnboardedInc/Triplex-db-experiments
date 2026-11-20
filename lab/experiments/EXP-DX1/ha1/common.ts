@@ -34,6 +34,7 @@ export const modes = [
   "load-micro",
   "load-volume",
   "load-pipeline",
+  "load-paced",
   "native-checks",
   "load-frontier-low",
   "load-frontier-high",
@@ -55,7 +56,12 @@ export type Role = keyof typeof roles;
 // [DX-LOAD1] Why: peak-rate arms keep several fresh databases in one transactor process. Rejected: reusing the 560 MiB failure-drill cap after a measured cgroup OOM.
 // [DX-LOAD2] Why: the same bound campaign can reserve just one machine for a same-host comparison.
 export function microLoad(mode: string) {
-  return mode === "load-micro" || mode === "load-volume" || mode === "load-pipeline";
+  return (
+    mode === "load-micro" ||
+    mode === "load-volume" ||
+    mode === "load-pipeline" ||
+    mode === "load-paced"
+  );
 }
 export function supportsSingleHost(mode: Mode) {
   return (

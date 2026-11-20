@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { microLoad, root, runFile, splitLoad, until } from "../ha1/common.ts";
 import type { Stack } from "../ha1/stack.ts";
+import { pacedArms } from "./pacing.ts";
 import { pipelineArms, pipelineComparison } from "./pipeline.ts";
 import { replayLive } from "./live-evidence.ts";
 export async function load(s: Stack, people: number) {
@@ -55,48 +56,50 @@ export async function load(s: Stack, people: number) {
   }
   const server = process.platform === "linux";
   const arms =
-    e.mode === "load-pipeline"
-      ? server
-        ? pipelineArms
-        : ["pipeline-16-4", "pipeline-24-8"]
-      : e.mode === "load-micro"
-        ? ["micro-0-a", "micro-24", "micro-16", "micro-32", "micro-0-b"]
-        : e.mode === "load-volume"
-          ? server
-            ? ["volume-0-a", "volume-32", "volume-0-b"]
-            : ["volume-32"]
-          : e.mode === "load-profile"
-            ? ["ordinary-a", "row-a", "range-a", "range-b", "row-b", "ordinary-b"]
-            : e.mode === "load-proof"
-              ? ["proof-file"]
-              : e.mode === "load-live"
-                ? ["live-0-a", "live-128", "live-500", "live-2000", "live-0-b"]
-                : e.mode === "load-tail"
-                  ? server
-                    ? ["tail-0-a", "tail-128", "tail-500", "tail-2000", "tail-0-b"]
-                    : ["tail-0-a", "tail-128", "tail-0-b"]
-                  : e.mode === "load-frontier-low"
-                    ? ["frontier-0-a", "frontier-1", "frontier-4", "frontier-8", "frontier-0-b"]
-                    : e.mode === "load-frontier-high"
-                      ? ["frontier-0-a", "frontier-16", "frontier-32", "frontier-0-b"]
-                      : e.mode === "load-frontier-allowance"
-                        ? ["frontier-alone", "frontier-0-a", "frontier-allowance", "frontier-0-b"]
-                        : split
-                          ? ["split-0-a", "split-2000", "split-0-b"]
-                          : server
-                            ? ["quiet-server-2000-2"]
-                            : [
-                                "quiet-a-2000-1",
-                                "classic-a-2000-2",
-                                "quiet-a-2000-2",
-                                "quiet-a-2000-4",
-                                "quiet-a-1024-2",
-                                "quiet-a-3000-2",
-                                "quiet-b-2000-2",
-                                "classic-b-2000-2",
-                                "quiet-b-2000-1",
-                                "proof-gap-1024-2",
-                              ];
+    e.mode === "load-paced"
+      ? pacedArms
+      : e.mode === "load-pipeline"
+        ? server
+          ? pipelineArms
+          : ["pipeline-16-4", "pipeline-24-8"]
+        : e.mode === "load-micro"
+          ? ["micro-0-a", "micro-24", "micro-16", "micro-32", "micro-0-b"]
+          : e.mode === "load-volume"
+            ? server
+              ? ["volume-0-a", "volume-32", "volume-0-b"]
+              : ["volume-32"]
+            : e.mode === "load-profile"
+              ? ["ordinary-a", "row-a", "range-a", "range-b", "row-b", "ordinary-b"]
+              : e.mode === "load-proof"
+                ? ["proof-file"]
+                : e.mode === "load-live"
+                  ? ["live-0-a", "live-128", "live-500", "live-2000", "live-0-b"]
+                  : e.mode === "load-tail"
+                    ? server
+                      ? ["tail-0-a", "tail-128", "tail-500", "tail-2000", "tail-0-b"]
+                      : ["tail-0-a", "tail-128", "tail-0-b"]
+                    : e.mode === "load-frontier-low"
+                      ? ["frontier-0-a", "frontier-1", "frontier-4", "frontier-8", "frontier-0-b"]
+                      : e.mode === "load-frontier-high"
+                        ? ["frontier-0-a", "frontier-16", "frontier-32", "frontier-0-b"]
+                        : e.mode === "load-frontier-allowance"
+                          ? ["frontier-alone", "frontier-0-a", "frontier-allowance", "frontier-0-b"]
+                          : split
+                            ? ["split-0-a", "split-2000", "split-0-b"]
+                            : server
+                              ? ["quiet-server-2000-2"]
+                              : [
+                                  "quiet-a-2000-1",
+                                  "classic-a-2000-2",
+                                  "quiet-a-2000-2",
+                                  "quiet-a-2000-4",
+                                  "quiet-a-1024-2",
+                                  "quiet-a-3000-2",
+                                  "quiet-b-2000-2",
+                                  "classic-b-2000-2",
+                                  "quiet-b-2000-1",
+                                  "proof-gap-1024-2",
+                                ];
   const reports: Array<{ sourceSeal: string; [key: string]: unknown }> = [];
   const comparisons: Parameters<typeof pipelineComparison>[0] = [];
   let allowance = 0;
@@ -131,6 +134,10 @@ export async function load(s: Stack, people: number) {
           DATOMIC_URL: url,
           DX_LOAD2_ALLOWANCE_MS: String(allowance),
           DX_LOAD2_IMPORT_URL: importUrl,
+          DX_LOAD_PACED_BASELINE:
+            e.mode === "load-paced" && comparisons.length
+              ? JSON.stringify(comparisons[0]!.neighbors)
+              : "",
           TRIPLEX_DATOMIC_LAYOUT: "lean",
           DX_SERVER_RECORD_TIME: "1",
           TRIPLEX_TRACE_LEVEL: e.mode === "load-profile" ? "full" : "off",
@@ -174,6 +181,7 @@ export async function load(s: Stack, people: number) {
         e,
         r,
         !server,
+        e.mode === "load-paced" ? comparisons[0]?.neighbors : undefined,
       );
     }
     const live =
@@ -209,6 +217,14 @@ export async function load(s: Stack, people: number) {
     });
     if (newDesign) e.write("arm-" + arm, r);
     reports.push(r);
+    if (e.mode === "load-paced") {
+      comparisons.push(r);
+      if (comparisons.length === 3 || arm === "pace-0-b")
+        e.write(
+          arm === "pace-0-b" ? "load-paced-comparison" : "load-paced-early",
+          pipelineComparison(comparisons, ["pace-0-a", "pace-0-b"], r.duration),
+        );
+    }
     if (e.mode === "load-pipeline" && server) {
       comparisons.push(r);
       if (reports.length === 3 || arm === "pipeline-0-b")
