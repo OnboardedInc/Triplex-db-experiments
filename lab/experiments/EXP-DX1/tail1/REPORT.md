@@ -21,6 +21,12 @@ The archive and its ledger match their published hashes. All 58,138 scheduled ev
 
 The analyst's writer clock fit puts 244 pauses in ordinary offer windows, including eight full collections with a 449.37 ms maximum pause. It puts 27 in the five P4 history windows, including two full collections and a 454.27 ms maximum. The archived log reports allocation failure on the ten full collections. That names a collector trigger. Attribution of the initiating allocation requires a fresh profile or an overlay control. Reader and transactor totals span startup through shutdown because their archived times lack the fitted anchor.
 
+## Collector arms
+
+Serial is the archived write collector. Tuned G1 has a 25 ms target, 2 MiB regions, a 1 MiB humongous-object threshold and a 5–25% adaptive young generation. The Java 21 ZGC peer arm is diagnostic. Datomic documents ZGC support on Java 25 and recommends G1 at 50 ms for the transactor. Every arm uses that same transactor, SQL durability and role caps. [G1](https://docs.oracle.com/en/java/javase/21/gctuning/garbage-first-garbage-collector-tuning.html) · [Datomic defaults](https://docs.datomic.com/operation/transactor.html#running-the-transactor) · [Datomic ZGC support](https://docs.datomic.com/changes/pro.html#1-0-7705)
+
+The allocation arm keeps Serial and decodes the existing positional row vector into a transient map. It reuses the exact row wire format and removes per-prefix Formatter allocation. Speculative transaction hints stay off in these controls.
+
 ## Measurement audit
 
 - The archive extractor checks the compressed SHA-256, ledger identity and each primary ACK. The replay checks the frozen source, population, offers and spacing, and checks the newly populated seed before releasing the driver.

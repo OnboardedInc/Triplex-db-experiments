@@ -21,6 +21,7 @@ import {
 } from "../../../bin/lib.mjs";
 import { frozenDeep, releaseDeepStart } from "../../../bench/lib/deep-profile.ts";
 import { matchOffers } from "./replay-input.mjs";
+import { arms } from "./arms.mjs";
 
 const roles = ["pg", "tx", "gw-w", "gw-r"];
 const GiB = 2 ** 30,
@@ -166,7 +167,9 @@ export async function runTail(options, config, manager) {
   assert.equal(process.env.DOCKER_HOST, host, "Supply the lab Docker endpoint");
   assert(!process.env.TX2_DOCKER_HOST || process.env.TX2_DOCKER_HOST === host);
   process.env.TX2_DOCKER_HOST = host;
-  assert.equal(options.arm ?? "serial", "serial");
+  const arm = options.arm ?? "serial";
+  assert(Object.hasOwn(arms, arm), "Unknown DX-TAIL1 arm");
+  const variant = arms[arm];
   const seconds = options.full === true ? 5910 : Number(options.seconds ?? 240);
   assert(mac || seconds <= 900, "The server diagnostic is a bounded prefix");
   const out = path.resolve(options.out),
@@ -204,10 +207,9 @@ export async function runTail(options, config, manager) {
     oracle: stageReplay(REPO, oracle),
     source: sourceInventory(REPO),
     tail1: Object.fromEntries(
-      ["run.mjs", "archive.py", "replay-input.mjs", "profile.clj", "measure.py"].map((file) => [
-        file,
-        sha256File(path.join(import.meta.dirname, file)),
-      ]),
+      ["run.mjs", "archive.py", "replay-input.mjs", "profile.clj", "measure.py", "arms.mjs"].map(
+        (file) => [file, sha256File(path.join(import.meta.dirname, file))],
+      ),
     ),
     offers: { ...plan, bytes: sha256File(input) },
   });
@@ -236,23 +238,26 @@ export async function runTail(options, config, manager) {
     ...(mac ? {} : { DX_BARE_METAL: "1", DX_BARE_METAL_ROOT: out }),
     DX_STACK_EVIDENCE: setup,
     DX_TAIL1_ATTEMPT: nonce,
+    DX_TAIL1_LESS_ALLOCATION: variant.allocation ? "1" : "0",
     DX_STACK_WAIT_FOR_TRANSACTOR: "1",
     DX_QUIET_LOGS: "1",
     DX_NATIVE_SETTINGS_READBACK: "1",
-    DX_INT1_GATEWAYS: "demand",
+    DX_INT1_GATEWAYS: mac ? "demand" : "original",
     DX_GW_WRITE_MEMORY: caps["gw-w"] + "m",
     DX_GW_READ_MEMORY: caps["gw-r"] + "m",
     DX_GW_WRITE_JAVA_OPTS:
       "-Xms256m -Xmx" +
       heaps["gw-w"] +
-      "m -XX:+UseSerialGC -Ddatomic.objectCacheMax=" +
+      "m " +
+      variant.flags.join(" ") +
+      " -Ddatomic.objectCacheMax=" +
       (mac ? "32m " : "1536m ") +
       gc("gw-w") +
       " -XX:StartFlightRecording=settings=profile,filename=/trace/gw-w.jfr,dumponexit=true,maxsize=32m",
     DX_GW_READ_JAVA_OPTS:
       "-Xms256m -Xmx" +
       heaps["gw-r"] +
-      "m -Ddatomic.objectCacheMax=" +
+      "m -XX:+UseG1GC -Ddatomic.objectCacheMax=" +
       (mac ? "32m " : "1536m ") +
       gc("gw-r"),
     TRIPLEX_TRACE_LEVEL: "summary",
@@ -279,7 +284,8 @@ export async function runTail(options, config, manager) {
       rPort = wPort + 10;
     write(path.join(out, "attempt.json"), {
       identity,
-      arm: "serial",
+      arm,
+      collector: variant.collector,
       reservation: reservation?.slot ?? null,
       caps,
       heaps,

@@ -894,6 +894,7 @@ async function run() {
   };
   const executeTraced = async (job: Job) => {
     const ev = job.ev;
+    const commandTime = tailReplay && ev.stream === "background" ? tailReplay.start + ev.atMs : job.scheduledAt;
     const out: any = { traceId: jobTraces.get(job)?.traceId, attempts: 0, tags: [] as string[], path: "direct" };
     outcomes.set(okey(ev), out);
     if (ev.resend) return resend(job, out);
@@ -901,7 +902,7 @@ async function run() {
     const cmd = traceSync("driver.plan-and-encode-command", () => {
       if (ev.stream === "background" && tenantWriters) return tenantWriters.build(runTag, ev as TenantEvent, st, job.scheduledAt);
       if (ev.stream === "background" && deepWriter)
-        return deepWriter.build(runTag, ev as DeepEvent, st, tailReplay ? tailReplay.start + ev.atMs : job.scheduledAt);
+        return deepWriter.build(runTag, ev as DeepEvent, st, commandTime);
       return buildTraceCommand({ runTag, event: ev, state: st, scheduledAbsMs: job.scheduledAt });
     });
     if (jobsByCommandId.has(cmd.commandId)) throw Error("Duplicate active writer command identity");
@@ -944,7 +945,7 @@ async function run() {
     const pl = ids.placement(ev.subject);
     st.stamp = cmd.newStamp;
     st.stampId = receipt.triples.find((t) => t.entityId === pl && t.attribute === ":placement/stamp")!.id;
-    st.stampValidFrom = Math.floor(tailReplay ? tailReplay.start + ev.atMs : job.scheduledAt);
+    st.stampValidFrom = Math.floor(commandTime);
     if (cmd.newAddress) {
       st.address = cmd.newAddress;
       st.addressId = receipt.triples.find((t) => t.entityId === ids.worker(ev.subject) && t.attribute === ":worker/address")!.id;
@@ -962,7 +963,7 @@ async function run() {
       ackWaiters.delete(ev.seq);
     }
     traceSync("driver.expected-state.bind-receipt", () => modelWriter.bindReceipt(cmd.operations, receipt!, ev.kind));
-    traceSync("driver.expected-state.add-commit", () => modelWriter.addCommit(ev.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: cmd.newStamp, stampValidFrom: Math.floor(job.scheduledAt), parts: partsOf(cmd.added, cmd.addedValidFrom, cmd.removed, cmd.removedValidFrom), ackAtMs: at, stream: ev.stream }));
+    traceSync("driver.expected-state.add-commit", () => modelWriter.addCommit(ev.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: cmd.newStamp, stampValidFrom: Math.floor(commandTime), parts: partsOf(cmd.added, cmd.addedValidFrom, cmd.removed, cmd.removedValidFrom), ackAtMs: at, stream: ev.stream }));
     // [DX-T1-12] Why: only planned resends need original payload/receipt retention, and the frozen trace names them in advance.
     // Rejected: retain full duplicate copies for every commit until shutdown.
     if ((ev.stream === "background" && resendSequences.has(ev.seq)) || ev.stream.startsWith("tenant-check-")) original.set(ev.seq, { operations: cmd.operations, meta, receipt });
