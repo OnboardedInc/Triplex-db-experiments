@@ -15,7 +15,7 @@
   (let [kind (get input "writeClass" (if (seq (get input "claims")) "live" "import"))
         bulk? (not= "live" kind)]
     (when-not (#{"live" "import" "activation" "notice"} kind)
-      (throw (ex-info "Unknown write class" {:code "InvalidValue" :status 400})))
+      (throw (ex-info "Unknown write class" {:code "InvalidValue" :status 400 :write-policy true})))
     (when bulk?
       (let [rows (+ (count (:new-ids p)) (count (filter #(and (vector? %) (= :triplex/retract (first %))) (:ops p))))]
         (when (or (> rows bulk-rows) (> (request-size input) bulk-bytes))

@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [triplex.gateway.group :as group] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.group :as group] [triplex.gateway.commit :as commit] [triplex.gateway.predecessor :as pred] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:require [triplex.gateway.replay-capture :as replay-capture])
   (:import [java.util UUID]))
 
@@ -214,7 +214,7 @@
                (map (fn [claim] {:db/id (str "c:" (get claim "commandId"))
                                 :triplex.claim/command-id (get claim "commandId") :triplex.claim/tx "datomic.tx"
                                 :triplex.claim/tx-id (get claim "txId")}) claims))))]
-     [[:triplex/commit (cond-> {:scope scope :source source :provisional position :span span
+     [[(commit/entry db input lean) (cond-> {:scope scope :source source :provisional position :span span
                        :scope-wide (get input "scopeWide" true) :entities (get input "entities" [])
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
                        :rev-aevt (= "1" (System/getenv "TX2_REV_AEVT"))
@@ -250,7 +250,7 @@
                        ;; [DX-T1-12] Why: return native tx-with reads on this exact report without synchronous logging; the map is not peer-storage I/O.
                        ;; Source: https://docs.datomic.com/clojure/index.html#datomic.api/transact-async
                        ;; Rejected: infer per-commit storage reads from a concurrent process-wide cache delta.
-                       options (concat (when hints [:hints hints]) (when trace/enabled [:io-context :triplex.gateway/commit]))
+                       options (concat (when hints [:hints hints]) (when (or trace/enabled (and pred/diagnostic (true? (get input "readProfile")))) [:io-context :triplex.gateway/commit]))
                        future (try (trace/span "d/transact-async" "peer-call" (apply d/transact-async conn (group/instrument data) options))
                                    ;; [DX-R3-P7] Why: a definitive synchronous clock refusal resolves this turn,
                                    ;; just like a failed transaction future; the retry owns the next sequence.
@@ -266,7 +266,7 @@
                    (swap! timeline assoc :submitted (System/nanoTime)) future))
         submit (if-not (group/scheduling?) solo
                  (fn [] (try (let [p (second (first data)) current (d/db conn) work (when policy/priority? (policy/work p input)) class (group/classify current p input)]
-                   (group/submit! conn (merge class work {:id (get input "operationId") :params p :eligible (group/eligible? current p)
+                   (group/submit! conn (merge class work {:id (get input "operationId") :params p :eligible (and (not (and pred/diagnostic (true? (get input "readProfile")))) (group/eligible? current p))
                      :prepare (fn [view] (tx-data view input (:scope p))) :solo solo})))
                    (catch Exception e (group/outcome-future (deliver (promise) {:error e}))))))]
     (if-let [client (get input "clientId")]
@@ -315,12 +315,13 @@
        :position (codec/encode-value "long" (or (get-in report [:member :position]) (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report))))))
        :delta (- (or (get-in report [:member :position]) (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report))))) (get input "position"))
        :datoms (count (:tx-data report))}
-        stamp (assoc :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
+        (and pred/diagnostic (true? (get input "readProfile"))) (assoc :readProfile (:io-stats report))
+        stamp (assoc :requestBytes (policy/request-size input) :preparedOps (count (:ops (second (first data)))) :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
     (catch Exception e
       (replay-capture/discard! input)
       (let [text (str e)]
-        (when (or (#{"OutcomeUnknown" "WriteQueueFull" "InvalidValue" "BulkFrameTooLarge"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))

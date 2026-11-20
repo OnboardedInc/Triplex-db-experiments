@@ -1,5 +1,5 @@
 {
   "extends": "../../../bench/tsconfig.json",
   "compilerOptions": { "allowJs": true, "checkJs": false },
-  "include": ["./*.ts", "./group/*.ts"]
+  "include": ["./*.ts", "./group/*.ts", "./field/*.ts"]
 }

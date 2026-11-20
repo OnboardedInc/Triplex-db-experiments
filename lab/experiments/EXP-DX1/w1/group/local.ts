@@ -5,6 +5,7 @@ import fs from "node:fs";
 import net from "node:net";
 import os from "node:os";
 import { setTimeout as wait } from "node:timers/promises";
+import { queueTrial, fieldTrial } from "../field/traffic.ts";
 import { exact, recovery, runArm } from "./workload.ts";
 
 // [DX-W1] Why: the manager's ephemeral isolated reservation includes PostgreSQL, transactor, gateway and client under one cap.
@@ -98,12 +99,13 @@ async function tx() {
   await ready(p, () => tcp(4334));
   return p;
 }
-async function gateway(grouped: boolean) {
+async function gateway(grouped: boolean, extra: NodeJS.ProcessEnv = {}) {
   const p = start(home + "/bin/run", ["-m", "triplex.gateway.main"], {
     DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
     DATOMIC_URI_TEMPLATE: uri,
     TX2_GROUP_QUEUE_CLOCK: "1",
     TX2_GROUP_COMMIT: grouped ? "1" : "0",
+    ...extra,
     DATOMIC_JAVA_OPTS:
       jvm + " -Ddatomic.objectCacheMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
   });
@@ -178,21 +180,76 @@ try {
     { mode: 0o600 },
   );
   let transactor = await tx();
-  for (const grouped of [false, true]) {
-    const gw = await gateway(grouped);
-    const proof = await exact(url, nonce + "-" + grouped, grouped);
-    emit("proof", proof);
-    const arm = await runArm(url, nonce + "-" + grouped, grouped, false);
-    emit("arm", arm);
-    await stop(gw);
-    if (grouped) {
-      await stop(transactor);
-      transactor = await tx();
-      const reopened = await gateway(false);
-      emit("recovered", await recovery(url, proof.witness));
-      await stop(reopened);
+  const fieldStudy = fs.existsSync("/config/field-study")
+    ? fs.readFileSync("/config/field-study", "utf8")
+    : undefined;
+  if (fieldStudy === "growth") {
+    const grant = Number(process.env.TX2_DIAGNOSTIC_SCRATCH_GIB);
+    const subjects = grant >= 3 ? 100000 : 32000,
+      facts = grant >= 3 ? 3848930 : subjects * 8;
+    const initial = fs.statfsSync(cwd),
+      free = initial.bavail * initial.bsize;
+    const peer = async (mode: string) => {
+      const p = start(
+        home + "/bin/run",
+        ["-m", "triplex.gateway.field-probe", mode, String(subjects), String(facts)],
+        {
+          W1_ATTEMPT: nonce,
+          DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
+          DATOMIC_URI_TEMPLATE: uri,
+          TX2_READ_ATTRIBUTION: "1",
+          DATOMIC_JAVA_OPTS:
+            jvm + " -Ddatomic.objectCacheMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
+        },
+      );
+      const watch = setInterval(() => {
+        const st = fs.statfsSync(cwd);
+        if (free - st.bavail * st.bsize > grant * 1024 ** 3 && p.pid)
+          process.kill(-p.pid, "SIGTERM");
+      }, 2000);
+      try {
+        const rc = await new Promise<number | null>((resolve) => p.once("exit", resolve));
+        assert.equal(rc, 0);
+      } finally {
+        clearInterval(watch);
+      }
+    };
+    emit("grant", { grant, subjects, facts });
+    await peer("seed");
+    emit("seedStorage", {
+      databaseBytes: Number(sql("datomic", "-c", "SELECT pg_database_size(current_database())")),
+      fileSystemDelta: free - fs.statfsSync(cwd).bavail * initial.bsize,
+    });
+    await stop(transactor);
+    transactor = await tx();
+    await peer("measure");
+  } else if (fieldStudy === "queue") {
+    for (const [i, priority] of [false, true, true, false].entries()) {
+      const gw = await gateway(true, { TX2_LIVE_PRIORITY: priority ? "1" : "0" });
+      emit("queue", await queueTrial(url, nonce + "-" + i, priority));
+      await stop(gw);
     }
-  }
+    for (const [i, only] of [false, true, true, false].entries()) {
+      const gw = await gateway(false, { TX2_FIELD_COALESCE: only ? "1" : "0" });
+      emit("fields", await fieldTrial(url, nonce + "-f" + i, only));
+      await stop(gw);
+    }
+  } else
+    for (const grouped of [false, true]) {
+      const gw = await gateway(grouped);
+      const proof = await exact(url, nonce + "-" + grouped, grouped);
+      emit("proof", proof);
+      const arm = await runArm(url, nonce + "-" + grouped, grouped, false);
+      emit("arm", arm);
+      await stop(gw);
+      if (grouped) {
+        await stop(transactor);
+        transactor = await tx();
+        const reopened = await gateway(false);
+        emit("recovered", await recovery(url, proof.witness));
+        await stop(reopened);
+      }
+    }
   emit("finished", { nonce });
 } finally {
   for (const p of [...children].reverse()) await stop(p);
