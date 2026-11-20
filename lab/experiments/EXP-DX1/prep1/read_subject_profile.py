@@ -41,13 +41,14 @@ def profile(root):
     assert list(probes) == expected_arms
     rows = []
     for arm in expected_arms:
-        observed, seed, *cells, finished = probes[arm]
-        assert [observed["kind"], seed["kind"], finished["kind"]] == ["writers", "seed", "finished"]
+        observed, seed, idle, *cells, finished = probes[arm]
+        assert [observed["kind"], seed["kind"], idle["kind"], finished["kind"]] == ["writers", "seed", "idle", "finished"]
         origin = seed["data"]
         expected_scope = json.loads(origin["scope"])
         assert expected_scope == ["triplex-scope-v1", "test", "prep1", f"{attempt}-{arm}", 0]
         db = "s2-" + base64.urlsafe_b64encode(origin["scope"].encode()).decode().rstrip("=")
         assert origin["db"] == finished["data"]["db"] == db
+        assert idle["data"]["db"] == db and int(idle["data"]["elapsedNs"]) >= 30_000_000_000
         assert (origin["subjects"], origin["facts"], origin["position"]) == (360, 57600, 45)
         assert finished["data"]["head"] == origin["position"] + 360
         assert len(observed["data"]) == int(arm[1])
@@ -102,6 +103,8 @@ def profile(root):
                        for sample in matched_cpu)
             rows.append({
                 "arm": arm, "width": width, "outstanding": outstanding, "saves": 30,
+                "firstReplyAfterIdleMs": ms(int(cell["rows"][0]["end"]) - int(cell["rows"][0]["begin"]))
+                if i == 0 and cell["afterIdle"] is True else None,
                 "prepared": prepared, "replanned": replans, "nativeTransactions": len(applies),
                 "logAppends": len(appends), "savesPerAppend": 30 / len(appends),
                 "nativeApplyMsPerSave": ms(sum(m["applied-at"] - m["started-at"] for m, _, _ in applies.values())) / 30,
@@ -129,8 +132,12 @@ def profile(root):
         whole_arm_wal[f"{arm}/{node}"] = {k: float(edges["after"][k]) - float(edges["before"][k])
                                          for k in ("wal_sync", "wal_sync_time", "wal_write", "wal_bytes")}
     return {"attempt": attempt, "image": terminal["image"], "head": inputs["head"],
-            "cells": rows, "wholeArmWalIncludingSeedAndReadback": whole_arm_wal,
-            "above1_6msPerSave": [r["arm"] for r in rows if r["arm"].startswith("B") and r["nativeApplyMsPerSave"] > 1.6]}
+            "cells": rows, "wholeArmWalIncludingSeedReadbackAndCleanup": whole_arm_wal,
+            "above1_6msPerSave": [{"arm": r["arm"], "width": r["width"], "outstanding": r["outstanding"],
+                                  "apply": r["nativeApplyMsPerSave"] > 1.6,
+                                  "append": r["appendMsPerSave"] > 1.6}
+                                 for r in rows if r["arm"].startswith("B")
+                                 and max(r["nativeApplyMsPerSave"], r["appendMsPerSave"]) > 1.6]}
 
 
 if __name__ == "__main__":

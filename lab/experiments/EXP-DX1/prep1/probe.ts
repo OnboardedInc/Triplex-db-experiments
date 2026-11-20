@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { setTimeout as sleep } from "node:timers/promises";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { decodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import type { Fact } from "../../../bench/lib/world.ts";
@@ -130,6 +131,11 @@ try {
     subjects: seeds.length,
     facts: seeds.length * depth,
   });
+  if (subjectProfile) {
+    const idleStart = BigInt(now());
+    await sleep(30100);
+    emit("idle", { db, elapsedNs: (BigInt(now()) - idleStart).toString() });
+  }
 
   for (const [block, outstanding] of depths.entries()) {
     const inputs = Array.from({ length: count }, (_, j) => {
@@ -253,7 +259,7 @@ try {
       end,
       head,
       rows,
-      ...(subjectProfile ? { width: 1 + (block % 3) } : {}),
+      ...(subjectProfile ? { width: 1 + (block % 3), afterIdle: block === 0 } : {}),
     });
   }
   emit("finished", { db, head: seedHead.position + depths.length * count });

@@ -44,17 +44,22 @@ const roots = Array.from({ length: 1200 }, (_, i) => `acct/a${i % 10}/p${i}`);
 const subjectComparison = process.env.DX_PREP1_SUBJECT_COMPARE === "1";
 const quietSavesPerSecond = 3.5;
 
+function jitterFrom(seed: number) {
+  let random = seed;
+  return () => {
+    random = Math.imul(random, 1664525) + 1013904223;
+    return (random >>> 0) / 2 ** 32;
+  };
+}
+
 function schedule(rate: number, seconds: number, block: number, quietOnly = false): Save[] {
   const total = seconds * rate;
   const quiet = Math.round(quietSavesPerSecond * seconds);
+  const legacyJitter = jitterFrom(207);
   return roots
     .slice(0, 10)
     .flatMap((_, account) => {
-      let random = 207 + account;
-      const jitter = () => {
-        random = Math.imul(random, 1664525) + 1013904223;
-        return (random >>> 0) / 2 ** 32;
-      };
+      const jitter = subjectComparison ? jitterFrom(207 + account) : legacyJitter;
       if (quietOnly && account !== 0) return [];
       const count = subjectComparison
         ? account === 0
@@ -118,6 +123,8 @@ async function phase(
   const pending = new Set<Promise<void>>();
   const runningSubjects = new Set<string>();
   const waiting: Save[] = [];
+  const accountQueues = Array.from({ length: 10 }, () => [] as Save[]);
+  let nextAccount = 0;
   const records: {
     id: string;
     account: number;
@@ -144,13 +151,30 @@ async function phase(
   };
   const startNs = process.hrtime.bigint();
   const elapsed = () => Number(process.hrtime.bigint() - startNs) / 1e6;
+  const takeReady = (queue: Save[]) => {
+    const i = queue.findIndex((s) => !runningSubjects.has(s.subject) && !frozen.has(s.subject));
+    return i === -1 ? undefined : queue.splice(i, 1)[0];
+  };
+  const take = () => {
+    if (!subjectComparison) return takeReady(waiting);
+    // [DX-PREP1] Why: one dispatch budget rotates across ready accounts under the same offered tape.
+    // Rejected: letting a burst from one account occupy every newly freed sender.
+    for (let i = 0; i < accountQueues.length; i++) {
+      const account = (nextAccount + i) % accountQueues.length;
+      const save = takeReady(accountQueues[account]!);
+      if (save) {
+        nextAccount = (account + 1) % accountQueues.length;
+        return save;
+      }
+    }
+    return undefined;
+  };
   const pump = () => {
     // [DX-PREP1] Why: fixed sender capacity makes the same offered load observable under overload.
     // Rejected: shifting scheduled offers to the time a socket or same-subject predecessor becomes ready.
     while (pending.size < 96) {
-      const i = waiting.findIndex((x) => !runningSubjects.has(x.subject) && !frozen.has(x.subject));
-      if (i < 0) break;
-      const s = waiting.splice(i, 1)[0]!;
+      const s = take();
+      if (!s) break;
       const old = bySubject.get(s.subject)!;
       const input = command(s.id, fields(s.subject, s.width, s.id), old.slice(0, s.width));
       if (subjectComparison)
@@ -204,13 +228,13 @@ async function phase(
       await wait(Math.ceil(remaining));
       remaining = save.at - elapsed();
     }
-    waiting.push(save);
+    (subjectComparison ? accountQueues[save.account]! : waiting).push(save);
     pump();
   }
   while (pending.size) await Promise.all([...pending]);
   // [DX-PREP1] Why: until a lost acknowledgement resolves, a later save cannot safely name that subject's predecessor.
   // Rejected: sending another edit against the last acknowledged row and counting the resulting CAS failure as load.
-  for (const s of waiting) {
+  for (const s of subjectComparison ? accountQueues.flat() : waiting) {
     assert(frozen.has(s.subject));
     const end = elapsed();
     records.push({
