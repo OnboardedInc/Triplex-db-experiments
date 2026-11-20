@@ -1,4 +1,4 @@
-Priority server candidate `5622afef13d5114373aad10cd76cca962772f63e`. Take `f0377ea3635cf56fd9178003a2f222ed83c5cf63` for integration.
+Priority server and integration candidate `acc0f5c39ed7dafc4c1539ce7353fa11750e6f9b`.
 On bare metal, one write recorded the release and what notices it owed in 46 ms. The first correct answer came at 56 ms.
 At 3.5 saves per second the receipt and answer took 53 and 63 ms. At 23.5 saves per second they took 2.043 and 2.051 seconds.
 The busy receipt waited 2.020 seconds behind 50 saves. A new release can now pass waiting saves in its own account. The active save finishes first.
@@ -16,6 +16,8 @@ The first Mac native ordinary-token run verified settlement across worker stops 
 The 3.5 saves/s 10,000-person pair matched 78,548 reads, 49,297 values and 5,997 effects. It had 630 saves per block and scope. Full-block save/read ratios were 0.30/0.85 and 0.33/0.91 in the publishing account and neighbour. The first minute of control built a backlog. Ratios reversed in the last 90 seconds, with 315 saves per side. The deep pair waited 3 hours and 38 minutes across the earlier grants. The pilot waited 4 hours and 33 minutes, partly overlapping. The new Mac runs use one ordinary token per step. [Clock breakdown](PART8.md#deep-settlement-on-the-mac)
 
 Earlier 10,000-person deep Mac checks found 48.2 encoded notice-leaf bytes per person and about 101.3 address bytes. Three sampled thin pages used 10.3–10.4 leaf bytes and 100–104 address bytes. Both are storage counts. P7 measures resident memory outside Postgres. [Size price](PART6-PRICE.md) · [Read stages](STAGES.md) · [Retention choice](RETENTION.md)
+
+The revised 64-person smoke used the pinned candidate. The cold observer started within 5 ms of the cutoff in all three cells. The peak Mac diagnostic still missed with 758 ms behind an active save and 317 ms from entry to durable. Quiet and 3.5 saves/s observed the new release in time. All 15 point samples and 379 effects replayed exactly.
 
 ### Server command
 
