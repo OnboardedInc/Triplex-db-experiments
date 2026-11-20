@@ -217,6 +217,9 @@ def host(r, request, clean=False):
             run(*launch, JOIN / "server.ts", "64", output, "--local", timeout=720)
             small = collect(output, owner, source, 64, r["start"], repo, node, env=env)
             small["writerOptions"] = writer_options(output)
+            # [DX-BM1] Why: component evidence must survive a later failure in the separate settlement gate.
+            # Rejected: writing one combined receipt only after all stages return.
+            save("collector.json", small)
             gate = root / "settlement-smoke"
             gate.mkdir()
             env["DX_ACT1_W1_GATE"] = "1"
@@ -224,9 +227,8 @@ def host(r, request, clean=False):
             witness = get(gate / "settle-gate.json")
             assert witness["nativeClass"] is True and witness["kills"] == 2 and witness["entries"] > 0
             run(*launch, JOIN / "settle-price.ts", gate, "64", "4", "2", timeout=480)
-            small["settlement"] = settlement(gate, 64, 4, 2, r["start"])
-            small["settlement"]["gateSha256"] = digest(gate / "settle-gate.json")
-            save("collector.json", small)
+            check = settlement(gate, 64, 4, 2, r["start"])
+            save("settlement-smoke-check.json", {**check, "gateSha256": digest(gate / "settle-gate.json")})
         except (AssertionError, OSError, ValueError, KeyError, subprocess.SubprocessError) as error:
             save("preflight-stop.json", dict(**bound, error=repr(error)))
             raise
@@ -238,7 +240,9 @@ def host(r, request, clean=False):
         scale.mkdir()
         issued = time.time()
         save("scale-admission.json", {**bound, "reviewSha256": r["reviewSha256"],
-                                     "collectorSha256": digest(root / "collector.json"), "issuedAt": issued})
+                                     "collectorSha256": digest(root / "collector.json"),
+                                     "settlementSmokeSha256": digest(root / "settlement-smoke-check.json"),
+                                     "issuedAt": issued})
         remaining = int(r["deadline"] - time.time() - 40)
         assert remaining >= 1800, "Less than 30 minutes remains after the reviewed native preflight"
         run(*launch, JOIN / "server.ts", "100000", scale, "--settlement", timeout=remaining)

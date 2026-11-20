@@ -76,7 +76,7 @@ def sources(r):
         if r["item"] in (15,17):
             parts["joined-scale"]=root/"scale"
             parts["joined-settlement-smoke"]=root/"settlement-smoke"
-            for name in ("preflight-stop.json","scale-admission.json","scale-writer-options.json"):
+            for name in ("preflight-stop.json","settlement-smoke-check.json","scale-admission.json","scale-writer-options.json"):
                 parts["joined-setup/"+name]=root/name
     elif r["item"]==6:
         platform=Path("/var/tmp/triplex-scale1")

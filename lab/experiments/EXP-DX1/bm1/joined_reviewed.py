@@ -51,13 +51,22 @@ def collect(output, owner_file, source, subjects, issued_after, repo, node, *, e
         cwd=repo, env=run_env, text=True, timeout=480,
     )
     assert json.loads(replay) == producer
+    windows = component_windows(output, inputs["nonce"], smoke)
+    return dict(source=source, owner=producer["owner"], nonce=inputs["nonce"], subjects=subjects,
+                inputSha256=seal["inputs"], observationsSha256=digest(output / "server-observations.json"),
+                producerSha256=digest(output / "server-collected.json"), windows=windows,
+                effects=get(output / "server-effects.json")["effects"])
+
+
+def component_windows(output, nonce, smoke):
+    """Recompute the clocks and denominators after checking the producer envelope."""
     windows = []
     releases = set()
     for i, (mode, rate) in enumerate(CELLS):
         offer, terminal, raw, proof, observed, point = [get(output / f"{name}-{i}.json") for name in POINTS]
         assert terminal["offerSha"] == digest(output / f"offer-{i}.json") and terminal["nativeTx"] == raw["nativeTx"]
         assert terminal["cut"] == observed["observed"]["basis"]["tx"] == raw["deadline"]["basis"]["tx"]
-        assert point["nonce"] == offer["nonce"] == inputs["nonce"]
+        assert point["nonce"] == offer["nonce"] == nonce
         assert raw["release"] not in releases and len(raw["coldDeadline"]["reads"]) == 3
         assert raw["coldDeadline"]["position"] == raw["coldDeadline"]["basis"]["tx"]
         assert all(row["basis"] == raw["coldDeadline"]["basis"] for row in raw["coldDeadline"]["reads"])
@@ -88,10 +97,7 @@ def collect(output, owner_file, source, subjects, issued_after, repo, node, *, e
                             durableMs=durable - offered, firstCorrectMs=raw["firstCorrectMs"],
                             durableClock=raw["durableClock"], proofChanges=proof["changes"],
                             owedEffects=proof["notices"], changedOwners=proof["changedOwners"]))
-    return dict(source=source, owner=producer["owner"], nonce=inputs["nonce"], subjects=subjects,
-                inputSha256=seal["inputs"], observationsSha256=digest(output / "server-observations.json"),
-                producerSha256=digest(output / "server-collected.json"), windows=windows,
-                effects=get(output / "server-effects.json")["effects"])
+    return windows
 
 
 def settlement(output, subjects, seconds, readers, issued_after):

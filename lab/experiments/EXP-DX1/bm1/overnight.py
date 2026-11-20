@@ -823,12 +823,14 @@ def result(r):
             prefix="tx2-dxt1-bm1-"+r["tag"],requestSha256=digest(directory/"request.json"),remaining=[])
         small=get(root/"collector.json")
         small_replayed=collect(root/"smoke",owner,r["source"],64,r["start"],repo,node,env=ENV)
-        assert small_replayed=={k:v for k,v in small.items() if k not in ("settlement","writerOptions")}
+        assert small_replayed=={k:v for k,v in small.items() if k!="writerOptions"}
         small_settlement=settlement(root/"settlement-smoke",64,4,2,r["start"])
-        assert small["settlement"]=={**small_settlement,"gateSha256":digest(root/"settlement-smoke/settle-gate.json")}
+        checked=root/"settlement-smoke-check.json"
+        assert get(checked)=={**small_settlement,"gateSha256":digest(root/"settlement-smoke/settle-gate.json")}
         admission=get(root/"scale-admission.json")
         assert admission["requestSha256"]==cleanup_proof["requestSha256"]
         assert admission["collectorSha256"]==digest(root/"collector.json")
+        assert admission["settlementSmokeSha256"]==digest(checked)
         assert admission["reviewSha256"]==r["reviewSha256"]
         if not (root/"scale/server-collected.json").is_file():
             return "partial","The six revised native preflight cells and small settlement matched. The 100,000-person producer did not seal."
