@@ -27,7 +27,7 @@ import { arms } from "./arms.mjs";
 const roles = ["pg", "tx", "gw-w", "gw-r"];
 const GiB = 2 ** 30,
   MiB = 2 ** 20;
-const holder = "DX-TAIL1";
+const originalHolder = "DX-TAIL1";
 const nameLabel = "tx2.tail1";
 const peerJar = "peer-1.0.7745.jar";
 
@@ -128,7 +128,7 @@ function reading(rows) {
   );
 }
 
-async function reserve(config, manager, names, roleMemory, cpus, signal, diskForecast, admitBy) {
+async function reserve(holder, config, manager, names, roleMemory, cpus, signal, diskForecast, admitBy) {
   const reservedRoles = Object.keys(names);
   const firstRole = reservedRoles[0];
   for (;;) {
@@ -259,7 +259,7 @@ async function decodeAllocation({ host, image, name, nonce, recording, start, st
   return profile;
 }
 
-async function recoverAllocation(options, config, manager, host, image) {
+async function recoverAllocation(options, config, manager, host, image, holder) {
   const prior = fs.realpathSync(options["recording-attempt"]);
   const recording = path.join(fs.realpathSync(options["recording-dir"]), "gw-w.jfr");
   const attempt = readJson(path.join(prior, "attempt.json"));
@@ -287,6 +287,7 @@ async function recoverAllocation(options, config, manager, host, image) {
   let reservation;
   try {
     reservation = await reserve(
+      holder,
       config,
       manager,
       { "gw-w": name },
@@ -339,7 +340,11 @@ async function recoverAllocation(options, config, manager, host, image) {
 
 export async function runTail(options, config, manager) {
   const invokedAt = Date.now();
-  assert.equal(options.holder, holder);
+  const holder = options.holder;
+  // [DX-INT1] Why: verify the merged recordings on this builder's ordinary, private Mac slot.
+  // Rejected: using another holder's allocation or reusing an archived recording as a fresh run.
+  assert(holder === originalHolder ||
+    (holder === "DX-THIN1" && process.platform === "darwin" && options["event-gate"] === true));
   const mac = process.platform === "darwin";
   assert(mac || (process.platform === "linux" && process.env.DX_BARE_METAL === "1"));
   const host = mac ? DOCKER_HOST : "unix:///var/run/docker.sock";
@@ -393,7 +398,7 @@ export async function runTail(options, config, manager) {
   if (build) assert.equal(buildInputHash, build.buildInputsSha256);
   if (options["recording-attempt"]) {
     assert(mac);
-    return recoverAllocation(options, config, manager, host, image);
+    return recoverAllocation(options, config, manager, host, image, holder);
   }
   if (!gate) {
     // [DX-TAIL1] Why: the exact publication feed needs the real host time domain before offers.
@@ -472,7 +477,7 @@ export async function runTail(options, config, manager) {
       ].map((file) => [file, sha256File(path.join(import.meta.dirname, file))]),
     ),
     stackLauncher: Object.fromEntries(
-      ["up.sh", "collector.sh"].map((file) => [
+      ["up.sh", "../jvm1/launch.mjs", "../../../config/datomic/runtime.mjs"].map((file) => [
         file,
         sha256File(path.join(import.meta.dirname, "../stack", file)),
       ]),
@@ -521,6 +526,7 @@ export async function runTail(options, config, manager) {
         }),
     DX_STACK_EVIDENCE: setup,
     DX_TAIL1_ATTEMPT: nonce,
+    DX_TAIL1_HOLDER: holder,
     DX_TAIL1_IMAGE: image,
     DX_TAIL1_LESS_ALLOCATION: variant.allocation ? "1" : "0",
     DX_TAIL1_EVENT_TRACE: eventGate ? "1" : "0",
@@ -564,6 +570,7 @@ export async function runTail(options, config, manager) {
     if (mac) {
       const bytes = Object.fromEntries(roles.map((role) => [role, caps[role] * MiB]));
       reservation = await reserve(
+        holder,
         config,
         manager,
         names,

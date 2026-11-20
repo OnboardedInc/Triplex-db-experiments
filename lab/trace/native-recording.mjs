@@ -19,6 +19,26 @@ const read = (file) => JSON.parse(fs.readFileSync(file, "utf8"));
 const walSql =
   "SELECT json_build_object('at',extract(epoch from clock_timestamp())*1000,'wal',(SELECT row_to_json(w) FROM pg_stat_wal w),'ioTiming',current_setting('track_wal_io_timing'),'durable',current_setting('synchronous_commit'));";
 
+// [DX-INT1] Why: a JVM stopped during initial readiness can leave its recording outputs under the same role.
+// Rejected: passing those files to the live recorder, or deleting the first startup failure.
+export function preservePreReadyRecordings(out, raw, ready) {
+  assert(!fs.existsSync(path.join(raw, ".finish")), "Recording finish already requested");
+  const previous = path.join(out, "pre-ready-recordings");
+  for (const role of roles) {
+    for (const suffix of [".jfr", ".jfr-complete.jsonl", ".jfr.jsonl", "-jfr-error.txt"]) {
+      const name = role + suffix;
+      const file = path.join(raw, name);
+      const stat = fs.lstatSync(file, { throwIfNoEntry: false });
+      if (!stat) continue;
+      assert(stat.isFile() && ready[role].restarts > 0, "Unexpected pre-ready recording " + name);
+      fs.mkdirSync(previous, { recursive: true });
+      const target = path.join(previous, name);
+      assert(!fs.existsSync(target));
+      fs.renameSync(file, target);
+    }
+  }
+}
+
 export function startWalSamples(out, pgId, binding) {
   assert.match(pgId, /^[0-9a-f]{64}$/);
   const file = path.join(out, "postgres-wal-samples.jsonl");

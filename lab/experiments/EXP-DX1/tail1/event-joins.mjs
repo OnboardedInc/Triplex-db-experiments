@@ -1,5 +1,6 @@
 // @ts-nocheck -- Trace and driver records cross a JSON boundary and are checked before joining.
 import assert from "node:assert/strict";
+import { preservePreReadyRecordings } from "../../../trace/native-recording.mjs";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -40,6 +41,9 @@ export async function observeEventGate({
 }) {
   const { source, slot, nonce } = identity;
   const ledger = path.join(out, "event-ledger.json");
+  verifyReadyRuntime();
+  preservePreReadyRecordings(out, trace, readyRuntime);
+  verifyReadyRuntime();
   const pgBefore = readPostgres(ids.pg);
   const child = spawnBound(
     process.execPath,

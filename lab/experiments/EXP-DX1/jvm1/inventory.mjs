@@ -6,7 +6,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { admission, docker, DOCKER_HOST, listTx2Containers, slotInfo, vmDisk, withPool } from "../../../bin/lib.mjs";
-import { finishNativeRecording, startWalSamples } from "../../../trace/native-recording.mjs";
+import { finishNativeRecording, preservePreReadyRecordings, startWalSamples } from "../../../trace/native-recording.mjs";
 
 const holder = "DX-JVM1";
 const stack = path.join(import.meta.dirname, "../stack");
@@ -146,6 +146,8 @@ export async function inventory(options, config, manager) {
       // [DX-JVM1] Why: SDK regressions use both writer variables, and both must resolve to this reservation.
       // Rejected: relying on legacy localhost fallbacks, which can select another stack.
       const writer = "http://127.0.0.1:" + slot.port;
+      const raw = path.join(out, prefix, "trace/raw");
+      if (recordEvents) preservePreReadyRecordings(out, raw, roles);
       const log = fs.openSync(path.join(out, "sdk-sql.log"), "wx");
       const identity = {source, slot:prefix, nonce:prefix.slice("tx2-dxt1-jvm1-".length)};
       const pg = stackConfig.containers.find((c) => c.name === prefix + "-pg");
@@ -187,7 +189,7 @@ export async function inventory(options, config, manager) {
       if (recordEvents) {
         // [DX-JVM1] Why: exercise the production recorder against this owned SQL gate's role IDs and source.
         // Rejected: counting trace files from a previous attempt or using the Mac timings as performance evidence.
-        await finishNativeRecording(out, path.join(out, prefix, "trace/raw"), identity, {...roles, pg: { id: pg.id }}, Date.now() + 45_000);
+        await finishNativeRecording(out, raw, identity, {...roles, pg: { id: pg.id }}, Date.now() + 45_000);
       }
     }
   } finally {

@@ -254,7 +254,7 @@ if [[ -n ${DX_TAIL1_ATTEMPT:-} ]]; then
   [[ $prefix == tx2-dxscale1-tail1-* && $DX_TAIL1_ATTEMPT =~ ^[a-f0-9-]{36}$ ]]
   [[ $DX_TAIL1_IMAGE =~ ^sha256:[a-f0-9]{64}$ ]]
   datomic_image=$DX_TAIL1_IMAGE
-  [[ ${DX_TAIL1_HOLDER:-DX-TAIL1} =~ ^DX-(TAIL1|JVM1)$ ]]
+  [[ ${DX_TAIL1_HOLDER:-DX-TAIL1} =~ ^DX-(TAIL1|JVM1|THIN1)$ ]]
   stack_labels=(--label "tx2.holder=${DX_TAIL1_HOLDER:-DX-TAIL1}" --label "tx2.tail1=$DX_TAIL1_ATTEMPT")
 fi
 network_tuning=()
@@ -368,8 +368,7 @@ trace_env+=(-e "TRIPLEX_NATIVE_SETTINGS_READBACK=$native_readback")
 trace_mount=(-v "$attempt/trace/raw:/trace")
 # [DX-T1-2] Why: isolate collectors with an inspected effective configuration. Rejected: inferring enabled collectors from a tag.
 eval "$(node "$repo/lab/trace/components.mjs" --shell)"
-trace_native_jfr=0
-if [[ $TRIPLEX_TRACE_TX_JFR == 1 && ${DX_TX_NATIVE_JFR:-$TRIPLEX_TRACE_TX_NATIVE_JFR} == 1 ]]; then trace_native_jfr=1; fi
+trace_native_jfr=$TRIPLEX_TRACE_TX_NATIVE_JFR
 trace_env+=(-e "TRIPLEX_TRACE_TX_NATIVE_JFR=$trace_native_jfr" -e "TRIPLEX_TRACE_TX_JFR=$TRIPLEX_TRACE_TX_JFR" -e "TRIPLEX_TRACE_JFR_PROFILE=${DX_JFR_PROFILE:-0}" -e "TRIPLEX_TRACE_GATEWAY=$TRIPLEX_TRACE_GATEWAY" -e "TRIPLEX_TRACE_NATIVE_LOGS=$TRIPLEX_TRACE_NATIVE_LOGS")
 trace_tx_java= trace_gw_java=
 # [DX-TAIL1] Why: preserve collector labels and JVM uptime alongside the anchored JFR events.
@@ -673,7 +672,9 @@ PY_CHANNEL
 fi
 node "$repo/lab/trace/components.mjs" > "$attempt/trace-components.json"
 docker exec "$prefix-pg" psql -X -At -U postgres -d datomic -c "SHOW log_min_duration_statement; SHOW track_io_timing; SHOW track_wal_io_timing;" > "$attempt/postgres-trace-settings.txt"
-docker exec "$prefix-pg" psql -X -At -U postgres -d datomic -c "SHOW log_duration; SHOW log_line_prefix;" > "$attempt/postgres-event-settings.txt"
+if [[ $TRIPLEX_TRACE_POSTGRES == 1 ]]; then
+  docker exec "$prefix-pg" psql -X -At -U postgres -d datomic -c "SHOW log_duration; SHOW log_line_prefix;" > "$attempt/postgres-event-settings.txt"
+fi
 docker inspect "$prefix-pg" "$prefix-tx" "${gateway_roles[@]/#/$prefix-gw-}" > "$attempt/containers.json"
 for role in pg tx "${gateway_roles[@]/#/gw-}"; do docker exec "$prefix-$role" cat /proc/sys/net/ipv4/tcp_slow_start_after_idle > "$attempt/tcp-idle-$role.txt"; done
 if [[ ${DX_IDLE_SENTINEL:-0} == 1 ]]; then
