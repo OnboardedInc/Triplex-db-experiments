@@ -130,6 +130,19 @@ try {
       (await automatic.recorder.packets(at)).flatMap((p) => p.deliveries.map(toWire)),
       ref.owed,
     );
+    // [DX-ACT1] Why: a committed receipt can reach this worker only through a retry after the original publisher dies. Rejected: relying on the first publisher's in-memory callback.
+    const detached = new JoinedAccount(store);
+    const fifth = await detached.publish("recover-wake", W0.R1.doc, valid, "owed");
+    assert.equal((await verify(fifth.position, W0.R1.doc, W0.R1.doc, 5)).changes, 0);
+    assert.equal(await automatic.archive.values(5), undefined);
+    assert.deepEqual(await account.publish("recover-wake", W0.R1.doc, valid, "owed"), fifth);
+    await automatic.idle();
+    assert.equal((await automatic.archive.stored(5)).frontier.status, "stored");
+    const replayAt = await automatic.recorder.archive.store.head();
+    assert.deepEqual(
+      (await automatic.recorder.packets(replayAt)).flatMap((p) => p.deliveries.map(toWire)),
+      ref.owed,
+    );
   } finally {
     await automatic.close();
   }

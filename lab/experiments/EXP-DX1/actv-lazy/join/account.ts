@@ -380,6 +380,20 @@ export class JoinedAccount {
       return r;
     });
   }
+  // [DX-ACT1] Why: recovering a committed command can be the first time this host sees it. Rejected: waking only on a newly handed-back ACK.
+  private observed(r: Awaited<ReturnType<Store["commit"]>>) {
+    if (
+      this.calendarListeners.size &&
+      r.changes.some((c: { entityId: string }) => c.entityId === this.db.prefix + "join-calendar")
+    )
+      for (const wake of this.calendarListeners) wake();
+    if (
+      this.noticeListeners.size &&
+      r.changes.some((c: { entityId: string }) => c.entityId.startsWith(this.db.prefix + "event:"))
+    )
+      for (const wake of this.noticeListeners) wake();
+    return r;
+  }
   private async command(
     id: string,
     args: unknown,
@@ -393,7 +407,7 @@ export class JoinedAccount {
     const intent = h([this.s.scope, id, args]);
     for (;;) {
       const old = await this.original(id, intent);
-      if (old) return old;
+      if (old) return this.observed(old);
       const p = await this.s.head();
       if (through) {
         const due = (await this.db.get<string[]>("join-calendar", p)).value[0];
@@ -413,23 +427,10 @@ export class JoinedAccount {
           hook,
         );
         assert.equal(r.position, (body.expected ?? p) + 1);
-        if (
-          r.changes.some(
-            (c: { entityId: string }) => c.entityId === this.db.prefix + "join-calendar",
-          )
-        )
-          for (const wake of this.calendarListeners) wake();
-        if (
-          this.noticeListeners.size &&
-          r.changes.some((c: { entityId: string }) =>
-            c.entityId.startsWith(this.db.prefix + "event:"),
-          )
-        )
-          for (const wake of this.noticeListeners) wake();
-        return r;
+        return this.observed(r);
       } catch (e) {
         const won = await this.original(id, intent);
-        if (won) return won;
+        if (won) return this.observed(won);
         if (!(e instanceof Conflict)) throw e;
       }
     }

@@ -4,6 +4,8 @@ Publish still commits the release, its source cut and the notice recipe together
 
 Values are scoped to one immutable receipt. A newer release effective at the same or an earlier business time can stop the unfinished value copy. Any completed old pages remain usable at their original cut. The notice worker finishes every event in order, including one whose value copy became obsolete. It commits addressed notice bytes with its item state and cursor while the recipient is offline. Delivery later uses the same ordered receiver and original replay identities.
 
+On startup and on a local Publish or receipt retry, the worker opens the durable tail. An active scan checks for debt appended by another publisher before going idle. A separate publisher needs an explicit call to wake the owning worker after a Commit, or to route receipt replay to it. Fleet-wide durable wake routing and admission remain open integration work.
+
 The archive reader uses a stored response only at the receipt's exact record and valid-time cut, with the same release, epoch and erasure frontier. It derives from the receipt's pinned source when a page is missing. A subsequent live save takes the ordinary current-read path. Protected inputs need a retention decision before this archive can record them.
 
 Bulk frames carry W1's `activation` or `notice` class on the native claim. The producer uses round-robin turns across ready accounts, live preference, a bounded bulk turn after eight completed live saves, and a duty cycle. Each frame is constrained by an 8 ms W1 estimate and the native row and byte limits. The estimate cannot preempt a submitted database commit. P6 needs observed live and neighbour p99 ratios, including stalls and backlog.
