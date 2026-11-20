@@ -3708,3 +3708,34 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
   (prepared equals durable in every cell) with zero replans and 1.00 to 1.02 saves per append; account 0 p99 loaded
   1,568.4 / 1,168.5 / 1,474.1 / 1,571.7 ms against alone 107.5 / 63.3 / 17.0 / 66.0 ms; native compute p99 18 to
   57 ms loaded. So the fast path worked as built and the ceiling is the serial step itself.
+
+## 2026-11-20 22:30 UTC (17:30 local, 2026-11-20): DX-PREP1 part 7 in (why both writers stop below 200 per second); version 0.1 is merged on one branch; server 1 re-ordered
+
+- **DX-PREP1 part 7 (`6ddbbf5b3`; `prep1/SERVER-READING.md`).** Per acknowledged save, native apply p50/mean and
+  storage reads: grouped loaded at 235 offered 0.15/0.19 ms and 0 reads (groups of eight, 3,276 native
+  transactions for 26,125 saves); per-person loaded 6.15/6.91 ms and 11 reads at 235, 7.24/8.62 ms and 10 reads at
+  394. A serial apply must average under 2.54 ms to carry 394 per second; the per-person apply-only ceiling is 116
+  to 145 per second. Either writer alone at 3.5 per second shows 10 to 14 reads and 6 to 11 ms. The grouped writer
+  pays the same reads in the gateway before submission (its function at the serial point only checks the exact
+  basis). At 50 offered the per-person arm's 136 replies over one second all came from offers in the first four
+  seconds (median wait to enter Datomic 1,360 ms): a start-of-cell stall, cause open (pause logs not in the copy).
+  First fix built: submit the already-resolved owner number and drop its identity upsert (744 Mac assertions pass);
+  predicted to remove at most one read. Driver's published reading (`2520ef874`) confirms 7.988 and 1.002 saves
+  per append and quiet-account p99 8.03 and 86.53 times solo for grouped and per-person at 394 offered.
+- **Orchestrator's reading:** both writers spend about 6 to 9 ms and about ten storage reads per save, one in the
+  gateway behind the basis fence, the other on the transaction thread. The tape reuses a small set of people, so
+  the reads are probably not the person's rows but probes for each save's new identifiers (operation, command
+  claim, journal entry, assertion ids, retired-id history) into very large value indexes. Hypothesis, unproven.
+- **DX-PREP1 part 8 assigned (run-critical):** attribute every read on the transaction thread to its lookup; make
+  each hot by construction, move it to preparation with a cheap fence, or remove it; target zero reads and at
+  most 0.5 ms of apply; a 90 minute server command including an arm that only enlarges the transactor's object
+  cache (2 GiB in the run) to 16 GiB.
+- **Version 0.1 on one branch.** DX-THIN1 merged everything onto `exp/DX-INT1` at `250c91916`
+  (`int1/V0.1-STATE.md`): write path and journal, readers, per-person writer (opt-in), Publish with priority and
+  settlement, erasure, ordered loader, machine loss and moves, Java launch settings, per-event tracing, scorecard
+  with the SCALE1 seed adoption, playground. Final Mac fixture matched 211 receipts and journal entries, 96 quiet
+  pinned reads, 20 cold pulls; playground gates pass. DX-THIN1 parked.
+- **Server 1 re-ordered** (DX-BM1 stopped and resumed): finish the two-gateway pair of the comparison and stop it
+  (skip four gateways and repeats); then the transactor cache arms; Java 25 and ZGC; DX-PREP1's next comparison;
+  Publish under load; erasure; import pacing.
+- Running: DX-BM1, DX-SCALE1, DX-V01, DX-PREP1 (four).
