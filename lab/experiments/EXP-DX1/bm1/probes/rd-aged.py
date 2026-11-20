@@ -69,6 +69,14 @@ assert((nativeSize === 24 && agingWrites === 32) || (nativeSize === 10_000 && ag
     change('mode === "control" && process.env.TRIPLEX_TRACE_SLOT,', 'mode === "curve" && process.env.TRIPLEX_TRACE_SLOT && process.env.DX_BM1_RD_NATIVE_LOG,')
     change('await run(process.env.TRIPLEX_TRACE_SLOT, async () => "", "control", output!);',
            'await run(process.env.TRIPLEX_TRACE_SLOT, async () => fs.readFileSync(process.env.DX_BM1_RD_NATIVE_LOG!, "utf8"), "curve", output!);')
+    # [DX-BM1] Why: the bare-metal stack identifies the reader by role, slot and checkout SHA.
+    # Rejected: dropping native binding when the Mac collector's gateway labels differ.
+    # The independent collector still verifies the live gateway's separate source-file digest.
+    change("  nativeSource: string,\n  requireEvery: boolean,", "  slot: string,\n  requireEvery: boolean,")
+    change('      row.source === nativeSource &&\n        row.process === "gateway" &&\n        row.attributes.status === 200 &&\n        row.slot &&\n        row.run === `rd1-${row.slot}` &&',
+           '      row.source === source &&\n        row.process === "gw-r" &&\n        row.attributes.status === 200 &&\n        row.slot === slot &&\n        row.run === slot &&')
+    change('timing(raw, allMisses[i]!, nativeSource, mode !== "control")',
+           'timing(raw, allMisses[i]!, slot, mode !== "control")')
     change('      const direct =\n        treatment === "off" ? await openComposition("reach", "datomic", scope) : undefined;',
            '''      // [DX-BM1] Why: both fallback paths must use the same native read gateway.
       // Rejected: comparing worker installation against a differently placed writer gateway.

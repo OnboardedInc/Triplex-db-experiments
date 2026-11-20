@@ -22,6 +22,7 @@ SLOTS = {
     "int1-capacity-retry": ("day-n20-int1-capacity-retry", ("small", "hot", "full", "comparison.json")),
     "rd1-aged": ("day-n20-rd1-aged", ("small", "full", "worker.log")),
     "rd1-aged-retry": ("day-n20-rd1-aged-retry", ("small", "full", "worker.log")),
+    "rd1-aged-native-trace": ("day-n20-rd1-aged-native-trace", ("small", "full", "worker.log")),
     "tail1": ("day-n20-tail1", ("serial", "g1", "g1-2core", "zgc", "campaign.log")),
     "ha1-micro": ("day-n20-ha1-micro", ("run", "collector.json", "worker.log", "cleanup.json")),
     "prep1": ("day-n20-prep1", ("adapter", "smoke", "campaign", "native-small-agreement.json", "worker.log")),

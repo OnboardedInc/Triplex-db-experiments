@@ -3,7 +3,7 @@ set -euo pipefail
 
 action=${1:?usage: rd-aged-run.sh run|cleanup ROOT}
 root=${2:?}
-[[ $root == /var/tmp/triplex-bm1/day-n20-rd1-aged || $root == /var/tmp/triplex-bm1/day-n20-rd1-aged-retry ]]
+[[ $root =~ ^/var/tmp/triplex-bm1/day-n20-rd1-aged(-retry|-native-trace)?$ ]]
 source=5f51de7d6ab09b884df61f5c260db7f6688726c1
 repo=$root/build/repository
 entry=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/rd-aged.py
@@ -11,7 +11,9 @@ export DOCKER_HOST=unix:///var/run/docker.sock DX_BARE_METAL=1
 export PATH="$root/build/tools/bin:$PATH"
 export DX_QUIET_LOGS=1 DX_NATIVE_GATES=0 DX_STACK_WAIT_FOR_TRANSACTOR=1
 export TRIPLEX_DATOMIC_LAYOUT=lean DX_STRICT_RECORD_CLOCKS=1 DX_SERVER_RECORD_TIME=1
-export TRIPLEX_TRACE_LEVEL=summary TRIPLEX_TRACE_GATEWAY=1 TRIPLEX_TRACE_COMPONENTS=gateway
+# [DX-BM1] Why: RD1 joins every requested native exchange to a gateway admission span.
+# Rejected: summary mode, which sampled six of 7,509 exchanges in the small preflight.
+export TRIPLEX_TRACE_LEVEL=full TRIPLEX_TRACE_GATEWAY=1 TRIPLEX_TRACE_COMPONENTS=gateway
 export TRIPLEX_TRACE_SOURCE=$source
 
 status() {
