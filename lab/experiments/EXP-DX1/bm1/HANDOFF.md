@@ -292,4 +292,11 @@ HA1 source `14174308fa1b1f6ade7f3e1fe3ce58ca4bc173ba` used one Datomic database 
 
 Every exact queryable prefix excludes later receipts and includes an independent marker check. The recorded native joins retain submit, queue, entry, peer stages, serial hold and complete times. The driver also checks a lost response replay and ordered history. Save and read service share one G1 gateway, with no standalone reader JVM in this experiment. The separate transactor used G1 too. Both have 3-core quotas and an effective JVM processor count of two. Absolute logs are retained with the offer tapes. This is the current small-frame reading for one database. No separate-database run is used in these comparisons. Evidence `evidence/DX-BM1/day-n20/ha1-micro`.
 
-PREP1's first native preflight matched all 1,315 prepared-path offers and returned `InvalidValue` for all 1,315 grouped-control offers. The short seed omitted the native subject/account mapping that the full producer has. BM1 now adds those facts before measuring. The fresh service `bm1n20-prep1-tenant-queue` started at 14:33:45 EST and will continue into the full `7ca8525a9` seed and 12 arms only after both short native treatments qualify. The prior output remains at `evidence/DX-BM1/day-n20/prep1`.
+PREP1's first native preflight matched all 1,315 prepared-path offers and returned `InvalidValue` for all 1,315 grouped-control offers. The short seed omitted the native subject/account mapping that the full producer has. BM1 added those facts and the second gate matched all 1,315 offers per treatment. K emitted zero prepared appends and S used the prepared route on all 1,315. The producer and separate collector agreed. The full producer entered ten-account seeding at 14:36:05 EST in `bm1n20-prep1-tenant.service`, source `7ca8525a9`, supervisor `a5c4d68f9`. It plans 12 arms with a 29-minute ceiling per arm and a 7h40m total unit ceiling. The failed and corrected small results remain separate at `evidence/DX-BM1/day-n20/prep1` and `evidence/DX-BM1/day-n20/prep1-tenant-agreement`.
+
+```sh
+sudo cat /var/tmp/triplex-bm1/STATUS
+systemctl status --no-pager bm1n20-prep1-tenant.service
+sudo tail -n 20 /var/tmp/triplex-bm1/day-n20-prep1-tenant/worker.log
+python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect prep1-tenant 7ca8525a9ea0c3810c7af6ba0b5a0e15552dd534 /var/tmp/triplex-bm1/day-n20-prep1-tenant-control
+```
