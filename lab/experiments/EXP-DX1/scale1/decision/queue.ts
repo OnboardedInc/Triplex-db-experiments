@@ -150,6 +150,10 @@ async function run(p: Plan, s: Step, deadline: number, build: string) {
         "--property=AllowedCPUs=0-8",
         "--setenv=PATH=" + pathEnv,
         "--setenv=DOCKER_HOST=unix:///var/run/docker.sock",
+        // [DX-SCALE1] Why: the stop hook runs outside the stack's startup environment.
+        // Rejected: assuming DOCKER_HOST alone opts an interrupted Linux stack into the cleanup path.
+        "--setenv=DX_BARE_METAL=1",
+        "--setenv=DX_BARE_METAL_ROOT=" + dir,
         "--setenv=GIT_TERMINAL_PROMPT=0",
         "--setenv=GIT_CONFIG_GLOBAL=/dev/null",
         "--setenv=GIT_CONFIG_NOSYSTEM=1",
