@@ -1,6 +1,6 @@
-All accounts stay in one Datomic database.
-Use commit `2859d6b15` for the one-billion server run.
-The Mac check adopted a small copy made by the same loader and matched all 120 saves.
+Keep commit `2859d6b15` for the queued one-billion server run.
+Take `f073d8058` for the INT1 merge candidate. The merged Mac checks are queued.
+The Mac check on the server revision adopted a small copy and matched all 120 saves.
 At 24,000 records per second from the estimated 430 million, the run would take 9.60 hours and cost $10.46.
 The driver reads the real starting count and continues only if the observed rate fits the 9.9-hour cap.
 The rate needs to reach about 23,000 records per second if the starting count is 430 million.
@@ -35,3 +35,7 @@ The SDK build, source parsing, rate and count tests, and historical log join com
 - The exact SCALE1 loader seeded 9,690 facts for 80 people in ten accounts. The adopted copy started with 26,385 native records. It matched 120 product saves, 2,400 added native records, current and pinned reads at six cuts, history, receipts and feed pages. Its slot, four containers and one volume were released. `p2-mac-k-adopted-fidelity`
 - The successor drill moved 14 accounts and verified 84 pinned and 28 current row comparisons, two held cuts and the feed before and after an interrupted erasure. It confirmed both sets of keys were gone and both stores still held ciphertext. Its slot, containers and volume were released. `p2-mac-f-erased-successor`
 - Retained failures cover the missing W0 build, an unavailable PostgreSQL image, the grouped revision-retraction census, the opaque-token probe, a misread reverse-index claim, a same-catalog restore collision and an integral timestamp in the raw-row oracle. Setup and oracle failures remain distinct from completed comparisons.
+
+## Part 3 integration
+
+Merged INT1 at `51d0aff35` into the AGE1 candidate. The only conflict was the shared heavy runner. The merge uses the INT1 implementation, and AGE1 uses ordinary tokens. The native gate mounts the exact merged source and compiles the server rung against it. Previous Mac attempts were compressed with entry-by-entry byte checks, and the older manifests refer to paths inside the archives. [Archive checksums](EVIDENCE-ARCHIVES.sha256)
