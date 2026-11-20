@@ -6,6 +6,8 @@ import path from "node:path";
 import test from "node:test";
 import { driverArgs, matrix } from "./bench.ts";
 import { readNative, nativeReadout, type Arm } from "./measure.ts";
+import { fieldPlan, fieldPolicy, modes, validateArm } from "./field/bench-check.ts";
+import { ids } from "../../../bench/lib/world.ts";
 import { generateTrace, traceDigest } from "../../../bench/lib/trace.ts";
 import { frozenDeep } from "../../../bench/lib/deep-profile.ts";
 
@@ -52,6 +54,144 @@ test("old and new use the same 100k schedules and their own zero controls", () =
   );
   const deep = frozenDeep(0, 100000);
   assert(deep.events.length > 500 && deep.populationSha256.length === 64);
+});
+
+test("field-rate windows preserve the anonymized minute counts and matched quiet offers", () => {
+  const plan = fieldPlan();
+  assert.deepEqual(
+    plan.map((p) => [p.label, p.schedule.length]),
+    [
+      ["solo35", 210],
+      ["ten35", 2100],
+      ["solo49", 294],
+      ["ten49", 2940],
+      ["solo235", 1410],
+      ["ten235", 14100],
+      ["nine235", 12900],
+      ["solo394", 2364],
+      ["ten394", 23640],
+      ["nine394", 21486],
+    ],
+  );
+  for (const phase of plan) {
+    const solo = plan.find((p) => p.label === phase.baseline)!;
+    assert.deepEqual(
+      phase.schedule.filter((e) => e.account === 9),
+      solo.schedule,
+    );
+    assert(phase.schedule.every((e, i, s) => e.ms < 60_000 && (!i || s[i - 1]!.ms <= e.ms)));
+  }
+});
+
+test("enhanced arms retain the controls and add independent layout and budget decisions", () => {
+  assert.deepEqual(modes("pulse"), ["individual", "all"]);
+  assert.deepEqual(modes("pulse", true), ["individual", "all", "compact", "prepared", "bounded"]);
+  assert.deepEqual(modes("rates", true), [
+    "individual",
+    "subject",
+    "all",
+    "compact",
+    "prepared",
+    "bounded",
+  ]);
+  assert.deepEqual(fieldPolicy("compact", true), { ...fieldPolicy("all", true), compact: true });
+  assert.deepEqual(fieldPolicy("bounded", true), {
+    ...fieldPolicy("prepared", true),
+    budgetMicros: 8000,
+  });
+  const enhanced = fieldPlan(true);
+  assert.deepEqual(enhanced.slice(0, fieldPlan().length), fieldPlan());
+  assert.deepEqual(
+    enhanced
+      .slice(-3)
+      .map((p) => [p.label, p.schedule.length, p.schedule.filter((e) => e.account === 9).length]),
+    [
+      ["budget50", 3000, 210],
+      ["budget100", 6000, 210],
+      ["budget235", 14100, 210],
+    ],
+  );
+  const pred = JSON.parse(
+    fs.readFileSync(new URL("./small/predictions.json", import.meta.url), "utf8"),
+  );
+  assert.equal(pred.beforeServerRun, true);
+  assert.equal(pred.common.preparedMaxMembers, fieldPolicy("prepared").maxMembers);
+  assert.equal(pred.common.boundedBudgetMicros, fieldPolicy("bounded").budgetMicros);
+  assert.deepEqual(pred.pulse.arms, modes("pulse", true));
+  assert.deepEqual(pred.rates.arms, modes("rates", true));
+});
+
+test("pulse recount refuses a different scope, subject, or duplicate logical position", () => {
+  const nonce = crypto.randomUUID();
+  const scope = JSON.stringify(["triplex-scope-v1", "test", "test", nonce + "-load", 0]);
+  let position = 80;
+  const phases = ["alone", "nine"].map((name) => {
+    const firstPosition = position + 1;
+    const item = (account: number, i: number, probe: boolean) => {
+      const pos = ++position;
+      return {
+        id: name + "-" + (probe ? "q-" : "") + account + "-" + i,
+        pos,
+        account,
+        probe,
+        t: String(pos + 1000),
+        elapsed: 5,
+        clock: pos,
+        subject: ids.placement(account * 10000 + i),
+        businessFacts: 8,
+        bytes: 100,
+        size: 1,
+        started: i * 100,
+        scheduled: 5,
+        queue: 0,
+      };
+    };
+    const records = Array.from({ length: 600 }, (_, i) => item(9, i, true));
+    if (name === "nine") for (let a = 0; a < 9; a++) records.push(item(a, 0, false));
+    const byAccount = Object.fromEntries(
+      (name === "nine" ? [...Array(10).keys()] : [9]).map((a) => [
+        a,
+        { count: a === 9 ? 600 : 1, commitMs: { p50: 5, p99: 5 } },
+      ]),
+    );
+    const count = records.length,
+      wall = 60_000;
+    return {
+      name,
+      firstPosition,
+      lastPosition: position,
+      records,
+      byAccount,
+      count,
+      wall,
+      throughput: (1000 * count) / wall,
+      physical: count,
+      quietMs: { p99: 5 },
+    };
+  });
+  const raw = {
+    nonce,
+    scope,
+    db: "s2-" + Buffer.from(scope).toString("base64url"),
+    grouped: false,
+    phases,
+    seeds: Array.from({ length: 10 }, (_, account) => ({
+      account,
+      subjects: 10000,
+      facts: 1624505,
+    })),
+  };
+  assert.deepEqual(
+    validateArm(raw, "individual", "pulse", nonce).map((p) => p.quietP99Ratio),
+    [1, 1],
+  );
+  assert.throws(() => validateArm(raw, "individual", "pulse", crypto.randomUUID()));
+  const [a, b] = raw.phases[0]!.records;
+  a!.subject = b!.subject;
+  assert.throws(() => validateArm(raw, "individual", "pulse", nonce));
+  a!.subject = ids.placement(90000);
+  b!.pos = a!.pos;
+  assert.throws(() => validateArm(raw, "individual", "pulse", nonce));
 });
 test("missing read maps and invalid nonzero counters cannot become cache hits", () => {
   const read = (reads: unknown) =>

@@ -1,0 +1,68 @@
+{
+  "schema": "dx-w1/field-predictions/1",
+  "beforeServerRun": true,
+  "sources": {
+    "macQueueRecountSha256": "b465e11493b41af62230a6cab0721ec5f0472423e13f8ca5f2819d09a7818f45",
+    "savedSampleModelSha256": "58c732847786b04240e09ff65f3b5e663a948ea1aa8484436d69d3ed2c3df326"
+  },
+  "pulse": {
+    "command": "node --experimental-strip-types lab/experiments/EXP-DX1/w1/control.ts --pulse pulsew1a",
+    "timedMinutes": 4,
+    "probeSavesPerSecond": 10,
+    "businessFactsPerSave": 8,
+    "liveNeighbors": 9,
+    "inflightPerNeighbor": 12,
+    "quietP99Ratio": { "individual": [12, 30], "all": [2, 6] },
+    "saturatedSavesPerSecond": { "individual": [150, 200], "all": [210, 285] }
+  },
+  "rates": {
+    "command": "node --experimental-strip-types lab/experiments/EXP-DX1/w1/control.ts --field-rates fldw1a",
+    "population": { "scopes": 1, "accounts": 10, "subjectsPerAccount": 10000, "facts": 16245050 },
+    "model": "175 solo saves/s, measured busy native-gap distribution, 3-second sessions and 12 admitted per account. Entries price ten simultaneously active accounts including the tail of the drain after a 60-second offer window.",
+    "cells": [
+      {
+        "perAccount": 3.5,
+        "total": 35,
+        "allReadySavesPerSecond": 35,
+        "allReadyQuietP99Ratio": 1.49,
+        "subjectOnlyShared": 0
+      },
+      {
+        "perAccount": 4.9,
+        "total": 49,
+        "allReadySavesPerSecond": 49,
+        "allReadyQuietP99Ratio": 1.34,
+        "subjectOnlyShared": 0
+      },
+      {
+        "perAccount": 23.5,
+        "total": 235,
+        "allReadySavesPerSecond": 233,
+        "allReadyQuietP99Ratio": 26.36,
+        "subjectOnlyShared": 9
+      },
+      {
+        "perAccount": 39.4,
+        "total": 394,
+        "allReadySavesPerSecond": 252,
+        "allReadyQuietP99Ratio": 1059,
+        "subjectOnlyShared": 0
+      }
+    ],
+    "quietSentinel": [
+      {
+        "eachOfNine": 23.5,
+        "quietAccount": 3.5,
+        "total": 215,
+        "p99Ratio": { "individual": 31.22, "subject": 6.86, "all": 8.59 }
+      },
+      {
+        "eachOfNine": 39.4,
+        "quietAccount": 3.5,
+        "total": 358.1,
+        "p99Ratio": { "individual": 26.89, "subject": 7.49, "all": 5.73 }
+      }
+    ],
+    "comparison": "At 235/s predict about 21 s of drain for ungrouped writes and roughly 1 s or less with all-ready grouping at the center estimate. At 394/s expect about 74 s and 34 s respectively. High-rate ratios will vary sharply with measured saturation."
+  }
+}

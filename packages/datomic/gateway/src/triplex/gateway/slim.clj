@@ -1,4 +1,5 @@
-(ns triplex.gateway.slim)
+(ns triplex.gateway.slim
+  (:require [triplex.gateway.small-row :as small-row] [clojure.data.json :as json]))
 
 ;; [DX-T1-8] Why: compress only the JSON suffix after authoritative clock/position assignment, preserving indexed prefixes.
 ;; Rejected: changing logical rows or UTF-8 conversion (unpaired UTF-16 code units must round-trip exactly).
@@ -39,10 +40,16 @@
 
 ;; [DX-T1-8] Why: journal and receipt routes return row texts directly, so expand before crossing the wire.
 ;; Rejected: requiring each TypeScript reader/oracle to understand a private physical storage frame.
+(defn logical-text [^String text body-start]
+  (if-let [packed (small-row/unpack text body-start)]
+    (str (subs text 0 body-start) (json/write-str packed))
+    (if (.startsWith text "Z1" (int body-start))
+      (str (subs text 0 body-start) (body (subs text body-start))) text)))
+(defn columns [^String text body-start]
+  (or (small-row/unpack text body-start) (json/read-str (body (subs text body-start)))))
 (defn row-text [^String text]
   (if (not= \2 (.charAt text 0)) text
     (let [start (+ 5 (Integer/parseInt text 1 5 16)) ref-start (+ start 36)
           size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)
           body-start (+ ref-start size 1)]
-      (if (.startsWith text "Z1" (int body-start))
-        (str (subs text 0 body-start) (body (subs text body-start))) text))))
+      (logical-text text body-start))))
