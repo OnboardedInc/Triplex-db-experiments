@@ -27,7 +27,7 @@ Datomic Pro 1.0.7745 used PostgreSQL 17 and 720 fixed people across 10 deep and 
 | Old cut, warm p50 / p99 | 14.28 / 51.30 (40) | 6.34 / 13.78 (40) |
 | Old cut, first peer (1) | 280.65 | 305.36 |
 
-Two complete rungs leave the flat, logarithmic and linear models unresolved for latency, memory, indexing and copy clocks. Allocated SQL moved from 12.15 MB at the 55,034-record seed to 73.68 and 283.71 MB. Incremental slopes were about 202 and 233 bytes/record. Native backup bytes grew 3.52× as indexed history grew 3.50×. The physical size observations are consistent with near-linear growth over this interval.
+The two complete rungs have per-metric flat, logarithmic and linear fits in the evidence. The log and linear curves interpolate both points exactly. Those fits and the observed time variability leave growth laws unresolved for latency, memory, indexing and copy clocks. Allocated SQL moved from 12.15 MB at the 55,034-record seed to 73.68 and 283.71 MB. Incremental slopes were about 202 and 233 bytes/record. Native backup bytes grew 3.52× as indexed history grew 3.50×. The physical size observations are consistent with near-linear growth over this interval.
 
 The 50/s ordered writer fell behind its offer schedule on the first rung. Busy p99 fell from 3.17 s to 0.37 s as the database grew. Ten and 43 save intervals overlapped the requested index windows, respectively. Queue depth and sampling variability limit any causal comparison. The idle and hot probes used fixed deep owners. First-peer samples retain PostgreSQL and guest caches. Absolute clocks are specific to this Mac, its runtime caps and the single writer.
 
@@ -35,6 +35,6 @@ The 180,000-save rung timed out after 105,264 tape saves. Its nine complete load
 
 ## Successor
 
-All 14 accounts moved together at logical position 17. Both old and new pins, the current view and 15 feed entries matched across 112 person-cut checks. The archived writer refused the new save, and the retry returned the original native receipt at position 4. The successor continued at position 18.
+All 14 accounts moved together at logical position 17. The old and new pins and current views matched across 112 person-cut checks. A separate feed check matched all 15 entries. The archived writer refused the new save, and the retry returned the original native receipt at position 4. The successor continued at position 18.
 
 The erasure copied 160 identity markers at each of two tested cuts. Fresh historical indexes contained zero affected rows and the tested native log frames lost the synthetic values. Already-held native database values still returned subject rows in both eras, and both affected ordinary journals lost their stored rows. The routed marker check and untouched sibling succeeded. Persistent publication of the erasure frontier, arbitrary cross-era joins and all backup and WAL copies remain open. [Evidence hashes](SHA256SUMS)

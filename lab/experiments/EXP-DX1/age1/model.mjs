@@ -25,7 +25,7 @@ export function schedule(recordsPerSecond, seed = 820e6) {
 // [DX-AGE1] Why: size-law comparisons need the same observations and failed measures stay absent.
 // Rejected: fitting synthetic zeros or choosing a growth law by the smallest in-sample error from three points.
 export function fit(points) {
-  if (points.length < 3) return { n: points.length, diagnosis: "fewer than three distinct measured ages" };
+  if (points.length < 2) return { n: points.length, diagnosis: "fewer than two distinct measured ages" };
   const x0 = points[0][0];
   const models = Object.fromEntries([
     ["flat", () => 0],
@@ -47,10 +47,13 @@ export function fit(points) {
       const m = regress(points.filter((_, j) => j !== i));
       return sum + (y - (m.intercept + m.slope * transform(n))) ** 2;
     }, 0);
-    return [name, { ...coeff, leaveOneOutRmse: Math.sqrt(cvSquared / points.length) }];
+    const squared = points.reduce((sum, [n, y]) => sum + (y - (coeff.intercept + coeff.slope * transform(n))) ** 2, 0);
+    return [name, { ...coeff, rmse: Math.sqrt(squared / points.length),
+      leaveOneOutRmse: points.length > 2 ? Math.sqrt(cvSquared / points.length) : null }];
   }));
   return { n: points.length, baselineRecords: x0, measuredRange: [points[0][0], points.at(-1)[0]], models,
-    diagnosis: "diagnostic fits only; repeated matched windows are needed to distinguish noise and extrapolation" };
+    diagnosis: points.length === 2 ? "two ages cannot distinguish the logarithmic and linear interpolants"
+      : "diagnostic fits only; repeated matched windows are needed to distinguish noise and extrapolation" };
 }
 
 export function summarize(dir) {
