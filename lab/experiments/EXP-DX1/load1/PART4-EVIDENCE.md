@@ -11,6 +11,7 @@ Paths in the checksum manifest are relative to the durable DX-HA1/load1 evidence
 | load-split-sql-a60ad979-f5f2-470a-8b8a-e15fd3890017 | Three verified arms at 50 offered saves/s under 46a788316. One PostgreSQL process with distinct Datomic storage databases. |
 | load-frontier-high-6185086e-37a0-4aca-8167-26e0e0ab1e07 | Four verified 100-save/s arms at 16 and 32 ms under 22f80099c. The 32 ms arm and final control missed offers. |
 | load-frontier-high-441caa36-497d-4796-9560-cdabd2e70b0f | Four verified 50-save/s arms at 16 and 32 ms under 085166853. Final control missed nine offers. |
+| load-frontier-low-c6d2a348-d7ca-461d-8826-16f18a73d8d7 | Five verified 100-save/s arms at 1, 4 and 8 ms under c5cb9553b. First control missed 192 offers. |
 
 Replay a completed comparison with `node --import tsx lab/experiments/EXP-DX1/load1/compare.ts "$ATTEMPT_DIR"`. The reader requires original observation, cleanup and offer bytes. It recomputes scheduled dose, p99, ratios, misses and windowed throughput against both retained controls. The per-arm files from the partial pacing attempt survive independently of the failed overall receipt.
 

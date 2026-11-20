@@ -17,23 +17,21 @@ One 255 ms save overlapped a 228 ms bulk hold and 150 ms of transactor GC. A 248
 
 A frame compiles before admission, carries whole subjects, and waits behind ready live saves. One bulk frame is outstanding. W1’s bounds are 96 stored rows and 64 KiB. We adapt using dispatch-to-peer time and persist the chosen boundary before submission. DX-PREP1’s work applies to existing single-owner saves. It excludes bulk. Its eight-save groups spent about 117 ms preparing the members versus 2 ms appending. GC, catch-up and indexing can overrun a size estimate.
 
-| Offered saves/s | Budget | Facts/s | Quiet read/save p99 ms | Ratios versus first control |
+| Offered saves/s | Budget | Facts/s | Quiet read/save p99 ms | Ratios versus control |
 |---:|---:|---:|---:|---:|
-| 50 | Control | 0 | 22.1 / 91.7 | 1.00 / 1.00 |
 | 50 | 1 ms | 0 | 18.0 / 34.9 | 0.81 / 0.38 |
 | 50 | 4 ms | 0 | 16.2 / 57.3 | 0.73 / 0.63 |
 | 50 | 8 ms | 596 | 21.2 / 88.6 | 0.96 / 0.97 |
 | 50 | 11.06 ms | 2,137 | 51.6 / 166.4 | 2.33 / 1.82 |
-| 50 | Wider-budget control | 0 | 28.8 / 213.7 | 1.00 / 1.00 |
 | 50 | 16 ms | 401 | 48.7 / 211.7 | 1.69 / 0.99 |
 | 50 | 32 ms | 1,774 | 171.2 / 156.3 | 5.95 / 0.73 |
-| 100 | Control | 0 | 50.8 / 178.6 | 1.00 / 1.00 |
+| 100 | 1 ms | 0 | 27.7 / 107.0 | 1.22 / 1.59 |
+| 100 | 4 ms | 1 | 30.9 / 99.6 | 1.36 / 1.48 |
+| 100 | 8 ms | 0 | 21.5 / 82.7 | 0.95 / 1.23 |
 | 100 | 16 ms | 1,477 | 110.2 / 247.6 | 2.17 / 1.39 |
 | 100 | 32 ms | 647 | 357.9 / 578.7 | 7.04 / 3.24 |
 
-The 1 and 4 ms plans stopped after the smallest group repeatedly exceeded budget. At 8 ms, 206/2,842 frames exceeded budget before the plan stopped. At 11.06 ms, 416/9,050 exceeded it. The latter budget came from half of the matched control’s quiet read p99. An integer deadline fix preserves the completed cells and allows the final control to start in subsequent runs. The dedicated allowance campaign uses a quiet-alone reference.
-
-At 50/s, 16 ms stopped after 27 s and averaged 1,602 facts/s while active. The 32 ms arm had no misses, and the last control missed nine. At 100/s, 16 ms had 195/5,955 budget overruns with no missed offers. The 32 ms arm missed 385/17,280 offers despite verified quiet replies. The last control missed 50 and reached 263.7/302.1 ms quiet read/save p99. The common host and accumulated database work limit comparisons across those conditions.
+At 50/s the first controls were 22.1/91.7 ms read/save at 1–11.06 ms and 28.8/213.7 ms at 16–32 ms. The 1 and 4 ms plans stopped after the smallest group repeatedly exceeded budget. At 8 ms, 206/2,842 frames exceeded budget before the plan stopped. At 11.06 ms, 416/9,050 exceeded it. The latter budget came from half of the matched control’s quiet read p99. An integer deadline fix preserves the completed cells and allows the final control to start in subsequent runs. The dedicated allowance campaign uses a quiet-alone reference. At 50/s, 16 ms stopped after 27 s and averaged 1,602 facts/s while active. The 32 ms arm had no misses, and the last control missed nine. The low-budget 100/s control missed 192 offers, so those ratios use the complete last control at 22.7/67.2 ms. At 100/s, 16 and 32 ms use the complete first control at 50.8/178.6 ms. The 16 ms arm had 195/5,955 budget overruns with no missed offers. The 32 ms arm missed 385/17,280 offers despite verified quiet replies. The last control missed 50 and reached 263.7/302.1 ms quiet read/save p99. The common host and accumulated database work limit comparisons across those conditions.
 
 ## Independent Datomic database and transactor
 
