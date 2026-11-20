@@ -5,7 +5,7 @@ Checking other replies overlapped about 215 milliseconds and garbage collection 
 The weighted test had one reader. Its four sampled misses spent their extra time mostly processing the answer.
 The separate worker moves decoding and observation away from local readers. Batching and retained history cut the number of replies.
 The revised forecast for the 192 MiB closure alone is 3,900–5,400 weighted pulls per second and a stress ratio of 0.45–0.65.
-The 20-reader regression retained 23% of local throughput before isolation and 106% with isolation. The Mac replay is queued again after rebuilding its trace image.
+The unit test retained 23% of local throughput before isolation and 106% with it. On the Mac, the five-percent old-cut test retained 12% before and 92% after.
 
 North star P1 and P4. Exact concurrent reads and the weighted pull path. The activity-based history accounting is the P7 diagnostic. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
@@ -18,7 +18,19 @@ North star P1 and P4. Exact concurrent reads and the weighted pull path. The act
 
 ### Diagnostics and handoff
 
-4. Mac plan. `miss-probe.ts OUTPUT auto 2 128 part3` in the owned trace image runs mirrored off/install curves at 0/0.5/1/2/5%, then the 64/192/512 MiB packed replay, then the low/old/install recovery comparison. The off arm uses the public reach composition. History budget results measure the packed index with synthetic 24 KiB replacements and the frozen offer trace. Each native answer is checked at its exact requested cut. [Part 2 report at `0eb2e0f0f`](https://github.com/OnboardedInc/Triplex-db-experiments/blob/0eb2e0f0f/lab/experiments/EXP-DX1/rd1/REPORT.md)
+4. Mac curve. Slot ready after 82m44s from queueing, including one refused image and a private rebuild. Two mirrored 2-second arms per condition used 128 closed-loop seats, 24 roots and two repeated old cuts. They checked 7,855,809 contained reads and joined 21,243 native exchanges for 22,083 logical fallbacks including boundary reads. The prior arm uses the public reach path.
+
+| Offered old cuts | Direct reads/s, share of its baseline | Isolated install reads/s, share of its baseline | Actual direct / isolated fallback |
+| ---: | ---: | ---: | ---: |
+| 0% | 269k, 100% | 268k, 100% | 0% / 0% |
+| 0.5% | 153k, 57% | 267k, 100% | 0.50% / 0.009% |
+| 1% | 124k, 46% | 263k, 98% | 1.00% / 0.019% |
+| 2% | 80k, 30% | 260k, 97% | 2.00% / 0.029% |
+| 5% | 33k, 12% | 246k, 92% | 4.98% / 0.037% |
+
+At 5%, direct arms averaged 31–90 waiting seats and had 127,040 local completions while misses were pending. The native queue averaged 2.59–57.44 ms and admitted work 0.11–0.47 ms per miss. Even the lower service-only ceiling was 84.8k/s. Install reduced 6,710 HTTP exchanges to 28 and average waiting seats to 6.7–6.8. Repeated cuts make reuse unusually high here.
+Packed budget replay followed the curve, using 38,826 frozen offers and synthetic 24 KiB entity replacements. The 64/192/512 MiB settings held 27.7/83.2/193.5 KiB per touched subject across 2,364 touched subjects and zero extra history for 7,636 untouched. Misses at 8 minutes were 1.93/0/0%, at 20 minutes 4.95/0/0%, and at 40 minutes 9.38/5.72/0%. All missed at the one-hour cut outside the clock window. The synthetic latest/last-2,000 mix stayed local in all three.
+The first recovery setup failed its retained-cut check and measured no recovery. The retry starts the follower at a sealed current cut and applies the next journal live.
 5. Unit regression. Nineteen local seats and one historical seat used the same exact 4,096-row body in both binaries, with two 700 ms arms per condition. On `89cf9d4d2` the mixed arms completed 1,493/6,441 local reads versus their zero-miss controls (23.2%, below 90%). With Part 2's isolated lane they completed 6,547/6,157 (106.3%). Eleven and ten historical replies respectively verified before the throughput assertion. This isolates inline decode and observation, without history installation. [Regression test](../../../bench/test/rd1-fallback-rate.test.ts)
 6. Handoff. The three 115-second offer pairs each have a 28-minute foreground budget and a matched zero arm. The diagnostic phase schedule and shell syntax were checked locally. Full-profile gates and write-gateway allocation attribution remain open. [Server 1 diagnostics](SERVER1.md)
 7. Audit. Archived analysis checks source, run, slot and boot on both clocks, then joins each HTTP parent and response ID and verifies the time sums. It hashes the analyzer, report and clock reference. Archived events are explicitly historical. Native comparisons use a fresh scope, owned slot, exact receipt model and exchange census. The packed replay checks the exact selected version and content at every locally covered cut. The unit regression checks the exact response digests and route on each seat in fresh arms, records the fixture and loaded product hashes, and checks the rate relative to the controls. The short server plan has a separate identity, retains the checks on matched build and offers, and remains outside full v3 qualification.

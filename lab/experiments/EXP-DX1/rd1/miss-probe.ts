@@ -132,10 +132,11 @@ type GatewayRow = {
 
 // [DX-RD1] Why: the old and new cuts are real receipts for the same subjects, with deliberately different stored rows.
 // Rejected: injecting artificial HTTP sleeps or substituting a recent answer for an evicted cut.
-async function fixture(scope: string) {
+async function fixture(scope: string, keepHistory: boolean) {
   const runtime = await openComposition("reach", "datomic", scope);
   const model = new Model(count),
     roots = Array.from({ length: count }, (_, i) => ids.placement(i));
+  let follower: ReplicaReadHost | undefined;
   const commit = async (ops: Parameters<typeof runtime.transact>[0], label: string) => {
     const result = await runtime.transact(ops, { actor: "probe", commandId: `${scope}-${label}` });
     if (!result.ok) throw Error(`Fixture ${label}: ${result.tag}`);
@@ -158,10 +159,35 @@ async function fixture(scope: string) {
         value: { type: "integer" as const, value: String(v) },
         validFrom: SEED_VALID_FROM,
       }));
-    const middle = await commit(more(1), "middle"),
-      head = await commit(more(2), "head");
-    assert(old.instant < middle.instant && middle.instant < head.instant);
+    const middle = await commit(more(1), "middle");
     const validAt = SEED_VALID_FROM + 1_000_000;
+    // [DX-RD1] Why: capture a sealed current cut, then retain its predecessor bytes through a real journal update.
+    // Rejected: reopening a middle cut after the head advanced (the setup could not confirm retained bytes and clock coverage).
+    if (keepHistory) {
+      follower = await ReplicaReadHost.open(
+        scope,
+        roots,
+        runtime,
+        middle,
+        "inline",
+        192 * 1024 ** 2,
+        "reader",
+        undefined,
+        "all",
+        undefined,
+        validAt,
+        false,
+        "closure",
+      );
+      assert.equal(follower.index.position, middle.position, "Recovery replica starts at middle");
+      assert.equal(
+        follower.index.retainedClockFloor(),
+        middle.instant,
+        "Recovery bootstrap must prove the current record clock",
+      );
+    }
+    const head = await commit(more(2), "head");
+    assert(old.instant < middle.instant && middle.instant < head.instant);
     const cuts = [old, middle, head].map((r) => ({
       position: r.position,
       basis: { recordedAt: r.instant, validAt },
@@ -169,8 +195,30 @@ async function fixture(scope: string) {
     }));
     assert(cuts.every((c) => c.expected.every((e) => e.fullRows && e.facts > 1)));
     assert(cuts[0]!.expected.every((e, i) => e.digest !== cuts[2]!.expected[i]!.digest));
-    return { runtime, roots, head, cuts };
+    let retained, historyWitness;
+    if (follower) {
+      const index = follower.index;
+      const deadline = performance.now() + 10_000;
+      while (index.position < head.position && performance.now() < deadline) await sleep(5);
+      const resolvedMiddle = index.resolve(cuts[1]!.basis);
+      historyWitness = {
+        head: index.position,
+        floor: index.floor,
+        clockFloor: index.retainedClockFloor(),
+        bytes: index.historyBytes,
+        resolvedMiddle,
+      };
+      assert.equal(index.position, head.position, JSON.stringify(historyWitness));
+      assert.equal(index.floor, middle.position, JSON.stringify(historyWitness));
+      assert(index.historyBytes > 0, JSON.stringify(historyWitness));
+      assert.equal(resolvedMiddle, middle.position, JSON.stringify(historyWitness));
+      retained = index.image();
+      await follower.close();
+      follower = undefined;
+    }
+    return { runtime, roots, head, cuts, retained, historyWitness };
   } catch (e) {
+    await follower?.close();
     await runtime.close();
     throw e;
   }
@@ -269,7 +317,7 @@ function timing(
 async function run(slot: string, logs: () => Promise<string>, mode: Mode, output: string) {
   const nonce = randomUUID(),
     scope = `rd1-miss-${nonce}`,
-    fx = await fixture(scope);
+    fx = await fixture(scope, mode === "recovery");
   try {
     const endpoint = process.env.DATOMIC_READ_URLS?.split(",")[0] ?? process.env.DATOMIC_URL!;
     const scopeKey = String(runtimeApi.DatabaseScope.test(scope));
@@ -277,39 +325,7 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
     const image = host.index.image();
     await host.close();
     assert(image.floor === fx.head.position && image.strictRecordClocks);
-    let retained = image;
-    if (mode === "recovery") {
-      const middle = fx.cuts[1]!;
-      const history = await ReplicaReadHost.open(
-        scope,
-        fx.roots,
-        fx.runtime,
-        { position: middle.position, instant: middle.basis.recordedAt },
-        "inline",
-        192 * 1024 ** 2,
-        "reader",
-        endpoint,
-        "all",
-        undefined,
-        Date.now(),
-        false,
-        "closure",
-      );
-      try {
-        const deadline = performance.now() + 10_000;
-        while (history.index.position < fx.head.position && performance.now() < deadline)
-          await sleep(5);
-        assert(
-          history.index.position === fx.head.position && history.index.floor === middle.position,
-        );
-        assert(
-          history.index.historyBytes > 0 && history.index.resolve(middle.basis) === middle.position,
-        );
-        retained = history.index.image();
-      } finally {
-        await history.close();
-      }
-    }
+    const retained = fx.retained ?? image;
     const arms: Record<string, any>[] = [],
       allMisses: Miss[][] = [];
     const referenceHead = fx.cuts.at(-1)!;
@@ -568,6 +584,7 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
       nativeSource,
       permits,
       mode,
+      historyWitness: fx.historyWitness,
       baseline,
       cuts: fx.cuts.map((c) => ({
         position: c.position,
