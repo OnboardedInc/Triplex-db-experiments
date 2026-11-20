@@ -8,6 +8,8 @@
 | `p4/checks/pins-p4.json`, `pins-final-check.json` | Pin comparisons against the 43 acceptance files on the observed main revision. The frozen trace inputs match Part 3. |
 | `p4/checks/everything-plan-sealed.json` | Eight physical arms and the four 40-person preflights. The runner and collector share the case list and explicit option settings. |
 | `p4-pilot-thin` | The independent collector checked the 100/150/200-person pilot with two fixed touches and verified the original roster, counters and clean volume release. At 200 the 96 MiB PostgreSQL pool had 17.27 MiB assigned. Per-process proportional memory was unavailable. |
+| `p4-scopes` | The 1/8/32/128-scope census on `cfec11ea1`. The original ledgers and saved checks bind all 128 opens, the pinned reads, the four first writes and the managed cleanup. |
+| `p4/checks/cleanup/` | Fresh image-manager receipts for the 11 removed staged tags and refusals for any retained image checked in the same pass. |
 | `p4/checks/native/` | Source, installed image and source-input digests for each completed native gate. Raw build and selftest logs include the first failures. |
 | `p4/checks/*-focused.log` | Ten notice tests and nine loader and oracle tests completed. The first SDK run found a legacy byte-order difference. The corrected identity-range run passed all 11 checks against the original fixture. |
 | `p4/checks/native-retry-in-memory.log` | The updated authoritative retry test completed 70 in-memory Datomic assertions, including the original receipt, new command conflict and unchanged head. |
