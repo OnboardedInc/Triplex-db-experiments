@@ -5,7 +5,7 @@ On deep data, the corresponding medians were 29 ms and 625 ms. Both readers pick
 The existing reader made seven database requests on a miss. The shared-cut option reuses control data from the same database position.
 An account record can describe every owed notice in one transaction. Storing changed output values also takes work proportional to the changes.
 The local joined experiment tests both costs. The earlier 10,000-person dispatcher took 25.6 seconds to record 1,650 individual notices.
-A protected identity erased after a notice becomes due needs an explicit delivery rule.
+If a worker erases their number while a case submission is waiting, I recommend recording that it was due and pausing submission. [Owner decision](RETENTION.md)
 
 ### Local evidence
 
