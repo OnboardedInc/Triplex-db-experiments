@@ -38,13 +38,16 @@ if [[ $mode == cleanup ]]; then
   exit 0
 fi
 [[ $mode == run && -z $(docker ps -q) && -s $sealed/SEAL.sha256 ]]
+reviewed=${2:?provide the reviewed upstream head that still lacks the replacement command}
+[[ $reviewed =~ ^[a-f0-9]{40}$ ]]
 mkdir "$root"
 status checking-published-source
 git -c credential.helper= clone --quiet --no-checkout --single-branch --branch exp/DX-PREP1-parallel-prepare "$public" "$root/producer"
 current=$(git -C "$root/producer" rev-parse refs/remotes/origin/exp/DX-PREP1-parallel-prepare)
 # [DX-BM1] Why: only use the numeric-owner fallback if the superseding producer has not been published.
 # Rejected: silently using the fallback after a new PREP1 handoff appears.
-[[ $current == 6ddbbf5b3* || $current == "$pin" ]]
+[[ $current == "$reviewed" ]]
+git -C "$root/producer" merge-base --is-ancestor "$pin" "$current"
 git -C "$root/producer" checkout --quiet --detach "$pin"
 bash "$root/producer/$experiment/t1/bare-metal.sh" --prepare "$pin" "$root/build"
 cd "$repo"
