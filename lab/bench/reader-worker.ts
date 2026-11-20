@@ -91,6 +91,8 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
 
   let comp: CompositionHandle;
   const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader((cfg.replicaHistoryMiB ?? 64) * 1024 ** 2, shared?.index, cfg.replicaWorldCacheBytes ?? 32 * 1024 ** 2, cfg.replicaHistoryCoverage) : undefined;
+  const readsLocalRows = Boolean(replica) ||
+    (cfg.composition === "reach-touched" && process.env.DX_TOUCHED_READ_MODE !== "validated");
   const historyApi = cfg.historicalPort ? await import("./lib/historical-fallback.ts") : undefined;
   const exactHistory = cfg.historicalPort ? new historyApi!.HistoricalFallbackPort(cfg.historicalPort) : undefined;
   if (replica && historyApi && cfg.installedHistoryBytes) replica.installedHistory = new historyApi.InstalledHistory(cfg.installedHistoryBytes);
@@ -304,8 +306,11 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       const o = traceSync("reader.observe", () => observe(pr));
       if (timed) costs.observeMs += performance.now() - observeStart;
       let gatewayCanonical: string | undefined;
-      if (opts.keepRows && replica) {
-        const reference = await traceAsync("reader.oracle-gateway", gateway);
+      if (opts.keepRows && (replica || pr.route === "replica")) {
+        // [DX-INT1] Why: the touched composition owns its local rows without a separate reader index.
+        // Rejected: re-reading that same cache for the independent exact-row sample.
+        const reference = await traceAsync("reader.oracle-gateway", replica ? gateway : () => comp.sweepPull(root, basis));
+        if (reference.route === "replica") throw Error("oracle comparison served from the replica");
         gatewayCanonical = canonicalWorld(reference.triples);
         if (canonicalWorld(pr.triples) !== canonicalWorld(reference.triples)) throw Error("oracle route full-row mismatch");
         if (JSON.stringify(o) !== JSON.stringify(observe({ ...pr, observation: undefined })))
@@ -325,7 +330,7 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       if (split > 0) stats.straddleWait.recordMs(straddleWaitMs);
       // [DX-RD1] Why: the raw independent replay sample and its actual tuple must reach the collector in the same batch.
       // Rejected: trying to reconstruct the sample's timed observation after its fixed window has folded.
-      const sample = opts.keepRows && (pr.route === "replica" || !replica || stats.rawFallbackSamples === 1)
+      const sample = opts.keepRows && (pr.route === "replica" || !readsLocalRows || stats.rawFallbackSamples === 1)
         ? { phase: ph, subject, basis, position, start, route: pr.route, fullCanonical: canonicalWorld(pr.triples), gatewayCanonical,
           rows: pr.triples.map(t => [t.entityId, t.attribute, t.value, t.validFrom ?? null, (t.validTo?._tag === "Some" ? t.validTo.value : null), t.id]) }
         : undefined;
@@ -379,11 +384,11 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
         // Rejected: charging open-clock fallbacks against the local quota (never exercises the copy).
         let keepRows = false;
         if (oracle) {
-          const owesLocal = replica !== undefined && (phases.get(readPhase)?.rawLocalSamples ?? 0) < (cfg.rawLocalMinimum ?? 1);
+          const owesLocal = readsLocalRows && (phases.get(readPhase)?.rawLocalSamples ?? 0) < (cfg.rawLocalMinimum ?? 1);
           keepRows = (owesLocal || rawSamples < (cfg.rawSampleLimit ?? Infinity)) &&
             (!replica || (!rawPending.has(readPhase) && replica.index.resolve(basis) !== undefined));
         }
-        if (keepRows) { rawPending.add(readPhase); if (!replica) rawSamples++; }
+        if (keepRows) { rawPending.add(readPhase); if (!readsLocalRows) rawSamples++; }
         try { await readOnce(picked.subject, basis, kind, position, readPhase, { keepRows, straddleSeq, assignedAt, hotPick: picked.hotPick }); }
         finally { if (keepRows) rawPending.delete(readPhase); }
         // [DX-SCALE1] Why: low-traffic accounts have a real reader without turning each small scope into a saturated read loop. Rejected: zero readers in active accounts or sleeping on the sentinel's comparison windows.

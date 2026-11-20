@@ -58,7 +58,7 @@ const basis = async (c: DatomicClient, db: string) => {
   await c.release(db, cut.handle);
   return cut.position;
 };
-function assigned(row: Row, p: number, clock: number): Row {
+function assigned(row: Row, p: number, clock: number) {
   return { ...row, recorded_position: p, recorded_at: clock };
 }
 
@@ -321,7 +321,8 @@ async function phase(
         assert.equal(observed.operationId, id);
         assert.equal(Number(observed.position?.v), position);
         assert.equal(observed.recordedAt?.v, clock);
-        rec.receipt = { p: position, clock, t: observed.t!.v };
+        assert(observed.t?.t === "long");
+        rec.receipt = { p: position, clock, t: observed.t.v };
       }
     }
   }
@@ -447,10 +448,9 @@ async function preflight(out: string) {
     for (const o of cell.tape) {
       const e = root(o.account, o.person);
       if (!fields.has(e))
-        fields.set(
-          e,
-          command("seed-" + e, [fact(e, answer, "old"), fact(e, note, "old")], [], false).rows,
-        );
+        fields.set(e, [
+          ...command("seed-" + e, [fact(e, answer, "old"), fact(e, note, "old")], [], false).rows,
+        ]);
     }
   const db = "mock-prep1";
   const fair = requestedCredits ? new FairTurns(accounts.length, requestedCredits) : undefined;

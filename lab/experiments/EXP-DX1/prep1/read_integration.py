@@ -44,7 +44,7 @@ def erasure(out, subject):
     assert run["sourceHash"] == encoded_hash(inputs["inputs"])
     assert run["nonce"] == inputs["nonce"] == cleanup["nonce"]
     assert run["mode"] == inputs["mode"] == "ledger-regression"
-    assert run["host"] == "mac-vm" and run["timings"] == "diagnostic"
+    assert run["host"] == "mac-vm" and run.get("timing", run.get("timings")) == "diagnostic"
     assert run["people"] == inputs["people"]
     assert run["slot"] == cleanup["slot"] and cleanup["released"] and not cleanup["errors"]
     restore = read(out / "exit-restore.json")

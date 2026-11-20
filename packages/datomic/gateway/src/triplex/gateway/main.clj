@@ -1,5 +1,5 @@
 (ns triplex.gateway.main
-  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
             [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
@@ -109,7 +109,11 @@
         entity (scope/entity db)
         selected (commit/entry db {} (lean/enabled? db))
         selected-id (d/entid db selected)
-        installed? (and selected-id (some? (storage/value db selected-id :db/fn)))]
+        installed? (and selected-id (some? (storage/value db selected-id :db/fn)))
+        guard (when prepared/enabled
+                (if prepared/basis-enabled prepared/basis-ident (prepared/active-guard)))
+        guard-id (when guard (d/entid db guard))
+        subject-t (when subject/enabled (subject/installed db))]
     (cond-> {:database name :attempt write-options-attempt
              :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")
              :t (str (d/basis-t db)) :position (storage/head-position name db)
@@ -117,6 +121,9 @@
              :rowsVersion (storage/value db entity :triplex.scope/rows-version)
              :commitFunction (str selected) :commitFunctionInstalled (boolean installed?)
              :baseFunctionHash (storage/value db entity :triplex.scope/commit-fn-hash)
+             :preparedWriter (when guard {:mode (if prepared/basis-enabled "basis" "full")
+                                          :guard (str guard)
+                                          :installed (boolean (and guard-id (storage/value db guard-id :db/fn)))})
              :options {:predecessorLookup pred/enabled :groupCommit group/enabled
                        :livePriority policy/priority? :fieldCoalesce policy/field-only?
                        :queueClock group/queue-clock :stageClock group/stage-clock
@@ -125,8 +132,8 @@
                        :bulkRows policy/bulk-rows :bulkBytes policy/bulk-bytes
                        :ledger (boolean (or ledger/enabled packed/enabled))
                        :packedJournal (boolean packed/enabled) :fastReply (boolean group/fast-reply)}}
-      subject/enabled (assoc :subjectSave true :subjectFunction (when (subject/installed db) (str subject/ident))
-                             :subjectFunctionTx (some-> (subject/installed db) str)))))
+      subject/enabled (assoc :subjectSave true :subjectFunction (when subject-t (str subject/ident))
+                             :subjectFunctionTx (some-> subject-t str)))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
 ;; Rejected: timing the StringBuilder alone (response bytes are not ready yet).
@@ -290,7 +297,8 @@
 (defn route-handler [{:keys [uri request-method body] :as request}]
   (if-let [[_ name action] (re-matches #"/v[12]/db/(s2-[A-Za-z0-9_-]+)/(.+)" uri)]
     (try
-      (let [conn (connection (db-uri name)) db (d/db conn)]
+      (let [[conn db] (trace/span "privacy/current-data" "gateway"
+                        (let [conn (connection (db-uri name))] [conn (d/db conn)]))]
         (cond
           (and (= :post request-method) (= action "protection"))
           (response 200 (erase/declare! name conn db (request-json body)))
@@ -299,14 +307,14 @@
           (and (= :post request-method) (= action "restore-erasure"))
           (response 200 (erase/replay-after-restore! name conn))
           :else
-          (let [read-cut (privacy/cut name db)
-                _ (privacy/verify-data! read-cut db)
-                input (when (and (= :post request-method) (= action "transact")) (request-json body))
+          (let [input (when (and (= :post request-method) (= action "transact")) (request-json body))
+                managed-write? (and input (trace/span "privacy/write-policy" "gateway" (privacy/managed? name db)))
                 source (get input "erasureSourceDatabase")
                 _ (when (and source (not (and (string? source) (re-matches #"s2-[A-Za-z0-9_-]+" source))))
                     (codec/invalid "Invalid source scope for protected delivery"))
                 request (cond-> request input (assoc :privacy-input input))
                 run (fn [cut]
+                      (trace/attribute! :erasureGuarded (boolean cut))
                       (binding [privacy/*cut* cut privacy/*database* name privacy/*data* db
                                 privacy/*unseal* (fn [id e a value] (envelope/decode! name (d/db conn) id e a value))]
                         (let [answer (if (and (= :get request-method) (= action "erasure-frontier"))
@@ -314,13 +322,15 @@
                                                       :seq (or (:seq cut) 0) :erased (or (:erased cut) {})})
                                        (route-handler-base request))]
                           (cond-> answer cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))))))]
-            (if (and input (or read-cut source))
+            (if (and input (or managed-write? source))
               ;; [DX-ERASE1] Why: the source cannot publish an erasure between validation and recipient commit.
               ;; Rejected: an HTTP recheck followed by an independent recipient write.
-              (with-privacy-guards (sort (cond-> #{} read-cut (conj name) source (conj source)))
+              (with-privacy-guards (sort (cond-> #{} managed-write? (conj name) source (conj source)))
                 (fn []
-                  (let [current (d/db conn) next (privacy/cut name current)]
-                    (privacy/verify-data! next current)
+                  (let [[current next] (trace/span "privacy/write-frontier" "gateway"
+                                         (let [current (d/db conn)] [current (privacy/cut name current)]))]
+                    (when (and managed-write? (nil? next)) (privacy/unavailable!))
+                    (trace/span "privacy/verify-write" "gateway" (privacy/verify-data! next current))
                     (when (or source (contains? input "erasureSeq"))
                       (if source
                         (let [source-db (d/db (connection (db-uri source)))
@@ -329,7 +339,11 @@
                           (privacy/ensure-seq! source-cut (get input "erasureSeq")))
                         (privacy/ensure-seq! next (get input "erasureSeq"))))
                     (run next))))
-              (do
+              ;; [DX-ERASE1] Why: a guarded write only needs the cut verified inside the writer lock.
+              ;; Rejected: reading and hashing the authority twice on every guarded save.
+              (let [read-cut (when-not input
+                               (trace/span "privacy/frontier" "gateway" (privacy/cut name db)))]
+                (when read-cut (trace/span "privacy/verify-data" "gateway" (privacy/verify-data! read-cut db)))
                 (when (contains? input "erasureSeq") (privacy/ensure-seq! read-cut (get input "erasureSeq")))
                 (run read-cut))))))
       (catch Exception e
