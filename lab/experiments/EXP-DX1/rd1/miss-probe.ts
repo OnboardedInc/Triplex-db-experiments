@@ -35,6 +35,7 @@ import {
 } from "../../../bench/lib/historical-fallback.ts";
 
 const source = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+const nonce = randomUUID();
 const [output, topology = "s3", interval = "3", seatCount = "128", mode = "mechanism"] =
   process.argv.slice(2);
 const seconds = Number(interval),
@@ -258,8 +259,7 @@ function timing(
 }
 
 async function run(slot: string, logs: () => Promise<string>) {
-  const nonce = randomUUID(),
-    scope = `rd1-miss-${nonce}`,
+  const scope = `rd1-miss-${nonce}`,
     fx = await fixture(scope);
   const endpoint = process.env.DATOMIC_READ_URLS?.split(",")[0] ?? process.env.DATOMIC_URL!;
   const scopeKey = String(runtimeApi.DatabaseScope.test(scope));
@@ -303,24 +303,7 @@ async function run(slot: string, logs: () => Promise<string>) {
   const arms: Record<string, any>[] = [],
     allMisses: Miss[][] = [];
   const referenceHead = fx.cuts.at(-1)!;
-  const admission = process.env.DX_RD1_MEASURE_LOCK;
-  let ownsMeasure = false;
   try {
-    if (admission) {
-      fs.mkdirSync(admission);
-      ownsMeasure = true;
-      fs.writeFileSync(
-        path.join(admission, "owner.json"),
-        JSON.stringify({
-          id: "DX-RD1",
-          pid: process.pid,
-          slot,
-          nonce,
-          at: new Date().toISOString(),
-        }) + "\n",
-        { flag: "wx" },
-      );
-    }
     for (const { share: oldPer200, treatment, transition, low } of order) {
       const client = new DatomicClient(endpoint);
       const misses = new Map<string, Miss>();
@@ -622,27 +605,50 @@ async function run(slot: string, logs: () => Promise<string>) {
       }),
     );
   } finally {
-    if (ownsMeasure) {
-      const owner = path.join(admission!, "owner.json");
-      if (fs.existsSync(owner)) {
-        assert.equal(JSON.parse(fs.readFileSync(owner, "utf8")).nonce, nonce);
-        fs.unlinkSync(owner);
-      }
-      fs.rmdirSync(admission!);
-    }
     await fx.runtime.close();
   }
 }
 
-if (topology === "prepared") {
-  assert(
-    mode === "control" && process.env.TRIPLEX_TRACE_SLOT,
-    "Prepared control requires an isolated scope and explicit slot identity",
-  );
-  fs.mkdirSync(output);
-  await run(process.env.TRIPLEX_TRACE_SLOT, async () => "");
-} else
-  await inLocalSlot(topology, async (slot, logs) => {
-    fs.mkdirSync(output);
-    await run(slot, logs);
-  });
+async function runInAssignedSlot() {
+  if (topology === "prepared") {
+    assert(
+      mode === "control" && process.env.TRIPLEX_TRACE_SLOT,
+      "Prepared control requires an isolated scope and explicit slot identity",
+    );
+    fs.mkdirSync(output!);
+    await run(process.env.TRIPLEX_TRACE_SLOT, async () => "");
+  } else
+    await inLocalSlot(topology!, async (slot, logs) => {
+      fs.mkdirSync(output!);
+      await run(slot, logs);
+    });
+}
+
+const admission = process.env.DX_RD1_MEASURE_LOCK;
+if (!admission) await runInAssignedSlot();
+else {
+  // [DX-RD1] Why: reserve the lab's measurement window before starting the isolated engine.
+  // Rejected: checking that it was free before bootstrap and racing another run during fixtures.
+  fs.mkdirSync(admission);
+  const owner = path.join(admission, "owner.json");
+  try {
+    fs.writeFileSync(
+      owner,
+      JSON.stringify({
+        id: "DX-RD1",
+        pid: process.pid,
+        topology,
+        nonce,
+        at: new Date().toISOString(),
+      }) + "\n",
+      { flag: "wx" },
+    );
+    await runInAssignedSlot();
+  } finally {
+    if (fs.existsSync(owner)) {
+      assert.equal(JSON.parse(fs.readFileSync(owner, "utf8")).nonce, nonce);
+      fs.unlinkSync(owner);
+    }
+    fs.rmdirSync(admission);
+  }
+}
