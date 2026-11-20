@@ -446,8 +446,6 @@ export async function live(
       }
     }
     await Promise.all([...pending, bulk, observeMarkers]);
-    if (invalidReceipt) throw invalidReceipt;
-    if (fatal) throw fatal;
     const drained = performance.now() - start;
     const clockAfter = traceTail || micro ? await sampleClock() : undefined;
     fs.writeFileSync(
@@ -473,12 +471,13 @@ export async function live(
               cycleBudget: microCycleMs,
               markers,
               temporal: [...temporalSeen].map(
-                ([command, { receipt, operations, correlationId }]) => ({
+                ([command, { receipt, operations, correlationId, retryStatus }]) => ({
                   command,
                   position: receipt.position,
                   txId: receipt.txId,
                   operations,
                   correlationId,
+                  retryStatus,
                 }),
               ),
               lostReplies,
@@ -489,6 +488,8 @@ export async function live(
       }),
       { flag: "wx" },
     );
+    if (invalidReceipt) throw invalidReceipt;
+    if (fatal) throw fatal;
     assert.equal(peakBulk, width && ordered.length ? 1 : 0);
     if (width && !budget && !split) assert(ordered.length > 0);
     const seen = new Set<string>();

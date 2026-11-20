@@ -126,7 +126,10 @@ export async function temporalExercise(
     value: { type: "string", value: String(i) },
     validFrom,
   });
-  const commits = new Map<string, { receipt: Receipt; operations: any[]; correlationId: string }>();
+  const commits = new Map<
+    string,
+    { receipt: Receipt; operations: any[]; correlationId: string; retryStatus: string | undefined }
+  >();
   async function commit(part: string, operations: any[], lose = false) {
     const commandId = temporalPrefix + part,
       correlationId = sha(JSON.stringify(operations));
@@ -134,6 +137,7 @@ export async function temporalExercise(
     if (lose) markLost(commandId);
     const result = await comp.transact(operations, meta);
     let receipt: Receipt;
+    let retryStatus: string | undefined;
     if (lose) {
       // [DX-LOAD3] Why: recover the original application command after its first HTTP reply was discarded.
       // Rejected: treating a duplicate error as a fresh write or requiring the transport to replay a lost reply.
@@ -143,8 +147,8 @@ export async function temporalExercise(
       const expected = record(frame, meta, found.value);
       if (result.ok) assert.deepEqual(ack(frame, result.value), expected);
       const retry = await comp.transact(operations, meta);
+      retryStatus = retry.ok ? "acknowledged" : retry.tag;
       if (retry.ok) assert.deepEqual(ack(frame, retry.value), expected);
-      else assert.equal(retry.tag, "CommandAlreadyCommittedError");
       const resolved = await comp.transactionByCommand(commandId);
       assert(resolved.ok && resolved.value);
       assert.deepEqual(record(frame, meta, resolved.value), expected);
@@ -162,7 +166,7 @@ export async function temporalExercise(
       if (!result.ok) throw new Error("Temporal exercise " + result.tag, { cause: result.error });
       receipt = result.value;
     }
-    commits.set(commandId, { receipt, operations, correlationId });
+    commits.set(commandId, { receipt, operations, correlationId, retryStatus });
     return receipt;
   }
   const birth = await commit("birth", [a(0, origin)]);

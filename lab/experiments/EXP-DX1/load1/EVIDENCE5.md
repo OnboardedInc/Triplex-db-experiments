@@ -17,3 +17,5 @@
 The experiment adds no acceptance verdict. No contract pin moved.
 
 The first Mac attempt `1b3dfba9-4ddc-4fe5-8744-8aa74fdfd6ff` verified 11,880 control offers before the final readback rejected unsupported depth eight. This attempt produced no completed arm. The cleanup removed all its containers and networks. The next attempt uses the existing supported depth four.
+
+Attempt `0ae918e0-ea4e-4432-b341-5b8f59435783` completed its first control and stopped in the 24-fact arm. The public benchmark wrapper surfaced the retry as `Unknown` instead of the tagged result seen in the in-memory test. The verification now records that transport outcome and always resolves the original command via a fresh durable lookup and full later feed reconciliation. Attempt cleanup is retained.
