@@ -175,7 +175,7 @@ subject_workers() {
     TX2_SUBJECT_SAVE=$subject TX2_GROUP_COMMIT=$((1-subject)) TX2_LIVE_PRIORITY=$((1-subject)) \
       TX2_PREDECESSOR_LOOKUP=1 TX2_GROUP_REUSE_PREPARED=1 TX2_GROUP_STAGE_CLOCK=1 \
       TX2_GROUP_FAST_REPLY=1 TX2_INT1_WRITE_READBACK=1 TX2_SUBJECT_PROFILE=1 \
-      DATOMIC_JAVA_OPTS="-Xms$((128/n))m -Xmx${share}m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -Ddatomic.objectCacheMax=24m -Ddatomic.memoryIndexMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json" \
+      DATOMIC_JAVA_OPTS="-Xms$((128/n))m -Xmx${share}m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -Ddatomic.objectCacheMax=32m -Ddatomic.memoryIndexMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json" \
       java_role -i bin/bridge.clj -m triplex.gateway.main "$port" &
     children[$((4+i))]=$!
     PREP1_PEERS="${PREP1_PEERS:+$PREP1_PEERS,}http://$addr:$port"
