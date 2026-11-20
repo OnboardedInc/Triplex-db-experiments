@@ -21,11 +21,15 @@
                            position (assoc "basis" {"recordedPosition" position})))
        :rows (map storage/decode-row) (sort-by :attribute) vec))
 
+(defn oracle-row [row]
+  ;; [DX-AGE1] Why: the gateway exposes timestamps as typed doubles even if the seed stored integral JSON.
+  ;; Rejected: changing the adopted storage text or comparing the wire response to the raw index JSON.
+  (storage/decode-row
+    (storage/wire-row (merge (zipmap lean/columns (repeat nil))
+                             {:retracted_at nil :retracted_position nil :retract_tx_id nil} row))))
+
 (defn oracle-person [pop i saves]
-  (let [missing (merge (zipmap lean/columns (repeat nil))
-                       {:retracted_at nil :retracted_position nil :retract_tx_id nil})]
-    (->> (tape/expected-person pop i saves) (map #(merge missing %))
-         (sort-by :attribute) vec)))
+  (->> (tape/expected-person pop i saves) (map oracle-row) (sort-by :attribute) vec))
 
 (defn oracle-history [pop saves]
   (let [by-id (into {} (for [i (range (:people pop)), j (range (:fields (tape/person pop i)))
@@ -37,10 +41,8 @@
                                               (update acc (:id row) assoc :retract_tx_id tx
                                                       :retracted_position position :retracted_at clock)) records prior)]
                          (into updated (map (juxt :id identity)) fresh)))
-                     by-id (range saves))
-        nil-fields (merge (zipmap lean/columns (repeat nil))
-                          {:retracted_at nil :retracted_position nil :retract_tx_id nil})]
-    (group-by :entity_id (map #(merge nil-fields %) (vals rows)))))
+                     by-id (range saves))]
+    (group-by :entity_id (map oracle-row (vals rows)))))
 
 (defn person-history [{:keys [name conn]} owner]
   (mapv storage/decode-row (:rows (storage/read-rows name (d/db conn) {"entityIds" [owner] "history" true}))))

@@ -8,7 +8,6 @@
             [triplex.age.scale :as scale]
             [triplex.age.structure :as structure]
             [triplex.age.tape :as tape]
-            [triplex.gateway.lean :as lean]
             [triplex.gateway.main :as gateway]
             [triplex.gateway.storage :as storage])
   (:import [java.nio.file Files Path]))
@@ -215,10 +214,7 @@
         rows (:ret result)
         duration (scale/ms began)
         view (filterv (comp adopt/fields :attribute) rows)
-        expected (->> (tape/expected-adopted pop i saves)
-                      (map #(merge (zipmap lean/columns (repeat nil))
-                                   {:retracted_at nil :retracted_position nil :retract_tx_id nil} %))
-                      (sort-by :attribute) vec)]
+        expected (->> (tape/expected-adopted pop i saves) (map gate/oracle-row) (sort-by :attribute) vec)]
     (gate/equal! expected view "Probe read differs from the seed and tape")
     {:cell label :cut head :count (count rows) :ms duration :io (:io-stats result)}))
 
