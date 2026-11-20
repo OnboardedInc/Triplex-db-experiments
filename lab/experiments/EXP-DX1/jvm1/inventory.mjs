@@ -16,6 +16,9 @@ export async function inventory(options, config, manager) {
   assert.equal(process.env.DOCKER_HOST, DOCKER_HOST);
   assert.equal(options.holder, holder);
   const sdkGate = options["sdk-gate"] === true;
+  const sdkFiles = options["sdk-files"] === undefined ? [] : String(options["sdk-files"]).split(",");
+  assert(!sdkFiles.length || (sdkGate && sdkFiles.every((file) => /^[a-z0-9-]+\.test\.ts$/.test(file))),
+    "Use --sdk-files with --sdk-gate and comma-separated Datomic SDK test filenames");
   const zgc = options.zgc === true;
   const javaMajor = process.env.DX_JAVA ?? "21";
   assert(!zgc || javaMajor === "25", "The shared Mac ZGC correctness gate requires Java 25");
@@ -88,7 +91,7 @@ export async function inventory(options, config, manager) {
     }
     const source = execFileSync("git", ["rev-parse", "HEAD"], {encoding:"utf8"}).trim();
     const files = [import.meta.filename, path.join(import.meta.dirname, "readback.sh"), path.join(import.meta.dirname, "launch.mjs"), path.join(stack, "up.sh")];
-    write("attempt.json", {prefix, source, slot:slot.slot, diagnostic: true, javaMajor, collectors, at:new Date(), caps, cpus, files:Object.fromEntries(files.map((file) => [path.basename(file), createHash("sha256").update(fs.readFileSync(file)).digest("hex")]))});
+    write("attempt.json", {prefix, source, slot:slot.slot, diagnostic: true, javaMajor, collectors, sdkGate, sdkFiles, at:new Date(), caps, cpus, files:Object.fromEntries(files.map((file) => [path.basename(file), createHash("sha256").update(fs.readFileSync(file)).digest("hex")]))});
     const child = spawn("bash", [
       path.join(stack,"up.sh"), prefix,
       ...(sdkGate ? ["--port-write", String(slot.port), "--port-read", String(slot.port + 10)] : ["--no-publish"]),
@@ -135,7 +138,8 @@ export async function inventory(options, config, manager) {
       const writer = "http://127.0.0.1:" + slot.port;
       const log = fs.openSync(path.join(out, "sdk-sql.log"), "wx");
       try {
-        execFileSync(process.execPath, [path.join(root, "node_modules/vitest/vitest.mjs"), "run", "--maxWorkers=1"], {
+        execFileSync(process.execPath, [path.join(root, "node_modules/vitest/vitest.mjs"), "run", "--maxWorkers=1",
+          ...sdkFiles.map((file) => "test/" + file)], {
           cwd: pkg, timeout: 240_000, stdio: ["ignore", log, log], env: {
             ...env, DATOMIC_INTEGRATION: "1", DATOMIC_URL: writer, DATOMIC_GATEWAY_URL: writer,
             DATOMIC_READ_URLS: "http://127.0.0.1:" + (slot.port + 10),
