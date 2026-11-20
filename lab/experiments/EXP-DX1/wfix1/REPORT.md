@@ -24,7 +24,7 @@ The audited base was the remote head `7a6a7e9ef` at dispatch. The exact review f
 
 **Checks** The receipt and retraction fixture went from 10 failures to 64 successful assertions. The combined native run passed 98 assertions across seven tests. Pinned O-REPLAY matched the raw feed, resumed page, pinned rows and durable tuples in all three modes. Sixteen SDK and eight W1 tests passed, along with the Datomic and W1 typechecks.
 
-**Mac SQL** The first managed image built. The current attempt is queued for admission. Process-stop recovery, native submission size and erasure qualification are open until the stack runs.
+**Mac SQL open** The first managed image built. Attempt `sql-03` combines build and execution under one heavy grant and was still queued at handoff. All four lab slots were occupied. The process-stop, native submission-size and erasure cases have no Mac SQL result yet.
 
 **Receipt and verdict audit**
 
