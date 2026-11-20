@@ -1192,7 +1192,24 @@ def fallback(r):
             "--timer-property=AccuracySec=1s","/usr/bin/systemctl","stop",*targets)
 
 
-def one(item):
+def restore_refusal(item):
+    # [DX-BM1] Why: the old serial restore refused a verified image before any offer could start.
+    # Rejected: retrying a measured result or discarding the original failed attempt.
+    folder=NIGHT/f"i{item}"
+    end=folder/"outcome.json"
+    kept=folder/"original-restore-outcome.json"
+    if item not in SEALED_ITEMS or not end.is_file() or kept.is_file():return False
+    row=get(end)
+    if row.get("attempt")!=1 or row.get("state")!="preflight-refused":return False
+    base=folder/"1"
+    log=base/"worker.log"
+    if not log.is_file() or not (base/"request.json").exists():return False
+    r=bind(get(base/"request.json"))
+    return not complete_output(r) and any("TimeoutExpired:" in line and "pg_restore" in line
+                                          for line in log.read_text(errors="replace").splitlines())
+
+
+def one(item, attempts=(1,2)):
     folder=NIGHT/f"i{item}";folder.mkdir(exist_ok=True)
     end=folder/"outcome.json"
     if end.exists():return
@@ -1203,7 +1220,7 @@ def one(item):
         put(timing,{"start":start})
     limit=start+ITEMS[item][3]*3600
     entry=dict(item=item,state="incomplete",detail="Item deadline elapsed before an admission",ended=stamp())
-    for attempt in (1,2):
+    for attempt in attempts:
         if time.time()>=limit-90:break
         r=make(item,attempt,start,limit);sub=Path(r["directory"]);terminal=sub/"terminal.json"
         if not terminal.is_file() and not installed(r):
@@ -1325,15 +1342,20 @@ def main():
         if any(running(bind(get(request))) for request in folder.glob("*/request.json")):
             in_flight.append(item)
     assert len(in_flight)<=1,"Multiple items claim the bench"
-    order=(*in_flight,*(item for item in scheduled if item not in in_flight))
-    pending=[item for item in order if not (NIGHT/f"i{item}/outcome.json").is_file()]
+    retry_restores=mode=="run-after-seed" and os.environ.get("DX_BM1_RESUME_RESTORES")=="1"
+    order=(*in_flight,*(item for item in scheduled if retry_restores or item not in in_flight))
+    pending=[item for item in order if not (NIGHT/f"i{item}/outcome.json").is_file() or (retry_restores and restore_refusal(item))]
     if pending:
         (NIGHT/"finished").unlink(missing_ok=True)
     if in_flight and len(pending)>1:
         item=in_flight[0]
         NEXT[item]=ITEMS[pending[1]][4] if pending[1] in ITEMS else "readers"
-    for item in order:
-        if (NIGHT/f"i{item}/outcome.json").is_file():
+    for index,item in enumerate(order):
+        adopted=retry_restores and index<len(in_flight)
+        folder=NIGHT/f"i{item}"
+        end=folder/"outcome.json"
+        kept=folder/"original-restore-outcome.json"
+        if end.is_file() and not (retry_restores and restore_refusal(item)):
             continue
         if item!=1 and mode!="run-after-seed":
             try:
@@ -1347,7 +1369,11 @@ def main():
                 assert not active("bm1n19-native-probes") and not command("docker","ps","-q")
             continue
         try:
-            one(item)
+            if retry_restores and not adopted and restore_refusal(item):end.rename(kept)
+            one(item, (2,) if kept.is_file() else (1,2))
+            if retry_restores and not adopted and restore_refusal(item):
+                end.rename(kept)
+                one(item, (2,))
         except Exception as error:
             print(traceback.format_exc(),flush=True)
             directory=NIGHT/f"i{item}"

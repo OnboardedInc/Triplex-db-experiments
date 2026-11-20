@@ -192,8 +192,22 @@ def files(root):
 
 
 def create_template(experiment,checkpoint):
+    scale=checkpoint.get("kind")=="scale1-single"
+    cache=INPUT.parent/"native-restore" if scale else None
+    identity={"checkpointSha256":sha(INPUT),"dumpSha256":checkpoint["dumpSha256"]}
+    if cache and cache.is_dir():
+        proof=get(cache/"snapshot.json")
+        assert all(proof[key]==value for key,value in identity.items())
+        assert proof["filesSha256"]==sha(cache/"files.json") and proof["pgVersion"]=="17"
+        data=cache/"pgdata"
+        assert (data/"PG_VERSION").read_text().strip()=="17" and not (data/"postmaster.pid").exists()
+        expected=get(cache/"files.json")
+        assert len(expected)>0 and "PG_VERSION" in expected
+        put(BASE/"frozen-files.json",expected)
+        put(BASE/"snapshot.json",proof)
+        return data,expected
     directory,slot,env,_=stack(0,"base",experiment)
-    dump=Path(checkpoint["dump"]) if checkpoint.get("kind")=="scale1-single" else INPUT.with_name("host.pgdump")
+    dump=Path(checkpoint["dump"]) if scale else INPUT.with_name("host.pgdump")
     assert dump.stat().st_size==checkpoint["bytes"] and sha(dump)==checkpoint["dumpSha256"]
     try:
         run("docker","stop","--time","20",slot+"-gw-r",slot+"-gw-w",slot+"-tx",env=env)
@@ -202,19 +216,39 @@ def create_template(experiment,checkpoint):
                                    stdout=subprocess.PIPE,check=True,timeout=60).stdout
         assert b"datomic_kvs" in catalog
         (directory/"restore-catalog.txt").write_bytes(catalog)
-        with dump.open("rb") as stream:
-            run("docker","exec","-i",slot+"-pg","pg_restore","-U","postgres","--exit-on-error","--clean","--if-exists",
-                "-d","datomic",stdin=stream,timeout=420,env=env)
+        pg_name=slot+"-pg"
+        options=("-U","postgres","--exit-on-error","--clean","--if-exists","-d","datomic")
+        if scale:
+            # [DX-BM1] Why: restore the large logical backup once with a seekable input and more setup CPUs.
+            # Rejected: a seven-minute serial pipe restore for each probe or changing the CPUs of a timed role.
+            copied="/tmp/bm1-pristine.pgdump"
+            run("docker","update","--cpuset-cpus","1,5,6,7",pg_name,env=env)
+            run("docker","cp",dump,pg_name+":"+copied,env=env,timeout=180)
+            assert pg(pg_name,"sha256sum",copied,env=env).split()[0]==checkpoint["dumpSha256"]
+            run("docker","exec",pg_name,"pg_restore","--jobs=4",*options,copied,timeout=1080,env=env)
+        else:
+            with dump.open("rb") as stream:
+                run("docker","exec","-i",pg_name,"pg_restore",*options,stdin=stream,timeout=420,env=env)
         run("docker","stop","--time","30",slot+"-pg",env=env)
         pgdata=volume(slot)
         assert not (pgdata/"postmaster.pid").exists()
-        target=BASE/"frozen-pgdata";target.mkdir(mode=0o700)
+        pending=cache.with_name("native-restore-"+experiment) if cache else None
+        if pending:pending.mkdir(mode=0o700)
+        target=(pending/"pgdata") if pending else BASE/"frozen-pgdata"
+        target.mkdir(mode=0o700)
         run("cp","-a","--reflink=auto",str(pgdata)+"/.",target,timeout=120)
         expected=files(target)
         assert expected==files(pgdata) and (target/"PG_VERSION").read_text().strip()=="17"
         put(BASE/"frozen-files.json",expected)
-        put(BASE/"snapshot.json",{"checkpointSha256":sha(INPUT),"dumpSha256":checkpoint["dumpSha256"],
-            "filesSha256":sha(BASE/"frozen-files.json"),"restoreCatalogSha256":sha(directory/"restore-catalog.txt")})
+        proof={**identity,"filesSha256":sha(BASE/"frozen-files.json"),
+               "restoreCatalogSha256":sha(directory/"restore-catalog.txt"),"pgVersion":"17"}
+        put(BASE/"snapshot.json",proof)
+        if pending:
+            shutil.copyfile(BASE/"frozen-files.json",pending/"files.json")
+            shutil.copyfile(directory/"restore-catalog.txt",pending/"restore-catalog.txt")
+            put(pending/"snapshot.json",proof)
+            pending.rename(cache)
+            target=cache/"pgdata"
         return target, expected
     finally:
         cleanup()
