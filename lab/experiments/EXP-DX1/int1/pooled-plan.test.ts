@@ -76,6 +76,11 @@ test("the saved proof tapes bind all ten accounts and keep quiet offer slots and
     Array(10).fill(4),
   );
   const windows = campaignWindows(campaign, "reader");
+  const offerRate = (plan: typeof windows, name: string) => plan.find((w) => w.name === name)!.rates!;
+  assert.deepEqual(offerRate(windows, "import"), offerRate(windows, "import-control"));
+  assert.equal(offerRate(windows, "import")[1], 4.9 / 8);
+  const physical = campaignWindows(campaignTenant(loaded!, false), "reader");
+  assert.equal(offerRate(physical, "import")[1], 4.9);
   const offsets = (name: string) => {
     const w = windows.find((v) => v.name === name)!;
     return b.events

@@ -75,7 +75,9 @@ function unavailable(name: string, bar: string, reason: string): Row {
 const markdown = (value: string) => value.replaceAll("|", "\\|").replace(/[\r\n]/g, " ");
 
 export function render(run: Run, destination: string) {
-  const rows = names.map((name, i) => unavailable(`P${i + 1} ${name}`, bars[i]!, run.error ?? gaps[i]!));
+  const rows = names.map((name, i) => unavailable(`P${i + 1} ${name}`, bars[i]!, run.error ?? (
+    run.toy && run.partial && [4, 5, 7].includes(i) ? "The Mac fixture has no verified loaded field arm." : gaps[i]!
+  )));
   const correctness = [
     unavailable("Journal queryable", "Original changes and ordered cursor are queryable", "Layout K native journal query gate is separate from the legacy SDK feed."),
     unavailable("Erased value never returned", "All covered current and historical routes return the marker", "The erasure/restore regression needs its own synthetic stack and authority."),
@@ -182,9 +184,11 @@ export function render(run: Run, destination: string) {
       ];
       for (const i of [0, 1, 2, 3]) {
         const checks = targetBars(i + 1, p[`P${i + 1}`]);
+        const measurements = shown(checks);
+        if (run.toy && !measurements) continue;
         const invalid = !eligible && !run.toy ? item.summary.invalid.join("; ") : "";
-        const diagnostic = run.toy ? `Toy samples. ${shown(checks)}`
-          : [shown(checks), invalid, i >= 2 ? gaps[i] : ""].filter(Boolean).join(". ");
+        const diagnostic = run.toy ? `Toy samples. ${measurements}`
+          : [measurements, invalid, i >= 2 ? gaps[i] : ""].filter(Boolean).join(". ");
         Object.assign(rows[i]!, {
           reading: diagnostic || "No applicable observations.",
           status: run.toy ? "DIAGNOSTIC" : i < 2 || checks.some((b) => b.pass === false)
