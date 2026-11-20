@@ -7,6 +7,8 @@ import { measureW0Http } from "../../../bench/lib/w0-http.ts";
 import type { Store, Op } from "./store.ts";
 import type { Packet } from "./dispatcher.ts";
 
+import { walCut, appendedWal } from "./wal.ts";
+
 type Extra = Record<string, unknown>;
 const now = () => performance.timeOrigin + performance.now();
 const bytes = (v: unknown) =>
@@ -91,8 +93,16 @@ export class Budget {
             };
           },
         ),
-      transact: (ops: Op[], meta: any) =>
-        this.http(
+      transact: (ops: Op[], meta: any) => {
+        const wal =
+          this.enabled &&
+          role === "receiver" &&
+          process.env.NOTIFY_WAL === "1" &&
+          base.scopeName?.startsWith("act1-")
+            ? path.join(this.identity.dir, base.scopeName + ".db")
+            : undefined;
+        const before = wal ? walCut(wal) : undefined;
+        return this.http(
           "write",
           role,
           () => base.transact(ops, meta),
@@ -112,11 +122,13 @@ export class Budget {
               operation: kind,
               txId: r.value.txId,
               position: r.value.position,
+              ...(wal && before ? { wal: appendedWal(before, walCut(wal)) } : {}),
               opBytes: bytes(ops),
               operations: ops.length,
             };
           },
-        ),
+        );
+      },
     } as T;
   }
   finish() {

@@ -35,6 +35,7 @@ if (["schedules", "rungs", "crash"].includes(mode!)) {
     ["delayed", ["delayed.test.ts"]],
     ["erasure", ["erasure.test.ts"]],
     ["recovery", ["recovery.test.ts"]],
+    ["activation-recovery", ["activation-recovery.test.ts"]],
   ] as const) {
     const out = path.join(dir, name + ".tap"),
       fd = fs.openSync(out, "wx");
@@ -68,7 +69,10 @@ if (["schedules", "rungs", "crash"].includes(mode!)) {
                 .readFileSync(path.join(import.meta.dirname, files[0]), "utf8")
                 .matchAll(/^test\(\s*"([^"]+)"/gm),
             ].map((m) => m[1]);
-      assert.equal(names.length, name === "delta" ? 4 : name === "delayed" ? 3 : 1);
+      assert.equal(
+        names.length,
+        name === "delta" ? 4 : name === "delayed" ? 3 : name === "activation-recovery" ? 2 : 1,
+      );
       assert.deepEqual(
         [...tap.matchAll(/^ok \d+ - (.+)$/gm)].map((m) => m[1]),
         names,
@@ -78,9 +82,42 @@ if (["schedules", "rungs", "crash"].includes(mode!)) {
     }
   }
 }
-if (mode !== "schedules") {
+if (mode === "joined-admission") {
+  await (await import("../actv-lazy/join/admission-gate.ts")).run(dir, attempt);
+} else if (mode === "joined-load") {
+  await (await import("../actv-lazy/join/queue-study.ts")).run(dir, attempt);
+} else if (mode === "joined-server-check") {
+  await (await import("../actv-lazy/join/admission-gate.ts")).run(dir, attempt);
+  const small = path.join(dir, "one-seed");
+  fs.mkdirSync(small);
+  execFileSync(
+    process.execPath,
+    [
+      "--experimental-strip-types",
+      path.join(import.meta.dirname, "../actv-lazy/join/server.ts"),
+      "1000",
+      small,
+      "--one-seed-local",
+    ],
+    {
+      stdio: "inherit",
+      timeout: 600000,
+      env: {
+        ...process.env,
+        TX2_WRITE_OPTIONS_ATTEMPT: attempt.nonce,
+        TX2_W0_RESTORE_INDEXED_JOURNAL: "1",
+      },
+    },
+  );
+} else if (mode !== "schedules") {
   const worker = await import(
-    "./" + (mode === "solo-check" || mode === "deep-loaded" ? "solo" : mode) + ".ts"
+    "./" +
+      (mode === "solo-check" || mode === "deep-loaded"
+        ? "solo"
+        : mode === "audit-check" || mode === "audit-loaded"
+          ? "audit-solo"
+          : mode) +
+      ".ts"
   );
   await worker.run(dir, attempt);
 }

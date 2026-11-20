@@ -1,6 +1,6 @@
 import { unsafe } from "@triplex-build/triplex";
 import {
-  decodeValueColumns,
+  decodeReadValueColumns,
   storedValueDomain,
   ValueDomains,
 } from "@triplex-build/triplex/runtime";
@@ -33,7 +33,7 @@ export function decodeReplicaRows(
       id: row.id,
       entityId: id,
       attribute: row.attribute,
-      value: decodeValueColumns(row, storedValueDomain(ValueDomains.datomic, row.attribute)),
+      value: decodeReadValueColumns(row, storedValueDomain(ValueDomains.datomic, row.attribute)),
       position: row.recorded_position,
       // [DX-R3] Why: source public metadata is part of the fast-path answer, not an optional projection.
       // Rejected: reconstructing metadata from journal clocks (old rows retain their own assertion receipt).

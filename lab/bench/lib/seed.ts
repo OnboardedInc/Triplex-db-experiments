@@ -71,6 +71,12 @@ export async function seedRung(opts: {
 }): Promise<SeedResult> {
   const { comp } = opts;
   const accounts = accountsFor(opts.subjects);
+  const requestedDepth = opts.inFlight ?? 1;
+  if (requestedDepth !== 1 && comp.backend.name !== "datomic") throw Error("Concurrent seed requires Datomic");
+  if (![1, 2, 4].includes(requestedDepth)) throw Error("Seed depth must be 1, 2 or 4");
+  // [DX-THIN1] Why: the deep witness proves a contiguous journal in roster order.
+  // Rejected: passing independently completed bulk receipts to the ordered witness.
+  const depth = opts.deep ? 1 : requestedDepth;
   const started = performance.now();
   const state = new Map<number, SubjectState>();
   const versionIds = new Map<number, string[]>();
@@ -119,9 +125,16 @@ export async function seedRung(opts: {
         if (record) recorded.push({ commandId, operations, preconditions, actor: "bulk-seed", receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignIds(operations, receipt) } });
         return receipt;
       }
-      failures.push({ tag: out.tag, commandId, message: String(out.error?.message ?? out.error ?? "").slice(0, 300) });
+      const gateway = out.error?.cause;
+      // [DX-THIN1] Why: distinguish a declined synthetic campaign frame from an unavailable gateway.
+      // Rejected: recording all error bodies in ordinary application runs.
+      const detail = process.env.DX_INT1_SEED_ERRORS === "1" && gateway?._tag === "DatomicHttpError"
+        ? ` (${gateway.status} ${gateway.code} ${gateway.message})`
+        : "";
+      const message = (String(out.error?.message ?? out.error ?? "") + detail).slice(0, 300);
+      failures.push({ tag: out.tag, commandId, message });
       if (opts.deep) opts.log(`seed: attempt ${attempt} failed for ${commandId}: ${out.tag} ${failures.at(-1)!.message}`);
-      if (attempt >= 8) throw new Error(`seed command ${commandId} failed ${attempt} times: ${out.tag} ${String(out.error?.message ?? out.error ?? "").slice(0, 300)}`);
+      if (attempt >= 8) throw new Error(`seed command ${commandId} failed ${attempt} times: ${out.tag} ${message}`);
       await new Promise((r) => setTimeout(r, 500 * attempt));
     }
   };
@@ -135,10 +148,7 @@ export async function seedRung(opts: {
   }
   opts.log(`seed: ${opts.deep ? 0 : accounts} shared account worlds in ${((performance.now() - started) / 1000).toFixed(1)} s`);
   // 2. subjects, version 0
-  // [DX-THIN1] Why: the deep witness proves a contiguous journal in roster order. Rejected: passing independently completed bulk receipts to that ordered witness.
-  const depth = opts.deep ? 1 : opts.inFlight ?? 1;
   let lastDeepProgress = 0;
-  if (depth !== 1 && comp.backend.name !== "datomic") throw Error("Concurrent seed requires Datomic");
   function* batches() {
     let batch: Fact[] = [], members: number[] = [];
     let deepBatch: { subject: number; rows: Fact[] }[] = [];

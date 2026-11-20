@@ -729,7 +729,23 @@
                 left (submit "left") right (submit "right")]
             (deliver go true)
             (is (= {:committed 1 conflict 1} (frequencies [@left @right])))
-            (is (= 1 (count (seq (d/index-range (d/db conn) :triplex.entity/row (pfx same) (str (pfx same) "~")))))))))
+            (is (= 1 (count (seq (d/index-range (d/db conn) :triplex.entity/row (pfx same) (str (pfx same) "~"))))))))
+        ;; [DX-THIN1] Why: drive the same immutable pre-ACK view into the real serial commit after a replacement.
+        ;; Rejected: a duplicate observed only by ingress or a write with a still-live predecessor.
+        (let [old (id "Q") next (id "R")
+              _ (commit! (d/db conn) (input [(row old "retry-owner")] [old] "retry-seed"))
+              stale (d/db conn)
+              replacement (input [(retired (row old "retry-owner")) (row next "retry-owner")]
+                                 [next] "retry-original")
+              original (commit! stale replacement)
+              fresh-operation (assoc replacement "operationId" "retry-fresh-operation")
+              distinct-command (assoc fresh-operation "claims" [{"commandId" "never-committed" "txId" "never-committed" "timestamp" 100.0}])]
+          (is (= {:status 409 :code "OperationDuplicate"} (outcome stale replacement)))
+          (is (= {:status 409 :code "CommandConflict"} (outcome stale fresh-operation)))
+          (is (= {:status 409 :code "CasConflict"} (outcome stale distinct-command)))
+          (is (= (select-keys original [:position :recordedAt :operationId :t])
+                 (select-keys (storage/operation (d/db conn) "retry-original") [:position :recordedAt :operationId :t])))
+          (is (= (get-in original [:position "v"]) (str (storage/head-position (d/db conn)))))))
       (finally (gateway/delete-scope! base scope)))))
 
 ;; [DX-W1] Why: exercise the compact bytes emitted by the public TS client through the gateway's normal request parser.

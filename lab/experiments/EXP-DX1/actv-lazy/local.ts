@@ -29,12 +29,14 @@ const tracked = git(
   "lab/experiments/EXP-DX1/notify1",
   "lab/experiments/EXP-DX1/import1/source.ts",
   "lab/experiments/EXP-DX1/scale1/tenants.ts",
+  "lab/experiments/EXP-DX1/scale1/deep-live.ts",
   "lab/world/W0",
   "lab/oracles/domain",
   "packages/datomic/src",
   "packages/datomic/gateway",
   "packages/w0/src",
   "lab/bin/engine.mjs",
+  "lab/bin/heavy-lock.mjs",
   "lab/bin/lib.mjs",
   "pnpm-lock.yaml",
 )
@@ -115,6 +117,61 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
   assert.match(buf, /# pass 1\b/);
   assert.match(buf, /# fail 0\b/);
   writeFileSync(join(dir, "ranges.tap"), buf, { flag: "wx" });
+} else if (binding.mode === "--joined-stage-proof") {
+  run("join/stage-gate.ts", [dir]);
+  run("join/deadline-gate.ts", [dir]);
+  run("join/gate.ts", [dir]);
+} else if (binding.mode === "--joined-fast-deep" || binding.mode === "--joined-fast-compact") {
+  assert(["1000", "10000"].includes(binding.size!));
+  run("join/fast-price.ts", [
+    dir,
+    binding.size!,
+    binding.mode === "--joined-fast-deep" ? "deep" : "compact",
+  ]);
+} else if (binding.mode === "--joined-server-smoke") {
+  run("join/server.ts", ["64", dir, "--local"]);
+} else if (binding.mode === "--joined-settle-proof") {
+  run("join/settle-gate.ts", [dir]);
+} else if (binding.mode === "--joined-shared-proof") {
+  run("join/gate.ts", [dir]);
+} else if (binding.mode === "--joined-part7") {
+  for (const f of ["settle-gate.ts", "future-gate.ts", "gate.ts"]) run("join/" + f, [dir]);
+  process.env.NOTIFY_NATIVE = "1";
+  const body = execFileSync(
+    process.execPath,
+    ["--experimental-strip-types", "--test", "lab/experiments/EXP-DX1/notify1/coverage.test.ts"],
+    { encoding: "utf8" },
+  );
+  assert.match(body, /# pass 7\b/);
+  assert.match(body, /# fail 0\b/);
+  writeFileSync(join(dir, "shared-coverage.tap"), body, { flag: "wx" });
+} else if (binding.mode === "--joined-role-gate") {
+  run("join/role-gate.ts", [dir]);
+} else if (binding.mode === "--joined-settle-price") {
+  assert(["64", "1000", "10000"].includes(binding.size!));
+  run("join/settle-price.ts", [dir, binding.size!, binding.size === "64" ? "3" : "60"]);
+} else if (binding.mode === "--joined-settle-prepare" || binding.mode === "--joined-settle-block") {
+  const [n, rate] = binding.size!.split(":");
+  assert(["64", "1000", "10000"].includes(n!) && ["3.5", "23.5"].includes(rate!));
+  const prepare = binding.mode === "--joined-settle-prepare";
+  run("join/settle-price.ts", [
+    dir,
+    n!,
+    n === "64" ? "3" : "180",
+    "4",
+    prepare ? "--prepare" : "--resume",
+    prepare ? rate! : process.env.DX_JOIN_PREPARATION!,
+  ]);
+} else if (binding.mode === "--joined-size") {
+  const [profile, n] = binding.size!.split(":");
+  assert((profile === "thin" || profile === "deep") && ["1000", "10000", "100000"].includes(n!));
+  run("join/scope-price.ts", [dir, n!, profile]);
+} else if (binding.mode === "--joined-fixed") {
+  assert(["45", "180"].includes(binding.size!));
+  run("join/interference.ts", [dir, binding.size!]);
+} else if (binding.mode === "--joined-deep") {
+  assert(["1000", "10000"].includes(binding.size!));
+  run("join/deep-price.ts", [dir, binding.size!]);
 } else if (binding.mode === "--joined-price") {
   assert(["1000", "10000"].includes(binding.size!));
   run("join/price.ts", [dir, binding.size!]);

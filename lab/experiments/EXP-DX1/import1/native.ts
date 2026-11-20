@@ -22,7 +22,7 @@ export async function openNative(scope: string, mode: "history" | "snapshot") {
     write: async (ops: any[], meta: Record<string, unknown>, instant?: number) => {
       if (instant === undefined) {
         const r = await base.transact(ops, meta);
-        if (!r.ok) throw Error("Import transaction: " + r.tag);
+        if (!r.ok) throw Error("Import transaction: " + r.tag, { cause: r.error });
         return r.value;
       }
       assert(historical);

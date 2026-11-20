@@ -53,17 +53,33 @@ const reopen = async () => {
   a = new JoinedAccount(s);
 };
 let active: W0.ReleaseDoc | null = null;
-async function check(t: any, at: string, doc: W0.ReleaseDoc | undefined) {
+async function check(t: any, at: string, doc: W0.ReleaseDoc | undefined, shared = false) {
   const n = doc ? (await a.notices.observe()).value.sequence : undefined;
-  notes.push(
-    await ref.check(a, ids, world, doc ?? active!, { tx: t.position, validTime: at }, active, n),
+  const proof = await ref.check(
+    a,
+    ids,
+    world,
+    doc ?? active!,
+    { tx: t.position, validTime: at },
+    active,
+    n,
+    true,
+    true,
+    shared,
   );
+  if (shared)
+    assert(
+      proof.coverage &&
+        proof.coverage.affected.length >= 2 &&
+        proof.coverage.complement.includes(ids[0]!),
+    );
+  notes.push(proof);
   if (doc) active = doc;
 }
-async function runSave(id: string, e: Edit, at = valid, editor = a) {
+async function runSave(id: string, e: Edit, at = valid, editor = a, shared = false) {
   const r = await editor.save(id, e, at);
   apply(e.e, e.a, e.values, r.position);
-  await check(r, at, undefined);
+  await check(r, at, undefined, shared);
   return r;
 }
 function kill(msg: object) {
@@ -147,6 +163,13 @@ try {
   await runSave("back", { e: ids[1]!, a: "payRateCents", values: [1550] });
   const digest = sha256(canonical((await a.notices.observe()).value));
   assert(digest.length === 64);
+  await runSave(
+    "local-before",
+    { e: "loc:x", a: "localMinWageCents", values: [1810] },
+    valid,
+    a,
+    true,
+  );
   let raced = false;
   const contender = await openStore(scope);
   try {
@@ -158,11 +181,12 @@ try {
           {
             e: "jur:x",
             a: "stateMinWageCents",
-            values: [1800],
+            values: [2050],
             from: "2026-11-01T00:00:00.000000Z",
           },
           valid,
           new JoinedAccount(contender),
+          true,
         );
       }
     });
@@ -179,14 +203,32 @@ try {
     }),
     "stale",
   );
+  await runSave(
+    "local-after",
+    { e: "loc:x", a: "localMinWageCents", values: [2250] },
+    valid,
+    a,
+    true,
+  );
   assert.equal(await a.admit(await propose(s, "w0", ids[1]!)), "covered");
+  const priorValue = (
+    await s.rows(["jur:x"], await s.head(), "2026-10-30T00:00:00.000000Z")
+  ).filter((x) => x.attribute === "stateMinWageCents");
+  assert.deepEqual(
+    priorValue.map((x) => x.value.value),
+    ["1650"],
+  );
   const later = "2026-11-05T01:00:00.000000Z",
     due = "2026-11-05T00:00:00.000000Z";
+  await runSave("deadline:" + sha256(due), { e: ids[4]!, a: "weeklyMinutes", values: [2800] });
   await a.advance(later);
-  const overdue = await s.lookup("joined:deadline:" + sha256(due));
+  const overdue = await s.lookup("joined:deadline/" + sha256(due));
   assert(overdue);
   await check(overdue, due, undefined);
-  const r3 = await a.publish("R3", W0.R3.doc, later, "envelopes");
+  const authored = structuredClone(W0.R3.doc);
+  const writing = a.publish("R3", authored, later, "envelopes");
+  Object.assign(authored.rules.find((r) => r.id === "OT")!, { params: { thresholdMinutes: 1 } });
+  const r3 = await writing;
   await check(r3, later, W0.R3.doc);
   kill({ stop: "receiver" });
   await reopen();

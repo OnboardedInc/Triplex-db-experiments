@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 import { Account } from "./account.ts";
 import type { W0 } from "../../../bench/lib/w0-world.ts";
+import { setTimeout as delay } from "node:timers/promises";
+import { iso } from "./v3.ts";
 
 type Job = { release: boolean; run: () => Promise<void>; parked: number; command: string };
 export type Admission = {
@@ -78,10 +80,15 @@ export function writerPipeline(source: CompositionHandle) {
 
 export type Decision = { output: W0.Output; seq: number; releaseSeq: number; position: number };
 export class CurrentDecisions {
-  private readonly a: Pick<Account, "db" | "decisionsAt">;
+  private readonly a: Pick<Account, "currentCut" | "decisionsAt">;
+  private readonly clock: (() => string) | null;
   private queued: { id: string; ok: (d: Decision) => void; fail: (e: unknown) => void }[] = [];
-  constructor(account: Pick<Account, "db" | "decisionsAt">) {
+  constructor(
+    account: Pick<Account, "currentCut" | "decisionsAt">,
+    clock: (() => string) | null = () => iso(Date.now()),
+  ) {
     this.a = account;
+    this.clock = clock;
   }
   read(id: string): Promise<Decision> {
     return new Promise((ok, fail) => {
@@ -93,9 +100,10 @@ export class CurrentDecisions {
     const group = this.queued.splice(0);
     try {
       // [DX-ACT2] Why: concurrent arrivals can share one cut acquired after every request in the group. Rejected: reusing an earlier latest position after another client publishes.
-      const p = await this.a.db.comp.currentPosition(),
+      const now = this.clock?.(),
+        p = await this.a.currentCut(now),
         ids = [...new Set(group.map((g) => g.id))],
-        r = await this.a.decisionsAt(ids, p);
+        r = await this.a.decisionsAt(ids, p, now);
       for (const g of group) {
         const output = r.out.get(g.id);
         assert(output);
@@ -104,5 +112,21 @@ export class CurrentDecisions {
     } catch (e) {
       for (const g of group) g.fail(e);
     }
+  }
+}
+
+// [DX-ACT2] Why: on startup replay due clock events with the same durable command keys even while dispatch and saves are idle. Rejected: deriving notices only when a point reader happens to ask for the expired person.
+export async function runValidClock(
+  account: Pick<Account, "currentCut">,
+  signal: AbortSignal,
+  now = () => iso(Date.now()),
+  interval = 250,
+) {
+  while (!signal.aborted) {
+    await account.currentCut(now());
+    if (!signal.aborted)
+      await delay(interval, undefined, { signal }).catch((e) => {
+        if (!signal.aborted) throw e;
+      });
   }
 }

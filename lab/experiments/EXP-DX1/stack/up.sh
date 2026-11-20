@@ -148,7 +148,7 @@ INPUT_LEASE
     tx2-datomic:1.0.7745-da00 -m triplex.gateway.layout-input-audit "/inputs/$(basename "$2")"
   exit
 fi
-tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume=
+tx=6 pg=6 gw_w=5,6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume=
 if [[ ${DX_INT1_GATEWAYS:-original} == demand ]]; then
   # [DX-THIN1] Why: apply the same peer limits on ordinary stack launches and the physical queue. Rejected: tuning only the Mac diagnostic container.
   demand_peer='-Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps'
@@ -184,6 +184,15 @@ while (($#)); do
   esac
   shift 2
 done
+# [DX-TAIL1] Why: even callers that only supply a property get an explicit heap and collector.
+# Rejected: depending on HotSpot footprint and placement heuristics.
+explicit_heap() {
+  local options=$1 start=$2 maximum=$3
+  case " $options " in *" -Xms"*) ;; *) options="-Xms$start $options";; esac
+  case " $options " in *" -Xmx"*) ;; *) options="-Xmx$maximum $options";; esac
+  printf '%s\n' "$options"
+}
+tx_java=$(explicit_heap "$tx_java" 256m "${DX_TX_HEAP:-2g}")
 tx_java=$(explicit_gc '-XX:+UseG1GC -XX:MaxGCPauseMillis=50' "$tx_java")
 # bin/run reads DATOMIC_JAVA_OPTS. Preserve precedence across the common and per-role options.
 peer_java() {
@@ -193,9 +202,12 @@ peer_java() {
   elif [[ -z $options && -n $heap ]]; then
     options="-Xms256m -Xmx$heap"
   fi
-  explicit_gc "$fallback" "${override:-$options}"
+  local start=256m max=${heap:-1g}
+  if [[ ${DX_INT1_GATEWAYS:-original} == demand ]]; then start=64m; max=${heap:-384m}; fi
+  options=$(explicit_heap "${override:-$options}" "$start" "$max")
+  explicit_gc "$fallback" "$options"
 }
-gw_w_java=$(peer_java "${DX_GW_WRITE_HEAP:-}" "${DX_GW_WRITE_JAVA_OPTS:-}" '-XX:+UseSerialGC')
+gw_w_java=$(peer_java "${DX_GW_WRITE_HEAP:-}" "${DX_GW_WRITE_JAVA_OPTS:-}" '-XX:+UseG1GC -XX:MaxGCPauseMillis=25')
 gw_r_java=$(peer_java "${DX_GW_READ_HEAP:-}" "${DX_GW_READ_JAVA_OPTS:-}" '-XX:+UseG1GC')
 if [[ ${DX_BARE_METAL:-0} == 1 ]]; then
   # [DX-BM1] Why: the native read gateway spans cores 4 and 8. Check each requested CPU against this host's actual allocation.
@@ -471,6 +483,39 @@ if [[ ${DX_STACK_WAIT_FOR_TRANSACTOR:-0} == 1 ]]; then
 fi
 # A ready transactor is checked by gateway health, which creates and syncs a real SQL database.
 for role in w r; do
+  # [DX-W1] Why: bootstrap is finished on the other peer before the single authoritative writer admits live traffic.
+  # Rejected: allowing a large labeled import through the live writer's frame cap during measurement.
+  field_policy=()
+  if [[ $role == w && -n ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
+    [[ ${DX_PREDECESSOR_LOOKUP:-} =~ ^[01]$ && $DX_WRITE_OPTIONS_ATTEMPT =~ ^[a-f0-9-]{36}$ ]] || exit 2
+    field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=$DX_PREDECESSOR_LOOKUP" -e "TX2_WRITE_OPTIONS_ATTEMPT=$DX_WRITE_OPTIONS_ATTEMPT")
+  fi
+  if [[ -n ${DX_LIVE_PRIORITY:-} ]]; then
+    [[ $DX_LIVE_PRIORITY =~ ^[01]$ && ${DX_FIELD_COALESCE:-0} =~ ^[01]$ ]] || exit 2
+    if [[ $role == w ]]; then field_policy+=(-e "TX2_LIVE_PRIORITY=$DX_LIVE_PRIORITY" -e "TX2_FIELD_COALESCE=${DX_FIELD_COALESCE:-0}"); fi
+  fi
+  if [[ $role == w && ${DX_W1_EXTRA:-0} == 1 ]]; then
+    [[ ${DX_SMALL_ROWS:-0} =~ ^[01]$ && ${DX_GROUP_REUSE_PREPARED:-0} =~ ^[01]$ && ${DX_GROUP_MAX_MEMBERS:-8} =~ ^[1-9][0-9]{0,2}$ ]] || exit 2
+    field_policy+=(-e "TX2_GROUP_STAGE_CLOCK=1" -e "TX2_SMALL_ROWS=${DX_SMALL_ROWS:-0}" -e "TX2_GROUP_REUSE_PREPARED=${DX_GROUP_REUSE_PREPARED:-0}" -e "TX2_GROUP_MAX_MEMBERS=${DX_GROUP_MAX_MEMBERS:-8}")
+    if [[ -z ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
+      [[ ${DX_W1_PREDECESSOR:-0} =~ ^[01]$ ]] || exit 2
+      field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=${DX_W1_PREDECESSOR:-0}")
+    fi
+    for pair in "TX2_SAVE_LEDGER=${DX_W1_LEDGER:-0}" \
+                "TX2_PACKED_JOURNAL=${DX_W1_PACKED_JOURNAL:-0}" "TX2_GROUP_FAST_REPLY=${DX_W1_FAST_REPLY:-0}" \
+                "TX2_LEAN_NATIVE_QUERY=${DX_W1_JOURNAL_QUERY:-0}" "TX2_LEAN_NATIVE_LOG=${DX_W1_JOURNAL_QUERY:-0}"; do
+      [[ ${pair#*=} =~ ^[01]$ ]] || exit 2
+      field_policy+=(-e "$pair")
+    done
+    if [[ -n ${DX_WRITE_BUDGET_US:-} ]]; then
+      [[ $DX_WRITE_BUDGET_US =~ ^[1-9][0-9]{0,5}$ ]] || exit 2
+      field_policy+=(-e "TX2_WRITE_BUDGET_US=$DX_WRITE_BUDGET_US")
+    fi
+  fi
+  if [[ $role == w && ${DX_INT1_NATIVE_WRITE_READBACK:-0} == 1 ]]; then
+    [[ ${DX_PREDECESSOR_LOOKUP:-0} =~ ^[01]$ ]] || exit 2
+    field_policy+=(-e "TX2_INT1_WRITE_READBACK=1" -e "TX2_PREDECESSOR_LOOKUP=${DX_PREDECESSOR_LOOKUP:-0}")
+  fi
   if [[ $role == w ]]; then cpu=$gw_w port=$port_w; else cpu=$gw_r port=$port_r; fi
   ports=(); [[ $publish == false ]] || ports=(-p "127.0.0.1:$port:8080")
   if [[ $role == w ]]; then
@@ -502,7 +547,7 @@ for role in w r; do
     fi
   fi
   docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
-    ${ports[@]+"${ports[@]}"} ${tail1_env[@]+"${tail1_env[@]}"} "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$role_jfr" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+    ${ports[@]+"${ports[@]}"} ${tail1_env[@]+"${tail1_env[@]}"} ${field_policy[@]+"${field_policy[@]}"} "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$role_jfr" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template&ApplicationName=triplex-gw-$role" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \
     -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \

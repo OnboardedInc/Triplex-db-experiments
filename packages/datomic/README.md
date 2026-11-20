@@ -146,9 +146,14 @@ Lean scopes keep live row-text datoms and reconstruct retirements from native
 Datomic history, with explicit markers for non-default retirement metadata.
 Assertions retired in their creating physical transaction retain a marked row so
 history is not lost. Retired assertion identities remain reserved. Native `q`
-and the older native `log` route return HTTP 409 `LayoutUnsupported`; the query
-adapter exposes `DatomicLayoutUnsupported`, a `ReadError` with its route.
-`Triples.transactions` uses the supported journal path.
+and `log` return HTTP 409 `LayoutUnsupported` by default on lean scopes.
+`TX2_LEAN_NATIVE_QUERY=1` enables the gateway's Datalog grammar over a bounded
+relation of stored rows identified by stable Triplex IDs. Physical fact entity
+numbers and unrestricted Datomic attributes still require the legacy layout.
+`TX2_LEAN_NATIVE_LOG=1` enables replay of application identities and intervals.
+The two options refuse lean scopes with observed erasure until those surfaces
+can apply the current erasure frontier. `Triples.transactions` uses the typed
+journal path.
 
 Optional `getReachRows` and `getReachRowsMany` expose the same ordered closure as
 fast reach while preserving each row's genuine recorded position. As with the

@@ -52,7 +52,7 @@ export class Model {
   private full: FullRowModel | undefined;
   receiptVersion = 0;
   bindReceipt(operations: readonly any[], receipt: Receipt, actor?: string): void {
-    this.full ??= new FullRowModel();
+    this.full ??= new FullRowModel(undefined, this.live);
     this.full.add(operations, receipt, actor);
     this.receiptVersion++;
   }
@@ -61,10 +61,13 @@ export class Model {
   private shared = new Map<number, Digest>();
   private seeds = new Map<number, Digest>();
   readonly commits = new Map<number, Commit[]>();
-  constructor(subjects: number) {
+  private readonly live: boolean;
+  constructor(subjects: number, live = false) {
     this.subjects = subjects;
     this.accounts = accountsFor(subjects);
+    this.live = live;
   }
+  expectationRevision(subject: number) { return this.full?.revision(subject) ?? this.receiptVersion; }
   private sharedDigest(a: number): Digest {
     let d = this.shared.get(a);
     if (!d) {

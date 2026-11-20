@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
 import { metricEndpoint, type Stack } from "../thin1/native-metrics.ts";
+import { heapResidency } from "../thin1/heap-residency.ts";
 
 export function parseHistogram(raw: string) {
   const total = raw.match(/^Total\s+(\d+)\s+(\d+)\s*$/m);
@@ -19,12 +20,37 @@ export function parseHistogram(raw: string) {
   return { count, bytes, top: rows.slice(0, 18) };
 }
 
-export async function gatewayProfiles(stack: Stack, dir: string, phase: string, binding: string) {
+export function nativePools(raw: string, pid: number) {
+  assert(raw.startsWith(pid + ":"));
+  const total = raw.match(/^Total: reserved=(\d+)KB, committed=(\d+)KB/m);
+  assert(total, "Native memory tracking did not return a total");
+  const pools = Object.fromEntries(
+    [...raw.matchAll(/^\s*-\s+([\w ()]+?)\s+\(reserved=(\d+)KB, committed=(\d+)KB\)/gm)]
+      .map(([, name, reserved, committed]) => [
+        name!,
+        { reserved: Number(reserved) * 1024, committed: Number(committed) * 1024 },
+      ]),
+  );
+  for (const name of ["Java Heap", "GC", "Thread", "Metaspace"]) assert(pools[name], name);
+  return { reserved: Number(total[1]) * 1024, committed: Number(total[2]) * 1024, pools };
+}
+
+export async function gatewayProfiles(
+  stack: Stack,
+  dir: string,
+  phase: string,
+  binding: string,
+  position?: number,
+) {
   const managed = stack.managed;
   assert(managed?.compact);
   const { secret } = JSON.parse(fs.readFileSync(process.env.DX_THIN_CREDENTIAL!, "utf8"));
   const samples = [];
-  for (const peer of managed.peers) {
+  const roles = managed.peers.map((peer) => ({ peer, role: peer.role as string }));
+  if (managed.nativePools) {
+    roles.push({ peer: managed.peers.find((peer) => peer.role === "write")!, role: "transactor" });
+  }
+  for (const { peer, role } of roles) {
     const owner = JSON.parse(fs.readFileSync(peer.owner, "utf8")),
       witness = randomUUID();
     assert.equal(owner.holder, "DX-THIN1");
@@ -38,14 +64,14 @@ export async function gatewayProfiles(stack: Stack, dir: string, phase: string, 
       headers: {
         authorization: "Bearer " + secret,
         "x-thin-observation": witness,
-        "x-thin-role": peer.role,
+        "x-thin-role": role,
       },
     });
     if (!res.ok) throw Error("Gateway profile unavailable: " + (await res.text()).slice(0, 2100));
     const { histogram, ...data } = (await res.json()) as any;
     assert.deepEqual(
       [data.witness, data.role, data.nonce, data.source, data.containerId],
-      [witness, peer.role, managed.nonce, stack.gatewaySourceSha256, peer.id],
+      [witness, role, managed.nonce, stack.gatewaySourceSha256, peer.id],
     );
     assert(Number.isSafeInteger(data.pid) && data.pid > 1 && Number(data.startTicks) > 0);
     assert(histogram.startsWith(data.pid + ":") && data.before.heap.startsWith(data.pid + ":"));
@@ -69,20 +95,31 @@ export async function gatewayProfiles(stack: Stack, dir: string, phase: string, 
       data.caches.reduce((s: number, c: any) => s + c.units * c.bytesPerUnit, 0),
     );
     const summary = parseHistogram(histogram);
-    const filename = phase + "-" + peer.role + ".histogram.gz",
+    const native = managed.nativePools ? {
+      before: nativePools(data.before.nmt, data.pid),
+      after: nativePools(data.after.nmt, data.pid),
+    } : undefined;
+    if (native) {
+      for (const when of ["before", "after"] as const) {
+        const state = data[when];
+        assert.deepEqual(heapResidency(state.heap, state.mappings), state.residency);
+      }
+    }
+    const filename = phase + "-" + role + ".histogram.gz",
       bytes = gzipSync(histogram);
     fs.writeFileSync(path.join(dir, filename), bytes, { flag: "wx" });
     samples.push({
       ...data,
       summary,
+      native,
       filename,
       sha256: createHash("sha256").update(bytes).digest("hex"),
     });
   }
-  assert.equal(new Set(samples.map((s) => s.pid)).size, 2);
+  assert.equal(new Set(samples.map((s) => s.pid)).size, roles.length);
   fs.writeFileSync(
     path.join(dir, phase + "-profile.json"),
-    JSON.stringify({ binding, phase, samples }),
+    JSON.stringify({ binding, phase, position, samples }),
     { flag: "wx" },
   );
 }

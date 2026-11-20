@@ -72,6 +72,10 @@ export async function finishNativeRecording(out, raw, identity, engines, deadlin
       assert.equal(observed.Id, engines[role].id);
       assert.equal(observed.Name, "/" + identity.slot + "-" + role);
       assert(observed.State.Running && !observed.State.OOMKilled);
+      if (engines[role].startedAt !== undefined)
+        assert.equal(observed.State.StartedAt, engines[role].startedAt);
+      if (engines[role].restarts !== undefined)
+        assert.equal(observed.RestartCount, engines[role].restarts);
       return [
         role,
         { id: observed.Id, startedAt: observed.State.StartedAt, restarts: observed.RestartCount },
@@ -119,6 +123,11 @@ export async function finishNativeRecording(out, raw, identity, engines, deadlin
     }
   }
   assert.equal(new Set(roles.map((role) => seals[role].clock.bootId)).size, 1);
+  const pg = inspect("pg");
+  assert.deepEqual(
+    [pg.Id, pg.State.StartedAt, pg.RestartCount],
+    [processes.pg.id, processes.pg.startedAt, processes.pg.restarts],
+  );
   const rawPg = path.join(raw, "postgres.log");
   const fd = fs.openSync(rawPg, "wx");
   try {
@@ -140,6 +149,7 @@ export async function finishNativeRecording(out, raw, identity, engines, deadlin
     assert.equal(sample.pgId, engines.pg.id);
     assert.equal(sample.slot, identity.slot);
     assert.equal(sample.source, identity.source);
+    assert.equal(sample.nonce, identity.nonce);
     if (sample.sampleError) continue;
     const observation = bridge(sample.at);
     if (observation)

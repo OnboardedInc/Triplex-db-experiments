@@ -17,16 +17,20 @@ export type TenantSpec = {
   topology: Topology;
   physical: number;
   live?: PeakAlignment;
+  campaign?: "frozen" | "field";
 };
 export type Account = { index: number; key: string; first: number; people: number };
 export type TenantEvent = DeepEvent & { tenant: number; localSubject: number; localSeq: number };
 export const keyFor = (i: number) => "account-" + String(i + 1).padStart(3, "0");
 export const tenantRowsId = "deep-tenant-membership/1";
-const catalog = "tenant:catalog",
-  accountRoot = (a: Account) => "tenant:directory:" + a.key,
+export const tenantCatalog = "tenant:catalog";
+const accountRoot = (a: Account) => "tenant:directory:" + a.key,
   shard = (a: Account, n: number) => "tenant:roster:" + a.key + ":" + Math.floor(n / 256);
 export function tenantAccounts(spec: TenantSpec): Account[] {
-  const total = spec.study === "small" ? 100 : spec.study === "smoke" ? 2 : 10;
+  if (spec.campaign) {
+    assert(spec.topology === "pooled" && spec.study !== "small" && !spec.live);
+  }
+  const total = spec.study === "small" ? 100 : spec.study === "smoke" && !spec.campaign ? 2 : 10;
   assert(
     Number.isInteger(spec.physical) &&
       spec.physical >= 0 &&
@@ -90,7 +94,7 @@ export function tenantRows(a: Account, local: number): Fact[] {
   );
   if (local % 256 === 0)
     rows.push({ e: accountRoot(a), a: ":tenant/shard", v: string(shard(a, local)) });
-  if (local === 0) rows.push({ e: catalog, a: ":tenant/account", v: string(a.key) });
+  if (local === 0) rows.push({ e: tenantCatalog, a: ":tenant/account", v: string(a.key) });
   return rows;
 }
 export const tenantFacts = (accounts: readonly Account[]) =>
@@ -197,7 +201,7 @@ export async function tenantQueries(
     for (const row of r.rows) observed.add(row);
     return r.rows;
   };
-  const directory = await read([catalog]);
+  const directory = await read([tenantCatalog]);
   assert.deepEqual(
     directory
       .filter((f) => f.attribute === ":tenant/account")

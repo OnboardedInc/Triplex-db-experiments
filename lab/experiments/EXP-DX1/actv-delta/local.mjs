@@ -3,6 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomBytes, randomUUID, createHash } from "node:crypto";
 import { fork } from "node:child_process";
+import { availableParallelism, loadavg } from "node:os";
+import { acquireMeasureLease, HEAVY_SLOTS, readMeasureLease } from "../../../bin/heavy-lock.mjs";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   admission,
@@ -21,6 +23,7 @@ export async function local(opts, config, manager) {
   assert(
     process.platform === "darwin" && opts.holder === "DX-ACT2" && dockerArgs([])[1] === DOCKER_HOST,
   );
+  if (opts.run === "recover-slot") return recoverSlot(opts, config, manager);
   assert(
     [
       "schedules",
@@ -32,8 +35,15 @@ export async function local(opts, config, manager) {
       "crash",
       "solo-check",
       "deep-loaded",
+      "audit-check",
+      "audit-loaded",
+      "audit-faults",
+      "joined-admission",
+      "joined-load",
+      "joined-server-check",
     ].includes(opts.run),
   );
+  const joined = opts.run.startsWith("joined-");
   const dir = path.resolve(opts.out),
     nonce = randomUUID(),
     prefix = "tx2-dxdelta-" + nonce.slice(0, 8);
@@ -44,11 +54,23 @@ export async function local(opts, config, manager) {
   const attempt = { nonce, run: opts.run, prefix, source: process.env.DELTA_SOURCE ?? null };
   const write = (name, obj) =>
     fs.writeFileSync(path.join(dir, name + ".json"), JSON.stringify(obj) + "\n", { flag: "wx" });
-  let info, net;
+  let info, net, lease;
   const created = new Map(),
     volumes = new Set();
   const limit = Math.min(config.pool.memLimitBytes, 15 * 2 ** 30);
   try {
+    // [DX-ACT2] Why: drain every lab heavy token and freeze other admissions before the matched timing. Rejected: relying on an idle-looking container count while another experiment starts.
+    if (opts.run === "joined-load") {
+      const parent = readMeasureLease();
+      // The outer heavy wrapper retains the lease throughout this exact child and cleans it on exit.
+      if (parent?.pid === process.ppid && parent.holder === opts.holder && !parent.stale)
+        lease = { owner: parent, tokens: HEAVY_SLOTS };
+      else
+        lease = await acquireMeasureLease("DX-ACT2 joined comparison", {
+          holder: opts.holder,
+          pollMs: 5000,
+        });
+    }
     while (!info) {
       const stat = fs.statfsSync(".");
       assert(stat.bavail * stat.bsize >= 5 * 2 ** 30, "host disk below floor");
@@ -56,6 +78,11 @@ export async function local(opts, config, manager) {
         await withPool((ledger) => {
           manager.assertMeasureAdmission(opts.holder);
           const live = listTx2Containers({ all: true });
+          if (
+            lease &&
+            live.some((c) => c.running && !/^tx2-(?:xtdb|qlever|datomic)-dev$/.test(c.name))
+          )
+            return;
           const candidate = ["s1", "s2", "s3"]
             .map((s) => slotInfo(config, "datomic", s))
             .find((s) => !fs.existsSync(s.lockDir) && !live.some((c) => c.name === s.container));
@@ -63,7 +90,8 @@ export async function local(opts, config, manager) {
           const req = {
             container: prefix,
             memBytes: Object.values(caps).reduce((a, b) => a + b, 0) * 2 ** 20,
-            diskForecastBytes: (opts.run === "deep-loaded" ? 8 : 4) * 2 ** 30,
+            diskForecastBytes:
+              (["audit-loaded", "deep-loaded", "joined-load"].includes(opts.run) ? 8 : 4) * 2 ** 30,
           };
           const allowed = admission({
             config: { ...config, pool: { ...config.pool, memLimitBytes: limit } },
@@ -225,6 +253,9 @@ export async function local(opts, config, manager) {
         "DATOMIC_URI_TEMPLATE=" + uri,
         "-e",
         "GATEWAY_SOURCE_SHA256=" + gateway,
+        ...(joined
+          ? ["-e", "TX2_LIVE_PRIORITY=1", "-e", "TX2_WRITE_OPTIONS_ATTEMPT=" + nonce]
+          : []),
         "-e",
         "DATOMIC_JAVA_OPTS=-Xms192m -Xmx656m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=160m",
       ],
@@ -255,6 +286,7 @@ export async function local(opts, config, manager) {
       image,
       pgImage,
       caps,
+      ...(lease ? { measurement: lease.owner, heavyTokens: lease.tokens } : {}),
     };
     write("native", binding);
     const child = fork(path.join(import.meta.dirname, "native.ts"), [opts.run, dir], {
@@ -270,12 +302,102 @@ export async function local(opts, config, manager) {
       },
       stdio: ["inherit", "inherit", "inherit", "ipc"],
     });
+    let studyImage, restoredBlock = -1;
+    async function restoreStudyImage(m) {
+      assert(lease && opts.run === "joined-load" && m.nonce === nonce);
+      assert.deepEqual(readMeasureLease(), lease.owner);
+      assert.equal(createHash("sha256").update(fs.readFileSync(info.ownerFile)).digest("hex"), binding.ownerHash);
+      for (const [role, id] of created) {
+        const observed = inspect(id);
+        assert(observed?.State.Running && observed.Name === "/" + prefix + "-" + role);
+        assert.equal(observed.Config.Labels["delta.attempt"], nonce);
+      }
+      const pgId = created.get("pg");
+      const dump = "/tmp/dx-act2-r1.pgdump";
+      const digest = () => docker(["exec", pgId, "sha256sum", dump]).split(/\s+/)[0];
+      if (m.action === "seal") {
+        assert(!studyImage);
+        assert(docker(["exec", pgId, "test", "!", "-e", dump], { allowFail: true }) !== null);
+        // [DX-ACT2] Why: the same private R1 cut is the starting state for every arm. Rejected: accumulating hundreds of earlier releases on the second policy's account.
+        docker(["exec", pgId, "pg_dump", "-U", "postgres", "-Fc", "-Z1", "-d", "postgres", "-f", dump]);
+        studyImage = {
+          sha256: digest(),
+          bytes: Number(docker(["exec", pgId, "stat", "-c", "%s", dump])),
+          nonce, ownerHash: binding.ownerHash,
+        };
+        assert(/^[a-f0-9]{64}$/.test(studyImage.sha256) && studyImage.bytes > 0);
+        write("seed-image", studyImage);
+        return studyImage;
+      }
+      assert(m.action === "restore" && studyImage && m.sha256 === studyImage.sha256);
+      assert(Number.isSafeInteger(m.block) && m.block > restoredBlock);
+      assert.equal(digest(), studyImage.sha256);
+      // [DX-ACT2] Why: replace only the derived fixture on this owned SQL volume, with both Datomic roles stopped. Rejected: restoring under a live peer that can retain the previous native cut.
+      for (const role of ["gw", "tx"]) docker(["stop", "--time", "20", created.get(role)]);
+      for (const role of ["gw", "tx"]) assert(!inspect(created.get(role)).State.Running);
+      docker(["exec", pgId, "pg_restore", "--exit-on-error", "--single-transaction",
+        "--if-exists", "--clean", "-U", "postgres", "-d", "postgres", dump]);
+      docker(["start", created.get("tx")]);
+      await wait(tx, () =>
+        docker(["exec", tx, "bash", "-c", "(exec 3<>/dev/tcp/$1/4334) 2>/dev/null && echo ready",
+          "probe", tx], { allowFail: true }) === "ready",
+      );
+      docker(["start", created.get("gw")]);
+      await wait(gw, async () => {
+        const r = await fetch(info.endpoint + "/health", { signal: AbortSignal.timeout(1500) }).catch(
+          () => undefined,
+        );
+        if (!r?.ok) return false;
+        assert.equal((await r.json()).gatewaySourceHash, gateway);
+        return true;
+      });
+      assert.equal(sql("select current_setting('fsync'),current_setting('synchronous_commit')"), "on|on");
+      restoredBlock = m.block;
+      const proof = { image: studyImage, block: m.block, restoredAt: Date.now() };
+      write("restored-" + m.block, proof);
+      return proof;
+    }
     let restarts = 0;
     child.on("message", async (m) => {
+      if (m?.type === "joinedImage") {
+        try {
+          child.send({ id: m.id, image: await restoreStudyImage(m) });
+        } catch (e) {
+          child.send({ id: m.id, error: String(e) });
+        }
+      }
+      if (m?.type === "cpu") {
+        try {
+          assert(lease && opts.run === "joined-load" && m.nonce === nonce);
+          assert.deepEqual(readMeasureLease(), lease.owner);
+          const foreign = listTx2Containers().filter(
+            (c) => !names.includes(c.name) && !/^tx2-(?:xtdb|qlever|datomic)-dev$/.test(c.name),
+          );
+          assert.equal(
+            foreign.length,
+            0,
+            "An unowned nonresident stack is active during the comparison",
+          );
+          const vm = docker(["exec", created.get("gw"), "cat", "/proc/pressure/cpu"]);
+          const guests = docker(["exec", created.get("gw"), "cat", "/proc/loadavg"]);
+          child.send({
+            id: m.id,
+            cpu: {
+              at: Date.now(),
+              vm,
+              guests,
+              host: { cpus: availableParallelism(), load: loadavg() },
+              exclusive: true,
+            },
+          });
+        } catch (e) {
+          child.send({ id: m.id, error: String(e) });
+        }
+      }
       if (m?.type === "power") {
         try {
           assert(
-            opts.run === "crash" &&
+            ["crash", "audit-faults"].includes(opts.run) &&
               m.nonce === nonce &&
               m.seq === ++restarts &&
               [1, 2].includes(restarts),
@@ -344,5 +466,68 @@ export async function local(opts, config, manager) {
       volumesRemoved: volumes.size,
       slotReleased: info?.slot ?? null,
     });
+    lease?.release?.();
   }
+}
+
+async function recoverSlot(opts, config, manager) {
+  const dir = path.resolve(opts.out);
+  const attempt = JSON.parse(fs.readFileSync(path.join(dir, "attempt.json")));
+  const n = JSON.parse(fs.readFileSync(path.join(dir, "native.json")));
+  assert(
+    n.nonce === attempt.nonce &&
+      n.prefix === "tx2-dxdelta-" + attempt.nonce.slice(0, 8) &&
+      /^tx2-dxdelta-[0-9a-f]{8}$/.test(n.prefix) &&
+      n.prefix.endsWith(n.nonce.slice(0, 8)) &&
+      ["s1", "s2", "s3"].includes(n.slot),
+  );
+  const file = path.join(dir, "cleanup.json");
+  assert(!fs.existsSync(file));
+  const info = slotInfo(config, "datomic", n.slot);
+  const receipt = await withPool((ledger) => {
+    assert(readOwner(info)?.holder === opts.holder);
+    assert.equal(
+      createHash("sha256").update(fs.readFileSync(info.ownerFile)).digest("hex"),
+      n.ownerHash,
+    );
+    const names = ["pg", "tx", "gw"].map((role) => n.prefix + "-" + role);
+    const owned = ledger.reservations.filter((r) => r.slot === n.slot && r.holder === opts.holder);
+    assert.deepEqual(owned.map((r) => r.container).sort(), [...names].sort());
+    assert(owned.every((r) => r.pid === owned[0].pid && r.state === "delta"));
+    assert.throws(() => process.kill(owned[0].pid, 0), { code: "ESRCH" });
+    // [DX-ACT2] Why: interrupted callers may outlive their terminal reply. Recover only the exact reservation and nonce-owned stack after proving its manager exited. Rejected: releasing the slot by holder or name alone.
+    const network = JSON.parse(docker(["network", "inspect", n.prefix]))[0];
+    assert.equal(network.Labels["delta.attempt"], n.nonce);
+    assert(Object.keys(network.Containers).every((id) => Object.values(n.roles).includes(id)));
+    const volumes = new Set();
+    for (const role of ["gw", "tx", "pg"]) {
+      const id = n.roles[role],
+        m = inspect(id);
+      if (!m) continue;
+      assert(
+        m.Id === id &&
+          m.Name === "/" + n.prefix + "-" + role &&
+          m.Config.Labels["delta.attempt"] === n.nonce &&
+          m.Config.Labels["tx2.holder"] === opts.holder &&
+          m.Image === (role === "pg" ? n.pgImage : n.image),
+      );
+      for (const mount of m.Mounts) if (mount.Type === "volume") volumes.add(mount.Name);
+      docker(["rm", "-fv", id]);
+      assert(!inspect(id));
+    }
+    for (const v of volumes)
+      assert(!docker(["volume", "inspect", v], { allowFail: true }), "owned volume remains");
+    docker(["network", "rm", network.Id]);
+    ledger.reservations = ledger.reservations.filter((r) => !owned.includes(r));
+    manager.releaseSlot(info);
+    assert(!fs.existsSync(info.ownerFile));
+    return {
+      nonce: n.nonce,
+      roles: names.length,
+      volumesRemoved: volumes.size,
+      slotReleased: n.slot,
+      recovered: true,
+    };
+  });
+  fs.writeFileSync(file, JSON.stringify(receipt) + "\n", { flag: "wx" });
 }

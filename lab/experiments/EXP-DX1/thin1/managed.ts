@@ -4,12 +4,14 @@ import { createHash, randomBytes } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { memoryPlan } from "../int1/memory-plan.ts";
 
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
 const integrated = [
   "int1-thin",
   "int1-deep",
   "int1-proof",
+  "int1-campaign-proof",
   "int1-cold-probe",
   "int1-idle",
   "int1-pooled",
@@ -90,10 +92,9 @@ async function prepare() {
   );
   // [DX-THIN1] Why: keep the pool, exclusive slot names, ports and ownership checks common to every worktree.
   // Rejected: substituting a private pool ledger or changing the tag of a resident image.
-  fs.copyFileSync(
-    fileURLToPath(new URL("./cache-charge.ts", import.meta.url)),
-    path.join(imageFolder, "cache-charge.ts"),
-  );
+  for (const name of ["cache-charge.ts", "heap-residency.ts"]) {
+    fs.copyFileSync(fileURLToPath(new URL("./" + name, import.meta.url)), path.join(imageFolder, name));
+  }
   const diagnosticJdk = process.env.DX_THIN_DIAGNOSTIC_JDK;
   if (diagnosticJdk) {
     const expected = "e3522e707fc7dbe2a72c30746b1e7068301a0213ecd213d4491f35a14eb55578";
@@ -133,7 +134,7 @@ function setup(compact: boolean) {
     const codec = "packages/datomic/src/codec-spec.json";
     assert(fs.readFileSync(path.join(repo,codec)).equals(fs.readFileSync(path.join(dir,codec))),
       "Rebuild the changed gateway codec");
-    for (const name of ["slot.ts", "cache-charge.ts"]) {
+    for (const name of ["slot.ts", "cache-charge.ts", "heap-residency.ts"]) {
       const running = fs.readFileSync(path.join(imageFolder, name));
       assert(
         running.equals(fs.readFileSync(new URL("./" + name, import.meta.url))),
@@ -160,6 +161,14 @@ function setup(compact: boolean) {
   assert(!smallHeap || (gwPolicy === "demand" && peerGc === "g1"));
   const seedFeed = process.env.DX_INT1_SEED_FEED ?? "immediate";
   const rowWire = process.env.DX_INT1_ROW_WIRE ?? "plain";
+  const memoryPoints = process.env.DX_INT1_MEMORY_POINTS;
+  const memory = memoryPlan(memoryPoints, mode ?? "", Number(rung));
+  const nativePools = process.env.DX_INT1_NATIVE_POOLS === "1";
+  if (nativePools) {
+    assert(memory && !memory.scopes && mode === "int1-deep");
+    assert(fs.existsSync(path.join(imageFolder, "diagnostic-jdk.tar.gz")));
+  }
+  if (memory) assert(compact && gwPolicy === "demand" && readMode === "validated");
   assert(rowWire === "plain" || (rowWire === "gzip" && readMode === "validated"));
   assert(["immediate","after-sampling"].includes(seedFeed));
   if (seedFeed === "after-sampling") assert(mode === "int1-deep" || mode === "int1-thin");
@@ -174,14 +183,17 @@ function setup(compact: boolean) {
         (peerGc === "elastic" ? "-Xms32m -XX:+UseZGC -XX:+ZGenerational -XX:SoftMaxHeapSize=96m -XX:ZUncommitDelay=1" :
           "-Xms64m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps")
         : (compact ? "-Xms128m -Xmx600m" : "-Xms160m -Xmx896m") + " -Ddatomic.objectCacheMax=192m") +
-      (compact ? " -Ddxthin.compact=yes" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
+      (compact ? " -Ddxthin.compact=yes" : "") + (memory ? " -Ddxthin.memory=yes" : "") +
+      (mode === "int1-campaign-proof" ? " -Ddxthin.campaign=yes" : "") +
+      (nativePools ? " -Ddxthin.nativePools=yes -XX:NativeMemoryTracking=summary" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
       " -Ddxthin.secret=" +
       secret +
       " -Ddxthin.role=" +
       role;
     settings.transactorOpts =
-      (compact ? "-Xms192m -Xmx840m" : "-Xms256m -Xmx1170m") + " -XX:+ExitOnOutOfMemoryError";
+      (compact ? "-Xms192m -Xmx840m" : "-Xms256m -Xmx1170m") + " -XX:+ExitOnOutOfMemoryError" +
+      (nativePools ? " -XX:NativeMemoryTracking=summary" : "");
     if (role === "read") settings.memBytes = Math.min(settings.memBytes, 1536 * 1024 ** 2);
   }
   write(file, cfg);
@@ -190,6 +202,7 @@ function setup(compact: boolean) {
   write(cred, {
     nonce, secret, slots, compact, census, cohort,
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
+    memoryPoints, nativePools,
     readerPages: process.env.DX_INT1_READER_PAGES === "1",
     isolatedVolume: compact,
   });
@@ -259,6 +272,8 @@ function bind() {
       smallHeap: attempt.smallHeap,
       seedFeed: attempt.seedFeed,
       rowWire: attempt.rowWire,
+      memoryPoints: attempt.memoryPoints,
+      nativePools: attempt.nativePools,
       readerPages: attempt.readerPages,
       peers,
       cacheDiagnostic: fs.existsSync(path.join(imageFolder, "diagnostic-jdk.tar.gz")),
@@ -289,6 +304,8 @@ if (action === "--guest") {
     DX_INT1_SEED_FEED: stack.managed.seedFeed ?? "immediate",
     DX_INT1_ROW_WIRE: stack.managed.rowWire ?? "plain",
     DX_INT1_READER_PAGES: stack.managed.readerPages ? "1" : "0",
+    ...(stack.managed.memoryPoints ? { DX_INT1_MEMORY_POINTS: stack.managed.memoryPoints } : {}),
+    DX_INT1_NATIVE_POOLS: stack.managed.nativePools ? "1" : "0",
     TRIPLEX_DATOMIC_FAST_PATHS: [...(process.env.TRIPLEX_DATOMIC_FAST_PATHS ?? "").split(",").filter(x => x && x !== "demand-gzip"), ...(stack.managed.rowWire === "gzip" ? ["demand-gzip"] : [])].join(","),
   });
   if (stack.managed.compact) {
@@ -324,7 +341,11 @@ if (action === "--guest") {
     process.env.DX_THIN_MEASURE = path.resolve(armRoot, "../../..", "locks", "measure");
   }
   process.argv = [process.execPath, run, "live", mode, rung, out];
-  if (integrated) {
+  if (mode === "int1-campaign-proof") {
+    assert(Number(rung) === 40);
+    process.chdir(repo);
+    await (await import("../int1/everything.ts")).localPreflight(out);
+  } else if (integrated) {
     process.chdir(repo);
     await import("../int1/trial.ts");
   } else await import("./trial.ts");

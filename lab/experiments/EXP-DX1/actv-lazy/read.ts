@@ -15,12 +15,18 @@ import {
   winner,
   type Format,
 } from "./decision.ts";
-import { millis, value, type Store } from "./store.ts";
+import { millis, value, type Controls, type Store } from "./store.ts";
 
 export type Pin =
   | { position: number; validTime: string }
   | { recordedAt: number; validTime: string }
   | { validTime?: string };
+type ArchivedAnswer = (
+  subject: string,
+  basis: { tx: number; validTime: string },
+  controls: Controls,
+  latest: Controls,
+) => Promise<string | undefined>;
 export const rosterSeal = (ids: readonly string[]) => ({
   n: ids.length,
   hash: sha256(canonical(ids)),
@@ -95,15 +101,18 @@ export class LazyReader {
   }
   private readonly now: () => string;
   private readonly path: "legacy" | "shared-cut";
+  private readonly archive?: ArchivedAnswer;
   constructor(
     store: Store,
     format: Format = "w0",
     byteLimit = 2 << 20,
     now = () => new Date().toISOString().replace("Z", "000Z"),
     path: "legacy" | "shared-cut" = "legacy",
+    archive?: ArchivedAnswer,
   ) {
     this.now = now;
     this.path = path;
+    this.archive = archive;
     this.store = store;
     this.format = format;
     this.limit = byteLimit;
@@ -173,6 +182,13 @@ export class LazyReader {
         this.cache.set(key, saved);
         stage?.("return");
         return { json: saved, basis: b, route: "exact-cache", subject };
+      }
+      const archived = this.archive && (await this.archive(subject, b, c, latest));
+      if (archived !== undefined) {
+        // [DX-ACT1] Why: reopened output bytes still need the current erasure frontier fence. Rejected: treating an immutable archive page as permission to return data removed from every pin.
+        if (!(await stable())) continue;
+        stage?.("return");
+        return { json: archived, basis: b, route: "receipt-archive", subject };
       }
       const r = this.replica,
         eligible =

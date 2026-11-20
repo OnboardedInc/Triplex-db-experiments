@@ -6,18 +6,61 @@ import os from "node:os";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
+import { modes, validateComparison } from "./field/bench-check.ts";
+const study =
+  process.argv[2] === "--pulse"
+    ? "pulse"
+    : process.argv[2] === "--field-rates"
+      ? "rates"
+      : undefined;
 const grouped = process.argv[2] === "--group";
-const batch = process.argv[grouped ? 3 : 2];
+const batch = process.argv[grouped || study ? 3 : 2];
+const write5 = process.argv[4] === "--write5";
+const write6 = process.argv[4] === "--write6";
+const enhanced = process.argv[4] === "--enhanced" || write5 || write6;
+assert(process.argv[4] === undefined || (study && enhanced && process.argv.length === 5));
 if (batch === "--plan") {
+  if (write6 && study) {
+    console.log(
+      "One pooled database with ten deep accounts. K keeps queryable journal facts. P is informational.",
+    );
+    console.log(
+      "Measures " +
+        (study === "pulse" ? "the four-minute pulse" : "the matched field rates") +
+        " and checks the native query and log on a timed command after the window.",
+    );
+    console.log("Forecasts are in small/write6-predictions.json.");
+    process.exit(0);
+  }
+  if (enhanced && study) {
+    console.log("Matched 1–3 fact saves with extra arms", modes(study, true, write5).join(", "));
+    if (write5)
+      console.log(
+        "The packed-journal arm is informational. Forecasts are in small/write5-predictions.json.",
+      );
+    console.log(
+      "The prepared arm allows 32 members. The bounded arm prices each turn at up to 8,000 estimated microseconds.",
+    );
+    if (study === "rates")
+      console.log("Adds matched quiet-account windows at 50, 100 and 235 offered saves/s.");
+    process.exit(0);
+  }
   console.log(
-    grouped
-      ? "Two fresh native SQL arms seed ten accounts of 10,000 deep subjects in one database. Measure the quiet account alone, with one or nine bursting neighbors, and with all ten bursting. Compare durable command rate, per-account latency and the quiet-account p99 ratio."
-      : "Two fresh 100,000-subject populations. Each runs individual/zero, range/zero, range/reader, individual/reader, with its own matched zero baseline. Thin uses the BM1 900-second prefix and deep uses the full SCALE1 schedule. Eight bounded native arms. SQL reads/commit, native apply and scheduled-offer-to-ACK p50/p99 are sealed in comparison.json.",
+    study
+      ? study === "pulse"
+        ? "Four timed minutes. Each of two freshly seeded pooled arms runs 600 quiet saves alone and another 600 with nine live neighbors at depth 12."
+        : "Ten 10k deep accounts in one scope. Match 3.5, 4.9, 23.5 and 39.4 saves/s with individual, subject-only and all-ready writes, matched alone controls and nine-neighbor windows."
+      : grouped
+        ? "Two fresh native SQL arms seed ten accounts of 10,000 deep subjects in one database. Measure the quiet account alone, with one or nine bursting neighbors, and with all ten bursting. Compare durable command rate, per-account latency and the quiet-account p99 ratio."
+        : "Two fresh 100,000-subject populations. Each runs individual/zero, range/zero, range/reader, individual/reader, with its own matched zero baseline. Thin uses the BM1 900-second prefix and deep uses the full SCALE1 schedule. Eight bounded native arms. SQL reads/commit, native apply and scheduled-offer-to-ACK p50/p99 are sealed in comparison.json.",
   );
   process.exit(0);
 }
 assert(
-  batch && /^[a-z][a-z0-9]{2,14}$/.test(batch) && (!grouped || batch.startsWith("grp")),
+  batch &&
+    /^[a-z][a-z0-9]{2,14}$/.test(batch) &&
+    (!grouped || batch.startsWith("grp")) &&
+    (!study || batch.startsWith(study === "pulse" ? "pulse" : "fld")),
   "supply a fresh batch name, or --plan",
 );
 const dest = process.env.BENCH_SERVER,
@@ -109,7 +152,7 @@ test "$(git -C "$dir/bootstrap" rev-parse HEAD)" = "$sha"
 bash "$dir/bootstrap/lab/experiments/EXP-DX1/t1/bare-metal.sh" --prepare "$sha" "$dir/build"
 export PATH="$dir/build/tools/bin:$PATH"
 cd "$dir/build/repository"
-node lab/bin/heavy.mjs --label DX-W1-native -- node --experimental-strip-types ${grouped ? "lab/experiments/EXP-DX1/w1/group/server.ts run" : "lab/experiments/EXP-DX1/w1/bench.ts"} "$dir" "$sha" "$batch"
+node lab/bin/heavy.mjs --label DX-W1-native -- node --experimental-strip-types ${study ? "lab/experiments/EXP-DX1/w1/field/server.ts run" : grouped ? "lab/experiments/EXP-DX1/w1/group/server.ts run" : "lab/experiments/EXP-DX1/w1/bench.ts"} "$dir" "$sha" "$batch"${study ? " " + study + (write6 ? " --write6" : write5 ? " --write5" : enhanced ? " --enhanced" : "") : ""}
 sha256sum "$dir/results/comparison.json" > "$dir/comparison.sha256"`;
 const launch = `set -euo pipefail
 root=$1; dir=$2; sha=$3; batch=$4; unit=$5; url=$6; machine=$7; script=$8
@@ -155,7 +198,45 @@ for (;;) {
   assert.equal(createHash("sha256").update(bytes).digest("hex"), hash);
   const collected = JSON.parse(bytes);
   const { arms: rows, pairs } = collected;
-  if (grouped) {
+  if (study) {
+    validateComparison(collected, study, source, batch, enhanced, write5, write6);
+    const expected = createHash("sha256")
+      .update(
+        fs.readFileSync(
+          path.join(
+            import.meta.dirname,
+            write6
+              ? "small/write6-predictions.json"
+              : write5
+                ? "small/write5-predictions.json"
+                : enhanced
+                  ? "small/predictions.json"
+                  : "field/predictions.json",
+          ),
+        ),
+      )
+      .digest("hex");
+    assert.equal(collected.predictionSha256, expected);
+    for (const [i, row] of rows.entries()) {
+      const armDir = dir + "/results/arm-" + (i + 1);
+      assert.deepEqual(JSON.parse(sudo("cat", armDir + "/identity.json")), row.arm);
+      if (enhanced)
+        assert.deepEqual(JSON.parse(sudo("cat", armDir + "/field-options.json")), row.policy);
+      assert.deepEqual(JSON.parse(sudo("cat", armDir + "/cleanup.json")), {
+        containers: [],
+        volumes: [],
+        networks: [],
+      });
+      for (const [name, hash] of [
+        ["raw.json", row.rawSha256],
+        ["seed-readback.json", row.seedReadbackSha256],
+        ["writer-expectation.json", row.writerExpectationSha256],
+        ...(write5 || write6 ? [["write-options.json", row.writeOptionsSha256]] : []),
+        ...(write6 ? [["journal-witness.json", row.journalWitnessSha256]] : []),
+      ])
+        assert.equal(sudo("sha256sum", armDir + "/" + name).split(/\s/)[0], hash);
+    }
+  } else if (grouped) {
     assert.equal(collected.kind, "group-commit");
     assert.equal(collected.source, source);
     assert.deepEqual(
@@ -185,6 +266,7 @@ for (;;) {
       for (const [name, hash] of [
         ["raw.json", row.rawSha256],
         ["seed-readback.json", row.seedReadbackSha256],
+        ["writer-expectation.json", row.writerExpectationSha256],
       ]) {
         assert.match(hash, /^[a-f0-9]{64}$/);
         assert.equal(sudo("sha256sum", armDir + "/" + name).split(/\s/)[0], hash);

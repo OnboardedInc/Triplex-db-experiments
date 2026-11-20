@@ -1,3 +1,9 @@
+import {
+  erasureWriteTicket,
+  type ErasureFrontier,
+  type ErasureReceipt,
+  type ErasureSelector,
+} from "./erasure.js";
 import { ByteCache } from "./ByteCache.js";
 import { PredecessorCache, RowCache, estimateRowBytes } from "./RowCache.js";
 import { createHash, randomUUID } from "node:crypto";
@@ -48,6 +54,11 @@ export class DatomicHttpError extends Error {
     super(message);
   }
 }
+class DatomicRequestTooLarge extends DatomicHttpError {
+  constructor() {
+    super(400, "InvalidValue", "Request too large");
+  }
+}
 export class DatomicTransportError extends Error {
   readonly _tag = "DatomicTransportError";
   constructor(message: string, options?: ErrorOptions) {
@@ -64,6 +75,8 @@ export interface DatomicDatabase {
   schemaHash: string;
   layout?: "lean" | "legacy";
   strictRecordClocks?: boolean;
+  orderedRowTexts?: boolean;
+  journalCuts?: boolean;
 }
 export interface DatomicBasis {
   t: TaggedValue;
@@ -100,6 +113,7 @@ export interface DatomicRequestSample {
   readonly gatewayMicros: number;
   readonly transactMicros: number;
   readonly waited: boolean;
+  readonly erasureSeq?: number;
   readonly datoms?: number;
   readonly position?: number;
 }
@@ -153,7 +167,9 @@ export class DatomicClient {
     ticketWaitMicros: 0,
   };
   private readonly layouts = new Map<string, "lean" | "legacy">();
-  private readonly sentCallbacks = new Map<string, () => void>();
+  private readonly orderedRowTexts = new Set<string>();
+  private readonly journalCuts = new Set<string>();
+  private readonly sentCallbacks = new Map<string, (published?: boolean) => void>();
   private lastCommit: { db: string; position: number; t: string } | undefined;
   reachSession = randomUUID();
   readonly reachCache: ByteCache<CachedEntity>;
@@ -177,6 +193,7 @@ export class DatomicClient {
     faults: 0,
     declines: {} as Record<string, number>,
   };
+  private readonly historicalSessions = new Map<string, string>();
   // [DX-H7] Why: parsed reference IDs repeatedly rebuilt and hashed long database-prefixed keys.
   // Rejected: changing cache identity to an entity ID alone (cross-database collisions).
   private reachKeyDb: string | undefined;
@@ -238,12 +255,14 @@ export class DatomicClient {
     readonly cacheOptions: {
       readonly groupAccount?: string;
       readonly writeClass?: DatomicWriteClass;
+      readonly saveWire?: boolean;
       readonly entityCacheBytes?: number;
       readonly rowCacheBytes?: number;
       readonly predecessorCacheBytes?: number;
       readonly predecessorAttributes?: readonly string[];
       readonly receiptPredecessorAttributes?: readonly string[];
       readonly reachKeyBytes?: number;
+      readonly historicalRevisionReuse?: boolean;
     } = {},
   ) {
     this.reachKeyBudget = cacheOptions.reachKeyBytes ?? 4 * 1024 ** 2;
@@ -288,10 +307,13 @@ export class DatomicClient {
     this.reachKeys.clear();
     this.reachKeyBytes = 0;
     this.reachKeyDb = undefined;
+    this.historicalSessions.clear();
     this.reachCache.clear();
     this.rowCache.clear();
     this.predecessorCache.clear();
     this.layouts.clear();
+    this.orderedRowTexts.clear();
+    this.journalCuts.clear();
     this.rowObservers.clear();
     this.agent.destroy();
   }
@@ -300,7 +322,7 @@ export class DatomicClient {
     path: string,
     body?: unknown,
     timeoutMs = this.timeoutMs,
-    onSent?: () => void,
+    onSent?: (published?: boolean) => void,
   ): Promise<T> {
     // [DX-T1] Why: a caller's commit/read owns all HTTP children, including retries and failures.
     // Rejected: a new unrelated trace for each round trip (loses queue and post-response cost).
@@ -319,7 +341,7 @@ export class DatomicClient {
     path: string,
     body: unknown,
     timeoutMs: number,
-    onSent?: () => void,
+    onSent?: (published?: boolean) => void,
   ): Promise<T> {
     const started = performance.now();
     const observation = this.activeObservation;
@@ -355,6 +377,10 @@ export class DatomicClient {
             : Buffer.from((fastPathEnabled("body") ? stringifyNativeExact : stringifyExact)(body)),
         );
     const byteLength = typeof bytes === "string" ? Buffer.byteLength(bytes) : (bytes?.length ?? 0);
+    // [DX-WFIX1] Why: validate the complete UTF-8 transaction after its final wire encoding and before opening a socket.
+    // Rejected: estimating row sizes (JSON escaping, envelopes and row texts all count against the same body cap).
+    if (path.endsWith("/transact") && byteLength > 4 * 1024 * 1024)
+      throw new DatomicRequestTooLarge();
     const serializeMicros = (performance.now() - serializeStart) * 1000;
     const remainingMs = timeoutMs - (performance.now() - started);
     if (remainingMs <= 0)
@@ -441,6 +467,7 @@ export class DatomicClient {
                   status: res.statusCode ?? 0,
                 };
               const status = res.statusCode ?? 0;
+              const erasureHead = res.headers["x-triplex-erasure-seq"];
               const sample: DatomicRequestSample | undefined =
                 observation || this.onRequest
                   ? {
@@ -460,6 +487,9 @@ export class DatomicClient {
                       gatewayMicros: Number(res.headers["x-tx2-gateway-micros"] ?? NaN),
                       transactMicros: Number(data["transactMicros"] ?? NaN),
                       waited: res.headers["x-tx2-waited"] === "true",
+                      ...(typeof erasureHead === "string"
+                        ? { erasureSeq: Number(erasureHead) }
+                        : {}),
                       ...(typeof data["datoms"] === "number" ? { datoms: data["datoms"] } : {}),
                       ...(data["position"] && typeof data["position"] === "object"
                         ? { position: Number((data["position"] as TaggedValue).v) }
@@ -502,7 +532,7 @@ export class DatomicClient {
       });
       if (onSent) {
         req.once("finish", onSent);
-        req.once("error", onSent);
+        req.once("error", () => onSent?.());
       }
       req.end(bytes);
     });
@@ -532,6 +562,67 @@ export class DatomicClient {
     }
     const world = reachResponse(root, found.entities, basis, found.closures[0]![1]);
     return { ...world, entities: found.closures[0]![1].length, requests: found.requests };
+  }
+
+  // [DX-RD1] Why: one native union walk for several roots at the identical two-clock cut.
+  // Rejected: batching across unequal valid times or answering a missing root from another cut.
+  async readHistoricalWorlds(
+    scope: string,
+    roots: readonly string[],
+    basis: ResolvedTemporalBasis,
+  ) {
+    if (
+      !roots.length ||
+      roots.length > 16 ||
+      new Set(roots).size !== roots.length ||
+      (basis.recordedAt === undefined && basis.recordedPosition === undefined)
+    )
+      throw new TypeError("Invalid historical read batch");
+    const found = await this.reachEntities(databaseName(scope), roots, basis, true);
+    if (!found) return undefined;
+    for (const entity of found.entities.values()) {
+      if (
+        entity.storedRows.some(
+          (row) =>
+            !Number.isSafeInteger(row.recorded_position) ||
+            row.recorded_position < 1 ||
+            row.recorded_position > found.position,
+        )
+      )
+        throw new TypeError("Historical row outside the selected position");
+    }
+    const worlds = found.closures.map(([root, closure]) => {
+      const result = reachResponse(root, found.entities, basis, closure);
+      let from = -Infinity,
+        to = Infinity;
+      // All reachable entities carry rows outside the requested valid time too. The first
+      // boundary changes either an output row or an edge, so a hit can never cross it.
+      for (const id of closure) {
+        for (const row of found.entities.get(id)!.storedRows) {
+          for (const at of [row.valid_from, row.valid_to]) {
+            if (at === null) continue;
+            if (at <= basis.validAt) from = Math.max(from, at);
+            else to = Math.min(to, at);
+          }
+        }
+      }
+      return { root, ...result, entities: closure.length, from, to };
+    });
+    return { worlds, requests: found.requests, position: found.position, t: found.t };
+  }
+
+  private reachSessionAt(db: string, basis: ResolvedTemporalBasis) {
+    if (!this.cacheOptions.historicalRevisionReuse) return this.reachSession;
+    const key = `${db}/${basis.recordedAt ?? ""}/${basis.recordedPosition ?? ""}`;
+    const found = this.historicalSessions.get(key);
+    if (found) return found;
+    // [DX-RD1] Why: an alternating cut must not overwrite the gateway's remembered revision on every other request.
+    // Rejected: one session per logical caller, or an unbounded session for every recorded instant.
+    if (this.historicalSessions.size >= 8)
+      this.historicalSessions.delete(this.historicalSessions.keys().next().value!);
+    const session = randomUUID();
+    this.historicalSessions.set(key, session);
+    return session;
   }
   async reachEntities(
     db: string,
@@ -575,6 +666,7 @@ export class DatomicClient {
     older: readonly Promise<void>[],
     ingested: () => void,
   ) {
+    const session = this.reachSessionAt(db, basis);
     const page = async (route: string, input: Record<string, unknown>) => {
       if (!gzipRows) return this.request<ReachWire>("POST", route, input);
       const wire = await this.request<ReachPage>("POST", route, { ...input, gzipRows: true });
@@ -587,7 +679,7 @@ export class DatomicClient {
         ...(roots.length === 1 ? { root: roots[0] } : { roots }),
         basis,
         ...(rowPage ? { rowPage: true } : {}),
-        session: this.reachSession,
+        session,
         ...(this.forceFullReach || attempt === 1 ? { full: true } : {}),
       });
       if (response.declined !== undefined) {
@@ -608,10 +700,16 @@ export class DatomicClient {
         )
           throw new TypeError("Reach response basis/shape mismatch");
         const prefix = `${db}\0`;
+        // [DX-RD1] Why: records of different revisions can be in flight concurrently.
+        // Rejected: reusing an inline payload without decoding it, or waiting for a newer revision to repair an older cut.
+        const key = (id: string, rev: number) =>
+          this.cacheOptions.historicalRevisionReuse
+            ? `${prefix}${id.length}:${id}/${rev}`
+            : this.reachKey(db, prefix, id);
         const cache = {
-          get: (id: string) => this.reachCache.get(this.reachKey(db, prefix, id)),
+          get: (id: string, rev: number) => this.reachCache.get(key(id, rev)),
           set: (id: string, entity: CachedEntity) =>
-            this.reachCache.set(this.reachKey(db, prefix, id), entity),
+            this.reachCache.set(key(id, entity.rev), entity),
         };
         const entities = new Map<string, CachedEntity>();
         let missed = false;
@@ -644,7 +742,7 @@ export class DatomicClient {
               cache.set(id, decoded);
             } else {
               this.reachDiagnostics.referenceEntities++;
-              decoded = cache.get(id);
+              decoded = cache.get(id, rev);
               if (decoded?.rev === rev) {
                 this.reachDiagnostics.referenceHits++;
                 // [DX-H7] Why: references are reads too; refresh only the small predecessor cache.
@@ -666,7 +764,7 @@ export class DatomicClient {
           ) as [string, number][];
           const missing = () =>
             references.filter(([id, rev]) => {
-              const found = cache!.get(id);
+              const found = cache.get(id, rev);
               if (found?.rev === rev) {
                 entities.set(id, found);
                 return false;
@@ -687,7 +785,7 @@ export class DatomicClient {
               const repair = await page(`/v2/db/${db}/reach-many`, {
                 roots,
                 need: need.map(([id]) => id),
-                session: this.reachSession,
+                session,
                 basis: { ...basis, recordedPosition: response.position },
                 ...(rowPage ? { rowPage: true } : {}),
               });
@@ -734,7 +832,13 @@ export class DatomicClient {
           )
             throw new TypeError("Reach closure binding mismatch");
         });
-        return { entities, closures: response.closures, requests, position: response.position };
+        return {
+          entities,
+          closures: response.closures,
+          requests,
+          position: response.position,
+          t: response.t,
+        };
       } catch {
         this.reachDiagnostics.faults++;
         return undefined;
@@ -753,6 +857,29 @@ export class DatomicClient {
           if (typeof value === "string")
             this.reachDiagnostics.decodedTextBytes += Buffer.byteLength(value);
     }
+  }
+  declareProtection(db: string, attributes: readonly string[], sealed = false) {
+    return this.request("POST", `/v2/db/${db}/protection`, { attributes, sealed });
+  }
+  async erasureFrontier(db: string): Promise<ErasureFrontier> {
+    const result = await this.request<ErasureFrontier>("GET", `/v2/db/${db}/erasure-frontier`);
+    if (
+      result.database !== db ||
+      typeof result.protected !== "boolean" ||
+      !Number.isSafeInteger(result.seq) ||
+      result.seq < 0 ||
+      !result.erased ||
+      typeof result.erased !== "object" ||
+      Array.isArray(result.erased)
+    )
+      throw new TypeError("Erasure frontier scope or shape mismatch");
+    return result;
+  }
+  erase(db: string, commandId: string, selectors: readonly ErasureSelector[]) {
+    return this.request<ErasureReceipt>("POST", `/v2/db/${db}/erase`, { commandId, selectors });
+  }
+  restoreErasure(db: string) {
+    return this.request("POST", `/v2/db/${db}/restore-erasure`, {});
   }
   health(): Promise<DatomicHealth> {
     return this.request("GET", "/health");
@@ -776,7 +903,14 @@ export class DatomicClient {
     // [DX-B5-L6] Why: compact writes follow the actual immutable scope layout, including a reopened scope.
     // Rejected: trusting only the requested layout (could compact a pre-existing legacy scope).
     this.layouts.set(result.db, result.layout === "lean" ? "lean" : "legacy");
+    if (result.orderedRowTexts === true) this.orderedRowTexts.add(result.db);
+    else this.orderedRowTexts.delete(result.db);
+    if (result.journalCuts === true) this.journalCuts.add(result.db);
+    else this.journalCuts.delete(result.db);
     return result;
+  }
+  supportsJournalCuts(db: string): boolean {
+    return this.journalCuts.has(db);
   }
   delete(scope: string): Promise<{ db: string; deleted: boolean }> {
     return this.request("POST", "/v1/db/delete", { scope });
@@ -867,7 +1001,7 @@ export class DatomicClient {
   async transact(
     db: string,
     input: {
-      onSent?: () => void;
+      onSent?: (dispatched?: boolean) => void;
       groupAccount?: string;
       writeClass?: DatomicWriteClass;
       clientId?: string;
@@ -888,7 +1022,7 @@ export class DatomicClient {
       handle?: string;
       release?: boolean;
     },
-    onSent?: () => void,
+    onSent?: (dispatched?: boolean) => void,
   ): Promise<unknown> {
     // [DX-T1] Why: direct client users retain encoding and post-response validation in the same commit trace.
     // Rejected: starting the only trace after serialization at the HTTP boundary.
@@ -899,13 +1033,23 @@ export class DatomicClient {
   private async transactTraced(
     db: string,
     input: Parameters<DatomicClient["transact"]>[1],
-    onSent?: () => void,
+    onSent?: (dispatched?: boolean) => void,
   ): Promise<unknown> {
     const encodeSpan = beginSpan("client.transact-encode");
     const encodeStart = performance.now();
     // [DX-B5-L0] Why: two-argument transact wrappers preserve the input, and this callback never belongs on the wire.
     // Rejected: a third-argument-only callback (the NS publication observer drops it).
     const { onSent: inputSent, ...wireInput } = input;
+    const { rows: inputRows, newIds: ids, ...requestHeader } = wireInput;
+    const ticket = erasureWriteTicket();
+    const header = ticket
+      ? {
+          ...requestHeader,
+          erasureSeq: ticket.sequence,
+          erasureReplay: ticket.replay,
+          erasureSourceDatabase: ticket.sourceDatabase,
+        }
+      : requestHeader;
     onSent ??= inputSent;
     const compact = this.layouts.get(db) === "lean";
     const rowFast = fastPathEnabled("row"),
@@ -920,66 +1064,82 @@ export class DatomicClient {
       "retract_tx_id",
     ];
     const rows = compact
-      ? input.rows
+      ? inputRows
           .filter((row) => row.retracted_at !== null)
           .map((row) => {
             const encoded = encodeRow(row);
             return Object.fromEntries(retirementColumns.map((column) => [column, encoded[column]]));
           })
-      : input.rows.map(encodeRow);
+      : inputRows.map(encodeRow);
     const bounds =
       compact && fastPathEnabled("history-range") ? historyIdentityBounds(input.newIds) : undefined;
+    const texts = inputRows
+      .filter((r) => isNew(r.id))
+      .map(
+        (r) =>
+          [
+            r.id,
+            (rowFast ? encodeRowTextFast : encodeRowText)(
+              rowFast &&
+                r.retracted_at === null &&
+                r.retracted_position === null &&
+                r.retract_tx_id === null
+                ? r
+                : { ...r, retracted_at: null, retracted_position: null, retract_tx_id: null },
+            ),
+          ] as const,
+      );
+    // [DX-W1] Why: each row text already carries its exact identity, and ordinary replacements have a stable order.
+    // Rejected: removing IDs from irregular imports or guessing peer support during a rollout.
+    const ordered =
+      compact &&
+      (this.cacheOptions.saveWire ?? fastPathEnabled("save-wire")) &&
+      this.orderedRowTexts.has(db) &&
+      ids.length === texts.length &&
+      new Set(ids).size === ids.length &&
+      rows.length + ids.length === inputRows.length &&
+      inputRows.every((r, i) =>
+        i < texts.length
+          ? r.retracted_at === null && r.id === texts[i]![0] && ids[i] === r.id
+          : r.retracted_at !== null && !isNew(r.id),
+      );
     // [DX-LOAD1] Why: an append-only lean batch carries the same new ID in the text prefix, map key and two arrays. Rejected: omitting IDs on mixed/retired input or trusting an empty subject at the peer.
     const fresh =
       compact &&
       fastPathEnabled("fresh-texts") &&
-      input.rows.length >= 32 &&
-      input.rows.length === input.newIds.length &&
-      new Set(input.newIds).size === input.rows.length &&
-      input.rows.every(
+      inputRows.length >= 32 &&
+      inputRows.length === input.newIds.length &&
+      new Set(input.newIds).size === inputRows.length &&
+      inputRows.every(
         (r) =>
           isNew(r.id) &&
           r.retracted_at === null &&
           r.retracted_position === null &&
           r.retract_tx_id === null,
       ) &&
-      new Set(input.rows.map((r) => r.id)).size === input.rows.length;
-    const { rows: wireRows, newIds: wireIds, ...header } = wireInput;
+      new Set(inputRows.map((r) => r.id)).size === inputRows.length;
     const body = {
-      ...(fresh ? header : wireInput),
+      // [DX-INT1] Why: updating the existing legacy keys preserves the frozen request bytes.
+      // Rejected: rebuilding the legacy header in compact-field order.
+      ...(fresh || ordered ? header : wireInput),
       ...(this.cacheOptions.writeClass ? { writeClass: this.cacheOptions.writeClass } : {}),
       ...(this.cacheOptions.groupAccount ? { groupAccount: this.cacheOptions.groupAccount } : {}),
       ...(bounds ? { historyIdentityBounds: bounds } : {}),
       ...(fresh
-        ? {
-            rowMode: "fresh-texts-v1",
-            freshTexts: wireRows.map((r) => (rowFast ? encodeRowTextFast : encodeRowText)(r)),
-          }
-        : {
-            newIds: wireIds,
-            rows,
-            ...(compact ? { rowMode: "texts", rowOrder: input.rows.map((row) => row.id) } : {}),
-            rowTexts: Object.fromEntries(
-              input.rows
-                .filter((r) => isNew(r.id))
-                .map((r) => [
-                  r.id,
-                  (rowFast ? encodeRowTextFast : encodeRowText)(
-                    rowFast &&
-                      r.retracted_at === null &&
-                      r.retracted_position === null &&
-                      r.retract_tx_id === null
-                      ? r
-                      : {
-                          ...r,
-                          retracted_at: null,
-                          retracted_position: null,
-                          retract_tx_id: null,
-                        },
-                  ),
-                ]),
-            ),
-          }),
+        ? { rowMode: "texts", freshTexts: texts.map(([, text]) => text) }
+        : ordered
+          ? {
+              rows,
+              rowMode: "texts",
+              rowOrder: "assertions-first-v1",
+              rowTexts: texts.map(([, text]) => text),
+            }
+          : {
+              rows,
+              newIds: ids,
+              ...(compact ? { rowMode: "texts", rowOrder: inputRows.map((row) => row.id) } : {}),
+              rowTexts: Object.fromEntries(texts),
+            }),
     };
     endSpan(encodeSpan);
     this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;
@@ -991,11 +1151,16 @@ export class DatomicClient {
       delta?: number;
       recordedAt?: TaggedValue;
     };
+    let dispatched = true;
     try {
       response = await this.request("POST", `/v1/db/${db}/transact`, body, this.timeoutMs);
+    } catch (error) {
+      dispatched = !(error instanceof DatomicRequestTooLarge);
+      throw error;
     } finally {
       this.sentCallbacks.delete(sendKey);
-      onSent?.();
+      if (dispatched) onSent?.();
+      else onSent?.(false);
     }
     if (response.t && response.position) {
       const p = validateTagged(response.position);
@@ -1096,7 +1261,11 @@ export class DatomicClient {
       if (ack.operationId !== input.operationId) throw new TypeError("Commit operation mismatch");
       return receipt(claim.txId, ack);
     } catch (error) {
+      // [DX-WFIX1] Why: older writers can report a stale CAS for an already committed command.
+      // Rejected: retrying CAS or polling for a different command (a truly conflicting write stays refused).
+      const cas = error instanceof DatomicHttpError && error.code === "CasConflict";
       if (
+        !cas &&
         !(
           error instanceof DatomicTransportError ||
           (error instanceof DatomicHttpError &&
@@ -1126,6 +1295,7 @@ export class DatomicClient {
         } catch (readError) {
           if (!(readError instanceof DatomicTransportError)) throw readError;
         }
+        if (cas) break;
         const left = deadline - performance.now();
         if (left > 0) await new Promise((resolve) => setTimeout(resolve, Math.min(25, left)));
       } while (performance.now() < deadline);

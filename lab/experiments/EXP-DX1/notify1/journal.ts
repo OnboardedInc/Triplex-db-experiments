@@ -3,6 +3,8 @@ import { readFileSync, readdirSync } from "node:fs";
 import { W0, sha256 } from "../../../bench/lib/w0-world.ts";
 import type { Budget } from "./budget.ts";
 import { type Census, installCensus, memberPage, width } from "./census.ts";
+import type { CommittedRanges, Coverage } from "./ranges.ts";
+import type { ReleaseCopy } from "./copy-plan.ts";
 import {
   Documents,
   hash,
@@ -20,6 +22,9 @@ export interface Inputs {
   identity: string;
   roster(cut: Cut): Promise<string[]>;
   worlds(subjects: string[], cut: Cut): Promise<W0.World[]>;
+  ranges?: Pick<CommittedRanges, "suggest">;
+  ownedCommand?(event: Event, owner: string): Promise<boolean>;
+  releaseCopy?: Pick<ReleaseCopy, "suggest" | "results">;
 }
 export type Selection = { kind: "census" } | { kind: "subjects"; ids: string[] };
 export interface Request {
@@ -45,6 +50,7 @@ export interface Tail {
   evaluator: string;
 }
 export interface Recipe {
+  ownerProof?: string;
   definition?: number;
   version: 1;
   account: string;
@@ -139,7 +145,7 @@ export class Notices {
     return e;
   }
   // [DX-STG1] Why: both activation hosts append these operations in their own guarded transaction. The stored event's assertion position is A. Rejected: guessing A or enqueuing a second transaction after the release ACK.
-  plan(tail: Row<Tail>, req: Request) {
+  plan(tail: Row<Tail>, req: Request, owner?: string) {
     const old = tail.value;
     assert(
       tail.key === "tail" &&
@@ -179,6 +185,12 @@ export class Notices {
           : undefined
         : old.custom;
 
+    if (owner !== undefined) {
+      assert(
+        this.inputs.ownedCommand && req.kind === "reconcile" && req.selection.kind === "subjects",
+      );
+      assert.deepEqual(req.selection.ids, [owner]);
+    }
     const recipe: Recipe = {
       version: 1,
       account: this.db.prefix,
@@ -196,7 +208,11 @@ export class Notices {
       request: req.id,
       kind: req.kind,
       census: old.census,
-      selection: req.selection,
+      // [DX-STG1] Why: generic source ops do not attest the full reverse dependency
+      // closure at the predecessor and committed cuts, including valid-time changes.
+      // Rejected: trusting the caller's subjects without the joined command witness.
+      selection: owner === undefined ? { kind: "census" } : { kind: "subjects", ids: [owner] },
+      ...(owner === undefined ? {} : { ownerProof: hash([old.census, tail.at, req.id, owner]) }),
       inputs: old.inputs,
       evaluator: interpreter,
       sourceBefore: tail.at,
@@ -232,12 +248,60 @@ export class Notices {
       [...sourceChecks, ...p.preconditions],
     );
   }
+  async requireCoverage(e: Event) {
+    // [DX-STG1] Why: an event already written with the old caller list can
+    // contain real unpaid debt outside that list. Rejected: advancing its
+    // cursor or retroactively treating an already paid span as a whole census.
+    const r = e.value;
+    if (r.selection.kind === "census") return;
+    const [owner] = r.selection.ids;
+    assert(
+      owner &&
+        r.selection.ids.length === 1 &&
+        r.kind === "reconcile" &&
+        r.ownerProof === hash([r.census, r.sourceBefore, r.request, owner]) &&
+        this.inputs.ownedCommand &&
+        (await this.inputs.ownedCommand(e, owner)),
+      "Legacy selection lacks coverage proof",
+    );
+  }
   async members(e: Event, start: number) {
-    const selection = e.value.selection;
-    if (selection.kind === "subjects") return selection.ids.slice(start, start + width);
-    return memberPage(this.db, e.value.census, start, e.at);
+    await this.requireCoverage(e);
+    return e.value.selection.kind === "census"
+      ? memberPage(this.db, e.value.census, start, e.at)
+      : e.value.selection.ids.slice(start, start + width);
+  }
+  async coverage(e: Event, ledger: Documents, at: number) {
+    if (e.value.kind === "erase") return;
+    const row = await ledger.row<string>("range:" + e.value.sequence, at);
+    if (!row) return;
+    const saved = unpack<{ assertion: string; recipe: string; coverage: Coverage }>(row.value);
+    assert(saved.assertion === e.id && saved.recipe === hash(e.value));
+    return saved.coverage;
+  }
+  async select(e: Event, ledger: Documents, at: number, sourceAt: number, start: number) {
+    await this.requireCoverage(e);
+    if (e.value.selection.kind === "subjects") return { coverage: undefined };
+    const previous = await this.coverage(e, ledger, at);
+    if (previous || start !== 0) return { coverage: previous };
+    const planner = e.value.kind === "activation" ? this.inputs.releaseCopy : this.inputs.ranges;
+    const coverage = await planner?.suggest(this, e, sourceAt);
+    return {
+      coverage,
+      write: coverage
+        ? ledger.put(
+            "range:" + e.value.sequence,
+            pack({
+              assertion: e.id,
+              recipe: hash(e.value),
+              coverage,
+            }),
+          )
+        : undefined,
+    };
   }
   async work(e: Event, ids: string[], at: number): Promise<Work[]> {
+    await this.requireCoverage(e);
     const markers = await this.db.rows<Erased>(
       ids.map((s) => "erased:" + s),
       at,
@@ -311,13 +375,11 @@ export class Notices {
     // [DX-STG1] Why: an owed EVSUB can depend on a value that will become unreadable at every old pin. Freeze only W0's replay-safe work records before erasure, even for a stalled receiver. Rejected: silently re-evaluating an old event with the erased marker.
     for (let i = (prev?.value.through ?? 0) + 1; i <= tail.value.sequence; i++) {
       const e = await this.event(i, at),
-        sel = e.value.selection;
-      if (sel.kind === "subjects" && !sel.ids.includes(subject)) continue;
-      if (sel.kind === "census") {
-        const members = await this.inputs.roster({ position: e.at, validTime: e.value.validTime });
-        assert.equal(hash(members), e.value.census.members);
-        if (!members.includes(subject)) continue;
-      }
+        census = e.value.census;
+      await this.requireCoverage(e);
+      const members = await this.inputs.roster({ position: e.at, validTime: e.value.validTime });
+      assert.equal(hash(members), census.members);
+      if (!members.includes(subject)) continue;
       const [items] = await this.work(e, [subject], at);
       proofs.push(
         this.db.put(receiptsAt(subject, i), {

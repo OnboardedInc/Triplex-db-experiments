@@ -18,27 +18,12 @@ main(async () => {
   if (!Number.isSafeInteger(pollMs) || pollMs < 100 || pollMs > 30000) fail('USAGE', '--poll-ms must be an integer from 100 to 30000');
   const label = options.label ?? command.join(' ');
   const holder = options['measure-holder'];
-  let release;
-  if (holder !== undefined) {
-    if (typeof holder !== 'string' || !holder || !options.label)
-      fail('USAGE', '--measure-holder requires an explicit holder and --label');
-    // [DX-TAIL1] Why: lease users need to enter the same queue before any heavy token is issued.
-    // Rejected: winning a token first, then losing pool admission while the next lease drains it.
-    const controller = new AbortController();
-    const cancel = () => controller.abort(Error('Measurement lease request canceled'));
-    process.once('SIGINT', cancel);
-    process.once('SIGTERM', cancel);
-    try {
-      const lease = await acquireMeasureLease(label, { holder, pollMs, signal: controller.signal });
-      release = lease.release;
-      process.stderr.write(`[lab] measurement lease ready after ${lease.waitedMs} ms\n`);
-    } finally {
-      process.removeListener('SIGINT', cancel);
-      process.removeListener('SIGTERM', cancel);
-    }
-  } else {
-    release = await acquireHeavy(label, { pollMs });
-  }
+  if (holder !== undefined && (typeof holder !== 'string' || !/^[A-Za-z0-9_-]+$/.test(holder)))
+    fail('USAGE', '--measure-holder needs the exact engine holder');
+  // [DX-ACT2] Why: an isolated comparison must drain the same heavy pool before building and running. Rejected: competing for a single token before requesting the existing measurement lease.
+  const release = holder
+    ? (await acquireMeasureLease(label, { holder, pollMs })).release
+    : await acquireHeavy(label, { pollMs });
   const code = await new Promise(resolve => {
     const child = spawn(command[0], command.slice(1), { stdio: 'inherit' });
     for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));

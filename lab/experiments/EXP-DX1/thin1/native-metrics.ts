@@ -12,6 +12,8 @@ export interface Stack {
   managed?: {
     nonce: string;
     compact?: boolean;
+    memoryPoints?: string;
+    nativePools?: boolean;
     peers: {
       role: "write" | "read";
       endpoint: string;
@@ -47,6 +49,7 @@ async function managedMetrics(stack: Stack) {
   const { secret } = JSON.parse(fs.readFileSync(process.env.DX_THIN_CREDENTIAL!, "utf8"));
   const roles: Record<string, { rssBytes: number; threads?: number }> = {},
     gateways: Record<string, unknown> = {};
+  const observations: Record<string, unknown> = {};
   const gatewayPids = new Set<number>();
   let disk, limit;
   for (const peer of managed.peers) {
@@ -77,6 +80,10 @@ async function managedMetrics(stack: Stack) {
     assert.equal(data.containerId, peer.id);
     assert.equal(data.role, peer.role);
     assert.equal(data.source, stack.gatewaySourceSha256);
+    if (managed.memoryPoints) {
+      assert(data.observation && data.observation.roles);
+      observations[peer.role] = data.observation;
+    }
     assert.deepEqual(
       Object.keys(data.rssBytes).sort(),
       peer.role === "write" ? ["postgres", "transactor", "writeGateway"] : ["readGateway"],
@@ -133,6 +140,7 @@ async function managedMetrics(stack: Stack) {
     writeGateway: gateways.write,
     disk,
     transactor: { objectCacheLimitBytes: limit, attributableObjectCacheBytes: null },
+    ...(managed.memoryPoints ? { observations } : {}),
   };
 }
 export async function nativeMetrics(stack: Stack) {

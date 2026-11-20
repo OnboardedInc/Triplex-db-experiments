@@ -299,6 +299,8 @@ function placement(prefix: string) {
         {
           id: s.Id,
           image: s.Image,
+          startedAt: s.State.StartedAt,
+          restarts: s.RestartCount,
           cpus: s.HostConfig.CpusetCpus,
           memory: s.HostConfig.Memory,
           cgroup: grp,
@@ -400,29 +402,22 @@ function clean(dir: string, prefix: string) {
     JSON.stringify({ at: Date.now(), before, after }),
   );
 }
-async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
-  const dir = path.join(root, tag),
-    attempt = get(path.join(dir, "attempt.json"));
-  const spec = campaignItem(item, attempt.layout);
-  assert.deepEqual(attempt.spec, spec);
-  const small = mode === "small",
-    smallSeparate = small && attempt.layout !== "pooled";
-  const prefix = attempt.slot,
-    source = call("git", ["rev-parse", "HEAD"]);
-  assert.equal(source, attempt.source);
-  const rawRoot = path.join(repo, "runs", "DX-SCALE1", tag),
-    barrier = path.join(dir, "barrier");
-  fs.mkdirSync(rawRoot, { recursive: true });
-  fs.mkdirSync(barrier);
-  const oracleDir = path.join(dir, "oracle");
-  write(path.join(dir, "replay-source.json"), stageReplay(repo, oracleDir));
-  write(path.join(dir, "source.json"), sourceInventory(repo, attempt.publication === "lazy"));
-  const budget = attempt.capacity;
-  assert(attempt.boundedTrial || (mode === "seed" ? budget.fitsSeed : budget.fitsLive));
-  status(dir, "starting stack");
+// [DX-STG1] Why: notification trials use the same cold native stack, placement and cleanup as SCALE1. Rejected: a second server launcher with different durability settings.
+export function startScaleStack(dir: string, prefix: string, source: string, grouped = false, options: NodeJS.ProcessEnv = {}) {
+  const twoWriterCores = options.DX_TAIL1_TWO_WRITE_CORES === "1";
+  if (twoWriterCores) {
+    // [DX-TAIL1] Why: give the writer a separate physical core.
+    // Rejected: counting two sibling hardware threads as the two-core arm.
+    const writerKeys = [planCpus.writerGateway, "5"].map((cpu) =>
+      ["physical_package_id", "core_id"].map((id) =>
+        fs.readFileSync(path.join("/sys/devices/system/cpu", `cpu${cpu}`, "topology", id), "utf8").trim(),
+      ).join("/"),
+    );
+    assert.notEqual(writerKeys[0], writerKeys[1]);
+  }
   const env = {
     ...process.env,
-    DX_GROUP_COMMIT: attempt.groupControl ? "1" : "0",
+    DX_GROUP_COMMIT: grouped ? "1" : "0",
     DX_GROUP_QUEUE_CLOCK: "0",
     DX_BARE_METAL: "1",
     DX_BARE_METAL_ROOT: dir,
@@ -443,6 +438,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "-Xms256m -Xmx4g -Ddatomic.objectCacheMax=1536m -Xlog:gc=info:file=/trace/gw-w-gc.log",
     DX_GW_READ_JAVA_OPTS:
       "-Xms256m -Xmx4g -Ddatomic.objectCacheMax=1536m -Xlog:gc=info:file=/trace/gw-r-gc.log",
+    ...options,
   };
   execFileSync(
     "bash",
@@ -455,7 +451,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--cpus-pg",
       planCpus.postgres,
       "--cpus-gw-write",
-      planCpus.writerGateway,
+      twoWriterCores ? planCpus.writerGateway + ",5" : planCpus.writerGateway,
       "--cpus-gw-read",
       planCpus.readerGateway,
       "--pg-memory",
@@ -463,7 +459,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--tx-memory",
       "6g",
       "--tx-java-opts",
-      "-Xms256m -Xmx5g -XX:+UseG1GC -Xlog:gc=info:file=/trace/tx-gc.log",
+      (options.DX_TX_JAVA_OPTS ?? "-Xms256m -Xmx5g -XX:+UseG1GC -XX:MaxGCPauseMillis=50") + " -Xlog:gc=info:file=/trace/tx-gc.log",
       "--object-cache-max",
       "2560m",
       "--pg-settings",
@@ -472,6 +468,29 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     { env, cwd: repo, stdio: "inherit", timeout: 480000 },
   );
   const engines = placement(prefix);
+  return { env, engines };
+}
+async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
+  const dir = path.join(root, tag),
+    attempt = get(path.join(dir, "attempt.json"));
+  const spec = campaignItem(item, attempt.layout);
+  assert.deepEqual(attempt.spec, spec);
+  const small = mode === "small",
+    smallSeparate = small && attempt.layout !== "pooled";
+  const prefix = attempt.slot,
+    source = call("git", ["rev-parse", "HEAD"]);
+  assert.equal(source, attempt.source);
+  const rawRoot = path.join(repo, "runs", "DX-SCALE1", tag),
+    barrier = path.join(dir, "barrier");
+  fs.mkdirSync(rawRoot, { recursive: true });
+  fs.mkdirSync(barrier);
+  const oracleDir = path.join(dir, "oracle");
+  write(path.join(dir, "replay-source.json"), stageReplay(repo, oracleDir));
+  write(path.join(dir, "source.json"), sourceInventory(repo, attempt.publication === "lazy"));
+  const budget = attempt.capacity;
+  assert(attempt.boundedTrial || (mode === "seed" ? budget.fitsSeed : budget.fitsLive));
+  status(dir, "starting stack");
+  const { env, engines } = startScaleStack(dir, prefix, source, Boolean(attempt.groupControl));
   if (item === 3 && attempt.layout === "pooled") {
     const expected = Number(Boolean(attempt.groupControl));
     const actual = JSON.parse(docker("inspect", engines["gw-w"].id))[0];
@@ -512,6 +531,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       TRIPLEX_DATOMIC_LAYOUT: "lean",
       TX2_SWEEP_STRICT: "1",
       TX2_W0_POINT_JOURNAL: "1",
+      DELTA_AUDITED: "1",
     };
     status(dir, "checking the 1000-person DELTA preflight");
     try {
@@ -537,7 +557,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
           process.execPath,
           "--import",
           "tsx",
-          path.join(repo, "lab/experiments/EXP-DX1/actv-delta/solo.ts"),
+          path.join(repo, "lab/experiments/EXP-DX1/actv-delta/audit-solo.ts"),
           log,
         ],
         { cwd: repo, env: { ...childEnv, DELTA_GATE: "solo" }, stdio: "inherit" },
@@ -597,13 +617,20 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
           await completion;
         }
       }
-      const { checkSolo } = await import("../actv-delta/solo-proof.ts");
-      const result = checkSolo(log, binding, 100000, 90, "solo");
-      assert.deepEqual(result.binding, binding);
-      assert.equal(result.target.people, 100000);
+      const { checkAuditSolo, checkCollector } = await import("../actv-delta/audit-solo.ts");
+      const { result, reports } = checkAuditSolo(log, binding, 100000, 45, "solo");
+      checkCollector(log, binding, 100000, 90);
       write(path.join(dir, "delta-measurement.json"), result);
+      write(path.join(dir, "delta-modes.json"), { binding, reports });
       write(path.join(dir, "disk-terminal.json"), snapshot(prefix));
-      status(dir, "DELTA evidence collected");
+      try {
+        checkAuditSolo(log, binding, 100000, 45, "solo", true);
+        status(dir, "DELTA evidence collected", { reports });
+      } catch (e) {
+        write(path.join(dir, "delta-deadline.json"), { binding, reports, reason: String(e) });
+        status(dir, "DELTA deadline missed", { reports, reason: String(e) });
+        throw e;
+      }
     } catch (e) {
       const reason = String(e).split("\n")[0];
       write(path.join(dir, "delta-stop.json"), { ...binding, reason });
@@ -1447,18 +1474,28 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
   const deltaStop = path.join(dir, "delta-stop.json");
   if (entry.activationMode === "delta" && !outcome.stopReason) {
     const result = path.join(dir, "delta-measurement.json");
-    status(dir, fs.existsSync(result) ? "DELTA evidence collected" : "DELTA stopped", {
-      ...outcome,
-      ...(!fs.existsSync(result)
-        ? {
-            reason: fs.existsSync(deltaStop)
-              ? get(deltaStop).reason
-              : (Date.now() - entry.at >= entry.ceiling * 1000
-                  ? "three-hour budget / "
-                  : "worker stopped / ") + service,
-          }
-        : {}),
-    });
+    const missed = path.join(dir, "delta-deadline.json");
+    const scored = fs.existsSync(result) && !fs.existsSync(missed) && !fs.existsSync(deltaStop);
+    status(
+      dir,
+      scored
+        ? "DELTA evidence collected"
+        : fs.existsSync(missed)
+          ? "DELTA deadline missed"
+          : "DELTA stopped",
+      {
+        ...outcome,
+        ...(!scored
+          ? {
+              reason: fs.existsSync(deltaStop)
+                ? get(deltaStop).reason
+                : (Date.now() - entry.at >= entry.ceiling * 1000
+                    ? "three-hour budget / "
+                    : "worker stopped / ") + service,
+            }
+          : {}),
+      },
+    );
   } else status(dir, outcome.stopReason ? "preflight stopped" : "finished", outcome);
 }
 async function main() {
@@ -1589,6 +1626,9 @@ async function main() {
   if (process.env.DX_SCALE1_RUNTIME_REPO)
     assert.equal(fs.realpathSync(repo), path.join(root, "build-" + source, "repository"));
   const activationMode = getopt("activation-mode");
+  // [DX-ACT2] Why: require explicit selection of the audited campaign. Rejected: admitting an old overnight command with the read-only interpretation of DELTA.
+  if (activationMode === "delta")
+    assert.equal(getopt("delta-audit"), "2", "DELTA launch requires --delta-audit 2");
   if (activationMode !== undefined)
     assert(
       activationMode === "delta" &&
@@ -1843,6 +1883,7 @@ async function main() {
   ]);
   console.log(JSON.stringify({ unit, tag, ceiling, capacity }));
 }
+export const scaleHost = { physical, released, memory, available, childrenInventory, clean, snapshot, planCpus, root };
 if (process.argv[1] && path.resolve(process.argv[1]) === script)
   main().catch((e) => {
     console.error(e);

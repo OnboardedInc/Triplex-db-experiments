@@ -7,6 +7,7 @@ import http from "node:http";
 import os from "node:os";
 import { randomUUID, createHash } from "node:crypto";
 import { cacheCharge } from "./cache-charge.ts";
+import { heapResidency, readResidentMappings } from "./heap-residency.ts";
 import path from "node:path";
 import process from "node:process";
 import { setTimeout as wait } from "node:timers/promises";
@@ -20,6 +21,9 @@ assert(nonce && /^[a-f0-9]{20}$/.test(nonce) && secret && /^[a-f0-9]{40}$/.test(
 assert(role === "write" || role === "read");
 const compact = property("compact") === "yes";
 const demand = property("cache") === "demand";
+const memory = property("memory") === "yes";
+const nativePools = property("nativePools") === "yes";
+const campaign = property("campaign") === "yes";
 assert(!compact || role === "write");
 const address = Object.values(os.networkInterfaces())
   .flat()
@@ -96,6 +100,37 @@ const processTotal = (pid: number, metric: "rss" | "threads"): number => {
     throw error;
   }
 };
+// [DX-THIN1] Why: Postgres backends can map the same shared pages. Rejected: treating a sum of their RSS as unique memory.
+function proportionalBytes(pid: number): number {
+  const proc = "/proc/" + pid;
+  const map = fs.readFileSync(proc + "/smaps_rollup", "utf8");
+  const observed = map.match(/^Pss:\s+(\d+) kB$/m);
+  assert(observed);
+  const children = fs.readFileSync(proc + "/task/" + pid + "/children", "utf8").trim();
+  return Number(observed[1]) * 1024 + (children ? children.split(/\s+/).reduce((sum, child) => sum + proportionalBytes(Number(child)), 0) : 0);
+}
+const budgets = { "memory-index-threshold": demand ? "8m" : "32m", "memory-index-max": demand ? "32m" : "192m", "object-cache-max": "192m" };
+let sharedBufferCensus = false;
+function indexIntervals() {
+  const files = [dir, path.join(dir, "log"), path.join(dir, "logs")].filter(p => fs.existsSync(p))
+    .flatMap(p => fs.readdirSync(p).filter(name => name.endsWith(".log")).map(name => path.join(p, name)))
+    .filter(p => fs.statSync(p).isFile()).sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+  const samples = [];
+  for (const file of files.slice(0, 3)) {
+    const fd = fs.openSync(file, "r");
+    try {
+      const size = fs.fstatSync(fd).size, tail = Buffer.alloc(Math.min(262_144, size));
+      fs.readSync(fd, tail, 0, tail.length, size - tail.length);
+      for (const line of tail.toString().split("\n")) {
+        const fields = line.includes(":event :metrics") && line.match(/:MemoryIndexMB \{([^}]+)\}/)?.[1];
+        if (!fields) continue;
+        const values = Object.fromEntries([...fields.matchAll(/:(lo|hi|sum|count) ([0-9.]+)/g)].map(m => [m[1], Number(m[2])]));
+        if (Object.keys(values).length === 4) samples.push({ time: line.slice(0, 23), ...values });
+      }
+    } finally { fs.closeSync(fd); }
+  }
+  return samples.sort((a, b) => a.time.localeCompare(b.time)).slice(-8);
+}
 process.once("SIGTERM", () => {
   closing = true;
   for (const child of [...pids.values()].reverse()) child.kill();
@@ -143,6 +178,10 @@ if (role === "write") {
   }
   sql("CREATE ROLE datomic LOGIN PASSWORD '" + secret + "'", "postgres");
   sql("CREATE DATABASE datomic TEMPLATE template0", "postgres");
+  if (memory && sql("SELECT count(*) FROM pg_available_extensions WHERE name='pg_buffercache'") === "1") {
+    sql("CREATE EXTENSION pg_buffercache");
+    sharedBufferCensus = true;
+  }
   execFileSync(
     pg + "psql",
     [
@@ -171,9 +210,7 @@ if (role === "write") {
     "sql-url": "jdbc:postgresql://" + primary + ":5432/datomic",
     "sql-user": "datomic",
     "sql-password": secret,
-    "memory-index-threshold": demand ? "8m" : "32m",
-    "memory-index-max": demand ? "32m" : "192m",
-    "object-cache-max": "192m",
+    ...budgets,
     "log-dir": dir,
     "pid-file": path.join(dir, "tx.pid"),
   };
@@ -250,6 +287,10 @@ const gateway = (label: "write" | "read", secondary = false) => {
       DATOMIC_URI_TEMPLATE: template,
       ...(demand ? { TX2_ID_CACHE_BYTES: "1048576", TX2_ID_CACHE_ENTRIES: "4096",
         TX2_REACH_SESSION_ENTRIES: "4096", TX2_ENTITY_CACHE_BYTES: "8388608" } : {}),
+      ...(campaign && label === "write" ? {
+        TX2_INT1_WRITE_READBACK: "1", TX2_PREDECESSOR_LOOKUP: "0", TX2_SMALL_ROWS: "0", TX2_GROUP_STAGE_CLOCK: "1",
+        TX2_GROUP_COMMIT: "0", TX2_LIVE_PRIORITY: "0", TX2_FIELD_COALESCE: "0", TX2_GROUP_REUSE_PREPARED: "0",
+      } : {}),
     },
   );
 };
@@ -293,10 +334,12 @@ const server = http.createServer(async (req, res) => {
     try {
       const profile = req.url === "/gateway-profile";
       const requested = profile ? req.headers["x-thin-role"] : role;
-      assert(requested === "write" || (requested === "read" && compact));
+      assert(requested === "write" || (requested === "read" && compact) ||
+        (requested === "transactor" && nativePools));
+      const profileTransactor = requested === "transactor";
       const tx = pids.get("transactor")!;
-      const pid = profile ? gatewayJvm(requested) : tx.pid!;
-      if (!profile) {
+      const pid = profile && !profileTransactor ? gatewayJvm(requested) : tx.pid!;
+      if (!profile || profileTransactor) {
         const args = fs.readFileSync("/proc/" + pid + "/cmdline", "utf8").split("\0");
         assert(tx.exitCode === null && args.includes("datomic.launcher") && args.includes(path.join(dir, "sql.properties")));
       }
@@ -304,20 +347,29 @@ const server = http.createServer(async (req, res) => {
         { encoding: "utf8", timeout: 120000, maxBuffer: 8 << 20 });
       const processStat = () => fs.readFileSync("/proc/" + pid + "/stat", "utf8").split(") ")[1]!.split(" ")[19]!;
       const startTicks = processStat();
-      const before = profile ? {
-        rssBytes: processTotal(pid, "rss"),
-        heap: jcmd("GC.heap_info"),
-        smaps: fs.readFileSync("/proc/" + pid + "/smaps_rollup", "utf8").split("\n").slice(1).join("\n"),
-      } : undefined;
+      const memoryState = () => {
+        const rssBytes = processTotal(pid, "rss"), heap = jcmd("GC.heap_info");
+        const smaps = fs.readFileSync("/proc/" + pid + "/smaps_rollup", "utf8").split("\n").slice(1).join("\n");
+        if (!nativePools) return { rssBytes, heap, smaps };
+        const mappings = readResidentMappings(fs.readFileSync("/proc/" + pid + "/smaps", "utf8"));
+        return { rssBytes, heap, smaps, mappings, residency: heapResidency(heap, mappings),
+          nmt: jcmd("VM.native_memory", "summary", "scale=KB") };
+      };
+      const before = profile ? memoryState() : undefined;
       const disk = fs.statfsSync(dir, { bigint: true });
       assert(disk.bavail * disk.bsize > 5n * 1024n ** 3n);
       execFileSync("/opt/thin-jdk/bin/jcmd", [String(pid), "GC.heap_dump", file], {
         timeout: 90000,
         stdio: ["ignore", "pipe", "pipe"],
       });
-      const limit = profile ? Number.parseInt(words.find((w) => w.startsWith("-Ddatomic.objectCacheMax="))!.split("=")[1]!, 10) : 192;
-      const values = cacheCharge(file, limit * 1024 ** 2, profile);
+      const limit = profile && !profileTransactor
+        ? Number.parseInt(words.find((w) => w.startsWith("-Ddatomic.objectCacheMax="))!.split("=")[1]!, 10)
+        : Number.parseInt(budgets["object-cache-max"], 10);
+      const values = cacheCharge(file, limit * 1024 ** 2, profile && !profileTransactor);
       const histogram = profile ? jcmd("GC.class_histogram") : undefined;
+      // [DX-THIN1] Why: distinguish live heap, JVM commitments and process residency at one phase boundary.
+      // Rejected: calling NMT committed bytes resident or forcing a collection before the baseline RSS.
+      const after = profile && nativePools ? memoryState() : undefined;
       assert.equal(processStat(), startTicks);
       const h = createHash("sha256");
       for await (const block of fs.createReadStream(file)) h.update(block);
@@ -326,7 +378,7 @@ const server = http.createServer(async (req, res) => {
         JSON.stringify({
           nonce,
           role: requested,
-          ...(profile ? { pid, startTicks, before, histogram, afterHeap: jcmd("GC.heap_info"), limitMiB: limit } : {}),
+          ...(profile ? { pid, startTicks, before, histogram, afterHeap: after?.heap ?? jcmd("GC.heap_info"), after, limitMiB: limit } : {}),
           containerId,
           source: observerId,
           witness,
@@ -370,6 +422,23 @@ const server = http.createServer(async (req, res) => {
             ),
           )
         : null;
+    const observation = memory ? {
+      roles: Object.fromEntries(processes.map(([name, child]) => {
+        let pssBytes = null;
+        try { pssBytes = proportionalBytes(child.pid!); }
+        catch (error) {
+          if (!["EACCES", "EPERM", "ESRCH", "ENOENT"].includes((error as NodeJS.ErrnoException).code ?? "")) throw error;
+        }
+        const ticks = fs.readFileSync(`/proc/${child.pid}/stat`, "utf8").split(") ")[1]!.split(" ")[19];
+        return [name, { pid: child.pid, ticks, pssBytes }];
+      })),
+      ...(requested === "write" ? {
+        budgets,
+        sharedBuffers: JSON.parse(sql(`SELECT json_build_object('limitBytes',pg_size_bytes(current_setting('shared_buffers')),'usedBytes',${sharedBufferCensus ? "(SELECT count(*) * current_setting('block_size')::bigint FROM pg_buffercache WHERE relfilenode IS NOT NULL)" : "NULL"})`)),
+        indexIntervals: indexIntervals(),
+        cgroup: Object.fromEntries([...fs.readFileSync("/sys/fs/cgroup/memory.stat", "utf8").matchAll(/^(anon|file|shmem|kernel) (\d+)$/gm)].map(m => [m[1], Number(m[2])])),
+      } : {}),
+    } : undefined;
     res.setHeader("Content-Type", "application/json");
     res.end(
       JSON.stringify({
@@ -383,6 +452,7 @@ const server = http.createServer(async (req, res) => {
           processes.map(([name, c]) => [name, processTotal(c.pid!, "threads")]),
         ),
         disk,
+        observation,
         objectCacheLimitBytes: requested === "write" ? 192 * 1024 ** 2 : null,
         cgroupBytes: Number(fs.readFileSync("/sys/fs/cgroup/memory.current", "utf8")),
       }),

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import {
+  allIndexes,
   bucket,
   bounds,
   declarations,
@@ -25,10 +26,19 @@ export const indexInputs = new Set(
     .flatMap((k) => declarations[k].reads.map((a) => a.split(".")[1]!))
     .filter((a) => a !== "startDate"),
 );
+export const outputRules = allIndexes();
+export const outputInputs = new Set(
+  Object.values(declarations).flatMap((d) => d.reads.map((a) => a.split(".")[1]!)),
+);
 // [DX-ACT1] Why: reopening an unpaid release must run the exact classifier, world mapping and selector that made its promise. Rejected: hashing the declaration table alone (a changed range boundary would retain that identity).
 const code = [
   "./index.ts",
   "./account.ts",
+  "./deep.ts",
+  "../../../../bench/lib/deep-activation.ts",
+  "./material.ts",
+  "./evaluator.ts",
+  "./staging.ts",
   "../decision.ts",
   "../../actv-delta/rules.ts",
   "../../actv-delta/index-patch.ts",
@@ -46,10 +56,15 @@ export const selector = sha256(
     code.map((f) => [f, sha256(readFileSync(new URL(f, import.meta.url)))]),
   ]),
 );
-export type Entry = { s: string; l: Location; post: Posting[] };
-export const entry = (w: W0.World, b: Point): Entry => {
-  const { location, postings } = describe(w, b, indexed);
-  return { s: w.subject, l: location, post: postings };
+export type Entry = { s: string; l: Location; post: Posting[]; facts?: W0.Fact[] };
+export const entry = (w: W0.World, b: Point, expanded = false): Entry => {
+  const facts = w.facts.filter((f) => f.a !== "answers" && !f.e.includes("/ans:"));
+  const { location, postings } = describe(
+    { subject: w.subject, facts },
+    b,
+    expanded ? outputRules : indexed,
+  );
+  return { s: w.subject, l: location, post: postings, ...(expanded ? { facts } : {}) };
 };
 export type Leaf = { ids: string[]; loc: Location[]; lists: Record<string, Posting[]> };
 export function leaf(entries: Entry[]): Leaf {
@@ -83,17 +98,26 @@ export function strategy(
   b: W0.CompiledRelease,
   kind: "notice" | "output",
   validIndex: boolean,
+  expanded = false,
 ): "all" | "none" | "index" {
   if (!a) return "all";
   const diff = W0.diff(a, b);
-  if (kind === "output" && diff.some((r) => !indexed.has(r))) return "all";
+  const rules = kind === "output" && expanded ? outputRules : indexed;
+  if (kind === "output" && diff.some((r) => !rules.has(r))) return "all";
   if (kind === "notice" && diff.includes("DOCEXP") && docTypes(a) !== docTypes(b)) return "all";
-  if (!diff.some((r) => indexed.has(r))) return "none";
+  if (!diff.some((r) => rules.has(r))) return "none";
   return validIndex ? "index" : "all";
 }
-export function hits(l: Leaf, old: W0.CompiledRelease, next: W0.CompiledRelease, b: Point) {
-  const { ranges, fallback } = derive(old, next, b.validTime, l.loc, indexed);
-  assert(!fallback.some((r) => indexed.has(r)));
+export function hits(
+  l: Leaf,
+  old: W0.CompiledRelease,
+  next: W0.CompiledRelease,
+  b: Point,
+  expanded = false,
+) {
+  const rules = expanded ? outputRules : indexed;
+  const { ranges, fallback } = derive(old, next, b.validTime, l.loc, rules);
+  assert(!fallback.some((r) => rules.has(r)));
   const set = new Set<string>();
   let postings = 0;
   for (const r of ranges) {

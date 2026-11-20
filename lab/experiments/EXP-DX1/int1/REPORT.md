@@ -1,45 +1,37 @@
-Both gateways held database pages from imports before anyone opened a person’s record.
-The new reader fetches a whole record when needed. Neither gateway added cache entries for people left untouched after import.
-At 100,000 thin people, the read gateway added 49 bytes per untouched person, below the 64-byte target. The write gateway added 534 bytes.
-At 10,000 deep people, the read and write gateways added 2,936 and 3,783 bytes per untouched person. Both exceed the target.
-The 100 deep first reads included both 34-task records. The slower of the two took 90.03 ms, which was also the 99th percentile.
-In two 200-person probes, plain and compressed reads measured 29.85 and 50.65 ms p99. Opening each fresh scope took 132 and 144 ms.
-An idle scope added 4.7 KB and no threads in the read gateway, and 2.42 MB and four threads in the write gateway.
-The Mac runs measured each population separately. Capacity for ten deep accounts and one 4.5-million-person account together remains unproven.
+All accounts will share one Datomic database.
+The reader and gateways kept the same person-cache entries through 600,000 thin people and 40,000 deep people at fixed activity.
+The read gateway still holds about 62 MiB of live Java objects at 10,000 and 30,000 deep people. Its resident memory rose by 18 MiB.
+The transactor committed 211 MiB more to its Java heap while its object-cache charge stayed flat. A saved ten-account run reached 5.37 GiB in its 6 GiB container.
+The final Mac import stopped at 49,469 confirmed people after an ambiguous write. We have two complete profiles and no measured resident plateau.
+The writer, erasure safeguards, fallback reader and Publish priority are on the shared branch. Six native suites and all 13 checks in the small erasure regression passed.
+The pooled campaign has forecasts for all eight priorities. The small saved-output comparison is still due.
+Lean storage still has open erasure and native query gaps. The campaign must keep those paths out of the judged run.
 
-| Role | Thin RSS B/untouched, old → new | Deep RSS B/untouched, old → new | New idle RSS B/scope | New threads/scope |
+## One-database work
+
+Pooled forecasts for the two population rungs and every bar through P8. [Forecasts](P5-PREDICTIONS.md) · [Bars](https://github.com/OnboardedInc/Triplex-db-experiments/blob/7a0b6080b924437a6067c6457faa511448f39e26/lab/TARGETS.md)
+
+The fixed-activity census keeps three natural RSS samples at each population before requesting Java class histograms and Native Memory Tracking. The observer checks the target role, live PID and start time, challenge and image. The report reopens the compressed bytes and checks the totals, native pools, actual roster, pinned cut and unchanged admission counters. All Mac timings are diagnostic.
+
+The transactor census uses a 840 MiB Java heap, a configured 192 MiB object cache and memory-index threshold/maximum of 8/32 MiB. The read gateway uses a 384 MiB heap, a 32 MiB peer cache, an 8 MiB row budget and a 1 MiB identity budget. Native committed bytes, live heap and OS residency have different denominators.
+
+The two census checkpoints attribute most of the transactor’s 223 MiB RSS increase to a 211 MiB increase in committed heap. Its tracked memory outside the heap grew 1.83 MiB. The read gateway’s heap commitment grew 1 MiB and its tracked memory outside the heap grew 2.44 MiB. Its residual RSS and the plateau are still open. [Native pool table](P5-EVIDENCE.md)
+
+## Previous observations
+
+| Role | Thin RSS MiB at 100,000 / 300,000 / 600,000 | Last B/person | Deep RSS MiB at 10,000 / 30,000 / 40,000 | Last B/person |
 | --- | ---: | ---: | ---: | ---: |
-| Reader process | 225 → 3 | 1,718 → −4,047 | 18,725 | 0 |
-| Read gateway | 2,390 → 49 | 53,025 → 2,936 | 4,681 | 0 |
-| Write gateway | 4,089 → 534 | 44,789 → 3,783 | 2,423,662 | 4 |
-| Transactor | 4,293 → 4,606 | 43,981 → 50,775 | 1,406,098 | 8.43 |
-| PostgreSQL | 10,354 → 13,450 | 147,618 → 152,747 | 576,951 | 0 |
-| Driver apparatus | 190 → 163 | 8,358 → 7,432 | 205,970 | 0 |
+| Reader | 140.68 / 140.68 / 140.68 | 0 | 140.88 / 140.88 / 141.00 | 13.1 |
+| Read gateway | 310.07 / 325.21 / 324.18 | −3.6 | 314.78 / 326.00 / 329.07 | 321.5 |
+| Write gateway | 325.52 / 322.20 / 324.68 | 8.7 | 329.18 / 337.62 / 327.12 | −1,100.6 |
+| Transactor | 773.46 / 916.64 / 1,038.64 | 426.4 | 830.21 / 981.41 / 1,020.79 | 4,129.6 |
+| PostgreSQL | 1,378.63 / 1,663.68 / 1,831.46 | 586.5 | 1,785.60 / 1,873.73 / 1,868.75 | −523.1 |
+| Driver | 227.68 / 235.13 / 237.45 | 8.1 | 287.36 / 398.68 / 461.55 | 6,592.9 |
 
-The final Mac census used source `d0a909ba4` and added 98,000 thin or 9,800 deep people with the admitted set held fixed. Negative RSS deltas record net page release. Idle cost divides the change from one scope to eight by seven. PostgreSQL RSS can count shared pages more than once. Disk with indexes added 3,616/135,685 B per added thin/deep person, across 800,000/1,604,464 total facts.
-From seed to 2% touched, the original read and write live heaps grew from 41.8 to 54.0 MB and 48.9 to 51.3 MB at 10,000 thin people. At 2,000 deep people they grew from 63.6 to 82.5 MB and 91.4 to 91.6 MB. Peer cache charges were 5.4 → 20.4 / 15.0 → 18.0 thin and 20.0 → 45.0 / 58.1 → 58.1 deep. At seed both gateways' explicit ID and row caches were empty. The bounded read peer charged 0.063 MB for either seed. The bounded write peer charged 29.845/30.173 MB for thin/deep, including a rise from the original 15.041 MB thin. After deep touches the read gateway held 0.274 MB of ID entries and 9.21 MB of parsed rows and revisions.
-With no application reads the original reader's RSS stayed flat during both imports. With reads, the original follower decodes journal rows even for unadmitted people and tracks bounded commit clocks. The validated reader skips this feed. Neither its admission charge nor the gateways' named person-cache charge grew while holding admissions fixed.
-In the original 10,000-deep control, the follower consumed 1,840 more commits. RSS rose 15.42 MB and live V8 heap rose 0.34 MB with admission and index charge held fixed. At 10,000 thin, follower RSS rose 38.31 MB, live heap fell 4.48 MB and V8 heap capacity rose 22.08 MB. In the final validated runs, resident anonymous data changed by +0.20/-39.98 MB thin/deep. Mapping totals capture resident pages. The allocation mix within those pages remains unknown.
-Isolating writes from the test driver's feed check left 29.429 MB in the bounded write peer at the 2,000-person deep seed, compared with 30.173 MB during immediate checking. After the 40 real touches it held 30.174 MB. Replaying all 376 original transactions and 320,826 facts left 29.542 MB. Most of the charge was already present in the import-only process.
-A validated read checks revisions in one closure request at the native cut and fetches any missing rows there. The reader budgets 16 MiB per touched scope. The gateway profile caps the peer at 32 MiB, parsed rows and revisions at 8 MiB, each positive ID memo at 1 MiB and 4,096 entries, and each session at 4,096 revisions. The earlier path is available with `DX_INT1_GATEWAYS=original` and `DX_TOUCHED_READ_MODE=following`.
-Bounded thin/deep p50 was 1.07/7.88 ms and p99 was 13.79/90.03 ms for 1,000/100 first reads. All 100 deep reads made one HTTP exchange. The original 103.08 ms p99 sample excluded 34-task records. Final commit p99 was 56.80/84.40 ms. All 16,000/800 row comparisons, 2,000/200 read-your-own-write checks and 64/1,328 independent entity queries matched.
-Repeating the original follower at 10,000 deep people on the same spread cohort gave 54.03 ms p99, including both 34-task records at 54.08 and 54.03 ms. The earlier 103.08 ms and the matched controls use different samples and host conditions.
-The 128 KiB moving-set reader served 8,000 exact reads and evicted 31,824 entity entries. RSS changed from 170.9 to 175.3 MB across 32 samples. These Mac timings are diagnostic. The single exchange should keep deep p99 below 100 ms on bare metal once the gateway connection is open. The physical run will also measure opening a scope.
-Separate fresh stacks measured 44.30 ms p99 plain and 54.30 ms gzip, with first reads at 342 and 491 ms. The final paired probe used two scopes in the same stack. Gzip reduced response bytes from 8.00 to 1.31 MB. All 200 reads in each wire format made one exchange and matched the original rows, including both 34-task records.
-In a fresh database, 4,097 real entity lookups evicted the original entry on each gateway. Three distinct reuse attempts returned native 400 IdentityConflict, before retirement, after eviction and after re-admission. Original pinned rows and retired current rows matched. The cut stayed at 67 through both retired-ID attempts.
-The final merged native run matched Python on 400 guards across four releases, 372 entity queries for 21 pinned reads, and 128 more guards across the same eight small accounts pooled and isolated. All 23 publication schedules completed, including three expected historical divergences. Independent replay matched 48 logged states. An earlier attempt stopped at a changed reader source hash and produced no result.
-The physical command is `node --experimental-transform-types lab/experiments/EXP-DX1/int1/control.ts launch BATCH UTC_CUTOFF` with `BENCH_SERVER` set by its operator. It runs 1M then 4M thin people at 2% active, and the same 29,000 deep people / 580 active pooled vs isolated across 100 accounts. The default uses plain rows. `DX_INT1_ROW_WIRE=gzip` selects compression. The first wide arm also compares both formats across all five deep classes in separate fresh scopes. Physical capacity remains for the bench run.
-The driver and reader-worker merge retains eager seed-image install for eager mode and bounded admission in touched mode. Activation keeps exact tenant ranges, dependency selection, page-guard publication, parallel evaluators and release/commit metering for both burst placements. The manager exposes the HA and delta controls and binds isolated volume cleanup to its reservation.
-The refreshed heads are SCALE1 `6013d9f52`, ACT2 `eaee4e102`, W1 `4ec01a58a` and HA1 `1f7fbfce3`, fetched at 01:11 UTC. The volume conflict preserves both private naming schemes and ordinary slots without volume metadata. The campaign conflict keeps the source-bound DELTA preflight, pinned group-commit treatment, matched baseline and publisher-specific source checks. The newer merge combines HA seed tracing with W1 write prioritization. It retains the bounded TypeScript reader, both wire formats and the ordinary selector while excluding live-save arms from standalone release. The final merge retains the verified deep seed order, the independent import pipeline, the two priority policies, and the activation and lazy run ceilings.
-The merged control, activation, HA, writer and integration suite passed 106 focused tests. Seven TypeScript projects checked. Three engine admission test fixtures use the configured pool limits. A latest read with an interposed write delegates its cut to the ordinary reader in one call.
-All 17 package suites ran. The final Datomic SDK passed 415 tests with 52 declared skips, and the other 16 package trees matched their tested sources. The host suite completed all 37 tests and 900 crash stops on official Node 22 after two deadline failures. Thirteen tarballs installed in a clean consumer. Native queue and field tests passed 281 and 318 assertions. The canonical native gate failed one of 54,074 assertions. Both history modes returned 400 InvalidValue for duplicate row order. The test expected 400 TransactionRejected. The root formatter stopped at the frozen 2,000-level JSON fixture.
+The earlier scope-cost study is complete. Its measured timing, thread counts and source bindings are preserved with the rest of part 4. [Evidence](P4-EVIDENCE.md) · [Checksums](P4-SHA256SUMS)
 
-**Evidence audit**
+## Integration and campaign
 
-- `readDemandWorld`, `reachResponse` and the touched reader check complete closure, native cut, row positions and revision identity on every cache hit or repair. Eviction clears the resident generation. The moving-set trial matches each original record and binds samples to the run, reader and budget.
-- `Account.issue`, `verifySeedFeed` and `trial.replay` check issued changes, assigned assertion identities, original transaction, command, slot and positions. The deferred verifier matches a fresh full feed to these digests. The histogram collector independently reconstructs the observed seal from every original SQLite receipt and reconciles all seed people and facts in the same scope. O-REPLAY checks regenerated Python bytes at actual pinned positions.
-- `activate`, `regularDeepProof`, `placementProof` and `checkSchedules` check immutable projection inputs, exact account membership, release and source cut, page masks, publication receipts, adjacent tenant and guarded rows. O-DOMAIN evaluates original worlds. The schedule gate checks every named TAP result including stale controls.
-- `nativeMetrics`, `managed.ts` and `summarize.ts` check source/build bytes, fresh nonce, guest boot, active slot, image, role PIDs and ordered phases. Counts reconcile to SQLite. Gateway entries, insertions, misses, evictions and bytes must stay fixed during cold import. Optional reader map samples check the same child, start tick, run and one complete set of kernel counters per mapping. The manager checks staged gateway and codec bytes and the exact removed volume.
-- `gatewayProfiles`, `cache-charge.ts` and `inspectProfiles` require fresh role challenges, PID start time, class totals, heap digest and the native weigher's charge. The small-heap control checks the live G1 reserved address range. Latency collection checks actual first-read identities, sizes, one-per-fifty cohort, classes, original expected rows, actual exchanges and recomputed quantiles.
-- `proveEvictedIdentities` attempts the same assertion ID live, retired immediately after both peers evict its lookup, and after re-admission. Each distinct command records the native error and head. Old and current rows are checked at their cuts. `verifyCase` and `verifyDeepColdProbe` recheck the tree, receipts, source-row counts, timings, scope, membership, guards and outputs. The standalone probe checks all 200 subjects, HTTP encoding on every requested compressed exchange, both quantiles and independent replay before publication.
-- The acceptance contract and frozen trace retain their original bytes. [Gateway evidence](GATEWAY-EVIDENCE.md) · [Checksums](GATEWAY-SHA256SUMS) · [Earlier integration evidence](EVIDENCE.md)
+The exact writer, erasure and Publish native builds each ran 27 tests with zero failures. The reader handoff changed only documentation and shared the erasure build. Core passed 861 tests. The Datomic SDK passed 426 tests with 52 opt-in tests skipped. Fourteen focused tests and the pooled TypeScript check passed. [Merge resolutions and evidence audit](P5-EVIDENCE.md) · [Checksums](P5-SHA256SUMS)
+
+Run `bash lab/experiments/EXP-DX1/int1/everything.sh BATCH UTC_CUTOFF --overnight` for ten accounts of 10,000 people. Omit `--overnight` for both rungs. The current SCALE1 million-person image uses different entity identities and lean storage. Both rungs capture and reuse a compatible legacy seed for their matched arms. [Campaign and options](P5-EVIDENCE.md)
