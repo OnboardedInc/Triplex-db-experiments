@@ -81,9 +81,16 @@ gateway() {
   TX2_GROUP_COMMIT=1 TX2_LIVE_PRIORITY=1 TX2_PREDECESSOR_LOOKUP=1 TX2_GROUP_REUSE_PREPARED=1 \
     TX2_GROUP_MAX_MEMBERS=8 TX2_GROUP_QUEUE_CLOCK=1 TX2_GROUP_STAGE_CLOCK=1 TX2_GROUP_FAST_REPLY=1 \
     TX2_BULK_ROWS=2048 TX2_BULK_BYTES=1048576 TX2_PARALLEL_PREPARE=$1 TX2_PREPARE_WINDOW=$2 \
+    TX2_PREPARE_PROFILE=${3:-} TX2_PREPARE_GUARD=${4:-} \
     java_role -i bin/bridge.clj -m triplex.gateway.main &
   children+=("$!")
   wait_tcp "$!" 8080
+}
+stop_gateway() {
+  local i=$((${#children[@]} - 1))
+  kill "${children[i]}"
+  wait "${children[i]}" || true
+  unset 'children[i]'
 }
 case "$PREP1_MODE" in
   ortho) gateway 0 off; node /config/probe.mjs ;;
@@ -93,10 +100,18 @@ case "$PREP1_MODE" in
     for arm in 0 1 2 3; do
       if ((arm == 0 || arm == 3)); then gateway 0 off; else gateway 1 prepare; fi
       node /config/probe.mjs "$PREP1_URL" "$PREP1_URL" "$seconds" "$PREP1_ATTEMPT" "$arm"
-      i=$(("${#children[@]}" - 1))
-      kill "${children[i]}"
-      wait "${children[i]}" || true
-      unset 'children[i]'
+      stop_gateway
+    done
+    ;;
+  profile)
+    for arm in reference guard time reads; do
+      case "$arm" in
+        reference) gateway 0 off ;;
+        guard) gateway 1 off ;;
+        time|reads) gateway 1 off "$arm" ;;
+      esac
+      PREP1_ARM="$arm" node /config/probe.mjs
+      stop_gateway
     done
     ;;
 esac

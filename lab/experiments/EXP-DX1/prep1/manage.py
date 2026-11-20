@@ -31,8 +31,8 @@ def disk_floor():
 
 
 def main(out, mode="ortho", seconds="10"):
-    if mode not in ("ortho", "prepare", "two", "live"):
-        raise SystemExit("Mode must be ortho, prepare, two or live")
+    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap"):
+        raise SystemExit("Unknown managed probe mode")
     out.mkdir()
     attempt = str(uuid.uuid4())
     stage = out / "stage"
@@ -83,7 +83,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     engine_dir = REPO / "runs/engines/prep1"
     env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots),
                TX2_ENGINE_DIR=str(engine_dir))
-    source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh")]
+    source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
     source_paths.extend(REPO / p for p in json.loads(metafile.read_text())["inputs"])
     inputs = {
         "attempt": attempt,
@@ -101,8 +101,10 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         for i in range(1, 121):
             disk_floor()
             path = out / f"{action}-{i}.log"
-            args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{action}", "--",
-                    "node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-PREP1"]
+            args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{action}", "--"]
+            if action == "selftest" and mode in ("profile", "cheap"):
+                args += ["node", str((EXPERIMENT / "measure.mjs").relative_to(REPO))]
+            args += ["node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-PREP1"]
             if action == "selftest":
                 args += ["--scratch-gib", "1"]
             with path.open("x") as log:

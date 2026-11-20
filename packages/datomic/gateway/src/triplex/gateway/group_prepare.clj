@@ -1,5 +1,6 @@
 (ns triplex.gateway.group-prepare
-  (:require [datomic.api :as d]
+  (:require [clojure.walk :as walk]
+            [datomic.api :as d]
             [triplex.gateway.commit :as commit]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.scope :as scope])
@@ -7,7 +8,9 @@
 
 (def enabled (= "1" (System/getenv "TX2_PARALLEL_PREPARE")))
 (def guard-ident :triplex.group/apply-prepared-v1)
-(def guard-code
+(def profile-mode (System/getenv "TX2_PREPARE_PROFILE"))
+(def profile-ident :triplex.group/profile-prepared-v1)
+(def guard-form
   '(letfn [(datom [e a] (when e (first (d/datoms db :eavt e a))))
            (v [e a] (:v (datom e a)))
            (lookup [id] (d/entid db [:triplex.entity/id id]))
@@ -19,37 +22,62 @@
              (when-not ok (throw (ex-info "TRIPLEX_GROUP_STALE" {:triplex.group/stale true}))))]
      (let [scope (get witness :scope)
            tx (d/t->tx (d/basis-t db))
-           newest (if (v tx :triplex.tx/position) tx
-                    (let [x (first (d/rseek-datoms db :aevt :triplex.tx/position tx))]
-                      (when (= (:a x) (d/entid db :triplex.tx/position)) (:e x))))
-           clock (v newest :triplex.tx/max-recorded-at)
+           head (measure-check :head nil
+                  (let [newest (if (v tx :triplex.tx/position) tx
+                                 (let [x (first (d/rseek-datoms db :aevt :triplex.tx/position tx))]
+                                   (when (= (:a x) (d/entid db :triplex.tx/position)) (:e x))))
+                        clock (v newest :triplex.tx/max-recorded-at)]
+                    [(or (v newest :triplex.tx/position) 0)
+                     (when clock (Double/doubleToRawLongBits (double clock)))
+                     (v newest :triplex.tx/operation-id)]))
            historical (d/history db)]
-       (doseq [[a expected] (get witness :flags)] (expect (= expected (v scope a))))
-       (expect (= (get witness :head)
-                  [(or (v newest :triplex.tx/position) 0)
-                   (when clock (Double/doubleToRawLongBits (double clock)))
-                   (v newest :triplex.tx/operation-id)]))
-       (doseq [member (get witness :members)]
-         (let [[ident fn-tx] (get member :function)]
-           (expect (= fn-tx (:tx (datom (d/entid db ident) :db/fn)))))
-         (doseq [[id eid rev] (get member :entities)]
-           (expect (and (= eid (lookup id)) (= rev (v eid :triplex.entity/rev)))))
-         (doseq [[eid prefix text] (get member :retirements)]
-           (expect (and (= text (seek eid :triplex.entity/row prefix))
-                        (nil? (seek eid :triplex.entity/retired prefix)))))
-         (doseq [^String prefix (get member :new-prefixes)]
-           (let [old (first (d/index-range historical :triplex.entity/row prefix nil))]
-             (expect (not (and old (.startsWith ^String (:v old) prefix))))))
-         (expect (nil? (lookup (get member :journal)))))
+       (measure-check :scope nil
+         (doseq [[a expected] (get witness :flags)] (expect (= expected (v scope a)))))
+       (expect (= (get witness :head) head))
+       (doseq [[i member] (map-indexed vector (get witness :members))]
+         (measure-check :function i
+           (let [[ident fn-tx] (get member :function)]
+             (expect (= fn-tx (:tx (datom (d/entid db ident) :db/fn))))))
+         (measure-check :revisions i
+           (doseq [[id eid rev] (get member :entities)]
+             (expect (and (= eid (lookup id)) (= rev (v eid :triplex.entity/rev))))))
+         (measure-check :retirements i
+           (doseq [[eid prefix text] (get member :retirements)]
+             (expect (and (= text (seek eid :triplex.entity/row prefix))
+                          (nil? (seek eid :triplex.entity/retired prefix))))))
+         (measure-check :history i
+           (doseq [^String prefix (get member :new-prefixes)]
+             (let [old (first (d/index-range historical :triplex.entity/row prefix nil))]
+               (expect (not (and old (.startsWith ^String (:v old) prefix)))))))
+         (measure-check :journal i
+           (expect (nil? (lookup (get member :journal))))))
        ops)))
 
+(defn expand-guard [profile?]
+  (let [body (walk/postwalk
+               (fn [form]
+                 (if (and (seq? form) (= 'measure-check (first form)))
+                   (let [[_ check i expression] form]
+                     (if profile? (list 'profile-visit check i (list 'fn [] expression)) expression))
+                   form))
+               guard-form)]
+    (if profile?
+      (list 'let '[instrument (ns-resolve 'triplex.prep1.observe 'profile-guard)]
+        (list 'instrument 'db 'witness 'ops
+              (list 'fn '[profile-visit] body)))
+      body)))
+(def guard-code (expand-guard false))
+(defn active-guard []
+  (if (#{"time" "reads"} profile-mode) profile-ident guard-ident))
+
 (defn install! [conn db]
-  (if (and enabled (not (d/entid db guard-ident)))
-    (:db-after @(d/transact conn [{:db/ident guard-ident
-                                  :db/fn (d/function {:lang :clojure :params '[db witness ops]
-                                                     :requires '[[datomic.api :as d]]
-                                                     :code guard-code})}]))
-    db))
+  (let [ident (active-guard)]
+    (if (and enabled (not (d/entid db ident)))
+      (:db-after @(d/transact conn [{:db/ident ident
+                                    :db/fn (d/function {:lang :clojure :params '[db witness ops]
+                                                       :requires '[[datomic.api :as d]]
+                                                       :code (if (= ident profile-ident) (expand-guard true) guard-code)})}]))
+      db)))
 
 (def flags [:triplex.scope/key :triplex.scope/schema-hash :triplex.scope/commit-fn-hash
             :triplex.scope/rows-version :triplex.scope/head-version :triplex.scope/feed-version
@@ -203,7 +231,8 @@
                 data (into [[:db/add "datomic.tx" :triplex.tx/max-recorded-at (last clocks)]]
                            (mapcat render drafts members positions clocks))
                 witness {:scope scope :flags signature :head (head-witness starting-head)
-                         :members (mapv :witness drafts)}]
-            {:data [[guard-ident witness data]]
+                         :members (mapv :witness drafts)
+                         :profile profile-mode}]
+            {:data [[(active-guard) witness data]]
              :results (mapv (fn [m p c] {:id (:id m) :position p :clock c}) drafts positions clocks)
              :next-head [(last positions) (last clocks) (:id (peek entries))]}))))))
