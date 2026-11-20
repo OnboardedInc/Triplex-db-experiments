@@ -25,6 +25,8 @@ const tracked = git(
   "lab/bench/lib",
   "lab/experiments/EXP-DX1/act1",
   "lab/experiments/EXP-DX1/act2",
+  "lab/experiments/EXP-DX1/actv-delta",
+  "lab/experiments/EXP-DX1/notify1",
   "lab/experiments/EXP-DX1/import1/source.ts",
   "lab/experiments/EXP-DX1/scale1/tenants.ts",
   "lab/world/W0",
@@ -103,6 +105,11 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
   writeFileSync(join(dir, "legacy.tap"), buf, { flag: "wx" });
 } else if (binding.mode === "--pressure") {
   run("pressure.ts", [dir]);
+} else if (binding.mode === "--joined-proof") {
+  run("join/gate.ts", [dir]);
+} else if (binding.mode === "--joined-price") {
+  assert(["1000", "10000"].includes(binding.size!));
+  run("join/price.ts", [dir, binding.size!]);
 } else if (binding.mode === "--timing") {
   assert(["legacy", "shared-cut"].includes(binding.size!));
   if (binding.size === "shared-cut") {
