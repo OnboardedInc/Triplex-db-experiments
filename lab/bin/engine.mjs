@@ -843,6 +843,8 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   }
   // [DX-ACT2] Why: the SQL activation experiment must reserve its small roles in the shared pool and remove only its private volumes. Rejected: launching a bench stack outside the slot manager.
   if (command === 'delta') return (await import('../experiments/EXP-DX1/actv-delta/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicSources });
+  // [DX-ERASE1] Why: storage GC and excision need an owned SQL volume. Rejected: exercising irreversible maintenance on a resident.
+  if (command === 'erase1') return (await import('../experiments/EXP-DX1/erase1/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicTree });
   if (options.lane === 'datomic' && command === 'build') return buildDatomic(config);
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
   if (options.lane === 'datomic' && command === 'image-remove') return removeThinImage(config, options);

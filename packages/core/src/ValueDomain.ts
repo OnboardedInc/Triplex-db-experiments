@@ -1,5 +1,12 @@
 import { Schema } from "effect";
-import { MIN_INTEGER, MAX_INTEGER, TripleValue, type ValueType } from "./Value.js";
+import {
+  MIN_INTEGER,
+  MAX_INTEGER,
+  ErasedValue,
+  TripleValue,
+  type ReadValue,
+  type ValueType,
+} from "./Value.js";
 import { InvalidTripleError } from "./errors/index.js";
 
 export interface ValueDomain {
@@ -384,3 +391,26 @@ export const decodeValueColumns = (
   assertValueInDomain(value, domain);
   return value;
 };
+
+// [DX-ERASE1] Why: markers exist on the read wire only. Rejected: relaxing the persisted write domain.
+export function decodeReadValueColumns(
+  row: Parameters<typeof decodeValueColumns>[0],
+  domain: ValueDomain,
+): ReadValue {
+  if (row.value_type !== "erased") return decodeValueColumns(row, domain);
+  const raw = JSON.parse(row.value_json as string);
+  if (
+    row.value_string !== null ||
+    row.value_number !== null ||
+    row.value_boolean !== null ||
+    row.value_datetime !== null ||
+    !Schema.is(ErasedValue)(raw) ||
+    !Number.isSafeInteger(raw.erasedAt) ||
+    raw.erasedAt < 0 ||
+    !raw.erasureTxId ||
+    Object.keys(raw).length !== 4
+  ) {
+    throw new TypeError("Invalid erasure marker");
+  }
+  return raw;
+}

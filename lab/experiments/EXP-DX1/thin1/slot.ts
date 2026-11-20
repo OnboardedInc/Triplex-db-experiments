@@ -7,6 +7,7 @@ import http from "node:http";
 import os from "node:os";
 import { randomUUID, createHash } from "node:crypto";
 import { cacheCharge } from "./cache-charge.ts";
+import { heapResidency, readResidentMappings } from "./heap-residency.ts";
 import path from "node:path";
 import process from "node:process";
 import { setTimeout as wait } from "node:timers/promises";
@@ -21,6 +22,7 @@ assert(role === "write" || role === "read");
 const compact = property("compact") === "yes";
 const demand = property("cache") === "demand";
 const memory = property("memory") === "yes";
+const nativePools = property("nativePools") === "yes";
 const campaign = property("campaign") === "yes";
 assert(!compact || role === "write");
 const address = Object.values(os.networkInterfaces())
@@ -286,7 +288,7 @@ const gateway = (label: "write" | "read", secondary = false) => {
       ...(demand ? { TX2_ID_CACHE_BYTES: "1048576", TX2_ID_CACHE_ENTRIES: "4096",
         TX2_REACH_SESSION_ENTRIES: "4096", TX2_ENTITY_CACHE_BYTES: "8388608" } : {}),
       ...(campaign && label === "write" ? {
-        TX2_INT1_WRITE_READBACK: "1", TX2_PREDECESSOR_LOOKUP: "1", TX2_SMALL_ROWS: "1", TX2_GROUP_STAGE_CLOCK: "1",
+        TX2_INT1_WRITE_READBACK: "1", TX2_PREDECESSOR_LOOKUP: "0", TX2_SMALL_ROWS: "0", TX2_GROUP_STAGE_CLOCK: "1",
         TX2_GROUP_COMMIT: "0", TX2_LIVE_PRIORITY: "0", TX2_FIELD_COALESCE: "0", TX2_GROUP_REUSE_PREPARED: "0",
       } : {}),
     },
@@ -332,10 +334,12 @@ const server = http.createServer(async (req, res) => {
     try {
       const profile = req.url === "/gateway-profile";
       const requested = profile ? req.headers["x-thin-role"] : role;
-      assert(requested === "write" || (requested === "read" && compact));
+      assert(requested === "write" || (requested === "read" && compact) ||
+        (requested === "transactor" && nativePools));
+      const profileTransactor = requested === "transactor";
       const tx = pids.get("transactor")!;
-      const pid = profile ? gatewayJvm(requested) : tx.pid!;
-      if (!profile) {
+      const pid = profile && !profileTransactor ? gatewayJvm(requested) : tx.pid!;
+      if (!profile || profileTransactor) {
         const args = fs.readFileSync("/proc/" + pid + "/cmdline", "utf8").split("\0");
         assert(tx.exitCode === null && args.includes("datomic.launcher") && args.includes(path.join(dir, "sql.properties")));
       }
@@ -343,20 +347,29 @@ const server = http.createServer(async (req, res) => {
         { encoding: "utf8", timeout: 120000, maxBuffer: 8 << 20 });
       const processStat = () => fs.readFileSync("/proc/" + pid + "/stat", "utf8").split(") ")[1]!.split(" ")[19]!;
       const startTicks = processStat();
-      const before = profile ? {
-        rssBytes: processTotal(pid, "rss"),
-        heap: jcmd("GC.heap_info"),
-        smaps: fs.readFileSync("/proc/" + pid + "/smaps_rollup", "utf8").split("\n").slice(1).join("\n"),
-      } : undefined;
+      const memoryState = () => {
+        const rssBytes = processTotal(pid, "rss"), heap = jcmd("GC.heap_info");
+        const smaps = fs.readFileSync("/proc/" + pid + "/smaps_rollup", "utf8").split("\n").slice(1).join("\n");
+        if (!nativePools) return { rssBytes, heap, smaps };
+        const mappings = readResidentMappings(fs.readFileSync("/proc/" + pid + "/smaps", "utf8"));
+        return { rssBytes, heap, smaps, mappings, residency: heapResidency(heap, mappings),
+          nmt: jcmd("VM.native_memory", "summary", "scale=KB") };
+      };
+      const before = profile ? memoryState() : undefined;
       const disk = fs.statfsSync(dir, { bigint: true });
       assert(disk.bavail * disk.bsize > 5n * 1024n ** 3n);
       execFileSync("/opt/thin-jdk/bin/jcmd", [String(pid), "GC.heap_dump", file], {
         timeout: 90000,
         stdio: ["ignore", "pipe", "pipe"],
       });
-      const limit = profile ? Number.parseInt(words.find((w) => w.startsWith("-Ddatomic.objectCacheMax="))!.split("=")[1]!, 10) : 192;
-      const values = cacheCharge(file, limit * 1024 ** 2, profile);
+      const limit = profile && !profileTransactor
+        ? Number.parseInt(words.find((w) => w.startsWith("-Ddatomic.objectCacheMax="))!.split("=")[1]!, 10)
+        : Number.parseInt(budgets["object-cache-max"], 10);
+      const values = cacheCharge(file, limit * 1024 ** 2, profile && !profileTransactor);
       const histogram = profile ? jcmd("GC.class_histogram") : undefined;
+      // [DX-THIN1] Why: distinguish live heap, JVM commitments and process residency at one phase boundary.
+      // Rejected: calling NMT committed bytes resident or forcing a collection before the baseline RSS.
+      const after = profile && nativePools ? memoryState() : undefined;
       assert.equal(processStat(), startTicks);
       const h = createHash("sha256");
       for await (const block of fs.createReadStream(file)) h.update(block);
@@ -365,7 +378,7 @@ const server = http.createServer(async (req, res) => {
         JSON.stringify({
           nonce,
           role: requested,
-          ...(profile ? { pid, startTicks, before, histogram, afterHeap: jcmd("GC.heap_info"), limitMiB: limit } : {}),
+          ...(profile ? { pid, startTicks, before, histogram, afterHeap: after?.heap ?? jcmd("GC.heap_info"), after, limitMiB: limit } : {}),
           containerId,
           source: observerId,
           witness,

@@ -108,12 +108,12 @@ def run(java, datomic, out):
     assert manifest == {str(f.relative_to(ROOT)): digest(f) for f in sources}
     events = [json.loads(line[11:]) for line in log.read_text().splitlines() if line.startswith("PREP1_GATE ")]
     assert {e["attempt"] for e in events} == {attempt}
-    assert [e["kind"] for e in events] == ["pair"] * 4 + ["witness"] * 6 + ["window"] * 6 + ["finished"]
+    assert [e["kind"] for e in events] == ["pair"] * 4 + ["witness"] * 6 + ["window"] * 6 + ["basis"] * 12 + ["finished"]
     assert [e["data"]["salt"] for e in events[:4]] == [17, 43, 503, 2601]
     witnesses = [e["data"] for e in events[4:10]]
     assert [e["mode"] for e in witnesses] == ["unrelated", "revision", "retired", "identity", "claim", "lost"]
     assert all(e["db"] == db(attempt, e["mode"]) for e in witnesses)
-    windows = [e["data"] for e in events[10:-1]]
+    windows = [e["data"] for e in events[10:16]]
     expected_windows = [(w, c) for w in ("prepare", "two") for c in ("ordinary", "moved", "lost")]
     for event, (window, scenario) in zip(windows, expected_windows, strict=True):
         assert (event["window"], event["scenario"]) == (window, scenario)
@@ -126,6 +126,17 @@ def run(java, datomic, out):
             ([1, int(window == "two")] if scenario == "moved" else [0, 0])
             if scenario != "lost" else [None, 0]
         )
+    basis_cases = [e["data"] for e in events[16:-1]]
+    for e, case in zip(basis_cases, ("unchanged", "unrelated", "scope", "feed", "head", "function",
+                                    "revision", "predicate", "retired", "journal", "history", "claim"), strict=True):
+        assert e["mode"] == case and e["db"] == db(attempt, "basis-" + case)
+        assert (e["observedBasis"] == e["basis"]) == (case in ("unchanged", "claim"))
+        assert e["historyPath"] in ("range", "points")
+        a, b = e["receipts"]
+        assert b == e["replies"][1]["receipt"] and b["t"] > e["observedBasis"]
+        assert e["replies"][1]["replays"] == int(case != "unchanged")
+        assert (a is None) == (case in ("revision", "predicate", "retired", "history", "claim"))
+        assert a is None or a["position"] == b["position"] - 1
     oracle = out / "oracle"
     for name in subprocess.check_output(["git", "ls-tree", "-r", "--name-only", ORACLE, "--", "lab/oracles/replay"],
                                         cwd=ROOT, text=True).splitlines():
@@ -135,9 +146,9 @@ def run(java, datomic, out):
     verdicts = []
     for e in events[:4]:
         salt = e["data"]["salt"]
-        for mode in ("reference", "prepared"):
+        for mode, suffix in (("reference", "false"), ("prepared", "true"), ("basis", "basis")):
             arm = e["data"][mode]
-            assert arm["db"] == db(attempt, f"{salt}-{str(mode == 'prepared').lower()}")
+            assert arm["db"] == db(attempt, f"{salt}-{suffix}")
             case = oracle_case(arm)
             requested, observed = (out / f"{salt}-{mode}-{suffix}.json" for suffix in ("case", "answer"))
             save(requested, case)
@@ -149,7 +160,8 @@ def run(java, datomic, out):
                              "cuts": len(case["queries"])})
     save(out / "verified.json", {"attempt": attempt, "slot": "fresh-in-process-datomic",
                                "source": manifest, "java": digest(java), "jars": {j.name: digest(j) for j in jars},
-                               "oracle": ORACLE, "observations": digest(log), "runs": verdicts, "windows": windows})
+                               "oracle": ORACLE, "observations": digest(log), "runs": verdicts,
+                               "windows": windows, "basis": basis_cases})
 
 
 if __name__ == "__main__":

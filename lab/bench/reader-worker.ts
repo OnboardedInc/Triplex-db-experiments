@@ -46,6 +46,8 @@ export type ReaderConfig = {
   replicaWorldCacheBytes?: number;
   replicaPort?: import("node:worker_threads").MessagePort;
   observationPort?: import("node:worker_threads").MessagePort;
+  historicalPort?: import("node:worker_threads").MessagePort;
+  installedHistoryBytes?: number;
   readPath?: "gateway" | "replica";
   splitTarget?: "pending" | "mixed";
   replicaHistoryMiB?: number;
@@ -89,6 +91,11 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
 
   let comp: CompositionHandle;
   const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader((cfg.replicaHistoryMiB ?? 64) * 1024 ** 2, shared?.index, cfg.replicaWorldCacheBytes ?? 32 * 1024 ** 2, cfg.replicaHistoryCoverage) : undefined;
+  const readsLocalRows = Boolean(replica) ||
+    (cfg.composition === "reach-touched" && process.env.DX_TOUCHED_READ_MODE !== "validated");
+  const historyApi = cfg.historicalPort ? await import("./lib/historical-fallback.ts") : undefined;
+  const exactHistory = cfg.historicalPort ? new historyApi!.HistoricalFallbackPort(cfg.historicalPort) : undefined;
+  if (replica && historyApi && cfg.installedHistoryBytes) replica.installedHistory = new historyApi.InstalledHistory(cfg.installedHistoryBytes);
   if (replica && cfg.replicaImage) replica.install(cfg.replicaImage);
   const turn = new ReaderTurn();
   const loopDelay = monitorEventLoopDelay({ resolution: 1 });
@@ -110,12 +117,12 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       replica!.apply(msg.delta);
     }
   });
-  const phases = new Map<number, { reads: number; reasons: Record<string, number>; straddleWait: Histogram; rawLocalSamples: number; rawFallbackSamples: number; timeOnlyReads: number; timeOnlyLocal: number }>();
+  const phases = new Map<number, { reads: number; reasons: Record<string, number>; ages: Record<string, number>; straddleWait: Histogram; rawLocalSamples: number; rawFallbackSamples: number; timeOnlyReads: number; timeOnlyLocal: number }>();
   let activeReads = 0, attemptedReads = 0, completedReads = 0;
   let readErrorCount = 0;
   const readErrors: any[] = [];
-  const finalDiagnostics = () => ({ strictRecordClocks: replica?.index.strictRecordClocks, readAttempts: { attempted: attemptedReads, completed: completedReads, active: activeReads }, readErrors: { count: readErrorCount, retained: readErrors }, gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics,
-    phases: Object.fromEntries([...phases].map(([p, s]) => [p, { reads: s.reads, rawLocalSamples: s.rawLocalSamples, rawFallbackSamples: s.rawFallbackSamples, timeOnlyReads: s.timeOnlyReads, timeOnlyLocal: s.timeOnlyLocal, fallbackReasons: s.reasons, straddleWait: s.straddleWait.toJSON() }])) });
+  const finalDiagnostics = () => ({ strictRecordClocks: replica?.index.strictRecordClocks, readAttempts: { attempted: attemptedReads, completed: completedReads, active: activeReads }, readErrors: { count: readErrorCount, retained: readErrors }, gateway: readerDiagnostics(), replica: replica?.diagnostics, installedHistory: replica?.installedHistory?.diagnostics, turn: turn.diagnostics,
+    phases: Object.fromEntries([...phases].map(([p, s]) => [p, { reads: s.reads, rawLocalSamples: s.rawLocalSamples, rawFallbackSamples: s.rawFallbackSamples, timeOnlyReads: s.timeOnlyReads, timeOnlyLocal: s.timeOnlyLocal, fallbackReasons: s.reasons, basisAgeSample: s.ages, straddleWait: s.straddleWait.toJSON() }])) });
   let phase = -1;
   let mode = "mixed";
   let wanted = 0;
@@ -195,13 +202,14 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
     });
   };
 
-  type TenantReader = {first:number;people:number;interReadMs:number;key:string};
+  type TenantReader = {first:number;people:number;interReadMs:number;key:string;matched?:boolean};
   let tenantSeats: TenantReader[] = [];
   let tenantHot = new Map<string,number[]>();
   const tenantSamples = new Map<string,number[]>();
   const within = (s:number,a:TenantReader) => s >= a.first && s < a.first + a.people;
   function pickSubject(rng: Rng, seat?: TenantReader): { subject: number; hotPick: boolean } {
     if (seat) {
+      if (seat.matched) return {subject:seat.first+rng.int(seat.people),hotPick:false};
       let choices = tenantHot.get(seat.key);
       if (!choices) { choices=hot.filter(s => within(s,seat)); tenantHot.set(seat.key,choices); }
       if (choices.length && rng.next()<0.6) return {subject:choices[rng.int(choices.length)]!,hotPick:true};
@@ -253,9 +261,10 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
   async function readOnceTraced(subject: number, basis: Basis, kind: number, position: number, ph: number, opts: { keepRows: boolean; sweep?: boolean; straddleSeq?: number; assignedAt?: number; hotPick?: boolean }) {
     activeReads++; attemptedReads++;
     const timed = (attemptedReads & 255) === 1;
+    const sampleAge = (attemptedReads & 1023) === 1;
     const start = nowAbs();
     const t0 = performance.now();
-    const stats = phases.get(ph) ?? { reads: 0, reasons: {}, straddleWait: new Histogram(), rawLocalSamples: 0, rawFallbackSamples: 0, timeOnlyReads: 0, timeOnlyLocal: 0 };
+    const stats = phases.get(ph) ?? { reads: 0, reasons: {}, ages: {}, straddleWait: new Histogram(), rawLocalSamples: 0, rawFallbackSamples: 0, timeOnlyReads: 0, timeOnlyLocal: 0 };
     phases.set(ph, stats);
     const timeOnly = basis.recordedAt !== undefined && basis.recordedPosition === undefined;
     if (timeOnly) stats.timeOnlyReads++;
@@ -276,9 +285,18 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
         }
       : undefined;
     try {
-      const gateway = () => opts.sweep ? comp.sweepPull(ids.placement(subject), basis) : comp.pull(ids.placement(subject), basis, replica ? undefined : between);
+      const root = ids.placement(subject);
+      const gateway = () => opts.sweep ? comp.sweepPull(root, basis) : comp.pull(root, basis, replica ? undefined : between);
+      const miss = exactHistory && replica && !opts.sweep ? async () => {
+        const epoch = replica.historyEpoch;
+        const payload = await exactHistory.pull(root, basis);
+        if (!payload) return gateway();
+        if (replica.historyEpoch === epoch && replica.installedHistory && replica.canInstallHistory(basis))
+          replica.installedHistory.put(root, basis, payload);
+        return historyApi!.historicalResult(payload, false);
+      } : gateway;
       const pr = replica
-        ? await replica.pullAt(ids.placement(subject), basis, gateway, between, false, position)
+        ? await replica.pullAt(root, basis, miss, between, false, position)
         : await gateway();
       if (timeOnly && pr.route === "replica") stats.timeOnlyLocal++;
       // The wait for the straddled command's ACK is the driver's scheduling, not the store's service time.
@@ -288,20 +306,31 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       const o = traceSync("reader.observe", () => observe(pr));
       if (timed) costs.observeMs += performance.now() - observeStart;
       let gatewayCanonical: string | undefined;
-      if (opts.keepRows && replica) {
-        const reference = await traceAsync("reader.oracle-gateway", gateway);
+      if (opts.keepRows && (replica || pr.route === "replica")) {
+        // [DX-INT1] Why: the touched composition owns its local rows without a separate reader index.
+        // Rejected: re-reading that same cache for the independent exact-row sample.
+        const reference = await traceAsync("reader.oracle-gateway", replica ? gateway : () => comp.sweepPull(root, basis));
+        if (reference.route === "replica") throw Error("oracle comparison served from the replica");
         gatewayCanonical = canonicalWorld(reference.triples);
         if (canonicalWorld(pr.triples) !== canonicalWorld(reference.triples)) throw Error("oracle route full-row mismatch");
         if (JSON.stringify(o) !== JSON.stringify(observe({ ...pr, observation: undefined })))
           throw Error("prepared full-row observation mismatch");
       }
       stats.reads++;
+      // [DX-RD1] Why: measure recorded cut age separately from a past valid-time selection.
+      // Rejected: classifying the 90-day valid-time draw as 90 days of replica history demand.
+      if (sampleAge) {
+        const age = Math.max(0, (start - basis.recordedAt) / 1000);
+        const ageBin = age < 1 ? "<1s" : age < 60 ? "1–60s" : age < 300 ? "1–5m" : age < 600 ? "5–10m" : age < 3600 ? "10–60m" : ">=60m";
+        const key = `${kind}/${ageBin}/${pr.route}`;
+        stats.ages[key] = (stats.ages[key] ?? 0) + 1;
+      }
       if (opts.keepRows) { if (pr.route === "replica") { stats.rawLocalSamples++; rawSamples++; } else stats.rawFallbackSamples++; }
       if (pr.route === "fallback") { const reason = pr.replicaFallbackReason ?? (opts.keepRows ? "oracle-raw" : "gateway"); stats.reasons[reason] = (stats.reasons[reason] ?? 0) + 1; }
       if (split > 0) stats.straddleWait.recordMs(straddleWaitMs);
       // [DX-RD1] Why: the raw independent replay sample and its actual tuple must reach the collector in the same batch.
       // Rejected: trying to reconstruct the sample's timed observation after its fixed window has folded.
-      const sample = opts.keepRows && (pr.route === "replica" || !replica || stats.rawFallbackSamples === 1)
+      const sample = opts.keepRows && (pr.route === "replica" || !readsLocalRows || stats.rawFallbackSamples === 1)
         ? { phase: ph, subject, basis, position, start, route: pr.route, fullCanonical: canonicalWorld(pr.triples), gatewayCanonical,
           rows: pr.triples.map(t => [t.entityId, t.attribute, t.value, t.validFrom ?? null, (t.validTo?._tag === "Some" ? t.validTo.value : null), t.id]) }
         : undefined;
@@ -321,7 +350,9 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
 
   async function loop(id: number) {
     let localReads = 0;
-    const rng = new Rng(seedOf(`reader:${cfg.seed}:${cfg.worker}:${id}`));
+    const defaultRng = new Rng(seedOf(`reader:${cfg.seed}:${cfg.worker}:${id}`));
+    const quietSeed = seedOf(`quiet-reader:${cfg.seed}:${cfg.worker}:${id}`);
+    let matchedPhase = -1, matchedRng = new Rng(quietSeed);
     running++;
     try {
       while (!stopping && id < wanted && acked.length > 0) {
@@ -331,14 +362,21 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
         if (stopping || id >= wanted) break;
         const issueStart = (issued++ & 255) === 0 ? performance.now() : undefined;
         const readPhase = phase, seat=tenantSeats[id];
+        // [DX-THIN1] Why: quiet seats replay the same deterministic subject draws in their matched windows.
+        // Rejected: chasing the neighbor-dependent hot set in a quiet-account comparison.
+        if (seat?.matched && matchedPhase !== readPhase) {
+          matchedPhase = readPhase;
+          matchedRng = new Rng(quietSeed);
+        }
+        const rng = seat?.matched ? matchedRng : defaultRng;
         let candidates = seat ? tenantSamples.get(seat.key) : cfg.sampleSubjects;
         if (!candidates) { candidates=cfg.sampleSubjects.filter(s=>within(s,seat!)); tenantSamples.set(seat!.key,candidates); }
         const oracle = candidates.length > 0 && rng.next() < cfg.oracleRate;
         let picked = oracle ? { subject: candidates[rng.int(candidates.length)]!, hotPick: false } : pickSubject(rng, seat);
-        const [basis, kind, position] = pickBasis(rng);
+        const [basis, kind, position] = pickBasis(seat?.matched ? defaultRng : rng);
         if (issueStart !== undefined) { costs.issueSamples++; costs.issueMs += performance.now() - issueStart; }
         let straddleSeq: number | undefined, assignedAt: number | undefined;
-        if (!oracle && mode === "mixed" && rng.next() < cfg.splitShare) {
+        if (!oracle && !seat?.matched && mode === "mixed" && rng.next() < cfg.splitShare) {
           const assignment = await ask({ type: "split-request", range:seat }, 2_000);
           if (assignment && assignment.subject >= 0) { picked = { subject: assignment.subject, hotPick: true }; straddleSeq = assignment.seq; assignedAt = assignment.assignedAt; }
         }
@@ -346,11 +384,11 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
         // Rejected: charging open-clock fallbacks against the local quota (never exercises the copy).
         let keepRows = false;
         if (oracle) {
-          const owesLocal = replica !== undefined && (phases.get(readPhase)?.rawLocalSamples ?? 0) < (cfg.rawLocalMinimum ?? 1);
+          const owesLocal = readsLocalRows && (phases.get(readPhase)?.rawLocalSamples ?? 0) < (cfg.rawLocalMinimum ?? 1);
           keepRows = (owesLocal || rawSamples < (cfg.rawSampleLimit ?? Infinity)) &&
             (!replica || (!rawPending.has(readPhase) && replica.index.resolve(basis) !== undefined));
         }
-        if (keepRows) { rawPending.add(readPhase); if (!replica) rawSamples++; }
+        if (keepRows) { rawPending.add(readPhase); if (!readsLocalRows) rawSamples++; }
         try { await readOnce(picked.subject, basis, kind, position, readPhase, { keepRows, straddleSeq, assignedAt, hotPick: picked.hotPick }); }
         finally { if (keepRows) rawPending.delete(readPhase); }
         // [DX-SCALE1] Why: low-traffic accounts have a real reader without turning each small scope into a saturated read loop. Rejected: zero readers in active accounts or sleeping on the sentinel's comparison windows.
@@ -469,6 +507,7 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       })));
       cfg.observationPort?.close();
       cfg.replicaPort?.close();
+      exactHistory?.close();
       unsubscribe?.();
       const diagnostics = { ...finalDiagnostics(), costs, threadCpuMs: threadCpuMs() };
       await comp.close().catch(() => {});

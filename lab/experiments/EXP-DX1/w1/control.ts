@@ -16,9 +16,22 @@ const study =
 const grouped = process.argv[2] === "--group";
 const batch = process.argv[grouped || study ? 3 : 2];
 const write5 = process.argv[4] === "--write5";
-const enhanced = process.argv[4] === "--enhanced" || write5;
+const write6 = process.argv[4] === "--write6";
+const enhanced = process.argv[4] === "--enhanced" || write5 || write6;
 assert(process.argv[4] === undefined || (study && enhanced && process.argv.length === 5));
 if (batch === "--plan") {
+  if (write6 && study) {
+    console.log(
+      "One pooled database with ten deep accounts. K keeps queryable journal facts. P is informational.",
+    );
+    console.log(
+      "Measures " +
+        (study === "pulse" ? "the four-minute pulse" : "the matched field rates") +
+        " and checks the native query and log on a timed command after the window.",
+    );
+    console.log("Forecasts are in small/write6-predictions.json.");
+    process.exit(0);
+  }
   if (enhanced && study) {
     console.log("Matched 1–3 fact saves with extra arms", modes(study, true, write5).join(", "));
     if (write5)
@@ -139,7 +152,7 @@ test "$(git -C "$dir/bootstrap" rev-parse HEAD)" = "$sha"
 bash "$dir/bootstrap/lab/experiments/EXP-DX1/t1/bare-metal.sh" --prepare "$sha" "$dir/build"
 export PATH="$dir/build/tools/bin:$PATH"
 cd "$dir/build/repository"
-node lab/bin/heavy.mjs --label DX-W1-native -- node --experimental-strip-types ${study ? "lab/experiments/EXP-DX1/w1/field/server.ts run" : grouped ? "lab/experiments/EXP-DX1/w1/group/server.ts run" : "lab/experiments/EXP-DX1/w1/bench.ts"} "$dir" "$sha" "$batch"${study ? " " + study + (write5 ? " --write5" : enhanced ? " --enhanced" : "") : ""}
+node lab/bin/heavy.mjs --label DX-W1-native -- node --experimental-strip-types ${study ? "lab/experiments/EXP-DX1/w1/field/server.ts run" : grouped ? "lab/experiments/EXP-DX1/w1/group/server.ts run" : "lab/experiments/EXP-DX1/w1/bench.ts"} "$dir" "$sha" "$batch"${study ? " " + study + (write6 ? " --write6" : write5 ? " --write5" : enhanced ? " --enhanced" : "") : ""}
 sha256sum "$dir/results/comparison.json" > "$dir/comparison.sha256"`;
 const launch = `set -euo pipefail
 root=$1; dir=$2; sha=$3; batch=$4; unit=$5; url=$6; machine=$7; script=$8
@@ -186,17 +199,19 @@ for (;;) {
   const collected = JSON.parse(bytes);
   const { arms: rows, pairs } = collected;
   if (study) {
-    validateComparison(collected, study, source, batch, enhanced, write5);
+    validateComparison(collected, study, source, batch, enhanced, write5, write6);
     const expected = createHash("sha256")
       .update(
         fs.readFileSync(
           path.join(
             import.meta.dirname,
-            write5
-              ? "small/write5-predictions.json"
-              : enhanced
-                ? "small/predictions.json"
-                : "field/predictions.json",
+            write6
+              ? "small/write6-predictions.json"
+              : write5
+                ? "small/write5-predictions.json"
+                : enhanced
+                  ? "small/predictions.json"
+                  : "field/predictions.json",
           ),
         ),
       )
@@ -215,7 +230,9 @@ for (;;) {
       for (const [name, hash] of [
         ["raw.json", row.rawSha256],
         ["seed-readback.json", row.seedReadbackSha256],
-        ...(write5 ? [["write-options.json", row.writeOptionsSha256]] : []),
+        ["writer-expectation.json", row.writerExpectationSha256],
+        ...(write5 || write6 ? [["write-options.json", row.writeOptionsSha256]] : []),
+        ...(write6 ? [["journal-witness.json", row.journalWitnessSha256]] : []),
       ])
         assert.equal(sudo("sha256sum", armDir + "/" + name).split(/\s/)[0], hash);
     }
@@ -249,6 +266,7 @@ for (;;) {
       for (const [name, hash] of [
         ["raw.json", row.rawSha256],
         ["seed-readback.json", row.seedReadbackSha256],
+        ["writer-expectation.json", row.writerExpectationSha256],
       ]) {
         assert.match(hash, /^[a-f0-9]{64}$/);
         assert.equal(sudo("sha256sum", armDir + "/" + name).split(/\s/)[0], hash);

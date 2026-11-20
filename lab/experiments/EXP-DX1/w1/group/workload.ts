@@ -9,12 +9,14 @@ import {
   type SweepRow,
 } from "../../../../../packages/datomic/dist/index.js";
 import { EntityId } from "../../../../../packages/core/dist/index.js";
-import { createPackedRow } from "../../../../../packages/datomic/dist/rows.js";
+import { assertionValue, createPackedRow } from "../../../../../packages/datomic/dist/rows.js";
+import { decodeRowText } from "../../../../../packages/datomic/dist/rowText.js";
 import { inlineSource } from "../../../../../packages/datomic/dist/replica/inlineSource.js";
 import { deepPopulation } from "../../../../bench/lib/deep-world.ts";
 import { ids, SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
 
 import { accounts, pooledDigest, tenantRows } from "./population.ts";
+import { readWriteOptions } from "../write-options.ts";
 
 const hash = (x: unknown) => createHash("sha256").update(JSON.stringify(x)).digest("hex");
 const account = (n: number) => "acct/a" + n + "/";
@@ -114,28 +116,24 @@ export function command(
       1,
     );
   if (publish) {
+    const assertion = (r: Input["rows"][number]) => ({
+      entityId: r.entity_id,
+      attribute: r.attribute,
+      tripleId: r.id,
+      value: assertionValue(r),
+      recordedAt: r.recorded_at,
+      validFrom: r.valid_from,
+      ...(r.valid_to === null ? {} : { validTo: r.valid_to }),
+      ...(r.tx_id === null ? {} : { assertionTxId: r.tx_id }),
+      ...(r.entity_type === null ? {} : { entityType: r.entity_type }),
+    });
     const changes = [
-      ...facts.map((f, i) => ({
-        op: "assert",
-        entityId: f.e,
-        attribute: f.a,
-        value: f.v,
-        tripleId: rows[i]!.id,
-        ...(denseJournalIds ? { validFrom: rows[i]!.valid_from, validTo: rows[i]!.valid_to } : {}),
-      })),
+      ...rows.map((r) => ({ op: "assert", ...assertion(r) })),
       ...old.map((r) => ({
         op: "retract",
-        entityId: r.entity_id,
-        attribute: r.attribute,
-        tripleId: r.id,
-        ...(denseJournalIds
-          ? {
-              recordedAt: r.recorded_at,
-              retractedAt: clock,
-              validFrom: r.valid_from,
-              validTo: r.valid_to,
-            }
-          : {}),
+        ...assertion(r),
+        retractedAt: clock,
+        retractionTxId: tx,
       })),
     ];
     rows.push(
@@ -330,6 +328,51 @@ export async function exact(url: string, nonce: string, grouped: boolean) {
         resolved.t === saved.t.v &&
         resolved.recordedAt === saved.recordedAt.v,
     );
+    const journals = [];
+    const operationReceipts = [];
+    for (const [index, input] of [...ins, dropped].entries()) {
+      const position = index + 1;
+      const { transactions } = await c.request<{ transactions: [string, number, string[]][] }>(
+        "POST",
+        `/v2/db/${db}/transactions`,
+        { after: index, limit: 1 },
+      );
+      assert.equal(transactions.length, 1);
+      const [txId, p, texts] = transactions[0]!;
+      const rows = texts.map(decodeRowText);
+      const fields = (attr: string) => rows.filter((r) => r.attribute === ":_tx/" + attr);
+      const first = (attr: string) => fields(attr).at(0)!;
+      journals.push({
+        txId,
+        position: p,
+        instant: first("instant").value_datetime,
+        commandId: first("command-id").value_string,
+        changedEntities: fields("changed-entity")
+          .map((r) => r.value_string)
+          .sort(),
+        changes: fields("change").map((r) => JSON.parse(r.value_json!)),
+      });
+      const stored = await c.operation(db, input.operationId);
+      const claim = await c.request("POST", `/v1/db/${db}/claim`, {
+        commandId: input.operationId,
+        position,
+        receipt: true,
+      });
+      const ack = receipts[index] ?? saved;
+      assert.deepEqual(stored, {
+        status: "committed",
+        operationId: input.operationId,
+        position: ack.position,
+        t: ack.t,
+        recordedAt: ack.recordedAt,
+      });
+      assert.deepEqual(claim, {
+        commandId: input.operationId,
+        txId: txFor(input.operationId),
+        receipt: stored,
+      });
+      operationReceipts.push(stored);
+    }
     return {
       rejection,
       duplicateError,
@@ -349,6 +392,8 @@ export async function exact(url: string, nonce: string, grouped: boolean) {
         instant: r.recordedAt.v,
       })),
       views,
+      journals,
+      operationReceipts,
       witness: w,
     };
   } finally {
@@ -424,6 +469,10 @@ export async function runArm(
       const opened = await client.create(key, "lean", true, 35000);
       assert(!opened.created && opened.db === db);
     }
+    const writerOptions = server
+      ? await readWriteOptions(url, db, process.env.DX_W1_WRITER_EXPECTATION)
+      : undefined;
+    if (writerOptions) assert.equal(writerOptions.observed.position, head);
     await options.opened?.(client, db);
     const phases = [];
     for (const name of options.pulse
@@ -587,7 +636,7 @@ export async function runArm(
     const check = await client.operation(db, sample.id);
     assert.equal(check.t?.v, sample.t);
     assert.equal(Number(check.position?.v), sample.pos);
-    return { nonce, grouped, scope: key, db, seeds, phases };
+    return { nonce, grouped, scope: key, db, seeds, phases, writerOptions };
   } finally {
     if (bootstrap !== client) bootstrap.close();
     client.close();

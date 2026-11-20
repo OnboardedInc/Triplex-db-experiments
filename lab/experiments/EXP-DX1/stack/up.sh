@@ -2,6 +2,7 @@
 # [DX-H1] Why: separate peers and durable SQL storage measure the intended topology. Rejected: dev storage (single process).
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/collector.sh"
 prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-write LIST] [--cpus-gw-read LIST] [--gateway-src DIR] [--port-write N] [--port-read N]}
 shift
 [[ "$prefix" =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "DX stack accepts only tx2-dx* prefixes" >&2; exit 2; }
@@ -183,6 +184,11 @@ while (($#)); do
   esac
   shift 2
 done
+explicit_collectors=${DX_STACK_EXPLICIT_GC:-0}
+[[ $explicit_collectors == 0 || $explicit_collectors == 1 ]] || exit 2
+if [[ $explicit_collectors == 1 ]]; then
+  tx_java=$(explicit_gc '-XX:+UseG1GC -XX:MaxGCPauseMillis=50' "$tx_java")
+fi
 if [[ ${DX_BARE_METAL:-0} == 1 ]]; then
   # [DX-BM1] Why: the native read gateway spans cores 4 and 8. Check each requested CPU against this host's actual allocation.
   # Rejected: carrying the eight-CPU Mac VM limit onto the 12-core bench, or allowing unavailable native CPUs.
@@ -444,15 +450,24 @@ for role in w r; do
   # [DX-W1] Why: bootstrap is finished on the other peer before the single authoritative writer admits live traffic.
   # Rejected: allowing a large labeled import through the live writer's frame cap during measurement.
   field_policy=()
+  if [[ $role == w && -n ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
+    [[ ${DX_PREDECESSOR_LOOKUP:-} =~ ^[01]$ && $DX_WRITE_OPTIONS_ATTEMPT =~ ^[a-f0-9-]{36}$ ]] || exit 2
+    field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=$DX_PREDECESSOR_LOOKUP" -e "TX2_WRITE_OPTIONS_ATTEMPT=$DX_WRITE_OPTIONS_ATTEMPT")
+  fi
   if [[ -n ${DX_LIVE_PRIORITY:-} ]]; then
     [[ $DX_LIVE_PRIORITY =~ ^[01]$ && ${DX_FIELD_COALESCE:-0} =~ ^[01]$ ]] || exit 2
-    if [[ $role == w ]]; then field_policy=(-e "TX2_LIVE_PRIORITY=$DX_LIVE_PRIORITY" -e "TX2_FIELD_COALESCE=${DX_FIELD_COALESCE:-0}"); fi
+    if [[ $role == w ]]; then field_policy+=(-e "TX2_LIVE_PRIORITY=$DX_LIVE_PRIORITY" -e "TX2_FIELD_COALESCE=${DX_FIELD_COALESCE:-0}"); fi
   fi
   if [[ $role == w && ${DX_W1_EXTRA:-0} == 1 ]]; then
     [[ ${DX_SMALL_ROWS:-0} =~ ^[01]$ && ${DX_GROUP_REUSE_PREPARED:-0} =~ ^[01]$ && ${DX_GROUP_MAX_MEMBERS:-8} =~ ^[1-9][0-9]{0,2}$ ]] || exit 2
     field_policy+=(-e "TX2_GROUP_STAGE_CLOCK=1" -e "TX2_SMALL_ROWS=${DX_SMALL_ROWS:-0}" -e "TX2_GROUP_REUSE_PREPARED=${DX_GROUP_REUSE_PREPARED:-0}" -e "TX2_GROUP_MAX_MEMBERS=${DX_GROUP_MAX_MEMBERS:-8}")
-    for pair in "TX2_PREDECESSOR_LOOKUP=${DX_W1_PREDECESSOR:-0}" "TX2_SAVE_LEDGER=${DX_W1_LEDGER:-0}" \
-                "TX2_PACKED_JOURNAL=${DX_W1_PACKED_JOURNAL:-0}" "TX2_GROUP_FAST_REPLY=${DX_W1_FAST_REPLY:-0}"; do
+    if [[ -z ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
+      [[ ${DX_W1_PREDECESSOR:-0} =~ ^[01]$ ]] || exit 2
+      field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=${DX_W1_PREDECESSOR:-0}")
+    fi
+    for pair in "TX2_SAVE_LEDGER=${DX_W1_LEDGER:-0}" \
+                "TX2_PACKED_JOURNAL=${DX_W1_PACKED_JOURNAL:-0}" "TX2_GROUP_FAST_REPLY=${DX_W1_FAST_REPLY:-0}" \
+                "TX2_LEAN_NATIVE_QUERY=${DX_W1_JOURNAL_QUERY:-0}" "TX2_LEAN_NATIVE_LOG=${DX_W1_JOURNAL_QUERY:-0}"; do
       [[ ${pair#*=} =~ ^[01]$ ]] || exit 2
       field_policy+=(-e "$pair")
     done
@@ -474,6 +489,9 @@ for role in w r; do
   elif [[ -z $role_java && -n $heap ]]; then role_java="-Xms256m -Xmx$heap"; fi
   if [[ $role == w ]]; then role_java=${DX_GW_WRITE_JAVA_OPTS:-$role_java}; fi
   if [[ $role == r ]]; then role_java=${DX_GW_READ_JAVA_OPTS:-$role_java}; fi
+  if [[ $explicit_collectors == 1 ]]; then
+    role_java=$(explicit_gc '-XX:+UseG1GC' "$role_java")
+  fi
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
   [[ $role != w ]] || entity_cache_bytes=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-268435456}
   role_trace_java=$trace_gw_java

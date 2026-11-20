@@ -1,3 +1,4 @@
+import { readErasure, recheckErasure, withErasure } from "../../../bench/lib/datomic-erasure.ts";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
@@ -31,13 +32,15 @@ export async function activate(
   const needCompleteAnswers =
     !answerIndependent(release.hash) && release.hash !== eadRelease().hash;
   const priorSourceReads = account.sourceWorldReads;
+  const authority = await readErasure(account.comp);
+  const sequence = authority?.seq;
   const roster = account.roster(),
     cut = {
       scope: account.comp.scopeName!,
       generation: account.binding,
       basis: { tx: basisPosition, validTime: W0.POPULATION_VALID_TIME },
       frontier: basisPosition,
-      erasure: "fresh-synthetic-scope",
+      erasure: sequence === undefined ? "fresh-synthetic-scope" : String(sequence),
       source: account.binding,
     };
   const stem = path.join(
@@ -69,13 +72,17 @@ export async function activate(
   try {
     for (let first = account.first; first < account.first + account.count; ) {
       await checkpoint();
+      if (sequence !== undefined) await recheckErasure(account.comp, sequence);
       const end = Math.min(first + 256 - (first % 256), account.first + account.count);
       const worlds = new Map<string, W0.World>();
       const ids = [] as string[];
       for (let i = first; i < end; i++) {
         const id = policyId(i);
         ids.push(id);
-        worlds.set(id, await account.world(i, basisPosition, needCompleteAnswers));
+        worlds.set(
+          id,
+          await account.world(i, basisPosition, needCompleteAnswers, authority ?? null),
+        );
       }
       const file = path.join(stem, "current-index.sqlite"),
         cursor = path.join(stem, "current-checkpoint.sqlite");
@@ -102,12 +109,15 @@ export async function activate(
         basis: { tx: BigInt(basisPosition), validTime: cut.basis.validTime },
         release: release.hash,
       };
-      const ack = await publishChanged(account.comp, records, {
-        layout: "page-cut",
-        roster: rosterFrame,
-        frameSize: 256,
-        inflight: 1,
-      });
+      if (sequence !== undefined) await recheckErasure(account.comp, sequence);
+      const ack = await withErasure(sequence, () =>
+        publishChanged(account.comp, records, {
+          layout: "page-cut",
+          roster: rosterFrame,
+          frameSize: 256,
+          inflight: 1,
+        }),
+      );
       assert(
         ack.coverage &&
           ack.coverage.roster === digest(canonical(ids)) &&

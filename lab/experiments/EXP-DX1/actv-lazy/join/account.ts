@@ -1,3 +1,4 @@
+import { readErasure, recheckErasure, withErasure } from "../../../../bench/lib/datomic-erasure.ts";
 import { bytes as transport } from "../../import1/source.ts";
 import assert from "node:assert/strict";
 import {
@@ -37,8 +38,9 @@ import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
 import { CLOCK, RELEASE, Conflict, fact, millis, value, type Store } from "../store.ts";
 import { calculate, worldsAt, type Proposal, type Point } from "../decision.ts";
-import { deepImpact, rawDeep } from "./deep.ts";
-import { subjectOf } from "../../../../bench/lib/world.ts";
+import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
+import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
+import { AccountAdmission, type PublishObservation, type WriteAttempt } from "./admission.ts";
 import { LazyReader, rosterRoot, rosterSeal } from "../read.ts";
 import {
   entry,
@@ -60,6 +62,7 @@ export type PublishOptions = {
   sources?: "census" | "native" | "indexed";
   codec?: "legacy" | "compact";
   afterChunk?: (attempt: string) => Promise<void>;
+  observation?: PublishObservation;
 };
 export type Edit = { e: string; a: string; values: W0.Fact["v"][]; from?: string };
 type Meta = {
@@ -119,8 +122,10 @@ export class JoinedAccount {
     noticeIndexBytes: 0,
     addressBytes: 0,
   };
-  constructor(s: Store) {
+  private readonly admission?: AccountAdmission;
+  constructor(s: Store, admission?: AccountAdmission) {
     this.s = s;
+    this.admission = admission;
     this.notices = new Notices(s.comp, "joined", {
       identity: selector,
       roster: async (c) => this.roster((await this.meta(c.position)).census, c.position),
@@ -394,30 +399,61 @@ export class JoinedAccount {
       for (const wake of this.noticeListeners) wake();
     return r;
   }
-  private async command(
+  private command(
     id: string,
     args: unknown,
     plan: (p: number) => Promise<{ ops: any[]; context: object; expected?: number }>,
     hook?: () => Promise<void>,
     through?: string,
+    priority = false,
+    observation?: PublishObservation,
+  ) {
+    const execute = () => this.execute(id, args, plan, hook, through, observation);
+    if (!this.admission) return execute();
+    return this.admission.run(priority ? "publish" : "save", (turn) => {
+      if (observation) observation.turn = turn;
+      return execute();
+    });
+  }
+  private async execute(
+    id: string,
+    args: unknown,
+    plan: (p: number) => Promise<{ ops: any[]; context: object; expected?: number }>,
+    hook?: () => Promise<void>,
+    through?: string,
+    observation?: PublishObservation,
   ) {
     assert(
       /^[a-zA-Z0-9_.:-]{1,145}$/.test(id) || (!through && /^deadline\/[a-f0-9]{64}$/.test(id)),
     );
     const intent = h([this.s.scope, id, args]);
-    for (;;) {
+    // [DX-ACT2] Why: only a different scope writer can beat an admitted turn. Bound that case and recover the original durable receipt by identity. Rejected: spinning against a moving source head.
+    for (let retries = 0; retries < 3; ) {
+      const attempt: WriteAttempt | undefined = observation
+        ? { started: performance.now() }
+        : undefined;
+      if (attempt) observation!.attempts.push(attempt);
       const old = await this.original(id, intent);
-      if (old) return this.observed(old);
+      if (old) {
+        if (attempt) {
+          attempt.recovered = true;
+          attempt.finished = performance.now();
+        }
+        return this.observed(old);
+      }
       const p = await this.s.head();
+      if (attempt) attempt.cut = p;
       if (through) {
         const due = (await this.db.get<string[]>("join-calendar", p)).value[0];
         if (due && due <= through) {
-          await this.advance(through);
+          await this.advanceWithinTurn(through);
+          if (attempt) attempt.finished = performance.now();
           continue;
         }
       }
       try {
         const body = await plan(p);
+        if (attempt) attempt.prepared = performance.now();
         const r = await this.s.commit(
           "joined:" + id,
           "lazy/join",
@@ -425,15 +461,27 @@ export class JoinedAccount {
           body.expected ?? p,
           { ...body.context, intent },
           hook,
+          attempt &&
+            ((at) => {
+              attempt.nativeAck = at;
+            }),
         );
+        if (attempt) attempt.finished = performance.now();
         assert.equal(r.position, (body.expected ?? p) + 1);
         return this.observed(r);
       } catch (e) {
         const won = await this.original(id, intent);
-        if (won) return this.observed(won);
+        if (attempt) attempt.finished = performance.now();
+        if (won) {
+          if (attempt) attempt.recovered = true;
+          return this.observed(won);
+        }
         if (!(e instanceof Conflict)) throw e;
+        if (attempt) attempt.conflict = true;
+        retries++;
       }
     }
+    throw new Conflict("Joined command exhausted three serial predecessor attempts");
   }
   private async choose(
     meta: Meta,
@@ -481,7 +529,8 @@ export class JoinedAccount {
     const xs = await this.s.rows([RELEASE], e.at),
       r = xs.find((x) => x.position === e.at);
     assert(r);
-    const m = value(r) as Marker;
+    const m = value(r) as Marker & { erasureSeq?: number };
+    await recheckErasure(this.s.comp, m.erasureSeq);
     assert(
       m.notice === h(e.value) &&
         m.seq === e.value.sequence &&
@@ -495,6 +544,7 @@ export class JoinedAccount {
     if (m.stage) {
       assert(
         m.storage === "staged" &&
+          m.stage.erasureSeq === m.erasureSeq &&
           m.stage.scope === this.s.scope &&
           m.stage.cut === m.cut &&
           m.stage.release === m.release &&
@@ -589,147 +639,172 @@ export class JoinedAccount {
       small = storage === "staged" && options.codec !== "legacy";
     assert(Number.isInteger(workers) && workers >= 1 && workers <= 8);
     const priceStart = performance.now();
+    const sequence = (await readErasure(this.s.comp))?.seq;
     this.lastMaterial = emptyMaterial();
-    return this.command(
-      id,
-      ["publish", doc, at, storage, options.sources ?? "native", workers, small],
-      async (p) => {
-        const { meta, c, tail } = await this.state(p);
-        assert(at >= c.at);
-        const prev = c.releases
-          .filter((r) => r.storage !== "scheduled" && r.from <= at)
-          .sort((a, b) => b.from.localeCompare(a.from) || b.tx - a.tx)[0];
-        const old = prev ? W0.compileRelease(prev.document) : undefined;
-        const req: Request = {
-          id,
-          document: doc,
-          kind: "activation",
-          release: doc.name,
-          validTime: at,
-          from: at,
-          selection: { kind: "census" },
-        };
-        const clock = emptyMaterial(),
-          begin = performance.now();
-        clock.prepMs = begin - priceStart;
-        const indexed = options.sources === "indexed" ? new Map<string, W0.World>() : undefined;
-        const ids =
-          storage === "owed"
-            ? []
-            : options.sources === "census"
-              ? await this.roster(meta.census, p)
-              : await this.choose(
-                  meta,
-                  p,
-                  at,
-                  old,
-                  next,
-                  "output",
-                  storage === "envelopes",
-                  indexed,
-                );
-        clock.selectionMs = performance.now() - begin;
-        const parts: string[] = [],
-          body: Stored[] = [];
-        let bytes = 0,
-          count = 0,
-          owners = 0;
-        const flush = () => {
-          if (!body.length) return;
-          const start = performance.now();
-          const packed = encode(body, small);
-          parts.push(packed);
-          this.stats.outputBytes += Buffer.byteLength(packed);
-          clock.encodeMs += performance.now() - start;
-          body.length = 0;
-          bytes = 0;
-        };
-        const evaluation = new Evaluation(workers, old, next, storage === "envelopes");
-        const materialStart = performance.now();
-        try {
-          for (let start = 0; start < ids.length; start += width * workers) {
-            const work = Array.from(
-              { length: Math.min(workers, Math.ceil((ids.length - start) / width)) },
-              (_, j) => ids.slice(start + j * width, start + (j + 1) * width),
-            );
-            const results = await Promise.all(
-              work.map(async (group, j) => {
-                const t = performance.now();
-                const snap = group.every((x) => indexed?.has(x))
-                  ? group.map((x) => indexed!.get(x)!)
-                  : await worldsAt(this.s, this.s.profile, group, { tx: p, validTime: at });
-                if (!group.every((x) => indexed?.has(x))) this.stats.worlds += snap.length;
-                clock.readMs += performance.now() - t;
-                return evaluation.page(j, { worlds: snap, basis: { tx: p + 1, validTime: at } });
-              }),
-            );
-            for (const result of results) {
-              clock.evaluateMs += result.evaluateMs;
-              for (const row of result.rows) {
-                const t = performance.now();
-                const size = Buffer.byteLength(canonical(small ? compact(row) : row));
-                clock.encodeMs += performance.now() - t;
-                if (bytes + size > (storage === "staged" ? 90000 : 96000)) flush();
-                body.push(row);
-                bytes += size;
-                owners++;
-                count += row.rows.length;
+    return withErasure(sequence, () =>
+      this.command(
+        id,
+        ["publish", doc, at, storage, options.sources ?? "native", workers, small],
+        async (p) => {
+          const { meta, c, tail } = await this.state(p);
+          assert(at >= c.at);
+          // [DX-THIN1] Why: the current erasure cut must use the effective predecessor release.
+          // Rejected: letting a future scheduled release define today's prior answers.
+          const prev = c.releases
+            .filter((r) => r.storage !== "scheduled" && r.from <= at)
+            .sort((a, b) => b.from.localeCompare(a.from) || b.tx - a.tx)[0];
+          const old = prev ? W0.compileRelease(prev.document) : undefined;
+          const req: Request = {
+            id,
+            document: doc,
+            kind: "activation",
+            release: doc.name,
+            validTime: at,
+            from: at,
+            selection: { kind: "census" },
+          };
+          const clock = emptyMaterial(),
+            begin = performance.now();
+          clock.prepMs = begin - priceStart;
+          // [DX-ERASE1] Why: retained posting pages have no current protected assertion identities.
+          // Rejected: handing their old facts to a Publish with a newly checked sequence.
+          const indexed =
+            options.sources === "indexed" && sequence === undefined
+              ? new Map<string, W0.World>()
+              : undefined;
+          const ids =
+            storage === "owed"
+              ? []
+              : options.sources === "census" || sequence !== undefined
+                ? await this.roster(meta.census, p)
+                : await this.choose(
+                    meta,
+                    p,
+                    at,
+                    old,
+                    next,
+                    "output",
+                    storage === "envelopes",
+                    indexed,
+                  );
+          clock.selectionMs = performance.now() - begin;
+          const parts: string[] = [],
+            body: Stored[] = [];
+          let bytes = 0,
+            count = 0,
+            owners = 0;
+          const flush = () => {
+            if (!body.length) return;
+            const start = performance.now();
+            const packed = encode(body, small);
+            parts.push(packed);
+            this.stats.outputBytes += Buffer.byteLength(packed);
+            clock.encodeMs += performance.now() - start;
+            body.length = 0;
+            bytes = 0;
+          };
+          const evaluation = new Evaluation(workers, old, next, storage === "envelopes");
+          const materialStart = performance.now();
+          try {
+            for (let start = 0; start < ids.length; start += width * workers) {
+              const work = Array.from(
+                { length: Math.min(workers, Math.ceil((ids.length - start) / width)) },
+                (_, j) => ids.slice(start + j * width, start + (j + 1) * width),
+              );
+              const results = await Promise.all(
+                work.map(async (group, j) => {
+                  const t = performance.now();
+                  const snap = group.every((x) => indexed?.has(x))
+                    ? group.map((x) => indexed!.get(x)!)
+                    : await worldsAt(this.s, this.s.profile, group, { tx: p, validTime: at });
+                  if (!group.every((x) => indexed?.has(x))) this.stats.worlds += snap.length;
+                  clock.readMs += performance.now() - t;
+                  return evaluation.page(j, { worlds: snap, basis: { tx: p + 1, validTime: at } });
+                }),
+              );
+              for (const result of results) {
+                clock.evaluateMs += result.evaluateMs;
+                for (const row of result.rows) {
+                  const t = performance.now();
+                  const size = Buffer.byteLength(canonical(small ? compact(row) : row));
+                  clock.encodeMs += performance.now() - t;
+                  if (bytes + size > (storage === "staged" ? 90000 : 96000)) flush();
+                  body.push(row);
+                  bytes += size;
+                  owners++;
+                  count += row.rows.length;
+                }
               }
             }
+            flush();
+          } finally {
+            await evaluation.close();
           }
-          flush();
-        } finally {
-          await evaluation.close();
-        }
-        clock.materialMs = performance.now() - materialStart;
-        const ops: Op[] = [];
-        let header: Stage | undefined,
-          expected = p;
-        if (storage === "staged" && parts.length) {
-          const t = performance.now();
-          const written = await stage(this.s, this.db, p, id, next.hash, parts, options.afterChunk);
-          header = written.header;
-          expected = written.predecessor;
-          clock.stages = written.writes;
-          clock.stageWriteMs = performance.now() - t;
-        }
-        const np = this.notices.plan({ ...tail, at: expected }, req);
-        assert(np.recipe.oldHash === (old?.hash ?? null));
-        if (storage !== "staged")
-          for (const [j, bytes] of parts.entries())
-            ops.push(this.db.put(dataKey(np.recipe.sequence, j), bytes));
-        this.lastMaterial = clock;
-        const m: Marker = {
-          joined: meta.epoch,
-          seq: np.recipe.sequence,
-          old: old?.doc ?? null,
-          document: doc,
-          release: next.hash,
-          cut: p,
-          at,
-          from: at,
-          kind: "activation",
-          storage,
-          output: { count, chunks: parts.length, hash: encodedHash(parts), owners },
-          ...(header ? { stage: header } : {}),
-          ...(small ? { codec: "compact" as const } : {}),
-          notice: h(np.recipe),
-          census: meta.census.members,
-          compiler: selector,
-        };
-        return {
-          ops: [fact(RELEASE, "lazy/activation", m), ...np.operations, ...ops],
-          expected,
-          context: {
-            epoch: meta.epoch,
-            notice: m.notice,
-            output: m.output,
-            stage: header?.attempt ?? null,
-          },
-        };
-      },
-      hook,
-      at,
+          clock.materialMs = performance.now() - materialStart;
+          const ops: Op[] = [];
+          let header: Stage | undefined,
+            expected = p;
+          if (storage === "staged" && parts.length) {
+            const t = performance.now();
+            const written = await stage(
+              this.s,
+              this.db,
+              p,
+              id,
+              next.hash,
+              parts,
+              options.afterChunk,
+              sequence,
+            );
+            header = written.header;
+            expected = written.predecessor;
+            clock.stages = written.writes;
+            clock.stageWriteMs = performance.now() - t;
+          }
+          const np = this.notices.plan({ ...tail, at: expected }, req);
+          assert(np.recipe.oldHash === (old?.hash ?? null));
+          if (storage !== "staged")
+            for (const [j, bytes] of parts.entries())
+              ops.push(this.db.put(dataKey(np.recipe.sequence, j), bytes));
+          this.lastMaterial = clock;
+          const m: Marker & { erasureSeq?: number } = {
+            joined: meta.epoch,
+            ...(sequence === undefined ? {} : { erasureSeq: sequence }),
+            seq: np.recipe.sequence,
+            old: old?.doc ?? null,
+            document: doc,
+            release: next.hash,
+            cut: p,
+            at,
+            from: at,
+            kind: "activation",
+            storage,
+            output: { count, chunks: parts.length, hash: encodedHash(parts), owners },
+            ...(header ? { stage: header } : {}),
+            ...(small ? { codec: "compact" as const } : {}),
+            notice: h(np.recipe),
+            census: meta.census.members,
+            compiler: selector,
+          };
+          if (sequence !== undefined) await recheckErasure(this.s.comp, sequence);
+          return {
+            ops: [fact(RELEASE, "lazy/activation", m), ...np.operations, ...ops],
+            expected,
+            context: {
+              epoch: meta.epoch,
+              notice: m.notice,
+              output: m.output,
+              stage: header?.attempt ?? null,
+            },
+          };
+        },
+        hook,
+        at,
+        // [DX-THIN1] Why: the owed Publish gets the next admitted turn with its original erasure witness.
+        // Rejected: an unfenced priority path or a priority turn for every staging write.
+        storage === "owed",
+        options.observation,
+      ),
     );
   }
   async physical(seq: number) {
@@ -769,7 +844,12 @@ export class JoinedAccount {
     await before?.();
     return (await this.s.head()) === p ? "covered" : "stale";
   }
-  async advance(at: string) {
+  advance(at: string) {
+    return this.admission
+      ? this.admission.run("save", () => this.advanceWithinTurn(at))
+      : this.advanceWithinTurn(at);
+  }
+  private async advanceWithinTurn(at: string) {
     assert(W0.isInstant(at));
     for (;;) {
       const p = await this.s.head(),
@@ -777,7 +857,7 @@ export class JoinedAccount {
         due = calendar.value[0];
       if (!due || due > at) return;
       const id = "deadline/" + sha256(due);
-      await this.command(id, ["deadline", due], async (k) => {
+      await this.execute(id, ["deadline", due], async (k) => {
         const { meta, c, tail } = await this.state(k),
           cal = await this.db.get<string[]>("join-calendar", k);
         assert(cal.value[0] === due && c.at <= due);
@@ -873,25 +953,35 @@ export class JoinedAccount {
     return [...found.values()];
   }
   // [DX-ACT1] Why: fold the live deep command into the same strict source transaction as its index and owed event. Rejected: dual-writing a compact mirror after the deep transaction (a release can land in the gap).
-  async saveDeep(id: string, person: number, submitted: readonly Op[], at: string) {
+  async saveDeep(
+    id: string,
+    person: number,
+    submitted: readonly Op[] | { fields: readonly Fact[]; from: number },
+    at: string,
+    observation?: PublishObservation,
+  ) {
     assert(
       this.s.profile === "act2-deep" &&
         W0.isInstant(at) &&
         Number.isSafeInteger(person) &&
         person >= 0,
     );
-    const source = structuredClone(submitted),
+    const request = structuredClone(submitted),
       subject = W0.placementId(person);
     return this.command(
       id,
-      ["deep-save", subject, source, at],
+      ["deep-save", subject, request, at],
       async (p) => {
         const { meta, c, tail } = await this.state(p);
-        assert(at >= c.at && source.length > 0);
+        assert(at >= c.at);
         const [addr, raw] = await Promise.all([
           this.db.get<number>(address(subject), p),
           rawDeep(this.s, person, { tx: p, validTime: at }),
         ]);
+        // [DX-ACT2] Why: a deferred field edit chooses its actual live replacement IDs after admission. Rejected: submitting stale retractions built while a different save held the turn.
+        const source =
+          "fields" in request ? replaceDeep(raw, request.fields, request.from) : request;
+        assert(source.length > 0);
         const impact = deepImpact(person, raw, source, { tx: p, validTime: at });
         const anticipated = impact.prospective(),
           basis = { tx: p + 1, validTime: at };
@@ -947,6 +1037,8 @@ export class JoinedAccount {
       },
       undefined,
       at,
+      false,
+      observation,
     );
   }
   async save(id: string, edit: Edit, at: string) {
@@ -973,7 +1065,8 @@ export class JoinedAccount {
       async (p) => {
         const { meta, c, tail } = await this.state(p);
         assert(at >= c.at);
-        const owner = classified.owner,
+        // [DX-ACT1] Why: W0 gives shared geography an empty owner, which means the whole census at this boundary. Rejected: passing the empty string as an owned-reconcile proof.
+        const owner = classified.owner || undefined,
           direct = W0.isPlacementId(edit.e),
           addr = owner ? await this.db.get<number>(address(owner), p) : undefined;
         const active = await this.intervals(edit, p, from, !!meta.scheduled || from < at);
@@ -1050,7 +1143,7 @@ export class JoinedAccount {
               validTime: at,
               selection: owner ? { kind: "subjects", ids: [owner] } : { kind: "census" },
             },
-            owner ?? undefined,
+            owner,
           );
           ops.push(...plan.operations);
         }

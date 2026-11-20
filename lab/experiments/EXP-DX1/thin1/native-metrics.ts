@@ -13,6 +13,7 @@ export interface Stack {
     nonce: string;
     compact?: boolean;
     memoryPoints?: string;
+    nativePools?: boolean;
     peers: {
       role: "write" | "read";
       endpoint: string;

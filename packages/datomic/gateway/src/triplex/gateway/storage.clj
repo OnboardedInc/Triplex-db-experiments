@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [clojure.edn] [triplex.gateway.group :as group] [triplex.gateway.commit :as commit] [triplex.gateway.predecessor :as pred] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [clojure.edn] [triplex.gateway.group :as group] [triplex.gateway.commit :as commit] [triplex.gateway.predecessor :as pred] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:require [triplex.gateway.replay-capture :as replay-capture] [triplex.gateway.small-row :as small-row]
             [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed] [clojure.data.json :as json])
   (:import [java.util UUID]))
@@ -152,6 +152,10 @@
    (let [lean (lean? db)
          input (ordered-row-texts (expand-fresh input lean))
          new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
+         _ (trace/span "privacy/validate-rows" "gateway" (privacy/validate-write! privacy/*cut* input rows))
+         protected (trace/span "privacy/prepare-envelopes" "gateway"
+                     (envelope/protect privacy/*database* privacy/*cut* input rows))
+         input (:input protected) rows (:rows protected)
          fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
          timed-rows (when (seq old) (into {} (keep (fn [r] (when-let [id (timed-retraction r)] [(:id r) id]))) fresh))
          source (when-some [p (get input "sourceK")] (safe-position p)) position (safe-position (get input "position"))
@@ -180,6 +184,11 @@
                [{:db/id "datomic.tx" :triplex.tx/position (marker position)
                  :triplex.tx/operation-id (get input "operationId") :triplex.tx/id (or (:id metadata) "")
                  :triplex.tx/recorded-at [:triplex/record-time (finite! (:recorded-at metadata))]}]
+               (:bodies protected)
+               ;; [DX-ERASE1] Why: a late native write is fenced even if its peer request timed out.
+               ;; Rejected: releasing the gateway lock and trusting the delayed transactor outcome.
+               (when-let [seq (:seq privacy/*cut*)]
+                 [[:db/cas scope :triplex.scope/erasure-seq seq seq]])
                ;; [DX-B4-T1] Why: one physical commit can contain several logical journals.
                ;; Rejected: using only tx/id (drops nested transacts at interior cursors).
                (mapcat (fn [[entity rs]]
@@ -230,8 +239,7 @@
                              (if (and (not lean) (> (.length ^String text) 8000))
                                [[:db/add (str "e:" (:entity_id row)) :triplex.entity/row-overflow true]]
                                 (let [offset (+ 44 (.length ^String (:id row)) (if (= "ref" (:value_type row)) (.length ^String (:value_string row)) 0))
-                                      plan (when (and packed-rows (not (contains? timed-rows (:id row)))
-                                                      (not (packed-journal-set (:id row))))
+                                      plan (when (and packed-rows (not (packed-journal-set (:id row))))
                                              (small-row/prepare text offset (:recorded_position row) new-ids))]
                                   [[(if lean :triplex/assert :db/add) (str "e:" (:entity_id row)) :triplex.entity/row
                                    (if plan [:triplex/row (subs text 0 offset) (:recorded_position row) offset :row plan]
@@ -287,6 +295,8 @@
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
                        :rev-aevt (= "1" (System/getenv "TX2_REV_AEVT"))
                        :lean lean :slim-row (= 4 rows-version) :ops ops :times times :new-ids (vec new-ids) :assign-record-time (not= false (get input "assignRecordTime"))
+                       :command-ids (mapv #(get % "commandId") claims)
+                       :owners (vec (distinct (map :entity_id rows)))
                        ;; [DX-R3] Why: strict scopes also order empty/claim-only commits and every imported claim clock.
                        ;; Rejected: checking row timestamps only (a supported SPI commit can have no rows).
                        :record-clocks (vec (cons (:recorded-at metadata) (map #(get % "timestamp") claims)))
@@ -322,7 +332,9 @@
                   (not-any? #(and (vector? %) (= :triplex.scope/feed-irregular (nth % 2 nil))) (:ops p)))]
     ;; [DX-INT1] Why: the installed writer stamps predecessor clocks and validity from each speculative db-before.
     ;; Rejected: rewriting peer row texts, which can be ordered, packed or forwarded without a map.
-    (fn [view]
+    ;; [DX-ERASE1] Why: group workers rebuild protected rows under the same verified erasure and envelope bindings.
+    ;; Rejected: capturing just the input frame (a fallback could rebuild unsealed rows on a different thread).
+    (bound-fn [view]
       (if (and safe
                (= (if (:slim-row p) 4 3) (value view (:scope p) :triplex.scope/rows-version))
                (= (ffirst data) (commit/entry view input (:lean p)))
@@ -424,7 +436,7 @@
         frame-size (assoc :frameSize frame-size)
         (and pred/diagnostic (true? (get input "readProfile"))) (assoc :readProfile (:io-stats report))
         group/stage-clock (assoc :nativeComputeMs (get-in report [:io-stats :api-ms]) :groupStages (:group-stages report)
-                                 :preparedStats (:prepared-stats report))
+                                 :preparedStats (:prepared-stats report) :writerFunction (str (ffirst data)))
         stamp (assoc :requestBytes (policy/request-size input) :preparedOps (count (:ops (second (first data)))) :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
     (catch Exception e
@@ -432,15 +444,15 @@
       (let [text (str e)]
         ;; [DX-THIN1] Why: preserve explicitly typed policy errors and the established transaction rejection for malformed row ordering.
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
-        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
-                       {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
+                       {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
                         :code (cond (re-find #"TRIPLEX_CLOCK_EXHAUSTED" text) "ClockExhausted"
                                     (re-find #"TRIPLEX_CLOCK" text) "ClockConflict"
                                     (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
-                                    (re-find #"triplex.claim/command-id" text) "CommandConflict"
-                                    (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
+                                    (re-find #"TRIPLEX_COMMAND_DUPLICATE|triplex.claim/command-id" text) "CommandConflict"
+                                    (re-find #"TRIPLEX_OPERATION_DUPLICATE|triplex.tx/operation-id" text) "OperationDuplicate"
                                     (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e))))))
 (defn operation [db id]
   (if-let [{:keys [position t clock]} (group/receipt db id)]
@@ -486,6 +498,8 @@
           (when-not tx (unavailable! "No physical transaction covers the requested position"))
           (d/as-of db (d/tx->t tx)))))))
 (defn read-db [name current input]
+  (when (and (:sealed privacy/*cut*) (contains? input "staged"))
+    (privacy/failure! 409 "ProtectedPreviewUnavailable" "A protected row preview requires a guarded save"))
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
                (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(trace/span "d/with" "peer-call" (d/with held (tx-data held staged))))) held))
@@ -565,7 +579,7 @@
         result {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
                   (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source")
      :basis basis :subjectAttribute (str attribute)
-     :rows (mapv #(wire-row (mask-retirement % basis))
+     :rows (mapv #(wire-row (privacy/masked (mask-retirement % basis)))
                  (filter (fn [r] (and (visible? r basis history)
                                      (or (not= route "live") (nil? (:retracted_at r)))
                                      (or (nil? entities) (some #{(:entity_id r)} entities))
@@ -581,6 +595,8 @@
 ;; [DX-B5-L2] Why: retain one visibility/masking rule for both physical layouts.
 ;; Rejected: interpreting interior logical positions as physical transaction cuts.
 (defn read-rows [name current input]
+  (when (and (:sealed privacy/*cut*) (contains? input "staged"))
+    (privacy/failure! 409 "ProtectedPreviewUnavailable" "A protected row preview requires a guarded save"))
   (let [db (if-let [handle (get input "handle")]
              (let [held (held-db name handle)]
                (if-let [staged (get input "staged")] (:db-after (admission/execute admission/reads #(trace/span "d/with" "peer-call" (d/with held (tx-data held staged))))) held)) current)]
@@ -595,7 +611,7 @@
         {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
                       (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source") :basis basis
          :subjectAttribute (str (if (= route "live") :f/live :f/subject))
-         :rows (mapv #(wire-row (mask-retirement % basis))
+         :rows (mapv #(wire-row (privacy/masked (mask-retirement % basis)))
                      (filter (fn [row]
                                (and (visible? row basis history)
                                     (or (not= route "live") (nil? (:retracted_at row)))

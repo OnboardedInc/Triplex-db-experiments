@@ -1,0 +1,81 @@
+# Publish while saves are flowing
+
+North star P5 at the exact durable cut, with P1 reads and P2 saves running. The one-second definition is in `a619d4eb4:lab/TARGETS.md`. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md)
+
+## What the earlier tape can attribute
+
+The 204-offer attempt executed `f199db819` before the 250 ms reader grace existed. The 34 late offers have 1.425 s median and 3.403 s maximum from scheduled offer to record completion. Candidate first correct reads have 1.373 s median and 2.845 s maximum on those offers. Their read calls themselves took 265 ms at the median and 1.513 s at the maximum. The first returned current answer could precede the issuer's ACK when a helper finished it.
+
+Issuer-side native instrumentation covers six late offers. In those six, delay behind an in-flight save was 34 ms median and 274 ms maximum. Native service was 95 ms median and 378 ms maximum. The remainder from ingress to ACK was 886 ms median and reaches 1.685 s. Across all 111 complete issuer traces the measured save wait was 495 ms p99. The tape cannot separate the remainder into fence work, source repair, an earlier Publish blocking admission, or scheduling pressure. It has no CPU-pressure or head-conflict clock. The 28 other late offers lack a full issuer trace. This is raw diagnostic evidence because the original complete oracle replay stopped. The source tape and result digests are in `part4/old-waits.json` under the durable evidence directory.
+
+## Queueing law to test
+
+Let `lambda` be offered saves per second, `s` their mean service in seconds, and `rho = lambda × s`. The FIFO queue is stable only for `rho < 1`. Under Poisson arrivals and exponentially distributed service, the queue has an atom `1-rho` at zero and tail `rho × exp(-(1/s-lambda) × t)`. Consequently its waiting p99 is `max(0, ln(rho / .01) / (1/s-lambda))` in the stable range. At `rho >= 1`, a finite FIFO observation depends on the duration and initial backlog. With constant service the saturated backlog adds about `(rho-1) × elapsed` seconds of waiting.
+
+With priority at the same-account admission point, ordinary waiting saves drop out of the Publish wait. For independent arrival times and an otherwise stable nonpreemptible save queue, the chance of a residual exceeding `t` is `lambda × E[max(S-t,0)]`. For constant service `s`, the residual p99 is `s × max(0, 1-.01/rho)`. A burst of earlier Publishes, a fairness turn and an already admitted native turn can all add delay to that residual. At 3.5, 23.5 and 39.4 saves/s, FIFO needs mean save service below 286, 42.6 and 25.4 ms respectively, before accounting for Publishes. These are model assumptions and thresholds. Report the p99 of complete offers and paired component clocks. Adding component p99s does not give the Publish p99.
+
+## One joined writer
+
+| File | Comparison and chosen path |
+| --- | --- |
+| `actv-delta/account.ts` and `actv-lazy/join/account.ts` | DELTA durably admits an intent then commits a terminal release. Its reader can finish an abandoned intent after a 250 ms grace. Joined keeps the source cut, output marker, ordered notice intent and tail in one native commit. There is no visible preterminal intent to help. A lost reply reopens the original transaction by command ID. An aborted precommit offer has no receipt and remains a miss. |
+| `actv-delta/deep.ts` and `actv-lazy/join/deep.ts` | DELTA repairs a durable source debt in another write. Joined places the native save, index leaf changes and owed work in one strict transaction. Deferred joined edits bind authored values on ingress and resolve retraction IDs in the admitted turn. |
+| `actv-delta/service.ts` and `actv-lazy/join/deadline.ts` | DELTA has recovery on a current read and a clock worker. The current joined head already has a durable calendar and restartable nearest-boundary worker. Keep that worker and joined's expired-debt handling. |
+| `actv-delta/rules.ts`, `index-patch.ts` and `actv-lazy/join/index.ts` | Joined imports the declarations and patch codec. Keep those sources shared. Joined adds the physical output projection and falls back to the census where ranges cannot justify selection. |
+| `actv-delta/dispatch.ts`, `actv-lazy/join/archive.ts` and `recorded.ts` | DELTA reopens exact recipe bytes and can materialize immutable parts. Joined already has separate budgeted value and notice writers, an ordered NOTIFY1 ledger and a transactional receiver. Keep these for the distinct stored endpoint. |
+| `actv-delta/audit-clock.ts` and `actv-lazy/join/observations.ts` | Both have separate durable clocks. DELTA keeps open-loop per-offer deadline probes and scores the earliest independently matched current reply. Joined retains native receipt and stored proof. The comparison runs the shared DELTA clock on the joined public tape. |
+| WFIX1 `group.clj` and joined `admission.ts` | The reviewed gateway rotates ready accounts and grants bulk a turn after eight live turns. A native source-barrier waits for work already submitted to its database. Choose Publish before unsent same-account saves at the TypeScript admission point, then use the same native strict predecessor. |
+
+The application writer owns one `AccountAdmission` per serviced scope and routes its semantic operations through the same `JoinedAccount`. The FIFO control and priority arm use one plan, reader and receipt decoder. Priority may pass only queued saves. An already admitted save is in the native cut. Waiting saves receive a turn by the ninth ready turn, and a separate writer that defeats the strict guard gets at most three attempts. Scope-owner routing is a deployment precondition. Other processes can still trigger a bounded conflict and must resolve the returned outcome by command identity. No durable intent or fixed grace is charged on this path.
+
+## Matched local comparison
+
+The joined runner uses 10,000 people in the publishing scope and two 96-person neighbour scopes on the same stack. Each neighbour offers 1.6 saves/s. The publishing scope is offered 3.5, 23.5 and 39.4 saves/s with 64 concurrent reads. Each rate has four 100-offer windows in FIFO, priority, priority, FIFO order. Publish offers arrive independently at four per second. Offered traffic and admitted traffic have separate clocks. The shared measurement lease drains other heavy jobs and blocks new stack admissions. Every cell records Mac load, VM CPU pressure and event-loop delay. Phase clocks and observed native HTTP stages are retained.
+
+The result checker keeps every scheduled offer, including misses. After timing it reopens each receipt by native command, checks the marker and predecessor cut, and compares the raw current answers with Python at the actual read cuts. Expected input comes from authored commands and their native positions. It requires one deadline read per route per offer and reports misses separately from latency. The native manager binds the attempt, source and build bytes, gateway settings and slot. A failed or incomplete comparison leaves the raw cells available as diagnostics.
+
+The completed low-rate ABBA windows at `3aee17a91` kept 200 native receipts per policy and independently checked 163,472 raw replies. Neighbours used separate database scopes on the same stack. The measurement lease excluded other lab timing arms. The host still had other work and the two repetitions had very different CPU pressure. The old DELTA experiment used one Publish per second and is an unpaired diagnostic.
+
+| Policy at 3.5 saves/s | Record and first exact read p50 / p99 / max (s) | Misses / offers | Late current replies | VM CPU stall across cells | Host load / 12 logical CPUs | Event loop p99 (ms) |
+| --- | --- | --- | --- | --- | --- | --- |
+| FIFO | 112.39 / 726.17 / 744.26 | 200 / 200 | 106,150 | 1.26–5.65% | up to 16.48 | 70–368 |
+| Priority | 84.99 / 262.89 / 267.87 | 200 / 200 | 53,638 | 1.83–2.26% | up to 14.97 | 149–259 |
+
+In the CPU windows above, median ingress-to-turn time attributable to saves fell from 64.76 s to 12.68 s. Time behind prior Publishes rose from 46.50 s to 69.66 s. Median admitted planning was 625 and 688 ms, and submission to native ACK was 727 and 712 ms. First-observation head lookup took 32 and 62 ms, then the reply took a further 436 and 458 ms. Both arms had zero retries, fence time and fixed grace. The reader eventually returned exact bytes at its recorded cut, including many cuts that were too old for the scheduled deadline.
+
+Saves completed entirely during reader traffic averaged 2.82 s across 188 FIFO saves and 2.64 s across 27 priority saves. That puts the observed save-only load near 9.9 and 9.2 at 3.5 saves/s in these windows. The later save drain took about 0.11 s per FIFO save across six saves and 0.10 s per priority save across 167. These magnitudes describe the four-Publishes-per-second stream. The native per-request split is missing in this attempt. The observer follows asynchronous context, and a queued Publish ran in the previous save's context. The attempt still carries deliberate native ACK timestamps and independently reopened receipts.
+
+The 23.5 saves/s FIFO window reached the 15-minute limit before writing observations. Its schedule and the timeout are in evidence. The 39.4 saves/s arm did not start. The manager removed the data volume and released the slot. A negative control reproduces the wrong request observer while a save holds the lane. The follow-up requires the queued Publish to retain its own observer and the native race gate to see its write stages.
+
+### Fixed-exposure rerun
+
+The rerun used the current route's own resolved head and captured when its release controls were available. It held 64 background readers through one fixed offer window and every per-offer deadline probe. Both policies got the same schedule. The observations retain the load-end CPU sample and the drain separately. Only 48 of the 1,200 Publishes received their native ACK during background reads. Every Publish had a deadline probe on each route. The p99s below include the drain.
+
+The run at `2d026eb29` reopened all 1,200 receipts, independently matched 37,311 raw replies, and kept 7,428 target saves and 540 from each neighbour. Every offer missed one second. There were 32,542 replies from cuts older than the deadline required, each exact at its observed cut. No other lab timing arm ran during these cells. The CPU columns report the range of VM runnable stalls and the largest endpoint host load and per-cell Node event-loop p99 during the reader windows.
+
+| Saves/s | Policy | Record p50 / p99 / max (s) | First exact read p50 / p99 / max (s) | Misses / offers | VM CPU stall | Host load / 12 CPUs | Loop p99 (ms) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 3.5 | FIFO | 19.41 / 27.21 / 27.29 | 19.41 / 27.21 / 27.29 | 200 / 200 | 1.04–9.79% | 12.95 | 328 |
+| 3.5 | Priority | 15.46 / 24.45 / 24.76 | 15.46 / 24.45 / 24.76 | 200 / 200 | 1.49–2.13% | 13.50 | 220 |
+| 23.5 | FIFO | 50.98 / 81.83 / 83.10 | 50.98 / 81.83 / 83.10 | 200 / 200 | 0.54–0.77% | 12.06 | 1,014 |
+| 23.5 | Priority | 24.74 / 30.36 / 30.53 | 24.74 / 30.36 / 30.53 | 200 / 200 | 0.59–0.64% | 13.44 | 903 |
+| 39.4 | FIFO | 102.89 / 180.36 / 180.39 | 102.89 / 180.36 / 180.39 | 200 / 200 | 0.38–0.59% | 12.72 | 3,081 |
+| 39.4 | Priority | 36.02 / 40.65 / 40.70 | 36.02 / 40.65 / 40.70 | 200 / 200 | 0.52–0.55% | 14.44 | 1,966 |
+
+In the corresponding CPU windows, median wait behind saves fell from 12.63 to 3.33 s, 46.32 to 1.45 s and 92.29 to 18.00 s. Median wait behind earlier Publishes rose from 4.17 to 12.24 s, 4.09 to 23.02 s and 8.64 to 18.37 s. There were zero predecessor conflicts, no preterminal fence and zero fixed grace. At the highest priority load, median offer-to-ingress was 485 ms, plan time 149 ms, submit-to-ACK 40 ms, and ACK-to-first 166 ms. The gateway reached the predecessor 15 ms after payload preparation and completed 6 ms after native submit. The first reply learned the head in 2 ms, loaded the release controls in a further 38 ms and took 120 ms after learning the release. Phase medians and whole-offer quantiles are computed separately.
+
+At 39.4 saves/s, after readers drained, saves averaged 117–118 ms in the two policies. That was about 4.6 times the time budget per offered save even before another Publish. Only two fully observed target saves per policy completed entirely during reader load at that rate. Both the host load and the client scheduling delay were high. The experiment measures those pressures beside the queue stages. It cannot isolate a causal Mac-only penalty. Raw deadlines, ACKs, CPU samples and both volume cleanup receipts are retained in the evidence manifest.
+
+## One-seed server campaign
+
+Use the joined builder path at the same reviewed gateway revision. Its four cells use broad R1-to-R2 variants in record and literal staged modes, each quiet and at 23.5 offered saves/s. The local record comparison also exercised narrow release variants. Each new server document is first authored at its offer. The staged cell charges its source hold and commits all changed values before the marker. Both cells independently reopen the ordered owed-notice recipe. Individually materialized notice entries have a separate clock and are outside the timed endpoint. The supervised command reserves seven of ninety minutes for cleanup, runs a ten-minute small preflight and gives the producer at most 83 minutes of work. It keeps the partial receipts on an overrun.
+
+```sh
+TX2_SWEEP_STRICT=1 TX2_W0_POINT_JOURNAL=1 TX2_W0_RESTORE_INDEXED_JOURNAL=1 TRIPLEX_DATOMIC_LAYOUT=lean node lab/bin/heavy.mjs --label DX-ACT2 -- node --experimental-strip-types lab/experiments/EXP-DX1/actv-lazy/join/server.ts 100000 "$DX_LAZY_OUT" --one-seed
+```
+
+The slot supervisor supplies `DATOMIC_URL`, `TRIPLEX_LAB_SLOT_OWNER`, `TX2_WRITE_OPTIONS_ATTEMPT` and an empty output directory. Set `DX_LIVE_PRIORITY=1` and `DX_PREDECESSOR_LOOKUP=0` when reserving the WFIX1 writer. Pass the same `DX_WRITE_OPTIONS_ATTEMPT` as `TX2_WRITE_OPTIONS_ATTEMPT` to the runner. The producer reads back native live priority and strict record clocks. Its preflight also runs the same four-cell producer and collector at 1,000 people with short save windows. The new census replays all subjects across four Python processes with fixed, ordered subject pages. A comparable SCALE1 seed took 56.6 minutes. Four cells use roughly two minutes of offered load plus concrete work, and 10–25 seconds per broad staged release was the joined estimate. Earlier independent joined prices put quiet record and first read at roughly 40–120 ms and 60–170 ms. A 50 ms save implies about 50 ms maximum residual at this writer's own queue in the constant-service model with no other Publish ahead. Native and read contention add separately. A planning range of 70–100 minutes including preflight, census, receiver proof and cleanup crosses the requested bound. The 90-minute fit and loaded latency need evidence from the revised path. The server remains on hold.
+
+The native 1,000-person rehearsal on `2d026eb29` completed all four windows. Each loaded window kept 12 saves, each proof covered all 1,000 people, and the two staged windows independently matched all 1,000 literal outputs. The independent receiver matched the entire ordered notice ledger. The smoke's collector recorded zero misses in four offers. Its short windows and absence of VM CPU samples limit it to a correctness and clock check. The manager removed its volume and released its slot before the 10,000-person run.
+
+For a single loaded offer at 23.5 saves/s, constant 70 ms save service would put about 18.7 s of saves ahead of a FIFO offer after 29 seconds. On priority admission the same service model bounds the one active save's remaining turn at 70 ms. Adding only that residual to the old quiet estimates gives 40–190 ms for record completion and 60–240 ms for first read. Native contention and additional Publishes can move both estimates. These are conditional projections. The local saturated comparison does not establish a loaded server percentile.

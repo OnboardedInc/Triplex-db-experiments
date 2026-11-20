@@ -24,6 +24,7 @@ export function makeDatomicRuntime(options: {
   readonly admissionQueue?: boolean;
   readonly maxRetries?: number;
   readonly serverRecordTime?: boolean;
+  readonly recordedJournalReads?: boolean;
   readonly resolutionTimeoutMs?: number;
 }): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> {
   const connection = Layer.effect(
@@ -73,3 +74,10 @@ export { resumeCommitOrder } from "./CommitOrder.js";
 export * from "./tracing.js";
 
 export { requireDatomicSourcePosition, withDatomicImportClock } from "./TransactionContext.js";
+
+export {
+  withDatomicErasureSequence,
+  type ErasureFrontier,
+  type ErasureReceipt,
+  type ErasureSelector,
+} from "./erasure.js";

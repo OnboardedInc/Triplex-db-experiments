@@ -29,13 +29,22 @@ async function run() {
   const [op, tag, ...args] = process.argv.slice(2),
     p = commandPlan(tag!);
   const selected = args.length
-    ? { route: args[0], pages: Number(args[1]), intervalMs: Number(args[2]) }
+    ? {
+        route: args[0],
+        pages: Number(args[1]),
+        intervalMs: Number(args[2]),
+        ...(args[0] === "copied" ? { copyWorkers: Number(args[3]) } : {}),
+      }
     : undefined;
   if (selected)
     assert(
       (op === "launch" || op === "plan") &&
-        args.length === 3 &&
-        (selected.route === "recipient" || selected.route === "isolated") &&
+        (selected.route === "copied" ? args.length === 4 : args.length === 3) &&
+        ["recipient", "isolated", "copied"].includes(selected.route!) &&
+        (selected.route !== "copied" ||
+          (Number.isInteger(selected.copyWorkers) &&
+            selected.copyWorkers! >= 1 &&
+            selected.copyWorkers! <= 8)) &&
         Number.isInteger(selected.pages) &&
         selected.pages >= 1 &&
         selected.pages <= 32 &&
@@ -87,7 +96,9 @@ async function run() {
       disk: scaleHost.available(disks),
     });
     // [DX-STG1] Why: sequential arms retain two source seeds but run one client cohort at a time. Rejected: charging the machine for two simultaneous reader pools.
-    const requiredDisk = budget.liveDisk + budget.db * (selected?.route === "isolated" ? 2 : 1);
+    const requiredDisk =
+      budget.liveDisk +
+      budget.db * (selected?.route === "isolated" || selected?.route === "copied" ? 2 : 1);
     assert(
       budget.host.disk >= requiredDisk && budget.host.memory >= budget.liveMemory,
       "Two retained seeds and one active cohort must fit",
@@ -164,18 +175,22 @@ async function run() {
     TX2_W0_RESTORE_INDEXED_JOURNAL: "1",
     TX2_SWEEP_STRICT: "1",
   });
-  if (attempt.recipient?.route === "isolated") {
+  delete process.env.NOTIFY_SENDER_URL;
+  delete process.env.NOTIFY_COPY_WORKERS;
+  if (attempt.recipient?.route === "isolated" || attempt.recipient?.route === "copied") {
     // [DX-STG1] Why: matching controls keep the test's two foreground routes
     // on the writer peer while the sender uses the second JVM. Rejected:
     // pointing the foreground readers and sender at the same read gateway.
     process.env.NOTIFY_SENDER_URL = process.env.DATOMIC_READ_URLS;
     delete process.env.DATOMIC_READ_URLS;
+    if (attempt.recipient.route === "copied")
+      process.env.NOTIFY_COPY_WORKERS = String(attempt.recipient.copyWorkers);
   }
   call("taskset", ["-pc", "3,5,6,7,9,10,11", String(process.pid)]);
   const binding = { source, slot: p.prefix, nonce: attempt.nonce };
   // [DX-STG1] Why: require ACT2's identity gate and a complete 1k notice replay on this allocation before paying for either 100k seed. Rejected: accepting a saved Mac preflight or a launch-only success.
   await preflight(p.dir, binding, attempt.recipient ?? undefined);
-  if (attempt.recipient?.route === "isolated") {
+  if (attempt.recipient?.route === "isolated" || attempt.recipient?.route === "copied") {
     for (const n of [p.preflight, p.subjects]) {
       const range = path.join(p.dir, "range-" + n);
       fs.mkdirSync(range);

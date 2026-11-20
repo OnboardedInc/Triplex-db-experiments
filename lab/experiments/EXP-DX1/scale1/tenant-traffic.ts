@@ -13,12 +13,15 @@ import { liveProfile, liveWindows, liveEdits, liveArrivals, geometryHash } from 
 import { smallPhases } from "./small-plan.ts";
 import {
   tenantAccounts,
+  tenantPopulationHash,
   tenantSeedPin,
   type Account,
   type TenantEvent,
   type TenantSpec,
 } from "./tenants.ts";
 import { nsPlan, V3_OFFER_SECONDS, type PhaseSpec } from "../../../bench/lib/phases.ts";
+import { frozenDeep } from "../../../bench/lib/deep-profile.ts";
+import { fieldRates } from "../int1/field-plan.ts";
 export type TenantWindow = {
   name: string;
   from: number;
@@ -28,9 +31,59 @@ export type TenantWindow = {
   readers: number;
   activated?: boolean;
   rates?: number[];
+  seats?: number[];
 };
 export const tenantTraceId = "deep-tenants/1";
+export const pooledCampaignId = "int1-pooled/1";
+
+export function campaignWindows(s: TenantSpec, arm: string): TenantWindow[] {
+  assert(s.campaign && ["zero", "reader"].includes(arm));
+  const smoke = s.study === "smoke";
+  if (s.campaign === "frozen" && !smoke) {
+    return nsPlan("v3", arm === "zero").flatMap((p) =>
+      p.traceFromS === undefined ? [] : [{
+        name: p.name, from: p.traceFromS, seconds: p.seconds!, active: 1,
+        pattern: "steady", readers: p.readers, seats: [p.readers],
+      }],
+    );
+  }
+  let from = 0;
+  const windows: TenantWindow[] = [];
+  const add = (name: string, seconds: number, readers: number, quiet: number, neighborRate: number) => {
+    if (arm === "zero") readers = quiet = 0;
+    const seats = [quiet, ...Array.from({ length: 9 }, (_, i) =>
+      Math.floor((readers - quiet) / 9) + Number(i < (readers - quiet) % 9),
+    )];
+    const rates = [fieldRates.steady[0], ...Array<number>(9).fill(neighborRate)];
+    windows.push({
+      name, from, seconds, active: neighborRate > 0 ? 10 : 1, pattern: "steady",
+      readers, seats, rates,
+    });
+    from += seconds;
+  };
+  if (s.campaign === "frozen") {
+    add("L4", 30, 4, 4, 0);
+    return windows;
+  }
+  // [DX-THIN1] Why: quiet lanes keep identical seats and offer offsets while neighbors change.
+  // Rejected: comparing the quiet lane's alone reads with all-reader aggregates.
+  const matched = smoke ? 8 : 300;
+  add("quiet-alone", matched, smoke ? 1 : 8, smoke ? 1 : 8, 0);
+  add("neighbors-64", matched, smoke ? 4 : 64, smoke ? 1 : 8, smoke ? 3.5 : 23.5);
+  add("neighbors-256", matched, smoke ? 8 : 256, smoke ? 1 : 8, smoke ? 3.5 : 39.4);
+  add("publish-control", matched, smoke ? 4 : 64, smoke ? 1 : 8, 3.5);
+  add("publish", matched, smoke ? 4 : 64, smoke ? 1 : 8, 3.5);
+  // [DX-INT1] Why: the full deep account needs about 90 minutes at the provisional import floor.
+  // Rejected: a shorter tail that would cut off an import meeting 3,000 facts/s.
+  const importSeconds = smoke ? 12 : s.study === "million" ? 6000 : 720;
+  add("import-control", matched, smoke ? 4 : 64, smoke ? 1 : 8, 4.9);
+  add("import", matched, smoke ? 4 : 64, smoke ? 1 : 8, 4.9);
+  add("import-tail", importSeconds - matched, smoke ? 4 : 64, smoke ? 1 : 8, 4.9);
+  return windows;
+}
+
 export function tenantWindows(s: TenantSpec, arm: string): TenantWindow[] {
+  if (s.campaign) return campaignWindows(s, arm);
   if (s.live) {
     assert(s.study === "interference" && arm === "interference");
     return liveWindows(s.live);
@@ -83,7 +136,8 @@ export function tenantWindows(s: TenantSpec, arm: string): TenantWindow[] {
   return list;
 }
 export const tenantReaders = (w: TenantWindow, i: number) =>
-  i >= w.active ? 0 : w.pattern === "low" || (w.pattern === "busy-low" && i !== 0) ? 1 : w.readers;
+  w.seats ? w.seats[i] ?? 0 :
+    i >= w.active ? 0 : w.pattern === "low" || (w.pattern === "busy-low" && i !== 0) ? 1 : w.readers;
 export function tenantPhases(
   spec: TenantSpec,
   arm: string,
@@ -102,10 +156,19 @@ function perTenant(a: Account, s: TenantSpec, arm: string) {
   // [DX-SCALE1] Why: a seed-only grant has no live offers or readers. Rejected: allocating a ten-account live trace when only the population and its native growth are measured.
   if ((s.study === "million" || s.study === "interference") && arm === "seed") return [];
   const windows = tenantWindows(s, arm);
+  if (s.campaign === "frozen") {
+    if (a.index !== 0) return [];
+    if (s.study === "smoke") {
+      // [DX-THIN1] Why: the short fixture exercises a genuine mapped frozen save tape without altering the long trace.
+      // Rejected: counting a planned event as a native smoke save.
+      return makeDeepTrace(deepSeed(0), a.people, 30).events;
+    }
+    return frozenDeep(0, a.people).events.filter((e) => e.atMs < V3_OFFER_SECONDS * 1000);
+  }
   const plain = makeDeepTrace(
     deepSeed(a.index),
     a.people,
-    s.live ? 10800 : s.study === "smoke" || s.study === "small" ? 450 : 7200,
+    s.live || s.campaign ? 10800 : s.study === "smoke" || s.study === "small" ? 450 : 7200,
   );
   if (s.study === "million" && (arm === "zero" || arm === "reader"))
     return plain.events.filter((e) => e.atMs < V3_OFFER_SECONDS * 1000);
@@ -131,7 +194,7 @@ function perTenant(a: Account, s: TenantSpec, arm: string) {
       const base = originals[issued++]!;
       assert(base, "Insufficient frozen business intents");
       const atMs = w.from * 1000 + Math.round(seconds * 1e6) / 1000;
-      const facts = s.live
+      const facts = s.live || s.campaign === "field"
         ? 1 +
           Number(base.correction) +
           liveEdits(base.subject, base.seq, base.kind, base.deep).length
@@ -144,7 +207,14 @@ function perTenant(a: Account, s: TenantSpec, arm: string) {
           events.push({ ...r, facts, atMs: retryAt, burst });
       }
     };
-    if (w.rates) liveArrivals(a.index, w.rates[a.index]!, w.seconds, put);
+    if (w.rates && s.campaign) {
+      const offered = w.rates[a.index]!;
+      if (offered > 0) {
+        const rng = new Rng(seedOf(`${pooledCampaignId}/${a.index}/${offered}`));
+        const n = Math.round(w.seconds * offered);
+        for (let j = 0; j < n; j++) put((j + rng.next()) / offered);
+      }
+    } else if (w.rates) liveArrivals(a.index, w.rates[a.index]!, w.seconds, put);
     else if (low) {
       for (let min = 0; min < w.seconds / 60; min++) put(min * 60 + 2 + rng.next() * 50);
     } else for (let t = rng.exp(rate); t < w.seconds; t += rng.exp(rate)) put(t);
@@ -165,7 +235,7 @@ export function tenantPlan(spec: TenantSpec, arm: string, checkPin = true) {
       dig.update(
         JSON.stringify([
           e,
-          e.resend ? null : (spec.live ? liveEdits : deepEdits)(e.subject, e.seq, e.kind, e.deep),
+          e.resend ? null : (spec.live || spec.campaign === "field" ? liveEdits : deepEdits)(e.subject, e.seq, e.kind, e.deep),
         ]) + "\n",
       );
       events.push({
@@ -174,7 +244,7 @@ export function tenantPlan(spec: TenantSpec, arm: string, checkPin = true) {
         localSubject: e.subject,
         localSeq: e.seq,
         subject: a.first + e.subject,
-        seq: e.seq * 100 + a.index,
+        seq: spec.campaign === "frozen" ? e.seq : e.seq * 100 + a.index,
       });
       if (!e.resend) {
         n++;
@@ -184,8 +254,13 @@ export function tenantPlan(spec: TenantSpec, arm: string, checkPin = true) {
     logical[a.key] = dig.digest("hex");
   }
   events.sort((a, b) => a.atMs - b.atMs || a.seq - b.seq || Number(a.resend) - Number(b.resend));
+  // [DX-THIN1] Why: the launcher and driver build the same campaign spec in different property orders.
+  // Rejected: changing archived tenant digests or accepting the driver's declared hash without rebuilding it.
+  const traceSpec = spec.campaign ? {
+    campaign: spec.campaign, study: spec.study, topology: spec.topology, physical: spec.physical,
+  } : spec;
   h.update(
-    JSON.stringify({ spec, arm: arm === "zero" || arm === "reader" ? "regular" : arm, logical }),
+    JSON.stringify({ spec: traceSpec, arm: arm === "zero" || arm === "reader" ? "regular" : arm, logical }),
   );
   if (checkPin && spec.live) {
     const pin = JSON.parse(
@@ -193,7 +268,7 @@ export function tenantPlan(spec: TenantSpec, arm: string, checkPin = true) {
     )[spec.live];
     assert(pin.profile === liveProfile && pin.geometry === geometryHash(tenantWindows(spec, arm)));
     for (const a of accounts) assert.equal(logical[a.key], pin.logical[a.key]);
-  } else if (checkPin) {
+  } else if (checkPin && !spec.campaign) {
     const geometry = JSON.parse(
       fs.readFileSync(new URL("./tenant-windows.json", import.meta.url), "utf8"),
     );
@@ -214,7 +289,9 @@ export function tenantPlan(spec: TenantSpec, arm: string, checkPin = true) {
     events,
     logical,
     sha256: h.digest("hex"),
-    populationSha256: checkPin ? tenantSeedPin(spec) : "",
+    populationSha256: checkPin
+      ? spec.campaign && spec.study === "smoke" ? tenantPopulationHash(spec) : tenantSeedPin(spec)
+      : "",
     activeSubjects: new Set(events.map((e) => e.subject)),
     sizeClasses: [...sizes]
       .sort(([a], [b]) => a - b)

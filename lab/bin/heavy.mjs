@@ -12,16 +12,18 @@ import { fail, main, parseArgs } from './lib.mjs';
 main(async () => {
   const { options } = parseArgs(process.argv.slice(2));
   const command = options['--'];
-  if (!command?.length) fail('USAGE', 'usage: heavy.mjs [--label TEXT] [--measure-holder NAME] -- <cmd...>');
+  if (!command?.length) fail('USAGE', 'usage: heavy.mjs [--label TEXT] -- <cmd...>');
   // [EXP-W02-R2] Why: contested short gaps can starve a builder's ordered setup/checks at 1 s polling. Rejected: increasing HEAVY_SLOTS (would change the lab resource limit).
   const pollMs = Number(options['poll-ms'] ?? 1000);
   if (!Number.isSafeInteger(pollMs) || pollMs < 100 || pollMs > 30000) fail('USAGE', '--poll-ms must be an integer from 100 to 30000');
   const label = options.label ?? command.join(' ');
   const holder = options['measure-holder'];
-  if (holder !== undefined && (typeof holder !== 'string' || !/^[A-Za-z0-9._-]+$/.test(holder))) fail('USAGE', 'invalid measurement holder');
-  // [DX-AGE1] Why: claim the freeze in this process before spawning a measured child.
-  // Rejected: holding a regular heavy token while a competing lease waits for that token.
-  const release = holder ? (await acquireMeasureLease(label, { holder, pollMs })).release : await acquireHeavy(label, { pollMs });
+  if (holder !== undefined && (typeof holder !== 'string' || !/^[A-Za-z0-9_-]+$/.test(holder)))
+    fail('USAGE', '--measure-holder needs the exact engine holder');
+  // [DX-ACT2] Why: an isolated comparison must drain the same heavy pool before building and running. Rejected: competing for a single token before requesting the existing measurement lease.
+  const release = holder
+    ? (await acquireMeasureLease(label, { holder, pollMs })).release
+    : await acquireHeavy(label, { pollMs });
   const code = await new Promise(resolve => {
     const child = spawn(command[0], command.slice(1), { stdio: 'inherit' });
     for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));

@@ -29,6 +29,8 @@ const [
   train = "1",
   interval = "0",
   concurrency = "4",
+  savePeriod = "625",
+  copyThreads = "4",
 ] = process.argv.slice(2);
 const n = Number(size),
   gap = Number(pause),
@@ -47,7 +49,7 @@ assert(
     (mode === "baseline") === ms > 0,
 );
 assert(
-  ["source", "recipient", "isolated"].includes(route) &&
+  ["source", "recipient", "isolated", "copied"].includes(route) &&
     Number.isInteger(batchPages) &&
     batchPages >= 1 &&
     batchPages <= 32 &&
@@ -61,6 +63,9 @@ assert(
 );
 const readers = Number(concurrency);
 assert([4, 64].includes(readers));
+const savePeriodMs = Number(savePeriod);
+assert(Number.isInteger(savePeriodMs) && savePeriodMs >= 20 && savePeriodMs <= 1000);
+assert(shape === "fixture" || savePeriodMs === 625);
 const recipientPages = route !== "source" ? batchPages : undefined;
 const dir = process.env.NOTIFY_DIR!,
   binding = JSON.parse(fs.readFileSync(path.join(dir, "binding.json"), "utf8"));
@@ -73,8 +78,12 @@ assert(
     binding.slot === owner.container &&
     owner.endpoint === process.env.DATOMIC_URL,
 );
-const sourceEndpoint = route === "isolated" ? (owner.readerEndpoint as string) : undefined;
-if (route === "isolated") {
+const copied = route === "copied";
+const copyWorkers = copied ? Number(copyThreads) : undefined;
+if (copied) assert(Number.isInteger(copyWorkers) && copyWorkers! >= 1 && copyWorkers! <= 8);
+const sourceEndpoint =
+  copied || route === "isolated" ? (owner.readerEndpoint as string) : undefined;
+if (copied || route === "isolated") {
   assert(sourceEndpoint && sourceEndpoint !== owner.endpoint, "Exclusive reader peer required");
   const response = await fetch(new URL("/health", sourceEndpoint));
   assert(response.ok, "Exclusive reader peer is unavailable");
@@ -108,7 +117,7 @@ try {
   const p =
     shape === "deep"
       ? await deepProfile(source, n, new Date().toISOString().replace(/Z$/, "000Z"))
-      : await fixtureProfile(source, n, 625);
+      : await fixtureProfile(source, n, savePeriodMs);
   const run = await runWindow({
     source,
     receiver: rx,
@@ -139,6 +148,7 @@ try {
       releases: Number(train),
       readIntervalMs: Number(interval),
       sourceEndpoint,
+      copyWorkers,
     },
     phase: (stage) => console.log(stage),
   });
@@ -159,6 +169,8 @@ try {
         run.dispatch.deliveries > 0,
     );
   if (mode !== "idle") assert(reads.length && saves.length);
+  const liveReadCount = reads.filter((r) => r.beganMs + r.latency <= run.duration).length;
+  const liveSaveCount = saves.filter((s) => s.atMs + s.ackMs <= run.duration).length;
   const raw = gzipSync(JSON.stringify({ reads, saves, history }));
   fs.writeFileSync(path.join(dir, "traffic.json.gz"), raw, { flag: "wx" });
   const gatewayGc = owner.readerEndpoint
@@ -181,6 +193,9 @@ try {
     shape,
     batchPages,
     route,
+    savePeriodMs,
+    liveReadCount,
+    liveSaveCount,
     profiled,
     gatewayGc,
     sourceClock: owner.createdAt,

@@ -1,17 +1,19 @@
-Use `ab8ce484b4320af2c8cbfa5a28b698aa737f3e32` for the server run. The Mac settlement preflight passed at that exact commit.
+Use `48f55759494f6a6a04eeb6aa5284dde3e166d431` for the server retry. The native shared-geography test passed at that exact commit.
 A single write records the new rules and what notices are owed. At 10,000 deep people that write took 38 ms on the Mac.
 A background worker writes the changed values and individual notices in short turns. The recipient can stay offline while it records them.
 Before a value is stored, reads at the receipt’s cut derive it. Stored values serve that same cut. Later saves use the latest source.
 A new release can stop an obsolete value copy. Notices from both releases still get recorded in order.
 A shared wage-floor save covers the full roster when the database cannot prove a smaller affected set.
 On the server, 64 people took 34 ms to the quiet receipt and 47 ms to the first correct answer. All six cells agreed.
-The ten-thousand-person settlement timing and live-traffic ratios need a reserved slot. The receipt and erasure rulings remain open.
+The first local replay waited 55 minutes for a slot. The live timing is still queued. The receipt and erasure rulings remain open.
 
 ### Part 7
 
 The value and notice archives are separate native scopes on the same writer. Frames bind their receipt, exact source cut, release and cursor. The W1 queue has live priority and fair bulk turns. A service estimate bounds submitted work per frame. The measured P6 ratios must still decide whether that allowance is sufficient. [Design and receipt audit](PART7.md)
 
 The STG1 fallback from `fa53e50cd` keeps generic source edits at full-census coverage. Joined saves may use one person only when the original native command proves the namespace is private. The specific shared floor already took the census path in joined Publish, so that recipe did not omit a person. The previous general save recipe allowed an unproved narrow list. The companion's seven memory tests passed. The joined regression checks both sides of Publish and the unaffected complement before delivery.
+
+BM1 `i27-1` and `i29-1` stopped before the large offers because Joined Save passed an empty geography owner as an owner claim. The repair plans a census reconcile for either shared geography kind. The native test replayed three shared edits with seven affected people and one unchanged person each, three stops, a lost acknowledgement and 35 ordered effects. It removed its volume. [Part 8 checksums](PART8-SHA256SUMS)
 
 ### Second review
 
@@ -29,6 +31,10 @@ On the Mac, 10,000 deep people took 38 ms to the receipt and 49 ms to the first 
 The deep notice leaf used 48.2 bytes per person, plus about 101.3 bytes of durable addresses. That is an encoded storage count. P7 measures resident bytes outside Postgres. The first-read and resident-account evidence must be reported separately. [Part 5 read stages](STAGES.md) · [Retention choice](RETENTION.md)
 
 The eight-fact thin fixture encoded 10.3–10.4 leaf bytes and 100–104 address bytes per person in three 64-person pages, including offsets near one million and 4.5 million. This calculation did not load those populations. Thirty-two small tests passed, and two queue tests separately exercised live preference and fair turns. The first native collector attempt caught a working-tree change at startup and released its volume. The replacement runs from a frozen checkout. [Part 7 checksums](PART7-SHA256SUMS)
+
+The 10,000-deep trial spent about 26 minutes on preparation and reached the contested timing boundary. It yielded its heavy token and removed the volume before either live window. The shared lease also blocked the 1,000-deep fallback and the untimed matrix. Both waiters closed before admission. [Part 7 checksums](PART7-SHA256SUMS)
+
+Transactor and gateway suspension, the fixed 64-reader trace, live save and read ratios, and wider cold-read and resident-memory measurements remain unverified. BM1 has published no 100,000-person result for this pin.
 
 ### Server command
 

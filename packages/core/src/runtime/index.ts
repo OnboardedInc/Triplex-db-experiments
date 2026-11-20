@@ -93,6 +93,7 @@ export {
 export { isTriplesRead } from "../store/TriplesLive.js";
 export {
   decodeValueColumns,
+  decodeReadValueColumns,
   ValueDomains,
   decodedPrimitiveValue,
   invalidValue,

@@ -10,7 +10,7 @@
  * The same service owns storage mutations and query execution.
  */
 
-import { decodeValueColumns, storedValueDomain, type ValueDomain } from "../ValueDomain.js";
+import { decodeReadValueColumns, storedValueDomain, type ValueDomain } from "../ValueDomain.js";
 import { withValidAssertValues } from "./validateValues.js";
 import { Effect, Layer, Option } from "effect";
 import {
@@ -82,7 +82,7 @@ import { encodeEntityPageCursor, prepareEntityPage } from "../EntityPage.js";
 const rowDecoder =
   (domain: ValueDomain) =>
   (row: TripleRow): Triple => {
-    const value = decodeValueColumns(row, storedValueDomain(domain, row.attribute));
+    const value = decodeReadValueColumns(row, storedValueDomain(domain, row.attribute));
 
     return {
       id: row.id as TripleId,
@@ -786,7 +786,16 @@ const makeTriplesServices = Effect.gen(function* () {
           }),
         transaction,
         transactionAtPosition: (txId, recordedPosition) =>
-          Effect.flatMap(now, (validAt) => transactionAtBasis(txId, { validAt, recordedPosition })),
+          Effect.gen(function* () {
+            const rows = yield* (
+              adapter.getTransactionRowsAtPosition?.(txId, recordedPosition) ??
+                Effect.succeed(undefined)
+            );
+            if (rows !== undefined)
+              return transactionRecordFromTriples(txId, rows.map(rowToTriple));
+            const validAt = yield* now;
+            return yield* transactionAtBasis(txId, { validAt, recordedPosition });
+          }),
       },
       entityId,
       request,

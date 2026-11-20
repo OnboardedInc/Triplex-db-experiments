@@ -1,14 +1,17 @@
 (ns triplex.gateway.small-row
-  (:require [clojure.data.json :as json]))
+  (:require [clojure.data.json :as json] [clojure.walk :as walk]))
 
 (def enabled (= "1" (System/getenv "TX2_SMALL_ROWS")))
 (def ^:private clock-slot (Object.))
+(def ^:private predecessor-slot (Object.))
 (def ^:private fields [2 3 4 5 6 7 8 9 10 13 14 15 16])
 (def ^:private shared-tx-bit 13)
 
-(defn- slice-bits [^String header start]
-  (let [bits (Long/parseUnsignedLong (subs header start (+ start 16)) 16)]
-    (if (= bits Long/MIN_VALUE) "-0" (Double/longBitsToDouble bits))))
+(def ^:private slice-bits-code
+  '(fn [^String header start]
+     (let [bits (Long/parseUnsignedLong (subs header start (+ start 16)) 16)]
+       (if (= bits Long/MIN_VALUE) "-0" (Double/longBitsToDouble bits)))))
+(def ^:private slice-bits (eval slice-bits-code))
 
 (defn- numeric-bits [value]
   (Double/doubleToRawLongBits (if (= value "-0") -0.0 (double value))))
@@ -25,9 +28,8 @@
   (let [q (json/write-str s)]
     (subs q 1 (dec (.length ^String q)))))
 
-(defn- change-tokens [text new-ids]
-  (let [change (json/read-str text)
-        change (cond-> change
+(defn- change-tokens [change new-ids]
+  (let [change (cond-> change
                  (new-ids (get change "tripleId")) (assoc "recordedAt" clock-slot)
                  (contains? change "retractedAt") (assoc "retractedAt" clock-slot))]
     (if (map? change)
@@ -59,6 +61,8 @@
         (let [journal (= "_Transaction" (nth values 14))
               instant (and journal (= ":_tx/instant" (nth values 3)))
               changed (and journal (= ":_tx/change" (nth values 3)))
+              change (when changed (json/read-str (nth values 9)))
+              predecessor (and (= "retract" (get change "op")) (not (new-ids (get change "tripleId"))))
               shared? (and journal (= (nth values 2) (nth values 16)))
               slots (keep-indexed (fn [bit index]
                                      (let [v (nth values index)]
@@ -71,21 +75,30 @@
               tokens (map (fn [[_ i v]]
                             (cond
                               (or (= i 10) (and instant (= i 8))) [clock-slot]
-                              (and changed (= i 9)) (change-tokens v new-ids)
-                              :else [(json/write-str v)])) slots)]
-          (split-clock (concat [(str "\"!1" (format "%04x" mask) "[")]
-                               (mapcat identity (interpose [","] tokens)) ["]"])))))
+                              (and changed (= i 9)) (if predecessor [predecessor-slot] (change-tokens change new-ids))
+                              :else [(json/write-str v)])) slots)
+              tokens (concat [(str "\"!1" (format "%04x" mask) "[")]
+                             (mapcat identity (interpose [","] tokens)) ["]"])]
+          ;; [DX-WFIX1] Why: a compact journal can stage around the predecessor, whose metadata is determined at commit.
+          ;; Rejected: baking the offered predecessor clock and validity into the compact plan.
+          (if predecessor
+            (let [[before [_ & after]] (split-with #(not (identical? % predecessor-slot)) tokens)]
+              {:before (split-clock before) :change (nth values 9) :after (split-clock after)})
+            (split-clock tokens)))))
     ;; The canonical function still owns unsupported or malformed rows and its existing error mapping.
     (catch Exception _ nil)))
 
-(defn unpack [^String text start]
-  (when (.startsWith text "!1" (int (+ start 19)))
-    (let [mask (Integer/parseInt text (int (+ start 21)) (int (+ start 25)) 16)
+(def unpack-code
+  (walk/postwalk-replace {'slice-bits-code slice-bits-code 'packed-fields fields 'shared-tx-bit shared-tx-bit}
+    '(fn [^String text start]
+       (when (.startsWith text "!1" (int (+ start 19)))
+         (let [slice-bits slice-bits-code
+          mask (Integer/parseInt text (int (+ start 21)) (int (+ start 25)) 16)
           ids (+ 5 (Integer/parseInt text 1 5 16))
           from (slice-bits text ids)
           end (+ ids 16)
           to (when-not (.startsWith text "----------------" (int end)) (slice-bits text end))
-          present (keep-indexed (fn [bit i] (when (bit-test mask bit) i)) fields)
+          present (keep-indexed (fn [bit i] (when (bit-test mask bit) i)) packed-fields)
           packed (json/read-str (subs text (+ start 25)))
           values (reduce (fn [arr [i v]] (assoc arr i v))
                          (assoc (vec (repeat 17 nil))
@@ -94,4 +107,5 @@
       (when-not (and (vector? packed) (= (count present) (count packed))
                      (< mask (bit-shift-left 1 (inc shared-tx-bit))) (bit-test mask 8))
         (throw (ex-info "Invalid packed row" {})))
-      (if (bit-test mask shared-tx-bit) (assoc values 16 (nth values 2)) values))))
+           (if (bit-test mask shared-tx-bit) (assoc values 16 (nth values 2)) values))))))
+(def unpack (eval unpack-code))

@@ -5,6 +5,7 @@ import { DatomicClient, DatomicHttpError } from "../../../../packages/datomic/di
 import { decodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import type { Fact } from "../../../bench/lib/world.ts";
 import { command } from "../w1/group/workload.ts";
+import type { WriterObservation } from "../w1/write-options.ts";
 
 type Input = ReturnType<typeof command>;
 type Receipt = {
@@ -13,6 +14,7 @@ type Receipt = {
   recordedAt: { v: number };
   t: { v: string };
   groupSize?: number;
+  writerFunction?: string;
   preparedStats?: {
     path: string;
     replays: number;
@@ -43,20 +45,20 @@ function schedule(rate: number, seconds: number, block: number): Save[] {
     random = Math.imul(random, 1664525) + 1013904223;
     return (random >>> 0) / 2 ** 32;
   };
-  const count = (seconds * rate) / 10;
-  assert(Number.isInteger(count), "duration must yield an integer offer count per account");
+  const total = seconds * rate;
   return roots
     .slice(0, 10)
-    .flatMap((_, account) =>
-      Array.from({ length: count }, (_, serial) => ({
+    .flatMap((_, account) => {
+      const count = Math.floor(total / 10) + Number(account < total % 10);
+      return Array.from({ length: count }, (_, serial) => ({
         id: `live-${block}-${account}-${serial}`,
         subject: roots[((serial * 67) % 120) * 10 + account]!,
         at: ((serial + jitter()) * seconds * 1000) / count,
         account,
         serial,
         width: 1 + ((account + serial) % 3),
-      })),
-    )
+      }));
+    })
     .sort((a, b) => a.at - b.at);
 }
 function percentile(values: number[], q: number) {
@@ -95,11 +97,13 @@ async function phase(
   c: DatomicClient,
   db: string,
   bySubject: Map<string, Input["rows"]>,
+  frozen: Set<string>,
   tape: Save[],
   seconds: number,
 ) {
   const basis = await c.begin(db);
   await c.release(db, basis.handle);
+  const committed = new Map(bySubject);
   const pending = new Set<Promise<void>>();
   const runningSubjects = new Set<string>();
   const waiting: Save[] = [];
@@ -114,13 +118,26 @@ async function phase(
     recovered?: Receipt;
   }[] = [];
   const inputs = new Map<string, Input>();
+  const remember = (rows: Map<string, Input["rows"]>, input: Input, receipt: Receipt) => {
+    const subject = input.entities![0]!;
+    const width = input.rows.findIndex((r) => r.entity_type === "_Transaction");
+    assert(width > 0);
+    rows.set(subject, [
+      ...input.rows.slice(0, width).map((r) => ({
+        ...r,
+        recorded_at: receipt.recordedAt.v,
+        recorded_position: Number(receipt.position.v),
+      })),
+      ...rows.get(subject)!.slice(width),
+    ]);
+  };
   const startNs = process.hrtime.bigint();
   const elapsed = () => Number(process.hrtime.bigint() - startNs) / 1e6;
   const pump = () => {
     // [DX-PREP1] Why: fixed sender capacity makes the same offered load observable under overload.
     // Rejected: shifting scheduled offers to the time a socket or same-subject predecessor becomes ready.
     while (pending.size < 96) {
-      const i = waiting.findIndex((x) => !runningSubjects.has(x.subject));
+      const i = waiting.findIndex((x) => !runningSubjects.has(x.subject) && !frozen.has(x.subject));
       if (i < 0) break;
       const s = waiting.splice(i, 1)[0]!;
       const old = bySubject.get(s.subject)!;
@@ -133,14 +150,8 @@ async function phase(
           const result = (await c.transact(db, input)) as Receipt;
           const end = elapsed();
           assert.equal(result.operationId, s.id);
-          bySubject.set(s.subject, [
-            ...input.rows.slice(0, s.width).map((r) => ({
-              ...r,
-              recorded_at: result.recordedAt.v,
-              recorded_position: Number(result.position.v),
-            })),
-            ...old.slice(s.width),
-          ]);
+          assert.match(result.writerFunction ?? "", /^:triplex\.write\/v-[0-9a-f]{24}$/);
+          remember(bySubject, input, result);
           records.push({
             id: s.id,
             account: s.account,
@@ -153,6 +164,7 @@ async function phase(
         } catch (error) {
           if (error instanceof assert.AssertionError) throw error;
           const outcome = error instanceof DatomicHttpError ? error.code : "transport";
+          if (outcome === "OutcomeUnknown" || outcome === "transport") frozen.add(s.subject);
           records.push({
             id: s.id,
             account: s.account,
@@ -180,7 +192,20 @@ async function phase(
     pump();
   }
   while (pending.size) await Promise.all([...pending]);
-  assert.equal(waiting.length, 0);
+  // [DX-PREP1] Why: until a lost acknowledgement resolves, a later save cannot safely name that subject's predecessor.
+  // Rejected: sending another edit against the last acknowledged row and counting the resulting CAS failure as load.
+  for (const s of waiting) {
+    assert(frozen.has(s.subject));
+    const end = elapsed();
+    records.push({
+      id: s.id,
+      account: s.account,
+      due: s.at,
+      sent: end,
+      end,
+      outcome: "PredecessorUnknown",
+    });
+  }
   assert.equal(records.length, tape.length);
   assert.equal(new Set(records.map((r) => r.id)).size, tape.length);
   const drained = elapsed();
@@ -233,11 +258,14 @@ async function phase(
         assert.equal(Number(receipt.position?.v), p);
         assert.equal(receipt.recordedAt?.v, decoded[0]!.recorded_at);
         ack.recovered = receipt as Receipt;
+        frozen.delete(input.entities![0]!);
       }
+      remember(committed, input, (ack.result ?? ack.recovered)!);
     }
   }
   assert(records.every((r) => !r.result || observed.has(r.id)));
   assert.equal(position, head.position);
+  for (const [subject, rows] of committed) bySubject.set(subject, rows);
   const acked = records.filter((r) => r.result);
   const inWindow = acked.filter((r) => r.end <= seconds * 1000).length;
   const outcomes = Object.fromEntries(
@@ -270,9 +298,54 @@ async function phase(
 const [first, second, secondsArg, attemptId, selectedArm] = process.argv.slice(2);
 assert(first && second && secondsArg);
 const seconds = Number(secondsArg);
-assert(Number.isSafeInteger(seconds) && seconds > 0 && seconds <= 60 && seconds % 10 === 0);
+assert(Number.isSafeInteger(seconds) && seconds > 0 && seconds <= 60);
 const attempt = attemptId || randomUUID();
 assert(selectedArm === undefined || /^[0-3]$/.test(selectedArm));
+
+async function checkWriter(c: DatomicClient, db: string, arm: number) {
+  const expectedSource = process.env.DX_PREP1_SOURCE_SHA256;
+  const expectedBoot = process.env.DX_PREP1_OPTIONS_ATTEMPT;
+  assert.match(expectedSource ?? "", /^[a-f0-9]{64}$/);
+  assert(expectedBoot);
+  const options = await c.request<
+    WriterObservation & {
+      preparedWriter: null | { mode: string; guard: string; installed: boolean };
+    }
+  >("GET", `/v1/db/${db}/write-options`);
+  assert.equal(options.database, db);
+  assert.equal(options.gatewaySourceHash, expectedSource);
+  assert.equal(options.attempt, expectedBoot);
+  assert.equal(options.rowsVersion, 3);
+  assert.equal(options.position, 0);
+  assert.equal(options.strictRecordClocks, true);
+  assert.equal(options.commitFunctionInstalled, true);
+  assert.match(options.commitFunction, /^:triplex\.write\/v-[a-f0-9]{24}$/);
+  assert.deepEqual(
+    options.preparedWriter,
+    arm === 1 || arm === 2
+      ? { mode: "basis", guard: ":triplex.group/apply-v1", installed: true }
+      : null,
+  );
+  assert.deepEqual(options.options, {
+    predecessorLookup: true,
+    groupCommit: true,
+    livePriority: true,
+    fieldCoalesce: false,
+    queueClock: true,
+    stageClock: true,
+    smallRows: false,
+    reusePrepared: true,
+    maxMembers: 8,
+    budgetMicros: null,
+    bulkRows: 2048,
+    bulkBytes: 1048576,
+    ledger: false,
+    packedJournal: false,
+    fastReply: true,
+  });
+  console.log("PREP1_WRITER " + JSON.stringify({ arm, attempt, observed: options }));
+}
+
 for (const [arm, url] of [first, second, second, first].entries()) {
   if (selectedArm !== undefined && Number(selectedArm) !== arm) continue;
   const c = new DatomicClient(url!, 35000);
@@ -280,9 +353,14 @@ for (const [arm, url] of [first, second, second, first].entries()) {
   try {
     const { db, created } = await c.create(scope, "lean", true, 35000);
     assert(created);
-    const seeded = await seed(c, db, roots);
+    // [DX-PREP1] Why: both server arms must price the same fixed source on fresh opened scopes.
+    // Rejected: assuming the supplied URLs, environment or requested flag prove the installed writer.
+    if (selectedArm === undefined) await checkWriter(c, db, arm);
+    const tapes = [50, 235, 394].map((rate, block) => schedule(rate, seconds, block));
+    const seeded = await seed(c, db, [...new Set(tapes.flat().map((x) => x.subject))].sort());
+    const frozen = new Set<string>();
     for (const [block, rate] of [50, 235, 394].entries()) {
-      const result = await phase(c, db, seeded, schedule(rate, seconds, block), seconds);
+      const result = await phase(c, db, seeded, frozen, tapes[block]!, seconds);
       console.log("PREP1_LIVE " + JSON.stringify({ attempt, db, arm, rate, seconds, ...result }));
     }
     await c.delete(scope);

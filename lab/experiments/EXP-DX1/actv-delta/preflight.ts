@@ -3,15 +3,18 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { openComposition } from "../../../bench/lib/composition.ts";
+import { sha256 } from "../../../bench/lib/w0-world.ts";
 import { checkWindows } from "../act2/preflight.ts";
 import { validatePreflight } from "../act2/preflight-runner.ts";
 import { headSha, stamp } from "./binding.ts";
 import { hash } from "./store.ts";
 import type { Identity } from "./server.ts";
-import { solo } from "./solo.ts";
+import { solo, openFreshSource } from "./solo.ts";
 import { measured } from "./measure-lock.ts";
-import { soloPopulation } from "./solo-population.ts";
+import { soloPopulation, soloScope } from "./solo-population.ts";
 import { checkSolo } from "./solo-proof.ts";
+import { auditSolo, checkAuditSolo, checkCollector } from "./audit-solo.ts";
+const auditPhases = ["reference", "record", "stored"] as const;
 function status(dir: string, binding: Identity, stage: string, reason?: string) {
   const file = path.join(dir, "STATUS.json");
   fs.writeFileSync(file + ".tmp", JSON.stringify({ binding, stage, reason }) + "\n");
@@ -55,13 +58,70 @@ async function check(dir: string, binding: Identity) {
         fallback.split("\n").includes("# pass 1") &&
         fallback.split("\n").includes("# fail 0"),
     );
+    if (process.env.DELTA_AUDITED === "1") {
+      stage = "checking two independently seeded activation timing modes";
+      progress(stage);
+      const folder = path.join(dir, "campaign");
+      fs.mkdirSync(folder);
+      fs.writeFileSync(path.join(folder, "request.json"), JSON.stringify(binding) + "\n", {
+        flag: "wx",
+      });
+      const audited = await auditSolo(folder, binding, 1000, 4, (s) => progress((stage = s)));
+      stage = "running the BM1 collector on the actual small campaign";
+      progress(stage);
+      checkCollector(folder, binding, 1000, 8);
+      const empty = [];
+      stage = "opening the three large destinations on the same stack";
+      progress(stage);
+      for (const arm of auditPhases) {
+        const large = await openFreshSource(binding, 100000, arm);
+        try {
+          empty.push({ scope: large.scopeName, position: await large.currentPosition() });
+        } finally {
+          await large.close();
+        }
+      }
+      const proof = {
+        format: "activation-clock/2",
+        binding,
+        windows: checked,
+        populations,
+        empty,
+        fullFallback: hash(fallback),
+        // [DX-ACT2] Why: bind the actual offer and arm bytes, including fractional milliseconds. Rejected: hashing timing objects with W0's integer-only value codec.
+        campaign: sha256(fs.readFileSync(path.join(folder, "result.json"))),
+        reports: audited.reports,
+        people: 1000,
+        code,
+        elapsedMs: Date.now() - started,
+      };
+      fs.writeFileSync(path.join(dir, "proof.json"), JSON.stringify(proof) + "\n", { flag: "wx" });
+      stage = "validating zero misses and zero stale reads";
+      progress(stage);
+      checkAuditSolo(folder, binding, 1000, 4, "preflight", true);
+      assert.equal(code, stamp());
+      status(dir, binding, "verified");
+      return;
+    }
     const deep = await solo(dir, binding, 1000, 6, (s) => {
       stage = s;
       progress(stage);
     });
     const checkedSolo = checkSolo(dir, binding, 1000, 6, "preflight");
     assert.deepEqual(checkedSolo, deep);
+    stage = "opening the large destination on the same stack";
+    progress(stage);
+    // [DX-ACT2] Why: both stages use the same attempt and server. Exercise the actual large-source opener and require an empty, distinct physical scope after the populated preflight. Rejected: proving only that the small database worked.
+    const destination = await openFreshSource(binding, 100000);
+    let emptyLarge;
+    try {
+      emptyLarge = { scope: destination.scopeName, position: await destination.currentPosition() };
+      assert(emptyLarge.scope !== deep.scope && emptyLarge.position === 0);
+    } finally {
+      await destination.close();
+    }
     const proof = {
+      emptyLarge,
       binding,
       windows: checked,
       populations,
@@ -95,23 +155,44 @@ export function guardDelta(dir: string, binding: Identity, env: NodeJS.ProcessEn
     });
     const get = (name: string) =>
         JSON.parse(fs.readFileSync(path.join(dir, name + ".json"), "utf8")),
-      proof = get("proof"),
-      observed = get("result");
+      proof = get("proof");
     assert.deepEqual(get("STATUS"), { binding, stage: "verified" });
     assert.deepEqual(proof.binding, binding);
     assert.equal(
       proof.fullFallback,
       hash(fs.readFileSync(path.join(dir, "full-fallback.tap"), "utf8")),
     );
-    assert.deepEqual(observed.binding, binding);
     validatePreflight(proof.windows, binding);
     assert.deepEqual(proof.populations, [soloPopulation(1000), soloPopulation(100000)]);
+    assert.equal(proof.code, stampForPreflight());
+    if (env.DELTA_AUDITED === "1") {
+      assert(
+        proof.format === "activation-clock/2" &&
+          proof.elapsedMs > 0 &&
+          performance.now() - start < 600000 &&
+          proof.people === 1000,
+      );
+      const folder = path.join(dir, "campaign"),
+        fresh = checkAuditSolo(folder, binding, 1000, 4, "preflight", true);
+      assert.equal(proof.campaign, sha256(fs.readFileSync(path.join(folder, "result.json"))));
+      assert.deepEqual(proof.reports, fresh.reports);
+      assert.deepEqual(
+        proof.empty,
+        auditPhases.map((arm) => ({ scope: soloScope(binding.nonce, 100000, arm), position: 0 })),
+      );
+      checkCollector(folder, binding, 1000, 8);
+      return proof;
+    }
+    const observed = get("result");
+    assert.deepEqual(observed.binding, binding);
     assert(
       proof.elapsedMs > 0 &&
         performance.now() - start < 600000 &&
         proof.people === 1000 &&
-        proof.scope === "delta-solo-" + binding.nonce,
+        proof.scope === soloScope(binding.nonce, 1000),
     );
+    assert.deepEqual(proof.emptyLarge, { scope: soloScope(binding.nonce, 100000), position: 0 });
+    assert.notEqual(proof.scope, proof.emptyLarge.scope);
     const fresh = checkSolo(dir, binding, 1000, 6, "preflight");
     assert.deepEqual(observed, fresh);
     assert.equal(proof.code, stampForPreflight());
