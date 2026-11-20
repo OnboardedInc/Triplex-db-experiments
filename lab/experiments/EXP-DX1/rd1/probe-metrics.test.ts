@@ -6,6 +6,7 @@ import path from "node:path";
 import { performance } from "node:perf_hooks";
 import { test } from "node:test";
 import { perfCountersDelivered } from "./probe-metrics.ts";
+import { collectGatewayPauses } from "./gateway-pauses.ts";
 import { finishTransactor, joinTransactor, type GatewayExchange } from "./probe-transactor.ts";
 
 test("transactor event must match the gateway cut and fall inside its aligned request", async () => {
@@ -112,4 +113,22 @@ test("native export completion binds its file checksum and exported row count", 
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test("write gateway pauses are joined to the ON window on the bound clock", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "rd1-gateway-"));
+  const id = { run: "probe", source: "source", slot: "slot" };
+  const clock = { domain: "linux-monotonic", bootId: "boot", offsetMs: 900, crossProcessQualified: true };
+  const jfr = path.join(dir, "gw-w.jfr"), content = "actual recording fixture";
+  const base = { ...id, process: "gw-w", clock };
+  try {
+    fs.writeFileSync(jfr, content);
+    fs.writeFileSync(`${jfr}.jsonl`, JSON.stringify({ ...base, type: "event", name: "jdk.GCPhasePause", start: 990, end: 1_010, jfrDurationMs: 20 }) + "\n");
+    fs.writeFileSync(`${jfr}-complete.jsonl`, JSON.stringify({ ...base, role: "gw-w", type: "jfr-complete", clockSamples: 8, events: 1,
+      fileSha256: createHash("sha256").update(content).digest("hex") }) + "\n");
+    const result = await collectGatewayPauses(dir, id, { bootId: "boot", offsetMs: 1_000 }, [{ at: 1_000, until: 1_020 }, { at: 1_100, until: 1_130 }], performance.now() + 3_000);
+    assert.deepEqual(result.blocks.map(b => [b.count, b.totalMs]), [[0, 0], [1, 10]]);
+    fs.writeFileSync(jfr, "different bytes");
+    await assert.rejects(collectGatewayPauses(dir, id, { bootId: "boot", offsetMs: 1_000 }, [], performance.now() + 3_000), /checksum/);
+  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });

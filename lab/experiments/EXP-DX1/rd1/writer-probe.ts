@@ -22,6 +22,7 @@ import type { ReadImage } from "../../../../packages/datomic/dist/index.js";
 import type { requestIndex } from "../../../bench/lib/maintenance.ts";
 import { blockPerf, physicalDelta, physicalSnapshot } from "./probe-metrics.ts";
 import { finishTransactor, type GatewayExchange } from "./probe-transactor.ts";
+import { collectGatewayPauses } from "./gateway-pauses.ts";
 import { inLocalSlot } from "./owned-local.ts";
 
 const now = () => performance.timeOrigin + performance.now();
@@ -563,7 +564,7 @@ async function run(slot: string) {
         ["summary", "full"].includes(process.env.TRIPLEX_TRACE_LEVEL ?? ""),
       "Bind the prepared stack's write trace to the checked-out source",
     );
-    for (const artifact of [".finish", "tx.jfr", "tx.jfr-complete.jsonl", "tx-jfr-error.txt"])
+    for (const artifact of [".finish", "tx.jfr", "tx.jfr-complete.jsonl", "tx-jfr-error.txt", "gw-w.jfr", "gw-w.jfr-complete.jsonl", "gw-w-jfr-error.txt"])
       assert(
         !fs.existsSync(path.join(traceDir, artifact)),
         "Prepared trace directory already has a terminal artifact",
@@ -673,6 +674,10 @@ async function run(slot: string) {
           deadline,
         )
       : null;
+  const gatewayPauses = traceDir && bootId
+    ? await collectGatewayPauses(traceDir, { run: traceRun, source, slot },
+      { bootId, offsetMs: now() - Number(process.hrtime.bigint()) / 1e6 }, blocks, deadline)
+    : null;
   const transactor = blocks.map((b) => {
     const rows = b.gatewayTrace.rows.flatMap((r) => {
       const row = r.traceId ? exported?.bound.get(r.traceId) : undefined;
@@ -689,6 +694,7 @@ async function run(slot: string) {
   const wallS = (performance.now() - started) / 1000;
   const nativeComplete =
     !!exported &&
+    !!gatewayPauses &&
     transactor.every((t) => t.matched === primarySeq.size) &&
     blocks.every(
       (b) =>
@@ -715,6 +721,7 @@ async function run(slot: string) {
     replayTarget: load,
     blocks,
     transactor,
+    writeGatewayGc: gatewayPauses,
     nativeRecording: exported && { sha256: exported.sha256, events: exported.events },
     nativeComplete,
     contrast,
