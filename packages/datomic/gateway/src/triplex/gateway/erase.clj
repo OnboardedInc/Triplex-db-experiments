@@ -65,7 +65,7 @@
               (catch Exception e
                 (if (re-find #"TRIPLEX_PROTECTION_MIGRATION_REQUIRED" (str e))
                   (privacy/failure! 409 "ProtectedScopeNeedsMigration" "Declare protection before saving into the scope")
-                  (throw e)))))))
+                  (throw e))))))))
     {:database name :attributes attrs :sealed sealed? :erasure {:seq (:seq (privacy/cut name (sync! conn)))}}))
 
 (defn identity [row]
