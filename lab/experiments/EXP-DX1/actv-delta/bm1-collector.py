@@ -42,6 +42,11 @@ if __name__ == "__main__":
     n, count = map(int, sys.argv[2:4])
     req = json.load(sys.stdin)
     actual = delta_output(folder, req["binding"], n, count, req["releases"])
+    if actual.get("format") == "activation-clock/2":
+        # [DX-ACT2] Why: use BM1's independent timing reader on the same seals that the producer compared. Rejected: checking compatible release order while the two processes score different first reads.
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "bm1"))
+        from activation_clock import activation_modes
+        activation_modes(folder, actual, (folder / "request.json").stat().st_mtime)
     with tempfile.TemporaryDirectory(prefix="delta-collector-") as scratch:
         root = Path(scratch)
         for name in ("request.json", "loaded.json", "offers.ndjson"):

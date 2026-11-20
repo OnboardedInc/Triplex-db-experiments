@@ -5,17 +5,17 @@ The deadline checker now rejects a missing last read and a stale read that arriv
 A new reader can finish an interrupted Publish. A clock worker can catch up after restart with saves idle.
 The earlier crash recovered 11,960 changed rows and 997 owed notices. It proved recovery from the recipe.
 The earlier save comparison measured 6.68% extra database log bytes per fact. The owner’s target was 15%.
-The raw 204-offer record clock was 2.65 seconds at p99. The 1,000-person stored run took 3.47 seconds for the broad release.
+The 1,000-person run recorded all four releases within 0.121 seconds. Storing the broad change took 2.776 seconds.
 
 | Finding | Decision | Fix | Negative control |
 | --- | --- | --- | --- |
-| 1 Durable endpoints | Accepted | 0d85534c8, 5744dd0a4, f199db819 | Release ACK alone, and a stored proof with an owed notice removed |
-| 2 Deadlines | Accepted | 5744dd0a4 and f199db819 | Missing final route probe, stale pre-ACK return, delayed seal and slow verifier |
+| 1 Durable endpoints | Accepted | 0d85534c8, 5744dd0a4, f199db819, 5e56947a4 | ACK alone, an omitted notice, and a resumed commit without a new clock |
+| 2 Deadlines | Accepted | 5744dd0a4, f199db819, 5e56947a4 | Missing final probe, stale pre-ACK return, and stalled seal and verifier |
 | 3 Collector | Accepted | BM1 c07040e4b and DELTA 5744dd0a4 | Two references must fail and three exact ordered identities must agree |
 | 4 Effective time | Accepted | 0d85534c8 | Future wage release and midnight expiry without a save |
-| 5 Independent source basis | Accepted | 0d85534c8 and 5744dd0a4 | Terminal position differs from the proposed ordinal |
+| 5 Independent source basis | Accepted | 0d85534c8, 5744dd0a4, 5e56947a4 | Claimed ordinal differs from the terminal cut, and omitted native input |
 | 6 Cold arms | Accepted | 5744dd0a4 and f199db819 | The cold-witness check rejects an earlier read of the same person |
-| 7 Interrupted Publish | Accepted | 0d85534c8 and 5744dd0a4 | Save first, interrupted issuer, competing Publish, save after |
+| 7 Interrupted Publish | Accepted | 0d85534c8, 5744dd0a4, 5e56947a4 | Save first, interrupted issuer, competing Publish, and save after |
 
 OwedRecord names the original event, predecessor, source cut, index and census. Its native assertion is verified at the same cut as the release. DecodeOwed opens those bytes with dispatch idle. PersistPublication writes literal domain changes and item states, then commits the account guard with hashes and native positions for every chunk. OpenStored verifies those exact cuts and bytes. Independent Python equality is still required in the campaign before a completion receives credit.
 
@@ -33,11 +33,11 @@ The bare command stays disabled. The audited command is below. Its preflight ref
 
 `DOCKER_HOST=unix:///var/run/docker.sock node --import tsx lab/experiments/EXP-DX1/scale1/bench.ts launch 2 delta-$(date -u +%Y%m%d%H%M%S) activation --activation-mode delta --delta-audit 2`
 
-The command schedules 45 offers per mode. It has a 160-minute work limit and 20 minutes for shutdown and collection. Three separate 100,000-person seeds project to about 175 minutes at the observed earlier seed rate, before the sweeps or proof. A three-hour completion remains unproved. No bench server was used. No acceptance pins changed.
+The command schedules 45 offers per mode. It has a 160-minute work limit and 20 minutes for shutdown and collection. An earlier SCALE1 run took 3,396 seconds to seed 100,000 deep people in ten accounts. Three comparable seeds project to about 170 minutes before sweeps or replay. A three-hour completion remains unproved. No bench server was used. No acceptance pins changed.
 
-The preflight independently matched 5,759 changed rows and 799 owed notices for broad in both modes. Its first version suppressed cold probes after a recovery helper finished the fence. A new guard checks the native fence and terminal receipts and preserves the probe. A resumed literal commit returns the original cuts and carries no fresh timing credit.
+The native 1,000-person replay matched all eight offers. Both modes reopened 5,759 broad changed rows and 799 owed notices, plus three narrow flags and zero narrow notices. Record had zero stale reads and zero deadline misses. Stored had zero stale reads and two deadline misses, with a 3.145 s maximum. The first wrapper stopped on a cold probe dropped after helper recovery. Its successor stopped on fractional milliseconds in the integer-only fingerprint codec. The current wrapper hashes the sealed result bytes.
 
-The exact BM1 parser accepted the prior native 1,000-person output. It refused the same bytes when the reference list omitted R1, reversed the order or repeated R2. The new preflight repeats those checks on its own native output. The clock-only sample that failed integer normalization is retained without a full activation result.
+The producer and revised BM1 checker independently returned identical clocks on the same 1,000-person saved bundle. The checker refused a missing R1, reversed references and duplicate R2. The preflight runs that same checker. BM1 still needs to adopt this clock reader and register the exact head before it can launch.
 
 Acceptance sites. The native schedule gate checks the exact TAP names and count, fresh run bytes, the owned slot and source inventory. The crash proof compares Python outputs and notice bytes to fresh reopened commits, all tied to original cut, transaction and slot nonce.
 

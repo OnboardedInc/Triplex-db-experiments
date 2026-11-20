@@ -59,3 +59,58 @@ test("a release ACK supplies record mode while stored mode requires the later ac
     await c.close();
   }
 });
+
+test("a restarted stored publication preserves a notice already committed in an unfinished part", async () => {
+  const c = memoryComposition("datomic", "stored-resume"),
+    id = "pl:a",
+    writer = new Account(new Objects(c, "target"), "test"),
+    validTime = W0.POPULATION_VALID_TIME;
+  try {
+    await writer.bootstrap(
+      [id],
+      [
+        {
+          subject: id,
+          facts: [
+            { e: id, a: "location", v: "loc:a", tx: 1 },
+            { e: id, a: "payRateCents", v: 1500, tx: 1 },
+            { e: "loc:a", a: "localMinWageCents", v: 2000, tx: 1 },
+          ],
+        },
+      ],
+      { tx: 1, validTime },
+    );
+    const release = await writer.seal("broad", W0.R2, { durability: "stored" });
+    const interrupted = new Account(
+      new Objects(
+        {
+          ...c,
+          async transact(ops, meta) {
+            const result = await c.transact(ops, meta);
+            if (String(meta.commandId) === writer.db.entity("cmd:put:stored:1:0")) {
+              assert(result.ok);
+              throw Error("writer ended after the first literal part");
+            }
+            return result;
+          },
+        },
+        "target",
+      ),
+      "test",
+    );
+    await assert.rejects(
+      persistPublication(interrupted, 1, release.position),
+      /first literal part/,
+    );
+    const cut = await c.currentPosition();
+    await assert.rejects(openStored(writer, 1, cut), /missing durable object/);
+    const resumed = await persistPublication(writer, 1, release.position);
+    assert(!resumed.fresh && resumed.position > cut);
+    assert.deepEqual(resumed.lastNotice, { position: cut, at: null });
+    const stored = await openStored(writer, 1, resumed.position);
+    assert.equal(stored.owedPosition, cut);
+    assert.equal(JSON.parse(stored.chunks[0]!.deliveries).length, 1);
+  } finally {
+    await c.close();
+  }
+});

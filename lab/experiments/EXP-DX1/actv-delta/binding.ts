@@ -114,6 +114,7 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
     ].includes(mode)
       ? [
           "actv-delta/solo-population.json",
+          "bm1/activation_clock.py",
           "scale1/bench.ts",
           "scale1/tenants.ts",
           "scale1/tenant-traffic.ts",

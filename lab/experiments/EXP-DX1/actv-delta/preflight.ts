@@ -3,6 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { openComposition } from "../../../bench/lib/composition.ts";
+import { sha256 } from "../../../bench/lib/w0-world.ts";
 import { checkWindows } from "../act2/preflight.ts";
 import { validatePreflight } from "../act2/preflight-runner.ts";
 import { headSha, stamp } from "./binding.ts";
@@ -87,7 +88,8 @@ async function check(dir: string, binding: Identity) {
         populations,
         empty,
         fullFallback: hash(fallback),
-        campaign: hash(audited),
+        // [DX-ACT2] Why: bind the actual offer and arm bytes, including fractional milliseconds. Rejected: hashing timing objects with W0's integer-only value codec.
+        campaign: sha256(fs.readFileSync(path.join(folder, "result.json"))),
         reports: audited.reports,
         people: 1000,
         code,
@@ -172,7 +174,7 @@ export function guardDelta(dir: string, binding: Identity, env: NodeJS.ProcessEn
       );
       const folder = path.join(dir, "campaign"),
         fresh = checkAuditSolo(folder, binding, 1000, 4, "preflight", true);
-      assert.equal(proof.campaign, hash(fresh));
+      assert.equal(proof.campaign, sha256(fs.readFileSync(path.join(folder, "result.json"))));
       assert.deepEqual(proof.reports, fresh.reports);
       assert.deepEqual(
         proof.empty,
