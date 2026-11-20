@@ -10,7 +10,8 @@ The earlier 36 ms p99 measured lean with the native query route off. Full query 
 | Surface | Lean K before and after | Test |
 | --- | --- | --- |
 | Match at current and held cuts | Stored change rows, changed-entity refs and application rows were already readable. | `query6.clj`, `query6.ts` compare full rows and earlier cuts. |
-| Datalog and Datalog pages | `/q` refused by default, including SDK execution through it. `TX2_LEAN_NATIVE_QUERY=1` supplies an immutable relation of stored rows. | `query6.ts` covers joins, logic, rules, aggregates, optional values, exact numerics and resuming a page after a write. [Datalog](../../../../docs/datalog.md) |
+| Datalog, complete reads, pages and plans | `/q` refused by default, including SDK execution through it. Explain stayed available. `TX2_LEAN_NATIVE_QUERY=1` supplies an immutable relation of stored rows. | `query6.ts` checks joins, logic, rules, aggregates, optional values, numerics, complete results, plans and both cursor forms after a write. [Datalog](../../../../docs/datalog.md) |
+| Dependency state | The existing history read finds assertion and retraction positions. The adapter still scans history for the requested attributes. | `query6.ts` checks the next valid-time edge before and after the retraction. |
 | Typed journal | The four routes were available. WFIX corrects wrong retraction content in the feed and resumed page. Per-entity history still scans candidate journals. | `query6.ts` checks command, ID, page and entity page. WFIX's retraction suite checks the original values, intervals and clocks. [Operational primitives](../../../../docs/operational-primitives.md) |
 | Native `/q` and `/log` | Both refused lean by default. Opt-in `/q` resolves stable Triplex IDs. Opt-in `/log` applies Q107c to both layouts by filtering journal rows. | `query6.clj` compares logical native queries, grouped interior cuts and log resume, and checks typed declines. |
 

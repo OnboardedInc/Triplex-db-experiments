@@ -102,6 +102,9 @@ compare({k: v for k, v in legacy.items() if k not in ("db", "layout", "physical"
 assert lean["exact"] == {"binding": {"type": "integer", "value": "9007199254740993"}, "negativeZero": True}
 assert lean["counts"] == [2, 2]
 assert lean["order"] == [[{"?s": "j:1", "?v": "four"}], [{"?s": "j:2", "?v": "three"}]]
+assert lean["complete"] == lean["order"][0] + lean["order"][1]
+assert lean["dependencies"] == [{"sourcePosition": 1, "nextTemporalBoundary": 0}, {"sourcePosition": 2}]
+assert lean["explainBackend"] == ["datomic-datalog", "datomic-datalog"]
 assert lean["recursive"] == [{"?y": "n:2"}, {"?y": "n:3"}]
 assert lean["optional"] == [{"?b": None, "?subject": "j:1"}, {"?b": None, "?subject": "j:2"}]
 assert lean["datalog"]["alternatives"] == [{"?subject": "j:1"}]

@@ -219,6 +219,20 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
     } as const;
     const page1 = await run(t.queryPage(wrapped, { basis: fixed }));
     assert(page1.nextCursor);
+    const plain = ordered(wrapped.inner);
+    const plain1 = await run(t.query(plain, { basis: fixed, pageSize: 1 }));
+    assert(plain1.nextCursor);
+    // [DX-W1] Why: a dependency read must report both the future valid-time edge and the later retraction.
+    // Rejected: inferring attribute freshness from the latest scope receipt, which misses both facts.
+    const dependencies = await Promise.all(
+      [first.instant, second.instant].map((recordedAt) =>
+        run(t.dependencyState([":j/b"], { validAt: -1, recordedAt })),
+      ),
+    );
+    assert.deepEqual(dependencies, [
+      { sourcePosition: first.position, nextTemporalBoundary: 0 },
+      { sourcePosition: second.position },
+    ]);
     const typed = {
       one: await run(t.transaction(second.txId)),
       command: await run(t.transactionByCommand("c2")),
@@ -270,6 +284,11 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
     );
     assert.equal(page2.nextCursor, undefined);
     assert.deepEqual(page2.results, [{ "?s": "j:2", "?v": "three" }]);
+    const plain2 = await run(t.query(plain, { pageSize: 1, cursor: plain1.nextCursor }));
+    assert.equal(plain2.nextCursor, undefined);
+    const complete = results(await run(t.queryAll(plain, { basis: fixed })));
+    assert.deepEqual([plain1.results, plain2.results], [page1.results, page2.results]);
+    assert.deepEqual(complete, [...page1.results, ...page2.results]);
     assert.equal(typed.ownerPage.nextBeforePosition, second.position);
     const older = await run(
       t.transactionsForEntity(owner("j:1"), {
@@ -320,8 +339,8 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
       ),
     );
     assert.deepEqual(recursive, [{ "?y": "n:2" }, { "?y": "n:3" }]);
-    const explain = await run(t.explainPage(wrapped));
-    assert.equal(explain.queryPlan?.backend, "datomic-datalog");
+    const explain = await Promise.all([run(t.explain(plain)), run(t.explainPage(wrapped))]);
+    assert(explain.every((plan) => plan.queryPlan?.backend === "datomic-datalog"));
     const log = await client.log(db, "0");
     const commits = log.rows.filter((row) => row.kind === "commit");
     assert.equal(commits.length, 3);
@@ -360,10 +379,12 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
       optional,
       order: [page1.results, page2.results],
       counts: [page1.totalCount, page2.totalCount],
+      dependencies,
+      complete,
       typed: { ...typed, older },
       exact: { binding: exact[0]?.["?int"], negativeZero: Object.is(exact[0]?.["?zero"], -0) },
       recursive,
-      explainBackend: explain.queryPlan?.backend,
+      explainBackend: explain.map((plan) => plan.queryPlan?.backend),
       log: commits.map((row) => row.transaction),
       physical: commits.map((row) => [row.t, row.transaction.operationId]),
     };
