@@ -120,12 +120,13 @@ async function recoverLoad(nonce: string, config: any, manager: any, folder: str
 
 export async function localDrill(opts: any, config: any, manager: any) {
   assert.equal(process.platform, "darwin");
-  assert.equal(opts.holder, "DX-HA1");
+  const mode = modeOf(opts.experiment);
+  const holder = mode.startsWith("hasync-") ? "DX-HASYNC1" : "DX-HA1";
+  assert.equal(opts.holder, holder);
   assert.equal(dockerArgs([])[1], DOCKER_HOST);
   const folder = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
   if (typeof opts.recover === "string") return recoverLoad(opts.recover, config, manager, folder);
   assert(["auto", "s1", "s2", "s3"].includes(opts.slot));
-  const mode = modeOf(opts.experiment);
   const slots = (opts.slot === "auto" ? ["s2", "s3", "s1"] : [opts.slot]).map((id) =>
     slotInfo(config, "datomic", id),
   );
@@ -137,7 +138,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
     const faultCell = opts["fault-cell"] ?? "all";
     assert(faultCell === "all" || (mode === "one-failover" && faultCell === "tail-burst"));
     const attempt = new Evidence(
-      path.join(folder, "evidence", "DX-HA1", ...(mode.startsWith("load-") ? ["load1"] : [])),
+      path.join(folder, "evidence", holder, ...(mode.startsWith("load-") ? ["load1"] : [])),
       mode,
       slot,
       shape,
@@ -152,7 +153,10 @@ export async function localDrill(opts: any, config: any, manager: any) {
       ? ["pg", "active", "write", "tool"].includes(r)
       : mode === "replication"
         ? ["pg", "target", "tool", "active", "write"].includes(r)
-        : mode === "move" || mode.startsWith("one-") || r !== "target",
+        : mode === "move" ||
+          mode.startsWith("one-") ||
+          mode.startsWith("hasync-") ||
+          r !== "target",
   );
   const people = Number(opts.people ?? 4);
   const smallLogicalCopy =
@@ -225,7 +229,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
               fs.writeFileSync(
                 path.join(parentLease, "owner.json"),
                 JSON.stringify({
-                  id: "DX-HA1",
+                  id: holder,
                   pid: process.pid,
                   nonce: e.nonce,
                   slot: info.slot,
@@ -234,7 +238,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
                 { flag: "wx" },
               );
               ownedFile = true;
-              const slot = manager.acquireSlot(info, opts.holder, "DX-HA1");
+              const slot = manager.acquireSlot(info, opts.holder, holder);
               assert(slot.created);
               acquired = true;
               for (const [role, mb] of wanted)
@@ -284,7 +288,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
         return (out.stdout + (args[0] === "logs" ? out.stderr : "")).trim();
       },
     };
-    if (mode.startsWith("load-")) {
+    if (mode.startsWith("load-") || mode.startsWith("hasync-")) {
       try {
         // [DX-LOAD1] Why: the shared VM rotates built images; bind the immutable digest to the engine's build event and image label. Rejected: running a mutable tag or changing the shared config for another builder.
         const builds = fs
@@ -352,7 +356,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
                 v.pid === process.pid,
             ),
         );
-        appendEvent({ event: "ha1-released", holder: opts.holder, prefix: e.prefix });
+        appendEvent({ event: "ha1-released", holder, prefix: e.prefix });
       });
     if (acquired && (!reserved || clean) && readOwner(info)?.pid === process.pid)
       manager.releaseSlot(info);

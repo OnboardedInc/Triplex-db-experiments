@@ -23,10 +23,13 @@ export class Stack {
   readonly e: Evidence;
   readonly a: Site;
   readonly b: Site;
+  readonly sharedVolumes = new Set<string>();
+  readonly holder: string;
   constructor(e: Evidence, a: Site, b: Site) {
     this.e = e;
     this.a = a;
     this.b = b;
+    this.holder = e.mode.startsWith("hasync-") ? "DX-HASYNC1" : "DX-HA1";
   }
   name(r: Role) {
     return this.e.prefix + "-" + r;
@@ -108,7 +111,7 @@ export class Stack {
       "--label",
       "ha1.attempt=" + this.e.nonce,
       "--label",
-      "tx2.holder=DX-HA1",
+      "tx2.holder=" + this.holder,
       "--label",
       "tx2.managed-by=lab/bin/engine.mjs",
       "--memory",
@@ -161,11 +164,14 @@ export class Stack {
       this.e.log("mounted-inputs", { id, role, gateway, codec });
     }
   }
-  async view(role: Role) {
+  async view(role: Role, timeout?: number) {
     const m = this.members.get(role)!;
-    const v = JSON.parse(await m.site.docker(["inspect", "--type", "container", m.id]))[0];
+    const v = JSON.parse(
+      await m.site.docker(["inspect", "--type", "container", m.id], timeout ? { timeout } : {}),
+    )[0];
     assert.equal(v.Id, m.id);
     assert.equal(v.Config.Labels["ha1.attempt"], this.e.nonce);
+    assert.equal(v.Config.Labels["tx2.holder"], this.holder);
     return v;
   }
   async exec(role: Role, ...args: string[]) {
@@ -198,7 +204,11 @@ export class Stack {
     await m.site.docker(["rm", "-fv", m.id]);
     assert.equal(await m.site.docker(["ps", "-aq", "--no-trunc", "--filter", "id=" + m.id]), "");
     for (const v of m.volumes)
-      assert.equal(await m.site.docker(["volume", "ls", "-q", "--filter", "name=^" + v + "$"]), "");
+      if (!this.sharedVolumes.has(v))
+        assert.equal(
+          await m.site.docker(["volume", "ls", "-q", "--filter", "name=^" + v + "$"]),
+          "",
+        );
     this.members.delete(role);
   }
   async cleanup() {

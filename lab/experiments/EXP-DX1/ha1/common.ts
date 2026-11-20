@@ -30,6 +30,7 @@ export const modes = [
   "load-proof",
   "load-quiet",
   "load-live",
+  "hasync-smoke",
 ] as const;
 export type Mode = (typeof modes)[number];
 export const roles = {
@@ -84,14 +85,14 @@ export function inputs(mode?: Mode) {
         }
       : {}),
     git: head(),
-    experiment: treeCode(),
+    experiment: treeCode(mode),
     gateway: tree(path.join(root, "packages/datomic/gateway/src")),
     codec: hash(fs.readFileSync(path.join(root, "packages/datomic/src/codec-spec.json"))),
     client: tree(path.join(root, "packages/datomic/dist")),
     core: tree(path.join(root, "packages/core/dist")),
   };
 }
-function treeCode() {
+function treeCode(mode?: Mode) {
   const paths = fs
     .readdirSync(import.meta.dirname)
     .filter((f) => f.endsWith(".ts"))
@@ -101,6 +102,11 @@ function treeCode() {
       path.join(root, f),
     ),
   );
+  if (mode?.startsWith("hasync-")) {
+    const dir = path.join(import.meta.dirname, "../hasync1");
+    for (const f of fs.readdirSync(dir).filter((name) => name.endsWith(".ts")))
+      paths.push(path.join(dir, f));
+  }
   return hash(
     JSON.stringify(paths.sort().map((f) => [path.relative(root, f), hash(fs.readFileSync(f))])),
   );
