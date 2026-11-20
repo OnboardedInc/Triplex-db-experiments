@@ -11,7 +11,7 @@ cd "$repo"
 [[ $(git rev-parse HEAD) == "$source" ]]
 git diff --exit-code HEAD --quiet
 export PATH="$root/build/tools/bin:$PATH" DOCKER_HOST=unix:///var/run/docker.sock
-export DX_BARE_METAL=1
+export DX_BARE_METAL=1 DX_BARE_METAL_ROOT="$root"
 
 status() {
   local tmp
@@ -74,7 +74,7 @@ if [[ $action == retry ]]; then
   # [DX-BM1] Why: the sealed input and real small native proof already passed before the restore timeout.
   # Rejected: repeating the two-hour seed or labelling the first incomplete arm a measurement.
   export DOCKER_HOST=unix:///var/run/docker.sock
-  [[ -z $(docker ps -q) ]]
+  if [[ ! -s $root/snapshot-provision/owned-slot ]]; then [[ -z $(docker ps -q) ]]; fi
   python3 - "$root" "$source" <<'PY'
 import hashlib
 import json

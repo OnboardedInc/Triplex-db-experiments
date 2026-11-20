@@ -75,21 +75,28 @@ def provision():
         assert json.loads(PROOF.read_bytes())["logicalDumpSha256"] == seed["dumpSha256"]
         return
     assert sha(DUMP) == seed["dumpSha256"]
-    assert not output(DOCKER, "ps", "-q")
     attempt = ROOT/"snapshot-provision"
-    attempt.mkdir()
-    slot = "tx2-dxt1-jvm1-"+str(uuid.uuid4())
-    (attempt/"owned-slot").write_text(slot+"\n")
-    boot = dict(DX_BARE_METAL="1", DX_BARE_METAL_ROOT=str(attempt),
-                DX_STACK_EVIDENCE=str(attempt/"engines"), DX_STACK_WAIT_FOR_TRANSACTOR="1")
-    run("env", *(k+"="+v for k,v in boot.items()), "bash", STACK/"up.sh", slot, "--no-publish",
-        "--cpus-tx","0","--cpus-pg","1,9,10,11","--cpus-gw-write","2","--cpus-gw-read","4,8",
-        "--pg-memory","6g","--tx-memory","6g","--object-cache-max","2560m",
-        "--pg-settings","-c shared_buffers=1GB -c synchronous_commit=on -c fsync=on -c full_page_writes=on -c track_io_timing=on",
-        timeout=300)
+    owner = attempt/"owned-slot"
+    if owner.is_file():
+        slot = owner.read_text().strip()
+        assert re.fullmatch(r"tx2-dxt1-jvm1-[a-f0-9-]{36}",slot)
+        assert output(DOCKER,"ps","--format","{{.Names}}") == slot+"-pg"
+        assert (attempt/"engines"/slot/"sql/postgres-user.sql.log").is_file()
+    else:
+        assert not output(DOCKER, "ps", "-q")
+        attempt.mkdir()
+        slot = "tx2-dxt1-jvm1-"+str(uuid.uuid4())
+        owner.write_text(slot+"\n")
+        boot = dict(DX_BARE_METAL="1", DX_BARE_METAL_ROOT=str(attempt),
+                    DX_STACK_EVIDENCE=str(attempt/"engines"), DX_STACK_WAIT_FOR_TRANSACTOR="1")
+        run("env", *(k+"="+v for k,v in boot.items()), "bash", STACK/"up.sh", slot, "--no-publish",
+            "--cpus-tx","0","--cpus-pg","1,9,10,11","--cpus-gw-write","2","--cpus-gw-read","4,8",
+            "--pg-memory","6g","--tx-memory","6g","--object-cache-max","2560m",
+            "--pg-settings","-c shared_buffers=1GB -c synchronous_commit=on -c fsync=on -c full_page_writes=on -c track_io_timing=on",
+            timeout=300)
+        run(DOCKER,"stop","--time","15",slot+"-gw-w",slot+"-gw-r",slot+"-tx",timeout=75)
     pg = slot+"-pg"
     directory, postgres = mount(slot)
-    run(DOCKER,"stop","--time","15",slot+"-gw-w",slot+"-gw-r",slot+"-tx",timeout=75)
     target = "/tmp/bm1-jvm1-logical.pgdump"
     run(DOCKER,"cp",DUMP,pg+":"+target,timeout=240)
     assert output(DOCKER,"exec",pg,"sha256sum",target,timeout=100).split()[0] == seed["dumpSha256"]
