@@ -3462,3 +3462,15 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   ten-account seed (1,000,000 people, 162,456,470 facts, ingest complete 13:15 local); present writer trimmed to
   four pairs per rate (3 h); DX-PREP1's per-person writer comparison; version 0.1 scorecard fresh; the 1 billion
   rung; scorecard at 1 billion. Target Saturday about 18:00 local, about $27 more for server 2.
+
+## 2026-11-20 20:15 UTC (15:15 local, 2026-11-20): DX-THIN1 ended on a network error; resumed as owner of the one branch with the merge order
+
+- DX-THIN1's turn ended with a provider stream disconnect (exit 1) after `51d0aff35` on `exp/DX-INT1`; tree
+  clean and pushed. Since morning it had merged W1's journal audit and ERASE1's guarded Reach checks.
+- DX-V01's readiness table (`origin/exp/DX-V01-scorecard`, `v01/READINESS.md`): already on the branch: WFIX1,
+  RD1, ACT2, STG1, THIN1, tracing. Outstanding with clean trial merges: W1 (1 commit), PREP1 (26), ACT1 (7),
+  ERASE1 (4, since merged), scorecard, playground. Outstanding with conflicts: HA1 (`heavy.mjs`), HASYNC1 (ha1
+  bench files, gateway commit/group/storage, DatomicClient), JVM1 and TAIL1 (driver, stack launcher, gateway
+  lean/storage). Ordered merge list recorded there.
+- DX-THIN1 part 6 assigned (xhigh): take the lease switch, merge in that order one part per commit with gates,
+  keep `int1/V0.1-STATE.md` current, memory terms move to scorecard rows, at most two source copies on disk.
