@@ -1,6 +1,6 @@
 // @ts-nocheck -- Engine reservations, CLI options and Docker evidence are verified dynamically.
 import assert from "node:assert/strict";
-import { spawn, execFileSync } from "node:child_process";
+import { spawn, spawnSync, execFileSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -19,11 +19,16 @@ export async function inventory(options, config, manager) {
   const sdkFiles = options["sdk-files"] === undefined ? [] : String(options["sdk-files"]).split(",");
   assert(!sdkFiles.length || (sdkGate && sdkFiles.every((file) => /^[a-z0-9-]+\.test\.ts$/.test(file))),
     "Use --sdk-files with --sdk-gate and comma-separated Datomic SDK test filenames");
+  const sdkTestName = options["sdk-test-name"];
+  assert(sdkTestName === undefined || (typeof sdkTestName === "string" && sdkFiles.length),
+    "Use --sdk-test-name with --sdk-files");
   const zgc = options.zgc === true;
+  const g1 = options.g1 === true;
   const javaMajor = process.env.DX_JAVA ?? "21";
   assert(!zgc || javaMajor === "25", "The shared Mac ZGC correctness gate requires Java 25");
+  assert(!(g1 && zgc), "Select at most one uniform collector");
   const collectors = zgc ? { tx: "Z", "gw-w": "Z", "gw-r": "Z" }
-    : { tx: "G1", "gw-w": "Serial", "gw-r": "G1" };
+    : { tx: "G1", "gw-w": g1 ? "G1" : "Serial", "gw-r": "G1" };
   // [DX-JVM1] Why: exercise ZGC in every serving role with the same small Mac reservation.
   // Rejected: using the server heap budget or comparing collector pause timing on the shared Mac.
   const gc = (role) => `-XX:+Use${collectors[role]}GC` + (zgc ? " -XX:ConcGCThreads=1 -XX:ParallelGCThreads=1" : "");
@@ -31,6 +36,7 @@ export async function inventory(options, config, manager) {
   const cpus = { pg: "0", tx: "0", "gw-w": "1", "gw-r": "2" };
   const prefix = "tx2-dxt1-jvm1-" + randomUUID();
   const out = path.resolve(options.out);
+  const root = path.resolve(import.meta.dirname, "../../../.."), pkg = path.join(root, "packages/datomic");
   const controller = new AbortController();
   const stop = () => controller.abort();
   process.once("SIGINT", stop);
@@ -90,10 +96,11 @@ export async function inventory(options, config, manager) {
       }
     }
     const source = execFileSync("git", ["rev-parse", "HEAD"], {encoding:"utf8"}).trim();
-    const files = [import.meta.filename, path.join(import.meta.dirname, "readback.sh"), path.join(import.meta.dirname, "launch.mjs"), path.join(stack, "up.sh")];
-    write("attempt.json", {prefix, source, slot:slot.slot, diagnostic: true, javaMajor, collectors, sdkGate, sdkFiles, at:new Date(), caps, cpus, files:Object.fromEntries(files.map((file) => [path.basename(file), createHash("sha256").update(fs.readFileSync(file)).digest("hex")]))});
+    const files = [import.meta.filename, path.join(import.meta.dirname, "readback.sh"), path.join(import.meta.dirname, "launch.mjs"), path.join(stack, "up.sh"), ...sdkFiles.map((file) => path.join(pkg, "test", file))];
+    write("attempt.json", {prefix, source, slot:slot.slot, diagnostic: true, javaMajor, collectors, sdkGate, sdkFiles, sdkTestName, at:new Date(), caps, cpus, files:Object.fromEntries(files.map((file) => [path.relative(root, file), createHash("sha256").update(fs.readFileSync(file)).digest("hex")]))});
     const child = spawn("bash", [
       path.join(stack,"up.sh"), prefix,
+      "--gateway-src", path.join(pkg, "gateway"), "--codec-spec", path.join(pkg, "src/codec-spec.json"),
       ...(sdkGate ? ["--port-write", String(slot.port), "--port-read", String(slot.port + 10)] : ["--no-publish"]),
       "--cpus-tx", cpus.tx, "--cpus-pg", cpus.pg, "--cpus-gw-write", cpus["gw-w"], "--cpus-gw-read", cpus["gw-r"],
       "--pg-memory", caps.pg+"m", "--tx-memory", caps.tx+"m",
@@ -132,20 +139,24 @@ export async function inventory(options, config, manager) {
     }
     write("idle-boot.json", {prefix, source, slot:slot.slot, diagnostic: true, readyAt, sampledAt:Date.now(), roles});
     if (sdkGate) {
-      const root = path.resolve(import.meta.dirname, "../../../.."), pkg = path.join(root, "packages/datomic");
       // [DX-JVM1] Why: SDK regressions use both writer variables, and both must resolve to this reservation.
       // Rejected: relying on legacy localhost fallbacks, which can select another stack.
       const writer = "http://127.0.0.1:" + slot.port;
       const log = fs.openSync(path.join(out, "sdk-sql.log"), "wx");
+      let test;
       try {
         // [DX-JVM1] Why: a focused shared-host run tests the SQL assertions within the outer four-minute budget.
         // Rejected: treating Vitest's default five seconds as a performance bar for an individual SQL test.
-        execFileSync(process.execPath, [path.join(root, "node_modules/vitest/vitest.mjs"), "run", "--maxWorkers=1",
+        test = spawnSync(process.execPath, [path.join(root, "node_modules/vitest/vitest.mjs"), "run", "--maxWorkers=1",
           ...(sdkFiles.length ? ["--testTimeout=30000"] : []),
+          ...(sdkTestName ? ["--testNamePattern", sdkTestName] : []),
+          "--reporter=default", "--reporter=json", "--outputFile.json=" + path.join(out, "vitest.json"),
           ...sdkFiles.map((file) => "test/" + file)], {
-          cwd: pkg, timeout: 240_000, stdio: ["ignore", log, log], env: {
+          cwd: pkg, timeout: sdkFiles.includes("clock-order.test.ts") ? 300_000 : 240_000,
+          stdio: ["ignore", log, log], env: {
             ...env, DATOMIC_INTEGRATION: "1", DATOMIC_URL: writer, DATOMIC_GATEWAY_URL: writer,
             DATOMIC_READ_URLS: "http://127.0.0.1:" + (slot.port + 10),
+            ...(sdkFiles.includes("clock-order.test.ts") ? { DX_CLOCK_EVIDENCE_DIR: path.join(out, "clock") } : {}),
           },
         });
       } finally { fs.closeSync(log); }
@@ -156,6 +167,9 @@ export async function inventory(options, config, manager) {
           fs.readFileSync(path.join(out, prefix, "config", role + ".process.txt")));
       }
       assert.equal(execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(), source);
+      // [DX-JVM1] Why: preserve runtime binding even for failed assertions. Rejected: skipping JVM readback when the SDK exits nonzero.
+      if (test.error) throw test.error;
+      assert.equal(test.status, 0, "SDK assertions did not complete successfully. See sdk-sql.log and vitest.json");
     }
   } finally {
     process.removeListener("SIGINT", stop);
