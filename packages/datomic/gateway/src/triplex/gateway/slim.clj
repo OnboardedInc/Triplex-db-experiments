@@ -1,4 +1,5 @@
-(ns triplex.gateway.slim)
+(ns triplex.gateway.slim
+  (:require [triplex.gateway.small-row :as small-row] [clojure.data.json :as json] [clojure.walk :as walk]))
 
 ;; [DX-T1-8] Why: compress only the JSON suffix after authoritative clock/position assignment, preserving indexed prefixes.
 ;; Rejected: changing logical rows or UTF-8 conversion (unpaired UTF-16 code units must round-trip exactly).
@@ -21,7 +22,8 @@
 
 ;; [DX-T1-8] Why: bounded, versioned frames fail on truncation, trailing bytes or a forged length before JSON is trusted.
 ;; Rejected: unbounded readAllBytes on compressed storage or silently accepting damaged rows.
-(defn body [^String value]
+(def body-code
+  '(fn [^String value]
   (if-not (.startsWith value "Z1") value
     (let [n (Integer/parseInt value 2 10 16)]
       (when-not (<= 0 n 8388608) (throw (ex-info "Invalid slim row length" {})))
@@ -35,14 +37,27 @@
               (let [chars (char-array n)]
                 (.get (.asCharBuffer (java.nio.ByteBuffer/wrap bytes)) chars)
                 (String. chars))))
-          (finally (.end inflater)))))))
+          (finally (.end inflater))))))))
+(def body (eval body-code))
 
 ;; [DX-T1-8] Why: journal and receipt routes return row texts directly, so expand before crossing the wire.
 ;; Rejected: requiring each TypeScript reader/oracle to understand a private physical storage frame.
+(defn logical-text [^String text body-start]
+  (if-let [packed (small-row/unpack text body-start)]
+    (str (subs text 0 body-start) (json/write-str packed))
+    (if (.startsWith text "Z1" (int body-start))
+      (str (subs text 0 body-start) (body (subs text body-start))) text)))
+(def row-columns-code
+  (walk/postwalk-replace {'unpack-code small-row/unpack-code 'body-code body-code}
+    '(fn [^String text]
+       (let [start (+ 5 (Integer/parseInt text 1 5 16)) ref-start (+ start 36)
+             size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)
+             body-start (+ ref-start size 1)]
+         (or (unpack-code text body-start) (json/read-str (body-code (subs text body-start))))))))
+(def row-columns (eval row-columns-code))
 (defn row-text [^String text]
   (if (not= \2 (.charAt text 0)) text
     (let [start (+ 5 (Integer/parseInt text 1 5 16)) ref-start (+ start 36)
           size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)
           body-start (+ ref-start size 1)]
-      (if (.startsWith text "Z1" (int body-start))
-        (str (subs text 0 body-start) (body (subs text body-start))) text))))
+      (logical-text text body-start))))

@@ -37,8 +37,9 @@ import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
 import { CLOCK, RELEASE, Conflict, fact, millis, value, type Store } from "../store.ts";
 import { calculate, worldsAt, type Proposal, type Point } from "../decision.ts";
-import { deepImpact, rawDeep } from "./deep.ts";
-import { subjectOf } from "../../../../bench/lib/world.ts";
+import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
+import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
+import { AccountAdmission, type PublishObservation, type WriteAttempt } from "./admission.ts";
 import { LazyReader, rosterRoot, rosterSeal } from "../read.ts";
 import {
   entry,
@@ -60,6 +61,7 @@ export type PublishOptions = {
   sources?: "census" | "native" | "indexed";
   codec?: "legacy" | "compact";
   afterChunk?: (attempt: string) => Promise<void>;
+  observation?: PublishObservation;
 };
 export type Edit = { e: string; a: string; values: W0.Fact["v"][]; from?: string };
 type Meta = {
@@ -119,8 +121,10 @@ export class JoinedAccount {
     noticeIndexBytes: 0,
     addressBytes: 0,
   };
-  constructor(s: Store) {
+  private readonly admission?: AccountAdmission;
+  constructor(s: Store, admission?: AccountAdmission) {
     this.s = s;
+    this.admission = admission;
     this.notices = new Notices(s.comp, "joined", {
       identity: selector,
       roster: async (c) => this.roster((await this.meta(c.position)).census, c.position),
@@ -394,30 +398,61 @@ export class JoinedAccount {
       for (const wake of this.noticeListeners) wake();
     return r;
   }
-  private async command(
+  private command(
     id: string,
     args: unknown,
     plan: (p: number) => Promise<{ ops: any[]; context: object; expected?: number }>,
     hook?: () => Promise<void>,
     through?: string,
+    priority = false,
+    observation?: PublishObservation,
+  ) {
+    const execute = () => this.execute(id, args, plan, hook, through, observation);
+    if (!this.admission) return execute();
+    return this.admission.run(priority ? "publish" : "save", (turn) => {
+      if (observation) observation.turn = turn;
+      return execute();
+    });
+  }
+  private async execute(
+    id: string,
+    args: unknown,
+    plan: (p: number) => Promise<{ ops: any[]; context: object; expected?: number }>,
+    hook?: () => Promise<void>,
+    through?: string,
+    observation?: PublishObservation,
   ) {
     assert(
       /^[a-zA-Z0-9_.:-]{1,145}$/.test(id) || (!through && /^deadline\/[a-f0-9]{64}$/.test(id)),
     );
     const intent = h([this.s.scope, id, args]);
-    for (;;) {
+    // [DX-ACT2] Why: only a different scope writer can beat an admitted turn. Bound that case and recover the original durable receipt by identity. Rejected: spinning against a moving source head.
+    for (let retries = 0; retries < 3; ) {
+      const attempt: WriteAttempt | undefined = observation
+        ? { started: performance.now() }
+        : undefined;
+      if (attempt) observation!.attempts.push(attempt);
       const old = await this.original(id, intent);
-      if (old) return this.observed(old);
+      if (old) {
+        if (attempt) {
+          attempt.recovered = true;
+          attempt.finished = performance.now();
+        }
+        return this.observed(old);
+      }
       const p = await this.s.head();
+      if (attempt) attempt.cut = p;
       if (through) {
         const due = (await this.db.get<string[]>("join-calendar", p)).value[0];
         if (due && due <= through) {
-          await this.advance(through);
+          await this.advanceWithinTurn(through);
+          if (attempt) attempt.finished = performance.now();
           continue;
         }
       }
       try {
         const body = await plan(p);
+        if (attempt) attempt.prepared = performance.now();
         const r = await this.s.commit(
           "joined:" + id,
           "lazy/join",
@@ -425,15 +460,27 @@ export class JoinedAccount {
           body.expected ?? p,
           { ...body.context, intent },
           hook,
+          attempt &&
+            ((at) => {
+              attempt.nativeAck = at;
+            }),
         );
+        if (attempt) attempt.finished = performance.now();
         assert.equal(r.position, (body.expected ?? p) + 1);
         return this.observed(r);
       } catch (e) {
         const won = await this.original(id, intent);
-        if (won) return this.observed(won);
+        if (attempt) attempt.finished = performance.now();
+        if (won) {
+          if (attempt) attempt.recovered = true;
+          return this.observed(won);
+        }
         if (!(e instanceof Conflict)) throw e;
+        if (attempt) attempt.conflict = true;
+        retries++;
       }
     }
+    throw new Conflict("Joined command exhausted three serial predecessor attempts");
   }
   private async choose(
     meta: Meta,
@@ -730,6 +777,8 @@ export class JoinedAccount {
       },
       hook,
       at,
+      storage === "owed",
+      options.observation,
     );
   }
   async physical(seq: number) {
@@ -769,7 +818,12 @@ export class JoinedAccount {
     await before?.();
     return (await this.s.head()) === p ? "covered" : "stale";
   }
-  async advance(at: string) {
+  advance(at: string) {
+    return this.admission
+      ? this.admission.run("save", () => this.advanceWithinTurn(at))
+      : this.advanceWithinTurn(at);
+  }
+  private async advanceWithinTurn(at: string) {
     assert(W0.isInstant(at));
     for (;;) {
       const p = await this.s.head(),
@@ -777,7 +831,7 @@ export class JoinedAccount {
         due = calendar.value[0];
       if (!due || due > at) return;
       const id = "deadline/" + sha256(due);
-      await this.command(id, ["deadline", due], async (k) => {
+      await this.execute(id, ["deadline", due], async (k) => {
         const { meta, c, tail } = await this.state(k),
           cal = await this.db.get<string[]>("join-calendar", k);
         assert(cal.value[0] === due && c.at <= due);
@@ -873,25 +927,35 @@ export class JoinedAccount {
     return [...found.values()];
   }
   // [DX-ACT1] Why: fold the live deep command into the same strict source transaction as its index and owed event. Rejected: dual-writing a compact mirror after the deep transaction (a release can land in the gap).
-  async saveDeep(id: string, person: number, submitted: readonly Op[], at: string) {
+  async saveDeep(
+    id: string,
+    person: number,
+    submitted: readonly Op[] | { fields: readonly Fact[]; from: number },
+    at: string,
+    observation?: PublishObservation,
+  ) {
     assert(
       this.s.profile === "act2-deep" &&
         W0.isInstant(at) &&
         Number.isSafeInteger(person) &&
         person >= 0,
     );
-    const source = structuredClone(submitted),
+    const request = structuredClone(submitted),
       subject = W0.placementId(person);
     return this.command(
       id,
-      ["deep-save", subject, source, at],
+      ["deep-save", subject, request, at],
       async (p) => {
         const { meta, c, tail } = await this.state(p);
-        assert(at >= c.at && source.length > 0);
+        assert(at >= c.at);
         const [addr, raw] = await Promise.all([
           this.db.get<number>(address(subject), p),
           rawDeep(this.s, person, { tx: p, validTime: at }),
         ]);
+        // [DX-ACT2] Why: a deferred field edit chooses its actual live replacement IDs after admission. Rejected: submitting stale retractions built while a different save held the turn.
+        const source =
+          "fields" in request ? replaceDeep(raw, request.fields, request.from) : request;
+        assert(source.length > 0);
         const impact = deepImpact(person, raw, source, { tx: p, validTime: at });
         const anticipated = impact.prospective(),
           basis = { tx: p + 1, validTime: at };
@@ -947,6 +1011,8 @@ export class JoinedAccount {
       },
       undefined,
       at,
+      false,
+      observation,
     );
   }
   async save(id: string, edit: Edit, at: string) {

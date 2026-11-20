@@ -1,5 +1,5 @@
 (ns triplex.gateway.reach
-  (:require [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission])
+  (:require [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger LongAdder]))
 (set! *warn-on-reflection* false)
 
@@ -107,16 +107,21 @@
     ;; Rejected: declining position-only/current pulls after a timestamp regression (needless history scans).
     ;; Older scopes without the explicit position proof retain the conservative fallback.
     (when (and (= 1 (aget header 2)) (or (some? r) (zero? (aget header 3)))) (decline! "irregular"))
-    (let [head (aget header 0)
+    (if-let [inner (group-cut/interior db p r)]
+      [(:after inner) (or p (aget header 0)) (:t inner) false inner]
+      (let [head (aget header 0)
           pt (when (and (some? p) (not= p head))
-               (if-let [tx (d/entid db [:triplex.tx/position p])]
+               (if-let [tx (or (d/entid db [:triplex.tx/position p])
+                             (when (d/entid db :triplex.group/position)
+                               (when-let [m (d/entid db [:triplex.group/position p])]
+                                 (group-cut/value db m :triplex.group/physical))))]
                  (d/tx->t tx) (decline! "interior-position")))
           rt (when (some? r)
                (let [a (d/entid db :triplex.tx/max-recorded-at)
                      ^datomic.Datom datom (first (d/seek-datoms db :avet :triplex.tx/max-recorded-at (Math/nextUp (double r))))]
                  (when (and datom (= a (.a datom))) (dec (d/tx->t (.e datom))))))
           t (min (long (or pt (d/basis-t db))) (long (or rt (d/basis-t db))))]
-      [(if (= t (d/basis-t db)) db (d/as-of db t)) (or p head) t (zero? (aget header 2))])))
+      [(if (= t (d/basis-t db)) db (d/as-of db t)) (or p head) t (zero? (aget header 2))]))))
 (defn bits ^double [^String text ^long start]
   (Double/longBitsToDouble (Long/parseUnsignedLong text (int start) (int (+ start 16)) 16)))
  ;; [DX-B2-N2] Why: a session remembers only immutable entity revisions; concurrent references may retry full.
@@ -151,10 +156,10 @@
               (.put lru session m) m))))))
 (defn parse-entity [db cfg eid revision row-limit]
   (let [texts (ArrayList.) refs (ArrayList.) out (StringBuilder.)
-        retired (set (map (fn [datom] (let [^String text (:v datom)] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))
-                          (d/datoms db :eavt eid :triplex.entity/retired)))
+        retired (if (:slice cfg) #{} (set (map (fn [datom] (let [^String text (:v datom)] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))
+                          (d/datoms db :eavt eid :triplex.entity/retired))))
         row-a (long (:row cfg)) overflow-a (long (:overflow cfg))
-        it (.iterator ^Iterable (d/datoms db :eavt eid))]
+        it (.iterator ^Iterable (or (get-in cfg [:slice :datoms]) (d/datoms db :eavt eid)))]
     (.append out \[)
     (while (.hasNext it)
       (let [^datomic.Datom datom (.next it) a (.a datom)]
@@ -168,8 +173,7 @@
                 ;; [DX-T1-8] Why: both JSON fragments and legacy text responses expose canonical logical rows.
                 ;; Rejected: emitting the compressed storage frame to replica/bootstrap or pinned read clients.
                 (let [body-start (+ ref-start ref-size 1)
-                      logical (if (.startsWith text "Z1" (int body-start))
-                                (str (subs text 0 body-start) (slim/body (subs text body-start))) text)]
+                      logical (if (= \2 (.charAt text 0)) (slim/logical-text text body-start) text)]
                 (.add texts logical)
                 (when (> (.size texts) row-limit) (decline! "row-budget"))
                 (if (= \1 (.charAt text 0)) (append-string! out logical)
@@ -231,8 +235,14 @@
       (when (and (<= (double from) valid) (< valid (double to))) (.add refs ref)))
     [eid (:rev value) (:texts value) refs (:json value)]))
 (defn read-entity [name db cfg id valid counts]
-  (if (:recent-state cfg) (read-entity-recent name db cfg id valid counts)
-    (read-entity-legacy name db cfg id valid counts)))
+  (if-let [cut (:group-cut cfg)]
+    (let [eid (d/entid db [:triplex.entity/id id]) slice (when eid (group-cut/entity-slice cut eid))
+          value (when eid (parse-entity db (assoc cfg :slice slice) eid (:rev slice) (- 100000 (aget ^longs counts 0))))
+          refs (ArrayList. ^java.util.Collection (vec (for [[ref from to] (:refs value) :when (<= from valid) :when (< valid to)] ref)))]
+      (aset ^longs counts 0 (+ (aget ^longs counts 0) (count (:texts value))))
+      [eid (or (:rev value) 0) (or (:texts value) []) refs (or (:json value) "[]")])
+    (if (:recent-state cfg) (read-entity-recent name db cfg id valid counts)
+    (read-entity-legacy name db cfg id valid counts))))
 (defn append-strings! [^StringBuilder out ^Iterable values]
   (.append out \[)
   (let [it (.iterator values) n (long-array 1)]
@@ -242,9 +252,9 @@
   (.append out \]))
 (defn build-response [name current input & [epoch recent-state]]
   (try
-    (let [[db position t recent-eligible] (select-db name current (get input "basis") epoch)
+    (let [[db position t recent-eligible group-cut] (select-db name current (get input "basis") epoch)
           base-cfg (config name current epoch)
-          cfg (assoc base-cfg :identity-db current :connection-generation epoch :selected-t t :recent-state recent-state :recent-eligible recent-eligible
+          cfg (assoc base-cfg :group-cut group-cut :identity-db current :connection-generation epoch :selected-t t :recent-state recent-state :recent-eligible recent-eligible
                 :revision-view (cache/revision-view [name epoch (:cache-generation base-cfg) t])) valid (double (get-in input ["basis" "validAt"]))
           ;; [DX-R2] Why: inline journals replace changed rows; only newly introduced reference roots need graph expansion.
           ;; Rejected: repeating every unchanged form/answer entity after a scalar replacement.

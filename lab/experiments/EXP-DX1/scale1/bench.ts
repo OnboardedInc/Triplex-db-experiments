@@ -472,6 +472,123 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   const binding = { source, slot: prefix, nonce: attempt.nonce };
   const imageTrial = attempt.layout === "pooled" && item === 5;
   const restoring = imageTrial && !!attempt.seedImageTag;
+  if (attempt.activationMode === "delta") {
+    assert(mode === "activation" && item === 2 && !attempt.layout && !restoring);
+    const childEnv = {
+      ...env,
+      DATOMIC_URL: `http://${engines["gw-w"].address}:8080`,
+      DELTA_READER_URL: `http://${engines["gw-r"].address}:8080`,
+      TRIPLEX_DATOMIC_LAYOUT: "lean",
+      TX2_SWEEP_STRICT: "1",
+      TX2_W0_POINT_JOURNAL: "1",
+      DELTA_AUDITED: "1",
+    };
+    status(dir, "checking the 1000-person DELTA preflight");
+    try {
+      const { guardDelta } = await import("../actv-delta/preflight.ts");
+      const proof = guardDelta(path.join(dir, "delta-preflight"), binding, childEnv);
+      write(path.join(dir, "preflight.json"), proof);
+      write(path.join(dir, "preflight-disk.json"), { binding, before, after: snapshot(prefix) });
+    } catch (e) {
+      const reason = String(e);
+      write(path.join(dir, "preflight-stop.json"), { ...binding, reason });
+      status(dir, "preflight stopped", { reason });
+      throw e;
+    }
+    const log = path.join(dir, "delta");
+    fs.mkdirSync(log);
+    write(path.join(log, "request.json"), binding);
+    try {
+      const worker = spawn(
+        "taskset",
+        [
+          "-c",
+          [planCpus.senders, planCpus.readers].join(","),
+          process.execPath,
+          "--import",
+          "tsx",
+          path.join(repo, "lab/experiments/EXP-DX1/actv-delta/audit-solo.ts"),
+          log,
+        ],
+        { cwd: repo, env: { ...childEnv, DELTA_GATE: "solo" }, stdio: "inherit" },
+      );
+      const completed = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>(
+        (ok, fail) => {
+          worker.once("error", fail);
+          worker.once("exit", (code, signal) => ok({ code, signal }));
+        },
+      );
+      let stage = "",
+        done = false;
+      const completion = completed.finally(() => {
+        done = true;
+      });
+      completion.catch(() => {});
+      try {
+        while (!done) {
+          if (Date.now() >= attempt.workDeadlineAt - 10000)
+            throw Error(
+              "DELTA reached its work deadline with twenty minutes reserved for cleanup and evidence",
+            );
+          const sample = health(dir, prefix, engines, worker.pid ? [worker.pid] : []);
+          fs.appendFileSync(path.join(dir, "resources.jsonl"), JSON.stringify(sample) + "\n");
+          if (sample.freeBytes < 15 * GiB) throw Error("Disk reached the SCALE1 retention floor");
+          const file = path.join(log, "STATUS.json");
+          if (fs.existsSync(file)) {
+            const observed = get(file);
+            assert.deepEqual(observed.binding, binding);
+            if (observed.stage !== stage) {
+              stage = observed.stage;
+              status(dir, stage);
+              const lsn = docker(
+                "exec",
+                prefix + "-pg",
+                "psql",
+                "-U",
+                "postgres",
+                "-d",
+                "datomic",
+                "-Atc",
+                "SELECT pg_wal_lsn_diff(pg_current_wal_insert_lsn(),'0/0')",
+              );
+              fs.appendFileSync(
+                path.join(log, "storage.jsonl"),
+                JSON.stringify({ stage, walInsertBytes: lsn, ...snapshot(prefix) }) + "\n",
+              );
+            }
+          }
+          await Promise.race([completion, sleep(3000)]);
+        }
+        const exit = await completion;
+        assert.equal(exit.code, 0, "DELTA worker stopped / " + JSON.stringify(exit));
+      } finally {
+        if (!done) {
+          worker.kill("SIGTERM");
+          await completion;
+        }
+      }
+      const { checkAuditSolo, checkCollector } = await import("../actv-delta/audit-solo.ts");
+      const { result, reports } = checkAuditSolo(log, binding, 100000, 45, "solo");
+      checkCollector(log, binding, 100000, 90);
+      write(path.join(dir, "delta-measurement.json"), result);
+      write(path.join(dir, "delta-modes.json"), { binding, reports });
+      write(path.join(dir, "disk-terminal.json"), snapshot(prefix));
+      try {
+        checkAuditSolo(log, binding, 100000, 45, "solo", true);
+        status(dir, "DELTA evidence collected", { reports });
+      } catch (e) {
+        write(path.join(dir, "delta-deadline.json"), { binding, reports, reason: String(e) });
+        status(dir, "DELTA deadline missed", { reports, reason: String(e) });
+        throw e;
+      }
+    } catch (e) {
+      const reason = String(e).split("\n")[0];
+      write(path.join(dir, "delta-stop.json"), { ...binding, reason });
+      status(dir, "DELTA stopped", { reason });
+      throw e;
+    }
+    return;
+  }
   if (spec.people * spec.scopes >= 100000) {
     status(dir, "checking 1000 subjects before the large seed");
     try {
@@ -1148,6 +1265,8 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
     "seed-disk.json",
     "processes.json",
     "summary.json",
+    "delta-measurement.json",
+    "delta-stop.json",
     "anatomy.json",
     "sizing.json",
     "resource-summary.json",
@@ -1186,6 +1305,10 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
   const engineEvidence = path.join(dir, "engines", prefix, "trace");
   if (fs.existsSync(engineEvidence)) sources.push("-C", path.dirname(engineEvidence), "trace");
   if (fs.existsSync(path.join(dir, "resources.jsonl"))) sources.push("-C", dir, "resources.jsonl");
+  if (entry.activationMode === "delta") {
+    for (const folder of ["delta", "delta-preflight"])
+      if (fs.existsSync(path.join(dir, folder))) sources.push("-C", dir, folder);
+  }
   let rawArchive = null,
     rawArchiveError: string | null = null;
   const seals: Record<string, Awaited<ReturnType<typeof compressTraces>>> = {};
@@ -1256,9 +1379,35 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
     raw: rawArchive,
     summaryFiles: summaryFiles(compact),
   });
-  status(dir, outcome.stopReason ? "preflight stopped" : "finished", outcome);
+  const deltaStop = path.join(dir, "delta-stop.json");
+  if (entry.activationMode === "delta" && !outcome.stopReason) {
+    const result = path.join(dir, "delta-measurement.json");
+    const missed = path.join(dir, "delta-deadline.json");
+    const scored = fs.existsSync(result) && !fs.existsSync(missed) && !fs.existsSync(deltaStop);
+    status(
+      dir,
+      scored
+        ? "DELTA evidence collected"
+        : fs.existsSync(missed)
+          ? "DELTA deadline missed"
+          : "DELTA stopped",
+      {
+        ...outcome,
+        ...(!scored
+          ? {
+              reason: fs.existsSync(deltaStop)
+                ? get(deltaStop).reason
+                : (Date.now() - entry.at >= entry.ceiling * 1000
+                    ? "three-hour budget / "
+                    : "worker stopped / ") + service,
+            }
+          : {}),
+      },
+    );
+  } else status(dir, outcome.stopReason ? "preflight stopped" : "finished", outcome);
 }
 async function main() {
+  const entered = Date.now();
   const [op, n, tag, mode] = process.argv.slice(2);
   const item = Number(n);
   if (op === "plan") {
@@ -1296,7 +1445,23 @@ async function main() {
         {
           items: [
             { item: 1, layouts: [campaignItem(1)], arms: ["zero", "reader"] },
-            { item: 2, layouts: [campaignItem(2)], arms: ["zero", "reader", "activation"] },
+            {
+              item: 2,
+              layouts: [campaignItem(2)],
+              arms: ["zero", "reader", "activation"],
+              activationModes: {
+                delta: {
+                  accounts: 1,
+                  people: 100000,
+                  preflightPeople: 1000,
+                  reference: "page-cut",
+                  readers: 64,
+                  loadedOffers: 90,
+                  workSeconds: 9600,
+                  cleanupSeconds: 1200,
+                },
+              },
+            },
             ...([3, 4] as const).map((i) => ({
               item: i,
               layouts: [campaignItem(i, "pooled"), campaignItem(i, "separate")],
@@ -1356,6 +1521,19 @@ async function main() {
   assert(!fs.existsSync(dir));
   if (process.env.DX_SCALE1_RUNTIME_REPO)
     assert.equal(fs.realpathSync(repo), path.join(root, "build-" + source, "repository"));
+  const activationMode = getopt("activation-mode");
+  // [DX-ACT2] Why: require explicit selection of the audited campaign. Rejected: admitting an old overnight command with the read-only interpretation of DELTA.
+  if (activationMode === "delta")
+    assert.equal(getopt("delta-audit"), "2", "DELTA launch requires --delta-audit 2");
+  if (activationMode !== undefined)
+    assert(
+      activationMode === "delta" &&
+        mode === "activation" &&
+        item === 2 &&
+        !getopt("account-layout") &&
+        !getopt("seed-image"),
+      "DELTA requires item 2 single-account activation with its own preflight and seed",
+    );
   const sourceGit = ["-c", "credential.helper=", "-c", "http.extraHeader="];
   // [DX-SCALE1] Why: a reader must execute the identical public revision as its zero arm even if the other bench publishes during the 5,910-second trace. Rejected: mixing sender or guard versions inside a pair, or silently ignoring upstream changes.
   const originHeads: Record<string, { head: string; changes: string[] }> = {};
@@ -1377,7 +1555,10 @@ async function main() {
       /^[a-z][a-z0-9-]{2,40}$/.test(getopt("baseline")!) &&
       get(path.join(root, getopt("baseline")!, "attempt.json")).source === source;
     assert(
-      paired || changes.every((n) => /\.md$|SHA256SUMS$|\.sha256$|\.test\.[cm]?ts$/.test(n)),
+      // [DX-ACT2] Why: DELTA executes this branch's source-bound experiment and full on-slot preflight. Unrelated later research on the reference branches is recorded in originHeads. Rejected: requiring both other experiments' newest code to launch an independently pinned treatment.
+      activationMode === "delta" ||
+        paired ||
+        changes.every((n) => /\.md$|SHA256SUMS$|\.sha256$|\.test\.[cm]?ts$/.test(n)),
       "New upstream executable inputs require an integrated source revision: " + ref,
     );
     originHeads[ref] = { head, changes };
@@ -1443,15 +1624,15 @@ async function main() {
     assert(fs.existsSync(path.join(root, baselineTag, "summary.json")));
   }
   const ceiling =
-    (publication === "lazy"
-      ? 24
-      : item === 5 && layout === "pooled"
-        ? 24
-        : mode === "activation" || mode === "interference"
-          ? 10
-          : spec.people === 100000
-            ? 8
-            : 4) * 3600;
+    activationMode === "delta"
+      ? Math.max(1, 9600 - Math.ceil((Date.now() - entered) / 1000))
+      : (publication === "lazy" || (item === 5 && layout === "pooled")
+          ? 24
+          : mode === "activation" || mode === "interference"
+            ? 10
+            : spec.people === 100000
+              ? 8
+              : 4) * 3600;
   const clientBudget = Math.floor(
     Math.max(1 * GiB, capacity.host.memory - capacity.sharedReserve - 5 * GiB),
   );
@@ -1468,6 +1649,9 @@ async function main() {
     ...(publication ? { publication } : {}),
     clientBudget,
     originHeads,
+    ...(activationMode
+      ? { activationMode, workDeadlineAt: entered + 9600000, deadlineAt: entered + 10800000 }
+      : {}),
     capacity,
     baselineTag,
     layout,
@@ -1503,7 +1687,8 @@ async function main() {
     "--property=KillMode=control-group",
     `--property=RuntimeMaxSec=${ceiling}s`,
     `--property=MemoryMax=${clientBudget}`,
-    "--property=TimeoutStopSec=3650s",
+    // [DX-ACT2] Why: shutdown and ExecStopPost can each use their own stop allowance. Rejected: giving each the entire twenty-minute cleanup reserve.
+    `--property=TimeoutStopSec=${activationMode === "delta" ? 600 : 3650}s`,
     `--property=ExecStopPost=${post}`,
     "--setenv=DOCKER_HOST=unix:///var/run/docker.sock",
     `--setenv=PATH=${process.env.PATH}`,

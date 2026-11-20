@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
-import { DomainOracle } from "../../../../bench/lib/w0-gates.ts";
+import { DomainOracle, DomainOraclePool } from "../../../../bench/lib/w0-gates.ts";
 import type { Point } from "../decision.ts";
 import type { JoinedAccount } from "./account.ts";
 import { pack, unpack } from "../../notify1/store.ts";
@@ -9,7 +9,56 @@ import type { Tail } from "../../notify1/journal.ts";
 import { width } from "../../notify1/census.ts";
 export const toWire = (d: any) => ({ ...d, seq: Number(d.seq), payload: JSON.parse(d.payload) });
 export class Reference {
-  readonly oracle = new DomainOracle(new URL("./oracle.py", import.meta.url).pathname);
+  readonly oracle: DomainOracle;
+  private readonly workers: DomainOraclePool;
+  private foldedRoster?: string;
+  constructor(workers = 1) {
+    this.workers = new DomainOraclePool(new URL("./oracle.py", import.meta.url).pathname, workers);
+    this.oracle = this.workers.children[0]!;
+  }
+  close() {
+    this.workers.close();
+  }
+
+  private async *pages(
+    ids: string[],
+    world: (i: number) => W0.World,
+    doc: W0.ReleaseDoc,
+    old: W0.ReleaseDoc | null,
+    b: Point,
+    fold: boolean,
+  ) {
+    const workers = this.workers.children;
+    if (fold && workers.length > 1) {
+      const roster = sha256(canonical(ids));
+      this.foldedRoster ??= roster;
+      assert.equal(
+        this.foldedRoster,
+        roster,
+        "Parallel publication replay must retain the enrolled subject order",
+      );
+    }
+    // [DX-ACT2] Why: a fixed subject page always reaches the same independent ledger, and results are folded in roster order. Rejected: skipping census rows to meet the 90-minute budget or round-robining a subject's publication state.
+    for (let base = 0; base < ids.length; base += 32 * workers.length) {
+      const pending = workers.flatMap((oracle, i) => {
+        const lo = base + i * 32,
+          subset = ids.slice(lo, lo + 32);
+        if (!subset.length) return [];
+        return [
+          oracle
+            .call("check", {
+              document: doc,
+              old,
+              basis: b,
+              worlds: subset.map((_, j) => world(lo + j)),
+              fold,
+            })
+            .then((text) => ({ subset, expected: JSON.parse(text) })),
+        ];
+      });
+      for (const result of await Promise.all(pending)) yield result;
+    }
+  }
   readonly owed: any[] = [];
   readonly items = new Map<string, any[]>();
   readonly receivers = new Map<string, any>();
@@ -45,12 +94,7 @@ export class Reference {
     const affected: string[] = [],
       complement: string[] = [];
     const changedOwners: string[] = [];
-    for (let lo = 0; lo < ids.length; lo += 32) {
-      const subset = ids.slice(lo, lo + 32),
-        ws = subset.map((_, j) => world(lo + j));
-      const expected = JSON.parse(
-        await this.oracle.call("check", { document: doc, old, basis: b, worlds: ws, fold }),
-      );
+    for await (const { subset, expected } of this.pages(ids, world, doc, old, b, fold)) {
       const outputs = allReads ? await a.reader().readMany(subset, b.tx, b.validTime) : null;
       for (const [j, o] of expected.entries()) {
         assert.equal(o.subject, subset[j]);

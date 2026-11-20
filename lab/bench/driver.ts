@@ -524,6 +524,11 @@ async function run() {
   cpuProfileClock("start");
   save();
   const writer = await openComposition(config.composition, lane, scopeName);
+  if (lane === "datomic" && process.env.DX_W1_WRITER_EXPECTATION) {
+    const { readWriteOptions } = await import("../experiments/EXP-DX1/w1/write-options.ts");
+    const db = "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url");
+    report.writerOptions = await readWriteOptions(writer.backend.url, db, process.env.DX_W1_WRITER_EXPECTATION);
+  }
   const aux = await openComposition(config.composition, lane, scopeName);
   // History growth (bulk, P4 item 2) writes through its own opening, so a writer admission queue full of
   // trace commands cannot starve it; a command that outlives the phase is resolved at wind-down.

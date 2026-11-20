@@ -7,6 +7,7 @@ import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { encodeRow, decodeRow, type WireRow } from "./protocol.js";
 import { encodeRowText, encodeRowTextFast } from "./rowText.js";
+import { historyIdentityBounds } from "./identityRange.js";
 import { enabledFastPaths, fastPathEnabled } from "./fastPaths.js";
 import { largeRequestBody, encodeLargeRequest } from "./requestEncoding.js";
 import http from "node:http";
@@ -25,6 +26,8 @@ import {
   traceResource,
 } from "./tracing.js";
 
+export type DatomicWriteClass = "live" | "import" | "activation" | "notice";
+
 export class DatomicHttpError extends Error {
   readonly _tag = "DatomicHttpError";
   constructor(
@@ -35,6 +38,11 @@ export class DatomicHttpError extends Error {
     readonly route?: string,
   ) {
     super(message);
+  }
+}
+class DatomicRequestTooLarge extends DatomicHttpError {
+  constructor() {
+    super(400, "InvalidValue", "Request too large");
   }
 }
 export class DatomicTransportError extends Error {
@@ -224,6 +232,8 @@ export class DatomicClient {
     readonly timeoutMs = 5000,
     readonly maxResponseBytes = 64 * 1024 ** 2,
     readonly cacheOptions: {
+      readonly groupAccount?: string;
+      readonly writeClass?: DatomicWriteClass;
       readonly entityCacheBytes?: number;
       readonly rowCacheBytes?: number;
       readonly predecessorCacheBytes?: number;
@@ -335,6 +345,10 @@ export class DatomicClient {
             : Buffer.from((fastPathEnabled("body") ? stringifyNativeExact : stringifyExact)(body)),
         );
     const byteLength = typeof bytes === "string" ? Buffer.byteLength(bytes) : (bytes?.length ?? 0);
+    // [DX-WFIX1] Why: validate the complete UTF-8 transaction after its final wire encoding and before opening a socket.
+    // Rejected: estimating row sizes (JSON escaping, envelopes and row texts all count against the same body cap).
+    if (path.endsWith("/transact") && byteLength > 4 * 1024 * 1024)
+      throw new DatomicRequestTooLarge();
     const serializeMicros = (performance.now() - serializeStart) * 1000;
     const remainingMs = timeoutMs - (performance.now() - started);
     if (remainingMs <= 0)
@@ -817,7 +831,9 @@ export class DatomicClient {
   async transact(
     db: string,
     input: {
-      onSent?: () => void;
+      onSent?: (dispatched?: boolean) => void;
+      groupAccount?: string;
+      writeClass?: DatomicWriteClass;
       clientId?: string;
       sendSequence?: number;
       replaySafe?: boolean;
@@ -836,7 +852,7 @@ export class DatomicClient {
       handle?: string;
       release?: boolean;
     },
-    onSent?: () => void,
+    onSent?: (dispatched?: boolean) => void,
   ): Promise<unknown> {
     // [DX-T1] Why: direct client users retain encoding and post-response validation in the same commit trace.
     // Rejected: starting the only trace after serialization at the HTTP boundary.
@@ -847,7 +863,7 @@ export class DatomicClient {
   private async transactTraced(
     db: string,
     input: Parameters<DatomicClient["transact"]>[1],
-    onSent?: () => void,
+    onSent?: (dispatched?: boolean) => void,
   ): Promise<unknown> {
     const encodeSpan = beginSpan("client.transact-encode");
     const encodeStart = performance.now();
@@ -875,8 +891,13 @@ export class DatomicClient {
             return Object.fromEntries(retirementColumns.map((column) => [column, encoded[column]]));
           })
       : input.rows.map(encodeRow);
+    const bounds =
+      compact && fastPathEnabled("history-range") ? historyIdentityBounds(input.newIds) : undefined;
     const body = {
       ...wireInput,
+      ...(this.cacheOptions.writeClass ? { writeClass: this.cacheOptions.writeClass } : {}),
+      ...(this.cacheOptions.groupAccount ? { groupAccount: this.cacheOptions.groupAccount } : {}),
+      ...(bounds ? { historyIdentityBounds: bounds } : {}),
       rows,
       ...(compact ? { rowMode: "texts", rowOrder: input.rows.map((row) => row.id) } : {}),
       rowTexts: Object.fromEntries(
@@ -910,11 +931,16 @@ export class DatomicClient {
       delta?: number;
       recordedAt?: TaggedValue;
     };
+    let dispatched = true;
     try {
       response = await this.request("POST", `/v1/db/${db}/transact`, body, this.timeoutMs);
+    } catch (error) {
+      dispatched = !(error instanceof DatomicRequestTooLarge);
+      throw error;
     } finally {
       this.sentCallbacks.delete(sendKey);
-      onSent?.();
+      if (dispatched) onSent?.();
+      else onSent?.(false);
     }
     if (response.t && response.position) {
       const p = validateTagged(response.position);
@@ -960,6 +986,101 @@ export class DatomicClient {
         };
     }
     return response;
+  }
+  async *transactBulkFrames(
+    db: string,
+    kind: Exclude<DatomicWriteClass, "live">,
+    frames:
+      | Iterable<Parameters<DatomicClient["transact"]>[1]>
+      | AsyncIterable<Parameters<DatomicClient["transact"]>[1]>,
+  ) {
+    // [DX-W1] Why: release the pipeline between independently atomic producer frames, with a durable receipt for each.
+    // Rejected: splitting one application's atomic write or pre-submitting the suffix before the current ACK.
+    if (this.cacheOptions.writeClass && this.cacheOptions.writeClass !== kind)
+      throw new TypeError("Bulk producer class differs from its configured role");
+    for await (const frame of frames) yield await this.transact(db, { ...frame, writeClass: kind });
+  }
+  // [DX-W1] Why: all retries of one claimed command return its original durable logical receipt, including after an ambiguous transport failure.
+  // Rejected: retrying a write after an unknown ACK or returning the last member of its physical transaction.
+  async transactCommand(db: string, input: Parameters<DatomicClient["transact"]>[1]) {
+    if (input.claims.length !== 1) throw new TypeError("One command claim is required");
+    const claim = input.claims[0]!;
+    type Result = {
+      operationId: string;
+      position: TaggedValue;
+      t: TaggedValue;
+      recordedAt: TaggedValue;
+    };
+    const receipt = (txId: string, ack: Result) => {
+      const p = validateTagged(ack.position),
+        t = validateTagged(ack.t),
+        clock = validateTagged(ack.recordedAt);
+      if (
+        typeof ack.operationId !== "string" ||
+        !ack.operationId ||
+        p.t !== "long" ||
+        !Number.isSafeInteger(Number(p.v)) ||
+        Number(p.v) < 1 ||
+        t.t !== "long" ||
+        BigInt(t.v) < 1n ||
+        clock.t !== "double" ||
+        !Number.isFinite(clock.v)
+      )
+        throw new TypeError("Invalid command receipt");
+      return {
+        commandId: claim.commandId,
+        txId,
+        operationId: ack.operationId,
+        position: Number(p.v),
+        t: String(t.v),
+        recordedAt: Number(clock.v),
+      };
+    };
+    try {
+      const ack = (await this.transact(db, input)) as Result;
+      if (ack.operationId !== input.operationId) throw new TypeError("Commit operation mismatch");
+      return receipt(claim.txId, ack);
+    } catch (error) {
+      // [DX-WFIX1] Why: older writers can report a stale CAS for an already committed command.
+      // Rejected: retrying CAS or polling for a different command (a truly conflicting write stays refused).
+      const cas = error instanceof DatomicHttpError && error.code === "CasConflict";
+      if (
+        !cas &&
+        !(
+          error instanceof DatomicTransportError ||
+          (error instanceof DatomicHttpError &&
+            ["CommandConflict", "OperationDuplicate", "OutcomeUnknown"].includes(error.code))
+        )
+      )
+        throw error;
+      const deadline = performance.now() + this.timeoutMs;
+      do {
+        const remaining = Math.max(1, Math.ceil(deadline - performance.now()));
+        try {
+          const found = await this.request<{
+            txId: string | null;
+            receipt?: Result & { status: string };
+            commandId?: string;
+          }>(
+            "POST",
+            `/v1/db/${db}/claim`,
+            { commandId: claim.commandId, receipt: true },
+            remaining,
+          );
+          if (found.txId) {
+            if (found.commandId !== claim.commandId || found.receipt?.status !== "committed")
+              throw new TypeError("Stored command receipt mismatch");
+            return receipt(found.txId, found.receipt);
+          }
+        } catch (readError) {
+          if (!(readError instanceof DatomicTransportError)) throw readError;
+        }
+        if (cas) break;
+        const left = deadline - performance.now();
+        if (left > 0) await new Promise((resolve) => setTimeout(resolve, Math.min(25, left)));
+      } while (performance.now() < deadline);
+      throw error;
+    }
   }
   operation(
     db: string,
