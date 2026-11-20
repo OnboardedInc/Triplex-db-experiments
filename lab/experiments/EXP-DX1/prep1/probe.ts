@@ -12,11 +12,13 @@ const deep = mode === "profile" || mode === "census";
 const guardProbe = deep || mode === "cheap";
 const depths = subjectProfile
   ? [1, 2, 4, 6].flatMap((n) => [n, n, n])
-  : guardProbe
-    ? [32]
-    : mode === "ortho"
-      ? [1, 8, 32, 32, 8, 1]
-      : [32, 32];
+  : mode === "census"
+    ? [8]
+    : guardProbe
+      ? [32]
+      : mode === "ortho"
+        ? [1, 8, 32, 32, 8, 1]
+        : [32, 32];
 const count = subjectProfile ? 30 : guardProbe ? 96 : 192;
 const subjectCount = deep ? 1200 : depths.length * count;
 // [DX-PREP1] Why: sample across the same seeded depth as the earlier open-loop experiment.
@@ -76,15 +78,16 @@ type Ack = {
   timeline: { payloadPrepared: number; completed: number; responsePrepared: number };
 };
 
-async function seedBatch(
+async function censusWrite(
+  peer: DatomicClient,
   db: string,
   input: Parameters<DatomicClient["transact"]>[1],
-  position: number,
-) {
+): Promise<{
+  ack: Ack | Pick<Ack, "operationId" | "position" | "t" | "recordedAt">;
+  recovered: boolean;
+}> {
   try {
-    const ack = (await c.transact(db, input)) as Ack;
-    assert.equal(ack.operationId, input.operationId);
-    assert.equal(Number(ack.position.v), position);
+    return { ack: (await peer.transact(db, input)) as Ack, recovered: false };
   } catch (failure) {
     if (
       mode !== "census" ||
@@ -92,16 +95,26 @@ async function seedBatch(
       failure.code !== "OutcomeUnknown"
     )
       throw failure;
-    // [DX-PREP1] Why: under concurrent Mac work the seed reply can miss the gateway's wait budget.
-    // Rejected: sending another seed transaction or extending the driver's edit timing to include recovery.
+    // [DX-PREP1] Why: a busy Mac can lose the HTTP reply while the original operation is still durable.
+    // Rejected: sending it again or fabricating gateway timings and group metadata for a recovered receipt.
     for (let i = 0; i < 60; i++) {
-      const stored = await c.operation(db, input.operationId);
+      const stored = await peer.operation(db, input.operationId);
       if (stored.status === "committed") {
         assert.equal(stored.operationId, input.operationId);
-        assert.equal(Number(stored.position?.v), position);
-        assert(Number(stored.t?.v) > 0);
-        console.log("PREP1_SEED_RECOVERED " + JSON.stringify({ attempt, db, arm, stored }));
-        return;
+        assert(
+          stored.position?.t === "long" &&
+            stored.t?.t === "long" &&
+            stored.recordedAt?.t === "double",
+        );
+        return {
+          ack: {
+            operationId: stored.operationId,
+            position: stored.position,
+            t: stored.t,
+            recordedAt: stored.recordedAt,
+          },
+          recovered: true,
+        };
       }
       await sleep(500);
     }
@@ -119,16 +132,20 @@ try {
     const batch = Array.from({ length: 8 }, (_, j) =>
       command(`seed-${i + j}`, facts(i + j, depth, "original"), [], false),
     );
-    await seedBatch(
-      db,
-      {
-        ...batch[0]!,
-        entities: batch.flatMap((x) => x.entities ?? []),
-        newIds: batch.flatMap((x) => x.newIds),
-        rows: batch.flatMap((x) => x.rows),
-      },
-      i / 8 + 1,
-    );
+    const { ack, recovered } = await censusWrite(c, db, {
+      ...batch[0]!,
+      entities: batch.flatMap((x) => x.entities ?? []),
+      newIds: batch.flatMap((x) => x.newIds),
+      rows: batch.flatMap((x) => x.rows),
+    });
+    assert.equal(ack.operationId, batch[0]!.operationId);
+    assert.equal(Number(ack.position.v), i / 8 + 1);
+    if (recovered) {
+      console.log(
+        "PREP1_SEED_RECOVERED " +
+          JSON.stringify({ attempt, db, arm, stored: { status: "committed", ...ack } }),
+      );
+    }
     seeds.push(...batch.map((x) => x.rows.slice(0, 3)));
   }
   const seedHead = await c.begin(db);
@@ -198,10 +215,17 @@ try {
             const input = inputs[index]!;
             const begin = now();
             const peer = index % peers.length;
-            const ack = (await peers[peer]!.transact(db, input)) as Ack;
+            const { ack, recovered } = await censusWrite(peers[peer]!, db, input);
             const end = now();
             assert.equal(ack.operationId, input.operationId);
-            recorded.push({ index, begin, end, ack, ...(subjectProfile ? { peer } : {}) });
+            recorded.push({
+              index,
+              begin,
+              end,
+              ack,
+              ...(recovered ? { recovered } : {}),
+              ...(subjectProfile ? { peer } : {}),
+            });
           }
           return recorded;
         }),

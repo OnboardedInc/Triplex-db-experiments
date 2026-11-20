@@ -5,7 +5,7 @@ Each writer gets the same field saves and quiet-account arrivals with one, two a
 The model puts the new writer near 383 saves per second with one save per append and 697 with two.
 At 394 offered saves per second, the two-save model predicts a 28 ms p99 and a quiet-account slowdown of 1.22×.
 The saved preflight joined 1,315 mock saves to the matching receipts and append records.
-The new Mac gates use ordinary heavy tokens. The server result has yet to land.
+PostgreSQL restart and public readbacks passed in the same run. The server result has yet to land.
 
 **North star.** P2 durable small saves, P6 per-account tails and P8 live progress during import. Exact historical reads, native rows and the ordered feed are part of this experiment. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
@@ -21,7 +21,7 @@ The owner revision is updated by every typed write to that owner's rows and is t
 
 **Step 3.** The SQL runner holds the subject response after the real native commit, kills the gateway, verifies the synchronous standby flushed through the primary's cut, restarts Datomic and both SQL instances, then checks the old receipt, four journal routes, Datalog over native rows, log and earlier cuts. The lean public HTTP native query and log routes already decline on INT1. ERASE1's independent tests found leaks through an old pin, journals and restore on the integration baseline. The managed runner now checks pins, journal bytes and ID reuse after actual lean excision. The Part 4 candidate merges INT1 `9205da5cb` and runs the ERASE1 ledger regressions with verified subject-writer installation. Protected requests use the existing guarded path. The restart fixture adds public native query and log readbacks. Results for the merged candidate are pending.
 
-**Mac gates.** The fresh census retains a route, decline reasons and native transaction for every save. Separate small SQL gates check an interrupted commit and public queries. Erasure runs through the merged ERASE1 ledger sequence. Every Mac timing is diagnostic. The archived Part 4 lease attempts remain evidence.
+**Mac gates.** The fresh census retains a route, decline reasons and native transaction for every save. Separate small SQL gates check an interrupted commit and public queries. Erasure runs through the merged ERASE1 ledger sequence. Every Mac timing is diagnostic. `p5-subject-recovery-01` passed 724 assertions, preserved the original receipt across two authenticated PostgreSQL boots, and verified the public queries after restart. The first census stopped on a seed reply timeout. The second recovered three seeds and stopped on an edit reply timeout. Its retry uses eight outstanding and verifies recovered replies without resubmission.
 
 **Fair turns.** The optional shared ingress `DX_PREP1_FAIR_CREDITS=1` routes the prepared arm across all its peers as one admission lane. It lends unused slots and picks the least-served ready account over the last ten grants. Equal claims go to the oldest ready save. One credit leaves at most one neighbour append outstanding. The actual wait includes its remaining prepare, native apply, append and response, which storage stalls can extend. Six credits cap one admitted group at six saves, whose actual append count is measured separately. Unknown results stop further dispatch. The guarantee covers traffic through this ingress.
 
