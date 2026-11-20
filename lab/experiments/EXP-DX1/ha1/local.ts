@@ -199,14 +199,18 @@ export async function localDrill(opts: any, config: any, manager: any) {
       const owner = readMeasureLease();
       // [DX-LOAD3] Why: a foreign claimant drains heavy tokens, including the wrapper's token.
       // Rejected: waiting inside the wrapper for a lease whose owner is waiting on us.
-      if (owner && !owner.stale) throw admissionRetry("measurement lease busy");
-      try {
-        const leaseOptions = { holder: String(opts.holder), timeoutMs: 30000 };
-        formal = await acquireMeasureLease(mode, leaseOptions);
-        assert(formal.owner?.holder === opts.holder && formal.owner.pid === process.pid);
-      } catch (error: any) {
-        if (error.code === "LEASE_TIMEOUT") throw admissionRetry(error.message);
-        throw error;
+      const inherited =
+        owner && !owner.stale && owner.holder === opts.holder && owner.pid === process.ppid;
+      if (!inherited) {
+        if (owner && !owner.stale) throw admissionRetry("measurement lease busy");
+        try {
+          const leaseOptions = { holder: String(opts.holder), timeoutMs: 30000 };
+          formal = await acquireMeasureLease(mode, leaseOptions);
+          assert(formal.owner?.holder === opts.holder && formal.owner.pid === process.pid);
+        } catch (error: any) {
+          if (error.code === "LEASE_TIMEOUT") throw admissionRetry(error.message);
+          throw error;
+        }
       }
     }
     const admitUntil = performance.now() + 30000;
@@ -312,7 +316,8 @@ export async function localDrill(opts: any, config: any, manager: any) {
         }
       }
       if (reserved) break;
-      if (formal && performance.now() > admitUntil) throw admissionRetry("no fitting VM slot");
+      if (microLoad(mode) && performance.now() > admitUntil)
+        throw admissionRetry("no fitting VM slot");
       await sleep(5000);
     }
     const site: Site = {
