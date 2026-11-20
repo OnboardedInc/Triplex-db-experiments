@@ -251,11 +251,28 @@ export function effectiveConfig(config, info) {
     const entrypoint = path.join(dir, 'entrypoint.sh');
     fs.copyFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/transactor.properties'), transactor);
     fs.copyFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/entrypoint.sh'), entrypoint);
+    let trace;
+    if (info.traceRun) {
+      if (info.mode !== 'exclusive' || !/^[a-z0-9-]{8,60}$/.test(info.traceRun) || !/^[a-f0-9]{40}$/.test(info.traceSource))
+        fail('CONFIG', 'A trace requires a named exclusive run and its committed source');
+      const traceDir = path.join(REPO, 'runs', 'engine-traces', info.traceRun);
+      if (fs.realpathSync(traceDir) !== traceDir) fail('CONFIG', 'Trace directory must be inside this checkout');
+      let script = fs.readFileSync(entrypoint, 'utf8');
+      for (const [cpus, role] of [['TX_CPUS', 'tx'], ['GW_CPUS', 'gateway']]) {
+        const prefix = 'taskset -c "$' + cpus + '"';
+        if (script.split(prefix).length !== 2) fail('CONFIG', 'Unknown Datomic JVM launch site');
+        script = script.replace(prefix, 'TRIPLEX_TRACE_PROCESS=' + role + ' TRIPLEX_TRACE_JFR=' + (role === 'tx' ? '1' : '0') + ' ' + prefix);
+      }
+      fs.writeFileSync(entrypoint, script);
+      // [DX-STG1] Why: the two JVMs in a local slot need separate clock-bound records for a real submit-to-function interval. Rejected: charging peer response or socket time to the transaction queue.
+      trace = { dir: traceDir, run: info.traceRun, source: info.traceSource, entrypoint: sha256(script) };
+    }
     const effective = {
       lane: 'datomic', slot: info.slot, image: info.laneConf.image, imageId: info.laneConf.imageId,
       buildInputsSha256: info.laneConf.buildInputsSha256, sourceInputsSha256: sources.sha256,
       gatewaySourceSha256: sha256(JSON.stringify(sources.gateway)), configMountMode: 'ro',
-      transactorOpts: info.transactorOpts, gatewayOpts: info.gatewayOpts,
+      transactorOpts: info.transactorOpts + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: info.gatewayOpts,
+      ...(trace ? { trace } : {}),
       txCpus: info.txCpus, gwCpus: info.gwCpus, profile: info.slot === 'dev' ? 'dev' : 'exclusive',
       memBytes: info.memBytes, cpus: info.cpus, ...pin,
       publish: `127.0.0.1:${info.port}:8080`, volume: `${info.volume}:/data`,
@@ -337,7 +354,7 @@ export function runArgs(info, eff, holder) {
     '--health-cmd', e.health, '--health-interval', '5s', '--health-timeout', '3s', '--health-start-period', '20s', '--health-retries', '3',
   ];
   if (info.lane === 'datomic')
-    return [...common, '-v', `${eff.files.transactor}:/config/transactor.properties:ro`, '-v', `${eff.files.entrypoint}:/config/entrypoint.sh:ro`, '-e', `TRANSACTOR_JAVA_OPTS=${e.transactorOpts}`, '-e', `GATEWAY_JAVA_OPTS=${e.gatewayOpts}`,
+    return [...common, ...(e.trace ? ['-v', e.trace.dir + ':/lab-trace', '-e', 'TRIPLEX_TRACE_DIR=/lab-trace', '-e', 'TRIPLEX_TRACE_LEVEL=summary', '-e', 'TRIPLEX_TRACE_TX_JFR=1', '-e', 'TRIPLEX_TRACE_RUN=' + e.trace.run, '-e', 'TRIPLEX_TRACE_SOURCE=' + e.trace.source, '-e', 'TRIPLEX_TRACE_SLOT=' + info.container] : []), '-v', `${eff.files.transactor}:/config/transactor.properties:ro`, '-v', `${eff.files.entrypoint}:/config/entrypoint.sh:ro`, '-e', `TRANSACTOR_JAVA_OPTS=${e.transactorOpts}`, '-e', `GATEWAY_JAVA_OPTS=${e.gatewayOpts}`,
       '-e', `TX_CPUS=${e.txCpus}`, '-e', `GW_CPUS=${e.gwCpus}`, '-e', `DATOMIC_PROFILE=${e.profile}`,
       '-e', `GATEWAY_SOURCE_SHA256=${e.gatewaySourceSha256}`, info.laneConf.imageId];
   if (info.lane === 'xtdb')
@@ -408,6 +425,20 @@ export function cgroupOf(container) {
     return parseCgroup(execFileSync('docker', dockerArgs(['exec', container, 'cat', '/sys/fs/cgroup/cpu.max', '/sys/fs/cgroup/cpuset.cpus.effective', '/sys/fs/cgroup/cpu.weight', '/sys/fs/cgroup/cpu.stat']),
       { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 15_000 }));
   } catch { return null; }
+}
+export function slotCpu(holder, lane, slot) {
+  const info = slotInfo(loadSlots(), lane, slot), owner = readOwner(info);
+  if (!owner || info.mode !== 'exclusive' || owner.holder !== holder || owner.container !== info.container)
+    fail('REFUSED', 'CPU observation requires the current exclusive holder');
+  const raw = execFileSync('docker', dockerArgs(['exec', info.container, 'cat', '/proc/stat', '/proc/pressure/cpu', '/sys/fs/cgroup/cpu.stat', '/sys/fs/cgroup/io.stat', '/sys/fs/cgroup/cpu.max']), { encoding: 'utf8', timeout: 10000 });
+  const devices = Object.fromEntries(raw.split('\n').filter(l => /^\d+:\d+\s/.test(l)).map(l => {
+    const [device,...counters]=l.trim().split(/\s+/);
+    return [device,Object.fromEntries(counters.map(c=>{const [k,v]=c.split('=');return [k,Number(v)];}))];
+  }));
+  return { at: performance.timeOrigin + performance.now(), owner: owner.createdAt, slot: info.container,
+    cpu: raw.split('\n').filter(x => /^cpu\d*\s/.test(x)).map(x => x.trim().split(/\s+/).slice(1, 9).map(Number)),
+    psiUsec: Number(raw.match(/^some .*total=(\d+)/m)?.[1]), groupUsec: Number(raw.match(/^usage_usec (\d+)/m)?.[1]),
+    throttledUsec: Number(raw.match(/^throttled_usec (\d+)/m)?.[1]), devices, quota: raw.trim().split('\n').at(-1) };
 }
 /** VM-wide PSI cpu line, read inside any running container (/proc/pressure is not namespaced). */
 function vmPsi(container) {

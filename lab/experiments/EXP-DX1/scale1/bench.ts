@@ -25,6 +25,7 @@ import {
   type Quantities,
   type ScopeMeasurement,
 } from "./measurements.ts";
+import { liveArms, type PeakAlignment } from "./deep-live.ts";
 import { compressTraces } from "./archive.ts";
 import { resources } from "./resources.ts";
 import {
@@ -69,6 +70,16 @@ function status(dir: string, stage: string, notes: unknown = {}) {
   fs.renameSync(f + ".tmp", f);
 }
 const roles = ["pg", "tx", "gw-w", "gw-r"];
+// [DX-SCALE1] Why: guarded releases never load the independently dispatched lazy publisher. Rejected: blocking the next production-shaped arm on changes confined to that publisher's private files.
+export function sameCampaignInputs(ref: string, changes: string[], publication?: string) {
+  return changes.every(
+    (name) =>
+      /\.md$|SHA256SUMS$|\.sha256$|\.test\.[cm]?ts$/.test(name) ||
+      (publication === undefined &&
+        ref === "exp/DX-ACT1-activation" &&
+        name.startsWith("lab/experiments/EXP-DX1/actv-lazy/")),
+  );
+}
 const planCpus = {
   transactor: "0",
   postgres: "1",
@@ -389,28 +400,12 @@ function clean(dir: string, prefix: string) {
     JSON.stringify({ at: Date.now(), before, after }),
   );
 }
-async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
-  const dir = path.join(root, tag),
-    attempt = get(path.join(dir, "attempt.json"));
-  const spec = campaignItem(item, attempt.layout);
-  assert.deepEqual(attempt.spec, spec);
-  const small = mode === "small",
-    smallSeparate = small && attempt.layout !== "pooled";
-  const prefix = attempt.slot,
-    source = call("git", ["rev-parse", "HEAD"]);
-  assert.equal(source, attempt.source);
-  const rawRoot = path.join(repo, "runs", "DX-SCALE1", tag),
-    barrier = path.join(dir, "barrier");
-  fs.mkdirSync(rawRoot, { recursive: true });
-  fs.mkdirSync(barrier);
-  const oracleDir = path.join(dir, "oracle");
-  write(path.join(dir, "replay-source.json"), stageReplay(repo, oracleDir));
-  write(path.join(dir, "source.json"), sourceInventory(repo, attempt.publication === "lazy"));
-  const budget = attempt.capacity;
-  assert(attempt.boundedTrial || (mode === "seed" ? budget.fitsSeed : budget.fitsLive));
-  status(dir, "starting stack");
+// [DX-STG1] Why: notification trials use the same cold native stack, placement and cleanup as SCALE1. Rejected: a second server launcher with different durability settings.
+export function startScaleStack(dir: string, prefix: string, source: string, grouped = false, options: NodeJS.ProcessEnv = {}) {
   const env = {
     ...process.env,
+    DX_GROUP_COMMIT: grouped ? "1" : "0",
+    DX_GROUP_QUEUE_CLOCK: "0",
     DX_BARE_METAL: "1",
     DX_BARE_METAL_ROOT: dir,
     DX_STACK_EVIDENCE: path.join(dir, "engines"),
@@ -430,6 +425,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "-Xms256m -Xmx4g -Ddatomic.objectCacheMax=1536m -Xlog:gc=info:file=/trace/gw-w-gc.log",
     DX_GW_READ_JAVA_OPTS:
       "-Xms256m -Xmx4g -Ddatomic.objectCacheMax=1536m -Xlog:gc=info:file=/trace/gw-r-gc.log",
+    ...options,
   };
   execFileSync(
     "bash",
@@ -459,6 +455,47 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     { env, cwd: repo, stdio: "inherit", timeout: 480000 },
   );
   const engines = placement(prefix);
+  return { env, engines };
+}
+async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
+  const dir = path.join(root, tag),
+    attempt = get(path.join(dir, "attempt.json"));
+  const spec = campaignItem(item, attempt.layout);
+  assert.deepEqual(attempt.spec, spec);
+  const small = mode === "small",
+    smallSeparate = small && attempt.layout !== "pooled";
+  const prefix = attempt.slot,
+    source = call("git", ["rev-parse", "HEAD"]);
+  assert.equal(source, attempt.source);
+  const rawRoot = path.join(repo, "runs", "DX-SCALE1", tag),
+    barrier = path.join(dir, "barrier");
+  fs.mkdirSync(rawRoot, { recursive: true });
+  fs.mkdirSync(barrier);
+  const oracleDir = path.join(dir, "oracle");
+  write(path.join(dir, "replay-source.json"), stageReplay(repo, oracleDir));
+  write(path.join(dir, "source.json"), sourceInventory(repo, attempt.publication === "lazy"));
+  const budget = attempt.capacity;
+  assert(attempt.boundedTrial || (mode === "seed" ? budget.fitsSeed : budget.fitsLive));
+  status(dir, "starting stack");
+  const { env, engines } = startScaleStack(dir, prefix, source, Boolean(attempt.groupControl));
+  if (item === 3 && attempt.layout === "pooled") {
+    const expected = Number(Boolean(attempt.groupControl));
+    const actual = JSON.parse(docker("inspect", engines["gw-w"].id))[0];
+    assert(
+      actual.Id === engines["gw-w"].id &&
+        actual.Config.Env.includes("TX2_GROUP_COMMIT=" + expected) &&
+        actual.Config.Env.includes("TX2_GROUP_QUEUE_CLOCK=0"),
+    );
+    write(path.join(dir, "group-settings.json"), {
+      source,
+      slot: prefix,
+      nonce: attempt.nonce,
+      databaseLayout: attempt.layout,
+      enabled: Boolean(expected),
+      gatewayImage: actual.Image,
+      queueClock: false,
+    });
+  }
   let before = snapshot(prefix);
   for (const [role, cpus] of Object.entries({
     pg: planCpus.postgres,
@@ -599,6 +636,12 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
         TX2_SWEEP_STRICT: "1",
         TRIPLEX_TRACE_DIR: path.join(dir, "act2-preflight-trace"),
       });
+      const { inputs } = await import("../act2/preflight.ts");
+      assert.equal(
+        proof.sourceInputs,
+        inputs(),
+        "Activation preflight used different runtime bytes",
+      );
       write(path.join(dir, "preflight.json"), proof);
       // [DX-ACT2] Why: the probe writes a separate native database on the measured stack. Account for those bytes before a cold seed; restoration replaces the probe database. Rejected: attributing the probe to the deep population.
       const after = snapshot(prefix);
@@ -732,7 +775,12 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     const fd = fs.openSync(path.join(out, "driver.log"), "wx");
     exit.push(null);
     const tenant: TenantSpec | undefined = attempt.layout
-      ? { study: attempt.spec.study, topology: attempt.layout, physical: i }
+      ? {
+          study: attempt.spec.study,
+          topology: attempt.layout,
+          physical: i,
+          ...(attempt.live ? { live: attempt.live } : {}),
+        }
       : undefined;
     const identity: DeepIdentity = {
       ...(tenant ? { tenant } : {}),
@@ -761,9 +809,9 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--lane",
       "datomic",
       "--composition",
-      "reach",
+      process.env.DX_INT1_READERS === "touched" ? "reach-touched" : "reach",
       "--profile",
-      "deep",
+      attempt.live ? "deep-live" : "deep",
       "--rung",
       tenant
         ? tenantRung(tenant)
@@ -806,6 +854,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       mode === "seed" ? "sender" : "replica-worker",
     ];
     if (restoring) args.push("--verified-seed-image", path.join(dir, "restored-seed.json"));
+    if (attempt.live) args.push("--peak-alignment", attempt.live);
     if (tenant) args.push("--tenant-study", tenant.study, "--tenant-topology", tenant.topology);
     if (small)
       args.push(
@@ -1050,7 +1099,24 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     raw.every((r) => fs.existsSync(path.join(r, "seed-observed.json")))
   ) {
     const after = snapshot(prefix),
-      facts = scheduledScopes * deepPopulation(spec.people).facts;
+      facts = raw.reduce((sum, r, i) => {
+        const w = get(path.join(r, "seed-observed.json"));
+        assert.deepEqual(w.identity, get(path.join(r, "identity.json")));
+        assert(
+          w.identity.source === source &&
+            w.identity.nonce === attempt.nonce &&
+            w.identity.slot === prefix &&
+            w.identity.account === i &&
+            w.identity.arm === "seed",
+        );
+        assert(
+          w.seed.facts ===
+            (w.identity.tenant
+              ? tenantFacts(tenantAccounts(w.identity.tenant))
+              : deepPopulation(w.seed.people).facts),
+        );
+        return sum + w.seed.facts;
+      }, 0);
     disk = {
       before,
       after,
@@ -1064,6 +1130,18 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   assert(disk, "No completed seed measurement");
   if (mode === "seed") {
     assert(exit.every((e) => e === 0));
+    if (item === 3 && attempt.layout === "pooled") {
+      const w = get(path.join(raw[0]!, "seed-observed.json"));
+      assert.deepEqual(w.identity, get(path.join(raw[0]!, "identity.json")));
+      assert(
+        w.identity.source === source &&
+          w.identity.nonce === attempt.nonce &&
+          w.identity.slot === prefix &&
+          w.identity.arm === "seed",
+      );
+      status(dir, "sealing the ten-account population", { position: w.seed.position });
+      await sealSeed(dir, prefix, w, engines.pg.id);
+    }
     status(dir, "seed complete", {
       facts: disk.facts,
       target: spec.scopes,
@@ -1231,7 +1309,7 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
   if (
     entry.item === 5 &&
     entry.layout === "pooled" &&
-    entry.mode === "zero" &&
+    (entry.mode === "zero" || entry.mode === "seed") &&
     fs.existsSync(path.join(seedDir, "identity.json"))
   ) {
     const identity = get(path.join(seedDir, "identity.json"));
@@ -1257,6 +1335,7 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
     "preflight.json",
     "preflight-stop.json",
     "preflight-disk.json",
+    "group-settings.json",
     "source.json",
     "lazy-binding.json",
     "placement.json",
@@ -1466,12 +1545,24 @@ async function main() {
               item: i,
               layouts: [campaignItem(i, "pooled"), campaignItem(i, "separate")],
               arms: [i === 3 ? "interference" : "small"],
+              ...(i === 3
+                ? {
+                    additionalPooledArm: "group commit with the matched all-ten burst",
+                    fieldSaves: {
+                      profile: "deep-live",
+                      trials: liveArms,
+                      alignments: ["staggered", "coincident"],
+                      comparisons: ["pooled ungrouped", "pooled grouped", "separate ungrouped"],
+                    },
+                  }
+                : {}),
             })),
             {
               item: 5,
               layouts: [campaignItem(5, "pooled")],
               arms: ["zero", "reader", "activation"],
               seedImages: 1,
+              capacityFallback: "seed-only if the live arm is refused and a seed fits",
             },
           ],
           placement: planCpus,
@@ -1537,16 +1628,38 @@ async function main() {
   const sourceGit = ["-c", "credential.helper=", "-c", "http.extraHeader="];
   // [DX-SCALE1] Why: a reader must execute the identical public revision as its zero arm even if the other bench publishes during the 5,910-second trace. Rejected: mixing sender or guard versions inside a pair, or silently ignoring upstream changes.
   const originHeads: Record<string, { head: string; changes: string[] }> = {};
-  for (const ref of publication === "lazy"
-    ? ["exp/DX-ACT1-activation"]
-    : ["exp/DX-BM1-bare-metal", "exp/DX-ACT1-activation"]) {
+  const refs =
+    publication === "lazy"
+      ? ["exp/DX-ACT1-activation"]
+      : ["exp/DX-BM1-bare-metal", "exp/DX-ACT1-activation"];
+  if (item >= 2 && publication !== "lazy") {
+    call("git", [
+      "merge-base",
+      "--is-ancestor",
+      "a9eb03b04f31d1679a2385bb80b87fa6d389b6d2",
+      source,
+    ]);
+    refs.push("exp/DX-ACT2-activation-100k");
+  }
+  if (item === 3 && getopt("account-layout") === "pooled") {
+    call("git", [
+      "merge-base",
+      "--is-ancestor",
+      "502c8897deb9af8233d72dfc6cc2d62f601f0fca",
+      source,
+    ]);
+    refs.push("exp/DX-W1-commit-tail-reads");
+  }
+  for (const ref of refs) {
     call("git", [...sourceGit, "fetch", "origin", "refs/heads/" + ref], 60000);
     const head = call("git", ["rev-parse", "FETCH_HEAD"]),
       ancestor = call("git", ["merge-base", head, source]);
     const changes =
       ancestor === head
         ? []
-        : call("git", ["diff", "--name-only", ancestor, head]).split("\n").filter(Boolean);
+        : call("git", ["diff", "--no-renames", "--name-only", ancestor, head])
+            .split("\n")
+            .filter(Boolean);
     if (publication === "lazy")
       assert.equal(head, source, "The lazy bench requires the exact published experiment");
     const paired =
@@ -1554,11 +1667,16 @@ async function main() {
       getopt("baseline") &&
       /^[a-z][a-z0-9-]{2,40}$/.test(getopt("baseline")!) &&
       get(path.join(root, getopt("baseline")!, "attempt.json")).source === source;
+    // [DX-SCALE1] Why: ACT2 and W1 are explicitly revision-pinned treatments. Their later independent experiments are recorded in originHeads. Rejected: blocking a verified page-guard or group-commit arm on an unrelated design branch advance.
+    const pinnedStudy =
+      ref === "exp/DX-ACT2-activation-100k" || ref === "exp/DX-W1-commit-tail-reads";
     assert(
       // [DX-ACT2] Why: DELTA executes this branch's source-bound experiment and full on-slot preflight. Unrelated later research on the reference branches is recorded in originHeads. Rejected: requiring both other experiments' newest code to launch an independently pinned treatment.
       activationMode === "delta" ||
         paired ||
-        changes.every((n) => /\.md$|SHA256SUMS$|\.sha256$|\.test\.[cm]?ts$/.test(n)),
+        pinnedStudy ||
+        (mode === "seed" && item === 3 && ref === "exp/DX-ACT1-activation") ||
+        sameCampaignInputs(ref, changes, publication),
       "New upstream executable inputs require an integrated source revision: " + ref,
     );
     originHeads[ref] = { head, changes };
@@ -1584,11 +1702,53 @@ async function main() {
     capacity = budgetFor(item, root, mode, getopt("sizing"));
   const baselineTag = getopt("baseline"),
     seedImageTag = getopt("seed-image");
+  const live = getopt("peak-alignment") as PeakAlignment | undefined;
+  if (live || getopt("profile"))
+    assert(
+      item === 3 &&
+        mode === "interference" &&
+        getopt("profile") === "deep-live" &&
+        (live === "staggered" || live === "coincident"),
+    );
+  const groupControl = getopt("group-control");
+  if (groupControl) {
+    assert(
+      item === 3 &&
+        layout === "pooled" &&
+        mode === "interference" &&
+        /^[a-z][a-z0-9-]{2,40}$/.test(groupControl),
+    );
+    const previous = get(path.join(root, groupControl, "attempt.json")),
+      result = get(path.join(root, groupControl, "terminal.json"));
+    const settings = get(path.join(root, groupControl, "transfer/group-settings.json"));
+    // [DX-SCALE1] Why: repeat the full control trace so all ten accounts reach the burst with the same prior offers and readers. Rejected: a separately seeded synthetic burst or an unverified gateway option.
+    assert(
+      previous.item === item &&
+        previous.mode === mode &&
+        previous.layout === layout &&
+        previous.live === live &&
+        previous.source === source &&
+        !previous.groupControl,
+    );
+    assert(
+      result.cleanup &&
+        result.service === "success" &&
+        result.scopeReports === 1 &&
+        result.nonce === previous.nonce,
+    );
+    assert(
+      settings.source === source &&
+        settings.slot === previous.slot &&
+        settings.nonce === previous.nonce &&
+        settings.enabled === false,
+    );
+  }
   // [DX-ACT2] Why: a standalone guarded activation can seed its own pooled account scope after preflight. Rejected: borrowing the image of a zero arm from another build.
   if (
     item === 5 &&
     layout === "pooled" &&
     mode !== "zero" &&
+    mode !== "seed" &&
     (mode !== "activation" || seedImageTag)
   ) {
     assert(seedImageTag && /^[a-z][a-z0-9-]{2,40}$/.test(seedImageTag));
@@ -1657,6 +1817,8 @@ async function main() {
     layout,
     boundedTrial,
     seedImageTag,
+    groupControl,
+    ...(live ? { live, profile: "deep-live" } : {}),
     at: Date.now(),
     cpus: planCpus,
     topology,
@@ -1708,6 +1870,7 @@ async function main() {
   ]);
   console.log(JSON.stringify({ unit, tag, ceiling, capacity }));
 }
+export const scaleHost = { physical, released, memory, available, childrenInventory, clean, snapshot, planCpus, root };
 if (process.argv[1] && path.resolve(process.argv[1]) === script)
   main().catch((e) => {
     console.error(e);
