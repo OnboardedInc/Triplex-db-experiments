@@ -184,6 +184,10 @@ async function selftestDatomic(config, opts) {
   const info = slotInfo(config, 'datomic', 'dev');
   assertDatomicImage(info);
   const name = 'tx2-datomic-selftest';
+  // [DX-W1] Why: charge indexed diagnostic seeds against the same disk ledger as every other builder.
+  // Rejected: letting an ephemeral SQL database inherit a zero-byte forecast.
+  const scratchGiB = Number(opts['scratch-gib'] ?? 0);
+  if (!Number.isSafeInteger(scratchGiB) || scratchGiB < 0 || scratchGiB > 16) fail('USAGE', 'invalid selftest scratch GiB');
   const holder = defaultHolder(opts);
   // [EXP-DA00] Why: ephemeral tests consume real pool capacity. Rejected: unaccounted docker run --rm.
   await withPool(async ledger => {
@@ -191,16 +195,16 @@ async function selftestDatomic(config, opts) {
     const all = listTx2Containers({ all: true });
     reconcile(ledger, all);
     if (ledger.reservations.some(e => e.container === name) || inspect(name)) fail('REFUSED', 'Datomic selftest already owned/running');
-    const request = { container: name, memBytes: 1.5 * 1024 ** 3, diskForecastBytes: 0 };
+    const request = { container: name, memBytes: 1.5 * 1024 ** 3, diskForecastBytes: scratchGiB * 1024 ** 3 };
     const verdict = admission({ config, reservations: ledger.reservations, running: all, request, diskUsedBytes: vmDisk(config).usedBytes });
     if (!verdict.ok) fail('REFUSED', `pool refuses selftest: ${verdict.reasons.join('; ')}`);
     ledger.reservations.push({ ...request, holder, lane: 'datomic', slot: 'selftest', cpus: 1, pid: process.pid, state: 'starting', reservedAt: now() });
     appendEvent({ event: 'reserved', container: name, holder });
   });
   try {
-    const result = spawnSync('docker', dockerArgs(['run', '--rm', '--name', name, '--network', 'none', '--memory', String(1.5 * 1024 ** 3), '--memory-swap', String(1.5 * 1024 ** 3), '--cpus', '1', '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', `tx2.holder=${holder}`, info.laneConf.imageId, 'selftest']), { stdio: 'inherit' });
+    const result = spawnSync('docker', dockerArgs(['run', '--rm', '--name', name, '--network', 'none', '--memory', String(1.5 * 1024 ** 3), '--memory-swap', String(1.5 * 1024 ** 3), '--cpus', '1', ...(scratchGiB ? ['-e', 'TX2_DIAGNOSTIC_SCRATCH_GIB=' + scratchGiB] : []), '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', `tx2.holder=${holder}`, info.laneConf.imageId, 'selftest']), { stdio: 'inherit' });
     if (result.status !== 0) fail('ENGINE', 'Datomic selftest failed');
-    appendEvent({ event: 'datomic-selftest-pass', imageId: info.laneConf.imageId });
+    appendEvent({ event: scratchGiB ? 'datomic-diagnostic-exited' : 'datomic-selftest-pass', imageId: info.laneConf.imageId });
   } finally {
     if (inspect(name)) fail('ENGINE', 'Selftest container remains; reservation retained');
     await withPool(async ledger => { ledger.reservations = ledger.reservations.filter(e => e.container !== name); });
