@@ -161,3 +161,6 @@ edcefa228ac79073e4b62d47c4f1144ec34fa58d1a6b001e3c407202308cbc6d  DX-W1/write5-l
 d14ebcb7d31454dc60280713074a4c1d24edb030d9ce71b20b9aa99d93b792e1  DX-W1/write5-ledger-oracle/verify-071e2122-97b8-4178-aceb-7dda6baca53b/oracle-answer-1.json
 825f838b7498720b7a7f4f392b8dde48045efd72f3ed8be6140713f9aa1657e2  DX-W1/write5-ledger-oracle/verify-071e2122-97b8-4178-aceb-7dda6baca53b/oracle-case-0.json
 278cfab5d4effbe1f7b40517ddc2e57bca5f822842e8b4a21819ed5cc7d733ed  DX-W1/write5-ledger-oracle/verify-071e2122-97b8-4178-aceb-7dda6baca53b/oracle-case-1.json
+2baa69c294545cd2ec7ff9b93fd24446549c09c6b54288700ffb3391fe957f2a  DX-W1/write5-packed-group/gate.log
+f3138ef78a62786db888e86f3a876ba57adc23d2da9b4fe7433abdcd43ecc8a7  DX-W1/write5-packed-group-02/gate.log
+a4124740dbf0e2f52911d274f502bb73afc7a2baa2ad338fdc3f12b4f5f1f198  DX-W1/write5-packed-group-02/verified.json
