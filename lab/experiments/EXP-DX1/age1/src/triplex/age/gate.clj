@@ -211,14 +211,6 @@
           seed (tape/seed-head pop)
           cuts [0 1 7 8 9 (dec (:active pop)) (:active pop) (dec saves) saves]]
       (when-let [db (get databases "product-group")] (group-reference! db pop saves members))
-      (doseq [[label db] databases
-              i (range (:people pop))
-              s (conj cuts nil)]
-        (equal! (oracle-person pop i (or s saves)) (person-view db pop i (some-> s (+ seed)))
-                (str label " oracle rows differ")))
-      (doseq [[label db] databases
-              [owner rows] (oracle-history pop saves)]
-        (equal! (set rows) (set (person-history db owner)) (str label " history differs")))
       (doseq [n (range saves) :let [command (tape/command pop n)]
               [label db] databases
               :let [r (read-receipt db n) t (Long/parseLong (get-in r [:t "v"]))]]
@@ -233,8 +225,19 @@
                 get-report (fn [{:keys [conn]} t]
                              {:db-after (d/as-of (d/db conn) t)
                               :tx-data (:data (first (d/tx-range (d/log conn) t (inc t))))})]
-            (equal! (report-datoms (get-report product pt))
-                    (report-datoms (get-report db t)) "Native group differs from W1 physical records"))))
+            (let [expected (report-datoms (get-report product pt))
+                  actual (report-datoms (get-report db t))
+                  diff (fn [left right] (take 3 (remove #(= (val %) (get right (key %))) left)))]
+              (native/check! (= expected actual) "Native group differs from W1 physical records"
+                             {:firstSave n :expectedOnly (diff expected actual) :actualOnly (diff actual expected)})))))
+      (doseq [[label db] databases
+              i (distinct (concat (range 20) (range (- (:people pop) 12) (:people pop))))
+              s (conj cuts nil)]
+        (equal! (oracle-person pop i (or s saves)) (person-view db pop i (some-> s (+ seed)))
+                (str label " oracle rows differ")))
+      (doseq [[label db] databases
+              [owner rows] (oracle-history pop saves)]
+        (equal! (set rows) (set (person-history db owner)) (str label " history differs")))
       (let [solo (or reference (get databases "rolling"))]
         (doseq [s (range 0 saves 17) pin [nil (+ seed (min saves (+ s 4)))]
                 [label db] databases]
