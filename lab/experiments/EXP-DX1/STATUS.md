@@ -2780,3 +2780,27 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **Assigned, part 4:** where a loaded Publish waits and the law for it; Publish ahead of waiting saves of its own
   account on the corrected write path, grace removed from the healthy path, bounded retries; 200 offers per arm at
   3.5, 23.5 and 39.4 saves per second; one code path with the joined Publish; a ninety-minute server command.
+
+## 2026-11-20 04:50 UTC (23:50 local, 2026-11-19): DX-COMPACT1 part 1 in: a compact save at four to six times the present rate (Mac prototype)
+
+- **DX-COMPACT1 part 1 (`e907e5bc8`, Mac VM; `compact1/REPORT.md`, `FLOOR.md`, `LAYOUT.md`, `CENSUS.md`, `MEASUREMENTS.md`,
+  `COST.md`, `PREDICTION.md`).** Floor of a Datomic transaction: native apply 0.160 ms fixed + 1.74 µs per datom + 2.49 µs
+  per KiB + 0.70 µs per warm index seek; durable peer round trip 2.136 ms + 4.80 µs per datom + 67.82 µs per KiB;
+  1,696 to 2,790 minimal transactions per second at depth 64. Layout: one event per save (scoped command, position,
+  owner, prior event, server clock, encoded body) with the subject's chain rebuilding validity, receipt, retirement,
+  history and both read paths: a one-field save is 11 records and 232 value bytes (three fields 344 bytes, 25 fields
+  1,614); write-ahead log 230 to 236 bytes per fact. Matched Mac blocks at 64 outstanding: 614 to 742 saves per second
+  against 99 to 169 for the present path (4.4 and 6.2 times); at 1, 8 and 32 outstanding 1.21 to 1.41, 3.69 to 4.83
+  and 2.59 to 4.19 times; native apply 222 to 252 µs per save. Both readers matched the W0 oracle on 71 cases (213
+  responses); a fresh peer recovered the receipt after a dropped group reply. 16 million facts loaded in 6 min 25 s
+  plus 3 s of indexing (866 MB of log). Cold current reads of one-event subjects 4.18 ms p50, 194.44 ms p99 (one
+  outlier of 88); 99.5 KiB of heap per touched subject. Forecast for a server: 730 saves per second gross (467 after
+  reserves), p99 31 and 34 ms at 235 and 394. Open by its own account: key custody and restore, storage-layer account
+  isolation, activation and notices, long-history reads, mixed traffic. Its advice: build the incremental writer
+  (DX-W1 with DX-PREP1) first and make whole accounts movable.
+- **Not yet established:** the body of a save is encoded, so Datomic cannot answer queries across subjects by
+  attribute or value from these records, and the Q107-S journal triples are not stored as such; reads walk a
+  subject's event chain (real people have about 415 saves). Reviewer **W2-COMPACTREVIEW** launched (fairness of the
+  comparison, obligations kept and lost, long histories, untested cases, whether 730 follows). Part 2 assigned: the
+  query surfaces and a projection priced; long histories and checkpoints; erasure envelopes; how much of the gain is
+  layout and how much is work not done at the serial point; mixed traffic and the loader on the corrected path.
