@@ -1,11 +1,11 @@
-The one-second target is still open. The server run remains on hold.
-On the Mac at 3.5 saves per second, prioritizing Publish cut the slow-end time from 726 to 263 seconds.
-All 400 offers missed one second in that test, which sent four Publishes per second and ran 64 readers.
-Publish waited less for saves and longer for earlier Publishes. The Mac was also under pressure.
-The joined path gives Publish a turn ahead of waiting saves and lets a save already in progress finish.
-Publish then reads the saved facts and records the release and what it owes in one write.
-The native race check passed. A save before Publish changed its answers. A save after it changed later reads.
-The one-seed command passed its 1,000-person rehearsal. Its ninety-minute finish at full size still needs proof.
+Giving Publish a turn cut the longest waits. The one-second target is still open.
+At the highest save rate, the slow-end time dropped from 180 to 41 seconds.
+All 1,200 offers missed one second in the Mac test, which sent four Publishes a second with 64 readers.
+Publish spent less time behind saves. Earlier Publishes also lined up and the client's clock fell behind.
+The joined path finishes the save already in progress, then reads those facts and records the release and what it owes in one write.
+The native check verified saves on both sides of that write. None of the timed Publishes retried.
+The 1,000-person rehearsal checked both ways of storing output, with and without saves.
+The full server run remains on hold. Its ninety-minute finish still needs proof.
 
 North star P5 with P1 and P2 under load. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
@@ -15,7 +15,7 @@ The existing DELTA record/stored audit, 23 native schedules, crash stops and +6.
 
 For DX-ACT1, merge `exp/DX-ACT2-activation-100k` from joined head `26bc49c58`. The branch includes reviewed WFIX1 `882df5487`, the recovered-receipt wakes, typed native refusals, joined admission, the oracle race gate, the matched study and the one-seed command. Route the scope's semantic saves and Publish through the same `AccountAdmission` instance. The gateway continues to decide native live and bulk turns. [File-by-file comparison](PART4.md#one-joined-writer)
 
-The first paired local test verified every receipt and read for 200 offers per policy at 3.5 saves/s. Neither arm met the deadline. The 23.5 saves/s FIFO cell exceeded the 15-minute measurement limit before it sealed observations. The 39.4 saves/s cells did not start. The timing observer lost native request stages after the application queue. The independent receipts, public bytes and application clocks remain available. [Measurements and CPU pressure](PART4.md#matched-local-comparison)
+The fixed-exposure run at `2d026eb29` verified 200 offers per policy at each of 3.5, 23.5 and 39.4 saves/s. Record and first-read p99 fell from 27.21 to 24.45 s, 81.83 to 30.36 s and 180.36 to 40.65 s respectively. Each paired cell had its own VM and host CPU samples. The earlier sustained-reader run exceeded the 15-minute limit at 23.5 saves/s and lost request observer context. The revised run captured all 1,200 native requests, with 48 ACKs during reader load. Later completions include the drain. [p50, p99, maxima and CPU pressure](PART4.md#fixed-exposure-rerun)
 
 The server has one large seed and four cells covering record and stored output in quiet and loaded conditions. The local 1,000-person rehearsal verified all four with the same producer and collector on `2d026eb29`. There were no deadline misses and the loaded windows kept 12 saves each. The 100,000-person command budgets 83 minutes for work and seven for cleanup. Current projection is 70–100 minutes with proof and cleanup. [Command and forecast](PART4.md#one-seed-server-campaign)
 

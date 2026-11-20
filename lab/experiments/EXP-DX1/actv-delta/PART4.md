@@ -47,11 +47,28 @@ Saves completed entirely during reader traffic averaged 2.82 s across 188 FIFO s
 
 The 23.5 saves/s FIFO window reached the 15-minute limit before writing observations. Its schedule and the timeout are in evidence. The 39.4 saves/s arm did not start. The manager removed the data volume and released the slot. A negative control reproduces the wrong request observer while a save holds the lane. The follow-up requires the queued Publish to retain its own observer and the native race gate to see its write stages.
 
-The next attempt uses the current route's own resolved head and also records when its release controls are available. It holds 64 background readers through one fixed offer window and all per-offer deadline probes. Both policies get the same exposure. Their outstanding commands may finish after the background reads stop. The attempt takes CPU samples at the end of reader load and after draining, and writes the deadline observations before the drain. This checkpoint alone carries no timing verdict.
+### Fixed-exposure rerun
+
+The rerun used the current route's own resolved head and captured when its release controls were available. It held 64 background readers through one fixed offer window and every per-offer deadline probe. Both policies got the same schedule. The observations retain the load-end CPU sample and the drain separately. Only 48 of the 1,200 Publishes received their native ACK during background reads. Every Publish had a deadline probe on each route. The p99s below include the drain.
+
+The run at `2d026eb29` reopened all 1,200 receipts, independently matched 37,311 raw replies, and kept 7,428 target saves and 540 from each neighbour. Every offer missed one second. There were 32,542 replies from cuts older than the deadline required, each exact at its observed cut. No other lab timing arm ran during these cells. The CPU columns report the range of VM runnable stalls and the largest endpoint host load and per-cell Node event-loop p99 during the reader windows.
+
+| Saves/s | Policy | Record p50 / p99 / max (s) | First exact read p50 / p99 / max (s) | Misses / offers | VM CPU stall | Host load / 12 CPUs | Loop p99 (ms) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 3.5 | FIFO | 19.41 / 27.21 / 27.29 | 19.41 / 27.21 / 27.29 | 200 / 200 | 1.04–9.79% | 12.95 | 328 |
+| 3.5 | Priority | 15.46 / 24.45 / 24.76 | 15.46 / 24.45 / 24.76 | 200 / 200 | 1.49–2.13% | 13.50 | 220 |
+| 23.5 | FIFO | 50.98 / 81.83 / 83.10 | 50.98 / 81.83 / 83.10 | 200 / 200 | 0.54–0.77% | 12.06 | 1,014 |
+| 23.5 | Priority | 24.74 / 30.36 / 30.53 | 24.74 / 30.36 / 30.53 | 200 / 200 | 0.59–0.64% | 13.44 | 903 |
+| 39.4 | FIFO | 102.89 / 180.36 / 180.39 | 102.89 / 180.36 / 180.39 | 200 / 200 | 0.38–0.59% | 12.72 | 3,081 |
+| 39.4 | Priority | 36.02 / 40.65 / 40.70 | 36.02 / 40.65 / 40.70 | 200 / 200 | 0.52–0.55% | 14.44 | 1,966 |
+
+In the corresponding CPU windows, median wait behind saves fell from 12.63 to 3.33 s, 46.32 to 1.45 s and 92.29 to 18.00 s. Median wait behind earlier Publishes rose from 4.17 to 12.24 s, 4.09 to 23.02 s and 8.64 to 18.37 s. There were zero predecessor conflicts, no preterminal fence and zero fixed grace. At the highest priority load, median offer-to-ingress was 485 ms, plan time 149 ms, submit-to-ACK 40 ms, and ACK-to-first 166 ms. The gateway reached the predecessor 15 ms after payload preparation and completed 6 ms after native submit. The first reply learned the head in 2 ms, loaded the release controls in a further 38 ms and took 120 ms after learning the release. Phase medians and whole-offer quantiles are computed separately.
+
+At 39.4 saves/s, after readers drained, saves averaged 117–118 ms in the two policies. That was about 4.6 times the time budget per offered save even before another Publish. Only two fully observed target saves per policy completed entirely during reader load at that rate. Both the host load and the client scheduling delay were high. The experiment measures those pressures beside the queue stages. It cannot isolate a causal Mac-only penalty. Raw deadlines, ACKs, CPU samples and both volume cleanup receipts are retained in the evidence manifest.
 
 ## One-seed server campaign
 
-Use the joined builder path at the same reviewed gateway revision. Its four cells are record and literal staged values, each quiet and at 23.5 offered saves/s. The release document is first authored at its offer. The staged cell charges its source hold and commits all changed values before the marker. Both cells independently reopen the ordered owed-notice recipe. Individually materialized notice entries have a separate field and this command leaves that field empty. The supervised command reserves seven of ninety minutes for cleanup, runs a ten-minute small preflight and gives the producer at most 83 minutes of work. It keeps the partial receipts on an overrun.
+Use the joined builder path at the same reviewed gateway revision. Its four cells use broad R1-to-R2 variants in record and literal staged modes, each quiet and at 23.5 offered saves/s. The local record comparison also exercised narrow release variants. Each new server document is first authored at its offer. The staged cell charges its source hold and commits all changed values before the marker. Both cells independently reopen the ordered owed-notice recipe. Individually materialized notice entries have a separate clock and are outside the timed endpoint. The supervised command reserves seven of ninety minutes for cleanup, runs a ten-minute small preflight and gives the producer at most 83 minutes of work. It keeps the partial receipts on an overrun.
 
 ```sh
 TX2_SWEEP_STRICT=1 TX2_W0_POINT_JOURNAL=1 TX2_W0_RESTORE_INDEXED_JOURNAL=1 TRIPLEX_DATOMIC_LAYOUT=lean node lab/bin/heavy.mjs --label DX-ACT2 -- node --experimental-strip-types lab/experiments/EXP-DX1/actv-lazy/join/server.ts 100000 "$DX_LAZY_OUT" --one-seed
