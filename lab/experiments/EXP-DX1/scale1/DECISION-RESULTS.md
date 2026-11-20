@@ -15,3 +15,21 @@ Terminal status exit-code. Cells with a sealed writer ledger 0. Matched decision
 10000 deep people per account, pooled layout, individual writer. Source `8b236f6a27bbef81603d5ad12ee9f85fd2af43dc`. Unfixed write path.
 
 16,245,050 current facts across 1 database(s). Ingest took 0.67 hours at 6771.32 facts/s. Exact claim and feed verification took 0.61 hours. PostgreSQL added 724.59 bytes per fact (one physical seed).
+
+Observed ingest cgroup peaks in GiB, from 40 progress snapshots.
+
+| Transactor | PostgreSQL | Write gateway | Read gateway |
+| ---: | ---: | ---: | ---: |
+| 4.51 | 6.00 | 0.27 | 2.94 |
+
+## arm-d7-single-seed
+
+100000 deep people per account, single layout, individual writer. Source `daf289fab1bc94593a2a62f0999ceecff3600c84`. Audited write path.
+
+16,245,647 current facts across 1 database(s). Ingest took 0.69 hours at 6540.77 facts/s. Exact claim and feed verification took 0.62 hours. PostgreSQL added 723.42 bytes per fact (one physical seed).
+
+Observed ingest cgroup peaks in GiB, from 42 progress snapshots.
+
+| Transactor | PostgreSQL | Write gateway | Read gateway |
+| ---: | ---: | ---: | ---: |
+| 4.85 | 6.00 | 0.28 | 2.80 |

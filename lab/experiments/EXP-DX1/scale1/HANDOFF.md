@@ -3,7 +3,7 @@
 The current decision screen measures ten full-size deep accounts together, then partitions the same logical rows and tapes across two Datomic databases on the same server. Each topology gets the same ten writer clients, reader seats and feed observer. [Scale review](REVIEW.md) · [Write-path review](WRITE-REVIEW.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-2026-11-20T05:14:23.998Z · Collected arm-d7-small-seed-b with service result success, 1 physical-scope report(s) and verified cleanup. arm-d7-single-seed started at 2026-11-20T05:13:00.810Z with execution ceiling 2026-11-20T08:13:00.810Z.
+2026-11-20T06:44:40.324Z · Collected arm-d7-single-seed with service result success, 1 physical-scope report(s) and verified cleanup. arm-d7-single-zero started at 2026-11-20T06:38:07.795Z with execution ceiling 2026-11-20T08:38:07.795Z.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows all active stages and their ceilings.
