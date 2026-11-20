@@ -49,6 +49,9 @@ def sources(r):
         if r["item"] in (8,9):
             smoke={8:"pulsesmk",9:"matchedsmk"}[r["item"]]+str(r["attempt"])
             parts["preflight"]=Path("/var/tmp/triplex-w1")/smoke/"results"
+            if r["item"]==9:
+                parts["deep-checkpoint"]=NIGHT/"probes"/(r["tag"]+"-3")
+                parts["preflight-checkpoint"]=NIGHT/"probes"/(smoke+"-2")
         if r["item"] in (10,11,12):
             parts["checkpoint-arms"]=root/"checkpoint-arms"
     elif r["item"]==2:

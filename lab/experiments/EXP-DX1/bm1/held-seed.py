@@ -56,7 +56,7 @@ def resume(directory, batch, root, source):
     marker.rename(directory / "resumed.json")
 
 
-def capture_checkpoint(arm, directory, identity, recorded, seed, deadline):
+def capture_checkpoint(arm, directory, identity, head, seed, deadline):
     # [DX-BM1] Why: the post-pricing source is quiescent after W1 verifies its original seed. Save it once so the two diagnostics can start from identical bytes.
     # Rejected: rebuilding 16 million facts or treating a live volume file copy as a recoverable PostgreSQL database.
     checkpoint = NIGHT / "checkpoints" / (directory.name + "-before-probes")
@@ -65,11 +65,11 @@ def capture_checkpoint(arm, directory, identity, recorded, seed, deadline):
     snapshot=json.loads(subprocess.check_output(["docker","inspect",role]))[0]
     assert snapshot["Name"]=="/"+role and snapshot["State"]["Running"]
     assert any(v.get("Name")==identity["slot"]+"-pg-data" for v in snapshot["Mounts"])
-    ident=snapshot["Id"]; owned=recorded["phases"][-1]["lastPosition"]
+    ident=snapshot["Id"]
     partial=checkpoint/"host.pgdump.partial"
     with partial.open("xb") as f:
         subprocess.run(["docker","exec",ident,"pg_dump","-U","postgres","-Fc","-Z1","-d","datomic"],stdout=f,
-                       timeout=min(350,max(1,int(deadline-time.time()-600))),check=True)
+                       timeout=min(350,max(1,int(deadline-time.time()-60))),check=True)
     with partial.open("rb") as source:
         assert source.read(5)==b"PGDMP";source.seek(0)
         toc=subprocess.run(["docker","exec","-i",ident,"pg_restore","--list"],stdin=source,
@@ -80,14 +80,37 @@ def capture_checkpoint(arm, directory, identity, recorded, seed, deadline):
     digest=sha(partial)
     partial.rename(checkpoint/"host.pgdump")
     proof={"source":identity["source"],"slot":identity["slot"],"nonce":identity["nonce"],"original":str(arm),
-           "scope":recorded["scope"],"db":recorded["db"],"lastPosition":owned,"seed":seed,
-           "witness":recorded["phases"][-1]["records"][-1],"bindingSha256":sha(directory/"bound-seed.json"),
+           "scope":head["scope"],"db":head["db"],"lastPosition":head["lastPosition"],"seed":seed,
+           "witness":head["witness"],"bindingSha256":sha(directory/"bound-seed.json"),
            "pgContainer":ident,"bytes":(checkpoint/"host.pgdump").stat().st_size,"dumpSha256":digest,"at":time.time()}
     (checkpoint/"checkpoint.json").write_text(json.dumps(proof,indent=2)+"\n")
     (directory/"checkpoint.json").write_text(json.dumps(proof,indent=2)+"\n")
 
 
+def matched(tag, arm):
+    assert os.getuid()==0 and re.fullmatch(r"matched(?:n19b?|smk[12])",tag)
+    ordinal="2" if "smk" in tag else "3"
+    root=Path("/var/tmp/triplex-w1")/tag
+    assert arm==root/"results"/("arm-"+ordinal)
+    output=arm/"field-output.json"
+    reading=get(output);identity=get(arm/"identity.json");head=get(arm/"matched-seed.json")
+    assert identity==reading["arm"] and identity["population"]==reading["population"]=="deep"
+    assert [identity[k] for k in ("source","slot","nonce")]==[head[k] for k in ("source","slot","nonce")]
+    assert identity["source"]==(root/"source").read_text().strip()
+    assert identity["slot"]=="tx2-dxscale1-w1-"+tag+"-"+ordinal==(root/"active-slot").read_text().strip()
+    seed=head["seed"]
+    assert seed==dict(facts=reading["seedFacts"],seedCommits=reading["seedCut"],seedCut=reading["seedCut"],
+                      digest=reading["sourceCensus"],people=64 if "smk" in tag else 10_000,accounts=1)
+    assert sha(arm/"writer.jsonl")==reading["writerSha256"] and head["lastPosition"]==seed["seedCut"]+reading["offers"]
+    directory=NIGHT/"probes"/(tag+"-"+ordinal)
+    directory.mkdir(parents=True,exist_ok=False)
+    (directory/"bound-seed.json").write_text(json.dumps({**head,"fieldOutputSha256":sha(output)})+"\n")
+    capture_checkpoint(arm,directory,identity,head,seed,time.time()+410)
+
+
 def main():
+    if len(sys.argv)==4 and sys.argv[1]=="matched":
+        matched(sys.argv[2],Path(sys.argv[3]));return
     mode, batch, ordinal, operator = sys.argv[1:]
     assert re.fullmatch(r"grpw1[ab]", batch) and ordinal in ("1", "2")
     assert re.fullmatch(r"[0-9a-f]{40}", operator)
@@ -170,7 +193,9 @@ def main():
                            "scope": recorded["scope"], "grouped": recorded["grouped"], "atVerified": time.time()}, f)
             if time.time()+1080<deadline:
                 try:
-                    capture_checkpoint(arm,directory,identity,recorded,proof,deadline)
+                    last=recorded["phases"][-1]
+                    head={"scope":recorded["scope"],"db":recorded["db"],"lastPosition":last["lastPosition"],"witness":last["records"][-1]}
+                    capture_checkpoint(arm,directory,identity,head,proof,deadline)
                 except Exception as error:
                     (directory/"checkpoint-error.txt").write_text(repr(error)+"\n")
             if mode == "checkpoint":return

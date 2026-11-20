@@ -74,6 +74,7 @@ const plan = {
   nonce,
   seedSource: seed.source,
   seed: hashFile(seedFile),
+  seedFacts: seed.seed.facts,
   db,
   cut,
   stage,
@@ -123,7 +124,8 @@ async function restoreWitness() {
   const original = await writer.operation(db, seed.witness.id);
   assert.equal(original.t.v, seed.witness.t);
   assert.equal(Number(original.position.v), seed.lastPosition);
-  const staticRoots = accounts.map((a) => ids.placement(a.first + 9999));
+  const roster = seed.seed.accounts === 1 ? accounts.slice(0, 1) : accounts;
+  const staticRoots = roster.map((a) => ids.placement(a.first + 9999));
   const stable = await peer.rows(db, { entityIds: staticRoots, basis: cut, pattern: {} });
   for (const id of staticRoots)
     assert.equal(

@@ -190,7 +190,7 @@ async function pulseSmall() {
   });
 }
 
-async function fieldCut(directory, arm, population, subjects, seconds) {
+async function fieldCut(directory, arm, population, subjects, seconds, checkpoint) {
   return withStack(directory, arm, async (env) => {
     const trace = path.join(directory, "engines", arm.slot, "trace/raw");
     execFileSync(
@@ -209,14 +209,75 @@ async function fieldCut(directory, arm, population, subjects, seconds) {
         population,
         String(subjects),
         String(seconds),
+        checkpoint ? "checkpoint" : "plain",
       ],
       { env: { ...env, TRIPLEX_TRACE_DIR: trace }, stdio: "inherit", timeout: 40 * 60000 },
     );
-    return json(path.join(directory, "field-output.json"));
+    const reading = json(path.join(directory, "field-output.json"));
+    if (checkpoint && fs.existsSync(path.join(directory, "matched-seed.json"))) {
+      try {
+        execFileSync("/usr/bin/python3", [path.join(import.meta.dirname, "../held-seed.py"), "matched", tag, directory], {
+          env, stdio: "inherit", timeout: 420_000,
+        });
+      } catch (error) {
+        write(path.join(directory, "checkpoint-dump-error.json"), { error: String(error) });
+      }
+    }
+    return reading;
   });
 }
 
-async function fieldWorker(directory, population, subjects, seconds) {
+function* fieldSeed(population, subjects, touched, census) {
+  let rows = [];
+  for (let i = 0; i < subjects; i++) {
+    const material = population === "thin" ? ownFacts(i, 1) : deepOwnFacts(i);
+    const entity = ids.placement(i);
+    assert(material.some((f) => f.e === entity));
+    if (touched.has(i))
+      for (let j = 0; j < 5; j++)
+        material.push(fact(entity, ":bm1/field/" + j, "original-value-" + j));
+    census?.update(JSON.stringify(material) + "\n");
+    if (rows.length + material.length > 1800) {
+      yield rows;
+      rows = [];
+    }
+    rows.push(...material);
+  }
+  if (rows.length) yield rows;
+}
+
+async function fieldSeedReadback(c, db, subjects, touched, seedCut, sourceCensus) {
+  // [DX-BM1] Why: a 10k diagnostic clone must reopen the exact indexed deep input, even when no pooled dump survived.
+  // Rejected: deriving a checkpoint from counts of issued rows or from a different arm's stack.
+  const digest = createHash("sha256"), positions = new Set();
+  let total = 0;
+  for (const batch of fieldSeed("deep", subjects, touched, digest)) {
+    const id = "bm1-seed-" + String(positions.size).padStart(7, "0"),
+      input = command(id, batch, [], false);
+    const ack = await c.operation(db, id);
+    assert(ack.status === "committed" && ack.operationId === id);
+    const position = Number(ack.position.v);
+    assert(position === positions.size + 1);
+    const rows = await c.rows(db, {
+      entityIds: [...new Set(batch.map((f) => f.e))],
+      basis: { recordedPosition: seedCut, validAt: SEED_VALID_FROM }, pattern: {},
+    });
+    const observed = new Map(rows.filter((r) => r.tx_id === input.rows[0].tx_id).map((r) => [r.id, r]));
+    assert.equal(observed.size, batch.length);
+    for (const expected of input.rows)
+      assert.deepEqual(observed.get(expected.id), {
+        ...expected, recorded_at: Number(ack.recordedAt.v), recorded_position: position,
+      });
+    total += observed.size;
+    positions.add(position);
+  }
+  assert.equal(positions.size, seedCut);
+  const verified = digest.digest("hex");
+  assert.equal(verified, sourceCensus);
+  return { facts: total, seedCommits: positions.size, seedCut, digest: verified, people: subjects, accounts: 1 };
+}
+
+async function fieldWorker(directory, population, subjects, seconds, checkpoint) {
   const c = new DatomicClient(process.env.DATOMIC_URL, 35000),
     arm = json(path.join(directory, "identity.json"));
   assert.equal(arm.source, source);
@@ -234,12 +295,10 @@ async function fieldWorker(directory, population, subjects, seconds) {
     assert(created);
     const witness = new Map(),
       census = createHash("sha256");
-    let rows = [],
-      sequence = 0,
+    let sequence = 0,
       count = 0,
       head = 0;
-    async function flush() {
-      if (!rows.length) return;
+    async function flush(rows) {
       const id = "bm1-seed-" + String(sequence++).padStart(7, "0"),
         payload = command(id, rows, [], false);
       const ack = await c.transact(db, payload);
@@ -252,20 +311,8 @@ async function fieldWorker(directory, population, subjects, seconds) {
           witness.set(row.entity_id, prior);
         }
       count += rows.length;
-      rows = [];
     }
-    for (let i = 0; i < subjects; i++) {
-      const material = population === "thin" ? ownFacts(i, 1) : deepOwnFacts(i);
-      const entity = ids.placement(i);
-      assert(material.some((f) => f.e === entity));
-      if (touched.has(i))
-        for (let j = 0; j < 5; j++)
-          material.push(fact(entity, ":bm1/field/" + j, "original-value-" + j));
-      if (rows.length + material.length > 1800) await flush();
-      rows.push(...material);
-      census.update(JSON.stringify(material) + "\n");
-    }
-    await flush();
+    for (const chunk of fieldSeed(population, subjects, touched, census)) await flush(chunk);
     const seedCut = head;
     const seedReads = new Map();
     for (const batch of [...witness.keys()].reduce((xs, k, i) => {
@@ -397,12 +444,30 @@ async function fieldWorker(directory, population, subjects, seconds) {
       assert(r.old.every((id) => !read.some((row) => row.id === id)));
     }
     obs.sort((a, b) => a.ordinal - b.ordinal);
+    const sourceCensus = census.digest("hex");
+    if (checkpoint) {
+      try {
+        assert.equal(population, "deep");
+        const seed = await fieldSeedReadback(c, db, subjects, touched, seedCut, sourceCensus);
+        assert.equal(seed.facts, count);
+        const witness = obs.reduce((a, b) => a.pos > b.pos ? a : b);
+        const basis = await c.basis(db);
+        assert.equal(Number(basis.position.v), witness.pos);
+        assert(BigInt(basis.t.v) >= BigInt(witness.t));
+        write(path.join(directory, "matched-seed.json"), {
+          source, slot: arm.slot, nonce: arm.nonce, scope, db, seed, lastPosition: witness.pos,
+          witness: { id: witness.id, t: witness.t, pos: witness.pos },
+        });
+      } catch (error) {
+        write(path.join(directory, "checkpoint-readback-error.json"), { error: String(error) });
+      }
+    }
     return {
       arm,
       people: subjects,
       population,
       seedCut,
-      sourceCensus: census.digest("hex"),
+      sourceCensus,
       seedFacts: count,
       seedRootsChecked: seedReads.size / 5,
       offers: obs.length,
@@ -425,10 +490,10 @@ async function fieldWorker(directory, population, subjects, seconds) {
 async function matched() {
   const small = mode === "matched-small";
   const arms = [];
-  for (const [i, population] of (small ? ["thin"] : ["thin", "deep", "deep", "thin"]).entries()) {
+  for (const [i, population] of (small ? ["thin", "deep"] : ["thin", "deep", "deep", "thin"]).entries()) {
     const directory = path.join(results, "arm-" + (i + 1)),
       arm = newArm(directory, `tx2-dxscale1-w1-${tag}-${i + 1}`, population);
-    const measured = await fieldCut(directory, arm, population, small ? 64 : 10000, small ? 1 : 45);
+    const measured = await fieldCut(directory, arm, population, small ? 64 : 10000, small ? 1 : 45, i === (small ? 1 : 2));
     write(path.join(directory, "summary.json"), measured);
     arms.push(measured);
   }
@@ -438,9 +503,9 @@ async function matched() {
 if (mode === "pulse-small") await pulseSmall();
 else if (mode === "matched" || mode === "matched-small") await matched();
 else if (mode === "field-worker") {
-  const [population, subjects, seconds] = process.argv.slice(6);
+  const [population, subjects, seconds, checkpoint] = process.argv.slice(6);
   write(
     path.join(root, "field-output.json"),
-    await fieldWorker(root, population, Number(subjects), Number(seconds)),
+    await fieldWorker(root, population, Number(subjects), Number(seconds), checkpoint === "checkpoint"),
   );
 } else throw Error("Unknown probe mode");

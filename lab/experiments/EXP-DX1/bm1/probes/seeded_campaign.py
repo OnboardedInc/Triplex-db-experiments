@@ -13,7 +13,7 @@ import uuid
 import native as stack
 
 
-def setup(directory):
+def setup(directory,mode):
     # [DX-BM1] Why: the storage checkpoint and the measured program have distinct source identities.
     # Rejected: opening the old writable database or claiming the restored data was seeded by the new code.
     assert re.fullmatch(r"/var/tmp/triplex-w1/(?:ceil|size|predecessor)n19b?",str(directory))
@@ -21,8 +21,8 @@ def setup(directory):
     stack.REPO=directory/"build/repository"
     stack.NODE=directory/"build/tools/bin/node"
     stack.BASE_ENV["PATH"]=str(stack.NODE.parent)+":"+stack.BASE_ENV["PATH"]
-    selected=stack.verified_checkpoint()
-    if not selected:raise RuntimeError("No independently verified pooled checkpoint")
+    selected=stack.verified_checkpoint(allow_single_account=(mode=="size"))
+    if not selected:raise RuntimeError("No independently verified checkpoint at the requested population")
     stack.INPUT=selected
     return stack.get(stack.INPUT)
 
@@ -124,7 +124,7 @@ def main(args):
         stack.cleanup()
         return
     assert action=="run" and not (directory/"results").exists()
-    checkpoint=setup(directory)
+    checkpoint=setup(directory,mode)
     assert stack.command("git","rev-parse","HEAD")==source and not stack.command("git","diff","--name-only","HEAD")
     assert shutil.disk_usage(directory).free>32*1024**3
     stack.BASE.mkdir(mode=0o700)

@@ -49,14 +49,27 @@ def put(file, value):
         out.write("\n")
 
 
-def verified_checkpoint():
-    for file in sorted((NIGHT/"checkpoints").glob("grpw1[ab]-[12]-before-probes/checkpoint.json")):
+def verified_checkpoint(allow_single_account=False):
+    folder=NIGHT/"checkpoints"
+    files=sorted(folder.glob("grpw1[ab]-[12]-before-probes/checkpoint.json"))
+    if allow_single_account:files+=sorted(folder.glob("matchedn19*-3-before-probes/checkpoint.json"))
+    for file in files:
         state=get(file)
         sample=NIGHT/"probes"/file.parent.name.removesuffix("-before-probes")/"bound-seed.json"
-        if state["seed"]["facts"]!=16_245_050 or not sample.is_file() or state["bindingSha256"]!=sha(sample):continue
+        if not sample.is_file() or state["bindingSha256"]!=sha(sample):continue
         proof=get(sample)
         keys=("source","slot","nonce","db","seed")
-        if [proof[k] for k in keys]==[state[k] for k in keys]:return file
+        if [proof[k] for k in keys]!=[state[k] for k in keys]:continue
+        if file.parent.name.startswith("matched"):
+            original=Path(state["original"])
+            if not (state["seed"]["people"]==10_000 and state["seed"]["accounts"]==1
+                    and state["seed"]["facts"]>1_500_000 and (original/"cleanup.json").is_file()):continue
+            if (get(original/"cleanup.json")!={"containers":[],"networks":[],"volumes":[]}
+                    or proof["fieldOutputSha256"]!=sha(original/"field-output.json")
+                    or proof["witness"]!=state["witness"]
+                    or state["at"]<(original/"field-output.json").stat().st_mtime):continue
+        elif state["seed"]["facts"]!=16_245_050:continue
+        return file
     return None
 
 
@@ -260,22 +273,37 @@ def case(run_id,mode,ordinal,setting,files_root,expected,staged,profile="full"):
     return str(dir)
 
 
+def select_origin():
+    global REPO, NODE
+    checkpoint=get(INPUT)
+    origin=Path(checkpoint["original"]).parents[1]
+    assert origin.parent==GROUP.parent and re.fullmatch(r"grpw1[ab]|matchedn19b?",origin.name)
+    REPO=origin/"build/repository"
+    NODE=origin/"build/tools/bin/node"
+    BASE_ENV["PATH"]=str(NODE.parent)+":"+BASE_ENV["PATH"]
+    expected_source=(origin/"source").read_text().strip()
+    assert checkpoint["source"]==expected_source==command("git","rev-parse","HEAD")
+    assert checkpoint["slot"]=="tx2-dxscale1-w1-"+origin.name+"-"+checkpoint["slot"][-1]
+    assert Path(checkpoint["original"])==origin/"results"/("arm-"+checkpoint["slot"][-1])
+    return checkpoint, expected_source
+
+
 def main():
     global INPUT
-    if sys.argv[1:]==["cleanup"]:
-        cleanup();return
-    assert len(sys.argv)==3 and sys.argv[1]=="run" and sys.platform=="linux" and os.getuid()==0
-    INPUT=Path(sys.argv[2]);assert INPUT==verified_checkpoint()
-    checkpoint=get(INPUT)
-    expected_source=(GROUP/"source").read_text().strip()
-    assert checkpoint["source"]==expected_source==command("git","rev-parse","HEAD")
-    assert checkpoint["slot"] in {"tx2-dxscale1-w1-grpw1a-1","tx2-dxscale1-w1-grpw1a-2"}
-    assert Path(checkpoint["original"])==GROUP/"results"/("arm-"+checkpoint["slot"][-1])
+    assert len(sys.argv)==3 and sys.argv[1] in ("cleanup","run") and sys.platform=="linux" and os.getuid()==0
+    INPUT=Path(sys.argv[2])
+    if sys.argv[1]=="cleanup":
+        if (BASE/"active.json").is_file():
+            select_origin()
+            cleanup()
+        return
+    assert INPUT==verified_checkpoint(allow_single_account=True)
+    checkpoint, expected_source=select_origin()
     assert shutil.disk_usage(NIGHT).free>45*1024**3
     BASE.mkdir(mode=0o700,exist_ok=False)
     experiment=uuid.uuid4().hex[:8]
     put(BASE/"plan.json",{"source":expected_source,"experiment":experiment,"checkpoint":sha(INPUT),
-        "sequence":["off","on","on","off"],"growthOff":"individual","growthOn":"range","started":time.time()})
+        "sequence":["off","on","on","off"],"growthOff":"individual","growthOn":"range","seed":checkpoint["seed"],"started":time.time()})
     root, expected=create_template(experiment,checkpoint)
     small=case(uuid.uuid4().hex[:8],"readers",1,"off",root,expected,None,"smoke")
     run(NODE,SCRIPT/"read-probe.mjs",BASE,"--smoke",small,timeout=90)

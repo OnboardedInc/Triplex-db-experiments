@@ -151,6 +151,7 @@ def complete_output(r):
     if item in (1,8,9,10,11,12):
         if (root/"results/comparison.json").is_file():return True
         if item in (10,11,12):return any((root/"checkpoint-arms").glob("*/outcomes.jsonl")) or any((root/"checkpoint-arms").glob("*/result.json"))
+        if item==9:return any((root/"results").glob("arm-*/writer.jsonl"))
         return any((root/"results").glob("arm-*/raw.json")) or any((root/"results").glob("arm-*/summary.json"))
     if item==2:return (root/"terminal.json").is_file()
     if item==3:return (root/"results/arm-4/measurements.json").is_file()
@@ -177,24 +178,32 @@ def pulse_output(root, source, tag, prediction, start, *, small=False):
     return result
 
 
-def matched_output(root, source, tag, *, small=False):
+def matched_output(root, source, tag, start, *, small=False):
     directory=root/"results"
     result=get(directory/"comparison.json")
     assert result["source"]==source and result["small"] is small and result["study"]=="thin-deep"
     arms=result["arms"]
-    assert [a["population"] for a in arms]==(["thin"] if small else ["thin","deep","deep","thin"])
+    assert [a["population"] for a in arms]==(["thin","deep"] if small else ["thin","deep","deep","thin"])
     n=39 if small else 1773
     for i,sample in enumerate(arms,1):
         arm=directory/f"arm-{i}"
         identity=get(arm/"identity.json")
         assert sample==get(arm/"field-output.json")==get(arm/"summary.json")
         assert identity==sample["arm"] and identity["source"]==source and identity["slot"]==f"tx2-dxscale1-w1-{tag}-{i}"
+        assert uuid.UUID(identity["nonce"]).hex==identity["nonce"].replace("-","")
+        assert all((arm/f).stat().st_mtime>=start-2 for f in ("identity.json","offers.json","writer.jsonl","field-output.json"))
         assert get(arm/"cleanup.json")==dict(containers=[],volumes=[],networks=[])
         assert sample["people"]==(64 if small else 10000) and sample["offers"]==sample["seedRootsChecked"]==n
         assert sample["rowsPerOffer"]==[5,5] and sample["rate"]==39.4
+        offers=(arm/"offers.json").read_bytes()
+        assert hashlib.sha256(offers.removesuffix(b"\n")).hexdigest()==sample["tapeSha256"]
+        tape=json.loads(offers)
+        assert len(tape)==n and all(o["i"]==i and o["subject"]==(i*7919)%sample["people"]
+                                   and abs(o["due"]-i*1000/39.4)<.000001 for i,o in enumerate(tape))
         assert sample["writerSha256"]==digest(arm/"writer.jsonl")
         with (arm/"writer.jsonl").open() as stream:rows=sorted((json.loads(line) for line in stream),key=lambda row:row["ordinal"])
         assert len(rows)==n and [row["ordinal"] for row in rows]==list(range(n)) and all(row["disposition"]=="ack" for row in rows)
+        assert all(row["due"]==o["due"] and row["id"]==f"bm1-matched-{o['i']:06d}" for row,o in zip(rows,tape))
         assert len({row["traceId"] for row in rows})==len({row["pos"] for row in rows})==n
         assert all(len(row["fresh"])==len(row["old"])==5 and row["pos"]>sample["seedCut"] for row in rows)
         ordered=sorted(row["ackMs"] for row in rows)
@@ -234,7 +243,7 @@ def preflight(r):
         assert not (smoke/"active-slot").exists() and not command("docker","ps","-q")
         if item==8:
             pulse_output(smoke,r["source"],tag,Path(r["repo"])/EXP/"w1/small/predictions.json",r["start"],small=True)
-        else:matched_output(smoke,r["source"],tag,small=True)
+        else:matched_output(smoke,r["source"],tag,r["start"],small=True)
         proof={"source":r["source"],"item":item,"tag":tag,"file":"comparison.json","sha256":digest(smoke/"results/comparison.json"),
                "at":stamp(),"location":str(smoke)}
         put(directory/"collector-agreement.json",proof)
@@ -253,7 +262,9 @@ def preflight(r):
         put(ready,proof)
         return
     if item in (10,11,12):
-        assert any((NIGHT/"checkpoints").glob("grpw1[ab]-[12]-before-probes/checkpoint.json")), "No verified pooled seed is available"
+        sys.path.insert(0,str(HERE/"probes"))
+        from native import verified_checkpoint
+        assert verified_checkpoint(allow_single_account=(item==12)), "No verified seed at the requested population is available"
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-small-run-first"})
         return
     documented=registered_sample(item,r["source"])
@@ -650,19 +661,20 @@ def matched_probes():
     unit="bm1n19-native-probes"
     sys.path.insert(0,str(HERE/"probes"))
     from native import verified_checkpoint
-    marker=verified_checkpoint()
+    marker=verified_checkpoint(allow_single_account=True)
     start=time.time()
     if request.is_file():
         row=get(request)
         start=row["start"]
     else:
-        source=(Path("/var/tmp/triplex-w1/grpw1a")/"source").read_text().strip()
+        source=get(marker)["source"] if marker else (Path("/var/tmp/triplex-w1/grpw1a")/"source").read_text().strip()
         assert re.fullmatch("[0-9a-f]{40}",source)
         row=dict(item=7,attempt=1,source=source,tag="matched-probes",start=start,deadline=start+2400,directory=str(directory),root=str(root),
-                 checkpoint=marker.name if marker else None,
+                 checkpoint=str(marker) if marker else None,
                  prediction=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith("| READERS off/on/on/off,")))
         put(request,row)
-    assert row["source"]==(Path("/var/tmp/triplex-w1/grpw1a")/"source").read_text().strip()
+    assert row["checkpoint"]==(str(marker) if marker else None)
+    if marker:assert row["source"]==get(marker)["source"]
     status("readers","running",start,"predecessor")
     terminal=directory/"terminal.json"
     if terminal.is_file():
@@ -675,7 +687,7 @@ def matched_probes():
                 run("systemd-run","--no-block","--unit="+unit,"-p","KillMode=control-group","-p",f"RuntimeMaxSec={left}s",
                     "-p","TimeoutStopSec=60s","-p","StandardOutput=append:"+str(directory/"worker.log"),
                     "-p","StandardError=append:"+str(directory/"worker.log"),
-                    "-p",f"ExecStopPost={sys.executable} {command_str} cleanup",sys.executable,command_str,"run",marker,timeout=30)
+                    "-p",f"ExecStopPost={sys.executable} {command_str} cleanup {marker}",sys.executable,command_str,"run",marker,timeout=30)
             except (OSError,subprocess.SubprocessError) as error:
                 atom(directory/"admission-error.txt",repr(error)+"\n")
         while active(unit):
@@ -683,12 +695,14 @@ def matched_probes():
                 run("systemctl","stop",unit,timeout=115)
                 break
             time.sleep(5)
-        if (root/"active.json").is_file():run(sys.executable,HERE/"probes/native.py","cleanup",timeout=125)
+        if (root/"active.json").is_file():
+            assert marker
+            run(sys.executable,HERE/"probes/native.py","cleanup",marker,timeout=125)
         assert not command("docker","ps","-q")
         assert not (root/"active.json").exists()
         result=root/"probe-results.json"
         state="incomplete"
-        detail="W1 did not produce a fresh, source-bound 100,000-subject checkpoint"
+        detail="Neither W1 nor the matched deep arm produced a source-bound checkpoint"
         if marker:
             detail="A matched probe failed before it sealed a reading"
             if result.is_file():
@@ -755,7 +769,7 @@ def result(r):
         pulse_output(root,r["source"],r["tag"],Path(r["repo"])/EXP/"w1/small/predictions.json",r["start"])
         return "recorded",str(root/"results/comparison.json")
     elif item==9 and (root/"results/comparison.json").is_file():
-        matched_output(root,r["source"],r["tag"])
+        matched_output(root,r["source"],r["tag"],r["start"])
         return "recorded",str(root/"results/comparison.json")
     elif item in (10,11,12) and (root/"results/comparison.json").is_file():
         file=root/"results/comparison.json"
@@ -870,7 +884,7 @@ def fallback(r):
     # [DX-BM1] Why: Mac controllers use authenticated SSH for launch. Their published native commands can still progress on this host during a link or laptop outage.
     # Rejected: copying a private SSH key to the server or losing the remaining queue when a client exits.
     attempt=Path(r["directory"])
-    if r["item"] in (1,2,3,5,8):
+    if r["item"] in (1,2,3,8):
         limit=time.time()+45
         while not installed(r) and time.time()<limit:time.sleep(2)
     if not installed(r):launch(r)
@@ -946,7 +960,7 @@ def one(item):
                     entry={**entry,"state":"uncollected","detail":"Producer output retained. Transfer archive did not seal."}
         timer=f"bm1n19-hard-{item}-{attempt}.timer"
         if active(timer):run("systemctl","stop",timer)
-        if entry["state"]!="incomplete" or entry["timedOut"]:break
+        if entry["state"]!="incomplete" or entry["timedOut"] or complete_output(r):break
         # A rejected builder preflight consumes one attempt. Failures after admission may use the remaining item budget.
         root=Path(r["root"])
         preflights=[p for p in (root/"preflight-stop.json",root/"preflight/STATUS.json",root/"source-preflight.json") if p.is_file() and ("stop" in p.name or "stopped" in p.read_text()[:8192])]
