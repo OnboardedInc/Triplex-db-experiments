@@ -19,6 +19,7 @@ import { lsn, timeouts, wait } from "./supervisor.ts";
 import { walLink } from "./wal-link.ts";
 import { driveOffers } from "./offers.ts";
 import { historyRead } from "./v2/history.ts";
+import { replacementProbe } from "./v3/replacement.ts";
 
 export const faultModes = [
   "hasync-commit",
@@ -304,6 +305,7 @@ async function faultWork(
   let hold: Awaited<ReturnType<typeof holdSql>> | undefined;
   let withheld: Awaited<ReturnType<typeof ackProxy>> | undefined;
   let withoutAck: DatomicClient | undefined;
+  let replacement: Awaited<ReturnType<typeof replacementProbe>> | undefined;
   let trap: unknown;
   let restart: Awaited<ReturnType<typeof checkOldRestart>> | undefined;
   let from: number | undefined;
@@ -330,6 +332,7 @@ async function faultWork(
   const monitor = pinnedLoop(ac, pin);
   const current = trackWitness(ac);
   try {
+    if (mode === "hasync-ack") replacement = await replacementProbe(pair);
     if (!logPod && mode !== "hasync-index") await start();
     if (mode !== "hasync-index" && mode !== "hasync-restart") {
       // The 2,000-fact import is one authored transaction across ten subjects.
@@ -363,6 +366,7 @@ async function faultWork(
       withheld = await ackProxy(pair.route!.url);
       withoutAck = new DatomicClient(withheld.url, timeouts.request);
       transport = sendOnce(ac, pending, withoutAck);
+      await replacement!.offer(withheld, withoutAck);
       await withheld.wait([pending.operationId], true);
       const bytes = withheld.requests.get(pending.operationId)!;
       assert.equal(bytes.status, 200);
@@ -479,6 +483,7 @@ async function faultWork(
     );
     await ac.pinned(pin);
     const traffic = await offered!.resolve();
+    const replacementRetry = await replacement?.settle();
     const returningDisk = testDiskReturn ? await pair.probeOldDiskBoot() : undefined;
     const newStandby = testDiskReturn ? await pair.rebuildStandby() : undefined;
     const recovered = await receipts(ac);
@@ -504,6 +509,7 @@ async function faultWork(
       availability,
       nativeReplay,
       offersRetried: traffic.settlements.filter((s) => s.disposition === "retried").length,
+      replacementRetry,
       polls,
       repeat,
       during: during.length,
@@ -523,6 +529,7 @@ async function faultWork(
     withheld?.drop();
     withheld?.close();
     withoutAck?.close();
+    replacement?.close();
     await hold?.close();
     await indexWork?.catch(() => undefined);
     await control?.catch(() => undefined);

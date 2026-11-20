@@ -1034,7 +1034,10 @@ export class DatomicClient {
       if (ack.operationId !== input.operationId) throw new TypeError("Commit operation mismatch");
       return receipt(claim.txId, ack);
     } catch (error) {
+      // [DX-WFIX1] Why: an older writer can report stale CAS for a committed replacement. Rejected: retrying the mutation after CAS (the original claim can resolve it safely).
+      const cas = error instanceof DatomicHttpError && error.code === "CasConflict";
       if (
+        !cas &&
         !(
           error instanceof DatomicTransportError ||
           (error instanceof DatomicHttpError &&
@@ -1063,7 +1066,10 @@ export class DatomicClient {
           }
         } catch (readError) {
           if (!(readError instanceof DatomicTransportError)) throw readError;
+          // [DX-HASYNC1] Why: an interrupted claim lookup keeps the decision unknown. Rejected: returning a definite conflict without reading the claim.
+          if (cas) throw readError;
         }
+        if (cas) break;
         const left = deadline - performance.now();
         if (left > 0) await new Promise((resolve) => setTimeout(resolve, Math.min(25, left)));
       } while (performance.now() < deadline);

@@ -83,13 +83,13 @@
       (let [entry (first entries)
             result (try
                      (when (d/entid view [:triplex.tx/operation-id (:id entry)])
-                       (throw (ex-info "triplex.tx/operation-id already committed" {})))
+                       (throw (ex-info "TRIPLEX_OPERATION_DUPLICATE" {})))
                      (let [report (d/with view ((:prepare entry) view))
                            after (:db-after report) tx (d/t->tx (d/basis-t after))]
                        {:report report :tx tx :position (v after tx :triplex.tx/position)
                         :clock (v after tx :triplex.tx/recorded-at) :id (v after tx :triplex.tx/id)})
                      (catch Exception e
-                       (if (re-find #"TRIPLEX_CONFLICT|TRIPLEX_IDENTITY|TRIPLEX_CLOCK|:db.error/(?:unique-conflict|cas-failed)|triplex.tx/operation-id already committed" (str e))
+                       (if (re-find #"TRIPLEX_CONFLICT|TRIPLEX_IDENTITY|TRIPLEX_CLOCK|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|:db.error/(?:unique-conflict|cas-failed)" (str e))
                          {:error e} (throw e))))]
         (recur (or (get-in result [:report :db-after]) view) (next entries) (conj out result))))))
 (defn prefix [^String text] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16))))

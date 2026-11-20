@@ -16,7 +16,12 @@ type Witness = {
   txId: string | null;
 };
 
-export async function replayEvidence(e: Evidence, ac: Account, selected: typeof ac.inputs) {
+export async function replayEvidence(
+  e: Evidence,
+  ac: Account,
+  selected: typeof ac.inputs,
+  label?: string,
+) {
   assert(selected.length && selected.every((input) => input.rows.length));
   const receipts = selected.map((input) => ac.receipts.get(input.operationId)!);
   assert(receipts.every((r) => r && Number.isSafeInteger(Number(r.position.v))));
@@ -24,23 +29,33 @@ export async function replayEvidence(e: Evidence, ac: Account, selected: typeof 
   const sorted = (rows: Witness[]) => rows.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   const input = {
     format: "triplex-db-2/o-replay-case/1",
-    caseId: e.nonce + "/" + e.mode,
+    caseId: [e.nonce, e.mode, label].filter(Boolean).join("/"),
     defaultScope: "witness",
     adapter: { schemaVersion: 1 },
     initialPositions: { witness: Number(receipts[0]!.position.v) - 1 },
-    commands: selected.map((command) => ({
-      clock: command.claims[0]!.timestamp,
-      meta: { commandId: command.claims[0]!.commandId, actor: "lab" },
-      operations: command.rows.map((r) => ({
-        op: "assert",
-        ref: r.id,
-        entityId: r.entity_id,
-        entityType: r.entity_type,
-        attribute: ":" + r.attribute,
-        value: { type: "string", value: r.value_string },
-        validFrom: r.valid_from,
-      })),
-    })),
+    commands: selected.map((command) => {
+      const newIds = new Set(command.newIds);
+      const rows = command.rows;
+      return {
+        clock: command.claims[0]!.timestamp,
+        meta: { commandId: command.claims[0]!.commandId, actor: "lab" },
+        // [DX-HASYNC1] Why: replay the authored retirement before asserting its replacement. Rejected: comparing two snapshots of the recovered database.
+        operations: [
+          ...rows.filter((r) => !newIds.has(r.id)).map((r) => ({ op: "retract", target: r.id })),
+          ...rows
+            .filter((r) => newIds.has(r.id))
+            .map((r) => ({
+              op: "assert",
+              ref: r.id,
+              entityId: r.entity_id,
+              entityType: r.entity_type,
+              attribute: ":" + r.attribute,
+              value: { type: "string", value: r.value_string },
+              validFrom: r.valid_from,
+            })),
+        ],
+      };
+    }),
     receipts: selected.map((command, i) => ({
       command: i,
       outcome: "committed",
@@ -56,9 +71,10 @@ export async function replayEvidence(e: Evidence, ac: Account, selected: typeof 
       pattern: {},
     })),
   };
-  e.write("oracle-case", input);
-  const casePath = path.join(e.dir, "oracle-case.json");
-  const observedPath = path.join(e.dir, "oracle-expected.json");
+  const name = label ? label + "-oracle" : "oracle";
+  e.write(name + "-case", input);
+  const casePath = path.join(e.dir, name + "-case.json");
+  const observedPath = path.join(e.dir, name + "-expected.json");
   await runFile("python3", ["-IB", "lab/oracles/replay/cli.py", casePath, "-o", observedPath], {
     cwd: root,
     timeout: 30000,

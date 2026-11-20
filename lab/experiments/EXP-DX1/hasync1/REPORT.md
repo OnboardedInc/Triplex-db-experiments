@@ -5,7 +5,7 @@ The system refused 90 saves during that cut. All 90 settled after retry with the
 In the first planned move with scheduled traffic, a new save arrived after 13.56 seconds.
 The first index drill exposed a 24.04-second gap when reads pulled a wide diagnostic record on every offer.
 The revised index drill read field pages on schedule. Its longest read gap was 0.18 seconds.
-You can reopen on one copy with an alarm, wait for the second copy, or run three data machines.
+Choose A to reopen on one copy, B to wait for a replacement, or C to keep three machines. I recommend C. [Owner decision](OWNER-DECISION.md)
 
 ## Availability
 
@@ -22,6 +22,8 @@ Five saves and fifty reads are offered per second per system. The one-second cal
 | Old writer and disk returned | 14.66 s | 14.4 s | 72 | 72 | 0.087 s |
 
 Offers are counted from the fault up to the first scheduled on-time save sent to the new writer. Every save in those windows was refused. No offer in those windows timed out or returned a late receipt. Read outcomes and offers outside the cut remain in the raw evidence. [Independent recount](v2/recount-local.ts)
+
+The earlier retries appended facts. The new test resends a replacement whose predecessor was already retired. The native duplicate guard and SDK claim recovery are ported from the write-path fix. [SDK retry contract and test](SDK-RETRY.md)
 
 The earlier Part 1 campaign kept all 73 acknowledged receipts and recorded 1,234 good reads. Its separate grouping and synchronous-flush measurements remain available. [Part 1 report](https://github.com/OnboardedInc/Triplex-db-experiments/blob/e61905198/lab/experiments/EXP-DX1/hasync1/REPORT.md)
 
@@ -41,4 +43,4 @@ Forecast 75–85 minutes on the released pair with prepared builds and the state
 
 The remaining scheduled directional cuts, edited deep runs and fleet timing are pending shared Mac admission. The fleet's first setup failure and fix are recorded. Physical power and management interlock qualification are also pending.
 
-Scoped TypeScript and 19 focused tests passed. The timings are Mac diagnostics. The evidence index records each gate and its content, freshness and binding checks. No acceptance pins moved. [Evidence and audit](EVIDENCE.md) · [Checksums](SHA256SUMS)
+Scoped TypeScript and focused HA and command recovery tests cover the gate. The replacement settlement checks the withheld and recovered receipts, exact same-input replay, scoped claim, ordered feed and oracle cuts. Its pending body and response are fresh and bound to the gate nonce, slot, source and scope. No acceptance pins moved. [Evidence and audit](EVIDENCE.md) · [Checksums](SHA256SUMS)
