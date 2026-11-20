@@ -229,13 +229,14 @@ async function run(step: Step) {
     const d = read(path.join(base, "seed-disk.json")),
       state = read(path.join(base, "partial.json"));
     const actual = state.scopes ?? [];
-    const million = a.item === 5 && a.layout === "pooled";
+    const tenantSeed = [3, 5].includes(a.item) && a.layout === "pooled";
+    const study = a.item === 3 ? "interference" : "million";
     const pins = read(
       path.join(
         root,
         "build-" + a.source,
         "repository/lab/experiments/EXP-DX1/scale1/" +
-          (million ? "tenant-seeds.json" : "profile.json"),
+          (tenantSeed ? "tenant-seeds.json" : "profile.json"),
       ),
     );
     verified =
@@ -245,15 +246,15 @@ async function run(step: Step) {
       actual.every((r: any) => {
         if (!/^s[0-9]+$/.test(r.scope)) return false;
         const seed = read(path.join(base, "transfer", r.scope, "seed-observed.json"));
-        if (million)
+        if (tenantSeed)
           assert.deepEqual(seed.identity.tenant, {
-            study: "million",
+            study,
             topology: "pooled",
             physical: 0,
           });
         else assert.equal(seed.identity.tenant, undefined);
-        const expected = million
-          ? pins["million/pooled/0"]
+        const expected = tenantSeed
+          ? pins[study + "/pooled/0"]
           : pins.find((p: any) => p.people === r.people)?.population;
         return (
           r.status === "SEEDED" &&

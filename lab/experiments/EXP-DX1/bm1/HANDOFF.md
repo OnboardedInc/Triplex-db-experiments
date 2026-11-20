@@ -51,3 +51,20 @@ bench 'cat /var/tmp/triplex-bm1/STATUS'
 bench 'sudo -n tail -12 /var/tmp/triplex-w1/grpw1a/campaign.log'
 bench 'systemctl show triplex-w1-grpw1a -p ActiveState -p Result -p ExecMainStatus'
 ```
+
+The detached Linux supervisor is `bm1n19-campaign.service`. It adopts the existing W1 unit and reads each later builder's public head and report at admission. It gives the Mac controller 45 seconds to launch through SSH, then uses the same published native worker locally when the client is unavailable. Each item has an overall deadline and an independent systemd timer for controllers whose default exceeds it. The Linux supervisor checks resource names, native lock release and terminal evidence before advancing. The Mac dispatcher and collector use `night-client.py watch` and inspect sealed bundles every eleven minutes. Summaries are always collected. The raw-archive ceiling is strictly below 1 GiB.
+
+```sh
+bench 'systemctl show bm1n19-campaign.service -p ActiveState -p Result -p NRestarts'
+bench 'sudo -n tail -15 /var/tmp/triplex-bm1/night-n19/campaign.log'
+bench 'sudo -n find /var/tmp/triplex-bm1/night-n19/bundles -mindepth 2 -maxdepth 2 -name TRANSFER.json'
+BENCH_SERVER="$BENCH_SERVER" python3 lab/experiments/EXP-DX1/bm1/night-client.py collect i1-1
+```
+
+The server labels the one-account DELTA retry as `0-repeat`, with transfer key `i6`. Other keys match the numbered items. Suffix 1 or 2 is the attempt number. Allow four hours for W1, four for the new one-account DELTA, five for import, three for thin lookup, four for guarded release and five for the active-capacity runs. A shorter terminal arm hands the server to the next item immediately. The original W1 worker finishes timing and full seed verification before any supplemental writes. The first verified W1 database is captured with PostgreSQL’s custom-format dump before those writes. Its manifest binds the native container, seed, scope, final position, original receipt, archive bytes and table of contents.
+
+### Evidence checks
+
+- `held-seed.py` binds the completed four W1 phases, the native process and its start ticks, the arm nonce, scalar seed cut, all ten accounts and immutable population digest. Its stop hook resumes only that exact parent. `group-probes.mjs` derives Q-PULSE from the original quiet receipts. Its supplemental phases have new command IDs, exact account membership, scheduled offers, hashed rows, pinned reads and durable operation checks.
+- `overnight.py` accepts W1 group or thin observations from the public revision, scoped arm identities, matched population and native result files. Import stages check same-attempt bindings and manifest bytes. The solo checker checks both reference releases, source, nonce, exact 100k roster, 90 offers and the actual loaded-output hash. The guarded and integrated rungs require their native result bytes and matching source/slot identities. Each terminal state retains failures and an independent scoped inventory.
+- `night-archive.py` seals the actual terminal and request, all selected summary bytes and the compressed archive. `night-client.py` rechecks archive size and hash, every extracted summary member, timestamps and bindings. The recovered-viewer index in `trace-store.mjs` requires the original interrupted slot, exact input hashes and every derived export. It preserves the original attempt's catalog entry.

@@ -3,6 +3,8 @@
 Measure one shared Datomic commit pipeline first, followed by the same tenant-local writes through separate databases. The comparison holds the quiet account's offers and reader count fixed. [Targets](../../../TARGETS.md)
 
 <!-- state -->
+The owner restarted the campaign with the ten-account native seed first. The pooled setup is `arm-p6-i1-seed-a`, followed by staggered and coincident field saves. The earlier stop below belongs to the previous queue.
+
 The campaign stopped at 00:42:17 UTC November 20 (19:42:17 ET November 19) after item 1’s second failed reader. The first attempt missed local-replica coverage. The retry reached its 64 GiB observation limit at 00:39:48 UTC. Its stack was released at 00:40:24 UTC and the verified 11,090,251,343-byte raw archive completed on the server at 00:42:11 UTC. The server is free. Items 2–5 and their six new field-save executions are unstarted. The four compact transfers are indexed. [Failure evidence](evidence/arm-d19-i1-reader-b-diagnostic.md)
 <!-- end state -->
 

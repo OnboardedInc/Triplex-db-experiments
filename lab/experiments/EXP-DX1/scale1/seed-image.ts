@@ -50,9 +50,9 @@ export function checkImage(s: Seal, dest: DeepIdentity) {
   requireIdentity(dest);
   requireIdentity(s.identity);
   assert(
-    s.identity.tenant?.study === "million" &&
-      s.identity.tenant.topology === "pooled" &&
-      s.identity.arm === "zero",
+    s.identity.tenant?.topology === "pooled" &&
+      ((s.identity.tenant.study === "million" && s.identity.arm === "zero") ||
+        (s.identity.tenant.study === "interference" && s.identity.arm === "seed")),
   );
   assert.deepEqual(dest.tenant, s.identity.tenant);
   assert(

@@ -13,3 +13,15 @@ These forecasts were recorded during the 10,000-person reader retry and before i
 Ten accounts at the observed all-hours mean imply about 49 saves/s. The per-active-minute median gives 35/s, the sustained p99 minute gives 235/s and simultaneous peak minutes give 394/s. Capacity forecasts count distinct durable logical saves. An expired primary is an overload observation. Quiet commit, read and feed p99 ratios use the same account alone on the same source and group setting. Record observed offered rate and ACK goodput separately, and leave any threshold between measured levels as a bracket. Each prediction is refuted by a correctly bound result outside its stated range. A missing required observation leaves it unresolved.
 
 The ranges draw on the dated QUEUE, GROWTH and LOAD analyst forecasts. The capacity ranges transfer an eight-fact saturation experiment to a workload with smaller field edits. The 100-database opening range is my own estimate.
+
+## Restart with bounded readers
+
+Forecasts below use the new order. An observation is entered alongside its original forecast when that item finishes.
+
+| Item | Forecast before execution | Result |
+| --- | --- | --- |
+| P6.1 · ten deep accounts | One queue saturates around 150 offered saves/s with grouping off and 200/s with grouping on. I expect quiet commit p99 at 12–30× alone under nine hot neighbours, or 2–6× with verified fair turns. The 35/s steady case should keep up. | Pending. |
+| P6.2 · existing zero controls | I expect the larger transaction or serial storage work to explain at least 20 ms of the observed 50.93 ms p99 gap. Test stage distributions and aligned samples separately. | Pending. |
+| P6.3 · 100,000 people | One account has 75–190 ms commit p99. Page-guard activation exceeds one second. | Pending. |
+| P6.4 · hundred small accounts | Pooled busy-with-low goodput is 3.15–3.40 saves/s and quiet p99 is 0.90–1.25× alone. I expect 100 logical accounts to open in one database. | Pending. |
+| P6.5 · one million people | The pooled seed takes 9.7–12.7 hours at 520–850 PostgreSQL bytes per current fact. | Pending. |

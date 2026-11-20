@@ -268,7 +268,8 @@ async function phase(name, offers, bulkWidth, readAccounts) {
       const end = state.bulk.at(-1),
         recovered = await ingest.importAt(end.first);
       assert.equal(recovered.position, end.position);
-      assert.equal(recovered.digest, end.digest);
+      assert.equal(recovered.correlationId, end.digest);
+      assert.equal(recovered.txId, end.txId);
     }
   }
   try {
