@@ -31,13 +31,13 @@ Each row is the median of six real saves at the fixed business time. Every comma
 
 | People and edit | Changed people / output rows | Owed notices | Projected work and commit if it fits (s) | Stored-mode native request (MiB) | Packed literal envelopes alone (MiB) |
 |---|---:|---:|---:|---:|---:|
-| 100,000 Wage with stored values | 16,495 / 24,743 | 16,495 | 3.9–4.4 | 2.81–2.82 | 16.6–16.6 |
-| 100,000 Overtime with stored values | 8,098 / 8,098 | 0 | 12.0–12.0 | 0.17–0.30 | 14.5–14.5 |
-| 100,000 W0 R1 → R2 with stored values | 20,081 / 37,652 | 16,495 | 11.7–13.4 | 3.57–3.73 | 17.2–17.3 |
-| 1,000,000 Wage with stored values | 164,947 / 247,421 | 164,947 | 38.7–43.5 | 27.90–27.98 | 166.0–166.4 |
-| 1,000,000 Overtime with stored values | 80,840 / 80,840 | 0 | 119.6–119.7 | 1.54–2.81 | 145.2–145.4 |
-| 1,000,000 W0 R1 → R2 with stored values | 200,805 / 376,511 | 164,947 | 116.2–133.4 | 35.53–37.11 | 172.1–173.0 |
+| 100,000 Wage with stored values | 16,495 / 24,743 | 16,495 | 4.4 | 2.81 | 16.6 |
+| 100,000 Overtime with stored values | 8,098 / 8,098 | 0 | 12.0 | 0.17 | 14.5 |
+| 100,000 W0 R1 → R2 with stored values | 20,081 / 37,652 | 16,495 | 11.7 | 3.57 | 17.2 |
+| 1,000,000 Wage with stored values | 164,947 / 247,421 | 164,947 | 43.5 | 27.90 | 166.0 |
+| 1,000,000 Overtime with stored values | 80,840 / 80,840 | 0 | 119.7 | 1.54 | 145.2 |
+| 1,000,000 W0 R1 → R2 with stored values | 200,805 / 376,511 | 164,947 | 116.2 | 35.53 | 172.1 |
 
-Each range projects the two measured rungs independently. The model counts the exact fixture changes and scales observed materialization time by roster size and incremental wire bytes by changed rows. The document lead edit adds a task and due obligation and deletes the prior window obligation. The literal estimate re-packs the oracle’s complete answer bytes using the same chunk size and codec as Publish. The crash gate also verified these chunks against real native assertions. [Model](join/cost-model.py)
+The scale table uses only the verified 10,000-person rung. The model counts the exact fixture changes and scales observed materialization time by roster size and incremental wire bytes by changed rows. The document lead edit adds a task and due obligation and deletes the prior window obligation. The literal estimate re-packs the oracle’s complete answer bytes using the same chunk size and codec as Publish. The crash gate also verified these chunks against real native assertions. [Model](join/cost-model.py)
 
 The gateway rejects bodies above **4 MiB** before a transaction starts. An oversized one-transaction publication leaves the earlier release active. The literal envelopes projection exceeds 4 MiB at 100,000 even before framing. For receipt-only Publish, both scales still require one transaction and four changes. Native admission reads and competing source activity can affect its latency. The estimates use a compact synthetic mix and the local machine. Actual deep-fact workload, multi-account time and server latency remain open. [Gateway body limit](../../../../packages/datomic/gateway/src/triplex/gateway/main.clj)

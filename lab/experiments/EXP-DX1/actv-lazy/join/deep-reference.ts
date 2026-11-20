@@ -103,7 +103,10 @@ export function expectedPolicy(i: number, rows: readonly WorldRow[]) {
     fact(doc, "docType", link, ordinal === 0 ? "ead" : "visa");
     fact(doc, "expiresOn", expiry);
   }
-  for (const [ordinal, link] of refs(root, ":placement/task").entries()) {
+  const tasks = rows
+    .filter((r) => r.attribute === ":placement/task")
+    .toSorted((a, b) => W0.cmpCodePoints(a.value.value, b.value.value));
+  for (const [ordinal, link] of tasks.entries()) {
     const ans = s + "/ans:t" + ordinal,
       f = one(link.value.value, ":task/field-0");
     fact(s, "answers", link, ans);

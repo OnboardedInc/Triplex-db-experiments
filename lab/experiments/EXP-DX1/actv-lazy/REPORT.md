@@ -4,7 +4,7 @@ Storing the 2,474 changed wage values took 472 ms. A connected reader returned t
 The original three-rule release stored 3,764 changed values in 1198 ms. It read the entire roster.
 The 10,000-person trial projects 4.4 seconds for the wage change and 11.7 seconds for the three-rule release at 100,000.
 At a million, the one-transaction wage and three-rule releases exceed the gateway’s 4 MiB request limit.
-Deep accounts and multi-transaction publication are the next measurements in this part.
+The new staged path stored the same three-rule changes in 796 ms at 10,000 compact people. The estimate at 100,000 stays above one second.
 For an erased number, keep the fact that a submission was due and pause submission. [Owner decision](RETENTION.md)
 
 ### Read path
@@ -31,3 +31,5 @@ Deep receipt audit. The deep save previews the actual enrolled root and attached
 Staged receipt audit. `stage/checkStage/collectStage` verify the original scoped manifest, exact native positions and unreachable chunk identity. `publish/marker/physical` bind encoded values and the source/marker cut. `prepare/deepImpact` and the oracle gates bind enrolled subject operations and independently authored inputs. `fast-price/stage-gate/deadline-gate/server` verify actual output bytes or receipts from fresh attempts, including the receiver and scope. Server time series keep offers that miss the deadline in the raw ledger. See [Part 6 implementation and audit response](PART6.md).
 
 The first native staged gate verified a killed writer, an abandoned and collectable stage, a competing release, all-change and empty releases, and an original receipt after lost ACK. The idle boundary gate recorded the expiry event with zero saves and proved one recipient effect after reopening.
+
+Native stage, race and expiry evidence is complete. The 10,000-person comparison isolates ranges, threads, input reuse, staged writes and encoding. The deep price and local server-command smoke are queued. [Measured work and estimates](PART6-PRICE.md) · [Deep server command and predictions](SERVER.md)

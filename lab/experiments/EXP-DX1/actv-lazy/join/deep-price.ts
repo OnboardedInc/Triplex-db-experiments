@@ -23,7 +23,12 @@ const store = (name: string, value: unknown) =>
   writeFileSync(join(out!, name + ".json"), JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
 const native = (samples: Record<string, unknown>[]) => {
   const requests = samples.filter((q) => String(q.path).endsWith("/transact"));
-  assert(requests.length > 0 && requests.every((q) => Number.isSafeInteger(q.requestBytes)));
+  assert(
+    requests.length > 0 &&
+      requests.every(
+        (q) => Number.isSafeInteger(q.requestBytes) && Number(q.requestBytes) <= 4194304,
+      ),
+  );
   return {
     nativeBytes: requests.reduce((b, q) => b + Number(q.requestBytes), 0),
     nativeMs: requests.reduce((b, q) => b + Number(q.wallMs), 0),
@@ -107,7 +112,7 @@ try {
     ["initial", W0.R1.doc, "owed"],
     ["receipt-only", W0.R2.doc, "owed"],
     ["back", W0.R1.doc, "owed"],
-    ["stored", W0.R2.doc, "stored"],
+    ["stored", W0.R2.doc, "staged"],
   ] as const;
   for (const [id, doc, mode] of arms) {
     const before = { ...a.stats },
