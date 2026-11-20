@@ -49,10 +49,11 @@
       (for [x (:data item)
             :let [a (d/ident db (:a x))
                   entity (if (= (:e x) tx) :native-tx (storage/value db (:e x) :triplex.entity/id))]]
-        (native/check! (and entity (= tx (:tx x))) "Unbound transaction datom" {:t t :attribute a})
-        [entity a (if (= a :db/txInstant)
-                    (do (native/check! (instance? java.util.Date (:v x)) "Invalid native instant" {:t t}) :engine-time)
-                    (:v x)) (:added x)]))))
+        (do
+          (native/check! (and entity (= tx (:tx x))) "Unbound transaction datom" {:t t :attribute a})
+          [entity a (if (= a :db/txInstant)
+                      (do (native/check! (instance? java.util.Date (:v x)) "Invalid native instant" {:t t}) :engine-time)
+                      (:v x)) (:added x)])))))
 
 (defn feed [{:keys [name conn]} position limit pin]
   (dissoc (json/read-str (journal/page conn name (cond-> {"after" position "limit" limit}

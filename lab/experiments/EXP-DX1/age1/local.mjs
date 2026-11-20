@@ -53,10 +53,43 @@ function capture(args, file, signal) {
   });
 }
 
-export async function local(opts, config, manager) {
+export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60 * 1000) {
   assert.equal(process.platform, "darwin");
   assert.equal(opts.holder, holder);
   assert.equal(dockerArgs([])[1], DOCKER_HOST);
+  if (opts.run === "sequence") {
+    const outer = readMeasureLease();
+    assert(outer?.pid === process.ppid && outer.holder === holder && !outer.stale,
+      "Sequence requires the heavy wrapper's measurement lease");
+    assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,34}$/);
+    const fidelity = opts.out + "-fidelity";
+    await local({ ...opts, run: "fidelity", out: fidelity }, config, manager, stopAt);
+    const dir = path.join(evidence, fidelity);
+    const binding = JSON.parse(fs.readFileSync(path.join(dir, "binding.json"), "utf8"));
+    const cleanup = JSON.parse(fs.readFileSync(path.join(dir, "cleanup.json"), "utf8"));
+    assert.equal(binding.attempt, cleanup.attempt);
+    assert.equal(binding.slot, cleanup.slotReleased);
+    const mark = "DX_AGE1 ";
+    const body = fs.readFileSync(path.join(dir, "probe.log"), "utf8").split("\n").find((line) => line.startsWith(mark));
+    assert(body, "Missing fidelity result");
+    const observation = JSON.parse(body.slice(mark.length));
+    assert.equal(observation.event, "fidelity");
+    assert.equal(observation.attempt, binding.attempt);
+    assert(observation.growth.recordsPerSecond > 0);
+    const max = Math.max(12000, Math.min(180000, Math.floor(observation.growth.recordsPerSecond * 420 / 20)));
+    const saves = opts.saves ?? [Math.floor(max / 12), Math.floor(max / 4), max].join(",");
+    // [DX-AGE1] Why: keep one bounded window while cleaning each private stack between phases.
+    // Rejected: mixing other experiments into timed rungs or carrying fidelity databases into the storage census.
+    let failure;
+    try {
+      await local({ ...opts, saves, run: "scale", out: opts.out + "-scale" }, config, manager, stopAt - 75000);
+    } catch (error) {
+      failure = error;
+    }
+    await local({ ...opts, run: "successor", out: opts.out + "-successor" }, config, manager, stopAt);
+    if (failure) throw failure;
+    return;
+  }
   const image = (ref) => docker(["image", "inspect", "--format", "{{.Id}}", ref]);
   const selectImage = () => {
     // [DX-AGE1] Why: use the read-back build record when the lab rotates the Datomic image.
@@ -158,7 +191,9 @@ export async function local(opts, config, manager) {
         await sleep(30000);
       }
     }
-    deadline = setTimeout(() => controller.abort(new Error("Measurement window expired")), 14 * 60 * 1000);
+    const remaining = stopAt - Date.now();
+    assert(remaining > 0, "Measurement window expired before boot");
+    deadline = setTimeout(() => controller.abort(new Error("Measurement window expired")), remaining);
     watch = setInterval(() => {
       try { floor(); } catch (error) { controller.abort(error); }
     }, 5000);
