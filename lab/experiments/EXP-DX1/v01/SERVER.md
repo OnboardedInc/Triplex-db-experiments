@@ -7,7 +7,7 @@ Use the held SCALE1 decision loader image on a dedicated bare-metal Ubuntu 24.04
 From a clean checkout at the stated revision with Node 22:
 
 ```bash
-COMMIT=83bb5c7d058b23b61425ce3c65d16e98ef67f2ee
+COMMIT=d5ac41f8ab6453567f9bbdf278296782426367ed
 BUILD=/var/tmp/triplex-v01-adopted-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
@@ -52,3 +52,5 @@ The INT1 Publish command was exercised on its own 64-person Mac fixture. It requ
 P6 runs after the loaded arm on the same adopted scope. It compares the quiet account alone and at 235 aggregate offers per second, with identical quiet offer and read schedules. It reports age-matched commit, pinned field read and journal-observation components. The P6 obligation also needs durable feed effects and Publish and import overlap.
 
 P7 samples first demand pulls at the retained loader cut and records empty and restored residency by role. An untouched-person slope under matched activity remains open.
+
+P8 runs the existing fixed 32-fact pacing arm after P6 in the same database under the grouped writer. The fixed cell offers 50 saves per second across its synthetic active accounts and tracks verified import frames, queryable facts and per-account tails. It is a component of P8. The matched pacing controls, deep and wide volumes and per-person-writer pacing remain open.

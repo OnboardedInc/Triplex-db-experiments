@@ -1,6 +1,6 @@
-Server 2 should use commit 83bb5c7d0.
+Server 2 should use commit d5ac41f8a.
 It accepts the original SCALE1 image and transfer.
-It records partial observations for rows 1 through 4, 6 and 7.
+It records partial observations for rows 1 through 4 and 6 through 8.
 The grouped configuration uses compact layout K.
 The per-person writer can be selected separately.
 Two Mac toy arms matched all 28 saves each.
@@ -36,7 +36,7 @@ The residency adapter uses the INT1 physical role census and the compact guest's
 
 ## P8 audit
 
-The fixed-pace import uses the published loader with the starting cut checked by the preceding quiet-account arm. Its independent oracle compares each newly committed journal entry against the original acknowledged command, checks exact import claims and typed readback, and requires complete native position coverage from the verified prior cut. The worker replays the original offers and verifies the expected database, gateway clock identity, source, slot and attempt. The card re-hashes the tape and binds it to the previous arm. It reports one fixed-pace component. The matched control and held-roster contention bars remain open.
+The fixed-pace import uses the published loader with the starting cut checked by the preceding quiet-account arm. Its independent oracle compares each newly committed journal entry against the original acknowledged command, checks exact import claims and typed readback, and requires complete native position coverage from the verified prior cut. The worker replays the original offers and verifies the expected database, gateway clock identity, source, slot and attempt. The card re-hashes the tape and binds it to the previous arm. It reports one fixed-pace component. The matched control and held-roster contention bars remain open. The second Mac attempt reopened logical cut 189 on the loaded toy scope. The original verifier checked 588 frames and 18,816 facts, with 17,728 already queryable at the end of the 18-second window. All 270 offered saves and 990 reads verified. The first attempt exposed missing bulk-grant metadata and stopped without a row result. Both attempts released the slot and removed their private volumes.
 
 ## Part 2 Publish adapter check
 
