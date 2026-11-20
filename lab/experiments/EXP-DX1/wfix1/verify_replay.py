@@ -34,7 +34,8 @@ def save(name, value):
 
 for line in pin.read_text().splitlines():
     digest, name = line.split(maxsplit=1)
-    data = subprocess.check_output(["git", "show", f"{revision}:{name}"])
+    # The acceptance file manifest includes the later frozen HAM reference script.
+    data = Path(name).read_bytes()
     assert sha(data) == digest
     target = args.output / "oracle" / name
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -53,6 +54,7 @@ def raw_journal(tx):
     assert all(row[2] == tx_id and row[14] == "_Transaction" for row in columns)
     instant, = fields("instant", 8)
     command, = fields("command-id", 5)
+    assert len(columns) == 3 + len(fields("changed-entity", 5)) + len(fields("change", 9))
     return dict(txId=tx_id, position=position, instant=instant, commandId=command,
                 changedEntities=sorted(fields("changed-entity", 5)),
                 changes=sorted((json.loads(text) for text in fields("change", 9)),
@@ -90,7 +92,8 @@ def replay(observed, grouped, label):
     assert len(report["queries"]) == 6
     assert len(observed["cuts"]) == len(observed["rawFeed"]) == len(observed["receipts"]) == len(observed["operations"]) == 3
     fields = dict(id="id", entityId="entity_id", attribute="attribute", recordedAt="recorded_at",
-                  validFrom="valid_from", validTo="valid_to", txId="tx_id")
+                  validFrom="valid_from", validTo="valid_to", txId="tx_id", entityType="entity_type",
+                  createdBy="created_by", retractedAt="retracted_at", retractTxId="retract_tx_id")
     for i, query in enumerate(report["queries"][:3]):
         expected, = query["result"]["snapshot"]
         row, = observed["cuts"][i]
@@ -99,7 +102,8 @@ def replay(observed, grouped, label):
         assert {key: tagged(wire) for key, wire in fields.items()} == {key: expected[key] for key in fields}
         assert {"type": tagged("value_type"), "value": tagged("value_string")} == expected["value"]
         assert int(tagged("recorded_position")) == expected["recordedPosition"]
-        assert tagged("retracted_at") is None
+        assert int(tagged("schema_version")) == expected["schemaVersion"]
+        assert tagged("retracted_position") is None
         command = tape[i][0]
         receipt = observed["operations"][i]
         assert observed["receipts"][i] == {"commandId": command, "txId": "_tx/" + command, "receipt": receipt}
@@ -121,7 +125,8 @@ def replay(observed, grouped, label):
 
 raw = args.log.read_bytes()
 binding = args.binding.read_bytes()
-if args.binding.suffix == ".json":
+sql = args.binding.suffix == ".json"
+if sql:
     inputs = json.loads(binding)
     assert inputs["attempt"] == args.attempt
     for name, digest in inputs["stage"].items():
@@ -133,23 +138,39 @@ if args.binding.suffix == ".json":
     source = inputs["git"]
 else:
     assert (args.binding.parent / "attempt").read_text().strip() == args.attempt
+    assert binding
     for line in binding.decode().splitlines():
         digest, name = line.split("  ", 1)
         assert sha((args.binding.parent / name).read_bytes()) == digest
     source = (args.binding.parent / "source").read_text().strip()
 assert len(source) == 40
 cases = []
+modes = []
+native_summary = []
+sql_progress = []
 for line in raw.splitlines():
     if line.startswith(b"WFIX1_REPLAY "):
         data = json.loads(line[len(b"WFIX1_REPLAY "):])
         assert data["attempt"] == args.attempt
+        modes.append(data["mode"])
         cases.append(replay(data, data["mode"][0], f"native-{len(cases)}"))
+    elif line.startswith(b"WFIX1_NATIVE "):
+        native_summary.append(json.loads(line[len(b"WFIX1_NATIVE "):]))
     elif line.startswith(b"WFIX1_SQL "):
         event = json.loads(line[len(b"WFIX1_SQL "):])
         assert event["attempt"] == args.attempt
+        sql_progress.append(event["event"])
         if event["event"] == "recovered":
             cases.append(replay(event["value"]["observed"], True, "sql"))
-assert len(cases) in (1, 3)
+if sql:
+    assert len(cases) == 1 and not modes and sql_progress[:4] == [
+        "durability", "process-stop", "http-reopened", "recovered",
+    ]
+else:
+    assert modes == [[False, False, False], [True, False, False], [True, True, True]]
+    summary, = native_summary
+    assert summary["attempt"] == args.attempt and summary["test"] == 7
+    assert summary["fail"] == summary["error"] == 0
 save("compared.json", dict(attempt=args.attempt, source=source, bindings=sha(binding),
                            raw=sha(raw), oracleSource=revision, oraclePin=sha(pin.read_bytes()),
                            verifier=sha(Path(__file__).read_bytes()), cases=cases))

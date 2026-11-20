@@ -22,6 +22,7 @@ export function checkJournal(
 ) {
   assert.equal(tx, intent.tx);
   assert.equal(position, intent.position);
+  assert.equal(rows.length, 4 + intent.changes.length);
   const fields = (attr: string) => rows.filter((row) => row.attribute === ":_tx/" + attr);
   assert.deepEqual(
     fields("position").map((row) => row.value_number),
