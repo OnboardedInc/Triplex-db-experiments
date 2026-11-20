@@ -745,7 +745,7 @@
           (is (= {:status 409 :code "CasConflict"} (outcome stale distinct-command)))
           (is (= (select-keys original [:position :recordedAt :operationId :t])
                  (select-keys (storage/operation (d/db conn) "retry-original") [:position :recordedAt :operationId :t])))
-          (is (= (get-in original [:position :v]) (str (storage/head-position (d/db conn)))))))
+          (is (= (get-in original [:position "v"]) (str (storage/head-position (d/db conn)))))))
       (finally (gateway/delete-scope! base scope)))))
 
 ;; [DX-W1] Why: exercise the compact bytes emitted by the public TS client through the gateway's normal request parser.
