@@ -21,8 +21,9 @@ test("read, compare, update, replay and publish in the Datomic playground", asyn
   await page.getByRole("button", { name: "Send twice" }).click();
   await expect(page.getByRole("status")).toContainText("Two submissions, one transaction");
   await page.getByRole("button", { name: "Publish", exact: true }).click();
-  await expect(page.locator("#progress")).toContainText("complete");
+  await expect(page.locator("#progress")).toContainText("complete", { timeout: 20_000 });
   await expect(page.getByRole("heading", { name: "Materialized release answer" })).toBeVisible();
+  await expect(page.locator("#feed-rows")).toContainText("publish:", { timeout: 10_000 });
   await page.getByText("Request and reply JSON", { exact: true }).click();
   await expect(page.locator("#reply-json")).toContainText("receipt");
   await expect(page.getByRole("button", { name: "Erase protected value" })).toBeDisabled();

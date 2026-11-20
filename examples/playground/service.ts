@@ -808,7 +808,9 @@ export class Playground {
             "InvalidCursor",
             "The native cursor exceeds a signed 64-bit tick",
           );
-        const page = await this.writer.log(this.db, fromT, 40, input.waitMs ?? 0);
+        // [DX-PLAY1] Why: the reader owns the feed notification queue while saves and releases use the write peer.
+        // Rejected: repeatedly opening and closing a native watch on the same peer that commits interactive writes.
+        const page = await this.reader.log(this.db, fromT, 40, input.waitMs ?? 0);
         return { records: page.rows, position: Number(start.position.v), fromT, nextT: page.nextT };
       }
       case "save":
