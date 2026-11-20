@@ -109,7 +109,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         for i in range(1, 121):
             disk_floor()
             path = out / f"{action}-{i}.log"
-            args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{action}", "--"]
+            args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{out.name}-{action}", "--"]
             if action == "selftest" and mode in ("profile", "cheap"):
                 args += ["node", str((EXPERIMENT / "measure.mjs").relative_to(REPO))]
             args += ["node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-PREP1"]
@@ -129,9 +129,13 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
                                                   "log": path.name, "sha256": sha(path)})
                 print(f"{action} finished", flush=True)
                 break
-            lines = path.read_text(errors="replace")
-            if action == "selftest" and any(x in lines for x in
-                    ("pool refuses selftest", "selftest already owned/running", "measurement lease")):
+            diagnostics = path.read_text(errors="replace").splitlines()
+            # [DX-PREP1] Why: retry only an admission refusal after the child exits.
+            # Rejected: matching an earlier queue message and rerunning a failing diagnostic image.
+            refused = any(line.startswith("[lab] REFUSED: ") and any(reason in line for reason in
+                          ("pool refuses selftest", "selftest already owned/running", "measurement lease"))
+                          for line in diagnostics)
+            if action == "selftest" and refused:
                 print(f"{action} waiting for reservation ({i})", flush=True)
                 time.sleep(15)
                 continue

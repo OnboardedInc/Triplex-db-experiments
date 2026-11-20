@@ -37,16 +37,18 @@
             {:check check :member member :start start :end end :cpuNs tcpu :io (:io-stats stats)})
     value))
 
-(defn profile-guard [snapshot witness ops f]
+(defn measure-guard [snapshot witness ops f]
   ;; [DX-PREP1] Why: the launcher must initialize the transactor before loading the Peer API.
   ;; Rejected: requiring datomic.api when the observer is preloaded (initializes Peer mode first).
   (let [basis-t (requiring-resolve 'datomic.api/basis-t)
         entid (requiring-resolve 'datomic.api/entid)
         profile (or *profile* (volatile! {:checks []}))
         read? (= "reads" (:profile witness))
-        operation (some #(when (and (map? %) (= "datomic.tx" (:db/id %)))
-                           (:triplex.tx/operation-id %)) ops)]
-    (vswap! profile assoc :scope (get (into {} (:flags witness)) :triplex.scope/key)
+        operation (some #(when (= "datomic.tx" (get % :db/id)) (get % :triplex.tx/operation-id)) ops)
+        scope (some (fn [[a value]] (when (= a :triplex.scope/key) value)) (:flags witness))]
+    ;; [DX-PREP1] Why: transaction function parameters can contain Java collections after transport.
+    ;; Rejected: destructuring the outer map correctly but requiring Clojure vectors for its entries.
+    (vswap! profile assoc :scope scope
             :operation operation :basis (basis-t snapshot) :mode (:profile witness)
             :members (count (:members witness))
             :witnessCounts {:flags (count (:flags witness))
@@ -57,7 +59,7 @@
             :validators (into {}
                           (mapcat (fn [[attr key]]
                                     (let [a (entid snapshot attr)]
-                                      (map-indexed (fn [i value] [[a value] [key i]]) (keep #(when (map? %) (get % attr)) ops)))))
+                                      (map-indexed (fn [i value] [[a value] [key i]]) (keep #(get % attr) ops)))))
                           [[:triplex.claim/command-id :claim] [:triplex.tx/operation-id :operation]]))
     (let [start (System/nanoTime) tcpu (cpu)
           result (f #(portion! profile read? %1 %2 %3))
@@ -65,6 +67,14 @@
       (vswap! profile assoc :start start :end end :cpuNs cpu-ns)
       (when-not *profile* (retain! "PREP1_GUARD" (dissoc @profile :validators)))
       result)))
+
+(defn profile-guard [snapshot witness ops f]
+  (try (measure-guard snapshot witness ops f)
+       (catch Throwable failure
+         (retain! "PREP1_PROFILE_ERROR"
+                  {:mode (:profile witness)
+                   :causes (mapv #(select-keys % [:type :message :at]) (:via (Throwable->map failure)))})
+         (throw failure))))
 
 (defn proc-stat [path]
   ;; [DX-PREP1] Why: Linux PSI files support direct reads but no available-byte ioctl.
