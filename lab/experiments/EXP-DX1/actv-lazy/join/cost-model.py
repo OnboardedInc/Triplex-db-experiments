@@ -1,4 +1,4 @@
-"""Compact fixture cardinalities and linear planning estimates from two sealed native trials."""
+"""Compact fixture cardinalities and linear planning estimates from sealed native trials."""
 import hashlib
 import json
 import sys
@@ -21,7 +21,7 @@ def cardinality(n):
             new += pay >= 1500 + place % 2 * 150
         overtime += 2351 < 2200 + i % 600 <= 2400
     return {"wage-stored": (wage, wage + new), "overtime-stored": (overtime, overtime),
-            "three-rules": (broad, wage + new + 2 * documents)}
+            "three-rules": (broad, wage + new + 3 * documents)}
 
 
 def evidence(directory):
@@ -46,19 +46,28 @@ def evidence(directory):
         s = stages[name]
         assert (s["proof"]["stored"], s["proof"]["changes"]) == (owners, facts)
         assert s["first"]["position"] == s["p"] and s["firstCorrectMs"] >= s["durableMs"]
-    return n, stages
+    assert hashlib.sha256((root / "inputs.json").read_bytes()).hexdigest() == attempt["inputs"]
+    assert hashlib.sha256((root / "owner.json").read_bytes()).hexdigest() == attempt["owner"]
+    # The reducer can be corrected without changing which runtime bytes were priced.
+    runtime = {f: h for f, h in load("inputs.json").items() if not f.endswith("/cost-model.py")}
+    return n, (stages, runtime, attempt["volume"], attempt["nonce"])
 
 
 def estimate(paths):
     inputs = dict(evidence(p) for p in paths)
-    assert set(inputs) == {1000, 10000}
+    assert list(sorted(inputs)) in ([1000], [1000, 10000])
+    assert len(inputs) == len(paths)
+    runtime = inputs[1000][1]
+    assert all(v[1] == runtime for v in inputs.values())
+    assert len({v[2] for v in inputs.values()}) == len(inputs)
+    assert len({v[3] for v in inputs.values()}) == len(inputs)
     forecasts = {}
     for n in (100000, 1000000):
         shape = cardinality(n)
         forecasts[n] = {}
         for name, (owners, rows) in shape.items():
             fits = []
-            for rung, stages in sorted(inputs.items()):
+            for rung, (stages, _, _, _) in sorted(inputs.items()):
                 base = stages["wage-debt"]
                 measured = stages[name]
                 # Native source pages and subject pulls both grow with roster size on this distribution.
