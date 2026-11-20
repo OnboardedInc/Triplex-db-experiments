@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] loader and SDK modules come from runtime-pinned Git archives.
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import fs from "node:fs";

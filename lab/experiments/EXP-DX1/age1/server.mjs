@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] Linux config, proc and receipt records are validated at their runtime boundaries.
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import { execFileSync, spawn } from "node:child_process";

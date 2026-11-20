@@ -1,4 +1,5 @@
 const seed = 430e6;
+/** @type {Record<string, {population: (records: number) => number, datoms: number, fanout: number, bytes: number}>} */
 const specs = {
   EAVT: { population: (n) => n, datoms: 3000, fanout: 2400, bytes: 30 },
   AEVT: { population: (n) => n, datoms: 2740, fanout: 2400, bytes: 24 },
@@ -6,6 +7,7 @@ const specs = {
   VAET: { population: (n) => 0.00040 * Math.min(n, seed), datoms: 2600, fanout: 2400, bytes: 32 },
 };
 
+/** @param {number} n */
 export function predict(n) {
   return Object.fromEntries(Object.entries(specs).map(([index, s]) => {
     const leaves = Math.ceil(s.population(n) / s.datoms);
@@ -17,7 +19,7 @@ export function predict(n) {
   }));
 }
 
-if (import.meta.url === new URL(process.argv[1], "file:").href) {
+if (process.argv[1] && import.meta.url === new URL(process.argv[1], "file:").href) {
   for (const n of [0.16e9, 0.82e9, 1e9, 2e9, 4e9, 8e9]) {
     const columns = Object.values(predict(n)).map((x) =>
       [x.levels, x.leaves, x.dirs, (x.directoryBytes / 1e6).toFixed(x.directoryBytes < 10000 ? 4 : 2)].join(" / "));

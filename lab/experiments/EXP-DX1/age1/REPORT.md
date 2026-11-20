@@ -1,5 +1,5 @@
 Keep commit `2859d6b15` for the queued one-billion server run.
-Take `f073d8058` for the INT1 merge candidate. The merged Mac checks are queued.
+Take `d83694ea9` for the INT1 merge candidate. The merged Mac checks are queued.
 The Mac check on the server revision adopted a small copy and matched all 120 saves.
 At 24,000 records per second from the estimated 430 million, the run would take 9.60 hours and cost $10.46.
 The driver reads the real starting count and continues only if the observed rate fits the 9.9-hour cap.
@@ -38,8 +38,10 @@ The SDK build, source parsing, rate and count tests, and historical log join com
 
 ## Part 3 integration
 
-Merged INT1 at `51d0aff35` into the AGE1 candidate. The only conflict was the shared heavy runner. The merge uses the INT1 implementation, and AGE1 uses ordinary tokens. The native gate mounts the exact merged source and compiles the server rung against it. Previous Mac attempts were compressed with entry-by-entry byte checks, and the older manifests refer to paths inside the archives. [Archive checksums](EVIDENCE-ARCHIVES.sha256)
+Merged INT1 through `a79267191` into the AGE1 candidate. The only conflict was the shared heavy runner. The merge uses the INT1 implementation, and AGE1 uses ordinary tokens. The native gate mounts the exact merged source and compiles the server rung against it. Previous Mac attempts were compressed with entry-by-entry byte checks, and the older manifests refer to paths inside the archives. [Archive checksums](EVIDENCE-ARCHIVES.sha256)
 
 The 1B seal exports the exact roster, database identity and original and final replay ledgers. The queued revision can use the exporter after sealing. The export binds the exact hashed seal, immutable checkpoint, roster, restore readback, manifest, attempt and source. The preflight checks live count and clocks, both cuts, fixed row and feed witnesses and the final receipt from a fresh tagged peer. The Mac fixture checks that the old head is refused and exercises the positive comparison only at small size. The v0.1 driver still has to select this input. [Scorecard handoff](SCORECARD-HANDOFF.md)
 
 At 8–16k/s and a 430M seed, about 620–800M fits with three hours reserved. A true doubling needs more than 17.3k/s. An 800M diagnostic can check the proposed tree shape and fixed-width paths when a matched fresh baseline exists. It cannot certify 1B or settle long-run timing laws. [Budget and diagnostic plan](FALLBACK.md)
+
+SCALE1 has published the current-writer plan at `46deaaedb`. The AGE1 measurement comparison remains pending. [Server comparison](GROWTH-READOUT.md)

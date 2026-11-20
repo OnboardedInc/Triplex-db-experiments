@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] negative unit fixtures intentionally vary dynamic receipt fields.
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";

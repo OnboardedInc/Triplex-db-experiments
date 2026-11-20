@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] live peer and seal JSON have runtime-checked versions, cuts and content digests.
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
