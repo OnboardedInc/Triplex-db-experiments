@@ -116,6 +116,8 @@ async function main(dir: string) {
         readers: p.phase === "cells",
       },
       async (env) => {
+        // [DX-SCALE1] Why: pin all sender threads after native CPU admission. Rejected: retaining the setup process's wide affinity during measurement.
+        execFileSync("taskset", ["-a", "-pc", "3", String(process.pid)], { timeout: 5000 });
         const writeUrl = env.DATOMIC_URL!,
           readUrl = env.DATOMIC_READ_URLS!;
         assert(writeUrl !== readUrl && writeUrl && readUrl);

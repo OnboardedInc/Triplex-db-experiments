@@ -3,7 +3,7 @@
 The current decision screen measures ten full-size deep accounts together, then partitions the same logical rows and tapes across two Datomic databases on the same server. Each topology gets the same ten writer clients, reader seats and feed observer. [Review response](REVIEW.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The original staggered writer stopped at 03:37 UTC on a missed phase start and released its stack. Its checksummed summary is collected and its first raw archive is retained for diagnostics. The revised queue starts with a verified 10,000-per-account seed and the W1 bounded prerequisite.
+The original staggered writer stopped at 03:37 UTC on a missed phase start and released its stack. Its checksummed summary is collected and its first raw archive is retained for diagnostics. The first decision seed exited during CPU admission before it started a database or issued traffic. The retry admits native CPU roles from the setup mask, then pins the sender to its assigned core and proceeds to the W1 bounded prerequisite.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows all active stages and their ceilings.
