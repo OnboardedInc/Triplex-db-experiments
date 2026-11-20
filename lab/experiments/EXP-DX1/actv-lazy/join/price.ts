@@ -38,12 +38,12 @@ try {
     params: structuredClone(W0.R2.doc.rules.find((r) => r.id === "MINWAGE")!.params),
   });
   Object.assign(ot.rules.find((r) => r.id === "OT")!, { params: { thresholdMinutes: 2351 } });
-  assert(!W0.RELEASES_BY_HASH.has(W0.compileRelease(wage).hash));
+  const materialWage: W0.ReleaseDoc = { ...wage, name: "R3" };
   const arms = [
     ["baseline", W0.R1.doc, "owed"],
     ["wage-debt", wage, "owed"],
     ["restore", W0.R1.doc, "owed"],
-    ["wage-stored", wage, "stored"],
+    ["wage-stored", materialWage, "stored"],
     ["restore-again", W0.R1.doc, "owed"],
     ["overtime-stored", ot, "stored"],
   ] as const;
@@ -51,6 +51,7 @@ try {
   let old: W0.ReleaseDoc | null = null;
   const stages = [],
     saves = [];
+  const changes: { subject: string; world: W0.World; position: number }[] = [];
   for (const [arm, [id, doc, mode]] of arms.entries()) {
     const before = { ...a.stats },
       cpu = process.cpuUsage(),
@@ -83,18 +84,9 @@ try {
         (c: any) => c.entityId === "lazy/account/releases" || c.entityId.startsWith(a.db.prefix),
       ),
     );
-    const seq = Number((await a.notices.observe()).value.sequence),
-      proof = await ref.check(
-        a,
-        f.roster,
-        f.world,
-        doc,
-        { tx: r.position, validTime: valid },
-        old,
-        seq,
-        true,
-        true,
-      );
+    const seq = Number((await a.notices.observe()).value.sequence);
+    if (id.includes("wage") || id === "overtime-stored")
+      assert(!W0.RELEASES_BY_HASH.has(W0.compileRelease(doc).hash));
     const stats = {
       pages: a.stats.indexPages - before.indexPages,
       worlds: a.stats.worlds - before.worlds,
@@ -124,18 +116,12 @@ try {
       physicalChanges: r.changes.length,
       noticeAndRelease: semantic.length,
       receiptBytes: Buffer.byteLength(bytes(r)),
-      proof,
     };
     stages.push(row);
-    save(id, row);
     old = doc;
   }
-  // [DX-ACT1] Why: price real source commands after the measured publications so neither sender progress nor Python can supply release answers. Rejected: charging the post-run full-census oracle to the customer's offer.
-  const sender = a.dispatcher(new Documents(sink.comp, "sink"));
-  const dispatchStart = performance.now();
-  await sender.drain();
-  const dispatchMs = performance.now() - dispatchStart;
-  const confirmed = await ref.receiver(a, sender);
+  // [DX-ACT1] Why: only real requested reads may warm a measured account. Rejected: running the full-census verifier between unseen release offers.
+  save("offers", stages);
   for (let i = 0; i < 18; i++) {
     const ordinal = 10 + i,
       sub = f.roster[ordinal]!,
@@ -175,6 +161,7 @@ try {
       }),
     );
     assert.equal(actual.json, reference.json);
+    changes.push({ subject: sub, world: changedWorld, position: r.position });
     saves.push({
       kind: ["read-only", "posting", "same-posting"][kind],
       tx: r.txId,
@@ -189,6 +176,40 @@ try {
       receiptBytes: Buffer.byteLength(bytes(r)),
     });
   }
+  const proofs = [];
+  for (const [i, row] of stages.entries()) {
+    const doc = arms[i]![1],
+      prev = i ? arms[i - 1]![1] : null;
+    const proof = await ref.check(
+      a,
+      f.roster,
+      f.world,
+      doc,
+      { tx: row.p, validTime: valid },
+      prev,
+      row.seq,
+    );
+    const verified = { ...row, proof };
+    proofs.push(verified);
+    save(row.id, verified);
+  }
+  for (const v of changes)
+    await ref.check(
+      a,
+      [v.subject],
+      () => v.world,
+      old!,
+      { tx: v.position, validTime: valid },
+      old,
+      undefined,
+      true,
+      false,
+    );
+  const sender = a.dispatcher(new Documents(sink.comp, "sink"));
+  const dispatchStart = performance.now();
+  await sender.drain();
+  const dispatchMs = performance.now() - dispatchStart;
+  const confirmed = await ref.receiver(a, sender);
   save("join-price", {
     scope,
     n,
@@ -196,7 +217,7 @@ try {
     source: f.sourceHash,
     roster: f.rosterHash,
     installMs,
-    stages,
+    stages: proofs,
     saves,
     confirmed,
     dispatchMs,
