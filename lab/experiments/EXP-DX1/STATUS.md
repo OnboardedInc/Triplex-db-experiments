@@ -3184,3 +3184,23 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   logs, socket and peer clocks, native apply and the durable log, and keep natural cold saves in the test.
 - This points at the same build as W3-DESIGN's first design (DX-PREP1 part 3, running): prepare each save once, give a
   quiet account the next turn, shorten the wait for the durable write.
+
+## 2026-11-20 13:09 UTC (08:09 local, 2026-11-20): DX-JVM1 in: settings inventoried and a candidate proposed, unmeasured; server 2's campaign cost; Mac disk
+
+- **DX-JVM1 (`46880aa47` on `exp/DX-JVM1-settings`; `jvm1/REPORT.md`, `INVENTORY.md`, `SOURCES.md`, `CONFIGURATION.md`,
+  `PREDICTIONS.md`, `SERVER.md`).** Inventory of the three JVMs and Datomic's properties with vendor sources; an opt-in
+  candidate (the transactor on three server cores with smaller, more frequent index jobs; the read gateway on three
+  cores keeping its larger cache; every role records the flags it actually started with; launchers for T1, SCALE1,
+  W1 and BM1 pinned); the write gateway stays on one core with Serial in this comparison (DX-TAIL1 owns that). In
+  the archived Mac control, saves overlapping explicit index requests had 1.29 times the p99 of those outside. Fresh
+  Mac inventory and replay stayed queued behind the measurement lease for over an hour: the candidate is unmeasured.
+  Server command: four arms (present; candidate; candidate with the memory-index threshold back at 128 MiB;
+  candidate with compiler scaling back at 1), 26 minutes each on one sealed ten-account seed. Parked until a server
+  runs it; added to the hand-over list for server 1.
+- **Server 2 (DX-SCALE1, xhigh):** the split-layout arm is out; the revised one-database study is pushed and waits
+  behind the pooled seed (55.64 million of about 162 million facts at about 5,900 facts per second; transactor peak
+  4.68 GiB). Its forecast for the whole campaign: 34 to 38 server hours from pilot launch, 37 to 41 USD.
+- **Server 1 (DX-BM1):** the activation job's own 100,000-person seed has run 101 minutes against a 77-minute estimate;
+  the six timed windows are still ahead.
+- **Mac disk fell to 18 GiB:** removed 18 lab images older than three hours and seven finished analysts' worktrees;
+  37 to 39 GiB free. `dx-thin1`'s worktree holds 18 GB.
