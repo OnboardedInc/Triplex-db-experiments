@@ -567,7 +567,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
               "commit p99 " +
               metric(p) +
               " ms" +
-              (boundary
+              (boundary && !(s.attempt.live && s.attempt.bounded)
                 ? ", lowest observed expiry or quiet miss " +
                   (b ? round(b.offeredPerS) + " offered/s" : "unresolved") +
                   ", highest lower measured within the bars " +
@@ -629,7 +629,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
               " · p99 " +
               metric(m.commit.p99) +
               " ms" +
-              (failure
+              (failure && !(s.attempt.live && s.attempt.bounded)
                 ? ", first quiet ratio miss or expiry at " + round(failure.offeredPerS) + "/s"
                 : "") +
               (expiry ? ", expiry from " + round(expiry.offeredPerS) + "/s" : "") +

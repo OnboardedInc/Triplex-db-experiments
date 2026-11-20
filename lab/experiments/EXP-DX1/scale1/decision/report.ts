@@ -24,7 +24,7 @@ const metric = (x: any, stem: "p50" | "p99") => {
   );
 };
 const ratio = (r: any) =>
-  r?.pass === null || !Number.isFinite(r?.value)
+  !Number.isFinite(r?.value)
     ? "unmeasured (n=" + (r?.n ?? 0) + "/" + (r?.denominatorN ?? 0) + ")"
     : fmt(r.value) +
       "× (n=" +
@@ -34,6 +34,7 @@ const ratio = (r: any) =>
       (r.interval90
         ? ", 90% [" + fmt(r.interval90.low) + ", " + fmt(r.interval90.high) + "]"
         : "") +
+      (r.pass === null ? ", descriptive" : "") +
       ")";
 
 export function placementReport(dir: string, trials: Trial[]) {
@@ -41,7 +42,7 @@ export function placementReport(dir: string, trials: Trial[]) {
   const lines = [
     "# Decision cells",
     "",
-    "Offered rate and goodput use the same 90-second wall interval. p50 and p99 use original durable acknowledgements. Expiry is before the SDK dispatch. Refusals and ambiguous outcomes carry their own denominators. The quiet account keeps 3.5/s. Exactly 64 reader seats replay the same pinned tape in the quiet control and each loaded comparison. Full-source feed differences are checked at each durable position.",
+    "Offered rate and goodput use the same 90-second wall interval. p50 and p99 use original durable acknowledgements. Expiry is before the SDK dispatch. Socket timing covers requests with a successful HTTP response. Refusals and ambiguous outcomes carry their own denominators. The quiet account keeps 3.5/s. Exactly 64 reader seats replay the same pinned tape in the quiet control and each loaded comparison. Full-source feed differences are checked at each durable position.",
     "",
     "The primary budget requires p50 ≤10 ms, p99 ≤50 ms, all primary dispositions exact with no expiry, rejection or missing offers, at least 99% of ACKs in the window and at most 1 s of drain. A quiet comparison requires 500 observations on each side and p99 ≤1.25× for saves, pinned reads and feed lag. The two layouts share one PostgreSQL, transactor JVM, physical cores and gateways. The two-database layout has two native commit pipelines inside that JVM.",
     "",
@@ -108,7 +109,7 @@ export function placementReport(dir: string, trials: Trial[]) {
       d.mode === a.mode && d.from === a.from && d.cells.length === 10 && d.comparisons.length === 4,
     );
     lines.push(
-      "| Cell | Offered/s | Durable ACKs/s (n) | Pre-dispatch expiry | Missing | Refused / uncertain / recovered | p50 ms | p99 ms | Quiet save p99 ms | Reader p99 ms | Feed p99 ms | Drain ms |",
+      "| Cell | Offered/s | Durable ACKs/s (n) | Pre-dispatch expiry | Missing | Refused / uncertain / recovered | p50 ms | p99 ms | Quiet save p99 ms | Reader p99 ms | Feed p99 ms | ACK / disposition drain ms |",
       "| --- | ---: | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | ---: |",
     );
     for (const c of d.cells)
@@ -117,7 +118,17 @@ export function placementReport(dir: string, trials: Trial[]) {
           [
             c.label,
             fmt(c.offered),
-            fmt(c.goodput) + " (" + c.inWindow + ")",
+            fmt(c.goodput) +
+              " (n=" +
+              c.inWindow +
+              (c.goodputInterval90
+                ? ", 90% [" +
+                  fmt(c.goodputInterval90.low) +
+                  ", " +
+                  fmt(c.goodputInterval90.high) +
+                  "]"
+                : "") +
+              ")",
             c.preDispatchExpiry,
             c.missing,
             [c.refused, c.uncertain, c.recovered].join(" / "),
@@ -126,7 +137,7 @@ export function placementReport(dir: string, trials: Trial[]) {
             metric(c.quiet, "p99"),
             metric(c.read, "p99"),
             metric(c.feed, "p99"),
-            fmt(c.drainMs),
+            fmt(c.drainMs) + " / " + fmt(c.dispositionDrainMs),
           ].join(" | ") +
           " |",
       );

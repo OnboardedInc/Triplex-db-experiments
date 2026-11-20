@@ -5,7 +5,7 @@ import { seedOps } from "../../../../bench/lib/commands.ts";
 import { SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
 import { ack } from "../../load1/oracle.ts";
 import { decodeFeed, now } from "./observer.ts";
-import { field, person, root, task, type Write } from "./plan.ts";
+import { field, operationId, person, root, sha, task, type Write } from "./plan.ts";
 import { expectedSave, type Save } from "./writes.ts";
 import type { Destination } from "./seed.ts";
 
@@ -60,7 +60,7 @@ export async function nativeProbe(id: Destination, writeUrl: string, readUrl: st
           version: "probe/" + a + "/" + n,
         };
         const o: Save = {
-          id: id.nonce + "/" + e.version,
+          id: operationId(id.nonce, e.version),
           account: a,
           subject: n,
           ordinal: n,
@@ -70,10 +70,10 @@ export async function nativeProbe(id: Destination, writeUrl: string, readUrl: st
           enqueued: now(),
           status: "offered",
         };
-        testCases.push({ o, body: expectedSave(o, e, prior) });
+        testCases.push({ o, prior: prior.slice(0, e.width), body: expectedSave(o, e, prior) });
       }
     const responses = await Promise.all(
-      testCases.map(async ({ o, body }) => {
+      testCases.map(async ({ o, body, prior }) => {
         const a = (await w.transact(db, body.input)) as {
           operationId: string;
           position: { v: string };
@@ -82,17 +82,23 @@ export async function nativeProbe(id: Destination, writeUrl: string, readUrl: st
         };
         assert.equal(a.operationId, o.id);
         assert(Number(a.position.v) > 1 && Number(a.t.v) > 0);
-        return { a, tx: body.input.claims[0]!.txId, digest: body.digest };
+        return { a, tx: body.input.claims[0]!.txId, digest: body.digest, body, prior };
       }),
     );
-    const feed = await r.request<{ transactions: [string, number, string[]][] }>(
-      "POST",
-      `/v2/db/${db}/transactions`,
-      { after: 1, limit: 10 },
-    );
-    assert.equal(feed.transactions.length, 6);
     const expected = responses.sort((a, b) => Number(a.a.position.v) - Number(b.a.position.v));
-    for (const [i, row] of feed.transactions.entries()) {
+    const feed: [string, number, string[]][] = [];
+    const deadline = now() + 12000;
+    while (feed.length < expected.length) {
+      assert(now() < deadline, "Read peer did not see the six committed probe saves");
+      const page = await r.request<{ transactions: typeof feed }>(
+        "POST",
+        `/v2/db/${db}/transactions`,
+        { after: 1 + feed.length, limit: 10, waitMs: 1000 },
+      );
+      feed.push(...page.transactions);
+    }
+    assert.equal(feed.length, expected.length);
+    for (const [i, row] of feed.entries()) {
       const got = decodeFeed(db, row, now()),
         s = expected[i]!;
       assert.deepEqual(
@@ -100,6 +106,29 @@ export async function nativeProbe(id: Destination, writeUrl: string, readUrl: st
         [s.a.operationId, Number(s.a.position.v), s.tx, s.a.recordedAt.v, s.digest],
       );
       assert.equal(got.position, i + 2);
+      const lookup = await w.operation(db, s.a.operationId);
+      assert.deepEqual(
+        [lookup.status, lookup.operationId, lookup.position, lookup.t, lookup.recordedAt],
+        ["committed", s.a.operationId, s.a.position, s.a.t, s.a.recordedAt],
+      );
+      assert.equal(await w.claim(db, s.a.operationId, got.position), s.tx);
+      const added = s.body.input.rows.slice(0, s.prior.length);
+      for (const [cut, predicted] of [
+        [got.position - 1, s.prior],
+        [got.position, added],
+      ] as const) {
+        const stored = await r.rows(db, {
+          entityIds: [s.body.entity],
+          basis: { recordedPosition: cut, validAt: SEED_VALID_FROM },
+        });
+        const fields = new Set(predicted.map((row) => row.attribute));
+        const values = stored.filter((row) => fields.has(row.attribute));
+        assert.deepEqual(
+          values.map((row) => [row.id, row.entity_id, row.attribute, row.value_string]).sort(),
+          predicted.map((row) => [row.id, row.entity_id, row.attribute, row.value_string]).sort(),
+        );
+        assert(values.every((row) => row.recorded_position <= cut && row.retracted_at === null));
+      }
     }
     return {
       ...id,
@@ -107,6 +136,9 @@ export async function nativeProbe(id: Destination, writeUrl: string, readUrl: st
       scope,
       seedFacts: facts.length,
       saves: expected.length,
+      claims: expected.length,
+      fieldCuts: 2 * expected.length,
+      feedHash: sha(feed),
       nativeTransactions: new Set(expected.map((x) => x.a.t.v)).size,
       pinnedAccounts: oracle.length,
     };

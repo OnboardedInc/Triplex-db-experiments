@@ -10,6 +10,7 @@ import {
   field,
   keyFor,
   maxInflight,
+  operationId,
   sha,
   task,
   type Density,
@@ -153,6 +154,12 @@ export async function play(scopes: Sender[], tape: Write[], start: number, nonce
     rows: Save[] = [];
   const quarantined = new Set<string>();
   const unresolved = new Map<Save, ReturnType<typeof expectedSave>>();
+  const inFlightSends = new Map<string, Save>();
+  const observe: NonNullable<DatomicClient["onRequest"]> = (response) => {
+    const save = inFlightSends.get(response.operationId ?? "");
+    if (save && response.path === `/v1/db/${save.db}/transact` && Number.isFinite(response.written))
+      save.sent = performance.timeOrigin + response.written;
+  };
   const expire = (entry: Save, cause: NonNullable<Save["expiryCause"]>) => {
     entry.status = "expired-before-dispatch";
     entry.expiryCause = cause;
@@ -189,13 +196,13 @@ export async function play(scopes: Sender[], tape: Write[], start: number, nonce
       active[account]!++;
       row.dispatched = now();
       row.status = "pending";
+      inFlightSends.set(row.id, row);
       let p: Promise<void>;
       p = sender.client
-        .transact(row.db, candidate.input, () => {
-          row.sent ??= now();
-        })
+        .transact(row.db, candidate.input)
         .then((value) => {
           row.end = now();
+          assert(row.sent !== undefined, "Acknowledged write has no matching socket sample");
           const raw = value as Ack;
           bind(row, raw, candidate);
           const old = sender.rows.get(candidate.entity)!;
@@ -220,6 +227,7 @@ export async function play(scopes: Sender[], tape: Write[], start: number, nonce
           quarantined.add(key(row));
         })
         .finally(() => {
+          inFlightSends.delete(row.id);
           owned.delete(key(row));
           active[account]!--;
           pending.delete(p);
@@ -229,38 +237,43 @@ export async function play(scopes: Sender[], tape: Write[], start: number, nonce
     }
   }
 
-  // Each account has its own bound even when all ten use one database. The same
-  // ten clients and same total outstanding cap are used in the 5+5 placement.
-  for (const e of tape) {
-    const due = start + e.ms;
-    while (now() < due) await sleep(Math.ceil(due - now()));
-    const q = queues[e.account]!,
-      scope = scopes[e.account]!.scope;
-    const row: Save = {
-      id: nonce + "/" + e.version,
-      account: e.account,
-      subject: e.subject,
-      ordinal: e.ordinal,
-      width: e.width,
-      db: scope.db,
-      due,
-      enqueued: now(),
-      queued: q.length,
-      pending: active[e.account],
-      status: "offered",
-    };
-    rows.push(row);
-    if (row.enqueued >= due + expiryMs) expire(row, "timer");
-    else {
-      q.push({ e, row });
-      pump(e.account);
+  // [DX-SCALE1] Why: record the actual socket flush for successful requests, with a bounded map of active operations. Rejected: using the publication callback's error and finally notifications as packet timestamps.
+  for (const s of scopes) s.client.onRequest = observe;
+  try {
+    // Ten clients with the same per-account request cap serve either placement.
+    for (const e of tape) {
+      const due = start + e.ms;
+      while (now() < due) await sleep(Math.ceil(due - now()));
+      const q = queues[e.account]!,
+        scope = scopes[e.account]!.scope;
+      const row: Save = {
+        id: operationId(nonce, e.version),
+        account: e.account,
+        subject: e.subject,
+        ordinal: e.ordinal,
+        width: e.width,
+        db: scope.db,
+        due,
+        enqueued: now(),
+        queued: q.length,
+        pending: active[e.account],
+        status: "offered",
+      };
+      rows.push(row);
+      if (row.enqueued >= due + expiryMs) expire(row, "timer");
+      else {
+        q.push({ e, row });
+        pump(e.account);
+      }
     }
+    while (pending.size || queues.some((q) => q.length)) {
+      for (const a of scopes.keys()) pump(a);
+      await Promise.race([...pending, sleep(25)]);
+    }
+    return { rows, unresolved };
+  } finally {
+    for (const s of scopes) delete s.client.onRequest;
   }
-  while (pending.size || queues.some((q) => q.length)) {
-    for (const a of scopes.keys()) pump(a);
-    await Promise.race([...pending, sleep(25)]);
-  }
-  return { rows, unresolved };
 }
 
 export async function resolveUncertain(
@@ -273,6 +286,7 @@ export async function resolveUncertain(
     if (receipt.status !== "committed" || !receipt.position || !receipt.t || !receipt.recordedAt)
       continue;
     const p = Number(receipt.position.v);
+    assert.equal(receipt.operationId, o.id);
     assert.equal(await client.claim(o.db, o.id, p), candidate.input.claims[0]!.txId);
     bind(
       o,

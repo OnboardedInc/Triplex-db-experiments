@@ -3,12 +3,13 @@ import fs from "node:fs";
 import test from "node:test";
 import { Histogram } from "../../../../bench/lib/hist.ts";
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
-import { checkCell, type Observation } from "./check.ts";
+import { checkCell, ratios, type Observation } from "./check.ts";
 import {
   cells,
   field,
   factsFor,
   layoutOf,
+  operationId,
   person,
   quiet,
   readTape,
@@ -55,7 +56,7 @@ test("deadline expiry before dispatch is counted separately and incomplete reads
     ];
   const writes = writeTape(people, "alone", 0).map(
     (w): Save => ({
-      id: nonce + "/" + w.version,
+      id: operationId(nonce, w.version),
       account: w.account,
       subject: w.subject,
       ordinal: w.ordinal,
@@ -113,4 +114,22 @@ test("deadline expiry before dispatch is counted separately and incomplete reads
   const damaged = structuredClone(x.reads) as [ReadResult, ReadResult];
   damaged.flatMap((r) => r.samples)[0]!.digest = "f".repeat(64);
   assert.throws(() => checkCell({ ...x, reads: damaged }, []));
+
+  const alone = [0, 1].map((repeat) => ({
+    ...summary,
+    repeat,
+    quietComplete: true,
+    distributions: { ...summary.distributions, commit: Array<number>(315).fill(7) },
+  }));
+  const loaded = alone.map((a) => ({
+    ...a,
+    cell: 235 as const,
+    distributions: { ...a.distributions, commit: Array<number>(315).fill(10) },
+  }));
+  const [commit, read] = ratios(alone, loaded);
+  assert.equal(commit!.pass, false);
+  assert.equal(commit!.denominatorN, 630);
+  assert.equal(read!.pass, true);
+  loaded[0]!.readErrors = 1;
+  assert.equal(ratios(alone, loaded)[1]!.pass, null);
 });

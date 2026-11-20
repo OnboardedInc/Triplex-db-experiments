@@ -3,7 +3,7 @@
 The current decision screen measures ten full-size deep accounts together, then partitions the same logical rows and tapes across two Datomic databases on the same server. Each topology gets the same ten writer clients, reader seats and feed observer. [Review response](REVIEW.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The earlier `arm-p6-i1-pool-staggered-a` is still running on its original source, with timed offers starting at 02:35 UTC. It is a 10,000-per-account write-capacity diagnostic. Its execution ceiling is 11:57 UTC November 20. The new queue waits for its first terminal files and exact cleanup. It preserves that attempt even if packaging or a checker fails.
+The original staggered writer stopped at 03:37 UTC on a missed phase start and released its stack. Its checksummed summary is collected and its first raw archive is retained for diagnostics. The revised queue starts with a verified 10,000-per-account seed and the W1 bounded prerequisite.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows all active stages and their ceilings.

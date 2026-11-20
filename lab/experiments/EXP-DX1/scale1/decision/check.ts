@@ -4,6 +4,7 @@ import {
   distribution,
   histogramDistribution,
   percentile,
+  rateBootstrap90,
   ratioBar,
   type Distribution,
 } from "../../../../bench/lib/verdict-statistics.ts";
@@ -13,6 +14,8 @@ import {
   cellKey,
   expiryMs,
   field,
+  operationId,
+  quietRate,
   readForMs,
   readFromMs,
   readTape,
@@ -56,7 +59,7 @@ export type Observation = {
 export type OracleRows = Map<string, Row[]>[];
 export function checkCell(x: Observation, model: OracleRows) {
   const program = writeTape(x.people, x.cell, x.repeat);
-  const plan = new Map(program.map((w) => [x.nonce + "/" + w.version, w]));
+  const plan = new Map(program.map((w) => [operationId(x.nonce, w.version), w]));
   const byCommand = new Map(x.writes.map((w) => [w.id, w]));
   assert.equal(byCommand.size, x.writes.length);
   const missing = program.length - x.writes.length;
@@ -82,6 +85,7 @@ export function checkCell(x: Observation, model: OracleRows) {
     assert(!w.dispatched || w.dispatched >= w.enqueued);
     assert(!w.sent || (!!w.dispatched && w.sent >= w.dispatched));
     assert(w.end && w.end >= (w.dispatched ?? w.enqueued));
+    if (w.status === "acked") assert(w.sent && w.sent <= w.end);
     if (w.status === "expired-before-dispatch") {
       assert(!w.dispatched && !w.sent && !w.receipt && !f.has(w.id));
       assert(w.end >= w.due + expiryMs);
@@ -190,6 +194,7 @@ export function checkCell(x: Observation, model: OracleRows) {
   const feedLat = quiet.map((w) => Math.max(0, f.get(w.id)!.seen - w.end!));
   const inWindow = acked.filter((w) => w.end! < upper).length;
   const drainMs = Math.max(0, ...acked.map((w) => w.end! - upper));
+  const dispositionDrainMs = Math.max(0, ...x.writes.map((w) => w.end! - upper));
   const beforeDispatch = x.writes.filter((w) => w.status === "expired-before-dispatch").length;
   const expiryCauses = Object.fromEntries(
     ["timer", "same-subject", "in-flight-limit", "unresolved-predecessor", "dispatch"].map(
@@ -258,13 +263,19 @@ export function checkCell(x: Observation, model: OracleRows) {
     acked: acked.length,
     inWindow,
     goodput: inWindow / seconds,
+    goodputInterval90: rateBootstrap90(
+      series.map((s) => ({ correct: s.durableAck, seconds: 1 })),
+      label + "/durable-save-rate",
+    ),
     drainMs,
+    dispositionDrainMs,
     offered: program.length / seconds,
     nativeTransactions: groups.size,
     groupMean: f.size / Math.max(1, groups.size),
     stages,
     sampledReadPlan: sha(readPlan),
     readErrors,
+    quietComplete: quiet.length === seconds * quietRate,
     qualifiedInputs: groupsEligible,
     capacityBars:
       groupsEligible &&
@@ -297,7 +308,10 @@ export function ratios(
     ),
   );
   return (["commit", "read", "feed"] as const).map((k) => {
-    const dirty = [...alone, ...loaded].some((r) => !r.qualifiedInputs);
+    // [DX-SCALE1] Why: a neighbour's expired save does not erase a complete quiet denominator. Rejected: calling all isolation metrics unmeasured as soon as any busy account loses an offer.
+    const invalid = [...alone, ...loaded].some((r) =>
+      k === "read" ? r.readErrors !== 0 : !r.quietComplete,
+    );
     const d = (rs: typeof loaded) => {
       if (k !== "read")
         return distribution(
@@ -312,7 +326,7 @@ export function ratios(
       b = d(alone);
     return ratioBar("decision/" + loaded[0]!.cell + "/" + k, a, b, 1.25, {
       minimum: 500,
-      invalid: dirty ? "incomplete outcomes in a matched window" : undefined,
+      invalid: invalid ? "incomplete quiet outcomes in a matched window" : undefined,
     });
   });
 }

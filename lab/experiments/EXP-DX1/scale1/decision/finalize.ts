@@ -59,6 +59,9 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
   assert(
     preflight.at >= a.at &&
       preflight.saves === 6 &&
+      preflight.claims === 6 &&
+      preflight.fieldCuts === 12 &&
+      /^[a-f0-9]{64}$/.test(preflight.feedHash) &&
       preflight.pinnedAccounts === 2 &&
       preflight.scope === "dx-scale-decision-probe-" + a.nonce,
   );

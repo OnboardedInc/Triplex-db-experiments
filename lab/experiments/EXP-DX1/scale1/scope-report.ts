@@ -43,26 +43,29 @@ function windowTable(run: Run, lines: string[]) {
     assert(m.layout === run.attempt.layout && m.sourceCuts.length === run.attempt.spec.scopes);
     const counts = m.sourceCuts.flatMap((s: any) => Object.entries(s.counts));
     assert(new Set(counts.map((pair: any) => pair[0])).size === run.attempt.spec.accounts);
-    lines.push(
-      "Account 1 supplies the quiet comparison. The first window has one active account. The stored roster is held fixed.",
-      "",
-      "| Window | Acknowledged commits/s | Quiet commit p99 ratio | Quiet read p99 ratio | Quiet feed p99 ratio |",
-      "| --- | ---: | --- | --- | --- |",
-    );
-    for (const w of m.tenants.windows)
+    const writeDiagnostic = run.attempt.live && run.attempt.bounded;
+    if (!writeDiagnostic) {
       lines.push(
-        "| " +
-          [
-            w.name,
-            fmt(w.sustainedCommitsPerS) + " (" + w.acked + " ACKs / " + fmt(w.seconds) + " s)",
-            ...w.ratios.map((r: any) => metric(r) + " " + r.status),
-          ].join(" | ") +
-          " |",
+        "Account 1 supplies the quiet comparison. The first window has one active account. The stored roster is held fixed.",
+        "",
+        "| Window | Acknowledged commits/s | Quiet commit p99 ratio | Quiet read p99 ratio | Quiet feed p99 ratio |",
+        "| --- | ---: | --- | --- | --- |",
       );
+      for (const w of m.tenants.windows)
+        lines.push(
+          "| " +
+            [
+              w.name,
+              fmt(w.sustainedCommitsPerS) + " (" + w.acked + " ACKs / " + fmt(w.seconds) + " s)",
+              ...w.ratios.map((r: any) => metric(r) + " " + r.status),
+            ].join(" | ") +
+            " |",
+        );
+    }
     if (run.attempt.live) {
       lines.push(
         "",
-        "| Field-save load | Offered / s | Durable ACKs / s | Expiries | Quiet account at 3.5/s | Account 1 commit p99 ms | Account 1 read p99 ms | Account 1 feed lag p99 ms |",
+        "| Field-save load | Offered / s | Offer-cohort ACKs / s | Expiries | Quiet account at 3.5/s | Account 1 commit p99 ms | Account 1 read p99 ms | Account 1 feed lag p99 ms |",
         "| --- | ---: | ---: | ---: | --- | --- | --- | --- |",
       );
       const sentinel = keyFor(0);
@@ -84,29 +87,31 @@ function windowTable(run: Run, lines: string[]) {
             " |",
         );
       }
-      for (const q of m.tenants.ninePeakQuiet)
-        lines.push(
-          "Three nine-neighbour peak minutes, " + q.id + ": " + metric(q) + " " + q.status + ".",
-        );
       const b = m.tenants.loadBoundary,
         lo = b.highestLowerObservedWithinBar,
         hi = b.lowestObservedFailure;
-      lines.push(
-        "",
-        "Highest lower measured rate within the quiet bars: " +
-          (lo ? fmt(lo.offeredPerS) + " offered/s in " + lo.window : "unresolved") +
-          ". Lowest measured expiry or judged quiet p99 miss: " +
-          (hi
-            ? fmt(hi.offeredPerS) +
-              " offered/s, " +
-              fmt(hi.ackPerS) +
-              " durable ACKs/s, " +
-              hi.expired +
-              " expiries in " +
-              hi.window
-            : "unresolved") +
-          ".",
-      );
+      if (!writeDiagnostic) {
+        for (const q of m.tenants.ninePeakQuiet)
+          lines.push(
+            "Three nine-neighbour peak minutes, " + q.id + ": " + metric(q) + " " + q.status + ".",
+          );
+        lines.push(
+          "",
+          "Highest lower measured rate within the quiet bars: " +
+            (lo ? fmt(lo.offeredPerS) + " offered/s in " + lo.window : "unresolved") +
+            ". Lowest measured expiry or judged quiet p99 miss: " +
+            (hi
+              ? fmt(hi.offeredPerS) +
+                " offered/s, " +
+                fmt(hi.ackPerS) +
+                " durable ACKs/s, " +
+                hi.expired +
+                " expiries in " +
+                hi.window
+              : "unresolved") +
+            ".",
+        );
+      }
       if (b.firstExpiry) {
         const e = b.firstExpiry;
         lines.push(
@@ -135,7 +140,7 @@ function windowTable(run: Run, lines: string[]) {
           : "No sampled steady load recorded a judged ratio above 1.25×.",
       );
     } else if (run.attempt.bounded) {
-      lines.push("", "This arm measures write capacity. Matched quiet-read and quiet-feed p99 ratios are unmeasured.");
+      lines.push("", "This arm measures write capacity. Matched isolation, in-window durable goodput and drain are unmeasured.");
     }
     lines.push(
       "The pinned roster counted " +
@@ -560,7 +565,7 @@ export function scopeReport(reportFile: string, runs: Run[], releases: Run[] = [
         ? " The comparison is unjudged."
         : "");
   }
-  fs.writeFileSync(file, lines.join("\n") + "\n");
+  fs.writeFileSync(file, lines.join("\n").trimEnd() + "\n");
   return (
     owner ||
     (runs.length
