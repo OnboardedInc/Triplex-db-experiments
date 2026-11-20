@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
+import { once } from "node:events";
+import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
 import { serialize } from "node:v8";
 import { test } from "node:test";
 import { MessageChannel } from "node:worker_threads";
 import {
   HistoricalFallbackPort,
+  HistoricalFallbackThread,
   InstalledHistory,
   historicalResult,
   type HistoricalPayload,
@@ -81,3 +84,76 @@ test("installed history preserves exact payload, refuses another valid interval 
   assert.equal(cache.diagnostics.bytes, 0);
   assert.equal((await reader.pullAt("root", basis, miss)).route, "fallback");
 });
+
+test(
+  "an outstanding historical exchange leaves an unrelated local read runnable",
+  { timeout: 5_000 },
+  async () => {
+    const server = createServer();
+    const incoming = once(server, "request") as Promise<[IncomingMessage, ServerResponse]>;
+    server.listen(0, "localhost");
+    await once(server, "listening");
+    const address = server.address();
+    assert(address && typeof address !== "string");
+    const host = address.family === "IPv6" ? `[${address.address}]` : address.address;
+    const lane = new HistoricalFallbackThread({
+      mode: "lane",
+      scope: "rd1-test",
+      endpoint: `http://${host}:${address.port}`,
+      active: 1,
+    });
+    const port = new HistoricalFallbackPort(lane.connect());
+    try {
+      assert.equal((await lane.snapshot()).requested, 0);
+      const held = port.pull("remote", basis);
+      const [request, response] = await Promise.race([
+        incoming,
+        held.then(() => assert.fail("Miss completed before its gateway replied")),
+      ]);
+      assert.match(request.url!, /\/reach$/);
+      const chunks: Buffer[] = [];
+      for await (const chunk of request) chunks.push(chunk);
+      assert.deepEqual(JSON.parse(Buffer.concat(chunks).toString()).basis, basis);
+      const reader = new ReplicaReader(0);
+      reader.install({
+        floor: 2,
+        position: 2,
+        valid: true,
+        entities: [],
+        history: [],
+        times: [[200, 2]],
+        timeSafe: true,
+        strictRecordClocks: true,
+      });
+      reader.installedHistory = new InstalledHistory(1_024);
+      reader.installedHistory.put("root", basis, payload);
+      const local = await reader.pullAt("root", basis, async () =>
+        assert.fail("Local hit went to the held gateway"),
+      );
+      assert(Object.is(local.triples[0]?.value.value, -0));
+      assert.equal((await lane.snapshot()).active, 1);
+
+      response.end(
+        JSON.stringify({
+          position: 1,
+          t: "42",
+          reset: false,
+          entities: [["remote", 0, []]],
+          closures: [["remote", ["remote"]]],
+        }),
+      );
+      const world = await held;
+      assert(world);
+      assert.deepEqual(historicalResult(world, false).triples, []);
+      const done = await lane.snapshot();
+      assert.equal(done.replied, 1);
+      assert.equal(done.wireExchanges, 1);
+      assert.equal(done.active, 0);
+    } finally {
+      port.close();
+      await lane.close();
+      server.closeAllConnections();
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  },
+);

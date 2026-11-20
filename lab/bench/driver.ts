@@ -735,6 +735,8 @@ async function run() {
     const { HistoricalFallbackThread } = await import("./lib/historical-fallback.ts");
     historicalFallback = new HistoricalFallbackThread({ mode: config.historicalFallback,
       scope: String(runtimeApi.DatabaseScope.test(scopeName)), endpoint: process.env.DATOMIC_READ_URLS!.split(",")[0]!, active: config.historicalFallbackActive });
+    if ((await historicalFallback.snapshot()).requested !== 0)
+      throw Error("Historical fallback lane handled a request before reader startup");
   }
   const afterReaderImages = Boolean(deep && !demandReaders && !config.zeroReaders && !config.sharedReaderIndex && pairPlan?.readers !== 0);
   const replicaHost = config.readPath === "replica" ? config.replicaThread === "worker"

@@ -19,8 +19,11 @@ const revision = cfg.mode === "revision" || cfg.mode === "install";
 const client = new DatomicClient(cfg.endpoint, 5_000, 32 * 1024 ** 2, {
   historicalRevisionReuse: revision,
   entityCacheBytes: 32 * 1024 ** 2,
-  predecessorCacheBytes: 0,
-  rowCacheBytes: 0,
+  // [DX-RD1] Why: only decoded reach entities belong in this read-only worker.
+  // Rejected: zero-byte cache options (the allocator requires a positive limit).
+  predecessorCacheBytes: 1,
+  predecessorAttributes: [],
+  rowCacheBytes: 1,
 });
 const pending: HistoricalRequest[] = [];
 let running = 0,
