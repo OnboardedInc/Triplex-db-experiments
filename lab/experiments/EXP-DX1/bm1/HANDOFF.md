@@ -250,3 +250,20 @@ All four clones finished at about 14:03 EST and INT1 took the host. Each arm acc
 Ten-account high-rate denominators are 14,100 and 23,640. In the 235-offer/s window, per-save p99 prepare/gateway queue plus native entry/native await were 0.15/1,521/1,531 ms presently, 0.17/1,094/1,165 ms for candidate, 0.18/1,048/1,146 ms for 128 MiB, and 0.18/1,159/1,258 ms for compiler default. Those are marginal clock distributions with possible overlap. They do not sum to the end-to-end tail. The client-side offered backlog peaked at 4,445 / 5,515 / 2,332 / 5,482 saves. Solo p50 at 23.5/s stayed 6.93–7.81 ms while the candidate's native await p99 rose from 71 to 135 ms. The 32 MiB candidate and both ablations missed both preregistered 3.5/s and 23.5/s solo-tail ranges. The 128 MiB arm offers the strongest busy-throughput follow-up. The solo and quiet regressions still matter, and each policy has one measured replicate.
 
 Collectors and physical role cores were G1 1/Serial 1/G1 2 for transactor/writer/reader presently and G1 3/Serial 1/G1 3 in each other arm. In present/candidate/128 MiB/compiler-default order the transactor logged 515/1,174/1,140/1,166 pause events, the writer 317/196/214/197, and the read gateway 107/39/48/39. Counts cover the whole arm including startup. Each role's log timestamps and exact placement are in the collected evidence. There was no controlled writer-collector change here.
+
+### Retained million-person capacity
+
+The original lean million-person seal bound cut 20,834 and all 8 million facts. A fresh 1,000-person retry matched the native producer and independent collector's 20 reads, at p50/p99 3.42/29.55 ms. The active-only baseline admitted only the matched 20,000 spread-cohort people, reaching cut 417. The full arm restored the original image and used the same cohort at cut 20,834. Both checked all 20,000 scheduled first reads in order with zero wrong or missing reads. There were no save offers and no save stage clocks in this read-only retry. The transactor, write gateway and read gateway used G1 with 1/1/2 cores, with absolute pause logs, exact container IDs and teardown retained. Mac evidence is under `evidence/DX-BM1/day-n20/int1-capacity-retry`.
+
+| Reading | Active-only profile | Restored million |
+| --- | ---: | ---: |
+| First read p50/p99, ms | 0.467 / 6.460 | 0.475 / 6.120 |
+| Reader median RSS, MiB | 207.73 | 210.27 |
+| Write gateway median RSS, MiB | 306.33 | 331.55 |
+| Read gateway median RSS, MiB | 338.30 | 406.04 |
+| Transactor median RSS, MiB | 727.70 | 506.51 |
+| Summed PostgreSQL median RSS, MiB | 562.01 | 523.74 |
+
+Per 980,000 extra untouched people this is +2.73, +26.98 and +72.48 B for reader, writer and read gateway. The three samples give roughly +72–78 B for the read gateway. The restored transactor and PostgreSQL RSS were lower by 236.66 and 40.95 B per untouched person. The active-only baseline seeded its rows in the live JVM and the full arm reopened a restored SQL image. These two negative differences expose the effect of startup and seed history on the snapshots and cannot establish a native bytes-per-person rate. The earlier follow-up write returned an unknown outcome and was not replayed. This capacity check measures a retained population with ordinary reads. It leaves write latency and integrated capacity qualification open.
+
+RD1's second preflight kept 32 exact native aging receipts and advanced through head 44. It finished its small read windows and failed the producer's trace-census step. Its native events identify the read peer as `gw-r`, run as the exact slot, and source as the Git SHA. The local decoder expected `gateway`, `rd1-` plus slot, and the gateway's measured source-file digest. The saved summary trace contains six admitted spans for 7,509 exchange IDs. All six match their parent and child IDs, but there are too few to complete the small evidence or price the full aged workload. Both attempts are under `evidence/DX-BM1/day-n20/rd1-aged*`.
