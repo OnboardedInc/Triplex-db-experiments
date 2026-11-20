@@ -6,6 +6,28 @@ export const profiles = ["frozen", "field"] as const;
 export type CampaignProfile = (typeof profiles)[number];
 export const populations = [10_000, 100_000] as const;
 export const loads = ["zero", "reader"] as const;
+const gatewayHeap = [
+  "-Xms64m",
+  "-Xmx384m",
+  "-Ddatomic.objectCacheMax=32m",
+  "-XX:MinHeapFreeRatio=15",
+  "-XX:MaxHeapFreeRatio=30",
+];
+// [DX-THIN1] Why: keep TAIL1's measured collector selection even when the serving CPU mask changes.
+// Rejected: relying on JVM startup ergonomics or bringing in the unrelated receipt-cache variant.
+export const gatewayJvmOptions = {
+  "gw-w": [
+    ...gatewayHeap,
+    "-XX:+UseG1GC",
+    "-XX:MaxGCPauseMillis=25",
+    "-XX:G1HeapRegionSize=2m",
+    "-XX:+UnlockExperimentalVMOptions",
+    "-XX:G1NewSizePercent=5",
+    "-XX:G1MaxNewSizePercent=25",
+    "-XX:ConcGCThreads=1",
+  ],
+  "gw-r": [...gatewayHeap, "-XX:+UseG1GC"],
+} as const;
 
 export function campaignCases(people: readonly number[] = populations) {
   return people.flatMap((n) =>
@@ -35,8 +57,11 @@ export function campaignTenant(c: CampaignCase, smoke: boolean) {
 // Rejected: trusting inherited environment flags or claiming an audited group configuration is eligible.
 export const treatment = {
   DX_INT1_GATEWAYS: "demand",
+  DX_INT1_LEGACY_TOUCHED: "1",
+  DX_INT1_SEED_ERRORS: "1",
   DX_INT1_READERS: "touched",
   DX_INT1_DEEP_RELEASE: "ead90",
+  DX_STACK_EXPLICIT_GC: "1",
   DX_TOUCHED_READ_MODE: "validated",
   DX_GROUP_COMMIT: "0",
   DX_GROUP_QUEUE_CLOCK: "0",
@@ -81,7 +106,8 @@ export const excluded = {
     "RD1's isolated and installed historical modes require separate reach replicas. This pair uses reach-touched.",
   joinedPublish:
     "The joined priority path has its own admission wrapper. The campaign overlay uses page-guard and selector activation on the same replica and feed.",
-  explicitCollector: "The matched G1 and Serial comparison is still pending.",
+  collectors:
+    "The paired Mac diagnostics favor tuned G1. Serial and ZGC remain controls and the combined profile still needs physical timing.",
   erasureEnvelope:
     "Detached envelopes need native query and key-store recovery coverage before use in the judged pair.",
   keepWarm: "Omitted under the frozen workload rule.",
@@ -95,6 +121,7 @@ export function planSummary() {
       field: { id: pooledCampaignId + "/field", ratesPerAccount: fieldRates },
     },
     treatment,
+    gatewayJvmOptions,
     excluded,
     readerCores: 6,
     savedOutputPreflight: campaignCases([4]),

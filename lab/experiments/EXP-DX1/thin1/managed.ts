@@ -92,10 +92,9 @@ async function prepare() {
   );
   // [DX-THIN1] Why: keep the pool, exclusive slot names, ports and ownership checks common to every worktree.
   // Rejected: substituting a private pool ledger or changing the tag of a resident image.
-  fs.copyFileSync(
-    fileURLToPath(new URL("./cache-charge.ts", import.meta.url)),
-    path.join(imageFolder, "cache-charge.ts"),
-  );
+  for (const name of ["cache-charge.ts", "heap-residency.ts"]) {
+    fs.copyFileSync(fileURLToPath(new URL("./" + name, import.meta.url)), path.join(imageFolder, name));
+  }
   const diagnosticJdk = process.env.DX_THIN_DIAGNOSTIC_JDK;
   if (diagnosticJdk) {
     const expected = "e3522e707fc7dbe2a72c30746b1e7068301a0213ecd213d4491f35a14eb55578";
@@ -135,7 +134,7 @@ function setup(compact: boolean) {
     const codec = "packages/datomic/src/codec-spec.json";
     assert(fs.readFileSync(path.join(repo,codec)).equals(fs.readFileSync(path.join(dir,codec))),
       "Rebuild the changed gateway codec");
-    for (const name of ["slot.ts", "cache-charge.ts"]) {
+    for (const name of ["slot.ts", "cache-charge.ts", "heap-residency.ts"]) {
       const running = fs.readFileSync(path.join(imageFolder, name));
       assert(
         running.equals(fs.readFileSync(new URL("./" + name, import.meta.url))),

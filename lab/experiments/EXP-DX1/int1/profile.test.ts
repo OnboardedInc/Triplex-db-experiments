@@ -4,6 +4,25 @@ import { deepShape } from "../../../bench/lib/deep-world.ts";
 import { activePerson } from "./cohort.ts";
 import { nativePools, parseHistogram } from "./gateway-profile.ts";
 import { mappedReaderPages } from "./reader.ts";
+import { heapResidency, readResidentMappings } from "../thin1/heap-residency.ts";
+
+test("JVM residency separates the heap from native anonymous and file pages", () => {
+  const raw = [
+    "1000-2000 rw-p 0000 00:00 0\nRss: 4 kB\nAnonymous: 4 kB",
+    "2000-4000 rw-p 0000 00:00 0\nRss: 8 kB\nAnonymous: 8 kB",
+    "4000-5000 rw-p 0000 00:00 0\nRss: 4 kB\nAnonymous: 4 kB",
+    "6000-7000 r-xp 0000 00:00 0 /fixture\nRss: 4 kB\nAnonymous: 0 kB",
+  ].join("\n");
+  const rows = readResidentMappings(raw);
+  const wanted = { javaHeap: 12 * 1024, otherAnonymous: 4096, otherNonAnonymous: 4096, mixed: 0 };
+  const g1 = " garbage-first heap total 12K, used 10K [0x1000, 0x4000)";
+  const serial = " def new generation total 4K [0x1000, 0x2000, 0x2000)\n tenured generation total 8K [0x2000, 0x4000, 0x4000)";
+  assert.deepEqual(heapResidency(g1, rows), wanted);
+  assert.deepEqual(heapResidency(serial, rows), wanted);
+  assert.equal(heapResidency(g1.replace("0x4000", "0x3000"), rows).mixed, 8192);
+  assert.throws(() => readResidentMappings(raw.replace("Rss: 8 kB", "")));
+  assert.throws(() => heapResidency(g1, [...rows].reverse()));
+});
 
 test("resident page attribution counts every mapping once without retaining its name", () => {
   const section = (range: string, mode: string, name: string, kb: number) =>

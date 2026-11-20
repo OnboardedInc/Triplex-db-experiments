@@ -11,7 +11,24 @@ import {
   historicalResult,
   type HistoricalPayload,
 } from "../lib/historical-fallback.ts";
-import { ReplicaReader } from "../lib/replica-reads.ts";
+import { ReplicaReader, bootstrapClock } from "../lib/replica-reads.ts";
+
+test("the legacy bootstrap binds both selectors to the journal's exact position", async () => {
+  const cut = { position: 17, instant: 100 };
+  const selected = { t: "42", position: cut.position, entities: [["root", 17, ["row"]]], closures: [["root", ["root"]]] };
+  const matches = { page: async () => selected };
+  assert.equal(await bootstrapClock(matches, "root", cut, 0, true), cut.instant);
+  const differentPosition = {
+    page: async (_roots: string[], basis: { recordedAt?: number }) =>
+      basis.recordedAt === undefined ? selected : { ...selected, position: cut.position - 1 },
+  };
+  assert(Number.isNaN(await bootstrapClock(differentPosition, "root", cut, 0, true)));
+  const differentRows = {
+    page: async (_roots: string[], basis: { recordedAt?: number }) =>
+      basis.recordedAt === undefined ? selected : { ...selected, entities: [["root", 17, ["other"]]] },
+  };
+  assert(Number.isNaN(await bootstrapClock(differentRows, "root", cut, 0, true)));
+});
 
 const basis = { recordedAt: 100, validAt: 2 };
 const payload: HistoricalPayload = {
