@@ -3700,3 +3700,11 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
   Recommendation for version 0.1 for now: Java 21 with G1 and two cores for the writer (128 MiB memory-index
   threshold: 149 to 189 saves per second at 235 offered). Memory reserved: 24 GiB for the G1 arms, 37 GiB for ZGC.
   The three Java 25 server arms are still to run. Parked.
+
+## 2026-11-20 22:15 UTC (17:15 local, 2026-11-20): arm 1-1-S official summary confirms the orchestrator's reading
+
+- `campaign/1-1-S/summary.json` on server 1 (17:15 local): delivered 50.0 / 140.6 / 111.1 / 140.1 saves per second
+  at 50 / 235 / 394 / 620 offered; expired 0 / 13,351 / 40,485 / 68,903; every stored save used the prepared path
+  (prepared equals durable in every cell) with zero replans and 1.00 to 1.02 saves per append; account 0 p99 loaded
+  1,568.4 / 1,168.5 / 1,474.1 / 1,571.7 ms against alone 107.5 / 63.3 / 17.0 / 66.0 ms; native compute p99 18 to
+  57 ms loaded. So the fast path worked as built and the ceiling is the serial step itself.
