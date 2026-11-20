@@ -1,5 +1,6 @@
 (ns triplex.gateway.group
-  (:require [datomic.api :as d] [triplex.gateway.write-policy :as policy] [triplex.gateway.schema :as schema] [triplex.gateway.lean :as lean])
+  (:require [datomic.api :as d] [triplex.gateway.write-policy :as policy] [triplex.gateway.schema :as schema] [triplex.gateway.lean :as lean]
+            [triplex.gateway.save-ledger :as ledger] [clojure.string :as str])
   (:import [java.util WeakHashMap] [java.util.concurrent Executors ThreadFactory]))
 
 ;; [DX-W1] Why: an idle scope dispatches immediately; only work accumulated behind an in-flight append can share its successor.
@@ -10,6 +11,8 @@
 (def queue-clock (= "1" (System/getenv "TX2_GROUP_QUEUE_CLOCK")))
 (def stage-clock (= "1" (System/getenv "TX2_GROUP_STAGE_CLOCK")))
 (def reuse-prepared (= "1" (System/getenv "TX2_GROUP_REUSE_PREPARED")))
+(def fast-reply (= "1" (System/getenv "TX2_GROUP_FAST_REPLY")))
+(def reply-clock (= "1" (System/getenv "TX2_GROUP_REPLY_CLOCK")))
 (def batch-limit (policy/limit "TX2_GROUP_MAX_MEMBERS" 8 128))
 (def pending-limit 256)
 (def max-live-turns 8)
@@ -46,7 +49,28 @@
     (let [grouped (and (d/entid db :triplex.group/physical) (v db e :triplex.group/physical))
           tx (or grouped e)]
       {:position (if grouped (v db e :triplex.group/position) (v db e :triplex.tx/position))
-       :clock (v db e :triplex.tx/recorded-at) :t (d/tx->t tx)})))
+       :clock (ledger/clock db e) :t (d/tx->t tx)})))
+(def receipt-attrs [:triplex.tx/operation-id :triplex.group/members :triplex.group/physical
+                    :triplex.group/position :triplex.tx/recorded-at :triplex.tx/max-recorded-at
+                    :triplex.tx/id :triplex.entity/id])
+(defn report-receipts [{:keys [db-after tx-data]}]
+  ;; [DX-W1] Why: the acknowledged native report already contains each member's durable bytes.
+  ;; Rejected: one independent index lookup per reply, or publishing the speculative report.
+  (let [t (d/basis-t db-after) physical (d/t->tx t)
+        attrs (into {} (map #(vector (d/entid db-after %) %) receipt-attrs))
+        members (volatile! []) values (java.util.HashMap.)]
+    (doseq [^datomic.Datom x tx-data :let [a (attrs (.a x))] :when (and a (.added x) (= physical (.tx x)))]
+      (let [e (.e x) value (.v x)]
+        (if (= :triplex.group/members a)
+          (when (= e physical) (vswap! members conj value))
+          (.put values e (assoc (.get values e) a value)))))
+    (into {} (keep (fn [e]
+                     (let [v (.get values e)]
+                       (when (and (= physical (:triplex.group/physical v)) (:triplex.tx/operation-id v))
+                         [(:triplex.tx/operation-id v)
+                          {:t t :position (:triplex.group/position v)
+                           :clock (or (:triplex.tx/recorded-at v) (:triplex.tx/max-recorded-at v))
+                           :id (or (:triplex.tx/id v) (:triplex.entity/id v))}])))) @members)))
 (defn persisted-account [db owner]
   ;; [DX-W1] Why: existing shared scopes may keep the account as a fact on the subject.
   ;; Rejected: trusting an arbitrary label to obtain extra turns in the contended queue.
@@ -97,9 +121,11 @@
                            prepared (when stage-clock (System/nanoTime))
                            report (d/with view data)
                            applied (when stage-clock (System/nanoTime))
-                           after (:db-after report) tx (d/t->tx (d/basis-t after))]
+                           after (:db-after report) tx (d/t->tx (d/basis-t after))
+                           id (v after tx :triplex.tx/id)]
                        (cond-> {:report report :tx tx :position (v after tx :triplex.tx/position)
-                                :clock (v after tx :triplex.tx/recorded-at) :id (v after tx :triplex.tx/id)}
+                                :clock (ledger/clock after tx) :id (or id (v after tx :triplex.entity/id))
+                                :merged-ledger (nil? id)}
                          stage-clock (assoc :prepare-micros (quot (- prepared started) 1000)
                                            :speculative-micros (quot (- applied prepared) 1000)
                                            :reused (if (identical? data (:original-data entry)) 1 0))))
@@ -119,13 +145,17 @@
         ref-type (d/entid base :db.type/ref)
         info (memoize (fn [a] [(d/ident base a) (= ref-type (v base a :db/valueType))]))
         net (java.util.LinkedHashMap.) born (volatile! #{}) retained (volatile! #{}) metadata (java.util.ArrayList.)]
-    (doseq [{:keys [report tx position clock id]} members]
+    (doseq [{:keys [report tx position clock id merged-ledger]} members]
       (let [member (eid tx) datoms (:tx-data report)
             explicit (set (for [x datoms :when (and (:added x) (= :triplex.entity/retired (first (info (:a x)))))]
                             [(:e x) (prefix (:v x))]))]
         (doseq [op [[:db/add "datomic.tx" :triplex.group/members member]
                     [:db/add member :triplex.group/physical "datomic.tx"] [:db/add member :triplex.group/position position]]]
           (.add metadata op))
+        (when merged-ledger
+          (.add metadata [:db/add member :triplex.group/touched member])
+          (when (not= tx last-tx)
+            (.add metadata [:db/add member :triplex.tx/recorded-at clock])))
         (doseq [x datoms :let [[a ref?] (info (:a x)) e (:e x) value (:v x) add (:added x)
                                  k [(if (= a :triplex.tx/journals) "datomic.tx" (eid e)) a (if ref? (eid value) value)]]]
           (when (and (= a :triplex.entity/rev) add)
@@ -164,6 +194,30 @@
               (contains? #{:db.error/unique-conflict :db.error/conflicting-datoms :db.error/cas-failed
                            :db.error/not-an-entity :db.error/invalid-data} (:db/error data)))))
         (take-while some? (iterate #(when % (ex-cause %)) e))))
+(defn micros [start end] (quot (- end start) 1000))
+(defn finish-group! [batch results report valid-count stages received-ms]
+  (let [started (when reply-clock (System/nanoTime))
+        db (:db-after report) t (d/basis-t db)
+        indexed (when fast-reply (try (report-receipts report) (catch Exception _ {})))
+        selected (when reply-clock (System/nanoTime))
+        lookup-ns (when reply-clock (volatile! 0))]
+    (doseq [[entry expected] (map vector batch results)]
+      (if (:error expected)
+        (complete! entry expected)
+        (let [start (when reply-clock (System/nanoTime))
+              saved (if fast-reply (get indexed (:id entry))
+                      (try (receipt db (:id entry)) (catch Exception _ nil)))]
+          (when reply-clock (vswap! lookup-ns + (- (System/nanoTime) start)))
+          (if (and (= (:position saved) (:position expected)) (= (:clock saved) (:clock expected))
+                   (= (:t saved) t) (or (not fast-reply) (= (:id saved) (:id expected))))
+            (complete! entry {:value (cond-> (assoc report :member saved :group-size valid-count
+                                                :group-wait-ns (- (:dispatch entry) (:arrived entry)))
+                                      stages (assoc :group-stages stages))})
+            (complete! entry {:error (ex-info "Durable member receipt unavailable" {:status 503 :code "OutcomeUnknown"})})))))
+    (when reply-clock
+      (let [done (System/nanoTime)]
+        (println (str "W1_REPLY " t " " valid-count " " received-ms " "
+                      (+ (micros started selected) (quot @lookup-ns 1000)) " " (micros started done)))))))
 (defn execute! [conn batch]
   (if (or (= 1 (count batch)) (not-every? :eligible batch))
     (doseq [e batch] (alone! e))
@@ -178,9 +232,10 @@
         (doseq [e batch] (alone! e))
         (let [prepared (when stage-clock (System/nanoTime))
               tx-data (instrument [[:triplex.group/apply-v1 (d/basis-t base) data]])
-              physical (try {:report @(if stage-clock
-                                         (d/transact-async conn tx-data :io-context :w1/grouped)
-                                         (d/transact-async conn tx-data))}
+              physical (try (let [report @(if stage-clock
+                                            (d/transact-async conn tx-data :io-context :w1/grouped)
+                                            (d/transact-async conn tx-data))]
+                              {:report report :received-ms (when reply-clock (System/currentTimeMillis))})
                             (catch Exception e {:error e}))
               stages (when stage-clock
                        {:evaluateMicros (quot (- evaluated started) 1000)
@@ -192,15 +247,7 @@
           (if-let [e (:error physical)]
             (if (definitive? e) (doseq [entry batch] (alone! entry))
               (doseq [entry batch] (complete! entry {:error (ex-info "Group durability is unknown" {:status 503 :code "OutcomeUnknown"} e)})))
-            (doseq [[entry result] (map vector batch results)]
-              (if (:error result) (complete! entry result)
-                (let [report (:report physical) saved (try (receipt (:db-after report) (:id entry)) (catch Exception _ nil))]
-                  (if (and (= (:position saved) (:position result)) (= (:clock saved) (:clock result))
-                           (= (:t saved) (d/basis-t (:db-after report))))
-                    (complete! entry {:value (cond-> (assoc report :member saved :group-size (count valid)
-                                                      :group-wait-ns (- (:dispatch entry) (:arrived entry)))
-                                               stages (assoc :group-stages stages))})
-                    (complete! entry {:error (ex-info "Durable member receipt unavailable" {:status 503 :code "OutcomeUnknown"})})))))))))))
+            (finish-group! batch results (:report physical) (count valid) stages (:received-ms physical))))))))
 
 (defn next-entry [{:keys [queue accounts rotation live-turns]}]
   (let [ready (fn [owners rank]
@@ -218,7 +265,7 @@
   (cond-> (filterv #(not= account %) owners) more? (conj account)))
 (defn join-turn [owners account]
   (if (some #{account} owners) owners (conj (or owners []) account)))
-(defn- choose-batch [state]
+(defn choose-batch [state]
   (loop [{:keys [queue accounts tails] :as state} state out [] variable 0]
     (if (or (empty? queue) (= (count out) batch-limit)) [state out]
       (let [next (next-entry state) _ (assert next "Oldest pending command must be eligible")

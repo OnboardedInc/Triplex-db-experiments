@@ -32,9 +32,18 @@
                :ednBytes (byte-count (pr-str [(:e x) a v (:tx x) (:added x)]))}))
           (:data tx))))
 
-(defn correction [subject serial old width]
+(defn correction
+  ([subject serial old width] (correction subject serial old width false))
+  ([subject serial old width run?]
   (let [{:keys [fresh input]} (field/correction subject serial (mapv :id old) width)
         tx (:tx_id (first fresh))
+        run-id (fn [i] (str "Y" (field/pad serial 24) (char (+ (int \A) i))))
+        owner-id (field/identity-id "Z" (+ (* serial 20) 12))
+        input (if run?
+                (-> input (update "newIds" #(mapv (fn [id] (if (= owner-id id) (run-id 0) id)) %))
+                          (update "rows" #(mapv (fn [r] (if (= owner-id (get-in r ["id" "v"]))
+                                                        (assoc-in r ["id" "v"] (run-id 0)) r)) %)))
+                input)
         changes (concat
                   (for [r fresh] {:op "assert" :entityId (:entity_id r) :attribute (:attribute r)
                                   :value {:type "string" :value (:value_string r)} :tripleId (:id r)
@@ -42,13 +51,13 @@
                   (for [r old] {:op "retract" :entityId (:entity_id r) :attribute (:attribute r)
                                 :tripleId (:id r) :recordedAt (:recorded_at r) :retractedAt field/clock}))
         jr (mapv (fn [i change]
-                   (assoc (field/row (field/identity-id "Y" (+ (* serial 20) i)) tx ":_tx/change" nil tx 1)
+                   (assoc (field/row (if run? (run-id (inc i)) (field/identity-id "Y" (+ (* serial 20) i))) tx ":_tx/change" nil tx 1)
                           :entity_type "_Transaction" :value_type "json" :value_json (json/write-str change)))
                  (range) changes)]
     {:fresh fresh :input (fixture/row-input (-> input
                                                (dissoc "rowTexts")
                                                (update "newIds" into (map :id jr))
-                                               (update "rows" into (map storage/wire-row jr))))}))
+                                               (update "rows" into (map storage/wire-row jr))))})))
 
 (defn shape [width name conn input reply]
   (let [payload (dissoc input "readProfile")

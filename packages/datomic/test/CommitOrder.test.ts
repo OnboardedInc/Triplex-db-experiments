@@ -69,6 +69,30 @@ it("waits for the actual socket send rather than request construction", async ()
   expect(seen).toHaveLength(2);
 });
 
+it("reuses the sequence only after a definite local refusal", async () => {
+  const lane = {};
+  const a = registerCommit(10, lane);
+  const b = registerCommit(11, lane);
+  const next = sendCommit(b, async (seq, finish) => {
+    finish();
+    return seq;
+  });
+  await expect(
+    sendCommit(a, async (seq, finish) => {
+      expect(seq).toBe(1);
+      finish(false);
+      throw new RangeError("Body was too large before sending");
+    }),
+  ).rejects.toThrow("Body was too large");
+  await expect(next).resolves.toBe(1);
+  await expect(
+    sendCommit(registerCommit(12, lane), async (seq, finish) => {
+      finish();
+      return seq;
+    }),
+  ).resolves.toBe(2);
+});
+
 // [DX-B6-5] Why: a conflict maximum advances the very next replay without wall-clock waiting.
 // Rejected: 50 ms catch-up sleeps (logical clocks can be arbitrarily ahead).
 it("issues unique scope instants and catches up immediately", async () => {

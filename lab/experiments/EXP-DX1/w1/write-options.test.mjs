@@ -16,12 +16,16 @@ test("a range arm needs the exact scope, fresh attempt, options and selected fun
     budgetMicros: null,
     bulkRows: 96,
     bulkBytes: 65536,
+    ledger: false,
+    packedJournal: false,
+    fastReply: false,
   };
   const expected = {
     source: "c".repeat(40),
     slot: "proof",
     attempt: "fresh",
     gatewaySourceHash: "a".repeat(64),
+    historyRange: true,
     options,
   };
   const observed = {
@@ -45,8 +49,10 @@ test("a range arm needs the exact scope, fresh attempt, options and selected fun
     { commitFunction: ":triplex/commit" },
     { commitFunctionInstalled: false },
     { options: { ...options, predecessorLookup: false } },
+    { options: { ...options, packedJournal: true } },
   ]) {
     assert.throws(() => verify({ ...observed, ...change }));
   }
   assert.throws(() => verify(observed, false));
+  verifyWriteOptions(observed, "s2-test", { ...expected, historyRange: false }, false);
 });

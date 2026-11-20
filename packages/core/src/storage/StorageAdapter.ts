@@ -35,6 +35,14 @@ export interface StorageAdapterService {
   readonly getTransactionIdByCommand?: (
     commandId: string,
   ) => Effect.Effect<string | null | undefined, ReadError>;
+  // [DX-W1] Why: a typed journal index has the same pinned paging contract across physical layouts.
+  // Rejected: requiring every adapter to use the journal's storage representation.
+  readonly getTransactionPositionsByEntity?: (
+    entityId: string,
+    limit: number,
+    basis: ResolvedTemporalBasis,
+    beforePosition?: number,
+  ) => Effect.Effect<readonly { transactionId: string; position: number }[] | undefined, ReadError>;
   // [DX-B3-M2] Why: a transactor may allocate the final position after staging.
   // Rejected: returning the provisional position as a committed receipt.
   readonly committedPosition?: (txId: string) => number | undefined;
