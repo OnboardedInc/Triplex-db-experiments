@@ -24,6 +24,7 @@ const [
   route = "source",
   train = "1",
   interval = "0",
+  concurrency = "4",
 ] = process.argv.slice(2);
 const n = Number(size),
   gap = Number(pause),
@@ -54,6 +55,8 @@ assert(
     Number(interval) <= 1000 &&
     (route === "recipient" || Number(interval) === 0),
 );
+const readers = Number(concurrency);
+assert([4, 64].includes(readers));
 const recipientPages = route === "recipient" ? batchPages : undefined;
 const dir = process.env.NOTIFY_DIR!,
   binding = JSON.parse(fs.readFileSync(path.join(dir, "binding.json"), "utf8"));
@@ -71,6 +74,18 @@ assert.equal(
   binding.source,
 );
 const pins = inputPins(binding.source);
+const dependencies = Object.fromEntries(
+  [
+    "lab/bin/engine.mjs",
+    "lab/bench/lib/w0-http.ts",
+    "lab/bench/lib/composition.ts",
+    "lab/experiments/EXP-DX1/act1/sqlite.ts",
+  ].map((file) => {
+    const sha = sha256(fs.readFileSync(file));
+    assert.equal(sha, sha256(execFileSync("git", ["show", binding.source + ":" + file])));
+    return [file, sha];
+  }),
+);
 const epoch = binding.nonce,
   profiled = process.env.NOTIFY_PROFILE === "1";
 const src = await openComposition("reach", "datomic", "notice-" + epoch),
@@ -89,7 +104,7 @@ try {
     receiver: rx,
     epoch,
     profile: p,
-    readers: 4,
+    readers,
     pace: shape === "deep" ? 0 : 60,
     gapMs: gap,
     priority: mode !== "idle",
@@ -140,6 +155,7 @@ try {
   const out = {
     binding,
     pins,
+    dependencies,
     mode,
     n,
     gap,

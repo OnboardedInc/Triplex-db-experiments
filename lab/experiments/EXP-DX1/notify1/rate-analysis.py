@@ -32,6 +32,9 @@ def arm(d):
     for file, sha in a["pins"].items():
         assert re.fullmatch(r"[a-z-]+\.(ts|py)", file) and re.fullmatch("[a-f0-9]{40}", b["source"])
         assert digest(subprocess.check_output(["git","show",b["source"]+":lab/experiments/EXP-DX1/notify1/"+file])) == sha
+    for file, sha in a.get("dependencies",{}).items():
+        assert file.startswith("lab/") and ".." not in Path(file).parts
+        assert digest(subprocess.check_output(["git","show",b["source"]+":"+file]))==sha
     raw = get(d / "traffic.json.gz")
     assert a["activation"]["txId"] == raw["history"][1]["receipt"]["txId"] and a["activation"]["operations"] == 4
     assert len(raw["reads"]) == a["readCount"] and len(raw["saves"]) == a["saveCount"]

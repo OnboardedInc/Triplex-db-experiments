@@ -21,6 +21,8 @@ def read_tail(a, raw_reads, rows):
     q=candidates[0]; requests=q["samples"]
     result={"latency":r["latency"],"matches":1,"cut":r["position"],"trace":q.get("trace"),"clientScheduledWait":r["beganMs"]-r["atMs"],"pinnedMs":q["end"]-q["start"],"httpMs":sum(s["wallMs"] for s in requests),"gatewayReportedMs":sum(s["gatewayMicros"] for s in requests if s["gatewayMicros"] is not None)/1000}
     if "socket" in q: result["socket"]=q["socket"]
+    if requests and all("waitedForBasis" in s for s in requests):
+        result["basisWaits"] = sum(s["waitedForBasis"] for s in requests)
     return result
 
 

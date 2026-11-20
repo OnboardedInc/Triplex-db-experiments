@@ -426,11 +426,15 @@ export function slotCpu(holder, lane, slot) {
   const info = slotInfo(loadSlots(), lane, slot), owner = readOwner(info);
   if (!owner || info.mode !== 'exclusive' || owner.holder !== holder || owner.container !== info.container)
     fail('REFUSED', 'CPU observation requires the current exclusive holder');
-  const raw = execFileSync('docker', dockerArgs(['exec', info.container, 'cat', '/proc/stat', '/proc/pressure/cpu', '/sys/fs/cgroup/cpu.stat', '/sys/fs/cgroup/cpu.max']), { encoding: 'utf8', timeout: 10000 });
+  const raw = execFileSync('docker', dockerArgs(['exec', info.container, 'cat', '/proc/stat', '/proc/pressure/cpu', '/sys/fs/cgroup/cpu.stat', '/sys/fs/cgroup/io.stat', '/sys/fs/cgroup/cpu.max']), { encoding: 'utf8', timeout: 10000 });
+  const devices = Object.fromEntries(raw.split('\n').filter(l => /^\d+:\d+\s/.test(l)).map(l => {
+    const [device,...counters]=l.trim().split(/\s+/);
+    return [device,Object.fromEntries(counters.map(c=>{const [k,v]=c.split('=');return [k,Number(v)];}))];
+  }));
   return { at: performance.timeOrigin + performance.now(), owner: owner.createdAt, slot: info.container,
     cpu: raw.split('\n').filter(x => /^cpu\d*\s/.test(x)).map(x => x.trim().split(/\s+/).slice(1, 9).map(Number)),
     psiUsec: Number(raw.match(/^some .*total=(\d+)/m)?.[1]), groupUsec: Number(raw.match(/^usage_usec (\d+)/m)?.[1]),
-    throttledUsec: Number(raw.match(/^throttled_usec (\d+)/m)?.[1]), quota: raw.trim().split('\n').at(-1) };
+    throttledUsec: Number(raw.match(/^throttled_usec (\d+)/m)?.[1]), devices, quota: raw.trim().split('\n').at(-1) };
 }
 /** VM-wide PSI cpu line, read inside any running container (/proc/pressure is not namespaced). */
 function vmPsi(container) {
