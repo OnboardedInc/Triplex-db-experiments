@@ -1,10 +1,10 @@
-Server 2 should use commit 6350fd83f.
+Server 2 should use commit 41bdc376a.
 It accepts the original SCALE1 image and transfer.
 It records partial observations for rows 1 through 4.
 The grouped configuration uses compact layout K.
 The per-person writer can be selected separately.
 Two Mac toy arms matched all 28 saves each.
-Rows 5 through 9 still need held-seed execution.
+The Publish toy check ran. The held-seed Publish row remains open.
 No full-size server run was performed here.
 
 ## Part 2 verdict and receipt audit
@@ -23,6 +23,12 @@ The native Mac gate ran at `3667de30c`, with one ordinary heavy token and no lea
 The first image failed because the merged Docker recipe's global base argument followed the auxiliary stages. The next start revealed that the engine overlaid the compact launcher with the canonical one. The final gate used the verified compact entrypoint. A low-level inspection found the loader's future logical clock in the original journal delta. The published renderer recomputes dispatch-to-observation on one host clock from the retained operations and never uses the logical clock as latency.
 
 [Server command](SERVER.md) pins the application and shows both age inputs. The 12-minute offered pair yields only components of P1–P4. Full-world straddle and recovery, commit band coverage, durable effects and crash resume, and matched history bytes remain open. No full-size restore, Java 25 campaign or AGE1 sealed cut was verified here.
+
+## Part 2 Publish adapter check
+
+The existing INT1 `actv-lazy/join/server.ts 64 --receipt-local` producer and its collector ran in a private K stack with an ordinary token. Its three rate windows offered 0, 3.5 and 23.5 saves per second. Their durable receipt observations were 293.360, 207.611 and 184.059 ms. Exact first-read observations were 410.365, 303.841 and 207.641 ms. The collector reported zero deadline misses with its original source and slot binding. These clocks are diagnostic. The volume was removed.
+
+The published producer opens a flat synthetic scope and loads its own fixture. It has no input for the held namespaced SCALE1 scope. The server card names that gap and leaves P5 unmeasured.
 
 ## Part 1 report
 

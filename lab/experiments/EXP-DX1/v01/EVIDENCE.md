@@ -25,3 +25,4 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 - `part2/image-build-a3.log` identifies the pinned compact image. The original build and launcher failures are preserved in `part2/image-a1.log` and `part2/fixture-a2-1.log`.
 - `part2/fixture-a3-1.log` and `part2/adoption-a3/campaign/` contain both native arms, exact loader receipts, observations, writer settings and cleanup.
 - `part2/adoption-a3/recalculated/SCORECARD-v0.1.md` is the current diagnostic renderer applied to the retained native evidence.
+- `part2/publish-p5a/` retains the original ACT1 producer and collector outputs. `part2/fixture-p5a-1.log` records engine ownership and cleanup.
