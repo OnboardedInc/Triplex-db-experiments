@@ -25,6 +25,8 @@ import { activePerson } from "./cohort.ts";
 import { gatewayProfiles } from "./gateway-profile.ts";
 import { pageNamespace } from "../../../bench/lib/w0-page-outbox.ts";
 import { checkSchedules, nativeScheduleNames, programInputs } from "../act1/bench-proof.ts";
+import { memoryPlan } from "./memory-plan.ts";
+import { sampleObjectCache } from "../thin1/cache-metrics.ts";
 
 const [, mode, rung, dir] = process.argv.slice(2),
   size = Number(rung);
@@ -82,10 +84,12 @@ const inputs = Object.fromEntries(
 const attempt = randomUUID(),
   spread = process.env.DX_INT1_COHORT === "spread",
   seedOnly = process.env.DX_INT1_CENSUS === "seed-only",
+  memory = memoryPlan(process.env.DX_INT1_MEMORY_POINTS, mode!, size),
   policy = { readMode: process.env.DX_TOUCHED_READ_MODE ?? "following", gateways: process.env.DX_INT1_GATEWAYS ?? "original",
     ...(process.env.DX_INT1_PEER_GC === "elastic" ? { peerGc: "elastic" } : {}),
     ...(process.env.DX_INT1_PEER_HEAP === "128m" ? { peerHeap: "128m" } : {}),
     ...(process.env.DX_INT1_ROW_WIRE === "gzip" ? { rowWire: "gzip" } : {}),
+    ...(memory ? { memory } : {}),
     ...(process.env.DX_INT1_READER_PAGES === "1" ? { readerPages: true } : {}),
     ...(process.env.DX_INT1_SEED_FEED === "after-sampling" ? { seedFeed: "after-sampling" } : {}) },
   gatewaySource = stack.gatewaySourceSha256 as string,
@@ -116,13 +120,13 @@ const lease = measurementWindow(binding, stack.prefix),
   handles: CompositionHandle[] = [];
 const phases: any[] = [];
 const now = () => performance.now();
-const readerStats = async (client = reader) => {
-  const stats = await client.stats();
+const readerStats = async (client = reader, collect = true) => {
+  const stats = await client.stats(collect);
   for (const [file, hash] of Object.entries(stats.code))
     assert.equal(hash, inputs[file], "Reader input changed: " + file);
   return stats;
 };
-async function phase(label: string) {
+async function phase(label: string, collect = true) {
   const sources: Record<string, { position: number; people: number }> = {};
   for (const account of accounts) {
     if (!account.count) continue;
@@ -135,8 +139,8 @@ async function phase(label: string) {
     label,
     at: new Date().toISOString(),
     binding,
-    driver: processSize(),
-    reader: await readerStats(),
+    driver: processSize(collect),
+    reader: await readerStats(reader, collect),
     native: await nativeMetrics(stack),
     sources,
   };
@@ -181,6 +185,7 @@ async function open(
       : { index: tenantIndex, key: keyFor(tenantIndex), first, people: count },
     pooled?.membership,
     policy.seedFeed === "after-sampling",
+    memory && !memory.scopes ? memory.activityPopulation : count,
   );
   accounts.push(a);
   return a;
@@ -424,7 +429,85 @@ async function placementProof() {
 }
 async function trial() {
   await lease.checkpoint();
-  await phase("empty");
+  await phase("empty", !memory);
+  if (memory) {
+    assert(stack.managed?.compact && spread && !seedOnly && !policy.seedFeed);
+    assert.equal(memory.points.join(","), stack.managed.memoryPoints);
+    assert(policy.readMode === "validated" && policy.gateways === "demand");
+    if (memory.scopes) {
+      const opened: { scope: string; openMs: number; seededAt: number }[] = [];
+      const idle = [];
+      for (const [index, count] of memory.points.entries()) {
+        while (accounts.length < count) {
+          await lease.checkpoint();
+          const began = now();
+          const account = await open("idle-" + accounts.length, "thin", 1);
+          const openMs = now() - began;
+          await account.seed([0]);
+          opened.push({ scope: account.comp.scopeName!, openMs, seededAt: now() });
+        }
+        const account = accounts[index]!, seed = opened[index]!;
+        const minIdleMs = 30_000;
+        await delay(Math.max(0, minIdleMs + 1 - (now() - seed.seededAt)));
+        await phase("idle-" + count, false);
+        const beforeRead = now(), cut = account.head;
+        const firstReadMs = await pull(account, 0, cut, V_W0, true);
+        const beforeSave = now(), saved = await account.update(0);
+        const firstSaveMs = now() - beforeSave;
+        assert.equal(saved.position, cut + 1);
+        await pull(account, 0, saved.position);
+        idle.push({ count, scope: seed.scope, cut, saved: saved.position, idleMs: beforeRead - seed.seededAt,
+          firstReadMs, firstSaveMs, saveAckMs: account.commits.at(-1), checkedRows: account.reads });
+      }
+      save("memory-scopes.json", { binding, opened, idle, firstReads });
+      return { memoryScopes: { people: accounts.length, idle, opened: opened.length } };
+    }
+
+    const shape = mode === "int1-deep" ? "deep" : "thin", account = await open("population", shape, size);
+    const a = memory.activityPopulation;
+    const touched = Array.from({ length: a / 50 }, (_, block) => activePerson(block, a, spread));
+    // [DX-THIN1] Why: the same admitted cohort survives every population step. Rejected: seeding a fresh 2 percent at each rung and charging its state to cold people.
+    async function seedPeople(people: Iterable<number>) {
+      const cap = shape === "deep" ? 900 : 384;
+      let group: number[] = [], facts = 0;
+      const flush = async () => {
+        await lease.checkpoint();
+        const disk = fs.statfsSync(dir!, { bigint: true });
+        assert(disk.bsize * disk.bavail > 5n * 1024n ** 3n, "Evidence storage at the disk floor");
+        await account.seed(group);
+        group = [];
+        facts = 0;
+      };
+      for (const i of people) {
+        const n = shape === "deep" ? deepShape(i).facts : 8;
+        if (group.length && facts + n > cap) await flush();
+        group.push(i);
+        facts += n;
+      }
+      if (group.length) await flush();
+    }
+    await seedPeople(touched);
+    for (const i of touched) await pull(account, i, account.head);
+    const fixed = await phase("fixed-active", false);
+    let first = 0;
+    for (const target of memory.points) {
+      await seedPeople((function* () { for (let i = first; i < target; i++) if (!account.isTouched(i)) yield i; })());
+      first = target;
+      for (let sample = 0; sample < 3; sample++) {
+        if (sample) await delay(2_000);
+        const observation = await phase(`people-${target}-${sample}`, false), scope = account.comp.scopeName!;
+        assert.deepEqual(observation.sources[scope], { position: account.head, people: target });
+        const admission = (stats: typeof observation) => stats.reader.scopes[scope];
+        for (const field of ["entries", "packed", "bytes", "admissions"] as const)
+          assert.equal(admission(observation)[field], admission(fixed)[field]);
+      }
+    }
+    const nativeCache = await sampleObjectCache(stack).catch((error: Error) => ({ unavailable: error.message.split("\n")[0] }));
+    save("memory-object-cache.json", { binding, position: account.head, nativeCache });
+    const end = account.head;
+    await pull(account, touched[0]!, end);
+    return { memoryPopulation: { people: size, touched, end, facts: account.facts, scope: account.comp.scopeName } };
+  }
   if (mode === "int1-cold-probe") {
     assert(size === 200 && spread && policy.readMode === "validated");
     const benchDeepCold = await deepColdProbe();
