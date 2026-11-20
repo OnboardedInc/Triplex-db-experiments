@@ -1,17 +1,26 @@
 # Failover on the shared version 0.1 database
 
-Take the Priority 9 work from `49d4b8139` on top of INT1 `51d0aff35`. It includes the second copy, the fence, the move and the same-database resend check.
-All ten accounts use one Datomic database in the new drill. The independent replay checks the edit before and after the lost reply.
-Saves wait for a second copy by default. Set `HA1_RECOVERY_POLICY=A` to reopen on one copy with an alarm. [Owner decision](OWNER-DECISION.md)
-The first server phase runs the four Priority 9 checks. Fleet and size measurements can start after their evidence is collected. [Server run](BENCH.md)
-The server run needs a sealed copy of the ten-account database at each age. The earlier Mac drills kept every confirmed save, but the updated checks are still running.
-The older account move is in INT1. Take the newer ordered import work separately from HA1. [Branch map](INTEGRATION.md)
+Take `a0c47480f`, which includes INT1 `51d0aff35`. The separate ordered import update comes from HA1. [Branch map](INTEGRATION.md)
+Four Mac drills used one Datomic database with ten accounts. All 358 saves settled once and all 3,571 scheduled reads returned the expected values within one second.
+The lost-reply edit returned its original receipt. The old disk refused to start as writer, and the planned move proved its first new save was on both copies.
+Saves wait for a second copy by default. Set `HA1_RECOVERY_POLICY=A` to reopen on one copy with an alarm. Both choices passed the local correctness checks. [Owner decision](OWNER-DECISION.md)
+The first server phase runs the four Priority 9 checks before any fleet or size work. It needs a prepared build, a sealed ten-account copy at each age and a server window. [Server run](BENCH.md)
+Mac clocks are diagnostic. Bare-metal timings and physical power fencing still need verification.
 
 ## Mac correctness
 
 The earlier eight Mac drills settled 782 scheduled saves once, with 689 original-ID retries. They returned 7,779 exact reads within the caller deadline. The old disk refused writer startup, and the planned move confirmed the first new receipt on two copies. Those drills waited 54 min 19 s in the ordinary queue. The earlier four fleet cells waited a combined 4 h 3 min 7 s. [Earlier evidence and diagnostics](https://github.com/OnboardedInc/Triplex-db-experiments/blob/a9f076753/lab/experiments/EXP-DX1/hasync1/REPORT.md)
 
-The integrated correctness gates offer five saves and fifty reads per second, rotate the pinned reads across ten accounts, and keep the original operation identity through retry. Mac timings are diagnostic. [Gate and receipt audit](EVIDENCE.md) · [Archives](SHA256SUMS.archives)
+Each integrated drill used 1,210 facts, five saves and fifty pinned reads per second, rotating reads across ten accounts. The four drills waited a combined 18 min 8 s for admission and used 4 min 50 s of active time. The checks kept every earlier confirmed receipt, and 301 saves settled on same-ID retry.
+
+| Mac diagnostic | Saves settled / retried | Exact scheduled reads | First scheduled new save | Longest read gap |
+| --- | ---: | ---: | ---: | ---: |
+| Lost reply, Policy B | 86 / 72 | 858 | 15.42 s | 0.070 s |
+| Planned move | 70 / 55 | 697 | 11.46 s | 0.105 s |
+| Returning disk, Policy B | 104 / 92 | 1,037 | 19.43 s | 0.182 s |
+| Lost reply, Policy A | 98 / 82 | 979 | 17.17 s | 0.469 s |
+
+Core and the Datomic SDK built. The strict HA typecheck, 25 focused checks and all 435 enabled SDK tests passed. The archive keeps the first codec-test timeout and the successful two-worker rerun with unchanged assertions. The full monorepo suite and 52 opt-in SDK cases were outside this run. No acceptance pins moved. [Gate and receipt audit](EVIDENCE.md) · [Archives](SHA256SUMS.archives)
 
 ## Bare-metal scorecard
 

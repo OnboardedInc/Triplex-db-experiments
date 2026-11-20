@@ -71,3 +71,16 @@ The eight ordinary-token drills ended at 19:42:58 UTC. They waited 54 min 19 s i
 The pooled drill writes its account evidence after a fresh read from the named native database at the seed cut. It checks every catalog key and the typed membership value for each account's first subject. It checks all recorded seed receipts against that database before and after the fault. The evidence binds the cut and the authored seed to the current nonce, slot and source. The pooled retry contributes the two independently checked commits to the same native feed and requires unique ordered positions for all commits. [Pooled proof](pooled.ts) · [Replacement probe](v3/replacement.ts)
 
 Before retrying, the Priority 9 ACK audit fetches the original receipts from the surviving reader and preserves both sides with the current scope, nonce, slot and source. The scorecard collector checks the original archive bytes, seed manifest digest, complete attempt identities, distinct host identities, exact ACK values, pool and read definitions, fresh fence/promotion/routing stages and WAL proof. It derives each numeric row rather than reading a stored verdict. Each scorecard command repeats those checks. Missing observations cannot pass, and the same-host run is labelled a rehearsal. [ACK audit](../p9/ack-audit.ts) · [Archive verifier](../p9/verify.ts) · [Row command](../p9/score.ts)
+
+## Integrated Mac attempts
+
+The `part-4-a0c47480f.tar.gz` archive contains the following ordinary-token attempts on `a0c47480f`. Their cold-start and outage clocks are diagnostic. It also contains the raw offer recount, initial build option refusal, admission refusals, strict typecheck, the first SDK run with its codec timeout, and the successful two-worker SDK rerun. [Archive checksum](SHA256SUMS.archives)
+
+| Attempt | Verified outcome |
+| --- | --- |
+| `hasync-ack-e98d3dfe` | Policy B checked 26 original receipts, verified the replacement standby and returned the lost edit's original receipt at position 18 on the shared database. |
+| `hasync-move-3d269ab9` | The original primary rejoined as standby and flushed WAL through the new receipt. The ordered feed had 79 distinct positions. |
+| `hasync-restart-dfeac029` | Policy B checked 23 original receipts. Both old roles and the fresh container booting the original disk exited 74. The replacement received the new verified receipt. |
+| `hasync-ack-7fd8e290` | Policy A checked 28 original receipts and reopened after fencing with the one-copy alarm. The shared database returned the original lost-reply receipt at position 18. |
+
+Every integrated attempt checked the current ten-account catalog, typed membership rows and original seed receipts on the same Datomic database before and after the cut. The independent recount checks nonce, slot, source, database, raw stream hash, exact returned receipt bytes, distinct settlement positions, and zero owned containers or networks. The stack also verified removal of its owned volumes. The scorecard archive reader was tested locally for its row limits, missing results and stale campaign identities. The bare-metal collector and physical power interlock have not run. [Pooled proof](pooled.ts) · [Row checks](../p9/score.test.ts)
