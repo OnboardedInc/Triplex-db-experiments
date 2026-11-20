@@ -320,13 +320,10 @@ export class Notices {
     // [DX-STG1] Why: an owed EVSUB can depend on a value that will become unreadable at every old pin. Freeze only W0's replay-safe work records before erasure, even for a stalled receiver. Rejected: silently re-evaluating an old event with the erased marker.
     for (let i = (prev?.value.through ?? 0) + 1; i <= tail.value.sequence; i++) {
       const e = await this.event(i, at),
-        sel = e.value.selection;
-      if (sel.kind === "subjects" && !sel.ids.includes(subject)) continue;
-      if (sel.kind === "census") {
-        const members = await this.inputs.roster({ position: e.at, validTime: e.value.validTime });
-        assert.equal(hash(members), e.value.census.members);
-        if (!members.includes(subject)) continue;
-      }
+        census = this.censusFor(e);
+      const members = await this.inputs.roster({ position: e.at, validTime: e.value.validTime });
+      assert.equal(hash(members), census.members);
+      if (!members.includes(subject)) continue;
       const [items] = await this.work(e, [subject], at);
       proofs.push(
         this.db.put(receiptsAt(subject, i), {

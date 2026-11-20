@@ -241,6 +241,21 @@ test("an existing narrowed event cannot advance and the verifier identifies the 
   );
   await assert.rejects(worker.drain(), /Legacy selection lacks coverage proof/);
   assert.deepEqual(await worker.effects(), []);
+  const unchanged = await a.db.head();
+  await assert.rejects(
+    a.erase(
+      await a.observe(),
+      {
+        ...save,
+        id: "erase-omitted-member",
+        kind: "erase",
+        selection: { kind: "subjects", ids: [subjects[1]!] },
+      },
+      [],
+    ),
+    /Legacy selection lacks coverage proof/,
+  );
+  assert.equal(await a.db.head(), unchanged);
   await assert.rejects(
     verify(
       worker,
