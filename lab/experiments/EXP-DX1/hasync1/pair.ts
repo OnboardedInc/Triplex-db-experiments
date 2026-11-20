@@ -90,7 +90,9 @@ export class SyncPair {
       "type=volume,source=" + this.latch + ",target=/ha-fence" + (readOnly ? ",readonly" : ""),
     ];
   }
-  async open(options: { grouped?: boolean; init?: (ac: Account) => Promise<unknown> } = {}) {
+  async open(
+    options: { grouped?: boolean; lean?: boolean; init?: (ac: Account) => Promise<unknown> } = {},
+  ) {
     const s = this.s;
     assert.equal(
       await s.a.docker(["volume", "create", "--label", "ha1.attempt=" + s.e.nonce, this.latch]),
@@ -122,7 +124,7 @@ export class SyncPair {
     this.writer = await this.gateway("write", s.a, "pg", options.grouped);
     const ac = new Account(s.e.prefix + "-sync", this.writer, this.writer);
     this.account = ac;
-    await ac.open();
+    await ac.open(options.lean ? "lean" : "legacy", options.lean ?? false);
     const setup = await options.init?.(ac);
     assert.match(
       (this.cluster = await this.sql("pg", "select system_identifier from pg_control_system()")),

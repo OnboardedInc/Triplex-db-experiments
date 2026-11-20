@@ -32,6 +32,9 @@ export async function drill(
       if (e.mode === "hasync-smoke") {
         const { smoke } = await import("../hasync1/smoke.ts");
         result = await smoke(pair, profile.people);
+      } else if (e.mode === "hasync-cost-plain" || e.mode === "hasync-cost-group") {
+        const { costDrill } = await import("../hasync1/cost.ts");
+        result = await costDrill(pair, profile.people, e.mode === "hasync-cost-group");
       } else {
         const { faultDrill } = await import("../hasync1/faults.ts");
         result = await faultDrill(pair, profile.people, e.mode);

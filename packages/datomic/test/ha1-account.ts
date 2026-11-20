@@ -56,8 +56,8 @@ export class Account {
     this.w = new DatomicClient(write, 2200);
     this.r = new DatomicClient(read, 2600);
   }
-  async open() {
-    const v = await this.w.create(this.scope, "legacy", false, 45000);
+  async open(layout: "legacy" | "lean" = "legacy", strict = false) {
+    const v = await this.w.create(this.scope, layout, strict, 45000);
     assert(v.created && v.db === this.db);
     this.schema = v.schemaHash;
     const b = await this.w.basis(this.db);

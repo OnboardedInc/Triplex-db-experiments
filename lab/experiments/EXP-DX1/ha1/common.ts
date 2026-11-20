@@ -38,6 +38,8 @@ export const modes = [
   "hasync-cut-wal",
   "hasync-cut-reply",
   "hasync-restart",
+  "hasync-cost-plain",
+  "hasync-cost-group",
 ] as const;
 export type Mode = (typeof modes)[number];
 export const roles = {
