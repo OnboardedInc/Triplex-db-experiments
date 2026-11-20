@@ -290,11 +290,11 @@ function replay(a: Account, key = String(accounts.indexOf(a))) {
   fs.writeFileSync(path.join(dest, "observed.json"), JSON.stringify(samples), { flag: "wx" });
   return result;
 }
-async function deepColdProbe() {
-  const scope = "int1-" + attempt + "-deep-cold", comp = await openComposition("reach", "datomic", scope);
-  const client = startReader(binding + "-deep-cold");
+async function deepColdProbe(key = "deep-cold", wire: "plain" | "gzip" = policy.rowWire === "gzip" ? "gzip" : "plain") {
+  const scope = "int1-" + attempt + "-" + key, comp = await openComposition("reach", "datomic", scope);
+  const client = startReader(binding + "-" + key, undefined, wire);
   const a = new Account(comp, "deep", digest(binding + "/" + scope), 0, 10000,
-    new DatabaseSync(path.join(dir!, "deep-cold.sqlite")));
+    new DatabaseSync(path.join(dir!, key + ".sqlite")));
   const subjects = Array.from({ length: 200 }, (_, b) => activePerson(b, 10000, true));
   try {
     assert.equal(await comp.currentPosition(), 0);
@@ -308,13 +308,13 @@ async function deepColdProbe() {
       const start = now(), result = await client.pull(scope, rootOf("deep", id), a.head, V_W0, true);
       const ms = now() - start;
       a.verify(id, a.head, V_W0, result);
-      if (policy.rowWire === "gzip") assert(result.diagnostic.exchanges.length === result.roundTrips && result.diagnostic.exchanges.every((x: any) => x.gzipRows === true));
+      assert(result.diagnostic.exchanges.length === result.roundTrips && result.diagnostic.exchanges.every((x: any) => x.gzipRows === (wire === "gzip")));
       output.push({ id, tasks: deepShape(id).tasks, ms, rows: result.triples.length, requests: result.roundTrips, diagnostic: result.diagnostic });
     }
-    const filename = "deep-cold-reads.json";
-    save(filename, { binding, scope, position: a.head, output });
-    return { scope, position: a.head, subjects: output.length, file: filename,
-      sha256: digest(fs.readFileSync(path.join(dir!, filename))), latency: quant(output.map(x => x.ms)), replay: replay(a, "deep-cold") };
+    const filename = key + "-reads.json";
+    save(filename, { binding, scope, wire, position: a.head, output });
+    return { scope, wire, position: a.head, subjects: output.length, file: filename,
+      sha256: digest(fs.readFileSync(path.join(dir!, filename))), latency: quant(output.map(x => x.ms)), replay: replay(a, key) };
   } finally { await client.close(); a.db.close(); await comp.close(); }
 }
 async function release(a: Account, next: W0.CompiledRelease, afterCapture?: () => Promise<void>) {
@@ -669,6 +669,9 @@ async function trial() {
   const benchDeepCold = ((mode === "int1-thin" && size === 1000000 && process.env.DX_BARE_METAL === "1") ||
     (mode === "int1-proof" && policy.readMode === "validated"))
     ? await deepColdProbe() : undefined;
+  // [DX-THIN1] Why: both formats met the latency target in fresh local stacks and transferred different amounts. Rejected: choosing a physical winner from the earlier unpaired Mac probe.
+  const benchDeepColdAlternate = benchDeepCold
+    ? await deepColdProbe("deep-cold-alternate", benchDeepCold.wire === "gzip" ? "plain" : "gzip") : undefined;
   const latencyFile = "latency-samples.json";
   const samples = { cold, commit, resident: hot, ryow: own };
   // [DX-INT1] Why: preserve every timed observation after the measurement window so the physical collector can recompute both percentiles.
@@ -707,6 +710,7 @@ async function trial() {
     schedules,
     moving,
     benchDeepCold,
+    benchDeepColdAlternate,
     ...(policy.seedFeed ? { seedFeedChecks } : {}),
   };
 }

@@ -11,6 +11,7 @@ The paths in [GATEWAY-SHA256SUMS](GATEWAY-SHA256SUMS) are relative to the durabl
 | `p3-idle-b` | One idle scope followed by eight in the same processes. The phase source records an empty admitted set for each scope. |
 | `p3-proof-c` | Native identity eviction, all 23 schedules, Python activation and pinned replay, eight accounts in two placements, and a separate 200-person deep first-read run including both 34-task people. |
 | `p3-compressed-probe-a` | Fresh stack, same 200 deep people, native gzip verified on every actual response, independent probe replay and first-read timings. |
+| `p3-plain-probe-a` | Matched fresh-stack plain-wire probe. All 200 subject ordinals, task counts and returned row counts match the compressed run. |
 | `p3-seed-feed-deep-a` | Writer-only import of 2,000 deep people, 40 active. A third histogram follows the complete replay of the 376 original seed transactions and 320,826 facts. |
 | `p3-following-deep-full`, `p3-following-thin-a` | Original following reader with 10,000 deep or 10,000 thin people and the same spread cohort. The live heap, committed V8 spaces, external buffers and charged index were sampled at fixed membership. |
 | `p3-elastic-deep-a` | Same 2,000-person deep cohort, cache budgets and validated reads as the bounded G1 control. The JVM reported a generational Z heap. |

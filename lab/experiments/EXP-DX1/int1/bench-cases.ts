@@ -14,7 +14,7 @@ export const cases = [
 ] as const;
 export type BenchCase = (typeof cases)[number];
 export function benchRowWire(setting?: string): "plain" | "gzip" {
-  const wire = setting ?? "gzip";
+  const wire = setting ?? "plain";
   assert(wire === "gzip" || wire === "plain", "Row wire must be gzip or plain");
   return wire;
 }
@@ -157,16 +157,17 @@ export async function verifyPages(dir: string, decision: any, first: number, cou
   assert.equal(sum.digest("hex"), decision.receipts);
   assert.equal(raw.digest("hex"), decision.receipts);
 }
-export async function verifyDeepColdProbe(dir: string, deep: any, binding: string, attempt: string, rowWire?: string) {
+export async function verifyDeepColdProbe(dir: string, deep: any, binding: string, attempt: string, rowWire?: string, key = "deep-cold") {
   const { sha256, V_W0 } = await import("../../../bench/lib/w0-world.ts");
   const { seedFacts } = await import("./account.ts");
   const { compareOracleOutput } = await import("../../../bench/lib/oracle.ts");
   const { readOracleOutput } = await import("../../../bench/lib/oracle-output.ts");
-  assert.equal(deep.file, "deep-cold-reads.json");
+  assert.equal(deep.file, key + "-reads.json");
   const raw = fs.readFileSync(path.join(dir, deep.file));
   assert.equal(sha256(raw), deep.sha256);
   const probe = JSON.parse(raw.toString());
-  assert.deepEqual([probe.scope, probe.binding, probe.position], ["int1-" + attempt + "-deep-cold", binding, 200]);
+  assert.deepEqual([probe.scope, probe.binding, probe.position], ["int1-" + attempt + "-" + key, binding, 200]);
+  if (deep.wire !== undefined) assert.equal(probe.wire, deep.wire);
   assert.deepEqual([deep.scope, deep.position, deep.subjects], [probe.scope, probe.position, 200]);
   assert.equal(probe.output.length, 200);
   for (const [n, sample] of probe.output.entries()) {
@@ -176,12 +177,12 @@ export async function verifyDeepColdProbe(dir: string, deep: any, binding: strin
     assert(Number.isFinite(sample.ms) && sample.ms >= 0);
     assert.equal(sample.rows, seedFacts("deep", id).filter(op => op.validFrom <= V_W0).length);
     assert(sample.requests > 0 && sample.diagnostic.exchanges.length === sample.requests);
-    if (rowWire === "gzip") assert(sample.diagnostic.exchanges.every((x: any) => x.gzipRows === true));
+    if (rowWire) assert(sample.diagnostic.exchanges.every((x: any) => x.gzipRows === (rowWire === "gzip")));
     assert(sample.diagnostic.exchanges.every((x: any) => ["reach", "reach-many"].includes(x.route) && x.bytes > 0 && x.responseMs >= x.toHeadersMs));
   }
   const ms = probe.output.map((x: any) => x.ms).sort((a: number,b: number) => a-b);
   assert.deepEqual(deep.latency, { n: 200, p50: ms[99], p99: ms[197] });
-  const replay = path.join(dir, "replay-deep-cold");
+  const replay = path.join(dir, "replay-" + key);
   const caseText = fs.readFileSync(path.join(replay, "oracle-case.json"), "utf8");
   const caseDoc = JSON.parse(caseText);
   assert.equal(caseDoc.caseId, "int1-" + sha256(binding + "/" + probe.scope));
@@ -242,7 +243,13 @@ export async function verifyCase(
   assert.equal(r.size, spec.size);
   assert.deepEqual(inputs.containers, stack.containers);
   verifyLatencies(dir, r, binding, inputs.attempt, inputs);
-  if (spec.key === "thin-1m") await verifyDeepColdProbe(dir, r.benchDeepCold, binding, inputs.attempt, inputs.policy.rowWire);
+  if (spec.key === "thin-1m") {
+    const alternate = wire === "gzip" ? "plain" : "gzip";
+    assert.equal(r.benchDeepCold.wire, wire);
+    assert.equal(r.benchDeepColdAlternate.wire, alternate);
+    await verifyDeepColdProbe(dir, r.benchDeepCold, binding, inputs.attempt, wire);
+    await verifyDeepColdProbe(dir, r.benchDeepColdAlternate, binding, inputs.attempt, alternate, "deep-cold-alternate");
+  }
   assert.equal(r.accounts.length, spec.accounts);
   assert.equal(new Set(r.accounts.map((a: any) => a.scope)).size, spec.scopes);
   assert.equal(r.activation.length, 2 * spec.accounts);
@@ -418,6 +425,7 @@ export async function verifyCase(
     seedEndToEndMs: r.seedMs,
     latencyMs: r.latency,
     deepCold: r.benchDeepCold,
+    deepColdAlternate: r.benchDeepColdAlternate,
     phases: phases.map((p) => ({
       name: p.label,
       disk: p.native.disk,

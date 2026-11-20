@@ -16,7 +16,7 @@ if (action === "--plan") {
         gateways: "32 MiB peer object cache, 8 MiB row cache, 4096 ID and session entries",
         activity: "2%",
         rowWire: wire,
-        deepCold: "200 first reads across all five task classes after the first wide case",
+        deepCold: "200 first reads in each of two fresh scopes, one per wire format, after the first wide case",
         releases: ["R1", "EAD selector R2"],
         comparison: "same 100 account rosters, command intents and guarded decisions",
         usage: "control.ts launch BATCH UTC_CUTOFF",
