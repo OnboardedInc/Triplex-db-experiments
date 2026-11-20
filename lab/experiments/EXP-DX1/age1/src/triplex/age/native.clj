@@ -109,7 +109,7 @@
   ;; Rejected: concatenating solo transactions, which would merge journals and hide interior cuts.
   (let [last-position (:position (peek commands))]
     (vec
-      (mapcat (fn [{:keys [owner position clock tx width prior] :as command}]
+      (mapcat (fn [{:keys [owner position clock tx width prior prior-rev] :as command}]
                 (let [final? (= position last-position)
                       member (if final? "datomic.tx" (str "age/member/" position))
                       owner-ref [:triplex.entity/id owner]
@@ -128,13 +128,18 @@
                                  (str (group/prefix (fixture/row-text r)) (tape/digits 16 position)
                                       (format "%016x" (Double/doubleToRawLongBits (double clock))) tx)])]
                   (check! (= width (count markers)) "Grouped retirement count differs" {:position position})
-                  (concat [header] rows tags markers)))
+                  ;; [DX-AGE1] Why: W1's materialized report explicitly retires the previous
+                  ;; revision as well as setting the new one. The native log observes both it
+                  ;; and Datomic's implicit cardinality-one retraction.
+                  ;; Rejected: relying only on the implicit retraction (different log census).
+                  (concat [header] rows [[:db/retract owner-ref :triplex.entity/rev prior-rev]]
+                          tags markers)))
               commands))))
 
 (defn grouped-ack! [commands {:keys [db-after tx-data]} previous-t]
   (let [t (d/basis-t db-after)
         physical (d/t->tx t)
-        records (+ 2 (reduce + (map #(+ 15 (* 5 (:width %))) commands)))]
+        records (+ 2 (reduce + (map #(+ 16 (* 5 (:width %))) commands)))]
     (check! (and (< previous-t t) (= records (count tx-data))
                  (every? #(= physical (:tx %)) tx-data))
             "Physical group datoms or ordering differ" {:t t :records records})
