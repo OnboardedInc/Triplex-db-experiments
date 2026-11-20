@@ -64,14 +64,15 @@
                       (range 40)))))
 
 (defn read-cells [pop saves]
-  (let [first-active (tape/owner-index pop 0)
-        hot (tape/owner-index pop (dec saves))
-        cold 0]
+  (let [hot (tape/owner-index pop 0)
+        cold 0
+        before-last-hot (* (:active pop) (quot (dec saves) (:active pop)))]
+    ;; Match the same 160-field owners across rungs. The near pin precedes the last write on the active owner.
     [["current-recent" hot saves :current]
      ["current-year-idle" cold saves :current]
-     ["pinned-recent" hot (dec saves) :pinned]
-     ["pinned-year-idle" cold (dec saves) :pinned]
-     ["old-cut" first-active (min 1 saves) :old-cut]]))
+     ["pinned-recent" hot before-last-hot :pinned]
+     ["pinned-year-idle" cold before-last-hot :pinned]
+     ["old-cut" hot (min 1 saves) :old-cut]]))
 
 (defn confirm-page! [page pop after count]
   (let [expected (mapv (fn [n] [(tape/tx-id n) (+ (tape/seed-head pop) (inc n))])

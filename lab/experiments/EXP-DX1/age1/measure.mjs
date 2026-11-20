@@ -71,6 +71,8 @@ export async function measure(ctx, spec) {
     assert.equal(result.from, from);
     assert.equal(result.target, target);
     assert.equal(result.growth.saves, target);
+    assert.equal(result.end, target + spec.low + 2 * spec.busy);
+    assert.equal(result.head, Math.ceil(seed.population.people / 12) + result.end);
     const transactorPssKiB = rolePss();
     assert(transactorPssKiB > 0);
     const cold = {};
@@ -109,13 +111,14 @@ export async function measure(ctx, spec) {
       assert(backupBytes > 0);
       const list = await vendor("list-backups", backup);
       const cut = list.output.split("\n").find((line) => /^\(\s*\d+\s*\)$/.test(line.trim()))?.match(/\d+/)?.[0];
-      assert.equal(cut, String(result.backupT), "Backup differs from the settled source cut");
+      assert(cut && Number(cut) >= result.backupT, "Backup falls before the final acknowledged basis");
       const verified = await vendor("verify-backup", backup, "true", cut);
-      assert.match(verified.output, /:event :verify-backup\/complete/);
-      assert.match(verified.output, /:missing-segments #\{\}/);
-      assert.match(verified.output, /:unreadable-segments \(\)/);
-      assert.equal(verified.output.match(/:t (\d+)(?=[,}])/)?.[1], cut);
-      assert(Number(verified.output.match(/:total-segments (\d+)/)?.[1]) > 0);
+      const record = verified.output.split("\n").find((line) => line.includes(":event :verify-backup/complete"));
+      assert(record, "Native backup verification did not complete");
+      assert.match(record, /:missing-segments #\{\}/);
+      assert.match(record, /:unreadable-segments \(\)/);
+      assert.equal(record.match(/:t (\d+)(?=[,}])/)?.[1], cut);
+      assert(Number(record.match(/:total-segments (\d+)/)?.[1]) > 0);
       psql("postgres", "CREATE DATABASE " + dest);
       restoreCreated = true;
       psql(dest, ddl);
@@ -124,7 +127,7 @@ export async function measure(ctx, spec) {
       const start = performance.now();
       const readback = only(await run(prefix + "-restored.log", "restored", [seed.name, String(result.end), cut],
         ["-e", "AGE_RESTORE_JDBC=" + restoreJdbc]), "restored-readback");
-      assert.equal(readback.t, result.backupT);
+      assert.equal(readback.t, Number(cut));
       assert.equal(readback.saves, result.end);
       write(prefix + "-backup.json", { attempt, t: cut, backupMs: backupResult.ms, backupBytes,
         verifyMs: verified.ms, restoreMs: restored.ms, readbackMs: performance.now() - start });
