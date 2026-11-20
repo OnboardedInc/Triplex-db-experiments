@@ -11,9 +11,10 @@ from producer_readings import digest, get
 
 TAIL_ARMS = ("tail-0-a", "tail-128", "tail-500", "tail-2000", "tail-0-b")
 SPLIT_ARMS = ("split-0-a", "split-2000", "split-0-b")
+MICRO_ARMS = ("micro-0-a", "micro-24", "micro-16", "micro-32", "micro-0-b")
 
 
-def read_arm(directory, attempt, name, rate=50, *, split=False):
+def read_arm(directory, attempt, name, rate=50, *, split=False, micro=False):
     # [DX-BM1] Why: join every scheduled offer and bulk ACK to this scope's immutable receipt.
     # Rejected: accepting an open-loop p99 after dropping expired, missing, or unverified offers.
     f = directory / (name + ".offers.json")
@@ -25,7 +26,7 @@ def read_arm(directory, attempt, name, rate=50, *, split=False):
     assert math.isfinite(tape["start"])
     due = {(actor, kind, i): i * 200 for actor, kind in (("quiet", "save"), ("quiet", "read")) for i in range(540)}
     due.update({("live" + str(i % 10), "save", i): i * (1000//rate) for i in range(rate*108)})
-    if split:
+    if split or micro:
         due.update({("live" + str(i % 10), "read", i): i * 20 for i in range(5400)})
     native = {row["command"]: row["position"] for row in tape["native"]}
     assert len(native) == len(tape["native"]) == len(set(native.values()))
@@ -78,6 +79,72 @@ def read_arm(directory, attempt, name, rate=50, *, split=False):
         assert not frames
     return dict(arm=name, scope=scope, duration=duration, rate=rate, neighbors=neighbors, facts=facts,
                 fps=facts / (duration / 1000), tapeSha256=digest(f))
+
+
+def micro_output(directory, source, slot, start, *, capacity="one-host"):
+    # [DX-BM1] Why: use fixed offer denominators and the last queryable prefix in the window.
+    # Rejected: granting progress from frames still in flight or accepting one of the two controls.
+    attempt = get(directory / "attempt.json")
+    nonce = attempt["nonce"]
+    assert attempt["mode"] == "load-micro" and re.fullmatch(r"[a-f0-9-]{36}", nonce)
+    assert directory.name == "load-micro-" + nonce
+    assert attempt["source"]["git"] == source and attempt["slot"] == slot
+    assert get(directory / "cleanup.json") == dict(nonce=nonce, containers=0, networks=0)
+    report = directory / "observations.json"
+    published = get(report)
+    assert (published["nonce"], published["slot"], published["source"]) == (nonce, slot, attempt["source"])
+    assert published["profile"] == dict(people=50, capacity=capacity, scopes=1)
+    assert [row["arm"] for row in published["result"]] == list(MICRO_ARMS)
+    assert len({row["sourceSeal"] for row in published["result"]}) == 1
+    results = []
+    for arm, width in zip(published["result"], (0, 24, 16, 32, 0)):
+        name = arm["arm"]
+        tape_path = directory / (name + ".offers.json")
+        individual = directory / ("arm-" + name + ".json")
+        assert start - 2 <= tape_path.stat().st_mtime <= report.stat().st_mtime
+        assert start - 2 <= individual.stat().st_mtime <= report.stat().st_mtime
+        assert get(individual) == arm
+        assert arm["width"] == width
+        checked = read_arm(directory, attempt, name, micro=True)
+        assert all(arm[k] == v for k, v in checked.items() if k != "tapeSha256")
+        tape = get(tape_path)
+        assert tape["hz"] == 130 and arm["offeredFrames"] == 14_040
+        assert tape["lostReplies"] == int(width != 0)
+        native = {row["command"]: row for row in tape["native"]}
+        frames = {}
+        stop = 0
+        ack = 0
+        for row in tape["ordered"]:
+            assert width and row["first"] == stop and row["end"] - stop == width // 8
+            assert row["facts"] == width and row["offer"] >= ack
+            stop, ack = row["end"], row["ack"]
+            bound = native[row["command"]]
+            assert bound["position"] not in frames
+            assert bound["grant"]["bulk"] and not bound["grant"]["runnable-live"]
+            service = row["service"]
+            assert service["ms"] == bound["serialHold"]["end"] - bound["serialHold"]["start"] > 0
+            assert 0 < service["rows"] <= 96 and 0 < service["bytes"] <= 65536
+            frames[bound["position"]] = row
+        prior = queryable = 0
+        for marker in tape["markers"]:
+            row = frames[marker["position"]]
+            assert row["first"] == marker["first"] and row["end"] == marker["end"]
+            assert row["position"] > prior and marker["done"] >= row["ack"]
+            assert re.fullmatch(r"[a-f0-9]{64}", marker["digest"])
+            prior = marker["position"]
+            if marker["done"] <= arm["duration"]:
+                queryable = row["end"] * 8
+        assert arm["queryableFacts"] == queryable and arm["completedBulk"] == stop * 8
+        assert arm["committedFrames"] == len(frames) == arm["proof"]["observed"]
+        assert arm["proof"]["facts"] == arm["completedBulk"] and arm["proof"]["cursor"] == stop
+        assert arm["cycleOverBudget"] == sum(r["ack"] - r["offer"] > 8 for r in tape["ordered"])
+        assert len(tape["temporal"]) == arm["temporal"] == (3 if width else 0)
+        for row in tape["temporal"]:
+            assert native[row["command"]]["position"] == row["position"]
+        results.append({**checked, "width": width, "queryableFacts": queryable,
+                        "queryablePerSecond": queryable / (arm["duration"] / 1000),
+                        "committedFrames": len(frames), "armSha256": digest(individual)})
+    return {"source": source, "slot": slot, "nonce": nonce, "observationsSha256": digest(report), "arms": results}
 
 
 def tail_attempt(root, r):

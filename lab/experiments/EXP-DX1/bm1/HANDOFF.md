@@ -180,9 +180,9 @@ The `i29-2` ACT1 producer began the first offer at 07:59:47 EST after 112 min 4 
 | Quiet receipt-only | 46.14 / 55.97 ms | 80 / 120 ms | MET |
 | 3.5 receipt-only | 53.15 / 63.46 ms | 100 / 140 ms | MET |
 | 23.5 receipt-only | 2.043 / 2.051 s | 140 / 190 ms | MISS |
-| Quiet staged | 13.019 / 13.026 s | 18 / 18.1 s | MISS |
-| 3.5 staged | 14.118 / 14.134 s | 20 / 20.1 s | MISS |
-| 23.5 staged | 18.616 / 18.625 s | 23 / 23.1 s | MISS |
+| Quiet staged | 13.019 / 13.026 s | 18 / 18.1 s | No bar |
+| 3.5 staged | 14.118 / 14.134 s | 20 / 20.1 s | No bar |
+| 23.5 staged | 18.616 / 18.625 s | 23 / 23.1 s | No bar |
 
 Each cell has one Publish. The loaded windows have 210 or 1,410 audited saves each, according to rate. The busy receipt waited 2,019.56 ms from ingress to entry. Its last older save finished 0.012 ms before that entry. Time from entry to the native ACK was 24.25 ms. The busy staged run had 89 older saves at ingress and waited 4,320.30 ms before entry. These observations include the benchmark's serial admission queue. The full v3 bars remain unjudged.
 
@@ -197,3 +197,21 @@ The first resume controller treated the copied directory as an already launched 
 The resumed check finished and cleaned up at **10:15:58 EST**. The unaged and 415-save targets each covered one person. Fresh-root clocks were 2.557 and 11.900 s, with native index jobs of 2.340 and 8.550 s. The aged arm selected 5,658 datoms and wrote 901 leaf segments and 111 directory segments. Fresh peers matched zero remaining selected values. One held gateway view returned the aged value 14.177 s after request send. At 500 saves per block, the aged arm's p99 was 129.99 ms in control and 120.88 ms for the entire comparison block. It was 164.94 ms among the 337 saves wholly inside the native index job. The later storage pass covered both erasures and older index generations. Ordinary collection removed 54.3 MB of values with unchanged relation allocation. The full rewrite recovered 0.99 GB and the maintenance window generated 5.72 GB of WAL. Mac archive `overnight/i34-2` has the full producer and collector outputs and the retained fixture proof.
 
 STATUS read `FREE 2026-11-20T15:15:58Z` after both native services stopped and the owned inventory was empty. The full chosen activation and erasure bundles and thin restore summaries were verified and indexed on the Mac. The full setup images remain on the bench. The source-bound activation prices cover the six component windows. The independent 100k settlement-price follow-up, INT1 capacity at 1M, CEIL, isolated predecessor and pulse, SIZE and RD1's matched writer attribution still need measurements. The revised INT1 pooled report at `bf6dbc410` still awaits its small saved-output comparison.
+
+## Friday one-database queue
+
+The pinned JVM1 seed service started at 10:28:14 EST. The write, read and transactor placements were confirmed and the seed entered native ingestion. The detached successor waits for exact readback and scoped teardown before running the eight-save agreement and starting the timed comparison. Bench checkout `46880aa47d7c580c400b457df0c8baf9e971e78a`, supervisor `897cd5b35`. Both use `/var/tmp/triplex-bm1/day-n20-jvm1`. Neither service releases the server to the next owner.
+
+```sh
+cat /var/tmp/triplex-bm1/STATUS
+systemctl status --no-pager bm1n20-jvm1-seed.service bm1n20-jvm1-campaign.service
+sudo tail -n 25 /var/tmp/triplex-bm1/day-n20-jvm1/{seed,campaign}.log
+```
+
+Look for the detached seed's `seed/seed.json`, then `small/results/small/{producer-small,collector-small}.json` and `campaign/results/collector.json`. The seed payload stays on the bench. Each phase keeps exact offer and stage rows. All three JVMs log absolute GC timestamps. HotSpot is G1 on the transactor and reader and Serial on the writer. The present arm uses 1/2/1 cores in that order and the three other arms use 3/3/1. The field schedule retains submit, prepare, ready, entry and native-completion clocks. The pinned individual mode doesn't emit the native computation subclock.
+
+TAIL1's archive pin matches the public experiment's 281,491,079-byte synthetic archive in the Mac SCALE1 evidence. The assigned bench contains no matching copy. Priority ACT1 awaits a published runner for the three loaded receipt-only sweeps. The previous joined run saved its exact final evidence and removed its volume without writing a physical snapshot. The separate SCALE1 deep seed uses another roster. No exact reusable ACT1 snapshot was found in the completed scope's artifacts or remaining Docker volumes. The previous six-window proof and timing remain available. Staged-value timings are reported separately under the current Targets definition.
+
+HA1's new `load-micro` uses one Datomic database per arm, with all live participants and the import in that database. The current command uses one serving gateway for writes and reads, and one transactor. The producer and BM1 replayed all five saved Mac tapes, each with 11,880 fixed live offers. The source-bound summary is in `evidence/DX-BM1/day-n20/ha1-micro-agreement`. The three cap treatments were 16/24/32 facts and yielded 844/836/935 independently queryable facts/s on that Mac. The historical separate-database comparisons are out of the current queue.
+
+The retained thin million-person image uses the INT1 `0dd4cbb24` lean roster. The stock integrated campaign expects another legacy, namespaced seed. The retained-seed reader uses the original source's validated reader, population ledger and gateway budgets. It runs a fresh small restore and companion API/collector check before the matched active-only and full-size observations. Both profiles admit precisely the same 20,000 spread-cohort people. The baseline creates only those 20,000 roots. The full arm restores the sealed 1M image and checks each reader answer against the saved assertion ledger. Three natural RSS samples precede the save loop. Profile differences are paired whole-process RSS estimates. PostgreSQL's summed RSS can count shared pages more than once.
