@@ -53,8 +53,14 @@
 (defn gc-count []
   (reduce + (filter #(not (neg? %)) (map #(.getCollectionCount %) (ManagementFactory/getGarbageCollectorMXBeans)))))
 
+(defn terminal-position [person depth]
+  ;; [DX-COMPACT1] Why: derive the exact logical cut from the fixed cohort without touching that subject's index pages.
+  ;; Rejected: looking up a revision before starting a cold read's clock.
+  (+ (reduce + (map #(min (second %) (dec depth)) subjects))
+     (count (filter (fn [[other n]] (and (<= other person) (>= n depth))) subjects))))
+
 (defn timed-read! [reader view person depth mode tag]
-  (let [root (f/root person) p (store/revision view account root)
+  (let [root (f/root person) p (terminal-position person depth)
         pinned? (= mode "pinned")
         before (gc-count)
         [ms projection]
@@ -65,6 +71,7 @@
         gc (- (gc-count) before)
         want (probe/expected-world person (inc person) depth (if (> depth 1) 1 0) p (> depth 1))]
     (assert (= (:depth projection) depth))
+    (assert (= (:p projection) p))
     (assert (= want (f/sorted-world {:subject root :facts (:visible projection)})))
     (let [folded (cond
                    (and (= tag "warm") (not pinned?)) 0
@@ -98,7 +105,7 @@
   (let [conn (d/connect (uri))
         reader (cond-> (store/open-store conn nil 4) (= strategy "chain") (assoc :ignore-checkpoints true))
         view (store/sync-view reader)]
-    (doseq [[person depth] (if (= strategy "chain") subjects (rseq subjects))]
+    (doseq [[person depth] (apply interleave (partition 6 subjects))]
       (timed-read! reader view person depth mode "cold")
       (timed-read! reader view person depth mode "warm"))
     (when (and (= strategy "checkpoint") (= mode "pinned")) (boundaries! reader view))
