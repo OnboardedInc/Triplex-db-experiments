@@ -118,6 +118,7 @@ try {
   await worker.idle();
   assert.equal(await worker.recorder.archive.store.head(), terminal.notices.state.at);
   const automatic = await Settlement.open(account, queue, true);
+  const wakes: { position: number; tx: string; reads: string; noticePosition: number }[] = [];
   try {
     await automatic.idle();
     const fourth = await account.publish("wake-recording", W0.R1.doc, valid, "owed");
@@ -130,10 +131,17 @@ try {
       (await automatic.recorder.packets(at)).flatMap((p) => p.deliveries.map(toWire)),
       ref.owed,
     );
+    wakes.push({
+      position: fourth.position,
+      tx: fourth.txId,
+      reads: same.digest,
+      noticePosition: at,
+    });
     // [DX-ACT1] Why: a committed receipt can reach this worker only through a retry after the original publisher dies. Rejected: relying on the first publisher's in-memory callback.
     const detached = new JoinedAccount(store);
     const fifth = await detached.publish("recover-wake", W0.R1.doc, valid, "owed");
-    assert.equal((await verify(fifth.position, W0.R1.doc, W0.R1.doc, 5)).changes, 0);
+    const recovered = await verify(fifth.position, W0.R1.doc, W0.R1.doc, 5);
+    assert.equal(recovered.changes, 0);
     assert.equal(await automatic.archive.values(5), undefined);
     assert.deepEqual(await account.publish("recover-wake", W0.R1.doc, valid, "owed"), fifth);
     await automatic.idle();
@@ -143,6 +151,12 @@ try {
       (await automatic.recorder.packets(replayAt)).flatMap((p) => p.deliveries.map(toWire)),
       ref.owed,
     );
+    wakes.push({
+      position: fifth.position,
+      tx: fifth.txId,
+      reads: recovered.digest,
+      noticePosition: replayAt,
+    });
   } finally {
     await automatic.close();
   }
@@ -163,6 +177,7 @@ try {
       superseded: superseded.through,
       entries: owed.length,
       deliveredDigest: sha256(canonical(owed)),
+      wakes,
     }) + "\n",
     { flag: "wx" },
   );

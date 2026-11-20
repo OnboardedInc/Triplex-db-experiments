@@ -21,7 +21,11 @@ const out = process.argv[2]!,
   seconds = Number(process.argv[3] ?? 45),
   n = 128;
 assert(out && Number.isInteger(seconds) && seconds > 0 && seconds <= 180);
-const events = generateTrace({ seed: "joined-interference-v3", subjects: n, durationS: seconds });
+// [DX-ACT1] Why: keep the published tape seed and draw an exact time prefix for this fixture rung. Rejected: a custom seed or a sped-up burst to fit the local lease.
+const tapeSeed = "ns-v2";
+const events = generateTrace({ seed: tapeSeed, subjects: n, durationS: 5910 }).filter(
+  (event) => event.atMs < seconds * 1000,
+);
 const tape = traceDigest(events),
   business = (offset: number) =>
     new Date(millis(valid) + Math.max(0, Math.floor(offset))).toISOString().replace("Z", "000Z");
@@ -200,6 +204,8 @@ for (const loaded of [false, true]) {
     roster: fixture.rosterHash,
     loaded,
     tape,
+    tapeSeed,
+    subjects: n,
     seconds,
     readers: 64,
     readCount: reads.length,
