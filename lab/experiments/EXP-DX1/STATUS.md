@@ -2979,3 +2979,21 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   of values and notice entries after the receipt is built (short turns, restartable, superseded by a newer release).
   The 10,000-person timing and the remaining Mac checks were blocked by the measurement lease. DX-BM1 was told at
   03:18 local to run the 100,000-person activation next on its sealed seed.
+
+## 2026-11-20 08:20 UTC (03:20 local, 2026-11-20): DX-COMPACT1 part 2 in: with the required journal restored the compact save is no smaller; builder parked
+
+- **DX-COMPACT1 part 2 (`2dad099fb`, Mac VM; `compact1/REPORT.md`, `ATTRIBUTION.md`).** The packed layout gives up direct
+  searches across people by field or value; it can find a save by owner, command or position. Restoring the stored
+  journal rows that raw queries use (Q107-S) brings a one-field replacement to 18 records and 2,500 value bytes
+  (DX-W1's K: 16 records, about 2,300 bytes). A targeted search index matched nine cases at about two records per
+  changed link. Matched Mac groups of eight: corrected present writer 33.90 ms median, packed 9.04 ms, packed with
+  stored journal 12.65 ms; the present path spent 12.34 ms speculatively applying the group, the compact native
+  function 0.45 ms packed or 2.78 ms with journal generation: most of the gain is work the present path does before
+  the native transaction. Checkpoints cut median cold pinned reads at 415 events from 5.36 to 2.17 ms. All 71 W0
+  cases and the SDK receipt checks pass. Revised forecast for a server: 450 saves per second at saturation (was 730),
+  p99 72 and 124 ms at 235 and 394 offered. General business query parity and erasure restore remain open. Its
+  advice stands: build the corrected incremental writer first, keep whole accounts movable, isolate deep accounts at
+  the storage layer.
+- **DX-COMPACT1 is parked.** What carries over goes to DX-PREP1 and DX-W1: the 12.34 ms of speculative apply per group
+  of eight against a 0.45 to 2.78 ms native function is the gap the incremental path can close without changing the
+  stored layout (`compact1/ATTRIBUTION.md`).
