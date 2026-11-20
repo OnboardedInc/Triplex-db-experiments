@@ -399,7 +399,7 @@ export class ReplicaReader {
     const result = await fallback();
     // [DX-RD1] Why: re-label the route without decoding the fallback lane's lazy public rows on the reader.
     // Rejected: object spread, which invokes the triples getter for every foreground miss.
-    return Object.defineProperties({}, {
+    return Object.defineProperties({} as PullResult, {
       ...Object.getOwnPropertyDescriptors(result),
       route: { value: "fallback", enumerable: true },
       waitedMs: { value: waitedMs, enumerable: true },

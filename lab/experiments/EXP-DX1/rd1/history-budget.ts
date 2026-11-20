@@ -75,6 +75,7 @@ for (const [i, e] of inputs.entries()) {
     recordTime: t0 + at,
     clockEnd: position,
     valid: true,
+    reset: false,
     changes: [[id, current.get(id), next]],
   });
   current.set(id, next);

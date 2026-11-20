@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { parentPort, workerData, type MessagePort } from "node:worker_threads";
 import { serialize } from "node:v8";
+import { performance } from "node:perf_hooks";
 import { DatomicClient } from "../../../packages/datomic/dist/index.js";
 import { replicaReply } from "./replica-reads.ts";
 import { observe } from "./observe.ts";

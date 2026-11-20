@@ -4,6 +4,7 @@ import path from "node:path";
 import { createHash, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
+import { performance } from "node:perf_hooks";
 import {
   DatomicClient,
   type DatomicRequestSample,

@@ -90,10 +90,12 @@ export class HistoricalFallbackThread {
 }
 
 export class HistoricalFallbackPort {
+  private readonly port: MessagePort;
   private serial = 0;
   private closed = false;
   private pending = new Map<number, (reply: Reply) => void>();
-  constructor(private readonly port: MessagePort) {
+  constructor(port: MessagePort) {
+    this.port = port;
     port.on("message", (reply: Reply) => {
       const done = this.pending.get(reply.id);
       if (!done) return;
@@ -113,7 +115,8 @@ export class HistoricalFallbackPort {
     return new Promise((resolve, reject) => {
       this.pending.set(id, ({ world, error }) => {
         if (error) reject(Error(error));
-        else if (world && !sameCut(root, basis, world)) reject(Error("Historical lane response cut mismatch"));
+        else if (world && !sameCut(root, basis, world))
+          reject(Error("Historical lane response cut mismatch"));
         else resolve(world);
       });
       this.port.postMessage({ id, root, basis });
@@ -125,9 +128,14 @@ export class HistoricalFallbackPort {
 }
 
 function sameCut(root: string, basis: ReadBasis, world: HistoricalPayload) {
-  return world.root === root && world.recordedAt === basis.recordedAt &&
-    world.recordedPosition === basis.recordedPosition && /^\d+$/.test(world.t) &&
-    world.from <= basis.validAt && basis.validAt < world.to;
+  return (
+    world.root === root &&
+    world.recordedAt === basis.recordedAt &&
+    world.recordedPosition === basis.recordedPosition &&
+    /^\d+$/.test(world.t) &&
+    world.from <= basis.validAt &&
+    basis.validAt < world.to
+  );
 }
 
 // [DX-RD1] Why: native rows cross the isolate losslessly, including signed zero and tagged Option values.
@@ -154,7 +162,10 @@ export function historicalResult(world: HistoricalPayload, local: boolean): Pull
 export class InstalledHistory {
   private readonly values = new Map<string, { world: HistoricalPayload; bytes: number }>();
   readonly diagnostics = { bytes: 0, peakBytes: 0, hits: 0, installs: 0, evictions: 0 };
-  constructor(readonly limit: number) {}
+  readonly limit: number;
+  constructor(limit: number) {
+    this.limit = limit;
+  }
   private key(root: string, basis: ReadBasis) {
     return JSON.stringify([root, basis.recordedAt ?? null, basis.recordedPosition ?? null]);
   }
@@ -168,8 +179,7 @@ export class InstalledHistory {
     return historicalResult(entry.world, true);
   }
   put(root: string, basis: ReadBasis, world: HistoricalPayload) {
-    if (!sameCut(root, basis, world))
-      throw Error("Installed history response cut mismatch");
+    if (!sameCut(root, basis, world)) throw Error("Installed history response cut mismatch");
     const key = this.key(root, basis),
       bytes = world.triples.byteLength + 384 + 2 * key.length;
     if (bytes > this.limit) return;
