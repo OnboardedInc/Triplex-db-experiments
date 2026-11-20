@@ -56,7 +56,34 @@ export async function catalog(
       attempt.spec.scopes * attempt.spec.people +
       " deep people"
     : attempt.spec.scopes + " × " + attempt.spec.people + " deep people";
-  const finding = `${population}, ${attempt.mode}, ${terminal.scopeReports} complete scope reports, ${cohort ? cohort.invalid.length + " invalid observations" : "no terminal traffic measurement"}, service ${terminal.service}`;
+  let finding = `${population}, ${attempt.mode}, ${terminal.scopeReports} complete scope reports, ${cohort ? cohort.invalid.length + " invalid observations" : "no terminal traffic measurement"}, service ${terminal.service}`;
+  if (attempt.study === "decision") {
+    const filename = attempt.phase === "seed" ? "seed.json" : "measurement.json";
+    const result = path.join(summary, filename);
+    if (terminal.service === "success") {
+      const measured = JSON.parse(fs.readFileSync(result, "utf8"));
+      assert(
+        measured.source === attempt.source &&
+          measured.nonce === attempt.nonce &&
+          measured.slot === attempt.slot,
+      );
+      assert(measured.layout === attempt.layout && measured.people === attempt.people);
+      const metric =
+        attempt.phase === "seed"
+          ? measured.facts + " witnessed seed facts"
+          : measured.cells.length + " independently rechecked open-loop cells";
+      finding = population + ", " + attempt.mode + ", " + metric;
+    } else {
+      finding =
+        population +
+        ", " +
+        attempt.mode +
+        ", " +
+        terminal.timedFiles +
+        " retained writer ledgers, service " +
+        terminal.service;
+    }
+  }
   const rows: string[] = [];
   const physicalSeeds: { database: string; people: number; reportSha256: string }[] = [];
   for (const s of cohort?.perScope ?? []) {

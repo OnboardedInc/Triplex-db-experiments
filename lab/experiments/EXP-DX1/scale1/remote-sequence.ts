@@ -94,7 +94,7 @@ function identified(step: Step) {
     );
   if (step.bootstrapCache) assert(sha(step.bootstrapCache));
 }
-async function prepare(step: Step) {
+export async function prepare(step: Pick<Step, "source" | "bootstrapCache">) {
   const build = path.join(root, "build-" + step.source),
     exit = path.join(build, "results/bootstrap.exit");
   if (!exists(exit)) {

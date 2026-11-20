@@ -1,0 +1,49 @@
+{
+  "schema": "dx-w1/write4-predictions/1",
+  "beforeServerRun": true,
+  "sourceEvidence": {
+    "layoutSha256": "53a70865f23d8704628e2e657e95b83ff64506fba9e3ec857f338662c78f7062",
+    "capacitySha256": "e0357052a45aa5a7ad1296a54fd3a9a189a9bb5998f21f2ed70b08a754d7b3ba",
+    "budgetModelSha256": "8c3bf16a70ad08b99d529585552a7458ade2b0661a25701eea2c82de042e4b69"
+  },
+  "pulse": {
+    "command": "node --experimental-strip-types lab/experiments/EXP-DX1/w1/control.ts --pulse pulsew4a --enhanced",
+    "arms": ["individual", "all", "compact", "prepared", "bounded"],
+    "factsPerSave": [1, 2, 3],
+    "durableSaturationPerSecond": {
+      "individual": [150, 200],
+      "all": [210, 285],
+      "compact": [220, 310],
+      "prepared": [260, 350],
+      "bounded": [180, 215]
+    },
+    "quietP99Ratio": {
+      "individual": [10, 30],
+      "all": [2, 6],
+      "compact": [2, 6],
+      "prepared": [2, 7],
+      "bounded": [2, 6]
+    }
+  },
+  "rates": {
+    "command": "node --experimental-strip-types lab/experiments/EXP-DX1/w1/control.ts --field-rates fldw4a --enhanced",
+    "arms": ["individual", "subject", "all", "compact", "prepared", "bounded"],
+    "modeledBoundedLiveOnlyQuietP99": {
+      "50": [1.05, 1.31],
+      "100": [1.18, 1.71],
+      "235": [3.7, 4.93]
+    },
+    "bestShortTailAt235": { "budgetMicros": 18550, "quietP99Ratio": 2.655 },
+    "preparedSaturationPerSecond": [260, 350],
+    "preparedExtraDrainSecondsAt394": [8, 31],
+    "boundedExtraDrainSecondsAt394": [50, 72]
+  },
+  "common": {
+    "pooledScopes": 1,
+    "deepAccounts": 10,
+    "subjectsPerAccount": 10000,
+    "preparedMaxMembers": 32,
+    "boundedBudgetMicros": 8000,
+    "scopeOfPrediction": "The quiet ranges price commit ACKs. The stages include speculative apply and combined durable round trip. Models assume no competing restore, import, notice or reader campaign."
+  }
+}

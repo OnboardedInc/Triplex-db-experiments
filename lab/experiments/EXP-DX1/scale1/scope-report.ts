@@ -122,17 +122,21 @@ function windowTable(run: Run, lines: string[]) {
         );
       }
     }
-    const miss = m.tenants.firstSteadyMiss;
-    lines.push(
-      "",
-      miss
-        ? "First measured steady load outside 1.25× was " +
-            miss.name +
-            " at " +
-            fmt(miss.commitsPerS) +
-            " acknowledged commits/s."
-        : "No sampled steady load recorded a judged ratio above 1.25×.",
-    );
+    if (!run.attempt.live) {
+      const miss = m.tenants.firstSteadyMiss;
+      lines.push(
+        "",
+        miss
+          ? "First measured steady load outside 1.25× was " +
+              miss.name +
+              " at " +
+              fmt(miss.commitsPerS) +
+              " acknowledged commits/s."
+          : "No sampled steady load recorded a judged ratio above 1.25×.",
+      );
+    } else if (run.attempt.bounded) {
+      lines.push("", "This arm measures write capacity. Matched quiet-read and quiet-feed p99 ratios are unmeasured.");
+    }
     lines.push(
       "The pinned roster counted " +
         counts.reduce((n: number, v: any) => n + v[1], 0) +

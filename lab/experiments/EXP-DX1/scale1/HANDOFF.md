@@ -1,31 +1,27 @@
 # DX-SCALE1 handoff
 
-Measure one shared Datomic commit pipeline first, followed by the same tenant-local writes through separate databases. The comparison holds the quiet account's offers and reader count fixed. [Targets](../../../TARGETS.md)
+The current decision screen measures ten full-size deep accounts together, then partitions the same logical rows and tapes across two Datomic databases on the same server. Each topology gets the same ten writer clients, reader seats and feed observer. [Review response](REVIEW.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-2026-11-20T02:01:25.346Z · Collected arm-p6-i1-seed-a with service result success, 0 physical-scope report(s) and verified cleanup. arm-p6-i1-pool-staggered-a started at 2026-11-20T01:57:04.299Z with execution ceiling 2026-11-20T11:57:04.299Z.
+The earlier `arm-p6-i1-pool-staggered-a` is still running on its original source, with timed offers starting at 02:35 UTC. It is a 10,000-per-account write-capacity diagnostic. Its execution ceiling is 11:57 UTC November 20. The new queue waits for its first terminal files and exact cleanup. It preserves that attempt even if packaging or a checker fails.
 <!-- end state -->
 
-With the dedicated destination set in `BENCH_SERVER`, this command shows the queue, bounded units and stage files.
+With the dedicated destination in `BENCH_SERVER`, this command shows all active stages and their ceilings.
 
 ```sh
 node --import tsx lab/experiments/EXP-DX1/scale1/control.ts status
 ```
 
-| Order | Population and layout | Work | Maximum per execution |
-| --- | --- | --- | --- |
-| 1 | Ten accounts of 10,000 in one database, then ten databases | Staggered and coincident field-save peaks with group commit off and on in the pooled database, then with group commit off in ten databases. | 8 h setup and up to 10 h per arm |
-| 2 | Existing 10,000-person deep and thin zero arms | Commit stages, storage reads and transaction sizes. [Comparison](COMMIT-ANATOMY.md) | Archived result |
-| 3 | 100,000 people in one database | Zero, bounded readers, guarded release and DELTA if its on-slot preflight verifies. | 8 h, 8 h, 10 h, 3 h |
-| 4 | 90 accounts of 100 and ten of 2,000 in one database, then 100 databases | Idle footprint, sentinel load and restart | 4 h per layout |
-| 5 | Ten accounts of 100,000 in one database | Serial seed, then zero, bounded readers and one guarded release as capacity allows. Seed progress and resource ceilings are recorded. | 24 h per execution |
+| Order | Arm | Maximum |
+| ---: | --- | ---: |
+| 1 | Existing staggered 10k write-capacity arm | Existing ceiling |
+| 2 | 10k per account pooled receipt-verified seed, then W1 bounded writer | 3 h each |
+| 3 | 100k per account pooled receipt-verified seed | 18 h |
+| 4 | Full pooled layout, individual then W1 prepared, from the same restored image | 5 h each |
+| 5 | Identical rows across two physical databases, then individual and prepared from the same split image | 18 h seed and 5 h per execution |
 
-Each detached arm has its own systemd unit, source, nonce, cgroup ceiling, disk floor and exact-prefix cleanup. The queue rechecks terminal and transfer files before advancing. The server clock is UTC. The first account is the quiet sentinel. The second performs the pooled release. For a loaded arm, 64 readers use two worker cores for ten minutes. The model checks every observation and the evidence retains one in 100, plus every error and mismatch.
+The queue caps additional service time at 38 hours, about USD 41.42 at the booked rate. Expected time is 22–30 hours. A clean pooled result through 394/s still requires a separately named 620/s headroom test before an affirmative placement decision. The former long reader arms, 100-database open experiment and standalone activation are deferred.
 
-The detached `triplex-scale1-p6-handoff-v2` unit started the first writer arm from the sealed seed. The detached `triplex-scale1-p6-followups` unit takes over at that arm’s terminal files and holds the fifteen later queue entries. The controller records freshly fetched branch heads before each new arm. It measures group commit with the fixture’s existing account keys. Fair turns require verified ownership on nested task entities, which the frozen fixture does not supply. Source builds start between measured arms.
+Each native arm has a separate unit, source, slot, nonce and verified cleanup. Before a timed arm, the runner checks the latest public W1 ref, the actual gateway flags and a six-save native preflight, including a pinned two-account read. An admitted pooled and split pair holds routing, reader tape, ten sender clients, CPU placement, heap caps and restore/open sequence fixed. The reader pair reproduces the same 60 seconds of scheduled tape within each 90-second cell, giving 600 seconds of observation in total per treatment. Cold data, pre/post field cuts and feed rows are checked independently of that reader sampling.
 
-Use `control.ts collect TAG` after each terminal arm. Collection verifies manifest bytes, transfers summaries and anatomy within a cumulative limit of 500 MiB per item, and registers the attempt in the durable trace index. Raw archives remain compressed on the server. A failed item yields to the next independent item and stays eligible for retry.
-
-ACT2 runs the 1,000-subject native preflight on each qualifying fresh stack before the large seed. Its release checks bind the public runtime, slot and attempt nonce. The two-account identity regression and 100,000-subject failure that prompted the preflight are documented in the [ACT2 report](../act2/REPORT.md).
-
-The forecasts and their verified observations use the current item numbers in [PREDICTIONS.md](PREDICTIONS.md).
+Use `control.ts collect TAG` after a terminal arm. Compact transfer files bind the exact source and attempt. Raw writer and observer files, original seed ledgers and images stay on the server. The queue retries evidence packaging against the same attempt. A checker failure carries its own status and does not restart measured work.

@@ -2,6 +2,7 @@ import fs from "node:fs";
 import assert from "node:assert/strict";
 import { scopeReport } from "./scope-report.ts";
 import { functionalNote } from "./functional-note.ts";
+import { placementReport } from "./decision/report.ts";
 import { summaryFiles } from "./source.ts";
 import { createHash } from "node:crypto";
 import { Histogram } from "../../../bench/lib/hist.ts";
@@ -28,6 +29,8 @@ type Stage = {
   groupSettings: any;
   delta: any;
   seedAnatomy: any;
+  seed: any;
+  decision: any;
   boundedLatency: { read: any; feedLag: any } | null;
 };
 const load = (dir: string, f: string) =>
@@ -109,6 +112,8 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         groupSettings: load(dir, "group-settings.json"),
         delta: load(dir, "delta-measurement.json"),
         seedAnatomy: load(dir, "seed-anatomy.json"),
+        seed: load(dir, "seed.json"),
+        decision: load(dir, "measurement.json"),
         boundedLatency: boundedLatency(dir, attempt, summary),
       });
     }
@@ -116,7 +121,6 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
   const recent = (item: number, mode: string) =>
     stages.filter((s) => s.attempt.item === item && s.attempt.mode === mode).at(-1);
   const one = recent(2, "reader") ?? recent(2, "zero"),
-    ten = recent(5, "reader") ?? recent(5, "zero"),
     a1 = stages
       .filter(
         (s) =>
@@ -241,6 +245,10 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       s.summary?.perScope?.some((p: any) => p.deep?.r2?.cost && p.deep?.activationOracle),
     ),
   );
+  const currentDecision = placementReport(
+    path.dirname(file),
+    stages.filter((s) => s.attempt.study === "decision"),
+  );
   const setup = stages
     .filter(
       (s) =>
@@ -288,11 +296,12 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "",
     ...(fs.existsSync(path.join(here, "COMMIT-ANATOMY.md"))
       ? [
-          "Deep reader goodput is unmeasured. Deep averaged 0.733 SQL reads per save versus 0.277 for thin. The largest increase in the slowest percentile was before gateway entry. [Commit anatomy](COMMIT-ANATOMY.md)",
+          "Deep reader goodput is unmeasured. Deep and thin commit p99 were 30.99 and 32.84 ms over the first 900 seconds. The archived deep tail aligned with six write-gateway GC pauses. [Commit anatomy](COMMIT-ANATOMY.md)",
         ]
       : []),
     `One account of 100,000 people — ${cost(one)}.`,
-    `Ten accounts of 100,000 people sharing one database — ${cost(ten)}.${partialTen?.partial ? ` The bounded seed acknowledged ${partialPeople.toLocaleString("en-US")} of 1,000,000 people across ${partialTen.partial.scopes.length} attempted databases.` : ""}${growthLine}`,
+    currentDecision ||
+      `Ten full-size accounts await the matched placement screen. ${partialTen?.partial ? `The earlier bounded seed acknowledged ${partialPeople.toLocaleString("en-US")} of 1,000,000 people across ${partialTen.partial.scopes.length} databases.` : ""}${growthLine} [Review response](REVIEW.md)`,
     `The owner's release target is under one second. Page-guard activation for one account is ${ledgerLimit && !a1 ? "unmeasured" : act(a1)}. Activation among ten is ${ledgerLimit && !a10 ? "unmeasured" : act(a10)}.${costLine}${delta ? ` DELTA release-to-correct-read p99 was ${round(delta.loaded.p99)} ms (n=${delta.loaded.count}).` : ""}`,
     emptied
       ? `First recorded engine memory-limit kill was in ${emptied.resources.firstObservedEngineOOM.role}, attempt ${emptied.tag}.`
@@ -300,7 +309,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         ? `The first capacity refusal was ${refused.tag} on ${refused.attempt.capacity.limits.join(" and ")}. This was an admission estimate.`
         : "The first shared resource to reach its limit is still unknown.",
     thresholds.length
-      ? "First measured expiry or quiet p99 miss by arm: " +
+      ? "Write-capacity diagnostic. First measured expiry or quiet commit p99 miss by arm " +
         thresholds.join(", ") +
         ". [Scope measurements](SCOPES.md)"
       : (setup
@@ -311,7 +320,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
             " PostgreSQL bytes/fact, one seed). "
           : "") +
         "The field-save profile offers 35/s steady, 235/s at its five-minute plateau and 394/s at coincident peaks.",
-    "Three changes to test are grouping queued saves, reducing per-save work at the serial commit point, and publishing a release with a constant number of writes. Their effects on the full account are unmeasured.",
+    "Three changes to test are shortening write-gateway GC pauses, reusing verified predecessor preparation and grouping ready saves. Their effects on the full account are unmeasured.",
     `The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. ${base?.disk ? `PostgreSQL grew by ${round(base.disk.bytesPerFact)} bytes per fact and the volume including WAL grew by ${round(base.disk.volumeBytesPerFact)} bytes per fact (one seed).` : "The first observed seed used 594.29 PostgreSQL bytes per fact and 1,214.95 allocated volume bytes per fact, including WAL (n=1 fresh stack)."}`,
     "",
     ...(base?.summary
@@ -460,14 +469,18 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "- `deep-activation.ts` checks the observed release, each page receipt and its changed bodies against the source cut, roster hashes and O-DOMAIN. `deep-commit-meter.ts` binds native transaction IDs, members, datoms and logical change rows to actual source replies. `measurements.ts` opens the new attempt’s receipt ledger, rehashes its bytes, validates its source, nonce and database, and recomputes the reported release and burst rates.",
     "- `measurements.ts` checks source hashes, cohort exits, complete planned offers and receipt positions, then recomputes the oracle comparisons and pooled bars from this attempt’s samples. Missing or invalid accounts leave the pooled result unjudged.",
     "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals. `small-host.ts` binds each open, empty snapshot and post-restart full-row hash to its database and original cut. `scope-report.ts` reads verified transfer bytes and checks the roster and restart denominators.",
-    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The deep-live generator checks frozen field-save content and minute geometry. Its two calendars preserved all ten business-intent digests, and 20 focused tests passed, including an independent replay of 8 pinned reads after 70 field saves on the in-memory composition (254 entity queries). The native field-save follow-up and the post-merge trace-suite rerun were waiting for a local heavy-job slot at the campaign stop. [Field-save evidence](evidence/part5-functional.sha256) The tenant collector binds observed offers, expiries, ACKs and quiet ratios to those windows. Predictions are updated from the same verified transfers. The launcher records each freshly fetched upstream head and its changed paths. A guarded arm accepts independent lazy-publisher changes confined to its separate directory. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. The restarted queue advances past failed arms and retains them for retry. The bounded reader collector checks every observation against the complete receipt model in memory, seals the one-in-100 sample and every error and mismatch, and rechecks attempt identity, counts and bytes on collection. The zero comparison independently binds gateway and transactor spans and full receipt journal bytes to each historical attempt. Bounded latency summaries recheck the exact per-scope report bytes, nonce, source, slot, account and arm before reading histograms. DELTA verifies the source hash, slot, nonce, 1,000-subject native preflight, empty 100,000-person destination, independent broad and narrow rows, and retained read bytes before advancing. The bounded DELTA runner checks every reader invocation at its exact native cut and saves every hundredth plus errors and mismatches. The million seed estimate binds the prior volume and dump sizes, fresh terminal evidence and actual cgroup samples.",
+    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The deep-live generator checks frozen field-save content and minute geometry. Its two calendars preserved all ten business-intent digests, and 20 focused tests passed, including an independent replay of 8 pinned reads after 70 field saves on the in-memory composition (254 entity queries). The native field-save follow-up and the post-merge trace-suite rerun were waiting for a local heavy-job slot at the campaign stop. [Field-save evidence](evidence/part5-functional.sha256) The tenant collector binds observed offers, expiries, ACKs and quiet ratios to those windows. Predictions are updated from the same verified transfers. The launcher records each freshly fetched upstream head and its changed paths. A guarded arm accepts independent lazy-publisher changes confined to its separate directory. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. The restarted queue advances past failed arms and retains them for retry. The bounded reader collector checks every observation against the complete receipt model in memory, seals the one-in-100 sample and every error and mismatch, and rechecks attempt identity, counts and bytes on collection. The zero comparison independently binds gateway and transactor spans and full receipt journal bytes to each historical attempt. Bounded latency summaries recheck the exact per-scope report bytes, nonce, source, slot, account and arm before reading histograms. DELTA verifies the source hash, slot, nonce, 1,000-subject native preflight, empty 100,000-person destination, independent broad and narrow rows, and retained read bytes before advancing. The bounded DELTA runner checks every reader invocation at its exact native cut and saves every hundredth plus errors and mismatches. The million seed estimate binds the prior volume and dump sizes, fresh terminal evidence and actual cgroup samples. The decision runner checks fresh field, feed and two-account bytes in native preflight. The loader checks every original claim and feed row at the sealed cut. The decision checker independently replays planned field values and predecessors in native position order, verifies cold rows and before/after cuts, and binds every sample to the frozen tape, slot, source and nonce. Finalization rechecks timing, dispositions, seed/archive bindings and durability before the compact transfer. Packaging can retry the same native evidence.",
     "- " + functionalNote(evidence, path.join(here, "evidence/part4-functional.sha256")),
     "",
     "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. [Predictions and observations](PREDICTIONS.md) are recorded for each item. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
   );
   const interference = stages
     .filter(
-      (s) => s.attempt.item === 3 && s.summary?.layout === "pooled" && !s.attempt.groupControl,
+      (s) =>
+        s.attempt.item === 3 &&
+        s.summary?.layout === "pooled" &&
+        !s.attempt.groupControl &&
+        !s.attempt.live,
     )
     .at(-1)?.summary?.tenants;
   if (interference) {

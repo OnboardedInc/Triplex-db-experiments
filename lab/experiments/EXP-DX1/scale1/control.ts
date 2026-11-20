@@ -73,7 +73,8 @@ function state() {
   return sudo(
     "sh",
     "-c",
-    script + '; for f in "$1"/queues/*/state.json; do test ! -f "$f" || cat "$f"; done',
+    script +
+      '; for f in "$1"/queues/*/state.json "$1"/decision/state.json "$1"/decision/attempts/*/STATUS.json; do test ! -f "$f" || cat "$f"; done',
     "state",
     root,
   );
@@ -151,7 +152,8 @@ function released() {
   assert.equal(sudo("env", "DOCKER_HOST=unix:///var/run/docker.sock", "docker", "ps", "-q"), "");
 }
 async function collect(tag: string) {
-  const entry = JSON.parse(sudo("cat", `${root}/${tag}/transfer.json`));
+  const base = root + (tag.startsWith("arm-d7-") ? "/decision/attempts/" : "/") + tag;
+  const entry = JSON.parse(sudo("cat", base + "/transfer.json"));
   assert.equal(entry.tag, tag);
   assert.match(entry.source, /^[a-f0-9]{40}$/);
   assert.match(entry.nonce, /^[a-f0-9-]{36}$/);
@@ -160,7 +162,7 @@ async function collect(tag: string) {
       path.join(os.homedir(), "Claude", "Projects", "triplex-db-2", "evidence"),
     dir = path.join(evidence, "DX-SCALE1", tag);
   fs.mkdirSync(dir, { recursive: true });
-  const remoteAttempt = JSON.parse(sudo("cat", root + "/" + tag + "/attempt.json"));
+  const remoteAttempt = JSON.parse(sudo("cat", base + "/attempt.json"));
   assert(
     remoteAttempt.tag === tag &&
       remoteAttempt.source === entry.source &&
@@ -188,7 +190,7 @@ async function collect(tag: string) {
     );
   }, 0);
   // [DX-SCALE1] Why: the Mac's 500 MiB transfer budget covers all attempts and arms of this item. Rejected: downloading a raw archive when its compressed size happens to fit.
-  const unpacked = Number(sudo("du", "-sb", "--", root + "/" + tag + "/transfer").split(/\s/)[0]);
+  const unpacked = Number(sudo("du", "-sb", "--", base + "/transfer").split(/\s/)[0]);
   assert(Number.isSafeInteger(unpacked) && unpacked > 0);
   assert(
     priorBytes +
@@ -215,7 +217,7 @@ async function collect(tag: string) {
       const fd = fs.openSync(tmp, "wx");
       const child = spawn(
         "ssh",
-        [...ssh, ["sudo", "-n", "cat", `${root}/${tag}/${spec.name}`].map(q).join(" ")],
+        [...ssh, ["sudo", "-n", "cat", `${base}/${spec.name}`].map(q).join(" ")],
         { stdio: ["ignore", fd, "inherit"] },
       );
       fs.closeSync(fd);
@@ -289,7 +291,8 @@ async function collect(tag: string) {
   const current = /triplex-scale1-(arm-[a-z0-9-]+)\.service/.exec(live)?.[1];
   let activity = "";
   if (current && current !== tag) {
-    const next = JSON.parse(sudo("cat", root + "/" + tags(current) + "/attempt.json"));
+    const currentBase = root + (current.startsWith("arm-d7-") ? "/decision/attempts/" : "/");
+    const next = JSON.parse(sudo("cat", currentBase + tags(current) + "/attempt.json"));
     assert(
       next.tag === current && Number.isSafeInteger(next.at) && Number.isSafeInteger(next.ceiling),
     );

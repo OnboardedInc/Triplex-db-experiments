@@ -6,9 +6,11 @@
 ;; Rejected: a collection timer or an unbounded burst queue.
 (def enabled (= "1" (System/getenv "TX2_GROUP_COMMIT")))
 (defn grouping? [] (or enabled policy/field-only?))
-(defn scheduling? [] (or (grouping?) policy/priority?))
+(defn scheduling? [] (or (grouping?) policy/priority? policy/budget-us))
 (def queue-clock (= "1" (System/getenv "TX2_GROUP_QUEUE_CLOCK")))
-(def batch-limit 8)
+(def stage-clock (= "1" (System/getenv "TX2_GROUP_STAGE_CLOCK")))
+(def reuse-prepared (= "1" (System/getenv "TX2_GROUP_REUSE_PREPARED")))
+(def batch-limit (policy/limit "TX2_GROUP_MAX_MEMBERS" 8 128))
 (def pending-limit 256)
 (def executor (Executors/newCachedThreadPool
   (reify ThreadFactory (newThread [_ r] (doto (Thread. r "triplex-group-writer") (.setDaemon true))))))
@@ -87,10 +89,17 @@
             result (try
                      (when (d/entid view [:triplex.tx/operation-id (:id entry)])
                        (throw (ex-info "triplex.tx/operation-id already committed" {})))
-                     (let [report (d/with view ((:prepare entry) view))
+                     (let [started (when stage-clock (System/nanoTime))
+                           data ((:prepare entry) view)
+                           prepared (when stage-clock (System/nanoTime))
+                           report (d/with view data)
+                           applied (when stage-clock (System/nanoTime))
                            after (:db-after report) tx (d/t->tx (d/basis-t after))]
-                       {:report report :tx tx :position (v after tx :triplex.tx/position)
-                        :clock (v after tx :triplex.tx/recorded-at) :id (v after tx :triplex.tx/id)})
+                       (cond-> {:report report :tx tx :position (v after tx :triplex.tx/position)
+                                :clock (v after tx :triplex.tx/recorded-at) :id (v after tx :triplex.tx/id)}
+                         stage-clock (assoc :prepare-micros (quot (- prepared started) 1000)
+                                           :speculative-micros (quot (- applied prepared) 1000)
+                                           :reused (if (identical? data (:original-data entry)) 1 0))))
                      (catch Exception e
                        (if (re-find #"TRIPLEX_CONFLICT|TRIPLEX_IDENTITY|TRIPLEX_CLOCK|:db.error/(?:unique-conflict|cas-failed)|triplex.tx/operation-id already committed" (str e))
                          {:error e} (throw e))))]
@@ -155,15 +164,28 @@
 (defn execute! [conn batch]
   (if (or (= 1 (count batch)) (not-every? :eligible batch))
     (doseq [e batch] (alone! e))
-    (let [base (d/db conn)
+    (let [started (when stage-clock (System/nanoTime))
+          base (d/db conn)
           results (when (every? #(eligible? base (:params %)) batch)
                     (try (evaluate base batch) (catch Exception _ nil)))
+          evaluated (when stage-clock (System/nanoTime))
           valid (vec (remove :error results))
           data (when (seq valid) (try (materialize base valid) (catch Exception _ nil)))]
       (if-not data
         (doseq [e batch] (alone! e))
-        (let [physical (try {:report @(d/transact-async conn (instrument [[:triplex.group/apply-v1 (d/basis-t base) data]]))}
-                            (catch Exception e {:error e}))]
+        (let [prepared (when stage-clock (System/nanoTime))
+              tx-data (instrument [[:triplex.group/apply-v1 (d/basis-t base) data]])
+              physical (try {:report @(if stage-clock
+                                         (d/transact-async conn tx-data :io-context :w1/grouped)
+                                         (d/transact-async conn tx-data))}
+                            (catch Exception e {:error e}))
+              stages (when stage-clock
+                       {:evaluateMicros (quot (- evaluated started) 1000)
+                        :prepareMicros (reduce + (map :prepare-micros valid))
+                        :speculativeMicros (reduce + (map :speculative-micros valid))
+                        :reused (reduce + (map :reused valid))
+                        :materializeMicros (quot (- prepared evaluated) 1000)
+                        :awaitMicros (quot (- (System/nanoTime) prepared) 1000)})]
           (if-let [e (:error physical)]
             (if (definitive? e) (doseq [entry batch] (alone! entry))
               (doseq [entry batch] (complete! entry {:error (ex-info "Group durability is unknown" {:status 503 :code "OutcomeUnknown"} e)})))
@@ -172,8 +194,9 @@
                 (let [report (:report physical) saved (try (receipt (:db-after report) (:id entry)) (catch Exception _ nil))]
                   (if (and (= (:position saved) (:position result)) (= (:clock saved) (:clock result))
                            (= (:t saved) (d/basis-t (:db-after report))))
-                    (complete! entry {:value (assoc report :member saved :group-size (count valid)
-                                               :group-wait-ns (- (:dispatch entry) (:arrived entry)))})
+                    (complete! entry {:value (cond-> (assoc report :member saved :group-size (count valid)
+                                                      :group-wait-ns (- (:dispatch entry) (:arrived entry)))
+                                               stages (assoc :group-stages stages))})
                     (complete! entry {:error (ex-info "Durable member receipt unavailable" {:status 503 :code "OutcomeUnknown"})})))))))))))
 
 (defn next-entry [{:keys [queue accounts rotation]}]
@@ -189,7 +212,7 @@
 (defn join-turn [owners account]
   (if (some #{account} owners) owners (conj (or owners []) account)))
 (defn choose [state]
-  (loop [{:keys [queue accounts tails] :as state} state out []]
+  (loop [{:keys [queue accounts tails] :as state} state out [] variable 0]
     (if (or (empty? queue) (= (count out) batch-limit)) [state out]
       (let [next (next-entry state) _ (assert next "Oldest pending command must be eligible")
             first-member (first out)
@@ -200,9 +223,11 @@
                                              (= (:subject %) (:subject first-member)) (:eligible %)
                                              (every? realized? (:predecessors %))) queue)) next) next)
             a (:account entry) rank (:rank entry)
-            solo (or (not (:eligible entry)) (and policy/priority? (or (= rank :bulk) (not (grouping?)))))]
+            priced (+ variable (or (:variable-us entry) 0))
+            solo (or (not (:eligible entry))
+                     (and (or policy/priority? policy/budget-us) (or (= rank :bulk) (not (grouping?)))))]
         (if (and (seq out)
-                 (or solo (and policy/field-only?
+                 (or solo (not (policy/fits? priced)) (and policy/field-only?
                                (or (nil? (:subject entry)) (not= (:subject entry) (:subject first-member))
                                    (not= a (:account first-member)))))) [state out]
           (let [others (filterv #(not (identical? % entry)) queue)
@@ -212,7 +237,7 @@
                     policy/priority? (update-in [:rotation rank] rotate a (some #(and (same? %) (= rank (:rank %))) others)))
                 taken (conj out (assoc entry :dispatch (System/nanoTime)))]
             (deliver (:token entry) true)
-            (if solo [s taken] (recur s taken))))))))
+            (if solo [s taken] (recur s taken priced))))))))
 (defn submit! [conn entry]
   (let [entry (merge {:rank :live} entry) lane (lane-for conn) p (promise) token (promise)
         launch (locking lane

@@ -173,8 +173,7 @@
                 ;; [DX-T1-8] Why: both JSON fragments and legacy text responses expose canonical logical rows.
                 ;; Rejected: emitting the compressed storage frame to replica/bootstrap or pinned read clients.
                 (let [body-start (+ ref-start ref-size 1)
-                      logical (if (.startsWith text "Z1" (int body-start))
-                                (str (subs text 0 body-start) (slim/body (subs text body-start))) text)]
+                      logical (if (= \2 (.charAt text 0)) (slim/logical-text text body-start) text)]
                 (.add texts logical)
                 (when (> (.size texts) row-limit) (decline! "row-budget"))
                 (if (= \1 (.charAt text 0)) (append-string! out logical)

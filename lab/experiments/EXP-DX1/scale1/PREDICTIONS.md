@@ -27,3 +27,20 @@ Forecasts below use the new order. An observation is entered alongside its origi
 | P6.5 · one million people | The pooled seed takes 9.7–12.7 hours at 520–850 PostgreSQL bytes per current fact. | Pending. |
 
 The million-person seed budget projects 47.90 GiB of memory and 350.30 GiB of free disk, including the volume, simultaneous PostgreSQL dump and reserve. It scales the observed 100,000-person pooled seed’s 1.64 GiB client peak, 12.90 GiB of additional volume and 11.94 GiB image, with the measured arm’s headroom rules. The 10,000-person live client’s 8.31 GiB peak, scaled by fact count, would imply more than 900 GiB at one million people. That extrapolation rules out relying on a full in-memory copy at the measured per-fact cost. The bounded live arms need an actual measurement after seeding.
+
+## Full-size placement screen
+
+Pre-run engineering ranges for the named 1–3 business-field tape. Cells are two 90-second repetitions at each rate with 60 seconds of offered reads in each repetition. Each repeat has its own 90-second quiet control. The quiet account keeps 3.5 saves/s. At total 235 and 394/s the other nine are slightly hotter than the observed individual rates. The test preserves aggregate demand with a quiet observer, so 394 here describes a sentinel stress test. The preceding staggered arm remains a separate write-capacity reading.
+
+Each table cell gives expected in-window durable saves/s, completed p50/p99 ms, and quiet commit p99 / alone. Estimates use CEILING, DEEPTAIL and W1's tested compact and prepared writer, with a larger working-set allowance. Quiet read and feed snapshots are compared independently. A ratio from an incomplete cell is descriptive. The report will retain all losses and each denominator.
+
+| Offered saves/s | 10k/account pooled, W1 bounded | 100k/account pooled current | 100k/account pooled prepared | 100k/account split current | 100k/account split prepared |
+| ---: | --- | --- | --- | --- | --- |
+| 35 | 34.7–35; 5–9/28–58; 1.0–1.4× | 34.5–35; 6–11/46–105; 1.0–1.9× | 34.5–35; 5–10/35–83; 1.0–1.6× | 34.5–35; 6–11/40–92; 1.0–1.7× | 34.5–35; 5–10/32–75; 1.0–1.5× |
+| 50 | 49–50; 5–10/35–75; 1.05–1.4× | 49–50; 7–13/60–130; 1.2–2.4× | 49–50; 6–12/42–100; 1.1–1.8× | 49–50; 6–12/45–105; 1.0–1.9× | 49–50; 5–11/35–88; 1.0–1.7× |
+| 235 | 175–215; 500–10000/3000–28000; 3–8× | 145–195; 2500–16000/18000–33000; 4–18× | 215–235; 12–1500/80–15000; 2–8× | 195–235; 15–3000/150–16000; 1.4–8× | 220–235; 8–500/65–3500; 1.3–5× |
+| 394 | 175–220; 6000–24000/22000–34900; 4–18× | 145–205; 9000–26000/26000–34900; 8–30× | 210–305; 3000–23000/18000–34900; 3–15× | 215–335; 3500–20000/14000–33000; 2–16× | 280–390; 50–11000/500–25000; 1.5–12× |
+
+Alone I expect 3.45–3.50 durable saves/s, save p50 4–9 ms and p99 25–80 ms across the two footprints. At 35 and 50/s I expect zero expiry and under 0.5 s drain, with read/feed p99 ratios of 1.0–1.3×. At 235 and 394/s I expect at least one pooled result to miss the write or quiet bars, with 0–30 s of drain and 1.1–4× surviving read/feed ratios. The higher native rate remains unproved unless an exact 620/s cell also holds the bars.
+
+Forecast one 162,456,470-fact image at 6,500 verified ingested facts/s, 6.94 h to commit, or 7.78 h at HA1's 5,800/s large-rung estimate. Full feed and scoped readback add time separately. One logical fixture produces two physical images because a pooled Datomic database cannot be partitioned by restoring a PostgreSQL dump. Provisional time from the small seed through both large layouts is 22–30 hours including archive, restore and exact checks, or about USD 24–33 at USD 1.09/h. The old full-length comparisons, standalone activation and 100-database arm are deferred in this spending window. Their results cannot reverse a measured capacity miss on the owner’s current question.
