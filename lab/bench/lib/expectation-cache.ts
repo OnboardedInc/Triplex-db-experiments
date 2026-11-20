@@ -26,17 +26,18 @@ export class ExpectationCache {
     if (!Number.isFinite(recordedAt) || !Number.isFinite(validAt))
       return this.model.expected(subject, recordedAt, validAt);
     const list = this.model.commits.get(subject) ?? EMPTY;
+    const revision = this.model.expectationRevision(subject);
     let entry = this.subjects.get(subject);
     if (
       !entry ||
       entry.list !== list ||
       entry.length !== list.length ||
-      entry.receiptVersion !== this.model.receiptVersion
+      entry.receiptVersion !== revision
     ) {
       entry = {
         list,
         length: list.length,
-        receiptVersion: this.model.receiptVersion,
+        receiptVersion: revision,
         ...this.model.expectationBoundaries(subject),
         values: new Map(),
       };
