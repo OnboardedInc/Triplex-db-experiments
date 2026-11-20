@@ -2705,3 +2705,23 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   for 165,000). Part 5 assigned: the owed measurements, then what sets the per-notice rate and a tenfold target.
 - **Mac VM:** eight virtual cores carry about ten builders; CPU pressure 18 to 20% (PSI some), memory 6.6 of 19 GiB
   reserved at 22:57 local. Builders queue for slots; timed Mac numbers tonight are ratios at best.
+
+## 2026-11-20 04:27 UTC (23:27 local, 2026-11-19): all eight write-path defects reproduced and fixed; both servers pointed at the fixed branch
+
+- **DX-WFIX1 part 1 (`cd2151749` on `exp/DX-WFIX1-write-path-fixes`; `wfix1/REPORT.md`).** Every review finding
+  reproduced on `7a6a7e9ef` (nine native assertions and two SDK recovery cases failed) and is fixed with a permanent
+  regression test: (1) resent replacement returns its first receipt (`a1e8ca12b`); (2) the feed uses the stored time,
+  range and value of the row it retires (`edffda1a7`); (3) hinted runtime can write checkpoint and release reference
+  (`db444ad25`); (4) a ready save passes an unrelated wait and a ready bulk frame is granted after at most eight live
+  turns (`d3572e794`); (5) accounts with different stored owners get separate queue capacity (`866a65043`); (6) an
+  oversize request no longer strands the sender's next sequence (`3d7569a19`); (7) every measured arm reads back the
+  writer's options (the base launcher had omitted the predecessor flag) (`9d605bcd9`); (8) the feed check compares
+  full content (`9a2d0938c`). 98 native assertions, 16 SDK and 8 W1 tests pass; the replay oracle matches feed, resumed
+  pages, pinned reads and receipts in all three write modes. PostgreSQL gates (process stop, submission limits,
+  erasure) not yet taken: no lab slot. Part 2 assigned: those gates; merge DX-W1's newest head; a tested recipe for
+  DX-PREP1, DX-COMPACT1 and DX-INT1; the same two defect classes sought in the loader, the joined Publish and the
+  notice sender.
+- **Servers:** DX-BM1 and DX-SCALE1 stopped and resumed: every arm that uses the new write path runs from the fixed
+  branch with options read back; arms already taken on the old head are kept and labelled "unfixed write path".
+  Server 2 runs the single full-size deep account (100,000 people, real rates) before any ten-accounts-in-one seed,
+  pending Sam's answer on Q106f.
