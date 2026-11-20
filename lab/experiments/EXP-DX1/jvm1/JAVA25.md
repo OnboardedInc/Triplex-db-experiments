@@ -29,4 +29,4 @@ The two ordinary-token boots used a G1 transactor, Serial writer and G1 reader o
 | Write gateway | 38.4 / 286.3 / 268.8 | 68.3 / 289.3 / 270.2 |
 | Read gateway | 17.5 / 376.8 / 359.4 | 35.7 / 309.5 / 290.2 |
 
-Both peers logged the same Clojure `identity` warning under both versions. The Java 21 transactor emitted no JVM warning. The first Java 25 boot exposed the Netty warning and prompted the explicit transactor flag. Both attempts released their owned containers, volumes and reservations.
+Both peers logged the same Clojure `identity` warning under both versions. The Java 21 transactor emitted no JVM warning. The first Java 25 boot exposed the Netty warning and prompted the explicit transactor flag. Both attempts released their owned containers, volumes and reservations. Focused SQL correctness batches allow up to 30 seconds per test within the four-minute suite budget.

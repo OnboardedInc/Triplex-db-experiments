@@ -138,7 +138,10 @@ export async function inventory(options, config, manager) {
       const writer = "http://127.0.0.1:" + slot.port;
       const log = fs.openSync(path.join(out, "sdk-sql.log"), "wx");
       try {
+        // [DX-JVM1] Why: a focused shared-host run tests the SQL assertions within the outer four-minute budget.
+        // Rejected: treating Vitest's default five seconds as a performance bar for an individual SQL test.
         execFileSync(process.execPath, [path.join(root, "node_modules/vitest/vitest.mjs"), "run", "--maxWorkers=1",
+          ...(sdkFiles.length ? ["--testTimeout=30000"] : []),
           ...sdkFiles.map((file) => "test/" + file)], {
           cwd: pkg, timeout: 240_000, stdio: ["ignore", log, log], env: {
             ...env, DATOMIC_INTEGRATION: "1", DATOMIC_URL: writer, DATOMIC_GATEWAY_URL: writer,
