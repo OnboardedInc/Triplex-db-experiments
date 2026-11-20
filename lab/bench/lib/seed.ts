@@ -139,7 +139,6 @@ export async function seedRung(opts: {
   const depth = opts.deep ? 1 : opts.inFlight ?? 1;
   let lastDeepProgress = 0;
   if (depth !== 1 && comp.backend.name !== "datomic") throw Error("Concurrent seed requires Datomic");
-  let stoppedEarly = false;
   function* batches() {
     let batch: Fact[] = [], members: number[] = [];
     let deepBatch: { subject: number; rows: Fact[] }[] = [];
@@ -147,7 +146,7 @@ export async function seedRung(opts: {
       const facts = opts.deepRows ? opts.deepRows(i) : opts.deep ? deepOwnFacts(i) : ownFacts(i, accounts);
       if (batch.length + facts.length > opts.batchFacts && batch.length) {
         yield { batch, members, deepBatch };
-        if (performance.now() - started > opts.budgetMs) { stoppedEarly = true; return; }
+        if (performance.now() - started > opts.budgetMs) return;
         if (commands % 100 === 0) opts.log(`seed: ${n} subjects, ${assertions} assertions`);
         batch = []; members = []; deepBatch = [];
       }

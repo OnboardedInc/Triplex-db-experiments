@@ -110,17 +110,25 @@ export class Evidence {
   readonly source: ReturnType<typeof inputs>;
   readonly dir: string;
   readonly start = clock();
+  readonly mode: Mode;
+  readonly slot: string;
+  readonly shape: "deep" | "mixed";
+  readonly faultCell: "all" | "tail-burst";
   constructor(
     parent: string,
-    readonly mode: Mode,
-    readonly slot: string,
-    readonly shape: "deep" | "mixed" = "deep",
-    readonly faultCell: "all" | "tail-burst" = "all",
+    mode: Mode,
+    slot: string,
+    shape: "deep" | "mixed" = "deep",
+    faultCell: "all" | "tail-burst" = "all",
   ) {
     assert(
       shape === "deep" || ["one-failover", "one-backup", "one-sync", "one-whole"].includes(mode),
       "This mode has a fixed population",
     );
+    this.mode = mode;
+    this.slot = slot;
+    this.shape = shape;
+    this.faultCell = faultCell;
     this.source = inputs(mode);
     fs.mkdirSync(parent, { recursive: true });
     this.dir = path.join(parent, mode + "-" + this.nonce);
