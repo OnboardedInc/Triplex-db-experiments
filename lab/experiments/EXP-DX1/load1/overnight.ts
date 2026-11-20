@@ -192,7 +192,27 @@ function analyze(arm: any) {
     const parks = logParks
       .filter((p) => p.threadName?.startsWith(writer) && intersects(p, envelope))
       .map((p) => ({ start: p.start, end: p.end, ms: clipped(p, envelope) }));
-    return { ...j, hold, envelope, parks, facts: r.facts };
+    const serial = hold.end - hold.start;
+    const queue = op.queueUs / 1000;
+    const apply = j.tx.nativeStats["apply-msec"];
+    const gateway = j.trace.end - j.trace.start;
+    const prep = j.trace.prep.end - j.trace.prep.start;
+    const http = op.end - op.submit;
+    const stages = {
+      sdkBeforeHttp: op.submit - raw.start - r.offer,
+      transportAndHttpClient: http - gateway,
+      gatewayPrepare: prep,
+      gatewayOther: gateway - prep - serial - queue,
+      readyQueue: queue,
+      dispatchToNative: envelope.start - hold.start,
+      nativeApply: apply,
+      nativeOther: j.tx.nativeStats.msec - apply,
+      nativeToPeer: hold.end - envelope.end,
+      sdkReceiptAndCursor: raw.start + r.ack - op.end,
+    };
+    assert(Object.values(stages).every(Number.isFinite));
+    assert(Math.abs(Object.values(stages).reduce((a, b) => a + b, 0) - (r.ack - r.offer)) < 0.001);
+    return { ...j, hold, envelope, parks, facts: r.facts, stages, wall: r.ack - r.offer };
   });
   const quiet = raw.samples.filter(
     (s: any) => s.actor === "quiet" && s.kind === "save" && s.outcome === "verified",
@@ -279,6 +299,20 @@ function analyze(arm: any) {
     clockBoundsMs: bounds,
     bulkFacts: stats(bulk.map((r: any) => r.facts)),
     bulkSerialMs: stats(bulk.map((r: any) => r.hold.end - r.hold.start)),
+    frameWall: stats(bulk.map((r) => r.wall)),
+    stageMs: Object.fromEntries(
+      Object.keys(bulk[0]?.stages ?? {}).map((name) => {
+        const xs = bulk.map((r) => r.stages[name as keyof typeof r.stages]);
+        return [
+          name,
+          {
+            ...stats(xs),
+            mean: xs.reduce((a, b) => a + b, 0) / xs.length,
+            negatives: xs.filter((n) => n < 0).length,
+          },
+        ];
+      }),
+    ),
     bulkPrepMs: stats(bulk.map((r: any) => r.trace.prep.end - r.trace.prep.start)),
     bulkApplyMs: stats(bulk.map((r: any) => r.tx.nativeStats["apply-msec"])),
     bulkNativeMs: stats(bulk.map((r: any) => r.tx.nativeStats.msec)),
