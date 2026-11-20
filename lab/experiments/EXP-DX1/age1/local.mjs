@@ -1,6 +1,7 @@
 // @ts-nocheck -- [EXP-CHECKJS] Docker inspection and lab reservation records are validated at runtime.
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
+import { acquireMeasureLease } from "../../../bin/heavy-lock.mjs";
 import { randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
@@ -30,13 +31,13 @@ function hashTree(dir, relative = "") {
 function stage(dir, revision) {
   const source = path.join(dir, "source");
   fs.mkdirSync(source);
-  const inputs = [experiment, "lab/bin/engine.mjs", "lab/bin/lib.mjs", "lab/bin/heavy.mjs",
+  const inputs = [experiment, "lab/bin/engine.mjs", "lab/bin/lib.mjs", "lab/bin/heavy.mjs", "lab/bin/heavy-lock.mjs",
     "lab/config/datomic/verification.json", "packages/datomic/gateway/src", "packages/datomic/src/codec-spec.json"];
   const archive = execFileSync("git", ["archive", revision, ...inputs], { cwd: REPO, maxBuffer: 16 * MiB });
   execFileSync("tar", ["-xf", "-", "-C", source], { input: archive });
   const launcher = path.join(REPO, experiment, "local.mjs");
   const manager = path.join(REPO, "lab", "bin", "engine.mjs");
-  for (const file of [launcher, manager, path.join(REPO, "lab/bin/lib.mjs"), path.join(REPO, "lab/bin/heavy.mjs")])
+  for (const file of [launcher, manager, ...["lib.mjs", "heavy.mjs", "heavy-lock.mjs"].map((name) => path.join(REPO, "lab/bin", name))])
     assert.equal(sha256(fs.readFileSync(file)), sha256(fs.readFileSync(path.join(source, path.relative(REPO, file)))), "running launcher differs from its source pin");
   return source;
 }
@@ -74,6 +75,8 @@ export async function local(opts, config, manager) {
   }
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
   assert.match(opts.run ?? "", /^(fidelity|scale|successor)$/);
+  const measure = opts.run === "scale" ? await import("./measure.mjs") : null;
+  const spec = measure?.scaleOptions(opts);
   const revision = git(["rev-parse", "HEAD"]);
   const pin = opts.source ?? revision;
   assert.match(pin, /^[0-9a-f]{40}$/);
@@ -84,6 +87,7 @@ export async function local(opts, config, manager) {
   fs.mkdirSync(dir);
   const source = stage(dir, pin);
   const sources = new Map(hashTree(source));
+  if (measure) assert.equal(sources.get(experiment + "/measure.mjs"), sha256(fs.readFileSync(new URL("./measure.mjs", import.meta.url))));
   const created = new Map(), volumes = new Set();
   const names = Object.fromEntries(Object.keys(caps).map((r) => [r, prefix + "-" + r]));
   const labels = ["--label", "age.attempt=" + attempt, "--label", "tx2.holder=" + holder];
@@ -92,7 +96,7 @@ export async function local(opts, config, manager) {
   const stop = () => controller.abort(new Error("Interrupted"));
   process.once("SIGTERM", stop);
   process.once("SIGINT", stop);
-  let slot, net, locked = false, deadline;
+  let slot, net, locked = false, deadline, watch, lease;
   const write = (file, body) => fs.writeFileSync(path.join(dir, file), JSON.stringify(body, null, 2) + "\n", { flag: "wx" });
   const forecast = (opts.run === "scale" ? 12 : 1) * GiB;
   const floor = () => {
@@ -112,6 +116,8 @@ export async function local(opts, config, manager) {
     return meta;
   };
   try {
+    floor();
+    if (measure) lease = await acquireMeasureLease(holder + " scale", { holder, pollMs: 30000 });
     while (!slot) {
       controller.signal.throwIfAborted();
       floor();
@@ -147,6 +153,9 @@ export async function local(opts, config, manager) {
       }
     }
     deadline = setTimeout(() => controller.abort(new Error("Measurement window expired")), 14 * 60 * 1000);
+    watch = setInterval(() => {
+      try { floor(); } catch (error) { controller.abort(error); }
+    }, 5000);
     const run = (role, img, args, entry, argv) => {
       const mem = String(caps[role] * MiB);
       const id = docker(["create", "--pull", "never", "--name", names[role], ...labels,
@@ -206,6 +215,7 @@ export async function local(opts, config, manager) {
       "-e", "DATOMIC_JAVA_OPTS=-Xms128m -Xmx768m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=96m -Dtriplex.codec.spec=/age/packages/datomic/src/codec-spec.json -Dlogback.configurationFile=" + logback,
       "-e", "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?" + jdbc + "?user=postgres&password=" + password,
       "-e", "AGE_ATTEMPT=" + attempt, "-e", "AGE_SQL_JDBC=" + jdbc, "-e", "AGE_SQL_PASSWORD=" + password,
+      "-e", "AGE_MAX_SQL_BYTES=" + (7 * GiB),
     ], "/bin/sleep", ["infinity"]);
     const listing = docker(["exec", peer, "bash", "-ceu", "cd /age; find . -type f -print0 | xargs -0 sha256sum"]);
     const actual = new Map(listing.split("\n").map((line) => {
@@ -215,12 +225,17 @@ export async function local(opts, config, manager) {
     }));
     assert.deepEqual(actual, sources);
     write("binding.json", { attempt, phase: opts.run, slot: slot.slot, source: pin, sourceHashes: Object.fromEntries(sources),
-      settings, flags, roleImages: { datomic, postgres }, jars, peerSha1, durable, caps,
+      settings, flags, spec, roleImages: { datomic, postgres }, jars, peerSha1, durable, caps,
       roles: Object.fromEntries(created), ownerHash: sha256(fs.readFileSync(slot.ownerFile)), startedAt: new Date().toISOString() });
-    await capture(["exec", peer, "/opt/datomic/bin/run", "-m", "triplex.age.gate", opts.run],
-      path.join(dir, "probe.log"), controller.signal);
+    if (measure) await measure.measure({ attempt, dir, peer, tx, pg, jdbc, password, capture, signal: controller.signal, floor, write }, spec);
+    else {
+      const ns = opts.run === "fidelity" ? "triplex.age.gate" : "triplex.age.successor";
+      await capture(["exec", peer, "/opt/datomic/bin/run", "-m", ns, opts.run],
+        path.join(dir, "probe.log"), controller.signal);
+    }
   } finally {
     clearTimeout(deadline);
+    clearInterval(watch);
     try {
       for (const [role, id] of [...created].reverse()) {
         owned(id);
@@ -243,6 +258,7 @@ export async function local(opts, config, manager) {
       write("cleanup.json", { attempt, rolesRemoved: created.size, volumesRemoved: volumes.size, slotReleased: slot?.slot ?? null });
     } finally {
       releaseMeasure();
+      lease?.release();
       process.removeListener("SIGTERM", stop);
       process.removeListener("SIGINT", stop);
     }
