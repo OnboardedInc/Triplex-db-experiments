@@ -1,5 +1,5 @@
 All accounts stay in one Datomic database.
-The server code and the status of its Mac gates are recorded below.
+The server candidate is `f07c4f8af`. The small Mac gates are pending.
 The existing ten-account seed is estimated at 430 million native records. The driver reads the actual count.
 At 24,000 records per second, the first billion is forecast at 9.60 hours and $10.46.
 The first rung stops within 9.9 hours. It continues after calibration only if the measured rate fits.
