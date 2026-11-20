@@ -14,7 +14,9 @@ import { play, resolveUncertain, type Row, type Sender } from "../scale1/decisio
 import { checkAdoptedPeer, hex, openScaleSeal, type AdoptedSeed } from "./adopt.ts";
 import { ladder, phaseSeconds, selectedWriter, type Writer } from "./profile.ts";
 
-export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown };
+export type Residency = Record<string, { rssBytes: number; threads: number }>;
+export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
+  empty?: Residency; residency?: () => Residency | Promise<Residency> };
 export type QuietCell = "alone" | 235;
 export const jsonFile = (file: string, data: unknown) =>
   fs.writeFileSync(file, JSON.stringify(data, null, 2) + "\n", { flag: "wx", flush: true, mode: 0o600 });
@@ -113,12 +115,13 @@ async function readWindows(client: DatomicClient, seed: AdoptedSeed, start: numb
   return phases;
 }
 
-async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: number, toy: boolean) {
+async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: number, toy: boolean, cold = false) {
   const h = new Histogram();
   let unavailable = 0;
   const basis = { recordedPosition: head, validAt: SEED_VALID_FROM };
-  for (let i = 0; i < (toy ? 10 : 1000); i++) {
-    const a = i % accounts.length, person = seed.image.people - 1 - Math.floor(i / accounts.length);
+  const probes = toy ? 10 : cold ? 200 : 1000;
+  for (let i = 0; i < probes; i++) {
+    const a = i % accounts.length, person = seed.image.people - (cold ? 2 : 1) - Math.floor(i / accounts.length);
     const id = root(a, person);
     const start = now();
     const found = await client.readDemandWorld(seed.key, id, basis, false);
@@ -127,6 +130,13 @@ async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: numbe
     const member = found.triples.filter((r) => r.entityId === id && r.attribute === ":subject/member");
     assert.equal(member.length, 1);
     assert.deepEqual(member[0]!.value, { type: "string", value: String(person) });
+    if (cold) {
+      const owner = task(a, person);
+      const expected = found.triples.filter((r) => r.entityId === owner && r.attribute === field(0));
+      // AGE1 may have changed this field since the loader. Verify the original cut on the first read.
+      assert.equal(expected.length, 1);
+      assert.deepEqual(expected[0]!.value, fieldValue(person, 0, 0, 0));
+    }
     h.recordMs(elapsed);
   }
   return { unavailable, observed: h.summary() };
@@ -158,6 +168,10 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       options.options.fastReply, options.options.livePriority, options.options.fieldCoalesce,
       options.options.stageClock, options.options.queueClock, options.options.maxMembers],
     [true, true, true, false, writer === "grouped", writer === "grouped", true, true, false, true, false, 32]);
+    const p7 = quietCell === undefined && peer.empty && peer.residency ? {
+      empty: peer.empty, restored: await peer.residency(), people: seed.image.people * accounts.length,
+      cold: await currentPull(reader, seed, seed.scope.cut, toy, true),
+    } : undefined;
     const seconds = toy ? 8 : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds(quietCell);
     const tape = quietCell === undefined ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell, toy);
     const senders = await preload(writerClient, seed, startHead, tape);
@@ -205,12 +219,12 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         commit: writes.summary(), feed: delivered.summary() };
     }
     const evidence = path.join(out, "operations.json");
-    jsonFile(evidence, { writes: writes.rows, journal: feed, tape });
+    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, p7 });
     const result = { source, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
       loaded, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
       observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java },
       p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
-      p3: { entries: feed.length }, p4: pulls, p6 };
+      p3: { entries: feed.length }, p4: pulls, p6, p7 };
     jsonFile(path.join(out, "arm.json"), result);
     return result;
   } finally {
@@ -232,6 +246,7 @@ export async function quietPair(out: string, source: string, peer: Peer, seed: A
 
 export async function adoptedToy(out: string, source: string, peer: Peer, writer: Writer) {
   assert(!process.env.DX_THIN_MEASURE);
+  peer.empty = await peer.residency?.();
   for (const loaded of [false, true]) {
     const folder = path.join(out, loaded ? "loaded" : "zero");
     fs.mkdirSync(folder);

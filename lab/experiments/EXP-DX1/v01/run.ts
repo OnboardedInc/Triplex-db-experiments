@@ -36,7 +36,7 @@ const out = path.resolve(values.out), campaign = path.join(out, "campaign");
 fs.mkdirSync(out, { mode: 0o700 });
 console.log(forecast);
 const fd = fs.openSync(path.join(out, "campaign.log"), "wx", 0o600);
-const child = spawn("timeout", ["--kill-after=90s", String(budget.adoptionAndP1to4 + budget.P6 + 1) + "m", "bash",
+const child = spawn("timeout", ["--kill-after=90s", String(budget.adoptionAndP1to4 + budget.P6 + budget.P7 + 1) + "m", "bash",
   "lab/experiments/EXP-DX1/v01/adopted-server.sh", source, campaign, String(Date.now() + budget.adoptionAndP1to4 * 60_000),
   path.resolve(values.seed), values["image-sha256"], values["transfer-sha256"], values.age, values.writer,
   ...aged.map((v) => v ?? "")], {

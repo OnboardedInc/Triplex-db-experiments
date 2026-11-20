@@ -5,7 +5,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { scaleHost, startScaleStack } from "../scale1/bench.ts";
 import { restoreDump } from "../scale1/seed-image.ts";
-import { adoptedArm, jsonFile, quietPair } from "./adopted.ts";
+import { adoptedArm, jsonFile, quietPair, type Residency } from "./adopted.ts";
+import { nativeMetrics } from "../thin1/native-metrics.ts";
 import { openScaleSeal, hex } from "./adopt.ts";
 import { stackOptions, type Age, type Writer } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
@@ -19,6 +20,7 @@ assert(Number.isSafeInteger(end) && end > Date.now());
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"), queue = fs.statSync(`/proc/${process.ppid}/fd/9`);
 assert.equal(lock.ino, queue.ino); assert.equal(lock.dev, queue.dev);
 scaleHost.physical();
+process.env.DX_BARE_METAL = "1";
 verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
@@ -40,6 +42,16 @@ for (const loaded of [false, true]) {
   assert(Object.values(scaleHost.childrenInventory(slot)).every((x) => x.length === 0));
   try {
     const { engines } = startScaleStack(out, slot, source, writer === "grouped", stackOptions(writer, attempt));
+    const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
+    const residency = async () => {
+      const { write, read } = peerUrls();
+      const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
+      assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
+      const observed = await nativeMetrics({ prefix: slot, writeUrl: write, readUrl: read, gatewaySourceSha256: health.gatewaySourceHash,
+        containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
+      return observed.roles as Residency;
+    };
+    const empty = await residency();
     await restoreDump(expected?.dump ?? seed.dump, expected?.dumpPin ?? seed.image.sha256, slot, engines,
       Math.min(end - 10 * 60_000, Date.now() + 42 * 60_000));
     const write = `http://${engines["gw-w"]!.address}:8080`;
@@ -49,7 +61,7 @@ for (const loaded of [false, true]) {
     assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
     const head = expected ? await verifyAged(expected, out, engines.pg!.address) : seed.scope.cut;
     assert(!stopping && Date.now() + 8 * 60_000 < end);
-    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw };
+    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency };
     const arm = await adoptedArm(out, source, peer, seed, writer as Writer, loaded, false, head);
     if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
   } finally {

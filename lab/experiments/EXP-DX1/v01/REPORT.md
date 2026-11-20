@@ -30,6 +30,10 @@ The adapter runs the published SCALE1 per-account offer and pinned read function
 
 The P6 Mac pair reused the actual loaded SCALE1 toy scope. The alone arm matched 28 of 28 saves and the reduced neighbour arm matched 127 of 127. Each checked 48 exact pinned reads. The quiet p99 ratios were 1.345 for commit, 1.066 for pinned field read and 1.318 for dispatch-to-feed. These are diagnostic. The full server arm offers the published 235 aggregate saves per second. The engine removed the private volume and released the slot.
 
+## P7 audit
+
+The residency adapter uses the INT1 physical role census and the compact guest's resident mapping reader. The first demand pull is pinned to the original loader cut and checks the exact rooted membership and first task field. The empty and restored observations, roster denominator, and first-read counts are in the digested arm archive. These two boot points supply a resident difference per roster person. The activity-matched slope remains unmeasured and the adapter emits no verdict.
+
 ## Part 2 Publish adapter check
 
 The existing INT1 `actv-lazy/join/server.ts 64 --receipt-local` producer and its collector ran in a private K stack with an ordinary token. Its three rate windows offered 0, 3.5 and 23.5 saves per second. Their durable receipt observations were 293.360, 207.611 and 184.059 ms. Exact first-read observations were 410.365, 303.841 and 207.641 ms. The collector reported zero deadline misses with its original source and slot binding. These clocks are diagnostic. The volume was removed.

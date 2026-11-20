@@ -360,6 +360,7 @@ if (action === "--guest") {
   if (mode === "int1-adopted-proof") {
     process.chdir(repo);
     const { adoptedToy } = await import("../v01/adopted.ts");
+    const { readResidentMappings } = await import("./heap-residency.ts");
     const commands = fs.readdirSync("/proc").filter((n) => /^\d+$/.test(n)).flatMap((n) => {
       const file = "/proc/" + n + "/cmdline";
       try {
@@ -368,9 +369,28 @@ if (action === "--guest") {
       } catch { return []; }
     });
     assert(stack.managed.writeOptionsAttempt && commands.length >= 3);
+    const residency = () => {
+      const roles: Record<string, { rssBytes: number; threads: number }> = {};
+      for (const pid of fs.readdirSync("/proc").filter((n) => /^\d+$/.test(n))) {
+        const dir = "/proc/" + pid;
+        let args: string[];
+        try { args = fs.readFileSync(dir + "/cmdline", "utf8").split("\0"); } catch { continue; }
+        if (!/^(?:.*\/)?java$/.test(args[0] ?? "")) continue;
+        const role = args.some((v) => v.endsWith("/read-port.clj")) ? "gw-r" :
+          args.includes("triplex.gateway.main") ? "gw-w" : args.includes("datomic.launcher") ? "tx" : undefined;
+        if (!role) continue;
+        assert(!roles[role]);
+        const r = readResidentMappings(fs.readFileSync(dir + "/smaps", "utf8"));
+        const threads = Number(/^Threads:\s+(\d+)$/m.exec(fs.readFileSync(dir + "/status", "utf8"))?.[1]);
+        assert(Number.isSafeInteger(threads) && threads > 0);
+        roles[role] = { rssBytes: r.reduce((sum, [, , bytes]) => sum + bytes, 0), threads };
+      }
+      assert.deepEqual(Object.keys(roles).sort(), ["gw-r", "gw-w", "tx"]);
+      return roles;
+    };
     await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
-      java: { placement: "owned Mac compact stack", commands } }, "grouped" satisfies Writer);
+      java: { placement: "owned Mac compact stack", commands }, residency }, "grouped" satisfies Writer);
   } else if (mode === "int1-campaign-proof") {
     assert(Number(rung) === 40);
     process.chdir(repo);

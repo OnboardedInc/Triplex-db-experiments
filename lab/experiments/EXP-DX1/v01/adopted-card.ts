@@ -20,6 +20,7 @@ export function writeAdoptedCard(run: Card) {
     assert(x.startedAt <= x.start && x.start < x.endedAt && x.seed.head === x.firstCut);
     assert.equal(createHash("sha256").update(bytes).digest("hex"), x.observationsSha256);
     const raw = JSON.parse(bytes.toString());
+    assert.deepEqual(raw.p7, x.p7);
     const dispatch = new Map<string, number>(raw.writes.filter((r: any) => r.receipt && Number.isFinite(r.dispatched))
       .map((r: any) => [r.id, r.dispatched]));
     const feed = new Histogram();
@@ -63,6 +64,15 @@ export function writeAdoptedCard(run: Card) {
       String(loaded.p3.entries), evidence("loaded")]);
     rows.set("Receipts", [`Verified the journal against ${loaded.p2.receipts} receipts and reopened a sample of durable claims. The retry and lost-ACK bar is open.`, "DIAGNOSTIC",
       String(loaded.p2.receipts), evidence("loaded")]);
+    if (loaded.p7) {
+      const p = loaded.p7;
+      const footprint = ["tx", "gw-w", "gw-r"].map((role) => {
+        const restored = p.restored[role]!, empty = p.empty[role]!;
+        return `${role} ${restored.threads} threads, ${tag((restored.rssBytes - empty.rssBytes) / p.people)} added RSS bytes per roster person`;
+      }).join("; ");
+      rows.set("P7", [`First demand pull at the original cut p99 ${tag(p.cold.observed.p99Ms)} ms, ${p.cold.unavailable} declined. ${footprint}. An activity-matched untouched-person memory slope is unmeasured.`,
+        run.toy ? "DIAGNOSTIC" : "NOT MEASURED", `${p.cold.observed.count} first pulls and two residency points`, evidence("loaded")]);
+    }
   }
   const [alone] = readArm("p6-alone", false), [neighbors] = readArm("p6-235", true);
   if (alone?.p6 && neighbors?.p6) {
