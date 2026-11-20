@@ -1,5 +1,5 @@
 All accounts stay in one Datomic database.
-The one-billion server candidate is `3af0e981d`. The small Mac gates are pending.
+The one-billion server candidate is `f48a64c75`. Final Mac seed and erasure checks are running.
 The existing ten-account seed is estimated at 430 million native records. The driver reads the actual count.
 At 24,000 records per second, the first billion is forecast at 9.60 hours and $10.46.
 The first rung stops within 9.9 hours. It continues after calibration only if the measured rate fits.
@@ -32,4 +32,4 @@ The SDK build, source parsing, rate and count tests, and historical log join com
 
 - The larger load-settings arm verified 1,072 saves and 21,436 logical datoms and took a settled per-index census. Its slot, containers and volume were released. `p2-mac-d-fidelity-arms-load`
 - The standard arm verified burst and rolling log identity and W1 grouped log identity on the same tape. Grouping kept the logical behavior and increased the log count to 28,135. Its slot, containers and volume were released. `p2-mac-g-fidelity-arms`
-- Retained failures cover the missing W0 build, a PostgreSQL image unavailable at container creation, JSON escaping in the opaque-token probe, and the grouped revision-retraction census. Setup and oracle failures remain distinct from completed comparisons.
+- Retained failures cover the missing W0 build, an unavailable PostgreSQL image, the grouped revision-retraction census, the opaque-token probe, a misread reverse-index claim and the vendor's same-catalog restore collision. Setup and oracle failures remain distinct from completed comparisons.
