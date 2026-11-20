@@ -12,15 +12,13 @@ import { Histogram } from "../../../../bench/lib/hist.ts";
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import {
   cellKey,
+  cellSeconds,
   expiryMs,
   field,
   operationId,
-  quietRate,
-  readForMs,
-  readFromMs,
   readTape,
+  readWindow,
   sampleEvery,
-  seconds,
   sha,
   task,
   writeTape,
@@ -28,7 +26,7 @@ import {
   type Density,
 } from "./plan.ts";
 import type { Feed, ReadResult, Scope } from "./observer.ts";
-import { expectedSave, type Save, type Row } from "./writes.ts";
+import { expectedJournal, expectedSave, type Save, type Row } from "./writes.ts";
 export const clock = "scheduled-offer";
 const exact = (a: number, b: number) => Math.abs(a - b) < 0.002;
 const stats = (d: Distribution, label: string) => {
@@ -46,6 +44,7 @@ export type Observation = {
   people: Density;
   cell: Cell;
   repeat: number;
+  withReaders?: boolean;
   start: number;
   nonce: string;
   source: string;
@@ -64,6 +63,7 @@ export function checkCell(x: Observation, model: OracleRows) {
   assert.equal(byCommand.size, x.writes.length);
   const missing = program.length - x.writes.length;
   assert(missing >= 0);
+  const seconds = cellSeconds(x.cell);
   const upper = x.start + seconds * 1000;
   const f = new Map(x.feed.map((m) => [m.id, m]));
   assert.equal(f.size, x.feed.length);
@@ -134,7 +134,7 @@ export function checkCell(x: Observation, model: OracleRows) {
     const prior = model[w.account]!.get(task(w.account, w.subject))!;
     const expected = expectedSave(w, plan.get(w.id)!, prior);
     const observed = f.get(w.id)!;
-    assert.equal(observed.digest, expected.digest);
+    assert.equal(observed.digest, expectedJournal(expected, observed.clock));
     assert.equal(observed.tx, expected.input.claims[0]!.txId);
     if (!cutAccounts.has(w.account)) {
       cuts.push({
@@ -163,7 +163,8 @@ export function checkCell(x: Observation, model: OracleRows) {
       if (i) assert(g[i - 1]!.receipt!.clock < w.receipt!.clock);
     }
   }
-  const readPlan = readTape(x.people, x.repeat);
+  const window = readWindow(x.cell);
+  const readPlan = readTape(x.people, x.repeat, x.cell, x.withReaders ?? true);
   assert.equal(x.reads.length, 2);
   const sample = new Map<number, ReadResult["samples"][number]>();
   const sampled = x.reads.flatMap((r) => r.samples);
@@ -173,7 +174,7 @@ export function checkCell(x: Observation, model: OracleRows) {
     assert(r.end >= x.start + op.ms - 0.01);
     if (!r.error) {
       assert((r.ordinal + 1) % sampleEvery === 0 && r.start);
-      assert(r.start >= x.start + readFromMs && r.start < x.start + readFromMs + readForMs);
+      assert(r.start >= x.start + window.from && r.start < x.start + window.from + window.duration);
       assert.equal(r.digest, sha([task(0, op.subject), field(0), fieldValue(op.subject, 0, 0, 0)]));
     }
     sample.set(op.ordinal, r);
@@ -275,7 +276,7 @@ export function checkCell(x: Observation, model: OracleRows) {
     stages,
     sampledReadPlan: sha(readPlan),
     readErrors,
-    quietComplete: quiet.length === seconds * quietRate,
+    quietComplete: quiet.length === program.filter((w) => w.account === 0).length,
     qualifiedInputs: groupsEligible,
     capacityBars:
       groupsEligible &&

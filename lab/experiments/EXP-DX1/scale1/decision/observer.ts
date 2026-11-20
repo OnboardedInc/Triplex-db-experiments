@@ -2,17 +2,18 @@ import assert from "node:assert/strict";
 import { setTimeout as sleep } from "node:timers/promises";
 import { DatomicClient } from "../../../../../packages/datomic/dist/index.js";
 import { decodeRowText } from "../../../../../packages/datomic/dist/rowText.js";
+import { canonicalJson } from "../../../../../packages/datomic/dist/rows.js";
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM } from "../../../../bench/lib/world.ts";
 import { Histogram } from "../../../../bench/lib/hist.ts";
 import {
   field,
   readTape,
-  readFromMs,
-  readForMs,
+  readWindow,
   sampleEvery,
   sha,
   task,
+  type Cell,
   type Density,
 } from "./plan.ts";
 
@@ -37,6 +38,8 @@ export type Begin = {
   start: number;
   people: Density;
   repeat: number;
+  cell: Cell;
+  withReaders: boolean;
   scopes: Scope[];
 };
 export type Finish = { kind: "finish"; key: string; cuts: Record<string, number> };
@@ -46,19 +49,26 @@ const waitTo = async (until: number) => {
 };
 type Wire = [string, number, string[]];
 
+export const journalHash = (root: string, changes: readonly Record<string, unknown>[]) =>
+  sha([root, changes.map(canonicalJson).sort()]);
+
 export function decodeFeed(db: string, row: Wire, seen: number): Feed {
   const [tx, position, text] = row;
   const fields = text.map(decodeRowText),
     attr = (a: string) => fields.filter((f) => f.attribute === ":_tx/" + a),
     id = attr("command-id"),
     instant = attr("instant"),
+    owner = attr("changed-entity"),
     changes = attr("change").map((r) => JSON.parse(r.value_json!));
   assert(id.length === 1 && typeof id[0]!.value_string === "string");
   assert(instant.length === 1 && typeof instant[0]!.value_datetime === "number");
   assert(Number.isSafeInteger(position) && position > 0);
-  const sorted = changes
-    .map((c) => [c.op, c.entityId, c.attribute, c.tripleId, c.value ?? null])
-    .sort();
+  assert(owner.length === 1 && typeof owner[0]!.value_string === "string");
+  assert.deepEqual(
+    attr("position").map((r) => r.value_number),
+    [position],
+  );
+  assert(fields.length === changes.length + 4);
   return {
     db,
     position,
@@ -66,7 +76,7 @@ export function decodeFeed(db: string, row: Wire, seen: number): Feed {
     id: id[0]!.value_string!,
     clock: instant[0]!.value_datetime!,
     seen,
-    digest: sha(sorted),
+    digest: journalHash(owner[0]!.value_string!, changes),
   };
 }
 
@@ -74,14 +84,17 @@ export function decodeFeed(db: string, row: Wire, seen: number): Feed {
 async function readCell(client: DatomicClient, role: number, m: Begin): Promise<ReadResult> {
   const scope = m.scopes.find((s) => s.accounts.includes(0))!;
   assert(scope);
-  const ops = readTape(m.people, m.repeat).filter((x) => x.seat % 2 === role);
+  const ops = readTape(m.people, m.repeat, m.cell, m.withReaders).filter(
+    (x) => x.seat % 2 === role,
+  );
+  const window = readWindow(m.cell);
   const active = new Map<number, Promise<void>>();
   const samples: ReadResult["samples"] = [];
   const latency = new Histogram();
   for (const op of ops) {
     await waitTo(m.start + op.ms);
     const at = now();
-    if (active.has(op.seat) || at >= m.start + readFromMs + readForMs) {
+    if (active.has(op.seat) || at >= m.start + window.from + window.duration) {
       samples.push({ ordinal: op.ordinal, end: at, error: "reader missed its offer" });
       continue;
     }

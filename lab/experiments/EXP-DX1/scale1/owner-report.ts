@@ -249,6 +249,24 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     path.dirname(file),
     stages.filter((s) => s.attempt.study === "decision"),
   );
+  const single = stages.filter(
+    (s) => s.attempt.layout === "single" && s.terminal.service === "success",
+  );
+  const singlePeak = single.flatMap((s) => {
+    const peak = s.decision?.cells.find((c: any) => c.cell === 39.4);
+    return peak
+      ? [
+          (s.attempt.withReaders ? "with readers " : "with zero readers ") +
+            metric({
+              value: peak.writes.p99,
+              n: peak.writes.n,
+              interval90: peak.writes.interval99,
+            }) +
+            " ms at 39.4/s",
+        ]
+      : [];
+  });
+  const singleDisk = single.find((s) => s.seed)?.seed;
   const setup = stages
     .filter(
       (s) =>
@@ -291,7 +309,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         expiry = recovered.windows.find((w: any) => w.expired > 0);
       assert(alone?.quiet.n >= 500 && steady?.quiet.n >= 500 && expiry?.planned > expiry.expired);
       return [
-        "The smaller staggered run acknowledged " +
+        "The smaller staggered run used the unfixed write path and acknowledged " +
           steady.good.toLocaleString("en-US") +
           " offers at " +
           round(steady.offeredPerS, 0) +
@@ -334,7 +352,14 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
           "Deep reader goodput is unmeasured. Deep and thin commit p99 were 30.99 and 32.84 ms over the first 900 seconds. The archived deep tail aligned with six write-gateway GC pauses. [Commit anatomy](COMMIT-ANATOMY.md)",
         ]
       : []),
-    `One account of 100,000 people — ${cost(one)}.`,
+    singlePeak.length
+      ? "One account of 100,000 people had commit p99 " +
+        singlePeak.join(" and ") +
+        (singleDisk
+          ? " and " + round(singleDisk.disk.bytesPerFact) + " PostgreSQL bytes per fact."
+          : ".") +
+        " [Decision cells](DECISION-RESULTS.md)"
+      : `One account of 100,000 people — ${cost(one)}.`,
     currentDecision ||
       `Ten full-size accounts await the matched placement screen. ${partialTen?.partial ? `The earlier bounded seed acknowledged ${partialPeople.toLocaleString("en-US")} of 1,000,000 people across ${partialTen.partial.scopes.length} databases.` : ""}${growthLine} [Review response](REVIEW.md)`,
     `The owner's release target is under one second. Page-guard activation for one account is ${ledgerLimit && !a1 ? "unmeasured" : act(a1)}. Activation among ten is ${ledgerLimit && !a10 ? "unmeasured" : act(a10)}.${costLine}${delta ? ` DELTA release-to-correct-read p99 was ${round(delta.loaded.p99)} ms (n=${delta.loaded.count}).` : ""}`,
@@ -505,7 +530,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "- `deep-activation.ts` checks the observed release, each page receipt and its changed bodies against the source cut, roster hashes and O-DOMAIN. `deep-commit-meter.ts` binds native transaction IDs, members, datoms and logical change rows to actual source replies. `measurements.ts` opens the new attempt’s receipt ledger, rehashes its bytes, validates its source, nonce and database, and recomputes the reported release and burst rates.",
     "- `measurements.ts` checks source hashes, cohort exits, complete planned offers and receipt positions, then recomputes the oracle comparisons and pooled bars from this attempt’s samples. Missing or invalid accounts leave the pooled result unjudged.",
     "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals. `small-host.ts` binds each open, empty snapshot and post-restart full-row hash to its database and original cut. `scope-report.ts` reads verified transfer bytes and checks the roster and restart denominators.",
-    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The deep-live generator checks frozen field-save content and minute geometry. Its two calendars preserved all ten business-intent digests, and 20 focused tests passed, including an independent replay of 8 pinned reads after 70 field saves on the in-memory composition (254 entity queries). The native field-save follow-up and the post-merge trace-suite rerun were waiting for a local heavy-job slot at the campaign stop. [Field-save evidence](evidence/part5-functional.sha256) The tenant collector binds observed offers, expiries, ACKs and quiet ratios to those windows. Predictions are updated from the same verified transfers. The launcher records each freshly fetched upstream head and its changed paths. A guarded arm accepts independent lazy-publisher changes confined to its separate directory. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. The restarted queue advances past failed arms and retains them for retry. The bounded reader collector checks every observation against the complete receipt model in memory, seals the one-in-100 sample and every error and mismatch, and rechecks attempt identity, counts and bytes on collection. The zero comparison independently binds gateway and transactor spans and full receipt journal bytes to each historical attempt. Bounded latency summaries recheck the exact per-scope report bytes, nonce, source, slot, account and arm before reading histograms. DELTA verifies the source hash, slot, nonce, 1,000-subject native preflight, empty 100,000-person destination, independent broad and narrow rows, and retained read bytes before advancing. The bounded DELTA runner checks every reader invocation at its exact native cut and saves every hundredth plus errors and mismatches. The million seed estimate binds the prior volume and dump sizes, fresh terminal evidence and actual cgroup samples. The decision runner checks fresh field, feed and two-account bytes in native preflight. The loader checks every original claim and feed row at the sealed cut. The decision checker independently replays planned field values and predecessors in native position order, verifies cold rows and before/after cuts, and binds every sample to the frozen tape, slot, source and nonce. Finalization rechecks timing, dispositions, seed/archive bindings and durability before the compact transfer. Packaging can retry the same native evidence.",
+    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The deep-live generator checks frozen field-save content and minute geometry. Its two calendars preserved all ten business-intent digests, and 20 focused tests passed, including an independent replay of 8 pinned reads after 70 field saves on the in-memory composition (254 entity queries). The native field-save follow-up and the post-merge trace-suite rerun were waiting for a local heavy-job slot at the campaign stop. [Field-save evidence](evidence/part5-functional.sha256) The tenant collector binds observed offers, expiries, ACKs and quiet ratios to those windows. Predictions are updated from the same verified transfers. The launcher records each freshly fetched upstream head and its changed paths. A guarded arm accepts independent lazy-publisher changes confined to its separate directory. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. The restarted queue advances past failed arms and retains them for retry. The bounded reader collector checks every observation against the complete receipt model in memory, seals the one-in-100 sample and every error and mismatch, and rechecks attempt identity, counts and bytes on collection. The zero comparison independently binds gateway and transactor spans and full receipt journal bytes to each historical attempt. Bounded latency summaries recheck the exact per-scope report bytes, nonce, source, slot, account and arm before reading histograms. DELTA verifies the source hash, slot, nonce, 1,000-subject native preflight, empty 100,000-person destination, independent broad and narrow rows, and retained read bytes before advancing. The bounded DELTA runner checks every reader invocation at its exact native cut and saves every hundredth plus errors and mismatches. The million seed estimate binds the prior volume and dump sizes, fresh terminal evidence and actual cgroup samples. The decision runner checks receipt, field and two-account bytes in fresh preflight. It verifies the active writer function and flags from each restored database against the source, slot, attempt nonce and seed cut. It compares the full typed journal changes including assertion and retirement clocks, valid ranges and exact values. The loader checks every original claim and feed row at the sealed cut. The decision checker independently replays planned field values and predecessors in native position order, verifies cold rows and before/after cuts, and binds every sample to the frozen tape, slot, source and nonce. Finalization rechecks timing, dispositions, seed/archive bindings and durability before the compact transfer. Packaging can retry the same native evidence.",
     "- " + functionalNote(evidence, path.join(here, "evidence/part4-functional.sha256")),
     "",
     "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. [Predictions and observations](PREDICTIONS.md) are recorded for each item. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",

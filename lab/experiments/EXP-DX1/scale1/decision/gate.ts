@@ -6,11 +6,17 @@ import { SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
 import { ack } from "../../load1/oracle.ts";
 import { decodeFeed, now } from "./observer.ts";
 import { field, operationId, person, root, sha, task, type Write } from "./plan.ts";
-import { expectedSave, type Save } from "./writes.ts";
+import { expectedJournal, expectedSave, type Save } from "./writes.ts";
+import { readWriteOptions } from "../../w1/write-options.ts";
 import type { Destination } from "./seed.ts";
 
 // [DX-SCALE1] Why: a fresh native witness exercises the exact three widths, retired row identities and grouped journal format before trusting timed cells. Rejected: spending a large restore on an untested observation codec.
-export async function nativeProbe(id: Destination, writeUrl: string, readUrl: string) {
+export async function nativeProbe(
+  id: Destination,
+  writeUrl: string,
+  readUrl: string,
+  binding: string,
+) {
   const scope = "dx-scale-decision-probe-" + id.nonce;
   const comp = await openComposition("reach", "datomic", scope);
   const w = new DatomicClient(writeUrl, 30000),
@@ -33,6 +39,8 @@ export async function nativeProbe(id: Destination, writeUrl: string, readUrl: st
     const opened = await w.create(key, "lean", true, 35000);
     assert(!opened.created && opened.strictRecordClocks);
     const { db } = opened;
+    const options = await readWriteOptions(writeUrl, db, binding);
+    assert.equal(options.observed.position, 1);
     const oracle = await r.rows(db, {
       entityIds: [root(0, 0), root(1, 0)],
       pattern: { attribute: ":subject/account" },
@@ -82,7 +90,13 @@ export async function nativeProbe(id: Destination, writeUrl: string, readUrl: st
         };
         assert.equal(a.operationId, o.id);
         assert(Number(a.position.v) > 1 && Number(a.t.v) > 0);
-        return { a, tx: body.input.claims[0]!.txId, digest: body.digest, body, prior };
+        return {
+          a,
+          tx: body.input.claims[0]!.txId,
+          digest: expectedJournal(body, a.recordedAt.v),
+          body,
+          prior,
+        };
       }),
     );
     const expected = responses.sort((a, b) => Number(a.a.position.v) - Number(b.a.position.v));
@@ -134,6 +148,8 @@ export async function nativeProbe(id: Destination, writeUrl: string, readUrl: st
       ...id,
       at: Date.now(),
       scope,
+      db,
+      options,
       seedFacts: facts.length,
       saves: expected.length,
       claims: expected.length,

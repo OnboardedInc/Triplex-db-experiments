@@ -6,6 +6,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { setTimeout as nap } from "node:timers/promises";
 import { prepare } from "../remote-sequence.ts";
 import { activeUnitArgs, dedicatedHost } from "../source.ts";
+import { layoutOf } from "./plan.ts";
 import type { Request } from "./server.ts";
 
 const root = "/var/tmp/triplex-scale1",
@@ -68,9 +69,11 @@ function plan(): Plan {
   for (const [i, s] of p.steps.entries()) {
     assert(/^arm-d7-[a-z0-9-]{2,24}$/.test(s.tag));
     assert(
-      (s.layout === "pooled" || s.layout === "split5") &&
+      ["pooled", "split5", "single"].includes(s.layout) &&
         (s.people === 10000 || s.people === 100000),
     );
+    if (s.layout === "single") assert(s.people === 100000 && s.mode === "individual");
+    assert((typeof s.withReaders === "boolean") === (s.layout === "single" && s.phase === "cells"));
     if (s.phase === "cells") {
       assert(["individual", "bounded", "prepared"].includes(s.mode));
       const earlier = p.steps.slice(0, i).find((q) => q.tag === s.from);
@@ -92,9 +95,10 @@ async function run(p: Plan, s: Step, deadline: number, build: string) {
   if (!exists(dir)) {
     released();
     const remaining = Math.floor((deadline - Date.now()) / 1000);
-    const h = s.phase === "seed" ? (s.people === 100000 ? 18 : 3) : s.people === 100000 ? 5 : 3;
+    const large = s.layout !== "single" && s.people === 100000;
+    const h = s.phase === "seed" ? (large ? 18 : 3) : large ? 5 : 2;
     assert(
-      remaining > (s.phase === "seed" && s.people === 100000 ? 6 : 1) * 3600,
+      remaining > (s.phase === "seed" && large ? 6 : 1) * 3600,
       "Campaign ceiling leaves too little time to start this arm",
     );
     const ceiling = Math.min(h * 3600, remaining);
@@ -102,7 +106,7 @@ async function run(p: Plan, s: Step, deadline: number, build: string) {
     if (src) assert(src.result === "success" && src.tag === s.from && src.source === p.source);
     const request: Request = { ...s, source: p.source, nonce: randomUUID(), review: p.review };
     const slot = "tx2-dxscale1-" + s.tag;
-    const count = s.layout === "pooled" ? 1 : 2;
+    const placement = layoutOf(s.layout);
     fs.mkdirSync(dir);
     put(path.join(dir, "request.json"), request);
     put(path.join(dir, "attempt.json"), {
@@ -112,7 +116,11 @@ async function run(p: Plan, s: Step, deadline: number, build: string) {
       ceiling,
       study: "decision",
       item: 7,
-      spec: { accounts: 10, scopes: count, people: (10 * s.people) / count },
+      spec: {
+        accounts: placement.flat().length,
+        scopes: placement.length,
+        people: placement[0]!.length * s.people,
+      },
     });
     const code = path.join(repo, "lab/experiments/EXP-DX1/scale1/decision");
     const stop = [node, "--import", "tsx", path.join(code, "stop.ts"), dir].join(" ");
@@ -243,31 +251,32 @@ async function main() {
     const pilot = p.steps.find(
       (s) => s.people === 10000 && s.phase === "cells" && s.mode === "bounded",
     );
-    assert(pilot);
-    const pilotDir = path.join(attempts, pilot.tag);
+    const pilotDir = pilot && path.join(attempts, pilot.tag);
     // [DX-SCALE1] Why: a finalizer failure cannot erase a completed native pilot. Rejected: spending a million-person load on an unexercised writer or replaying a measured pilot to regenerate a transfer.
     const pilotComplete =
-      results.some((r) => r.tag === pilot.tag && r.outcome === "success") ||
-      (exists(path.join(pilotDir, "measurement.json")) &&
-        exists(path.join(pilotDir, "unit.json")) &&
-        (() => {
-          const a = read(path.join(pilotDir, "attempt.json"));
-          const m = read(path.join(pilotDir, "measurement.json"));
-          const unit = read(path.join(pilotDir, "unit.json"));
-          return (
-            a.source === p.source &&
-            unit.result === "success" &&
-            m.source === a.source &&
-            m.slot === a.slot &&
-            m.nonce === a.nonce &&
-            unit.nonce === a.nonce &&
-            m.cells.length === 10
-          );
-        })());
+      pilot &&
+      pilotDir &&
+      (results.some((r) => r.tag === pilot.tag && r.outcome === "success") ||
+        (exists(path.join(pilotDir, "measurement.json")) &&
+          exists(path.join(pilotDir, "unit.json")) &&
+          (() => {
+            const a = read(path.join(pilotDir, "attempt.json"));
+            const m = read(path.join(pilotDir, "measurement.json"));
+            const unit = read(path.join(pilotDir, "unit.json"));
+            return (
+              a.source === p.source &&
+              unit.result === "success" &&
+              m.source === a.source &&
+              m.slot === a.slot &&
+              m.nonce === a.nonce &&
+              unit.nonce === a.nonce &&
+              m.cells.length === 10
+            );
+          })()));
     const s = p.steps.find(
       (s) =>
         !results.some((r) => r.tag === s.tag) &&
-        (s.people === 10000 || pilotComplete) &&
+        (s.layout === "single" || s.people === 10000 || pilotComplete) &&
         (!s.from || results.some((r) => r.tag === s.from && r.outcome === "success")),
     );
     if (!s) {

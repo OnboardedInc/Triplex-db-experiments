@@ -4,16 +4,17 @@ import path from "node:path";
 import { spawn, type ChildProcess } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { DatomicClient } from "../../../../../packages/datomic/dist/index.js";
+import { readWriteOptions } from "../../w1/write-options.ts";
 import { SEED_VALID_FROM } from "../../../../bench/lib/world.ts";
 import { checkCell, ratios, type Observation } from "./check.ts";
 import { now, type Begin, type Feed, type ReadResult, type Scope } from "./observer.ts";
 import {
-  accounts,
   cellKey,
   cellOrder,
+  cellSeconds,
   field,
   rates,
-  seconds,
+  repetitions,
   sha,
   task,
   writeTape,
@@ -61,13 +62,16 @@ export async function runCells(
   scopes: Scope[],
   writeUrl: string,
   readUrl: string,
+  optionsBinding: string,
   status: (stage: string) => void,
 ) {
   assert(scopes.flatMap((s) => s.accounts).every((a, i) => a === i));
-  const senders = accounts.map((a) => ({
-    client: new DatomicClient(writeUrl, 35000),
-    scope: scopes.find((s) => s.accounts.includes(a))!,
-  }));
+  const senders = scopes
+    .flatMap((s) => s.accounts)
+    .map((a) => ({
+      client: new DatomicClient(writeUrl, 35000),
+      scope: scopes.find((s) => s.accounts.includes(a))!,
+    }));
   const checker = new DatomicClient(readUrl, 35000);
   assert(senders.every((s) => s.scope));
   const log = fs.openSync(path.join(dir, "observers.log"), "wx");
@@ -102,6 +106,8 @@ export async function runCells(
     assert.deepEqual(placement, ["3", "5", "6", "7"]);
     status("preparing identical field predecessors");
     const prepared = [];
+    const writeOptions = [];
+    const checked = new Set<string>();
     for (const [a, s] of senders.entries()) {
       const open = await s.client.create(
         JSON.stringify(["triplex-scope-v1", "test", "test", s.scope.name, 0]),
@@ -110,9 +116,20 @@ export async function runCells(
         35000,
       );
       assert(!open.created && open.db === s.scope.db && open.strictRecordClocks);
+      if (!checked.has(open.db)) {
+        const readback = await readWriteOptions(writeUrl, open.db, optionsBinding);
+        assert.equal(readback.observed.position, s.scope.seedCut);
+        writeOptions.push(readback);
+        checked.add(open.db);
+      }
       prepared.push({ ...s, rows: await preload(s.client, s.scope, id.people, a) });
     }
     const initial = path.join(dir, "initial.json");
+    write(path.join(dir, "writer-readbacks.json"), {
+      ...id,
+      at: Date.now(),
+      entries: writeOptions,
+    });
     write(initial, { ...id, accounts: prepared.map((s) => [...s.rows]), scopes });
     const model = prepared.map((s) => new Map([...s.rows].map(([e, rows]) => [e, [...rows]])));
     const reference = {
@@ -131,15 +148,25 @@ export async function runCells(
     );
     const reports: ReturnType<typeof checkCell>[] = [];
     const begin = Date.now();
-    for (const repeat of [0, 1]) {
-      for (const cell of cellOrder(repeat)) {
+    for (const repeat of repetitions(id.layout)) {
+      for (const cell of cellOrder(repeat, id.layout)) {
         const key = cellKey(cell, repeat);
         status("running " + key);
         const before = engineResources(id.slot),
           countBefore = disk(id.slot);
         const placed = scopes.map((s) => ({ ...s })),
           start = Math.ceil(now() + 2000);
-        const m: Begin = { kind: "begin", key, start, people: id.people, repeat, scopes: placed };
+        const withReaders = request.withReaders ?? true;
+        const m: Begin = {
+          kind: "begin",
+          key,
+          start,
+          people: id.people,
+          repeat,
+          cell,
+          withReaders,
+          scopes: placed,
+        };
         const readers = children
           .slice(0, 2)
           .map((c) => message<ReadResult>(c, (r) => r.key === key));
@@ -158,7 +185,7 @@ export async function runCells(
           scopes: placed,
           writes: timing.rows,
         });
-        const intervalEnd = start + seconds * 1000;
+        const intervalEnd = start + cellSeconds(cell) * 1000;
         while (now() < intervalEnd) await sleep(Math.ceil(intervalEnd - now()));
         write(path.join(dir, key + "-resources.json"), {
           ...id,
@@ -189,6 +216,7 @@ export async function runCells(
           ...id,
           cell,
           repeat,
+          withReaders,
           start,
           scopes: placed,
           writes: timing.rows,
@@ -220,7 +248,7 @@ export async function runCells(
         for (const s of scopes) s.cut = ends[s.db]!;
       }
     }
-    const comparisons = rates.map((rate) => ({
+    const comparisons = (id.layout === "single" ? [] : rates).map((rate) => ({
       rate,
       ratios: ratios(
         reports.filter((r) => r.cell === "alone"),
@@ -233,6 +261,7 @@ export async function runCells(
       ...id,
       mode: request.mode,
       from: request.from,
+      withReaders: request.withReaders ?? true,
       elapsedMs: Date.now() - begin,
       comparisons,
       footprint,

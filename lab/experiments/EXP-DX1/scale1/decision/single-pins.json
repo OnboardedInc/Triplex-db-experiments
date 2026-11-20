@@ -1,0 +1,25 @@
+{
+  "profile": "deep-field-single/1",
+  "items": [
+    {
+      "seed": {
+        "people": 100000,
+        "factsPerAccount": 16245647,
+        "hashes": [
+          "3e92d94a2fe0c58af86ea471933a6f7f54e7385a6ffbd6e100dbde497dd09a86"
+        ],
+        "digest": "b7e7d58876cdc13a18f30f0bf32abfea67984e8a4430bceff5a5f1d2a0a5c561"
+      },
+      "tapes": {
+        "read/3.5": "54e888c2e3e9a356a3d485d8e9607ef228c64ff9d7bf129726b3717869f15166",
+        "read/4.9": "2851272462142fd789ec6d0d9451ed117ae88bfaa131a39af600a2cddabf02d8",
+        "read/23.5": "aa4d3f90fc5fca455ccdb130b46534f5a06dfd2f578dcbe838dd4ceb6f33486f",
+        "read/39.4": "d22337e88edf46e8235adc4988b1f8b7a5b6a4605daeba860201fbdfa64b177c",
+        "r0-3p5": "6209cbffe64f7b0c45efafaf3ec32793efa887ba392110199a693962ac2c612e",
+        "r0-4p9": "5785cae99ae45d62a7b9bf73cbc2aa4690313412cdf3636d1fd966ed5d3be25d",
+        "r0-23p5": "6923e6c83a6c1ef8ae0f5a6726a17e6b6f2efb27196bef9fbce57d3560caa1d0",
+        "r0-39p4": "58666b6fbdafd0a723e89cd478518e3d3cf5213b0b17d39d0d20c0cfd78aed75"
+      }
+    }
+  ]
+}

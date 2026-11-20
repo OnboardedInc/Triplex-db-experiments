@@ -16,7 +16,7 @@ import {
   type Density,
   type Write,
 } from "./plan.ts";
-import { now, type Scope } from "./observer.ts";
+import { journalHash, now, type Scope } from "./observer.ts";
 
 type Input = Parameters<DatomicClient["transact"]>[1];
 export type Row = Input["rows"][number];
@@ -118,13 +118,20 @@ export function expectedSave(o: Save, e: Write, prior: readonly Row[]) {
     groupAccount: keyFor(o.account),
     writeClass: "live" as const,
   };
-  const digest = sha(
-    [
-      ...facts.map((f, i) => ["assert", f.e, f.a, input.rows[i]!.id, f.v]),
-      ...old.map((r) => ["retract", r.entity_id, r.attribute, r.id, null]),
-    ].sort(),
-  );
-  return { input, digest, entity };
+  return { input, entity };
+}
+
+// [DX-SCALE1] Why: compare every logical field of the committed WFIX1 change records at the assigned clock. Rejected: proving only the retracted identity or ignoring the stored predecessor lifetime.
+export function expectedJournal(candidate: ReturnType<typeof expectedSave>, clock: number) {
+  const changes = candidate.input.rows
+    .filter((r) => r.entity_type === "_Transaction" && r.attribute === ":_tx/change")
+    .map((row) => {
+      const change = JSON.parse(row.value_json!);
+      return change.op === "assert"
+        ? { ...change, recordedAt: clock }
+        : { ...change, retractedAt: clock };
+    });
+  return journalHash(candidate.entity, changes);
 }
 
 function bind(o: Save, a: Ack, candidate: ReturnType<typeof expectedSave>) {
@@ -138,7 +145,7 @@ function bind(o: Save, a: Ack, candidate: ReturnType<typeof expectedSave>) {
     t,
     clock,
     tx: candidate.input.claims[0]!.txId,
-    digest: candidate.digest,
+    digest: expectedJournal(candidate, clock),
     size: a.groupSize ?? 1,
   };
   const { operationId: _id, position: _p, t: _t, recordedAt: _c, ...stage } = a;

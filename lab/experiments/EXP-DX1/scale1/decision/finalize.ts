@@ -9,15 +9,18 @@ import {
   activeSubjects,
   cellKey,
   cellOrder,
+  cellSeconds,
   factsFor,
   field,
   layoutOf,
+  repetitions,
   rates,
   sha,
   task,
 } from "./plan.ts";
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { fieldPolicy } from "../../w1/field/bench-check.ts";
+import { verifyWriteOptions, type WriterReadback } from "../../w1/write-options.ts";
 import { read, write } from "./seed.ts";
 import type { Row } from "./writes.ts";
 import type { Request } from "./server.ts";
@@ -41,12 +44,14 @@ const names = [
   "upstream.json",
   "restored.json",
   "unit.json",
+  "writer-expectation.json",
+  "writer-readbacks.json",
 ];
 
 export function checkRecorded(dir: string, a: Request & { slot: string; at: number }) {
-  const pin = read(path.join(import.meta.dirname, "pins.json")).items.find(
-    (x: any) => x.seed.people === a.people,
-  )!;
+  const pin = read(
+    path.join(import.meta.dirname, a.layout === "single" ? "single-pins.json" : "pins.json"),
+  ).items.find((x: any) => x.seed.people === a.people)!;
   const bound = (d: any) =>
     assert(
       d.source === a.source &&
@@ -67,6 +72,17 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
   );
   assert.deepEqual(read(path.join(dir, "field-options.json")), fieldPolicy(a.mode, true));
   assert.deepEqual(read(path.join(dir, "durability.json")), { settings: "on|on|on" });
+  const expectation = read(path.join(dir, "writer-expectation.json"));
+  assert.deepEqual(
+    [expectation.source, expectation.slot, expectation.attempt],
+    [a.source, a.slot, a.nonce],
+  );
+  const verifyOptions = (r: WriterReadback, db: string, cut: number) => {
+    assert.deepEqual(r.expected, expectation);
+    verifyWriteOptions(r.observed, db, expectation, r.historyRange);
+    assert.equal(r.observed.position, cut);
+  };
+  verifyOptions(preflight.options, preflight.db, 1);
   if (a.phase === "seed") {
     const seed = read(path.join(dir, "seed.json")),
       image = read(path.join(dir, "image.json"));
@@ -79,7 +95,7 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
     assert(
       seed.started >= a.at &&
         seed.completed >= seed.started &&
-        seed.facts === 10 * factsFor(a.people),
+        seed.facts === layoutOf(a.layout).flat().length * factsFor(a.people),
     );
     assert.deepEqual(
       seed.scopes.map((s: any) => s.accounts),
@@ -106,11 +122,16 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
   bound(restored.identity);
   assert(restored.reopenedAt >= a.at && restored.origin.nonce !== a.nonce);
   assert.deepEqual(raw.scopes, restored.origin.scopes);
+  const readbacks = read(path.join(dir, "writer-readbacks.json"));
+  bound(readbacks);
+  assert(readbacks.at >= restored.reopenedAt && readbacks.entries.length === raw.scopes.length);
+  for (const [i, s] of raw.scopes.entries()) verifyOptions(readbacks.entries[i], s.db, s.seedCut);
   const base = activeSubjects(a.people);
   const m = read(path.join(dir, "measurement.json"));
   bound(m);
-  assert(m.mode === a.mode && m.from === a.from && m.elapsedMs >= 900000);
-  assert(raw.accounts.length === 10);
+  assert(m.mode === a.mode && m.from === a.from && m.withReaders === (a.withReaders ?? true));
+  assert(m.elapsedMs >= (a.layout === "single" ? 630000 : 900000));
+  assert(raw.accounts.length === layoutOf(a.layout).flat().length);
   const model = raw.accounts.map((r: [string, Row[]][], i: number) => {
     const rows = new Map(r);
     assert.equal(rows.size, base[i]!.length);
@@ -136,8 +157,8 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
   const checks: ReturnType<typeof checkCell>[] = [];
   let scopes = raw.scopes;
   let previousEnd = a.at;
-  for (const r of [0, 1])
-    for (const c of cellOrder(r)) {
+  for (const r of repetitions(a.layout))
+    for (const c of cellOrder(r, a.layout)) {
       const label = cellKey(c, r),
         full = read<Observation>(path.join(dir, label + "-raw.json"));
       const written = read(path.join(dir, label + "-writer.json"));
@@ -145,7 +166,13 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
       bound(full);
       bound(written);
       bound(result);
-      assert(full.cell === c && full.repeat === r && full.start >= previousEnd);
+      assert(
+        full.cell === c &&
+          full.repeat === r &&
+          full.withReaders === m.withReaders &&
+          full.start >= previousEnd &&
+          full.start >= readbacks.at,
+      );
       assert(written.key === label && written.start === full.start);
       assert.deepEqual(full.scopes, scopes);
       assert.deepEqual(full.scopes, written.scopes);
@@ -157,7 +184,7 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
       const stats = checkCell(full, model);
       const pinRows = read(path.join(dir, label + "-cuts.json"));
       bound(pinRows);
-      assert(pinRows.at >= full.start + 90000 && pinRows.key === label);
+      assert(pinRows.at >= full.start + cellSeconds(c) * 1000 && pinRows.key === label);
       assert.deepEqual(
         pinRows.pins,
         stats.cuts.map((c) => ({ ...c, values: [c.before, c.after] })),
@@ -172,11 +199,11 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
         ...s,
         cut: Math.max(s.cut, ...full.feed.filter((x) => x.db === s.db).map((x) => x.position)),
       }));
-      previousEnd = full.start + 90000;
+      previousEnd = full.start + cellSeconds(c) * 1000;
     }
   assert.deepEqual(
     m.comparisons,
-    rates.map((rate) => ({
+    (a.layout === "single" ? [] : rates).map((rate) => ({
       rate,
       ratios: ratios(
         checks.filter((r) => r.cell === "alone"),
@@ -202,7 +229,9 @@ export async function packageAttempt(dir: string) {
     ...names.filter((n) => exists(path.join(dir, n))),
     ...fs
       .readdirSync(dir)
-      .filter((f) => /^r[01]-(?:alone|35|50|235|394)-(?:result|resources|cuts)\.json$/.test(f)),
+      .filter((f) =>
+        /^r[01]-(?:alone|35|50|235|394|3p5|4p9|23p5|39p4)-(?:result|resources|cuts)\.json$/.test(f),
+      ),
   ];
   let checkError: string | undefined;
   if (unit.result === "success") {
@@ -217,6 +246,7 @@ export async function packageAttempt(dir: string) {
     nonce: a.nonce,
     tag: a.tag,
     slot: a.slot,
+    writerRelease: "WFIX1",
     cleanup: true,
     endedAt: unit.endedAt,
     scopeReports: unit.result === "success" && !checkError ? a.spec.scopes : 0,

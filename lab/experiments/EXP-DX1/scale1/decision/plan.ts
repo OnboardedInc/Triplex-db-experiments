@@ -7,9 +7,10 @@ import { Rng, seedOf } from "../../../../bench/lib/rng.ts";
 import type { SnapshotData, Frame } from "../../load1/source.ts";
 
 export const profile = "deep-field-decision/1";
+export const singleProfile = "deep-field-single/1";
 export const density = [10000, 100000] as const;
 export type Density = (typeof density)[number];
-export type Layout = "pooled" | "split5";
+export type Layout = "pooled" | "split5" | "single";
 export const rates = [35, 50, 235, 394] as const;
 export const accounts = Array.from({ length: 10 }, (_, i) => i);
 export const quiet = 0;
@@ -24,7 +25,18 @@ export const width = 2000;
 export const loaderDepth = 2;
 export const sampleEvery = 100;
 export const cells = ["alone", ...rates] as const;
-export type Cell = (typeof cells)[number];
+export const singleRates = [3.5, 4.9, 23.5, 39.4] as const;
+type SingleRate = (typeof singleRates)[number];
+export type Cell = (typeof cells)[number] | SingleRate;
+const singleSeconds = { 3.5: 150, 4.9: 120, 23.5: 300, 39.4: 60 };
+const solo = (cell: Cell): cell is SingleRate => singleRates.includes(cell as SingleRate);
+export const cellSeconds = (cell: Cell) => (solo(cell) ? singleSeconds[cell] : seconds);
+export const readWindow = (cell: Cell | undefined) =>
+  cell !== undefined && solo(cell)
+    ? { from: 7500, duration: cellSeconds(cell) * 1000 - 7500 }
+    : { from: readFromMs, duration: readForMs };
+export const profileFor = (layout: Layout) => (layout === "single" ? singleProfile : profile);
+export const repetitions = (layout: Layout) => (layout === "single" ? [0] : [0, 1]);
 export const field = (i: number) => ":task/field-" + i;
 export const sha = (x: unknown) => createHash("sha256").update(JSON.stringify(x)).digest("hex");
 // [DX-SCALE1] Why: recovery must resolve the exact operation ID through the gateway's path segment. Rejected: sending a slash-delimited tape key through an encoded path.
@@ -35,7 +47,11 @@ const namespace = (a: number) => "acct/" + keyFor(a) + "/";
 export const root = (a: number, i: number) => namespace(a) + ids.placement(i);
 export const task = (a: number, i: number) => namespace(a) + taskId(i, 0);
 export const layoutOf = (layout: Layout) =>
-  layout === "pooled" ? [accounts] : [accounts.slice(0, 5), accounts.slice(5)];
+  layout === "single"
+    ? [[0]]
+    : layout === "pooled"
+      ? [accounts]
+      : [accounts.slice(0, 5), accounts.slice(5)];
 export const factsFor = (people: Density) =>
   deepPopulation(people).facts + 2 * people + Math.ceil(people / 256) + 1;
 
@@ -99,18 +115,20 @@ export function source(people: Density, roster: readonly number[], seedPin: stri
   };
 }
 
-export function populationPins(people: Density) {
-  const hashes = accounts.map((a) => {
-    const h = createHash("sha256");
-    let facts = 0;
-    for (let i = 0; i < people; i++) {
-      const rows = person(a, i);
-      facts += rows.length;
-      h.update(JSON.stringify(rows) + "\n");
-    }
-    assert.equal(facts, factsFor(people));
-    return h.digest("hex");
-  });
+export function populationPins(people: Density, layout: Layout = "pooled") {
+  const hashes = layoutOf(layout)
+    .flat()
+    .map((a) => {
+      const h = createHash("sha256");
+      let facts = 0;
+      for (let i = 0; i < people; i++) {
+        const rows = person(a, i);
+        facts += rows.length;
+        h.update(JSON.stringify(rows) + "\n");
+      }
+      assert.equal(facts, factsFor(people));
+      return h.digest("hex");
+    });
   return { people, factsPerAccount: factsFor(people), hashes, digest: sha(hashes) };
 }
 
@@ -160,6 +178,7 @@ export function activeSubjects(people: Density) {
 }
 
 function count(cell: Cell, account: number) {
+  if (solo(cell)) return account === 0 ? Math.round(cell * cellSeconds(cell)) : 0;
   if (account === quiet) return quietRate * seconds;
   if (cell === "alone") return 0;
   const others = (cell - quietRate) * seconds;
@@ -170,10 +189,12 @@ function count(cell: Cell, account: number) {
 export function writeTape(people: Density, cell: Cell, repeat: number): Write[] {
   const subjects = activeSubjects(people),
     choose = zipf(people / 50);
-  return accounts
+  return (solo(cell) ? [0] : accounts)
     .flatMap((account) => {
       const n = count(cell, account);
-      const rng = new Rng(seedOf(profile + "/offers/" + repeat + "/" + account));
+      const rng = new Rng(
+        seedOf((solo(cell) ? singleProfile : profile) + "/offers/" + repeat + "/" + account),
+      );
       return Array.from({ length: n }, (_, ordinal) => {
         const r = rng.next(),
           w = rng.next();
@@ -182,7 +203,7 @@ export function writeTape(people: Density, cell: Cell, repeat: number): Write[] 
           account,
           ordinal,
           subject: subjects[account]![index]!,
-          ms: (1000 * seconds * (ordinal + rng.next())) / n,
+          ms: (1000 * cellSeconds(cell) * (ordinal + rng.next())) / n,
           width: w < 0.8 ? 1 : w < 0.95 ? 2 : 3,
           version: repeat + "/" + cell + "/" + account + "/" + ordinal,
         };
@@ -192,23 +213,40 @@ export function writeTape(people: Density, cell: Cell, repeat: number): Write[] 
 }
 
 export type Read = { seat: number; ordinal: number; subject: number; ms: number };
-export function readTape(people: Density, repeat: number): Read[] {
-  const rng = new Rng(seedOf(profile + "/reads/" + repeat + "/" + people));
-  return Array.from({ length: (readers * readForMs) / 1000 }, (_, ordinal) => ({
+export function readTape(people: Density, repeat: number, cell?: Cell, enabled = true): Read[] {
+  if (!enabled) return [];
+  const rng = new Rng(
+    seedOf(
+      (cell !== undefined && solo(cell) ? singleProfile : profile) +
+        "/reads/" +
+        repeat +
+        "/" +
+        people,
+    ),
+  );
+  const { from, duration } = readWindow(cell);
+  return Array.from({ length: (readers * duration) / 1000 }, (_, ordinal) => ({
     seat: ordinal % readers,
     ordinal,
     subject: Math.floor(rng.next() * people),
-    ms: readFromMs + (ordinal * 1000) / readers,
+    ms: from + (ordinal * 1000) / readers,
   }));
 }
 
-export const cellOrder = (repeat: number): Cell[] =>
-  repeat === 0 ? [...cells] : ["alone", ...[...rates].reverse()];
-export const cellKey = (cell: Cell, repeat: number) => "r" + repeat + "-" + cell;
-export const workloadPins = (people: Density) =>
+export const cellOrder = (repeat: number, layout: Layout = "pooled"): Cell[] =>
+  layout === "single"
+    ? [...singleRates]
+    : repeat === 0
+      ? [...cells]
+      : ["alone", ...[...rates].reverse()];
+export const cellKey = (cell: Cell, repeat: number) =>
+  "r" + repeat + "-" + String(cell).replace(".", "p");
+export const workloadPins = (people: Density, layout: Layout = "pooled") =>
   Object.fromEntries(
-    [0, 1].flatMap((r) => [
-      ["read/" + r, sha(readTape(people, r))] as const,
-      ...cells.map((c) => [cellKey(c, r), sha(writeTape(people, c, r))] as const),
+    repetitions(layout).flatMap((r) => [
+      ...(layout === "single"
+        ? singleRates.map((c) => ["read/" + c, sha(readTape(people, r, c))] as const)
+        : [["read/" + r, sha(readTape(people, r))] as const]),
+      ...cellOrder(r, layout).map((c) => [cellKey(c, r), sha(writeTape(people, c, r))] as const),
     ]),
   );

@@ -6,6 +6,7 @@ import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { checkCell, ratios, type Observation } from "./check.ts";
 import {
   cells,
+  cellSeconds,
   field,
   factsFor,
   layoutOf,
@@ -16,6 +17,8 @@ import {
   sampleEvery,
   sha,
   task,
+  singleProfile,
+  singleRates,
   workloadPins,
   writeTape,
 } from "./plan.ts";
@@ -45,6 +48,23 @@ test("the profile pins exact offered counts and quiet schedules on both physical
       db.map((a) => sha([person(a, 0), person(a, 257), person(a, 99999)])),
     );
   assert.deepEqual(samples("pooled"), samples("split5"));
+});
+
+test("single-account controls pin all four rates and the 600-second reader dose", () => {
+  const pin = JSON.parse(fs.readFileSync(new URL("./single-pins.json", import.meta.url), "utf8"));
+  assert.equal(pin.profile, singleProfile);
+  assert.deepEqual(pin.items[0].tapes, workloadPins(100000, "single"));
+  assert.deepEqual(layoutOf("single"), [[0]]);
+  assert.equal(pin.items[0].seed.factsPerAccount, 16245647);
+  let observations = 0;
+  for (const rate of singleRates) {
+    const events = writeTape(100000, rate, 0);
+    assert.equal(events.length, Math.round(rate * cellSeconds(rate)));
+    assert(events.every((w) => w.account === 0));
+    assert.equal(readTape(100000, 0, rate, false).length, 0);
+    observations += readTape(100000, 0, rate).length;
+  }
+  assert.equal(observations, 64 * 600);
 });
 
 test("deadline expiry before dispatch is counted separately and incomplete reads stay unjudged", () => {

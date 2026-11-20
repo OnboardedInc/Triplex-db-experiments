@@ -247,7 +247,7 @@ export async function ingest(dir: string, id: Destination, readUrl: string) {
       Object.assign(proofs.at(-1)!, { ledgerHash: await fileHash(ledger) });
     }
     const membership = await verifyMembership(client, scopes, id.people);
-    assert.equal(facts, 10 * factsFor(id.people));
+    assert.equal(facts, layoutOf(id.layout).flat().length * factsFor(id.people));
     const dbAfter = disk(id.slot);
     const result = {
       ...id,

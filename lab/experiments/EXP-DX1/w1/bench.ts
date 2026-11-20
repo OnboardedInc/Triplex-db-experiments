@@ -12,6 +12,7 @@ import { sourceInventory, stageReplay } from "../scale1/source.ts";
 import { fileHash } from "../scale1/measurements.ts";
 import { measure, type Arm } from "./measure.ts";
 import { fieldPolicy, type Mode } from "./field/bench-check.ts";
+import type { WriterExpectation } from "./write-options.ts";
 
 const repo = path.resolve(import.meta.dirname, "../../../.."),
   GiB = 1024 ** 3;
@@ -260,6 +261,8 @@ export async function withStack<T>(
     TRIPLEX_TRACE_TX_JFR: "1",
     TRIPLEX_DATOMIC_LAYOUT: "lean",
     TRIPLEX_DATOMIC_FAST_PATHS: arm.lookup === "range" ? "history-range" : "",
+    DX_PREDECESSOR_LOOKUP: arm.lookup === "range" ? "1" : "0",
+    DX_WRITE_OPTIONS_ATTEMPT: arm.nonce,
     DX_SERVER_RECORD_TIME: "1",
     DX_STRICT_RECORD_CLOCKS: "1",
     DX_MODEL_COMPACT: "1",
@@ -365,6 +368,28 @@ export async function withStack<T>(
         get(path.join(engines, "health-" + role + ".json")).gatewaySourceHash,
         gatewayHash,
       );
+    const expectation: WriterExpectation = {
+      source: arm.source,
+      slot,
+      attempt: arm.nonce,
+      gatewaySourceHash: gatewayHash,
+      options: {
+        predecessorLookup: arm.lookup === "range",
+        groupCommit: grouped ?? false,
+        livePriority: policy?.priority ?? false,
+        fieldCoalesce: policy?.subjectOnly ?? false,
+        queueClock: grouped !== undefined,
+        stageClock: policy?.stageClock ?? false,
+        smallRows: policy?.compact ?? false,
+        reusePrepared: policy?.prepared ?? false,
+        maxMembers: policy?.maxMembers ?? 8,
+        budgetMicros: policy?.budgetMicros ?? null,
+        bulkRows: 96,
+        bulkBytes: 65536,
+      },
+    };
+    write(path.join(dir, "writer-expectation.json"), expectation);
+    env.DX_W1_WRITER_EXPECTATION = JSON.stringify(expectation);
     const groups: string[] = [];
     const roleInfo = roles.map((role) => {
       const info = JSON.parse(docker("inspect", slot + "-" + role))[0];

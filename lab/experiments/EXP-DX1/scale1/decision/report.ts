@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { factsFor } from "./plan.ts";
+import { factsFor, layoutOf } from "./plan.ts";
 
 type Trial = {
   tag: string;
@@ -58,11 +58,13 @@ function recordPredictions(dir: string, trials: Trial[]) {
       measurement = t.decision;
     if (a.phase === "seed") {
       const key =
-        a.people === 10000
-          ? "Small pooled image"
-          : a.layout === "pooled"
-            ? "Full pooled image"
-            : "Full split image";
+        a.layout === "single"
+          ? "Single-account image"
+          : a.people === 10000
+            ? "Small pooled image"
+            : a.layout === "pooled"
+              ? "Full pooled image"
+              : "Full split image";
       writeRow(
         key,
         2,
@@ -78,6 +80,22 @@ function recordPredictions(dir: string, trials: Trial[]) {
       continue;
     }
     if (!measurement || t.terminal.service !== "success") continue;
+    if (a.layout === "single") {
+      for (const c of measurement.cells)
+        writeRow(
+          "Single " + c.cell,
+          a.withReaders ? 3 : 2,
+          fmt(c.goodput, 2) +
+            "/s (n=" +
+            c.inWindow +
+            "), " +
+            fmt(c.writes.p50) +
+            "/" +
+            fmt(c.writes.p99) +
+            " ms. [Cell results](DECISION-RESULTS.md)",
+        );
+      continue;
+    }
     const column =
       a.people === 10000 ? 2 : (a.layout === "pooled" ? 3 : 5) + Number(a.mode === "prepared");
     for (const comparison of measurement.comparisons) {
@@ -114,7 +132,7 @@ export function placementReport(dir: string, trials: Trial[]) {
   const lines = [
     "# Decision cells",
     "",
-    "Offered rate and goodput use the same 90-second wall interval. p50 and p99 use original durable acknowledgements. Expiry is before the SDK dispatch. Socket timing covers requests with a successful HTTP response. Refusals and ambiguous outcomes carry their own denominators. The quiet account keeps 3.5/s. Exactly 64 reader seats replay the same pinned tape in the quiet control and each loaded comparison. Full-source feed differences are checked at each durable position.",
+    "Offered rate and goodput use the same rated interval. Capacity comparisons use 90-second cells. The single account uses 150, 120, 300 and 60 seconds at 3.5, 4.9, 23.5 and 39.4/s respectively, from the same restored image with and without a 600-second reader dose. p50 and p99 use original durable acknowledgements. Expiry is before SDK dispatch. Socket timestamps cover successful HTTP responses. The placement sentinel keeps 3.5/s and replays 64 identical pinned reader seats in the quiet control and loaded cells. Every durable feed change is checked.",
     "",
     "The primary budget requires p50 ≤10 ms, p99 ≤50 ms, all primary dispositions exact with no expiry, rejection or missing offers, at least 99% of ACKs in the window and at most 1 s of drain. A quiet comparison requires 500 observations on each side and p99 ≤1.25× for saves, pinned reads and feed lag. The two layouts share one PostgreSQL, transactor JVM, physical cores and gateways. The two-database layout has two native commit pipelines inside that JVM.",
     "",
@@ -135,16 +153,23 @@ export function placementReport(dir: string, trials: Trial[]) {
         a.layout +
         " layout, " +
         a.mode +
-        " writer. Source `" +
+        " writer" +
+        (a.layout === "single" && a.phase === "cells"
+          ? a.withReaders
+            ? " with 64 reader seats"
+            : " with zero readers"
+          : "") +
+        ". Source `" +
         a.source +
-        "`.",
+        "`. " +
+        (t.terminal.writerRelease === "WFIX1" ? "Audited write path." : "Unfixed write path."),
       "",
     );
     if (seed && t.terminal.service === "success") {
       binding(seed);
       assert(
         seed.people === a.people &&
-          seed.facts === 10 * factsFor(a.people) &&
+          seed.facts === layoutOf(a.layout).flat().length * factsFor(a.people) &&
           seed.completed >= seed.started &&
           seed.started >= a.at,
       );
@@ -178,7 +203,10 @@ export function placementReport(dir: string, trials: Trial[]) {
     }
     binding(d);
     assert(
-      d.mode === a.mode && d.from === a.from && d.cells.length === 10 && d.comparisons.length === 4,
+      d.mode === a.mode &&
+        d.from === a.from &&
+        d.cells.length === (a.layout === "single" ? 4 : 10) &&
+        d.comparisons.length === (a.layout === "single" ? 0 : 4),
     );
     lines.push(
       "| Cell | Offered/s | Durable ACKs/s (n) | Pre-dispatch expiry | Missing | Refused / uncertain / recovered | p50 ms | p99 ms | Quiet save p99 ms | Reader p99 ms | Feed p99 ms | ACK / disposition drain ms |",
@@ -213,11 +241,12 @@ export function placementReport(dir: string, trials: Trial[]) {
           ].join(" | ") +
           " |",
       );
-    lines.push(
-      "",
-      "| Offered/s | Quiet save ratio | Quiet read ratio | Quiet feed ratio | Both absolute cells within budget |",
-      "| ---: | --- | --- | --- | --- |",
-    );
+    if (a.layout !== "single")
+      lines.push(
+        "",
+        "| Offered/s | Quiet save ratio | Quiet read ratio | Quiet feed ratio | Both absolute cells within budget |",
+        "| ---: | --- | --- | --- | --- |",
+      );
     for (const c of d.comparisons)
       lines.push(
         "| " +

@@ -6,7 +6,7 @@ import { withStack } from "../../w1/bench.ts";
 import { fieldPolicy } from "../../w1/field/bench-check.ts";
 import {
   density,
-  profile,
+  profileFor,
   workloadPins,
   populationPins,
   type Density,
@@ -26,6 +26,7 @@ export type Request = {
   mode: Mode;
   from?: string;
   review: string;
+  withReaders?: boolean;
 };
 const checkout = path.resolve(import.meta.dirname, "../../../../..");
 const outputRoot = "/var/tmp/triplex-scale1/decision/attempts";
@@ -41,7 +42,9 @@ async function main(dir: string) {
   assert.match(p.source, /^[a-f0-9]{40}$/);
   assert.match(p.nonce, /^[a-f0-9-]{36}$/);
   assert.match(p.review, /^[a-f0-9]{64}$/);
-  assert(density.includes(p.people) && ["pooled", "split5"].includes(p.layout));
+  assert(density.includes(p.people) && ["pooled", "split5", "single"].includes(p.layout));
+  if (p.layout === "single") assert(p.people === 100000 && p.mode === "individual");
+  assert((typeof p.withReaders === "boolean") === (p.layout === "single" && p.phase === "cells"));
   assert(["individual", "bounded", "prepared"].includes(p.mode));
   assert(["seed", "cells"].includes(p.phase));
   assert(
@@ -54,11 +57,13 @@ async function main(dir: string) {
   assert.equal(git("rev-parse", "HEAD"), p.source);
   assert.equal(git("status", "--porcelain", "--untracked-files=no"), "");
 
-  const assets = read(path.join(import.meta.dirname, "pins.json"));
-  assert.equal(assets.profile, profile);
+  const assets = read(
+    path.join(import.meta.dirname, p.layout === "single" ? "single-pins.json" : "pins.json"),
+  );
+  assert.equal(assets.profile, profileFor(p.layout));
   const pin = assets.items.find((x: any) => x.seed.people === p.people);
   assert(pin && /^[a-f0-9]{64}$/.test(pin.seed.digest));
-  assert.deepEqual(pin.tapes, workloadPins(p.people));
+  assert.deepEqual(pin.tapes, workloadPins(p.people, p.layout));
   const slot = "tx2-dxscale1-" + p.tag;
   const id: Destination = {
     source: p.source,
@@ -70,7 +75,14 @@ async function main(dir: string) {
   };
   const storage = fs.statfsSync(dir);
   const free = storage.bavail * storage.bsize;
-  const floorGiB = p.people === 100000 && p.phase === "seed" ? 350 : p.people === 100000 ? 190 : 60;
+  const floorGiB =
+    p.layout === "single"
+      ? 160
+      : p.people === 100000 && p.phase === "seed"
+        ? 350
+        : p.people === 100000
+          ? 190
+          : 60;
   write(path.join(dir, "admission.json"), {
     ...id,
     free,
@@ -79,7 +91,12 @@ async function main(dir: string) {
     at: Date.now(),
   });
   assert(free >= floorGiB * 1024 ** 3, "Free disk is below the actual layout's scratch forecast");
-  const refs = ["exp/DX-W1-commit-tail-reads", "exp/DX-BM1-bare-metal", "exp/DX-HA1-failover-move"];
+  const refs = [
+    "exp/DX-WFIX1-write-path-fixes",
+    "exp/DX-W1-commit-tail-reads",
+    "exp/DX-BM1-bare-metal",
+    "exp/DX-HA1-failover-move",
+  ];
   const heads = Object.fromEntries(
     refs.map((ref) => {
       git(
@@ -94,7 +111,8 @@ async function main(dir: string) {
       return [ref, git("rev-parse", "FETCH_HEAD")];
     }),
   );
-  git("merge-base", "--is-ancestor", "7a6a7e9efc711076821ee7bccc82a20df8322c6c", p.source);
+  git("merge-base", "--is-ancestor", "cd2151749", p.source);
+  git("merge-base", "--is-ancestor", "cd2151749", heads[refs[0]!]!);
   write(path.join(dir, "upstream.json"), {
     ...id,
     heads,
@@ -124,13 +142,15 @@ async function main(dir: string) {
         process.env.TRIPLEX_DATOMIC_LAYOUT = "lean";
         process.env.DX_STRICT_RECORD_CLOCKS = "1";
         process.env.DX_SERVER_RECORD_TIME = "1";
-        process.env.TRIPLEX_DATOMIC_FAST_PATHS = "row,body,history-range,fresh-texts";
+        process.env.TRIPLEX_DATOMIC_FAST_PATHS = "row,body,fresh-texts";
         process.env.DATOMIC_URL = readUrl;
+        const binding = env.DX_W1_WRITER_EXPECTATION;
+        assert(binding);
         status("checking fresh native field and feed preflight");
-        write(path.join(dir, "preflight.json"), await nativeProbe(id, writeUrl, readUrl));
+        write(path.join(dir, "preflight.json"), await nativeProbe(id, writeUrl, readUrl, binding));
         if (p.phase === "seed") {
           status("verifying canonical population bytes");
-          assert.deepEqual(populationPins(p.people), pin.seed);
+          assert.deepEqual(populationPins(p.people, p.layout), pin.seed);
           status("running two-frame loader");
           const seed = await ingest(dir, id, readUrl);
           status("sealing immutable PostgreSQL image");
@@ -139,7 +159,16 @@ async function main(dir: string) {
           status("restoring verified seed");
           const restored = await restore(dir, path.join(outputRoot, p.from!), id);
           const { runCells } = await import("./traffic.ts");
-          await runCells(dir, p, id, restored.scopes, restored.urls[0]!, restored.urls[1]!, status);
+          await runCells(
+            dir,
+            p,
+            id,
+            restored.scopes,
+            restored.urls[0]!,
+            restored.urls[1]!,
+            binding,
+            status,
+          );
         }
       },
       fieldPolicy(p.mode, true).grouping,

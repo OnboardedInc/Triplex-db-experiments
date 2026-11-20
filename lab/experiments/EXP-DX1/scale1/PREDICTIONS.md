@@ -50,5 +50,17 @@ Forecast one 162,456,470-fact image at 6,500 verified ingested facts/s, 6.94 h t
 | Image | Forecast for ingest |
 | --- | --- |
 | Small pooled image | At 5,800–6,500 facts/s, 42–47 min for 16,245,050 facts.<br>Observed arm-d7-small-seed ended with exit-code. |
+| Single-account image | 16,245,647 facts at 5,800–6,800/s, or 40–47 min before independent verification. |
 | Full pooled image | At 5,800–6,500 facts/s, 6.94–7.78 h for 162,456,470 facts. |
 | Full split image | At 5,800–6,500 total facts/s, 6.94–7.78 h for the same 162,456,470 facts placed across two databases. |
+
+## Single full-size account first
+
+The two field-save arms start from the same verified image. They use the same offers for 150, 120, 300 and 60 s. The reader arm has 64 seats on two cores and 600 active seconds over its four cells. The projected single-account job takes 70–105 min, costing USD 1.27–1.91. The full placement budget above is held until the single-account results are reported. Q106f sets tiered deployment pending a new owner ruling.
+
+| Cell | Exact offered rate | Zero-reader forecast | Bounded-reader forecast |
+| --- | ---: | --- | --- |
+| Single 3.5 | 3.5/s | 3.48–3.5 ACK/s and p50/p99 5–9 / 28–65 ms. | 3.48–3.5 ACK/s and 5–10 / 32–85 ms. |
+| Single 4.9 | 4.9/s | 4.87–4.9 ACK/s and 5–9 / 28–70 ms. | 4.86–4.9 ACK/s and 5–10 / 33–90 ms. |
+| Single 23.5 | 23.5/s | 23.4–23.5 ACK/s and 5–10 / 30–85 ms. | 23.3–23.5 ACK/s and 6–13 / 45–105 ms. |
+| Single 39.4 | 39.4/s | 39.0–39.4 ACK/s and 6–11 / 40–115 ms. | 38.5–39.4 ACK/s and 7–14 / 55–130 ms. |
