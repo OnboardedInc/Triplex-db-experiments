@@ -3293,3 +3293,13 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   what differs; a structural growth model with predictions per index at 0.16 to 8 billion records; one unattended
   server command for the 1 billion rung in under ten server hours; successor erasure on DX-ERASE1's design. No more
   Mac ladders. Owner decision pending once the server rate is known: how far past 1 billion to pay for.
+
+## 2026-11-20 16:40 UTC (11:40 local, 2026-11-20): Sam: test at 1 billion for now, work towards version 0.1, keep the budget
+
+- Sam's message is recorded verbatim in `lab/research/SAM-decisions-2026-11-09.md`. `lab/V0.1.md` on main (cf738d13c)
+  defines version 0.1 as the orchestrator reads it: one merged branch (`exp/DX-INT1`), one database, one scorecard
+  at fresh and 1 billion records. Deferred: aging past 1 billion, notification and background-writing bars,
+  successor move, production key custody.
+- Consequence for the queue: server time goes first to (1) per-person writer against grouped writer on ten accounts
+  in one database, (2) the scorecard on the merged branch, (3) the 1 billion rung. Builders are told at their next
+  handover that work counts for version 0.1 only once merged on `exp/DX-INT1`.

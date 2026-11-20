@@ -751,3 +751,15 @@ one had the other flags, the cores and memory per process, or Datomic's own sett
 launched for exactly that. (2) The claim "about 100 KB of memory per person the reader has touched" was wrong: that
 figure was measured on the compact prototype's reader, not the product's. Corrected in the reply with the numbers
 that are measured for the product's reader.
+
+## 2026-11-20 about 11:40 local: 1 billion is the test size for now; work towards a version 0.1; keep the budget
+
+Sam, verbatim:
+- "1 billion is probably ok to test with for now, we can go up to 8 billion+ in the future when we give it more budget,
+  but lets work towards a v0.1 of this project and keep our budget for now"
+
+Orchestrator's reading: (1) the aging test stops at 1 billion records for now; 8 billion and beyond wait for a
+later budget. (2) The cloud budget stays at $200; no request for more. (3) "v0.1" is not defined in his message. My
+definition, written to `lab/V0.1.md` on main for him to correct: one merged branch, every account in one database,
+one scorecard command run on bare metal at the fresh size and at 1 billion records, every failing line with a cause
+and a next step.
