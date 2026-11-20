@@ -177,6 +177,7 @@ try {
     source: f.sourceHash,
     enrollMs,
     noticeIndexBytes: a.stats.noticeIndexBytes,
+    addressBytes: a.stats.addressBytes,
     offers,
     control,
     joined,

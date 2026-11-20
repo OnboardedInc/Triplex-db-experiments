@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { spawnSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { W0, sha256 } from "../../../../bench/lib/w0-world.ts";
@@ -9,6 +9,10 @@ import { openStore } from "../store.ts";
 import { seed, valid } from "../fixture.ts";
 import { Reference } from "./check.ts";
 import { JoinedAccount } from "./account.ts";
+import { rawDeep, replaceDeep } from "./deep.ts";
+import { ids as deepIds } from "../../../../bench/lib/world.ts";
+import { integer } from "../../../../bench/lib/deep-world.ts";
+import { millis } from "../store.ts";
 import { stageActor } from "./staging.ts";
 
 const s = await openStore("lazy-stage-gate-" + randomUUID(), "act2-deep"),
@@ -74,6 +78,43 @@ try {
   const aborted = documents.find((t) => t.actor === stageActor);
   assert(aborted && !documents.some((t) => t.actor === "lazy/join"));
   const abandoned = JSON.parse(aborted.correlationId).context.attempt;
+  const nonce = randomUUID(),
+    coldSubject = f.roster.at(-1)!;
+  const [ready, cold] = execFileSync(
+    process.execPath,
+    ["--experimental-strip-types", new URL("../timing-worker.ts", import.meta.url).pathname],
+    {
+      input:
+        [
+          { scope: s.scope, format: "act2-deep", valid, nonce, path: "shared-cut" },
+          { subject: coldSubject, nonce },
+          { close: true },
+        ]
+          .map((x) => JSON.stringify(x))
+          .join("\n") + "\n",
+      encoding: "utf8",
+      timeout: 120000,
+    },
+  )
+    .trim()
+    .split("\n")
+    .map((x) => JSON.parse(x));
+  assert(
+    ready.nonce === nonce &&
+      ready.scope === s.scope &&
+      cold.nonce === nonce &&
+      cold.subject === coldSubject,
+  );
+  const [coldAnswer] = JSON.parse(
+    await o.oracle.call("check", {
+      document: high,
+      old: null,
+      basis: cold.basis,
+      worlds: [f.world(f.n - 1)],
+      fold: false,
+    }),
+  );
+  assert.equal(cold.json, coldAnswer.json);
   const pinned = await a.reader().readAt(f.roster[0]!, { validTime: valid });
   const [expected] = JSON.parse(
     await o.oracle.call("check", {
@@ -112,6 +153,69 @@ try {
   const found = await b.publish("staged-receipt", high, valid, "staged", undefined, opts);
   assert.deepEqual(sent, found);
   assert.equal((await verify(found, high)).changes, f.n);
+  const person = 0,
+    subject = f.roster[person]!,
+    writer = deepIds.worker(person),
+    at = millis(valid);
+  function updated(minutes: number, tx: number): W0.World {
+    return {
+      subject,
+      facts: f
+        .world(person)
+        .facts.map((x) =>
+          x.e === subject && x.a === "weeklyMinutes" ? { ...x, v: minutes, tx } : x,
+        ),
+    };
+  }
+  let racedSave: typeof origin | undefined;
+  const winner = await a.publish("same-person-race", low, valid, "staged", undefined, {
+    ...opts,
+    afterChunk: async () => {
+      if (racedSave) return;
+      const raw = await rawDeep(other, person, { tx: await other.head(), validTime: valid });
+      racedSave = await b.saveDeep(
+        "person-before",
+        person,
+        replaceDeep(raw, [{ e: writer, a: ":person/custom-weekly-minutes", v: integer(5000) }], at),
+        valid,
+      );
+    },
+  });
+  assert(racedSave && racedSave.position < winner.position);
+  await o.check(
+    a,
+    [subject],
+    () => updated(5000, racedSave!.position),
+    high,
+    { tx: racedSave.position, validTime: valid },
+    high,
+  );
+  const won = await o.check(
+    a,
+    f.roster,
+    (i) => (i === person ? updated(5000, racedSave!.position) : f.world(i)),
+    low,
+    { tx: winner.position, validTime: valid },
+    high,
+    ++sequence,
+  );
+  assert.equal(won.changes, f.n - 1);
+  const raw = await rawDeep(other, person, { tx: await other.head(), validTime: valid });
+  const post = await b.saveDeep(
+    "person-after",
+    person,
+    replaceDeep(raw, [{ e: writer, a: ":person/custom-weekly-minutes", v: integer(0) }], at),
+    valid,
+  );
+  assert(post.position > winner.position);
+  await o.check(
+    a,
+    [subject],
+    () => updated(0, post.position),
+    low,
+    { tx: post.position, validTime: valid },
+    low,
+  );
   const dispatcher = a.dispatcher(new Documents(target.comp, "sink"));
   await dispatcher.drain();
   const receiver = await o.receiver(a, dispatcher);
@@ -125,7 +229,9 @@ try {
         cut: origin.position,
         abandoned,
         priorRead: sha256(pinned.json),
+        freshRead: { position: cold.basis.tx, hash: sha256(cold.json) },
         kills: 2,
+        samePerson: [racedSave.position, winner.position, post.position],
         everyone: f.n,
         nobody: 0,
         receiver,

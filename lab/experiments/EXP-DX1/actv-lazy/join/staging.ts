@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
-import type { Store } from "../store.ts";
+import { Conflict, type Store } from "../store.ts";
 import type { Documents, Op } from "../../notify1/store.ts";
 import { encodedHash } from "./material.ts";
 
@@ -88,21 +88,30 @@ export async function collectStage(s: Store, db: Documents, attempt: string) {
     const head = await db.row<Stage>(root(attempt), p);
     if (!head) return;
     assert(head.value.scope === s.scope && head.value.attempt === attempt);
-    const keys = Array.from({ length: head.value.chunks }, (_, i) => stageKey(attempt, i));
-    const ops: Op[] = [];
-    for (let i = 0; i < keys.length; i += 64)
-      for (const row of (await db.rows<string>(keys.slice(i, i + 64), p)).values())
+    const limit = 256,
+      ops: Op[] = [];
+    for (let i = 0; i < head.value.chunks && ops.length < limit; i += 64) {
+      const keys = Array.from({ length: Math.min(64, head.value.chunks - i) }, (_, j) =>
+        stageKey(attempt, i + j),
+      );
+      for (const row of (await db.rows<string>(keys, p)).values()) {
         ops.push({ op: "retract", id: row.id });
-    ops.push({ op: "retract", id: head.id });
-    assert(Buffer.byteLength(canonical(ops)) <= 1024 * 1024);
+        if (ops.length === limit) break;
+      }
+    }
+    const last = ops.length === 0;
+    if (last) ops.push({ op: "retract", id: head.id });
+    const batch = sha256(canonical(ops));
     try {
-      await s.commit("join-stage-collect:" + attempt, stageActor, ops, p, {
+      await s.commit("join-stage-collect:" + attempt + ":" + batch, stageActor, ops, p, {
         attempt,
         header: sha256(canonical(head.value)),
+        batch,
+        last,
       });
-      return;
+      if (last) return;
     } catch (error) {
-      if ((await s.head()) === p) throw error;
+      if (!(error instanceof Conflict)) throw error;
     }
   }
 }

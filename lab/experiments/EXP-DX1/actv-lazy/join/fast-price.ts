@@ -103,6 +103,7 @@ try {
     scope: store.scope,
     installMs,
     indexBytes: a.stats.noticeIndexBytes,
+    addressBytes: a.stats.addressBytes,
     facts: f.facts,
     roster: f.rosterHash,
     source: f.sourceHash,

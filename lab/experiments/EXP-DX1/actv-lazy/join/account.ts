@@ -106,7 +106,13 @@ export class JoinedAccount {
     return () => this.calendarListeners.delete(listener);
   }
   readonly notices: Notices;
-  readonly stats = { indexPages: 0, worlds: 0, outputBytes: 0, noticeIndexBytes: 0 };
+  readonly stats = {
+    indexPages: 0,
+    worlds: 0,
+    outputBytes: 0,
+    noticeIndexBytes: 0,
+    addressBytes: 0,
+  };
   constructor(s: Store) {
     this.s = s;
     this.notices = new Notices(s.comp, "joined", {
@@ -248,7 +254,12 @@ export class JoinedAccount {
         ws.map((w) => entry(w, b, expanded)),
       );
       this.stats.noticeIndexBytes += Buffer.byteLength(base.value.value);
-      const ops = [base, ...group.map((id) => this.db.put(address(id), i))];
+      const addresses = group.map((id) => this.db.put(address(id), i));
+      this.stats.addressBytes += addresses.reduce(
+        (n, r) => n + Buffer.byteLength(r.entityId) + Buffer.byteLength(r.value.value),
+        0,
+      );
+      const ops = [base, ...addresses];
       const id = "join-index-" + i,
         original = await s.lookup(id);
       await s.commit(
