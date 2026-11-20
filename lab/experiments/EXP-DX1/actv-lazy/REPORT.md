@@ -1,6 +1,6 @@
 Publish still records the new rules and what notices are owed in one write. The previous 10,000-person deep run measured 38 ms.
 A background worker writes the changed values and individual notices in short turns. The recipient can stay offline while it records them.
-Until a value is stored, a read derives the answer from the receipt. A stored answer can serve the same exact cut.
+Before a value is stored, reads at the receipt’s cut derive it. Stored values serve that same cut. Later saves use the latest source.
 A new release can stop an obsolete value copy. Notices from both releases still get recorded in order.
 A shared wage-floor save covers the full roster when the database cannot prove a smaller affected set.
 The earlier server command remains on hold while the revised producer and its collector run together on native storage.
@@ -20,6 +20,8 @@ The seven ACTREVIEW2 findings have a written response. The revised format keeps 
 On the Mac, 10,000 deep people took 38 ms to the receipt and 49 ms to the first correct connected answer. Storing all 49,297 values with the notice-only index took 21.66 s. The faster compact path stored the original three-rule release in 796 ms at 10,000 people. [Part 6 price and scope](PART6-PRICE.md) · [Part 6 checksums](PART6-SHA256SUMS)
 
 The deep notice leaf used 48.2 bytes per person, plus about 101.3 bytes of durable addresses. That is an encoded storage count. P7 measures resident bytes outside Postgres. The first-read and resident-account evidence must be reported separately. [Part 5 read stages](STAGES.md) · [Retention choice](RETENTION.md)
+
+The eight-fact thin fixture encoded 10.3–10.4 leaf bytes and 100–104 address bytes per person in three 64-person pages, including offsets near one million and 4.5 million. This calculation did not load those populations. Thirty-two small tests passed, and two queue tests separately exercised live preference and fair turns. The first native collector attempt caught a working-tree change at startup and released its volume. The replacement runs from a frozen checkout. [Part 7 checksums](PART7-SHA256SUMS)
 
 ### Server command
 

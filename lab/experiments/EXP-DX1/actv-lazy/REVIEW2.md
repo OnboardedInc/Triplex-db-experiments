@@ -1,6 +1,6 @@
 # Second activation review
 
-Read `FINDINGS.md` with SHA-256 `ceb2da9ad3de4137294b2bca47adbb78078cb983a13a806f158609a469c3c808`. Keep the server launch held until the revised producer and collector complete the same fresh native smoke. The earlier BM1 item accepts the old 64-person schema and cannot consume the revised format or the 100,000-person run.
+Read the updated `FINDINGS.md` with SHA-256 `dcc3cb963da5af203ee29b855bfee85a039cc0552e7d9c6e9db8d630c9610563`. Keep the server launch held until the revised producer and collector complete the same fresh native smoke. BM1 `d94b09f92` now rejects the wrong-answer replay. It still accepts only the old 64-person schema and cannot consume the revised format or a 100,000-person run.
 
 1. **Individual notice endpoint.** Agreed. Recipe, concrete changes and individual notice timestamps are distinct. The original six windows price the first two components, and physical notices are recorded in the offline-recipient settlement windows. The published deadline still requires all three unless the owner changes it.
 2. **Collector.** Agreed. `joined-components/2` binds the six offers, terminal files, independent deadline records and exact produced bytes. The matching collector recomputes the clocks and uses Python on the retained input tape to reject wrong returned answers even if rehashed. BM1's older collector remains outside this branch.
