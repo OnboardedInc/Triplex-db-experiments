@@ -12,7 +12,7 @@ import subprocess
 import sys
 import time
 import uuid
-from producer_readings import capacity_rung, group_arm
+from producer_readings import capacity_memory, capacity_rung, group_arm
 from import_reading import tail_attempt
 from activation_clock import activation_modes
 from joined_preflight import joined_output, point_readback
@@ -386,7 +386,7 @@ def make(item, attempt, start, deadline):
         shutil.copyfile(repo/EXP/"w1/REPORT.md",directory/"builder-report.md")
     else:
         head,repo=public_source(item,directory)
-    token="| Item 0 repeat," if item==6 else {8:"| Enhanced pulse,",9:"| Thin/deep matched,",10:"| Predecessor lookup,",
+    token="| ACT2 audited activation," if item==6 else {8:"| Enhanced pulse,",9:"| Thin/deep matched,",10:"| Predecessor lookup,",
             11:"| CEIL-SERVER-LIVE10,",12:"| W2-SIZE-LEDGER,",13:"| HA1 one-host import,",14:"| ACT1 joined Publish,"}.get(item,f"| {item} ·")
     forecast=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith(token))
     r=dict(item=item,attempt=attempt,tag=tag,source=head,repo=str(repo),unit=unit,root=str(root),
@@ -908,13 +908,15 @@ def result(r):
                 assert seal.stat().st_mtime>=r["start"]-2
                 lines=seal.read_text().splitlines()
                 sums=dict((line[66:],line[:64]) for line in lines)
-                assert len(sums)==len(lines) and {"inputs.json","result.json","latency-samples.json"}.issubset(sums)
+                assert len(sums)==len(lines) and {"inputs.json","result.json","latency-samples.json","phases.jsonl"}.issubset(sums)
                 for name,expected in sums.items():
                     file=(case/name).resolve()
                     assert file.is_relative_to(case.resolve()) and file.is_file() and digest(file)==expected
                 observed=capacity_rung(case,r["source"],size)
                 assert re.fullmatch(rf"tx2-dxint1-{r['tag']}-{key}-[a-f0-9]{{12}}",observed["slot"])
-                completed[key]=observed["latency"]
+                completed[key]=dict(latency=observed["latency"],memory=capacity_memory(case,observed,full=True))
+            if completed:
+                put(Path(r["directory"])/"capacity-observations.json",{"source":r["source"],"tag":r["tag"],"rungs":completed})
             if len(completed)==2:
                 return "recorded",str(directory)
             return ("partial" if completed else "incomplete"),"Verified thin populations: "+", ".join(completed)

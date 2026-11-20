@@ -99,3 +99,41 @@ def capacity_rung(directory, source, size):
         n=len(values)
         assert result["latency"][name]==dict(n=n,p50=values[(n+1)//2-1],p99=values[(99*n+99)//100-1])
     return result
+
+
+def capacity_memory(directory, result, *, full):
+    # [DX-BM1] Why: price the actual untouched denominator at a fixed admitted reader set.
+    # Rejected: treating after-activity memory or a passing latency sample as the fixed-hot capacity reading.
+    file=directory/"phases.jsonl"
+    with file.open() as stream:phases=[json.loads(line) for line in stream]
+    labels=["empty","scopes-open","fixed-hot","after-cold-import","after-activity"]
+    if full:labels.append("after-publication")
+    assert [p["label"] for p in phases]==labels and all(p["binding"]==result["binding"] for p in phases)
+    assert all(a["at"]<b["at"] for a,b in zip(phases,phases[1:]))
+    account,=result["accounts"]
+    scope,size=account["scope"],account["people"]
+    hot,cold=phases[2:4]
+    assert hot["sources"][scope]["people"]==account["active"]==account["ryow"]==size//50
+    assert cold["sources"][scope]["people"]==size and cold["sources"][scope]["position"]>hot["sources"][scope]["position"]
+    assert hot["reader"]["scopes"][scope]["admissions"]==cold["reader"]["scopes"][scope]["admissions"]
+
+    def footprint(phase):
+        roles=phase["native"]["roles"]
+        aliases={"postgres":"pg","transactor":"tx","writeGateway":"gw-w","readGateway":"gw-r"}
+        assert set(roles)==set(aliases.values() if full else aliases)
+        rss={role:roles[aliases[role] if full else role]["rssBytes"] for role in aliases}
+        rss["reader"]=phase["reader"]["rssBytes"]
+        rss["driver"]=phase["driver"]["rssBytes"]
+        assert all(isinstance(n,int) and n>0 for n in rss.values())
+        disk=phase["native"]["disk"]
+        assert [disk[k] for k in ("fsync","synchronousCommit","fullPageWrites")]==["on"]*3
+        assert disk["kvsIncludingIndexes"]>0
+        return rss,disk["kvsIncludingIndexes"],phase["reader"]["scopes"][scope]["bytes"]
+
+    before,after=footprint(hot),footprint(cold)
+    untouched=size-account["active"]
+    return {"source":result["source"],"attempt":result["attempt"],"slot":result["slot"],"binding":result["binding"],
+            "snapshotsSha256":digest(file),"people":size,"untouched":untouched,
+            "rows":{role:{"beforeRss":value,"afterRss":after[0][role],"bytesPerUntouched":(after[0][role]-value)/untouched}
+                    for role,value in before[0].items()},
+            "kvsBytesDelta":after[1]-before[1],"readerChargedBytesDelta":after[2]-before[2]}
