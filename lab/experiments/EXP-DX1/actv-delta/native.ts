@@ -84,7 +84,13 @@ if (["schedules", "rungs", "crash"].includes(mode!)) {
 }
 if (mode !== "schedules") {
   const worker = await import(
-    "./" + (mode === "solo-check" || mode === "deep-loaded" ? "solo" : mode) + ".ts"
+    "./" +
+      (mode === "solo-check" || mode === "deep-loaded"
+        ? "solo"
+        : mode === "audit-check" || mode === "audit-loaded"
+          ? "audit-solo"
+          : mode) +
+      ".ts"
   );
   await worker.run(dir, attempt);
 }

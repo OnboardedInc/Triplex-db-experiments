@@ -33,6 +33,9 @@ export async function local(opts, config, manager) {
       "crash",
       "solo-check",
       "deep-loaded",
+      "audit-check",
+      "audit-loaded",
+      "audit-faults",
     ].includes(opts.run),
   );
   const dir = path.resolve(opts.out),
@@ -64,7 +67,8 @@ export async function local(opts, config, manager) {
           const req = {
             container: prefix,
             memBytes: Object.values(caps).reduce((a, b) => a + b, 0) * 2 ** 20,
-            diskForecastBytes: (opts.run === "deep-loaded" ? 8 : 4) * 2 ** 30,
+            diskForecastBytes:
+              (["audit-loaded", "deep-loaded"].includes(opts.run) ? 8 : 4) * 2 ** 30,
           };
           const allowed = admission({
             config: { ...config, pool: { ...config.pool, memLimitBytes: limit } },
@@ -276,7 +280,7 @@ export async function local(opts, config, manager) {
       if (m?.type === "power") {
         try {
           assert(
-            opts.run === "crash" &&
+            ["crash", "audit-faults"].includes(opts.run) &&
               m.nonce === nonce &&
               m.seq === ++restarts &&
               [1, 2].includes(restarts),

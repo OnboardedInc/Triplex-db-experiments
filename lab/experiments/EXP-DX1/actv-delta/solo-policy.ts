@@ -44,17 +44,24 @@ export async function scopedDeepPolicy(c: CompositionHandle, seed: number) {
     },
   );
   assert(result.ok);
+  const policy = await reopenDeepPolicy(c, seed);
+  assert.equal(policy.catalog.txId, result.value.txId);
+  assert.equal(policy.catalog.position, result.value.position);
+  assert.deepEqual(policy.catalog.facts, floorBytes(result.value.triples));
+  return policy;
+}
+function floorBytes(triples: readonly PulledTriple[]): Floor[] {
+  return triples
+    .map(({ entityId, attribute, value, validFrom }) => {
+      assert(validFrom !== undefined);
+      return { entityId, attribute, value, validFrom };
+    })
+    .sort((a, b) => a.entityId.localeCompare(b.entityId));
+}
+export async function reopenDeepPolicy(c: CompositionHandle, seed: number) {
   const stored = await c.transactionByCommand(command);
-  assert(stored.ok && stored.value?.txId === result.value.txId);
-  assert.equal(stored.value.position, result.value.position);
+  assert(stored.ok && stored.value);
   assert.equal(stored.value.commandId, command);
-  const actual = (triples: readonly PulledTriple[]): Floor[] =>
-    triples
-      .map(({ entityId, attribute, value, validFrom }) => {
-        assert(validFrom !== undefined);
-        return { entityId, attribute, value, validFrom };
-      })
-      .sort((a, b) => a.entityId.localeCompare(b.entityId));
   assert(c.scopeName);
   const reopened = receiptOfRecord(stored.value);
   const catalog = {
@@ -62,9 +69,8 @@ export async function scopedDeepPolicy(c: CompositionHandle, seed: number) {
     scope: c.scopeName,
     position: reopened.position,
     txId: reopened.txId,
-    facts: actual(reopened.triples),
+    facts: floorBytes(reopened.triples),
   };
-  assert.deepEqual(catalog.facts, actual(result.value.triples));
   checkDeepPolicy(catalog, c.scopeName, seed);
   const shared = new Map(
     catalog.facts.map((f) => [

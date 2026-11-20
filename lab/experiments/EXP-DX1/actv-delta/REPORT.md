@@ -5,16 +5,16 @@ The deadline checker now rejects a missing last read and a stale read that arriv
 A new reader can finish an interrupted Publish. A clock worker can catch up after restart with saves idle.
 The earlier crash recovered 11,960 changed rows and 997 owed notices. It proved recovery from the recipe.
 The earlier save comparison measured 6.68% extra database log bytes per fact. The owner’s target was 15%.
-A fresh loaded run, an independent full source check and the matching server collector still need proof.
+The two timing modes now have separate databases and a raw read log. The final local gate is pending.
 
 | Finding | Decision | Fix | Negative control |
 | --- | --- | --- | --- |
 | 1 Durable endpoints | Accepted | Owed assertion at seal and separate materialized ledger | The old ACK had no owed assertion |
-| 2 Deadlines | Accepted | Strict clock scorer, pending campaign wiring | Missing final route probe and stale pre-ACK return |
-| 3 Collector | Accepted | Pending integration | Two references must fail and three exact ordered identities must agree |
+| 2 Deadlines | Accepted | Open-loop ingress, raw read tape and a strict scorer | Missing final route probe and stale pre-ACK return |
+| 3 Collector | Accepted | BM1 c07040e4b and its exact parser in preflight | Two references must fail and three exact ordered identities must agree |
 | 4 Effective time | Accepted | Public valid clock and idle recovery | Future wage release and midnight expiry without a save |
-| 5 Independent source basis | Accepted | Native ordinal on fresh audited accounts, pending independent source replay | Terminal position differs from the proposed ordinal |
-| 6 Cold arms | Accepted | Pending | Reject a previously observed witness or previously published offer |
+| 5 Independent source basis | Accepted | Native journal positions and independent commanded inputs | Terminal position differs from the proposed ordinal |
+| 6 Cold arms | Accepted | Separate R1-only arms, fresh process and withheld people | Reject a previously observed witness or previously published offer |
 | 7 Interrupted Publish | Accepted | Read-side fence recovery and original claim replay | Save first, interrupted issuer, competing Publish, save after |
 
 OwedRecord names the original event, predecessor, source cut, index and census. Its native assertion is verified at the same cut as the release. DecodeOwed opens those bytes with dispatch idle. PersistPublication writes literal domain changes and item states, then commits the account guard with hashes and native positions for every chunk. OpenStored verifies those exact cuts and bytes. Independent Python equality is still required in the campaign before a completion receives credit.
@@ -27,4 +27,8 @@ The earlier 201-release result was 0.843 s p99 to one verified read, with two ov
 
 The joined path at cff46335b uses the same release-independent ranges and durable notice intent. Share the serial release contract, declaration-driven ranges and retired-item checks. Keep record and literal completion clocks explicit. The 3.9 to 13.4 s stored projections use its compact fixture.
 
-The existing DELTA launcher refuses the server campaign during the audit. No bench server was used. No acceptance pins changed.
+The bare command stays disabled. The audited command is below. Its preflight refuses missing source, raw reads, guards, notices or deadline coverage. The full result records misses separately for each mode and retains the diagnostic output when a mode misses.
+
+`DOCKER_HOST=unix:///var/run/docker.sock node --import tsx lab/experiments/EXP-DX1/scale1/bench.ts launch 2 delta-$(date -u +%Y%m%d%H%M%S) activation --activation-mode delta --delta-audit 2`
+
+The command schedules 45 offers per mode. It has a 160-minute work limit and 20 minutes for shutdown and collection. Three separate 100,000-person seeds project to about 175 minutes at the observed earlier seed rate, before the sweeps or proof. A three-hour completion remains unproved. No bench server was used. No acceptance pins changed.

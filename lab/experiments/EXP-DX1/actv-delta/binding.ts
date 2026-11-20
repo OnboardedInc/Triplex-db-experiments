@@ -55,7 +55,14 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
                   "bench-rung",
                   "loaded",
                   "page-control",
-                  ...(["solo", "deep-loaded", "solo-check", "preflight"].includes(mode)
+                  ...([
+                    "solo",
+                    "deep-loaded",
+                    "solo-check",
+                    "preflight",
+                    "audit-check",
+                    "audit-loaded",
+                  ].includes(mode)
                     ? [
                         "solo",
                         "solo-proof",
@@ -63,6 +70,13 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
                         "reference-traffic",
                         "solo-population",
                         "solo-policy",
+                        "audit-solo",
+                        "audit-clock",
+                        "audit-offers",
+                        "audit-reader",
+                        "audit-replay",
+                        "deep-inputs",
+                        "bm1-collector",
                       ]
                     : []),
                   "v3",
@@ -88,7 +102,15 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
     "lab/bench/lib/composition.ts",
     "lab/bench/lib/deep-activation.ts",
     "lab/world/W0/releases/index.json",
-    ...(["preflight", "server", "solo", "solo-check", "deep-loaded"].includes(mode)
+    ...([
+      "preflight",
+      "server",
+      "solo",
+      "solo-check",
+      "deep-loaded",
+      "audit-check",
+      "audit-loaded",
+    ].includes(mode)
       ? [
           "actv-delta/solo-population.json",
           "scale1/bench.ts",
