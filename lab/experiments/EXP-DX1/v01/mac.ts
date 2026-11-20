@@ -4,18 +4,19 @@ import fs from "node:fs";
 import path from "node:path";
 import { cleanSource, packageBytes } from "./source.ts";
 
-const [commit, store] = process.argv.slice(2);
-assert(process.platform === "darwin" && commit && store && path.isAbsolute(store));
+const [action, commit, argument] = process.argv.slice(2);
+assert(process.platform === "darwin" && commit && argument && path.isAbsolute(argument));
+assert(["--packages", "--image", "--fixture"].includes(action ?? ""));
 const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 cleanSource(head);
 assert.match(commit, /^[a-f0-9]{40}$/);
 execFileSync("git", ["merge-base", "--is-ancestor", commit, head]);
-const source = commit;
 const disk = fs.statfsSync(".");
 assert(disk.bavail * disk.bsize >= 5 * 1024 ** 3);
 const staging = path.resolve("runs/DX-V01");
 fs.mkdirSync(staging, { recursive: true });
-const checkout = fs.mkdtempSync(path.join(staging, "mac-"));
+const checkout = action === "--packages" ? fs.mkdtempSync(path.join(staging, "mac-")) : fs.realpathSync(argument);
+assert(path.dirname(checkout) === staging && /^mac-[a-zA-Z0-9]+$/.test(path.basename(checkout)));
 const repository = path.join(checkout, "repository");
 const runtime = path.dirname(execFileSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], { encoding: "utf8" }).trim());
 const env = {
@@ -28,36 +29,48 @@ const env = {
   DX_TOUCHED_READ_MODE: "validated",
 };
 const command = (bin: string, args: string[]) => execFileSync(bin, args, { env, stdio: "inherit" });
-// [DX-V01] Why: exercise the package build with a fresh index and empty generated directories.
-// Rejected: inheriting a different builder's package outputs or copying the large shared Git object store.
-command("git", ["clone", "--shared", "--no-checkout", "--single-branch", ".", repository]);
-process.chdir(repository);
-command("git", ["checkout", "--detach", source]);
-cleanSource(source, true);
-const root = path.resolve("runs/DX-V01");
-fs.mkdirSync(root, { recursive: true });
-const build = path.join(root, "image");
-const managed = (args: string[]) => command(process.execPath, [
-  "--no-warnings", "--experimental-transform-types",
-  "lab/experiments/EXP-DX1/thin1/managed.ts", ...args,
-]);
-command("pnpm", ["--store-dir", store, "install", "--frozen-lockfile", "--offline"]);
-command("node_modules/.bin/turbo", ["run", "build",
-  "--filter=@triplex-build/triplex-datomic", "--filter=@triplex-build/triplex-host",
-  "--filter=@triplex-build/triplex-qualification", "--filter=@triplex-build/w0"]);
-cleanSource(source);
-fs.writeFileSync(path.join(root, "package-build.json"),
-  JSON.stringify({ source, files: packageBytes() }, null, 2) + "\n", { flag: "wx" });
-const { stageReplay } = await import("../scale1/source.ts");
-const oracleInput = path.join(root, "oracle-input");
-fs.mkdirSync(oracleInput);
-fs.writeFileSync(path.join(oracleInput, "manifest.json"),
-  JSON.stringify(stageReplay(process.cwd(), path.join(oracleInput, "oracle")), null, 2) + "\n", { flag: "wx" });
-console.log("Mac evidence staging " + root);
-managed(["--build", build]);
-const fixture = path.join(root, "fixture");
-fs.mkdirSync(fixture);
-fs.renameSync(oracleInput, path.join(fixture, "oracle-input"));
-managed(["--arm-compact", build, "int1-campaign-proof", "40", fixture]);
-command(process.execPath, ["lab/bin/scorecard.mjs", "--age", "fresh", "--toy-campaign",
-  path.join(fixture, "campaign"), "--commit", source, "--out", path.join(root, "scorecard")]);
+if (action === "--packages") {
+  console.log("Mac checkout " + checkout);
+  // [DX-V01] Why: exercise the package build with a fresh index and empty generated directories.
+  // Rejected: inheriting a different builder's package outputs or copying the large shared Git object store.
+  command("git", ["clone", "--shared", "--no-checkout", "--single-branch", ".", repository]);
+  process.chdir(repository);
+  command("git", ["checkout", "--detach", commit]);
+  cleanSource(commit, true);
+  command("pnpm", ["--store-dir", argument, "install", "--frozen-lockfile", "--offline"]);
+  command("node_modules/.bin/turbo", ["run", "build",
+    "--filter=@triplex-build/triplex-datomic", "--filter=@triplex-build/triplex-host",
+    "--filter=@triplex-build/triplex-qualification", "--filter=@triplex-build/w0"]);
+  cleanSource(commit);
+  const root = path.resolve("runs/DX-V01");
+  fs.mkdirSync(root, { recursive: true });
+  fs.writeFileSync(path.join(root, "package-build.json"),
+    JSON.stringify({ source: commit, files: packageBytes() }, null, 2) + "\n", { flag: "wx" });
+} else {
+  process.chdir(repository);
+  cleanSource(commit);
+  const root = path.resolve("runs/DX-V01");
+  const receipt = JSON.parse(fs.readFileSync(path.join(root, "package-build.json"), "utf8"));
+  assert.equal(receipt.source, commit);
+  assert.deepEqual(packageBytes(), receipt.files);
+  const build = path.join(root, "image");
+  const managed = (args: string[]) => command(process.execPath, [
+    "--no-warnings", "--experimental-transform-types",
+    "lab/experiments/EXP-DX1/thin1/managed.ts", ...args,
+  ]);
+  if (action === "--image") managed(["--build", build]);
+  else {
+    // [DX-V01] Why: leave each native attempt and its independently staged oracle available after failure.
+    // Rejected: recycling a previous output directory or taking a Mac measurement lease.
+    const fixture = fs.mkdtempSync(path.join(root, "fixture-"));
+    const oracleInput = path.join(fixture, "oracle-input");
+    fs.mkdirSync(oracleInput);
+    const { stageReplay } = await import("../scale1/source.ts");
+    fs.writeFileSync(path.join(oracleInput, "manifest.json"),
+      JSON.stringify(stageReplay(process.cwd(), path.join(oracleInput, "oracle")), null, 2) + "\n", { flag: "wx" });
+    console.log("Mac evidence staging " + fixture);
+    managed(["--arm-compact", build, "int1-campaign-proof", "40", fixture]);
+    command(process.execPath, ["lab/bin/scorecard.mjs", "--age", "fresh", "--toy-campaign",
+      path.join(fixture, "campaign"), "--commit", commit, "--out", path.join(fixture, "scorecard")]);
+  }
+}
