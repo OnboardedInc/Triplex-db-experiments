@@ -520,13 +520,11 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   if (id.tenant) {
     const observed = path.join(dir, "tenant-observations.json"),
       cross = report.deep.crossAccount;
-    if (pooled !== "frozen") {
-      hashes["tenant-observations.json"] = await fileHash(observed);
-      assert.equal(hashes["tenant-observations.json"], report.deep.tenantObservationsSha256);
-      tenantEvidence = JSON.parse(fs.readFileSync(observed, "utf8"));
-      assert.deepEqual(tenantEvidence.identity, id);
-      assert(tenantEvidence.database === db && tenantEvidence.traceStart === commonStart);
-    }
+    hashes["tenant-observations.json"] = await fileHash(observed);
+    assert.equal(hashes["tenant-observations.json"], report.deep.tenantObservationsSha256);
+    tenantEvidence = JSON.parse(fs.readFileSync(observed, "utf8"));
+    assert.deepEqual(tenantEvidence.identity, id);
+    assert(tenantEvidence.database === db && tenantEvidence.traceStart === commonStart);
     assert.deepEqual(cross.identity, id);
     assert.equal(cross.database, db);
     assert.deepEqual(cross.proof.receiptProjection, cross.seedProjection);
