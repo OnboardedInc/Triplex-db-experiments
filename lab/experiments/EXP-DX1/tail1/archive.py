@@ -2,6 +2,7 @@
 """Read the sealed SCALE1 input without unpacking its observation store."""
 
 import argparse
+from bisect import bisect_left
 from collections import Counter
 import hashlib
 import json
@@ -57,12 +58,73 @@ def write_json(file, data):
         output.write("\n")
 
 
+def archive_observations(report, settings, resources, writer_log, primary, history):
+    start = report["traceStartAbsMs"]
+    stop = start + 5910000
+    assert set(settings) == set(ROLES)
+    for role, row in settings.items():
+        assert row["process"] == role and row["source"] == SOURCE and row["slot"] == SLOT
+    assert len(resources) > 1 and all(r["prefix"] == SLOT for r in resources)
+    samples = [r for r in resources if start <= r["at"] < stop]
+    assert samples[0]["at"] - start < 10000 and stop - samples[-1]["at"] < 10000
+    first, last = samples[0], samples[-1]
+    resources_by_role = {}
+    for role in first["members"]:
+        def cpu(sample):
+            count = re.search(r"^usage_usec (\d+)$", sample["members"][role]["cpu"], re.MULTILINE)
+            return int(count[1])
+        resources_by_role[role] = {
+            "averageCores": (cpu(last) - cpu(first)) / ((last["at"] - first["at"]) * 1000),
+            "maximumSampledBytes": max(r["members"][role]["current"] for r in samples),
+            "archiveJvmMaxHeapBytes": settings.get(role, {}).get("jvm", {}).get("maxHeapBytes"),
+        }
+    maintenance = [(job["driverRequestedAtMs"] - start, job["driverCompletedAtMs"] - start)
+                   for job in report["maintenance"]["events"]]
+    history_spans = [(p["startMs"], p["endMs"]) for p in history]
+    classification = {"history": [], "other-explicit-index": [], "outside-known-overlays": []}
+    for event in pauses(writer_log):
+        end = event["uptimeMs"] - 475827.078
+        begin = end - event["ms"]
+        if end <= 0 or begin >= stop - start:
+            continue
+        def overlaps(intervals):
+            return any(begin < right and end > left for left, right in intervals)
+        bucket = ("history" if overlaps(history_spans) else "other-explicit-index" if overlaps(maintenance)
+                  else "outside-known-overlays")
+        classification[bucket].append(event)
+    # [DX-TAIL1] Why: the archived Serial heap is reclaimed only at these events.
+    # Rejected: calling the rounded occupancy differences exact allocations or assigning them to a request.
+    offsets = [r["offsetMs"] for r in primary]
+    net_mib = elapsed_s = offers_between = gaps = 0
+    previous = None
+    for match in re.finditer(r"^\[([\d.]+)s\].*? (\d+)M->(\d+)M\(\d+M\) ([\d.]+)ms$", writer_log, re.MULTILINE):
+        end = float(match[1]) * 1000 - 475827.078
+        begin = end - float(match[4])
+        if previous and 0 <= previous[0] <= begin < end < stop - start:
+            last_end, last_after = previous
+            net_mib += max(0, int(match[2]) - last_after)
+            elapsed_s += (begin - last_end) / 1000
+            offers_between += bisect_left(offsets, begin) - bisect_left(offsets, last_end)
+            gaps += 1
+        previous = end, int(match[3])
+    assert elapsed_s > 0 and offers_between > 0
+    ack = [r["verdictMs"] for r in primary]
+    return {"archive": ARCHIVE, "source": SOURCE, "slot": SLOT, "primarySaves": len(ack),
+            "ackMs": quantiles(ack), "savesPerScheduledSecond": len(ack) / 5910,
+            "prefix240AckMs": quantiles([r["verdictMs"] for r in primary if r["offsetMs"] < 240000]),
+            "resourcesDuringOffers": resources_by_role, "resourceSamples": len(samples),
+            "serialBetweenGcHeapGrowth": {"gaps": gaps, "seconds": elapsed_s, "primaryOffers": offers_between,
+                "mib": net_mib, "mibPerSecond": net_mib / elapsed_s, "mibPerPrimaryOffer": net_mib / offers_between},
+            "writerPausesByKnownBenchOverlap": {k: describe(v) for k, v in classification.items()}}
+
+
 def read_archive(archive, output):
     with archive.open("rb") as stream:
         actual = hashlib.file_digest(stream, "sha256").hexdigest()
     if actual != ARCHIVE:
         raise ValueError("Deep B archive SHA-256 mismatch")
-    logs, rows = {}, []
+    logs, settings, rows = {}, {}, []
+    resources = None
     report = ledger_hash = None
     with subprocess.Popen(["zstd", "-dc", "--", archive], stdout=subprocess.PIPE) as decoder:
         with tarfile.open(fileobj=decoder.stdout, mode="r|") as tar:
@@ -81,11 +143,17 @@ def read_archive(archive, output):
                                     "verdictMs", "outcome", "expired")
                             rows.append({key: row.get(key) for key in keys})
                     ledger_hash = digest.hexdigest()
+                if entry.name == "resources.jsonl":
+                    assert resources is None and entry.isfile()
+                    resources = [json.loads(line) for line in tar.extractfile(entry)]
                 for role in ROLES:
                     if entry.name == f"trace/raw/{role}-gc.log.zst":
                         assert role not in logs and entry.isfile()
                         logs[role] = subprocess.run(["zstd", "-dc"], input=tar.extractfile(entry).read(),
                                                     capture_output=True, check=True).stdout.decode()
+                    if entry.name == f"trace/raw/{role}-native-settings.json":
+                        assert role not in settings and entry.isfile()
+                        settings[role] = json.load(tar.extractfile(entry))
         # tar stops at the end marker before zstd necessarily reaches its checksum.
         while decoder.stdout.read(1024 * 1024):
             pass
@@ -133,6 +201,7 @@ def read_archive(archive, output):
                "prefixPrimary": {s: sum(r["offsetMs"] < s * 1000 for r in primary) for s in (180, 240, 300, 900)},
                "historyWindows": history, "rolesFullProcess": {role: describe(list(pauses(logs[role]))) for role in ROLES},
                "writerByOverlap": {name: describe(events) for name, events in cohorts.items()}})
+    write_json(output / "observations.json", archive_observations(report, settings, resources, logs["gw-w"], primary, history))
 
 
 if __name__ == "__main__":

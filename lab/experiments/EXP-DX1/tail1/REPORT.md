@@ -19,7 +19,9 @@ The archive and its ledger match their published hashes. All 58,138 scheduled ev
 | Read gateway | 198 | 45 / 79 / 0 / 74 | 25.23 / 131.77 / 169.25 |
 | Transactor | 1,397 | 292 / 543 / 0 / 562 | 12.90 / 107.97 / 251.10 |
 
-The analyst's writer clock fit puts 244 pauses in ordinary offer windows, including eight full collections with a 449.37 ms maximum pause. It puts 27 in the five P4 history windows, including two full collections and a 454.27 ms maximum. The archived log reports allocation failure on the ten full collections. That names a collector trigger. Attribution of the initiating allocation requires a fresh profile or an overlay control. Reader and transactor totals span startup through shutdown because their archived times lack the fitted anchor.
+The writer clock fit puts 237 pauses outside known overlays, including eight full collections with a 449.37 ms maximum. The five history windows contain 27 pauses, including two full collections and a 454.27 ms maximum. Seven young pauses overlap other explicit index requests. The full collections report allocation failure. The archived reader and transactor totals span startup through shutdown.
+The writer heap grew about 21.36 MiB/s between Serial pauses, or 2.21 MiB per primary offer across 55,795 covered offers. This estimate uses rounded heap occupancy and includes feed and maintenance traffic. Archived maximum heaps were 3.87/4/5 GiB for writer/reader/transactor in 6 GiB containers.
+Archived ACK p50/p99/p99.9/max was 5.10/86.74/447.17/602.04 ms by exact rank, and 4.62/39.43/152.68/191.82 ms in the first 240 seconds. The analyst found a `/begin` on 21,130 of 56,505 primary saves (37.4%).
 
 ## Collector arms
 
@@ -41,9 +43,7 @@ Eleven focused tests and the Datomic type check passed. The native gate captures
 - The Mac measurement requires the attempt's source, slot and nonce, PostgreSQL durability readback, all primary and resend offers, unique ACK positions, exact receipt coverage and a fresh independent replay check. It binds resource samples to the same four containers and records their cleanup.
 - The receipt oracle compares actual assertion IDs and values at five fresh pinned cuts against its hashed case, along with the observed conflict and receipt order. Captures are created in the newly allocated attempt directory.
 - The archive results are historical. The replay is a diagnostic, and the acceptance contract is unchanged.
-
 Image source pin changes under `packages/datomic/gateway/src/triplex/gateway/`, SHA-256 before → after.
-
 - `lean.clj` `bafa5d00aaaf87321396674f16d6ffc03faa664100a75ce0024de7287ce58ca2` → `115812796134acf278ec30d71eabd9710fb121e7759475b28df97a43ed815fee`.
 - `storage.clj` `341f45cf51ea1f785292b72eca34951d7fe10c9ace55e69af8fbe9df71234b60` → `144e4ecd3742f1323669e67ddaa14dfd3bd69e22b9366ac5d02bcad1bb2bff66`.
 

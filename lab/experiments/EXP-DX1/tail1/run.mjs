@@ -61,8 +61,8 @@ function spawnBound(command, args, { env, log, signal, deadline }) {
   const timer = setTimeout(stop, Math.max(1, deadline - Date.now()));
   if (signal.aborted) stop();
   signal.addEventListener("abort", stop, { once: true });
-  const done = new Promise((resolve, reject) => {
-    child.once("error", reject);
+  const done = new Promise((resolve) => {
+    child.once("error", (error) => resolve({ code: null, signal: null, error: String(error) }));
     child.once("close", (code, killed) => resolve({ code, signal: killed }));
   }).finally(() => {
     signal.removeEventListener("abort", stop);
@@ -75,6 +75,7 @@ async function waitFor(probe, child, signal, deadline) {
   for (;;) {
     signal.throwIfAborted();
     assert(Date.now() < deadline, "Timed out waiting for the replay barrier");
+    assert(child.pid, "Driver spawn failed");
     assert(
       child.exitCode === null && child.signalCode === null,
       "Driver exited before the replay barrier",

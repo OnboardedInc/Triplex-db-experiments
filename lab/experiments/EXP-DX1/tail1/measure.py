@@ -56,8 +56,20 @@ def measure(out):
     assert stack["prefix"] == identity["slot"]
     assert all(stack["durability"][key] == "on" for key in ("fsync", "synchronous_commit", "full_page_writes"))
     ids = {row["name"].removeprefix(identity["slot"] + "-"): row["id"] for row in stack["containers"]}
-    effective = load(out / "runtime-flags.json")
-    assert effective["identity"] == identity and effective["ids"] == ids
+    flags = out / "runtime-flags.json"
+    if flags.exists():
+        effective = load(flags)
+        assert effective["identity"] == identity and effective["ids"] == ids
+    # [DX-TAIL1] Why: the initial control predates the argument readback. Its
+    # mounted native startup record still proves the exact process and heap.
+    # Rejected: filling absent flags from the arm's desired settings.
+    jvm = {}
+    for role in ("gw-w", "gw-r", "tx"):
+        row = load(dir / "config" / (role + "-native-settings.json"))
+        assert row["source"] == identity["source"] and row["slot"] == identity["slot"] and row["process"] == role
+        heap = row["jvm"]["maxHeapBytes"] / (2 ** 20)
+        assert 0 < heap <= attempt["caps"][role]
+        jvm[role] = heap
     with subprocess.Popen(["zstd", "-dc", out / "ns-writes.jsonl.zst"], stdout=subprocess.PIPE) as reader:
         writes = [json.loads(line) for line in reader.stdout]
         assert reader.wait() == 0
@@ -118,7 +130,7 @@ def measure(out):
             "averageCores": used / ((last["before"] - first["before"]) * 1000),
             "sampledPeakMiB": max(s["stats"][role]["current"] for s in inside) / (2 ** 20),
             "peakSinceStartupMiB": last["stats"][role]["peak"] / (2 ** 20),
-            "heapMaxMiB": attempt["heaps"].get(role), "containerMiB": attempt["caps"][role],
+            "heapMaxMiB": jvm.get(role), "containerMiB": attempt["caps"][role],
         }
     allocation = out / "allocation.json"
     groups = None
@@ -135,6 +147,7 @@ def measure(out):
         "gatewayRequests": dict(requests), "requestsPerSave": requests.total() / len(saved),
         "transactJoinMissing": sum("transact" not in exchanges[trace_id] for trace_id in saved),
         "allocationSampleWeightBytesPerSave": sum(g["weightBytes"] for g in groups.values()) / len(saved) if groups else None,
+        "allocationSampleWeightBytesPerSecond": sum(g["weightBytes"] for g in groups.values()) / attempt["seconds"] if groups else None,
         "allocationGroups": groups,
     })
 
