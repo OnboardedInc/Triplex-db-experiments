@@ -1,6 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { arms, cells, fairArms, fairPrediction, fairSeconds } from "./server-tape.ts";
+import {
+  arms,
+  cells,
+  fairArms,
+  fairPrediction,
+  fairSeconds,
+  ownerArms,
+  ownerPrediction,
+} from "./server-tape.ts";
 
 test("the four fair-policy arms share their sealed field inputs and matched quiet arrivals", () => {
   const original = new Map(cells(arms[0]).map(({ label, tape }) => [label, tape]));
@@ -49,4 +57,26 @@ test("predictions express the one-credit round trip and distinguish a missing fu
     [null, null, null, 28],
   );
   for (const arm of fairArms) assert.equal(fairPrediction(arm, 235, true).serving, 3.5);
+});
+
+test("grouped, original prepared and numeric-owner arms share the same shortened tape and window order", () => {
+  assert.deepEqual(
+    ownerArms.map(({ writer, numericOwner }) => [writer, numericOwner]),
+    [
+      ["K", false],
+      ["S", false],
+      ["S", true],
+    ],
+  );
+  const expected = cells(fairArms[0]).map(({ label, tapeSha }) => [label, tapeSha]);
+  for (const arm of ownerArms) {
+    const schedule = cells(arm);
+    assert.deepEqual(
+      schedule.map(({ label, tapeSha }) => [label, tapeSha]),
+      expected,
+    );
+    assert(schedule.every(({ duration }) => duration === 60));
+    assert.equal(ownerPrediction(arm, 394, true).serving, 3.5);
+    assert(ownerPrediction(arm, 394, false).serving < 394);
+  }
 });

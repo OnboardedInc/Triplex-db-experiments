@@ -36,15 +36,25 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     arm = next(a for a in plan["arms"] if a["id"] == header["arm"]["id"])
     assert {k: v for k, v in arm.items() if k != "cells"} == header["arm"]
     assert plan["seconds"] == header["seconds"]
-    followup = plan.get("campaign") == "fair"
+    campaign = plan.get("campaign", "comparison")
+    assert campaign in ("comparison", "fair", "owner")
+    followup = campaign != "comparison"
     fair_credits = header.get("fairCredits", 0)
     assert fair_credits in (0, 1, 2, 6) and (not fair_credits or arm["writer"] == "S")
     assert fair_credits == (arm.get("credits", plan.get("fairCredits", 0)) if arm["writer"] == "S" else 0)
-    if followup:
+    if campaign == "fair":
         assert [(a["id"], a["writers"], a["writer"], a["reverse"], a["credits"]) for a in plan["arms"]] == [
             ("1-off-S", 1, "S", False, 0), ("1-on-S", 1, "S", False, 1),
             ("2-on-S", 2, "S", True, 1), ("2-off-S", 2, "S", True, 0),
         ]
+    if campaign == "owner":
+        assert [(a["id"], a["writers"], a["writer"], a["reverse"], a["numericOwner"])
+                for a in plan["arms"]] == [
+            ("1-group-K", 1, "K", False, False), ("1-old-S", 1, "S", False, False),
+            ("1-fixed-S", 1, "S", False, True),
+        ]
+        assert fair_credits == 0
+    if followup:
         phases = ("loaded", "alone") if arm["reverse"] else ("alone", "loaded")
         assert [(c["label"], c["rate"], c["offered"]) for c in arm["cells"]] == [
             (f"r{rate}-{phase}", rate, round((3.5 if phase == "alone" else rate) * plan["seconds"]))
@@ -80,6 +90,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert option["database"] == header["db"] and option["position"] == header["head"]
             assert option["attempt"] == header["nonce"] and option["gatewaySourceHash"] == header["gatewaySource"]
             assert bool(option.get("subjectSave")) == (arm["writer"] == "S")
+            assert bool(option.get("subjectNumericOwner")) == bool(arm.get("numericOwner"))
             assert option["options"]["groupCommit"] == (arm["writer"] == "K")
         assert re.fullmatch(r"[0-9a-f-]{36}", (directory / "boot-id").read_text().strip())
         for role in roles:
@@ -209,7 +220,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             kept.extend(directory.parent / name for name in ("comparison.SEAL.sha256", "SEAL.sha256", "source"))
     return {"fixture": fixture, "source": header["commit"], "nonce": header["nonce"], "slot": header["slot"],
             "seedSha": header["seedSha"], "dumpSha": header["dumpSha"], "planSha": sha(plan_path),
-            "fairCredits": fair_credits,
+            "fairCredits": fair_credits, "numericOwner": bool(arm.get("numericOwner")),
             "rawSha256": {path.name: sha(path) for path in kept}, "cells": metrics}
 
 

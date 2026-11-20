@@ -10,7 +10,7 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 here=lab/experiments/EXP-DX1/prep1
 stack=lab/experiments/EXP-DX1/stack
-mode=${1:?expected run, fair or arm}
+mode=${1:?expected run, owner, fair or arm}
 out=${2:?provide an absolute new output directory}
 source=${3:?provide the pinned Git commit}
 [[ "$out" == /* && "$source" =~ ^[a-f0-9]{40}$ && $(git rev-parse HEAD) == "$source" && -z $(git status --porcelain) ]]
@@ -34,7 +34,7 @@ nonce() { cat /proc/sys/kernel/random/uuid; }
 clean() {
   if [[ -n ${owned:-} ]]; then
     bash "$stack/down.sh" "$owned" --volumes
-    if [[ ${DX_PREP1_CAMPAIGN:-comparison} == fair ]]; then
+    if [[ ${DX_PREP1_CAMPAIGN:-comparison} != comparison ]]; then
       # [DX-PREP1] Why: only publish an arm after this fresh stack's resources are gone.
       # Rejected: treating a best-effort teardown as confirmed cleanup.
       local remaining
@@ -47,12 +47,12 @@ clean() {
 on_exit() { ret=$?; trap - EXIT; clean; exit "$ret"; }
 trap on_exit EXIT
 trap 'exit 143' TERM INT
-if [[ $mode == fair ]]; then
+if [[ $mode == fair || $mode == owner ]]; then
   [[ $# == 4 ]]
   # [DX-PREP1] Why: cap time from seed verification through the last cleanup.
   # Rejected: four independent timeouts that let restore and teardown exceed the hour.
-  exec timeout --kill-after=40s 3520s bash "$here/server.sh" fair-timed "$out" "$source" "$4"
-elif [[ $mode == fair-timed ]]; then
+  exec timeout --kill-after=40s 3520s bash "$here/server.sh" "$mode-timed" "$out" "$source" "$4"
+elif [[ $mode == fair-timed || $mode == owner-timed ]]; then
   [[ $# == 4 && $4 == /* && ! -e $out && -z $(docker ps -q) ]]
   parent=$(realpath -e "$4")
   [[ -d $parent && -f $parent/SEAL.sha256 && $(head -c 5 "$parent/seed.pgdump") == PGDMP ]]
@@ -70,7 +70,7 @@ PY
   tag=$(nonce); tag=${tag%%-*}
   printf '%s\n' "$tag" > "$prefix_file"
   printf '%s\n' "$source" > "$out/source"
-  export DX_PREP1_CAMPAIGN=fair DX_PREP1_FAIR_CREDITS=0
+  export DX_PREP1_CAMPAIGN=${mode%-timed} DX_PREP1_FAIR_CREDITS=0
   # [DX-PREP1] Why: restore the exact earlier sealed bytes into each fresh stack without duplicating its dump.
   # Rejected: fresh seed generation or carrying an edited database from one policy into the other.
   cp "$parent/SEAL.sha256" "$out/comparison.SEAL.sha256"
@@ -79,7 +79,9 @@ PY
   "${producer[@]}" plan > "$out/plan.json"
   (cd "$out"; head -n 2 comparison.SEAL.sha256; sha256sum plan.json) > "$out/SEAL.sha256"
   chmod a-w "$out"/{comparison.SEAL.sha256,SEAL.sha256,source,plan.json,prefix}
-  for cell in 1-off-S 1-on-S 2-on-S 2-off-S; do
+  cells=(1-off-S 1-on-S 2-on-S 2-off-S)
+  if [[ $mode == owner-timed ]]; then cells=(1-group-K 1-old-S 1-fixed-S); fi
+  for cell in "${cells[@]}"; do
     owned="tx2-dxprep1-$tag-${cell,,}"
     timeout --foreground --kill-after=20s 830s bash "$here/server.sh" arm "$out" "$source" "$cell"
     unset owned
@@ -87,6 +89,7 @@ PY
 elif [[ $mode == run ]]; then
   [[ $# == 3 && -z $(docker ps -q) ]]
   export DX_PREP1_CAMPAIGN=comparison
+  export TX2_SUBJECT_NUMERIC_OWNER=0
   mkdir "$out"
   tag=$(nonce); tag=${tag%%-*}
   printf '%s\n' "$tag" > "$prefix_file"
@@ -125,6 +128,8 @@ elif [[ $mode == arm ]]; then
   [[ $# == 4 ]]
   if [[ ${DX_PREP1_CAMPAIGN:-comparison} == fair ]]; then
     [[ $cell =~ ^(1|2)-(off|on)-S$ && $(cat "$out/source") == "$source" ]]
+  elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == owner ]]; then
+    [[ $cell =~ ^1-(group-K|old-S|fixed-S)$ && $(cat "$out/source") == "$source" ]]
   else
     [[ $cell =~ ^(1|2|4)-(0-K|1-S|2-S|3-K)$ ]]
   fi
@@ -134,7 +139,9 @@ elif [[ $mode == arm ]]; then
   export DX_PREP1_DUMP="$dump" DX_PREP1_DUMP_SHA=$(awk '$2=="seed.pgdump" {print $1}' "$out/SEAL.sha256")
   export DX_PREP1_WRITERS=${cell%%-*}
   export DX_PREP1_SUBJECT=0 DX_GROUP_COMMIT=1 DX_LIVE_PRIORITY=1
+  export TX2_SUBJECT_NUMERIC_OWNER=0
   if [[ $cell == *-S ]]; then export DX_PREP1_SUBJECT=1 DX_GROUP_COMMIT=0 DX_LIVE_PRIORITY=0; fi
+  if [[ $cell == 1-fixed-S ]]; then export TX2_SUBJECT_NUMERIC_OWNER=1; fi
   export DX_WRITE_OPTIONS_ATTEMPT=$(nonce)
   # Hold total configured writer heap and the writer CPU mask fixed across peer counts.
   export DX_GW_WRITE_JAVA_OPTS="-Xms$((512/DX_PREP1_WRITERS))m -Xmx$((4096/DX_PREP1_WRITERS))m -XX:+UseG1GC"

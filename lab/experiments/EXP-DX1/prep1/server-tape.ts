@@ -11,6 +11,7 @@ export type Arm = {
   writer: "K" | "S";
   reverse: boolean;
   credits?: 0 | 1;
+  numericOwner?: boolean;
 };
 export const arms: Arm[] = widths.flatMap((writers) =>
   (["K", "S", "S", "K"] as const).map((writer, repeat) => ({
@@ -28,6 +29,12 @@ export const fairArms: Arm[] = [
   { id: "2-on-S", writers: 2, writer: "S", reverse: true, credits: 1 },
   { id: "2-off-S", writers: 2, writer: "S", reverse: true, credits: 0 },
 ];
+export const ownerArms: Arm[] = [
+  { id: "1-group-K", writers: 1, writer: "K", reverse: false, numericOwner: false },
+  { id: "1-old-S", writers: 1, writer: "S", reverse: false, numericOwner: false },
+  { id: "1-fixed-S", writers: 1, writer: "S", reverse: false, numericOwner: true },
+];
+const shortened = (arm: Arm) => arm.credits !== undefined || arm.numericOwner !== undefined;
 export const operation = (label: string, ordinal: number) => `${label}-${ordinal}`;
 
 function newCells(arm: Arm, duration: number) {
@@ -51,8 +58,8 @@ function newCells(arm: Arm, duration: number) {
     .map((cell) => ({ ...cell, tapeSha: sha(cell.tape) }));
 }
 
-export function cells(arm: Arm, duration = arm.credits === undefined ? seconds : fairSeconds) {
-  if (arm.credits === undefined) return newCells(arm, duration);
+export function cells(arm: Arm, duration = shortened(arm) ? fairSeconds : seconds) {
+  if (!shortened(arm)) return newCells(arm, duration);
   return newCells(arm, seconds)
     .filter(({ rate }) => rate === 235 || rate === 394)
     .map((cell) => {
@@ -93,6 +100,42 @@ export function fairPrediction(arm: Arm, rate: number, quietOnly: boolean) {
     p99Ms: quietOnly ? 8.8 : rate > capacity ? null : rate === 235 ? 27.48 : 28,
     quietP99Ms,
     quietRatio: Number((quietP99Ms / 8.8).toFixed(2)),
+  };
+}
+
+export function ownerPrediction(arm: Arm, rate: number, quietOnly: boolean) {
+  const first = rate === 235;
+  const solo = arm.writer === "K" ? (first ? 119 : 37) : first ? 63 : 17;
+  const serving =
+    arm.writer === "K"
+      ? first
+        ? 180
+        : 182
+      : arm.numericOwner
+        ? first
+          ? 146
+          : 115
+        : first
+          ? 141
+          : 111;
+  const quietP99Ms = quietOnly
+    ? solo
+    : arm.writer === "K"
+      ? first
+        ? 341
+        : 294
+      : arm.numericOwner
+        ? first
+          ? 1120
+          : 1430
+        : first
+          ? 1169
+          : 1474;
+  return {
+    serving: quietOnly ? 3.5 : serving,
+    p99Ms: quietOnly ? solo : null,
+    quietP99Ms,
+    quietRatio: quietP99Ms / solo,
   };
 }
 

@@ -17,6 +17,8 @@ import {
   fairPrediction,
   fairSeconds,
   operation,
+  ownerArms,
+  ownerPrediction,
   prediction,
   seconds,
   type Arm,
@@ -51,9 +53,9 @@ const answer = ":field/answer-prep1",
 const requestedCredits = Number(process.env.DX_PREP1_FAIR_CREDITS ?? 0);
 assert([0, 1, 2, 6].includes(requestedCredits));
 const campaign = process.env.DX_PREP1_CAMPAIGN ?? "comparison";
-assert(campaign === "comparison" || campaign === "fair");
-const campaignArms = campaign === "fair" ? fairArms : arms;
-const campaignSeconds = campaign === "fair" ? fairSeconds : seconds;
+assert(campaign === "comparison" || campaign === "fair" || campaign === "owner");
+const campaignArms = campaign === "owner" ? ownerArms : campaign === "fair" ? fairArms : arms;
+const campaignSeconds = campaign === "comparison" ? seconds : fairSeconds;
 const creditsFor = (arm: Arm) => (arm.writer === "S" ? (arm.credits ?? requestedCredits) : 0);
 const root = (a: number, p: number) => ids.placement(accounts[a]!.first + p);
 const fact = (e: string, a: string, value: string): Fact => ({
@@ -377,7 +379,7 @@ async function armRun(
   );
   const schedule = cells(arm);
   const fields = new Map(baseline.fields);
-  if (arm.credits !== undefined)
+  if (campaign !== "comparison")
     for (const { tape } of schedule)
       for (const offer of tape)
         assert(fields.has(root(offer.account, offer.person)), "sealed predecessor missing");
@@ -418,6 +420,7 @@ async function armRun(
         ],
         [b, !b, !b, true, true, true, false, false, false, true, true, false, null, 8],
       );
+      assert.equal(Boolean(got.subjectNumericOwner), Boolean(arm.numericOwner));
       if (b) assert.match(got.subjectFunction, /^:triplex\.subject\/v-[0-9a-f]{24}$/);
       options.push(got);
     }
@@ -519,8 +522,8 @@ async function preflight(out: string, arm: Arm) {
         t: { v: String(t) },
         recordedAt: { v: clock },
         timeline: { payloadPrepared: 20, submitted: 25, completed: 30, responsePrepared: 40 },
-        writePath: { function: "mock/subject" },
-        subjectSave: "mock/subject",
+        writePath: { function: arm.writer === "S" ? "mock/subject" : "mock/grouped" },
+        ...(arm.writer === "S" ? { subjectSave: "mock/subject" } : {}),
       };
     },
   } as unknown as DatomicClient;
@@ -590,7 +593,7 @@ else if (action === "arm") {
     JSON.stringify({
       seconds: duration,
       fairCredits: requestedCredits,
-      ...(campaign === "fair" ? { campaign } : {}),
+      ...(campaign !== "comparison" ? { campaign } : {}),
       tapes,
       arms: campaignArms.map((arm) => ({
         ...arm,
@@ -600,9 +603,11 @@ else if (action === "arm") {
           tapeSha,
           offered: tape.length,
           predicted:
-            campaign === "fair"
-              ? fairPrediction(arm, rate, label.endsWith("-alone"))
-              : prediction(arm.writers, arm.writer, rate, label.endsWith("-alone")),
+            campaign === "owner"
+              ? ownerPrediction(arm, rate, label.endsWith("-alone"))
+              : campaign === "fair"
+                ? fairPrediction(arm, rate, label.endsWith("-alone"))
+                : prediction(arm.writers, arm.writer, rate, label.endsWith("-alone")),
         })),
       })),
     }),
