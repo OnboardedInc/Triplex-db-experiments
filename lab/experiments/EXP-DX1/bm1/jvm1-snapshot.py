@@ -21,6 +21,10 @@ SNAPSHOT = ROOT/"cold-postgres"
 PROOF = ROOT/"cold-postgres.json"
 DOCKER = "/usr/bin/docker"
 ENV = dict(os.environ, DOCKER_HOST="unix:///var/run/docker.sock")
+NEXT = {
+    "jvm25": "608420dca067c93ef81a7595c65c8498836e5e35",
+    "tail-backlog": "da4c34f48f3749afcacfe45ac51a727ab0a2160a",
+}
 
 
 def output(*args, timeout=60):
@@ -60,7 +64,6 @@ def mount(slot):
 
 
 def staged():
-    assert output("git", "rev-parse", "HEAD") == SOURCE
     seed = json.loads(SEED.read_bytes())
     assert seed["source"] == SOURCE and seed["facts"] == 16_245_050 and seed["seedCut"] == 8710
     assert json.loads((ROOT/"seed/results/seed/cleanup.json").read_bytes()) == {
@@ -70,6 +73,7 @@ def staged():
 
 
 def provision():
+    assert output("git", "rev-parse", "HEAD") == SOURCE
     seed = staged()
     if PROOF.is_file():
         assert json.loads(PROOF.read_bytes())["logicalDumpSha256"] == seed["dumpSha256"]
@@ -128,11 +132,25 @@ def replay(args):
     assert args[:2] == ["exec", "-i"] and args[3:] == ["pg_restore","-U","postgres","--clean","--if-exists","--exit-on-error","-d","datomic"]
     pg = args[2]
     assert re.fullmatch(r"tx2-dxt1-jvm1-[a-f0-9-]{36}-pg",pg)
-    assert os.path.samestat(os.fstat(0),DUMP.stat())
+    night = os.environ.get("BM1_COLD_CAMPAIGN")
+    if night:
+        campaign = ROOT.parent/("night-n20-"+night)
+        assert os.getuid() == 0 and night in NEXT
+        repo = campaign/"build/repository"
+        assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip() == NEXT[night]
+        assert Path.cwd() == repo and os.environ["DX_JVM1_PG_RESTORE"] == str(DUMP)
+        # [DX-BM1] Why: the newer producer checks the bytes piped to its subprocess.
+        # Rejected: cloning a verified snapshot while acknowledging a different streamed dump.
+        supplied = hashlib.file_digest(sys.stdin.buffer, "sha256").hexdigest()
+    else:
+        assert output("git", "rev-parse", "HEAD") == SOURCE
+        assert os.path.samestat(os.fstat(0),DUMP.stat())
     seed = staged()
     proof = json.loads(PROOF.read_bytes())
     assert proof["source"] == SOURCE and proof["logicalDumpSha256"] == seed["dumpSha256"]
     assert proof["seedSha256"] == sha(SEED) and proof["seedCut"] == seed["seedCut"]
+    if night:
+        assert supplied == proof["logicalDumpSha256"] == os.environ["DX_JVM1_PG_RESTORE_SHA256"]
     path, container = mount(pg.removesuffix("-pg"))
     run(DOCKER,"stop","--time","45",container)
     original = path.with_name("_data.bm1-init")
@@ -149,7 +167,8 @@ def replay(args):
         if time.monotonic() >= until:
             raise TimeoutError("Verified PostgreSQL clone did not reopen")
         time.sleep(1)
-    write(ROOT/"retry"/("restore-"+pg+".json"),dict(source=SOURCE, container=container,
+    destination = campaign/"restore-proofs" if night else ROOT/"retry"
+    write(destination/("restore-"+pg+".json"),dict(source=NEXT[night] if night else SOURCE, container=container,
           physicalManifestSha256=sha(PROOF),logicalDumpSha256=seed["dumpSha256"], seedCut=seed["seedCut"]))
 
 

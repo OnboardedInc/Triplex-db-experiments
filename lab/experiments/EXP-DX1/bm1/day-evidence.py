@@ -5,14 +5,18 @@ from importlib.util import module_from_spec, spec_from_file_location
 import json
 from pathlib import Path
 import shlex
+import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 
 HERE = Path(__file__).resolve().parent
 SERVER = Path("/var/tmp/triplex-bm1")
 MAC = Path.home()/"Claude/Projects/triplex-db-2/evidence"
 SLOTS = {
+    "jvm25": ("night-n20-jvm25", ("small", "campaign", "restore-proofs", "adapter.json", "small-agreement.json", "collector.json")),
+    "tail-backlog": ("night-n20-tail-backlog", ("small", "campaign", "restore-proofs", "adapter.json", "small-agreement.json", "collector.json")),
     "jvm1": ("day-n20-jvm1", ("seed/seed.json", "seed/results", "small/results", "campaign/results",
                              "seed.log", "campaign.log", "retry.log", "retry-resumed.log", "failed-unit.txt",
                              "cold-postgres.json", "retry",
@@ -67,6 +71,9 @@ def archive(name, revision):
                 summaries.append((label, file))
             else:
                 raw.append((label, file))
+    log = SERVER/(root.name+".log")
+    if log.is_file():
+        summaries.append(("unit.log", log))
     assert summaries, f"No result files in {root.name}"
     # [DX-BM1] Why: validate the exact transferred files and preserve original results after any packaging error.
     # Rejected: inferring measurement completion from an archive write or transferring a sealed population image.
@@ -91,7 +98,41 @@ def archive(name, revision):
     return index
 
 
-def collect(name, revision, control):
+def check_compressed(file, member_name, manifest_hash):
+    import hashlib
+    metadata = {}
+    expected = None
+    # [DX-BM1] Why: verify every compressed member with bounded memory and no extracted tree on the Mac.
+    # Rejected: accepting only the outer archive digest or applying no bound to local expansion.
+    with subprocess.Popen(["zstd","-qdc",str(file)], stdout=subprocess.PIPE) as process:
+        assert process.stdout is not None
+        with tarfile.open(fileobj=process.stdout, mode="r|") as archive:
+            for item in archive:
+                name = Path(item.name)
+                assert item.isfile() and not name.is_absolute() and ".." not in name.parts
+                assert item.name not in metadata
+                with archive.extractfile(item) as stream:
+                    if item.name == member_name:
+                        assert expected is None and item.size < 64*1024**2
+                        body = stream.read()
+                        assert hashlib.sha256(body).hexdigest() == manifest_hash
+                        expected = json.loads(body)
+                    else:
+                        digest = hashlib.sha256()
+                        size = 0
+                        while block := stream.read(1024*1024):
+                            digest.update(block)
+                            size += len(block)
+                        assert size == item.size
+                        metadata[item.name] = {"bytes":size,"sha256":digest.hexdigest()}
+        while process.stdout.read(1024*1024):
+            pass
+        assert process.wait() == 0
+    assert expected is not None and expected == metadata
+
+
+def collect(name, revision, control, mode="trees"):
+    assert mode in ("trees","--bundles")
     tool = load("night-client.py")
     report = shlex.quote(str(Path(control)/"lab/experiments/EXP-DX1/bm1/day-evidence.py"))
     worker = f"/usr/bin/python3 {report} archive {shlex.quote(name)} {shlex.quote(revision)}"
@@ -103,6 +144,8 @@ def collect(name, revision, control):
     assert ticket["summary"]["bytes"] + (ticket["raw"] or {"bytes":0})["bytes"] < 1024**3
     out = MAC/"DX-BM1/day-n20"/name
     out.mkdir(parents=True, exist_ok=True)
+    arrival_bytes = ticket["summary"]["bytes"] + (ticket["raw"] or {"bytes":0})["bytes"]
+    assert shutil.disk_usage(out).free > 5*1024**3 + arrival_bytes, "Under the Mac evidence reserve after transfer"
     for kind, name_key, member_key in (("summary","members.json","summaryMembers"),
                                        ("raw","raw-members.json","rawMembers")):
         block = ticket[kind]
@@ -111,6 +154,9 @@ def collect(name, revision, control):
         assert block["name"] == kind+".tar.zst"
         file = out/block["name"]
         tool.download(str(ticket_path.parent/block["name"]), file, block["sha256"])
+        if mode == "--bundles":
+            check_compressed(file, name_key, ticket[member_key])
+            continue
         final = out/kind
         destination = final if final.is_dir() else Path(tempfile.mkdtemp(prefix=kind+"-",dir=out))
         names = {p.relative_to(destination).as_posix() for p in destination.rglob("*") if p.is_file()} if destination == final else tool.extract(file, destination)

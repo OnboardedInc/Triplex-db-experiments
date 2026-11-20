@@ -300,3 +300,22 @@ systemctl status --no-pager bm1n20-prep1-tenant.service
 sudo tail -n 20 /var/tmp/triplex-bm1/day-n20-prep1-tenant/worker.log
 python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect prep1-tenant 7ca8525a9ea0c3810c7af6ba0b5a0e15552dd534 /var/tmp/triplex-bm1/day-n20-prep1-tenant-control
 ```
+
+## Friday evening queue
+
+**Server 1 estimated running cost at 15:54 EST is $57.17** at $1.09/hr since Wednesday 11:27 EST. The orchestrator owns the release. The absolute remaining window ends Saturday at 12:00 EST.
+
+PREP1 is using the ten-account seed stage of the published `7ca8525a9` experiment. The evening supervisor waits for that unit and its cleanup. It then dispatches JVM1 `608420dca` and TAIL1 `da4c34f48`, each against the original `46880aa47` verified 16,245,050-fact seed. The Java 21 G1, Java 25 G1 and Java 25 ZGC comparison keeps writer/transactor/reader placement fixed across arms. It adds the optional larger-memory G1 arm only if the first three complete in under 80 minutes. The cache pair uses Java 21 G1 and varies the transactor cache from 256 to 2,560 MiB. The bare-metal adapter recognizes the physical-host check's expected status 1 and admits the exact previously sealed sibling-branch seed by its pinned provenance. It does not reinterpret another snapshot as the old one.
+
+The checked cold clone from the afternoon avoids the measured six-minute startup barrier. The cold-copy shim hashes every streamed byte of the original 22.26 GB dump, compares the bound seed and physical manifest, checks every restored file on the fresh PG container and records its immutable ID. Each producer still checks its own original restore digest and reopens its verified cut. Eight native offers per small arm must agree with the independent collector before long timing. All committed starting states, phase outputs, pause logs and scoped cleanup are checked per source and run. The benchmark writer layout and single-database workloads remain fixed.
+
+The priority-Publish code is integrated on ACT1. Its latest server launcher starts a fresh seed and offers one Publish per rate. The available repeated runner is fixed to 10,000 people, and the earlier 100,000-person ACT1 cleanup deleted the exact PostgreSQL volume without a snapshot. The previous proof and roster census are intact. Keep the current no-reseed rule unless the owner changes it. Release-scorecard trajectories and cross-database contrasts stay out of server 1's queue.
+
+ERASE1's report pins `4054f548` and names the prepared detached check, with the matched guarded arms also published. The branch requires a staged scratch authority, exact bystander assertion IDs and a stage checksum. HA1 `324a329d7` publishes the one-host pipelined-import command. Its first two treatments are 16 and 24 facts, each at two frames in flight. The two-server failover window belongs to the orchestrator after this queue.
+
+```sh
+sudo cat /var/tmp/triplex-bm1/STATUS
+systemctl status --no-pager bm1n20-prep1-tenant.service bm1n20-jvm25.service bm1n20-tail-backlog.service
+sudo tail -n 25 /var/tmp/triplex-bm1/night-n20-dispositions.txt
+df -g .
+```
