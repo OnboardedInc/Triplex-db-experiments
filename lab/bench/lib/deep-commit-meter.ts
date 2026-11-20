@@ -118,7 +118,7 @@ export class DeepCommitMeter {
 
   // [DX-INT1] Why: derive the selected path from the actual receipt rows both before and after export.
   // Rejected: trusting launcher flags or accepting a report with no matching native receipt.
-  writePath() {
+  writePath(legacy = false) {
     let first: NativeCut | undefined;
     let packedRows = 0,
       rangeRequests = 0,
@@ -129,7 +129,9 @@ export class DeepCommitMeter {
       if (!first || row.position < first.position) first = row;
       packedRows += path.packedRows;
       rangeRequests += Number(path.historyRange);
-      unexpectedFunctions += Number(!/^:triplex\.write\/v-[a-f0-9]{24}$/.test(path.function));
+      unexpectedFunctions += Number(legacy
+        ? path.function !== ":triplex/commit"
+        : !/^:triplex\.write\/v-[a-f0-9]{24}$/.test(path.function));
     }
     return {
       database: this.database,

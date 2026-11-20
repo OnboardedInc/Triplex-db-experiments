@@ -200,13 +200,14 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
     });
   };
 
-  type TenantReader = {first:number;people:number;interReadMs:number;key:string};
+  type TenantReader = {first:number;people:number;interReadMs:number;key:string;matched?:boolean};
   let tenantSeats: TenantReader[] = [];
   let tenantHot = new Map<string,number[]>();
   const tenantSamples = new Map<string,number[]>();
   const within = (s:number,a:TenantReader) => s >= a.first && s < a.first + a.people;
   function pickSubject(rng: Rng, seat?: TenantReader): { subject: number; hotPick: boolean } {
     if (seat) {
+      if (seat.matched) return {subject:seat.first+rng.int(seat.people),hotPick:false};
       let choices = tenantHot.get(seat.key);
       if (!choices) { choices=hot.filter(s => within(s,seat)); tenantHot.set(seat.key,choices); }
       if (choices.length && rng.next()<0.6) return {subject:choices[rng.int(choices.length)]!,hotPick:true};
@@ -344,7 +345,9 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
 
   async function loop(id: number) {
     let localReads = 0;
-    const rng = new Rng(seedOf(`reader:${cfg.seed}:${cfg.worker}:${id}`));
+    const defaultRng = new Rng(seedOf(`reader:${cfg.seed}:${cfg.worker}:${id}`));
+    const quietSeed = seedOf(`quiet-reader:${cfg.seed}:${cfg.worker}:${id}`);
+    let matchedPhase = -1, matchedRng = new Rng(quietSeed);
     running++;
     try {
       while (!stopping && id < wanted && acked.length > 0) {
@@ -354,14 +357,21 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
         if (stopping || id >= wanted) break;
         const issueStart = (issued++ & 255) === 0 ? performance.now() : undefined;
         const readPhase = phase, seat=tenantSeats[id];
+        // [DX-THIN1] Why: quiet seats replay the same deterministic subject draws in their matched windows.
+        // Rejected: chasing the neighbor-dependent hot set in a quiet-account comparison.
+        if (seat?.matched && matchedPhase !== readPhase) {
+          matchedPhase = readPhase;
+          matchedRng = new Rng(quietSeed);
+        }
+        const rng = seat?.matched ? matchedRng : defaultRng;
         let candidates = seat ? tenantSamples.get(seat.key) : cfg.sampleSubjects;
         if (!candidates) { candidates=cfg.sampleSubjects.filter(s=>within(s,seat!)); tenantSamples.set(seat!.key,candidates); }
         const oracle = candidates.length > 0 && rng.next() < cfg.oracleRate;
         let picked = oracle ? { subject: candidates[rng.int(candidates.length)]!, hotPick: false } : pickSubject(rng, seat);
-        const [basis, kind, position] = pickBasis(rng);
+        const [basis, kind, position] = pickBasis(seat?.matched ? defaultRng : rng);
         if (issueStart !== undefined) { costs.issueSamples++; costs.issueMs += performance.now() - issueStart; }
         let straddleSeq: number | undefined, assignedAt: number | undefined;
-        if (!oracle && mode === "mixed" && rng.next() < cfg.splitShare) {
+        if (!oracle && !seat?.matched && mode === "mixed" && rng.next() < cfg.splitShare) {
           const assignment = await ask({ type: "split-request", range:seat }, 2_000);
           if (assignment && assignment.subject >= 0) { picked = { subject: assignment.subject, hotPick: true }; straddleSeq = assignment.seq; assignedAt = assignment.assignedAt; }
         }

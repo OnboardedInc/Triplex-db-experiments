@@ -287,7 +287,7 @@ const gateway = (label: "write" | "read", secondary = false) => {
       ...(demand ? { TX2_ID_CACHE_BYTES: "1048576", TX2_ID_CACHE_ENTRIES: "4096",
         TX2_REACH_SESSION_ENTRIES: "4096", TX2_ENTITY_CACHE_BYTES: "8388608" } : {}),
       ...(campaign && label === "write" ? {
-        TX2_INT1_WRITE_READBACK: "1", TX2_PREDECESSOR_LOOKUP: "1", TX2_SMALL_ROWS: "1", TX2_GROUP_STAGE_CLOCK: "1",
+        TX2_INT1_WRITE_READBACK: "1", TX2_PREDECESSOR_LOOKUP: "0", TX2_SMALL_ROWS: "0", TX2_GROUP_STAGE_CLOCK: "1",
         TX2_GROUP_COMMIT: "0", TX2_LIVE_PRIORITY: "0", TX2_FIELD_COALESCE: "0", TX2_GROUP_REUSE_PREPARED: "0",
       } : {}),
     },

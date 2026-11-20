@@ -4,7 +4,7 @@ The last 10,000 deep people still added about 322 resident bytes each in the rea
 The transactor kept adding memory after its object cache was nearly full. One deep account peaked at 2.55 GiB and loading ten peaked at 4.67 GiB on the server.
 The next Mac run samples both Java heaps at three sizes while the same people stay active.
 The three pending native gates are back in the lab queue.
-The pooled campaign forecasts are committed before measurement. The prepared run still needs a fresh save-and-feed comparison.
+The pooled campaign has forecasts for all eight priorities. The small saved-output comparison is still due.
 Lean storage still has open erasure and native query gaps. The campaign must keep those paths out of the judged run.
 
 ## One-database work
@@ -27,3 +27,9 @@ The transactor census uses a 840 MiB Java heap, a configured 192 MiB object cach
 | Driver | 227.68 / 235.13 / 237.45 | 8.1 | 287.36 / 398.68 / 461.55 | 6,592.9 |
 
 The earlier scope-cost study is complete. Its measured timing, thread counts and source bindings are preserved with the rest of part 4. [Evidence](P4-EVIDENCE.md) · [Checksums](P4-SHA256SUMS)
+
+## Integration and campaign
+
+The writer, erasure, reader fallback and Publish priority are merged locally. Their exact native gates and pushes are queued in order. The collector comparison is still due from DX-TAIL1. [Merge resolutions and evidence audit](P5-EVIDENCE.md)
+
+Run `bash lab/experiments/EXP-DX1/int1/everything.sh BATCH UTC_CUTOFF --overnight` for ten accounts of 10,000 people. Omit `--overnight` for both rungs. The current SCALE1 million-person image uses different entity identities and lean storage. Both rungs capture and reuse a compatible legacy seed for their matched arms. [Campaign and options](P5-EVIDENCE.md)

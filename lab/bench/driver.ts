@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import {seedAddress} from "./lib/world.ts";
 import {tenantAccounts, accountOfSubject as tenantOf, tenantQueries, tenantRows, tenantFacts, tenantRung, TenantWriters,type TenantSpec,type TenantEvent} from "../experiments/EXP-DX1/scale1/tenants.ts";
-import {tenantPlan,tenantPhases,tenantWindows,tenantReaders,tenantTraceId} from "../experiments/EXP-DX1/scale1/tenant-traffic.ts";
+import {tenantPlan,tenantPhases,tenantWindows,tenantReaders,tenantTraceId,pooledCampaignId} from "../experiments/EXP-DX1/scale1/tenant-traffic.ts";
 import {checkImage} from "../experiments/EXP-DX1/scale1/seed-image.ts";
 import {MembershipProof,tenantRelease} from "../experiments/EXP-DX1/scale1/tenant-proof.ts";
 import {challengeTenants} from "../experiments/EXP-DX1/scale1/tenant-checks.ts";
 import {tenantFeedAt} from "../experiments/EXP-DX1/scale1/tenant-feed.ts";
 import {tenantObservations} from "../experiments/EXP-DX1/scale1/tenant-metrics.ts";
+import { runImport } from "../experiments/EXP-DX1/int1/pooled-import.ts";
 import {TenantScheduler} from "../experiments/EXP-DX1/scale1/tenant-scheduler.ts";
 import type {SchedulerOptions} from "./lib/scheduler.ts";
 import { smallId, smallPhases, smallTrace, smallSeconds, smallPeople } from "../experiments/EXP-DX1/scale1/small-plan.ts";
@@ -135,16 +136,22 @@ if (!["xtdb", "qlever", "datomic"].includes(lane)) throw new Error("--lane xtdb|
 const deepSmoke = opt("profile") === "deep-smoke";
 const deepLive = opt("profile") === "deep-live";
 const deepField = flag("int1-field");
+const pooledCampaign = opt("int1-pooled") as TenantSpec["campaign"];
+const pooledFrozen = pooledCampaign === "frozen", pooledField = pooledCampaign === "field";
 const alignment = opt("peak-alignment") as PeakAlignment | undefined;
 if (deepLive || alignment) assert(deepLive && (alignment === "coincident" || alignment === "staggered") && opt("tenant-study") === "interference");
 const deep = opt("profile") === "deep" || deepSmoke || deepLive;
 const tenantSpec: TenantSpec | undefined = opt("tenant-study") ? {
   ...(alignment ? {live:alignment}:{}),
+  ...(pooledCampaign ? {campaign:pooledCampaign}:{}),
   study: opt("tenant-study") as TenantSpec["study"],
   topology: opt("tenant-topology") as TenantSpec["topology"],
   physical: Number(opt("deep-account", "0")),
 } : undefined;
 if(tenantSpec)assert(deep&&["pooled","separate"].includes(tenantSpec.topology)&&["interference","small","million","smoke"].includes(tenantSpec.study));
+if(pooledCampaign)assert((pooledFrozen || pooledField) && tenantSpec?.topology === "pooled" &&
+  !deepField && !deepLive && !flag("deep-activation") && !flag("deep-seed-only") && !flag("deep-interference") &&
+  !flag("deep-small-scopes") && (deepSmoke === (tenantSpec.study === "smoke")));
 const tenants=tenantSpec?tenantAccounts(tenantSpec):undefined;
 const tenantMembership=tenants ? new MembershipProof() : undefined;
 const tenantSize = tenants?.reduce((people, account) => people + account.people, 0) ?? 0;
@@ -158,18 +165,18 @@ if (deepField) assert(deep && !tenantSpec && !smallOnly && !activationOnly && !s
 if (smallOnly && (activationOnly || seedOnly || interferenceOnly || deepSmoke || flag("zero-readers"))) throw Error("Small scope study requires its separate low-rate arm");
 if (interferenceOnly && (activationOnly || seedOnly || deepSmoke || flag("zero-readers") || rung !== "deep-10k")) throw Error("Interference requires the complete deep-10k cohort");
 if ((activationOnly || seedOnly) && (flag("zero-readers") || activationOnly && seedOnly)) throw Error("Choose one deep arm");
-const fullLength = profile === "v3" || deep && !deepSmoke && !activationOnly && !seedOnly && !interferenceOnly && !smallOnly && !tenantSpec;
+const fullLength = profile === "v3" || deep && !deepSmoke && !activationOnly && !seedOnly && !interferenceOnly && !smallOnly && (!tenantSpec || pooledFrozen);
 if (!deep && !(profile in PROFILES)) throw new Error(`--profile must be one of ${Object.keys(PROFILES).join("|")}`);
 const rungSubjects = devSubjects ? Number(devSubjects) : availableRungs[rung]!;
 const deepAccount = Number(opt("deep-account", "0"));
-const deepId = deep ? { ...(tenantSpec?{tenant:tenantSpec}:{}), ...(deepField ? { field: true as const } : {}), source: process.env.TRIPLEX_TRACE_SOURCE!, slot: process.env.TRIPLEX_TRACE_SLOT!, nonce: opt("deep-nonce")!, people: rungSubjects, account: deepAccount, arm: seedOnly ? "seed" : tenantSpec?.study==="small" ? "small" : tenantSpec && ["smoke","interference"].includes(tenantSpec.study) ? "interference" : smallOnly ? "small" : interferenceOnly ? "interference" : activationOnly ? "activation" : flag("zero-readers") ? "zero" : "reader" } satisfies DeepIdentity : undefined;
+const deepId = deep ? { ...(tenantSpec?{tenant:tenantSpec}:{}), ...(deepField ? { field: true as const } : {}), source: process.env.TRIPLEX_TRACE_SOURCE!, slot: process.env.TRIPLEX_TRACE_SLOT!, nonce: opt("deep-nonce")!, people: rungSubjects, account: deepAccount, arm: seedOnly ? "seed" : tenantSpec?.study==="small" ? "small" : tenantSpec && !pooledCampaign && ["smoke","interference"].includes(tenantSpec.study) ? "interference" : smallOnly ? "small" : interferenceOnly ? "interference" : activationOnly ? "activation" : flag("zero-readers") ? "zero" : "reader" } satisfies DeepIdentity : undefined;
 if (deepId) {
   requireIdentity(deepId);
   if (!opt("deep-barrier") || devSubjects || lane !== "datomic" || opt("seed-manifest") || opt("round-plan") || opt("idle-gaps-ms") || opt("oracle-root") === undefined || opt("seed", deepSeed(deepAccount)) !== deepSeed(deepAccount)) throw Error("Deep requires its named Datomic rung, independent oracle, account seed, and start barrier");
 }
 if(smallOnly) assert.equal(rungSubjects,smallPeople(deepAccount));
 const plannedTenants=tenantSpec&&deepId?tenantPlan(tenantSpec,deepId.arm):undefined;
-const tenantWriters=plannedTenants ? new TenantWriters(plannedTenants.accounts,plannedTenants.events,deepLive) : undefined;
+const tenantWriters=plannedTenants ? new TenantWriters(plannedTenants.accounts,plannedTenants.events,deepLive || pooledField) : undefined;
 const deepPlan = plannedTenants ?? (smallOnly ? smallTrace(deepAccount) : interferenceOnly ? interferenceTrace(deepAccount) : deepField ? fieldPlan(deepAccount, rungSubjects, deepSmoke) : deep ? frozenDeep(deepAccount, rungSubjects) : undefined);
 const deepWriter = deepPlan && !tenantSpec ? new (deepField ? FieldSaveWriter : DeepWriter)(deepPlan.activeSubjects) : undefined;
 const deepWitness = deep ? new DeepSeedWitness() : undefined;
@@ -179,7 +186,7 @@ const rawDir = path.dirname(output);
 if (flag("int1-guest-output")) {
   // [DX-INT1] Why: the managed fixture needs a real Linux device for the unchanged SQLite guard.
   // Rejected: a FUSE-backed feed ledger or letting arbitrary runs write outside the worktree.
-  assert(process.platform === "linux" && deepSmoke && deepId && !tenantSpec);
+  assert(process.platform === "linux" && deepSmoke && deepId && (!tenantSpec || tenantSpec.campaign === pooledCampaign));
   assert(process.env.DX_THIN_STACK && process.env.DX_THIN_HOST_PID);
   const stack = JSON.parse(fs.readFileSync(process.env.DX_THIN_STACK, "utf8"));
   assert(stack.managed?.compact && stack.prefix === deepId.slot && /^tx2-dxthin-/.test(stack.prefix));
@@ -356,7 +363,7 @@ const bulkManifest = config.seedManifest ? JSON.parse(fs.readFileSync(path.resol
 if (bulkManifest && (bulkManifest.subjects !== rungSubjects || bulkManifest.lane !== lane || bulkManifest.seed !== config.seed))
   throw new Error(`--seed-manifest is for ${bulkManifest.lane}/${bulkManifest.subjects} subjects/seed ${bulkManifest.seed}, not ${lane}/${rungSubjects}/${config.seed}`);
 const restoredSeed=opt("verified-seed-image")?JSON.parse(fs.readFileSync(opt("verified-seed-image")!,"utf8")):undefined;
-if(restoredSeed){assert(deepId && ["reader","activation"].includes(deepId.arm));assert.deepEqual(restoredSeed.identity,deepId);checkImage(restoredSeed.origin,deepId);}
+if(restoredSeed){assert(deepId && (pooledCampaign || ["reader","activation"].includes(deepId.arm)));assert.deepEqual(restoredSeed.identity,deepId);checkImage(restoredSeed.origin,deepId);}
 const scopeName = restoredSeed?.origin.scope ?? (bulkManifest ? bulkManifest.scope : `ns-${lane}-${config.rung.replace(/[^a-z0-9]/gi, "")}-${runTag}`);
 const now = () => performance.timeOrigin + performance.now();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -370,6 +377,7 @@ const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(
 const tenantSources = tenantSpec ? fs.readdirSync(path.join(REPO,"lab/experiments/EXP-DX1/scale1")).filter(f=>(f.startsWith("tenant")&&!f.endsWith("test.ts"))||f==="seed-image.ts"||f==="deep-live.ts"||f==="deep-live-pins.json").map(f=>"lab/experiments/EXP-DX1/scale1/"+f) : [];
 const BENCH_FILES = [...tenantSources,"lab/bench/driver.ts", "lab/trace/instrument.mjs", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 if (deepField) BENCH_FILES.push("lab/experiments/EXP-DX1/int1/field-plan.ts", "lab/experiments/EXP-DX1/scale1/deep-live.ts");
+if (pooledCampaign) BENCH_FILES.push("lab/experiments/EXP-DX1/int1/field-plan.ts", "lab/experiments/EXP-DX1/int1/pooled-import.ts");
 if(smallOnly||interferenceOnly) {
   const names=smallOnly?["small-plan.ts","small-pins.json"]:["interference.ts","interference-pins.json"];
   BENCH_FILES.push(...names.map(n=>"lab/experiments/EXP-DX1/scale1/"+n));
@@ -381,13 +389,13 @@ const report: Record<string, any> = latencyReceipt({
   qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v3: final-receipt ACK, minimum 500 commits, four-subject growth",
   verdictClock: VERDICT_CLOCK,
-  verdictPlanId: deepField ? fieldProfile : tenantSpec ? (tenantSpec.live ? liveProfile+"/"+tenantSpec.live : tenantTraceId+"/"+tenantSpec.study) : fullLength ? V3_PLAN_ID : rd1ReadDiagnostic ? "rd1-reader-diagnostic/1" : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
+  verdictPlanId: deepField ? fieldProfile : pooledField || pooledFrozen && deepSmoke ? pooledCampaignId + "/" + pooledCampaign : fullLength ? V3_PLAN_ID : tenantSpec ? (tenantSpec.live ? liveProfile+"/"+tenantSpec.live : tenantTraceId+"/"+tenantSpec.study) : rd1ReadDiagnostic ? "rd1-reader-diagnostic/1" : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
   status: "RUNNING",
   startedAt: new Date().toISOString(),
   config,
   runTag,
   scope: scopeName,
-  ...(deepId ? { deep: { profile: deepField ? fieldProfile : deepLive ? liveProfile : DEEP_PROFILE, identity: deepId, ...(plannedTenants?{accounts:tenants,logicalTraces:plannedTenants.logical}: {}) } } : {}),
+  ...(deepId ? { deep: { profile: deepField ? fieldProfile : pooledField ? pooledCampaignId + "/field" : deepLive ? liveProfile : DEEP_PROFILE, identity: deepId, ...(plannedTenants?{accounts:tenants,logicalTraces:plannedTenants.logical}: {}) } } : {}),
   generator: { traceSha256: sha256File(deepField ? "lab/experiments/EXP-DX1/int1/field-plan.ts" : deep ? "lab/bench/lib/deep-trace.ts" : "lab/bench/lib/trace.ts"), worldSha256: sha256File(deep ? "lab/bench/lib/deep-world.ts" : "lab/bench/lib/world.ts"), seed: config.seed },
   benchSources: Object.fromEntries(BENCH_FILES.map((f) => [f, sha256File(f)])),
   host: { cpus: os.cpus().length, platform: `${process.platform}-${process.arch}`, node: process.version, totalMemBytes: os.totalmem() },
@@ -472,7 +480,7 @@ const modelJournalContext = {
 // Rejected: advancing an observation frontier in irregular-clock, paired or externally written scopes.
 const streamReads = (fullLength || rollingReadSmoke) && !config.zeroReaders && lane === "datomic" && config.readPath === "replica" &&
   config.strictRecordClocks && config.replicaThread === "worker" && config.expectedStateRetention === "worker-journal" &&
-  !pairPlan && !tenantSpec && config.readRetention !== "raw";
+  !pairPlan && (!tenantSpec || pooledFrozen) && config.readRetention !== "raw";
 if (rd1ReadDiagnostic && (!rollingReadSmoke || !config.levelS || config.levelS > 45))
   throw Error("RD1 read diagnostics require the rolling smoke plan and levels no longer than 45 s");
 if (rollingReadSmoke && ((!streamReads && !(rd1ReadDiagnostic && config.zeroReaders)) || profile !== "smoke" || !config.readerLadderOnly || !config.levelS || config.levelS <= config.settleS))
@@ -705,13 +713,14 @@ async function run() {
     report.deep.trace = deepPlan.sha256;
     save();
   }
-  const tenantReleasePhase = tenantSpec && !tenantSpec.live && (tenantSpec.study === "interference" || tenantSpec.study === "million" && activationOnly);
-  const releaseTarget = tenantReleasePhase ? tenants!.find(a => a.index === 1) : undefined;
+  const pooledPublish = pooledField && !config.zeroReaders;
+  const tenantReleasePhase = tenantSpec && !pooledCampaign && !tenantSpec.live && (tenantSpec.study === "interference" || tenantSpec.study === "million" && activationOnly);
+  const releaseTarget = tenantReleasePhase || pooledPublish ? tenants!.find(a => a.index === 1) : undefined;
   const nextRelease = config.composition === "reach-touched" && process.env.DX_INT1_DEEP_RELEASE === "ead90" ? "ead90" : "standard";
   const activation = releaseTarget
     ? new DeepActivation(rawDir, releaseTarget.people, runTag + ":" + releaseTarget.key, releaseTarget.first, nextRelease, releaseTarget, Number(opt("deep-evaluators") ?? 2))
     : activationOnly && !tenantSpec ? new DeepActivation(rawDir, rungSubjects, runTag, 0, nextRelease) : undefined;
-  const measureBurst = tenantSpec?.study === "interference";
+  const measureBurst = tenantSpec?.study === "interference" && !pooledCampaign;
   const meter = campaignMeter ?? ((activation || measureBurst) && config.composition !== "memory"
     ? new DeepCommitMeter("s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scopeName))).toString("base64url")) : undefined);
   if (meter && !campaignMeter) observeNativeReceipt(meter.observe.bind(meter));
@@ -749,8 +758,8 @@ async function run() {
   const params: TraceParams = { ...TRACE_DEFAULTS, ...seriesParams, burstMultiplier: opt("burst-multiplier") ? config.burstMultiplier : (seriesParams.burstMultiplier ?? TRACE_DEFAULTS.burstMultiplier), steadyFactsPerS: (seriesParams.steadyFactsPerS ?? TRACE_DEFAULTS.steadyFactsPerS) * config.rateScale };
   const idle = config.idleGapsMs ? idlePlan(config.idleGapsMs, config.idleCommits, N,config.idleWarmupCommits) : null;
   const lastTenantWindow = tenantSpec && deepId ? tenantWindows(tenantSpec, deepId.arm).at(-1) : undefined;
-  const traceDurationS = deepField ? (deepSmoke ? 30 : V3_OFFER_SECONDS) : lastTenantWindow ? lastTenantWindow.from + lastTenantWindow.seconds : idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
-  if (deepPlan) Object.assign(params, { sizeClasses: deepPlan.sizeClasses, steadyFactsPerS: (deepLive || deepField ? 3.5 : DEEP_RATE) * deepPlan.sizeClasses.reduce((n, c) => n + c.min * c.share, 0) });
+  const traceDurationS = deepField || pooledFrozen ? (deepSmoke ? 30 : V3_OFFER_SECONDS) : lastTenantWindow ? lastTenantWindow.from + lastTenantWindow.seconds : idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
+  if (deepPlan) Object.assign(params, { sizeClasses: deepPlan.sizeClasses, steadyFactsPerS: (deepLive || deepField || pooledField ? 3.5 : DEEP_RATE) * deepPlan.sizeClasses.reduce((n, c) => n + c.min * c.share, 0) });
   const events = deepPlan ? deepPlan.events : idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
   if (!tenantSpec && config.receiptCapture === "replica-worker" &&
       events.filter(e => e.stream === "background" && !e.resend && (!deep || e.atMs < V3_OFFER_SECONDS * 1000)).length > MAX_RECEIPT_CAPTURES)
@@ -910,14 +919,16 @@ async function run() {
   const basisTimer = sendBasis ? setInterval(broadcast, 100) : undefined;
   const setReaders = (phase: number, wantedReaders: number, mode: string) => {
     const readers = config.maxReaders === null ? wantedReaders : Math.min(wantedReaders, config.maxReaders);
-    if (tenants && tenantSpec && deepId && phase >= 0) {
-      const stage = tenantWindows(tenantSpec, deepId.arm)[phase]!;
-      const sets = Array.from({length: workers.length}, () => [] as {first:number; people:number; interReadMs:number; key:string}[]);
+    const stage = tenantSpec && deepId && phase >= 0 ? tenantWindows(tenantSpec, deepId.arm)[phase] : undefined;
+    if (tenants && stage) {
+      const sets = Array.from({length: workers.length}, () => [] as {first:number; people:number; interReadMs:number; key:string; matched?:boolean}[]);
       for (const a of tenants) {
         const count = tenantReaders(stage, a.index);
         for (let j = 0; j < count && workers.length; j++) {
           const set = sets[(j + a.index) % workers.length]!;
-          set.push({first:a.first, people:a.people, key:a.key, interReadMs:stage.pattern==="low" || stage.pattern==="busy-low" && a.index!==0 ? 15000 : 0});
+          const matched = pooledField && a.index === 0;
+          set.push({first:a.first, people:a.people, key:a.key, ...(matched ? {matched} : {}),
+            interReadMs:matched ? 1_000 : stage.pattern==="low" || stage.pattern==="busy-low" && a.index!==0 ? 15000 : 0});
         }
       }
       assert.equal(sets.reduce((sum,x)=>sum+x.length,0), readers);
@@ -1300,7 +1311,7 @@ async function run() {
     if (rd1ReadDiagnostic) return rd1Phases.has(p.name);
     return !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256));
   };
-  let plan: ReturnType<typeof nsPlan> = tenantSpec && deepId ? tenantPhases(tenantSpec,deepId.arm) : smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
+  let plan: ReturnType<typeof nsPlan> = pooledFrozen && !deepSmoke ? nsPlan("v3", config.zeroReaders) : tenantSpec && deepId ? tenantPhases(tenantSpec,deepId.arm) : smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
     { name: "presweep", readers: 64, seconds: 100, measured: true, mode: "mixed" },
     { name: "activation", readers: 64, measured: true, mode: "mixed" },
   ] : deepSmoke ? [
@@ -1319,6 +1330,8 @@ async function run() {
     });
   }
   const phases: any[] = [];
+  let pooledImport: Promise<void> | undefined;
+  let pooledImportError: unknown;
   // [DX-B2-N3] Why: identify a completed indexing job inside each P1 level, not unbound log words.
   // Rejected: issuing maintenance after readers stop.
   const indexClient = lane === "datomic" ? new (await import(pathToFileURL(path.join(REPO,"packages/datomic/dist/index.js")).href)).DatomicClient(process.env["DATOMIC_URL"] ?? "http://127.0.0.1:8493", 601000) : null;
@@ -1333,7 +1346,7 @@ async function run() {
   }
   await sleep(Math.max(0, traceStart - now()));
   if (deep) void watermarkSampler(aux);
-  if (deep && (fullLength || interferenceOnly || smallOnly || deepSmoke && process.env.DX_INT1_NATIVE_WRITE_READBACK === "1")) scheduler.setUntil(traceStart + (deepSmoke ? 30 : smallOnly ? smallSeconds : interferenceOnly ? interferenceSeconds : V3_OFFER_SECONDS) * 1000);
+  if (deep && (pooledCampaign || fullLength || interferenceOnly || smallOnly || deepSmoke && process.env.DX_INT1_NATIVE_WRITE_READBACK === "1")) scheduler.setUntil(traceStart + (pooledCampaign ? traceDurationS : deepSmoke ? 30 : smallOnly ? smallSeconds : interferenceOnly ? interferenceSeconds : V3_OFFER_SECONDS) * 1000);
   scheduler.start();
   probeScheduler?.start();
   if (config.probe10PerS > 0) probeTimer = setInterval(() => void overlay("probe10", probeRng.int(N), 10), 1000 / config.probe10PerS);
@@ -1407,7 +1420,7 @@ async function run() {
     })() : null;
     log(`phase ${spec.name}: ${entry.readers} readers at trace ${entry.traceStartS.toFixed(0)}s; writer pending ${scheduler.pending}`);
     if (spec.growHistoryTo) entry.history = await growHistory(spec.growHistoryTo, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
-    else if (spec.name === "activation" && activation) {
+    else if ((spec.name === "activation" || spec.name === "publish" && pooledPublish) && activation) {
       report.deep.r2 = await activation.execute(writer, "R2", (receipt, ops, actor) => {
         modelWriter.bindReceipt(ops, receipt, actor);
         noteAck(receipt, -1, { seq: receipt.position, stream: "deep-activation", correction: false, correctionValidFrom: null, stamp: -1, subjects: [] });
@@ -1416,11 +1429,28 @@ async function run() {
         assert(positions.every(p => p > cut.position), "Missing post-capture mutation"); return people.map((subject,k) => ({ subject, position: positions[k] }));
       });
       save();
+      if (spec.name === "publish") {
+        assert(report.deep.r2.endedAt <= start + spec.seconds! * 1000, "Publish exceeded its observation window");
+        await sleep(Math.max(0, start + spec.seconds! * 1000 - now()));
+      }
     }
     else if (spec.name === "activation" && tenantReleasePhase) { /* [DX-SCALE1] Why: wait on the target’s measured release below. Rejected: holding neighbors for the whole ceiling. */ }
     else if (spec.sweep) entry.sweep = await runSweep(idx, config.levelS ? Math.min(spec.maxS ?? 1800, 10 * config.levelS) : spec.maxS ?? 1800);
     else if (spec.seconds) {
+      if (spec.name === "import" && pooledPublish) {
+        const tail = plan[idx + 1]!;
+        assert(tail.name === "import-tail");
+        pooledImport = runImport(growthComp, path.join(rawDir, "int1-import.jsonl"), runTag,
+          tenants![0]!.people, start + (spec.seconds + tail.seconds!) * 1000,
+          (r) => noteAck(r, -1, {seq:r.position, stream:"campaign-import", correction:false,
+            correctionValidFrom:null, stamp:-1, subjects:[]}),
+        ).then(imported => { report.deep.pooledImport = imported; }, error => { pooledImportError = error; });
+      }
       await sleep(Math.max(0, start + spec.seconds * 1000 - now()));
+      if (spec.name === "import-tail" && pooledImport) {
+        await pooledImport;
+        if (pooledImportError) throw pooledImportError;
+      }
       if (!config.zeroReaders && /^p4h(1|3|10)$/.test(spec.name)) {
         const deadline = now() + 120_000;
         while ((settledReadCounts.get(idx) ?? 0) < 10_000 && now() < deadline) await sleep(250);
@@ -1767,7 +1797,7 @@ async function run() {
       report.deep.allBurstQueue = meter.burst(writes, w.start + config.settleS * 1000, w.end);
     }
     report.deep.nativeReceipts = meter.seal(path.join(rawDir, "deep-native-commits.jsonl"), deepId);
-    if (campaignMeter) report.deep.writePath = campaignMeter.writePath();
+    if (campaignMeter) report.deep.writePath = campaignMeter.writePath(Boolean(pooledCampaign));
   }
   const incompleteHistory = !tenantSpec && !deepSmoke && !interferenceOnly && !smallOnly && !activation && !config.readerLadderOnly && !config.zeroReaders && !pairPlan && report.priorities?.P4?.history?.eligibleForDepthComparison === false;
   if (incompleteHistory) finalizationErrors.push("History comparison is ineligible: incomplete growth, indexing or fewer than 10,000 correct pulls per depth");
@@ -2049,7 +2079,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const background = writes.filter((w) => w.stream === "background" && !w.resend);
   const baseline = loadBaselineWrites();
   const lagRows = feed!.lags;
-  if(tenants && deepId) {
+  if(tenants && deepId && !pooledFrozen) {
     const source=JSON.stringify({route:"A0-control",dir:rawDir,epoch:scopeName+"#0"});
     const view=tenantFeedAt(path.join(rawDir,"consumer.db"),tenants,source,feedWind!.target,report.deep.r1?.publicationPosition??report.deep.seed.position);
     for (const [position, members] of view.matched) {

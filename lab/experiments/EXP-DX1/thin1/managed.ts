@@ -343,6 +343,7 @@ if (action === "--guest") {
   }
   process.argv = [process.execPath, run, "live", mode, rung, out];
   if (mode === "int1-campaign-proof") {
+    assert(Number(rung) === 40);
     process.chdir(repo);
     await (await import("../int1/everything.ts")).localPreflight(out);
   } else if (integrated) {

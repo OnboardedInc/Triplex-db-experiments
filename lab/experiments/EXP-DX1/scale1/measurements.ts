@@ -27,7 +27,7 @@ import {
 } from "./interference.ts";
 import { checkImage } from "./seed-image.ts";
 import { tenantAccounts, tenantFacts, tenantScope } from "./tenants.ts";
-import { tenantPlan, tenantPhases, tenantWindows, tenantTraceId } from "./tenant-traffic.ts";
+import { tenantPlan, tenantPhases, tenantWindows, tenantTraceId, pooledCampaignId } from "./tenant-traffic.ts";
 import { compareTenants } from "./tenant-metrics.ts";
 import { smallTrace, smallId, smallSeconds, smallPhases, smallScope } from "./small-plan.ts";
 import { deepPopulation, DEEP_PROFILE } from "../../../bench/lib/deep-world.ts";
@@ -57,6 +57,8 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   const mix = id.arm === "interference",
     small = id.arm === "small",
     compactFixture = id.people === 40 && !id.tenant;
+  const pooled = id.tenant?.campaign;
+  const pooledFixture = pooled && id.tenant!.study === "smoke";
   const plan = id.tenant
       ? tenantPlan(id.tenant, id.arm)
       : small
@@ -67,9 +69,10 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     expectedCount = id.tenant
       ? tenantFacts(tenantAccounts(id.tenant))
       : deepPopulation(id.people).facts;
-  assert.equal(report.deep.profile, id.field ? fieldProfile : id.tenant?.live ? liveProfile : DEEP_PROFILE);
+  assert.equal(report.deep.profile, id.field ? fieldProfile : pooled === "field" ? pooledCampaignId + "/field" : id.tenant?.live ? liveProfile : DEEP_PROFILE);
   const fixture = id.tenant?.study === "smoke" || compactFixture;
-  if (fixture && !compactFixture) assert(id.slot.startsWith("tx2-dxscale1-smoke-"));
+  if (fixture && !compactFixture)
+    assert(id.slot.startsWith("tx2-dxscale1-smoke-") || pooledFixture && /^tx2-dxthin-[a-f0-9]{20}$/.test(id.slot));
   assert.equal(
     report.config.profile,
     fixture ? "deep-smoke" : id.tenant?.live ? "deep-live" : "deep",
@@ -102,7 +105,8 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   assert.equal(report.verdictClock, VERDICT_CLOCK);
   assert.equal(
     report.verdictPlanId,
-    id.field ? fieldProfile : compactFixture ? "ns-deep-smoke/2" : id.tenant
+    id.field ? fieldProfile : pooled === "field" || pooledFixture ? pooledCampaignId + "/" + pooled :
+      pooled === "frozen" ? V3_PLAN_ID : compactFixture ? "ns-deep-smoke/2" : id.tenant
       ? id.tenant.live
         ? liveProfile + "/" + id.tenant.live
         : tenantTraceId + "/" + id.tenant.study
@@ -119,7 +123,8 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   const hashes = Object.fromEntries(
     await Promise.all(Object.entries(files).map(async ([k, f]) => [k, await fileHash(f)])),
   );
-  const duration = compactFixture ? 30 : id.tenant
+  const duration = pooled === "frozen" ? pooledFixture ? 30 : V3_OFFER_SECONDS :
+    compactFixture ? 30 : id.tenant
     ? tenantWindows(id.tenant, id.arm).at(-1)!.pattern === "activation"
       ? report.writer.offeredUntilTraceS
       : (report.phases.at(-1).end - commonStart) / 1000
@@ -171,7 +176,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
       ]),
     );
   // [DX-SCALE1] Why: offered-rate thresholds and deadline losses must reproduce from the source-matched sender ledger, independently of the per-tenant histograms. Rejected: trusting an aggregate counter or using ACK time as the arrival time.
-  const liveCounts = id.tenant?.live
+  const liveCounts = id.tenant?.live || pooled === "field"
     ? mixPhases.map((p) => ({
         from: commonStart + p.traceFromS * 1000,
         to: commonStart + (p.traceFromS + p.seconds) * 1000,
@@ -185,7 +190,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     : undefined;
   const challengeRows = new Map<string, any>();
   const allBurst =
-    id.tenant?.study === "interference"
+    id.tenant?.study === "interference" && !pooled
       ? report.phases.find(
           (p: any) => p.name === (id.tenant?.live ? livePeakWindow(id.tenant.live) : "all-burst"),
         )
@@ -239,7 +244,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
           report.runTag + ":account-" + String(e.tenant + 1).padStart(3, "0") + ":t" + e.localSeq,
         );
     }
-    if (id.tenant?.live && w.expired) {
+    if ((id.tenant?.live || pooled === "field") && w.expired) {
       assert(
         w.outcome === "unaccounted" &&
           w.reason === "not sent: writer deadline passed" &&
@@ -388,7 +393,7 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     assert.equal(hashes["deep-native-commits.jsonl"], seal.sha256);
     const meter = await DeepCommitMeter.read(file, id, db, seal.positions);
     if (report.deep.writePath) {
-      assert.deepEqual(report.deep.writePath, meter.writePath());
+      assert.deepEqual(report.deep.writePath, meter.writePath(Boolean(pooled)));
       for (const [position, command] of nativeCommands) meter.verifyCommand(position, command);
     }
     if (allBurst)
@@ -515,16 +520,15 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   if (id.tenant) {
     const observed = path.join(dir, "tenant-observations.json"),
       cross = report.deep.crossAccount;
-    hashes["tenant-observations.json"] = await fileHash(observed);
-    assert.equal(hashes["tenant-observations.json"], report.deep.tenantObservationsSha256);
-    tenantEvidence = JSON.parse(fs.readFileSync(observed, "utf8"));
-    assert.deepEqual(tenantEvidence.identity, id);
+    if (pooled !== "frozen") {
+      hashes["tenant-observations.json"] = await fileHash(observed);
+      assert.equal(hashes["tenant-observations.json"], report.deep.tenantObservationsSha256);
+      tenantEvidence = JSON.parse(fs.readFileSync(observed, "utf8"));
+      assert.deepEqual(tenantEvidence.identity, id);
+      assert(tenantEvidence.database === db && tenantEvidence.traceStart === commonStart);
+    }
     assert.deepEqual(cross.identity, id);
-    assert(
-      tenantEvidence.database === db &&
-        tenantEvidence.traceStart === commonStart &&
-        cross.database === db,
-    );
+    assert.equal(cross.database, db);
     assert.deepEqual(cross.proof.receiptProjection, cross.seedProjection);
     const actual = tenantAccounts(id.tenant);
     if (id.tenant.study === "small" || report.deep.tenantChecks) {
@@ -608,11 +612,11 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
         }
       }
     }
-    if (tenantEvidence.feed.missing || tenantEvidence.feed.matched !== committed)
+    if (tenantEvidence && (tenantEvidence.feed.missing || tenantEvidence.feed.matched !== committed))
       invalid.push("Durable account feed did not match every acknowledged primary");
     const target = actual.find((a) => a.index === 1);
     if (
-      (id.tenant.study === "interference" && !id.tenant.live) ||
+      (id.tenant.study === "interference" && !id.tenant.live && !pooled) ||
       (id.tenant.study === "million" && id.arm === "activation")
     ) {
       const done = report.deep.tenantActivation;
