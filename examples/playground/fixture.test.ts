@@ -77,7 +77,27 @@ test("sample bundle verifies all objects and resumes using a byte range", async 
     createReadStream(file, { start: offset }).pipe(res);
   });
   try {
+    const started = performance.now();
     const manifest = await generateBundle(source, true);
+    console.log(
+      "Sample bundle generation",
+      JSON.stringify({
+        generationMs: performance.now() - started,
+        maxRssKiB: process.resourceUsage().maxRSS,
+        groups: Object.fromEntries(
+          ["catalog", "people", "events"].map((prefix) => {
+            const files = manifest.objects.filter((e) => e.file.startsWith(prefix + "-"));
+            return [
+              prefix,
+              {
+                bytes: files.reduce((total, e) => total + e.bytes, 0),
+                records: files.reduce((total, e) => total + e.records, 0),
+              },
+            ];
+          }),
+        ),
+      }),
+    );
     const local = await openBundle(source, cache);
     const { mkdir } = await import("node:fs/promises");
     const partial = join(cache, local.checksum);
@@ -110,4 +130,61 @@ test("sample bundle verifies all objects and resumes using a byte range", async 
     await new Promise<void>((resolve) => server.close(() => resolve()));
     await rm(dir, { recursive: true, force: true });
   }
+});
+
+test("the static dashboard, JSON and MCP share a loopback listener", async () => {
+  const { listen } = await import("./http.ts");
+  const observed: string[] = [];
+  const server = await listen(0, {
+    token: "fixture-test",
+    stop: () => {},
+    getInvoke: () => async (action) => {
+      observed.push(action);
+      return {
+        status: 200,
+        reply: {
+          ok: true,
+          records: [],
+          position: 0,
+          receipt: null,
+          timings: {
+            totalMs: 0,
+            clientMs: null,
+            gatewayMs: null,
+            peerWaitMs: null,
+            transactorMs: null,
+            storageMs: null,
+            traceId: null,
+          },
+        },
+      };
+    },
+  });
+  try {
+    const page = await fetch(server.url);
+    assert.match(await page.text(), /Explore the fact store/);
+    const script = await fetch(server.url + "/ui.js");
+    assert.match(script.headers.get("content-type")!, /javascript/);
+    assert.match(await script.text(), /api\//);
+    const http = (path: string, body: unknown, origin?: string) =>
+      fetch(server.url + path, {
+        method: "POST",
+        headers: { "content-type": "application/json", ...(origin ? { origin } : {}) },
+        body: JSON.stringify(body),
+      });
+    assert.equal((await http("/api/accounts", {})).status, 200);
+    assert.equal((await http("/api/accounts", {}, "https://invalid.example")).status, 403);
+    const result = await http("/mcp", {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "tools/call",
+      params: { name: "accounts", arguments: {} },
+    });
+    assert.equal(result.status, 200);
+    assert.equal((await result.json()).result.structuredContent.position, 0);
+    assert.deepEqual(observed, ["accounts", "accounts"]);
+  } finally {
+    await server.close();
+  }
+  await assert.rejects(fetch(server.url + "/health"));
 });

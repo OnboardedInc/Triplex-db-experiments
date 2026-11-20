@@ -20,7 +20,7 @@ Open the printed loopback address. Pick an account and a person to compare the c
 
 ## Evidence and limits
 
-The deterministic Git fixture and action discovery checks ran against this worktree. The lab pool-admitted native gate and the resumable bundle test were queued while a separate measurement lease was active. Their completed results belong here when available. The full population and first-start targets remain unmeasured. The snapshot probe checks PostgreSQL restoration at small scale, with full cold restore performance open.
+The deterministic Git fixture, action discovery and loopback transport checks ran against this worktree. The lab pool-admitted native gate and the resumable bundle test were queued while a separate measurement lease was active. Their completed results belong here when available. The full population and first-start targets remain unmeasured. The snapshot probe checks PostgreSQL restoration at small scale, with full cold restore performance open.
 
 The release demo uses the shared ConfigStore and the HTTP package's configuration descriptors. An intentionally small status rule provides a visible answer and durable background materialization. The standalone Foldkit explorer continues to serve the generic Triples view. The Datomic dashboard has its own workspace panel for commit positions, traces, native query and Publish.
 
