@@ -3342,3 +3342,11 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   save by native T, on by default on the merged branch; predictions and one server command of at most 40 minutes
   to separate storage reads, transactor pauses and the serial apply; collector flags and receipt reuse rebased onto
   `exp/DX-INT1` for the version 0.1 merge list.
+
+## 2026-11-20 17:22 UTC (12:22 local, 2026-11-20): ZGC is available to us on Java 25; DX-JVM1 resumed to build and compare it
+
+- Datomic 1.0.7705 release notes: "Datomic now supports Java 25" and "Datomic now supports ZGC on Java 25". We run
+  1.0.7745 on `eclipse-temurin:21.0.13_9-jre-noble`. DX-JVM1's four arms leave the write gateway on one core with
+  Serial and have no ZGC arm. DX-JVM1 part 2 assigned (xhigh): Java 25 images selectable by one setting, all
+  correctness gates on Java 25, G1 and generational ZGC arms for all three processes with measured memory needs,
+  three server arms of at most 26 minutes each, launch settings merged onto `exp/DX-INT1`.

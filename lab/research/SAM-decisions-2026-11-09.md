@@ -799,3 +799,13 @@ every value invented. (3) Deep account: about 100,000 people at about 160 facts.
 of" the deep one: read as the same total number of facts over millions of people (about 4 million at about 4
 facts); flagged to Sam as a reading he may correct. (4) More than one month of history: at least five simulated
 weeks. (5) Continuous compliance scenarios: TODO for later, recorded in `lab/V0.1.md` (fcfa01b9a).
+
+## 2026-11-20 about 12:22 local: why not ZGC
+
+Sam, verbatim:
+- "Why can't we use the memory cleaner ZGC? Do we need to get a newer Java version or something? What's going on there?"
+
+Orchestrator's reading: my message said ZGC was "not usable yet", which overstated the obstacle. Checked against
+Datomic's release notes: 1.0.7705 (2026-07-10) added support for Java 25 and for ZGC on Java 25; we run 1.0.7745 on
+a Java 21 image. The only thing missing is a Java 25 image and the test. DX-JVM1 resumed to build it, with three
+server arms (Java 21 with two-core G1 on the writer, Java 25 with G1, Java 25 with ZGC).
