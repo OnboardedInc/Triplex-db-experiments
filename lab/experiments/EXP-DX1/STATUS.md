@@ -2862,3 +2862,21 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   writes omitted; blocker: no native business facts or Q107-S journal triples; cache-miss current reads 0.193 /
   0.448 / 2.264 ms at 1 / 64 / 415 events; erasure omitted from the journal; retiring a 513-fact subject refused; a
   changed schema dictionary can relabel an old fact; 733 saves per second and 31/34 ms follow from model inputs.
+
+## 2026-11-20 05:50 UTC (00:50 local, 2026-11-20): DX-TAIL1 part 1 in: the write gateway ran the Serial collector; Mac measurements blocked
+
+- **DX-TAIL1 part 1 (`14b07b24d`; `tail1/REPORT.md`, `PREDICTIONS.md`).** In the archived deep run the write gateway
+  used the Serial collector, the read gateway and transactor G1 (heaps 3.87 / 4 / 5 GiB in 6 GiB containers); the
+  writer's heap grew about 21.36 MiB per second between pauses, 2.21 MiB per primary offer; all fifty slowest saves
+  were delayed by its pauses (42 directly, 8 behind an earlier save); deep p99 86.74 ms overall, 59.65 ms outside the
+  history windows. Built: the exact four-minute replay of the archived offers (5,254 events, 5,110 primary saves) with
+  arms Serial, tuned G1 (25 ms target, 2 MiB regions), generational ZGC and less allocation; the receipt fast path
+  that skips `/begin` only after a bound receipt settles (16 native tests, five oracle reads and the erasure fixture
+  pass; an intervening retirement falls back and returns a typed conflict). Mac Serial replay unusable (4,926 of
+  5,110 matched, ACK p50 2.14 s: queueing before dispatch on the contended VM; pauses up to 338 / 503 / 228 ms in
+  writer / reader / transactor); the G1 arm never got the measurement lease. Forecast for bare metal: deep p99 55 to 67
+  ms with Serial, 52 to 58 with tuned G1, 48 to 56 with the fast path as well; the quiet-account ratio stays 10 to 30
+  times with nine busy neighbours whatever the collector.
+- **Assigned, part 2:** attribute tonight's server result (deep p99 170 to 179 ms against 19 ms thin, evidence
+  `DX-BM1/overnight/i9-1`) to its causes from the saved traces; where the collector is chosen and a two-core G1 arm;
+  the owed Mac measurements when the lease frees.
