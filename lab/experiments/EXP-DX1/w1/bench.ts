@@ -210,6 +210,7 @@ export async function withStack<T>(
   grouped?: boolean,
   fieldMode?: Mode,
   enhanced = false,
+  readerGatewayCpus?: "4,8",
 ) {
   const why = stopReason();
   assert(!why, why);
@@ -311,7 +312,7 @@ export async function withStack<T>(
     "--cpus-gw-write",
     "2",
     "--cpus-gw-read",
-    "4",
+    readerGatewayCpus ?? "4",
     "--pg-memory",
     "6g",
     "--tx-memory",
@@ -327,7 +328,9 @@ export async function withStack<T>(
   fs.writeFileSync(activeSlot, slot + "\n", { flag: "wx" });
   try {
     execFileSync("bash", args, { cwd: repo, env, timeout: 600000, stdio: "inherit" });
-    if (availableParallelism() >= 12) docker("update", "--cpuset-cpus", "4,8", slot + "-gw-r");
+    // [DX-SCALE1] Why: the decision controller is already pinned to one CPU during stack startup. Rejected: using its own process affinity to infer the assigned host's reader gateway placement.
+    if (!readerGatewayCpus && availableParallelism() >= 12)
+      docker("update", "--cpuset-cpus", "4,8", slot + "-gw-r");
     const buildResults = path.resolve(repo, "../results"),
       images = get(path.join(buildResults, "images.json"));
     const imageFor = (tag: string) => {

@@ -2,6 +2,9 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { execFileSync, spawn } from "node:child_process";
+import { createHash } from "node:crypto";
+import { Transform } from "node:stream";
+import { pipeline } from "node:stream/promises";
 import { setTimeout as sleep } from "node:timers/promises";
 import { DatomicClient } from "../../../../../packages/datomic/dist/index.js";
 import { SEED_VALID_FROM } from "../../../../bench/lib/world.ts";
@@ -116,12 +119,19 @@ async function pgCopy(command: string[], input: fs.ReadStream | null, out: numbe
       code === 0 ? ok() : bad(Error("PG snapshot operation " + code + "/" + signal)),
     );
   });
-  if (input) {
-    input.once("error", (e) => c.stdin!.destroy(e));
-    c.stdin!.on("error", (e) => input.destroy(e));
-    input.pipe(c.stdin!);
+  if (!input) {
+    await done;
+    return null;
   }
-  await done;
+  const digest = createHash("sha256");
+  const checkedBytes = new Transform({
+    transform(bytes, _encoding, callback) {
+      digest.update(bytes);
+      callback(null, bytes);
+    },
+  });
+  await Promise.all([done, pipeline(input, checkedBytes, c.stdin!)]);
+  return digest.digest("hex");
 }
 
 async function verifyMembership(client: DatomicClient, scopes: Scope[], people: Density) {
@@ -291,12 +301,11 @@ export async function restore(dir: string, from: string, id: Destination) {
   assert.equal(proof.people, id.people);
   assert.equal(proof.population, id.population);
   assert(proof.nonce !== id.nonce && proof.bytes === fs.statSync(dump).size);
-  assert.equal(await fileHash(dump), proof.sha256);
   const cleanup = read(path.join(from, "cleanup.json"));
   assert.deepEqual(cleanup, { containers: [], volumes: [], networks: [] });
   const slot = id.slot;
   for (const role of ["gw-r", "gw-w", "tx"]) docker("stop", "--time", "20", slot + "-" + role);
-  await pgCopy(
+  const restoredHash = await pgCopy(
     [
       "exec",
       "-i",
@@ -314,6 +323,7 @@ export async function restore(dir: string, from: string, id: Destination) {
     fs.createReadStream(dump),
     "ignore",
   );
+  assert.equal(restoredHash, proof.sha256);
   for (const role of ["tx", "gw-w", "gw-r"]) docker("start", slot + "-" + role);
   const urls = ["gw-w", "gw-r"].map((role) => {
     const c = JSON.parse(docker("inspect", slot + "-" + role))[0];

@@ -143,6 +143,7 @@ async function main(dir: string) {
       fieldPolicy(p.mode, true).grouping,
       p.mode,
       true,
+      "4,8",
     );
     status("arm ended");
   } catch (e) {
