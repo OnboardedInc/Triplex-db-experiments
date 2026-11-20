@@ -2761,3 +2761,22 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   therefore already ruled as "blocked"; the builder's recommendation agrees with it.
 - **Assigned, part 2:** the three violations and their neighbours as permanent regression tests; the erasure ledger
   and sequence checked on every path; the envelope prototype measured against the budgets; paced cleanup.
+
+## 2026-11-20 04:38 UTC (23:38 local, 2026-11-19): DX-ACT2 audit response in: test fixed; Publish under live saves is the open miss
+
+- **DX-ACT2 (`d2cda11f0`; `actv-delta/REPORT.md`).** All seven ACTAUDIT findings accepted and fixed with negative controls:
+  a release records what it owes in the same transaction that publishes it (record mode); a separate stored mode
+  writes values, retirements and guards and stops its clock at the last required commit; the deadline checker
+  rejects a missing last read and a stale read before a late reply; a new reader can finish an interrupted Publish;
+  a clock worker replays due boundaries after restart; the oracle derives the release basis itself; cold witnesses.
+  Producer and BM1's revised checker returned identical clocks on the same native 1,000-person bundle and refuse a
+  missing R1, reversed references and a duplicate R2. 1,000 people: record mode all four offers within 121 ms, no
+  stale reads; stored mode two deadline misses, broad release 2.776 s to its last guard (5,759 changed rows, 799
+  notices), narrow 0.762 s. 23 publication schedules and two native crash stops pass. Compact index: write-ahead log
+  4,507 to 4,808 bytes per fact (6.68%; target 15%).
+- **Under load (Mac, 64 readers, two saving neighbours, 204 offers, before the grace change):** record completion p99
+  2.65 s with 34 late offers; first candidate public read p99 2.13 s; save queueing seen by the issuer 495 ms p99.
+  The server run stays on hold; the three-seed campaign (about 170 minutes of seeding) is too long.
+- **Assigned, part 4:** where a loaded Publish waits and the law for it; Publish ahead of waiting saves of its own
+  account on the corrected write path, grace removed from the healthy path, bounded retries; 200 offers per arm at
+  3.5, 23.5 and 39.4 saves per second; one code path with the joined Publish; a ninety-minute server command.
