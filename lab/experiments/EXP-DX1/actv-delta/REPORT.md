@@ -1,46 +1,22 @@
-The server run is on hold. The earlier number measured one correct read after Publish.
-A release can now record what it owes in the same transaction that publishes it.
-A separate mode writes the changed values, retirements and guards. Its timer ends at the last required commit.
-The deadline checker now rejects a missing last read and a stale read that arrives before a late reply.
-A new reader can finish an interrupted Publish. A clock worker can catch up after restart with saves idle.
-The earlier crash recovered 11,960 changed rows and 997 owed notices. It proved recovery from the recipe.
-The earlier save comparison measured 6.68% extra database log bytes per fact. The owner’s target was 15%.
-The 1,000-person run recorded all four releases within 0.121 seconds. Storing the broad change took 2.776 seconds.
+The server run is still on hold.
+The old loaded run took 2.65 seconds at the 99th percentile. Thirty-four of 204 offers missed one second.
+Only six of those late offers have complete writer timings. Waiting behind a save explains part of their delay.
+The joined path can give Publish a turn ahead of waiting saves. It lets a save already in progress finish first.
+Publish then reads the saved facts and records the release and what it owes in one write.
+Both timing arms use the same reader, rules and receipt. A save still gets a turn when releases keep arriving.
+The focused checks passed. The native race check and loaded comparison need the shared Mac slot.
+The proposed server command uses one large seed. Its ninety-minute finish still needs proof.
 
-| Finding | Decision | Fix | Negative control |
-| --- | --- | --- | --- |
-| 1 Durable endpoints | Accepted | 0d85534c8, 5744dd0a4, f199db819, 5e56947a4 | ACK alone, an omitted notice, and a resumed commit without a new clock |
-| 2 Deadlines | Accepted | 5744dd0a4, f199db819, 5e56947a4, 9ddf0dd8a | Missing final probe, stale pre-ACK return, and stalled seal and verifier |
-| 3 Collector | Accepted | BM1 c07040e4b and DELTA c4cf7d8d7 | Missing, reversed or repeated reference IDs fail independent collection |
-| 4 Effective time | Accepted | 0d85534c8 | Future wage release and midnight expiry without a save |
-| 5 Independent source basis | Accepted | 0d85534c8, 5744dd0a4, 5e56947a4 | Claimed ordinal differs from the terminal cut, and omitted native input |
-| 6 Cold arms | Accepted | 5744dd0a4 and f199db819 | The cold-witness check rejects an earlier read of the same person |
-| 7 Interrupted Publish | Accepted | 0d85534c8, 5744dd0a4, 5e56947a4 | Save first, interrupted issuer, competing Publish, and save after |
+North star P5 with P1 and P2 under load. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
-OwedRecord names the original event, predecessor, source cut, index and census. Its native assertion is verified at the same cut as the release. DecodeOwed opens those bytes with dispatch idle. PersistPublication writes literal domain changes and item states, then commits the account guard with hashes and native positions for every chunk. OpenStored verifies those exact cuts and bytes. Independent Python equality is still required in the campaign before a completion receives credit.
+The source-bound prior tape still has 34 late offers and 495 ms p99 issuer-side wait behind an active save across 111 complete traces. The six late offers with that instrumentation have 34 ms median measured save wait, 95 ms median native service and 886 ms median unassigned time. The earlier run preceded the 250 ms grace. It had no integrated CPU-pressure, reader-head or retry counters. [Attribution, queue law and stored evidence](PART4.md) · [Checksums](PART4-SHA256SUMS)
 
-Account.currentCut gives a healthy issuer 250 ms and helps finish an abandoned fence. A due valid-time boundary waits for the fence. Duplicate claims read back the original native command and position. Future activation and UTC boundaries use durable command keys. Save validity intervals add due boundaries. The clock worker can replay them on startup. The new mode binds release ordinals to their own native event positions.
+The existing DELTA record/stored audit, 23 native schedules, crash stops and +6.68% WAL price are at `d2cda11f0`. The 1,000-person record/stored split remains 121 ms maximum for four record offers and 2.776 s for broad literal storage. The new joined path has a separate study with no DELTA fence or grace. [Earlier evidence](ACTAUDIT-SHA256SUMS)
 
-The 23 original native publication schedules and the delayed, time, race, erasure and recovery tests passed at 0d85534c8. At 31acf1616, two native crash stops recovered the original fence before terminal commit and the values, retirements, guards and notices after stored commit. Git and build bytes matched both source inventories, and both slots and volumes were released. [Audit checksums](ACTAUDIT-SHA256SUMS)
+For DX-ACT1, take `9895f926b` for joined admission and the oracle race gate, `815e1c0e2` for the matched study and `1bdeab224` for the one-seed server command. Integrate reviewed WFIX1 `882df5487` first. Keep the joined calendar, archive and NOTIFY1 dispatcher. Route the scope's semantic saves and Publish through the same `AccountAdmission` instance. The gateway continues to decide native live and bulk turns. [File-by-file comparison](PART4.md#one-joined-writer)
 
-The pre-grace record arm offered 204 releases over live traffic with 64 readers and two saving neighbors. Its 58,402 raw observations include 48 stale deadline probes and 128 other stale reads. First candidate public read was 2.13 s p99. Record completion was 2.65 s p99 with 34 late offers. Issuer-observed save queueing was 495 ms p99 across 111 offers. Both p99 releases lacked issuer terminal samples, so their queue shares are unknown. The full replay was stopped after the deadline failures were saved. Both slot and volume were released.
+The local comparison plans 200 offers per policy at each of 3.5, 23.5 and 39.4 saves/s, with 64 readers and two neighbouring scopes. Each observation retains scheduled ingress, application queue, durable and reader-head clocks. It rechecks raw answers against the authored history in Python and reopens every native release receipt. Every cell has an exclusive measurement lease and its own CPU-pressure samples. [Measurement details](PART4.md#matched-local-comparison)
 
-The earlier 201-release result was 0.843 s p99 to one verified read, with two over one second. Its already-submitted save queue was 605 ms p99 and zero on the release at the read p99. It is diagnostic. Four separate physical WAL arms measured 4,507 → 4,808 bytes per fact and database growth 4,314 → 4,604. Individual native operation counts matched. [Part 3 checksums](PART3-SHA256SUMS)
+The server has one large seed and four cells covering record and stored output in quiet and loaded conditions. It budgets 83 minutes for work and seven for supervisor cleanup. The seed analogue was 56.6 minutes. The planning range is 70–100 minutes with proof and cleanup. The prior command's three cold seeds are out of this plan. [Command and forecast](PART4.md#one-seed-server-campaign)
 
-The joined path at cff46335b uses the same release-independent ranges and durable notice intent. Share the serial release contract, declaration-driven ranges and retired-item checks. Keep record and literal completion clocks explicit. The 3.9 to 13.4 s stored projections use its compact fixture.
-
-The bare command stays disabled. The audited command is below. Its preflight refuses missing source, raw reads, guards, notices or deadline coverage. The full result records misses separately for each mode and retains the diagnostic output when a mode misses.
-
-`DOCKER_HOST=unix:///var/run/docker.sock node --import tsx lab/experiments/EXP-DX1/scale1/bench.ts launch 2 delta-$(date -u +%Y%m%d%H%M%S) activation --activation-mode delta --delta-audit 2`
-
-The command schedules 45 offers per mode. It has a 160-minute work limit and 20 minutes for shutdown and collection. An earlier SCALE1 run took 3,396 seconds to seed 100,000 deep people in ten accounts. Three comparable seeds project to about 170 minutes before sweeps or replay. A three-hour completion remains unproved. No bench server was used. No acceptance pins changed.
-
-The native 1,000-person replay matched all eight offers. Both modes reopened 5,759 broad changed rows and 799 owed notices, plus three narrow flags and zero narrow notices. Record had zero stale reads and zero deadline misses. Stored had zero stale reads and two deadline misses, with a 3.145 s maximum. Broad finished reading at 0.116 s, recording its last concrete notice at 2.632 s and storing its last guard at 2.776 s. Narrow stored in 0.762 s. The first wrapper stopped on a cold probe dropped after helper recovery. Its successor stopped on fractional milliseconds in the integer-only fingerprint codec. The current wrapper hashes the sealed result bytes.
-
-The producer and revised BM1 checker independently returned identical clocks on the same 1,000-person saved bundle. The checker refused a missing R1, reversed references and duplicate R2. The preflight runs that same checker. BM1 still needs to adopt this clock reader and register the exact head before it can launch.
-
-Acceptance sites. The native schedule gate checks the exact TAP names and count, fresh run bytes, the owned slot and source inventory. The crash proof compares Python outputs and notice bytes to fresh reopened commits, all tied to original cut, transaction and slot nonce.
-
-The audit-preflight and SCALE1 collectors rehash read tapes and arm outputs, check independent source, release and notice proofs, require raw probes for every offer and route, and bind source, slot, nonce, population and ordered reference IDs. BM1 reads the same accepted envelope. The latest 10,000-person tape remains diagnostic because it missed the deadline and full replay stopped.
-
-The final wrapper retake waited sixteen minutes for a shared heavy token and was cancelled before engine allocation. The saved native output, producer and collector replay, and the mode-specific stop test are retained. Open work includes the revised 10,000-person p99, matched no-activation interference, and the 100,000-person result within three hours.
+Receipt audit. `admission-gate.ts` matches the new native transaction, source cut, before and after oracle answers and bounded negative conflict to the same fresh scope, gateway options and slot. `queue-study.ts` keeps the plan and all raw observations, checks each native receipt and Python answer, then reports distributions and deadline misses. `join/collect.ts` binds the plan, gateway and signed input/output hashes to the exact source, nonce and owner before checking both endpoint clocks. Diagnostics carry their misses. Acceptance pins, W0 and the frozen trace are intact.
