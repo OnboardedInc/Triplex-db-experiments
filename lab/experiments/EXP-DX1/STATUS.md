@@ -3058,3 +3058,32 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   the typed 413 refusal, small settlement)**. DX-BM1 was stopped and resumed at 06:05 with one instruction first: launch
   the 100,000-person activation run now as a detached job; a repair on the Mac never holds the server empty. The idle
   watcher for server 1 was restarted.
+
+## 2026-11-20 11:36 UTC (06:36 local, 2026-11-20): Sam: one database stays the goal; three agents on it; memory per untouched person met for thin at size
+
+- **Decision (Sam, about 06:35 local; verbatim in SAM-decisions):** all accounts in one Datomic database; he never ruled
+  for splitting (Q106f was one row in a batch of the orchestrator's recommendations that he approved with one
+  sentence; the orchestrator's overnight description of it as his ruling was wrong). Splitting accounts across
+  databases is not to be recommended; each obstacle is a problem to solve in one database. Notifications should go
+  out quickly; bar later. The durable-record question was re-asked with a concrete example. Saved to memory.
+- **Launched 06:40 local** (private folder `research/2026-11-20-onedb/`): **W3-LIMITS** (`gpt-6.2-sol` max: what Datomic's
+  size guidance really says and how one database stays inside it for years); **W3-ISOLATE** (`gpt-6.2-sol` max: why the
+  quiet account read 3.77 times at 35 saves per second on bare metal, the floor for any scheduling, the design for
+  1.25); **W3-DESIGN** (`gpt-6.2-astra` high, the one creative brief: three incremental routes were measured and closed
+  overnight; Datomic's own floor is 1,696 to 2,790 minimal transactions per second against our 150 to 300).
+- **Servers at 06:26 local:** server 1's detached activation job started 06:05:37 (`48f557594` with writer `4331d6fe8`),
+  building its own 100,000-person roster; the thin 1,000,000 image restored in 119 s and its summaries are on the
+  Mac. Server 2: the ten-account full-size pooled seed is loading at about 6,300 to 6,400 facts per second (96,760
+  people and 15.70 million facts at the last note; transactor peak 4.67 GiB, PostgreSQL 6 GiB). Its audited pilot (ten
+  accounts of 10,000, corrected grouped path): quiet-account save p99 3.77 times alone at 35 saves per second
+  (n=630, 90% interval 1.75 to 5.88); pre-dispatch expiry first at 235 per second.
+- **DX-THIN1 part 4 (`78d791562`; published through `883bb65bf`).** Mac sweeps with the touched set fixed: from 300,000 to
+  600,000 thin people the reader added 0 resident bytes per person, the read gateway shrank, the write gateway
+  added 8.7 (target 64: met); over the last 10,000 of 40,000 deep people the read gateway added 322 bytes per person
+  and the write gateway shrank; PostgreSQL filled its 96 MiB shared buffers; the transactor's memory kept growing
+  after its object cache reached 99.6% of its limit. First deep record on a running gateway 132 to 144 ms, fresh
+  stacks 342 to 491 ms. 128 scopes: 565 threads in the write gateway, 1,097 in the transactor. Merged branch: W1,
+  HA1 and ACT1 refreshes each pass 54,079 native assertions; SDK 426 tests; three native gates queued behind the
+  lease. Part 5 assigned: the two open memory terms in one database; keep the merged branch current (single write
+  branch, erasure fixes, reader worker, collector settings, Publish priority); `everything.sh` reworked for ten deep
+  accounts in one database.
