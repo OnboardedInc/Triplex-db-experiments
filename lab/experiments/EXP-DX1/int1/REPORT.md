@@ -2,10 +2,10 @@ The reader and gateways kept the same person-cache entries throughout the thin a
 In the last 24,464 people of the earlier thin import, the read and write gateways added 14 and 25 resident bytes per person.
 The smaller deep import still shows large changes in resident pages. Growth at the account sizes in the physical queue remains open.
 A running gateway opened its first deep record in 132–144 ms. Fresh stacks took 342–491 ms. Most of that difference was inside the gateway.
-Seven extra idle scopes added no read-gateway threads. Each added four write-gateway threads and about eight transactor threads.
+At 128 scopes the write gateway had 565 threads and the transactor had 1,097. The last 96 scopes added about four and eight threads each.
 The merged native path passed all 54,079 checks. Malformed rows and genuine write conflicts keep their expected error types.
 The physical campaign uses two pairs at each deep size. The field-save tape uses measured per-account rates and the frozen tape keeps its original rules.
-Grouping stays off until the combined proof covers the clock error found in review. The memory pilot finished and the larger checks are queued.
+Grouping stays off until the combined proof covers the clock error found in review. The larger population checks and campaign smoke remain queued.
 
 ## Mac observations at fixed activity
 
@@ -22,16 +22,18 @@ The four samples in each series come from `d0a909ba4`, before any remaining acti
 
 ## Mostly idle scopes
 
-| Role | 1 scope RSS MiB / threads | 8 scopes RSS MiB / threads |
-| --- | ---: | ---: |
-| Reader | 129 / 7 | 129 / 7 |
-| Read gateway | 242 / 49 | 242 / 49 |
-| Write gateway | 241 / 56 | 257 / 84 |
-| Transactor | 281 / 75 | 290 / 134 |
-| PostgreSQL | 235 / 17 | 239 / 17 |
-| Driver | 117 / 7 | 118 / 7 |
+| Role | 1 scope MiB / threads | 8 scopes | 32 scopes | 128 scopes | Added MiB / threads per scope, 32→128 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Reader | 128.8 / 7 | 132.1 / 7 | 132.7 / 7 | 133.5 / 7 | 0.01 / 0 |
+| Read gateway | 240.5 / 49 | 241.7 / 56 | 242.5 / 61 | 249.4 / 64 | 0.07 / 0.03 |
+| Write gateway | 250.3 / 56 | 269.7 / 84 | 273.9 / 180 | 338.3 / 565 | 0.67 / 4.01 |
+| Transactor | 279.6 / 76 | 306.4 / 132 | 352.0 / 326 | 516.4 / 1,097 | 1.71 / 8.03 |
+| PostgreSQL | 234.2 / 15 | 238.9 / 15 | 265.9 / 16 | 318.2 / 18 | 0.54 / 0.02 |
+| Driver | 118.6 / 7 | 124.7 / 7 | 133.1 / 7 | 173.8 / 7 | 0.42 / 0 |
 
-The fresh stacks spent 307–445 ms inside the read gateway on their first request. The fresh databases in an already-serving stack spent 92–113 ms there. After startup the deep population p99 was 90.03 ms on 100 first reads including both 34-task records. A restart or newly serving peer exposes the larger startup cost. The comparisons used separate stacks. The gateway retains each opened native connection and its feed watcher until scope deletion. Per-scope row caps bound fact caches. [Gateway evidence](GATEWAY-EVIDENCE.md)
+Median cold creation time for each tranche was 688 / 238 / 155 / 120 ms. The first pinned read after at least 30 s idle took 200 / 105 / 100 / 80 ms. The following first save acknowledged in 127 / 33 / 18 / 11 ms and took 149 / 41 / 22 / 14 ms through exact feed verification. One idle scope was probed per rung.
+
+The separate deep probes spent 307–445 ms inside a fresh read gateway and 92–113 ms in a peer that had already served another scope. The first user after a peer restart sees the larger range. After that setup, the prior deep sample measured 90.03 ms p99 over 100 cold records including both 34-task cases. The gateway retains each opened connection and feed watcher until deletion. The 128-scope PostgreSQL pool had 21.53 MiB assigned of 96 MiB. [Raw scope checks](P4-EVIDENCE.md)
 
 ## Integration and physical command
 
