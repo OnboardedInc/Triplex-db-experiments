@@ -9,6 +9,7 @@
             [triplex.gateway.scope :as scope]
             [triplex.gateway.storage :as storage])
   (:import [java.nio.charset StandardCharsets]
+           [java.nio.channels FileChannel]
            [java.nio.file Files Path StandardCopyOption StandardOpenOption]
            [java.security MessageDigest]
            [java.util HexFormat]))
@@ -160,6 +161,8 @@
       (Files/move partial target (into-array java.nio.file.CopyOption
                                            (cond-> [StandardCopyOption/ATOMIC_MOVE]
                                              replace? (conj StandardCopyOption/REPLACE_EXISTING))))
+      (with-open [parent-handle (FileChannel/open parent (into-array StandardOpenOption [StandardOpenOption/READ]))]
+        (.force parent-handle true))
       (finally (Files/deleteIfExists partial)))))
 
 (defn read-ledger [file] (edn/read-string (slurp file)))

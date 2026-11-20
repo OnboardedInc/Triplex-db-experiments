@@ -97,7 +97,13 @@ function admit(config, configFile) {
   assert(path.isAbsolute(propsArg));
   const liveArgs = fs.readFileSync("/proc/" + options.txPid + "/cmdline", "utf8").split("\0");
   assert(liveArgs.includes(propsArg));
-  assert.equal(fileSha("/proc/" + options.txPid + "/root" + propsArg), config.transactorPropertiesSha);
+  const liveProperties = fs.readFileSync("/proc/" + options.txPid + "/root" + propsArg);
+  assert.equal(sha(liveProperties), config.transactorPropertiesSha);
+  const readerSettings = Object.fromEntries(liveProperties.toString("utf8").split(/\r?\n/)
+    .map((line) => /^\s*(memory-index-threshold|memory-index-max|object-cache-max|index-parallelism)\s*=\s*(\S+)\s*$/.exec(line))
+    .filter(Boolean).map(([, key, value]) => [key, value]));
+  assert.equal(Object.keys(readerSettings).length, 4);
+  assert.deepEqual(readerSettings, options.properties);
   const allowJava = [...new Set(config.javaPids)].sort((a, b) => a - b);
   const running = execFileSync("ps", ["-eo", "pid=,comm="], { encoding: "utf8" })
     .split("\n").map((s) => /^\s*(\d+)\s+java\s*$/.exec(s)).filter(Boolean)
@@ -186,11 +192,16 @@ async function run(configFile, config) {
   const gcFlags = (tag) => "-Xlog:gc*,safepoint:file=" + path.join(logDir, tag + "-gc.log") +
     ":time,uptime,pid,level,tags";
   let stopped, active;
+  const signalGroup = (child, signal) => {
+    if (!child?.pid) return;
+    try { process.kill(-child.pid, signal); }
+    catch (e) { if (e.code !== "ESRCH") throw e; }
+  };
   const interrupt = (error) => {
     stopped ??= error;
     const child = active;
-    child?.kill("SIGTERM");
-    if (child) setTimeout(() => child.kill("SIGKILL"), 10000).unref();
+    signalGroup(child, "SIGTERM");
+    if (child) setTimeout(() => { if (active === child) signalGroup(child, "SIGKILL"); }, 10000).unref();
   };
   for (const signal of ["SIGTERM", "SIGINT"]) process.on(signal, () => interrupt(Error("Interrupted")));
   const watcher = setInterval(() => {
@@ -225,7 +236,9 @@ async function run(configFile, config) {
       const fd = fs.openSync(file, "wx");
       try {
         const code = await new Promise((resolve, reject) => {
-          active = spawn(cmd, args, { env: { ...env, ...customEnv }, stdio: ["ignore", fd, fd] });
+          // [DX-AGE1] Why: the Datomic CLI wraps its JVM in scripts.
+          // Rejected: killing the wrapper and leaving an orphaned copy running after the deadline.
+          active = spawn(cmd, args, { detached: true, env: { ...env, ...customEnv }, stdio: ["ignore", fd, fd] });
           active.once("error", reject);
           active.once("exit", resolve);
         });
@@ -262,6 +275,7 @@ async function run(configFile, config) {
     }
     const inspected = await peer("inspect", "inspect", "inspect", state, config.imageSha);
     assert.equal(inspected.db, binding.db);
+    assert.equal(inspected.sqlDurability, "on|on|on");
     const corrected = forecast(Math.min(inspected.records, config.target), config.target, config.ratePrior, config.reserveHours);
     console.log(JSON.stringify({ phase: "observed-head-forecast", ...corrected }));
     write(path.join(logDir, "observed-forecast.json"), corrected);

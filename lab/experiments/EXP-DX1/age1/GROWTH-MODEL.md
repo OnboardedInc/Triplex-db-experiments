@@ -8,12 +8,12 @@ The second part-one Mac job reported 1,715 index segments for 3,659,560 index da
 
 | Total records (billions) | EAVT levels / leaves / dirs / dir MB | AEVT levels / leaves / dirs / dir MB | AVET levels / leaves / dirs / dir MB | VAET levels / leaves / dirs / dir MB |
 | --: | --: | --: | --: | --: |
-| 0.16 | 3 / 53334 / 23 / 2.14 | 3 / 58395 / 25 / 2.34 | 3 / 63108 / 64 / 4.55 | 3 / 14 / 1 / 0.00 |
-| 0.82 | 3 / 273334 / 114 / 10.95 | 3 / 299271 / 125 / 11.99 | 3 / 323427 / 324 / 23.34 | 3 / 70 / 1 / 0.00 |
-| 1 | 3 / 333334 / 139 / 13.35 | 3 / 364964 / 153 / 14.62 | 3 / 387969 / 388 / 28.00 | 3 / 70 / 1 / 0.00 |
-| 2 | 3 / 666667 / 278 / 26.70 | 3 / 729928 / 305 / 29.24 | 3 / 746534 / 747 / 53.87 | 3 / 70 / 1 / 0.00 |
-| 4 | 3 / 1333334 / 556 / 53.40 | 3 / 1459855 / 609 / 58.47 | 3 / 1463666 / 1464 / 105.62 | 3 / 70 / 1 / 0.00 |
-| 8 | 3 / 2666667 / 1112 / 106.81 | 3 / 2919709 / 1217 / 116.94 | 3 / 2897929 / 2898 / 209.11 | 3 / 70 / 1 / 0.00 |
+| 0.16 | 3 / 53334 / 23 / 2.14 | 3 / 58395 / 25 / 2.34 | 3 / 63108 / 64 / 4.55 | 3 / 14 / 1 / 0.0007 |
+| 0.82 | 3 / 273334 / 114 / 10.95 | 3 / 299271 / 125 / 11.99 | 3 / 323427 / 324 / 23.34 | 3 / 70 / 1 / 0.0024 |
+| 1 | 3 / 333334 / 139 / 13.35 | 3 / 364964 / 153 / 14.62 | 3 / 387969 / 388 / 28.00 | 3 / 70 / 1 / 0.0024 |
+| 2 | 3 / 666667 / 278 / 26.70 | 3 / 729928 / 305 / 29.24 | 3 / 746534 / 747 / 53.87 | 3 / 70 / 1 / 0.0024 |
+| 4 | 3 / 1333334 / 556 / 53.40 | 3 / 1459855 / 609 / 58.47 | 3 / 1463666 / 1464 / 105.62 | 3 / 70 / 1 / 0.0024 |
+| 8 | 3 / 2666667 / 1112 / 106.81 | 3 / 2919709 / 1217 / 116.94 | 3 / 2897929 / 2898 / 209.11 | 3 / 70 / 1 / 0.0024 |
 
 Each index already has three levels at the observed small cut when it has a populated root. Crossing about 7.2M EAVT, 6.58M AEVT, 2.51M AVET or 6.24M VAET **index occurrences** should first require a second directory at full packing. That expands the root without adding another level. A fourth structural level is not predicted through 8B in the pinned implementation. VAET's sealed-seed population stays below its second-directory threshold. The first intermediate-tier transition already appeared by the small cut for AEVT and AVET with the 32 MiB threshold. Different transactor thresholds and novelty can move that transition. A surveyed root with child roots, or a persistent directory/leaf count or byte total outside ±40% of the forecast at the actual seed and 1B counts, contradicts the model.
 

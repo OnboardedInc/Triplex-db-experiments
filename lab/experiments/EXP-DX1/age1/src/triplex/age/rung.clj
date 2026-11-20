@@ -10,7 +10,8 @@
             [triplex.age.tape :as tape]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.main :as gateway]
-            [triplex.gateway.storage :as storage]))
+            [triplex.gateway.storage :as storage])
+  (:import [java.nio.file Files Path]))
 
 (defn current! [{:keys [conn]}]
   (let [db (deref (d/sync conn) 60000 nil)]
@@ -26,9 +27,14 @@
                            (assoc :probes (get-in state [:population :probes]))
                            (dissoc :population)) replace?))
 
+(defn ledger-hash [file]
+  (adopt/sha (Files/readAllBytes (Path/of file (make-array String 0)))))
+
 (defn load-state! [file]
   (let [state (adopt/read-ledger file)
-        pop (adopt/read-ledger (str file ".population.edn"))]
+        seed-file (str file ".population.edn")
+        _ (gate/equal! (:population-sha state) (ledger-hash seed-file) "Population row bytes differ")
+        pop (adopt/read-ledger seed-file)]
     (gate/equal! (:manifest-sha state) (get-in pop [:seal :manifest-sha]) "Population manifest differs")
     (assoc state :population (assoc pop :probes (:probes state)))))
 
@@ -44,7 +50,7 @@
     (if (.exists (io/file seed-file))
       (gate/equal! pop (adopt/read-ledger seed-file) "Interrupted adoption's ledger differs")
       (adopt/persist! seed-file pop false))
-    (save-state! file state false)
+    (save-state! file (assoc state :population-sha (ledger-hash seed-file)) false)
     (native/emit "adopt" {:manifestSha pin :name (:name seal) :facts (:facts seal) :records records
                          :seedT (:seed-t pop) :settled settled :active (:active pop)
                          :sqlBytes (scale/bytes!)})))
@@ -296,14 +302,19 @@
         pop (:population state)
         db (db-for pop)
         view (current! db)
+        durability (scale/sql (System/getenv "AGE_SQL_JDBC")
+                     #(scale/string-query %
+                        "select current_setting('fsync') || '|' || current_setting('synchronous_commit') || '|' || current_setting('full_page_writes')"))
         before (tape/seed-head pop)
         head (- (storage/head-position view) before)]
     (gate/equal! manifest (:manifest-sha state) "Rung refers to a different seed manifest")
+    (gate/equal! "on|on|on" durability "SQL durability differs from the declared arm")
     (gate/equal! (get-in pop [:seal :scope]) (gateway/stored-scope view) "Seed scope differs")
     (native/check! (<= (:observed state) head (get state :pending-end (:observed state)))
                    "Rung head exceeds its pending write boundary" {:head head})
     (native/emit "inspect" {:records (+ (:seed-records pop) (count-records pop 0 head))
                             :db (:name db) :head (+ before head) :sqlBytes (scale/bytes!)
+                            :sqlDurability durability
                             :finished (boolean (or (:finished state)
                                                    (some #(= (:t state) (:t %)) (vals (:closed-rungs state)))))
                             :seedRecords (:seed-records pop)})))

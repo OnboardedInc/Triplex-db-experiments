@@ -20,7 +20,7 @@ export function predict(n) {
 if (import.meta.url === new URL(process.argv[1], "file:").href) {
   for (const n of [0.16e9, seed, 1e9, 2e9, 4e9, 8e9]) {
     const columns = Object.values(predict(n)).map((x) =>
-      [x.levels, x.leaves, x.dirs, (x.directoryBytes / 1e6).toFixed(2)].join(" / "));
+      [x.levels, x.leaves, x.dirs, (x.directoryBytes / 1e6).toFixed(x.directoryBytes < 10000 ? 4 : 2)].join(" / "));
     console.log("|", [n / 1e9, ...columns].join(" | "), "|");
   }
 }

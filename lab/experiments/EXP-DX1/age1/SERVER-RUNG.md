@@ -49,7 +49,11 @@ The config keys are shown below. Values in angle brackets are supplied by the dr
   "transactorPropertiesSha": "<actual properties hash>",
   "javaPids": ["<all pre-existing java pids as numbers>"],
   "measureSettings": "<observed measurement settings JSON path>",
-  "expectedMeasureSettings": { "txPid": "<transactor pid as a number>", "group": false, "saveLedger": true, "smallRows": true },
+  "expectedMeasureSettings": {
+    "txPid": "<transactor pid as a number>", "group": false, "saveLedger": true, "smallRows": true,
+    "properties": { "memory-index-threshold": "32m", "memory-index-max": "512m",
+                    "object-cache-max": "512m", "index-parallelism": "1" }
+  },
   "peerHeap": "2g",
   "peerCache": "768m",
   "copyHeap": "2g"
