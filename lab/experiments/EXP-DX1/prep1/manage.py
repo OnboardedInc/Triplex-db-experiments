@@ -115,6 +115,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "subject": subject == "1",
         "numericOwner": numeric_owner == "1",
         "prefetch": prefetch == "1",
+        "explicitProbes": mode == "lookup-profile" and prefetch == "1",
         "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
         "stage": {str(p.relative_to(stage)): sha(p) for p in sorted(stage.rglob("*"))
                   if p.is_file() and p != slots},

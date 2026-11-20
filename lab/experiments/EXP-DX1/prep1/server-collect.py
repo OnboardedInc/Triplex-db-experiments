@@ -112,6 +112,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert (tx_jvm["run"], tx_jvm["slot"], tx_jvm["source"], tx_jvm["process"]) == (
                 header["slot"], header["slot"], header["commit"], "tx")
             assert tx_jvm["jvm"]["objectCacheMax"] == f'{arm["cacheGiB"]}g'
+            assert tx_jvm["jvm"]["prefetchProbes"] == "true" and tx_jvm["jvm"]["prefetchEnabled"] is True
             assert 23 << 30 <= tx_jvm["jvm"]["maxHeapBytes"] <= 24 << 30
             tx_container, = [container for container in stack["containers"] if container["name"] == header["slot"] + "-tx"]
             assert tx_container["memory"] == 30 << 30

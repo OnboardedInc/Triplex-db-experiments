@@ -16,7 +16,10 @@
                ;; [DX-T1-12] Why: bind the effective compiler/heap policy without recording arbitrary JVM arguments or secrets. Rejected: an environment string as proof the VM accepted a flag.
                :jvm {:compileThresholdScaling (try (.getValue (.getVMOption (ManagementFactory/getPlatformMXBean HotSpotDiagnosticMXBean) "CompileThresholdScaling")) (catch Throwable _ nil))
                      :maxHeapBytes (.maxMemory (Runtime/getRuntime))
-                     :objectCacheMax (System/getProperty "datomic.objectCacheMax")}
+                     :objectCacheMax (System/getProperty "datomic.objectCacheMax")
+                     :prefetchProbes (System/getProperty "datomic.prefetchProbes")
+                     :prefetchEnabled (when (= process "tx")
+                                        (boolean ((requiring-resolve 'datomic.config/prefetch-enabled?))))}
                :loggers (into {} (map (fn [name] [name (str (.getEffectiveLevel (LoggerFactory/getLogger name)))]) logger-names))}]
       (.mkdirs (File. dir))
       (spit (File. dir (str process "-native-settings.json")) (str (json/write-str row) "\n")))))

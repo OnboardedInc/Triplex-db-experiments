@@ -24,6 +24,10 @@ def extract(out):
     hint_comparison = inputs.get("prefetch", False)
     assert inputs["numericOwner"] == hint_comparison
     attempt = inputs["attempt"]
+    dispatcher = None
+    if inputs.get("explicitProbes"):
+        dispatcher, = events("PREP1_NATIVE_PREFETCH ")
+        assert dispatcher == {"attempt": attempt, "setting": "true", "enabled": True, "processors": 1}
     probes = defaultdict(list)
     for event in events("PREP1_PROBE "):
         probes[event["arm"]].append(event)
@@ -125,7 +129,8 @@ def extract(out):
                         "outsideSql": dict(outside_sql.most_common()),
                         "cpuPressure": window}
     return {"attempt": attempt, "head": inputs["head"], "image": terminal["image"],
-            "logSha256": terminal["sha256"], "status": "diagnostic", "arms": result}
+            "logSha256": terminal["sha256"], "status": "diagnostic",
+            "nativePrefetch": dispatcher, "arms": result}
 
 
 if __name__ == "__main__":

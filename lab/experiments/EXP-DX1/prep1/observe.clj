@@ -202,7 +202,12 @@
                          :triplex.tx/position :triplex.group/position :triplex.scope/key :triplex.scope/bootstrap} attr)
                     (lookup! (str "native/unique :avet " attr) #(validate datom))
                     (validate datom))))))))))
-  (let [api (delay (instrument-lookup-api!))]
+  (let [api (delay
+              (retain! "PREP1_NATIVE_PREFETCH"
+                {:setting (System/getProperty "datomic.prefetchProbes")
+                 :enabled (boolean ((requiring-resolve 'datomic.config/prefetch-enabled?)))
+                 :processors (.availableProcessors (Runtime/getRuntime))})
+              (instrument-lookup-api!))]
     (alter-var-root #'db/with-tx
       (fn [apply-tx]
         (fn [snapshot dispatcher data]

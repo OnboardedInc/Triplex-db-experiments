@@ -32,7 +32,7 @@ if [[ $mode == arm && ${DX_PREP1_CAMPAIGN:-comparison} == storage ]]; then
   # Rejected: changing the heap or CPU as well as the object cache between the two S arms.
   tx_memory=30g
   if [[ ${4:-} == 1-cache-S ]]; then tx_cache=16g; fi
-  tx_java="-Xms1g -Xmx24g -XX:+UseG1GC -XX:MaxGCPauseMillis=50 -Ddatomic.objectCacheMax=$tx_cache"
+  tx_java="-Xms1g -Xmx24g -XX:+UseG1GC -XX:MaxGCPauseMillis=50 -Ddatomic.objectCacheMax=$tx_cache -Ddatomic.prefetchProbes=true"
 fi
 up_args=(--port-write 8491 --port-read 8495 --cpus-tx "${DX_PREP1_TX_CPUS:-0}" --cpus-pg "${DX_PREP1_PG_CPUS:-1}"
   --cpus-gw-write "${DX_PREP1_WRITE_CPUS:-2-5}" --cpus-gw-read "${DX_PREP1_READ_CPUS:-6}"

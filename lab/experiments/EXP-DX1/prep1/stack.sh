@@ -141,6 +141,11 @@ export PREP1_URL="http://$addr:8080"
 export DATOMIC_URI_TEMPLATE="datomic:sql://{db}?jdbc:postgresql://$addr:5432/datomic?user=datomic&password=$secret"
 export DATOMIC_EXT_CLASSPATH=/opt/gateway/src
 export DATOMIC_JAVA_OPTS="-Xms96m -Xmx368m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:MaxDirectMemorySize=64m -XX:+ExitOnOutOfMemoryError -Ddatomic.objectCacheMax=$cache -Dtriplex.codec.spec=/opt/gateway/codec-spec.json"
+if [[ $PREP1_MODE == lookup-profile && $TX2_SUBJECT_PREFETCH == 1 ]]; then
+  # [DX-PREP1] Why: both arms need the same active native dispatcher on the one-CPU slot.
+  # Rejected: attaching hints to a transaction while native probe dispatch is disabled.
+  export DATOMIC_JAVA_OPTS="$DATOMIC_JAVA_OPTS -Ddatomic.prefetchProbes=true"
+fi
 java_role() { exec java -server $DATOMIC_JAVA_OPTS -cp "$(bin/classpath)" clojure.main "$@"; }
 # [DX-PREP1] Why: run the normal pinned launcher after attaching an attempt-local native observer.
 # Rejected: a separate JVM's SQL polling as a substitute for the actual durable append interval.
