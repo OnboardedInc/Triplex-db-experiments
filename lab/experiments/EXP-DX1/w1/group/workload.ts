@@ -15,6 +15,7 @@ import { deepPopulation } from "../../../../bench/lib/deep-world.ts";
 import { ids, SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
 
 import { accounts, pooledDigest, tenantRows } from "./population.ts";
+import { readWriteOptions } from "../write-options.ts";
 
 const hash = (x: unknown) => createHash("sha256").update(JSON.stringify(x)).digest("hex");
 const account = (n: number) => "acct/a" + n + "/";
@@ -400,6 +401,10 @@ export async function runArm(
       const opened = await client.create(key, "lean", true, 35000);
       assert(!opened.created && opened.db === db);
     }
+    const writerOptions = server
+      ? await readWriteOptions(url, db, process.env.DX_W1_WRITER_EXPECTATION)
+      : undefined;
+    if (writerOptions) assert.equal(writerOptions.observed.position, head);
     const phases = [];
     for (const name of options.pulse
       ? ["alone", "nine"]
@@ -562,7 +567,7 @@ export async function runArm(
     const check = await client.operation(db, sample.id);
     assert.equal(check.t?.v, sample.t);
     assert.equal(Number(check.position?.v), sample.pos);
-    return { nonce, grouped, scope: key, db, seeds, phases };
+    return { nonce, grouped, scope: key, db, seeds, phases, writerOptions };
   } finally {
     if (bootstrap !== client) bootstrap.close();
     client.close();

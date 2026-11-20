@@ -206,6 +206,7 @@ for (;;) {
       for (const [name, hash] of [
         ["raw.json", row.rawSha256],
         ["seed-readback.json", row.seedReadbackSha256],
+        ["writer-expectation.json", row.writerExpectationSha256],
       ])
         assert.equal(sudo("sha256sum", armDir + "/" + name).split(/\s/)[0], hash);
     }
@@ -239,6 +240,7 @@ for (;;) {
       for (const [name, hash] of [
         ["raw.json", row.rawSha256],
         ["seed-readback.json", row.seedReadbackSha256],
+        ["writer-expectation.json", row.writerExpectationSha256],
       ]) {
         assert.match(hash, /^[a-f0-9]{64}$/);
         assert.equal(sudo("sha256sum", armDir + "/" + name).split(/\s/)[0], hash);

@@ -411,9 +411,13 @@ for role in w r; do
   # [DX-W1] Why: bootstrap is finished on the other peer before the single authoritative writer admits live traffic.
   # Rejected: allowing a large labeled import through the live writer's frame cap during measurement.
   field_policy=()
+  if [[ $role == w && -n ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
+    [[ ${DX_PREDECESSOR_LOOKUP:-} =~ ^[01]$ && $DX_WRITE_OPTIONS_ATTEMPT =~ ^[a-f0-9-]{36}$ ]] || exit 2
+    field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=$DX_PREDECESSOR_LOOKUP" -e "TX2_WRITE_OPTIONS_ATTEMPT=$DX_WRITE_OPTIONS_ATTEMPT")
+  fi
   if [[ -n ${DX_LIVE_PRIORITY:-} ]]; then
     [[ $DX_LIVE_PRIORITY =~ ^[01]$ && ${DX_FIELD_COALESCE:-0} =~ ^[01]$ ]] || exit 2
-    if [[ $role == w ]]; then field_policy=(-e "TX2_LIVE_PRIORITY=$DX_LIVE_PRIORITY" -e "TX2_FIELD_COALESCE=${DX_FIELD_COALESCE:-0}"); fi
+    if [[ $role == w ]]; then field_policy+=(-e "TX2_LIVE_PRIORITY=$DX_LIVE_PRIORITY" -e "TX2_FIELD_COALESCE=${DX_FIELD_COALESCE:-0}"); fi
   fi
   if [[ $role == w && ${DX_W1_EXTRA:-0} == 1 ]]; then
     [[ ${DX_SMALL_ROWS:-0} =~ ^[01]$ && ${DX_GROUP_REUSE_PREPARED:-0} =~ ^[01]$ && ${DX_GROUP_MAX_MEMBERS:-8} =~ ^[1-9][0-9]{0,2}$ ]] || exit 2
