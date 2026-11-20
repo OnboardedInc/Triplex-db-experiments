@@ -180,13 +180,24 @@ try {
     "stale",
   );
   assert.equal(await a.admit(await propose(s, "w0", ids[1]!)), "covered");
+  const priorValue = (
+    await s.rows(["jur:x"], await s.head(), "2026-10-30T00:00:00.000000Z")
+  ).filter((x) => x.attribute === "stateMinWageCents");
+  assert.deepEqual(
+    priorValue.map((x) => x.value.value),
+    ["1650"],
+  );
   const later = "2026-11-05T01:00:00.000000Z",
     due = "2026-11-05T00:00:00.000000Z";
+  await runSave("deadline:" + sha256(due), { e: ids[4]!, a: "weeklyMinutes", values: [2800] });
   await a.advance(later);
-  const overdue = await s.lookup("joined:deadline:" + sha256(due));
+  const overdue = await s.lookup("joined:deadline/" + sha256(due));
   assert(overdue);
   await check(overdue, due, undefined);
-  const r3 = await a.publish("R3", W0.R3.doc, later, "envelopes");
+  const authored = structuredClone(W0.R3.doc);
+  const writing = a.publish("R3", authored, later, "envelopes");
+  Object.assign(authored.rules.find((r) => r.id === "OT")!, { params: { thresholdMinutes: 1 } });
+  const r3 = await writing;
   await check(r3, later, W0.R3.doc);
   kill({ stop: "receiver" });
   await reopen();

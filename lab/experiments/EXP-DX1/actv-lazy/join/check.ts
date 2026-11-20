@@ -4,7 +4,7 @@ import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
 import { DomainOracle } from "../../../../bench/lib/w0-gates.ts";
 import type { Point } from "../decision.ts";
 import type { JoinedAccount } from "./account.ts";
-import { unpack } from "../../notify1/store.ts";
+import { pack, unpack } from "../../notify1/store.ts";
 export const toWire = (d: any) => ({ ...d, seq: Number(d.seq), payload: JSON.parse(d.payload) });
 export class Reference {
   readonly oracle = new DomainOracle(new URL("./oracle.py", import.meta.url).pathname);
@@ -25,6 +25,19 @@ export class Reference {
     const physical = seq === undefined ? undefined : await a.physical(seq),
       stored: any[] = [],
       digest = createHash("sha256");
+    const envelope = { rawBytes: 0, encodedBytes: 0, chunks: 0 };
+    let page: unknown[] = [],
+      size = 0;
+    const envelopeHashes: string[] = [];
+    const flushEnvelope = () => {
+      if (!page.length) return;
+      const encoded = pack(page);
+      envelope.encodedBytes += Buffer.byteLength(encoded);
+      envelopeHashes.push(sha256(encoded));
+      envelope.chunks++;
+      page = [];
+      size = 0;
+    };
     let changes = 0;
     for (let lo = 0; lo < ids.length; lo += 32) {
       const subset = ids.slice(lo, lo + 32),
@@ -45,15 +58,31 @@ export class Reference {
         )
           stored.push({
             subject: o.subject,
-            rows: o.rows,
+            rows:
+              physical.marker.codec === "compact"
+                ? o.rows.map(([k, , v]: [string, string | null, string | null]) => [k, null, v])
+                : o.rows,
             ...(physical.marker.storage === "envelopes" ? { json: o.json } : {}),
           });
+        if (physical && physical.marker.storage !== "owed") {
+          const literal = { subject: o.subject, rows: o.rows, json: o.json };
+          const bytes = Buffer.byteLength(canonical(literal));
+          if (size + bytes > 96000) flushEnvelope();
+          page.push(literal);
+          size += bytes;
+          envelope.rawBytes += bytes;
+        }
         if (fold) {
           this.owed.push(...o.deliveries);
           this.items.set(o.subject, o.items);
           this.receivers.set(o.subject, o.receiver);
         }
       }
+    }
+    flushEnvelope();
+    if (physical?.marker.storage === "envelopes") {
+      assert.equal(sha256(canonical(envelopeHashes)), physical.marker.output.hash);
+      assert.equal(envelope.chunks, physical.marker.output.chunks);
     }
     if (physical) {
       assert.deepEqual(physical.values, stored);
@@ -63,6 +92,7 @@ export class Reference {
       count: ids.length,
       digest: digest.digest("hex"),
       changes,
+      envelope,
       stored: stored.length,
       owed: this.owed.length,
     };

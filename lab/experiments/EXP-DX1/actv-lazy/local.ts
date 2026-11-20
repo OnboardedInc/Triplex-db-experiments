@@ -29,6 +29,7 @@ const tracked = git(
   "lab/experiments/EXP-DX1/notify1",
   "lab/experiments/EXP-DX1/import1/source.ts",
   "lab/experiments/EXP-DX1/scale1/tenants.ts",
+  "lab/experiments/EXP-DX1/scale1/deep-live.ts",
   "lab/world/W0",
   "lab/oracles/domain",
   "packages/datomic/src",
@@ -115,6 +116,22 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
   assert.match(buf, /# pass 1\b/);
   assert.match(buf, /# fail 0\b/);
   writeFileSync(join(dir, "ranges.tap"), buf, { flag: "wx" });
+} else if (binding.mode === "--joined-stage-proof") {
+  run("join/stage-gate.ts", [dir]);
+  run("join/deadline-gate.ts", [dir]);
+  run("join/gate.ts", [dir]);
+} else if (binding.mode === "--joined-fast-deep" || binding.mode === "--joined-fast-compact") {
+  assert(["1000", "10000"].includes(binding.size!));
+  run("join/fast-price.ts", [
+    dir,
+    binding.size!,
+    binding.mode === "--joined-fast-deep" ? "deep" : "compact",
+  ]);
+} else if (binding.mode === "--joined-server-smoke") {
+  run("join/server.ts", ["1000", dir, "--local"]);
+} else if (binding.mode === "--joined-deep") {
+  assert(["1000", "10000"].includes(binding.size!));
+  run("join/deep-price.ts", [dir, binding.size!]);
 } else if (binding.mode === "--joined-price") {
   assert(["1000", "10000"].includes(binding.size!));
   run("join/price.ts", [dir, binding.size!]);

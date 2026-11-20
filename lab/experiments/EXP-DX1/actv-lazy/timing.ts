@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 import { W0, sha256 } from "../../../bench/lib/w0-world.ts";
+import { measureW0Http } from "../../../bench/lib/w0-http.ts";
 import { DomainOracle } from "../../../bench/lib/w0-gates.ts";
 import { seed, valid } from "./fixture.ts";
 import { activation, openStore, type Store } from "./store.ts";
@@ -137,9 +138,16 @@ async function run(format: Format, n: number) {
             offer = 0;
           const publish = () => {
             offer = clock();
-            return activation(s, "release-" + i, release, valid, valid, (t) => {
-              nativeAck = performance.timeOrigin + t;
-            }).then((r) => ({ r, returned: clock() }));
+            return measureW0Http(() =>
+              activation(s, "release-" + i, release, valid, valid, (t) => {
+                nativeAck = performance.timeOrigin + t;
+              }),
+            ).then((m) => ({
+              r: m.value,
+              returned: clock(),
+              native: m.samples.filter((q) => String(q.path).endsWith("/transact")),
+              commits: m.commits,
+            }));
           };
           const pub =
             load === "saves"
@@ -193,6 +201,7 @@ async function run(format: Format, n: number) {
             read,
             repeat,
             publishSave: pub.save,
+            publication: { native: pub.value.native, commits: pub.value.commits },
             readSave: call.save,
           });
         }
