@@ -65,7 +65,7 @@
         business (remove system? authored)
         hint (get input "groupAccount")
         accounts (set (map #(or (second (re-matches #"acct/([A-Za-z0-9_-]{1,64})/.+" %))
-                                (when (and hint (:lean p)) (persisted-account db %))) business))
+                                (when (:lean p) (persisted-account db %))) business))
         account (when (= 1 (count accounts)) (first accounts))]
     (when (and hint (seq business) (not= hint account))
       (throw (ex-info "Group account must match every business entity namespace" {:code "InvalidValue" :status 400 :write-policy true})))

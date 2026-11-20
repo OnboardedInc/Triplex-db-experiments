@@ -75,3 +75,24 @@
       (is (= ["quiet" "import" "dependent" "activation" "notice"]
              (filterv #(#{"quiet" "import" "dependent" "activation" "notice"} %) taken)))
       (is (< 0 (.indexOf taken "import") (.indexOf taken "dependent") (.indexOf taken "notice") 32)))))
+
+(deftest persisted-membership-keeps-quiet-account-admissible
+  (with-redefs [group/enabled true policy/priority? true]
+    (w/in-scope
+     (fn [name conn]
+       (doseq [account ["a" "b"]]
+         (let [id (str "member-" account)
+               row (fact id (str "subject-" account) ":subject/account" "string" account (str "_tx/" id))]
+           (is (= [200 nil] (w/outcome (w/send name (frame id "live" nil [row] [id])))))))
+       (let [db (d/db conn)
+             save (fn [a] (w/save (str "save-" a) (str "subject-" a) (str "row-" a) nil))
+             classify (fn [input] (group/classify db (second (first (storage/tx-data db input))) input))
+             a (classify (save "a")) b (classify (save "b"))
+             lane (atom {:active true :queue (vec (repeat 128 a)) :tails {}})
+             admit (fn [entry] (try (group/submit! conn entry) :admitted
+                                   (catch clojure.lang.ExceptionInfo e (:code (ex-data e)))))]
+         (is (= ["a" "b"] (mapv :account [a b])))
+         (is (= b (classify (assoc (save "b") "groupAccount" "b"))))
+         (with-redefs [group/lane-for (constantly lane)]
+           (is (= "WriteQueueFull" (admit a)))
+           (is (= :admitted (admit b)))))))))
