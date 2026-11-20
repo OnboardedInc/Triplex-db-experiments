@@ -95,3 +95,18 @@ test("the offline bench checker detects a missing changed owner and a substitute
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("matched writer traces retain fractional offers, replay and acknowledgement-loss flags", async () => {
+  const { offerDigest } = await import("./bench.ts");
+  const { sha256 } = await import("../../../bench/lib/w0-world.ts");
+  const original = { key: "344", off: 123579.112, retried: false },
+    repeat = { key: "344", off: 123881.77 };
+  const digest = offerDigest([original], [repeat]);
+  assert.equal(
+    digest,
+    sha256(JSON.stringify([[["344", 123579.112, false]], [["344", 123881.77]]])),
+  );
+  assert.notEqual(digest, offerDigest([{ ...original, off: 123579.113 }], [repeat]));
+  assert.notEqual(digest, offerDigest([{ ...original, retried: true }], [repeat]));
+  assert.notEqual(digest, offerDigest([original], []));
+});

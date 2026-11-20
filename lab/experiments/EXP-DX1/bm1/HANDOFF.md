@@ -6,7 +6,11 @@ The three sender arms completed and their bundles and checksummed COMPARISON.md 
 
 Batch p3 launched at 13:03 EST at f37731a7. Native schedules passed 13/13. The narrow-full run verified all 100,000 seed worlds, then R1 refused an invalid later world for subject 6011. Baseline and sweep had written the same answer references at 4,341,356 and 4,344,665. The second private clone independently reproduced those duplicate facts. Its stage was stopped at 13:46 and cleaned. The standard release was deferred with the narrow comparison. O-DOMAIN independently accepted the seed and reproduced W0.E_CARDINALITY at the live head from the captured gateway responses. `bm1/replay-cardinality.py` reproduces both readings from `subject-6011-basis-wire.json` under evidence/DX-BM1/drv1a/guarded-schedules. A fresh 100k seed takes about 3¼ hours including readback, followed by about three hours for the guarded series.
 
-The original pair was refused before any offers because the VM-only CPU check rejected core 8. The fresh pair retry, batch `p3r`, started at 13:53:48 EST on `11cb89fe0d5a7ddd74d0dbeee53313425ab34a6e`. Its five-hour ceiling is 18:53:48 EST, followed by scoped cleanup and archival. Its zero-reader driver completed at 15:42 EST with all 38,826 receipt reads matched, p50 4.416 ms and p99 36.111 ms. Six physical cores serve the loaded arm’s reader workers. Guarded activation follows DX-SCALE1 item 1. The terminal FREE line with its UTC time transfers the bench to DX-SCALE1.
+**The bench was released at 18:48:15 EST on November 19 (`FREE 2026-11-19T23:48:15Z`).** The named pair’s teardown found zero owned containers and networks. Both tracing-off bookends returned 0. All seven sealed `p3r` bundles are on the Mac. The separate guarded activation trigger entered its waiting state five seconds after handoff.
+
+The first pair attempt refused physical core 8 before any offers. Batch `p3r` ran from 13:53:48 to 18:48:15 EST on `11cb89fe0d5a7ddd74d0dbeee53313425ab34a6e`. Each arm submitted and checked all 38,826 primary receipts. The loaded driver reached DONE, matched 143,900,955 model observations and finished independent replay in 34m33s. At 18:42:10 the operator stopped its post-run viewer after securing the raw checksums and native oracle output, leaving time for the normal closing bookend. The original pair controller therefore records exit 1. Reproduction of its bars and both 90% intervals uses the captured same-session inputs. Six saturated reader workers make performance ineligible. [Per-bar readings](REPORT.md)
+
+On the Mac, `evidence/DX-BM1/drv1a/p3r-handoff-confirmation.log` records the FREE line, empty inventories, control exits and deferred state. The original bundles are under `evidence/DX-BM1/tx2-dxt1-bm1-p3r-*`. The separate viewer is rebuilding from the loaded arm’s original raw manifest in `evidence/DX-BM1/drv1a/offline-render/tx2-dxt1-bm1-p3r-pair-ladder/`. Its log is one directory above it. The original loaded bundle retains `BM1-RENDER-INTERRUPTION.json`.
 
 Set `BENCH_SERVER` to the SSH destination in the brief. Poll every 10 to 15 minutes while timing is active.
 
@@ -34,17 +38,33 @@ done < <(bench 'sudo -n find /var/tmp/triplex-bm1/bundles -mindepth 2 -maxdepth 
 
 A terminal failure with missing bundles or a nonempty `remaining.txt` requires checking its corresponding `logs/<item>-cleanup/cleanup.log` and run output before release. The retained November 18 seed volume belongs to its original attempt and is outside the scoped day teardown.
 
-The deferred job is `g19r`, pinned to `c0ee7dc9f0b3198f28e0103eb2a5dfb692a2ce15`. At 17:02 EST the replacement installer was active and waiting on the terminal `p3r-day-logs/TRANSFER.sha256`. It clones the pinned public commit after the pair is archived. Its second trigger waits for the handback after SCALE1 item 1. SCALE1 runs on its own allocation at present. The first reader produced zero complete scope reports. SCALE1 restarted item 1 on the matched B pair, whose zero tag is `arm-d19-i1-zero-b`. The Mac relay watches the B-pair evidence locally through 01:30 EST November 20. Once both transfers are complete and BM1 is FREE, it signals the waiting server service by SSH. It checks the two archive hashes, attempt and terminal bytes, nonces, source, baseline tag, end times and cleanups. Only the tags and terminal digests cross the connection. The manual release below can recover an expired relay.
+## Overnight queue
+
+The November 19 evening dispatch replaced the deferred SCALE1 handback. Its server trigger, installer and Mac relay and collector were retired before the overnight items. The 18:48:15 EST FREE line records the afternoon handoff. The current queue owns the allocation.
+
+Item 0 began at 19:01:16 EST on ACT2 `6eb4a3e3831f9352d0f56495cd5c881c81a30f9d`. Its 1k gate took 143.889 s and its scoped cleanup finished at 19:06:26. The published launcher refused the one-account 100k workload at the population check. The verified summary and 297,236-byte raw archive are under `evidence/DX-BM1/overnight/i0`.
+
+Item 1 began at 19:12:21 EST, group `grpw1a`, W1 `502c8897deb9af8233d72dfc6cc2d62f601f0fca`. The separate systemd ceiling stops this unit by 23:11:31 EST. ACT2 subsequently published its one-account solo.ts runner with the page-guard reference. That workload now follows W1, before import, the thin lookup comparison, guarded release and 2% active capacity. The original W1 alone and nine-neighbor phases provide Q-PULSE. Additional open-loop production rates and the same-database import probe use verified W1 seeds between timing and teardown. [Predictions and outcomes](PREDICTIONS.md)
 
 ```sh
-bench 'systemctl show triplex-bm1-g19r-install-b.path triplex-bm1-g19r-install-b.service -p ActiveState -p SubState -p Result'
-bench 'sudo -n cat /var/tmp/triplex-bm1/deferred-g19r/STATUS'
-launchctl print "gui/$(id -u)/org.triplex.dx-bm1.g19r-relay" | rg "state =|last exit code"
-bench 'systemctl status --no-pager triplex-bm1-g19r-after-scale1.path'
-bash lab/experiments/EXP-DX1/bm1/deferred.sh --release g19r "$BENCH_SERVER" arm-d19-i1-zero-b arm-d19-i1-reader-b
-bench 'sudo -n tail -n 12 /var/tmp/triplex-bm1/day-g19r/logs/queue.log'
+bench 'cat /var/tmp/triplex-bm1/STATUS'
+bench 'sudo -n tail -12 /var/tmp/triplex-w1/grpw1a/campaign.log'
+bench 'systemctl show triplex-w1-grpw1a -p ActiveState -p Result -p ExecMainStatus'
 ```
 
-The deferred seed has a four-hour ceiling. It stops before any release or live traffic, proves the fresh writable head and all 100,000 worlds, then seals a cold PostgreSQL copy. Each activation restores every file into a new private volume, checks its seed digest, and runs native schedules and complete readback. The three arms share a further three-hour ceiling. Allow 7 h 45 min from release including setup and archival. A failed prerequisite skips its dependants and releases the clean bench. Use the collection command above with the tags for `g19r` and its three request slots. `DX_BM1_COMPACT=1` keeps the raw traces compressed on the Mac and extracts the Linux telemetry needed to replay the study. The two full 10k arm reports, viewers and anatomy remain directly readable.
+The detached Linux supervisor is `bm1n19-campaign.service`. It adopts the existing W1 unit and reads each later builder's public head and report at admission. It gives the Mac controller 45 seconds to launch through SSH, then uses the same published native worker locally when the client is unavailable. Each item has an overall deadline and an independent systemd timer for controllers whose default exceeds it. The Linux supervisor checks resource names, native lock release and terminal evidence before advancing. The Mac dispatcher and collector use `night-client.py watch` and inspect sealed bundles every eleven minutes. Summaries are always collected. The raw-archive ceiling is strictly below 1 GiB.
 
-The Mac collector follows the relay automatically. Every 11 minutes after handback it inventories only this batch’s sealed archives and requested activation slots, pulls new bundles, checks their hashes and updates the evidence index. Its receipt is `evidence/DX-BM1/collection-g19r.json`. It names missing terminal archives and ends at most nine hours after the handback signal. If no release arrived by 01:40 EST, it exits with the server trigger still available. The manual collection commands above work independently.
+```sh
+bench 'systemctl show bm1n19-campaign.service -p ActiveState -p Result -p NRestarts'
+bench 'sudo -n tail -15 /var/tmp/triplex-bm1/night-n19/campaign.log'
+bench 'sudo -n find /var/tmp/triplex-bm1/night-n19/bundles -mindepth 2 -maxdepth 2 -name TRANSFER.json'
+BENCH_SERVER="$BENCH_SERVER" python3 lab/experiments/EXP-DX1/bm1/night-client.py collect i1-1
+```
+
+The server labels the one-account DELTA retry as `0-repeat`, with transfer key `i6`. Other keys match the numbered items. Suffix 1 or 2 is the attempt number. Allow four hours for W1, four for the new one-account DELTA, five for import, three for thin lookup, four for guarded release and five for the active-capacity runs. A shorter terminal arm hands the server to the next item immediately. The original W1 worker finishes timing and full seed verification before any supplemental writes. The first verified W1 database is captured with PostgreSQL’s custom-format dump before those writes. Its manifest binds the native container, seed, scope, final position, original receipt, archive bytes and table of contents.
+
+### Evidence checks
+
+- `held-seed.py` binds the completed four W1 phases, the native process and its start ticks, the arm nonce, scalar seed cut, all ten accounts and immutable population digest. Its stop hook resumes only that exact parent. `group-probes.mjs` derives Q-PULSE from the original quiet receipts. Its supplemental phases have new command IDs, exact account membership, scheduled offers, hashed rows, pinned reads and durable operation checks.
+- `overnight.py` accepts W1 group or thin observations from the public revision, scoped arm identities, matched population and native result files. Import stages check same-attempt bindings and manifest bytes. The solo checker checks both reference releases, source, nonce, exact 100k roster, 90 offers and the actual loaded-output hash. The guarded and integrated rungs require their native result bytes and matching source/slot identities. Each terminal state retains failures and an independent scoped inventory.
+- `night-archive.py` seals the actual terminal and request, all selected summary bytes and the compressed archive. `night-client.py` rechecks archive size and hash, every extracted summary member, timestamps and bindings. The recovered-viewer index in `trace-store.mjs` requires the original interrupted slot, exact input hashes and every derived export. It preserves the original attempt's catalog entry.

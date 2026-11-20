@@ -3,7 +3,9 @@
 Measure one shared Datomic commit pipeline first, followed by the same tenant-local writes through separate databases. The comparison holds the quiet account's offers and reader count fixed. [Targets](../../../TARGETS.md)
 
 <!-- state -->
-2026-11-19 23:59 UTC. The matched 10k reader, `arm-d19-i1-reader-b` on `69220f279`, completed all four eight-minute windows at 256 readers. The observed batches contain 203,645,158 reads in those windows. The latest checkpoint contains 223,993,286 reads across all phases (35.05 GiB of numeric observations). Full-row verification and O-REPLAY follow the timed traffic. The arm began at 23:07:37 UTC and has a four-hour ceiling at 03:07:37 UTC November 20, followed by scoped cleanup. The zero control acknowledged all 56,505 commands with commit p99 of 87.04 ms. Three terminal attempts are indexed. The original raw archives remain on the server. [Retention hashes](evidence/original-archives-server-only.sha256)
+The owner restarted the campaign with the ten-account native seed first. The pooled setup is `arm-p6-i1-seed-a`, followed by staggered and coincident field saves. The earlier stop below belongs to the previous queue.
+
+The campaign stopped at 00:42:17 UTC November 20 (19:42:17 ET November 19) after item 1’s second failed reader. The first attempt missed local-replica coverage. The retry reached its 64 GiB observation limit at 00:39:48 UTC. Its stack was released at 00:40:24 UTC and the verified 11,090,251,343-byte raw archive completed on the server at 00:42:11 UTC. The server is free. Items 2–5 and their six new field-save executions are unstarted. The four compact transfers are indexed. [Failure evidence](evidence/arm-d19-i1-reader-b-diagnostic.md)
 <!-- end state -->
 
 With the dedicated destination set in `BENCH_SERVER`, this command shows the queue, bounded units and stage files.

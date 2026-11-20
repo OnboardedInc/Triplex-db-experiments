@@ -1111,6 +1111,18 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   assert(disk, "No completed seed measurement");
   if (mode === "seed") {
     assert(exit.every((e) => e === 0));
+    if (item === 3 && attempt.layout === "pooled") {
+      const w = get(path.join(raw[0]!, "seed-observed.json"));
+      assert.deepEqual(w.identity, get(path.join(raw[0]!, "identity.json")));
+      assert(
+        w.identity.source === source &&
+          w.identity.nonce === attempt.nonce &&
+          w.identity.slot === prefix &&
+          w.identity.arm === "seed",
+      );
+      status(dir, "sealing the ten-account population", { position: w.seed.position });
+      await sealSeed(dir, prefix, w, engines.pg.id);
+    }
     status(dir, "seed complete", {
       facts: disk.facts,
       target: spec.scopes,
@@ -1608,6 +1620,7 @@ async function main() {
       activationMode === "delta" ||
         paired ||
         pinnedStudy ||
+        (mode === "seed" && item === 3 && ref === "exp/DX-ACT1-activation") ||
         sameCampaignInputs(ref, changes, publication),
       "New upstream executable inputs require an integrated source revision: " + ref,
     );

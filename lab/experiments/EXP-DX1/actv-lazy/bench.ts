@@ -25,6 +25,7 @@ import { price, pct } from "./price.ts";
 import { readers } from "./traffic.ts";
 import { checkPush } from "./push-check.ts";
 import { observeFeed } from "./feed.ts";
+import { bytes as wireBytes } from "../import1/source.ts";
 const file = (p: string, x: unknown) =>
   writeFileSync(p, JSON.stringify(x, null, 2) + "\n", { flag: "wx" });
 type Stamp = { p: number; v: string };
@@ -48,6 +49,14 @@ const q = (a: number[]) => ({
   p99: pct(a, 0.99),
   max: pct(a, 1),
 });
+// [DX-ACT1] Why: frozen writer offers retain fractional milliseconds. Rejected: W0's integer-only domain codec (a correct traffic window would fail during evidence collection).
+export const offerDigest = (
+  writes: readonly { key: string; off: number; retried: boolean }[],
+  resends: readonly { key: string; off: number }[],
+) =>
+  sha256(
+    wireBytes([writes.map((r) => [r.key, r.off, r.retried]), resends.map((r) => [r.key, r.off])]),
+  );
 async function account(dir: string, n: number) {
   const s = await openStore("lazy-bench-" + randomUUID(), "act2-deep"),
     f = await seed(s, n),
@@ -580,12 +589,7 @@ async function window(
         ...reads,
         scope: acct.s.scope,
         seed: acct.f.sourceHash,
-        offers: sha256(
-          canonical([
-            w.map((r) => [r.key, r.off, r.retried]),
-            record.resends.map((r) => [r.key, r.off]),
-          ]),
-        ),
+        offers: offerDigest(w, record.resends),
         scheduled: w.length + record.resends.length,
         original: w.length,
         resends: record.resends.length,
@@ -813,10 +817,27 @@ export async function bench(
   }
 }
 export async function smokeWindow(path: string) {
-  const a = await account(path, 256),
-    nonce = randomUUID();
+  const attempt = JSON.parse(readFileSync(join(path, "attempt.json"), "utf8")),
+    holder = JSON.parse(readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!, "utf8"));
+  assert(
+    attempt.mode === "--smoke" &&
+      holder.holder === "DX-ACT1" &&
+      holder.container === attempt.slot &&
+      holder.volume === attempt.volume &&
+      execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim() === attempt.source,
+  );
+  const a = await account(path, 256);
   try {
-    const r = await window(join(path, "traffic-smoke"), [a], true, 2, "local", nonce, false, true);
+    const r = await window(
+      join(path, "traffic-smoke"),
+      [a],
+      true,
+      2,
+      attempt.slot,
+      attempt.nonce,
+      false,
+      true,
+    );
     assert(r.switches?.cold.n === 2 && r.summaries[0]!.commit.n > 0 && r.summaries[0]!.checked > 0);
     file(join(path, "bench-smoke.json"), r);
   } finally {
