@@ -115,7 +115,7 @@ case "$PREP1_MODE" in
     ;;
   profile|cheap)
     if [[ "$PREP1_MODE" == profile ]]; then
-      arms=(reference guard time reads)
+      arms=(time reads reference cheap)
     else
       arms=(reference cheap cheap2 reference2 guard time reads)
     fi

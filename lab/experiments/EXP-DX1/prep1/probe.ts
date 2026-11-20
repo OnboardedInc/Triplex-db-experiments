@@ -9,6 +9,10 @@ const arm = process.env.PREP1_ARM;
 const guardProbe = mode === "profile" || mode === "cheap";
 const depths = guardProbe ? [32] : mode === "ortho" ? [1, 8, 32, 32, 8, 1] : [32, 32];
 const count = guardProbe ? 96 : 192;
+const subjectCount = mode === "profile" ? 1200 : depths.length * count;
+// [DX-PREP1] Why: sample across the same seeded depth as the earlier open-loop experiment.
+// Rejected: a narrow prefix of that database, where all historical lookups can share the same index leaves.
+const subjectFor = (offer: number) => (mode === "profile" ? (offer * 67) % subjectCount : offer);
 const depth = 160;
 const attempt = process.env.PREP1_ATTEMPT!;
 const scope = JSON.stringify([
@@ -64,7 +68,7 @@ try {
   const { db, created } = await c.create(scope, "lean", true, 35000);
   assert(created);
   const seeds: ReturnType<typeof command>["rows"][] = [];
-  for (let i = 0; i < depths.length * count; i += 8) {
+  for (let i = 0; i < subjectCount; i += 8) {
     const batch = Array.from({ length: 8 }, (_, j) =>
       command(`seed-${i + j}`, facts(i + j, depth, "original"), [], false),
     );
@@ -91,7 +95,8 @@ try {
     const inputs = Array.from({ length: count }, (_, j) => {
       const i = block * count + j;
       const width = 1 + (j % 3);
-      return command(`edit-${i}`, facts(i, width, "edited"), seeds[i]!.slice(0, width));
+      const subject = subjectFor(i);
+      return command(`edit-${i}`, facts(subject, width, "edited"), seeds[subject]!.slice(0, width));
     });
     const head = seedHead.position + block * count;
     let next = 0;
@@ -187,7 +192,7 @@ try {
               .filter((x) => attributes.has(x.attribute))
               .map((x) => x.id)
               .sort(),
-            seeds[block * count + r.index]!.slice(0, expected.length)
+            seeds[subjectFor(block * count + r.index)]!.slice(0, expected.length)
               .map((x) => x.id)
               .sort(),
           );

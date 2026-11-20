@@ -30,7 +30,9 @@
 
 (defn portion! [profile read? check member f]
   (let [start (System/nanoTime) before (cpu)
-        stats (when read? (io/throw-if-ex! (io/with-io-stats f {:io-context check :api :guard-section})))
+        stats (when read?
+                (io/throw-if-ex!
+                  (io/with-io-stats f {:io-context (keyword "prep1" (name check)) :api :guard-section})))
         value (if read? (:ret stats) (f))
         tcpu (- (cpu) before) end (System/nanoTime)]
     (vswap! profile update :checks conj

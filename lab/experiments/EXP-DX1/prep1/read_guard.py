@@ -33,7 +33,6 @@ def failed_diagnostic(out):
     lines = log.read_text().splitlines()
     assert "DatomicHttpError: Group durability is unknown" in lines
     assert lines[-1] == "[lab] ENGINE: Datomic selftest failed"
-    assert not any(line.startswith("PREP1_GUARD ") for line in lines)
     return inputs, {"log": log.name, "slot": "tx2-datomic-selftest", "image": image["imageId"],
                     "sha256": sha(log)}, run_events(inputs, lines)
 
@@ -71,32 +70,40 @@ def read(out, completed_only=False):
             assert key not in native
             native[key] = (member, append)
 
-    profile = {}
-    for entry in (() if completed_only else events("PREP1_GUARD ")):
-        key = entry["scope"], entry["operation"]
-        assert key not in profile
-        profile[key] = entry
-
     by_arm = defaultdict(list)
     for entry in events("PREP1_PROBE "):
         by_arm[entry["arm"]].append((entry["kind"], entry["data"]))
     if mode == "profile":
-        assert list(by_arm) == ["reference", "guard", "time", "reads"]
+        assert list(by_arm) == ["time", "reads", "reference", "cheap"]
     elif completed_only:
-        assert list(by_arm) == ["reference", "cheap", "cheap2", "reference2", "guard", "time"]
-        assert [kind for kind, _ in by_arm.pop("time")] == ["seed"]
+        names = ["reference", "cheap", "cheap2", "reference2", "guard", "time", "reads"]
+        last = next(reversed(by_arm))
+        assert last in ("time", "reads") and list(by_arm) == names[:names.index(last) + 1]
+        assert [kind for kind, _ in by_arm.pop(last)] == ["seed"]
     else:
         assert list(by_arm) == ["reference", "cheap", "cheap2", "reference2", "guard", "time", "reads"]
+    profile = {}
+    if "time" in by_arm or "reads" in by_arm:
+        for entry in events("PREP1_GUARD "):
+            key = entry["scope"], entry["operation"]
+            assert key not in profile
+            profile[key] = entry
+    else:
+        assert not any(line.startswith("PREP1_GUARD ") for line in raw)
+    subject_count = 1200 if mode == "profile" else 96
+    initial_position = subject_count // 8
     results = {}
     for arm, observations in by_arm.items():
         assert [kind for kind, _ in observations] == ["seed", "block", "finished"]
         seed, block, finished = (value for _, value in observations)
         scope, db = scoped_db(attempt, arm)
-        assert (seed["db"], seed["scope"], seed["subjects"], seed["facts"], seed["position"]) == (db, scope, 96, 15360, 12)
-        assert (block["db"], block["head"], block["outstanding"], finished["db"], finished["head"]) == (db, 12, 32, db, 108)
+        assert (seed["db"], seed["scope"], seed["subjects"], seed["facts"], seed["position"]) == (
+            db, scope, subject_count, subject_count * 160, initial_position)
+        assert (block["db"], block["head"], block["outstanding"], finished["db"], finished["head"]) == (
+            db, initial_position, 32, db, initial_position + 96)
         assert {e["index"] for e in block["rows"]} == set(range(96))
         groups = defaultdict(list)
-        for i, e in enumerate(block["rows"], 13):
+        for i, e in enumerate(block["rows"], initial_position + 1):
             ack = e["ack"]
             assert ack["operationId"] == f"edit-{e['index']}" and int(ack["position"]["v"]) == i
             groups[ack["t"]["v"]].append(e)
