@@ -96,6 +96,7 @@ export class AuditReplay {
       byCut.set(r.position, rows);
     }
     const seqAt = new Map<number, number>();
+    const answerTape: unknown[] = [];
     let i = 0,
       seq = 0;
     for (const [position, rows] of [...byCut].sort(([a], [b]) => a - b)) {
@@ -112,10 +113,12 @@ export class AuditReplay {
         [...rows].map(([id, b]) => [id, hash(JSON.parse(b))]),
         "public read differs from independent journal replay",
       );
+      answerTape.push([position, expected]);
     }
     for (const r of raw) assert.equal(r.seq, seqAt.get(r.position));
     return {
       observations: raw.length,
+      answers: hash(answerTape),
       proofs: await this.verifyDurability(offers, ids, decoder),
     };
   }
@@ -134,6 +137,11 @@ export class AuditReplay {
           notices: reopened.chunks.flatMap((c) => parsePublication(c.deliveries)),
           state: reopened.chunks.flatMap((c) => parsePublication(c.state)),
         };
+      assert.equal(
+        reopened.owedPosition,
+        o.owed.position,
+        "timed owed cut differs from reopened native entries",
+      );
       const expected: typeof actual = { rows: [], notices: [], state: [] };
       for (let i = 0; i < ids.length; i += 256) {
         const subjects = ids.slice(i, i + 256),
@@ -171,6 +179,7 @@ export class AuditReplay {
         pos: position,
         seq,
         stored: o.stored?.position ?? null,
+        owedCut: reopened.owedPosition,
         people,
         rows: expected.rows.length,
         notices: expected.notices.length,

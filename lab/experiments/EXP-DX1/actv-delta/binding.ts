@@ -72,6 +72,7 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
                         "solo-policy",
                         "audit-solo",
                         "audit-clock",
+                        "audit-cold",
                         "audit-offers",
                         "audit-reader",
                         "audit-replay",

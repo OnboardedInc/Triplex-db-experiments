@@ -15,6 +15,7 @@ import { scoreClock, assertOnTime, type RawDecision } from "./audit-clock.ts";
 import { headSha, sources, stamp } from "./binding.ts";
 import { hash } from "./store.ts";
 import { unseenRelease } from "./audit-offers.ts";
+import { checkColdWitnesses } from "./audit-cold.ts";
 
 const phases = ["reference", "record", "stored"] as const;
 const sum = (b: Buffer) => createHash("sha256").update(b).digest("hex");
@@ -167,6 +168,31 @@ export function checkAuditSolo(
         .split("\n")
         .map((line) => JSON.parse(line));
       assert(s.count === reads.length && s.verified.observations === reads.length);
+      const plan = read(path.join(folder, "schedule-" + base + ".json"));
+      assert.deepEqual(plan, {
+        binding: lit.binding,
+        mode: phase,
+        schedule: portion.map((o: any) => ({ id: o.id, order: o.order, scheduled: o.scheduled })),
+      });
+      assert(
+        plan.schedule.every(
+          (x: any, j: number) => x.scheduled === plan.schedule[0].scheduled + j * 1000,
+        ),
+      );
+      checkColdWitnesses(portion, reads, lit.routeNames, n);
+      const observed = new Map<number, Map<string, string>>();
+      for (const r of [...reads].sort((a, b) => a.invoked - b.invoked)) {
+        const at = observed.get(r.position) ?? new Map<string, string>();
+        const digest = hash(JSON.parse(r.raw)),
+          prior = at.get(r.id);
+        if (prior) assert.equal(prior, digest);
+        at.set(r.id, digest);
+        observed.set(r.position, at);
+      }
+      assert.equal(
+        hash([...observed].sort(([a], [b]) => a - b).map(([p, ids]) => [p, [...ids]])),
+        s.verified.answers,
+      );
       const scored = scoreClock(
         portion.map((o: any) => ({ ...o, order: o.order - base })),
         reads.map((r) => ({ ...r, offer: r.offer === undefined ? undefined : r.offer - base })),
@@ -187,6 +213,7 @@ export function checkAuditSolo(
             p.pos === o.ack.position &&
             p.seq === o.ack.seq &&
             p.stored === (o.stored?.position ?? null) &&
+            p.owedCut === o.owed.position &&
             /^[a-f0-9]{64}$/.test(p.digest) &&
             /^[a-f0-9]{64}$/.test(p.object),
         );

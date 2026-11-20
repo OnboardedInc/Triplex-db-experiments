@@ -58,7 +58,12 @@ export function readerProcess(connect: Connect) {
     name: "fresh-process",
     read: (subject: string) => exchange<Decision>({ kind: "read", subject }),
     proof: (mode: DurabilityMode, seq: number, cut: number) =>
-      exchange<{ digest: string; chunks: any[] }>({ kind: "proof", mode, seq, cut }),
+      exchange<{ digest: string; chunks: any[]; owedPosition: number }>({
+        kind: "proof",
+        mode,
+        seq,
+        cut,
+      }),
     async close() {
       if (child.connected) child.disconnect();
       await ended;
@@ -92,7 +97,7 @@ if (process.argv[1] === import.meta.filename) {
           );
           assert.equal(absent.size, 0, "a concrete row existed before the record endpoint");
           for await (const { chunk } of record.chunks) chunks.push(chunk);
-          value = { digest: record.owed, chunks };
+          value = { digest: record.owed, chunks, owedPosition: input.cut };
         }
         process.send?.({ id, value });
       } catch (e) {

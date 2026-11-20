@@ -266,7 +266,15 @@ export async function openStored(a: Account, seq: number, position: number) {
     );
     return c.value;
   });
-  return { cut: m.cut, digest: manifest.hash, chunks };
+  const lastOwed = chunks.flatMap((c, i) =>
+    decodeBig<W0.Delivery[]>(c.deliveries).length ? [m.parts[i]!.position] : [],
+  );
+  return {
+    cut: m.cut,
+    digest: manifest.hash,
+    chunks,
+    owedPosition: lastOwed.at(-1) ?? manifest.position,
+  };
 }
 export async function concrete(db: Objects, x: Expansion) {
   const p = await db.comp.currentPosition(),

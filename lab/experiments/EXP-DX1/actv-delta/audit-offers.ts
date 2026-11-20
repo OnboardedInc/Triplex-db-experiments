@@ -71,6 +71,16 @@ export async function auditOffers(
     await measured(async () => {
       const opened = performance.now(),
         start = opened + 2100;
+      const schedule = Array.from({ length: Math.min(30, count - base) }, (_, j) => ({
+        id: "audit-publish-" + (base + j),
+        order: base + j,
+        scheduled: start + j * 1000,
+      }));
+      fs.writeFileSync(
+        path.join(dir, "schedule-" + base + ".json"),
+        JSON.stringify({ binding, mode, schedule }) + "\n",
+        { flag: "wx" },
+      );
       let running = true;
       const ingress = new OrderedSaves();
       function capture(route: Route, id: string, phase: RawDecision["phase"], offer?: number) {
@@ -133,15 +143,14 @@ export async function auditOffers(
       const pending: Promise<unknown>[] = [];
       let serial: Promise<unknown> = Promise.resolve();
       try {
-        for (let i = base; i < Math.min(base + 30, count); i++) {
-          const scheduled = start + (i - base) * 1000;
+        for (const { order: i, id, scheduled } of schedule) {
           await waitsUntil(scheduled);
           const ingressAt = performance.now(),
             intended = unseenRelease(i),
             o: AuditOffer = {
               ...intended,
               order: i,
-              id: "audit-publish-" + i,
+              id,
               scheduled,
               ingress: ingressAt,
               mode,
