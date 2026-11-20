@@ -5,7 +5,7 @@ The busy receipt spent 2.020 seconds queued behind 50 earlier saves. The databas
 Writing all concrete values took 13.0 to 18.6 seconds. Each release changed values for everyone in the account.
 The Mac pilot reopened a parked account and recorded values and individual notices. Every checked answer and notice matched the oracle.
 At 10,000 people and 3.5 saves per second, the Mac recorded values after 216 seconds and individual notices after 254 seconds. The faster-rate pair is queued.
-The receipt and erasure rulings remain open. The server finished the release trials and stopped the separate background timing run.
+The owner chose the durable receipt as the one-second stored point. The server finished the release trials. Protected-input erasure remains open.
 
 ### Part 7
 

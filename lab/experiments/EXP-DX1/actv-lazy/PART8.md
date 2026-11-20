@@ -62,3 +62,9 @@ The first minute of the control accumulated a backlog in both scopes. The contro
 The publication receipt returned in 167 ms. The values and notices reached their matching native cursor ACKs 215.54 and 254.12 seconds after the receipt. They continued beyond the last offered save. The independent replay matched 78,548 sampled answers at their witnessed cuts, 49,297 changed values and 5,997 ordered effects across R1 and the offered release. Its verified file set and cleanup are in `part8-deep-event/rate-3.5`. [Checksums](PART8-SHA256SUMS)
 
 At those measured per-person rates, 100,000 people would take roughly 36 minutes to values and 42 minutes to notices. A million would take about 6.0 and 7.1 hours. Those projections assume the measured work mix, limited traffic window and linear scaling. The 23.5 saves/s pair has its own baseline and remains queued.
+
+## Version 0.1 handoff
+
+The Mac now uses ordinary heavy tokens only. The bound Mac attempts and settlement output label their clocks diagnostic. A short reopen checks the original preparation seal, exact slot and volume, an ancestral source, both native source cuts and the baseline notice cursor before offering the release. The run validates the full value and notice archives with Python. Its shorter traffic interval keeps its actual denominators. Bare metal owns latency qualification.
+
+The branch merged peer priority `bc01028b0`, the notification census `fa53e50cd` and integration base `0b5ab37c9`. The three overlapping notification and scale files use the verified INT1 reconciliation. The owner chose Option A in `origin/main` TARGETS §1.2. The durable release fixes the exact answers and owed notices at the stored point. Background materialization has a separate reported clock.

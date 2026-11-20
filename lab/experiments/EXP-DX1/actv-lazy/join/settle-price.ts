@@ -15,7 +15,7 @@ import { Settlement } from "./settlement.ts";
 import { Reference, toWire } from "./check.ts";
 import { authoredSeed, expectedPolicy } from "./deep-reference.ts";
 import { rawDeep, replaceDeep } from "./deep.ts";
-import { measure } from "./measure.ts";
+import { macDiagnostic, measure } from "./measure.ts";
 
 type Fixture = Pick<
   Awaited<ReturnType<typeof seed>>,
@@ -255,9 +255,10 @@ export async function settlementPrices(
   n: number,
   seconds = 60,
   readerCount = 4,
-  phase?: { prepare: number } | { resume: Preparation; digest: string },
+  phase?: { prepare: number } | { resume: Preparation; digest: string; shortDiagnostic?: true },
 ) {
   const prepared = phase && "resume" in phase ? phase.resume : undefined;
+  const shortDiagnostic = phase && "shortDiagnostic" in phase && phase.shortDiagnostic;
   const prepareRate = phase && "prepare" in phase ? phase.prepare : undefined;
   const slot = phase ? ownedSlot() : undefined;
   if (prepared)
@@ -368,7 +369,8 @@ export async function settlementPrices(
           return { control, loaded, offer, visible, after, terminal, published, doc, charged };
         });
       if (prepared) {
-        if (n !== 64) for (const x of [...control, ...loaded]) assert(x.writes.length >= 500);
+        if (n !== 64 && !shortDiagnostic)
+          for (const x of [...control, ...loaded]) assert(x.writes.length >= 500);
         save(out, "observed-" + i, {
           scope: source.scope,
           rate,
@@ -480,6 +482,7 @@ export async function settlementPrices(
       neighbour: neighbour.scope,
       seconds,
       readerCount,
+      ...(macDiagnostic ? { timing: "diagnostic" } : {}),
       result: result.map((r) => ({
         rate: r.rate,
         cut: r.cut,
@@ -509,8 +512,10 @@ if (import.meta.filename === process.argv[1]) {
   if (mode === "--prepare") {
     assert(arg === "3.5" || arg === "23.5");
     await settlementPrices(out, Number(n), 180, Number(readers), { prepare: Number(arg) });
-  } else if (mode === "--resume") {
-    assert(arg && Number(seconds) === (Number(n) === 64 ? 3 : 180));
+  } else if (mode === "--resume" || mode === "--diagnostic-resume") {
+    const shortDiagnostic = mode === "--diagnostic-resume";
+    assert(!shortDiagnostic || macDiagnostic);
+    assert(arg && Number(seconds) === (Number(n) === 64 ? 3 : shortDiagnostic ? 45 : 180));
     const bytes = readFileSync(arg),
       digest = sha256(bytes);
     assert.equal(digest, process.env.DX_JOIN_PREPARATION_SHA256);
@@ -520,6 +525,7 @@ if (import.meta.filename === process.argv[1]) {
     await settlementPrices(out, Number(n), Number(seconds), Number(readers), {
       resume: witness,
       digest,
+      ...(shortDiagnostic ? { shortDiagnostic } : {}),
     });
   } else {
     assert(mode === undefined);
