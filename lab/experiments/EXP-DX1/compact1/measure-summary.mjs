@@ -38,6 +38,10 @@ function txLog() {
     const field = (name) => Number(line.match(new RegExp("(?:^|[ ,{]):" + name + " ([0-9.]+(?:[eE][+-]?[0-9]+)?)"))?.[1]);
     const t = field("t"), tid = field("tid"), datoms = field("datom-count");
     const apply = field("apply-msec"), api = field("api-ms"), readToLog = field("msec");
+    // [DX-COMPACT1] Why: an aborted transaction can emit a process header with no commit measurements.
+    // Rejected: interpreting omissions on a committed native t as zero-duration work.
+    if ([t, datoms, apply, api, readToLog].every(Number.isNaN) && Number.isSafeInteger(tid) &&
+        /^.*\{:event :tx\/process, :txid #uuid "[a-f0-9-]{36}", :pid \d+, :tid \d+\}$/.test(line)) continue;
     assert([t, tid, datoms, apply, api, readToLog].every(Number.isFinite));
     const byT = byTid.get(tid) ?? new Map();
     assert(!byT.has(t));

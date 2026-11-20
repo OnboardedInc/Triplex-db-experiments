@@ -12,6 +12,8 @@ The domain checker runs both current and pinned worlds through unchanged indepen
 
 Mac SQL attempt `prototype-c` checked 71 W0 cases across evaluate, reconcile and affected. Both read paths produced the expected independent answer in all 213 oracle responses, with three frozen coordinates and 68 remapped cases. A new peer recovered the original grouped receipt, pinned value and erase marker. The separate SDK process checked 11 requests, including three distinct receipts at one native transaction across two accounts. The benchmark component stopped on a bad seed revision index. `benchmark-d` fixed the index and ran fresh databases. [Attempt evidence](SHA256SUMS)
 
+The fresh Mac SQL regression `p2-regression-a` repeated all 71 cases and 213 checked responses after the stored-journal, checkpoint, and protected-envelope changes. Peer recovery, all 11 SDK calls, the historical benchmark tape and the 320,000-fact snapshot load completed on the updated runtime. The benchmark reducer now recognises a metricless :tx/process header emitted by an aborted operation. It still requires every priced native t, datom count and API measurement to match its writer. Both the first reduction error and the complete reduction are retained. [Part 2 regression hashes](SHA256SUMS)
+
 ## Observed alternating arms
 
 Both databases were seeded with 1,024 subjects of 160 facts. Each treatment acknowledged 960 distinct saves across eight windows, with a fresh cohort per window. Ranges are the two reversed-order blocks at each depth in the shared lab VM.
