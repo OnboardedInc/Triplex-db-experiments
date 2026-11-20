@@ -75,7 +75,7 @@ if study == "erase6":
     assert json.loads(base64.urlsafe_b64decode(key + "=" * (-len(key) % 4)))[3] == nonce
     assert 0 < int(record["assertT"]) < int(record["eraseT"])
     assert record["pinnedCode"] == record["freshCode"] == "ErasureQueryUnsupported"
-    assert record["feedCode"] == "FeedErasureUnsupported"
+    assert record["feedCode"] == record["pastLogCode"] == "FeedErasureUnsupported"
     assert all(type(record[k]) is bool for k in ("heldCleartext", "historyPresent", "journalCleartext"))
     with (out / ("observation-" + str(uuid.uuid4()) + ".json")).open("x") as f:
         json.dump({**binding, "observation": record}, f, indent=2)

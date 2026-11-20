@@ -16,10 +16,7 @@
 (defn assert-unprotected! [db]
   ;; [DX-W1] Why: old pins can still own plaintext after a native excision.
   ;; Rejected: assuming row absence at the selected data cut is current erasure evidence.
-  (when (or (System/getenv "TRIPLEX_ERASURE_DIRECTORY")
-            (and (d/entid db :db/excise) (seq (d/datoms db :aevt :db/excise)))
-            (and (d/entid db :triplex.scope/erasure-ledger)
-                 (some :v (d/datoms db :aevt :triplex.scope/erasure-ledger))))
+  (when (lean/erasure-protected? db)
     (throw (ex-info "Lean queries need current erasure-aware value semantics"
                     {:status 409 :code "ErasureQueryUnsupported" :route "q"}))))
 (defn binding? [x] (or (= '_ x) (canonical/variable? x)))

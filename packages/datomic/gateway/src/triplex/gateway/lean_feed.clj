@@ -4,6 +4,12 @@
 
 (def enabled (= "1" (System/getenv "TX2_LEAN_NATIVE_LOG")))
 
+(defn assert-unprotected! [db]
+  ;; [DX-W1] Why: excision can remove datoms from log entries before the excision's own t.
+  ;; Rejected: serving an apparently complete earlier offset from a truncated native history.
+  (when (lean/erasure-protected? db)
+    (throw (ex-info "Native erasure requires a published sequence" {:status 409 :code "FeedErasureUnsupported"}))))
+
 (defn application [row op p]
   (when-not (= "_Transaction" (:entity_type row))
     {:op op :entity (:entity_id row) :attribute (:attribute row) :assertionId (:id row)

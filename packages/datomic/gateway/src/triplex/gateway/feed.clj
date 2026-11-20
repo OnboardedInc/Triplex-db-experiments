@@ -123,7 +123,8 @@
   (poll-log-with-clock from limit wait-ms read-page arm-wait #(System/nanoTime)))
 (defn log-page
   ([conn input] (log-page conn input project))
-  ([conn input project-entry]
+  ([conn input project-entry] (log-page conn input project-entry nil))
+  ([conn input project-entry assert-source!]
   (let [from (natural (get input "fromT" "0")) limit (bounded (get input "limit") 1000 1000)
         wait-ms (bounded (get input "waitMs") 0 30000)]
     (when (zero? limit) (codec/invalid "Empty log limit"))
@@ -132,6 +133,7 @@
         (let [read-page (fn [start n]
                           (admission/execute admission/journals (fn []
                           (let [db (trace/span "d/db" "peer-call" (d/db conn)) end (inc (d/basis-t db))]
+                            (when assert-source! (assert-source! db))
                             (if (>= start end) []
                               (mapv #(project-entry db %) (take n (d/tx-range (d/log conn) start end))))))))
               rows (poll-log from limit wait-ms read-page

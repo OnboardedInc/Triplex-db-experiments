@@ -58,17 +58,21 @@
         (let [t (cut! conn seed/root id)
               [pin-status pin] (post name "q" pinned) [fresh-status fresh] (post name "q" query)
               [log-status log] (log-page t)
+              [past-log-status past-log] (log-page (get-in report [:t "v"]))
               [old-status old] (post name "read" {"id" id "handle" held "basis" {"recordedPosition" 1}})
               [new-status current] (post name "read" {"id" id "history" true})
               [journal-status j] (journal)]
           ;; [DX-W1] Why: prove the new query guard and preserve the observed red read boundaries separately.
           ;; Rejected: declaring a typed 409 equivalent to Q49c's ordered, countable marker.
-          (assert (= [[409 "ErasureQueryUnsupported"] [409 "ErasureQueryUnsupported"] [409 "FeedErasureUnsupported"]]
-                     [[pin-status (get pin "code")] [fresh-status (get fresh "code")] [log-status (get log "code")]]))
+          (assert (= [[409 "ErasureQueryUnsupported"] [409 "ErasureQueryUnsupported"]
+                      [409 "FeedErasureUnsupported"] [409 "FeedErasureUnsupported"]]
+                     [[pin-status (get pin "code")] [fresh-status (get fresh "code")]
+                      [log-status (get log "code")] [past-log-status (get past-log "code")]]))
           (assert (= [200 200 200] [old-status new-status journal-status]))
           (println "W1_ERASE6" (json/write-str {:attempt attempt :db name :eraseT (str t) :id id
                      :assertT (get-in report [:t "v"]) :pinnedCode (get pin "code") :freshCode (get fresh "code")
-                     :feedCode (get log "code") :heldCleartext (= token (get-in old ["rows" 0 "value_string" "v"]))
+                     :feedCode (get log "code") :pastLogCode (get past-log "code")
+                     :heldCleartext (= token (get-in old ["rows" 0 "value_string" "v"]))
                      :historyPresent (boolean (seq (get current "rows")))
                      :journalCleartext (= token (get-in (json/read-str (get-in j ["rows" 0 "value_json" "v"])) ["value" "value"]))}))))
       (finally (gateway/delete-scope! nil key))))

@@ -11,6 +11,11 @@
 (defn value [db e a] (:v (first (d/datoms db :eavt e a))))
 (defn enabled? [db]
   (contains? #{3 4} (value db (:e (first (d/datoms db :aevt :triplex.scope/key))) :triplex.scope/rows-version)))
+(defn erasure-protected? [db]
+  (or (System/getenv "TRIPLEX_ERASURE_DIRECTORY")
+      (and (d/entid db :db/excise) (seq (d/datoms db :aevt :db/excise)))
+      (and (d/entid db :triplex.scope/erasure-ledger)
+           (some :v (d/datoms db :aevt :triplex.scope/erasure-ledger)))))
 (defn unsupported! [route]
   (throw (ex-info (str "Lean layout does not support " route) {:status 409 :code "LayoutUnsupported" :route route})))
 (defn prefix [^String id] (str "2" (format "%04x" (.length id)) id))

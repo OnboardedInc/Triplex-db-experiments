@@ -206,7 +206,8 @@
           (when (and lean? (not lean-feed/enabled)) (lean/unsupported! "log"))
           (response 200 (assoc (feed/log-page conn params (cond lean? lean-feed/project
                                                               lean-feed/enabled feed/project-application
-                                                              :else feed/project)) :database name))))
+                                                              :else feed/project)
+                                             (when lean? lean-feed/assert-unprotected!)) :database name))))
       (and (= :post request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/transact" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime) db-uri (db-uri name)]
         (try (timed start (response 200 (trace/span "storage/commit!" "gateway" (storage/commit! name (connection db-uri) (trace/span "d/db" "peer-call" (d/db (connection db-uri))) input))))
