@@ -2725,3 +2725,20 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   branch with options read back; arms already taken on the old head are kept and labelled "unfixed write path".
   Server 2 runs the single full-size deep account (100,000 people, real rates) before any ten-accounts-in-one seed,
   pending Sam's answer on Q106f.
+
+## 2026-11-20 04:32 UTC (23:32 local, 2026-11-19): DX-PREP1 part 1 in: preparation was 86% of the gateway turn; with it moved, the cost reappears in the transactor
+
+- **DX-PREP1 part 1 (`0bcc9ec55`, Mac VM; `prep1/REPORT.md`).** Mechanism confirmed beyond the forecast: for full
+  eight-save groups the speculative evaluate plus materialize was 85.8% of the gateway turn (82 to 117 ms per group on
+  the contended Mac against 2 to 4 ms of native apply and 1.3 to 2.4 ms of durable append; forecast was 25 to 55%).
+  Built: `TX2_PARALLEL_PREPARE=1` (bounded worker pool; a guard binding scope and feed flags, function revision,
+  logical head and clock, subject revisions and retirements, journal absence and historical assertion ids) and
+  `TX2_PREPARE_WINDOW=prepare|two` (the next group rendered, or submitted, while the current one is appended). 928
+  pinned oracle answers and 144 durable receipts matched across shuffled tapes; 22 overlapping submissions with no
+  replays; injected commits forced the expected replays; lost replies resolved to original receipts. **But the
+  prepared path's median native apply for a full group at 235 offered saves per second was 89.0 to 89.8 ms against
+  4.2 to 5.2 ms**: the authoritative checks now run inside the transactor. Mac rate windows were too contended to
+  conclude (every offer over 50 ms; 25 to 82 acknowledged saves per second). Forecast for a server about 300 saves per
+  second (260 to 360) against W1's 210 to 300 and the analyst's 320 to 450.
+- **Assigned, part 2:** profile the guard inside the transactor; target under 0.5 ms per member or a plain statement
+  that the design buys latency, not capacity; merge DX-WFIX1; lean erasure and restart gates; one server command.
