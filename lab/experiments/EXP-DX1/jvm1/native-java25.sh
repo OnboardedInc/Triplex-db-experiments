@@ -48,8 +48,9 @@ cat > "$out/run-selftest.clj" <<'CLJ'
 (require '[clojure.java.io :as io] '[triplex.gateway.selftest :as suite])
 (let [original slurp
       root (System/getProperty "triplex.gateway.fixtureRoot")
-      fixtures (into {} (map (fn [name] [(str "/opt/gateway/" name) (io/file root name)])
-                     ["codec-cases.json" "codec-vectors.json" "history-range-case.json"])]
+      fixtures {"/opt/gateway/codec-cases.json" (io/file root "codec-cases.json")
+                "/opt/gateway/codec-vectors.json" (io/file root "codec-vectors.json")
+                "/opt/gateway/history-range-case.json" (io/file root "history-range-case.json")}]
   (with-redefs [clojure.core/slurp (fn [file & options]
                                    (apply original (get fixtures file file) options))]
     (suite/-main)))
