@@ -268,4 +268,28 @@ Per 980,000 extra untouched people this is +2.73, +26.98 and +72.48 B for reader
 
 RD1's second preflight kept 32 exact native aging receipts and advanced through head 44. It finished its small read windows and failed the producer's trace-census step. Its native events identify the read peer as `gw-r`, run as the exact slot, and source as the Git SHA. The local decoder expected `gateway`, `rd1-` plus slot, and the gateway's measured source-file digest. The saved summary trace contains six admitted spans for 7,509 exchange IDs. All six match their parent and child IDs, but there are too few to complete the small evidence or price the full aged workload. Both attempts are under `evidence/DX-BM1/day-n20/rd1-aged*`.
 
-The bare-metal decoder now checks the headers actually set by the native stack. The repaired launch uses the builder's required full trace level and preserves the old output. Its fresh root is `day-n20-rd1-aged-native-trace`; the long diagnostic requires the independent collector to accept the small run's complete trace inventory first.
+### Aged old-cut reads
+
+The bare-metal decoder and the independent collector accepted all exchanges from the fresh 24-person, 32-save gate. The full run on the same pinned source finished at 14:30 EST. It aged one 10,000-person database with 10,000 native saves in 34.44 s and queried the same 24 roots at head or two previous cuts. Each cell used two mirrored three-second windows with 128 seats. The producer checked every issued answer against its cut-specific model. Of 14,047,985 issues, 14,046,964 completed inside their windows and 1,021 drained after. No open-loop offers or expiries apply to these closed-loop reads. The gateway spans matched all 23,387 logical fallbacks that issued HTTP and all 23,401 corresponding exchanges.
+
+| Old-cut share | Direct reads/s | Share of direct baseline | Isolated install reads/s | Share of isolated baseline | Correct in both treatments |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 0% | 538,551 | 100% | 541,376 | 100% | 6,479,564 |
+| 1% | 140,766 | 26.1% | 542,115 | 100.1% | 4,097,284 |
+| 5% | 49,549 | 9.2% | 528,804 | 97.7% | 3,470,116 |
+
+The isolated installer reduced in-window fallback decisions from 8,442 to 229 at 1%, and from 14,794 to 358 at 5%. Both treatments shared the same read gateway. The transactor, writer and read gateway used G1 with 1/1/2 cores. Logs include their absolute GC clocks, saved issue and ACK times for every aging save and read admission/work spans. The diagnostic benefits from reusing two historical cuts. It leaves the curve for high-cardinality old cuts and full frozen-trace verdicts open. Evidence `evidence/DX-BM1/day-n20/rd1-aged-native-trace`.
+
+### Shared database microframes
+
+HA1 source `14174308fa1b1f6ade7f3e1fe3ce58ca4bc173ba` used one Datomic database and eleven live accounts within each five-arm run. Ten neighbours offered 50 saves/s and the quiet account added 5/s. There were 540 saves and 540 read offers per account in every 108 s window, all 59,400 live offers matched. Fresh matched no-import bookends gave the quiet account save/read p99 of 12.76/6.55 ms and 6.84/3.98 ms. Every import frame size exceeded 1.5× for at least one account against both controls. The quiet-account rows below give p99 and ratios against the first and second control.
+
+| Facts/frame | Queryable within 108 s (facts/s) | Quiet save p99 (ms) and ratios | Quiet read p99 (ms) and ratios | Worst read/save ratio against either control |
+| ---: | ---: | ---: | ---: | ---: |
+| 16 | 216,208 (2,002) | 42.92 (3.36× / 6.28×) | 9.85 (1.51× / 2.48×) | 4.07× / 8.25× |
+| 24 | 320,136 (2,964) | 50.76 (3.98× / 7.42×) | 12.68 (1.94× / 3.19×) | 3.19× / 8.68× |
+| 32 | 430,144 (3,983) | 37.59 (2.95× / 5.50×) | 15.98 (2.44× / 4.02×) | 4.02× / 8.41× |
+
+Every exact queryable prefix excludes later receipts and includes an independent marker check. The recorded native joins retain submit, queue, entry, peer stages, serial hold and complete times. The driver also checks a lost response replay and ordered history. Save and read service share one G1 gateway, with no standalone reader JVM in this experiment. The separate transactor used G1 too. Both have 3-core quotas and an effective JVM processor count of two. Absolute logs are retained with the offer tapes. This is the current small-frame reading for one database. No separate-database run is used in these comparisons. Evidence `evidence/DX-BM1/day-n20/ha1-micro`.
+
+PREP1's first native preflight matched all 1,315 prepared-path offers and returned `InvalidValue` for all 1,315 grouped-control offers. The short seed omitted the native subject/account mapping that the full producer has. BM1 now adds those facts before measuring. The fresh service `bm1n20-prep1-tenant-queue` started at 14:33:45 EST and will continue into the full `7ca8525a9` seed and 12 arms only after both short native treatments qualify. The prior output remains at `evidence/DX-BM1/day-n20/prep1`.
