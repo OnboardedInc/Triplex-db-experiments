@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { createInterface } from "node:readline";
 import { cohort, fileHash, readScope, type ScopeMeasurement } from "../scale1/measurements.ts";
 import { canonical, sha256 } from "../../../bench/lib/w0-world.ts";
 import { requireIdentity } from "../../../bench/lib/deep-profile.ts";
+import { distribution, percentile } from "../../../bench/lib/verdict-statistics.ts";
+import { verdictMs, VERDICT_CLOCK } from "../../../trace/instrument.mjs";
+import { fieldPlan, fieldProfile, fieldWindows } from "./field-plan.ts";
 import { campaignCases, treatment, type CampaignCase } from "./everything-plan.ts";
 import { atomicJson, type Arm } from "./everything-arm.ts";
 
@@ -53,6 +57,93 @@ function originalArm(out: string, c: CampaignCase, plan: ReturnType<typeof read>
     [arm.source, arm.slot, c.people, c.load, 0, c.profile === "field"],
   );
   return arm;
+}
+
+async function fieldStats(out: string, arm: Arm, raw: ScopeMeasurement) {
+  const start = raw.interval.from;
+  const rows = fieldWindows((raw.interval.to - start) / 1000).map((w) => ({
+    ...w,
+    scheduled: 0,
+    offered: 0,
+    acknowledged: 0,
+    acknowledgedInWindow: 0,
+    expired: 0,
+    lastAcknowledgedAt: 0,
+    latencies: [] as number[],
+  }));
+  const at = (ms: number) => {
+    const seconds = (ms - start) / 1000;
+    return rows.find((w) => seconds >= w.start && seconds < w.end);
+  };
+  for (const event of fieldPlan(arm.identity.account, arm.case.people, arm.smoke).events) {
+    if (!event.resend) at(start + event.atMs)!.scheduled++;
+  }
+  for await (const line of createInterface({
+    input: fs.createReadStream(path.join(out, "ns-writes.jsonl")),
+    crlfDelay: Infinity,
+  })) {
+    if (!line) continue;
+    const row = JSON.parse(line);
+    if (row.stream !== "background" || row.resend) continue;
+    // [DX-THIN1] Why: report scheduled cohorts and receipt-time goodput using the verified sender ledger.
+    // Rejected: assigning delayed completions to the nominal arrival window's throughput.
+    const w = at(row.scheduledAt);
+    assert(w);
+    w.offered++;
+    if (row.expired) w.expired++;
+    if (row.outcome !== "committed") continue;
+    w.acknowledged++;
+    w.latencies.push(verdictMs(row));
+    w.lastAcknowledgedAt = Math.max(w.lastAcknowledgedAt, row.ackPublishedAt);
+    const acknowledged = at(row.ackPublishedAt);
+    if (acknowledged) acknowledged.acknowledgedInWindow++;
+  }
+  assert.equal(
+    rows.reduce((sum, w) => sum + w.acknowledged, 0),
+    raw.committed,
+  );
+  return rows.map(({ latencies, lastAcknowledgedAt, ...w }) => {
+    const d = distribution(latencies, VERDICT_CLOCK);
+    return {
+      ...w,
+      missingOffers: w.scheduled - w.offered,
+      acknowledgedPerSecond: w.acknowledgedInWindow / (w.end - w.start),
+      lastScheduledAckAfterWindowMs:
+        w.scheduled === w.acknowledged
+          ? Math.max(0, lastAcknowledgedAt - start - w.end * 1000)
+          : null,
+      p50Ms: latencies.length ? percentile(d, 0.5) : null,
+      p99Ms: latencies.length ? percentile(d, 0.99) : null,
+    };
+  });
+}
+
+function checkPreflight(raw: ScopeMeasurement) {
+  const { correctness, oracle, receiptCapture, status } = raw.report;
+  assert.equal(status, "DONE");
+  assert(
+    raw.missing === 0 && raw.expired === 0 && raw.committed > 0 && raw.primaries === raw.committed,
+  );
+  assert(
+    receiptCapture.matched === raw.committed &&
+      !receiptCapture.missing &&
+      !receiptCapture.mismatches,
+  );
+  assert(
+    correctness.reads > 0 &&
+      correctness.correct === correctness.reads &&
+      !correctness.errors &&
+      !correctness.violations,
+  );
+  assert(
+    oracle.status === "PASS" &&
+      oracle.oracleVerdict === "PASS" &&
+      oracle.receiptConsistency === "PASS" &&
+      oracle.exitCode === 0 &&
+      oracle.reads > 0 &&
+      oracle.modelCorrectOnSameReads === oracle.reads &&
+      oracle.mismatchCount === 0,
+  );
 }
 
 // [DX-THIN1] Why: recompute from saved native evidence using the same code at production and collection. Rejected: accepting the producer's declared p99 or counting archives without checking their contents.
@@ -122,13 +213,29 @@ export async function collect(dir: string, mode: "produce" | "verify") {
       assert.equal(raw.offered, zero.offered);
       assert.equal(raw.report.matchedBaseline?.sha256, zero.hashes.writes);
     }
-    const summary = cohort([raw], 1, zero?.values, zero?.invalid.join("; ") || null);
+    if (plan.smoke && result.code === 0) checkPreflight(raw);
+    const { summary } = cohort([raw], 1, zero?.values, zero?.invalid.join(", ") || null);
+    const observed = result.code === 0 && raw.report.status === "DONE";
+    const eligible =
+      observed && !plan.smoke && !id.field && !raw.invalid.length && !zero?.invalid.length;
+    const { pooledBars, jointObligations, perScope, ...observations } = summary;
     const row = {
       binding,
       arm,
-      state: result.code === 0 ? "measured" : "diagnostic",
+      state: !observed
+        ? "incomplete"
+        : plan.smoke
+          ? "preflight"
+          : eligible
+            ? "measured"
+            : "diagnostic",
       files: await index(out),
-      summary,
+      summary: {
+        ...observations,
+        profile: id.field ? fieldProfile : summary.profile,
+        ...(eligible ? { pooledBars, jointObligations, perScope } : {}),
+        ...(id.field ? { rateWindows: await fieldStats(out, arm, raw) } : {}),
+      },
     };
     const stored = path.join(out, "recorded.json");
     if (mode === "produce" && !fs.existsSync(stored)) atomicJson(stored, row);

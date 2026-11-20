@@ -62,7 +62,7 @@ export async function localPreflight(dir: string) {
       await collect(dir, "produce");
     }
     const result = await collect(dir, "verify");
-    assert.equal(result.results.filter((r) => r.state === "measured").length, cases.length);
+    assert.equal(result.results.filter((r) => r.state === "preflight").length, cases.length);
     atomicJson(path.join(dir, "comparison.json"), result);
   } finally {
     lease.release();
@@ -143,11 +143,17 @@ async function physicalCases(
         scaleHost.clean(out, slot);
       }
       const partial = await collect(dir, "produce");
-      assert.equal(partial.results[i]?.state, "measured");
+      const state = partial.results[i]?.state;
+      assert(smoke ? state === "preflight" : state === "measured" || state === "diagnostic");
       assert.equal(exit, 0);
     }
     const verified = await collect(dir, "verify");
-    assert.equal(verified.results.filter((r) => r.state === "measured").length, cases.length);
+    assert.equal(verified.results.length, cases.length);
+    assert(
+      verified.results.every((r) =>
+        smoke ? r.state === "preflight" : r.state === "measured" || r.state === "diagnostic",
+      ),
+    );
     atomicJson(path.join(dir, "comparison.json"), verified);
   } finally {
     process.removeListener("SIGTERM", interrupt);

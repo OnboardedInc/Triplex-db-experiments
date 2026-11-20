@@ -10,6 +10,15 @@ import { liveEdits } from "../scale1/deep-live.ts";
 export const fieldProfile = "int1-field/1";
 export const fieldRates = { steady: [3.5, 4.9], busy: [23.5, 39.4] } as const;
 
+export function fieldWindows(duration: number) {
+  let busy = 0,
+    steady = 0;
+  return segments(duration).map((window) => ({
+    ...window,
+    rate: window.burst ? fieldRates.busy[busy++ % 2]! : fieldRates.steady[steady++ % 2]!,
+  }));
+}
+
 export function fieldPlan(account: number, people: number, smoke = false) {
   const base = frozenDeep(account, people),
     duration = smoke ? 30 : V3_OFFER_SECONDS;
@@ -26,13 +35,11 @@ export function fieldPlan(account: number, people: number, smoke = false) {
   hash.update(
     JSON.stringify([fieldProfile, account, people, duration, fieldRates, base.populationSha256]),
   );
-  let index = 0,
-    busy = 0,
-    steady = 0;
+  let index = 0;
   // [DX-THIN1] Why: keep the same deep population and edit intents while offering field-sized saves at the observed per-account rates.
   // Rejected: multiplying the frozen load or assuming all saves consist of only a business field.
-  for (const window of segments(duration)) {
-    const rate = window.burst ? fieldRates.busy[busy++ % 2]! : fieldRates.steady[steady++ % 2]!;
+  for (const window of fieldWindows(duration)) {
+    const { rate } = window;
     for (let t = window.start + rng.exp(rate); t < window.end; t += rng.exp(rate)) {
       const prior = original[index++];
       assert(prior, "Field schedule exhausted its bound deep intents");
