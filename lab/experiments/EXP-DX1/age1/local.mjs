@@ -1,7 +1,7 @@
 // @ts-nocheck -- [EXP-CHECKJS] Docker inspection and lab reservation records are validated at runtime.
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
-import { acquireMeasureLease } from "../../../bin/heavy-lock.mjs";
+import { acquireMeasureLease, readMeasureLease } from "../../../bin/heavy-lock.mjs";
 import { randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
@@ -117,7 +117,9 @@ export async function local(opts, config, manager) {
     floor();
     // [DX-AGE1] Why: a competing lease can wait for this wrapper's token. Rejected: sleeping indefinitely while both holders wait.
     manager.assertMeasureAdmission(holder);
-    lease = await acquireMeasureLease(holder + " " + opts.run, { holder, pollMs: 1000, timeoutMs: 45000 });
+    const outer = readMeasureLease();
+    const parentOwnsLease = outer?.pid === process.ppid && outer.holder === holder && !outer.stale;
+    if (!parentOwnsLease) lease = await acquireMeasureLease(holder + " " + opts.run, { holder, pollMs: 1000, timeoutMs: 45000 });
     const datomic = image(selectImage()), postgres = image("postgres:17-alpine");
     const source = stage(dir, pin);
     const sources = new Map(hashTree(source));
@@ -229,7 +231,7 @@ export async function local(opts, config, manager) {
     }));
     assert.deepEqual(actual, sources);
     write("binding.json", { attempt, phase: opts.run, slot: slot.slot, source: pin, sourceHashes: Object.fromEntries(sources),
-      settings, flags, spec, roleImages: { datomic, postgres }, jars, peerSha1, durable, caps,
+      settings, flags, spec, measurementLease: lease?.owner ?? outer, roleImages: { datomic, postgres }, jars, peerSha1, durable, caps,
       roles: Object.fromEntries(created), ownerHash: sha256(fs.readFileSync(slot.ownerFile)), startedAt: new Date().toISOString() });
     if (measure) await measure.measure({ attempt, dir, peer, tx, pg, jdbc, password, capture, signal: controller.signal, floor, write }, spec);
     else {

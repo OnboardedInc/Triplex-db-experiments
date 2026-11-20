@@ -6,17 +6,22 @@
 // [EXP-000] Why: four mkdir token directories lab/locks/heavy/<1..4>; a token whose owner pid is
 // dead is stale and broken. Rejected: a counter file (needs its own lock and crash recovery).
 import { spawn } from 'node:child_process';
-import { acquireHeavy } from './heavy-lock.mjs';
+import { acquireHeavy, acquireMeasureLease } from './heavy-lock.mjs';
 import { fail, main, parseArgs } from './lib.mjs';
 
 main(async () => {
   const { options } = parseArgs(process.argv.slice(2));
   const command = options['--'];
-  if (!command?.length) fail('USAGE', 'usage: heavy.mjs [--label TEXT] -- <cmd...>');
+  if (!command?.length) fail('USAGE', 'usage: heavy.mjs [--label TEXT] [--measure-holder NAME] -- <cmd...>');
   // [EXP-W02-R2] Why: contested short gaps can starve a builder's ordered setup/checks at 1 s polling. Rejected: increasing HEAVY_SLOTS (would change the lab resource limit).
   const pollMs = Number(options['poll-ms'] ?? 1000);
   if (!Number.isSafeInteger(pollMs) || pollMs < 100 || pollMs > 30000) fail('USAGE', '--poll-ms must be an integer from 100 to 30000');
-  const release = await acquireHeavy(options.label ?? command.join(' '), { pollMs });
+  const label = options.label ?? command.join(' ');
+  const holder = options['measure-holder'];
+  if (holder !== undefined && (typeof holder !== 'string' || !/^[A-Za-z0-9._-]+$/.test(holder))) fail('USAGE', 'invalid measurement holder');
+  // [DX-AGE1] Why: claim the freeze in this process before spawning a measured child.
+  // Rejected: holding a regular heavy token while a competing lease waits for that token.
+  const release = holder ? (await acquireMeasureLease(label, { holder, pollMs })).release : await acquireHeavy(label, { pollMs });
   const code = await new Promise(resolve => {
     const child = spawn(command[0], command.slice(1), { stdio: 'inherit' });
     for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));
