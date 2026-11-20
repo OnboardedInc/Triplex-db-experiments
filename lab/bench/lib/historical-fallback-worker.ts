@@ -101,8 +101,9 @@ async function execute(group: HistoricalRequest[]) {
     callers: group.length,
   });
   try {
-    const result = await withTrace(trace, () =>
-      client.readHistoricalWorlds(cfg.scope, roots, basis),
+    const result: Awaited<ReturnType<DatomicClient["readHistoricalWorlds"]>> = await withTrace(
+      trace,
+      () => client.readHistoricalWorlds(cfg.scope, roots, basis),
     );
     if (!result) {
       stats.declined += group.length;
