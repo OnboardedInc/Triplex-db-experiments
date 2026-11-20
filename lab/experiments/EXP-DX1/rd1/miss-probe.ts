@@ -5,10 +5,9 @@ import { createHash, randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 import { performance } from "node:perf_hooks";
-import {
-  DatomicClient,
-  type DatomicRequestSample,
-} from "../../../../packages/datomic/dist/index.js";
+import { fileURLToPath } from "node:url";
+import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
+import { LOCKS } from "../../../bin/lib.mjs";
 import { openComposition, type PullResult } from "../../../bench/lib/composition.ts";
 import { ReplicaReadHost, ReplicaReader } from "../../../bench/lib/replica-reads.ts";
 import { ReaderTurn } from "../../../bench/lib/reader-turn.ts";
@@ -19,7 +18,6 @@ import { ids, ownFacts, sharedFacts, SEED_VALID_FROM } from "../../../bench/lib/
 import { seedOps } from "../../../bench/lib/commands.ts";
 import {
   beginTrace,
-  currentTrace,
   finishTrace,
   gatewayExchanges,
   withTrace,
@@ -43,44 +41,61 @@ const seconds = Number(interval),
   permits = 2;
 assert(
   output &&
-    /^(s[123]|prepared)$/.test(topology) &&
+    /^(s[123]|auto|prepared)$/.test(topology) &&
     Number.isSafeInteger(seats) &&
     seats >= 16 &&
     seats <= 1024,
 );
 assert(Number.isFinite(seconds) && seconds >= 1 && seconds <= 20);
-type Mode = "mechanism" | "control" | "treatments" | "recovery";
+type Mode = "mechanism" | "control" | "treatments" | "recovery" | "curve";
 const modes = ["mechanism", "treatments", "recovery"] as const;
-assert(mode === "suite" || mode === "control" || modes.some((m) => m === mode));
+assert(
+  mode === "suite" ||
+    mode === "part3" ||
+    mode === "curve" ||
+    mode === "control" ||
+    modes.some((m) => m === mode),
+);
 const samples = [0, 1, 2, 4, 10] as const;
 function armsFor(
   mode: Mode,
 ): { share: number; treatment: HistoricalMode; transition?: boolean; low?: boolean }[] {
-  return mode === "treatments"
-    ? (
-        [
-          "off",
-          "lane",
-          "batch",
-          "revision",
-          "install",
-          "install",
-          "revision",
-          "batch",
-          "lane",
-          "off",
-        ] as const
-      ).map((treatment) => ({ share: 10, treatment }))
-    : mode === "recovery"
-      ? [
-          { share: 0, treatment: "off", low: true },
-          { share: 10, treatment: "off", transition: true },
-          { share: 10, treatment: "install", transition: true },
-          { share: 10, treatment: "install", transition: true },
-          { share: 10, treatment: "off", transition: true },
-          { share: 0, treatment: "off", low: true },
-        ]
-      : [...samples, ...[...samples].reverse()].map((share) => ({ share, treatment: "off" }));
+  return mode === "curve"
+    ? [
+        ...samples.flatMap((share) => [
+          { share, treatment: "off" as const },
+          { share, treatment: "install" as const },
+        ]),
+        ...[...samples].reverse().flatMap((share) => [
+          { share, treatment: "install" as const },
+          { share, treatment: "off" as const },
+        ]),
+      ]
+    : mode === "treatments"
+      ? (
+          [
+            "off",
+            "lane",
+            "batch",
+            "revision",
+            "install",
+            "install",
+            "revision",
+            "batch",
+            "lane",
+            "off",
+          ] as const
+        ).map((treatment) => ({ share: 10, treatment }))
+      : mode === "recovery"
+        ? [
+            { share: 0, treatment: "off", low: true },
+            { share: 10, treatment: "off", transition: true },
+            { share: 10, treatment: "install", transition: true },
+            { share: 10, treatment: "install", transition: true },
+            { share: 10, treatment: "off", transition: true },
+            { share: 0, treatment: "off", low: true },
+          ]
+        : [...samples, ...[...samples].reverse()].map((share) => ({ share, treatment: "off" }));
 }
 const clock = () => performance.timeOrigin + performance.now();
 const cpu = () => {
@@ -89,19 +104,10 @@ const cpu = () => {
 };
 const sha = (text: string) => createHash("sha256").update(text).digest("hex");
 const count = 24;
-type Exchange = {
-  started: number;
-  headers: number;
-  clientMs: number;
-  gatewayMs: number;
-  bytes: number;
-};
 type Miss = {
   id: string;
   at: number;
   end: number;
-  exchanges: Exchange[];
-  count?: number;
   wire: ReturnType<typeof gatewayExchanges>;
 };
 type Span = { name: string; start: number; end: number };
@@ -221,21 +227,13 @@ function timing(
   }
   let workMs = 0,
     queueMs = 0,
-    clientMs = 0,
     exchanges = 0,
-    responseBytes = 0,
     matchedMisses = 0;
   for (const miss of misses) {
-    const client =
-        miss.count === undefined
-          ? miss.exchanges.reduce((n, x) => n + x.clientMs, 0)
-          : miss.end - miss.at,
-      native = nativeByMiss.get(miss.id);
-    const count = miss.count ?? miss.exchanges.length;
-    assert(count > 0 && count === miss.wire.length);
+    const native = nativeByMiss.get(miss.id);
+    const count = miss.wire.length;
+    assert(count > 0);
     exchanges += count;
-    responseBytes += miss.exchanges.reduce((n, x) => n + x.bytes, 0);
-    clientMs += client;
     residence.recordMs(miss.end - miss.at);
     if (native?.routes !== count) continue;
     matchedMisses++;
@@ -251,11 +249,9 @@ function timing(
   return {
     matchedMisses,
     exchanges,
-    responseBytes,
     nativeRunSlot: [...runSlots][0] ?? null,
     meanWorkMs: matchedMisses ? workMs / matchedMisses : null,
     meanQueueMs: matchedMisses ? queueMs / matchedMisses : null,
-    meanClientExchangeMs: misses.length ? clientMs / misses.length : null,
     queue: q.summary(),
     service: s.summary(),
     residence: residence.summary(),
@@ -311,7 +307,8 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
       allMisses: Miss[][] = [];
     const referenceHead = fx.cuts.at(-1)!;
     for (const { share: oldPer200, treatment, transition, low } of armsFor(mode)) {
-      const client = new DatomicClient(endpoint);
+      const direct =
+        treatment === "off" ? await openComposition("reach", "datomic", scope) : undefined;
       const misses = new Map<string, Miss>();
       const chosen = treatment === "install" && transition ? retained : image;
       const reader = new ReplicaReader(
@@ -352,17 +349,6 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
         fallbacks: 0,
       }));
       const nSeats = low ? (seats / 4) | 0 : seats;
-      client.onRequest = (s: DatomicRequestSample) => {
-        const miss = misses.get(currentTrace()?.traceId ?? "");
-        assert(miss, "Fallback exchange missing its initiating probe identity");
-        miss.exchanges.push({
-          started: s.started,
-          headers: s.headers,
-          clientMs: s.finished - s.started,
-          gatewayMs: s.gatewayMicros / 1000,
-          bytes: s.responseBytes,
-        });
-      };
       // [DX-RD1] Why: time the fallback path after its isolate has loaded, as in the driver.
       // Rejected: a priming read before the first measurement (it would populate gateway and replica caches).
       try {
@@ -412,32 +398,21 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
               id: trace.traceId,
               at: clock(),
               end: NaN,
-              exchanges: [],
               wire: [],
             };
             misses.set(miss.id, miss);
             pending++;
             maxPending = Math.max(pending, maxPending);
             try {
-              const g = await withTrace(trace, () =>
-                client.readDemandWorld(scopeKey, root, cut.basis),
-              );
-              assert(g, "Gateway declined the exact probe cut");
-              fallbackCalls += g.requests;
-              return {
-                triples: g.triples,
-                roundTrips: g.requests,
-                entities: g.entities,
-                depth: g.hops - 1,
-                waitedMs: 0,
-                route: "source",
-                language: "reach",
-              };
+              // [DX-RD1] Why: use the old driver's public reach path in the comparison arm.
+              // Rejected: using the demand endpoint for the control (its row projection and decode differ).
+              return await withTrace(trace, () => direct!.pull(root, cut.basis));
             } finally {
               miss.end = clock();
               pending--;
               pendingMs += Math.max(0, Math.min(until, miss.end) - miss.at);
               miss.wire = gatewayExchanges(trace);
+              fallbackCalls += miss.wire.length;
               finishTrace(trace);
             }
           };
@@ -480,7 +455,7 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
         await Promise.all(Array.from({ length: nSeats }, (_, i) => worker(i)));
         laneStats = await lane?.snapshot();
       } finally {
-        client.close();
+        await direct?.close();
         port?.close();
         await lane?.close();
       }
@@ -497,8 +472,6 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
             id: s.traceId,
             at: s.started,
             end: s.ended,
-            count: s.requests,
-            exchanges: [],
             wire: s.wire,
           }))
         : [...misses.values()];
@@ -528,7 +501,7 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
         elu: performance.eventLoopUtilization(e0).utilization,
         gatewayCalls: laneStats?.wireExchanges ?? fallbackCalls,
         latency: histogram.summary(),
-        revision: laneStats?.revision ?? client.reachDiagnostics,
+        revision: laneStats?.revision,
         ...(laneStats
           ? {
               lane: { ...laneStats, exchanges: undefined },
@@ -615,6 +588,20 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
   }
 }
 
+function runBudgets(destination: string) {
+  const script = fileURLToPath(new URL("history-budget.ts", import.meta.url));
+  for (const size of [64, 192, 512]) {
+    const result = execFileSync(process.execPath, ["--import", "tsx", script, String(size)]);
+    const parsed = JSON.parse(result.toString());
+    assert(
+      parsed.source === source && parsed.mib === size && parsed.retainedBytes <= size * 1024 ** 2,
+    );
+    fs.writeFileSync(path.join(destination, `history-${size}.json`), result, { flag: "wx" });
+  }
+}
+
+class AdmissionWait extends Error {}
+
 async function runInAssignedSlot() {
   if (topology === "prepared") {
     assert(
@@ -623,27 +610,70 @@ async function runInAssignedSlot() {
     );
     fs.mkdirSync(output!);
     await run(process.env.TRIPLEX_TRACE_SLOT, async () => "", "control", output!);
-  } else
-    await inLocalSlot(topology!, async (slot, logs) => {
-      fs.mkdirSync(output!);
-      // [DX-RD1] Why: three independent scopes can reuse a single owned stack and measurement window.
-      // Rejected: booting three engines or reusing one scope's replica and session caches across experiments.
-      if (mode === "suite") {
-        for (const m of modes) {
-          const destination = path.join(output!, m);
-          fs.mkdirSync(destination);
-          await run(slot, logs, m, destination);
-        }
-      } else await run(slot, logs, mode as Mode, output!);
-    });
+  } else {
+    const runSlot = (which: string) =>
+      inLocalSlot(which, async (slot, logs) => {
+        fs.mkdirSync(output!);
+        console.error(
+          JSON.stringify({
+            event: "native-slot-admitted",
+            at: new Date().toISOString(),
+            source,
+            slot,
+          }),
+        );
+        // [DX-RD1] Why: three independent scopes can reuse a single owned stack and measurement window.
+        // Rejected: booting three engines or reusing one scope's replica and session caches across experiments.
+        if (mode === "suite" || mode === "part3") {
+          for (const m of mode === "part3" ? (["curve", "recovery"] as const) : modes) {
+            const destination = path.join(output!, m);
+            fs.mkdirSync(destination);
+            await run(slot, logs, m, destination);
+            if (m === "curve") runBudgets(output!);
+          }
+        } else await run(slot, logs, mode as Mode, output!);
+      });
+    if (topology !== "auto") return runSlot(topology!);
+    for (const candidate of ["s3", "s2", "s1"]) {
+      if (fs.existsSync(path.join(LOCKS, `datomic-${candidate}`))) continue;
+      try {
+        await runSlot(candidate);
+        return;
+      } catch (error) {
+        const refusal = (error as { stderr?: string }).stderr ?? "";
+        if (
+          fs.existsSync(output!) ||
+          !/pool refuses|exact slot owner|held by|pool admission is frozen/.test(refusal)
+        )
+          throw error;
+      }
+    }
+    throw new AdmissionWait("No Datomic slot was admitted");
+  }
 }
 
 const admission = process.env.DX_RD1_MEASURE_LOCK;
-if (!admission) await runInAssignedSlot();
-else {
+async function withMeasurementWindow() {
+  if (!admission) {
+    assert(topology !== "auto", "Auto admission requires the lab measurement directory");
+    return runInAssignedSlot();
+  }
   // [DX-RD1] Why: reserve the lab's measurement window before starting the isolated engine.
   // Rejected: checking that it was free before bootstrap and racing another run during fixtures.
-  fs.mkdirSync(admission);
+  const deadline = performance.now() + (topology === "auto" ? 240_000 : 0);
+  for (;;) {
+    if (fs.existsSync(path.join(LOCKS, "measure-lease")))
+      throw new AdmissionWait("Canonical measurement lease is held");
+    try {
+      fs.mkdirSync(admission);
+      break;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+      if (performance.now() >= deadline)
+        throw new AdmissionWait("Shared measurement window is occupied");
+      await sleep(5_000);
+    }
+  }
   const owner = path.join(admission, "owner.json");
   try {
     fs.writeFileSync(
@@ -665,4 +695,11 @@ else {
     }
     fs.rmdirSync(admission);
   }
+}
+try {
+  await withMeasurementWindow();
+} catch (error) {
+  if (!(error instanceof AdmissionWait)) throw error;
+  console.error(error.message);
+  process.exitCode = 75;
 }
