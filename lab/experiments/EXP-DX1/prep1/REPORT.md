@@ -1,11 +1,11 @@
-Preparing a full group took most of the time on the Mac.
-Eight-save groups spent 86% of their gateway turn preparing the edits.
-The forecast was 25% to 55%. Both repeats were above it.
-Almost all of that preparation was Datomic applying each edit on the gateway.
-The durable log append took about 2 ms at the median.
-All 1,152 saves had the expected receipts, feed entries and pinned field reads.
-The comparison used ten synthetic accounts on a one-core shared Mac slot.
-The next build targets the repeated apply.
+Datomic applied each save on the gateway before it could send the group.
+That work took 86% of the gateway turn for full eight-save groups on the shared Mac.
+The forecast was 25% to 55%, and both repeats were above it.
+Independent saves now prepare in parallel, and a ready second group can overlap the first.
+The checks covered exact receipts, history and the order and content of changes.
+At 50 and 235 offered saves per second, the Mac acknowledged more saves sooner. Peak results varied.
+The predicted server ceiling is about 385 saves per second, with a range of 320 to 450.
+Lean erasure and lost replies across a database restart still need direct evidence.
 
 **North star.** P2 durable saves and P6 isolation, with P1/P3 exact cuts and feed. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 **CEIL-MAC-ORTHO eight-member probe.** W1 source `7a6a7e9ef`, prepared-request reuse and predecessor lookup on, original row encoding, cap eight, 1,152 subjects with 160 scalar fields each. The six blocks used disjoint cohorts at 1/8/32/32/8/1 outstanding, 192 replacements per block.
@@ -19,17 +19,25 @@ The next build targets the repeated apply.
 
 Values are medians within the displayed occupancies. The full table includes the smaller groups and per-group observations. The 8-outstanding arm produced no full groups. Initial gateway request preparation was 0.388 ms median at depth one. Full groups carried 38,384 median native serialized bytes. Native append measures the actual durable log call, and the ACK interval ends at the last HTTP client response.
 **Decision.** For all full groups, total evaluate plus materialize divided by total evaluate plus materialize plus peer await was 85.8% (85.1% and 86.9% by repeat). The loop's per-member receipt settlement follows that denominator. The prepare path clears the 15% stop threshold. Shared CPU and the small synthetic seed limit extrapolation.
-**Evidence.** `DX-PREP1/ortho-03` under the durable lab evidence root, with the append/receipt join in `stages.json`. Attempts 01 and 02 retain startup failures. [Checksums](SHA256SUMS)
-**Result audit.** `manage.py` records engine exit and binds its log digest, attempt, image and reservation. `probe.ts` checks the current attempt's durable operation receipts, strict positions/clocks, exact feed changes and reads at p−1/p. `read_probe.py` checks staged/build input hashes, attempt, slot, image, durable SQL settings, all edits, native database/t, datom counts, timing bounds and zero observer drops before writing measurements.
+**Evidence.** All attempt directories below sit under `evidence/DX-PREP1` in the durable lab evidence root. `ortho-03/stages.json` joins every group to its native append and receipts. Attempts 01 and 02 retain startup failures. [Checksums](SHA256SUMS)
+**Evidence audit.** `manage.py` records engine exit, log digest, attempt, image and slot. `probe.ts` checks fresh durable receipts, strict positions and clocks, exact feed changes and reads at p−1/p. `read_probe.py` checks staged/build hashes, attempt, slot, image, durable SQL settings, edits, native database/t, datom counts, timing and zero observer drops. `live.ts` checks fresh scope, exact feed changes and durable receipt readback. `read_live.py` joins exact offered IDs and outcomes to the staged image, slot, native database/t and append timing before counting rates or tails.
 
 **Parallel preparation.** `TX2_PARALLEL_PREPARE=1` prepares strict lean single-owner saves with a bounded worker pool. The guard binds scope and feed flags, function revision, logical head and clock, exact subject revisions and retirements, journal absence and historical assertion IDs. Datomic enforces unique operation and command claims. Interacting members, layout changes and whole-scope predicates use W1. Definite refusal recomputes and an unknown reply is resolved by durable identity.
-**Differential.** Four shuffled tapes per path yielded 144 durable receipts and 928 exact O-REPLAY snapshot answers, plus independent full feed-change checks. Same-subject chains shared one physical group. Six native witnesses covered an unrelated append, changed revision, retirement, ID reuse, duplicate claim and lost acknowledgement. The original receipt survives both a repeat operation and a fresh operation with the same claim. `DX-PREP1/parity-02` holds the attempt and all oracle inputs/answers.
-**Audit follow-up.** Serialized duplicate checks precede mutable predecessors, and a same-group retraction uses its predecessor's assigned clock. The gate uses in-process Datomic. SQL restart recovery, lean erasure and cross-group provisional retraction metadata need separate evidence.
-**Receipt audit.** The gateway acknowledges only on that native report's exact operation, position, clock and physical t. `gate.py` checks fresh scope/attempt, source and JAR hashes, full expected changes and pinned oracle answers before writing its verification. No acceptance pins changed.
+**Differential.** Four shuffled tapes per path yielded 144 durable receipts and 928 exact O-REPLAY snapshot answers, plus independent full feed-change checks. Same-subject chains shared one physical group. Six native cases covered an unrelated append, changed revision, retirement, ID reuse, duplicate claim and lost acknowledgement. Both repeat operation ID and fresh operation ID with the original claim resolve the exact original receipt. `parity-02` retains the inputs and answers.
+**Receipt audit.** The gateway acknowledges from the exact durable report's operation, position, clock and physical t. `gate.py` checks fresh scope/attempt, source and JAR hashes, full expected changes and pinned oracle answers before recording verification. Acceptance pins were left intact.
 **Window.** `TX2_PREPARE_WINDOW=prepare` renders the next dependency-disjoint group ahead of the current durable reply. `two` can submit that successor immediately. Its native guard requires the first group's exact final operation, position and clock. Only definitive refusals replay.
-**Window evidence.** The Mac prepare-ahead arm verified 384 saves, 46 prepared physical groups and 22 successor renders before the preceding append completed, with zero replays. In six native scenarios, an injected intervening commit forced one replay in prepare-ahead and two with two submissions. Lost replies preserved all original receipts. `window-prepare-01` and `window-parity-02` are bound. The two-submission SQL arm is queued.
-**W1 compatibility.** The integration incorporates `f5ef9f091` account admission and receipt assembly. Both paths stamp retraction times and supplied valid-time ranges from the exact predecessor. W1's shared-ledger and packed-journal layouts continue through the reference path. The merged gateway loads, and its native rerun is queued.
+**Window evidence.** Both Mac SQL arms verified 384 saves. Prepare-ahead rendered 22 successors before the preceding durable append returned. Two-in-flight submitted 22 successors before that return and the native reader received all 22 while the predecessor was still pending. Both arms had zero definitive replays. An injected advancing commit forced one replay in prepare-ahead and two with two submissions. Lost replies preserved original receipts. `window-prepare-01`, `window-two-02` and `window-parity-02` bind these results.
+**W1 compatibility.** Merged gateway source through W1's `3223c5e37` passed the same eight oracle runs and six window cases in `merged-parity-compound`. W1 common code supplies duplicate handling, fair account turns, and authoritative predecessor clocks and valid ranges. Optional shared-ledger and packed-journal writes use W1. The SDK build and W1's 281-assertion gate passed. The latest W1 research-only update merges cleanly.
 
-**Bare-metal forecast.** About 385 saves/s at today's field payload, with a 320–450/s planning range. Eight members need roughly 18–25 ms of effective service per group. At 50 and 235/s, predict 49–50 and 230–235 in-window saves/s, with p99 of 25–45 and 30–100 ms. At 394/s, predict 315–394 in-window saves/s. Expect p99 of 60–300 ms if all offers keep pace. A 320/s plateau accumulates roughly 14 seconds of p99 wait over a minute if the queue accepts every offer.
+**Mac offered load.** `live-01` used matched 10-second A/B/B/A windows, ten namespaces in one SQL-backed database per arm and 96 client sends outstanding at most. Each save edited 1–3 fields of a 160-field subject. A uses W1 grouped, B prepares ahead with one submission in flight. Each cell gives in-window durable ACKs/s / completed p99 seconds, ordered by arm.
+
+| Offered/s | W1 A0 | Prepare B1 | Prepare B2 | W1 A3 |
+| ---: | ---: | ---: | ---: | ---: |
+| 50 | 25.7 / 5.18 | 34.3 / 3.56 | 36.9 / 3.02 | 23.2 / 6.16 |
+| 235 | 50.5 / 32.30 | 81.7 / 23.81 | 73.7 / 27.42 | 52.9 / 36.83 |
+| 394 | 65.7 / 56.18 | 56.6 / 55.54 | 75.3 / 48.82 | invalid |
+
+Every offer in these shared-slot windows exceeded 50 ms or missed its ACK. All clean arms drained every offer. A3 at 235/s recovered 68 original receipts. At 394/s every one of its 526 CAS conflicts followed a lost durable predecessor known only to the database, invalidating that bookend. The corrected driver freezes the subject until it knows the durable predecessor.
+**Bare-metal forecast.** About 385 saves/s at today's field payload (320–450/s), against the original W1 estimate of 210–300/s. The model assumes eight members per 18–25 ms of effective service. At 50 and 235/s, predict 49–50 and 230–235 in-window saves/s with p99 of 25–45 and 30–100 ms. At 394/s, predict 315–394 in-window and p99 of 60–300 ms if capacity keeps pace. At 320/s, retaining every offer builds about 14 seconds of p99 wait over a minute.
 **Server command.** Use two disposable SQL-backed gateways on the same reference hardware. Both use strict lean rows, ready-only cap eight, predecessor lookup, prepared-request reuse, stage clocks and fast replies. Set diagnostic bulk seed caps to 2,048 rows and 1,048,576 bytes. Enable `TX2_PARALLEL_PREPARE=1 TX2_PREPARE_WINDOW=prepare` only on the second gateway.
 `node --import tsx lab/experiments/EXP-DX1/prep1/live.ts "$DX_W1_URL" "$DX_PREP1_URL" 60`
