@@ -1,3 +1,4 @@
+import type { IndexDelta, IndexLink } from "./index-overlay.ts";
 import assert from "node:assert/strict";
 import { W0 } from "../../../bench/lib/w0-world.ts";
 export const epoch = "2000-01-01T00:00:00.000000Z";
@@ -25,7 +26,6 @@ export type Epochs = {
   times: string[];
   epochs: number[][];
 };
-import type { IndexDelta, IndexLink } from "./index-overlay.ts";
 export type Head = {
   index?: IndexLink;
   baseRoot?: string;

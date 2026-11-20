@@ -187,7 +187,12 @@ export async function run(dir: string, attempt: any) {
           });
         }
       });
-      console.log("paired physical write blocks", k + 1, "of", blocks.length);
+      console.log(
+        isolated ? "isolated physical arm" : "paired physical write blocks",
+        k + 1,
+        "of",
+        isolated ? 1 : blocks.length,
+      );
     }
     for (const arm of arms) {
       const { a, c, indexed, seed, blocks: measures, samples } = arm,

@@ -7,7 +7,11 @@ import { checkWindows } from "../act2/preflight.ts";
 import { validatePreflight } from "../act2/preflight-runner.ts";
 import { headSha, stamp } from "./binding.ts";
 import { hash } from "./store.ts";
-import { nativeDeep, type Identity } from "./server.ts";
+import type { Identity } from "./server.ts";
+import { solo } from "./solo.ts";
+import { measured } from "./measure-lock.ts";
+import { soloPopulation } from "./solo-population.ts";
+import { checkSolo } from "./solo-proof.ts";
 function status(dir: string, binding: Identity, stage: string, reason?: string) {
   const file = path.join(dir, "STATUS.json");
   fs.writeFileSync(file + ".tmp", JSON.stringify({ binding, stage, reason }) + "\n");
@@ -19,8 +23,12 @@ async function check(dir: string, binding: Identity) {
   const started = Date.now(),
     progress = (s: string) => status(dir, binding, s),
     code = stamp();
-  let stage = "checking two live windows";
+  let stage = "validating both single-account inventories";
   try {
+    progress(stage);
+    const populations = [soloPopulation(1000, true), soloPopulation(100000, true)];
+    stage = "checking two live windows";
+    progress(stage);
     const c = await openComposition("reach", "datomic", "act2-preflight-" + binding.nonce);
     let windows;
     try {
@@ -47,17 +55,21 @@ async function check(dir: string, binding: Identity) {
         fallback.split("\n").includes("# pass 1") &&
         fallback.split("\n").includes("# fail 0"),
     );
-    const deep = await nativeDeep(dir, binding, true, (s) => {
+    const deep = await solo(dir, binding, 1000, 6, (s) => {
       stage = s;
       progress(stage);
     });
+    const checkedSolo = checkSolo(dir, binding, 1000, 6, "preflight");
+    assert.deepEqual(checkedSolo, deep);
     const proof = {
       binding,
       windows: checked,
+      populations,
       fullFallback: hash(fallback),
       scope: deep.scope,
       people: deep.subjects,
-      offers: deep.offers.map((o) => hash(JSON.stringify(o))),
+      offers: deep.proofs.map((o) => hash(o)),
+      loaded: deep.loaded,
       code,
       elapsedMs: Date.now() - started,
     };
@@ -93,49 +105,20 @@ export function guardDelta(dir: string, binding: Identity, env: NodeJS.ProcessEn
     );
     assert.deepEqual(observed.binding, binding);
     validatePreflight(proof.windows, binding);
+    assert.deepEqual(proof.populations, [soloPopulation(1000), soloPopulation(100000)]);
     assert(
       proof.elapsedMs > 0 &&
         performance.now() - start < 600000 &&
         proof.people === 1000 &&
-        proof.scope === "delta-deep-" + binding.nonce + "-check",
+        proof.scope === "delta-solo-" + binding.nonce,
     );
-    assert.equal(proof.scope, observed.scope);
-    assert.equal(observed.subjects, 1000);
-    assert.equal(observed.target.people, 1000);
-    for (const [i, o] of observed.offers.entries()) {
-      assert.equal(o.nonce, binding.nonce);
-      assert.equal(o.account, observed.target.key);
-      assert.equal(o.seq, 2 * (i + 1));
-      assert.equal(o.applied, o.notices);
-      assert(
-        o.position > 0 &&
-          o.writes === 6 &&
-          o.activationWorldPulls === 0 &&
-          o.firstPoint &&
-          o.rows >= o.people,
-      );
-      for (const digest of [o.root, o.census, o.domainSha, o.effectsSha, o.allSubjectsSha])
-        assert.match(digest, /^[a-f0-9]{64}$/);
-    }
-    assert.equal(proof.code, observed.source);
+    const fresh = checkSolo(dir, binding, 1000, 6, "preflight");
+    assert.deepEqual(observed, fresh);
     assert.equal(proof.code, stampForPreflight());
-    assert.deepEqual(
-      observed.offers.map((o: any) => o.label),
-      ["broad", "narrow"],
-    );
+    assert.deepEqual(proof.loaded, fresh.loaded);
     assert.deepEqual(
       proof.offers,
-      [1, 2].map((i) => hash(JSON.stringify(get("offer-" + i)))),
-    );
-    assert.deepEqual(
-      proof.offers,
-      observed.offers.map((o: unknown) => hash(JSON.stringify(o))),
-    );
-    assert(
-      observed.reads > 0 &&
-        observed.saves === 3 &&
-        observed.events === 5 &&
-        observed.sourceBoundReadAudits > 0,
+      fresh.proofs.map((o: unknown) => hash(o)),
     );
     return proof;
   } catch (e) {
@@ -166,10 +149,12 @@ function stampForPreflight() {
 }
 export async function run(dir: string, attempt: any) {
   const native = JSON.parse(fs.readFileSync(path.join(dir, "native.json"), "utf8"));
-  return guardDelta(
-    path.join(dir, "preflight"),
-    { source: headSha(), slot: native.prefix, nonce: attempt.nonce },
-    process.env,
+  return measured(async () =>
+    guardDelta(
+      path.join(dir, "preflight"),
+      { source: headSha(), slot: native.prefix, nonce: attempt.nonce },
+      process.env,
+    ),
   );
 }
 if (process.argv[1] === import.meta.filename) {

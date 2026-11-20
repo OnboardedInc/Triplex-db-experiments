@@ -30,6 +30,7 @@ export class DeepAccount {
     this.control = this.guarded();
   }
   private guarded(debt?: Cell<Debt>) {
+    if (debt) return new Account(this.db, this.binding, undefined, undefined, debt);
     const entityId = this.db.entity("deep-debt"),
       prefix = this.db.entity("cmd:event:"),
       comp = this.comp;
@@ -38,21 +39,17 @@ export class DeepAccount {
       ...comp,
       transact: async (ops, meta) => {
         if (!String(meta.commandId).startsWith(prefix)) return comp.transact(ops, meta);
-        return comp.transact(debt ? [{ op: "retract", id: debt.id }, ...ops] : ops, {
+        return comp.transact(ops, {
           ...meta,
           preconditions: [
             ...((meta.preconditions as unknown[]) ?? []),
-            { _tag: "EntityState", entityId, tripleIds: debt ? [debt.id] : [] },
+            { _tag: "EntityState", entityId, tripleIds: [] },
           ],
         });
       },
     };
-    return new Account(
-      new Objects(bound, this.db.account),
-      this.binding,
-      undefined,
-      debt ? undefined : (id) => this.repair(id),
-      !!debt,
+    return new Account(new Objects(bound, this.db.account), this.binding, undefined, (id) =>
+      this.repair(id),
     );
   }
   async debt(p: number) {

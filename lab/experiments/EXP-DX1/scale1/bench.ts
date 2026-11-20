@@ -473,7 +473,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   const imageTrial = attempt.layout === "pooled" && item === 5;
   const restoring = imageTrial && !!attempt.seedImageTag;
   if (attempt.activationMode === "delta") {
-    assert(mode === "activation" && item === 5 && attempt.layout === "pooled" && !restoring);
+    assert(mode === "activation" && item === 2 && !attempt.layout && !restoring);
     const childEnv = {
       ...env,
       DATOMIC_URL: `http://${engines["gw-w"].address}:8080`,
@@ -506,10 +506,10 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
           process.execPath,
           "--import",
           "tsx",
-          path.join(repo, "lab/experiments/EXP-DX1/actv-delta/server.ts"),
+          path.join(repo, "lab/experiments/EXP-DX1/actv-delta/solo.ts"),
           log,
         ],
-        { cwd: repo, env: { ...childEnv, DELTA_GATE: "server" }, stdio: "inherit" },
+        { cwd: repo, env: { ...childEnv, DELTA_GATE: "solo" }, stdio: "inherit" },
       );
       const completed = new Promise<{ code: number | null; signal: NodeJS.Signals | null }>(
         (ok, fail) => {
@@ -525,6 +525,10 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       completion.catch(() => {});
       try {
         while (!done) {
+          if (Date.now() >= attempt.workDeadlineAt - 10000)
+            throw Error(
+              "DELTA reached its work deadline with twenty minutes reserved for cleanup and evidence",
+            );
           const sample = health(dir, prefix, engines, worker.pid ? [worker.pid] : []);
           fs.appendFileSync(path.join(dir, "resources.jsonl"), JSON.stringify(sample) + "\n");
           if (sample.freeBytes < 15 * GiB) throw Error("Disk reached the SCALE1 retention floor");
@@ -562,7 +566,8 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
           await completion;
         }
       }
-      const result = get(path.join(log, "result.json"));
+      const { checkSolo } = await import("../actv-delta/solo-proof.ts");
+      const result = checkSolo(log, binding, 100000, 90, "solo");
       assert.deepEqual(result.binding, binding);
       assert.equal(result.target.people, 100000);
       write(path.join(dir, "delta-measurement.json"), result);
@@ -1206,6 +1211,10 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
   const engineEvidence = path.join(dir, "engines", prefix, "trace");
   if (fs.existsSync(engineEvidence)) sources.push("-C", path.dirname(engineEvidence), "trace");
   if (fs.existsSync(path.join(dir, "resources.jsonl"))) sources.push("-C", dir, "resources.jsonl");
+  if (entry.activationMode === "delta") {
+    for (const folder of ["delta", "delta-preflight"])
+      if (fs.existsSync(path.join(dir, folder))) sources.push("-C", dir, folder);
+  }
   let rawArchive = null,
     rawArchiveError: string | null = null;
   const seals: Record<string, Awaited<ReturnType<typeof compressTraces>>> = {};
@@ -1285,13 +1294,16 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
         ? {
             reason: fs.existsSync(deltaStop)
               ? get(deltaStop).reason
-              : "measurement incomplete / " + service,
+              : (Date.now() - entry.at >= entry.ceiling * 1000
+                  ? "three-hour budget / "
+                  : "worker stopped / ") + service,
           }
         : {}),
     });
   } else status(dir, outcome.stopReason ? "preflight stopped" : "finished", outcome);
 }
 async function main() {
+  const entered = Date.now();
   const [op, n, tag, mode] = process.argv.slice(2);
   const item = Number(n);
   if (op === "plan") {
@@ -1300,7 +1312,23 @@ async function main() {
         {
           items: [
             { item: 1, layouts: [campaignItem(1)], arms: ["zero", "reader"] },
-            { item: 2, layouts: [campaignItem(2)], arms: ["zero", "reader", "activation"] },
+            {
+              item: 2,
+              layouts: [campaignItem(2)],
+              arms: ["zero", "reader", "activation"],
+              activationModes: {
+                delta: {
+                  accounts: 1,
+                  people: 100000,
+                  preflightPeople: 1000,
+                  reference: "page-cut",
+                  readers: 64,
+                  loadedOffers: 90,
+                  workSeconds: 9600,
+                  cleanupSeconds: 1200,
+                },
+              },
+            },
             ...([3, 4] as const).map((i) => ({
               item: i,
               layouts: [campaignItem(i, "pooled"), campaignItem(i, "separate")],
@@ -1359,10 +1387,10 @@ async function main() {
     assert(
       activationMode === "delta" &&
         mode === "activation" &&
-        item === 5 &&
-        getopt("account-layout") === "pooled" &&
+        item === 2 &&
+        !getopt("account-layout") &&
         !getopt("seed-image"),
-      "DELTA requires item 5 pooled activation with its own preflight and seed",
+      "DELTA requires item 2 single-account activation with its own preflight and seed",
     );
   const sourceGit = ["-c", "credential.helper=", "-c", "http.extraHeader="];
   // [DX-SCALE1] Why: a reader must execute the identical public revision as its zero arm even if the other bench publishes during the 5,910-second trace. Rejected: mixing sender or guard versions inside a pair, or silently ignoring upstream changes.
@@ -1445,13 +1473,15 @@ async function main() {
     assert(fs.existsSync(path.join(root, baselineTag, "summary.json")));
   }
   const ceiling =
-    (item === 5 && layout === "pooled"
-      ? 24
-      : mode === "activation" || mode === "interference"
-        ? 10
-        : spec.people === 100000
-          ? 8
-          : 4) * 3600;
+    activationMode === "delta"
+      ? Math.max(1, 9600 - Math.ceil((Date.now() - entered) / 1000))
+      : (item === 5 && layout === "pooled"
+          ? 24
+          : mode === "activation" || mode === "interference"
+            ? 10
+            : spec.people === 100000
+              ? 8
+              : 4) * 3600;
   const clientBudget = Math.floor(
     Math.max(1 * GiB, capacity.host.memory - capacity.sharedReserve - 5 * GiB),
   );
@@ -1467,7 +1497,9 @@ async function main() {
     ceiling,
     clientBudget,
     originHeads,
-    ...(activationMode ? { activationMode } : {}),
+    ...(activationMode
+      ? { activationMode, workDeadlineAt: entered + 9600000, deadlineAt: entered + 10800000 }
+      : {}),
     capacity,
     baselineTag,
     layout,
@@ -1500,7 +1532,8 @@ async function main() {
     "--property=KillMode=control-group",
     `--property=RuntimeMaxSec=${ceiling}s`,
     `--property=MemoryMax=${clientBudget}`,
-    "--property=TimeoutStopSec=3650s",
+    // [DX-ACT2] Why: shutdown and ExecStopPost can each use their own stop allowance. Rejected: giving each the entire twenty-minute cleanup reserve.
+    `--property=TimeoutStopSec=${activationMode === "delta" ? 600 : 3650}s`,
     `--property=ExecStopPost=${post}`,
     "--setenv=DOCKER_HOST=unix:///var/run/docker.sock",
     `--setenv=PATH=${process.env.PATH}`,

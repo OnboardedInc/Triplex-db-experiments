@@ -55,7 +55,13 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
                   "loaded",
                   "page-control",
                   ...(["solo", "deep-loaded", "solo-check", "preflight"].includes(mode)
-                    ? ["solo", "solo-proof", "solo-reference", "reference-traffic"]
+                    ? [
+                        "solo",
+                        "solo-proof",
+                        "solo-reference",
+                        "reference-traffic",
+                        "solo-population",
+                      ]
                     : []),
                   "v3",
                   ...(mode === "rungs" ? [] : ["deep", "server", "preflight", "full.test"]),
@@ -82,6 +88,7 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
     "lab/world/W0/releases/index.json",
     ...(["preflight", "server", "solo", "solo-check", "deep-loaded"].includes(mode)
       ? [
+          "actv-delta/solo-population.json",
           "scale1/bench.ts",
           "scale1/tenants.ts",
           "scale1/tenant-traffic.ts",
