@@ -1,7 +1,7 @@
-The merged code let a reader, an import and a Publish keep using erased data.
-The new ledger closed all three paths in the integration tests, including a reader on an old pin.
-The replica, journal, feed and notice routes also honored the ledger in those tests.
-The restored backup refused reads until it caught up, then showed the erased marker.
+Pinned reads now reuse cached replies while checking for erasure.
+The warm reply was 1,428 bytes with or without the guard, even after another person was erased.
+All thirteen native erasure checks passed, including restore from an old backup.
+The Mac controls drifted, so the read and save timing targets still need bare metal.
 Across three Mac sizes, one fresh value took 38 to 80 milliseconds p99 to erase. A batch of 100 took 114 to 211.
 One person with 416 protected versions took 257 milliseconds at the largest size.
 Cleanup still slowed saves. A protected save added about two to three milliseconds at the median.
@@ -12,6 +12,8 @@ The prepared 100,000-person server check still uses the Part 2 commit `d0ccf3123
 **North star** P1–P3 and P5. Measure pinned reads, save tails, replay and Publish during excision. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
 Part 3 started with one ordinary Mac token and paired diagnostic traces. Forced inline replies added about 38 KB and 5.21 ms of median SDK decoding. The save shift concentrated in first-byte and native commit waits. The median lock acquisition was 0.08 ms. Six local cache tests reproduced stale or mismatched reference use on the starting code. [Stage attribution, predictions and evidence audit](PREDICTIONS-PART3.md)
+
+The candidate binds cache references to the pin and erasure sequence, and verifies the save frontier once under the existing lock. The six cache checks, thirteen native checks and exact Reach reply-byte comparisons passed. Timing ratios and surrounding controls are diagnostic. The one-database writer fit, shared authority, cleanup comparison and server update remain open. [Guard change and evidence](GUARD-PART3.md)
 
 Part 2. [Regression tests and red evidence](REGRESSIONS.md) · [Ledger implementation, latency and receipt audit](LEDGER.md). The guarded Mac run verified all thirteen checks, including the joined stage race, actual backup restore, and the erased-SSN task. Save request bodies stayed at 7,442 B. Save p99 rose 1.73× and pinned read p99 rose 5.28× in the matched Mac comparison. Forcing full read responses accounted for the increased wire bytes.
 

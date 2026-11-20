@@ -66,6 +66,9 @@
   (and db (d/entid db :triplex.scope/erasure-ledger)
        (true? (scope/value db (scope/entity db) :triplex.scope/erasure-ledger))))
 
+(defn managed? [name db]
+  (or (enabled? db) (and root (exists? (path name "head.json")))))
+
 (defn register! [name attributes sealed?]
   (when-not (and (vector? attributes) (seq attributes) (= (count attributes) (count (set attributes)))
                  (every? #(and (string? %) (seq %) (not (.startsWith ^String % ":_tx/"))) attributes))
@@ -101,7 +104,7 @@
 (defn cut
   ([name db] (cut name db false))
   ([name db allow-pending?]
-   (when (or (enabled? db) (and root (exists? (path name "head.json"))))
+   (when (managed? name db)
      (try
        (when (and (not allow-pending?) (exists? (path name "pending.json"))) (unavailable!))
        (let [wire (Files/readString (path name "head.json"))

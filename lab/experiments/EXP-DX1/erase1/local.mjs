@@ -116,6 +116,7 @@ export async function local(opts, config, manager) {
       "ledger-regression",
       "ledger-overhead",
       "ledger-profile",
+      "ledger-match",
       "fast-smoke",
       "fast",
     ].includes(mode),
