@@ -2687,3 +2687,21 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   **W2-ACTREVIEW2** launched to check the server test before the long run (summary first). DX-ACT1 part 7 assigned:
   background writing of values and notice entries after the receipt, in the bulk class; pull DX-STG1's coverage fix;
   the fault and interference matrix; size (wide and million-person accounts).
+
+## 2026-11-20 03:57 UTC (22:57 local, 2026-11-19): activation server test reviewed (fix first); notification selection made exact; the Mac VM is the builders' limit
+
+- **W2-ACTREVIEW2 (`research/2026-11-20-wave2/ACTREVIEW2/`; reviewed `befa95acf` and `22c590093` against BM1's collector
+  through `d94b09f92`).** FIX FIRST: (1) both modes stop the clock before individual notices are recorded (only the
+  recipe is stored: Sam's open ruling); (2) the bare-metal collector rejects the runner's revised file list; (3) a
+  missed sampling instant can count as a hit; (4) the deadline read covers one person on an existing connection;
+  (5) the quiet staged trial reuses a release compiled at startup; (6) DX-STG1's shared-fact fix is not on the branch;
+  (7) the oracle's source and cut evidence is partial. Held: the collector replayed all 12 sampled answers and
+  rejected an altered one. BM1 holds the 100,000-person launch; DX-ACT1 is answering the findings first.
+- **DX-STG1 part 4 (`d3c3c96b7`).** Exact affected-person selection (both links from a person to the wage floor, facts
+  on both sides of the save; whole roster when a record is missing, a time boundary is crossed or the set cannot be
+  proved) and a separate sender gateway, built; 17 in-memory regression checks pass; the patched joined Publish test
+  confirmed two owed notices and one unchanged person against the oracle. Native measurements not taken: all four
+  lab slots were held. Forecast 60 to 90 notices per second on a server (3 to 5 minutes for 16,500; 31 to 46 minutes
+  for 165,000). Part 5 assigned: the owed measurements, then what sets the per-notice rate and a tenfold target.
+- **Mac VM:** eight virtual cores carry about ten builders; CPU pressure 18 to 20% (PSI some), memory 6.6 of 19 GiB
+  reserved at 22:57 local. Builders queue for slots; timed Mac numbers tonight are ratios at best.
