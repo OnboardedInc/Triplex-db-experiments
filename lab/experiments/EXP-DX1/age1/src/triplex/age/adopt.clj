@@ -6,6 +6,7 @@
             [triplex.age.tape :as tape]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.main :as gateway]
+            [triplex.gateway.save-ledger :as ledger]
             [triplex.gateway.scope :as scope]
             [triplex.gateway.storage :as storage])
   (:import [java.nio.charset StandardCharsets]
@@ -119,22 +120,30 @@
         e (scope/entity db)
         clock (scope/max-recorded-at db e)
         loader-prefix (str "load1/" (sha-text (json/write-str [(nth (json/read-str scope) 3) source-seal 2000])) "/")
-        last-tx (scope/newest-commit db)]
-    (native/check! (and (= scope (gateway/stored-scope db))
-                        (= position (storage/head-position db))
-                        (= 3 (storage/value db e :triplex.scope/rows-version))
-                        (scope/head-v2? db e)
-                        (true? (storage/value db e :triplex.scope/strict-record-clocks))
-                        (true? (storage/value db e :triplex.scope/position-regular))
-                        (number? clock)
-                        (and last-tx (= seed-t (d/tx->t last-tx)))
-                        (d/entid db [:triplex.claim/command-id manifest-command])
-                        (some (fn [x]
-                                (let [cmd (storage/value db (:v x) :triplex.claim/command-id)]
-                                  (and (string? cmd) (.startsWith ^String cmd loader-prefix))))
-                              (d/datoms db :vaet last-tx :triplex.claim/tx)))
+        last-tx (scope/newest-commit db)
+        marker (d/entid db [:triplex.claim/command-id manifest-command])
+        ;; [DX-AGE1] Why: VAET finds claims by target but the command lives on the referring entity.
+        ;; Rejected: testing the target's command only (misses the separate bulk-loader claim).
+        last-claims (when last-tx (concat [last-tx] (map :e (d/datoms db :vaet last-tx :triplex.claim/tx))))
+        checks {:scope (= scope (gateway/stored-scope db))
+                :head (= position (storage/head-position db))
+                :rows (= 3 (storage/value db e :triplex.scope/rows-version))
+                :head-version (scope/head-v2? db e)
+                :strict (true? (storage/value db e :triplex.scope/strict-record-clocks))
+                :regular (true? (storage/value db e :triplex.scope/position-regular))
+                :clock (number? clock)
+                :physical-cut (and last-tx (= seed-t (d/tx->t last-tx)))
+                :manifest (and marker (= 1 (storage/value db (ledger/claim-tx db marker) :triplex.tx/position)))
+                :terminal-command (boolean
+                                    (some (fn [claim]
+                                            (let [cmd (storage/value db claim :triplex.claim/command-id)]
+                                              (and (string? cmd) (.startsWith ^String cmd loader-prefix)
+                                                   (re-matches #"[0-9]+" (subs cmd (count loader-prefix))))))
+                                          last-claims))}]
+    (native/check! (every? val checks)
                    "Native seed identity, terminal loader receipt or clock/layout differs"
-                   {:position position :seed-t seed-t})
+                   {:position position :seed-t seed-t
+                    :failed (into [] (comp (remove val) (map key)) checks)})
     ;; [DX-AGE1] Why: interleave fixed samples across accounts and locate them by the source's exact IDs.
     ;; Rejected: walking all 162M facts or creating a new active population alongside the seed.
     (let [actives (for [j (range per-account), account (range 10)
