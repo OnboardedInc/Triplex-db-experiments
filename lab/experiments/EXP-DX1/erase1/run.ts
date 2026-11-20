@@ -29,8 +29,12 @@ type Layout =
   | "ledger-overhead"
   | "ledger-profile"
   | "ledger-match"
+  | "ledger-reuse"
+  | "ledger-parallel"
+  | "ledger-derived"
   | "guard-prepared-smoke"
   | "fast"
+  | "fast-neighbours-smoke"
   | "fast-smoke";
 type Attempt = {
   binding: string;
@@ -44,6 +48,7 @@ type Attempt = {
   controlSha256?: string;
   seedRole?: "control";
   guardComparison?: boolean;
+  neighbourCheck?: boolean;
 };
 type Row = Receipt["triples"][number];
 type Fact = ReturnType<typeof deepOwnFacts>[number];
@@ -227,7 +232,7 @@ function blocks() {
   const history =
     run.mode === "smoke" ||
     run.mode.endsWith("regression") ||
-    ["ledger-overhead", "ledger-profile", "ledger-match"].includes(run.mode)
+    ["ledger-overhead", "ledger-profile", "ledger-match", "ledger-reuse"].includes(run.mode)
       ? 5
       : 415;
   return [
@@ -868,14 +873,30 @@ async function scale() {
   let f = new Fixture(comp, fixtureName);
   let reader: CompositionHandle | undefined;
   try {
+    if (run.mode === "ledger-derived") {
+      const { derivedRegression } = await import("./regression.ts");
+      await derivedRegression(run.binding, output);
+      return;
+    }
     const sealed = run.mode.startsWith("fast") || run.guardComparison;
-    if (run.mode === "ledger-regression" || (sealed && action !== "check" && !run.seedRole)) {
+    if (
+      ["ledger-regression", "ledger-reuse", "ledger-parallel"].includes(run.mode) ||
+      (sealed && action !== "check" && !run.seedRole)
+    ) {
       const authority = new DatomicClient(process.env.DATOMIC_URL!);
       try {
-        await authority.declareProtection(f.db, sealed ? [":privacy/field"] : [field(0)], sealed);
+        await authority.declareProtection(
+          f.db,
+          sealed ? [":privacy/field"] : [run.mode === "ledger-parallel" ? ":v" : field(0)],
+          sealed,
+        );
       } finally {
         authority.close();
       }
+    }
+    if (run.mode === "ledger-parallel") {
+      output("parallel-writer", await diag("parallel-writer", { scope: f.scope }));
+      return;
     }
     let groups: Acc[];
     if (action === "check") {
@@ -908,6 +929,16 @@ async function scale() {
         await restoreFixture(f, manifest);
       }
       await comparePreparedGuard(f);
+      return;
+    }
+    if (run.neighbourCheck) {
+      const { quietNeighbours } = await import("./quiet.ts");
+      await quietNeighbours(f, run.nonce, diag, output, action === "check");
+      return;
+    }
+    if (run.mode === "ledger-reuse") {
+      const { checkErasedIdentity } = await import("./reuse.ts");
+      await checkErasedIdentity(f, field(0), run.nonce, diag, output);
       return;
     }
     if (run.mode === "smoke") {

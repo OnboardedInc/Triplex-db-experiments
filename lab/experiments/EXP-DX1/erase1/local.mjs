@@ -79,6 +79,7 @@ function bindingInputs(manager) {
     "lab/experiments/EXP-DX1/notify1",
     "lab/experiments/EXP-DX1/actv-lazy",
     "lab/experiments/EXP-DX1/actv-delta",
+    "lab/experiments/EXP-DX1/wfix1/regression.clj",
     "pnpm-lock.yaml",
   )
     .split("\n")
@@ -108,7 +109,7 @@ export async function local(opts, config, manager) {
   assert(typeof holder === "string" && /^DX-[A-Z0-9-]{1,26}$/.test(holder));
   const people = Number(opts.people);
   const mode = String(opts.run ?? "scale");
-  const subjectWriter = process.env.DX_ERASE1_SUBJECT_WRITER;
+  const subjectWriter = mode === "ledger-parallel" ? "1" : process.env.DX_ERASE1_SUBJECT_WRITER;
   assert(subjectWriter === undefined || subjectWriter === "0" || subjectWriter === "1");
   assert(
     [
@@ -121,8 +122,12 @@ export async function local(opts, config, manager) {
       "ledger-overhead",
       "ledger-profile",
       "ledger-match",
+      "ledger-reuse",
+      "ledger-parallel",
+      "ledger-derived",
       "guard-prepared-smoke",
       "fast-smoke",
+      "fast-neighbours-smoke",
       "fast",
     ].includes(mode),
   );
@@ -382,6 +387,9 @@ export async function local(opts, config, manager) {
           ":/opt/gateway/codec-spec.json:ro",
         "-v",
         import.meta.dirname + ":/erase1:ro",
+        ...(mode === "ledger-parallel"
+          ? ["-v", path.resolve(import.meta.dirname, "../wfix1") + ":/erase1-writer-check:ro"]
+          : []),
         ...(archiveDir ? ["-v", archiveDir + ":/dx-archive"] : []),
         ...(profile
           ? [
@@ -487,6 +495,7 @@ export async function local(opts, config, manager) {
       host: "mac-vm",
       timings: "diagnostic",
       guardComparison: mode === "guard-prepared-smoke",
+      neighbourCheck: mode === "fast-neighbours-smoke",
     };
     run.binding = sha256(JSON.stringify(run));
     write("native", run);

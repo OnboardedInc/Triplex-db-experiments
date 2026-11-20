@@ -1,3 +1,4 @@
+import { readErasure } from "../../../bench/lib/datomic-erasure.ts";
 import assert from "node:assert/strict";
 import { Worker, parentPort, workerData } from "node:worker_threads";
 import {
@@ -201,6 +202,14 @@ export class ReleaseCopy {
     }
   }
   private async select(a: Notices, e: Event, sourceAt: number): Promise<Coverage | undefined> {
+    // [DX-ERASE1] Why: shared images have no assertion IDs or removal witness at the point the worker reuses them.
+    // Rejected: giving a protected source a reusable detached copy. The relay can ask the guarded reader instead.
+    if (await readErasure(this.source)) {
+      this.copy = undefined;
+      this.plan = undefined;
+      this.stats.declines++;
+      return;
+    }
     const next = e.value.next,
       old = e.value.old;
     if (

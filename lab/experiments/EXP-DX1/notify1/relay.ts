@@ -126,7 +126,9 @@ export class Relay {
     // [DX-STG1] Why: resume the persisted range at its own offset, even when
     // the in-memory copy is gone. Rejected: switching to a census offset.
     const copied =
-      erasure.value === 0 && selected.coverage ? a.inputs.releaseCopy?.results(e, ids) : undefined;
+      !authority && erasure.value === 0 && selected.coverage
+        ? a.inputs.releaseCopy?.results(e, ids)
+        : undefined;
     const ledger = (s: string) => "ledger:" + s;
     const old = await state.rows<string>(ids.map(ledger), at);
     const ops = [] as ReturnType<Documents["change"]>;

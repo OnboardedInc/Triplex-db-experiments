@@ -9,15 +9,23 @@ import { verifiedTree } from "../../../bin/datomic-context.mjs";
 
 const [command, location, staged, control, ...extra] = process.argv.slice(2);
 const guardComparison = command === "check-guarded";
+const neighbourCheck = command === "check-neighbours";
 const seedRole = command === "stage-control" ? "control" : undefined;
 assert(
   process.platform === "linux" &&
-    ["stage", "check", "stage-fast", "check-fast", "stage-control", "check-guarded"].includes(
-      command,
-    ),
+    [
+      "stage",
+      "check",
+      "stage-fast",
+      "check-fast",
+      "stage-control",
+      "check-guarded",
+      "check-neighbours",
+    ].includes(command),
 );
 const action = command.startsWith("stage") ? "stage" : "check";
-const mode = command.endsWith("-fast") || guardComparison || seedRole ? "fast" : "scale";
+const mode =
+  command.endsWith("-fast") || guardComparison || neighbourCheck || seedRole ? "fast" : "scale";
 assert(location && !extra.length && (action === "check" ? staged : staged === undefined));
 assert(guardComparison === Boolean(control));
 const dir = path.resolve(location);
@@ -92,6 +100,7 @@ const attempt = {
   builds,
   seedRole,
   guardComparison,
+  neighbourCheck,
 };
 const health = await fetch(new URL("/health", endpoint));
 assert(health.ok);
@@ -140,7 +149,7 @@ if (action === "stage") {
   // Rejected: reusing a staged native-excision seed (its rows were created without that authority).
   assert.equal(plan.mode, mode);
   stageSha256 = sums(raw);
-  if (guardComparison) {
+  if (guardComparison || neighbourCheck) {
     // [DX-ERASE1] Why: the held sealed copy may have been built at an earlier reviewed source.
     // Rejected: accepting a staged manifest by name or restaging the full sealed fixture inside the timed check.
     const sealedSha = env("DX_ERASE_SEALED_SHA256");
@@ -149,16 +158,18 @@ if (action === "stage") {
     assert.equal(plan.seedRole, undefined);
     assert.match(stagedSource, /^[a-f0-9]{40}$/);
     git("merge-base", "--is-ancestor", stagedSource, source);
-    const controlBytes = fs.readFileSync(control);
-    const plain = JSON.parse(controlBytes.toString());
-    assert.equal(plain.seedRole, "control");
-    assert.equal(plain.source, source);
-    assert.equal(plain.nonce, nonce);
-    assert.equal(plain.mode, mode);
-    assert.equal(plain.people, attempt.people);
-    assert.deepEqual(plain.builds, builds);
-    assert.equal(plain.data.facts, plan.data.facts);
-    controlSha256 = sums(controlBytes);
+    if (guardComparison) {
+      const controlBytes = fs.readFileSync(control);
+      const plain = JSON.parse(controlBytes.toString());
+      assert.equal(plain.seedRole, "control");
+      assert.equal(plain.source, source);
+      assert.equal(plain.nonce, nonce);
+      assert.equal(plain.mode, mode);
+      assert.equal(plain.people, attempt.people);
+      assert.deepEqual(plain.builds, builds);
+      assert.equal(plain.data.facts, plan.data.facts);
+      controlSha256 = sums(controlBytes);
+    }
   } else {
     assert.equal(plan.source, source);
     assert.deepEqual(plan.builds, builds);
@@ -260,7 +271,14 @@ try {
   if (action === "check" && mode === "fast") {
     const observed = JSON.parse(
       fs.readFileSync(
-        path.join(dir, guardComparison ? "guarded-comparison.json" : "fast-result.json"),
+        path.join(
+          dir,
+          guardComparison
+            ? "guarded-comparison.json"
+            : neighbourCheck
+              ? "quiet-comparison.json"
+              : "fast-result.json",
+        ),
         "utf8",
       ),
     );
@@ -268,8 +286,8 @@ try {
     assert.equal(observed.nonce, nonce);
     assert.equal(observed.mode, mode);
     assert.equal(observed.people, attempt.people);
-    if (guardComparison) {
-      assert.equal(observed.controlSha256, controlSha256);
+    if (guardComparison || neighbourCheck) {
+      if (guardComparison) assert.equal(observed.controlSha256, controlSha256);
       assert.equal(observed.stageSha256, stageSha256);
       assert.equal(observed.attempt, attempt.attempt);
     }

@@ -25,6 +25,16 @@ The small Mac smoke rehydrated both seeds, verified 2,500 save receipts and the 
 
 `server.mjs` binds the fresh result to the current source, compiled JS, gateway source, scratch nonce, stage hashes and attempt ID. `loadStage` reopens the original head and bystander IDs. `comparePreparedGuard` uses the checked rows and receipts from `traffic` and verifies the new marker against its original identity, sealed body and receipt. It emits the observed ratios and planned bounds.
 
+## Prepared quiet-account comparison
+
+Restore an unchanged copy of the sealed fixture and use the same manifest hash and scratch ownership setup. The synthetic gateway uses zero key grace for this test only. The active and quiet accounts share one Datomic database and one gateway. The driver verifies 500 quiet saves per block through the actual feed and checks four held reads continuously. It measures a 100-person removal and a paced cleanup job in separate blocks, each against both surrounding controls. The comparison uses the full latency of any request that waits for the current removal record. Each quiet save, read and feed p99 ratio has a 1.25× bar.
+
+```sh
+timeout --kill-after=15s 55m node lab/experiments/EXP-DX1/erase1/server.mjs check-neighbours erase1-neighbours-check erase1-fast-stage/staged.json
+```
+
+The Mac smoke runs the correctness checks with eight saves per block and emits counts. Dedicated-server estimates remain conditional on the shared transactor's indexing work. [Writer checks](WRITER-PART3.md)
+
 ## Prepared detached-erasure check
 
 The fixture has 100,000 deep subjects and 16,045,255 current facts. For one subject the check makes 415 actual protected replacements and verifies the original held pin. The repeated one- and 100-person arms erase one new protected assertion per target per request. The forecast uses all three matched Mac rungs. [Mac measurements](FAST.md#matched-scale-measurements)
