@@ -70,7 +70,7 @@ def sources(r):
     elif r["item"]==5:parts["rungs"]=root/"build/state/evidence/DX-INT1"/r["tag"]
     elif r["item"] in (24,26):
         names=("checkpoint-arms","preflight","measurement","preflight-reading.json","reading.json","perf-preflight.txt") if r["item"]==24 else (
-            "engines","activation-preflight","small","rung-thin-1m","int1-clean.json","stack-access.json","engine-logs.txt")
+            "engines","activation-preflight","small","rung-thin-1m","int1-clean.json","stack-access.json","engine-logs.txt","metric-compat.json")
         for name in names:
             parts[name]=root/name
     elif r["item"]==28:

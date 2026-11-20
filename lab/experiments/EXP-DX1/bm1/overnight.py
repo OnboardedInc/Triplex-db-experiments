@@ -470,6 +470,8 @@ def bind(r):
         assert (item,attempt)==(32,2) and retained["source"]==r["source"]==NOTICE_SOURCE
         for key in ("requestSha256","preflightSha256","reportSha256"):
             assert re.fullmatch("[a-f0-9]{64}",retained[key])
+    if "dockerTopCompatibility" in r:
+        assert (item,attempt)==(26,2) and r["dockerTopCompatibility"] is True
     return r
 
 
@@ -502,6 +504,8 @@ def make(item, attempt, start, deadline):
         token="| RD1 mounted retry,"
     if (item,attempt)==(32,2):
         token="| STG1 retained preflight,"
+    if (item,attempt)==(26,2):
+        token="| INT1 Docker top retry,"
     forecast=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith(token))
     r=dict(item=item,attempt=attempt,tag=tag,source=head,repo=str(repo),unit=unit,root=str(root),
            directory=str(directory),start=start,deadline=deadline,prediction=forecast,requested=stamp())
@@ -519,6 +523,8 @@ def make(item, attempt, start, deadline):
         r["stableEndpoints"]=True
     if retained:
         r[{21:"retainedControl",32:"retainedNotice"}[item]]=retained
+    if (item,attempt)==(26,2):
+        r["dockerTopCompatibility"]=True
     put(request,bind(r))
     return r
 
@@ -1175,6 +1181,15 @@ def result(r):
         source,slot=r["source"],access["prefix"]
         assert (clean["source"],clean["tag"],clean["prefix"],clean["request"],clean["remaining"])==(source,r["tag"],slot,r["requested"],[])
         assert access["engineSha256"]==digest(root/"engines"/slot/"stack.json")
+        if r.get("dockerTopCompatibility"):
+            compat=get(root/"metric-compat.json")
+            assert [compat[k] for k in ("source","prefix","nonce","tag","request")]==[
+                clean[k] for k in ("source","prefix","nonce","tag","request")]
+            assert compat["ids"]==[c["id"] for c in access["containers"]]
+            assert compat["scriptSha256"]==digest(HERE/"probes/int1-docker-top.sh")
+            assert compat["commands"]==[["top","-eo","pid,rss"],["top","-eo","pid,nlwp"]]
+            assert compat["metrics"]==["RSS","NLWP"]
+            assert (root/"metric-compat.json").stat().st_mtime>=r["start"]
         for folder,size in ((root/"small",1000),(root/"rung-thin-1m",1000000)):
             file=folder/"bm1-reading.json"
             if not file.is_file():
@@ -1373,15 +1388,26 @@ def setup_repair(item):
     # Rejected: resetting the clock for every partial run or waiting until its first evidence is lost.
     folder=NIGHT/f"i{item}"
     end=folder/"outcome.json"
-    if item not in (21,22,24,28,32) or not end.is_file() or (folder/"original-setup-outcome.json").exists():
+    if item not in (21,22,24,26,28,32) or not end.is_file() or (folder/"original-setup-outcome.json").exists():
         return None
-    state={21:"uncollected",22:"preflight-refused",24:"partial",28:"preflight-refused",32:"preflight-refused"}[item]
+    state={21:"uncollected",22:"preflight-refused",24:"partial",26:"preflight-refused",28:"preflight-refused",32:"preflight-refused"}[item]
     row=get(end)
     if (row.get("attempt"),row.get("state"))!=(1,state):
         return None
     prior=bind(get(folder/"1/request.json"))
     root=Path(prior["root"])
     worker=folder/"1/worker.log"
+    if item==26:
+        guard=root/"activation-preflight/STATUS.json"
+        detail=worker.read_text(errors="replace")
+        if (not (root/"small/result.json").exists() and guard.is_file() and get(guard)["stage"]=="verified"
+                and "Couldn't find PID field in ps output" in detail and " -eo rss" in detail):
+            clean=get(root/"int1-clean.json")
+            receipt=get(guard)
+            assert receipt["binding"]=={"source":prior["source"],"slot":clean["prefix"],"nonce":clean["nonce"]}
+            assert prior["start"]-1<=guard.stat().st_mtime<=prior["deadline"]
+            return {}
+        return None
     if item==32:
         small=notice_dir(prior,small=True)
         if (not complete_output(prior) and (small/"producer-preflight.json").is_file() and
@@ -1575,7 +1601,7 @@ def main():
     retry_restores=mode=="run-after-seed" and os.environ.get("DX_BM1_RESUME_RESTORES")=="1"
     repaired={}
     if retry_restores:
-        for item in (21,22,24,28,32):
+        for item in (21,22,24,26,28,32):
             if item not in scheduled:
                 continue
             try:

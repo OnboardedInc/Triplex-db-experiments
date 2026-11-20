@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import time
@@ -83,6 +84,19 @@ def process(r, clean=False):
     heavy=(node,"lab/bin/heavy.mjs","--label","DX-BM1","--","taskset","-c","3",node,
            "--no-warnings","--experimental-transform-types","--expose-gc")
     run(*heavy,EXP/"act2/preflight-runner.ts",root/"activation-preflight",source,prefix,nonce,timeout=620)
+    if r["attempt"]==2:
+        assert r["dockerTopCompatibility"] is True
+        ids=[c["id"] for c in stack["containers"]]
+        assert len(set(ids))==4 and all(re.fullmatch(r"[a-f0-9]{64}",id) for id in ids)
+        actual=shutil.which("docker",path=env["PATH"])
+        assert actual and Path(actual).is_absolute()
+        tools=root/"metric-tools"
+        tools.mkdir()
+        shim=Path(__file__).with_name("int1-docker-top.sh")
+        (tools/"docker").symlink_to(shim)
+        save(root/"metric-compat.json",{**binding,"scriptSha256":digest(shim),"engineSha256":digest(engine),"ids":ids,
+             "commands":[["top","-eo","pid,rss"],["top","-eo","pid,nlwp"]],"metrics":["RSS","NLWP"]})
+        env.update(DX_BM1_DOCKER_NATIVE=actual,DX_BM1_INT1_CONTAINER_IDS=" ".join(ids),PATH=str(tools)+":"+env["PATH"])
     for size in (1000,1000000):
         folder=root/("small" if size==1000 else "rung-thin-1m")
         left=max(1,int(r["deadline"]-time.time()-150))
