@@ -216,14 +216,17 @@ for port in "$port_w" "$port_r"; do
 done
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 prepw=${DX_PREP1_WRITERS:-1}
+subject_save=${TX2_SUBJECT_SAVE:-0}
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prefix == tx2-dxprep1-* && $prepw =~ ^(1|2|4)$ && $publish == true ]]
   [[ ${DX_PREP1_SUBJECT:-0} =~ ^[01]$ && -z $seed_volume ]]
   (( port_w + prepw - 1 < port_r ))
   [[ -z ${DX_PREP1_DUMP:-} || -f $DX_PREP1_DUMP ]]
+  subject_save=${DX_PREP1_SUBJECT:-0}
 else
   [[ $prepw == 1 && -z ${DX_PREP1_DUMP:-} ]]
 fi
+[[ $subject_save =~ ^[01]$ ]]
 network_tuning=()
 if [[ ${DX_IDLE_TCP:-default} != default ]]; then
   # [DX-T1-10] Why: test slow-start-after-idle only in this attempt's endpoint namespaces, leaving guest/global settings alone.
@@ -477,6 +480,9 @@ for role in "${gateway_roles[@]}"; do
   # [DX-W1] Why: bootstrap is finished on the other peer before the single authoritative writer admits live traffic.
   # Rejected: allowing a large labeled import through the live writer's frame cap during measurement.
   field_policy=()
+  # [DX-PREP1] Why: carry the one opt-in setting through the normal writer launcher.
+  # Rejected: coupling activation to trace collection or installing the writer on reader peers.
+  if [[ $mode == w ]]; then field_policy+=(-e "TX2_SUBJECT_SAVE=$subject_save"); fi
   if [[ $mode == w && -n ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
     [[ ${DX_PREDECESSOR_LOOKUP:-} =~ ^[01]$ && $DX_WRITE_OPTIONS_ATTEMPT =~ ^[a-f0-9-]{36}$ ]] || exit 2
     field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=$DX_PREDECESSOR_LOOKUP" -e "TX2_WRITE_OPTIONS_ATTEMPT=$DX_WRITE_OPTIONS_ATTEMPT")
@@ -527,7 +533,7 @@ for role in "${gateway_roles[@]}"; do
   role_trace_java=$trace_gw_java
   if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
     role_trace_java+=" -Xlog:gc*,safepoint*=debug:file=/trace/prep1-gc-gw-$role.log:time,uptimemillis,level,tags,pid,tid:filecount=0"
-    if [[ $mode == w ]]; then field_policy+=(-e "TX2_SUBJECT_SAVE=${DX_PREP1_SUBJECT:-0}" -e TX2_SUBJECT_PROFILE=1); fi
+    if [[ $mode == w ]]; then field_policy+=(-e TX2_SUBJECT_PROFILE=1); fi
   fi
   if [[ $TRIPLEX_TRACE_GW_JFR == 1 ]]; then role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0"; fi
   if [[ ${TRIPLEX_TRACE_DEBUG:-0} == 1 ]]; then
