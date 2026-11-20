@@ -1,10 +1,10 @@
 # DX-HA1 · Import in one database
 
-The overnight server loaded 5,491 facts per second, but its quiet account's slow saves took 49 ms against 21 ms and 11 ms in the controls.
+The overnight server loaded 5,491 facts per second. The quiet account's slow saves took 49 ms against 21 ms and 11 ms in the controls.
 Half of the twelve slowest saves overlapped an import transaction. The slower control had four saves queued behind long native transactions.
-On the Mac, 16, 24 and 32 facts per transaction yielded 844, 836 and 935 queryable facts per second.
+In the Mac diagnostic, 16, 24 and 32 facts per transaction yielded 844, 836 and 935 queryable facts per second.
 All three widths fell short of 3,000 facts per second and had missed neighbour requests.
-Every committed test frame reconciled with its original receipt and stored rows, including the backdated write whose reply was deliberately dropped.
+The four-minute check verified 154,016 imported facts, including original receipts, a dropped reply, backdating and retirement.
 [Single-server command and predictions](MICRO-SERVER.md)
 
 ## Overnight bare metal
@@ -23,7 +23,7 @@ Every committed test frame reconciled with its original receipt and stored rows,
 - GC clips for 128/500/2,000 peaked at gateway 8.19/15.95/17.21 ms and transactor 10.87/25.96/14.12 ms. Direct processor index adoptions that overlapped the tail took up to 2.00 ms at 500 and 9.98 ms at 2,000. Background indexing has minute-level completion metrics only. Overlaps are nonexclusive and guest clock bounds are 0.66–1.16 ms.
 - [Evidence index](EVIDENCE5.md) includes every slow save, both JFR recordings and the offer reconciliation. [Part 4](PART4.md) preserves the older Mac controls.
 
-## Mac microframes
+## Mac microframe diagnostics
 
 | Facts/frame | Committed / queryable facts/s | Mean frame interval ms | Serial hold p50/p99 ms | Median wire bytes / stored rows | Quiet save/read p99 ms | Quiet ratios before and after, save / read | Missed offers, all accounts |
 |---|---:|---:|---:|---:|---:|---|---:|
@@ -37,3 +37,11 @@ Every committed test frame reconciled with its original receipt and stored rows,
 - Each 108-second arm offered 55 saves and 55 reads per second across eleven neighbours. The importer offered about 130 frames per second, staged the next frame outside the serial lane and kept one outstanding. Ready live saves came first. Each frame was capped at 96 stored rows and 64 KiB. A 24-fact frame needs an 8-ms completion interval to reach the rate target.
 - All three arms verified every committed frame, every claimed ID and final pinned row, and a near-end queryable prefix. Each proved birth, backdate, retirement and one lost reply under live writes. The direct retry returned an opaque wrapper status and the durable lookup resolved the original claim.
 - The Mac controls themselves differed by 2.80× on quiet reads. The measured frontier falls short of the throughput target in every arm. Missed offers prevent a neighbour latency pass. The server command remains a prediction. [Offer tapes, role metrics and audit](EVIDENCE5.md)
+
+## Sustained import
+
+- The lease-free Mac check used one ordinary heavy token and verified all 4,813 committed frames and 154,016 facts. An independent in-window read confirmed a prefix of 153,088 facts. One recovered frame lacked original timing. The tape accounts for all 16,800 neighbour offers, with 275 marked as missed. It used 15 offered saves and 55 reads per second. The four-minute window leaves time for full readback within the Mac diagnostic budget. Tens of millions remain untested here.
+- Across three 80-second diagnostic slices, the transactor adopted 3 / 2 / 7 indexes. The longest adoption fell from 88 to 27 to 10 ms. Nine callback-reported background jobs took 1.09–4.99 seconds. Three memory-index samples ranged from 2 to 20 MiB. The minute samples miss brief peaks, as the observed adoptions show.
+- The transactor logged 425 GC pauses and the gateway logged 433. Their longest pauses were 675 and 931 ms, both in the middle third. Quiet-save p99 there was 5.90 seconds, against 1.03 and 0.55 seconds in the first and last thirds. The longest waits show a queue that a per-frame cap alone cannot bound. Both JVMs used Serial GC.
+- The settings leave 64 MiB between triggering an indexing job and write throttling. A novelty budget would reserve live work plus new index bytes during a conservatively long job and catch-up interval. A minute-old sample cannot enforce that. GC needs the matched allocation and collector comparisons defined by DX-TAIL1. [Datomic capacity planning](https://docs.datomic.com/operation/capacity.html) · [G1 pause targets](https://docs.oracle.com/en/java/javase/21/gctuning/garbage-first-g1-garbage-collector1.html) · [DX-TAIL1](https://github.com/OnboardedInc/Triplex-db-experiments/blob/4ebff4dbc9d225f6a56abd23152185041eaae865/lab/experiments/EXP-DX1/tail1/REPORT.md)
+- The server handoff preregisters sustained timing and compares each account against both controls. It remains open whether one database meets both limits on bare metal. Version 0.1 also needs the integrated gates and scorecard at both database sizes. [Server commands](MICRO-SERVER.md) · [Evidence and audit](EVIDENCE5.md)
