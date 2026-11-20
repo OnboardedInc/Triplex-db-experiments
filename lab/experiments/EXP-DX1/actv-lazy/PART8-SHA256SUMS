@@ -81,3 +81,9 @@ c1ae934c21dec69c504ee972a5d444a2078a376ebdb53f3f37349d51622f74c6  lazy-join/part
 8c190b1c42c341519e282179607388b9f9227e9b8b53ab70adfe3769ddaea7ce  lazy-join/part8-peak-ordinary/run.log
 9f5f992b25287662c3479d6f80eed61c882ec3a46aa40f21ba51cb540659d26c  lazy-join/part8-receipt-plan/test.log
 95f65a05a5a0c12385438753ba64e790246a0bd4546e82de4231359d2ada47c2  lazy-join/part8-receipt-plan/source.txt
+20a2745ffd1b04dad0f1a16cf511eba5fb3675ee530845f6846509bfeab09b54  lazy-join/part8-merged-tests/source.txt
+c915eec722e09fa0115b083fda8cb51ac95512c1eedff9ee159b1d5719cf18f8  lazy-join/part8-merged-tests/small.log
+136c55c5f17c16fb2d0ab617310e0fddeb9565a7119900c539fdb74d6694c21e  lazy-join/part8-merged-tests/small-r2.log
+afbf2124e11b06af8973b4a0c999bbdd7edc14a3f411d4a8b31ac8af95abda3c  lazy-join/part8-build-merged/retry.log
+33190fb88b48b792e42e404a508fb08a2638346a86de81ac117e3a447a0b89f2  lazy-join/part8-int-gateway/build.log
+6ca8688622ba547c20cd90c03d32308d4cfe315c3015bb0809f808f325b7ed41  lazy-join/part8-int-gateway/gateway-attempt
