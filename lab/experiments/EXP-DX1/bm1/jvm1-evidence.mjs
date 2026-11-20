@@ -160,6 +160,15 @@ if (mode === "produce-small") {
   const campaign = read(path.join(results, "comparison.json"));
   assert.equal(campaign.source, source);
   assert.deepEqual(campaign.results.map((r) => r.name), serverArms);
+  const physicalFile = path.join(path.dirname(output), "cold-postgres.json");
+  const physical = path.basename(output) === "retry" ? {
+    ...read(physicalFile), manifestSha256: hash(fs.readFileSync(physicalFile)),
+  } : null;
+  if (physical) {
+    assert.equal(physical.source, source);
+    assert.equal(physical.seedCut, seed.seedCut);
+    assert.equal(physical.logicalDumpSha256, seed.dumpSha256);
+  }
   const comparisons = [];
   for (const result of campaign.results) {
     const directory = path.join(results, result.name);
@@ -195,7 +204,18 @@ if (mode === "produce-small") {
       assert.equal(summary[index].quietP99Ratio, measured.quietRatio);
       return measured;
     });
-    comparisons.push({ name: result.name, arm, phases, roles: stackReading(directory, arm, policy, startedAt) });
+    let restored = null;
+    if (physical) {
+      const clone = path.join(output, "restore-" + arm.slot + "-pg.json");
+      const pg = read(path.join(directory, "placements.json")).engines.find((e) => e.role === "pg");
+      assert(fs.statSync(clone).mtimeMs >= startedAt && fs.statSync(clone).mtimeMs <= fs.statSync(file).mtimeMs);
+      restored = read(clone);
+      assert.deepEqual(restored, {
+        source, container: pg.id, physicalManifestSha256: physical.manifestSha256,
+        logicalDumpSha256: seed.dumpSha256, seedCut: seed.seedCut,
+      });
+    }
+    comparisons.push({ name: result.name, arm, phases, restored, roles: stackReading(directory, arm, policy, startedAt) });
   }
   write(path.join(results, "collector.json"), { source, dumpSha256: seed.dumpSha256, comparisons });
 }

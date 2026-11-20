@@ -14,7 +14,8 @@ SERVER = Path("/var/tmp/triplex-bm1")
 MAC = Path.home()/"Claude/Projects/triplex-db-2/evidence"
 SLOTS = {
     "jvm1": ("day-n20-jvm1", ("seed/seed.json", "seed/results", "small/results", "campaign/results",
-                             "seed.log", "campaign.log", "build/results/lscpu.txt", "build/results/images.json",
+                             "seed.log", "campaign.log", "retry.log", "cold-postgres.json", "retry",
+                             "build/results/lscpu.txt", "build/results/images.json",
                              "build/results/IMAGE-INPUTS.SHA256SUMS", "build/results/disks.txt")),
     "int1-capacity": ("day-n20-int1-capacity", ("small", "hot", "full", "comparison.json")),
     "rd1-aged": ("day-n20-rd1-aged", ("small", "full", "worker.log")),

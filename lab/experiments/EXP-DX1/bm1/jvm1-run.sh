@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-action=${1:?usage: jvm1-run.sh run|cleanup ROOT PRODUCER_SHA}
+action=${1:?usage: jvm1-run.sh run|retry|cleanup ROOT PRODUCER_SHA}
 root=${2:?}
 source=${3:?}
 [[ $root == /var/tmp/triplex-bm1/day-n20-jvm1 && $source =~ ^[0-9a-f]{40}$ ]]
@@ -22,7 +22,15 @@ status() {
 
 cleanup() {
   local base slot line items rc=0
-  for base in "$root/seed" "$root/small" "$root/campaign"; do
+  if [[ -s $root/snapshot-provision/owned-slot ]]; then
+    read -r slot < "$root/snapshot-provision/owned-slot"
+    [[ $slot =~ ^tx2-dxt1-jvm1-[0-9a-f-]{36}$ ]] || return 2
+    timeout 120s bash lab/experiments/EXP-DX1/stack/down.sh "$slot" --volumes || return 1
+    items=$(docker ps -a --format '{{.Names}}' && docker volume ls --format '{{.Name}}' && docker network ls --format '{{.Name}}') || return 1
+    if grep -q "^$slot-" <<<"$items"; then return 1; fi
+    mv "$root/snapshot-provision/owned-slot" "$root/snapshot-provision/cleaned-slot"
+  fi
+  for base in "$root/seed" "$root/small" "$root/campaign" "$root/retry"; do
     [[ -f $base/active-slot ]] || continue
     read -r slot < "$base/active-slot"
     [[ $slot =~ ^tx2-dxt1-jvm1-[0-9a-f-]{36}$ ]] || return 2
@@ -60,7 +68,45 @@ if [[ $action == cleanup ]]; then
   fi
   exit 0
 fi
-[[ $action == run && $(id -u) == 0 ]]
+[[ $(id -u) == 0 && ( $action == run || $action == retry ) ]]
+
+if [[ $action == retry ]]; then
+  # [DX-BM1] Why: the sealed input and real small native proof already passed before the restore timeout.
+  # Rejected: repeating the two-hour seed or labelling the first incomplete arm a measurement.
+  export DOCKER_HOST=unix:///var/run/docker.sock
+  [[ -z $(docker ps -q) ]]
+  python3 - "$root" "$source" <<'PY'
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+root, source = Path(sys.argv[1]), sys.argv[2]
+small = root/"small/results/small"
+producer = small/"producer-small.json"
+checked = json.loads((small/"collector-small.json").read_bytes())
+assert checked["arm"]["source"] == source and checked["reading"]["offered"] == 8
+assert checked["producerSha256"] == hashlib.sha256(producer.read_bytes()).hexdigest()
+assert "ETIMEDOUT" in (root/"campaign.log").read_text()
+tag = "tx2-datomic:1.0.7745-da00"
+images = json.loads((root/"build/results/images.json").read_bytes())
+image, = [row for row in images if tag in row.get("RepoTags", [])]
+subprocess.run(["docker","image","tag",image["Id"],tag],check=True,timeout=30)
+PY
+  status preparing-cold-snapshot campaign
+  node lab/bin/heavy.mjs --label DX-BM1-jvm1-cold-snapshot -- \
+    python3 "$(dirname -- "$helper")/jvm1-snapshot.py" provision
+  cleanup
+  mkdir "$root/restore-compat"
+  install -m 755 "$(dirname -- "$helper")/jvm1-snapshot.py" "$root/restore-compat/docker"
+  status measuring-cold-clones next-ready-item
+  PATH="$root/restore-compat:$PATH" node lab/bin/heavy.mjs --label DX-BM1-jvm1-retry -- \
+    node --import tsx lab/experiments/EXP-DX1/jvm1/server.ts run "$root/retry" "$root/seed"
+  node --import tsx "$helper" check-campaign "$repo" "$root/retry" "$source" "$root/seed"
+  status measured next-ready-item
+  exit 0
+fi
 
 # [DX-BM1] Why: the next native phase starts as soon as the existing seed service has exited.
 # Rejected: querying Docker on a timer while its seed verifier is still using the server.
