@@ -1,6 +1,6 @@
 """Bind per-lookup SQL samples to durable edits in the managed fixture."""
 
-from collections import defaultdict
+from collections import Counter, defaultdict
 import json
 from pathlib import Path
 import sys
@@ -62,6 +62,7 @@ def extract(out):
         summary = defaultdict(lambda: {"calls": 0, "wallNs": 0, "sql": 0,
                                        "sqlMs": 0, "decodeMs": 0})
         total = {"saves": 0, "tx": 0, "wallNs": 0, "sql": 0, "sqlReported": 0}
+        outside_sql = Counter()
         exact_profiles = []
         # [DX-PREP1] Why: select the actual K or S function at the bound native t.
         # Rejected: counting a K singleton on the ordinary reference path as a grouped apply.
@@ -83,8 +84,9 @@ def extract(out):
             reported = rows[0]["ack"].get("nativeIoStats")
             assert reported and all(row["ack"]["nativeIoStats"] == reported for row in rows)
             native_sql = io(profile["io"], "sql")
-            if profile["lookupCount"] > 128:
+            if profile["lookupCount"] > profile.get("lookupLimit", 128):
                 total["cappedTransactions"] = total.get("cappedTransactions", 0) + 1
+            outside_sql.update(profile.get("outsideSql", {}))
             total["sql"] += native_sql
             total["sqlReported"] += io(reported, "sql")
             attributed = 0
@@ -101,6 +103,7 @@ def extract(out):
         window = [p["pressure"]["some"] for p in cpu
                   if min(r["start"] for r in exact_profiles) <= p["at"] <= max(r["end"] for r in exact_profiles)]
         result[kind] = {"offered": 96, "total": total, "sections": dict(sorted(summary.items())),
+                        "outsideSql": dict(outside_sql.most_common()),
                         "cpuPressure": window}
     return {"attempt": attempt, "head": inputs["head"], "image": terminal["image"],
             "logSha256": terminal["sha256"], "status": "diagnostic", "arms": result}

@@ -108,9 +108,11 @@
 (def ^:dynamic *lookups* nil)
 (def ^:dynamic *inside-lookup* false)
 (def ^:dynamic *lookup-count* nil)
+(def ^:dynamic *outside-reads* nil)
+(def lookup-limit 1024)
 
 (defn lookup! [check f]
-  (if (and *lookups* (not *inside-lookup*) (<= (vswap! *lookup-count* inc) 128))
+  (if (and *lookups* (not *inside-lookup*) (<= (vswap! *lookup-count* inc) lookup-limit))
     (let [start (System/nanoTime)
           sample (binding [*inside-lookup* true]
                    (io/throw-if-ex!
@@ -152,8 +154,27 @@
 (when (= "lookup-profile" mode)
   ;; [DX-PREP1] Why: shared native prefetch can load one leaf for several keys. Measure its real I/O once.
   ;; Rejected: running extra point seeks to split a batch's shared storage reads across individual ids.
-  (doseq [op '[prefetch-identity prefetch-redundancy+uniqueness find-avet find-aevt find-eavt get-hook]]
+  (doseq [op '[prefetch-identity prefetch-redundancy+uniqueness get-hook]]
     (wrap-lookup! (ns-resolve 'datomic.db op) (constantly (str "native/" op)) identity))
+  (doseq [[op idx attr-offset] [['find-avet :avet 0] ['find-aevt :aevt 0] ['find-eavt :eavt 1]]]
+    (wrap-lookup! (ns-resolve 'datomic.db op)
+      (fn [snapshot & args]
+        (let [a (nth args attr-offset nil)
+              ident (when (number? a) ((requiring-resolve 'datomic.api/ident) snapshot a))]
+          (str "native/" op " " idx " " (or ident a "entity"))))
+      identity))
+  (let [index (ns-resolve 'datomic.measure.io-stats '*io-index*)]
+    (alter-var-root #'io/inc!
+      (fn [inc-io!]
+        (fn [counter & args]
+          ;; [DX-PREP1] Why: key remaining physical misses on the calling engine frame.
+          ;; Rejected: assigning all unmatched I/O to the last authored check.
+          (when (and *outside-reads* (not *inside-lookup*) (= :sql counter))
+            (let [frames (into [] (comp (map #(.getClassName ^StackTraceElement %))
+                                        (filter #(re-find #"^datomic\.(?:db|builtins|index|iter)\$" %))
+                                        (take 6)) (.getStackTrace (Thread/currentThread)))]
+              (vswap! *outside-reads* update (str @index " " (str/join " / " frames)) (fnil + 0) (or (first args) 1))))
+          (apply inc-io! counter args)))))
   (wrap-lookup! (ns-resolve 'datomic.db 'resolve-lookup-ref)
     (constantly "native/resolve-lookup-ref :avet") identity)
   (alter-var-root (ns-resolve 'datomic.db 'create-unique-value-validator)
@@ -164,7 +185,11 @@
             validate
             (let [ident (requiring-resolve 'datomic.api/ident)]
               (fn [^Datom datom]
-                (lookup! (str "native/unique :avet " (ident snapshot (.a datom))) #(validate datom)))))))))
+                (let [attr (ident snapshot (.a datom))]
+                  (if (#{:triplex.entity/id :triplex.tx/operation-id :triplex.claim/command-id
+                         :triplex.tx/position :triplex.group/position :triplex.scope/key :triplex.scope/bootstrap} attr)
+                    (lookup! (str "native/unique :avet " attr) #(validate datom))
+                    (validate datom))))))))))
   (let [api (delay (instrument-lookup-api!))]
     (alter-var-root #'db/with-tx
       (fn [apply-tx]
@@ -172,7 +197,7 @@
           ;; [DX-PREP1] Why: the apply and append can run on different native threads.
           ;; Rejected: requiring the appender's thread name on an apply worker. Join by t and clock containment.
           @api
-          (binding [*lookups* (volatile! {}) *lookup-count* (volatile! 0)]
+          (binding [*lookups* (volatile! {}) *lookup-count* (volatile! 0) *outside-reads* (volatile! {})]
             (let [basis-t (requiring-resolve 'datomic.api/basis-t)
                   start (System/nanoTime) before (cpu)
                   sample (io/throw-if-ex!
@@ -181,9 +206,9 @@
                   end (System/nanoTime) cpu-ns (- (cpu) before)
                   result (:ret sample)]
               (when-let [after (:db-after result)]
-                (retain! "PREP1_LOOKUPS" {:t (str (basis-t after)) :lookupCount @*lookup-count*
+                (retain! "PREP1_LOOKUPS" {:t (str (basis-t after)) :lookupCount @*lookup-count* :lookupLimit lookup-limit
                                           :start start :end end :cpuNs cpu-ns :io (:io-stats sample)
-                                          :lookups @*lookups*}))
+                                          :lookups @*lookups* :outsideSql @*outside-reads*}))
               result)))))))
 
 (when (= "subject-profile" mode)
