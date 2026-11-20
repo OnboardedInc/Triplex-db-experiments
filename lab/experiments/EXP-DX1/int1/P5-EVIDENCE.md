@@ -54,6 +54,8 @@ The first pooled smoke stopped on the first 2,000-fact legacy seed frame. Replay
 
 The next executed smoke opened that reader and wrote its ready record. The launcher then rejected the trace digest. The driver and launcher built the same campaign with different property order. Recomputing the saved arm and ready record confirmed the difference. The campaign hash now serializes the four fields in one order. Frozen events and the earlier tenant-profile digests use their existing definitions. [Readiness and cleanup hashes](P5-SHA256SUMS)
 
+The frozen zero-reader smoke then reached its terminal driver record. It checked 39 receipt reads and 40 oracle samples exactly. The collector rejected the absent tenant feed summary. An independent check of the saved consumer database matched all 39 tape writes and ten account challenges to their durable effects at checkpoint 63. The producer now emits the existing tenant feed evidence for the frozen arm too, which the collector requires. The other three smoke arms remain to be collected. [Original driver, consumer and cleanup hashes](P5-SHA256SUMS)
+
 ## Evidence audit
 
 - The integration gates match the live engine lease, exact source archive, build-input and image hashes, and fresh native test output. The gate runner reopens those bytes before each branch push. The documentation-only reader handoff matches the tested runtime inputs byte for byte.
