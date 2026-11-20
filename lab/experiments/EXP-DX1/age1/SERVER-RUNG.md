@@ -1,20 +1,20 @@
 # Running one rung
 
-Use the verified SCALE1 transfer and the exclusively held, already restored pooled seed on the driver. Start with the 1B rung. At 820M starting records and a 20k records/s rolling prior, 2.50 h aging plus a 3 h allowance for measurements and native copies comes to 5.50 h and $6.00. The first target has a 9.9 h stop, worth at most $10.79. At a 3 h measurement allowance, a 180M delta requires at least 7,247 records/s to fit that stop. The command recomputes its forecast after reading the live head and checks a fresh prefix after the first aging segment.
+Use the verified SCALE1 transfer and the exclusively held, already restored pooled seed. Start with the 1B rung. The [source census](SEED-ADOPTION.md) suggests 430M starting records. A rate of 24k records/s would add 570M in 6.60 h. With 3 h for measurements and native copies that is 9.60 h and $10.46. The original 820M assumption gives 5.50 h and $6.00 at 20k/s. The cap is 9.9 h, at most $10.79. A 430M seed requires at least 23.0k records/s after reserving three hours. Even if the initial rate prior is lower, the command can run a bounded 100,000-save calibration and continues aging only if the fresh rate fits. The working prior of 20k/s would miss the 430M scenario's cap.
 
-| Rung | Estimated age-only hours from the previous rung at 20k/s | Added allowance for traffic, full backup, verify and restore | Cumulative estimated cost |
+| Rung | Estimated age-only hours from the previous rung at 24k/s | Added allowance for traffic, full backup, verify and restore | Cumulative estimated cost |
 | --- | ---: | ---: | ---: |
-| 1B from 0.82B | 2.50 | 3 h | $6.00 |
-| 2B | 13.89 | 4 h | $25.49 |
-| 4B | 27.78 | 6 h | $62.31 |
-| 8B | 55.56 | 9 h | $132.67 |
+| 1B from 0.43B | 6.60 | 3 h | $10.46 |
+| 2B | 11.57 | 4 h | $27.44 |
+| 4B | 23.15 | 6 h | $59.21 |
+| 8B | 46.30 | 9 h | $119.48 |
 
-The project has about $74 left. Stop after 1B to price the next step from actual steady rates, native bytes and copy costs. A 2B rung buys the first doubling and evidence on cold directories and indexing. Run 4B if the prior rungs leave working reserve and at least another $37. The 8B rung requires faster qualified solo writes or a different budget. The 8B prior alone exceeds the runner's present 60 h per-rung cap.
+The project has about $74 left. Stop after 1B to price the next step from actual steady rates, native bytes and copy costs. A 2B rung buys the first doubling and evidence on cold directories and indexing. Run 4B if the prior rungs leave working reserve and at least another $32. The 8B rung requires faster qualified solo writes or a different budget.
 
 ## Invocation
 
 ```sh
-node lab/experiments/EXP-DX1/age1/server.mjs forecast 820000000 1000000000 20000 3
+node lab/experiments/EXP-DX1/age1/server.mjs forecast 430000000 1000000000 24000 3
 node lab/experiments/EXP-DX1/age1/server.mjs "$AGE_RUNG_CONFIG"
 ```
 
@@ -26,7 +26,7 @@ The config keys are shown below. Values in angle brackets are supplied by the dr
 {
   "source": "<clean committed AGE1 code revision>",
   "target": 1000000000,
-  "fromRecords": 820000000,
+  "fromRecords": 430000000,
   "ratePrior": 20000,
   "reserveHours": 3,
   "maxHours": 9.9,

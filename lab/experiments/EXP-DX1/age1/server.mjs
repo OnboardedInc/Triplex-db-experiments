@@ -140,7 +140,9 @@ async function run(configFile, config) {
     process.exitCode = result;
     return;
   }
-  assert(initial.hours < config.maxHours && initial.usd <= config.maxUsd, "Forecast exceeds rung budget");
+  if (initial.hours >= config.maxHours || initial.usd > config.maxUsd) {
+    console.log(JSON.stringify({ phase: "forecast-over-budget", calibrationMaxSaves: 100000 }));
+  }
   const dir = config.output;
   const rung = path.join(dir, String(config.target));
   fs.mkdirSync(rung, { recursive: true });
@@ -279,8 +281,13 @@ async function run(configFile, config) {
     const corrected = forecast(Math.min(inspected.records, config.target), config.target, config.ratePrior, config.reserveHours);
     console.log(JSON.stringify({ phase: "observed-head-forecast", ...corrected }));
     write(path.join(logDir, "observed-forecast.json"), corrected);
-    assert(inspected.finished || Date.now() + corrected.hours * 3_600_000 < deadline,
-      "Observed head is below budgeted size for this deadline");
+    if (!inspected.finished && Date.now() + corrected.hours * 3_600_000 >= deadline) {
+      const requiredRate = Math.max(0, config.target - inspected.records) /
+        Math.max(1, (deadline - Date.now()) / 1000 - config.reserveHours * 3600);
+      console.log(JSON.stringify({ phase: "rate-calibration-required", requiredRate, calibrationMaxSaves: 100000 }));
+      assert(deadline - Date.now() > (config.reserveHours * 3600 + 600) * 1000,
+        "Insufficient time for calibration plus measurement reserve");
+    }
     const projected = Math.max(0, config.target - inspected.records) * config.bytesPerAddedRecord;
     assert(inspected.sqlBytes + projected < config.maxSqlBytes, "Forecast exceeds source SQL cap");
     if (fs.statSync(config.dataMount).dev === fs.statSync(config.copyMount).dev) {

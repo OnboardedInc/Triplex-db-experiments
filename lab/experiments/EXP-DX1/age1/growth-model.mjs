@@ -1,9 +1,9 @@
-const seed = 820e6;
+const seed = 430e6;
 const specs = {
   EAVT: { population: (n) => n, datoms: 3000, fanout: 2400, bytes: 40 },
   AEVT: { population: (n) => n, datoms: 2740, fanout: 2400, bytes: 40 },
   AVET: { population: (n) => 0.99 * Math.min(n, seed) + 0.90 * Math.max(0, n - seed), datoms: 2510, fanout: 1000, bytes: 72 },
-  VAET: { population: (n) => 0.00022 * Math.min(n, seed), datoms: 2600, fanout: 2400, bytes: 32 },
+  VAET: { population: (n) => 0.00040 * Math.min(n, seed), datoms: 2600, fanout: 2400, bytes: 32 },
 };
 
 export function predict(n) {
@@ -18,7 +18,7 @@ export function predict(n) {
 }
 
 if (import.meta.url === new URL(process.argv[1], "file:").href) {
-  for (const n of [0.16e9, seed, 1e9, 2e9, 4e9, 8e9]) {
+  for (const n of [0.16e9, 0.82e9, 1e9, 2e9, 4e9, 8e9]) {
     const columns = Object.values(predict(n)).map((x) =>
       [x.levels, x.leaves, x.dirs, (x.directoryBytes / 1e6).toFixed(x.directoryBytes < 10000 ? 4 : 2)].join(" / "));
     console.log("|", [n / 1e9, ...columns].join(" | "), "|");

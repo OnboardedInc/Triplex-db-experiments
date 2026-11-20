@@ -1,8 +1,8 @@
 All accounts stay in one Datomic database.
-The server driver can use code at `e813827cb` once the Mac gates listed below are green.
-At the planned seed size, one billion records is forecast at 5.5 hours and $6.00.
-The first rung stops within 9.9 hours and at most $10.79 of server time.
-The loader reuses the existing ten-account seed and reads the stored facts it needs.
+The server code and the status of its Mac gates are recorded below.
+The existing ten-account seed is estimated at 430 million native records. The driver reads the actual count.
+At 24,000 records per second, the first billion is forecast at 9.60 hours and $10.46.
+The first rung stops within 9.9 hours. It continues after calibration only if the measured rate fits.
 The slower Mac run spent 57 more seconds with native writes outstanding for the same work.
 The model predicts more index segments and directories while the trees keep their depth.
 The successor drill now checks one erasure across both eras, including views held before the move.
@@ -14,7 +14,7 @@ Part 1 at `e44ea53dc` matched 112 saves and reached 360,314 and 1,260,314 record
 - [Seed adoption](SEED-ADOPTION.md) compares the exact SCALE1 bulk loader and synthetic AGE1 seed. The full seed business count is 162,456,470 facts. The server command reads the native history count before aging and checks the observed load rate before continuing.
 - [Aging arms](AGING-ARMS.md) joins 15,000 native acknowledgements in each original Mac sample. It adds measured client stage timers, a rolling pipeline, W1-shaped physical groups and larger load-only index settings. Adopted solo K retains the intended index workload. Server rates remain predictions.
 - [Growth model](GROWTH-MODEL.md) predicts level count, leaf count, directory count and serialized-size estimates per index. It names a counterexample measurement for each operation and includes a separate directory-census peer.
-- [Server rung](SERVER-RUNG.md) describes one Linux command and its setup, stopping conditions, exact-prefix restart, quiet and busy schedules, index overlap, fresh JVM reads, pauses and backup/restore seal. The project has about $74 left. The rolling prior prices 2B at $25.49 cumulative, 4B at $62.31 and 8B at $132.67.
+- [Server rung](SERVER-RUNG.md) describes one Linux command and its setup, stopping conditions, exact-prefix restart, quiet and busy schedules, index overlap, fresh JVM reads, pauses and backup/restore seal. The project has about $74 left. At a qualifying 24k records/s, 2B costs $27.44 cumulative, 4B $59.21 and 8B $119.48. The 20k prior misses the 1B time cap on the estimated seed.
 - [Successor erasure](SUCCESSOR-ERASURE.md) describes the source-pinned detached cipher and shared frontier. The test forces a partial publication, then checks replay, held cuts, the ordinary feed and detached-key removal.
 
 ## Evidence checks
@@ -27,4 +27,4 @@ Part 1 at `e44ea53dc` matched 112 saves and reached 360,314 and 1,260,314 record
 
 ## Verification
 
-The SDK build, source parsing, rate and count tests, and historical log join completed. Fresh SQL-backed fidelity and successor gate results are pending the shared Mac slot.
+The SDK build, source parsing, rate and count tests, and historical log join completed. The pinned SCALE1 source produced five frames with 9,690 facts for 80 people, and the Clojure adopter validated that fixture manifest. Fresh SQL-backed fidelity and successor gate results are pending the shared Mac slot. [Evidence manifest](P2-SHA256SUMS)
