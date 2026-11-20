@@ -895,12 +895,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const command = positional[0];
   const config = loadSlots();
   if (command === 'status') return status(config);
-  if (command === 'jvm-replay') {
-    const arm = options['jvm-arm'];
-    if (!['present', 'candidate'].includes(arm)) fail('USAGE', 'Use --jvm-arm present or candidate');
-    const { runTail } = await import('../experiments/EXP-DX1/tail1/run.mjs');
-    return runTail(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission }, arm);
-  }
+  if (command === 'jvm-replay') fail('USAGE', 'Use jvm-inventory for a short Mac diagnostic and jvm1/server.ts for collector comparisons');
   if (command === 'jvm-inventory') return (await import('../experiments/EXP-DX1/jvm1/inventory.mjs')).inventory(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
   // [DX-HA1] Why: destructive process drills need an exclusive, pool-admitted SQL topology. Rejected: killing roles in a resident slot.
   if (command === 'ha1') {

@@ -12,7 +12,8 @@ On the shared Mac, the writer's worst one percent of pauses started at 0.062 ms 
 - [Part 2 compatibility](JAVA25.md) · [Exact flags and rationale](COLLECTORS-PART2.md) · [Before-run forecasts and heap inputs](PREDICTIONS-PART2.md) · [Server command](SERVER.md)
 - [Part 1 inventory](INVENTORY.md) · [Sources](SOURCES.md) · [Configuration](CONFIGURATION.md) · [Mac measurements](MAC.md) · [Forecasts](PREDICTIONS.md)
 - Official Temurin 25.0.5+8 and the Java 21 base are digest-pinned. The signed Datomic 1.0.7745 distribution includes Clojure 1.12.5 and SLF4J 2.0.17. Java 25 enables the documented Unsafe and peer native-access flags.
-- The shared Mac measurement lease holds the native suite, container builds and SDK setup in the queue. DX-HA1 is waiting for the heavy token held by DX-THIN1. The host accepted both Java 25 collectors and the role flag sets. Live SQL gates and startup memory are pending. No bench server was contacted.
+- Mac checks use one ordinary heavy token each. The old replay entry point now directs collector comparisons to the server and startup diagnostics to the small Mac inventory. No bench server was contacted.
+- The first Java 25 native run confirmed Clojure and SLF4J versions. Three tests needed container-only fixture paths. The host gate now maps just those three paths to unchanged files from its exact Git archive. The first attempt is retained.
 - The GC parser was exercised with archived G1 and generational ZGC logs on the shared Mac. The check verified all three G1 roles, the ZGC writer's phase labels and rejection of a log from a different boot. Evidence and hashes are under `evidence/DX-JVM1/part2`.
 - The Java 21 fixed-activity census adds a shared-Mac reference of about 12,651 resident bytes per added untouched person between 10,000 and 30,000 people, mostly in the transactor. The matching ZGC slope is still open. [Census](../int1/P5-EVIDENCE.md)
 - A restore fixture consumed the exact expected bytes and rejected a changed stream. It exercised the stream verifier with a stand-in for PostgreSQL.
@@ -22,7 +23,7 @@ On the shared Mac, the writer's worst one percent of pauses started at 0.062 ms 
 ## Evidence audit
 
 - Variant build receipt compares ZIP, signature and staging bytes, binds current source and the exact Java parent, and verifies the resulting image identity and labels. Launchers verify runtime flags from fresh process startup, bind container ID and start ticks, and capture collector and memory constraints.
-- `native-java25.sh` archives the exact source, verifies vendor bytes and Java version, and requires all 27 native tests and 54,079 assertions with zero failures or errors. The SQL inventory collects a fresh startup and checks stable JVM identities around the SDK command.
+- `native-java25.sh` archives the exact source, verifies vendor bytes and Java version, maps the three test fixture reads into that archive, and requires all 27 native tests and 54,079 assertions with zero failures or errors. The SQL inventory collects a fresh startup and checks stable JVM identities around the SDK command.
 - The Mac replay checks archive hash, schedules, source, reserved slot, distinct boots, receipts, oracle samples and owned cleanup. Its historical timings are shared-Mac diagnostics.
 - `server.ts` verifies the sealed seed and the digest of the bytes sent to `pg_restore`, the restored cut, W1 offers and durable results, and sampled reader contents before `field-summary.json`. The final result also checks fresh flags and GC log bytes, process identities, timings and owned cleanup. Counts and latency are measurements.
 - Image source changes from the integration base, old → new SHA-256:

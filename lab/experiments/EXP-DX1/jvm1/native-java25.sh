@@ -4,6 +4,7 @@
 set -euo pipefail
 java=${1:?Java 25 executable} zip=${2:?pinned Datomic ZIP} out=${3:?fresh evidence directory}
 source=$(git rev-parse --verify "${4:-HEAD}^{commit}")
+[[ $(df -Pk "$(dirname "$out")" | awk 'NR==2 {print $4}') -ge 5242880 ]] || { echo 'Host free disk below 5 GiB' >&2; exit 2; }
 mkdir "$out"
 "$java" -version > "$out/version.log" 2>&1
 grep -F '25.0.5+8' "$out/version.log" >/dev/null
@@ -41,9 +42,22 @@ expr='(require (quote datomic.api))
 "$java" "${base[@]}" -XX:+UseG1GC "$spec" -cp "$classpath" clojure.main -e "$expr" > "$out/warnings.log" 2>&1
 "$java" "${base[@]}" -XX:+UseG1GC --sun-misc-unsafe-memory-access=allow --enable-native-access=ALL-UNNAMED "$spec" -cp "$classpath" clojure.main -e "$expr" > "$out/compatibility.log" 2>&1
 grep -Fx 'LIBRARIES 1.12.5 2.0.17' "$out/compatibility.log"
+# [DX-JVM1] Why: run the unchanged integrated suite and use its exact archived fixtures on the host.
+# Rejected: writing the container's /opt layout on the Mac or skipping three fixture-dependent tests.
+cat > "$out/run-selftest.clj" <<'CLJ'
+(require '[clojure.java.io :as io] '[triplex.gateway.selftest :as suite])
+(let [original slurp
+      root (System/getProperty "triplex.gateway.fixtureRoot")
+      fixtures (into {} (map (fn [name] [(str "/opt/gateway/" name) (io/file root name)])
+                     ["codec-cases.json" "codec-vectors.json" "history-range-case.json"])]
+  (with-redefs [clojure.core/slurp (fn [file & options]
+                                   (apply original (get fixtures file file) options))]
+    (suite/-main)))
+CLJ
 for gc in G1 Z; do
   "$java" "${base[@]}" "-XX:+Use${gc}GC" --sun-misc-unsafe-memory-access=allow --enable-native-access=ALL-UNNAMED \
-    "$spec" -cp "$classpath" clojure.main -m triplex.gateway.selftest > "$out/native-$gc.log" 2>&1
+    "$spec" "-Dtriplex.gateway.fixtureRoot=$src/packages/datomic/gateway" \
+    -cp "$classpath" clojure.main "$out/run-selftest.clj" > "$out/native-$gc.log" 2>&1
   grep -Fx 'Ran 27 tests containing 54079 assertions.' "$out/native-$gc.log"
   grep -Fx '0 failures, 0 errors.' "$out/native-$gc.log"
 done

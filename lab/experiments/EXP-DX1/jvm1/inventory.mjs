@@ -42,6 +42,7 @@ export async function inventory(options, config, manager) {
     ...(sdkGate ? { DX_SERVER_RECORD_TIME: "1", DX_STRICT_RECORD_CLOCKS: "1", DX_GATEWAY_SELFTEST: "1" } : {}),
   });
   let slot;
+  const admissionDeadline = Date.now() + 60_000;
   try {
     // [DX-JVM1] Why: the three roles need one exclusively owned SQL reservation and a private volume.
     // Rejected: attaching to the resident stack or charging split processes as a single running container.
@@ -50,11 +51,7 @@ export async function inventory(options, config, manager) {
       const disk = fs.statfsSync(out);
       assert(disk.bavail * disk.bsize >= 5 * 2 ** 30, "Host disk below lab floor");
       slot = await withPool((ledger) => {
-        try { manager.assertMeasureAdmission(holder); }
-        catch (error) {
-          if (error.code === "REFUSED") return;
-          throw error;
-        }
+        manager.assertMeasureAdmission(holder);
         const running = listTx2Containers({ all: true });
         const candidate = ["s1", "s2", "s3"].map((id) => slotInfo(config, "datomic", id))
           .find((info) => !fs.existsSync(info.lockDir) && !running.some((row) => row.name === info.container));
@@ -76,13 +73,14 @@ export async function inventory(options, config, manager) {
         return candidate;
       });
       if (!slot) {
+        assert(Date.now() < admissionDeadline, "No sufficiently small exclusive slot became available");
         console.log("Waiting for JVM inventory slot");
         await delay(15_000, undefined, {signal:controller.signal});
       }
     }
     const source = execFileSync("git", ["rev-parse", "HEAD"], {encoding:"utf8"}).trim();
     const files = [import.meta.filename, path.join(import.meta.dirname, "readback.sh"), path.join(import.meta.dirname, "launch.mjs"), path.join(stack, "up.sh")];
-    write("attempt.json", {prefix, source, slot:slot.slot, at:new Date(), caps, cpus, files:Object.fromEntries(files.map((file) => [path.basename(file), createHash("sha256").update(fs.readFileSync(file)).digest("hex")]))});
+    write("attempt.json", {prefix, source, slot:slot.slot, diagnostic: true, at:new Date(), caps, cpus, files:Object.fromEntries(files.map((file) => [path.basename(file), createHash("sha256").update(fs.readFileSync(file)).digest("hex")]))});
     const child = spawn("bash", [
       path.join(stack,"up.sh"), prefix,
       ...(sdkGate ? ["--port-write", String(slot.port), "--port-read", String(slot.port + 10)] : ["--no-publish"]),
@@ -120,13 +118,13 @@ export async function inventory(options, config, manager) {
       roles[role] = {id:c.id, imageId:c.imageId, pid:Number(pid), startedAt,
         startupToAllReadyMs: readyAt - Date.parse(startedAt), processRssKiB:Number(rss), cgroupBytes:Number(memory)};
     }
-    write("idle-boot.json", {prefix, source, slot:slot.slot, readyAt, sampledAt:Date.now(), roles});
+    write("idle-boot.json", {prefix, source, slot:slot.slot, diagnostic: true, readyAt, sampledAt:Date.now(), roles});
     if (sdkGate) {
       const root = path.resolve(import.meta.dirname, "../../../.."), pkg = path.join(root, "packages/datomic");
       const log = fs.openSync(path.join(out, "sdk-sql.log"), "wx");
       try {
         execFileSync(process.execPath, [path.join(root, "node_modules/vitest/vitest.mjs"), "run", "--maxWorkers=1"], {
-          cwd: pkg, timeout: 600_000, stdio: ["ignore", log, log], env: {
+          cwd: pkg, timeout: 240_000, stdio: ["ignore", log, log], env: {
             ...env, DATOMIC_INTEGRATION: "1", DATOMIC_URL: "http://127.0.0.1:" + slot.port,
             DATOMIC_READ_URLS: "http://127.0.0.1:" + (slot.port + 10),
           },
