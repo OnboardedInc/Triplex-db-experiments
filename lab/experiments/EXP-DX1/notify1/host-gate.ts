@@ -15,6 +15,7 @@ const mode = process.argv[2],
   root = path.resolve(process.argv[3]!),
   dir = process.env.NOTIFY_DIR!;
 assert(mode === "lazy" || mode === "delta");
+const atomic = process.env.NOTIFY_HOST_BATCH === "1";
 const protectedProbe = mode === "lazy" && process.argv[4] === "protected";
 const revision = fs.readFileSync(path.join(root, "version"), "utf8").trim();
 const load = (name: string) =>
@@ -22,7 +23,14 @@ const load = (name: string) =>
 const v = W0.POPULATION_VALID_TIME,
   s = "pl:a",
   other = "pl:b",
-  ids = [s, other],
+  ids = [
+    s,
+    other,
+    ...Array.from(
+      { length: atomic && !protectedProbe ? 128 : 0 },
+      (_, i) => "pl:c" + String(i).padStart(3, "0"),
+    ),
+  ],
   run = randomUUID();
 const facts = (who: string, tx: number): W0.Fact[] => [
   { e: who, a: "location", v: "loc:a", tx },
@@ -70,6 +78,7 @@ async function checkEffects(src: Documents, epoch: string) {
     .filter((d) => d.subject === s && d.rule === "MINWAGE")
     .map((d) => Number(d.seq));
   assert.deepEqual(pay, [1, 2, 3, 4]);
+  if (atomic) assert(observed.length > 128);
   return {
     count: observed.length,
     orderedSha256: hash(observed),
@@ -127,33 +136,45 @@ try {
         originals.push(["rollback", rollback.position, rollback.txId]);
         await projection.drain();
         const src = new Documents(host.comp, "lazy-sender"),
-          feed = await lazyFeed(host, await host.head());
+          feed = await lazyFeed(host, await host.head(), atomic ? 1024 : 64);
         await assert.rejects(
-          drainHost(src, sink, feed, async () => {
-            const oldRate = seed.changes.find(
-              (row: any) => row.entityId === s && row.attribute === "payRateCents",
-            );
-            assert(oldRate?.assertionTxId === seed.txId);
-            const change = await host.input("save-during-delivery", { kind: "source", at: v }, [
-              { op: "retract", id: oldRate.tripleId },
-              {
-                op: "assert",
-                entityId: s,
-                attribute: "payRateCents",
-                value: triplexValue("payRateCents", 1500),
-                validFrom: 0,
-              },
-            ]);
-            payChangedAt = change.position;
-            const decision = await load("decision");
-            const q = await decision.propose(host, "w0", s);
-            const ordinary = await decision.admitLive(host, "w0", q, undefined, projection);
-            if (ordinary.status === "deferred") await projection.drain();
-            else assert(ordinary.status === "accepted" && ordinary.receipt.actor === "lazy/event");
-            originals.push(["save-during-delivery", change.position, change.txId, ordinary.status]);
-            await expect("R1", change.position, seed.position, loss.position);
-            throw Error("drop ACK");
-          }),
+          drainHost(
+            src,
+            sink,
+            feed,
+            async () => {
+              const oldRate = seed.changes.find(
+                (row: any) => row.entityId === s && row.attribute === "payRateCents",
+              );
+              assert(oldRate?.assertionTxId === seed.txId);
+              const change = await host.input("save-during-delivery", { kind: "source", at: v }, [
+                { op: "retract", id: oldRate.tripleId },
+                {
+                  op: "assert",
+                  entityId: s,
+                  attribute: "payRateCents",
+                  value: triplexValue("payRateCents", 1500),
+                  validFrom: 0,
+                },
+              ]);
+              payChangedAt = change.position;
+              const decision = await load("decision");
+              const q = await decision.propose(host, "w0", s);
+              const ordinary = await decision.admitLive(host, "w0", q, undefined, projection);
+              if (ordinary.status === "deferred") await projection.drain();
+              else
+                assert(ordinary.status === "accepted" && ordinary.receipt.actor === "lazy/event");
+              originals.push([
+                "save-during-delivery",
+                change.position,
+                change.txId,
+                ordinary.status,
+              ]);
+              await expect("R1", change.position, seed.position, loss.position);
+              throw Error("drop ACK");
+            },
+            atomic,
+          ),
           /drop ACK/,
         );
         projection.close();
@@ -161,8 +182,8 @@ try {
         host = await lib.openStore("lazy-notice-" + run);
         projection = new dispatch.Dispatcher(host);
         const reopened = new Documents(host.comp, "lazy-sender"),
-          latest = await lazyFeed(host, await host.head());
-        await drainHost(reopened, sink, latest);
+          latest = await lazyFeed(host, await host.head(), atomic ? 1024 : 64);
+        await drainHost(reopened, sink, latest, undefined, atomic);
         assert.equal(
           (
             await host.rows(
@@ -177,7 +198,7 @@ try {
         if (fs.existsSync(serviceFile)) {
           const service = new (await load("service")).NoticeService(
             host,
-            lazyRecipient(host, sink),
+            lazyRecipient(host, sink, atomic),
             "w0",
             () => v,
           );
@@ -225,19 +246,30 @@ try {
       await expect("R1", last.value.basis.tx, 1, after.value.basis.tx);
       originals.push(["rollback", rollback.position, last.value.seq]);
       const source = new Documents(comp, "delta-sender");
-      const feed = await deltaFeed(host, last.value.seq, (n) => dispatch.expand(host, n));
+      const feed = await deltaFeed(
+        host,
+        last.value.seq,
+        (n) => dispatch.expand(host, n),
+        atomic ? 16 : 1,
+      );
       await assert.rejects(
-        drainHost(source, sink, feed, async () => {
-          // [DX-STG1] Why: a live save can commit after receipt application while the sender still waits for its ACK. Rejected: deriving the original packet again from the newest pay rate.
-          const change = await save.save(host, "save-during-delivery", [
-            { e: s, a: "payRateCents", from: v, values: [1500] },
-          ]);
-          const current = await host.head(change.position);
-          payChangedAt = current.value.basis.tx;
-          originals.push(["save-during-delivery", change.position, current.value.seq]);
-          await expect("R1", current.value.basis.tx, 1, after.value.basis.tx);
-          throw Error("drop ACK");
-        }),
+        drainHost(
+          source,
+          sink,
+          feed,
+          async () => {
+            // [DX-STG1] Why: a live save can commit after receipt application while the sender still waits for its ACK. Rejected: deriving the original packet again from the newest pay rate.
+            const change = await save.save(host, "save-during-delivery", [
+              { e: s, a: "payRateCents", from: v, values: [1500] },
+            ]);
+            const current = await host.head(change.position);
+            payChangedAt = current.value.basis.tx;
+            originals.push(["save-during-delivery", change.position, current.value.seq]);
+            await expect("R1", current.value.basis.tx, 1, after.value.basis.tx);
+            throw Error("drop ACK");
+          },
+          atomic,
+        ),
         /drop ACK/,
       );
       const reopened = new lib.Account(new objects.Objects(comp, "target"), binding, keys);
@@ -245,7 +277,14 @@ try {
       await drainHost(
         source,
         sink,
-        await deltaFeed(reopened, newest.value.seq, (n) => dispatch.expand(reopened, n)),
+        await deltaFeed(
+          reopened,
+          newest.value.seq,
+          (n) => dispatch.expand(reopened, n),
+          atomic ? 16 : 1,
+        ),
+        undefined,
+        atomic,
       );
       proof = await checkEffects(source, feed.epoch);
     } finally {
@@ -275,7 +314,17 @@ try {
   }
   fs.writeFileSync(
     path.join(dir, "host.json"),
-    JSON.stringify({ run, mode, revision, files, owner: sha256(owner), originals, proof }) + "\n",
+    JSON.stringify({
+      run,
+      mode,
+      atomic,
+      subjects: ids.length,
+      revision,
+      files,
+      owner: sha256(owner),
+      originals,
+      proof,
+    }) + "\n",
     { flag: "wx" },
   );
   console.log(proof);

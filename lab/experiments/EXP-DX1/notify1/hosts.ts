@@ -24,6 +24,21 @@ interface Cursor {
   point: Point;
   batch: number;
   previous: string;
+  outstanding?: Frame;
+}
+function hostPacket(source: Documents, feed: Feed, c: Cursor, frame: Frame): Packet {
+  return {
+    epoch: feed.epoch,
+    account: source.prefix,
+    batch: c.batch + 1,
+    previous: c.previous,
+    event: c.point.event,
+    position: frame.position,
+    recipe: frame.id,
+    start: c.point.offset,
+    through: frame.next.offset,
+    deliveries: frame.deliveries,
+  };
 }
 export function drainHostAccounts(
   sink: Documents,
@@ -31,12 +46,15 @@ export function drainHostAccounts(
     source: Documents;
     feed: Feed;
     afterEffect?: (p: Packet) => Promise<void>;
+    atomic?: boolean;
   }[],
 ) {
   assert.equal(new Set(accounts.map((account) => account.source.prefix)).size, accounts.length);
   // [DX-STG1] Why: a slow source or recipient may suspend its own batch while every other account keeps making progress. Rejected: awaiting the largest account's entire backlog before reading the next native feed.
   return Promise.allSettled(
-    accounts.map(({ source, feed, afterEffect }) => drainHost(source, sink, feed, afterEffect)),
+    accounts.map(({ source, feed, afterEffect, atomic }) =>
+      drainHost(source, sink, feed, afterEffect, atomic),
+    ),
   );
 }
 export async function drainHost(
@@ -44,6 +62,7 @@ export async function drainHost(
   sink: Documents,
   feed: Feed,
   afterEffect?: (p: Packet) => Promise<void>,
+  atomic = false,
 ) {
   const progress = new Documents(sink.store, "host-" + hash(source.prefix));
   let batches = 0,
@@ -52,16 +71,74 @@ export async function drainHost(
     const at = await progress.head(),
       key = "host-cursor:" + feed.epoch,
       stored = await progress.row<Cursor>(key, at);
-    const c = stored?.value ?? {
+    const c: Cursor = stored?.value ?? {
       point: feed.first,
       batch: 0,
       previous: hash([source.prefix, feed.epoch, "receiver-genesis"]),
     };
+    if (c.outstanding) {
+      const { outstanding, ...settled } = c;
+      assert(feed.acknowledge && outstanding.ack?.length);
+      await feed.acknowledge(outstanding);
+      try {
+        await progress.commit(
+          "host-settle:" + feed.epoch + ":" + outstanding.id,
+          [outstanding.id, settled],
+          progress.change(key, stored, settled),
+          [progress.guard(key, stored)],
+        );
+      } catch (e) {
+        if (!(e instanceof Conflict)) throw e;
+      }
+      continue;
+    }
     const spanKey = "host-span:" + feed.epoch + ":" + c.point.event + ":" + c.point.offset;
     let span = await progress.row<string>(spanKey, at);
     if (!span) {
       const planned = await feed.at(c.point);
       if (!planned) return { batches, effects };
+      if (atomic) {
+        const next: Cursor = { ...c, point: planned.next };
+        const packet = planned.deliveries.length ? hostPacket(source, feed, c, planned) : null;
+        if (packet) {
+          next.batch = packet.batch;
+          next.previous = hash(packet);
+        }
+        if (planned.ack?.length) {
+          assert(feed.acknowledge);
+          next.outstanding = { ...planned, deliveries: [] };
+        }
+        const ops = progress.change(key, stored, next),
+          checks = [progress.guard(key, stored), progress.guard(spanKey, undefined)];
+        const binding = hash([source.prefix, feed.epoch, planned.id, ops]);
+        // [DX-STG1] Why: commit the effects, original native ACK obligation and cursor together. Legacy pinned spans finish on their original path. Rejected: advancing only in memory after a delivery.
+        try {
+          if (packet) {
+            if (
+              !(await receiveOrdered(sink, source.prefix, packet, next.previous, undefined, {
+                binding,
+                ops,
+                checks,
+              }))
+            )
+              continue;
+          } else await progress.commit("host-advance:" + spanKey, binding, ops, checks);
+        } catch (e) {
+          if (e instanceof Conflict) continue;
+          if (
+            e instanceof assert.AssertionError &&
+            (await progress.row<Cursor>(key, await progress.head()))?.id !== stored?.id
+          )
+            continue;
+          throw e;
+        }
+        if (packet) {
+          batches++;
+          effects += packet.deliveries.length;
+          await afterEffect?.(packet);
+        }
+        continue;
+      }
       const bytes = pack({
         origin: source.prefix,
         epoch: feed.epoch,
@@ -99,18 +176,7 @@ export async function drainHost(
     const frame = pinned.frame;
     const next = { ...c, point: frame.next };
     if (frame.deliveries.length) {
-      const p: Packet = {
-        epoch: feed.epoch,
-        account: source.prefix,
-        batch: c.batch + 1,
-        previous: c.previous,
-        event: c.point.event,
-        position: frame.position,
-        recipe: frame.id,
-        start: c.point.offset,
-        through: frame.next.offset,
-        deliveries: frame.deliveries,
-      };
+      const p = hostPacket(source, feed, c, frame);
       const digest = hash(p);
       await receiveOrdered(sink, source.prefix, p, digest);
       await afterEffect?.(p);
@@ -149,7 +215,8 @@ interface LazyStore {
     context?: unknown,
   ): Promise<any>;
 }
-export async function lazyFeed(store: LazyStore, through: number): Promise<Feed> {
+export async function lazyFeed(store: LazyStore, through: number, packetLimit = 64): Promise<Feed> {
+  assert(Number.isInteger(packetLimit) && packetLimit > 0 && packetLimit <= 1024);
   const epoch = (await store.controls(through)).generation;
   assert(typeof epoch === "string" && epoch && epoch !== "uninitialized");
   return {
@@ -207,7 +274,7 @@ export async function lazyFeed(store: LazyStore, through: number): Promise<Feed>
             ds.push(d);
             ack.push({ op: "retract", id: x.tripleId });
             bindings.push([tx.position, tx.txId, x.tripleId, hash(d)]);
-            if (ds.length === 64) {
+            if (ds.length === packetLimit) {
               next =
                 i + 1 === cs.length
                   ? { event: tx.position + 1, offset: 0 }
@@ -215,7 +282,7 @@ export async function lazyFeed(store: LazyStore, through: number): Promise<Feed>
               break;
             }
           }
-          if (ds.length === 64) break;
+          if (ds.length === packetLimit) break;
           next = { event: tx.position + 1, offset: 0 };
         }
         if (ds.length)
@@ -283,6 +350,7 @@ interface DeltaObjects {
   account: string;
   comp: Store;
   get<T>(key: string, p: number): Promise<{ hash: string; value: T; position: number }>;
+  many<T>(keys: string[], p: number): Promise<Map<string, { value: T }>>;
   entity(k: string): string;
 }
 interface DeltaAccount {
@@ -298,7 +366,9 @@ export async function deltaFeed(
   a: DeltaAccount,
   through: number,
   expand: (seq: number) => Promise<Expansion>,
+  chunksPerFrame = 1,
 ): Promise<Feed> {
+  assert(Number.isInteger(chunksPerFrame) && chunksPerFrame >= 1 && chunksPerFrame <= 32);
   const db = a.db,
     p = await db.comp.currentPosition(),
     bootstrap = await db.get<unknown>("bootstrap", p),
@@ -341,20 +411,27 @@ export async function deltaFeed(
           hash(x.parts) === x.digest &&
           (point.offset < x.parts.length || (!x.parts.length && !point.offset)),
       );
-      let deliveries: W0.Delivery[] = [];
-      if (x.parts.length) {
-        const chunk = await db.get<DeltaChunk>("chunk:" + seq + ":" + point.offset, cut);
+      const deliveries: W0.Delivery[] = [];
+      const keys = x.parts
+        .slice(point.offset, point.offset + chunksPerFrame)
+        .map((_, i) => "chunk:" + seq + ":" + (point.offset + i));
+      const chunks = keys.length > 1 ? await db.many<DeltaChunk>(keys, cut) : null;
+      for (const [i, key] of keys.entries()) {
+        const chunk = chunks ? chunks.get(key) : await db.get<DeltaChunk>(key, cut);
         assert(
-          hash(chunk.value) === x.parts[point.offset] &&
+          chunk &&
+            hash(chunk.value) === x.parts[point.offset + i] &&
             chunk.value.seq === seq &&
             chunk.value.request === event.hash,
         );
-        deliveries = JSON.parse(chunk.value.deliveries, (k, v) => (k === "seq" ? BigInt(v) : v));
+        deliveries.push(
+          ...JSON.parse(chunk.value.deliveries, (k, v) => (k === "seq" ? BigInt(v) : v)),
+        );
       }
       const next =
-        point.offset + 1 >= x.parts.length
+        point.offset + keys.length >= x.parts.length
           ? { event: seq + 1, offset: 0 }
-          : { event: seq, offset: point.offset + 1 };
+          : { event: seq, offset: point.offset + keys.length };
       return {
         id: hash([db.account, epoch, event.hash, x.digest, point]),
         position: event.position,
@@ -366,12 +443,20 @@ export async function deltaFeed(
 }
 
 // [DX-STG1] Why: the normal LAZY service wakes a receiver after its projector catches up. Use that wake for batched native acknowledgements and retain its genuine deadline timer. Rejected: polling an idle account.
-export function lazyRecipient(store: LazyStore, sink: Documents) {
+export function lazyRecipient(store: LazyStore, sink: Documents, atomic = false) {
   const source = new Documents(store.comp, "lazy-sender");
   return {
     drain: async (host: LazyStore) => {
       assert.equal(host.scope, store.scope);
-      return (await drainHost(source, sink, await lazyFeed(host, await host.head()))).effects;
+      return (
+        await drainHost(
+          source,
+          sink,
+          await lazyFeed(host, await host.head(), atomic ? 1024 : 64),
+          undefined,
+          atomic,
+        )
+      ).effects;
     },
   };
 }
