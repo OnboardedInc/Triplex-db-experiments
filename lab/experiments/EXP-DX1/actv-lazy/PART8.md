@@ -47,3 +47,18 @@ BM1 `20747b816` closed `overnight/i29-2` after verifying all 342,881 ordered rec
 | 23.5 | 2.043 / 2.051 s | 18.616 / 18.625 s |
 
 Every release affected all 100,000 people. The concrete change count ranged from 489,852 to 490,407. The proof listed 42,871 owed effects per release. The busy receipt waited 2,019.56 ms behind 50 earlier saves and reached native ACK 24.25 ms after entry. The busy staged cell waited 4,320.30 ms behind 89 earlier saves. The priority queue can pass saves that have yet to start. An in-progress save and shared native contention still contribute to the clock. These single-offer windows leave the full trace and the priority path at scale unmeasured.
+
+## Deep settlement on the Mac
+
+The 3.5 saves/s pair used 10,000 deep people and 1,604,464 facts, four connected readers in the publishing scope, and one read stream in a 64-person neighbour. Source `60f20c399` checked the same parked volume, roster, inputs and R1 notice cursor after reopening. The manager initially refused the old image ID. Its rebuild changed the image ID with the gateway sources and build inputs matching their previous hashes. From the first deep queue entry to a ready preparation engine took 3:02:49. Seeding, enrolment and parking took 26:41. The timed reopen then waited 0:34:42. The final cleanup removed the volume.
+
+| Scope | Saves per block | Control save / read p99 | Settlement save / read p99 | Ratios |
+| --- | ---: | ---: | ---: | ---: |
+| Publishing account | 630 | 16,575 / 139 ms | 5,042 / 118 ms | 0.30 / 0.85 |
+| Neighbour | 630 | 13,195 / 115 ms | 4,388 / 105 ms | 0.33 / 0.91 |
+
+The first minute of the control accumulated a backlog in both scopes. The control completed 49 of the publishing account's first 105 scheduled saves by 30 seconds. The equivalent settlement block completed all 105. In the final 90 seconds the publishing scope changed from 997/58 ms to 5,192/145 ms and the neighbour from 419/51 ms to 4,410/134 ms. Each of those slices has 315 saves per side. Sixteen publishing and twelve neighbour saves in the settlement block finished after its 180-second offer period. Order and time within a block confound the full-window ratios. The local test uses a neighbour under matched control traffic and leaves the full quiet-alone P6 comparison open.
+
+The publication receipt returned in 167 ms. The values and notices reached their matching native cursor ACKs 215.54 and 254.12 seconds after the receipt. They continued beyond the last offered save. The independent replay matched 78,548 sampled answers at their witnessed cuts, 49,297 changed values and 5,997 ordered effects across R1 and the offered release. Its verified file set and cleanup are in `part8-deep-event/rate-3.5`. [Checksums](PART8-SHA256SUMS)
+
+At those measured per-person rates, 100,000 people would take roughly 36 minutes to values and 42 minutes to notices. A million would take about 6.0 and 7.1 hours. Those projections assume the measured work mix, limited traffic window and linear scaling. The 23.5 saves/s pair has its own baseline and remains queued.

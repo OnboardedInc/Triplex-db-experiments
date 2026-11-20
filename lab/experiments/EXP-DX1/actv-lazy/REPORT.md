@@ -4,7 +4,7 @@ At 3.5 saves per second the receipt and first answer took 53 and 63 ms. At 23.5 
 The busy receipt spent 2.020 seconds queued behind 50 earlier saves. The database acknowledged it 24 ms after it entered.
 Writing all concrete values took 13.0 to 18.6 seconds. Each release changed values for everyone in the account.
 The Mac pilot reopened a parked account and recorded values and individual notices. Every checked answer and notice matched the oracle.
-The pilot waited 4 hours and 33 minutes across two grants. The 10,000-person settlement blocks are still queued.
+At 10,000 people and 3.5 saves per second, the Mac recorded values after 216 seconds and individual notices after 254 seconds. The faster-rate pair is queued.
 The receipt and erasure rulings remain open. The server finished the release trials and stopped the separate background timing run.
 
 ### Part 7
@@ -35,6 +35,8 @@ The eight-fact thin fixture encoded 10.3–10.4 leaf bytes and 100–104 address
 The 10,000-deep trial spent about 26 minutes on preparation and reached the contested timing boundary. It yielded its heavy token and removed the volume before either live window. The shared lease also blocked the 1,000-deep fallback and the untimed matrix. Both waiters closed before admission. [Part 7 checksums](PART7-SHA256SUMS)
 
 Transactor and gateway suspension, the fixed 64-reader trace and wider cold-read measurements remain open. BM1 `i33-1` passed the small cells and fault checks. The final `i29-2` replay includes all 3,240 scheduled saves and readback of all 16,045,255 seeded facts. [Part 8 evidence and clocks](PART8.md)
+
+The 3.5 saves/s Mac pair had 630 saves in each block and each scope. Full-block save/read p99 ratios were 0.30/0.85 in the publishing scope and 0.33/0.91 in the neighbour. The cold control had a large early backlog. In the final 90 seconds both scopes slowed during settlement, with only 315 saves per side. The deep pair waited 3 hours and 38 minutes across its grants. The pilot's wait was 4 hours and 33 minutes and partly overlapped. [Clock breakdown and checksums](PART8.md#deep-settlement-on-the-mac)
 
 ### Server command
 
