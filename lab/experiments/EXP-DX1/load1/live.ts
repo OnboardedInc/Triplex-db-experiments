@@ -11,9 +11,21 @@ import { Snapshot } from "./snapshot.ts";
 import { maxBulkFacts, SerialBudget } from "./budget.ts";
 import { isolatedImport } from "./isolated.ts";
 import { sharedMono } from "./split-import.ts";
-import { splitLoad } from "../ha1/common.ts";
+import { microLoad, splitLoad } from "../ha1/common.ts";
 import { offers, type Offer } from "./live-evidence.ts";
 import { ack, record, type Seen } from "./oracle.ts";
+import {
+  FrameCredits,
+  microCycleMs,
+  microDuration,
+  microFixture,
+  microHz,
+  queryMarker,
+  temporalExercise,
+  temporalPrefix,
+  volumeDuration,
+} from "./micro.ts";
+import type { Frame } from "./source.ts";
 
 // [DX-LOAD2] Why: bracket the guest clock with both host timestamps; compare guest-native clocks directly.
 // Rejected: assuming wall time on a VM is the same as the client's clock, or hiding uncertain overlaps.
@@ -59,14 +71,27 @@ export async function live(
 ) {
   const traceTail = mode === "load-tail",
     frontier = mode.startsWith("load-frontier-");
-  const split = splitLoad(mode);
+  const split = splitLoad(mode),
+    micro = microLoad(mode),
+    volume = mode === "load-volume";
   const alone = frontier && arm === "frontier-alone";
-  const allReads = (split || frontier) && !alone;
+  const allReads = (split || frontier || micro) && !alone;
   assert((split || frontier ? [50, 100] : [50, 235, 390]).includes(rate));
   const cell = alone ? "0" : arm.split("-")[1],
     width = frontier && cell !== "0" ? maxBulkFacts : Number(cell),
-    duration = (traceTail || split || frontier ? 108 : server ? 60 : 12) * 1000,
-    subjects = server || traceTail || split || frontier ? 100000 : 20000;
+    duration = volume
+      ? volumeDuration
+      : micro
+        ? microDuration
+        : (traceTail || split || frontier ? 108 : server ? 60 : 12) * 1000,
+    subjects = micro
+      ? volume
+        ? 360000
+        : 60000
+      : server || traceTail || split || frontier
+        ? 100000
+        : 20000;
+  const fixture = micro ? microFixture(subjects, width || 24) : undefined;
   const budget =
     frontier && width
       ? new SerialBudget(Number(cell === "allowance" ? process.env.DX_LOAD2_ALLOWANCE_MS : cell))
@@ -101,7 +126,9 @@ export async function live(
     byCommand.set(n.command, n);
   };
   const attempted = new Map<string, { command: string; submit: number }>();
-  let invalidReceipt: unknown;
+  let invalidReceipt: unknown,
+    loseReplyFor = "",
+    lostReplies = 0;
   const expectedDb =
     "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scope))).toString("base64url");
   const original = api.DatomicClient.prototype.transact;
@@ -130,13 +157,18 @@ export async function live(
         toEntryMs: reply.submitToNativeEntryMs,
         serialHold: reply.serialHold,
         frameSize: reply.frameSize,
-        peerTimings: traceTail ? reply.timeline : undefined,
+        peerTimings: traceTail || micro ? reply.timeline : undefined,
         submit: start,
         end: performance.now(),
       });
     } catch (error) {
       invalidReceipt ??= error;
       throw error;
+    }
+    if (command === loseReplyFor) {
+      loseReplyFor = "";
+      lostReplies++;
+      throw new Error("Injected lost HTTP reply after a committed native write");
     }
     return reply;
   };
@@ -171,11 +203,12 @@ export async function live(
     return result;
   };
   const quiet = await openComposition("reach", "datomic", scope);
+  const writerForImport = micro ? await openComposition("reach", "datomic", scope) : comp;
   const importer = await Snapshot.open(
-    comp,
-    "thin",
+    writerForImport,
+    fixture ?? "thin",
     subjects,
-    budget ? maxBulkFacts : Math.max(width, 128),
+    budget ? maxBulkFacts : micro ? width || 24 : Math.max(width, 128),
     path.join(dir, arm + ".sqlite"),
     budget ? { budgetMs: budget.ms } : undefined,
   );
@@ -226,7 +259,7 @@ export async function live(
       assert(url && url !== process.env.DATOMIC_URL);
       other = await isolatedImport(url, scope + "-import", dir, arm, subjects, width);
     }
-    const clockBefore = traceTail ? await sampleClock() : undefined;
+    const clockBefore = traceTail || micro ? await sampleClock() : undefined;
     const start = performance.now(),
       bridge = sharedMono(),
       end = start + duration;
@@ -317,27 +350,59 @@ export async function live(
       pending.add(work);
     }
     let budgetStopped = false;
+    let lastFrame: { frame: Frame; position: number; ids: string } | undefined;
+    const markers: (Awaited<ReturnType<typeof queryMarker>> & { done: number })[] = [];
+    const temporalSeen: Awaited<ReturnType<typeof temporalExercise>> = new Map();
+    const observeMarkers = (async () => {
+      if (!fixture || !width) return;
+      for (let at = 1000; at <= duration - 100; at += at < duration - 800 ? 1000 : 100) {
+        await delay(Math.max(0, start + at - performance.now()));
+        if (!lastFrame || markers.at(-1)?.position === lastFrame.position) continue;
+        const { frame, ...entry } = lastFrame;
+        const marker = await queryMarker(quiet, frame, entry);
+        markers.push({ ...marker, done: performance.now() - start });
+      }
+    })().catch((error) => {
+      fatal ??= error;
+    });
+    const credits = micro ? new FrameCredits(start) : undefined;
     const bulk = (async () => {
       if (!width || split) return;
-      const fixed = frames("thin", subjects, width);
+      const fixed = fixture?.batches(importer.cursor()) ?? frames("thin", subjects, width);
+      let staged = fixed.next().value;
       while (performance.now() < end) {
         const limit = budget?.next();
         if (budget && limit === undefined) {
           budgetStopped = true;
           break;
         }
-        const f = budget ? importer.nextFrame(limit!) : fixed.next().value;
-        if (!f) break;
+        const f = budget ? importer.nextFrame(limit!) : staged;
+        if (!f || (credits && !(await credits.grant(end)))) break;
+        if (micro && !temporalSeen.size && performance.now() - start >= duration / 3) {
+          assert.equal(bulkInFlight, 0);
+          bulkInFlight++;
+          const tested = await temporalExercise(writerForImport, (command) => {
+            loseReplyFor = command;
+          });
+          for (const [command, receipt] of tested) temporalSeen.set(command, receipt);
+          bulkInFlight--;
+          if (performance.now() >= end) break;
+        }
         const offered = performance.now();
         bulkInFlight++;
         peakBulk = Math.max(peakBulk, bulkInFlight);
-        const entry = await importer.write(f);
+        const writing = importer.write(f);
+        // [DX-LOAD3] Why: stage the next immutable input outside the acquisition of a serial grant.
+        // Rejected: submitting a successor to the peer while the previous frame is outstanding.
+        if (!budget) staged = fixed.next().value;
+        const entry = await writing;
         bulkInFlight--;
         const done = performance.now();
         if (done <= end) factsInWindow += entry.facts;
         completedBulk += entry.facts;
-        const service = budget ? measure(entry.command) : undefined;
-        if (service) budget!.observe(entry.facts, service.ms);
+        const service = budget || micro ? measure(entry.command) : undefined;
+        if (micro) lastFrame = { frame: f, position: entry.position, ids: entry.ids };
+        if (service && budget) budget.observe(entry.facts, service.ms);
         ordered.push({
           first: f.first,
           end: f.end,
@@ -375,11 +440,11 @@ export async function live(
         noisy++;
       }
     }
-    await Promise.all([...pending, bulk]);
+    await Promise.all([...pending, bulk, observeMarkers]);
     if (invalidReceipt) throw invalidReceipt;
     if (fatal) throw fatal;
     const drained = performance.now() - start;
-    const clockAfter = traceTail ? await sampleClock() : undefined;
+    const clockAfter = traceTail || micro ? await sampleClock() : undefined;
     fs.writeFileSync(
       path.join(dir, arm + ".offers.json"),
       JSON.stringify({
@@ -396,6 +461,24 @@ export async function live(
         budgetStopped,
         pilots,
         native: [...native.values()],
+        ...(micro
+          ? {
+              hz: microHz,
+              windowFacts: factsInWindow,
+              cycleBudget: microCycleMs,
+              markers,
+              temporal: [...temporalSeen].map(
+                ([command, { receipt, operations, correlationId }]) => ({
+                  command,
+                  position: receipt.position,
+                  txId: receipt.txId,
+                  operations,
+                  correlationId,
+                }),
+              ),
+              lostReplies,
+            }
+          : {}),
         ordered,
         samples,
       }),
@@ -407,6 +490,36 @@ export async function live(
     const proof = await importer.verify(
       false,
       (r) => {
+        if (micro && String(r.commandId).startsWith(temporalPrefix)) {
+          const expected = temporalSeen.get(r.commandId);
+          assert(expected && !seen.has(r.commandId));
+          assert.deepEqual(
+            [r.position, r.txId, r.instant, r.actor, r.correlationId],
+            [
+              expected.receipt.position,
+              expected.receipt.txId,
+              expected.receipt.instant,
+              "bulk-import",
+              expected.correlationId,
+            ],
+          );
+          assert.equal(r.changes.length, expected.operations.length);
+          let asserted = 0;
+          for (const [i, op] of expected.operations.entries()) {
+            const c = r.changes[i];
+            assert.equal(c.op, op.op);
+            if (op.op === "retract") assert.equal(c.tripleId, op.id);
+            else {
+              const received = expected.receipt.triples[asserted++]!;
+              assert.deepEqual(
+                [c.tripleId, c.entityId, c.attribute, c.value, c.validFrom],
+                [received.id, op.entityId, op.attribute, op.value, op.validFrom],
+              );
+            }
+          }
+          seen.add(r.commandId);
+          return;
+        }
         const parts = String(r.commandId).split("/");
         assert(parts[0] === "save" && parts.length === 3 && !seen.has(r.commandId));
         const { frame, meta } = save(
@@ -419,9 +532,14 @@ export async function live(
         assert.deepEqual(record(frame, meta, r), expected);
         seen.add(r.commandId);
       },
-      { pageSize: allReads ? 24 : 8 },
+      { pageSize: micro ? 64 : allReads ? 24 : 8, readDepth: micro ? 8 : 1, assertionSweep: micro },
     );
-    assert.equal(seen.size, checks.size);
+    assert.equal(seen.size, checks.size + temporalSeen.size);
+    if (micro && width) {
+      assert.equal(lostReplies, 1);
+      assert.equal(temporalSeen.size, 3);
+      assert(markers.some((m) => m.done <= duration));
+    }
     const otherProof = await isolated;
     if (split && width) {
       assert(otherProof);
@@ -460,7 +578,7 @@ export async function live(
       scope,
       rate,
       width,
-      sourceSeal: sourceId("thin", subjects),
+      sourceSeal: fixture?.seal ?? sourceId("thin", subjects),
       duration,
       elapsedMs: drained,
       facts: factsInWindow,
@@ -471,6 +589,14 @@ export async function live(
       aboveBudget: budget ? ordered.filter((r) => r.service.ms > budget.ms).length : undefined,
       committedFrames: otherProof?.proof.observed ?? ordered.length,
       fps: factsInWindow / (duration / 1000),
+      ...(micro
+        ? {
+            offeredFrames: Math.floor((duration * microHz) / 1000),
+            queryableFacts: (markers.findLast((m) => m.done <= duration)?.end ?? 0) * 8,
+            cycleOverBudget: ordered.filter((r) => r.ack - r.offer > microCycleMs).length,
+            temporal: temporalSeen.size,
+          }
+        : {}),
       neighbors,
       peakBulk: otherProof?.peak ?? peakBulk,
       proof,
@@ -481,6 +607,7 @@ export async function live(
     api.DatomicClient.prototype.operation = operation;
     importer.close();
     if (other) await other.close();
+    if (writerForImport !== comp) await writerForImport.close();
     await quiet.close();
   }
 }

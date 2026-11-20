@@ -11,6 +11,7 @@ import {
   localRoleMiB,
   loopback,
   roles,
+  microLoad,
   splitLoad,
   until,
   type Role,
@@ -263,6 +264,21 @@ export class Stack {
     return s.replaceAll(this.secret, "[redacted]").replaceAll(this.admin, "[redacted]");
   }
   private loadTraceArgs(process: string) {
+    if (microLoad(this.e.mode) && process === "tx")
+      return [
+        "-e",
+        "TRIPLEX_TRACE_LEVEL=summary",
+        "-e",
+        "TRIPLEX_TRACE_DIR=" + loadTraceDir,
+        "-e",
+        "TRIPLEX_TRACE_PROCESS=tx",
+        "-e",
+        "TRIPLEX_TRACE_RUN=" + this.e.nonce,
+        "-e",
+        "TRIPLEX_TRACE_SOURCE=" + this.e.source.git,
+        "-e",
+        "TRIPLEX_TRACE_SLOT=" + this.e.slot,
+      ];
     return this.e.mode === "load-tail"
       ? [
           "-e",
@@ -285,6 +301,20 @@ export class Stack {
           "TRIPLEX_TRACE_SLOT=" + this.e.slot,
         ]
       : [];
+  }
+  async collectMicroCounters() {
+    for (const [role, process, file] of [
+      ["active", "tx", loadTraceDir + "/tx.jsonl"],
+      ["active", "tx-gc", "/tmp/load5-gc.log"],
+      ["write", "gw-gc", "/tmp/load5-gc.log"],
+    ] as const) {
+      const member = await this.view(role);
+      const packed = await this.exec(role, "sh", "-ceu", 'gzip -c "$1" | base64 -w0', "pack", file);
+      const raw = Buffer.from(packed, "base64");
+      assert(raw.length > 16);
+      fs.writeFileSync(path.join(this.e.dir, process + ".gz"), raw, { flag: "wx" });
+      this.e.log("load-counter-bytes", { process, id: member.Id, sha256: hash(raw) });
+    }
   }
   // [DX-LOAD2] Why: copy native events and their original JFR from identified live JVMs.
   // Rejected: interpreting vendor logs from the last arm as if they covered every arm.
@@ -460,8 +490,12 @@ export class Stack {
         'printf "%s\n" "$HA1_PROPERTIES" > /tmp/ha1.properties; exec bin/transactor -Xms96m -Xmx' +
           (process.platform === "linux" ? "1400" : "288") +
           "m -XX:ActiveProcessorCount=2" +
-          (this.e.mode === "load-tail"
-            ? javaRecording + " -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
+          (this.e.mode === "load-tail" ? javaRecording : "") +
+          (microLoad(this.e.mode)
+            ? " -Xlog:gc*:file=/tmp/load5-gc.log:time,uptimemillis,level,tags"
+            : "") +
+          (this.e.mode === "load-tail" || microLoad(this.e.mode)
+            ? " -Ddatomic.metricsCallback=triplex.gateway.trace/metrics"
             : "") +
           " /tmp/ha1.properties",
       ],
@@ -493,7 +527,7 @@ export class Stack {
   }
   async gateway(role: "write" | "read", site: Site, pg: "pg" | "target", store: string) {
     const size = process.platform === "linux" ? "1600" : "320";
-    const frontier = this.e.mode.startsWith("load-frontier-");
+    const frontier = this.e.mode.startsWith("load-frontier-") || microLoad(this.e.mode);
     const split = splitLoad(this.e.mode);
     const priority = this.e.mode === "load-live" || this.e.mode === "load-tail" || frontier;
     const grouping = priority || (split && role === "write");
@@ -551,7 +585,10 @@ export class Stack {
         "DATOMIC_JAVA_OPTS=-Xms96m -Xmx" +
           size +
           "m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=64m" +
-          (this.e.mode === "load-tail" ? javaRecording : ""),
+          (this.e.mode === "load-tail" ? javaRecording : "") +
+          (microLoad(this.e.mode)
+            ? " -Xlog:gc*:file=/tmp/load5-gc.log:time,uptimemillis,level,tags"
+            : ""),
       ],
       "/opt/datomic/bin/run",
       [

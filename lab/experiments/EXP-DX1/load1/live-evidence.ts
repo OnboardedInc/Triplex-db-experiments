@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import type { Seen } from "./oracle.ts";
+import { microCycleMs, microDuration, microHz, volumeDuration } from "./micro.ts";
 
 export interface Offer {
   actor: string;
@@ -29,7 +30,18 @@ export interface OfferTape {
     ack: number;
     service?: { ms: number; rows: number; bytes: number };
   }[];
-  native: { command: string; position: number; recovered?: boolean }[];
+  native: {
+    command: string;
+    position: number;
+    recovered?: boolean;
+    queueUs?: number;
+    serialHold?: { start: number; end: number };
+    grant?: { bulk: boolean; "runnable-live": boolean };
+  }[];
+  markers?: { first: number; end: number; position: number; digest: string; done: number }[];
+  hz?: number;
+  lostReplies?: number;
+  temporal?: { command: string; position: number }[];
 }
 export interface Measure {
   offered: number;
@@ -74,14 +86,30 @@ export function replayLive(
     aboveBudget?: number;
     committedFrames?: number;
     budgetMs?: number;
+    queryableFacts?: number;
+    cycleOverBudget?: number;
+    offeredFrames?: number;
+    temporal?: number;
+    width?: number;
   },
 ) {
-  if (!/^(load-tail|load-frontier-(low|high|allowance)|load-split-(sql|pg))$/.test(attempt.mode))
+  const micro = attempt.mode === "load-micro" || attempt.mode === "load-volume";
+  if (
+    !/^(load-tail|load-micro|load-volume|load-frontier-(low|high|allowance)|load-split-(sql|pg))$/.test(
+      attempt.mode,
+    )
+  )
     return;
   const prefix = "tx2-ha1-" + attempt.nonce.slice(0, 8);
   assert.deepEqual(
     [tape.nonce, tape.source, tape.slot, tape.scope, tape.duration],
-    [attempt.nonce, attempt.source.git, attempt.slot, prefix + "-" + arm.arm, 108000],
+    [
+      attempt.nonce,
+      attempt.source.git,
+      attempt.slot,
+      prefix + "-" + arm.arm,
+      attempt.mode === "load-volume" ? volumeDuration : microDuration,
+    ],
   );
   assert.equal(arm.scope, tape.scope);
   assert.equal(arm.duration, tape.duration);
@@ -114,6 +142,7 @@ export function replayLive(
         Number.isFinite(row.end) &&
         row.end >= row.offered &&
         row.offered >= row.due - 5 &&
+        (!micro || row.end >= row.due) &&
         row.outcome !== "pending",
       id,
     );
@@ -160,6 +189,46 @@ export function replayLive(
         tape.ordered.filter((r) => r.service!.ms > arm.budgetMs!).length,
       );
     }
+  }
+  if (micro) {
+    assert.equal(tape.hz, microHz);
+    assert.equal(arm.offeredFrames, Math.floor((arm.duration * microHz) / 1000));
+    let first = 0;
+    let lastAck = 0;
+    const byPosition = new Map<number, (typeof tape.ordered)[number]>();
+    for (const row of tape.ordered) {
+      assert.equal(row.first, first);
+      assert.equal(row.facts, arm.width);
+      assert.equal(row.facts, (row.end - row.first) * 8);
+      assert(row.offer >= lastAck);
+      first = row.end;
+      lastAck = row.ack;
+      const n = recorded.get(row.command)!;
+      assert(n.grant?.bulk && !n.grant["runnable-live"] && n.serialHold);
+      assert.equal(row.service?.ms, n.serialHold.end - n.serialHold.start);
+      assert(row.service.ms > 0 && row.service.rows <= 96 && row.service.bytes <= 65536);
+      assert(!byPosition.has(row.position));
+      byPosition.set(row.position, row);
+    }
+    assert.equal(
+      arm.cycleOverBudget,
+      tape.ordered.filter((r) => r.ack - r.offer > microCycleMs).length,
+    );
+    let prior = 0;
+    for (const m of tape.markers ?? []) {
+      const frame = byPosition.get(m.position);
+      assert(frame && m.position > prior && m.done >= frame.ack);
+      assert.deepEqual([m.first, m.end], [frame.first, frame.end]);
+      assert.match(m.digest, /^[0-9a-f]{64}$/);
+      prior = m.position;
+    }
+    const last = tape.markers?.findLast((m) => m.done <= arm.duration);
+    assert.equal(arm.queryableFacts, (last?.end ?? 0) * 8);
+    assert.equal(tape.lostReplies, arm.width ? 1 : 0);
+    assert.equal(tape.temporal?.length, arm.temporal);
+    assert.equal(arm.temporal, arm.width ? 3 : 0);
+    for (const r of tape.temporal ?? [])
+      assert.equal(recorded.get(r.command)?.position, r.position);
   }
   assert.equal(arm.fps, arm.facts / (arm.duration / 1000));
 }

@@ -299,16 +299,13 @@ export class Snapshot {
   async verify(
     complete = true,
     extra?: (r: any) => void,
-    { pageSize = extra ? 8 : 1, readDepth = 1 } = {},
+    { pageSize = extra ? 8 : 1, readDepth = 1, assertionSweep = false } = {},
   ) {
     const cut = await this.comp.currentPosition(),
       byPosition = this.ledger.prepare("SELECT * FROM frames WHERE position=?");
-    const last =
-      typeof this.shape === "string"
-        ? undefined
-        : (await this.comp.feedPage(cut - 1, 1)).transactions[0];
-    if (typeof this.shape !== "string")
-      assert(last?.position === cut && Number.isFinite(last.instant));
+    const perSubject = typeof this.shape !== "string" && !assertionSweep;
+    const last = !perSubject ? undefined : (await this.comp.feedPage(cut - 1, 1)).transactions[0];
+    if (perSubject) assert(last?.position === cut && Number.isFinite(last.instant));
     const lastInstant = last?.instant as number;
     let pos = 0,
       observed = 0,
@@ -336,6 +333,38 @@ export class Snapshot {
     });
     assert.equal(this.cursor(), expectedPrefix);
     if (complete) assert.equal(expectedPrefix, this.subjects);
+    const validAt = typeof this.shape === "string" ? SEED_VALID_FROM : this.shape.validAt;
+    const basis = { position: cut, validAt };
+    let sweepIds = new Set<string>();
+    let sweepExpected = new Map<string, string>();
+    async function flushSweep(comp: CompositionHandle) {
+      if (!sweepIds.size) return;
+      const ids = [...sweepIds];
+      const pages = Array.from({ length: Math.ceil(ids.length / 64) }, (_, j) =>
+        ids.slice(j * 64, (j + 1) * 64),
+      );
+      const observed = new Map<string, string>();
+      await windowed(pages, readDepth, async (subjects) => {
+        const page = await comp.sweepPage(subjects, basis);
+        assert.deepEqual(page.reportedBasis, basis);
+        for (const v of page.rows) {
+          if (!sweepIds.has(v.entityId)) continue;
+          const body = JSON.stringify([
+            v.entityId,
+            v.attribute,
+            v.value,
+            v.validFrom,
+            v.validTo ?? null,
+            v.position,
+          ]);
+          if (observed.has(v.id)) assert.equal(observed.get(v.id), body);
+          observed.set(v.id, body);
+        }
+      });
+      assert.deepEqual(observed, sweepExpected);
+      sweepIds = new Set();
+      sweepExpected = new Map();
+    }
     while (pos < cut) {
       const page = await this.comp.feedPage(pos, pageSize);
       assert(page.transactions.length > 0);
@@ -363,7 +392,21 @@ export class Snapshot {
           record(f, identity(this.scope, this.source, this.width, f), r),
           this.summary(e),
         );
-        if (typeof this.shape !== "string") {
+        if (assertionSweep) {
+          // [DX-LOAD3] Why: batch independent reads at one exact cut after the timed window.
+          // Rejected: replacing a full typed readback with a sample when frame count rises.
+          for (const [i, o] of f.operations.entries()) {
+            assert.equal(o.op, "assert");
+            sweepIds.add(o.entityId);
+            const id = r.changes[i].tripleId;
+            assert(!sweepExpected.has(id));
+            sweepExpected.set(
+              id,
+              JSON.stringify([o.entityId, o.attribute, o.value, o.validFrom, null, e.position]),
+            );
+          }
+          if (sweepIds.size >= 512) await flushSweep(this.comp);
+        } else if (typeof this.shape !== "string") {
           const expected = new Map<string, string>(),
             observed = new Map<string, string>();
           const entities = new Set(f.operations.map((o) => o.entityId));
@@ -433,6 +476,7 @@ export class Snapshot {
         facts += f.operations.length;
       }
     }
+    await flushSweep(this.comp);
     assert.equal(marker, 1);
     assert.equal(pos, cut);
     assert.deepEqual(this.totals(), { commands: observed, facts });

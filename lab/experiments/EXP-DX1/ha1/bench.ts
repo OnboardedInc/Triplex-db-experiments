@@ -93,6 +93,8 @@ try {
     "load-quiet": "100000,1000000",
     "load-live": "50,235,390",
     "load-tail": "50",
+    "load-micro": "50",
+    "load-volume": "50",
     "load-frontier-low": "50,100",
     "load-frontier-high": "50,100",
     "load-frontier-allowance": "50,100",
