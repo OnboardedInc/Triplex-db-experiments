@@ -144,7 +144,9 @@ export async function localDrill(opts: any, config: any, manager: any) {
   assert(!pooled || ["hasync-ack", "hasync-move", "hasync-restart"].includes(mode));
   // [DX-INT1] Why: recheck the merged loader and recovery with this builder's diagnostic slot.
   // Rejected: borrowing another builder's live reservation.
-  assert(holder === owner || (holder === "DX-THIN1" && diagnostic));
+  const scorecard = holder === "DX-V01" && opts.diagnostic === true && pooled &&
+    ["hasync-ack", "hasync-move"].includes(mode) && opts.people === "10";
+  assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || scorecard);
   assert.equal(dockerArgs([])[1], DOCKER_HOST);
   const folder = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
   if (typeof opts.recover === "string") {
@@ -252,7 +254,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
       // [DX-HASYNC1] Why: a queued exclusive lab window needs this process's heavy token to drain. Rejected: holding the token while waiting for that same window to finish.
       if (diagnostic) manager.assertMeasureAdmission(opts.holder);
       const disk = fs.statfsSync(root);
-      const floorBytes = (holder === "DX-THIN1" ? 10 : 5) * 2 ** 30;
+      const floorBytes = (holder === "DX-THIN1" || scorecard ? 10 : 5) * 2 ** 30;
       if (disk.bavail * disk.bsize < floorBytes) {
         e = declare(opts.slot);
         e.write("admission-refused", {

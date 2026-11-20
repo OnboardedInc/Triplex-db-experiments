@@ -38,6 +38,10 @@ The residency adapter uses the INT1 physical role census and the compact guest's
 
 The fixed-pace import uses the published loader with the starting cut checked by the preceding quiet-account arm. Its independent oracle compares each newly committed journal entry against the original acknowledged command, checks exact import claims and typed readback, and requires complete native position coverage from the verified prior cut. The worker replays the original offers and verifies the expected database, gateway clock identity, source, slot and attempt. The card re-hashes the tape and binds it to the previous arm. It reports one fixed-pace component. The matched control and held-roster contention bars remain open. The second Mac attempt reopened logical cut 189 on the loaded toy scope. The original verifier checked 588 frames and 18,816 facts, with 17,728 already queryable at the end of the 18-second window. All 270 offered saves and 990 reads verified. The first attempt exposed missing bulk-grant metadata and stopped without a row result. Both attempts released the slot and removed their private volumes.
 
+## P9 audit
+
+The one-host rehearsal and two-host score use the same HASYNC1 receipt and move checks. The P9 runner requires the native backup manifest, PostgreSQL cluster identity, original legacy basis and ten proof rows in the HASYNC1 population geometry. The held SCALE1 and AGE1 archives use K, namespaced membership and a logical dump. The integrated command keeps that mismatch explicit. There is no path in this change from a local rehearsal to a physical P9 verdict or to the standing no-loss ruling.
+
 ## Part 2 Publish adapter check
 
 The existing INT1 `actv-lazy/join/server.ts 64 --receipt-local` producer and its collector ran in a private K stack with an ordinary token. Its three rate windows offered 0, 3.5 and 23.5 saves per second. Their durable receipt observations were 293.360, 207.611 and 184.059 ms. Exact first-read observations were 410.365, 303.841 and 207.641 ms. The collector reported zero deadline misses with its original source and slot binding. These clocks are diagnostic. The volume was removed.

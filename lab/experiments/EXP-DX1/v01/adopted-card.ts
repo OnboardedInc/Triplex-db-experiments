@@ -110,6 +110,7 @@ export function writeAdoptedCard(run: Card) {
   const gaps: Record<string, string> = {
     P5: "The published INT1 Publish producer creates its own flat scope. No adapter binds it to the held SCALE1 roster and live release cut.",
     P6: "No verified same-scope alone and 235-save quiet-account pair from this attempt.",
+    P9: "One-host rehearsal requires the published HASYNC1 legacy PostgreSQL base backup, compatible ten-account proofs and two 10-minute windows. The held SCALE1 K archive is a logical dump. Qualifying fault and move measurements: needs two servers.",
     P8: run.writer === "subject" ? "The published pacing oracle requires grouped writer grant metadata." : "No verified fixed-pace import arm from this attempt.",
   };
   const text = base.split("\n").map((line) => {
