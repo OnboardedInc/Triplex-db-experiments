@@ -27,12 +27,14 @@ WFIX_SOURCE = "cd2151749d52df47e179a9b6d13d3d62c0f57aef"
 ACT = "exp/DX-ACT2-activation-100k"
 JOINED_REVIEW_SOURCE = "befa95acfa69fe05e1ba96f86ca13141b0a0e3c1"
 JOINED_REVISED_SOURCE = "95a1058d7bfc7515e1f582b87162247ddce645a3"
+REVISED_JOINED = (15, 17)
 # [DX-BM1] Why: the timeout belongs to the entire item, including its retry and data preparation.
 # Rejected: inheriting the 24–72 hour limits of standalone research controllers.
 ITEMS = {
     1: (W1, "w1", "502c8897", 4, "grpw1"),
     14: ("exp/DX-ACT1-activation", "actv-lazy", "befa95acf", .5, "joinedn19"),
     15: ("exp/DX-ACT1-activation", "actv-lazy", JOINED_REVISED_SOURCE, 4, "joinedv2n19"),
+    17: ("exp/DX-ACT1-activation", "actv-lazy", JOINED_REVISED_SOURCE, 3.9, "joinedv2n19r"),
     16: (WFIX, "wfix1", WFIX_SOURCE, 4, "pulsew4an19"),
     8: (W1, "w1", "7a6a7e9ef", 4, "pulsew4a"),
     9: (W1, "w1", "9ce599309", 1, "matchedn19"),
@@ -46,9 +48,9 @@ ITEMS = {
     6: (ACT, "actv-delta", "eaee4e10", 4, "solon19"),
     3: (W1, "w1", "502c8897", 3, "w1trial01"),
 }
-ORDER = (1, 14, 8, 11, 9, 15, 16, 12, 7, 10, 13, 5)
+ORDER = (1, 14, 8, 11, 9, 15, 17, 16, 12, 7, 10, 13, 5)
 NEXT = {1:"joined-publish-preflight", 14:"enhanced-pulse", 8:"ceil-live10", 11:"thin-deep", 9:"joined-publish", 15:"corrected-pulse",
-        16:"size-ledger", 12:"readers", 7:"predecessor",
+        17:"collect", 16:"size-ledger", 12:"readers", 7:"predecessor",
         10:"same-database-import", 13:"int1", 5:"collect", 6:"resume", 4:"collect", 3:"collect"}
 EXP = Path("lab/experiments/EXP-DX1")
 ENV = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
@@ -171,7 +173,7 @@ def complete_output(r):
         trial=Path("/var/tmp/triplex-scale1")/r["tag"]
         return (trial/"delta-measurement.json").is_file() or any((trial/"delta").glob("*/*offers-*.json"))
     if item==13:return any((root/"run").glob("load-tail-*/arm-*.json")) or any((root/"run").glob("load-tail-*/*.offers.json"))
-    if item in (14,15):
+    if item in (14,*REVISED_JOINED):
         return any(any((root/phase).glob("offer-*.json")) for phase in ("smoke","scale"))
     return False
 
@@ -284,9 +286,9 @@ def preflight(r):
         assert verified_checkpoint(allow_single_account=(item==12)), "No verified seed at the requested population is available"
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-small-run-first"})
         return
-    if item in (14,15):
+    if item in (14,*REVISED_JOINED):
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"native-preflight-only",
-                   "subjects":64,"longRun":"matching native agreement required" if item==15 else "ACTREVIEW2 FIX FIRST"})
+                   "subjects":64,"longRun":"matching native agreement required" if item in REVISED_JOINED else "ACTREVIEW2 FIX FIRST"})
         return
     documented=registered_sample(item,r["source"])
     if item==6:
@@ -366,7 +368,7 @@ def coordinates(item,attempt):
     elif attempt==2: tag += "b"
     if item in (1,3,8,9,10,11,12,16): root=Path("/var/tmp/triplex-w1")/tag; unit="triplex-w1-"+tag
     elif item==13: root=Path("/var/tmp/triplex-ha1")/tag;unit="bm1n19-"+tag
-    elif item in (14,15): root=NIGHT/tag;unit="bm1n19-"+tag
+    elif item in (14,*REVISED_JOINED): root=NIGHT/tag;unit="bm1n19-"+tag
     elif item==2: root=Path("/var/tmp/triplex-import1")/tag;unit="triplex-bm1-"+tag
     elif item==4: root=ROOT/("day-"+tag);unit="bm1n19-"+tag
     elif item==6: root=NIGHT/tag; unit="bm1n19-"+tag
@@ -384,7 +386,7 @@ def bind(r):
     valid_repos={NIGHT/("source-"+r["source"])}
     if item==1 and attempt==1:valid_repos.add(root/"bootstrap")
     assert Path(r["repo"]) in valid_repos
-    if item==15:
+    if item in REVISED_JOINED:
         assert r["writerSource"]==WFIX_SOURCE
         assert Path(r["writerRepo"])==NIGHT/("source-"+WFIX_SOURCE)
         assert re.fullmatch(r"[a-f0-9]{64}",r["reviewSha256"])
@@ -408,11 +410,11 @@ def make(item, attempt, start, deadline):
         head,repo=public_source(item,directory)
     token="| ACT2 audited activation," if item==6 else {8:"| Enhanced pulse,",9:"| Thin/deep matched,",10:"| Predecessor lookup,",
             11:"| CEIL-SERVER-LIVE10,",12:"| W2-SIZE-LEDGER,",13:"| HA1 one-host import,",14:"| ACT1 joined Publish,",
-            15:"| ACT1 reviewed joined Publish,",16:"| WFIX enhanced pulse,"}.get(item,f"| {item} ·")
+            15:"| ACT1 reviewed joined Publish,",16:"| WFIX enhanced pulse,",17:"| ACT1 manifest repair,"}.get(item,f"| {item} ·")
     forecast=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith(token))
     r=dict(item=item,attempt=attempt,tag=tag,source=head,repo=str(repo),unit=unit,root=str(root),
            directory=str(directory),start=start,deadline=deadline,prediction=forecast,requested=stamp())
-    if item==15:
+    if item in REVISED_JOINED:
         advertised=command("git","-c","credential.helper=","ls-remote","--exit-code",URL,"refs/heads/"+WFIX).split()[0]
         writer=checkout_source(WFIX,advertised,WFIX_SOURCE,WFIX_SOURCE)
         shutil.copyfile(writer/EXP/"wfix1/REPORT.md",directory/"writer-report.md")
@@ -520,7 +522,7 @@ def worker(r):
         stage_guard(r,env);return
     repo,node=setup(r,env)
     heavy=[node,"lab/bin/heavy.mjs","--label","DX-BM1-night-"+str(r["item"]),"--",node]
-    if r["item"] in (14,15):
+    if r["item"] in (14,*REVISED_JOINED):
         run(sys.executable,HERE/"joined_preflight.py","run",Path(r["directory"])/"request.json",cwd=repo,env=env)
     elif r["item"]==6:
         run(node,"--import","tsx",EXP/"scale1/bench.ts","launch","2",tag,
@@ -579,7 +581,7 @@ def cleanup(r):
     root,tag,src=Path(r["root"]),r["tag"],r["source"]
     if r["item"] in (10,11,12) and (root/"checkpoint-arms/active.json").is_file():
         run(sys.executable,HERE/"probes/seeded_campaign.py","cleanup",{10:"pred",11:"ceil",12:"size"}[r["item"]],root,src,timeout=150)
-    if r["item"] in (14,15) and (root/"stack-owner.json").is_file():
+    if r["item"] in (14,*REVISED_JOINED) and (root/"stack-owner.json").is_file():
         run(sys.executable,HERE/"joined_preflight.py","cleanup",Path(r["directory"])/"request.json",timeout=170)
     if r["item"] in (1,3,8,9,10,16) and (root/"active-slot").exists():
         run("bash",Path(r["repo"])/EXP/"w1/release.sh",root,timeout=180)
@@ -637,7 +639,7 @@ def remaining(r):
     elif item in (1,3,8,9,16): prefixes=["tx2-dxscale1-w1-"+tag+"-"]
     elif item==5: prefixes=["tx2-dxint1-"+tag+"-"]
     elif item==6: prefixes=["tx2-dxscale1-"+tag+"-"]
-    elif item in (14,15): prefixes=["tx2-dxt1-bm1-"+tag+"-"]
+    elif item in (14,*REVISED_JOINED): prefixes=["tx2-dxt1-bm1-"+tag+"-"]
     else:
         prefixes=["tx2-dxt1-bm1-"+tag+"-"] if item==4 else []
         if item==4:prefixes.extend(s+"-" for s in guarded_children(r))
@@ -674,6 +676,7 @@ def installed(r):
 
 def launch(r):
     if not installed(r):
+        assert not command("docker","ps","-q"),"The exclusive worker cannot prepare while another stack owns the bench"
         seconds=max(1,int(r["deadline"]-time.time()))
         log=Path(r["directory"])/"worker.log"
         cmd=["systemd-run","--no-block","--unit="+r["unit"],"-p","KillMode=control-group","-p",f"RuntimeMaxSec={seconds}s",
@@ -807,7 +810,7 @@ def result(r):
         assert get(root/"native-clean.json")==dict(source=r["source"],prefix="tx2-dxt1-bm1-"+r["tag"],
                    requestSha256=digest(Path(r["directory"])/"request.json"),remaining=[])
         return "observed","All six 64-person native cells agreed with the collector. ACTREVIEW2 holds the 100,000-person run."
-    elif item==15:
+    elif item in REVISED_JOINED:
         from joined_reviewed import collect, settlement
         if (blocked:=root/"preflight-stop.json").is_file():
             return "preflight-refused",get(blocked)["error"]
@@ -1074,7 +1077,7 @@ def one(item):
                     entry={**entry,"state":"uncollected","detail":"Producer output retained. Transfer archive did not seal."}
         timer=f"bm1n19-hard-{item}-{attempt}.timer"
         if active(timer):run("systemctl","stop",timer)
-        if entry["state"]!="incomplete" or entry["timedOut"] or complete_output(r):break
+        if entry["state"]!="incomplete" or entry["timedOut"] or complete_output(r) or item==17:break
         # A rejected builder preflight consumes one attempt. Failures after admission may use the remaining item budget.
         root=Path(r["root"])
         preflights=[p for p in (root/"preflight-stop.json",root/"preflight/STATUS.json",root/"source-preflight.json") if p.is_file() and ("stop" in p.name or "stopped" in p.read_text()[:8192])]
@@ -1119,6 +1122,8 @@ def main():
     assert len(in_flight)<=1,"Multiple items claim the bench"
     order=(*in_flight,*(item for item in ORDER if item not in in_flight))
     pending=[item for item in order if not (NIGHT/f"i{item}/outcome.json").is_file()]
+    if pending:
+        (NIGHT/"finished").unlink(missing_ok=True)
     if in_flight and len(pending)>1:
         item=in_flight[0]
         NEXT[item]=ITEMS[pending[1]][4] if pending[1] in ITEMS else "readers"

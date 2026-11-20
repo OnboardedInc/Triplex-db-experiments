@@ -102,8 +102,8 @@ def joined_output(folder, owner, source, start, repo=None):
 def host(r, request, clean=False):
     root = Path(r["root"])
     tag, source = r["tag"], r["source"]
-    revised = r["item"] == 15
-    assert r["item"] in (14, 15) and re.fullmatch(r"joined(?:v2)?n19b?", tag)
+    revised = r["item"] in (15, 17)
+    assert r["item"] in (14, 15, 17) and re.fullmatch(r"joined(?:v2)?n19r?b?", tag)
     assert root == Path("/var/tmp/triplex-bm1/night-n19") / tag
     repo = root / "build/repository"
     stack_repo = Path(r["writerRepo"]) if revised else repo
@@ -183,7 +183,8 @@ def host(r, request, clean=False):
     if revised:
         from joined_reviewed import JOIN, collect, settlement
 
-        gateway_files = root / "engines/gateway-files.json"
+        engine = root / "engines" / prefix
+        gateway_files = engine / "gateway-files.json"
         gateway = stack_repo / "packages/datomic/gateway"
         expected = {name: digest(gateway / name) for name in command(
             "git", "ls-files", cwd=gateway).splitlines()}
@@ -191,7 +192,7 @@ def host(r, request, clean=False):
         assert get(gateway_files) == expected
         gateway_hash = digest(gateway_files)
         for role in ("w", "r"):
-            assert get(root / f"engines/health-{role}.json")["gatewaySourceHash"] == gateway_hash
+            assert get(engine / f"health-{role}.json")["gatewaySourceHash"] == gateway_hash
 
         def writer_options(folder):
             scope = get(folder / "server-observations.json")["scope"]

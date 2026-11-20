@@ -92,7 +92,7 @@ def writer_options(directory, arm, raw, policy, predecessor):
         maxMembers=policy["maxMembers"],budgetMicros=policy["budgetMicros"],bulkRows=96,bulkBytes=65536)
     current=observed["observed"]
     assert current["database"]==raw["db"] and current["attempt"]==identity["nonce"]
-    assert current["gatewaySourceHash"]==expected["gatewaySourceHash"]==digest(directory/"engines/gateway-files.json")
+    assert current["gatewaySourceHash"]==expected["gatewaySourceHash"]==digest(directory/"engines"/identity["slot"]/"gateway-files.json")
     assert current["strictRecordClocks"] is True and current["rowsVersion"]==3 and current["commitFunctionInstalled"] is True
     assert current["options"]==expected["options"]
     assert re.fullmatch(r":triplex\.write/v-[a-f0-9]{24}" if predecessor else r":triplex/commit",current["commitFunction"])

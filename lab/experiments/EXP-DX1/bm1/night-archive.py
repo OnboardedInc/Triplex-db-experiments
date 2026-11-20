@@ -69,11 +69,11 @@ def sources(r):
                 parts[slot]=ROOT/("day-"+batch)/"checkout/state/evidence/DX-T1"/slot
     elif r["item"]==5:parts["rungs"]=root/"build/state/evidence/DX-INT1"/r["tag"]
     elif r["item"]==13:parts["import"]=root/"run"
-    elif r["item"] in (14,15):
+    elif r["item"] in (14,15,17):
         parts["joined-smoke"]=root/"smoke"
         for name in ("run-owner.json","collector.json","point-check.json","native-clean.json","startup-and-engine.log","engines"):
             parts["joined-setup/"+name]=root/name
-        if r["item"]==15:
+        if r["item"] in (15,17):
             parts["joined-scale"]=root/"scale"
             parts["joined-settlement-smoke"]=root/"settlement-smoke"
             for name in ("preflight-stop.json","scale-admission.json","scale-writer-options.json"):
