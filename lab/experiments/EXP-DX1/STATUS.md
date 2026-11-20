@@ -3751,3 +3751,22 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
 - **Server 2:** the seed's verification has run since 13:13 local on one core: it is checking the durable feed at
   about 4.9 positions per second (position 35,750 of 87,001 at 17:41 local), so about 2.9 more hours, then the
   image and transfer. The present-writer run starts after that (about 21:00 local). Seed ceiling 23:24 local.
+
+## 2026-11-20 23:39 UTC (18:39 local, 2026-11-20): the storage reads are attributed: over half are "assertion id never used" probes with hashed ids; two gateways confirmed no gain
+
+- **Arm 1-2-S (per-person writer, two write gateways), server 1:** 126.7 / 114.3 / 132.4 saves per second at 235 /
+  394 / 620 offered (one gateway: 140.6 / 111.1 / 140.1); account 0 p99 loaded 1,236 to 1,709 ms. Gateway count
+  does not raise the ceiling. The driver stopped the remaining arms and moved on.
+- **DX-PREP1 part 8 (`1e46803f0`; five-arm server command `d3bd6a8b3`, 89 minutes; `prep1/LOOKUP-READING.md`).**
+  Small-cache SQL diagnostic on the Mac (two fresh 184,320-row seeds; 95 grouped saves in 12 groups, 96 per-person
+  saves), storage reads per save: grouped 1.116 (all native row and retirement redundancy); per-person 7.021, of
+  which the historical "assertion ids never used" probe 3.646 plus 0.625 under the lazy iterator (52 percent; 57
+  percent in an earlier trace), owner revision compare-and-set 0.990, native row and retirement redundancy 1.135,
+  operation and command checks 0 (the tape's ids for those are sequential strings; its journal and assertion ids
+  are hashes). A lookup-hint and native prefetch arm kept correctness (762 native assertions, restart gate) and
+  fetched more segments (976 against 457). Server command has five arms including the per-person writer with the
+  transactor's object cache at 16 GiB against 2 GiB. Grouped fallback modelled: four same-basis preparation
+  workers, 430 to 520 saves per second if reads overlap and groups stay near eight. Its answer: not yet.
+- **Part 9 assigned (run-critical; three agents running):** assertion and journal ids ordered by, or derived from,
+  the position the serial point assigns so the probe is hot or unnecessary; the owner's revision on a small dense
+  record; rerun the diagnostic (target at most 1.5 reads per save); a sixth server arm.
