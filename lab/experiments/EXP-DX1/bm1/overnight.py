@@ -13,7 +13,7 @@ import sys
 import time
 import uuid
 from producer_readings import capacity_memory, capacity_rung, group_arm, writer_options
-from import_reading import tail_attempt
+from import_reading import split_output, tail_attempt
 from activation_clock import activation_modes
 from joined_preflight import joined_output, point_readback
 
@@ -32,6 +32,8 @@ TYPED_JOINED = (27, 29)
 JOINED_POLICY_FIX = "5100afc528b8bf188532bc621c81a0fc332dd644"
 SCALE_PROBES = {18:"ceil", 19:"pred", 20:"pulse", 21:"growth", 22:"size"}
 SEALED_ITEMS = (*SCALE_PROBES, 24)
+HA_SPLIT_SOURCE = "6ef27404ea90081454096337c586302b8600093c"
+HA_SPLIT = {30:"load-split-sql",31:"load-split-pg"}
 SCALE_CHECKPOINT = ROOT / "single-n20/checkpoint.json"
 # [DX-BM1] Why: the timeout belongs to the entire item, including its retry and data preparation.
 # Rejected: inheriting the 24–72 hour limits of standalone research controllers.
@@ -56,6 +58,8 @@ ITEMS = {
     11: (W1, "w1", "7a6a7e9ef", 1, "ceiln19"),
     12: (WFIX, "wfix1", WFIX_SOURCE, 1, "sizen19"),
     13: ("exp/DX-HA1-failover-move", "load1", "bd2ce3bf9", 2, "loadtailn19"),
+    30: ("exp/DX-HA1-failover-move", "load1", HA_SPLIT_SOURCE, 1, "single-shared-sql"),
+    31: ("exp/DX-HA1-failover-move", "load1", HA_SPLIT_SOURCE, 1, "single-separate-sql"),
     2: ("exp/DX-ACT1-activation", "import1", "eb154ca8", 5, "import-bm1n19"),
     10: (WFIX, "wfix1", WFIX_SOURCE, 1, "predecessorn19"),
     5: ("exp/DX-INT1", "int1", None, 5, "bm1n19int"),
@@ -69,6 +73,7 @@ NEXT = {1:"joined-publish-preflight", 14:"enhanced-pulse", 8:"ceil-live10", 11:"
         10:"same-database-import", 13:"int1", 5:"collect", 6:"resume", 4:"collect", 3:"collect"}
 NEXT.update({18:"predecessor",19:"enhanced-pulse",20:"growth",21:"size-ledger",22:"readers",24:"rd1-pairs",28:"thin-1m",26:"collect",27:"ceil"})
 NEXT[29]="sealed-probes"
+NEXT.update({30:"separate-sql",31:"rd1-pairs"})
 EXP = Path("lab/experiments/EXP-DX1")
 ENV = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
            GIT_TERMINAL_PROMPT="0", DOCKER_HOST="unix:///var/run/docker.sock",
@@ -198,6 +203,7 @@ def complete_output(r):
         trial=Path("/var/tmp/triplex-scale1")/r["tag"]
         return (trial/"delta-measurement.json").is_file() or any((trial/"delta").glob("*/*offers-*.json"))
     if item==13:return any((root/"run").glob("load-tail-*/arm-*.json")) or any((root/"run").glob("load-tail-*/*.offers.json"))
+    if item in HA_SPLIT:return any(root.glob("run-*/load-split-*/*.offers.json"))
     if item in (14,*REVISED_JOINED):
         return any(any((root/phase).glob("offer-*.json")) for phase in ("smoke","scale"))
     return False
@@ -327,6 +333,12 @@ def preflight(r):
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-small-run-first",
                    "format":"reader-diagnostic/1","size":1000,"instructionsSha256":digest(published)})
         return
+    if item in HA_SPLIT:
+        published=directory/"builder-isolation-bench.md"
+        assert HA_SPLIT[item]+" "+r["tag"].removesuffix("b" if r["attempt"]==2 else "")+" one-host" in published.read_text()
+        put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-50-rate-first",
+                   "instructionsSha256":digest(published)})
+        return
     if item in (14,*REVISED_JOINED):
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"native-preflight-only",
                    "subjects":64,"longRun":"matching native agreement required" if item in REVISED_JOINED else "ACTREVIEW2 FIX FIRST"})
@@ -389,7 +401,7 @@ def public_source(item, directory, retained=None):
     document = collector_cases().get(str(item),{}) if item in (5,13) else {}
     # [DX-BM1] Why: preserve the historical joined check, then pin the current published source per new attempt.
     # Rejected: picking up a different file format or application between the small and large runs.
-    pinned={14:JOINED_REVIEW_SOURCE}
+    pinned={14:JOINED_REVIEW_SOURCE,**dict.fromkeys(HA_SPLIT,HA_SPLIT_SOURCE)}
     if item==29:
         pinned[29]=os.environ["DX_BM1_ACT_RETRY"]
     if retained:
@@ -412,7 +424,7 @@ def coordinates(item,attempt):
     if item == 1: tag += "ab"[attempt-1]
     elif attempt==2: tag += "b"
     if item in (1,3,8,9,10,11,12,16,28,*SEALED_ITEMS): root=Path("/var/tmp/triplex-w1")/tag; unit="triplex-w1-"+tag
-    elif item==13: root=Path("/var/tmp/triplex-ha1")/tag;unit="bm1n19-"+tag
+    elif item in (13,*HA_SPLIT): root=Path("/var/tmp/triplex-ha1")/tag;unit="bm1n19-"+tag
     elif item in (14,*REVISED_JOINED): root=NIGHT/tag;unit="bm1n19-"+tag
     elif item==2: root=Path("/var/tmp/triplex-import1")/tag;unit="triplex-bm1-"+tag
     elif item==4: root=ROOT/("day-"+tag);unit="bm1n19-"+tag
@@ -466,6 +478,7 @@ def make(item, attempt, start, deadline):
             11:"| CEIL-SERVER-LIVE10,",12:"| W2-SIZE-LEDGER,",13:"| HA1 one-host import,",14:"| ACT1 joined Publish,",
             15:"| ACT1 reviewed joined Publish,",16:"| WFIX enhanced pulse,",17:"| ACT1 manifest repair,",27:"| ACT1 typed refusal,",
             24:"| RD1 writer probe,",26:"| INT1 single thin rung,",28:"| RD1 short pairs,",29:"| ACT1 shared-scope repair,",
+            30:"| HA1 shared SQL,",31:"| HA1 separate SQL,",
             **{i:"| Sealed "+s+"," for i,s in SCALE_PROBES.items()}}.get(item,f"| {item} ·")
     if (item,attempt)==(28,2):
         token="| RD1 mounted retry,"
@@ -620,6 +633,14 @@ def worker(r):
         # Rejected: joining a second host, or letting the SSH controller pull an uncapped raw archive.
         run(*heavy,"--import","tsx",EXP/"ha1/bench.ts","load-tail",tag,source,"-","-","-",root/"run",
             str(uuid.uuid4()),"50","deep","one-host",cwd=repo,env=env)
+    elif r["item"] in HA_SPLIT:
+        # [DX-BM1] Why: verify the complete 50/s block before admitting 100/s.
+        # Rejected: repeating 50/s after using it as the small native collector check.
+        for rate in (50,100):
+            store=root/f"run-{rate}"
+            run(*heavy,"--import","tsx",EXP/"ha1/bench.ts",HA_SPLIT[r["item"]],tag,source,"-","-","-",store,
+                str(uuid.uuid4()),str(rate),"deep","one-host",cwd=repo,env=env)
+            put(root/f"reading-{rate}.json",split_run(r,store,rate))
     elif r["item"]==5:
         run(node,"--no-warnings","--experimental-transform-types",repo/EXP/"thin1/queue-bench.ts","--launch",tag,
             stamp(r["deadline"]-10),root/"build","--int1","--row-wire=plain",cwd=repo,env=env)
@@ -628,15 +649,19 @@ def worker(r):
 
 def import_inventory(r):
     inventory={"containers":[],"networks":[],"volumes":[]}
-    for f in (Path(r["root"])/"run").glob("load-tail-*/attempt.json"):
+    mode=HA_SPLIT.get(r["item"],"load-tail")
+    root=Path(r["root"])
+    stores=(root/"run",) if r["item"]==13 else (root/"run-50",root/"run-100")
+    for f in (f for store in stores for f in store.glob(mode+"-*/attempt.json")):
         a=get(f)
         nonce=a["nonce"]
-        assert re.fullmatch(r"[a-f0-9-]{36}",nonce) and f.parent.name=="load-tail-"+nonce
-        assert a["slot"]==r["tag"] and a["source"]["git"]==r["source"] and a["mode"]=="load-tail"
+        assert re.fullmatch(r"[a-f0-9-]{36}",nonce) and f.parent.name==mode+"-"+nonce
+        assert a["slot"]==r["tag"] and a["source"]["git"]==r["source"] and a["mode"]==mode
         prefix="tx2-ha1-"+nonce[:8]
         selector="label=ha1.attempt="+nonce
         for name in command("docker","ps","-a","--filter",selector,"--format","{{.Names}}").splitlines():
-            assert name in {prefix+"-"+role for role in ("pg","active","write","tool")}
+            roles=("pg","active","write","tool","standby","read","target") if r["item"] in HA_SPLIT else ("pg","active","write","tool")
+            assert name in {prefix+"-"+role for role in roles}
             inventory["containers"].append(name)
         for name in command("docker","network","ls","--filter",selector,"--format","{{.Name}}").splitlines():
             assert name==prefix
@@ -653,6 +678,18 @@ def import_inventory(r):
                         if command("docker","volume","ls","-q","--filter","name=^"+name+"$")==name:
                             inventory["volumes"].append(name)
     return inventory
+
+
+def split_run(r, store, rate):
+    mode=HA_SPLIT[r["item"]]
+    declaration=get(store/"campaign.json")
+    assert [declaration[k] for k in ("tag","sha","mode","sizes","layout","shape")]==[
+        r["tag"],r["source"],mode,[rate],"one-host","deep"]
+    assert re.fullmatch(r"[a-f0-9-]{36}",declaration["campaign"])
+    folder,=store.glob(mode+"-*")
+    row=split_output(folder,r["source"],r["tag"],rate,r["start"])
+    assert row["mode"]==mode
+    return {**row,"campaignSha256":digest(store/"campaign.json")}
 
 
 def cleanup(r):
@@ -700,7 +737,7 @@ def cleanup(r):
     elif r["item"]==5:
         unit="triplex-int1-"+tag
         if active(unit):run("systemctl","stop",unit,timeout=200)
-    elif r["item"]==13:
+    elif r["item"] in (13,*HA_SPLIT):
         # [DX-BM1] Why: systemd invokes this after the group is dead even when the producer's finally block could not run.
         # Rejected: label-wide removal, which could delete another run after handoff.
         inventory=import_inventory(r)
@@ -713,7 +750,7 @@ def cleanup(r):
 
 def remaining(r):
     item, tag = r["item"],r["tag"]
-    if item==13:return import_inventory(r)
+    if item in (13,*HA_SPLIT):return import_inventory(r)
     root=Path(r["root"])
     if item in (10,11,12,*SEALED_ITEMS):
         prefixes=[]
@@ -1099,6 +1136,19 @@ def result(r):
         path,rows=tail_attempt(root/"run",r)
         good=all(value["offered"]==value["ok"] for row in rows for intervals in row["neighbors"].values() for value in intervals.values())
         return ("recorded" if good else "partial"),str(path)
+    elif item in HA_SPLIT:
+        checked=[]
+        for rate in (50,100):
+            file=root/f"reading-{rate}.json"
+            if not file.is_file():
+                return ("partial","The 50/s native block is retained. The 100/s block is incomplete.") if checked else (
+                    "preflight-refused","The 50/s producer and collector did not agree.")
+            assert file.stat().st_mtime>=r["start"] and get(file)==split_run(r,root/f"run-{rate}",rate)
+            checked.append(get(file))
+        assert len({row["nonce"] for row in checked})==2
+        file=Path(r["directory"])/"isolation-readings.json"
+        put(file,checked)
+        return "recorded",str(file)
     elif item==2:
         if (root/"terminal.json").is_file():
             doc=get(root/"terminal.json")
@@ -1410,7 +1460,7 @@ def main():
                 assert not command("docker","ps","-q")
                 status("seed100","checking-seal",time.time(),"ceil")
                 prepare_receipt(SCALE_CHECKPOINT)
-            scheduled=(27,*SCALE_PROBES,24,28,26)
+            scheduled=(27,*SCALE_PROBES,24,30,31,28,26)
             if retry:=os.environ.get("DX_BM1_ACT_RETRY"):
                 assert re.fullmatch(r"[a-f0-9]{40}",retry)
                 scheduled=(29,*scheduled)

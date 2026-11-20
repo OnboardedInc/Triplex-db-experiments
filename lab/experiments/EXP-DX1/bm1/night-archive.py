@@ -78,6 +78,10 @@ def sources(r):
             if file.name=="evidence" or file.name.endswith((".json",".log")):
                 parts[file.name]=file
     elif r["item"]==13:parts["import"]=root/"run"
+    elif r["item"] in (30,31):
+        for rate in (50,100):
+            parts[f"import-{rate}"]=root/f"run-{rate}"
+            parts[f"reading-{rate}.json"]=root/f"reading-{rate}.json"
     elif r["item"] in (14,15,17,27,29):
         parts["joined-smoke"]=root/"smoke"
         for name in ("run-owner.json","collector.json","point-check.json","native-clean.json","startup-and-engine.log","engines"):

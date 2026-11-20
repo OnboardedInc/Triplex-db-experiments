@@ -10,9 +10,10 @@ from producer_readings import digest, get
 
 
 TAIL_ARMS = ("tail-0-a", "tail-128", "tail-500", "tail-2000", "tail-0-b")
+SPLIT_ARMS = ("split-0-a", "split-2000", "split-0-b")
 
 
-def tail_arm(directory, attempt, name):
+def read_arm(directory, attempt, name, rate=50, *, split=False):
     # [DX-BM1] Why: join every scheduled offer and bulk ACK to this scope's immutable receipt.
     # Rejected: accepting an open-loop p99 after dropping expired, missing, or unverified offers.
     f = directory / (name + ".offers.json")
@@ -23,7 +24,9 @@ def tail_arm(directory, attempt, name):
         attempt["nonce"], attempt["source"]["git"], attempt["slot"], scope, duration)
     assert math.isfinite(tape["start"])
     due = {(actor, kind, i): i * 200 for actor, kind in (("quiet", "save"), ("quiet", "read")) for i in range(540)}
-    due.update({("live" + str(i % 10), "save", i): i * 20 for i in range(5_400)})
+    due.update({("live" + str(i % 10), "save", i): i * (1000//rate) for i in range(rate*108)})
+    if split:
+        due.update({("live" + str(i % 10), "read", i): i * 20 for i in range(5400)})
     native = {row["command"]: row["position"] for row in tape["native"]}
     assert len(native) == len(tape["native"]) == len(set(native.values()))
     bins = defaultdict(lambda: defaultdict(list))
@@ -54,9 +57,26 @@ def tail_arm(directory, attempt, name):
         assert row["offer"] < duration and row["ack"] >= row["offer"]
         assert native[row["command"]] == row["position"]
     facts = sum(r["facts"] for r in frames if r["ack"] <= duration)
+    if split:
+        assert not frames
+        if name=="split-2000":
+            imported=get(directory/(name+"-split.offers.json"))
+            assert [imported[k] for k in ("nonce","source","slot","scope","arm","duration","width","peak")]==[
+                attempt["nonce"],attempt["source"]["git"],attempt["slot"],scope+"-import",name,duration,2000,2]
+            assert math.isfinite(imported["start"])
+            issued=imported["issued"]
+            assert issued and len({row["command"] for row in issued})==len(issued)
+            assert sorted(row["position"] for row in issued)==list(range(2,len(issued)+2))
+            for index,row in enumerate(sorted(issued,key=lambda row:row["first"])):
+                assert row["first"]==index*250 and row["end"]==row["first"]+250 and row["facts"]==2000
+                assert re.fullmatch(r"load1/[a-f0-9]{64}/"+str(row["first"]),row["command"])
+                assert re.fullmatch(r"[a-f0-9]{64}",row["digest"])
+                assert -5<=row["offered"]<duration and row["settled"]>=row["offered"]
+            facts=sum(row["facts"] for row in issued if row["settled"]<=duration)
+            assert facts==imported["facts"]
     if name in (TAIL_ARMS[0], TAIL_ARMS[-1]):
         assert not frames
-    return dict(arm=name, scope=scope, duration=duration, rate=50, neighbors=neighbors, facts=facts,
+    return dict(arm=name, scope=scope, duration=duration, rate=rate, neighbors=neighbors, facts=facts,
                 fps=facts / (duration / 1000), tapeSha256=digest(f))
 
 
@@ -80,8 +100,52 @@ def tail_attempt(root, r):
     rows = []
     for name, expected in zip(TAIL_ARMS, published["result"]):
         assert (directory / (name + ".offers.json")).stat().st_mtime >= r["start"] - 2
-        row = tail_arm(directory, attempt, name)
+        row = read_arm(directory, attempt, name)
         assert all(expected[k] == v for k, v in row.items() if k != "tapeSha256")
         assert get(directory / ("arm-" + name + ".json")) == expected
         rows.append(row)
     return path, rows
+
+
+def split_output(directory, source, slot, rate, start, *, capacity="one-host"):
+    # [DX-BM1] Why: the live-side tape and the separate writer's durable imports have different receipt streams.
+    # Rejected: granting the import rate from a packaging receipt or from the live writer's tape alone.
+    attempt=get(directory/"attempt.json")
+    nonce=attempt["nonce"]
+    assert re.fullmatch(r"[a-f0-9-]{36}",nonce)
+    assert attempt["mode"] in ("load-split-sql","load-split-pg")
+    assert directory.name==attempt["mode"]+"-"+nonce
+    assert attempt["source"]["git"]==source and attempt["slot"]==slot
+    assert get(directory/"cleanup.json")=={"nonce":nonce,"containers":0,"networks":0}
+    report=directory/"observations.json"
+    assert report.stat().st_mtime>=start-2
+    value=get(report)
+    assert (value["source"],value["nonce"],value["slot"])==(attempt["source"],nonce,slot)
+    assert value["profile"]=={"people":rate,"capacity":capacity,"scopes":1}
+    assert [arm["arm"] for arm in value["result"]]==list(SPLIT_ARMS)
+    assert len({arm["sourceSeal"] for arm in value["result"]})==1
+    rows=[]
+    for arm in value["result"]:
+        name=arm["arm"]
+        assert (directory/(name+".offers.json")).stat().st_mtime>=start-2
+        row=read_arm(directory,attempt,name,rate,split=True)
+        assert all(arm[k]==v for k,v in row.items() if k!="tapeSha256")
+        assert get(directory/("arm-"+name+".json"))==arm
+        transfer=directory/(name+"-split.offers.json")
+        if name=="split-2000":
+            assert transfer.stat().st_mtime>=start-2
+            raw=get(transfer)
+            isolated=arm["isolated"]
+            assert [isolated[k] for k in ("nonce","source","slot","scope","start","duration","width","peak","facts")]==[
+                raw[k] for k in ("nonce","source","slot","scope","start","duration","width","peak","facts")]
+            assert isolated["type"]=="done" and isolated["sourceSeal"]==arm["sourceSeal"]
+            proof=isolated["proof"]
+            frames=len(raw["issued"])
+            assert proof=={"cut":frames+1,"observed":frames,"facts":frames*2000,"cursor":frames*250}
+            assert arm["committedFrames"]==frames and arm["completedBulk"]==proof["facts"]
+            row["importTapeSha256"]=digest(transfer)
+        else:
+            assert not transfer.exists() and arm["committedFrames"]==arm["completedBulk"]==0
+        rows.append(row)
+    return {"mode":attempt["mode"],"rate":rate,"source":source,"slot":slot,"nonce":nonce,
+            "observationsSha256":digest(report),"arms":rows}
