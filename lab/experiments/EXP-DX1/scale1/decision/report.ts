@@ -90,7 +90,7 @@ function recordPredictions(dir: string, trials: Trial[]) {
       for (const c of measurement.cells)
         writeRow(
           "Single " + c.cell,
-          a.withReaders ? 3 : 2,
+          a.withReaders ? 4 : 3,
           fmt(c.goodput, 2) +
             "/s (n=" +
             c.inWindow +
