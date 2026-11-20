@@ -1,6 +1,8 @@
 # Write-path review
 
-The audited runtime includes WFIX1 at `cd2151749`. The single-account zero-reader and bounded-reader arms use the same 100,000-person image and frozen offers. Their report follows [the forecasts](PREDICTIONS.md). The full placement study waits for these results. Q106f currently assigns large accounts their own Datomic systems and pools small ones. [Handoff](HANDOFF.md)
+The single-account runtime includes WFIX1 at `cd2151749`. The zero-reader and bounded-reader arms use the same 100,000-person image and frozen offers. The placement study waits for these results. Q106f currently assigns large accounts their own Datomic systems and pools small ones. [Handoff](HANDOFF.md) · [Forecasts](PREDICTIONS.md)
+
+The next grouped arm uses WFIX1 `c1e17c07e` or later. The merge takes WFIX1's compact JSON escaping and legacy retirement behavior and its synchronized native function readback. The grouped plan still uses the bounded mode with compact rows and prepared reuse. Predecessor lookup, retained ledger, packed journal and fast reply stay off for that comparison. Each flag is included in the live gateway readback and checked at the restored cut. The current single-account arms keep their original source and image.
 
 The eight findings cover resend settlement (1), predecessor lifetime in the feed (2), scope-owned progress (3), bulk versus live scheduling (4), tenant admission and fair turns (5), ordered size caps (6), effective predecessor selection (7), and complete feed verification (8).
 

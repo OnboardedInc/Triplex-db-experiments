@@ -215,8 +215,8 @@ for (;;) {
       for (const [name, hash] of [
         ["raw.json", row.rawSha256],
         ["seed-readback.json", row.seedReadbackSha256],
-        ...(write5 ? [["write-options.json", row.writeOptionsSha256]] : []),
         ["writer-expectation.json", row.writerExpectationSha256],
+        ...(write5 ? [["write-options.json", row.writeOptionsSha256]] : []),
       ])
         assert.equal(sudo("sha256sum", armDir + "/" + name).split(/\s/)[0], hash);
     }

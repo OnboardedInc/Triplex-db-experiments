@@ -469,11 +469,11 @@ export async function runArm(
       const opened = await client.create(key, "lean", true, 35000);
       assert(!opened.created && opened.db === db);
     }
-    await options.opened?.(client, db);
     const writerOptions = server
       ? await readWriteOptions(url, db, process.env.DX_W1_WRITER_EXPECTATION)
       : undefined;
     if (writerOptions) assert.equal(writerOptions.observed.position, head);
+    await options.opened?.(client, db);
     const phases = [];
     for (const name of options.pulse
       ? ["alone", "nine"]

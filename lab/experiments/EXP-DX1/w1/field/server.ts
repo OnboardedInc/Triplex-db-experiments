@@ -55,13 +55,13 @@ async function fieldArm(
     const { head: seedHead, seeds } = await seedPooled(seed, init.db);
     const open = await c.create(scope, "lean", true, 35000);
     assert(!open.created && open.db === init.db);
-    await opened?.(c, init.db);
     const writerOptions = await readWriteOptions(
       url,
       init.db,
       process.env.DX_W1_WRITER_EXPECTATION,
     );
     assert.equal(writerOptions.observed.position, seedHead);
+    await opened?.(c, init.db);
     const phases = [],
       senders = new Map<string, number>();
     let head = seedHead;

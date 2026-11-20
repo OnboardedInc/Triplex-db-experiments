@@ -1,7 +1,8 @@
 (ns triplex.gateway.main
   (:require [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
-            [triplex.gateway.predecessor :as pred] [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy] [triplex.gateway.packed-journal :as packed])
+            [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
+            [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -119,7 +120,9 @@
                :queueClock group/queue-clock :stageClock group/stage-clock
                :smallRows small-row/enabled :reusePrepared group/reuse-prepared
                :maxMembers group/batch-limit :budgetMicros policy/budget-us
-               :bulkRows policy/bulk-rows :bulkBytes policy/bulk-bytes}}))
+               :bulkRows policy/bulk-rows :bulkBytes policy/bulk-bytes
+               :ledger (boolean (or ledger/enabled packed/enabled))
+               :packedJournal (boolean packed/enabled) :fastReply (boolean group/fast-reply)}}))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
 ;; Rejected: timing the StringBuilder alone (response bytes are not ready yet).
@@ -144,7 +147,7 @@
     (when (> (alength bytes) 4194304) (codec/invalid "Request too large"))
     (let [start (System/nanoTime) input (trace/span "gateway.request-parse" "gateway" (json/read-str (String. bytes "UTF-8")))]
       (.set request-parse-micros (quot (- (System/nanoTime) start) 1000)) (if (map? input) (with-meta input {:wire-bytes (alength bytes)}) input))))
-(defn write-options-v2 [db database]
+(defn write-layout-options [db database]
   (let [selected (commit/entry db {} (lean/enabled? db))
         [variant body] (commit/variants [true false])
         actual (:db/fn (d/entity db selected))
@@ -155,7 +158,7 @@
      :predecessorRequested (boolean pred/enabled) :predecessorSelected (= selected variant)
      :selectedFunction (str selected) :selectedDefinitionSha256 (schema/sha256 (str actual))
      :installedDefinitionMatches (and actual (= (str actual) (str expected)))
-     :ledger (boolean ledger/enabled) :packedJournal (boolean packed/enabled)
+     :ledger (boolean (or ledger/enabled packed/enabled)) :packedJournal (boolean packed/enabled)
      :packedJournalCount (if (d/entid db :triplex.journal/packed)
                            (reduce (fn [n _] (inc n)) 0 (d/datoms db :aevt :triplex.journal/packed)) 0)
      :fastReply (boolean group/fast-reply)}))
@@ -165,7 +168,7 @@
     (cond
       (and (= :get request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/write-options" uri))
       (let [name (nth (clojure.string/split uri #"/") 3)]
-        (response 200 (write-options-v2 (d/db (connection (db-uri name))) name)))
+        (response 200 (write-layout-options (sync-db (db-uri name)) name)))
       (= uri "/v2/admin/scan-stats") (response 200 (assoc @stats/counts :idMemo (reach/id-memo-stats) :entityCache (let [base (entity-cache/stats) extra (recent/stats)] (assoc (merge base extra) :bytes (+ (:bytes base) (:recentBytes extra))))))
       (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (response 200 {}))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal|entity-transactions)" uri))

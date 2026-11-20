@@ -299,7 +299,7 @@ export async function withStack<T>(
       DX_W1_EXTRA: String(Number(enhanced)),
       DX_SMALL_ROWS: String(Number(policy.compact)),
       DX_GROUP_REUSE_PREPARED: String(Number(policy.prepared)),
-      DX_W1_PREDECESSOR: String(Number(policy.predecessor)),
+      DX_PREDECESSOR_LOOKUP: String(Number(policy.predecessor)),
       DX_W1_LEDGER: String(Number(policy.ledger)),
       DX_W1_PACKED_JOURNAL: String(Number(policy.packedJournal)),
       DX_W1_FAST_REPLY: String(Number(policy.fastReplyAndWire)),
@@ -373,8 +373,9 @@ export async function withStack<T>(
       slot,
       attempt: arm.nonce,
       gatewaySourceHash: gatewayHash,
+      historyRange: arm.lookup === "range",
       options: {
-        predecessorLookup: arm.lookup === "range",
+        predecessorLookup: policy?.predecessor ?? arm.lookup === "range",
         groupCommit: grouped ?? false,
         livePriority: policy?.priority ?? false,
         fieldCoalesce: policy?.subjectOnly ?? false,
@@ -386,6 +387,9 @@ export async function withStack<T>(
         budgetMicros: policy?.budgetMicros ?? null,
         bulkRows: 96,
         bulkBytes: 65536,
+        ledger: (policy?.ledger ?? false) || (policy?.packedJournal ?? false),
+        packedJournal: policy?.packedJournal ?? false,
+        fastReply: policy?.fastReplyAndWire ?? false,
       },
     };
     write(path.join(dir, "writer-expectation.json"), expectation);
