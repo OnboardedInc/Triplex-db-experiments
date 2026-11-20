@@ -26,6 +26,9 @@ export const modes = [
   "one-sync",
   "one-whole",
   "one-account",
+  "load-profile",
+  "load-quiet",
+  "load-live",
 ] as const;
 export type Mode = (typeof modes)[number];
 export const roles = {
@@ -58,8 +61,27 @@ export function tree(dir: string) {
     .filter((f) => fs.statSync(path.join(dir, f)).isFile());
   return hash(JSON.stringify(files.map((f) => [f, hash(fs.readFileSync(path.join(dir, f)))])));
 }
-export function inputs() {
+export function inputs(mode?: Mode) {
   return {
+    ...(mode?.startsWith("load-")
+      ? {
+          loadSources: hash(
+            JSON.stringify([
+              ...["lab/bench/lib", "packages/qualification/dist", "packages/w0/dist"].map((dir) =>
+                tree(path.join(root, dir)),
+              ),
+              ...fs
+                .readdirSync(path.join(root, "lab/experiments/EXP-DX1/load1"))
+                .filter((f) => f.endsWith(".ts"))
+                .sort()
+                .map((f) => [
+                  f,
+                  hash(fs.readFileSync(path.join(root, "lab/experiments/EXP-DX1/load1", f))),
+                ]),
+            ]),
+          ),
+        }
+      : {}),
     git: head(),
     experiment: treeCode(),
     gateway: tree(path.join(root, "packages/datomic/gateway/src")),
@@ -85,7 +107,7 @@ function treeCode() {
 export class Evidence {
   readonly nonce = randomUUID();
   readonly prefix = "tx2-ha1-" + this.nonce.slice(0, 8);
-  readonly source = inputs();
+  readonly source: ReturnType<typeof inputs>;
   readonly dir: string;
   readonly start = clock();
   constructor(
@@ -99,6 +121,7 @@ export class Evidence {
       shape === "deep" || ["one-failover", "one-backup", "one-sync", "one-whole"].includes(mode),
       "This mode has a fixed population",
     );
+    this.source = inputs(mode);
     fs.mkdirSync(parent, { recursive: true });
     this.dir = path.join(parent, mode + "-" + this.nonce);
     fs.mkdirSync(this.dir);

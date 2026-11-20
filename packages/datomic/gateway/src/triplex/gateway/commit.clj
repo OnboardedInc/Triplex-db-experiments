@@ -214,10 +214,27 @@
                           'record-range-result observe} operation-code))
 ;; [DX-W1] Why: JFR records the actual decision on its existing bound transaction event.
 ;; Rejected: storing a diagnostic datom or running a second historical query on the peer.
-(def code (instrument-code (expand-code
+(def ordinary-code (instrument-code (expand-code
   '(fn [result] (when triplex-trace-event
                   (try (.set triplex-trace-event 3 (cond (true? result) "empty" (false? result) "occupied" :else "ineligible"))
                        (catch Throwable _ nil)))))))
+(def load-profile (= "1" (System/getenv "TX2_LOAD1_PROFILE")))
+;; [DX-LOAD1] Why: the peer cannot count history seeks made against the serialized db-before. Rejected: timing a second speculative d/with or inferring lookup counts from business facts.
+(def code
+  (if-not load-profile ordinary-code
+    (list 'let '[load-start (System/nanoTime) singles (volatile! 0) seek-ns (volatile! 0)
+                 ranges (volatile! 0) empty-ranges (volatile! 0)]
+      (list 'let ['expanded
+        (walk/postwalk-replace
+          {'(identity-row id)
+           '(let [start (System/nanoTime) result (identity-row id)]
+              (vswap! singles inc) (vswap! seek-ns + (- (System/nanoTime) start)) result)
+           '(d/index-range (d/history db) :triplex.entity/row start end)
+           '(let [result (seq (d/index-range (d/history db) :triplex.entity/row start end))]
+              (vswap! ranges inc) (when-not result (vswap! empty-ranges inc)) result)}
+          ordinary-code)]
+        '(conj expanded [:db/add "datomic.tx" :triplex.load/metrics
+                         (pr-str [(- (System/nanoTime) load-start) @singles @seek-ns @ranges @empty-ranges])])))))
 (def source-hash (schema/sha256 (pr-str code)))
 (defn install!
   ([conn scope] (install! conn scope (d/db conn)))
@@ -227,7 +244,8 @@
        observed
        (:db-after
         (trace/span "d/transact" "peer-wait"
-          @(d/transact conn [{:db/ident :triplex/commit
+          @(d/transact conn (cond-> [{:db/ident :triplex/commit
                              :db/fn (d/function {:lang :clojure :params '[db payload]
                                                 :requires '[[datomic.api :as d] [clojure.data.json :as json]] :code code})}
-                            [:db/add entity :triplex.scope/commit-fn-hash source-hash]])))))))
+                            [:db/add entity :triplex.scope/commit-fn-hash source-hash]]
+                            load-profile (conj (schema/attr :triplex.load/metrics :db.type/string))))))))))

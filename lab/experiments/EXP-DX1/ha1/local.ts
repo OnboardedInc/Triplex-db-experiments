@@ -35,7 +35,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
     const faultCell = opts["fault-cell"] ?? "all";
     assert(faultCell === "all" || (mode === "one-failover" && faultCell === "tail-burst"));
     const attempt = new Evidence(
-      path.join(folder, "evidence", "DX-HA1"),
+      path.join(folder, "evidence", "DX-HA1", ...(mode.startsWith("load-") ? ["load1"] : [])),
       mode,
       slot,
       shape,
@@ -46,9 +46,11 @@ export async function localDrill(opts: any, config: any, manager: any) {
   }
   // [DX-HA1] Why: each child cap has a matching live reservation and unique name. Rejected: reusing a retained slot volume or double-counting a single opaque stack.
   const wanted = Object.entries(roles).filter(([r]) =>
-    mode === "replication"
-      ? ["pg", "target", "tool", "active", "write"].includes(r)
-      : mode === "move" || mode.startsWith("one-") || r !== "target",
+    mode.startsWith("load-")
+      ? ["pg", "active", "write", "tool"].includes(r)
+      : mode === "replication"
+        ? ["pg", "target", "tool", "active", "write"].includes(r)
+        : mode === "move" || mode.startsWith("one-") || r !== "target",
   );
   const people = Number(opts.people ?? 4);
   const smallLogicalCopy =

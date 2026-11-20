@@ -360,6 +360,22 @@ export class Stack {
       site,
       [
         "-e",
+        ...(this.e.mode.startsWith("load-")
+          ? [
+              "TRIPLEX_TRACE_LEVEL=" + (this.e.mode === "load-profile" ? "full" : "off"),
+              "-e",
+              "TRIPLEX_TRACE_JFR=0",
+              "-e",
+              "TX2_LOAD1_PROFILE=" + Number(this.e.mode === "load-profile"),
+              "-e",
+              "TRIPLEX_TRACE_RUN=" + this.e.nonce,
+              "-e",
+              "TRIPLEX_TRACE_SOURCE=" + this.e.source.git,
+              "-e",
+              "TRIPLEX_TRACE_SLOT=" + this.e.slot,
+              "-e",
+            ]
+          : []),
         ...(this.e.mode === "one-account"
           ? [
               "HA1_SHARED_SCOPE=" + this.sharedScope(role),

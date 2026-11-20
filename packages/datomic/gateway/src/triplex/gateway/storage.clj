@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.commit :as commit] [clojure.edn] [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:require [triplex.gateway.replay-capture :as replay-capture])
   (:import [java.util UUID]))
 
@@ -105,10 +105,16 @@
                (.startsWith ^String (:v datom) prefix)) (:v datom))))
  ;; [DX-B3-M2] Why: prepare all row encoding and fact maps off the transactor's serial point.
 ;; Rejected: resolving row retractions in the gateway (stale exact row text after another commit).
+(def ^:dynamic *load-timing* nil)
+;; [DX-LOAD1] Why: decode and validation happen before constructing native ops on the peer. Rejected: counting the entire peer wait as validation.
+(defn timed-input-rows [input lean new-ids]
+  (if-not *load-timing* (input-rows input lean new-ids)
+    (let [start (System/nanoTime) rows (input-rows input lean new-ids)]
+      (vreset! *load-timing* (- (System/nanoTime) start)) rows)))
 (defn tx-data
   ([db input] (tx-data db input (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([db input scope]
-   (let [lean (lean? db) new-ids (set (get input "newIds")) rows (input-rows input lean new-ids)
+   (let [lean (lean? db) new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
          fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
          source (when-some [p (get input "sourceK")] (safe-position p)) position (safe-position (get input "position"))
          span (safe-position (or (get input "span") (when source (- position source))))
@@ -290,7 +296,8 @@
     (reject-ordered! conn input (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
   (try
     (let [parsed (System/nanoTime)
-          data (try (trace/span "commit.prepare-and-validate" "gateway" (tx-data db input (scope/entity db)))
+          load-timing (when commit/load-profile (volatile! 0))
+          data (try (binding [*load-timing* load-timing] (trace/span "commit.prepare-and-validate" "gateway" (tx-data db input (scope/entity db))))
                     (catch Exception e (reject-ordered! conn input e)))
           start (System/nanoTime)
           ready-ms (when group/queue-clock (System/currentTimeMillis))
@@ -315,6 +322,8 @@
        :position (codec/encode-value "long" (or (get-in report [:member :position]) (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report))))))
        :delta (- (or (get-in report [:member :position]) (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report))))) (get input "position"))
        :datoms (count (:tx-data report))}
+        load-timing (assoc :loadProfile {:rowNs @load-timing :applyMs (get-in report [:io-stats :api-ms])
+                       :tx (clojure.edn/read-string (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.load/metrics))})
         stamp (assoc :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
     (catch Exception e
