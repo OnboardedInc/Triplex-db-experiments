@@ -2481,3 +2481,21 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   against ten) and **W2-WRITEAUDIT** (try to break group commit, priority, coalescing and the predecessor lookup).
   W2-DEEPTAIL part 2 is attributing the fifty slowest deep saves from the raw archive, now copied to the Mac and
   verified.
+
+## 2026-11-20 02:07 UTC (21:07 local, 2026-11-19): DX-HA1 part 3 in: the loader is faster; no import beside live traffic met priority 8
+
+- **DX-HA1 part 3 (`40d1d1692`, Mac VM; `load1/REPORT.md`, `load1/BENCH.md`).** Where the 413 ms per 2,000-fact batch
+  went on the server witness: 73 ms before the next client start, 69 ms row encoding, 13 ms body encoding, about 245 ms
+  gateway and peer (53 ms preparation, 100 ms native envelope of which 72 ms apply and 13 ms log park). Fixes: row
+  encoding 103 to 18 ms per batch, two batches in flight, a covering empty-range check in place of one history seek
+  per new id (4,595 seeks to 1), restart-safe receipts (reopen recovers the original transaction, position, clock and
+  ids). Quiet Mac loader: 4,506 to 5,826 facts per second at depth two against 1,808 to 4,813 at depth one. Forecast
+  for a server: 6,500 facts per second at 16 million facts (41 minutes), 5,800 at 160 million (7 h 40 min); unrun.
+- **Beside live traffic (ten writing accounts, one quiet account; 12 s arms, 60 quiet saves each, so the p99 is the
+  maximum):** at 50 saves per second frames of 128 / 500 / 2,000 facts loaded 2,682 / 3,307 / 3,833 facts per second with
+  the quiet account's save p99 at 4.72 / 9.25 / 13.67 times its baseline and read p99 at 1.67 / 6.50 / 6.93 times (bars:
+  3,000 and 1.5). At 235 and 390 saves per second the database missed offers even without an import; import fell to
+  42 to 1,167 and 0 to 167 facts per second.
+- **Assigned, DX-HA1 part 4:** explain the 4.72 times from the slowest quiet saves (arms with at least 500 quiet saves);
+  frames sized by a time budget and admitted only when no live save waits; the frontier of import rate against
+  neighbour ratio; the alternative of importing into a database of its own; single-server commands with predictions.
