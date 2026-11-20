@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { statfsSync } from "node:fs";
+import { readFileSync, statfsSync } from "node:fs";
 import { promisify } from "node:util";
 
 const run = promisify(execFile);
@@ -30,14 +30,30 @@ export async function inLocalSlot<T>(
     started = true;
     process.stderr.write(stderr);
     const endpoint = /^export DATOMIC_(?:GATEWAY_)?URL='([^']+)'$/m.exec(stdout)?.[1];
-    assert(endpoint, "Slot manager omitted the Datomic endpoint");
+    const ownerFile = /^export TRIPLEX_LAB_SLOT_OWNER='([^']+)'$/m.exec(stdout)?.[1];
+    assert(endpoint && ownerFile, "Slot manager omitted the Datomic endpoint or owner");
+    const checkOwner = () => {
+      const owner = JSON.parse(readFileSync(ownerFile, "utf8"));
+      assert(
+        owner.holder === holder &&
+          owner.mode === "exclusive" &&
+          owner.slot === slot &&
+          owner.container === `tx2-datomic-${slot}` &&
+          owner.volume === `tx2-datomic-${slot}-data-${trial}` &&
+          owner.endpoint === endpoint,
+        "Datomic observation is no longer bound to the acquired private volume",
+      );
+    };
+    checkOwner();
     process.env.DATOMIC_URL = endpoint;
     process.env.DATOMIC_READ_URLS = endpoint;
     process.env.TRIPLEX_DATOMIC_LAYOUT ??= "lean";
     // [DX-RD1] Why: collect native traces from this fresh owned volume before its reservation is released.
     // Rejected: scraping residents or estimating semaphore wait from round-trip time.
     return await work(`datomic-${slot}-${trial}`, async () => {
+      checkOwner();
       const log = await engine("logs", ["--tail", "160000"]);
+      checkOwner();
       return log.stdout + log.stderr;
     });
   } finally {

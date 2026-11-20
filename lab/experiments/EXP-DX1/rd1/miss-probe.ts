@@ -108,6 +108,7 @@ const sha = (text: string) => createHash("sha256").update(text).digest("hex");
 const count = 24;
 type Miss = {
   id: string;
+  logical: number;
   at: number;
   end: number;
   wire: ReturnType<typeof gatewayExchanges>;
@@ -154,7 +155,7 @@ async function fixture(scope: string) {
         op: "assert" as const,
         entityId,
         attribute: ":rd1/marker",
-        value: { type: "long" as const, value: String(v) },
+        value: { type: "integer" as const, value: String(v) },
         validFrom: SEED_VALID_FROM,
       }));
     const middle = await commit(more(1), "middle"),
@@ -230,7 +231,8 @@ function timing(
   let workMs = 0,
     queueMs = 0,
     exchanges = 0,
-    matchedMisses = 0;
+    matchedMisses = 0,
+    matchedLogical = 0;
   for (const miss of misses) {
     const native = nativeByMiss.get(miss.id);
     const count = miss.wire.length;
@@ -239,6 +241,7 @@ function timing(
     residence.recordMs(miss.end - miss.at);
     if (native?.routes !== count) continue;
     matchedMisses++;
+    matchedLogical += miss.logical;
     workMs += native.work;
     queueMs += native.queue;
     q.recordMs(native.queue);
@@ -250,10 +253,12 @@ function timing(
     assert.equal(matchedMisses, misses.length, "Native gateway trace census differs");
   return {
     matchedMisses,
+    matchedLogical,
     exchanges,
     nativeRunSlot: [...runSlots][0] ?? null,
     meanWorkMs: matchedMisses ? workMs / matchedMisses : null,
     meanQueueMs: matchedMisses ? queueMs / matchedMisses : null,
+    workMsPerLogicalFallback: matchedLogical ? workMs / matchedLogical : null,
     queue: q.summary(),
     service: s.summary(),
     residence: residence.summary(),
@@ -335,6 +340,8 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
       const turn = new ReaderTurn(),
         histogram = new Histogram();
       let serial = 0,
+        oldIssued = 0,
+        oldCompleted = 0,
         correct = 0,
         fallbacks = 0,
         recovery = 0,
@@ -376,6 +383,7 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
           // [DX-RD1] Why: every 200 introductions has the same exact programmed old-cut count.
           // Rejected: changing the subject list or offering more native requests than the selected logical reads.
           const old = (n * 67) % 200 < oldPer200;
+          if (old && at < until) oldIssued++;
           const cut = old ? fx.cuts[(Math.floor(n / 200) + subject) & 1]! : referenceHead;
           const pull = async (): Promise<PullResult> => {
             assert(old);
@@ -398,6 +406,7 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
             assert(trace, "Run the probe with TRIPLEX_TRACE_LEVEL=summary or full");
             const miss: Miss = {
               id: trace.traceId,
+              logical: 1,
               at: clock(),
               end: NaN,
               wire: [],
@@ -446,6 +455,7 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
             continue;
           }
           correct++;
+          oldCompleted += Number(old);
           fallbacks += Number(fallback);
           if (!fallback && pending > 0) localDuringMiss++;
           histogram.recordMs(end - at);
@@ -472,6 +482,7 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
       const store = laneStats
         ? laneStats.exchanges.map((s: any) => ({
             id: s.traceId,
+            logical: s.logical,
             at: s.started,
             end: s.ended,
             wire: s.wire,
@@ -488,6 +499,8 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
         seconds,
         seats: nSeats,
         issued: serial,
+        oldIssued,
+        oldCompleted,
         correct,
         fallbacks,
         drain,
@@ -540,7 +553,7 @@ async function run(slot: string, logs: () => Promise<string>, mode: Mode, output
     for (const [i, a] of arms.entries()) {
       a.gateway = timing(raw, allMisses[i]!, nativeSource, mode !== "control");
       const p = a.fallbacks / a.correct,
-        w = a.gateway.meanWorkMs;
+        w = a.gateway.workMsPerLogicalFallback;
       a.admissionCeiling = p && w ? (permits * 1000) / p / w : null;
       a.predicted = Math.min(baseline, a.admissionCeiling ?? Infinity);
       a.completedFallbackShare = p;
