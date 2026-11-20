@@ -19,7 +19,13 @@ type Layout = "smoke" | "scale" | "batch" | "overlap";
 type Attempt = { binding: string; nonce: string; people: number; mode: Layout; slot: string };
 type Row = Receipt["triples"][number];
 type Fact = ReturnType<typeof deepOwnFacts>[number];
-type Acc = { people: number[]; depths: number[]; journal: string[]; positions: number[] };
+type Acc = {
+  people: number[];
+  depths: number[];
+  journal: string[];
+  positions: number[];
+  values?: string[][];
+};
 type Sample = { start: number; end: number; ms: number; position: number; subject: number };
 type Window = { start: number; end: number };
 const dir = process.argv[2]!;
@@ -421,12 +427,11 @@ async function traffic(
   return summary;
 }
 
-async function eraseArm(
+async function eraseArm<T>(
   f: Fixture,
-  reader: CompositionHandle,
-  basis: Basis,
   index: number,
   group: Acc,
+  work: (start: () => Promise<any>) => Promise<T>,
 ) {
   const client = new DatomicClient(process.env.DATOMIC_URL!, 15000);
   const arm = `erase-${index}`;
@@ -436,7 +441,7 @@ async function eraseArm(
     domain: [...new Set(group.people.flatMap((i) => deepOwnFacts(i).map((row) => row.e)))],
     journal: group.journal,
     witnesses: group.people.map((i) => taskId(i, 0)),
-    values: group.people.map((i, j) => [mark(i, 0, group.depths[j]!)]),
+    values: group.values ?? group.people.map((i, j) => [mark(i, 0, group.depths[j]!)]),
     historyCounts: group.depths.map((d) => 2 * d + 1),
     logPositions: group.positions.slice(0, 4),
   };
@@ -458,7 +463,7 @@ async function eraseArm(
     const beforeBytes = await markStorage();
     const offset = await clock();
     let erase: any;
-    const load = await traffic(f, reader, basis, arm, async () => {
+    const load = await work(async () => {
       const sentAt = wall();
       const result = await diag("erase", { scope: f.scope, arm });
       const receivedAt = wall();
@@ -615,6 +620,50 @@ async function scale() {
       Array.from({ length: run.people }, (_, i) => deepShape(i).facts).reduce((a, b) => a + b, 0),
     );
     output("seed", { facts: f.facts, basis, inputDigest: f.inputs.copy().digest("hex"), groups });
+    if (run.mode === "overlap") {
+      const { importWork, publishWork, replayErased } = await import("./scenarios.ts");
+      const group = groups[1]!;
+      const { imported, late } = await measured(async () => {
+        const imported = await importWork(f.name, run.binding, dir, async (work) => {
+          const arm = await eraseArm(f, 0, group, work);
+          await freshPeer(f, arm, 0);
+          return arm.result;
+        });
+        const i = group.people[0]!,
+          value = mark(i, 0, group.depths[0]!);
+        const late = await replayErased(f.name, run.binding, dir, taskId(i, 0), value);
+        const client = new DatomicClient(process.env.DATOMIC_URL!);
+        try {
+          const current = await client.rows(f.db, {
+            entityIds: [taskId(i, 0)],
+            pattern: { attribute: field(0) },
+          });
+          assert.deepEqual(
+            current.map((r) => r.value_string),
+            [value],
+          );
+        } finally {
+          client.close();
+        }
+        return { imported, late };
+      });
+      output("import-overlap", { imported, late });
+      const published = await publishWork(
+        f.name + "-publish",
+        run.binding,
+        dir,
+        (publisher, cohort, work) =>
+          measured(async () => {
+            const other = new Fixture(publisher, f.name + "-publish");
+            await diag("index", { scope: other.scope });
+            const arm = await eraseArm(other, 1, cohort, work);
+            await freshPeer(other, arm, 1);
+            return arm.result;
+          }),
+      );
+      output("publish-overlap", published);
+      return;
+    }
     reader = await openComposition("reach", "datomic", fixtureName);
     const r = reader;
     const { arms, gc } = await measured(async () => {
@@ -623,7 +672,9 @@ async function scale() {
       for (const [i, group] of groups.entries()) {
         const baseline = await traffic(f, r, basis, `control-${i}`);
         await diag("index", { scope: f.scope });
-        const arm = await eraseArm(f, r, basis, i, group);
+        const arm = await eraseArm(f, i, group, (start) =>
+          traffic(f, r, basis, `erase-${i}`, start),
+        );
         attempts.push({ baseline, arm });
       }
       for (const [i, arm] of attempts.entries()) await freshPeer(f, arm.arm, i);
