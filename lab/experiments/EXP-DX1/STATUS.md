@@ -3033,3 +3033,18 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **DX-RD1 is parked.** The aged-database confirmation is a server item (`rd1/SERVER1.md` at `5f51de7d6`): the fresh-scope
   pairs on server 1 tonight read about 32,000 weighted pulls per second with zero fallback, which does not exercise
   old cuts.
+
+## 2026-11-20 10:39 UTC (05:39 local, 2026-11-20): DX-PREP1 part 2 in: no capacity gain from parallel preparation; builder parked
+
+- **DX-PREP1 part 2 (`ec509b2dc`, Mac VM; `prep1/REPORT.md`).** The old guard: 93.3 ms elapsed and 8.5 ms of writer CPU at
+  the median, most of it waiting; revision and history checks were 135 of its 146 SQL reads. The new opt-in basis
+  guard (one database version checked for a group) added 0.07 to 0.22 ms per save on the smaller fixture (target
+  0.5). At 192,000 facts it certified only 2 of 12 batches and drained 18.2 saves per second against 19.9 for W1.
+  216 receipts and 1,392 historical reads matched between writers; after a SQL restart both saves returned their
+  original receipts; DX-WFIX1's fixes merged and passing. Lean erasure failed here too (values kept in the feed, the
+  erased id reusable by either owner). Its conclusion: the benefit is shorter bursts on small databases; no case for
+  server time as a capacity fix.
+- **DX-PREP1 is parked.** Of the three routes to a higher ceiling for one database, the compact layout (no smaller with
+  the journal restored, 450 saves per second forecast with p99 of 72 and 124 ms) and parallel preparation (no gain at
+  depth) are closed as capacity fixes; grouping with the corrected write path (forecast 260 to 350) is what remains,
+  to be measured by server 2's ten-account runs.
