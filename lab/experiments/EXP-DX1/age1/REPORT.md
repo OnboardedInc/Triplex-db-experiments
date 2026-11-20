@@ -1,5 +1,5 @@
-Keep commit `2859d6b15` for the queued one-billion server run.
-Take `e90e8cd72` for the INT1 merge candidate. The Mac native reruns are queued.
+Keep `2859d6b15` for the queued aging run. The exporter has moved to `9ccb08626`.
+Take `9ccb08626` for the INT1 merge candidate. The last Mac checks are running.
 The Mac check on the server revision adopted a small copy and matched all 120 saves.
 At 24,000 records per second from the estimated 430 million, the run would take 9.60 hours and cost $10.46.
 The driver reads the real starting count and continues only if the observed rate fits the 9.9-hour cap.
@@ -38,7 +38,7 @@ The SDK build, source parsing, rate and count tests, and historical log join com
 
 ## Part 3 integration
 
-Merged INT1 through `a79267191` into the AGE1 candidate. The only conflict was the shared heavy runner. The merge uses the INT1 implementation, and AGE1 uses ordinary tokens. The native gate mounts the exact merged source and compiles the server rung against it. Previous Mac attempts were compressed with entry-by-entry byte checks, and the older manifests refer to paths inside the archives. [Archive checksums](EVIDENCE-ARCHIVES.sha256)
+Merged INT1 through `990badf25` into AGE1. The shared heavy runner uses the INT1 implementation and AGE1 uses ordinary tokens. PREP1 changed compact retraction journals to include the verified predecessor. AGE1 uses the same encoder and keeps the queued pin's earlier layout readable. The native suite mounted exact source and passed 27 tests with 54,079 assertions at `94e424800`. Archived Mac attempts retain entry-by-entry byte checks and their original internal paths. [Archive checksums](EVIDENCE-ARCHIVES.sha256)
 
 The 1B seal exports the exact roster, database identity and original and final replay ledgers. The queued revision can use the exporter after sealing. The export binds the exact hashed seal, immutable checkpoint, roster, restore readback, manifest, attempt and source. The preflight checks live count and clocks, both cuts, fixed row and feed witnesses and the final receipt from a fresh tagged peer. The Mac fixture checks that the old head is refused and exercises the positive comparison only at small size. The v0.1 driver still has to select this input. [Scorecard handoff](SCORECARD-HANDOFF.md)
 
