@@ -24,3 +24,13 @@ env DX_BARE_METAL=1 DOCKER_HOST=unix:///var/run/docker.sock node lab/bin/engine.
 ```
 
 The command offers 5,254 events, including 5,110 primary saves, at the original spacing. The 29-minute budget includes seeding, replay, collection and cleanup. The full 5,910-second schedule cannot fit in that budget at its original pace. Change `--arm` to `serial`, `zgc` or `allocation` for a fresh paired replay, or add `--receipt-predecessors` for the G1 request-count comparison. The server runtime remains unmeasured.
+
+## Mac comparison
+
+Use the existing lab Docker endpoint and the same archive and image-receipt variables. The Mac feed clock requires permission to read the host boot identity. `--preflight` checks the image and clock before any reservation or seed. Give every attempt a new output directory.
+
+```sh
+node lab/bin/heavy.mjs --label DX-TAIL1-serial -- node lab/bin/engine.mjs tail1 --holder DX-TAIL1 --arm serial --seconds 240 --archive "$DX_TAIL1_ARCHIVE" --image-receipt "$DX_TAIL1_IMAGE_RECEIPT" --out "$DX_TAIL1_OUTPUT"
+```
+
+Alternate Serial controls with G1, ZGC and the allocation variant. Compare receipt reuse against the same collector with the flag off. `--full` retains the 98.5-minute offer schedule and its later history phases on the Mac. `--gate` runs the native exactness checks in an independent stack. The durable evidence directory holds the input hashes, JVM logs, gate outcomes and cleanup records. [Evidence manifest](SHA256SUMS)

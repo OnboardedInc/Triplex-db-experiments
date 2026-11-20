@@ -3,7 +3,7 @@ The write gateway stopped for garbage collection in all fifty of the slowest sav
 Some stops happened during the benchmark's history work. Long stops also happened in ordinary traffic.
 The original write gateway used Serial GC. The read gateway and transactor used G1.
 The Mac replay checks the same offers in the same order with the same gaps.
-The short run covers the first four minutes, including the first burst and 5,110 saves.
+The short replay schedules 5,110 primary saves in four minutes, including the first burst.
 The full schedule takes 98.5 minutes at its original pace.
 One Mac attempt verified all 10,000 people and 1,604,464 seed facts. A denied host clock read stopped it before the first offer.
 
