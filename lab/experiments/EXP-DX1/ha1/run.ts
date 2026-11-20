@@ -11,6 +11,8 @@ import { failures } from "./failures.ts";
 async function gatewayChecks(s: Stack) {
   await s.tool();
   const before = await s.view("tool");
+  const witnessPath = "/tmp/" + s.e.prefix + "-recorded-feed.json";
+  const evidence = { nonce: s.e.nonce, role: before.Id, source: s.e.source };
   const result = [];
   for (const name of [
     "selftest",
@@ -23,16 +25,42 @@ async function gatewayChecks(s: Stack) {
   ]) {
     // [DX-HA1] Why: run the gates against the exact mounted integration source in one small reservation.
     // Rejected: borrowing another builder's image-only selftest output.
-    const stdout = await s.exec(
-      "tool",
-      "env",
-      "DATOMIC_JAVA_OPTS=-Xms96m -Xmx768m -XX:ActiveProcessorCount=2",
-      "bin/run",
-      "-m",
-      "triplex.gateway." + name,
-      s.e.nonce,
-    );
-    s.e.write("native-" + name, { nonce: s.e.nonce, role: before.Id, source: s.e.source, stdout });
+    const stdout = await s
+      .exec(
+        "tool",
+        "env",
+        "DATOMIC_JAVA_OPTS=-Xms96m -Xmx768m -XX:ActiveProcessorCount=2",
+        "DF01_RECORDED_PAGE=" + witnessPath,
+        "bin/run",
+        "-m",
+        "triplex.gateway." + name,
+        s.e.nonce,
+      )
+      .catch((error: { stdout?: string; stderr?: string }) => {
+        s.e.write("native-" + name, {
+          ...evidence,
+          stdout: s.redact(error.stdout ?? ""),
+          stderr: s.redact(error.stderr ?? ""),
+        });
+        throw error;
+      });
+    s.e.write("native-" + name, { ...evidence, stdout });
+    if (name === "feed-test") {
+      // [DX-HA1] Why: prove the emitted fixture belongs to this role and covers its exact feed cut.
+      // Rejected: treating stdout alone as evidence of the required feed output.
+      const witness = await s.exec("tool", "cat", witnessPath);
+      const page = JSON.parse(witness);
+      assert.deepEqual([page.database, page.fromT, page.nextT], ["s2-Zg", "100", "106"]);
+      assert.deepEqual(
+        page.rows.map((row: { t: string; kind: string }) => [row.t, row.kind]),
+        [
+          ["100", "commit"],
+          ["101", "skipped"],
+          ["105", "commit"],
+        ],
+      );
+      s.e.write("native-feed-witness", { ...evidence, witness });
+    }
     const counts = /Ran (\d+) tests containing (\d+) assertions\./.exec(stdout);
     assert(counts && Number(counts[1]) >= (name === "selftest" ? 27 : 1) && Number(counts[2]) > 0);
     assert.match(stdout, /0 failures, 0 errors\./);

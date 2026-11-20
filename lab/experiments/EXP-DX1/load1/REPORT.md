@@ -5,7 +5,7 @@ Several small frames can prepare and collect receipts at once. Only one import f
 The first two server arms are 16 facts with two in flight, then 24 with two. The forecasts are 3,040 and 3,600 queryable facts per second.
 The forecasts put quiet reads outside the 1.5× allowance. [The server run](MICRO-SERVER.md) compares every account with two live-only controls.
 The Mac verified 13,936 facts, reached four and eight frames in flight, and checked order, original receipts and restart. Mac timings are diagnostic.
-Server code is based on `31646e007`. Allow 30–45 minutes on one server, with a 90-minute allocation including setup and collection.
+The integrated code is `f5a3e90bf`. Allow 30–45 minutes on one server, with 90 minutes allocated for setup, tests and collection.
 
 ## Evidence and predictions
 
@@ -18,4 +18,8 @@ Server code is based on `31646e007`. Allow 30–45 minutes on one server, with a
 
 ## Version 0.1 intake
 
+- Merged INT1 revision `a08f20103`. Core passed 861 checks, Datomic passed 434 with 52 opt-in tests skipped, and the focused and retention checks passed 34. The managed import verified 11,472 facts on the merged code.
+- The shared database recovered in all four transactor fault cells. Every observed historical probe succeeded, 742 in total. These runs checked receipts and feed resume in addition to the reads. [Exact attempts and hashes](EVIDENCE6.md)
+
+- The planned whole-database move verified all 266 receipts and all 316 pinned-read probes. The shared Mac pause was 31.74 seconds, of which 21.17 seconds was transactor startup. The 30-second target remains open on bare metal.
 - P8 uses the [single-server import matrix](MICRO-SERVER.md) and its per-account comparison. P9 uses the [single-server shared-database fault command](../ha1/BENCH.md#version-01-recovery-row-on-one-server). Host loss, synchronous commit cost and whole-database relocation need the paired runs described there.
