@@ -23,9 +23,16 @@ export class DeepAccount {
   readonly db: Objects;
   readonly control: Account;
   readonly binding: string;
-  constructor(comp: CompositionHandle, name: string, binding: string) {
+  private readonly readWorlds: typeof readDeepWorlds;
+  constructor(
+    comp: CompositionHandle,
+    name: string,
+    binding: string,
+    readWorlds: typeof readDeepWorlds = readDeepWorlds,
+  ) {
     this.comp = comp;
     this.binding = binding;
+    this.readWorlds = readWorlds;
     this.db = new Objects(comp, name);
     this.control = this.guarded();
   }
@@ -62,7 +69,7 @@ export class DeepAccount {
     const d = debt.value,
       subject = W0.placementId(d.index),
       h = (await this.control.head(d.sourceBefore)).value;
-    const [raw] = await readDeepWorlds(
+    const [raw] = await this.readWorlds(
       this.comp,
       [d.index],
       { position: debt.position, validAt: d.validAt },
@@ -184,7 +191,7 @@ export class DeepAccount {
         assert.equal(W0.placementId(n), s);
         return n;
       });
-      for (const w of await readDeepWorlds(
+      for (const w of await this.readWorlds(
         this.comp,
         group,
         { position: p, validAt: debt.value.validAt },
@@ -203,7 +210,7 @@ export class DeepAccount {
       basis = { tx: debt.position, validTime: iso(at) };
     const id = Number(subject.slice(4));
     assert(W0.placementId(id) === subject);
-    const [w] = await readDeepWorlds(
+    const [w] = await this.readWorlds(
       this.comp,
       [id],
       { position: p, validAt: at },

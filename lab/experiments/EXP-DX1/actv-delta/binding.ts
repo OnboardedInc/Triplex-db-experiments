@@ -61,6 +61,7 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
                         "solo-reference",
                         "reference-traffic",
                         "solo-population",
+                        "solo-policy",
                       ]
                     : []),
                   "v3",

@@ -7,6 +7,7 @@ import { percentile } from "../../../bench/lib/w0-traffic.ts";
 import { keyFor } from "../scale1/tenants.ts";
 import { hash } from "./store.ts";
 import { soloPopulation, soloScope } from "./solo-population.ts";
+import { checkDeepPolicy, scopedOvertimeRows } from "./solo-policy.ts";
 import { sources } from "./binding.ts";
 import type { Identity } from "./server.ts";
 export function checkSolo(dir: string, b: Identity, n: number, count: number, mode: string) {
@@ -43,6 +44,7 @@ export function checkSolo(dir: string, b: Identity, n: number, count: number, mo
     const pinned = soloPopulation(n);
     assert(r.seed.sha256 === pinned.sha256 && r.seed.facts === pinned.facts);
   }
+  checkDeepPolicy(r.policy, scope, r.seed.position);
   assert.equal(r.loaded.sha, createHash("sha256").update(bytes).digest("hex"));
   assert.deepEqual(x.binding, {
     nonce: b.nonce,
@@ -141,5 +143,16 @@ export function checkSolo(dir: string, b: Identity, n: number, count: number, mo
     );
     for (const k of ["all", "event", "parts"]) assert.match(v[k], /^[a-f0-9]{64}$/);
   }
+  const narrow = r.proofs[1];
+  const expected = scopedOvertimeRows(n);
+  assert(expected.length > 0);
+  assert.equal(
+    narrow.people,
+    expected.length,
+    "scoped overtime failed to change the expected subjects",
+  );
+  assert.equal(narrow.rowsDigest, hash(expected));
+  assert.equal(narrow.rows, narrow.people);
+  assert.equal(narrow.notices, 0);
   return r;
 }

@@ -8,7 +8,7 @@ import {
   type Receipt,
 } from "../../../bench/lib/composition.ts";
 import { W0, V_W0 } from "../../../bench/lib/w0-world.ts";
-import { deepGroups, readDeepWorlds } from "../../../bench/lib/deep-activation.ts";
+import { deepGroups } from "../../../bench/lib/deep-activation.ts";
 import { makeDeepTrace } from "../../../bench/lib/deep-trace.ts";
 import { subjectOf } from "../../../bench/lib/world.ts";
 import type { SubjectState } from "../../../bench/lib/commands.ts";
@@ -23,6 +23,7 @@ import { iso } from "./v3.ts";
 import { seedFacts } from "./model.ts";
 import { expand, concrete } from "./dispatch.ts";
 import { soloPopulation, soloScope } from "./solo-population.ts";
+import { scopedDeepPolicy, scopedOvertimeRows } from "./solo-policy.ts";
 import { pageReference } from "./solo-reference.ts";
 import { headSha, stamp } from "./binding.ts";
 import type { Identity } from "./server.ts";
@@ -82,8 +83,6 @@ export async function solo(
   }
   const pipe = writerPipeline(source),
     bind = hash([b, code, target]),
-    bridge = new DeepAccount(pipe.comp, target.key, bind),
-    read = new DeepAccount(rc, target.key, bind),
     oracle = emptyAudit(),
     pageOracle = emptyAudit();
   try {
@@ -146,15 +145,18 @@ export async function solo(
         seed.facts === expectedSeed.facts && seed.sha256 === expectedSeed.sha256,
         "native seed differs from the verified single-account fixture",
       );
-    const ids = Array.from({ length: n }, (_, i) => W0.placementId(i)),
-      basis = { tx: seed.position, validTime: iso(V_W0) },
+    const policy = await scopedDeepPolicy(source, seed.position),
+      bridge = new DeepAccount(pipe.comp, target.key, bind, policy.read),
+      read = new DeepAccount(rc, target.key, bind, policy.read),
+      ids = Array.from({ length: n }, (_, i) => W0.placementId(i)),
+      basis = { tx: policy.catalog.position, validTime: iso(V_W0) },
       worlds: W0.World[] = [];
     enter("checking the source and building ordinary indexes");
     for (const group of deepGroups(0, n)) {
-      const batch = await readDeepWorlds(
+      const batch = await policy.read(
         rc,
         group,
-        { position: seed.position, validAt: V_W0 },
+        { position: policy.catalog.position, validAt: V_W0 },
         target.key,
       );
       for (const o of [oracle, pageOracle])
@@ -166,14 +168,19 @@ export async function solo(
     const timeline = new Timeline(oracle, basis, ready.position);
     const services = [bridge];
     for (const neighbor of neighbors) {
-      const service = new DeepAccount(pipe.comp, neighbor.key, hash([b, code, neighbor])),
+      const service = new DeepAccount(
+          pipe.comp,
+          neighbor.key,
+          hash([b, code, neighbor]),
+          policy.read,
+        ),
         small: W0.World[] = [];
       for (const group of deepGroups(neighbor.first, neighbor.people))
         small.push(
-          ...(await readDeepWorlds(
+          ...(await policy.read(
             rc,
             group,
-            { position: seed.position, validAt: V_W0 },
+            { position: policy.catalog.position, validAt: V_W0 },
             neighbor.key,
           )),
         );
@@ -197,7 +204,7 @@ export async function solo(
       assert(!saved.duplicate);
       observe(saved.receipt);
       const p = saved.receipt.position,
-        [raw] = await readDeepWorlds(rc, [e.subject], { position: p, validAt: V_W0 }, a.key);
+        [raw] = await policy.read(rc, [e.subject], { position: p, validAt: V_W0 }, a.key);
       const repair = await rc.transactionByCommand(
         service.db.entity("cmd:event:repair-" + cmd.commandId),
       );
@@ -229,7 +236,8 @@ export async function solo(
         return s.item;
       },
       true,
-      { position: seed.position, worlds },
+      { position: policy.catalog.position, worlds },
+      policy.read,
     );
     worlds.length = 0;
     enter("offering releases to sixty-four readers and bursting saves");
@@ -276,6 +284,7 @@ export async function solo(
         })),
       );
       assert.deepEqual(owed, all.notices);
+      if (o.label === "narrow") assert.deepEqual(all.rows, scopedOvertimeRows(n));
       proofs.push({
         seq: o.seq,
         position: o.position,
@@ -284,6 +293,7 @@ export async function solo(
         rows: x.rows,
         notices: x.notices,
         all: all.digest,
+        rowsDigest: hash(all.rows),
         event: x.event,
         parts: x.digest,
       });
@@ -297,6 +307,7 @@ export async function solo(
       accounts,
       subjects: n,
       seed,
+      policy: policy.catalog,
       trace: hash(JSON.stringify(events)),
       timings: [...timings, { stage: "complete", startMs: performance.now() - begin }],
       reference,
