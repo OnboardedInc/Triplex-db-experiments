@@ -1,29 +1,31 @@
 # Failover correctness and server measurements
 
-A saved edit whose reply was lost returned the original receipt when resent after failover.
-The edit appeared once in the change history. Earlier and later reads both returned the expected value.
-In the first planned move with scheduled traffic, a new save arrived after 13.56 seconds.
-Four systems on one shared storage pair resumed saves within 12.03 seconds and within 64 milliseconds of one another.
-With a separate storage pair for each of the four systems, the last resumed at 22.25 seconds.
+All 782 scheduled saves settled once across eight small Mac drills. 689 needed a retry with the identical command.
+Every earlier confirmed save was present on the survivor. All 7,779 scheduled reads answered within the caller deadline with the expected values.
+Resending an edit whose reply was lost returned its original receipt. The edit appeared once in the change history.
+The old disk could no longer start as a writer. The planned move reopened writes once the second copy was ready.
 Choose A to reopen on one copy, B to wait for a replacement, or C to keep three machines. I recommend B within the version 0.1 budget and C for production when funded and tested. [Owner decision](OWNER-DECISION.md)
 
 ## Availability
 
-Five saves and fifty reads are offered per second per system. The one-second caller deadline classifies late answers separately from refusals and timeouts. Clients keep each pending command durably and resubmit its original ID and payload until a receipt is confirmed.
+Each run offered five saves and fifty reads per second over eight subjects and 1,280 facts. The caller deadline was one second. Mac clocks are diagnostic. [Raw attempts and independent recount](EVIDENCE.md)
 
-| Earlier Mac diagnostic | First on-time new save | Unavailable at 200 ms sampling | Offers refused during cut | Total retried | Longest on-time read gap |
+| Mac drill | First on-time new save | Longest save gap | On time / refused / timed out / late in cut | Settled / retried | Longest read gap |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Withheld reply | 18.55 s | 18.0 s | 90 | 90 | 0.093 s |
-| Mid-commit | 18.90 s | 18.6 s | 93 | 98 | 0.063 s |
-| 2,000-fact import | 17.00 s | 16.6 s | 83 | 88 | 0.039 s |
-| Planned move | 13.56 s | 13.0 s | 65 | 65 | 0.053 s |
-| Index fault, first attempt | 23.41 s | 23.0 s | 115 | Ledger incomplete | 24.04 s |
-| Index fault, field-page probes | 14.56 s | 13.8 s | 69 | 74 | 0.183 s |
-| Old writer and disk returned | 14.66 s | 14.4 s | 72 | 72 | 0.087 s |
+| Withheld reply | 15.95 s | 15.2 s | 0 / 76 / 0 / 0 | 91 / 76 | 0.150 s |
+| WAL direction cut | 18.23 s | 17.2 s | 0 / 86 / 0 / 0 | 100 / 87 | 0.154 s |
+| Reply direction cut | 19.79 s | 18.8 s | 0 / 92 / 0 / 2 | 106 / 92 | 0.107 s |
+| Mid-commit kill | 18.61 s | 18.2 s | 0 / 91 / 0 / 0 | 103 / 96 | 0.054 s |
+| Index-job kill | 15.86 s | 15.2 s | 0 / 76 / 0 / 0 | 89 / 81 | 0.649 s |
+| 2,000-fact import kill | 21.59 s | 20.8 s | 1 / 104 / 0 / 0 | 117 / 109 | 0.145 s |
+| Old disk returns | No on-time sample | ≥16.7 s | 1 / 76 / 0 / 8 | 90 / 76 | 0.213 s |
+| Planned move | 15.82 s | 14.8 s | 0 / 72 / 0 / 2 | 86 / 72 | 0.095 s |
 
-Offers are counted from the fault up to the first scheduled on-time save sent to the new writer. Every save in those windows was refused. No offer in those windows timed out or returned a late receipt. Read outcomes and offers outside the cut remain in the raw evidence. [Independent recount](v2/recount-local.ts)
+Cut outcomes count offers due from the fault up to the first on-time save sent to the new writer, or the end of the observation window. The gap is the longest consecutive run of offers without an on-time receipt at 200 ms sampling. No offer produced a wrong result.
 
-The live Mac retry exercised a committed replacement that had retired its predecessor. It recovered the original receipt and settled all 91 scheduled saves, including 76 same-ID retries. The earlier scheduled traffic only appended facts. [SDK retry contract and test](SDK-RETRY.md)
+The old-disk run ended its offer window before an on-time save was recorded on the new route. An explicit fresh receipt arrived after 19.89 s and a further receipt reached both copies 6.28 s after the replacement copy began. The planned-move probe received its fresh two-copy receipt 15.76 s after the seal.
+
+The drills rechecked 92 pre-cut receipt lookups and each on-time and late scheduled receipt. The survivor feed kept the order and unique positions. The independent replay oracle also compared the values before and after the committed replacement. Clients keep pending commands durably and retry the same ID and payload. [SDK retry specification](SDK-RETRY.md)
 
 The earlier Part 1 campaign kept all 73 acknowledged receipts and recorded 1,234 good reads. Its separate grouping and synchronous-flush measurements remain available. [Part 1 report](https://github.com/OnboardedInc/Triplex-db-experiments/blob/e61905198/lab/experiments/EXP-DX1/hasync1/REPORT.md)
 
@@ -31,7 +33,7 @@ The earlier Part 1 campaign kept all 73 acknowledged receipts and recorded 1,234
 
 - The edited server size rungs target 100,549, 1,000,464 and 16,045,255 active facts, with three retire-and-replace edits on every fifth subject. Timings split Datomic log replay, broker readiness, peer synchronization, first-touch reads and PostgreSQL rewind. [Scale forecasts](SCALE.md) · [Server plan](v2/bench-plan.ts)
 - The fleet runs 1, 4 or 10 Datomic systems, each with an active and standby transactor. The PostgreSQL alternatives are one shared pair with separate SQL schemas and roles or a pair per system. Cgroup readings report idle memory and cores by role. [Fleet driver](v2/fleet.ts)
-- The old writer and the fresh container carrying its original disk refused startup. The replacement made a new write safe on two copies 1.33 s after its small copy began, ending a 17.59 s one-copy window. Full rebuild forecasts are 45–180 s at 16M and 7–27 min at 160M. The controller protocol passed reboot and simulated clock-skew checks. [Fence](FENCE.md)
+- The returning-disk startup, simulated clock skew and replacement were checked locally. Full rebuild forecasts are 45–180 s at 16M and 7–27 min at 160M. The independent physical fence still needs a power-loss drill. [Fence](FENCE.md)
 
 ## Paired bench
 
@@ -43,6 +45,6 @@ Forecast 78–85 minutes plus up to four for launch and collection with prepared
 
 Version 0.1 still needs integration on `exp/DX-INT1` and the failover and move gates on its shared database at both scorecard ages. [Merge readiness](https://github.com/OnboardedInc/Triplex-db-experiments/blob/exp/DX-V01-scorecard/lab/experiments/EXP-DX1/v01/READINESS.md)
 
-The four exploratory fleet cells waited a combined 4 hours 3 minutes 7 seconds. The earlier queue was stopped before either ten-system run. Fleet and size measurements use the two-server campaign. Mac correctness trials take one ordinary heavy token and write a source-, slot- and nonce-bound diagnostic marker. Physical power and its independent fence are unverified. [Fleet measurements](SCALE.md)
+Ordinary Mac admission took 54 min 19 s across eight drills, including 17 min 11 s before the first. The earlier four fleet cells waited a combined 4 h 3 min 7 s. Both ten-system cells and all new size timings are in the paired campaign. [Fleet measurements](SCALE.md)
 
 Scoped TypeScript and focused HA and command recovery tests cover the gate. The replacement settlement checks the withheld and recovered receipts, exact same-input replay, scoped claim, ordered feed and oracle cuts. Its pending body and response are fresh and bound to the gate nonce, slot, source and scope. No acceptance pins moved. [Evidence and audit](EVIDENCE.md) · [Checksums](SHA256SUMS)
