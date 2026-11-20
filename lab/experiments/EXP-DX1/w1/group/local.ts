@@ -435,6 +435,7 @@ try {
       const g = await gateway(false, {
         TX2_SAVE_LEDGER: "1",
         TX2_PACKED_JOURNAL: "0",
+        TX2_PREDECESSOR_LOOKUP: "1",
         TX2_SMALL_ROWS: "1",
         TX2_LEAN_NATIVE_QUERY: covered ? "1" : "0",
       });

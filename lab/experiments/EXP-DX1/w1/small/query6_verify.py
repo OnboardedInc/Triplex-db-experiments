@@ -118,6 +118,7 @@ if study == "query6-cost":
         assert writer["database"] == arm["db"] and writer["installedDefinitionMatches"] is True
         assert writer["ledger"] is True and writer["packedJournal"] is False and writer["leanNativeQuery"] is covered
         assert writer["packedJournalCount"] == 0 and len(writer["selectedDefinitionSha256"]) == 64
+        assert writer["predecessorSelected"] is True and writer["selectedFunction"].startswith(":triplex.write/v-")
         samples = arm["samples"]
         assert len(samples) == len({r["id"] for r in samples}) == 64
         for n, sample in enumerate(samples):

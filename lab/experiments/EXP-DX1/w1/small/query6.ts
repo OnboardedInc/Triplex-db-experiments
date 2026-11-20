@@ -436,6 +436,8 @@ export function queryCost(url: string, nonce: string, layout: Layout, covered: b
       leanNativeQuery: boolean;
       installedDefinitionMatches: boolean;
       selectedDefinitionSha256: string;
+      selectedFunction: string;
+      predecessorSelected: boolean;
     }>("GET", `/v2/db/${db}/write-options`);
     assert.equal(writer.database, db);
     assert.equal(writer.ledger, true);
@@ -443,9 +445,12 @@ export function queryCost(url: string, nonce: string, layout: Layout, covered: b
     assert.equal(writer.packedJournalCount, 0);
     assert.equal(writer.installedDefinitionMatches, true, JSON.stringify(writer));
     assert.match(writer.selectedDefinitionSha256, /^[a-f0-9]{64}$/);
+    assert.match(writer.selectedFunction, /^:triplex\.write\/v-[a-f0-9]{24}$/);
+    assert.equal(writer.predecessorSelected, true);
     assert.equal(writer.leanNativeQuery, covered);
+    const attribute = ":price/field";
     const seed = await run(
-      t.transact(Array.from({ length: 48 }, (_, i) => a("e:" + i, ":field", "seed"))),
+      t.transact(Array.from({ length: 48 }, (_, i) => a("e:" + i, attribute, "seed"))),
     );
     let last = seed.triples[0]!;
     const samples = [];
@@ -456,7 +461,7 @@ export function queryCost(url: string, nonce: string, layout: Layout, covered: b
       requests = [];
       const start = performance.now();
       const committed = await run(
-        t.transact([{ op: "retract", id: last.id }, a("e:0", ":field", expected)], {
+        t.transact([{ op: "retract", id: last.id }, a("e:0", attribute, expected)], {
           commandId: "save:" + n,
         }),
       );
@@ -479,7 +484,7 @@ export function queryCost(url: string, nonce: string, layout: Layout, covered: b
               t.query(
                 {
                   find: ["?v"],
-                  where: [["e:0", ":field", "?v"]],
+                  where: [["e:0", attribute, "?v"]],
                 },
                 { basis },
               ),
@@ -487,7 +492,7 @@ export function queryCost(url: string, nonce: string, layout: Layout, covered: b
           )
         : (
             await run(
-              t.match({ entityId: owner("e:0"), attribute: Attribute.make(":field") }, basis),
+              t.match({ entityId: owner("e:0"), attribute: Attribute.make(attribute) }, basis),
             )
           ).map((row) => ({ "?v": row.value.value }));
       const readMs = performance.now() - read;
