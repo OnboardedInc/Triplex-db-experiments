@@ -4,6 +4,7 @@
             [triplex.age.gate :as gate]
             [triplex.age.native :as native]
             [triplex.age.tape :as tape]
+            [triplex.gateway.commit :as commit]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.main :as gateway]
             [triplex.gateway.storage :as storage])
@@ -88,27 +89,35 @@
      ["pinned-year-idle" cold before-last-hot :pinned]
      ["old-cut" hot (min 1 saves) :old-cut]]))
 
-(defn confirm-page! [page pop after count]
-  (let [expected (mapv (fn [n] [(tape/tx-id n) (+ (tape/seed-head pop) (inc n))])
-                       (range after (+ after count)))]
-    (gate/equal! expected (mapv #(subvec % 0 2) (get page "transactions")) "Feed membership differs")
-    (gate/equal! (mapv (fn [[_ p]] [p p]) expected) (get page "clockEnds") "Feed boundary differs")
-    (doseq [[n [_ _ rows]] (map vector (range after (+ after count)) (get page "transactions"))]
-      (let [expected (:journal (tape/command pop n))
-            observed (mapv lean/decode rows)]
-        (gate/equal! (into {} (map (juxt :id :attribute)) expected)
-                     (into {} (map (juxt :id :attribute)) observed) "Feed journal record identities differ")
-        (doseq [row observed
-                :let [want (first (filter #(= (:id row) (:id %)) expected))]]
-          (gate/equal! (if (= ":_tx/change" (:attribute want))
-                         (dissoc want :value_json) want)
-                       (select-keys row (if (= ":_tx/change" (:attribute want))
-                                          (remove #{:value_json} (keys want)) (keys want)))
-                       "Feed journal row differs")
-          (when (= ":_tx/change" (:attribute want))
-            (let [value (json/read-str (:value_json want))]
-              (gate/equal! (cond-> value (= "assert" (get value "op")) (assoc "recordedAt" (:recorded_at want)))
-                           (json/read-str (:value_json row)) "Feed change payload differs"))))))))
+(defn confirm-page!
+  ([page pop after count] (confirm-page! page pop after count "recorded-predecessor-k"))
+  ([page pop after count policy]
+    (let [expected (mapv (fn [n] [(tape/tx-id n) (+ (tape/seed-head pop) (inc n))])
+                         (range after (+ after count)))]
+      (gate/equal! expected (mapv #(subvec % 0 2) (get page "transactions")) "Feed membership differs")
+      (gate/equal! (mapv (fn [[_ p]] [p p]) expected) (get page "clockEnds") "Feed boundary differs")
+      (doseq [[n [_ _ rows]] (map vector (range after (+ after count)) (get page "transactions"))]
+        (let [command (tape/command pop n)
+              expected (:journal command)
+              prior (when (= policy "recorded-predecessor-k") (native/recorded-predecessors command))
+              new-ids (set (map :id (:fresh command)))
+              observed (mapv lean/decode rows)]
+          (gate/equal! (into {} (map (juxt :id :attribute)) expected)
+                       (into {} (map (juxt :id :attribute)) observed) "Feed journal record identities differ")
+          (doseq [row observed
+                  :let [want (first (filter #(= (:id row) (:id %)) expected))]]
+            (gate/equal! (if (= ":_tx/change" (:attribute want))
+                           (dissoc want :value_json) want)
+                         (select-keys row (if (= ":_tx/change" (:attribute want))
+                                            (remove #{:value_json} (keys want)) (keys want)))
+                         "Feed journal row differs")
+            (when (= ":_tx/change" (:attribute want))
+              (let [value (json/read-str (:value_json want))
+                    clock (:recorded_at want)
+                    authored (case policy
+                               "classic-k" (cond-> value (= "assert" (get value "op")) (assoc "recordedAt" clock))
+                               "recorded-predecessor-k" (commit/rewrite-change value clock new-ids prior))]
+                (gate/equal! authored (json/read-str (:value_json row)) "Feed change payload differs")))))))))
 
 (defn timed-feed [db pop saves]
   (let [count (min 7 saves) after (- saves count) p (+ (tape/seed-head pop) after)]

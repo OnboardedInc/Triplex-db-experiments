@@ -18,7 +18,7 @@ test("the handoff binds the exact seal, restore, attempt and two replay ledgers"
   const source = "a".repeat(40), target = 1e9, records = target + 20, t = 39, head = 33, db = "test-scope";
   const binding = { attempt, source, runSpecSha: sha("spec"), target, imageSha: sha("image"), datomicSha: sha("jar"), db };
   const observation = { event: "scorecard-cut", attempt, physicalT: t, logicalHead: head, records, database: db,
-    sourceSeed: { "manifest-sha": binding.imageSha } };
+    journal: "classic-k", sourceSeed: { "manifest-sha": binding.imageSha } };
   const event = (fields) => "DX_AGE1 " + JSON.stringify({ attempt, ...fields }) + "\n";
   const files = { "binding.json": JSON.stringify(binding), "seal.log": event({ event: "seal-cut", target, t, head, records }),
     "restore-readback.log": event({ event: "restore-readback", t, head }) };
@@ -33,6 +33,7 @@ test("the handoff binds the exact seal, restore, attempt and two replay ledgers"
   const call = (value = observation) => writeScorecard(final, sha(sealed), state, card, value);
   assert.throws(() => call({ ...observation, attempt: randomUUID() }));
   assert.throws(() => call({ ...observation, records: records + 1 }));
+  assert.throws(() => call({ ...observation, journal: "recorded-predecessor-k" }));
   assert.throws(() => writeScorecard(final, sha("stale seal"), state, card, observation));
   const first = call();
   assert.equal(first.sha256, sha(fs.readFileSync(card)));

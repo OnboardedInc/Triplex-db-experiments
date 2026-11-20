@@ -14,6 +14,12 @@ const target = 1_000_000_000;
 const version = "triplex-age1-scorecard/1";
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 
+function journalPolicy(result) {
+  const policy = result.journal ?? "classic-k";
+  assert(["classic-k", "recorded-predecessor-k"].includes(policy));
+  return policy;
+}
+
 function checked(file, pin) {
   const bytes = fs.readFileSync(file);
   assert(/^[0-9a-f]{64}$/.test(pin));
@@ -54,7 +60,8 @@ function live(file, database, result, datomicSha) {
     path.join(repo, "packages/datomic/gateway/src"), path.join(here, "src")].join(path.delimiter);
   const args = ["-Xmx1g", "-Dlogback.configurationFile=" + path.join(here, "server-logback.xml"),
     "-Dtriplex.codec.spec=" + path.join(repo, "packages/datomic/src/codec-spec.json"),
-    "-cp", cp, "clojure.main", "-m", "triplex.age.scorecard", file, database, ...cut(result).map(String)];
+    "-cp", cp, "clojure.main", "-m", "triplex.age.scorecard", file, database, ...cut(result).map(String),
+    journalPolicy(result)];
   const out = execFileSync(java, args, { env: { ...process.env, AGE_ATTEMPT: attempt }, encoding: "utf8", timeout: 180000 });
   return stable(singleEvent(out, "scorecard-cut", attempt), attempt);
 }
@@ -78,6 +85,7 @@ export function writeScorecard(sealedFile, sealSha, state, output, observation) 
   const observed = observation ? stable(observation, sealed.attempt) : live(state, binding.db, sealed, binding.datomicSha);
   assert.deepEqual([observed.physicalT, observed.logicalHead, observed.records], expected);
   assert.equal(observed.database, binding.db);
+  assert.equal(observed.journal, journalPolicy(sealed));
   assert.equal(observed.sourceSeed["manifest-sha"], binding.imageSha);
   const ledger = gzipSync(JSON.stringify([prior.toString("base64"), population.toString("base64")]));
   const bundle = { version, ...observed, producer: sealed.source, agingAttempt: sealed.attempt,
@@ -116,9 +124,10 @@ export function checkScorecard(file, pin) {
     fs.writeFileSync(state, checkpoint, { mode: 0o600 });
     fs.writeFileSync(state + ".population.edn", population, { mode: 0o600 });
     const physical = process.env.AGE_SCORECARD_PHYSICAL_DB || expected.database;
+    const journal = journalPolicy(expected);
     const observed = live(state, physical, { target, t: expected.physicalT, head: expected.logicalHead,
-      records: expected.records }, datomicSha);
-    assert.deepEqual(observed, expected, "Fresh peer observation differs from the aged scorecard handoff");
+      records: expected.records, journal }, datomicSha);
+    assert.deepEqual(observed, { ...expected, journal }, "Fresh peer observation differs from the aged scorecard handoff");
     return { observedAt: new Date().toISOString(), database: physical, nativeId: observed.nativeId,
       logicalHead: observed.logicalHead, physicalT: observed.physicalT, records: observed.records, bundleSha: pin };
   } finally {

@@ -336,10 +336,11 @@ async function run(configFile, config) {
     }
     const cut = await peer("seal", "seal-cut", "seal", state, String(config.target));
     assert.deepEqual([cut.t, cut.head, cut.records], [r.t, r.head, r.records]);
+    const journal = "recorded-predecessor-k";
     const scorecardCut = await peer("scorecard-cut", "scorecard-cut", "scorecard-cut", state, binding.db,
-      String(r.t), String(r.head), String(r.records));
+      String(r.t), String(r.head), String(r.records), journal);
     const result = { attempt, bindingSha: binding.runSpecSha, source: binding.source, target: config.target,
-      head: r.head, t: r.t, records: r.records, cold, structure, endJava,
+      head: r.head, t: r.t, records: r.records, journal, cold, structure, endJava,
       checkpointSha: fileSha(state), seedLedgerSha: fileSha(state + ".population.edn"),
       measuredBy: r.observedBy, windowsBy: Object.fromEntries(Object.entries(r.windows)
         .map(([label, window]) => [label, { attempt: window.observedBy, from: window.wallStart, to: window.wallEnd }])),

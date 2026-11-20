@@ -4,6 +4,8 @@ At seal, AGE1 writes `1000000000/aged-scorecard.json` and prints its SHA-256. Ke
 
 The queued server revision `2859d6b15` can finish as pinned. Run the exporter from the merge candidate against its intact run directory and exclusively held database once it seals.
 
+The handoff labels the journal encoding. Merged INT1 writes compact rows with authoritative predecessor metadata. A seal from the queued revision uses the earlier K journal. The checker uses the encoding recorded by the producer when it compares the feed.
+
 ```sh
 node lab/experiments/EXP-DX1/age1/scorecard.mjs export \
   "$AGE_SEALED_JSON" "$AGE_SEALED_SHA256" "$AGE_STATE_EDN" "$AGE_HANDOFF_JSON"

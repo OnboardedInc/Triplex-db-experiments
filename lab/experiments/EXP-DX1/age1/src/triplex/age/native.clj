@@ -71,35 +71,42 @@
 
 (defn native-rows [rows ids] (mapv #(stored-text % ids) rows))
 
-(defn journal-texts [journal prev ids position clock]
-  (let [prior (into {} (map (fn [r] [(:id r) {"recordedAt" (:recorded_at r)
-                                              "validFrom" (:valid_from r) "validTo" (:valid_to r)}]) prev))
-        stamp (commit/stamp true clock ids (dec position) position position false prior)]
+(defn predecessor-texts [{:keys [prior prior-texts]}]
+  (let [prior-ids (set (map :id prior))]
+    (mapv (fn [r text]
+            (or text (if (.startsWith ^String (:id r) "A")
+                       (fixture/row-text r) (stored-text r prior-ids))))
+          prior (or prior-texts (repeat nil)))))
+
+(defn recorded-predecessors [{:keys [prior] :as command}]
+  (zipmap (map :id prior) (map commit/recorded-row (predecessor-texts command))))
+
+(defn journal-texts [journal prior ids position clock]
+  (let [stamp (commit/stamp true clock ids (dec position) position position false prior)]
     (mapv (fn [row]
             (if (storage/timed-retraction row)
               (let [text (fixture/row-text row)
-                    offset (+ 44 (count (:id row)))]
-                ;; [DX-AGE1] Why: K keeps timed retract journals in the canonical full encoding.
-                ;; Rejected: compressing these rows as if the predecessor clock were client-authoritative.
-                (stamp [:triplex/row text position offset :row]))
+                    offset (+ 44 (count (:id row)))
+                    plan (small/prepare text offset position ids)]
+                ;; [DX-AGE1] Why: the merged writer adds authoritative predecessor metadata inside the compact row.
+                ;; Rejected: stamping the client's provisional retraction or emitting the old full encoding.
+                (check! (map? plan) "Timed retraction no longer has a compact predecessor slot" {:id (:id row)})
+                (stamp [:triplex/row (subs text 0 offset) position offset :row plan]))
               (stored-text row ids))) journal)))
 
-(defn render [{:keys [owner operation tx position clock fresh prior journal prior-texts]}]
+(defn render [{:keys [owner operation tx position clock fresh prior journal] :as command}]
   (let [ids (set (map :id (concat fresh journal)))
         owner-ref [:triplex.entity/id owner]
-        prior-ids (set (map :id prior))]
+        predecessors (predecessor-texts command)
+        recorded (zipmap (map :id prior) (map commit/recorded-row predecessors))]
     ;; [DX-AGE1] Why: the native transaction keeps one actual log frame and receipt per K save.
     ;; Rejected: combining solo saves in one physical transaction, which replaces instants and changes native cuts.
     (into [{:db/id "datomic.tx" :triplex.tx/position position :triplex.tx/operation-id operation
             :triplex.entity/id tx :triplex.claim/command-id operation :triplex.tx/max-recorded-at clock
-            :triplex.entity/row (journal-texts journal prior ids position clock)}
+            :triplex.entity/row (journal-texts journal recorded ids position clock)}
            [:db/add owner-ref :triplex.entity/rev position]]
           (concat (map (fn [value] [:db/add owner-ref :triplex.entity/row value]) (native-rows fresh ids))
-                  (map (fn [value] [:db/retract owner-ref :triplex.entity/row value])
-                       (map (fn [r text]
-                              (or text (if (.startsWith ^String (:id r) "A")
-                                         (fixture/row-text r) (stored-text r prior-ids))))
-                            prior (or prior-texts (repeat nil))))))))
+                  (map (fn [value] [:db/retract owner-ref :triplex.entity/row value]) predecessors)))))
 
 (def attrs [:db/txInstant :triplex.tx/position :triplex.tx/operation-id :triplex.entity/id
             :triplex.claim/command-id :triplex.tx/max-recorded-at :triplex.entity/row :triplex.entity/rev])

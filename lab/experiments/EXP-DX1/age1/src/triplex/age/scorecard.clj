@@ -14,6 +14,7 @@
         view (rung/verify-state! state db)
         seed (d/as-of view (:seed-t pop))
         uid (:db-id conn)
+        policy (get state :journal "recorded-predecessor-k")
         last-n (dec (:observed state))
         last-command (tape/command pop last-n)
         last-receipt (gate/read-receipt db last-n)]
@@ -35,9 +36,9 @@
                    "Original membership, row bytes or owner revision differs"))
     (doseq [[cell i n pinned?] (rung/read-targets pop (:observed state))]
       (rung/read-probe! db pop cell i n pinned?))
-    (scale/confirm-page! (gate/feed db (- head 7) 7 nil) pop (- (:observed state) 7) 7)
+    (scale/confirm-page! (gate/feed db (- head 7) 7 nil) pop (- (:observed state) 7) 7 policy)
     {:database (get-in pop [:seal :name]) :nativeId (str uid) :scope (get-in pop [:seal :scope])
-     :physicalT t :logicalHead head :records records :layout "lean-v3-strict-solo-k"
+     :physicalT t :logicalHead head :records records :layout "lean-v3-strict-solo-k" :journal policy
      :sourceSeed (select-keys (:seal pop) [:source :source-seal :manifest-sha :facts])
      :roster (mapv (fn [i]
                      (let [tenant (format "account-%03d" (inc i))]
@@ -49,19 +50,19 @@
               :lastRecordedAt (:clock last-command) :lastOperation (:operation last-command)
               :lastTransaction (:tx last-command)}}))
 
-(defn -main [file physical want-t want-head want-records]
+(defn -main [file physical want-t want-head want-records policy]
   (try
     (let [[t head records] (mapv #(Long/parseLong %) [want-t want-head want-records])
           state (rung/load-state! file)
           pop (:population state)
           name (get-in pop [:seal :name])
           final (or (get-in state [:closed-rungs 1000000000]) (:finished state))]
-      (native/check! (and (>= records 1000000000) (string? physical)
+      (native/check! (and (>= records 1000000000) (#{"classic-k" "recorded-predecessor-k"} policy) (string? physical)
                           (or (= name physical) (re-matches #"age-restore-[a-f0-9-]{36}" physical)))
                      "Expected a sealed one-billion DB or its owned restore" {})
       (gate/equal! [1000000000 t head records]
-                   (mapv final [:target :t :head :records]) "Checkpoint is not the one-billion seal")
-      (native/emit "scorecard-cut" (observe! state (adopt/scope-db name physical) t head records)))
+                   (mapv #(get final %) [:target :t :head :records]) "Checkpoint is not the one-billion seal")
+      (native/emit "scorecard-cut" (observe! (assoc state :journal policy) (adopt/scope-db name physical) t head records)))
     (shutdown-agents)
     (System/exit 0)
     (catch Throwable e (.printStackTrace e) (System/exit 1))))
