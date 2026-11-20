@@ -36,10 +36,10 @@ The earlier Part 1 campaign kept all 73 acknowledged receipts and recorded 1,234
 ## Paired bench
 
 ```sh
-node --import tsx lab/experiments/EXP-DX1/ha1/control.ts hasync-suite hasync-p9-v2
+node --import tsx lab/experiments/EXP-DX1/ha1/control.ts hasync-suite hasync-p9-v3
 ```
 
-Forecast 75–85 minutes on the released pair with prepared builds and the stated copy and load rates. The 18-cell campaign tests a 16M edited population, fleet recovery and idle load, standby replacement, every fault shape and save cost. The bare-metal run is pending. [Forecast and schedule](BENCH.md)
+Forecast 75–85 minutes plus up to four for launch and collection on the released pair with prepared builds. The 18 cells cover a 16M edited population, fleet recovery, idle load, standby replacement, stale-predecessor retry, every fault shape and save cost. The collector checks the retry receipt against the attempt's saved body, database, slot, source and oracle. The bare-metal run is pending. [Forecast and schedule](BENCH.md)
 
 The remaining scheduled directional cuts, edited deep runs and fleet timing are pending shared Mac admission. The fleet's first setup failure and fix are recorded. Physical power and management interlock qualification are also pending.
 

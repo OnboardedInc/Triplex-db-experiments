@@ -8,7 +8,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { createInterface } from "node:readline";
 import { pipeline } from "node:stream/promises";
 import { Satellite } from "./satellite.ts";
-import { head, modeOf, root, runFile } from "./common.ts";
+import { hash, head, modeOf, root, runFile } from "./common.ts";
 import { benchTrials, subjects, workingMs } from "../hasync1/v2/bench-plan.ts";
 import { recountTraffic } from "../hasync1/offers.ts";
 
@@ -354,6 +354,7 @@ try {
     );
     const has = (name: string) => members.has(tag + "/" + name);
     const checks = [];
+    const replacements = [];
     const suite = has("suite.json") ? member("suite.json") : undefined;
     if (suite) {
       assert.deepEqual([suite.tag, suite.sha, suite.campaign], [tag, sha, campaign]);
@@ -387,6 +388,66 @@ try {
           capacity: "two-host",
         });
         assert.deepEqual(clean, { nonce, containers: 0, networks: 0 });
+        if (expectedTrial.mode === "hasync-ack") {
+          // [DX-HASYNC1] Why: bind replacement settlement to the archived caller bytes and oracle. Rejected: treating a successful worker exit or a summary count as a receipt.
+          const scope = JSON.stringify([
+            "triplex-scope-v1",
+            "ha1",
+            "tx2-ha1-" + nonce.slice(0, 8) + "-replace",
+            "test",
+            0,
+          ]);
+          const db = "s2-" + Buffer.from(scope).toString("base64url");
+          const binding: { nonce: string; slot: string; source: unknown; scope: string; db: string } = {
+            nonce,
+            slot: tag,
+            source: attempt.source,
+            scope,
+            db,
+          };
+          const pending = member(sub + "replacement-pending.json");
+          const wire = member(sub + "replacement-withheld.json");
+          const settled = member(sub + "replacement-settled.json");
+          const oracleCase = raw(sub + "replacement-oracle-case.json");
+          const oracleBytes = raw(sub + "replacement-oracle-expected.json");
+          const oracle = JSON.parse(oracleBytes);
+          for (const artifact of [pending, wire, settled])
+            assert.deepEqual(artifact.binding, binding);
+          assert.deepEqual(settled, obs.result.replacementRetry);
+          assert.equal(settled.first, "Transport");
+          assert.equal(settled.operations, 2);
+          assert.equal(pending.sha256, hash(JSON.stringify(pending.input)));
+          const bytes = Buffer.from(wire.bytes, "base64");
+          assert.equal(hash(bytes), wire.sha256);
+          assert.equal(settled.request, wire.sha256);
+          const submitted = JSON.parse(bytes.toString("utf8"));
+          assert.equal(submitted.operationId, pending.input.operationId);
+          assert.deepEqual(submitted.claims, pending.input.claims);
+          const [claim] = pending.input.claims;
+          assert.deepEqual(wire.survivor, wire.original);
+          assert.deepEqual(settled.receipt, {
+            commandId: claim.commandId,
+            txId: claim.txId,
+            operationId: pending.input.operationId,
+            position: 2,
+            t: wire.original.t.v,
+            recordedAt: claim.timestamp,
+          });
+          assert.deepEqual(wire.original, {
+            operationId: settled.receipt.operationId,
+            t: { t: "long", v: settled.receipt.t },
+            position: { t: "long", v: "2" },
+            recordedAt: { t: "double", v: claim.timestamp },
+          });
+          assert.equal(settled.oracle.case, nonce + "/hasync-ack/replacement");
+          assert.equal(oracle.caseId, settled.oracle.case);
+          assert.equal(oracle.caseSha256, hash(oracleCase));
+          assert.equal(oracle.oracle.id, "O-REPLAY");
+          assert.equal(oracle.oracle.sourceSha256, settled.oracle.source);
+          assert.equal(oracle.verdict, "PASS");
+          assert.equal(hash(oracleBytes), settled.oracle.output);
+          replacements.push({ nonce, db, receipt: settled.receipt, oracle: settled.oracle.output });
+        }
       } else assert.notEqual(code, 0);
       const labels = expectedTrial.mode.startsWith("hasync-fleet-")
         ? Array.from({ length: expectedTrial.systems }, (_, i) => "cell-" + i)
@@ -442,6 +503,7 @@ try {
           ...declaration,
           sha256: expected,
           checks,
+          replacements,
         },
         null,
         2,
