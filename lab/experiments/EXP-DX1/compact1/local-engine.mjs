@@ -116,7 +116,7 @@ export async function runCompactProbe(opts, config, manager) {
   const phase = opts.run;
   const profile = opts.profile ?? "baseline";
   const loadPeople = Number(opts.people ?? "2000");
-  assert(["floor", "layout", "prototype", "benchmark", "load", "surface"].includes(phase));
+  assert(["floor", "layout", "prototype", "benchmark", "load", "surface", "history"].includes(phase));
   assert(["baseline", "large-index", "parallel-index"].includes(profile));
   assert(opts.people === undefined || (phase === "load" && [2000, 100000].includes(loadPeople)));
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
@@ -283,10 +283,17 @@ export async function runCompactProbe(opts, config, manager) {
       owner: sha256(fs.readFileSync(slot.ownerFile)), startedAt: new Date().toISOString(),
     };
     write("binding.json", binding);
-    const namespace = ["floor", "surface"].includes(phase) ? "triplex.compact." + phase : "triplex.compact.probe";
+    const namespace = ["floor", "surface", "history"].includes(phase) ? "triplex.compact." + phase : "triplex.compact.probe";
     const invoke = (step, file, args = []) =>
       capture(["exec", peerId, "/opt/datomic/bin/run", "-m", namespace, step, ...args], path.join(dir, file), abort.signal);
-    if (phase !== "prototype") await invoke(phase, "probe.log", phase === "load" ? [String(loadPeople)] : []);
+    if (phase === "history") {
+      await invoke("seed", "probe.log");
+      for (const mode of ["current", "pinned"]) {
+        for (const strategy of ["chain", "checkpoint"]) {
+          await invoke("sample", `history-${mode}-${strategy}.log`, [strategy, mode]);
+        }
+      }
+    } else if (phase !== "prototype") await invoke(phase, "probe.log", phase === "load" ? [String(loadPeople)] : []);
     else {
       // [DX-COMPACT1] Why: an independent probe can still produce useful evidence after another probe fails.
       // Rejected: losing the capacity and read measurements after a semantic failure, or mixing concurrent timed arms.

@@ -8,6 +8,7 @@ The earlier speed measurements compared two paths that do different work.
 Build the incremental writer first and make whole accounts movable between databases.
 
 **North star.** P2 durable field saves, with P1/P3/P4 exact historical and current reads and P5 atomic publication. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+**Review.** The 11-datom primitive drops required raw facts. The matched-speed claim needs stronger comparable paths. Checkpoints address the measured replay slope. [Finding-by-finding response](REVIEW-RESPONSE.md)
 **Query contract.** The ledger lists direct reads, the targeted W0 projection, general queries it cannot answer, and the Q107-S stored journal variant. [Query surfaces](QUERY-SURFACES.md)
 **Floor.** 1,440 factorial and 3,840 burst transactions matched the requested bytes and durable log. Fixed native apply was 0.160 ms, plus 1.74 µs/datom, 2.49 µs/KiB and 0.70 µs/warm index seek. Durable peer coefficients were 2.136 ms, 4.80 µs, 67.82 µs and 1.33 µs. [Floor and settings](FLOOR.md)
 **Ceiling.** The first baseline reached 1,696–2,790 minimal tx/s at depth 64. Native apply occupied 22–25% of the one-member deep bursts and up to 80% in a larger group. Across three settings the highest bare rate was 68,471 simple members/s with 128 per native transaction. Two indexing threads led the eight-member blocks and the larger threshold deferred index adoption. The baseline repeat drift limits attribution. [Floor and settings](FLOOR.md)

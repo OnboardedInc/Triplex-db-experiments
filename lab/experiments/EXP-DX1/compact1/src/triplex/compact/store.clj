@@ -46,6 +46,7 @@
    (attr :compact/previous :db.type/ref)
    (attr :compact/recorded :db.type/long)
    (attr :compact/body :db.type/string)
+   (attr :compact/checkpoint :db.type/string)
    {:db/ident :compact/append-v1
     :db/fn (d/function '{:lang "clojure" :params [db requests]
                         :requires [[triplex.compact.store :as compact]]
@@ -60,7 +61,8 @@
   (let [wall (* 1000 (System/currentTimeMillis))
         accounts (volatile! {}) subjects (volatile! {})
         claims (volatile! #{}) ops (transient [])]
-    (doseq [[idx {:keys [account root command expected body kind expected-account protected journal-rows]}] (map-indexed vector requests)]
+    (doseq [[idx {:keys [account root command expected body kind expected-account protected journal-rows checkpoint]}]
+            (map-indexed vector requests)]
       (let [command-key (compound account command)]
         (when-not (or (@claims command-key) (lookup db :compact/command command-key))
           (let [a (or (@accounts account)
@@ -88,6 +90,8 @@
                             :compact/subject-ref sid :compact/recorded clock :compact/body body})
                 (when journal-rows
                   (conj! ops (assoc (journal/transaction account command p clock journal-rows) :db/id event)))
+                (when checkpoint
+                  (conj! ops [:db/add event :compact/checkpoint checkpoint]))
                 (when (:previous prior)
                   (conj! ops [:db/add event :compact/previous (:previous prior)]))
                 (when (= kind "erase") (conj! ops [:db/add sid :compact/erased clock]))))))))
@@ -121,10 +125,11 @@
   (assoc store :journal? true))
 
 (defn layout []
-  (let [world (json/read-str (slurp (or (System/getenv "COMPACT_W0_SCHEMA") "/compact/schema.json")))
+  (let [schema-text (slurp (or (System/getenv "COMPACT_W0_SCHEMA") "/compact/schema.json"))
+        world (json/read-str schema-text)
         kinds (get world "entityKinds")
         names (->> kinds vals (mapcat #(keys (get % "attributes"))) (into (sorted-set)) vec)]
-    {:kinds kinds :attrs names :codes (zipmap names (range))}))
+    {:kinds kinds :attrs names :codes (zipmap names (range)) :hash (sha schema-text)}))
 (def w0 (delay (layout)))
 
 (defn open-store [conn vault limit]
@@ -249,7 +254,12 @@
         (when (and key (not= ::destroyed key)) (Arrays/fill ^bytes key (byte 0)))
         (swap! keys assoc k ::destroyed)))))
 
-(def empty-projection {:head nil :p 0 :facts {} :fields {}})
+(def empty-projection {:head nil :p 0 :depth 0 :folded 0 :facts {} :fields {}})
+
+(defn insert-row [out {:keys [id suffix code] :as row}]
+  (-> out (assoc-in [:facts id] row)
+      (update-in [:fields [suffix code]] (fnil conj #{}) id)))
+
 (defn change [projection {:keys [eid p recorded adds retires]}]
   (let [pruned (reduce (fn [out id]
                         (if-let [row (get-in out [:facts id])]
@@ -260,9 +270,8 @@
                                 (update :fields (if (empty? ids) #(dissoc % f) #(assoc % f ids)))))
                           (reject :MissingRetirementWitness))) projection retires)]
     (reduce (fn [out [i [suffix code val from to]]]
-              (let [id [p i] row {:id id :suffix suffix :code code :value val :from from :to to :recorded recorded}]
-                (-> out (assoc-in [:facts id] row) (update-in [:fields [suffix code]] (fnil conj #{}) id))))
-            (assoc pruned :head eid :p p) (map-indexed vector adds))))
+              (insert-row out {:id [p i] :suffix suffix :code code :value val :from from :to to :recorded recorded}))
+            (-> pruned (assoc :head eid :p p) (update :depth inc)) (map-indexed vector adds))))
 
 (defn chain [db eid stop]
   (loop [e eid out []]
@@ -270,13 +279,65 @@
       {:reached e :events (rseq out)}
       (recur (value db e :compact/previous) (conj out (event db e))))))
 
+(def checkpoint-columns [:id :suffix :code :value :from :to :recorded])
+
+(defn event-native-t [db event-eid]
+  (some-> (first (d/datoms db :eavt event-eid :compact/position)) :tx d/tx->t))
+
+(defn checkpoint-text [db account root projection]
+  (let [rows (mapv #(mapv % checkpoint-columns) (sort-by :id (vals (:facts projection))))
+        owner (account-id db account)
+        payload (canonical [1 (value db owner :compact/source) (value db owner :compact/epoch) (:hash @w0)
+                            root (:head projection) (event-native-t db (:head projection)) (:p projection) (:depth projection) rows])]
+    (str (sha payload) ":" payload)))
+
+(defn restore-checkpoint [db account root carrier text]
+  (require! (and (string? text) (> (count text) 65)) :InvalidCheckpoint)
+  (let [payload (subs text 65)]
+    (require! (= (str (sha payload) ":") (subs text 0 65)) :InvalidCheckpoint)
+    (let [[version source epoch codec owner prior t p depth rows]
+          (try (json/read-str payload) (catch Exception _ (reject :InvalidCheckpoint)))
+          acct (account-id db account)]
+      (require! (and (= 1 version) (= root owner) (= codec (:hash @w0))
+                   (= source (value db acct :compact/source))
+                   (= epoch (value db acct :compact/epoch))
+                   (some? prior) (= prior (value db carrier :compact/previous))
+                   (= t (event-native-t db prior))
+                   (= p (position db prior)) (< p (position db carrier)) (pos-int? depth)
+                   (= (value db carrier :compact/subject-ref) (value db prior :compact/subject-ref))
+                   (vector? rows) (= (count rows) (count (set (map first rows))))) :InvalidCheckpoint)
+      (reduce (fn [out row]
+                (require! (and (vector? row) (= (count checkpoint-columns) (count row))
+                               (vector? (first row)) (= 2 (count (first row)))
+                               (integer? (ffirst row)) (<= 1 (ffirst row) p)) :InvalidCheckpoint)
+                (insert-row out (zipmap checkpoint-columns row)))
+              (assoc empty-projection :head prior :p p :depth depth) rows))))
+
+(defn fold-projection [store db account root eid prior]
+  ;; [DX-COMPACT1] Why: carry an exact predecessor snapshot on every 64th event and let older pins choose their own carrier.
+  ;; Rejected: retracing the entire chain, or attaching a mutable checkpoint selected from the live head.
+  (let [checkpoint-attr (when-not (:ignore-checkpoints store) (d/entid db :compact/checkpoint))
+        stop (:head prior)
+        apply-events (fn [base events] (assoc (reduce change base (rseq events)) :folded (count events)))]
+    (loop [e eid tail []]
+      (cond
+        (nil? e) (apply-events empty-projection tail)
+        (= e stop) (apply-events prior tail)
+        :else (let [events (conj tail (event db e))
+                    restored (when-let [packed (when checkpoint-attr (value db e checkpoint-attr))]
+                               (try (restore-checkpoint db account root e packed)
+                                    (catch clojure.lang.ExceptionInfo ex
+                                      (when-not (= :InvalidCheckpoint (:code (ex-data ex))) (throw ex)))))]
+                (if restored
+                  (apply-events restored events)
+                  (recur (value db e :compact/previous) events)))))))
+
 (defn current-projection [store db account root]
   (let [cache ^LinkedHashMap (:cache store) k [account root] eid (head db (subject-id db account root))
         prior (locking cache (.get cache k))]
     (if (= eid (:head prior))
-      (or prior empty-projection)
-      (let [{:keys [reached events]} (chain db eid (:head prior))
-            result (reduce change (if reached prior empty-projection) events)]
+      (assoc (or prior empty-projection) :folded 0)
+      (let [result (fold-projection store db account root eid prior)]
         ;; [DX-COMPACT1] Why: keep only touched live intervals and bind each cached value to its source head.
         ;; Rejected: a fleet-wide in-memory image or using an old projection after a later append.
         (when eid
@@ -289,13 +350,15 @@
                   (.remove it))))))
         result))))
 
-(defn pinned-projection [db account root p]
-  (if (zero? p) empty-projection
-    (let [eid (loop [e (head db (subject-id db account root))]
-                (if (and e (> (position db e) p))
-                  (recur (value db e :compact/previous))
-                  e))]
-      (reduce change empty-projection (:events (chain db eid nil))))))
+(defn pinned-projection
+  ([db account root p] (pinned-projection {} db account root p))
+  ([store db account root p]
+   (if (zero? p) empty-projection
+     (let [eid (loop [e (head db (subject-id db account root))]
+                 (if (and e (> (position db e) p))
+                   (recur (value db e :compact/previous))
+                   e))]
+       (fold-projection store db account root eid nil)))))
 
 (defn overlaps? [from to other-from other-to]
   (and (or (nil? to) (neg? (compare (or other-from first-valid) to)))
@@ -398,13 +461,17 @@
                                              (every? string? (drop 4 meta)) (empty? adds) (empty? retires))
                               false))) :InvalidMetadata)
         (let [encoded (mapv #(encode-add store account root %) adds)
-              projection (when (or (seq adds) (seq retires)) (current-projection store db account root))
-              body (canonical [1 fingerprint encoded retires meta])]
+              interval (:checkpoint-every store)
+              projection (when (or interval (seq adds) (seq retires)) (current-projection store db account root))
+              body (canonical [1 fingerprint encoded retires meta])
+              checkpoint (when (and interval (zero? (mod (inc (:depth projection)) interval)))
+                           (checkpoint-text db account root projection))]
           (when projection (validate-delta! projection encoded retires root))
           (require! (<= (utf8 body) 65536) :FrameTooLarge)
           (cond-> (assoc request :body body :expected-account (when (= kind "publish") (second meta))
                          :protected (boolean (some #(protected? (nth % 2)) encoded)))
-            (:journal? store) (assoc :journal-rows (journal-plan account root projection encoded retires))))))))
+            (:journal? store) (assoc :journal-rows (journal-plan account root projection encoded retires))
+            checkpoint (assoc :checkpoint checkpoint)))))))
 
 (defn no-new-members? [error]
   (some (fn [cause]
@@ -414,7 +481,8 @@
 
 (defn commit-ready! [store prepared]
   (require! (and (<= 1 (count prepared) 128)
-                 (<= (reduce + (map #(if-let [body (:body %)] (utf8 body) 0) prepared)) 65536)) :FrameTooLarge)
+                 (<= (reduce + (map #(if-let [body (:body %)] (utf8 body) 0) prepared)) 65536)
+                 (<= (reduce + (map #(if-let [body (:checkpoint %)] (utf8 body) 0) prepared)) (* 4 1024 1024))) :FrameTooLarge)
   (let [conn (:conn store)
         pending (vec (remove :resolved prepared))
         start (System/nanoTime)
@@ -463,7 +531,7 @@
   (require! (account-id latest account) :UnknownAccount)
   (let [at (if (= mode :current) latest (history-cut latest account p))
         pull (fn [r] (rows-at store latest account r
-                      (if (= mode :current) (current-projection store at account r) (pinned-projection at account r p)) valid))
+                      (if (= mode :current) (current-projection store at account r) (pinned-projection store at account r p)) valid))
         base (pull root)
         loc (:v (first (filter #(and (= root (:e %)) (= "location" (:a %))) base)))
         local (when loc (pull loc))

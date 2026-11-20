@@ -19,11 +19,15 @@ assert.equal(cleanup.rolesRemoved, 3);
 assert.deepEqual(binding.durability.slice(0, 3), ["on", "on", "on"]);
 assert.equal(binding.sourceHash, hash(JSON.stringify(binding.sources)));
 for (const [file, expected] of Object.entries(binding.sources)) assert.equal(hash(read("source/" + file)), expected);
-const log = read("probe.log");
-const rows = log.toString().split("\n").filter((l) => l.startsWith("COMPACT ")).map((l) => JSON.parse(l.slice(8)));
-for (const row of rows) {
-  assert.equal(row.attempt, binding.attempt);
-  assert.equal(row.source, binding.sourceHash);
+const parse = (file) => {
+  const data = read(file).toString().split("\n").filter((l) => l.startsWith("COMPACT ")).map((l) => JSON.parse(l.slice(8)));
+  for (const row of data) {
+    assert.equal(row.attempt, binding.attempt);
+    assert.equal(row.source, binding.sourceHash);
+  }
+  return data;
+};
+const rows = parse("probe.log");
 }
 const of = (kind) => rows.filter((r) => r.kind === kind);
 const last = rows.at(-1);
@@ -86,5 +90,45 @@ function surface() {
     projection: { plain: price("plain"), edge: price("edge") } };
 }
 
-assert.equal(binding.phase, "surface");
-console.log(JSON.stringify({ attempt: binding.attempt, source: binding.sourceHash, raw: hash(log), ...surface() }, null, 2));
+function history() {
+  assert.equal(last.kind, "history-seed");
+  assert.equal(last.checkpoints, 228);
+  assert.equal(last.interval, 64);
+  assert.equal(last.events, 14880);
+  assert.equal(last.position, last.events);
+  const matrix = [];
+  for (const mode of ["current", "pinned"]) for (const strategy of ["chain", "checkpoint"]) {
+    const readings = parse(`history-${mode}-${strategy}.log`);
+    const end = readings.at(-1);
+    assert.equal(end.kind, "history-reader-end");
+    assert.equal(end.position, last.position);
+    assert.equal(end.nativeT, last.nativeT);
+    assert.equal(end.strategy, strategy);
+    assert.equal(end.mode, mode);
+    assert.equal(end.samples, 48);
+    const samples = readings.filter((a) => a.kind === "history-read");
+    assert.equal(samples.length, end.samples);
+    if (mode === "pinned" && strategy === "checkpoint") {
+      const cut = readings.filter((a) => a.kind === "checkpoint-boundaries");
+      assert.equal(cut.length, 1);
+      assert.equal(cut[0].verified, true);
+      assert.deepEqual(cut[0].cuts, [1, 63, 64, 65, 127, 128, 129, 415, 2000]);
+    }
+    for (const [i, depth] of [1, 64, 415, 2000].entries()) for (const cache of ["cold", "warm"]) {
+      const group = samples.filter((a) => a.depth === depth && a.cache === cache);
+      assert.deepEqual(group.map((a) => a.person).sort((a, b) => a - b), Array.from({ length: 6 }, (_, j) => i * 6 + j));
+      assert(group.every((a) => a.mode === mode && a.strategy === strategy && a.position > 0));
+      const folds = mode === "current" && cache === "warm" ? 0 : strategy === "chain" || depth < 64 ? depth : 1 + depth % 64;
+      assert(group.every((a) => a.folded === folds));
+      matrix.push({ depth, mode, cache, strategy, folds, pauses: group.filter((a) => a.gc > 0).length,
+        ms: stats(group.map((a) => a.ms)) });
+    }
+  }
+  return { checkpoints: last.checkpoints, events: last.events, checkpointBytes: last.bytes,
+    bytesPerCheckpoint: last.bytes / last.checkpoints, steadyBytesPerSave: last.bytes / last.checkpoints / 64, matrix };
+}
+
+const reducers = { surface, history };
+assert(reducers[binding.phase], "unexpected probe phase");
+console.log(JSON.stringify({ attempt: binding.attempt, source: binding.sourceHash,
+  raw: hash(read("probe.log")), ...reducers[binding.phase]() }, null, 2));
