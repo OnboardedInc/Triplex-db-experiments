@@ -17,6 +17,8 @@ Part 2. [Regression tests and red evidence](REGRESSIONS.md) · [Ledger implement
 
 The two layout branches reviewed the erasure work. W1 ported the regression and identified the clear copies in K. COMPACT1 implemented detached envelopes with a test vault. [Current copy inventory and requirements](HANDOFF-PART2.md)
 
+The prepared 100,000-person check now measures detached publication and paced cleanup. The provisional elapsed forecast is 3–12 minutes after staging. [Server command and prediction](MODEL.md#prepared-detached-erasure-check)
+
 Part 1 measurements and handoff follow.
 
 1. [How erasure works today](READ-PATH.md) traces requests, pins, feed, journal, outbox, SQL storage and the missing publication frontier.

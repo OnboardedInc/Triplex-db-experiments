@@ -2,6 +2,32 @@
 
 **North star** P1, P2 and P6. Bound fresh absence and price interference at account size and after retained history. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
+## Prepared detached-erasure check
+
+The fixture has 100,000 deep subjects and 16,045,255 current facts. For one subject the check makes 415 actual protected replacements and verifies the original held pin. The repeated one- and 100-person arms erase one new protected assertion per target per request. Forecasts are provisional while the largest local rung waits. [Mac measurements](FAST.md#matched-scale-measurements)
+
+| Bare-metal planning range | Forecast |
+| --- | --- |
+| One new protected assertion, request to durable ACK p99 | 20–120 ms |
+| One aged owner with 416 protected assertions, single ACK | 35–120 ms |
+| 100 people with one new protected assertion each, ACK p99 | 65–250 ms |
+| Native index jobs called by the request | 0 |
+| First 128-body cleanup native index job | 4–20 s |
+| Cleanup save / read / feed p99 divided by quiet p99 | 1.1–3.0× / 0.7–1.8× / 0.7–2.0× |
+| Full check after staging | 3–12 min |
+
+At the first two sizes, one-person p99 moved from 80 to 38 ms. Use a roughly flat range with margin for tail variation. The 100-person p99 moved from 114 to 124 ms. A power fit through those two points gives about 137 ms at 16M. The first 128-body cleanup builds took 0.92 and 2.97 s. A square-root size sensitivity gives about 12 s at 16M on the Mac. The planning bands allow dedicated NVMe to take 0.5–1× the matched Mac time and allow drift either way. These inputs leave a 100-person batch with widely retained protected histories and foreground concurrency sensitivity unpriced.
+
+Start with the dedicated Linux scratch database and gateway configured below. Set `TRIPLEX_ERASURE_DIRECTORY` to an independent durable directory for this test and `TRIPLEX_ERASURE_SHRED_GRACE_MS=0` on the synthetic gateway. This enables the file probe within the check. Use a fresh nonce and the same clean commit, build hashes and still-running authority for staging and checking. Stage outside the measurement clock with `node lab/experiments/EXP-DX1/erase1/server.mjs stage-fast erase1-fast-stage`.
+
+```sh
+timeout --kill-after=15s 55m node lab/experiments/EXP-DX1/erase1/server.mjs check-fast erase1-fast-check erase1-fast-stage/staged.json
+```
+
+The check measures 100 requests in each publication arm, verifies the aged marker and key-file probe, and compares three 500-save blocks plus a 500-save protected-write block. It leaves the raw native log and measured rows for review. The wrapper prints results after verifying the same source and builds, staged bytes, nonce and child evidence binding. The 55-minute cap applies to the prepared check. The launcher passed syntax, lint, focused typing and local argument-preflight checks. Bare-metal runtime, approved key-store rotation and physical media scans remain open.
+
+## Original native-excision forecast
+
 For a person with 415 two-field saves, the Mac data fit `index seconds ≈ 1.54 × N^0.48` and `leaf writes ≈ 209 × N^0.47`, with `N` in millions of current facts. Affine fits give `1.01 + 0.390N` seconds and `104 + 70.5N` leaf writes. Use both shapes as sensitivity. The first is a description of three local points. The second lets the dominant work grow with the database. [Measured fit](SCALE.md) · [Datomic background indexing](https://docs.datomic.com/indexes/background-indexing.html)
 
 The one-account case is the indexed 100,000-person fixture, with 16,045,255 current facts and one aged target. For ten accounts with 160.45M current facts, assume 500–750M new assertions over the year, two additions per save and 27 native datoms per save. Initial storage adds about 480M native datoms at three per initial fact. That gives 7.2–10.6B native datoms, equivalent to roughly 2.4–3.5B seed facts by count. The count equivalence holds write amplification constant and omits the locality of a year of edits. The upper case crosses the vendor's roughly 10B-datom performance guidance. The W2-SIZE estimate for one active person and the annual input assumptions come from its `SUMMARY` and `ANALYSIS` §4. [Datomic size guidance](https://www.datomic.com/faq.html#how-big-can-a-database-be)
