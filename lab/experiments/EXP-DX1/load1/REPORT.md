@@ -22,7 +22,7 @@ The paced import ran locally at `633595994`. Allow 15–25 minutes on one server
 
 ## Version 0.1 intake
 
-- Merged INT1 `0196b9952`. Core passed 861 tests, Datomic passed 434 with 52 opt-in tests skipped, and the focused and retention suites passed 36. The earlier pipeline proof checked 11,472 facts on the prior merged code.
+- Merged INT1 `0196b9952`. Core passed 861 tests, Datomic passed 434 with 52 opt-in tests skipped, and the focused and retention suites passed 36. The seven native suites passed 65 tests after the legacy feed fixture correction. The earlier pipeline proof checked 11,472 facts on the prior merged code.
 - The refreshed shared database recovered in all four transactor fault cells with all 780 pinned-read probes, receipts and feed checks verified. Mac recovery took 15.91–21.09 seconds.
 - The refreshed planned move verified 173 receipts and 250 pinned probes, with a 22.79-second Mac pause. The preceding merged run took 31.74 seconds. Both timings are diagnostic and the 30-second target remains open on bare metal.
 - P8 uses the [single-server import matrix](MICRO-SERVER.md) and its per-account comparison. P9 uses the [single-server shared-database fault command](../ha1/BENCH.md#version-01-recovery-row-on-one-server). Host loss, synchronous commit cost and whole-database relocation need the paired runs described there.

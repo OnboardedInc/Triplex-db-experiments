@@ -84,3 +84,15 @@ a29f6cdd4b7536233572724836aa82923f9a79583a9940e8c0f654a0ad966fea  ../one-failove
 5803c3a34217a6acf95f8e5811c4d04d9e94bc3a6a015f14b9b4d921208651ce  ../one-whole-14ea6ca6-1a9a-4805-8924-3ce827ae1d27/cleanup.json
 fac69aa42d27dc9f1a72de7f4cf9219ad3ad174705c2992bc3cc0f74b83d9387  ../one-whole-14ea6ca6-1a9a-4805-8924-3ce827ae1d27/observations.json
 44888a5952d3bf333291735f3e4f424d6c2f344609cf0a971b932fb69fcd71d9  ../one-whole-14ea6ca6-1a9a-4805-8924-3ce827ae1d27/whole-database.json
+c7239f8ad561943fbd62409993fb859ce00acf8e16452beaf1cadfba2ce792bb  final-native-fixture.log
+ee58f1a52eb6d146a13bd4f24846cdae980353ef12b36034176849e1c3c788cb  ../native-checks-eda87b2f-bb0a-4471-98b1-1ac26d7e8d30/attempt.json
+89d48f9b5e7c37e9624f8cc79afc426e4d58e8c8e512274c7be5a882c8ed3d7e  ../native-checks-eda87b2f-bb0a-4471-98b1-1ac26d7e8d30/observations.json
+11059cc59d8588bbc05026de7945b816993476c4eb3392efd395e848ebf7ee15  ../native-checks-eda87b2f-bb0a-4471-98b1-1ac26d7e8d30/cleanup.json
+5b58dc34ae02ca474fa8d3e6b8db31664124b9b322caef15b3d387f098190cce  ../native-checks-eda87b2f-bb0a-4471-98b1-1ac26d7e8d30/native-selftest.json
+1d2017d049641ac9a984fdf92d09b03bfb0ebb9205886973f0a7cdb6e765930f  ../native-checks-eda87b2f-bb0a-4471-98b1-1ac26d7e8d30/native-feed-test.json
+94e4c484a1ff6a8dfe561f9afed8e23438a0e7616ae0b7960257c0ed80adab21  ../native-checks-eda87b2f-bb0a-4471-98b1-1ac26d7e8d30/native-feed-witness.json
+1a45ddbd012418d8703ebc8d7f5228cc3efbb601b68a4fb0ff6b720719aaa951  ../native-checks-eda87b2f-bb0a-4471-98b1-1ac26d7e8d30/native-commit-order-test.json
+6406d0c15877fc248695d009d1a6cc0e8894ace0da97f9691e6a7d93269af689  ../native-checks-eda87b2f-bb0a-4471-98b1-1ac26d7e8d30/native-group-test.json
+7eea8a88feb0934ed273c377959c1d10b20b1c42a641414dac5392a41fab55da  ../native-checks-eda87b2f-bb0a-4471-98b1-1ac26d7e8d30/native-cache-key-test.json
+81deb3a07f050ba4c414e28e7d32618155c559e67b2bcb80fb002162984d2b6f  ../native-checks-eda87b2f-bb0a-4471-98b1-1ac26d7e8d30/native-recent-test.json
+9a0de14f5b9a1fa19f2c88f6fca6991b60e1dd6b642e181fdba6016e5bd8c2a7  ../native-checks-eda87b2f-bb0a-4471-98b1-1ac26d7e8d30/native-trace-test.json
