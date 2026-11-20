@@ -1,4 +1,4 @@
-import { traceSync, traceWork, traceAsync } from "./tracing.ts";
+import { traceSync, traceWork, traceAsync, currentTrace, traceLevel } from "./tracing.ts";
 import { initializeReplicaClient } from "./replica-initialize.ts";
 import { CutCache } from "./cut-cache.ts";
 import { Option } from "effect";
@@ -225,7 +225,8 @@ export class ReplicaReader {
       this.waiters.add(waiter);
     });
   }
-  async pullAt(root: string, basis: ReadBasis, fallback: () => Promise<PullResult>, between?: () => Promise<void>, rows = false, receiptPosition?: number): Promise<PullResult> {
+  pullAt(root: string, basis: ReadBasis, fallback: () => Promise<PullResult>, between?: () => Promise<void>, rows = false, receiptPosition?: number): Promise<PullResult> {
+    if (traceLevel === "off" || !currentTrace()) return this.pullAtTraced(root, basis, fallback, between, rows, receiptPosition);
     return traceAsync("replica.pull-at", () => this.pullAtTraced(root, basis, fallback, between, rows, receiptPosition));
   }
   private async pullAtTraced(

@@ -90,6 +90,9 @@ import { ExpectationCache } from "./lib/expectation-cache.ts";
 import { splitTarget } from "./lib/split-target.ts";
 import { ReaderLifecycle } from "./lib/reader-lifecycle.ts";
 import { SpillThread } from "./lib/spill-thread.ts";
+import { judgeReadCode, VERDICTS, wasHot } from "./lib/read-judgment.ts";
+import { ReadWindow } from "./lib/read-window.ts";
+import type { ReadWindowPlan } from "./lib/stream-reads.ts";
 import { monitorEventLoopDelay } from "node:perf_hooks";
 import { ReadRecords, type ObservationRecords } from "./lib/read-records.ts";
 import { checkWithOracleWorker } from "./lib/oracle-thread.ts";
@@ -207,6 +210,8 @@ const config = {
   replicaFeed: opt("replica-feed", "inline") as "legacy" | "inline",
   readerLadderOnly: flag("reader-ladder-only"),
   readerThreads: Number(opt("reader-threads", "4")),
+  readerTraceEvery: Number(opt("reader-trace-every", "1")),
+  readRetention: opt("read-retention", "auto"),
   sharedReaderIndex: boundedMemoryTrial && !flag("zero-readers"),
   readerEntityCacheMiB: Number(opt("reader-entity-cache-mib", opt("read-path", "gateway") === "replica" ? "16" : lane === "datomic" ? "640" : "128")),
   writerPredecessorCacheMiB: lane === "datomic" ? WRITER_PREDECESSOR_CACHE_MIB : 0,
@@ -267,6 +272,8 @@ if (fullLength && (config.levelS || config.readerLadderOnly || config.legacyEmpt
   throw Error("v3 requires its full fixed phase plan and unchanged offered rate");
 if (fullLength) config.matchDurationS = V3_OFFER_SECONDS;
 if (!["heap", "journal", "worker-journal"].includes(config.expectedStateRetention)) throw Error("Invalid expected-state retention");
+if (!Number.isSafeInteger(config.readerTraceEvery) || config.readerTraceEvery < 1 || !["auto", "raw"].includes(config.readRetention!))
+  throw Error("Invalid reader trace interval or observation retention");
 if (!["sender", "replica-worker"].includes(config.receiptCapture)) throw Error("Invalid receipt capture mode");
 // [DX-BM1] Why: ladder readers and receipt captures have distinct sequenced spill ports and both drain before final accounting.
 // Rejected: running the known slow sender on the loaded half or sharing the bounded trial's single reader isolate.
@@ -427,9 +434,13 @@ const modelJournalFile = path.join(rawDir, `expected-model-${runTag}.bin`);
 const modelJournalContext = {
   run: process.env.TRIPLEX_TRACE_RUN ?? runTag, source: process.env.TRIPLEX_TRACE_SOURCE ?? "local", slot: process.env.TRIPLEX_TRACE_SLOT ?? runTag, subjects: rungSubjects,
 };
+// [DX-RD1] Why: the exact rolling verifier needs a private strict-clock scope and the fixed v3 windows.
+// Rejected: advancing an observation frontier in irregular-clock, paired or externally written scopes.
+const streamReads = fullLength && !config.zeroReaders && lane === "datomic" && config.readPath === "replica" &&
+  config.strictRecordClocks && config.replicaThread === "worker" && config.expectedStateRetention === "worker-journal" &&
+  !pairPlan && !tenantSpec && config.readRetention !== "raw";
 let modelJournal = config.expectedStateRetention === "journal" ? new ModelJournal(modelJournalFile, modelJournalContext) : undefined;
-const modelJournalThread = config.expectedStateRetention === "worker-journal" ? new ModelJournalThread(modelJournalFile, modelJournalContext) : undefined;
-const modelWriter = modelJournalThread ?? modelJournal ?? model;
+const modelJournalThread = config.expectedStateRetention === "worker-journal" && !streamReads ? new ModelJournalThread(modelJournalFile, modelJournalContext) : undefined;
 const accounts = accountsFor(rungSubjects);
 let expectations = new ExpectationCache(model);
 const ryowFallbackReasons: Record<string, number> = {};
@@ -437,7 +448,9 @@ const readerFinalDiagnostics: any[] = [];
 const spillLimit = process.env.TRIPLEX_BENCH_SPILL_MAX_BYTES === undefined
   ? (config.profile === "v3" ? 28 * 1024 ** 3 : undefined) : Number(process.env.TRIPLEX_BENCH_SPILL_MAX_BYTES);
 if (spillLimit !== undefined && (!Number.isSafeInteger(spillLimit) || spillLimit <= 0)) throw Error("Invalid observation spill byte limit");
-const spill = config.readPath === "replica" ? new SpillThread(path.join(rawDir, `observations-${runTag}`), spillLimit) : undefined;
+const spill = config.readPath === "replica" ? new SpillThread(path.join(rawDir, `observations-${runTag}`), spillLimit,
+  streamReads ? { file: modelJournalFile, context: modelJournalContext, deep } : undefined) : undefined;
+const modelWriter = streamReads ? spill! : modelJournalThread ?? modelJournal ?? model;
 let records: ObservationRecords = [];
 function visitPhase(phase: number, fn: (record: ReadRecord, index: number) => void) {
   if (records instanceof ReadRecords) records.forPhase(phase, fn);
@@ -448,7 +461,10 @@ let mainReadCount = 0;
 let judgedReadCount = 0;
 const oracleSamples: any[] = [];
 const settledReadCounts = new Map<number, number>();
+const spillElu: { t: number; active: number; idle: number; elu: number; threadCpuMs?: number }[] = [];
 if (spill) spill.onProgress = m => {
+  if (m.client) spillElu.push(m.client);
+  if (m.checked) report.streamReadProgress = m.checked;
   for (const [phase, summary] of Object.entries(m.phases) as [string, any][]) settledReadCounts.set(Number(phase), summary.settled);
   for (const sample of m.samples ?? []) oracleSamples.push(sample);
 };
@@ -469,7 +485,7 @@ function retainRead(r: ReadRecord) {
   summary.routes[r[R.route]] = (summary.routes[r[R.route]] ?? 0) + 1;
 }
 const workerDiagnostics: { worker: number; t: number; diagnostics: unknown; memory: unknown; threadCpuMs: number | null }[] = [];
-const workerElu: { worker: number; t: number; elu: number }[] = [];
+const workerElu: { worker: number; t: number; elu: number; running?: number; activeMs?: number; idleMs?: number }[] = [];
 const acked: { instant: number; position: number; txId: string; at: number }[] = [];
 const ackOf = new Map<number, { at: number; instant: number; subject: number; subjects?: number[]; seq: number; stream: string; correction: boolean; correctionValidFrom: number | null; stamp: number }>();
 const lastWriteAt = new Map<number, number>();
@@ -709,6 +725,9 @@ async function run() {
       config.replicaHistoryMiB * 1024 ** 2, config.replicaPeer, undefined, demandReaders ? "touched" : "all") : undefined;
   const receiptThread = config.receiptCapture === "replica-worker" && replicaHost && "captureReceipt" in replicaHost
     ? replicaHost : undefined;
+  let copyApplications: { position: number; at: number }[] = [];
+  if (streamReads && replicaHost && "connect" in replicaHost)
+    replicaHost.onApply = (position, at) => copyApplications.push({ position, at });
   const mainReplicaHost = replicaHost && !("connect" in replicaHost) ? replicaHost : undefined;
   const replicaLocal = mainReplicaHost ? new (await import("./lib/replica-reads.ts")).ReplicaReader(config.replicaHistoryMiB * 1024 ** 2, mainReplicaHost.index, config.replicaWorldCacheMiB * 1024 ** 2) : undefined;
   if (mainReplicaHost && replicaLocal) {
@@ -723,7 +742,7 @@ async function run() {
       return remote.pull(root, basis);
     };
   }
-  const workerCfg = (w: number) => ({ deep, replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: demandReaders ? "gateway" : config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: demandReaders ? undefined : mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ deep, replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, traceEvery: config.readerTraceEvery, replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: demandReaders ? "gateway" : config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: demandReaders ? undefined : mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const readerLives: { worker: number; life: ReaderLifecycle }[] = [];
@@ -741,7 +760,7 @@ async function run() {
       }
     }
     else if (msg.type === "elu") {
-      workerElu.push({ worker: w, t: msg.t, elu: msg.elu });
+      workerElu.push({ worker: w, t: msg.t, elu: msg.elu, running: msg.running, activeMs: msg.activeMs, idleMs: msg.idleMs });
       workerDiagnostics.push({ worker: w, t: msg.t, diagnostics: msg.diagnostics, memory: msg.memory, threadCpuMs: msg.threadCpuMs });
     }
     else if (msg.type === "sweep-done") sweepDone.get(msg.phase)?.(msg);
@@ -867,6 +886,23 @@ async function run() {
     return at;
   };
   const publicationTimes = new Map<number, any>();
+  const activeModelWrites = new Map<Job, number>();
+  let streamClockCeiling = Infinity;
+  let streamFault: string | undefined;
+  const readFrontier = () => {
+    let through = Math.min(streamClockCeiling, latestInstant);
+    for (const clock of activeModelWrites.values()) through = Math.min(through, clock);
+    return { through, at: now() };
+  };
+  // [DX-RD1] Why: a strict clock observed before dispatch is below every possible result of that active mutation.
+  // Rejected: certifying through the latest ACK while an earlier native transaction is still unresolved.
+  const sendFrontier = () => {
+    if (streamFault) return;
+    const f = readFrontier();
+    spill!.frontier(f.through, f.at, copyApplications);
+    copyApplications = [];
+  };
+  const frontierTimer = streamReads ? setInterval(sendFrontier, 100) : undefined;
   let probeThread: ProbeThread | null = null;
   const jobTraces = new WeakMap<Job, Trace>();
   // [DX-T1-5] Why: native claim identity binds the witness to its measured job even with tracing off or interleaved fibers.
@@ -876,7 +912,12 @@ async function run() {
   const capturedByJob = new WeakMap<Job, any[]>();
   const execute = (job: Job) => {
     const trace = jobTraces.get(job);
-    return withTrace(trace, () => traceAsync("driver.execute", () => executeTraced(job)));
+    if (!streamReads) return withTrace(trace, () => traceAsync("driver.execute", () => executeTraced(job)));
+    activeModelWrites.set(job, latestInstant);
+    return withTrace(trace, () => traceAsync("driver.execute", () => executeTraced(job))).catch(error => {
+      streamFault ??= `Writer ${job.ev.seq} threw before model publication: ${String(error)}`;
+      throw error;
+    }).finally(() => activeModelWrites.delete(job));
   };
   const executeTraced = async (job: Job) => {
     const ev = job.ev;
@@ -910,6 +951,7 @@ async function run() {
       await sleep(20 * out.attempts);
     }
     if (!receipt) {
+      if (streamReads) streamFault ??= `No terminal original receipt for issued writer ${ev.seq}`;
       out.outcome = out.tags.includes("TransactionConflictError") ? "typed-conflict" : out.tags.length && !out.tags.includes("Unknown") ? "typed-rejection" : "unaccounted";
       job.onDone?.(-1);
       return;
@@ -980,6 +1022,7 @@ async function run() {
     else if (res.tag === "CommandAlreadyCommittedError" && res.error?.transactionId === orig.receipt.txId) how = "already-committed-original";
     else if ((await resolveByCommand(orig.meta.commandId))?.txId === orig.receipt.txId) how = "resolved-by-command";
     out.outcome = how === "mismatch" || how === "COMMITTED-AGAIN" ? "unaccounted" : "duplicate-returned-original";
+    if (streamReads && out.outcome !== "duplicate-returned-original") streamFault ??= `Unresolved resend ${job.ev.seq}`;
     out.ackPublishedAt = now();
     original.delete(job.ev.seq);
     resends.push({ seq: job.ev.seq, result: how, tag: res.ok ? null : res.tag });
@@ -1192,7 +1235,9 @@ async function run() {
   // [DX-B2-N3] Why: identify a completed indexing job inside each P1 level, not unbound log words.
   // Rejected: issuing maintenance after readers stop.
   const indexClient = lane === "datomic" ? new (await import(pathToFileURL(path.join(REPO,"packages/datomic/dist/index.js")).href)).DatomicClient(process.env["DATOMIC_URL"] ?? "http://127.0.0.1:8493", 601000) : null;
-  const indexDb = indexClient ? (await indexClient.create(runtimeApi.DatabaseScope.test(scopeName))).db : null;
+  const indexScope = indexClient ? await indexClient.create(runtimeApi.DatabaseScope.test(scopeName)) : null;
+  if (streamReads && indexScope?.strictRecordClocks !== true) throw Error("Rolling verification requires a source-enforced strict clock");
+  const indexDb = indexScope?.db ?? null;
   if (deepId) {
     const scopeKey = String(runtimeApi.DatabaseScope.test(scopeName));
     assert.equal(indexDb, `s2-${Buffer.from(scopeKey).toString("base64url")}`, "Gateway opened a different database");
@@ -1233,6 +1278,7 @@ async function run() {
     report.phases = phases;
     save();
   } else for (const [idx, spec] of plan.entries()) {
+    if (streamReads && spec.traceFromS === undefined && streamClockCeiling === Infinity) streamClockCeiling = latestInstant;
     if (spec.traceFromS !== undefined) {
       const target = traceStart + spec.traceFromS * 1000;
       if (now() < target) await sleep(target - now());
@@ -1251,7 +1297,17 @@ async function run() {
     const entry: any = { actualStart: now(), pool: spec.pool, cycle: spec.cycle, writerDiagnosticsStart: datomicWriterDiagnostics(), historyIndex, idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
     phases.push(entry);
     phaseStarts.set(idx, start);
-    await spill?.beginPhase(idx, start, config.settleS * 1000);
+    let checkedPlan: ReadWindowPlan | undefined;
+    if (streamReads && spec.traceFromS !== undefined) {
+      const to = start + spec.seconds! * 1000, settle = config.settleS * 1000;
+      const windows = spec.measured ? [{ name: spec.name, from: start + settle, to }] : [];
+      if (spec.name === "L256-A") windows.push({ name: "L256-legacy", from: start + settle, to: start + 45_000 });
+      if (spec.name === "L256-D") windows.push({ name: "L256-adjacent", from: to - 45_000 + settle, to });
+      const recovery = spec.pool === "recovery" ? Array.from({ length: (spec.seconds! - 30) / 5 + 1 }, (_, i) =>
+        ({ name: spec.name, from: start + i * 5000, to: start + i * 5000 + 30_000 })) : [];
+      checkedPlan = { windows, recovery };
+    }
+    await spill?.beginPhase(idx, start, config.settleS * 1000, checkedPlan);
     setReaders(idx, spec.readers, spec.mode ?? "mixed");
     const indexJob = indexClient && /^L[0-9]+(?:-[A-Z0-9]+)?$/.test(spec.name) && spec.seconds ? (async () => {
       const delay = Math.min(config.settleS * 1000, Math.max(0, spec.seconds! * 1000 - 1000));
@@ -1389,12 +1445,6 @@ async function run() {
   if (preparedSweeper) { preparedSweeper.worker.postMessage({ type: "stop" }); await preparedSweeper.worker.terminate(); }
   deepStage("closing replica");
   await replicaHost?.close();
-  deepStage("sealing observations");
-  if (spill) { records = await spill.finish(); spillFinished = true; }
-  await splitWrites;
-  if (splitWriteError) throw splitWriteError;
-  report.splitEvidence = { rule: config.splitTarget,
-    ...await (await import("./lib/split-evidence.ts")).completeSplitEvidence(splitDirectory, replicaHost && "applied" in replicaHost ? replicaHost.applied : []) };
   if (replicaHost) report.replica = { copyBytes: replicaHost.replica.bytes, historyBytes: replicaHost.index.historyBytes,
     floor: replicaHost.index.floor, position: replicaHost.index.position, positionWindow: replicaHost.index.positions,
     historyBudgetBytes: replicaHost.index.maxBytes, feedPeer: config.replicaPeer, feedEndpoint: "endpoint" in replicaHost ? replicaHost.endpoint : (await import("./lib/replica-reads.ts")).replicaEndpoint(process.env, config.replicaPeer), applyThread: config.replicaThread,
@@ -1412,6 +1462,15 @@ async function run() {
     for (const s of late.cmd.perSubject) modelWriter.addCommit(s.subject, { instant: receipt.instant, position: receipt.position, txId: receipt.txId, stamp: -1, stampValidFrom: 0, parts: partsOf(s.added, s.added.map(() => SEED_VALID_FROM), s.removed, s.removed.map(() => SEED_VALID_FROM)), ackAtMs: at, stream: "p4-history" });
   }
   lateGrowth.length = 0;
+  deepStage("sealing observations");
+  if (frontierTimer) clearInterval(frontierTimer);
+  if (streamFault || streamReads && activeModelWrites.size) throw Error(streamFault ?? "Unclosed model writer at reader seal");
+  if (streamReads) sendFrontier();
+  if (spill) { records = await spill.finish(streamReads ? readFrontier() : undefined); spillFinished = true; }
+  await splitWrites;
+  if (splitWriteError) throw splitWriteError;
+  report.splitEvidence = { rule: config.splitTarget,
+    ...(spill?.checked?.splits ?? await (await import("./lib/split-evidence.ts")).completeSplitEvidence(splitDirectory, replicaHost && "applied" in replicaHost ? replicaHost.applied : [])) };
   deepStage("draining the feed");
   const lastAcked = Math.max(acked.reduce((max,a)=>Math.max(max,a.position),seed.lastPosition), await writer.currentPosition().catch(() => 0));
   const feedDeadline = now() + 120_000;
@@ -1505,6 +1564,16 @@ async function run() {
     modelJournal = sealed.journal;
     report.expectedStateJournalQueue = sealed.queue;
   }
+  if (spill?.checked) {
+    const seal = spill.checked.journal;
+    assert.equal(seal.file, modelJournalFile);
+    for (const key of ["source", "slot", "run", "subjects"] as const) assert.equal(seal[key], modelJournalContext[key]);
+    modelJournal = new ModelJournal(modelJournalFile, modelJournalContext, seal);
+    report.expectedStateJournalQueue = spill.modelQueue;
+    report.streamReadProgress = { captured: spill.checked.captured, compared: spill.checked.compared,
+      pending: spill.checked.pending, peakPending: spill.checked.peakPending, pendingLimit: spill.checked.pendingLimit,
+      sealedClock: spill.checked.sealedClock };
+  }
   if (modelJournal) {
     const restored = modelJournal.restore(); model = restored.model; expectations = new ExpectationCache(model);
     report.expectedStateJournal = await modelJournal.archive();
@@ -1567,18 +1636,20 @@ async function run() {
   // [DX-H1] Why: API round trips and observed HTTP requests differ when reach falls back inside the adapter.
   // Rejected: discarding the reader's roundTrips field during analysis (cannot compare compositions).
   let pulls = 0, roundTripSum = 0;
-  const roundTripDistribution: Record<string, number> = {};
+  const roundTripDistribution: Record<string, number> = { ...spill?.checked?.trips };
+  for (const [trips, n] of Object.entries(roundTripDistribution)) { pulls += n; roundTripSum += Number(trips) * n; }
   records.forEach(r => { if (r[R.error] === null) { pulls++; roundTripSum += r[R.roundTrips]; const key = String(r[R.roundTrips]); roundTripDistribution[key] = (roundTripDistribution[key] ?? 0) + 1; } });
   report.pullRoundTrips = { pulls, mean: pulls ? roundTripSum / pulls : null,
     distribution: roundTripDistribution, unit: "public Triples service calls; see httpRequests for actual HTTP" };
   if (spill) {
     const attempts = readerFinalDiagnostics.reduce((n, x) => n + (x.diagnostics.readAttempts?.attempted ?? 0), 0);
     const completed = readerFinalDiagnostics.reduce((n, x) => n + (x.diagnostics.readAttempts?.completed ?? 0), 0);
-    report.observationAccounting = { attempts, completed, mainReadCount, retained: records.length, judged: judgedReadCount };
-    if (attempts !== completed || records.length !== completed + mainReadCount || records.length !== judgedReadCount)
+    const retained = records.length + (spill.checked?.captured ?? 0), judged = judgedReadCount + (spill.checked?.compared ?? 0);
+    report.observationAccounting = { attempts, completed, mainReadCount, retained, judged };
+    if (attempts !== completed || retained !== completed + mainReadCount || retained !== judged)
       finalizationErrors.push("Read-attempt, retained-observation and final-verdict counts differ");
   }
-  if (records instanceof ReadRecords) report.observationStorage = { format: "lossless Float64 tuples and interned strings", records: records.length, encodedBytes: records.encodedBytes, numericResidentBytes: records.residentBytes, spillDirectory: records.directory, strings: records.stringCount, diskBudget: spill?.diskBudget };
+  if (records instanceof ReadRecords) report.observationStorage = { format: spill?.checked ? "checked fixed-window reductions and exact terminal tuples" : "lossless Float64 tuples and interned strings", records: records.length, encodedBytes: records.encodedBytes, numericResidentBytes: records.residentBytes, spillDirectory: records.directory, strings: records.stringCount, diskBudget: spill?.diskBudget, checkedFixedWindowReads: spill?.checked?.compared };
   report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
   report.engineSamples = engineSamples;
   if (feedFailure) {
@@ -1849,30 +1920,17 @@ function windowOf(phase: any) {
   return settledPhaseWindow(phase.start, phase.end, config.settleS * 1000);
 }
 function judgeRead(r: ReadRecord) {
-  // [DX-R3] Why: unsupported returned values are wrong reads, not transport failures.
-  // Rejected: hiding domain violations in the error counter instead of the correctness verdict.
-  if (r[R.error] === "CanonicalValueError") return { ok: false, kind: "invalid-value" };
-  if (r[R.error] !== null) return { ok: false, kind: "error" };
-  const exp = expectations.expected(r[R.subject], r[R.recordedAt], r[R.validAt]);
-  // [DX-R3] Why: a business-only expectation has no assertion identity or temporal provenance to certify a full-row read.
-  // Rejected: accepting a digest before all seed/write receipts have populated the independent full-row model.
-  if (!exp.fullRows) return { ok: false, kind: "wrong-world" };
-  if (r[R.stamp] === exp.stamp && r[R.facts] === exp.facts && r[R.digest] === exp.digest) return { ok: true, kind: "correct" };
-  const late = model.lateArrivals(r[R.subject], r[R.recordedAt], r[R.start]);
-  if (exp.stamp >= 0 && r[R.stamp] < exp.stamp) return { ok: false, kind: late > 0 ? "stale-late-arrival" : "stale" };
-  if (r[R.stamp] > exp.stamp) return { ok: false, kind: "future-or-latest-state" };
-  return { ok: false, kind: "wrong-world" };
+  return VERDICTS[judgeReadCode(r, expectations)]!;
 }
 // [DX-R3] Why: one byte per verdict preserves every judgment without a heap object per observation.
 // Rejected: retaining millions of identical {ok:true,kind:"correct"} objects during full-ladder analysis.
-const VERDICTS = ["correct", "error", "stale-late-arrival", "stale", "future-or-latest-state", "wrong-world", "invalid-value"].map(kind => ({ ok: kind === "correct", kind }));
 let judgingCost: { cpuMs: number; wallMs: number; reads: number; cpuMsPerRead: number; cpuScope: string } | undefined;
 function readVerdicts(): Uint8Array {
   const threadScope = typeof (process as any).threadCpuUsage === "function";
   const cpuUsage: typeof process.cpuUsage = threadScope ? (process as any).threadCpuUsage : process.cpuUsage;
   const cpuStart = cpuUsage(), wallStart = performance.now();
   const result = new Uint8Array(records.length);
-  records.forEach((r, k) => { const verdict = judgeRead(r); result[k] = VERDICTS.findIndex(v => v.kind === verdict.kind); });
+  records.forEach((r, k) => { result[k] = judgeReadCode(r, expectations); });
   judgedReadCount = result.length;
   const cpu = cpuUsage(cpuStart);
   judgingCost = { cpuMs: (cpu.user + cpu.system) / 1000, wallMs: performance.now() - wallStart, reads: result.length, cpuMsPerRead: (cpu.user + cpu.system) / 1000 / result.length, cpuScope: threadScope ? "main thread" : "process upper bound, may include concurrent oracle worker" };
@@ -1887,8 +1945,10 @@ const countBy = (values: string[]) => { const o: Record<string, number> = {}; fo
 function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintenance: any; historyList: number[]; pendingAtEnd: number; events: readonly TraceEvent[] }) {
   const analysisCpuStart = process.cpuUsage(), analysisWallStart = performance.now();
   const verdicts = readVerdicts();
+  const checked = spill?.checked;
   const violationKinds: Record<string, number> = {};
-  const violationSample: any[] = [];
+  const violationSample: any[] = [...(checked?.violationSample ?? [])];
+  if (checked) checked.verdicts.forEach((count, code) => { if (code > 1 && count) violationKinds[VERDICTS[code]!.kind] = count; });
   records.forEach((r, k) => {
     const v = VERDICTS[verdicts[k]!]!;
     if (v.ok || v.kind === "error") return;
@@ -1913,48 +1973,20 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     fs.writeFileSync(path.join(rawDir,"tenant-observations.json"),bytes,{flag:"wx"});
     report.deep.tenantObservationsSha256 = sha256File(path.relative(REPO, path.join(rawDir, "tenant-observations.json")));
   }
-  const lastAckBefore = (subject: number, t: number): number | null => {
-    let best: number | null = null;
-    for (const c of model.commits.get(subject) ?? []) if (c.ackAtMs < t && (best === null || c.ackAtMs > best)) best = c.ackAtMs;
-    return best;
-  };
-
   const levelStats = (phase: any) => {
     const w = windowOf(phase);
     const secs = Math.max(0.001, (w.to - w.from) / 1000);
-    const read = new Histogram();
-    const goodputBySecond = w.invalid ? [] : Array.from({ length: Math.ceil(secs) }, (_, i) => ({ correct: 0, seconds: Math.min(1, secs - i) }));
-    let reads = 0, correct = 0, violations = 0, errors = 0, hotReads = 0, splitReads = 0, splitForced = 0, splitCorrect = 0;
-    const byBasis = [0, 0, 0];
-    const routes: Record<string, number> = {};
-    const languages: Record<string, number> = {};
-    let waited = 0;
-    const watermarkWait = new Histogram();
-    const buckets: Record<string, Histogram> = {};
-    const bytesBy: Record<string, { sum: number; count: number }> = {};
-    visitPhase(phase.idx, (r, k) => {
+    const bounds = { name: phase.name, from: w.from, to: w.to };
+    const prior = checked?.windows[phase.name];
+    const observation = prior ? ReadWindow.restore(prior, bounds) : new ReadWindow(bounds);
+    if (!prior) visitPhase(phase.idx, (r, k) => {
       if (r[R.phase] !== phase.idx || r[R.start] < w.from || r[R.start] + r[R.latency] > w.to) return;
-      reads++;
-      const v = VERDICTS[verdicts[k]!]!;
-      if (v.ok) { correct++; read.recordMs(r[R.latency]); const bin = Math.min(goodputBySecond.length - 1, Math.floor((r[R.start] + r[R.latency] - w.from) / 1000)); goodputBySecond[bin]!.correct++; } else if (v.kind === "error") errors++; else violations++;
-      const lw = lastAckBefore(r[R.subject], r[R.start]);
-      if (lw !== null && r[R.start] - lw <= 60_000) hotReads++;
-      byBasis[r[R.basisKind]]!++;
-      routes[r[R.route]] = (routes[r[R.route]] ?? 0) + 1;
-      languages[r[R.language]] = (languages[r[R.language]] ?? 0) + 1;
-      if (r[R.waitedMs] > 0) waited++;
-      watermarkWait.recordMs(r[R.waitedMs]);
-      if (r[R.split] > 0) { splitReads++; if (r[R.split] === 2) { splitForced++; if (v.ok) splitCorrect++; } }
-      if (v.ok) {
-        const facts = cells ? cells.sizes[r[R.subject]]! : worldFactsOf(r[R.subject], accounts);
-        const b = facts <= 200 ? "small" : facts <= 800 ? "medium" : "large";
-        for (const key of [`bucket:${b}`, `hops:${hopOf(r[R.subject])}`]) {
-          (buckets[key] ??= new Histogram()).recordMs(r[R.latency]);
-          const bytes = bytesBy[key] ??= { sum: 0, count: 0 };
-          bytes.sum += r[R.bytes]; bytes.count++;
-        }
-      }
+      const facts = cells ? cells.sizes[r[R.subject]]! : worldFactsOf(r[R.subject], accounts);
+      const b = facts <= 200 ? "small" : facts <= 800 ? "medium" : "large";
+      observation.add(r, verdicts[k]!, wasHot(r, expectations), `bucket:${b}`, `hops:${hopOf(r[R.subject])}`);
     });
+    const { read, goodputBySecond, reads, correct, violations, errors, hotReads, splitReads, splitForced, splitCorrect,
+      byBasis, routes, languages, waited, watermarkWait, buckets, bytesBy } = observation;
     const commits = background.filter((x) => x.scheduledAt >= w.from && x.scheduledAt < w.to && x.outcome === "committed" && !x.expired);
     const commit = new Histogram();
     for (const c of commits) commit.recordMs(verdictMs(c));
@@ -1968,10 +2000,11 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const mainEluMean = mean(mainElu.filter((e) => e.t >= w.from && e.t < w.to).map((e) => e.elu));
     const eng = engineSamples.filter((e) => e.t >= w.from && e.t < w.to);
     const maxWorkerElu = workerEluMean.length ? Math.max(...workerEluMean) : null;
-    const maint = (ctx.maintenance.events ?? []).filter((e: any) => lane === "datomic" ? completedMaintenanceInWindow(e, phase.name, w.from, w.to) : e.t >= w.from && e.t < w.to).length;
+    const maintenancePhase = phase.maintenancePhase ?? phase.name;
+    const maint = (ctx.maintenance.events ?? []).filter((e: any) => lane === "datomic" ? completedMaintenanceInWindow(e, maintenancePhase, w.from, w.to) : e.t >= w.from && e.t < w.to).length;
     const maintenanceWindows = w.invalid ? [] : Array.from({ length: Math.ceil(secs / 45) }, (_, i) => {
       const from = w.from + i * 45000, to = Math.min(w.to, from + 45000);
-      return { phase: phase.name, from, to, completed: (ctx.maintenance.events ?? []).filter((e: any) => lane === "datomic" ? completedMaintenanceInWindow(e, phase.name, from, to) : e.t >= from && e.t < to).length };
+      return { phase: maintenancePhase, from, to, completed: (ctx.maintenance.events ?? []).filter((e: any) => lane === "datomic" ? completedMaintenanceInWindow(e, maintenancePhase, from, to) : e.t >= from && e.t < to).length };
     });
     const marks = watermarkSamples.filter((s) => s.t >= w.from && s.t < w.to).map((s) => s.marks["source"] ?? 0);
     return {
@@ -2003,9 +2036,9 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       stats[name] = pooledPhase(name, members, windows[name], ref ? { ...ref, rows: undefined, values: undefined } : null);
     }
     const first = ctx.phases.find(p => p.name === "L256-A");
-    if (first?.end) stats["L256-legacy"] = levelStats({ ...first, end: first.start + 45000 });
+    if (first?.end) stats["L256-legacy"] = { ...levelStats({ ...first, name: "L256-legacy", maintenancePhase: first.name, end: first.start + 45000 }), phase: first.name };
     const last=ctx.phases.find(p=>p.name==="L256-D");
-    if(last?.end) stats["L256-adjacent"] = levelStats({...last,start:last.end-45000});
+    if(last?.end) stats["L256-adjacent"] = { ...levelStats({...last, name: "L256-adjacent", maintenancePhase: last.name, start:last.end-45000}), phase: last.name };
   }
   const strip = (s: any) => s ? Object.fromEntries(Object.entries(s).filter(([k]) => !k.startsWith("_"))) : s;
   const L = (n: string) => stats[n];
@@ -2194,14 +2227,22 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   }
 
   const saturated = Object.values(stats).filter((s: any) => s.client.saturated).map((s: any) => s.phase);
-  const total = records.length, ok = verdicts.reduce((n, code) => n + Number(code === 0), 0), errs = verdicts.reduce((n, code) => n + Number(code === 1), 0);
+  const stressHeadroom = fullLength && !config.zeroReaders ? ctx.phases.filter(p => p.readers === 1024 && p.measured).map(p => {
+    const w = windowOf(p);
+    const inside = (samples: { t: number; elu: number }[]) => mean(samples.filter(e => e.t >= w.from && e.t < w.to).map(e => e.elu));
+    const readers = Array.from({ length: config.readerThreads }, (_, worker) => inside(workerElu.filter(e => e.worker === worker && e.running! > 0)));
+    const sender = inside(mainElu), collector = spill ? inside(spillElu) : null;
+    const roles = [sender, ...(spill ? [collector] : []), ...readers];
+    return { phase: p.name, readers, sender, collector, limit: 0.70, eligible: roles.every(elu => elu !== null && elu <= 0.70) };
+  }) : [];
+  const total = records.length + (checked?.compared ?? 0), ok = verdicts.reduce((n, code) => n + Number(code === 0), checked?.verdicts[0] ?? 0), errs = verdicts.reduce((n, code) => n + Number(code === 1), checked?.verdicts[1] ?? 0);
   report.correctness = { reads: total, correct: ok, violations: total - ok - errs, errors: errs, violationKinds, violationSample, rule: "a read is correct when its :placement/stamp and whole-world multiset digest equal the expected-state model at the basis the driver requested (receipt instant R, valid time V); errors and wrong answers are never goodput" };
   report.readerDiagnostics = workerDiagnostics;
   report.readerFinalDiagnostics = readerFinalDiagnostics;
-  report.expectedStateCache = expectations.diagnostics;
-  report.client = { series: {main:mainElu,readers:workerElu},
+  report.expectedStateCache = { ...expectations.diagnostics, rolling: checked?.expectationCache };
+  report.client = { series: {main:mainElu,readers:workerElu,collector:spillElu}, stressHeadroom,
     burstMainEluMean: mean(mainElu.filter(e => overlapsBurst((e.t - ctx.traceStart)/1000, (e.t - ctx.traceStart)/1000 + 0.001, report.trace.params)).map(e=>e.elu)),
-    peakProcessBytes: process.resourceUsage().maxRSS * 1024, saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };
+    peakProcessBytes: process.resourceUsage().maxRSS * 1024, saturatedPhases: saturated, invalid: saturated.length > 0 || stressHeadroom.some(p => !p.eligible), processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "Measured windows retain the 0.90 limit. Full stress windows require sampled sender, collector and active reader means at or below 0.70." };
   report.phases = ctx.phases.map((p) => ({ ...p, stats: strip(stats[p.name]) }));
   report.priorities = { P1: p1, P2: p2, P3: p3, P4: p4, P5: p5 };
   report.pooledPhases = Object.fromEntries(["L256", "L1024", "L256-legacy"].filter(n => stats[n]).map(n => [n, strip(stats[n])]));
@@ -2211,7 +2252,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   report.histograms = Object.fromEntries(Object.entries(stats).flatMap(([name, s]: any) => [[`${name}.read`, s._read.toJSON()], [`${name}.commit`, s._commit.toJSON()], [`${name}.feedLag`, s._feedLag.toJSON()], ...Object.entries(s._buckets).map(([b, h]: any) => [`${name}.${b}`, h.toJSON()])]));
   applyCommitVerdicts(report, writes, baseline, ctx.events);
   const analysisCpu = process.cpuUsage(analysisCpuStart), fullAnalysisCpuMs = (analysisCpu.user + analysisCpu.system) / 1000;
-  report.verificationCost = { verdicts: judgingCost, fullAnalysisCpuMs, fullAnalysisWallMs: performance.now() - analysisWallStart,
+  report.verificationCost = { verdicts: judgingCost, rollingComparisonAndFold: checked?.comparisonAndFold, fullAnalysisCpuMs, fullAnalysisWallMs: performance.now() - analysisWallStart,
     fullAnalysisCpuMsPerRead: fullAnalysisCpuMs / records.length,
     scope: "process CPU after measured phases; includes every verdict and all JS statistics; post-run process CPU may include the concurrent independent oracle worker (not the external oracle process); phase client CPU includes serving/capture, follower, writer and spill" };
 }
@@ -2285,19 +2326,25 @@ function recoveryWindows(phases: any[], l256: any, baseline: any[] | null, trace
   const good = writes.filter(x => x.stream === "background" && !x.resend && x.outcome === "committed" && !x.expired);
   for (let offset = 0; offset + width <= Math.min(...phases.map(p => p.end - p.start)) + 1; offset += 5000) {
     const intervals = phases.map(p => ({ from: p.start - traceStart + offset, to: p.start - traceStart + offset + width }));
-    const h = new Histogram(); let violations = 0;
+    const h = new Histogram(); let violations = 0, errors = 0;
     for (const p of phases) {
-      const one = new Histogram(); let invalidReads = 0;
-      visitPhase(p.idx, (r) => {
+      const one = new Histogram(); let invalidReads = 0, failedReads = 0;
       const from = p.start + offset, to = from + width;
-      if (r[R.start] < from || r[R.start] + r[R.latency] > to) return;
-      const v = judgeRead(r);
-      if (v.ok) { h.recordMs(r[R.latency]); one.recordMs(r[R.latency]); } else if (v.kind !== "error") { violations++; invalidReads++; }
+      const folded = spill?.checked?.recovery[p.idx]?.find(s => s.bounds.from === from && s.bounds.to === to);
+      if (spill?.checked?.recovery[p.idx] && !folded) throw Error(`Missing checked recovery interval ${p.name}/${offset}`);
+      if (folded) {
+        one.merge(folded.read);
+        invalidReads = folded.violations; failedReads = folded.errors;
+      } else visitPhase(p.idx, (r) => {
+        if (r[R.start] < from || r[R.start] + r[R.latency] > to) return;
+        const v = judgeRead(r);
+        if (v.ok) one.recordMs(r[R.latency]); else if (v.kind === "error") failedReads++; else invalidReads++;
       });
-      const from = p.start - traceStart + offset, interval = [{ from, to: from + width }];
+      h.merge(one); violations += invalidReads; errors += failedReads;
+      const interval = [{ from: from - traceStart, to: to - traceStart }];
       const commit = new Histogram(); good.filter(x => inIntervals(x.offsetMs, interval)).forEach(x => commit.recordMs(verdictMs(x)));
       const ref = baseline ? matchBaseline(baseline, interval, verdictEvents.filter(e => !e.resend && e.stream === "background"), (report.matchedBaseline?.offeredUntilTraceS ?? 0) * 1000, "ack") : null;
-      cycleWindows.get(p.name)!.push({ fromS: offset/1000, n: commit.count, denominatorN: ref?.commits ?? 0, readP99Ms: one.percentileMs(99), commitP99Ms: commit.percentileMs(99),
+      cycleWindows.get(p.name)!.push({ fromS: offset/1000, n: commit.count, denominatorN: ref?.commits ?? 0, reads: one.count, errors: failedReads, routes: folded?.routes, readP99Ms: one.percentileMs(99), commitP99Ms: commit.percentileMs(99),
         descriptiveMeets: invalidReads === 0 && (one.percentileMs(99) ?? Infinity) <= 100 && (!l256 || one.count / (width/1000) >= .9*l256.goodputPerS) &&
           !ref?.invalid && !!ref?.p99Ms && (commit.percentileMs(99) ?? Infinity) <= 1.25*ref.p99Ms,
         diagnosticOnly: true });
@@ -2309,7 +2356,7 @@ function recoveryWindows(phases: any[], l256: any, baseline: any[] | null, trace
     const readP99 = h.percentileMs(99), commitP99 = ch.percentileMs(99), goodput = h.count / (phases.length * width / 1000);
     const meets = ch.count >= 500 && (matched?.commits ?? 0) >= 500 && !matched?.invalid && violations === 0 && readP99 !== null && readP99 <= 100 &&
       (!l256 || goodput >= 0.9 * l256.goodputPerS) && !!matched?.p99Ms && commitP99 !== null && commitP99 <= 1.25 * matched.p99Ms;
-    windows.push({ fromS: offset / 1000, windowMs: width, intervals, cycles: phases.length, reads: h.count, violations, readP99Ms: readP99,
+    windows.push({ fromS: offset / 1000, windowMs: width, intervals, cycles: phases.length, reads: h.count, violations, errors, readP99Ms: readP99,
       n: ch.count, denominatorN: matched?.commits ?? 0, commitP99Ms: commitP99, matchedZeroReaderP99Ms: matched?.p99Ms ?? null, meets });
   }
   const first = windows.find(w => w.meets);
