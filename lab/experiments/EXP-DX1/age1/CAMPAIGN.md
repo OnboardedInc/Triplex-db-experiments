@@ -13,7 +13,16 @@ Reserve one server at $1.09/h under the $130 budget (~119.3 h). Price the initia
 | 4B | 2B | 27.64 / 30.13 | 47.91 | Second doubling to distinguish a flat path from sustained growth. |
 | 8B | 4B | 55.29 / 60.26 | 108.17 | Proposed operating boundary and full-copy budget. |
 
-The baseline uses the observed 300,000-record Mac load at 20,097 records/s over 14.93 s. Its three segments ranged from 17,225 to 22,022 records/s. It establishes a short full-shape rate at this age. The earlier floor reached 68,471 bare members/s in a short Mac sample with 128 minimal members per transaction. K preserves a physical transaction per save and includes indexed IDs, a journal, revisions and retractions. At 10k records/s, cumulative aging costs $35.73 through 2B, $96.28 through 4B and $217.39 through 8B. At 50k, the 8B age-only cost is $43.48. Set aside 15 hours ($16.35) for traffic, full copies and recovery measurements. From a compatible 0.82B base, 8B requires about 19.1k sustained records/s after that reserve. Plan through 4B. The slowest observed segment would cost $126.21 in aging alone through 8B. Starting instead from a 0.25B compatible synthetic seed would cost $116.76 in aging at the baseline rate, plus seed creation and measurement time. Start the 8B rung only if the compatible starting point, last-rung rate and observed recovery cost leave room under the budget and peak disk cap. End the campaign on any exactness failure, sustained backpressure or live service limit violation. [Capacity guidance](https://docs.datomic.com/operation/capacity.html)
+The baseline uses the observed 300,000-record Mac load at 20,097 records/s over 14.93 s. Its three segments ranged from 17,225 to 22,022 records/s. It establishes a short full-shape rate at this age. The earlier floor reached 68,471 bare members/s in a short Mac sample with 128 minimal members per transaction. K preserves a physical transaction per save and includes indexed IDs, a journal, revisions and retractions. At 10k records/s, cumulative aging costs $35.73 through 2B, $96.28 through 4B and $217.39 through 8B. At 50k, the 8B age-only cost is $43.48. Set aside 15 hours ($16.35) for traffic, full copies and recovery measurements. From a compatible 0.82B base, 8B requires about 19.1k sustained records/s after that reserve. The longer run supports budgeting through 2B until calibration on the server. The short run’s slowest segment would cost $126.21 in aging alone through 8B. Starting instead from a 0.25B compatible synthetic seed would cost $116.76 in aging at the baseline rate, plus seed creation and measurement time. Start the 8B rung only if the compatible starting point, last-rung rate and observed recovery cost leave room under the budget and peak disk cap. End the campaign on any exactness failure, sustained backpressure or live service limit violation. [Capacity guidance](https://docs.datomic.com/operation/capacity.html)
+
+The two complete Mac rungs averaged 5,875 records/s across 1,194,720 age records. The longer run is the conservative cost basis. Its third load reached 10,700 records/s over a 900,000-record prefix before the time limit. Rate variability at these sizes argues for re-estimating from the actual server at 1B. [Mac observations](OBSERVATIONS.md)
+
+| Rung | Added hours / USD at 5,875 records/s | Cumulative USD |
+| --- | ---: | ---: |
+| 1B | 8.51 / 9.28 | 9.28 |
+| 2B | 47.28 / 51.54 | 60.81 |
+| 4B | 94.56 / 103.08 | 163.89 |
+| 8B | 189.13 / 206.15 | 370.04 |
 
 ## Predictions to freeze before execution
 
