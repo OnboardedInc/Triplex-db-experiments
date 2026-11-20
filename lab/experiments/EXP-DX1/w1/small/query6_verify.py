@@ -150,7 +150,9 @@ case["queries"].extend([
 ])
 attempt = out / ("verify-" + str(uuid.uuid4()))
 attempt.mkdir()
-revision = "03d86f3346cccd6794487b77293fb56077dd020e"
+# [DX-W1] Why: use the independent revision that models R-JNL-5 and queryable journal facts.
+# Rejected: the older timing oracle, whose match source contains only application assertions.
+revision = "45bfa59b8c10c038de73f21f831bf1fd24a5368f"
 oracle = attempt / "oracle"
 for name in subprocess.check_output(["git", "ls-tree", "-r", "--name-only", revision, "--", "lab/oracles/replay"], text=True).splitlines():
     target = oracle / name
