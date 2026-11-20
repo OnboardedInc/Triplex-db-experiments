@@ -19,8 +19,12 @@ export const hash = (bytes: Buffer | string) => createHash("sha256").update(byte
 
 export function port(value: string): number {
   const n = Number(value);
-  if (!/^\d+$/.test(value) || n > 65535 || (n !== 0 && n < 1024) ||
-      [5432, 6379, 4222, 4566, 16686, 15442, 17019].includes(n))
+  if (
+    !/^\d+$/.test(value) ||
+    n > 65535 ||
+    (n !== 0 && n < 1024) ||
+    [5432, 6379, 4222, 4566, 16686, 15442, 17019].includes(n)
+  )
     throw new Error("Choose port 0 or an unreserved port between 1024 and 65535");
   return n;
 }
@@ -30,14 +34,18 @@ export function dockerClient(host?: string): Docker {
   const args = host ? ["--host", host] : [];
   return async (command) => {
     try {
-      return (await exec("docker", [...args, ...command], {
-        timeout: 10 * 60_000,
-        maxBuffer: 4 * 1024 ** 2,
-        encoding: "utf8",
-      })).stdout.trim();
+      return (
+        await exec("docker", [...args, ...command], {
+          timeout: 10 * 60_000,
+          maxBuffer: 4 * 1024 ** 2,
+          encoding: "utf8",
+        })
+      ).stdout.trim();
     } catch (error) {
       const failure = error as { stderr?: string; code?: string };
-      throw new Error(`Docker ${command.slice(0, 2).join(" ")} failed: ${failure.stderr?.trim() || failure.code}`);
+      throw new Error(
+        `Docker ${command.slice(0, 2).join(" ")} failed: ${failure.stderr?.trim() || failure.code}`,
+      );
     }
   };
 }
@@ -59,7 +67,10 @@ async function unpackVendor(zip: Buffer, target: string) {
     cursor += 46 + length + zip.readUInt16LE(cursor + 30) + zip.readUInt16LE(cursor + 32);
     if (name.endsWith("/")) continue;
     const parts = name.split("/");
-    if (parts.shift() !== packageName || parts.some((p) => !p || p === "." || p === ".." || p.includes("\\")))
+    if (
+      parts.shift() !== packageName ||
+      parts.some((p) => !p || p === "." || p === ".." || p.includes("\\"))
+    )
       throw new Error("Unexpected Datomic distribution path");
     const at = local + 30 + zip.readUInt16LE(local + 26) + zip.readUInt16LE(local + 28);
     const data = zip.subarray(at, at + size);
@@ -76,16 +87,23 @@ async function buildImage(docker: Docker, dir: string, prefix: string) {
   const build = join(dir, "build");
   try {
     const expected = (await readFile(join(config, "SHA256SUMS"), "utf8")).split(/\s/)[0];
-    const response = await fetch(`https://datomic-pro-downloads.s3.amazonaws.com/${version}/${packageName}.zip`, {
-      signal: AbortSignal.timeout(180_000),
-    });
-    if (!response.ok) throw new Error(`Datomic distribution download returned HTTP ${response.status}`);
+    const response = await fetch(
+      `https://datomic-pro-downloads.s3.amazonaws.com/${version}/${packageName}.zip`,
+      {
+        signal: AbortSignal.timeout(180_000),
+      },
+    );
+    if (!response.ok)
+      throw new Error(`Datomic distribution download returned HTTP ${response.status}`);
     const zip = Buffer.from(await response.arrayBuffer());
     if (hash(zip) !== expected) throw new Error("Datomic distribution checksum mismatch");
     await unpackVendor(zip, join(build, "datomic"));
     await cp(config, join(build, "config"), { recursive: true });
     await cp(join(repo, "packages/datomic/gateway"), join(build, "gateway"), { recursive: true });
-    await cp(join(repo, "packages/datomic/src/codec-spec.json"), join(build, "gateway/codec-spec.json"));
+    await cp(
+      join(repo, "packages/datomic/src/codec-spec.json"),
+      join(build, "gateway/codec-spec.json"),
+    );
     await cp(join(config, "Dockerfile"), join(build, "Dockerfile"));
     await docker(["build", "--label", `${ownership}=${prefix}`, "-t", prefix, build]);
     return prefix;
@@ -104,7 +122,11 @@ export interface StackOptions {
   cachedImage?: string;
 }
 
-async function waitFor<T>(poll: () => Promise<T | undefined>, message: string, signal?: AbortSignal) {
+async function waitFor<T>(
+  poll: () => Promise<T | undefined>,
+  message: string,
+  signal?: AbortSignal,
+) {
   const until = Date.now() + 150_000;
   let recent = "";
   do {
@@ -125,7 +147,8 @@ export class Stack {
   readonly traceDir: string;
   readonly #opts: StackOptions;
   constructor(opts: StackOptions) {
-    if (!/^tx2-dxplay1-[a-f0-9]{12}$/.test(opts.prefix)) throw new Error("Invalid playground owner");
+    if (!/^tx2-dxplay1-[a-f0-9]{12}$/.test(opts.prefix))
+      throw new Error("Invalid playground owner");
     this.#opts = opts;
     this.label = `${ownership}=${opts.prefix}`;
     this.traceDir = join(opts.directory, "traces");
@@ -140,29 +163,63 @@ export class Stack {
     const extract = prefix + "-extract";
     const gateway = join(repo, "packages/datomic/gateway");
     await mkdir(this.traceDir, { recursive: true });
-    const sourceFiles = (await readdir(join(gateway, "src"), { recursive: true, withFileTypes: true }))
+    const sourceFiles = (
+      await readdir(join(gateway, "src"), { recursive: true, withFileTypes: true })
+    )
       .filter((file) => file.isFile())
       .map((file) => join(file.parentPath, file.name))
       .sort();
-    const source = hash(JSON.stringify(await Promise.all(sourceFiles.map(async (file) =>
-      [file.slice(gateway.length + 5), hash(await readFile(file))]))));
-    const image = cachedImage ?? await buildImage(docker, directory, prefix);
+    const source = hash(
+      JSON.stringify(
+        await Promise.all(
+          sourceFiles.map(async (file) => [
+            file.slice(gateway.length + 5),
+            hash(await readFile(file)),
+          ]),
+        ),
+      ),
+    );
+    const image = cachedImage ?? (await buildImage(docker, directory, prefix));
     signal?.throwIfAborted();
     await docker(["network", "create", "--label", this.label, network]);
     await docker(["volume", "create", "--label", this.label, volume]);
     const runnable = (role: keyof typeof caps, name: string) => [
-      "--name", name, "--label", this.label, "--network", network,
-      "--memory", caps[role] + "m", "--memory-swap", caps[role] + "m",
-      "--cpus", "2", "--ulimit", "core=0",
+      "--name",
+      name,
+      "--label",
+      this.label,
+      "--network",
+      network,
+      "--memory",
+      caps[role] + "m",
+      "--memory-swap",
+      caps[role] + "m",
+      "--cpus",
+      "2",
+      "--ulimit",
+      "core=0",
     ];
     const secret = randomBytes(24).toString("hex");
-    await docker(["run", "-d", "--pull", cachedImage ? "never" : "missing",
-      ...runnable("pg", pg), "-e", `POSTGRES_PASSWORD=${secret}`,
-      "-v", `${volume}:/var/lib/postgresql/data`, "postgres:17-alpine"]);
-    await waitFor(async () => {
-      await docker(["exec", pg, "pg_isready", "-h", loopback, "-U", "postgres"]);
-      return true;
-    }, "PostgreSQL did not become ready", signal);
+    await docker([
+      "run",
+      "-d",
+      "--pull",
+      cachedImage ? "never" : "missing",
+      ...runnable("pg", pg),
+      "-e",
+      `POSTGRES_PASSWORD=${secret}`,
+      "-v",
+      `${volume}:/var/lib/postgresql/data`,
+      "postgres:17-alpine",
+    ]);
+    await waitFor(
+      async () => {
+        await docker(["exec", pg, "pg_isready", "-h", loopback, "-U", "postgres"]);
+        return true;
+      },
+      "PostgreSQL did not become ready",
+      signal,
+    );
 
     await docker(["create", "--name", extract, "--label", this.label, image]);
     for (const file of sqlFiles) {
@@ -172,66 +229,144 @@ export class Stack {
       // Rejected: a published Postgres port or the lab's shared password.
       if (file === "postgres-user.sql") {
         const sql = await readFile(local, "utf8");
-        if (!/password\s+'datomic'/i.test(sql)) throw new Error("Unexpected vendor SQL password statement");
+        if (!/password\s+'datomic'/i.test(sql))
+          throw new Error("Unexpected vendor SQL password statement");
         await writeFile(local, sql.replace(/(password\s+)'datomic'/i, `$1'${secret}'`));
       }
       await docker(["cp", local, `${pg}:/tmp/${file}`]);
-      await docker(["exec", pg, "psql", "-v", "ON_ERROR_STOP=1", "-U", "postgres",
-        "-d", file === "postgres-table.sql" ? "datomic" : "postgres", "-f", "/tmp/" + file]);
+      await docker([
+        "exec",
+        pg,
+        "psql",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-U",
+        "postgres",
+        "-d",
+        file === "postgres-table.sql" ? "datomic" : "postgres",
+        "-f",
+        "/tmp/" + file,
+      ]);
       await rm(local);
     }
     const localConfig = join(directory, "sql.properties");
     const sqlUrl = `jdbc:postgresql://${pg}:5432/datomic`;
-    await writeFile(localConfig, [
-      "protocol=sql", `host=${tx}`, `alt-host=${tx}`, `sql-url=${sqlUrl}`,
-      "sql-user=datomic", `sql-password=${secret}`, "memory-index-threshold=8m",
-      "memory-index-max=32m", "object-cache-max=64m", "encrypt-channel=true", "",
-    ].join("\n"), { mode: 0o600 });
+    await writeFile(
+      localConfig,
+      [
+        "protocol=sql",
+        `host=${tx}`,
+        `alt-host=${tx}`,
+        `sql-url=${sqlUrl}`,
+        "sql-user=datomic",
+        `sql-password=${secret}`,
+        "memory-index-threshold=8m",
+        "memory-index-max=32m",
+        "object-cache-max=64m",
+        "encrypt-channel=true",
+        "",
+      ].join("\n"),
+      { mode: 0o600 },
+    );
     await docker(["rm", "-v", extract]);
-    const mount = (a: string, b: string, ro = false) =>
-      ["--mount", `type=bind,source=${a},target=${b}${ro ? ",readonly" : ""}`];
+    const mount = (a: string, b: string, ro = false) => [
+      "--mount",
+      `type=bind,source=${a},target=${b}${ro ? ",readonly" : ""}`,
+    ];
     const sources = [
       ...mount(join(gateway, "src"), "/opt/gateway/src", true),
-      ...mount(join(repo, "packages/datomic/src/codec-spec.json"), "/opt/gateway/codec-spec.json", true),
-      "-e", "DATOMIC_EXT_CLASSPATH=/opt/gateway/src",
+      ...mount(
+        join(repo, "packages/datomic/src/codec-spec.json"),
+        "/opt/gateway/codec-spec.json",
+        true,
+      ),
+      "-e",
+      "DATOMIC_EXT_CLASSPATH=/opt/gateway/src",
     ];
-    await docker(["create", ...runnable("tx", tx), ...sources,
-      "-e", "JAVA_OPTS=-Xms128m -Xmx640m -XX:+ExitOnOutOfMemoryError",
-      "--entrypoint", "/opt/datomic/bin/transactor", image, "/tmp/sql.properties"]);
+    await docker([
+      "create",
+      ...runnable("tx", tx),
+      ...sources,
+      "-e",
+      "JAVA_OPTS=-Xms128m -Xmx640m -XX:+ExitOnOutOfMemoryError",
+      "--entrypoint",
+      "/opt/datomic/bin/transactor",
+      image,
+      "/tmp/sql.properties",
+    ]);
     await docker(["cp", localConfig, `${tx}:/tmp/sql.properties`]);
     await rm(localConfig);
     await docker(["start", tx]);
-    await waitFor(async () => {
-      await docker(["exec", tx, "bash", "-c", `(exec 3<>/dev/tcp/${tx}/4334) 2>/dev/null`]);
-      return true;
-    }, "Datomic transactor did not become ready", signal);
+    await waitFor(
+      async () => {
+        await docker(["exec", tx, "bash", "-c", `(exec 3<>/dev/tcp/${tx}/4334) 2>/dev/null`]);
+        return true;
+      },
+      "Datomic transactor did not become ready",
+      signal,
+    );
 
     const urls = {} as Record<keyof Ports, string>;
     for (const role of ["write", "read"] as const) {
       signal?.throwIfAborted();
       const name = prefix + "-" + role;
-      await docker(["run", "-d", "--restart", "on-failure:3", ...runnable(role, name), ...sources,
-        "-p", `${loopback}:${ports[role] || ""}:8080`,
+      await docker([
+        "run",
+        "-d",
+        "--restart",
+        "on-failure:3",
+        ...runnable(role, name),
+        ...sources,
+        "-p",
+        `${loopback}:${ports[role] || ""}:8080`,
         ...mount(this.traceDir, "/trace"),
-        "-e", "DATOMIC_JAVA_OPTS=-Xms64m -Xmx352m -Ddatomic.objectCacheMax=32m -XX:+ExitOnOutOfMemoryError",
-        "-e", `DATOMIC_URI_TEMPLATE=datomic:sql://{db}?${sqlUrl}?user=datomic&password=${secret}`,
-        "-e", `GATEWAY_SOURCE_SHA256=${source}`,
-        "-e", "TX2_ENTITY_CACHE_BYTES=8388608", "-e", "TX2_ID_CACHE_ENTRIES=4096",
-        "-e", "TX2_REACH_SESSION_ENTRIES=4096", "-e", "TRIPLEX_TRACE_LEVEL=full",
-        "-e", "TRIPLEX_TRACE_JFR=0", "-e", "TRIPLEX_TRACE_DIR=/trace",
-        "-e", `TRIPLEX_TRACE_PROCESS=${role}`, "-e", `TRIPLEX_TRACE_RUN=${prefix}`,
-        "-e", `TRIPLEX_TRACE_SLOT=${prefix}`, "-e", `TRIPLEX_TRACE_SOURCE=${source}`,
-        "--entrypoint", "/opt/datomic/bin/run", image, "-m", "triplex.gateway.main"]);
+        "-e",
+        "DATOMIC_JAVA_OPTS=-Xms64m -Xmx352m -Ddatomic.objectCacheMax=32m -XX:+ExitOnOutOfMemoryError",
+        "-e",
+        `DATOMIC_URI_TEMPLATE=datomic:sql://{db}?${sqlUrl}?user=datomic&password=${secret}`,
+        "-e",
+        `GATEWAY_SOURCE_SHA256=${source}`,
+        "-e",
+        "TX2_ENTITY_CACHE_BYTES=8388608",
+        "-e",
+        "TX2_ID_CACHE_ENTRIES=4096",
+        "-e",
+        "TX2_REACH_SESSION_ENTRIES=4096",
+        "-e",
+        "TRIPLEX_TRACE_LEVEL=full",
+        "-e",
+        "TRIPLEX_TRACE_JFR=0",
+        "-e",
+        "TRIPLEX_TRACE_DIR=/trace",
+        "-e",
+        `TRIPLEX_TRACE_PROCESS=${role}`,
+        "-e",
+        `TRIPLEX_TRACE_RUN=${prefix}`,
+        "-e",
+        `TRIPLEX_TRACE_SLOT=${prefix}`,
+        "-e",
+        `TRIPLEX_TRACE_SOURCE=${source}`,
+        "--entrypoint",
+        "/opt/datomic/bin/run",
+        image,
+        "-m",
+        "triplex.gateway.main",
+      ]);
       const address = await docker(["port", name, "8080/tcp"]);
-      if (!/^127\.0\.0\.1:\d+$/.test(address)) throw new Error("Gateway port did not bind to loopback");
+      if (!/^127\.0\.0\.1:\d+$/.test(address))
+        throw new Error("Gateway port did not bind to loopback");
       urls[role] = "http://" + address;
-      await waitFor(async () => {
-        const res = await fetch(urls[role] + "/health", { signal: AbortSignal.timeout(1500) });
-        if (!res.ok) return;
-        const body = await res.json() as { datomicVersion: string; gatewaySourceHash: string };
-        if (body.datomicVersion === version && body.gatewaySourceHash === source) return true;
-        throw new Error("Live gateway identity differs from the playground source");
-      }, `Datomic ${role} gateway did not become ready`, signal);
+      await waitFor(
+        async () => {
+          const res = await fetch(urls[role] + "/health", { signal: AbortSignal.timeout(1500) });
+          if (!res.ok) return;
+          const body = (await res.json()) as { datomicVersion: string; gatewaySourceHash: string };
+          if (body.datomicVersion === version && body.gatewaySourceHash === source) return true;
+          throw new Error("Live gateway identity differs from the playground source");
+        },
+        `Datomic ${role} gateway did not become ready`,
+        signal,
+      );
     }
     return { ...urls, source };
   }
@@ -239,11 +374,15 @@ export class Stack {
   async inventory() {
     const { docker } = this.#opts;
     const types = ["ps", "volume", "network", "image"] as const;
-    return Object.fromEntries(await Promise.all(types.map(async (type) => {
-      const args = type === "ps" ? ["ps", "-aq"] : [type, "ls", "-q"];
-      const listed = await docker([...args, "--filter", "label=" + this.label]);
-      return [type, [...new Set(listed.split("\n").filter(Boolean))]];
-    }))) as Record<(typeof types)[number], string[]>;
+    return Object.fromEntries(
+      await Promise.all(
+        types.map(async (type) => {
+          const args = type === "ps" ? ["ps", "-aq"] : [type, "ls", "-q"];
+          const listed = await docker([...args, "--filter", "label=" + this.label]);
+          return [type, [...new Set(listed.split("\n").filter(Boolean))]];
+        }),
+      ),
+    ) as Record<(typeof types)[number], string[]>;
   }
 
   async stop() {
@@ -255,7 +394,9 @@ export class Stack {
     if (live.image.length) await docker(["image", "rm", ...live.image]);
     const remaining = await this.inventory();
     if (Object.values(remaining).some((items) => items.length))
-      throw new Error("Playground cleanup left owned Docker resources: " + JSON.stringify(remaining));
+      throw new Error(
+        "Playground cleanup left owned Docker resources: " + JSON.stringify(remaining),
+      );
     return remaining;
   }
 }

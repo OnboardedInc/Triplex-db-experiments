@@ -1,0 +1,15 @@
+{
+  "name": "triplex-playground",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test:fixture": "node --test fixture.test.ts"
+  },
+  "dependencies": {
+    "@triplex-build/triplex": "workspace:^",
+    "@triplex-build/triplex-datomic": "workspace:^",
+    "effect": "catalog:"
+  }
+}

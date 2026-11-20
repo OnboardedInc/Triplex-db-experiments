@@ -1,0 +1,222 @@
+import { execFileSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
+import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
+import { parseArgs } from "node:util";
+import { loadFixture } from "./fixture.ts";
+import { dockerClient, loopback, port, repo, Stack } from "./stack.ts";
+
+const usage = `pnpm playground start [--port 4186] [--write-port 8486] [--read-port 8487] [--larger | --tier full --data SOURCE]
+pnpm playground stop
+node examples/playground/cli.ts mcp [--port 4186]`;
+const { values, positionals } = parseArgs({
+  allowPositionals: true,
+  options: {
+    port: { type: "string", default: "4186" },
+    "write-port": { type: "string", default: "8486" },
+    "read-port": { type: "string", default: "8487" },
+    larger: { type: "boolean" },
+    tier: { type: "string", default: "small" },
+    data: { type: "string" },
+    help: { type: "boolean", short: "h" },
+  },
+});
+const [cmd] = positionals;
+const state = join(repo, ".runtime/playground");
+const file = join(state, "owner.json");
+const directory = join(state, "stack");
+type Owner = { prefix: string; token: string; port: number; pid: number; dockerHost?: string };
+const pnpm = (argv: string[]) =>
+  execFileSync(
+    "pnpm",
+    [
+      ...(process.env["PLAYGROUND_PNPM_STORE"]
+        ? ["--store-dir", resolve(process.env["PLAYGROUND_PNPM_STORE"])]
+        : []),
+      ...argv,
+    ],
+    { cwd: repo, stdio: "inherit" },
+  );
+
+function pidExists(pid: number) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return (error as NodeJS.ErrnoException).code !== "ESRCH";
+  }
+}
+async function readOwner(): Promise<Owner | undefined> {
+  try {
+    const found = JSON.parse(await readFile(file, "utf8")) as Owner;
+    if (
+      !/^tx2-dxplay1-[a-f0-9]{12}$/.test(found.prefix) ||
+      !/^[a-f0-9]{48}$/.test(found.token) ||
+      !Number.isSafeInteger(found.pid) ||
+      found.pid < 1
+    )
+      throw new Error("Invalid playground state");
+    port(String(found.port));
+    return found;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    return undefined;
+  }
+}
+
+function checkPortableDocker(dockerHost?: string) {
+  // Lab execution is admitted by the engine adapter, which calls openInstance directly.
+  if (dockerHost?.includes("/.colima/triplex2/"))
+    throw new Error("The private lab daemon requires the engine.mjs play1 gate");
+}
+
+async function start() {
+  if (existsSync(state))
+    throw new Error("The playground already has a run. Use pnpm playground stop first.");
+  if (
+    !["small", "full"].includes(values.tier) ||
+    (values.larger && values.tier !== "small") ||
+    (values.data && values.tier !== "full")
+  )
+    throw new Error(usage);
+  const dockerHost = process.env["DOCKER_HOST"];
+  checkPortableDocker(dockerHost);
+  const ports = {
+    api: port(values.port),
+    write: port(values["write-port"]),
+    read: port(values["read-port"]),
+  };
+  const explicit = Object.values(ports).filter(Boolean);
+  if (new Set(explicit).size !== explicit.length)
+    throw new Error("Use a different port for each listener");
+  // [DX-PLAY1] Why: the clean-clone path installs and builds only its committed workspace inputs.
+  // Rejected: needing generated dist files, a global tsx install or an unpublished package.
+  pnpm([
+    "--filter",
+    "triplex-monorepo",
+    "--filter",
+    "triplex-playground...",
+    "install",
+    "--frozen-lockfile",
+  ]);
+  pnpm(["exec", "turbo", "run", "build", "--filter=@triplex-build/triplex-datomic..."]);
+  const { openInstance } = await import("./instance.ts");
+  const prefix = "tx2-dxplay1-" + randomBytes(6).toString("hex");
+  const owner: Owner = {
+    prefix,
+    token: randomBytes(24).toString("hex"),
+    port: ports.api,
+    pid: process.pid,
+    ...(dockerHost ? { dockerHost } : {}),
+  };
+  const abort = new AbortController();
+  const stop = () => abort.abort();
+  let instance: Awaited<ReturnType<typeof openInstance>> | undefined;
+  await mkdir(join(repo, ".runtime"), { recursive: true });
+  await mkdir(state, { mode: 0o700 });
+  try {
+    process.once("SIGINT", stop);
+    process.once("SIGTERM", stop);
+    await writeFile(file, JSON.stringify(owner), { mode: 0o600, flag: "wx" });
+    const source = values.data ?? process.env["PLAYGROUND_DATA_URL"];
+    if (values.tier === "full" && !source)
+      throw new Error("Set PLAYGROUND_DATA_URL or pass --data for the full tier");
+    const fixture =
+      values.tier === "full"
+        ? await (
+            await import("./bundle.ts")
+          ).openBundle(source!, join(repo, ".cache/playground-data"), abort.signal)
+        : loadFixture(values.larger);
+    if ("manifest" in fixture && fixture.manifest.tier !== "full")
+      throw new Error("Full tier requires a full manifest");
+    instance = await openInstance({
+      prefix,
+      token: owner.token,
+      docker: dockerClient(owner.dockerHost),
+      directory,
+      ports,
+      apiPort: ports.api,
+      signal: abort.signal,
+      fixture,
+    });
+    owner.port = instance.server.port;
+    await writeFile(file, JSON.stringify(owner), { mode: 0o600 });
+    console.log("Starting the Datomic stack and loading synthetic data…");
+    await instance.ready;
+    console.log(`Triplex playground: ${instance.server.url}`);
+    console.log(`OpenAPI: ${instance.server.url}/openapi.json\nMCP: ${instance.server.url}/mcp`);
+    if (!instance.signal.aborted)
+      await new Promise<void>((resolve) =>
+        instance!.signal.addEventListener("abort", () => resolve(), { once: true }),
+      );
+  } catch (error) {
+    if (!abort.signal.aborted && !instance?.signal.aborted) throw error;
+  } finally {
+    process.removeListener("SIGINT", stop);
+    process.removeListener("SIGTERM", stop);
+    await instance?.close();
+    await rm(state, { recursive: true, force: true });
+  }
+}
+
+async function stop() {
+  const owner = await readOwner();
+  if (!owner) {
+    if (existsSync(state)) throw new Error("Run directory is being initialized or has no owner");
+    console.log("The playground is stopped.");
+    return;
+  }
+  checkPortableDocker(owner.dockerHost);
+  if (pidExists(owner.pid)) {
+    const response = await fetch(`http://${loopback}:${owner.port}/internal/stop`, {
+      method: "POST",
+      headers: { authorization: "Bearer " + owner.token },
+      signal: AbortSignal.timeout(3000),
+    });
+    if (response.status !== 202) throw new Error("The process refused the stop request");
+    const until = Date.now() + 150_000;
+    while (existsSync(file) && pidExists(owner.pid)) {
+      if (Date.now() > until) throw new Error("Shutdown is still waiting for its Docker resources");
+      await delay(400);
+    }
+  }
+  if (existsSync(file)) {
+    const again = await readOwner();
+    if (again?.prefix !== owner.prefix || pidExists(owner.pid))
+      throw new Error("The playground owner changed");
+    await new Stack({
+      prefix: owner.prefix,
+      directory,
+      ports: { write: 0, read: 0 },
+      docker: dockerClient(owner.dockerHost),
+    }).stop();
+    await rm(state, { recursive: true, force: true });
+  }
+  console.log("Stopped the playground and removed its database.");
+}
+
+async function mcp() {
+  const { stdio } = await import("./mcp.ts");
+  const owner = await readOwner();
+  const target = `http://${loopback}:${owner?.port ?? port(values.port)}`;
+  await stdio(async (action, body) => {
+    const response = await fetch(`${target}/api/${action}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(40_000),
+    });
+    return { status: response.status, reply: await response.json() };
+  });
+}
+
+if (values.help || cmd === undefined) console.log(usage);
+else {
+  if (positionals.length !== 1) throw new Error(usage);
+  if (cmd === "start") await start();
+  else if (cmd === "stop") await stop();
+  else if (cmd === "mcp") await mcp();
+  else throw new Error(usage);
+}

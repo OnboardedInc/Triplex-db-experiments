@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/ui.css" />
+    <title>Triplex playground</title>
+    <script src="/ui.js" type="module"></script>
+  </head>
+  <body>
+    <header class="masthead">
+      <div><strong>Triplex</strong><span>Playground</span></div>
+      <nav aria-label="API links">
+        <a href="/openapi.json">OpenAPI</a><span>Local · synthetic data</span>
+      </nav>
+    </header>
+    <main>
+      <div class="intro">
+        <div>
+          <h1>Explore the fact store</h1>
+          <p>Read a person at two points in time, try a save, and follow the changes.</p>
+        </div>
+        <div class="pickers">
+          <label>Account<select id="account"></select></label>
+          <label>Person<select id="person"></select></label>
+          <div class="pagination">
+            <button id="previous" aria-label="Previous people">←</button
+            ><button id="next" aria-label="Next people">→</button>
+          </div>
+        </div>
+      </div>
+      <div class="workspace">
+        <aside>
+          <section>
+            <h2>Record</h2>
+            <div class="buttons">
+              <button id="current" class="primary">Read current</button
+              ><button id="earlier">Compare earlier</button><button id="history">Journal</button>
+            </div>
+            <p id="basis" class="meta"></p>
+            <label
+              >Status<select id="status">
+                <option>Active</option>
+                <option>Review</option>
+              </select></label
+            >
+            <label
+              >Note<input id="note" maxlength="500" placeholder="Enter a synthetic note"
+            /></label>
+            <div class="buttons">
+              <button id="save">Save</button><button id="duplicate">Send twice</button
+              ><button id="stale">Try stale save</button>
+            </div>
+            <button id="erase" disabled>Erase protected value</button>
+            <p id="erase-reason" class="meta"></p>
+          </section>
+          <section>
+            <h2>Release</h2>
+            <label
+              >Release name<input id="release-label" maxlength="80" value="Circuit trial"
+            /></label>
+            <label
+              >Flag people with status<select id="review-status">
+                <option>Review</option>
+                <option>Active</option>
+              </select></label
+            >
+            <button id="publish">Publish</button>
+            <p id="progress" class="meta"></p>
+          </section>
+          <section>
+            <h2>Laptop load</h2>
+            <div class="load-fields">
+              <label>Saves/s<input id="saves" type="number" min="0" max="8" value="2" /></label>
+              <label>Reads/s<input id="reads" type="number" min="0" max="20" value="5" /></label>
+              <label>Seconds<input id="seconds" type="number" min="1" max="8" value="3" /></label>
+            </div>
+            <button id="load">Run load</button>
+            <p class="meta">Local p50 and p99, diagnostic only.</p>
+          </section>
+          <section>
+            <h2>Scenarios</h2>
+            <p class="meta">Continuous compliance scenarios are planned.</p>
+          </section>
+        </aside>
+        <div class="results">
+          <section aria-labelledby="result-title">
+            <div class="section-head">
+              <h2 id="result-title">Current values</h2>
+              <div id="position" class="position"></div>
+            </div>
+            <div id="status-line" role="status">Starting the playground…</div>
+            <div id="timings" class="timings" aria-label="Request timings"></div>
+            <div id="diff"></div>
+            <div class="table-wrap" id="records"></div>
+            <details>
+              <summary>Request and reply JSON</summary>
+              <div class="json-grid">
+                <pre id="request-json"></pre>
+                <pre id="reply-json"></pre>
+              </div>
+            </details>
+          </section>
+          <section aria-labelledby="feed-title">
+            <div class="section-head">
+              <h2 id="feed-title">Change feed</h2>
+              <button id="feed">Start live feed</button>
+            </div>
+            <p id="feed-status" class="meta">
+              Start at the current native position and watch new changes.
+            </p>
+            <div id="feed-rows" class="table-wrap"></div>
+            <details>
+              <summary>Feed request and reply JSON</summary>
+              <div class="json-grid">
+                <pre id="feed-request"></pre>
+                <pre id="feed-reply"></pre>
+              </div>
+            </details>
+          </section>
+          <section>
+            <h2>Native Datalog</h2>
+            <label class="visually-hidden" for="query">Native Datalog query</label>
+            <div id="examples" class="buttons"></div>
+            <textarea id="query" spellcheck="false" rows="4"></textarea>
+            <button class="primary" id="native">Run query</button>
+          </section>
+        </div>
+      </div>
+    </main>
+  </body>
+</html>
