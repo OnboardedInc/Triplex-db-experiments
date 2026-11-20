@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { copyFileSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 import { fileSource, type Group } from "./export.ts";
@@ -110,6 +112,15 @@ export async function proveFile(
       run.close();
     }
     assert(before);
+    const forgedPath = path.join(dir, arm + ".forged-cursor.sqlite");
+    copyFileSync(ledgerFile, forgedPath);
+    const forged = new DatabaseSync(forgedPath);
+    try {
+      forged.exec("DELETE FROM frames");
+    } finally {
+      forged.close();
+    }
+    await assert.rejects(Snapshot.open(comp, data.data, subjects, width, forgedPath));
     const reopened = await Snapshot.open(comp, data.data, subjects, width, ledgerFile);
     try {
       await reopened.drain(2);

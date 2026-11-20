@@ -109,8 +109,8 @@ export class Snapshot {
       );
       run.ledger.exec("BEGIN");
       // [DX-LOAD1] Why: a restored destination can have the right manifest and an old prefix. Rejected: trusting a local high-water integer after reopening a scope.
+      let cursor = 0;
       if (run.ledger.prepare("SELECT 1 FROM frames LIMIT 1").get()) {
-        let cursor = 0;
         const stored = run.ledger.prepare("SELECT * FROM frames ORDER BY first").iterate();
         let next = stored.next();
         for (const f of run.batches()) {
@@ -124,8 +124,8 @@ export class Snapshot {
           next = stored.next();
         }
         assert(next.done);
-        assert.equal(run.cursor(), cursor);
       }
+      assert.equal(run.cursor(), cursor);
       run.ledger.exec("COMMIT");
       return run;
     } catch (e) {
@@ -240,6 +240,7 @@ export class Snapshot {
       marker = 0;
     const fixture = this.batches();
     const positions = this.ledger.prepare("SELECT first FROM frames ORDER BY first").iterate();
+    let expectedPrefix = 0;
     for (const row of positions) {
       let step = fixture.next();
       while (!step.done && step.value.first < Number(row["first"])) step = fixture.next();
@@ -248,7 +249,10 @@ export class Snapshot {
         e = this.entry(f)!,
         original = await lookup(this.comp, f, identity(this.scope, this.source, this.width, f));
       assert.deepEqual(original, this.summary(e));
+      if (f.first === expectedPrefix) expectedPrefix = f.end;
     }
+    assert.equal(this.cursor(), expectedPrefix);
+    if (complete) assert.equal(expectedPrefix, this.subjects);
     while (pos < cut) {
       const page = await this.comp.feedPage(pos, extra ? 8 : 1);
       assert(page.transactions.length > 0);
