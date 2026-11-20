@@ -18,6 +18,27 @@ assert(mode === "lazy" || mode === "delta");
 const atomic = process.env.NOTIFY_HOST_BATCH === "1";
 const protectedProbe = mode === "lazy" && process.argv[4] === "protected";
 const revision = fs.readFileSync(path.join(root, "version"), "utf8").trim();
+const localBinding = JSON.parse(fs.readFileSync(path.join(dir, "binding.json"), "utf8"));
+const verifyRunner = () => {
+  assert(/^[a-f0-9]{40}$/.test(localBinding.source));
+  const files = ["host-gate.ts", "hosts.ts", "receiver.ts", "store.ts"];
+  return Object.fromEntries(
+    files.map((file) => {
+      const actual = sha256(fs.readFileSync(new URL(file, import.meta.url)));
+      assert.equal(
+        actual,
+        sha256(
+          execFileSync("git", [
+            "show",
+            localBinding.source + ":lab/experiments/EXP-DX1/notify1/" + file,
+          ]),
+        ),
+      );
+      return [file, actual];
+    }),
+  );
+};
+const runner = verifyRunner();
 const load = (name: string) =>
   import(pathToFileURL(path.join(root, "lab/experiments/EXP-DX1/actv-" + mode, name + ".ts")).href);
 const v = W0.POPULATION_VALID_TIME,
@@ -184,15 +205,14 @@ try {
         const reopened = new Documents(host.comp, "lazy-sender"),
           latest = await lazyFeed(host, await host.head(), atomic ? 1024 : 64);
         await drainHost(reopened, sink, latest, undefined, atomic);
-        assert.equal(
-          (
-            await host.rows(
-              ids.map((i) => "lazy/pending/" + i),
-              await host.head(),
-            )
-          ).length,
-          0,
-        );
+        const settledAt = await host.head();
+        for (let i = 0; i < ids.length; i += 64) {
+          const pending = await host.rows(
+            ids.slice(i, i + 64).map((id) => "lazy/pending/" + id),
+            settledAt,
+          );
+          assert.equal(pending.length, 0);
+        }
         proof = await checkEffects(reopened, feed.epoch);
         const serviceFile = path.join(root, "lab/experiments/EXP-DX1/actv-lazy/service.ts");
         if (fs.existsSync(serviceFile)) {
@@ -292,6 +312,8 @@ try {
     }
   }
   const owner = fs.readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!);
+  assert.equal(sha256(owner), localBinding.owner);
+  assert.deepEqual(verifyRunner(), runner);
   const files = Object.fromEntries(
     fs
       .readdirSync(path.join(root, "lab/experiments/EXP-DX1/actv-" + mode))
@@ -319,6 +341,8 @@ try {
       mode,
       atomic,
       subjects: ids.length,
+      localBinding,
+      runner,
       revision,
       files,
       owner: sha256(owner),
