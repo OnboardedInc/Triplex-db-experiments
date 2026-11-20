@@ -92,7 +92,7 @@
       (into {} (map #(str/split % #" " 2))
             (str/split-lines (String. buffer 0 n StandardCharsets/US_ASCII))))))
 
-(when (#{"profile" "cheap" "census" "subject-profile"} mode)
+(when (#{"profile" "cheap" "census" "subject-profile" "lookup-profile"} mode)
   ;; [DX-PREP1] Why: join samples to each native apply on the same VM monotonic clock.
   ;; Rejected: applying a whole-run CPU average to every group.
   (doto (Thread.
@@ -104,6 +104,90 @@
               (recur))))
     (.setDaemon true)
     (.start)))
+
+(def ^:dynamic *lookups* nil)
+(def ^:dynamic *inside-lookup* false)
+
+(defn lookup! [check f]
+  (if (and *lookups* (not *inside-lookup*))
+    (let [start (System/nanoTime)
+          sample (binding [*inside-lookup* true]
+                   (io/throw-if-ex!
+                     (io/with-io-stats f {:io-context :prep1/native-lookup :api :native-lookup})))
+          elapsed (- (System/nanoTime) start)]
+      (vswap! *lookups* update check
+              (fn [{:keys [calls wallNs reads]}]
+                {:calls (inc (or calls 0)) :wallNs (+ (or wallNs 0) elapsed)
+                 :reads (merge-with + reads (get-in sample [:io-stats :reads]))}))
+      (:ret sample))
+    (f)))
+
+(defn wrap-lookup! [v classify realize]
+  (alter-var-root v
+    (fn [original]
+      (fn [& args]
+        (if (and *lookups* (not *inside-lookup*))
+          (lookup! (apply classify args) #(realize (apply original args)))
+          (apply original args))))))
+
+(defn instrument-lookup-api! []
+  ;; [DX-PREP1] Why: a seek can defer its first storage fetch until its first result.
+  ;; Rejected: timing only creation of an unrealized iterator or eagerly walking a whole range.
+  (doseq [op ['datoms 'index-range 'rseek-datoms]]
+    (wrap-lookup! (requiring-resolve (symbol "datomic.api" (name op)))
+      (fn [_ & args]
+        (let [[index key attribute] args]
+          (if (= 'index-range op) (str "api/range :avet " index)
+            (str "api/" op " " index " " (if (= :eavt index) attribute key)))))
+      (fn [rows] (seq rows) rows)))
+  (wrap-lookup! (requiring-resolve 'datomic.api/entid)
+    (fn [_ k] (if (instance? java.util.List k)
+                (str "api/entid :avet " (first k))
+                (str "api/entid schema " (if (and (keyword? k) (= "triplex.subject" (namespace k))) "subject-fn" k))))
+    identity))
+
+(when (= "lookup-profile" mode)
+  ;; [DX-PREP1] Why: shared native prefetch can load one leaf for several keys. Measure its real I/O once.
+  ;; Rejected: running extra point seeks to split a batch's shared storage reads across individual ids.
+  (doseq [op '[prefetch-identity prefetch-redundancy+uniqueness]]
+    (wrap-lookup! (ns-resolve 'datomic.db op) (constantly (str "native/" op)) identity))
+  (wrap-lookup! (ns-resolve 'datomic.db 'resolve-lookup-ref)
+    (constantly "native/resolve-lookup-ref :avet") identity)
+  (alter-var-root (ns-resolve 'datomic.db 'create-unique-value-validator)
+    (fn [factory]
+      (fn [snapshot]
+        (let [validate (factory snapshot)]
+          (if-not *lookups*
+            validate
+            (let [ident (requiring-resolve 'datomic.api/ident)]
+              (fn [^Datom datom]
+                (lookup! (str "native/unique :avet " (ident snapshot (.a datom))) #(validate datom)))))))))
+  (let [api (delay (instrument-lookup-api!))]
+    (alter-var-root #'db/with-tx
+      (fn [apply-tx]
+        (fn [snapshot dispatcher data]
+          (let [database (writer-database)
+                kinds (keep #(when (instance? java.util.List %) (first %)) data)
+                kind (some (fn [k] (cond
+                                     (= k :triplex.group/apply-v1) "K"
+                                     (and (keyword? k) (= "triplex.subject" (namespace k))) "S")) kinds)]
+            (if-not (and database kind)
+              (apply-tx snapshot dispatcher data)
+              (do
+                @api
+                (binding [*lookups* (volatile! {})]
+                  (let [basis-t (requiring-resolve 'datomic.api/basis-t)
+                        start (System/nanoTime) before (cpu)
+                        sample (io/throw-if-ex!
+                                 (io/with-io-stats #(apply-tx snapshot dispatcher data)
+                                   {:io-context :prep1/native-apply :api :native-apply}))
+                        end (System/nanoTime) cpu-ns (- (cpu) before)
+                        result (:ret sample)]
+                    (when-let [after (:db-after result)]
+                      (retain! "PREP1_LOOKUPS" {:db database :t (str (basis-t after)) :kind kind
+                                                :start start :end end :cpuNs cpu-ns :io (:io-stats sample)
+                                                :lookups @*lookups*}))
+                    result))))))))))
 
 (when (= "subject-profile" mode)
   ;; [DX-PREP1] Why: sample the native transaction application and bind its CPU time to db-after.

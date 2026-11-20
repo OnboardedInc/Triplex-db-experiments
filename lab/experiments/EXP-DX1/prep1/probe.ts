@@ -8,9 +8,11 @@ import { command } from "../w1/group/workload.ts";
 const mode = process.env.PREP1_MODE;
 const arm = process.env.PREP1_ARM;
 const subjectProfile = mode === "subject-profile";
+const lookupProfile = mode === "lookup-profile";
+const subjectProbe = subjectProfile || lookupProfile;
 const deep = mode === "profile" || mode === "census";
 const guardProbe = deep || mode === "cheap";
-const depths = subjectProfile
+const depths = lookupProfile ? [24] : subjectProfile
   ? [1, 2, 4, 6].flatMap((n) => [n, n, n])
   : mode === "census"
     ? [8]
@@ -19,18 +21,18 @@ const depths = subjectProfile
       : mode === "ortho"
         ? [1, 8, 32, 32, 8, 1]
         : [32, 32];
-const count = subjectProfile ? 30 : guardProbe ? 96 : 192;
-const subjectCount = deep ? 1200 : depths.length * count;
+const count = lookupProfile ? 96 : subjectProfile ? 30 : guardProbe ? 96 : 192;
+const subjectCount = lookupProfile ? 192 : deep ? 1200 : depths.length * count;
 // [DX-PREP1] Why: sample across the same seeded depth as the earlier open-loop experiment.
 // Rejected: a narrow prefix of that database, where all historical lookups can share the same index leaves.
-const subjectFor = (offer: number) => (deep ? (offer * 67) % subjectCount : offer);
+const subjectFor = (offer: number) => (deep || lookupProfile ? (offer * 67) % subjectCount : offer);
 const depth = 160;
 const attempt = process.env.PREP1_ATTEMPT!;
 const scope = JSON.stringify([
   "triplex-scope-v1",
   "test",
   "prep1",
-  guardProbe || subjectProfile ? `${attempt}-${arm}` : attempt,
+  guardProbe || subjectProbe ? `${attempt}-${arm}` : attempt,
   0,
 ]);
 const peers = (process.env.PREP1_PEERS ?? process.env.PREP1_URL!)
@@ -151,7 +153,7 @@ try {
   const seedHead = await c.begin(db);
   await c.release(db, seedHead.handle);
   assert.equal(seedHead.position, seeds.length / 8);
-  if (subjectProfile) {
+  if (subjectProbe) {
     const installed = [];
     for (const [i, client] of peers.entries()) {
       if (i > 0) assert.equal((await client.create(scope, "lean", true, 35000)).db, db);
@@ -185,9 +187,9 @@ try {
     subjects: seeds.length,
     facts: seeds.length * depth,
   });
-  if (subjectProfile) {
+  if (subjectProbe) {
     const idleStart = BigInt(now());
-    await sleep(30100);
+    await sleep(lookupProfile ? 8000 : 30100);
     emit("idle", { db, elapsedNs: (BigInt(now()) - idleStart).toString() });
   }
 
@@ -201,7 +203,7 @@ try {
         facts(subject, width, "edited"),
         seeds[subject]!.slice(0, width),
       );
-      return subjectProfile ? { ...edit, sourceK: seedHead.position } : edit;
+      return subjectProbe ? { ...edit, sourceK: seedHead.position } : edit;
     });
     const head = seedHead.position + block * count;
     let next = 0;
@@ -324,7 +326,7 @@ try {
     });
   }
   emit("finished", { db, head: seedHead.position + depths.length * count });
-  if (subjectProfile) await c.delete(scope);
+  if (subjectProbe) await c.delete(scope);
 } finally {
   for (const peer of peers) peer.close();
 }

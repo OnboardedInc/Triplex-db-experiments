@@ -115,6 +115,12 @@ if [[ "$PREP1_MODE" == "subject-recovery" || "$PREP1_MODE" == "subject-profile" 
   start_standby
 fi
 umask 077
+cache=32m index_threshold=32m
+if [[ "$PREP1_MODE" == "lookup-profile" ]]; then
+  # [DX-PREP1] Why: make index leaves compete for cache on a short fixture.
+  # Rejected: treating a fully resident Mac fixture as evidence that the serial path never fetches storage.
+  cache=2m index_threshold=1m
+fi
 cat >"$work/transactor.properties" <<EOF
 protocol=sql
 host=$addr
@@ -124,16 +130,16 @@ sql-driver-class=org.postgresql.Driver
 sql-url=jdbc:postgresql://$addr:5432/datomic
 sql-user=datomic
 sql-password=$secret
-memory-index-threshold=32m
+memory-index-threshold=$index_threshold
 memory-index-max=80m
-object-cache-max=32m
+object-cache-max=$cache
 log-dir=$work
 pid-file=$work/tx.pid
 EOF
 export PREP1_URL="http://$addr:8080"
 export DATOMIC_URI_TEMPLATE="datomic:sql://{db}?jdbc:postgresql://$addr:5432/datomic?user=datomic&password=$secret"
 export DATOMIC_EXT_CLASSPATH=/opt/gateway/src
-export DATOMIC_JAVA_OPTS="-Xms96m -Xmx368m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:MaxDirectMemorySize=64m -XX:+ExitOnOutOfMemoryError -Ddatomic.objectCacheMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json"
+export DATOMIC_JAVA_OPTS="-Xms96m -Xmx368m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:MaxDirectMemorySize=64m -XX:+ExitOnOutOfMemoryError -Ddatomic.objectCacheMax=$cache -Dtriplex.codec.spec=/opt/gateway/codec-spec.json"
 java_role() { exec java -server $DATOMIC_JAVA_OPTS -cp "$(bin/classpath)" clojure.main "$@"; }
 # [DX-PREP1] Why: run the normal pinned launcher after attaching an attempt-local native observer.
 # Rejected: a separate JVM's SQL polling as a substitute for the actual durable append interval.
@@ -217,6 +223,15 @@ case "$PREP1_MODE" in
         wal_snapshot "$arm" after
         stop_subject_workers "$n"
       done
+    done
+    ;;
+  lookup-profile)
+    for arm in A1 B1; do
+      subject=0
+      if [[ "$arm" == B1 ]]; then subject=1; fi
+      subject_workers 1 "$subject"
+      PREP1_ARM="$arm" node /config/probe.mjs
+      stop_subject_workers 1
     done
     ;;
   profile|cheap|census)
