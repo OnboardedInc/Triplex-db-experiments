@@ -129,6 +129,32 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
         incompleteReader += " [Matched client and gateway timing](" + diagnostic + ")";
     }
   }
+  const ledgerLimit = stages
+    .flatMap((s) => {
+      const witness = load(path.join(evidence, "diagnostics", s.tag), "reader-limit-terminal.json");
+      if (!witness) return [];
+      const ns = path.join(evidence, s.tag, "summaries/s0/ns-report.json"),
+        report = JSON.parse(fs.readFileSync(ns, "utf8"));
+      assert(
+        witness.source === s.attempt.source &&
+          witness.slot === s.attempt.slot &&
+          witness.nonce === s.attempt.nonce &&
+          witness.tag === s.tag &&
+          witness.terminalUTC === s.terminal.endedAt &&
+          s.terminal.scopeReports === 0 &&
+          witness.seals.report === createHash("sha256").update(fs.readFileSync(ns)).digest("hex") &&
+          report.status === "ERROR" &&
+          String(report.error).includes(witness.error) &&
+          witness.limitBytes === 64 * 1024 ** 3 &&
+          witness.requestedBytes > witness.limitBytes &&
+          witness.error.includes(
+            String(witness.requestedBytes) + " > " + String(witness.limitBytes),
+          ) &&
+          Number.isSafeInteger(witness.checkpointReads),
+      );
+      return [witness];
+    })
+    .at(-1);
   const refused = stages.find((s) => s.terminal.service === "capacity-refused");
   const partialTen =
     recent(5, "seed") ??
@@ -152,14 +178,18 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
   const lines = [
     "# DX-SCALE1 · deep accounts",
     "",
-    `One account of 100,000 people — ${cost(one)}.`,
-    `Ten accounts of 100,000 people sharing one database — ${cost(ten)}.${partialTen ? ` The bounded seed acknowledged ${partialPeople.toLocaleString("en-US")} of 1,000,000 people across ${partialTen.partial.scopes.length} attempted databases.` : ""}`,
-    `The owner's release target is under one second. Activation for one account is ${act(a1)}. Activation among ten is ${act(a10)}.${costLine}`,
-    emptied
-      ? `First recorded engine memory-limit kill was in ${emptied.resources.firstObservedEngineOOM.role}, attempt ${emptied.tag}.`
-      : refused
-        ? `The first capacity refusal was ${refused.tag} on ${refused.attempt.capacity.limits.join(" and ")}. This was an admission estimate.`
-        : "The first shared resource to reach its limit is still unknown.",
+    `One account of 100,000 people — ${ledgerLimit && !one ? "unmeasured because the campaign stopped at 10,000" : cost(one)}.`,
+    `Ten accounts of 100,000 people sharing one database — ${ledgerLimit && !ten ? "unmeasured. The field-save profile offers 35/s steady, 235/s at its five-minute plateau and 394/s when peaks coincide" : cost(ten)}.${partialTen ? ` The bounded seed acknowledged ${partialPeople.toLocaleString("en-US")} of 1,000,000 people across ${partialTen.partial.scopes.length} attempted databases.` : ""}`,
+    `The owner's release target is under one second. Activation for one account is ${ledgerLimit && !a1 ? "unmeasured" : act(a1)}. Activation among ten is ${ledgerLimit && !a10 ? "unmeasured" : act(a10)}.${costLine}`,
+    ledgerLimit
+      ? "The 10,000-person reader stopped on its second attempt. The benchmark’s 64 GiB observation allowance filled after " +
+        ledgerLimit.checkpointReads.toLocaleString("en-US") +
+        " reads had been checkpointed. Database capacity and tenant isolation remain unresolved. [Failure evidence](evidence/arm-d19-i1-reader-b-diagnostic.md)"
+      : emptied
+        ? `First recorded engine memory-limit kill was in ${emptied.resources.firstObservedEngineOOM.role}, attempt ${emptied.tag}.`
+        : refused
+          ? `The first capacity refusal was ${refused.tag} on ${refused.attempt.capacity.limits.join(" and ")}. This was an admission estimate.`
+          : "The first shared resource to reach its limit is still unknown.",
     "Three changes to test are grouping queued saves, reducing per-save work at the serial commit point, and publishing a release with a constant number of writes. Their effects on the full account are unmeasured.",
     `The 10,000-person fixture generates 1,604,464 current facts, or 160.45 per person. ${base?.disk ? `PostgreSQL grew by ${round(base.disk.bytesPerFact)} bytes per fact and the volume including WAL grew by ${round(base.disk.volumeBytesPerFact)} bytes per fact (one seed).` : "The first observed seed used 594.29 PostgreSQL bytes per fact and 1,214.95 allocated volume bytes per fact, including WAL (n=1 fresh stack)."}`,
     "",
@@ -308,7 +338,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "- `deep-activation.ts` checks the observed release, each page receipt and its changed bodies against the source cut, roster hashes and O-DOMAIN. `deep-commit-meter.ts` binds native transaction IDs, members, datoms and logical change rows to actual source replies. `measurements.ts` opens the new attempt’s receipt ledger, rehashes its bytes, validates its source, nonce and database, and recomputes the reported release and burst rates.",
     "- `measurements.ts` checks source hashes, cohort exits, complete planned offers and receipt positions, then recomputes the oracle comparisons and pooled bars from this attempt’s samples. Missing or invalid accounts leave the pooled result unjudged.",
     "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals. `small-host.ts` binds each open, empty snapshot and post-restart full-row hash to its database and original cut. `scope-report.ts` reads verified transfer bytes and checks the roster and restart denominators.",
-    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The deep-live generator checks frozen field-save content and minute geometry. The tenant collector binds observed offers, expiries, ACKs and quiet ratios to those windows. Predictions are updated from the same verified transfers. The launcher records each freshly fetched upstream head and its changed paths. A guarded arm accepts independent lazy-publisher changes confined to its separate directory. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. A second failed item stops the queue.",
+    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The deep-live generator checks frozen field-save content and minute geometry. Its two calendars preserved all ten business-intent digests, and 20 focused tests passed, including an independent replay of 8 pinned reads after 70 field saves on the in-memory composition (254 entity queries). The native field-save follow-up and the post-merge trace-suite rerun were waiting for a local heavy-job slot at the campaign stop. [Field-save evidence](evidence/part5-functional.sha256) The tenant collector binds observed offers, expiries, ACKs and quiet ratios to those windows. Predictions are updated from the same verified transfers. The launcher records each freshly fetched upstream head and its changed paths. A guarded arm accepts independent lazy-publisher changes confined to its separate directory. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. A second failed item stops the queue.",
     "- " + functionalNote(evidence, path.join(here, "evidence/part4-functional.sha256")),
     "",
     "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. [Predictions and observations](PREDICTIONS.md) are recorded for each item. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
@@ -369,6 +399,13 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
           .map((s) => {
             const m = s.summary,
               id = s.tag;
+            if (!m && ledgerLimit?.tag === id)
+              return (
+                id +
+                " · second reader failure at the 64 GiB collector limit after " +
+                ledgerLimit.checkpointReads.toLocaleString("en-US") +
+                " checkpointed reads"
+              );
             if (!m)
               return (
                 id +
