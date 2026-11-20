@@ -10,6 +10,7 @@ cf2d64c637d54f74dc3de306b56c0e8bb82aaaf68769bb9193bec2687e43066e  int1/p5-checks
 45cfcb3a86153cd5f14be8debf11ab376af394f20b8877c57d263c5871ceae34  int1/p5-checks/merged-focused.log
 86c2508041dcc63ad6a792c02ffac47abba466a4adedd1f72b05bff023698b7b  int1/p5-checks/native-pools-phases-30000.jsonl
 9305b94cad6f78da89ae1fc80e1892c00a822b7582a260c2889e1e7d7638ff54  int1/p5-checks/native-pools-summary-partial-30000.json
+f8ef87b6cecd761d01f48f9b73810e2e90d8f5cbe64abbb8df8ecbed16c94f9d  int1/p5-checks/native-pools-terminal-diagnostic.json
 ad613224ffbd2a3264cf32e8700b315e065ebcf60ecf9b422936d8c2513081f2  int1/p5-checks/p5-act2-08fb93d9ae/build-1.log
 4a3c34234e4a7ef81de827ad4aa3e0d366c06c67fa194273b5e212075bb890f0  int1/p5-checks/p5-act2-08fb93d9ae/gate.json
 bd871934b76bf0f08af35b8530dd5ab8c4df0bb0f035ef71eb77a8c0e683202d  int1/p5-checks/p5-act2-08fb93d9ae/selftest-1.log
@@ -47,6 +48,9 @@ e093c8706e34618fab127a0a1326857a0bbe01140cecffc69abfe9ebd9f6b973  int1/p5-native
 aacb327c0142b9c557ddb94e8ebac8119e81b8e7f44d74e51b8b7cc2243ee0b6  int1/p5-native-pools/people-30000-read.histogram.gz
 0a39f9a10fbb18b1897775ce30fab220afd1a34ce9bd0ec5f6907ac906c35ebb  int1/p5-native-pools/people-30000-transactor.histogram.gz
 f82e015062d7596a04e9eebc851c863f25826cd90844d9da5f322b81737f0bc0  int1/p5-native-pools/people-30000-write.histogram.gz
+86c2508041dcc63ad6a792c02ffac47abba466a4adedd1f72b05bff023698b7b  int1/p5-native-pools/phases.jsonl
+becf61e7cfa275d8d4dd7cdf59bf38850623dd8891c50e01a6546783c4f1ee02  int1/p5-native-pools/population.sqlite
+895eb11bd8e668f03de236db45f1dc35e117a4976a08991bbc922c9d05c1d77d  int1/p5-native-pools/slot-cleanup.log
 ff6e10a8a8a2226ad23e2efe3294516903589b236d3c14a2c32325ac64ccd9a0  int1/p5-pooled-smoke/4-frozen-zero/arm.json
 4670a911d0c77f3972bcd295e081fd2fdf619321813a8ab2775667eb5ee0b765  int1/p5-pooled-smoke/4-frozen-zero/driver.log
 281855c98f1d087fc69d0df8a3cad462600e1836f17b1a4a35c39b42d9a31bed  int1/p5-pooled-smoke/4-frozen-zero/expected-model-deep-ff5d52ef-2fa7-4eaf-bee4-6911ed3ce215-s0.bin
