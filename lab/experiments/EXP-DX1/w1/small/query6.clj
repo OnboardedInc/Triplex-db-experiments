@@ -26,14 +26,19 @@
 (defn changes [id add old]
   (let [tx (str "_tx/" id)
         input (gt/input {:id id :add add :remove old})
+        predecessor-tx (if (= old "middle") "_tx/edit" "_tx/seed")
         authored (mapv (fn [op p n]
-                         (assoc (gt/row (str id "/change-" n) tx ":_tx/change" nil tx)
-                           :value_type "json" :value_json (json/write-str {"op" op "tripleId" p
-                              "entityId" gt/root "attribute" ":v" "value" {"type" "string" "value" p}
-                              "recordedAt" 1000.0 "validFrom" 0.0})))
+                         (let [retract? (= op "retract")
+                               change (cond-> {"op" op "tripleId" p "entityId" gt/root "attribute" ":v"
+                                               "value" {"type" "string" "value" p} "recordedAt" 1000.0 "validFrom" 0.0
+                                               "assertionTxId" (if retract? predecessor-tx tx)}
+                                        retract? (assoc "retractedAt" 1000.0 "retractionTxId" tx))]
+                           (assoc (gt/row (str id "/change-" n) tx ":_tx/change" nil tx)
+                             :value_type "json" :value_json (json/write-str change))))
                        (if old ["assert" "retract"] ["assert"]) (if old [add old] [add]) (range))
         actor (gt/row (str id "/actor") tx ":_tx/actor" "client" tx)
-        rows (mapv (fn [r] (cond-> r (= ":_tx/changed-entity" (:attribute r)) (assoc :value_type "ref")))
+        rows (mapv (fn [r] (cond-> r (= ":_tx/changed-entity" (:attribute r)) (assoc :value_type "ref")
+                                    (:retracted_at r) (assoc :tx_id predecessor-tx)))
                    (mapv storage/decode-row (get input "rows")))
         extra (conj authored actor)]
     (fixture/row-input (assoc input "newIds" (into (get input "newIds") (map :id extra))
