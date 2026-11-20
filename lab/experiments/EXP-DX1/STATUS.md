@@ -2598,3 +2598,21 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **Correction to DX-W1 part 5:** item 1 was assigned without Q107-S. Stopped and resumed: variant K keeps way 2 (the
   only one eligible for an acceptance claim), variant P derives the journal facts on read (informational, off by
   default), reported side by side.
+
+## 2026-11-20 02:38 UTC (21:38 local, 2026-11-19): write-path review in: fix first; a fixer launched
+
+- **W2-WRITEREVIEW (reviewer; private folder `research/2026-11-20-wave2/WRITEAUDIT/`, reproductions and logs beside
+  FINDINGS.md; reviewed `9ce599309` and merged source `5afa9067e`; 118 native assertions passed, 9 failed).** High: (1) a
+  replacement that committed can return `CasConflict` on resend (the duplicate check runs after the predecessor check
+  in the singleton and fallback paths; the TypeScript recovery makes no claim lookup); (2) a retraction of a row
+  written by an earlier member of the same physical transaction carries the wrong recorded time in the feed (1000
+  where history says 1001); (3) the runtime account hint refuses valid system writes (checkpoint, configuration);
+  (4) a waiting import can strand an independent live save; (7) the launcher can leave the predecessor option off
+  under a label that says on. Medium: (5) two account owners collapse into one queue; (6) the body cap strands an
+  ordered sender's suffix; (8) a feed gate passes on counts and ids with changed content. Held: distinct receipts and
+  clocks, all eleven pinned values, feed order across two adjacent groups. Owed on the real storage stack:
+  process-stop recovery, native wire limits, erasure.
+- **Launched: DX-WFIX1** (`exp/DX-WFIX1-write-path-fixes`, base DX-W1's head): re-run each reproduction on the current
+  head, fix in order with permanent regression tests, run the owed gates. DX-W1 continues part 5 in parallel.
+- **Consequence for the servers:** throughput and latency readings from the grouped write path taken before these
+  fixes are diagnostic; no acceptance claim rests on them.
