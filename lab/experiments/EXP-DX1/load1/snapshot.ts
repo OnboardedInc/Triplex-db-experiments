@@ -212,7 +212,7 @@ export class Snapshot {
       assert.deepEqual(original, this.summary(e));
     }
     while (pos < cut) {
-      const page = await this.comp.feedPage(pos, 1);
+      const page = await this.comp.feedPage(pos, extra ? 8 : 1);
       assert(page.transactions.length > 0);
       for (const r of page.transactions) {
         assert.equal(r.position, ++pos);

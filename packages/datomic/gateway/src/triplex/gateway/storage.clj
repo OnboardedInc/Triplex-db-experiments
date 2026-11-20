@@ -243,6 +243,11 @@
                        :record-clocks (vec (cons (:recorded-at metadata) (map #(get % "timestamp") claims)))
                        :replay-safe (true? (get input "replaySafe")) :irregular irregular :position-irregular irregular
                        :journal-entities (vec (distinct (map :entity_id (filter #(= "_Transaction" (:entity_type %)) fresh))))}
+                       (and group/bulk-priority
+                         (some (fn [r] (and (= "_Transaction" (:entity_type r)) (= ":_tx/actor" (:attribute r))
+                                            (#{"bulk-import" "bulk-seed"} (:value_string r))
+                                            (some #(= (:entity_id r) (get % "txId")) claims))) fresh))
+                       (assoc :bulk true)
                        (and lean (get input "historyIdentityBounds"))
                        (assoc :identity-bounds (get input "historyIdentityBounds")))]])))
 ;; [DX-B10] Why: only contiguous client sequences enter Datomic, even when HTTP arrivals reorder.
@@ -285,7 +290,7 @@
                    (swap! timeline assoc :submitted (System/nanoTime)) future))
         submit (if-not group/enabled solo
                  (fn [] (try (let [p (second (first data)) current (d/db conn) class (group/classify current p input)]
-                   (group/submit! conn (merge class {:id (get input "operationId") :params p :eligible (group/eligible? current p)
+                   (group/submit! conn (merge class {:id (get input "operationId") :params p :eligible (and (not (:bulk p)) (group/eligible? current p))
                      :prepare (fn [view] (tx-data view input (:scope p))) :solo solo})))
                    (catch Exception e (group/outcome-future (deliver (promise) {:error e}))))))]
     (if-let [client (get input "clientId")]
@@ -337,6 +342,7 @@
        :datoms (count (:tx-data report))}
         load-timing (assoc :loadProfile {:rowNs @load-timing :applyMs (get-in report [:io-stats :api-ms])
                        :tx (clojure.edn/read-string (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.load/metrics))})
+        group/bulk-priority (assoc :bulkGrant (:bulk-grant report))
         stamp (assoc :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
     (catch Exception e

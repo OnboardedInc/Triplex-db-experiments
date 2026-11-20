@@ -28,9 +28,28 @@ export async function load(s: Stack, people: number) {
   await s.database("pg", "moving");
   await s.tx("active", s.a, "pg", "moving");
   await until("active writer", async () => (await s.broker("active")) || undefined);
-  await s.gateway("write", s.a, "pg", "moving");
+  await s.gateway("write", s.b, "pg", "moving");
   const url = await s.ready("write");
-  const arms = ["ordinary-a", "range-a", "range-b", "ordinary-b"];
+  const server = s.a !== s.b;
+  const arms =
+    e.mode === "load-profile"
+      ? ["ordinary-a", "row-a", "range-a", "range-b", "row-b", "ordinary-b"]
+      : e.mode === "load-live"
+        ? ["live-0-a", "live-128", "live-500", "live-2000", "live-0-b"]
+        : server
+          ? ["quiet-server-2000-2"]
+          : [
+              "quiet-a-2000-1",
+              "classic-a-2000-2",
+              "quiet-a-2000-2",
+              "quiet-a-2000-4",
+              "quiet-a-1024-2",
+              "quiet-a-4096-2",
+              "quiet-b-2000-2",
+              "classic-b-2000-2",
+              "quiet-b-2000-1",
+              "proof-gap-1024-2",
+            ];
   const reports = [];
   for (const arm of arms) {
     const scope = e.prefix + "-" + arm;
@@ -55,6 +74,7 @@ export async function load(s: Stack, people: number) {
         arm,
         e.dir,
         String(people),
+        server ? "server" : "local",
       ],
       {
         cwd: root,
@@ -63,13 +83,24 @@ export async function load(s: Stack, people: number) {
           DATOMIC_URL: url,
           TRIPLEX_DATOMIC_LAYOUT: "lean",
           DX_SERVER_RECORD_TIME: "1",
-          TRIPLEX_TRACE_LEVEL: "full",
+          TRIPLEX_TRACE_LEVEL: e.mode === "load-profile" ? "full" : "off",
           TRIPLEX_TRACE_RUN: e.nonce,
           TRIPLEX_TRACE_SOURCE: e.source.git,
           TRIPLEX_TRACE_SLOT: e.slot,
-          TRIPLEX_DATOMIC_FAST_PATHS: arm.startsWith("range") ? "row,body,history-range" : "",
+          TRIPLEX_DATOMIC_FAST_PATHS:
+            e.mode === "load-profile"
+              ? arm.startsWith("range")
+                ? "row,body,history-range"
+                : arm.startsWith("row")
+                  ? "row,body"
+                  : ""
+              : arm.startsWith("classic")
+                ? "row,body,history-range"
+                : "row,body,history-range,fresh-texts",
         },
-        timeout: 165000,
+        timeout: server
+          ? 48 * 3600000
+          : Math.max(1, Math.min(240000, 830000 - (performance.now() - e.start))),
         maxBuffer: 4 * 2 ** 20,
         encoding: "utf8",
       },
@@ -79,7 +110,7 @@ export async function load(s: Stack, people: number) {
       [r.nonce, r.source, r.slot, r.scope, r.arm],
       [e.nonce, e.source.git, e.slot, scope, arm],
     );
-    assert(Number.isSafeInteger(r.facts) && r.facts > 0);
+    assert(Number.isSafeInteger(r.facts) && (e.mode === "load-live" ? r.facts >= 0 : r.facts > 0));
     if (reports.length) assert.equal(r.sourceSeal, reports[0]!.sourceSeal);
     e.log("load-arm", {
       arm,
