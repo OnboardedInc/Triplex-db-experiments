@@ -41,6 +41,8 @@ The full-population artifacts, replay and restore remain unmeasured. The `live-1
 
 The part 2 small snapshot restored and ran all 13 actions on the source used for the sizing ladder, `734890a2c`. The three individual-save samples measured 19,278, 34,862 and 66,010 initial facts. The first 96-person attempt failed with a Datomic read error. Subsequent runs passed after the playground bounded config reads to committed subject IDs and rebuilt against the integration ref. The fit selects 246 deep people and 9,840 wide people at the 5 GB sensitivity ceiling. Its upper build forecast is 2.21 hours, so I retained the one-command server recipe and did not build the selected tier on the Mac. No bucket or upload was created. [Sizing table and command](SIZE.md)
 
+On integration revision `990badf25`, playground commit `3b40fd516` passed the build, typecheck, six fixture tests, all 13 restored API actions, both MCP transports and Chromium against the restored database. The snapshot gate checked all three time cuts and verified that no owned runtime resources remained. The evidence archive is `part2-final-01.tar.gz`. [Evidence checksums](SHA256SUMS)
+
 The release demo uses the shared ConfigStore and the HTTP package's configuration descriptors. An intentionally small status rule provides a visible answer and durable background materialization. The standalone Foldkit explorer continues to serve the generic Triples view. The Datomic dashboard has its own workspace panel for commit positions, traces, native query and Publish.
 
 The orchestrator confirmed that the superseded plan commit used the generic lab identity.
