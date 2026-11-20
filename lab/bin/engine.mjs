@@ -718,6 +718,15 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'status') return status(config);
   if (options.lane === 'datomic' && command === 'build') return buildDatomic(config);
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
+  if (command === 'cpu-sample') {
+    const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
+    const owner = readOwner(info);
+    if (info.mode !== 'exclusive' || !options.holder || owner?.holder !== options.holder || owner?.volume !== info.volume) fail('OWNERSHIP', 'A CPU sample requires the active private slot');
+    // [DX-ACT1] Why: CPU pressure and throttling need two observations on the same guest and container. Rejected: treating host load average as evidence of VM saturation.
+    const stat = docker(['exec', info.container, 'cat', '/proc/stat', '/proc/pressure/cpu', '/sys/fs/cgroup/cpu.stat', '/sys/fs/cgroup/cpu.max']);
+    console.log(JSON.stringify({ at: Date.now(), slot: info.container, volume: info.volume, stat }));
+    return;
+  }
   if (!['up', 'down', 'logs'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
   if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');
   const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);

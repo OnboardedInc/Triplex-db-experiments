@@ -103,6 +103,9 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
   writeFileSync(join(dir, "legacy.tap"), buf, { flag: "wx" });
 } else if (binding.mode === "--pressure") {
   run("pressure.ts", [dir]);
+} else if (binding.mode === "--timing") {
+  assert(["legacy", "shared-cut"].includes(binding.size!));
+  run("timing.ts", [dir, binding.size!]);
 } else if (binding.mode === "--smoke") {
   run("bench.ts", ["--smoke", dir]);
 } else {
