@@ -1,6 +1,6 @@
 # Can imports leave neighbouring accounts alone?
 The longer repeat found slow saves behind bulk frames, garbage collection and waits elsewhere in the write path.
-At 50 saves per second, the best tested pacing setting loaded 2,137 facts per second and still slowed the quiet account.
+The best tested shared-database pacing loaded 2,137 facts per second at 50 saves/s and 1,477 at 100 saves/s.
 Giving the importer its own database and writer increased loading to 5,167–5,537 facts per second.
 With one PostgreSQL process the quiet account stayed within the limit, but some other accounts slowed down.
 Two PostgreSQL processes on the same Mac still shared the machine’s resources. The quiet account’s slow saves took twice as long.
@@ -24,8 +24,13 @@ A frame compiles before admission, carries whole subjects, and waits behind read
 | 50 | 4 ms | 0 | 16.2 / 57.3 | 0.73 / 0.63 |
 | 50 | 8 ms | 596 | 21.2 / 88.6 | 0.96 / 0.97 |
 | 50 | 11.06 ms | 2,137 | 51.6 / 166.4 | 2.33 / 1.82 |
+| 100 | Control | 0 | 50.8 / 178.6 | 1.00 / 1.00 |
+| 100 | 16 ms | 1,477 | 110.2 / 247.6 | 2.17 / 1.39 |
+| 100 | 32 ms | 647 | 357.9 / 578.7 | 7.04 / 3.24 |
 
 The 1 and 4 ms plans stopped after the smallest group repeatedly exceeded budget. At 8 ms, 206/2,842 frames exceeded budget before the plan stopped. At 11.06 ms, 416/9,050 exceeded it. The latter budget came from half of the matched control’s quiet read p99. An integer deadline fix preserves the completed cells and allows the final control to start in subsequent runs. The dedicated allowance campaign uses a quiet-alone reference.
+
+At 100/s, 16 ms had 195/5,955 budget overruns with no missed offers. The 32 ms arm missed 385/17,280 offers despite verified quiet replies. The last control missed 50 and reached 263.7/302.1 ms quiet read/save p99. The common host and accumulated database work limit comparisons across those conditions.
 
 ## Independent Datomic database and transactor
 
@@ -39,4 +44,4 @@ All 11,880 offered reads and saves completed exactly in each split arm. The 108-
 Account-local pins and receipts remain useful. Cross-account reads need coordinated cuts or a materialized view, and release activation needs explicit coordination across independent commit streams. The earlier move copied and verified 1,280–20,480 facts online in 2.76–18 s and fenced for 0.47–0.71 s with one three-fact delta. Extrapolating the top rung gives about 3.5–3.9 hours of live copying for 16 million facts, with two copies during overlap and a bounded final suffix. [Move evidence](../ha1/REPORT.md)
 
 - Audit. Retrospective uses archived file hashes and exact receipt positions. Native capture binds original recording bytes to the identified role, attempt, source and slot. Each live arm verifies schedule, reads and durable receipts at exact cuts, then replays per-account metrics from the saved offers. The split child checks every original claim and every stored row. Adaptive retry checks original frame boundaries and receipts at reopen. The stack validates mounts, images and cleanup. The bench receiver verifies archive hash, revision, layout and attempt before replaying offer tapes. No acceptance pins or frozen trace changed.
-- [One- and two-server commands and forecasts](ISOLATION-BENCH.md) · [Part 4 evidence checksums](PART4-SHA256SUMS) · [Part 3](PART3.md).
+- [One- and two-server commands and forecasts](ISOLATION-BENCH.md) · [Part 4 evidence](PART4-EVIDENCE.md) · [Part 3](PART3.md).
