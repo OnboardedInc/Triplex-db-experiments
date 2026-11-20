@@ -46,3 +46,13 @@ it("distinguishes a deadline and retains an HTTP status", () => {
     reason: "deadline",
   });
 });
+
+it("keeps only repository-relative TypeError locations", () => {
+  const error = new TypeError("private input");
+  error.stack = ["TypeError: private input", "  at read (/private/prefix/lab/bench/lib/path.ts:11:22)",
+    "  at package (file:///other/packages/datomic/dist/client.js:33:44)",
+    "  at other (/private/prefix/other.ts:55:66)"].join("\n");
+  const result = describeReadError(error);
+  expect(result.causes[0]!.frames).toEqual(["lab/bench/lib/path.ts:11:22", "packages/datomic/dist/client.js:33:44"]);
+  expect(JSON.stringify(result)).not.toContain("private");
+});

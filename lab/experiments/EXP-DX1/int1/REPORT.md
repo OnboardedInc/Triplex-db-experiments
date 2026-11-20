@@ -4,7 +4,7 @@ The shared branch keeps the write history queryable and the per-person writer op
 The durable Publish record is the point we count as stored. Background work settles values and notices afterward.
 The read gateway held about 62 MiB of live Java objects at both deep sizes. Its resident memory still grew.
 The transactor's Java heap grew while its object-cache charge held steady. The larger physical test will look for the plateau.
-The fresh and billion-record runs need matching sealed inputs and the merged scorecard.
+The scorecard can reopen the original shared database. Its first four sections still need physical evidence at both ages.
 The merge table records what has been taken, what ran on this branch and what is still due.
 
 ## Integration
@@ -35,6 +35,10 @@ JVM1 conflicted in the shared stack launcher. Its launch policy owns image, heap
 
 TAIL1 conflicted in the driver, engine, launcher, scorecard plan and recorder files. JVM1 keeps launch policy and TAIL1 supplies recording and the second writer core. The following reader remains selected. The native gate at 9385270c0 matched 192 saves and 960 assertion IDs, with three fresh JVM seals. Three focused parser and startup-artifact tests passed. The gate keeps rejected startup files separately, compares exact receipts and native event positions, and checks the ready processes, source, slot and digests. No acceptance pin or frozen input changed.
 
+The scorecard merge kept held-seed and trace binding in two conflicts. It also takes the newer SCALE1 and AGE1 adoption. The older compact gate verified both frozen arms and refused the incomplete field arm. The final clean build and native K gate at 4c5209499 matched 56 saves and journal entries, 14,543 pinned reads and ten current pulls. Both peers must expose the queryable K journal. No physical verdict was issued.
+
+The adopted producer checks the original loader receipt, pinned values, observed writer choices and native journal bytes against each save before publishing. The saved-output recount checks the same tape and cut in both fresh, source-bound arms and compares every receipt to its journal entry. The independent recount agreed with the rendered card. The physical aged adapter also requires the pinned bundle and verifies its restored cut. [Server command](../v01/SERVER.md)
+
 ## Server work
 
-Run the physical scorecard on the exact merged revision at both ages. The old frozen preflight had two exact arms. The field comparison, compatibility with the aged journal and physical age results remain open. [Earlier campaign and options](P5-EVIDENCE.md)
+Run the physical scorecard on the exact merged revision at both ages. The adopted command covers parts of P1–P4. Full frozen coverage, P5–P9 adapters and live validation of the aged restore remain open. [Earlier campaign and options](P5-EVIDENCE.md)

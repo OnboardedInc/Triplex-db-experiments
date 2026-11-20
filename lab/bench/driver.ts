@@ -199,7 +199,7 @@ if (flag("int1-guest-output")) {
   // [DX-INT1] Why: the managed fixture needs a real Linux device for the unchanged SQLite guard.
   // Rejected: a FUSE-backed feed ledger or letting arbitrary runs write outside the worktree.
   assert(process.platform === "linux" && deepSmoke && deepId && (!tenantSpec || tenantSpec.campaign === pooledCampaign));
-  assert(process.env.DX_THIN_STACK && process.env.DX_THIN_HOST_PID);
+  assert(process.env.DX_THIN_STACK && (process.env.DX_THIN_HOST_PID || process.env.DX_V01_FIXTURE_SOURCE === deepId.source));
   const stack = JSON.parse(fs.readFileSync(process.env.DX_THIN_STACK, "utf8"));
   assert(stack.managed?.compact && stack.prefix === deepId.slot && /^tx2-dxthin-/.test(stack.prefix));
   const info = fs.lstatSync(rawDir);

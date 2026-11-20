@@ -230,7 +230,11 @@ done
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 prepw=${DX_PREP1_WRITERS:-1}
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
-  [[ ${DX_BARE_METAL:-0} == 1 && $prefix == tx2-dxprep1-* && $prepw =~ ^(1|2|4)$ && $publish == true ]]
+  [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
+  # [DX-V01] Why: the scorecard uses the same selected writer on private bridge endpoints.
+  # Rejected: publishing ports solely to select the integrated per-person writer.
+  [[ ( $prefix == tx2-dxprep1-* && $publish == true ) ||
+     ( ${DX_V01_ADOPTED_STACK:-0} == 1 && $prefix == tx2-dxscale1-v01-* && $publish == false && $prepw == 1 ) ]]
   [[ ${DX_PREP1_SUBJECT:-0} =~ ^[01]$ && -z $seed_volume ]]
   (( port_w + prepw - 1 < port_r ))
   [[ -z ${DX_PREP1_DUMP:-} || -f $DX_PREP1_DUMP ]]
@@ -593,6 +597,11 @@ for role in "${gateway_roles[@]}"; do
   if [[ $mode == w && ${DX_INT1_NATIVE_WRITE_READBACK:-0} == 1 ]]; then
     [[ ${DX_PREDECESSOR_LOOKUP:-0} =~ ^[01]$ ]] || exit 2
     field_policy+=(-e "TX2_INT1_WRITE_READBACK=1" -e "TX2_PREDECESSOR_LOOKUP=${DX_PREDECESSOR_LOOKUP:-0}")
+  fi
+  if [[ $mode == r && ${DX_V01_ADOPTED_STACK:-0} == 1 && ${DX_W1_JOURNAL_QUERY:-0} == 1 ]]; then
+    # [DX-V01] Why: the scorecard independently checks the layout K journal through the read peer.
+    # Rejected: accepting an output reconstructed only by the same peer that acknowledged the saves.
+    field_policy+=(-e TX2_LEAN_NATIVE_QUERY=1 -e TX2_LEAN_NATIVE_LOG=1)
   fi
   if [[ $mode == w ]]; then
     cpu=$gw_w port=$port_w

@@ -1,17 +1,23 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawnSync } from "node:child_process";
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { memoryPlan } from "../int1/memory-plan.ts";
+import { nodeImage, pgImage } from "../v01/source.ts";
+import { type Writer } from "../v01/profile.ts";
 
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
+const scorecard = process.env.DX_V01_MAC_FIXTURE === "1";
+const holder = scorecard ? (process.env.DX_V01_MAC_HOLDER ?? "DX-V01") : "DX-THIN1";
+assert(holder === "DX-THIN1" || (scorecard && holder === "DX-V01"));
 const integrated = [
   "int1-thin",
   "int1-deep",
   "int1-proof",
   "int1-campaign-proof",
+  "int1-adopted-proof",
   "int1-cold-probe",
   "int1-idle",
   "int1-pooled",
@@ -21,12 +27,13 @@ const repo = fileURLToPath(new URL("../../../../", import.meta.url)),
   dir = path.resolve(supplied ?? ".");
 assert(dir.startsWith(path.resolve(repo, "runs") + "/"));
 const read = (file: string) => JSON.parse(fs.readFileSync(file, "utf8"));
-const main = path.dirname(
+const sharedGit = action === "--guest" && process.env.DX_V01_FIXTURE_SOURCE ? repo : path.dirname(
   execFileSync("git", ["rev-parse", "--path-format=absolute", "--git-common-dir"], {
     cwd: repo,
     encoding: "utf8",
   }).trim(),
 );
+const main = scorecard && process.env.DX_V01_LAB_RUNTIME ? process.env.DX_V01_LAB_RUNTIME : sharedGit;
 const file = path.join(dir, "lab/config/slots.json"),
   cred = path.join(dir, "attempt.json"),
   manifest = path.join(dir, "stack.json");
@@ -34,7 +41,7 @@ const write = (file: string, data: unknown) =>
   fs.writeFileSync(file, JSON.stringify(data, null, 2) + "\n", { mode: 0o600 });
 const imageFolder = path.join(dir, "lab/config/datomic");
 const manager = (args: string[]) => {
-  const argv = ["lab/bin/engine.mjs", ...args, "--lane", "datomic", "--holder", "DX-THIN1"];
+  const argv = ["lab/bin/engine.mjs", ...args, "--lane", "datomic", "--holder", holder];
   const attempt = args.includes("--slot") && fs.existsSync(cred) ? read(cred) : undefined;
   const options = {
     cwd: repo,
@@ -79,10 +86,18 @@ async function prepare() {
   );
   const recipe = path.join(imageFolder, "Dockerfile");
   const original = fs.readFileSync(recipe, "utf8");
+  // [DX-INT1] Why: JVM1 declares its pinned base before all build stages.
+  // Rejected: prepending a stage that makes the Java image ARG local to that stage.
+  const firstFrom = original.search(/^FROM /m);
+  assert(firstFrom >= 0);
   fs.writeFileSync(
     recipe,
-    "FROM postgres:17-alpine AS thinpg\nFROM node:22.23.2-bookworm-slim AS thinnode\n" +
-      original +
+    original.slice(0, firstFrom) +
+    (scorecard
+      ? `FROM ${pgImage} AS thinpg\nFROM ${nodeImage} AS thinnode\nFROM python:3.13-slim-bookworm@sha256:a5a7017efc5969e00ae2b91c8eb0631049a569652aa4ffc4501769049ae45c72 AS thinpython\n`
+      : "FROM postgres:17-alpine AS thinpg\nFROM node:22.23.2-bookworm-slim AS thinnode\n") +
+      original.slice(firstFrom) +
+      (scorecard ? "\nCOPY --from=thinpython /usr/local/ /usr/local/\nRUN python3 -B -I -c 'import hashlib, json, math'\n" : "") +
       "\nCOPY --from=thinpg / /opt/thin-pg/\nCOPY --from=thinnode /usr/local/bin/node /usr/local/bin/node\n" +
       "RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 && printf '%s\\n' '/opt/thin-pg/lib:/opt/thin-pg/usr/lib:/opt/thin-pg/usr/local/lib' > /etc/ld-musl-aarch64.path && cp -a /opt/thin-pg/usr/share/icu/. /usr/share/icu/ && /opt/thin-pg/usr/local/bin/postgres --version && node --version\n",
   );
@@ -174,6 +189,7 @@ function setup(compact: boolean) {
   if (seedFeed === "after-sampling") assert(mode === "int1-deep" || mode === "int1-thin");
   assert(["original", "demand"].includes(gwPolicy) && ["following", "validated"].includes(readMode));
   assert(peerGc === "g1" || (gwPolicy === "demand" && peerGc === "elastic"));
+  const writeOptionsAttempt = mode === "int1-adopted-proof" ? randomUUID() : undefined;
   for (const [n, slot] of slots.entries()) {
     const role = n === 0 ? "write" : "read";
     assert(!fs.existsSync(ownerFile(slot)), "Exclusive slot is in use");
@@ -185,6 +201,7 @@ function setup(compact: boolean) {
         : (compact ? "-Xms128m -Xmx600m" : "-Xms160m -Xmx896m") + " -Ddatomic.objectCacheMax=192m") +
       (compact ? " -Ddxthin.compact=yes" : "") + (memory ? " -Ddxthin.memory=yes" : "") +
       (mode === "int1-campaign-proof" ? " -Ddxthin.campaign=yes" : "") +
+      (writeOptionsAttempt ? " -Ddxthin.adopted=" + writeOptionsAttempt : "") +
       (nativePools ? " -Ddxthin.nativePools=yes -XX:NativeMemoryTracking=summary" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
       " -Ddxthin.secret=" +
@@ -200,7 +217,7 @@ function setup(compact: boolean) {
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
   write(cred, {
-    nonce, secret, slots, compact, census, cohort,
+    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt,
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
     memoryPoints, nativePools,
     readerPages: process.env.DX_INT1_READER_PAGES === "1",
@@ -213,7 +230,7 @@ function witness(slot: string) {
     cfg = read(file),
     attempt = read(cred);
   assert(
-    owner.holder === "DX-THIN1" &&
+    owner.holder === holder &&
       owner.mode === "exclusive" &&
       fs.realpathSync(owner.worktree) === fs.realpathSync(repo),
   );
@@ -259,12 +276,13 @@ function bind() {
   assert(peers[0]!.source === peers[1]!.source);
   write(manifest, {
     prefix: "tx2-dxthin-" + attempt.nonce,
-    writeUrl: peers[0]!.endpoint,
+    writeUrl: scorecard ? "http://" + peers[0]!.address + ":8080" : peers[0]!.endpoint,
     readUrl: peers[1]!.endpoint,
     gatewaySourceSha256: peers[0]!.source,
     buildInputsSha256: cfg.lanes.datomic.buildInputsSha256,
     managed: {
       nonce: attempt.nonce,
+      writeOptionsAttempt: attempt.writeOptionsAttempt,
       compact: !!attempt.compact,
       census: attempt.census, cohort: attempt.cohort,
       gwPolicy: attempt.gwPolicy, readMode: attempt.readMode,
@@ -341,7 +359,21 @@ if (action === "--guest") {
     process.env.DX_THIN_MEASURE = path.resolve(armRoot, "../../..", "locks", "measure");
   }
   process.argv = [process.execPath, run, "live", mode, rung, out];
-  if (mode === "int1-campaign-proof") {
+  if (mode === "int1-adopted-proof") {
+    process.chdir(repo);
+    const { adoptedToy } = await import("../v01/adopted.ts");
+    const commands = fs.readdirSync("/proc").filter((n) => /^\d+$/.test(n)).flatMap((n) => {
+      const file = "/proc/" + n + "/cmdline";
+      try {
+        const args = fs.readFileSync(file, "utf8").split("\0");
+        return /^(?:.*\/)?java$/.test(args[0] ?? "") ? [args.filter((v) => /^(-X|--add|datomic\.launcher|triplex\.gateway)/.test(v))] : [];
+      } catch { return []; }
+    });
+    assert(stack.managed.writeOptionsAttempt && commands.length >= 3);
+    await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
+      slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
+      java: { placement: "owned Mac compact stack", commands } }, "grouped" satisfies Writer);
+  } else if (mode === "int1-campaign-proof") {
     assert(Number(rung) === 40);
     process.chdir(repo);
     await (await import("../int1/everything.ts")).localPreflight(out);
@@ -362,18 +394,17 @@ if (action === "--guest") {
         Number.isSafeInteger(Number(rung)) &&
         out &&
         path.isAbsolute(out) &&
-        !fs.existsSync(out) &&
-        guestNode &&
-        path.isAbsolute(guestNode),
+        (scorecard ? fs.statSync(out).isDirectory() && mode === "int1-adopted-proof" :
+          !fs.existsSync(out) && guestNode && path.isAbsolute(guestNode)),
     );
     const disk = fs.statfsSync(repo, { bigint: true });
     assert(disk.bavail * disk.bsize > 5n * 1024n ** 3n);
     const slots = setup(compact);
     const writerSlot = slots[0]!,
       readerSlot = slots[1];
-    const exp = "DX-THIN1-" + read(cred).nonce;
+    const exp = holder + "-" + read(cred).nonce;
     try {
-      manager(["up", "--slot", writerSlot, "--exp", exp]);
+      manager(["up", "--slot", writerSlot, "--exp", exp, ...(scorecard ? ["--scorecard-output", out] : [])]);
       if (readerSlot) {
         const primary = witness(writerSlot);
         const cfg = read(file);
@@ -382,7 +413,8 @@ if (action === "--guest") {
         manager(["up", "--slot", readerSlot, "--exp", exp]);
       }
       bind();
-      execFileSync(
+      if (scorecard) console.log(manager(["scorecard-fixture", "--slot", writerSlot, "--scorecard-output", out]));
+      else execFileSync(
         "colima",
         [
           "ssh",
@@ -410,7 +442,7 @@ if (action === "--guest") {
         if (!fs.existsSync(ownerFile(slot))) continue;
         const owner = read(ownerFile(slot));
         if (
-          owner.holder !== "DX-THIN1" ||
+          owner.holder !== holder ||
           owner.experiment !== exp ||
           fs.realpathSync(owner.worktree) !== fs.realpathSync(repo)
         )
@@ -430,7 +462,7 @@ if (action === "--guest") {
         if (fs.existsSync(ownerFile(slot))) {
           const o = read(ownerFile(slot));
           if (
-            o.holder === "DX-THIN1" &&
+            o.holder === holder &&
             o.experiment === exp &&
             fs.realpathSync(o.worktree) === fs.realpathSync(repo)
           )

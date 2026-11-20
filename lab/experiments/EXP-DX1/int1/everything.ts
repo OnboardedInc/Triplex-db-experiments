@@ -5,15 +5,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { scaleHost, startScaleStack } from "../scale1/bench.ts";
 import { stageReplay } from "../scale1/source.ts";
-import { restoreSeed, sealSeed } from "../scale1/seed-image.ts";
-import { measurementWindow } from "../thin1/measure.ts";
+import { checkImage, restoreSeed, sealSeed } from "../scale1/seed-image.ts";
+import { fileHash } from "../scale1/measurements.ts";
 import { canonical, sha256 } from "../../../bench/lib/w0-world.ts";
-import { finishNativeRecording, startWalSamples } from "../../../trace/native-recording.mjs";
-import { atomicJson, createArm, executeArm } from "./everything-arm.ts";
+import { finishNativeRecording, preservePreReadyRecordings, startWalSamples } from "../../../trace/native-recording.mjs";
+import { atomicJson, copyArtifact, createArm, executeArm } from "./everything-arm.ts";
 import { collect, openPlan } from "./everything-collect.ts";
 import {
   gatewayJvmOptions,
   planSummary,
+  scorecardCases,
   transactorJvmOptions,
   treatment,
 } from "./everything-plan.ts";
@@ -27,7 +28,8 @@ const previous = (dir: string, c: { people: number; profile: string; load: strin
     : path.join(dir, `${c.people}-${c.profile}-zero`, "ns-writes.jsonl");
 
 export async function localPreflight(dir: string) {
-  const source = git("rev-parse", "HEAD");
+  const fixtureSource = process.env.DX_V01_FIXTURE_SOURCE;
+  const source = fixtureSource ?? git("rev-parse", "HEAD");
   const stack = JSON.parse(fs.readFileSync(process.env.DX_THIN_STACK!, "utf8"));
   assert(
     stack.managed?.compact && stack.containers.length === 1 && stack.managed.gwPolicy === "demand",
@@ -35,47 +37,47 @@ export async function localPreflight(dir: string) {
   assert(
     stack.writeUrl === process.env.DATOMIC_URL && stack.readUrl === process.env.DATOMIC_READ_URLS,
   );
-  const lease = measurementWindow(
-    sha256(canonical([source, stack.containers, stack.prefix, "campaign-fixture"])),
-    stack.prefix,
-  );
-  try {
-    fs.mkdirSync(dir);
-    const oracle = path.join(dir, "oracle");
-    atomicJson(path.join(dir, "oracle-source.json"), stageReplay(repo, oracle));
-    atomicJson(path.join(dir, "physical-inputs.json"), {
-      source,
-      slot: stack.prefix,
-      containers: stack.containers,
-      gatewaySource: stack.gatewaySourceSha256,
-    });
-    const cases = openPlan(dir, source, true, "leased-mac");
-    for (const c of cases) {
-      await lease.checkpoint();
-      const out = path.join(dir, c.key);
-      fs.mkdirSync(out);
-      const id = createArm(source, stack.prefix, c, true);
-      assert.equal(
-        await executeArm(
-          id,
-          out,
-          oracle,
-          { ...process.env, ...treatment },
-          Date.now() + 180_000,
-          previous(dir, c),
-          undefined,
-          "owned-ext4",
-        ),
-        0,
-      );
-      await collect(dir, "produce");
-    }
-    const result = await collect(dir, "verify");
-    assert.equal(result.results.filter((r) => r.state === "preflight").length, cases.length);
-    atomicJson(path.join(dir, "comparison.json"), result);
-  } finally {
-    lease.release();
+  // [DX-V01] Why: preserve the actual admission mode in the bound campaign record.
+  // Rejected: calling the owned ordinary-token fixture a leased Mac run.
+  if (fixtureSource) assert(!process.env.DX_THIN_MEASURE);
+  fs.mkdirSync(dir);
+  const oracle = path.join(dir, "oracle");
+  if (fixtureSource) {
+    // [DX-V01] Why: mount source read-only and use the oracle bytes staged on the Mac by the holder.
+    // Rejected: exposing the shared Git checkout inside the slot.
+    const prepared = path.join(path.dirname(dir), "oracle-input");
+    await copyArtifact(path.join(prepared, "oracle"), oracle);
+    await copyArtifact(path.join(prepared, "manifest.json"), path.join(dir, "oracle-source.json"));
+  } else atomicJson(path.join(dir, "oracle-source.json"), stageReplay(repo, oracle));
+  atomicJson(path.join(dir, "physical-inputs.json"), {
+    source,
+    slot: stack.prefix,
+    containers: stack.containers,
+    gatewaySource: stack.gatewaySourceSha256,
+  });
+  const cases = openPlan(dir, source, true, "mac-diagnostic");
+  for (const c of cases) {
+    const out = path.join(dir, c.key);
+    fs.mkdirSync(out);
+    const id = createArm(source, stack.prefix, c, true);
+    assert.equal(
+      await executeArm(
+        id,
+        out,
+        oracle,
+        { ...process.env, ...treatment },
+        Date.now() + 180_000,
+        previous(dir, c),
+        undefined,
+        "owned-ext4",
+      ),
+      0,
+    );
+    await collect(dir, "produce");
   }
+  const result = await collect(dir, "verify");
+  assert.equal(result.results.filter((r) => r.state === "preflight").length, cases.length);
+  atomicJson(path.join(dir, "comparison.json"), result);
 }
 
 async function physicalCases(
@@ -86,6 +88,7 @@ async function physicalCases(
   topology: string[][],
   smoke: boolean,
   overnight: boolean,
+  held?: { folder: string; hash: string },
 ) {
   const oracle = path.join(dir, "oracle");
   atomicJson(path.join(dir, "oracle-source.json"), stageReplay(repo, oracle));
@@ -94,9 +97,16 @@ async function physicalCases(
     topology,
     placement: scaleHost.planCpus,
   });
-  const cases = openPlan(dir, source, smoke, "physical", overnight);
+  if (held) {
+    const seal = path.join(dir, "held-seal.json");
+    fs.copyFileSync(path.join(held.folder, "seed-image.json"), seal, fs.constants.COPYFILE_EXCL);
+    assert.equal(await fileHash(seal), held.hash);
+    const probe = createArm(source, `tx2-dxscale1-int1-${tag}-0`, scorecardCases()[0]!, false);
+    checkImage(JSON.parse(fs.readFileSync(seal, "utf8")), probe.identity);
+  }
+  const cases = openPlan(dir, source, smoke, "physical", overnight, held?.hash);
   const seeds = path.join(dir, "seeds");
-  if (!smoke) fs.mkdirSync(seeds);
+  if (!smoke && !held) fs.mkdirSync(seeds);
   let interrupted = false;
   const interrupt = () => {
     interrupted = true;
@@ -141,9 +151,14 @@ async function physicalCases(
         const snapshot = () => scaleHost.snapshot(slot);
         atomicJson(path.join(out, "before.json"), snapshot());
         const seedDir = path.join(seeds, String(c.people));
-        const capture = !smoke && c.profile === "frozen" && c.load === "zero";
+        const capture = !held && !smoke && c.profile === "frozen" && c.load === "zero";
         if (capture) fs.mkdirSync(seedDir);
-        if (!capture && !smoke) await restoreSeed(out, "", id.identity, engines, seedDir);
+        if (!capture && !smoke) {
+          // [DX-V01] Why: both arms restore the same operator-held seal before they mutate it.
+          // Rejected: deriving the reader baseline from a database changed by the zero-reader arm.
+          await restoreSeed(out, "", id.identity, engines, held?.folder ?? seedDir, held?.hash,
+            held ? Math.min(end, Date.now() + 12 * 60_000) : undefined);
+        }
         const vm = Object.entries({ ...gatewayJvmOptions, tx: transactorJvmOptions }).map(
           ([role, expected]) => {
             const container = engines[role].id;
@@ -211,6 +226,8 @@ async function physicalCases(
           .split(",")
           .filter((cpu) => cpu !== "5")
           .join(",");
+        const raw = path.join(out, "engines", slot, "trace", "raw");
+        preservePreReadyRecordings(out, raw, engines);
         const stopWal = startWalSamples(out, engines.pg.id, id.identity);
         try {
           exit = await executeArm(
@@ -224,6 +241,7 @@ async function physicalCases(
               TRIPLEX_NODE_MAIN_CPUS: scaleHost.planCpus.senders,
               TRIPLEX_NODE_WORKER_CPUS: readerCpus,
               DX_MODEL_COMPACT: "1",
+              ...(held ? { TX2_ENGINE_CPUS: "5" } : {}),
               NODE_OPTIONS: `--max-old-space-size=${c.people === 100_000 ? 32_768 : 8_192}`,
               TRIPLEX_BENCH_SPILL_MAX_BYTES: String(48 * 1024 ** 3),
             },
@@ -237,7 +255,6 @@ async function physicalCases(
           await stopWal();
         }
         if (exit === 0) {
-          const raw = path.join(out, "engines", slot, "trace", "raw");
           await finishNativeRecording(
             out,
             raw,
@@ -269,11 +286,11 @@ async function physicalCases(
   }
 }
 
-async function physicalCampaign(dir: string, cutoff: string, overnight: boolean) {
+async function physicalCampaign(dir: string, cutoff: string, overnight: boolean, held?: {folder: string; hash: string}) {
   scaleHost.physical();
   const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"),
-    held = fs.statSync(`/proc/${process.ppid}/fd/9`);
-  assert(held.ino === lock.ino && held.dev === lock.dev, "Use the shared queue wrapper");
+    queueFd = fs.statSync(`/proc/${process.ppid}/fd/9`);
+  assert(queueFd.ino === lock.ino && queueFd.dev === lock.dev, "Use the shared queue wrapper");
   const end = Date.parse(cutoff),
     tag = path.basename(dir);
   assert(/^[a-z][a-z0-9-]{2,24}$/.test(tag) && end > Date.now() + 60_000);
@@ -291,6 +308,11 @@ async function physicalCampaign(dir: string, cutoff: string, overnight: boolean)
   );
   assert.equal(execFileSync("docker", ["ps", "-q"], { encoding: "utf8" }).trim(), "");
   fs.mkdirSync(dir);
+  if (held) {
+    assert(tag.startsWith("v01-"));
+    await physicalCases(dir, end, source, tag, topology, false, false, held);
+    return;
+  }
   const preflight = path.join(dir, "preflight");
   fs.mkdirSync(preflight);
   // [DX-THIN1] Why: consume the separately saved terminal bytes before admitting a long arm. Rejected: a collector that was only tested on synthesized summary JSON.
@@ -301,7 +323,7 @@ async function physicalCampaign(dir: string, cutoff: string, overnight: boolean)
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   process.chdir(repo);
-  const [action = "--plan", dest, cutoff, selection = "--both"] = process.argv.slice(2);
+  const [action = "--plan", dest, cutoff, selection = "--both", seedFolder, sealHash] = process.argv.slice(2);
   if (action === "--plan") console.log(JSON.stringify(planSummary(), null, 2));
   else if (action === "--verify") {
     assert(dest);
@@ -317,7 +339,12 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     );
   } else {
     assert(action === "--run" && dest && cutoff && path.isAbsolute(dest));
-    assert(["--both", "--overnight"].includes(selection));
-    await physicalCampaign(dest, cutoff, selection === "--overnight");
+    assert(["--both", "--overnight", "--scorecard"].includes(selection));
+    let held;
+    if (selection === "--scorecard") {
+      assert(seedFolder && path.isAbsolute(seedFolder) && sealHash && /^[a-f0-9]{64}$/.test(sealHash));
+      held = { folder: fs.realpathSync(seedFolder), hash: sealHash };
+    }
+    await physicalCampaign(dest, cutoff, selection === "--overnight", held);
   }
 }

@@ -15,3 +15,7 @@ c3e5384cf4d72b6279cdfcbe31e7fd297fd8467210ba931e9cf12fd11e60acca  int1/p6/tail1-
 ad29ab3e67cd784f6228dca6f50f636ae55d34c0d8e5c442bfd6960d939c9eac  int1/p6/tail1-jfr-guest-io.tar.gz
 8fb40654a48d9afff1222a6b8719039c43305f72a62687c1b27d20ad2c78f662  int1/p6/tail1-jfr-io.tar.gz
 df6874cd152edc1172224dbc84408e0b25c60eb773a4ccbf068643474bba27a9  int1/p6/tail1-recording.tar.gz
+dcf64179748e09fb12e277f5942395aa62282f8329f702324b7c3021f2f4f1cc  int1/p6/v01-adoption.tar.gz
+b641f1c2ce96c9d7845bb76ad250975c1cff6ce641cfa3b35b60e59a2bac3d04  int1/p6/v01-compact-readback.tar.gz
+7b583e9985662c241ced016eb36d3458ac9a9c5dc4a3bc45a6963c05ca07a685  int1/p6/v01-first-image.tar.gz
+1bda999483537959af50e73c32988bc05ed8604aab999c9e51edb619bb0f8421  int1/p6/v01-legacy-pair.tar.gz
