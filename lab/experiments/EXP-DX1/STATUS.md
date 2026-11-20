@@ -2951,3 +2951,31 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   different owner. With DX-ERASE1's three findings this makes the lean layout fail ruling Q24 in four ways; DX-ERASE1
   (erasure sequence and envelopes) and DX-W1 part 6 item 3 (where a K save copies a protected value) own the fix.
 - **DX-WFIX1 is finished and parked.** The single write-path branch is DX-W1's to name in part 6.
+
+## 2026-11-20 08:17 UTC (03:17 local, 2026-11-20): bare metal: one deep account of 100,000 people alone in its database, real save rates
+
+- **DX-SCALE1 (`85f0945b5`; `scale1/REPORT.md`, `DECISION-RESULTS.md`, arms `arm-d7-single-zero-c` and the matched 64-reader
+  arm; source `0ac94040`, audited write path, individual writer, no group commit; seed 16.25 million facts, 40.0 min
+  ingest plus 36.5 min verification, 723.42 PostgreSQL bytes per fact).** Every offer durably acknowledged, none
+  expired, none missing; feed p99 about 25 ms in every cell.
+
+  | Offered saves/s | n | p50 ms | p99 ms, zero readers [90% interval] | p99 ms, 64 reader seats | read p99 ms |
+  |---:|---:|---:|---|---|---:|
+  | 3.5 (median active minute) | 525 | 10.37 | 66.56 [56.32, 118.78] | 74.24 [63.74, 101.89] | 10.62 |
+  | 4.9 (day average) | 588 | 4.70 | 34.81 [17.15, 40.70] | 33.79 [20.35, 40.45] | 4.45 |
+  | 23.5 (p99 minute) | 7,050 | 3.66 | 33.02 [24.83, 38.91] | 34.05 [25.73, 37.63] | 4.13 |
+  | 39.4 (peak minute) | 2,364 | 3.46 | 63.23 [42.49, 71.17] | 46.85 [31.87, 59.90] | 3.47 |
+
+  All 38,400 bounded reads matched the model. Cgroup peaks with readers: transactor 2.55 GiB, PostgreSQL 6.00 GiB,
+  write gateway 1.47 GiB, read gateway 2.34 GiB (about 12.4 GiB for one deep account's system). Against the bars
+  (p50 at most 10, p99 at most 50): met at 4.9 and 23.5; at 39.4 the two arms straddle 50 with overlapping
+  intervals; **missed at the slowest rate, 3.5 per second (p50 10.4, p99 67 to 74)**: a save after a quiet gap is
+  slower, and no keep-warm mechanism is allowed. The smaller staggered run on the unfixed path: quiet-account p99 2.51
+  times alone at 35 saves per second, first pre-dispatch expiries at 175 per second. Next on server 2: the audited
+  ten-account pilot (10,000 people each).
+- **DX-ACT1 (`ab8ce484b` is the commit for the server; head `fd4e46b42`).** The typed bulk-limit error is returned (HTTP 413
+  `BulkFrameTooLarge`; the rejected write leaves the database unchanged; the smaller retry is accepted and replayed;
+  after two worker kills the settlement gate matched 199 stored changes and 118 ordered notices). Background writing
+  of values and notice entries after the receipt is built (short turns, restartable, superseded by a newer release).
+  The 10,000-person timing and the remaining Mac checks were blocked by the measurement lease. DX-BM1 was told at
+  03:18 local to run the 100,000-person activation next on its sealed seed.
