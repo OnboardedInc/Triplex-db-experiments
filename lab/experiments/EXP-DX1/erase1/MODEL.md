@@ -4,21 +4,22 @@
 
 ## Prepared detached-erasure check
 
-The fixture has 100,000 deep subjects and 16,045,255 current facts. For one subject the check makes 415 actual protected replacements and verifies the original held pin. The repeated one- and 100-person arms erase one new protected assertion per target per request. Forecasts are provisional while the largest local rung waits. [Mac measurements](FAST.md#matched-scale-measurements)
+The fixture has 100,000 deep subjects and 16,045,255 current facts. For one subject the check makes 415 actual protected replacements and verifies the original held pin. The repeated one- and 100-person arms erase one new protected assertion per target per request. The forecast uses all three matched Mac rungs. [Mac measurements](FAST.md#matched-scale-measurements)
 
 | Bare-metal planning range | Forecast |
 | --- | --- |
 | One new protected assertion, request to durable ACK p99 | 20–120 ms |
-| One aged owner with 416 protected assertions, single ACK | 35–120 ms |
-| 100 people with one new protected assertion each, ACK p99 | 65–250 ms |
+| One aged owner with 416 protected assertions, single ACK | 100–650 ms |
+| 100 people with one new protected assertion each, ACK p99 | 100–350 ms |
 | Native index jobs called by the request | 0 |
-| First 128-body cleanup native index job | 4–20 s |
-| Cleanup save / read / feed p99 divided by quiet p99 | 1.1–3.0× / 0.7–1.8× / 0.7–2.0× |
+| First 128-body cleanup native index job | 4–20 s and roughly 500–1,300 leaf writes |
+| Cleanup save / read / feed p99 divided by quiet p99 | 1.1–3.0× / 0.5–1.8× / 0.5–2.0× |
+| Protected save median overhead | 1–4 ms, five datoms and a 32-byte key |
 | Full check after staging | 3–12 min |
 
-At the first two sizes, one-person p99 moved from 80 to 38 ms. Use a roughly flat range with margin for tail variation. The 100-person p99 moved from 114 to 124 ms. A power fit through those two points gives about 137 ms at 16M. The first 128-body cleanup builds took 0.92 and 2.97 s. A square-root size sensitivity gives about 12 s at 16M on the Mac. The planning bands allow dedicated NVMe to take 0.5–1× the matched Mac time and allow drift either way. These inputs leave a 100-person batch with widely retained protected histories and foreground concurrency sensitivity unpriced.
+One-person p99 ranged from 38 to 80 ms without a monotone size trend. The 100-person p99 values were 114, 124 and 211 ms. A log fit with exponent 0.15 gives about 230 ms at 16M. The three first cleanup builds fit an exponent of 0.49 and about 11 s at 16M, with about 780 leaf writes on a separate fit. The aged ACK samples were 55, 52 and 257 ms. All three give a fitted 282 ms at 16M. Extending only the jump between the largest two sizes gives about 1.3 s on the Mac. The planning ranges for dedicated NVMe allow 0.5–1× Mac timing and additional variation. The single aged sample per size leaves its p99 and the real cost of a batch of 100 aged people open. The measured 4M request-to-final-cleanup window lasted 113 s after seeding.
 
-Start with the dedicated Linux scratch database and gateway configured below. Set `TRIPLEX_ERASURE_DIRECTORY` to an independent durable directory for this test and `TRIPLEX_ERASURE_SHRED_GRACE_MS=0` on the synthetic gateway. This enables the file probe within the check. Use a fresh nonce and the same clean commit, build hashes and still-running authority for staging and checking. Stage outside the measurement clock with `node lab/experiments/EXP-DX1/erase1/server.mjs stage-fast erase1-fast-stage`.
+Start with the dedicated Linux scratch database and gateway configured below. Set `TRIPLEX_ERASURE_DIRECTORY` to an independent durable directory for this test and `TRIPLEX_ERASURE_SHRED_GRACE_MS=0` on the synthetic gateway. This enables the file probe within the check. Use a fresh nonce and the same clean commit, build hashes and still-running authority for staging and checking. Stage outside the measurement clock with `node lab/experiments/EXP-DX1/erase1/server.mjs stage-fast erase1-fast-stage`. The 4M Mac seed took about 29 minutes. A proportional 16M seed implies about 55–120 minutes on dedicated hardware before final maintenance, so the check uses a prepared fixture.
 
 ```sh
 timeout --kill-after=15s 55m node lab/experiments/EXP-DX1/erase1/server.mjs check-fast erase1-fast-check erase1-fast-stage/staged.json
