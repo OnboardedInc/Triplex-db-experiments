@@ -39,3 +39,9 @@ Observed ingest cgroup peaks in GiB, from 42 progress snapshots.
 100000 deep people per account, single layout, individual writer with zero readers. Source `daf289fab1bc94593a2a62f0999ceecff3600c84`. Audited write path.
 
 Terminal status exit-code. Cells with a sealed writer ledger 0. Matched decision unmeasured.
+
+## arm-d7-single-read
+
+100000 deep people per account, single layout, individual writer with 64 reader seats. Source `daf289fab1bc94593a2a62f0999ceecff3600c84`. Audited write path.
+
+Terminal status exit-code. Cells with a sealed writer ledger 0. Matched decision unmeasured.
