@@ -52,8 +52,12 @@ def summarize(root, r, name, population, coverage, strategy, start):
         doc=get(report)
         config=doc["config"]
         trace=get(arm/"trace-run.json")
+        assert doc.get("endedAt"), doc.get("error","Native report has no terminal clock")
         assert (arm/"head.txt").read_text().strip()==r["source"]
         assert trace["source"]==r["source"] and trace["slot"]==slot
+        driver,=get(arm/"driver-container.json")
+        assert driver["Name"]=="/"+slot+"-driver"
+        assert any(m["Type"]=="bind" and m["Source"]==m["Destination"]==str(root/"evidence") for m in driver["Mounts"])
         assert r["start"]<=start<=dt.datetime.fromisoformat(doc["startedAt"]).timestamp()<=dt.datetime.fromisoformat(doc["endedAt"]).timestamp()
         assert doc["format"]=="tx2-ns-report/2" and doc["verdictPlanId"]=="rd1-reader-diagnostic/1"
         assert (config["profile"],config["rungSubjects"],config["zeroReaders"],config["levelS"])==("smoke",population,mode=="zero",20)
@@ -88,8 +92,10 @@ def operate(r, action):
     root=Path(r["root"])
     assert re.fullmatch(r"/var/tmp/triplex-w1/rdpairn20b?",str(root))
     repo,node=root/"build/repository",root/"build/tools/bin/node"
+    # [DX-BM1] Why: the native driver mounts the platform evidence root, which must contain the baseline and oracle inputs.
+    # Rejected: a separate stack evidence directory that is visible only to the host launcher.
     env=dict(os.environ,DX_BARE_METAL="1",DOCKER_HOST="unix:///var/run/docker.sock",
-             DX_BARE_METAL_ROOT=str(root/"state"),DX_STACK_EVIDENCE=str(root/"evidence"),
+             DX_BARE_METAL_ROOT=str(root),DX_STACK_EVIDENCE=str(root/"evidence"),
              DX_NS_PROFILE="smoke",DX_MATCH_DURATION_S="115",DX_R3_TRY_LOCK="1",
              TRIPLEX_TRACE_LEVEL="summary",DX_CPUS_GW_READ="4,8",DX_CPUS_DRIVER="3,5,6,7,9,10,11",
              DX_MAIN_CPU="3",DX_WORKER_CPUS="5,6,7,9,10,11",DX_DRIVER_MEMORY="48g")
@@ -111,7 +117,7 @@ def operate(r, action):
                 assert (root/"evidence"/slot/"head.txt").read_text().strip()==r["source"]
                 command("bash",EXP/"stack/down.sh",slot,"--volumes",timeout=120)
                 assert not command("bash",EXP/"stack/up.sh",slot,"--inventory")
-        lock=root/"state/locks/measure"
+        lock=root/"locks/measure"
         if lock.is_dir():
             owner=get(lock/"owner.json")
             assert owner["kind"]=="full-pair" and owner["id"]=="DX-T1"
@@ -128,7 +134,7 @@ def operate(r, action):
         clean()
         return
     assert action=="run" and not command("git","status","--porcelain")
-    for d in (root/"evidence",root/"state/locks"):
+    for d in (root/"evidence",root/"locks"):
         d.mkdir(parents=True)
     plan=[("small",1000,*PLANS[0]),("global",10000,*PLANS[0]),("closure",10000,*PLANS[1]),("install",10000,*PLANS[2])]
     for name,people,coverage,strategy in plan:

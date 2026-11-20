@@ -467,6 +467,8 @@ def make(item, attempt, start, deadline):
             15:"| ACT1 reviewed joined Publish,",16:"| WFIX enhanced pulse,",17:"| ACT1 manifest repair,",27:"| ACT1 typed refusal,",
             24:"| RD1 writer probe,",26:"| INT1 single thin rung,",28:"| RD1 short pairs,",29:"| ACT1 shared-scope repair,",
             **{i:"| Sealed "+s+"," for i,s in SCALE_PROBES.items()}}.get(item,f"| {item} ·")
+    if (item,attempt)==(28,2):
+        token="| RD1 mounted retry,"
     forecast=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith(token))
     r=dict(item=item,attempt=attempt,tag=tag,source=head,repo=str(repo),unit=unit,root=str(root),
            directory=str(directory),start=start,deadline=deadline,prediction=forecast,requested=stamp())
@@ -1243,15 +1245,27 @@ def setup_repair(item):
     # Rejected: resetting the clock for every partial run or waiting until its first evidence is lost.
     folder=NIGHT/f"i{item}"
     end=folder/"outcome.json"
-    if item not in (21,22,24) or not end.is_file() or (folder/"original-setup-outcome.json").exists():
+    if item not in (21,22,24,28) or not end.is_file() or (folder/"original-setup-outcome.json").exists():
         return None
-    state={21:"uncollected",22:"preflight-refused",24:"partial"}[item]
+    state={21:"uncollected",22:"preflight-refused",24:"partial",28:"preflight-refused"}[item]
     row=get(end)
     if (row.get("attempt"),row.get("state"))!=(1,state):
         return None
     prior=bind(get(folder/"1/request.json"))
     root=Path(prior["root"])
     worker=folder/"1/worker.log"
+    if item==28:
+        base=root/"evidence/tx2-dxt1-rd1p3-rdpairn20-small"
+        zero=base.with_name(base.name+"-zero")/"driver/ns-report.json"
+        ladder=base.with_name(base.name+"-ladder")
+        frozen=ladder/"input/ns-report.json"
+        if not (ladder/"driver/ns-report.json").is_file() or not frozen.is_file() or not zero.is_file():
+            return None
+        report=get(ladder/"driver/ns-report.json")
+        if (report["status"]=="ERROR" and not report.get("endedAt") and "ENOENT:" in report.get("error","")
+                and str(frozen) in report["error"] and get(zero)["status"]=="DONE" and digest(zero)==digest(frozen)):
+            return {}
+        return None
     if item==24:
         if not complete_output(prior) and "No such file or directory: 'psql'" in worker.read_text(errors="replace"):
             return {}
@@ -1420,8 +1434,15 @@ def main():
     retry_restores=mode=="run-after-seed" and os.environ.get("DX_BM1_RESUME_RESTORES")=="1"
     repaired={}
     if retry_restores:
-        for item in (21,22,24):
-            if item in scheduled and (repair:=setup_repair(item)) is not None:
+        for item in (21,22,24,28):
+            if item not in scheduled:
+                continue
+            try:
+                repair=setup_repair(item)
+            except (OSError,ValueError,AssertionError,KeyError):
+                atom(NIGHT/f"i{item}"/"repair-admission-error.txt",traceback.format_exc())
+                continue
+            if repair is not None:
                 repaired[item]=repair
     order=(*in_flight,*(item for item in scheduled if retry_restores or item not in in_flight))
     pending=[item for item in order if not (NIGHT/f"i{item}/outcome.json").is_file() or item in repaired or
@@ -1454,8 +1475,9 @@ def main():
             if item in repaired and end.is_file():
                 if repaired[item]:
                     put(folder/"retained-control.json",repaired[item])
-                (folder/"timing.json").rename(folder/"original-setup-timing.json")
                 end.rename(saved_setup)
+            if saved_setup.is_file() and not (folder/"original-setup-timing.json").exists():
+                (folder/"timing.json").rename(folder/"original-setup-timing.json")
             if retry_restores and not adopted and restore_refusal(item):end.rename(kept)
             one(item, (2,) if kept.is_file() or saved_setup.is_file() else (1,2))
             if retry_restores and not adopted and restore_refusal(item):
