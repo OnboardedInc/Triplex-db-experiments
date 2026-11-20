@@ -511,7 +511,7 @@ export class ReplicaReadHost {
       if (legacy) {
         // [DX-THIN1] Why: the synthetic legacy campaign uses the existing position-bound row and journal projections.
         // Rejected: bypassing the inline replica's layout guard without proof of the selected clock and journal cut.
-        source.capability = async ({ recordedPosition: position }) => {
+        source.capability = async ({ recordedPosition: position }: ReadBasis) => {
           if (witness === undefined || position === undefined || position <= 0) return "legacy-replica-witness";
           if ((await source.erasure?.())?.protected !== false) return "legacy-replica-protection";
           const instant = await bootstrapSourceClock(source, times, clockEnds, witness, position, true);
