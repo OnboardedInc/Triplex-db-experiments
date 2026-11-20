@@ -18,6 +18,7 @@ assert.equal(binding.slot, cleanup.slotReleased);
 assert.equal(cleanup.rolesRemoved, 3);
 assert.deepEqual(binding.durability.slice(0, 3), ["on", "on", "on"]);
 assert.equal(binding.sourceHash, hash(JSON.stringify(binding.sources)));
+assert.equal(binding.launcher, hash(read("launcher.mjs")));
 for (const [file, expected] of Object.entries(binding.sources)) assert.equal(hash(read("source/" + file)), expected);
 const parse = (file) => {
   const data = read(file).toString().split("\n").filter((l) => l.startsWith("COMPACT ")).map((l) => JSON.parse(l.slice(8)));

@@ -120,6 +120,15 @@ export async function runCompactProbe(opts, config, manager) {
   assert.equal(opts.holder, holder);
   assert.equal(dockerArgs([])[1], DOCKER_HOST);
   assert(!process.env.DOCKER_HOST || process.env.DOCKER_HOST === DOCKER_HOST);
+  const imageRef = opts.image ?? config.lanes.datomic.image;
+  assert.match(imageRef, /^tx2-datomic:[a-z0-9][a-z0-9.-]{0,63}$|^sha256:[0-9a-f]{64}$/);
+  const image = (reference) => docker(["image", "inspect", "--format", "{{.Id}}", reference]);
+  // [DX-COMPACT1] Why: check local image availability before queueing an exclusive SQL slot.
+  // Rejected: acquiring an expensive shared lease to discover that a previously tested tag was pruned.
+  if (opts["check-images"]) {
+    console.log(JSON.stringify({ datomicReference: imageRef, datomic: image(imageRef), postgres: image("postgres:17-alpine") }));
+    return;
+  }
   const phase = opts.run;
   const profile = opts.profile ?? "baseline";
   const loadPeople = Number(opts.people ?? "2000");
@@ -129,8 +138,6 @@ export async function runCompactProbe(opts, config, manager) {
   assert(["baseline", "large-index", "parallel-index"].includes(profile));
   assert(opts.people === undefined || (phase === "load" && [2000, 100000].includes(loadPeople)));
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
-  const imageRef = opts.image ?? config.lanes.datomic.image;
-  assert.match(imageRef, /^tx2-datomic:[a-z0-9][a-z0-9.-]{0,63}$/);
   const root = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
   const parent = path.join(root, "evidence", holder);
   fs.mkdirSync(parent, { recursive: true });
@@ -148,6 +155,7 @@ export async function runCompactProbe(opts, config, manager) {
   const created = new Map();
   const volumes = new Set();
   const abort = new AbortController();
+  const launcher = fs.readFileSync(new URL(import.meta.url));
   const onSignal = () => abort.abort(Error("interrupted"));
   process.once("SIGINT", onSignal);
   process.once("SIGTERM", onSignal);
@@ -202,7 +210,6 @@ export async function runCompactProbe(opts, config, manager) {
 
     deadline = setTimeout(() => abort.abort(Error("measurement window expired")), 14 * 60 * 1000);
     floor();
-    const image = (reference) => docker(["image", "inspect", "--format", "{{.Id}}", reference]);
     // [DX-COMPACT1] Why: a retagged build may still contain the verified native distribution.
     // Rejected: launching a mutable tag or rebuilding a shared image to match an old gateway hash.
     const datomicImage = image(imageRef);
@@ -293,10 +300,12 @@ export async function runCompactProbe(opts, config, manager) {
       boundFiles.set(entry[2], entry[1]);
     }
     assert.deepEqual(boundFiles, new Map(Object.entries(sources)));
+    fs.writeFileSync(path.join(dir, "launcher.mjs"), launcher, { flag: "wx" });
     const binding = {
       attempt, prefix, phase, profile, slot: slot.slot, source: sourceCommit, sourceHash, sources, incumbent, flags,
       ...(phase === "load" ? { loadPeople } : {}),
-      image: datomicImage, pgImage, jars, peerSha1, durability: durable, roles: Object.fromEntries(created), caps, settings,
+      image: datomicImage, pgImage, jars, peerSha1, launcher: sha256(launcher), durability: durable,
+      roles: Object.fromEntries(created), caps, settings,
       owner: sha256(fs.readFileSync(slot.ownerFile)), startedAt: new Date().toISOString(),
     };
     write("binding.json", binding);
