@@ -17,6 +17,11 @@ The files below are relative to the durable Triplex lab vault's `evidence/DX-HAS
 | `hasync-cost-plain-f9a361f8` | `72a60d044` | 1,536 checked saves across matched local/remote flush blocks.                                               |
 | `hasync-cost-group-3133c55c` | `8553fed4a` | 1,536 checked saves with W1 grouping enabled.                                                               |
 | `hasync-move-4b838b84`       | `8553fed4a` | Live copy, planned fence, promotion, rewind and two-copy writes.                                            |
+| `hasync-ack-eb9b142a`        | `70559dfad` | 105 scheduled saves settled, including 90 same-ID retries.                                                |
+| `hasync-index-0ab1716f`      | `70559dfad` | First failed scheduled read run. 24.04 s gap, 578 late reads, raw timing retained before settlement.        |
+| `hasync-move-5ad73ad2`       | `70559dfad` | 65 cut offers were refused and later settled. 13.56 s to a new scheduled protected save.                     |
+| `hasync-commit-616d65f3`     | `70559dfad` | Mid-commit fault with 106 precisely settled offers and a separate trapped operation.                         |
+| `hasync-import-2049db80`     | `70559dfad` | Cut killed the import before any of its rows became visible. The original ID later published it once.       |
 
 ## Where the code publishes outcomes
 
