@@ -2,7 +2,7 @@
 Datomic already supports ZGC on Java 25. Our old image runs Java 21.
 This branch lets all three processes run on either Java version.
 Start with Java 21 and a two-core writer, Java 25 with G1, then Java 25 with ZGC.
-Use `286a5fbe0da2b5e33c3185955a7462b3f4504317` for the server. Budget 78 minutes for those three arms.
+Use `078c233a54ff6c68a358f84c2626461379a2cab0` for the server. Budget 78 minutes for those three arms.
 A fourth arm brings the total to 104 minutes and gives G1 the same memory as ZGC.
 ZGC gets 13 GiB more reserved memory in this trial. The server still has to price the gain and check for stalls.
 On the shared Mac, the writer's worst one percent of pauses started at 0.062 ms with ZGC versus 31 ms with two-core G1. The server still needs to measure the effect on saves.

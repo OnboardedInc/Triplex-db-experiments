@@ -17,4 +17,4 @@ DX_JAVA=25 DX_DATOMIC_IMAGE_RECEIPT="$IMAGE_RECEIPT" node lab/bin/heavy.mjs --la
   node lab/bin/engine.mjs jvm-inventory --holder DX-JVM1 --out "$OUT"
 ```
 
-Build a second private receipt with `DX_JAVA=21` to compare the same source and distribution. The inventory measures each role from its container start to all roles ready, then reads its live RSS and cgroup usage after five idle seconds. These are shared-Mac diagnostics. The installed source's SDK and integration tests also run in Node, so their scope is distinguished from the native Java and SQL checks.
+Build a second private receipt with `DX_JAVA=21` to compare the same source and distribution. The inventory measures each role from its container start to all roles ready, then reads its live RSS and cgroup usage after five idle seconds. These are shared-Mac diagnostics. After building the SDK, add `--sdk-gate` to the inventory command to run native gateway selftests and the SDK's opt-in SQL tests on that same owned stack. The standalone SDK and integration unit tests run in Node.
