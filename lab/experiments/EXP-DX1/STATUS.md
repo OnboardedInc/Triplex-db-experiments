@@ -3110,3 +3110,15 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   with a per-subject compare-and-set; publication, durability and query gates before capacity; each stage priced);
   DX-HA1 part 5 (explain the bare-metal import result from its evidence; small frames of 16 to 32 facts at about 130
   per second with live saves first; what the import triggers besides its frames).
+
+## 2026-11-20 11:52 UTC (06:52 local, 2026-11-20): Sam: Sol at xhigh; the durable record counts as stored at one second
+
+- **Effort:** every `gpt-6.2-sol` role launches and resumes at xhigh from now (launcher `9461e8b54` on main). DX-PREP1 and
+  DX-HA1, restarted minutes earlier, were restarted again at xhigh; the other running agents switch at their next
+  handover.
+- **Activation definition settled (Option A):** at one second the release is permanent and every read returns the new
+  answers; per-person values and individual notice entries are written behind it. `lab/TARGETS.md` section 1.2
+  updated. The receipt-only windows of the 100,000-person run on server 1 are therefore the judged ones; the
+  staged-values windows stay as a report of how long the background writing takes. Review findings that treated the
+  recipe as insufficient (ACTAUDIT 1, ACTREVIEW2 1) are answered by this ruling for the record itself; the checks
+  that the record is decodable with the receiver stopped and that reads are correct for unopened people remain.

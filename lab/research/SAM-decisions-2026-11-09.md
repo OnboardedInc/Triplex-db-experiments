@@ -726,3 +726,16 @@ Orchestrator's reading: every Codex `gpt-6.2-sol` launch and resume runs at xhig
 analysts). The creative role (`gpt-6.2-astra` at high) is unchanged and still only for a problem that needs it. Agents
 already running at max switch at their next handover, because a resume takes the launcher's current effort;
 interrupting them now would lose measurement slots some waited hours for.
+
+## 2026-11-20 about 07:10 local: the durable record counts as stored (Option A)
+
+Sam, verbatim, answering the question put with the wage-floor example (Option A: one durable record that makes the
+release permanent and fixes every answer, each person's values written in the background; Option B: every changed
+value written to its own stored row before Publish counts as done):
+- "yes for permanent record stuff Option A is totally fine"
+
+Orchestrator's reading: one second after Publish the release must be permanent and every read must return the new
+release's answers; the per-person values and the individual notice entries follow in the background, and a reader
+who asks first gets the identical answer derived from the record. Written into `lab/TARGETS.md` section 1.2. The
+receipt-only path is the path that is judged; the time the background writing takes is reported and has no bar
+yet. This closes the question that was open since 2026-11-19 evening.
