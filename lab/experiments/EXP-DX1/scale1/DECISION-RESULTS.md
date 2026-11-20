@@ -45,3 +45,9 @@ Terminal status exit-code. Cells with a sealed writer ledger 0. Matched decision
 100000 deep people per account, single layout, individual writer with 64 reader seats. Source `daf289fab1bc94593a2a62f0999ceecff3600c84`. Audited write path.
 
 Terminal status exit-code. Cells with a sealed writer ledger 0. Matched decision unmeasured.
+
+## arm-d7-single-zero-b
+
+100000 deep people per account, single layout, individual writer with zero readers. Source `07057d6c2e2cb95550ecfae81d8fc68a68e7b69c`. Audited write path.
+
+Terminal status exit-code. Cells with a sealed writer ledger 3. Matched decision unmeasured.
