@@ -44,7 +44,7 @@ The November 19 evening dispatch replaced the deferred SCALE1 handback. Its serv
 
 Item 0 began at 19:01:16 EST on ACT2 `6eb4a3e3831f9352d0f56495cd5c881c81a30f9d`. Its 1k gate took 143.889 s and its scoped cleanup finished at 19:06:26. The published launcher refused the one-account 100k workload at the population check. The verified summary and 297,236-byte raw archive are under `evidence/DX-BM1/overnight/i0`.
 
-Item 1 began at 19:12:21 EST, group `grpw1a`, W1 `502c8897deb9af8233d72dfc6cc2d62f601f0fca`. The separate systemd ceiling stops this unit by 23:11:31 EST. The import, thin lookup comparison, guarded release and 2% active-capacity runs follow. Each forecast and actual outcome is in [the prediction ledger](PREDICTIONS.md).
+Item 1 began at 19:12:21 EST, group `grpw1a`, W1 `502c8897deb9af8233d72dfc6cc2d62f601f0fca`. The separate systemd ceiling stops this unit by 23:11:31 EST. ACT2 subsequently published its one-account solo.ts runner with the page-guard reference. That workload now follows W1, before import, the thin lookup comparison, guarded release and 2% active capacity. The original W1 alone and nine-neighbor phases provide Q-PULSE. Additional open-loop production rates and the same-database import probe use verified W1 seeds between timing and teardown. [Predictions and outcomes](PREDICTIONS.md)
 
 ```sh
 bench 'cat /var/tmp/triplex-bm1/STATUS'
