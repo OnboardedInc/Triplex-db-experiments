@@ -352,6 +352,33 @@ export class Stack {
         "-m",
         "triplex.gateway.main",
       ]);
+      const mounted = await docker([
+        "exec",
+        name,
+        "bash",
+        "-c",
+        "cd /opt/gateway/src && find . -type f -exec sha256sum {} +",
+      ]);
+      const actualFiles = mounted
+        .split("\n")
+        .map((line) => {
+          const match = /^([a-f0-9]{64})  \.\/(.+)$/.exec(line);
+          if (!match) throw new Error("Unexpected gateway source inventory");
+          return [match[2], match[1]];
+        })
+        .sort(([a], [b]) => (a! < b! ? -1 : a! > b! ? 1 : 0));
+      const mountedCodec = await docker([
+        "exec",
+        name,
+        "sha256sum",
+        "/opt/gateway/codec-spec.json",
+      ]);
+      if (
+        hash(JSON.stringify(actualFiles)) !== source ||
+        mountedCodec.split(/\s/)[0] !==
+          hash(await readFile(join(repo, "packages/datomic/src/codec-spec.json")))
+      )
+        throw new Error("Running gateway sources do not match the playground checkout");
       const address = await docker(["port", name, "8080/tcp"]);
       if (!/^127\.0\.0\.1:\d+$/.test(address))
         throw new Error("Gateway port did not bind to loopback");

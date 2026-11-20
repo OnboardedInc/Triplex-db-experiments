@@ -10,6 +10,7 @@
   "dependencies": {
     "@triplex-build/triplex": "workspace:^",
     "@triplex-build/triplex-datomic": "workspace:^",
+    "@triplex-build/triplex-http": "workspace:^",
     "effect": "catalog:"
   }
 }

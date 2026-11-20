@@ -15,7 +15,7 @@ pnpm playground stop
 4. Follow the existing dashboard's JSON-backed workbench, temporal view and loopback origin checks, the HTTP example's served contract, the CLI's stable JSON action envelope, and the demo's deterministic seed. The old dashboard's composition points at the original Triples model and its learning fixture. Build the playground view under its own host using the single action table for the browser, OpenAPI and both MCP transports.
 5. Run the product API gate with the pool-admitted stack and the browser journey through Playwright. Inspect the raw values, timestamps, operation identities, status and resource inventory. Retain gate evidence and record individual limitations.
 
-Use existing workspace Effect and Datomic dependencies and existing TypeScript and Playwright tooling. The browser UI and local HTTP host can use the platform, with no additional runtime dependencies. Keep Clojure and acceptance pins intact. Push each completed slice on the playground branch.
+Use existing workspace Effect, Datomic and HTTP dependencies and existing TypeScript and Playwright tooling. Reuse the HTTP package to derive the Person schema descriptor directly from the published snapshot. The browser UI and local HTTP host can use the platform, with no additional runtime dependencies. Keep Clojure and acceptance pins intact. Push each completed slice on the playground branch.
 
 ## Revised data requirements
 

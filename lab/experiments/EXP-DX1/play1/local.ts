@@ -92,10 +92,10 @@ async function dumpProbe(docker: Docker, prefix: string, out: string) {
     // [DX-PLAY1] Why: compare every restored row, binary value and key in both directions; a dump exit code proves no content.
     // Rejected: calling a file size comparison a restorable database.
     const table =
-      "SELECT count(*), md5(string_agg(md5(row(id,rev,map,encode(val,'hex'))::text), '' ORDER BY id)) FROM datomic_kvs";
+      "SELECT count(*), encode(sha256(convert_to(string_agg(encode(sha256(convert_to(row(id,rev,map,encode(val,'hex'))::text, 'UTF8')), 'hex'), '' ORDER BY id), 'UTF8')), 'hex') FROM datomic_kvs";
     const original = await sql("datomic", table);
     const restored = await sql("playground_restore", table);
-    assert.match(original, /^[1-9][0-9]*\|[a-f0-9]{32}$/);
+    assert.match(original, /^[1-9][0-9]*\|[a-f0-9]{64}$/);
     assert.equal(restored, original);
     return {
       dumpBytes: (await stat(saved)).size,

@@ -101,7 +101,14 @@ async function start() {
     "install",
     "--frozen-lockfile",
   ]);
-  pnpm(["exec", "turbo", "run", "build", "--filter=@triplex-build/triplex-datomic..."]);
+  pnpm([
+    "exec",
+    "turbo",
+    "run",
+    "build",
+    "--filter=@triplex-build/triplex-datomic...",
+    "--filter=@triplex-build/triplex-http...",
+  ]);
   const { openInstance } = await import("./instance.ts");
   const prefix = "tx2-dxplay1-" + randomBytes(6).toString("hex");
   const owner: Owner = {

@@ -7,7 +7,8 @@ import {
   type TransactionMeta,
   type TransactOp,
 } from "@triplex-build/triplex";
-import { ConfigNode, ConfigStore } from "@triplex-build/triplex/config";
+import { Attribute, ConfigNode, ConfigStore, EntityType } from "@triplex-build/triplex/config";
+import { ConfigApi } from "@triplex-build/triplex-http";
 import {
   Capabilities,
   DatabaseScope,
@@ -33,6 +34,15 @@ import { personId, personName, type Profile, type Subject } from "./model.ts";
 import type { Frame, Manifest } from "./bundle.ts";
 
 type Row = Awaited<ReturnType<DatomicClient["rows"]>>[number];
+const PersonSchema = EntityType.make("Person", {
+  attributes: {
+    name: Attribute.use(Attribute.text(attrs.name), { required: true }),
+    status: Attribute.use(Attribute.text(attrs.status), { required: true }),
+    role: Attribute.use(Attribute.text(attrs.role)),
+    note: Attribute.use(Attribute.text(attrs.note)),
+  },
+});
+
 type Policy = { label: string; reviewStatus: string };
 type StackUrls = { write: string; read: string };
 export type Source =
@@ -154,6 +164,7 @@ type Release = {
   id: string;
   account: Profile;
   policy: Policy;
+  schema: ConfigApi.ConfigApiDescriptor;
   receipt: ReturnType<typeof receipt>;
   written: number;
   writePosition: number;
@@ -517,11 +528,20 @@ export class Playground {
       const node = await this.run(
         ConfigNode.make({ kind: "playground-policy", key: account.id, attrs: policy }),
       );
-      const commit = Effect.flatMap(ConfigStore.ConfigStore, (store) =>
-        store.commit({ label: policy.label, objects: [node], ref: "playground-" + account.id }),
-      );
+      const commit = Effect.gen(function* () {
+        const store = yield* ConfigStore.ConfigStore;
+        const personNodes = yield* PersonSchema.nodes;
+        return yield* store.commit({
+          label: policy.label,
+          objects: [...personNodes, node],
+          ref: "playground-" + account.id,
+        });
+      });
       const published = await this.run(
         importAt === undefined ? commit : withDatomicImportClock(this.scope, importAt, commit),
+      );
+      const schema = await this.run(
+        ConfigApi.compile(published.snapshot, { operations: { Person: ["read"] } }),
       );
       const position = published.transaction.position;
       const id = published.snapshot.id + "-" + position;
@@ -530,6 +550,7 @@ export class Playground {
         id,
         account,
         policy,
+        schema,
         receipt: receipt(published.transaction),
         written: 0,
         writePosition: position,
@@ -590,6 +611,7 @@ export class Playground {
         receipt: release.receipt,
         position,
         releaseId: id,
+        schema,
         firstAnswerMs: release.firstAnswerMs,
         progress: { state: release.state, written: 0, total: account.count },
       };
@@ -611,6 +633,7 @@ export class Playground {
       receipt: release.receipt,
       position: writePosition,
       releaseId: id,
+      schema: release.schema,
       firstAnswerMs,
       progress: { state, written, total: account.count, lastWriteMs, backgroundMs, error },
     };
