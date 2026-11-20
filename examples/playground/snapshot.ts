@@ -6,6 +6,7 @@ import { manifestReader, saves, type Frame, type VerifiedObject } from "./bundle
 import { datomicVersion, hash } from "./stack.ts";
 
 export type Shape = { deep: number; daily: number | "real" };
+export const maxDailySaves = 450_000;
 export type SeedPlan = Shape | "small";
 export type SeedFrame = Frame | { kind: "middle" };
 export type Checkpoint = {
@@ -45,7 +46,7 @@ export function checkPlan(plan: SeedPlan) {
     plan !== "small" &&
     (!plan ||
       !natural(plan.deep, 1, 100_000) ||
-      (plan.daily === "real" ? plan.deep !== 100_000 : !natural(plan.daily, 1, 1900)))
+      (plan.daily === "real" ? plan.deep !== 100_000 : !natural(plan.daily, 1, maxDailySaves)))
   )
     throw new Error("Invalid snapshot population or daily save quota");
 }
@@ -81,24 +82,34 @@ function* events(
     else {
       const time = earlyAt + day * dayMs;
       for (let i = 0; i < plan.daily; i++) {
-        for (const account of accounts.slice(0, 2)) {
+        for (let accountIndex = 0; accountIndex < 2; accountIndex++) {
+          const account = accounts[accountIndex]!;
           // [DX-PLAY1] Why: the sampled days retain same-day ordering and a rotating active roster.
           // Rejected: using the small fixture's grouped edits to forecast individual save costs.
+          const active = Math.min(plan.daily, 1900, account.count);
           const n =
             i === 0
               ? 0
-              : (1 + ((i - 1 + day * plan.daily) % (account.count - 1 || 1))) % account.count;
+              : (1 +
+                  ((((i - 1) % Math.max(1, active - 1)) + day * active * 7) %
+                    (account.count - 1 || 1))) %
+                account.count;
           if (include && !include(account, n)) continue;
           const root = personId(account, n);
-          const child = account.shape === "deep" && i % 3 === 1;
+          const child = account.shape === "deep" && i % 6 !== 0;
+          const key = (day * maxDailySaves + i) * 32 + accountIndex * 16;
+          const text = Array.from({ length: 16 }, (_, j) => token(key + j)).join("-");
           const changes: Record<string, string> = child
-            ? { ":field/value": "Answer-" + token(day * 10000 + i) + "-" + token(day * 10000 - i) }
-            : { [attrs.note]: "Log-" + token(day * 10000 + i) + "-" + token(day * 10000 - i) };
+            ? { ":field/value": "Answer-" + text }
+            : {
+                [attrs.note]: "Note-" + text,
+                ...(i % 6 === 0 ? { [attrs.status]: key % 3 ? "Active" : "Review" } : {}),
+              };
           yield {
             kind: "save",
             id: account.id + "-" + day + "-" + i,
             target: child ? root + "/placement:1/task:1/subtask:1/field:1" : root,
-            validAt: time + i * 1000,
+            validAt: time + Math.floor((i * (dayMs - 1)) / plan.daily),
             changes,
           };
         }
