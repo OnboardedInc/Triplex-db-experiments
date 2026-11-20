@@ -4,17 +4,26 @@ import { createHash } from "node:crypto";
 import { spawn } from "node:child_process";
 import { createGunzip } from "node:zlib";
 import { createInterface } from "node:readline";
+import path from "node:path";
 import { sampledTrace } from "../../../../packages/datomic/dist/index.js";
 import { alignClockRecord } from "../../../trace/report.mjs";
+import {
+  coveredMs,
+  wireIntervals,
+  type ArchivedSpan,
+  type Interval,
+} from "./archived-intervals.ts";
 
 const [reportFile, summaryFile, archive, ...readerMembers] = process.argv.slice(2);
 assert(reportFile && summaryFile && archive && readerMembers.length);
+const hash = (data: Buffer) => createHash("sha256").update(data).digest("hex");
 const bytes = fs.readFileSync(reportFile),
   report = JSON.parse(bytes.toString()),
-  traceSummary = JSON.parse(fs.readFileSync(summaryFile, "utf8"));
+  summaryBytes = fs.readFileSync(summaryFile),
+  traceSummary = JSON.parse(summaryBytes.toString());
 const reference = traceSummary.clockAlignment.reference,
   { source, tag } = traceSummary;
-assert(/^\w{40}$/.test(source) && reference?.bootId);
+assert(/^[a-f0-9]{40}$/.test(source) && reference?.bootId);
 assert(
   report.verdictPlanId === "ns-v3/2" &&
     report.correctness.violations === 0 &&
@@ -22,8 +31,11 @@ assert(
 );
 const phases = report.phases.filter((p: any) => p.pool === "L1024");
 assert.equal(phases.length, 18);
+const weighted = report.phases.filter((p: any) => p.name === "p4mix");
+assert.equal(weighted.length, 1);
+const windows = [...phases, ...weighted];
 const phaseFor = (r: { start: number; end: number }) =>
-  phases.find((p: any) => r.start >= p.start + report.config.settleS * 1000 && r.end < p.end);
+  windows.find((p: any) => r.start >= p.start + report.config.settleS * 1000 && r.end < p.end);
 const low = phases.filter((p: any) => p.stats.routing.fallbackShare < 0.01),
   high = phases.filter((p: any) => p.stats.routing.fallbackShare >= 0.01);
 const sum = (xs: number[]) => xs.reduce((s, x) => s + x, 0);
@@ -46,6 +58,12 @@ const light = group(low),
   heavy = group(high);
 async function* member(file: string) {
   assert(/^trace\/raw\/(node-\d+-\d+|gw-r)\.jsonl\.gz$/.test(file));
+  if (fs.statSync(archive!).isDirectory()) {
+    const input = fs.createReadStream(path.join(archive!, file)).pipe(createGunzip());
+    for await (const line of createInterface({ input, crlfDelay: Infinity }))
+      if (line) yield JSON.parse(line);
+    return;
+  }
   const tar = spawn("tar", ["-xOf", archive!, file], { stdio: ["ignore", "pipe", "inherit"] });
   const exit = new Promise<void>((resolve, reject) => {
     tar.once("error", reject);
@@ -63,8 +81,28 @@ async function* member(file: string) {
 // Rejected: deriving service capacity from the slow throughput and using that same number to explain it.
 const roots = new Map<string, any>();
 const local = new Map<string, number[]>();
+const activity = new Map<number, (Interval & { name: string })[]>();
 for (const file of readerMembers)
   for await (const raw of member(file)) {
+    if (
+      raw.type === "event" &&
+      (raw.synchronous === true || raw.name === "node.gc") &&
+      raw.end - raw.start >= 0.1
+    ) {
+      assert(
+        raw.source === source &&
+          raw.run === tag &&
+          raw.slot === tag &&
+          raw.clock?.bootId === reference.bootId,
+      );
+      const { start, end, thread, name } = alignClockRecord(raw, reference);
+      if (phaseFor({ start, end })) {
+        const events = activity.get(thread) ?? [];
+        events.push({ start, end, name });
+        activity.set(thread, events);
+      }
+      continue;
+    }
     if (raw.name !== "reader.pull" || !sampledTrace(raw.traceId) || raw.attributes?.oracle === true)
       continue;
     assert(
@@ -75,7 +113,12 @@ for (const file of readerMembers)
     );
     const r = alignClockRecord(raw, reference),
       phase = phaseFor(r);
-    if (!phase || r.spans.some((s: any) => s.name === "reader.straddle-await-ack")) continue;
+    if (
+      !phase ||
+      r.truncated !== 0 ||
+      r.spans.some((s: any) => s.name === "reader.straddle-await-ack")
+    )
+      continue;
     const http = new Map(
       r.spans.filter((s: any) => s.name === "client.http").map((s: any) => [s.id, s]),
     );
@@ -83,6 +126,7 @@ for (const file of readerMembers)
       roots.set(r.traceId, {
         phase: phase.name,
         duration: r.end - r.start,
+        reader: r,
         http,
         gateway: new Map(),
       });
@@ -114,9 +158,87 @@ for await (const raw of member("trace/raw/gw-r.jsonl.gz")) {
       workUpper: w ? work : 0.5,
       queue: q.end - q.start,
       wall: raw.end - raw.start,
+      route: raw.name.endsWith("/reach-many") ? "repair" : "reach",
+      interval: alignClockRecord(raw, reference),
     });
   }
 }
+
+// [DX-RD1] Why: account for every millisecond on the original clock and keep recorded CPU work distinct from waits.
+// Rejected: attributing a first-byte callback gap to the network or a whole reach duration to row decoding.
+function stages(r: any) {
+  const read = r.reader as Interval & { spans: ArchivedSpan[]; thread: number; traceId: string };
+  const http: ArchivedSpan[] = [...r.http.values()].sort((a, b) => a.start - b.start);
+  const events = activity.get(read.thread) ?? [];
+  const exchanges = http.map((h) => {
+    const g = r.gateway.get(h.id);
+    const w = wireIntervals(h, read.spans, g.interval);
+    if (!w) return;
+    return {
+      ...w.parts,
+      route: g.route,
+      queue: g.queue,
+      workLower: g.work,
+      workUpper: g.workUpper,
+      responseOverlap: coveredMs(w.responseWindow, events),
+      gcOverlap: coveredMs(
+        w.responseWindow,
+        events.filter((e) => e.name === "node.gc"),
+      ),
+      replicaApplyOverlap: coveredMs(
+        w.responseWindow,
+        events.filter((e) => e.name === "replica.apply-delta"),
+      ),
+    };
+  });
+  if (!exchanges.every((x) => x !== undefined)) return;
+  const before = http[0]!.start - read.start;
+  const betweenIntervals = http.slice(1).map((h, i) => h.start - http[i]!.end);
+  const between = sum(betweenIntervals);
+  const after = read.end - http.at(-1)!.end;
+  assert(
+    before >= 0 && betweenIntervals.every((ms) => ms >= 0) && after >= 0,
+    "Reader exchanges must be serial and contained",
+  );
+  const interval = (name: string) => {
+    const spans = read.spans.filter((s) => s.name === name);
+    return { observed: spans.length, ms: sum(spans.map((s) => s.end - s.start)) };
+  };
+  const syncNames = [
+    "client.encode",
+    "client.parse",
+    "client.reach-decode-and-cache",
+    "reader.observe",
+  ];
+  const outside =
+    before +
+    between +
+    after +
+    sum(
+      exchanges.map(
+        (e) =>
+          e.httpSetup +
+          e.queueAndWrite +
+          e.writeToGateway +
+          e.gatewayEndToHeaders +
+          e.headersToBodyEnd +
+          e.bodyEndToHttpEnd,
+      ),
+    );
+  assert(Math.abs(outside + sum(exchanges.map((e) => e.gatewayWall)) - r.duration) < 0.01);
+  return {
+    traceId: read.traceId,
+    phase: r.phase as string,
+    workerThread: read.thread,
+    beforeHttp: before,
+    betweenHttp: between,
+    afterHttp: after,
+    outside,
+    synchronous: Object.fromEntries(syncNames.map((name) => [name, interval(name)])),
+    exchanges,
+  };
+}
+
 const complete = [...roots.values()]
   .filter((r) => r.http.size === r.gateway.size)
   .map((r) => ({
@@ -127,6 +249,7 @@ const complete = [...roots.values()]
     workUpper: sum([...r.gateway.values()].map((e) => e.workUpper)),
     queue: sum([...r.gateway.values()].map((e) => e.queue)),
     nonGateway: r.duration - sum([...r.gateway.values()].map((e) => e.wall)),
+    stages: stages(r),
   }));
 const estimates = complete.filter((r) => heavy.phases.includes(r.phase));
 const work = mean(estimates.map((r) => r.work)),
@@ -153,12 +276,71 @@ const predict = (g: typeof heavy) => ({
   nonFallbackCycleImpliedAtObservedMissResidenceMs:
     ((1024 * 1000) / g.rate - g.p * duration) / (1 - g.p),
 });
+type Stage = NonNullable<ReturnType<typeof stages>>;
+function summarizeStages(names: readonly string[]) {
+  const eligible = complete.filter((r) => names.includes(r.phase));
+  const measured = eligible.map((r) => r.stages).filter((r): r is Stage => r !== undefined);
+  const exchanges = measured.flatMap((r) => r.exchanges);
+  const exchangeTotals = [
+    "httpSetup",
+    "queueAndWrite",
+    "writeToGateway",
+    "gatewayWall",
+    "gatewayEndToHeaders",
+    "headersToBodyEnd",
+    "bodyEndToHttpEnd",
+    "queue",
+    "workLower",
+    "workUpper",
+    "responseOverlap",
+    "gcOverlap",
+    "replicaApplyOverlap",
+  ] as const;
+  const forStage = (times: readonly number[]) =>
+    measured.length ? sum([...times]) / measured.length : null;
+  return {
+    names,
+    eligible: eligible.length,
+    measured: measured.length,
+    exchanges: exchanges.length,
+    repairExchanges: exchanges.filter((e) => e.route === "repair").length,
+    headersAtLeast50MsAfterGateway: exchanges.filter((e) => e.gatewayEndToHeaders >= 50).length,
+    samplesDominatedByHeaderGap: measured.filter(
+      (r) => sum(r.exchanges.map((e) => e.gatewayEndToHeaders)) > r.outside / 2,
+    ).length,
+    meanMsPerMiss: {
+      outside: mean(measured.map((r) => r.outside)),
+      beforeHttp: mean(measured.map((r) => r.beforeHttp)),
+      betweenHttp: mean(measured.map((r) => r.betweenHttp)),
+      afterHttp: mean(measured.map((r) => r.afterHttp)),
+      ...Object.fromEntries(
+        exchangeTotals.map((name) => [name, forStage(exchanges.map((e) => e[name]))]),
+      ),
+    },
+    synchronous: Object.fromEntries(
+      Object.keys(measured[0]?.synchronous ?? {}).map((name) => [
+        name,
+        {
+          observed: sum(measured.map((r) => r.synchronous[name]!.observed)),
+          lowerMeanMsPerMiss: forStage(measured.map((r) => r.synchronous[name]!.ms)),
+        },
+      ]),
+    ),
+  };
+}
 console.log(
   JSON.stringify(
     {
       source,
       tag,
-      reportSha256: createHash("sha256").update(bytes).digest("hex"),
+      reportSha256: hash(bytes),
+      traceSummarySha256: hash(summaryBytes),
+      analyzers: Object.fromEntries(
+        ["archived-fallback.ts", "archived-intervals.ts"].map((name) => [
+          name,
+          hash(fs.readFileSync(new URL(name, import.meta.url))),
+        ]),
+      ),
       sampledNodeMembers: readerMembers,
       candidateRoots: roots.size,
       fullyJoined: complete.length,
@@ -172,6 +354,17 @@ console.log(
       },
       low: { ...light, ...predict(light), localRootMs: localTimings(light) },
       high: { ...heavy, ...predict(heavy), localRootMs: localTimings(heavy) },
+      stages: {
+        light: summarizeStages(light.phases),
+        heavy: summarizeStages(heavy.phases),
+        weighted: { ...group(weighted), ...summarizeStages(weighted.map((p: any) => p.name)) },
+        unavailable: [
+          "per-request socket reuse and TCP setup",
+          "response bytes",
+          "fallback decision stamp",
+          "driver model checker interval",
+        ],
+      },
       evidence: estimates,
     },
     null,

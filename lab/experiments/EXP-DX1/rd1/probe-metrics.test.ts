@@ -8,6 +8,34 @@ import { test } from "node:test";
 import { perfCountersDelivered } from "./probe-metrics.ts";
 import { collectGatewayPauses } from "./gateway-pauses.ts";
 import { finishTransactor, joinTransactor, type GatewayExchange } from "./probe-transactor.ts";
+import { coveredMs, wireIntervals } from "./archived-intervals.ts";
+
+test("HTTP stages conserve wall time with an overlapping gateway flush", () => {
+  const http = { id: "wire", name: "client.http", start: 10, end: 55 };
+  const parts = wireIntervals(
+    http,
+    [
+      { id: "w", parent: http.id, name: "socket.queue-and-write", start: 11, end: 18 },
+      { id: "h", parent: http.id, name: "socket.wait-first-byte", start: 18, end: 35 },
+      { id: "b", parent: http.id, name: "socket.body-read", start: 35, end: 54 },
+    ],
+    { start: 16, end: 40 },
+  );
+  assert(parts);
+  assert.equal(parts.parts.writeToGateway, -2);
+  assert.equal(parts.parts.gatewayEndToHeaders, -5);
+  assert.equal(
+    Object.values(parts.parts).reduce((n, v) => n + v, 0),
+    http.end - http.start,
+  );
+  assert.equal(
+    coveredMs({ start: 10, end: 20 }, [
+      { start: 5, end: 13 },
+      { start: 12, end: 17 },
+    ]),
+    7,
+  );
+});
 
 test("transactor event must match the gateway cut and fall inside its aligned request", async () => {
   const id = { run: "probe", source: "source", slot: "slot" };
@@ -118,17 +146,68 @@ test("native export completion binds its file checksum and exported row count", 
 test("write gateway pauses are joined to the ON window on the bound clock", async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "rd1-gateway-"));
   const id = { run: "probe", source: "source", slot: "slot" };
-  const clock = { domain: "linux-monotonic", bootId: "boot", offsetMs: 900, crossProcessQualified: true };
-  const jfr = path.join(dir, "gw-w.jfr"), content = "actual recording fixture";
+  const clock = {
+    domain: "linux-monotonic",
+    bootId: "boot",
+    offsetMs: 900,
+    crossProcessQualified: true,
+  };
+  const jfr = path.join(dir, "gw-w.jfr"),
+    content = "actual recording fixture";
   const base = { ...id, process: "gw-w", clock };
   try {
     fs.writeFileSync(jfr, content);
-    fs.writeFileSync(`${jfr}.jsonl`, JSON.stringify({ ...base, type: "event", name: "jdk.GCPhasePause", start: 990, end: 1_010, jfrDurationMs: 20 }) + "\n");
-    fs.writeFileSync(`${jfr}-complete.jsonl`, JSON.stringify({ ...base, role: "gw-w", type: "jfr-complete", clockSamples: 8, events: 1,
-      fileSha256: createHash("sha256").update(content).digest("hex") }) + "\n");
-    const result = await collectGatewayPauses(dir, id, { bootId: "boot", offsetMs: 1_000 }, [{ at: 1_000, until: 1_020 }, { at: 1_100, until: 1_130 }], performance.now() + 3_000);
-    assert.deepEqual(result.blocks.map(b => [b.count, b.totalMs]), [[0, 0], [1, 10]]);
+    fs.writeFileSync(
+      `${jfr}.jsonl`,
+      JSON.stringify({
+        ...base,
+        type: "event",
+        name: "jdk.GCPhasePause",
+        start: 990,
+        end: 1_010,
+        jfrDurationMs: 20,
+      }) + "\n",
+    );
+    fs.writeFileSync(
+      `${jfr}-complete.jsonl`,
+      JSON.stringify({
+        ...base,
+        role: "gw-w",
+        type: "jfr-complete",
+        clockSamples: 8,
+        events: 1,
+        fileSha256: createHash("sha256").update(content).digest("hex"),
+      }) + "\n",
+    );
+    const result = await collectGatewayPauses(
+      dir,
+      id,
+      { bootId: "boot", offsetMs: 1_000 },
+      [
+        { at: 1_000, until: 1_020 },
+        { at: 1_100, until: 1_130 },
+      ],
+      performance.now() + 3_000,
+    );
+    assert.deepEqual(
+      result.blocks.map((b) => [b.count, b.totalMs]),
+      [
+        [0, 0],
+        [1, 10],
+      ],
+    );
     fs.writeFileSync(jfr, "different bytes");
-    await assert.rejects(collectGatewayPauses(dir, id, { bootId: "boot", offsetMs: 1_000 }, [], performance.now() + 3_000), /checksum/);
-  } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+    await assert.rejects(
+      collectGatewayPauses(
+        dir,
+        id,
+        { bootId: "boot", offsetMs: 1_000 },
+        [],
+        performance.now() + 3_000,
+      ),
+      /checksum/,
+    );
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
