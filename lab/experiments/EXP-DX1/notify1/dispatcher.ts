@@ -3,7 +3,7 @@ import { setImmediate as yieldTurn, setTimeout as sleep } from "node:timers/prom
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { width } from "./census.ts";
 import { receiveOrdered } from "./receiver.ts";
-import { Notices, type Tail } from "./journal.ts";
+import { Notices, type Event, type Tail } from "./journal.ts";
 import { Conflict, Documents, hash, pack, unpack, type Row } from "./store.ts";
 
 interface Cursor {
@@ -64,7 +64,14 @@ export class Dispatcher {
   readonly notices: Notices;
   readonly sink: Documents;
   readonly metrics = emptyMetrics();
-  constructor(notices: Notices, sink: Documents) {
+  constructor(
+    notices: Notices,
+    sink: Documents,
+    private readonly activationRange?: (
+      event: Event,
+      start: number,
+    ) => Promise<{ ids: string[]; size: number }>,
+  ) {
     this.notices = notices;
     this.sink = sink;
   }
@@ -95,10 +102,16 @@ export class Dispatcher {
       start = performance.now();
     const selected = await a.select(e, db, at, at, cursor.start);
     const census = a.censusFor(e);
-    const ids = selected.coverage
-      ? selected.coverage.ids.slice(cursor.start, cursor.start + width)
-      : await a.members(e, cursor.start);
-    const size = selected.coverage?.ids.length ?? census.count;
+    // [DX-STG1] Why: joined Publish already binds its release-only range to
+    // the original marker. Rejected: using that callback to narrow a save.
+    const { ids, size } = selected.coverage
+      ? {
+          ids: selected.coverage.ids.slice(cursor.start, cursor.start + width),
+          size: selected.coverage.ids.length,
+        }
+      : this.activationRange && e.value.kind === "activation"
+        ? await this.activationRange(e, cursor.start)
+        : { ids: await a.members(e, cursor.start), size: census.count };
     assert(ids.length === Math.min(width, size - cursor.start), "Incomplete delivery source range");
     const subjects = ids;
     const ledgers = await db.rows<string>(subjects.map(ledger), at);

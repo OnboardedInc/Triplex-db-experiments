@@ -41,6 +41,7 @@ export async function verify(
   let document: W0.ReleaseDoc | undefined;
   try {
     for (const [idx, { req, receipt }] of events.entries()) {
+      const predecessorAt = previous;
       assert(receipt.position > previous && receipt.txId);
       if (req.kind === "activation") document = req.document;
       const row = await a.event(idx + 1, receipt.position);
@@ -88,7 +89,8 @@ export async function verify(
         assert(
           exact.parent === predecessor &&
             exact.txId === receipt.txId &&
-            exact.edits === transportHash(r.changes),
+            exact.edits === transportHash(r.changes) &&
+            (exact.indexAt === undefined || exact.indexAt === predecessorAt),
           "Ordered range identifies a different source commit",
         );
       predecessor = row.id;

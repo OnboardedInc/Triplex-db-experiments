@@ -19,6 +19,7 @@ export type Coverage = {
   edits: string;
   ids: string[];
   evaluated: number;
+  indexAt?: number;
 };
 const wage = new Set([
   "location",
@@ -37,6 +38,10 @@ const add = (sets: Map<string, Set<string>>, k: string, v: string) => {
 const key = (x: Change) => canonical([x.entityId, x.attribute]);
 
 type Posting = { value: number; subject: string };
+type WagePostings = (
+  e: Event,
+  locations: ReadonlySet<string>,
+) => Promise<ReadonlyMap<string, readonly Posting[]> | undefined>;
 // [DX-STG1] Why: use the same exclusive upper pay bound as DELTA's MINWAGE
 // ranges, retaining people who stay below a different floor (payload changes).
 // Rejected: taking only the threshold crossing or using an inclusive upper bound.
@@ -161,7 +166,11 @@ export class CommittedRanges {
   private ready = Promise.resolve();
   readonly censusHash: string;
   readonly rawW0: boolean;
-  constructor(roster: readonly string[], rawW0: boolean) {
+  constructor(
+    roster: readonly string[],
+    rawW0: boolean,
+    private readonly wages?: WagePostings,
+  ) {
     assert.deepEqual([...new Set(roster)].sort(), roster);
     this.censusHash = hash(roster);
     this.rawW0 = rawW0;
@@ -224,7 +233,7 @@ export class CommittedRanges {
     )
       return;
 
-    let candidates: Set<string>;
+    let candidates: Set<string>, indexAt: number | undefined;
     if (!this.rawW0) {
       // The compact fixture stores one complete isolated world per subject.
       // Rejected: extrapolating this property to a native world with shared edges.
@@ -254,7 +263,7 @@ export class CommittedRanges {
     } else {
       const found = await this.shared(a, previous, actual, ms(e.value.validTime));
       if (!found) return;
-      candidates = found;
+      ({ candidates, indexAt } = found);
     }
     const ids = [...candidates].sort();
     const changed = [];
@@ -276,6 +285,7 @@ export class CommittedRanges {
       edits: transportHash(actual.changes),
       ids: changed,
       evaluated: ids.length * 2,
+      ...(indexAt === undefined ? {} : { indexAt }),
     };
   }
 
@@ -353,8 +363,17 @@ export class CommittedRanges {
       if (def.value.document) policy = W0.compileRelease(def.value.document);
     }
     if (!policy || policy.hash !== previous.value.nextHash) return;
+    const indexed = places.size ? await this.wages?.(previous, places) : undefined;
     const old = new Map(
-      [...places].map((l) => [l, { floor: view.floor(policy!, l), rows: view.postings(l) }]),
+      [...places].map((l) => {
+        const native = view.postings(l),
+          saved = indexed?.get(l) ?? [];
+        // [DX-STG1] Why: before using joined postings, prove their complete
+        // membership at the same cut against committed edges. Rejected: treating
+        // an intact leaf encoding as proof its inputs are still current.
+        if (indexed) assert.deepEqual(saved, native, "Joined postings differ from committed edges");
+        return [l, { floor: view.floor(policy!, l), rows: indexed ? saved : native }] as const;
+      }),
     );
     for (const l of reparent) for (const s of view.subjects.get(l) ?? []) direct.add(s);
     view.valid = nextValid;
@@ -370,7 +389,7 @@ export class CommittedRanges {
       for (const s of below(before.rows, limit)) direct.add(s);
       for (const s of below(view.postings(l), limit)) direct.add(s);
     }
-    return direct;
+    return { candidates: direct, indexAt: indexed ? previous.at : undefined };
   }
   private rememberBoundaries(changes: Change[]) {
     for (const c of changes) {
