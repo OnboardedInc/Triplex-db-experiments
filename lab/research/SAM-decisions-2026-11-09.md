@@ -716,3 +716,13 @@ answer; the work is to make one database carry the load, and every obstacle foun
 a miss with its cause when unsolved. (2) The durable-record question was put in words he could not tell apart; it
 is re-asked with a concrete example. (3) Notifications must go out quickly; the bar is set later. (4) He asked what
 runs on Java and whether Rust would help anywhere (earlier constraint: TypeScript only); answered in the reply.
+
+## 2026-11-20 about 07:00 local: Sol agents at xhigh, not max
+
+Sam, verbatim:
+- "instead of using max effort sol 6.2, lets go with XHIGH effort instead"
+
+Orchestrator's reading: every Codex `gpt-6.2-sol` launch and resume runs at xhigh effort from now (builders, reviewers,
+analysts). The creative role (`gpt-6.2-astra` at high) is unchanged and still only for a problem that needs it. Agents
+already running at max switch at their next handover, because a resume takes the launcher's current effort;
+interrupting them now would lose measurement slots some waited hours for.
