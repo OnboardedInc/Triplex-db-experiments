@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import { pathToFileURL } from "node:url";
 
-export const roles = ["tx", "gw-w", "gw-r"];
+export const roles = /** @type {const} */ (["tx", "gw-w", "gw-r"]);
+/** @typedef {(typeof roles)[number]} Role */
 export const part2Arms = ["j21-g1-writer2", "j25-g1", "j25-zgc", "j25-g1-zgc-memory"];
 
 // [DX-JVM1] Why: use the exact TAIL1 young generation and region settings for the measured writer control.
@@ -26,10 +27,12 @@ const general = [
   "-XX:-UseTransparentHugePages", "-Xshare:auto", "-XX:+TieredCompilation",
   "-XX:CICompilerCount=2", "-XX:CompileThresholdScaling=1", "-Ddatomic.txTimeoutMsec=10000",
 ];
+/** @param {string} option */
 const optionKey = (option) => option.match(/^-XX:[+-]?(\w+)(?:=|$)|^(-Xms|-Xmx|-Xshare:)|^(-D[^=]+)=/)?.slice(1).find(Boolean) ?? option;
 
 // [DX-JVM1] Why: one role policy completes the explicitly chosen flags, preserving deliberate arm overrides.
 // Rejected: duplicated fallbacks in the Mac and physical launchers or relying on a processor-dependent collector.
+/** @param {Role} role @param {number} coreCount @param {string} options @param {string} [control] */
 export function launchOptions(role, coreCount, options, control = "default") {
   assert(roles.includes(role) && Number.isInteger(coreCount) && coreCount > 0);
   assert(control === "default" || (role === "gw-w" && control === "serial"));
@@ -60,6 +63,7 @@ export function launchOptions(role, coreCount, options, control = "default") {
 
 if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) {
   const [, , role, cpus, options, control] = process.argv;
+  assert(role === "tx" || role === "gw-w" || role === "gw-r");
   const ids = new Set();
   for (const part of cpus.split(",")) {
     assert(/^\d+(?:-\d+)?$/.test(part));
@@ -70,6 +74,7 @@ if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) 
   console.log(launchOptions(role, ids.size, options, control));
 }
 
+/** @param {string} major @param {string} collector @param {Role} role @param {number} cores */
 export function collectorOptions(major, collector, role, cores) {
   assert(roles.includes(role) && Number.isInteger(cores) && cores > 0);
   if (collector === "ZGC") {
@@ -105,6 +110,7 @@ export function collectorOptions(major, collector, role, cores) {
 
 // [DX-JVM1] Why: hold cores, durability and Datomic parameters fixed during the Java comparison.
 // Rejected: treating extra heap as a collector gain. The fourth arm matches ZGC's allocation budget.
+/** @param {string} arm */
 export function part2Policy(arm) {
   assert(part2Arms.includes(arm));
   const javaMajor = arm === "j21-g1-writer2" ? "21" : "25";

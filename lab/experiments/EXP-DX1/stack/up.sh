@@ -486,8 +486,26 @@ fi
 # Rejected: running the large import during the timed arm or attaching a writable original.
 if [[ -n ${DX_JVM1_PG_RESTORE:-} ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prefix == tx2-dxt1-jvm1-* && -z $seed_volume && -f $DX_JVM1_PG_RESTORE ]]
-  [[ $(head -c 5 "$DX_JVM1_PG_RESTORE") == PGDMP ]]
-  docker exec -i "$prefix-pg" pg_restore -U postgres --clean --if-exists --exit-on-error -d datomic     < "$DX_JVM1_PG_RESTORE" > "$attempt/restore.log" 2>&1
+  # [DX-JVM1] Why: verify the actual stream given to pg_restore.
+  # Rejected: checksumming a separate open of a dump that can change while restoring.
+  python3 - "$prefix-pg" "$DX_JVM1_PG_RESTORE" "$DX_JVM1_PG_RESTORE_SHA256" \
+    > "$attempt/restore.sha256" 2> "$attempt/restore.log" <<'PG_RESTORE'
+import hashlib, subprocess, sys
+container, dump, expected = sys.argv[1:]
+digest = hashlib.sha256()
+with open(dump, 'rb') as source:
+    assert source.peek(5)[:5] == b'PGDMP', 'Expected a custom PostgreSQL dump'
+    with subprocess.Popen(['docker', 'exec', '-i', container, 'pg_restore', '-U', 'postgres',
+                           '--clean', '--if-exists', '--exit-on-error', '-d', 'datomic'],
+                          stdin=subprocess.PIPE, stdout=sys.stderr) as restore:
+        with restore.stdin:
+            while (block := source.read(1024 * 1024)):
+                digest.update(block)
+                restore.stdin.write(block)
+        assert restore.wait() == 0, 'PostgreSQL restore failed'
+assert digest.hexdigest() == expected, 'Restored dump bytes differ from the sealed seed'
+print(digest.hexdigest())
+PG_RESTORE
 fi
 # [DX-JVM1] Why: emit the real JVM's final flags and GC startup identity to its own container log.
 # Rejected: a second JVM running outside the live cgroup or inferring collector from affinity.

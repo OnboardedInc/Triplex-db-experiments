@@ -233,6 +233,7 @@ async function campaign(base: string, source: string, seedDirectory: string, par
     const predictionHash = await fileHash(predictions);
     write(path.join(dir, "request.json"), { part2, arm, policy, seed, seedReceiptSha256, predictionHash, startedAt, deadline });
     const result = await withStack(dir, arm, async (env) => {
+      assert.equal(fs.readFileSync(path.join(dir, "engines", arm.slot, "restore.sha256"), "utf8").trim(), seed.dumpSha256);
       const started = Date.now();
       const before = activePart2 ? cgroupSample(env) : undefined;
       const remaining = deadline - started - (activePart2 ? 45_000 : 0);
@@ -273,7 +274,7 @@ async function campaign(base: string, source: string, seedDirectory: string, par
       assert(Date.now() <= deadline, "Work and evidence exceeded the arm deadline");
       return { name, arm, predictionHash, dumpSha256: seed.dumpSha256, seedReceiptSha256,
         evidenceSha256: await fileHash(file), summary: result.summary, jvm };
-    }, false, "individual", false, { policy, deadline, dump, javaMajor: activePart2?.javaMajor });
+    }, false, "individual", false, { policy, deadline, seed: { dump, sha256: seed.dumpSha256 }, javaMajor: activePart2?.javaMajor });
     assert.equal(await fileHash(dump), seed.dumpSha256, "The prepared seed changed");
     assert.equal(await fileHash(seedFile), seedReceiptSha256, "The seed receipt changed");
     const durationMs = Date.now() - startedAt;

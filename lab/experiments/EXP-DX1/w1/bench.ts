@@ -216,7 +216,12 @@ export async function withStack<T>(
   grouped?: boolean,
   fieldMode?: Mode,
   enhanced = false,
-  jvm?: { policy: ReturnType<typeof jvmPolicy> | ReturnType<typeof part2Policy>; deadline: number; dump?: string; javaMajor?: string },
+  jvm?: {
+    policy: ReturnType<typeof jvmPolicy> | ReturnType<typeof part2Policy>;
+    deadline: number;
+    seed?: { dump: string; sha256: string };
+    javaMajor?: string;
+  },
 ) {
   const why = stopReason();
   assert(!why, why);
@@ -324,9 +329,15 @@ export async function withStack<T>(
     // [DX-JVM1] Why: tie the declared JVM arm to the shared stack startup and storage clone.
     // Rejected: updating process placement after the JVM derived its pools and collector.
     const p = jvm.policy;
+    if (jvm.javaMajor) {
+      assert(p.cpus.sender);
+      // [DX-JVM1] Why: reserve space for Linux and the bounded field sender beside 37 GiB of engine caps.
+      // Rejected: allowing the generic 32 GiB sender heap in this memory comparison.
+      Object.assign(env, { TRIPLEX_NODE_MAIN_CPUS: p.cpus.sender.split(",")[0],
+        TRIPLEX_NODE_WORKER_CPUS: p.cpus.sender, NODE_OPTIONS: "--max-old-space-size=3072" });
+    }
     Object.assign(env, {
       DX_JAVA: jvm.javaMajor ?? "21",
-      ...(jvm.javaMajor ? { TRIPLEX_NODE_MAIN_CPUS: p.cpus.sender.split(",")[0], TRIPLEX_NODE_WORKER_CPUS: p.cpus.sender } : {}),
       DX_JVM_EVIDENCE: "1",
       DX_NATIVE_SETTINGS_READBACK: "1",
       DX_JVM1_TX_PROPERTIES: JSON.stringify(p.txProperties),
@@ -334,7 +345,7 @@ export async function withStack<T>(
       DX_GW_READ_MEMORY: p.memory["gw-r"] + "m",
       DX_GW_WRITE_JAVA_OPTS: p.opts["gw-w"].join(" ") + gcLog("gw-w"),
       DX_GW_READ_JAVA_OPTS: p.opts["gw-r"].join(" ") + gcLog("gw-r"),
-      ...(jvm.dump ? { DX_JVM1_PG_RESTORE: jvm.dump } : {}),
+      ...(jvm.seed ? { DX_JVM1_PG_RESTORE: jvm.seed.dump, DX_JVM1_PG_RESTORE_SHA256: jvm.seed.sha256 } : {}),
     });
   }
   write(path.join(dir, "identity.json"), arm);

@@ -1,3 +1,4 @@
+// @ts-nocheck -- Engine reservations, CLI options and Docker evidence are verified dynamically.
 import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";

@@ -2,6 +2,7 @@
 // Rejected: comparing collector arms owned by DX-TAIL1 or choosing heap sizes from the cgroup alone.
 export const serverArms = ["present", "candidate", "index-threshold", "compiler-default"];
 
+/** @param {string} platform @param {string} arm */
 export function jvmPolicy(platform, arm) {
   if (!["mac", "server"].includes(platform) || !serverArms.includes(arm))
     throw new Error("Unknown DX-JVM1 platform or arm");
@@ -31,7 +32,7 @@ export function jvmPolicy(platform, arm) {
   const peers = mac ? { "gw-w": 32, "gw-r": 32 }
     : candidate ? { "gw-w": 1024, "gw-r": 1536 } : { "gw-w": 1536, "gw-r": 1536 };
 
-  const opts = Object.fromEntries(["tx", "gw-w", "gw-r"].map((role) => {
+  const opts = Object.fromEntries((/** @type {const} */ (["tx", "gw-w", "gw-r"])).map((role) => {
     const cpu = cpus[role].split(",").length;
     const serial = role === "gw-w";
     const flags = ["-Xms" + initialHeap[role] + "m", "-Xmx" + maxHeap[role] + "m",

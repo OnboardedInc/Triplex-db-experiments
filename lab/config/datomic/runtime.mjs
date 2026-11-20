@@ -21,10 +21,11 @@ const runtimes = {
 // [DX-JVM1] Why: one selector names the JVM used by the transactor and both peers.
 // Rejected: moving the Java 21 tag or resolving the Java 25 parent by mutable tag.
 export function datomicRuntime(major = process.env.DX_JAVA ?? "21") {
-  assert(Object.hasOwn(runtimes, major), "DX_JAVA must be 21 or 25");
+  assert(major === "21" || major === "25", "DX_JAVA must be 21 or 25");
   return runtimes[major];
 }
 
+/** @param {string} major @param {string} role */
 export function javaCompatibility(major, role) {
   datomicRuntime(major);
   return major === "25"
@@ -32,7 +33,9 @@ export function javaCompatibility(major, role) {
     : [];
 }
 
+/** @param {string | undefined} file */
 export function readVariantReceipt(file, runtime = datomicRuntime()) {
+  assert(file, "Supply a private Datomic image receipt");
   const receipt = JSON.parse(readFileSync(file, "utf8"));
   assert.deepEqual(receipt.runtime, runtime);
   assert.match(receipt.imageId, /^sha256:[a-f0-9]{64}$/);
@@ -53,7 +56,7 @@ if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) 
   else if (field === "image") console.log(process.env.DX_DATOMIC_IMAGE_RECEIPT
     ? readVariantReceipt(process.env.DX_DATOMIC_IMAGE_RECEIPT, runtime).imageId : runtime.tag);
   else {
-    assert(["major", "version", "base", "tag"].includes(field));
+    assert(field === "major" || field === "version" || field === "base" || field === "tag");
     console.log(runtime[field]);
   }
 }
