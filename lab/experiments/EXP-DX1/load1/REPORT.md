@@ -1,23 +1,46 @@
 # Loading one shared Datomic database
-The original two server loads reached 4,578 and 4,669 facts per second.
-A full batch took about 413 milliseconds from the previous client return.
-About 72 milliseconds were spent applying it. Durable-write waiting overlapped parts of the transaction pipeline.
-The client waited for each reply before submitting its next batch.
-The first experiment measures how much of that interval can be removed without changing a receipt.
-Local and server measurements for the new loader are pending.
-The live-import target is 3,000 facts per second with each neighbour's read and write p99 within 1.5 times its own baseline.
+The old loader waited for each batch. Its two server runs loaded 4,578–4,669 facts per second.
+On the Mac, most removable client work was preparing rows for the wire. Updating the local journal took about 9 milliseconds per batch.
+Two batches in flight worked best in this test. The importer can restart and recover the same receipt without inserting the facts twice.
+At 50 saves per second, the two larger batches loaded 3,307–3,833 facts per second but made the quiet account's slow saves much slower.
+Even the smallest tested batch missed the quiet account's latency limit. A save can still wait for a bulk transaction already running.
+I expect roughly 41 minutes for 16 million facts and 7 hours 40 minutes for 160 million on the servers.
+The server predictions are untested. The Mac results explain the behaviour and carry no acceptance verdict.
 
-## Evidence audit
-- `profile.ts` joins each current public command to the actual native operation ID, HTTP position, source, attempt and slot. It checks exact source rows and IDs against a subsequent durable lookup. Each arm starts with a fresh physical database, verifies its final position and seals the actual expected-model journal bytes.
-- `oracle.ts` compares every ordered source fact, validity, stored clock, transaction ID and assertion ID. `run.ts` checks subprocess identity and equal source seals. The HA1 manager checks image, mounts, reservation, cleanup and unchanged executed inputs before emitting observations.
-- W1 is imported from `502c8897d`. Its native range proof rechecks all unique IDs and both bounds against actual ops and serialized history. Group evaluate/materialize/receipt and the client's transactCommand tie each logical receipt to the claimed operation, actual report and stored basis; ordinary writes remain the default. LOAD1 profile mode is solo and reads its metrics datom from that exact transaction.
-- `Snapshot.open/write/verify` binds a native manifest to destination, source generator and packing width, compares the public ACK with the input, and commits only contiguous source progress in SQLite FULL. Reopen verifies stored receipts; final verification reconstructs every frame from source, compares durable lookup and feed to the saved identities and checks the physical rows at one pin. The gap drill withholds a committed checkpoint and checks the exact original after reopen.
-- The named fresh-text wire format derives row IDs and order from the submitted canonical text. The peer repeats the ordinary identity/content validation and rejects duplicate prefixes. Only an empty historical range at the transactor permits skipping the individual history seeks. The existing seed entry point accepts `TX2_DATOMIC_SEED_IN_FLIGHT=1|2|4` for disjoint subject batches on Datomic.
-- The named W1 queue option, `TX2_GROUP_COMMIT=1 TX2_LOAD1_PRIORITY=1`, recognizes the actual claimed import journal. The writer grants bulk singly and chooses runnable live saves first while preserving earlier dependency tokens. Group ACKs are read from their native member records. A non-preemptible bulk commit already executing can still delay a save.
-- `live.ts` binds every native operation and logical position to the same physical database, checks its grant and the original source content, and reconciles the complete feed and pinned quiet reads. Rates include scheduled offers, capacity refusals, errors and drain; only confirmed facts inside the offered window count. The quiet account's baseline uses the same offered reads and writes. Local percentiles are diagnostics.
-- The first image preflight stopped before creating a database. A matched six-arm run then confirmed all 30 batches. A wire-fixture test subsequently caught an ordinary object's property-order change. The ordinary branch now keeps the original wire object and its golden bytes.
-- [Predictions and two-server commands](BENCH.md) were recorded before server access. No new bare-metal measurements have been made.
-- The interrupted live attempt has no timing result. Recovery required its dead timer owner, attempt JSON, exact slot, role IDs, image digests and Docker labels before removing any owned objects. Cleanup records the verified absence of only that attempt's containers, volumes and network.
-- The fresh wire variant uses the existing compact row mode with a new payload member. A peer that cannot expand it rejects the required compact fields as missing.
-- `sealedSnapshot` checks the declared export seal against the pinned file bytes and proves disjoint source ownership before enabling the pipeline. `file-proof.ts` binds malformed input refusals and the typed readback to a fresh database and its manifest. Missing or incompatible checkpoint manifests are refused before an append.
-- Live readback joins a durable native operation to its original request ID, exact shared database and feed position. Only direct replies supply grant evidence. A malformed direct reply still fails the attempt. Before accepting even an empty checkpoint, the importer reconstructs its contiguous prefix from verified stored receipts.
+## Where the time went
+
+The archived 2,000-fact server witness joined the same 5,988-datom transaction across Node, gateway and native telemetry. The 413 ms cycle included 73 ms before the next SDK start, 69 ms row encoding, 13 ms body encoding, 12 ms other client work and about 245 ms gateway/peer. That last interval contained 8 ms JSON parse, 53 ms preparation, about 42 ms before native entry, 100 ms native envelope and 41 ms peer/reply. Native apply was 72 ms including 59 ms of the transaction function. The 13 ms log park sits inside the native envelope. These nested spans and rounded components overlap.
+
+| Mac median for 1,972 business facts | Unchanged client | Fast row + body | Fast row + empty range |
+|---|---:|---:|---:|
+| Generate, stage, encode rows, encode body (ms) | 2.4 / 93 / 103 / 35 | 2.6 / 100 / 18 / 28 | 1.8 / 86 / 17 / 29 |
+| HTTP round trip (ms) | 760 | 478 | 529 |
+| Gateway JSON parse, row checks and tx-data construction (ms) | 23 / 59 / 31 | 12 / 46 / 27 | 10 / 33 / 30 |
+| Gateway wait including native apply (ms) | 608 (238) | 342 (137) | 355 (93) |
+| Native historic seeks, time (ms) | 4,595 / 25 | 4,595 / 10 | 1 empty range |
+| Client settle, model journal (ms) | 10 / 9.2 | 12 / 8.5 | 10 / 9.5 |
+
+Thirty batches, ten per option, in the order ordinary, row, range, range, row, ordinary. A typical request was 2.65 MB, the diagnostic response about 0.46 kB and the transaction 5,901 native datoms. The peer parses/binds every row and looks up the operation and journal entity. Per-row AVET history seeks are in the serialized transaction function, one for each new business or journal ID. Retirements and revision checks retain their original paths. The benchmark starts its feed replica after seeding. The measured caller path includes its expected-model journal. Native timing also varied across the ordinary and row arms, which kept the same history checks.
+
+## Quiet loader and live imports
+
+The ten quiet arms each reconciled 13,147 source facts with the public journal and pinned store. With 2,000-fact caps the bookended depth-one arms gave 1,808 and 4,813 facts/s, depth two 4,506 and 5,826, depth four 3,543. Startup and arm order matter. At depth two, caps of 1,024 and 3,000 gave 4,922 and 4,556. The ordinary compact wire at depth two gave 2,475 and 3,747. Chosen server point is two in flight up to 2,000 facts.
+
+The new peer reconstructs ID and ordering from the canonical fresh row texts and repeats content validation. It skips individual history seeks only after checking every distinct ID, both bounds and an empty covering range against serialized history, including retired rows. A nonempty or unsupported interval falls back. Older peers reject the compact request. A FULL SQLite checkpoint advances only through contiguous verified receipts. The restart test acknowledged a later batch first, withheld the earlier checkpoint, reopened and recovered the original transaction ID, position, clock and assertion IDs. The end-to-end sealed-file proof awaits a Mac slot.
+
+| Offered saves/s | Bulk cap | In-window facts/s | Quiet read p99 ms (ratio) | Quiet save p99 ms (ratio) | Verified of all offers |
+|---:|---:|---:|---:|---:|---:|
+| 50 | Control | 0 | 11.8 | 28.2 | 1,440/1,440 |
+| 50 | 128 | 2,682 | 19.6 (1.67×) | 132.9 (4.72×) | 720/720 |
+| 50 | 500 | 3,307 | 76.6 (6.50×) | 260.7 (9.25×) | 720/720 |
+| 50 | 2,000 | 3,833 | 81.6 (6.93×) | 385.0 (13.67×) | 720/720 |
+| 235 | Control | 0 | 73.1 | 576.8 | 5,159/5,880 |
+| 235 | 128 | 42 | 94.5 (1.29×) | 413.4 (0.72×) | 2,695/2,940 |
+| 235 | 500 | 454 | 121.2 (1.66×) | 173.3 (0.30×) | 2,914/2,940 |
+| 235 | 2,000 | 1,167 | 173.8 (2.38×) | 845.4 (1.47×) | 2,410/2,940 |
+
+One new physical database per arm, ten writing namespaces and an extra quiet account at five writes and five pinned reads per second. Each Mac arm offers for 12 seconds. Controls pool both bookends. Candidate p99 uses 60 scheduled quiet samples per class minus any misses. Latency includes offer delay from one Node process. At 50/s, p99 quiet offer delay was 6–17 ms versus 132–384 ms save service after offer. Every observed native bulk grant was solo and found no runnable live save waiting. This still permits a save to arrive during an admitted bulk commit. At 235/s, the controls also missed offers. The 390/s retry is queued after a gateway port collision.
+
+- `profile.ts/oracle.ts` tie every exact row, receipt and metric to the source, nonce, slot, operation ID and native position. `Snapshot.open/write/verify` binds the destination manifest and packing to the source, checks ACK content or the original claim, advances the verified prefix and compares the physical rows and feed at a pin.
+- W1's range certificate and group materializer use the serialized before/after databases. Each group ACK names its actual logical member. `live.ts` verifies runnable-live and group-size at grants, every published command against the feed and the quiet pin. `run.ts` and the engine check images, mounts, source hashes, counts and cleanup. The image miss, port collision and interrupted stack are recorded. Scoped TypeScript, three loader checks and 110 Datomic tests checked the changes. Eleven opt-in tests skipped.
+- [Server predictions and commands](BENCH.md) · [Attempt index](EVIDENCE.md) · [Checksums](SHA256SUMS)
