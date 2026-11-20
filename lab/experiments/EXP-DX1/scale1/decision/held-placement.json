@@ -1,5 +1,5 @@
 {
-  "maxHours": 38,
+  "maxHours": 40,
   "steps": [
     { "tag": "arm-d7-wfix-pilot-seed", "phase": "seed", "people": 10000, "layout": "pooled", "mode": "individual" },
     { "tag": "arm-d7-wfix-pilot-bounded", "phase": "cells", "people": 10000, "layout": "pooled", "mode": "bounded", "from": "arm-d7-wfix-pilot-seed" },
