@@ -141,6 +141,15 @@ export async function localDrill(opts: any, config: any, manager: any) {
   const mode = modeOf(opts.experiment);
   const diagnostic = opts.diagnostic === true;
   assert(!microLoad(mode) || diagnostic, "Use --diagnostic for Mac import trials");
+  const previousPg = opts["prepare-postgres"];
+  assert(
+    previousPg === undefined ||
+      (diagnostic &&
+        mode === "load-volume" &&
+        typeof previousPg === "string" &&
+        /^sha256:[a-f0-9]{64}$/.test(previousPg)),
+    "--prepare-postgres expects the prior image ID for a local diagnostic volume check",
+  );
   const slots = (opts.slot === "auto" ? ["s2", "s3", "s1"] : [opts.slot]).map((id) =>
     slotInfo(config, "datomic", id),
   );
@@ -358,6 +367,38 @@ export async function localDrill(opts: any, config: any, manager: any) {
           image: chosen.imageId,
           buildInputs: chosen.buildInputsSha256,
         });
+      } catch (error) {
+        clean = true;
+        throw error;
+      }
+    }
+    if (previousPg) {
+      try {
+        const inspect = (ref: string) =>
+          site.docker(["image", "inspect", ref, "--format", "{{.Id}}"]).catch((error: Error) => {
+            if (/No such image/.test(error.message)) return undefined;
+            throw error;
+          });
+        const tag = "postgres:17-alpine";
+        const retained = await inspect(previousPg);
+        let current = retained ?? (await inspect(tag));
+        if (!current) {
+          // [DX-LOAD3] Why: restore the official dependency through the engine using an anonymous client.
+          // Rejected: an implicit container pull or binding the historical image ID to a newer build.
+          const config = fs.mkdtempSync(path.join(os.tmpdir(), "ha1-registry-"));
+          try {
+            await runFile("docker", ["--config", config, ...dockerArgs(["pull", "--quiet", tag])], {
+              encoding: "utf8",
+              timeout: 120000,
+            });
+            current = await inspect(tag);
+          } finally {
+            fs.rmSync(config, { recursive: true, force: true });
+          }
+        }
+        assert(current && /^sha256:[a-f0-9]{64}$/.test(current));
+        site.postgresImage = current;
+        e!.log("postgres-image", { previous: previousPg, current, retained: retained === current });
       } catch (error) {
         clean = true;
         throw error;

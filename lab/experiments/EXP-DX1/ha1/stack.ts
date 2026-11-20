@@ -21,6 +21,7 @@ export interface Site {
   key: string;
   repo: string;
   datomicId: string;
+  postgresImage?: string;
   privateAddress?: string;
   docker: (args: string[], opts?: { timeout?: number }) => Promise<string>;
 }
@@ -48,18 +49,10 @@ export class Stack {
   }
   async open() {
     for (const site of new Set([this.a, this.b])) {
-      const id = await site.docker([
-        "network",
-        "create",
-        "--label",
-        "ha1.attempt=" + this.e.nonce,
-        this.e.prefix,
-      ]);
-      this.networks.set(site, id);
       const pg = await site.docker([
         "image",
         "inspect",
-        "postgres:17-alpine",
+        site.postgresImage ?? "postgres:17-alpine",
         "--format",
         "{{.Id}}",
       ]);
@@ -69,6 +62,14 @@ export class Stack {
         await site.docker(["image", "inspect", site.datomicId, "--format", "{{.Id}}"]),
         site.datomicId,
       );
+      const id = await site.docker([
+        "network",
+        "create",
+        "--label",
+        "ha1.attempt=" + this.e.nonce,
+        this.e.prefix,
+      ]);
+      this.networks.set(site, id);
     }
   }
   async start(

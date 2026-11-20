@@ -35,3 +35,5 @@ node lab/bin/heavy.mjs --label DX-HA1 -- node --import tsx lab/bin/engine.mjs ha
 ```
 
 This checks four minutes of sustained work with an ordinary heavy token and one VM slot. The oracle checks original claims, every typed row, temporal queries and retries. Local elapsed values are diagnostic and can include activity from other builders.
+
+If the lab VM has dropped PostgreSQL, append `--prepare-postgres "$PRIOR_POSTGRES_IMAGE_ID"` using the exact ID from the previous run's PostgreSQL role record. The managed diagnostic prefers that image and can restore the official public image anonymously. The recorded role ID identifies the dependency that actually ran.
