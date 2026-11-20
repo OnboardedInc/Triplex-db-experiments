@@ -1,11 +1,11 @@
 The native Publish check found six people whose work changed and two whose work stayed the same. The recipient was still stopped.
 After dispatch resumed, the recipient's 19 effects matched the independent oracle in order.
-At 1,000 people the first floor change drained in 145 ms with a roster scan and 439 ms with the smaller set.
-At 10,000 people it took 1.59 and 3.87 seconds. Replaying the source history to build the smaller set delayed nearby saves.
-The smaller set used one recipient transaction at 10,000 people. The roster scan used ten.
-The sender proved 19 of 20 cases at each size. Crossing a scheduled time boundary required the roster scan.
-The separate gateway lowered read p99 in both repeats. It sent 212–262 notices per second. The shared gateway sent 222–277.
-All four arms met both latency limits against the closing control. None met both against the opening control.
+The whole roster drained in 145 milliseconds at 1,000 people and 1.59 seconds at 10,000.
+The smaller list used one recipient commit at 10,000 people. Rebuilding it from scratch took 3.87 seconds and delayed nearby saves.
+The separate gateway lowered read delays in both repeats. Neither gateway met both latency limits consistently.
+Loading one source copy and reading it in parallel raised the cold deep rate from 140 to 174 notices per second.
+Fetching that copy still took nearly two thirds of the sending time. It would need to be more than ten times faster to hit the target.
+The longer copy test sent 140 notices per second and broke both latency limits.
 
 | Review finding | Decision | Fix | Regression test |
 | --- | --- | --- | --- |
@@ -25,13 +25,17 @@ The ordered selector binds the original event and its predecessor to native edit
 
 The declared mix was 16 direct pay edits, a local floor edit, a backdated state floor edit, a jurisdiction move and a save crossing a scheduled boundary. Each neighbouring-save sample had 16 offers. Each floor save wrote six source records. Dispatch wrote zero. At 10k, ordered selection and dispatch evaluated 1,110 worlds. The drain spent 3.72 seconds before or outside the normal evaluation and recipient service timers, where cold source replay is the extra step. [Part 5 evidence](PART5-SHA256SUMS)
 
+At each size 19 of 20 events used the exact selection. The time-boundary event used the full roster. At 100k the same fixture predicts 3,685 notices, about 16 s and 98 recipient commits for the census, and 39 s and four for the cold ordered selection. [Cost model](RATE.md)
+
 **Sending and live latency**
 
 Each 10k active compact arm delivered 6,336 notices with 1,523–1,996 completed reads and 713–935 completed saves. The offer period was 32 ms. The 1.5× limit gave different results across the controls because matching write p99s were 52–57 ms at the opening and 224–263 ms at the closing. The separate sender's read p99 was 9.69–11.67 ms and the shared sender's was 12.54–13.57 ms. [Exact ratios and budgets](RATE.md)
 
-The separate sender uses its own JVM against the same transactor. The native slot was ready in 3 minutes 5 seconds. The joined check got a heavy-job permit 8 minutes 51 seconds later. The cost and gateway jobs entered at 23:16 and 23:25 local. Each gateway arm checks exact ordered effects and requires the source to advance only for live saves. [Rate runner](rate-arm.ts)
+The separate sender uses its own JVM against the same transactor. The native slot was ready in 3 minutes 5 seconds. The joined check got a heavy-job permit 8 minutes 51 seconds later. The cold-copy comparison waited 21 minutes 32 seconds for a permit and another 4 minutes 30 seconds for its timing window. Each gateway arm checks exact ordered effects and requires the source to advance only for live saves. [Rate runner](rate-arm.ts)
 
-The forecast assumes 350–550 checks per second on deep inputs, based on 471 per second with four foreground readers on the earlier Mac test. At 16.5% notice density that implies about 58–91 notices per second. At the earlier deep fixture's 79.9% it implies about 280–440 per second. Pinned reads and gateway service bound this rate. The 14 ms cadence caps a worker at 1,143 checks per second before work. The earlier receiver commit share was 18%. The forecast assumes the release has reached the front of the queue and both p99 ratios stay within 1.5×.
+At 1,000 deep people, one cold copy read 5.27 MB of source replies, including 16 bulk pages, and evaluated 799 affected people across four threads. Both arms delivered exactly 799 in one recipient commit with zero source writes. The copy spent 2.88 of 4.60 seconds on the source and 0.48 on worker setup, walking and rules. The test recipient commit cost 0.42 ms per notice. Local IPC acknowledgement took under 0.1 ms per group. Customer endpoint costs were outside the test. [Sending budget](RATE.md)
+
+The compact copy run delivered 2,914 notices across 43 releases with 1,390 live reads and 650 live saves. Read p99 was 2.91× and 5.52× the matched controls. Save p99 was 3.04× and 6.35×. Worker setup and walking with evaluation took 14.15 of 20.84 seconds. [Matched results](RATE.md)
 
 **Joined Publish**
 
@@ -43,4 +47,4 @@ Keep the recipient stopped while taking the one-second cut under live saves. Reo
 
 `DOCKER_HOST=unix:///var/run/docker.sock node --import tsx lab/experiments/EXP-DX1/notify1/bench.ts launch notify-part4-001 isolated 16 14` runs the 1,000-person preflight, shared-floor costs at 1,000 and 100,000, then the 100,000-person deep paired workload on the same server. The plan was checked locally. [Runner](bench.ts)
 
-The joined gate binds the two source revisions, native slot and original transaction bytes. The cost runner checks the oracle and reopens the recipient receipts by ID. The compact verifier binds both world bytes and the original frame with no intervening save. The rate reducer checks fresh run, slot, original receipts, matching offers, oracle effects and both sample counts. The copy binds adjacent native release frames, the enrolment digest, the business instant and the copied snapshot before storing the selection with the recipient cursor. Python checks the full affected set and complement. Acceptance pins and frozen inputs stayed fixed. [Part 5 evidence](PART5-SHA256SUMS) · [Part 4 evidence](PART4-SHA256SUMS)
+The joined gate binds the two source revisions, native slot and original transaction bytes. The cost runner checks the oracle and reopens recipient receipts by ID. The compact verifier binds both world bytes and the original frame with no intervening save. The rate reducers bind the fresh run, slot and receipts, recompute matched tails and count copy pages and completed samples. The copy binds adjacent release frames, census digest, business instant and native snapshot before storing the selection with the recipient cursor. Python checks affected and unchanged people and ordered effects. The lab slot and its volume were removed. No acceptance pins changed. [Part 5 evidence](PART5-SHA256SUMS) · [Part 4 evidence](PART4-SHA256SUMS)
