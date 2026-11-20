@@ -150,6 +150,8 @@ function reading(rows) {
 }
 
 async function reserve(config, manager, names, roleMemory, cpus, signal, diskForecast, leaseHeld) {
+  const reservedRoles = Object.keys(names);
+  const firstRole = reservedRoles[0];
   for (;;) {
     signal.throwIfAborted();
     diskFloor(REPO);
@@ -166,7 +168,7 @@ async function reserve(config, manager, names, roleMemory, cpus, signal, diskFor
         );
       if (!slot) return "No Datomic exclusive slot";
       const request = {
-        container: names.pg,
+        container: names[firstRole],
         memBytes: Object.values(roleMemory).reduce((sum, n) => sum + n, 0),
         diskForecastBytes: diskForecast,
       };
@@ -182,7 +184,7 @@ async function reserve(config, manager, names, roleMemory, cpus, signal, diskFor
       });
       if (!allowed.ok) return allowed.reasons.join(", ");
       assert(manager.acquireSlot(slot, holder, holder).created);
-      for (const role of roles)
+      for (const role of reservedRoles)
         ledger.reservations.push({
           container: names[role],
           lane: "datomic",
@@ -192,7 +194,7 @@ async function reserve(config, manager, names, roleMemory, cpus, signal, diskFor
           state: "tail1",
           cpus: cpus[role].split(",").length,
           memBytes: roleMemory[role],
-          diskForecastBytes: role === "pg" ? diskForecast : 0,
+          diskForecastBytes: role === firstRole ? diskForecast : 0,
         });
       return slot;
     });
@@ -200,6 +202,159 @@ async function reserve(config, manager, names, roleMemory, cpus, signal, diskFor
     if (leaseHeld) throw new Error("DX-TAIL1 measurement lease released without a slot: " + result);
     console.log("Waiting for DX-TAIL1 admission: " + result);
     await delay(5000, undefined, { signal });
+  }
+}
+
+function validateRecording(recording, identity, start, stop) {
+  const seal = readJson(recording + "-complete.jsonl");
+  assert.equal(seal.fileSha256, sha256File(recording));
+  assert.equal(seal.source, identity.source);
+  assert.equal(seal.run, identity.slot);
+  assert.equal(seal.slot, identity.slot);
+  assert.equal(seal.process, "gw-w");
+  assert.equal(seal.type, "jfr-complete");
+  assert(seal.recordingStart <= start && seal.at >= stop);
+  return seal;
+}
+
+async function decodeAllocation({ host, image, name, nonce, recording, start, stop, out, signal }) {
+  const log = path.join(out, "profile.log");
+  const decoder = spawnBound(
+    "docker",
+    [
+      "-H",
+      host,
+      "run",
+      "--rm",
+      "--pull",
+      "never",
+      "--network",
+      "none",
+      "--read-only",
+      "--name",
+      name,
+      "--label",
+      nameLabel + "=" + nonce,
+      "--memory",
+      "384m",
+      "--memory-swap",
+      "384m",
+      "--cpus",
+      "1",
+      "--tmpfs",
+      "/tmp:size=24m",
+      "--mount",
+      "type=bind,src=" + recording + ",dst=/profile.jfr,readonly",
+      "--mount",
+      "type=bind,src=" +
+        path.join(import.meta.dirname, "profile.clj") +
+        ",dst=/profile.clj,readonly",
+      "-e",
+      "DATOMIC_JAVA_OPTS=-Xms64m -Xmx224m -XX:+UseSerialGC",
+      "-e",
+      "DX_TAIL1_PROFILE_FROM=" + start,
+      "-e",
+      "DX_TAIL1_PROFILE_TO=" + stop,
+      "--entrypoint",
+      "/opt/datomic/bin/run",
+      image,
+      "/profile.clj",
+    ],
+    { env: process.env, log, signal, deadline: Date.now() + 90_000 },
+  );
+  assert.deepEqual(
+    await decoder.done,
+    { code: 0, signal: null },
+    "Allocation profile decode failed",
+  );
+  const profile = JSON.parse(
+    fs
+      .readFileSync(log, "utf8")
+      .split("\n")
+      .filter((line) => line.startsWith("{"))
+      .at(-1),
+  );
+  assert.equal(profile.from, start);
+  assert.equal(profile.to, stop);
+  assert(profile.firstEvent <= start && profile.lastEvent >= stop);
+  return profile;
+}
+
+async function recoverAllocation(options, config, manager, host, image) {
+  const prior = fs.realpathSync(options["recording-attempt"]);
+  const recording = path.join(fs.realpathSync(options["recording-dir"]), "gw-w.jfr");
+  const attempt = readJson(path.join(prior, "attempt.json"));
+  const report = readJson(path.join(prior, "ns-report.json"));
+  const cleanup = readJson(path.join(prior, "cleanup.json"));
+  const measure = readJson(path.join(prior, "measurement.json"));
+  const identity = attempt.identity;
+  assert.deepEqual(cleanup.identity, identity);
+  assert.deepEqual(report.deep.identity, identity);
+  assert.deepEqual(measure.identity, identity);
+  assert.equal(report.status, "DONE");
+  assert.equal(readJson(path.join(prior, "source.json")).datomicImage.image, image);
+  const start = report.traceStartAbsMs,
+    stop = start + attempt.seconds * 1000;
+  const seal = validateRecording(recording, identity, start, stop);
+  const out = path.resolve(options.out);
+  diskFloor(path.dirname(out));
+  fs.mkdirSync(out);
+  const nonce = randomUUID(),
+    name = "tx2-dxscale1-tail1-profile-" + nonce;
+  const controller = new AbortController();
+  const interrupt = () => controller.abort(Error("DX-TAIL1 allocation recovery interrupted"));
+  process.once("SIGINT", interrupt);
+  process.once("SIGTERM", interrupt);
+  let reservation;
+  try {
+    reservation = await reserve(
+      config,
+      manager,
+      { "gw-w": name },
+      { "gw-w": 384 * MiB },
+      { "gw-w": "1" },
+      controller.signal,
+      256 * MiB,
+      false,
+    );
+    // [DX-TAIL1] Why: decode the original sealed recording when text export or the first
+    // reader failed. Rejected: repeating the live workload or presenting the profile as fresh offers.
+    const profile = await decodeAllocation({
+      host,
+      image,
+      name,
+      nonce,
+      recording,
+      start,
+      stop,
+      out,
+      signal: controller.signal,
+    });
+    write(path.join(out, "allocation-recovered.json"), {
+      recordedAttempt: identity,
+      recordingSha256: seal.fileSha256,
+      source: git("rev-parse", "HEAD"),
+      decoderSha256: sha256File(path.join(import.meta.dirname, "profile.clj")),
+      nonce,
+      slot: reservation.slot,
+      image,
+      profile,
+    });
+  } finally {
+    const helper = inspect(name);
+    if (helper) {
+      assert.equal(helper.Config.Labels[nameLabel], nonce);
+      docker(["rm", "-fv", helper.Id]);
+      assert.equal(inspect(helper.Id), null);
+    }
+    if (reservation)
+      await withPool((ledger) => {
+        assert.equal(readOwner(reservation)?.holder, holder);
+        ledger.reservations = ledger.reservations.filter((row) => row.container !== name);
+        manager.releaseSlot(reservation);
+      });
+    process.removeListener("SIGINT", interrupt);
+    process.removeListener("SIGTERM", interrupt);
   }
 }
 
@@ -253,6 +408,10 @@ export async function runTail(options, config, manager) {
   const buildInputHash = meta.Config.Labels["tx2.build-inputs-sha256"];
   assert.match(buildInputHash, /^[a-f0-9]{64}$/);
   if (build) assert.equal(buildInputHash, build.buildInputsSha256);
+  if (options["recording-attempt"]) {
+    assert(mac);
+    return recoverAllocation(options, config, manager, host, image);
+  }
   if (options.gate !== true) {
     // [DX-TAIL1] Why: the exact publication feed needs the real host time domain before offers.
     // Rejected: spending a full seed before discovering a denied boot-ID read, or labelling a fake clock.
@@ -819,15 +978,13 @@ export async function runTail(options, config, manager) {
       const until = Date.now() + 30_000;
       while (!fs.existsSync(complete) && Date.now() < until)
         await delay(250, undefined, { signal });
-      const seal = readJson(complete);
-      assert.equal(seal.fileSha256, sha256File(recording));
-      assert.equal(seal.source, identity.source);
-      assert.equal(seal.run, slot);
-      assert.equal(seal.slot, slot);
-      assert.equal(seal.process, "gw-w");
-      assert.equal(seal.type, "jfr-complete");
+      const seal = validateRecording(
+        recording,
+        identity,
+        measuredStart,
+        measuredStart + seconds * 1000,
+      );
       assert.equal(seal.allocationOnly, true);
-      assert(seal.recordingStart <= measuredStart && seal.at >= measuredStart + seconds * 1000);
     } catch (error) {
       signal.throwIfAborted();
       write(path.join(out, "allocation-dump-error.json"), { error: String(error) });
@@ -911,57 +1068,18 @@ export async function runTail(options, config, manager) {
           // Rejected: adding its CPU or heap to the timed window.
           const recording = path.join(trace, "gw-w.jfr");
           assert(fs.statSync(recording).size > 0, "Missing Java allocation recording");
-          const profileLog = path.join(out, "profile.log");
-          const profile = spawnBound(
-            "docker",
-            [
-              "-H",
-              host,
-              "run",
-              "--rm",
-              "--pull",
-              "never",
-              "--network",
-              "none",
-              "--read-only",
-              "--name",
-              names["gw-w"],
-              "--label",
-              nameLabel + "=" + nonce,
-              "--memory",
-              "384m",
-              "--memory-swap",
-              "384m",
-              "--tmpfs",
-              "/tmp:size=24m",
-              "--mount",
-              "type=bind,src=" + recording + ",dst=/profile.jfr,readonly",
-              "--mount",
-              "type=bind,src=" +
-                path.join(import.meta.dirname, "profile.clj") +
-                ",dst=/profile.clj,readonly",
-              "-e",
-              "DATOMIC_JAVA_OPTS=-Xms64m -Xmx224m -XX:+UseSerialGC",
-              "--entrypoint",
-              "/opt/datomic/bin/run",
-              image,
-              "/profile.clj",
-              String(measuredStart),
-              String(measuredStart + seconds * 1000),
-            ],
-            { env, log: profileLog, signal, deadline: Date.now() + 30_000 },
-          );
-          assert.deepEqual(
-            await profile.done,
-            { code: 0, signal: null },
-            "Allocation profile decode failed",
-          );
-          const profileJson = fs
-            .readFileSync(profileLog, "utf8")
-            .split("\n")
-            .filter((line) => line.startsWith("{"))
-            .at(-1);
-          write(path.join(out, "allocation.json"), JSON.parse(profileJson));
+          const profile = await decodeAllocation({
+            host,
+            image,
+            name: names["gw-w"],
+            nonce,
+            recording,
+            start: measuredStart,
+            stop: measuredStart + seconds * 1000,
+            out,
+            signal,
+          });
+          write(path.join(out, "allocation.json"), profile);
         }
       } catch (error) {
         write(path.join(out, "allocation-decode-error.json"), { error: String(error) });
