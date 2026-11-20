@@ -220,7 +220,7 @@ def bag(rows):
     return sorted(canonical(numbers(row)) for row in rows)
 
 
-def fact(row, journal):
+def fact(row, journal, oracle=False):
     keys = ("entityId", "attribute", "value", "validFrom", "validTo", "recordedAt", "entityType", "txId")
     if not journal:
         keys = ("id",) + keys
@@ -229,6 +229,11 @@ def fact(row, journal):
         v = row.get(key)
         if isinstance(v, dict) and v.get("_id") == "Option":
             v = v.get("value")
+        if oracle and key == "value" and v.get("type") == "json":
+            # [DX-W1] Why: the oracle separately exports a canonical-text witness for its JSON value.
+            # Rejected: dropping the witness without checking that it describes the same complete value.
+            compare(json.loads(v["canonical"]), v["value"])
+            v = {k: item for k, item in v.items() if k != "canonical"}
         out[key] = v
     return out
 
@@ -236,7 +241,7 @@ def fact(row, journal):
 for k, actual in lean["matched"].items():
     journal = k in ("changes", "entities")
     compare(bag(fact(row, journal) for row in actual),
-            bag(fact(row, journal) for row in expected[k]["snapshot"]))
+            bag(fact(row, journal, oracle=True) for row in expected[k]["snapshot"]))
     if journal:
         vals = [v["value"]["value"] for v in expected[k]["snapshot"]]
         compare(bag(json.loads(x["?v"]) if k == "changes" else x["?v"] for x in lean["datalog"][k]), bag(vals))
