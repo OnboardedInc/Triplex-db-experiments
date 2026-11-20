@@ -8,6 +8,7 @@
             [triplex.gateway.main :as gateway]
             [triplex.gateway.storage :as storage])
   (:import [java.sql DriverManager]
+           [java.lang ProcessHandle]
            [java.util.concurrent.locks LockSupport]))
 
 (def GiB (* 1024 1024 1024))
@@ -53,9 +54,17 @@
     (when (pos? n) {:n n :p50 (p 0.5) :p99 (p 0.99) :max (peek ordered)})))
 
 (defn peer-memory []
-  (let [metrics (into {} (map (fn [[_ k n]] [k (Long/parseLong n)])
-                             (re-seq #"(?m)^(Rss|Pss):\s+(\d+)" (slurp "/proc/self/smaps_rollup"))))]
-    (native/check! (<= 0 (get metrics "Pss") (get metrics "Rss")) "Invalid peer memory sample" {})
+  (let [pid (.pid (ProcessHandle/current))
+        proc (.start (ProcessBuilder. ^java.util.List ["cat" (str "/proc/" pid "/smaps_rollup")]))
+        output (slurp (.getInputStream proc))
+        exit (.waitFor proc)
+        metrics (into {} (map (fn [[_ k n]] [k (Long/parseLong n)])
+                             (re-seq #"(?m)^(Rss|Pss):\s+(\d+)" output)))]
+    ;; [DX-AGE1] Why: read the same JVM's guest proc data through a stream that supports ordinary buffering.
+    ;; Rejected: FileInputStream.available on smaps_rollup, which the guest returned EINVAL for.
+    (native/check! (and (zero? exit) (number? (get metrics "Pss")) (number? (get metrics "Rss"))
+                         (< 0 (get metrics "Pss")) (<= (get metrics "Pss") (get metrics "Rss")))
+                   "Invalid peer memory sample" {:exit exit})
     {:rssKiB (get metrics "Rss") :pssKiB (get metrics "Pss")}))
 
 (defn warm-reader [db pop i saves route]
