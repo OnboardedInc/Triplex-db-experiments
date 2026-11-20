@@ -17,13 +17,13 @@ If the G1 variant avoids 50–75% of baseline `/begin` calls without added confl
 
 ## Server replay
 
-Run on the physical bench host with the pinned Datomic build receipt and already-built workspace packages. Set `DX_TAIL1_ARCHIVE` to the sealed archive, `DX_TAIL1_IMAGE_RECEIPT` to the local engine build receipt, and `DX_TAIL1_OUTPUT` to a new evidence directory.
+Run on the physical bench host with the pinned Datomic build receipt and already-built workspace packages. Set `DX_TAIL1_ARCHIVE` to the sealed archive, `DX_TAIL1_IMAGE_RECEIPT` to the local engine build receipt, and `DX_TAIL1_OUTPUT` to a new evidence directory. Set `DX_TAIL1_ARM` to `serial`, `g1`, `zgc`, `allocation` or `g1-2core`.
 
 ```sh
-env DX_BARE_METAL=1 DOCKER_HOST=unix:///var/run/docker.sock node lab/bin/engine.mjs tail1 --holder DX-TAIL1 --arm g1 --seconds 240 --archive "$DX_TAIL1_ARCHIVE" --image-receipt "$DX_TAIL1_IMAGE_RECEIPT" --out "$DX_TAIL1_OUTPUT"
+env DX_BARE_METAL=1 DOCKER_HOST=unix:///var/run/docker.sock node lab/bin/heavy.mjs --label DX-TAIL1 -- node lab/bin/engine.mjs tail1 --holder DX-TAIL1 --arm "${DX_TAIL1_ARM:-g1}" --seconds 240 --archive "$DX_TAIL1_ARCHIVE" --image-receipt "$DX_TAIL1_IMAGE_RECEIPT" --out "$DX_TAIL1_OUTPUT"
 ```
 
-The command offers 5,254 events, including 5,110 primary saves, at the original spacing. The 29-minute budget includes seeding, replay, collection and cleanup. The full 5,910-second schedule cannot fit in that budget at its original pace. Change `--arm` to `serial`, `zgc` or `allocation` for a fresh paired replay, or add `--receipt-predecessors` for the G1 request-count comparison. The server runtime remains unmeasured.
+The command offers 5,254 events, including 5,110 primary saves, at the original spacing. The 29-minute budget includes seeding, replay, collection and cleanup. The full 5,910-second schedule cannot fit in that budget at its original pace. Add `--receipt-predecessors` for the G1 request-count comparison. The server runtime remains unmeasured.
 
 ## Mac comparison
 

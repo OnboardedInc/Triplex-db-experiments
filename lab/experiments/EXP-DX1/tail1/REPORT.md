@@ -27,7 +27,7 @@ Archived ACK p50/p99/p99.9/max was 5.10/86.74/447.17/602.04 ms by exact rank, an
 
 Serial is the archived write collector. Tuned G1 has a 25 ms target, 2 MiB regions, a 1 MiB humongous-object threshold and a 5–25% adaptive young generation. The Java 21 ZGC peer arm is diagnostic. Datomic documents ZGC support on Java 25 and recommends G1 at 50 ms for the transactor. Every arm uses that same transactor, SQL durability and role caps. [G1](https://docs.oracle.com/en/java/javase/21/gctuning/garbage-first-garbage-collector-tuning.html) · [Datomic defaults](https://docs.datomic.com/operation/transactor.html#running-the-transactor) · [Datomic ZGC support](https://docs.datomic.com/changes/pro.html#1-0-7705)
 
-The allocation arm keeps Serial, decodes the positional row vector into a transient map, and removes per-prefix Formatter allocation. Speculative transaction hints stay off. Tuned G1 was still queued behind a lab measurement lease at report time. The full Mac replay, allocation profile and matched comparisons remain open.
+The allocation arm keeps Serial, decodes the positional row vector into a transient map and removes per-prefix Formatter allocation. Two-core G1 holds tuning fixed. Mac Serial was explicit. Both BM1 peers started on one core without a collector flag, so Serial is the expected choice even for the reader expanded after launch. The BM1 transactor specified G1. [Collector evidence and readback](COLLECTORS.md)
 
 Mac Serial F retained 4,926 receipts in 240 s (20.53/s). Completed ACK p50/p99/p99.9/max was 2.14/29.81/30.25/32.20 s. All fifty slowest completed saves spent their largest interval queued before dispatch. Writer/reader/transactor logged 150/342/241 pauses with maximums of 338.54/502.65/227.88 ms. Rounded writer heap growth was 59.05 MiB/s and 2.55 MiB per covered ACK. Final analysis aborted on absent later phases. [Evidence manifest](SHA256SUMS)
 
@@ -40,11 +40,11 @@ Sixteen native gateway tests and the protected-value erasure fixture passed. The
 ## Measurement audit
 
 - The archive extractor checks the compressed SHA-256, ledger identity and each primary ACK. The replay checks the frozen source, population, offers and spacing, and checks the newly populated seed before releasing the driver.
-- The Mac measurement binds its timing lock, reports and offers to the attempt's source, slot and nonce. It verifies PostgreSQL durability, unique ACK positions, original receipts for resends and lost ACKs, exact receipt coverage and fresh independent replay reads. Resource samples bind the four container IDs to their cleanup.
+- The replay binds its timing lock, reports and offers to source, slot and nonce. It checks collector and CPU count against the fresh JVM boot, exact receipt coverage and independent replay reads. PostgreSQL durability, ACK positions and resend receipts are checked. Resource samples bind the container IDs to their cleanup.
 - The receipt oracle compares actual assertion IDs and values at five fresh pinned cuts against its hashed case, along with the observed conflict and receipt order. Captures are created in the newly allocated attempt directory.
 - The archive results are historical. The replay is a diagnostic, and the acceptance contract is unchanged.
 Image source pin changes under `packages/datomic/gateway/src/triplex/gateway/`, SHA-256 before → after.
 - `lean.clj` `bafa5d00aaaf87321396674f16d6ffc03faa664100a75ce0024de7287ce58ca2` → `115812796134acf278ec30d71eabd9710fb121e7759475b28df97a43ed815fee`.
 - `storage.clj` `341f45cf51ea1f785292b72eca34951d7fe10c9ace55e69af8fbe9df71234b60` → `144e4ecd3742f1323669e67ddaa14dfd3bd69e22b9366ac5d02bcad1bb2bff66`.
 
-Pre-run ranges for all four arms and the bounded server replay command. [Forecasts](PREDICTIONS.md)
+Pre-run ranges, the bounded server replay command and the two-core arm selector. [Forecasts](PREDICTIONS.md)

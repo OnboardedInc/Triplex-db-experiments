@@ -141,7 +141,7 @@ function reading(rows) {
   );
 }
 
-async function reserve(config, manager, names, roleMemory, signal, diskForecast) {
+async function reserve(config, manager, names, roleMemory, cpus, signal, diskForecast) {
   for (;;) {
     signal.throwIfAborted();
     diskFloor(REPO);
@@ -185,7 +185,7 @@ async function reserve(config, manager, names, roleMemory, signal, diskForecast)
           holder,
           pid: process.pid,
           state: "tail1",
-          cpus: 1,
+          cpus: cpus[role].split(",").length,
           memBytes: roleMemory[role],
           diskForecastBytes: role === "pg" ? diskForecast : 0,
         });
@@ -316,6 +316,12 @@ export async function runTail(options, config, manager) {
         "receipt-oracle.py",
       ].map((file) => [file, sha256File(path.join(import.meta.dirname, file))]),
     ),
+    stackLauncher: Object.fromEntries(
+      ["up.sh", "collector.sh"].map((file) => [
+        file,
+        sha256File(path.join(import.meta.dirname, "../stack", file)),
+      ]),
+    ),
     offers: { ...plan, bytes: sha256File(input) },
     datomicImage: {
       image,
@@ -333,6 +339,9 @@ export async function runTail(options, config, manager) {
   const cpus = mac
     ? { pg: "0", tx: "0", "gw-w": "1", "gw-r": "2" }
     : { pg: "1", tx: "0", "gw-w": "2", "gw-r": "4,8" };
+  // [DX-TAIL1] Why: matched G1 runs change only the writer's available cores.
+  // Rejected: giving it a core shared with the reader, sender, storage or transactor.
+  if (variant.writerCores === 2) cpus["gw-w"] += mac ? ",3" : ",5";
   const gc = (role) =>
     "-Xlog:gc*=info,safepoint=info:file=/trace/" +
     role +
@@ -404,7 +413,7 @@ export async function runTail(options, config, manager) {
   try {
     if (mac) {
       const bytes = Object.fromEntries(roles.map((role) => [role, caps[role] * MiB]));
-      reservation = await reserve(config, manager, names, bytes, signal, 6 * GiB);
+      reservation = await reserve(config, manager, names, bytes, cpus, signal, 6 * GiB);
     }
     const latest = mac
       ? Date.now() + (seconds === 5910 ? 9000 : 2400) * 1000
@@ -522,11 +531,32 @@ export async function runTail(options, config, manager) {
       for (const flag of selected) assert(args.includes(flag), role + " did not apply " + flag);
       runtimeFlags[role] = args;
     }
+    const startupGc = {};
+    for (const role of ["gw-w", "gw-r", "tx"]) {
+      const log = fs.readFileSync(path.join(trace, role + ".log"), "utf8");
+      const collector = role === "gw-w" ? variant.collector : "G1";
+      const init = log.split("\n").find((line) => {
+        const note = line.split("] ").at(-1);
+        return collector === "ZGC"
+          ? /^Initializing The Z Garbage Collector/.test(note)
+          : note === "Using " + collector;
+      });
+      assert(init, role + " collector did not start as " + collector);
+      const startedAt = Date.parse(readyRuntime[role].startedAt);
+      const initializedAt = Date.parse(init.slice(1, init.indexOf("]")));
+      // [DX-TAIL1] Why: bind collector and CPU readback to the ready container's boot.
+      // Rejected: matching a flag request or a startup line from a previous process.
+      assert(Math.abs(initializedAt - startedAt) <= 15_000, role + " stale JVM startup readback");
+      const active = Number(/CPUs: \d+ total, (\d+) available/.exec(log)?.[1]);
+      assert.equal(active, cpus[role].split(",").length, role + " JVM saw different CPU placement");
+      startupGc[role] = { initializedAt, collector, active };
+    }
     write(path.join(out, "runtime-flags.json"), {
       identity,
       ids,
       flags: runtimeFlags,
       readyRuntime,
+      startupGc,
     });
     if (options.gate === true) {
       // [DX-TAIL1] Why: use two native writers and an independent replay on their actual receipts.
@@ -588,8 +618,9 @@ export async function runTail(options, config, manager) {
     }
     console.log("DX-TAIL1 stack ready, seeding 10,000 deep people");
     driver = spawnBound(
-      process.execPath,
+      mac ? process.execPath : "taskset",
       [
+        ...(mac ? [] : ["-c", "3", process.execPath]),
         "--max-old-space-size=" + (mac ? "2304" : "6144"),
         "--import",
         "tsx",
@@ -839,7 +870,7 @@ export async function runTail(options, config, manager) {
                 path.join(import.meta.dirname, "profile.clj") +
                 ",dst=/profile.clj,readonly",
               "-e",
-              "DATOMIC_JAVA_OPTS=-Xms64m -Xmx224m",
+              "DATOMIC_JAVA_OPTS=-Xms64m -Xmx224m -XX:+UseSerialGC",
               "--entrypoint",
               "/opt/datomic/bin/run",
               image,

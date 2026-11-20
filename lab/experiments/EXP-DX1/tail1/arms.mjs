@@ -14,6 +14,7 @@ const g1 = [
 export const arms = Object.freeze({
   serial: { flags: serial, collector: "Serial", allocation: false },
   g1: { flags: g1, collector: "G1", allocation: false },
+  "g1-2core": { flags: g1, collector: "G1", allocation: false, writerCores: 2 },
   zgc: {
     flags: ["-XX:+UseZGC", "-XX:+ZGenerational", "-XX:ConcGCThreads=1"],
     collector: "ZGC",
