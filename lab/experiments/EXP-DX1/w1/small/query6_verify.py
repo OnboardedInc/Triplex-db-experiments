@@ -48,7 +48,11 @@ for file, digest in inputs["stage"].items():
     if file != "lab/config/slots.json":
         assert sha(stage / file) == digest, file
 for file, digest in inputs["bundle"].items():
-    assert sha(Path(file)) == digest, file
+    if not Path(file).is_file() or sha(Path(file)) != digest:
+        # [DX-W1] Why: compare a queued run to the revision that staged its inputs.
+        # Rejected: rerunning the engine because a runner file advanced while the slot was busy.
+        staged_source = subprocess.check_output(["git", "show", f"{inputs['head']}:{file}"])
+        assert hashlib.sha256(staged_source).hexdigest() == digest, file
 slot = json.loads((stage / "lab/config/slots.json").read_text())["lanes"]["datomic"]
 build = json.loads((out / "build-1.log").read_text().split("Successfully tagged")[-1].split("\n", 1)[1])
 assert slot["imageId"] == build["imageId"] == terminal["image"]
@@ -64,7 +68,7 @@ lines = raw.read_text().splitlines()
 events = [json.loads(line[8:]) for line in lines if line.startswith("W1_DATA ")]
 assert all(e["nonce"] == nonce for e in events) and events[-1]["v"] == {"nonce": nonce}
 assert events[0]["v"] == [[k, "on"] for k in ("fsync", "synchronous_commit", "full_page_writes")]
-binding = {"slot": terminal["slot"], "image": slot["imageId"], "attempt": nonce,
+binding = {"source": inputs["head"], "slot": terminal["slot"], "image": slot["imageId"], "attempt": nonce,
            "inputs": sha(out / "inputs.json"), "raw": sha(raw), "verifier": sha(Path(__file__))}
 
 def erasure_observation():

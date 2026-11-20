@@ -1,9 +1,9 @@
-The server branch is exp/DX-W1-commit-tail-reads. This report covers code head 0403ef2c6.
+The server branch is exp/DX-W1-commit-tail-reads. Run code head 9289362b1.
 K keeps separate changed-subject and change rows. Match and the new query option read those same rows.
 The option adds zero records or bytes to a save. The local PostgreSQL timing run is queued.
 A query for one named entity can seek to it. A broad query still has to read stored histories.
 Queries that return classic Datomic fact numbers need reified fact records.
-The new native routes refuse after observed erasure. K still stores cleartext in the business row and journal.
+After erasure, an old ordinary read and the journal still returned the value. The new native routes refused.
 P remains an experiment because its packed journal rows are absent from ordinary queries.
 The earlier 36 ms p99 measured lean with the native query route off. Full query coverage and erasure remain open.
 
@@ -38,7 +38,7 @@ The earlier 36 ms p99 measured lean with the native query route off. Full query 
 
 **Erasure inventory.** K stores the protected body in the business row and in the assertion and retraction `:_tx/change` JSON. The row text is an indexed value. Historical indexes, database logs, WAL, backups, caches, and typed journal and replica responses can retain it. A claim, receipt, retirement marker and native application-feed entry carry identity, timing or interval metadata. Q49c needs a current, durable erasure marker per assertion and query semantics that preserve presence while excluding erased values from predicates. Physical excision alone loses that identity-to-value binding. [Datomic excision](https://docs.datomic.com/operation/excision.html)
 
-**Erasure regression.** Ported the gateway, retained-pin, journal and native feed checks and synchronized native excision from DX-ERASE1 `91cffd2c3`. The local verifier binds the pre-excision canary, refusals and ordinary read observations to the issued t, earlier assertion t, current slot/image and staged sources. At `4b085177b` the upstream tests cover replica, import, Publish, notice and restore with detached ciphertext, an independent key store and the prepared subject writer. K still needs opaque per-assertion references in rows and journal, current ledger checks on reconstruction and replay, and migration of retained plaintext.
+**Erasure regression.** Ported the gateway, retained-pin, journal and native feed checks and synchronized native excision from DX-ERASE1 `91cffd2c3`. The fresh K history omitted the excised row. The retained pin and journal returned the synthetic value. Query, recorded journal index and envelope, and native log at both offsets returned typed refusals. The verifier binds them to the assertion and excision t, nonce, source, image and slot. At `4b085177b` the upstream tests cover replica, import, Publish, notice and restore with detached ciphertext, an independent key store and the prepared subject writer. K needs those dependencies, opaque assertion references, current erasure checks and migration of retained plaintext.
 
 **Pulse.** `node --experimental-strip-types lab/experiments/EXP-DX1/w1/control.ts --pulse pulsew6a --write6`.
 **Field rates.** `node --experimental-strip-types lab/experiments/EXP-DX1/w1/control.ts --field-rates fldw6a --write6`.
