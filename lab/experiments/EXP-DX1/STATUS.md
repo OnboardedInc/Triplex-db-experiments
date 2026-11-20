@@ -3494,3 +3494,40 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   sealed bodies for protected values in K with ERASE1's thirteen route checks ported; a point query in one call
   (within 1.5 times Match); `QUERY-SUPPORT.md` as an owner decision table; merge onto `exp/DX-INT1` with the
   default settings stated.
+
+## 2026-11-20 20:49 UTC (15:49 local, 2026-11-20): server 1's afternoon results read (Java comparison, million thin people, aged reads, small-frame import); DX-JVM1 part 2 in
+
+Source: `origin/exp/DX-BM1-bare-metal` at `729d41fdd`, `bm1/REPORT.md` and `HANDOFF.md` (the driver had not
+had a handover since 10:28 local; the orchestrator first read these at 15:50).
+
+- **Java settings, four arms, ten accounts in one database (W1 writer, 81,444 timed offers per arm, zero missing).**
+
+  | Arm | Solo p99 at 3.5 / 23.5 / 39.4 per s (ms) | Quiet account beside nine at 23.5 / 39.4 (ms, ratio) | Delivered at 235 / 394 offered per s | Drain beyond 60 s |
+  | --- | --- | --- | --- | --- |
+  | Present | 70.8 / 72.2 / 474.1 | 1,450 / 1,525, 20.49 / 21.54 | 138.6 / 153.3 | 41.72 / 94.26 s |
+  | Candidate (32 MiB threshold) | 97.1 / 139.2 / 199.9 | 1,203 / 1,072, 12.39 / 11.04 | 148.8 / 163.5 | 34.78 / 84.57 s |
+  | Candidate, 128 MiB threshold | 90.8 / 132.1 / 243.4 | 981 / 956, 10.80 / 10.53 | 188.5 / 186.4 | 14.81 / 66.86 s |
+  | Candidate, compiler scaling 1 | 125.2 / 110.5 / 627.0 | 1,072 / 906, 8.56 / 7.23 | 147.2 / 170.1 | 35.76 / 78.99 s |
+
+  Reading: with the present grouped writer, one database of ten accounts delivers 139 to 189 saves per second when
+  235 are offered and never keeps a quiet account within 1.25; settings move throughput by up to 36 percent and
+  leave isolation failing by about ten times. The per-person writer comparison is the test of whether the design
+  changes this.
+- **One million thin people (read-only retry, 20,000 first reads):** first read p50/p99 0.475/6.120 ms; per
+  untouched person the reader added 2.73 B, the write gateway 26.98 B, the read gateway 72.48 B (bar 64 B).
+- **Aged old-cut reads (10,000 people, 14,047,985 reads, all correct):** direct path kept 26.1 and 9.2 percent of
+  its baseline at 1 and 5 percent old-cut share; the isolated installer (DX-RD1's fix) kept 100.1 and 97.7 percent.
+- **Small-frame import in one database (eleven live accounts, 59,400 live offers all matched):** 2,002 / 2,964 /
+  3,983 queryable facts per second at 16 / 24 / 32 facts per frame; quiet save p99 42.92 / 50.76 / 37.59 ms, which
+  is 2.95 to 7.42 times the two controls (12.76 and 6.84 ms); quiet read p99 1.51 to 4.02 times. DX-HA1's rate
+  model held; its neighbour model (1.28 to 1.74) did not.
+- **Per-person writer comparison** entered ten-account seeding on server 1 at 14:36 local (source `7ca8525a9`,
+  12 arms, 29 minutes ceiling each, 7 h 40 min unit ceiling).
+- **DX-JVM1 part 2 (`96c7fc010`; server arms at `608420dca`, 78 minutes for three):** Java 21 and 25 images
+  selectable by one setting; Java 25 passed native G1 and ZGC suites, 861 Core, 434 SDK, eight integration and
+  twelve focused SQL tests; the full SQL suite had seven adapter and one clock-order failure before its time limit;
+  ZGC reserves 13 GiB more memory in the trial.
+- **Assigned:** DX-BM1 re-briefed with the queue after the writer comparison (Java 25 and ZGC arms, cache arms,
+  Publish under load with priority, erasure check, import arms; release by Saturday midday). DX-HA1 stopped and
+  resumed: attribute the import interference by stage before building anything. DX-JVM1 part 3: the eight
+  failures against Java 21, its own predictions against the four-arm result, merge onto `exp/DX-INT1`.
