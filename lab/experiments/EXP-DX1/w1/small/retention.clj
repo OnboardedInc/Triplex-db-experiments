@@ -1,8 +1,9 @@
 (ns triplex.gateway.retention
-  (:require [clojure.data.json :as json] [datomic.api :as d]
+  (:require [clojure.data.json :as json] [clojure.edn :as edn] [datomic.api :as d]
             [datomic.index-direct-metrics :as index]
             [triplex.gateway.field-probe :as field] [triplex.gateway.native-cost :as cost]
             [triplex.gateway.journal :as journal] [triplex.gateway.lean :as lean]
+            [triplex.gateway.main :as gateway]
             [triplex.gateway.reach :as reach] [triplex.gateway.save-ledger :as ledger]
             [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.schema :as schema] [triplex.gateway.small-row :as small]
@@ -109,15 +110,15 @@
                   (range n))]
         {:witnesses witnesses :duration-ms (/ (- (System/nanoTime) start) 1e6) :state @state}))))
 
-(defn verify! [name conn base db witnesses state]
+(defn verify! [name conn base-t base-position db witnesses state]
   (doseq [{:keys [op tx-id t p clock]} witnesses]
     (let [r (storage/operation db op)
           claim (d/entid db [:triplex.claim/command-id op])]
       (assert (= [op t p clock] [(:operationId r) (some-> r :t (get "v") Long/parseLong)
                                 (some-> r :position (get "v") Long/parseLong) (get-in r [:recordedAt "v"])]))
       (assert (and claim (= tx-id (ledger/claim-tx-id db claim))))))
-  (verify-feed! name conn (storage/head-position base) witnesses)
-  (doseq [i (range subjects) [basis expected] [[(d/as-of db (d/basis-t base)) (mapv #(original i %) (range (count (state i))))] [db (state i)]]]
+  (verify-feed! name conn base-position witnesses)
+  (doseq [i (range subjects) [basis expected] [[(d/as-of db base-t) (mapv #(original i %) (range (count (state i))))] [db (state i)]]]
     (let [e (d/entid basis [:triplex.entity/id (field/root i)])
           live (map (comp lean/decode :v) (lean/live-texts basis e))]
       (assert (= depth (count live)))
@@ -142,8 +143,27 @@
     (assert (not= result ::timeout))
     {:t t :cutoff-ms (.getTime cutoff) :returned (str result)}))
 
-(defn -main [arm dir n-text]
-  (let [[name conn] (cost/open arm) n (Long/parseLong n-text)]
+(defn witness-file [arm dir] (str dir "/" arm "-readback.edn"))
+
+(defn reopen! [arm dir n]
+  (let [text (slurp (witness-file arm dir))
+        {:keys [attempt name base-t base-position t history witnesses state]} (edn/read-string text)
+        _ (assert (and (= attempt (System/getenv "W1_ATTEMPT")) (= n (count witnesses))))
+        conn (gateway/connection (gateway/db-uri name))
+        seen (deref (d/sync-index conn t) 180000 nil)]
+    (assert (and seen (= t (d/basis-t seen)) (= base-position (storage/head-position (d/as-of seen base-t)))))
+    (verify! name conn base-t base-position seen witnesses state)
+    (assert (= history (:history (stats seen))))
+    (cost/emit "retention-done"
+      {:arm arm :t t :saves n :history history
+       :widths (into {} (for [[width ws] (group-by :width witnesses)]
+                          [width {:count (count ws) :datoms (frequencies (map :datoms ws))}]))
+       :max-offer-delay-us (reduce max (map :send-delay-us witnesses))
+       :witness-sha256 (schema/sha256 text)
+       :ack-sha256 (schema/sha256 (json/write-str witnesses))})))
+
+(defn measure! [arm dir n]
+  (let [[name conn] (cost/open arm)]
     (seed! conn)
     (let [base (index! conn (d/basis-t (d/db conn)))
           _ (barrier! dir arm "seed-gc" (collect! conn (d/basis-t base)))
@@ -162,17 +182,19 @@
             (cost/emit "retention-shape" {:arm arm :width width :t t :p p :op op :data data})))
         (let [indexed (index! conn t) index-stats (stats indexed)]
           (barrier! dir arm "indexed" index-stats)
-          (verify! name conn base indexed witnesses state)
+          (verify! name conn (:t baseline) (:position baseline) indexed witnesses state)
           (cost/emit "retention-read-cost" (assoc (read-cost name conn indexed (:p (first witnesses))) :arm arm))
-          (barrier! dir arm "gc" (collect! conn t))
-          (let [seen (d/db conn)]
-            (verify! name conn base seen witnesses state)
-            (assert (= (:history index-stats) (:history (stats seen))))
-            (cost/emit "retention-done"
-              {:arm arm :t t :saves n :history (:history (stats seen))
-               :widths (into {} (for [[width ws] (group-by :width witnesses)]
-                                  [width {:count (count ws) :datoms (frequencies (map :datoms ws))}]))
-               :max-offer-delay-us (reduce max (map :send-delay-us witnesses))
-               :ack-sha256 (schema/sha256 (json/write-str witnesses))}))))))
+          ;; [DX-W1] Why: a fresh peer must recover the correct history after deliberate immediate collection.
+          ;; Rejected: reusing in-process index views after their superseded segments were reclaimed.
+          (let [text (pr-str {:attempt (System/getenv "W1_ATTEMPT") :name name :t t
+                              :base-t (:t baseline) :base-position (:position baseline)
+                              :history (:history index-stats) :witnesses witnesses :state state})]
+            (spit (witness-file arm dir) text)
+            (barrier! dir arm "gc" (assoc (collect! conn t) :witness-sha256 (schema/sha256 text)))))))))
+
+(defn -main [arm dir n-text & [phase]]
+  (try
+    ((if (= "readback" phase) reopen! measure!) arm dir (Long/parseLong n-text))
+    (catch Throwable e (.printStackTrace e) (throw e)))
   (shutdown-agents)
   (System/exit 0))

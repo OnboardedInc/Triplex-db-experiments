@@ -70,6 +70,7 @@ def retention():
         assert 0 < source["indexSegments"] <= adopted["indexSegments"]
         (done,) = [r["data"] for r in observed if r["kind"] == "retention-done" and r["data"]["arm"] == arm]
         assert done["saves"] == n and done["t"] == adopted["t"] and done["history"] == adopted["history"]
+        assert done["witness-sha256"] == gc["native"]["witness-sha256"]
         assert re.fullmatch("[a-f0-9]{64}", done["ack-sha256"])
         shapes = sorted([r["data"] for r in observed if r["kind"] == "retention-shape" and r["data"]["arm"] == arm],
                         key=lambda s: s["width"])
