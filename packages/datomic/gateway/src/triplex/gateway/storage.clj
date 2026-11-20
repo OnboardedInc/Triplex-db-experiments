@@ -1,6 +1,6 @@
 (ns triplex.gateway.storage
   (:require [triplex.gateway.group :as group] [triplex.gateway.commit :as commit] [triplex.gateway.predecessor :as pred] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
-  (:require [triplex.gateway.replay-capture :as replay-capture] [triplex.gateway.small-row :as small-row])
+  (:require [clojure.data.json :as json] [triplex.gateway.replay-capture :as replay-capture] [triplex.gateway.small-row :as small-row])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -246,6 +246,30 @@
       ;; A stale speculative basis can reject an otherwise valid ordered commit.
       ;; Hints are optional; only the transactor may make the definitive decision.
       (catch Exception _ (swap! timeline assoc :hintsDeclined (System/nanoTime)) nil))))
+(defn correct-group-clocks [input clocks]
+  ;; [DX-PREP1] Why: a queued retraction may name an assertion whose final clock was first assigned inside this group.
+  ;; Rejected: publishing the caller's provisional assertion clock in the change journal.
+  (let [edits (into {}
+                (keep (fn [[id ^String text]]
+                        (let [offset (+ 5 (Integer/parseInt text 1 5 16) 36)
+                              width (Integer/parseInt text (- offset 4) offset 16)
+                              start (+ offset width 1)
+                              row (lean/decode text)]
+                          (when (= ":_tx/change" (:attribute row))
+                            (let [change (json/read-str (:value_json row))
+                                  observed (clocks (get change "tripleId"))]
+                              (when (and (= "retract" (get change "op")) (some? observed))
+                                (let [value (json/write-str (assoc change "recordedAt" observed))
+                                      cols (assoc (json/read-str (subs text start)) 9 value)]
+                                  [id {:value value :text (str (subs text 0 start) (json/write-str cols))}])))))))
+                (get input "rowTexts"))]
+    (if (empty? edits) input
+      (-> input
+          (update "rowTexts" into (map (fn [[id x]] [id (:text x)])) edits)
+          (update "rows" #(mapv (fn [row]
+                                  (if-let [e (edits (get (get row "id") "v"))]
+                                    (assoc row "value_json" (codec/encode-value "string" (:value e))) row)) %))))))
+
 (defn prepared-for [data input p]
   (let [journals (:journal-entities p)
         safe (and group/reuse-prepared (:lean p) (seq journals)
@@ -253,11 +277,14 @@
     ;; [DX-W1] Why: the incoming request already compiled the immutable rows. Only journal existence and scope layout can change that compilation.
     ;; Rejected: comparing speculative and real basis-t numbers, or reusing a stale journal link without its absence check.
     (fn [view]
-      (if (and safe (= (if (:slim-row p) 4 3) (value view (:scope p) :triplex.scope/rows-version))
-               (= (ffirst data) (commit/entry view input (:lean p)))
-               (not-any? #(d/entid view [:triplex.entity/id %]) journals))
-        data
-        (tx-data view input (:scope p))))))
+      (let [corrected (if (and (:lean p) (seq group/*same-group-clocks*))
+                        (correct-group-clocks input group/*same-group-clocks*) input)]
+        (if (and safe (identical? corrected input)
+                 (= (if (:slim-row p) 4 3) (value view (:scope p) :triplex.scope/rows-version))
+                 (= (ffirst data) (commit/entry view input (:lean p)))
+                 (not-any? #(d/entid view [:triplex.entity/id %]) journals))
+          data
+          (tx-data view corrected (:scope p)))))))
 (defn submit! [conn data input timeline]
   (let [hints (transaction-hints conn data timeline)
         solo (bound-fn []
@@ -286,7 +313,8 @@
         submit (if-not (group/scheduling?) solo
                  (fn [] (try (let [p (second (first data)) current (d/db conn) work (when (or policy/priority? policy/budget-us) (policy/work p input)) class (group/classify current p input)]
                    (group/submit! conn (merge class work {:id (get input "operationId") :params p :eligible (and (not (and pred/diagnostic (true? (get input "readProfile")))) (group/eligible? current p))
-                     :prepare (prepared-for data input p) :original-data (when group/stage-clock data) :solo solo})))
+                     :prepare (prepared-for data input p) :data data
+                     :original-data (when group/stage-clock data) :solo solo})))
                    (catch Exception e (group/outcome-future (deliver (promise) {:error e}))))))]
     (if-let [client (get input "clientId")]
       (order/enqueue! client (get input "sendSequence") (get input "operationId") submit order/gap-ms order/buffer-limit [conn input])
@@ -335,7 +363,8 @@
        :delta (- (or (get-in report [:member :position]) (:v (first (filter #(= (:a %) (d/entid (:db-after report) :triplex.tx/position)) (:tx-data report))))) (get input "position"))
        :datoms (count (:tx-data report))}
         (and pred/diagnostic (true? (get input "readProfile"))) (assoc :readProfile (:io-stats report))
-        group/stage-clock (assoc :nativeComputeMs (get-in report [:io-stats :api-ms]) :groupStages (:group-stages report))
+        group/stage-clock (assoc :nativeComputeMs (get-in report [:io-stats :api-ms]) :groupStages (:group-stages report)
+                                 :preparedStats (:prepared-stats report))
         stamp (assoc :requestBytes (policy/request-size input) :preparedOps (count (:ops (second (first data)))) :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
     (catch Exception e
