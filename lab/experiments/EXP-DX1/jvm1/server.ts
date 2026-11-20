@@ -175,11 +175,12 @@ async function gcEvidence(dir: string, slot: string, started: number, ended: num
     assert(lines.some((line) => collector === "G1" ? /Using G1\b/.test(line) : /(?:Initializing|Using) (?:The Z Garbage Collector|ZGC)\b/.test(line)));
     const pauses: number[] = [];
     let allocationStalls = 0;
+    const pauseTags = collector === "G1" ? /\[gc\s*\]/ : /\[gc,phases\s*\]/;
     for (const line of lines) {
       const time = timestamp(line);
       if (time < started || time > ended) continue;
       if (/\bAllocation Stall\b/.test(line)) allocationStalls++;
-      const pause = /\]\s+(?:GC\(\d+\)\s+)?Pause .+? (\d+(?:\.\d+)?)(ms|us|s)$/.exec(line);
+      const pause = pauseTags.test(line) && /\]\s+GC\(\d+\)\s+(?:[YO]:\s+)?Pause .+? (\d+(?:\.\d+)?)(ms|us|s)$/.exec(line);
       if (pause) pauses.push(Number(pause[1]) * (pause[2] === "ms" ? 1 : pause[2] === "s" ? 1000 : 0.001));
     }
     summary.push({ role, containerId: placement.id, collector, bytes: bytes.length,
