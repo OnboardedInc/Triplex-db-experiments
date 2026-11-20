@@ -162,7 +162,8 @@
      :ledger (boolean (or ledger/enabled packed/enabled)) :packedJournal (boolean packed/enabled)
      :packedJournalCount (if (d/entid db :triplex.journal/packed)
                            (reduce (fn [n _] (inc n)) 0 (d/datoms db :aevt :triplex.journal/packed)) 0)
-     :fastReply (boolean group/fast-reply)}))
+     :fastReply (boolean group/fast-reply)
+     :leanNativeQuery (boolean lean-query/enabled) :leanNativeLog (boolean lean-feed/enabled)}))
 (defn route-handler [{:keys [request-method uri body query-string]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try

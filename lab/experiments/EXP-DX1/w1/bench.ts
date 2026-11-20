@@ -302,6 +302,7 @@ export async function withStack<T>(
       DX_W1_LEDGER: String(Number(policy.ledger)),
       DX_W1_PACKED_JOURNAL: String(Number(policy.packedJournal)),
       DX_W1_FAST_REPLY: String(Number(policy.fastReplyAndWire)),
+      DX_W1_JOURNAL_QUERY: String(Number(Boolean(policy.journalVariant))),
       DX_GROUP_MAX_MEMBERS: String(policy.maxMembers),
       DX_WRITE_BUDGET_US: policy.budgetMicros === null ? "" : String(policy.budgetMicros),
     });
@@ -431,6 +432,10 @@ export async function withStack<T>(
             writer.Config.Env.includes("TX2_PREDECESSOR_LOOKUP=" + Number(policy.predecessor)),
           );
           assert(writer.Config.Env.includes("TX2_SAVE_LEDGER=" + Number(policy.ledger)));
+          if (policy.journalVariant) {
+            assert(writer.Config.Env.includes("TX2_LEAN_NATIVE_QUERY=1"));
+            assert(writer.Config.Env.includes("TX2_LEAN_NATIVE_LOG=1"));
+          }
           assert(writer.Config.Env.includes("TX2_PACKED_JOURNAL=" + Number(policy.packedJournal)));
           assert(
             writer.Config.Env.includes("TX2_GROUP_FAST_REPLY=" + Number(policy.fastReplyAndWire)),
