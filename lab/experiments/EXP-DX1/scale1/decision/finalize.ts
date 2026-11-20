@@ -42,6 +42,7 @@ const names = [
   "measurement.json",
   "upstream.json",
   "restored.json",
+  "restored-peer-probe.json",
   "unit.json",
   "writer-expectation.json",
   "writer-readbacks.json",
@@ -126,6 +127,27 @@ export function checkRecorded(dir: string, a: Request & { slot: string; at: numb
     verifiedOrigin(path.join(path.dirname(dir), a.from!), restored.identity, a.fromTransfer),
   );
   assert.deepEqual(raw.scopes, restored.origin.scopes);
+  const peer = restored.gatewayRoles;
+  const probe = read(path.join(dir, "restored-peer-probe.json"));
+  bound(probe);
+  const first = raw.scopes[0];
+  assert(
+    peer.at >= a.at &&
+      peer.at <= restored.reopenedAt &&
+      [0, 1].includes(peer.writer) &&
+      peer.reader === 1 - peer.writer &&
+      peer.database === first.db &&
+      peer.read.database === first.db &&
+      peer.read.position === first.seedCut &&
+      peer.read.attempt === null &&
+      peer.read.gatewaySourceHash === expectation.gatewaySourceHash,
+  );
+  assert(probe.at === peer.at && probe.database === first.db && probe.observations.length === 2);
+  assert.deepEqual(
+    [probe.observations[peer.writer], probe.observations[peer.reader]],
+    [peer.write.observed, peer.read],
+  );
+  verifyOptions(peer.write, first.db, first.seedCut);
   const readbacks = read(path.join(dir, "writer-readbacks.json"));
   bound(readbacks);
   assert(readbacks.at >= restored.reopenedAt && readbacks.entries.length === raw.scopes.length);

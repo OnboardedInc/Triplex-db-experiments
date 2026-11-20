@@ -13,12 +13,18 @@ import { openComposition } from "../../../../bench/lib/composition.ts";
 import { Snapshot } from "../../load1/snapshot.ts";
 import { fileHash } from "../measurements.ts";
 import {
+  verifyWriteOptions,
+  type WriterExpectation,
+  type WriterObservation,
+} from "../../w1/write-options.ts";
+import {
   factsFor,
   field,
   keyFor,
   layoutOf,
   loaderDepth,
   root,
+  reusableSeed,
   source,
   task,
   width,
@@ -299,7 +305,7 @@ export function verifiedOrigin(from: string, id: Destination, fromTransfer?: str
   // [DX-SCALE1] Why: an observer startup failure can reuse the original verified image with a fresh runtime.
   // Rejected: relabeling the original seed with the retry source or repeating the durable load.
   if (fromTransfer) {
-    assert.equal(id.layout, "single");
+    assert(reusableSeed(id.people, id.layout));
     const receipt = fs.readFileSync(path.join(from, "transfer.json"));
     assert.equal(createHash("sha256").update(receipt).digest("hex"), fromTransfer);
     const t = JSON.parse(receipt.toString("utf8"));
@@ -321,7 +327,13 @@ export function verifiedOrigin(from: string, id: Destination, fromTransfer?: str
   return proof;
 }
 
-export async function restore(dir: string, from: string, id: Destination, fromTransfer?: string) {
+export async function restore(
+  dir: string,
+  from: string,
+  id: Destination,
+  writerBinding: string,
+  fromTransfer?: string,
+) {
   const proof = verifiedOrigin(from, id, fromTransfer);
   const dump = path.join(from, "seed.pgdump");
   const slot = id.slot;
@@ -361,8 +373,50 @@ export async function restore(dir: string, from: string, id: Destination, fromTr
       await sleep(500);
     }
   }
-  const c = new DatomicClient(urls[1]!, 35000);
+  // [DX-SCALE1] Why: a healthy endpoint can belong to the reader after the bridge restarts.
+  // Rejected: treating health or a captured network address alone as proof of the writer role.
+  const peers = urls.map((url) => new DatomicClient(url, 35000));
   try {
+    const first = proof.scopes[0]!;
+    const expected = JSON.parse(writerBinding) as WriterExpectation;
+    assert.deepEqual(
+      [expected.source, expected.slot, expected.attempt],
+      [id.source, id.slot, id.nonce],
+    );
+    const actual = await Promise.all(
+      peers.map((peer) =>
+        peer.request<WriterObservation>("GET", "/v1/db/" + first.db + "/write-options"),
+      ),
+    );
+    const probe = { ...id, at: Date.now(), database: first.db, observations: actual };
+    write(path.join(dir, "restored-peer-probe.json"), probe);
+    const writer = actual.findIndex((x) => x.attempt === id.nonce),
+      reader = 1 - writer;
+    assert(
+      writer >= 0 && actual[reader]?.attempt === null,
+      "Restored writer and reader roles did not separate",
+    );
+    assert(
+      actual.every(
+        (x) =>
+          x.database === first.db &&
+          x.position === first.seedCut &&
+          x.gatewaySourceHash === expected.gatewaySourceHash,
+      ),
+    );
+    const historyRange = (process.env.TRIPLEX_DATOMIC_FAST_PATHS ?? "")
+      .split(",")
+      .includes("history-range");
+    verifyWriteOptions(actual[writer]!, first.db, expected, historyRange);
+    const gatewayRoles = {
+      at: probe.at,
+      writer,
+      reader,
+      database: first.db,
+      write: { observed: actual[writer]!, expected, historyRange },
+      read: actual[reader]!,
+    };
+    const c = peers[reader]!;
     for (const s of proof.scopes) {
       const db = await c.create(scopeKey(s.name), "lean", true, 35000);
       assert(!db.created && db.strictRecordClocks && db.db === s.db);
@@ -376,11 +430,12 @@ export async function restore(dir: string, from: string, id: Destination, fromTr
       identity: id,
       origin: proof,
       ...(fromTransfer ? { fromTransfer } : {}),
+      gatewayRoles,
       reopenedAt: Date.now(),
       membership,
     });
-    return { scopes: proof.scopes, urls };
+    return { scopes: proof.scopes, urls: [urls[writer]!, urls[reader]!] };
   } finally {
-    c.close();
+    for (const peer of peers) peer.close();
   }
 }

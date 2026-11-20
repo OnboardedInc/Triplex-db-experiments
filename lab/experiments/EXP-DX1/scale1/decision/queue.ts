@@ -6,7 +6,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { setTimeout as nap } from "node:timers/promises";
 import { prepare } from "../remote-sequence.ts";
 import { activeUnitArgs, dedicatedHost } from "../source.ts";
-import { layoutOf } from "./plan.ts";
+import { layoutOf, reusableSeed } from "./plan.ts";
 import type { Request } from "./server.ts";
 
 const root = "/var/tmp/triplex-scale1",
@@ -62,7 +62,7 @@ function plan(): Plan {
   );
   assert(
     Array.isArray(p.steps) &&
-      p.steps.length >= 2 &&
+      (p.steps.length >= 2 || (p.steps.length === 1 && p.steps[0]?.fromTransfer)) &&
       new Set(p.steps.map((s) => s.tag)).size === p.steps.length,
   );
   assert(Number.isInteger(p.maxHours) && p.maxHours > 0 && p.maxHours <= 40);
@@ -78,7 +78,7 @@ function plan(): Plan {
       assert(["individual", "bounded", "prepared"].includes(s.mode));
       const earlier = p.steps.slice(0, i).find((q) => q.tag === s.from);
       if (s.fromTransfer) {
-        assert(s.layout === "single" && !earlier);
+        assert(reusableSeed(s.people, s.layout) && !earlier);
         assert.match(s.from ?? "", /^arm-d7-[a-z0-9-]{2,24}$/);
         assert.match(s.fromTransfer, /^[a-f0-9]{64}$/);
       } else {

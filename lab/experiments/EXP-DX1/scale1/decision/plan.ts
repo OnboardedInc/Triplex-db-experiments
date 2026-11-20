@@ -52,6 +52,8 @@ export const layoutOf = (layout: Layout) =>
     : layout === "pooled"
       ? [accounts]
       : [accounts.slice(0, 5), accounts.slice(5)];
+export const reusableSeed = (people: Density, layout: Layout) =>
+  layout === "single" || (layout === "pooled" && people === 10000);
 export const factsFor = (people: Density) =>
   deepPopulation(people).facts + 2 * people + Math.ceil(people / 256) + 1;
 

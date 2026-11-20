@@ -117,7 +117,9 @@ export async function runCells(
       );
       assert(!open.created && open.db === s.scope.db && open.strictRecordClocks);
       if (!checked.has(open.db)) {
-        const readback = await readWriteOptions(writeUrl, open.db, optionsBinding);
+        const readback = await readWriteOptions(writeUrl, open.db, optionsBinding, (route) =>
+          s.client.request("GET", route),
+        );
         assert.equal(readback.observed.position, s.scope.seedCut);
         writeOptions.push(readback);
         checked.add(open.db);

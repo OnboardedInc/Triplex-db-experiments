@@ -66,18 +66,25 @@ export function verifyWriteOptions(
   assert(Number.isSafeInteger(observed.position) && observed.position >= 0);
 }
 
-export async function readWriteOptions(url: string, db: string, binding: string | undefined) {
+export async function readWriteOptions(
+  url: string,
+  db: string,
+  binding: string | undefined,
+  request?: (route: string) => Promise<WriterObservation>,
+) {
   assert(binding, "Writer option expectation missing");
   const expected = JSON.parse(binding) as WriterExpectation;
   assert.match(expected.gatewaySourceHash, /^[a-f0-9]{64}$/);
   const historyRange = (process.env.TRIPLEX_DATOMIC_FAST_PATHS ?? "")
     .split(",")
     .includes("history-range");
-  const response = await fetch(new URL(`/v1/db/${db}/write-options`, url), {
-    signal: AbortSignal.timeout(35000),
-  });
-  assert(response.ok, "Writer option readback failed");
-  const observed = (await response.json()) as WriterObservation;
+  const route = `/v1/db/${db}/write-options`;
+  const observed = request
+    ? await request(route)
+    : await fetch(new URL(route, url), { signal: AbortSignal.timeout(35000) }).then((response) => {
+        assert(response.ok, "Writer option readback failed");
+        return response.json() as Promise<WriterObservation>;
+      });
   verifyWriteOptions(observed, db, expected, historyRange);
   return { expected, observed, historyRange };
 }

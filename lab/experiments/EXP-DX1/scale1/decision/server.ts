@@ -9,6 +9,7 @@ import {
   profileFor,
   workloadPins,
   populationPins,
+  reusableSeed,
   type Density,
   type Layout,
 } from "./plan.ts";
@@ -49,7 +50,7 @@ async function main(dir: string) {
   assert(["individual", "bounded", "prepared"].includes(p.mode));
   assert(["seed", "cells"].includes(p.phase));
   if (p.fromTransfer) {
-    assert(p.phase === "cells" && p.layout === "single");
+    assert(p.phase === "cells" && reusableSeed(p.people, p.layout));
     assert.match(p.fromTransfer, /^[a-f0-9]{64}$/);
   }
   assert(
@@ -164,7 +165,13 @@ async function main(dir: string) {
           await seal(dir, seed);
         } else {
           status("restoring verified seed");
-          const restored = await restore(dir, path.join(outputRoot, p.from!), id, p.fromTransfer);
+          const restored = await restore(
+            dir,
+            path.join(outputRoot, p.from!),
+            id,
+            binding,
+            p.fromTransfer,
+          );
           const { runCells } = await import("./traffic.ts");
           await runCells(
             dir,
