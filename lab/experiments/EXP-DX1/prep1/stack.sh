@@ -13,7 +13,8 @@ if [[ "$PREP1_MODE" == subject-native-suite ]]; then
   export DATOMIC_EXT_CLASSPATH=/opt/gateway/src
   export DATOMIC_JAVA_OPTS="-Xms96m -Xmx768m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError"
   export TX2_SUBJECT_SAVE="$(cat /config/subject)"
-  printf 'PREP1_SUITE {"attempt":"%s","subject":%s}\n' "$PREP1_ATTEMPT" "$TX2_SUBJECT_SAVE"
+  printf 'PREP1_SUITE {"attempt":"%s","subject":%s,"numericOwner":%s,"orderedIds":%s}\n' \
+    "$PREP1_ATTEMPT" "$TX2_SUBJECT_SAVE" "$TX2_SUBJECT_NUMERIC_OWNER" "$TX2_SUBJECT_ORDERED_IDS"
   exec bin/run -m triplex.gateway.selftest
 fi
 work=$(mktemp -d)

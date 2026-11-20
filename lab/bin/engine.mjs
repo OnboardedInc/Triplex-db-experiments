@@ -220,7 +220,7 @@ async function removeThinImage(config, opts) {
   const tag = info.laneConf.image;
   // [DX-PREP1] Why: a diagnostic retry can discard its exact staged image after the slot exits.
   // Rejected: pruning the image store shared with other builders.
-  const ownedTag = opts.holder === 'DX-THIN1' ? /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/ : /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery)$/;
+  const ownedTag = opts.holder === 'DX-THIN1' ? /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/ : /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery|subject-native-suite)$/;
   if (!ownedTag.test(tag)) fail('REFUSED', 'Only the holder’s staged image tags may be removed');
   if (info.laneConf.imageId !== opts['image-id']) fail('REFUSED', 'The staged configuration is pinned to a different image');
   await withPool(async ledger => {
