@@ -199,15 +199,20 @@
 (defn clear-free! [{:keys [conn]} secrets ids]
   (let [db (d/db conn)
         data (d/history db)
+        rows (mapv (comp lean/decode :v) (d/datoms data :aevt :triplex.entity/row))
         texts (concat (map :v (d/datoms data :aevt :triplex.entity/row))
                       (mapcat (fn [{:keys [data]}] (keep #(when (string? (:v %)) (:v %)) data))
                               (d/tx-range (d/log conn) nil nil)))
-        refs (map envelope/token ids)
+        protected (into {} (keep (fn [row]
+                                   (when (= protected-attribute (:attribute row))
+                                     [(:id row) (:value_string row)])) rows))
         strings (vec texts)]
     (native/check! (not-any? #(some (fn [s] (str/includes? % s)) secrets) strings)
                    "A protected plaintext appears in native storage" {})
-    (native/check! (every? #(some (fn [s] (str/includes? s %)) strings) refs)
-                   "A protected opaque positive control is missing" {})
+    ;; [DX-AGE1] Why: the lean wire format can JSON-escape the slash in an opaque token.
+    ;; Rejected: matching the token's unescaped characters against serialized native storage.
+    (doseq [id ids]
+      (gate/equal! (envelope/token id) (protected id) "A protected opaque positive control differs"))
     (count strings)))
 
 (defn rehearsal! []
