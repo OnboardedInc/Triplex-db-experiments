@@ -6,7 +6,7 @@
   (:import [java.util.concurrent ArrayBlockingQueue RejectedExecutionException ThreadFactory ThreadPoolExecutor TimeUnit]))
 
 (def enabled (= "1" (System/getenv "TX2_PARALLEL_PREPARE")))
-(def guard-ident :triplex.group/apply-prepared-v1)
+(def guard-ident :triplex.group/apply-prepared-v2)
 (def guard-code
   '(letfn [(datom [e a] (when e (first (d/datoms db :eavt e a))))
            (v [e a] (:v (datom e a)))
@@ -24,6 +24,11 @@
                       (when (= (:a x) (d/entid db :triplex.tx/position)) (:e x))))
            clock (v newest :triplex.tx/max-recorded-at)
            historical (d/history db)]
+       (doseq [member (get witness :members)]
+         (when (d/entid db [:triplex.tx/operation-id (get member :operation)])
+           (throw (ex-info "TRIPLEX_OPERATION_DUPLICATE" {})))
+         (when (d/entid db [:triplex.claim/command-id (get member :command)])
+           (throw (ex-info "TRIPLEX_COMMAND_DUPLICATE" {}))))
        (doseq [[a expected] (get witness :flags)] (expect (= expected (v scope a))))
        (expect (= (get witness :head)
                   [(or (v newest :triplex.tx/position) 0)
@@ -54,7 +59,7 @@
 (def flags [:triplex.scope/key :triplex.scope/schema-hash :triplex.scope/commit-fn-hash
             :triplex.scope/rows-version :triplex.scope/head-version :triplex.scope/feed-version
             :triplex.scope/feed-irregular :triplex.scope/strict-record-clocks
-            :triplex.scope/position-regular :triplex.scope/irregular])
+            :triplex.scope/position-regular :triplex.scope/irregular :triplex.scope/packed-journals])
 (defn scope-flags [db eid] (mapv #(vector % (scope/value db eid %)) flags))
 (defn head [db]
   (let [latest (scope/newest-commit db)
@@ -96,9 +101,7 @@
                (:lean p) (not (:slim-row p)) (= 1 (:span p)) (:assign-record-time p)
                (not (:scope-wide p)) (not (:position-irregular p)) (not (:irregular p))
                (not (:identity-bounds p))
-               ;; [DX-INT1] Why: the reference writer owns ledger conversion and timed predecessors.
-               ;; Rejected: preparing a shape whose final journal depends on authoritative predecessor metadata.
-               (not-any? p [:save-ledger :packed-journal :timed-retractions])
+               (not-any? p [:save-ledger :packed-journal])
                (<= (count ops) 256)
                (#{:triplex/commit (first (commit/variants [true false]))} ident) fn-tx
                (= 1 (count journal-entities)) (every? small-op? ops))
@@ -116,6 +119,8 @@
             asserted (filter #(and (vector? %) (= :triplex/assert (first %))) ops)
             clocks (concat times record-clocks)]
         (when (and (some? (:triplex.scope/key by-flag)) owner
+                   (= commit/source-hash (:triplex.scope/commit-fn-hash by-flag))
+                   (not (:triplex.scope/packed-journals by-flag))
                    (= 3 (:triplex.scope/rows-version by-flag)) (= 2 (:triplex.scope/head-version by-flag))
                    (= true (:triplex.scope/strict-record-clocks by-flag)) (= true (:triplex.scope/position-regular by-flag))
                    (= 2 (:triplex.scope/feed-version by-flag)) (not (:triplex.scope/feed-irregular by-flag))
@@ -133,7 +138,12 @@
               {:scope scope :flags signature :provisional provisional :operations ops
                :new-ids (set new-ids) :submitted-clock (reduce max (map double clocks))
                :id (:triplex.tx/id (first ops)) :operation (:triplex.tx/operation-id (first ops))
-               :witness {:function [ident fn-tx] :entities revisions
+               :retirement-times (into {} (map (fn [[_ prefix text]]
+                                                  [(subs prefix 5) (commit/recorded-row text)]))
+                                       retirements)
+               :witness {:operation (:triplex.tx/operation-id (first ops))
+                         :command (:triplex.claim/command-id (first claims))
+                         :function [ident fn-tx] :entities revisions
                          :journal journal :retirements retirements :new-prefixes (mapv lean/prefix new-ids)}})))))))
 
 (def executor
@@ -151,9 +161,9 @@
 
 (defn assign-clock [prior submitted]
   (if prior (max submitted (+ (double prior) 1.0) (Math/nextUp (double prior))) submitted))
-(defn render [{:keys [id operations provisional new-ids witness]} member position clock]
+(defn render [{:keys [id operations provisional new-ids witness retirement-times]} member position clock]
   (let [physical "datomic.tx"
-        stamp (commit/stamp true clock new-ids (dec provisional) provisional position false {})
+        stamp (commit/stamp true clock new-ids (dec provisional) provisional position false retirement-times)
         old (into {} (map (fn [[eid prefix text]] [prefix [eid text]]) (:retirements witness)))
         tx-metadata [[:db/add physical :triplex.group/members member]
                      [:db/add member :triplex.group/physical physical]
