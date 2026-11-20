@@ -18,17 +18,19 @@ export class Stack {
   readonly members = new Map<Role, Member>();
   readonly networks = new Map<Site, string>();
   readonly pgIds = new Map<Site, string>();
-  readonly secret = randomBytes(18).toString("hex");
-  readonly admin = randomBytes(18).toString("hex");
+  readonly secret: string;
+  readonly admin: string;
   readonly e: Evidence;
   readonly a: Site;
   readonly b: Site;
   readonly sharedVolumes = new Set<string>();
   readonly holder: string;
-  constructor(e: Evidence, a: Site, b: Site) {
+  constructor(e: Evidence, a: Site, b: Site, credentials?: { secret: string; admin: string }) {
     this.e = e;
     this.a = a;
     this.b = b;
+    this.secret = credentials?.secret ?? randomBytes(18).toString("hex");
+    this.admin = credentials?.admin ?? randomBytes(18).toString("hex");
     this.holder = e.mode.startsWith("hasync-") ? "DX-HASYNC1" : "DX-HA1";
   }
   name(r: Role) {

@@ -41,6 +41,9 @@ export const modes = [
   "hasync-cost-plain",
   "hasync-cost-group",
   "hasync-move",
+  "hasync-seed-legacy",
+  "hasync-seed-lean",
+  "hasync-suite",
 ] as const;
 export type Mode = (typeof modes)[number];
 export const roles = {
@@ -120,6 +123,8 @@ function treeCode(mode?: Mode) {
       .readdirSync(path.join(root, "lab/oracles/replay"))
       .filter((name) => name.endsWith(".py")))
       paths.push(path.join(root, "lab/oracles/replay", f));
+    for (const f of ["deep-world", "world", "rng"])
+      paths.push(path.join(root, "lab/bench/lib", f + ".ts"));
   }
   return hash(
     JSON.stringify(paths.sort().map((f) => [path.relative(root, f), hash(fs.readFileSync(f))])),

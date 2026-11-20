@@ -23,6 +23,7 @@ export function privateAddress(s: string) {
 }
 assert(remoteImage && /^sha256:[a-f0-9]{64}$/.test(remoteImage));
 assert(store && campaign && /^[a-f0-9-]{36}$/.test(campaign));
+const sync = mode === "hasync-suite";
 const waiters = new Map<number, { ok: (s: string) => void; fail: (err: Error) => void }>();
 let seq = 0;
 const stream = createInterface({ input: process.stdin });
@@ -46,81 +47,97 @@ const local: Site["docker"] = async (args, opts = {}) => {
   });
   return (v.stdout + (args[0] === "logs" ? v.stderr : "")).trim();
 };
+const localImage = await local([
+  "image",
+  "inspect",
+  "tx2-datomic:1.0.7745-da00",
+  "--format",
+  "{{.Id}}",
+]);
+const satellite: Site["docker"] = async (args, opts = {}) => {
+  const id = ++seq;
+  const reply = new Promise<string>((ok, fail) => waiters.set(id, { ok, fail }));
+  process.stdout.write("@ha1 " + JSON.stringify({ id, args, timeout: opts.timeout }) + "\n");
+  return reply;
+};
 const a: Site = {
   key: "a",
   repo: root,
   privateAddress: privateAddress(addrA!),
-  docker: local,
-  datomicId: await local(["image", "inspect", "tx2-datomic:1.0.7745-da00", "--format", "{{.Id}}"]),
+  docker: sync ? satellite : local,
+  datomicId: sync ? remoteImage : localImage,
 };
 const b: Site = {
   key: "b",
   repo: root,
   privateAddress: privateAddress(addrB!),
-  datomicId: remoteImage,
-  docker: async (args, opts = {}) => {
-    const id = ++seq;
-    const reply = new Promise<string>((ok, fail) => waiters.set(id, { ok, fail }));
-    process.stdout.write("@ha1 " + JSON.stringify({ id, args, timeout: opts.timeout }) + "\n");
-    return reply;
-  },
+  datomicId: sync ? localImage : remoteImage,
+  docker: sync ? local : satellite,
 };
 fs.mkdirSync(store, { recursive: false });
 try {
-  const defaults: Record<string, string> = {
-    "load-profile": "260",
-    "load-proof": "60",
-    "load-quiet": "100000,1000000",
-    "load-live": "50,235,390",
-    failures: "2000",
-    move: "500,2000,5000",
-    replication: "1",
-    "one-failover": "1000,10000,100000,1000000",
-    "one-backup": "1000,10000,100000,1000000",
-    "one-whole": "1000,10000,100000,1000000",
-    "one-account": "100,1000,10000,100000",
-    "one-sync": "1000",
-  };
-  assert(shape === "deep" || shape === "mixed");
-  const sizes = (people || defaults[mode]!).split(",").map(Number);
-  assert(
-    sizes.length &&
-      sizes.every(
-        (n) =>
-          Number.isSafeInteger(n) &&
-          n > 0 &&
-          n <= (mode.startsWith("one-") || mode === "load-quiet" ? 1500000 : 100000),
-      ),
-  );
-  fs.writeFileSync(
-    path.join(store, "campaign.json"),
-    JSON.stringify({ tag, sha, mode, campaign, sizes, shape }) + "\n",
-    { flag: "wx" },
-  );
-  const points: MovePoint[] = [];
-  for (const n of sizes) {
-    const e = new Evidence(store, modeOf(mode), tag, shape);
-    process.stdout.write("@attempt " + JSON.stringify({ nonce: e.nonce, prefix: e.prefix }) + "\n");
-    await drill(
-      e,
-      a,
-      b,
-      { people: n, scopes: mode.startsWith("load-") ? 1 : 5, capacity: "two-host" },
-      () => {},
+  if (sync) {
+    const { campaign: run } = await import("../hasync1/campaign.ts");
+    assert(shape === "deep" && (!people || people === "100000"));
+    await run(store, { a, b }, { tag, sha: sha!, campaign });
+  } else {
+    const defaults: Record<string, string> = {
+      "load-profile": "260",
+      "load-proof": "60",
+      "load-quiet": "100000,1000000",
+      "load-live": "50,235,390",
+      failures: "2000",
+      move: "500,2000,5000",
+      replication: "1",
+      "one-failover": "1000,10000,100000,1000000",
+      "one-backup": "1000,10000,100000,1000000",
+      "one-whole": "1000,10000,100000,1000000",
+      "one-account": "100,1000,10000,100000",
+      "one-sync": "1000",
+    };
+    assert(shape === "deep" || shape === "mixed");
+    const sizes = (people || defaults[mode]!).split(",").map(Number);
+    assert(
+      sizes.length &&
+        sizes.every(
+          (n) =>
+            Number.isSafeInteger(n) &&
+            n > 0 &&
+            n <= (mode.startsWith("one-") || mode === "load-quiet" ? 1500000 : 100000),
+        ),
     );
-    if (mode === "move") {
-      const { seedFacts, finalBytes, pauseMs, setupThroughCutoverMs } = JSON.parse(
-        fs.readFileSync(path.join(e.dir, "move.json"), "utf8"),
-      );
-      points.push({ seedFacts, finalBytes, pauseMs, setupThroughCutoverMs });
-    }
-  }
-  if (points.length)
     fs.writeFileSync(
-      path.join(store, "projection.json"),
-      JSON.stringify(projection(points), null, 2) + "\n",
+      path.join(store, "campaign.json"),
+      JSON.stringify({ tag, sha, mode, campaign, sizes, shape }) + "\n",
       { flag: "wx" },
     );
+    const points: MovePoint[] = [];
+    for (const n of sizes) {
+      const e = new Evidence(store, modeOf(mode), tag, shape);
+      process.stdout.write(
+        "@attempt " + JSON.stringify({ nonce: e.nonce, prefix: e.prefix }) + "\n",
+      );
+      await drill(
+        e,
+        a,
+        b,
+        { people: n, scopes: mode.startsWith("load-") ? 1 : 5, capacity: "two-host" },
+        () => {},
+      );
+      if (mode === "move") {
+        const { seedFacts, finalBytes, pauseMs, setupThroughCutoverMs } = JSON.parse(
+          fs.readFileSync(path.join(e.dir, "move.json"), "utf8"),
+        );
+        points.push({ seedFacts, finalBytes, pauseMs, setupThroughCutoverMs });
+      }
+    }
+    if (points.length)
+      fs.writeFileSync(
+        path.join(store, "projection.json"),
+        JSON.stringify(projection(points), null, 2) + "\n",
+        { flag: "wx" },
+      );
+  }
 } finally {
   stream.close();
 }

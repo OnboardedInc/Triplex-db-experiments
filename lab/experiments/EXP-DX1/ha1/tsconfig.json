@@ -6,6 +6,7 @@
     "allowImportingTsExtensions": true,
     "allowJs": true,
     "checkJs": false,
+    "noPropertyAccessFromIndexSignature": false,
     "noEmit": true,
     "types": ["node"]
   },

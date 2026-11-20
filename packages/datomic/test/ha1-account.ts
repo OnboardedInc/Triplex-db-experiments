@@ -50,10 +50,12 @@ export class Account {
     readonly key: string,
     write: string,
     read: string,
+    scopeKey = key,
+    writeTimeout = 2200,
   ) {
-    this.scope = JSON.stringify(["triplex-scope-v1", "ha1", key, "test", 0]);
+    this.scope = JSON.stringify(["triplex-scope-v1", "ha1", scopeKey, "test", 0]);
     this.db = "s2-" + Buffer.from(this.scope).toString("base64url");
-    this.w = new DatomicClient(write, 2200);
+    this.w = new DatomicClient(write, writeTimeout);
     this.r = new DatomicClient(read, 2600);
   }
   async open(layout: "legacy" | "lean" = "legacy", strict = false) {

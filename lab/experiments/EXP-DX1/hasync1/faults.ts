@@ -432,6 +432,7 @@ async function faultWork(
     );
     await ac.pinned(pin);
     const recovered = await receipts(ac);
+    await pair.auditCheckpoint("after");
     const replay = await replayEvidence(e, ac, selected);
     const feed = await auditFeed(
       ac,

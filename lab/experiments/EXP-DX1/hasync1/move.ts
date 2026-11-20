@@ -70,6 +70,7 @@ export async function moveDrill(
     await ac.pinned(old);
     await ac.pinned(fresh);
     const recovered = await receipts(ac);
+    await pair.auditCheckpoint("after");
     const verified =
       options.auditSeed === false
         ? await verifySuffix(ac, before.t.v, ac.inputs.slice(-4))

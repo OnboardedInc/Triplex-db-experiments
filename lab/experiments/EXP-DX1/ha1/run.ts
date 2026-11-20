@@ -8,14 +8,21 @@ import { oneAccount } from "./one-account.ts";
 import { oneWhole } from "./one-whole.ts";
 import { oneFailover } from "./one-failover.ts";
 import { failures } from "./failures.ts";
+import type { Checkpoint } from "../hasync1/seed.ts";
 export async function drill(
   e: Evidence,
   a: Site,
   b: Site,
   profile: { people: number; scopes: number; capacity: string },
   release: () => void,
+  sync?: {
+    path: string;
+    checkpoint?: Checkpoint;
+    deadline: number;
+    credentials: { secret: string; admin: string };
+  },
 ) {
-  const s = new Stack(e, a, b);
+  const s = new Stack(e, a, b, sync?.credentials);
   let cleanupShared: (() => Promise<void>) | undefined;
   let result: unknown;
   try {
@@ -27,20 +34,34 @@ export async function drill(
     await s.open();
     if (e.mode.startsWith("hasync-")) {
       const { SyncPair } = await import("../hasync1/pair.ts");
-      const pair = new SyncPair(s);
+      const pair = new SyncPair(s, sync);
       cleanupShared = () => pair.cleanup();
-      if (e.mode === "hasync-smoke") {
+      if (e.mode === "hasync-seed-legacy" || e.mode === "hasync-seed-lean") {
+        assert(sync);
+        const { buildCheckpoint } = await import("../hasync1/seed.ts");
+        result = await buildCheckpoint(
+          pair,
+          e.mode === "hasync-seed-lean" ? "lean" : "legacy",
+          profile.people,
+          sync.deadline,
+        );
+      } else if (e.mode === "hasync-smoke") {
         const { smoke } = await import("../hasync1/smoke.ts");
         result = await smoke(pair, profile.people);
       } else if (e.mode === "hasync-cost-plain" || e.mode === "hasync-cost-group") {
         const { costDrill } = await import("../hasync1/cost.ts");
-        result = await costDrill(pair, profile.people, e.mode === "hasync-cost-group");
+        result = await costDrill(
+          pair,
+          profile.people,
+          e.mode === "hasync-cost-group",
+          sync ? { blockSize: 512 } : {},
+        );
       } else if (e.mode === "hasync-move") {
         const { moveDrill } = await import("../hasync1/move.ts");
-        result = await moveDrill(pair, profile.people);
+        result = await moveDrill(pair, profile.people, sync ? { auditSeed: false } : {});
       } else {
         const { faultDrill } = await import("../hasync1/faults.ts");
-        result = await faultDrill(pair, profile.people, e.mode);
+        result = await faultDrill(pair, profile.people, e.mode, sync ? { auditSeed: false } : {});
       }
     } else if (e.mode.startsWith("load-"))
       result = await (await import("../load1/run.ts")).load(s, profile.people);
@@ -90,4 +111,5 @@ export async function drill(
       : profile,
     result,
   });
+  return result;
 }

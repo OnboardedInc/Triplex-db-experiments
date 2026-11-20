@@ -12,6 +12,10 @@ import { head, modeOf, root, runFile } from "./common.ts";
 
 const [action, tag] = process.argv.slice(2),
   mode = modeOf(action ?? "");
+const sync = mode === "hasync-suite",
+  holder = sync ? "DX-HASYNC1" : "DX-HA1",
+  observerSite = sync ? 1 : 0,
+  satelliteSite = sync ? 0 : 1;
 assert(tag && /^[a-z][a-z0-9-]{2,40}$/.test(tag), "Expected experiment and a new attempt tag");
 const servers = [process.env["BENCH_SERVER"], process.env["BENCH_SERVER_B"]],
   addrs = [process.env["HA1_LINK_A"], process.env["HA1_LINK_B"]];
@@ -31,7 +35,7 @@ const url = execFileSync("git", ["remote", "get-url", "origin"], {
   encoding: "utf8",
 }).trim();
 assert.equal(url, "https://github.com/OnboardedInc/Triplex-db-experiments.git");
-const branch = "exp/DX-HA1-failover-move",
+const branch = sync ? "exp/DX-HASYNC1-sync-failover" : "exp/DX-HA1-failover-move",
   git = (...args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
 assert.equal(git("branch", "--show-current"), branch);
 assert.equal(
@@ -75,18 +79,19 @@ function argv(i: number, args: string[]) {
     args.map(quote).join(" "),
   ];
 }
-const remote = async (i: number, ...args: string[]) =>
+const remoteTimed = async (i: number, timeout: number, ...args: string[]) =>
   (
     await runFile("ssh", argv(i, ["sudo", "-n", ...args]), {
       encoding: "utf8",
-      timeout: 2400000,
+      timeout,
       maxBuffer: 16 * 2 ** 20,
     })
   ).stdout.trim();
+const remote = (i: number, ...args: string[]) => remoteTimed(i, 2400000, ...args);
 const prepare = async (i: number) => {
   const assignment = JSON.parse(await remote(i, "cat", base + "/platform/dedicated.json")),
     machine = (await remote(i, "sha256sum", "/etc/machine-id")).split(/\s/)[0];
-  assert.equal(assignment.role, "DX-HA1");
+  assert.equal(assignment.role, holder);
   assert.equal(assignment.machineIdSha256, machine);
   assert.equal(await remote(i, "docker", "-H", "unix:///var/run/docker.sock", "ps", "-q"), "");
   const ips = JSON.parse(await remote(i, "ip", "-j", "-4", "addr", "show"));
@@ -98,8 +103,11 @@ assert.notEqual(ids[0], ids[1]);
 const lease = base + "/campaign.lock",
   held: number[] = [];
 const dockerOpts = ["docker", "-H", "unix:///var/run/docker.sock"];
-let attempt: { nonce: string; prefix: string } | undefined;
+let attempt: { nonce: string; prefix: string; mode?: string } | undefined;
 let satellite: Satellite | undefined;
+const store = base + "/" + tag;
+let seedDirCreated = false;
+let suiteArchiveVerified = false;
 try {
   for (const i of [0, 1]) {
     await remote(i, "mkdir", lease);
@@ -127,7 +135,7 @@ try {
     }),
   );
   const remoteImage = await remote(
-    1,
+    satelliteSite,
     ...dockerOpts,
     "image",
     "inspect",
@@ -136,7 +144,7 @@ try {
     "{{.Id}}",
   );
   const pgImage = await remote(
-    1,
+    satelliteSite,
     ...dockerOpts,
     "image",
     "inspect",
@@ -146,35 +154,42 @@ try {
   );
   const campaign = randomUUID(),
     nonces: string[] = [];
-  const store = base + "/" + tag,
-    remoteArgs = [
-      "sudo",
-      "-n",
-      "systemd-run",
-      "--quiet",
-      "--wait",
-      "--pipe",
-      "--collect",
-      "--unit=triplex-ha1-" + tag,
-      "--property=RuntimeMaxSec=" + hours + "h",
-      "--property=KillMode=control-group",
-      "--working-directory=" + src,
-      bin,
-      "--import",
-      "tsx",
-      src + "/lab/experiments/EXP-DX1/ha1/bench.ts",
-      mode,
-      tag,
-      sha,
-      addrs[0]!,
-      addrs[1]!,
-      remoteImage,
-      store,
-      campaign,
-      process.env["HA1_PEOPLE"] ?? "",
-      process.env["HA1_BENCH_SHAPE"] ?? "deep",
-    ];
-  const child = spawn("ssh", argv(0, remoteArgs), { stdio: ["pipe", "pipe", "inherit"] });
+  const trialModes: string[] = [];
+  if (sync) {
+    await remote(satelliteSite, "mkdir", store);
+    await remote(satelliteSite, "mkdir", "-m", "700", store + "/seed");
+    seedDirCreated = true;
+  }
+  const remoteArgs = [
+    "sudo",
+    "-n",
+    "systemd-run",
+    "--quiet",
+    "--wait",
+    "--pipe",
+    "--collect",
+    "--unit=triplex-ha1-" + tag,
+    "--property=RuntimeMaxSec=" + (sync ? "89min" : hours + "h"),
+    "--property=KillMode=control-group",
+    "--working-directory=" + src,
+    bin,
+    "--import",
+    "tsx",
+    src + "/lab/experiments/EXP-DX1/ha1/bench.ts",
+    mode,
+    tag,
+    sha,
+    addrs[0]!,
+    addrs[1]!,
+    remoteImage,
+    store,
+    campaign,
+    process.env["HA1_PEOPLE"] ?? "",
+    process.env["HA1_BENCH_SHAPE"] ?? "deep",
+  ];
+  const child = spawn("ssh", argv(observerSite, remoteArgs), {
+    stdio: ["pipe", "pipe", "inherit"],
+  });
   const done = new Promise<number | null>((ok, fail) => {
     child.once("error", fail);
     child.once("close", ok);
@@ -190,8 +205,22 @@ try {
           attempt.prefix === "tx2-ha1-" + attempt.nonce.slice(0, 8),
       );
       assert(!nonces.includes(attempt.nonce));
+      if (sync) {
+        assert(
+          attempt.mode &&
+            attempt.mode.startsWith("hasync-") &&
+            modeOf(attempt.mode) === attempt.mode,
+        );
+        trialModes.push(attempt.mode);
+      }
       nonces.push(attempt.nonce);
-      satellite = new Satellite(attempt.nonce, attempt.prefix, src, [pgImage, remoteImage]);
+      satellite = new Satellite(
+        attempt.nonce,
+        attempt.prefix,
+        src,
+        [pgImage, remoteImage],
+        sync ? store + "/seed" : undefined,
+      );
       continue;
     }
     if (!line.startsWith("@ha1 ")) {
@@ -214,14 +243,26 @@ try {
         "logs",
         "kill",
         "rm",
+        ...(sync ? ["stop"] : []),
       ].includes(req[0]!),
     );
     const task = (async () => {
       try {
+        const timeout = msg.timeout ?? 2400000;
+        assert(Number.isSafeInteger(timeout) && timeout > 0 && timeout <= 2400000);
         const out = await satellite!.call(req, (args) =>
           args[0] === "logs"
-            ? remote(1, "sh", "-c", 'exec "$@" 2>&1', "logs", ...dockerOpts, ...args)
-            : remote(1, ...dockerOpts, ...args),
+            ? remoteTimed(
+                satelliteSite,
+                timeout,
+                "sh",
+                "-c",
+                'exec "$@" 2>&1',
+                "logs",
+                ...dockerOpts,
+                ...args,
+              )
+            : remoteTimed(satelliteSite, timeout, ...dockerOpts, ...args),
         );
         child.stdin.write(JSON.stringify({ id: msg.id, out }) + "\n");
       } catch (err: any) {
@@ -239,15 +280,16 @@ try {
   const evidence = path.join(
     process.env["TRIPLEX_TRACE_EVIDENCE"] ??
       path.join(os.homedir(), "Claude", "Projects", "triplex-db-2", "evidence"),
-    "DX-HA1",
+    holder,
     tag,
   );
   fs.mkdirSync(path.dirname(evidence), { recursive: true });
   fs.mkdirSync(evidence);
   const archive = store + ".tar.gz";
-  await remote(0, "tar", "-C", base, "-czf", archive, tag);
-  const expected = (await remote(0, "sha256sum", archive)).split(/\s/)[0]!;
-  const copy = spawn("ssh", argv(0, ["sudo", "-n", "cat", archive]), {
+  await remote(observerSite, "tar", "-C", base, "-czf", archive, tag);
+  const expected = (await remote(observerSite, "sha256sum", archive)).split(/\s/)[0]!;
+  if (sync) assert(Number(await remote(observerSite, "stat", "-c", "%s", archive)) <= 2 ** 30);
+  const copy = spawn("ssh", argv(observerSite, ["sudo", "-n", "cat", archive]), {
     stdio: ["ignore", "pipe", "inherit"],
   });
   const copied = new Promise<number | null>((ok, fail) => {
@@ -264,7 +306,7 @@ try {
     JSON.parse(
       execFileSync("tar", ["-xOzf", file, tag + "/" + name], {
         encoding: "utf8",
-        maxBuffer: 4 * 2 ** 20,
+        maxBuffer: 16 * 2 ** 20,
       }),
     );
   const declaration = member("campaign.json");
@@ -274,15 +316,23 @@ try {
   );
   if (code === 0) {
     assert(nonces.length > 0 && nonces.length === declaration.sizes.length);
+    if (sync) {
+      assert.deepEqual(trialModes, declaration.trials);
+      assert.equal(trialModes.length, 12);
+      const suite = member("suite.json");
+      assert(suite.measured <= 85 * 60000 && suite.trials === 12 && suite.subjects === 100000);
+      assert.deepEqual([suite.tag, suite.sha, suite.campaign], [tag, sha, campaign]);
+    }
     for (const [i, nonce] of nonces.entries()) {
-      const sub = mode + "-" + nonce + "/",
+      const trial = sync ? trialModes[i] : mode;
+      const sub = trial + "-" + nonce + "/",
         attempt = member(sub + "attempt.json"),
         summary = member(sub + "observations.json"),
         clean = member(sub + "cleanup.json");
       assert.equal(attempt.nonce, nonce);
       assert.equal(attempt.source.git, sha);
       assert.equal(attempt.slot, tag);
-      assert.equal(attempt.mode, mode);
+      assert.equal(attempt.mode, trial);
       assert.equal(attempt.shape, declaration.shape);
       assert.equal(declaration.shape, process.env["HA1_BENCH_SHAPE"] ?? "deep");
       assert.deepEqual(summary.source, attempt.source);
@@ -292,6 +342,7 @@ try {
       assert.equal(summary.profile.capacity, "two-host");
       assert.deepEqual(clean, { nonce, containers: 0, networks: 0 });
     }
+    suiteArchiveVerified = sync;
   }
   fs.writeFileSync(
     path.join(evidence, "transfer.json"),
@@ -319,7 +370,7 @@ try {
       "ps",
       "-aq",
       "--filter",
-      "label=tx2.holder=DX-HA1",
+      "label=tx2.holder=" + holder,
     );
     const nets = await remote(
       i,
@@ -331,7 +382,7 @@ try {
       "label=ha1.attempt",
     );
     const active = await remote(
-      0,
+      observerSite,
       "systemctl",
       "list-units",
       "--type=service",
@@ -340,8 +391,17 @@ try {
       "--plain",
       "triplex-ha1-" + tag + ".service",
     );
-    if (leftovers || nets || active)
+    const volumes = sync
+      ? await remote(i, ...dockerOpts, "volume", "ls", "-q", "--filter", "label=ha1.attempt")
+      : "";
+    if (leftovers || nets || active || volumes)
       console.error("Bench lease retained; inspect attempt resources on site " + i);
-    else await remote(i, "rmdir", lease);
+    else {
+      if (sync && i === satelliteSite && seedDirCreated && suiteArchiveVerified) {
+        await remote(i, "rm", "-r", "--", store + "/seed");
+        await remote(i, "rmdir", store);
+      }
+      await remote(i, "rmdir", lease);
+    }
   }
 }

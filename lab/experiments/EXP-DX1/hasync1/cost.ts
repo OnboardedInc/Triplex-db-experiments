@@ -222,6 +222,7 @@ export async function costDrill(
       lsn((await pair.candidate()).replay) >= end ? true : undefined,
     );
     const verified = await audit(ac, blocks);
+    await pair.auditCheckpoint("after");
     const cells = summarize(blocks);
     for (const cell of cells) {
       for (const arm of [cell.local, cell.sync]) {

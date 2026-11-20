@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import { Account } from "../ha1/one-db.ts";
-import { loopback, roles, type Role } from "../ha1/common.ts";
+import { hash, loopback, roles, type Role } from "../ha1/common.ts";
 import { drop, replicationRole } from "../ha1/one-backup.ts";
 import { Stack, type Site } from "../ha1/stack.ts";
 import { DatomicClient } from "../../../../packages/datomic/test/ha1-account.ts";
 import { ingress } from "./ingress.ts";
+import type { Checkpoint } from "./seed.ts";
 import {
   lsn,
   Supervisor,
@@ -49,7 +50,10 @@ export class SyncPair {
   writer = "";
   reader = "";
   initialFlush = "";
-  constructor(readonly s: Stack) {
+  constructor(
+    readonly s: Stack,
+    readonly base?: { path: string; checkpoint?: Checkpoint },
+  ) {
     this.latch = s.e.prefix + "-fence";
     this.primaryData = s.e.prefix + "-pgdata";
   }
@@ -107,9 +111,16 @@ export class SyncPair {
     ];
   }
   async open(
-    options: { grouped?: boolean; lean?: boolean; init?: (ac: Account) => Promise<unknown> } = {},
+    options: {
+      grouped?: boolean;
+      lean?: boolean;
+      writeTimeout?: number;
+      init?: (ac: Account) => Promise<unknown>;
+    } = {},
   ) {
     const s = this.s;
+    const cp = this.base?.checkpoint;
+    if (cp) assert.equal(cp.layout, options.lean ? "lean" : "legacy");
     await this.ownedVolume(this.latch);
     await this.ownedVolume(this.primaryData);
     await s.start("tool", s.a, this.volume(false), "/bin/sh", ["-c", "exec sleep infinity"]);
@@ -123,22 +134,52 @@ export class SyncPair {
         "POSTGRES_PASSWORD=" + s.admin,
         ...this.volume(),
         ...this.dataMount(),
+        ...(this.base
+          ? [
+              "--mount",
+              "type=bind,source=" + this.base.path + ",target=/base" + (cp ? ",readonly" : ""),
+            ]
+          : []),
+        ...(cp ? ["-e", "BASE_LAYOUT=" + cp.layout, "-e", "BASE_MANIFEST=" + cp.manifest] : []),
         ...(s.a === s.b ? ["-p", loopback + "::5432"] : []),
       ],
       "/bin/sh",
-      ["-ceu", guard + 'exec docker-entrypoint.sh postgres "$@"', "primary", ...pgArgs],
+      [
+        "-ceu",
+        guard +
+          (cp
+            ? 'actual=$(sha256sum "/base/$BASE_LAYOUT/backup_manifest"); test "${actual%% *}" = "$BASE_MANIFEST"; cp -a "/base/$BASE_LAYOUT/." "$PGDATA/"; '
+            : "") +
+          'exec docker-entrypoint.sh postgres "$@"',
+        "primary",
+        ...pgArgs,
+      ],
       s.a === s.b ? undefined : 5432,
     );
-    await this.pgReady("pg", false);
-    await s.database("pg", "moving");
-    await replicationRole(s);
+    await this.pgReady("pg", false, cp ? 360000 : timeouts.setup);
+    if (!cp) {
+      await s.database("pg", "moving");
+      await replicationRole(s);
+    }
     await this.tx("active", s.a);
     await this.waitBroker("active", timeouts.setup);
     this.writer = await this.gateway("write", s.a, "pg", options.grouped);
-    const ac = new Account(s.e.prefix + "-sync", this.writer, this.writer);
+    const ac = new Account(
+      s.e.prefix + "-sync",
+      this.writer,
+      this.writer,
+      cp?.key,
+      options.writeTimeout,
+    );
     this.account = ac;
-    await ac.open(options.lean ? "lean" : "legacy", options.lean ?? false);
-    const setup = await options.init?.(ac);
+    if (cp) {
+      assert.deepEqual(await ac.w.basis(ac.db), cp.basis);
+      assert(cp.basis.t.t === "long");
+      ac.cursor = String(BigInt(cp.basis.t.v) + 1n);
+      ac.schema = cp.basis.schemaHash;
+      assert.equal(hash(JSON.stringify(cp.receipts)), cp.seal);
+    } else await ac.open(options.lean ? "lean" : "legacy", options.lean ?? false);
+    const setup = cp ?? (await options.init?.(ac));
     assert.match(
       (this.cluster = await this.sql("pg", "select system_identifier from pg_control_system()")),
       /^\d+$/,
@@ -146,6 +187,7 @@ export class SyncPair {
     const tli = await this.sql("pg", "select left(pg_walfile_name(pg_current_wal_insert_lsn()),8)");
     assert.match(tli, /^[0-9A-F]{8}$/);
     this.timeline = parseInt(tli, 16);
+    if (cp) assert.equal(this.cluster, cp.cluster);
     return { ac, setup };
   }
   async clone(replicationHost?: string, replicationPort = 5432) {
@@ -179,7 +221,7 @@ export class SyncPair {
       ],
       s.a === s.b ? undefined : 5432,
     );
-    await this.pgReady("target", true);
+    await this.pgReady("target", true, this.base?.checkpoint ? 360000 : timeouts.setup);
     const received = await wait("initial WAL receiver", timeouts.setup, () =>
       this.candidate().catch(() => undefined),
     );
@@ -205,6 +247,7 @@ export class SyncPair {
     this.reader = await this.gateway("read", s.b, "target", grouped);
     this.route = await ingress(this.writer);
     this.account!.changeEndpoint(this.route.url, this.reader);
+    await this.auditCheckpoint("before");
   }
   async setSync(enabled: boolean) {
     const setting = enabled ? "FIRST 1 (" + standbyName + ")" : "";
@@ -566,6 +609,13 @@ export class SyncPair {
       },
     };
     return new Supervisor(port, this.initialFlush);
+  }
+  async auditCheckpoint(stage: "before" | "after") {
+    if (!this.base?.checkpoint) return;
+    const cp = this.base.checkpoint;
+    const { auditSeed } = await import("./seed.ts");
+    const receipts = await auditSeed(this.account!, cp.receipts);
+    this.s.e.log("seed-identity", { stage, seal: cp.seal, manifest: cp.manifest, receipts });
   }
   async cleanup() {
     this.route?.close();
