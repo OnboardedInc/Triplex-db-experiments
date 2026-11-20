@@ -341,6 +341,13 @@ def run():
     ROOT.mkdir()
     with (ROOT.parent/"night-n19/campaign.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        # [DX-BM1] Why: the preceding comparison uses the same tag for a different image.
+        # Rejected: letting the current tag select an unrecorded runtime after restoring the sealed seed.
+        image_name = "tx2-datomic:1.0.7745-da00"
+        image, = [row for row in read(seed.BUILD/"results/images.json") if image_name in row.get("RepoTags", [])]
+        assert command("docker","image","inspect","--format","{{.Id}}",image["Id"]) == image["Id"]
+        call("docker","image","tag",image["Id"],image_name)
+        assert command("docker","image","inspect","--format","{{.Id}}",image_name) == image["Id"]
         ENV.update(DX_INT1_GATEWAYS="demand", DX_INT1_READER_CPUS="5,6,7,9,10,11",
                    DX_TOUCHED_READ_MODE="validated", TRIPLEX_TRACE_LEVEL="summary",
                    TRIPLEX_TRACE_COMPONENTS="gateway", TRIPLEX_TRACE_GATEWAY="1",

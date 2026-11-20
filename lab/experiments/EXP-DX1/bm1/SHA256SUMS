@@ -232,3 +232,5 @@ e272ac70a56e0b596794830d825ac9a0a8de2a019be1a4bdb818f27b43a36039  overnight/i29-
 49c7b3744920e8c175d1dcfd41ef321f25804c341b80f0c298d81d40e9be879e  overnight/i34-2/collector.json
 f33c3c767e92cd4bece823d3600876e64692ae3162f7fdbf9a8127469f71266c  overnight/i34-2/restore-witness.json
 cd4c9abbe7137bc6f65fc101799dfb73fcdc6703bc6444ee168bdcdb08a9d0ff  day-n20/ha1-micro-agreement/collector.json
+b8c2d3702f99f5629eb772809b1be1595bcb3eb30cb9e22f8393c1f6a7d7ca52  day-n20/tail1-collector-agreement/collector.json
+e1147c4fb940d77faa9dbf2f64d82ea2ada5fcbe8f3e929d4b8ac70b73b71111  day-n20/int1-oracle-agreement/world-digests.json
