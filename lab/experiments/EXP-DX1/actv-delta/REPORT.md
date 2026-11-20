@@ -9,6 +9,8 @@ The full server run remains on hold. Its ninety-minute finish still needs proof.
 
 North star P5 with P1 and P2 under load. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
+The four-Publishes-per-second comparison below is a saturation experiment. A separate joined run checks save-only capacity first, then offers one Publish every five seconds or one second. [Part 5 method and receipt audit](PART5.md)
+
 The source-bound prior tape still has 34 late offers and 495 ms p99 issuer-side wait behind an active save across 111 complete traces. The six late offers with that instrumentation have 34 ms median measured save wait, 95 ms median native service and 886 ms median unassigned time. The earlier run preceded the 250 ms grace. It had no integrated CPU-pressure, reader-head or retry counters. [Attribution, queue law and stored evidence](PART4.md) · [Checksums](PART4-SHA256SUMS)
 
 The existing DELTA record/stored audit, 23 native schedules, crash stops and +6.68% WAL price are at `d2cda11f0`. The 1,000-person record/stored split remains 121 ms maximum for four record offers and 2.776 s for broad literal storage. The new joined path has a separate study with no DELTA fence or grace. The fresh native race at `3aee17a91` included save 12 in the single Publish at 13 and excluded save 14. Python matched both reads. An external writer moved the predecessor three times and the contender left no receipt. [Earlier evidence](ACTAUDIT-SHA256SUMS)
