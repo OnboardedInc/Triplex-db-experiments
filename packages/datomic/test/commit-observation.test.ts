@@ -1,7 +1,16 @@
 import http from "node:http";
 import { once } from "node:events";
+import { createHash } from "node:crypto";
 import { expect, it } from "vitest";
-import { DatomicClient, type DatomicCommitAttempt } from "../src/DatomicClient.js";
+import {
+  DatomicClient,
+  type DatomicCommitAttempt,
+  type DatomicRequestSample,
+} from "../src/DatomicClient.js";
+const parent = (id: string) => {
+  const token = createHash("sha256").update(id).digest("hex");
+  return "00-" + token.slice(0, 32) + "-" + token.slice(32, 48) + "-01";
+};
 // [DX-B6-1] Why: overlapping responses must remain bound to their own commit, including conflict replies.
 // Rejected: joining telemetry through a mutable last-response callback.
 it("attributes actual overlapping HTTP calls and socket events to their observation", async () => {
@@ -14,6 +23,7 @@ it("attributes actual overlapping HTTP calls and socket events to their observat
         () => {
           res.statusCode = req.url === "/fail" ? 409 : 200;
           res.setHeader("Content-Type", "application/json");
+          res.setHeader("traceparent", parent(body.operationId));
           res.end(
             JSON.stringify(
               req.url === "/fail"
@@ -30,6 +40,12 @@ it("attributes actual overlapping HTTP calls and socket events to their observat
   await once(server, "listening");
   const address = server.address() as { port: number };
   const client = new DatomicClient(`http://127.0.0.1:${address.port}`);
+  // [DX-SCALE1] Why: refused writes need a separate correlated trace sample.
+  // Rejected: routing their diagnostics into the client success count.
+  const successes: DatomicRequestSample[] = [],
+    failures: DatomicRequestSample[] = [];
+  client.onRequest = (s) => successes.push(s);
+  client.onRequestFailure = (s) => failures.push(s);
   const observation = (): DatomicCommitAttempt => ({
     firstAdapterCall: performance.now(),
     optimistic: true,
@@ -62,11 +78,13 @@ it("attributes actual overlapping HTTP calls and socket events to their observat
       expect(o.httpCalls).toBe(1);
       expect(o.requests).toHaveLength(1);
       const sample = o.requests[0]!;
-      expect(sample).toMatchObject({ operationId: id, status });
+      expect(sample).toMatchObject({ operationId: id, status, gatewayTraceparent: parent(id) });
       expect(sample.written).toBeGreaterThanOrEqual(sample.started);
       expect(sample.headers).toBeGreaterThanOrEqual(sample.written);
       expect(sample.finished).toBeGreaterThanOrEqual(sample.headers);
     }
+    expect(successes.map((s) => s.operationId).sort()).toEqual(["fast", "slow"]);
+    expect(failures).toEqual(failed.requests);
   } finally {
     client.close();
     await new Promise<void>((resolve) => server.close(() => resolve()));
