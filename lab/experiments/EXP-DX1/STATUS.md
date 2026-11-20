@@ -2901,3 +2901,18 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   campaigns to the two-server window with DX-HASYNC1's suite.
 - **DX-HA1 is parked** (no part 5): the Mac cannot separate these arms tonight, and one builder fewer shortens the
   queue for the measurement lease that DX-STG1, DX-WFIX1, DX-RD1, DX-TAIL1 and DX-HASYNC1 are waiting on.
+
+## 2026-11-20 06:26 UTC (01:26 local, 2026-11-20): DX-STG1 part 5 in: joined Publish check passes natively; sending stays near 50 per second; builder parked
+
+- **DX-STG1 part 5 (`f3454b12e`, Mac VM; `notify1/REPORT.md`).** Native joined Publish check with the recipient stopped:
+  six people whose work changed and two unchanged matched the oracle; after dispatch resumed the recipient's 19
+  effects arrived in order. Exact selection handled 19 of 20 cases at 1,000 and 10,000 people; the whole roster
+  drained in 145 ms at 1,000 and 1.59 s at 10,000; the exact list used one recipient commit at 10,000 against ten,
+  but rebuilding the selection from scratch took 3.87 s and delayed nearby saves. Separate sender gateway: lower read
+  delays in both repeats; neither gateway met both latency limits consistently on the contended Mac. Sender reading
+  one pinned source copy in parallel: cold deep rate 140 to 174 notices per second, with 63% of the run spent
+  fetching the copy; the longer test broke both latency limits. Forecast for a server 40 to 70 notices per second
+  inside the limits (39 to 69 minutes for 165,000). The tenfold target is unmet; the fetch of the source copy would
+  have to be more than ten times faster. 19 local regressions pass.
+- **DX-STG1 is parked** (no part 6): there is no bar for sending time (asked of Sam, not urgent), the Mac cannot give a
+  clean latency comparison tonight, and its server command joins the hand-over list.
