@@ -1,11 +1,11 @@
-Activation changes which rules a new screen uses. A screen pinned before the change keeps its earlier answer.
-Each release wrote one account fact and visited zero people at both 1,000 and 10,000 people.
-Six of twelve local switches took at least one second from offer to the first correct answer in a fresh process. The slowest took 1.925 s.
-On the 10,000-person wage repeat, the write took 254 ms. The first verified answer arrived another 951 ms later.
-At that size, a first read in a running process took 20.5 ms at the median, a repeat took 11.1 ms and an unchanged reconciliation took 29.9 ms.
-The wage edit owed 1,650 notices. Recording them took 25.6 s and applying them took another 94.3 s. The overtime edit owed none.
-A live save offered during a 64-person notification batch took 1.399 s to acknowledge. The 100,000-person live-traffic test remains open.
-If one second includes the last notice, these broad edits missed it. Protected submissions also need a decision about what may survive erasure.
+A 10,000-person release that previously took 1.205 seconds to show included the cost of starting a new reader process.
+The original trace measured 254 ms to make the release durable, 14 ms to check its receipt and 39 ms inside the first read.
+In a fresh trace, an already-connected reader returned the new answer 36 ms after durability at the median. A new process took 563 ms.
+On deep data, the corresponding medians were 29 ms and 625 ms. Both readers picked up the release on their next request.
+The existing reader made seven database requests on a miss. The shared-cut option reuses control data from the same database position.
+An account record can describe every owed notice in one transaction. Storing changed output values also takes work proportional to the changes.
+The local joined experiment tests both costs. The earlier 10,000-person dispatcher took 25.6 seconds to record 1,650 individual notices.
+A protected identity erased after a notice becomes due needs an explicit delivery rule.
 
 ### Local evidence
 

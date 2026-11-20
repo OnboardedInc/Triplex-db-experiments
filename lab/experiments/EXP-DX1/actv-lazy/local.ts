@@ -105,6 +105,10 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
   run("pressure.ts", [dir]);
 } else if (binding.mode === "--timing") {
   assert(["legacy", "shared-cut"].includes(binding.size!));
+  if (binding.size === "shared-cut") {
+    process.env.DX_LAZY_READ_PATH = "shared-cut";
+    run("read-gate.ts", [dir]);
+  }
   run("timing.ts", [dir, binding.size!]);
 } else if (binding.mode === "--smoke") {
   run("bench.ts", ["--smoke", dir]);

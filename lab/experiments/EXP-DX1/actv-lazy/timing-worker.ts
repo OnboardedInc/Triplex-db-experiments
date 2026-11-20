@@ -55,14 +55,14 @@ const imported = clock(),
   importCpu = process.cpuUsage(entryCpu);
 const boot = await message();
 assert(boot.scope && boot.nonce);
-assert(boot.path === "legacy");
+assert(["legacy", "shared-cut"].includes(boot.path));
 phase = "connect";
 const opening = clock(),
-  s = await openStore(boot.scope, boot.format);
+  s = await openStore(boot.scope, boot.format, boot.path === "shared-cut" ? "read" : "write");
 const connected = clock(),
   startup = { entry, imported, opening, connected, importCpu, requests: requests.splice(0) };
 try {
-  const reader = new LazyReader(s, boot.format, 4 << 20, () => boot.valid);
+  const reader = new LazyReader(s, boot.format, 4 << 20, () => boot.valid, boot.path);
   send({ ready: true, nonce: boot.nonce, scope: s.scope, startup });
   for (;;) {
     const m = await message();

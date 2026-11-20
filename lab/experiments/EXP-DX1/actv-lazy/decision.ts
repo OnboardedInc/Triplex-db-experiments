@@ -56,7 +56,7 @@ export async function worldsAt(store: Store, format: Format, subjects: string[],
   }
   return subjects.map((s) => worldOf(s, reachableRows([s], rows, by)));
 }
-export function evaluate(
+export function render(
   store: Store,
   format: Format,
   world: W0.World,
@@ -81,8 +81,26 @@ export function evaluate(
       }),
     };
   const activations = c.releases.map((r) => ({ from: r.from, tx: r.tx, release: r.release }));
-  const output = W0.reconcileWorld(world, activations, b);
+  const w = c.releases.find((r) => r.id === winner(c, b));
+  let output;
+  if (w?.joined && w.document && !W0.RELEASES_BY_HASH.has(w.release)) {
+    const custom = W0.compileRelease(w.document);
+    assert.equal(custom.hash, w.release, "Unbound release document");
+    output = W0.evaluateWorld(world, custom, b);
+  } else output = W0.reconcileWorld(world, activations, b);
   const json = W0.isFailure(output) ? canonical(output) : W0.outputJson(output);
+  return { output, json, world };
+}
+export function evaluate(
+  store: Store,
+  format: Format,
+  input: W0.World,
+  b: Point,
+  c: Controls,
+  latest: Controls,
+) {
+  const { output, json, world } = render(store, format, input, b, c, latest),
+    subject = world.subject;
   return {
     output,
     json,
