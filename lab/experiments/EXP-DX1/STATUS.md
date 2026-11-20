@@ -2520,3 +2520,26 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   Datomic's range: fewer records per save, accounts per database, archive tiers; the rulings it needs from Sam);
   builder **DX-ERASE1** (`exp/DX-ERASE1-erasure-cost`: time and disruption of erasing one person at three sizes on the
   Mac, growth law, the layout requirement if it is too slow).
+
+## 2026-11-20 02:15 UTC (21:15 local, 2026-11-19): DX-W1 part 4 in: a save's time is fixed cost, not record count; servers' state
+
+- **DX-W1 part 4 (`7a6a7e9ef`, Mac VM; `w1/REPORT.md`, `w1/small/CENSUS.md`, `BUDGETS.md`, `CAPACITY.md`).** Census of a
+  one-field replacement: 23 records and 2,907 stored bytes (2 business, 6 journal rows of which the entry rows repeat
+  the business texts, 15 bookkeeping); three fields: 31 and 5,969. Compact rows (`TX2_SMALL_ROWS=1`): 2,285 and 4,847
+  bytes, same counts, native compute 1.250 to 1.030 ms and 1.425 to 1.135 ms; existing seeds need only the new
+  reader. **Fitted cost:** native compute 0.396 ms fixed + 2.26 µs per datom + 0.22 µs per KiB; durable peer round trip
+  6.45 ms fixed + 4.42 µs per datom + 71.7 µs per KiB: record count does not buy speed, the fixed part per transaction
+  and the bytes do. Prepared-request reuse (`TX2_GROUP_REUSE_PREPARED=1`) removed 1.43 to 1.95 ms of repeat
+  preparation per save; throughput at 1/8/32/64/128 outstanding 46-49 / 77-87 / 138-159 / 189-195 / 158-183 saves per
+  second (falls above 64). Time budget per transaction (`TX2_WRITE_BUDGET_US`): a 7 to 8 ms budget models 1.128 times at
+  50 saves per second and 1.245 at 100; at 235 the best modelled quiet-account ratio is 2.655 times (bar 1.25).
+  Forecast for a server: 260 to 350 saves per second with large ready groups, 180 to 215 with an 8 ms budget. Both
+  server commands gained arms (`--pulse pulsew4a --enhanced`, `--field-rates fldw4a --enhanced`), unrun.
+- **Assigned, DX-W1 part 5:** records per field save to 12 or fewer inside the existing layout (for the ten-billion
+  record problem); what a field save keeps after the index job, measured; why throughput falls above 64 outstanding
+  and the log-write against peer split.
+- **Servers at 21:15 local:** server 1 still on the group-commit job (ten accounts in one scope); DX-BM1 confirmed the
+  audit's findings in its own code and fixed its collector (producer and collector accept the same six native offers
+  with R1, R2, R3 in order); the 100,000 activation stays on hold for the producer's fixes. Server 2: the pooled seed
+  finished (16,245,050 current facts in 56 min 40 s, 730 PostgreSQL bytes per fact) and the first staggered
+  real-rate write arm is running.
