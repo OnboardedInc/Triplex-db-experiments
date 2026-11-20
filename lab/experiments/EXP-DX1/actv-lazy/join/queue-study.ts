@@ -114,9 +114,6 @@ class SourceTape {
     if (this.next) assert.deepEqual(events[this.next - 1], this.events[this.next - 1]);
     this.events = events;
   }
-  keepLatest() {
-    for (const [id, history] of this.histories) this.histories.set(id, [history.at(-1)!]);
-  }
   fields() {
     const event = this.events[this.next++];
     assert(event, "insufficient authored save commands");
@@ -171,14 +168,14 @@ async function setup(scope: string, n: number, nonce: string, tape: string): Pro
   }
 }
 
-function arrivalOffsets(cycle: number, writer: number, rate: number, span: number) {
+function arrivalOffsets(writer: number, rate: number, span: number) {
   if (writer)
     return Array.from(
       { length: Math.ceil((span * rate) / 1000) },
       (_, i) => ((i + (writer === 1 ? 0.23 : 0.71)) * 1000) / rate,
     ).filter((at) => at < span);
   const offsets: number[] = [];
-  liveArrivals(cycle, rate, 60 * Math.ceil(span / 60000), (at) => {
+  liveArrivals(0, rate, 60 * Math.ceil(span / 60000), (at) => {
     if (at * 1000 < span) offsets.push(at * 1000);
   });
   return offsets;
@@ -209,7 +206,7 @@ async function block(
       span = settleMs + screenMs + 30000 + spacing * count,
       saves = [target, ...neighbors].map((t, index) => {
         const hz = index ? 1.6 : rate;
-        const offsets = arrivalOffsets(cycle, index, hz, span);
+        const offsets = arrivalOffsets(index, hz, span);
         t.tape.reserve(offsets.length);
         return {
           t,
@@ -653,7 +650,6 @@ async function block(
       schedule: clock?.offers ?? [],
     };
     save(join(folder, "verified.json"), result);
-    for (const { t } of saves) t.tape.keepLatest();
     console.log(
       JSON.stringify({
         verifiedBlock: cycle,
@@ -669,6 +665,56 @@ async function block(
   } finally {
     await Promise.all(readers.map((r) => r.close()));
   }
+}
+
+type SeedImage = { sha256: string; bytes: number; nonce: string; ownerHash: string };
+type Restore = { image: SeedImage; block: number; restoredAt: number };
+
+async function imageOperation<T>(
+  attempt: Identity,
+  request: { action: "seal" } | { action: "restore"; block: number; sha256: string },
+) {
+  assert(process.send);
+  const id = randomUUID();
+  return new Promise<T>((ok, fail) => {
+    const receive = (m: { id: string; error?: string; image?: T }) => {
+      if (m.id !== id) return;
+      clearTimeout(timer);
+      process.off("message", receive);
+      if (m.error) fail(Error(m.error));
+      else {
+        assert(m.image);
+        ok(m.image);
+      }
+    };
+    const timer = setTimeout(() => {
+      process.off("message", receive);
+      fail(Error("The slot manager did not return a seed image proof"));
+    }, 600000);
+    process.on("message", receive);
+    process.send!({ id, nonce: attempt.nonce, type: "joinedImage", ...request });
+  });
+}
+
+async function anchor(target: Target) {
+  const { store, fixture } = target,
+    account = new JoinedAccount(store);
+  const r = await store.lookup("joined:initial-r1");
+  assert(r?.position === (await store.head()));
+  const tail = await account.db.get<Tail>("tail", r.position),
+    durable = await account.receipt(tail.value.sequence, r.position);
+  assert.equal(durable.marker.release, W0.R1.hash);
+  return {
+    scope: store.scope,
+    position: r.position,
+    tx: r.txId,
+    cut: durable.marker.cut,
+    roster: fixture.rosterHash,
+    facts: fixture.facts,
+    source: fixture.sourceHash,
+    marker: sha256(canonical(durable.marker)),
+    event: sha256(canonical(durable.event.value)),
+  };
 }
 
 export async function run(dir: string, attempt: Identity) {
@@ -689,33 +735,62 @@ export async function run(dir: string, attempt: Identity) {
     target = await setup(scope, n, attempt.nonce, "joined-target"),
     neighbors: Target[] = [],
     ref = new Reference();
+  let initialClosed = false;
   try {
     for (const i of [1, 2])
       neighbors.push(
         await setup(scope + "-neighbor-" + i, 96, attempt.nonce, "joined-neighbor-" + i),
       );
+    const seeded = [target, ...neighbors];
+    const seedAnchors = await Promise.all(seeded.map(anchor));
+    await Promise.all(seeded.map(({ store }) => store.close()));
+    initialClosed = true;
+    const image = await imageOperation<SeedImage>(attempt, { action: "seal" });
+    assert(image.nonce === attempt.nonce && /^[a-f0-9]{64}$/.test(image.sha256));
+    save(join(dir, "fixture.json"), { attempt, image, anchors: seedAnchors });
     type Window = Awaited<ReturnType<typeof block>>;
     const windows: { cycle: number; window: Window }[] = [];
     const dropped = new Map<number, number>();
     for (const [cycle, item] of plan.entries()) {
       if (dropped.has(item.rate)) continue;
-      console.log(JSON.stringify({ cycle, ...item, plannedOffers: count }));
-      const { policy, rate, spacing } = item;
-      const window = await block(
-        join(dir, "cell-" + cycle),
-        attempt,
-        target,
-        neighbors,
-        policy,
-        rate,
-        spacing,
-        count,
-        cycle,
-        ref,
+      const restore = await imageOperation<Restore>(attempt, {
+        action: "restore",
+        block: cycle,
+        sha256: image.sha256,
+      });
+      assert.deepEqual(restore.image, image);
+      assert.equal(restore.block, cycle);
+      const current = await Promise.all(
+        seeded.map(async ({ store, fixture }, i) => ({
+          store: await openStore(store.scope, "act2-deep"),
+          fixture,
+          tape: new SourceTape(fixture, i ? "joined-neighbor-" + i : "joined-target"),
+        })),
       );
-      windows.push({ cycle, window });
-      // [DX-ACT2] Why: all four cells at a rate have the same save-only admission requirement. Rejected: measuring another cadence on a rate the baseline cannot sustain.
-      if (window.result.screen.reason) dropped.set(rate, cycle);
+      try {
+        const reopened = await Promise.all(current.map(anchor));
+        assert.deepEqual(reopened, seedAnchors);
+        save(join(dir, "reopened-" + cycle + ".json"), { attempt, restore, anchors: reopened });
+        console.log(JSON.stringify({ cycle, ...item, plannedOffers: count }));
+        const { policy, rate, spacing } = item;
+        const window = await block(
+          join(dir, "cell-" + cycle),
+          attempt,
+          current[0]!,
+          current.slice(1),
+          policy,
+          rate,
+          spacing,
+          count,
+          cycle,
+          ref,
+        );
+        windows.push({ cycle, window });
+        // [DX-ACT2] Why: all four cells at a rate have the same save-only admission requirement. Rejected: measuring another cadence on a rate the baseline cannot sustain.
+        if (window.result.screen.reason) dropped.set(rate, cycle);
+      } finally {
+        await Promise.all(current.map(({ store }) => store.close()));
+      }
     }
     const pooled = rates.flatMap((rate) =>
       cadences.flatMap((spacing) =>
@@ -779,6 +854,6 @@ export async function run(dir: string, attempt: Identity) {
     });
   } finally {
     ref.oracle.close();
-    await Promise.all([target, ...neighbors].map((t) => t.store.close()));
+    if (!initialClosed) await Promise.all([target, ...neighbors].map((t) => t.store.close()));
   }
 }

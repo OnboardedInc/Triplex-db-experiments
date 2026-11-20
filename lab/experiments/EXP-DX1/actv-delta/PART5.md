@@ -8,9 +8,12 @@ Each admitted block keeps 100 fixed offers at five-second or one-second spacing.
 
 Save-only admission requires the offered ACK rate within a one-save boundary allowance or 1% of offers, whichever is larger. Backlog at the last checkpoint must stay within that allowance of the starting backlog. All saves due in the screen must have receipted ACKs by the one-second drain deadline. The reader driver must deliver at least 99% of the paced seats. A failed rate screen drops both cadences and both policies at that rate. A later failed screen can leave a partial arm without a measured percentile.
 
+The first run kept advancing one account through the whole matrix. The third block started with more than 200 earlier releases, missed 28 releases, and the next save-only check failed at 3.5/s. This establishes a capacity change during the run. It leaves release history and runtime pressure confounded. The matched rerun starts every block at the same independently checked R1 cut and reuses the same save tape geometry. The new timed release is still authored at its offer.
+
 ## Receipt audit
 
 - The native runner binds source and build bytes to a fresh engine nonce and exclusive slot owner. CPU samples come from that same lease. The manager confirms volume removal and slot release.
+- The matched reset verifies the checksum of the one private seed image and its exact slot ownership before restoring. Both Datomic roles stop for the restore. Each block reopens all three exact R1 receipts, source cuts and roster identities on freshly opened clients. The image contains ordinary R1 seed data. It lives in the private container and is removed with it.
 - The screen grades fresh, monotonic scheduled and native ACK clocks by scope and verifies the exact due schedule and receipt identities after drain. Each joined save first verifies the complete native transaction through `Store.commit`. The test then checks the authored field values in its original receipt.
 - The publication result reopens each native receipt and checks the document, predecessor, previous release and notice recipe. A skipped offer must have no native command. Python compares each recorded response at its actual cut from the independently authored seed and save tape.
 - Each measured summary requires 200 scheduled offers and retains every miss. The four stage clocks add to the record endpoint per offer. A busy or elapsed slot remains in the p99 denominator. The rejected-rate summaries carry their save-only screen and no Publish latency.
