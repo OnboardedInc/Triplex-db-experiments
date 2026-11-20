@@ -56,6 +56,10 @@ The next executed smoke opened that reader and wrote its ready record. The launc
 
 The frozen zero-reader smoke then reached its terminal driver record. It checked 39 receipt reads and 40 oracle samples exactly. The collector rejected the absent tenant feed summary. An independent check of the saved consumer database matched all 39 tape writes and ten account challenges to their durable effects at checkpoint 63. The producer now emits the existing tenant feed evidence for the frozen arm too, which the collector requires. The other three smoke arms remain to be collected. [Original driver, consumer and cleanup hashes](P5-SHA256SUMS)
 
+The next frozen zero-reader arm matched all 27 files in a separate collector invocation. The loaded arm checked 8,845 reads exactly and found zero local oracle samples. The validated reader checks the gateway on every pull, so its reads are counted as source reads. The campaign selects the following touched replica and preserves its actual route tags. A sampled local reply is checked against the existing direct sweep source at the same cut. The evidence exporter also transfers guest directories with ordinary host creation modes and verifies their bytes before retiring the guest copy. [Verified prefix, loaded attempt and cleanup hashes](P5-SHA256SUMS)
+
+The full deep import needs about 90 minutes at 3,000 facts per second. Its tail now allows 100 minutes while the matched foreground comparison keeps its original 300-second window.
+
 ## Evidence audit
 
 - The integration gates match the live engine lease, exact source archive, build-input and image hashes, and fresh native test output. The gate runner reopens those bytes before each branch push. The documentation-only reader handoff matches the tested runtime inputs byte for byte.
