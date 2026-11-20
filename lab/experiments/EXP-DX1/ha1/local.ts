@@ -16,7 +16,16 @@ import {
   vmDisk,
   withPool,
 } from "../../../bin/lib.mjs";
-import { Evidence, modeOf, roles, root, runFile, sleep } from "./common.ts";
+import {
+  Evidence,
+  localRoleMiB,
+  modeOf,
+  roles,
+  root,
+  runFile,
+  sleep,
+  type Role,
+} from "./common.ts";
 import { drill } from "./run.ts";
 import type { Site } from "./stack.ts";
 
@@ -147,13 +156,15 @@ export async function localDrill(opts: any, config: any, manager: any) {
     return attempt;
   }
   // [DX-HA1] Why: each child cap has a matching live reservation and unique name. Rejected: reusing a retained slot volume or double-counting a single opaque stack.
-  const wanted = Object.entries(roles).filter(([r]) =>
-    mode.startsWith("load-")
-      ? ["pg", "active", "write", "tool"].includes(r)
-      : mode === "replication"
-        ? ["pg", "target", "tool", "active", "write"].includes(r)
-        : mode === "move" || mode.startsWith("one-") || r !== "target",
-  );
+  const wanted = (Object.keys(roles) as Role[])
+    .filter((r) =>
+      mode.startsWith("load-")
+        ? ["pg", "active", "write", "tool"].includes(r)
+        : mode === "replication"
+          ? ["pg", "target", "tool", "active", "write"].includes(r)
+          : mode === "move" || mode.startsWith("one-") || r !== "target",
+    )
+    .map((role) => [role, localRoleMiB(mode, role)] as const);
   const people = Number(opts.people ?? 4);
   const smallLogicalCopy =
     mode === "one-account" && Number.isSafeInteger(people) && people > 0 && people <= 256;

@@ -42,6 +42,10 @@ export const roles = {
   tool: 640,
 } as const;
 export type Role = keyof typeof roles;
+// [DX-LOAD1] Why: peak-rate arms keep several fresh databases in one transactor process. Rejected: reusing the 560 MiB failure-drill cap after a measured cgroup OOM.
+export function localRoleMiB(mode: Mode, role: Role) {
+  return mode === "load-live" && role === "active" ? 896 : roles[role];
+}
 export function modeOf(s: string): Mode {
   assert(modes.includes(s as Mode), "Unknown HA experiment");
   return s as Mode;

@@ -3,7 +3,16 @@ import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import net from "node:net";
 import path from "node:path";
-import { clock, Evidence, hash, loopback, roles, until, type Role } from "./common.ts";
+import {
+  clock,
+  Evidence,
+  hash,
+  localRoleMiB,
+  loopback,
+  roles,
+  until,
+  type Role,
+} from "./common.ts";
 
 export interface Site {
   key: string;
@@ -90,7 +99,7 @@ export class Stack {
       // [DX-HA1] Why: an explicit port survives a gateway container restart. Rejected: ephemeral Docker publication that silently moves the client endpoint.
       published = ["-p", (site.privateAddress ?? loopback) + ":" + hostPort + ":" + port];
     }
-    const mb = roles[role] * (cross ? 4 : 1);
+    const mb = cross ? roles[role] * 4 : localRoleMiB(this.e.mode, role);
     const mounts = pgRoles.has(role)
       ? []
       : [

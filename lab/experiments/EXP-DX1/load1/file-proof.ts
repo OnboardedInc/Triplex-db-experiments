@@ -67,7 +67,7 @@ export async function proveFile(
           ref: i + "/e",
           entityId: namespace + i,
           attribute: "number",
-          value: { type: "number", value: i === 1 ? -0 : i - 0.25 },
+          value: { type: "number", value: i - 0.25 },
           validFrom: validAt,
         },
       ],
@@ -85,6 +85,15 @@ export async function proveFile(
   const wrongHeader = overlapping.header;
   overlapping.close();
   assert.throws(() => sealedSnapshot(wrongFile, wrongHeader, namespace, width));
+  const invalidFile = path.join(dir, arm + ".unsupported.sqlite");
+  const invalidGroups = fixtures();
+  const badNumber = invalidGroups[0]!.ops[4]!;
+  assert(badNumber.op === "assert" && badNumber.value.type === "number");
+  badNumber.value.value = -0;
+  const invalidExport = fileSource(invalidFile, meta, invalidGroups);
+  const invalidHeader = invalidExport.header;
+  invalidExport.close();
+  assert.throws(() => sealedSnapshot(invalidFile, invalidHeader, namespace, width));
   const data = sealedSnapshot(exportFile, header, namespace, width);
   const start = performance.now();
   try {

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
+import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { bytes, fileSource, type Header, type Source } from "./export.ts";
 import { sha, type Frame, type SnapshotData } from "./source.ts";
 
@@ -25,6 +26,8 @@ export function sealedSnapshot(file: string, header: Header, namespace: string, 
         const entities = new Set<string>();
         for (const o of ops) {
           assert(o.op === "assert" && o.entityId.startsWith(namespace));
+          const invalid = runtimeApi.invalidValue(o.value, runtimeApi.ValueDomains.datomic);
+          if (invalid) throw invalid;
           entities.add(o.entityId);
         }
         for (const entity of entities) put.run(entity);
