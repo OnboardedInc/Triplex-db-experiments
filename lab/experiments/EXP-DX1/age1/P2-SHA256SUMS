@@ -32,3 +32,8 @@ cf89cbb39703dfcffab96351dc29b385d773910abed468ef4fcb18c2b251135d  p2-mac-f-fidel
 1f199317bd89608ddcaa64323fdcb0592403629630e8905c06d03275e153fcca  p2-mac-f-fidelity-arms/pg.log
 ff8ec6ca7deb9ee39f11f0869c5d00add1022684ce1f1eae8a2bf0169e188282  p2-mac-f-fidelity-arms/probe.log
 91399e56f731dd3473d3b3b0545f1dfe0aceffed2648fdd9b08d4c72fb26db01  p2-mac-f-fidelity-arms/tx.log
+a99d2485a9434da0200694bc5f2f99a893d158182435d256788cc2ed1ed716a2  p2-mac-g-fidelity-arms/binding.json
+09f2d26bb99a1ccbe70c4215e6b05e464ebde0abef7fb3fed0f6081d58946b63  p2-mac-g-fidelity-arms/cleanup.json
+8a31ce83f46f313629d6f1e65d92af2cb61add0d60bc8bd929bb934a60e7eb7c  p2-mac-g-fidelity-arms/pg.log
+e14a05638466b779d681cd58eab7771c6fe6daa6163b53514d2d308492a5d98b  p2-mac-g-fidelity-arms/probe.log
+e51e13c03738eeff9c3dc5b3eecf00dc98c7e51a9b05d772771f69007c793aae  p2-mac-g-fidelity-arms/tx.log

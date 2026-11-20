@@ -31,4 +31,5 @@ Part 1 at `e44ea53dc` matched 112 saves and reached 360,314 and 1,260,314 record
 The SDK build, source parsing, rate and count tests, and historical log join completed. The pinned SCALE1 source produced five frames with 9,690 facts for 80 people, and the Clojure adopter validated that fixture manifest. The small SQL-backed gates use one ordinary heavy token per run. Any Mac timing is diagnostic. [Evidence manifest](P2-SHA256SUMS)
 
 - The larger load-settings arm verified 1,072 saves and 21,436 logical datoms and took a settled per-index census. Its slot, containers and volume were released. `p2-mac-d-fidelity-arms-load`
+- The standard arm verified burst and rolling log identity and W1 grouped log identity on the same tape. Grouping kept the logical behavior and increased the log count to 28,135. Its slot, containers and volume were released. `p2-mac-g-fidelity-arms`
 - Retained failures cover the missing W0 build, a PostgreSQL image unavailable at container creation, JSON escaping in the opaque-token probe, and the grouped revision-retraction census. Setup and oracle failures remain distinct from completed comparisons.
