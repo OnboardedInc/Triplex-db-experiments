@@ -27,6 +27,8 @@ The files below are relative to the durable Triplex lab vault's `evidence/DX-HAS
 | `hasync-fleet-shared-3bf2d6c8` | `0d093d3a8` | First setup failure. The vendor table script transfers ownership to postgres, so cell-role bootstrap stopped before the cut. |
 | `hasync-fleet-shared-ea09d833` | `514fa5644` | A container startup probe accepted the temporary bootstrap listener before PostgreSQL restarted. |
 | `hasync-fleet-dedicated-2d7dea95` | `514fa5644` | SQL bootstrap completed. Datomic rejected the undersized memory index configuration at startup. |
+| `hasync-fleet-shared-4ecda644` | `a20076137` | One system on the shared SQL pair. 17.50 s to a new save and 96 scheduled saves settled. First fleet admission at 06:31:52 UTC. |
+| `hasync-fleet-dedicated-bf166e22` | `a20076137` | One system on a dedicated SQL pair. 19.87 s to a new save and 110 scheduled saves settled. |
 
 ## Where the code publishes outcomes
 

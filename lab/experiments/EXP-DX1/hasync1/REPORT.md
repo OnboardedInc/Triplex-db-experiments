@@ -41,6 +41,6 @@ node --import tsx lab/experiments/EXP-DX1/ha1/control.ts hasync-suite hasync-p9-
 
 Forecast 75–85 minutes plus up to four for launch and collection on the released pair with prepared builds. The 18 cells cover a 16M edited population, fleet recovery, idle load, standby replacement, stale-predecessor retry, every fault shape and save cost. The collector checks the retry receipt against the attempt's saved body, database, slot, source and oracle. The bare-metal run is pending. [Forecast and schedule](BENCH.md)
 
-The remaining scheduled directional cuts, edited deep runs and fleet timing are pending shared Mac admission. The fleet's first setup failure and fix are recorded. Physical power and management interlock qualification are also pending.
+The fleet first received Mac admission after 1 hour 19 minutes 34 seconds. One system recovered in 17.50 s on the shared pair and 19.87 s on the dedicated pair. The larger fleet, edited deep runs and both directional cuts remain queued. Physical power and management interlock qualification are pending.
 
 Scoped TypeScript and focused HA and command recovery tests cover the gate. The replacement settlement checks the withheld and recovered receipts, exact same-input replay, scoped claim, ordered feed and oracle cuts. Its pending body and response are fresh and bound to the gate nonce, slot, source and scope. No acceptance pins moved. [Evidence and audit](EVIDENCE.md) · [Checksums](SHA256SUMS)
