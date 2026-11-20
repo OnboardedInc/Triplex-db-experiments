@@ -10,6 +10,8 @@ Use the pushed `exp/DX-RD1-readers` source and the existing server 1 placement a
 
 These forecasts apply to a scope aged like p3r. The combined arm assumes fewer obsolete-cut exchanges and less foreground observation work. A single weighted reader still waits for every issued exchange and its IPC. Moving from the archived 3,490/s to 4,400/s requires removing about 59 microseconds from its average complete read cycle. The writer estimates allow for shared CPU and storage pressure. Read fallback traffic goes to a separate JVM, so direct savings in the writer JVM's allocation remain unmeasured. The four bars are 4,400/s, 0.90, 41,392/s and 1.25. [Pre-Part-3 forecasts](PREDICTIONS-P2.md)
 
+The Mac fixture with 5% old cuts held 12% of the direct zero-miss rate. The isolated install arm held 92% of its own zero-miss rate and fell back on 0.037% of completed reads. It reused two old cuts over 24 roots. The forecasts above retain the aged-scope assumptions. The recovery retry could not acquire the Mac lab window, so its forecast remains untested. [Mac curve and history data](REPORT.md)
+
 ```bash
 short_pair() {
   local tag="$1"
