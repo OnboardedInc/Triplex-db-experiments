@@ -130,11 +130,11 @@ async function main(
   const copyReal = fs.realpathSync(copyMount);
   const sameFilesystem = fs.statSync(copyReal).dev === fs.statSync(bench).dev;
   assert(Number.isSafeInteger(original.disk.after) && original.disk.after > 0);
-  // [DX-SCALE1] Why: both the backup and the independent SQL copy occupy disk
-  // at the final cut. Rejected: counting only one of the two artifacts.
+  // [DX-SCALE1] Why: the native backup, verification restore and separate
+  // scorecard dump coexist. Rejected: assuming the dump will compress enough.
   const grownSql = original.disk.after + (targetRecords - baselineRecords) * bytesPerAddedRecord;
   const liveReservation = grownSql + 24 * GiB;
-  const copyReservation = copyHeadroomBytes + grownSql + 24 * GiB;
+  const copyReservation = copyHeadroomBytes + 2 * grownSql + 24 * GiB;
   const liveFree = free(bench),
     copyFree = free(copyReal);
   write(path.join(out, "storage-admission.json"), {
@@ -151,7 +151,7 @@ async function main(
     sameFilesystem
       ? liveFree >= liveReservation + copyReservation
       : liveFree >= liveReservation && copyFree >= copyReservation,
-    "Fresh restore, growing source, backup and verification SQL do not fit",
+    "Fresh restore, growing source, backup, verification SQL and scorecard dump do not fit",
   );
 
   const imageIndex = read<{ Id: string; RepoTags?: string[] }[]>(
@@ -518,6 +518,60 @@ async function main(
       t: sealed.t,
       bytes: fs.statSync(handoff).size,
       digest: await fileHash(handoff),
+    });
+    // [DX-SCALE1] Why: the scorecard restores the exact-aged SQL cut.
+    // Rejected: using the original fresh dump or exporting while native writes can still run.
+    status("sealing the scorecard SQL dump");
+    tx.kill("SIGTERM");
+    const stopped = await Promise.race([txDone.then(() => true), sleep(30000).then(() => false)]);
+    assert(
+      stopped &&
+        !call("ps", ["-eo", "pid=,comm="])
+          .split("\n")
+          .some((line) => new RegExp("^\\s*" + txPid + "\\s+java$").test(line)),
+    );
+    docker("update", "--cpuset-cpus", "1,8", pgName);
+    const dump = path.join(copyDir, "aged.pgdump");
+    const partial = dump + ".partial";
+    const output = fs.createWriteStream(partial, { flags: "wx" });
+    const dumper = spawn(
+      "docker",
+      ["exec", pgName, "pg_dump", "-U", "postgres", "-Fc", "-Z1", "-d", primaryDb],
+      {
+        stdio: ["ignore", "pipe", "inherit"],
+      },
+    );
+    const hashing = createHash("sha256");
+    const passthrough = new Transform({
+      transform(data, _encoding, done) {
+        hashing.update(data);
+        done(null, data);
+      },
+    });
+    const [dumpExit] = await Promise.all([
+      exited(dumper),
+      pipeline(dumper.stdout!, passthrough, output),
+    ]);
+    assert.equal(dumpExit, 0);
+    const verifyFd = fs.openSync(partial, "r");
+    const magic = Buffer.alloc(5);
+    try {
+      assert.equal(fs.readSync(verifyFd, magic, 0, magic.length, 0), magic.length);
+    } finally {
+      fs.closeSync(verifyFd);
+    }
+    assert.equal(magic.toString("ascii"), "PGDMP");
+    fs.renameSync(partial, dump);
+    fs.chmodSync(dump, 0o400);
+    write(path.join(out, "aged-dump.json"), {
+      ...manifest,
+      at: Date.now(),
+      sealSha,
+      records: sealed.records,
+      cut: sealed.head,
+      t: sealed.t,
+      bytes: fs.statSync(dump).size,
+      digest: hashing.digest("hex"),
     });
     status("sealed aged rung");
   } finally {
