@@ -83,7 +83,16 @@ const attempt = {
 };
 const health = await fetch(new URL("/health", endpoint));
 assert(health.ok);
-const { datomicVersion, gatewaySourceHash } = await health.json();
+const identity = await health.json();
+assert(
+  identity &&
+    typeof identity === "object" &&
+    "datomicVersion" in identity &&
+    "gatewaySourceHash" in identity &&
+    typeof identity.gatewaySourceHash === "string",
+  "Unexpected prepared gateway identity",
+);
+const { datomicVersion, gatewaySourceHash } = identity;
 assert.equal(datomicVersion, "1.0.7745");
 assert.equal(gatewaySourceHash, sums(JSON.stringify(verifiedTree(path.dirname(gatewayCode)))));
 assert.equal(git("status", "--porcelain", "--untracked-files=no"), "");

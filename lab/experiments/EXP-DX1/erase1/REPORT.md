@@ -16,3 +16,5 @@ An import restored an erased value, and Publish used an older copy. Both need th
 5. [Requirements for DX-W1 and DX-COMPACT1](HANDOFF.md) sets proposed publication budgets of 100 ms p99 for one person and 1 s p99 for 100, with zero Datomic index jobs on the request path.
 
 The Mac results are diagnostic. The paired scale blocks each contain 500 saves, with 5–115 entirely within the index jobs. The local fixture-resume smoke checked the recorded seed and both excision arms. The SSN-specific Publish rule and independent production review remain open.
+
+The new JavaScript scripts passed the focused type check. The engine import graph reports existing diagnostics in the ACTV delta scripts. The base and this branch have the same 135 gaps in the repository-wide JavaScript coverage list.
