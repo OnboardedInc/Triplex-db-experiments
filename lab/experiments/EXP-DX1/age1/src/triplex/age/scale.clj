@@ -27,6 +27,11 @@
   (sql (System/getenv "AGE_SQL_JDBC")
     #(Long/parseLong (string-query % "select pg_database_size(current_database())"))))
 
+(defn records! [conn]
+  (let [n (:datoms (d/db-stats (d/db conn)))]
+    (native/check! (and (integer? n) (pos? n)) "Datomic history record count unavailable" {})
+    n))
+
 (defn local-limit! []
   (when-let [limit (some-> (System/getenv "AGE_MAX_SQL_BYTES") Long/parseLong)]
     (native/check! (< (bytes!) limit) "Conservative source SQL byte guard reached" {:limit limit})))
@@ -148,10 +153,12 @@
 
 (defn init! [pop]
   (let [db (native/open! "scale") start (System/nanoTime)
-        records (native/seed! db pop)]
+        records (native/seed! db pop)
+        indexing (index! (:conn db))]
     (local-limit!)
-    (native/emit "seed" {:name (:name db) :population pop :records records :seconds (/ (ms start) 1000)
-                         :sqlBytes (bytes!) :index (dissoc (index! (:conn db)) :started :finished)})))
+    (native/emit "seed" {:name (:name db) :population pop :records records
+                         :totalRecords (records! (:conn db)) :seconds (/ (ms start) 1000)
+                         :sqlBytes (bytes!) :index (dissoc indexing :started :finished)})))
 
 (defn rung! [db pop from target low-n busy-n]
   (let [growth (load-to! db pop from target)
@@ -166,6 +173,7 @@
         bytes (bytes!)]
     (local-limit!)
     (native/emit "rung" {:name (:name db) :growth growth :from from :target target :end end :bytes bytes
+                         :totalRecords (records! (:conn db))
                          :warmMs reads :feedMs feed-lat :peerMemory (peer-memory)
                          :low low :busy busy :indexMix mixed :settled (dissoc settled :started :finished)
                          :backupT (:requestedT final-index)

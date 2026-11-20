@@ -63,7 +63,8 @@ export async function measure(ctx, spec) {
   const psql = (db, query) => docker(["exec", pg, "psql", "-XAt", "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-d", db, "-c", query]);
   const rolePss = () => Number(docker(["exec", tx, "awk", "/^Pss:/{print $2}", "/proc/1/smaps_rollup"]));
   const uri = (jdbcUri) => "datomic:sql://" + seed.name + "?" + jdbcUri + "?user=postgres&password=" + password;
-  let from = 0, records = seed.records;
+  assert(seed.totalRecords >= seed.records);
+  let from = 0, authoredRecords = seed.records, previousHistory = seed.totalRecords;
   for (const [i, target] of spec.targets.entries()) {
     const prefix = "rung-" + (i + 1);
     const result = only(await run(prefix + ".log", "rung", [seed.name, ...[from, target, spec.low, spec.busy].map(String)]), "rung");
@@ -84,8 +85,11 @@ export async function measure(ctx, spec) {
       cold[label] = x;
     }
     assert(result.bytes < 7 * GiB);
-    records += result.growth.records + result.low.records + result.busy.records + result.indexMix.records;
-    const measurement = { attempt, name: seed.name, target, records, transactorPssKiB, cold, ...result };
+    const added = result.growth.records + result.low.records + result.busy.records + result.indexMix.records;
+    authoredRecords += added;
+    assert(result.totalRecords >= previousHistory + added, "Indexed history is missing counted records");
+    const measurement = { attempt, name: seed.name, target, records: result.totalRecords, authoredRecords, transactorPssKiB, cold, ...result };
+    previousHistory = result.totalRecords;
     write(prefix + "-measurement.json", measurement);
 
     // [DX-AGE1] Why: restore into fresh SQL storage with no destination transactor, then read at the chosen t.

@@ -24,6 +24,24 @@
     (->> (tape/expected-person pop i saves) (map #(merge missing %))
          (sort-by :attribute) vec)))
 
+(defn oracle-history [pop saves]
+  (let [by-id (into {} (for [i (range (:people pop)), j (range (:fields (tape/person pop i)))
+                             :let [r (tape/seed-row pop i j)]]
+                         [(:id r) r]))
+        rows (reduce (fn [records n]
+                       (let [{:keys [prior fresh tx position clock]} (tape/command pop n)
+                             updated (reduce (fn [acc row]
+                                              (update acc (:id row) assoc :retract_tx_id tx
+                                                      :retracted_position position :retracted_at clock)) records prior)]
+                         (into updated (map (juxt :id identity)) fresh)))
+                     by-id (range saves))
+        nil-fields (merge (zipmap lean/columns (repeat nil))
+                          {:retracted_at nil :retracted_position nil :retract_tx_id nil})]
+    (group-by :entity_id (map #(merge nil-fields %) (vals rows)))))
+
+(defn person-history [{:keys [name conn]} owner]
+  (mapv storage/decode-row (:rows (storage/read-rows name (d/db conn) {"entityIds" [owner] "history" true}))))
+
 (defn normalized-log [{:keys [conn]} t]
   (let [db (d/db conn) tx (d/t->tx t) item (first (d/tx-range (d/log conn) t (inc t)))]
     (equal! t (:t item) "Missing acknowledged transaction in durable log")
@@ -79,6 +97,9 @@
               :let [expected (oracle-person pop i saves)]]
         (equal! expected (person-view product pop i nil) "Product current rows differ from tape")
         (equal! expected (person-view aged pop i nil) "Generated current rows differ from tape"))
+      (doseq [[owner expected] (oracle-history pop saves)]
+        (equal! (set expected) (set (person-history product owner)) "Product historical rows differ from tape")
+        (equal! (set expected) (set (person-history aged owner)) "Generated historical rows differ from tape"))
       (doseq [s (range 0 saves 7)
               pin [nil (+ seed-head (min saves (+ s 5)))]
               :let [page (feed product (+ seed-head s) 7 pin)
