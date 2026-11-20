@@ -24,7 +24,7 @@ The audited base was the remote head `7a6a7e9ef` at dispatch. The exact review f
 
 **Checks** The receipt and retraction fixture went from 10 failures to 64 successful assertions. The combined native run passed 98 assertions across seven tests. Pinned O-REPLAY matched the raw feed, resumed page, pinned rows and durable tuples in all three modes. Sixteen SDK and eight W1 tests passed, along with the Datomic and W1 typechecks.
 
-**Integration** DX-W1 was merged through `6c0d81454`. Its writer and regression files match the tested `0f92704d2` bytes. The merged run passed 98 native assertions, 641 packed and ledger parity assertions, 17 SDK tests and eight W1 tests. Both typechecks passed. Four separately configured integration cases skipped. Pinned O-REPLAY matched all three write modes. The one- and three-fact narrow wire frames decoded byte for byte to the ordinary payloads. [PORTS.md](PORTS.md)
+**Integration** DX-W1 was merged through `67bc5285c`. The last rerun passed 98 native assertions, 641 packed and ledger parity assertions, the 17-assertion packed-group regression, 17 SDK tests and eight W1 tests. Both typechecks passed. Four separately configured integration cases skipped. Pinned O-REPLAY matched all three write modes. The one- and three-fact narrow wire frames decoded byte for byte to the ordinary payloads. [PORTS.md](PORTS.md)
 
 **Related writes** The import loader, joined Publish and notice sender recovered the original receipt when the relevant state advanced. Layout replay used the offered predecessor metadata. Commit `09088a27f` fixed it and passed the native regression. [RELATED.md](RELATED.md)
 
