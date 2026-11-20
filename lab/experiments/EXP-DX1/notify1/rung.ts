@@ -52,7 +52,7 @@ export async function fixtureProfile(
   n: number,
   interval = 100,
 ): Promise<Profile> {
-  const inputs = new Fixture(store),
+  const inputs = new Fixture(store, n),
     seed = await inputs.seed(n),
     ids = Array.from({ length: n }, (_, i) => W0.placementId(i));
   const changes = new Map<number, { position: number; pay: number }[]>(),

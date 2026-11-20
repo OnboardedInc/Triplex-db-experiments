@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { W0 } from "../../../bench/lib/w0-world.ts";
 import { type Cut, type Inputs } from "./journal.ts";
 import { type Check, type Op, type Store, pack, unpack } from "./store.ts";
+import { CommittedRanges } from "./ranges.ts";
 
 const entity = (s: string) => "notice-fixture:" + s;
 const index = (n: number) => "notice-directory:" + n;
@@ -38,8 +39,14 @@ export function originalWorld(i: number): W0.World {
 export class Fixture implements Inputs {
   readonly identity = "notify-policy-fixture-v1";
   readonly store: Store;
-  constructor(store: Store) {
+  readonly ranges?: CommittedRanges;
+  constructor(store: Store, people?: number) {
     this.store = store;
+    if (people !== undefined)
+      this.ranges = new CommittedRanges(
+        Array.from({ length: people }, (_, i) => W0.placementId(i)),
+        false,
+      );
   }
   async seed(n: number) {
     assert.equal(await this.store.currentPosition(), 0);

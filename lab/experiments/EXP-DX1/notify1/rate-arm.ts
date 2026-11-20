@@ -11,9 +11,13 @@ import { fixtureProfile, inputPins } from "./rung.ts";
 import { recipient } from "./worker.ts";
 import { runWindow } from "./workload.ts";
 
-const { slotCpu }: { slotCpu(holder: string, lane: string, slot: string): unknown } = await import(
-  new URL("../../../bin/engine.mjs", import.meta.url).href
-);
+const {
+  slotCpu,
+  slotGatewayGc,
+}: {
+  slotCpu(holder: string, lane: string, slot: string): unknown;
+  slotGatewayGc(holder: string, lane: string, slot: string): Record<string, string>;
+} = await import(new URL("../../../bin/engine.mjs", import.meta.url).href);
 const [
   mode,
   size,
@@ -43,21 +47,21 @@ assert(
     (mode === "baseline") === ms > 0,
 );
 assert(
-  ["source", "recipient"].includes(route) &&
+  ["source", "recipient", "isolated"].includes(route) &&
     Number.isInteger(batchPages) &&
     batchPages >= 1 &&
     batchPages <= 32 &&
-    (route === "recipient" || batchPages === 1),
+    (route !== "source" || batchPages === 1),
 );
 assert(
   Number.isFinite(Number(interval)) &&
     Number(interval) >= 0 &&
     Number(interval) <= 1000 &&
-    (route === "recipient" || Number(interval) === 0),
+    (route !== "source" || Number(interval) === 0),
 );
 const readers = Number(concurrency);
 assert([4, 64].includes(readers));
-const recipientPages = route === "recipient" ? batchPages : undefined;
+const recipientPages = route !== "source" ? batchPages : undefined;
 const dir = process.env.NOTIFY_DIR!,
   binding = JSON.parse(fs.readFileSync(path.join(dir, "binding.json"), "utf8"));
 const ownerBytes = fs.readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!),
@@ -69,6 +73,12 @@ assert(
     binding.slot === owner.container &&
     owner.endpoint === process.env.DATOMIC_URL,
 );
+const sourceEndpoint = route === "isolated" ? (owner.readerEndpoint as string) : undefined;
+if (route === "isolated") {
+  assert(sourceEndpoint && sourceEndpoint !== owner.endpoint, "Exclusive reader peer required");
+  const response = await fetch(new URL("/health", sourceEndpoint));
+  assert(response.ok, "Exclusive reader peer is unavailable");
+}
 assert.equal(
   execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
   binding.source,
@@ -128,6 +138,7 @@ try {
       recipientPages,
       releases: Number(train),
       readIntervalMs: Number(interval),
+      sourceEndpoint,
     },
     phase: (stage) => console.log(stage),
   });
@@ -150,6 +161,14 @@ try {
   if (mode !== "idle") assert(reads.length && saves.length);
   const raw = gzipSync(JSON.stringify({ reads, saves, history }));
   fs.writeFileSync(path.join(dir, "traffic.json.gz"), raw, { flag: "wx" });
+  const gatewayGc = owner.readerEndpoint
+    ? Object.fromEntries(
+        Object.entries(slotGatewayGc(owner.holder, owner.lane, owner.slot)).map(([role, log]) => {
+          fs.writeFileSync(path.join(dir, role + "-gc.log"), log, { flag: "wx" });
+          return [role, sha256(log)];
+        }),
+      )
+    : undefined;
   assert.deepEqual(inputPins(binding.source), pins);
   assert(fs.readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!).equals(ownerBytes));
   const out = {
@@ -163,6 +182,7 @@ try {
     batchPages,
     route,
     profiled,
+    gatewayGc,
     sourceClock: owner.createdAt,
     raw: sha256(raw),
     ...summary,
