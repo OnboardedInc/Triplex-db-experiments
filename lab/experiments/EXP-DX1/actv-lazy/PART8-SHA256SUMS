@@ -87,3 +87,4 @@ c915eec722e09fa0115b083fda8cb51ac95512c1eedff9ee159b1d5719cf18f8  lazy-join/part
 afbf2124e11b06af8973b4a0c999bbdd7edc14a3f411d4a8b31ac8af95abda3c  lazy-join/part8-build-merged/retry.log
 33190fb88b48b792e42e404a508fb08a2638346a86de81ac117e3a447a0b89f2  lazy-join/part8-int-gateway/build.log
 6ca8688622ba547c20cd90c03d32308d4cfe315c3015bb0809f808f325b7ed41  lazy-join/part8-int-gateway/gateway-attempt
+5a8b9943e2311e6414d8ddbc51072f04114b40e6c6904375cd9c246336f3e50c  lazy-join/part8-merged-tests/retry.log
