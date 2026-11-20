@@ -7,7 +7,7 @@ Use the held SCALE1 decision loader image on a dedicated bare-metal Ubuntu 24.04
 From a clean checkout at the stated revision with Node 22:
 
 ```bash
-COMMIT=41bdc376a5d3a36be37960536faf8d7cf0f0ffe0
+COMMIT=f99c9832b4bf337cb9c5cbbb8b5caf36cf199015
 BUILD=/var/tmp/triplex-v01-adopted-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
@@ -48,3 +48,5 @@ sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.j
 The budget is 235 minutes per age and up to USD 4.27 at USD 1.09 per hour. The first stage uses at most 105 minutes including both restores, 12 minutes of matched offers and collection. Budgets for P5 through P9 are 25, 30, 15, 25 and 20 minutes, with 15 minutes reserved for cleanup. The base card reports shortened P1–P4 observations and names the bars that still need qualifying evidence. Preserve the output directory with its campaign archives.
 
 The INT1 Publish command was exercised on its own 64-person Mac fixture. It requires a held-scope adapter before it can supply this scorecard's P5 evidence.
+
+P6 runs after the loaded arm on the same adopted scope. It compares the quiet account alone and at 235 aggregate offers per second, with identical quiet offer and read schedules. It reports age-matched commit, pinned field read and journal-observation components. The P6 obligation also needs durable feed effects and Publish and import overlap.

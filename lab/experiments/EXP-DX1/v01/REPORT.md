@@ -1,6 +1,6 @@
-Server 2 should use commit 41bdc376a.
+Server 2 should use commit f99c9832b.
 It accepts the original SCALE1 image and transfer.
-It records partial observations for rows 1 through 4.
+It records partial observations for rows 1 through 4 and 6.
 The grouped configuration uses compact layout K.
 The per-person writer can be selected separately.
 Two Mac toy arms matched all 28 saves each.
@@ -27,6 +27,8 @@ The first image failed because the merged Docker recipe's global base argument f
 ## P6 audit
 
 The adapter runs the published SCALE1 per-account offer and pinned read functions. The renderer requires the same live slot, gateway challenge and database, exact gapless arm cuts and identical quiet subject, size and offer offsets. It reopens the raw journal and write bytes through their arm digests. The standalone ratios measure dispatch-to-feed and record sample denominators. They do not supply a durable-effect or full P6 verdict.
+
+The P6 Mac pair reused the actual loaded SCALE1 toy scope. The alone arm matched 28 of 28 saves and the reduced neighbour arm matched 127 of 127. Each checked 48 exact pinned reads. The quiet p99 ratios were 1.345 for commit, 1.066 for pinned field read and 1.318 for dispatch-to-feed. These are diagnostic. The full server arm offers the published 235 aggregate saves per second. The engine removed the private volume and released the slot.
 
 ## Part 2 Publish adapter check
 
