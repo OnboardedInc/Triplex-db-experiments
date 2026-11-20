@@ -6,17 +6,22 @@ from pathlib import Path
 
 
 def cardinality(n):
-    wage = new = overtime = 0
+    wage = new = overtime = documents = broad = 0
     for i in range(n):
         if i % 97 == 0:
             continue
         place = i % 10
         pay = 1450 + i * 37 % 600
-        if place % 3 == 0 and pay < 1700:
+        below = place % 3 == 0 and pay < 1700
+        document = i % 23 == 0
+        documents += document
+        broad += below or document
+        if below:
             wage += 1
             new += pay >= 1500 + place % 2 * 150
         overtime += 2351 < 2200 + i % 600 <= 2400
-    return {"wage-stored": (wage, wage + new), "overtime-stored": (overtime, overtime)}
+    return {"wage-stored": (wage, wage + new), "overtime-stored": (overtime, overtime),
+            "three-rules": (broad, wage + new + 2 * documents)}
 
 
 def evidence(directory):
@@ -36,6 +41,7 @@ def evidence(directory):
     assert owe["worlds"] == owe["pages"] == 0 and owe["physicalChanges"] == 4
     assert owe["proof"]["owed"] - stages["baseline"]["proof"]["owed"] == shape["wage-stored"][0]
     assert stages["overtime-stored"]["proof"]["owed"] == stages["restore-again"]["proof"]["owed"]
+    assert stages["three-rules"]["proof"]["owed"] - stages["restore-final"]["proof"]["owed"] == shape["wage-stored"][0]
     for name, (owners, facts) in shape.items():
         s = stages[name]
         assert (s["proof"]["stored"], s["proof"]["changes"]) == (owners, facts)
@@ -63,7 +69,7 @@ def estimate(paths):
                              "fitsGatewayEstimate":wire <= 4194304,
                              "literalEncodedBytes":round(measured["proof"]["envelope"]["encodedBytes"] * n / rung)})
             forecasts[n][name] = {"changedPeople":owners, "changedRows":rows,
-                                  "owed":owners if name=="wage-stored" else 0, "fits":fits}
+                                  "owed":shape["wage-stored"][0] if name!="overtime-stored" else 0, "fits":fits}
     return forecasts
 
 

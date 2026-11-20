@@ -46,6 +46,8 @@ try {
     ["wage-stored", materialWage, "stored"],
     ["restore-again", W0.R1.doc, "owed"],
     ["overtime-stored", ot, "stored"],
+    ["restore-final", W0.R1.doc, "owed"],
+    ["three-rules", W0.R2.doc, "stored"],
   ] as const;
   const reader = a.reader();
   let old: W0.ReleaseDoc | null = null;
