@@ -2391,3 +2391,21 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   gateway, recovery, the four-block reader probe, goodput at 1,024 readers); **DX-HASYNC1**
   (`exp/DX-HASYNC1-sync-failover`: scripted failover with a synchronous copy, zero-loss proof under kills and network
   cuts, its cost per save, one two-server command with predictions).
+
+## 2026-11-20 01:45 UTC (20:45 local, 2026-11-19): DX-W1 part 3 in; one database is short of the busy-minute load
+
+- **DX-W1 part 3 (`9ce599309`, Mac VM; `w1/REPORT.md`).** Capacity estimate for one database: 150 to 200 saves per second
+  today, 210 to 285 with already-waiting saves sharing a commit; ten deep accounts offer 49 averaged, 235 in aligned busy
+  minutes, 394 at coincident peaks. Live saves now go ahead of waiting bulk work (`TX2_LIVE_PRIORITY=1`, fair turns per
+  account, bulk frames bounded at 96 rows and 64 KiB): live saves landed in the first three positions in 12 of 12 waves
+  against as late as ninth. **Priority 6 floor:** going next behind a running 32 ms batch already gives a quiet account
+  1.58 times its alone p99 (bar 1.25); provisional split threshold about 90 offered saves per second per database.
+  Folding queued edits of one subject (`TX2_FIELD_COALESCE=1`) removed 0 to 7.86% of commits at the modelled rates
+  while every edit stays durable: not worth a product decision. Predecessor lookup (`TX2_PREDECESSOR_LOOKUP=1`): SQL
+  reads per save 11.38 to 7.98 on 100,000 subjects and 3.85 million facts; native compute p50/p99 22.75/213.81 to
+  15.80/130.90 ms. Two server commands with predictions, not yet run: `control.ts --pulse pulsew1a` (quiet p99 ratio
+  12 to 30 ungrouped, 2 to 6 grouped) and `control.ts --field-rates fldw1a` (drain at 235/s about 21 s ungrouped against
+  at most 1 s grouped; at 394/s 74 against 34 s).
+- **Assigned 20:45 local, DX-W1 part 4:** itemise and cut the datoms and bytes of a 1 to 3 fact save (23 datoms and
+  7.2 kB measured; target half the native time); a time budget per transaction for the priority 6 ratio at 50, 100 and
+  235 saves per second; what limits grouped throughput and the predicted ceiling.
