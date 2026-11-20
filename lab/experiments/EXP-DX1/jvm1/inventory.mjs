@@ -130,11 +130,14 @@ export async function inventory(options, config, manager) {
     write("idle-boot.json", {prefix, source, slot:slot.slot, diagnostic: true, readyAt, sampledAt:Date.now(), roles});
     if (sdkGate) {
       const root = path.resolve(import.meta.dirname, "../../../.."), pkg = path.join(root, "packages/datomic");
+      // [DX-JVM1] Why: SDK regressions use both writer variables, and both must resolve to this reservation.
+      // Rejected: relying on legacy localhost fallbacks, which can select another stack.
+      const writer = "http://127.0.0.1:" + slot.port;
       const log = fs.openSync(path.join(out, "sdk-sql.log"), "wx");
       try {
         execFileSync(process.execPath, [path.join(root, "node_modules/vitest/vitest.mjs"), "run", "--maxWorkers=1"], {
           cwd: pkg, timeout: 240_000, stdio: ["ignore", log, log], env: {
-            ...env, DATOMIC_INTEGRATION: "1", DATOMIC_URL: "http://127.0.0.1:" + slot.port,
+            ...env, DATOMIC_INTEGRATION: "1", DATOMIC_URL: writer, DATOMIC_GATEWAY_URL: writer,
             DATOMIC_READ_URLS: "http://127.0.0.1:" + (slot.port + 10),
           },
         });
