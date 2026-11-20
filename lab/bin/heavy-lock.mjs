@@ -73,11 +73,12 @@ export async function acquireHeavy(label, { pollMs = 1000 } = {}) {
  * Rejected: pausing other agents' engines or repinning the dev residents (never without Sam; another holder's engine
  * is never stopped or recreated).
  */
-export async function acquireMeasureLease(label, { holder, pollMs = 1000, timeoutMs = Infinity } = {}) {
+export async function acquireMeasureLease(label, { holder, pollMs = 1000, timeoutMs = Infinity, signal } = {}) {
   fs.mkdirSync(dir(), { recursive: true });
   const started = Date.now();
   let announced = 0;
   for (;;) {
+    signal?.throwIfAborted();
     try {
       fs.mkdirSync(leaseDir());
       atomicJson(path.join(leaseDir(), 'owner.json'), { pid: process.pid, label, holder: holder ?? null, at: now() });
@@ -101,6 +102,9 @@ export async function acquireMeasureLease(label, { holder, pollMs = 1000, timeou
   process.on('exit', releaseAll);
   try {
     while (releases.size < HEAVY_SLOTS) {
+      // [DX-TAIL1] Why: a cancelled attempt must release the lease and any tokens already drained.
+      // Rejected: waiting out the full timeout while other builders remain frozen.
+      signal?.throwIfAborted();
       for (let index = 1; index <= HEAVY_SLOTS; index++) {
         if (releases.has(index)) continue;
         // [EXP-M01R] Why: heavy.mjs waits for its single child while retaining a token; borrow that exact parent permit so a wrapped PAIR can drain the pool. Rejected: releasing another process's token or bypassing the other tokens.

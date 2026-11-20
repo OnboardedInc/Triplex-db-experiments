@@ -88,7 +88,7 @@ async function waitFor(probe, child, signal, deadline) {
   }
 }
 
-async function holdMacWindow(identity, signal, deadline) {
+async function holdMacWindow(identity, signal, deadline, ownLease) {
   // [DX-TAIL1] Why: older lab runs share this lock around their measured offers.
   // Rejected: holding it through the deep seed, or taking all four heavy tokens while seeding.
   const lock = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2", "locks", "measure");
@@ -100,7 +100,7 @@ async function holdMacWindow(identity, signal, deadline) {
     const current = readMeasureLease();
     // [DX-TAIL1] Why: the incoming lease needs this job's heavy token to drain.
     // Rejected: waiting for that lease while keeping our seed, slot and heavy token.
-    if (current && !current.stale)
+    if (current && !current.stale && current.pid !== ownLease?.pid)
       throw new Error("DX-TAIL1 yielding the heavy token to an incoming measurement lease");
     try {
       fs.mkdirSync(lock);
@@ -149,7 +149,7 @@ function reading(rows) {
   );
 }
 
-async function reserve(config, manager, names, roleMemory, cpus, signal, diskForecast) {
+async function reserve(config, manager, names, roleMemory, cpus, signal, diskForecast, leaseHeld) {
   for (;;) {
     signal.throwIfAborted();
     diskFloor(REPO);
@@ -197,6 +197,7 @@ async function reserve(config, manager, names, roleMemory, cpus, signal, diskFor
       return slot;
     });
     if (typeof result !== "string") return result;
+    if (leaseHeld) throw new Error("DX-TAIL1 measurement lease released without a slot: " + result);
     console.log("Waiting for DX-TAIL1 admission: " + result);
     await delay(5000, undefined, { signal });
   }
@@ -267,6 +268,8 @@ export async function runTail(options, config, manager) {
     return;
   }
   const seconds = options.full === true ? 5910 : Number(options.seconds ?? 240);
+  const leaseBeforeSeed = options["lease-before-seed"] === true;
+  assert(!leaseBeforeSeed || (mac && options.gate !== true));
   const receiptPredecessors = options["receipt-predecessors"] === true;
   if (receiptPredecessors)
     assert(
@@ -423,11 +426,40 @@ export async function runTail(options, config, manager) {
       controller.abort(error);
     }
   };
+  const takeMeasureLease = async (timeoutMs) => {
+    const active = readMeasureLease();
+    if (active && !active.stale)
+      throw new Error("DX-TAIL1 yielding the heavy token to an incoming measurement lease");
+    try {
+      return await acquireMeasureLease(slot, { holder, timeoutMs, signal });
+    } catch (error) {
+      if (error.code === "LEASE_TIMEOUT")
+        throw new Error("DX-TAIL1 could not drain the heavy tokens for its measured window", {
+          cause: error,
+        });
+      throw error;
+    }
+  };
   try {
+    if (leaseBeforeSeed) {
+      // [DX-TAIL1] Why: obtain the all-token lease before reserving memory after a seeded arm lost
+      // its window on token drain. Rejected: holding the physical timing lock while waiting to seed.
+      measureLease = await takeMeasureLease(20 * 60_000);
+      signal.throwIfAborted();
+    }
     const admissionRequestedAt = Date.now();
     if (mac) {
       const bytes = Object.fromEntries(roles.map((role) => [role, caps[role] * MiB]));
-      reservation = await reserve(config, manager, names, bytes, cpus, signal, 6 * GiB);
+      reservation = await reserve(
+        config,
+        manager,
+        names,
+        bytes,
+        cpus,
+        signal,
+        6 * GiB,
+        leaseBeforeSeed,
+      );
     }
     const latest = mac
       ? Date.now() + (seconds === 5910 ? 9000 : 2400) * 1000
@@ -445,6 +477,8 @@ export async function runTail(options, config, manager) {
       cpus,
       seconds,
       platform: process.platform,
+      leaseBeforeSeed,
+      preseedLeaseWaitedMs: measureLease?.waitedMs ?? null,
       invokedAt,
       admissionRequestedAt,
       admittedAt: Date.now(),
@@ -714,19 +748,19 @@ export async function runTail(options, config, manager) {
     assert.deepEqual(ready.seed, readJson(input).seed);
     assert.equal(ready.trace, frozenDeep(0, 10000).sha256);
     if (mac) {
-      macWindow = await holdMacWindow(identity, signal, latest - seconds * 1000 - 135_000);
-      // [DX-TAIL1] Why: keep the pool stable during offers using the lab's lease,
-      // while other timing users still honor the shared directory. Rejected: draining during seed.
-      const maxWaitMs = Math.min(120_000, latest - Date.now() - seconds * 1000 - 135_000);
-      assert(maxWaitMs > 0, "Insufficient time left to admit the measured window");
-      try {
-        measureLease = await acquireMeasureLease(slot, { holder, timeoutMs: maxWaitMs });
-      } catch (error) {
-        if (error.code === "LEASE_TIMEOUT")
-          throw new Error("DX-TAIL1 could not drain the heavy tokens for its measured window", {
-            cause: error,
-          });
-        throw error;
+      const lastStart = latest - seconds * 1000 - 135_000;
+      macWindow = await holdMacWindow(
+        identity,
+        signal,
+        measureLease ? Math.min(lastStart, Date.now() + 120_000) : lastStart,
+        measureLease?.owner,
+      );
+      if (!measureLease) {
+        // [DX-TAIL1] Why: keep the pool stable during offers using the lab's lease,
+        // while other timing users still honor the shared directory.
+        const maxWaitMs = Math.min(120_000, lastStart - Date.now());
+        assert(maxWaitMs > 0, "Insufficient time left to admit the measured window");
+        measureLease = await takeMeasureLease(maxWaitMs);
       }
       signal.throwIfAborted();
       assert.equal(measureLease.owner.label, identity.slot);
