@@ -54,6 +54,7 @@ def measure(out):
     identity = attempt["identity"]
     assert report["deep"]["identity"] == identity == load(out / "cleanup.json")["identity"]
     assert report["status"] == "DONE" and not report["finalizationErrors"]
+    assert report["verdictClock"] == "ack/1"
     assert report["oracle"]["exitCode"] == 0 and report["oracle"]["mismatchCount"] == 0
     assert report["oracle"]["modelCorrectOnSameReads"] == report["oracle"]["reads"] > 0
     start = report["traceStartAbsMs"]
@@ -108,9 +109,15 @@ def measure(out):
             assert math.isclose(elapsed, row["verdictMs"], abs_tol=.001)
             assert elapsed >= 0 and row["scheduledAt"] >= start
             saved[row["traceId"]] = row
+        else:
+            assert row["outcome"] == "duplicate-returned-original", key
     assert observed.keys() == expected.keys()
     assert len(saved) == report["receiptCapture"]["matched"] == report["tailReplay"]["primary"] >= 5000
     assert len({r["position"] for r in saved.values()}) == len(saved)
+    duplicates, lost_ack = (report["priorities"]["P2"][k] for k in ("duplicates", "lostAck"))
+    resend_count = len(observed) - len(saved)
+    assert duplicates["resends"] == duplicates["considered"] == duplicates["returnedOriginal"] == resend_count
+    assert lost_ack["simulated"] == lost_ack["returnedOriginal"] == sum(row["ackLoss"] for row in saved.values())
     assert load(out / "s0.armed.json")["identity"] == identity
     release = load(out / "release.json")
     assert all(release[part] == identity[part] for part in ("source", "slot", "nonce"))
@@ -160,7 +167,7 @@ def measure(out):
     indexes = [(j["driverRequestedAtMs"], j["driverCompletedAtMs"]) for j in report["maintenance"]["events"]]
     write_json(out / "measurement.json", {
         "identity": identity, "archive": archive["archive"], "arm": attempt["arm"], "seconds": attempt["seconds"],
-        "saves": len(saved), "replays": len(observed) - len(saved),
+        "saves": len(saved), "replays": resend_count, "resolvedLostAcks": lost_ack["returnedOriginal"],
         "savesPerSecond": len(saved) / max(attempt["seconds"], (max(r["ackPublishedAt"] for r in saved.values()) - start) / 1000),
         "ackMs": quantiles([r["verdictMs"] for r in saved.values()]), "cpuMemory": cpu_memory,
         "gc": {role: timed_gc(trace, role, start, stop, history, indexes) for role in ("gw-w", "gw-r", "tx")},
