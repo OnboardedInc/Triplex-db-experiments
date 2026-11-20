@@ -1,5 +1,5 @@
 // [EXP-DA01] Why: fiber-local savepoints isolate staged callbacks. Rejected: global mutable transaction state (cross-fiber leaks).
-import { ReadError } from "@triplex-build/triplex/runtime";
+import { ReadError, WriteError } from "@triplex-build/triplex/runtime";
 import { Context, Effect } from "effect";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import type { DatomicClient } from "./DatomicClient.js";
@@ -41,6 +41,16 @@ export const CurrentTransactions = Context.Reference<ReadonlyMap<symbol, Transac
   "triplex/datomic/transactions",
   { defaultValue: () => new Map() },
 );
+
+// [DX-ACT1] Why: compare the computation's original cut on the transactor, including changes to absent and indirectly reached facts. Rejected: reopening a fresh source snapshot for an old decision (the race would validate a different calculation).
+export const requireDatomicSourcePosition = (scope: string, position: number) =>
+  Effect.gen(function* () {
+    const active = [...(yield* CurrentTransactions).values()].filter((s) => s.scopeKey === scope);
+    const state = active[0];
+    if (active.length !== 1 || !state || state.optimistic || !Number.isSafeInteger(position) || position < 0 || state.sourceK !== position)
+      return yield* Effect.fail(new WriteError({ message: "Original Datomic source position is no longer current" }));
+    state.scopeWide = true;
+  });
 
 // [DX-B3-M3] Why: unsupported reads restart before submission under the replay-safe callback contract.
 // Rejected: answering an entity or pattern read from an incomplete by-id cache.

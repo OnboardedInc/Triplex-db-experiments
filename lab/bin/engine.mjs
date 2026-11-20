@@ -441,6 +441,7 @@ function acquireSlot(info, holder, experiment) {
     let owner = readOwner(info);
     for (let i = 0; !owner && i < 25; i++) { Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 200); owner = readOwner(info); }
     if (!owner) fail('REFUSED', `${info.lockDir} exists without owner.json; inspect and remove it by hand if abandoned`);
+    if ((process.env.TX2_EXCLUSIVE_VOLUME_ID || owner.volume?.startsWith(info.container + '-data-')) && owner.volume !== info.volume) fail('REFUSED', 'Existing slot owns a different volume');
     if (owner.holder !== holder && info.mode !== 'resident')
       fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}" (${owner.experiment ?? 'no experiment'}) since ${owner.createdAt}`);
     return { owner, created: false };
@@ -540,6 +541,8 @@ async function up(config, info, opts) {
 async function down(config, info, opts) {
   const holder = defaultHolder(opts);
   const owner = readOwner(info);
+  if ((process.env.TX2_EXCLUSIVE_VOLUME_ID || owner?.volume?.startsWith(info.container + '-data-')) && owner?.volume !== info.volume)
+    fail('REFUSED', 'Isolated volume cleanup requires its exact slot owner');
   if (owner && owner.holder !== holder && !opts.force)
     fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}"; pass --force only if you own it`);
   // [EXP-X05] A follower outliving its writer would block the next writer start (volumeGuard) and keep
@@ -717,9 +720,35 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'delta') return (await import('../experiments/EXP-DX1/actv-delta/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicSources });
   if (options.lane === 'datomic' && command === 'build') return buildDatomic(config);
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
+  if (command === 'cpu-sample') {
+    const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
+    const owner = readOwner(info);
+    if (info.mode !== 'exclusive' || !options.holder || owner?.holder !== options.holder || owner?.volume !== info.volume) fail('OWNERSHIP', 'A CPU sample requires the active private slot');
+    // [DX-ACT1] Why: CPU pressure and throttling need two observations on the same guest and container. Rejected: treating host load average as evidence of VM saturation.
+    const stat = docker(['exec', info.container, 'cat', '/proc/stat', '/proc/pressure/cpu', '/sys/fs/cgroup/cpu.stat', '/sys/fs/cgroup/cpu.max']);
+    console.log(JSON.stringify({ at: Date.now(), slot: info.container, volume: info.volume, stat }));
+    return;
+  }
+  if (command === 'fault-process') {
+    const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
+    const owner = readOwner(info);
+    const role = options.role, action = options.action;
+    const managed = inspect(info.container);
+    if (info.lane !== 'datomic' || info.mode !== 'exclusive' || !options.holder || owner?.holder !== options.holder
+      || owner?.volume !== info.volume || !process.env.TX2_EXCLUSIVE_VOLUME_ID || !managed?.State?.Running
+      || !managed.Config?.Labels?.['tx2.managed-by'] || !managed.Mounts?.some(m => m.Name === info.volume))
+      fail('OWNERSHIP', 'A role stop requires the active suffixed private slot');
+    if (!['transactor', 'write-gateway'].includes(role) || !['pause', 'resume'].includes(action))
+      fail('USAGE', 'fault-process takes a transactor or write-gateway role and pause or resume action');
+    // [DX-ACT1] Why: suspend exactly the managed fixture child so the two native roles can be distinguished. Rejected: signalling a host PID or stopping someone else's engine.
+    const checkRole = 'set -eu; read -r p < "$1"; case "$p" in ""|*[!0-9]*) exit 1;; esac; test "$p" -gt 1; test "$(awk \'/^PPid:/{print $2}\' "/proc/$p/status")" = 1; kill "-$2" "$p"; for i in 1 2 3 4 5 6 7 8 9 10; do state=$(awk \'/^State:/{print $2}\' "/proc/$p/status"); case "$2:$state" in STOP:T|CONT:[RSDI]) printf "%s %s\\n" "$p" "$state"; exit 0;; esac; sleep 0.05; done; exit 1';
+    const observed = docker(['exec', info.container, 'bash', '-c', checkRole, '--', `/run/tx2-${role}.pid`, action === 'pause' ? 'STOP' : 'CONT']).trim();
+    console.log(JSON.stringify({ holder: owner.holder, slot: info.container, volume: info.volume, role, action, observed }));
+    return;
+  }
   if (!['up', 'down', 'logs'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
   if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');
-  const info = slotInfo(config, options.lane, options.slot);
+  const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
   // [EXP-QG1] Why: overrides never reach shared residents; effective bytes bind the run.
   // Rejected: changing slots.json for everyone during a measurement window.
   if (options['qlever-memory'] || options['qlever-seed-dir']) {

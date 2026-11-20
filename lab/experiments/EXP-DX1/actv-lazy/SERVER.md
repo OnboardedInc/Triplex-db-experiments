@@ -1,0 +1,24 @@
+# One deep account on the server
+
+Predictions use the local 10,000-person compact feature calibration and the native 1,000- and 10,000-person deep prices. The independent 10,000-person deep census found 49,297 concrete changes across all 10,000 people and 4,497 new notice effects for R1 to R2. A broad deep release can change the due date for every person. Expanded ranges can supply their inputs without individual source reads, but the output count still scales with the entire account. The server command uses the expanded index. The 10,000-person deep price used the notice-only index. The numbers below are offer to durable, then to the first correct connected answer.
+
+| Publish at 100,000 deep people | Quiet | 3.5 saves/s | 23.5 saves/s |
+| --- | --- | --- | --- |
+| Receipt only | 0.04–0.12 s, then another 0.02–0.05 s | 0.05–0.22 s, then another 0.02–0.07 s | Same service cost plus the live queue. About 5 s of queue if saves average 50 ms in the first 29 s. |
+| Staged concrete values | 10–25 s, then another 0.02–0.05 s | 10–26 s, then another 0.02–0.07 s | Same work plus the live queue. About 15–30 s total with the 50 ms assumption. |
+
+The staged estimate includes expanded index reads, cold workers, encoding the deeper change set and bounded writes. At one million deep people the analogous work projects about 100–250 s if it fits memory. The current implementation retains selected inputs and encoded chunks until the marker. The one-frame variant has a 4 MiB ceiling. A receipt carries the exact input, prior release and owed recipe in its marker transaction. The separate field for individually durable owed notices is null. In staged mode the native marker ACK is also the point through which all concrete values are readable. These predictions use the Mac to estimate work. Fleet p99 remains unmeasured.
+
+Use a clean checkout of the pushed experiment branch with built workspace packages. Attach the environment from the bench operator’s exclusively reserved Datomic slot. Set `TRIPLEX_LAB_SLOT_OWNER` to the slot owner file and `DATOMIC_URL` to its gateway endpoint. Set `DX_LAZY_OUT` to a new, empty output directory for this attempt. The command keeps the receiver offline during measurement, runs the native small preflight and then six windows on one freshly seeded account. [Command](REPORT.md#server-command)
+
+The loaded windows issue 210 and 1,410 real saves over 60 seconds. The account has one request queue. A staged Publish can hold up saves behind it. At 23.5 saves/s that queue needs an average save service time under 42.6 ms to keep pace. At a steady 70 ms per save, the same model adds about 19 seconds before Publish enters. The runner records offered and entered clocks on both operations, so it charges that wait. An independent one-second probe runs even if Publish is still working. The runner keeps each offer, native receipt, returned bytes, physical comparison and ordered receiver proof. It reports misses individually. A production verdict also needs the full fixed-trace interference and fault matrix.
+
+A native 64-person functional smoke exercised all six collector cells, 28 short-window saves and 757 verified recipient effects. This test checked the collector and proof paths. The server timing and full-rate windows remain unrun.
+
+## After the receipt
+
+The `--settlement` option adds matched control and settlement windows at 3.5 and 23.5 saves/s with 64 readers on a separately seeded deep account. It writes the two durable endpoints with the recipient offline and checks both against the full oracle roster. Use a W1 `5713149b8`-compatible gateway with live priority enabled in the gateway process. The producer labels its native frames `activation` and `notice`. The gateway's default bulk size caps may stay enabled during seed. The producer also checks its own 8 ms estimate for each background frame.
+
+A 100,000-person run uses 6,250 value pages at 16 people per page. Notice pages hold four people and the count depends on independently selected candidates. At an assumed 30–80 ms per admitted turn with both classes ready, the value endpoint projects to about 6–17 minutes. Roughly 11,250 notice turns would bring the combined endpoint to about 9–23 minutes. Multiply those work counts by ten at one million if the mix is unchanged. These estimates are sensitive to read cost, demand, save backlog and native service. Live ratio predictions await the matched trial.
+
+Hold the scale launch until the producer and its versioned collector pass together in a fresh native smoke. The older BM1 item accepts an earlier file set. The revised producer invokes `join/collect.ts` itself and retains the clock inputs and point witnesses. A reviewed automation must pin the same source for both. [Review disposition](REVIEW2.md)

@@ -405,7 +405,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   fs.mkdirSync(barrier);
   const oracleDir = path.join(dir, "oracle");
   write(path.join(dir, "replay-source.json"), stageReplay(repo, oracleDir));
-  write(path.join(dir, "source.json"), sourceInventory(repo));
+  write(path.join(dir, "source.json"), sourceInventory(repo, attempt.publication === "lazy"));
   const budget = attempt.capacity;
   assert(attempt.boundedTrial || (mode === "seed" ? budget.fitsSeed : budget.fitsLive));
   status(dir, "starting stack");
@@ -610,6 +610,91 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       status(dir, "preflight stopped", { reason });
       throw e;
     }
+  }
+  if (attempt.publication === "lazy") {
+    assert(item === 2 && mode === "activation" && !restoring && spec.people === 100000);
+    status(dir, "checking lazy admission, then measuring deep activation and live traffic");
+    const child = spawn(
+      "taskset",
+      [
+        "-c",
+        [planCpus.senders, planCpus.readers].join(","),
+        process.execPath,
+        "--experimental-strip-types",
+        "lab/experiments/EXP-DX1/actv-lazy/bench.ts",
+        "--execute",
+        dir,
+        source,
+        prefix,
+        attempt.nonce,
+        rawRoot,
+      ],
+      {
+        cwd: repo,
+        stdio: "inherit",
+        env: {
+          ...env,
+          DATOMIC_URL: `http://${engines["gw-w"].address}:8080`,
+          DATOMIC_READ_URLS: `http://${engines["gw-r"].address}:8080`,
+          TRIPLEX_DATOMIC_LAYOUT: "lean",
+          TX2_W0_POINT_JOURNAL: "1",
+          TX2_W0_RESTORE_INDEXED_JOURNAL: "1",
+          TX2_SWEEP_STRICT: "1",
+        },
+      },
+    );
+    const done = new Promise<void>((resolve, reject) => {
+      child.once("error", reject);
+      child.once("close", (code, signal) =>
+        code === 0 ? resolve() : reject(Error("Lazy bench stopped: " + (signal ?? code))),
+      );
+    });
+    let stopped = false;
+    void done.then(
+      () => {
+        stopped = true;
+      },
+      () => {
+        stopped = true;
+      },
+    );
+    try {
+      while (!stopped) {
+        const sample = health(dir, prefix, engines, child.pid ? [child.pid] : []);
+        fs.appendFileSync(path.join(dir, "resources.jsonl"), JSON.stringify(sample) + "\n");
+        assert(
+          sample.freeBytes > 15 * GiB &&
+            Object.values(sample.members).every((m) => !/^oom_kill [1-9]/m.test(m.events)),
+          "Lazy resource envelope exhausted",
+        );
+        await Promise.race([done, sleep(5000)]);
+      }
+      await done;
+    } finally {
+      if (!stopped) child.kill("SIGTERM");
+    }
+    write(path.join(dir, "disk-terminal.json"), snapshot(prefix));
+    const result = get(path.join(dir, "summary.json"));
+    assert(
+      result.source === source &&
+        result.nonce === attempt.nonce &&
+        result.slot === prefix &&
+        result.rows.length === 2 &&
+        result.subjects === 100000,
+    );
+    assert.deepEqual(sourceInventory(repo, true), get(path.join(dir, "source.json")));
+    assert.deepEqual(placement(prefix), engines);
+    write(path.join(dir, "lazy-binding.json"), {
+      source,
+      slot: prefix,
+      nonce: attempt.nonce,
+      inputs: await fileHash(path.join(dir, "source.json")),
+      stack: await fileHash(path.join(dir, "placement.json")),
+      observations: await fileHash(path.join(rawRoot, "lazy", "SHA256SUMS")),
+      summary: await fileHash(path.join(dir, "summary.json")),
+    });
+    status(dir, "lazy paired measurements complete");
+    return;
   }
   if (restoring) {
     const dest: DeepIdentity = {
@@ -1173,6 +1258,7 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
     "preflight-stop.json",
     "preflight-disk.json",
     "source.json",
+    "lazy-binding.json",
     "placement.json",
     "disk-before.json",
     "disk-terminal.json",
@@ -1325,6 +1411,35 @@ async function main() {
   const [op, n, tag, mode] = process.argv.slice(2);
   const item = Number(n);
   if (op === "plan") {
+    if (getopt("publication") === "lazy") {
+      console.log(
+        JSON.stringify(
+          {
+            publication: "lazy",
+            item: 2,
+            arm: "activation",
+            preflight: 1000,
+            deepPeople: 100000,
+            quietPeople: 10000,
+            readers: [64, 256],
+            quietReaders: 4,
+            windowSeconds: 360,
+            trace: "aa8a7636ff027ab3",
+            switchesPerWindow: 100,
+            heldFollowerSeconds: 60,
+            subscriberOutageSeconds: 10,
+            minimumCommitsPerArm: 500,
+            activeReadCommitRatio: 1.5,
+            quietReadCommitFeedRatio: 1.25,
+            offerToColdMs: 1000,
+          },
+          null,
+          2,
+        ),
+      );
+      return;
+    }
+
     console.log(
       JSON.stringify(
         {
@@ -1395,6 +1510,12 @@ async function main() {
     return;
   }
   assert.equal(op, "launch");
+  const publication = getopt("publication");
+  if (publication !== undefined)
+    assert(
+      publication === "lazy" && item === 2 && mode === "activation",
+      "Lazy is the single deep-account activation arm",
+    );
   released();
   fs.mkdirSync(root, { recursive: true, mode: 0o700 });
   assert(!fs.existsSync(dir));
@@ -1416,7 +1537,9 @@ async function main() {
   const sourceGit = ["-c", "credential.helper=", "-c", "http.extraHeader="];
   // [DX-SCALE1] Why: a reader must execute the identical public revision as its zero arm even if the other bench publishes during the 5,910-second trace. Rejected: mixing sender or guard versions inside a pair, or silently ignoring upstream changes.
   const originHeads: Record<string, { head: string; changes: string[] }> = {};
-  for (const ref of ["exp/DX-BM1-bare-metal", "exp/DX-ACT1-activation"]) {
+  for (const ref of publication === "lazy"
+    ? ["exp/DX-ACT1-activation"]
+    : ["exp/DX-BM1-bare-metal", "exp/DX-ACT1-activation"]) {
     call("git", [...sourceGit, "fetch", "origin", "refs/heads/" + ref], 60000);
     const head = call("git", ["rev-parse", "FETCH_HEAD"]),
       ancestor = call("git", ["merge-base", head, source]);
@@ -1424,6 +1547,8 @@ async function main() {
       ancestor === head
         ? []
         : call("git", ["diff", "--name-only", ancestor, head]).split("\n").filter(Boolean);
+    if (publication === "lazy")
+      assert.equal(head, source, "The lazy bench requires the exact published experiment");
     const paired =
       mode === "reader" &&
       getopt("baseline") &&
@@ -1480,7 +1605,12 @@ async function main() {
   }
   const canAttempt = capacity.host.memory > capacity.sharedReserve + 8 * GiB;
   const diskFloor =
-    capacity.db * (item === 5 && layout === "pooled" && mode === "zero" ? 1.65 : 1) +
+    capacity.db *
+      (publication === "lazy"
+        ? 2.3
+        : item === 5 && layout === "pooled" && mode === "zero"
+          ? 1.65
+          : 1) +
     (capacity.liveDisk - capacity.seedDisk) +
     15 * GiB;
   const boundedTrial = mode !== "seed" && item >= 2 && canAttempt && capacity.host.disk > diskFloor;
@@ -1496,7 +1626,7 @@ async function main() {
   const ceiling =
     activationMode === "delta"
       ? Math.max(1, 9600 - Math.ceil((Date.now() - entered) / 1000))
-      : (item === 5 && layout === "pooled"
+      : (publication === "lazy" || (item === 5 && layout === "pooled")
           ? 24
           : mode === "activation" || mode === "interference"
             ? 10
@@ -1516,6 +1646,7 @@ async function main() {
     spec,
     item,
     ceiling,
+    ...(publication ? { publication } : {}),
     clientBudget,
     originHeads,
     ...(activationMode
@@ -1530,7 +1661,10 @@ async function main() {
     cpus: planCpus,
     topology,
   });
-  if (!boundedTrial && !(mode === "seed" ? capacity.fitsSeed : capacity.fitsLive)) {
+  if (
+    (publication === "lazy" && !boundedTrial) ||
+    (!boundedTrial && !(mode === "seed" ? capacity.fitsSeed : capacity.fitsLive))
+  ) {
     status(dir, "capacity refused", { limits: capacity.limits, seedFits: capacity.fitsSeed });
     await terminal(dir, tag, prefix, "capacity-refused");
     console.log(JSON.stringify(capacity));
