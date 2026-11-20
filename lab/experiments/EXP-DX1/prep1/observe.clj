@@ -1,5 +1,6 @@
 (ns triplex.prep1.observe
   (:require [clojure.data.json :as json]
+            [clojure.java.io :as file]
             [clojure.string :as str]
             [datomic.db :as db]
             [datomic.io :as dio]
@@ -20,6 +21,7 @@
 (def appended (ThreadLocal.))
 (def attempt (System/getenv "PREP1_ATTEMPT"))
 (def mode (System/getenv "PREP1_MODE"))
+(def streaming? (= mode "subject-server"))
 (def diagnostic-events (ArrayBlockingQueue. 16384))
 (def ^ThreadMXBean cpu-bean (ManagementFactory/getThreadMXBean))
 (def ^:dynamic *profile* nil)
@@ -172,10 +174,27 @@
             (when-not (.offer pending event) (.incrementAndGet dropped))))
         (complete metadata)))))
 
-(.addShutdownHook
-  (Runtime/getRuntime)
-  (Thread.
-    (fn []
+(if streaming?
+  (let [stop (atom false)
+        drain (Thread.
+                (fn []
+                  ;; [DX-PREP1] Why: stream the whole arm without blocking the serialized append.
+                  ;; Rejected: retaining only the first 16,384 append blocks at shutdown.
+                  (with-open [out (file/writer "/trace/prep1-native.ndjson")]
+                    (loop []
+                      (if-let [event (.poll pending 100 java.util.concurrent.TimeUnit/MILLISECONDS)]
+                        (do (.write out (str (json/write-str event) "\n")) (recur))
+                        (when-not @stop (.flush out) (recur))))
+                    (.write out (str (json/write-str {:attempt attempt :dropped (.get dropped) :end true}) "\n"))))
+                "prep1-native-drain")]
+    (.setDaemon drain true)
+    (.start drain)
+    (.addShutdownHook (Runtime/getRuntime)
+      (Thread. (fn [] (reset! stop true) (.join drain 25000)))))
+  (.addShutdownHook
+    (Runtime/getRuntime)
+    (Thread.
+      (fn []
       (loop []
         (when-let [event (.poll pending)]
           (println "PREP1_NATIVE" (json/write-str event))
@@ -185,4 +204,4 @@
           (println prefix (json/write-str event))
           (recur)))
       (println "PREP1_NATIVE_END" (json/write-str {:attempt attempt :dropped (.get dropped)}))
-      (flush))))
+        (flush)))))
