@@ -37,6 +37,78 @@ const ratio = (r: any) =>
       (r.pass === null ? ", descriptive" : "") +
       ")";
 
+function recordPredictions(dir: string, trials: Trial[]) {
+  const file = path.join(dir, "PREDICTIONS.md");
+  if (!fs.existsSync(file)) return;
+  const rows = fs.readFileSync(file, "utf8").split("\n");
+  const separator = "<br>Observed ";
+  const writeRow = (key: string, column: number, observation: string) => {
+    const row = rows.findIndex((line) => line.startsWith("| " + key + " |"));
+    assert(row >= 0, "Missing forecast for " + key);
+    const columns = rows[row]!.split("|");
+    const forecast = columns[column]?.split(separator)[0]?.trimEnd();
+    assert(forecast);
+    columns[column] = forecast + separator + observation + " ";
+    rows[row] = columns.join("|");
+  };
+  // [DX-SCALE1] Why: put source-bound observations beside the original forecast for each tested cell. Rejected: replacing the forecast or adding a retrospective prediction.
+  for (const t of trials) {
+    const a = t.attempt,
+      seed = t.seed,
+      measurement = t.decision;
+    if (a.phase === "seed") {
+      const key =
+        a.people === 10000
+          ? "Small pooled image"
+          : a.layout === "pooled"
+            ? "Full pooled image"
+            : "Full split image";
+      writeRow(
+        key,
+        2,
+        seed && t.terminal.service === "success"
+          ? fmt(seed.ingestMs / 3600000) +
+              " h at " +
+              fmt((1000 * seed.facts) / seed.ingestMs) +
+              " facts/s. " +
+              t.tag +
+              "."
+          : t.tag + " ended with " + t.terminal.service + ".",
+      );
+      continue;
+    }
+    if (!measurement || t.terminal.service !== "success") continue;
+    const column =
+      a.people === 10000 ? 2 : (a.layout === "pooled" ? 3 : 5) + Number(a.mode === "prepared");
+    for (const comparison of measurement.comparisons) {
+      const rate = comparison.rate;
+      const results = measurement.cells.filter((c: any) => c.cell === rate);
+      assert(results.length === 2);
+      writeRow(
+        String(rate),
+        column,
+        results
+          .map(
+            (c: any) =>
+              fmt(c.goodput, 1) +
+              "/s (n=" +
+              c.inWindow +
+              "), " +
+              fmt(c.writes.p50) +
+              "/" +
+              fmt(c.writes.p99) +
+              " ms",
+          )
+          .join(" and ") +
+          ". Quiet save p99 " +
+          ratio(comparison.ratios[0]) +
+          ". [Cell results](DECISION-RESULTS.md)",
+      );
+    }
+  }
+  fs.writeFileSync(file, rows.join("\n"));
+}
+
 export function placementReport(dir: string, trials: Trial[]) {
   if (!trials.length) return "";
   const lines = [
@@ -183,6 +255,7 @@ export function placementReport(dir: string, trials: Trial[]) {
       pooled.push({ tag: t.tag, mode: a.mode, summary: d });
   }
   fs.writeFileSync(path.join(dir, "DECISION-RESULTS.md"), lines.join("\n").trimEnd() + "\n");
+  recordPredictions(dir, trials);
   const recent = pooled.at(-1);
   if (!recent)
     return "Full-size placement remains unmeasured. [Decision cells](DECISION-RESULTS.md)";

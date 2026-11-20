@@ -44,3 +44,9 @@ Each table cell gives expected in-window durable saves/s, completed p50/p99 ms, 
 Alone I expect 3.45–3.50 durable saves/s, save p50 4–9 ms and p99 25–80 ms across the two footprints. At 35 and 50/s I expect zero expiry and under 0.5 s drain, with read/feed p99 ratios of 1.0–1.3×. At 235 and 394/s I expect at least one pooled result to miss the write or quiet bars, with 0–30 s of drain and 1.1–4× surviving read/feed ratios. The higher native rate remains unproved unless an exact 620/s cell also holds the bars.
 
 Forecast one 162,456,470-fact image at 6,500 verified ingested facts/s, 6.94 h to commit, or 7.78 h at HA1's 5,800/s large-rung estimate. Full feed and scoped readback add time separately. One logical fixture produces two physical images because a pooled Datomic database cannot be partitioned by restoring a PostgreSQL dump. Provisional time from the small seed through both large layouts is 22–30 hours including archive, restore and exact checks, or about USD 24–33 at USD 1.09/h. The old full-length comparisons, standalone activation and 100-database arm are deferred in this spending window. Their results cannot reverse a measured capacity miss on the owner’s current question.
+
+| Image | Forecast for ingest |
+| --- | --- |
+| Small pooled image | At 5,800–6,500 facts/s, 42–47 min for 16,245,050 facts. |
+| Full pooled image | At 5,800–6,500 facts/s, 6.94–7.78 h for 162,456,470 facts. |
+| Full split image | At 5,800–6,500 total facts/s, 6.94–7.78 h for the same 162,456,470 facts placed across two databases. |
