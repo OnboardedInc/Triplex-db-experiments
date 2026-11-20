@@ -1,6 +1,6 @@
 # What should happen to saves after a machine fails?
 
-**One-line reply** `Choose A`, `Choose B`, or `Choose C`. **I recommend C.** It is the only option designed to resume within 60 seconds while keeping two copies of every new save. Until a third machine and the fence have been tested, I would choose B for production and accept the longer pause in saves. [Confirmed targets](../../../TARGETS.md) · [Fence design](FENCE.md)
+**One-line reply** `Choose A`, `Choose B`, or `Choose C`. **I recommend B within the version 0.1 budget, and C for production when funded and tested.** B can miss the 60-second bar at production size. C is designed to resume within that bar while keeping two copies of every new save. The example third machine alone costs more than the current $200 cloud budget. [Version 0.1 budget](https://github.com/OnboardedInc/Triplex-db-experiments/blob/main/lab/V0.1.md) · [Confirmed targets](../../../TARGETS.md) · [Fence design](FENCE.md)
 
 ## A. Reopen on one copy and raise an alarm
 
