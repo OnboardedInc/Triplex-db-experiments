@@ -1,5 +1,6 @@
 // @ts-nocheck -- Trace and driver records cross a JSON boundary and are checked before joining.
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
@@ -9,7 +10,8 @@ import { alignClockRecord } from "../../../trace/report.mjs";
 import { postgresEvents, wallBridge } from "../../../trace/postgres-events.mjs";
 
 const roles = ["gw-w", "gw-r", "tx"];
-const jsonLines = (file) => fs.readFileSync(file, "utf8").trim().split("\n").map(JSON.parse);
+const jsonLines = (file) =>
+  fs.readFileSync(file, "utf8").split("\n").filter(Boolean).map(JSON.parse);
 const store = (file, value) =>
   fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
 
@@ -32,6 +34,7 @@ export async function observeEventGate({
   signal,
   eventBaseline,
   timing,
+  host,
   verifyReadyRuntime,
   spawnBound,
 }) {
@@ -196,7 +199,17 @@ export async function observeEventGate({
   assert.equal(pgBefore.wal.stats_reset, pgAfter.wal.stats_reset);
   assert(pgAfter.wal.wal_sync >= pgBefore.wal.wal_sync);
   const pgLog = path.join(out, "event-postgres.log");
-  fs.writeFileSync(pgLog, docker(["logs", ids.pg]), { flag: "wx" });
+  // [DX-TAIL1] Why: PostgreSQL writes its server events to the container's stderr.
+  // Rejected: the convenience Docker wrapper, which returns only stdout.
+  const fd = fs.openSync(pgLog, "wx");
+  try {
+    execFileSync("docker", ["-H", host, "logs", ids.pg], {
+      stdio: ["ignore", fd, fd],
+      timeout: 30_000,
+    });
+  } finally {
+    fs.closeSync(fd);
+  }
   const pgTimeline = path.join(out, "event-postgres.jsonl");
   const pgCoverage = await postgresEvents(pgLog, pgTimeline, seals.tx, {
     source,

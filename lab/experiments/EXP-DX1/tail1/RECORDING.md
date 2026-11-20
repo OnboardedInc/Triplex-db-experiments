@@ -20,3 +20,15 @@ Datomic's metrics callback carries process-wide storage get/put and log write di
 - `event-joins.mjs` checks the live role IDs and startup clocks, same-attempt JFR SHA-256 and event counts, ordered gateway spans and exact SDK/database/native-t joins. PostgreSQL timings are checked inside the attempt on the original server. WAL samples must keep the same statistics epoch. No SQL or JFR overlap alone earns a per-save attribution.
 - `postgres-events.mjs` emits parsed duration bytes with their recorded role and backend. Clock-qualified rows require a continuous region of the transactor's own anchor sequence. `native-recording.mjs` checks the running container IDs and process starts, source and slot of each recorder, binary content hashes, one shared boot, SQL coverage and a bound WAL bracket before writing its collection inventory.
 - The summary trace changes keep the existing finalize/report evidence checks. The ablation reads back actual PostgreSQL flags. Collection on a physical host and the two-percent save p50 bar remain to be measured.
+
+## Recorder cost on bare metal
+
+Predict a 0.5–4% p50 increase over the previous summary recorder at this small save shape. PostgreSQL duration logging and JFR event submission can both affect the median. The 2% bar lies inside that range. Compare the mean of the two treatment medians with the mean of the two controls and retain control drift. Use the fresh stacks, exact input ledger and saved clocks for all four arms. Mac measurements are diagnostic.
+
+```sh
+env DX_BARE_METAL=1 DOCKER_HOST=unix:///var/run/docker.sock node lab/bin/heavy.mjs --label DX-TAIL1-trace-cost -- \
+  python3 lab/experiments/EXP-DX1/tail1/trace-cost.py \
+  "$DX_TAIL1_ARCHIVE" "$DX_TAIL1_IMAGE_RECEIPT" "$DX_TAIL1_OUTPUT"
+```
+
+The command uses the pinned stack and five-field commands from the correctness fixture. The control keeps the previous Node and gateway summary recording. This compares the incremental cost of the new recorders under a bounded physical campaign. Scorecard-scale recorder cost remains a separate observation. The comparison checks four fresh slots, exact source, matching input and placement, actual role IDs and cleanup, and each arm's sealed command ledger. Any incomplete arm stops the comparison.
