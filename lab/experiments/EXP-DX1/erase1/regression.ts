@@ -23,7 +23,7 @@ import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
 import { valid } from "../actv-lazy/fixture.ts";
-import { rosterRoot, rosterSeal } from "../actv-lazy/read.ts";
+import { LazyReader, rosterRoot, rosterSeal } from "../actv-lazy/read.ts";
 import { W0, factValue, triplexValue } from "../../../bench/lib/w0-world.ts";
 import { publishWork, replayErased } from "./scenarios.ts";
 
@@ -775,6 +775,69 @@ export async function derivedRegression(
   } finally {
     peer.close();
     await Promise.all([values?.close(), noticeArchive?.close(), control?.close(), store.close()]);
+  }
+  await derivedMemoRegression(binding, output);
+}
+
+async function derivedMemoRegression(
+  binding: string,
+  output: (name: string, value: unknown) => void,
+) {
+  const store = await openStore("lazy-erase-memo-" + binding.slice(0, 18));
+  const peer = new DatomicClient(process.env.DATOMIC_URL!);
+  const db = databaseFor(String(runtimeApi.DatabaseScope.test(store.scope)));
+  const { subject, facts } = originalWorld(0);
+  try {
+    await peer.declareProtection(db, ["ssn"]);
+    await store.input(
+      "memo-source",
+      { kind: "baseline", at: valid },
+      facts.map(({ e, a, v }) => ({
+        op: "assert" as const,
+        entityId: e,
+        attribute: a,
+        value: triplexValue(a, v),
+        validFrom: 0,
+      })),
+    );
+    await store.input("memo-release", {
+      kind: "activation",
+      at: valid,
+      from: valid,
+      release: W0.R2.hash,
+    });
+    const pin = { position: await store.head(), validTime: valid };
+    const reader = new LazyReader(store);
+    const initial = await reader.readAt(subject, pin);
+    assert(initial.json.includes("everify.submit-case"));
+    assert.equal((await reader.readAt(subject, pin)).route, "exact-cache");
+    const target = (await peer.rows(db, { entityIds: [subject] })).find(
+      (row) => row.attribute === "ssn",
+    );
+    assert(target?.value_string === "000000000");
+    const erased = await peer.erase(db, "memo-removal", [{ id: target.id }]);
+    assert.equal(erased.seq, 1);
+    assert.deepEqual(
+      erased.identities.map((r) => r.assertionId),
+      [target.id],
+    );
+    const reopened = await reader.readAt(subject, pin);
+    const independent = await new LazyReader(store).readAt(subject, pin);
+    output("derived-reader", {
+      first: sha(initial.json),
+      reopened: sha(reopened.json),
+      independent: sha(independent.json),
+      basis: pin,
+      sourceSequence: erased.seq,
+      route: reopened.route,
+    });
+    assert.notEqual(reopened.route, "exact-cache");
+    assert(reopened.json.includes("everify.ssn-erased"));
+    assert(!reopened.json.includes("everify.submit-case"));
+    assert.equal(reopened.json, independent.json);
+  } finally {
+    peer.close();
+    await store.close();
   }
 }
 
