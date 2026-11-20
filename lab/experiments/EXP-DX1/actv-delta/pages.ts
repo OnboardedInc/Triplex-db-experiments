@@ -48,18 +48,21 @@ export function buildPage(worlds: readonly W0.World[], basis: W0.Basis, indexed 
     lists: Page["lists"] = {};
   for (const w of worlds) {
     const { location, postings } = describe(w, basis, indexed ? nativeIndexes() : new Set());
+    let eligible = false;
+    for (const p of postings) {
+      if (p.rule === "DOCEXP" && !trackedDocuments.has(p.tag)) continue;
+      if ((p.rule === "OT" || p.rule === "PAYCHG") && p.value === 0) continue;
+      if (p.rule === "MINWAGE" && location.local === location.state) continue;
+      eligible = true;
+      (lists[bucket(p)] ??= []).push([p.value, p.subject, p.key]);
+    }
+    if (!eligible) continue;
     addresses[w.subject] = location.id;
     const prior = locations[location.id];
     if (prior) assert.deepEqual(prior, location, "inconsistent location at native cut");
     else {
       locations[location.id] = location;
       (jurisdictions[location.jurisdiction ?? ""] ??= []).push(location.id);
-    }
-    for (const p of postings) {
-      if (p.rule === "DOCEXP" && !trackedDocuments.has(p.tag)) continue;
-      if ((p.rule === "OT" || p.rule === "PAYCHG") && p.value === 0) continue;
-      if (p.rule === "MINWAGE" && location.local === location.state) continue;
-      (lists[bucket(p)] ??= []).push([p.value, p.subject, p.key]);
     }
   }
   for (const list of Object.values(lists))
@@ -74,7 +77,9 @@ export function buildPage(worlds: readonly W0.World[], basis: W0.Basis, indexed 
 export function updatePage(old: Page, worlds: W0.World[], basis: W0.Basis, indexed: boolean): Page {
   const patch = buildPage(worlds, basis, indexed),
     changed = new Set(patch.roster),
-    addresses = { ...old.addresses, ...patch.addresses };
+    addresses = { ...old.addresses };
+  for (const id of changed) delete addresses[id];
+  Object.assign(addresses, patch.addresses);
   const locations = { ...old.locations, ...patch.locations },
     jurisdictions: Page["jurisdictions"] = {};
   const used = new Set(Object.values(addresses));

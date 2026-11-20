@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { runtimeApi, REPO } from "../../../bench/lib/triplex.ts";
+import { requestIndex } from "../../../bench/lib/maintenance.ts";
 import { randomUUID } from "node:crypto";
 import { openComposition } from "../../../bench/lib/composition.ts";
 import { W0 } from "../../../bench/lib/w0-world.ts";
@@ -11,7 +14,7 @@ import { measured } from "./measure-lock.ts";
 import { Account } from "./account.ts";
 import { Objects, hash } from "./store.ts";
 import { Window } from "./v3.ts";
-export const physical = async (): Promise<[number, number]> => {
+export const physical = async (checkpoint = false): Promise<[number, number]> => {
   assert(process.send, "physical storage observer required");
   const id = randomUUID();
   return new Promise((ok, fail) => {
@@ -27,9 +30,30 @@ export const physical = async (): Promise<[number, number]> => {
       ok(m.data);
     }
     process.on("message", listen);
-    process.send!({ type: "storage", id });
+    process.send!({ type: "storage", id, checkpoint });
   });
 };
+async function settled(scope: string, position: number, phase: string) {
+  const url = process.env.DATOMIC_URL;
+  assert(url);
+  const { DatomicClient } = await import(
+    pathToFileURL(path.join(REPO, "packages/datomic/dist/index.js")).href
+  );
+  const client = new DatomicClient(url, 100000);
+  const db = await client.create(runtimeApi.DatabaseScope.test(scope), "lean", true);
+  assert(!db.created && db.layout === "lean");
+  const before = await client.basis(db.db);
+  assert.equal(Number(before.position.v), position);
+  const job = await requestIndex(client, db.db, phase, () => performance.now(), 90000);
+  const after = await client.basis(db.db);
+  assert(
+    job.completed &&
+      Number(after.position.v) === position &&
+      BigInt(job.requestedT) >= BigInt(before.t.v) &&
+      BigInt(after.t.v) >= BigInt(job.requestedT),
+  );
+  return { scope, position, before: before.t.v, after: after.t.v, job };
+}
 export async function run(dir: string, attempt: any) {
   const N = 1000,
     r = W0.rung(N),
@@ -53,8 +77,12 @@ export async function run(dir: string, attempt: any) {
     position: number;
     burst: boolean;
   };
+  const isolated = process.env.DELTA_PRICE_ARM;
+  if (isolated) assert(["on", "off"].includes(isolated) && process.env.DELTA_PRICE_CAMPAIGN);
+  const barriers: Awaited<ReturnType<typeof settled>>[] = [],
+    physicalCuts: { before: number[]; afterCommits: number[]; after: number[] }[] = [];
   const arms = await Promise.all(
-    [false, true].map(async (indexed) => {
+    (isolated ? [isolated === "on"] : [false, true]).map(async (indexed) => {
       const c = await openComposition(
         "reach",
         "datomic",
@@ -103,12 +131,15 @@ export async function run(dir: string, attempt: any) {
     msPerFact: number;
   }[] = [];
   try {
-    for (const [k, events] of blocks.entries()) {
+    for (const [k, events] of (isolated ? [selected] : blocks).entries()) {
       await measured(async () => {
-        const order = k % 2 ? [1, 0] : [0, 1];
+        const indexedFirst = process.env.DELTA_PRICE_ORDER === "indexed-first";
+        const order = isolated ? [0] : (k % 2 === 1) !== indexedFirst ? [1, 0] : [0, 1];
         for (const [j, index] of order.entries()) {
-          const arm = arms[index]!,
-            before = await physical();
+          const arm = arms[index]!;
+          if (isolated)
+            barriers.push(await settled(arm.c.scopeName!, await arm.c.currentPosition(), "seed"));
+          const before = await physical(!!isolated);
           let facts = 0;
           for (const e of events) {
             const at = performance.now(),
@@ -142,7 +173,11 @@ export async function run(dir: string, attempt: any) {
               burst: e.burst,
             });
           }
-          const after = await physical();
+          const afterCommits = await physical();
+          if (isolated)
+            barriers.push(await settled(arm.c.scopeName!, await arm.c.currentPosition(), "saves"));
+          const after = isolated ? await physical(true) : afterCommits;
+          physicalCuts.push({ before, afterCommits, after });
           arm.blocks.push({
             block: k,
             facts,
@@ -173,6 +208,7 @@ export async function run(dir: string, attempt: any) {
           average = (k: "ms" | "bytes" | "writes") => samples.reduce((n, x) => n + x[k], 0) / facts;
         const summary = {
           indexed,
+          firstArm: process.env.DELTA_PRICE_ORDER ?? "unindexed-first",
           trace: traceDigest(selected),
           facts,
           receipts: arm.claimed.size,
@@ -204,10 +240,11 @@ export async function run(dir: string, attempt: any) {
         oracle.close();
       }
     }
-    assert.deepEqual(
-      arms[0]!.samples.map((s) => [s.seq, s.facts]),
-      arms[1]!.samples.map((s) => [s.seq, s.facts]),
-    );
+    if (!isolated)
+      assert.deepEqual(
+        arms[0]!.samples.map((s) => [s.seq, s.facts, s.writes]),
+        arms[1]!.samples.map((s) => [s.seq, s.facts, s.writes]),
+      );
     assert(
       blocks.length === 10 &&
         summaries.every(
@@ -224,6 +261,10 @@ export async function run(dir: string, attempt: any) {
         identity: attempt.identity,
         sources: attempt.sources,
         summaries,
+        isolated: isolated ?? null,
+        campaign: process.env.DELTA_PRICE_CAMPAIGN ?? null,
+        barriers,
+        physicalCuts,
       }) + "\n",
       { flag: "wx" },
     );

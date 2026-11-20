@@ -25,7 +25,10 @@ export type Epochs = {
   times: string[];
   epochs: number[][];
 };
+import type { IndexDelta, IndexLink } from "./index-overlay.ts";
 export type Head = {
+  index?: IndexLink;
+  baseRoot?: string;
   history?: string;
   seedTx?: number;
   seq: number;
@@ -44,6 +47,7 @@ export type Head = {
   compiler: string;
 };
 export type Recipe = {
+  indexDelta?: IndexDelta;
   history?: Epochs;
   kind: "release" | "clock" | "save" | "seed";
   seq: number;

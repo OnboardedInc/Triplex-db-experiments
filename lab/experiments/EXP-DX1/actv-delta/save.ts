@@ -14,6 +14,7 @@ import {
   type Mask,
   type Recipe,
 } from "./model.ts";
+import type { PageEdit } from "./index-overlay.ts";
 type Shared = Pick<Body, "seed" | "changes">;
 const refKey = (s: string) => "ref:" + hash(s).slice(0, 2);
 const subjectOf = (e: string) => (e.startsWith("pl:") ? e.split("/")[0]! : undefined);
@@ -114,6 +115,7 @@ export async function save(
         tree = needsPages ? await account.tree(h, p) : undefined,
         newTree = tree ? structuredClone(tree.value) : undefined,
         pages = needsPages ? await account.pages(h, p, numbers, tree) : undefined;
+      const changedPages: PageEdit[] = [];
       const touched = new Set<string>(),
         refAdds = new Map<string, Set<number>>();
       for (const n of numbers) {
@@ -219,10 +221,8 @@ export async function save(
             h.indexed,
           ),
           digest = hash(refreshed);
-        if (digest !== newTree.pages[n]) {
-          newTree.pages[n] = digest;
-          patches.push({ key: "page:" + n, prior: page, value: refreshed });
-        }
+        if (digest !== hash(page.value))
+          changedPages.push({ number: n, base: page.physical, next: refreshed });
       }
       const refCells = await db.many<Record<string, number[]>>(
           [...new Set([...refAdds.keys()].map(refKey))],
@@ -243,11 +243,15 @@ export async function save(
         newTree!.refs[key] = hash(value);
         patches.push({ key, value, prior: refCells.get(key) });
       }
-      const root = newTree ? hash(newTree) : h.root;
-      if (newTree && tree && root !== h.root)
+      const baseRoot = newTree ? hash(newTree) : (h.baseRoot ?? h.root);
+      if (newTree && tree && baseRoot !== (h.baseRoot ?? h.root))
         patches.push({ key: "tree", value: newTree, prior: tree });
+      const index = await account.overlay.extend(h.index, p, seq, changedPages),
+        root = index.root ? hash([baseRoot, index.root]) : baseRoot;
+      const { index: previousIndex, baseRoot: previousBase, ...priorHead } = h;
       const event: Recipe = {
         kind: "save",
+        ...(index.delta ? { indexDelta: index.delta } : {}),
         seq,
         parent: h.seq,
         parentHash: head.hash,
@@ -263,7 +267,8 @@ export async function save(
       };
       return {
         head: {
-          ...h,
+          ...priorHead,
+          ...(index.root ? { index: index.root, baseRoot } : {}),
           basis,
           root,
           seq,

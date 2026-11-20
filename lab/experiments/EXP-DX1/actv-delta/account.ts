@@ -28,6 +28,7 @@ import {
   type Mask,
   type Recipe,
 } from "./model.ts";
+import { IndexOverlay } from "./index-overlay.ts";
 import { SourceKeys } from "./secrets.ts";
 
 type Tree = { pages: string[]; members: string[]; refs: Record<string, string> };
@@ -60,7 +61,8 @@ export type View = {
 };
 const keyOf = (s: string) => "point:" + s;
 // [DX-ACT2] Why: stored recipes bind the rule and encoding version; each measured binary is bound separately in the attempt. Rejected: rejecting a valid old recipe after a performance-only change to source text.
-export const sourceFormats = hash(["actv-delta/fenced-recipe/2", compilerVersion]);
+const recipeFormat = hash(["actv-delta/fenced-recipe/2", compilerVersion]);
+export const sourceFormats = hash(["actv-delta/fenced-recipe/3", compilerVersion]);
 const firstFenceFormat = hash(["actv-delta/fenced-head/1", compilerVersion]);
 const legacyFormat = "85f74b77efaf2fb4e7e5d9d019049bcfc109cff98454f202ec2c1726c867d323";
 // [DX-ACT2] Why: a rollback reuses immutable rule bytes but still has a distinct epoch. Rejected: copying the entire rule book into every subsequent save.
@@ -116,21 +118,23 @@ function unpackHead(
 }
 export class Account {
   readonly keys: SourceKeys;
+  readonly overlay: IndexOverlay;
   readonly db: Objects;
   readonly binding: string;
-  readonly settleSource?: () => Promise<unknown>;
+  readonly settleSource?: (debtId: string) => Promise<unknown>;
   readonly settlingDebt: boolean;
   constructor(
     db: Objects,
     binding: string,
     keyDir?: string,
-    settleSource?: () => Promise<unknown>,
+    settleSource?: (debtId: string) => Promise<unknown>,
     settlingDebt = false,
   ) {
     this.settleSource = settleSource;
     this.settlingDebt = settlingDebt;
     this.db = db;
     this.binding = binding;
+    this.overlay = new IndexOverlay(db, binding);
     this.keys = new SourceKeys(keyDir, db.account);
   }
   async bootstrap(
@@ -243,14 +247,14 @@ export class Account {
       root: h.root,
     };
   }
-  private readonly histories = new Map<string, string>();
+  private readonly histories = new Map<string, { bytes: string; position: number }>();
   private async checkedHead(c: Cell<Head>) {
     let stored = c.value;
     if (stored.history && !stored.activations) {
       const key = "event:" + stored.releaseSeq,
         digest = stored.history;
       let encoded = this.histories.get(digest);
-      if (!encoded) {
+      if (!encoded || encoded.position > c.position) {
         let rec = (await this.db.many<Recipe>([key], c.position)).get(key);
         if (!rec || rec.hash !== digest)
           rec = await originalObject<Recipe>(
@@ -266,16 +270,16 @@ export class Account {
             rec.value.history,
           "missing original release history",
         );
-        encoded = JSON.stringify(rec.value.history);
+        encoded = { bytes: JSON.stringify(rec.value.history), position: rec.position };
         if (this.histories.size >= 32) this.histories.delete(this.histories.keys().next().value!);
         this.histories.set(digest, encoded);
       }
-      stored = { ...stored, ...JSON.parse(encoded) };
+      stored = { ...stored, ...JSON.parse(encoded.bytes) };
     }
     c = { ...c, value: unpackHead(stored) };
     assert(
       c.value.source === this.binding &&
-        [sourceFormats, legacyFormat, firstFenceFormat].includes(c.value.compiler) &&
+        [sourceFormats, recipeFormat, legacyFormat, firstFenceFormat].includes(c.value.compiler) &&
         c.value.frontier === c.value.certified,
       "uncertified source/index/publication frontier",
     );
@@ -284,9 +288,14 @@ export class Account {
   async head(position: number) {
     return this.checkedHead(await this.db.get<Head>("head", position));
   }
+  private treeProof(h: Head, value: unknown) {
+    const base = hash(value);
+    assert.equal(base, h.baseRoot ?? h.root, "index root mismatch");
+    assert.equal(h.root, h.index ? hash([base, h.index]) : base, "incorrect overlay commitment");
+  }
   async tree(h: Head, position: number) {
     const t = await this.db.get<Tree>("tree", position);
-    assert.equal(hash(t.value), h.root, "index root mismatch");
+    this.treeProof(h, t.value);
     return t;
   }
   async refs(h: Head, p: number, keys: string[]) {
@@ -309,17 +318,16 @@ export class Account {
     return cs;
   }
   async pages(h: Head, position: number, nums: number[], certified?: Cell<Tree>) {
-    if (certified)
-      assert(
-        certified.position <= position && hash(certified.value) === h.root,
-        "incorrect supplied index root",
-      );
+    if (certified) {
+      assert(certified.position <= position, "index certificate is newer than the requested cut");
+      this.treeProof(h, certified.value);
+    }
     const root = certified ?? (await this.tree(h, position)),
       rows = await this.db.many<Page>(
         nums.map((i) => "page:" + i),
         position,
       ),
-      out = new Map<number, Cell<Page>>();
+      out = new Map<number, Cell<Page> & { physical: Cell<Page> }>();
     for (const i of nums) {
       const key = "page:" + i;
       let cell = rows.get(key);
@@ -337,7 +345,9 @@ export class Account {
           hash(cell.value.roster) === root.value.members[i],
         "index or roster page mismatch",
       );
-      out.set(i, cell);
+      const value = await this.overlay.page(h.index, position, i, cell);
+      assert.equal(hash(value.roster), root.value.members[i]);
+      out.set(i, { ...cell, value, physical: cell });
     }
     return out;
   }
@@ -553,7 +563,14 @@ export class Account {
   private replay(c: Cell<Claim>, id: string, request: string) {
     assert(c.value.id === id && c.value.request === request, "command identity reused");
     if (c.value.error) throw Error(c.value.error);
-    return { position: c.position, seq: c.value.seq, retry: true, bytes: 0, operations: 0 };
+    return {
+      position: c.position,
+      seq: c.value.seq,
+      retry: true,
+      bytes: 0,
+      operations: 0,
+      sourceDebtMs: 0,
+    };
   }
   private async writeEvent(
     id: string,
@@ -600,7 +617,7 @@ export class Account {
       release ? [...nativeOps, { op: "retract", id: fence!.id }] : nativeOps,
       conditions,
     );
-    return { ...r, seq: v.head.seq, retry: false };
+    return { ...r, seq: v.head.seq, retry: false, sourceDebtMs: 0 };
   }
   async command(
     id: string,
@@ -735,16 +752,28 @@ export class Account {
     const i = f.value,
       key = "claim:" + hash(i.id);
     assert(i.source === this.binding && i.request === hash(["seal", i.doc, i.from, i.valid]));
-    await this.settleSource?.();
-    const p = fresh && !this.settleSource ? f.position : await this.db.comp.currentPosition(),
-      rows = await this.db.many([key, "head", "fence", "tree"], p),
-      done = rows.get(key) as Cell<Claim> | undefined;
+    let p = fresh ? f.position : await this.db.comp.currentPosition(),
+      sourceDebtMs = 0;
+    const inputs = [key, "fence", "head", "tree", ...(this.settleSource ? ["deep-debt"] : [])];
+    let rows = await this.db.many(inputs, p);
+    const pending = rows.get("deep-debt");
+    // [DX-ACT2] Why: the admission cut already tells us whether a source save won the serial race. Only reconcile that exact debt. Rejected: making every release chase a newer source position before reading the same empty debt.
+    if (pending && !rows.has(key)) {
+      assert(this.settleSource);
+      const started = performance.now(),
+        repaired = await this.settleSource(pending.id);
+      if (repaired) sourceDebtMs = performance.now() - started;
+      p = await this.db.comp.currentPosition();
+      rows = await this.db.many(inputs, p);
+      assert(rows.has(key) || !rows.has("deep-debt"), "fence still has unresolved source input");
+    }
+    const done = rows.get(key) as Cell<Claim> | undefined;
     if (done) return this.replay(done, i.id, i.request);
     assert.equal(rows.get("fence")?.id, f.id, "admitted release lost its fence");
     const h = await this.checkedHead(rows.get("head") as Cell<Head>);
     let plan: Awaited<ReturnType<Build>>;
     try {
-      assert.equal(hash(rows.get("tree")?.value), h.value.root, "index root mismatch");
+      this.treeProof(h.value, rows.get("tree")?.value);
       plan = await this.releasePlan(p, h, i);
     } catch (e) {
       // [DX-ACT2] Why: malformed input cannot strand ordinary writers. Only reject the same fenced predecessor. Rejected: expiring a live owner's lease by wall clock.
@@ -769,7 +798,10 @@ export class Account {
       throw e;
     }
     try {
-      return await this.writeEvent(i.id, i.request, h, plan, f, true, [], []);
+      return {
+        ...(await this.writeEvent(i.id, i.request, h, plan, f, true, [], [])),
+        sourceDebtMs,
+      };
     } catch (e) {
       if (!(e instanceof Conflict)) throw e;
       // [DX-ACT2] Why: a concurrent helper can only have committed these identical bytes. Rejected: retrying release evaluation on ordinary save contention.

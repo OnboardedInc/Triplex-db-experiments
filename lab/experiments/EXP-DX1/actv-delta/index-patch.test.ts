@@ -41,9 +41,12 @@ test("a sparse index can be reopened from its immutable base at each save withou
         b = (await restored.pages(h, p, [0])).get(0)!,
         wire = await c.sweepPage([db.entity("page:0")], { position: p, validAt: 0 });
       if (i) {
-        const disk = JSON.parse(wire.rows[0]!.value.value);
-        assert.equal(disk.from, (await db.get("page:0", cuts[0]!)).position);
-        assert(typeof disk.patch === "string" && !Object.hasOwn(disk, "value"));
+        const original = await db.get("page:0", cuts[0]!),
+          at = await db.get<Recipe>("event:" + i, p);
+        assert.equal(wire.rows[0]!.id, original.id);
+        assert.equal((await db.get("tree", p)).position, (await db.get("tree", cuts[0]!)).position);
+        assert(h.index?.[0] === i && at.value.indexDelta?.leaves[0]?.base === original.hash);
+        assert.equal(at.value.indexDelta.leaves[0].after, hash(b.value));
       }
       const actual = b.value.lists[JSON.stringify(["OT", "loc:l", ""])]!.find(
         (row) => row[1] === first,
@@ -102,6 +105,8 @@ test("a newly tracked document type takes the full path and closed cases write n
       h = (await a.head(seed.position)).value,
       page = (await a.pages(h, seed.position, [0])).get(0)!.value;
     assert.equal(Object.values(page.lists).flat().length, 0);
+    assert.deepEqual(page.addresses, {});
+    assert.deepEqual(page.locations, {});
     const newDoc = W0.compileRelease({
         ...W0.R1.doc,
         rules: W0.R1.doc.rules.map((r) =>
@@ -113,6 +118,51 @@ test("a newly tracked document type takes the full path and closed cases write n
     assert(rec.value.shape === "full" && rec.value.fullCheck?.people === 1);
     const answer = await a.readAt(id, result.position);
     assert(answer.output.tasks.some((task) => task.kind === "doc.reverify"));
+  } finally {
+    await c.close();
+  }
+});
+
+test("a second shard update preserves the other shard and rejects a rebound change", async () => {
+  const c = memoryComposition("datomic", "delta-shards-" + randomUUID()),
+    db = new Objects(c, "t"),
+    { IndexOverlay } = await import("./index-overlay.ts"),
+    o = new IndexOverlay(db, "source"),
+    { buildPage } = await import("./pages.ts"),
+    b = { tx: 1, validTime: W0.POPULATION_VALID_TIME },
+    leaf = (id: string, v: number) =>
+      buildPage([{ subject: id, facts: [{ e: id, a: "weeklyMinutes", v, tx: 1 }] }], b);
+  try {
+    const base = await db.commit("base", [
+      { key: "page:0", value: leaf("pl:a", 0) },
+      { key: "page:33", value: leaf("pl:b", 0) },
+    ]);
+    const a = await db.get<ReturnType<typeof leaf>>("page:0", base.position),
+      z = await db.get<ReturnType<typeof leaf>>("page:33", base.position);
+    const one = await o.extend(undefined, base.position, 1, [
+      { number: 0, base: a, next: leaf("pl:a", 2300) },
+      { number: 33, base: z, next: leaf("pl:b", 2600) },
+    ]);
+    const p1 = await db.commit("changes1", [
+      { key: "event:1", value: { kind: "save", seq: 1, indexDelta: one.delta } },
+    ]);
+    const two = await o.extend(one.root, p1.position, 2, [
+      { number: 33, base: z, next: leaf("pl:b", 2100) },
+    ]);
+    const p2 = await db.commit("changes2", [
+      { key: "event:2", value: { kind: "save", seq: 2, indexDelta: two.delta } },
+    ]);
+    const cold = new IndexOverlay(db, "source");
+    assert.deepEqual(await cold.page(two.root, p2.position, 0, a), leaf("pl:a", 2300));
+    assert.deepEqual(await cold.page(two.root, p2.position, 33, z), leaf("pl:b", 2100));
+    assert.deepEqual(await cold.page(one.root, p1.position, 33, z), leaf("pl:b", 2600));
+    await assert.rejects(cold.page(two.root, p1.position, 33, z), /missing/);
+    await assert.rejects(cold.page(two.root, p2.position, 33, a), /different base/);
+    const returned = await cold.extend(two.root, p2.position, 3, [
+      { number: 0, base: a, next: a.value },
+      { number: 33, base: z, next: z.value },
+    ]);
+    assert.equal(returned.root, undefined);
   } finally {
     await c.close();
   }

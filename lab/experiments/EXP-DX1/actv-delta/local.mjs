@@ -31,6 +31,7 @@ export async function local(opts, config, manager) {
       "loaded",
       "crash",
       "solo-check",
+      "deep-loaded",
     ].includes(opts.run),
   );
   const dir = path.resolve(opts.out),
@@ -62,7 +63,7 @@ export async function local(opts, config, manager) {
           const req = {
             container: prefix,
             memBytes: Object.values(caps).reduce((a, b) => a + b, 0) * 2 ** 20,
-            diskForecastBytes: 4 * 2 ** 30,
+            diskForecastBytes: (opts.run === "deep-loaded" ? 8 : 4) * 2 ** 30,
           };
           const allowed = admission({
             config: { ...config, pool: { ...config.pool, memLimitBytes: limit } },
@@ -230,16 +231,8 @@ export async function local(opts, config, manager) {
       "/opt/datomic/bin/run",
       ["-m", "triplex.gateway.main"],
     );
-    const mounted = docker([
-      "exec",
-      gw,
-      "sh",
-      "-c",
-      "cd /opt/gateway/src && find . -type f -exec sha256sum {} +",
-    ])
-      .split("\n")
-      .map((v) => [v.slice(68), v.slice(0, 64)])
-      .sort();
+    const { mountedGateway } = await import("./power.mjs");
+    const mounted = mountedGateway(gw);
     assert.deepEqual(mounted, manifest);
     await wait(gw, async () => {
       const r = await fetch(info.endpoint + "/health", { signal: AbortSignal.timeout(1500) }).catch(
@@ -301,6 +294,10 @@ export async function local(opts, config, manager) {
         }
       }
       if (m?.type === "storage") {
+        if (m.checkpoint) {
+          assert(opts.run === "price" && ["on", "off"].includes(process.env.DELTA_PRICE_ARM));
+          sql("CHECKPOINT");
+        }
         const data = sql(
           "SELECT pg_database_size(current_database()),pg_wal_lsn_diff(pg_current_wal_insert_lsn(),'0/0')",
         )

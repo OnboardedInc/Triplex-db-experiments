@@ -79,7 +79,9 @@ if (["schedules", "rungs", "crash"].includes(mode!)) {
   }
 }
 if (mode !== "schedules") {
-  const worker = await import("./" + mode + ".ts");
+  const worker = await import(
+    "./" + (mode === "solo-check" || mode === "deep-loaded" ? "solo" : mode) + ".ts"
+  );
   await worker.run(dir, attempt);
 }
 assert.equal(start, stamp(), "gate sources changed during execution");
