@@ -86,6 +86,9 @@
         journal-reply (route "journal" {"txId" "_tx/edit-a"})
         entity-reply (route "entity-transactions" {"entityId" fixture/root "limit" 10
                                                   "basis" {"recordedPosition" 2 "validAt" 5.0}})
+        audit-basis {"recordedOnly" true "basis" {"recordedPosition" 2}}
+        audit-entity (route "entity-transactions" (assoc audit-basis "entityId" fixture/root "limit" 10))
+        audit-journal (route "journal" (assoc audit-basis "txId" "_tx/edit-a"))
         claim (reference/claim db "edit-a")
         native-t (parse-long (held "nativeT"))
         data (mapcat :data (d/tx-range (d/log conn) native-t (inc native-t)))
@@ -111,6 +114,11 @@
     (assert (= {"txId" "_tx/edit-a"} (:body command-reply)))
     (assert (= (set (nth entry 2)) (set (get-in journal-reply [:body "rows"]))))
     (assert (= [["_tx/edit-a" 2] ["_tx/seed" 1]] (get-in entity-reply [:body "positions"])))
+    ;; [DX-PREP1] Why: the merged recorded-cut audit must see a save through either writer.
+    ;; Rejected: passing only the default journal route, which can hide regressions in the opt-in audit.
+    (assert (= entity-reply audit-entity))
+    (assert (= (set (nth entry 2)) (set (get-in audit-journal [:body "rows"]))))
+    (assert (= 200 (:status audit-journal)))
     (assert (= (held "receipt") (claim "receipt")))
     (assert (= #{"middle"} (set (for [text (d/q '[:find [?row ...] :in $ ?e :where [?e :triplex.entity/row ?row]] view eid)
                                          :let [row (lean/decode text)]
@@ -129,6 +137,7 @@
                          (get-in native-entry ["transaction" "changes"])))))
     {:feed entry :claim claim :nativeT (str native-t)
      :command command-reply :journal journal-reply :entityTransactions entity-reply
+     :recordedAudit {:journal audit-journal :entityTransactions audit-entity}
      :nativeQueries queries :nativeLog native-entry}))
 
 (defn after [file]
