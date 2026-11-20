@@ -71,7 +71,11 @@ function runtime(
       name: "query6",
       storage: Layer.succeed(
         StorageAdapter,
-        makeDatomicStorageAdapter(client, scope, { layout, serverRecordTime: false }),
+        makeDatomicStorageAdapter(client, scope, {
+          layout,
+          serverRecordTime: false,
+          recordedJournalReads: true,
+        }),
       ),
       queries: Layer.succeed(QueryExecutor, makeDatomicQueryExecutor(client, scope)),
     }).layer({

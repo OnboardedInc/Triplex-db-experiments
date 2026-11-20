@@ -22,8 +22,8 @@
       (assert (<= t (d/basis-t (completed (d/sync-excise conn t)))))
       t)))
 
-(defn post [name route data]
-  (let [response (gateway/route-handler {:request-method :post :uri (str "/v1/db/" name "/" route)
+(defn post [name route data & [version]]
+  (let [response (gateway/route-handler {:request-method :post :uri (str "/v" (or version 1) "/db/" name "/" route)
                                         :body (ByteArrayInputStream. (.getBytes (json/write-str data) "UTF-8"))})]
     [(:status response) (json/read-str (:body response))]))
 
@@ -61,6 +61,9 @@
               [past-log-status past-log] (log-page (get-in report [:t "v"]))
               [old-status old] (post name "read" {"id" id "handle" held "basis" {"recordedPosition" 1}})
               [new-status current] (post name "read" {"id" id "history" true})
+              [index-status index] (post name "entity-transactions" {"entityId" seed/root "limit" 1
+                                            "basis" {"recordedPosition" 1} "recordedOnly" true} 2)
+              [envelope-status envelope] (post name "journal" {"txId" tx "basis" {"recordedPosition" 1} "recordedOnly" true} 2)
               [journal-status j] (journal)]
           ;; [DX-W1] Why: prove the new query guard and preserve the observed red read boundaries separately.
           ;; Rejected: declaring a typed 409 equivalent to Q49c's ordered, countable marker.
@@ -69,9 +72,12 @@
                      [[pin-status (get pin "code")] [fresh-status (get fresh "code")]
                       [log-status (get log "code")] [past-log-status (get past-log "code")]]))
           (assert (= [200 200 200] [old-status new-status journal-status]))
+          (assert (= [[409 "ErasureQueryUnsupported"] [409 "ErasureQueryUnsupported"]]
+                     [[index-status (get index "code")] [envelope-status (get envelope "code")]]))
           (println "W1_ERASE6" (json/write-str {:attempt attempt :db name :eraseT (str t) :id id
                      :assertT (get-in report [:t "v"]) :pinnedCode (get pin "code") :freshCode (get fresh "code")
                      :feedCode (get log "code") :pastLogCode (get past-log "code")
+                     :indexCode (get index "code") :envelopeCode (get envelope "code")
                      :heldCleartext (= token (get-in old ["rows" 0 "value_string" "v"]))
                      :historyPresent (boolean (seq (get current "rows")))
                      :journalCleartext (= token (get-in (json/read-str (get-in j ["rows" 0 "value_json" "v"])) ["value" "value"]))}))))

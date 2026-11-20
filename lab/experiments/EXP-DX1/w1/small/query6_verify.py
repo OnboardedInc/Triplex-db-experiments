@@ -74,6 +74,7 @@ def erasure_observation():
     assert json.loads(base64.urlsafe_b64decode(key + "=" * (-len(key) % 4)))[3] == nonce
     assert 0 < int(record["assertT"]) < int(record["eraseT"])
     assert record["pinnedCode"] == record["freshCode"] == "ErasureQueryUnsupported"
+    assert record["indexCode"] == record["envelopeCode"] == "ErasureQueryUnsupported"
     assert record["feedCode"] == record["pastLogCode"] == "FeedErasureUnsupported"
     assert all(type(record[k]) is bool for k in ("heldCleartext", "historyPresent", "journalCleartext"))
     return record

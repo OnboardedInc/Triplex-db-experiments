@@ -71,6 +71,7 @@ export const makeDatomicStorageAdapter = (
     readonly optimisticCommits?: boolean;
     readonly serverRecordTime?: boolean;
     readonly indexedJournalReads?: boolean;
+    readonly recordedJournalReads?: boolean;
   } = {},
 ): StorageAdapterService => {
   // [DX-T1] Why: Effect scopes include staging/validation and always close on typed failure or interruption.
@@ -864,7 +865,15 @@ export const makeDatomicStorageAdapter = (
       }),
     getTransactionPositionsByEntity: (entityId, limit, basis, beforePosition) =>
       Effect.gen(function* () {
-        if ((yield* current) || !client.supportsJournalCuts(db)) return undefined;
+        const recordedOnly = options.recordedJournalReads === true;
+        if (yield* current) {
+          if (recordedOnly)
+            return yield* Effect.fail(
+              new ReadError({ message: "Journal history needs a committed snapshot" }),
+            );
+          return undefined;
+        }
+        if (!recordedOnly && !client.supportsJournalCuts(db)) return undefined;
         return yield* read(async () => {
           const result = await client.request<{
             declined?: string;
@@ -872,13 +881,44 @@ export const makeDatomicStorageAdapter = (
           }>("POST", `/v2/db/${db}/entity-transactions`, {
             entityId,
             limit,
-            basis,
+            basis: recordedOnly ? { recordedPosition: basis.recordedPosition } : basis,
+            ...(recordedOnly ? { recordedOnly } : {}),
             ...(beforePosition === undefined ? {} : { beforePosition }),
           });
-          if (result.declined) return undefined;
+          if (result.declined) {
+            if (recordedOnly)
+              throw new TypeError(`Recorded journal index declined (${result.declined})`);
+            return undefined;
+          }
           return result.positions.map(([transactionId, position]) => ({ transactionId, position }));
         });
       }),
+    ...(options.recordedJournalReads
+      ? {
+          getTransactionRowsAtPosition: (txId: string, recordedPosition: number) =>
+            read(async () => {
+              // [DX-W1] Why: hydration uses the same explicit recorded cut as journal membership.
+              // Rejected: substituting the caller's current time or the newest database.
+              const result = await client.request<{ declined?: string; rows: string[] }>(
+                "POST",
+                `/v2/db/${db}/journal`,
+                { txId, basis: { recordedPosition }, recordedOnly: true },
+              );
+              if (result.declined)
+                throw new TypeError(`Recorded journal declined (${result.declined})`);
+              const rows = result.rows.map(decodeRowText);
+              if (
+                rows.some(
+                  (row) => row.entity_id !== txId || row.recorded_position > recordedPosition,
+                )
+              )
+                throw new TypeError("Journal envelope is outside the requested subject and cut");
+              return rows
+                .filter((row) => row.entity_type === "_Transaction")
+                .sort((a, b) => a.recorded_at - b.recorded_at || a.id.localeCompare(b.id));
+            }),
+        }
+      : {}),
     getReachRows: (root, basis) =>
       Effect.gen(function* () {
         if (yield* current) return undefined;
