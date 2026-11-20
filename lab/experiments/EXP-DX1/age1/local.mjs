@@ -58,19 +58,21 @@ export async function local(opts, config, manager) {
   assert.equal(opts.holder, holder);
   assert.equal(dockerArgs([])[1], DOCKER_HOST);
   const image = (ref) => docker(["image", "inspect", "--format", "{{.Id}}", ref]);
-  // [DX-AGE1] Why: use the read-back build record when the lab rotates the Datomic image.
-  // Rejected: pulling or rebuilding a shared image for a read-only source mount.
-  const builds = fs.readFileSync(path.join(LOCKS, "events.jsonl"), "utf8").trim().split("\n")
-    .map((line) => JSON.parse(line)).filter((e) => e.event === "datomic-build").reverse();
-  const pinned = [config.lanes.datomic, ...builds].find(({ imageId, buildInputsSha256 }) => {
-    const readback = docker(["image", "inspect", "--format", '{{.Id}} {{index .Config.Labels "tx2.build-inputs-sha256"}}',
-      imageId], { allowFail: true });
-    return readback === imageId + " " + buildInputsSha256 && (!opts.image || opts.image === imageId);
-  });
-  assert(pinned, "Locally present, recorded Datomic build required");
-  const imageRef = pinned.imageId;
+  const selectImage = () => {
+    // [DX-AGE1] Why: use the read-back build record when the lab rotates the Datomic image.
+    // Rejected: pulling or rebuilding a shared image for a read-only source mount.
+    const builds = fs.readFileSync(path.join(LOCKS, "events.jsonl"), "utf8").trim().split("\n")
+      .map((line) => JSON.parse(line)).filter((e) => e.event === "datomic-build").reverse();
+    const pinned = [config.lanes.datomic, ...builds].find(({ imageId, buildInputsSha256 }) => {
+      const readback = docker(["image", "inspect", "--format", '{{.Id}} {{index .Config.Labels "tx2.build-inputs-sha256"}}',
+        imageId], { allowFail: true });
+      return readback === imageId + " " + buildInputsSha256 && (!opts.image || opts.image === imageId);
+    });
+    assert(pinned, "Locally present, recorded Datomic build required");
+    return pinned.imageId;
+  };
   if (opts["check-images"]) {
-    console.log(JSON.stringify({ datomic: image(imageRef), postgres: image("postgres:17-alpine") }));
+    console.log(JSON.stringify({ datomic: image(selectImage()), postgres: image("postgres:17-alpine") }));
     return;
   }
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
@@ -80,14 +82,10 @@ export async function local(opts, config, manager) {
   const revision = git(["rev-parse", "HEAD"]);
   const pin = opts.source ?? revision;
   assert.match(pin, /^[0-9a-f]{40}$/);
-  const datomic = image(imageRef), postgres = image("postgres:17-alpine");
   const attempt = randomUUID(), prefix = "tx2-dxage-" + attempt.slice(0, 12);
   const dir = path.join(evidence, opts.out);
   fs.mkdirSync(evidence, { recursive: true });
   fs.mkdirSync(dir);
-  const source = stage(dir, pin);
-  const sources = new Map(hashTree(source));
-  if (measure) assert.equal(sources.get(experiment + "/measure.mjs"), sha256(fs.readFileSync(new URL("./measure.mjs", import.meta.url))));
   const created = new Map(), volumes = new Set();
   const names = Object.fromEntries(Object.keys(caps).map((r) => [r, prefix + "-" + r]));
   const labels = ["--label", "age.attempt=" + attempt, "--label", "tx2.holder=" + holder];
@@ -117,7 +115,13 @@ export async function local(opts, config, manager) {
   };
   try {
     floor();
-    if (measure) lease = await acquireMeasureLease(holder + " scale", { holder, pollMs: 30000 });
+    // [DX-AGE1] Why: a competing lease can wait for this wrapper's token. Rejected: sleeping indefinitely while both holders wait.
+    manager.assertMeasureAdmission(holder);
+    lease = await acquireMeasureLease(holder + " " + opts.run, { holder, pollMs: 1000, timeoutMs: 45000 });
+    const datomic = image(selectImage()), postgres = image("postgres:17-alpine");
+    const source = stage(dir, pin);
+    const sources = new Map(hashTree(source));
+    if (measure) assert.equal(sources.get(experiment + "/measure.mjs"), sha256(fs.readFileSync(new URL("./measure.mjs", import.meta.url))));
     while (!slot) {
       controller.signal.throwIfAborted();
       floor();
@@ -144,7 +148,7 @@ export async function local(opts, config, manager) {
           });
         });
       } catch (error) {
-        if (!["REFUSED", "EEXIST"].includes(error.code)) throw error;
+        if (error.code !== "EEXIST") throw error;
       }
       if (!slot) {
         releaseMeasure();
