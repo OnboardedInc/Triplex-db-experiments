@@ -11,6 +11,10 @@
 (def queue-clock (= "1" (System/getenv "TX2_GROUP_QUEUE_CLOCK")))
 (def stage-clock (= "1" (System/getenv "TX2_GROUP_STAGE_CLOCK")))
 (def reuse-prepared (= "1" (System/getenv "TX2_GROUP_REUSE_PREPARED")))
+(def prepare-window
+  (case (or (System/getenv "TX2_PREPARE_WINDOW") "off")
+    "off" :off "prepare" :prepare "two" :two
+    (throw (IllegalArgumentException. "Invalid TX2_PREPARE_WINDOW"))))
 (def batch-limit (policy/limit "TX2_GROUP_MAX_MEMBERS" 8 128))
 (def pending-limit 256)
 (def executor (Executors/newCachedThreadPool
@@ -221,43 +225,64 @@
       (when (every? some? drafts) drafts))))
 (defn mark-prepared [batch stats]
   (if stage-clock (mapv #(assoc % :prepared-stats stats) batch) batch))
+(defn assemble [batch drafts head]
+  (try (when-let [plan (prepared/assemble batch drafts head)]
+         (assoc plan :rendered-ns (when stage-clock (str (System/nanoTime)))))
+       (catch Exception _ nil)))
+(defn plan [conn batch]
+  (when-let [drafts (ready-drafts batch)]
+    (assemble batch drafts (prepared/head (d/db conn)))))
+(defn start-prepared! [conn plan]
+  (let [sent (when stage-clock (str (System/nanoTime)))]
+    (merge plan {:submitted-ns sent}
+           (try {:future (send! conn (:data plan))} (catch Exception e {:error e})))))
+(defn finish-prepared! [conn batch plan]
+  (let [physical (if-let [error (:error plan)] {:error error}
+                   (try {:report @(:future plan)} (catch Exception e {:error e})))
+        stats (when stage-clock
+                {:submittedNs (:submitted-ns plan) :renderedNs (:rendered-ns plan)
+                 :afterOperation (:after-operation plan) :observedNs (str (System/nanoTime))})]
+    (if-let [error (:error physical)]
+      ;; [DX-PREP1] Why: re-evaluate at the authoritative cut after a definite rejection.
+      ;; Rejected: retrying a write whose lost response could hide a successful durable append.
+      (do (if (definitive? error)
+            (execute-reference! conn (mark-prepared batch (assoc stats :path "reference" :replays 1)))
+            (unknown! batch error))
+          false)
+      (do (durable-results! (mark-prepared batch (assoc stats :path "prepared" :replays 0))
+                            (:results plan) (:report physical) nil)
+          true))))
 (defn execute! [conn batch]
-  (if-let [plan (when-let [drafts (ready-drafts batch)]
-                  (try (prepared/assemble batch drafts (prepared/head (d/db conn)))
-                       (catch Exception _ nil)))]
-    (let [physical (try {:report @(send! conn (:data plan))} (catch Exception e {:error e}))]
-      (if-let [error (:error physical)]
-        ;; [DX-PREP1] Why: re-evaluate at the authoritative cut after a definite rejection.
-        ;; Rejected: retrying a write whose lost response could hide a successful durable append.
-        (if (definitive? error)
-          (execute-reference! conn (mark-prepared batch {:path "reference" :replays 1}))
-          (unknown! batch error))
-        (durable-results! (mark-prepared batch {:path "prepared" :replays 0}) (:results plan) (:report physical) nil)))
+  (if-let [candidate (plan conn batch)]
+    (finish-prepared! conn batch (start-prepared! conn candidate))
     (execute-reference! conn batch)))
 
-(defn next-entry [{:keys [queue accounts rotation]}]
-  (let [ready (fn [owners rank]
+(defn next-entry
+  ([state] (next-entry state realized?))
+  ([{:keys [queue accounts rotation]} ready?]
+   (let [ready (fn [owners rank]
                 (some (fn [account]
                     (let [e (first (filter #(and (= account (:account %)) (or (nil? rank) (= rank (:rank %)))) queue))]
-                      (when (and e (every? realized? (:predecessors e))) e))) owners))]
+                      (when (and e (every? ready? (:predecessors e))) e))) owners))]
     (if policy/priority?
       (or (ready (:live rotation) :live) (ready (:bulk rotation) :bulk))
-      (ready accounts nil))))
+      (ready accounts nil)))))
 (defn rotate [owners account more?]
   (cond-> (filterv #(not= account %) owners) more? (conj account)))
 (defn join-turn [owners account]
   (if (some #{account} owners) owners (conj (or owners []) account)))
-(defn choose [state]
-  (loop [{:keys [queue accounts tails] :as state} state out [] variable 0]
+(defn preview [state]
+  (loop [{:keys [queue accounts tails] :as state} state out [] selected #{} variable 0]
     (if (or (empty? queue) (= (count out) batch-limit)) [state out]
-      (let [next (next-entry state) _ (assert next "Oldest pending command must be eligible")
+      (let [ready? #(or (contains? selected %) (realized? %))
+            next (next-entry state ready?) _ (assert next "Oldest pending command must be eligible")
             first-member (first out)
             ;; [DX-W1] Why: combine already waiting edits of this subject across independent work in the same account.
             ;; Rejected: two physical turns before the next account or jumping a sender, subject, claim or scope predecessor.
             entry (if (and policy/field-only? first-member (:subject first-member) (= (:rank next) (:rank first-member)))
                     (or (first (filter #(and (= (:account %) (:account first-member)) (= (:rank %) (:rank first-member))
                                              (= (:subject %) (:subject first-member)) (:eligible %)
-                                             (every? realized? (:predecessors %))) queue)) next) next)
+                                             (every? ready? (:predecessors %))) queue)) next) next)
             a (:account entry) rank (:rank entry)
             priced (+ variable (or (:variable-us entry) 0))
             solo (or (not (:eligible entry))
@@ -271,9 +296,39 @@
                 remaining (reduce (fn [m k] (if (identical? (:token entry) (get m k)) (dissoc m k) m)) tails (:keys entry))
                 s (cond-> (assoc state :queue others :tails remaining :accounts (rotate accounts a (some same? others)))
                     policy/priority? (update-in [:rotation rank] rotate a (some #(and (same? %) (= rank (:rank %))) others)))
-                taken (conj out (assoc entry :dispatch (System/nanoTime)))]
-            (deliver (:token entry) true)
-            (if solo [s taken] (recur s taken priced))))))))
+                taken (conj out entry)]
+            (if solo [s taken] (recur s taken (conj selected (:token entry)) priced))))))))
+(defn admit [batch]
+  (mapv (fn [entry] (deliver (:token entry) true) (assoc entry :dispatch (System/nanoTime))) batch))
+(defn choose [state]
+  (let [[remaining batch] (preview state)]
+    [remaining (admit batch)]))
+(defn reserve-overlap! [lane current]
+  (locking lane
+    (let [[remaining next] (preview @lane)]
+      (when-let [drafts (and (prepared/disjoint? (concat current next)) (ready-drafts next))]
+        (reset! lane remaining)
+        {:batch (admit next) :drafts drafts}))))
+(defn execute-window! [conn lane batch]
+  ;; [DX-PREP1] Why: reserve only ready and dependency-disjoint live members, then render against the first group's exact proposed head.
+  ;; Rejected: whole-basis blind submissions or sending another group that depends on unsettled subject or sender state.
+  (if-let [first-plan (plan conn batch)]
+    (let [first-started (start-prepared! conn first-plan)
+          next (when (:future first-started) (reserve-overlap! lane batch))
+          candidate (when next
+                      (when-let [p (assemble (:batch next) (:drafts next) (:next-head first-plan))]
+                        (assoc p :after-operation (peek (:next-head first-plan)))))
+          second-started (when (and candidate (= :two prepare-window)) (start-prepared! conn candidate))]
+      (try
+        (let [first-ok (finish-prepared! conn batch first-started)]
+          (when-let [entries (:batch next)]
+            (cond
+              second-started (finish-prepared! conn entries second-started)
+              (and candidate first-ok) (finish-prepared! conn entries (start-prepared! conn candidate))
+              :else (execute! conn entries))))
+        (catch Throwable error
+          (unknown! (concat batch (:batch next)) error))))
+    (execute-reference! conn batch)))
 (defn submit! [conn entry]
   (let [entry (merge {:rank :live} entry) lane (lane-for conn) p (promise) token (promise)
         launch (locking lane
@@ -297,7 +352,9 @@
     (when launch
       (.execute executor (fn []
         (loop [batch launch]
-          (try (execute! conn batch)
+          (try (if (and prepared/enabled (not= :off prepare-window))
+                 (execute-window! conn lane batch)
+                 (execute! conn batch))
                (catch Throwable t (doseq [e batch] (complete! e {:error t}))))
           (when-let [next-batch (locking lane
                                  (if (empty? (:queue @lane)) (do (swap! lane assoc :active false) nil)

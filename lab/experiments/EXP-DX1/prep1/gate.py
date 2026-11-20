@@ -95,6 +95,7 @@ def run(java, datomic, out):
     jars = [datomic / "datomic-transactor-pro-1.0.7745.jar", *sorted((datomic / "lib").glob("*.jar"))]
     sources = [HERE / "gate.clj", Path(__file__).resolve(), codec, *sorted(gateway.rglob("*.clj"))]
     manifest = {str(f.relative_to(ROOT)): digest(f) for f in sources}
+    save(out / "inputs.json", {"attempt": attempt, "source": manifest, "oracle": ORACLE})
     log = out / "native.log"
     argv = [java, "-Xms64m", "-Xmx464m", "-XX:ActiveProcessorCount=2", "-XX:-UsePerfData",
             f"-Djava.io.tmpdir={out}", f"-Dtriplex.codec.spec={codec}",
@@ -107,11 +108,24 @@ def run(java, datomic, out):
     assert manifest == {str(f.relative_to(ROOT)): digest(f) for f in sources}
     events = [json.loads(line[11:]) for line in log.read_text().splitlines() if line.startswith("PREP1_GATE ")]
     assert {e["attempt"] for e in events} == {attempt}
-    assert [e["kind"] for e in events] == ["pair"] * 4 + ["witness"] * 6 + ["finished"]
+    assert [e["kind"] for e in events] == ["pair"] * 4 + ["witness"] * 6 + ["window"] * 6 + ["finished"]
     assert [e["data"]["salt"] for e in events[:4]] == [17, 43, 503, 2601]
-    witnesses = [e["data"] for e in events[4:-1]]
+    witnesses = [e["data"] for e in events[4:10]]
     assert [e["mode"] for e in witnesses] == ["unrelated", "revision", "retired", "identity", "claim", "lost"]
     assert all(e["db"] == db(attempt, e["mode"]) for e in witnesses)
+    windows = [e["data"] for e in events[10:-1]]
+    expected_windows = [(w, c) for w in ("prepare", "two") for c in ("ordinary", "moved", "lost")]
+    for event, (window, scenario) in zip(windows, expected_windows, strict=True):
+        assert (event["window"], event["scenario"]) == (window, scenario)
+        assert event["db"] == db(attempt, f"{window}-{scenario}")
+        begin = 10 if scenario == "moved" else 9
+        assert [r["position"] for r in event["receipts"]] == list(range(begin, begin + 8))
+        assert len({r["t"] for r in event["receipts"]}) == 2
+        replies = event["replies"]
+        assert [replies[i].get("replays") for i in (0, 4)] == (
+            ([1, int(window == "two")] if scenario == "moved" else [0, 0])
+            if scenario != "lost" else [None, 0]
+        )
     oracle = out / "oracle"
     for name in subprocess.check_output(["git", "ls-tree", "-r", "--name-only", ORACLE, "--", "lab/oracles/replay"],
                                         cwd=ROOT, text=True).splitlines():
@@ -135,7 +149,7 @@ def run(java, datomic, out):
                              "cuts": len(case["queries"])})
     save(out / "verified.json", {"attempt": attempt, "slot": "fresh-in-process-datomic",
                                "source": manifest, "java": digest(java), "jars": {j.name: digest(j) for j in jars},
-                               "oracle": ORACLE, "observations": digest(log), "runs": verdicts})
+                               "oracle": ORACLE, "observations": digest(log), "runs": verdicts, "windows": windows})
 
 
 if __name__ == "__main__":
