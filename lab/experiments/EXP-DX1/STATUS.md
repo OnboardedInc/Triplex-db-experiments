@@ -3542,3 +3542,15 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
   alarm. Strict typecheck, 25 focused checks and 435 SDK tests pass. Four priority 9 scorecard commands ready; the
   first phase of the two-server suite is forecast at 17 to 30 minutes and yields all four rows. Bare-metal timings
   and physical power fencing unverified. Parked: next step needs the owner's A/B/C choice and both servers.
+
+## 2026-11-20 21:08 UTC (16:08 local, 2026-11-20): DX-PREP1 part 5 in: all four owed gates pass in both writer modes; waiting on the server comparison
+
+- **DX-PREP1 part 5 (`94b930a73`; tested merge candidate `339d26c47`; `prep1/REPORT.md`).** The per-person
+  writer is off by default and enabled with `TX2_SUBJECT_SAVE=1` on the write gateway. Fresh census: 96 receipts
+  across 25 native transactions, zero submitted replays. PostgreSQL restart in the middle of a commit, the public
+  query surfaces and the thirteen erasure checks pass with the writer off and on; both restarts kept the original
+  receipt. The gates ran in about two hours under ordinary tokens (they had been blocked for over two hours under
+  the lease). The server run pinned at `7ca8525a9` predates the fair-turn credits, so it cannot show their
+  effect on a quiet account; a follow-up arm at the newer commit is needed for that.
+- Server 1: the comparison is measuring (seed done, arms K and S under way since 15:36 local). A watcher wakes the
+  orchestrator when the unit ends. DX-PREP1 is parked until then.
