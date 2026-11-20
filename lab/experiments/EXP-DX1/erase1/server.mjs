@@ -7,8 +7,12 @@ import { fileURLToPath } from "node:url";
 import { isIPv4 } from "node:net";
 import { verifiedTree } from "../../../bin/datomic-context.mjs";
 
-const [action, location, staged] = process.argv.slice(2);
-assert(process.platform === "linux" && ["stage", "check"].includes(action));
+const [command, location, staged] = process.argv.slice(2);
+assert(
+  process.platform === "linux" && ["stage", "check", "stage-fast", "check-fast"].includes(command),
+);
+const action = command.startsWith("stage") ? "stage" : "check";
+const mode = command.endsWith("-fast") ? "fast" : "scale";
 assert(location && (action === "check" ? staged : staged === undefined));
 const dir = path.resolve(location);
 /** @param {string} name */
@@ -75,7 +79,7 @@ const builds = buildSums();
 const attempt = {
   nonce,
   people: 100000,
-  mode: "scale",
+  mode,
   slot: "prepared",
   attempt: randomUUID(),
   source,
@@ -122,6 +126,9 @@ if (action === "stage") {
   assert.equal(plan.nonce, nonce);
   assert.equal(plan.people, attempt.people);
   assert.equal(plan.source, source);
+  // [DX-ERASE1] Why: a sealed check requires the authority enrolled before the original seed.
+  // Rejected: reusing a staged native-excision seed (its rows were created without that authority).
+  assert.equal(plan.mode, mode);
   assert.deepEqual(plan.builds, builds);
   stageSha256 = sums(raw);
 }
@@ -212,7 +219,15 @@ try {
   assert.equal(git("rev-parse", "HEAD"), source);
   assert.equal(git("status", "--porcelain", "--untracked-files=no"), "");
   assert.deepEqual(buildSums(), builds);
-  if (action === "check") {
+  if (action === "check" && mode === "fast") {
+    const observed = JSON.parse(fs.readFileSync(path.join(dir, "fast-result.json"), "utf8"));
+    assert.equal(observed.binding, run.binding);
+    assert.equal(observed.nonce, nonce);
+    assert.equal(observed.mode, mode);
+    assert.equal(observed.people, attempt.people);
+    console.log(JSON.stringify(observed.data, null, 2));
+  }
+  if (action === "check" && mode === "scale") {
     execFileSync("python3", [path.join(import.meta.dirname, "summarize.py"), dir], {
       stdio: "inherit",
     });
