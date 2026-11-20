@@ -122,7 +122,7 @@ def stats(d):
     packets=[r for r in rows if r["kind"]=="deliveries"]
     assert sum(r["count"] for r in packets)==ds and len({r["batch"] for r in packets})==m["packets"]
     counts.update(deliveries=ds,evaluations=sum(r["evaluations"] for r in rows if r["kind"]=="kernel"),payloadBytes=sum(r["payloadBytes"] for r in packets),deliveryBytes=sum(r["deliveryBytes"] for r in packets))
-    assert counts["evaluations"]==m["evaluations"]
+    assert counts["evaluations"]==m["evaluations"] + m.get("selectionEvaluations", 0)
     out["ms"]=partition(rows,a["startedAt"],a["duration"])
     out["gateway"]={}
     for role,ops in [("dispatch",[r for r in writes if r["role"]=="source"]),("saves",list(written.values()))]:

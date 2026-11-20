@@ -239,7 +239,12 @@ export async function runWindow(opts: {
       if (opts.workerJob)
         external = await (
           await import("./worker.ts")
-        ).separate(opts.workerJob, grant, onEffect, abort.signal);
+        ).separate(
+          { ...opts.workerJob, publicationPosition: lastPublication.receipt.position },
+          grant,
+          onEffect,
+          abort.signal,
+        );
       else
         await worker.drain({
           through: releases + 1,
@@ -277,6 +282,13 @@ export async function runWindow(opts: {
     "Offered trace ended before measured window",
   );
   const dispatch = { ...(external ?? worker.metrics) };
+  const sourceAdvances = (await source.currentPosition()) - lastPublication.receipt.position;
+  const foregroundCommits = history.length - (releases + 1);
+  if (opts.recipientPages) {
+    // [DX-STG1] Why: recipient batching must leave the source write queue to
+    // the foreground. Rejected: inferring that property from sender timers.
+    assert.equal(sourceAdvances, foregroundCommits, "Recipient sender advanced the source journal");
+  }
   opts.phase?.("checking exact reads and ordered receiver bytes");
   const byCut = new Map<string, Map<string, string>>();
   for (const r of reads) {
@@ -329,6 +341,9 @@ export async function runWindow(opts: {
     firstEffectMs,
     lastEffectMs,
     dispatcherProcess: opts.workerJob ? "separate" : "application",
+    senderReadPeer: opts.workerJob?.sourceEndpoint ? "dedicated" : "shared",
+    sourceAdvances,
+    foregroundCommits,
     scope: source.scopeName,
     receiver: receiver.scopeName,
     profile: p.inputs.identity,

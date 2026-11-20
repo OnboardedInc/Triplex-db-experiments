@@ -272,6 +272,47 @@ export function effectiveConfig(config, info) {
     const entrypoint = path.join(dir, 'entrypoint.sh');
     fs.copyFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/transactor.properties'), transactor);
     fs.copyFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/entrypoint.sh'), entrypoint);
+    let reader, readerGateway;
+    if (info.readerPort !== undefined) {
+      const p = info.readerPort;
+      if (info.mode !== 'exclusive' || !Number.isInteger(p) || p < 1024 || p > 65535
+        || config.forbiddenPorts.includes(p)
+        || Object.values(config.slots).some(lane => Object.values(lane).some(s => s.port === p))
+        || config.reservedPortRanges.some(r => p >= r.from && p <= r.to))
+        fail('CONFIG', 'Invalid dedicated Datomic reader port');
+      const pcs = parseCpuset(info.readerCpus, config.vm.cpus);
+      if (!info.cpusetCpus || !info.readerOpts || pcs.some(c => !parseCpuset(info.cpusetCpus, config.vm.cpus).includes(c))
+        || cpusetOverlap(info.readerCpus, info.txCpus, config.vm.cpus).length
+        || cpusetOverlap(info.readerCpus, info.gwCpus, config.vm.cpus).length)
+        fail('CONFIG', 'Dedicated Datomic reader requires its own CPUs inside the slot cap');
+      reader = path.join(dir, 'dedicated-reader.clj');
+      // [DX-STG1] Why: use a separate peer JVM and heap against the identical
+      // transactor. Rejected: claiming a second connection isolates gateway GC.
+      const body = `(require '[triplex.gateway.main :as gateway] '[ring.adapter.jetty :as jetty] '[clojure.string :as str])
+(defn read-peer [req]
+  (if (some #(str/ends-with? (:uri req) %) ["/transact" "/delete" "/request-index"])
+    {:status 405 :headers {"Content-Type" "application/json"} :body "{}"}
+    (gateway/handler req)))
+(jetty/run-jetty read-peer {:port 8081 :host "0.0.0.0" :join? true :min-threads 8 :max-threads 128})
+`;
+      fs.writeFileSync(reader, body);
+      let script = fs.readFileSync(entrypoint, 'utf8');
+      if (!script.includes('wait -n "$tx" "$gw" || true')) fail('CONFIG', 'Unknown Datomic slot launcher');
+      script = script.replace("gw=''", "gw=''\nreader=''")
+        .replace('kill "$tx" 2>/dev/null', '[[ -z "$reader" ]] || kill "$reader" 2>/dev/null || true; kill "$tx" 2>/dev/null')
+        .replace('wait -n "$tx" "$gw" || true', [
+          'DATOMIC_JAVA_OPTS="$READER_JAVA_OPTS" taskset -c "$READER_CPUS" bin/run -i /config/dedicated-reader.clj &',
+          'reader=$!',
+          'wait -n "$tx" "$gw" "$reader" || true',
+        ].join('\n'));
+      fs.writeFileSync(entrypoint, script);
+      const gc = role => ' -Xlog:gc*,safepoint:file=/data/log/' + role + '-gc.log:time,uptimemillis,tags:filecount=0';
+      readerGateway = {
+        port: p, publish: `127.0.0.1:${p}:8081`, cpus: info.readerCpus,
+        opts: info.readerOpts + gc('reader'), writerGc: gc('writer'),
+        source: sha256(body), entrypoint: sha256(script),
+      };
+    }
     let trace;
     if (info.traceRun) {
       if (info.mode !== 'exclusive' || !/^[a-z0-9-]{8,60}$/.test(info.traceRun) || !/^[a-f0-9]{40}$/.test(info.traceSource))
@@ -292,7 +333,8 @@ export function effectiveConfig(config, info) {
       lane: 'datomic', slot: info.slot, image: info.laneConf.image, imageId: info.laneConf.imageId,
       buildInputsSha256: info.laneConf.buildInputsSha256, sourceInputsSha256: sources.sha256,
       gatewaySourceSha256: sha256(JSON.stringify(sources.gateway)), configMountMode: 'ro',
-      transactorOpts: info.transactorOpts + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: info.gatewayOpts,
+      transactorOpts: info.transactorOpts + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: info.gatewayOpts + (readerGateway?.writerGc ?? ''),
+      ...(readerGateway ? { readerGateway } : {}),
       ...(trace ? { trace } : {}),
       txCpus: info.txCpus, gwCpus: info.gwCpus, profile: info.slot === 'dev' ? 'dev' : 'exclusive',
       memBytes: info.memBytes, cpus: info.cpus, ...pin,
@@ -305,7 +347,7 @@ export function effectiveConfig(config, info) {
       for (const cpu of [...parseCpuset(info.txCpus, config.vm.cpus), ...parseCpuset(info.gwCpus, config.vm.cpus)])
         if (!allowed.includes(cpu)) fail('CONFIG', 'Datomic JVM CPUs outside container cpuset');
     }
-    return { effective, sha256: sha256(JSON.stringify(effective)), files: { transactor, entrypoint } };
+    return { effective, sha256: sha256(JSON.stringify(effective)), files: { transactor, entrypoint, ...(reader ? { reader } : {}) } };
   }
   // QLever: repo qlever-start.sh with the slot's query memory (-m). Port stays 7019 inside.
   const original = fs.readFileSync(path.join(CONFIG_DIR, 'qlever-start.sh'), 'utf8');
@@ -375,7 +417,7 @@ export function runArgs(info, eff, holder) {
     '--health-cmd', e.health, '--health-interval', '5s', '--health-timeout', '3s', '--health-start-period', '20s', '--health-retries', '3',
   ];
   if (info.lane === 'datomic')
-    return [...common, ...(e.trace ? ['-v', e.trace.dir + ':/lab-trace', '-e', 'TRIPLEX_TRACE_DIR=/lab-trace', '-e', 'TRIPLEX_TRACE_LEVEL=summary', '-e', 'TRIPLEX_TRACE_TX_JFR=1', '-e', 'TRIPLEX_TRACE_RUN=' + e.trace.run, '-e', 'TRIPLEX_TRACE_SOURCE=' + e.trace.source, '-e', 'TRIPLEX_TRACE_SLOT=' + info.container] : []), '-v', `${eff.files.transactor}:/config/transactor.properties:ro`, '-v', `${eff.files.entrypoint}:/config/entrypoint.sh:ro`, '-e', `TRANSACTOR_JAVA_OPTS=${e.transactorOpts}`, '-e', `GATEWAY_JAVA_OPTS=${e.gatewayOpts}`,
+    return [...common, ...(e.readerGateway ? ['-p', e.readerGateway.publish, '-v', eff.files.reader + ':/config/dedicated-reader.clj:ro', '-e', 'READER_CPUS=' + e.readerGateway.cpus, '-e', 'READER_JAVA_OPTS=' + e.readerGateway.opts] : []), ...(e.trace ? ['-v', e.trace.dir + ':/lab-trace', '-e', 'TRIPLEX_TRACE_DIR=/lab-trace', '-e', 'TRIPLEX_TRACE_LEVEL=summary', '-e', 'TRIPLEX_TRACE_TX_JFR=1', '-e', 'TRIPLEX_TRACE_RUN=' + e.trace.run, '-e', 'TRIPLEX_TRACE_SOURCE=' + e.trace.source, '-e', 'TRIPLEX_TRACE_SLOT=' + info.container] : []), '-v', `${eff.files.transactor}:/config/transactor.properties:ro`, '-v', `${eff.files.entrypoint}:/config/entrypoint.sh:ro`, '-e', `TRANSACTOR_JAVA_OPTS=${e.transactorOpts}`, '-e', `GATEWAY_JAVA_OPTS=${e.gatewayOpts}`,
       '-e', `TX_CPUS=${e.txCpus}`, '-e', `GW_CPUS=${e.gwCpus}`, '-e', `DATOMIC_PROFILE=${e.profile}`,
       '-e', `GATEWAY_SOURCE_SHA256=${e.gatewaySourceSha256}`, info.laneConf.imageId];
   if (info.lane === 'xtdb')
@@ -402,10 +444,14 @@ export async function probe(info) {
   }
   if (info.lane === 'datomic') {
     try {
-      const response = await fetch(`${info.endpoint}/health`, { signal: AbortSignal.timeout(3000) });
-      const body = await response.json();
       const expected = sha256(JSON.stringify(datomicSources().gateway));
-      return { ok: response.ok && body.datomicVersion === '1.0.7745' && body.gatewaySourceHash === expected, why: `gateway HTTP ${response.status}` };
+      const peers = [info.endpoint, ...(info.readerPort ? [`http://127.0.0.1:${info.readerPort}`] : [])];
+      const results = await Promise.all(peers.map(async endpoint => {
+        const response = await fetch(`${endpoint}/health`, { signal: AbortSignal.timeout(3000) });
+        const body = await response.json();
+        return { ok: response.ok && body.datomicVersion === '1.0.7745' && body.gatewaySourceHash === expected, status: response.status };
+      }));
+      return { ok: results.every(r => r.ok), why: `gateway HTTP ${results.map(r => r.status).join('/')}` };
     } catch (error) { return { ok: false, why: `gateway ${error.message}` }; }
   }
   try {
@@ -461,6 +507,14 @@ export function slotCpu(holder, lane, slot) {
     psiUsec: Number(raw.match(/^some .*total=(\d+)/m)?.[1]), groupUsec: Number(raw.match(/^usage_usec (\d+)/m)?.[1]),
     throttledUsec: Number(raw.match(/^throttled_usec (\d+)/m)?.[1]), devices, quota: raw.trim().split('\n').at(-1) };
 }
+export function slotGatewayGc(holder, lane, slot) {
+  const info = slotInfo(loadSlots(), lane, slot), owner = readOwner(info);
+  if (!owner || info.mode !== 'exclusive' || owner.holder !== holder || !owner.readerEndpoint)
+    fail('REFUSED', 'Gateway GC observations require the dedicated peer holder');
+  return Object.fromEntries(['writer', 'reader'].map(role => [role,
+    docker(['exec', info.container, 'tail', '-c', '1048576', `/data/log/${role}-gc.log`]),
+  ]));
+}
 /** VM-wide PSI cpu line, read inside any running container (/proc/pressure is not namespaced). */
 function vmPsi(container) {
   try { return execFileSync('docker', dockerArgs(['exec', container, 'cat', '/proc/pressure/cpu']), { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 15_000 }).split('\n')[0].trim(); }
@@ -512,6 +566,7 @@ function acquireSlot(info, holder, experiment) {
   const owner = {
     format: OWNER_FORMAT, lane: info.lane, slot: info.slot, mode: info.mode, container: info.container, volume: info.volume,
     endpoint: info.endpoint, port: info.port, holder, experiment: experiment ?? null, pid: process.pid, worktree: REPO, createdAt: now(),
+    ...(info.readerPort ? { readerEndpoint: `http://127.0.0.1:${info.readerPort}` } : {}),
   };
   atomicJson(info.ownerFile, owner);
   appendEvent({ event: 'slot-acquired', slot: `${info.lane}-${info.slot}`, holder });

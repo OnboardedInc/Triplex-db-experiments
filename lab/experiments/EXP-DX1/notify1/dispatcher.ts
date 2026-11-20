@@ -3,7 +3,7 @@ import { setImmediate as yieldTurn, setTimeout as sleep } from "node:timers/prom
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { width } from "./census.ts";
 import { receiveOrdered } from "./receiver.ts";
-import { Notices, type Tail, type Recipe, type Event } from "./journal.ts";
+import { Notices, type Tail, type Event } from "./journal.ts";
 import { Conflict, Documents, hash, pack, unpack, type Row } from "./store.ts";
 
 interface Cursor {
@@ -30,6 +30,9 @@ type Receipt = { batch: number; digest: string };
 export interface Metrics {
   visits: number;
   evaluations: number;
+  selectionEvaluations: number;
+  certified: number;
+  fallback: number;
   deliveries: number;
   packets: number;
   sourceWrites: number;
@@ -43,6 +46,9 @@ export interface Metrics {
 export const emptyMetrics = (): Metrics => ({
   visits: 0,
   evaluations: 0,
+  selectionEvaluations: 0,
+  certified: 0,
+  fallback: 0,
   deliveries: 0,
   packets: 0,
   sourceWrites: 0,
@@ -77,7 +83,6 @@ export class Dispatcher {
     old: Row<Cursor> | undefined,
     at: number,
     grant?: () => Promise<void>,
-    throughEvent?: number,
   ) {
     const a = this.notices,
       db = a.db,
@@ -98,44 +103,22 @@ export class Dispatcher {
     );
     const guard = await db.get<number>("erasure", at),
       start = performance.now();
-    // [DX-ACT1] Why: a certified release range can skip the census complement while preserving the original event and parent hash. Rejected: rewriting an incoming event to pretend it enrolled fewer people.
     const census = a.censusFor(e);
+    const selected = await a.select(e, db, at, at, cursor.start);
+    // [DX-ACT1] Why: a certified release range can skip its census complement without changing the source event.
+    // Rejected: applying a reconcile selector to activation or trusting a caller-supplied subject list.
     const { ids, size } =
       this.range && e.value.kind === "activation"
         ? await this.range(e, cursor.start)
         : {
-            ids: await a.members(e, cursor.start),
-            size: census.count,
+            ids:
+              selected.coverage?.ids.slice(cursor.start, cursor.start + width) ??
+              (await a.members(e, cursor.start)),
+            size: selected.coverage?.ids.length ?? census.count,
           };
     assert(ids.length === Math.min(width, size - cursor.start), "Incomplete delivery source range");
-    const ranges = [{ event: e, ids }];
-    let visits = ids.length;
-    const ceiling = Math.min(throughEvent ?? t.sequence, t.sequence);
-    if (e.value.selection.kind === "subjects" && e.value.sequence < ceiling) {
-      const keys = Array.from(
-        { length: Math.min(16, ceiling - e.value.sequence) },
-        (_, i) => "event:" + (e.value.sequence + i + 1),
-      );
-      const rows = await db.rows<Recipe>(keys, at);
-      for (const [i, k] of keys.entries()) {
-        const row = rows.get(k);
-        assert(row, "Gap in live publication prefix");
-        const candidate = a.checkedEvent(row, e.value.sequence + i + 1);
-        if (
-          candidate.value.selection.kind !== "subjects" ||
-          visits + candidate.value.selection.ids.length > width
-        )
-          break;
-        assert(
-          candidate.value.epoch === t.epoch &&
-            candidate.value.parent === hash(ranges.at(-1)!.event.value),
-        );
-        ranges.push({ event: candidate, ids: candidate.value.selection.ids });
-        visits += candidate.value.selection.ids.length;
-      }
-    }
-    const subjects = [...new Set(ranges.flatMap((r) => r.ids))],
-      ledgers = await db.rows<string>(subjects.map(ledger), at);
+    const subjects = ids;
+    const ledgers = await db.rows<string>(subjects.map(ledger), at);
     const states = new Map<string, readonly W0.ItemState[]>(
       subjects.map((s) => [
         s,
@@ -144,28 +127,23 @@ export class Dispatcher {
     );
     const initial = new Map(states),
       deliveries: W0.Delivery[] = [];
-    const work = await Promise.all(ranges.map((r) => a.work(r.event, r.ids, at))).catch(
-      async (error) => {
-        if ((await db.get<number>("erasure", await db.head())).id !== guard.id)
-          throw new Conflict("Erasure advanced during replay");
-        throw error;
-      },
-    );
+    const work = await a.work(e, ids, at).catch(async (error) => {
+      if ((await db.get<number>("erasure", await db.head())).id !== guard.id)
+        throw new Conflict("Erasure advanced during replay");
+      throw error;
+    });
     const publicationStart = a.budget ? performance.timeOrigin + performance.now() : 0;
-    // [DX-STG1] Why: a batch of ordinary saves can revisit a subject. Fold every transition into its predecessor before storing final items and the full delivery list. Rejected: coalescing to the last payload, which loses reversions.
-    for (const [r, range] of ranges.entries()) {
-      for (const [i, s] of range.ids.entries()) {
-        const result = W0.publish({ items: states.get(s)!, subjects: [], pending: [] }, [
-          {
-            subject: s,
-            release: range.event.value.nextHash,
-            basis: { tx: BigInt(range.event.at), validTime: range.event.value.validTime },
-            workItems: work[r]![i]!,
-          },
-        ]);
-        states.set(s, result.state.items);
-        deliveries.push(...result.deliveries);
-      }
+    for (const [i, subject] of ids.entries()) {
+      const result = W0.publish({ items: states.get(subject)!, subjects: [], pending: [] }, [
+        {
+          subject,
+          release: e.value.nextHash,
+          basis: { tx: BigInt(e.at), validTime: e.value.validTime },
+          workItems: work[i]!,
+        },
+      ]);
+      states.set(subject, result.state.items);
+      deliveries.push(...result.deliveries);
     }
     const changes = subjects.flatMap((s) =>
       canonical(states.get(s)) === canonical(initial.get(s))
@@ -174,14 +152,14 @@ export class Dispatcher {
     );
     a.budget?.mark("publish-and-pack", publicationStart);
     this.metrics.evaluationMs += performance.now() - start;
-    const last = ranges.at(-1)!.event,
-      through = cursor.start + ids.length,
+    if (selected.write) changes.push(selected.write);
+    const through = cursor.start + ids.length,
       done = through === size;
     const next: Cursor = {
       ...cursor,
-      event: done ? last.value.sequence + 1 : cursor.event,
+      event: done ? e.value.sequence + 1 : cursor.event,
       start: done ? 0 : through,
-      parent: done ? hash(last.value) : cursor.parent,
+      parent: done ? hash(e.value) : cursor.parent,
     };
     if (deliveries.length) {
       const packet: Packet = {
@@ -191,10 +169,7 @@ export class Dispatcher {
         previous: cursor.previous,
         event: e.value.sequence,
         position: e.at,
-        recipe:
-          ranges.length === 1
-            ? hash(e.value)
-            : hash(ranges.map((r) => [r.event.at, hash(r.event.value)])),
+        recipe: hash(e.value),
         start: cursor.start,
         through,
         deliveries,
@@ -218,7 +193,11 @@ export class Dispatcher {
       ],
     );
     this.metrics.visits++;
-    this.metrics.evaluations += visits;
+    if (selected.write) {
+      this.metrics.certified++;
+      this.metrics.selectionEvaluations += selected.coverage!.evaluated;
+    } else if (cursor.start === 0 && e.value.kind === "reconcile") this.metrics.fallback++;
+    this.metrics.evaluations += ids.length;
     this.metrics.sourceWrites++;
     this.metrics.progressMs += performance.now() - commit;
     return true;
@@ -243,7 +222,7 @@ export class Dispatcher {
     if (!cursor?.value.pending) {
       assert(!tail.value.recipient, "Account uses the registered recipient checkpoint");
       if (through !== undefined && (cursor?.value.event ?? 1) > through) return false;
-      return this.derive(tail, cursor, at, grant, through);
+      return this.derive(tail, cursor, at, grant);
     }
     const c = cursor.value,
       p = unpack<Packet>((await db.get<string>("packet:" + c.batch, at)).value),
