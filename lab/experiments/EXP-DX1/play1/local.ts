@@ -154,12 +154,9 @@ export async function local(
       const disk = statfsSync(repo);
       assert(disk.bavail * disk.bsize >= 5 * 2 ** 30, "Below host disk floor");
       await withPool((ledger) => {
-        try {
-          manager.assertMeasureAdmission(holder);
-        } catch (error) {
-          if ((error as { code?: string }).code === "REFUSED") return;
-          throw error;
-        }
+        // [DX-PLAY1] Why: ordinary correctness holds one heavy token.
+        // Rejected: waiting for a foreign measurement lease while that owner drains this token.
+        manager.assertMeasureAdmission(holder);
         const live = listTx2Containers({ all: true });
         const candidate = ["s1", "s2", "s3"]
           .map((name) => slotInfo(config, "datomic", name))
@@ -240,6 +237,7 @@ export async function local(
           bootMs: ready.stackMs,
           replayMs: ready.seedMs,
           residentCapsMiB: caps,
+          timingClass: "laptop diagnostic",
         },
         null,
         2,
@@ -277,6 +275,7 @@ export async function local(
           gatewaySource: ready.gatewaySource,
           fixture: fixture.checksum,
           browserRequested: Boolean(options.browser),
+          timingClass: "laptop diagnostic",
           portableImage: Boolean(options.portable),
         },
         null,

@@ -22,7 +22,7 @@ Open the printed loopback address. Pick an account and a person to compare the c
 
 The deterministic Git fixture, action discovery and loopback transport checks passed. Stdio discovery returned all 13 tools in two JSON-RPC frames. The pinned lockfile validated offline in lockfile-only mode. Raw output and its source binding are in `evidence/DX-PLAY1/lightweight.txt` and `evidence/DX-PLAY1/lightweight-source.json`.
 
-The resumable bundle, workspace build and native database gates are queued behind the shared lab measurement. The admission readback showed DX-HA1 holding the measurement lease while DX-THIN1 still held a heavy token. The native startup, restore, browser and full-population measurements remain unverified.
+The lab-admitted small bundle gate passed all four checks, including an HTTP range resume and refusal of a corrupt object. The original workspace preflight hit a pnpm option error. The store flag was corrected and the workspace build and native gate were requeued. The native startup, restore, browser and full-population measurements remain unverified.
 
 The release demo uses the shared ConfigStore and the HTTP package's configuration descriptors. An intentionally small status rule provides a visible answer and durable background materialization. The standalone Foldkit explorer continues to serve the generic Triples view. The Datomic dashboard has its own workspace panel for commit positions, traces, native query and Publish.
 

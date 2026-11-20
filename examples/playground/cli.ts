@@ -39,11 +39,15 @@ const pnpm = (argv: string[], signal: AbortSignal) =>
   new Promise<void>((done, reject) => {
     signal.throwIfAborted();
     const store = process.env["PLAYGROUND_PNPM_STORE"];
-    const child = spawn("pnpm", [...(store ? ["--config.store-dir=" + resolve(store)] : []), ...argv], {
-      cwd: repo,
-      stdio: "inherit",
-      signal,
-    });
+    const child = spawn(
+      "pnpm",
+      [...(store ? ["--config.store-dir=" + resolve(store)] : []), ...argv],
+      {
+        cwd: repo,
+        stdio: "inherit",
+        signal,
+      },
+    );
     child.once("error", reject);
     child.once("exit", (status, killedBy) =>
       status === 0
