@@ -122,7 +122,8 @@
     (with-open [r (RecordingFile. (Paths/get file (make-array String 0)))
                 w (BufferedWriter. (FileWriter. (str file ".jsonl")))]
       (loop [count 0]
-        (if-not (.hasMoreEvents r) {:events count :clockSamples (clojure.core/count points) :clockMaxUncertaintyMs uncertainty}
+        (if-not (.hasMoreEvents r) {:events count :clockSamples (clojure.core/count points) :clockMaxUncertaintyMs uncertainty
+                                   :clockAnchors points}
           (let [^RecordedEvent event (.readEvent r) name (.getName (.getEventType event))]
             (if (= name "triplex.ClockSync") (recur count)
               (let [detail (details event) transaction (= name "triplex.TransactionFunction") native (= name "triplex.NativeTransaction")

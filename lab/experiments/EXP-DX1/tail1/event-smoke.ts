@@ -2,46 +2,50 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { writeFileSync } from "node:fs";
 import { Effect, Layer, ManagedRuntime } from "effect";
-import { Triples } from "@triplex-build/triplex";
+import { Triples } from "../../../../packages/core/dist/index.js";
 import {
   Capabilities,
   DatabaseScope,
   QueryExecutor,
   Runtime,
   StorageAdapter,
-} from "@triplex-build/triplex/runtime";
-import { DatomicClient } from "../../../../packages/datomic/src/DatomicClient.js";
-import { makeDatomicStorageAdapter } from "../../../../packages/datomic/src/DatomicStorageAdapter.js";
-import { makeDatomicQueryExecutor } from "../../../../packages/datomic/src/DatomicQueryExecutor.js";
-import { databaseName } from "../../../../packages/datomic/src/scopeName.js";
+} from "../../../../packages/core/dist/runtime/index.js";
 import {
+  DatomicClient,
+  makeDatomicStorageAdapter,
+  makeDatomicQueryExecutor,
   beginTrace,
   currentTrace,
   finishTrace,
   flushTracing,
   traceNow,
   withTrace,
-} from "../../../../packages/datomic/src/tracing.js";
+} from "../../../../packages/datomic/dist/index.js";
 
 const [output, nonce] = process.argv.slice(2);
 const { DATOMIC_GATEWAY_URL, TRIPLEX_TRACE_RUN: slot, TRIPLEX_TRACE_SOURCE: source } = process.env;
+assert(DATOMIC_GATEWAY_URL);
 assert(
   output &&
     nonce &&
-    DATOMIC_GATEWAY_URL &&
     slot?.endsWith(nonce) &&
     source?.match(/^[0-9a-f]{40}$/),
 );
 const scope = DatabaseScope.test(`DX-TAIL1-events-${nonce}`);
-const databaseHash = createHash("sha256").update(databaseName(scope)).digest("hex");
 const native = new Map<string, string>();
+let database: string | undefined;
 class ObservedClient extends DatomicClient {
   override async request<T>(...args: Parameters<DatomicClient["request"]>): Promise<T> {
     const response = await super.request<T>(...args);
+    if (args[1] === "/v1/db/create") {
+      const observed = (response as { db?: string }).db;
+      assert(observed && (!database || database === observed));
+      database = observed;
+    }
     const trace = currentTrace();
     if (trace?.name === "tail1.event-smoke" && args[1].endsWith("/transact")) {
       const t = (response as { t?: { v?: string } }).t?.v;
-      assert(t?.match(/^\d+$/) && !native.has(trace.traceId));
+      assert(typeof t === "string" && /^\d+$/.test(t) && !native.has(trace.traceId));
       native.set(trace.traceId, t);
     }
     return response;
@@ -98,6 +102,8 @@ try {
     assert.deepEqual(observed.map((field) => field.id).sort(), [...row.assertions].sort());
   }
   await flushTracing();
+  assert(database);
+  const databaseHash = createHash("sha256").update(database).digest("hex");
   writeFileSync(output, JSON.stringify({ source, slot, nonce, databaseHash, rows }) + "\n", {
     flag: "wx",
   });

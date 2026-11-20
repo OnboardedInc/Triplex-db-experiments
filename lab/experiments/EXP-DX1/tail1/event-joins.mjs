@@ -6,6 +6,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { docker, readJson, sha256File } from "../../../bin/lib.mjs";
 import { bindNativeTransaction, nativeWaitLegs } from "../../../trace/native-transactions.mjs";
 import { alignClockRecord } from "../../../trace/report.mjs";
+import { postgresEvents, wallBridge } from "../../../trace/postgres-events.mjs";
 
 const roles = ["gw-w", "gw-r", "tx"];
 const jsonLines = (file) => fs.readFileSync(file, "utf8").trim().split("\n").map(JSON.parse);
@@ -104,10 +105,12 @@ export async function observeEventGate({
     assert.match(r.clock.bootId, /^[0-9a-f-]{36}$/);
   };
   const roleRows = {};
+  const seals = {};
   const capture = {};
   for (const role of roles) {
     const file = path.join(trace, role + ".jfr");
     const seal = readJson(file + "-complete.jsonl");
+    seals[role] = seal;
     bound(seal, role);
     assert.equal(seal.fileSha256, sha256File(file));
     assert(
@@ -192,19 +195,24 @@ export async function observeEventGate({
   assert(pgAfter.wal.wal_sync >= pgBefore.wal.wal_sync);
   const pgLog = path.join(out, "event-postgres.log");
   fs.writeFileSync(pgLog, docker(["logs", ids.pg]), { flag: "wx" });
-  const pgRecords = fs
-    .readFileSync(pgLog, "utf8")
-    .split("\n")
-    .filter((l) =>
-      /^dxpg\|[^|]+\|\d+\|[^|]+\|\d+\|triplex-tx\|LOG:\s+duration: [\d.]+ ms$/.test(l),
-    );
+  const pgTimeline = path.join(out, "event-postgres.jsonl");
+  const pgCoverage = await postgresEvents(pgLog, pgTimeline, seals.tx, {
+    source,
+    slot,
+    run: slot,
+    nonce,
+  });
   assert(
-    pgRecords.some((line) => {
-      const at = Date.parse(line.split("|")[1]);
-      return pgBefore.at <= at && at <= pgAfter.at;
-    }),
-    "No transactor SQL durations on the guest wall clock",
+    jsonLines(pgTimeline).some(
+      (r) =>
+        r.type === "event" &&
+        r.application === "triplex-tx" &&
+        pgBefore.at <= r.wallEnd &&
+        r.wallEnd <= pgAfter.at,
+    ),
+    "No transactor SQL duration mapped to its guest boot clock",
   );
+  assert(wallBridge(seals.tx)(pgAfter.at), "WAL readback outside the measured clock bracket");
   verifyReadyRuntime();
   store(path.join(out, "event-observations.json"), {
     identity,
@@ -216,7 +224,8 @@ export async function observeEventGate({
     pgBefore,
     pgAfter,
     pgSha256: sha256File(pgLog),
-    pgDurationRecords: pgRecords.length,
+    pgEventSha256: sha256File(pgTimeline),
+    pgCoverage,
     joined,
   });
 }
