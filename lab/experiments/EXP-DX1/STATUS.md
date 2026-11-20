@@ -2667,3 +2667,23 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **Assigned, part 2:** reproduce the collapse law on the Mac (reads per second against fallback share); size retained
   history so pinned cuts stay local; a separate lane and batching for fallbacks, cheaper historical reads, installing
   fetched history; recovery; predictions for every read bar.
+
+## 2026-11-20 03:29 UTC (22:29 local, 2026-11-19): DX-ACT1 part 6 in: receipt-only Publish 38 ms at 10,000 deep; stored values cannot make one second at 100,000
+
+- **DX-ACT1 part 6 (`befa95acf`, Mac VM; `actv-lazy/REPORT.md`, `SERVER.md`, `PART6.md`, `PART6-PRICE.md`).** Joined
+  Publish on the deep profile. 1,000 deep people: receipt-only 68 ms durable, 85 ms to the first correct connected
+  answer; staging all 5,759 changed values 1,052 / 1,068 ms. **10,000 deep people (1,604,464 facts loaded): receipt and
+  notice recipe durable in 38 ms, first correct answer at 49 ms; storing all 49,297 changed values 21.66 s** with the
+  notice-only index (a broad deep release changes values for every person); the faster path (expanded ranges, worker
+  threads, staged chunk transactions invisible until the marker) stored the three-rule release in 796 ms on 10,000
+  compact people. Projection for 100,000 deep people: receipt-only 0.04 to 0.12 s quiet; staged concrete values 10 to
+  25 s; a million 100 to 250 s. Oracle verified all four release cuts, 49,297 stored changes and 11,997 ordered
+  recipient effects; native gates passed after a killed writer, an abandoned and collectable stage, competing
+  releases, both orders of a same-person save, everybody or nobody changing, an idle expiry. Deep notice index about
+  48 value bytes per person; ordinary saves add 0, 3 or 5 database changes. Individual notice entries are written at
+  dispatch. Server command for one deep account of 100,000 (six windows) passed a 64-person native collector check.
+- **Action:** DX-BM1 stopped and resumed: that command runs next on server 1 after the group-commit job (arm 2 of
+  `grpw1a` running since about 21:42 local), with its preflight and producer/collector agreement first. Reviewer
+  **W2-ACTREVIEW2** launched to check the server test before the long run (summary first). DX-ACT1 part 7 assigned:
+  background writing of values and notice entries after the receipt, in the bulk class; pull DX-STG1's coverage fix;
+  the fault and interference matrix; size (wide and million-person accounts).
