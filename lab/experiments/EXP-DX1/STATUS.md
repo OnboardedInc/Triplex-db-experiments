@@ -2880,3 +2880,24 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **Assigned, part 2:** attribute tonight's server result (deep p99 170 to 179 ms against 19 ms thin, evidence
   `DX-BM1/overnight/i9-1`) to its causes from the saved traces; where the collector is chosen and a two-core G1 arm;
   the owed Mac measurements when the lease frees.
+
+## 2026-11-20 06:16 UTC (01:16 local, 2026-11-20): DX-HA1 part 4 in: no import layout met priority 8 on the Mac; builder parked until a server decides
+
+- **DX-HA1 part 4 (`6ef27404e`, Mac VM; `load1/REPORT.md`, `ISOLATION-BENCH.md`, `PART4-EVIDENCE.md`).** The earlier 4.72 times
+  was a maximum of 60 saves; the repeat (540 quiet saves and reads per 108 s arm) loaded 3,082 facts per second at the
+  128-fact cap with quiet read/save p99 95.6/154.6 ms between controls of 22.4/96.8 and 203.3/247.9: control drift on
+  the contended Mac makes a single ratio misleading. Across 2,775 bulk frames: hold p50/p99 15.6/69.2 ms, native apply
+  4.4/39.8 ms. Slow saves traced to bulk holds, transactor garbage collection (145 to 150 ms pauses) and a wait after
+  native completion before the peer returns; gateway pauses and frame preparation were not captured. Frames by time
+  budget in one shared database: best 2,137 facts per second beside 50 saves per second (budget 11 ms; quiet ratios
+  2.33 read, 1.82 save) and 1,477 beside 100 (16 ms; 2.17, 1.39); budgets of 1 to 8 ms loaded 0 to 596 facts per
+  second. Importer in its own database and transactor: 5,167 to 5,537 facts per second; with one PostgreSQL the quiet
+  account stayed inside 1.5 but other accounts slowed; with two PostgreSQL processes on the same Mac the quiet
+  account's slow saves doubled. Splitting makes cross-account queries and release order the application's to
+  coordinate. Server commands with forecasts, one host and two: separate writers and PostgreSQL on two hosts forecast
+  5,400 to 6,500 facts per second with neighbours at most 1.15 read and 1.2 save.
+- **Bare metal already measured the shared-database case** (server 1, 128-fact frames: 5,491 facts per second, quiet save
+  p99 2.28 and 4.45 times). The split layouts go to the servers: one-host campaigns to server 1's queue, two-host
+  campaigns to the two-server window with DX-HASYNC1's suite.
+- **DX-HA1 is parked** (no part 5): the Mac cannot separate these arms tonight, and one builder fewer shortens the
+  queue for the measurement lease that DX-STG1, DX-WFIX1, DX-RD1, DX-TAIL1 and DX-HASYNC1 are waiting on.
