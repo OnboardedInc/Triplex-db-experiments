@@ -32,7 +32,7 @@ trap finish EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 wait_tcp() {
-  local pid=$1 port=$2
+  local pid=$1 port=$2 i
   for ((i=0; i<240; i++)); do
     kill -0 "$pid"
     if (exec 3<>/dev/tcp/"$addr"/"$port") 2>/dev/null; then return; fi
@@ -47,6 +47,7 @@ start_postgres() {
   wait_tcp "$!" 5432
 }
 start_standby() {
+  local i
   setpriv --reuid=65534 --regid=65534 --clear-groups "$pg/postgres" -D "$work/standby" -h "$addr" -p 5433 -k "$work/socket" -c shared_buffers=16MB -c track_wal_io_timing=on &
   children[3]=$!
   wait_tcp "$!" 5433
@@ -61,7 +62,7 @@ start_standby() {
   return 1
 }
 replica_flushed() {
-  local lsn
+  local lsn i
   lsn=$(sql -d datomic -c "SELECT pg_current_wal_flush_lsn()")
   [[ "$lsn" =~ ^[0-9A-F]+/[0-9A-F]+$ ]]
   for ((i=0; i<120; i++)); do
@@ -175,9 +176,11 @@ stop_subject_workers() {
   done
 }
 wal_snapshot() {
-  local arm=$1 edge=$2 stats='SELECT to_json(w) FROM pg_stat_wal w'
-  printf 'PREP1_SQL_WAL %s %s primary %s\n' "$arm" "$edge" "$(sql -d datomic -c "$stats")"
-  printf 'PREP1_SQL_WAL %s %s standby %s\n' "$arm" "$edge" "$(pg_run psql -XAtq -h "$work/socket" -p 5433 -U postgres -d datomic -c "$stats")"
+  local arm=$1 edge=$2 stats='SELECT to_json(w) FROM pg_stat_wal w' primary standby
+  primary=$(sql -d datomic -c "$stats") || return
+  standby=$(pg_run psql -XAtq -h "$work/socket" -p 5433 -U postgres -d datomic -c "$stats") || return
+  printf 'PREP1_SQL_WAL %s %s primary %s\n' "$arm" "$edge" "$primary"
+  printf 'PREP1_SQL_WAL %s %s standby %s\n' "$arm" "$edge" "$standby"
 }
 case "$PREP1_MODE" in
   ortho) gateway 0 off; node /config/probe.mjs ;;
