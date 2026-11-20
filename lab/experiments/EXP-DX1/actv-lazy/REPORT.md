@@ -5,7 +5,7 @@ Before a value is stored, reads at the receipt’s cut derive it. Stored values 
 A new release can stop an obsolete value copy. Notices from both releases still get recorded in order.
 A shared wage-floor save covers the full roster when the database cannot prove a smaller affected set.
 On the server, 64 people took 34 ms to the quiet receipt and 47 ms to the first correct answer. All six cells agreed.
-The first local replay waited 55 minutes for a slot. The live timing is still queued. The receipt and erasure rulings remain open.
+The first local replay waited 55 minutes for a slot. The live timing pilot has waited over two hours. The receipt and erasure rulings remain open.
 
 ### Part 7
 
@@ -34,7 +34,7 @@ The eight-fact thin fixture encoded 10.3–10.4 leaf bytes and 100–104 address
 
 The 10,000-deep trial spent about 26 minutes on preparation and reached the contested timing boundary. It yielded its heavy token and removed the volume before either live window. The shared lease also blocked the 1,000-deep fallback and the untimed matrix. Both waiters closed before admission. [Part 7 checksums](PART7-SHA256SUMS)
 
-Transactor and gateway suspension, the fixed 64-reader trace, live save and read ratios, and wider cold-read and resident-memory measurements remain unverified. BM1 has published no 100,000-person result for this pin.
+Transactor and gateway suspension, the fixed 64-reader trace, live ratios and wider cold-read measurements remain open. BM1 queued `i33-1` at the first-line pin. Its existing 100,000-person SCALE1 seed needs a compatible producer or a separate joined seed. [Local run design](PART8.md)
 
 ### Server command
 
