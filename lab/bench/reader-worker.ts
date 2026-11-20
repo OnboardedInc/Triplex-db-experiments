@@ -164,18 +164,19 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
     while (observationPending.size >= 2) await (credit ??= new Promise<void>(resolve => { releaseCredit = resolve; }));
     costs.creditWaitMs += performance.now() - start;
   }
-  function record(row: ReadRecord): void | Promise<void> {
-    if ((packed?.length ?? records.length) >= READ_BATCH_SIZE) return recordAfterCredit(row);
+  function record(row: ReadRecord, sample?: unknown): void | Promise<void> {
+    if ((packed?.length ?? records.length) >= READ_BATCH_SIZE) return recordAfterCredit(row, sample);
     if (packed) packed.push(row);
     else records.push(row);
+    if (sample) samples.push(sample);
     if (cfg.observationPort && observationPending.size < 2 && (packed?.length ?? records.length) === READ_BATCH_SIZE) void sendReads();
   }
-  async function recordAfterCredit(row: ReadRecord): Promise<void> {
+  async function recordAfterCredit(row: ReadRecord, sample?: unknown): Promise<void> {
     while ((packed?.length ?? records.length) >= READ_BATCH_SIZE) {
       if (observationPending.size < 2) { void sendReads(); break; }
       await observationCredit();
     }
-    await record(row);
+    await record(row, sample);
   }
   let rawSamples = 0;
   const rawPending = new Set<number>();
@@ -298,12 +299,16 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       if (opts.keepRows) { if (pr.route === "replica") { stats.rawLocalSamples++; rawSamples++; } else stats.rawFallbackSamples++; }
       if (pr.route === "fallback") { const reason = pr.replicaFallbackReason ?? (opts.keepRows ? "oracle-raw" : "gateway"); stats.reasons[reason] = (stats.reasons[reason] ?? 0) + 1; }
       if (split > 0) stats.straddleWait.recordMs(straddleWaitMs);
+      // [DX-RD1] Why: the raw independent replay sample and its actual tuple must reach the collector in the same batch.
+      // Rejected: trying to reconstruct the sample's timed observation after its fixed window has folded.
+      const sample = opts.keepRows && (pr.route === "replica" || !replica || stats.rawFallbackSamples === 1)
+        ? { phase: ph, subject, basis, position, start, route: pr.route, fullCanonical: canonicalWorld(pr.triples), gatewayCanonical,
+          rows: pr.triples.map(t => [t.entityId, t.attribute, t.value, t.validFrom ?? null, (t.validTo?._tag === "Some" ? t.validTo.value : null), t.id]) }
+        : undefined;
       const recordStart = timed ? performance.now() : 0;
-      const pending = record([ph, subject, basis.recordedAt, basis.validAt, start, latency, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, pr.route, pr.language, pr.waitedMs]);
+      const pending = record([ph, subject, basis.recordedAt, basis.validAt, start, latency, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, pr.route, pr.language, pr.waitedMs], sample);
       if (pending) await pending;
       if (timed) { costs.recordMs += performance.now() - recordStart; costs.sampled++; }
-      if (opts.keepRows && (pr.route === "replica" || !replica || stats.rawFallbackSamples === 1))
-        samples.push({ phase: ph, subject, basis, position, start, route: pr.route, fullCanonical: canonicalWorld(pr.triples), gatewayCanonical, rows: pr.triples.map((t) => [t.entityId, t.attribute, t.value, t.validFrom ?? null, (t.validTo?._tag === "Some" ? t.validTo.value : null), t.id]) });
     } catch (error: any) {
       const pending = record([ph, subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? error?.name ?? "Error"), kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, "error", "", 0]);
       if (pending) await pending;

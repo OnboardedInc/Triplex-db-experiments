@@ -156,6 +156,8 @@ test("the real collector port verifies more rows than its byte allowance can spo
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "dx-rd1-port-"));
   const context = { run: "collector-port", source: "fixture", slot: "fixture", subjects: 1 };
   const spill = new SpillThread(path.join(tmp, "spill"), 32_768, { file: path.join(tmp, "model"), context, deep: false });
+  const actualSamples: ReadRecord[] = [];
+  spill.onProgress = message => actualSamples.push(...message.sampleRecords);
   try {
     const cut = { position: 1, instant: 10, txId: "seed", triples: [] } as unknown as Receipt;
     spill.bindReceipt([], cut);
@@ -163,14 +165,15 @@ test("the real collector port verifies more rows than its byte allowance can spo
     const port = spill.connect();
     for (let id = 1; id <= 8; id++) {
       const batch = new ReadBatch();
-      for (let i = 0; i < 1_024; i++) batch.push(record(1, 10, 150));
+      for (let i = 0; i < 1_024; i++) batch.push(record(1, 10, id === 1 && i === 0 ? 150.125 : 150));
       const packed = batch.take();
       const ack = new Promise<{ id: number; buffer: ArrayBuffer }>(resolve => port.once("message", resolve));
-      port.postMessage({ id, packed }, [packed.values.buffer]);
+      const samples = id === 1 ? [{ phase: 0, subject: 0, basis: { recordedAt: 10, validAt: 17 }, start: 150.125, position: 1, route: "replica" }] : [];
+      port.postMessage({ id, packed, samples }, [packed.values.buffer]);
       const reply = await ack;
       assert.equal(reply.id, id);
       assert(reply.buffer.byteLength > 32_768);
-      spill.frontier(10, 150, []);
+      spill.frontier(10, 151, []);
     }
     port.close();
     const retained = await spill.finish({ through: 10, at: 200 });
@@ -178,6 +181,7 @@ test("the real collector port verifies more rows than its byte allowance can spo
     assert.equal(spill.checked?.compared, 8192);
     assert.equal(spill.checked?.windows.L256?.correct, 8192);
     assert.equal(spill.checked?.pending, 0);
+    assert.deepEqual(actualSamples, [record(1, 10, 150.125)]);
     assert(Number(spill.diskBudget?.peakBytes) < 32_768);
   } finally { await spill.abort(); fs.rmSync(tmp, { recursive: true }); }
 });

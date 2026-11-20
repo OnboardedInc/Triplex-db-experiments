@@ -175,6 +175,8 @@ if (!output.startsWith(path.join(REPO, "runs") + path.sep)) throw new Error("--o
 const rawDir = path.dirname(output);
 fs.mkdirSync(rawDir, { recursive: true });
 const devFlags = ["subjects", "max-readers", "burst-multiplier", "level-s", "rate-scale", "probe10-per-s"].filter((f) => opt(f) !== undefined);
+const rollingReadSmoke = flag("rolling-read-smoke");
+if (rollingReadSmoke) devFlags.push("rolling-read-smoke");
 if (flag("reader-ladder-only")) devFlags.push("reader-ladder-only");
 if (flag("legacy-empty-basis-broadcast")) devFlags.push("legacy-empty-basis-broadcast");
 const boundedMemoryTrial = process.env.DX_BOUNDED_MEMORY_TRIAL === "1";
@@ -439,9 +441,11 @@ const modelJournalContext = {
 };
 // [DX-RD1] Why: the exact rolling verifier needs a private strict-clock scope and the fixed v3 windows.
 // Rejected: advancing an observation frontier in irregular-clock, paired or externally written scopes.
-const streamReads = fullLength && !config.zeroReaders && lane === "datomic" && config.readPath === "replica" &&
+const streamReads = (fullLength || rollingReadSmoke) && !config.zeroReaders && lane === "datomic" && config.readPath === "replica" &&
   config.strictRecordClocks && config.replicaThread === "worker" && config.expectedStateRetention === "worker-journal" &&
   !pairPlan && !tenantSpec && config.readRetention !== "raw";
+if (rollingReadSmoke && (!streamReads || profile !== "smoke" || !config.readerLadderOnly || !config.levelS || config.levelS <= config.settleS))
+  throw Error("Rolling read smoke requires the short replica ladder and its worker journal");
 let modelJournal = config.expectedStateRetention === "journal" ? new ModelJournal(modelJournalFile, modelJournalContext) : undefined;
 const modelJournalThread = config.expectedStateRetention === "worker-journal" && !streamReads ? new ModelJournalThread(modelJournalFile, modelJournalContext) : undefined;
 const accounts = accountsFor(rungSubjects);
@@ -463,6 +467,7 @@ let spillFinished = false;
 let mainReadCount = 0;
 let judgedReadCount = 0;
 const oracleSamples: any[] = [];
+const streamedOracleRows: ReadRecord[] = [];
 const settledReadCounts = new Map<number, number>();
 const spillElu: { t: number; active: number; idle: number; elu: number; threadCpuMs?: number }[] = [];
 if (spill) spill.onProgress = m => {
@@ -470,6 +475,7 @@ if (spill) spill.onProgress = m => {
   if (m.checked) report.streamReadProgress = m.checked;
   for (const [phase, summary] of Object.entries(m.phases) as [string, any][]) settledReadCounts.set(Number(phase), summary.settled);
   for (const sample of m.samples ?? []) oracleSamples.push(sample);
+  for (const row of m.sampleRecords ?? []) streamedOracleRows.push(row);
 };
 const phaseStarts = new Map<number, number>();
 const observedPhases = new Map<number, { reads: number; errors: number; read: Histogram; wait: Histogram; routes: Record<string, number> }>();
@@ -1230,13 +1236,24 @@ async function run() {
   };
 
   // ---------------------------------------------------------------- phases
-  const plan: ReturnType<typeof nsPlan> = tenantSpec && deepId ? tenantPhases(tenantSpec,deepId.arm) : smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
+  let plan: ReturnType<typeof nsPlan> = tenantSpec && deepId ? tenantPhases(tenantSpec,deepId.arm) : smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
     { name: "presweep", readers: 64, seconds: 100, measured: true, mode: "mixed" },
     { name: "activation", readers: 64, measured: true, mode: "mixed" },
   ] : deepSmoke ? [
     { name: "warmup", readers: config.zeroReaders ? 0 : 1, seconds: 5, measured: false },
     { name: "L4", readers: config.zeroReaders ? 0 : 4, seconds: 25, measured: true, ladder: true, mode: "mixed" },
   ] : idle ? idle.phases : nsPlan(profile === "deep" || profile === "deep-live" || profile === "deep-smoke" ? "v3" : profile, config.zeroReaders).filter(p => !config.readerLadderOnly || p.name === "warmup" || (p.ladder && p.readers <= (config.maxReaders ?? 256))).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
+  // [DX-RD1] Why: exercise the real rolling collector and source frontier in a brief owned smoke run.
+  // Rejected: weakening the fixed v3 schedule or using a scaled run for a verdict.
+  if (rollingReadSmoke) {
+    let offset = 0;
+    plan = plan.map(p => {
+      assert(p.seconds && !p.sweep && !p.growHistoryTo);
+      const phase = { ...p, traceFromS: offset };
+      offset += p.seconds;
+      return phase;
+    });
+  }
   const phases: any[] = [];
   // [DX-B2-N3] Why: identify a completed indexing job inside each P1 level, not unbound log words.
   // Rejected: issuing maintenance after readers stop.
@@ -2231,8 +2248,9 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     const inside = (samples: { t: number; elu: number }[]) => mean(samples.filter(e => e.t >= w.from && e.t < w.to).map(e => e.elu));
     const readers = Array.from({ length: config.readerThreads }, (_, worker) => inside(workerElu.filter(e => e.worker === worker && e.running! > 0)));
     const sender = inside(mainElu), collector = spill ? inside(spillElu) : null;
-    const roles = [sender, ...(spill ? [collector] : []), ...readers];
-    return { phase: p.name, readers, sender, collector, limit: 0.70, eligible: roles.every(elu => elu !== null && elu <= 0.70) };
+    const feedConsumer = feed instanceof SideThread ? inside(feed.elus) : null;
+    const roles = [sender, ...(spill ? [collector] : []), ...(feed instanceof SideThread ? [feedConsumer] : []), ...readers];
+    return { phase: p.name, readers, sender, collector, feedConsumer, limit: 0.70, eligible: roles.every(elu => elu !== null && elu <= 0.70) };
   }) : [];
   const total = records.length + (checked?.compared ?? 0), ok = verdicts.reduce((n, code) => n + Number(code === 0), checked?.verdicts[0] ?? 0), errs = verdicts.reduce((n, code) => n + Number(code === 1), checked?.verdicts[1] ?? 0);
   report.correctness = { reads: total, correct: ok, violations: total - ok - errs, errors: errs, violationKinds, violationSample, rule: "a read is correct when its :placement/stamp and whole-world multiset digest equal the expected-state model at the basis the driver requested (receipt instant R, valid time V); errors and wrong answers are never goodput" };
@@ -2390,7 +2408,8 @@ async function runOracle(finalPosition: number, lastAcked: number, deepSamples: 
   const result = await checkWithOracleWorker({ oracleRoot: config.oracleRoot, dir: rawDir, caseDoc, reads });
   // [DX-R3] Why: bind each oracle verdict to its exact retained attempt, not another read at the same basis.
   // Rejected: subject/time-only lookup (can attach an earlier read's verdict to this sample).
-  const modelAgrees = sampleMatches(records, liveSamples).filter(rec => rec && judgeRead(rec).ok).length + deepSamples.filter(s => {
+  function* observations() { yield* streamedOracleRows; yield* records; }
+  const modelAgrees = sampleMatches(observations(), liveSamples).filter(rec => rec && judgeRead(rec).ok).length + deepSamples.filter(s => {
     const expected = model.expected(s.subject, s.basis.recordedAt, s.basis.validAt);
     return expected.fullRows && expected.digest === s.observation.digest && expected.facts === s.observation.facts && expected.stamp === s.observation.stamp && s.observation.stamps === 1;
   }).length;

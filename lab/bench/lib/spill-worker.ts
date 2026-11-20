@@ -6,6 +6,7 @@ import { R, type ReadRecord } from "./observe.ts";
 import { Histogram } from "./hist.ts";
 import { SpillBudget } from "./spill-budget.ts";
 import { unpackReadBatch } from "./read-batch.ts";
+import { sampleMatches } from "./sample-matches.ts";
 import { performance } from "node:perf_hooks";
 const tracing = process.env.TRIPLEX_NODE_WORKER_CPUS ||
     (process.env.TRIPLEX_TRACE_LEVEL && process.env.TRIPLEX_TRACE_LEVEL !== "off") ? await import("./tracing.ts") : undefined;
@@ -17,6 +18,7 @@ const phases = new Map<number, { reads: number; errors: number; settled: number;
 let senderRows = 0;
 const changed = new Set<number>();
 let pendingSamples: any[] = [];
+let pendingSampleRecords: ReadRecord[] = [];
 let elu = performance.eventLoopUtilization();
 function reportProgress() {
   if (!changed.size && !pendingSamples.length) return;
@@ -24,7 +26,7 @@ function reportProgress() {
   const client = performance.eventLoopUtilization(next, elu);
   elu = next;
   const cpu = typeof process.threadCpuUsage === "function" ? process.threadCpuUsage() : undefined;
-  port!.postMessage({ type: "progress", count: records.length + (stream?.progress.captured ?? 0), senderRows, samples: pendingSamples,
+  port!.postMessage({ type: "progress", count: records.length + (stream?.progress.captured ?? 0), senderRows, samples: pendingSamples, sampleRecords: pendingSampleRecords,
     client: { t: performance.timeOrigin + performance.now(), active: client.active, idle: client.idle, elu: client.utilization,
       threadCpuMs: cpu && (cpu.user + cpu.system) / 1000 }, checked: stream?.progress,
     diskBudget: budget && { bytes: budget.bytes, peakBytes: budget.peakBytes, maxBytes: budget.maxBytes, includes: "numeric tuples, strings, checkpoint, split steps and atomic-write scratch; excludes traces and replica apply log" },
@@ -33,11 +35,22 @@ function reportProgress() {
     return [phase, { reads: s.reads, errors: s.errors, settled: s.settled, read: s.read.toJSON(), watermarkWait: s.wait.toJSON(), routes: s.routes,
       verification: "PENDING terminal model, reader drain and independent replay" }];
   })) });
-  changed.clear(); pendingSamples = [];
+  changed.clear(); pendingSamples = []; pendingSampleRecords = [];
 }
 const timer = setInterval(reportProgress, 250);
 timer.unref();
 function retain(rows: Iterable<ReadRecord>, samples: any[] = [], splits: any[] = [], sender = false) {
+  if (stream && samples.length) {
+    const fullBatch = Array.from(rows);
+    const matches = sampleMatches(fullBatch, samples);
+    for (let i = 0; i < samples.length; i++) {
+      const row = matches[i], sample = samples[i];
+      if (!row || row[R.error] !== null || row[R.basisPosition] !== sample.position || row[R.route] !== sample.route)
+        throw Error("Raw oracle sample is missing its same-batch observed tuple");
+      pendingSampleRecords.push(row);
+    }
+    rows = fullBatch;
+  }
   // [DX-R3] Why: persist each actual split's step timestamps before acknowledging its observation batch.
   // Rejected: inferring straddles from the target-selection policy or ACK counts alone.
   if (stream) for (const split of splits) stream.splits.add(split);
