@@ -3,9 +3,9 @@ In the last 24,464 people of the earlier thin import, the read and write gateway
 The smaller deep import still shows large changes in resident pages. Growth at the account sizes in the physical queue remains open.
 A running gateway opened its first deep record in 132–144 ms. Fresh stacks took 342–491 ms. Most of that difference was inside the gateway.
 Seven extra idle scopes added no read-gateway threads. Each added four write-gateway threads and about eight transactor threads.
-The malformed-row error now has its expected type. The W1, HA loader and joined Publish merges passed the canonical native gate.
+The merged native path passed all 54,079 checks. Malformed rows and genuine write conflicts keep their expected error types.
 The physical campaign uses two pairs at each deep size. The field-save tape uses measured per-account rates and the frozen tape keeps its original rules.
-Grouping stays off because the review reproduced a wrong clock in a grouped change. Larger memory and saved-output checks are in progress.
+Grouping stays off until the combined proof covers the clock error found in review. The memory pilot finished and the larger checks are queued.
 
 ## Mac observations at fixed activity
 
@@ -18,7 +18,7 @@ Grouping stays off because the review reproduced a wrong clock in a grouped chan
 | PostgreSQL | 658 / 975 / 1,266 / 1,511 | 10,516 | 1,240 / 1,623 / 1,712 / 1,771 | 25,025 |
 | Driver | 197 / 198 / 200 / 201 | 25 | 234 / 244 / 254 / 281 | 11,635 |
 
-The four samples in each series come from `d0a909ba4`, before any remaining activity. The same 1,000 thin or 100 deep readers had opened their worlds, with the full 2% already seeded. Cache limits were 16 MiB in the reader per touched scope, 32 MiB of native peer cache per gateway, 8 MiB of gateway rows and 1 MiB / 4,096 IDs per scope. The transactor had an 8 MiB index threshold, 32 MiB index maximum, 192 MiB object cache and 840 MiB JVM heap ceiling. PostgreSQL shared buffers were 96 MiB. Summed PostgreSQL RSS can count each shared page several times. These samples support a plateau for the thin gateway but leave the transactor's charged memory and the deep slopes open. [Forecasts and refuters](PREDICTIONS.md)
+The four samples in each series come from `d0a909ba4`, before any remaining activity. The same 1,000 thin or 100 deep readers had opened their worlds, with the full 2% already seeded. Cache limits were 16 MiB in the reader per touched scope, 32 MiB of native peer cache per gateway, 8 MiB of gateway rows and 1 MiB / 4,096 IDs per scope. The transactor had an 8 MiB index threshold, 32 MiB index maximum, 192 MiB object cache and 840 MiB JVM heap ceiling. PostgreSQL shared buffers were 96 MiB. Summed PostgreSQL RSS can count each shared page several times. These samples are consistent with a thin gateway plateau. The transactor's charged memory and the deep slopes remain open. The 100/150/200 thin pilot verified one fixed working set, PostgreSQL buffer accounting and managed cleanup. [Forecasts and refuters](PREDICTIONS.md)
 
 ## Mostly idle scopes
 
