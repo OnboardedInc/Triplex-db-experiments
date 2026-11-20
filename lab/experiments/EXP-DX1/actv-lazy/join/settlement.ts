@@ -72,6 +72,8 @@ export class Settlement {
       };
       const results = await Promise.allSettled([record, values()]);
       for (const r of results) if (r.status === "rejected") throw r.reason;
+      // [DX-ACT1] Why: another publisher may have appended debt during this run. Rejected: waiting for a local callback from a foreign process or polling after the worker is idle.
+      if ((await a.notices.observe()).value.sequence > tail.value.sequence) this.requested = true;
     }
   }
   async idle() {
