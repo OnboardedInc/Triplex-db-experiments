@@ -2499,3 +2499,24 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **Assigned, DX-HA1 part 4:** explain the 4.72 times from the slowest quiet saves (arms with at least 500 quiet saves);
   frames sized by a time budget and admitted only when no live save waits; the frontier of import rate against
   neighbour ratio; the alternative of importing into a database of its own; single-server commands with predictions.
+
+## 2026-11-20 02:08 UTC (21:08 local, 2026-11-19): size analysis in: one database passes ten billion Datomic records within a year
+
+- **W2-SIZE (analyst; private folder `research/2026-11-20-wave2/SIZE/`).** Starting size for ten deep accounts plus
+  the wide accounts: 139 to 189 GB in PostgreSQL (the newest 16.25-million-fact pooled seed measured 730.45 bytes per
+  fact; a never-edited deep person is 94 to 137 kB, an untouched thin person 3.20 to 3.70 kB of allocated SQL). Growth
+  is set by what each field save keeps: 24 to 36 native records per two-field save (working estimate, unmeasured). At
+  0.50 to 0.75 billion new facts a year one database holds an estimated 8 to 12 billion Datomic records and 0.6 to
+  1.5 TB after year one, 1.5 to 4.2 TB after year three; at the recent save rate sustained, ten billion (where
+  Datomic's documentation warns of slower performance) arrives in about 72 days. Fresh scope opens took 342 to
+  491 ms; both gateways exceed the 64-byte target per untouched subject. Erasure of one person has no timing at any
+  size. Candidate year-one machine: 128 GiB ECC, 16 or more cores, 3.84 TB NVMe mirror, about 725 to 1,000 USD a month
+  before independent copies. Most valuable probe: ten minutes on an indexed deep database, 10,000 field saves at 50
+  per second, counting records and retained bytes per save.
+- **A content filter in the Codex service stopped two agents** ("flagged for possible cybersecurity risk"): DX-STG1 once
+  (resumed with plain wording, running) and the write-path reviewer W2-WRITEAUDIT (relaunched as W2-WRITEREVIEW with a
+  brief in ordinary quality-review wording). Briefs avoid security vocabulary from now.
+- **Launched, `gpt-6.2-sol` at max:** analyst **W2-RETAIN** (how history stays exact without one database passing
+  Datomic's range: fewer records per save, accounts per database, archive tiers; the rulings it needs from Sam);
+  builder **DX-ERASE1** (`exp/DX-ERASE1-erasure-cost`: time and disruption of erasing one person at three sizes on the
+  Mac, growth law, the layout requirement if it is too slow).
