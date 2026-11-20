@@ -64,7 +64,7 @@ The two field-save arms start from the same verified image. They use the same of
 
 | Cell | Exact offered rate | Zero-reader forecast | Bounded-reader forecast |
 | --- | ---: | --- | --- |
-| Single 3.5 | 3.5/s | 3.48–3.5 ACK/s and p50/p99 5–9 / 28–65 ms. | 3.48–3.5 ACK/s and 5–10 / 32–85 ms. |
-| Single 4.9 | 4.9/s | 4.87–4.9 ACK/s and 5–9 / 28–70 ms. | 4.86–4.9 ACK/s and 5–10 / 33–90 ms. |
-| Single 23.5 | 23.5/s | 23.4–23.5 ACK/s and 5–10 / 30–85 ms. | 23.3–23.5 ACK/s and 6–13 / 45–105 ms. |
-| Single 39.4 | 39.4/s | 39.0–39.4 ACK/s and 6–11 / 40–115 ms. | 38.5–39.4 ACK/s and 7–14 / 55–130 ms. |
+| Single 3.5 | 3.5/s<br>Observed 3.50/s (n=525), 10.37/66.56 ms. [Cell results](DECISION-RESULTS.md) | 3.48–3.5 ACK/s and p50/p99 5–9 / 28–65 ms. | 3.48–3.5 ACK/s and 5–10 / 32–85 ms. |
+| Single 4.9 | 4.9/s<br>Observed 4.90/s (n=588), 4.70/34.81 ms. [Cell results](DECISION-RESULTS.md) | 4.87–4.9 ACK/s and 5–9 / 28–70 ms. | 4.86–4.9 ACK/s and 5–10 / 33–90 ms. |
+| Single 23.5 | 23.5/s<br>Observed 23.50/s (n=7050), 3.66/33.02 ms. [Cell results](DECISION-RESULTS.md) | 23.4–23.5 ACK/s and 5–10 / 30–85 ms. | 23.3–23.5 ACK/s and 6–13 / 45–105 ms. |
+| Single 39.4 | 39.4/s<br>Observed 39.40/s (n=2364), 3.46/63.23 ms. [Cell results](DECISION-RESULTS.md) | 39.0–39.4 ACK/s and 6–11 / 40–115 ms. | 38.5–39.4 ACK/s and 7–14 / 55–130 ms. |
