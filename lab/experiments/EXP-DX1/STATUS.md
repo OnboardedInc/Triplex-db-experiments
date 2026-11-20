@@ -3531,3 +3531,14 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
   Publish under load with priority, erasure check, import arms; release by Saturday midday). DX-HA1 stopped and
   resumed: attribute the import interference by stage before building anything. DX-JVM1 part 3: the eight
   failures against Java 21, its own predictions against the four-arm result, merge onto `exp/DX-INT1`.
+
+## 2026-11-20 20:59 UTC (15:59 local, 2026-11-20): DX-HASYNC1 part 4 in; parked until the owner's choice and the two-server window
+
+- **DX-HASYNC1 part 4 (`57485ecb5`; tested code `a0c47480f`, which includes `exp/DX-INT1` `51d0aff35`;
+  `hasync1/REPORT.md` with a merge map, `SCORECARD.md`, `BENCH.md`).** Four Mac drills on ONE database with ten
+  accounts kept every acknowledged save; 358 scheduled saves settled once; 3,571 reads correct within one second;
+  the returning disk refused writer startup; the planned move verified its first new save on both copies. Policy B
+  (hold saves until a second copy is ready) is the default; `HA1_RECOVERY_POLICY=A` reopens on one copy with an
+  alarm. Strict typecheck, 25 focused checks and 435 SDK tests pass. Four priority 9 scorecard commands ready; the
+  first phase of the two-server suite is forecast at 17 to 30 minutes and yields all four rows. Bare-metal timings
+  and physical power fencing unverified. Parked: next step needs the owner's A/B/C choice and both servers.
