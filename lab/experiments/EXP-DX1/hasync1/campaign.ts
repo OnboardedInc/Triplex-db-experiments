@@ -6,15 +6,17 @@ import { Evidence } from "../ha1/common.ts";
 import { drill } from "../ha1/run.ts";
 import type { Site } from "../ha1/stack.ts";
 import type { Checkpoint } from "./seed.ts";
-import { benchTrials, seeds, subjects, workingMs } from "./v2/bench-plan.ts";
+import { benchTrials, cellBudgetMs, seeds, subjects, workingMs } from "./v2/bench-plan.ts";
 
 export async function campaign(
   store: string,
   assignSites: (nonce: string, sourceOnB: boolean) => { a: Site; b: Site },
   identity: { tag: string; sha: string; campaign: string },
+  budget: number,
 ) {
+  assert(Number.isSafeInteger(budget) && budget > 0 && budget <= workingMs);
   const now = performance.now();
-  const end = now + workingMs;
+  const end = now + budget;
   const credentials = {
     secret: randomBytes(18).toString("hex"),
     admin: randomBytes(18).toString("hex"),
@@ -28,15 +30,16 @@ export async function campaign(
     });
   write("campaign", {
     ...identity,
-    mode: "hasync-suite",
+    mode: "hasync-scale",
     shape: "deep",
     layout: "two-host",
+    budget,
     trials: benchTrials,
     sizes: benchTrials.map((trial) => trial.people),
   });
   const status: { sequence: number; nonce: string; elapsedMs: number; complete: boolean }[] = [];
   const run = async (sequence: number, checkpoint?: Checkpoint) => {
-    assert(performance.now() < end, "Campaign reached its 85-minute working deadline");
+    assert(performance.now() < end, "Optional campaign reached its working deadline");
     const { mode, people, systems, checkpoint: key } = benchTrials[sequence]!;
     const e = new Evidence(store, mode, identity.tag);
     process.stdout.write(
@@ -56,7 +59,7 @@ export async function campaign(
         key
           ? {
               path: path.join(seedDir, key),
-              deadline: end - 26 * 60000,
+              deadline: end - 4 * 60000,
               credentials,
               ...(checkpoint ? { checkpoint } : {}),
             }
@@ -76,36 +79,35 @@ export async function campaign(
       status.push({ sequence, nonce: e.nonce, elapsedMs: performance.now() - start, complete });
     }
   };
+  let stopped: "budget" | "failed" | null = null;
   try {
     const checkpoints = new Map<keyof typeof seeds, Checkpoint>();
-    const seedOn = async (sourceOnB: boolean) => {
-      for (const [i, trial] of benchTrials.entries()) {
-        const key = trial.checkpoint;
-        if (!key || trial.mode !== seeds[key].mode || seeds[key].sourceOnB !== sourceOnB) continue;
-        const value = await run(i);
-        if (!value) continue;
+    for (let i = 0; i < benchTrials.length; i++) {
+      const trial = benchTrials[i]!;
+      // [DX-HASYNC1] Why: finish a verified prefix within the remaining window. Rejected: starting a seed or fault that has insufficient time for capture and cleanup.
+      if (performance.now() + cellBudgetMs(trial) >= end) {
+        stopped = "budget";
+        break;
+      }
+      const key = trial.checkpoint;
+      const checkpoint = key && checkpoints.get(key);
+      const seed = key && trial.mode === seeds[key].mode;
+      assert(!key || seed || checkpoint);
+      const value = await run(i, checkpoint);
+      if (!value) {
+        stopped = "failed";
+        break;
+      }
+      if (seed) {
         const cp = value as Checkpoint;
         assert.equal(cp.people, trial.people);
-        assert.equal(cp.layout, key === "cost" ? "lean" : "legacy");
-        assert.equal(Boolean(cp.history), key !== "cost");
+        assert.equal(cp.layout, "legacy");
+        assert(cp.history);
         assert.match(cp.manifest, /^[a-f0-9]{64}$/);
         checkpoints.set(key, cp);
       }
-    };
-    // [DX-HASYNC1] Why: smaller checkpoints fit under the full seed without running timed faults alongside a loader. Rejected: sharing one backup directory across edited rungs.
-    for (const preparation of await Promise.allSettled([seedOn(false), seedOn(true)]))
-      if (preparation.status === "rejected") throw preparation.reason;
-    for (let i = 0; i < benchTrials.length; i++) {
-      const trial = benchTrials[i]!;
-      const key = trial.checkpoint;
-      if (key && trial.mode === seeds[key].mode) continue;
-      const checkpoint = key && checkpoints.get(key);
-      if (!key || checkpoint) await run(i, checkpoint);
     }
-    assert(
-      status.length === benchTrials.length && status.every((s) => s.complete),
-      "Campaign has failed or skipped cells",
-    );
+    assert.notEqual(stopped, "failed", "Optional campaign retained its first failed cell");
     assert(performance.now() <= end, "Campaign exceeded its working deadline");
   } finally {
     write("suite", {
@@ -113,6 +115,7 @@ export async function campaign(
       measured: performance.now() - now,
       subjects,
       expected: benchTrials.length,
+      stopped,
       status: status.sort((a, b) => a.sequence - b.sequence),
     });
   }

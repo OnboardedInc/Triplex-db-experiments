@@ -1,12 +1,10 @@
 import type { Mode } from "../../ha1/common.ts";
 
-export const subjects = 100000;
-export const workingMs = 85 * 60000;
+export const subjects = 6300;
+export const workingMs = 55 * 60000;
 export const seeds = {
-  full: { mode: "hasync-seed-edited", people: subjects, sourceOnB: false },
   small: { mode: "hasync-seed-edited", people: 740, sourceOnB: true },
-  medium: { mode: "hasync-seed-edited", people: 6300, sourceOnB: true },
-  cost: { mode: "hasync-seed-lean", people: 740, sourceOnB: true },
+  medium: { mode: "hasync-seed-edited", people: subjects, sourceOnB: true },
 } as const;
 type SeedKey = keyof typeof seeds;
 type Trial = { mode: Mode; people: number; systems: number; checkpoint?: SeedKey };
@@ -19,15 +17,18 @@ const seeded = (mode: Mode, checkpoint: SeedKey): Trial => ({
 });
 
 export const benchTrials = [
-  ...(["full", "small", "medium", "cost"] as const).map((key) => seeded(seeds[key].mode, key)),
   ...(["hasync-fleet-shared", "hasync-fleet-dedicated"] as const).flatMap((mode) =>
     [1, 4, 10].map((systems) => small(mode, systems)),
   ),
-  ...(["small", "medium", "full"] as const).flatMap((key) =>
-    (["hasync-ack", "hasync-index", "hasync-move"] as const).map((mode) => seeded(mode, key)),
+  ...(["small", "medium"] as const).flatMap((key) =>
+    ([seeds[key].mode, "hasync-ack", "hasync-index", "hasync-move"] as const).map((mode) =>
+      seeded(mode, key),
+    ),
   ),
-  small("hasync-cut-wal"),
-  small("hasync-cut-reply"),
-  seeded("hasync-cost-plain", "cost"),
-  seeded("hasync-cost-group", "cost"),
 ] as const;
+
+export function cellBudgetMs(trial: Trial) {
+  if (trial.mode === "hasync-seed-edited") return (trial.people === subjects ? 8 : 3) * 60000;
+  if (trial.mode.startsWith("hasync-fleet-")) return (trial.systems === 10 ? 4 : 2) * 60000;
+  return (trial.people === subjects ? 4 : 3) * 60000;
+}

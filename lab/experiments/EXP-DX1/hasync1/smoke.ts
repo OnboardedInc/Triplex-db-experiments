@@ -3,6 +3,7 @@ import { pinnedLoop, populate, receipts } from "../ha1/one-db.ts";
 import { sleep } from "../ha1/common.ts";
 import type { SyncPair } from "./pair.ts";
 import { driveOffers } from "./offers.ts";
+import { recoveryPolicy } from "./supervisor.ts";
 
 export async function smoke(pair: SyncPair, people: number) {
   const { ac, setup: population } = await pair.open({ init: (a) => populate(pair.s, a, people) });
@@ -23,8 +24,9 @@ export async function smoke(pair: SyncPair, people: number) {
     ),
   });
   const monitor = pinnedLoop(ac, old);
+  const durability = recoveryPolicy();
   try {
-    const control = pair.supervisor().run("fault", "single-copy-after-fence");
+    const control = pair.supervisor().run("fault", durability);
     control.catch(() => {});
     await sleep(350);
     const fault = await pair.s.kill("pg");
@@ -36,6 +38,9 @@ export async function smoke(pair: SyncPair, people: number) {
     const reads = await monitor.finish();
     assert(pair.account === ac);
     await offers.resolve();
+    const replacement = pair.replacement
+      ? await pair.verifyReplacement(pair.replacement)
+      : undefined;
     await receipts(ac);
     const audit = await ac.verify();
     assert(reads.some((v) => v.start > fault.from && v.end < firstAt && v.code === "ok"));
@@ -49,7 +54,8 @@ export async function smoke(pair: SyncPair, people: number) {
       old,
       fresh,
       audit,
-      durability: "single-copy-after-fence",
+      durability,
+      replacement,
       kind: "process-loss diagnostic",
     };
   } finally {

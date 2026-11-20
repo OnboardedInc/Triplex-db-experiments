@@ -15,14 +15,21 @@ import { recountTraffic } from "../hasync1/offers.ts";
 import { measurements, score, type Identity } from "../p9/score.ts";
 import { priorityModes, verifyPriority9 } from "../p9/verify.ts";
 import { seedDirectory } from "../p9/seed.ts";
+import { runSuite } from "../p9/suite.ts";
 
 const [action, tag, layout = "two-host", extra] = process.argv.slice(2),
   mode = modeOf(action ?? "");
 assert(tag && /^[a-z][a-z0-9-]{2,40}$/.test(tag), "Expected experiment and a new attempt tag");
 assert(!extra && (layout === "two-host" || (layout === "one-host" && supportsSingleHost(mode))));
+if (mode === "hasync-suite") process.exit(await runSuite(tag));
 const single = layout === "one-host";
 const p9 = mode === "hasync-p9";
-const sync = p9 || mode === "hasync-suite";
+const scale = mode === "hasync-scale";
+const sync = p9 || scale;
+const scaleBudget = Math.min(workingMs, Number(process.env["HA1_SCALE_BUDGET_MS"] ?? workingMs));
+const recovery = process.env["HA1_RECOVERY_POLICY"] ?? "B";
+if (scale)
+  assert(Number.isSafeInteger(scaleBudget) && scaleBudget > 0 && ["A", "B"].includes(recovery));
 const holder = sync ? "DX-HASYNC1" : "DX-HA1";
 const observerSite = sync && !single ? 1 : 0;
 const satelliteSite = observerSite === 1 ? 0 : 1;
@@ -209,7 +216,6 @@ try {
     await remote(satelliteSite, "mkdir", store);
     await remote(satelliteSite, "mkdir", "-m", "700", store + "/seed");
     seedDirCreated = true;
-    await remote(satelliteSite, "mkdir", "-m", "700", store + "/seed/full");
   }
   const remoteArgs = [
     "sudo",
@@ -220,7 +226,8 @@ try {
     "--pipe",
     "--collect",
     "--unit=triplex-ha1-" + tag,
-    "--property=RuntimeMaxSec=" + (p9 ? "26min" : sync ? "89min" : hours + "h"),
+    "--property=RuntimeMaxSec=" +
+      (p9 ? "26min" : scale ? Math.floor(scaleBudget / 1000) + "s" : hours + "h"),
     "--property=KillMode=control-group",
     "--working-directory=" + src,
     bin,
@@ -235,12 +242,13 @@ try {
     remoteImage,
     store,
     campaign,
-    p9 ? "" : (process.env["HA1_PEOPLE"] ?? ""),
+    sync ? "" : (process.env["HA1_PEOPLE"] ?? ""),
     process.env["HA1_BENCH_SHAPE"] ?? "deep",
     layout,
     priority?.age ?? "",
     priority?.seedSha256 ?? "",
-    priority?.policy ?? "B",
+    priority?.policy ?? recovery,
+    scale ? String(scaleBudget) : "",
   ];
   const child = spawn("ssh", argv(observerSite, remoteArgs), {
     stdio: ["pipe", "pipe", "inherit"],
@@ -424,6 +432,7 @@ try {
     assert(p9Verified, "Both priority 9 attempts are required; raw archive retained");
   } else if (sync) {
     assert.deepEqual(declaration.trials, benchTrials);
+    assert.equal(declaration.budget, scaleBudget);
     assert.deepEqual(
       declaration.sizes,
       benchTrials.map((t) => t.people),
@@ -443,8 +452,9 @@ try {
       assert.equal(suite.subjects, subjects);
     }
     if (code === 0) {
-      assert(suite && suite.measured <= workingMs && suite.status.length === benchTrials.length);
-      assert.equal(nonces.length, benchTrials.length);
+      assert(suite && suite.measured <= scaleBudget && suite.status.length <= benchTrials.length);
+      assert.equal(nonces.length, suite.status.length);
+      assert.equal(suite.stopped, nonces.length < benchTrials.length ? "budget" : null);
       assert(
         suite.status.every(
           (r: any, i: number) => r.sequence === i && trials.get(r.nonce) === i && r.complete,
@@ -665,7 +675,6 @@ try {
     const sizeFits = ["hasync-ack", "hasync-index", "hasync-move"].flatMap((mode) => {
       const points = sizePoints.filter((point) => point.mode === mode);
       const sizes = new Set(points.map((point) => point.facts));
-      if (code === 0) assert.equal(sizes.size, 3);
       if (sizes.size < 2) return [];
       const x = points.map((point) => Math.log2(point.facts));
       const centerX = x.reduce((sum, value) => sum + value, 0) / points.length;

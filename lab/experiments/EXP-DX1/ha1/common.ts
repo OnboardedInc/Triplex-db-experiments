@@ -53,6 +53,7 @@ export const modes = [
   "hasync-fleet-shared",
   "hasync-fleet-dedicated",
   "hasync-suite",
+  "hasync-scale",
   "hasync-p9",
 ] as const;
 export type Mode = (typeof modes)[number];
@@ -178,7 +179,7 @@ function treeCode(mode?: Mode) {
       paths.push(path.join(root, "lab/bench/lib", f + ".ts"));
     for (const f of ["tenants", "small-plan"])
       paths.push(path.join(root, "lab/experiments/EXP-DX1/scale1", f + ".ts"));
-    for (const f of ["ack-audit", "runner", "score", "seed", "verify"])
+    for (const f of ["ack-audit", "runner", "score", "seed", "suite", "verify"])
       paths.push(path.join(root, "lab/experiments/EXP-DX1/p9", f + ".ts"));
   }
   return hash(

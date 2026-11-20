@@ -23,6 +23,7 @@ const [
   age,
   seedSha256,
   policy = "B",
+  scaleBudget,
 ] = process.argv.slice(2);
 const single = layout === "one-host";
 assert(layout === "two-host" || (single && mode && supportsSingleHost(modeOf(mode))));
@@ -45,7 +46,7 @@ export function privateAddress(s: string) {
 assert(remoteImage && (single ? remoteImage === "-" : /^sha256:[a-f0-9]{64}$/.test(remoteImage)));
 assert(store && campaign && /^[a-f0-9-]{36}$/.test(campaign));
 const p9 = mode === "hasync-p9";
-const sync = p9 || mode === "hasync-suite";
+const sync = p9 || mode === "hasync-scale";
 const waiters = new Map<number, { ok: (s: string) => void; fail: (err: Error) => void }>();
 let seq = 0;
 const stream = createInterface({ input: process.stdin });
@@ -117,7 +118,8 @@ try {
     );
   } else if (sync) {
     const { campaign: run } = await import("../hasync1/campaign.ts");
-    assert(shape === "deep" && (!people || people === "100000"));
+    assert(shape === "deep" && !people && (policy === "A" || policy === "B"));
+    process.env["HA1_RECOVERY_POLICY"] = policy;
     await run(
       store,
       (nonce, sourceOnB) => {
@@ -125,6 +127,7 @@ try {
         return sourceOnB ? { a: b, b: primaryHost } : { a: primaryHost, b };
       },
       { tag, sha: sha!, campaign },
+      Number(scaleBudget),
     );
   } else {
     const defaults: Record<string, string> = {
