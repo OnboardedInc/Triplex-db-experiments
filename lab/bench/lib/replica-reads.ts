@@ -212,10 +212,16 @@ export class ReplicaReader {
   }
   private clearInstalled() { this.historyEpoch++; this.installedHistory?.clear(); }
   canInstallHistory(basis: ReadBasis) {
+    if (!this.index.valid || !Number.isFinite(basis.validAt) ||
+      (basis.recordedAt !== undefined && !Number.isFinite(basis.recordedAt))) return false;
+    // [DX-RD1] Why: an applied position is a sealed prefix even after the local versions for it are evicted.
+    // Rejected: keeping a fetched result for a position the source has yet to publish.
+    if (basis.recordedPosition !== undefined)
+      return Number.isSafeInteger(basis.recordedPosition) && basis.recordedPosition > 0 && basis.recordedPosition <= this.index.position;
     const floor = this.index.retainedClockFloor();
     // [DX-RD1] Why: a strictly later applied clock proves an evicted time can no longer acquire writes.
     // Rejected: caching an unresolved open clock or adding a receipt-position hint to an authoritative time-only read.
-    return basis.recordedPosition === undefined && basis.recordedAt !== undefined && floor !== undefined &&
+    return basis.recordedAt !== undefined && floor !== undefined &&
       (basis.recordedAt < floor || this.index.resolve(basis) !== undefined);
   }
   async wait(p: number, ms: number) {

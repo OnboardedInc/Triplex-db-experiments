@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { serialize } from "node:v8";
 import { test } from "node:test";
+import { MessageChannel } from "node:worker_threads";
 import {
+  HistoricalFallbackPort,
   InstalledHistory,
   historicalResult,
   type HistoricalPayload,
@@ -28,6 +30,23 @@ const payload: HistoricalPayload = {
   ]),
 };
 
+test("a fallback port refuses a reply from another requested cut", async () => {
+  const { port1, port2 } = new MessageChannel();
+  const input = new HistoricalFallbackPort(port1);
+  port2.on("message", (m) =>
+    port2.postMessage({
+      id: m.id,
+      world: { ...payload, root: m.root, recordedAt: m.basis.recordedAt - 1 },
+    }),
+  );
+  try {
+    await assert.rejects(input.pull("root", basis), /cut mismatch/);
+  } finally {
+    input.close();
+    port2.close();
+  }
+});
+
 test("installed history preserves exact payload, refuses another valid interval and clears on rebuild", async () => {
   const cache = new InstalledHistory(1_024);
   const reader = new ReplicaReader(0);
@@ -42,6 +61,8 @@ test("installed history preserves exact payload, refuses another valid interval 
   reader.index.apply(newer);
   reader.installedHistory = cache;
   assert(!reader.canInstallHistory(basis), "A non-strict clock cannot authorize installation");
+  assert(reader.canInstallHistory({ recordedPosition: 1, validAt: 2 }));
+  assert(!reader.canInstallHistory({ recordedPosition: 3, validAt: 2 }));
   reader.install({ ...reader.index.image(), strictRecordClocks: true });
   assert(reader.canInstallHistory(basis));
   assert(!reader.canInstallHistory({ recordedAt: 300, validAt: 2 }));

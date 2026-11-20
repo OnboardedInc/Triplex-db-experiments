@@ -16,7 +16,13 @@ import { observe } from "../../../bench/lib/observe.ts";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import { ids, ownFacts, sharedFacts, SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { seedOps } from "../../../bench/lib/commands.ts";
-import { beginTrace, currentTrace, finishTrace, withTrace } from "../../../bench/lib/tracing.ts";
+import {
+  beginTrace,
+  currentTrace,
+  finishTrace,
+  gatewayExchanges,
+  withTrace,
+} from "../../../bench/lib/tracing.ts";
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { inLocalSlot } from "./owned-local.ts";
 import {
@@ -83,7 +89,14 @@ type Exchange = {
   gatewayMs: number;
   bytes: number;
 };
-type Miss = { id: string; at: number; end: number; exchanges: Exchange[]; count?: number };
+type Miss = {
+  id: string;
+  at: number;
+  end: number;
+  exchanges: Exchange[];
+  count?: number;
+  wire: ReturnType<typeof gatewayExchanges>;
+};
 type Span = { name: string; start: number; end: number };
 type GatewayRow = {
   schema: string;
@@ -154,6 +167,7 @@ function timing(
   requireEvery: boolean,
 ) {
   const byTrace = new Map(misses.map((m) => [m.id, m]));
+  assert.equal(byTrace.size, misses.length);
   const seen = new Set<string>(),
     runSlots = new Set<string>();
   const nativeByMiss = new Map<
@@ -171,7 +185,9 @@ function timing(
       row.source === nativeSource &&
         row.process === "gateway" &&
         row.attributes.status === 200 &&
-        row.parent &&
+        row.slot &&
+        row.run === `rd1-${row.slot}` &&
+        miss.wire.some((http) => http.parent === row.parent && http.root === row.root) &&
         !seen.has(row.root),
     );
     runSlots.add(`${row.run}/${row.slot}`);
@@ -209,7 +225,7 @@ function timing(
           : miss.end - miss.at,
       native = nativeByMiss.get(miss.id);
     const count = miss.count ?? miss.exchanges.length;
-    assert(count > 0 && !miss.exchanges.some((x) => !Number.isFinite(x.gatewayMs)));
+    assert(count > 0 && count === miss.wire.length);
     exchanges += count;
     responseBytes += miss.exchanges.reduce((n, x) => n + x.bytes, 0);
     clientMs += client;
@@ -292,7 +308,17 @@ async function run(slot: string, logs: () => Promise<string>) {
     if (admission) {
       fs.mkdirSync(admission);
       ownsMeasure = true;
-      fs.writeFileSync(path.join(admission, "owner.json"), JSON.stringify({ id: "DX-RD1", pid: process.pid, slot, nonce, at: new Date().toISOString() }) + "\n", { flag: "wx" });
+      fs.writeFileSync(
+        path.join(admission, "owner.json"),
+        JSON.stringify({
+          id: "DX-RD1",
+          pid: process.pid,
+          slot,
+          nonce,
+          at: new Date().toISOString(),
+        }) + "\n",
+        { flag: "wx" },
+      );
     }
     for (const { share: oldPer200, treatment, transition, low } of order) {
       const client = new DatomicClient(endpoint);
@@ -383,7 +409,13 @@ async function run(slot: string, logs: () => Promise<string>) {
             }
             const trace = beginTrace("read", "rd1.miss", { arm: arms.length, subject });
             assert(trace, "Run the probe with TRIPLEX_TRACE_LEVEL=summary or full");
-            const miss = { id: trace.traceId, at: clock(), end: NaN, exchanges: [] };
+            const miss: Miss = {
+              id: trace.traceId,
+              at: clock(),
+              end: NaN,
+              exchanges: [],
+              wire: [],
+            };
             misses.set(miss.id, miss);
             pending++;
             maxPending = Math.max(pending, maxPending);
@@ -406,6 +438,7 @@ async function run(slot: string, logs: () => Promise<string>) {
               miss.end = clock();
               pending--;
               pendingMs += Math.max(0, Math.min(until, miss.end) - miss.at);
+              miss.wire = gatewayExchanges(trace);
               finishTrace(trace);
             }
           };
@@ -467,6 +500,7 @@ async function run(slot: string, logs: () => Promise<string>) {
             end: s.ended,
             count: s.requests,
             exchanges: [],
+            wire: s.wire,
           }))
         : [...misses.values()];
       allMisses.push(store);
@@ -515,6 +549,16 @@ async function run(slot: string, logs: () => Promise<string>) {
       .split("\n")
       .filter((l) => l.startsWith('{"') && l.includes('"triplex.trace.v1"'))
       .map((l) => JSON.parse(l) as GatewayRow);
+    const selected = new Set(allMisses.flat().map((x) => x.id));
+    const nativeRows =
+      raw
+        .filter((r) => selected.has(r.traceId))
+        .map((r) => JSON.stringify(r))
+        .join("\n") + "\n";
+    fs.writeFileSync(path.join(output!, "native.jsonl"), nativeRows, { flag: "wx" });
+    fs.writeFileSync(path.join(output!, "exchanges.json"), JSON.stringify(allMisses) + "\n", {
+      flag: "wx",
+    });
     const controls = arms.filter(
       (a) => a.oldPer200 === 0 || (mode === "treatments" && a.treatment === "off"),
     );
@@ -529,16 +573,6 @@ async function run(slot: string, logs: () => Promise<string>) {
       a.goodputRatio = a.goodput / baseline;
       if (a.transition) a.recoveryRatio = a.recovery / a.seconds / baseline;
     }
-    const selected = new Set(allMisses.flat().map((x) => x.id));
-    const nativeRows =
-      raw
-        .filter((r) => selected.has(r.traceId))
-        .map((r) => JSON.stringify(r))
-        .join("\n") + "\n";
-    fs.writeFileSync(path.join(output!, "native.jsonl"), nativeRows, { flag: "wx" });
-    fs.writeFileSync(path.join(output!, "exchanges.json"), JSON.stringify(allMisses) + "\n", {
-      flag: "wx",
-    });
     const result = {
       nonce,
       source,

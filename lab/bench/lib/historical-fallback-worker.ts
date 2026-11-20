@@ -4,7 +4,7 @@ import { serialize } from "node:v8";
 import { DatomicClient } from "../../../packages/datomic/dist/index.js";
 import { replicaReply } from "./replica-reads.ts";
 import { observe } from "./observe.ts";
-import { beginTrace, finishTrace, withTrace } from "./tracing.ts";
+import { beginTrace, finishTrace, gatewayExchanges, withTrace } from "./tracing.ts";
 import type { PullResult } from "./composition.ts";
 import type {
   HistoricalConfig,
@@ -42,6 +42,7 @@ const stats = {
     logical: number;
     started: number;
     ended: number;
+    wire: ReturnType<typeof gatewayExchanges>;
   }[],
 };
 let elu = performance.eventLoopUtilization();
@@ -108,18 +109,6 @@ async function execute(group: HistoricalRequest[]) {
       return;
     }
     stats.wireExchanges += result.requests;
-    if (cfg.capture && trace) {
-      if (stats.exchanges.length >= 20_000)
-        throw Error("Historical probe exchange allowance exceeded");
-      stats.exchanges.push({
-        traceId: trace.traceId,
-        requests: result.requests,
-        roots: roots.length,
-        logical: group.length,
-        started,
-        ended: performance.timeOrigin + performance.now(),
-      });
-    }
     const byRoot = new Map(
       result.worlds.map((w) => {
         const full: PullResult = {
@@ -145,6 +134,21 @@ async function execute(group: HistoricalRequest[]) {
         return [w.root, world];
       }),
     );
+    if (cfg.capture && trace) {
+      if (stats.exchanges.length >= 20_000)
+        throw Error("Historical probe exchange allowance exceeded");
+      const wire = gatewayExchanges(trace);
+      assert.equal(wire.length, result.requests);
+      stats.exchanges.push({
+        traceId: trace.traceId,
+        requests: result.requests,
+        roots: roots.length,
+        logical: group.length,
+        started,
+        ended: performance.timeOrigin + performance.now(),
+        wire,
+      });
+    }
     for (const r of group) {
       const world = byRoot.get(r.root);
       if (!world) throw Error("Historical batch root coverage differs");
