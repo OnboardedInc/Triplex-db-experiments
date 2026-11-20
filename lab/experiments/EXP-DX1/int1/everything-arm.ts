@@ -13,6 +13,7 @@ import {
 } from "../../../bench/lib/deep-profile.ts";
 import { fieldPlan } from "./field-plan.ts";
 import { type CampaignCase } from "./everything-plan.ts";
+import { fileHash } from "../scale1/measurements.ts";
 
 export type Arm = {
   source: string;
@@ -44,6 +45,41 @@ export function atomicJson(f: string, data: unknown) {
   fs.renameSync(f + ".tmp", f);
 }
 
+async function sameArtifact(a: string, b: string): Promise<void> {
+  const original = fs.lstatSync(a),
+    archived = fs.lstatSync(b);
+  if (original.isDirectory()) {
+    assert(archived.isDirectory());
+    const children = fs.readdirSync(a).sort();
+    assert.deepEqual(fs.readdirSync(b).sort(), children);
+    for (const name of children) await sameArtifact(path.join(a, name), path.join(b, name));
+  } else {
+    assert(original.isFile() && archived.isFile() && original.size === archived.size);
+    assert.equal(await fileHash(b), await fileHash(a));
+  }
+}
+
+async function archiveDriverOutput(staging: string, output: string) {
+  // [DX-INT1] Why: the driver keeps its worktree output boundary and the collector sees the real saved bytes.
+  // Rejected: relaxing the driver's directory guard or allowing a terminal record before archiving.
+  for (const name of fs.readdirSync(staging)) {
+    const original = path.join(staging, name),
+      target = path.join(output, name);
+    assert(!fs.existsSync(target));
+    try {
+      fs.renameSync(original, target);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EXDEV") throw error;
+      const transfer = target + ".transfer";
+      fs.cpSync(original, transfer, { recursive: true, force: false, errorOnExist: true });
+      await sameArtifact(original, transfer);
+      fs.renameSync(transfer, target);
+      fs.rmSync(original, { recursive: true });
+    }
+  }
+  fs.rmdirSync(staging);
+}
+
 export async function executeArm(
   arm: Arm,
   output: string,
@@ -58,6 +94,9 @@ export async function executeArm(
   const barrier = path.join(output, "barrier");
   fs.mkdirSync(barrier);
   atomicJson(path.join(output, "arm.json"), arm);
+  const work = path.resolve("runs");
+  fs.mkdirSync(work, { recursive: true });
+  const staging = fs.mkdtempSync(path.join(work, "int1-arm-"));
   const argv = [
     process.execPath,
     "--no-warnings",
@@ -73,7 +112,7 @@ export async function executeArm(
     "--rung",
     smoke ? "deep-smoke-40" : arm.case.people === 10000 ? "deep-10k" : "deep-100k",
     "--output",
-    path.join(output, "ns-report.json"),
+    path.join(staging, "ns-report.json"),
     "--oracle-root",
     oracleRoot,
     "--deep-account",
@@ -136,6 +175,7 @@ export async function executeArm(
   });
   const readyFile = path.join(barrier, "s0.ready.json");
   let timer: NodeJS.Timeout | undefined;
+  let terminal: { arm: Arm; start: number; code: number; endedAt: number };
   try {
     while (!fs.existsSync(readyFile)) {
       assert(!exited && Date.now() < deadline, "Driver closed before its ready record");
@@ -163,8 +203,7 @@ export async function executeArm(
     releaseDeepStart(barrier, [id], start);
     timer = setTimeout(cancelled, Math.min(2 ** 31 - 1, deadline - Date.now()));
     const code = await exit;
-    atomicJson(path.join(output, "observed.json"), { arm, start, code, endedAt: Date.now() });
-    return code;
+    terminal = { arm, start, code, endedAt: Date.now() };
   } finally {
     clearTimeout(timer);
     process.removeListener("SIGTERM", cancelled);
@@ -173,5 +212,8 @@ export async function executeArm(
       cancelled();
       await exit;
     }
+    await archiveDriverOutput(staging, output);
   }
+  atomicJson(path.join(output, "observed.json"), terminal);
+  return terminal.code;
 }

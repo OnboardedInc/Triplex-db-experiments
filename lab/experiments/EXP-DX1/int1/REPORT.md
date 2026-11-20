@@ -5,7 +5,7 @@ A running gateway opened its first deep record in 132–144 ms. Fresh stacks too
 At 128 scopes the write gateway had 565 threads and the transactor had 1,097. The last 96 scopes added about four and eight threads each.
 The merged native path passed all 54,079 checks. Malformed rows and genuine write conflicts keep their expected error types.
 The physical campaign uses two pairs at each deep size. The field-save tape uses measured per-account rates and the frozen tape keeps its original rules.
-The larger population sweeps and the repaired campaign smoke are waiting for Mac capacity. The first smoke stopped before driver readiness.
+The larger population sweeps and the corrected campaign smoke are waiting for Mac capacity. Both archived smoke attempts stopped before driver readiness.
 
 ## Mac observations at fixed activity
 
