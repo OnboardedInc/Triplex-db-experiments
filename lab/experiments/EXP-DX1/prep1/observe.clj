@@ -1,14 +1,15 @@
 (ns triplex.prep1.observe
   (:require [clojure.data.json :as json]
             [clojure.string :as str]
-            [datomic.api :as d]
             [datomic.db :as db]
             [datomic.io :as dio]
             [datomic.log :as log]
             [datomic.measure.io-stats :as io]
             [datomic.transaction :as tx])
   (:import [datomic Datom]
+           [java.io FileInputStream]
            [java.lang.management ManagementFactory ThreadMXBean]
+           [java.nio.charset StandardCharsets]
            [java.util.concurrent ArrayBlockingQueue]
            [java.util.concurrent.atomic AtomicLong]))
 
@@ -37,12 +38,16 @@
     value))
 
 (defn profile-guard [snapshot witness ops f]
-  (let [profile (or *profile* (volatile! {:checks []}))
+  ;; [DX-PREP1] Why: the launcher must initialize the transactor before loading the Peer API.
+  ;; Rejected: requiring datomic.api when the observer is preloaded (initializes Peer mode first).
+  (let [basis-t (requiring-resolve 'datomic.api/basis-t)
+        entid (requiring-resolve 'datomic.api/entid)
+        profile (or *profile* (volatile! {:checks []}))
         read? (= "reads" (:profile witness))
         operation (some #(when (and (map? %) (= "datomic.tx" (:db/id %)))
                            (:triplex.tx/operation-id %)) ops)]
     (vswap! profile assoc :scope (get (into {} (:flags witness)) :triplex.scope/key)
-            :operation operation :basis (d/basis-t snapshot) :mode (:profile witness)
+            :operation operation :basis (basis-t snapshot) :mode (:profile witness)
             :members (count (:members witness))
             :witnessCounts {:flags (count (:flags witness))
                             :members (mapv (fn [m] {:revisions (count (:entities m))
@@ -51,7 +56,7 @@
                                            (:members witness))}
             :validators (into {}
                           (mapcat (fn [[attr key]]
-                                    (let [a (d/entid snapshot attr)]
+                                    (let [a (entid snapshot attr)]
                                       (map-indexed (fn [i value] [[a value] [key i]]) (keep #(when (map? %) (get % attr)) ops)))))
                           [[:triplex.claim/command-id :claim] [:triplex.tx/operation-id :operation]]))
     (let [start (System/nanoTime) tcpu (cpu)
@@ -62,7 +67,14 @@
       result)))
 
 (defn proc-stat [path]
-  (into {} (map (fn [line] (str/split line #" " 2))) (str/split-lines (slurp path))))
+  ;; [DX-PREP1] Why: Linux PSI files support direct reads but no available-byte ioctl.
+  ;; Rejected: slurp through BufferedInputStream (the available-byte probe fails with EINVAL).
+  (with-open [input (FileInputStream. ^String path)]
+    (let [buffer (byte-array 4096)
+          n (.read input buffer)]
+      (assert (and (pos? n) (= -1 (.read input))))
+      (into {} (map #(str/split % #" " 2))
+            (str/split-lines (String. buffer 0 n StandardCharsets/US_ASCII))))))
 
 (when (#{"profile" "cheap"} mode)
   ;; [DX-PREP1] Why: join samples to each native apply on the same VM monotonic clock.

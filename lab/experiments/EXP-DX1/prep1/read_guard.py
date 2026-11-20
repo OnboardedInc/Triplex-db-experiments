@@ -69,7 +69,7 @@ def read(out):
     if mode == "profile":
         assert list(by_arm) == ["reference", "guard", "time", "reads"]
     else:
-        assert list(by_arm) == ["reference", "guard", "cheap", "cheap2", "reads"]
+        assert list(by_arm) == ["reference", "cheap", "cheap2", "reference2", "guard", "time", "reads"]
     results = {}
     for arm, observations in by_arm.items():
         assert [kind for kind, _ in observations] == ["seed", "block", "finished"]

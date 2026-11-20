@@ -264,8 +264,8 @@
                            (format "%016x" (Double/doubleToRawLongBits 1007.0)) "_tx/seed-7")]]
            :journal [{:db/id "occupied-journal" :triplex.entity/id (str "_tx/" (:id a))}]
            :history [[:db/add (d/entid base [:triplex.entity/id (owners 2)]) :triplex.entity/row
-                      (fixture/row-text (assoc (fixture/row (:add a) (owners 2) ":v" "occupied" "_tx/seed-2")
-                                               :recorded_position 3 :recorded_at 1002.0))]])))))
+                      (rows/row-text (assoc (fixture/row (:add a) (owners 2) ":v" "occupied" "_tx/seed-2")
+                                            :recorded_position 3 :recorded_at 1002.0))]])))))
 
 (defn basis-fences []
   (doseq [mode basis-cases]

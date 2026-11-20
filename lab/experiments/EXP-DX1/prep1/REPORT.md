@@ -4,12 +4,12 @@ The database compares that version once before applying the group.
 A later write makes the group replay through the fixed writer.
 A scope with a recorded excision request uses the fixed writer.
 The new timing records separate writer CPU, storage reads and waiting.
-The managed SQL tests are queued on the shared Mac.
+The merged write fixes passed 98 database assertions.
 The server comparison is staged for the fixed source.
 
 **North star.** P2 durable saves, P1 exact cuts, P3 exact feed and P6 account isolation. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 **Part 1.** Git `0bcc9ec55` holds the original report. At 235 offered saves/s, full-group median native apply moved from 4.2/5.2 to 89.0/89.8 ms with the original prepared guard. `live-01/native-cost.json` contains the earlier joined results.
-**Profile.** `guard-profile-01` targets the original authored guard. The timed arm captures wall and writer-thread CPU. The reads arm adds nested Datomic I/O statistics. Each full group is joined to its receipt, native t and bracketed VM pressure and cgroup throttling. The quiet lease timed out waiting for two active jobs. The same frozen image is queued for a shared-slot run.
+**Profile.** Timed and I/O arms isolate the original authored guard. Each full group is joined to its receipt, native t and bracketed VM pressure and cgroup throttling. The first quiet lease timed out waiting for active jobs. The first admitted profiler and restart stacks stopped at launcher initialization. The corrected observer defers Peer API loading and reads Linux CPU pressure directly. The parity fixture's unresolved row encoder was corrected before retry.
 **Candidate.** `TX2_PARALLEL_PREPARE=1 TX2_PREPARE_GUARD=basis` validates all members against one physical database value. The existing W1 basis guard protects the exact data, even across non-Triplex appends. Workers reuse matching drafts or refresh them on that basis. A covering historical range can prove all new IDs unused, with exact point checks for an occupied range or unsupported keys. Normalized subject EIDs eliminate repeated owner upserts.
 
 | Removed native check | Dependency fenced | Negative fixture |
@@ -21,7 +21,7 @@ The server comparison is staged for the fixed source.
 | Physical excision | Historical excision requests exclude a basis from certification | SQL excision between proof and apply and a fresh proof after the watermark |
 
 **Scheduling.** Prepared drafts can start while another group is pending. A certified submission refreshes them against the actual prior append. Both the full witness and W1 reference paths remain available. Definitive refusal replays through W1. A lost reply resolves from its durable identity.
-**Fix integration.** WFIX through `0f92704d2` carries ordered admission, scope-maintenance ownership, SDK duplicate recovery and readback. The branch uses one stored-row metadata decoder and stamper for both the installed function and prepared renderer, including compact journal rows. Same-subject chains continue through the reference writer. The merged bodies compiled and a codec fixture matched stored value, range, clock and transaction identity. Twelve SDK tests and two W1 readback/feed tests passed in `wfix-unit-02`. The Datomic runtime gates are pending.
+**Fix integration.** WFIX through `0f92704d2` carries ordered admission, scope-maintenance ownership, SDK duplicate recovery and readback. Both writers use the stored-row stamper, including compact journal rows. Same-subject chains continue through the reference writer. With the basis option enabled, `wfix-01` passed all 98 native assertions, including the resend receipt and the interior stored retraction, along with 12 SDK and two W1 readback/feed tests. The Datomic SQL restart, erasure and parity reruns are pending.
 **Evidence audit.** `manage.py` binds frozen files, image, slot and attempt. `observe.clj` captures native times and read counters by attempt. `probe.ts` checks receipt/feed and pinned rows, and `read_guard.py` joins them to exact native t, append and pressure before interpreting measurements. `gate.py` checks fresh scope, source and JAR hashes and pinned O-REPLAY answers. `read_recovery.py` binds the stopped process, SQL durability, exact native t, original claims, pinned rows, full feed and excision watermark. The gateway publishes a prepared ACK from the real native report after matching operation, position, clock and t.
 **Evidence.** Attempt directories sit under `evidence/DX-PREP1` in the durable lab evidence root. Acceptance content hashes are unchanged. [Checksums](SHA256SUMS)
 

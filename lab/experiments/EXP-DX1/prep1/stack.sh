@@ -117,11 +117,11 @@ case "$PREP1_MODE" in
     if [[ "$PREP1_MODE" == profile ]]; then
       arms=(reference guard time reads)
     else
-      arms=(reference guard cheap cheap2 reads)
+      arms=(reference cheap cheap2 reference2 guard time reads)
     fi
     for arm in "${arms[@]}"; do
       case "$arm" in
-        reference) gateway 0 off ;;
+        reference|reference2) gateway 0 off ;;
         guard) gateway 1 off ;;
         time|reads) gateway 1 off "$arm" ;;
         cheap|cheap2) gateway 1 off "" basis ;;
