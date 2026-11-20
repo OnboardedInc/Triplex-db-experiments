@@ -27,7 +27,8 @@ export function selectedWriter(writer: Writer) {
     TX2_GROUP_STAGE_CLOCK: "1",
     TX2_GROUP_QUEUE_CLOCK: "0",
     TX2_LIVE_PRIORITY: "1",
-    TX2_LOAD2_TIMING: "1",
+    TX2_LOAD1_PRIORITY: writer === "grouped" ? "1" : "0",
+    TX2_LOAD2_TIMING: writer === "grouped" ? "1" : "0",
     TX2_FIELD_COALESCE: "0",
     TX2_COMMIT_HINTS: "false",
     TRIPLEX_DATOMIC_FAST_PATHS: "save-wire",
@@ -52,7 +53,7 @@ export function stackOptions(writer: Writer, attempt: string) {
     DX_W1_FAST_REPLY: "1", DX_W1_JOURNAL_QUERY: "1", DX_GROUP_MAX_MEMBERS: "32",
     DX_LIVE_PRIORITY: "1", DX_FIELD_COALESCE: "0", DX_COMMIT_HINTS: "false",
     DX_PREP1_SERVER: "1", DX_V01_ADOPTED_STACK: "1", DX_PREP1_SUBJECT: writer === "subject" ? "1" : "0",
-    DX_WRITE_OPTIONS_ATTEMPT: attempt, DX_V01_IMPORT_TIMING: "1",
+    DX_WRITE_OPTIONS_ATTEMPT: attempt, DX_V01_IMPORT_TIMING: writer === "grouped" ? "1" : "0",
     DX_JAVA: "25",
     DX_GW_WRITE_JAVA_OPTS: physicalJvm()["gw-w"], DX_GW_READ_JAVA_OPTS: physicalJvm()["gw-r"],
   };

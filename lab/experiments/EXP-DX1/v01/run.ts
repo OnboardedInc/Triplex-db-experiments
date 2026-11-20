@@ -21,7 +21,7 @@ if (values.help) {
 }
 const price = Number(values["hourly-usd"]);
 assert(/^\d+(?:\.\d+)?$/.test(values["hourly-usd"]!) && Number.isFinite(price) && price > 0);
-const forecast = `Budget ${ceiling} minutes including cleanup, up to USD ${(ceiling / 60 * price).toFixed(2)} per age. This revision allocates ${budget.adoptionAndP1to4} minutes to restore and partial P1–P4 coverage, including ${pairSeconds / 60} minutes of matched offers. Build and AGE1 provisioning are separate.`;
+const forecast = `Budget ${ceiling} minutes including cleanup, up to USD ${(ceiling / 60 * price).toFixed(2)} per age. This revision allocates ${budget.adoptionAndP1to4} minutes to restore and partial P1–P4 coverage, including ${pairSeconds / 60} minutes of matched offers. Quiet-account pairing has ${budget.P6} minutes, first reads and census ${budget.P7}, and grouped import pacing ${budget.P8}. Build and AGE1 provisioning are separate.`;
 if (values.plan) { console.log(forecast); process.exit(0); }
 assert(values.age === "fresh" || values.age === "1B");
 assert(values.writer === "grouped" || values.writer === "subject");
