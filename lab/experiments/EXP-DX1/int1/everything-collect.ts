@@ -9,6 +9,7 @@ import { distribution, percentile } from "../../../bench/lib/verdict-statistics.
 import { verdictMs, VERDICT_CLOCK } from "../../../trace/instrument.mjs";
 import { fieldPlan, fieldProfile, fieldWindows } from "./field-plan.ts";
 import { campaignCases, treatment, type CampaignCase } from "./everything-plan.ts";
+import { replayRevision } from "../scale1/source.ts";
 import { atomicJson, type Arm } from "./everything-arm.ts";
 
 const read = (f: string) => JSON.parse(fs.readFileSync(f, "utf8"));
@@ -25,6 +26,8 @@ export function openPlan(
     treatment,
     createdAt: Date.now(),
     cases: campaignCases(smoke ? [40] : undefined),
+    oracle: read(path.join(dir, "oracle-source.json")),
+    placementInputs: read(path.join(dir, "physical-inputs.json")),
   };
   atomicJson(path.join(dir, "campaign.json"), { ...plan, binding: sha256(canonical(plan)) });
   return plan.cases;
@@ -57,6 +60,36 @@ function originalArm(out: string, c: CampaignCase, plan: ReturnType<typeof read>
     [arm.source, arm.slot, c.people, c.load, 0, c.profile === "field"],
   );
   return arm;
+}
+
+async function checkInputs(dir: string, plan: ReturnType<typeof read>) {
+  const oracle = plan.oracle,
+    placement = plan.placementInputs;
+  assert.deepEqual(read(path.join(dir, "oracle-source.json")), oracle);
+  assert.deepEqual(read(path.join(dir, "physical-inputs.json")), placement);
+  assert.equal(placement.source, plan.source);
+  assert.equal(oracle.revision, replayRevision);
+  const base = "lab/oracles/replay/",
+    declared = new Set<string>();
+  for (const f of oracle.files) {
+    assert(
+      typeof f.path === "string" &&
+        f.path.startsWith(base) &&
+        !f.path.split("/").includes("..") &&
+        !declared.has(f.path),
+    );
+    declared.add(f.path);
+    const file = path.join(dir, "oracle", f.path);
+    assert(fs.lstatSync(file).isFile() && fs.statSync(file).size === f.bytes);
+    assert.equal(await fileHash(file), f.sha256);
+  }
+  assert(declared.has(base + "cli.py"));
+  const observed = (await index(path.join(dir, "oracle"))).map(([f]) => f).sort();
+  assert.deepEqual(observed, [...declared].sort());
+  if (plan.placement === "leased-mac") {
+    assert(placement.containers.length === 1 && /^[a-f0-9]{64}$/.test(placement.gatewaySource));
+    assert(/^tx2-dxthin-/.test(placement.slot));
+  }
 }
 
 async function fieldStats(out: string, arm: Arm, raw: ScopeMeasurement) {
@@ -154,6 +187,7 @@ export async function collect(dir: string, mode: "produce" | "verify") {
   assert.deepEqual(plan.cases, campaignCases(plan.smoke ? [40] : undefined));
   assert.deepEqual(plan.treatment, treatment);
   assert(plan.placement === "physical" || (plan.placement === "leased-mac" && plan.smoke));
+  await checkInputs(dir, plan);
   const seen = new Set<string>(),
     prior = new Map<string, ScopeMeasurement>();
   const results = [];
@@ -168,6 +202,7 @@ export async function collect(dir: string, mode: "produce" | "verify") {
       result = read(terminal),
       id = arm.identity;
     assert.deepEqual(result.arm, arm);
+    if (plan.placement === "leased-mac") assert.equal(id.slot, plan.placementInputs.slot);
     assert(
       result.start > arm.startedAt &&
         result.endedAt > result.start &&

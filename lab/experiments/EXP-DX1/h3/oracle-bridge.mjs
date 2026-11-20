@@ -47,7 +47,7 @@ if(mode==='client') {
      const r=JSON.parse(fs.readFileSync(path.join(dir,file),'utf8'));
      const input=path.join(dir,r.id+'.case'),output=path.join(dir,r.id+'.output');
      if(fileHash(input)!==r.sha256)throw Error('oracle input changed');
-     const result=spawnSync('python3',['-I',r.cli,input,'-o',output],{
+     const result=spawnSync('python3',['-B','-I',r.cli,input,'-o',output],{
        encoding:'utf8',timeout:oracleTimeouts(fs.statSync(input).size).runMs,maxBuffer:64<<20,
      });
      const stderr=[result.error?.message,result.stderr].filter(Boolean).join('\n');
