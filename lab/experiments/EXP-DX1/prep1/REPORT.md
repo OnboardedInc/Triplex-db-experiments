@@ -1,13 +1,16 @@
-The per-person design has yet to reach 394 saves/s in one database. It reached 111.1 at that load with 8.62 ms of native apply per save, against a 2.54 ms total serial budget.
-The next server command uses source `afd94a9fe0bc2e4485f200bab436c7cb58b289ed`.
-Run `DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-owner -- bash lab/experiments/EXP-DX1/prep1/server.sh owner "$OUT" afd94a9fe0bc2e4485f200bab436c7cb58b289ed "$SEALED"`.
-Use the original comparison's sealed campaign directory as `SEALED` and a new absolute directory as `OUT`.
-The command restores one ten-account database for each of three arms. One gateway serves grouped, original per-person, and fixed per-person in turn.
-Each arm measures the quiet account alone and with nine neighbours at 235 and 394 gross offers/s. The command allows at most one hour including forced exit.
-The fix sends the existing owner number. Datomic still checks the public identity and revision, and stores the same journal and feed.
-The fix removes one redundant lookup. The bigger costs still need to come down before 394 is credible.
+Not yet. The per-person writer delivered 111 of 394 offered saves/s in one database, and avoiding all its reported SQL and decoding would still leave an estimated 2.64 ms of apply.
+A targeted PostgreSQL run found that new assertion IDs account for at least half of the prepared writer’s storage reads.
+The operation and command checks fetched nothing in this run. The owner revision check cost about one fetch per prepared save.
+Every grouped-writer read in the same fixture came from Datomic checking exact business rows and retirement markers.
+The first comparison supports warming assertion history before submission. Its validity checks still belong at the moment of commit.
+The Mac results explain where work happens. Capacity still needs a run on the sealed server seed.
+The previous runnable numeric-owner comparison is at `afd94a9fe`. The expanded comparison will replace it.
+The lookup table and raw-evidence checksums are below.
 
 **North star.** P2 durable and exact small saves, P3 the ordered feed, and quiet-account tails in one database. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+**Lookup trace.** The fresh one-CPU SQL run reconciled 106 K and 674 S fetches with the stock Datomic counters. Historical AVET accounts for 350 S fetches in the named check and another 60 were recorded by a lazy AVET iterator under native injection. Three unscoped S EAVT reads have no exact entity key. [Lookup reading](LOOKUP-READING.md) · [Checksums](SHA256SUMS)
+
+**Evidence audit.** The fixture verifies the receipts, journal rows and existing business bytes at adjoining pins. The collector pins staged source and image hashes, slot, attempt, database, native transaction and apply interval. Its output is diagnostic. No acceptance pins moved.
 
 **Server finding.** The copied one-gateway run confirmed 179.5 versus 140.6 saves/s at 235 and 181.7 versus 111.1 at 394, grouped versus per-person. The 235 medians were 0.15 versus 6.15 ms of apply per save. Per-person at 50 offered had 136 replies over one second, all from seconds one through four. The median native entry wait in that tail was 1,360 ms. The early archive lacks all six JVM pause logs, so the underlying cause of that initial stall remains open. [Full server reading and candidate forecasts](SERVER-READING.md)
 

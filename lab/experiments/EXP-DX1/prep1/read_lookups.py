@@ -13,6 +13,9 @@ def io(section, key):
     return (section.get("reads") or {}).get(key, 0)
 
 
+indexes = ("aevt-load", "avet-load", "eavt-load", "vaet-load")
+
+
 def extract(out):
     inputs, terminal, events = managed_events(out)
     assert inputs["mode"] == "lookup-profile" and inputs["timings"] == "diagnostic"
@@ -60,8 +63,9 @@ def extract(out):
             receipts[(db, ack["t"]["v"])].append(row)
 
         summary = defaultdict(lambda: {"calls": 0, "wallNs": 0, "sql": 0,
-                                       "sqlMs": 0, "decodeMs": 0})
+                                       "sqlMs": 0, "decodeMs": 0, "indexLoads": Counter()})
         total = {"saves": 0, "tx": 0, "wallNs": 0, "sql": 0, "sqlReported": 0}
+        total["indexLoads"] = Counter()
         outside_sql = Counter()
         exact_profiles = []
         # [DX-PREP1] Why: select the actual K or S function at the bound native t.
@@ -89,6 +93,7 @@ def extract(out):
             outside_sql.update(profile.get("outsideSql", {}))
             total["sql"] += native_sql
             total["sqlReported"] += io(reported, "sql")
+            total["indexLoads"].update({index: io(profile["io"], index) for index in indexes})
             attributed = 0
             for name, record in profile["lookups"].items():
                 section = summary[name]
@@ -97,6 +102,7 @@ def extract(out):
                 section["sql"] += io(record, "sql")
                 section["sqlMs"] += io(record, "sql-ms")
                 section["decodeMs"] += io(record, "deserialize-ms")
+                section["indexLoads"].update({index: io(record, index) for index in indexes})
                 attributed += io(record, "sql")
             assert attributed <= native_sql, (kind, key, attributed, native_sql)
         assert total["saves"] >= (96 if kind == "S" else 64)
