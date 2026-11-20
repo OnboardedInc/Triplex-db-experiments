@@ -32,17 +32,17 @@ export async function localPreflight(dir: string) {
     sha256(canonical([source, stack.containers, stack.prefix, "campaign-fixture"])),
     stack.prefix,
   );
-  fs.mkdirSync(dir);
-  const oracle = path.join(dir, "oracle");
-  atomicJson(path.join(dir, "oracle-source.json"), stageReplay(repo, oracle));
-  atomicJson(path.join(dir, "physical-inputs.json"), {
-    source,
-    slot: stack.prefix,
-    containers: stack.containers,
-    gatewaySource: stack.gatewaySourceSha256,
-  });
-  const cases = openPlan(dir, source, true, "leased-mac");
   try {
+    fs.mkdirSync(dir);
+    const oracle = path.join(dir, "oracle");
+    atomicJson(path.join(dir, "oracle-source.json"), stageReplay(repo, oracle));
+    atomicJson(path.join(dir, "physical-inputs.json"), {
+      source,
+      slot: stack.prefix,
+      containers: stack.containers,
+      gatewaySource: stack.gatewaySourceSha256,
+    });
+    const cases = openPlan(dir, source, true, "leased-mac");
     for (const c of cases) {
       await lease.checkpoint();
       const out = path.join(dir, c.key);
@@ -56,6 +56,8 @@ export async function localPreflight(dir: string) {
           { ...process.env, ...treatment },
           Date.now() + 180_000,
           previous(dir, c),
+          undefined,
+          "owned-ext4",
         ),
         0,
       );
@@ -94,11 +96,14 @@ async function physicalCases(
   try {
     for (const [i, c] of cases.entries()) {
       assert(!interrupted && Date.now() + 60_000 < end);
-      assert(
-        fs.statfsSync(dir).bavail * fs.statfsSync(dir).bsize >=
-          (c.people === 100000 ? 70 : 30) * 1024 ** 3,
-        "Disk headroom for raw seed, WAL and observations",
-      );
+      const minimum = (c.people === 100000 ? 70 : 30) * 1024 ** 3;
+      for (const folder of [repo, dir]) {
+        const space = fs.statfsSync(folder);
+        assert(
+          space.bavail * space.bsize >= minimum,
+          "Disk headroom for raw seed, WAL and observations",
+        );
+      }
       // [DX-INT1] Why: the deep identity admits 40-person physical fixtures only under the smoke slot namespace.
       // Rejected: letting a short run use a full campaign slot identity.
       const out = path.join(dir, c.key),

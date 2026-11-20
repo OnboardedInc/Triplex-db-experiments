@@ -100,7 +100,7 @@ const fieldStudy = fs.existsSync("/config/field-study")
   ? fs.readFileSync("/config/field-study", "utf8")
   : undefined;
 const clockPath = cwd + "/native-clock.xml";
-if (fieldStudy === "write-clock")
+if (fieldStudy === "write-clock") {
   fs.writeFileSync(
     clockPath,
     `<configuration>
@@ -112,6 +112,10 @@ if (fieldStudy === "write-clock")
     <root level="WARN"><appender-ref ref="clock"/></root>
   </configuration>`,
   );
+  // [DX-W1] Why: the transactor launcher reloads its distribution's logging file inside this disposable slot.
+  // Rejected: setting only the JVM property, which captured peer events but left the log-append clock unavailable.
+  fs.copyFileSync(clockPath, home + "/bin/logback.xml");
+}
 function clockJvm(role: string) {
   return fieldStudy === "write-clock"
     ? " -Dlogback.configurationFile=" +
@@ -249,21 +253,24 @@ try {
       sql(database, "-f", home + "/bin/sql/postgres-table.sql");
       config(database);
       transactor = await tx();
-      const p = start(
-        home + "/bin/run",
-        ["-m", "triplex.gateway.retention", arm, cwd, String(offers)],
-        {
-          DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
-          DATOMIC_URI_TEMPLATE: uriFor(database),
-          W1_ATTEMPT: nonce,
-          DATOMIC_JAVA_OPTS:
-            jvm + " -Ddatomic.objectCacheMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
-        },
-      );
+      const peer = (...args: string[]) =>
+        start(
+          home + "/bin/run",
+          ["-m", "triplex.gateway.retention", arm, cwd, String(offers), ...args],
+          {
+            DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
+            DATOMIC_URI_TEMPLATE: uriFor(database),
+            W1_ATTEMPT: nonce,
+            DATOMIC_JAVA_OPTS:
+              jvm +
+              " -Ddatomic.objectCacheMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
+          },
+        );
+      const p = peer();
       const exit = new Promise<number | null>((resolve) => p.once("exit", resolve));
-      for (const phase of ["seed", "acked", "written", "indexed", "gc"]) {
+      for (const phase of ["seed-gc", "seed", "acked", "written", "indexed", "gc"]) {
         const path = cwd + "/" + arm + "-" + phase;
-        const deadline = performance.now() + (phase === "acked" ? 330_000 : 200_000);
+        const deadline = performance.now() + (phase === "acked" ? 540_000 : 200_000);
         while (!fs.existsSync(path + ".ready")) {
           assert(p.exitCode === null && p.signalCode === null, arm + " exited before " + phase);
           assert(performance.now() < deadline, arm + " timed out at " + phase);
@@ -274,7 +281,7 @@ try {
           sql(database, "-c", "VACUUM FULL datomic_kvs", "-c", "CHECKPOINT");
         }
         emit("storage", { arm, phase, native, sql: measureSql(database) });
-        if (phase === "gc") {
+        if (phase === "gc" || phase === "seed-gc") {
           let stable = 0,
             last = "";
           for (let i = 0; stable < 6 && i < 40; i++) {
@@ -283,10 +290,10 @@ try {
             const key = JSON.stringify([point.keys, point.kvBytes]);
             stable = key === last ? stable + 1 : 0;
             last = key;
-            emit("gc-observation", { arm, point, stable });
+            emit("gc-observation", { arm, phase, point, stable });
           }
           assert(stable >= 6, "Storage GC observation never settled");
-          emit("storage", { arm, phase: "observed-gc", native, sql: measureSql(database) });
+          emit("storage", { arm, phase: "observed-" + phase, native, sql: measureSql(database) });
         }
         fs.writeFileSync(path + ".release", nonce, { flag: "wx" });
       }
@@ -294,6 +301,13 @@ try {
       await stop(transactor);
       sql(database, "-c", "VACUUM FULL datomic_kvs", "-c", "CHECKPOINT");
       emit("storage", { arm, phase: "rewritten", sql: measureSql(database) });
+      transactor = await tx();
+      const reopened = peer("readback");
+      assert.equal(
+        await new Promise<number | null>((resolve) => reopened.once("exit", resolve)),
+        0,
+      );
+      await stop(transactor);
       sql("postgres", "-c", "DROP DATABASE " + database);
     }
   } else if (fieldStudy === "growth") {

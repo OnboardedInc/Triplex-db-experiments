@@ -222,6 +222,12 @@ export async function collect(dir: string, mode: "produce" | "verify") {
     );
     assert.deepEqual(released.armed.s0.identity, id);
     const raw = await readScope(out, id, result.start, result.code);
+    if (plan.placement === "leased-mac") {
+      assert.deepEqual(raw.report.harnessStorage, {
+        requested: "owned-ext4",
+        filesystemType: 0xef53,
+      });
+    }
     const exercised = raw.report.deep.writePath;
     assert(
       exercised &&

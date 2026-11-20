@@ -78,13 +78,18 @@
                                          (= text (packed-restore-code (json/read-str (json/write-str recipe)) business)))
                                 recipe))))]
        (if (and (= (count ids) (count templates)) (every? some? templates))
-         (conj (filterv #(not (and (row-op? %) (selected (row-id (nth % 3))))) resolved)
-               [:db/add "datomic.tx" :triplex.journal/packed (str "2001a" (first ids) (format "%x" (count ids)) (json/write-str templates))])
+         (let [plain (json/write-str templates)
+               frame (packed-frame-code plain 2)]
+           (if (= plain (slim-body-code frame))
+             (conj (filterv #(not (and (row-op? %) (selected (row-id (nth % 3))))) resolved)
+                   [:db/add "datomic.tx" :triplex.journal/packed (str "2001a" (first ids) (format "%x" (count ids)) frame)])
+             resolved))
          resolved))))
 
 (defn definitions []
   (let [columns (walk/postwalk-replace {'slim-body-code slim/decoder-code} decode-columns-code)]
-    {'packed-columns-code columns 'packed-business-code business-code 'packed-restore-code restore-code}))
+    {'packed-columns-code columns 'packed-business-code business-code 'packed-restore-code restore-code
+     'packed-frame-code slim/encoder-code 'slim-body-code slim/decoder-code}))
 (def compiled-encode (walk/postwalk-replace (definitions) encode-code))
 (def restore (eval restore-code))
 (def to-business (eval business-code))
@@ -99,7 +104,7 @@
 
 (defn rows [db e]
   (when-let [frame (:v (first (d/datoms db :eavt e :triplex.journal/packed)))]
-    (let [templates (json/read-str (subs frame 32))
+    (let [templates (json/read-str (slim/body (subs frame 32)))
           business (memoize (fn [id]
                               (let [prefix (str "2" (format "%04x" (.length ^String id)) id)
                                     x (first (filter :added (d/index-range (d/history db) :triplex.entity/row prefix (str prefix "\uffff"))))]
