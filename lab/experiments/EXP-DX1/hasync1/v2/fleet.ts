@@ -226,7 +226,7 @@ export async function fleet(s: Stack, pair: SyncPair, count: number) {
       site,
       env,
       "/opt/datomic/bin/run",
-      ["-m", "triplex.gateway.main", "8080"],
+      ["-m", "triplex.gateway.ha-observer", "8080"],
       8080,
     );
     return s.ready(role);
@@ -382,15 +382,26 @@ export async function fleet(s: Stack, pair: SyncPair, count: number) {
     await systems[0]!.stream!.lead();
 
     const lost = [...s.members.keys()].filter((r) => r === "write" || r.startsWith("fleet-a-"));
-    const views = await all(
-      lost.map(async (r) => {
-        const v = await s.view(r);
-        assert(v.State.Running);
-        return { role: r, id: v.Id as string };
-      }),
-    );
+    const views = lost.map((role) => ({ role, id: s.members.get(role)!.id }));
+    const owned = views.map((v) => v.id);
+    const inspectLost = async () => {
+      const state = JSON.parse(await s.a.docker(["inspect", "--type", "container", ...owned]));
+      assert.equal(state.length, owned.length);
+      for (const [i, v] of state.entries()) {
+        assert.equal(v.Id, owned[i]);
+        assert.equal(v.Config.Labels["ha1.attempt"], s.e.nonce);
+        assert.equal(v.Config.Labels["tx2.holder"], s.holder);
+      }
+      return state as { State: { Running: boolean; ExitCode: number; FinishedAt: string } }[];
+    };
+    assert((await inspectLost()).every((v) => v.State.Running));
     fault = performance.now();
-    await all(lost.map((r) => s.kill(r)));
+    await s.a.docker(["kill", "--signal", "KILL", ...owned]);
+    const killed = (await inspectLost()).map(({ State }, i) => {
+      assert(!State.Running && State.ExitCode === 137);
+      return { ...views[i]!, at: State.FinishedAt };
+    });
+    s.e.log("fleet-host-cut", { fault, killed });
     let close: Promise<void> | undefined;
     const latch = () =>
       (close ??= (async () => {
@@ -406,9 +417,8 @@ export async function fleet(s: Stack, pair: SyncPair, count: number) {
           ),
           s.e.nonce,
         );
-        const now = await all(lost.map((r) => s.view(r)));
-        assert(now.every((v, i) => !v.State.Running && v.Id === views[i]!.id));
-        s.e.write("fleet-fence", { nonce: s.e.nonce, slot: s.e.slot, fault, stopped: views });
+        assert((await inspectLost()).every((v) => !v.State.Running));
+        s.e.write("fleet-fence", { nonce: s.e.nonce, slot: s.e.slot, fault, stopped: killed });
       })());
     const armed = identities.map(({ i, id, floor }) => {
       const subset = systems.filter((sys) => fromFields(sys.id) === i);
@@ -452,11 +462,13 @@ export async function fleet(s: Stack, pair: SyncPair, count: number) {
           const activated = performance.now();
           await all(
             subset.map(async (sys) => {
-              await wait(
-                "fleet broker ready",
-                timeouts.broker,
-                async () => (await s.broker(txRole("b", sys.id), port(sys.id))) || undefined,
-              );
+              await wait("fleet broker ready", timeouts.broker, async () => {
+                const role = txRole("b", sys.id);
+                const v = await s.view(role, timeouts.control);
+                assert(!v.State.OOMKilled, "Fleet standby exceeded its cap");
+                if (!v.State.Running) await s.restart(role);
+                return (await s.broker(role, port(sys.id))) || undefined;
+              });
               const client = new DatomicClient(reader, timeouts.control);
               try {
                 await wait(
@@ -579,7 +591,7 @@ async function idleResources(s: Stack) {
       }),
     );
   const start = await sample();
-  await sleep(3000);
+  await sleep(11000);
   const end = await sample();
   const resources = end.map((v, i) => {
     const before = start[i]!;

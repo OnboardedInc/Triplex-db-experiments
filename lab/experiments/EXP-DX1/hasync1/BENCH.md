@@ -1,31 +1,29 @@
 # Two-server synchronous failover campaign
 
-Priority 9 requires zero earlier acknowledged loss, reads during recovery, new writes within 60 seconds, and a planned pause within 30 seconds. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
-
-From the clean published experiment worktree, the orchestrator supplies the two assigned SSH targets through `BENCH_SERVER` and `BENCH_SERVER_B` and their dedicated IPv4 link through `HA1_LINK_A` and `HA1_LINK_B`. Existing HA1 SSH credentials and the dedicated host manifests are required with role `DX-HASYNC1`. Use a new tag for each attempt.
+From the clean published experiment branch, the orchestrator supplies the two released SSH targets through `BENCH_SERVER` and `BENCH_SERVER_B` and the dedicated private IPv4 link through `HA1_LINK_A` and `HA1_LINK_B`. The dedicated host manifests must name `DX-HASYNC1`. Use a new tag for each run.
 
 ```sh
-node --import tsx lab/experiments/EXP-DX1/ha1/control.ts hasync-suite hasync-p9
+node --import tsx lab/experiments/EXP-DX1/ha1/control.ts hasync-suite hasync-p9-v2
 ```
 
-A hosts the initial PostgreSQL primary, Datomic transactor and write gateway for the fault and move cells. B hosts the standby SQL copy, standby transactor, surviving gateway and observer. The synchronous cost cells use B as initial primary for both group settings. Both checked-out builds are bound to the published revision and container images. The relay alters only the WAL link for the two directional faults. No periodic traffic keeps JVMs, connections, scopes or caches warm between trials.
+The 18-cell schedule builds one edited 100,000-subject checkpoint on A and a 740-subject lean checkpoint on B. The larger checkpoint drives the withheld reply, index fault and planned move. The withheld-reply cell also measures a fresh standby rebuild and verifies that a fresh boot container refuses the retained old disk. The mid-commit, import, directional WAL and reboot cuts run on small fresh fixtures. The cost pair compares both flush policies at depths 1, 16 and 64 on the same smaller strict lean checkpoint. Fleet counts use independent Datomic systems and small data. The Mac supplies the smaller deep scale points.
 
-The campaign builds the legacy checkpoint on A and the strict lean checkpoint on B in parallel, using 16,045,255 canonical facts each with exact typed references. PostgreSQL verifies both backup manifests. Each trial restores the appropriate checkpoint, confirms its identity and rereads all seed receipts before and after the test. The fault witnesses use independent replay and exact ordered feed and pinned reads. Seed receipt equality and physical backup verification cover the scale fixture.
+A system receives five saves and 50 pinned reads per second. At scale, two read offers per second open a new deep subject at the checkpoint cut. A one-second caller deadline separates on-time and late answers. A 5.5-second wire deadline preserves the opportunity to observe a late reply and its receipt. A client should durably keep each unconfirmed command and retry with the same command ID and bytes after reconnect.
 
-The budget assumes both servers are released and bootstrap artifacts are prepared. The worker allows 57 minutes for the parallel seeds and uses an 89-minute service ceiling. A seed miss stops the campaign with partial evidence. Earlier quiet imports delivered 4,578–4,669 facts/s on one server, so two serial seeds risk exhausting the allocation. Storage assumptions are 6–12 GB per checkpoint and 80–180 MB/s effective base-copy rate. Allow about 40 GB free per host for its checkpoint, the active copy and WAL. [Earlier loader measurements](https://github.com/OnboardedInc/Triplex-db-experiments/blob/530f435d2/lab/experiments/EXP-DX1/load1/PART3.md)
+| Probe | Two-server forecast |
+| --- | --- |
+| Edited seed with 16,045,255 active facts and 60,000 status replacements | 53–59 min at 4,800–5,400 facts/s with index and checked snapshot. Lean seed runs in parallel. |
+| 16M first on-time save after withheld reply / index crash | 12–30 s / 15–38 s. About 60–190 offers fall in a write gap at five per second. Expect the sealed route to refuse most. |
+| Cold reads and native log replay after failover | Read completion gap 0.1–1.0 s on healthy peers. Replay of a ≤40 MiB post-index tail should take 0.1–2.5 s. Gateway and broker timings are captured separately. |
+| Mid-commit, import, directional WAL cuts, and reboot | 11–40 s to a fresh save. No lost earlier receipt, duplicate command, changed pin or out-of-order feed entry. |
+| Planned move at 16M / 160M | 18–30 s / 21–40 s. Data precopy stays outside the pause. Heavy write tails or large rewind can cross the 30-second bar. The paired run measures 16M. |
+| Last system after shared PostgreSQL failure at 1 / 4 / 10 systems | 12–27 s / 15–34 s / 20–46 s. Shared SQL promotes once and each Datomic writer rejoins concurrently. |
+| Last system after dedicated PostgreSQL failure at 1 / 4 / 10 systems | 12–28 s / 16–38 s / 24–55 s. SQL and Datomic recovery run concurrently with more I/O and process overhead. |
+| Idle resources | Forecast each active or standby transactor 120–260 MiB and 0.005–0.05 core. Each small PostgreSQL member 30–100 MiB and under 0.05 core. Add one peer JVM per side. Measure deltas over two heartbeat rounds. |
+| One-copy gap / fresh synchronous standby | 12–38 s to reopen on one copy when the fence works. Full replacement 45–180 s at 16M and 7–27 min at 160M at 75–150 MB/s effective copy plus catch-up. |
+| Synchronous save surcharge at depths 1 / 16 / 64 | +0.23–0.74 ms isolated or ungrouped. +0.03–0.19 ms per save in groups of four to eight. |
+| Paired run with prepared builds and 40 GB free per host | 75–85 min on the assumed load and copy rates. The worker stops starting cells at 85 min and the service ceiling is 89 min. |
 
-| Probe                                                 | Prediction                                                        | Expected observation                                                                                                            |
-| ----------------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| Both deep checkpoint builds                           | 43–56 min                                                         | ≥9,550 combined facts/s, with the live index and backup check in the seed budget                                                |
-| Mid-commit, held ACK, index job and 2,000-fact import | 18–40 s to a new write                                            | Zero earlier ACK loss, no duplicate position or feed gap, zero changed pinned answers. One-copy service until a standby returns |
-| Block WAL A → B and block reports B → A               | 19–45 s                                                           | No ACK from the blocked connection. Both directions show distinct positive trap evidence                                        |
-| Restart old PostgreSQL and transactor                 | 18–42 s                                                           | Both startup guards refuse the fenced incarnation                                                                               |
-| Remote flush at depth 1, with or without W1           | +0.23–0.74 ms per save, about 1.02–1.15× median                   | Two sequential remote flushes on the ordinary append path at 0.089 ms same-site RTT                                             |
-| Remote flush at depth 16 / 64 without W1              | +0.23–0.74 ms of service per save before native batching          | About 1.02–1.15× elapsed time per save under the same queue mix                                                                 |
-| Remote flush at depth 16 / 64 with W1                 | +0.03–0.19 ms of service per save at 4–8 logical saves per append | About 1.01–1.08× elapsed time per save if groups reach that size. Compare observed native transaction membership                |
-| Planned 16M / 160M move                               | 18–29 / 21–38 s to a new protected write                          | Precopy and seed checks complete before the pause. Only the replay tail, rewind and peer transition are inside it               |
-| Whole 100k campaign                                   | 66–84 min                                                         | 12 complete stages with cleanup and an evidence archive below 1 GiB                                                             |
+The upper budget assumes the full seed finishes inside 59 minutes and large restores, the rebuild and remaining tests fit 26 minutes. Lower rates can miss the budget and yield a partial archive. Preparing the pinned checkout and images is outside the worker timer. [Earlier loader measurements](https://github.com/OnboardedInc/Triplex-db-experiments/blob/530f435d2/lab/experiments/EXP-DX1/load1/PART3.md)
 
-Cost ratios are forecasts for this topology, and separate elapsed time per save from caller latency while other saves are outstanding. A queued save sees native serialization, batching and scheduling. The upper move forecast at 160M exceeds 30 seconds. The server suite tests 16M first. [W1 grouping](https://github.com/OnboardedInc/Triplex-db-experiments/commit/6756ed177) · [Prior recovery and copy measurements](../ha1/PART2-MEASUREMENTS.md)
-
-The suite stops dedicated processes through the management channel. A whole-host power test needs an independent fence that survives loss of A. Two-copy durability for every new write after losing A needs a replacement durable standby.
+The controller archives raw outcomes and independently recounts each completed traffic stream against the predeclared topology, source, nonce, slot, scope, schedule and bytes. The bench power probe stops the owned workload. A physical power-loss test requires the enrolled independent interlock. [Fence procedure](FENCE.md)

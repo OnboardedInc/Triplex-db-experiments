@@ -8,6 +8,7 @@ export class Satellite {
     readonly repo: string,
     readonly images: string[],
     readonly seedDir?: string,
+    readonly fleet = false,
   ) {}
   async call(args: string[], invoke: (args: string[]) => Promise<string>) {
     const [verb, what] = args;
@@ -41,7 +42,12 @@ export class Satellite {
           "read",
           "tool",
           ...(this.seedDir ? ["pg"] : []),
-        ].some((r) => opt("--name") === this.prefix + "-" + r),
+        ].some((r) => opt("--name") === this.prefix + "-" + r) ||
+          (this.fleet &&
+            /^fleet-[ab]-(?:pg|tx)[0-9]$/.test(
+              opt("--name")?.slice(this.prefix.length + 1) ?? "",
+            ) &&
+            opt("--name")!.startsWith(this.prefix + "-")),
       );
       assert(this.network && opt("--network") === this.network && opt("--pull") === "never");
       assert(this.images.some((id) => args.includes(id)));
@@ -59,6 +65,7 @@ export class Satellite {
         "-v",
         "-e",
         ...(this.seedDir ? ["--mount", "--restart"] : []),
+        ...(this.fleet ? ["--network-alias"] : []),
       ]);
       for (let i = 1; i < at; i += 2) {
         assert(flags.has(args[i]!));
@@ -70,6 +77,8 @@ export class Satellite {
             ].includes(args[i + 1]!),
           );
         if (args[i] === "--restart") assert.equal(args[i + 1], "no");
+        if (args[i] === "--network-alias")
+          assert.match(args[i + 1]!, /^db-[ab]-s2-[A-Za-z0-9_-]{1,54}$/);
         if (args[i] === "--mount") {
           const bind = "type=bind,source=" + this.seedDir + ",target=/base";
           assert(
@@ -98,6 +107,20 @@ export class Satellite {
         ...(this.seedDir ? ["stop"] : []),
       ].includes(verb!)
     ) {
+      // [DX-HASYNC1] Why: simulate losing one host in one local engine request. Rejected: a wave of independent SSH connections whose handshake delays stagger the fault.
+      if (this.fleet && ["inspect", "kill"].includes(verb!) && args.length > 4) {
+        assert.deepEqual(
+          args.slice(1, 3),
+          verb === "inspect" ? ["--type", "container"] : ["--signal", "KILL"],
+        );
+        const batch = args.slice(3);
+        assert(
+          batch.length <= 21 &&
+            new Set(batch).size === batch.length &&
+            batch.every((id) => this.containers.has(id)),
+        );
+        return invoke(args);
+      }
       const at =
         this.seedDir && verb === "exec" && args[1] === "-e"
           ? 3

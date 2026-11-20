@@ -28,6 +28,7 @@ type Offer = {
   deep?: { subject: number; t: string; sha256: string };
 };
 type Plan = {
+  format?: "field-offers/2";
   nonce: string;
   source: Evidence["source"];
   slot: string;
@@ -46,6 +47,25 @@ const success = (r: Offer) => r.result === "acknowledged" || r.result === "answe
 const count = (rows: Offer[]) =>
   Object.fromEntries(outcomes.map((type) => [type, rows.filter((r) => r.result === type).length]));
 const dueAt = (p: Plan, kind: Kind, n: number) => p.start + n * (1000 / p.rates[kind]);
+
+// [DX-HASYNC1] Why: completions from work sent before the cut can land during it. Rejected: treating the full bracket between old and new receipts as one continuous outage.
+export function unavailableOffers(rows: readonly Offer[], fault: number | undefined, end: number) {
+  const scheduled = rows
+    .filter((r) => r.kind === "save" && fault !== undefined && r.due >= fault && r.due < end)
+    .sort((a, b) => a.due - b.due);
+  let from: number | undefined;
+  let longest: { from: number; to: number; ms: number } | null = null;
+  const close = (to: number) => {
+    if (from !== undefined && to - from > (longest?.ms ?? 0)) longest = { from, to, ms: to - from };
+    from = undefined;
+  };
+  for (const r of scheduled) {
+    if (r.result === "acknowledged") close(r.due);
+    else from ??= r.due;
+  }
+  close(end);
+  return { longest, outcomes: count(scheduled) };
+}
 
 export function summarizeOffers(plan: Plan, rows: Offer[], stopAt: number, marks: Marks) {
   assert(stopAt >= plan.start && stopAt <= plan.start + plan.horizonMs);
@@ -82,7 +102,9 @@ export function summarizeOffers(plan: Plan, rows: Offer[], stopAt: number, marks
     fault === undefined || routed === undefined
       ? undefined
       : saves
-          .filter((r) => r.due >= fault && (r.called ?? -1) >= routed && r.result === "acknowledged")
+          .filter(
+            (r) => r.due >= fault && (r.called ?? -1) >= routed && r.result === "acknowledged",
+          )
           .sort((a, b) => a.finished - b.finished)[0];
   const cut = {
     low: last?.finished ?? (fault === undefined ? null : plan.start),
@@ -117,6 +139,9 @@ export function summarizeOffers(plan: Plan, rows: Offer[], stopAt: number, marks
     read: count(reads),
     during: count(during),
     duringKeys: during.map((o) => o.key),
+    ...(plan.format === "field-offers/2"
+      ? { unavailable: unavailableOffers(saves, fault, first?.due ?? stopAt) }
+      : {}),
     maxReadGapMs,
     ...(deep.length
       ? {
@@ -137,7 +162,7 @@ export function summarizeOffers(plan: Plan, rows: Offer[], stopAt: number, marks
 export function recountTraffic(
   raw: string,
   timing: ReturnType<typeof summarizeOffers> & { sha256: string; raw: string },
-  binding: Pick<Plan, "nonce" | "slot" | "source">,
+  binding: Pick<Plan, "nonce" | "slot" | "source" | "database">,
 ) {
   assert.equal(hash(raw), timing.sha256);
   const lines = raw
@@ -150,7 +175,13 @@ export function recountTraffic(
   assert.equal(stop.stage, "stop");
   assert.deepEqual(plan.data, timing.plan);
   const { nonce, slot, database, source } = plan.data as Plan;
-  assert.deepEqual({ nonce, slot, source }, binding);
+  assert.deepEqual({ nonce, slot, source, database }, binding);
+  assert.equal(plan.data.rates.save, fieldRate);
+  assert.equal(plan.data.rates.read, fieldRate * 10);
+  assert.deepEqual(
+    [plan.data.callerMs, plan.data.requestMs, plan.data.horizonMs],
+    [callerMs, requestMs, maxWindowMs],
+  );
   assert(
     [...lines, plan, stop].every(
       (x) => x.nonce === nonce && x.slot === slot && x.database === database,
@@ -220,6 +251,7 @@ export async function driveOffers(
     read: new DatomicClient(options.reader, requestMs),
   };
   const plan: Plan = {
+    format: "field-offers/2",
     nonce: e.nonce,
     source: e.source,
     slot: e.slot,

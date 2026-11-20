@@ -9,6 +9,8 @@ import { createInterface } from "node:readline";
 import { pipeline } from "node:stream/promises";
 import { Satellite } from "./satellite.ts";
 import { head, modeOf, root, runFile } from "./common.ts";
+import { benchTrials, subjects, workingMs } from "../hasync1/v2/bench-plan.ts";
+import { recountTraffic } from "../hasync1/offers.ts";
 
 const [action, tag] = process.argv.slice(2),
   mode = modeOf(action ?? "");
@@ -103,7 +105,7 @@ assert.notEqual(ids[0], ids[1]);
 const lease = base + "/campaign.lock",
   held: number[] = [];
 const dockerOpts = ["docker", "-H", "unix:///var/run/docker.sock"];
-let attempt: { nonce: string; prefix: string; mode?: string } | undefined;
+let attempt: { nonce: string; prefix: string; mode?: string; sequence?: number } | undefined;
 let satellite: Satellite | undefined;
 const trialSatellites = new Map<string, Satellite>();
 const store = base + "/" + tag;
@@ -155,7 +157,7 @@ try {
   );
   const campaign = randomUUID(),
     nonces: string[] = [];
-  const trialModes: string[] = [];
+  const trials = new Map<string, number>();
   if (sync) {
     await remote(satelliteSite, "mkdir", store);
     await remote(satelliteSite, "mkdir", "-m", "700", store + "/seed");
@@ -207,12 +209,10 @@ try {
       );
       assert(!nonces.includes(attempt.nonce));
       if (sync) {
-        assert(
-          attempt.mode &&
-            attempt.mode.startsWith("hasync-") &&
-            modeOf(attempt.mode) === attempt.mode,
-        );
-        trialModes.push(attempt.mode);
+        const sequence = attempt.sequence!;
+        assert(Number.isSafeInteger(sequence) && ![...trials.values()].includes(sequence));
+        assert.equal(attempt.mode, benchTrials[sequence]?.mode);
+        trials.set(attempt.nonce, sequence);
       }
       nonces.push(attempt.nonce);
       satellite = new Satellite(
@@ -221,6 +221,7 @@ try {
         src,
         [pgImage, remoteImage],
         sync ? store + "/seed" : undefined,
+        attempt.mode?.startsWith("hasync-fleet-") ?? false,
       );
       if (sync) trialSatellites.set(attempt.nonce, satellite);
       continue;
@@ -316,62 +317,17 @@ try {
   const digest = createHash("sha256");
   for await (const chunk of createReadStream(file)) digest.update(chunk);
   assert.equal(digest.digest("hex"), expected);
-  const member = (name: string) =>
-    JSON.parse(
-      execFileSync("tar", ["-xOzf", file, tag + "/" + name], {
-        encoding: "utf8",
-        maxBuffer: 16 * 2 ** 20,
-      }),
-    );
+  const raw = (name: string) =>
+    execFileSync("tar", ["-xOzf", file, tag + "/" + name], {
+      encoding: "utf8",
+      maxBuffer: 16 * 2 ** 20,
+    });
+  const member = (name: string) => JSON.parse(raw(name));
   const declaration = member("campaign.json");
   assert.deepEqual(
     [declaration.tag, declaration.sha, declaration.mode, declaration.campaign],
     [tag, sha, mode, campaign],
   );
-  if (code === 0) {
-    assert(nonces.length > 0 && nonces.length === declaration.sizes.length);
-    const timings = new Map<string, { measuredMs: number; targetMs: number }>();
-    if (sync) {
-      assert.deepEqual(trialModes, declaration.trials);
-      assert.equal(trialModes.length, 12);
-      const suite = member("suite.json");
-      assert(suite.measured <= 85 * 60000 && suite.trials === 12 && suite.subjects === 100000);
-      assert.deepEqual([suite.tag, suite.sha, suite.campaign], [tag, sha, campaign]);
-      assert.equal(suite.timings.length, 8);
-      for (const timing of suite.timings) timings.set(timing.mode, timing);
-      assert.equal(timings.size, 8);
-    }
-    for (const [i, nonce] of nonces.entries()) {
-      const trial = sync ? trialModes[i] : mode;
-      const sub = trial + "-" + nonce + "/",
-        attempt = member(sub + "attempt.json"),
-        summary = member(sub + "observations.json"),
-        clean = member(sub + "cleanup.json");
-      assert.equal(attempt.nonce, nonce);
-      assert.equal(attempt.source.git, sha);
-      assert.equal(attempt.slot, tag);
-      assert.equal(attempt.mode, trial);
-      assert.equal(attempt.shape, declaration.shape);
-      assert.equal(declaration.shape, process.env["HA1_BENCH_SHAPE"] ?? "deep");
-      assert.deepEqual(summary.source, attempt.source);
-      assert.equal(summary.slot, tag);
-      assert.equal(summary.nonce, nonce);
-      assert.equal(summary.profile.people, declaration.sizes[i]);
-      assert.equal(summary.profile.capacity, "two-host");
-      assert.deepEqual(clean, { nonce, containers: 0, networks: 0 });
-      if (sync && trial && !trial.startsWith("hasync-seed") && !trial.startsWith("hasync-cost")) {
-        const timing = timings.get(trial);
-        const moving = trial === "hasync-move";
-        assert(timing);
-        assert.equal(timing.targetMs, moving ? 30000 : 60000);
-        assert.equal(
-          timing.measuredMs,
-          moving ? summary.result.firstWritePauseMs : summary.result.firstNewMs,
-        );
-      }
-    }
-    suiteArchiveVerified = sync;
-  }
   fs.writeFileSync(
     path.join(evidence, "transfer.json"),
     JSON.stringify({
@@ -387,6 +343,133 @@ try {
     }) + "\n",
     { flag: "wx" },
   );
+  if (sync) {
+    assert.deepEqual(declaration.trials, benchTrials);
+    assert.deepEqual(
+      declaration.sizes,
+      benchTrials.map((t) => t.people),
+    );
+    const members = new Set(
+      execFileSync("tar", ["-tzf", file], { encoding: "utf8" }).trim().split("\n"),
+    );
+    const has = (name: string) => members.has(tag + "/" + name);
+    const checks = [];
+    const suite = has("suite.json") ? member("suite.json") : undefined;
+    if (suite) {
+      assert.deepEqual([suite.tag, suite.sha, suite.campaign], [tag, sha, campaign]);
+      assert.equal(suite.expected, benchTrials.length);
+      assert.equal(suite.subjects, subjects);
+    }
+    if (code === 0) {
+      assert(suite && suite.measured <= workingMs && suite.status.length === benchTrials.length);
+      assert.equal(nonces.length, benchTrials.length);
+      assert(
+        suite.status.every(
+          (r: any, i: number) => r.sequence === i && trials.get(r.nonce) === i && r.complete,
+        ),
+      );
+    }
+    for (const nonce of nonces) {
+      const expectedTrial = benchTrials[trials.get(nonce)!]!;
+      const sub = expectedTrial.mode + "-" + nonce + "/";
+      const attempt = member(sub + "attempt.json");
+      assert.deepEqual(
+        [attempt.nonce, attempt.mode, attempt.slot, attempt.shape, attempt.source.git],
+        [nonce, expectedTrial.mode, tag, "deep", sha],
+      );
+      if (has(sub + "observations.json")) {
+        const obs = member(sub + "observations.json"),
+          clean = member(sub + "cleanup.json");
+        assert.deepEqual([obs.nonce, obs.slot, obs.source], [nonce, tag, attempt.source]);
+        assert.deepEqual(obs.profile, {
+          people: expectedTrial.people,
+          scopes: expectedTrial.systems,
+          capacity: "two-host",
+        });
+        assert.deepEqual(clean, { nonce, containers: 0, networks: 0 });
+      } else assert.notEqual(code, 0);
+      const labels = expectedTrial.mode.startsWith("hasync-fleet-")
+        ? Array.from({ length: expectedTrial.systems }, (_, i) => "cell-" + i)
+        : expectedTrial.mode.startsWith("hasync-seed-") ||
+            expectedTrial.mode.startsWith("hasync-cost-")
+          ? []
+          : ["field"];
+      for (const label of labels) {
+        const leaf = "traffic-" + label;
+        if (!has(sub + leaf + "-timing.json")) {
+          assert.notEqual(code, 0);
+          continue;
+        }
+        const timing = member(sub + leaf + "-timing.json");
+        assert.equal(timing.raw, leaf + ".jsonl");
+        const anchor =
+          expectedTrial.people === subjects
+            ? [...trials].find(([, sequence]) => sequence === 0)?.[0]
+            : nonce;
+        assert(anchor);
+        const scopeKey = label.startsWith("cell-")
+          ? (10 + Number(label.slice(5))).toString(36)
+          : "tx2-ha1-" + anchor.slice(0, 8) + "-sync";
+        const database =
+          "s2-" +
+          Buffer.from(JSON.stringify(["triplex-scope-v1", "ha1", scopeKey, "test", 0])).toString(
+            "base64url",
+          );
+        const counts = recountTraffic(raw(sub + timing.raw), timing, {
+          nonce,
+          slot: tag,
+          source: attempt.source,
+          database,
+        });
+        assert.equal(counts.plan.label, label);
+        if (code === 0) assert.equal(counts.read["wrong"], 0);
+        checks.push({
+          nonce,
+          label,
+          mode: expectedTrial.mode,
+          newWriteMs: counts.faultToNewWriteMs,
+          gapMs: counts.writeGapMs,
+          readGapMs: counts.maxReadGapMs,
+          fate: counts.during,
+          targetMs: expectedTrial.mode === "hasync-move" ? 30000 : 60000,
+        });
+      }
+    }
+    fs.writeFileSync(
+      path.join(evidence, "recount.json"),
+      JSON.stringify(
+        {
+          ...declaration,
+          sha256: expected,
+          checks,
+        },
+        null,
+        2,
+      ) + "\n",
+      { flag: "wx" },
+    );
+    suiteArchiveVerified = true;
+  } else if (code === 0) {
+    assert(nonces.length > 0 && nonces.length === declaration.sizes.length);
+    for (const [i, nonce] of nonces.entries()) {
+      const sub = mode + "-" + nonce + "/",
+        attempt = member(sub + "attempt.json"),
+        summary = member(sub + "observations.json"),
+        clean = member(sub + "cleanup.json");
+      assert.equal(attempt.nonce, nonce);
+      assert.equal(attempt.source.git, sha);
+      assert.equal(attempt.slot, tag);
+      assert.equal(attempt.mode, mode);
+      assert.equal(attempt.shape, declaration.shape);
+      assert.equal(declaration.shape, process.env["HA1_BENCH_SHAPE"] ?? "deep");
+      assert.deepEqual(summary.source, attempt.source);
+      assert.equal(summary.slot, tag);
+      assert.equal(summary.nonce, nonce);
+      assert.equal(summary.profile.people, declaration.sizes[i]);
+      assert.equal(summary.profile.capacity, "two-host");
+      assert.deepEqual(clean, { nonce, containers: 0, networks: 0 });
+    }
+  }
   assert.equal(code, 0, "Run failed; collected its evidence");
   console.log(evidence);
 } finally {

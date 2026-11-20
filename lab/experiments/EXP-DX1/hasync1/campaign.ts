@@ -2,99 +2,112 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
-import { Evidence, type Mode } from "../ha1/common.ts";
+import { Evidence } from "../ha1/common.ts";
 import { drill } from "../ha1/run.ts";
 import type { Site } from "../ha1/stack.ts";
-import { faultModes } from "./faults.ts";
 import type { Checkpoint } from "./seed.ts";
-
-export const trials = [
-  "hasync-seed-legacy",
-  "hasync-seed-lean",
-  ...faultModes,
-  "hasync-cost-plain",
-  "hasync-cost-group",
-  "hasync-move",
-] as const satisfies readonly Mode[];
-export const subjects = 100000;
-const suiteMs = 85 * 60000;
+import { benchTrials, subjects, workingMs } from "./v2/bench-plan.ts";
 
 export async function campaign(
   store: string,
   assignSites: (nonce: string, sourceOnB: boolean) => { a: Site; b: Site },
-  identity: {
-    tag: string;
-    sha: string;
-    campaign: string;
-  },
+  identity: { tag: string; sha: string; campaign: string },
 ) {
   const now = performance.now();
-  const end = now + suiteMs;
+  const end = now + workingMs;
   const credentials = {
     secret: randomBytes(18).toString("hex"),
     admin: randomBytes(18).toString("hex"),
   };
-  fs.mkdirSync(path.join(store, "seed"), { mode: 0o700 });
-  fs.writeFileSync(
-    path.join(store, "campaign.json"),
-    JSON.stringify({
-      ...identity,
-      mode: "hasync-suite",
-      sizes: trials.map(() => subjects),
-      shape: "deep",
-      trials,
-    }) + "\n",
-    { flag: "wx" },
-  );
-  const run = async (mode: (typeof trials)[number], checkpoint?: Checkpoint) => {
-    assert(performance.now() < end, "The campaign reached its 85-minute working deadline");
+  const seedDir = path.join(store, "seed");
+  fs.mkdirSync(seedDir, { mode: 0o700 });
+  const write = (f: string, data: unknown) =>
+    fs.writeFileSync(path.join(store, f + ".json"), JSON.stringify(data, null, 2) + "\n", {
+      flag: "wx",
+    });
+  write("campaign", {
+    ...identity,
+    mode: "hasync-suite",
+    shape: "deep",
+    trials: benchTrials,
+    sizes: benchTrials.map((trial) => trial.people),
+  });
+  const status: { sequence: number; nonce: string; elapsedMs: number; complete: boolean }[] = [];
+  const run = async (sequence: number, checkpoint?: Checkpoint) => {
+    assert(performance.now() < end, "Campaign reached its 85-minute working deadline");
+    const { mode, people, systems } = benchTrials[sequence]!;
     const e = new Evidence(store, mode, identity.tag);
     process.stdout.write(
-      "@attempt " + JSON.stringify({ nonce: e.nonce, prefix: e.prefix, mode }) + "\n",
+      "@attempt " + JSON.stringify({ nonce: e.nonce, prefix: e.prefix, mode, sequence }) + "\n",
     );
-    const layout =
-      mode === "hasync-seed-lean" || mode.startsWith("hasync-cost") ? "lean" : "legacy";
-    const sites = assignSites(e.nonce, layout === "lean");
-    const profile = { people: subjects, scopes: 1, capacity: "two-host" };
-    const result = await drill(e, sites.a, sites.b, profile, () => {}, {
-      path: path.join(store, "seed"),
-      deadline: end - 28 * 60000,
-      credentials,
-      ...(checkpoint ? { checkpoint } : {}),
-    });
-    return result;
+    const cost = mode.startsWith("hasync-cost"),
+      seed = mode.startsWith("hasync-seed");
+    const sites = assignSites(e.nonce, cost || mode === "hasync-seed-lean");
+    const start = performance.now();
+    let result: unknown;
+    let complete = false;
+    try {
+      result = await drill(
+        e,
+        sites.a,
+        sites.b,
+        { people, scopes: systems, capacity: "two-host" },
+        () => {},
+        checkpoint || seed
+          ? {
+              path: seedDir,
+              deadline: end - 26 * 60000,
+              credentials,
+              ...(checkpoint ? { checkpoint } : {}),
+            }
+          : undefined,
+      );
+      complete = true;
+      return result;
+    } catch (error) {
+      // [DX-HASYNC1] Why: retain the first failed cell and finish independent cells following proven cleanup. Rejected: discarding a failed scorecard or continuing after unverified ownership.
+      assert(fs.existsSync(path.join(e.dir, "cleanup.json")), "Failed cell still owns resources");
+      e.log("campaign-cell-error", {
+        sequence,
+        name: error instanceof Error ? error.name : String(typeof error),
+      });
+      return undefined;
+    } finally {
+      status.push({ sequence, nonce: e.nonce, elapsedMs: performance.now() - start, complete });
+    }
   };
-  // [DX-HASYNC1] Why: the measured serial cost of two full populations can exhaust the bench allocation. Rejected: budgeting two cold imports at twice the known loader rate.
-  const seeds = await Promise.allSettled([run("hasync-seed-legacy"), run("hasync-seed-lean")]);
-  const checkpoints = seeds.map((seed, index) => {
-    if (seed.status === "rejected") throw seed.reason;
-    const cp = seed.value as Checkpoint;
-    assert.equal(cp.people, subjects);
-    assert.equal(cp.layout, index === 0 ? "legacy" : "lean");
-    assert(cp.facts >= 16000000 && cp.manifest.match(/^[a-f0-9]{64}$/));
-    return cp;
-  });
-  const timings: { mode: string; measuredMs: number; targetMs: number }[] = [];
-  for (const mode of trials.slice(2)) {
-    const result = await run(mode, checkpoints[mode.startsWith("hasync-cost") ? 1 : 0]);
-    if (mode.startsWith("hasync-cost")) continue;
-    const moving = mode === "hasync-move";
-    const observation = result as { firstWritePauseMs?: number; firstNewMs?: number };
-    const measuredMs = moving ? observation.firstWritePauseMs : observation.firstNewMs;
-    assert(typeof measuredMs === "number" && Number.isFinite(measuredMs) && measuredMs > 0);
-    timings.push({ mode, measuredMs, targetMs: moving ? 30000 : 60000 });
-  }
-  const measured = performance.now() - now;
-  fs.writeFileSync(
-    path.join(store, "suite.json"),
-    JSON.stringify({
+  try {
+    const cells = await Promise.allSettled([run(0), run(1)]);
+    for (const c of cells) if (c.status === "rejected") throw c.reason;
+    const checkpoints = cells.map((c, i) => {
+      assert(c.status === "fulfilled");
+      if (!c.value) return undefined;
+      const cp = c.value as Checkpoint;
+      assert.equal(cp.people, benchTrials[i]!.people);
+      assert.equal(cp.layout, i === 0 ? "legacy" : "lean");
+      assert.equal(Boolean(cp.history), i === 0);
+      assert.match(cp.manifest, /^[a-f0-9]{64}$/);
+      return cp;
+    });
+    for (let i = 2; i < benchTrials.length; i++) {
+      const trial = benchTrials[i]!;
+      const required =
+        trial.people === subjects ? 0 : trial.mode.startsWith("hasync-cost") ? 1 : null;
+      const checkpoint = required === null ? undefined : checkpoints[required];
+      if (required === null || checkpoint) await run(i, checkpoint);
+    }
+    assert(
+      status.length === benchTrials.length && status.every((s) => s.complete),
+      "Campaign has failed or skipped cells",
+    );
+    assert(performance.now() <= end, "Campaign exceeded its working deadline");
+  } finally {
+    write("suite", {
       ...identity,
-      measured,
-      trials: trials.length,
+      measured: performance.now() - now,
       subjects,
-      timings,
-    }) + "\n",
-    { flag: "wx" },
-  );
-  assert(measured <= suiteMs, "The campaign exceeded its working deadline");
+      expected: benchTrials.length,
+      status: status.sort((a, b) => a.sequence - b.sequence),
+    });
+  }
 }

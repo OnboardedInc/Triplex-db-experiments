@@ -625,7 +625,8 @@ export class SyncPair {
     assert(after.Id !== old.Id && after.State.ExitCode === 74);
     assert(after.Mounts.some((m: { Name: string }) => m.Name === this.primaryData));
     assert(after.Mounts.some((m: { Name: string; RW: boolean }) => m.Name === this.latch && !m.RW));
-    const logs = await this.docker("pg", "logs");
+    const m = s.members.get("pg")!;
+    const logs = await m.site.docker(["logs", "--tail", "35", m.id]);
     assert(
       logs.includes("old disk " + this.cluster + " detected") && logs.includes("DX-HASYNC1-fenced"),
     );
@@ -706,7 +707,9 @@ export class SyncPair {
         return v && lsn(v) >= lsn(cut) ? v : undefined;
       },
     );
-    const log = await this.docker("pg", "logs");
+    const mbr = s.members.get("pg")!;
+    assert(mbr.id !== old.Id && !mbr.volumes.includes(this.primaryData));
+    const log = await mbr.site.docker(["logs", "--tail", "35", mbr.id]);
     const m = /^backup-kib (\d+)\s/m.exec(log);
     assert(m && log.includes("backup successfully verified"));
     const result = {
