@@ -5,7 +5,7 @@ Before a value is stored, reads at the receipt’s cut derive it. Stored values 
 A new release can stop an obsolete value copy. Notices from both releases still get recorded in order.
 A shared wage-floor save covers the full roster when the database cannot prove a smaller affected set.
 On the server, 64 people took 42 ms to the quiet receipt and 58 ms to the first correct answer. At 23.5 saves per second those took 85 and 93 ms.
-The first local replay waited 55 minutes for a slot. The live timing pilot has waited over two hours. The receipt and erasure rulings remain open.
+The Mac pilot passed after 4 hours and 33 minutes of waiting across its two grants. The deep blocks and the receipt and erasure rulings remain open.
 
 ### Part 7
 

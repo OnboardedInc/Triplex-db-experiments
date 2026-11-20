@@ -20,6 +20,10 @@ The four peer queue tests passed from `2d026eb29`. The queue gives a receipt Pub
 
 The first native proof received its slot after 55 minutes. The initial settlement pilot queued at 08:28:47 UTC and never reserved an engine. A new measurement lease froze its admission during two gaps. After two hours the replacement queued for the native lease before trying to reserve its engine. It still runs through the heavy wrapper under that same process's lease. Both waiters have the same pinned product source. Only the replacement can proceed to seed a pilot account.
 
+The 64-person pilot waited 3:35:55 from the first queue entry to a ready preparation engine, then 0:57:18 for the measured reopen. The two receipts at `60f20c399` bind different owners and nonces to the same volume. The second process verified the preparation digest, baseline releases and exact notice cursor. It covered 319 changed values and 127 ordered notice effects across both releases. Values and notices reached their native terminal cursors 1.97 and 3.44 seconds after the receipt. There were only ten primary saves during the overlap. The pilot volume was removed after verification. [Native evidence](PART8-SHA256SUMS)
+
+The deep preparation has a separate waiter so it can proceed under an ordinary heavy reservation while a timed reopen waits. The measured phase still drains other work through the native lease and the timed window remains bounded. The post-run oracle checks can finish outside that window.
+
 The peer branch imported the geography repair and proved both ingress orders using the shared queue at `bc01028b0`. The 1,000-person one-seed preflight used the same priority path. Its later `a52f7937c` diagnostic resets the native R1 cut between policy blocks to keep growing release history out of the comparison. Those are peer results. The measured settlement route here has its own inputs and clocks.
 
 ## Server handoff at 64 people
