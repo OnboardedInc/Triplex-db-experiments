@@ -3660,3 +3660,13 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
   already full at eight saves per append; beyond that saves expire (23, 53 and 72 percent). The loaded p99 covers
   only saves that completed. Arm 1-1-S (per-person writer) started about 16:45 local; a watcher wakes the
   orchestrator when its summary exists.
+
+## 2026-11-20 21:59 UTC (16:59 local, 2026-11-20): DX-AGE1 part 3 in; parked until the 1 billion run reports
+
+- **DX-AGE1 part 3 (`74d9eb225`; take `93ad03aa3` for the `exp/DX-INT1` merge and the scorecard exporter; the
+  server run stays pinned at `2859d6b15`; `age1/FALLBACK.md`, `GROWTH-READOUT.md`).** Merged gate on the Mac
+  matched 120 product saves byte for byte; the scorecard's aged-database check refused a fresh cut and accepted a
+  restored 28,819-record fixture; native suite 54,079 assertions and 437 SDK tests pass. Fallback if the server
+  rate is 8,000 to 16,000 records per second: 620 to 800 million records in the same 9.9 hours (a full doubling
+  from 430 million needs at least 17,300 per second). Growth comparison open until the run reports. Parked; five
+  agents running (DX-BM1, DX-SCALE1, DX-V01, DX-THIN1, DX-JVM1).
