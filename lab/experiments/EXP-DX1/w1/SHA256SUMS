@@ -144,3 +144,6 @@ b41e82be8705fb672be99eb851cfb7622bbf067ddfc9ab93fae41c1c3e2ae85c  DX-W1/write5-c
 072898f91dc0ae233dbe035b1a6b6c05bc3d5ccca395e974b7695bc2fe531357  DX-W1/write5-clocks-04/selftest-1.log
 8bef5718df99799230ecf707a42d86235f83a90d38214eecaec3867057a660a6  DX-W1/write5-clocks-04/terminal.json
 dd0dd3a5d0005158488078cbcfebd224bbac9db7e54697d3a81eeefb0fa271c7  DX-W1/write5-clocks-04/diagnostic-summary.json
+71bb4f07b0d945495e5a76e194cae13aa1c09ea1f15bd9c550f1aa63b87e1d11  DX-W1/write5-retention-03/inputs.json
+9c0403616c25a05adb6a58d5d9b0c6df81f52d9789d58c6a5d6fd86800073045  DX-W1/write5-retention-03/build-1.log
+e5b605832daa68cc3c2e02235b94984d4700b591d58895fca27ab90bc7f09f6b  DX-W1/write5-retention-03/selftest-1.log

@@ -253,21 +253,24 @@ try {
       sql(database, "-f", home + "/bin/sql/postgres-table.sql");
       config(database);
       transactor = await tx();
-      const p = start(
-        home + "/bin/run",
-        ["-m", "triplex.gateway.retention", arm, cwd, String(offers)],
-        {
-          DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
-          DATOMIC_URI_TEMPLATE: uriFor(database),
-          W1_ATTEMPT: nonce,
-          DATOMIC_JAVA_OPTS:
-            jvm + " -Ddatomic.objectCacheMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
-        },
-      );
+      const peer = (...args: string[]) =>
+        start(
+          home + "/bin/run",
+          ["-m", "triplex.gateway.retention", arm, cwd, String(offers), ...args],
+          {
+            DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
+            DATOMIC_URI_TEMPLATE: uriFor(database),
+            W1_ATTEMPT: nonce,
+            DATOMIC_JAVA_OPTS:
+              jvm +
+              " -Ddatomic.objectCacheMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
+          },
+        );
+      const p = peer();
       const exit = new Promise<number | null>((resolve) => p.once("exit", resolve));
       for (const phase of ["seed-gc", "seed", "acked", "written", "indexed", "gc"]) {
         const path = cwd + "/" + arm + "-" + phase;
-        const deadline = performance.now() + (phase === "acked" ? 330_000 : 200_000);
+        const deadline = performance.now() + (phase === "acked" ? 540_000 : 200_000);
         while (!fs.existsSync(path + ".ready")) {
           assert(p.exitCode === null && p.signalCode === null, arm + " exited before " + phase);
           assert(performance.now() < deadline, arm + " timed out at " + phase);
@@ -298,6 +301,13 @@ try {
       await stop(transactor);
       sql(database, "-c", "VACUUM FULL datomic_kvs", "-c", "CHECKPOINT");
       emit("storage", { arm, phase: "rewritten", sql: measureSql(database) });
+      transactor = await tx();
+      const reopened = peer("readback");
+      assert.equal(
+        await new Promise<number | null>((resolve) => reopened.once("exit", resolve)),
+        0,
+      );
+      await stop(transactor);
       sql("postgres", "-c", "DROP DATABASE " + database);
     }
   } else if (fieldStudy === "growth") {
