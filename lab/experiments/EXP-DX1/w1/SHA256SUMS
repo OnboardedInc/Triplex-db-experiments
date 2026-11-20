@@ -134,3 +134,8 @@ fed3c5f139aff58186cef93b53c68cde790cdfaeafb536c947fc61a95b94c57a  DX-W1/write5-n
 78d9f0b02bac83ef2c6b5c3d68ff9a524731784466caa2a9bd434c1ab428d1a4  DX-W1/write5-wire/3-ordered.json
 914b488df8ce691875431a741eece03776573777065767532b3600cbe27e7b32  DX-W1/write5-wire/source.sha256
 6ed037a07ccbfd83e574faa81decf7ca0a4544965d8dc6a7c62bfee6415d90ed  DX-W1/write5-wire/wire.jsonl
+3a9cca878d14c69091cd2b4ebf2d43611b78941d86cbbb75230d8ca85ac62a91  DX-W1/write5-clocks-03/inputs.json
+c1271c4a47bf9a162086e5cfd8b33b4dea9396b688a389e0f315c608bab21aff  DX-W1/write5-clocks-03/build-1.log
+322159f4fcd571058448b4234d1312a66245be5c2cb200241fb0ad5a6b0742f5  DX-W1/write5-clocks-03/selftest-1.log
+7468e5fcda9ddd3013dcc16dd24a68d131ffdf47994aa630da591bd24e3d62e9  DX-W1/write5-clocks-03/terminal.json
+b763cb3c467aa8e6369a6d8307c9c7014d05dfa81073be080223a88fdf9c8cd8  DX-W1/write5-clocks-03/diagnostic-summary.json
