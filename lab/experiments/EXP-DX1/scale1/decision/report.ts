@@ -388,14 +388,21 @@ export function placementReport(dir: string, trials: Trial[]) {
       const firstMiss = pilot.summary.comparisons.find(
         (c: any) => !c.completeCapacity || c.ratios.some((r: any) => r.pass !== true),
       );
+      const quietMiss = pilot.summary.comparisons.find((c: any) => c.ratios[0]?.pass === false);
       const firstExpiry = pilot.summary.cells
         .filter((c: any) => c.preDispatchExpiry)
         .sort((a: any, b: any) => a.offered - b.offered)[0];
       return (
         "The audited 10,000-person-per-account pilot " +
-        (firstMiss
-          ? "first missed or left unjudged a declared bar at " + firstMiss.rate + "/s."
-          : "held the measured windows through 394/s.") +
+        (quietMiss
+          ? "had quiet save p99 " +
+            ratio(quietMiss.ratios[0]) +
+            " of alone at " +
+            quietMiss.rate +
+            "/s."
+          : firstMiss
+            ? "first missed or left unjudged a declared bar at " + firstMiss.rate + "/s."
+            : "held the measured windows through 394/s.") +
         (firstExpiry
           ? " Pre-dispatch expiry first appeared at " + firstExpiry.offered + "/s."
           : "") +

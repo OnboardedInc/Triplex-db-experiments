@@ -2,7 +2,7 @@
 
 Deep reader goodput is unmeasured. Deep and thin commit p99 were 30.99 and 32.84 ms over the first 900 seconds. The archived deep tail aligned with six write-gateway GC pauses. [Commit anatomy](COMMIT-ANATOMY.md)
 One account of 100,000 people had commit p99 with zero readers 63.23 · 2364 [42.49, 71.17] ms at 39.4/s and with readers 46.85 · 2364 [31.87, 59.90] ms at 39.4/s. Read p99 was 3.47 · 3360 [3.34, 3.82] ms at that rate. PostgreSQL added 723.42 bytes/fact. Cgroup peaks with readers were 2.55 GiB transactor, 6.00 GiB PostgreSQL, 1.47 GiB write gateway and 2.34 GiB read gateway. [Decision cells](DECISION-RESULTS.md)
-The audited 10,000-person-per-account pilot first missed or left unjudged a declared bar at 35/s. Pre-dispatch expiry first appeared at 235/s. Full-size placement remains unmeasured. [Decision cells](DECISION-RESULTS.md)
+The audited 10,000-person-per-account pilot had quiet save p99 3.77× (n=630/630, 90% [1.75, 5.88]) of alone at 35/s. Pre-dispatch expiry first appeared at 235/s. Full-size placement remains unmeasured. [Decision cells](DECISION-RESULTS.md)
 The owner's release target is under one second. Page-guard activation for one account is unmeasured. Activation among ten is unmeasured.
 The first shared resource to reach its limit is still unknown.
 The smaller staggered run used the unfixed write path and acknowledged 10,500 offers at 35/s with account 1 commit p99 at 2.51× alone. The first 1,924 pre-dispatch expiries occurred at 175/s. [Staggered capacity](STAGGERED-CAPACITY.md)
