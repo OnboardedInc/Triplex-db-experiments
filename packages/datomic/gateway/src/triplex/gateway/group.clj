@@ -247,7 +247,7 @@
           (if-let [e (:error physical)]
             (if (definitive? e) (doseq [entry batch] (alone! entry))
               (doseq [entry batch] (complete! entry {:error (ex-info "Group durability is unknown" {:status 503 :code "OutcomeUnknown"} e)})))
-            (finish-group! batch results (:report physical) (count valid) stages (:received-ms physical)))))))
+            (finish-group! batch results (:report physical) (count valid) stages (:received-ms physical))))))))
 
 (defn next-entry [{:keys [queue accounts rotation live-turns]}]
   (let [ready (fn [owners rank]
