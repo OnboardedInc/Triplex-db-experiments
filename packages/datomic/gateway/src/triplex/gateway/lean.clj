@@ -14,13 +14,10 @@
   (throw (ex-info (str "Lean layout does not support " route) {:status 409 :code "LayoutUnsupported" :route route})))
 (defn prefix [^String id] (str "2" (format "%04x" (.length id)) id))
 (defn decode [^String text]
-  (let [start (+ 5 (Integer/parseInt text 1 5 16)) ref-start (+ start 36)
-        size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)
-        values (slim/columns text (+ ref-start size 1))
-        row (into {:retracted_at nil :retracted_position nil :retract_tx_id nil}
+  (let [row (into {:retracted_at nil :retracted_position nil :retract_tx_id nil}
                   (map (fn [column v] [column (cond (= column :recorded_position) (Long/parseLong v)
                                                    (and (numbers column) (= v "-0")) -0.0
-                                                   :else v)]) columns values))]
+                                                   :else v)]) columns (slim/row-columns text)))]
     (if (= ":_tx/position" (:attribute row)) (assoc row :value_number (double (:recorded_position row))) row)))
 (defn by-id [db id]
   (let [p (prefix id) datom (first (d/index-range db :triplex.entity/row p nil))]

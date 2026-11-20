@@ -34,7 +34,8 @@
 ;; [DX-B3-M2] Why: the serial point belongs in Datomic, after parallel client staging.
 ;; Rejected: scope CAS in the peer (unrelated subjects conflict and queue).
 (def operation-code
-  '(letfn [(value [e a]
+  '(let [checked (volatile! {})]
+     (letfn [(value [e a]
              ;; [DX-T1-6] Why: the rev check can warm the same AEVT segment native cardinality-one replacement reads.
              ;; Rejected: changing stored identities or bypassing the serial revision conflict check.
              (:v (first (if (and (:rev-aevt payload) (= a :triplex.entity/rev))
@@ -62,18 +63,43 @@
                (when (and datom (.startsWith ^String (:v datom) prefix))
                  (let [marker (read-at :w1/retirement (first (d/seek-datoms db :eavt (:e datom) :triplex.entity/retired prefix)))]
                    (when-not (and marker (= (:a marker) (d/entid db :triplex.entity/retired))
-                                  (.startsWith ^String (:v marker) prefix)) (choose-read datom (do (vswap! checked assoc id datom) datom)))))))
+                                  (.startsWith ^String (:v marker) prefix))
+                     (vswap! checked assoc id datom)
+                     datom)))))
            ;; [DX-B5-L1] Why: legacy assertion identities remain reserved after retirement.
            ;; Rejected: accepting a reused retired ID (history would contain two incompatible rows for one identity).
            (identity-row [id]
              (let [prefix (str "2" (format "%04x" (.length ^String id)) id)
                    datom (read-at :w1/new-id (first (d/index-range (d/history db) :triplex.entity/row prefix nil)))]
                (when (and datom (.startsWith ^String (:v datom) prefix)) datom)))
+           (number-field [x] (if (= "-0" x) -0.0 x))
+           (assertion-meta [change datom]
+             ;; [DX-WFIX1] Why: the checked assertion can have been created by the last logical member.
+             ;; Rejected: copying the client's provisional clock, range or value into a durable retraction.
+             (let [[_ _ entity attr kind string number bool datetime data recorded from to _ entity-type _ tx]
+                   (lean-columns-code (:v datom))
+                   value {"type" kind "value" (case kind
+                           ("ref" "integer" "string" "blob") string
+                           "number" (number-field number)
+                           "boolean" (not (zero? bool))
+                           "datetime" (number-field datetime)
+                           "json" (json/read-str data))}
+                   value (if (= "blob" kind) (merge (json/read-str data) value) value)]
+               (cond-> (assoc (dissoc change "validTo" "entityType" "assertionTxId")
+                              "entityId" entity "attribute" attr "value" value
+                              "recordedAt" (number-field recorded) "validFrom" (number-field from))
+                 (some? to) (assoc "validTo" (number-field to))
+                 entity-type (assoc "entityType" entity-type)
+                 tx (assoc "assertionTxId" tx))))
            (assign-change [text clock new-ids]
              (let [change (json/read-str text)
+                   id (get change "tripleId")
+                   retract (= "retract" (get change "op"))
+                   predecessor (when (and retract (not (new-ids id))) (get @checked id))
                    change (cond-> change
-                            (new-ids (get change "tripleId")) (assoc "recordedAt" clock)
-                            (contains? change "retractedAt") (assoc "retractedAt" clock))]
+                            predecessor (assertion-meta predecessor)
+                            (new-ids id) (assoc "recordedAt" clock)
+                            (or retract (contains? change "retractedAt")) (assoc "retractedAt" clock))]
                (json/write-str change)))
            (assign-row [text offset clock new-ids]
              (let [start (- offset 2) values (json/read-str (subs text start))
@@ -142,8 +168,14 @@
                      (if packed
                        (do
                          (when-not server-clock (throw (ex-info "Packed row requires server clock" {})))
-                         (str text (if (= p provisional) final-digits (digits (shifted p)))
-                              (apply str (interpose (Double/toString (double clock)) packed))))
+                         (let [clock-text (Double/toString (double clock))
+                               fill #(apply str (interpose clock-text %))]
+                           (str text (if (= p provisional) final-digits (digits (shifted p)))
+                                (if (map? packed)
+                                  (str (fill (:before packed))
+                                       (json/write-str (assign-change (:change packed) clock new-id-set))
+                                       (fill (:after packed)))
+                                  (fill packed)))))
                        (let [text (if (and (not= 0 delta) (< lower p (inc provisional)))
                                     (str (subs text 0 offset) (if (= p provisional) final-digits (digits (shifted p)))
                                          (subs text (+ offset 16))) text)
@@ -217,7 +249,7 @@
                         (when (some #(d/entid db [:triplex.entity/id %]) journal-entities)
                           [[:db/add scope :triplex.scope/feed-irregular true]])
                         (when irregular [[:db/add scope :triplex.scope/irregular true]])
-                        (when position-irregular [[:db/add scope :triplex.scope/position-regular false]]))))))))
+                        (when position-irregular [[:db/add scope :triplex.scope/position-regular false]])))))))))
  ;; [DX-T1-4] Why: the authored transaction function is observable even though Datomic's surrounding pipeline is closed.
 ;; Rejected: native DEBUG logs on the serial path, or requiring a tracing namespace on ordinary transactors.
 (defn instrument-code [operation]
@@ -234,7 +266,8 @@
 (defn expand-code
   ([observe] (expand-code observe false false))
   ([observe optimized? measured?]
-   (let [expanded (walk/postwalk-replace {'slim-row-code slim/encoder-code 'history-range-code history-range-code
+   (let [expanded (walk/postwalk-replace {'slim-row-code slim/encoder-code 'lean-columns-code slim/row-columns-code
+                                          'history-range-code history-range-code
                                           'record-range-result observe} operation-code)
          op (if optimized? (list pred/normalization expanded) expanded)]
      (pred/expand (list 'read-at :w1/function op) optimized? measured?))))

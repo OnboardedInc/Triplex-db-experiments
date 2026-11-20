@@ -1,8 +1,10 @@
 (ns wfix1-regression
   (:require [clojure.data.json :as json] [clojure.test :refer [deftest is testing]]
-            [clojure.walk :as walk] [datomic.api :as d]
+            [clojure.string :as str] [clojure.walk :as walk] [datomic.api :as d]
             [triplex.gateway.group :as group] [triplex.gateway.group-test :as fixture]
-            [triplex.gateway.main :as main] [triplex.gateway.selftest :as rows]
+            [triplex.gateway.lean :as lean] [triplex.gateway.main :as main]
+            [triplex.gateway.predecessor :as pred] [triplex.gateway.selftest :as rows]
+            [triplex.gateway.small-row :as small]
             [triplex.gateway.storage :as storage] [triplex.gateway.write-policy :as policy])
   (:import [java.io ByteArrayInputStream] [java.nio.charset StandardCharsets] [java.util UUID]))
 
@@ -115,3 +117,86 @@
              (is (= (cond-> [["_tx/seed" 1] ["_tx/edit" 2]] (not= :singleton mode) (conj ["_tx/peer" 3]))
                     (mapv #(subvec % 0 2) (feed name 0 10))))
              (is (= (+ 1 (count offers)) (storage/head-position (d/db conn)))))))))))
+
+(defn change [op id value from to clock tx]
+  (cond-> {"op" op "tripleId" id "entityId" fixture/root "attribute" ":v"
+           "value" {"type" "string" "value" value} "validFrom" from
+           "recordedAt" clock "assertionTxId" tx}
+    to (assoc "validTo" to)))
+
+(defn edit-frame [command id value from to predecessor]
+  (let [input (save command id predecessor)
+        tx (str "_tx/" command)
+        business (fn [r]
+                   (cond-> (storage/decode-row r)
+                     (= id (get-in r ["id" "v"])) (assoc :value_string value :valid_from from :valid_to to)))
+        changes (cond-> [(change "assert" id value from to 1000.0 tx)]
+                  predecessor (conj (assoc (change "retract" predecessor "client estimate" 0.0 90.0 1000.0 "_tx/estimate")
+                                           "retractedAt" 1000.0 "retractionTxId" tx)))
+        journal (mapv (fn [c]
+                        (assoc (fixture/row (str command "/" (c "op")) tx ":_tx/change" nil tx)
+                               :value_type "json" :value_json (json/write-str c))) changes)]
+    (rows/row-input (-> input (assoc "rows" (mapv storage/wire-row (concat (map business (input "rows")) journal)))
+                        (update "newIds" into (map :id journal))))))
+
+(defn changes [[_ _ texts]]
+  (let [entries (for [text texts :let [row (lean/decode text)] :when (= ":_tx/change" (:attribute row))]
+                  (let [change (json/read-str (:value_json row))]
+                    [(change "op") change]))
+        indexed (into {} entries)]
+    (assert (= (count indexed) (count entries)) "Fixture contains duplicate change operations")
+    indexed))
+
+(defn edits []
+  [(edit-frame "seed" "old" "old value" -9.0 40.0 nil)
+   (edit-frame "edit-a" "middle" "intermediate value" 2.0 12.0 "old")
+   (edit-frame "edit-b" "new" "final value" 3.0 nil "middle")])
+
+(defn replay-observations [name]
+  (let [all (feed name 0 10)
+        resume (feed name 2 1)]
+    {:feed (mapv (fn [tx] [(first tx) (second tx) (changes tx)]) all)
+     :resume (mapv (fn [tx] [(first tx) (second tx) (changes tx)]) resume)
+     :rawFeed all :rawResume resume
+     :cuts (mapv (fn [p]
+                   (get-in (route name "v1" "read" {"entityIds" [fixture/root]
+                                                  "basis" {"recordedPosition" p "validAt" 5.0}}) [:body "rows"]))
+                 [1 2 3])
+     :receipts (mapv #(claim name %) ["seed" "edit-a" "edit-b"])
+     :operations (mapv #(operation name %) ["seed" "edit-a" "edit-b"])}))
+
+(deftest retraction-content-at-interior-cut-and-resume
+  (doseq [[grouped compact predecessor] [[false false false] [true false false] [true true true]]]
+    (testing (str [grouped compact predecessor])
+      (with-redefs [group/enabled grouped small/enabled compact pred/enabled predecessor
+                    policy/priority? grouped policy/field-only? grouped]
+        (in-scope
+         (fn [name conn]
+           (let [[seed a b] (edits)
+                 result (if grouped (ready-batch name conn seed [a b]) (mapv #(send name %) [seed a b]))
+                 [first-a middle last-b] [(change "assert" "old" "old value" -9.0 40.0 1000.0 "_tx/seed")
+                                          (change "assert" "middle" "intermediate value" 2.0 12.0 1001.0 "_tx/edit-a")
+                                          (change "assert" "new" "final value" 3.0 nil 1002.0 "_tx/edit-b")]
+                 retired (fn [c clock tx] (assoc c "op" "retract" "retractedAt" clock "retractionTxId" tx))
+                 expected [["_tx/seed" 1 {"assert" first-a}]
+                           ["_tx/edit-a" 2 {"assert" middle "retract" (retired first-a 1001.0 "_tx/edit-a")}]
+                           ["_tx/edit-b" 3 {"assert" last-b "retract" (retired middle 1002.0 "_tx/edit-b")}]]
+                 actual (replay-observations name)
+                 middle-row (:v (lean/by-id (d/history (d/db conn)) "middle"))
+                 retraction-row (:v (lean/by-id (d/db conn) "edit-b/retract"))]
+             (is (= [[200 nil] [200 nil] [200 nil]] (mapv outcome result)))
+             (is (= grouped (= (get-in result [1 :body "t"]) (get-in result [2 :body "t"]))))
+             (is (= compact (boolean (str/includes? middle-row "!1"))
+                            (boolean (str/includes? retraction-row "!1"))))
+             (is (= expected (:feed actual)))
+             (is (= [(peek expected)] (:resume actual)))
+             (is (empty? (feed name 3 1)))
+             (is (= [[["old" "old value" 1000.0 -9.0 40.0]]
+                     [["middle" "intermediate value" 1001.0 2.0 12.0]]
+                     [["new" "final value" 1002.0 3.0 nil]]]
+                    (mapv (fn [cut] (mapv (fn [r] (mapv #(get-in r [% "v"])
+                                                   ["id" "value_string" "recorded_at" "valid_from" "valid_to"])) cut))
+                          (:cuts actual))))
+             (when-let [attempt (System/getenv "WFIX1_ATTEMPT")]
+               (println "WFIX1_REPLAY" (json/write-str (assoc actual :attempt attempt :database name
+                                                          :mode [grouped compact predecessor])))))))))))
