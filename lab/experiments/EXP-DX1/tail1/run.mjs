@@ -392,6 +392,10 @@ export async function runTail(options, config, manager) {
   const arm = options.arm ?? "serial";
   assert(Object.hasOwn(arms, arm), "Unknown DX-TAIL1 arm");
   const variant = arms[arm];
+  const eventGate = options["event-gate"] === true;
+  const eventBaseline = options["trace-baseline"] === true;
+  assert(!eventBaseline || eventGate);
+  const gate = eventGate || options.gate === true;
   const datomic = path.join(REPO, "lab/config/datomic");
   const peerHash = fs
     .readFileSync(path.join(datomic, "SHA256SUMS"), "utf8")
@@ -434,7 +438,7 @@ export async function runTail(options, config, manager) {
     assert(mac);
     return recoverAllocation(options, config, manager, host, image);
   }
-  if (options.gate !== true) {
+  if (!gate) {
     // [DX-TAIL1] Why: the exact publication feed needs the real host time domain before offers.
     // Rejected: spending a full seed before discovering a denied boot-ID read, or labelling a fake clock.
     const { openHostFeedClock } = await import(
@@ -450,7 +454,7 @@ export async function runTail(options, config, manager) {
   }
   const seconds = options.full === true ? 5910 : Number(options.seconds ?? 240);
   const leaseBeforeSeed = options["lease-before-seed"] === true;
-  assert(!leaseBeforeSeed || (mac && options.gate !== true));
+  assert(!leaseBeforeSeed || (mac && (eventGate || !gate)));
   const receiptPredecessors = options["receipt-predecessors"] === true;
   if (receiptPredecessors)
     assert(
@@ -506,6 +510,8 @@ export async function runTail(options, config, manager) {
         "measure.py",
         "arms.mjs",
         "receipt-oracle.py",
+        "event-smoke.ts",
+        "event-joins.mjs",
       ].map((file) => [file, sha256File(path.join(import.meta.dirname, file))]),
     ),
     stackLauncher: Object.fromEntries(
@@ -560,6 +566,7 @@ export async function runTail(options, config, manager) {
     DX_TAIL1_ATTEMPT: nonce,
     DX_TAIL1_IMAGE: image,
     DX_TAIL1_LESS_ALLOCATION: variant.allocation ? "1" : "0",
+    DX_TAIL1_EVENT_TRACE: eventGate ? "1" : "0",
     DX_STACK_WAIT_FOR_TRANSACTOR: "1",
     DX_QUIET_LOGS: "1",
     DX_NATIVE_SETTINGS_READBACK: "1",
@@ -581,6 +588,7 @@ export async function runTail(options, config, manager) {
       (mac ? "32m " : "1536m ") +
       gc("gw-r"),
     TRIPLEX_TRACE_LEVEL: "summary",
+    ...(!eventGate || eventBaseline ? { TRIPLEX_TRACE_COMPONENTS: "node,gateway" } : {}),
     TRIPLEX_TRACE_NODE: "1",
     TRIPLEX_TRACE_GATEWAY: "1",
     TRIPLEX_TRACE_RUN: slot,
@@ -807,7 +815,29 @@ export async function runTail(options, config, manager) {
       readyRuntime,
       startupGc,
     });
-    if (options.gate === true) {
+    if (eventGate) {
+      if (mac) {
+        assert(measureLease, "The event-cost comparison needs the pre-seed measurement lease");
+        macWindow = await holdMacWindow(identity, signal, Date.now() + 120_000, measureLease.owner);
+      }
+      const { observeEventGate } = await import("./event-joins.mjs");
+      await observeEventGate({
+        out,
+        trace,
+        identity,
+        readyRuntime,
+        ids,
+        env,
+        stack,
+        signal,
+        host,
+        eventBaseline,
+        verifyReadyRuntime,
+        spawnBound,
+      });
+      return;
+    }
+    if (gate) {
       // [DX-TAIL1] Why: use two native writers and an independent replay on their actual receipts.
       // Rejected: exercising only the in-memory adapter or collecting benchmark samples from the gate.
       const suiteEnv = {

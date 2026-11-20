@@ -5,7 +5,7 @@ The write gateway kept working during those waits. Its longest gap in the trace 
 One deep save spent 151 ms reading from SQL. The three slowest saves were already waiting when that earlier write's reply arrived.
 Each subject was written once. The sender and the read gateway account for none of the slowest saves.
 A transactor pause could have contributed. Its log has minute totals, so individual waits remain unresolved.
-All 7,092 receipts join to their original traces. [Rankings and method](OVERNIGHT.md)
+All 7,092 receipts join to their original traces. [Rankings and method](OVERNIGHT.md) · [Part 3 recording and audit](RECORDING.md)
 
 North star P2 scheduled offer to durable ACK, including the 10 ms p50 and 50 ms p99 bars at the rated reader load, and P6 quiet-account p99 / alone p99 ≤1.25. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
