@@ -27,7 +27,9 @@ export function reviewPace(
     "quiet",
   ]);
   let ratio = 0,
-    incomplete = 0;
+    incomplete = 0,
+    elevated = 0,
+    nearLimit = 0;
   for (const [account, operations] of Object.entries(baseline)) {
     for (const kind of ["read", "save"] as const) {
       const base = operations[kind];
@@ -41,16 +43,19 @@ export function reviewPace(
       const good = rows.filter((row) => row.outcome === "verified" && row.end <= at);
       incomplete += Math.max(expected, rows.length) - good.length + base.offered - base.ok;
       const delays = good.map((row) => row.end - row.due).sort((a, b) => a - b);
-      ratio = Math.max(ratio, (delays[Math.ceil(delays.length * 0.99) - 1] ?? 0) / base.p99Ms);
+      const relative = delays.map((value) => value / base.p99Ms!);
+      ratio = Math.max(ratio, relative[Math.ceil(relative.length * 0.99) - 1] ?? 0);
+      elevated = Math.max(elevated, relative.filter((value) => value > 1.35).length);
+      nearLimit = Math.max(nearLimit, relative.filter((value) => value > 1.2).length);
     }
   }
   const next =
-    incomplete || ratio > 1.35
+    incomplete || elevated >= 4
       ? Math.max(32, Math.floor(previous * 0.8))
-      : ratio < 1.2
+      : nearLimit <= 2
         ? Math.min(pacedHz, previous + 8)
         : previous;
-  return { at, through, previous, next, ratio, incomplete };
+  return { at, through, previous, next, ratio, incomplete, elevated, nearLimit };
 }
 
 export type PaceDecision = ReturnType<typeof reviewPace>;

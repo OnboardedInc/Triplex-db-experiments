@@ -181,8 +181,9 @@ test("paced import counts a missing scheduled save and protects each account ind
     ),
   );
   assert.equal(reviewPace(baseline, samples, 50, 8000, 88).next, 96);
-  const outlier = { ...samples[0]!, end: 14 };
-  const slow = [outlier, ...samples.slice(1)];
+  const oneSlow = [{ ...samples[0]!, end: 14 }, ...samples.slice(1)];
+  assert.equal(reviewPace(baseline, oneSlow, 50, 8000, 88).next, 96);
+  const slow = samples.map((row, i) => (i < 4 ? { ...row, end: row.due + 14 } : row));
   assert.equal(reviewPace(baseline, slow, 50, 8000, 110).next, 88);
   const missing = reviewPace(baseline, samples.slice(1), 50, 8000, 110);
   assert.equal(missing.next, 88);
