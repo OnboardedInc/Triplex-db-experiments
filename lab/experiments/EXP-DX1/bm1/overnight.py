@@ -15,6 +15,7 @@ import uuid
 from producer_readings import capacity_rung, group_arm
 from import_reading import tail_attempt
 from activation_clock import activation_modes
+from joined_preflight import joined_output
 
 ROOT = Path("/var/tmp/triplex-bm1")
 NIGHT = ROOT / "night-n19"
@@ -22,10 +23,12 @@ HERE = Path(__file__).resolve().parent
 URL = "https://github.com/OnboardedInc/Triplex-db-experiments.git"
 W1 = "exp/DX-W1-commit-tail-reads"
 ACT = "exp/DX-ACT2-activation-100k"
+JOINED_REVIEW_SOURCE = "befa95acfa69fe05e1ba96f86ca13141b0a0e3c1"
 # [DX-BM1] Why: the timeout belongs to the entire item, including its retry and data preparation.
 # Rejected: inheriting the 24–72 hour limits of standalone research controllers.
 ITEMS = {
     1: (W1, "w1", "502c8897", 4, "grpw1"),
+    14: ("exp/DX-ACT1-activation", "actv-lazy", "befa95acf", .5, "joinedn19"),
     8: (W1, "w1", "7a6a7e9ef", 4, "pulsew4a"),
     9: (W1, "w1", "9ce599309", 1, "matchedn19"),
     11: (W1, "w1", "7a6a7e9ef", 1, "ceiln19"),
@@ -38,8 +41,8 @@ ITEMS = {
     6: (ACT, "actv-delta", "eaee4e10", 4, "solon19"),
     3: (W1, "w1", "502c8897", 3, "w1trial01"),
 }
-ORDER = (1, 8, 11, 9, 12, 7, 10, 13, 5)
-NEXT = {1:"enhanced-pulse", 8:"ceil-live10", 11:"thin-deep", 9:"size-ledger", 12:"readers", 7:"predecessor",
+ORDER = (1, 14, 8, 11, 9, 12, 7, 10, 13, 5)
+NEXT = {1:"joined-publish-preflight", 14:"enhanced-pulse", 8:"ceil-live10", 11:"thin-deep", 9:"size-ledger", 12:"readers", 7:"predecessor",
         10:"same-database-import", 13:"int1", 5:"collect", 6:"resume", 4:"collect", 3:"collect"}
 EXP = Path("lab/experiments/EXP-DX1")
 ENV = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
@@ -162,6 +165,7 @@ def complete_output(r):
         trial=Path("/var/tmp/triplex-scale1")/r["tag"]
         return (trial/"delta-measurement.json").is_file() or any((trial/"delta").glob("*/*offers-*.json"))
     if item==13:return any((root/"run").glob("load-tail-*/arm-*.json")) or any((root/"run").glob("load-tail-*/*.offers.json"))
+    if item==14:return any((root/"smoke").glob("offer-*.json")) or (root/"smoke/server-observations.json").is_file()
     return False
 
 
@@ -270,6 +274,10 @@ def preflight(r):
         assert verified_checkpoint(allow_single_account=(item==12)), "No verified seed at the requested population is available"
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-small-run-first"})
         return
+    if item==14:
+        put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"native-preflight-only",
+                   "subjects":64,"longRun":"ACTREVIEW2 FIX FIRST"})
+        return
     documented=registered_sample(item,r["source"])
     if item==6:
         assert documented["reviewedFindings"]==[1,2] and documented["reportSha256"]==digest(directory/"builder-report.md")
@@ -308,7 +316,9 @@ def public_source(item, directory):
     branch, component, minimum, _, _ = ITEMS[item]
     advertised = command("git","-c","credential.helper=","ls-remote","--exit-code",URL,"refs/heads/"+branch).split()[0]
     document = collector_cases().get(str(item),{}) if item in (5,13) else {}
-    head = document.get("source",advertised)
+    # [DX-BM1] Why: the joined smoke reproduces the same published revision examined by ACTREVIEW2.
+    # Rejected: running a later branch tip against a launch ruling for different executable bytes.
+    head = JOINED_REVIEW_SOURCE if item==14 else document.get("source",advertised)
     if not re.fullmatch("[a-f0-9]{40}",head):
         raise ValueError("No published head for " + branch)
     repo = NIGHT / ("source-" + head)
@@ -327,7 +337,7 @@ def public_source(item, directory):
     if not report.is_file():
         raise ValueError("The builder has no published report")
     shutil.copyfile(report,directory/"builder-report.md")
-    for name in ("HANDOFF.md","README.md","PREDICTIONS.md","ISOLATION-BENCH.md"):
+    for name in ("HANDOFF.md","README.md","PREDICTIONS.md","ISOLATION-BENCH.md","SERVER.md"):
         f=report.with_name(name)
         if f.is_file(): shutil.copyfile(f,directory/("builder-"+name.lower()))
     return head,repo
@@ -340,6 +350,7 @@ def coordinates(item,attempt):
     elif attempt==2: tag += "b"
     if item in (1,3,8,9,10,11,12): root=Path("/var/tmp/triplex-w1")/tag; unit="triplex-w1-"+tag
     elif item==13: root=Path("/var/tmp/triplex-ha1")/tag;unit="bm1n19-"+tag
+    elif item==14: root=NIGHT/tag;unit="bm1n19-"+tag
     elif item==2: root=Path("/var/tmp/triplex-import1")/tag;unit="triplex-bm1-"+tag
     elif item==4: root=ROOT/("day-"+tag);unit="bm1n19-"+tag
     elif item==6: root=NIGHT/tag; unit="bm1n19-"+tag
@@ -376,7 +387,7 @@ def make(item, attempt, start, deadline):
     else:
         head,repo=public_source(item,directory)
     token="| Item 0 repeat," if item==6 else {8:"| Enhanced pulse,",9:"| Thin/deep matched,",10:"| Predecessor lookup,",
-            11:"| CEIL-SERVER-LIVE10,",12:"| W2-SIZE-LEDGER,",13:"| HA1 one-host import,"}.get(item,f"| {item} ·")
+            11:"| CEIL-SERVER-LIVE10,",12:"| W2-SIZE-LEDGER,",13:"| HA1 one-host import,",14:"| ACT1 joined Publish,"}.get(item,f"| {item} ·")
     forecast=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith(token))
     r=dict(item=item,attempt=attempt,tag=tag,source=head,repo=str(repo),unit=unit,root=str(root),
            directory=str(directory),start=start,deadline=deadline,prediction=forecast,requested=stamp())
@@ -481,7 +492,9 @@ def worker(r):
         stage_guard(r,env);return
     repo,node=setup(r,env)
     heavy=[node,"lab/bin/heavy.mjs","--label","DX-BM1-night-"+str(r["item"]),"--",node]
-    if r["item"]==6:
+    if r["item"]==14:
+        run(sys.executable,HERE/"joined_preflight.py","run",Path(r["directory"])/"request.json",cwd=repo,env=env)
+    elif r["item"]==6:
         run(node,"--import","tsx",EXP/"scale1/bench.ts","launch","2",tag,
             "activation","--activation-mode","delta","--delta-audit","2",cwd=repo,env=env)
     elif r["item"] in (1,3,8):
@@ -538,6 +551,8 @@ def cleanup(r):
     root,tag,src=Path(r["root"]),r["tag"],r["source"]
     if r["item"] in (10,11,12) and (root/"checkpoint-arms/active.json").is_file():
         run(sys.executable,HERE/"probes/seeded_campaign.py","cleanup",{10:"pred",11:"ceil",12:"size"}[r["item"]],root,src,timeout=150)
+    if r["item"]==14 and (root/"stack-owner.json").is_file():
+        run(sys.executable,HERE/"joined_preflight.py","cleanup",Path(r["directory"])/"request.json",timeout=170)
     if r["item"] in (1,3,8,9,10) and (root/"active-slot").exists():
         run("bash",Path(r["repo"])/EXP/"w1/release.sh",root,timeout=180)
     elif r["item"]==6:
@@ -594,6 +609,7 @@ def remaining(r):
     elif item in (1,3,8,9): prefixes=["tx2-dxscale1-w1-"+tag+"-"]
     elif item==5: prefixes=["tx2-dxint1-"+tag+"-"]
     elif item==6: prefixes=["tx2-dxscale1-"+tag+"-"]
+    elif item==14: prefixes=["tx2-dxt1-bm1-"+tag+"-"]
     else:
         prefixes=["tx2-dxt1-bm1-"+tag+"-"] if item==4 else []
         if item==4:prefixes.extend(s+"-" for s in guarded_children(r))
@@ -754,7 +770,15 @@ def restrict_scope(r):
 
 def result(r):
     root=Path(r["root"]);item=r["item"]
-    if item==1:
+    if item==14:
+        if not (root/"smoke/server-observations.json").is_file():
+            return "preflight-refused","The native 64-person preflight did not seal all six cells. See its retained log and partial offer files."
+        check=joined_output(root/"smoke",root/"run-owner.json",r["source"],r["start"],root/"build/repository")
+        assert check==get(root/"collector.json")
+        assert get(root/"native-clean.json")==dict(source=r["source"],prefix="tx2-dxt1-bm1-"+r["tag"],
+                   requestSha256=digest(Path(r["directory"])/"request.json"),remaining=[])
+        return "observed","All six 64-person native cells agreed with the collector. ACTREVIEW2 holds the 100,000-person run."
+    elif item==1:
         f=root/"results/comparison.json"
         if f.is_file():
             obj=get(f)
