@@ -154,15 +154,44 @@
 
 (defn input-budget! []
   (throw (ex-info "Lean query exceeded the row source budget" {:status 422 :code "QueryInputBudgetExceeded" :route "q"})))
+(defn row-budget [deadline]
+  ;; [DX-W1] Why: count while consuming the index, including a single owner's history.
+  ;; Rejected: counting decoded results after the peer has already materialized them.
+  (let [n (volatile! 0) text (volatile! 0)]
+    (fn [^String value]
+      (when (or (> (vswap! n inc) 100000)
+                (> (vswap! text + (.length value)) (* 16 1024 1024))
+                (>= (System/nanoTime) deadline)) (input-budget!)))))
+
+(defn simple-projection [query basis]
+  ;; [DX-W1] Why: the exact compiler form has one visible scalar and one assertion witness from the same row.
+  ;; Rejected: treating a named owner alone as proof that arbitrary clauses, joins or projections can be skipped.
+  (when (= 7 (count (:where query)))
+    (let [[[s _ owner] [f] [_ _ a] [_ _ attr] [_ _ id] _ [_ result]] (:where query)
+          names [s f a id result]
+          coords (map (fn [k] (when-let [v (get basis k)] (double v)))
+                      ["validAt" "recordedAt" "recordedPosition"])]
+      (when (and (every? canonical/variable? names) (= 5 (count (set names)))
+                 (string? owner) (not (.startsWith ^String owner "?")) (string? attr)
+                 (= [result id] (:find query)) (not (:with query))
+                 (= (:where query)
+                    [[s :triplex.entity/id owner] [f :f/subject s] [f :f/attr a] [a :triplex.attr/key attr]
+                     [f :f/id id] [(list* 'triplex.gateway.query/visible '$ f coords)]
+                     [(list 'triplex.gateway.query/scalar '$ f) result]]))
+        [owner attr]))))
+
+(defn point-projection [name db [owner attr] basis deadline]
+  (let [p (get basis "recordedPosition")
+        ;; [DX-W1] Why: an interior grouped cut needs history with the same bounded visitor.
+        ;; Rejected: constructing a grouped slice before enforcing the query input budget.
+        interior? (and (some? p) (pos? p) (not (d/entid db [:triplex.tx/position p])))]
+    (into [] (comp (filter #(and (= attr (:attribute %)) (storage/visible? % basis false)))
+                  (map (fn [row] [(scalar-value (privacy/masked row)) (:id row)])))
+          (lean/rows name db {"entityIds" [owner] "basis" basis "history" (boolean interior?)} (row-budget deadline)))))
+
 (defn relation [name db point basis deadline]
   (let [p (select-keys basis ["recordedPosition"])
-        n (volatile! 0) text (volatile! 0)
-        ;; [DX-W1] Why: check the budget as the index is consumed, before grouping one owner's history.
-        ;; Rejected: counting the decoded results after a single large history could exhaust the peer.
-        visit! (fn [^String value]
-                 (when (or (> (vswap! n inc) 100000)
-                           (> (vswap! text + (.length value)) (* 16 1024 1024))
-                           (>= (System/nanoTime) deadline)) (input-budget!)))
+        visit! (row-budget deadline)
         all-rows (if point
                    ;; [DX-W1] Why: the shared reader receives a vector of entity IDs, as it does on the wire.
                    ;; Rejected: a hash set, which the pinned Clojure distinct implementation cannot destructure.

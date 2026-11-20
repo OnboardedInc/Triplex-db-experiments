@@ -56,11 +56,15 @@
                                     :retracted_position (value db tx :triplex.tx/position)
                                     :retract_tx_id (ledger/tx-id db tx)))
                :else row))) grouped))))
-(defn live-texts [db eid]
-  (let [retired (set (map (fn [datom] (let [^String text (:v datom)] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))
-                          (d/datoms db :eavt eid :triplex.entity/retired)))]
-    (remove (fn [datom] (let [^String text (:v datom)] (retired (subs text 0 (+ 5 (Integer/parseInt text 1 5 16))))))
-            (d/datoms db :eavt eid :triplex.entity/row))))
+(defn live-texts
+  ([db eid] (live-texts db eid nil))
+  ([db eid visit-text!]
+   (let [key-for (fn [datom]
+                   (let [^String text (:v datom)]
+                     (when visit-text! (visit-text! text))
+                     (subs text 0 (+ 5 (Integer/parseInt text 1 5 16)))))
+         retired (set (map key-for (d/datoms db :eavt eid :triplex.entity/retired)))]
+     (remove (comp retired key-for) (d/datoms db :eavt eid :triplex.entity/row)))))
 (defn rows
   ([name db input] (rows name db input nil))
   ([name db input visit-text!]
@@ -73,11 +77,12 @@
         entities (or (get input "entityIds")
                      (when-let [entity (get pattern "entityId")]
                        (when-not (.startsWith ^String entity "?") [entity])))
+        decode-datom (fn [x] (when visit-text! (visit-text! (:v x))) (decode (:v x)))
         eids (cond id (when-let [datom (by-id (if (and cut (not inner)) source (d/history source)) id)] [(:e datom)])
                    entities (keep #(d/entid source [:triplex.entity/id %]) (distinct entities))
                    :else (distinct (map :e (d/datoms (if (and cut (not inner)) source (d/history source)) :aevt :triplex.entity/row))))]
     (filter #(or (nil? id) (= id (:id %)))
       (mapcat (fn [eid]
-                (cond inner (map #(decode (:v %)) (:datoms (group-cut/entity-slice inner eid)))
-                      cut (map #(decode (:v %)) (live-texts source eid))
+                (cond inner (map decode-datom (:datoms (group-cut/entity-slice inner eid)))
+                      cut (map #(decode (:v %)) (live-texts source eid visit-text!))
                       :else (history-entity db eid visit-text!))) eids)))))

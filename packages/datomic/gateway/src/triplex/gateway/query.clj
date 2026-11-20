@@ -44,15 +44,19 @@
   (codec/encode-value (cond (integer? v) "long" (number? v) "double" (boolean? v) "bool" :else "string") v))
 (defn lean-run [name db query input timeout]
   (let [rewritten (lean-query/prepare query) point (lean-query/point-demands (:where rewritten))
-        _ (when (and (true? (get input "singleRequest")) (nil? point)) (lean-query/unsupported! "a named subject or assertion in every fact pattern"))
+        single? (true? (get input "singleRequest"))
+        _ (when (and single? (nil? point)) (lean-query/unsupported! "a named subject or assertion in every fact pattern"))
         _ (when privacy/*cut* (lean-query/assert-guarded-query! rewritten))
+        basis (get input "basis") projection (when single? (lean-query/simple-projection query basis))
         deadline (+ (System/nanoTime) (* timeout 1000000))]
     (admission/execute admission/reads
       (fn []
-        (let [source (lean-query/relation name db point (get input "basis") deadline)
-              remaining (quot (- deadline (System/nanoTime)) 1000000)]
-          (when-not (pos? remaining) (lean-query/input-budget!))
-          (d/query {:query rewritten :args [source (get input "relations" [])] :timeout remaining}))))))
+        (if projection
+          (lean-query/point-projection name db projection basis deadline)
+          (let [source (lean-query/relation name db point basis deadline)
+                remaining (quot (- deadline (System/nanoTime)) 1000000)]
+            (when-not (pos? remaining) (lean-query/input-budget!))
+            (d/query {:query rewritten :args [source (get input "relations" [])] :timeout remaining})))))))
 (defn run [name current input]
   (when (and (not lean-query/enabled) (lean/enabled? (or current (storage/held-db name (get input "handle")))))
     (lean/unsupported! "q"))
