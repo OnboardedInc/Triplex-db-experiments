@@ -76,7 +76,9 @@ export async function live(
     volume = mode === "load-volume";
   const alone = frontier && arm === "frontier-alone";
   const allReads = (split || frontier || micro) && !alone;
-  assert((split || frontier ? [50, 100] : [50, 235, 390]).includes(rate));
+  const diagnosticVolume = volume && !server;
+  const rates = diagnosticVolume ? [10, 50] : split || frontier ? [50, 100] : [50, 235, 390];
+  assert(rates.includes(rate));
   const cell = alone ? "0" : arm.split("-")[1],
     width = frontier && cell !== "0" ? maxBulkFacts : Number(cell),
     duration = volume
@@ -402,7 +404,11 @@ export async function live(
         const done = performance.now();
         if (done <= end) factsInWindow += entry.facts;
         completedBulk += entry.facts;
-        const service = budget || micro ? measure(entry.command) : undefined;
+        // [DX-LOAD3] Why: a busy diagnostic can recover an exact commit with no original timing reply.
+        // Rejected: inventing its hold or repeating a committed rectangle to produce telemetry.
+        const recoveredWithoutTiming = diagnosticVolume && byCommand.get(entry.command)?.recovered;
+        const service =
+          (budget || micro) && !recoveredWithoutTiming ? measure(entry.command) : undefined;
         if (micro) lastFrame = { frame: f, position: entry.position, ids: entry.ids };
         if (service && budget) budget.observe(entry.facts, service.ms);
         ordered.push({
@@ -602,6 +608,7 @@ export async function live(
             offeredFrames: Math.floor((duration * microHz) / 1000),
             queryableFacts: (markers.findLast((m) => m.done <= duration)?.end ?? 0) * 8,
             cycleOverBudget: ordered.filter((r) => r.ack - r.offer > microCycleMs).length,
+            framesWithoutService: ordered.filter((r) => !r.service).length,
             temporal: temporalSeen.size,
           }
         : {}),

@@ -88,6 +88,7 @@ export function replayLive(
     budgetMs?: number;
     queryableFacts?: number;
     cycleOverBudget?: number;
+    framesWithoutService?: number;
     offeredFrames?: number;
     temporal?: number;
     width?: number;
@@ -115,7 +116,8 @@ export function replayLive(
   assert.equal(arm.scope, tape.scope);
   assert.equal(arm.duration, tape.duration);
   assert(Number.isFinite(tape.start));
-  assert([50, 100].includes(arm.rate));
+  const diagnosticVolume = mac && attempt.mode === "load-volume";
+  assert((diagnosticVolume ? [10, 50] : [50, 100]).includes(arm.rate));
   if (attempt.mode === "load-tail") assert.equal(arm.rate, 50);
   const alone = arm.arm === "frontier-alone";
   assert(!alone || attempt.mode === "load-frontier-allowance");
@@ -194,6 +196,7 @@ export function replayLive(
   if (micro) {
     assert.equal(tape.hz, microHz);
     assert.equal(arm.offeredFrames, Math.floor((arm.duration * microHz) / 1000));
+    assert.equal(arm.framesWithoutService, tape.ordered.filter((r) => !r.service).length);
     let first = 0;
     let lastAck = 0;
     const byPosition = new Map<number, (typeof tape.ordered)[number]>();
@@ -205,9 +208,12 @@ export function replayLive(
       first = row.end;
       lastAck = row.ack;
       const n = recorded.get(row.command)!;
-      assert(n.grant?.bulk && !n.grant["runnable-live"] && n.serialHold);
-      assert.equal(row.service?.ms, n.serialHold.end - n.serialHold.start);
-      assert(row.service.ms > 0 && row.service.rows <= 96 && row.service.bytes <= 65536);
+      if (diagnosticVolume && n.recovered) assert.equal(row.service, undefined);
+      else {
+        assert(n.grant?.bulk && !n.grant["runnable-live"] && n.serialHold);
+        assert.equal(row.service?.ms, n.serialHold.end - n.serialHold.start);
+        assert(row.service.ms > 0 && row.service.rows <= 96 && row.service.bytes <= 65536);
+      }
       assert(!byPosition.has(row.position));
       byPosition.set(row.position, row);
     }

@@ -31,9 +31,9 @@ Read novelty, direct index adoption, background job duration, and per-JVM stops 
 ## Mac correctness and trace check
 
 ```sh
-node lab/bin/heavy.mjs --label DX-HA1 -- node --import tsx lab/bin/engine.mjs ha1 --slot auto --holder DX-HA1 --experiment load-volume --people 50 --diagnostic
+node lab/bin/heavy.mjs --label DX-HA1 -- node --import tsx lab/bin/engine.mjs ha1 --slot auto --holder DX-HA1 --experiment load-volume --people 10 --diagnostic
 ```
 
-This checks four minutes of sustained work with an ordinary heavy token and one VM slot. The oracle checks original claims, every typed row, temporal queries and retries. Local elapsed values are diagnostic and can include activity from other builders.
+This checks four minutes of sustained work with 15 offered saves and 55 offered reads per second, an ordinary heavy token and one VM slot. The oracle checks original claims, every typed row, temporal queries and retries. Local elapsed values are diagnostic and can include activity from other builders.
 
 If the lab VM has dropped PostgreSQL, append `--prepare-postgres "$PRIOR_POSTGRES_IMAGE_ID"` using the exact ID from the previous run's PostgreSQL role record. The managed diagnostic prefers that image and can restore the official public image anonymously. The recorded role ID identifies the dependency that actually ran.
