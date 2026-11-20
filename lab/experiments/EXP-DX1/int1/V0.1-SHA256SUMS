@@ -8,6 +8,7 @@ e846a4aa59e212dabb1e7b92ad56f2769561d56b8781a71a5949dac26d46318f  int1/p6/erase1
 33998bd5a67809a5fa3daf8a5011432801a1f7a51b6d0b55a971209b26ea95e9  int1/p6/interrupted-profiles.tar.gz
 2441573291b8804a5ce5c2b122558ec0edc0cf9fc7ddd9eaf1a3ec5b442680be  int1/p6/jvm1-native25.tar.gz
 7df132b6464325addfc7b97973e845b6e9ba3b3b79321e4486b20fe7ac9fc49f  int1/p6/mac-prelude.tar.gz
+a82088813b0f3ef93a620a62e094df9192e9742902f9f802becbd9c69e47a7a0  int1/p6/play1-live-snapshot.tar.gz
 7d95cc483552aca5bac960d4bd825ae9b373154ac911a182cb877677ae07e426  int1/p6/prep1-recovery.tar.gz
 06fe36eed17c39b2e53864e4ad710aa78b447d3fe79e0b6181befddec2ac493f  int1/p6/tail1-before-ready-error.tar.gz
 c3e5384cf4d72b6279cdfcbe31e7fd297fd8467210ba931e9cf12fd11e60acca  int1/p6/tail1-binder-first.tar.gz

@@ -5,7 +5,7 @@ The durable Publish record is the point we count as stored. Background work sett
 The read gateway held about 62 MiB of live Java objects at both deep sizes. Its resident memory still grew.
 The transactor's Java heap grew while its object-cache charge held steady. The larger physical test will look for the plateau.
 The scorecard can reopen the original shared database. Its first four sections still need physical evidence at both ages.
-The merge table records what has been taken, what ran on this branch and what is still due.
+The local dashboard and agent API work on the small fixture and the restored snapshot. The full hosted data and playground erasure remain open.
 
 ## Integration
 
@@ -38,6 +38,10 @@ TAIL1 conflicted in the driver, engine, launcher, scorecard plan and recorder fi
 The scorecard merge kept held-seed and trace binding in two conflicts. It also takes the newer SCALE1 and AGE1 adoption. The older compact gate verified both frozen arms and refused the incomplete field arm. The final clean build and native K gate at 4c5209499 matched 56 saves and journal entries, 14,543 pinned reads and ten current pulls. Both peers must expose the queryable K journal. No physical verdict was issued.
 
 The adopted producer checks the original loader receipt, pinned values, observed writer choices and native journal bytes against each save before publishing. The saved-output recount checks the same tape and cut in both fresh, source-bound arms and compares every receipt to its journal entry. The independent recount agreed with the rendered card. The physical aged adapter also requires the pinned bundle and verifies its restored cut. [Server command](../v01/SERVER.md)
+
+The playground merge kept the Java-aware engine dispatch and added the portable playground command. Four builds, TypeScript and six fixture tests passed. Both native arms at 8c7f766b0 checked 17 API cases and Chromium. The live dump matched 910 PostgreSQL rows. The snapshot reopened cuts 46, 65 and 90. A live feed poll closed during shutdown.
+
+The local API gate compares fresh fixture and restored values, receipts, ordered feed cursors and conflict responses. Its receipts bind the checked source, fixture or manifest, owned slot and fresh attempts. Both stacks verified empty owned inventories and a closed listener. The manual remote workflow and hosted full bundle were outside these gates. [Playground guide](../../../../AGENTS-PLAYGROUND.md)
 
 ## Server work
 

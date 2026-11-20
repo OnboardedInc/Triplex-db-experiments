@@ -19,6 +19,7 @@
     "docs:dev": "vitepress dev docs",
     "docs:plan": "alchemy plan --stage prod",
     "docs:preview": "vitepress preview docs",
+    "playground": "node --disable-warning=ExperimentalWarning examples/playground/cli.ts",
     "dashboard": "pnpm --filter @triplex-build/triplex-dashboard dev",
     "dashboard:serve": "turbo run build --filter=@triplex-build/triplex-dashboard && pnpm --filter @triplex-build/triplex-dashboard serve",
     "triplex": "pnpm --filter @triplex-build/triplex-cli dev",
