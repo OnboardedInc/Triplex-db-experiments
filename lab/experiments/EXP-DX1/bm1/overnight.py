@@ -383,7 +383,7 @@ def checkout_source(branch, advertised, head, minimum):
     return repo
 
 
-def public_source(item, directory):
+def public_source(item, directory, retained=None):
     branch, component, minimum, _, _ = ITEMS[item]
     advertised = command("git","-c","credential.helper=","ls-remote","--exit-code",URL,"refs/heads/"+branch).split()[0]
     document = collector_cases().get(str(item),{}) if item in (5,13) else {}
@@ -392,6 +392,8 @@ def public_source(item, directory):
     pinned={14:JOINED_REVIEW_SOURCE}
     if item==29:
         pinned[29]=os.environ["DX_BM1_ACT_RETRY"]
+    if retained:
+        pinned[item]=retained["source"]
     head = pinned.get(item,document.get("source",advertised))
     repo = checkout_source(branch,advertised,head,minimum)
     report = repo / EXP / component / "REPORT.md"
@@ -435,6 +437,11 @@ def bind(r):
         assert re.fullmatch(r"[a-f0-9]{64}",r["reviewSha256"])
     if item in SEALED_ITEMS:
         assert re.fullmatch(r"[a-f0-9]{64}",r["checkpointSha256"])
+    if "retainedControl" in r:
+        retained=r["retainedControl"]
+        assert (item,attempt)==(21,2) and retained["source"]==r["source"]
+        assert re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-growth1",retained["slot"])
+        assert re.fullmatch("[a-f0-9]{64}",retained["sha256"])
     return r
 
 
@@ -444,6 +451,8 @@ def make(item, attempt, start, deadline):
     directory.mkdir(parents=True,exist_ok=True)
     request=directory/"request.json"
     if request.exists(): return bind(get(request))
+    old=directory.parent/"retained-control.json"
+    retained=get(old) if (item,attempt)==(21,2) and old.is_file() else None
     prior=Path("/var/tmp/triplex-w1/grpw1a/source")
     if item==1 and attempt==1 and prior.is_file():
         head=prior.read_text().strip()
@@ -452,7 +461,7 @@ def make(item, attempt, start, deadline):
         assert command("git","rev-parse","HEAD",cwd=repo)==head and not command("git","diff","--name-only","HEAD",cwd=repo)
         shutil.copyfile(repo/EXP/"w1/REPORT.md",directory/"builder-report.md")
     else:
-        head,repo=public_source(item,directory)
+        head,repo=public_source(item,directory,retained)
     token="| ACT2 audited activation," if item==6 else {8:"| Enhanced pulse,",9:"| Thin/deep matched,",10:"| Predecessor lookup,",
             11:"| CEIL-SERVER-LIVE10,",12:"| W2-SIZE-LEDGER,",13:"| HA1 one-host import,",14:"| ACT1 joined Publish,",
             15:"| ACT1 reviewed joined Publish,",16:"| WFIX enhanced pulse,",17:"| ACT1 manifest repair,",27:"| ACT1 typed refusal,",
@@ -471,6 +480,10 @@ def make(item, attempt, start, deadline):
         r.update(writerSource=writer_source,writerRepo=str(writer),reviewSha256=digest(review))
     if item in SEALED_ITEMS:
         r["checkpointSha256"]=digest(SCALE_CHECKPOINT)
+    if item in SCALE_PROBES:
+        r["stableEndpoints"]=True
+    if retained:
+        r["retainedControl"]=retained
     put(request,bind(r))
     return r
 
@@ -588,8 +601,10 @@ def worker(r):
         run(sys.executable,HERE/"probes/seeded_campaign.py","run",mode,root,source,cwd=repo,env=env)
     elif r["item"] in SCALE_PROBES:
         assert r["checkpointSha256"]==digest(SCALE_CHECKPOINT)
+        retained=r.get("retainedControl")
+        reuse=[retained["slot"],retained["sha256"]] if retained else []
         run(sys.executable,HERE/"probes/seeded_campaign.py","run",SCALE_PROBES[r["item"]],root,source,SCALE_CHECKPOINT,
-            cwd=repo,env=env)
+            *reuse,cwd=repo,env=env)
     elif r["item"]==24:
         assert r["checkpointSha256"]==digest(SCALE_CHECKPOINT)
         run(sys.executable,HERE/"probes/rd_runner.py","run",root,source,SCALE_CHECKPOINT,cwd=repo,env=env)
@@ -981,14 +996,21 @@ def result(r):
         source=r["source"]
         checked=get(small)
         assert all(row["completed"] and row["dispositions"]=={"ack":50} for row in checked)
-        def compare(row,is_small):
+        def compare(row,is_small,request):
             slot=row["directory"]
             assert slot==row["slot"] and re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-"+mode+r"[1-5]",slot)
-            folder=root/"checkpoint-arms"/slot
-            assert (folder/"clock.json").stat().st_mtime>=r["start"]-1
+            folder=Path(request["root"])/"checkpoint-arms"/slot
+            assert request["start"]-1<=(folder/"clock.json").stat().st_mtime<=request["deadline"]
             assert row==summarize(folder,mode,source,SCALE_CHECKPOINT,small=is_small)
+            if request.get("stableEndpoints"):
+                file=folder/"ready-endpoints.json"
+                endpoints=get(file)
+                assert request["start"]-1<=file.stat().st_mtime<=(folder/"clock.json").stat().st_mtime
+                assert [endpoints[k] for k in ("source","slot","optionsAttempt")]==[source,slot,row["nonce"]]
+                urls=[endpoints[k] for k in ("writer","reader")]
+                assert len(set(urls))==2 and all(re.fullmatch(r"http://(?:\d{1,3}\.){3}\d{1,3}:8080",url) for url in urls)
         for row in checked:
-            compare(row,True)
+            compare(row,True,r)
         file=results/"comparison.json"
         if not file.is_file():
             return "partial","The matching small result is retained. The full comparison is incomplete."
@@ -999,8 +1021,15 @@ def result(r):
         modes={"size":["control"],"pulse":["individual","all","compact","prepared","bounded"]}
         assert [a["setting"] for a in value["arms"]]==modes.get(mode,["control","candidate","candidate","control"])
         assert len({a["nonce"] for a in checked+value["arms"]})==len(checked+value["arms"])
-        for row in value["arms"]:
-            compare(row,False)
+        retained=r.get("retainedControl")
+        assert value.get("retainedControl")==(retained["sha256"] if retained else None)
+        for index,row in enumerate(value["arms"]):
+            request=r
+            if index==0 and retained:
+                assert (row["slot"],row["resultSha256"])==(retained["slot"],retained["sha256"])
+                request=bind(get(NIGHT/"i21/1/request.json"))
+                assert (request["source"],request["checkpointSha256"])==(source,r["checkpointSha256"])
+            compare(row,False,request)
         return ("recorded" if all(a["completed"] for a in value["arms"]) else "partial"),str(file)
     elif item==24:
         sys.path.insert(0,str(HERE/"probes"))
@@ -1209,6 +1238,51 @@ def restore_refusal(item):
                                           for line in log.read_text(errors="replace").splitlines())
 
 
+def setup_repair(item):
+    # [DX-BM1] Why: retry only the diagnosed setup failures, preserving measured control rows.
+    # Rejected: resetting the clock for every partial run or waiting until its first evidence is lost.
+    folder=NIGHT/f"i{item}"
+    end=folder/"outcome.json"
+    if item not in (21,22,24) or not end.is_file() or (folder/"original-setup-outcome.json").exists():
+        return None
+    state={21:"uncollected",22:"preflight-refused",24:"partial"}[item]
+    row=get(end)
+    if (row.get("attempt"),row.get("state"))!=(1,state):
+        return None
+    prior=bind(get(folder/"1/request.json"))
+    root=Path(prior["root"])
+    worker=folder/"1/worker.log"
+    if item==24:
+        if not complete_output(prior) and "No such file or directory: 'psql'" in worker.read_text(errors="replace"):
+            return {}
+        return None
+    arms=root/"checkpoint-arms"
+    if item==22:
+        if not complete_output(prior) and any("clojure.main (No such file or directory)" in log.read_text(errors="replace")
+                                               for log in arms.glob("*/worker.log")):
+            return {}
+        return None
+    logs=(p.read_text(errors="replace") for p in arms.glob("*/worker.log"))
+    if not any("+ null" in log and "verifyWriteOptions" in log for log in logs):
+        return None
+    full=[]
+    for path in arms.glob("*/result.json"):
+        plan=get(path)["plan"]
+        if not plan["smoke"]:
+            full.append(path)
+    if len(full)!=1:
+        return None
+    saved=full[0]
+    sys.path.insert(0,str(HERE/"probes"))
+    from seeded_reading import summarize
+    reading=summarize(saved.parent,"growth",prior["source"],SCALE_CHECKPOINT)
+    if reading["setting"]!="control" or reading["dispositions"]!={"ack":2250} or not reading["completed"]:
+        return None
+    assert reading["checkpointSha256"]==prior["checkpointSha256"]==digest(SCALE_CHECKPOINT)
+    assert prior["start"]-1<=(saved.parent/"clock.json").stat().st_mtime<=prior["deadline"]
+    return {"source":prior["source"],"slot":reading["slot"],"sha256":reading["resultSha256"]}
+
+
 def one(item, attempts=(1,2)):
     folder=NIGHT/f"i{item}";folder.mkdir(exist_ok=True)
     end=folder/"outcome.json"
@@ -1255,6 +1329,7 @@ def one(item, attempts=(1,2)):
             except (TypeError, ValueError, KeyError, AssertionError, OSError, RuntimeError, subprocess.SubprocessError) as err:
                 state="uncollected" if complete_output(r) else "incomplete"
                 why="Producer output kept in its original directory. Collector rejected: "+repr(err)
+                atom(sub/"collector-reconcile-error.txt",traceback.format_exc())
             entry=dict(item=item,attempt=attempt,tag=r["tag"],source=r["source"],state=state,detail=why,
                        timedOut=timed_out,ended=stamp(),clean=True,serviceResult=command("systemctl","show",r["unit"],"-p","Result","--value"))
             put(terminal,entry)
@@ -1343,8 +1418,14 @@ def main():
             in_flight.append(item)
     assert len(in_flight)<=1,"Multiple items claim the bench"
     retry_restores=mode=="run-after-seed" and os.environ.get("DX_BM1_RESUME_RESTORES")=="1"
+    repaired={}
+    if retry_restores:
+        for item in (21,22,24):
+            if item in scheduled and (repair:=setup_repair(item)) is not None:
+                repaired[item]=repair
     order=(*in_flight,*(item for item in scheduled if retry_restores or item not in in_flight))
-    pending=[item for item in order if not (NIGHT/f"i{item}/outcome.json").is_file() or (retry_restores and restore_refusal(item))]
+    pending=[item for item in order if not (NIGHT/f"i{item}/outcome.json").is_file() or item in repaired or
+             (retry_restores and restore_refusal(item))]
     if pending:
         (NIGHT/"finished").unlink(missing_ok=True)
     if in_flight and len(pending)>1:
@@ -1355,7 +1436,7 @@ def main():
         folder=NIGHT/f"i{item}"
         end=folder/"outcome.json"
         kept=folder/"original-restore-outcome.json"
-        if end.is_file() and not (retry_restores and restore_refusal(item)):
+        if end.is_file() and item not in repaired and not (retry_restores and restore_refusal(item)):
             continue
         if item!=1 and mode!="run-after-seed":
             try:
@@ -1369,8 +1450,14 @@ def main():
                 assert not active("bm1n19-native-probes") and not command("docker","ps","-q")
             continue
         try:
+            saved_setup=folder/"original-setup-outcome.json"
+            if item in repaired and end.is_file():
+                if repaired[item]:
+                    put(folder/"retained-control.json",repaired[item])
+                (folder/"timing.json").rename(folder/"original-setup-timing.json")
+                end.rename(saved_setup)
             if retry_restores and not adopted and restore_refusal(item):end.rename(kept)
-            one(item, (2,) if kept.is_file() else (1,2))
+            one(item, (2,) if kept.is_file() or saved_setup.is_file() else (1,2))
             if retry_restores and not adopted and restore_refusal(item):
                 end.rename(kept)
                 one(item, (2,))

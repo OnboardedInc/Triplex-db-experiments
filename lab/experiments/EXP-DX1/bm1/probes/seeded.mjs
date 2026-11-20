@@ -150,7 +150,7 @@ function nativeSize(mode, low, high, name) {
   const output = execFileSync(
     "docker",
     ["exec", "-i", "-e", "DATOMIC_JAVA_OPTS=-Xms128m -Xmx768m -Ddatomic.objectCacheMax=64m",
-      slot + "-gw-r", "/opt/datomic/bin/run", "clojure.main", "-", mode, db, low, high],
+      slot + "-gw-r", "/opt/datomic/bin/run", "-", mode, db, low, high],
     { input: fs.readFileSync(script), timeout: 120_000, maxBuffer: 16 << 20, encoding: "utf8" },
   );
   fs.writeFileSync(file(name), output, { flag: "wx" });

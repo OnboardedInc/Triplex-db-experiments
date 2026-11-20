@@ -33,16 +33,36 @@ def setup(directory,mode,checkpoint_file=None):
     return checkpoint
 
 
-def start_roles(slot, directory, env):
-    for role,key in (("gw-w","DATOMIC_URL"),("gw-r","PROBE_READ_URL")):
-        ip=stack.command("docker","inspect","--format","{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",slot+"-"+role,env=env)
-        assert re.fullmatch(r"[0-9.]+",ip)
-        url=f"http://{ip}:8080"
-        deadline=time.time()+165
-        while subprocess.run(["curl","-fSs","--max-time","3",url+"/health"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL).returncode:
-            if time.time()>=deadline:raise TimeoutError("Restored gateway did not become ready")
-            time.sleep(1)
-        env[key]=url
+def start_roles(slot, directory, env, witness=None):
+    def endpoints():
+        rows=stack.command("docker","inspect","--format","{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}",
+                           slot+"-gw-w",slot+"-gw-r",env=env).splitlines()
+        if len(rows)!=2 or len(set(rows))!=2 or not all(re.fullmatch(r"(?:\d{1,3}\.){3}\d{1,3}",ip) for ip in rows):
+            return None
+        return tuple(f"http://{ip}:8080" for ip in rows)
+
+    deadline=time.time()+165
+    while time.time()<deadline:
+        actual=endpoints()
+        if actual and all(subprocess.run(["curl","-fSs","--max-time","3",url+"/health"],stdout=subprocess.DEVNULL,
+                                        stderr=subprocess.DEVNULL).returncode==0 for url in actual):
+            if witness:
+                # [DX-BM1] Why: the Docker IP can change while restarted peers join the network.
+                # Rejected: accepting the read peer's health response as the configured writer.
+                db,nonce=witness
+                assert re.fullmatch(r"s2-[A-Za-z0-9_-]+",db)
+                probe=subprocess.run(["curl","-fSs","--max-time","3",actual[0]+"/v1/db/"+db+"/write-options"],
+                                     capture_output=True,text=True)
+                if probe.returncode or json.loads(probe.stdout).get("attempt")!=nonce:
+                    time.sleep(1)
+                    continue
+            if actual==endpoints():break
+        time.sleep(1)
+    else:
+        raise TimeoutError("Restored gateway IPs and writer identity did not stabilize")
+    env["DATOMIC_URL"],env["PROBE_READ_URL"]=actual
+    stack.put(directory/"ready-endpoints.json",{"slot":slot,"source":env["TRIPLEX_TRACE_SOURCE"],
+        "writer":actual[0],"reader":actual[1],"optionsAttempt":witness[1] if witness else None})
     env["TRIPLEX_TRACE_DIR"]=str(directory/"engines"/slot/"trace/raw")
 
 
@@ -89,7 +109,7 @@ def arm(mode,setting,ordinal,tag,staged,frozen,expected,profile):
     chosen=owner["nonce"]
     try:
         stack.reopen(slot,env,frozen,expected,directory)
-        start_roles(slot,directory,env)
+        start_roles(slot,directory,env,(stack.get(stack.INPUT)["db"],chosen))
         gateway=directory/"engines"/slot/"gateway-files.json"
         staged_source=staged or stack.REPO/"packages/datomic/gateway"
         files=stack.files(staged_source)
@@ -158,7 +178,7 @@ def main(args):
         stack.cleanup()
         return
     assert action=="run" and not (directory/"results").exists()
-    assert len(seed_path)<=1
+    assert len(seed_path) in (0,1,3)
     checkpoint=setup(directory,mode,Path(seed_path[0]) if seed_path else None)
     assert stack.command("git","rev-parse","HEAD")==source and not stack.command("git","diff","--name-only","HEAD")
     assert shutil.disk_usage(directory).free>32*1024**3
@@ -191,11 +211,27 @@ def main(args):
     rows=[]
     full_settings={"size":("control",),"pulse":("individual","all","compact","prepared","bounded")}.get(
         mode,("control","candidate","candidate","control"))
-    for n,setting in enumerate(full_settings,1):
+    retained=None
+    if len(seed_path)==3:
+        assert mode=="growth"
+        # [DX-BM1] Why: preserve the first completed measured block and its original source when resuming B/B/A.
+        # Rejected: spending the probe budget on a second copy of a valid first control.
+        original=Path("/var/tmp/triplex-w1/growthn20/checkpoint-arms")
+        options=[]
+        for file in original.glob("*/result.json"):
+            plan=stack.get(file)["plan"]
+            if not plan["smoke"] and plan["setting"]=="control":options.append(file.parent)
+        saved,=options
+        assert (saved.name,stack.sha(saved/"result.json"))==tuple(seed_path[1:])
+        retained=summarize(saved,mode,source,stack.INPUT)
+        assert retained["dispositions"]=={"ack":2250} and retained["completed"]
+        rows.append(retained)
+    for n,setting in enumerate(full_settings[len(rows):],len(rows)+1):
         case=arm(mode,setting,n,tag,staged,frozen,expected,"full")
         rows.append(summarize(case,mode,source,stack.INPUT))
     stack.put(results/"comparison.json",{"source":source,"mode":mode,"checkpointSha256":stack.sha(stack.INPUT),
-        "smallSha256":stack.sha(results/"small-reading.json"),"smallComparisonSha256":stack.sha(results/"small-comparison.json"),"arms":rows})
+        "smallSha256":stack.sha(results/"small-reading.json"),"smallComparisonSha256":stack.sha(results/"small-comparison.json"),
+        **({"retainedControl":retained["resultSha256"]} if retained else {}),"arms":rows})
 
 
 if __name__=="__main__":main(sys.argv[1:])

@@ -162,7 +162,7 @@ def summarize(directory,mode,source,checkpoint,small=False):
                       "goal50":sum(x<=50 for x in durations),
                       "outcomes":Counter(r["disposition"] for r in n),"p50":pct(durations,50),"p99":pct(durations,99),
                       "firstPacketP99":pct([r["firstPacket"]-r["offset"] for r in confirmed],99),
-                      "physicalTurns":len(group),"observedGroupSizes":Counter(group.values()),
+                      "physicalTurns":len(group),"observedGroupSizes":Counter(map(str,group.values())),
                       "gatewayPrepareMs":dist([r["payloadPrepared"]/1000 for r in clocks]),
                       "groupPrepareMs":dist([r["prepareMicros"]/1000 for r in staged.values()]),
                       "groupMaterializeMs":dist([r["materializeMicros"]/1000 for r in staged.values()]),
@@ -241,10 +241,10 @@ def summarize(directory,mode,source,checkpoint,small=False):
         entries=len(turns)
         assert entries
         wal=lsn(after["walInsert"])-lsn(before["walInsert"])
-        by_width={width:dist([turns[r["t"]] for r in successful if r["width"]==width])
+        by_width={str(width):dist([turns[r["t"]] for r in successful if r["width"]==width])
                   for width in sorted({r["width"] for r in successful})}
         measurement["size"]={"nativeDatoms":sum(turns.values()),"nativeScope":entries,
-                             "widths":Counter(r["width"] for r in successful),"before":before,"after":after,
+                             "widths":Counter(str(r["width"]) for r in successful),"before":before,"after":after,
                              "indexed":indexed,"index":index,"walBytes":wal,"nativeDatomsByWidth":by_width,
                              "nativeIndexCounts":index_counts,
                              "indexedSegmentsDelta":index_counts["indexed"]["segments"]-index_counts["before"]["segments"],
