@@ -3,6 +3,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomBytes, randomUUID, createHash } from "node:crypto";
 import { fork } from "node:child_process";
+import { availableParallelism, loadavg } from "node:os";
+import { acquireMeasureLease, readMeasureLease } from "../../../bin/heavy-lock.mjs";
 import { setTimeout as delay } from "node:timers/promises";
 import {
   admission,
@@ -36,8 +38,11 @@ export async function local(opts, config, manager) {
       "audit-check",
       "audit-loaded",
       "audit-faults",
+      "joined-admission",
+      "joined-load",
     ].includes(opts.run),
   );
+  const joined = opts.run.startsWith("joined-");
   const dir = path.resolve(opts.out),
     nonce = randomUUID(),
     prefix = "tx2-dxdelta-" + nonce.slice(0, 8);
@@ -48,11 +53,17 @@ export async function local(opts, config, manager) {
   const attempt = { nonce, run: opts.run, prefix, source: process.env.DELTA_SOURCE ?? null };
   const write = (name, obj) =>
     fs.writeFileSync(path.join(dir, name + ".json"), JSON.stringify(obj) + "\n", { flag: "wx" });
-  let info, net;
+  let info, net, lease;
   const created = new Map(),
     volumes = new Set();
   const limit = Math.min(config.pool.memLimitBytes, 15 * 2 ** 30);
   try {
+    // [DX-ACT2] Why: drain every lab heavy token and freeze other admissions before the matched timing. Rejected: relying on an idle-looking container count while another experiment starts.
+    if (opts.run === "joined-load")
+      lease = await acquireMeasureLease("DX-ACT2 joined comparison", {
+        holder: opts.holder,
+        pollMs: 5000,
+      });
     while (!info) {
       const stat = fs.statfsSync(".");
       assert(stat.bavail * stat.bsize >= 5 * 2 ** 30, "host disk below floor");
@@ -60,6 +71,11 @@ export async function local(opts, config, manager) {
         await withPool((ledger) => {
           manager.assertMeasureAdmission(opts.holder);
           const live = listTx2Containers({ all: true });
+          if (
+            lease &&
+            live.some((c) => c.running && !/^tx2-(?:xtdb|qlever|datomic)-dev$/.test(c.name))
+          )
+            return;
           const candidate = ["s1", "s2", "s3"]
             .map((s) => slotInfo(config, "datomic", s))
             .find((s) => !fs.existsSync(s.lockDir) && !live.some((c) => c.name === s.container));
@@ -68,7 +84,7 @@ export async function local(opts, config, manager) {
             container: prefix,
             memBytes: Object.values(caps).reduce((a, b) => a + b, 0) * 2 ** 20,
             diskForecastBytes:
-              (["audit-loaded", "deep-loaded"].includes(opts.run) ? 8 : 4) * 2 ** 30,
+              (["audit-loaded", "deep-loaded", "joined-load"].includes(opts.run) ? 8 : 4) * 2 ** 30,
           };
           const allowed = admission({
             config: { ...config, pool: { ...config.pool, memLimitBytes: limit } },
@@ -230,6 +246,9 @@ export async function local(opts, config, manager) {
         "DATOMIC_URI_TEMPLATE=" + uri,
         "-e",
         "GATEWAY_SOURCE_SHA256=" + gateway,
+        ...(joined
+          ? ["-e", "TX2_LIVE_PRIORITY=1", "-e", "TX2_WRITE_OPTIONS_ATTEMPT=" + nonce]
+          : []),
         "-e",
         "DATOMIC_JAVA_OPTS=-Xms192m -Xmx656m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=160m",
       ],
@@ -260,6 +279,7 @@ export async function local(opts, config, manager) {
       image,
       pgImage,
       caps,
+      ...(lease ? { measurement: lease.owner, heavyTokens: lease.tokens } : {}),
     };
     write("native", binding);
     const child = fork(path.join(import.meta.dirname, "native.ts"), [opts.run, dir], {
@@ -277,6 +297,34 @@ export async function local(opts, config, manager) {
     });
     let restarts = 0;
     child.on("message", async (m) => {
+      if (m?.type === "cpu") {
+        try {
+          assert(lease && opts.run === "joined-load" && m.nonce === nonce);
+          assert.deepEqual(readMeasureLease(), lease.owner);
+          const foreign = listTx2Containers().filter(
+            (c) => !names.includes(c.name) && !/^tx2-(?:xtdb|qlever|datomic)-dev$/.test(c.name),
+          );
+          assert.equal(
+            foreign.length,
+            0,
+            "An unowned nonresident stack is active during the comparison",
+          );
+          const vm = docker(["exec", created.get("gw"), "cat", "/proc/pressure/cpu"]);
+          const guests = docker(["exec", created.get("gw"), "cat", "/proc/loadavg"]);
+          child.send({
+            id: m.id,
+            cpu: {
+              at: Date.now(),
+              vm,
+              guests,
+              host: { cpus: availableParallelism(), load: loadavg() },
+              exclusive: true,
+            },
+          });
+        } catch (e) {
+          child.send({ id: m.id, error: String(e) });
+        }
+      }
       if (m?.type === "power") {
         try {
           assert(
@@ -349,6 +397,7 @@ export async function local(opts, config, manager) {
       volumesRemoved: volumes.size,
       slotReleased: info?.slot ?? null,
     });
+    lease?.release();
   }
 }
 

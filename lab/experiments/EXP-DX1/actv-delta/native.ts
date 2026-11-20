@@ -82,7 +82,11 @@ if (["schedules", "rungs", "crash"].includes(mode!)) {
     }
   }
 }
-if (mode !== "schedules") {
+if (mode === "joined-admission") {
+  await (await import("../actv-lazy/join/admission-gate.ts")).run(dir, attempt);
+} else if (mode === "joined-load") {
+  await (await import("../actv-lazy/join/queue-study.ts")).run(dir, attempt);
+} else if (mode !== "schedules") {
   const worker = await import(
     "./" +
       (mode === "solo-check" || mode === "deep-loaded"

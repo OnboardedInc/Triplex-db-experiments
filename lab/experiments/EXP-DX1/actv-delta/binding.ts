@@ -86,6 +86,14 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
         ].includes(path.basename(p).replace(/\.[^.]+$/, "")) ||
           path.basename(p) === mode + ".ts"),
     ),
+    ...(mode.startsWith("joined-")
+      ? [
+          ...files(path.join(here, "../actv-lazy")).filter((p) => /\.(ts|py)$/.test(p)),
+          ...files(path.join(here, "../notify1")).filter((p) => /\.(ts|py)$/.test(p)),
+          "lab/experiments/EXP-DX1/import1/source.ts",
+          "lab/experiments/EXP-DX1/scale1/deep-live.ts",
+        ]
+      : []),
     ...files("lab/bench/lib").filter((p) => p.endsWith(".ts")),
     ...files("lab/experiments/EXP-DX1/act1").filter((p) => p.endsWith(".ts")),
     ...["w0", "core", "qualification", "datomic"].flatMap((pkg) =>
