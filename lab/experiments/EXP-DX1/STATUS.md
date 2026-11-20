@@ -3017,3 +3017,19 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   workload and the Mac was past capacity: the number is not usable either way. Part 5 assigned: one Publish every
   5 s (and every 1 s as stress) in steady state, at least 200 per cell, a keeping-up check before each cell; the law
   and a bare-metal prediction; stop maintaining DELTA apart from the joined path.
+
+## 2026-11-20 10:14 UTC (05:14 local, 2026-11-20): DX-RD1 part 3 in: the read collapse is the reader's own event loop; fix holds 92% on the Mac; builder parked
+
+- **DX-RD1 part 3 (`5f51de7d6`; `rd1/REPORT.md`, `SERVER1.md`).** Of the 729 ms a sampled miss spent outside the gateway,
+  624 ms elapsed between the gateway finishing its response and Node handling the headers; that stage dominated 133
+  of 144 sampled misses; checking other replies overlapped about 215 ms of it and garbage collection 131 ms. So the
+  collapse was the reader's event loop holding finished gateway replies behind its own work, not gateway capacity.
+  With the separate fallback worker, same-cut batching and installed history: the unit regression kept 23.2% of
+  local throughput before and 94.6 to 106.3% after; on the Mac at 5% old-cut reads throughput went from 12% to 92% of
+  the no-fallback rate (the fixture reused two cuts across 24 roots). Revised forecast for the 192 MiB closure option
+  alone: 3,900 to 5,400 weighted pulls per second and a stress ratio of 0.45 to 0.65. Recovery unmeasured: the first
+  fixture failed its retained-cut check and the corrected retry never got the lab window (five hours of waiting
+  across attempts). 27 focused tests pass.
+- **DX-RD1 is parked.** The aged-database confirmation is a server item (`rd1/SERVER1.md` at `5f51de7d6`): the fresh-scope
+  pairs on server 1 tonight read about 32,000 weighted pulls per second with zero fallback, which does not exercise
+  old cuts.
