@@ -94,3 +94,14 @@ test("a change in the source commit policy seals the writer without promoting", 
   );
   assert.deepEqual(calls, ["seal"]);
 });
+
+test("an unavailable standby leaves the current primary fenced by its existing sync policy", async () => {
+  const { calls, run } = fixture({
+    primary: async () => ({ configured: true, sync: false, flush: "0/04", waitingMs: 6000 }),
+    candidate: async () => {
+      throw Error("standby unavailable");
+    },
+  });
+  await assert.rejects(run.run("fault", "single-copy-after-fence"), /standby unavailable/);
+  assert.deepEqual(calls, []);
+});

@@ -98,6 +98,8 @@ export class Supervisor {
         }
         return undefined;
       });
+      // [DX-HASYNC1] Why: the same replication stall can mean the standby died. Rejected: stopping a live primary before verifying an eligible survivor.
+      this.#candidate(await p.candidate());
     } else {
       const sample = await p.primary();
       assert(

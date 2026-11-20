@@ -6,7 +6,7 @@ The source uses PostgreSQL 17 physical streaming with `fsync=on`, `full_page_wri
 
 The two Datomic transactors share the same writable SQL cluster. B's transactor uses the two SQL addresses with pgJDBC's `targetServerType=primary`. The gateways use the existing Datomic Peer API. The reader is on B with its SQL reads pinned to B. Its ordinary reads still issue database work during the cut. The TypeScript ingress keeps one writer route and rejects replies from a sealed generation. The original operation ID resolves an ambiguous reply after rerouting. [Datomic HA](https://docs.datomic.com/operation/ha.html) · [pgJDBC connection options](https://jdbc.postgresql.org/documentation/use/)
 
-1. Watch the current primary and named standby. An unreachable primary or a stalled synchronous commit triggers fencing.
+1. Watch the current primary and named standby. On primary failure or a stalled synchronous commit, confirm the survivor's identity and recovery state before fencing. When the standby is unavailable, leave the primary up with its original synchronous settings.
 2. Seal writer ingress. For a planned move, first check the live replay floor, drain requests, then stop the old transactor and capture the final source flush point.
 3. Persist the attempt and cluster ID in an interlock outside the two old processes. Stop the exact old PostgreSQL and Datomic containers, verify their stopped states and check that both mount the interlock read-only. Both entry points refuse startup while the interlock exists. An unavailable management plane leaves ingress sealed.
 4. Verify the survivor's cluster and timeline, then replay its locally durable receive point and all previously observed confirmed flushes. Promote and observe the next timeline.
