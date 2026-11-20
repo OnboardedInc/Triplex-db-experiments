@@ -183,7 +183,8 @@ export async function local(opts, config, manager) {
   let info, network, run, child;
   function diskFloor() {
     const s = fs.statfsSync(REPO);
-    assert(s.bavail * s.bsize >= 5 * GiB, "Host disk below 5 GiB");
+    const minimum = holder === "DX-THIN1" ? 10 : 5;
+    assert(s.bavail * s.bsize >= minimum * GiB, "Host disk below " + minimum + " GiB");
     return s.bavail * s.bsize;
   }
   write("inputs", { nonce, mode, people, caps, forecast, inputs });
