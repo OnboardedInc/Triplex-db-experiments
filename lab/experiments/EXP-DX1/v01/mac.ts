@@ -63,22 +63,17 @@ if (action === "--packages") {
     // [DX-V01] Why: leave each native attempt and its independently staged oracle available after failure.
     // Rejected: recycling a previous output directory or taking a Mac measurement lease.
     const fixture = fs.mkdtempSync(path.join(root, "fixture-"));
-    const oracleInput = path.join(fixture, "oracle-input");
-    fs.mkdirSync(oracleInput);
-    const { stageReplay } = await import("../scale1/source.ts");
-    fs.writeFileSync(path.join(oracleInput, "manifest.json"),
-      JSON.stringify(stageReplay(process.cwd(), path.join(oracleInput, "oracle")), null, 2) + "\n", { flag: "wx" });
     console.log("Mac evidence staging " + fixture);
     const campaign = path.join(fixture, "campaign");
+    fs.mkdirSync(campaign);
     try {
-      managed(["--arm-compact", build, "int1-campaign-proof", "40", fixture]);
+      managed(["--arm-compact", build, "int1-adopted-proof", "80", fixture]);
     } catch (error) {
       console.error(error);
       process.exitCode = 1;
     }
-    if (fs.existsSync(path.join(campaign, "campaign.json"))) {
-      command(process.execPath, ["lab/bin/scorecard.mjs", "--age", "fresh", "--toy-campaign",
-        campaign, "--commit", commit, "--out", path.join(fixture, "scorecard")]);
-    }
+    const { writeAdoptedCard } = await import("./adopted-card.ts");
+    writeAdoptedCard({ source: commit, age: "fresh", writer: "grouped", toy: true, campaign,
+      out: fixture, forecast: "Mac diagnostics from the SCALE1 loader fixture." });
   }
 }

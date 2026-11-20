@@ -230,7 +230,11 @@ done
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 prepw=${DX_PREP1_WRITERS:-1}
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
-  [[ ${DX_BARE_METAL:-0} == 1 && $prefix == tx2-dxprep1-* && $prepw =~ ^(1|2|4)$ && $publish == true ]]
+  [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
+  # [DX-V01] Why: the scorecard uses the same selected writer on private bridge endpoints.
+  # Rejected: publishing ports solely to select the integrated per-person writer.
+  [[ ( $prefix == tx2-dxprep1-* && $publish == true ) ||
+     ( ${DX_V01_ADOPTED_STACK:-0} == 1 && $prefix == tx2-dxscale1-v01-* && $publish == false && $prepw == 1 ) ]]
   [[ ${DX_PREP1_SUBJECT:-0} =~ ^[01]$ && -z $seed_volume ]]
   (( port_w + prepw - 1 < port_r ))
   [[ -z ${DX_PREP1_DUMP:-} || -f $DX_PREP1_DUMP ]]

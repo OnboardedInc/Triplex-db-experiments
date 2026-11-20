@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
+import { datomicRuntime } from "../../../config/datomic/runtime.mjs";
 
 const git = (...args: string[]) => execFileSync("git", args, { encoding: "utf8", maxBuffer: 64 * 1024 ** 2 }).trim();
 export const pgImage = "postgres:17-alpine@sha256:526f86d93c6ea08fd3f1fe5605650cacc781b2c6013169a0ad8f42c7d3d84f32";
@@ -52,7 +53,7 @@ export function serverImages() {
   for (const reference of [pgImage, nodeImage]) {
     assert.equal(imageId(reference), imageId(reference.split("@")[0]!), "Mutable tag does not match pinned image");
   }
-  return Object.fromEntries([pgImage, nodeImage, datomicImage].map((ref) => [ref, imageId(ref)]));
+  return Object.fromEntries([pgImage, nodeImage, datomicImage, datomicRuntime("25").tag].map((ref) => [ref, imageId(ref)]));
 }
 
 export function verifyBuild(source: string, file?: string) {

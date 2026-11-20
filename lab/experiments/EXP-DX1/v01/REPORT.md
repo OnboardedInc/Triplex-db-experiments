@@ -1,3 +1,21 @@
+The second scorecard candidate adopts the pooled SCALE1 format.
+The grouped writer uses compact layout K with a queryable journal.
+The server may also select the integrated per-person writer.
+This step covers adopted seed checks and partial readings for rows 1 through 4.
+The short pair offers the same writes in both arms.
+Aged offers require the live AGE1 check on the restored database.
+The Mac proof uses a toy seed made by the SCALE1 loader.
+The server handoff will name the verified revision.
+
+## Part 2 verdict and receipt audit
+
+- The fresh adoption reads the exact operator-pinned SCALE1 image and transfer. The transfer binds the producer, nonce, successful terminal result and image digest. The restore checks the exact dump hash while streaming it onto a private slot. Both peers check the original logical cut, stored scope, loader manifest receipt, terminal loader command and exact pinned members and fields. The aged branch checks the original fresh identity against the AGE1 bundle and calls the published fresh-peer verifier on the actual restored database before offers.
+- Each arm starts with a fresh UUID used by the selected gateway and write commands. The installed writer function and concrete options must agree with the source-bound live gateway and held cut. The archive compares every journal change and transaction identity to the original acknowledged operation and expected prior rows. It refreshes a sample of receipt and claim lookups after the tape and records the denominators.
+- The card rejects mismatched source, arm type and changed observation bytes and requires the matched arm tapes and starting cuts to agree. It reports diagnostic components with explicit gaps. This revision creates no new PASS path.
+- No acceptance file changed. The transferred code comes from the SCALE1 and AGE1 branches and keeps the original sources and command formats.
+
+## Part 1 report
+
 The readiness table and merge order are on the scorecard branch.
 Version 0.1 still needs both physical runs on INT1.
 The scorecard reports nine priorities and four correctness checks.

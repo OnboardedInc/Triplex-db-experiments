@@ -13,7 +13,7 @@ const disk = fs.statfsSync(".");
 assert(disk.bavail * disk.bsize >= 5 * 1024 ** 3);
 const env = {
   PATH: process.env.PATH, HOME: process.env.HOME,
-  DX_V01_PIN_IMAGES: "1",
+  DX_V01_PIN_IMAGES: "1", DX_JAVA: "25",
 };
 execFileSync("bash", ["lab/experiments/EXP-DX1/t1/bare-metal.sh", "--prepare", source, location],
   { env, stdio: "inherit" });

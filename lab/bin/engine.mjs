@@ -262,13 +262,29 @@ async function selftestDatomic(config, opts) {
 // [DX-THIN1] Why: release only staged images that this experiment built and whose slots have closed.
 // Rejected: a forced removal or pruning the lab VM's shared image cache.
 async function removeThinImage(config, opts) {
-  if (opts.holder !== 'DX-THIN1' || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
+  const scorecard = opts.holder === 'DX-V01';
+  if ((!scorecard && opts.holder !== 'DX-THIN1') || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
+  if (scorecard) {
+    // [DX-V01] Why: retire only the scorecard's exact staged builds while rotating its two-image budget.
+    // Rejected: taking the thin holder identity or pruning a shared cache.
+    const root = fs.realpathSync(CONFIG_DIR);
+    if (!root.startsWith(path.join(REPO, 'runs', 'DX-V01') + path.sep))
+      fail('REFUSED', 'The scorecard build configuration must belong to its worktree');
+    const log = fs.readFileSync(path.join(root, 'build.log'), 'utf8');
+    const built = JSON.parse(log.slice(log.indexOf('{\n')));
+    if (built.imageId !== opts['image-id'] || built.image !== config.lanes.datomic.image)
+      fail('REFUSED', 'The scorecard image differs from its build record');
+  }
   const info = slotInfo(config, 'datomic', 'dev');
   const tag = info.laneConf.image;
   if (!/^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/.test(tag)) fail('REFUSED', 'Only staged DX-THIN1 image tags may be removed');
   if (info.laneConf.imageId !== opts['image-id']) fail('REFUSED', 'The staged configuration is pinned to a different image');
   await withPool(async ledger => {
     assertMeasureAdmission(opts.holder);
+    if (scorecard && !docker(['image', 'inspect', tag], { allowFail: true })) {
+      console.log(JSON.stringify({ tag, alreadyAbsent: true }));
+      return;
+    }
     const image = assertDatomicImage(info);
     if (ledger.reservations.some(r => r.holder === opts.holder)) fail('REFUSED', 'Release the holder’s reservations first');
     const users = docker(['ps', '-a', '--filter', 'ancestor=' + image.Id, '--format', '{{.ID}}']);
@@ -948,7 +964,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
     const source = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO, encoding: 'utf8' }).trim();
     const result = spawnSync('docker', dockerArgs(['exec', '-w', REPO, '-e', 'DX_V01_FIXTURE_SOURCE=' + source, live.Id, '/usr/local/bin/node',
       '--no-warnings', '--experimental-transform-types', '--expose-gc', '--max-old-space-size=768',
-      'lab/experiments/EXP-DX1/thin1/managed.ts', '--guest', configDir, 'int1-campaign-proof', '40',
+      'lab/experiments/EXP-DX1/thin1/managed.ts', '--guest', configDir, 'int1-adopted-proof', '80',
       path.join(output, 'campaign')]), { stdio: 'inherit', timeout: 13 * 60_000 });
     if (result.status !== 0) fail('ENGINE', 'Scorecard fixture failed');
     return;

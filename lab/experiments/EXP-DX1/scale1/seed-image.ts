@@ -143,10 +143,26 @@ export async function restoreSeed(
     (campaignSeed ? proof.identity.slot !== id.slot : proof.identity.slot === "tx2-dxscale1-" + target));
   const file = path.join(source, "seed.pgdump");
   assert(fs.statSync(file).size === proof.bytes);
+  await restoreDump(file, proof.dumpSha256, id.slot, engines, deadline);
+  fs.writeFileSync(
+    path.join(dir, "restored-seed.json"),
+    JSON.stringify({ identity: id, origin: proof }),
+    { flag: "wx" },
+  );
+  return proof;
+}
+
+
+// [DX-V01] Why: use the same owned PostgreSQL restore for a SCALE1 operator-held dump.
+// Rejected: relabeling the loader artifacts as an INT1 driver seed.
+export async function restoreDump(file: string, expectedSha: string, slot: string,
+  engines: Record<string, { id: string; address: string }>, deadline?: number) {
+  assert(process.platform === "linux" && process.getuid?.() === 0 && process.env.DOCKER_HOST === "unix:///var/run/docker.sock");
+  assert(/^tx2-dxscale1-[a-z0-9-]+$/.test(slot) && /^[a-f0-9]{64}$/.test(expectedSha));
   for (const role of ["pg", "tx", "gw-w", "gw-r"])
     assert.equal(
       docker(["inspect", "--format", "{{.Name}}", engines[role]!.id]),
-      "/" + id.slot + "-" + role,
+      "/" + slot + "-" + role,
     );
   for (const role of ["gw-r", "gw-w", "tx"]) docker(["stop", "--time", "20", engines[role]!.id]);
   const g = spawn(
@@ -169,7 +185,7 @@ export async function restoreSeed(
   );
   const timer = deadline ? setTimeout(() => g.kill("SIGKILL"), Math.max(0, deadline - Date.now())) : undefined;
   try {
-    assert.equal(await archiveStream(g, fs.createReadStream(file), g.stdin), proof.dumpSha256);
+    assert.equal(await archiveStream(g, fs.createReadStream(file), g.stdin), expectedSha);
   } finally {
     clearTimeout(timer);
   }
@@ -193,10 +209,4 @@ export async function restoreSeed(
       await sleep(500);
     }
   }
-  fs.writeFileSync(
-    path.join(dir, "restored-seed.json"),
-    JSON.stringify({ identity: id, origin: proof }),
-    { flag: "wx" },
-  );
-  return proof;
 }
