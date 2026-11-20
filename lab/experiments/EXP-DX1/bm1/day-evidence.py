@@ -26,6 +26,7 @@ SLOTS = {
     "tail1": ("day-n20-tail1", ("serial", "g1", "g1-2core", "zgc", "campaign.log")),
     "ha1-micro": ("day-n20-ha1-micro", ("run", "collector.json", "worker.log", "cleanup.json")),
     "prep1": ("day-n20-prep1", ("adapter", "smoke", "campaign", "native-small-agreement.json", "worker.log")),
+    "prep1-tenant": ("day-n20-prep1-tenant", ("adapter", "smoke", "campaign", "native-small-agreement.json", "worker.log")),
 }
 
 

@@ -3,7 +3,7 @@ set -euo pipefail
 
 action=${1:?usage: prep1-run.sh run|cleanup ROOT}
 root=${2:?}
-[[ $root == /var/tmp/triplex-bm1/day-n20-prep1 ]]
+[[ $root =~ ^/var/tmp/triplex-bm1/day-n20-prep1(-tenant)?$ ]]
 source=7ca8525a9ea0c3810c7af6ba0b5a0e15552dd534
 producer=$root/build/repository
 base=lab/experiments/EXP-DX1

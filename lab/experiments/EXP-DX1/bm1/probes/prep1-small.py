@@ -38,8 +38,21 @@ def generate(repo):
         else:
             replace('} from "./server-tape.ts";','} from "./.bm1-small-server-tape.ts";')
             replace("const population = await seedPooled(c, init.db);\n    let head = population.head;", "let head = 0;")
+            replace("    const fields = new Map<string, Row[]>();", '''    // [DX-BM1] Why: real grouped writes authenticate the subject owner from native rows.
+    // Rejected: timing a grouped control whose short fixture omitted all ownership facts.
+    const ownership = new Map(cells(arms[0]!).flatMap(({ tape }) => tape.map((o) =>
+      [root(o.account, o.person), accounts[o.account]!.key] as const)));
+    for (let i = 0; i < owners.length; i += 200) {
+      const batch = owners.slice(i, i + 200);
+      const input = command("smoke-owners-" + i,
+        batch.map((e) => fact(e, ":subject/account", ownership.get(e)!)), [], false);
+      const ack = (await c.transact(init.db, input)) as Ack;
+      assert.equal(ack.operationId, input.operationId);
+      assert.equal(Number(ack.position.v), ++head);
+    }
+    const fields = new Map<string, Row[]>();''')
             replace('      roster: pooledDigest,\n      facts: 16_245_050,\n      fields: [...fields],\n      seeds: population.seeds,',
-                    '      roster: digest(Buffer.from(JSON.stringify(owners))),\n      facts: owners.length * 2,\n      fields: [...fields],\n      seeds: [],')
+                    '      roster: digest(Buffer.from(JSON.stringify(owners))),\n      facts: owners.length * 3,\n      fields: [...fields],\n      seeds: [],')
             replace('''  assert.equal(baseline.roster, pooledDigest);
   assert.equal(baseline.facts, 16_245_050);
   assert.deepEqual(
@@ -49,7 +62,7 @@ def generate(repo):
   // Rejected: fabricating a deep seed receipt or substituting the mock transport for the native writer.
   const expected = [...new Set(cells(arm).flatMap((cell) => cell.tape.map((e) => root(e.account, e.person))))].sort();
   assert.equal(baseline.roster, digest(Buffer.from(JSON.stringify(expected))));
-  assert.equal(baseline.facts, expected.length * 2);
+  assert.equal(baseline.facts, expected.length * 3);
   assert.deepEqual(baseline.fields.map(([key]) => key), expected);
   assert(baseline.fields.every(([, rows]) => rows.length === 2));''')
         derived = repo/path.with_name(".bm1-small-"+filename)
