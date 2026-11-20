@@ -2835,3 +2835,30 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **Assigned, part 3:** the queued runs (fleet first); `OWNER-DECISION.md` on the window after a sudden loss (one copy
   with an alarm, refuse until two, three machines) with times, costs and sources; the client's resend specification;
   merge the write-path fixes.
+
+## 2026-11-20 05:16 UTC (00:16 local, 2026-11-20): server 1's night so far: first bare-metal activation and import numbers; server idle 16 minutes; reseeded
+
+- **DX-BM1 (`34badc007`; `bm1/REPORT.md`, `HANDOFF.md`, `COLLECTORS.md`; evidence `DX-BM1/overnight/`).** Bare metal:
+  **joined Publish at 64 people: quiet receipt 34.04 ms, first correct answer 47.09 ms, staged values 233.84 / 243.57 ms;
+  six cells, 28 saves, 30 independently replayed answers and 757 effects matched.** The 100,000-person run is held: the
+  settlement preflight received a generic rejected-write message where it requires the typed bulk-limit error.
+  **Import inside one shared database (HA1 load-live, all 32,400 offers verified): 128-fact frames moved 5,491 facts per
+  second (forecast 1,500); the quiet account's save p99 rose 2.28 and 4.45 times against the two controls (bar 1.5).**
+  **Matched thin against deep (same stream, zero readers, no overlay; 7,092 writes joined to gateway traces): deep
+  about 7 ms slower at the median; after the first two seconds p99 170 to 179 ms deep against 19 ms thin** (the
+  analyst had predicted a difference of minus 5 to plus 15 ms: refuted). Old W1 group study (unfixed path): 50.1
+  saves per second ungrouped with nine busy neighbours, quiet-save p99 198 ms to 4.00 s; the grouped arm hit its time
+  ceiling during seeding. WFIX pulse: five option readbacks and 75 receipts replayed; the five-seed run cut (over four
+  hours). Not run: CEIL, GROWTH and the predecessor arm (no verified 100,000 seed); SIZE (lean transaction-log route
+  refused after 50 receipts); READERS (missing group-format input); INT1 1,000,000 (launcher could not find
+  `lab/bench/lib`); DELTA and guarded activation (held).
+- **Server 1 sat idle from 00:04:43 to about 00:21 local (16 minutes, about 0.30 USD)** after the driver released it
+  with an empty inventory and ended its turn. Resumed at 00:21: seed and seal one verified 100,000-person deep
+  account first (about 77 minutes), fix the launcher faults on the Mac meanwhile, then every waiting probe on the
+  sealed seed; activation ahead of all of them when its preflight passes; never release while a seed could be building.
+- **DX-ACT1 stopped and resumed** with the one blocker (typed bulk-limit error) and the second review's findings 2 to 5.
+- **W2-COMPACTREVIEW:** FIX-FIRST for the compact prototype: the 11 records and 232 bytes are real and the paired
+  speedups were 4.40 and 6.19 times, but against a control that predates tonight's improvements and with the journal
+  writes omitted; blocker: no native business facts or Q107-S journal triples; cache-miss current reads 0.193 /
+  0.448 / 2.264 ms at 1 / 64 / 415 events; erasure omitted from the journal; retiring a 513-fact subject refused; a
+  changed schema dictionary can relabel an old fact; 733 saves per second and 31/34 ms follow from model inputs.
