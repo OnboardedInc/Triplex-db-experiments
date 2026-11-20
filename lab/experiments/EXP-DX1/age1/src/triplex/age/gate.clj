@@ -4,6 +4,7 @@
             [triplex.age.adopt :as adopt]
             [triplex.age.native :as native]
             [triplex.age.tape :as tape]
+            [triplex.gateway.group :as group]
             [triplex.gateway.journal :as journal]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.storage :as storage]))
@@ -159,11 +160,86 @@
                     :facts (:facts seal) :seedT (:seed-t pop) :seedHead seed :saves saves
                     :accounts 10 :sample (:people pop) :growth growth :cuts cuts :dbs [name clone]}))))
 
+(defn report-datoms [report]
+  (let [db (:db-after report) tx (d/t->tx (or (d/as-of-t db) (d/basis-t db)))]
+    (frequencies
+      (for [x (:tx-data report)
+            :let [a (d/ident db (:a x))
+                  entity #(if (= tx %) :native-tx (storage/value db % :triplex.entity/id))
+                  ref? (= :db.type/ref (:db/valueType (d/entity db (:a x))))]]
+        [(entity (:e x)) a (cond (= :db/txInstant a) :engine-time
+                                ref? (entity (:v x))
+                                :else (:v x)) (:added x)]))))
+
+(defn group-reference! [{:keys [conn]} pop saves size]
+  @(d/transact conn group/group-schema)
+  (doseq [ns (partition-all size (range saves))
+          :let [db (d/db conn)
+                entries (mapv (fn [n]
+                                (let [c (tape/command pop n)]
+                                  {:id (:operation c) :prepare #(storage/tx-data % (tape/input c))})) ns)
+                expected (group/evaluate db entries)]]
+    (equal! (count ns) (count (filter :report expected)) "Product group member failed")
+    @(d/transact conn (group/materialize db expected))))
+
+(defn fidelity-arms! [setting]
+  (let [pop (tape/population 27 3)
+        saves (* 4 (:active pop))
+        members 8
+        arms (if (= setting "load")
+               ["rolling"]
+               ["burst" "rolling" "group" "product-group"])
+        databases (into {} (for [label arms :let [db (native/open! label)]]
+                             (do (native/seed! db pop) [label db])))
+        reference (get databases "burst")]
+    (when-let [db (get databases "group")] @(d/transact (:conn db) group/group-schema))
+    (let [growth (into {} (for [[label db] databases :when (not= label "product-group")]
+                           [label (case label
+                                    "burst" (native/age! db pop 0 saves 64)
+                                    "rolling" (native/age! db pop 0 saves 256 true)
+                                    "group" (native/grouped-age! db pop 0 saves members))]))
+          seed (tape/seed-head pop)
+          cuts [0 1 7 8 9 (dec (:active pop)) (:active pop) (dec saves) saves]]
+      (when-let [db (get databases "product-group")] (group-reference! db pop saves members))
+      (doseq [[label db] databases
+              i (range (:people pop))
+              s (conj cuts nil)]
+        (equal! (oracle-person pop i (or s saves)) (person-view db pop i (some-> s (+ seed)))
+                (str label " oracle rows differ")))
+      (doseq [[label db] databases
+              [owner rows] (oracle-history pop saves)]
+        (equal! (set rows) (set (person-history db owner)) (str label " history differs")))
+      (doseq [n (range saves) :let [command (tape/command pop n)]
+              [label db] databases
+              :let [r (read-receipt db n) t (Long/parseLong (get-in r [:t "v"]))]]
+        (equal! (str (:position command)) (get-in r [:position "v"]) "Arm receipt position differs")
+        (equal! (:clock command) (get-in r [:recordedAt "v"]) "Arm receipt clock differs")
+        (when (and reference (= label "rolling"))
+          (equal! (normalized-log reference (Long/parseLong (get-in (read-receipt reference n) [:t "v"])))
+                  (normalized-log db t) "Rolling pipeline altered stored records"))
+        (when (and (= label "group") (zero? (mod n members)))
+          (let [product (get databases "product-group")
+                pt (Long/parseLong (get-in (read-receipt product n) [:t "v"]))
+                get-report (fn [{:keys [conn]} t]
+                             {:db-after (d/as-of (d/db conn) t)
+                              :tx-data (:data (first (d/tx-range (d/log conn) t (inc t))))})]
+            (equal! (report-datoms (get-report product pt))
+                    (report-datoms (get-report db t)) "Native group differs from W1 physical records"))))
+      (let [solo (or reference (get databases "rolling"))]
+        (doseq [s (range 0 saves 17) pin [nil (+ seed (min saves (+ s 4)))]
+                [label db] databases]
+          (equal! (feed solo (+ seed s) 7 pin) (feed db (+ seed s) 7 pin)
+                  (str label " feed page differs"))))
+      (native/emit "fidelity-arms" {:setting setting :growth growth :saves saves :cuts cuts
+                                    :active (:active pop) :arms arms :logicalDatoms
+                                    (reduce + (for [n (range saves)] (+ 12 (* 4 (tape/width n pop)))))}))))
+
 (defn -main [mode & args]
   (try
     (case mode
       "fidelity" (fidelity!)
       "adopted-fidelity" (apply adopted-fidelity! args)
+      "fidelity-arms" (apply fidelity-arms! args)
       (throw (ex-info "Unknown gate" {:mode mode})))
     (shutdown-agents)
     (System/exit 0)

@@ -94,20 +94,23 @@
           rows (mapv second pairs)]
       (native/check! (and (= [key (str local)] member)
                           (integer? revision) (<= 1 revision cut)
-                          (every? #(and (= owner (:entity_id %)) (= "string" (:value_type %))
-                                       (= 57 (count (:value_string %)))
-                                       (string? (:tx_id %)) (number? (:valid_from %))
-                                       (nil? (:valid_to %)) (number? (:recorded_at %))
-                                       (<= 1 (:recorded_position %) revision)
-                                       (<= (:recorded_at %) clock)) rows))
+                          (every? true?
+                            (map-indexed (fn [j row]
+                                           (and (= owner (:entity_id row)) (= "string" (:value_type row))
+                                                (= (subs (sha-text (str "deep-field/" local "/0/" j "/0")) 0 57)
+                                                   (:value_string row))
+                                                (string? (:tx_id row)) (number? (:valid_from row))
+                                                (nil? (:valid_to row)) (number? (:recorded_at row))
+                                                (<= 1 (:recorded_position row) revision)
+                                                (<= (:recorded_at row) clock))) rows)))
                      "Seed subject fields or stored revision differ" {:account account :local local})
       {:account account :local local :root root :owner owner :revision revision
        :texts (mapv first pairs) :rows rows})))
 
 (defn read-population! [{:keys [conn]} {:keys [position scope people-per-account source-seal] :as seal}
                         per-account initial?]
-  (native/check! (<= 1 per-account (dec people-per-account))
-                 "Active sample needs a separate idle subject in every account" {})
+  (native/check! (<= 1 per-account (- people-per-account 2))
+                 "Active sample needs separate probe and idle subjects in every account" {})
   (let [live (deref (d/sync conn) 60000 nil)
         _ (native/check! live "Seed peer did not synchronize" {})
         seed-t (exact-position-t live position)

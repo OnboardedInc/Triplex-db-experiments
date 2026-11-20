@@ -109,7 +109,7 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
     return;
   }
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
-  assert.match(opts.run ?? "", /^(fidelity|adopted-fidelity|scale|successor)$/);
+  assert.match(opts.run ?? "", /^(fidelity|adopted-fidelity|fidelity-arms|fidelity-arms-load|scale|successor)$/);
   const adopting = opts.run === "adopted-fidelity";
   const measure = opts.run === "scale" ? await import("./measure.mjs") : null;
   const spec = measure?.scaleOptions(opts);
@@ -235,7 +235,9 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
       ["postgres", "-c", "shared_buffers=48MB", "-c", "max_wal_size=256MB", "-c", "track_wal_io_timing=on"]);
     const sql = (query) => docker(["exec", pg, "psql", "-XAt", "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-c", query]);
     await ready(pg, () => docker(["exec", pg, "pg_isready", "-h", names.pg, "-U", "postgres"], { allowFail: true })?.includes("accepting connections"));
-    const settings = { "memory-index-threshold": "32m", "memory-index-max": "96m", "object-cache-max": "64m", "index-parallelism": 1 };
+    const settings = opts.run === "fidelity-arms-load"
+      ? { "memory-index-threshold": "96m", "memory-index-max": "192m", "object-cache-max": "96m", "index-parallelism": 2 }
+      : { "memory-index-threshold": "32m", "memory-index-max": "96m", "object-cache-max": "64m", "index-parallelism": 1 };
     const props = { protocol: "sql", host: names.tx, port: 4334, "sql-url": jdbc, "sql-driver-class": "org.postgresql.Driver",
       "sql-user": "postgres", "sql-password": password, ...settings };
     const flags = ["TX2_SAVE_LEDGER=1", "TX2_SMALL_ROWS=1"];
@@ -321,8 +323,11 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
         opts.run, "/tmp/age-fixture.json", fixture.sha, clone], path.join(dir, "probe.log"), controller.signal);
     }
     else {
-      const ns = opts.run === "fidelity" ? "triplex.age.gate" : "triplex.age.successor";
-      await capture(["exec", peer, "/opt/datomic/bin/run", "-m", ns, opts.run],
+      const ns = opts.run === "successor" ? "triplex.age.successor" : "triplex.age.gate";
+      const args = opts.run.startsWith("fidelity-arms")
+        ? ["fidelity-arms", opts.run.endsWith("-load") ? "load" : "standard"]
+        : [opts.run];
+      await capture(["exec", peer, "/opt/datomic/bin/run", "-m", ns, ...args],
         path.join(dir, "probe.log"), controller.signal);
     }
   } finally {

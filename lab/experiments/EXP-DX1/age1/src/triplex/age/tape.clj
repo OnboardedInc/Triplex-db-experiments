@@ -31,7 +31,11 @@
 (defn seed-head [{:keys [people seed-head]}]
   (or seed-head (quot (+ people (dec seed-frame)) seed-frame)))
 
-(defn id [prefix n] (str prefix (format "%025d" (long n))))
+(def zeroes "0000000000000000000000000")
+(defn digits [width n]
+  (let [s (Long/toString n)]
+    (str (subs zeroes 0 (- width (count s))) s)))
+(defn id [prefix n] (str prefix (digits 25 n)))
 (defn tx-id [n] (str "_tx/" (id "T" n)))
 (defn operation [n] (str "age-save-" n))
 (defn seed-position [i] (inc (quot i seed-frame)))

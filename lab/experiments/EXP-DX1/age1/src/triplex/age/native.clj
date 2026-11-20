@@ -3,6 +3,7 @@
             [datomic.api :as d]
             [triplex.age.tape :as tape]
             [triplex.gateway.commit :as commit]
+            [triplex.gateway.group :as group]
             [triplex.gateway.main :as gateway]
             [triplex.gateway.selftest :as fixture]
             [triplex.gateway.small-row :as small]
@@ -98,9 +99,72 @@
 (def attrs [:db/txInstant :triplex.tx/position :triplex.tx/operation-id :triplex.entity/id
             :triplex.claim/command-id :triplex.tx/max-recorded-at :triplex.entity/row :triplex.entity/rev])
 
-(defn acknowledge! [pop command authored result previous-t id-attr]
+(defn grouped-render [commands]
+  ;; [DX-AGE1] Why: mirror W1 materialize for a window with distinct owners and no born-and-retired rows.
+  ;; Rejected: concatenating solo transactions, which would merge journals and hide interior cuts.
+  (let [last-position (:position (peek commands))]
+    (vec
+      (mapcat (fn [{:keys [owner position clock tx width prior] :as command}]
+                (let [final? (= position last-position)
+                      member (if final? "datomic.tx" (str "age/member/" position))
+                      owner-ref [:triplex.entity/id owner]
+                      [header & rows] (render command)
+                      header (if final? header
+                                 (-> header
+                                     (dissoc :triplex.tx/position :triplex.tx/max-recorded-at)
+                                     (assoc :db/id member :triplex.tx/recorded-at clock)))
+                      tags [[:db/add "datomic.tx" :triplex.group/members member]
+                            [:db/add member :triplex.group/physical "datomic.tx"]
+                            [:db/add member :triplex.group/position position]
+                            [:db/add member :triplex.group/touched member]
+                            [:db/add member :triplex.group/touched owner-ref]]
+                      markers (for [r prior]
+                                [:db/add owner-ref :triplex.entity/retired
+                                 (str (group/prefix (fixture/row-text r)) (tape/digits 16 position)
+                                      (format "%016x" (Double/doubleToRawLongBits (double clock))) tx)])]
+                  (check! (= width (count markers)) "Grouped retirement count differs" {:position position})
+                  (concat [header] rows tags markers)))
+              commands))))
+
+(defn grouped-ack! [commands {:keys [db-after tx-data]} previous-t]
+  (let [t (d/basis-t db-after)
+        physical (d/t->tx t)
+        records (+ 2 (reduce + (map #(+ 15 (* 5 (:width %))) commands)))]
+    (check! (and (< previous-t t) (= records (count tx-data))
+                 (every? #(= physical (:tx %)) tx-data))
+            "Physical group datoms or ordering differ" {:t t :records records})
+    (doseq [{:keys [position clock operation tx owner prior-rev]} commands
+            :let [receipt (group/receipt db-after operation)
+                  member (d/entid db-after [:triplex.entity/id tx])
+                  owner-id (d/entid db-after [:triplex.entity/id owner])]]
+      (check! (and (= {:position position :clock clock :t t} receipt)
+                   (= member (d/entid db-after [:triplex.claim/command-id operation]))
+                   (some #(and (= owner-id (:e %)) (= prior-rev (:v %)) (not (:added %))
+                               (= :triplex.entity/rev (d/ident db-after (:a %)))) tx-data))
+              "Group logical receipt or predecessor revision differs" {:position position}))
+    [t records]))
+
+(defn grouped-age! [{:keys [conn]} pop from to size]
+  (let [db (d/db conn) start (System/nanoTime)]
+    (check! (<= 2 size (:active pop)) "Group owners must be distinct" {:size size})
+    (check! (= (+ (tape/seed-head pop) from) (storage/head-position db)) "Group start differs" {:from from})
+    (let [[t total]
+          (reduce (fn [[prev total] batch]
+                    (let [commands (mapv #(tape/command pop %) batch)
+                          data (grouped-render commands)
+                          result (deref (d/transact-async conn data) 120000 ::timeout)]
+                      (check! (not= result ::timeout) "Group outcome unknown" {:from (first batch)})
+                      (let [[t count] (grouped-ack! commands result prev)] [t (+ total count)])))
+                  [(d/basis-t db) 0] (partition-all size (range from to)))
+          seconds (/ (- (System/nanoTime) start) 1e9)]
+      (check! (= (+ (tape/seed-head pop) to) (storage/head-position (d/db conn)))
+              "Final grouped head differs" {:to to})
+      {:from from :to to :t t :seconds seconds :records total :recordsPerSecond (/ total seconds)
+       :groupSize size})))
+
+(defn acknowledge! [command authored result previous-t id-attr]
   (let [{:keys [db-after tx-data]} result
-        t (d/basis-t db-after) tx (d/t->tx t)
+        t (or (d/as-of-t db-after) (d/basis-t db-after)) tx (d/t->tx t)
         owner (d/entid db-after [:triplex.entity/id (:owner command)])
         prior-rev (:prior-rev command)
         header (first authored)
@@ -119,24 +183,49 @@
             {:t t :previous-t previous-t :position (:position command) :records (count tx-data)})
     [t (count tx-data)]))
 
-(defn age! [{:keys [conn]} pop from to depth]
-  (check! (<= 1 depth (min 128 (:active pop))) "Depth exceeds the tape's nonoverlapping owner window" {:depth depth})
+(defn age!
+  ([db pop from to depth] (age! db pop from to depth false))
+  ([{:keys [conn]} pop from to depth rolling?]
+  (check! (<= 1 depth (min 1024 (:active pop))) "Depth exceeds the tape's nonoverlapping owner window" {:depth depth})
   (let [start (System/nanoTime) db (d/db conn) head (storage/head-position db)
-        id-attr (into {} (map (fn [a] [(d/entid db a) a]) attrs))]
+        id-attr (into {} (map (fn [a] [(d/entid db a) a]) attrs))
+        stage (long-array 5)]
     (check! (= head (+ (tape/seed-head pop) from)) "Database head differs from tape start" {:head head :from from})
-    (let [[t datoms]
-          (reduce (fn [state batch]
-                    (let [pending (mapv (fn [n]
-                                          (let [command (tape/command pop n) authored (render command)]
-                                            [command authored (d/transact-async conn authored)])) batch)]
-                      (reduce (fn [[t datoms] [command authored future]]
-                                (let [r (deref future 120000 ::timeout)]
-                                  (check! (not= r ::timeout) "Native receipt timed out; outcome unknown" {:position (:position command)})
-                                  (let [[next-t n] (acknowledge! pop command authored r t id-attr)]
-                                    [next-t (+ datoms n)])))
-                              state pending)))
-                  [(d/basis-t db) 0] (partition-all depth (range from to)))
+    (let [add-stage! (fn [i a b] (aset-long stage i (+ (aget stage i) (- b a))))
+          send! (fn [n]
+                  (let [built (System/nanoTime)
+                        command (tape/command pop n) rendered (System/nanoTime)
+                        authored (render command) enqueue (System/nanoTime)
+                        ack (d/transact-async conn authored) enqueued (System/nanoTime)]
+                    (add-stage! 0 built rendered)
+                    (add-stage! 1 rendered enqueue)
+                    (add-stage! 2 enqueue enqueued)
+                    [command authored ack]))
+          receive! (fn [[t datoms] [command authored ack]]
+                     (let [waiting (System/nanoTime) r (deref ack 120000 ::timeout)
+                           ready (System/nanoTime)]
+                       (check! (not= r ::timeout) "Native receipt timed out; outcome unknown" {:position (:position command)})
+                       (let [[next-t n] (acknowledge! command authored r t id-attr)]
+                         (add-stage! 3 waiting ready)
+                         (add-stage! 4 ready (System/nanoTime))
+                         [next-t (+ datoms n)])))
+          initial [(d/basis-t db) 0]
+          [t datoms] (if rolling?
+                       (loop [sent (min to (+ from depth))
+                              pending (into clojure.lang.PersistentQueue/EMPTY
+                                            (map send! (range from (min to (+ from depth)))))
+                              state initial]
+                         (if (empty? pending) state
+                           (let [done (receive! state (peek pending)) rest (clojure.core/pop pending)]
+                             (if (< sent to)
+                               (recur (inc sent) (conj rest (send! sent)) done)
+                               (recur sent rest done)))))
+                       (reduce (fn [state batch] (reduce receive! state (mapv send! batch)))
+                               initial (partition-all depth (range from to))))
           elapsed (/ (- (System/nanoTime) start) 1e9)]
       (check! (= (+ (tape/seed-head pop) to) (storage/head-position (d/db conn)))
               "Final native head differs from tape end" {:to to})
-      {:from from :to to :t t :seconds elapsed :records datoms :recordsPerSecond (/ datoms elapsed)})))
+      {:from from :to to :t t :seconds elapsed :records datoms :recordsPerSecond (/ datoms elapsed)
+       :depth depth :rolling rolling?
+       :stageMs (zipmap [:tape :encode :enqueue :blockedAwait :ackValidate]
+                       (map #(/ % 1e6) stage))}))))
