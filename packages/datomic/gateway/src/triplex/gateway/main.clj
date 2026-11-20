@@ -245,7 +245,8 @@
 (defn route-handler [{:keys [uri request-method body] :as request}]
   (if-let [[_ name action] (re-matches #"/v[12]/db/(s2-[A-Za-z0-9_-]+)/(.+)" uri)]
     (try
-      (let [conn (connection (db-uri name)) db (d/db conn)]
+      (let [[conn db] (trace/span "privacy/current-data" "gateway"
+                        (let [conn (connection (db-uri name))] [conn (d/db conn)]))]
         (cond
           (and (= :post request-method) (= action "protection"))
           (response 200 (erase/declare! name conn db (request-json body)))
@@ -254,8 +255,9 @@
           (and (= :post request-method) (= action "restore-erasure"))
           (response 200 (erase/replay-after-restore! name conn))
           :else
-          (let [read-cut (privacy/cut name db)
-                _ (privacy/verify-data! read-cut db)
+          (let [read-cut (trace/span "privacy/frontier" "gateway" (privacy/cut name db))
+                _ (trace/span "privacy/verify-data" "gateway" (privacy/verify-data! read-cut db))
+                _ (trace/attribute! :erasureGuarded (boolean read-cut))
                 input (when (and (= :post request-method) (= action "transact")) (request-json body))
                 source (get input "erasureSourceDatabase")
                 _ (when (and source (not (and (string? source) (re-matches #"s2-[A-Za-z0-9_-]+" source))))
@@ -274,8 +276,9 @@
               ;; Rejected: an HTTP recheck followed by an independent recipient write.
               (with-privacy-guards (sort (cond-> #{} read-cut (conj name) source (conj source)))
                 (fn []
-                  (let [current (d/db conn) next (privacy/cut name current)]
-                    (privacy/verify-data! next current)
+                  (let [[current next] (trace/span "privacy/write-frontier" "gateway"
+                                         (let [current (d/db conn)] [current (privacy/cut name current)]))]
+                    (trace/span "privacy/verify-write" "gateway" (privacy/verify-data! next current))
                     (when (or source (contains? input "erasureSeq"))
                       (if source
                         (let [source-db (d/db (connection (db-uri source)))

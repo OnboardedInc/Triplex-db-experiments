@@ -1,6 +1,6 @@
 (ns triplex.gateway.privacy
   (:require [clojure.data.json :as json] [clojure.string :as str] [datomic.api :as d]
-            [triplex.gateway.scope :as scope])
+            [triplex.gateway.scope :as scope] [triplex.gateway.trace :as trace])
   (:import [java.nio.charset StandardCharsets]
            [java.nio.channels FileChannel]
            [java.nio.file Files Path Paths StandardCopyOption StandardOpenOption LinkOption]
@@ -55,10 +55,12 @@
   ;; Rejected: an in-memory mutex alone (an independent gateway would not join it).
   (let [m (get (swap! local-guards #(if (contains? % name) % (assoc % name (Object.)))) name)
         p (path name "writer.lock")]
-    (locking m
-      (with-open [c (FileChannel/open p (into-array StandardOpenOption [StandardOpenOption/CREATE StandardOpenOption/WRITE]))
-                  lock (.lock c)]
-        (work)))))
+    (let [started (when trace/*request* (trace/clock))]
+      (locking m
+        (with-open [c (FileChannel/open p (into-array StandardOpenOption [StandardOpenOption/CREATE StandardOpenOption/WRITE]))
+                    lock (.lock c)]
+          (when started (trace/interval! "privacy/write-lock-wait" "gateway" started (trace/clock) nil))
+          (work))))))
 
 (defn enabled? [db]
   (and db (d/entid db :triplex.scope/erasure-ledger)

@@ -115,6 +115,7 @@ export async function local(opts, config, manager) {
       "regression",
       "ledger-regression",
       "ledger-overhead",
+      "ledger-profile",
       "fast-smoke",
       "fast",
     ].includes(mode),
@@ -136,6 +137,17 @@ export async function local(opts, config, manager) {
   const roles = Object.keys(caps);
   const names = Object.fromEntries(roles.map((r) => [r, prefix + "-" + r]));
   const regression = mode.endsWith("regression");
+  // [DX-ERASE1] Why: stage evidence must join the peer and SDK from the same fresh attempt.
+  // Rejected: comparing an aggregate HTTP span from an earlier run.
+  const profile = mode === "ledger-profile";
+  const traceDir = path.join(dir, "trace");
+  const traceEnv = {
+    TRIPLEX_TRACE_LEVEL: "full",
+    TRIPLEX_TRACE_JFR: "0",
+    TRIPLEX_TRACE_RUN: nonce,
+    TRIPLEX_TRACE_SOURCE: sha256(JSON.stringify(inputs)),
+  };
+  if (profile) fs.mkdirSync(traceDir);
   const archiveDir = regression ? path.join(dir, "archive") : undefined;
   if (archiveDir) fs.mkdirSync(archiveDir);
   const owned = new Map();
@@ -365,6 +377,19 @@ export async function local(opts, config, manager) {
         "-v",
         import.meta.dirname + ":/erase1:ro",
         ...(archiveDir ? ["-v", archiveDir + ":/dx-archive"] : []),
+        ...(profile
+          ? [
+              "-v",
+              traceDir + ":/dx-trace",
+              "-e",
+              "TRIPLEX_TRACE_DIR=/dx-trace",
+              ...Object.entries({
+                ...traceEnv,
+                TRIPLEX_TRACE_SLOT: info.slot,
+                TRIPLEX_TRACE_PROCESS: "gateway",
+              }).flatMap(([k, v]) => ["-e", k + "=" + v]),
+            ]
+          : []),
         ...(mode.startsWith("ledger-") || mode.startsWith("fast")
           ? ["-v", "/dx-authority", "-e", "TRIPLEX_ERASURE_DIRECTORY=/dx-authority"]
           : []),
@@ -451,6 +476,7 @@ export async function local(opts, config, manager) {
       sourceHash: sha256(JSON.stringify(inputs)),
       freeBytes: diskFloor(),
       host: "mac-vm",
+      timing: "diagnostic",
     };
     run.binding = sha256(JSON.stringify(run));
     write("native", run);
@@ -462,8 +488,17 @@ export async function local(opts, config, manager) {
         TRIPLEX_DATOMIC_LAYOUT: "lean",
         TX2_W0_POINT_JOURNAL: "1",
         DX_ERASE_TOKEN: token,
-        DX_ERASE_MEASURE:
-          mode.endsWith("smoke") || regression ? "" : path.join(vault, "locks", "measure"),
+        ...(profile
+          ? {
+              ...traceEnv,
+              TRIPLEX_TRACE_DIR: traceDir,
+              TRIPLEX_TRACE_SLOT: info.slot,
+              TRIPLEX_TRACE_PROCESS: "client",
+            }
+          : {}),
+        // [DX-ERASE1] Why: local gates share the Mac under one ordinary heavy token.
+        // Rejected: serializing other work to make diagnostic timings resemble the server.
+        DX_ERASE_MEASURE: "",
       },
       stdio: ["ignore", "inherit", "inherit", "ipc"],
     });

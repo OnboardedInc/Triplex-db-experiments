@@ -3,7 +3,11 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
+import {
+  DatomicClient,
+  flushTracing,
+  tracedRequest,
+} from "../../../../packages/datomic/dist/index.js";
 import { canonicalWorld } from "../../../bench/lib/canonical.ts";
 import {
   openComposition,
@@ -23,6 +27,7 @@ type Layout =
   | "regression"
   | "ledger-regression"
   | "ledger-overhead"
+  | "ledger-profile"
   | "fast"
   | "fast-smoke";
 type Attempt = {
@@ -214,7 +219,9 @@ function blocks() {
     return [makeGroup(mid - 25, 10, 32), makeGroup(mid, 100, 8)];
   }
   const history =
-    run.mode === "smoke" || run.mode.endsWith("regression") || run.mode === "ledger-overhead"
+    run.mode === "smoke" ||
+    run.mode.endsWith("regression") ||
+    ["ledger-overhead", "ledger-profile"].includes(run.mode)
       ? 5
       : 415;
   return [makeGroup(mid - 1, 1, 0), makeGroup(mid, 1, run.mode.startsWith("fast") ? 0 : history)];
@@ -425,10 +432,15 @@ async function traffic(
     window: Window | undefined;
   const workers = subjects
     .map(async (subject) => {
+      const pull = () => reader.pull(ids.placement(subject), basis);
       while (running) {
         const start = wall(),
           t = performance.now();
-        const r = await reader.pull(ids.placement(subject), basis);
+        // [DX-ERASE1] Why: the normal recorder samples fast reads even at full detail.
+        // Rejected: estimating median Reach cost from the retained slow-tail sample.
+        const r = await (run.mode === "ledger-profile"
+          ? tracedRequest("internal", "erase1.profile.read", { phase: label, subject }, pull)
+          : pull());
         const end = wall(),
           ms = performance.now() - t;
         assert.equal(
@@ -787,7 +799,7 @@ async function scale() {
       );
       return;
     }
-    if (run.mode === "ledger-overhead") {
+    if (["ledger-overhead", "ledger-profile"].includes(run.mode)) {
       const { measureW0Http } = await import("../../../bench/lib/w0-http.ts");
       const otherName = fixtureName + "-guarded";
       const guarded = await openComposition("reach", "datomic", otherName);
@@ -919,5 +931,9 @@ async function scale() {
 try {
   await scale();
 } finally {
-  process.disconnect?.();
+  try {
+    if (run.mode === "ledger-profile") await flushTracing();
+  } finally {
+    process.disconnect?.();
+  }
 }

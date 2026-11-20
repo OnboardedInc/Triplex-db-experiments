@@ -1,5 +1,5 @@
 (ns triplex.gateway.reach
-  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission] [triplex.gateway.save-ledger :as ledger])
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.trace :as trace] [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission] [triplex.gateway.save-ledger :as ledger])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger LongAdder]))
 (set! *warn-on-reflection* false)
 
@@ -314,7 +314,8 @@
               (when inline
                 (.append out \,)
                 (if privacy/*cut*
-                  (append-strings! out (mapv privacy/text texts))
+                  (trace/span "reach/protected-inline" "gateway"
+                    (append-strings! out (mapv privacy/text texts)))
                   (.append out ^String (nth entry 4)))
                 ;; Overflow pages are entirely inline and leave the bounded map empty.
                 (when (and remembered eid (<= (.size entities) session-entry-limit)) (remember! generation eid rev)))

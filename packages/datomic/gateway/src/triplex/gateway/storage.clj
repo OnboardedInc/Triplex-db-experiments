@@ -152,8 +152,9 @@
    (let [lean (lean? db)
          input (ordered-row-texts (expand-fresh input lean))
          new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
-         _ (privacy/validate-write! privacy/*cut* input rows)
-         protected (envelope/protect privacy/*database* privacy/*cut* input rows)
+         _ (trace/span "privacy/validate-rows" "gateway" (privacy/validate-write! privacy/*cut* input rows))
+         protected (trace/span "privacy/prepare-envelopes" "gateway"
+                     (envelope/protect privacy/*database* privacy/*cut* input rows))
          input (:input protected) rows (:rows protected)
          fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
          timed-rows (when (seq old) (into {} (keep (fn [r] (when-let [id (timed-retraction r)] [(:id r) id]))) fresh))

@@ -5,11 +5,13 @@ The restored backup refused reads until it caught up, then showed the erased mar
 Across three Mac sizes, one fresh value took 38 to 80 milliseconds p99 to erase. A batch of 100 took 114 to 211.
 One person with 416 protected versions took 257 milliseconds at the largest size.
 Cleanup still slowed saves. A protected save added about two to three milliseconds at the median.
-The prepared 100,000-person server check should take 3 to 12 minutes after loading the data.
+The prepared 100,000-person server check still uses the Part 2 commit `d0ccf312373141d0d919cc17e18a5989e60b74ce`.
 
 # DX-ERASE1 · What erasing a person costs
 
 **North star** P1–P3 and P5. Measure pinned reads, save tails, replay and Publish during excision. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+
+Part 3 started with one ordinary Mac token and paired diagnostic traces. Forced inline replies added about 38 KB and 5.21 ms of median SDK decoding. The save shift concentrated in first-byte and native commit waits. The median lock acquisition was 0.08 ms. Six local cache tests reproduced stale or mismatched reference use on the starting code. [Stage attribution, predictions and evidence audit](PREDICTIONS-PART3.md)
 
 Part 2. [Regression tests and red evidence](REGRESSIONS.md) · [Ledger implementation, latency and receipt audit](LEDGER.md). The guarded Mac run verified all thirteen checks, including the joined stage race, actual backup restore, and the erased-SSN task. Save request bodies stayed at 7,442 B. Save p99 rose 1.73× and pinned read p99 rose 5.28× in the matched Mac comparison. Forcing full read responses accounted for the increased wire bytes.
 
