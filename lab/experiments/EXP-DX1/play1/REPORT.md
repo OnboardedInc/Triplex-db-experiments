@@ -24,7 +24,8 @@ From the Mac lab, rerun the correctness gate with one ordinary heavy token and a
 
 ```sh
 node lab/bin/heavy.mjs --label DX-PLAY1-live -- node lab/bin/engine.mjs play1 \
-  --holder DX-PLAY1 --portable --browser --out "$PLAYGROUND_EVIDENCE_DIR"
+  --holder DX-PLAY1 --portable --snapshot snapshot-smoke --browser \
+  --out "$PLAYGROUND_EVIDENCE_DIR"
 ```
 
 ## Evidence and limits
@@ -42,6 +43,8 @@ The full-population artifacts, replay and restore remain unmeasured. The `live-1
 The part 2 small snapshot restored and ran all 13 actions on the source used for the sizing ladder, `734890a2c`. The three individual-save samples measured 19,278, 34,862 and 66,010 initial facts. The first 96-person attempt failed with a Datomic read error. Subsequent runs passed after the playground bounded config reads to committed subject IDs and rebuilt against the integration ref. The fit selects 246 deep people and 9,840 wide people at the 5 GB sensitivity ceiling. Its upper build forecast is 2.21 hours, so I retained the one-command server recipe and did not build the selected tier on the Mac. No bucket or upload was created. [Sizing table and command](SIZE.md)
 
 On integration revision `990badf25`, playground commit `3b40fd516` passed the build, typecheck, six fixture tests, all 13 restored API actions, both MCP transports and Chromium against the restored database. The snapshot gate checked all three time cuts and verified that no owned runtime resources remained. The evidence archive is `part2-final-01.tar.gz`. [Evidence checksums](SHA256SUMS)
+
+The final refresh merged integration revision `53c595f02`. Playground source `36f9cad16` passed the same build, TypeScript, fixture, restored API, MCP and Chromium checks. The restored routine checked commit cuts 46, 65 and 90. With an already built image, local restore took 1.14 seconds and the first checked read arrived in 33.1 seconds on the shared Mac. The browser left a feed poll in flight as the service shut down. The gate observed a closed listener, an empty owned-resource inventory and release of the lab slot. The top report commit changes only documentation and evidence checksums. [Evidence checksums](SHA256SUMS)
 
 The release demo uses the shared ConfigStore and the HTTP package's configuration descriptors. An intentionally small status rule provides a visible answer and durable background materialization. The standalone Foldkit explorer continues to serve the generic Triples view. The Datomic dashboard has its own workspace panel for commit positions, traces, native query and Publish.
 
@@ -64,6 +67,7 @@ The orchestrator confirmed that the superseded plan commit used the generic lab 
 - A restored instance checks the exact Datomic scope, head and checkpoint carried by the archive. Before exposing API actions it compares the independently generated person and owned-record values, cardinalities and keys at the current cut and both earlier cuts. The fresh restore gate also reads the first person through the HTTP API.
 - The snapshot runner writes its evidence after the checked read, measured memory and storage observations, confirmed owned-resource inventory and shutdown of its original API address. The Mac adapter binds the gate to a committed source tree, manifest digest, unique run and live reservation owner before sealing.
 - Export waits for a fresh Datomic index job on the exact source database and checks that its requested native tick covers the named snapshot head. The subsequent shutdown quiesces the owned processes before measuring and exporting PostgreSQL.
+- The sizing fit consumes same-source diagnostics, checks the committed fact and save counts against the generator plan, and reports forecast sensitivity. Only the builder can verify a tier's actual byte cap by counting the produced chunks and manifest before sealing the validated restore.
 - The private playground scope has one config writer. It records config subject IDs from the committed ConfigStore result and uses them to bound subsequent reads of those records. ConfigStore still reads Datomic values. An uncertain commit invalidates the bound IDs until ConfigStore reads the authoritative state again.
 - The manual workflow binds the checkout to the dispatched commit, requires empty initial inventory, exercises expected fixture results on a fresh loopback server, then compares Docker inventory and requires the runtime directory and listener to disappear.
 
