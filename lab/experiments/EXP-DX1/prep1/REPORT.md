@@ -1,3 +1,4 @@
+The measured per-person writer has yet to reach 394 saves/s in one database. It reached 111.1 at that load with 8.62 ms native apply per save. [Server reading](SERVER-READING.md)
 Fair-turn follow-up source `5191435dc061a5abbed8f4e8f16abfa8174440aa`.
 Run `DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-fair -- bash lab/experiments/EXP-DX1/prep1/server.sh fair "$OUT" 5191435dc061a5abbed8f4e8f16abfa8174440aa "$SEALED"`.
 Use the original comparison's sealed campaign directory as `SEALED` and a new absolute directory as `OUT`.
@@ -5,7 +6,6 @@ Each of four runs starts from the same sealed database of ten accounts.
 One and two write gateways each run the prepared writer with fair turns off and on.
 Every run has a quiet account alone and beside nine neighbours at both 235 and 394 offered saves per second.
 The command stops within an hour, including the time allowed for cleanup.
-The original comparison passed native admission. Its timed rows are pending.
 
 **North star.** Durable small saves and quiet-account tails under load, with exact stored history and the ordered feed. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
@@ -36,7 +36,7 @@ Use the same allocated native Linux host, pinned images, built workspace package
 | S, 1 | 50 / 235 / 383 / 383 | 27.34 / 27.48 / 4,122 / 88,244 | 1.11 / 1.19 / 1.22 / 1.26 | 1 |
 | S, 2 or 4 | 50 / 235 / 394 / 620 | 27.34 / 27.48 / 28.00 / 28.36 | 1.11 / 1.19 / 1.22 / 1.26 | 2 |
 
-**Readout.** Awaiting the first published timed arm. The next limit will come from paired offer-to-ACK, sender queue, native work, ready-to-append and durable append clocks. No capacity verdict from the Mac.
+**Readout.** The verified one-gateway prefix measures 179.5 versus 140.6 saves/s for grouped and per-person at 235 offered. The copied per-person cells show native apply and storage reads as the next limit. [Server reading](SERVER-READING.md)
 
 **Evidence audit.** The launcher verifies and rechecks the sealed bytes, binds the new plan to its commit, starts a fresh slot per arm, and waits for owned cleanup before publishing a summary. The producer reads back settings and the installed function on each gateway, verifies the restored cut, and checks receipt and stored journal content against each offer. The collector verifies those bindings, joins each receipt to the same-attempt native append, checks one append at most per one-credit turn, and retains raw hashes and pause logs. Six tests and strict TypeScript passed. The four source-bound fixtures joined 2,548 simulated saves to their append records and rejected a changed fair-credit setting. The follow-up used no physical server here. [Checksums](SHA256SUMS)
 
