@@ -72,7 +72,7 @@ export function endCommit(item: OrderedCommit | undefined) {
 }
 export function sendCommit<A>(
   item: OrderedCommit,
-  send: (sequence: number, sent: () => void) => Promise<A>,
+  send: (sequence: number, sent: (published?: boolean) => void) => Promise<A>,
 ): Promise<A> {
   return new Promise((resolve, reject) => {
     const head = pending.reduce<OrderedCommit | undefined>(
@@ -95,7 +95,13 @@ export function sendCommit<A>(
         lane.inFlight++;
         let request: Promise<A>;
         try {
-          request = send(number, () => endCommit(item));
+          request = send(number, (published) => {
+            // [DX-W1] Why: a known local body-cap rejection has spent no sequence at the gateway.
+            // Rejected: advancing past an unsent ticket or rewinding after an ambiguous transport failure.
+            if (published === false && pending.includes(item) && lane.sequence === number)
+              lane.sequence--;
+            endCommit(item);
+          });
         } catch (error) {
           lane.inFlight--;
           throw error;

@@ -1,6 +1,7 @@
 (ns triplex.gateway.main
-  (:require [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
-            [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
+  (:require [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
+            [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
+            [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -80,7 +81,7 @@
         current (group/install! conn (commit/install! conn scope schema-ready))]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
-      (lean/enabled? current) (assoc :layout "lean")))))
+      (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
 (defn delete-scope! [base scope]
   (let [name (scope-name scope) uri (db-uri name)]
     (when (some #{name} (d/get-database-names (db-uri "*"))) (assert-scope (sync-db uri) scope))
@@ -121,21 +122,41 @@
     (when (> (alength bytes) 4194304) (codec/invalid "Request too large"))
     (let [start (System/nanoTime) input (trace/span "gateway.request-parse" "gateway" (json/read-str (String. bytes "UTF-8")))]
       (.set request-parse-micros (quot (- (System/nanoTime) start) 1000)) (if (map? input) (with-meta input {:wire-bytes (alength bytes)}) input))))
+(defn write-options [db database]
+  (let [selected (commit/entry db {} (lean/enabled? db))
+        [variant body] (commit/variants [true false])
+        actual (:db/fn (d/entity db selected))
+        expected (d/function {:lang :clojure :params '[db payload]
+                               :requires '[[datomic.api :as d] [clojure.data.json :as json]]
+                               :code (if (= selected variant) body commit/code)})]
+    {:database database :scope (stored-scope db) :basis (str (d/basis-t db))
+     :predecessorRequested (boolean pred/enabled) :predecessorSelected (= selected variant)
+     :selectedFunction (str selected) :selectedDefinitionSha256 (schema/sha256 (str actual))
+     :installedDefinitionMatches (and actual (= (str actual) (str expected)))
+     :ledger (boolean ledger/enabled) :packedJournal (boolean packed/enabled)
+     :fastReply (boolean group/fast-reply)}))
 (defn route-handler [{:keys [request-method uri body query-string]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try
     (cond
+      (and (= :get request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/write-options" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3)]
+        (response 200 (write-options (d/db (connection (db-uri name))) name)))
       (= uri "/v2/admin/scan-stats") (response 200 (assoc @stats/counts :idMemo (reach/id-memo-stats) :entityCache (let [base (entity-cache/stats) extra (recent/stats)] (assoc (merge base extra) :bytes (+ (:bytes base) (:recentBytes extra))))))
       (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (response 200 {}))
-      (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal)" uri))
+      (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal|entity-transactions)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
             conn (connection (db-uri name))]
         (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
-                     :body (if (.endsWith ^String uri "transactions")
+                     :body (case (last (clojure.string/split uri #"/"))
+                             "transactions"
                              (trace/span "journal/page" "gateway" (journal/page conn name input))
-                             (if (.endsWith ^String uri "journal")
-                               (trace/span "journal/entity" "gateway" (journal/entity (trace/span "d/db" "peer-call" (d/db conn)) name input))
-                               (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name input))))}))
+                             "journal"
+                             (trace/span "journal/entity" "gateway" (journal/entity (trace/span "d/db" "peer-call" (d/db conn)) name input))
+                             "entity-transactions"
+                             (trace/span "journal/entity-positions" "gateway" (journal/entity-positions (d/db conn) name input))
+                             "command"
+                             (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name input)))}))
       (and (= :get request-method) (= "/health" uri))
       (do (trace/span "d/db" "peer-call" (d/db (connection (db-uri "tx2-health"))))
           (response 200 (cond-> {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}
@@ -203,10 +224,10 @@
             "operation" (storage/operation db id)
             "claim" (let [cut (storage/at-position db (get input "position"))
                           id (get input "commandId") claim (d/entid cut [:triplex.claim/command-id id])
-                          tx (when claim (storage/value cut claim :triplex.claim/tx))
+                          tx (when claim (ledger/claim-tx cut claim))
                           pos (when (and tx (d/entid cut :triplex.group/position)) (storage/value cut tx :triplex.group/position))
                           visible (and claim (or (nil? pos) (nil? (get input "position")) (<= pos (get input "position"))))
-                          tx-id (when visible (storage/value cut claim :triplex.claim/tx-id))]
+                          tx-id (when visible (ledger/claim-tx-id cut claim))]
                       (cond-> {:txId tx-id}
                         (and visible (true? (get input "receipt"))) (assoc :commandId id
                           :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id))))))))

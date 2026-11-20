@@ -64,6 +64,8 @@ export interface DatomicDatabase {
   schemaHash: string;
   layout?: "lean" | "legacy";
   strictRecordClocks?: boolean;
+  orderedRowTexts?: boolean;
+  journalCuts?: boolean;
 }
 export interface DatomicBasis {
   t: TaggedValue;
@@ -153,7 +155,9 @@ export class DatomicClient {
     ticketWaitMicros: 0,
   };
   private readonly layouts = new Map<string, "lean" | "legacy">();
-  private readonly sentCallbacks = new Map<string, () => void>();
+  private readonly orderedRowTexts = new Set<string>();
+  private readonly journalCuts = new Set<string>();
+  private readonly sentCallbacks = new Map<string, (published?: boolean) => void>();
   private lastCommit: { db: string; position: number; t: string } | undefined;
   reachSession = randomUUID();
   readonly reachCache: ByteCache<CachedEntity>;
@@ -238,6 +242,7 @@ export class DatomicClient {
     readonly cacheOptions: {
       readonly groupAccount?: string;
       readonly writeClass?: DatomicWriteClass;
+      readonly saveWire?: boolean;
       readonly entityCacheBytes?: number;
       readonly rowCacheBytes?: number;
       readonly predecessorCacheBytes?: number;
@@ -290,6 +295,8 @@ export class DatomicClient {
     this.rowCache.clear();
     this.predecessorCache.clear();
     this.layouts.clear();
+    this.orderedRowTexts.clear();
+    this.journalCuts.clear();
     this.rowObservers.clear();
     this.agent.destroy();
   }
@@ -298,7 +305,7 @@ export class DatomicClient {
     path: string,
     body?: unknown,
     timeoutMs = this.timeoutMs,
-    onSent?: () => void,
+    onSent?: (published?: boolean) => void,
   ): Promise<T> {
     // [DX-T1] Why: a caller's commit/read owns all HTTP children, including retries and failures.
     // Rejected: a new unrelated trace for each round trip (loses queue and post-response cost).
@@ -317,7 +324,7 @@ export class DatomicClient {
     path: string,
     body: unknown,
     timeoutMs: number,
-    onSent?: () => void,
+    onSent?: (published?: boolean) => void,
   ): Promise<T> {
     const started = performance.now();
     const observation = this.activeObservation;
@@ -353,6 +360,10 @@ export class DatomicClient {
             : Buffer.from((fastPathEnabled("body") ? stringifyNativeExact : stringifyExact)(body)),
         );
     const byteLength = typeof bytes === "string" ? Buffer.byteLength(bytes) : (bytes?.length ?? 0);
+    if (path.endsWith("/transact") && byteLength > 4_194_304) {
+      onSent?.(false);
+      throw new DatomicHttpError(413, "RequestTooLarge", "Request too large");
+    }
     const serializeMicros = (performance.now() - serializeStart) * 1000;
     const remainingMs = timeoutMs - (performance.now() - started);
     if (remainingMs <= 0)
@@ -500,7 +511,7 @@ export class DatomicClient {
       });
       if (onSent) {
         req.once("finish", onSent);
-        req.once("error", onSent);
+        req.once("error", () => onSent?.());
       }
       req.end(bytes);
     });
@@ -774,7 +785,14 @@ export class DatomicClient {
     // [DX-B5-L6] Why: compact writes follow the actual immutable scope layout, including a reopened scope.
     // Rejected: trusting only the requested layout (could compact a pre-existing legacy scope).
     this.layouts.set(result.db, result.layout === "lean" ? "lean" : "legacy");
+    if (result.orderedRowTexts === true) this.orderedRowTexts.add(result.db);
+    else this.orderedRowTexts.delete(result.db);
+    if (result.journalCuts === true) this.journalCuts.add(result.db);
+    else this.journalCuts.delete(result.db);
     return result;
+  }
+  supportsJournalCuts(db: string): boolean {
+    return this.journalCuts.has(db);
   }
   delete(scope: string): Promise<{ db: string; deleted: boolean }> {
     return this.request("POST", "/v1/db/delete", { scope });
@@ -865,7 +883,7 @@ export class DatomicClient {
   async transact(
     db: string,
     input: {
-      onSent?: () => void;
+      onSent?: (published?: boolean) => void;
       groupAccount?: string;
       writeClass?: DatomicWriteClass;
       clientId?: string;
@@ -886,7 +904,7 @@ export class DatomicClient {
       handle?: string;
       release?: boolean;
     },
-    onSent?: () => void,
+    onSent?: (published?: boolean) => void,
   ): Promise<unknown> {
     // [DX-T1] Why: direct client users retain encoding and post-response validation in the same commit trace.
     // Rejected: starting the only trace after serialization at the HTTP boundary.
@@ -897,13 +915,13 @@ export class DatomicClient {
   private async transactTraced(
     db: string,
     input: Parameters<DatomicClient["transact"]>[1],
-    onSent?: () => void,
+    onSent?: (published?: boolean) => void,
   ): Promise<unknown> {
     const encodeSpan = beginSpan("client.transact-encode");
     const encodeStart = performance.now();
     // [DX-B5-L0] Why: two-argument transact wrappers preserve the input, and this callback never belongs on the wire.
     // Rejected: a third-argument-only callback (the NS publication observer drops it).
-    const { onSent: inputSent, ...wireInput } = input;
+    const { onSent: inputSent, rows: inputRows, newIds: ids, ...header } = input;
     onSent ??= inputSent;
     const compact = this.layouts.get(db) === "lean";
     const rowFast = fastPathEnabled("row"),
@@ -918,67 +936,80 @@ export class DatomicClient {
       "retract_tx_id",
     ];
     const rows = compact
-      ? input.rows
+      ? inputRows
           .filter((row) => row.retracted_at !== null)
           .map((row) => {
             const encoded = encodeRow(row);
             return Object.fromEntries(retirementColumns.map((column) => [column, encoded[column]]));
           })
-      : input.rows.map(encodeRow);
+      : inputRows.map(encodeRow);
     const bounds =
       compact && fastPathEnabled("history-range") ? historyIdentityBounds(input.newIds) : undefined;
+    const texts = inputRows
+      .filter((r) => isNew(r.id))
+      .map(
+        (r) =>
+          [
+            r.id,
+            (rowFast ? encodeRowTextFast : encodeRowText)(
+              rowFast &&
+                r.retracted_at === null &&
+                r.retracted_position === null &&
+                r.retract_tx_id === null
+                ? r
+                : { ...r, retracted_at: null, retracted_position: null, retract_tx_id: null },
+            ),
+          ] as const,
+      );
+    // [DX-W1] Why: each row text already carries its exact identity, and ordinary replacements have a stable order.
+    // Rejected: removing IDs from irregular imports or guessing peer support during a rollout.
+    const ordered =
+      compact &&
+      (this.cacheOptions.saveWire ?? fastPathEnabled("save-wire")) &&
+      this.orderedRowTexts.has(db) &&
+      ids.length === texts.length &&
+      new Set(ids).size === ids.length &&
+      rows.length + ids.length === inputRows.length &&
+      inputRows.every((r, i) =>
+        i < texts.length
+          ? r.retracted_at === null && r.id === texts[i]![0] && ids[i] === r.id
+          : r.retracted_at !== null && !isNew(r.id),
+      );
     // [DX-LOAD1] Why: an append-only lean batch carries the same new ID in the text prefix, map key and two arrays. Rejected: omitting IDs on mixed/retired input or trusting an empty subject at the peer.
     const fresh =
       compact &&
       fastPathEnabled("fresh-texts") &&
-      input.rows.length >= 32 &&
-      input.rows.length === input.newIds.length &&
-      new Set(input.newIds).size === input.rows.length &&
-      input.rows.every(
+      inputRows.length >= 32 &&
+      inputRows.length === input.newIds.length &&
+      new Set(input.newIds).size === inputRows.length &&
+      inputRows.every(
         (r) =>
           isNew(r.id) &&
           r.retracted_at === null &&
           r.retracted_position === null &&
           r.retract_tx_id === null,
       ) &&
-      new Set(input.rows.map((r) => r.id)).size === input.rows.length;
-    const { rows: wireRows, newIds: wireIds, ...header } = wireInput;
+      new Set(inputRows.map((r) => r.id)).size === inputRows.length;
     const body = {
-      ...(fresh ? header : wireInput),
+      ...header,
       ...(this.cacheOptions.writeClass ? { writeClass: this.cacheOptions.writeClass } : {}),
       ...(this.cacheOptions.groupAccount ? { groupAccount: this.cacheOptions.groupAccount } : {}),
       ...(bounds ? { historyIdentityBounds: bounds } : {}),
       ...(fresh
-        ? {
-            // [DX-LOAD1] Why: older gateways reject compact requests missing rowOrder and rowTexts. Rejected: a new rowMode that falls through to a successful empty legacy write.
-            rowMode: "texts",
-            freshTexts: wireRows.map((r) => (rowFast ? encodeRowTextFast : encodeRowText)(r)),
-          }
-        : {
-            newIds: wireIds,
-            rows,
-            ...(compact ? { rowMode: "texts", rowOrder: input.rows.map((row) => row.id) } : {}),
-            rowTexts: Object.fromEntries(
-              input.rows
-                .filter((r) => isNew(r.id))
-                .map((r) => [
-                  r.id,
-                  (rowFast ? encodeRowTextFast : encodeRowText)(
-                    rowFast &&
-                      r.retracted_at === null &&
-                      r.retracted_position === null &&
-                      r.retract_tx_id === null
-                      ? r
-                      : {
-                          ...r,
-                          retracted_at: null,
-                          retracted_position: null,
-                          retract_tx_id: null,
-                        },
-                  ),
-                ]),
-            ),
-          }),
+        ? { rowMode: "texts", freshTexts: texts.map(([, text]) => text) }
+        : ordered
+          ? {
+              rows,
+              rowMode: "texts",
+              rowOrder: "assertions-first-v1",
+              rowTexts: texts.map(([, text]) => text),
+            }
+          : {
+              rows,
+              newIds: ids,
+              ...(compact ? { rowMode: "texts", rowOrder: inputRows.map((row) => row.id) } : {}),
+              rowTexts: Object.fromEntries(texts),
+            }),
     };
     endSpan(encodeSpan);
     this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;

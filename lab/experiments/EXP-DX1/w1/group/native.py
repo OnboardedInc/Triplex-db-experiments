@@ -16,7 +16,7 @@ prefix, count, checks = {
     "group": ("W1_NATIVE ", 4, 281),
     "policy": ("W1_FIELD_POLICY ", 3, 357),
     "predecessor": ("W1_PREDECESSOR ", 3, 350),
-    "small": ("W1_SMALL_PARITY ", 1, 282),
+    "small": ("W1_SMALL_PARITY ", 2, 641),
     "budget": ("W1_BUDGET ", 1, 9),
     "prepared": ("W1_PREPARED ", 1, 266),
 }[gate_name]

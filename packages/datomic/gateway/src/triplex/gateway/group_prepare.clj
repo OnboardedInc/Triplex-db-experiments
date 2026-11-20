@@ -95,7 +95,11 @@
     (when (and subject (re-matches #"acct/[A-Za-z0-9_-]{1,64}/.+" subject)
                (:lean p) (not (:slim-row p)) (= 1 (:span p)) (:assign-record-time p)
                (not (:scope-wide p)) (not (:position-irregular p)) (not (:irregular p))
-               (not (:identity-bounds p)) (<= (count ops) 256)
+               (not (:identity-bounds p))
+               ;; [DX-INT1] Why: the reference writer owns ledger conversion and timed predecessors.
+               ;; Rejected: preparing a shape whose final journal depends on authoritative predecessor metadata.
+               (not-any? p [:save-ledger :packed-journal :timed-retractions])
+               (<= (count ops) 256)
                (#{:triplex/commit (first (commit/variants [true false]))} ident) fn-tx
                (= 1 (count journal-entities)) (every? small-op? ops))
       (let [signature (scope-flags db scope)
@@ -149,7 +153,7 @@
   (if prior (max submitted (+ (double prior) 1.0) (Math/nextUp (double prior))) submitted))
 (defn render [{:keys [id operations provisional new-ids witness]} member position clock]
   (let [physical "datomic.tx"
-        stamp (commit/stamp true clock new-ids (dec provisional) provisional position false)
+        stamp (commit/stamp true clock new-ids (dec provisional) provisional position false {})
         old (into {} (map (fn [[eid prefix text]] [prefix [eid text]]) (:retirements witness)))
         tx-metadata [[:db/add physical :triplex.group/members member]
                      [:db/add member :triplex.group/physical physical]
@@ -194,5 +198,5 @@
                 witness {:scope scope :flags signature :head (head-witness starting-head)
                          :members (mapv :witness drafts)}]
             {:data [[guard-ident witness data]]
-             :results (mapv (fn [p c] {:position p :clock c}) positions clocks)
+             :results (mapv (fn [draft p c] {:id (:id draft) :position p :clock c}) drafts positions clocks)
              :next-head [(last positions) (last clocks) (:id (peek entries))]}))))))

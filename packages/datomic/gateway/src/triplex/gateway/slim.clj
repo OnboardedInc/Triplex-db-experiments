@@ -22,7 +22,8 @@
 
 ;; [DX-T1-8] Why: bounded, versioned frames fail on truncation, trailing bytes or a forged length before JSON is trusted.
 ;; Rejected: unbounded readAllBytes on compressed storage or silently accepting damaged rows.
-(defn body [^String value]
+(def decoder-code
+  '(fn [^String value]
   (if-not (.startsWith value "Z1") value
     (let [n (Integer/parseInt value 2 10 16)]
       (when-not (<= 0 n 8388608) (throw (ex-info "Invalid slim row length" {})))
@@ -36,7 +37,8 @@
               (let [chars (char-array n)]
                 (.get (.asCharBuffer (java.nio.ByteBuffer/wrap bytes)) chars)
                 (String. chars))))
-          (finally (.end inflater)))))))
+          (finally (.end inflater))))))))
+(def body (eval decoder-code))
 
 ;; [DX-T1-8] Why: journal and receipt routes return row texts directly, so expand before crossing the wire.
 ;; Rejected: requiring each TypeScript reader/oracle to understand a private physical storage frame.
