@@ -61,7 +61,7 @@
                                 (when (and hint (:lean p)) (persisted-account db %))) business))
         account (when (= 1 (count accounts)) (first accounts))]
     (when (and hint (seq business) (not= hint account))
-      (throw (ex-info "Group account must match every business entity namespace" {:code "InvalidValue" :status 400})))
+      (throw (ex-info "Group account must match every business entity namespace" {:code "InvalidValue" :status 400 :write-policy true})))
     {:account (or account :shared)
      :subject (when (= 1 (count business)) (first business))
      :scope-barrier (and policy/priority? (:scope-wide p) (some? (:source p)))
@@ -191,7 +191,14 @@
 (defn choose [state]
   (loop [{:keys [queue accounts tails] :as state} state out []]
     (if (or (empty? queue) (= (count out) batch-limit)) [state out]
-      (let [entry (next-entry state) _ (assert entry "Oldest pending command must be eligible")
+      (let [next (next-entry state) _ (assert next "Oldest pending command must be eligible")
+            first-member (first out)
+            ;; [DX-W1] Why: combine already waiting edits of this subject across independent work in the same account.
+            ;; Rejected: two physical turns before the next account or jumping a sender, subject, claim or scope predecessor.
+            entry (if (and policy/field-only? first-member (:subject first-member) (= (:rank next) (:rank first-member)))
+                    (or (first (filter #(and (= (:account %) (:account first-member)) (= (:rank %) (:rank first-member))
+                                             (= (:subject %) (:subject first-member)) (:eligible %)
+                                             (every? realized? (:predecessors %))) queue)) next) next)
             a (:account entry) rank (:rank entry)
             solo (or (not (:eligible entry)) (and policy/priority? (or (= rank :bulk) (not (grouping?)))))]
         (if (and (seq out)
