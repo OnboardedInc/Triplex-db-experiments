@@ -4,7 +4,7 @@ The scorecard reports nine priorities and four correctness checks.
 It uses one Datomic database with all accounts in each arm.
 The two frozen arms take 197 minutes before restore and checks.
 The clean Mac clone built its packages and started Datomic.
-The Mac card contains diagnostic numbers and records gaps.
+The Mac ran both frozen arms and printed every scorecard row.
 Both server runs need compatible sealed inputs.
 
 ## Readiness and replacement
@@ -35,7 +35,9 @@ The first post-fix frozen zero-reader arm verified its archive. Its loaded arm r
 
 The stable catalog witness retry served 50 checked local replica samples and compared 91 exact reads through the independent oracle. Two split reads recorded TypeErrors and the gate refused the loaded arm. A targeted reproduction found that split reads assigned to read-only fallback metadata when combining their exact halves. The fixed reader constructs the result with the combined descriptors in one step and preserves the lazy row getter. Error traces now retain bounded repository-relative code locations without exception text.
 
-The retained archives produced diagnostic cards with nine priorities, four correctness rows and 39 exact zero-reader receipts. They contain no verdicts and label unverified loaded observations as unavailable. [Evidence index](EVIDENCE.md) locates the native logs, cards, build records and checksums.
+The retry from the joined INT1 branch verified both frozen arms. Its loaded arm checked 1,556,570 correct reads without errors, 50 local replica samples and 91 independent oracle samples. The field zero-reader arm returned all 1,755 committed receipts and checked 40 independent reads, but 315 offers expired. The next source uses lower field-only offer rates for the compact Mac fixture. Its first attempt again had no local samples in the frozen loaded arm. The pooled reader now retries one unavailable exact journal cut while honoring protection refusals. The scoped retry and field geometry tests passed.
+
+The final clean clone at `ac7698b07` verified both frozen arms. The loaded arm checked 1,956,903 reads with zero errors or mismatches, 50 exact local samples, 91 independent oracle samples and 39 exact receipts. In the reduced field zero-reader arm, 461 receipts and 40 independent reads matched. One primary write lacked terminal publication evidence and zero offers expired. The collector stopped before the loaded field arm. The generated card has all nine priorities and four correctness rows, with diagnostic numbers and explicit gaps. The fixture returned nonzero and the engine removed the private volume and released the slot. [Evidence index](EVIDENCE.md) locates the native logs, cards, build records and checksums.
 
 ## Server handoff
 

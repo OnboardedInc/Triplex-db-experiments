@@ -24,16 +24,6 @@ North star covers P1–P9 on one Datomic database. Parts come from `origin/main`
 - J1 — `lab/bench/driver.ts`, `lab/experiments/EXP-DX1/stack/up.sh`.
 - J2 — `lab/bench/driver.ts`, `lab/bin/heavy.mjs`, `lab/experiments/EXP-DX1/stack/up.sh`, `packages/datomic/gateway/src/triplex/gateway/{lean,storage}.clj`.
 
-## Ordered merge list
-
-1. W1 evidence; keep WFIX1's existing integration.
-2. PREP1; rerun SQL recovery, exact journal/native feed and SDK receipt gates before enabling the writer.
-3. ACT1 evidence; retain ACT2 and STG1 and verify permanent Publish, read visibility and settlement together.
-4. ERASE1; run the route regression and the native copy inventory on the selected journal and writer paths.
-5. HA1; retain INT1's resource admission and rerun the shared-database drill. Then integrate HASYNC1 and recheck move fences, receipt identity and feed resume.
-6. JVM1 and TAIL1; reconcile overlapping launch and driver flags with INT1 and check actual flags and process evidence for all three JVMs.
-7. Recheck the THIN1 and tracing gates already present in INT1. Integrate DX-V01 after review and run the fresh and 1B server scorecards.
-
 ## November 20 additions
 
 The [updated v0.1 table](https://github.com/OnboardedInc/Triplex-db-experiments/blob/fcfa01b9a4e0b01ab3659f693cff1321692cc529/lab/V0.1.md) adds the scorecard and playground. The trial below uses the newer INT1 snapshot `0b5ab37c92dedf3846ee5a6c5445e5df00939632`. Git's three-way merge calculated both trees in the DX-V01 worktree without changing its index. The original table records the earlier snapshot.
@@ -43,6 +33,40 @@ The [updated v0.1 table](https://github.com/OnboardedInc/Triplex-db-experiments/
 | Scorecard command | `exp/DX-V01-scorecard` `80324197afc2228a3c86de3d199a5095a303f51b` | No | 9 | Clean | INT1 has the fixed pooled campaign and native readback collector. | The scorecard wrapper and build need integration, compatible held seeds and the two physical runs. |
 | Playground dashboard, API and invented data | `exp/DX-PLAY1-playground` `4d393c7ce225bae895601fb77b70ceb11c50476c` | No | 14 | Clean | The branch-specific Datomic playground fixture and browser tests are pending integration. | The clean-clone start, local API and dashboard need a merged-branch gate alongside the small sample and the full hosted data. |
 
-Take the Mac admission marker independently as needed. After the core merges in the ordered list, integrate the playground alongside the scorecard. Run the playground's clean-clone gate on INT1 and run the merged scorecard at both ages.
-
 The later INT1 snapshot `d8c0af523ab5e25cd37e4126a1f9e292af6f68ac` includes the four previously outstanding ERASE1 commits. The scorecard branch trial with that snapshot conflicted in `int1/everything-arm.ts`, `int1/pooled-plan.test.ts` and `scale1/tenant-traffic.ts`. The merge on this branch keeps the streamed copy, combines the tests and takes INT1's canonical tape metadata and import duration.
+
+INT1 subsequently adopted the no-lease marker as `a79267191`. Its trial merge into the scorecard branch was clean.
+
+## Latest trial snapshot
+
+The following trials used INT1 `0196b9952e496c883a24b9ed05ef17fa886dfb00`. The source heads were the worktree's fetched origin refs. Counts are `INT1..source`. The trial tree leaves the index unchanged. [INT1 gate ledger](../int1/V0.1-STATE.md)
+
+| Source | Head | Ancestor | Unmerged | Trial merge | Gates and remaining work |
+| --- | --- | --- | ---: | --- | --- |
+| `exp/DX-ACT1-activation` | `c07b82562a2e39f6cbc31ee12f352574eee45d68` | No | 5 | Clean | The taken snapshot includes 41 focused checks and pinned priority, settlement and shared-save readbacks. The latest tip and pooled receipt-only run are open. |
+| `exp/DX-ACT2-activation-100k` | `90bfa213680bfbca22f758ec912b5d3e6fcdbdbb` | Yes | 0 | Included | Activation identity and readback are included. Both selected physical ages are open. |
+| `exp/DX-ERASE1-erasure-cost` | `9fdad4ed28cce4b2e61eaa375a1c7cca1a8871fd` | No | 5 | Conflicts in `lab/experiments/EXP-DX1/erase1/local.mjs`, `packages/datomic/src/DatomicClient.ts` | Guarded Reach native and cache checks ran. Reconcile the newer detached route and shared storage proof. |
+| `exp/DX-HA1-failover-move` | `41498d15fd5fc3b3e740c2f1f52e2099acafdf3a` | No | 21 | Clean | Earlier recorded drills are present. Integrate the refreshed shared-database machine-loss and move arm. |
+| `exp/DX-HASYNC1-sync-failover` | `57485ecb56aa168501cdd94d7b4cef7da6fa23f6` | No | 43 | Clean | The older HA receipt and oracle checks are available. The refreshed synchronous receipt and move fence drills are open. |
+| `exp/DX-INT1` | `0196b9952e496c883a24b9ed05ef17fa886dfb00` | Yes | 0 | Included | Native trace, position and collector bindings are in place. Capture those traces on both ages. |
+| `exp/DX-JVM1-settings` | `96c7fc0102eb7059b8b4ff867db78088d7c305d1` | No | 41 | Conflicts in `lab/experiments/EXP-DX1/stack/up.sh` | Gateway option readbacks and heap samples are available. Reconcile the 3-JVM physical launch. |
+| `exp/DX-PLAY1-playground` | `734890a2c14d39e40b82b323bf1eb10af3cbd01c` | No | 31 | Clean | Branch tests remain to be run on the joined clean clone. |
+| `exp/DX-PREP1-parallel-prepare` | `0fa782372ece9b878982d8165680c1b3f812d73c` | Yes | 0 | Included | Four fairness checks and 724 native assertions, including synchronous receipt and feed recovery. The physical writer comparison is open. |
+| `exp/DX-RD1-readers` | `5f51de7d6ab09b884df61f5c260db7f6688726c1` | Yes | 0 | Included | Exact fallback and oracle checks are included. The aged physical run is open. |
+| `exp/DX-STG1-staged-activation` | `f3454b12ebb60ed9a009e051b785660115f66ea5` | Yes | 0 | Included | Prepare, dispatch and settlement checks are included. Live restart coverage is open. |
+| `exp/DX-TAIL1-gc-pauses` | `da4c34f48f3749afcacfe45ac51a727ab0a2160a` | No | 44 | Conflicts in `lab/experiments/EXP-DX1/int1/everything-plan.ts`, `lab/experiments/EXP-DX1/stack/up.sh` | Collector selection is verified on INT1. The matched physical pause comparison is open. |
+| `exp/DX-THIN1-cold-subjects` | `e758c44002d8914745405f8a7f21d1c56c9bc927` | Yes | 0 | Included | Two heap profiles and one resident-page checkpoint. Matched physical deep growth remains open. |
+| `exp/DX-V01-scorecard` | `52829bbf09bd3238b60bf24dd86ba818864041a2` | No | 23 | Clean | Fixed pooled driver and saved-output verifier are present. Integrate the wrapper and run both compatible seals. |
+| `exp/DX-W1-commit-tail-reads` | `29c30a9a89b19dcefacd12c5d6d1b8512bbd6973` | No | 11 | Clean | Recorded-cut journal audit included. The new tip and combined physical layout K proof are open. |
+| `exp/DX-WFIX1-write-path-fixes` | `4331d6fe8e2240d1cab6fdca7ca8287226043bb9` | Yes | 0 | Included | Native SQL, Core and SDK gates ran. The combined physical path is open. |
+
+## Ordered merge list
+
+1. Take the remaining W1 work and keep WFIX1's existing integration.
+2. Keep the merged PREP1 writer opt-in until the physical comparison. Rerun SQL recovery, exact journal and feed, and SDK receipt checks before selecting it.
+3. Take the remaining ACT1 commits. Verify permanent Publish, read visibility and settlement together with ACT2 and STG1.
+4. ERASE1; run the route regression and the native copy inventory on the selected journal and writer paths.
+5. HA1; retain INT1's resource admission and rerun the shared-database drill. Then integrate HASYNC1 and recheck move fences, receipt identity and feed resume.
+6. JVM1 and TAIL1; reconcile overlapping launch and driver flags with INT1 and check actual flags and process evidence for all three JVMs.
+7. Recheck the THIN1 and tracing gates already present in INT1.
+8. Integrate DX-V01 and DX-PLAY1 after review. Run the playground clean-clone gate and both age scorecards on INT1.

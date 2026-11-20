@@ -1,13 +1,13 @@
 # Run the v0.1 scorecard on the allotted server
 
-Use one idle, dedicated bare-metal Linux server. The existing INT1 placement requires 12 distinct allowed physical cores numbered 0 through 11, extra space for a disposable restore, WAL, and evidence, and the native Docker socket. Use the rated host from the BM1/SCALE1 handoff. Build ahead of the scored allocation.
+Use one idle, dedicated bare-metal Linux server. The existing INT1 placement requires 12 distinct allowed physical cores numbered 0 through 11, at least 240 GiB free for the disposable restore, WAL, and evidence, and the native Docker socket. Use the rated host from the BM1/SCALE1 handoff. Build ahead of the scored allocation.
 
 ## Build
 
 Run this from a clean clone of the scorecard revision with Node 22 available. The command creates a fresh checkout and toolchain in a new build directory. It will refuse an existing build directory, changed or hidden source inputs, or unpinned files in the image context.
 
 ```bash
-COMMIT=d72cd53954e14514538875b05d6902e36cf4be34
+COMMIT=ac7698b0771f17b0253e73d8b6b74b573898c79c
 BUILD=/var/tmp/triplex-v01-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
