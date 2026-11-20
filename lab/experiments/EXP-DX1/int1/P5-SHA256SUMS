@@ -3,6 +3,7 @@
 45a5e0f564c5b4e644fb4d1ef5b0fdfce64ec7e5def8240a48859ec8d8cee5f0  int1/p5-checks/campaign-sdk.log
 496c8f8c7544844d91edb39f48f69735d36777d434a5a52df79f2bbf6192fcb0  int1/p5-checks/collector-diagnostics.json
 144f2d4c8924d24736984149b174f164a080b1e7c6065ce84756ca0682b5bfd0  int1/p5-checks/collector-launch-checks.log
+971d313108eb3ca615d64eb003e9e04422e5e92141a507a16985d9aed1e76826  int1/p5-checks/core-gate.log
 3807b082b37493e604ef3aad10eecb58909799663c25a791dcc183d1e34871e8  int1/p5-checks/legacy-frame-probe-2.log
 cf2d64c637d54f74dc3de306b56c0e8bb82aaaf68769bb9193bec2687e43066e  int1/p5-checks/legacy-frame-probe.mjs
 45cfcb3a86153cd5f14be8debf11ab376af394f20b8877c57d263c5871ceae34  int1/p5-checks/merged-focused.log
@@ -26,7 +27,7 @@ af766d70dc995ed36d3819f492fd0321485481c4e48699f66ff577fd1a552b62  int1/p5-checks
 78e07537434878ff189b86109c7e4e9b8a207ba046f535fb4641ec58a85a7b1d  int1/p5-checks/p5-w1-b2880b5e2c/build-1.log
 90ef36a3f2def6622c556ad13f0c6d720185642b237bae1757a0dc8d8f00eb15  int1/p5-checks/p5-w1-b2880b5e2c/gate.json
 af766d70dc995ed36d3819f492fd0321485481c4e48699f66ff577fd1a552b62  int1/p5-checks/p5-w1-b2880b5e2c/selftest-1.log
-90528911105f4f9c81f7160a5336be0a67b7f6f8b3d1773461c4481e8b6f8be3  int1/p5-checks/pin-audit-375.json
+fd72dd6ddafd528a6e5a875c99b2bd9749d1b3e52c54b1446f492d37b4b890f7  int1/p5-checks/pin-audit-8b1.json
 a3fa14a5c12eb8d203e5beeabd516973350d8303ff21c268d6fa993d343fb873  int1/p5-checks/pin-audit-b.json
 5ea57aea4712e578b3fbbbc3cc124531e63b56d85ce03ebcbcdff8b612640659  int1/p5-checks/pooled-plan-final.json
 2cfbb3e9d86ed69bbb3dedc25d5956312ed9cbcc59714ad37be160af73f8b327  int1/p5-checks/pooled-plan.json
