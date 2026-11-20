@@ -2103,7 +2103,9 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const background = writes.filter((w) => w.stream === "background" && !w.resend);
   const baseline = loadBaselineWrites();
   const lagRows = feed!.lags;
-  if(tenants && deepId && !pooledFrozen) {
+  // [DX-INT1] Why: the frozen arm also needs durable tenant cursors for its post-window challenges.
+  // Rejected: reconstructing a cursor from the offer tape or skipping the check without field traffic.
+  if(tenants && deepId) {
     const source=JSON.stringify({route:"A0-control",dir:rawDir,epoch:scopeName+"#0"});
     const view=tenantFeedAt(path.join(rawDir,"consumer.db"),tenants,source,feedWind!.target,report.deep.r1?.publicationPosition??report.deep.seed.position);
     for (const [position, members] of view.matched) {
