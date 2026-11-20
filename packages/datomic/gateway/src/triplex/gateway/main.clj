@@ -1,5 +1,6 @@
 (ns triplex.gateway.main
-  (:require [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
+  (:require [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
+            [triplex.gateway.predecessor :as pred] [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
   (:gen-class))
 
@@ -8,6 +9,7 @@
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
 ;; [DX-H1] Why: SQL storage places the database before the JDBC query. Rejected: suffix concatenation (dev-only).
 (def slim-rows? (= "1" (System/getenv "TX2_SLIM_ROWS")))
+(def write-options-attempt (System/getenv "TX2_WRITE_OPTIONS_ATTEMPT"))
 (def uri-template (or (System/getenv "DATOMIC_URI_TEMPLATE") "datomic:dev://127.0.0.1:4334/{db}"))
 (defn db-uri [name] (clojure.string/replace uri-template "{db}" name))
 (def connections (atom {}))
@@ -77,7 +79,7 @@
                        (do
                          (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
                          (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))))
-        current (commit/install! conn scope schema-ready)]
+        current (group/install! conn (commit/install! conn scope schema-ready))]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean")))))
@@ -97,6 +99,27 @@
       {:t (codec/encode-value "long" (d/basis-t db))
        :position (codec/encode-value "long" (storage/head-position name db))
        :recordedAt nil :schemaHash (storage/value db entity :triplex.scope/schema-hash)})))
+(defn write-options [name]
+  ;; [DX-WFIX1] Why: an enabled launcher option can still select the base function on an unopened scope.
+  ;; Rejected: an environment listing or a readback from a different database.
+  (let [db (sync-db (db-uri name))
+        entity (scope/entity db)
+        selected (commit/entry db {} (lean/enabled? db))
+        selected-id (d/entid db selected)
+        installed? (and selected-id (some? (storage/value db selected-id :db/fn)))]
+    {:database name :attempt write-options-attempt
+     :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")
+     :t (str (d/basis-t db)) :position (storage/head-position name db)
+     :strictRecordClocks (true? (storage/value db entity :triplex.scope/strict-record-clocks))
+     :rowsVersion (storage/value db entity :triplex.scope/rows-version)
+     :commitFunction (str selected) :commitFunctionInstalled (boolean installed?)
+     :baseFunctionHash (storage/value db entity :triplex.scope/commit-fn-hash)
+     :options {:predecessorLookup pred/enabled :groupCommit group/enabled
+               :livePriority policy/priority? :fieldCoalesce policy/field-only?
+               :queueClock group/queue-clock :stageClock group/stage-clock
+               :smallRows small-row/enabled :reusePrepared group/reuse-prepared
+               :maxMembers group/batch-limit :budgetMicros policy/budget-us
+               :bulkRows policy/bulk-rows :bulkBytes policy/bulk-bytes}}))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
 ;; Rejected: timing the StringBuilder alone (response bytes are not ready yet).
@@ -120,7 +143,7 @@
   (let [bytes (.readNBytes ^java.io.InputStream body 4194305)]
     (when (> (alength bytes) 4194304) (codec/invalid "Request too large"))
     (let [start (System/nanoTime) input (trace/span "gateway.request-parse" "gateway" (json/read-str (String. bytes "UTF-8")))]
-      (.set request-parse-micros (quot (- (System/nanoTime) start) 1000)) input)))
+      (.set request-parse-micros (quot (- (System/nanoTime) start) 1000)) (if (map? input) (with-meta input {:wire-bytes (alength bytes)}) input))))
 (defn route-handler [{:keys [request-method uri body query-string]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try
@@ -145,6 +168,8 @@
       (response 200 (delete-scope! uri-template (get (request-json body) "scope")))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/basis" uri))
       (response 200 (basis uri-template (nth (clojure.string/split uri #"/") 3)))
+      (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/write-options" uri))
+      (response 200 (write-options (nth (clojure.string/split uri #"/") 3)))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/log" uri))
       (let [name (nth (clojure.string/split uri #"/") 3)
             params (into {} (map (fn [part] (let [[k v] (clojure.string/split part #"=" 2)]
@@ -199,8 +224,14 @@
             "q" (do (when (lean/enabled? (or db (storage/held-db name (get input "handle")))) (lean/unsupported! "q")) (trace/span "query/run" "gateway" (query/run name db input)))
             "operation" (storage/operation db id)
             "claim" (let [cut (storage/at-position db (get input "position"))
-                          claim (d/entid cut [:triplex.claim/command-id (get input "commandId")])]
-                      {:txId (when claim (storage/value cut claim :triplex.claim/tx-id))}))))
+                          id (get input "commandId") claim (d/entid cut [:triplex.claim/command-id id])
+                          tx (when claim (storage/value cut claim :triplex.claim/tx))
+                          pos (when (and tx (d/entid cut :triplex.group/position)) (storage/value cut tx :triplex.group/position))
+                          visible (and claim (or (nil? pos) (nil? (get input "position")) (<= pos (get input "position"))))
+                          tx-id (when visible (storage/value cut claim :triplex.claim/tx-id))]
+                      (cond-> {:txId tx-id}
+                        (and visible (true? (get input "receipt"))) (assoc :commandId id
+                          :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id))))))))
       :else (response 404 {:code "NotFound"}))
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
