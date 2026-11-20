@@ -45,7 +45,7 @@ test("only current evidence can judge a physical bar and toy reports never judge
   const arm = { case: c, identity: raw.deep.identity, source, startedAt: Date.parse(run.startedAt) + 2 };
   const zero = { ...c, key: "100000-frozen-zero", load: "zero" };
   const plan = { binding: "bound", source, cases: [zero, c], createdAt: arm.startedAt - 1,
-    placement: "physical", heldSeal: run.seal };
+    placement: "physical", heldSeal: run.seal, smoke: false };
   const write = (file: string, value: unknown) => fs.writeFileSync(path.join(root, file), JSON.stringify(value));
   fs.mkdirSync(path.join(root, key));
   fs.mkdirSync(path.join(root, zero.key));
@@ -62,11 +62,21 @@ test("only current evidence can judge a physical bar and toy reports never judge
   assert.match(rows(physical)[0]!, /\| PASS \|/);
   assert.match(rows(physical)[2]!, /\| NOT MEASURED \|/);
   assert.match(rows(physical)[3]!, /\| NOT MEASURED \|/);
+  write("campaign.json", { ...plan, smoke: true });
   write("comparison.json", { ...comparison, smoke: true });
   const toy = render({ ...run, toy: true }, root);
   assert.match(toy, /All numbers are diagnostic/);
   assert.doesNotMatch(toy, /\| PASS \||\| FAIL \|/);
   assert.throws(() => render({ ...run, toy: true, startedAt: "2026-11-21T00:00:00Z" }, root));
+  fs.unlinkSync(path.join(root, "comparison.json"));
+  write(key + "/recorded.json", comparison.results[1]);
+  const partialRun = { ...run, toy: true, partial: true };
+  const partial = render(partialRun, root);
+  assert.match(partial, /The native fixture stopped/);
+  assert.equal(rows(partial).length, 9);
+  assert.match(rows(partial)[0]!, /\| DIAGNOSTIC \|/);
+  assert.doesNotMatch(partial, /\| PASS \||\| FAIL \|/);
+  assert.throws(() => render({ ...partialRun, source: "b".repeat(40) }, root));
   write(key + "/ns-report.json", { ...raw, status: "UNVERIFIED" });
-  assert.throws(() => render({ ...run, toy: true }, root));
+  assert.throws(() => render(partialRun, root));
 });

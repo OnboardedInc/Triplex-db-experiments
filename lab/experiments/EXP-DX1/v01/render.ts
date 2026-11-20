@@ -13,6 +13,7 @@ export type Run = {
   forecast: string;
   campaign: string;
   seal?: string;
+  partial?: boolean;
   error?: string;
 };
 
@@ -73,23 +74,41 @@ export function render(run: Run, destination: string) {
     return `[${file}](${rel.split(path.sep).map(encodeURIComponent).join("/")})`;
   };
   const settings: Record<string, unknown> = {};
+  const zeroReaderObservations: string[] = [];
   const publication = path.join(run.campaign, "comparison.json");
   if (!run.error) {
     assert(run.toy || (run.seal && /^[a-f0-9]{64}$/.test(run.seal)), "Physical evidence requires a pinned seal");
-    const comparison = json(publication);
     const plan = json(path.join(run.campaign, "campaign.json"));
+    assert(plan.source === run.source && plan.smoke === run.toy && plan.heldSeal === run.seal);
+    assert(plan.createdAt >= Date.parse(run.startedAt));
+    let verifiedResults: any[];
+    if (run.partial) {
+      // [DX-V01] Why: render the available toy evidence after a native refusal.
+      // Rejected: turning an unverified arm into a sample source or a verdict.
+      assert(run.toy && !fs.existsSync(publication));
+      verifiedResults = plan.cases.flatMap((c: any) => {
+        assert(/^[0-9]+-(frozen|field)-(zero|reader)$/.test(c.key));
+        const record = path.join(run.campaign, c.key, "recorded.json");
+        if (!fs.existsSync(record)) return [];
+        const item = json(record);
+        assert.deepEqual(item.arm.case, c);
+        return [item];
+      });
+    } else {
+      const comparison = json(publication);
+      assert(comparison.source === run.source && comparison.smoke === run.toy);
+      assert.equal(comparison.binding, plan.binding);
+      assert.deepEqual(comparison.results.map((r: any) => r.arm.case), plan.cases);
+      verifiedResults = comparison.results;
+    }
     // [DX-V01] Why: read only a completed native producer's archived source-bound comparisons.
     // Rejected: interpreting raw driver exit codes or an unrelated report as a verdict.
-    assert(comparison.source === run.source && comparison.smoke === run.toy);
-    assert(comparison.binding === plan.binding && plan.source === run.source && plan.heldSeal === run.seal);
-    assert(plan.createdAt >= Date.parse(run.startedAt));
-    assert.deepEqual(comparison.results.map((r: any) => r.case ?? r.arm.case), plan.cases);
     if (!run.toy) {
       assert.equal(plan.placement, "physical");
       assert.deepEqual(plan.cases.map((c: any) => c.key), ["100000-frozen-zero", "100000-frozen-reader"]);
     }
     settings.treatment = plan.treatment;
-    for (const item of comparison.results) {
+    for (const item of verifiedResults) {
       assert(["measured", "diagnostic", "preflight"].includes(item.state));
       assert(item.binding === plan.binding && item.arm.source === run.source && item.arm.startedAt >= plan.createdAt);
       const key = item.arm.case.key;
@@ -101,6 +120,10 @@ export function render(run: Run, destination: string) {
       assert.equal(raw.status, "DONE");
       const armReport = evidence(key + "/ns-report.json");
       const p = raw.priorities;
+      if (run.toy && item.arm.case.load === "zero") {
+        const capture = raw.receiptCapture;
+        zeroReaderObservations.push(`- ${key}: ${capture.matched} receipts matched, ${capture.missing} missing, ${capture.mismatches} mismatched. ${armReport}`);
+      }
       settings[key] = { config: raw.config, writePath: raw.deep.writePath, trace: raw.deep.trace };
       for (const file of ["gateway-jvm.json", "placement.json"]) {
         if (fs.existsSync(path.join(run.campaign, key, file))) {
@@ -158,7 +181,7 @@ export function render(run: Run, destination: string) {
       }
     }
     const setup = path.join(run.campaign, "physical-inputs.json");
-    settings.placement = json(setup);
+    if (!run.partial || fs.existsSync(setup)) settings.placement = json(setup);
   }
   const table = (data: Row[]) => data.map(({ name, bar, reading, status, samples, evidence }) =>
     `| ${[name, bar, reading, status, samples, evidence].map(markdown).join(" | ")} |`).join("\n");
@@ -166,6 +189,7 @@ export function render(run: Run, destination: string) {
   return [
     "# Triplex scorecard v0.1", "",
     run.toy ? "**Mac toy run. All numbers are diagnostic.**" : "**Bare-metal scorecard.**",
+    ...(run.partial ? ["", "The native fixture stopped before every arm could be verified. Only collected arms supply numbers."] : []),
     "", `Source \`${run.source}\` · age label \`${run.age}\` · started ${run.startedAt}`,
     run.seal ? `Held seal SHA-256 \`${run.seal}\`` : "Population ten accounts of four deep people.",
     "", run.forecast, "", "## Run settings", "",
@@ -173,5 +197,6 @@ export function render(run: Run, destination: string) {
     "```json", JSON.stringify(settings, null, 2), "```", "",
     "## Priorities", "", header, table(rows), "",
     "## Standing correctness checks", "", header, table(correctness), "",
+    ...(zeroReaderObservations.length ? ["## Diagnostic zero-reader observations", "", ...zeroReaderObservations, ""] : []),
   ].join("\n");
 }

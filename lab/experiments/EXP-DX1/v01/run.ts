@@ -55,6 +55,7 @@ if (toy) {
 }
 const run: Run = {
   source, age: values.age, toy, startedAt, campaign, seal,
+  partial: toy && !fs.existsSync(path.join(campaign, "comparison.json")),
   forecast: toy ? "Owned Mac toy fixture. The physical time and cost forecast does not apply." : forecast,
 };
 console.log(run.forecast);
@@ -91,7 +92,7 @@ try {
 }
 fs.writeFileSync(path.join(dest, "SCORECARD-v0.1.md"), card, { flag: "wx", mode: 0o600 });
 console.log(path.join(dest, "SCORECARD-v0.1.md"));
-if (run.error) process.exitCode = 1;
+if (run.error || run.partial) process.exitCode = 1;
 
 function serverEnvironment() {
   // [DX-V01] Why: both arms use the committed treatment and launcher defaults.

@@ -69,8 +69,16 @@ if (action === "--packages") {
     fs.writeFileSync(path.join(oracleInput, "manifest.json"),
       JSON.stringify(stageReplay(process.cwd(), path.join(oracleInput, "oracle")), null, 2) + "\n", { flag: "wx" });
     console.log("Mac evidence staging " + fixture);
-    managed(["--arm-compact", build, "int1-campaign-proof", "40", fixture]);
-    command(process.execPath, ["lab/bin/scorecard.mjs", "--age", "fresh", "--toy-campaign",
-      path.join(fixture, "campaign"), "--commit", commit, "--out", path.join(fixture, "scorecard")]);
+    const campaign = path.join(fixture, "campaign");
+    try {
+      managed(["--arm-compact", build, "int1-campaign-proof", "40", fixture]);
+    } catch (error) {
+      console.error(error);
+      process.exitCode = 1;
+    }
+    if (fs.existsSync(path.join(campaign, "campaign.json"))) {
+      command(process.execPath, ["lab/bin/scorecard.mjs", "--age", "fresh", "--toy-campaign",
+        campaign, "--commit", commit, "--out", path.join(fixture, "scorecard")]);
+    }
   }
 }
