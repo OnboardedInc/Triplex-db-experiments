@@ -2820,3 +2820,18 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
 - **Mac capacity:** twelve cores, eight given to the lab VM (busy-waiting under `nohlt`), fifteen agent processes on
   the rest; CPU pressure in the VM 15 to 30%. Builders that need a timed native arm are queueing for the one
   measurement window; three have ended a part with measurements owed tonight (DX-STG1, DX-WFIX1, DX-RD1).
+
+## 2026-11-20 05:10 UTC (00:10 local, 2026-11-20): DX-HASYNC1 part 2 in: failover under scheduled traffic; three runs queued behind the Mac
+
+- **DX-HASYNC1 part 2 (`de0d7507b`, Mac VM; `hasync1/REPORT.md`).** Open-loop traffic through the drills (five saves and
+  fifty reads per second per system, one-second caller deadline; clients keep each pending command and resend the
+  original id and payload): six drills settled all 552 scheduled saves, 487 by retry. Withheld-reply drill: saves
+  resumed after 18.55 s, 90 refused during the cut, all 90 settled on retry. Planned move: protected writes resumed
+  after 13.56 s. Index drill (corrected): 14.56 s, longest read gap 0.183 s; the first attempt's 24.04 s read gap
+  was the test pulling a wide diagnostic record on every offer. A fresh container carrying the old PostgreSQL disk
+  refused writer startup. A replacement standby restored two-copy protection 17.59 s after a sudden loss. 19 focused
+  tests pass. Not taken (queued behind shared Mac admission): the three sizes, the fleet of 1, 4 and 10 systems, the
+  scheduled directional cuts. Two-server command forecast 75 to 85 minutes.
+- **Assigned, part 3:** the queued runs (fleet first); `OWNER-DECISION.md` on the window after a sudden loss (one copy
+  with an alarm, refuse until two, three machines) with times, costs and sources; the client's resend specification;
+  merge the write-path fixes.
