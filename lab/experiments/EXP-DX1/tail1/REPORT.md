@@ -27,15 +27,15 @@ Archived ACK p50/p99/p99.9/max was 5.10/86.74/447.17/602.04 ms by exact rank, an
 
 Serial is the archived write collector. Tuned G1 has a 25 ms target, 2 MiB regions, a 1 MiB humongous-object threshold and a 5–25% adaptive young generation. The Java 21 ZGC peer arm is diagnostic. Datomic documents ZGC support on Java 25 and recommends G1 at 50 ms for the transactor. Every arm uses that same transactor, SQL durability and role caps. [G1](https://docs.oracle.com/en/java/javase/21/gctuning/garbage-first-garbage-collector-tuning.html) · [Datomic defaults](https://docs.datomic.com/operation/transactor.html#running-the-transactor) · [Datomic ZGC support](https://docs.datomic.com/changes/pro.html#1-0-7705)
 
-The allocation arm keeps Serial, decodes the positional row vector into a transient map and removes per-prefix Formatter allocation. Two-core G1 holds tuning fixed. Mac Serial was explicit. Both BM1 peers started on one core without a collector flag, so Serial is the expected choice even for the reader expanded after launch. The BM1 transactor specified G1. [Collector evidence and readback](COLLECTORS.md)
+The allocation arm keeps Serial and cuts measured row preparation from 1.16 to 1.09 MiB/save. Two-core G1 holds tuning fixed. Mac Serial was explicit. Both BM1 peers started on one core without a collector flag, so Serial is the expected choice even for the reader expanded after launch. The BM1 transactor specified G1. [Collector evidence and readback](COLLECTORS.md)
 
-All five collector arms verified 5,110 saves each. Writer pause p99 was 146–175 ms for Serial, 121 ms with lower allocation, 63 ms for one-core G1, 31 ms for two-core G1 and 0.062 ms for ZGC. Serial client p99 varied from 4.54 to 20.85 seconds. [Mac observations](MAC.md)
+All five collector arms verified 5,110 saves each. Writer pause p99 was 146–175 ms for Serial, 121 ms with lower allocation, 63–70 ms for one-core G1 controls, 31 ms for two-core G1 and 0.062 ms for ZGC. Serial client p99 varied from 4.54 to 20.85 seconds. Recorded queue and lock time was 7 hours 15 minutes. [Mac observations](MAC.md)
 
 ## Receipt reuse
 
 The TypeScript write adapter already skips `/begin` when every hinted live row is cached. The new opt-in keeps the deep fields eligible for that path only after a bound receipt settles. Known retirement evicts their cache entries. Datomic rechecks the exact live IDs at the serial point, and unsupported reads and conflicts use the existing snapshot path.
 
-Sixteen native tests and the erasure fixture passed. A different writer's commit still allowed one request. An intervening retirement forced `/begin` and returned a typed conflict. All five pinned reads matched O-REPLAY. The first Mac pair cut snapshots from 1,218 to 422 on 3,654 shared saves, with 1,456 offers missing a commit. [Receipt results](MAC.md)
+Sixteen native tests and the erasure fixture passed. A different writer's commit allowed one request. An intervening retirement forced `/begin` and returned a typed conflict. Five pinned reads matched O-REPLAY. The final Mac pair cut snapshots from 996 to 406 across 3,638 shared saves. Pre-dispatch queues and expiries confound the Mac latency comparison. [Receipt results](MAC.md)
 
 ## Measurement audit
 
@@ -47,4 +47,4 @@ Image source pin changes under `packages/datomic/gateway/src/triplex/gateway/`, 
 - `lean.clj` `bafa5d00aaaf87321396674f16d6ffc03faa664100a75ce0024de7287ce58ca2` → `115812796134acf278ec30d71eabd9710fb121e7759475b28df97a43ed815fee`.
 - `storage.clj` `341f45cf51ea1f785292b72eca34951d7fe10c9ace55e69af8fbe9df71234b60` → `144e4ecd3742f1323669e67ddaa14dfd3bd69e22b9366ac5d02bcad1bb2bff66`.
 - `jfr.clj` `a703ed7772ab7fcdd62effde8135bc62f6b4325046a0f893a1165c8c08474d94` → `0c435b193a369f6dee40059452a41b9719046bac15bceaf06ac36e514e40994b`.
-The two-core bare-metal forecast is 24–34 ms thin and 49–58 ms deep. The command offers the same four minutes with a 29-minute runner budget. Physical timing remains unverified. [Forecasts and command](PREDICTIONS.md)
+The two-core bare-metal forecast for the aged workload is 24–34 ms thin and 49–58 ms deep. The command offers the same four minutes with a 29-minute runner budget. Physical timing remains unverified. [Forecasts and command](PREDICTIONS.md)
