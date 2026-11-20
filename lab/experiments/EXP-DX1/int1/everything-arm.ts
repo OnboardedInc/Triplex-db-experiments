@@ -60,6 +60,19 @@ async function sameArtifact(a: string, b: string): Promise<void> {
   }
 }
 
+function copyRawArtifact(source: string, target: string) {
+  const entry = fs.lstatSync(source);
+  if (entry.isDirectory()) {
+    fs.mkdirSync(target, { mode: 0o700 });
+    for (const child of fs.readdirSync(source)) {
+      copyRawArtifact(path.join(source, child), path.join(target, child));
+    }
+  } else {
+    assert(entry.isFile(), "Unexpected driver output entry");
+    fs.copyFileSync(source, target, fs.constants.COPYFILE_EXCL);
+  }
+}
+
 async function archiveDriverOutput(staging: string, output: string) {
   // [DX-INT1] Why: the driver keeps its worktree output boundary and the collector sees the real saved bytes.
   // Rejected: relaxing the driver's directory guard or allowing a terminal record before archiving.
@@ -72,7 +85,9 @@ async function archiveDriverOutput(staging: string, output: string) {
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "EXDEV") throw error;
       const transfer = target + ".transfer";
-      fs.cpSync(original, transfer, { recursive: true, force: false, errorOnExist: true });
+      // [DX-INT1] Why: guest directories cross into the shared host mount.
+      // Rejected: recursively preserving guest directory metadata on the host mount.
+      copyRawArtifact(original, transfer);
       await sameArtifact(original, transfer);
       fs.renameSync(transfer, target);
       fs.rmSync(original, { recursive: true });

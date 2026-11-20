@@ -17,8 +17,13 @@ export const cells = [
   ["staged", 23.5],
 ] as const;
 
-export const campaignCells = (oneSeed: boolean) =>
-  oneSeed ? cells.filter(([, rate]) => rate !== 3.5) : cells;
+export const campaignCells = (oneSeed: boolean, receiptOnly = false) =>
+  receiptOnly
+    ? cells.filter(([mode]) => mode === "owed")
+    : oneSeed
+      ? cells.filter(([, rate]) => rate !== 3.5)
+      : cells;
+export const campaignBudgetMs = (receiptOnly: boolean) => (receiptOnly ? 240 : 83) * 60000;
 
 type Collected = {
   source: string;
@@ -42,9 +47,13 @@ export async function collect(
     assert(inputs[key] === value && seal[key] === value);
   assert.equal(inputs.nonce, seal.nonce);
   assert.equal(seal.scope, "lazy-join-server-" + inputs.nonce);
-  const plan = campaignCells(inputs.oneSeed === true);
+  assert(!inputs.receiptOnly || inputs.oneSeed === true);
+  const plan = campaignCells(inputs.oneSeed === true, inputs.receiptOnly === true);
   assert.deepEqual(inputs.planned, plan);
-  if (inputs.oneSeed) assert(!inputs.settlement && inputs.workBudgetMs === 83 * 60000);
+  if (inputs.oneSeed)
+    assert(
+      !inputs.settlement && inputs.workBudgetMs === campaignBudgetMs(inputs.receiptOnly === true),
+    );
   const files = readdirSync(root),
     names = Object.keys(seal.outputs);
   const outputTypes = ["offer", "terminal", "window", "proof", "deadline", "point-inputs"];
@@ -69,16 +78,47 @@ export async function collect(
     const scope = String(runtimeApi.DatabaseScope.test(seal.scope));
     assert.equal(native.database, "s2-" + Buffer.from(scope).toString("base64url"));
     assert(
-      native.strictRecordClocks && native.commitFunctionInstalled && native.options.livePriority,
+      native.strictRecordClocks === true &&
+        native.commitFunctionInstalled === true &&
+        native.options.livePriority === true,
     );
     assert(/^[a-f0-9]{64}$/.test(native.gatewaySourceHash));
     if (!inputs.smoke) {
+      if (inputs.receiptOnly) {
+        expectedNames.push("preflight/joined-admission");
+        const order = get("preflight/joined-admission");
+        // [DX-ACT1] Why: bind the gate's semantic comparisons to this campaign's fresh scope and native queue. Rejected: accepting a successful order test from some other slot or run.
+        assert.deepEqual(order.attempt, {
+          source: inputs.source,
+          nonce: inputs.nonce,
+          identity: inputs.owner,
+        });
+        assert.equal(order.scope, "lazy-join-admission-" + inputs.nonce);
+        const orderDb = String(runtimeApi.DatabaseScope.test(order.scope));
+        assert.equal(order.options.database, "s2-" + Buffer.from(orderDb).toString("base64url"));
+        for (const key of [
+          "attempt",
+          "gatewaySourceHash",
+          "strictRecordClocks",
+          "commitFunctionInstalled",
+          "options",
+        ])
+          assert.deepEqual(order.options[key], native[key]);
+        assert(order.before === order.receipt.cut && order.receipt.position === order.before + 1);
+        assert(order.after === order.receipt.position + 1 && order.externalConflicts === 3);
+        assert(
+          order.publishFirst.cut === order.after &&
+            order.publishFirst.position === order.after + 1 &&
+            order.publishFirst.save === order.after + 2,
+        );
+      }
       const small = "preflight/one-seed/";
       expectedNames.push(small + "server-collected");
       const child = get(small + "server-inputs");
       assert(
         child.smoke &&
           child.oneSeed &&
+          child.receiptOnly === inputs.receiptOnly &&
           child.nonce !== inputs.nonce &&
           child.gatewayAttempt === inputs.gatewayAttempt &&
           child.issuedAt >= inputs.issuedAt &&

@@ -4,8 +4,12 @@ import { lstatSync, mkdirSync, rmdirSync, unlinkSync, writeFileSync } from "node
 import { basename, dirname, join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 
-// [DX-ACT1] Why: load the fixture before taking the Mac measurement window and release before oracle work. Rejected: holding the shared lock across seeding or post-run verification.
+export const macDiagnostic =
+  process.platform === "darwin" || process.env.DX_JOIN_MAC_DIAGNOSTIC === "1";
+
+// [DX-ACT1] Why: native Mac checks share the ordinary heavy pool and their clocks are diagnostic. Rejected: freezing other builders to get a quiet laptop sample.
 export async function measure<T>(run: () => Promise<T>) {
+  if (macDiagnostic) return run();
   const dir = process.env.DX_JOIN_TIMING_DIR;
   if (!dir) return run();
   const handedOff = process.env.DX_JOIN_LEASE_TOKEN;

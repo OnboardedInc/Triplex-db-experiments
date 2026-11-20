@@ -55,7 +55,11 @@ type Step = {
 
 // [DX-ERASE1] Why: the frontier travels in the real response headers, including on repair and reordered replies.
 // Rejected: stubbing reachEntities (would bypass the cache and HTTP binding this test needs).
-async function withPeer(steps: Step[], test: (client: DatomicClient) => Promise<void>) {
+async function withPeer(
+  steps: Step[],
+  test: (client: DatomicClient) => Promise<void>,
+  historicalRevisionReuse = false,
+) {
   const server = createServer(async (req, res) => {
     const step = steps.shift();
     try {
@@ -83,7 +87,9 @@ async function withPeer(steps: Step[], test: (client: DatomicClient) => Promise<
   const address = server.address();
   assert(address && typeof address !== "string");
   const host = address.family === "IPv6" ? `[${address.address}]` : address.address;
-  const client = new DatomicClient(`http://${host}:${address.port}`, 2_000);
+  const client = new DatomicClient(`http://${host}:${address.port}`, 2_000, undefined, {
+    historicalRevisionReuse,
+  });
   try {
     await test(client);
     expect(steps).toHaveLength(0);
@@ -147,9 +153,13 @@ it("does not carry a guarded cache entry across data positions", async () => {
   );
 });
 
-it.each(["reference", "inline"])(
-  "cannot roll the protected cache back with a late %s reply",
-  async (format) => {
+it.each(
+  ["reference", "inline"].flatMap((format) =>
+    [false, true].map((historicalRevisionReuse) => ({ format, historicalRevisionReuse })),
+  ),
+)(
+  "cannot roll back a protected cache on a late $format reply (history $historicalRevisionReuse)",
+  async ({ format, historicalRevisionReuse }) => {
     const release = Promise.withResolvers<void>();
     const entered = Promise.withResolvers<void>();
     await withPeer(
@@ -179,6 +189,7 @@ it.each(["reference", "inline"])(
         expect(result?.requests).toBe(2);
         expect(value(await peer.reachEntities(database, [subject], basis()))).toEqual(marker);
       },
+      historicalRevisionReuse,
     );
   },
 );

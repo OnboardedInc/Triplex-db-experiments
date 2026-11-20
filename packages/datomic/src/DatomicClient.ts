@@ -744,16 +744,16 @@ export class DatomicClient {
         )
           throw new TypeError("Reach response basis/shape mismatch");
         const prefix = `${db}\0`;
-        const stamp =
-          sequence === undefined
-            ? undefined
-            : { position: response.position, t: response.t, sequence };
-        // [DX-RD1] Why: records of different revisions can be in flight concurrently.
-        // Rejected: reusing an inline payload without decoding it, or waiting for a newer revision to repair an older cut.
+        // [DX-INT1] Why: historical sessions keep their revision keys and guarded references still verify the native cut.
+        // Rejected: letting a revision match override the erasure sequence.
         const key = (id: string, rev: number) =>
           this.cacheOptions.historicalRevisionReuse
             ? `${prefix}${id.length}:${id}/${rev}`
             : this.reachKey(db, prefix, id);
+        const stamp =
+          sequence === undefined
+            ? undefined
+            : { position: response.position, t: response.t, sequence };
         const cache = {
           get: (id: string, rev: number) => {
             const hit = this.reachCache.get(key(id, rev));

@@ -43,6 +43,12 @@ export interface StorageAdapterService {
     basis: ResolvedTemporalBasis,
     beforePosition?: number,
   ) => Effect.Effect<readonly { transactionId: string; position: number }[] | undefined, ReadError>;
+  // [DX-W1] Why: hydrate a typed audit envelope at the same recorded cut as its index.
+  // Rejected: filtering a durable journal by the reader's business clock.
+  readonly getTransactionRowsAtPosition?: (
+    txId: string,
+    position: number,
+  ) => Effect.Effect<readonly TripleRow[] | undefined, ReadError>;
   // [DX-B3-M2] Why: a transactor may allocate the final position after staging.
   // Rejected: returning the provisional position as a committed receipt.
   readonly committedPosition?: (txId: string) => number | undefined;
