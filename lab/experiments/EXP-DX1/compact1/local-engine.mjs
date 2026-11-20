@@ -1,0 +1,275 @@
+// [DX-COMPACT1] Why: reserve the three live processes against one exclusive lab slot.
+// Rejected: attaching a retained volume or running an unbudgeted Docker stack.
+import assert from "node:assert/strict";
+import { spawn } from "node:child_process";
+import { randomBytes, randomUUID } from "node:crypto";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import {
+  DOCKER_HOST, GiB, REPO, admission, docker, dockerArgs, git, inspect, listTx2Containers,
+  readOwner, sha256, sleep, slotInfo, vmDisk, withPool,
+} from "../../../bin/lib.mjs";
+
+const holder = "DX-COMPACT1";
+const mounts = "/compact";
+const MiB = 1024 ** 2;
+const caps = { pg: 320, tx: 896, peer: 896 };
+
+function capture(args, file, signal) {
+  const fd = fs.openSync(file, "wx");
+  return new Promise((resolve, reject) => {
+    const child = spawn("docker", dockerArgs(args), { stdio: ["ignore", fd, fd], signal });
+    fs.closeSync(fd);
+    child.once("error", reject);
+    child.once("close", (code) => code === 0 ? resolve() : reject(Error(`Docker command exited ${code}; see ${path.basename(file)}`)));
+  });
+}
+
+function copySources(dir, phase) {
+  const sources = {};
+  const copy = (relative, target) => {
+    const from = path.join(REPO, relative);
+    if (fs.statSync(from).isDirectory()) {
+      for (const name of fs.readdirSync(from).sort()) copy(path.join(relative, name), path.join(target, name));
+      return;
+    }
+    const bytes = fs.readFileSync(from);
+    const to = path.join(dir, "source", target);
+    fs.mkdirSync(path.dirname(to), { recursive: true });
+    fs.writeFileSync(to, bytes, { flag: "wx" });
+    sources[target] = sha256(bytes);
+  };
+  const experiment = path.relative(REPO, import.meta.dirname);
+  if (phase === "floor") copy(path.join(experiment, "src/triplex/compact/floor.clj"), "src/triplex/compact/floor.clj");
+  else copy(path.join(experiment, "src"), "src");
+  copy(path.join(experiment, "logback.xml"), "logback.xml");
+  copy(path.join(experiment, "local-engine.mjs"), "local-engine.mjs");
+  copy("lab/bin/engine.mjs", "engine.mjs");
+  if (phase !== "floor") {
+    copy("packages/datomic/gateway/src", "src");
+    copy("packages/datomic/src/codec-spec.json", "codec-spec.json");
+    copy("lab/world/W0/schema.json", "schema.json");
+    if (phase === "prototype") copy("lab/world/W0/cases", "cases");
+  }
+  return sources;
+}
+
+async function measureLock(root, prefix, signal) {
+  const dir = path.join(root, "locks", "measure");
+  for (;;) {
+    signal.throwIfAborted();
+    try {
+      fs.mkdirSync(dir);
+      fs.writeFileSync(path.join(dir, "owner.json"), JSON.stringify({
+        id: holder, pid: process.pid, prefix, kind: "compact-probe", at: new Date().toISOString(),
+      }) + "\n", { flag: "wx" });
+      return () => {
+        const owner = JSON.parse(fs.readFileSync(path.join(dir, "owner.json"), "utf8"));
+        assert.equal(owner.prefix, prefix);
+        fs.rmSync(dir, { recursive: true });
+      };
+    } catch (error) {
+      if (error.code !== "EEXIST") throw error;
+      console.log("[compact] waiting for the lab measurement window");
+      await sleep(5000);
+    }
+  }
+}
+
+export async function runCompactProbe(opts, config, manager) {
+  assert.equal(process.platform, "darwin");
+  assert.equal(opts.holder, holder);
+  assert.equal(dockerArgs([])[1], DOCKER_HOST);
+  assert(!process.env.DOCKER_HOST || process.env.DOCKER_HOST === DOCKER_HOST);
+  const phase = opts.run;
+  const profile = opts.profile ?? "baseline";
+  assert(["floor", "layout", "prototype", "load"].includes(phase));
+  assert(["baseline", "pressure", "parallel-index"].includes(profile));
+  assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
+  const imageRef = opts.image ?? config.lanes.datomic.image;
+  assert.match(imageRef, /^tx2-datomic:[a-z0-9][a-z0-9.-]{0,63}$/);
+  const root = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
+  const parent = path.join(root, "evidence", holder);
+  fs.mkdirSync(parent, { recursive: true });
+  const dir = path.join(parent, opts.out);
+  fs.mkdirSync(dir);
+  const write = (file, data) => fs.writeFileSync(path.join(dir, file), JSON.stringify(data, null, 2) + "\n", { flag: "wx" });
+  const sources = copySources(dir, phase);
+  const sourceHash = sha256(JSON.stringify(sources));
+  const attempt = randomUUID();
+  const prefix = "tx2-dxcompact-" + attempt.slice(0, 12);
+  const reserved = Object.keys(caps).map((role) => prefix + "-" + role);
+  const created = new Map();
+  const volumes = new Set();
+  const abort = new AbortController();
+  const onSignal = () => abort.abort(Error("interrupted"));
+  process.once("SIGINT", onSignal);
+  process.once("SIGTERM", onSignal);
+  let slot, net, releaseMeasure, deadline;
+  const floor = () => {
+    const stat = fs.statfsSync(dir);
+    assert(stat.bavail * stat.bsize >= 5 * GiB, "host disk free below 5 GiB");
+  };
+  const assertOwned = (id) => {
+    const current = inspect(id);
+    assert(current?.Id === id && current.Config.Labels["compact.attempt"] === attempt);
+    return current;
+  };
+  const label = ["--label", "compact.attempt=" + attempt, "--label", "tx2.holder=" + holder];
+  try {
+    while (!slot) {
+      abort.signal.throwIfAborted();
+      floor();
+      try {
+        await withPool((ledger) => {
+          manager.assertMeasureAdmission(holder);
+          const live = listTx2Containers({ all: true });
+          const candidate = ["s1", "s2", "s3"].map((key) => slotInfo(config, "datomic", key))
+            .find((info) => !fs.existsSync(info.lockDir) && !live.some((row) => row.name === info.container));
+          if (!candidate) return;
+          const diskForecastBytes = phase === "load" ? 2 * GiB : GiB;
+          const allowed = admission({
+            config: { ...config, pool: { ...config.pool, memLimitBytes: Math.min(15 * GiB, config.pool.memLimitBytes) } },
+            reservations: ledger.reservations, running: live, diskUsedBytes: vmDisk(config).usedBytes,
+            request: { container: prefix, memBytes: Object.values(caps).reduce((a, b) => a + b) * MiB, diskForecastBytes },
+          });
+          if (!allowed.ok) return;
+          assert(manager.acquireSlot(candidate, holder, prefix).created);
+          slot = candidate;
+          for (const [role, memory] of Object.entries(caps)) ledger.reservations.push({
+            container: prefix + "-" + role, lane: "datomic", slot: slot.slot, holder,
+            pid: process.pid, state: "compact-probe", cpus: 2, memBytes: memory * MiB,
+            diskForecastBytes: role === "pg" ? diskForecastBytes : 0,
+          });
+        });
+      } catch (error) {
+        if (error.code !== "REFUSED") throw error;
+      }
+      if (!slot) {
+        console.log("[compact] waiting for a pool-admitted exclusive Datomic slot");
+        await sleep(5000);
+      }
+    }
+
+    releaseMeasure = await measureLock(root, prefix, abort.signal);
+    deadline = setTimeout(() => abort.abort(Error("measurement window expired")), 14 * 60 * 1000);
+    floor();
+    const image = (reference) => docker(["image", "inspect", "--format", "{{.Id}}", reference]);
+    // [DX-COMPACT1] Why: a retagged build may still contain the verified native distribution.
+    // Rejected: launching a mutable tag or rebuilding a shared image to match an old gateway hash.
+    const datomicImage = image(imageRef);
+    const peerSha1 = JSON.parse(fs.readFileSync(path.join(REPO, "lab/config/datomic/verification.json"))).peerSha1;
+    const pgImage = image("postgres:17-alpine");
+    const password = randomBytes(24).toString("hex");
+    const pg = prefix + "-pg", tx = prefix + "-tx";
+    const jdbc = "jdbc:postgresql://" + pg + "/postgres";
+    const source = path.join(dir, "source");
+    const run = (role, img, extra, entry, argv) => {
+      abort.signal.throwIfAborted();
+      const memory = caps[role] * MiB;
+      const id = docker(["create", "--pull", "never", "--name", prefix + "-" + role, ...label,
+        "--network", net, "--cpus", "2", "--memory", String(memory), "--memory-swap", String(memory),
+        "--ulimit", "core=0", ...extra, "--entrypoint", entry, img, ...argv]);
+      created.set(role, id);
+      const actual = assertOwned(id);
+      assert.equal(actual.Image, img);
+      assert.equal(actual.HostConfig.Memory, memory);
+      assert.equal(actual.HostConfig.MemorySwap, memory);
+      assert(!Object.keys(actual.HostConfig.PortBindings ?? {}).length);
+      for (const mount of actual.Mounts) {
+        if (mount.Type === "volume") volumes.add(mount.Name);
+        else assert(mount.Source === source && mount.Destination === mounts && !mount.RW);
+      }
+      docker(["start", id]);
+      return id;
+    };
+    async function ready(id, check) {
+      for (let i = 0; i < 120; i++) {
+        abort.signal.throwIfAborted();
+        assert(assertOwned(id).State.Running, "owned process stopped during startup");
+        if (check()) return;
+        await sleep(1000);
+      }
+      throw Error("owned process startup timed out");
+    }
+    net = docker(["network", "create", "--internal", ...label, prefix]);
+    const pgId = run("pg", pgImage, ["-e", "POSTGRES_PASSWORD=" + password], "docker-entrypoint.sh", [
+      "postgres", "-c", "shared_buffers=48MB", "-c", "track_wal_io_timing=on",
+    ]);
+    const sql = (query) => docker(["exec", pgId, "psql", "-XAt", "-v", "ON_ERROR_STOP=1", "-U", "postgres", "-c", query]);
+    await ready(pgId, () => docker(["exec", pgId, "pg_isready", "-h", "127.0.0.1", "-U", "postgres"], { allowFail: true })?.includes("accepting connections"));
+    const threshold = profile === "baseline" ? "32m" : "2m";
+    const indexParallelism = profile === "parallel-index" ? 2 : 1;
+    const settings = { threshold, indexParallelism, max: "96m", cache: "64m" };
+    const props = [
+      "protocol=sql", "host=" + tx, "port=4334",
+      "sql-url=" + jdbc, "sql-driver-class=org.postgresql.Driver", "sql-user=postgres",
+      "sql-password=" + password, "memory-index-threshold=" + threshold,
+      "memory-index-max=" + settings.max, "object-cache-max=" + settings.cache,
+      "index-parallelism=" + indexParallelism,
+    ].join("\n");
+    const mounted = ["-v", source + ":" + mounts + ":ro", "-e", "DATOMIC_EXT_CLASSPATH=/compact/src"];
+    const txId = run("tx", datomicImage, [...mounted, "-e", "COMPACT_PROPERTIES=" + props,
+      "-e", "JAVA_OPTS=-Xms128m -Xmx512m -XX:ActiveProcessorCount=2 -Dlogback.configurationFile=/compact/logback.xml"],
+    "/bin/sh", ["-ceu", 'while [ ! -f /tmp/compact.ready ]; do sleep 1; done; printenv COMPACT_PROPERTIES > /tmp/compact.properties; exec /opt/datomic/bin/transactor /tmp/compact.properties']);
+    const jars = docker(["exec", txId, "bash", "-ceu", "cd /opt/datomic; find . -name '*1.0.7745.jar' -print0 | sort -z | xargs -0 sha256sum"]);
+    const readPeerSha1 = docker(["exec", txId, "bash", "-ceu", "cd /opt/datomic; find . -name 'peer-1.0.7745.jar' -print0 | xargs -0 sha1sum"]);
+    assert.equal(readPeerSha1.split(/\s+/)[0], peerSha1);
+    assert.match(jars, /datomic-transactor-pro-1\.0\.7745\.jar/);
+    sql(docker(["exec", txId, "cat", "/opt/datomic/bin/sql/postgres-table.sql"]));
+    docker(["exec", txId, "touch", "/tmp/compact.ready"]);
+    await ready(txId, () => docker(["exec", txId, "bash", "-c", '(exec 3<>/dev/tcp/$1/4334) 2>/dev/null && echo ready', "probe", tx], { allowFail: true }) === "ready");
+    const durable = sql("select current_setting('fsync'), current_setting('synchronous_commit'), current_setting('full_page_writes'), current_setting('wal_sync_method')").split("|");
+    assert.deepEqual(durable.slice(0, 3), ["on", "on", "on"]);
+    const peerId = run("peer", datomicImage, [...mounted,
+      "-e", "DATOMIC_JAVA_OPTS=-Xms128m -Xmx544m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=96m -Dtriplex.codec.spec=/compact/codec-spec.json -Dlogback.configurationFile=/compact/logback.xml",
+      "-e", "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?" + jdbc + "?user=postgres&password=" + password,
+      "-e", "COMPACT_JDBC=" + jdbc, "-e", "COMPACT_SQL_PASSWORD=" + password, "-e", "COMPACT_ATTEMPT=" + attempt,
+      "-e", "COMPACT_SOURCE=" + sourceHash, "-e", "COMPACT_PROFILE=" + profile,
+      "-e", "TX2_GROUP_COMMIT=1",
+    ], "/bin/sleep", ["infinity"]);
+    const boundFiles = docker(["exec", peerId, "bash", "-ceu", "cd /compact; find . -type f -print0 | sort -z | xargs -0 sha256sum"]);
+    const expectedFiles = Object.entries(sources).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
+      .map(([file, hash]) => hash + "  ./" + file).join("\n");
+    assert.equal(boundFiles, expectedFiles);
+    const binding = {
+      attempt, prefix, phase, profile, slot: slot.slot, source: git(["rev-parse", "HEAD"]), sourceHash, sources,
+      image: datomicImage, pgImage, jars, peerSha1, durability: durable, roles: Object.fromEntries(created), caps, settings,
+      owner: sha256(fs.readFileSync(slot.ownerFile)), startedAt: new Date().toISOString(),
+    };
+    write("binding.json", binding);
+    const namespace = phase === "floor" ? "triplex.compact.floor" : "triplex.compact.probe";
+    await capture(["exec", peerId, "/opt/datomic/bin/run", "-m", namespace, phase], path.join(dir, "probe.log"), abort.signal);
+    if (phase === "prototype") {
+      await capture(["exec", peerId, "/opt/datomic/bin/run", "-m", namespace, "recovery"], path.join(dir, "recovery.log"), abort.signal);
+    }
+  } finally {
+    clearTimeout(deadline);
+    try {
+      for (const [role, id] of [...created].reverse()) {
+        assertOwned(id);
+        if (role !== "peer") await capture(["logs", id], path.join(dir, role + ".log")).catch(() => {});
+        docker(["rm", "-fv", id]);
+        assert(!inspect(id));
+      }
+      for (const name of volumes) assert(!docker(["volume", "inspect", name], { allowFail: true }), "owned volume remains");
+      if (net) {
+        assert.equal(JSON.parse(docker(["network", "inspect", net]))[0].Labels["compact.attempt"], attempt);
+        docker(["network", "rm", net]);
+        assert(!docker(["network", "inspect", net], { allowFail: true }));
+      }
+      if (slot) await withPool((ledger) => {
+        assert.equal(readOwner(slot)?.holder, holder);
+        assert.equal(readOwner(slot)?.pid, process.pid);
+        ledger.reservations = ledger.reservations.filter((entry) => !reserved.includes(entry.container));
+        manager.releaseSlot(slot);
+      });
+      write("cleanup.json", { attempt, rolesRemoved: created.size, volumesRemoved: volumes.size, slotReleased: slot?.slot ?? null });
+    } finally {
+      releaseMeasure?.();
+      process.removeListener("SIGINT", onSignal);
+      process.removeListener("SIGTERM", onSignal);
+    }
+  }
+}

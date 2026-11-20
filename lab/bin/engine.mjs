@@ -717,6 +717,12 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const command = positional[0];
   const config = loadSlots();
   if (command === 'status') return status(config);
+  // [DX-COMPACT1] Why: reserve a fresh SQL stack without attaching the slot's retained volume.
+  // Rejected: using the resident dev transactor as the durable PostgreSQL control.
+  if (command === 'compact-probe') {
+    const { runCompactProbe } = await import('../experiments/EXP-DX1/compact1/local-engine.mjs');
+    return runCompactProbe(options, config, { assertMeasureAdmission, acquireSlot, releaseSlot });
+  }
   if (options.lane === 'datomic' && command === 'build') return buildDatomic(config);
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
   if (!['up', 'down', 'logs'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
