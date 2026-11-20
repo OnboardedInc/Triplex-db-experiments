@@ -13,6 +13,8 @@ import { fileHash } from "../scale1/measurements.ts";
 import { measure, type Arm } from "./measure.ts";
 import { fieldPolicy, type Mode } from "./field/bench-check.ts";
 
+import type { jvmPolicy } from "../jvm1/policy.mjs";
+
 const repo = path.resolve(import.meta.dirname, "../../../.."),
   GiB = 1024 ** 3;
 const get = (f: string) => JSON.parse(fs.readFileSync(f, "utf8"));
@@ -210,6 +212,7 @@ export async function withStack<T>(
   grouped?: boolean,
   fieldMode?: Mode,
   enhanced = false,
+  jvm?: { policy: ReturnType<typeof jvmPolicy>; deadline: number; dump?: string },
 ) {
   const why = stopReason();
   assert(!why, why);
@@ -236,7 +239,8 @@ export async function withStack<T>(
   const empty = { containers: [], volumes: [], networks: [] };
   assert.deepEqual(resources(), empty);
   const env: NodeJS.ProcessEnv = {
-    ...process.env,
+    ...(jvm ? Object.fromEntries(Object.entries(process.env).filter(([key]) =>
+      !/^(DX_|TX2_|TRIPLEX_|DATOMIC_|JAVA_OPTS$|JAVA_TOOL_OPTIONS$|JDK_JAVA_OPTIONS$|_JAVA_OPTIONS$|NODE_OPTIONS$)/.test(key))) : process.env),
     DX_BARE_METAL: "1",
     DX_BARE_METAL_ROOT: dir,
     DX_STACK_EVIDENCE: path.join(dir, "engines"),
@@ -307,35 +311,55 @@ export async function withStack<T>(
         .filter(Boolean)
         .join(",");
   }
+
+  if (jvm) {
+    // [DX-JVM1] Why: tie the declared JVM arm to the shared stack startup and storage clone.
+    // Rejected: updating process placement after the JVM derived its pools and collector.
+    const p = jvm.policy;
+    Object.assign(env, {
+      DX_JVM_EVIDENCE: "1",
+      DX_NATIVE_SETTINGS_READBACK: "1",
+      DX_JVM1_TX_PROPERTIES: JSON.stringify(p.txProperties),
+      DX_GW_WRITE_MEMORY: p.memory["gw-w"] + "m",
+      DX_GW_READ_MEMORY: p.memory["gw-r"] + "m",
+      DX_GW_WRITE_JAVA_OPTS: p.opts["gw-w"].join(" ") + " -Xlog:gc*=info:file=/trace/gw-w.log:time,uptimemillis,level,tags:filecount=4,filesize=8m",
+      DX_GW_READ_JAVA_OPTS: p.opts["gw-r"].join(" ") + " -Xlog:gc*=info:file=/trace/gw-r.log:time,uptimemillis,level,tags:filecount=4,filesize=8m",
+      ...(jvm.dump ? { DX_JVM1_PG_RESTORE: jvm.dump } : {}),
+    });
+  }
   write(path.join(dir, "identity.json"), arm);
   const args = [
     stack("up"),
     slot,
     "--no-publish",
     "--cpus-tx",
-    "0",
+    jvm?.policy.cpus.tx ?? "0",
     "--cpus-pg",
-    "1",
+    jvm?.policy.cpus.pg ?? "1",
     "--cpus-gw-write",
-    "2",
+    jvm?.policy.cpus["gw-w"] ?? "2",
     "--cpus-gw-read",
-    "4",
+    jvm?.policy.cpus["gw-r"] ?? "4",
     "--pg-memory",
-    "6g",
+    jvm ? jvm.policy.memory.pg + "m" : "6g",
     "--tx-memory",
-    "6g",
+    jvm ? jvm.policy.memory.tx + "m" : "6g",
     "--tx-java-opts",
-    "-Xms256m -Xmx5g -XX:+UseG1GC",
+    jvm ? jvm.policy.opts.tx.join(" ") + " -Xlog:gc*=info:file=/trace/tx.log:time,uptimemillis,level,tags:filecount=4,filesize=8m" : "-Xms256m -Xmx5g -XX:+UseG1GC",
+    ...(jvm ? ["--memory-index-threshold", jvm.policy.indexThreshold + "m",
+      "--memory-index-max", jvm.policy.indexMax + "m"] : []),
     "--object-cache-max",
-    "1280m",
+    jvm ? jvm.policy.txObjectCache + "m" : "1280m",
     "--pg-settings",
     "-c shared_buffers=1GB -c synchronous_commit=on -c fsync=on -c full_page_writes=on -c track_io_timing=on",
   ];
   const activeSlot = path.resolve(dir, "../../active-slot");
   fs.writeFileSync(activeSlot, slot + "\n", { flag: "wx" });
   try {
-    execFileSync("bash", args, { cwd: repo, env, timeout: 600000, stdio: "inherit" });
-    if (availableParallelism() >= 12) docker("update", "--cpuset-cpus", "4,8", slot + "-gw-r");
+    const startupBudget = jvm ? Math.min(360_000, jvm.deadline - Date.now()) : 600_000;
+    assert(startupBudget > 0);
+    execFileSync("bash", args, { cwd: repo, env, timeout: startupBudget, stdio: "inherit" });
+    if (!jvm && availableParallelism() >= 12) docker("update", "--cpuset-cpus", "4,8", slot + "-gw-r");
     const buildResults = path.resolve(repo, "../results"),
       images = get(path.join(buildResults, "images.json"));
     const imageFor = (tag: string) => {
@@ -366,6 +390,10 @@ export async function withStack<T>(
     const roleInfo = roles.map((role) => {
       const info = JSON.parse(docker("inspect", slot + "-" + role))[0];
       assert.equal(info.Image, role === "pg" ? pg.Id : peer.Id);
+      if (jvm) {
+        assert.equal(info.HostConfig.CpusetCpus, jvm.policy.cpus[role]);
+        assert.equal(info.HostConfig.Memory, jvm.policy.memory[role] * 2 ** 20);
+      }
       const group = fs
         .readFileSync(`/proc/${info.State.Pid}/cgroup`, "utf8")
         .trim()
@@ -381,6 +409,7 @@ export async function withStack<T>(
         role,
         id: info.Id,
         image: info.Image,
+        ...(jvm ? { startedAt: info.State.StartedAt, restarts: info.RestartCount } : {}),
         cpus: info.HostConfig.CpusetCpus,
         bytes: info.HostConfig.Memory,
       };
@@ -420,7 +449,7 @@ export async function withStack<T>(
     }
     env.TX2_ENGINE_CGROUPS = groups.join(",");
     env.TX2_ENGINE_CPUS = "5";
-    write(path.join(dir, "placements.json"), { engines: roleInfo, sender: "3", workerCpus });
+    write(path.join(dir, "placements.json"), { engines: roleInfo, sender: jvm?.policy.cpus.sender ?? "3", workerCpus });
     const durable = docker(
       "exec",
       slot + "-pg",

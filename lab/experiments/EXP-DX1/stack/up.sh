@@ -457,6 +457,13 @@ for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   docker exec -i "$prefix-pg" psql -v ON_ERROR_STOP=1 -U postgres -d "$db" < "$attempt/sql/$file" > "$attempt/sql/$file.log"
 done
 fi
+# [DX-JVM1] Why: restore one sealed seed into a fresh PostgreSQL volume before any measured JVM starts.
+# Rejected: running the large import during the timed arm or attaching a writable original.
+if [[ -n ${DX_JVM1_PG_RESTORE:-} ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && $prefix == tx2-dxt1-jvm1-* && -z $seed_volume && -f $DX_JVM1_PG_RESTORE ]]
+  [[ $(head -c 5 "$DX_JVM1_PG_RESTORE") == PGDMP ]]
+  docker exec -i "$prefix-pg" pg_restore -U postgres --clean --if-exists --exit-on-error -d datomic     < "$DX_JVM1_PG_RESTORE" > "$attempt/restore.log" 2>&1
+fi
 # [DX-JVM1] Why: emit the real JVM's final flags and GC startup identity to its own container log.
 # Rejected: a second JVM running outside the live cgroup or inferring collector from affinity.
 final_flags=''
