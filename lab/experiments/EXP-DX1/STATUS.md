@@ -3609,3 +3609,17 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
   33,952 imported facts and 5,040 live offers verified; failover, planned move and 65 native tests pass after the
   merge; planned-move pause 22.79 and 31.74 s on the Mac (bar 30 s, open on bare metal). Parked.
 - Running: DX-BM1, DX-SCALE1, DX-V01, DX-THIN1, DX-AGE1, DX-PREP1, DX-JVM1, DX-W1 (eight).
+
+## 2026-11-20 21:34 UTC (16:34 local, 2026-11-20): DX-V01 part 1 in: a scorecard exists but cannot use the server's seed and covers four rows; resumed (run-critical)
+
+- **DX-V01 part 1 (`3b0371487`; server command at `ac7698b07`; `v01/SERVER.md`, `READINESS.md`).** A clean Mac
+  clone built and verified both frozen arms without a lease; a diagnostic card with 13 rows printed; the field
+  gate stopped on one write without terminal publication evidence, so field rows were unmeasured. Forecast 197 to
+  235 minutes and $3.58 to $4.27 per age. The lease switch is on `exp/DX-INT1` (`a79267191`).
+- **Faults against the version 0.1 definition:** the command refuses the SCALE1 sealed seed on server 2 (it wants
+  an INT1 image with its own command identities; that seed took over ten hours to load and is the only full-size
+  one); it runs the legacy journal, not layout K; the server run measures priorities 1 to 4 only (5, 6 and 8 "exceed
+  the remaining window", 7 and 9 absent).
+- **Part 2 assigned (run-critical; eight agents running with it):** adopt the SCALE1 seed with DX-AGE1's adoption
+  step; version 0.1 settings with every setting printed; rows 5 to 9 by calling the other builders' published
+  commands inside a 235 minute budget; first usable version (rows 1 to 4 on the real seed) within two hours.
