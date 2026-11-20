@@ -1,47 +1,22 @@
-Publish now reserves the account. A save can finish before that reservation or continue under the new release.
-The first verified read arrived within 0.843 seconds at the 99th percentile in 201 loaded releases at 10,000 people.
-Sixty-four readers ran while two accounts submitted everyday saves and bursts of 55.
-Two of the 201 releases took over a second. The slowest took 1.295 seconds.
-After the database restarted, a fresh reader recovered all 11,960 changed rows and 997 owed notices from the broad release.
-The narrow release recovered all 38 flag changes and owed no notices. Neither release had written a concrete output chunk.
-The indexes added 6.68% to database log bytes per saved fact, below the 15% target. Both arms wrote the same number of records on every save.
-The 1,000-person server preflight passed locally in 4 minutes 52 seconds. The 100,000-person result still requires a server run.
+At 3.5 saves a second, all 800 Publishes recorded the release and what it owed, and the first correct read arrived within one second.
+With one Publish every five seconds, the slow end was 382 ms in queue order and 373 ms with priority.
+With one Publish every second, it was 403 ms in queue order and 411 ms with priority.
+The Mac fell behind on saves alone at 23.5 and 39.4 saves a second, so those rates have no Publish timings.
+The native check proved that the release includes a save that goes first and excludes a save that goes after it.
+The bare-metal model puts one priority Publish at 140 to 169 ms if joined saves can match the measured server save times.
+The release record and notice recipe were durable in this test. The clock for storing every changed value is separate.
+The joined path has the priority change and the tests. The older DELTA path remains available to reproduce its results.
 
-**Loaded publication and evidence audit**
+North star P5 with P1 and P2 under load. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
-In the earlier continuous-offer control, p99 was 1.735 s. That offer spent 1.485 s waiting for a save to finish preparation and 0.087 s waiting for a submitted save. The shorter path starts at native submission and combines the head and index check. The faster series scheduled Publish at one-second intervals and completed 1,542 saves. All 252,608 background reads matched Python. Native save queueing was 605 ms at p99 and 0 ms on the 843 ms tail offer.
+The isolated Mac run at `a52f7937c` used 10,000 deep people, two neighbours each offering 1.6 saves/s, and 64 readers offering one read each second. Each of the eight admitted blocks started from the same checked R1 state and reopened both Datomic roles. The fixed schedule kept 200 offers per cadence and policy. The oracle checked 180,884 responses across the measured blocks and capacity screens. There were zero misses, stale reads or Publish retries. [Timings, save p99, CPU and phase clocks](PART5.md#matched-mac-results)
 
-The native fence checks the absence of another fence and the original command claim. Every ordinary save checks the fence at Datomic’s serial point. The terminal write checks the admitted intent, exact predecessor and claim, appends the event and releases the fence atomically. A second writer helps an interrupted publisher. A bad full evaluation records a rejection and releases the fence. The original source, release and valid-time checks still apply to delayed work.
+The high-rate screens acknowledged 385 of 706 and 421 of 1,182 saves within their 30-second windows. Both queues grew. The earlier four-Publishes-per-second run measured a saturated system. A first sparse run also lost save capacity after 300 scheduled releases on a reused account. The matched rerun reset release history and native process state together. [Capacity checks and earlier run](PART5.md#matched-mac-results) · [Part 4 evidence](PART4.md)
 
-Objects.many/commit check scope, cut, object hashes and returned assertion bytes. Account.seal/completeFence/command bind the document and command identity, actual predecessor and census. CurrentDecisions times the returned policy answer, takes the cut after the batch arrives and checks the latest erasure mask. The cold and full-census gates also verify the combined answer and publication history. Each measured offer starts before decoding the offered document.
+For DX-ACT1, merge `a52f7937c` for the complete joined study, or `bc01028b0` for priority and the native order gate. The product changes are `9895f926b` and `eb08bd32f`. Native checks ran on joined code from `541326043` with those changes. The current activation head checked at `46e838fe7` adds documentation only. Wire saves and Publish in the scope to the same `AccountAdmission`. The `--one-seed` runner already uses that wiring. Joined uses the shared declarations, posting codec and deadline checker. [Exact handoff](PART5.md#joined-handoff)
 
-loadedOffers/Timeline verify a fresh current read against Python before stopping each timer, then check all 64 readers’ observations against independently replayed inputs at their native source positions. The writer records time behind the already submitted save separately from native service time. An earlier attempt stopped at a save conflict. Each attempt uses a new database, source-file hashes, slot owner, gateway and nonce.
+The one-second record endpoint combines the native release and owed-recipe write with the first exact response. The offer-to-turn clock, transaction, reader learning and first response are timed separately. The estimated bare-metal priority p99 is 144, 140 and 169 ms at 3.5, 23.5 and 39.4 saves/s. At the highest rate, about 19 ms of added mean save service would exhaust the model's capacity. Literal storage and the joined path's write price remain separate measurements. [Law and assumptions](PART5.md#the-latency-law-and-bare-metal-forecast) · [One-seed server command](PART4.md#one-seed-server-campaign)
 
-native.ts checks the original 23 schedule names and the delayed-result, race, erasure and restart TAP results. The source and slot owner are rechecked at exit. The first native audit caught a misspelled expected test title and retained the failure.
+The prior DELTA audit at `d2cda11f0` covers the 23 publication schedules, two crash stops, the record/stored split and the 6.68% WAL increase. [Earlier evidence](ACTAUDIT-SHA256SUMS)
 
-crash.writer and recoverPower killed the issuing process immediately after the native commit and before the application received its ACK, then sent SIGKILL to the three nonce-owned PostgreSQL, transactor and gateway processes. The cold reader matched the original transaction ID, predecessor, cut, compiled release, census, ordered notice payloads and every changed row against independent Python. It checked all 10,000 subjects and 106 possible chunk/manifest keys before and after each read-only traversal. PostgreSQL reopened with fsync and synchronous commit enabled. The protected-source key directory survived both restarts.
-
-The durable representation is the immutable release recipe, its authenticated epoch history, source/index cut and actual prior outbox. A consumer can recover every changed value and lifecycle sequence without a materialized result row. Subsequent saves reference that history by hash. The test covers process and storage-service crashes on the same host.
-
-RE1 documented one serial apply thread per native database at 72785052e. This profile admitted one native transaction at a time and gave the release priority over unsent saves. W1 measured grouped submission separately at 502c8897d.
-
-The pinned NOTIFY1 host read the seed, two releases and an intervening save through the existing feed. Its delivered rows matched independent Python output, including order and payload. Its DELTA feed contract is byte-identical at 93ee743df and e9bfc4d4b.
-
-With separate page and root records, 111 of the 500 saves used four extra native operations. The first compact-index run alternated the order of ten paired 50-save blocks. Each arm committed 6,549 facts in 500 saves and recovered ten duplicates. Without/with indexes the WAL cost was 3,599/4,958 bytes per fact, database growth 3,480/4,782 and acknowledgment 7.57/7.75 ms per fact. price.run compared the same trace and receipts, the 62 touched people against Python and physical PostgreSQL size/LSN boundaries. Objects.decode verifies the original cut and logical page digest after applying a sparse patch. The tests also check the census complement, closed cases, old page versions and the full fallback for a newly tracked document type.
-
-The final index puts changed leaves and their directory entries inside the existing save event. The head carries one authenticated reference. The cache checks that its native position precedes the requested cut. The negative test first reproduced an incorrectly accepted future reference. Two alternating-block observations of cluster-wide WAL changed sign when the starting order changed. They do not isolate asynchronous index maintenance.
-
-Four fresh PostgreSQL stacks ran unindexed/indexed then indexed/unindexed. Each arm used its own empty volume, 500 original saves, 6,549 facts and ten duplicate sends. Datomic request-index/sync-index completed through the exact seed and final positions, with aligned PostgreSQL checkpoints. The means without/with the index were 4,507/4,808 WAL bytes, 4,314/4,604 database bytes, 1,039/1,075 request bytes and 4.07/4.29 ms per fact. The added WAL was 301 bytes per fact. None of the matched saves added a native operation.
-
-physical-arms validates per-command fact and operation counts, independent final outputs, cluster IDs, unique maintenance jobs, cut ordering, physical counters, same executable inputs and removal of every preceding arm’s volume. The fail-first historical-cut test and corrected run are retained. [Part 3 evidence checksums](PART3-SHA256SUMS)
-
-No acceptance pins or frozen workloads changed. Part 2’s original evidence is retained in [its manifest](SHA256SUMS).
-
-**Single deep account on the server**
-
-`DOCKER_HOST=unix:///var/run/docker.sock node --import tsx lab/experiments/EXP-DX1/scale1/bench.ts launch 2 delta-$(date -u +%Y%m%d%H%M%S) activation --activation-mode delta`
-
-The release runner admits one 100,000-person account, checks its 16,245,647 actual seed assertions against the separate-account inventory and verifies native membership. Both page-guard reference releases read the actual deep source after Publish with live readers and saves. DELTA runs 90 loaded releases, 30 each broad, narrow and rollback. The same physical seed serves both arms. Expected duration is about two hours on the server. The prior 349-second seed at 10,000 projects to 58 minutes for this single account. The hard budget is 160 minutes of work plus up to ten minutes each for shutdown and evidence. [Original seed timing](../act2/REPORT.md)
-The 600-second preflight regenerates both population inventories before any large seed, runs both live-window oracle checks, reopens the full fallback, exercises both publishers on 1,000 deep subjects and validates the source, nonce, slot, result hashes and raw observation count. The parent writes the failing stage and reason to STATUS.json. Locally this took 291.6 s. Both reference sweeps accepted 61 saves, including a 55-save burst. Their 5,664 live reads matched Python. DELTA verified 9,024 background reads and every row and notice at both source cuts. The preflight rejects a changed nonce or a missing timing row.
-
-checkSolo and the SCALE1 launcher compare the fresh native seed and membership, raw per-offer bytes and recomputed p99, all three reference releases and both complete oracle proofs against the request, source and slot. The three-hour Linux campaign has 64 readers and 55-save, one-second bursts on top of 1.6 steady saves/s. All Mac timings are diagnostic.
+The receipt audit binds checks to the native nonce, source/build bytes, slot owner and re-opened R1 image. It lists the save, release, independent read, deadline and order checks. The local lease was released and its three containers and one volume were removed. The acceptance pins, W0 and frozen trace are unchanged. [Receipt audit](PART5.md#receipt-audit) · [Evidence index and checksums](PART5-SHA256SUMS)

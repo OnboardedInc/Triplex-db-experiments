@@ -26,7 +26,6 @@ import {
 
 const MiB = 2 ** 20;
 const GiB = 2 ** 30;
-const holder = "DX-ERASE1";
 const code = path.relative(REPO, import.meta.dirname);
 const caps = { pg: 384, tx: 1152, gw: 1408 };
 
@@ -103,7 +102,10 @@ function bindingInputs(manager) {
 
 export async function local(opts, config, manager) {
   assert(process.platform === "darwin" && dockerArgs([])[1] === DOCKER_HOST);
-  assert.equal(opts.holder, holder);
+  // [DX-THIN1] Why: the exact same integration fixture must reserve and clean up under the calling builder's own holder.
+  // Rejected: requiring the original builder's slot or collecting their files as a fresh gate.
+  const holder = opts.holder;
+  assert(typeof holder === "string" && /^DX-[A-Z0-9-]{1,26}$/.test(holder));
   const people = Number(opts.people);
   const mode = String(opts.run ?? "scale");
   assert(

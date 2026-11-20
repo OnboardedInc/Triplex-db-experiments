@@ -854,6 +854,33 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
     console.log(JSON.stringify({ at: Date.now(), slot: info.container, volume: info.volume, stat }));
     return;
   }
+  if (command === 'fault-process' || command === 'memory-process') {
+    const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
+    const owner = readOwner(info);
+    const role = options.role, action = options.action;
+    const managed = inspect(info.container);
+    if (info.lane !== 'datomic' || info.mode !== 'exclusive' || !options.holder || owner?.holder !== options.holder
+      || owner?.volume !== info.volume || !process.env.TX2_EXCLUSIVE_VOLUME_ID || !managed?.State?.Running
+      || !managed.Config?.Labels?.['tx2.managed-by'] || !managed.Mounts?.some(m => m.Name === info.volume))
+      fail('OWNERSHIP', 'A role observation requires the active suffixed private slot');
+    if (!['transactor', 'write-gateway'].includes(role)) fail('USAGE', 'Select the transactor or write-gateway role');
+    if (command === 'memory-process') {
+      // [DX-ACT1] Why: separate the two application processes from PostgreSQL without charging shared pages twice. Rejected: treating Docker's total RSS as the never-touched client footprint.
+      const readRole = 'set -eu; read -r p < "$1"; case "$p" in ""|*[!0-9]*) exit 1;; esac; test "$p" -gt 1; test "$(awk \'/^PPid:/{print $2}\' "/proc/$p/status")" = 1; printf "%s " "$p"; awk \'/^Rss:/{rss=$2} /^Pss:/{pss=$2} END{if(!rss || !pss)exit 1; print rss, pss}\' "/proc/$p/smaps_rollup"';
+      const [pid, rssKiB, pssKiB] = docker(['exec', info.container, 'bash', '-c', readRole, '--', `/run/tx2-${role}.pid`]).trim().split(/\s+/).map(Number);
+      if (![pid, rssKiB, pssKiB].every(n => Number.isSafeInteger(n) && n > 0) || pssKiB > rssKiB)
+        fail('GUEST_ROLE', 'Missing or invalid guest memory observation');
+      console.log(JSON.stringify({ at: Date.now(), holder: owner.holder, slot: info.container, volume: info.volume, containerId: managed.Id, role, pid, rssKiB, pssKiB }));
+      return;
+    }
+    if (!['pause', 'resume'].includes(action))
+      fail('USAGE', 'fault-process takes a transactor or write-gateway role and pause or resume action');
+    // [DX-ACT1] Why: suspend exactly the managed fixture child so the two native roles can be distinguished. Rejected: signalling a host PID or stopping someone else's engine.
+    const checkRole = 'set -eu; read -r p < "$1"; case "$p" in ""|*[!0-9]*) exit 1;; esac; test "$p" -gt 1; test "$(awk \'/^PPid:/{print $2}\' "/proc/$p/status")" = 1; kill "-$2" "$p"; for i in 1 2 3 4 5 6 7 8 9 10; do state=$(awk \'/^State:/{print $2}\' "/proc/$p/status"); case "$2:$state" in STOP:T|CONT:[RSDI]) printf "%s %s\\n" "$p" "$state"; exit 0;; esac; sleep 0.05; done; exit 1';
+    const observed = docker(['exec', info.container, 'bash', '-c', checkRole, '--', `/run/tx2-${role}.pid`, action === 'pause' ? 'STOP' : 'CONT']).trim();
+    console.log(JSON.stringify({ holder: owner.holder, slot: info.container, volume: info.volume, role, action, observed }));
+    return;
+  }
   if (!['up', 'down', 'logs'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
   if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');
   const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);

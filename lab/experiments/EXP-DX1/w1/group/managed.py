@@ -12,7 +12,7 @@ import uuid
 
 parser = argparse.ArgumentParser()
 parser.add_argument("destination", type=Path)
-parser.add_argument("--field", choices=["queue","growth","small-cost","small-layout","small-capacity","retention","ledger-proof","write-clock"])
+parser.add_argument("--field", choices=["queue","growth","small-cost","small-layout","small-capacity","retention","ledger-proof","write-clock","query6","erase6"])
 parser.add_argument("--offers", type=int, default=10000)
 args = parser.parse_args()
 if args.field == "retention" and not 64 <= args.offers <= 10000:
@@ -40,9 +40,12 @@ if args.field:
     if args.field == "retention":
         shutil.copy2(experiment.parent / "small/retention.clj", cfg / "packages/datomic/gateway/src/triplex/gateway/retention.clj")
         (container / "offers").write_text(str(args.offers) + "\n")
+    if args.field in ("erase6", "query6"):
+        shutil.copy2(experiment.parent / "small/erase6.clj", cfg / "packages/datomic/gateway/src/triplex/gateway/erase6.clj")
 esbuild = repo / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
 subprocess.run([esbuild, experiment / "local.ts", "--bundle", "--platform=node", "--format=esm",
                 "--banner:js=import {createRequire as w1Require} from 'node:module'; const require=w1Require(import.meta.url);",
+                "--metafile=" + str(out / "bundle.json"),
                 "--outfile=" + str(container / "local.mjs")], check=True)
 recipe = container / "Dockerfile"
 recipe.write_text("FROM postgres:17-alpine AS w1pg\nFROM node:22.23.2-bookworm-slim AS w1node\n" +
@@ -63,6 +66,7 @@ env = dict(os.environ, TX2_CONFIG_DIR=str(cfg), TX2_SLOTS_FILE=str(slots), TX2_E
 assert env.get("DOCKER_HOST") == s["dockerHost"]
 files = {str(f.relative_to(cfg)):digest(f) for f in cfg.rglob("*") if f.is_file()}
 (out / "inputs.json").write_text(json.dumps({"head":subprocess.check_output(["git","rev-parse","HEAD"],text=True).strip(),
+    "bundle": {f: digest(repo / f) for f in json.loads((out / "bundle.json").read_text())["inputs"]},
     "stage":files,"runner":{str(f):digest(f) for folder in ([experiment,experiment.parent / "field",experiment.parent / "small"] if args.field else [experiment]) for f in folder.iterdir() if f.is_file()}},indent=2)+"\n")
 scratch = 8 if args.field == "growth" else 1
 for action in ["build","selftest"]:

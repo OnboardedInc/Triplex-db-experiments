@@ -1,39 +1,47 @@
-At 10,000 compact people, the account recorded 1,650 wage notices in 37 ms with four database changes.
-The original three-rule release now stores 3,764 concrete changes in 796 ms on that compact fixture. The connected reader answered at 807 ms.
-At 1,000 real deep people, the recipe was durable in 68 ms. Staging 5,759 concrete changes with the notice-only index took 1.052 seconds.
-The deep notice leaves use about 48 bytes per person. A reader-only save adds no notice or index changes.
-Bounded staging removes the single-request limit for a release. The 100,000-person deep estimate for concrete output still exceeds one second.
-Native crashes, two competing releases, same-person writes, changes for everyone or nobody and idle expiry matched the oracle.
-The six-cell server command passed a small native collector check. Server timings remain open.
-The owner still needs to decide whether a durable recipe counts as stored and whether erased submissions should pause or be cancelled.
+Use `48f55759494f6a6a04eeb6aa5284dde3e166d431` for the server retry. The native shared-geography test passed at that exact commit.
+A single write records the new rules and what notices are owed. At 10,000 deep people that write took 38 ms on the Mac.
+A background worker writes the changed values and individual notices in short turns. The recipient can stay offline while it records them.
+Before a value is stored, reads at the receipt’s cut derive it. Stored values serve that same cut. Later saves use the latest source.
+A new release can stop an obsolete value copy. Notices from both releases still get recorded in order.
+A shared wage-floor save covers the full roster when the database cannot prove a smaller affected set.
+On the server, 64 people took 34 ms to the quiet receipt and 47 ms to the first correct answer. All six cells agreed.
+The first local replay waited 55 minutes for a slot. The live timing is still queued. The receipt and erasure rulings remain open.
 
-### Read path
+### Part 7
 
-Quiet figures are paired local medians from four cases apiece. The release is learned by querying the latest committed database position. The pinned source pull took 10–19 ms on a deep person, and rule evaluation and serialization took about 1–2 ms. Starting a fresh process took 469–552 ms on average, including module loading and native session setup. The included save overlap raised the time to get to the final native commit request. Guest CPU averaged 5.5–13.5% busy across eight virtual cores with no native quota throttling. The historical trace lacked host resource and transactor queue clocks. [Full stage budget](STAGES.md)
+The value and notice archives are separate native scopes on the same writer. Frames bind their receipt, exact source cut, release and cursor. The W1 queue has live priority and fair bulk turns. A service estimate bounds submitted work per frame. The measured P6 ratios must still decide whether that allowance is sufficient. [Design and receipt audit](PART7.md)
 
-### Joined publication
+The STG1 fallback from `fa53e50cd` keeps generic source edits at full-census coverage. Joined saves may use one person only when the original native command proves the namespace is private. The specific shared floor already took the census path in joined Publish, so that recipe did not omit a person. The previous general save recipe allowed an unproved narrow list. The companion's seven memory tests passed. The joined regression checks both sides of Publish and the unaffected complement before delivery.
 
-An account transaction installs the LAZY marker, changes the notice tail and appends the ordered owed event. The marker and event share the same source cut. Ordinary reads derive from that marker and verify the exact database position and erasure frontier. DELTA indexes only notice-changing inputs. NOTIFY1 replays the immutable cut and maintains ordered recipient deduplication. Stored mode adds the actual changed values and deletions. Envelopes mode also preserves the complete W0 answer bytes. [Design and companion source pins](JOIN.md)
+BM1 `i27-1` and `i29-1` stopped before the large offers because Joined Save passed an empty geography owner as an owner claim. The repair plans a census reconcile for either shared geography kind. The native test replayed three shared edits with seven affected people and one unchanged person each, three stops, a lost acknowledgement and 35 ordered effects. It removed its volume. [Part 8 checksums](PART8-SHA256SUMS)
 
-Externally named saves keep their own IDs separate from calendar events. Dated corrections retain the earlier valid interval. Reader-only saves update source and clock with zero notice or index changes. A notice-input save adds an event and changes the tail. A changed posting updates one compressed base-relative leaf. A shared dependency or backdated change can invalidate the index and lead to an exact census fallback. The experiment enrols a fresh W0 recipient epoch. Deep-profile joined support, migration, protected inputs and production latency remain open. [Costs and limits](COST.md)
+### Second review
 
-### Verification and evidence
+- Finding 2 `8b0db230d`. The collector accepts the exact `i17-1` file set and rejects a copy that omits one terminal.
+- Finding 3 `8b0db230d`. `observations.test.ts` marks late starts, late native cuts and stale cuts as misses.
+- Finding 4 `8b0db230d`. The `i17-1` replay matched three distinct fresh deadline subjects per cell and 30 sampled answers.
+- Finding 5 `8b0db230d`. All six `i17-1` offer hashes compiled to the recorded release, were unique and were absent from the built-in set. The quiet staged offer was among them.
 
-- The two raw stage captures verify all 64 read responses per build against Python at the reported cuts. The shared-cut run also checked 19 historical and erasure reads. The old 23 publication schedules, six other experiment tests and 174 frozen W0 tests passed.
-- The final native join gate killed three processes and checked 11 full-census cuts. It recovered the exact lost publication receipt, admitted the two-hop correction, retained the earlier valid value and replayed 21 ordered recipient effects. The independent range grid checked 4,000 subject, clock, edit and coverage combinations. The 1,000-person price run independently checked the full source roster at eight release cuts, every physical change, 18 saves and all 883 recipient effects.
-- Receipt audit. Joined `install/state/original/command` check durable operation bytes, native generation, independent roster, command intent and exact predecessor. `choose/admit/marker/physical` verify source cut, leaf and census matches, witness, event and chunk assertions. NOTIFY1 `Documents.original/commit`, `Notices.create/event/plan`, dispatcher and receiver bind epoch, event parent, packet, native receipt, effect and acknowledgements. `Reference.check/receiver`, `gate/price` and the range test compare complete pinned answers, changes and ordered effects to the oracle. `timing` binds request nonce, release and cut. `local` verifies source, binaries, inputs, image, slot and volume before and after. Reducers validate sealed evidence bytes and attempt identities.
-- The private evidence is under `evidence/DX-ACT1/lazy-join/`. Key attempts are `baseline-a`, `reader-d`, `joined-proof-d`, `price1-c`. The pool refused the optional 10,000-person joined price on its disk forecast. Earlier unallocated attempts and that refusal are retained as admission logs. Trial volume removals are in each cleanup log. No acceptance pin moved. [Checksums](PART5-SHA256SUMS)
+The four producer and collector source files match byte for byte at `5100afc52` and the observed `i17-1` source `ec996c073`. The replay used the original source and slot owner, and all four focused tests passed at `5100afc52`. [Full review response](REVIEW2.md)
 
-The Part 6 compact repeat independently checked all eight release cuts, each stored value and the receiver. Its volume was removed. [10,000-person cost and estimates](COST.md) · [Part 6 checksums](PART6-SHA256SUMS)
+### Prior measurements
 
-Deep receipt audit. The deep save previews the actual enrolled root and attached rows at the proposed native predecessor. Every accepted change carries the same source receipt, calendar, index operations and notice tail. The profile compares the first native answer, release cuts and effect ledger with Python on the authored deep inputs and verifies every save’s actual native byte and position.
+On the Mac, 10,000 deep people took 38 ms to the receipt and 49 ms to the first correct connected answer. Storing all 49,297 values with the notice-only index took 21.66 s. The faster compact path stored the original three-rule release in 796 ms at 10,000 people. [Part 6 price and scope](PART6-PRICE.md) · [Part 6 checksums](PART6-SHA256SUMS)
 
-Staged receipt audit. `stage/checkStage/collectStage` verify the original scoped manifest, exact native positions and unreachable chunk identity. `publish/marker/physical` bind encoded values and the source/marker cut. `rawDeep/deepImpact/replaceDeep` and the oracle gates bind enrolled subject operations and independently authored inputs. `fast-price/stage-gate/deadline-gate/server` verify actual output bytes or receipts from fresh attempts, including the receiver and scope. Server time series keep offers that miss the deadline in the raw ledger. See [Part 6 implementation and audit response](PART6.md).
+The deep notice leaf used 48.2 bytes per person, plus about 101.3 bytes of durable addresses. That is an encoded storage count. P7 measures resident bytes outside Postgres. The first-read and resident-account evidence must be reported separately. [Part 5 read stages](STAGES.md) · [Retention choice](RETENTION.md)
 
-The first native staged gate verified a killed writer, an abandoned and collectable stage, a competing release, all-change and empty releases, and an original receipt after lost ACK. The idle boundary gate recorded the expiry event with zero saves and proved one recipient effect after reopening.
+The eight-fact thin fixture encoded 10.3–10.4 leaf bytes and 100–104 address bytes per person in three 64-person pages, including offsets near one million and 4.5 million. This calculation did not load those populations. Thirty-two small tests passed, and two queue tests separately exercised live preference and fair turns. The first native collector attempt caught a working-tree change at startup and released its volume. The replacement runs from a frozen checkout. [Part 7 checksums](PART7-SHA256SUMS)
 
-Native stage, race and expiry evidence is complete. The 10,000-person comparison isolates ranges, threads, input reuse, staged writes and encoding. The native 64-person server-command smoke checked six cells, 28 saves and 757 ordered effects. The 10,000-deep price is loading its fixture. [Measured work and estimates](PART6-PRICE.md) · [Deep server command and predictions](SERVER.md)
+The 10,000-deep trial spent about 26 minutes on preparation and reached the contested timing boundary. It yielded its heavy token and removed the volume before either live window. The shared lease also blocked the 1,000-deep fallback and the untimed matrix. Both waiters closed before admission. [Part 7 checksums](PART7-SHA256SUMS)
 
-The final staged gate verified both orders of the same-person save and a new deep reader during an abandoned stage. The deep fixture’s independently encoded notice leaf costs 48.2 bytes per person at 10,000. [Evidence checksums](PART6-SHA256SUMS)
+Transactor and gateway suspension, the fixed 64-reader trace, live save and read ratios, and wider cold-read and resident-memory measurements remain unverified. BM1 has published no 100,000-person result for this pin.
 
-At 1,000 deep people, receipt-only Publish took 68 ms durable and 85 ms to the first correct answer. Staging all 5,759 changed values took 1,052 / 1,068 ms using the notice-only index. The independent oracle verified 2,003 recipient effects. [Deep save costs](PART6-PRICE.md)
+### Server command
+
+Use the pinned checkout on the first line and the managed W1 slot with live priority enabled. [Environment and predictions](SERVER.md)
+
+BM1 `34badc007`, evidence `i14-1` and `i17-1`, replayed 30 point answers and 757 effects. `Store.commit` had discarded the adapter's typed cause. The Mac W1 gate got HTTP 413 `BulkFrameTooLarge` with no head change and accepted and replayed the smaller retry. The same native run matched 199 stored changes, 118 ordered notices, two worker kills and two automatic wakeups. Its volume was removed. [Checksums](PART7-SHA256SUMS)
+
+```sh
+TX2_SWEEP_STRICT=1 TX2_W0_POINT_JOURNAL=1 TX2_W0_RESTORE_INDEXED_JOURNAL=1 TRIPLEX_DATOMIC_LAYOUT=lean node lab/bin/heavy.mjs --label DX-ACT1 -- node --experimental-strip-types lab/experiments/EXP-DX1/actv-lazy/join/server.ts 100000 "$DX_LAZY_OUT" --settlement
+```

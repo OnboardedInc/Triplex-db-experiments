@@ -38,7 +38,9 @@ import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
 import { CLOCK, RELEASE, Conflict, fact, millis, value, type Store } from "../store.ts";
 import { calculate, worldsAt, type Proposal, type Point } from "../decision.ts";
-import { deepImpact, rawDeep } from "./deep.ts";
+import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
+import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
+import { AccountAdmission, type PublishObservation, type WriteAttempt } from "./admission.ts";
 import { LazyReader, rosterRoot, rosterSeal } from "../read.ts";
 import {
   entry,
@@ -60,6 +62,7 @@ export type PublishOptions = {
   sources?: "census" | "native" | "indexed";
   codec?: "legacy" | "compact";
   afterChunk?: (attempt: string) => Promise<void>;
+  observation?: PublishObservation;
 };
 export type Edit = { e: string; a: string; values: W0.Fact["v"][]; from?: string };
 type Meta = {
@@ -71,7 +74,7 @@ type Meta = {
   scheduled: boolean;
   expanded?: boolean;
 };
-type Marker = {
+export type Marker = {
   joined: string;
   seq: number;
   old: W0.ReleaseDoc | null;
@@ -102,9 +105,14 @@ export class JoinedAccount {
   readonly s: Store;
   lastMaterial = emptyMaterial();
   private readonly calendarListeners = new Set<() => void>();
+  private readonly noticeListeners = new Set<() => void>();
   onCalendar(listener: () => void) {
     this.calendarListeners.add(listener);
     return () => this.calendarListeners.delete(listener);
+  }
+  onNotice(listener: () => void) {
+    this.noticeListeners.add(listener);
+    return () => this.noticeListeners.delete(listener);
   }
   readonly notices: Notices;
   readonly stats = {
@@ -114,13 +122,39 @@ export class JoinedAccount {
     noticeIndexBytes: 0,
     addressBytes: 0,
   };
-  constructor(s: Store) {
+  private readonly admission?: AccountAdmission;
+  constructor(s: Store, admission?: AccountAdmission) {
     this.s = s;
+    this.admission = admission;
     this.notices = new Notices(s.comp, "joined", {
       identity: selector,
       roster: async (c) => this.roster((await this.meta(c.position)).census, c.position),
       worlds: async (ids, c) =>
         worldsAt(s, s.profile, ids, { tx: c.position, validTime: c.validTime }),
+      ownedCommand: async (event, owner) => {
+        const tx = (await s.comp.feedPage(event.at - 1, 1)).transactions[0];
+        if (
+          tx?.position !== event.at ||
+          tx.actor !== "lazy/join" ||
+          tx.commandId !== "joined:" + event.value.request ||
+          event.value.sourceBefore !== event.at - 1
+        )
+          return false;
+        const rows = tx.changes.filter(
+          (r: { entityId: string }) =>
+            r.entityId !== CLOCK && !r.entityId.startsWith(this.db.prefix),
+        );
+        // [DX-ACT1] Why: W0 owned entities and the deep root namespace cannot be policy dependencies of another enrollee. Rejected: deriving a durable covered set solely from a caller's owner label.
+        return (
+          rows.length > 0 &&
+          rows.every((r: { entityId: string; value?: { type: string; value: string } }) =>
+            s.profile === "w0"
+              ? W0.classify(r.entityId)?.owner === owner
+              : subjectOf(r.entityId) === Number(owner.slice(4)) &&
+                (r.value?.type !== "ref" || subjectOf(r.value.value) === Number(owner.slice(4))),
+          )
+        );
+      },
     });
   }
   get db() {
@@ -351,30 +385,75 @@ export class JoinedAccount {
       return r;
     });
   }
-  private async command(
+  // [DX-ACT1] Why: recovering a committed command can be the first time this host sees it. Rejected: waking only on a newly handed-back ACK.
+  private observed(r: Awaited<ReturnType<Store["commit"]>>) {
+    if (
+      this.calendarListeners.size &&
+      r.changes.some((c: { entityId: string }) => c.entityId === this.db.prefix + "join-calendar")
+    )
+      for (const wake of this.calendarListeners) wake();
+    if (
+      this.noticeListeners.size &&
+      r.changes.some((c: { entityId: string }) => c.entityId.startsWith(this.db.prefix + "event:"))
+    )
+      for (const wake of this.noticeListeners) wake();
+    return r;
+  }
+  private command(
     id: string,
     args: unknown,
     plan: (p: number) => Promise<{ ops: any[]; context: object; expected?: number }>,
     hook?: () => Promise<void>,
     through?: string,
+    priority = false,
+    observation?: PublishObservation,
+  ) {
+    const execute = () => this.execute(id, args, plan, hook, through, observation);
+    if (!this.admission) return execute();
+    return this.admission.run(priority ? "publish" : "save", (turn) => {
+      if (observation) observation.turn = turn;
+      return execute();
+    });
+  }
+  private async execute(
+    id: string,
+    args: unknown,
+    plan: (p: number) => Promise<{ ops: any[]; context: object; expected?: number }>,
+    hook?: () => Promise<void>,
+    through?: string,
+    observation?: PublishObservation,
   ) {
     assert(
       /^[a-zA-Z0-9_.:-]{1,145}$/.test(id) || (!through && /^deadline\/[a-f0-9]{64}$/.test(id)),
     );
     const intent = h([this.s.scope, id, args]);
-    for (;;) {
+    // [DX-ACT2] Why: only a different scope writer can beat an admitted turn. Bound that case and recover the original durable receipt by identity. Rejected: spinning against a moving source head.
+    for (let retries = 0; retries < 3; ) {
+      const attempt: WriteAttempt | undefined = observation
+        ? { started: performance.now() }
+        : undefined;
+      if (attempt) observation!.attempts.push(attempt);
       const old = await this.original(id, intent);
-      if (old) return old;
+      if (old) {
+        if (attempt) {
+          attempt.recovered = true;
+          attempt.finished = performance.now();
+        }
+        return this.observed(old);
+      }
       const p = await this.s.head();
+      if (attempt) attempt.cut = p;
       if (through) {
         const due = (await this.db.get<string[]>("join-calendar", p)).value[0];
         if (due && due <= through) {
-          await this.advance(through);
+          await this.advanceWithinTurn(through);
+          if (attempt) attempt.finished = performance.now();
           continue;
         }
       }
       try {
         const body = await plan(p);
+        if (attempt) attempt.prepared = performance.now();
         const r = await this.s.commit(
           "joined:" + id,
           "lazy/join",
@@ -382,21 +461,27 @@ export class JoinedAccount {
           body.expected ?? p,
           { ...body.context, intent },
           hook,
+          attempt &&
+            ((at) => {
+              attempt.nativeAck = at;
+            }),
         );
+        if (attempt) attempt.finished = performance.now();
         assert.equal(r.position, (body.expected ?? p) + 1);
-        if (
-          r.changes.some(
-            (c: { entityId: string }) => c.entityId === this.db.prefix + "join-calendar",
-          )
-        )
-          for (const wake of this.calendarListeners) wake();
-        return r;
+        return this.observed(r);
       } catch (e) {
         const won = await this.original(id, intent);
-        if (won) return won;
+        if (attempt) attempt.finished = performance.now();
+        if (won) {
+          if (attempt) attempt.recovered = true;
+          return this.observed(won);
+        }
         if (!(e instanceof Conflict)) throw e;
+        if (attempt) attempt.conflict = true;
+        retries++;
       }
     }
+    throw new Conflict("Joined command exhausted three serial predecessor attempts");
   }
   private async choose(
     meta: Meta,
@@ -471,26 +556,73 @@ export class JoinedAccount {
     }
     return m;
   }
+  async receipt(sequence: number, at?: number) {
+    const event = await this.notices.event(sequence, at ?? (await this.s.head())),
+      marker = await this.marker(event);
+    const meta = await this.meta(marker.cut);
+    assert(marker.joined === meta.epoch && marker.census === meta.census.members);
+    return { event, marker, census: meta.census };
+  }
+
+  async noticeSelection(e: NoticeEvent) {
+    const m = await this.marker(e),
+      meta = await this.meta(m.cut);
+    return this.choose(
+      meta,
+      m.cut,
+      m.at,
+      m.old ? W0.compileRelease(m.old) : undefined,
+      W0.compileRelease(m.document),
+      "notice",
+    );
+  }
   dispatcher(sink: Documents) {
     let key = "",
       selection: string[] = [];
     return new Dispatcher(this.notices, sink, async (e, start) => {
       if (key !== e.id) {
-        const m = await this.marker(e),
-          meta = await this.meta(m.cut);
-        selection = await this.choose(
-          meta,
-          m.cut,
-          m.at,
-          m.old ? W0.compileRelease(m.old) : undefined,
-          W0.compileRelease(m.document),
-          "notice",
-        );
+        selection = await this.noticeSelection(e);
         key = e.id;
       }
       assert(start >= 0 && start <= selection.length && start % width === 0);
       return { ids: selection.slice(start, start + width), size: selection.length };
     });
+  }
+  async schedule(id: string, doc: W0.ReleaseDoc, offered: string, effective: string) {
+    doc = structuredClone(doc);
+    const release = W0.compileRelease(doc).hash;
+    assert(W0.isInstant(offered) && W0.isInstant(effective) && offered < effective);
+    // [DX-ACT1] Why: a future policy is visible to explicitly future-pinned reads without advancing the live notice tail early. Rejected: setting the live business clock to the effective date at ingress.
+    return this.command(
+      id,
+      ["schedule", doc, offered, effective],
+      async (p) => {
+        const { meta, c } = await this.state(p);
+        assert(c.at <= offered);
+        const calendar = await this.db.get<string[]>("join-calendar", p);
+        const dates = [...new Set([...calendar.value, effective])].sort();
+        const ops = [
+          fact(RELEASE, "lazy/activation", {
+            joined: meta.epoch,
+            storage: "scheduled",
+            kind: "activation",
+            release,
+            document: doc,
+            at: offered,
+            from: effective,
+            cut: p,
+            census: meta.census.members,
+            compiler: selector,
+          }),
+        ];
+        return {
+          ops: [...ops, ...this.db.change("join-calendar", calendar, dates)],
+          context: { release, offered, effective },
+        };
+      },
+      undefined,
+      offered,
+    );
   }
   async publish(
     id: string,
@@ -516,7 +648,11 @@ export class JoinedAccount {
         async (p) => {
           const { meta, c, tail } = await this.state(p);
           assert(at >= c.at);
-          const prev = c.releases.toSorted((a, b) => b.tx - a.tx)[0];
+          // [DX-THIN1] Why: the current erasure cut must use the effective predecessor release.
+          // Rejected: letting a future scheduled release define today's prior answers.
+          const prev = c.releases
+            .filter((r) => r.storage !== "scheduled" && r.from <= at)
+            .sort((a, b) => b.from.localeCompare(a.from) || b.tx - a.tx)[0];
           const old = prev ? W0.compileRelease(prev.document) : undefined;
           const req: Request = {
             id,
@@ -664,6 +800,10 @@ export class JoinedAccount {
         },
         hook,
         at,
+        // [DX-THIN1] Why: the owed Publish gets the next admitted turn with its original erasure witness.
+        // Rejected: an unfenced priority path or a priority turn for every staging write.
+        storage === "owed",
+        options.observation,
       ),
     );
   }
@@ -704,7 +844,12 @@ export class JoinedAccount {
     await before?.();
     return (await this.s.head()) === p ? "covered" : "stale";
   }
-  async advance(at: string) {
+  advance(at: string) {
+    return this.admission
+      ? this.admission.run("save", () => this.advanceWithinTurn(at))
+      : this.advanceWithinTurn(at);
+  }
+  private async advanceWithinTurn(at: string) {
     assert(W0.isInstant(at));
     for (;;) {
       const p = await this.s.head(),
@@ -712,7 +857,7 @@ export class JoinedAccount {
         due = calendar.value[0];
       if (!due || due > at) return;
       const id = "deadline/" + sha256(due);
-      await this.command(id, ["deadline", due], async (k) => {
+      await this.execute(id, ["deadline", due], async (k) => {
         const { meta, c, tail } = await this.state(k),
           cal = await this.db.get<string[]>("join-calendar", k);
         assert(cal.value[0] === due && c.at <= due);
@@ -724,7 +869,47 @@ export class JoinedAccount {
         // [DX-ACT1] Why: passage through an enrolled valid-time boundary may change posting inputs without a save. Rejected: treating the original page as authoritative beyond its first unprocessed boundary.
         if (!(await this.db.row("join-invalid", k)))
           ops.push(this.db.put("join-invalid", { source: k + 1, compiler: selector }));
-        if (tail.value.release)
+        const scheduled = c.releases
+          .filter((r) => r.storage === "scheduled" && r.from === due)
+          .toSorted((a, b) => b.tx - a.tx)[0];
+        if (scheduled) {
+          const doc = W0.compileRelease(scheduled.document);
+          assert(scheduled.joined === meta.epoch && doc.hash === scheduled.release);
+          const prior = tail.value.custom
+            ? (await this.notices.event(tail.value.custom.definition, k)).value.document
+            : tail.value.release
+              ? W0[tail.value.release].doc
+              : null;
+          const plan = this.notices.plan(
+            { ...tail, at: k },
+            {
+              id: "future-" + sha256(due),
+              kind: "activation",
+              release: doc.doc.name,
+              document: doc.doc,
+              validTime: due,
+              from: due,
+              selection: { kind: "census" },
+            },
+          );
+          const m: Marker = {
+            joined: meta.epoch,
+            seq: plan.recipe.sequence,
+            old: prior,
+            document: doc.doc,
+            release: doc.hash,
+            cut: k,
+            at: due,
+            from: due,
+            kind: "activation",
+            storage: "owed",
+            output: { count: 0, chunks: 0, hash: encodedHash([]), owners: 0 },
+            notice: h(plan.recipe),
+            census: meta.census.members,
+            compiler: selector,
+          };
+          ops.push(fact(RELEASE, "lazy/activation", m), ...plan.operations);
+        } else if (tail.value.release)
           ops.push(
             ...this.notices.plan(
               { ...tail, at: k },
@@ -768,25 +953,35 @@ export class JoinedAccount {
     return [...found.values()];
   }
   // [DX-ACT1] Why: fold the live deep command into the same strict source transaction as its index and owed event. Rejected: dual-writing a compact mirror after the deep transaction (a release can land in the gap).
-  async saveDeep(id: string, person: number, submitted: readonly Op[], at: string) {
+  async saveDeep(
+    id: string,
+    person: number,
+    submitted: readonly Op[] | { fields: readonly Fact[]; from: number },
+    at: string,
+    observation?: PublishObservation,
+  ) {
     assert(
       this.s.profile === "act2-deep" &&
         W0.isInstant(at) &&
         Number.isSafeInteger(person) &&
         person >= 0,
     );
-    const source = structuredClone(submitted),
+    const request = structuredClone(submitted),
       subject = W0.placementId(person);
     return this.command(
       id,
-      ["deep-save", subject, source, at],
+      ["deep-save", subject, request, at],
       async (p) => {
         const { meta, c, tail } = await this.state(p);
-        assert(at >= c.at && source.length > 0);
+        assert(at >= c.at);
         const [addr, raw] = await Promise.all([
           this.db.get<number>(address(subject), p),
           rawDeep(this.s, person, { tx: p, validTime: at }),
         ]);
+        // [DX-ACT2] Why: a deferred field edit chooses its actual live replacement IDs after admission. Rejected: submitting stale retractions built while a different save held the turn.
+        const source =
+          "fields" in request ? replaceDeep(raw, request.fields, request.from) : request;
+        assert(source.length > 0);
         const impact = deepImpact(person, raw, source, { tx: p, validTime: at });
         const anticipated = impact.prospective(),
           basis = { tx: p + 1, validTime: at };
@@ -835,12 +1030,15 @@ export class JoinedAccount {
                 validTime: at,
                 selection: { kind: "subjects", ids: [subject] },
               },
+              subject,
             ).operations,
           );
         return { ops, context: { epoch: meta.epoch, subject } };
       },
       undefined,
       at,
+      false,
+      observation,
     );
   }
   async save(id: string, edit: Edit, at: string) {
@@ -867,7 +1065,8 @@ export class JoinedAccount {
       async (p) => {
         const { meta, c, tail } = await this.state(p);
         assert(at >= c.at);
-        const owner = classified.owner,
+        // [DX-ACT1] Why: W0 gives shared geography an empty owner, which means the whole census at this boundary. Rejected: passing the empty string as an owned-reconcile proof.
+        const owner = classified.owner || undefined,
           direct = W0.isPlacementId(edit.e),
           addr = owner ? await this.db.get<number>(address(owner), p) : undefined;
         const active = await this.intervals(edit, p, from, !!meta.scheduled || from < at);
@@ -944,6 +1143,7 @@ export class JoinedAccount {
               validTime: at,
               selection: owner ? { kind: "subjects", ids: [owner] } : { kind: "census" },
             },
+            owner,
           );
           ops.push(...plan.operations);
         }

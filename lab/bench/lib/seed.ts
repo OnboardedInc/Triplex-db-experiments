@@ -125,9 +125,16 @@ export async function seedRung(opts: {
         if (record) recorded.push({ commandId, operations, preconditions, actor: "bulk-seed", receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignIds(operations, receipt) } });
         return receipt;
       }
-      failures.push({ tag: out.tag, commandId, message: String(out.error?.message ?? out.error ?? "").slice(0, 300) });
+      const gateway = out.error?.cause;
+      // [DX-THIN1] Why: distinguish a declined synthetic campaign frame from an unavailable gateway.
+      // Rejected: recording all error bodies in ordinary application runs.
+      const detail = process.env.DX_INT1_SEED_ERRORS === "1" && gateway?._tag === "DatomicHttpError"
+        ? ` (${gateway.status} ${gateway.code} ${gateway.message})`
+        : "";
+      const message = (String(out.error?.message ?? out.error ?? "") + detail).slice(0, 300);
+      failures.push({ tag: out.tag, commandId, message });
       if (opts.deep) opts.log(`seed: attempt ${attempt} failed for ${commandId}: ${out.tag} ${failures.at(-1)!.message}`);
-      if (attempt >= 8) throw new Error(`seed command ${commandId} failed ${attempt} times: ${out.tag} ${String(out.error?.message ?? out.error ?? "").slice(0, 300)}`);
+      if (attempt >= 8) throw new Error(`seed command ${commandId} failed ${attempt} times: ${out.tag} ${message}`);
       await new Promise((r) => setTimeout(r, 500 * attempt));
     }
   };

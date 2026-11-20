@@ -518,6 +518,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       TRIPLEX_DATOMIC_LAYOUT: "lean",
       TX2_SWEEP_STRICT: "1",
       TX2_W0_POINT_JOURNAL: "1",
+      DELTA_AUDITED: "1",
     };
     status(dir, "checking the 1000-person DELTA preflight");
     try {
@@ -543,7 +544,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
           process.execPath,
           "--import",
           "tsx",
-          path.join(repo, "lab/experiments/EXP-DX1/actv-delta/solo.ts"),
+          path.join(repo, "lab/experiments/EXP-DX1/actv-delta/audit-solo.ts"),
           log,
         ],
         { cwd: repo, env: { ...childEnv, DELTA_GATE: "solo" }, stdio: "inherit" },
@@ -603,13 +604,20 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
           await completion;
         }
       }
-      const { checkSolo } = await import("../actv-delta/solo-proof.ts");
-      const result = checkSolo(log, binding, 100000, 90, "solo");
-      assert.deepEqual(result.binding, binding);
-      assert.equal(result.target.people, 100000);
+      const { checkAuditSolo, checkCollector } = await import("../actv-delta/audit-solo.ts");
+      const { result, reports } = checkAuditSolo(log, binding, 100000, 45, "solo");
+      checkCollector(log, binding, 100000, 90);
       write(path.join(dir, "delta-measurement.json"), result);
+      write(path.join(dir, "delta-modes.json"), { binding, reports });
       write(path.join(dir, "disk-terminal.json"), snapshot(prefix));
-      status(dir, "DELTA evidence collected");
+      try {
+        checkAuditSolo(log, binding, 100000, 45, "solo", true);
+        status(dir, "DELTA evidence collected", { reports });
+      } catch (e) {
+        write(path.join(dir, "delta-deadline.json"), { binding, reports, reason: String(e) });
+        status(dir, "DELTA deadline missed", { reports, reason: String(e) });
+        throw e;
+      }
     } catch (e) {
       const reason = String(e).split("\n")[0];
       write(path.join(dir, "delta-stop.json"), { ...binding, reason });
@@ -1453,18 +1461,28 @@ async function terminal(dir: string, tag: string, prefix: string, refusal?: stri
   const deltaStop = path.join(dir, "delta-stop.json");
   if (entry.activationMode === "delta" && !outcome.stopReason) {
     const result = path.join(dir, "delta-measurement.json");
-    status(dir, fs.existsSync(result) ? "DELTA evidence collected" : "DELTA stopped", {
-      ...outcome,
-      ...(!fs.existsSync(result)
-        ? {
-            reason: fs.existsSync(deltaStop)
-              ? get(deltaStop).reason
-              : (Date.now() - entry.at >= entry.ceiling * 1000
-                  ? "three-hour budget / "
-                  : "worker stopped / ") + service,
-          }
-        : {}),
-    });
+    const missed = path.join(dir, "delta-deadline.json");
+    const scored = fs.existsSync(result) && !fs.existsSync(missed) && !fs.existsSync(deltaStop);
+    status(
+      dir,
+      scored
+        ? "DELTA evidence collected"
+        : fs.existsSync(missed)
+          ? "DELTA deadline missed"
+          : "DELTA stopped",
+      {
+        ...outcome,
+        ...(!scored
+          ? {
+              reason: fs.existsSync(deltaStop)
+                ? get(deltaStop).reason
+                : (Date.now() - entry.at >= entry.ceiling * 1000
+                    ? "three-hour budget / "
+                    : "worker stopped / ") + service,
+            }
+          : {}),
+      },
+    );
   } else status(dir, outcome.stopReason ? "preflight stopped" : "finished", outcome);
 }
 async function main() {
@@ -1595,6 +1613,9 @@ async function main() {
   if (process.env.DX_SCALE1_RUNTIME_REPO)
     assert.equal(fs.realpathSync(repo), path.join(root, "build-" + source, "repository"));
   const activationMode = getopt("activation-mode");
+  // [DX-ACT2] Why: require explicit selection of the audited campaign. Rejected: admitting an old overnight command with the read-only interpretation of DELTA.
+  if (activationMode === "delta")
+    assert.equal(getopt("delta-audit"), "2", "DELTA launch requires --delta-audit 2");
   if (activationMode !== undefined)
     assert(
       activationMode === "delta" &&

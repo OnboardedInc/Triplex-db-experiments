@@ -85,11 +85,13 @@ const attempt = randomUUID(),
   spread = process.env.DX_INT1_COHORT === "spread",
   seedOnly = process.env.DX_INT1_CENSUS === "seed-only",
   memory = memoryPlan(process.env.DX_INT1_MEMORY_POINTS, mode!, size),
+  nativePools = process.env.DX_INT1_NATIVE_POOLS === "1",
   policy = { readMode: process.env.DX_TOUCHED_READ_MODE ?? "following", gateways: process.env.DX_INT1_GATEWAYS ?? "original",
     ...(process.env.DX_INT1_PEER_GC === "elastic" ? { peerGc: "elastic" } : {}),
     ...(process.env.DX_INT1_PEER_HEAP === "128m" ? { peerHeap: "128m" } : {}),
     ...(process.env.DX_INT1_ROW_WIRE === "gzip" ? { rowWire: "gzip" } : {}),
     ...(memory ? { memory } : {}),
+    ...(nativePools ? { nativePools: true, nativeResidency: true } : {}),
     ...(process.env.DX_INT1_READER_PAGES === "1" ? { readerPages: true } : {}),
     ...(process.env.DX_INT1_SEED_FEED === "after-sampling" ? { seedFeed: "after-sampling" } : {}) },
   gatewaySource = stack.gatewaySourceSha256 as string,
@@ -433,6 +435,7 @@ async function trial() {
   if (memory) {
     assert(stack.managed?.compact && spread && !seedOnly && !policy.seedFeed);
     assert.equal(memory.points.join(","), stack.managed.memoryPoints);
+    assert.equal(nativePools, stack.managed.nativePools === true);
     assert(policy.readMode === "validated" && policy.gateways === "demand");
     if (memory.scopes) {
       const opened: { scope: string; openMs: number; seededAt: number }[] = [];
@@ -501,6 +504,7 @@ async function trial() {
         for (const field of ["entries", "packed", "bytes", "admissions"] as const)
           assert.equal(admission(observation)[field], admission(fixed)[field]);
       }
+      if (nativePools) await gatewayProfiles(stack, dir!, `people-${target}`, binding, account.head);
     }
     const nativeCache = await sampleObjectCache(stack).catch((error: Error) => ({ unavailable: error.message.split("\n")[0] }));
     save("memory-object-cache.json", { binding, position: account.head, nativeCache });

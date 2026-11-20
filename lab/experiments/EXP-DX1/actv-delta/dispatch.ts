@@ -3,7 +3,7 @@ import { W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { Account } from "./account.ts";
 import { projection, type Difference } from "./rules.ts";
 import { Objects, Conflict, hash } from "./store.ts";
-import { encodeBig, decodeBig, type Recipe } from "./model.ts";
+import { encodeBig, decodeBig, owedRecord, type Recipe } from "./model.ts";
 import { width } from "./pages.ts";
 
 type Chunk = {
@@ -13,6 +13,7 @@ type Chunk = {
   subjects: string[];
   rows: Difference[];
   deliveries: string;
+  state?: string;
 };
 type Expansion = {
   seq: number;
@@ -27,9 +28,15 @@ export type Hook = (
   stage: "before-chunk" | "after-chunk" | "before-effect" | "after-effect" | "after-ack",
   i: number,
 ) => void | Promise<void>;
-async function immutable<T>(db: Objects, key: string, value: T) {
+async function immutable<T>(
+  db: Objects,
+  key: string,
+  value: T,
+  committed?: (position: number, at: number) => void,
+) {
   try {
-    await db.commit("put:" + key, [{ key, value }], [{ key, cell: undefined }]);
+    const r = await db.commit("put:" + key, [{ key, value }], [{ key, cell: undefined }]);
+    committed?.(r.position, performance.now());
   } catch (e) {
     if (!(e instanceof Conflict)) throw e;
   }
@@ -37,17 +44,10 @@ async function immutable<T>(db: Objects, key: string, value: T) {
   assert.equal(canonical(cell.value), canonical(value), "durable object replay differs");
   return cell;
 }
-export async function expand(a: Account, seq: number, hook?: Hook) {
+async function publication(a: Account, seq: number, now: number) {
   const db = a.db,
-    now = await db.comp.currentPosition();
-  const old = (await db.many<Expansion>(["expanded:" + seq], now)).get("expanded:" + seq);
-  const rec = seq === 0 ? undefined : await db.get<Recipe>("event:" + seq, now);
-  const init = await db.get<unknown>("bootstrap", now);
-  const eventHash = rec?.hash ?? init.hash;
-  if (old) {
-    assert.equal(old.value.event, eventHash);
-    return old.value;
-  }
+    rec = seq === 0 ? undefined : await db.get<Recipe>("event:" + seq, now),
+    eventHash = rec?.hash ?? (await db.get("bootstrap", now)).hash;
   let subjects: string[], after: number, before: number;
   if (rec) {
     const e = rec.value,
@@ -84,17 +84,24 @@ export async function expand(a: Account, seq: number, hook?: Hook) {
   }
   assert.equal(new Set(subjects).size, subjects.length);
   subjects.sort();
-  const parts: string[] = [];
-  let rowCount = 0,
-    notices = 0,
-    changed = 0;
+  return { subjects, before, after, eventHash };
+}
+
+async function* publicationChunks(
+  a: Account,
+  seq: number,
+  plan: Awaited<ReturnType<typeof publication>>,
+  stored = false,
+) {
+  const { subjects, before, after, eventHash } = plan;
   for (let i = 0; i < subjects.length; i += width) {
     const ids = subjects.slice(i, i + width),
       newViews = await a.views(ids, after),
       oldViews = before ? await a.views(ids, before) : new Map();
     const rows: Difference[] = [],
       deliveries: W0.Delivery[] = [],
-      changedSubjects: string[] = [];
+      changedSubjects: string[] = [],
+      states: unknown[] = [];
     for (const s of ids) {
       const next = newViews.get(s)!,
         prev = oldViews.get(s),
@@ -113,6 +120,9 @@ export async function expand(a: Account, seq: number, hook?: Hook) {
           "outbox prefix changed",
         );
       deliveries.push(...pending);
+      if (stored && (changes.length || pending.length)) {
+        states.push([s, next.state.subjects, next.state.items]);
+      }
     }
     const chunk: Chunk = {
       seq,
@@ -121,18 +131,38 @@ export async function expand(a: Account, seq: number, hook?: Hook) {
       subjects: changedSubjects,
       rows,
       deliveries: encodeBig(deliveries),
+      ...(stored ? { state: encodeBig(states) } : {}),
     };
-    await hook?.("before-chunk", i);
+    yield { chunk, notices: deliveries.length };
+  }
+}
+
+export async function expand(a: Account, seq: number, hook?: Hook) {
+  const db = a.db,
+    now = await db.comp.currentPosition(),
+    old = (await db.many<Expansion>(["expanded:" + seq], now)).get("expanded:" + seq);
+  if (old) {
+    const source = await db.get(seq ? "event:" + seq : "bootstrap", now);
+    assert.equal(old.value.event, source.hash);
+    return old.value;
+  }
+  const plan = await publication(a, seq, now),
+    parts: string[] = [];
+  let rowCount = 0,
+    notices = 0,
+    changed = 0;
+  for await (const { chunk, notices: n } of publicationChunks(a, seq, plan)) {
+    await hook?.("before-chunk", chunk.offset);
     const c = await immutable(db, "chunk:" + seq + ":" + parts.length, chunk);
     parts.push(hash(c.value));
-    await hook?.("after-chunk", i);
-    rowCount += rows.length;
-    notices += deliveries.length;
-    changed += changedSubjects.length;
+    await hook?.("after-chunk", chunk.offset);
+    rowCount += chunk.rows.length;
+    notices += n;
+    changed += chunk.subjects.length;
   }
   const result: Expansion = {
     seq,
-    event: eventHash,
+    event: plan.eventHash,
     parts,
     subjects: changed,
     rows: rowCount,
@@ -140,6 +170,109 @@ export async function expand(a: Account, seq: number, hook?: Hook) {
     digest: hash(parts),
   };
   return (await immutable(db, "expanded:" + seq, result)).value;
+}
+
+export async function decodeOwed(a: Account, seq: number, cut: number) {
+  const e = await a.db.get<Recipe>("event:" + seq, cut),
+    owed = await a.db.get("owed:" + seq, cut);
+  assert(e.position === cut && owed.position === cut && e.value.kind === "release");
+  assert.deepEqual(owed.value, owedRecord(e.value, e.hash));
+  const plan = await publication(a, seq, cut);
+  assert.equal(plan.after, cut);
+  return { owed: owed.hash, chunks: publicationChunks(a, seq, plan, true) };
+}
+
+export async function persistPublication(a: Account, seq: number, cut: number) {
+  const record = await decodeOwed(a, seq, cut),
+    e = await a.db.get<Recipe>("event:" + seq, cut),
+    parts: { position: number; hash: string }[] = [];
+  let reused = false;
+  let lastNotice: { position: number; at: number | null } | undefined;
+  for await (const { chunk, notices } of record.chunks) {
+    if (!chunk.rows.length && !notices) continue;
+    let at: number | null = null;
+    const cell = await immutable(a.db, "stored:" + seq + ":" + parts.length, chunk, (_, t) => {
+      at = t;
+    });
+    if (at === null) reused = true;
+    if (notices) lastNotice = { position: cell.position, at };
+    assert(cell.position > cut);
+    parts.push({ position: cell.position, hash: hash(cell.value) });
+  }
+  // [DX-ACT2] Why: the account guard commits the covered census and binds all changed values, retirements and debt to the original cut. Rejected: timing an expansion loop without authenticating its durable end.
+  const value = {
+    seq,
+    cut,
+    root: e.value.root,
+    census: e.value.census,
+    owed: record.owed,
+    guard: { validTime: e.value.basis.validTime, tx: cut },
+    parts,
+  };
+  let at: number | undefined;
+  const cell = await immutable(a.db, "stored:" + seq, value, (_, t) => {
+    at = t;
+  });
+  const completion = { position: cell.position, digest: cell.hash },
+    notice = lastNotice ?? { position: cell.position, at: at ?? null };
+  // [DX-ACT2] Why: a resumed command binds the original literal parts and guard. Rejected: treating prior durable writes as fresh deadline timestamps.
+  if (reused || at === undefined || notice.at === null)
+    return { ...completion, fresh: false as const, at: null, lastNotice: { ...notice, at: null } };
+  return { ...completion, fresh: true as const, at, lastNotice: { ...notice, at: notice.at } };
+}
+
+export async function openStored(a: Account, seq: number, position: number) {
+  const manifest = await a.db.get<{
+    seq: number;
+    cut: number;
+    root: string;
+    census: string;
+    owed: string;
+    guard: { validTime: string; tx: number };
+    parts: { position: number; hash: string }[];
+  }>("stored:" + seq, position);
+  const m = manifest.value,
+    e = await a.db.get<Recipe>("event:" + seq, m.cut),
+    owed = await a.db.get("owed:" + seq, m.cut);
+  assert(
+    manifest.position === position &&
+      m.seq === seq &&
+      e.position === m.cut &&
+      owed.position === m.cut,
+  );
+  assert(
+    m.cut < position &&
+      m.owed === owed.hash &&
+      m.root === e.value.root &&
+      m.census === e.value.census,
+  );
+  assert.deepEqual(owed.value, owedRecord(e.value, e.hash));
+  assert.deepEqual(m.guard, { validTime: e.value.basis.validTime, tx: m.cut });
+  const keys = m.parts.map((_, i) => "stored:" + seq + ":" + i);
+  const cells = await a.db.many<Chunk>(keys, position);
+  const chunks = keys.map((k, i) => {
+    const c = cells.get(k),
+      witness = m.parts[i]!;
+    assert(
+      c &&
+        c.position === witness.position &&
+        c.position > m.cut &&
+        c.position < position &&
+        hash(c.value) === witness.hash &&
+        c.value.seq === seq &&
+        c.value.request === e.hash,
+    );
+    return c.value;
+  });
+  const lastOwed = chunks.flatMap((c, i) =>
+    decodeBig<W0.Delivery[]>(c.deliveries).length ? [m.parts[i]!.position] : [],
+  );
+  return {
+    cut: m.cut,
+    digest: manifest.hash,
+    chunks,
+    owedPosition: lastOwed.at(-1) ?? manifest.position,
+  };
 }
 export async function concrete(db: Objects, x: Expansion) {
   const p = await db.comp.currentPosition(),

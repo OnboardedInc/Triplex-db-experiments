@@ -19,7 +19,7 @@ export type Body = {
   state: string;
   seen: number;
 };
-export type Activation = W0.Activation & { doc: W0.ReleaseDoc };
+export type Activation = W0.Activation & { doc: W0.ReleaseDoc; clock?: true; seq?: number };
 export type Epochs = {
   docs: Record<string, W0.ReleaseDoc>;
   names: string[];
@@ -28,6 +28,8 @@ export type Epochs = {
 };
 export type Head = {
   index?: IndexLink;
+  ordinal?: "native";
+  validBoundaries?: string[];
   baseRoot?: string;
   history?: string;
   seedTx?: number;
@@ -49,6 +51,7 @@ export type Head = {
 export type Recipe = {
   indexDelta?: IndexDelta;
   history?: Epochs;
+  nativeBasis?: true;
   kind: "release" | "clock" | "save" | "seed";
   seq: number;
   parent: number;
@@ -66,9 +69,21 @@ export type Recipe = {
   flags?: [string, boolean, boolean][];
   subjects?: string[];
 };
+export type DurabilityMode = "record" | "stored";
+export function owedRecord(e: Recipe, event: string) {
+  return {
+    format: "delta-owed/1",
+    seq: e.seq,
+    event,
+    predecessor: e.parentHash,
+    sourceCut: e.sourceCut,
+    root: e.root,
+    census: e.census,
+  };
+}
 export function resolve(doc: readonly Activation[], t: string) {
   const winner = doc
-    .filter((e) => e.from <= t)
+    .filter((e) => !e.clock && e.from <= t)
     .sort(
       (a, b) => b.from.localeCompare(a.from) || b.tx - a.tx || b.release.localeCompare(a.release),
     )[0];

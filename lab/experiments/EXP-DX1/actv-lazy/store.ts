@@ -1,8 +1,10 @@
 import { bytes as wireBytes } from "../import1/source.ts";
 import assert from "node:assert/strict";
+import { Cause, Exit } from "effect";
 import {
   requireDatomicSourcePosition,
   DatomicClient,
+  DatomicHttpError,
 } from "../../../../packages/datomic/dist/index.js";
 import { Effect, openTriples, runtimeApi } from "../../../bench/lib/triplex.ts";
 import { openComposition } from "../../../bench/lib/composition.ts";
@@ -28,6 +30,36 @@ export const fact = (entityId: string, attribute: string, data: unknown) => ({
 });
 export const value = (row: WorldRow) => JSON.parse(row.value.value);
 export class Conflict extends Error {}
+
+// [DX-ACT1] Why: a typed write-policy refusal proves this frame was rejected even if another writer advanced the source. Rejected: flattening the adapter's cause into a message or mistaking the other writer for a retryable conflict.
+export async function rejectUnrecordedWrite(
+  exit: Exit.Exit<unknown, unknown>,
+  expected: number,
+  head: () => Promise<number>,
+): Promise<never> {
+  const failure = Exit.isFailure(exit)
+    ? exit.cause.reasons.find(Cause.isFailReason)?.error
+    : undefined;
+  const native =
+    failure instanceof DatomicHttpError
+      ? failure
+      : failure instanceof Error
+        ? failure.cause
+        : undefined;
+  if (
+    native instanceof DatomicHttpError &&
+    ((native.status === 413 &&
+      (native.code === "BulkFrameTooLarge" || native.code === "WriteBudgetExceeded")) ||
+      (native.status === 429 && native.code === "WriteQueueFull"))
+  )
+    throw native;
+  if ((await head()) !== expected) throw new Conflict("Source changed at admission");
+  throw new Error(
+    "Native write had no receipt: " + (failure instanceof Error ? failure.message : exit._tag),
+    { cause: failure },
+  );
+}
+
 export type EventKind = "activation" | "source" | "due" | "erase" | "baseline";
 export interface Event {
   kind: EventKind;
@@ -56,7 +88,22 @@ export async function openStore(
   }
   const h = access === "write" ? await openTriples("datomic", scope) : undefined,
     comp = await openComposition("reach", "datomic", scope);
-  const counters = { writes: 0, accountReads: 0, subjectRoots: 0, rosterRoots: 0, ackObserved: 0 };
+  const counters = {
+    writes: 0,
+    accountReads: 0,
+    subjectRoots: 0,
+    rosterRoots: 0,
+    ackObserved: 0,
+    lastReceipt: undefined as
+      | {
+          commandId: string;
+          position: number;
+          txId: string;
+          time: number;
+          clock: "native-ack" | "readback";
+        }
+      | undefined,
+  };
   const rows = async (ids: string[], position: number, validTime = epoch) => {
     const basis = { position, validAt: millis(validTime) };
     for (const id of ids) {
@@ -135,19 +182,26 @@ export async function openStore(
         }),
       ),
     );
-    if (exit._tag === "Success") {
+    const ack = exit._tag === "Success" ? performance.now() : undefined;
+    if (ack !== undefined) {
       counters.writes++;
-      counters.ackObserved = performance.now();
+      counters.ackObserved = ack;
       onAck?.(counters.ackObserved);
     }
     const stored = await lookup(id);
-    if (stored) return check(stored);
-    if ((await comp.currentPosition()) !== expected)
-      throw new Conflict("Source changed at admission");
-    throw Error(
-      "Native write had no receipt: " +
-        String(exit.cause?.reasons?.[0]?.error?.message ?? exit._tag),
-    );
+    if (stored) {
+      const receipt = check(stored);
+      // [DX-ACT1] Why: a recovered marker needs its own observation clock, even if an earlier stage received an ACK. Rejected: assigning the last arbitrary write's clock to this receipt.
+      counters.lastReceipt = {
+        commandId: id,
+        position: receipt.position,
+        txId: receipt.txId,
+        time: ack ?? performance.now(),
+        clock: ack === undefined ? "readback" : "native-ack",
+      };
+      return receipt;
+    }
+    return rejectUnrecordedWrite(exit, expected, () => comp.currentPosition());
   }
   async function controls(p: number, inputOnly = false) {
     const all = await rows(
