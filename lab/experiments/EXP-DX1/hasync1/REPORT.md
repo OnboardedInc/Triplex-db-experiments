@@ -1,25 +1,43 @@
-# Synchronous failover
+# Synchronous recovery and database moves
 
-The PostgreSQL standby saves a second copy before the writer replies.
-The controller waits for evidence of failure, closes the writer route and fences the old primary and transactor.
-It checks the surviving copy before promotion and sends writes to the new owner after the peer reconnects.
-Pinned reads use a gateway attached to the surviving PostgreSQL copy.
-The first new receipt after losing a machine has one durable copy until a standby returns.
-Strict two-copy mode keeps the writer closed until another synchronous copy is available.
-Timing and fault coverage will be recorded from the isolated runs.
+All seven Mac fault drills preserved every write that had already been acknowledged.
+A new write arrived in 11.95 to 22.22 seconds.
+Readers answered 1,234 times during those cuts, and the answers we checked stayed the same afterwards.
+Both old writer processes refused to start after the switch.
+A planned move paused writes for 9.18 seconds and reopened with both copies required for every reply.
+After sudden loss, new writes have one durable copy until another standby returns.
 
-**Priority 9.** Recovery and planned moves use [scope](../../../SCOPE.md), [north star](../../../NORTH-STAR.md) and [targets](../../../TARGETS.md). See [procedure](PROCEDURE.md).
+**Priority 9.** The Mac runs were diagnostics with eight starting subjects and 1,280 facts per run. Full machine loss, standby-loss routing and bare-metal timings remain open. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md) · [Procedure and timeouts](PROCEDURE.md)
 
-**Fault audit.** The driver checks the active SQL wait or held wire reply, binds it to the authored operation, and rereads every earlier receipt and the ordered feed on B. The replay oracle checks exact rows at successive landmarks from the same attempt. Reader probes store their requested cut and compare every returned digest after recovery. Docker startup refusal is a new process start against the same fenced volumes. [Fault driver](faults.ts) · [O-REPLAY comparison](replay.ts)
+| Mac fault                                          | Earlier receipts kept | First new write (s) | Pinned reads during cut |
+| -------------------------------------------------- | --------------------: | ------------------: | ----------------------: |
+| Primary killed while updating the log pointer      |                 10/10 |               14.85 |                     171 |
+| Primary killed after the log write, reply withheld |                   9/9 |               18.08 |                     210 |
+| Primary killed with an index job writing           |                 17/17 |               22.22 |                     149 |
+| Primary killed during one 2,000-fact import        |                 10/10 |               12.66 |                     142 |
+| WAL from primary to standby cut                    |                   9/9 |               11.95 |                     141 |
+| Standby replies to primary cut                     |                   9/9 |               20.15 |                     237 |
+| Old primary and transactor restarted               |                   9/9 |               15.86 |                     184 |
 
-**Sync cost.** Both arms use a strict-clock lean scope and matched ten-fact saves at depths 1, 16 and 64. Each runs local flush / sync / sync / local flush with streaming enabled throughout. The comparison reports p50, p99, elapsed time per save and actual native transactions per save. The W1 grouping implementation is already in the base. [Cost driver](cost.ts) · [W1 original implementation](https://github.com/OnboardedInc/Triplex-db-experiments/commit/6756ed177)
+The native feed matched the authored order and changes with zero duplicate saves. O-REPLAY compared real rows at each witness cut. The withheld write returned its original receipt. The interrupted import was absent on B before retry and published all 2,000 facts once after retry. A WAL-cut rerun with the new survivor check took 11.30 s and kept all nine earlier receipts. [Evidence and receipt audit](EVIDENCE.md)
 
-**Planned move.** The previous lab move paused 15.47–15.62 s and opened with one copy. The new procedure rewinds A to the new timeline and waits for A to protect B's writes before routing clients. Predicted pause with a small final WAL tail is 18–29 s at 16M and 21–38 s at 160M. The second range can exceed 30 s. Estimates add startup, rewind file scans and changed blocks to the saved local clocks. Precopy grows with bytes and churn. [Move driver](move.ts) · [Prior measurements](../ha1/PART2-MEASUREMENTS.md)
+| Mac saves outstanding | Grouping | Local → sync p50 (ms) | p50 ratio | p99 ratio | Elapsed ms/save ratio |
+| --------------------: | -------- | --------------------: | --------: | --------: | --------------------: |
+|                     1 | Off      |         10.83 → 11.90 |      1.10 |      0.76 |                  0.98 |
+|                    16 | Off      |         55.12 → 40.21 |      0.73 |      0.70 |                  0.75 |
+|                    64 | Off      |        170.89 → 98.01 |      0.57 |      0.79 |                  0.70 |
+|                     1 | W1       |         12.31 → 12.46 |      1.01 |      3.41 |                  1.22 |
+|                    16 | W1       |         54.12 → 57.29 |      1.06 |      1.70 |                  1.24 |
+|                    64 | W1       |       149.49 → 157.86 |      1.06 |      0.71 |                  0.90 |
 
-**Two-server command, predicted 66–84 minutes on released, prepared hosts.**
+There were 256 saves per durability setting per cell. At depths 16 and 64, W1 averaged 7.53 saves per synchronous native transaction. The Mac controls varied sharply by block. At 0.089 ms RTT I predict +0.23–0.74 ms for an isolated save and +0.03–0.19 ms of service per save in groups of four to eight. [Cost driver](cost.ts) · [Bench predictions](BENCH.md)
+
+**Planned move.** The live copy took 0.91 s while the source accepted writes. A rejoined as a read-only synchronous standby after rewind. All 15 earlier receipts survived, and 103 pinned probes succeeded during the 9.18 s pause. The inherited small move took 15.47–15.62 s. I predict 18–29 s at 16M and 21–38 s at 160M, with a small final WAL tail. Live precopy grows from an estimated 6–12 GB to 60–120 GB. Rewind scans and changed blocks, recent Datomic log replay and reconnects affect the pause. [Move driver](move.ts) · [Prior measurements](../ha1/PART2-MEASUREMENTS.md)
+
+**Two-server campaign.** Predicted 66–84 minutes on the released, prepared pair. Parallel seeds establish 100,000 subjects per layout. The working budget is 85 minutes, with an 89-minute service cutoff. Bench execution is pending. A full machine-loss run needs an independent reboot-safe fence. [Commands, conditions and predictions](BENCH.md)
 
 ```sh
 node --import tsx lab/experiments/EXP-DX1/ha1/control.ts hasync-suite hasync-p9
 ```
 
-The controller runs on B and reaches A through the dedicated management channel. It seeds 100,000 subjects per layout and reuses verified physical checkpoints. The campaign has an 85-minute working deadline and an 89-minute service limit. Cold dependency and image preparation precede the campaign. Neither bench server was used. [Predictions and run conditions](BENCH.md)
+Scoped TypeScript, 16 focused tests and the latch/route checks passed. The broader oracle suite had three failures in unchanged contract coverage and the HAM source hash. All started Mac volumes were removed. No acceptance pin moved. [Evidence index](EVIDENCE.md) · [Checksums](SHA256SUMS)
