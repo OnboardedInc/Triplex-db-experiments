@@ -1,5 +1,5 @@
 (ns triplex.gateway.commit
-  (:require [clojure.walk :as walk] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.schema :as schema]
+  (:require [clojure.data.json :as json] [clojure.walk :as walk] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.schema :as schema]
             [triplex.gateway.trace :as trace] [triplex.gateway.predecessor :as pred]))
 
 ;; [DX-W1] Why: only the serialized db-before can prove a whole interval of historical prefixes empty.
@@ -31,104 +31,28 @@
                        end (str "2001a" (subs high 0 25) (char (inc (int (.charAt ^String high 25)))))]
                    (nil? (read-at :w1/new-range (first (d/index-range (d/history db) :triplex.entity/row start end)))))))))))))
 
-;; [DX-B3-M2] Why: the serial point belongs in Datomic, after parallel client staging.
-;; Rejected: scope CAS in the peer (unrelated subjects conflict and queue).
-(def operation-code
-  '(letfn [(value [e a]
-             ;; [DX-T1-6] Why: the rev check can warm the same AEVT segment native cardinality-one replacement reads.
-             ;; Rejected: changing stored identities or bypassing the serial revision conflict check.
-             (:v (first (if (and (:rev-aevt payload) (= a :triplex.entity/rev))
-                          (d/datoms db :aevt a e) (d/datoms db :eavt e a)))))
-           ;; [DX-B8] Why: immutable transaction values avoid the per-commit scope retraction merge.
-           ;; Rejected: a peer-cached head (allocation must remain atomic on the transactor).
-           (newest-commit []
-             (let [tx (d/t->tx (d/basis-t db))]
-               (if (some? (value tx :triplex.tx/position)) tx
-                 ;; [DX-B8] Why: one AEVT seek skips any suffix of non-commit transactions.
-                 ;; Rejected: walking the log backwards (unbounded marker suffix).
-                 (let [datom (first (d/rseek-datoms db :aevt :triplex.tx/position tx))]
-                   (when (and datom (= (:a datom) (d/entid db :triplex.tx/position))) (:e datom))))))
-           (digits [p] (let [s (str p)] (str (subs "0000000000000000" (count s)) s)))
-           (row-id [id]
-             (let [prefix (str "2" (format "%04x" (.length ^String id)) id)
-                   datom (read-at :w1/old-live
-                     (choose-read (first (d/index-range db :triplex.entity/row prefix nil))
-                       (or (when-let [owner (get owners id)]
-                             (when-let [e (owner-eid owner)]
-                               (let [x (first (d/seek-datoms db :eavt e :triplex.entity/row prefix))]
-                                 (when (and (= e (:e x)) (= (d/entid db :triplex.entity/row) (:a x))
-                                            (.startsWith ^String (:v x) prefix)) x))))
-                           (first (d/index-range db :triplex.entity/row prefix nil)))))]
-               (when (and datom (.startsWith ^String (:v datom) prefix))
-                 (let [marker (read-at :w1/retirement (first (d/seek-datoms db :eavt (:e datom) :triplex.entity/retired prefix)))]
-                   (when-not (and marker (= (:a marker) (d/entid db :triplex.entity/retired))
-                                  (.startsWith ^String (:v marker) prefix)) (choose-read datom (do (vswap! checked assoc id datom) datom)))))))
-           ;; [DX-B5-L1] Why: legacy assertion identities remain reserved after retirement.
-           ;; Rejected: accepting a reused retired ID (history would contain two incompatible rows for one identity).
-           (identity-row [id]
-             (let [prefix (str "2" (format "%04x" (.length ^String id)) id)
-                   datom (read-at :w1/new-id (first (d/index-range (d/history db) :triplex.entity/row prefix nil)))]
-               (when (and datom (.startsWith ^String (:v datom) prefix)) datom)))
-           (assign-change [text clock new-ids]
+;; [DX-PREP1] Why: the guarded writer and the prepared group must stamp identical row bytes.
+;; Rejected: maintaining separate position, journal and signed-zero transformations.
+(def stamp-code
+  '(fn [server-clock clock new-id-set lower provisional final slim-row]
+     (let [delta (- final provisional)
+           digits (fn [p] (let [s (str p)] (str (subs "0000000000000000" (count s)) s)))
+           final-digits (digits final)
+           shifted (fn [p] (if (< lower p (inc provisional)) (+ p delta) p))]
+       (letfn [(assign-change [text clock new-ids]
              (let [change (json/read-str text)
                    change (cond-> change
                             (new-ids (get change "tripleId")) (assoc "recordedAt" clock)
                             (contains? change "retractedAt") (assoc "retractedAt" clock))]
                (json/write-str change)))
-           (assign-row [text offset clock new-ids]
+               (assign-row [text offset clock new-ids]
              (let [start (- offset 2) values (json/read-str (subs text start))
                    attr (nth values 3) journal (= "_Transaction" (nth values 14))
                    values (cond-> (assoc values 10 clock)
                             (and journal (= attr ":_tx/instant")) (assoc 8 clock)
                             (and journal (= attr ":_tx/change")) (assoc 9 (assign-change (nth values 9) clock new-ids)))]
                (str (subs text 0 start) (json/write-str values))))
-           ;; [DX-THIN1] Why: a queued resend can be stale because this exact command already changed the row.
-           ;; Rejected: returning a CAS error before checking the native identities, or adding those lookups to a valid save.
-           (conflict []
-             (cond
-               (and (:operation-id payload) (d/entid db [:triplex.tx/operation-id (:operation-id payload)]))
-               (throw (ex-info "unique-conflict triplex.tx/operation-id" {}))
-               (some #(d/entid db [:triplex.claim/command-id %]) (:command-ids payload))
-               (throw (ex-info "unique-conflict triplex.claim/command-id" {}))
-               :else (throw (ex-info "TRIPLEX_CONFLICT" {}))))]
-     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row]} payload
-           head-v2 (= 2 (value scope :triplex.scope/head-version))
-           latest (when head-v2 (newest-commit))
-           h (if head-v2 (or (when latest (value latest :triplex.tx/position)) 0)
-                 (value scope :triplex.scope/position)) final (+ h span) final-digits (digits final) delta (- final provisional)
-           lower (- provisional span)
-           shifted (fn [p] (if (< lower p (inc provisional)) (+ p delta) p))
-           row-a (d/entid db :triplex.entity/row)
-           prior (if head-v2 (when latest (value latest :triplex.tx/max-recorded-at))
-                     (value scope :triplex.scope/max-recorded-at))
-           strict-clocks (and (d/entid db :triplex.scope/strict-record-clocks)
-                              (true? (value scope :triplex.scope/strict-record-clocks)))
-           server-clock (and strict-clocks (not= false assign-record-time))
-           _ (when (not= (boolean slim-row) (= 4 (value scope :triplex.scope/rows-version)))
-               (throw (ex-info "TRIPLEX_SLIM_LAYOUT_MISMATCH" {})))
-           _ (when (and strict-clocks (some #(or (not (number? %)) (not (Double/isFinite (double %)))) (concat times record-clocks)))
-               (throw (ex-info "Invalid strict record clock" {})))
-           checked-times (if strict-clocks (map double (concat times record-clocks)) times)
-           ;; [DX-T1-5] Why: the serialized transaction owns the scope's next finite record clock; valid time stays submitted.
-           ;; Rejected: peer allocation and clock-conflict replay (two clients can race the same maximum).
-           clock (when server-clock
-                   (let [submitted (if (seq checked-times) (reduce max checked-times) (double (System/currentTimeMillis)))
-                         next (when prior (max (+ (double prior) 1.0) (Math/nextUp (double prior))))
-                         assigned (if next (max submitted next) submitted)]
-                     (when-not (Double/isFinite (double assigned))
-                       (throw (ex-info "TRIPLEX_CLOCK_EXHAUSTED" {})))
-                     (double assigned)))
-           new-id-set (set new-ids)]
-       (when (or (not (pos? span)) (> final 9007199254740991))
-         (throw (ex-info "Invalid commit span" {})))
-       (when (and scope-wide (not= h source)) (conflict))
-       (doseq [id live]
-         (when-not (if lean (row-id id) (when-let [e (d/entid db [:f/id id])] (value e :f/live))) (conflict)))
-       (when source
-         (doseq [id entities]
-           (when-let [e (choose-read (d/entid db [:triplex.entity/id id]) (owner-eid id))]
-             (when (> (or (read-at :w1/revision (value e :triplex.entity/rev)) 0) source) (conflict)))))
-       (letfn [(replace-value [x]
+               (replace-value [x]
                  (cond
                    (and (instance? java.util.List x) (= :triplex/record-time (first x))) (if server-clock clock (second x))
                    (and (instance? java.util.List x) (= :triplex/change (first x))) (if server-clock (assign-change (second x) clock new-id-set) (second x))
@@ -158,6 +82,96 @@
                    (instance? java.util.Map x) (into {} (map (fn [[k v]] [k (replace-value v)]) x))
                    (instance? java.util.List x) (mapv replace-value x)
                    :else x))]
+         replace-value))))
+
+(defmacro row-stamper []
+  (walk/postwalk-replace {'slim-row-code slim/encoder-code} stamp-code))
+(def stamp (row-stamper))
+
+;; [DX-B3-M2] Why: the serial point belongs in Datomic, after parallel client staging.
+;; Rejected: scope CAS in the peer (unrelated subjects conflict and queue).
+(def operation-code
+  '(letfn [(value [e a]
+             ;; [DX-T1-6] Why: the rev check can warm the same AEVT segment native cardinality-one replacement reads.
+             ;; Rejected: changing stored identities or bypassing the serial revision conflict check.
+             (:v (first (if (and (:rev-aevt payload) (= a :triplex.entity/rev))
+                          (d/datoms db :aevt a e) (d/datoms db :eavt e a)))))
+           ;; [DX-B8] Why: immutable transaction values avoid the per-commit scope retraction merge.
+           ;; Rejected: a peer-cached head (allocation must remain atomic on the transactor).
+           (newest-commit []
+             (let [tx (d/t->tx (d/basis-t db))]
+               (if (some? (value tx :triplex.tx/position)) tx
+                 ;; [DX-B8] Why: one AEVT seek skips any suffix of non-commit transactions.
+                 ;; Rejected: walking the log backwards (unbounded marker suffix).
+                 (let [datom (first (d/rseek-datoms db :aevt :triplex.tx/position tx))]
+                   (when (and datom (= (:a datom) (d/entid db :triplex.tx/position))) (:e datom))))))
+           (row-id [id]
+             (let [prefix (str "2" (format "%04x" (.length ^String id)) id)
+                   datom (read-at :w1/old-live
+                     (choose-read (first (d/index-range db :triplex.entity/row prefix nil))
+                       (or (when-let [owner (get owners id)]
+                             (when-let [e (owner-eid owner)]
+                               (let [x (first (d/seek-datoms db :eavt e :triplex.entity/row prefix))]
+                                 (when (and (= e (:e x)) (= (d/entid db :triplex.entity/row) (:a x))
+                                            (.startsWith ^String (:v x) prefix)) x))))
+                           (first (d/index-range db :triplex.entity/row prefix nil)))))]
+               (when (and datom (.startsWith ^String (:v datom) prefix))
+                 (let [marker (read-at :w1/retirement (first (d/seek-datoms db :eavt (:e datom) :triplex.entity/retired prefix)))]
+                   (when-not (and marker (= (:a marker) (d/entid db :triplex.entity/retired))
+                                  (.startsWith ^String (:v marker) prefix)) (choose-read datom (do (vswap! checked assoc id datom) datom)))))))
+           ;; [DX-B5-L1] Why: legacy assertion identities remain reserved after retirement.
+           ;; Rejected: accepting a reused retired ID (history would contain two incompatible rows for one identity).
+           (identity-row [id]
+             (let [prefix (str "2" (format "%04x" (.length ^String id)) id)
+                   datom (read-at :w1/new-id (first (d/index-range (d/history db) :triplex.entity/row prefix nil)))]
+               (when (and datom (.startsWith ^String (:v datom) prefix)) datom)))
+           (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
+     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row]} payload
+           head-v2 (= 2 (value scope :triplex.scope/head-version))
+           latest (when head-v2 (newest-commit))
+           h (if head-v2 (or (when latest (value latest :triplex.tx/position)) 0)
+                 (value scope :triplex.scope/position)) final (+ h span)
+           lower (- provisional span)
+           row-a (d/entid db :triplex.entity/row)
+           prior (if head-v2 (when latest (value latest :triplex.tx/max-recorded-at))
+                     (value scope :triplex.scope/max-recorded-at))
+           strict-clocks (and (d/entid db :triplex.scope/strict-record-clocks)
+                              (true? (value scope :triplex.scope/strict-record-clocks)))
+           server-clock (and strict-clocks (not= false assign-record-time))
+           _ (when (not= (boolean slim-row) (= 4 (value scope :triplex.scope/rows-version)))
+               (throw (ex-info "TRIPLEX_SLIM_LAYOUT_MISMATCH" {})))
+           _ (when (and strict-clocks (some #(or (not (number? %)) (not (Double/isFinite (double %)))) (concat times record-clocks)))
+               (throw (ex-info "Invalid strict record clock" {})))
+           checked-times (if strict-clocks (map double (concat times record-clocks)) times)
+           ;; [DX-T1-5] Why: the serialized transaction owns the scope's next finite record clock; valid time stays submitted.
+           ;; Rejected: peer allocation and clock-conflict replay (two clients can race the same maximum).
+           clock (when server-clock
+                   (let [submitted (if (seq checked-times) (reduce max checked-times) (double (System/currentTimeMillis)))
+                         next (when prior (max (+ (double prior) 1.0) (Math/nextUp (double prior))))
+                         assigned (if next (max submitted next) submitted)]
+                     (when-not (Double/isFinite (double assigned))
+                       (throw (ex-info "TRIPLEX_CLOCK_EXHAUSTED" {})))
+                     (double assigned)))
+           new-id-set (set new-ids)]
+       (when (or (not (pos? span)) (> final 9007199254740991))
+         (throw (ex-info "Invalid commit span" {})))
+       ;; [DX-PREP1] Why: a resend of a durable replacement must resolve before its old row is checked.
+       ;; Rejected: returning a CAS conflict after the original command retired that row.
+       (when-let [id (:triplex.tx/operation-id (first ops))]
+         (when (d/entid db [:triplex.tx/operation-id id])
+           (throw (ex-info ":db.error/unique-conflict triplex.tx/operation-id" {}))))
+       (doseq [op ops :when (instance? java.util.Map op)
+               :let [id (get op :triplex.claim/command-id)] :when id]
+         (when (d/entid db [:triplex.claim/command-id id])
+           (throw (ex-info ":db.error/unique-conflict triplex.claim/command-id" {}))))
+       (when (and scope-wide (not= h source)) (conflict))
+       (doseq [id live]
+         (when-not (if lean (row-id id) (when-let [e (d/entid db [:f/id id])] (value e :f/live))) (conflict)))
+       (when source
+         (doseq [id entities]
+           (when-let [e (choose-read (d/entid db [:triplex.entity/id id]) (owner-eid id))]
+             (when (> (or (read-at :w1/revision (value e :triplex.entity/rev)) 0) source) (conflict)))))
+       (let [replace-value (stamp-rows server-clock clock new-id-set lower provisional final slim-row)]
          (let [empty-history (when (and lean (:identity-bounds payload))
                                (let [empty? (history-range-code db ops (:identity-bounds payload))]
                                  (record-range-result empty?) empty?))
@@ -234,7 +248,9 @@
 (defn expand-code
   ([observe] (expand-code observe false false))
   ([observe optimized? measured?]
-   (let [expanded (walk/postwalk-replace {'slim-row-code slim/encoder-code 'history-range-code history-range-code
+   (let [expanded (walk/postwalk-replace {'slim-row-code slim/encoder-code 'stamp-rows
+                                          (walk/postwalk-replace {'slim-row-code slim/encoder-code} stamp-code)
+                                          'history-range-code history-range-code
                                           'record-range-result observe} operation-code)
          op (if optimized? (list pred/normalization expanded) expanded)]
      (pred/expand (list 'read-at :w1/function op) optimized? measured?))))

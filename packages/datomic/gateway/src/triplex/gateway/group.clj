@@ -1,5 +1,6 @@
 (ns triplex.gateway.group
-  (:require [datomic.api :as d] [triplex.gateway.write-policy :as policy] [triplex.gateway.schema :as schema] [triplex.gateway.lean :as lean])
+  (:require [datomic.api :as d] [triplex.gateway.write-policy :as policy] [triplex.gateway.schema :as schema]
+            [triplex.gateway.lean :as lean] [triplex.gateway.group-prepare :as prepared])
   (:import [java.util WeakHashMap] [java.util.concurrent Executors ThreadFactory]))
 
 ;; [DX-W1] Why: an idle scope dispatches immediately; only work accumulated behind an in-flight append can share its successor.
@@ -37,7 +38,8 @@
                  {:db/ident :triplex.diagnostic/queue-clock :db/fn (d/function {:lang :clojure :params '[db sent]
                     :code '(vector [:db/add "datomic.tx" :triplex.diagnostic/native-entry
                                       (str sent "/" (System/currentTimeMillis))])})}]))]
-    (if (seq ops) (:db-after @(d/transact conn (vec ops))) db)))
+    (let [ready (if (seq ops) (:db-after @(d/transact conn (vec ops))) db)]
+      (if (grouping?) (prepared/install! conn ready) ready))))
 (defn instrument [ops]
   ;; [DX-W1] Why: timestamp actual submission and native entry on the same host, before either real command function runs.
   ;; Rejected: counting the entire peer future as queue time, or recording speculative d/with evaluations.
@@ -83,17 +85,19 @@
        (= true (v db (:scope p) :triplex.scope/position-regular))
        (not (v db (:scope p) :triplex.scope/irregular)) (d/entid db :triplex.group/apply-v1)))
 
+(def ^:dynamic *same-group-clocks* nil)
 (defn evaluate [db entries]
   ;; [DX-W1] Why: evaluate ordinary installed commands sequentially on immutable speculative databases, including duplicate/CAS checks.
   ;; Rejected: concatenated transaction functions (Datomic gives each function the original db-before).
-  (loop [view db entries (seq entries) out []]
+  (loop [view db entries (seq entries) out [] clocks {}]
     (if-not entries out
       (let [entry (first entries)
             result (try
                      (when (d/entid view [:triplex.tx/operation-id (:id entry)])
                        (throw (ex-info "triplex.tx/operation-id already committed" {})))
                      (let [started (when stage-clock (System/nanoTime))
-                           data ((:prepare entry) view)
+                           data (binding [*same-group-clocks* (select-keys clocks (:live (:params entry)))]
+                                  ((:prepare entry) view))
                            prepared (when stage-clock (System/nanoTime))
                            report (d/with view data)
                            applied (when stage-clock (System/nanoTime))
@@ -106,7 +110,8 @@
                      (catch Exception e
                        (if (re-find #"TRIPLEX_CONFLICT|TRIPLEX_IDENTITY|TRIPLEX_CLOCK|:db.error/(?:unique-conflict|cas-failed)|triplex.tx/operation-id already committed" (str e))
                          {:error e} (throw e))))]
-        (recur (or (get-in result [:report :db-after]) view) (next entries) (conj out result))))))
+        (recur (or (get-in result [:report :db-after]) view) (next entries) (conj out result)
+               (if (:report result) (reduce #(assoc %1 %2 (:clock result)) clocks (:new-ids (:params entry))) clocks))))))
 (defn prefix [^String text] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16))))
 (defn materialize [base members]
   (let [last-tx (:tx (peek members))
@@ -151,7 +156,9 @@
     (reify clojure.lang.IDeref (deref [_] (unwrap @p))
            clojure.lang.IBlockingDeref (deref [_ ms timeout]
              (let [r (deref p ms ::timeout)] (if (= r ::timeout) timeout (unwrap r)))))))
-(defn complete! [entry r] (deliver (:result entry) r))
+(defn complete! [entry r]
+  (deliver (:result entry) (if-let [stats (and stage-clock (:prepared-stats entry))]
+                             (cond-> r (:value r) (update :value assoc :prepared-stats stats)) r)))
 (defn alone! [entry]
   (try
     ;; [DX-LOAD2] Why: the nonpreemptible interval starts at dispatch and ends when the peer future resolves.
@@ -172,7 +179,28 @@
               (contains? #{:db.error/unique-conflict :db.error/conflicting-datoms :db.error/cas-failed
                            :db.error/not-an-entity :db.error/invalid-data} (:db/error data)))))
         (take-while some? (iterate #(when % (ex-cause %)) e))))
-(defn execute! [conn batch]
+(defn durable-results! [batch results report stages]
+  (let [size (count (remove :error results))
+        after (:db-after report)
+        t (d/basis-t after)]
+    (doseq [[entry result] (map vector batch results)]
+      (if (:error result) (complete! entry result)
+        (let [saved (try (receipt after (:id entry)) (catch Exception _ nil))]
+          (if (and (= (:position saved) (:position result)) (= (:clock saved) (:clock result))
+                   (= (:t saved) t))
+            (complete! entry {:value (cond-> (assoc report :member saved :group-size size
+                                                  :bulk-grant (select-keys entry [:bulk :queued-at-grant :runnable-live])
+                                                  :group-wait-ns (- (:dispatch entry) (:arrived entry)))
+                                       stages (assoc :group-stages stages))})
+            (complete! entry {:error (ex-info "Durable member receipt unavailable" {:status 503 :code "OutcomeUnknown"})})))))))
+(defn unknown! [batch error]
+  (doseq [entry batch]
+    (complete! entry {:error (ex-info "Group durability is unknown" {:status 503 :code "OutcomeUnknown"} error)})))
+(defn send! [conn tx-data]
+  (let [data (instrument tx-data)]
+    (if stage-clock (d/transact-async conn data :io-context :w1/grouped)
+      (d/transact-async conn data))))
+(defn execute-reference! [conn batch]
   (if (or (= 1 (count batch)) (not-every? :eligible batch))
     (doseq [e batch] (alone! e))
     (let [started (when stage-clock (System/nanoTime))
@@ -185,10 +213,7 @@
       (if-not data
         (doseq [e batch] (alone! e))
         (let [prepared (when stage-clock (System/nanoTime))
-              tx-data (instrument [[:triplex.group/apply-v1 (d/basis-t base) data]])
-              physical (try {:report @(if stage-clock
-                                         (d/transact-async conn tx-data :io-context :w1/grouped)
-                                         (d/transact-async conn tx-data))}
+              physical (try {:report @(send! conn [[:triplex.group/apply-v1 (d/basis-t base) data]])}
                             (catch Exception e {:error e}))
               stages (when stage-clock
                        {:evaluateMicros (quot (- evaluated started) 1000)
@@ -199,17 +224,28 @@
                         :awaitMicros (quot (- (System/nanoTime) prepared) 1000)})]
           (if-let [e (:error physical)]
             (if (definitive? e) (doseq [entry batch] (alone! entry))
-              (doseq [entry batch] (complete! entry {:error (ex-info "Group durability is unknown" {:status 503 :code "OutcomeUnknown"} e)})))
-            (doseq [[entry result] (map vector batch results)]
-              (if (:error result) (complete! entry result)
-                (let [report (:report physical) saved (try (receipt (:db-after report) (:id entry)) (catch Exception _ nil))]
-                  (if (and (= (:position saved) (:position result)) (= (:clock saved) (:clock result))
-                           (= (:t saved) (d/basis-t (:db-after report))))
-                    (complete! entry {:value (cond-> (assoc report :member saved :group-size (count valid)
-                                                       :bulk-grant (select-keys entry [:bulk :queued-at-grant :runnable-live])
-                                                      :group-wait-ns (- (:dispatch entry) (:arrived entry)))
-                                               stages (assoc :group-stages stages))})
-                    (complete! entry {:error (ex-info "Durable member receipt unavailable" {:status 503 :code "OutcomeUnknown"})})))))))))))
+              (unknown! batch e))
+            (durable-results! batch results (:report physical) stages)))))))
+
+(defn ready-drafts [batch]
+  (when (and prepared/enabled (< 1 (count batch)) (every? :eligible batch) (prepared/disjoint? batch))
+    (let [drafts (mapv #(when-let [pending (:draft %)] (deref pending 0 nil)) batch)]
+      (when (every? some? drafts) drafts))))
+(defn mark-prepared [batch stats]
+  (if stage-clock (mapv #(assoc % :prepared-stats stats) batch) batch))
+(defn execute! [conn batch]
+  (if-let [plan (when-let [drafts (ready-drafts batch)]
+                  (try (prepared/assemble batch drafts (prepared/head (d/db conn)))
+                       (catch Exception _ nil)))]
+    (let [physical (try {:report @(send! conn (:data plan))} (catch Exception e {:error e}))]
+      (if-let [error (:error physical)]
+        ;; [DX-PREP1] Why: re-evaluate at the authoritative cut after a definite rejection.
+        ;; Rejected: retrying a write whose lost response could hide a successful durable append.
+        (if (definitive? error)
+          (execute-reference! conn (mark-prepared batch {:path "reference" :replays 1}))
+          (unknown! batch error))
+        (durable-results! (mark-prepared batch {:path "prepared" :replays 0}) (:results plan) (:report physical) nil)))
+    (execute-reference! conn batch)))
 
 (defn next-entry [{:keys [queue accounts rotation]}]
   (let [ready (fn [owners rank]
@@ -262,7 +298,9 @@
                    (when (or (>= (count queue) pending-limit)
                              (and policy/priority? (= :bulk (:rank entry)) (>= (count (filter #(= :bulk (:rank %)) queue)) 64)) (>= (count (filter #(= (:account %) (:account entry)) queue)) 128))
                      (throw (ex-info "Account write queue full" {:status 429 :code "WriteQueueFull"})))
-                   (let [e (assoc entry :result p :token token :arrived (System/nanoTime)
+                   (let [draft (when (and prepared/enabled active (:eligible entry) (= :live (:rank entry)) (:data entry))
+                                 (prepared/schedule! conn entry))
+                         e (assoc entry :result p :token token :arrived (System/nanoTime) :draft draft
                                         :predecessors (vec (distinct (concat (keep tails (:keys entry))
                                           (when (:scope-barrier entry) (map :token queue))
                                           (when-let [b (:barrier @lane)] [b])))))]
