@@ -333,59 +333,75 @@ export async function exact(url: string, nonce: string, grouped: boolean) {
     c.close();
   }
 }
-export async function runArm(url: string, nonce: string, grouped: boolean, server: boolean) {
+export async function seedPooled(client: DatomicClient, db: string) {
+  const expected = deepPopulation(10000).facts + 20000 + Math.ceil(10000 / 256) + 1,
+    seeds = [];
+  const digest = createHash("sha256");
+  let head = 0;
+
+  for (let a = 0; a < 10; a++) {
+    let count = 0,
+      batch: Fact[] = [],
+      packed = 0;
+    const flush = async () => {
+      if (!batch.length) return;
+      const ack = await write(client, db, command("seed-" + a + "-" + packed++, batch, [], false));
+      assert.equal(Number(ack.position.v), ++head);
+      count += batch.length;
+      batch = [];
+    };
+    for (let i = 0; i < 10000; i++) {
+      const rows = tenantRows(accounts[a]!, i);
+      digest.update(JSON.stringify(rows) + "\n");
+      if (batch.length + rows.length > 2000) await flush();
+      batch.push(...rows);
+    }
+    await flush();
+    assert.equal(count, expected);
+    const samples = [];
+    for (const i of [0, 4999, 9999]) {
+      const basis = { recordedPosition: head, validAt: SEED_VALID_FROM },
+        root = ids.placement(accounts[a]!.first + i);
+      const rows = await client.rows(db, { entityIds: [root], basis, pattern: {} });
+      const actual = rows.map((r) => [r.attribute, r.value_string]).sort();
+      const expectedRoot = tenantRows(accounts[a]!, i)
+        .filter((f) => f.e === root)
+        .map((f) => [f.a, f.v.value])
+        .sort();
+      assert.deepEqual(actual, expectedRoot);
+      samples.push(hash(actual));
+    }
+    seeds.push({ account: a, subjects: 10000, facts: count, samples });
+  }
+  assert.equal(digest.digest("hex"), pooledDigest);
+  return { head, seeds };
+}
+export async function runArm(
+  url: string,
+  nonce: string,
+  grouped: boolean,
+  server: boolean,
+  options: { pulse?: boolean; bootstrapUrl?: string } = {},
+) {
   const client = new DatomicClient(url, 35_000),
-    key = scope(nonce, "load");
+    key = scope(nonce, "load"),
+    bootstrap = options.bootstrapUrl ? new DatomicClient(options.bootstrapUrl, 35000) : client;
   try {
-    const { created, db, strictRecordClocks } = await client.create(key, "lean", true, 35_000);
+    const { created, db, strictRecordClocks } = await bootstrap.create(key, "lean", true, 35_000);
     assert(created && strictRecordClocks);
-    const expected = server ? deepPopulation(10000).facts + 20000 + Math.ceil(10000 / 256) + 1 : 0,
-      seeds = [];
-    const digest = createHash("sha256");
-    let head = 0;
-    if (server) {
-      for (let a = 0; a < 10; a++) {
-        let count = 0,
-          batch: Fact[] = [],
-          packed = 0;
-        const flush = async () => {
-          if (!batch.length) return;
-          const ack = await write(
-            client,
-            db,
-            command("seed-" + a + "-" + packed++, batch, [], false),
-          );
-          assert.equal(Number(ack.position.v), ++head);
-          count += batch.length;
-          batch = [];
-        };
-        for (let i = 0; i < 10000; i++) {
-          const rows = tenantRows(accounts[a]!, i);
-          digest.update(JSON.stringify(rows) + "\n");
-          if (batch.length + rows.length > 2000) await flush();
-          batch.push(...rows);
-        }
-        await flush();
-        assert.equal(count, expected);
-        const samples = [];
-        for (const i of [0, 4999, 9999]) {
-          const basis = { recordedPosition: head, validAt: SEED_VALID_FROM },
-            root = ids.placement(accounts[a]!.first + i);
-          const rows = await client.rows(db, { entityIds: [root], basis, pattern: {} });
-          const actual = rows.map((r) => [r.attribute, r.value_string]).sort();
-          const expectedRoot = tenantRows(accounts[a]!, i)
-            .filter((f) => f.e === root)
-            .map((f) => [f.a, f.v.value])
-            .sort();
-          assert.deepEqual(actual, expectedRoot);
-          samples.push(hash(actual));
-        }
-        seeds.push({ account: a, subjects: 10000, facts: count, samples });
-      }
-      assert.equal(digest.digest("hex"), pooledDigest);
+    const seed = server ? await seedPooled(bootstrap, db) : { head: 0, seeds: [] };
+    const seeds = seed.seeds;
+    let head = seed.head;
+    if (bootstrap !== client) {
+      const opened = await client.create(key, "lean", true, 35000);
+      assert(!opened.created && opened.db === db);
     }
     const phases = [];
-    for (const name of server ? ["alone", "one", "nine", "all"] : ["1", "4", "16", "64"]) {
+    for (const name of options.pulse
+      ? ["alone", "nine"]
+      : server
+        ? ["alone", "one", "nine", "all"]
+        : ["1", "4", "16", "64"]) {
       const startHead = head,
         depth = server ? 12 : Number(name),
         count = 128,
@@ -412,6 +428,14 @@ export async function runArm(url: string, nonce: string, grouped: boolean, serve
             Number.isFinite(ack.readyToNativeEntryMs),
         );
         records.push({
+          ...(options.pulse
+            ? {
+                subject: root,
+                businessFacts: facts.length,
+                clock: ack.recordedAt.v,
+                bytes: (ack as Response & { requestBytes: number }).requestBytes,
+              }
+            : {}),
           id,
           probe,
           account: a,
@@ -533,6 +557,7 @@ export async function runArm(url: string, nonce: string, grouped: boolean, serve
     assert.equal(Number(check.position?.v), sample.pos);
     return { nonce, grouped, scope: key, db, seeds, phases };
   } finally {
+    if (bootstrap !== client) bootstrap.close();
     client.close();
   }
 }

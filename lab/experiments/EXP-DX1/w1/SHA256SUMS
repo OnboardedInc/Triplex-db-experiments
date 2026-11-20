@@ -64,3 +64,8 @@ f23563d159ebb43f5207f26870d29bd66600d78f859f6e7331d33bfea153397f  DX-W1/field3/g
 a0fb8fe1b1ad156c0e71f96587d6114cd3f5ecc953e81d7451983ba33efaad79  DX-W1/field3/growth-02/selftest-resume-8.log
 fe030dcb341a4e2e9b617f5b74956f0663d674d19e34f6e4acb8c34699bee1aa  DX-W1/field3/growth-02/verified.json
 63056f3414a136a1e1dceeab43a89429f5a7163876d062c24376151feb5e6d86  DX-W1/field3/engine-state/datomic-build/0da6179355f245a9bf7cff7ed3294654888acaa6abedadbb12d0bee68aec0272-36093-1795135707267/build-receipt.json
+58c732847786b04240e09ff65f3b5e663a948ea1aa8484436d69d3ed2c3df326  DX-W1/field3/model-01/sentinel.json
+62ce23b79f3064aa40665f8f25a741e3c2f469b62829aa1486a198fcb608262b  DX-W1/field3/field-bench-tests-01.log
+b7bffe241fd942f68504072b37952baf7d38eb030133edeec96e695d01c281fc  DX-W1/field3/field-preflight-01.log
+755c41ee02cbb98e8be3fb9f7a4dc5ce3ba5e0b85929dafcf8a539b43ee98bba  DX-W1/field3/policy-03/gate.log
+3eab58bee38da141cb9221154603312753a81e545fc4963b187bb3d8232f7f27  DX-W1/field3/policy-03/verified.json

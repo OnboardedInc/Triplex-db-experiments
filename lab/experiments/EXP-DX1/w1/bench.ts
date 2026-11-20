@@ -207,6 +207,7 @@ export async function withStack<T>(
   arm: Arm,
   run: (env: NodeJS.ProcessEnv) => Promise<T>,
   grouped?: boolean,
+  fieldMode?: "individual" | "subject" | "all",
 ) {
   const why = stopReason();
   assert(!why, why);
@@ -282,6 +283,11 @@ export async function withStack<T>(
       TRIPLEX_TRACE_TX_JFR: "0",
       DX_TX_NATIVE_JFR: "0",
       DX_NATIVE_SETTINGS_READBACK: "0",
+    });
+  if (fieldMode)
+    Object.assign(env, {
+      DX_LIVE_PRIORITY: fieldMode === "individual" ? "0" : "1",
+      DX_FIELD_COALESCE: fieldMode === "subject" ? "1" : "0",
     });
   write(path.join(dir, "identity.json"), arm);
   const args = [
@@ -365,6 +371,12 @@ export async function withStack<T>(
       const writer = JSON.parse(docker("inspect", slot + "-gw-w"))[0];
       assert(writer.Config.Env.includes("TX2_GROUP_COMMIT=" + Number(grouped)));
       assert(writer.Config.Env.includes("TX2_GROUP_QUEUE_CLOCK=1"));
+      if (fieldMode) {
+        assert(
+          writer.Config.Env.includes("TX2_LIVE_PRIORITY=" + Number(fieldMode !== "individual")),
+        );
+        assert(writer.Config.Env.includes("TX2_FIELD_COALESCE=" + Number(fieldMode === "subject")));
+      }
     }
     env.TX2_ENGINE_CGROUPS = groups.join(",");
     env.TX2_ENGINE_CPUS = "5";

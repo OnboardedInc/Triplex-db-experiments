@@ -145,6 +145,28 @@ for (const variation of ["flat", "capped", "full"] as const)
       quietRatio: r.sentinelP99 / a.sentinelP99,
     });
   }
+const sentinel = [];
+for (const rate of [23.5, 39.4]) {
+  const quiet = offers(3.5, 60, [9]),
+    neighbors = offers(rate, 60, owners.slice(0, 9)),
+    trace = [...quiet, ...neighbors].sort((a, b) => a.ms - b.ms || a.account - b.account);
+  for (const capacity of [150, 175, 200])
+    for (const variation of ["flat", "capped", "full"] as const)
+      for (const mode of ["individual", "subject", "all"] as const) {
+        const alone = simulate(quiet, mode, capacity, variation);
+        const loaded = simulate(trace, mode, capacity, variation);
+        sentinel.push({
+          neighborRate: rate,
+          capacity,
+          variation,
+          mode,
+          trace: sha(trace),
+          offered: loaded.offered,
+          drainMs: loaded.drainMs,
+          ratio: loaded.sentinelP99 / alone.sentinelP99,
+        });
+      }
+}
 // [DX-W1] Why: even granting the sentinel the very next turn leaves the residual of a native batch already running.
 // Rejected: adding independent p99s or calling an aggregate-rate capacity estimate an isolation guarantee.
 const baseline = quantile(source.baseMs, 0.99);
@@ -168,6 +190,7 @@ fs.writeFileSync(
       "12 admitted per account; 1/3/8 second sessions, 19 fields/subtask and 415 saves/person; 33.9% shareable native spacing; all queued offers drain",
     cells,
     operating,
+    sentinel,
     residual,
   }) + "\n",
   { flag: "wx" },

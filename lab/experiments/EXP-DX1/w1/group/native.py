@@ -12,7 +12,7 @@ gate_name = sys.argv[4] if len(sys.argv) == 5 else "group"
 gate = Path("lab/experiments/EXP-DX1/w1/field") / (gate_name + "_test.clj")
 prefix, count, checks = {
     "group": ("W1_NATIVE ", 4, 281),
-    "policy": ("W1_FIELD_POLICY ", 3, 356),
+    "policy": ("W1_FIELD_POLICY ", 3, 357),
     "predecessor": ("W1_PREDECESSOR ", 3, 350),
 }[gate_name]
 output.mkdir()

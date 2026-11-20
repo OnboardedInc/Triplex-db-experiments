@@ -203,7 +203,8 @@
             solo (or (not (:eligible entry)) (and policy/priority? (or (= rank :bulk) (not (grouping?)))))]
         (if (and (seq out)
                  (or solo (and policy/field-only?
-                               (or (nil? (:subject entry)) (not= (:subject entry) (:subject (first out))))))) [state out]
+                               (or (nil? (:subject entry)) (not= (:subject entry) (:subject first-member))
+                                   (not= a (:account first-member)))))) [state out]
           (let [others (filterv #(not (identical? % entry)) queue)
                 same? #(= a (:account %))
                 remaining (reduce (fn [m k] (if (identical? (:token entry) (get m k)) (dissoc m k) m)) tails (:keys entry))
