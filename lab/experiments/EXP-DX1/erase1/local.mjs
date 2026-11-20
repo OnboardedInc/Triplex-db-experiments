@@ -121,6 +121,7 @@ export async function local(opts, config, manager) {
       "ledger-overhead",
       "ledger-profile",
       "ledger-match",
+      "guard-prepared-smoke",
       "fast-smoke",
       "fast",
     ].includes(mode),
@@ -395,7 +396,7 @@ export async function local(opts, config, manager) {
               }).flatMap(([k, v]) => ["-e", k + "=" + v]),
             ]
           : []),
-        ...(mode.startsWith("ledger-") || mode.startsWith("fast")
+        ...(mode.startsWith("ledger-") || mode.startsWith("fast") || mode === "guard-prepared-smoke"
           ? ["-v", "/dx-authority", "-e", "TRIPLEX_ERASURE_DIRECTORY=/dx-authority"]
           : []),
         ...(mode.startsWith("fast") ? ["-e", "TRIPLEX_ERASURE_SHRED_GRACE_MS=0"] : []),
@@ -485,6 +486,7 @@ export async function local(opts, config, manager) {
       freeBytes: diskFloor(),
       host: "mac-vm",
       timings: "diagnostic",
+      guardComparison: mode === "guard-prepared-smoke",
     };
     run.binding = sha256(JSON.stringify(run));
     write("native", run);

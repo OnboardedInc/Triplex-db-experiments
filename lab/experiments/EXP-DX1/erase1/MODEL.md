@@ -2,6 +2,29 @@
 
 **North star** P1, P2 and P6. Bound fresh absence and price interference at account size and after retained history. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
+## Prepared guarded read and save comparison
+
+Run the commit named at the top of [REPORT.md](REPORT.md). Use the existing sealed 100,000-person deep scratch fixture and its independently recorded `staged.json` SHA-256. Set `DX_ERASE_SEALED_SHA256` to that hash. The launcher checks the live gateway source, sealed manifest and scratch database nonce. It accepts a sealed manifest from an ancestor of the runner commit and verifies the original head and bystander assertion IDs against the restored database.
+
+Prepare the unguarded control outside the timed window using the same scratch store, nonce and fixture size. The control has its own Datomic scope and no protection declaration. Each arm reads and writes one Datomic database. The public guard stays enabled throughout the sealed arm. Prepare the control once with `node lab/experiments/EXP-DX1/erase1/server.mjs stage-control erase1-control-stage`. Use unchanged copies of both seeds for a rerun.
+
+```sh
+timeout --kill-after=15s 55m node lab/experiments/EXP-DX1/erase1/server.mjs check-guarded erase1-guarded-check erase1-fast-stage/staged.json erase1-control-stage/staged.json
+```
+
+The comparison runs unguarded, guarded, unguarded, guarded, unguarded. Each block offers the same 500 saves under four pinned readers. The driver verifies the receipt for every save and the returned rows for every read. It erases a separate sealed assertion between the two guarded blocks, and checks the marker at its original pin and the retained detached body. Report each guarded ratio against both surrounding controls. The targets apply to both phases and both operations.
+
+| Guarded / unguarded | Predicted p50 | Predicted p99 | Required p50 / p99 |
+| --- | ---: | ---: | ---: |
+| Ordinary save | 1.00–1.08× | 1.00–1.18× | ≤1.05× / ≤1.10× |
+| Pinned read | 1.00–1.07× | 1.00–1.15× | ≤1.05× / ≤1.10× |
+
+Budget 2–8 minutes after both seeds are ready. These planning ranges apply before removal and to bystanders afterwards. They use the measured direct guard stages and the matched Reach bytes. Both tail ranges cross their targets because the Mac controls drifted. This compares the price of checking an account's removal sequence on ordinary saves. The protected-field sealing cost has its own check. [Stage attribution](PREDICTIONS-PART3.md) · [Local byte parity and diagnostic ratios](GUARD-PART3.md)
+
+The small Mac smoke rehydrated both seeds, verified 2,500 save receipts and the pinned reader loops, and checked the sealed marker and detached body. Both seed scopes used the same owned stack, which was removed afterwards. The launcher passed argument checks and focused typing. The sealed 100,000-person run remains unmeasured. [Smoke and SDK evidence hashes](P3-PREPARED-SHA256SUMS)
+
+`server.mjs` binds the fresh result to the current source, compiled JS, gateway source, scratch nonce, stage hashes and attempt ID. `loadStage` reopens the original head and bystander IDs. `comparePreparedGuard` uses the checked rows and receipts from `traffic` and verifies the new marker against its original identity, sealed body and receipt. It emits the observed ratios and planned bounds.
+
 ## Prepared detached-erasure check
 
 The fixture has 100,000 deep subjects and 16,045,255 current facts. For one subject the check makes 415 actual protected replacements and verifies the original held pin. The repeated one- and 100-person arms erase one new protected assertion per target per request. The forecast uses all three matched Mac rungs. [Mac measurements](FAST.md#matched-scale-measurements)
