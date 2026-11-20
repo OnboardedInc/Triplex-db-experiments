@@ -200,3 +200,8 @@ cb26a185ea171ed47350b37405079364379175bfbd704d89e1e4854cc8437e47  write6-price-0
 b243b87c227a6bd9df5c81fa153e79118f8a98cee2e068035f5068ae59bdb296  write6-price-06/selftest-1.log
 7a9f7be59a53d6acdf91199a31423fdcfe5b7794bc567db99c7e91100e5fc521  write6-price-06/terminal.json
 3701f82bf8361300bb3b80311b67f1347c3d24326d5970576ac1926680a3b1fd  write6-price-06/verified-52ae61e1-6ddd-4001-9760-bc6ecd7afc4d.json
+ee10ac2f5266c25bcf428765b5894c14e68ba04cb9ab9f9c18b4a3014644e4c7  write6-pack-core-03/consumer/consumer.ts
+4ab5d59678909880f771005689bfe8d6d681eb2e65e69ac2f157ffaf91a7db63  write6-pack-core-03/observation.json
+dfe308e8f0d706c6bc9b987b1e2e9b57c29a18c4ea6a9c52be9ac9d035d0068b  write6-pack-core-03/offline.log
+8404d1f771bd24164a88d3a138560c673aaae0ca24a5e1ff0abb0a10ccf93f69  write6-pack-core-03/pack.py
+1a8732dd0d7a60d41dc0c5d33d0747e617cb6d41eac42a3cb09801a99831a19b  write6-pack-core-03/triplex-build-triplex-0.2.0.tgz
