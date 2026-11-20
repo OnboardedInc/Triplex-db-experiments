@@ -2,6 +2,7 @@
 # [DX-H1] Why: separate peers and durable SQL storage measure the intended topology. Rejected: dev storage (single process).
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/platform.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/collector.sh"
 prefix=${1:?usage: up.sh PREFIX [--cpus-tx LIST] [--cpus-pg LIST] [--cpus-gw-write LIST] [--cpus-gw-read LIST] [--gateway-src DIR] [--port-write N] [--port-read N]}
 shift
 [[ "$prefix" =~ ^tx2-dx[a-z0-9-]+$ ]] || { echo "DX stack accepts only tx2-dx* prefixes" >&2; exit 2; }
@@ -103,7 +104,7 @@ PAIR_LEASE
   trap 'docker rm -f "$prefix-probe" >/dev/null 2>&1 || true' EXIT
   trap 'exit 143' TERM INT
   docker run --rm --pull never --name "$prefix-probe" --network none --memory 768m --memory-swap 768m --cpuset-cpus 0 \
-    -e 'DATOMIC_JAVA_OPTS=-Xms64m -Xmx512m' -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+    -e 'DATOMIC_JAVA_OPTS=-Xms64m -Xmx512m -XX:+UseSerialGC' -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)" \
     -v "$PWD/packages/datomic/gateway:/opt/gateway:ro" --entrypoint /opt/datomic/bin/run \
     tx2-datomic:1.0.7745-da00 -m triplex.gateway.sql-pair-probe
@@ -140,7 +141,7 @@ INPUT_LEASE
   trap 'exit 143' TERM INT
   input_dir=$(cd "$(dirname "$2")" && pwd)
   docker run --rm --pull never --name "$prefix-probe" --network none --read-only --memory 768m --memory-swap 768m \
-    --tmpfs /tmp:rw,size=64m -e 'DATOMIC_JAVA_OPTS=-Xms64m -Xmx512m -Dtriplex.codec.spec=/opt/spec/codec-spec.json' \
+    --tmpfs /tmp:rw,size=64m -e 'DATOMIC_JAVA_OPTS=-Xms64m -Xmx512m -XX:+UseSerialGC -Dtriplex.codec.spec=/opt/spec/codec-spec.json' \
     -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e "TRIPLEX_TRACE_RUN=$prefix" -e "TRIPLEX_TRACE_SOURCE=$(git rev-parse HEAD)" \
     -v "$input_dir:/inputs:ro" -v "$PWD/packages/datomic/gateway:/opt/gateway:ro" \
     -v "$PWD/packages/datomic/src/codec-spec.json:/opt/spec/codec-spec.json:ro" --entrypoint /opt/datomic/bin/run \
@@ -183,6 +184,19 @@ while (($#)); do
   esac
   shift 2
 done
+tx_java=$(explicit_gc '-XX:+UseG1GC -XX:MaxGCPauseMillis=50' "$tx_java")
+# bin/run reads DATOMIC_JAVA_OPTS. Preserve precedence across the common and per-role options.
+peer_java() {
+  local heap=$1 override=$2 fallback=$3 options=$gw_java
+  if [[ -z $options && ${DX_INT1_GATEWAYS:-original} == demand ]]; then
+    options="-Xms64m -Xmx${heap:-384m} $demand_peer"
+  elif [[ -z $options && -n $heap ]]; then
+    options="-Xms256m -Xmx$heap"
+  fi
+  explicit_gc "$fallback" "${override:-$options}"
+}
+gw_w_java=$(peer_java "${DX_GW_WRITE_HEAP:-}" "${DX_GW_WRITE_JAVA_OPTS:-}" '-XX:+UseSerialGC')
+gw_r_java=$(peer_java "${DX_GW_READ_HEAP:-}" "${DX_GW_READ_JAVA_OPTS:-}" '-XX:+UseG1GC')
 if [[ ${DX_BARE_METAL:-0} == 1 ]]; then
   # [DX-BM1] Why: the native read gateway spans cores 4 and 8. Check each requested CPU against this host's actual allocation.
   # Rejected: carrying the eight-CPU Mac VM limit onto the 12-core bench, or allowing unavailable native CPUs.
@@ -209,6 +223,17 @@ for port in "$port_w" "$port_r"; do
   [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1024 && "$port" -le 65535 && "$port" != 15442 && "$port" != 17019 ]] || exit 2
 done
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
+stack_labels=()
+datomic_image=tx2-datomic:1.0.7745-da00
+if [[ -n ${DX_TAIL1_ATTEMPT:-} ]]; then
+  # [DX-TAIL1] Why: bind the owned stack to the reservation and reject name reuse at cleanup.
+  # Rejected: inferring ownership from the slot number alone.
+  [[ $prefix == tx2-dxscale1-tail1-* && $DX_TAIL1_ATTEMPT =~ ^[a-f0-9-]{36}$ ]]
+  [[ $DX_TAIL1_IMAGE =~ ^sha256:[a-f0-9]{64}$ ]]
+  datomic_image=$DX_TAIL1_IMAGE
+  [[ ${DX_TAIL1_HOLDER:-DX-TAIL1} =~ ^DX-(TAIL1|JVM1)$ ]]
+  stack_labels=(--label "tx2.holder=${DX_TAIL1_HOLDER:-DX-TAIL1}" --label "tx2.tail1=$DX_TAIL1_ATTEMPT")
+fi
 network_tuning=()
 if [[ ${DX_IDLE_TCP:-default} != default ]]; then
   # [DX-T1-10] Why: test slow-start-after-idle only in this attempt's endpoint namespaces, leaving guest/global settings alone.
@@ -233,7 +258,7 @@ fi
 for role in pg tx gw-w gw-r extract; do
   if docker container inspect "$prefix-$role" >/dev/null 2>&1; then echo "container already exists: $prefix-$role" >&2; exit 2; fi
 done
-docker image inspect tx2-datomic:1.0.7745-da00 postgres:17-alpine >/dev/null
+docker image inspect "$datomic_image" postgres:17-alpine >/dev/null
 if [[ -z "$src" ]]; then
   src="$evidence/stage/$prefix"
   mkdir -p "$src"
@@ -263,7 +288,7 @@ print(hashlib.sha256(data).hexdigest())
 PY
 )
 # Copy only from the already-local image; never start its inherited entrypoint.
-docker create --name "$prefix-extract" --pull never tx2-datomic:1.0.7745-da00 >/dev/null
+docker create --name "$prefix-extract" ${stack_labels[@]+"${stack_labels[@]}"} --pull never "$datomic_image" >/dev/null
 trap 'docker rm -f "$prefix-extract" >/dev/null 2>&1 || true' EXIT
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   docker cp "$prefix-extract:/opt/datomic/bin/sql/$file" "$attempt/sql/$file"
@@ -273,11 +298,20 @@ docker cp "$prefix-extract:/opt/datomic/bin/logback.xml" "$attempt/config/vendor
 docker rm "$prefix-extract" >/dev/null
 trap - EXIT
 python3 - "$attempt/config" "$prefix" "$index_threshold" "$index_max" "$object_cache" "$encrypt_channel" <<'PY'
-import pathlib,sys
+import json,os,pathlib,sys
 root=pathlib.Path(sys.argv[1]); prefix=sys.argv[2]
 settings={'protocol':'sql','host':prefix+'-tx','alt-host':prefix+'-tx',
 'sql-url':'jdbc:postgresql://'+prefix+'-pg:5432/datomic','sql-user':'datomic','sql-password':'datomic',
 'memory-index-threshold':sys.argv[3],'memory-index-max':sys.argv[4],'object-cache-max':sys.argv[5],'encrypt-channel':sys.argv[6]}
+# [DX-JVM1] Why: tune only approved non-durability properties in this experiment.
+# Rejected: accepting arbitrary properties from an inherited environment.
+extra=json.loads(os.environ.get('DX_JVM1_TX_PROPERTIES', '{}'))
+allowed={'write-concurrency':range(2,17), 'read-concurrency':range(2,33), 'index-parallelism':range(1,9),
+         'heartbeat-interval-msec':[5000], 'prefetch-concurrency':range(1,9), 'prefetch-probes':[True,False]}
+assert extra.keys() <= allowed.keys() and all(
+    type(v) is (bool if k == 'prefetch-probes' else int) and v in allowed[k] for k,v in extra.items()
+)
+settings.update({k:str(v).lower() for k,v in extra.items()})
 lines=[line for line in (root/'template.properties').read_text().splitlines() if line.partition('=')[0].strip() not in settings]
 (root/'sql.properties').write_text('\n'.join(lines)+'\n'+'\n'.join(k+'='+v for k,v in settings.items())+'\n')
 PY
@@ -332,16 +366,16 @@ fi
 # Rejected: mocking the server-clock serial point or silently skipping the gateway's normal selftests.
 if [[ ${DX_GATEWAY_SELFTEST:-0} == 1 ]]; then
   docker run --rm --pull never --name "$prefix-selftest" --network none --memory 1500m --memory-swap 1500m \
-    -e "DATOMIC_JAVA_OPTS=-Xms128m -Xmx1g" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -v "$src:/opt/gateway:ro" \
-    --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.selftest > "$attempt/gateway-selftests.log" 2>&1
+    -e "DATOMIC_JAVA_OPTS=-Xms128m -Xmx1g -XX:+UseSerialGC" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -v "$src:/opt/gateway:ro" \
+    --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.selftest > "$attempt/gateway-selftests.log" 2>&1
 fi
 if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
   mkdir -p "$attempt/trace/preflight"
   docker run --rm --pull never --name "$prefix-trace-check" --network none --memory 768m --memory-swap 768m \
-    -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=-Xms128m -Xmx512m -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e TRIPLEX_TRACE_DIR=/test-trace -e TRIPLEX_TRACE_TEST_JFR=1 -v "$attempt/trace/preflight:/test-trace" -v "$src:/opt/gateway:ro" \
-    --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.trace-test > "$attempt/gateway-trace-tests.log" 2>&1
+    -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=-Xms128m -Xmx512m -XX:+UseSerialGC -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e TRIPLEX_TRACE_DIR=/test-trace -e TRIPLEX_TRACE_TEST_JFR=1 -v "$attempt/trace/preflight:/test-trace" -v "$src:/opt/gateway:ro" \
+    --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.trace-test > "$attempt/gateway-trace-tests.log" 2>&1
 fi
-docker network create "$prefix-net" >/dev/null
+docker network create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-net" >/dev/null
 # [DX-T1-14] Why: activation uses a byte-verified fresh clone under the holder's lease; a sealed source is never writable.
 # Rejected: S5's old first-use/reuse fallback, incomplete copies, or attaching a transactor directly to a sealed seed.
 if [[ $seed_volume == bm1-pristine-* ]]; then
@@ -364,7 +398,7 @@ CLONE_LEASE
   docker volume inspect "$seed_volume" > "$attempt/seed-source-volume.json"
   [[ -z $(docker ps -q --filter "volume=$seed_volume") ]] || { echo 'Seed source is active' >&2;exit 2; }
   if docker volume inspect "$prefix-pg-data" >/dev/null 2>&1;then echo 'Refusing an existing clone destination' >&2;exit 2;fi
-  docker volume create "$prefix-pg-data" >/dev/null
+  docker volume create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-pg-data" >/dev/null
   docker create --pull never --name "$prefix-seed-copy" --read-only --network none --memory 128m --memory-swap 128m \
     -v "$seed_volume:/from:ro" -v "$prefix-pg-data:/to" --entrypoint /bin/sh postgres:17-alpine -eu -c '
       test "$(cat /from/PG_VERSION)" = 17
@@ -388,9 +422,9 @@ CLONE_MOUNTS
   docker rm "$prefix-seed-copy" >/dev/null
   trap - EXIT
 else
-  docker volume create "$prefix-pg-data" >/dev/null
+  docker volume create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-pg-data" >/dev/null
 fi
-docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
+docker run -d --pull never --name "$prefix-pg" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
   -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
 # Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
@@ -429,8 +463,8 @@ final_flags=''
 if [[ ${DX_JVM_EVIDENCE:-0} == 1 ]]; then
   final_flags=' -XX:+PrintFlagsFinal -Xlog:gc+init=info:stdout:uptimemillis,level,tags'
 fi
-docker run -d --pull never --name "$prefix-tx" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
-  -e "JAVA_OPTS=$tx_java$trace_tx_java$final_flags" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor tx2-datomic:1.0.7745-da00 /dxh1/sql.properties >/dev/null
+docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
+  -e "JAVA_OPTS=$tx_java$trace_tx_java$final_flags" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" --entrypoint /opt/datomic/bin/transactor "$datomic_image" /dxh1/sql.properties >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 # [DX-BM1] Why: avoid probing catalog creation before the SQL transactor announces startup.
 # Rejected: treating an early location read failure as a missing database, or unbounded health fetches.
@@ -473,27 +507,40 @@ for role in w r; do
   fi
   if [[ $role == w ]]; then cpu=$gw_w port=$port_w; else cpu=$gw_r port=$port_r; fi
   ports=(); [[ $publish == false ]] || ports=(-p "127.0.0.1:$port:8080")
-  if [[ $role == w ]]; then mem=${DX_GW_WRITE_MEMORY:-$gw_mem}; heap=${DX_GW_WRITE_HEAP:-}; else mem=${DX_GW_READ_MEMORY:-$gw_mem}; heap=${DX_GW_READ_HEAP:-}; fi
-  # bin/run reads DATOMIC_JAVA_OPTS, not JAVA_OPTS (DX-S3). An explicit --gw-java-opts wins; else DX_GW_*_HEAP; else the launcher default (1g).
-  role_java=$gw_java
-  if [[ -z $role_java && ${DX_INT1_GATEWAYS:-original} == demand ]]; then role_java="-Xms64m -Xmx${heap:-384m} $demand_peer"
-  elif [[ -z $role_java && -n $heap ]]; then role_java="-Xms256m -Xmx$heap"; fi
-  if [[ $role == w ]]; then role_java=${DX_GW_WRITE_JAVA_OPTS:-$role_java}; fi
-  if [[ $role == r ]]; then role_java=${DX_GW_READ_JAVA_OPTS:-$role_java}; fi
+  if [[ $role == w ]]; then
+    mem=${DX_GW_WRITE_MEMORY:-$gw_mem}; role_java=$gw_w_java
+  else
+    mem=${DX_GW_READ_MEMORY:-$gw_mem}; role_java=$gw_r_java
+  fi
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
   [[ $role != w ]] || entity_cache_bytes=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-268435456}
   role_trace_java=$trace_gw_java
-  if [[ $TRIPLEX_TRACE_GW_JFR == 1 ]]; then role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0"; fi
+  role_jfr=$TRIPLEX_TRACE_GW_JFR
+  if [[ $role == w && -n ${DX_TAIL1_ATTEMPT:-} ]]; then
+    # [DX-TAIL1] Why: dump the allocation recording from the owning live JVM.
+    # Rejected: depending on bin/run to forward Docker shutdown to the Java child.
+    role_jfr=1
+    role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=profile,dumponexit=false,maxsize=32m"
+  elif [[ $role_jfr == 1 ]]; then
+    role_trace_java="$role_trace_java -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0"
+  fi
   if [[ ${TRIPLEX_TRACE_DEBUG:-0} == 1 ]]; then
     debug_port=8506; [[ $role == w ]] || debug_port=8507
     role_trace_java="$role_trace_java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:$debug_port"
   fi
-  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
-    ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" "${trace_env[@]}" ${field_policy[@]+"${field_policy[@]}"} -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_GW_JFR" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}${final_flags}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+  tail1_env=()
+  if [[ $role == w && -n ${DX_TAIL1_ATTEMPT:-} ]]; then
+    tail1_env=(-e TRIPLEX_TRACE_ALLOCATION_ONLY=1)
+    if [[ ${DX_TAIL1_LESS_ALLOCATION:-0} == 1 ]]; then
+      tail1_env+=(-e TX2_TAIL1_ROW_DECODE=1)
+    fi
+  fi
+  docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
+    ${ports[@]+"${ports[@]}"} ${tail1_env[@]+"${tail1_env[@]}"} "${trace_env[@]}" ${field_policy[@]+"${field_policy[@]}"} -e "TRIPLEX_TRACE_JFR=$role_jfr" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}${final_flags}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \
     -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \
-    -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
+    -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.main >/dev/null
   ok=false
   health_deadline=$((SECONDS + 180))
   while (( SECONDS < health_deadline )); do
