@@ -15,7 +15,7 @@ import uuid
 from producer_readings import capacity_rung, group_arm
 from import_reading import tail_attempt
 from activation_clock import activation_modes
-from joined_preflight import joined_output
+from joined_preflight import joined_output, point_readback
 
 ROOT = Path("/var/tmp/triplex-bm1")
 NIGHT = ROOT / "night-n19"
@@ -775,6 +775,7 @@ def result(r):
             return "preflight-refused","The native 64-person preflight did not seal all six cells. See its retained log and partial offer files."
         check=joined_output(root/"smoke",root/"run-owner.json",r["source"],r["start"],root/"build/repository")
         assert check==get(root/"collector.json")
+        assert point_readback(root/"smoke",root/"build/repository",check)==get(root/"point-check.json")
         assert get(root/"native-clean.json")==dict(source=r["source"],prefix="tx2-dxt1-bm1-"+r["tag"],
                    requestSha256=digest(Path(r["directory"])/"request.json"),remaining=[])
         return "observed","All six 64-person native cells agreed with the collector. ACTREVIEW2 holds the 100,000-person run."

@@ -71,7 +71,7 @@ def sources(r):
     elif r["item"]==13:parts["import"]=root/"run"
     elif r["item"]==14:
         parts["joined-smoke"]=root/"smoke"
-        for name in ("run-owner.json","collector.json","native-clean.json","startup-and-engine.log","engines"):
+        for name in ("run-owner.json","collector.json","point-check.json","native-clean.json","startup-and-engine.log","engines"):
             parts["joined-setup/"+name]=root/name
     elif r["item"]==6:
         platform=Path("/var/tmp/triplex-scale1")

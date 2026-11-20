@@ -52,10 +52,10 @@ bench 'sudo -n tail -12 /var/tmp/triplex-w1/grpw1a/campaign.log'
 bench 'systemctl show triplex-w1-grpw1a -p ActiveState -p Result -p ExecMainStatus'
 ```
 
-The detached Linux supervisor is `bm1n19-campaign-v10.service`. It adopts the existing W1 unit and reads each later builder's public head and report at admission. It verifies a small producer output before emitting a ready receipt. W1’s Mac controller gets 45 seconds to launch through SSH. The supervisor can start the published native worker locally. It launches the same-database HA1 and INT1 workers directly. Each item has an overall deadline and an independent systemd timer where needed. The Linux supervisor checks resource names, native lock release and terminal evidence before advancing. The Mac collector uses `night-client.py watch` and inspects sealed bundles every eleven minutes. The raw-archive ceiling is strictly below 1 GiB.
+The detached Linux supervisor is `bm1n19-campaign-v11.service`. It adopts the existing W1 unit and reads each later builder's public head and report at admission. It verifies a small producer output before emitting a ready receipt. W1’s Mac controller gets 45 seconds to launch through SSH. The supervisor can start the published native worker locally. It launches the same-database HA1 and INT1 workers directly. Each item has an overall deadline and an independent systemd timer where needed. The Linux supervisor checks resource names, native lock release and terminal evidence before advancing. The Mac collector uses `night-client.py watch` and inspects sealed bundles every eleven minutes. The raw-archive ceiling is strictly below 1 GiB.
 
 ```sh
-bench 'systemctl show bm1n19-campaign-v10.service -p ActiveState -p Result -p NRestarts'
+bench 'systemctl show bm1n19-campaign-v11.service -p ActiveState -p Result -p NRestarts'
 bench 'sudo -n tail -15 /var/tmp/triplex-bm1/night-n19/campaign.log'
 bench 'sudo -n find /var/tmp/triplex-bm1/night-n19/bundles -mindepth 2 -maxdepth 2 -name TRANSFER.json'
 BENCH_SERVER="$BENCH_SERVER" python3 lab/experiments/EXP-DX1/bm1/night-client.py collect i1-1

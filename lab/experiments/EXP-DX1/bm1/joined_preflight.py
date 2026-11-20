@@ -16,6 +16,16 @@ EXP = Path("lab/experiments/EXP-DX1")
 CELLS = [("owed", 0), ("staged", 0), ("owed", 3.5), ("staged", 3.5), ("owed", 23.5), ("staged", 23.5)]
 
 
+def point_readback(folder, repo, reading):
+    node = repo.parent / "tools/bin/node"
+    raw = subprocess.check_output([node, "--experimental-strip-types", Path(__file__).with_name("joined_readback.mjs"), folder],
+                                  cwd=repo, text=True, timeout=120)
+    result = json.loads(raw)
+    assert [result[k] for k in ("source", "nonce", "slot")] == [reading[k] for k in ("source", "nonce", "slot")]
+    assert result["saves"] == sum(w["saves"] for w in reading["windows"]) and len(result["responses"]) == 12
+    return result
+
+
 def joined_output(folder, owner, source, start, repo=None):
     # [DX-BM1] Why: require all six real cells and replay their offer, clock and native proof identities.
     # Rejected: granting a 100k or deadline result from the small smoke or from the aggregate file alone.
@@ -152,6 +162,7 @@ def host(r, request, clean=False):
     run(node, "lab/bin/heavy.mjs", "--label", "DX-BM1", "--", "taskset", "-c", "3,5,6,7,9,10,11", node,
         "--experimental-strip-types", EXP / "actv-lazy/join/server.ts", "64", output, "--local", timeout=timeout)
     result = joined_output(output, owner, source, r["start"], repo)
+    (root / "point-check.json").write_text(json.dumps(point_readback(output, repo, result), indent=2) + "\n")
     (root / "collector.json").write_text(json.dumps(result, indent=2) + "\n")
 
 
