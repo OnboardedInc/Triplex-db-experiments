@@ -6,7 +6,8 @@
 ;; Rejected: a cross-basis cache or an unverified client row (a concurrent retraction could invalidate either).
 (def bindings
   '[owners (into {} (keep (fn [op] (when (and (instance? java.util.List op) (= :triplex/retract (first op))) [(nth op 2) (second op)])) (:ops payload)))
-    owner-eid (memoize (fn [owner] (read-at :w1/owner (d/entid db [:triplex.entity/id owner]))))])
+    owner-eid (memoize (fn [owner] (read-at :w1/owner (d/entid db [:triplex.entity/id owner]))))
+    checked (volatile! {})])
 (defn expand [form optimized? measured?]
   (walk/postwalk
     (fn [x]

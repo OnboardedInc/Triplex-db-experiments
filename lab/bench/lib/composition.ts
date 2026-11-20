@@ -84,6 +84,7 @@ export interface Assignments {
 }
 
 export interface CompositionHandle {
+  touchedUsage?(): { bytes: number; limit: number; evictions: number; admissions: number; entries: number; packed: number; history: number; position?: number };
   readonly scopeName?: string;
   sweepPage(
     subjects: readonly string[],
@@ -255,6 +256,11 @@ export const COMPOSITIONS: Record<string, (lane: Lane, scope: string) => Promise
   memory: async (lane, scope) => (await import("./memory.ts")).memoryComposition(lane, scope, Number(process.env["TX2_MEMORY_SERVICE_MS"] ?? "1")),
   "broker-h1": (lane, scope) => { if(lane!=="qlever")throw Error("broker-h1 is lane Q only"); return publicComposition(lane,scope,"broker-h1"); },
   reach: (lane, scope) => publicComposition(lane, scope, "reach"),
+  "reach-touched": async (lane, scope) => {
+    if (lane !== "datomic") throw Error("The touched replica requires Datomic");
+    const { touchedComposition } = await import("./touched-reads.ts");
+    return touchedComposition(await publicComposition(lane, scope, "reach"));
+  },
   public: (lane, scope) => publicComposition(lane, scope, "public"),
   /** Same surfaces; on XTDB the adapter queues writes in process (admissionQueue) instead of racing the scope position CAS. */
   "public-queued": (lane, scope) => publicComposition(lane, scope, "public-queued"),

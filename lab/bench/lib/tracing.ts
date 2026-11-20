@@ -3,6 +3,7 @@ import { pathToFileURL } from "node:url";
 import { REPO } from "./triplex.ts";
 const api = await import(pathToFileURL(`${REPO}/packages/datomic/dist/index.js`).href);
 export const {
+  traceLevel,
   beginTrace,
   withTrace,
   withoutTrace,

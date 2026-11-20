@@ -62,8 +62,6 @@ it("waits for the actual socket send rather than request construction", async ()
     sent();
   });
   expect(seen).toHaveLength(1);
-  endCommit(first);
-  expect(seen).toHaveLength(1);
   flush();
   await Promise.all([a, b]);
   expect(seen).toHaveLength(2);

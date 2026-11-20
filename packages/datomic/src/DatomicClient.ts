@@ -1,7 +1,15 @@
 import { ByteCache } from "./ByteCache.js";
 import { PredecessorCache, RowCache, estimateRowBytes } from "./RowCache.js";
 import { createHash, randomUUID } from "node:crypto";
-import { decodeEntity, type CachedEntity, type ReachWire } from "./reach.js";
+import {
+  decodeEntity,
+  decodeReachPage,
+  reachResponse,
+  type CachedEntity,
+  type ReachPage,
+  type ReachWire,
+} from "./reach.js";
+import { databaseName } from "./scopeName.js";
 import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/feed";
 import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
@@ -38,11 +46,6 @@ export class DatomicHttpError extends Error {
     readonly route?: string,
   ) {
     super(message);
-  }
-}
-class DatomicRequestTooLarge extends DatomicHttpError {
-  constructor() {
-    super(400, "InvalidValue", "Request too large");
   }
 }
 export class DatomicTransportError extends Error {
@@ -183,6 +186,7 @@ export class DatomicClient {
   private reachKeyDb: string | undefined;
   private readonly reachKeys = new Map<string, string>();
   private reachKeyBytes = 0;
+  private readonly reachKeyBudget: number;
   private cacheTimer: ReturnType<typeof setInterval> | undefined;
   cacheDiagnostics() {
     const stats = (c: {
@@ -206,7 +210,7 @@ export class DatomicClient {
       reachKeys: {
         bytes: this.reachKeyBytes,
         entries: this.reachKeys.size,
-        budgetBytes: 4 * 1024 ** 2,
+        budgetBytes: this.reachKeyBudget,
       },
     };
   }
@@ -220,8 +224,8 @@ export class DatomicClient {
     if (found !== undefined) return found;
     const key = prefix + id;
     const bytes = 128 + 2 * (id.length + key.length);
-    if (bytes <= 4 * 1024 ** 2) {
-      if (this.reachKeyBytes + bytes > 4 * 1024 ** 2) {
+    if (bytes <= this.reachKeyBudget) {
+      if (this.reachKeyBytes + bytes > this.reachKeyBudget) {
         this.reachKeys.clear();
         this.reachKeyBytes = 0;
       }
@@ -243,8 +247,12 @@ export class DatomicClient {
       readonly rowCacheBytes?: number;
       readonly predecessorCacheBytes?: number;
       readonly predecessorAttributes?: readonly string[];
+      readonly reachKeyBytes?: number;
     } = {},
   ) {
+    this.reachKeyBudget = cacheOptions.reachKeyBytes ?? 4 * 1024 ** 2;
+    if (!Number.isSafeInteger(this.reachKeyBudget) || this.reachKeyBudget < 0)
+      throw new RangeError("Invalid reach key budget");
     this.reachCache = new ByteCache(
       cacheOptions.entityCacheBytes ?? 16 * 1024 ** 2,
       (entity) => 256 + entity.storedRows.reduce((n, row) => n + 3 * estimateRowBytes(row), 0),
@@ -352,10 +360,10 @@ export class DatomicClient {
             : Buffer.from((fastPathEnabled("body") ? stringifyNativeExact : stringifyExact)(body)),
         );
     const byteLength = typeof bytes === "string" ? Buffer.byteLength(bytes) : (bytes?.length ?? 0);
-    // [DX-WFIX1] Why: validate the complete UTF-8 transaction after its final wire encoding and before opening a socket.
-    // Rejected: estimating row sizes (JSON escaping, envelopes and row texts all count against the same body cap).
-    if (path.endsWith("/transact") && byteLength > 4 * 1024 * 1024)
-      throw new DatomicRequestTooLarge();
+    if (path.endsWith("/transact") && byteLength > 4_194_304) {
+      onSent?.(false);
+      throw new DatomicHttpError(413, "RequestTooLarge", "Request too large");
+    }
     const serializeMicros = (performance.now() - serializeStart) * 1000;
     const remainingMs = timeoutMs - (performance.now() - started);
     if (remainingMs <= 0)
@@ -511,14 +519,38 @@ export class DatomicClient {
   // [DX-B2-N2] Why: bind caches to database and revisions, and repair concurrent inline/reference races once.
   // Rejected: accepting a missing reference as an empty entity.
   private readonly reachInflight = new Set<Promise<void>>();
+  async readDemandWorld(
+    scope: string,
+    root: string,
+    basis: ResolvedTemporalBasis,
+    gzipRows = fastPathEnabled("demand-gzip"),
+  ) {
+    // [DX-THIN1] Why: one native cut validates every cached entity revision and returns all missing rows. Rejected: following the whole import journal to keep untouched worlds current.
+    const found = await this.reachEntities(databaseName(scope), [root], basis, true, gzipRows);
+    if (!found) return undefined;
+    for (const entity of found.entities.values()) {
+      if (
+        entity.storedRows.some(
+          (row) =>
+            !Number.isSafeInteger(row.recorded_position) ||
+            row.recorded_position < 1 ||
+            row.recorded_position > found.position,
+        )
+      )
+        throw new TypeError("Demand row outside its selected position");
+    }
+    const world = reachResponse(root, found.entities, basis, found.closures[0]![1]);
+    return { ...world, entities: found.closures[0]![1].length, requests: found.requests };
+  }
   async reachEntities(
     db: string,
     roots: readonly string[],
     basis: ResolvedTemporalBasis,
     rowPage = false,
+    gzipRows = false,
   ) {
     return tracedRequest("read", "client.reach", {}, () =>
-      this.reachEntitiesTraced(db, roots, basis, rowPage),
+      this.reachEntitiesTraced(db, roots, basis, rowPage, gzipRows),
     );
   }
   private async reachEntitiesTraced(
@@ -526,6 +558,7 @@ export class DatomicClient {
     roots: readonly string[],
     basis: ResolvedTemporalBasis,
     rowPage: boolean,
+    gzipRows: boolean,
   ) {
     const older = [...this.reachInflight];
     let ingested!: () => void;
@@ -534,7 +567,7 @@ export class DatomicClient {
     });
     this.reachInflight.add(ready);
     try {
-      return await this.fetchReachEntities(db, roots, basis, rowPage, older, ingested);
+      return await this.fetchReachEntities(db, roots, basis, rowPage, gzipRows, older, ingested);
     } finally {
       ingested();
       this.reachInflight.delete(ready);
@@ -547,21 +580,25 @@ export class DatomicClient {
     roots: readonly string[],
     basis: ResolvedTemporalBasis,
     rowPage: boolean,
+    gzipRows: boolean,
     older: readonly Promise<void>[],
     ingested: () => void,
   ) {
+    const page = async (route: string, input: Record<string, unknown>) => {
+      if (!gzipRows) return this.request<ReachWire>("POST", route, input);
+      const wire = await this.request<ReachPage>("POST", route, { ...input, gzipRows: true });
+      return decodeReachPage(wire, this.maxResponseBytes);
+    };
+    let requests = 0;
     for (let attempt = 0; attempt < 2; attempt++) {
-      const response = await this.request<ReachWire>(
-        "POST",
-        `/v2/db/${db}/${roots.length === 1 ? "reach" : "reach-many"}`,
-        {
-          ...(roots.length === 1 ? { root: roots[0] } : { roots }),
-          basis,
-          ...(rowPage ? { rowPage: true } : {}),
-          session: this.reachSession,
-          ...(this.forceFullReach || attempt === 1 ? { full: true } : {}),
-        },
-      );
+      requests++;
+      const response = await page(`/v2/db/${db}/${roots.length === 1 ? "reach" : "reach-many"}`, {
+        ...(roots.length === 1 ? { root: roots[0] } : { roots }),
+        basis,
+        ...(rowPage ? { rowPage: true } : {}),
+        session: this.reachSession,
+        ...(this.forceFullReach || attempt === 1 ? { full: true } : {}),
+      });
       if (response.declined !== undefined) {
         this.reachDiagnostics.declines[response.declined] =
           (this.reachDiagnostics.declines[response.declined] ?? 0) + 1;
@@ -655,7 +692,8 @@ export class DatomicClient {
             this.reachDiagnostics.needRequests++;
             this.reachDiagnostics.needEntities += need.length;
             try {
-              const repair = await this.request<ReachWire>("POST", `/v2/db/${db}/reach-many`, {
+              requests++;
+              const repair = await page(`/v2/db/${db}/reach-many`, {
                 roots,
                 need: need.map(([id]) => id),
                 session: this.reachSession,
@@ -705,7 +743,7 @@ export class DatomicClient {
           )
             throw new TypeError("Reach closure binding mismatch");
         });
-        return { entities, closures: response.closures };
+        return { entities, closures: response.closures, requests, position: response.position };
       } catch {
         this.reachDiagnostics.faults++;
         return undefined;
@@ -845,7 +883,7 @@ export class DatomicClient {
   async transact(
     db: string,
     input: {
-      onSent?: (dispatched?: boolean) => void;
+      onSent?: (published?: boolean) => void;
       groupAccount?: string;
       writeClass?: DatomicWriteClass;
       clientId?: string;
@@ -866,7 +904,7 @@ export class DatomicClient {
       handle?: string;
       release?: boolean;
     },
-    onSent?: (dispatched?: boolean) => void,
+    onSent?: (published?: boolean) => void,
   ): Promise<unknown> {
     // [DX-T1] Why: direct client users retain encoding and post-response validation in the same commit trace.
     // Rejected: starting the only trace after serialization at the HTTP boundary.
@@ -877,13 +915,14 @@ export class DatomicClient {
   private async transactTraced(
     db: string,
     input: Parameters<DatomicClient["transact"]>[1],
-    onSent?: (dispatched?: boolean) => void,
+    onSent?: (published?: boolean) => void,
   ): Promise<unknown> {
     const encodeSpan = beginSpan("client.transact-encode");
     const encodeStart = performance.now();
     // [DX-B5-L0] Why: two-argument transact wrappers preserve the input, and this callback never belongs on the wire.
     // Rejected: a third-argument-only callback (the NS publication observer drops it).
-    const { onSent: inputSent, newIds: ids, ...wireInput } = input;
+    const { onSent: inputSent, ...wireInput } = input;
+    const { rows: inputRows, newIds: ids, ...header } = wireInput;
     onSent ??= inputSent;
     const compact = this.layouts.get(db) === "lean";
     const rowFast = fastPathEnabled("row"),
@@ -898,16 +937,16 @@ export class DatomicClient {
       "retract_tx_id",
     ];
     const rows = compact
-      ? input.rows
+      ? inputRows
           .filter((row) => row.retracted_at !== null)
           .map((row) => {
             const encoded = encodeRow(row);
             return Object.fromEntries(retirementColumns.map((column) => [column, encoded[column]]));
           })
-      : input.rows.map(encodeRow);
+      : inputRows.map(encodeRow);
     const bounds =
       compact && fastPathEnabled("history-range") ? historyIdentityBounds(input.newIds) : undefined;
-    const texts = input.rows
+    const texts = inputRows
       .filter((r) => isNew(r.id))
       .map(
         (r) =>
@@ -931,25 +970,49 @@ export class DatomicClient {
       this.orderedRowTexts.has(db) &&
       ids.length === texts.length &&
       new Set(ids).size === ids.length &&
-      rows.length + ids.length === input.rows.length &&
-      input.rows.every((r, i) =>
+      rows.length + ids.length === inputRows.length &&
+      inputRows.every((r, i) =>
         i < texts.length
           ? r.retracted_at === null && r.id === texts[i]![0] && ids[i] === r.id
           : r.retracted_at !== null && !isNew(r.id),
       );
+    // [DX-LOAD1] Why: an append-only lean batch carries the same new ID in the text prefix, map key and two arrays. Rejected: omitting IDs on mixed/retired input or trusting an empty subject at the peer.
+    const fresh =
+      compact &&
+      fastPathEnabled("fresh-texts") &&
+      inputRows.length >= 32 &&
+      inputRows.length === input.newIds.length &&
+      new Set(input.newIds).size === inputRows.length &&
+      inputRows.every(
+        (r) =>
+          isNew(r.id) &&
+          r.retracted_at === null &&
+          r.retracted_position === null &&
+          r.retract_tx_id === null,
+      ) &&
+      new Set(inputRows.map((r) => r.id)).size === inputRows.length;
     const body = {
-      ...wireInput,
+      // [DX-INT1] Why: updating the existing legacy keys preserves the frozen request bytes.
+      // Rejected: rebuilding the legacy header in compact-field order.
+      ...(fresh || ordered ? header : wireInput),
       ...(this.cacheOptions.writeClass ? { writeClass: this.cacheOptions.writeClass } : {}),
       ...(this.cacheOptions.groupAccount ? { groupAccount: this.cacheOptions.groupAccount } : {}),
       ...(bounds ? { historyIdentityBounds: bounds } : {}),
-      rows,
-      ...(ordered
-        ? { rowMode: "texts", rowOrder: "assertions-first-v1", rowTexts: texts.map((x) => x[1]) }
-        : {
-            newIds: ids,
-            ...(compact ? { rowMode: "texts", rowOrder: input.rows.map((row) => row.id) } : {}),
-            rowTexts: Object.fromEntries(texts),
-          }),
+      ...(fresh
+        ? { rowMode: "texts", freshTexts: texts.map(([, text]) => text) }
+        : ordered
+          ? {
+              rows,
+              rowMode: "texts",
+              rowOrder: "assertions-first-v1",
+              rowTexts: texts.map(([, text]) => text),
+            }
+          : {
+              rows,
+              newIds: ids,
+              ...(compact ? { rowMode: "texts", rowOrder: inputRows.map((row) => row.id) } : {}),
+              rowTexts: Object.fromEntries(texts),
+            }),
     };
     endSpan(encodeSpan);
     this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;
@@ -961,16 +1024,11 @@ export class DatomicClient {
       delta?: number;
       recordedAt?: TaggedValue;
     };
-    let dispatched = true;
     try {
       response = await this.request("POST", `/v1/db/${db}/transact`, body, this.timeoutMs);
-    } catch (error) {
-      dispatched = !(error instanceof DatomicRequestTooLarge);
-      throw error;
     } finally {
       this.sentCallbacks.delete(sendKey);
-      if (dispatched) onSent?.();
-      else onSent?.(false);
+      onSent?.();
     }
     if (response.t && response.position) {
       const p = validateTagged(response.position);
@@ -1071,11 +1129,7 @@ export class DatomicClient {
       if (ack.operationId !== input.operationId) throw new TypeError("Commit operation mismatch");
       return receipt(claim.txId, ack);
     } catch (error) {
-      // [DX-WFIX1] Why: older writers can report a stale CAS for an already committed command.
-      // Rejected: retrying CAS or polling for a different command (a truly conflicting write stays refused).
-      const cas = error instanceof DatomicHttpError && error.code === "CasConflict";
       if (
-        !cas &&
         !(
           error instanceof DatomicTransportError ||
           (error instanceof DatomicHttpError &&
@@ -1105,7 +1159,6 @@ export class DatomicClient {
         } catch (readError) {
           if (!(readError instanceof DatomicTransportError)) throw readError;
         }
-        if (cas) break;
         const left = deadline - performance.now();
         if (left > 0) await new Promise((resolve) => setTimeout(resolve, Math.min(25, left)));
       } while (performance.now() < deadline);

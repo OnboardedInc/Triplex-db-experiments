@@ -1,4 +1,5 @@
 import { Option } from "effect";
+import { gunzipSync } from "node:zlib";
 import {
   unsafe,
   type Triple,
@@ -25,6 +26,13 @@ export interface ReachWire {
   reset: boolean;
   entities: unknown[];
   closures: [string, string[]][];
+}
+export type ReachPage = ReachWire | { gzipRows: string };
+export function decodeReachPage(page: ReachPage, maxBytes: number): ReachWire {
+  if (!("gzipRows" in page)) return page;
+  // [DX-THIN1] Why: a large cold world repeats entity and transaction identifiers. Rejected: dropping metadata or enforcing the response limit only on compressed bytes.
+  const text = gunzipSync(Buffer.from(page.gzipRows, "base64"), { maxOutputLength: maxBytes });
+  return JSON.parse(text.toString("utf8")) as ReachWire;
 }
 // [DX-B2-N2] Why: callers share cached Triples including nested JSON and Option values.
 // Rejected: shallow freezing (a caller could change later pulls through value.value).
@@ -78,6 +86,7 @@ export function reachResponse(
   root: string,
   entities: ReadonlyMap<string, CachedEntity>,
   basis: ResolvedTemporalBasis,
+  expectedClosure?: readonly string[],
 ): ReachResult {
   const seen = new Set<string>([root]);
   const triples: Triple[] = [];
@@ -104,6 +113,11 @@ export function reachResponse(
     }
     todo = next;
   }
+  if (
+    expectedClosure &&
+    (seen.size !== expectedClosure.length || expectedClosure.some((id) => !seen.has(id)))
+  )
+    throw new TypeError("Demand reach closure differs from the active references");
   return { triples, hops };
 }
 

@@ -1,16 +1,10 @@
+import { readOutboxAt, parseOutbox } from "./w0-outbox-state.ts";
+export { parseOutbox } from "./w0-outbox-state.ts";
 import type { OutboxStore } from "./w0-outbox.ts";
-import { canonical, sha256, V_W0, W0, type WorldRow } from "./w0-world.ts";
+import { canonical, sha256, W0, type WorldRow } from "./w0-world.ts";
 
 export type GuardLayout = "full-state" | "guard-fact";
 type Fact = Pick<WorldRow, "attribute" | "value" | "id">;
-
-// [DX-ACT1] Why: subjects and sequences have unbounded integer tokens in W0 §8.8. Rejected: rounding once in JSON.parse and converting the rounded value back to BigInt.
-export function parseOutbox(bytes: string) {
-  return JSON.parse(bytes, ((key: string, value: unknown, ctx: { source?: string }) => {
-    if ((key === "tx" || key === "seq") && typeof value === "number") return BigInt(ctx.source!);
-    return value;
-  }) as Parameters<typeof JSON.parse>[1]);
-}
 
 export function storedOutbox(rows: readonly Fact[], subject: string): W0.OutboxState {
   function single(attribute: string) {
@@ -74,14 +68,8 @@ export async function guardedFrame(
     const recovered = await lookup();
     if (recovered) return recovered;
     const read = performance.now();
-    const basis = { position: await comp.currentPosition(), validAt: V_W0 };
-    const page = await comp.sweepPage(ids, basis);
-    if (
-      page.reportedBasis?.position !== basis.position ||
-      page.reportedBasis.validAt !== basis.validAt
-    )
-      throw Error("Outbox state read at wrong cut");
-    stateReads += page.roundTrips;
+    const page = await readOutboxAt(comp, ids, await comp.currentPosition());
+    stateReads += page.reads;
     stateReadMs += performance.now() - read;
     const operations: any[] = [],
       preconditions = [],

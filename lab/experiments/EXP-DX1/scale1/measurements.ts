@@ -1,3 +1,4 @@
+import { liveProfile, livePeakWindow } from "./deep-live.ts";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -18,7 +19,20 @@ import { VERDICT_CLOCK, verdictMs } from "../../../trace/instrument.mjs";
 import { frozenDeep, requireIdentity, type DeepIdentity } from "../../../bench/lib/deep-profile.ts";
 import { compareOracleOutput } from "../../../bench/lib/oracle.ts";
 import { readOracleOutput } from "../../../bench/lib/oracle-output.ts";
+import {
+  interferenceId,
+  interferenceTrace,
+  interferencePhases,
+  interferenceSeconds,
+} from "./interference.ts";
+import { checkImage } from "./seed-image.ts";
+import { tenantAccounts, tenantFacts, tenantScope } from "./tenants.ts";
+import { tenantPlan, tenantPhases, tenantWindows, tenantTraceId } from "./tenant-traffic.ts";
+import { compareTenants } from "./tenant-metrics.ts";
+import { smallTrace, smallId, smallSeconds, smallPhases, smallScope } from "./small-plan.ts";
 import { deepPopulation, DEEP_PROFILE } from "../../../bench/lib/deep-world.ts";
+import { DeepCommitMeter } from "../../../bench/lib/deep-commit-meter.ts";
+import { fieldPlan, fieldProfile } from "../int1/field-plan.ts";
 
 export async function fileHash(file: string) {
   const h = createHash("sha256");
@@ -40,10 +54,26 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   assert.deepEqual(report.deep.identity, id);
   assert.deepEqual(actualSeed.identity, id);
   assert.deepEqual(report.deep.seed, actualSeed.seed);
-  const plan = frozenDeep(id.account, id.people),
-    expectedCount = deepPopulation(id.people).facts;
-  assert.equal(report.deep.profile, DEEP_PROFILE);
-  assert.equal(report.config.profile, "deep");
+  const mix = id.arm === "interference",
+    small = id.arm === "small",
+    compactFixture = id.people === 40 && !id.tenant;
+  const plan = id.tenant
+      ? tenantPlan(id.tenant, id.arm)
+      : small
+        ? smallTrace(id.account)
+        : mix
+          ? interferenceTrace(id.account)
+          : id.field ? fieldPlan(id.account, id.people, compactFixture) : frozenDeep(id.account, id.people),
+    expectedCount = id.tenant
+      ? tenantFacts(tenantAccounts(id.tenant))
+      : deepPopulation(id.people).facts;
+  assert.equal(report.deep.profile, id.field ? fieldProfile : id.tenant?.live ? liveProfile : DEEP_PROFILE);
+  const fixture = id.tenant?.study === "smoke" || compactFixture;
+  if (fixture && !compactFixture) assert(id.slot.startsWith("tx2-dxscale1-smoke-"));
+  assert.equal(
+    report.config.profile,
+    fixture ? "deep-smoke" : id.tenant?.live ? "deep-live" : "deep",
+  );
   assert.equal(report.config.receiptCapture, "replica-worker");
   assert.equal(report.config.expectedStateRetention, "worker-journal");
   assert.equal(report.deep.trace, plan.sha256);
@@ -62,17 +92,44 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   ]);
   assert.equal(
     report.scope,
-    `ns-datomic-deep${id.people === 10000 ? "10k" : "100k"}-deep-${id.nonce}-s${id.account}`,
+    id.tenant
+      ? (report.deep.restoredSeed?.origin.scope ?? tenantScope(id.tenant, id.nonce))
+      : small
+        ? smallScope(id.nonce, id.account)
+        : `ns-datomic-deep${compactFixture ? "smoke40" : id.people === 10000 ? "10k" : "100k"}-deep-${id.nonce}-s${id.account}`,
   );
   assert.equal(report.traceStartAbsMs, commonStart);
   assert.equal(report.verdictClock, VERDICT_CLOCK);
-  assert.equal(report.verdictPlanId, id.arm === "activation" ? "deep-activation/1" : V3_PLAN_ID);
+  assert.equal(
+    report.verdictPlanId,
+    id.field ? fieldProfile : compactFixture ? "ns-deep-smoke/2" : id.tenant
+      ? id.tenant.live
+        ? liveProfile + "/" + id.tenant.live
+        : tenantTraceId + "/" + id.tenant.study
+      : id.arm === "activation"
+        ? "deep-activation/1"
+        : small
+          ? smallId
+          : mix
+            ? interferenceId
+            : V3_PLAN_ID,
+  );
   for (const [file, hash] of Object.entries(report.benchSources))
     assert.equal(await fileHash(file), hash, `Harness source mismatch ${file}`);
   const hashes = Object.fromEntries(
     await Promise.all(Object.entries(files).map(async ([k, f]) => [k, await fileHash(f)])),
   );
-  const duration = id.arm === "activation" ? report.writer.offeredUntilTraceS : V3_OFFER_SECONDS;
+  const duration = compactFixture ? 30 : id.tenant
+    ? tenantWindows(id.tenant, id.arm).at(-1)!.pattern === "activation"
+      ? report.writer.offeredUntilTraceS
+      : (report.phases.at(-1).end - commonStart) / 1000
+    : id.arm === "activation"
+      ? report.writer.offeredUntilTraceS
+      : small
+        ? smallSeconds
+        : mix
+          ? interferenceSeconds
+          : V3_OFFER_SECONDS;
   assert(Number.isFinite(duration) && duration > 0);
   const expected = new Map(
     plan.events.filter((e) => e.atMs < duration * 1000).map((e) => [`${e.seq}/${e.resend}`, e]),
@@ -83,6 +140,57 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   const seenPositions = new Set<number>(),
     invalid: string[] =
       duration > 7200 ? ["Activation exceeded the frozen 7,200-second live traffic horizon"] : [];
+  const mixPhases = id.tenant
+    ? tenantPhases(id.tenant, id.arm)
+    : small
+      ? smallPhases(id.account)
+      : mix
+        ? interferencePhases(id.account)
+        : [];
+  if (id.tenant) {
+    for (const [i, p] of tenantWindows(id.tenant, id.arm).entries()) {
+      const x = report.phases[i];
+      assert(
+        x.name === p.name &&
+          x.readers === mixPhases[i]!.readers &&
+          x.start === commonStart + p.from * 1000 &&
+          (p.pattern === "activation"
+            ? x.end === report.deep.tenantActivation.endedAt && x.end <= x.start + p.seconds * 1000
+            : x.end === x.start + p.seconds * 1000),
+      );
+    }
+  } else if (mix || small)
+    assert.deepEqual(
+      report.phases.map((p: any) => [p.name, p.readers, p.start, p.end]),
+      mixPhases.map((p) => [
+        p.name,
+        p.readers,
+        commonStart + p.traceFromS * 1000,
+        commonStart + (p.traceFromS + p.seconds) * 1000,
+      ]),
+    );
+  // [DX-SCALE1] Why: offered-rate thresholds and deadline losses must reproduce from the source-matched sender ledger, independently of the per-tenant histograms. Rejected: trusting an aggregate counter or using ACK time as the arrival time.
+  const liveCounts = id.tenant?.live
+    ? mixPhases.map((p) => ({
+        from: commonStart + p.traceFromS * 1000,
+        to: commonStart + (p.traceFromS + p.seconds) * 1000,
+        by: new Map(
+          tenantAccounts(id.tenant!).map((a) => [
+            a.index,
+            { fullOffered: 0, fullExpired: 0, acked: 0 },
+          ]),
+        ),
+      }))
+    : undefined;
+  const challengeRows = new Map<string, any>();
+  const allBurst =
+    id.tenant?.study === "interference"
+      ? report.phases.find(
+          (p: any) => p.name === (id.tenant?.live ? livePeakWindow(id.tenant.live) : "all-burst"),
+        )
+      : undefined;
+  const burstFrom = allBurst ? allBurst.start + report.config.settleS * 1000 : 0;
+  const burstWrites: any[] = [];
   let primaries = 0,
     committed = 0,
     expired = 0,
@@ -93,6 +201,13 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   })) {
     if (!line) continue;
     const w = JSON.parse(line);
+    if (allBurst && w.ackPublishedAt >= burstFrom && w.ackPublishedAt < allBurst.end)
+      burstWrites.push(w);
+    if (w.stream.startsWith("tenant-check-")) {
+      const k = w.seq + "/" + w.resend;
+      assert(!challengeRows.has(k));
+      challengeRows.set(k, w);
+    }
     if (w.stream !== "background") continue;
     const key = `${w.seq}/${w.resend}`,
       match = expected.get(key);
@@ -112,11 +227,48 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
       Math.abs(w.offsetMs - match.atMs) < 0.001 &&
         Math.abs(w.scheduledAt - commonStart - match.atMs) < 0.001,
     );
+    if (id.tenant) {
+      const e = match as import("./tenants.ts").TenantEvent;
+      assert(
+        w.tenant === e.tenant && w.localSeq === e.localSeq && w.localSubject === e.localSubject,
+      );
+      if (w.outcome === "committed" && !w.resend)
+        assert.equal(
+          w.commandId,
+          report.runTag + ":account-" + String(e.tenant + 1).padStart(3, "0") + ":t" + e.localSeq,
+        );
+    }
+    if (id.tenant?.live && w.expired) {
+      assert(
+        w.outcome === "unaccounted" &&
+          w.reason === "not sent: writer deadline passed" &&
+          !w.position &&
+          w.startedAt - w.scheduledAt > report.config.writerDeadlineMs,
+      );
+    }
     if (w.resend) {
       resends++;
       continue;
     }
     primaries++;
+    if (liveCounts) {
+      const x = liveCounts
+        .find((p) => w.scheduledAt >= p.from && w.scheduledAt < p.to)
+        ?.by.get(w.tenant);
+      assert(x);
+      x.fullOffered++;
+      if (w.expired) x.fullExpired++;
+      if (!w.expired && w.outcome === "committed") {
+        const y = liveCounts
+          .find(
+            (p) =>
+              w.ackPublishedAt >= p.from + report.config.settleS * 1000 && w.ackPublishedAt < p.to,
+          )
+          ?.by.get(w.tenant);
+        if (y) y.acked++;
+      }
+    }
+
     if (w.expired || w.outcome !== "committed") {
       expired += Number(w.expired);
       continue;
@@ -130,11 +282,18 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     committed++;
     values.all!.push(ms);
     for (const level of ["L256", "L1024"] as const)
-      if (inIntervals(w.offsetMs, windows[level])) {
+      if (!mix && !small && inIntervals(w.offsetMs, windows[level])) {
         assert(!w.burst);
         values[level]!.push(ms);
         (values[`${level}/${factBand(w.facts)}`] ??= []).push(ms);
       }
+    if ((mix || small) && !id.tenant)
+      for (const p of mixPhases)
+        if (
+          w.offsetMs >= (p.traceFromS + 2) * 1000 &&
+          w.offsetMs < (p.traceFromS + p.seconds) * 1000
+        )
+          (values["mix/" + p.name] ??= []).push(ms);
     if (w.burst) (values[`burst/${factBand(w.facts)}`] ??= []).push(ms);
     if (id.arm === "activation")
       for (const name of ["presweep", "activation"]) {
@@ -214,6 +373,97 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
       hashes[path.basename(f)] = await fileHash(f);
   }
   const checks = [...(report.priorities?.P2?.bars ?? []), ...(report.priorities?.P3?.bars ?? [])];
+  if (
+    report.config.composition !== "memory" &&
+    report.benchSources["lab/bench/lib/deep-commit-meter.ts"] &&
+    (report.deep.r2 || allBurst)
+  ) {
+    const seal = report.deep.nativeReceipts,
+      file = path.join(dir, "deep-native-commits.jsonl");
+    assert.deepEqual(seal.identity, id);
+    assert.equal(seal.database, db);
+    hashes["deep-native-commits.jsonl"] = await fileHash(file);
+    assert.equal(hashes["deep-native-commits.jsonl"], seal.sha256);
+    const meter = await DeepCommitMeter.read(file, id, db, seal.positions);
+    if (allBurst)
+      assert.deepEqual(
+        report.deep.allBurstQueue,
+        meter.burst(burstWrites, burstFrom, allBurst.end),
+      );
+    if (report.deep.r2) {
+      const account = id.tenant ? tenantAccounts(id.tenant).find((a) => a.index === 1) : undefined;
+      for (const [i, name] of ["R1", "R2"].entries()) {
+        const release = i === 0 ? report.deep.r1 : report.deep.r2,
+          cost = release.cost;
+        const marker = report.runTag + (account ? ":" + account.key : "") + ":activate:" + name;
+        meter.verifyFacts(release.cut.position, i === 0 ? 1 : 2);
+        assert.deepEqual(
+          cost.queue,
+          meter.release(release.cut.position, release.publicationPosition, release.wallMs, marker),
+        );
+        assert(
+          cost.evaluationCommits === 0 &&
+            cost.markerCommits === 1 &&
+            cost.mixedPages + cost.guardOnlyPages === release.coverage.pages,
+        );
+        assert(
+          cost.subjects === release.subjects &&
+            cost.changedSubjects === report.deep.activationOracle.changedItemsByRelease[i],
+        );
+        const claimsFile = path.join(dir, "deep-" + name + "-page-claims.json"),
+          claimsHash = await fileHash(claimsFile);
+        assert.equal(claimsHash, release.claimSha256);
+        hashes[path.basename(claimsFile)] = claimsHash;
+        const claims = JSON.parse(fs.readFileSync(claimsFile, "utf8"));
+        assert.equal(claims.length, release.coverage.pages);
+        const timingFile = path.join(dir, "deep-" + name + "-page-timings.json"),
+          timingHash = await fileHash(timingFile);
+        assert.equal(timingHash, release.timingSha256);
+        hashes[path.basename(timingFile)] = timingHash;
+        const timing = JSON.parse(fs.readFileSync(timingFile, "utf8"));
+        assert(
+          timing.cut === release.cut.position &&
+            timing.release === release.release &&
+            timing.pages.length === claims.length,
+        );
+        let guardFacts = 0,
+          bodyFacts = 0,
+          changed = 0,
+          mixedMs = 0,
+          guardMs = 0,
+          mixed = 0;
+        for (const [j, c] of timing.pages.entries()) {
+          assert(claims[j].position === c.position && claims[j].txId === c.txId);
+          meter.verifyFacts(c.position, c.timing.operations);
+          assert(
+            c.txId === c.timing.receiptTxId &&
+              c.position === c.timing.receiptPosition &&
+              c.position > release.cut.position &&
+              c.position <= release.publicationPosition,
+          );
+          assert(c.timing.operations === c.timing.guardFacts + c.timing.bodyFacts);
+          guardFacts += c.timing.guardFacts;
+          bodyFacts += c.timing.bodyFacts;
+          changed += c.bodies;
+          if (c.bodies) {
+            mixed++;
+            mixedMs += c.timing.publishCommitMs;
+          } else guardMs += c.timing.publishCommitMs;
+        }
+        assert.deepEqual(
+          [guardFacts, bodyFacts, changed, mixed, mixedMs, guardMs],
+          [
+            cost.guardFacts,
+            cost.bodyFacts,
+            cost.changedSubjects,
+            cost.mixedPages,
+            cost.mixedCommitMs,
+            cost.guardOnlyCommitMs,
+          ],
+        );
+      }
+    }
+  }
   for (const id of [
     "NS-P2 every offered command accounted",
     "NS-P2 every oracle-valid trace command published",
@@ -230,10 +480,17 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   ])
     if (checks.find((b) => b.id === id)?.pass !== true) invalid.push(id);
   if (
+    !id.tenant &&
     id.arm === "activation" &&
     (report.deep.activationOracle?.checked !== id.people ||
       report.deep.activationOracle.guardComparisons !== 2 * id.people ||
-      report.deep.r2?.layout !== "guard-fact" ||
+      report.deep.r2?.layout !== "page-cut" ||
+      [report.deep.r1, report.deep.r2].some(
+        (a) =>
+          a?.coverage?.size !== id.people ||
+          a.coverage.pages !== Math.ceil(id.people / 256) ||
+          a.publications !== a.coverage.pages,
+      ) ||
       !report.deep.activationTraffic ||
       report.deep.activationTraffic.trafficHeldThrough <
         report.deep.activationTraffic.lastSweepEndedAt ||
@@ -243,16 +500,145 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
       ))
   )
     invalid.push("Incomplete activation outbox verification");
+  if (report.deep.restoredSeed) {
+    assert.deepEqual(report.deep.restoredSeed.identity, id);
+    checkImage(report.deep.restoredSeed.origin, id);
+    assert.deepEqual(report.deep.seed, report.deep.restoredSeed.origin.seed);
+  }
+  let tenantEvidence;
+  if (id.tenant) {
+    const observed = path.join(dir, "tenant-observations.json"),
+      cross = report.deep.crossAccount;
+    hashes["tenant-observations.json"] = await fileHash(observed);
+    assert.equal(hashes["tenant-observations.json"], report.deep.tenantObservationsSha256);
+    tenantEvidence = JSON.parse(fs.readFileSync(observed, "utf8"));
+    assert.deepEqual(tenantEvidence.identity, id);
+    assert.deepEqual(cross.identity, id);
+    assert(
+      tenantEvidence.database === db &&
+        tenantEvidence.traceStart === commonStart &&
+        cross.database === db,
+    );
+    assert.deepEqual(cross.proof.receiptProjection, cross.seedProjection);
+    const actual = tenantAccounts(id.tenant);
+    if (id.tenant.study === "small" || report.deep.tenantChecks) {
+      const post = report.deep.tenantChecks;
+      assert.deepEqual(post.identity, id);
+      assert(
+        post.startedAt >= post.timedEnd &&
+          post.timedEnd >= report.phases.at(-1).end &&
+          post.checks.length === actual.length &&
+          challengeRows.size === 2 * actual.length,
+      );
+      for (const [i, c] of post.checks.entries()) {
+        const a = actual[i]!,
+          one = challengeRows.get(c.seq + "/false"),
+          retry = challengeRows.get(c.seq + "/true");
+        assert(
+          c.account === a.key &&
+            c.subject === a.first &&
+            c.seq === 7000000000 + a.index &&
+            one?.stream === "tenant-check-" + a.key &&
+            retry?.stream === one.stream,
+        );
+        assert(
+          one.scheduledAt >= post.startedAt &&
+            retry.scheduledAt >= one.scheduledAt &&
+            one.subject === a.first &&
+            one.commandId === c.commandId &&
+            one.position === c.position &&
+            c.position > report.deep.seed.position,
+        );
+        assert(
+          one.outcome === "committed" &&
+            one.ackLoss &&
+            one.correction &&
+            one.path === "lost-ack-resolved" &&
+            !one.expired &&
+            c.lost.resolvedOriginal &&
+            c.lost.retryNamesOriginal &&
+            c.lost.retryTag === "CommandAlreadyCommittedError" &&
+            retry.outcome === "duplicate-returned-original" &&
+            !retry.expired,
+        );
+        assert(tenantEvidence.feed.cursors[a.key] >= c.position);
+      }
+    }
+    assert.deepEqual(cross.proof.counts, Object.fromEntries(actual.map((a) => [a.key, a.people])));
+    assert(
+      cross.proof.total === id.people &&
+        cross.proof.crossAccountSingleRequest === actual.length > 1,
+    );
+    const rawCuts = fs
+      .readFileSync(path.join(dir, "ns-full-read-samples.jsonl"), "utf8")
+      .trimEnd()
+      .split("\n")
+      .map((l) => JSON.parse(l))
+      .filter((r) => r.source === "pinned-multi-root");
+    assert.deepEqual(
+      rawCuts.map((r) => r.subject),
+      actual.slice(0, 2).map((a) => a.first),
+    );
+    assert(
+      rawCuts.every(
+        (r) =>
+          r.basis.recordedPosition === cross.proof.basis.position &&
+          r.basis.validAt === cross.proof.basis.validAt,
+      ),
+    );
+    if (liveCounts) {
+      assert.equal(tenantEvidence.windows.length, liveCounts.length);
+      for (const [i, window] of liveCounts.entries()) {
+        const saved: {
+          start: number;
+          to: number;
+          accounts: Record<string, { fullOffered: number; fullExpired: number; acked: number }>;
+        } = tenantEvidence.windows[i];
+        assert(saved.start === window.from && saved.to === window.to);
+        for (const a of actual) {
+          const counts = window.by.get(a.index)!;
+          for (const k of ["fullOffered", "fullExpired", "acked"] as const)
+            assert.equal(saved.accounts[a.key]![k], counts[k]);
+        }
+      }
+    }
+    if (tenantEvidence.feed.missing || tenantEvidence.feed.matched !== committed)
+      invalid.push("Durable account feed did not match every acknowledged primary");
+    const target = actual.find((a) => a.index === 1);
+    if (
+      (id.tenant.study === "interference" && !id.tenant.live) ||
+      (id.tenant.study === "million" && id.arm === "activation")
+    ) {
+      const done = report.deep.tenantActivation;
+      assert(
+        done?.identity?.source === id.source &&
+          done.identity.slot === id.slot &&
+          done.identity.nonce === id.nonce &&
+          done.account === "account-002",
+      );
+      if (
+        target &&
+        (report.deep.activationOracle?.checked !== target.people ||
+          report.deep.activationOracle?.guardComparisons !== 2 * target.people ||
+          report.deep.r2?.layout !== "page-cut" ||
+          done.cut.position !== report.deep.r2.cut.position ||
+          report.deep.r2?.mutations?.length !== Math.min(target.people, 10))
+      )
+        invalid.push("Incomplete tenant page-guard verification");
+    }
+  }
   return {
     id,
     scope: report.scope,
     interval: { from: commonStart, to: commonStart + duration * 1000 },
     hashes,
+    ...(tenantEvidence ? { tenantEvidence } : {}),
     offered,
     primaries,
     ackMinutes: [...ackMinutes],
     committed,
     resends,
+    expired,
     missing: expected.size,
     invalid,
     values,
@@ -295,7 +681,7 @@ export function cohort(
     ),
   );
   const invalid = scopes.flatMap((s) => s.invalid.map((r) => `s${s.id.account}: ${r}`));
-  if (first.id.arm === "activation") {
+  if (!first.id.tenant && first.id.arm === "activation") {
     const end = Math.max(...scopes.map((s) => s.report.deep.r2?.endedAt ?? Infinity));
     for (const s of scopes) {
       const traffic = s.report.deep.activationTraffic;
@@ -361,7 +747,7 @@ export function cohort(
           : value <= target,
     });
   }
-  if (first.id.arm === "activation") {
+  if (!first.id.tenant && first.id.arm === "activation") {
     bars.push(
       ratioBar(
         "NS-P5 writer commit p99 during sweep / presweep",
@@ -400,6 +786,35 @@ export function cohort(
   const perScope = scopes.map((s) => ({
     commitHistogram: compactCommit(s.values.all!),
     commit: commit(s.values.all!),
+    interference:
+      !first.id.tenant && (first.id.arm === "interference" || first.id.arm === "small")
+        ? (first.id.arm === "small"
+            ? smallPhases(s.id.account)
+            : interferencePhases(s.id.account)
+          ).map((p) => {
+            const from = s.interval.from + p.traceFromS * 1000,
+              to = from + p.seconds * 1000;
+            const dist = (key: string) => {
+              const data = s.report.histograms[p.name + "." + key];
+              if (!data) return null;
+              const d = histogramDistribution(Histogram.fromJSON(data));
+              return {
+                value: percentile(d, 0.99),
+                n: d.n,
+                interval90: bootstrap90(d, 0.99, p.name + "/" + key),
+              };
+            };
+            return {
+              window: p.name,
+              from,
+              to,
+              readers: p.readers,
+              commit: commit(s.values["mix/" + p.name] ?? []),
+              read: dist("read"),
+              feedLag: dist("feedLag"),
+            };
+          })
+        : undefined,
     account: s.id.account,
     scope: s.scope,
     ackMinutes: s.ackMinutes,
@@ -411,6 +826,7 @@ export function cohort(
       committed: s.committed,
       primaries: s.primaries,
       resends: s.resends,
+      expired: s.expired,
       missing: s.missing,
       correctness: s.report.correctness,
       oracle: s.report.oracle,
@@ -434,14 +850,51 @@ export function cohort(
   return {
     values: all,
     summary: {
-      profile: DEEP_PROFILE,
+      ...(first.id.tenant
+        ? {
+            tenants: compareTenants(
+              scopes.map((s) => s.tenantEvidence),
+              tenantAccounts({ ...first.id.tenant, topology: "pooled", physical: 0 }),
+              first.id.tenant.live
+                ? scopes
+                    .flatMap((s) =>
+                      s.invalid.filter(
+                        (r) =>
+                          !(
+                            s.missing === 0 &&
+                            s.expired > 0 &&
+                            s.primaries === s.committed + s.expired &&
+                            r ===
+                              "0 missing offers, " +
+                                s.expired +
+                                " unsuccessful primaries, " +
+                                s.expired +
+                                " expired"
+                          ),
+                      ),
+                    )
+                    .join(", ") || null
+                : reason,
+              first.id.tenant.live,
+            ),
+            layout: first.id.tenant.topology,
+            sourceCuts: scopes.map((s) => ({
+              scope: s.scope,
+              database: s.report.deep.database,
+              basis: s.report.deep.crossAccount.proof.basis,
+              counts: s.report.deep.crossAccount.proof.counts,
+            })),
+          }
+        : {}),
+      profile: first.id.tenant?.live ? liveProfile : DEEP_PROFILE,
       source: first.id.source,
       slot: first.id.slot,
       nonce: first.id.nonce,
       commit: commit(all.all!),
       arm: first.id.arm,
       scopeCount: scopes.length,
-      peoplePerScope: first.id.people,
+      peoplePerScope: first.id.arm === "small" ? null : first.id.people,
+      peopleByScope: scopes.map((s) => s.id.people),
       commonWindow: {
         from: first.interval.from,
         to: Math.min(...scopes.map((s) => s.interval.to)),

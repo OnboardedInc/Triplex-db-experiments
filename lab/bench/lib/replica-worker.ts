@@ -8,6 +8,7 @@ import { ReceiptCapture } from "./receipt-capture.ts";
 import { PHASE_RYOW } from "./receipt-read.ts";
 import { ids } from "./world.ts";
 import type { Basis } from "./composition.ts";
+import { touchedPull } from "./touched-reads.ts";
 // [DX-R3] Why: a new public runtime after seed can advance the native basis without a journal position and poison clock admission.
 // Rejected: initializing another writer runtime inside the follower; reuse the parent's already-open head and exact fallback.
 let serial = 0;
@@ -15,10 +16,13 @@ const heads = new Map<number, { resolve(value: number): void; reject(error: Erro
 port!.on("message", m => { if (m.type === "head-reply") { const p = heads.get(m.id); heads.delete(m.id); if (m.error) p?.reject(Error(m.error)); else p?.resolve(m.value); } });
 const comp = { currentPosition: () => new Promise<number>((resolve, reject) => { const id = ++serial; heads.set(id, { resolve, reject }); port!.postMessage({ type: "head", id }); }) };
 try {
-  const host = await ReplicaReadHost.open(cfg.scope, cfg.roots, comp, cfg.initial, cfg.feed, cfg.historyBytes, cfg.peer, cfg.sourceEndpoint);
+  const demand = cfg.composition === "reach-touched";
+  const host = await ReplicaReadHost.open(cfg.scope, demand ? [] : cfg.roots, comp, cfg.initial, cfg.feed, cfg.historyBytes, cfg.peer, cfg.sourceEndpoint, demand ? "touched" : "all", undefined, Date.now(), cfg.afterReaderImages === true, cfg.historyCoverage);
   // [DX-R3] Why: subscribe and publish the initial cut in one turn; no journal can fall between image and deltas.
   // Rejected: requesting a snapshot and subscribing in separate parent messages.
   const local = new ReplicaReader(cfg.historyBytes, host.index, cfg.worldCacheBytes ?? 32 * 1024 ** 2);
+  const localPull = (root: string, basis: Basis, gateway: () => Promise<never>) => demand
+    ? touchedPull(local, host.replica, root, basis, gateway) : local.pullAt(root, basis, gateway);
   const fallback = (basis: Basis, started: number) => ({
     waitedMs: performance.now() - started,
     reason: !host.index.valid ? "copy-unavailable"
@@ -37,7 +41,7 @@ try {
         const declined = Error("exact gateway fallback required"), started = performance.now();
         const root = ids.placement(input.subject), basis = input.basis;
         try {
-          return readObservation(await local.pullAt(root, basis, async () => { throw declined; }));
+          return readObservation(await localPull(root, basis, async () => { throw declined; }));
         } catch (error) {
           if (error !== declined) throw error;
           const { waitedMs, reason } = fallback(basis, started);
@@ -58,7 +62,7 @@ try {
   host.subscribe(delta => {
     bytes = delta.reset ? host.replica.bytes : bytes + delta.changes.reduce((sum, [, previous, entity]) => sum + (entity.byteLength ?? entity.buffer.byteLength) - (previous ? previous.byteLength ?? previous.buffer.byteLength : 0), 0);
     const at = performance.timeOrigin + performance.now();
-    local.notify();
+    local.notify(delta.reset);
     if (delta.valid && appliedLog !== undefined) fs.writeSync(appliedLog, JSON.stringify({ position: delta.position, at }) + "\n");
     port!.postMessage({ type: "progress", index: indexStats(), valid: delta.valid, bytes, at, timing: host.applied.at(-1) });
     for (const reader of readers) reader.postMessage({ type: "replica-delta", delta, sentAt: at });
@@ -69,7 +73,7 @@ try {
     if (m.type === "pull" || m.type === "observe") {
       const declined = Error("exact gateway fallback required"), started = performance.now();
       try {
-        const result = await local.pullAt(m.root, m.basis, async () => { throw declined; });
+        const result = await localPull(m.root, m.basis, async () => { throw declined; });
         // [DX-R3] Why: return the real immutable world across the worker boundary for low-volume RYOW calls.
         // Rejected: fabricating an empty triples array beside a nonempty cached digest.
         port!.postMessage({ type: "reply", id: m.id, value: m.type === "observe" ? readObservation(result) : replicaReply(result) });
@@ -87,6 +91,14 @@ try {
       m.port.postMessage({ type: "replica-image", image: host.index.image() });
       readers.add(m.port);
       m.port.on("close", () => readers.delete(m.port));
+    }
+    if (m.type === "follow-after-images") {
+      try {
+        if (!Number.isSafeInteger(m.readers) || m.readers < 1 || readers.size !== m.readers)
+          throw Error("Reader cohort differs from installed seed images");
+        host.followAfterImages(cfg.initial.position);
+        port!.postMessage({ type: "following-after-images" });
+      } catch (error) { port!.postMessage({ type: "error", message: String(error) }); }
     }
     if (m.type === "start-shared-reader") {
       const control = m.control as import("node:worker_threads").MessagePort;

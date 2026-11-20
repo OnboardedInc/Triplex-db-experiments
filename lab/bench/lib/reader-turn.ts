@@ -13,11 +13,11 @@ export class ReaderTurn {
     this.maxReads = maxReads;
     this.maxMs = maxMs;
   }
-  enter(): Promise<void> {
+  enter(): Promise<void> | undefined {
     this.diagnostics.admissions++;
     if (!this.scheduled && this.head === this.queue.length && this.reads < this.maxReads && performance.now() - this.start < this.maxMs) {
       this.reads++;
-      return Promise.resolve();
+      return;
     }
     return new Promise<void>(resolve => { this.queue.push(resolve); this.schedule(); });
   }

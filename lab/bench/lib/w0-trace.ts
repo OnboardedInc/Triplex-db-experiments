@@ -1,8 +1,13 @@
 import type { TraceEvent } from "./trace.ts";
 import { W0, V_W0, triplexValue } from "./w0-world.ts";
-export function mapW0Trace(ev: TraceEvent) {
+export function mapW0Trace(ev: TraceEvent, window?: number) {
+  // [DX-ACT2] Why: the durable window position is unique within this scope, even when the same trace repeats. Base 36 fits W0's 32-character local ID. Rejected: a shortened request hash with a possible collision.
+  if (window !== undefined && (!Number.isSafeInteger(window) || window < 1))
+    throw Error("Invalid live window position");
+  const suffix =
+    window === undefined ? "t" + ev.seq : "w" + window.toString(36) + "-t" + ev.seq.toString(36);
   const S = W0.placementId(ev.subject),
-    id = `${S}/ans:t${ev.seq}`;
+    id = `${S}/ans:${suffix}`;
   const validFrom = V_W0 + Math.floor(ev.atMs) - (ev.correction ? 30 * 86400000 : 0);
   // [EXP-P5] Why: ballast answer chains preserve the frozen fact count without introducing unknown attributes or shared writes. Rejected: changing a location (round A has no shared-entity fanout).
   const rows: [string, string, any][] = [];
@@ -10,7 +15,7 @@ export function mapW0Trace(ev: TraceEvent) {
     rows.push([S, "everifySubmitResult", ev.seq % 2 ? "accepted" : "rejected"]);
   else if (ev.kind === "runtime") rows.push([S, "bgcStatus", ev.seq % 2 ? "clear" : "consider"]);
   else if (ev.kind === "agent") {
-    const d = `${S}/dec:t${ev.seq}`;
+    const d = `${S}/dec:${suffix}`;
     rows.push(
       [S, "decisions", d],
       [d, "target", "bgc.adjudication"],
@@ -27,7 +32,7 @@ export function mapW0Trace(ev: TraceEvent) {
     if (rows.length < ev.facts) rows.push([a, "value", String(ev.seq)]);
   }
   return {
-    commandId: `p5:trace:${ev.seq}`,
+    commandId: (window === undefined ? "" : window + ":") + `p5:trace:${ev.seq}`,
     validFrom,
     rows,
     operations: rows.map(([entityId, attribute, v]) => ({

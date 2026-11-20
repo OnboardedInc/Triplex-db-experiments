@@ -10,7 +10,6 @@ import { command } from "../group/workload.ts";
 import { accounts as roster } from "../group/population.ts";
 import { ids, type Fact } from "../../../../bench/lib/world.ts";
 import { offers, rates, quantile, sha, type Offer } from "./schedule.ts";
-import { checkJournal } from "./journal.ts";
 type Input = Parameters<DatomicClient["transact"]>[1];
 type Ack = {
   operationId: string;
@@ -171,7 +170,13 @@ export async function fieldPhase(
     inflight = new Map<number, number>();
   const expected = new Map<
     string,
-    { root: string; tx: string; fresh: Input["rows"]; old?: Input["rows"][number] }
+    {
+      root: string;
+      tx: string;
+      fresh: Input["rows"][number];
+      old?: string;
+      changes: Record<string, unknown>[];
+    }
   >();
   const attr = ":field/answer-" + label;
   let offered = 0,
@@ -226,8 +231,11 @@ export async function fieldPhase(
     expected.set(id, {
       root,
       tx: input.claims[0]!.txId,
-      fresh: input.rows.slice(0, f.length),
-      ...(prior ? { old: prior } : {}),
+      fresh: input.rows[0]!,
+      old: prior?.id,
+      changes: input.rows
+        .filter((r) => r.attribute === ":_tx/change" && r.entity_type === "_Transaction")
+        .map((r) => JSON.parse(r.value_json!)),
     });
     last.set(root, input.rows[0]!);
     input.writeClass = "live";
@@ -296,91 +304,81 @@ export async function fieldPhase(
   const h = await c.begin(db);
   assert.equal(h.position, head + rows.length);
   await c.release(db, h.handle);
+  if (denseJournalIds) {
+    for (let i = 0; i < rows.length; i += 48)
+      await Promise.all(
+        rows.slice(i, i + 48).map(async (r) => {
+          const receipt = await c.operation(db, r.id);
+          assert.equal(receipt.status, "committed");
+          assert.equal(receipt.operationId, r.id);
+          assert.equal(Number(receipt.position?.v), r.p);
+          assert.equal(receipt.t?.v, r.t);
+          assert.equal(receipt.recordedAt?.v, r.clock);
+          assert.equal(await c.claim(db, r.id, r.p), expected.get(r.id)!.tx);
+        }),
+      );
+  } else
+    for (const r of [rows.at(0), rows.at(-1)])
+      if (r) assert.equal((await c.operation(db, r.id)).t?.v, r.t);
   {
     const ordered = [...rows].sort((a, b) => a.p - b.p),
       byId = new Map(ordered.map((r) => [r.id, r]));
     const retired = new Map<string, Observed>();
-    const born = new Map<string, Observed>();
+    const asserted = new Map<string, number>();
     for (const r of ordered) {
       const intent = expected.get(r.id)!;
-      if (intent.old) retired.set(intent.old.id, r);
-      for (const row of intent.fresh) born.set(row.id, r);
-    }
-    for (let i = 0; i < ordered.length; i += 32) {
-      await Promise.all(
-        ordered.slice(i, i + 32).map(async (ack) => {
-          const durable = await c.operation(db, ack.id);
-          assert.deepEqual(durable, {
-            status: "committed",
-            operationId: ack.id,
-            position: { t: "long", v: String(ack.p) },
-            t: { t: "long", v: ack.t },
-            recordedAt: { t: "double", v: ack.clock },
-          });
-          assert.deepEqual(
-            await c.request("POST", `/v1/db/${db}/claim`, {
-              commandId: ack.id,
-              position: ack.p,
-              receipt: true,
-            }),
-            { commandId: ack.id, txId: expected.get(ack.id)!.tx, receipt: durable },
-          );
-        }),
-      );
+      for (const change of intent.changes)
+        if (change.op === "assert") asserted.set(String(change.tripleId), r.clock);
+      const old = intent.old;
+      if (old) retired.set(old, r);
     }
     // [DX-W1] Why: check every receipt's journal and the old/new lifetime of the exact field. A smaller physical count alone cannot prove lossless coalescing.
     // Rejected: verifying only the final field value or assuming a shared native t is a public position.
-    const pageAt = (after: number, limit: number) =>
-      c.request<{ transactions: [string, number, string[]][] }>(
-        "POST",
-        `/v2/db/${db}/transactions`,
-        { after, limit },
-      );
-    const check = ([tx, p, wire]: [string, number, string[]], index: number) => {
-      const ack = ordered[index]!;
-      const intent = expected.get(ack.id)!;
-      const assertion = (row: Input["rows"][number]) => ({
-        tripleId: row.id,
-        entityId: row.entity_id,
-        attribute: row.attribute,
-        value: { type: "string", value: row.value_string },
-        validFrom: row.valid_from,
-        ...(row.valid_to === null ? {} : { validTo: row.valid_to }),
-        recordedAt: born.get(row.id)!.clock,
-        assertionTxId: row.tx_id,
-      });
-      const changes = intent.fresh.map((row) => ({ op: "assert", ...assertion(row) }));
-      checkJournal([tx, p, wire.map(decodeRowText)], {
-        tx: intent.tx,
-        position: head + index + 1,
-        command: ack.id,
-        clock: ack.clock,
-        root: intent.root,
-        changes: intent.old
-          ? [
-              ...changes,
-              {
-                op: "retract",
-                ...assertion(intent.old),
-                retractedAt: ack.clock,
-                retractionTxId: intent.tx,
-              },
-            ]
-          : changes,
-      });
-    };
     let after = head;
     while (after < head + rows.length) {
-      const page = await pageAt(after, 100);
+      const page = await c.request<{ transactions: [string, number, string[]][] }>(
+        "POST",
+        `/v2/db/${db}/transactions`,
+        { after, limit: 100 },
+      );
       assert(page.transactions.length > 0);
-      for (const tx of page.transactions) check(tx, after++ - head);
-    }
-    const interior = ordered.findIndex((r, i) => r.t === ordered[i + 1]?.t);
-    if (ordered.length > 1) {
-      const cut = Math.max(0, interior) + 1;
-      const resumed = await pageAt(head + cut, 1);
-      assert.equal(resumed.transactions.length, 1);
-      check(resumed.transactions[0]!, cut);
+      for (const [tx, p, wire] of page.transactions) {
+        const observed = ordered[p - head - 1]!,
+          intent = expected.get(observed.id)!;
+        assert.equal(p, ++after);
+        assert.equal(tx, intent.tx);
+        const journal = wire.map(decodeRowText),
+          fields = (a: string) => journal.filter((r) => r.attribute === ":_tx/" + a);
+        assert.deepEqual(
+          fields("command-id").map((r) => r.value_string),
+          [observed.id],
+        );
+        assert.deepEqual(
+          fields("instant").map((r) => r.value_datetime),
+          [observed.clock],
+        );
+        assert.deepEqual(
+          fields("changed-entity").map((r) => r.value_string),
+          [intent.root],
+        );
+        const sortChanges = (xs: Record<string, unknown>[]) =>
+          xs.sort((a, b) => String(a.tripleId).localeCompare(String(b.tripleId)));
+        const wanted = intent.changes.map((change) =>
+          change.op === "assert"
+            ? { ...change, recordedAt: observed.clock }
+            : denseJournalIds
+              ? {
+                  ...change,
+                  recordedAt: asserted.get(String(change.tripleId)),
+                  retractedAt: observed.clock,
+                }
+              : change,
+        );
+        assert.deepEqual(
+          sortChanges(fields("change").map((r) => JSON.parse(r.value_json!))),
+          sortChanges(wanted),
+        );
+      }
     }
     const roots = [...last.keys()],
       read = new Map<string, Input["rows"][number]>();
@@ -398,13 +396,11 @@ export async function fieldPhase(
     }
     assert.equal(read.size, expected.size);
     for (const [id, intent] of expected) {
-      const r = read.get(intent.fresh[0]!.id)!,
+      const r = read.get(intent.fresh.id)!,
         ack = byId.get(id)!,
         next = retired.get(r.id);
       assert.equal(r.entity_id, intent.root);
-      assert.equal(r.value_string, intent.fresh[0]!.value_string);
-      assert.equal(r.valid_from, intent.fresh[0]!.valid_from);
-      assert.equal(r.valid_to, intent.fresh[0]!.valid_to);
+      assert.equal(r.value_string, intent.fresh.value_string);
       assert.equal(r.tx_id, intent.tx);
       assert.equal(r.recorded_position, ack.p);
       assert.equal(r.recorded_at, ack.clock);

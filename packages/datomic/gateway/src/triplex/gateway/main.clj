@@ -1,8 +1,7 @@
 (ns triplex.gateway.main
-  (:require [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
+  (:require [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
-            [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
-            [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy])
+            [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -10,7 +9,6 @@
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
 ;; [DX-H1] Why: SQL storage places the database before the JDBC query. Rejected: suffix concatenation (dev-only).
 (def slim-rows? (= "1" (System/getenv "TX2_SLIM_ROWS")))
-(def write-options-attempt (System/getenv "TX2_WRITE_OPTIONS_ATTEMPT"))
 (def uri-template (or (System/getenv "DATOMIC_URI_TEMPLATE") "datomic:dev://127.0.0.1:4334/{db}"))
 (defn db-uri [name] (clojure.string/replace uri-template "{db}" name))
 (def connections (atom {}))
@@ -100,35 +98,6 @@
       {:t (codec/encode-value "long" (d/basis-t db))
        :position (codec/encode-value "long" (storage/head-position name db))
        :recordedAt nil :schemaHash (storage/value db entity :triplex.scope/schema-hash)})))
-(defn write-options [name]
-  ;; [DX-WFIX1] Why: an enabled launcher option can still select the base function on an unopened scope.
-  ;; Rejected: an environment listing or a readback from a different database.
-  (let [db (sync-db (db-uri name))
-        entity (scope/entity db)
-        selected (commit/entry db {} (lean/enabled? db))
-        selected-id (d/entid db selected)
-        installed? (and selected-id (some? (storage/value db selected-id :db/fn)))
-        guard (when prepared/enabled
-                (if prepared/basis-enabled prepared/basis-ident (prepared/active-guard)))
-        guard-id (when guard (d/entid db guard))]
-    {:database name :attempt write-options-attempt
-     :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")
-     :t (str (d/basis-t db)) :position (storage/head-position name db)
-     :strictRecordClocks (true? (storage/value db entity :triplex.scope/strict-record-clocks))
-     :rowsVersion (storage/value db entity :triplex.scope/rows-version)
-     :commitFunction (str selected) :commitFunctionInstalled (boolean installed?)
-     :baseFunctionHash (storage/value db entity :triplex.scope/commit-fn-hash)
-     :preparedWriter (when guard {:mode (if prepared/basis-enabled "basis" "full")
-                                  :guard (str guard)
-                                  :installed (boolean (and guard-id (storage/value db guard-id :db/fn)))})
-     :options {:predecessorLookup pred/enabled :groupCommit group/enabled
-               :livePriority policy/priority? :fieldCoalesce policy/field-only?
-               :queueClock group/queue-clock :stageClock group/stage-clock
-               :smallRows small-row/enabled :reusePrepared group/reuse-prepared
-               :maxMembers group/batch-limit :budgetMicros policy/budget-us
-               :bulkRows policy/bulk-rows :bulkBytes policy/bulk-bytes
-               :ledger (boolean (or ledger/enabled packed/enabled))
-               :packedJournal (boolean packed/enabled) :fastReply (boolean group/fast-reply)}}))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
 ;; Rejected: timing the StringBuilder alone (response bytes are not ready yet).
@@ -153,7 +122,7 @@
     (when (> (alength bytes) 4194304) (codec/invalid "Request too large"))
     (let [start (System/nanoTime) input (trace/span "gateway.request-parse" "gateway" (json/read-str (String. bytes "UTF-8")))]
       (.set request-parse-micros (quot (- (System/nanoTime) start) 1000)) (if (map? input) (with-meta input {:wire-bytes (alength bytes)}) input))))
-(defn write-layout-options [db database]
+(defn write-options [db database]
   (let [selected (commit/entry db {} (lean/enabled? db))
         [variant body] (commit/variants [true false])
         actual (:db/fn (d/entity db selected))
@@ -174,7 +143,7 @@
     (cond
       (and (= :get request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/write-options" uri))
       (let [name (nth (clojure.string/split uri #"/") 3)]
-        (response 200 (write-layout-options (sync-db (db-uri name)) name)))
+        (response 200 (write-options (d/db (connection (db-uri name))) name)))
       (= uri "/v2/admin/scan-stats") (response 200 (assoc @stats/counts :idMemo (reach/id-memo-stats) :entityCache (let [base (entity-cache/stats) extra (recent/stats)] (assoc (merge base extra) :bytes (+ (:bytes base) (:recentBytes extra))))))
       (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (response 200 {}))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal|entity-transactions)" uri))
@@ -192,15 +161,16 @@
                              (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name input)))}))
       (and (= :get request-method) (= "/health" uri))
       (do (trace/span "d/db" "peer-call" (d/db (connection (db-uri "tx2-health"))))
-          (response 200 {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}))
+          (response 200 (cond-> {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}
+            (= "1" (System/getenv "TX2_LOAD2_TIMING"))
+            (assoc :loadClock {:bootId (get-in trace/identity-fields [:clock :bootId])
+                               :run (:run trace/identity-fields) :monoMs (/ (double (System/nanoTime)) 1000000.0)}))))
       (and (= :post request-method) (= "/v1/db/create" uri))
       (response 200 (let [input (request-json body)] (create-scope! uri-template (get input "scope") (get input "layout" "legacy") true (get input "strictRecordClocks" false))))
       (and (= :post request-method) (= "/v1/db/delete" uri))
       (response 200 (delete-scope! uri-template (get (request-json body) "scope")))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/basis" uri))
       (response 200 (basis uri-template (nth (clojure.string/split uri #"/") 3)))
-      (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/write-options" uri))
-      (response 200 (write-options (nth (clojure.string/split uri #"/") 3)))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/log" uri))
       (let [name (nth (clojure.string/split uri #"/") 3)
             params (into {} (map (fn [part] (let [[k v] (clojure.string/split part #"=" 2)]

@@ -1,16 +1,30 @@
 (ns triplex.gateway.group
-  (:require [datomic.api :as d] [triplex.gateway.write-policy :as policy] [triplex.gateway.schema :as schema]
-            [triplex.gateway.lean :as lean] [triplex.gateway.group-prepare :as prepared]
-            [triplex.gateway.prepare-trace :as census]
+  (:require [datomic.api :as d] [triplex.gateway.write-policy :as policy] [triplex.gateway.schema :as schema] [triplex.gateway.lean :as lean]
+            [triplex.gateway.group-prepare :as prepared]
             [triplex.gateway.save-ledger :as ledger] [clojure.string :as str])
   (:import [java.util WeakHashMap] [java.util.concurrent Executors ThreadFactory]))
 
 ;; [DX-W1] Why: an idle scope dispatches immediately; only work accumulated behind an in-flight append can share its successor.
 ;; Rejected: a collection timer or an unbounded burst queue.
 (def enabled (= "1" (System/getenv "TX2_GROUP_COMMIT")))
+(def bulk-priority (= "1" (System/getenv "TX2_LOAD1_PRIORITY")))
 (defn grouping? [] (or enabled policy/field-only?))
 (defn scheduling? [] (or (grouping?) policy/priority? policy/budget-us))
 (def queue-clock (= "1" (System/getenv "TX2_GROUP_QUEUE_CLOCK")))
+(def load-timing (= "1" (System/getenv "TX2_LOAD2_TIMING")))
+(def load-frame-caps (= "1" (System/getenv "TX2_LOAD2_FRAME_CAPS")))
+(defn frame-measurement [p input]
+  (when (and (or load-timing load-frame-caps) (:bulk p))
+    {:rows (+ (count (:new-ids p)) (count (filter #(and (vector? %) (= :triplex/retract (first %))) (:ops p))))
+     :bytes (:wire-bytes (meta input))}))
+(defn bound-frame! [size]
+  ;; [DX-W1] Why: bound actual decoded fresh and retired rows (including journal) and exact HTTP bytes before admitting bulk.
+  ;; Rejected: estimating bytes from input business facts or splitting one atomic write after seeing a receipt.
+  (when (and load-frame-caps size)
+    (when-not (and (number? (:bytes size)) (<= (:rows size) 96) (<= (:bytes size) 65536))
+      (throw (ex-info "Atomic bulk frame exceeds its row or byte limit" {:code "BulkFrameTooLarge" :status 413})))))
+
+(defn mono-ms [] (/ (double (System/nanoTime)) 1000000.0))
 (def stage-clock (= "1" (System/getenv "TX2_GROUP_STAGE_CLOCK")))
 (def reuse-prepared (= "1" (System/getenv "TX2_GROUP_REUSE_PREPARED")))
 (def fast-reply (= "1" (System/getenv "TX2_GROUP_FAST_REPLY")))
@@ -89,18 +103,16 @@
 (defn classify [db p input]
   (let [journals (set (:journal-entities p))
         owners (set (keep #(when (map? %) (:triplex.entity/id %)) (:ops p)))
-        authored (remove journals (or (:owners p) owners))
-        ;; [DX-WFIX1] Why: the core reserves system entities within this verified database scope.
-        ;; Rejected: assigning scope maintenance to a caller-supplied account (or removing its dependency keys).
-        system? #(.startsWith ^String % "_triplex/")
-        business (remove system? authored)
+        ;; [DX-W1] Why: scope-owned checkpoints and configuration use reserved IDs, with no tenant membership fact.
+        ;; Rejected: dropping their dependency keys or making a scope-wide runtime hint mandatory.
+        business (remove #(or (journals %) (str/starts-with? % "_triplex/")) owners)
         hint (get input "groupAccount")
         accounts (set (map #(or (second (re-matches #"acct/([A-Za-z0-9_-]{1,64})/.+" %))
                                 (when (:lean p) (persisted-account db %))) business))
         account (when (= 1 (count accounts)) (first accounts))]
     (when (and hint (seq business) (not= hint account))
       (throw (ex-info "Group account must match every business entity namespace" {:code "InvalidValue" :status 400 :write-policy true})))
-    {:account (or account (if (and (seq authored) (empty? business)) :system :shared))
+    {:account (or account :shared) :bulk (boolean (:bulk p))
      :subject (when (= 1 (count business)) (first business))
      :scope-barrier (and policy/priority? (:scope-wide p) (some? (:source p)))
      :keys (set (concat (map #(vector :entity %) (concat owners (:entities p)))
@@ -123,6 +135,8 @@
     (if-not entries out
       (let [entry (first entries)
             result (try
+                     (when (d/entid view [:triplex.tx/operation-id (:id entry)])
+                       (throw (ex-info ":db.error/unique-conflict triplex.tx/operation-id already committed" {})))
                      (let [started (when stage-clock (System/nanoTime))
                            data ((:prepare entry) view)
                            prepared (when stage-clock (System/nanoTime))
@@ -137,9 +151,10 @@
                                            :speculative-micros (quot (- applied prepared) 1000)
                                            :reused (if (identical? data (:original-data entry)) 1 0))))
                      (catch Exception e
-                       (if (re-find #"TRIPLEX_CONFLICT|TRIPLEX_IDENTITY|TRIPLEX_CLOCK|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|:db.error/(?:unique-conflict|cas-failed)" (str e))
+                       (if (re-find #"TRIPLEX_CONFLICT|TRIPLEX_IDENTITY|TRIPLEX_CLOCK|:db.error/(?:unique-conflict|cas-failed)" (str e))
                          {:error e} (throw e))))]
         (recur (or (get-in result [:report :db-after]) view) (next entries) (conj out result))))))
+
 (defn prefix [^String text] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16))))
 (defn materialize [base members]
   (let [last-tx (:tx (peek members))
@@ -192,8 +207,16 @@
   (deliver (:result entry) (if-let [stats (and stage-clock (:prepared-stats entry))]
                              (cond-> r (:value r) (update :value assoc :prepared-stats stats)) r)))
 (defn alone! [entry]
-  (try (complete! entry {:value (assoc @((:solo entry)) :group-size 1 :group-wait-ns (- (:dispatch entry) (:arrived entry)))})
-       (catch Exception e (complete! entry {:error e}))))
+  (try
+    ;; [DX-LOAD2] Why: the nonpreemptible interval starts at dispatch and ends when the peer future resolves.
+    ;; Rejected: sizing a frame from its HTTP response or the time it spent waiting to be dispatched.
+    (let [result @((:solo entry))
+          timing (when load-timing {:start (/ (double (:dispatch entry)) 1000000.0) :end (mono-ms)})]
+      (complete! entry {:value (cond-> (assoc result :group-size 1
+                                          :bulk-grant (select-keys entry [:bulk :queued-at-grant :runnable-live])
+                                          :group-wait-ns (- (:dispatch entry) (:arrived entry)))
+                                 timing (assoc :serial-hold timing))}))
+    (catch Exception e (complete! entry {:error e}))))
 (defn definitive? [e]
   ;; [DX-W1] Why: only an authoritative refused transaction can be submitted again.
   ;; Rejected: searching a transport error's free text for a transaction-function marker.
@@ -220,6 +243,7 @@
           (if (and (= (:position saved) (:position expected)) (= (:clock saved) (:clock expected))
                    (= (:t saved) t) (or (not fast-reply) (= (:id saved) (:id expected))))
             (complete! entry {:value (cond-> (assoc report :member saved :group-size valid-count
+                                                :bulk-grant (select-keys entry [:bulk :queued-at-grant :runnable-live])
                                                 :group-wait-ns (- (:dispatch entry) (:arrived entry)))
                                       stages (assoc :group-stages stages))})
             (complete! entry {:error (ex-info "Durable member receipt unavailable" {:status 503 :code "OutcomeUnknown"})})))))
@@ -234,6 +258,9 @@
   (let [data (instrument tx-data)]
     (if stage-clock (d/transact-async conn data :io-context :w1/grouped)
       (d/transact-async conn data))))
+(defn receive! [future]
+  (let [report @future]
+    {:report report :received-ms (when reply-clock (System/currentTimeMillis))}))
 (defn execute-reference! [conn batch]
   (if (or (= 1 (count batch)) (not-every? :eligible batch))
     (doseq [e batch] (alone! e))
@@ -247,8 +274,7 @@
       (if-not data
         (doseq [e batch] (alone! e))
         (let [prepared (when stage-clock (System/nanoTime))
-              physical (try (let [report @(send! conn [[:triplex.group/apply-v1 (d/basis-t base) data]])]
-                              {:report report :received-ms (when reply-clock (System/currentTimeMillis))})
+              physical (try (receive! (send! conn [[:triplex.group/apply-v1 (d/basis-t base) data]]))
                             (catch Exception e {:error e}))
               stages (when stage-clock
                        {:evaluateMicros (quot (- evaluated started) 1000)
@@ -262,81 +288,55 @@
               (unknown! batch e))
             (finish-group! batch results (:report physical) (count valid) stages (:received-ms physical))))))))
 
-(defn preparable? [batch]
-  (and prepared/enabled (< 1 (count batch)) (every? :eligible batch) (prepared/disjoint? batch)))
-(defn drafted [batch]
-  (mapv #(when-let [pending (:draft %)] (deref pending 0 nil)) batch))
 (defn ready-drafts [batch]
-  (when (preparable? batch)
-    (let [drafts (drafted batch)]
+  (when (and prepared/enabled (< 1 (count batch)) (every? :eligible batch) (prepared/disjoint? batch))
+    (let [drafts (mapv #(when-let [pending (:draft %)] (deref pending 0 nil)) batch)]
       (when (every? some? drafts) drafts))))
 (defn mark-prepared [batch stats]
   (if stage-clock (mapv #(assoc % :prepared-stats stats) batch) batch))
-(defn assemble [batch drafts head & [certificate]]
-  (try (when-let [plan (prepared/assemble batch drafts head certificate)]
+(defn assemble [batch drafts head]
+  (try (when-let [plan (prepared/assemble batch drafts head)]
          (assoc plan :rendered-ns (when stage-clock (str (System/nanoTime)))))
        (catch Exception _ nil)))
 (defn plan [conn batch]
-  (if (and prepared/basis-enabled (preparable? batch))
-    (let [db (d/db conn)]
-      (try (when-let [certificate (prepared/certify db batch (drafted batch))]
-             (or (assemble batch (:drafts certificate) (prepared/head db) certificate)
-                 (census/note! :all :dependency-mismatch)))
-           (catch Exception _ (census/note! :all :dependency-mismatch))))
-    (when-let [drafts (ready-drafts batch)]
-      (assemble batch drafts (prepared/head (d/db conn))))))
+  (when-let [drafts (ready-drafts batch)]
+    (assemble batch drafts (prepared/head (d/db conn)))))
 (defn start-prepared! [conn plan]
   (let [sent (when stage-clock (str (System/nanoTime)))]
     (merge plan {:submitted-ns sent}
            (try {:future (send! conn (:data plan))} (catch Exception e {:error e})))))
 (defn finish-prepared! [conn batch plan]
   (let [physical (if-let [error (:error plan)] {:error error}
-                   (try (let [report @(:future plan)]
-                          {:report report :received-ms (when reply-clock (System/currentTimeMillis))})
-                        (catch Exception e {:error e})))
+                   (try (receive! (:future plan)) (catch Exception e {:error e})))
         stats (when stage-clock
                 {:submittedNs (:submitted-ns plan) :renderedNs (:rendered-ns plan)
-                 :guard (:guard plan) :history (:history plan)
                  :afterOperation (:after-operation plan) :observedNs (str (System/nanoTime))})]
     (if-let [error (:error physical)]
       ;; [DX-PREP1] Why: re-evaluate at the authoritative cut after a definite rejection.
       ;; Rejected: retrying a write whose lost response could hide a successful durable append.
-      (do (when census/*reasons*
-            (let [reason (if (definitive? error) :native-refusal :uncertain-result)]
-              (census/note! :all reason)
-              (census/emit! batch @census/*reasons* reason)))
-          (if (definitive? error)
+      (do (if (definitive? error)
             (execute-reference! conn (mark-prepared batch (assoc stats :path "reference" :replays 1)))
             (unknown! batch error))
           false)
-      (do (when census/*reasons* (census/emit! batch @census/*reasons* :prepared))
-          (finish-group! (mark-prepared batch (assoc stats :path "prepared" :replays 0))
+      (do (finish-group! (mark-prepared batch (assoc stats :path "prepared" :replays 0))
                          (:results plan) (:report physical) (count batch) nil (:received-ms physical))
           true))))
 (defn execute! [conn batch]
-  (if-not (and census/attempt prepared/basis-enabled)
-    (if-let [candidate (plan conn batch)]
-      (finish-prepared! conn batch (start-prepared! conn candidate))
-      (execute-reference! conn batch))
-    (binding [census/*reasons* (volatile! {})]
-      (if-let [candidate (plan conn batch)]
-        (finish-prepared! conn batch (start-prepared! conn candidate))
-        (do (when-not (preparable? batch) (census/note! :all :shape))
-            (when (empty? @census/*reasons*) (census/note! :all :dependency-mismatch))
-            (census/emit! batch (update @census/*reasons* :all (fnil conj []) :batch-declined) :reference)
-            (execute-reference! conn batch))))))
+  (if-let [candidate (plan conn batch)]
+    (finish-prepared! conn batch (start-prepared! conn candidate))
+    (execute-reference! conn batch)))
 
 (defn next-entry
   ([state] (next-entry state realized?))
   ([{:keys [queue accounts rotation live-turns]} ready?]
    (let [ready (fn [owners rank]
-                (some (fn [account]
-                    (some #(when (and (= account (:account %)) (or (nil? rank) (= rank (:rank %)))
+                 (some (fn [account]
+                         (some #(when (and (= account (:account %)) (or (nil? rank) (= rank (:rank %)))
                                            (every? ready? (:predecessors %))) %) queue)) owners))]
-    (if policy/priority?
-      (or (when (>= (or live-turns 0) max-live-turns) (ready (:bulk rotation) :bulk))
-          (ready (:live rotation) :live) (ready (:bulk rotation) :bulk))
-      (ready accounts nil)))))
+     (if policy/priority?
+       (or (when (>= (or live-turns 0) max-live-turns) (ready (:bulk rotation) :bulk))
+           (ready (:live rotation) :live) (ready (:bulk rotation) :bulk))
+       (ready accounts nil)))))
 (defn rotate [owners account more?]
   (cond-> (filterv #(not= account %) owners) more? (conj account)))
 (defn join-turn [owners account]
@@ -345,7 +345,12 @@
   (loop [{:keys [queue accounts tails] :as state} state out [] selected #{} variable 0]
     (if (or (empty? queue) (= (count out) batch-limit)) [state out]
       (let [ready? #(or (contains? selected %) (realized? %))
-            next (next-entry state ready?) _ (assert next "Oldest pending command must be eligible")
+            live (when (and bulk-priority (not policy/priority?))
+                   (some (fn [account]
+                           (some (fn [e] (when (and (= account (:account e)) (not (:bulk e))
+                                                   (every? ready? (:predecessors e))) e)) queue))
+                         accounts))
+            next (or live (next-entry state ready?)) _ (assert next "Oldest pending command must be eligible")
             first-member (first out)
             ;; [DX-W1] Why: combine already waiting edits of this subject across independent work in the same account.
             ;; Rejected: two physical turns before the next account or jumping a sender, subject, claim or scope predecessor.
@@ -366,19 +371,19 @@
                 remaining (reduce (fn [m k] (if (identical? (:token entry) (get m k)) (dissoc m k) m)) tails (:keys entry))
                 s (cond-> (assoc state :queue others :tails remaining :accounts (rotate accounts a (some same? others)))
                     policy/priority? (update-in [:rotation rank] rotate a (some #(and (same? %) (= rank (:rank %))) others)))
-                taken (conj out entry)]
+                taken (conj out (assoc entry :queued-at-grant (count queue) :runnable-live (boolean live)))]
             (if solo [s taken] (recur s taken (conj selected (:token entry)) priced))))))))
+(defn admit [batch]
+  (mapv (fn [entry] (deliver (:token entry) true) (assoc entry :dispatch (System/nanoTime))) batch))
 (defn preview [state]
   (let [[next batch] (preview-batch state)]
-    ;; [DX-W1] Why: count each admitted physical turn once, including a pre-rendered or pipelined live group.
-    ;; Rejected: letting early reservation bypass the bounded bulk grant.
+    ;; [DX-W1] Why: a ready bulk frame gets one physical turn after a bounded run of live turns.
+    ;; Rejected: counting members of one transaction as turns or leaving a ready import behind a permanent live backlog.
     [(if (and policy/priority? (seq batch))
        (if (= :bulk (:rank (first batch))) (assoc next :live-turns 0)
          (update next :live-turns #(min max-live-turns (inc (or % 0)))))
        next)
      batch]))
-(defn admit [batch]
-  (mapv (fn [entry] (deliver (:token entry) true) (assoc entry :dispatch (System/nanoTime))) batch))
 (defn choose [state]
   (let [[remaining batch] (preview state)]
     [remaining (admit batch)]))
@@ -427,18 +432,16 @@
                          (cond-> policy/priority? (update-in [:rotation (:rank e)] join-turn (:account e))
                                  (:scope-barrier e) (assoc :barrier token))
                          (update :tails into (map #(vector % token) (:keys e)))))) nil)
-                       (do (swap! lane assoc :active true) (deliver token true) [(assoc e :dispatch (System/nanoTime))])))))]
+                       (do (swap! lane assoc :active true) (deliver token true) [(assoc e :dispatch (System/nanoTime) :queued-at-grant 0 :runnable-live false)])))))]
     (when launch
       (.execute executor (fn []
         (loop [batch launch]
-          ;; [DX-PREP1] Why: the next certified batch must actually observe the first native append.
-          ;; Rejected: guessing the next physical basis for a second native submission.
-          (try (if (and prepared/enabled (not prepared/basis-enabled) (not= :off prepare-window))
+          (try (if (and prepared/enabled (not= :off prepare-window))
                  (execute-window! conn lane batch)
                  (execute! conn batch))
                (catch Throwable t (doseq [e batch] (complete! e {:error t}))))
           (when-let [next-batch (locking lane
-                                 (if (empty? (:queue @lane)) (do (swap! lane assoc :active false :live-turns 0) nil)
+                                 (if (empty? (:queue @lane)) (do (swap! lane assoc :active false) nil)
                                    (let [[s taken] (choose @lane)] (reset! lane s) taken)))]
             (recur next-batch))))))
     (outcome-future p)))

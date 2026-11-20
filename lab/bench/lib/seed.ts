@@ -7,6 +7,9 @@
  * Commands are applied one at a time: concurrent commits within one XTDB runtime conflict on the
  * scope position (observed 2026-11-07, `triplex-cas-conflict`), and seeding is not what is measured.
  */
+import { strict as assert } from "node:assert";
+import { Option } from "effect";
+import { windowed } from "./load-window.ts";
 import { deepOwnFacts } from "./deep-world.ts";
 import type { DeepSeedWitness } from "./deep-profile.ts";
 import { alignAssertIds } from "./receipt.ts";
@@ -50,12 +53,16 @@ export function alignIds(operations: readonly any[], receipt: Receipt): (string 
 export async function seedRung(opts: {
   comp: CompositionHandle;
   deep?: DeepSeedWitness;
+  restoredRunTag?:string;
+  deepRows?: (subject:number)=>Fact[];
+  seedAddressOf?:(subject:number)=>string;
   deepProgress?: (subjects: number, facts: number, position: number) => void;
   onReceipt?: (operations: readonly any[], receipt: Receipt) => void;
   subjects: number;
   runTag: string;
   batchFacts: number;
   budgetMs: number;
+  inFlight?: number;
   recordSubjects: Set<number>;
   recordAccounts: Set<number>;
   /** Subjects whose versioned-fact ids are kept for in-place history growth (P4 matched sample). */
@@ -64,6 +71,12 @@ export async function seedRung(opts: {
 }): Promise<SeedResult> {
   const { comp } = opts;
   const accounts = accountsFor(opts.subjects);
+  const requestedDepth = opts.inFlight ?? 1;
+  if (requestedDepth !== 1 && comp.backend.name !== "datomic") throw Error("Concurrent seed requires Datomic");
+  if (![1, 2, 4].includes(requestedDepth)) throw Error("Seed depth must be 1, 2 or 4");
+  // [DX-THIN1] Why: the deep witness proves a contiguous journal in roster order.
+  // Rejected: passing independently completed bulk receipts to the ordered witness.
+  const depth = opts.deep ? 1 : requestedDepth;
   const started = performance.now();
   const state = new Map<number, SubjectState>();
   const versionIds = new Map<number, string[]>();
@@ -75,14 +88,31 @@ export async function seedRung(opts: {
   let n = 0;
 
   const commit = async (operations: any[], label: string, record: boolean, preconditions: any[] = []) => {
-    const commandId = `${opts.runTag}:seed:${label}`;
+    const commandId = `${opts.restoredRunTag??opts.runTag}:seed:${label}`;
     const meta = { commandId, actor: "bulk-seed", ...(preconditions.length ? { preconditions } : {}) };
     for (let attempt = 1; ; attempt++) {
       const t0 = performance.now();
-      let out = await comp.transact(operations, meta);
+      const previous=opts.restoredRunTag ? await comp.transactionByCommand(commandId) : undefined;
+      if(opts.restoredRunTag && (!previous?.ok || !previous.value || previous.value.commandId!==commandId)) throw Error("Missing original seed transaction in restored database");
+      let out = previous?.ok ? {ok:true as const,value:receiptOfRecord(previous.value)} : await comp.transact(operations, meta);
       if (!out.ok && out.tag === "CommandAlreadyCommittedError") {
         const found = await comp.transactionByCommand(commandId);
-        if (found.ok && found.value) out = { ok: true, value: receiptOfRecord(found.value) };
+        if (found.ok && found.value) {
+          const r = found.value;
+          // [DX-LOAD1] Why: restart may reuse a command label with a different input. Rejected: accepting an old receipt by label or fact count alone.
+          assert.deepEqual([r.commandId,r.actor,r.changes.length],[commandId,meta.actor,operations.length]);
+          assert(Number.isSafeInteger(r.position) && r.position>0 && Number.isFinite(r.instant) && typeof r.txId==="string" && r.txId.length);
+          const recovered=receiptOfRecord(r);
+          const ids=new Set<string>();
+          for (const [i,op] of operations.entries()) {
+            const c=r.changes[i];
+            assert.deepEqual([c.op,c.entityId,c.attribute,c.value,c.validFrom,c.validTo,c.recordedAt,c.assertionTxId],
+              ["assert",op.entityId,op.attribute,op.value,op.validFrom,undefined,r.instant,r.txId]);
+            assert(typeof c.tripleId==="string" && c.tripleId && !ids.has(c.tripleId)); ids.add(c.tripleId);
+          }
+          out={ok:true,value:{...recovered,triples:recovered.triples.map(t=>({...t,validTo:Option.none(),recordedAt:r.instant,txId:Option.some(r.txId),
+            createdBy:Option.some(meta.actor),retractedAt:Option.none(),retractTxId:Option.none(),entityType:Option.none(),schemaVersion:Option.none()}))}};
+        }
       }
       latencies.push(performance.now() - t0);
       if (out.ok) {
@@ -111,46 +141,56 @@ export async function seedRung(opts: {
   }
   opts.log(`seed: ${opts.deep ? 0 : accounts} shared account worlds in ${((performance.now() - started) / 1000).toFixed(1)} s`);
   // 2. subjects, version 0
-  let batch: Fact[] = [], members: number[] = [];
   let lastDeepProgress = 0;
-  const deepBatch: { subject: number; rows: Fact[] }[] = [];
-  const flush = async () => {
-    if (!batch.length) return;
+  function* batches() {
+    let batch: Fact[] = [], members: number[] = [];
+    let deepBatch: { subject: number; rows: Fact[] }[] = [];
+    for (let i = 0; i < opts.subjects; i++) {
+      const facts = opts.deepRows ? opts.deepRows(i) : opts.deep ? deepOwnFacts(i) : ownFacts(i, accounts);
+      if (batch.length + facts.length > opts.batchFacts && batch.length) {
+        yield { batch, members, deepBatch };
+        if (performance.now() - started > opts.budgetMs) return;
+        if (commands % 100 === 0) opts.log(`seed: ${n} subjects, ${assertions} assertions`);
+        batch = []; members = []; deepBatch = [];
+      }
+      batch.push(...facts); members.push(i);
+      if (opts.deep) deepBatch.push({ subject: i, rows: facts });
+    }
+    if (batch.length) yield { batch, members, deepBatch };
+  }
+  await windowed(batches(), depth, async ({ batch, members, deepBatch }) => {
     const receipt = await commit(seedOps(batch), `s${members[0]}-${members.at(-1)}`, members.some((i) => opts.recordSubjects.has(i)));
     if (opts.deep) {
-      opts.deep.observe(deepBatch, receipt, SEED_VALID_FROM); deepBatch.length = 0;
+      opts.deep.observe(deepBatch, receipt, SEED_VALID_FROM);
       if (performance.now() - lastDeepProgress >= 15000 || opts.deep.subjects === opts.subjects || commands === 1) {
         opts.deepProgress?.(opts.deep.subjects, opts.deep.facts, receipt.position); lastDeepProgress = performance.now();
       }
     }
+    // [DX-LOAD1] Why: one index preserves first-assertion semantics across every member lookup in a pipelined batch. Rejected: rescanning two thousand returned rows for each subject and history field.
+    const byEntity = new Map<string, Map<string,string>>();
+    if (depth > 1) for (const t of receipt.triples) {
+      const attrs = byEntity.get(t.entityId) ?? new Map<string,string>();
+      if (!attrs.has(t.attribute)) attrs.set(t.attribute,t.id);
+      byEntity.set(t.entityId,attrs);
+    }
+    const find = (e:string,a:string) => depth === 1 ? idOf(receipt,e,a) : byEntity.get(e)?.get(a);
     for (const i of members) {
-      const stampId = idOf(receipt, ids.placement(i), ":placement/stamp");
-      const addressId = idOf(receipt, ids.worker(i), ":worker/address");
+      const stampId = find(ids.placement(i), ":placement/stamp");
+      const addressId = find(ids.worker(i), ":worker/address");
       if (!stampId || !addressId) throw new Error(`seed receipt lacks ids for subject ${i}`);
       if (opts.historySubjects.has(i)) {
-        const vIds = versioned(i, 0).map((f) => idOf(receipt, f.e, f.a)!);
+        const vIds = versioned(i, 0).map((f) => find(f.e, f.a)!);
         if (vIds.some((x) => !x)) throw new Error(`seed receipt lacks versioned ids for subject ${i}`);
         versionIds.set(i, vIds);
       }
-      state.set(i, { stamp: 0, stampId, stampValidFrom: SEED_VALID_FROM, address: seedAddress(i), addressId, addressValidFrom: SEED_VALID_FROM });
+      state.set(i, { stamp: 0, stampId, stampValidFrom: SEED_VALID_FROM, address: opts.seedAddressOf?.(i) ?? seedAddress(i), addressId, addressValidFrom: SEED_VALID_FROM });
     }
-    n = members.at(-1)! + 1;
-    batch = [];
-    members = [];
-  };
-  let stoppedEarly = false;
-  for (let i = 0; i < opts.subjects; i++) {
-    const facts = opts.deep ? deepOwnFacts(i) : ownFacts(i, accounts);
-    if (batch.length + facts.length > opts.batchFacts) {
-      await flush();
-      if (performance.now() - started > opts.budgetMs) { stoppedEarly = true; break; }
-      if (commands % 100 === 0) opts.log(`seed: ${n} subjects, ${assertions} assertions, ${((performance.now() - started) / 1000).toFixed(0)} s`);
-    }
-    if (opts.deep) deepBatch.push({ subject: i, rows: facts });
-    batch.push(...facts);
-    members.push(i);
+    n += members.length;
+  });
+  if (depth > 1) {
+    positions.sort((a,b)=>a-b);
+    recorded.sort((a,b)=>a.receipt.position-b.receipt.position);
   }
-  if (!stoppedEarly) await flush();
   const seeded = n;
   opts.log(`seed: ${seeded} subjects in ${((performance.now() - started) / 1000).toFixed(1)} s`);
   const wallMs = performance.now() - started;
@@ -159,7 +199,7 @@ export async function seedRung(opts: {
     seededSubjects: seeded, complete: seeded === opts.subjects, commands, assertions, retractions, wallMs,
     factsPerS: assertions / (wallMs / 1000),
     commitMs: { p50: latencies[Math.floor(latencies.length / 2)] ?? 0, max: latencies.at(-1) ?? 0 },
-    failures, firstPosition: Math.min(...positions), lastPosition: Math.max(...positions), lastInstant, positions, state, versionIds, recorded,
+    failures, firstPosition: positions[0] ?? 0, lastPosition: positions.at(-1) ?? 0, lastInstant, positions, state, versionIds, recorded,
   };
 }
 

@@ -1,0 +1,144 @@
+--- a/lab/experiments/EXP-DX1/actv-lazy/join/account.ts
++++ b/lab/experiments/EXP-DX1/actv-lazy/join/account.ts
+@@ -33,6 +33,7 @@
+   type Event as NoticeEvent,
+ } from "../../notify1/journal.ts";
+ import { Documents, type Row, type Op } from "../../notify1/store.ts";
++import { CommittedRanges } from "../../notify1/ranges.ts";
+ import { Dispatcher } from "../../notify1/dispatcher.ts";
+ import { memberRange, width, type Census } from "../../notify1/census.ts";
+ import { CLOCK, RELEASE, Conflict, fact, millis, value, type Store } from "../store.ts";
+@@ -115,7 +116,21 @@
+   };
+   constructor(s: Store) {
+     this.s = s;
++    const ranges = new Map<string, Promise<CommittedRanges>>();
+     this.notices = new Notices(s.comp, "joined", {
++      ...(s.profile === "w0" ? {
++        ranges: { suggest: async (account, event, sourceAt) => {
++          const census = event.value.census;
++          let proof = ranges.get(census.members);
++          if (!proof) {
++            proof = this.roster(census, event.at).then((members) => new CommittedRanges(
++              members, true, (prior, locations) => this.wagePostings(prior, locations),
++            ));
++            ranges.set(census.members, proof);
++          }
++          return (await proof).suggest(account, event, sourceAt);
++        } },
++      } : {}),
+       identity: selector,
+       roster: async (c) => this.roster((await this.meta(c.position)).census, c.position),
+       worlds: async (ids, c) =>
+@@ -143,6 +158,31 @@
+       ids.push(...(await memberRange(this.db, c, i, p, 16)));
+     assert.equal(h(ids), c.members);
+     return ids;
++  }
++  private async wagePostings(prior: NoticeEvent, locations: ReadonlySet<string>) {
++    const p = prior.at, meta = await this.meta(p);
++    if (prior.value.validTime !== meta.valid || await this.db.row("join-invalid", p)) return;
++    // [DX-STG1] Why: use the same sealed DELTA leaves as Publish at this cut.
++    // Rejected: accepting the previous leaf after a shared edge invalidated it.
++    const out = new Map<string, { value: number; subject: string }[]>();
++    const pages = Math.ceil(meta.census.count / width);
++    for (let i = 0; i < pages; i += 16) {
++      const count = Math.min(16, pages - i);
++      const [leaves, enrolled] = await Promise.all([
++        loadLeaves(this.db, i, count, p), memberRange(this.db, meta.census, i * width, p, count),
++      ]);
++      for (const [j, { sorted }] of leaves.entries()) {
++        assert.deepEqual(sorted.ids, enrolled.slice(j * width, (j + 1) * width));
++        for (const posting of Object.values(sorted.lists).flat()) {
++          if (posting.rule !== "MINWAGE" || !locations.has(posting.location)) continue;
++          const rows = out.get(posting.location) ?? [];
++          rows.push({ value: posting.value, subject: posting.subject });
++          out.set(posting.location, rows);
++        }
++      }
++    }
++    for (const rows of out.values()) rows.sort((a, b) => a.value - b.value || W0.cmpCodePoints(a.subject, b.subject));
++    return out;
+   }
+   private async suffix(after: number, p: number, setup = false) {
+     while (after < p) {
+@@ -157,7 +197,7 @@
+             (v: any) =>
+               v.entityId.startsWith(this.db.prefix) &&
+               (setup ||
+-                /^(?:claim:|cursor$|ledger:|packet:)/.test(
++                /^(?:claim:|cursor$|ledger:|packet:|range:)/.test(
+                   v.entityId.slice(this.db.prefix.length),
+                 )),
+           );
+--- a/lab/experiments/EXP-DX1/actv-lazy/join/index.ts
++++ b/lab/experiments/EXP-DX1/actv-lazy/join/index.ts
+@@ -44,6 +44,7 @@
+   "../../actv-delta/index-patch.ts",
+   "../../notify1/dispatcher.ts",
+   "../../notify1/journal.ts",
++  "../../notify1/ranges.ts",
+   "../../notify1/census.ts",
+   "../../../../bench/lib/w0-world.ts",
+ ];
+--- a/lab/experiments/EXP-DX1/actv-lazy/join/gate.ts
++++ b/lab/experiments/EXP-DX1/actv-lazy/join/gate.ts
+@@ -85,7 +85,7 @@
+     tuples.push(
+       [id, "location", "loc:x"],
+       [id, "bgcStatus", "clear"],
+-      [id, "payRateCents", i % 2 ? 1600 : 1700],
++      [id, "payRateCents", i === 7 ? 2100 : i % 2 ? 1600 : 1700],
+       [id, "baselinePayRateCents", 1500],
+       [id, "weeklyMinutes", 2300 + i * 50],
+     );
+@@ -148,12 +148,14 @@
+   const digest = sha256(canonical((await a.notices.observe()).value));
+   assert(digest.length === 64);
+   let raced = false;
++  let floor: { position: number; txId: string; sequence: number; affected: string[] } | undefined;
+   const contender = await openStore(scope);
+   try {
+     r = await a.publish("R1-return", W0.R1.doc, valid, "owed", async () => {
+       if (!raced) {
+         raced = true;
+-        await runSave(
++        const owedBefore = ref.owed.length;
++        const saved = await runSave(
+           "state-floor",
+           {
+             e: "jur:x",
+@@ -164,6 +166,10 @@
+           valid,
+           new JoinedAccount(contender),
+         );
++        const affected = [...new Set(ref.owed.slice(owedBefore).map((delivery) => String(delivery.subject)))].sort();
++        assert(affected.length >= 2 && affected.length < ids.length);
++        const sequence = (await a.db.get<{ sequence: number }>("tail", saved.position)).value.sequence;
++        floor = { position: saved.position, txId: saved.txId, sequence, affected };
+       }
+     });
+   } finally {
+@@ -204,6 +210,14 @@
+   const sender = a.dispatcher(new Documents(sink.comp, "sink"));
+   await sender.drain();
+   const received = await ref.receiver(a, sender);
++  assert(floor);
++  const event = await a.notices.event(floor.sequence, floor.position);
++  const selected = await a.notices.coverage(event, a.db, await a.s.head());
++  assert(selected && selected.txId === floor.txId && selected.indexAt);
++  assert.equal(selected.indexAt, (await a.notices.event(floor.sequence - 1, floor.position)).at);
++  assert.deepEqual(selected.ids, floor.affected);
++  const complement = ids.filter((id) => !floor.affected.includes(id));
++  assert.deepEqual(ids.filter((id) => !selected.ids.includes(id)), complement);
+   const cnt = (await sender.effects()).length;
+   await sender.drain();
+   assert.equal((await sender.effects()).length, cnt);
+@@ -238,6 +252,7 @@
+         stops: 3,
+         expected: notes,
+         received,
++        sharedFloor: { ...floor, complement, indexAt: selected.indexAt },
+         checkedAt: before,
+       },
+       null,

@@ -148,6 +148,17 @@ INPUT_LEASE
   exit
 fi
 tx=6 pg=6 gw_w=6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume=
+if [[ ${DX_INT1_GATEWAYS:-original} == demand ]]; then
+  # [DX-THIN1] Why: apply the same peer limits on ordinary stack launches and the physical queue. Rejected: tuning only the Mac diagnostic container.
+  demand_peer='-Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps'
+  DX_GW_WRITE_ENTITY_CACHE_BYTES=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-8388608}
+  DX_GW_READ_ENTITY_CACHE_BYTES=${DX_GW_READ_ENTITY_CACHE_BYTES:-8388608}
+  DX_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-1048576}
+  DX_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-4096}
+  DX_GW_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-4096}
+  DX_INDEX_THRESHOLD=${DX_INDEX_THRESHOLD:-8m}
+  DX_INDEX_MAX=${DX_INDEX_MAX:-32m}
+fi
 # [DX-S3] Why: tune placement, heap and durable storage without changing existing callers.
 # Rejected: replacing defaults globally (would change other agents' measurements).
 # [orchestrator merge] Flags (DX-S3) win; DX_* environment variables (DX-H3) are the fallback; then the old defaults.
@@ -172,9 +183,28 @@ while (($#)); do
   esac
   shift 2
 done
-for cpus in "$tx" "$pg" "$gw_w" "$gw_r"; do
-  [[ "$cpus" =~ ^[0-7](,[0-7])*$ || "$cpus" =~ ^[0-7]-[0-7]$ ]] || { echo "only VM CPUs 0 through 7 are allowed" >&2; exit 2; }
-done
+if [[ ${DX_BARE_METAL:-0} == 1 ]]; then
+  # [DX-BM1] Why: the native read gateway spans cores 4 and 8. Check each requested CPU against this host's actual allocation.
+  # Rejected: carrying the eight-CPU Mac VM limit onto the 12-core bench, or allowing unavailable native CPUs.
+  python3 - "$tx" "$pg" "$gw_w" "$gw_r" <<'NATIVE_CPUS'
+import os,re,sys
+allowed=os.sched_getaffinity(0)
+for group in sys.argv[1:]:
+    cpus=set()
+    for part in group.split(','):
+        assert re.fullmatch(r'[0-9]+(?:-[0-9]+)?',part), 'invalid CPU range'
+        limits=[int(v) for v in part.split('-')]
+        first,last=limits[0],limits[-1]
+        assert first<=last<=max(allowed), 'unavailable CPU range'
+        members=set(range(first,last+1))
+        assert members<=allowed and members.isdisjoint(cpus), 'unavailable or duplicate CPU'
+        cpus.update(members)
+NATIVE_CPUS
+else
+  for cpus in "$tx" "$pg" "$gw_w" "$gw_r"; do
+    [[ "$cpus" =~ ^[0-7](,[0-7])*$ || "$cpus" =~ ^[0-7]-[0-7]$ ]] || { echo "only VM CPUs 0 through 7 are allowed" >&2; exit 2; }
+  done
+fi
 for port in "$port_w" "$port_r"; do
   [[ "$port" =~ ^[0-9]+$ && "$port" -ge 1024 && "$port" -le 65535 && "$port" != 15442 && "$port" != 17019 ]] || exit 2
 done
@@ -314,7 +344,10 @@ fi
 docker network create "$prefix-net" >/dev/null
 # [DX-T1-14] Why: activation uses a byte-verified fresh clone under the holder's lease; a sealed source is never writable.
 # Rejected: S5's old first-use/reuse fallback, incomplete copies, or attaching a transactor directly to a sealed seed.
-if [[ -n $seed_volume ]];then
+if [[ $seed_volume == bm1-pristine-* ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && $seed_volume == bm1-pristine-"${DX_BM1_PRISTINE_BATCH:?}" ]] || exit 2
+  python3 lab/experiments/EXP-DX1/bm1/pristine-seed.py clone "$DX_BM1_PRISTINE_BATCH" "$prefix" "$attempt"
+elif [[ -n $seed_volume ]];then
   [[ $prefix == tx2-dxt1-* ]] || exit 2
   case $seed_volume in
     tx2-dxh5-seed-1000-pg-data|tx2-dxh8-seed-10000-pg-data|tx2-dxs5-seed-100000-pg-data) ;;
@@ -411,22 +444,14 @@ for role in w r; do
   # [DX-W1] Why: bootstrap is finished on the other peer before the single authoritative writer admits live traffic.
   # Rejected: allowing a large labeled import through the live writer's frame cap during measurement.
   field_policy=()
-  if [[ $role == w && -n ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
-    [[ ${DX_PREDECESSOR_LOOKUP:-} =~ ^[01]$ && $DX_WRITE_OPTIONS_ATTEMPT =~ ^[a-f0-9-]{36}$ ]] || exit 2
-    field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=$DX_PREDECESSOR_LOOKUP" -e "TX2_WRITE_OPTIONS_ATTEMPT=$DX_WRITE_OPTIONS_ATTEMPT")
-  fi
   if [[ -n ${DX_LIVE_PRIORITY:-} ]]; then
     [[ $DX_LIVE_PRIORITY =~ ^[01]$ && ${DX_FIELD_COALESCE:-0} =~ ^[01]$ ]] || exit 2
-    if [[ $role == w ]]; then field_policy+=(-e "TX2_LIVE_PRIORITY=$DX_LIVE_PRIORITY" -e "TX2_FIELD_COALESCE=${DX_FIELD_COALESCE:-0}"); fi
+    if [[ $role == w ]]; then field_policy=(-e "TX2_LIVE_PRIORITY=$DX_LIVE_PRIORITY" -e "TX2_FIELD_COALESCE=${DX_FIELD_COALESCE:-0}"); fi
   fi
   if [[ $role == w && ${DX_W1_EXTRA:-0} == 1 ]]; then
     [[ ${DX_SMALL_ROWS:-0} =~ ^[01]$ && ${DX_GROUP_REUSE_PREPARED:-0} =~ ^[01]$ && ${DX_GROUP_MAX_MEMBERS:-8} =~ ^[1-9][0-9]{0,2}$ ]] || exit 2
     field_policy+=(-e "TX2_GROUP_STAGE_CLOCK=1" -e "TX2_SMALL_ROWS=${DX_SMALL_ROWS:-0}" -e "TX2_GROUP_REUSE_PREPARED=${DX_GROUP_REUSE_PREPARED:-0}" -e "TX2_GROUP_MAX_MEMBERS=${DX_GROUP_MAX_MEMBERS:-8}")
-    if [[ -z ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
-      [[ ${DX_W1_PREDECESSOR:-0} =~ ^[01]$ ]] || exit 2
-      field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=${DX_W1_PREDECESSOR:-0}")
-    fi
-    for pair in "TX2_SAVE_LEDGER=${DX_W1_LEDGER:-0}" \
+    for pair in "TX2_PREDECESSOR_LOOKUP=${DX_W1_PREDECESSOR:-0}" "TX2_SAVE_LEDGER=${DX_W1_LEDGER:-0}" \
                 "TX2_PACKED_JOURNAL=${DX_W1_PACKED_JOURNAL:-0}" "TX2_GROUP_FAST_REPLY=${DX_W1_FAST_REPLY:-0}"; do
       [[ ${pair#*=} =~ ^[01]$ ]] || exit 2
       field_policy+=(-e "$pair")
@@ -436,11 +461,17 @@ for role in w r; do
       field_policy+=(-e "TX2_WRITE_BUDGET_US=$DX_WRITE_BUDGET_US")
     fi
   fi
+  if [[ $role == w && ${DX_INT1_NATIVE_WRITE_READBACK:-0} == 1 ]]; then
+    [[ ${DX_PREDECESSOR_LOOKUP:-0} =~ ^[01]$ ]] || exit 2
+    field_policy+=(-e "TX2_INT1_WRITE_READBACK=1" -e "TX2_PREDECESSOR_LOOKUP=${DX_PREDECESSOR_LOOKUP:-0}")
+  fi
   if [[ $role == w ]]; then cpu=$gw_w port=$port_w; else cpu=$gw_r port=$port_r; fi
   ports=(); [[ $publish == false ]] || ports=(-p "127.0.0.1:$port:8080")
   if [[ $role == w ]]; then mem=${DX_GW_WRITE_MEMORY:-$gw_mem}; heap=${DX_GW_WRITE_HEAP:-}; else mem=${DX_GW_READ_MEMORY:-$gw_mem}; heap=${DX_GW_READ_HEAP:-}; fi
   # bin/run reads DATOMIC_JAVA_OPTS, not JAVA_OPTS (DX-S3). An explicit --gw-java-opts wins; else DX_GW_*_HEAP; else the launcher default (1g).
-  role_java=$gw_java; [[ -n $role_java || -z $heap ]] || role_java="-Xms256m -Xmx$heap"
+  role_java=$gw_java
+  if [[ -z $role_java && ${DX_INT1_GATEWAYS:-original} == demand ]]; then role_java="-Xms64m -Xmx${heap:-384m} $demand_peer"
+  elif [[ -z $role_java && -n $heap ]]; then role_java="-Xms256m -Xmx$heap"; fi
   if [[ $role == w ]]; then role_java=${DX_GW_WRITE_JAVA_OPTS:-$role_java}; fi
   if [[ $role == r ]]; then role_java=${DX_GW_READ_JAVA_OPTS:-$role_java}; fi
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
@@ -455,6 +486,7 @@ for role in w r; do
     ${ports[@]+"${ports[@]}"} -e "JAVA_OPTS=-Xms256m -Xmx1g" "${trace_env[@]}" ${field_policy[@]+"${field_policy[@]}"} -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_GW_JFR" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
     -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \
+    -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \
     -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run tx2-datomic:1.0.7745-da00 -m triplex.gateway.main >/dev/null
   ok=false
   health_deadline=$((SECONDS + 180))

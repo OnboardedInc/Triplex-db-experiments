@@ -89,22 +89,41 @@ export class DeepSeedWitness {
     return { people, facts, position: this.previous, sha256 };
   }
 }
+import { tenantAccounts, type TenantSpec } from "../../experiments/EXP-DX1/scale1/tenants.ts";
 export interface DeepIdentity {
+  tenant?: TenantSpec;
+  field?: true;
   nonce: string;
   source: string;
   slot: string;
   account: number;
   people: number;
-  arm: "zero" | "reader" | "activation" | "seed";
+  arm: "zero" | "reader" | "activation" | "seed" | "interference" | "small";
 }
 export function requireIdentity(id: DeepIdentity) {
   assert.match(id.nonce, /^[a-f0-9-]{36}$/);
   assert.match(id.source, /^[a-f0-9]{40}$/);
-  assert.match(id.slot, /^tx2-dxscale1-[a-z0-9-]+$/);
-  assert(["zero", "reader", "activation", "seed"].includes(id.arm));
+  const compactFixture = id.people === 40 && /^tx2-dxthin-[a-f0-9]{20}$/.test(id.slot);
+  assert(compactFixture || /^tx2-dxscale1-[a-z0-9-]+$/.test(id.slot));
+  if (id.field) assert(!id.tenant && ["zero", "reader"].includes(id.arm));
+  assert(["zero", "reader", "activation", "seed", "interference", "small"].includes(id.arm));
+  if (id.tenant) {
+    const a = tenantAccounts(id.tenant);
+    assert(id.tenant.physical === id.account && a.reduce((n, x) => n + x.people, 0) === id.people);
+    return;
+  }
+  if (id.arm === "small") {
+    assert(
+      Number.isInteger(id.account) &&
+        id.account >= 0 &&
+        id.account < 100 &&
+        id.people === (id.account === 0 || id.account >= 91 ? 2000 : 100),
+    );
+    return;
+  }
   assert(
     ([10000, 100000].includes(id.people) ||
-      (id.people === 40 && id.slot.startsWith("tx2-dxscale1-smoke-"))) &&
+      (id.people === 40 && (compactFixture || id.slot.startsWith("tx2-dxscale1-smoke-")))) &&
       Number.isInteger(id.account) &&
       id.account >= 0 &&
       id.account < 10,

@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { DomainOracle, emptyWireState } from "../../../bench/lib/w0-gates.ts";
+import { pageAddress } from "../../../bench/lib/w0-page-outbox.ts";
 import { measureHttp } from "../../../bench/lib/http-counts.ts";
 import { publishChanged } from "../../../bench/lib/w0-replica.ts";
 import { W0, canonical, sha256 } from "../../../bench/lib/w0-world.ts";
@@ -51,6 +52,7 @@ if (action === "readback") {
         comp,
         page.map((r: any) => r.subject),
         head,
+        process.argv[5],
       );
       for (const [j, state] of states.entries()) rows.push({ subject: page[j].subject, state });
     }
@@ -129,6 +131,7 @@ if (action === "readback") {
         if (release === W0.R2 && canonical(next.state.items) !== canonical(prior.items)) {
           itemChanges++;
           changedItems.add(outboxEntity(world.subject));
+          changedItems.add(pageAddress(world.subject).body);
         }
         records.push(result.record);
         prior = next.state;
@@ -156,11 +159,30 @@ if (action === "readback") {
     itemChanges,
   };
   const arms = [];
-  for (const layout of [undefined, "full-state", "guard-fact"] as const) {
+  const rosterSubjects = Array.from({ length: N }, (_, i) => W0.placementId(i));
+  const modes = process.argv.includes("--page-cut")
+    ? ([undefined, "full-state", "guard-fact", "page-cut"] as const)
+    : ([undefined, "full-state", "guard-fact"] as const);
+  for (const layout of process.argv.includes("--reverse") ? [...modes].reverse() : modes) {
+    const paged = layout === "page-cut";
+    const opts = (release: W0.CompiledRelease, cut: W0.Basis) => ({
+      layout,
+      frameSize: paged ? 256 : 32,
+      inflight: 1,
+      ...(paged
+        ? {
+            roster: {
+              subjects: rosterSubjects,
+              basis: { ...cut, tx: BigInt(cut.tx) },
+              release: release.hash,
+            },
+          }
+        : {}),
+    });
     const name = layout ?? "historical",
       scope = "act1-" + name + "-" + nonce;
     let store = await open(scope);
-    await publishChanged(store, a, { layout, inflight: 1, frameSize: 32 });
+    await publishChanged(store, a, opts(W0.R1, basis));
     await store.close();
     const fileBytes = () => statSync(join(root, scope + ".db")).size;
     const initialBytes = native ? 0 : fileBytes();
@@ -174,7 +196,12 @@ if (action === "readback") {
     let commitMs = 0,
       opsBytes = 0,
       txCount = 0;
-    let guardOnlyValueBytes = 0;
+    let guardOnlyValueBytes = 0,
+      pageAssertions = 0,
+      bodyAssertions = 0,
+      absentChangeWrites = 0,
+      assertionCount = 0,
+      retractCount = 0;
     const frames: unknown[] = [];
     const comp: OutboxStore = {
       ...store,
@@ -206,6 +233,18 @@ if (action === "readback") {
         for (const op of ops)
           if (op.op === "assert" && !changedItems.has(op.entityId))
             guardOnlyValueBytes += Buffer.byteLength(op.value.value);
+        for (const op of ops) {
+          if (op.op === "retract") {
+            retractCount++;
+            continue;
+          }
+          assertionCount++;
+          if (op.attribute === "p5/page-cut") pageAssertions++;
+          if (op.attribute === "p5/page-body") {
+            bodyAssertions++;
+            if (!changedItems.has(op.entityId)) absentChangeWrites++;
+          }
+        }
         txCount++;
         commitMs += duration;
         opsBytes += bytes;
@@ -222,9 +261,7 @@ if (action === "readback") {
     const nativeBefore = engineCpu?.(slot.slot)?.usageUsec;
     const cpu = process.cpuUsage(),
       start = performance.now();
-    const transport = await measureHttp(() =>
-      publishChanged(comp, b, { layout, frameSize: 32, inflight: 1 }),
-    );
+    const transport = await measureHttp(() => publishChanged(comp, b, opts(W0.R2, later)));
     const result = transport.value;
     const wallMs = performance.now() - start,
       usage = process.cpuUsage(cpu);
@@ -233,7 +270,7 @@ if (action === "readback") {
     const reopened = JSON.parse(
       execFileSync(
         process.execPath,
-        ["--experimental-strip-types", script, "readback", root, scope],
+        ["--experimental-strip-types", script, "readback", root, scope, layout ?? "historical"],
         { encoding: "utf8", stdio: ["ignore", "pipe", "inherit"] },
       ),
     );
@@ -242,6 +279,14 @@ if (action === "readback") {
     if (layout) assert.equal(reopened.hash, binding.expected);
     assert.equal(reopened.scope, scope);
     assert.equal(txCount, result.commits);
+    if (paged) {
+      assert.equal(pageAssertions, Math.ceil(N / 256));
+      assert.equal(txCount, pageAssertions);
+      assert.equal(bodyAssertions, itemChanges);
+      assert.equal(absentChangeWrites, 0);
+      assert.equal(result.coverage?.roster, sha256(canonical(rosterSubjects)));
+      assert.equal(result.coverage?.size, N);
+    }
     const arm = {
       name,
       scope,
@@ -260,7 +305,13 @@ if (action === "readback") {
       casSubjects,
       assertedBytes,
       opsBytes,
-      guardOnlyValueBytes,
+      pageAssertions,
+      bodyAssertions,
+      absentChangeWrites,
+      assertionCount,
+      retractCount,
+      coverage: result.coverage,
+      guardOnlyValueBytes: paged ? 0 : guardOnlyValueBytes,
       guardOnlySubjects: N - itemChanges,
       fileGrowth: native ? null : fileBytes() - initialBytes,
       txCount,
@@ -273,11 +324,13 @@ if (action === "readback") {
   for (const [path, digest] of Object.entries(sourceFiles))
     assert.equal(sha256(readFileSync(path)), digest);
   assert.deepEqual(slotBinding(), slot);
-  const historicalMs = arms[0]!.wallMs;
-  const projections = arms.slice(1).map((arm) => {
-    const seconds100k = 50.79 + (22.99 * arm.wallMs) / historicalMs;
-    return { layout: arm.name, seconds100k, secondsMillionSerial: 10 * seconds100k };
-  });
+  const historicalMs = arms.find((a) => a.name === "historical")!.wallMs;
+  const projections = arms
+    .filter((a) => a.name !== "historical")
+    .map((arm) => {
+      const seconds100k = 50.79 + (22.99 * arm.wallMs) / historicalMs;
+      return { layout: arm.name, seconds100k, secondsMillionSerial: 10 * seconds100k };
+    });
   writeFileSync(
     join(root, "price.json"),
     JSON.stringify({ ...binding, arms, projections }, null, 2) + "\n",

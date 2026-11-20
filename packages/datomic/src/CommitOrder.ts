@@ -19,7 +19,6 @@ interface Lane {
 }
 const defaultLane = {};
 const lanes = new WeakMap<object, Lane>();
-export type CommitSendComplete = (dispatched?: boolean) => void;
 function laneFor(key: object): Lane {
   let lane = lanes.get(key);
   if (!lane) {
@@ -52,7 +51,12 @@ function drain() {
   const item = pending[0];
   if (item?.ready && !item.sending) {
     item.sending = true;
-    item.send?.(laneFor(item.lane).sequence + 1);
+    if (Number.isFinite(item.timestamp)) {
+      orderDiagnostics.sent++;
+      if (item.timestamp < orderDiagnostics.maximum) orderDiagnostics.regressions++;
+      orderDiagnostics.maximum = Math.max(orderDiagnostics.maximum, item.timestamp);
+    }
+    item.send?.(++laneFor(item.lane).sequence);
   }
 }
 export function registerCommit(timestamp: number, lane = defaultLane): OrderedCommit {
@@ -61,14 +65,14 @@ export function registerCommit(timestamp: number, lane = defaultLane): OrderedCo
   return item;
 }
 export function endCommit(item: OrderedCommit | undefined) {
-  if (!item || item.sending) return;
+  if (!item) return;
   const index = pending.indexOf(item);
   if (index >= 0) pending.splice(index, 1);
   drain();
 }
 export function sendCommit<A>(
   item: OrderedCommit,
-  send: (sequence: number, sent: CommitSendComplete) => Promise<A>,
+  send: (sequence: number, sent: (published?: boolean) => void) => Promise<A>,
 ): Promise<A> {
   return new Promise((resolve, reject) => {
     const head = pending.reduce<OrderedCommit | undefined>(
@@ -89,35 +93,23 @@ export function sendCommit<A>(
         // Rejected: draining on request construction (different sockets can overtake by more than 20 ms).
         const lane = laneFor(item.lane);
         lane.inFlight++;
-        let settled = false;
-        const settle: CommitSendComplete = (dispatched = true) => {
-          if (settled) return;
-          settled = true;
-          // [DX-WFIX1] Why: only a local preflight refusal proves the reserved sequence never reached HTTP.
-          // Rejected: rewinding after a network error or a regular gateway rejection (either may consume the turn).
-          if (dispatched) {
-            lane.sequence = number;
-            if (Number.isFinite(item.timestamp)) {
-              orderDiagnostics.sent++;
-              if (item.timestamp < orderDiagnostics.maximum) orderDiagnostics.regressions++;
-              orderDiagnostics.maximum = Math.max(orderDiagnostics.maximum, item.timestamp);
-            }
-          }
-          item.sending = false;
-          endCommit(item);
-        };
         let request: Promise<A>;
         try {
-          request = send(number, settle);
+          request = send(number, (published) => {
+            // [DX-W1] Why: a known local body-cap rejection has spent no sequence at the gateway.
+            // Rejected: advancing past an unsent ticket or rewinding after an ambiguous transport failure.
+            if (published === false && pending.includes(item) && lane.sequence === number)
+              lane.sequence--;
+            endCommit(item);
+          });
         } catch (error) {
           lane.inFlight--;
-          settle();
           throw error;
         }
         resolve(
           request.finally(() => {
             lane.inFlight--;
-            settle();
+            endCommit(item);
           }),
         );
       } catch (error) {

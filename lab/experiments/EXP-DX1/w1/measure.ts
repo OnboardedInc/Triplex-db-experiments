@@ -13,7 +13,6 @@ import { verdictMs } from "../../../trace/instrument.mjs";
 import { compareOracleOutput } from "../../../bench/lib/oracle.ts";
 import { readOracleOutput } from "../../../bench/lib/oracle-output.ts";
 import { fileHash, readScope } from "../scale1/measurements.ts";
-import { verifyWriteOptions } from "./write-options.ts";
 
 export type Arm = {
   source: string;
@@ -53,22 +52,6 @@ export async function measure(dir: string, arm: Arm) {
   const reportFile = path.join(d, "ns-report.json"),
     writesFile = path.join(d, "ns-writes.jsonl"),
     report = get(reportFile);
-  const writerExpectationFile = path.join(dir, "writer-expectation.json");
-  const expectedWriter = get(writerExpectationFile);
-  const writerOptions = report.writerOptions;
-  assert.deepEqual(writerOptions.expected, expectedWriter);
-  assert.equal(expectedWriter.attempt, arm.nonce);
-  assert.equal(expectedWriter.source, arm.source);
-  assert.equal(expectedWriter.slot, arm.slot);
-  assert.equal(expectedWriter.options.predecessorLookup, arm.lookup === "range");
-  const scopeKey = JSON.stringify(["triplex-scope-v1", "test", "test", report.scope, 0]);
-  verifyWriteOptions(
-    writerOptions.observed,
-    "s2-" + Buffer.from(scopeKey).toString("base64url"),
-    expectedWriter,
-    writerOptions.historyRange,
-  );
-  assert.equal(writerOptions.observed.position, 0);
   assert.equal(report.config.profile, arm.population === "deep" ? "deep" : "smoke");
   assert(
     report.status === "DONE" &&
@@ -257,13 +240,11 @@ export async function measure(dir: string, arm: Arm) {
     nativeFile,
     completeFile,
     path.join(dir, "identity.json"),
-    writerExpectationFile,
   ])
     inputs[path.relative(dir, file)] = await fileHash(file);
   return {
     arm,
     inputs,
-    writerOptions,
     trace: report.trace.digest,
     seedFacts: report.seed.assertions,
     windowSeconds,

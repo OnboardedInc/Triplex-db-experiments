@@ -65,6 +65,7 @@ DatomicClient.prototype.request = function (...args: any[]) {
       active.requests++;
       active.samples.push({
         path: sample.path,
+        waitedForBasis: sample.waited,
         wallMs: sample.finished - sample.started,
         requestBytes: sample.requestBytes,
         responseBytes: sample.responseBytes,

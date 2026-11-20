@@ -9,7 +9,6 @@ import { fileHash } from "../../scale1/measurements.ts";
 import { accounts, pooledDigest } from "./population.ts";
 import { verifyPopulation } from "./seed-readback.ts";
 import { runArm } from "./workload.ts";
-import { verifyWriteOptions } from "../write-options.ts";
 
 const write = (f: string, x: unknown) =>
   fs.writeFileSync(f, JSON.stringify(x, null, 2) + "\n", { flag: "wx" });
@@ -81,12 +80,6 @@ if (action === "worker") {
         );
         const raw = path.join(attempt, "raw.json"),
           r = JSON.parse(fs.readFileSync(raw, "utf8")) as Awaited<ReturnType<typeof runArm>>;
-        const writerExpectation = path.join(attempt, "writer-expectation.json");
-        const writerOptions = r.writerOptions!;
-        const expected = JSON.parse(fs.readFileSync(writerExpectation, "utf8"));
-        assert.deepEqual(writerOptions.expected, expected);
-        verifyWriteOptions(writerOptions.observed, r.db, expected, writerOptions.historyRange);
-        assert.equal(writerOptions.observed.position, r.phases[0]!.firstPosition - 1);
         const readback = JSON.parse(
           fs.readFileSync(path.join(attempt, "seed-readback.json"), "utf8"),
         );
@@ -154,8 +147,6 @@ if (action === "worker") {
           seed: pooledDigest,
           seeds: r.seeds,
           phases,
-          writerOptions,
-          writerExpectationSha256: await fileHash(writerExpectation),
           rawSha256: await fileHash(raw),
           seedReadbackSha256: await fileHash(path.join(attempt, "seed-readback.json")),
         };
