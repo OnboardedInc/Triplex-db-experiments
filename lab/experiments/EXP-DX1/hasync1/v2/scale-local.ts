@@ -21,6 +21,8 @@ async function attempt(arm: string, people: number, checkpoint?: string) {
     process.execPath,
     [
       "lab/bin/heavy.mjs",
+      "--poll-ms",
+      "100",
       "--label",
       "DX-HASYNC1-scale-" + arm,
       "--",
