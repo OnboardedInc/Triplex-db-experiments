@@ -54,6 +54,8 @@ Forecast one 162,456,470-fact image at 6,500 verified ingested facts/s, 6.94 h t
 | Full pooled image | At 5,800–6,500 facts/s, 6.94–7.78 h for 162,456,470 facts. |
 | Full split image | At 5,800–6,500 total facts/s, 6.94–7.78 h for the same 162,456,470 facts placed across two databases. |
 
+The 16.25-million-fact predecessor needed 40.0 minutes to ingest and 36.5 more to verify 8,701 claims and feed frames. At equal per-frame rates, full verification adds about 6.1 hours per million-person image after ingest. Before launching the held placement study I now expect 29–34 hours for both layouts, including the audited pilot, restores and timed cells, at USD 31.61–37.06. The guard remains 38 hours and USD 41.42. This extrapolation uses one seed.
+
 ## Single full-size account first
 
 The two field-save arms start from the same verified image. They use the same offers for 150, 120, 300 and 60 s. The reader arm has 64 seats on two cores and 600 active seconds over its four cells. The projected single-account job takes 70–105 min, costing USD 1.27–1.91. The full placement budget above is held until the single-account results are reported. Q106f sets tiered deployment pending a new owner ruling.

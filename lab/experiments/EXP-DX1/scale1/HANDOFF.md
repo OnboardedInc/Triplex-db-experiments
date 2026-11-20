@@ -20,7 +20,7 @@ node --import tsx lab/experiments/EXP-DX1/scale1/control.ts status
 | 4 | Replay the identical tape and image with 64 seats on two cores for 600 s | 2 h |
 | Held | Audited grouped 10k prerequisite, then full pooled and split placement | After reporting the single-account result |
 
-The single-account queue has a seven-hour guard and an expected 70–105 minutes of bench time, about USD 1.27–1.91. The held placement plan is 22–30 hours, with a 38-hour guard and about USD 24–33 expected cost. Its pooled and split restores retain the same logical data, tape and resource placement. The 620/s headroom target requires a separately measured arm if all four placement cells hold. [Forecasts](PREDICTIONS.md) · [Held queue](decision/held-placement.json)
+The single-account queue has a seven-hour guard and an expected 70–105 minutes of bench time, about USD 1.27–1.91. After one measured verification, the held placement plan is forecast at 29–34 hours, with a 38-hour guard and USD 31.61–37.06 expected cost. Its pooled and split restores retain the same logical data, tape and resource placement. The 620/s headroom target requires a separately measured arm if all four placement cells hold. [Forecasts](PREDICTIONS.md) · [Held queue](decision/held-placement.json)
 
 Each audited timed arm reads its actual writer gateway configuration at the restored database cut and binds the options, installed function, source, slot, nonce and clock into the result. The native gate also checks retrievable receipts, full feed changes and pinned field lifetimes. The wider placement queue waits for the single-account result to be collected and reported. The existing Q106f tiered-storage ruling remains an input while the owner clarifies placement.
 
