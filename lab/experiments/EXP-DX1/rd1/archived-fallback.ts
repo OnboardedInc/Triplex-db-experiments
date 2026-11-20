@@ -174,20 +174,26 @@ function stages(r: any) {
     const g = r.gateway.get(h.id);
     const w = wireIntervals(h, read.spans, g.interval);
     if (!w) return;
+    const overlaps = events.filter(
+      (e) => e.start < w.responseWindow.end && e.end > w.responseWindow.start,
+    );
+    const named = new Map<string, Interval[]>();
+    for (const event of overlaps) {
+      const group = named.get(event.name) ?? [];
+      group.push(event);
+      named.set(event.name, group);
+    }
     return {
       ...w.parts,
       route: g.route,
       queue: g.queue,
       workLower: g.work,
       workUpper: g.workUpper,
-      responseOverlap: coveredMs(w.responseWindow, events),
-      gcOverlap: coveredMs(
-        w.responseWindow,
-        events.filter((e) => e.name === "node.gc"),
-      ),
-      replicaApplyOverlap: coveredMs(
-        w.responseWindow,
-        events.filter((e) => e.name === "replica.apply-delta"),
+      responseOverlap: coveredMs(w.responseWindow, overlaps),
+      gcOverlap: coveredMs(w.responseWindow, named.get("node.gc") ?? []),
+      replicaApplyOverlap: coveredMs(w.responseWindow, named.get("replica.apply-delta") ?? []),
+      overlapsByName: Object.fromEntries(
+        [...named].map(([name, group]) => [name, coveredMs(w.responseWindow, group)]),
       ),
     };
   });
@@ -277,10 +283,54 @@ const predict = (g: typeof heavy) => ({
     ((1024 * 1000) / g.rate - g.p * duration) / (1 - g.p),
 });
 type Stage = NonNullable<ReturnType<typeof stages>>;
+// [DX-RD1] Why: the client did retain cumulative decoded text bytes, even though individual response lengths were never sealed.
+// Rejected: treating decoded bytes as HTTP wire bytes or dividing them among the randomly sampled requests.
+function readerCounters(names: readonly string[]) {
+  const keys = ["decodedRows", "decodedTextBytes", "needRequests", "waits", "waitHits"] as const;
+  const totals: Record<(typeof keys)[number], number> = {
+    decodedRows: 0,
+    decodedTextBytes: 0,
+    needRequests: 0,
+    waits: 0,
+    waitHits: 0,
+  };
+  let workerWindows = 0;
+  for (const phase of windows.filter((p: any) => names.includes(p.name))) {
+    const samples = new Map<number, [any, any]>();
+    for (const r of report.readerDiagnostics) {
+      if (
+        r.t < phase.start + report.config.settleS * 1000 ||
+        r.t >= phase.end ||
+        r.diagnostics?.gateway?.length !== 1
+      )
+        continue;
+      const pair = samples.get(r.worker);
+      if (!pair) samples.set(r.worker, [r, r]);
+      else {
+        if (r.t < pair[0].t) pair[0] = r;
+        if (r.t > pair[1].t) pair[1] = r;
+      }
+    }
+    for (const [a, b] of samples.values()) {
+      if (b.t <= a.t) continue;
+      const before = a.diagnostics.gateway[0].reach,
+        after = b.diagnostics.gateway[0].reach;
+      const differences = keys.map((key) => after[key] - before[key]);
+      if (differences.some((d) => !Number.isSafeInteger(d) || d < 0)) continue;
+      workerWindows++;
+      keys.forEach((key, i) => {
+        totals[key] += differences[i]!;
+      });
+    }
+  }
+  return { workerWindows, ...totals };
+}
+
 function summarizeStages(names: readonly string[]) {
   const eligible = complete.filter((r) => names.includes(r.phase));
   const measured = eligible.map((r) => r.stages).filter((r): r is Stage => r !== undefined);
   const exchanges = measured.flatMap((r) => r.exchanges);
+  const activityNames = new Set(exchanges.flatMap((e) => Object.keys(e.overlapsByName)));
   const exchangeTotals = [
     "httpSetup",
     "queueAndWrite",
@@ -302,9 +352,19 @@ function summarizeStages(names: readonly string[]) {
     names,
     eligible: eligible.length,
     measured: measured.length,
+    readerCounters: readerCounters(names),
     exchanges: exchanges.length,
     repairExchanges: exchanges.filter((e) => e.route === "repair").length,
     headersAtLeast50MsAfterGateway: exchanges.filter((e) => e.gatewayEndToHeaders >= 50).length,
+    responseCallbackOverlap: Object.fromEntries(
+      [...activityNames].map((name) => {
+        const values = exchanges.map((e) => e.overlapsByName[name] ?? 0);
+        return [
+          name,
+          { exchanges: values.filter((x) => x > 0).length, meanMsPerMiss: forStage(values) },
+        ];
+      }),
+    ),
     samplesDominatedByHeaderGap: measured.filter(
       (r) => sum(r.exchanges.map((e) => e.gatewayEndToHeaders)) > r.outside / 2,
     ).length,
