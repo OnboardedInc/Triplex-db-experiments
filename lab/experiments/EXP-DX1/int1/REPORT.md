@@ -4,7 +4,7 @@ The read gateway still holds about 62 MiB of live Java objects at 10,000 and 30,
 The transactor committed 211 MiB more to its Java heap while its object-cache charge stayed flat. A saved ten-account run reached 5.37 GiB in its 6 GiB container.
 The final Mac import stopped at 49,469 confirmed people after an ambiguous write. We have two complete profiles and no measured resident plateau.
 The writer, erasure safeguards, fallback reader and Publish priority are on the shared branch. Eight native suites and all 13 checks in the small erasure regression passed.
-The pooled campaign has forecasts for all eight priorities. The producer and collector agreed on the saved zero-reader arm. The loaded and field arms are still being checked.
+The pooled campaign has forecasts for all eight priorities. The saved frozen baseline matched, and the loaded arm verified 50 local samples against the source. The field proof is still due.
 Lean storage still has open erasure and native query gaps. The campaign must keep those paths out of the judged run.
 
 ## One-database work
