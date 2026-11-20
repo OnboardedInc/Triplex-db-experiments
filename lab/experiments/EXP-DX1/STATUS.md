@@ -3350,3 +3350,27 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   Serial and have no ZGC arm. DX-JVM1 part 2 assigned (xhigh): Java 25 images selectable by one setting, all
   correctness gates on Java 25, G1 and generational ZGC arms for all three processes with measured memory needs,
   three server arms of at most 26 minutes each, launch settings merged onto `exp/DX-INT1`.
+
+## 2026-11-20 18:30 UTC (13:30 local, 2026-11-20): [PROTOCOL] no measurement leases on the Mac; ten builders stopped and resumed; DX-PREP1 part 4 in
+
+- **What was wrong.** The measurement lease (`heavy.mjs --measure-holder`, `acquireMeasureLease`) stops every new
+  heavy command and stack start until the holder has all four tokens and finishes. With fifteen builders, each
+  lease waited behind the longest running job (one 50,000-person memory arm had run over an hour) while a dozen
+  installs, image builds and correctness gates queued behind it; as each lease ended the next builder took it
+  within seconds (DX-HA1, DX-V01, DX-ERASE1, DX-JVM1, DX-PLAY1 in turn, observed 13:25 to 13:40 local). DX-TAIL1
+  recorded 7 h 15 min of such waiting in one part; DX-PREP1 could not run four correctness gates in over two hours.
+- **Rule from 13:40 local.** No measurement lease on the Mac. Mac work runs under one ordinary heavy token, small
+  and short, with any time labelled diagnostic; anything that needs a quiet machine goes into a server command.
+  This does not weaken the quiet-verdict rule: no Mac number is a verdict now that bare-metal servers give timings.
+  The file `lab/locks/NO-MEASURE-LEASE` marks the machine; DX-V01 is to make `heavy-lock.mjs` honour it on its
+  branch for the owner of `exp/DX-INT1` to take.
+- **Stopped and resumed with the rule** (same sessions, same parts): DX-HA1, DX-V01, DX-AGE1, DX-TAIL1, DX-ERASE1,
+  DX-JVM1, DX-ACT1, DX-HASYNC1, DX-PLAY1. DX-W1 and DX-THIN1 were left running (ordinary tokens) and get the rule at
+  their next handover. DX-AGE1 was also told the campaign stops at 1 billion (Sam).
+- **DX-PREP1 part 4 (`e5f6e754e`; runnable server source `7ca8525a9`).** The server comparison of the grouped
+  writer against the per-person writer exists (forecast 383 saves per second at one logical save per append, 697 at
+  two; worst-account p99 27.34 / 27.48 / 28.00 / 28.36 ms at 50 / 235 / 394 / 620 offered if two per append hold);
+  fair-turn rule passes four tests (a ready quiet account waits behind at most one neighbour append; a storage
+  stall can extend it). Fresh census, PostgreSQL restart, public query and erasure gates unverified (blocked by the
+  lease jam). Part 5 assigned: those gates without the lease, merge with `exp/DX-INT1`, compare the server result
+  with every forecast when it lands.
