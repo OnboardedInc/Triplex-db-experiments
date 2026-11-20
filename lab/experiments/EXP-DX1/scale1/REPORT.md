@@ -1,7 +1,7 @@
 # DX-SCALE1 · deep accounts
 
 Deep reader goodput is unmeasured. Deep and thin commit p99 were 30.99 and 32.84 ms over the first 900 seconds. The archived deep tail aligned with six write-gateway GC pauses. [Commit anatomy](COMMIT-ANATOMY.md)
-One account of 100,000 people had commit p99 with zero readers 63.23 · 2364 [42.49, 71.17] ms at 39.4/s. PostgreSQL added 723.42 bytes/fact. [Decision cells](DECISION-RESULTS.md)
+One account of 100,000 people had commit p99 with zero readers 63.23 · 2364 [42.49, 71.17] ms at 39.4/s and with readers 46.85 · 2364 [31.87, 59.90] ms at 39.4/s. Read p99 was 3.47 · 3360 [3.34, 3.82] ms at that rate. PostgreSQL added 723.42 bytes/fact. [Decision cells](DECISION-RESULTS.md)
 Full-size placement remains unmeasured. [Decision cells](DECISION-RESULTS.md)
 The owner's release target is under one second. Page-guard activation for one account is unmeasured. Activation among ten is unmeasured.
 The first shared resource to reach its limit is still unknown.

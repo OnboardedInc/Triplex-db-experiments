@@ -86,3 +86,43 @@ Cgroup peaks in GiB through each sampled cell, including that arm's restore and 
 | r0-4p9 | 1.33 | 6.00 | 1.40 | 0.43 |
 | r0-23p5 | 2.34 | 6.00 | 1.45 | 0.45 |
 | r0-39p4 | 2.45 | 6.00 | 1.46 | 0.45 |
+
+## arm-d7-single-read-c
+
+100000 deep people per account, single layout, individual writer with 64 reader seats. Source `0ac94040950bff80974e1f0cc21c4c73f914b3d5`. Audited write path.
+
+| Cell | Offered/s | Durable ACKs/s (n) | Pre-dispatch expiry | Missing | Refused / uncertain / recovered | p50 ms | p99 ms | Quiet save p99 ms | Reader p99 ms | Feed p99 ms | ACK / disposition drain ms |
+| --- | ---: | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | ---: |
+| r0-3p5 | 3.50 | 3.50 (n=525, 90% [3.43, 3.58]) | 0 | 0 | 0 / 0 / 0 | 11.26 (n=525, 90% [10.56, 11.90]) | 74.24 (n=525, 90% [63.74, 101.89]) | 74.24 (n=525, 90% [64.00, 101.89]) | 10.62 (n=9120, 90% [9.15, 12.73]) | 27.01 (n=525, 90% [24.83, 42.49]) | 0.00 / 0.00 |
+| r0-4p9 | 4.90 | 4.90 (n=588, 90% [4.83, 4.97]) | 0 | 0 | 0 / 0 / 0 | 4.93 (n=588, 90% [4.80, 5.09]) | 33.79 (n=588, 90% [20.35, 40.45]) | 33.79 (n=588, 90% [27.90, 40.45]) | 4.45 (n=7200, 90% [4.05, 4.89]) | 26.11 (n=588, 90% [24.96, 29.05]) | 0.00 / 0.00 |
+| r0-23p5 | 23.50 | 23.50 (n=7050, 90% [23.45, 23.55]) | 0 | 0 | 0 / 0 / 0 | 3.57 (n=7050, 90% [3.55, 3.60]) | 34.05 (n=7050, 90% [25.73, 37.63]) | 34.05 (n=7050, 90% [25.73, 37.38]) | 4.13 (n=18720, 90% [3.95, 4.42]) | 25.21 (n=7050, 90% [25.09, 25.21]) | 0.00 / 0.00 |
+| r0-39p4 | 39.40 | 39.40 (n=2364, 90% [39.23, 39.58]) | 0 | 0 | 0 / 0 / 0 | 3.34 (n=2364, 90% [3.29, 3.39]) | 46.85 (n=2364, 90% [31.87, 59.90]) | 46.85 (n=2364, 90% [31.87, 60.16]) | 3.47 (n=3360, 90% [3.34, 3.82]) | 25.09 (n=2364, 90% [25.09, 25.21]) | 0.00 / 0.00 |
+
+| Cell | SDK timer p99 ms | Admission p99 ms | Request send p99 ms | Gateway queue p99 ms | Native entry p99 ms | Native compute p99 ms | Logical saves / native tx |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| r0-3p5 | 1.90 (n=525, 90% [1.81, 1.98]) | 1.32 (n=525, 90% [0.82, 3.33]) | 2.29 (n=525, 90% [1.19, 3.74]) | unmeasured | 8.03 (n=525, 90% [6.01, 27.01]) | 55.30 (n=525, 90% [49.15, 84.99]) | 525 / 525 |
+| r0-4p9 | 1.92 (n=588, 90% [1.74, 2.06]) | 0.66 (n=588, 90% [0.30, 2.11]) | 1.61 (n=588, 90% [0.87, 1.98]) | unmeasured | 4.01 (n=588, 90% [4.01, 6.01]) | 7.39 (n=588, 90% [5.21, 8.70]) | 588 / 588 |
+| r0-23p5 | 1.87 (n=7050, 90% [1.82, 1.90]) | 0.18 (n=7050, 90% [0.18, 0.19]) | 0.52 (n=7050, 90% [0.43, 0.69]) | unmeasured | 3.01 (n=7050, 90% [3.01, 4.01]) | 11.01 (n=7050, 90% [10.56, 11.46]) | 7050 / 7050 |
+| r0-39p4 | 1.86 (n=2364, 90% [1.82, 1.93]) | 0.18 (n=2364, 90% [0.18, 0.20]) | 0.31 (n=2364, 90% [0.29, 0.35]) | unmeasured | 29.05 (n=2364, 90% [16.06, 37.12]) | 11.90 (n=2364, 90% [10.37, 13.38]) | 2364 / 2364 |
+
+Separate WAL latency is unmeasured. Per-cell cgroup, storage and sender dose records are in the compact evidence.
+
+Cgroup peaks in GiB through each sampled cell, including that arm's restore and startup.
+
+| Cell | Transactor | PostgreSQL | Write gateway | Read gateway |
+| --- | ---: | ---: | ---: | ---: |
+| r0-3p5 | 1.19 | 6.00 | 1.39 | 2.10 |
+| r0-4p9 | 1.36 | 6.00 | 1.39 | 2.18 |
+| r0-23p5 | 2.33 | 6.00 | 1.45 | 2.34 |
+| r0-39p4 | 2.55 | 6.00 | 1.47 | 2.34 |
+
+## Matched single-account reader dose
+
+Latency differences compare the two restores of the sealed image from arm-d7-single-seed. Each condition ran once.
+
+| Offered/s | Save p99 with readers / zero (n / n) | Feed p99 with readers / zero (n / n) |
+| ---: | --- | --- |
+| 3.5 | 1.12× (525 / 525) | 1.08× (525 / 525) |
+| 4.9 | 0.97× (588 / 588) | 1.04× (588 / 588) |
+| 23.5 | 1.03× (7050 / 7050) | 1.01× (7050 / 7050) |
+| 39.4 | 0.74× (2364 / 2364) | 1.01× (2364 / 2364) |
