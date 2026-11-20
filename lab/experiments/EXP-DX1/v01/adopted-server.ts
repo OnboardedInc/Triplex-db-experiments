@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { scaleHost, startScaleStack } from "../scale1/bench.ts";
 import { restoreDump } from "../scale1/seed-image.ts";
-import { adoptedArm, jsonFile } from "./adopted.ts";
+import { adoptedArm, jsonFile, quietPair } from "./adopted.ts";
 import { openScaleSeal, hex } from "./adopt.ts";
 import { stackOptions, type Age, type Writer } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
@@ -49,8 +49,9 @@ for (const loaded of [false, true]) {
     assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
     const head = expected ? await verifyAged(expected, out, engines.pg!.address) : seed.scope.cut;
     assert(!stopping && Date.now() + 8 * 60_000 < end);
-    await adoptedArm(out, source, { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw },
-      seed, writer as Writer, loaded, false, head);
+    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw };
+    const arm = await adoptedArm(out, source, peer, seed, writer as Writer, loaded, false, head);
+    if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
   } finally {
     scaleHost.clean(out, slot);
   }

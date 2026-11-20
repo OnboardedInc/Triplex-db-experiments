@@ -24,6 +24,10 @@ The first image failed because the merged Docker recipe's global base argument f
 
 [Server command](SERVER.md) pins the application and shows both age inputs. The 12-minute offered pair yields only components of P1–P4. Full-world straddle and recovery, commit band coverage, durable effects and crash resume, and matched history bytes remain open. No full-size restore, Java 25 campaign or AGE1 sealed cut was verified here.
 
+## P6 audit
+
+The adapter runs the published SCALE1 per-account offer and pinned read functions. The renderer requires the same live slot, gateway challenge and database, exact gapless arm cuts and identical quiet subject, size and offer offsets. It reopens the raw journal and write bytes through their arm digests. The standalone ratios measure dispatch-to-feed and record sample denominators. They do not supply a durable-effect or full P6 verdict.
+
 ## Part 2 Publish adapter check
 
 The existing INT1 `actv-lazy/join/server.ts 64 --receipt-local` producer and its collector ran in a private K stack with an ordinary token. Its three rate windows offered 0, 3.5 and 23.5 saves per second. Their durable receipt observations were 293.360, 207.611 and 184.059 ms. Exact first-read observations were 410.365, 303.841 and 207.641 ms. The collector reported zero deadline misses with its original source and slot binding. These clocks are diagnostic. The volume was removed.
