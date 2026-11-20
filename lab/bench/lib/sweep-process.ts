@@ -24,6 +24,9 @@ process.on("message", async (m: any) => {
       comp,
       composition: "memory",
       workers: 1,
+      // [DX-BM1] Why: the crash/restart verifier compares the actual evaluated world across processes.
+      // Rejected: comparing an absent field after the timed worker switched to transferring only its digest.
+      includeRecoveryWorlds: true,
       onPage: async (records, page) => {
         await rpc("publish", [records, page]);
       },

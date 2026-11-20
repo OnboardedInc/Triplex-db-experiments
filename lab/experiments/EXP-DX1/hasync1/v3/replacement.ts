@@ -27,12 +27,18 @@ function retireAndReplace(draft: Input, predecessor: Input, pin: Receipt): Input
   };
 }
 
-export async function replacementProbe(pair: SyncPair) {
+export async function replacementProbe(pair: SyncPair, shared?: Account) {
   const e = pair.s.e,
     ingress = pair.route!.url;
-  const ac = new Account(e.prefix + "-replace", ingress, pair.reader);
+  const key = e.prefix + "-replace";
+  const ac = new Account(key, ingress, pair.reader, key, timeouts.request, shared?.scope);
   try {
-    await ac.open();
+    if (shared) {
+      const head = await ac.r.basis(ac.db);
+      assert.equal(ac.db, shared.db);
+      ac.schema = shared.schema;
+      ac.cursor = String(BigInt(head.t.v) + 1n);
+    } else await ac.open();
     const predecessor = ac.intent("before");
     const old = await ac.send(predecessor);
     await ac.pinned(old);
@@ -62,7 +68,8 @@ export async function replacementProbe(pair: SyncPair) {
         });
         assert.equal(held.status, 200);
         const original = ac.remember(input, held.reply);
-        assert.equal(original.position.v, "2");
+        assert(BigInt(original.position.v) > BigInt(old.position.v));
+        if (!shared) assert.equal(original.position.v, "2");
         const survivor = await wait("replacement is readable on the standby", 5000, async () => {
           const record = await ac.r.operation(ac.db, input.operationId);
           return record.status === "committed" ? immutable(record) : undefined;
@@ -71,7 +78,7 @@ export async function replacementProbe(pair: SyncPair) {
         const rows = await ac.r.rows(ac.db, {
           entityIds: [input.rows[0]!.entity_id],
           basisT: original.t.v,
-          basis: { recordedPosition: 2, validAt: 10 },
+          basis: { recordedPosition: Number(original.position.v), validAt: 10 },
         });
         assert.deepEqual(
           rows.map((r) => [r.id, r.value_string]),
@@ -160,8 +167,22 @@ export async function replacementProbe(pair: SyncPair) {
           retryClient.close();
         }
 
-        const feed = await ac.r.log(ac.db, ac.cursor);
-        const firstCommit = feed.rows.find((row) => row.kind === "commit")!;
+        let cursor = ac.cursor;
+        const commits = [];
+        for (;;) {
+          const page = await ac.r.log(ac.db, cursor, 32);
+          assert.equal(page.fromT, cursor);
+          for (const row of page.rows)
+            if (
+              row.kind === "commit" &&
+              (!shared || row.transaction.operationId.startsWith(key + "-"))
+            )
+              commits.push(row);
+          if (!page.rows.length) break;
+          assert(BigInt(page.nextT) > BigInt(cursor));
+          cursor = page.nextT;
+        }
+        const firstCommit = commits[0]!;
         ac.checkEntry(firstCommit);
         const expectedReplacement = {
           t: original.t.v,
@@ -188,17 +209,19 @@ export async function replacementProbe(pair: SyncPair) {
               ),
           },
         };
-        e.write("replacement-feed", { binding, expectedReplacement, feed });
-        assert.deepEqual(
-          feed.rows.filter((row) => row.kind === "commit"),
-          [firstCommit, expectedReplacement],
-        );
-        assert.equal((await ac.r.log(ac.db, feed.nextT)).rows.length, 0);
-        assert.equal((await ac.r.basis(ac.db)).position.v, original.position.v);
+        e.write("replacement-feed", { binding, expectedReplacement, commits, cursor });
+        assert.deepEqual(commits, [firstCommit, expectedReplacement]);
+        if (!shared) assert.equal((await ac.r.basis(ac.db)).position.v, original.position.v);
         const oracle = await replayEvidence(e, ac, [predecessor, input], "replacement");
         const result = { binding, request: wire.sha256, first, receipt, oracle, operations: 2 };
         e.write("replacement-settled", result);
-        return result;
+        return {
+          result,
+          extra: [
+            { receipt: old, entry: firstCommit },
+            { receipt: original, entry: expectedReplacement },
+          ],
+        };
       },
       close() {
         ac.close();

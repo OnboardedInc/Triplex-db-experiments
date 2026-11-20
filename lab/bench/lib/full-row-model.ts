@@ -4,6 +4,7 @@ import { Digest } from "./rng.ts";
 import { ids, memberOf } from "./world.ts";
 import type { Receipt } from "./composition.ts";
 type Version = {
+  owner?: string;
   row?: any;
   from: number;
   until: number;
@@ -20,8 +21,17 @@ export class FullRowModel {
   // [DX-T1-2] Why: the cached digest already covers every canonical row field; visibility traversal needs only these scalars.
   // Rejected: retain metadata/Option wrappers after hashing (writer GC), or change the expected digest or temporal rules.
   private readonly compact: boolean;
-  constructor(compact = process.env.DX_MODEL_COMPACT === "1") {
+  private readonly dependents: Map<string, Set<number>> | undefined;
+  private readonly revisions = new Map<number, number>();
+  constructor(compact = process.env.DX_MODEL_COMPACT === "1", live = false) {
     this.compact = compact;
+    this.dependents = live ? new Map() : undefined;
+  }
+  revision(subject: number) { return this.dependents ? this.revisions.get(subject) ?? 0 : undefined; }
+  private changed(entity: string | undefined) {
+    if (entity === undefined) return;
+    for (const subject of this.dependents?.get(entity) ?? [])
+      this.revisions.set(subject, (this.revisions.get(subject) ?? 0) + 1);
   }
   private seen = new Set<number>();
   private entities = new Map<string, Version[]>();
@@ -59,6 +69,7 @@ export class FullRowModel {
         const old = this.assertions.get(op.id);
         if (!old) throw Error(`Missing expected retraction ${op.id}`);
         old.until = receipt.instant;
+        this.changed(old.owner);
       } else if (op.op === "assert") {
         const source = pool
           .get(
@@ -101,6 +112,8 @@ export class FullRowModel {
             }
           : { row, from: receipt.instant, until: Infinity, a: d.a, b: d.b };
         const body = this.entities.get(row.entityId) ?? [];
+        if (this.dependents) v.owner = row.entityId;
+        this.changed(row.entityId);
         body.push(v);
         this.entities.set(row.entityId, body);
         this.assertions.set(row.id, v);
@@ -136,6 +149,13 @@ export class FullRowModel {
           todo.push(reference);
         }
       }
+    // [DX-RD1] Why: late additions, ends and new references invalidate any expected root that could traverse the changed entity.
+    // Rejected: invalidating every subject for every unrelated receipt during live checking, or watching only the current world.
+    if (this.dependents) for (const id of seen) {
+      const roots = this.dependents.get(id) ?? new Set<number>();
+      roots.add(subject);
+      this.dependents.set(id, roots);
+    }
     return { record: [...record].sort((a, b) => a - b), valid: [...valid].sort((a, b) => a - b) };
   }
   expected(subject: number, recordedAt: number, validAt: number): string {

@@ -18,6 +18,76 @@ export function suffixDelta<T>(window: readonly T[], total: number, previous: nu
   return { from: previous, start, end: total, reset, added: window.slice(reset ? 0 : previous! - start) };
 }
 
+// [DX-RD1] Why: no reader can see beyond the last 2,000 ACKs, and a delta owes only newly visible entries.
+// Rejected: scanning the full receipt history on every idle or populated tick.
+export class ReceiptBasisRing<T extends { at: number }> {
+  length = 0;
+  private readonly capacity = 2_000;
+  private readonly values: T[] = new Array(this.capacity);
+
+  get latest(): T | undefined { return this.length ? this.get(this.length - 1) : undefined; }
+
+  push(receipt: T) {
+    if (!Number.isFinite(receipt.at) || (this.latest && receipt.at < this.latest.at)) throw Error("ACK receipt clock regressed");
+    this.values[this.length++ % this.capacity] = receipt;
+  }
+
+  private get(i: number) { return this.values[i % this.capacity]!; }
+
+  private start(now: number) {
+    if (this.length === 0) return 0;
+    let lo = Math.max(0, this.length - this.capacity), hi = this.length - 1;
+    // Include equality as in the original now - ackAt <= hour comparison. Keep the newest when all expired.
+    while (lo < hi) {
+      const mid = lo + Math.floor((hi - lo) / 2);
+      if (now - this.get(mid).at <= 3_600_000) hi = mid;
+      else lo = mid + 1;
+    }
+    return lo;
+  }
+
+  private slice(start: number) {
+    return Array.from({ length: this.length - start }, (_, i) => this.get(start + i));
+  }
+
+  snapshot(now: number) { return this.slice(this.start(now)); }
+
+  delta(now: number, previous: number | null): SuffixDelta<T> {
+    if (previous !== null && (!Number.isSafeInteger(previous) || previous < 0 || previous > this.length))
+      throw Error("Invalid basis delta cursor");
+    const start = this.start(now), reset = previous === null || previous < start;
+    return { from: previous, start, end: this.length, reset, added: this.slice(reset ? start : previous!) };
+  }
+}
+
+// [DX-RD1] Why: expiry visits only active ACKs and the wire still uses first-touch order.
+// Rejected: reordering hot subjects by last update (would give the same RNG draw a different subject).
+export class HotSubjects {
+  private readonly firstTouch = new Map<number, number>();
+  private readonly active = new Map<number, number>();
+  private cached: number[] = [];
+  private dirty = false;
+
+  update(subject: number, at: number) {
+    if (!this.firstTouch.has(subject)) this.firstTouch.set(subject, this.firstTouch.size);
+    if (!this.active.delete(subject)) this.dirty = true;
+    this.active.set(subject, at);
+  }
+
+  snapshot(now: number) {
+    for (const [subject, at] of this.active) {
+      if (now - at <= 60_000) break;
+      this.active.delete(subject);
+      this.dirty = true;
+    }
+    if (this.dirty) {
+      this.cached = [...this.active.keys()].sort((a, b) => this.firstTouch.get(a)! - this.firstTouch.get(b)!);
+      this.dirty = false;
+    }
+    return this.cached;
+  }
+}
+
 export class BasisWindow<T> {
   private start = 0;
   private end: number | null = null;

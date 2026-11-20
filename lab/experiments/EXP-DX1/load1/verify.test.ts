@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import type { CompositionHandle } from "../../../bench/lib/composition.ts";
+import { SerialBudget } from "./budget.ts";
+import { Snapshot } from "./snapshot.ts";
 import { windowed } from "../../../bench/lib/load-window.ts";
-import { frames, identity } from "./source.ts";
+import { frames, identity, type Frame } from "./source.ts";
 import { record } from "./oracle.ts";
 
 test("a failed frame drains all admitted work and schedules no new frame", async () => {
@@ -63,4 +69,86 @@ test("same-count swapped facts, stale command bindings and reused assertion IDs 
   assert.throws(() =>
     record(f, m, { ...r, changes: r.changes.map((c) => ({ ...c, tripleId: "one" })) }),
   );
+});
+
+test("time pacing reduces over-budget frames and rejects a sustained minimum-frame stall", () => {
+  const budget = new SerialBudget(8);
+  for (let i = 0; i < 8; i++) budget.observe(8, 3);
+  const before = budget.next()!;
+  assert(before > 10);
+  budget.observe(12, 25);
+  assert(budget.next()! < before);
+  for (let i = 0; i < 6; i++) budget.observe(8, 9);
+  assert.equal(budget.next(), undefined);
+});
+test("an unresolved adaptive frame keeps its original boundary and receipt on reopen", async () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "dx-load-budget-"));
+  const saved = new Map<string, any>();
+  let sends = 0;
+  const fake = {
+    scopeName: "budget-scope",
+    backend: { name: "datomic" },
+    async transactionByCommand(command: string) {
+      return { ok: true, value: saved.get(command) };
+    },
+    async transact(operations: Frame["operations"], meta: ReturnType<typeof identity>) {
+      if (saved.has(meta.commandId)) return { ok: false, tag: "Duplicate" };
+      const position = ++sends,
+        instant = 1000 + position,
+        txId = "tx" + position;
+      const changes = operations.map((op, i) => ({
+        ...op,
+        tripleId: "id" + position + "-" + i,
+        recordedAt: instant,
+        assertionTxId: txId,
+      }));
+      saved.set(meta.commandId, { ...meta, position, instant, txId, changes });
+      return {
+        ok: true,
+        value: {
+          position,
+          instant,
+          txId,
+          triples: changes.map((o) => ({
+            ...o,
+            id: o.tripleId,
+            validTo: { _tag: "None" },
+            txId: { value: txId },
+          })),
+        },
+      };
+    },
+  } as unknown as CompositionHandle;
+  const open = (budgetMs: number) =>
+    Snapshot.open(fake, "thin", 30, 32, path.join(dir, "cursor.sqlite"), { budgetMs });
+  try {
+    let writer = await open(8);
+    const before = writer.nextFrame(32)!;
+    assert(before.end > 1);
+    await assert.rejects(
+      writer.write(before, {
+        beforeCheckpoint() {
+          throw Error("lost checkpoint");
+        },
+      }),
+      /lost checkpoint/,
+    );
+    assert.equal(writer.cursor(), 0);
+    const durable = await fake.transactionByCommand(
+      identity(writer.scope, writer.source, 32, before).commandId,
+    );
+    assert(durable.ok && durable.value);
+    writer.close();
+    await assert.rejects(open(16), /different source or storage/);
+    writer = await open(8);
+    assert.deepEqual(writer.nextFrame(1), before);
+    const after = await writer.write(writer.nextFrame(1)!);
+    assert.equal(after.txId, durable.value.txId);
+    assert.equal(after.position, durable.value.position);
+    assert.equal(sends, 2);
+    assert.equal(writer.cursor(), before.end);
+    writer.close();
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

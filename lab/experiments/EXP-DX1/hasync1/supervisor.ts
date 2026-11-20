@@ -50,6 +50,10 @@ export type FenceProof = {
 };
 type ExpectedFence = Omit<FenceProof, "method">;
 export type Durability = "two-copy" | "single-copy-after-fence";
+export function recoveryPolicy(setting = process.env["HA1_RECOVERY_POLICY"] ?? "B"): Durability {
+  assert(setting === "A" || setting === "B", "HA1_RECOVERY_POLICY must be A or B");
+  return setting === "A" ? "single-copy-after-fence" : "two-copy";
+}
 export type Port = {
   identity: ExpectedFence & { timeline: number };
   seal(): void;

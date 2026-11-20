@@ -46,6 +46,8 @@ export class SyncPair {
   readonly transitions: { stage: string; at: number }[] = [];
   route?: Awaited<ReturnType<typeof ingress>>;
   account?: Account;
+  beforeReplacement?: () => Promise<void>;
+  replacement?: Awaited<ReturnType<SyncPair["startReplacement"]>>;
   cluster = "";
   timeline = 0;
   writer = "";
@@ -558,6 +560,11 @@ export class SyncPair {
   }
   async activate(policy: Durability, kind: "fault" | "planned") {
     if (policy === "two-copy" && kind === "planned") await this.rejoin();
+    if (policy === "two-copy" && kind === "fault") {
+      // [DX-HASYNC1] Why: preserve protected acknowledgements across recovery by keeping ingress sealed through replacement. Rejected: opening on the promoted copy while its replica catches up.
+      await this.beforeReplacement?.();
+      this.replacement = await this.startReplacement();
+    }
     if (policy === "single-copy-after-fence") {
       await this.sql("target", "ALTER SYSTEM SET synchronous_standby_names=''");
       assert.equal(await this.sql("target", "select pg_reload_conf()"), "t");
@@ -641,11 +648,11 @@ export class SyncPair {
     s.e.write("old-disk-boot", { nonce: s.e.nonce, slot: s.e.slot, source: s.e.source, ...result });
     return result;
   }
-  async rebuildStandby() {
+  async startReplacement() {
     const s = this.s;
-    const ac = this.account!;
     const old = await s.view("pg");
-    assert(!old.State.Running && old.State.ExitCode === 74);
+    assert(!old.State.Running && (await this.sql("target", "select pg_is_in_recovery()")) === "f");
+    assert(old.Mounts.some((m: { Name: string }) => m.Name === this.primaryData));
     await s.remove("pg");
     const from = s.storageHost("target", s.a);
     const conn =
@@ -693,6 +700,17 @@ export class SyncPair {
       );
       return row === "on|on|FIRST 1 (sync_a)|streaming|sync" ? row : undefined;
     });
+    const mbr = s.members.get("pg")!;
+    assert(mbr.id !== old.Id && !mbr.volumes.includes(this.primaryData));
+    const log = await mbr.site.docker(["logs", "--tail", "35", mbr.id]);
+    const m = /^backup-kib (\d+)\s/m.exec(log);
+    assert(m && log.includes("backup successfully verified"));
+    return { old: old.Id, new: mbr.id, copiedMs, bytes: Number(m[1]) * 1024, expected, start };
+  }
+  async verifyReplacement(copy: Awaited<ReturnType<SyncPair["startReplacement"]>>) {
+    const s = this.s;
+    const ac = this.account!;
+    assert.equal(s.members.get("pg")!.id, copy.new);
     const receipt = await ac.send(ac.intent("first-reprotected", 3));
     await ac.pinned(receipt);
     const cut = await this.sql("target", "select pg_current_wal_flush_lsn()");
@@ -707,19 +725,14 @@ export class SyncPair {
         return v && lsn(v) >= lsn(cut) ? v : undefined;
       },
     );
-    const mbr = s.members.get("pg")!;
-    assert(mbr.id !== old.Id && !mbr.volumes.includes(this.primaryData));
-    const log = await mbr.site.docker(["logs", "--tail", "35", mbr.id]);
-    const m = /^backup-kib (\d+)\s/m.exec(log);
-    assert(m && log.includes("backup successfully verified"));
     const result = {
-      old: old.Id,
-      new: s.members.get("pg")!.id,
+      old: copy.old,
+      new: copy.new,
       cluster: this.cluster,
-      copiedMs,
-      protectedMs: performance.now() - start,
-      bytes: Number(m[1]) * 1024,
-      expected,
+      copiedMs: copy.copiedMs,
+      protectedMs: performance.now() - copy.start,
+      bytes: copy.bytes,
+      expected: copy.expected,
       flush,
       receipt,
     };

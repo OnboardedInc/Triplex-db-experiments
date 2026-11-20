@@ -76,7 +76,13 @@ const decodeChange = (value: unknown): TransactionChange | undefined => {
   }
   const candidate = value as Record<string, unknown>;
   if (
-    (candidate["op"] !== "assert" && candidate["op"] !== "retract") ||
+    (candidate["op"] !== "assert" &&
+      candidate["op"] !== "retract" &&
+      candidate["op"] !== "erase") ||
+    (candidate["op"] === "erase" &&
+      ("value" in candidate ||
+        !Number.isSafeInteger(candidate["erasureSeq"]) ||
+        Number(candidate["erasureSeq"]) < 1)) ||
     typeof candidate["tripleId"] !== "string" ||
     typeof candidate["entityId"] !== "string" ||
     typeof candidate["attribute"] !== "string" ||

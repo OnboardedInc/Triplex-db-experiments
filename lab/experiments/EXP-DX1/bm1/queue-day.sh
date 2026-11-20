@@ -5,7 +5,8 @@ set -euo pipefail
 
 mode=${1:---plan}
 if [[ $mode == --plan ]]; then
-  printf '%s\n' 'Prepare, run three guarded 100k activations with 256 live readers, then one full new-sender v3 pair on six reader cores.'
+  printf '%s\n' 'Prepare, seal one pristine 100k seed, run three guarded activations, then one full new-sender v3 pair on six reader cores.'
+  printf '%s\n' 'Use --launch-pair for the pair alone or --launch-guarded for the seed and guarded series.'
   printf '%s\n' 'Run as root from the named pushed checkout: queue-day.sh --launch BATCH UTC_CUTOFF'
   exit
 fi
@@ -40,7 +41,7 @@ release_bench() {
   local temporary running kind item remaining slots tag child
   running=$(timeout 15s docker ps -q) || return 1
   [[ -z $running && ! -e $day/active-item && ! -e $work/state/locks/measure ]] || return 1
-  for item in guarded pair; do
+  for item in seed guarded pair; do
     for kind in containers networks volumes; do
       remaining=$(owned_resources "$item" "$kind") || return 1
       [[ -z $remaining ]] || return 1
@@ -80,7 +81,7 @@ for file in sorted(pathlib.Path(sys.argv[1]).glob('*-request.json')):
     print(r['slot'])
 GUARDED_SLOTS
       ;;
-    smoke|activation-a|activation-b) printf '%s\n' "$prefix-$1" ;;
+    seed|smoke|activation-a|activation-b) printf '%s\n' "$prefix-$1" ;;
     pair) printf '%s\n' "$prefix-pair-"off-before "$prefix-pair-"zero "$prefix-pair-"ladder "$prefix-pair-"off-after ;;
     *) return 2 ;;
   esac
@@ -262,13 +263,16 @@ run_item() {
   use_checkout
   configure_placement
   case $item in
+    seed)
+      DX_BM1_PRISTINE_BATCH=$batch DX_ACTIVATION_STOP_AT=$item_stop bash "$t1/activation.sh" --execute "$prefix-seed" 100000 seed-only no-live ;;
     smoke)
       DX_ACTIVATION_STOP_AT=$item_stop bash "$t1/activation.sh" --execute "$prefix-smoke" 1000 seed live ;;
     activation-a|activation-b)
       export DX_ACTIVATION_RETAINED_RUN=$root/queue-20261118r/scale/state/evidence/DX-T1/tx2-dxt1-bm1-20261118d-activation
       DX_ACTIVATION_STOP_AT=$item_stop bash "$t1/activation.sh" --execute "$prefix-$item" 100000 retained live ;;
     guarded)
-      DX_BM1_GUARDED_BATCH=$batch node lab/bin/heavy.mjs --label DX-BM1-guarded -- node --experimental-strip-types lab/experiments/EXP-DX1/act1/bench.ts --execute ;;
+      DX_BM1_PRISTINE_BATCH=$batch DX_BM1_GUARDED_BATCH=$batch DX_BM1_AFTER_GUARDED="$(cat "$logs/after-guarded.txt")" \
+        node lab/bin/heavy.mjs --label DX-BM1-guarded -- node --experimental-strip-types lab/experiments/EXP-DX1/act1/bench.ts --execute ;;
     pair)
       DX_NS_PROFILE=v3 DX_STUDY_LEVEL=summary bash "$t1/study.sh" "$prefix-pair" --idle-keep none --receipt-capture replica-worker --expected-state-retention worker-journal ;;
     *) exit 2 ;;
@@ -279,19 +283,20 @@ case $mode in
   --item) [[ $# == 5 && -d $logs ]] || exit 2; run_item "$4" "$5"; exit ;;
   --cleanup) [[ $# == 4 || ($# == 5 && $5 == retry) ]] && [[ -d $logs ]] || exit 2; cleanup_item "$4" "${5:-first}"; exit ;;
   --reconcile) [[ $# == 3 ]] || exit 2; reconcile_controller; exit ;;
-  --launch)
+  --launch|--launch-pair|--launch-guarded)
     [[ $# == 3 && ! -e $day && $runner != *[[:space:]]* ]] || exit 2
     state=$(systemctl show triplex-drv1-wait -p ActiveState --value)
     [[ $state == inactive || $state == failed ]] || exit 75
     lifetime=$((cutoff - $(date +%s) + 180))
     ((lifetime > 600)) || exit 75
+    run_mode=${mode/--launch/--run}
     exec systemd-run --no-block --unit="triplex-bm1-$batch-queue" \
       --property=KillMode=control-group --property="RuntimeMaxSec=${lifetime}s" \
       --property=TimeoutStopSec=180s \
       --property="ExecStopPost=/bin/bash $runner/queue-day.sh --reconcile $batch $stop" \
-      /bin/bash "$runner/queue-day.sh" --run "$batch" "$stop"
+      /bin/bash "$runner/queue-day.sh" "$run_mode" "$batch" "$stop"
     ;;
-  --run) [[ $# == 3 ]] || exit 2 ;;
+  --run|--run-pair|--run-guarded) [[ $# == 3 ]] || exit 2 ;;
   *) exit 2 ;;
 esac
 
@@ -299,10 +304,14 @@ mkdir -p "$root"
 exec 9> "$root/dx-bm1-day.lock"
 flock -n 9 || exit 75
 [[ -z $(git -C "$runner" status --porcelain) ]]
+if [[ $mode == --run-guarded ]]; then
+  [[ $(cat "$root/STATUS") == 'FREE '* && -z $(docker ps -q) ]] || exit 75
+  [[ -z $(systemctl list-units --state=active,activating --no-legend 'triplex-scale1-*') ]] || exit 75
+fi
 mkdir "$day" "$logs"
 exec >> "$logs/queue.log" 2>&1
 final=failed
-trap 'if [[ -e $day/active-item ]]; then status queue "$final" reconcile; else release_bench || status queue "$final" inspect; fi' EXIT
+trap 'if [[ -e $day/active-item ]]; then status queue "$final" reconcile; elif [[ $mode != --run-guarded && ! -s $work/state/evidence/DX-T1/$prefix-pair-zero/driver/ns-writes.jsonl ]]; then status queue failed-before-measurement recover; else release_bench || status queue "$final" inspect; fi' EXIT
 trap 'exit 143' TERM INT
 status queue preflight setup
 systemctl show triplex-drv1-wait -p ActiveState -p Result -p ExecMainStatus > "$logs/comparison-terminal.txt"
@@ -356,6 +365,10 @@ run_stage() {
     --property=TimeoutStopSec=150s \
     --property="ExecStopPost=/bin/bash $runner/queue-day.sh --cleanup $batch $stop $item" \
     /bin/bash "$runner/queue-day.sh" --item "$batch" "$stop" "$item" "$item_stop" || rc=$?
+  # [DX-BM1] Why: systemd may report a requested service stop as success. Preserve it as an interrupted guarded series.
+  # Rejected: treating a stopped controller as three independently verified arms.
+  if [[ $item == guarded && $rc == 0 && ! -s $day/guarded/comparison.json ]]; then rc=1; fi
+  if [[ $item == seed && $rc == 0 && ! -s $day/pristine/seed.json ]]; then rc=1; fi
   printf '%s\n' "$rc" > "$logs/$item.exit"
   printf '%s terminal %s exit=%s\n' "$(stamp)" "$item" "$rc"
   if [[ $(cat "$logs/$item-cleanup/result" 2>/dev/null) != clean ]]; then
@@ -386,11 +399,22 @@ run_stage() {
 }
 
 archive_failed=0
-if run_stage setup guarded 2100 150; then
-  activation_rc=0
-  run_stage guarded pair 10800 600 || activation_rc=$?
-  pair_rc=0
-  run_stage pair collect 18000 12600 || pair_rc=$?
+first=seed
+[[ $mode != --run-pair ]] || first=pair
+if run_stage setup "$first" 2100 150; then
+  activation_rc=0; pair_rc=0
+  if [[ $first == seed ]]; then
+    next=pair
+    [[ $mode != --run-guarded ]] || next=collect
+    printf '%s\n' "$next" > "$logs/after-guarded.txt"
+    if run_stage seed guarded 14400 12000; then
+      run_stage guarded "$next" 10800 6600 || activation_rc=$?
+    else
+      activation_rc=$?
+      printf '%s guarded skipped: prerequisite seed did not seal (exit %s)\n' "$(stamp)" "$activation_rc"
+    fi
+  fi
+  if [[ $mode != --run-guarded ]]; then run_stage pair collect 18000 12600 || pair_rc=$?; fi
   printf '%s\n' "$activation_rc" > "$logs/activation-final.exit"
   printf '%s\n' "$pair_rc" > "$logs/pair-final.exit"
   final=finished

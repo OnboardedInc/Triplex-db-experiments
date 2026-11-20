@@ -17,7 +17,18 @@ import {
   vmDisk,
   withPool,
 } from "../../../bin/lib.mjs";
-import { Evidence, modeOf, roles, root, runFile, sleep } from "./common.ts";
+import {
+  Evidence,
+  loadRoles,
+  localRoleMiB,
+  modeOf,
+  splitLoad,
+  roles,
+  root,
+  runFile,
+  sleep,
+  type Role,
+} from "./common.ts";
 import { drill } from "./run.ts";
 import { localCheckpoint } from "../hasync1/v2/local-checkpoint.ts";
 import { fleetCaps, fleetMode } from "../hasync1/v2/fleet-config.ts";
@@ -52,7 +63,7 @@ async function recoverLoad(nonce: string, config: any, manager: any, folder: str
       .split("\n")
       .map((l) => JSON.parse(l));
     const roles = events.filter((r) => r.nonce === nonce && r.type === "role").map((r) => r.data);
-    const names = ["pg", "active", "write", "tool"].map((role) => prefix + "-" + role);
+    const names = loadRoles(modeOf(attempt.mode)).map((role) => prefix + "-" + role);
     const reservations = ledger.reservations.filter((r: any) => names.includes(r.container));
     assert.equal(reservations.length, names.length);
     assert(
@@ -127,6 +138,8 @@ export async function localDrill(opts: any, config: any, manager: any) {
   const syncMode = mode.startsWith("hasync-");
   const holder = syncMode ? "DX-HASYNC1" : "DX-HA1";
   const diagnostic = syncMode || opts.diagnostic === true;
+  const pooled = opts.pooled === true;
+  assert(!pooled || ["hasync-ack", "hasync-move", "hasync-restart"].includes(mode));
   assert.equal(opts.holder, holder);
   assert.equal(dockerArgs([])[1], DOCKER_HOST);
   const folder = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
@@ -162,20 +175,26 @@ export async function localDrill(opts: any, config: any, manager: any) {
     return attempt;
   }
   // [DX-HA1] Why: each child cap has a matching live reservation and unique name. Rejected: reusing a retained slot volume or double-counting a single opaque stack.
-  const scopes = fleetMode(mode) ? Number(opts.systems ?? 1) : mode.startsWith("load-") ? 1 : 3;
+  const scopes = fleetMode(mode)
+    ? Number(opts.systems ?? 1)
+    : mode.startsWith("load-") || pooled
+      ? 1
+      : 3;
   const wanted = fleetMode(mode)
     ? [...fleetCaps(mode, scopes, false)]
-    : Object.entries(roles).filter(([r]) =>
-        mode.startsWith("load-")
-          ? ["pg", "active", "write", "tool"].includes(r)
-          : mode === "replication"
-            ? ["pg", "target", "tool", "active", "write"].includes(r)
-            : mode === "move" ||
-              mode.startsWith("one-") ||
-              mode.startsWith("hasync-") ||
-              r !== "target",
-      );
-  const people = Number(opts.people ?? 4);
+    : Object.entries(roles)
+        .filter(([r]) =>
+          mode.startsWith("load-")
+            ? loadRoles(mode).includes(r as Role)
+            : mode === "replication"
+              ? ["pg", "target", "tool", "active", "write"].includes(r)
+              : mode === "move" ||
+                mode.startsWith("one-") ||
+                mode.startsWith("hasync-") ||
+                r !== "target",
+        )
+        .map(([r]) => [r, localRoleMiB(mode, r as Role)] as const);
+  const people = Number(opts.people ?? (pooled ? 10 : 4));
   const smallLogicalCopy =
     mode === "one-account" && Number.isSafeInteger(people) && people > 0 && people <= 256;
   const checkpointRun = opts.checkpoint !== undefined || mode === "hasync-seed-edited";
@@ -189,9 +208,11 @@ export async function localDrill(opts: any, config: any, manager: any) {
         ? Math.max(2, Math.ceil(people / 2500))
         : smallLogicalCopy
           ? 1.5
-          : mode.startsWith("one-")
+          : mode.startsWith("one-") || splitLoad(mode)
             ? 3
-            : 1) *
+            : mode === "load-tail"
+              ? 2
+              : 1) *
     2 ** 30;
   const bytes = wanted.reduce((n, [, mb]) => n + mb * 2 ** 20, 0);
   const slotsNeeded = Math.ceil(bytes / info.memBytes);
@@ -396,7 +417,12 @@ export async function localDrill(opts: any, config: any, manager: any) {
       e!,
       site,
       site,
-      { people, scopes, capacity: diagnostic ? "local-diagnostic" : "local" },
+      {
+        people,
+        scopes,
+        capacity: diagnostic ? "local-diagnostic" : "local",
+        ...(pooled ? { pooled: true as const } : {}),
+      },
       () => {
         clean = true;
       },

@@ -27,15 +27,16 @@ const point = (r: Receipt) => ({
   basis: { recordedPosition: position(r), validAt: SEED_VALID_FROM },
 });
 
-export function deepRow(fact: Fact, id: string, tx: string, stamp: number): Row {
+export function deepRow(fact: Fact, id: string, tx: string, stamp: number, prefix = key): Row {
   const v = fact.v;
   return {
     id,
-    entity_id: key + fact.e,
+    entity_id: prefix + fact.e,
     entity_type: "Subject",
     attribute: fact.a,
     value_type: v.type,
-    value_string: typeof v.value === "string" ? (v.type === "ref" ? key + v.value : v.value) : null,
+    value_string:
+      typeof v.value === "string" ? (v.type === "ref" ? prefix + v.value : v.value) : null,
     value_number: null,
     value_datetime: v.type === "datetime" ? v.value : null,
     value_boolean: v.type === "boolean" ? Number(v.value) : null,

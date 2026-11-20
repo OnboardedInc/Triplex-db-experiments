@@ -65,3 +65,23 @@ export async function requestIndex(
     clearTimeout(timer);
   }
 }
+
+// [DX-RD1] Why: Node can wake a timer before a fractional monotonic deadline.
+// Rejected: a one-shot sleep or crediting a request that begins outside its own bin.
+export async function scheduleMaintenanceBins(
+  from: number,
+  to: number,
+  fullLength: boolean,
+  now: () => number,
+  sleep: (ms: number) => Promise<unknown>,
+  request: (waitMs: number) => Promise<void>,
+) {
+  const binMs = fullLength ? 45_000 : Math.max(1, to - from);
+  for (let start = from; start < to; start += binMs) {
+    const deadline = Math.min(to, start + binMs), target = start + 10;
+    if (target >= deadline - 100) continue;
+    while (now() < target) await sleep(Math.max(1, target - now()));
+    const remaining = Math.floor(deadline - now() - 100);
+    if (remaining > 0) await request(Math.min(remaining, fullLength ? 44_900 : 600_000));
+  }
+}

@@ -20,20 +20,24 @@ test("Datomic publication observes a bound result before the caller ACK and refu
   }
   installDatomicPublication({ DatomicClient: Client });
   installDatomicPublication({ DatomicClient: Client });
-  observeDatomicPublication((position, id) => {
+  const claims = [{ commandId: "first" }, { commandId: "second" }];
+  observeDatomicPublication((position, id, _diagnostics, commandIds) => {
     assert.equal(position, 7);
     assert.equal(id, "op");
+    assert.deepEqual(commandIds, ["first", "second"]);
     order.push("publication");
   });
   try {
-    await new Client().transact("db", { position: 7, operationId: "op" });
+    await new Client().transact("db", { position: 7, operationId: "op", claims });
     order.push("ACK");
     assert.deepEqual(order, ["result", "publication", "ACK"]);
     await assert.rejects(
       new Client().transact("db", { position: 7, returned: 8, operationId: "op" }),
       /binding mismatch/,
     );
-    await new Client().transact("db", { position: 5, returned: 7, delta: 2, operationId: "op" });
+    await new Client().transact("db", { position: 5, returned: 7, delta: 2, operationId: "op", claims });
+    await assert.rejects(new Client().transact("db", { position: 7, operationId: "op", claims: [{}] }),
+      /command identity/);
     await assert.rejects(
       new Client().transact("db", { position: 7, returnedId: "other", operationId: "op" }),
       /binding mismatch/,

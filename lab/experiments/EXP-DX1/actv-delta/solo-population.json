@@ -1,0 +1,25 @@
+{
+  "format": "deep-tenant-membership/1",
+  "sizes": {
+    "1000": {
+      "account": {
+        "index": 0,
+        "key": "account-001",
+        "first": 0,
+        "people": 1000
+      },
+      "facts": 139640,
+      "sha256": "3773d3e1cac72c5c303502868994b197beb2ddb648a7804a1924d509867d9794"
+    },
+    "100000": {
+      "account": {
+        "index": 0,
+        "key": "account-001",
+        "first": 0,
+        "people": 100000
+      },
+      "facts": 16245647,
+      "sha256": "c9da25ea5e874341ce4beba4e2556d6b72d2e07d1edc9bcbf62c3efa6b459d1f"
+    }
+  }
+}

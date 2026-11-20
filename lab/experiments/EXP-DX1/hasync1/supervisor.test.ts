@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Supervisor, type Port } from "./supervisor.ts";
+import { recoveryPolicy, Supervisor, type Port } from "./supervisor.ts";
 
 function fixture(overrides: Partial<Port> = {}) {
   const calls: string[] = [];
@@ -36,6 +36,12 @@ test("planned move seals, finishes the prefix, then changes writer once", async 
   await run.run("planned", "two-copy");
   assert.deepEqual(calls, ["seal", "drain", "fence", "promote", "activate", "publish"]);
   await assert.rejects(run.run("planned", "two-copy"), /one promotion/i);
+});
+
+test("the recovery setting selects one or two copies before publication", () => {
+  assert.equal(recoveryPolicy("A"), "single-copy-after-fence");
+  assert.equal(recoveryPolicy("B"), "two-copy");
+  assert.throws(() => recoveryPolicy("C"), /must be A or B/);
 });
 
 test("health failures alone never authorize promotion", async () => {

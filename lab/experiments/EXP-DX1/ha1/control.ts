@@ -8,23 +8,33 @@ import { createHash, randomUUID } from "node:crypto";
 import { createInterface } from "node:readline";
 import { pipeline } from "node:stream/promises";
 import { Satellite } from "./satellite.ts";
-import { hash, head, modeOf, root, runFile } from "./common.ts";
+import { replayLive } from "../load1/live-evidence.ts";
+import { hash, head, modeOf, root, runFile, supportsSingleHost } from "./common.ts";
 import { benchTrials, seeds, subjects, workingMs } from "../hasync1/v2/bench-plan.ts";
 import { recountTraffic } from "../hasync1/offers.ts";
 
-const [action, tag] = process.argv.slice(2),
+const [action, tag, layout = "two-host", extra] = process.argv.slice(2),
   mode = modeOf(action ?? "");
 const sync = mode === "hasync-suite",
   holder = sync ? "DX-HASYNC1" : "DX-HA1",
   observerSite = sync ? 1 : 0,
   satelliteSite = sync ? 0 : 1;
 assert(tag && /^[a-z][a-z0-9-]{2,40}$/.test(tag), "Expected experiment and a new attempt tag");
-const servers = [process.env["BENCH_SERVER"], process.env["BENCH_SERVER_B"]],
-  addrs = [process.env["HA1_LINK_A"], process.env["HA1_LINK_B"]];
+assert(!extra && (layout === "two-host" || (layout === "one-host" && supportsSingleHost(mode))));
+const single = layout === "one-host";
+const sites = single ? [0] : [0, 1];
+const servers = single
+    ? [process.env["BENCH_SERVER"]]
+    : [process.env["BENCH_SERVER"], process.env["BENCH_SERVER_B"]],
+  addrs = single ? [] : [process.env["HA1_LINK_A"], process.env["HA1_LINK_B"]];
+assert(servers.every((s) => s && /^[a-z0-9_]+@[a-zA-Z0-9.-]+$/.test(s)));
 assert(
-  servers.every((s) => s && /^[a-z0-9_]+@[a-zA-Z0-9.-]+$/.test(s)) && servers[0] !== servers[1],
+  single ||
+    (servers[0] !== servers[1] &&
+      addrs[0] !== addrs[1] &&
+      addrs.every((s) => s && /^\d+(?:\.\d+){3}$/.test(s))),
 );
-assert(addrs.every((s) => s && /^\d+(?:\.\d+){3}$/.test(s)) && addrs[0] !== addrs[1]);
+
 const hours = Number(process.env["HA1_BENCH_HOURS"] ?? 6);
 assert(Number.isInteger(hours) && hours >= 1 && hours <= 72);
 const sha = head(),
@@ -96,12 +106,14 @@ const prepare = async (i: number) => {
   assert.equal(assignment.role, holder);
   assert.equal(assignment.machineIdSha256, machine);
   assert.equal(await remote(i, "docker", "-H", "unix:///var/run/docker.sock", "ps", "-q"), "");
-  const ips = JSON.parse(await remote(i, "ip", "-j", "-4", "addr", "show"));
-  assert(ips.some((d: any) => d.addr_info.some((v: any) => v.local === addrs[i])));
+  if (!single) {
+    const ips = JSON.parse(await remote(i, "ip", "-j", "-4", "addr", "show"));
+    assert(ips.some((d: any) => d.addr_info.some((v: any) => v.local === addrs[i])));
+  }
   return machine;
 };
-const ids = await Promise.all([prepare(0), prepare(1)]);
-assert.notEqual(ids[0], ids[1]);
+const ids = await Promise.all(sites.map(prepare));
+if (!single) assert.notEqual(ids[0], ids[1]);
 const lease = base + "/campaign.lock",
   held: number[] = [];
 const dockerOpts = ["docker", "-H", "unix:///var/run/docker.sock"];
@@ -112,12 +124,12 @@ const store = base + "/" + tag;
 let seedDirCreated = false;
 let suiteArchiveVerified = false;
 try {
-  for (const i of [0, 1]) {
+  for (const i of sites) {
     await remote(i, "mkdir", lease);
     held.push(i);
   }
   await Promise.all(
-    [0, 1].map(async (i) => {
+    sites.map(async (i) => {
       const prepareScript =
         'set -eu; if ! test -e "$2"; then git -c credential.helper= clone -q --no-checkout "$3" "$1"; git -C "$1" checkout -q --detach "$4"; cd "$1"; bash lab/experiments/EXP-DX1/t1/bare-metal.sh --prepare "$4" "$2"; fi; test "$(cat "$2/results/bootstrap.exit")" = 0; test "$(git -C "$2/repository" rev-parse HEAD)" = "$4"; test -z "$(git -C "$2/repository" status --porcelain)"; test -s "$2/repository/packages/datomic/dist/index.js"';
       await remote(
@@ -137,24 +149,28 @@ try {
       );
     }),
   );
-  const remoteImage = await remote(
-    satelliteSite,
-    ...dockerOpts,
-    "image",
-    "inspect",
-    "tx2-datomic:1.0.7745-da00",
-    "--format",
-    "{{.Id}}",
-  );
-  const pgImage = await remote(
-    satelliteSite,
-    ...dockerOpts,
-    "image",
-    "inspect",
-    "postgres:17-alpine",
-    "--format",
-    "{{.Id}}",
-  );
+  const remoteImage = single
+    ? "-"
+    : await remote(
+        satelliteSite,
+        ...dockerOpts,
+        "image",
+        "inspect",
+        "tx2-datomic:1.0.7745-da00",
+        "--format",
+        "{{.Id}}",
+      );
+  const pgImage = single
+    ? "-"
+    : await remote(
+        satelliteSite,
+        ...dockerOpts,
+        "image",
+        "inspect",
+        "postgres:17-alpine",
+        "--format",
+        "{{.Id}}",
+      );
   const campaign = randomUUID(),
     nonces: string[] = [];
   const trials = new Map<string, number>();
@@ -183,13 +199,14 @@ try {
     mode,
     tag,
     sha,
-    addrs[0]!,
-    addrs[1]!,
+    addrs[0] ?? "-",
+    addrs[1] ?? "-",
     remoteImage,
     store,
     campaign,
     process.env["HA1_PEOPLE"] ?? "",
     process.env["HA1_BENCH_SHAPE"] ?? "deep",
+    layout,
   ];
   const child = spawn("ssh", argv(observerSite, remoteArgs), {
     stdio: ["pipe", "pipe", "inherit"],
@@ -217,15 +234,16 @@ try {
       }
       nonces.push(attempt.nonce);
       const key = sync ? benchTrials[attempt.sequence!]?.checkpoint : undefined;
-      satellite = new Satellite(
-        attempt.nonce,
-        attempt.prefix,
-        src,
-        [pgImage, remoteImage],
-        sync ? store + "/seed" + (key ? "/" + key : "") : undefined,
-        attempt.mode?.startsWith("hasync-fleet-") ?? false,
-      );
-      if (sync) trialSatellites.set(attempt.nonce, satellite);
+      if (!single)
+        satellite = new Satellite(
+          attempt.nonce,
+          attempt.prefix,
+          src,
+          [pgImage, remoteImage],
+          sync ? store + "/seed" + (key ? "/" + key : "") : undefined,
+          attempt.mode?.startsWith("hasync-fleet-") ?? false,
+        );
+      if (sync && satellite) trialSatellites.set(attempt.nonce, satellite);
       continue;
     }
     if (!line.startsWith("@ha1 ")) {
@@ -233,7 +251,7 @@ try {
       continue;
     }
     const msg = JSON.parse(line.slice(5));
-    assert(attempt && Number.isSafeInteger(msg.id) && Array.isArray(msg.args));
+    assert(!single && attempt && Number.isSafeInteger(msg.id) && Array.isArray(msg.args));
     const activeTrial = sync ? trialSatellites.get(msg.nonce) : satellite;
     assert(activeTrial, "Unknown attempt on the management channel");
     const req = msg.args as string[];
@@ -322,13 +340,13 @@ try {
   const raw = (name: string) =>
     execFileSync("tar", ["-xOzf", file, tag + "/" + name], {
       encoding: "utf8",
-      maxBuffer: 16 * 2 ** 20,
+      maxBuffer: 64 * 2 ** 20,
     });
   const member = (name: string) => JSON.parse(raw(name));
   const declaration = member("campaign.json");
   assert.deepEqual(
-    [declaration.tag, declaration.sha, declaration.mode, declaration.campaign],
-    [tag, sha, mode, campaign],
+    [declaration.tag, declaration.sha, declaration.mode, declaration.campaign, declaration.layout],
+    [tag, sha, mode, campaign, layout],
   );
   fs.writeFileSync(
     path.join(evidence, "transfer.json"),
@@ -340,6 +358,7 @@ try {
       sha256: expected,
       bytes: fs.statSync(file).size,
       hosts: ids,
+      layout,
       campaign,
       nonces,
     }) + "\n",
@@ -633,8 +652,14 @@ try {
       assert.equal(summary.slot, tag);
       assert.equal(summary.nonce, nonce);
       assert.equal(summary.profile.people, declaration.sizes[i]);
-      assert.equal(summary.profile.capacity, "two-host");
+      assert.equal(summary.profile.capacity, layout);
       assert.deepEqual(clean, { nonce, containers: 0, networks: 0 });
+      if (supportsSingleHost(mode)) {
+        for (const arm of summary.result) {
+          assert(/^[a-z0-9-]+$/.test(arm.arm) && arm.rate === declaration.sizes[i]);
+          replayLive(member(sub + arm.arm + ".offers.json"), attempt, arm);
+        }
+      }
     }
   }
   assert.equal(code, 0, "Run failed; collected its evidence");

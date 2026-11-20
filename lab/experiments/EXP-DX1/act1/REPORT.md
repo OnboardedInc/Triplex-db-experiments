@@ -1,42 +1,47 @@
-# DX-ACT1 · Release activation
-Yes. Activation as measured could overwrite a newer decision. All three delayed-result schedules reproduced the failure.
-At transaction 20 a person's pay notice still said 1,600 cents. A delayed result from 15 replaced it with 1,500 and issued another notice after restart.
-The W0 product publication rule is correct. The benchmark skipped a durable write, and both of its original checkers discarded the same part of the oracle's answer.
-On 1,000 W0 subjects, the historical publisher left 884 guards missing or stale. Both opt-in fixes recovered all 1,000 expected states on Datomic.
-Saving just the guard wrote 89 bytes per unchanged person, against 444 for a full rewrite. Across the whole release, guarded publication took 8.74 seconds locally.
-The native cost ratio projects the old 73.78-second run to about 320 seconds for 100,000 people, or 53 minutes for ten such accounts in series. The bench time is unmeasured.
-Changing only the EAD document lead time skipped rule evaluation for 675 of 1,000 people. Every person still received the correct durable decision.
+# DX-ACT1 · Correct release activation
 
-North star P5. Commit `1d27933e` records the three failing tests before the fix. The historical checker accepted missing guards even after 100,000 comparisons. [Benchmark](../bm1/REPORT.md) · [W0 §8.8](../../../world/W0/SPEC.md) · [Targets](../../../TARGETS.md)
+The old 73.78-second benchmark could undo a newer decision after restart. Its publisher and checker both missed progress for unchanged people. The W0 publication rule was correct.
+A page now remembers progress for up to 256 people in one transaction. At the measured 100,000-person mix, 391 pages and 9,798 changed item bodies cover everyone. The other 90,202 need no individual write.
+In two local Datomic runs, publishing for 1,000 people took 0.326 and 0.679 seconds with pages, versus 6.71 and 5.36 seconds with individual guards. All 1,000 page states matched the independent oracle in both runs.
+With two evaluators, that projects to **61–78 seconds for 100,000 people** and **10.2–13.0 minutes for ten such accounts in series**. Part 1 projected 320 seconds per account with individual guards.
+The 100-second bar and the limits on live read and save latency still need a server run. Five evaluator cores fit with two cores reserved for readers.
+For the narrow document-deadline release, the selector skipped evaluation for 675 of 1,000 people. The standard release used for the cost figures evaluates everyone.
 
-## Price of a correct activation
+## What an interrupted sweep guarantees
 
-The native trial evaluated the same 1,000 W0 worlds for R1 and R2 at successive bases. Items changed for 116 people. Each arm used a fresh database scope, 32-subject frames, one outstanding frame and no background traffic within its scope. Timings below cover publication. Commit time is amortized over the roster.
+Only committed page members advance. Readers can see a completed prefix and an older suffix. Each live or sweep update compares its member’s transaction and valid time, then atomically replaces the page fence and any changed bodies or pending deliveries. A live winner forces a reread. A newer live basis survives. An uncovered neighbor keeps its own basis.
+Completion needs contiguous transaction claims covering an independent sorted roster at one cut. Restart recovers each original claim and delivery sequence before publishing the suffix. A record at the wrong basis fails, as do different record bytes or conflicting segmentation on retry. The named page namespace routes ordinary live reconciles through the same fence on reopen. [Design, alternatives and write counts](DESIGN-2.md)
+All 13 original native publication cases ran again. Five variants exercised the new layout and five more covered partial visibility, lost page acknowledgements, competing live decisions, coverage rejection, bounded native reads and normal-entry restart. The latest run completed 23/23. Strict native reads now split frames over 64 roots while retaining one read position.
+The bench initializes a fresh page namespace at R1. A populated legacy outbox needs a separate migration. Live actions that recur at the same basis can supply distinct event IDs. An identified no-op records its original empty acknowledgement so its retry can survive a later equal-basis edit.
 
-| Per roster subject on local Datomic | Historical | Full state | Guard fact |
-| --- | ---: | ---: | ---: |
-| Asserted value bytes / bytes per guard-only subject | 141 / 0 | 533 / 444 | 219 / 89 |
-| State rows / state page reads / claim lookups | 1.10 / .016 / .004 | 2.00 / .032 / .032 | 2.10 / .032 / .032 |
-| HTTP requests / complete entity compare-and-sets | .048 / 0 | 1.192 / 1 | 1.192 / 1 |
-| Publisher CPU / engine container CPU, ms | .213 / 1.180 | 1.854 / 12.054 | 1.415 / 8.408 |
-| Commit / publication wall, ms | .494 / .746 | 10.113 / 10.908 | 7.840 / 8.737 |
+## Measured publication cost
 
-Projection adds 50.79 s evaluation to 22.99 s scaled by the native publication wall ratio. Full-state rewrite projects to 387 s at 100k and 64.5 min at 1M. Guard-fact projects to 320 s and 53.4 min. This transfers a local idle-scope ratio to the loaded server and assumes linear serial scaling. Item-change shares were 11.6% locally and 9.8% on the bench.
-Three full-sync SQLite trials also matched both corrected arms and projected 111–140 s for the guard. SQLite file growth per roster subject was 1,130 / 7,172 / 4,174 bytes. Datomic per-scope physical growth and physical index reads were unavailable.
-The stock gateway returned HTTP 404. A source-pinned build on a managed exclusive slot ran all 13 publication schedules and the selector successfully. Both reservations for that build were released. The first native timing's source list was collected after a script edit. Only the repeat with 43 prelaunch files rehashed after exit supplies the native table. [Measurement code](price.ts)
+Both trials used the same 1,000 W0 R1/R2 worlds, 116 item changes, one frame in flight and fresh native scopes. The second reversed arm order. The table gives cost per roster subject. Ranges are the two observations.
 
-## Narrow release
+| Local Datomic per person | Historical | Full state | Individual guard | Page |
+| --- | ---: | ---: | ---: | ---: |
+| Asserted value bytes | 140.70 | 533.29 | 219.38 | 98.05 |
+| State rows / read pages / claim reads | 1.10 / .016 / .004 | 2.00 / .032 / .032 | 2.10 / .032 / .032 | .554 / .015 / .004 |
+| HTTP requests | .048 | 1.192 | 1.192 | .035 |
+| Publisher CPU / engine CPU, ms | .153–.181 / .658–.848 | 1.669–1.819 / 6.670–9.480 | 1.398–1.555 / 5.372–6.111 | .111–.187 / .220–.801 |
+| Commit / publication wall, ms | .401–.460 / .569–.725 | 7.755–10.142 / 8.216–10.790 | 5.010–6.293 / 5.362–6.712 | .226–.539 / .326–.679 |
 
-Only compiled R1→R2 edits confined to the unscoped DOCEXP EAD lead-days constant qualify. The index binds validated R1 outputs and reachable EAD membership to the source generation, both clocks and erasure frontier. A changed cut, missing index, unproved page or broader edit, including standard R2, takes the full path. Invalid source worlds surface their W0 error.
-At the 0→90-day edit, 325 people owned a reachable EAD and 51 had no document link. Tasks or obligations changed for 239. Work-item payloads changed for zero. Exclusions received the new release and recomputed work versions. All output bytes and all reopened outboxes matched the independent oracle.
-Each 256-ordinal page binds both roster hashes, release pair and source cut. Durable output precedes cursor advancement. Interruptions at 10%, 50%, 90% and between page write and checkpoint recovered exact coverage. A missing subject, duplicate ID, swapped page or foreign checkpoint was detected.
-In the native-store functional run, the local planner took 0.95 s full and 0.47 s selected, including page checks. Building the index took 0.71 s. Recovery of build cost would take two comparable releases at the same cut with zero intervening upkeep. The cold path took longer than full.
+Each page trial wrote four page facts and 116 bodies in four transactions, with 63 retractions. The existing release marker precedes the measured sweep. The historical arm left 884 guards stale or absent. Both other correct arms used 32 transactions. Bytes count asserted values. Datomic per-scope physical storage and physical index reads were unavailable.
+For a ten-fact live save deliberately queued at the client behind native submission, individual guard batches of 32/64/128/256 used 12,172/24,204/48,396/96,652 request bytes. Median waits across the two trials were 136–143/306–333/614–755/1,090–1,547 ms. The 256-member page used 865 bytes, waited 14–20 ms and reached save ACK in 28–37 ms. Each median uses three pairs. These measure one FIFO ordering.
+The projection adds the old two-worker evaluation (50.79 s) to 22.99 s × page/historical native wall time. The implied publication phase is 10.35–27.44 s. The linear ten-account projection assumes the same mix and serial sweeps. The local fixture changed 11.6% of people versus 9.8% in BM1. [Original bench](../bm1/REPORT.md)
+Under the same model, the full rewrite projects to 383–393 s at 100k and 63.8–65.5 min at 1M. Individual guards project to 264–268 s and 43.9–44.6 min in these two trials.
 
-## Bench handoff and audit
+## Worker and server comparison
 
-On a prepared BM1 checkout run `node --experimental-strip-types lab/experiments/EXP-DX1/act1/bench.ts --execute`. The three-hour controller runs native schedules, then the 100k narrow full/selector pair and the standard full release on fresh retained-seed clones, each with the guard and 256 live readers. [Runner](bench.ts)
-Expect standard activation to exceed 100 s and the narrow edit to save evaluation work once indexed. The runner reports both cold and reused-index costs. The live read/commit p99 ratios and the 1.5× bars await execution. Each clone is released after P5 readback. The separate whole-history audit, throttled compaction trial and a P5 acceptance verdict remain open.
-Publication audit. The schedules compare fresh scoped facts, original ACK identity, pending bytes and receiver sequences against bare Python W0. An independent process delivers the held record after a lost newer ACK. Pricing binds release/input/source/build digests, native owner and ordered readback from a second process. `native-repeat/price/price.json` uses source `b76f8ab3`.
-Selector audit. Source edges and roster ordinals independently check every candidate and exclusion. Checkpoints verify the attempt, cut and page bytes. The replica driver rereads both committed release markers, complete outputs and all terminal states at named cuts. The bench collector binds the nonce, source/build, slot and frozen trace, reproduces ratios from raw windows, and compares the narrow arms' ordered world/output/state digest.
-Local gates covered 18 experiment tests, 15 existing publication/parallel/oracle tests, 139 W0 kernel checks and focused TypeScript compilation. Broad bench typing reports 32 errors in three untouched files. The Python cases loader read 133/136 fixtures. Its raw-byte entry point returned the expected error for the remaining three. No acceptance pins moved.
-The evidence root is `evidence/DX-ACT1/`. It contains the initial red test (`initial/first-red.tap`), native delivery and receiver witnesses (`native/schedules.tap`), selector checkpoints (`native/selector-files/`), SQLite repetitions and independent native state bytes (`native-repeat/price/*.observed.json`). [SHA-256 manifest](SHA256SUMS)
+If evaluation scales ideally from two workers, the expected 100k total for 1/2/3/4/5 workers is 112–129 / 61–78 / 44–61 / 36–53 / 31–48 s. Serial setup, shared memory bandwidth and live traffic can flatten that curve.
+The 12-core plan assigns engine roles to 0, 1, 2 and 4, 256 readers to 3 and 5, coordination, live writer and follower to 6, and evaluators to 7–11. Workers return ordinal-tagged output. The publisher commits pages in roster order.
+On the prepared server run `node --experimental-strip-types lab/experiments/EXP-DX1/act1/bench.ts --execute` for the three-hour, two-worker comparison. Add `--workers 1,2,3,4,5 --hours 6` for the full worker ladder. Each profile uses a fresh retained-seed clone, native schedules and the frozen writer trace. [Runner](bench.ts)
+The four arms are narrow full, narrow selector, standard individual guard and standard page. A fresh historical control must exhibit exactly the omitted guards while preserving items and pending deliveries. Every arm gets six minutes of baseline traffic to cover the slower guard control. The largest measured worker count needs a complete matched window, at least 500 commits on each side and both live p99 ratios ≤1.5. Server timing, safe count, throttled compaction and independent review remain open. [Targets](../../../TARGETS.md)
+
+## Evidence and verdict audit
+
+`publishPage` checks the returned facts against the proposed bytes, or recovers the original immutable command with its input hash, scope, member mask, transaction and deliveries. `publishPages` checks every span against the roster, release and both clocks before producing a coverage digest.
+The native schedules compare independent Python states and receiver sequences at actual committed positions in fresh scopes. `pageWireState` decodes stored masks and bodies at one pinned position. `price.ts` checks all 1,000 states from a second process and binds the fixture, owner, image, nonce and pre/post source bytes. `page-pressure.ts` reopens each fresh same-scope save and verifies its ten native values and transaction.
+The worker gate compared 514 ordered outputs and durable states with Python for each of 1–5 native workers, including empty inputs. All five committed the same three ordinal ranges. The replica driver compares worlds, release markers, evaluation bytes and durable state for every roster member. The bench collector checks all named native cases, attempt/source/build/slot, raw traffic, CPU assignments and cross-arm digests before computing worker ratios.
+Pricing used commits `bf44e24f9` and `33d170e01`. Both trials rechecked 143 tracked source files, 181 built files and 50 prelaunch hashes. Final native gates used `d6a78f440`. Local checks also passed 30 experiment tests, 184 W0 and publication tests, five parallel/oracle tests, formatting and focused TypeScript. The broad bench typecheck reproduced part 1’s 32 errors byte for byte. No acceptance pins moved.
+Evidence lives under `evidence/DX-ACT1/part2/`. All four exclusive reservations were released. See `native-{1,2}/price/price.json`, `native-{1,2}/fifo/samples.json`, `native-final/{schedules,workers}.tap` and `final-gates/`. [Part 2 checksums](PART2-SHA256SUMS) · [Part 1 checksums](SHA256SUMS)

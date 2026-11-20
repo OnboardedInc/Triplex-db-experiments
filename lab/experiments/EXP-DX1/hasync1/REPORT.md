@@ -1,10 +1,10 @@
-# Failover correctness and server measurements
+# Failover on the shared version 0.1 database
 
-All 782 scheduled saves settled once across eight small Mac drills. 689 needed a retry with the identical command.
-Every earlier confirmed save was present on the survivor. All 7,779 scheduled reads answered within the caller deadline with the expected values.
-Resending an edit whose reply was lost returned its original receipt. The edit appeared once in the change history.
-The old disk could no longer start as a writer. The planned move reopened writes once the second copy was ready.
-Choose A to reopen on one copy, B to wait for a replacement, or C to keep three machines. I recommend B within the version 0.1 budget and C for production when funded and tested. [Owner decision](OWNER-DECISION.md)
+Take this branch after INT1 `a08f20103`. It carries synchronous storage, the writer fence, the whole-database move and the one-database resend drill.
+The shared-database drill checks ten accounts on one Datomic database before and after the cut.
+By default, saves stay pending until the replacement copy is ready. `HA1_RECOVERY_POLICY=A` reopens on one copy with an alarm. [Owner decision](OWNER-DECISION.md)
+The earlier Mac drills settled 782 saves once and returned 7,779 correct reads. The updated shared-database runs still need verification.
+The latest import work has a separate handoff. The earlier move and resend fixes are already in the merged source. [Branch map](INTEGRATION.md)
 
 ## Availability
 

@@ -2,7 +2,7 @@ import { encodeRowText } from "./rowText.js";
 import { randomUUID } from "node:crypto";
 import type { TransactionState } from "./TransactionContext.js";
 import {
-  decodeValueColumns,
+  decodeReadValueColumns,
   storedValueDomain,
   ValueDomains,
   type TripleRow,
@@ -41,7 +41,7 @@ export function decodeRow(row: WireRow): TripleRow {
     }),
   ) as unknown as TripleRow;
   // [CX-A01-0314-R3] Why: validate the actual gateway read path against the stored attribute domain. Rejected: a test-only decoder (leaves production reads unchecked).
-  decodeValueColumns(decoded, storedValueDomain(ValueDomains.datomic, decoded.attribute));
+  decodeReadValueColumns(decoded, storedValueDomain(ValueDomains.datomic, decoded.attribute));
   return decoded;
 }
 

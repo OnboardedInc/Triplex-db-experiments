@@ -3,7 +3,7 @@ import path from "node:path";
 import { sha256 } from "./w0-world.ts";
 import { Worker } from "node:worker_threads";
 import { generateTrace } from "./trace.ts";
-import { applyW0Trace, percentile } from "./w0-traffic.ts";
+import { applyW0Trace, openW0Window, percentile } from "./w0-traffic.ts";
 import type { CompositionHandle } from "./composition.ts";
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 5));
 const now = () => performance.timeOrigin + performance.now();
@@ -19,6 +19,7 @@ export async function startW0Live(o: {
   offsetS: number;
   warmupMs?: number;
 }) {
+  const window = await openW0Window(o.comp, o.id);
   const warmupMs = o.warmupMs ?? 0;
   if (!Number.isSafeInteger(warmupMs) || warmupMs < 0 || warmupMs > 60000)
     throw Error("invalid live warmup");
@@ -83,15 +84,11 @@ export async function startW0Live(o: {
     .filter((e) => e.atMs >= o.offsetS * 1000)
     .map((e) => ({ ...e, atMs: e.atMs - o.offsetS * 1000 }));
   let activeScheduled = 0;
-  const namespaced: CompositionHandle = {
+  const measured: CompositionHandle = {
     ...o.comp,
-    transactionByCommand: (id) => o.comp.transactionByCommand(o.id + ":" + id),
-    transact: async (operations, meta: any) => {
+    transact: async (operations, meta) => {
       const begun = now();
-      const result = await o.comp.transact(operations, {
-        ...meta,
-        commandId: o.id + ":" + meta.commandId,
-      });
+      const result = await o.comp.transact(operations, meta);
       const row = {
         kind: "commit",
         started: begun,
@@ -114,10 +111,14 @@ export async function startW0Live(o: {
       serial = serial
         .then(async () => {
           activeScheduled = start + event.atMs;
-          const result = await applyW0Trace(namespaced, {
-            ...event,
-            atMs: event.atMs + o.offsetS * 1000,
-          });
+          const result = await applyW0Trace(
+            measured,
+            {
+              ...event,
+              atMs: event.atMs + o.offsetS * 1000,
+            },
+            window,
+          );
           const row = {
             kind: "write",
             event,

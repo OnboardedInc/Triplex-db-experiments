@@ -1,0 +1,38 @@
+{
+  "staggered": {
+    "profile": "deep-live/1",
+    "geometry": "ba729c63865a541ceca500eda5e4b9f3c92d1eb87dfdd112dff89d5f8c2628da",
+    "logical": {
+      "account-001": "3e2e773726545605e3d409f088fd950a458aa3535a668f5aca31c14e00cd11dd",
+      "account-002": "3325eae85e562497d9258a808d820a64b0366cf3614d4677bbba0513834fcc84",
+      "account-003": "77dfb128927011651fc33cb7c02990a4cd2328723134b005dbc4bea7da69b5cc",
+      "account-004": "e3100a4850a5113b3522711a336520dc07b370cb5e24b0d8bc5c0f53b1705d73",
+      "account-005": "dc206bab03406db57de4441902422314d0be0e92dac897c546ce64ac2a87ff96",
+      "account-006": "128d1233a1196ae5b7e02be2f49f00b68cfde624eb4fdde2cb39b699cc28de95",
+      "account-007": "30cc385ce66aba5e58d90d4c426938b858299f2292810f39ed19c3da7fca92c1",
+      "account-008": "192ff6b71e5aab21e1ce463aa6c5ad8cee925baf06fee948e9a0b16bee0c236a",
+      "account-009": "3f13b15a5c9c80f17048944bb0d22da89ef90e97e05c53915d55aff4bdf0a585",
+      "account-010": "de190b577c9f415be6efe42608ecf07e974eef243adca68b91cd229e79ed4d37"
+    },
+    "primary": 594228,
+    "atMostThreeAssertions": 468345
+  },
+  "coincident": {
+    "profile": "deep-live/1",
+    "geometry": "c14144f570b73f685d49940b209c6ebd6b2070afdcf989261e56a5a3cfbf1e2e",
+    "logical": {
+      "account-001": "3e2e773726545605e3d409f088fd950a458aa3535a668f5aca31c14e00cd11dd",
+      "account-002": "d7504ae7e10b05d19237dffb9f77ee1eb172e5cfee94f4614bdb9c8191b28846",
+      "account-003": "a5984784859076d3cb97459de859d9aecf4a3bbb046752655e30d6472da4bef1",
+      "account-004": "12dcf81f01249fccf22c1c8145b97572e2ea841a310bd656fa83226f5463efef",
+      "account-005": "e3de58f8204d502aa2d4401700c5e2165f930294df6fc6777efe84a0fda6bc99",
+      "account-006": "b87e23c5bb128bf9a1303b49f087096ad352f6732a069c33583c5c965f716e5b",
+      "account-007": "fb355c45523808641aa408b25caa06c613b05606b17b26340aecad45eb06f117",
+      "account-008": "85781f9a5cb7cb2266f3a2af16fc0a277a27b5f2f9b28392c9abbe0e2b11ebce",
+      "account-009": "a03fce6b0106f09b140b886aa241193077b169175208eed3217bf1349792d77e",
+      "account-010": "6b42b6d4e6876d3799d940300dd2a650b03bb1ab4fb8c4f6fdcec15ff95fc49c"
+    },
+    "primary": 594228,
+    "atMostThreeAssertions": 468345
+  }
+}

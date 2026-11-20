@@ -14,7 +14,7 @@ export async function drill(
   e: Evidence,
   a: Site,
   b: Site,
-  profile: { people: number; scopes: number; capacity: string },
+  profile: { people: number; scopes: number; capacity: string; pooled?: true },
   release: () => void,
   sync?: {
     path: string;
@@ -70,10 +70,16 @@ export async function drill(
         );
       } else if (e.mode === "hasync-move") {
         const { moveDrill } = await import("../hasync1/move.ts");
-        result = await moveDrill(pair, profile.people, sync ? { auditSeed: false } : {});
+        result = await moveDrill(pair, profile.people, {
+          auditSeed: !sync,
+          pooled: profile.pooled === true,
+        });
       } else {
         const { faultDrill } = await import("../hasync1/faults.ts");
-        result = await faultDrill(pair, profile.people, e.mode, sync ? { auditSeed: false } : {});
+        result = await faultDrill(pair, profile.people, e.mode, {
+          auditSeed: !sync,
+          pooled: profile.pooled === true,
+        });
       }
     } else if (e.mode.startsWith("load-"))
       result = await (await import("../load1/run.ts")).load(s, profile.people);

@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { copyFileSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 import { fileSource, type Group } from "./export.ts";
@@ -65,7 +67,7 @@ export async function proveFile(
           ref: i + "/e",
           entityId: namespace + i,
           attribute: "number",
-          value: { type: "number", value: i === 1 ? -0 : i - 0.25 },
+          value: { type: "number", value: i - 0.25 },
           validFrom: validAt,
         },
       ],
@@ -83,6 +85,15 @@ export async function proveFile(
   const wrongHeader = overlapping.header;
   overlapping.close();
   assert.throws(() => sealedSnapshot(wrongFile, wrongHeader, namespace, width));
+  const invalidFile = path.join(dir, arm + ".unsupported.sqlite");
+  const invalidGroups = fixtures();
+  const badNumber = invalidGroups[0]!.ops[4]!;
+  assert(badNumber.op === "assert" && badNumber.value.type === "number");
+  badNumber.value.value = -0;
+  const invalidExport = fileSource(invalidFile, meta, invalidGroups);
+  const invalidHeader = invalidExport.header;
+  invalidExport.close();
+  assert.throws(() => sealedSnapshot(invalidFile, invalidHeader, namespace, width));
   const data = sealedSnapshot(exportFile, header, namespace, width);
   const start = performance.now();
   try {
@@ -110,6 +121,15 @@ export async function proveFile(
       run.close();
     }
     assert(before);
+    const forgedPath = path.join(dir, arm + ".forged-cursor.sqlite");
+    copyFileSync(ledgerFile, forgedPath);
+    const forged = new DatabaseSync(forgedPath);
+    try {
+      forged.exec("DELETE FROM frames");
+    } finally {
+      forged.close();
+    }
+    await assert.rejects(Snapshot.open(comp, data.data, subjects, width, forgedPath));
     const reopened = await Snapshot.open(comp, data.data, subjects, width, ledgerFile);
     try {
       await reopened.drain(2);

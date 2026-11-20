@@ -15,11 +15,12 @@ import {
 import { DatomicClient } from "../../../../packages/datomic/test/ha1-account.ts";
 import type { SyncPair } from "./pair.ts";
 import { replayEvidence } from "./replay.ts";
-import { lsn, timeouts, wait } from "./supervisor.ts";
+import { lsn, recoveryPolicy, timeouts, wait, type Durability } from "./supervisor.ts";
 import { walLink } from "./wal-link.ts";
 import { driveOffers } from "./offers.ts";
 import { historyRead } from "./v2/history.ts";
 import { replacementProbe } from "./v3/replacement.ts";
+import { auditPool, pooledRead, seedPooled, type PooledProof } from "./pooled.ts";
 
 export const faultModes = [
   "hasync-commit",
@@ -153,15 +154,16 @@ async function checkOldRestart(pair: SyncPair) {
   return result;
 }
 
-export async function auditFeed(ac: Account, inputs: typeof ac.inputs, from: string) {
-  const order = inputs
-    .slice()
-    .sort((a, b) =>
-      Number(
-        BigInt(ac.receipts.get(a.operationId)!.position.v) -
-          BigInt(ac.receipts.get(b.operationId)!.position.v),
-      ),
-    );
+export async function auditFeed(
+  ac: Account,
+  inputs: typeof ac.inputs,
+  from: string,
+  extra: readonly { receipt: Receipt; entry: unknown }[] = [],
+) {
+  const order = [
+    ...inputs.map((input) => ({ receipt: ac.receipts.get(input.operationId)!, entry: undefined })),
+    ...extra,
+  ].sort((a, b) => Number(BigInt(a.receipt.position.v) - BigInt(b.receipt.position.v)));
   let index = 0;
   let cursor = from;
   let t = BigInt(from) - 1n;
@@ -173,8 +175,10 @@ export async function auditFeed(ac: Account, inputs: typeof ac.inputs, from: str
       assert(BigInt(row.t) > t, "Feed coordinates must strictly increase");
       t = BigInt(row.t);
       if (row.kind === "skipped") continue;
-      assert.equal(row.transaction.operationId, order[index++]?.operationId);
-      ac.checkEntry(row);
+      const expected = order[index++];
+      assert.equal(row.transaction.operationId, expected?.receipt.operationId);
+      if (expected.entry) assert.deepEqual(row, expected.entry);
+      else ac.checkEntry(row);
       const position = row.transaction.positions[0]!;
       assert(!positions.has(position));
       positions.add(position);
@@ -237,17 +241,26 @@ export async function faultDrill(
   pair: SyncPair,
   people: number,
   mode: Mode,
-  options: { populated?: (ac: Account) => Promise<unknown>; auditSeed?: boolean } = {},
+  options: {
+    populated?: (ac: Account) => Promise<unknown>;
+    auditSeed?: boolean;
+    policy?: Durability;
+    pooled?: boolean;
+  } = {},
 ) {
   assert(faultModes.includes(mode as Fault));
   const { ac, setup: population } = await pair.open({
-    init: options.populated ?? ((client) => populate(pair.s, client, people)),
+    init:
+      options.populated ??
+      ((client) =>
+        options.pooled ? seedPooled(pair.s.e, client, people) : populate(pair.s, client, people)),
   });
   const link =
     mode === "hasync-cut-wal" || mode === "hasync-cut-reply" ? await walLink(pair) : undefined;
   try {
     const copy = await pair.clone(link?.host, link?.port);
     await pair.service();
+    if (options.pooled) await auditPool(pair.s.e, ac, population as PooledProof, "before");
     return await faultWork(
       pair,
       ac,
@@ -256,6 +269,8 @@ export async function faultDrill(
       copy,
       link,
       options.auditSeed ?? true,
+      options.policy ?? recoveryPolicy(),
+      options.pooled ? (population as PooledProof) : undefined,
     );
   } finally {
     link?.close();
@@ -270,6 +285,8 @@ async function faultWork(
   copy: unknown,
   link: Awaited<ReturnType<typeof walLink>> | undefined,
   auditSeed: boolean,
+  policy: Durability,
+  pooled: PooledProof | undefined,
 ) {
   const e = pair.s.e;
   const baseline = await ac.send(ac.intent("baseline", 10, witness));
@@ -308,12 +325,19 @@ async function faultWork(
   let replacement: Awaited<ReturnType<typeof replacementProbe>> | undefined;
   let trap: unknown;
   let restart: Awaited<ReturnType<typeof checkOldRestart>> | undefined;
+  let returningDisk: Awaited<ReturnType<SyncPair["probeOldDiskBoot"]>> | undefined;
   let from: number | undefined;
   let indexWork: Promise<unknown> | undefined;
   let offered: Awaited<ReturnType<typeof driveOffers>> | undefined;
   const testDiskReturn =
     mode === "hasync-restart" ||
     (mode === "hasync-ack" && pair.base?.checkpoint?.people === 100000);
+  const checkDisk = async () => {
+    restart = await checkOldRestart(pair);
+    returningDisk = await pair.probeOldDiskBoot();
+  };
+  if (testDiskReturn && policy === "two-copy") pair.beforeReplacement = checkDisk;
+  e.log("recovery-policy", { policy });
   const marks = () => ({
     ...(from === undefined ? {} : { fault: from }),
     ...Object.fromEntries(
@@ -325,14 +349,14 @@ async function faultWork(
     offered = await driveOffers(e, ac, baseline, {
       writer: pair.route!.url,
       reader: pair.reader,
-      deepRead: historyRead(ac, pair.base?.checkpoint),
+      deepRead: pooled ? pooledRead(pooled) : historyRead(ac, pair.base?.checkpoint),
     });
     await offered.lead();
   };
   const monitor = pinnedLoop(ac, pin);
   const current = trackWitness(ac);
   try {
-    if (mode === "hasync-ack") replacement = await replacementProbe(pair);
+    if (mode === "hasync-ack") replacement = await replacementProbe(pair, pooled ? ac : undefined);
     if (!logPod && mode !== "hasync-index") await start();
     if (mode !== "hasync-index" && mode !== "hasync-restart") {
       // The 2,000-fact import is one authored transaction across ten subjects.
@@ -436,18 +460,18 @@ async function faultWork(
         return { direction, before, packet, waiting, durable, current };
       });
       e.log("fault-trap", trap);
-      control = detached(pair.supervisor().run("fault", "single-copy-after-fence"));
+      control = detached(pair.supervisor().run("fault", policy));
     } else {
       if (trap) e.log("fault-trap", trap);
       if (!offered) await start();
-      control = detached(pair.supervisor().run("fault", "single-copy-after-fence"));
+      control = detached(pair.supervisor().run("fault", policy));
       const killed = await pair.s.kill("pg");
       from = killed.from;
     }
     await control;
     assert(from !== undefined);
     const availability = await offered!.finish(marks(), true);
-    if (testDiskReturn) restart = await checkOldRestart(pair);
+    if (testDiskReturn && policy === "single-copy-after-fence") await checkDisk();
     let initialStatus: string | undefined;
     let resolution: Receipt | undefined;
     if (pending) {
@@ -484,15 +508,18 @@ async function faultWork(
     await ac.pinned(pin);
     const traffic = await offered!.resolve();
     const replacementRetry = await replacement?.settle();
-    const returningDisk = testDiskReturn ? await pair.probeOldDiskBoot() : undefined;
-    const newStandby = testDiskReturn ? await pair.rebuildStandby() : undefined;
+    const standby =
+      pair.replacement ?? (testDiskReturn ? await pair.startReplacement() : undefined);
+    const newStandby = standby ? await pair.verifyReplacement(standby) : undefined;
     const recovered = await receipts(ac);
     await pair.auditCheckpoint("after");
+    if (pooled) await auditPool(e, ac, pooled, "after");
     const replay = await replayEvidence(e, ac, selected);
     const feed = await auditFeed(
       ac,
       auditSeed ? ac.inputs : ac.inputs.filter((input) => ac.receipts.has(input.operationId)),
       auditSeed ? ac.cursor : baseline.t.v,
+      pooled ? replacementRetry?.extra : undefined,
     );
     const report = {
       mode,
@@ -509,7 +536,7 @@ async function faultWork(
       availability,
       nativeReplay,
       offersRetried: traffic.settlements.filter((s) => s.disposition === "retried").length,
-      replacementRetry,
+      replacementRetry: replacementRetry?.result,
       polls,
       repeat,
       during: during.length,
@@ -518,7 +545,7 @@ async function faultWork(
       recovered,
       oracle: replay,
       feed,
-      policy: "single-copy-after-fence",
+      policy,
     };
     e.write("fault", report);
     return report;

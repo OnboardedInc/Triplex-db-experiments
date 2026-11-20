@@ -37,6 +37,7 @@ import { stagedInput } from "./protocol.js";
 import { databaseName } from "./scopeName.js";
 import {
   CurrentTransactions,
+  ImportClock,
   DatomicOptimisticRestart,
   type TransactionState,
 } from "./TransactionContext.js";
@@ -188,13 +189,14 @@ export const makeDatomicStorageAdapter = (
         options.indexedJournalReads !== false &&
         !state &&
         !history &&
-        basis === undefined &&
+        (basis === undefined || client.supportsJournalCuts(db)) &&
         pattern.entityType === "_Transaction" &&
         pattern.entityId
       ) {
         const direct = yield* read(() =>
           client.request<{ declined?: string; rows: string[] }>("POST", `/v2/db/${db}/journal`, {
             txId: pattern.entityId,
+            ...(basis === undefined ? {} : { basis }),
           }),
         );
         if (!direct.declined)
@@ -330,7 +332,7 @@ export const makeDatomicStorageAdapter = (
           // [DX-T1-5] Why: server-assigned strict clocks eliminate timestamp tickets and client-wide send head-of-line waits.
           // Rejected: queueing strict writes by a provisional client timestamp after the transactor owns record time.
           const readyAt = performance.now();
-          const submit = (sendSequence?: number, sent?: () => void) => {
+          const submit = (sendSequence?: number, sent?: (published?: boolean) => void) => {
             if (state.serverRecordTime) client.commitDiagnostics.serverAssignedSubmissions++;
             else {
               client.commitDiagnostics.clientOrderedSubmissions++;
@@ -347,7 +349,7 @@ export const makeDatomicStorageAdapter = (
                 // [DX-B5-L0] Why: public journals take their timestamp from the replayed runtime clock.
                 // Rejected: clock-replaying raw SPI callbacks with fixed import timestamps (cannot advance).
                 replaySafe:
-                  state.replaySafe === true &&
+                  state.replaySafe === true && state.importInstant === undefined &&
                   [...state.rows.values()].some((row) => row.entity_type === "_Transaction"),
                 sourceK: state.optimistic ? null : state.sourceK,
                 position: state.position,
@@ -861,6 +863,23 @@ export const makeDatomicStorageAdapter = (
           return result.txId;
         });
       }),
+    getTransactionPositionsByEntity: (entityId, limit, basis, beforePosition) =>
+      Effect.gen(function* () {
+        if ((yield* current) || !client.supportsJournalCuts(db)) return undefined;
+        return yield* read(async () => {
+          const result = await client.request<{
+            declined?: string;
+            positions: [string, number][];
+          }>("POST", `/v2/db/${db}/entity-transactions`, {
+            entityId,
+            limit,
+            basis,
+            ...(beforePosition === undefined ? {} : { beforePosition }),
+          });
+          if (result.declined) return undefined;
+          return result.positions.map(([transactionId, position]) => ({ transactionId, position }));
+        });
+      }),
     getReachRows: (root, basis) =>
       Effect.gen(function* () {
         if (yield* current) return undefined;
@@ -953,8 +972,14 @@ export const makeDatomicStorageAdapter = (
     transactionInstant: (now) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;
+        const imported = yield* ImportClock;
         const instant = yield* Effect.try({
           try: () => {
+            if (imported || state.importInstant !== undefined) {
+              if (!imported || imported.scope !== scopeKey || strictRecordClocks || (state.importInstant !== undefined && state.importInstant !== imported.instant)) throw new Error("Source record clock conflicts with target scope or transaction");
+              // [DX-ACT1] Why: historical source ordinals can share or reverse clocks. Rejected: the normal monotone allocation or gateway clock-replay flag, which rewrites those cuts.
+              return (state.importInstant = imported.instant);
+            }
             if (!state.serverRecordTime)
               return physicalInstant(scopeKey, now, state.order ?? {}, strictRecordClocks);
             if (!Number.isFinite(now)) throw new RangeError("Nonfinite submitted clock");

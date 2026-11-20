@@ -12,6 +12,7 @@ export function datomicReplicaSource(
 ): ReplicaSource {
   return {
     head,
+    erasure: () => client.erasureFrontier(db),
     page: (roots, basis, need) =>
       client.request<ReachWire>("POST", `/v2/db/${db}/reach-many`, {
         roots,
@@ -53,7 +54,7 @@ export function datomicReplicaSource(
             const c = r.value.type === "json" ? (r.value.value as Record<string, unknown>) : null;
             if (
               !c ||
-              !["assert", "retract"].includes(String(c["op"])) ||
+              !["assert", "retract", "erase"].includes(String(c["op"])) ||
               typeof c["entityId"] !== "string" ||
               !entities.includes(c["entityId"])
             )

@@ -3,17 +3,26 @@ import { measureHttp } from "./http-counts.ts";
 import { measureW0Http } from "./w0-http.ts";
 import type { CompositionHandle } from "./composition.ts";
 import { W0, canonical, sha256 } from "./w0-world.ts";
+import { pageLayout, publishPages, publishPage } from "./w0-page-outbox.ts";
 import { guardedFrame, type GuardLayout } from "./w0-guarded.ts";
 export type OutboxStore = Pick<
   CompositionHandle,
-  "currentPosition" | "sweepPage" | "transactionByCommand" | "transact" | "publishOutbox"
+  | "scopeName"
+  | "currentPosition"
+  | "sweepPage"
+  | "transactionByCommand"
+  | "transact"
+  | "publishOutbox"
 >;
 export const outboxEntity = (subject: string) =>
   "p5:outbox:" +
   (process.env.TX2_W0_OUTBOX_NAMESPACE ? process.env.TX2_W0_OUTBOX_NAMESPACE + ":" : "") +
   subject;
 export interface PublicationOptions {
-  layout?: GuardLayout;
+  layout?: GuardLayout | "page-cut";
+  roster?: import("./w0-page-outbox.ts").SweepRoster;
+  span?: import("./w0-page-outbox.ts").PageSpan;
+  eventId?: string;
   frameSize?: number;
   inflight?: number;
   stateRows?: readonly import("./w0-world.ts").WorldRow[];
@@ -54,11 +63,52 @@ async function publicationSlot(comp: OutboxStore, limit: number) {
     else pool.active--;
   };
 }
+async function guardedSlot<A>(
+  comp: OutboxStore,
+  options: PublicationOptions,
+  work: (before: () => Promise<void>) => Promise<A>,
+) {
+  const limit = options.inflight ?? publicationLimit;
+  if (!Number.isInteger(limit) || limit < 1 || limit > 32)
+    throw Error("Invalid publication capacity");
+  const release = await publicationSlot(comp, limit);
+  try {
+    const yieldBeforeCommit = async () => {
+      const since = performance.now();
+      while (
+        options.yieldToWriter &&
+        liveWriterBacklog > 0 &&
+        performance.now() - since < (options.maxWriterYieldMs ?? 50)
+      )
+        await new Promise((resolve) => setTimeout(resolve, 1));
+    };
+    return await work(yieldBeforeCommit);
+  } finally {
+    release();
+  }
+}
 export async function publishRecords(
   comp: OutboxStore,
   records: readonly W0.EvaluationRecord[],
   options: PublicationOptions = {},
 ) {
+  if (pageLayout(options.layout) === "page-cut" && !options.layout) {
+    const frameSize = options.frameSize ?? 256;
+    if (!Number.isInteger(frameSize) || frameSize < 1 || frameSize > 256)
+      throw Error("Invalid page frame size");
+    const result = await publishPages(
+      records,
+      { ...options, frameSize, layout: "page-cut" },
+      (frame, span) =>
+        guardedSlot(comp, options, (before) =>
+          publishPage(comp, frame, span, before, options.eventId),
+        ),
+    );
+    return {
+      deliveries: result.responses.flatMap((r) => r.deliveries),
+      retry: result.responses.length > 0 && result.responses.every((r) => r.retry),
+    };
+  }
   if (
     !Number.isInteger(options.frameSize ?? 64) ||
     (options.frameSize ?? 64) < 1 ||
@@ -70,21 +120,15 @@ export async function publishRecords(
     new Set(records.map((r) => r.subject)).size !== records.length
   )
     throw new Error("outbox frame must contain bounded distinct subjects");
+  if (options.layout === "page-cut")
+    return guardedSlot(comp, options, (yieldBeforeCommit) =>
+      publishPage(comp, records, options.span, yieldBeforeCommit, options.eventId),
+    );
   if (options.layout) {
-    const release = await publicationSlot(comp, options.inflight ?? publicationLimit);
-    try {
-      return await guardedFrame(comp, records, outboxEntity, options.layout, async () => {
-        const since = performance.now();
-        while (
-          options.yieldToWriter &&
-          liveWriterBacklog > 0 &&
-          performance.now() - since < (options.maxWriterYieldMs ?? 50)
-        )
-          await new Promise((resolve) => setTimeout(resolve, 1));
-      });
-    } finally {
-      release();
-    }
+    const layout = options.layout;
+    return guardedSlot(comp, options, (yieldBeforeCommit) =>
+      guardedFrame(comp, records, outboxEntity, layout, yieldBeforeCommit),
+    );
   }
   // [DX-H6] Why: prepare disjoint pages concurrently, then submit in invocation order without waiting for prior ACKs.
   // Rejected: serial state reads/build/ACK across all pages.

@@ -45,10 +45,10 @@ function* frames(n: number) {
   if (frame.length) yield frame;
 }
 
-export async function auditSeed(ac: Account, ledger: Receipt[]) {
+export async function auditSeed(ac: Account, ledger: Receipt[], client = ac.r) {
   for (let i = 0; i < ledger.length; i += 256) {
     const batch = ledger.slice(i, i + 256);
-    const v = await ac.r.request<{ database: string; operations: unknown[] }>(
+    const v = await client.request<{ database: string; operations: unknown[] }>(
       "POST",
       "/ha1/" + ac.db + "/operations",
       { ids: batch.map((r) => r.operationId) },

@@ -1,6 +1,9 @@
 (ns triplex.gateway.main
-  (:require [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
-            [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
+            [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
+            [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
+            [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
+            [triplex.gateway.small-row :as small-row] [triplex.gateway.write-policy :as policy])
   (:gen-class))
 
 (set! *warn-on-reflection* false)
@@ -8,6 +11,7 @@
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
 ;; [DX-H1] Why: SQL storage places the database before the JDBC query. Rejected: suffix concatenation (dev-only).
 (def slim-rows? (= "1" (System/getenv "TX2_SLIM_ROWS")))
+(def write-options-attempt (System/getenv "TX2_WRITE_OPTIONS_ATTEMPT"))
 (def uri-template (or (System/getenv "DATOMIC_URI_TEMPLATE") "datomic:dev://127.0.0.1:4334/{db}"))
 (defn db-uri [name] (clojure.string/replace uri-template "{db}" name))
 (def connections (atom {}))
@@ -80,7 +84,7 @@
         current (group/install! conn (commit/install! conn scope schema-ready))]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
-      (lean/enabled? current) (assoc :layout "lean")))))
+      (lean/enabled? current) (assoc :layout "lean" :orderedRowTexts true :journalCuts true)))))
 (defn delete-scope! [base scope]
   (let [name (scope-name scope) uri (db-uri name)]
     (when (some #{name} (d/get-database-names (db-uri "*"))) (assert-scope (sync-db uri) scope))
@@ -97,6 +101,35 @@
       {:t (codec/encode-value "long" (d/basis-t db))
        :position (codec/encode-value "long" (storage/head-position name db))
        :recordedAt nil :schemaHash (storage/value db entity :triplex.scope/schema-hash)})))
+(defn write-options [name]
+  ;; [DX-WFIX1] Why: an enabled launcher option can still select the base function on an unopened scope.
+  ;; Rejected: an environment listing or a readback from a different database.
+  (let [db (sync-db (db-uri name))
+        entity (scope/entity db)
+        selected (commit/entry db {} (lean/enabled? db))
+        selected-id (d/entid db selected)
+        installed? (and selected-id (some? (storage/value db selected-id :db/fn)))
+        guard (when prepared/enabled
+                (if prepared/basis-enabled prepared/basis-ident (prepared/active-guard)))
+        guard-id (when guard (d/entid db guard))]
+    {:database name :attempt write-options-attempt
+     :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")
+     :t (str (d/basis-t db)) :position (storage/head-position name db)
+     :strictRecordClocks (true? (storage/value db entity :triplex.scope/strict-record-clocks))
+     :rowsVersion (storage/value db entity :triplex.scope/rows-version)
+     :commitFunction (str selected) :commitFunctionInstalled (boolean installed?)
+     :baseFunctionHash (storage/value db entity :triplex.scope/commit-fn-hash)
+     :preparedWriter (when guard {:mode (if prepared/basis-enabled "basis" "full")
+                                  :guard (str guard)
+                                  :installed (boolean (and guard-id (storage/value db guard-id :db/fn)))})
+     :options {:predecessorLookup pred/enabled :groupCommit group/enabled
+               :livePriority policy/priority? :fieldCoalesce policy/field-only?
+               :queueClock group/queue-clock :stageClock group/stage-clock
+               :smallRows small-row/enabled :reusePrepared group/reuse-prepared
+               :maxMembers group/batch-limit :budgetMicros policy/budget-us
+               :bulkRows policy/bulk-rows :bulkBytes policy/bulk-bytes
+               :ledger (boolean (or ledger/enabled packed/enabled))
+               :packedJournal (boolean packed/enabled) :fastReply (boolean group/fast-reply)}}))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
 ;; Rejected: timing the StringBuilder alone (response bytes are not ready yet).
@@ -120,41 +153,76 @@
   (let [bytes (.readNBytes ^java.io.InputStream body 4194305)]
     (when (> (alength bytes) 4194304) (codec/invalid "Request too large"))
     (let [start (System/nanoTime) input (trace/span "gateway.request-parse" "gateway" (json/read-str (String. bytes "UTF-8")))]
-      (.set request-parse-micros (quot (- (System/nanoTime) start) 1000)) input)))
-(defn route-handler [{:keys [request-method uri body query-string]}]
+      (.set request-parse-micros (quot (- (System/nanoTime) start) 1000)) (if (map? input) (with-meta input {:wire-bytes (alength bytes)}) input))))
+(defn write-layout-options [db database]
+  (let [selected (commit/entry db {} (lean/enabled? db))
+        [variant body] (commit/variants [true false])
+        actual (:db/fn (d/entity db selected))
+        expected (d/function {:lang :clojure :params '[db payload]
+                               :requires '[[datomic.api :as d] [clojure.data.json :as json]]
+                               :code (if (= selected variant) body commit/code)})]
+    {:database database :scope (stored-scope db) :basis (str (d/basis-t db))
+     :predecessorRequested (boolean pred/enabled) :predecessorSelected (= selected variant)
+     :selectedFunction (str selected) :selectedDefinitionSha256 (schema/sha256 (str actual))
+     :installedDefinitionMatches (and actual (= (str actual) (str expected)))
+     :ledger (boolean (or ledger/enabled packed/enabled)) :packedJournal (boolean packed/enabled)
+     :packedJournalCount (if (d/entid db :triplex.journal/packed)
+                           (reduce (fn [n _] (inc n)) 0 (d/datoms db :aevt :triplex.journal/packed)) 0)
+     :fastReply (boolean group/fast-reply)
+     :leanNativeQuery (boolean lean-query/enabled) :leanNativeLog (boolean lean-feed/enabled)}))
+(defn route-handler-base [{:keys [request-method uri body query-string privacy-input]}]
   (stats/bump! [:routes (str (name request-method) " " (clojure.string/replace uri #"/s2?-[^/]+/" "/{db}/"))] 1)
   (try
     (cond
+      (and (= :get request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/write-options" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3)]
+        (response 200 (write-layout-options (sync-db (db-uri name)) name)))
       (= uri "/v2/admin/scan-stats") (response 200 (assoc @stats/counts :idMemo (reach/id-memo-stats) :entityCache (let [base (entity-cache/stats) extra (recent/stats)] (assoc (merge base extra) :bytes (+ (:bytes base) (:recentBytes extra))))))
       (and (= :post request-method) (= uri "/v2/admin/scan-stats/reset")) (do (reset! stats/counts {}) (response 200 {}))
-      (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal)" uri))
+      (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(transactions|command|journal|entity-transactions)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
             conn (connection (db-uri name))]
         (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
-                     :body (if (.endsWith ^String uri "transactions")
+                     :body (case (last (clojure.string/split uri #"/"))
+                             "transactions"
                              (trace/span "journal/page" "gateway" (journal/page conn name input))
-                             (if (.endsWith ^String uri "journal")
-                               (trace/span "journal/entity" "gateway" (journal/entity (trace/span "d/db" "peer-call" (d/db conn)) name input))
-                               (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name input))))}))
+                             "journal"
+                             (trace/span "journal/entity" "gateway" (journal/entity (trace/span "d/db" "peer-call" (d/db conn)) name input))
+                             "entity-transactions"
+                             (trace/span "journal/entity-positions" "gateway" (journal/entity-positions (d/db conn) name input))
+                             "command"
+                             (trace/span "journal/command" "gateway" (journal/command (trace/span "d/db" "peer-call" (d/db conn)) name input)))}))
       (and (= :get request-method) (= "/health" uri))
       (do (trace/span "d/db" "peer-call" (d/db (connection (db-uri "tx2-health"))))
-          (response 200 {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}))
+          (response 200 (cond-> {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}
+            (= "1" (System/getenv "TX2_LOAD2_TIMING"))
+            (assoc :loadClock {:bootId (get-in trace/identity-fields [:clock :bootId])
+                               :run (:run trace/identity-fields) :monoMs (/ (double (System/nanoTime)) 1000000.0)}))))
       (and (= :post request-method) (= "/v1/db/create" uri))
       (response 200 (let [input (request-json body)] (create-scope! uri-template (get input "scope") (get input "layout" "legacy") true (get input "strictRecordClocks" false))))
       (and (= :post request-method) (= "/v1/db/delete" uri))
       (response 200 (delete-scope! uri-template (get (request-json body) "scope")))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/basis" uri))
       (response 200 (basis uri-template (nth (clojure.string/split uri #"/") 3)))
+      (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/write-options" uri))
+      (response 200 (write-options (nth (clojure.string/split uri #"/") 3)))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/log" uri))
       (let [name (nth (clojure.string/split uri #"/") 3)
             params (into {} (map (fn [part] (let [[k v] (clojure.string/split part #"=" 2)]
                                              (let [^String encoded (or v "")] [k (java.net.URLDecoder/decode encoded "UTF-8")])))
                                   (remove empty? (clojure.string/split (or query-string "") #"&"))))]
-        (let [conn (connection (db-uri name))]
-          (when (lean/enabled? (trace/span "d/db" "peer-call" (d/db conn))) (lean/unsupported! "log"))
-          (response 200 (assoc (feed/log-page conn params) :database name))))
+        (let [conn (connection (db-uri name)) lean? (lean/enabled? (trace/span "d/db" "peer-call" (d/db conn)))
+              protected? (some? privacy/*cut*)]
+          ;; [DX-THIN1] Why: protected log requests must use the verified current erasure sequence even at an earlier native t.
+          ;; Rejected: choosing the unprotected projector when the native log option is also enabled.
+          (when (and lean? (not protected?) (not lean-feed/enabled)) (lean/unsupported! "log"))
+          (response 200 (assoc (feed/log-page conn params (cond protected? feed/project-protected
+                                                              lean? lean-feed/project
+                                                              lean-feed/enabled feed/project-application
+                                                              :else feed/project)
+                                             (when (and lean? (not protected?)) lean-feed/assert-unprotected!)) :database name))))
       (and (= :post request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/transact" uri))
-      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime) db-uri (db-uri name)]
+      (let [name (nth (clojure.string/split uri #"/") 3) input (or privacy-input (request-json body)) start (System/nanoTime) db-uri (db-uri name)]
         (try (timed start (response 200 (trace/span "storage/commit!" "gateway" (storage/commit! name (connection db-uri) (trace/span "d/db" "peer-call" (d/db (connection db-uri))) input))))
              (finally (when (get input "release") (storage/release! name (get input "handle"))))))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/request-index" uri))
@@ -196,14 +264,20 @@
             "transact" (try (trace/span "storage/commit!" "gateway" (storage/commit! name conn db input))
                          (finally (when (get input "release") (storage/release! name (get input "handle")))))
             "read" (trace/span "storage/read-rows" "gateway" (storage/read-rows name db input))
-            "q" (do (when (lean/enabled? (or db (storage/held-db name (get input "handle")))) (lean/unsupported! "q")) (trace/span "query/run" "gateway" (query/run name db input)))
+            "q" (trace/span "query/run" "gateway"
+                  (do (when privacy/*cut*
+                        (throw (ex-info "Lean queries need current erasure-aware value semantics"
+                                        {:status 409 :code "ErasureQueryUnsupported" :route "q"})))
+                      (when (and lean-query/enabled (lean/enabled? (or db (storage/held-db name (get input "handle")))))
+                        (lean-query/assert-unprotected! (or db (d/db (connection db-uri)))))
+                      (query/run name db input)))
             "operation" (storage/operation db id)
             "claim" (let [cut (storage/at-position db (get input "position"))
                           id (get input "commandId") claim (d/entid cut [:triplex.claim/command-id id])
-                          tx (when claim (storage/value cut claim :triplex.claim/tx))
+                          tx (when claim (ledger/claim-tx cut claim))
                           pos (when (and tx (d/entid cut :triplex.group/position)) (storage/value cut tx :triplex.group/position))
                           visible (and claim (or (nil? pos) (nil? (get input "position")) (<= pos (get input "position"))))
-                          tx-id (when visible (storage/value cut claim :triplex.claim/tx-id))]
+                          tx-id (when visible (ledger/claim-tx-id cut claim))]
                       (cond-> {:txId tx-id}
                         (and visible (true? (get input "receipt"))) (assoc :commandId id
                           :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id))))))))
@@ -211,8 +285,71 @@
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
                                   (:expectedSequence (ex-data e)) (assoc :expectedSequence (:expectedSequence (ex-data e))))))))
+(defn- with-privacy-guards [scopes work]
+  (if-let [[scope & more] (seq scopes)]
+    (privacy/guard scope #(with-privacy-guards more work))
+    (work)))
+
+(defn route-handler [{:keys [uri request-method body] :as request}]
+  (if-let [[_ name action] (re-matches #"/v[12]/db/(s2-[A-Za-z0-9_-]+)/(.+)" uri)]
+    (try
+      (let [[conn db] (trace/span "privacy/current-data" "gateway"
+                        (let [conn (connection (db-uri name))] [conn (d/db conn)]))]
+        (cond
+          (and (= :post request-method) (= action "protection"))
+          (response 200 (erase/declare! name conn db (request-json body)))
+          (and (= :post request-method) (= action "erase"))
+          (response 200 (erase/erase! name conn (request-json body)))
+          (and (= :post request-method) (= action "restore-erasure"))
+          (response 200 (erase/replay-after-restore! name conn))
+          :else
+          (let [input (when (and (= :post request-method) (= action "transact")) (request-json body))
+                managed-write? (and input (trace/span "privacy/write-policy" "gateway" (privacy/managed? name db)))
+                source (get input "erasureSourceDatabase")
+                _ (when (and source (not (and (string? source) (re-matches #"s2-[A-Za-z0-9_-]+" source))))
+                    (codec/invalid "Invalid source scope for protected delivery"))
+                request (cond-> request input (assoc :privacy-input input))
+                run (fn [cut]
+                      (trace/attribute! :erasureGuarded (boolean cut))
+                      (binding [privacy/*cut* cut privacy/*database* name privacy/*data* db
+                                privacy/*unseal* (fn [id e a value] (envelope/decode! name (d/db conn) id e a value))]
+                        (let [answer (if (and (= :get request-method) (= action "erasure-frontier"))
+                                       (response 200 {:database name :protected (boolean cut)
+                                                      :seq (or (:seq cut) 0) :erased (or (:erased cut) {})})
+                                       (route-handler-base request))]
+                          (cond-> answer cut (assoc-in [:headers "x-triplex-erasure-seq"] (str (:seq cut)))))))]
+            (if (and input (or managed-write? source))
+              ;; [DX-ERASE1] Why: the source cannot publish an erasure between validation and recipient commit.
+              ;; Rejected: an HTTP recheck followed by an independent recipient write.
+              (with-privacy-guards (sort (cond-> #{} managed-write? (conj name) source (conj source)))
+                (fn []
+                  (let [[current next] (trace/span "privacy/write-frontier" "gateway"
+                                         (let [current (d/db conn)] [current (privacy/cut name current)]))]
+                    (when (and managed-write? (nil? next)) (privacy/unavailable!))
+                    (trace/span "privacy/verify-write" "gateway" (privacy/verify-data! next current))
+                    (when (or source (contains? input "erasureSeq"))
+                      (if source
+                        (let [source-db (d/db (connection (db-uri source)))
+                              source-cut (privacy/cut source source-db)]
+                          (privacy/verify-data! source-cut source-db)
+                          (privacy/ensure-seq! source-cut (get input "erasureSeq")))
+                        (privacy/ensure-seq! next (get input "erasureSeq"))))
+                    (run next))))
+              ;; [DX-ERASE1] Why: a guarded write only needs the cut verified inside the writer lock.
+              ;; Rejected: reading and hashing the authority twice on every guarded save.
+              (let [read-cut (when-not input
+                               (trace/span "privacy/frontier" "gateway" (privacy/cut name db)))]
+                (when read-cut (trace/span "privacy/verify-data" "gateway" (privacy/verify-data! read-cut db)))
+                (when (contains? input "erasureSeq") (privacy/ensure-seq! read-cut (get input "erasureSeq")))
+                (run read-cut))))))
+      (catch Exception e
+        (let [info (ex-data e)]
+          (response (or (:status info) 400) {:code (or (:code info) "GatewayError") :message (.getMessage e)}))))
+    (route-handler-base request)))
+
 (defn handler [request] (trace/handler route-handler request))
 (defn -main [& _]
+  (envelope/start!)
   (d/create-database (db-uri "tx2-health"))
   ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.
   ;; Rejected: per-read initialization barriers.

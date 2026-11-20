@@ -30,6 +30,7 @@ export async function campaign(
     ...identity,
     mode: "hasync-suite",
     shape: "deep",
+    layout: "two-host",
     trials: benchTrials,
     sizes: benchTrials.map((trial) => trial.people),
   });

@@ -6,15 +6,19 @@ import { lsn, timeouts, wait } from "./supervisor.ts";
 import { driveOffers } from "./offers.ts";
 import { auditFeed } from "./faults.ts";
 import { historyRead } from "./v2/history.ts";
+import { auditPool, pooledRead, seedPooled, type PooledProof } from "./pooled.ts";
 
 export async function moveDrill(
   pair: SyncPair,
   people: number,
-  options: { seed?: (ac: Account) => Promise<unknown>; auditSeed?: boolean } = {},
+  options: { seed?: (ac: Account) => Promise<unknown>; auditSeed?: boolean; pooled?: boolean } = {},
 ) {
   const { ac, setup: population } = await pair.open({
-    init: options.seed ?? (async (a) => populate(pair.s, a, people)),
+    init:
+      options.seed ??
+      ((a) => (options.pooled ? seedPooled(pair.s.e, a, people) : populate(pair.s, a, people))),
   });
+  const pooled = options.pooled ? (population as PooledProof) : undefined;
   const writer = traffic(ac, "precopy", 220);
   let copy: Awaited<ReturnType<SyncPair["clone"]>>;
   try {
@@ -24,6 +28,7 @@ export async function moveDrill(
   }
   assert(writer.samples.length > 0);
   await pair.service();
+  if (pooled) await auditPool(pair.s.e, ac, pooled, "before");
   const before = await ac.send(ac.intent("before-planned-cut", 10, "move"));
   const old = await ac.send(ac.intent("old-basis", 10, "move"));
   const checkpoint = await requestIndex(ac);
@@ -34,7 +39,7 @@ export async function moveDrill(
   const offered = await driveOffers(pair.s.e, ac, old, {
     writer: pair.route!.url,
     reader: pair.reader,
-    deepRead: historyRead(ac, pair.base?.checkpoint),
+    deepRead: pooled ? pooledRead(pooled) : historyRead(ac, pair.base?.checkpoint),
   });
   await offered.lead();
   const monitor = pinnedLoop(ac, old);
@@ -83,6 +88,7 @@ export async function moveDrill(
     const traffic = await offered.resolve();
     const recovered = await receipts(ac);
     await pair.auditCheckpoint("after");
+    if (pooled) await auditPool(pair.s.e, ac, pooled, "after");
     const verified = await auditFeed(
       ac,
       options.auditSeed === false ? [...selected, command, ...traffic.inputs] : ac.inputs,

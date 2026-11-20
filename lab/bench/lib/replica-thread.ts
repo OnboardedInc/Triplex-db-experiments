@@ -14,6 +14,7 @@ export class ReplicaThread {
   readonly index = { floor: 0, position: 0, historyBytes: 0, positions: 20_000, maxBytes: 0 };
   readonly replica = { bytes: 0 };
   readonly applied: { position: number; at: number; availableAt?: number; receivedAt?: number }[] = [];
+  onApply?: (position: number, at: number) => void;
   readonly endpoint: string;
   private worker: Worker;
   private head: () => Promise<number>;
@@ -23,6 +24,7 @@ export class ReplicaThread {
   private closed = false;
   private fail: Error | undefined;
   private closeReply: (() => void) | undefined;
+  private following?: { resolve(): void; reject(error: Error): void };
   private serial = 0;
   private readonly receiptProgress?: Int32Array;
   private receiptSubmitted = 0;
@@ -49,6 +51,7 @@ export class ReplicaThread {
     });
     const failed = (error: Error) => {
       this.fail = error; reject(error); this.closeReply?.();
+      this.following?.reject(error);
       this.receiptDrain?.reject(error);
       for (const p of this.pending.values()) p.reject(error);
       this.pending.clear();
@@ -56,7 +59,11 @@ export class ReplicaThread {
     this.worker.on("message", m => {
       if (m.type === "ready" || m.type === "progress") { Object.assign(this.index, m.index); this.replica.bytes = m.bytes; }
       if (m.type === "ready") ready();
-      if (m.type === "progress" && m.valid) this.applied.push(m.timing ?? { position: m.index.position, at: m.at });
+      if (m.type === "following-after-images") this.following?.resolve();
+      if (m.type === "progress" && m.valid) {
+        this.applied.push(m.timing ?? { position: m.index.position, at: m.at });
+        this.onApply?.(m.index.position, m.at);
+      }
       if (m.type === "head") void this.head().then(value => this.worker.postMessage({ type: "head-reply", id: m.id, value }), error => this.worker.postMessage({ type: "head-reply", id: m.id, error: String(error) }));
       if (m.type === "reply") {
         const p = this.pending.get(m.id); this.pending.delete(m.id);
@@ -93,6 +100,14 @@ export class ReplicaThread {
     const { port1, port2 } = new MessageChannel();
     this.worker.postMessage({ type: "connect", port: port1 }, [port1]);
     return port2;
+  }
+  async followAfterImages(readers: number) {
+    if (this.fail) throw this.fail;
+    if (this.following) throw Error("Follower was already released");
+    await new Promise<void>((resolve, reject) => {
+      this.following = { resolve, reject };
+      this.worker.postMessage({ type: "follow-after-images", readers });
+    });
   }
   startSharedReader(reader: ReaderConfig, observationPort?: MessagePort) {
     const { port1, port2 } = new MessageChannel();
