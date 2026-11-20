@@ -19,6 +19,12 @@ interface EntityTransactionReader {
     query: DatalogQuery,
     position: number,
   ) => Effect.Effect<QueryResponse, unknown>;
+  readonly positions?: (
+    entityId: EntityId,
+    limit: number,
+    snapshotPosition: number,
+    beforePosition?: number,
+  ) => Effect.Effect<readonly { transactionId: string; position: number }[] | undefined, ReadError>;
   readonly transactionAtPosition?: (
     transactionId: TransactionId,
     position: number,
@@ -68,27 +74,31 @@ export const transactionsForEntity = (
     const query = reader.queryAtPosition
       ? (q: DatalogQuery) => reader.queryAtPosition!(q, snapshotPosition)
       : reader.query;
-    const response = yield* query({
-      find: ["?transaction", "?position"],
-      where,
-      orderBy: [{ variable: "?position", direction: "desc" }],
-      limit: limit + 1,
-    }).pipe(
-      Effect.mapError((cause) =>
-        cause instanceof ReadError
-          ? cause
-          : new ReadError({
-              message: `Failed to query entity transaction index: ${String(cause)}`,
-              cause,
-            }),
-      ),
+    const direct = yield* (
+      reader.positions?.(entityId, limit + 1, snapshotPosition, request.beforePosition) ??
+        Effect.succeed(undefined)
     );
+    const offered =
+      direct ??
+      (yield* query({
+        find: ["?transaction", "?position"],
+        where,
+        orderBy: [{ variable: "?position", direction: "desc" }],
+        limit: limit + 1,
+      }).pipe(
+        Effect.mapError((cause) =>
+          cause instanceof ReadError
+            ? cause
+            : new ReadError({
+                message: `Failed to query entity transaction index: ${String(cause)}`,
+                cause,
+              }),
+        ),
+      )).results.map((row) => ({ transactionId: row["?transaction"], position: row["?position"] }));
 
-    const indexed = yield* Effect.forEach(response.results, (row) =>
+    const indexed = yield* Effect.forEach(offered, ({ transactionId: transaction, position }) =>
       Effect.try({
         try: () => {
-          const transaction = row["?transaction"];
-          const position = row["?position"];
           if (
             typeof transaction !== "string" ||
             typeof position !== "number" ||

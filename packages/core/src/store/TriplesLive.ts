@@ -759,6 +759,26 @@ const makeTriplesServices = Effect.gen(function* () {
       {
         currentPosition: adapter.currentCommitPosition,
         query: queryAll,
+        ...(adapter.getTransactionPositionsByEntity
+          ? {
+              positions: (
+                entity: EntityId,
+                limit: number,
+                recordedPosition: number,
+                before?: number,
+              ) =>
+                Effect.flatMap(
+                  now,
+                  (validAt) =>
+                    adapter.getTransactionPositionsByEntity?.(
+                      entity,
+                      limit,
+                      { validAt, recordedPosition },
+                      before,
+                    ) ?? Effect.succeed(undefined),
+                ),
+            }
+          : {}),
         queryAtPosition: (query, recordedPosition) =>
           Effect.gen(function* () {
             const validAt = yield* now;

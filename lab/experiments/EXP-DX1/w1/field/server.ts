@@ -22,8 +22,15 @@ import {
 } from "./bench-check.ts";
 const repo = path.resolve(import.meta.dirname, "../../../../..");
 const [, , action, dir, source, batch, requested, profile] = process.argv;
-const predictionPath = (enhanced: boolean) =>
-  path.join(import.meta.dirname, enhanced ? "../small/predictions.json" : "predictions.json");
+const predictionPath = (enhanced: boolean, write5: boolean) =>
+  path.join(
+    import.meta.dirname,
+    write5
+      ? "../small/write5-predictions.json"
+      : enhanced
+        ? "../small/predictions.json"
+        : "predictions.json",
+  );
 const write = (name: string, data: unknown) =>
   fs.writeFileSync(name, JSON.stringify(data) + "\n", { flag: "wx" });
 const read = (f: string) => JSON.parse(fs.readFileSync(f, "utf8"));
@@ -35,6 +42,8 @@ async function fieldArm(
   nonce: string,
   directory: string,
   enhanced: boolean,
+  write5: boolean,
+  opened?: (client: DatomicClient, db: string) => Promise<void>,
 ) {
   const seed = new DatomicClient(seedUrl, 35000),
     c = new DatomicClient(url, 35000),
@@ -45,6 +54,7 @@ async function fieldArm(
     const { head: seedHead, seeds } = await seedPooled(seed, init.db);
     const open = await c.create(scope, "lean", true, 35000);
     assert(!open.created && open.db === init.db);
+    await opened?.(c, init.db);
     const phases = [],
       senders = new Map<string, number>();
     let head = seedHead;
@@ -58,6 +68,7 @@ async function fieldArm(
         window.schedule,
         true,
         senders,
+        write5,
       );
       write(path.join(directory, window.label + ".json"), p);
       assert.deepEqual(p.failures, []);
@@ -77,20 +88,89 @@ if (action === "worker") {
     bootstrapUrl = process.env.DATOMIC_READ_URLS!;
   assert.equal(process.env.TRIPLEX_TRACE_SOURCE, req.arm.source);
   assert.equal(process.env.TRIPLEX_TRACE_SLOT, req.arm.slot);
-  assert.equal(await fileHash(predictionPath(req.enhanced)), req.predictionSha256);
+  assert.equal(await fileHash(predictionPath(req.enhanced, req.write5)), req.predictionSha256);
   assert(req.study === "pulse" || req.study === "rates");
-  assert(typeof req.enhanced === "boolean" && modes(req.study, req.enhanced).includes(req.mode));
+  assert(
+    typeof req.enhanced === "boolean" &&
+      typeof req.write5 === "boolean" &&
+      modes(req.study, req.enhanced, req.write5).includes(req.mode),
+  );
   const policy = fieldPolicy(req.mode, req.enhanced);
   if (req.enhanced) assert.deepEqual(read(path.join(dir, "field-options.json")), policy);
   assert(url && bootstrapUrl && url !== bootstrapUrl);
+  const readOptions = async (client: DatomicClient, db: string) => {
+    const actual = await client.request<{
+      database: string;
+      scope: string;
+      basis: string;
+      predecessorRequested: boolean;
+      predecessorSelected: boolean;
+      selectedFunction: string;
+      selectedDefinitionSha256: string;
+      installedDefinitionMatches: boolean;
+      ledger: boolean;
+      packedJournal: boolean;
+      packedJournalCount: number;
+      fastReply: boolean;
+    }>("GET", `/v2/db/${db}/write-options`);
+    assert.equal(actual.database, db);
+    assert.equal(JSON.parse(actual.scope)[3], req.arm.nonce + "-load");
+    assert.match(actual.basis, /^\d+$/);
+    assert.match(actual.selectedDefinitionSha256, /^[a-f0-9]{64}$/);
+    assert(actual.installedDefinitionMatches);
+    assert.equal(actual.predecessorRequested, policy.predecessor);
+    assert.equal(actual.predecessorSelected, policy.predecessor);
+    assert.match(
+      actual.selectedFunction,
+      policy.predecessor ? /^:triplex\.write\/v-[a-f0-9]{24}$/ : /^:triplex\/commit$/,
+    );
+    assert.equal(actual.ledger, policy.ledger);
+    assert.equal(actual.packedJournal, policy.packedJournal);
+    assert.equal(actual.fastReply, policy.fastReplyAndWire);
+    assert.deepEqual(
+      client.cacheDiagnostics().fastPaths,
+      policy.fastReplyAndWire ? ["save-wire"] : [],
+    );
+    return actual;
+  };
+  let before: Awaited<ReturnType<typeof readOptions>> | undefined;
+  const opened = req.write5
+    ? async (client: DatomicClient, db: string) => {
+        before = await readOptions(client, db);
+        assert.equal(before.packedJournalCount, 0);
+      }
+    : undefined;
   const r =
     req.study === "pulse"
       ? await runArm(url, req.arm.nonce, policy.grouping, true, {
           pulse: true,
           smallPulse: req.enhanced,
           bootstrapUrl,
+          denseJournalIds: req.write5,
+          ...(opened ? { opened } : {}),
         })
-      : await fieldArm(url, bootstrapUrl, req.arm.nonce, dir, req.enhanced);
+      : await fieldArm(url, bootstrapUrl, req.arm.nonce, dir, req.enhanced, req.write5, opened);
+  if (req.write5) {
+    assert(before);
+    const client = new DatomicClient(url, 35_000);
+    try {
+      const after = await readOptions(client, r.db);
+      assert.equal(before.scope, after.scope);
+      assert.equal(before.selectedDefinitionSha256, after.selectedDefinitionSha256);
+      assert(BigInt(after.basis) > BigInt(before.basis));
+      if (policy.packedJournal) assert(after.packedJournalCount > 0);
+      else assert.equal(after.packedJournalCount, 0);
+      write(path.join(dir, "write-options.json"), {
+        nonce: req.arm.nonce,
+        source: req.arm.source,
+        slot: req.arm.slot,
+        before,
+        after,
+      });
+    } finally {
+      client.close();
+    }
+  }
   write(path.join(dir, "raw.json"), r);
   const seedHead =
     "headBefore" in r.phases[0]! ? r.phases[0]!.headBefore : r.phases[0]!.firstPosition - 1;
@@ -109,11 +189,12 @@ if (action === "worker") {
       batch &&
       /^[a-z][a-z0-9]{2,14}$/.test(batch) &&
       (requested === "pulse" || requested === "rates") &&
-      (profile === undefined || profile === "--enhanced"),
+      (profile === undefined || profile === "--enhanced" || profile === "--write5"),
   );
   const study: Study = requested,
-    enhanced = profile === "--enhanced",
-    pred = predictionPath(enhanced);
+    write5 = profile === "--write5",
+    enhanced = profile === "--enhanced" || write5,
+    pred = predictionPath(enhanced, write5);
   assert.equal(git("rev-parse", "HEAD"), source);
   assert.equal(git("diff", "--name-only", "HEAD"), "");
   const out = path.join(dir, "results");
@@ -122,7 +203,11 @@ if (action === "worker") {
   const prediction = read(pred);
   assert.equal(
     prediction.schema,
-    enhanced ? "dx-w1/write4-predictions/1" : "dx-w1/field-predictions/1",
+    write5
+      ? "dx-w1/write5-predictions/1"
+      : enhanced
+        ? "dx-w1/write4-predictions/1"
+        : "dx-w1/field-predictions/1",
   );
   assert.equal(prediction.beforeServerRun, true);
   fs.copyFileSync(pred, path.join(out, "predictions.json"), fs.constants.COPYFILE_EXCL);
@@ -132,7 +217,7 @@ if (action === "worker") {
     inventory.files[f] = await fileHash(f);
   write(path.join(out, "source.json"), inventory);
   const arms = [];
-  for (const [index, mode] of modes(study, enhanced).entries()) {
+  for (const [index, mode] of modes(study, enhanced, write5).entries()) {
     const attempt = path.join(out, "arm-" + (index + 1));
     fs.mkdirSync(attempt);
     const arm = {
@@ -144,7 +229,14 @@ if (action === "worker") {
       readers: false,
     };
     const policy = fieldPolicy(mode, enhanced);
-    write(path.join(attempt, "request.json"), { arm, mode, study, enhanced, predictionSha256 });
+    write(path.join(attempt, "request.json"), {
+      arm,
+      mode,
+      study,
+      enhanced,
+      write5,
+      predictionSha256,
+    });
     const r = await withStack(
       attempt,
       arm,
@@ -184,6 +276,9 @@ if (action === "worker") {
           predictionSha256,
           rawSha256: await fileHash(rawFile),
           seedReadbackSha256: await fileHash(seedFile),
+          ...(write5
+            ? { writeOptionsSha256: await fileHash(path.join(attempt, "write-options.json")) }
+            : {}),
         };
       },
       policy.grouping,
@@ -193,7 +288,7 @@ if (action === "worker") {
     write(path.join(attempt, "summary.json"), r);
     arms.push(r);
   }
-  const comparison = { study, source, enhanced, arms, predictionSha256 };
-  validateComparison(comparison, study, source, batch, enhanced);
+  const comparison = { study, source, enhanced, write5, arms, predictionSha256 };
+  validateComparison(comparison, study, source, batch, enhanced, write5);
   write(path.join(out, "comparison.json"), comparison);
 } else throw Error("Use the published W1 campaign controller");
