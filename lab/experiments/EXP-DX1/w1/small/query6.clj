@@ -76,6 +76,10 @@
         (is (= [[["assert" "early" ":v"]] [["retract" "early" ":v"] ["assert" "later" ":v"]]]
                (mapv (fn [tx] (mapv #(mapv % ["op" "assertionId" "attribute"]) (get tx "changes"))) feed)))
         (is (= [] (get resumed "rows")))
+        (let [[status body :as physical] (native name (str (pattern ":_tx/change")
+                         " [(triplex.gateway.query/compare-op \">\" ?f 0)]") "?id" edit-world)]
+          (is (if lean? (= [409 "LayoutUnsupported"] [status (get body "code")])
+                  (= ["edit/change-0" "edit/change-1" "seed/change-0"] (mapv #(second (first %)) (answer physical))))))
         (when lean?
           (let [[status content] (native name "[?f :f/id _]" "?f" edit-world)]
             (is (= [409 "LayoutUnsupported"] [status (get content "code")])))

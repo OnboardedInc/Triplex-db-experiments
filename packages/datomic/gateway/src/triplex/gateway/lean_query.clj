@@ -31,6 +31,8 @@
 ;; Rejected: synthesizing durable fact entities on writes or using d/with to extend a Datomic as-of value.
 (defn prepare [query]
   (let [used (set (filter symbol? (tree-seq coll? seq query)))
+        entities (volatile! #{}) scalars (volatile! (set (:find query)))
+        note! (fn [roles term] (vswap! roles into (filter canonical/variable? (tree-seq coll? seq term))))
         counter (volatile! 0)
         fresh #(first (drop-while used (repeatedly (fn [] (symbol (str "?leanRow" (vswap! counter inc)))))))
         physical #(unsupported! "an application attribute and a stable Triplex identity, or a classic scope for physical datoms")]
@@ -39,7 +41,7 @@
               ;; Rejected: treating lookup-ref vectors as native DB eids in an ordinary tuple relation.
               (if (logical-id? value)
                 (let [binding (fresh)] [binding [[binding (first value) (second value)]]])
-                [value []]))
+                (do (note! entities value) [value []])))
             (rewrite [form]
               (cond
                 (seq? form)
@@ -59,15 +61,17 @@
                                        (or (canonical/variable? fact) (logical-id? fact)))
                           (codec/invalid "Invalid fact function arguments"))
                         (let [[entity bind] (reference fact)]
+                          (note! scalars target)
                           (conj bind [entity (if (= f 'triplex.gateway.query/scalar) ::scalar ::transaction) target])))
                     triplex.gateway.query/visible
                     (do (when-not (and (= '$ source) (= 3 (count args)) (= 1 (count form))
                                        (or (canonical/variable? fact) (logical-id? fact)))
                           (codec/invalid "Invalid visible function arguments"))
                         (let [[entity bind] (reference fact) row (fresh)]
+                          (note! scalars args)
                           (conj bind [entity ::row row] [(apply list 'triplex.gateway.lean-query/visible-row row args)])))
-                    [form]))
-                (rule-pattern? form) [form]
+                    (do (note! scalars form) [form])))
+                (rule-pattern? form) (do (note! scalars form) [form])
                 :else
                 (let [[e a v :as pattern] (data-pattern form)]
                   (when-not (and (<= 2 (count pattern) 3)
@@ -77,9 +81,13 @@
                                      (binding? v) (logical-id? v)))
                     (physical))
                   (let [[entity bind] (reference e)
-                        [value refs] (if (reference-attributes a) (reference v) [v []])]
+                        [value refs] (if (reference-attributes a) (reference v) (do (note! scalars v) [v []]))]
                     (conj (into bind refs) (if (= 2 (count pattern)) [entity a] [entity a value]))))))]
-      (update query :where #(into [] (mapcat rewrite) %)))))
+      (let [rewritten (update query :where #(into [] (mapcat rewrite) %))]
+        ;; [DX-W1] Why: native entity numbers can match scalar values and comparisons that synthetic IDs cannot.
+        ;; Rejected: checking only returned rows, which silently accepts false negatives from a physical-ID predicate.
+        (when (some @scalars @entities) (physical))
+        rewritten))))
 
 (defn literal-lookup [e a]
   (when (and (logical-id? e) (= a (first e))) (second e)))
