@@ -1,5 +1,5 @@
-The packed edit can be found by its owner, command or position.
-Searching by a field across people needs an extra index.
+The packed layout gives up direct searches across people by field or value.
+It can still find a save by its owner, command or position.
 The 11-record write leaves out the stored journal rows that raw queries use.
 Putting those rows back takes 18 records and 2,500 bytes for a one-field replacement.
 The targeted search index matched nine cases and added about two records per changed link.
@@ -13,8 +13,8 @@ Build the incremental writer first and make whole accounts movable between datab
 **Floor.** 1,440 factorial and 3,840 burst transactions matched the requested bytes and durable log. Fixed native apply was 0.160 ms, plus 1.74 µs/datom, 2.49 µs/KiB and 0.70 µs/warm index seek. Durable peer coefficients were 2.136 ms, 4.80 µs, 67.82 µs and 1.33 µs. [Floor and settings](FLOOR.md)
 **Ceiling.** The first baseline reached 1,696–2,790 minimal tx/s at depth 64. Native apply occupied 22–25% of the one-member deep bursts and up to 80% in a larger group. Across three settings the highest bare rate was 68,471 simple members/s with 128 per native transaction. Two indexing threads led the eight-member blocks and the larger threshold deferred index adoption. The baseline repeat drift limits attribution. [Floor and settings](FLOOR.md)
 **Layout.** Event, claim, server clock, owner and account position are durable together. The subject chain reconstructs exact validity, receipt, retirement, history and both read paths. Grouping saves account-head replacements and one native instant. [Obligations](LAYOUT.md) · [Native size census](CENSUS.md)
-**SQL gate.** Both readers matched independent W0 on 71 cases and 213 checked responses. The fresh peer recovered the exact receipt after the dropped group result. The SDK checked 11 requests. [Methods and evidence](MEASUREMENTS.md)
-**Matched timing.** At 64 outstanding, compact finished 4.4× and 6.2× as many saves/s within the two matched Mac blocks. Native apply used 222–252 µs/save and WAL used 230–236 B/fact. At 1, 8 and 32 outstanding, the paired rate gains were 1.21–1.41×, 3.69–4.83× and 2.59–4.19×. [Write and read tables](MEASUREMENTS.md)
+**Part 1 SQL gate.** Both readers matched independent W0 on 71 cases and 213 checked responses. A fresh peer recovered the exact receipt after the dropped group result. The SDK checked 11 requests. [Methods and evidence](MEASUREMENTS.md)
+**Part 1 timing.** At 64 outstanding, packed compact finished 4.4× and 6.2× as many saves/s within the two historical matched Mac blocks. Native apply used 222–252 µs/save and WAL used 230–236 B/fact. At 1, 8 and 32 outstanding, the paired rate gains were 1.21–1.41×, 3.69–4.83× and 2.59–4.19×. [Write and read tables](MEASUREMENTS.md)
 **Cost.** The Mac loaded 16M facts in 6m 25s plus 3s of final indexing, with 866 MB of WAL. Cold current reads for one-event subjects took 4.18 ms p50 and 194.44 ms p99, with one outlier across 88 reads. The heap sample added 99.5 KiB per touched subject. [Read, import and migration](COST.md)
 **Retained history.** A predecessor snapshot every 64 events adds about 168 value bytes/save. At 415 events it cut cold current p50 from 9.94 to 3.01 ms and cold pinned p50 from 5.36 to 2.17 ms in Mac SQL. The old 194 ms sample had one event. Its cause remains unobserved. [Read matrix and evidence](HISTORY.md)
 **Erasure.** The protected save added two datoms, 141 value bytes and 0.38 ms of median durable ACK time across the alternating arms. The C07 rule and fresh-peer marker matched. Production key custody and physical restore remain open. [Erasure probe and limits](ERASURE.md)
@@ -24,4 +24,5 @@ Build the incremental writer first and make whole accounts movable between datab
 `bash lab/experiments/EXP-DX1/compact1/bench-server.sh`
 **Audit.** The floor checks full datom tuples and native t. The layout and loader compare durable event bytes to input. Receipts, old cuts, feed fields, the lost reply, SDK and oracle have explicit fresh-attempt and source checks. [PASS audit](AUDIT.md)
 **Evidence.** Durable attempt directories under `evidence/DX-COMPACT1/`. [Checksums](SHA256SUMS)
+**Part 2 attempts.** `p2-surface-b`, `p2-history-c`, `p2-erasure-b`, `p2-ablation-b`, `p2-mixed-b`. The first surface attempt released the slot before container creation when its image tag was absent. The replacement runs pinned the available image ID and verified native JAR and staged source bytes. [Evidence checks](AUDIT.md)
 **Open.** Complete portable and native business query parity, production key custody and back-up restore, storage-layer isolation, activation and notice delivery, and the bare-metal run.

@@ -21,3 +21,9 @@
 The W2 review's lost replacement response and predecessor-clock findings motivated the order of the claim check and full retirement witnesses. Queue fairness for mixed import, activation and notice traffic belongs to the admission gate after this experiment. Source-level tenant isolation, production key restore and mixed-traffic activation remain separate qualification tasks.
 
 The evidence here supports diagnostic claims and the listed prototype scenarios. The lab acceptance contract, fixture source and their pins are untouched.
+
+Run the following from the checkout with `attempt_dir` set to one complete Part 2 attempt. The reducer independently replays W0 for the surface and C07 results, verifies staged files and the launcher, and checks all terminal records before pricing samples.
+
+```sh
+node lab/experiments/EXP-DX1/compact1/part2-summary.mjs "$attempt_dir"
+```
