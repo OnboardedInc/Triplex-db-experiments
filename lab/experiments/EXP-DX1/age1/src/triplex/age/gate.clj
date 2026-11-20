@@ -167,16 +167,16 @@
               cut [nil (+ seed (min saves (+ s 5)))]]
         (equal! (feed product (+ seed s) 7 cut) (feed aged (+ seed s) 7 cut)
                 "Adopted journal feed differs"))
+      (native/emit "adopted-fidelity"
+                   {:source (:source seal) :manifestSha pin :seedRecords (:seed-records pop)
+                    :facts (:facts seal) :seedT (:seed-t pop) :seedHead seed :saves saves
+                    :accounts 10 :sample (:people pop) :growth growth :cuts cuts :dbs [name clone]})
       (let [conn (:conn aged)
             t (:t growth)
             _ (d/request-index conn)
             _ (native/check! (deref (d/sync-index conn t) 120000 nil) "Aged fixture index did not settle" {})
             observed (observe (assoc initial :t t) aged t final-head (+ (:seed-records pop) (:records growth)))]
-        (native/emit "scorecard-fixture" observed))
-      (native/emit "adopted-fidelity"
-                   {:source (:source seal) :manifestSha pin :seedRecords (:seed-records pop)
-                    :facts (:facts seal) :seedT (:seed-t pop) :seedHead seed :saves saves
-                    :accounts 10 :sample (:people pop) :growth growth :cuts cuts :dbs [name clone]}))))
+        (native/emit "scorecard-fixture" observed)))))
 
 (defn index-fixture! [file pin]
   (let [seal (adopt/read-seal! file pin true)

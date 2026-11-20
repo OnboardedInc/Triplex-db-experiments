@@ -6,14 +6,18 @@
             [triplex.age.rung :as rung]
             [triplex.age.scale :as scale]
             [triplex.age.tape :as tape]
-            [triplex.gateway.scope :as scope]))
+            [triplex.gateway.scope :as scope])
+  (:import [datomic.peer Connection]))
 
 (defn observe! [state db t head records]
   (let [pop (:population state)
         conn (:conn db)
         view (rung/verify-state! state db)
         seed (d/as-of view (:seed-t pop))
-        uid (:db-id conn)
+        ;; [DX-AGE1] Why: the pinned SQL peer holds the original catalog ID on its connection.
+        ;; Rejected: using the requested database alias or looking it up as a record key on the connection type.
+        _ (native/check! (instance? Connection conn) "Expected a connected Datomic SQL peer" {:class (str (class conn))})
+        uid (.-db_id ^Connection conn)
         policy (get state :journal "recorded-predecessor-k")
         last-n (dec (:observed state))
         last-command (tape/command pop last-n)
