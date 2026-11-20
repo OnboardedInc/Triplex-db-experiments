@@ -1,0 +1,194 @@
+"""Provide the disposable native PostgreSQL 17 and Datomic stack for ERASE1."""
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import secrets
+import shutil
+import socket
+import subprocess
+import sys
+import time
+from urllib.request import urlopen
+import uuid
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from producer_readings import digest, get
+
+SOURCE = "856c4c9ae41750af4565e93216d1ba92e2c6c5c5"
+EXP = Path("lab/experiments/EXP-DX1")
+PGPORT = 56141
+TXPORT = 4334
+WEBPORT = 8080
+LOOPBACK = socket.inet_ntoa(socket.INADDR_LOOPBACK.to_bytes(4,"big"))
+
+
+def managed(request, cleanup=False):
+    root = Path(request["root"])
+    source = request["source"]
+    tag = request["tag"]
+    assert source == SOURCE and request["item"] == 34 and tag == "erasen20"
+    assert root == Path("/var/tmp/triplex-bm1/night-n19") / tag
+    repo = root / "build/repository"
+    node = root / "build/tools/bin/node"
+    experiment = repo / EXP / "erase1"
+    owner_file = root / "erase-owner.json"
+    request_file = Path(request["directory"]) / "request.json"
+    env = dict(os.environ, DOCKER_HOST="unix:///var/run/docker.sock")
+
+    def output(*args, timeout=45):
+        return subprocess.check_output(args, cwd=repo, env=env, text=True, timeout=timeout).strip()
+
+    def run(*args, timeout, **kwargs):
+        subprocess.run(args, cwd=repo, env=env, check=True, timeout=timeout, **kwargs)
+
+    def save(path, value):
+        with path.open("x") as stream:
+            stream.write(json.dumps(value, indent=2) + "\n")
+
+    if cleanup and not owner_file.is_file():
+        return
+    assert output("git", "rev-parse", "HEAD") == source
+    if cleanup:
+        owner = get(owner_file)
+        nonce = owner["nonce"]
+        assert re.fullmatch(r"[a-f0-9-]{36}", nonce)
+        prefix = "tx2-dxbm1-erasen20-" + nonce.replace("-", "")[:12]
+        assert owner == {"source": source, "nonce": nonce, "prefix": prefix, "requestSha256": digest(request_file)}
+        for name in (prefix+"-java", prefix+"-pg"):
+            ids = output("docker","ps","-aq","--no-trunc","--filter","name=^/"+name+"$").splitlines()
+            if not ids:
+                continue
+            ident, = ids
+            assert output("docker","inspect","--format",'{{index .Config.Labels "tx2.erase1.holder"}}',ident) == nonce
+            if name.endswith("-pg"):
+                with (root/"postgres.log").open("a") as log:
+                    try:
+                        subprocess.run(["docker","logs","--tail","2000",ident],cwd=repo,env=env,stdout=log,
+                                       stderr=subprocess.STDOUT,timeout=25)
+                    except (OSError,subprocess.SubprocessError) as error:
+                        print(f"PostgreSQL log capture failed: {error!r}",file=log)
+            run("docker","rm","-f",ident,timeout=60)
+            assert not output("docker","ps","-aq","--filter","id="+ident)
+        assert not output("docker","ps","-q")
+        save(root/"erase-clean.json",{**owner,"remaining":[]})
+        owner_file.unlink()
+        return
+
+    assert shutil.disk_usage(root).free >= 80*2**30 and not output("docker","ps","-q")
+    assert not output("git","status","--porcelain")
+    for port in (PGPORT, TXPORT, WEBPORT):
+        with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as probe:
+            probe.bind((LOOPBACK,port))
+    nonce = str(uuid.uuid4())
+    prefix = "tx2-dxbm1-erasen20-" + nonce.replace("-", "")[:12]
+    owner = {"source": source, "nonce": nonce, "prefix": prefix, "requestSha256": digest(request_file)}
+    save(owner_file,owner)
+    label = "tx2.erase1.holder="+nonce
+    images = get(root/"build/results/images.json")
+    image = next(i for i in images if "tx2-datomic:1.0.7745-da00" in i["RepoTags"])
+    pg_image = next(i for i in images if "postgres:17-alpine" in i["RepoTags"])
+    assert image["Id"] == output("docker","image","inspect","--format","{{.Id}}","tx2-datomic:1.0.7745-da00")
+    assert pg_image["Id"] == output("docker","image","inspect","--format","{{.Id}}","postgres:17-alpine")
+    java_home, = [row.split("=",1)[1] for row in image["Config"]["Env"] if row.startswith("JAVA_HOME=")]
+    assert java_home == "/opt/java/openjdk"
+    # [DX-BM1] Why: the official Linux erasure wrapper launches a fresh native peer on the bench host.
+    # Rejected: borrowing a Java process, changing a global Java install, or using a different Datomic distribution.
+    jre = root/"jdk"
+    jre.mkdir()
+    helper = output("docker","create","--pull","never","--network","none","--label",label,
+                    "--name",prefix+"-java",image["Id"])
+    run("docker","cp",helper+":"+java_home+"/.",jre,timeout=180)
+    run("docker","rm",helper,timeout=30)
+    datomic = root/"build/image/datomic"
+    codec = repo/"packages/datomic/src/codec-spec.json"
+    files = repo/"packages/datomic/gateway"
+    peer_pin, = [row.split()[0] for row in (repo/"lab/config/datomic/SHA256SUMS").read_text().splitlines()
+                 if row.endswith("  peer-1.0.7745.jar")]
+    assert digest(datomic/"peer-1.0.7745.jar") == peer_pin
+    tree = "import{verifiedTree}from'./lab/bin/datomic-context.mjs';process.stdout.write(JSON.stringify(verifiedTree(process.argv[1])))"
+    gateway_hash = hashlib.sha256(
+        output(node,"--input-type=module","-e",tree,files).encode()).hexdigest()
+    db = "erase1_" + nonce.replace("-", "")
+    pgdata = root/"pgdata"
+    pgdata.mkdir(mode=0o700)
+    env.update(DX_ERASE_NONCE=nonce, DX_ERASE_TOKEN=secrets.token_hex(24), DX_ERASE_BIND_HOST=LOOPBACK,
+               DATOMIC_URL=f"http://{LOOPBACK}:{WEBPORT}", PGHOST=LOOPBACK, PGPORT=str(PGPORT),
+               PGDATABASE=db, PGUSER="postgres", PGPASSWORD=secrets.token_hex(24),
+               DX_ERASE_DATOMIC_HOME=str(datomic), DX_ERASE_SQL_DATA=str(pgdata),
+               DX_ERASE_TX_LOG=str(root/"transactor.log"), JAVA_HOME=str(jre), GATEWAY_SOURCE_SHA256=gateway_hash,
+               DATOMIC_EXT_CLASSPATH=str(files/"src")+":"+str(experiment),
+               PATH=f"{node.parent}:{jre / 'bin'}:"+env["PATH"])
+    sql = f"jdbc:postgresql://{LOOPBACK}:{PGPORT}/{db}"
+    env["DATOMIC_URI_TEMPLATE"] = "datomic:sql://{db}?" + sql + "?user=postgres&password=" + env["PGPASSWORD"]
+    pg = output("docker","run","-d","--pull","never","--name",prefix+"-pg","--label",label,"--network","host",
+                "--cpuset-cpus","1","--memory","6g","--memory-swap","6g","--mount",f"type=bind,src={pgdata},dst={pgdata}",
+                "-e","POSTGRES_DB="+db,"-e","POSTGRES_PASSWORD="+env["PGPASSWORD"],"-e","PGDATA="+str(pgdata),
+                pg_image["Id"],"postgres","-c","listen_addresses="+LOOPBACK,"-p",str(PGPORT),
+                "-c","shared_buffers=1GB","-c","max_wal_size=4GB")
+
+    def wait_until(check, description):
+        end = time.monotonic()+100
+        while time.monotonic()<end:
+            try:
+                if check():
+                    return
+            except (OSError,subprocess.CalledProcessError,subprocess.TimeoutExpired):
+                pass
+            time.sleep(1)
+        raise RuntimeError(description+" readiness timed out")
+
+    def tcp(port):
+        with socket.create_connection((LOOPBACK,port),timeout=2):
+            return True
+
+    wait_until(lambda: output("pg_isready","-q",timeout=3) == "", "PostgreSQL")
+    with (datomic/"bin/sql/postgres-table.sql").open("rb") as ddl:
+        run("psql","-Xq","-v","ON_ERROR_STOP=1",stdin=ddl,timeout=45)
+    assert Path(output("psql","-XAtq","-c","SHOW data_directory")).resolve() == pgdata.resolve()
+    props = root/"transactor.properties"
+    with os.fdopen(os.open(props,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600),"w") as stream:
+        stream.write("\n".join(["protocol=sql","host="+LOOPBACK,f"port={TXPORT}", "sql-url="+sql,
+              "sql-driver-class=org.postgresql.Driver","sql-user=postgres", "sql-password="+env["PGPASSWORD"],
+              "memory-index-threshold=48m","memory-index-max=160m","object-cache-max=96m"])+"\n")
+    with (root/"transactor.log").open("x") as log:
+        tx = subprocess.Popen(["taskset","-c","0",datomic/"bin/transactor","-Xms256m","-Xmx5g","-XX:+UseG1GC",
+            "-Dlogback.configurationFile="+str(experiment/"logback.xml"),props],cwd=datomic,env=env,
+            stdout=log,stderr=subprocess.STDOUT)
+    wait_until(lambda: tx.poll() is None and tcp(TXPORT), "Datomic transactor")
+    gateway_env = {**env,"DATOMIC_JAVA_OPTS":"-Xms256m -Xmx4g -XX:+UseG1GC -Ddatomic.objectCacheMax=96m -Dtriplex.codec.spec="+str(codec)}
+    with (root/"gateway.log").open("x") as log:
+        gateway = subprocess.Popen(["taskset","-c","2",datomic/"bin/run","-m","erase1","gateway"],cwd=datomic,
+            env=gateway_env,stdout=log,stderr=subprocess.STDOUT)
+
+    def health():
+        if gateway.poll() is not None:
+            raise RuntimeError("The ERASE1 gateway exited")
+        with urlopen(env["DATOMIC_URL"]+"/health",timeout=2) as response:
+            return json.load(response) == {"datomicVersion":"1.0.7745","gatewaySourceHash":gateway_hash}
+
+    wait_until(health,"ERASE1 gateway")
+    save(root/"stack.json",{**owner,"pgContainer":pg,"images":{"postgres":pg_image["Id"],"tool":image["Id"]},
+                          "gateway":gateway_hash,"peer":peer_pin})
+    heavy = (node,"lab/bin/heavy.mjs","--label","DX-BM1","--","taskset","-c","3",node)
+    run(*heavy,experiment/"server.mjs","stage",root/"stage",timeout=9000)
+    stage = root/"stage/staged.json"
+    staged = get(stage)
+    assert staged["source"] == source and staged["nonce"] == nonce and staged["people"] == 100_000
+    assert stage.stat().st_mtime >= request["start"]
+    save(root/"stage-witness.json",{**owner,"stagedSha256":digest(stage)})
+    remaining = int(request["deadline"]-time.time()-90)
+    assert remaining >= 1800, "Less than 30 minutes left for the native erasure check"
+    run(*heavy,experiment/"server.mjs","check",root/"measured",stage,timeout=min(3300,remaining))
+    with (root/"producer.json").open("xb") as log:
+        run(sys.executable,experiment/"summarize.py",root/"measured",stdout=log,timeout=120)
+    with (root/"collector.json").open("xb") as log:
+        run(sys.executable,Path(__file__).with_name("erase-reading.py"),root/"measured",root/"producer.json",
+            stage,source,stdout=log,timeout=120)
+
+
+if __name__ == "__main__":
+    assert sys.platform == "linux" and os.getuid() == 0 and sys.argv[1] in ("run","cleanup")
+    managed(get(Path(sys.argv[2])),cleanup=sys.argv[1]=="cleanup")

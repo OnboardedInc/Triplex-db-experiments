@@ -38,6 +38,7 @@ SEALED_ITEMS = (*SCALE_PROBES, 24)
 HA_SPLIT_SOURCE = "6ef27404ea90081454096337c586302b8600093c"
 HA_SPLIT = {30:"load-split-sql",31:"load-split-pg"}
 NOTICE_SOURCE = "f3454b12ebb60ed9a009e051b785660115f66ea5"
+ERASE_SOURCE = "856c4c9ae41750af4565e93216d1ba92e2c6c5c5"
 SCALE_CHECKPOINT = ROOT / "single-n20/checkpoint.json"
 # [DX-BM1] Why: the timeout belongs to the entire item, including its retry and data preparation.
 # Rejected: inheriting the 24–72 hour limits of standalone research controllers.
@@ -66,6 +67,7 @@ ITEMS = {
     30: ("exp/DX-HA1-failover-move", "load1", HA_SPLIT_SOURCE, 1, "single-shared-sql"),
     31: ("exp/DX-HA1-failover-move", "load1", HA_SPLIT_SOURCE, 1, "single-separate-sql"),
     32: ("exp/DX-STG1-staged-activation", "notify1", NOTICE_SOURCE, 4, "notify-bm1n20"),
+    34: ("exp/DX-ERASE1-erasure-cost", "erase1", ERASE_SOURCE, 4, "erasen20"),
     2: ("exp/DX-ACT1-activation", "import1", "eb154ca8", 5, "import-bm1n19"),
     10: (WFIX, "wfix1", WFIX_SOURCE, 1, "predecessorn19"),
     5: ("exp/DX-INT1", "int1", None, 5, "bm1n19int"),
@@ -81,6 +83,7 @@ NEXT.update({18:"predecessor",19:"enhanced-pulse",20:"growth",21:"size-ledger",2
 NEXT[29]="sealed-probes"
 NEXT[33]="review"
 NEXT.update({30:"separate-sql",31:"rd1-pairs",32:"thin-1m"})
+NEXT[34]="collect"
 EXP = Path("lab/experiments/EXP-DX1")
 ENV = dict(os.environ, GIT_CONFIG_NOSYSTEM="1", GIT_CONFIG_GLOBAL="/dev/null",
            GIT_TERMINAL_PROMPT="0", DOCKER_HOST="unix:///var/run/docker.sock",
@@ -214,6 +217,7 @@ def complete_output(r):
     if item==32:return any((notice_dir(r)/"deep").glob("*-raw.json"))
     if item in (14,*REVISED_JOINED):
         return any(any((root/phase).glob("offer-*.json")) for phase in ("smoke","scale"))
+    if item==34:return (root/"measured/result.json").is_file()
     return False
 
 
@@ -353,6 +357,15 @@ def preflight(r):
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"owned-notice-preflight-first",
                    "instructionsSha256":digest(report)})
         return
+    if item==34:
+        sample=Path(r["repo"])/EXP/"erase1/STAGE-SHA256SUMS"
+        sample_sha=digest(sample)
+        assert r["source"]==ERASE_SOURCE and sample_sha=="c0f91db3a13cfa8b20aaa9109ed7fc691a218f8f98eb85f9fcc3fa72aa5804e3"
+        assert "stage-replay/result.json" in sample.read_text()
+        put(ready,{"source":r["source"],"item":item,"at":stamp(),"smallPeople":24,"sampleManifestSha256":sample_sha,
+                   "producerSha256":"3fbb335729f9e9d7b852a476ba8e23c6ed25324e78ba39ba65bb86f0eb69012e",
+                   "collectorSha256":"5a244a17ef36f4f5055750c14cba3af4a374c70405a2e8385529454b1751f35f"})
+        return
     if item in (14,*REVISED_JOINED):
         put(ready,{"source":r["source"],"item":item,"at":stamp(),"state":"native-preflight-only",
                    "subjects":64,"longRun":"matching native agreement required" if item in REVISED_JOINED else "ACTREVIEW2 FIX FIRST"})
@@ -415,7 +428,8 @@ def public_source(item, directory, retained=None):
     document = collector_cases().get(str(item),{}) if item in (5,13) else {}
     # [DX-BM1] Why: preserve the historical joined check, then pin the current published source per new attempt.
     # Rejected: picking up a different file format or application between the small and large runs.
-    pinned={14:JOINED_REVIEW_SOURCE,32:NOTICE_SOURCE,33:JOINED_GEOGRAPHY_SOURCE,**dict.fromkeys(HA_SPLIT,HA_SPLIT_SOURCE)}
+    pinned={14:JOINED_REVIEW_SOURCE,32:NOTICE_SOURCE,33:JOINED_GEOGRAPHY_SOURCE,34:ERASE_SOURCE,
+            **dict.fromkeys(HA_SPLIT,HA_SPLIT_SOURCE)}
     if item==29:
         pinned[29]=os.environ["DX_BM1_ACT_RETRY"]
     if retained:
@@ -443,7 +457,7 @@ def coordinates(item,attempt):
     elif item==2: root=Path("/var/tmp/triplex-import1")/tag;unit="triplex-bm1-"+tag
     elif item==4: root=ROOT/("day-"+tag);unit="bm1n19-"+tag
     elif item==6: root=NIGHT/tag; unit="bm1n19-"+tag
-    elif item==32: root=NIGHT/tag;unit="bm1n20-"+tag
+    elif item in (32,34): root=NIGHT/tag;unit="bm1n20-"+tag
     else: root=Path("/var/tmp/triplex-int1")/tag;unit="triplex-int1-prepare-"+tag
     return tag,root,unit
 
@@ -502,7 +516,7 @@ def make(item, attempt, start, deadline):
             15:"| ACT1 reviewed joined Publish,",16:"| WFIX enhanced pulse,",17:"| ACT1 manifest repair,",27:"| ACT1 typed refusal,",
             24:"| RD1 writer probe,",26:"| INT1 single thin rung,",28:"| RD1 short pairs,",29:"| ACT1 shared-scope repair,",
             30:"| HA1 shared SQL,",31:"| HA1 separate SQL,",
-            32:"| STG1 copied notices,",33:"| ACT1 geography gate,",
+            32:"| STG1 copied notices,",33:"| ACT1 geography gate,",34:"| ERASE1 staged,",
             **{i:"| Sealed "+s+"," for i,s in SCALE_PROBES.items()}}.get(item,f"| {item} ·")
     if (item,attempt)==(28,2):
         token="| RD1 mounted retry,"
@@ -677,6 +691,8 @@ def worker(r):
         put(root/"preflight-reading.json",checked_notice(r,small=True))
         assert r["deadline"]-time.time()>=3600
         run(node,"--import","tsx",EXP/"notify1/bench.ts","launch",tag,"copied","16","0","4",cwd=repo,env=env,timeout=90)
+    elif r["item"]==34:
+        run(sys.executable,HERE/"probes/erase-runner.py","run",Path(r["directory"])/"request.json",cwd=repo,env=env)
     elif r["item"]==5:
         run(node,"--no-warnings","--experimental-transform-types",repo/EXP/"thin1/queue-bench.ts","--launch",tag,
             stamp(r["deadline"]-10),root/"build","--int1","--row-wire=plain",cwd=repo,env=env)
@@ -787,6 +803,8 @@ def cleanup(r):
                 run(node,"--import","tsx",HERE/"probes/notify_gate.mjs",action,tag,src,cwd=repo,env=prep,timeout=200)
     if r["item"] in (14,*REVISED_JOINED) and (root/"stack-owner.json").is_file():
         run(sys.executable,HERE/"joined_preflight.py","cleanup",Path(r["directory"])/"request.json",timeout=170)
+    if r["item"]==34 and (root/"erase-owner.json").is_file():
+        run(sys.executable,HERE/"probes/erase-runner.py","cleanup",Path(r["directory"])/"request.json",timeout=150)
     if r["item"] in (1,3,8,9,10,16) and (root/"active-slot").exists():
         run("bash",Path(r["repo"])/EXP/"w1/release.sh",root,timeout=180)
     elif r["item"]==6:
@@ -845,6 +863,7 @@ def remaining(r):
     elif item==28: prefixes=["tx2-dxt1-rd1p3-"+tag+"-"]
     elif item==6: prefixes=["tx2-dxscale1-"+tag+"-"]
     elif item==32: prefixes=["tx2-dxscale1-"+tag+"-"]
+    elif item==34: prefixes=["tx2-dxbm1-"+tag+"-"]
     elif item in (14,*REVISED_JOINED): prefixes=["tx2-dxt1-bm1-"+tag+"-"]
     else:
         prefixes=["tx2-dxt1-bm1-"+tag+"-"] if item==4 else []
@@ -1017,6 +1036,21 @@ def result(r):
         assert get(root/"native-clean.json")==dict(source=r["source"],prefix="tx2-dxt1-bm1-"+r["tag"],
                    requestSha256=digest(Path(r["directory"])/"request.json"),remaining=[])
         return "observed","All six 64-person native cells agreed with the collector. ACTREVIEW2 holds the 100,000-person run."
+    elif item==34:
+        checked=root/"collector.json"
+        stage=root/"stage/staged.json"
+        if not checked.is_file():
+            if stage.is_file():return "partial","The ERASE1 indexed fixture is retained. The complete physical check did not reconcile."
+            return "preflight-refused","ERASE1 did not finish its owned indexed fixture. Startup and seed evidence are retained."
+        proof=get(root/"erase-clean.json")
+        assert proof["source"]==r["source"] and proof["requestSha256"]==digest(Path(r["directory"])/"request.json")
+        assert proof["remaining"]==[] and proof["nonce"]==get(checked)["nonce"]
+        staged=get(root/"stage-witness.json")
+        assert {k:proof[k] for k in staged if k!="stagedSha256"}=={k:v for k,v in staged.items() if k!="stagedSha256"}
+        assert staged["stagedSha256"]==digest(stage)
+        replay=command(sys.executable,HERE/"probes/erase-reading.py",root/"measured",root/"producer.json",stage,r["source"],timeout=150)
+        assert json.loads(replay)==get(checked) and checked.stat().st_mtime>=r["start"]
+        return "recorded","The prepared ERASE1 fixture, both native erasure clocks, original traffic and two fresh peers replayed."
     elif item in REVISED_JOINED:
         from joined_reviewed import collect, settlement
         if (blocked:=root/"preflight-stop.json").is_file():
@@ -1532,7 +1566,7 @@ def one(item, attempts=(1,2)):
                     entry={**entry,"state":"uncollected","detail":"Producer output retained. Transfer archive did not seal."}
         timer=f"bm1n19-hard-{item}-{attempt}.timer"
         if active(timer):run("systemctl","stop",timer)
-        if entry["state"]!="incomplete" or entry["timedOut"] or complete_output(r) or item==17:break
+        if entry["state"]!="incomplete" or entry["timedOut"] or complete_output(r) or item in (17,34):break
         # A rejected builder preflight consumes one attempt. Failures after admission may use the remaining item budget.
         root=Path(r["root"])
         preflights=[p for p in (root/"preflight-stop.json",root/"preflight/STATUS.json",root/"source-preflight.json") if p.is_file() and ("stop" in p.name or "stopped" in p.read_text()[:8192])]
@@ -1602,6 +1636,9 @@ def main():
             if retry:=os.environ.get("DX_BM1_ACT_RETRY"):
                 assert re.fullmatch(r"[a-f0-9]{40}",retry)
                 scheduled=(29,*scheduled)
+            if os.environ.get("DX_BM1_ERASE_QUEUE")=="1":
+                assert retry==JOINED_GEOGRAPHY_SOURCE
+                scheduled=(*scheduled,34)
         except (OSError,ValueError,AssertionError,KeyError) as error:
             # [DX-BM1] Why: keep the original seed evidence and use the next independent population while diagnosing it.
             # Rejected: repeatedly restoring an unverified image or leaving a usable bench idle after a seal check fails.
