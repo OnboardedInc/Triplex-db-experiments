@@ -16,6 +16,14 @@ export async function inventory(options, config, manager) {
   assert.equal(process.env.DOCKER_HOST, DOCKER_HOST);
   assert.equal(options.holder, holder);
   const sdkGate = options["sdk-gate"] === true;
+  const zgc = options.zgc === true;
+  const javaMajor = process.env.DX_JAVA ?? "21";
+  assert(!zgc || javaMajor === "25", "The shared Mac ZGC correctness gate requires Java 25");
+  const collectors = zgc ? { tx: "Z", "gw-w": "Z", "gw-r": "Z" }
+    : { tx: "G1", "gw-w": "Serial", "gw-r": "G1" };
+  // [DX-JVM1] Why: exercise ZGC in every serving role with the same small Mac reservation.
+  // Rejected: using the server heap budget or comparing collector pause timing on the shared Mac.
+  const gc = (role) => `-XX:+Use${collectors[role]}GC` + (zgc ? " -XX:ConcGCThreads=1 -XX:ParallelGCThreads=1" : "");
   const caps = { pg: 320, tx: 1056, "gw-w": 1408, "gw-r": 768 };
   const cpus = { pg: "0", tx: "0", "gw-w": "1", "gw-r": "2" };
   const prefix = "tx2-dxt1-jvm1-" + randomUUID();
@@ -28,7 +36,7 @@ export async function inventory(options, config, manager) {
   const write = (file, value) => fs.writeFileSync(path.join(out, file), JSON.stringify(value, null, 2) + "\n", {flag:"wx"});
   const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(DX_|TRIPLEX_|DATOMIC_|TX2_|JAVA_OPTS$|JAVA_TOOL_OPTIONS$|_JAVA_OPTIONS$|JDK_JAVA_OPTIONS$)/.test(key)));
   Object.assign(env, {
-    DX_JAVA: process.env.DX_JAVA ?? "21",
+    DX_JAVA: javaMajor,
     ...(process.env.DX_DATOMIC_IMAGE_RECEIPT ? { DX_DATOMIC_IMAGE_RECEIPT: process.env.DX_DATOMIC_IMAGE_RECEIPT } : {}),
     DX_STACK_EVIDENCE: out,
     DX_STACK_WAIT_FOR_TRANSACTOR: "1",
@@ -37,8 +45,8 @@ export async function inventory(options, config, manager) {
     DX_QUIET_LOGS: "1",
     DX_GW_WRITE_MEMORY: caps["gw-w"] + "m",
     DX_GW_READ_MEMORY: caps["gw-r"] + "m",
-    DX_GW_WRITE_JAVA_OPTS: "-Xms256m -Xmx896m -XX:+UseSerialGC -Ddatomic.objectCacheMax=32m",
-    DX_GW_READ_JAVA_OPTS: "-Xms256m -Xmx416m -XX:+UseG1GC -Ddatomic.objectCacheMax=32m",
+    DX_GW_WRITE_JAVA_OPTS: "-Xms256m -Xmx896m " + gc("gw-w") + " -Ddatomic.objectCacheMax=32m",
+    DX_GW_READ_JAVA_OPTS: "-Xms256m -Xmx416m " + gc("gw-r") + " -Ddatomic.objectCacheMax=32m",
     ...(sdkGate ? { DX_SERVER_RECORD_TIME: "1", DX_STRICT_RECORD_CLOCKS: "1", DX_GATEWAY_SELFTEST: "1" } : {}),
   });
   let slot;
@@ -80,13 +88,13 @@ export async function inventory(options, config, manager) {
     }
     const source = execFileSync("git", ["rev-parse", "HEAD"], {encoding:"utf8"}).trim();
     const files = [import.meta.filename, path.join(import.meta.dirname, "readback.sh"), path.join(import.meta.dirname, "launch.mjs"), path.join(stack, "up.sh")];
-    write("attempt.json", {prefix, source, slot:slot.slot, diagnostic: true, at:new Date(), caps, cpus, files:Object.fromEntries(files.map((file) => [path.basename(file), createHash("sha256").update(fs.readFileSync(file)).digest("hex")]))});
+    write("attempt.json", {prefix, source, slot:slot.slot, diagnostic: true, javaMajor, collectors, at:new Date(), caps, cpus, files:Object.fromEntries(files.map((file) => [path.basename(file), createHash("sha256").update(fs.readFileSync(file)).digest("hex")]))});
     const child = spawn("bash", [
       path.join(stack,"up.sh"), prefix,
       ...(sdkGate ? ["--port-write", String(slot.port), "--port-read", String(slot.port + 10)] : ["--no-publish"]),
       "--cpus-tx", cpus.tx, "--cpus-pg", cpus.pg, "--cpus-gw-write", cpus["gw-w"], "--cpus-gw-read", cpus["gw-r"],
       "--pg-memory", caps.pg+"m", "--tx-memory", caps.tx+"m",
-      "--tx-java-opts", "-Xms256m -Xmx704m -XX:+UseG1GC -XX:MaxGCPauseMillis=50",
+      "--tx-java-opts", "-Xms256m -Xmx704m " + gc("tx") + (zgc ? "" : " -XX:MaxGCPauseMillis=50"),
       "--object-cache-max", "160m", "--memory-index-threshold", "48m", "--memory-index-max", "128m",
       "--pg-settings", "-c shared_buffers=64MB -c synchronous_commit=on -c fsync=on -c full_page_writes=on",
     ], {env, stdio:"inherit", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(300_000)])});
@@ -105,6 +113,7 @@ export async function inventory(options, config, manager) {
       const before = docker(["inspect", "--format", "{{.Id}} {{.State.StartedAt}} {{.RestartCount}} {{.State.Running}}", c.id]);
       const role = c.name.slice(prefix.length + 1);
       const observed = fs.readFileSync(path.join(out, prefix, "config", role + ".process.txt"), "utf8");
+      assert.equal(/^collector=(.+)$/m.exec(observed)?.[1], "Use" + collectors[role] + "GC");
       const startedAt = /^startedAt=(.+)$/m.exec(observed)?.[1];
       const restarts = /^restarts=(\d+)$/m.exec(observed)?.[1];
       assert.equal(before, [c.id, startedAt, restarts, true].join(" "));
