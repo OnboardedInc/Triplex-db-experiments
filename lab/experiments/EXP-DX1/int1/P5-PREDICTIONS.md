@@ -1,6 +1,6 @@
 # DX-INT1 pooled forecasts before the campaign
 
-Ten accounts share one physical Datomic database. The overnight rung has 100,000 people total and the retained-seed rung has 1,000,000. The real save tape is per account. The frozen tape remains the comparison required by v3. These forecasts precede both pooled runs. They use the archived single-account and grouped-pilot results, the local memory census, and the published native Publish preflight. All performance ranges assume the same serving resources across each matched pair. [North star](../../../NORTH-STAR.md) · [Bars](../../../TARGETS.md) · [Fixed tape](PREDICTIONS.md) · [Scale pilot](../scale1/REPORT.md)
+Ten accounts share one physical Datomic database. The overnight rung has 100,000 people total and the retained-seed rung has 1,000,000. The real save tape is per account. The frozen tape remains the comparison required by v3. These forecasts precede both pooled runs. They use the archived single-account and grouped-pilot results, the local memory census, and the published native Publish preflight. All performance ranges assume the same serving resources across each matched pair. [North star](https://github.com/OnboardedInc/Triplex-db-experiments/blob/7a0b6080b924437a6067c6457faa511448f39e26/lab/NORTH-STAR.md) · [Bars](https://github.com/OnboardedInc/Triplex-db-experiments/blob/7a0b6080b924437a6067c6457faa511448f39e26/lab/TARGETS.md) · [Fixed tape](PREDICTIONS.md) · [Scale pilot](../scale1/REPORT.md)
 
 | Bar | 10 × 10,000 people | 10 × 100,000 people |
 | --- | --- | --- |

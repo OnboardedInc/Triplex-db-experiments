@@ -31,6 +31,7 @@ c85e54e765b6fe5cfc61ba05e89af882fb13a7a5faf6dcb99a38247d2452440c  int1/p5-checks
 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  int1/p5-checks/pooled-typecheck-b.log
 14fd7e9256a7e07ac98fc3735bc172624433a9ed750dd961a77a2f8b1ee3bf18  int1/p5-checks/pooled-units-b.log
 c51d3760152ab8e918050be801d20977ed89372fc3117075146c13ed5405e199  int1/p5-checks/retention-gate.log
+b97613398660d22aeba5c74510d56aaf48262ea345d0c2ae4bba7f5d16feb7b9  int1/p5-checks/scale1-staggered-pools.json
 ff6e10a8a8a2226ad23e2efe3294516903589b236d3c14a2c32325ac64ccd9a0  int1/p5-pooled-smoke/4-frozen-zero/arm.json
 4670a911d0c77f3972bcd295e081fd2fdf619321813a8ab2775667eb5ee0b765  int1/p5-pooled-smoke/4-frozen-zero/driver.log
 281855c98f1d087fc69d0df8a3cad462600e1836f17b1a4a35c39b42d9a31bed  int1/p5-pooled-smoke/4-frozen-zero/expected-model-deep-ff5d52ef-2fa7-4eaf-bee4-6911ed3ce215-s0.bin

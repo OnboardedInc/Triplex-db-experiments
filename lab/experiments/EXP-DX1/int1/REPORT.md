@@ -1,7 +1,7 @@
 All accounts will share one Datomic database.
 The reader and gateways kept the same person-cache entries through 600,000 thin people and 40,000 deep people at fixed activity.
 The last 10,000 deep people still added about 322 resident bytes each in the read gateway. We are measuring the heap and native memory behind that change.
-The transactor kept adding memory after its object cache was nearly full. One deep account peaked at 2.55 GiB and loading ten peaked at 4.67 GiB on the server.
+The transactor kept adding memory after its object cache was nearly full. A saved ten-account traffic run reached 5.37 GiB in its 6 GiB container.
 The next Mac run samples both Java heaps at three sizes while the same people stay active.
 The writer, erasure safeguards, fallback reader and Publish priority are now on the shared branch. All six native runs passed 54,079 assertions each.
 The pooled campaign has forecasts for all eight priorities. The small saved-output comparison is still due.
@@ -9,7 +9,7 @@ Lean storage still has open erasure and native query gaps. The campaign must kee
 
 ## One-database work
 
-Pooled forecasts for the two population rungs and every bar through P8. [Forecasts](P5-PREDICTIONS.md) · [Bars](../../../TARGETS.md)
+Pooled forecasts for the two population rungs and every bar through P8. [Forecasts](P5-PREDICTIONS.md) · [Bars](https://github.com/OnboardedInc/Triplex-db-experiments/blob/7a0b6080b924437a6067c6457faa511448f39e26/lab/TARGETS.md)
 
 The fixed-activity census keeps three natural RSS samples at each population before requesting Java class histograms and Native Memory Tracking. The observer checks the target role, live PID and start time, challenge and image. The report reopens the compressed bytes and checks the totals, native pools, actual roster, pinned cut and unchanged admission counters. All Mac timings are diagnostic.
 
