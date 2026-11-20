@@ -106,7 +106,11 @@ export class DeepAccount {
       writer = this.guarded(debt),
       result = await save(writer, tag, edits, { touch: subject, originTx: debt.position });
     const v = await this.control.readAt(subject, result.position),
-      expected = evaluate(raw!, resolve(v.head.activations, v.head.basis.validTime), v.head.basis);
+      expected = evaluate(
+        raw!,
+        resolve(v.head.activations, v.output.basis.validTime),
+        v.output.basis,
+      );
     assert.equal(
       W0.outputJson(v.output),
       W0.outputJson(expected),
@@ -178,11 +182,17 @@ export class DeepAccount {
     }
     throw Error("deep command contention limit");
   }
-  async decisionsAt(ids: string[], p: number) {
+  currentCut(now?: string) {
+    return this.control.currentCut(now);
+  }
+  async decisionsAt(ids: string[], p: number, valid?: string) {
     const debt = await this.debt(p);
-    if (!debt) return this.control.decisionsAt(ids, p);
+    if (!debt) return this.control.decisionsAt(ids, p, valid);
     const prior = (await this.control.head(debt.value.sourceBefore)).value,
-      basis = { tx: debt.position, validTime: iso(debt.value.validAt) },
+      basis = {
+        tx: prior.ordinal === "native" ? p : debt.position,
+        validTime: valid ?? iso(debt.value.validAt),
+      },
       release = resolve(prior.activations, basis.validTime);
     const out = new Map<string, W0.Output>();
     for (let i = 0; i < ids.length; i += 32) {
@@ -194,7 +204,7 @@ export class DeepAccount {
       for (const w of await this.readWorlds(
         this.comp,
         group,
-        { position: p, validAt: debt.value.validAt },
+        { position: p, validAt: valid ? Date.parse(valid) : debt.value.validAt },
         this.db.account,
       ))
         out.set(w.subject, evaluate(w, release, basis));

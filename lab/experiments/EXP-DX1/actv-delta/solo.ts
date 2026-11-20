@@ -254,7 +254,7 @@ export async function solo(
         }
       },
     }));
-    const reader = new CurrentDecisions(read);
+    const reader = new CurrentDecisions(read, null);
     const loaded = await loadedOffers(
       bridge.control,
       reader,

@@ -43,6 +43,7 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
           "power",
           "erasure.test",
           "recovery.test",
+          "activation-recovery.test",
           ...(mode === "schedules"
             ? []
             : mode === "price"

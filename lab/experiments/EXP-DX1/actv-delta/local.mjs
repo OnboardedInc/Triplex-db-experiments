@@ -21,6 +21,7 @@ export async function local(opts, config, manager) {
   assert(
     process.platform === "darwin" && opts.holder === "DX-ACT2" && dockerArgs([])[1] === DOCKER_HOST,
   );
+  if (opts.run === "recover-slot") return recoverSlot(opts, config, manager);
   assert(
     [
       "schedules",
@@ -345,4 +346,66 @@ export async function local(opts, config, manager) {
       slotReleased: info?.slot ?? null,
     });
   }
+}
+
+async function recoverSlot(opts, config, manager) {
+  const dir = path.resolve(opts.out);
+  const attempt = JSON.parse(fs.readFileSync(path.join(dir, "attempt.json")));
+  const n = JSON.parse(fs.readFileSync(path.join(dir, "native.json")));
+  assert(
+    n.nonce === attempt.nonce &&
+      n.prefix === "tx2-dxdelta-" + attempt.nonce.slice(0, 8) &&
+      /^tx2-dxdelta-[0-9a-f]{8}$/.test(n.prefix) &&
+      n.prefix.endsWith(n.nonce.slice(0, 8)) &&
+      ["s1", "s2", "s3"].includes(n.slot),
+  );
+  const file = path.join(dir, "cleanup.json");
+  assert(!fs.existsSync(file));
+  const info = slotInfo(config, "datomic", n.slot);
+  const receipt = await withPool((ledger) => {
+    assert(readOwner(info)?.holder === opts.holder);
+    assert.equal(
+      createHash("sha256").update(fs.readFileSync(info.ownerFile)).digest("hex"),
+      n.ownerHash,
+    );
+    const names = ["pg", "tx", "gw"].map((role) => n.prefix + "-" + role);
+    const owned = ledger.reservations.filter((r) => r.slot === n.slot && r.holder === opts.holder);
+    assert.deepEqual(owned.map((r) => r.container).sort(), [...names].sort());
+    assert(owned.every((r) => r.pid === owned[0].pid && r.state === "delta"));
+    assert.throws(() => process.kill(owned[0].pid, 0), { code: "ESRCH" });
+    // [DX-ACT2] Why: interrupted callers may outlive their terminal reply. Recover only the exact reservation and nonce-owned stack after proving its manager exited. Rejected: releasing the slot by holder or name alone.
+    const network = JSON.parse(docker(["network", "inspect", n.prefix]))[0];
+    assert.equal(network.Labels["delta.attempt"], n.nonce);
+    assert(Object.keys(network.Containers).every((id) => Object.values(n.roles).includes(id)));
+    const volumes = new Set();
+    for (const role of ["gw", "tx", "pg"]) {
+      const id = n.roles[role],
+        m = inspect(id);
+      if (!m) continue;
+      assert(
+        m.Id === id &&
+          m.Name === "/" + n.prefix + "-" + role &&
+          m.Config.Labels["delta.attempt"] === n.nonce &&
+          m.Config.Labels["tx2.holder"] === opts.holder &&
+          m.Image === (role === "pg" ? n.pgImage : n.image),
+      );
+      for (const mount of m.Mounts) if (mount.Type === "volume") volumes.add(mount.Name);
+      docker(["rm", "-fv", id]);
+      assert(!inspect(id));
+    }
+    for (const v of volumes)
+      assert(!docker(["volume", "inspect", v], { allowFail: true }), "owned volume remains");
+    docker(["network", "rm", network.Id]);
+    ledger.reservations = ledger.reservations.filter((r) => !owned.includes(r));
+    manager.releaseSlot(info);
+    assert(!fs.existsSync(info.ownerFile));
+    return {
+      nonce: n.nonce,
+      roles: names.length,
+      volumesRemoved: volumes.size,
+      slotReleased: n.slot,
+      recovered: true,
+    };
+  });
+  fs.writeFileSync(file, JSON.stringify(receipt) + "\n", { flag: "wx" });
 }

@@ -22,6 +22,8 @@ import {
   stateOf,
   stateText,
   releaseEntry,
+  owedRecord,
+  type DurabilityMode,
   type Body,
   type Head,
   type Epochs,
@@ -45,7 +47,20 @@ type Intent = {
   from: string | null;
   valid: string | null;
   source: string;
+  durability?: DurabilityMode;
+  clock?: true;
 };
+const intentRequest = (i: Pick<Intent, "doc" | "from" | "valid" | "durability" | "clock">) =>
+  hash([
+    "seal",
+    i.doc,
+    i.from,
+    i.valid,
+    ...(i.durability ? [i.durability] : []),
+    ...(i.clock ? ["clock"] : []),
+  ]);
+const observedEvent = (c: Cell<Recipe>) =>
+  c.value.nativeBasis ? { ...c.value, basis: { ...c.value.basis, tx: c.position } } : c.value;
 type Claim = { id: string; request: string; seq: number; error?: string };
 type Build = (
   p: number,
@@ -82,7 +97,7 @@ function packEpochs(h: Head): Epochs {
       t = times.length;
       times.push(a.from);
     }
-    return [r, t, a.tx, (a as typeof a & { seq?: number }).seq ?? 0];
+    return a.clock ? [r, t, a.tx, a.seq ?? 0, 1] : [r, t, a.tx, a.seq ?? 0];
   });
   return { docs, names, times, epochs };
 }
@@ -105,12 +120,13 @@ function unpackHead(
     assert(names && times);
     return {
       ...fixed,
-      activations: epochs.map(([r, t, tx, seq]) => ({
+      activations: epochs.map(([r, t, tx, seq, clock]) => ({
         doc: docs[names[r!]!]!,
         release: names[r!]!,
         from: times[t!]!,
         tx: tx!,
         ...(seq ? { seq } : {}),
+        ...(clock ? { clock: true as const } : {}),
       })),
     };
   }
@@ -142,6 +158,7 @@ export class Account {
     worlds: readonly W0.World[],
     basis: W0.Basis,
     indexed = true,
+    ordinal?: "native",
   ) {
     assert(census.length > 0 && !W0.checkBasis(basis));
     const censusHash = checkCensus(
@@ -227,6 +244,7 @@ export class Account {
       frontier: 0,
       erasure: 0,
       indexed,
+      ...(ordinal ? { ordinal } : {}),
       indexedAt: basis.validTime,
       source: this.binding,
       compiler: sourceFormats,
@@ -250,6 +268,7 @@ export class Account {
   private readonly histories = new Map<string, { bytes: string; position: number }>();
   private async checkedHead(c: Cell<Head>) {
     let stored = c.value;
+    let nativeRelease: number | undefined;
     if (stored.history && !stored.activations) {
       const key = "event:" + stored.releaseSeq,
         digest = stored.history;
@@ -275,8 +294,17 @@ export class Account {
         this.histories.set(digest, encoded);
       }
       stored = { ...stored, ...JSON.parse(encoded.bytes) };
+      if (stored.ordinal === "native") nativeRelease = encoded.position;
     }
-    c = { ...c, value: unpackHead(stored) };
+    const checked = unpackHead(stored);
+    if (nativeRelease !== undefined) {
+      checked.activations = checked.activations.map((a) =>
+        a.seq === checked.releaseSeq ? { ...a, tx: nativeRelease! } : a,
+      );
+      if (checked.seq === checked.releaseSeq)
+        checked.basis = { ...checked.basis, tx: nativeRelease };
+    }
+    c = { ...c, value: checked };
     assert(
       c.value.source === this.binding &&
         [sourceFormats, recipeFormat, legacyFormat, firstFenceFormat].includes(c.value.compiler) &&
@@ -371,11 +399,15 @@ export class Account {
       latest,
     );
   }
-  async decisionsAt(ids: string[], position: number) {
+  async decisionsAt(ids: string[], position: number, valid?: string) {
     // [DX-ACT2] Why: an answer read needs the current release and the source at one cut. Notification history is available through views. Rejected: replaying every earlier dispatch to answer a current policy question.
     const cells = await this.db.many(["head", ...ids.map(keyOf)], position),
       head = (await this.checkedHead(cells.get("head") as Cell<Head>)).value,
-      release = resolve(head.activations, head.basis.validTime),
+      basis = {
+        tx: head.ordinal === "native" ? position : head.basis.tx,
+        validTime: valid ?? head.basis.validTime,
+      },
+      release = resolve(head.activations, basis.validTime),
       masks = await this.masks(ids),
       out = new Map<string, W0.Output>();
     for (const id of ids) {
@@ -390,7 +422,7 @@ export class Account {
         if (!mask) throw e;
         body = this.keys.convert(raw.value, "read", mask);
       }
-      out.set(id, evaluate(worldOf(body, head.basis, mask), release, head.basis));
+      out.set(id, evaluate(worldOf(body, basis, mask), release, basis));
     }
     return { head, out };
   }
@@ -444,19 +476,25 @@ export class Account {
         if (n <= body.seen) continue;
         const key = "event:" + n,
           activation = h.activations.find((a) => (a as typeof a & { seq?: number }).seq === n)!;
-        let event = ev.get(key)?.value;
+        let event = ev.has(key) ? observedEvent(ev.get(key)!) : undefined;
         if (!event || event.seq !== n || event.basis.tx !== activation.tx) {
           const source = await originalObject<Recipe>(
             this.db,
             key,
             position,
-            (x) => x.seq === n && x.kind === "release" && x.basis.tx === activation.tx,
+            (x) =>
+              x.seq === n &&
+              x.kind === "release" &&
+              (x.nativeBasis || x.basis.tx === activation.tx),
           );
-          event = source.value;
+          event = observedEvent(source);
           ev.set(key, source);
         }
 
-        assert(event && event.seq === n, "missing recipe ancestor");
+        assert(
+          event && event.seq === n && event.basis.tx === activation.tx,
+          "missing recipe ancestor",
+        );
         if (mask && event.basis.tx < mask.tx) {
           const retained = mask.published?.[n];
           assert(retained, "erasure restore lacks original publication state");
@@ -468,7 +506,7 @@ export class Account {
           W0.recordOf(evaluate(worldOf(body, event.basis, mask), old, event.basis)),
         ]).state;
       }
-      const basis = { ...h.basis, validTime: t },
+      const basis = { tx: h.ordinal === "native" ? position : h.basis.tx, validTime: t },
         output = evaluate(worldOf(body, basis, mask), current, basis);
       const token = hash([
         this.db.account,
@@ -560,11 +598,14 @@ export class Account {
     }
     return { people: census.length, digest: digest.digest("hex") };
   }
-  private replay(c: Cell<Claim>, id: string, request: string) {
+  private async replay(c: Cell<Claim>, id: string, request: string) {
     assert(c.value.id === id && c.value.request === request, "command identity reused");
     if (c.value.error) throw Error(c.value.error);
+    const native = await this.db.comp.transactionByCommand(this.db.entity("cmd:event:" + id));
+    assert(native.ok && native.value && native.value.position === c.position);
     return {
       position: c.position,
+      txId: String(native.value.txId),
       seq: c.value.seq,
       retry: true,
       bytes: 0,
@@ -605,6 +646,14 @@ export class Account {
     else head = { ...fields, compiler: sourceFormats, ...packEpochs(v.head) };
     const patches: Patch[] = [...v.patches, { key: "head", value: head, prior: h }];
     if (v.event) patches.push({ key: "event:" + v.head.seq, value: v.event });
+    if (fence?.value.durability && release) {
+      // [DX-ACT2] Why: the owed debt has its own immutable assertion in the terminal transaction and names the exact replay inputs. Rejected: timing a release marker that leaves no ordered debt record.
+      const event = v.event!;
+      patches.push({
+        key: "owed:" + event.seq,
+        value: owedRecord(event, hash([this.db.account, "event:" + event.seq, event])),
+      });
+    }
     patches.push({ key, value: { id, request, seq: v.head.seq } });
     const r = await this.db.commit(
       "event:" + id,
@@ -699,24 +748,59 @@ export class Account {
     if (f) await this.help(f);
     return !!f;
   }
+  async currentCut(now?: string) {
+    for (;;) {
+      const p = await this.db.comp.currentPosition(),
+        rows = await this.db.many(["fence", ...(now ? ["head"] : [])], p),
+        fence = rows.get("fence") as Cell<Intent> | undefined;
+      if (fence) {
+        await this.help(fence);
+        continue;
+      }
+      if (!now) return p;
+      const h = (await this.checkedHead(rows.get("head") as Cell<Head>)).value;
+      const at = h.basis.validTime;
+      assert(W0.isInstant(now) && now >= at, "authoritative clock precedes admitted valid time");
+      const day =
+        new Date(Date.parse(at.slice(0, 10)) + 86400000).toISOString().slice(0, 10) +
+        "T00:00:00.000000Z";
+      const due = [
+        day,
+        ...h.activations.filter((a) => !a.clock).map((a) => a.from),
+        ...(h.validBoundaries ?? []),
+      ]
+        .filter((t) => t > at && t <= now)
+        .sort()[0];
+      if (!due) return p;
+      // [DX-ACT2] Why: recover each effective-time boundary in order from persisted inputs, even if all writers went away. Rejected: changing valid time only on a subsequent save.
+      await this.seal("clock-" + due, W0.R1, { valid: due, clock: true, durability: "record" });
+    }
+  }
   async seal(
     id: string,
     rel: W0.CompiledRelease,
     options: {
       from?: string;
       valid?: string;
+      durability?: DurabilityMode;
+      clock?: true;
       beforeCas?: () => Promise<void>;
       afterFence?: () => Promise<void>;
     } = {},
   ) {
     assert(id.length > 0);
-    const request = hash(["seal", rel.doc, options.from ?? null, options.valid ?? null]),
+    const input = {
+      doc: rel.doc,
+      from: options.from ?? null,
+      valid: options.valid ?? null,
+      ...(options.durability ? { durability: options.durability } : {}),
+      ...(options.clock ? { clock: true as const } : {}),
+    };
+    const request = intentRequest(input),
       value: Intent = {
         id,
         request,
-        doc: rel.doc,
-        from: options.from ?? null,
-        valid: options.valid ?? null,
+        ...input,
         source: this.binding,
       },
       key = "claim:" + hash(id);
@@ -776,7 +860,7 @@ export class Account {
   private async completeFence(f: Cell<Intent>, fresh: boolean) {
     const i = f.value,
       key = "claim:" + hash(i.id);
-    assert(i.source === this.binding && i.request === hash(["seal", i.doc, i.from, i.valid]));
+    assert(i.source === this.binding && i.request === intentRequest(i));
     let p = fresh ? f.position : await this.db.comp.currentPosition(),
       sourceDebtMs = 0;
     const inputs = [key, "fence", "head", "tree", ...(this.settleSource ? ["deep-debt"] : [])];
@@ -841,11 +925,22 @@ export class Account {
     const rel = W0.compileRelease(options.doc);
     const h = c.value,
       seq = h.seq + 1,
-      valid = options.valid ?? h.basis.validTime,
+      valid =
+        options.clock && options.valid! < h.basis.validTime
+          ? h.basis.validTime
+          : (options.valid ?? h.basis.validTime),
       from = options.from ?? valid;
     assert(W0.isInstant(valid) && valid >= h.basis.validTime, "retrospective reads cannot publish");
-    const basis = { tx: h.basis.tx + 1, validTime: valid },
-      activations = [...h.activations, { ...releaseEntry(rel, from, basis.tx), seq }];
+    // [DX-ACT2] Why: the event's own native position supplies the actual ordinal after commit. The fixed source cut is enough to validate the fenced inputs before admission. Rejected: guessing the next global position while neighbors can commit.
+    const basis = { tx: h.ordinal === "native" ? p : h.basis.tx + 1, validTime: valid },
+      activations = [
+        ...h.activations,
+        {
+          ...releaseEntry(rel, from, basis.tx),
+          seq,
+          ...(options.clock ? { clock: true as const } : {}),
+        },
+      ];
     const old = resolve(h.activations, h.basis.validTime),
       next = resolve(activations, valid),
       diff = W0.diff(old, next);
@@ -864,13 +959,26 @@ export class Account {
       old: old.doc,
       next: next.doc,
       basis,
+      ...(h.ordinal === "native" ? { nativeBasis: true as const } : {}),
       previousBasis: h.basis,
       root: h.root,
       census: h.census,
       shape: full ? "full" : "recipe",
     };
     if (event.shape === "full") event.fullCheck = await this.checkFull(event);
-    return { head: { ...h, seq, releaseSeq: seq, basis, activations }, event, patches: [] };
+    const validBoundaries = h.validBoundaries?.filter((time) => time > valid);
+    return {
+      head: {
+        ...h,
+        seq,
+        releaseSeq: seq,
+        basis,
+        activations,
+        ...(validBoundaries ? { validBoundaries } : {}),
+      },
+      event,
+      patches: [],
+    };
   }
   async admit(id: string, v: View, beforeCas?: () => Promise<void>) {
     return this.command(

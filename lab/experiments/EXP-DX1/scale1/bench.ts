@@ -1383,6 +1383,8 @@ async function main() {
   if (process.env.DX_SCALE1_RUNTIME_REPO)
     assert.equal(fs.realpathSync(repo), path.join(root, "build-" + source, "repository"));
   const activationMode = getopt("activation-mode");
+  // [DX-ACT2] Why: the old single-read timer cannot qualify activation. Rejected: letting a moving-branch server run consume a large seed while the audited collector is being verified.
+  assert(activationMode !== "delta", "DELTA launch held for the audited publication and deadline gate");
   if (activationMode !== undefined)
     assert(
       activationMode === "delta" &&

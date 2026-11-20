@@ -35,6 +35,7 @@ if (["schedules", "rungs", "crash"].includes(mode!)) {
     ["delayed", ["delayed.test.ts"]],
     ["erasure", ["erasure.test.ts"]],
     ["recovery", ["recovery.test.ts"]],
+    ["activation-recovery", ["activation-recovery.test.ts"]],
   ] as const) {
     const out = path.join(dir, name + ".tap"),
       fd = fs.openSync(out, "wx");
@@ -68,7 +69,10 @@ if (["schedules", "rungs", "crash"].includes(mode!)) {
                 .readFileSync(path.join(import.meta.dirname, files[0]), "utf8")
                 .matchAll(/^test\(\s*"([^"]+)"/gm),
             ].map((m) => m[1]);
-      assert.equal(names.length, name === "delta" ? 4 : name === "delayed" ? 3 : 1);
+      assert.equal(
+        names.length,
+        name === "delta" ? 4 : name === "delayed" ? 3 : name === "activation-recovery" ? 2 : 1,
+      );
       assert.deepEqual(
         [...tap.matchAll(/^ok \d+ - (.+)$/gm)].map((m) => m[1]),
         names,

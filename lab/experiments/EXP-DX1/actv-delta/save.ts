@@ -61,6 +61,9 @@ export async function save(
       const h = head.value,
         seq = h.seq + 1,
         tx = options.originTx ?? h.basis.tx + 1;
+      const future = edits
+        .flatMap((e) => [e.from, ...(e.until ? [e.until] : [])])
+        .filter((t) => t > h.basis.validTime);
       assert(Number.isSafeInteger(tx) && tx > h.basis.tx);
       const basis = { ...h.basis, tx },
         release = resolve(h.activations, basis.validTime),
@@ -268,6 +271,9 @@ export async function save(
       return {
         head: {
           ...priorHead,
+          ...(future.length
+            ? { validBoundaries: [...new Set([...(h.validBoundaries ?? []), ...future])].sort() }
+            : {}),
           ...(index.root ? { index: index.root, baseRoot } : {}),
           basis,
           root,
