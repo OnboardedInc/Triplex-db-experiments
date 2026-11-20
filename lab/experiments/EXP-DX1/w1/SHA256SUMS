@@ -121,3 +121,10 @@ b9590a50ff6952eacf4cac7c371c9b38ac71c9fa6ad9c0d8b0850776b1cd8175  DX-W1/write5-c
 1a8d619cda3ff26e81c0476e9179928a9a1321ee0f086622ff0939208bab1da2  DX-W1/write5-frame/recipe.clj
 7a7ef21c13e1bb3de16596b7a270429eb28eab96132dc46662acd736199637ff  DX-W1/write5-frame/value-bytes.jsonl
 ee58b3eb58d139e8d9bce5e71b456d5796ed5aa63d461ecad92d06fa3b1bceca  DX-W1/write5-frame/source.sha256
+7aa42b1db726e175365ee53d9c8e41a05f56dfde62ecea17bdc4ad3a0223ac4b  DX-W1/write5-parity-02/gate.log
+49451dacf4ac688c6d35e70d1f7282c497df83197c8a81bdf11e795f81debebf  DX-W1/write5-parity-02/verified.json
+01918161710d620f6444b6896768c413967b4c34c935cf469975e74212f9fdef  DX-W1/write5-native-census/gate.log
+f692f85f2f14e44bff7881bbca54b80b95673865fcd61c305c06ff9b1eec0c9f  DX-W1/write5-native-census/source-readback.log
+56122bd9e4d22ce933258aaf31418c5e8a6a6b8b64ada4eadcfdfc73aedb4d31  DX-W1/write5-native-census/source.sha256
+ac5bf97506a7556295bdf2d5a9dbd1daefb0f1aa4910e4399f385413aeb96ab2  DX-W1/write5-native-census/head
+fed3c5f139aff58186cef93b53c68cde790cdfaeafb536c947fc61a95b94c57a  DX-W1/write5-native-census/attempt
