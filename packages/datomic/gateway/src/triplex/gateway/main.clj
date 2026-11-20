@@ -1,5 +1,5 @@
 (ns triplex.gateway.main
-  (:require [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
+  (:require [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
   (:gen-class))
 
@@ -77,7 +77,7 @@
                        (do
                          (trace/span "d/transact" "peer-wait" @(d/transact conn schema/schema))
                          (:db-after (trace/span "d/transact" "peer-wait" @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}])))))
-        current (commit/install! conn scope schema-ready)]
+        current (group/install! conn (commit/install! conn scope schema-ready))]
     (cond-> {:db name :created created :schemaHash schema/schema-hash
              :strictRecordClocks (true? (:triplex.scope/strict-record-clocks (d/entity current [:triplex.scope/key scope])))}
       (lean/enabled? current) (assoc :layout "lean")))))
@@ -199,8 +199,14 @@
             "q" (do (when (lean/enabled? (or db (storage/held-db name (get input "handle")))) (lean/unsupported! "q")) (trace/span "query/run" "gateway" (query/run name db input)))
             "operation" (storage/operation db id)
             "claim" (let [cut (storage/at-position db (get input "position"))
-                          claim (d/entid cut [:triplex.claim/command-id (get input "commandId")])]
-                      {:txId (when claim (storage/value cut claim :triplex.claim/tx-id))}))))
+                          id (get input "commandId") claim (d/entid cut [:triplex.claim/command-id id])
+                          tx (when claim (storage/value cut claim :triplex.claim/tx))
+                          pos (when (and tx (d/entid cut :triplex.group/position)) (storage/value cut tx :triplex.group/position))
+                          visible (and claim (or (nil? pos) (nil? (get input "position")) (<= pos (get input "position"))))
+                          tx-id (when visible (storage/value cut claim :triplex.claim/tx-id))]
+                      (cond-> {:txId tx-id}
+                        (and visible (true? (get input "receipt"))) (assoc :commandId id
+                          :receipt (storage/operation cut (storage/value cut tx :triplex.tx/operation-id))))))))
       :else (response 404 {:code "NotFound"}))
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 (cond-> {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e) :maximum (or (:maximum (ex-data e)) (:expectedSequence (ex-data e))) :route (:route (ex-data e))}
