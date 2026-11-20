@@ -4,6 +4,8 @@ Use the verified SCALE1 transfer and the exclusively held, already restored pool
 
 The campaign ends at 1B. The [growth model](GROWTH-MODEL.md) retains the projections for larger databases.
 
+If calibration measures 8–16k/s, keep the original budget clock and checkpoint. [Smaller diagnostic forecasts](FALLBACK.md)
+
 ## Invocation
 
 ```sh
@@ -29,7 +31,7 @@ The config keys are shown below. Values in angle brackets are supplied by the dr
   "output": "<durable run directory>",
   "dataMount": "<actual PostgreSQL filesystem>",
   "copyMount": "<backup directory on reserved filesystem>",
-  "maxSqlBytes": 270000000000,
+  "maxSqlBytes": 320000000000,
   "copyHeadroomBytes": 260000000000,
   "bytesPerAddedRecord": 300,
   "image": "<verified SCALE1 image.json>",
@@ -52,6 +54,8 @@ The config keys are shown below. Values in angle brackets are supplied by the dr
   "copyHeap": "2g"
 }
 ```
+
+Set the SQL and copy caps from actual reserved capacity. For example, a 114 GiB source and 570M more records at 300 bytes/record already project roughly 293 GB of source storage. The earlier 270 GB example cap would stop that placement before calibration. Compare both SQL destinations and the actual source and backup filesystems.
 
 Set `AGE_JAVA` and `AGE_DATOMIC_HOME` to the admitted JDK and distribution. Put credentials in the runtime environment through `DATOMIC_URI_TEMPLATE`, `AGE_SQL_JDBC`, `AGE_SQL_PASSWORD` and `AGE_RESTORE_URI_TEMPLATE`. Both Datomic URI templates use `{db}`. The driver verifies they address distinct SQL databases. Supply the long-lived JVMs' native event logs from the same window for `tx/process`, SQL waits and index events. The runner attaches fresh GC and safepoint outputs to every listed Java process. Archive those logs and the sealed output separately.
 
