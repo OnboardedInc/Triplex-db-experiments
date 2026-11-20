@@ -252,8 +252,13 @@ export function tenantPlan(spec: TenantSpec, arm: string, checkPin = true) {
     logical[a.key] = dig.digest("hex");
   }
   events.sort((a, b) => a.atMs - b.atMs || a.seq - b.seq || Number(a.resend) - Number(b.resend));
+  // [DX-THIN1] Why: the launcher and driver build the same campaign spec in different property orders.
+  // Rejected: changing archived tenant digests or accepting the driver's declared hash without rebuilding it.
+  const traceSpec = spec.campaign ? {
+    campaign: spec.campaign, study: spec.study, topology: spec.topology, physical: spec.physical,
+  } : spec;
   h.update(
-    JSON.stringify({ spec, arm: arm === "zero" || arm === "reader" ? "regular" : arm, logical }),
+    JSON.stringify({ spec: traceSpec, arm: arm === "zero" || arm === "reader" ? "regular" : arm, logical }),
   );
   if (checkPin && spec.live) {
     const pin = JSON.parse(

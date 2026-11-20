@@ -49,6 +49,8 @@ test("the saved proof tapes bind all ten accounts and keep quiet offer slots and
   const campaign = campaignTenant(loaded!, true);
   const b = tenantPlan(campaign, "reader");
   assert.equal(b.sha256, tenantPlan(campaignTenant(zero!, true), "zero").sha256);
+  const driverOrder = { campaign: campaign.campaign, study: campaign.study, topology: campaign.topology, physical: campaign.physical };
+  assert.equal(b.sha256, tenantPlan(driverOrder, "reader").sha256);
   assert.deepEqual(
     b.accounts.map((a) => a.people),
     Array(10).fill(4),
