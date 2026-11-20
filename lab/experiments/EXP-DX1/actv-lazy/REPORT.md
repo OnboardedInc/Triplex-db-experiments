@@ -25,3 +25,5 @@ Externally named saves keep their own IDs separate from calendar events. Dated c
 - The private evidence is under `evidence/DX-ACT1/lazy-join/`. Key attempts are `baseline-a`, `reader-d`, `joined-proof-d`, `price1-c`. The pool refused the optional 10,000-person joined price on its disk forecast. Earlier unallocated attempts and that refusal are retained as admission logs. Trial volume removals are in each cleanup log. No acceptance pin moved. [Checksums](PART5-SHA256SUMS)
 
 The Part 6 compact repeat independently checked all eight release cuts, each stored value and the receiver. Its volume was removed. [10,000-person cost and estimates](COST.md) · [Part 6 checksums](PART6-SHA256SUMS)
+
+Deep receipt audit. The deep save previews the actual enrolled root and attached rows at the proposed native predecessor. Every accepted change carries the same source receipt, calendar, index operations and notice tail. The profile compares the first native answer, release cuts and effect ledger with Python on the authored deep inputs and verifies every save’s actual native byte and position.

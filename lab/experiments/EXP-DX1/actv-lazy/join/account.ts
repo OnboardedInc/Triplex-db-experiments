@@ -20,6 +20,7 @@ import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
 import { CLOCK, RELEASE, Conflict, fact, millis, value, type Store } from "../store.ts";
 import { calculate, worldsAt, type Proposal, type Point } from "../decision.ts";
+import { deepImpact, rawDeep } from "./deep.ts";
 import { LazyReader, rosterRoot, rosterSeal } from "../read.ts";
 import {
   entry,
@@ -95,21 +96,21 @@ function delta(
 export class JoinedAccount {
   readonly s: Store;
   readonly notices: Notices;
-  readonly stats = { indexPages: 0, worlds: 0, outputBytes: 0 };
+  readonly stats = { indexPages: 0, worlds: 0, outputBytes: 0, noticeIndexBytes: 0 };
   constructor(s: Store) {
-    assert.equal(s.profile, "w0", "Joined source requires a W0 source mapping");
     this.s = s;
     this.notices = new Notices(s.comp, "joined", {
       identity: selector,
       roster: async (c) => this.roster((await this.meta(c.position)).census, c.position),
-      worlds: async (ids, c) => worldsAt(s, "w0", ids, { tx: c.position, validTime: c.validTime }),
+      worlds: async (ids, c) =>
+        worldsAt(s, s.profile, ids, { tx: c.position, validTime: c.validTime }),
     });
   }
   get db() {
     return this.notices.db;
   }
   reader() {
-    return new LazyReader(this.s, "w0", 2 << 20, undefined, "shared-cut");
+    return new LazyReader(this.s, this.s.profile, 2 << 20, undefined, "shared-cut");
   }
   private async meta(p: number) {
     const m = (await this.db.get<Meta>("join-meta", p)).value;
@@ -183,9 +184,12 @@ export class JoinedAccount {
         assert.equal(t.actor, "lazy/input");
         source = t.position;
         for (const row of t.changes) {
-          assert(row.attribute !== "ssn", "Protected input requires a retention ruling");
+          assert(
+            !/(?:^|[/:_-])ssn$/i.test(row.attribute),
+            "Protected input requires a retention ruling",
+          );
           if (row.op !== "assert") continue;
-          if (row.attribute === "expiresOn") {
+          if (["expiresOn", ":file/expiresOn"].includes(row.attribute)) {
             const date = W0.parseDate(row.value.value);
             if (date >= 0) days.add(W0.endOfDay(date));
           }
@@ -214,19 +218,18 @@ export class JoinedAccount {
       assert.equal(src.length, 1);
       assert.deepEqual(value(src[0]!), group);
       const b = { tx: source, validTime: at },
-        ws = await worldsAt(s, "w0", group, b);
+        ws = await worldsAt(s, s.profile, group, b);
       assert.deepEqual(
         ws.map((w) => w.subject),
         group,
       );
-      const ops = [
-        baseOp(
-          this.db,
-          i,
-          ws.map((w) => entry(w, b)),
-        ),
-        ...group.map((id) => this.db.put(address(id), i)),
-      ];
+      const base = baseOp(
+        this.db,
+        i,
+        ws.map((w) => entry(w, b)),
+      );
+      this.stats.noticeIndexBytes += Buffer.byteLength(base.value.value);
+      const ops = [base, ...group.map((id) => this.db.put(address(id), i))];
       const id = "join-index-" + i,
         original = await s.lookup(id);
       await s.commit(
@@ -474,7 +477,7 @@ export class JoinedAccount {
           bytes = 0;
         };
         for (let i = 0; i < ids.length; i += width) {
-          const ws = await worldsAt(this.s, "w0", ids.slice(i, i + width), {
+          const ws = await worldsAt(this.s, this.s.profile, ids.slice(i, i + width), {
             tx: p,
             validTime: at,
           });
@@ -554,7 +557,7 @@ export class JoinedAccount {
     const { c } = await this.state(p);
     if (q.basis.validTime !== c.at) return "stale";
     assert(await this.db.row(address(q.subject), p), "Subject outside enrolment");
-    const answer = await calculate(this.s, "w0", q.subject, q.basis, c, c);
+    const answer = await calculate(this.s, this.s.profile, q.subject, q.basis, c, c);
     assert.equal(answer.witness, q.witness);
     await before?.();
     return (await this.s.head()) === p ? "covered" : "stale";
@@ -622,7 +625,81 @@ export class JoinedAccount {
     }
     return [...found.values()];
   }
+  // [DX-ACT1] Why: fold the live deep command into the same strict source transaction as its index and owed event. Rejected: dual-writing a compact mirror after the deep transaction (a release can land in the gap).
+  async saveDeep(id: string, person: number, submitted: readonly Op[], at: string) {
+    assert(
+      this.s.profile === "act2-deep" &&
+        W0.isInstant(at) &&
+        Number.isSafeInteger(person) &&
+        person >= 0,
+    );
+    const source = structuredClone(submitted),
+      subject = W0.placementId(person);
+    return this.command(
+      id,
+      ["deep-save", subject, source, at],
+      async (p) => {
+        const { meta, c, tail } = await this.state(p);
+        assert(at >= c.at && source.length > 0);
+        const [addr, raw] = await Promise.all([
+          this.db.get<number>(address(subject), p),
+          rawDeep(this.s, person, { tx: p, validTime: at }),
+        ]);
+        const impact = deepImpact(person, raw, source, { tx: p, validTime: at });
+        const anticipated = impact.prospective(),
+          basis = { tx: p + 1, validTime: at };
+        assert(
+          typeof W0.indexWorld(anticipated, basis.tx) !== "string",
+          "Invalid prospective deep policy world",
+        );
+        const ops: Op[] = [
+          ...source,
+          ...(c.clock ? [{ op: "retract" as const, id: c.clock.id }] : []),
+          fact(CLOCK, "lazy/slot", { joined: meta.epoch, kind: "source", at }),
+        ];
+        if (impact.posting && !(await this.db.row("join-invalid", p))) {
+          const leaf = await loadLeaf(this.db, addr.value, p);
+          assert(leaf.entries.some((x) => x.s === subject));
+          const updated = entry(anticipated, basis);
+          ops.push(
+            ...leafChange(
+              this.db,
+              addr.value,
+              leaf,
+              leaf.entries.map((x) => (x.s === subject ? updated : x)),
+            ),
+          );
+        }
+        if (impact.dates.length) {
+          const calendar = await this.db.get<string[]>("join-calendar", p);
+          const remainder = [
+            ...new Set([...calendar.value, ...impact.dates.filter((d) => d > at)]),
+          ].sort();
+          if (canonical(remainder) !== canonical(calendar.value))
+            ops.push(...this.db.change("join-calendar", calendar, remainder));
+        }
+        if (impact.notice && tail.value.release)
+          ops.push(
+            ...this.notices.plan(
+              { ...tail, at: p },
+              {
+                id,
+                kind: "reconcile",
+                release: tail.value.release,
+                from: tail.value.from,
+                validTime: at,
+                selection: { kind: "subjects", ids: [subject] },
+              },
+            ).operations,
+          );
+        return { ops, context: { epoch: meta.epoch, subject } };
+      },
+      undefined,
+      at,
+    );
+  }
   async save(id: string, edit: Edit, at: string) {
+    assert.equal(this.s.profile, "w0", "Use saveDeep for a deep native command");
     edit = structuredClone(edit);
     assert(W0.isInstant(at) && edit.a !== "ssn", "Protected input requires a retention ruling");
     const classified = W0.classify(edit.e);

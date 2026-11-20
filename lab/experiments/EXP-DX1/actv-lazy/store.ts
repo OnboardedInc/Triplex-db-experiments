@@ -20,7 +20,7 @@ export function millis(v: string) {
   return Date.parse(v.slice(0, 19) + "Z") + Number(v.slice(20, 26)) / 1000;
 }
 export const fact = (entityId: string, attribute: string, data: unknown) => ({
-  op: "assert",
+  op: "assert" as const,
   entityId,
   attribute,
   value: { type: "string", value: canonical(data) },

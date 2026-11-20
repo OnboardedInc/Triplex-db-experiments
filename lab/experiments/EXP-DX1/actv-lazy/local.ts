@@ -115,6 +115,9 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
   assert.match(buf, /# pass 1\b/);
   assert.match(buf, /# fail 0\b/);
   writeFileSync(join(dir, "ranges.tap"), buf, { flag: "wx" });
+} else if (binding.mode === "--joined-deep") {
+  assert(["1000", "10000"].includes(binding.size!));
+  run("join/deep-price.ts", [dir, binding.size!]);
 } else if (binding.mode === "--joined-price") {
   assert(["1000", "10000"].includes(binding.size!));
   run("join/price.ts", [dir, binding.size!]);

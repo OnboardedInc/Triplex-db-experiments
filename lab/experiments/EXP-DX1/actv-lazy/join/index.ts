@@ -29,6 +29,8 @@ export const indexInputs = new Set(
 const code = [
   "./index.ts",
   "./account.ts",
+  "./deep.ts",
+  "../../../../bench/lib/deep-activation.ts",
   "../decision.ts",
   "../../actv-delta/rules.ts",
   "../../actv-delta/index-patch.ts",
