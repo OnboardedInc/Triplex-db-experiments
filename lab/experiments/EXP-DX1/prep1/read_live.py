@@ -14,6 +14,8 @@ def read_live(out):
     inputs, terminal, events = managed_events(out)
     attempt = inputs["attempt"]
     assert inputs["mode"] == (out / "stage/lab/config/datomic/mode").read_text().strip() == "live"
+    duration_path = out / "stage/lab/config/datomic/seconds"
+    seconds = int(duration_path.read_text()) if duration_path.exists() else 10
     rate_rows = events("PREP1_LIVE ")
     native = {}
     for append in events("PREP1_NATIVE "):
@@ -26,15 +28,17 @@ def read_live(out):
         arm, block = divmod(number, 3)
         rate = (50, 235, 394)[block]
         variant = "reference" if arm in (0, 3) else "prepare"
-        assert (r["arm"], r["rate"], r["seconds"], r["pendingPeakAllowed"]) == (arm, rate, 10, 96)
+        assert (r["arm"], r["rate"], r["seconds"], r["pendingPeakAllowed"]) == (arm, rate, seconds, 96)
         scope = json.dumps(["triplex-scope-v1", "test", "prep1-live", f"{attempt}-{arm}", 0], separators=(",", ":"))
         db = "s2-" + base64.urlsafe_b64encode(scope.encode()).decode().rstrip("=")
         assert db == r["db"]
         assert digests.setdefault(rate, r["tapeSha256"]) == r["tapeSha256"]
         records = r["records"]
-        assert len(records) == r["offers"] == rate * 10
+        total = rate * seconds
+        assert len(records) == r["offers"] == total
         by_id = {item["id"]: item for item in records}
-        assert set(by_id) == {f"live-{block}-{account}-{i}" for account in range(10) for i in range(rate)}
+        assert set(by_id) == {f"live-{block}-{account}-{i}" for account in range(10)
+                              for i in range(total // 10 + int(account < total % 10))}
         assert Counter(x["outcome"] for x in records) == r["outcomes"]
         start = int(r["startNs"])
         durable = []
@@ -50,7 +54,9 @@ def read_live(out):
             assert (item["outcome"] == "acked") == bool(ack)
             if ack:
                 latencies.append(item["end"] - item["due"])
-                missed_window += int(item["end"] > 10_000)
+                missed_window += int(item["end"] > 1000 * seconds)
+                if duration_path.exists():
+                    assert ack["writerFunction"].startswith(":triplex.write/v-")
             receipt = ack or recovered
             if not receipt:
                 continue
@@ -71,7 +77,7 @@ def read_live(out):
         assert positions == list(range(r["positionBefore"] + 1, r["positionBefore"] + 1 + len(durable)))
         latencies.sort()
         p99 = latencies[math.ceil(len(latencies) * .99) - 1] if latencies else None
-        goodput = (len(latencies) - missed_window) / 10
+        goodput = (len(latencies) - missed_window) / seconds
         assert r["afterDrain"] == len(durable) and r["recovered"] == len(durable) - len(latencies)
         assert r["inWindowPerSecond"] == goodput and r["p99CompletedMs"] == p99
         late = len(records) - len(latencies) + sum(ms > 50 for ms in latencies)
@@ -84,7 +90,7 @@ def read_live(out):
             "definitiveReplays": sum(x["replays"] for x in tries.values()),
         })
     assert len(results) == 12
-    return {"attempt": attempt, "source": inputs["head"], "image": terminal["image"], "slot": terminal["slot"],
+    return {"attempt": attempt, "source": inputs["head"], "image": terminal["image"], "slot": terminal["slot"], "seconds": seconds,
             "inputSha256": sha(out / "inputs.json"), "rawSha256": terminal["sha256"],
             "offerTapeDigests": digests, "windows": results}
 

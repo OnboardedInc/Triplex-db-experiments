@@ -89,9 +89,10 @@ case "$PREP1_MODE" in
   ortho) gateway 0 off; node /config/probe.mjs ;;
   prepare|two) gateway 1 "$PREP1_MODE"; node /config/probe.mjs ;;
   live)
+    seconds=$(cat /config/seconds)
     for arm in 0 1 2 3; do
       if ((arm == 0 || arm == 3)); then gateway 0 off; else gateway 1 prepare; fi
-      node /config/probe.mjs "$PREP1_URL" "$PREP1_URL" 10 "$PREP1_ATTEMPT" "$arm"
+      node /config/probe.mjs "$PREP1_URL" "$PREP1_URL" "$seconds" "$PREP1_ATTEMPT" "$arm"
       i=$(("${#children[@]}" - 1))
       kill "${children[i]}"
       wait "${children[i]}" || true

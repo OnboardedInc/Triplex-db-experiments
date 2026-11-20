@@ -30,7 +30,7 @@ def disk_floor():
         raise SystemExit("Host free disk below 5 GiB")
 
 
-def main(out, mode="ortho"):
+def main(out, mode="ortho", seconds="10"):
     if mode not in ("ortho", "prepare", "two", "live"):
         raise SystemExit("Mode must be ortho, prepare, two or live")
     out.mkdir()
@@ -49,6 +49,10 @@ def main(out, mode="ortho"):
     config = stage / files[1]
     (config / "attempt").write_text(attempt + "\n")
     (config / "mode").write_text(mode + "\n")
+    if mode == "live":
+        if not 1 <= int(seconds) <= 60:
+            raise SystemExit("Live window must be 1 to 60 seconds")
+        (config / "seconds").write_text(seconds + "\n")
     shutil.copyfile(EXPERIMENT / "stack.sh", config / "entrypoint.sh")
     shutil.copyfile(EXPERIMENT / "observe.clj", config / "observe.clj")
     recipe = config / "Dockerfile"
