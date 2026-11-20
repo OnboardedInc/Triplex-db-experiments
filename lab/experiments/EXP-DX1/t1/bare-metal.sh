@@ -117,8 +117,18 @@ for f in sorted(context.rglob('*')):
  if f.is_file():rows.append(f'{hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(context)}')
 (p/'results/IMAGE-INPUTS.SHA256SUMS').write_text('\n'.join(rows)+'\n')
 PY_DATOMIC
-docker pull --platform "linux/$arch" node:22.23.2-bookworm-slim
-docker pull --platform "linux/$arch" postgres:17-alpine
+# [DX-V01] Why: server scorecard runs bind the two reused stack tags to immutable inputs.
+# Rejected: silently rebuilding from refreshed registry tags.
+if [[ ${DX_V01_PIN_IMAGES:-0} == 1 ]]; then
+  refs=$(node --disable-warning=ExperimentalWarning --input-type=module -e +    'import {nodeImage, pgImage} from "./lab/experiments/EXP-DX1/v01/source.ts"; console.log(nodeImage, pgImage)')
+  for image in $refs; do
+    docker pull --platform "linux/$arch" "$image"
+    docker tag "$image" "${image%@*}"
+  done
+else
+  docker pull --platform "linux/$arch" node:22.23.2-bookworm-slim
+  docker pull --platform "linux/$arch" postgres:17-alpine
+fi
 build_hash=$(sha256sum "$work/results/IMAGE-INPUTS.SHA256SUMS" | cut -d' ' -f1)
 node lab/bin/heavy.mjs --label DX-T1-native-image -- docker build --platform "linux/$arch" --build-arg "BUILD_INPUTS_SHA256=$build_hash" -t tx2-datomic:1.0.7745-da00 "$work/image"
 docker image inspect tx2-datomic:1.0.7745-da00 node:22.23.2-bookworm-slim postgres:17-alpine > "$work/results/images.json"

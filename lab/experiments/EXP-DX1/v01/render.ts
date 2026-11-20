@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
-import { gatewayJvmOptions, treatment } from "../int1/everything-plan.ts";
 
 type Bar = { id: string; value: unknown; pass: boolean | null };
 type Row = { name: string; bar: string; reading: string; status: string; samples: string; evidence: string };
@@ -68,9 +67,10 @@ export function render(run: Run, destination: string) {
     const rel = path.relative(destination, path.join(run.campaign, file));
     return `[${file}](${rel.split(path.sep).map(encodeURIComponent).join("/")})`;
   };
-  const settings: Record<string, unknown> = { treatment, gatewayJvmOptions };
+  const settings: Record<string, unknown> = {};
   const publication = path.join(run.campaign, "comparison.json");
   if (!run.error) {
+    assert(run.toy || (run.seal && /^[a-f0-9]{64}$/.test(run.seal)), "Physical evidence requires a pinned seal");
     const comparison = json(publication);
     const plan = json(path.join(run.campaign, "campaign.json"));
     // [DX-V01] Why: read only a completed native producer's archived source-bound comparisons.
@@ -79,6 +79,11 @@ export function render(run: Run, destination: string) {
     assert(comparison.binding === plan.binding && plan.source === run.source && plan.heldSeal === run.seal);
     assert(plan.createdAt >= Date.parse(run.startedAt));
     assert.deepEqual(comparison.results.map((r: any) => r.case ?? r.arm.case), plan.cases);
+    if (!run.toy) {
+      assert.equal(plan.placement, "physical");
+      assert.deepEqual(plan.cases.map((c: any) => c.key), ["100000-frozen-zero", "100000-frozen-reader"]);
+    }
+    settings.treatment = plan.treatment;
     for (const item of comparison.results) {
       assert(["measured", "diagnostic", "preflight"].includes(item.state));
       assert(item.binding === plan.binding && item.arm.source === run.source && item.arm.startedAt >= plan.createdAt);

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
@@ -30,7 +30,6 @@ if (values.plan) {
   console.log(forecast);
   process.exit(0);
 }
-const { fileHash } = await import("../scale1/measurements.ts");
 const { render } = await import("./render.ts");
 assert(values.age === "fresh" || values.age === "1B", "--age must be fresh or 1B");
 assert(values.commit && values.out, "--commit and --out are required");
@@ -52,7 +51,7 @@ if (toy) {
   assert(!fs.existsSync(campaign));
   verifyBuild(source, process.env.DX_V01_BUILD_RECEIPT);
   seed = fs.realpathSync(values.seed);
-  assert.equal(await fileHash(path.join(seed, "seed-image.json")), seal);
+  assert.equal(createHash("sha256").update(fs.readFileSync(path.join(seed, "seed-image.json"))).digest("hex"), seal);
 }
 const run: Run = {
   source, age: values.age, toy, startedAt, campaign, seal,
