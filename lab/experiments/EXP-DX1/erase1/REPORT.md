@@ -1,11 +1,11 @@
+Run the prepared server comparison from commit `4054f548469e57b6aa82b06e93711c39b6867f7c`.
 Pinned reads now reuse cached replies while checking for erasure.
 The warm reply was 1,428 bytes with or without the guard, even after another person was erased.
 All thirteen native erasure checks passed, including restore from an old backup.
 The Mac controls drifted, so the read and save timing targets still need bare metal.
+The new comparison uses a sealed seed and an unguarded control, with 500 verified saves in each block.
 Across three Mac sizes, one fresh value took 38 to 80 milliseconds p99 to erase. A batch of 100 took 114 to 211.
-One person with 416 protected versions took 257 milliseconds at the largest size.
 Cleanup still slowed saves. A protected save added about two to three milliseconds at the median.
-The prepared 100,000-person server check still uses the Part 2 commit `d0ccf312373141d0d919cc17e18a5989e60b74ce`.
 
 # DX-ERASE1 · What erasing a person costs
 
@@ -21,7 +21,7 @@ Part 2. [Regression tests and red evidence](REGRESSIONS.md) · [Ledger implement
 
 The two layout branches reviewed the erasure work. W1 ported the regression and identified the clear copies in K. COMPACT1 implemented detached envelopes with a test vault. [Current copy inventory and requirements](HANDOFF-PART2.md)
 
-The prepared 100,000-person check now measures detached publication and paced cleanup. The forecast uses all three sizes. [Server command and prediction](MODEL.md#prepared-detached-erasure-check)
+The prepared comparison adds both removal-check phases and their surrounding control blocks. The small Mac smoke verified 2,500 saves, the pinned reads and the sealed value's marker. The detached publication and cleanup study remains available as a separate check. [Server commands and predictions](MODEL.md)
 
 Part 1 measurements and handoff follow.
 
