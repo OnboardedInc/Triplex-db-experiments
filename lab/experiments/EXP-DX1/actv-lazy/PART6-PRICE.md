@@ -18,6 +18,10 @@ The feature comparison uses 40,898 compact native W0 facts. All six overtime alt
 
 Read and evaluation columns sum the individual operations. Four workers overlap them. Their cold starts, message transfers and exit also take time. On the narrow edit, forcing four workers increased the materialization clock from 149 ms to 473 ms. One worker is the better measured narrow configuration. Reusing the independently maintained input leaves eliminated candidate world pulls. Index enumeration was the largest remaining measured stage. The staged mode traded an additional commit for the ability to make many bounded writes before visibility. Compaction reduced the overtime value payload from 6,276 to 3,324 bytes. The broad arm wrote 147,568 encoded bytes and used two chunk transactions before its four-change marker. It stored 3,764 rows across 2,007 people.
 
+## Deep index footprint
+
+The deep fixture has 137,635 owned facts for 1,000 people and 1,604,464 for 10,000. Applying the exact notice-leaf codec to the independently authored seed used 48.1 and 48.2 bytes per person, respectively. These are encoded leaf values. The native account also carries membership addresses, census structures and database overhead. This calculation does not time a transaction.
+
 ## Planning estimates
 
 For the same compact distribution, subtract the measured request preparation and final marker request as fixed costs, then scale the remaining measured work by roster size. This simple projection includes cold worker cost in the scaled part. Data volume, writer queues and server hardware can change the slope.
