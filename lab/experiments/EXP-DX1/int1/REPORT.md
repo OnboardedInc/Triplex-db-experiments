@@ -4,7 +4,7 @@ The shared branch keeps the write history queryable and the per-person writer op
 The durable Publish record is the point we count as stored. Background work settles values and notices afterward.
 The read gateway held about 62 MiB of live Java objects at both deep sizes. Its resident memory still grew.
 The transactor's Java heap grew while its object-cache charge held steady. The larger physical test will look for the plateau.
-The scorecard can reopen the original shared database. Its first four sections still need physical evidence at both ages.
+The scorecard can reopen the original shared database and report partial read, save, feed, quiet-account and memory observations. Both physical runs remain open.
 The local dashboard and agent API work on the small fixture and the restored snapshot. The full hosted data and playground erasure remain open.
 
 ## Integration
@@ -43,6 +43,8 @@ The playground merge kept the Java-aware engine dispatch and added the portable 
 
 The local API gate compares fresh fixture and restored values, receipts, ordered feed cursors and conflict responses. Its receipts bind the checked source, fixture or manifest, owned slot and fresh attempts. Both stacks verified empty owned inventories and a closed listener. The manual remote workflow and hosted full bundle were outside these gates. [Playground guide](../../../../AGENTS-PLAYGROUND.md)
 
+The final scorecard refresh matched 211 receipts and journal entries, 96 quiet pinned reads and 20 first pulls at cb2120c1b. Its collector and independent recount checked digests, offered tape, same-slot cut continuity and fresh process samples. Both memory forecasts render as unmeasured. The pin audit found zero changes across 521 digests. [Memory forecasts](V0.1-MEMORY.md)
+
 ## Server work
 
-Run the physical scorecard on the exact merged revision at both ages. The adopted command covers parts of P1–P4. Full frozen coverage, P5–P9 adapters and live validation of the aged restore remain open. [Earlier campaign and options](P5-EVIDENCE.md)
+Run the physical scorecard on the exact merged revision at both ages. Full frozen coverage, held-seed Publish, import and machine loss adapters, and live validation of the aged restore remain open. [Earlier campaign and options](P5-EVIDENCE.md)

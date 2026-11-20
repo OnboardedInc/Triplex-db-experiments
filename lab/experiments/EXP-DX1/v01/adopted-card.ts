@@ -12,14 +12,16 @@ type Observation = Awaited<ReturnType<typeof adoptedArm>>;
 const tag = (x: unknown) => (typeof x === "number" && Number.isFinite(x)) ? String(Number(x.toFixed(3))) : "—";
 export function writeAdoptedCard(run: Card) {
   const file = (arm: string, name: string) => path.join(run.campaign, arm, name);
-  const arms = ["zero", "loaded"].flatMap((arm) => {
+  const readArm = (arm: string, load: boolean) => {
     if (!fs.existsSync(file(arm, "arm.json"))) return [];
     const x: Observation = JSON.parse(fs.readFileSync(file(arm, "arm.json"), "utf8"));
     const bytes = fs.readFileSync(file(arm, "operations.json"));
-    assert.deepEqual([x.source, x.fixture, x.loaded], [run.source, run.toy, arm === "loaded"]);
+    assert.deepEqual([x.source, x.fixture, x.loaded], [run.source, run.toy, load]);
     assert(x.startedAt <= x.start && x.start < x.endedAt && x.seed.head === x.firstCut);
     assert.equal(createHash("sha256").update(bytes).digest("hex"), x.observationsSha256);
     const raw = JSON.parse(bytes.toString());
+    assert.deepEqual(raw.p6, x.p6);
+    assert.deepEqual(raw.p7, x.p7);
     const dispatch = new Map<string, number>(raw.writes.filter((r: any) => r.receipt && Number.isFinite(r.dispatched))
       .map((r: any) => [r.id, r.dispatched]));
     const feed = new Histogram();
@@ -29,8 +31,9 @@ export function writeAdoptedCard(run: Card) {
       // Rejected: subtracting the logical record instant and clamping a negative duration to zero.
       if (due !== undefined && Number.isFinite(entry.seen) && entry.seen >= due) feed.recordMs(entry.seen - due);
     }
-    return [{ ...x, dispatchToFeed: feed.summary() }];
-  });
+    return [{ ...x, dispatchToFeed: feed.summary(), tape: raw.tape }];
+  };
+  const arms = [...readArm("zero", false), ...readArm("loaded", true)];
   const [zero, loaded] = arms;
   if (zero && loaded) {
     assert(!zero.loaded && loaded.loaded && zero.firstCut === loaded.firstCut);
@@ -62,14 +65,43 @@ export function writeAdoptedCard(run: Card) {
       String(loaded.p3.entries), evidence("loaded")]);
     rows.set("Receipts", [`Verified the journal against ${loaded.p2.receipts} receipts and reopened a sample of durable claims. The retry and lost-ACK bar is open.`, "DIAGNOSTIC",
       String(loaded.p2.receipts), evidence("loaded")]);
+    if (loaded.p7) {
+      const p = loaded.p7;
+      const footprint = ["tx", "gw-w", "gw-r"].map((role) => {
+        const restored = p.restored[role]!, empty = p.empty[role]!;
+        return `${role} ${restored.threads} threads, ${tag((restored.rssBytes - empty.rssBytes) / p.people)} added RSS bytes per roster person`;
+      }).join("; ");
+      rows.set("P7", [`First demand pull at the original cut p99 ${tag(p.cold.observed.p99Ms)} ms, ${p.cold.unavailable} declined. ${footprint}. An activity-matched untouched-person memory slope is unmeasured.`,
+        run.toy ? "DIAGNOSTIC" : "NOT MEASURED", `${p.cold.observed.count} first pulls and two residency points`, evidence("loaded")]);
+    }
+  }
+  const [alone] = readArm("p6-alone", false), [neighbors] = readArm("p6-235", true);
+  if (alone?.p6 && neighbors?.p6) {
+    const a = alone.p6, b = neighbors.p6;
+    assert.deepEqual([a.quietCell, b.quietCell], ["alone", 235]);
+    assert.deepEqual([alone.slot, alone.attempt, alone.seed.database, alone.terminal],
+      [neighbors.slot, neighbors.attempt, neighbors.seed.database, neighbors.firstCut]);
+    const quiet = (ops: any[]) => ops.filter((e) => e.account === 0).map((e) => [e.ms, e.subject, e.width]);
+    assert.deepEqual(quiet(alone.tape), quiet(neighbors.tape));
+    assert.equal(a.read.planned, b.read.planned);
+    const ratio = (base: number | null, loaded: number | null) => tag(base && loaded !== null ? loaded / base : null);
+    const total = (r: typeof a) => r.totalOffers + "/" + r.totalReceipts;
+    rows.set("P6", [`Quiet-account p99 ratios for commits ${ratio(a.commit.p99Ms, b.commit.p99Ms)}, pinned reads ${ratio(a.read.read.p99Ms, b.read.read.p99Ms)}, dispatch-to-feed ${ratio(a.feed.p99Ms, b.feed.p99Ms)}. ${total(a)} and ${total(b)} offers/receipts. ${a.read.errors + b.read.errors} read errors or missed offers. Durable effects, Publish and import overlap remain open.`,
+      run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
+      `${a.commit.count}/${b.commit.count} commits, ${a.read.read.count}/${b.read.read.count} reads, ${a.feed.count}/${b.feed.count} feed observations`,
+      evidence("p6-alone") + " · " + evidence("p6-235")]);
   }
   const field = ["P5", "P6", "P7", "P8", "P9"];
+  const gaps: Record<string, string> = {
+    P5: "The published INT1 Publish producer creates its own flat scope. No adapter binds it to the held SCALE1 roster and live release cut.",
+    P6: "No verified same-scope alone and 235-save quiet-account pair from this attempt.",
+  };
   const text = base.split("\n").map((line) => {
     if (line === "Population ten accounts of four deep people.") return "Population ten deep accounts in one SCALE1 database.";
     const match = /^\| ((P\d) [^|]+|Journal queryable|Receipts) \| ([^|]+) \|/.exec(line);
     const key = match?.[2] ?? match?.[1]?.trim();
     if (!key || !match) return line;
-    const values = rows.get(key) ?? (field.includes(key) ? ["No same-seed adapter for this row at this revision.", "NOT MEASURED", "0", "—"] : undefined);
+    const values = rows.get(key) ?? (field.includes(key) ? [gaps[key] ?? "No same-seed adapter for this row at this revision.", "NOT MEASURED", "0", "—"] : undefined);
     return values ? `| ${match[1]!.trim()} | ${match[3]!.trim()} | ${values.join(" | ")} |` : line;
   }).join("\n").replaceAll("No compatible measurement from this attempt.", run.failure ?? "No compatible measurement from this attempt.");
   const settings = { ...selectedWriter(run.writer), armReadbacks: arms.map((a) => a.settings) };

@@ -17,6 +17,8 @@ test("failed campaign still describes every priority and standing ruling", () =>
   const card = render({ ...context("/missing"), error: "Campaign stopped." }, "/missing");
   assert.equal(rows(card).length, 9);
   assert(rows(card).every((line) => line.includes("NOT MEASURED")));
+  assert.match(card, /\| Deep read gateway \|[^\n]+Forecast under 64 B\/person[^\n]+NOT MEASURED/);
+  assert.match(card, /\| Transactor residency \|[^\n]+Forecast 6–12 GiB[^\n]+NOT MEASURED/);
   for (const name of ["Journal queryable", "Erased value never returned", "Receipts", "No acknowledged write lost"]) {
     assert.match(card, new RegExp(`\\| ${name} \\|`));
   }

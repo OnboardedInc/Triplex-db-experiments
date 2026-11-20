@@ -78,6 +78,18 @@ export function render(run: Run, destination: string) {
   const rows = names.map((name, i) => unavailable(`P${i + 1} ${name}`, bars[i]!, run.error ?? (
     run.toy && run.partial && [4, 5, 7].includes(i) ? "The Mac fixture has no verified loaded field arm." : gaps[i]!
   )));
+  const memory = [
+    unavailable(
+      "Deep read gateway",
+      "≤ 64 resident B per added untouched person outside Postgres",
+      "Forecast under 64 B/person after the 32 MiB demand cache saturates. Measure the last interval of a fixed-activity deep census.",
+    ),
+    unavailable(
+      "Transactor residency",
+      "Report resident and committed pools once the object cache is full",
+      "Forecast 6–12 GiB peak in the shared database. The physical census assumes 16 GiB of capacity, an 8–12 GiB heap and a memory index of at most 1 GiB.",
+    ),
+  ];
   const correctness = [
     unavailable("Journal queryable", "Original changes and ordered cursor are queryable", "Layout K native journal query gate is separate from the legacy SDK feed."),
     unavailable("Erased value never returned", "All covered current and historical routes return the marker", "The erasure/restore regression needs its own synthetic stack and authority."),
@@ -214,6 +226,7 @@ export function render(run: Run, destination: string) {
     "The following settings and linked JVM observations identify the measured paths.", "",
     "```json", JSON.stringify(settings, null, 2), "```", "",
     "## Priorities", "", header, table(rows), "",
+    "## P7 memory census", "", header, table(memory), "",
     "## Standing correctness checks", "", header, table(correctness), "",
     ...(zeroReaderObservations.length ? ["## Diagnostic zero-reader observations", "", ...zeroReaderObservations, ""] : []),
   ].join("\n");

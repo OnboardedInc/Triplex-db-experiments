@@ -83,14 +83,17 @@ export function decodeFeed(db: string, row: Wire, seen: number): Feed {
 }
 
 // [DX-SCALE1] Why: the two readers issue the same fixed seat tape at the initial durable basis for every cell. Rejected: a closed-loop fastest-reader distribution or materializing all read responses.
-async function readCell(client: DatomicClient, role: number, m: Begin): Promise<ReadResult> {
+export async function readCell(client: DatomicClient, role: number, m: Begin, diagnostic = false): Promise<ReadResult> {
   const account = quietFor(m.repeat, m.isolation);
   const scope = m.scopes.find((s) => s.accounts.includes(account))!;
   assert(scope);
-  const ops = readTape(m.people, m.repeat, m.cell, m.withReaders, m.isolation).filter(
+  const planned = readTape(m.people, m.repeat, m.cell, m.withReaders, m.isolation).filter(
     (x) => x.seat % 2 === role,
   );
-  const window = readWindow(m.cell, m.isolation);
+  const window = diagnostic ? { from: 0, duration: 8000 } : readWindow(m.cell, m.isolation);
+  // [DX-V01] Why: use the same pinned read and verifier on a compact toy stack.
+  // Rejected: running the full sixty-second sample at the Mac's shared capacity.
+  const ops = diagnostic ? planned.slice(0, 24).map((op, i) => ({ ...op, ms: i * 240 })) : planned;
   const active = new Map<number, Promise<void>>();
   const samples: ReadResult["samples"] = [];
   const latency = new Histogram();

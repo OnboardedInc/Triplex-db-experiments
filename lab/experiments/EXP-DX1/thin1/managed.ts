@@ -362,6 +362,7 @@ if (action === "--guest") {
   if (mode === "int1-adopted-proof") {
     process.chdir(repo);
     const { adoptedToy } = await import("../v01/adopted.ts");
+    const { readResidentMappings } = await import("./heap-residency.ts");
     const commands = fs.readdirSync("/proc").filter((n) => /^\d+$/.test(n)).flatMap((n) => {
       const file = "/proc/" + n + "/cmdline";
       try {
@@ -370,9 +371,28 @@ if (action === "--guest") {
       } catch { return []; }
     });
     assert(stack.managed.writeOptionsAttempt && commands.length >= 3);
+    const residency = () => {
+      const roles: Record<string, { rssBytes: number; threads: number }> = {};
+      for (const pid of fs.readdirSync("/proc").filter((n) => /^\d+$/.test(n))) {
+        const dir = "/proc/" + pid;
+        let args: string[];
+        try { args = fs.readFileSync(dir + "/cmdline", "utf8").split("\0"); } catch { continue; }
+        if (!/^(?:.*\/)?java$/.test(args[0] ?? "")) continue;
+        const role = args.some((v) => v.endsWith("/read-port.clj")) ? "gw-r" :
+          args.includes("triplex.gateway.main") ? "gw-w" : args.includes("datomic.launcher") ? "tx" : undefined;
+        if (!role) continue;
+        assert(!roles[role]);
+        const r = readResidentMappings(fs.readFileSync(dir + "/smaps", "utf8"));
+        const threads = Number(/^Threads:\s+(\d+)$/m.exec(fs.readFileSync(dir + "/status", "utf8"))?.[1]);
+        assert(Number.isSafeInteger(threads) && threads > 0);
+        roles[role] = { rssBytes: r.reduce((sum, [, , bytes]) => sum + bytes, 0), threads };
+      }
+      assert.deepEqual(Object.keys(roles).sort(), ["gw-r", "gw-w", "tx"]);
+      return roles;
+    };
     await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
-      java: { placement: "owned Mac compact stack", commands } }, "grouped" satisfies Writer);
+      java: { placement: "owned Mac compact stack", commands }, residency }, "grouped" satisfies Writer);
   } else if (mode === "int1-campaign-proof") {
     assert(Number(rung) === 40);
     process.chdir(repo);
@@ -413,7 +433,22 @@ if (action === "--guest") {
         manager(["up", "--slot", readerSlot, "--exp", exp]);
       }
       bind();
-      if (scorecard) console.log(manager(["scorecard-fixture", "--slot", writerSlot, "--scorecard-output", out]));
+      if (scorecard && process.env.DX_V01_MAC_PUBLISH === "1") {
+        // [DX-V01] Why: exercise the existing receipt producer on a bounded isolated toy fixture.
+        // Rejected: timing a second full seed or reporting the private fixture as the held SCALE1 cut.
+        const slot = read(ownerFile(writerSlot));
+        const attempt = read(cred);
+        const output = path.join(out, "publish");
+        fs.mkdirSync(output);
+        execFileSync(process.execPath, ["--no-warnings", "--experimental-transform-types",
+          "lab/experiments/EXP-DX1/actv-lazy/join/server.ts", "64", output, "--receipt-local"], {
+          cwd: repo, stdio: "inherit", timeout: 5 * 60_000,
+          env: { ...process.env, DATOMIC_URL: slot.endpoint, TX2_CONFIG_DIR: dir,
+            TRIPLEX_LAB_SLOT_OWNER: ownerFile(writerSlot), TX2_WRITE_OPTIONS_ATTEMPT: attempt.writeOptionsAttempt,
+            TX2_SWEEP_STRICT: "1", TX2_W0_POINT_JOURNAL: "1", TX2_W0_RESTORE_INDEXED_JOURNAL: "1",
+            TRIPLEX_DATOMIC_LAYOUT: "lean", DX_STRICT_RECORD_CLOCKS: "1", DX_SERVER_RECORD_TIME: "1" },
+        });
+      } else if (scorecard) console.log(manager(["scorecard-fixture", "--slot", writerSlot, "--scorecard-output", out]));
       else execFileSync(
         "colima",
         [
