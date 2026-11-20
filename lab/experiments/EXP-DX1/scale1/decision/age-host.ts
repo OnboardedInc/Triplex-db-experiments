@@ -29,6 +29,10 @@ const jdk = "/usr/lib/jvm/java-21-openjdk-amd64/bin";
 const role = "datomic";
 const primaryDb = "datomic";
 const copyDb = "verify_rung";
+const baselineRecords = 430_000_000;
+const targetRecords = 1_000_000_000;
+const bytesPerAddedRecord = 300;
+const copyHeadroomBytes = 260e9;
 
 const call = (
   cmd: string,
@@ -109,7 +113,7 @@ async function main(
     transfer = path.join(seedDir, "transfer.json"),
     imageSha = await fileHash(image),
     transferSha = await fileHash(transfer),
-    original = read<SeedProof>(image);
+    original = read<SeedProof & { disk: { after: number } }>(image);
   const invocationStarted = Date.now();
   fs.mkdirSync(out);
   const identity = {
@@ -124,14 +128,30 @@ async function main(
   assert.equal(seed.facts, 162456470);
   assert.equal(seed.scopes[0]?.seedCut, 87002);
   const copyReal = fs.realpathSync(copyMount);
-  assert.notEqual(
-    fs.statSync(copyReal).dev,
-    fs.statSync(bench).dev,
-    "A separate filesystem is required for backup and restored-copy reserve",
-  );
+  const sameFilesystem = fs.statSync(copyReal).dev === fs.statSync(bench).dev;
+  assert(Number.isSafeInteger(original.disk.after) && original.disk.after > 0);
+  // [DX-SCALE1] Why: both the backup and the independent SQL copy occupy disk
+  // at the final cut. Rejected: counting only one of the two artifacts.
+  const grownSql = original.disk.after + (targetRecords - baselineRecords) * bytesPerAddedRecord;
+  const liveReservation = grownSql + 24 * GiB;
+  const copyReservation = copyHeadroomBytes + grownSql + 24 * GiB;
+  const liveFree = free(bench),
+    copyFree = free(copyReal);
+  write(path.join(out, "storage-admission.json"), {
+    ...identity,
+    sameFilesystem,
+    grownSql,
+    liveReservation,
+    liveFree,
+    copyReservation,
+    copyFree,
+    at: Date.now(),
+  });
   assert(
-    free(copyReal) >= 575 * 1e9 && free(bench) > 315 * 1e9,
-    "Fresh restore and age storage do not fit",
+    sameFilesystem
+      ? liveFree >= liveReservation + copyReservation
+      : liveFree >= liveReservation && copyFree >= copyReservation,
+    "Fresh restore, growing source, backup and verification SQL do not fit",
   );
 
   const imageIndex = read<{ Id: string; RepoTags?: string[] }[]>(
@@ -380,8 +400,8 @@ async function main(
     write(measureSettings, expectedMeasureSettings);
     const config = {
       source: ageSource,
-      target: 1e9,
-      fromRecords: 430000000,
+      target: targetRecords,
+      fromRecords: baselineRecords,
       ratePrior: 24000,
       reserveHours: 3,
       maxHours: 9.9,
@@ -392,8 +412,8 @@ async function main(
       dataMount: bench,
       copyMount: copyDir,
       maxSqlBytes: 330e9,
-      copyHeadroomBytes: 260e9,
-      bytesPerAddedRecord: 300,
+      copyHeadroomBytes,
+      bytesPerAddedRecord,
       image,
       imageSha,
       transfer,
