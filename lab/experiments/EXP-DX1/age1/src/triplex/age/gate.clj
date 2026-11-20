@@ -160,6 +160,15 @@
                     :facts (:facts seal) :seedT (:seed-t pop) :seedHead seed :saves saves
                     :accounts 10 :sample (:people pop) :growth growth :cuts cuts :dbs [name clone]}))))
 
+(defn index-fixture! [file pin]
+  (let [seal (adopt/read-seal! file pin true)
+        db (adopt/scope-db (:name seal) (:name seal))
+        pop (adopt/read-population! db seal 3 true)
+        _ (d/request-index (:conn db))
+        indexed (deref (d/sync-index (:conn db) (:seed-t pop)) 120000 nil)]
+    (native/check! indexed "Seed did not index through the sealed cut" {:t (:seed-t pop)})
+    (native/emit "fixture-cut" {:db (:name db) :manifestSha pin :t (:seed-t pop)})))
+
 (defn report-datoms [report]
   (let [db (:db-after report) tx (d/t->tx (or (d/as-of-t db) (d/basis-t db)))]
     (frequencies
@@ -239,6 +248,7 @@
     (case mode
       "fidelity" (fidelity!)
       "adopted-fidelity" (apply adopted-fidelity! args)
+      "index-fixture" (apply index-fixture! args)
       "fidelity-arms" (apply fidelity-arms! args)
       (throw (ex-info "Unknown gate" {:mode mode})))
     (shutdown-agents)

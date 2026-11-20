@@ -4,6 +4,7 @@ import { spawn, execFileSync } from "node:child_process";
 import { acquireMeasureLease, readMeasureLease } from "../../../bin/heavy-lock.mjs";
 import { randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
+import { createServer } from "node:net";
 import os from "node:os";
 import path from "node:path";
 import {
@@ -17,6 +18,7 @@ const MiB = 1024 ** 2;
 const caps = { pg: 384, tx: 1024, peer: 1280 };
 const evidence = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2", "evidence", holder);
 const labRoot = path.join(evidence, "../..");
+const eraseSource = "d0ccf312373141d0d919cc17e18a5989e60b74ce";
 
 function hashTree(dir, relative = "") {
   return fs.readdirSync(path.join(dir, relative), { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))
@@ -28,13 +30,19 @@ function hashTree(dir, relative = "") {
     });
 }
 
-function stage(dir, revision) {
+function stage(dir, revision, erasure) {
   const source = path.join(dir, "source");
   fs.mkdirSync(source);
   const inputs = [experiment, "lab/bin/engine.mjs", "lab/bin/lib.mjs", "lab/bin/heavy.mjs", "lab/bin/heavy-lock.mjs",
     "lab/config/datomic/verification.json", "packages/datomic/gateway/src", "packages/datomic/src/codec-spec.json"];
   const archive = execFileSync("git", ["archive", revision, ...inputs], { cwd: REPO, maxBuffer: 16 * MiB });
   execFileSync("tar", ["-xf", "-", "-C", source], { input: archive });
+  if (erasure) {
+    const privateModules = ["envelope", "erase", "privacy"].map((s) =>
+      "packages/datomic/gateway/src/triplex/gateway/" + s + ".clj");
+    const sourceBytes = execFileSync("git", ["archive", eraseSource, ...privateModules], { cwd: REPO });
+    execFileSync("tar", ["-xf", "-", "-C", source], { input: sourceBytes });
+  }
   const launcher = path.join(REPO, experiment, "local.mjs");
   const manager = path.join(REPO, "lab", "bin", "engine.mjs");
   for (const file of [launcher, manager, ...["lib.mjs", "heavy.mjs", "heavy-lock.mjs"].map((name) => path.join(REPO, "lab/bin", name))])
@@ -53,10 +61,53 @@ function capture(args, file, signal) {
   });
 }
 
+async function fixturePort(peer) {
+  // [DX-AGE1] Why: route only the small SDK loader through the peer's loopback socket.
+  // Rejected: publishing a gateway from the lab's isolated Docker network.
+  const sockets = new Set();
+  const proxy = createServer((socket) => {
+    sockets.add(socket);
+    const child = spawn("docker", dockerArgs(["exec", "-i", peer, "bash", "-ceu",
+      'exec 3<>/dev/tcp/127.0.0.1/8080; cat <&3 & reader=$!; trap "kill $reader 2>/dev/null || true" EXIT; cat >&3']),
+    { stdio: ["pipe", "pipe", "ignore"] });
+    socket.pipe(child.stdin);
+    child.stdout.pipe(socket);
+    socket.on("error", () => child.kill());
+    child.stdin.on("error", () => socket.destroy());
+    child.on("error", () => socket.destroy());
+    child.on("close", () => socket.destroy());
+    socket.on("close", () => { sockets.delete(socket); child.stdin.end(); });
+  });
+  await new Promise((resolve, reject) => {
+    proxy.once("error", reject);
+    proxy.listen(0, "127.0.0.1", resolve);
+  });
+  const port = proxy.address().port;
+  assert(![15442, 17019].includes(port));
+  return {
+    url: "http://127.0.0.1:" + port,
+    close: () => { for (const s of sockets) s.destroy(); proxy.close(); },
+  };
+}
+
 export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60 * 1000) {
   assert.equal(process.platform, "darwin");
   assert.equal(opts.holder, holder);
   assert.equal(dockerArgs([])[1], DOCKER_HOST);
+  if (opts.run === "p2-small") {
+    const outer = readMeasureLease();
+    assert(outer?.pid === process.ppid && outer.holder === holder && !outer.stale,
+      "Small gates require the heavy wrapper's measurement lease");
+    assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,31}$/);
+    const failures = [];
+    for (const run of ["adopted-fidelity", "fidelity-arms", "fidelity-arms-load", "erased-successor"]) {
+      try { await local({ ...opts, run, out: opts.out + "-" + run }, config, manager, stopAt); }
+      catch (error) { failures.push({ run, error }); }
+    }
+    if (failures.length) throw new AggregateError(failures.map((x) => x.error),
+      "Small gates failed: " + failures.map((x) => x.run).join(", "));
+    return;
+  }
   if (opts.run === "sequence") {
     const outer = readMeasureLease();
     assert(outer?.pid === process.ppid && outer.holder === holder && !outer.stale,
@@ -109,8 +160,9 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
     return;
   }
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
-  assert.match(opts.run ?? "", /^(fidelity|adopted-fidelity|fidelity-arms|fidelity-arms-load|scale|successor)$/);
+  assert.match(opts.run ?? "", /^(fidelity|adopted-fidelity|fidelity-arms|fidelity-arms-load|scale|successor|erased-successor)$/);
   const adopting = opts.run === "adopted-fidelity";
+  const erasure = opts.run === "erased-successor";
   const measure = opts.run === "scale" ? await import("./measure.mjs") : null;
   const spec = measure?.scaleOptions(opts);
   const revision = git(["rev-parse", "HEAD"]);
@@ -155,7 +207,7 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
     const parentOwnsLease = outer?.pid === process.ppid && outer.holder === holder && !outer.stale;
     if (!parentOwnsLease) lease = await acquireMeasureLease(holder + " " + opts.run, { holder, pollMs: 1000, timeoutMs: 45000 });
     const datomic = image(selectImage()), postgres = image("postgres:17-alpine");
-    const source = stage(dir, pin);
+    const source = stage(dir, pin, erasure);
     const sources = new Map(hashTree(source));
     if (measure) assert.equal(sources.get(experiment + "/measure.mjs"), sha256(fs.readFileSync(new URL("./measure.mjs", import.meta.url))));
     while (!slot) {
@@ -213,10 +265,7 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
       assert.equal(meta.HostConfig.Memory, Number(mem));
       assert.equal(meta.HostConfig.MemorySwap, Number(mem));
       assert.equal(meta.HostConfig.NanoCpus, 2e9);
-      const ports = meta.HostConfig.PortBindings ?? {};
-      if (role === "peer" && adopting) {
-        assert.deepEqual(ports, { "8080/tcp": [{ HostIp: "127.0.0.1", HostPort: "" }] });
-      } else assert(!Object.keys(ports).length);
+      assert(!Object.keys(meta.HostConfig.PortBindings ?? {}).length);
       docker(["start", id]);
       return id;
     };
@@ -259,7 +308,7 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
     const durable = sql("select current_setting('fsync'),current_setting('synchronous_commit'),current_setting('full_page_writes')");
     assert.equal(durable, "on|on|on");
     const peer = run("peer", datomic, [...mounted,
-      ...(adopting ? ["-p", "127.0.0.1::8080"] : []),
+      ...(erasure ? ["-e", "TRIPLEX_ERASURE_DIRECTORY=/tmp/age-erasure"] : []),
       "-e", "DATOMIC_JAVA_OPTS=-Xms128m -Xmx768m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=96m -Dtriplex.codec.spec=/age/packages/datomic/src/codec-spec.json -Dlogback.configurationFile=" + logback,
       "-e", "DATOMIC_URI_TEMPLATE=datomic:sql://{db}?" + jdbc + "?user=postgres&password=" + password,
       "-e", "AGE_ATTEMPT=" + attempt, "-e", "AGE_SQL_JDBC=" + jdbc, "-e", "AGE_SQL_PASSWORD=" + password,
@@ -273,6 +322,7 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
     }));
     assert.deepEqual(actual, sources);
     write("binding.json", { attempt, phase: opts.run, slot: slot.slot, source: pin, sourceHashes: Object.fromEntries(sources),
+      eraseSource: erasure ? eraseSource : undefined,
       settings, flags, spec, measurementLease: lease?.owner ?? outer, roleImages: { datomic, postgres }, jars, peerSha1, durable, caps,
       roles: Object.fromEntries(created), ownerHash: sha256(fs.readFileSync(slot.ownerFile)), startedAt: new Date().toISOString() });
     if (measure) await measure.measure({ attempt, dir, peer, tx, pg, jdbc, password, capture, signal: controller.signal, floor, write }, spec);
@@ -290,25 +340,36 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
         [pkg, Object.fromEntries(hashTree(path.join(REPO, "packages", pkg, "dist")))]));
       write("loader-binding.json", { attempt, loaderPin, loaderHashes, builds });
       const server = capture(["exec", "-e", "TX2_SAVE_LEDGER=0", "-e", "TX2_SMALL_ROWS=0",
+        "-e", "TX2_GROUP_QUEUE_CLOCK=1",
         peer, "bash", "-ceu", 'echo $$ > /tmp/age-gw.pid; exec /opt/datomic/bin/run -m triplex.gateway.main'],
         path.join(dir, "gateway.log"), controller.signal);
       server.catch(() => {});
-      const peerPort = owned(peer).NetworkSettings.Ports["8080/tcp"]?.[0];
-      assert.equal(peerPort?.HostIp, "127.0.0.1");
-      assert(peerPort.HostPort && !["15442", "17019"].includes(peerPort.HostPort));
-      const url = "http://127.0.0.1:" + peerPort.HostPort;
-      for (let retry = 0; ; retry++) {
-        controller.signal.throwIfAborted();
-        assert(retry < 120, "Small loader gateway did not start");
-        if (await fetch(url + "/health", { signal: AbortSignal.timeout(500) }).then((r) => r.ok, () => false)) break;
-        await sleep(1000);
+      const transport = await fixturePort(peer);
+      let fixture;
+      try {
+        for (let retry = 0; ; retry++) {
+          controller.signal.throwIfAborted();
+          assert(retry < 120, "Small loader gateway did not start");
+          if (await fetch(transport.url + "/health", { signal: AbortSignal.timeout(500) }).then((r) => r.ok, () => false)) break;
+          await sleep(1000);
+        }
+        fixture = JSON.parse(execFileSync(process.execPath, ["--import", "tsx",
+          path.join(source, experiment, "scale1-fixture.mjs"), loader, dir, attempt, transport.url, REPO, loaderPin],
+          { cwd: REPO, encoding: "utf8", timeout: 180000, signal: controller.signal }));
+      } finally {
+        transport.close();
       }
-      const fixture = JSON.parse(execFileSync(process.execPath, ["--import", "tsx",
-        path.join(source, experiment, "scale1-fixture.mjs"), loader, dir, attempt, url, REPO, loaderPin],
-        { cwd: REPO, encoding: "utf8", timeout: 180000, signal: controller.signal }));
       docker(["exec", peer, "bash", "-ceu", 'kill "$(cat /tmp/age-gw.pid)"']);
       await server.catch(() => {});
       docker(["cp", path.join(dir, "fixture.json"), peer + ":/tmp/age-fixture.json"]);
+      const indexLog = path.join(dir, "seed-index.log");
+      await capture(["exec", peer, "/opt/datomic/bin/run", "-m", "triplex.age.gate",
+        "index-fixture", "/tmp/age-fixture.json", fixture.sha], indexLog, controller.signal);
+      const index = JSON.parse(fs.readFileSync(indexLog, "utf8").split("\n")
+        .find((line) => line.startsWith("DX_AGE1 ")).slice(8));
+      assert.deepEqual([index.event, index.attempt, index.db, index.manifestSha],
+        ["fixture-cut", attempt, fixture.db, fixture.sha]);
+      assert(Number.isSafeInteger(index.t) && index.t > 0);
       const clone = "age-clone-" + attempt;
       const uri = (name) => "datomic:sql://" + name + "?" + jdbc + "?user=postgres&password=" + password;
       const command = async (file, ...args) => {
@@ -318,12 +379,13 @@ export async function local(opts, config, manager, stopAt = Date.now() + 14 * 60
       };
       const backup = "file:/tmp/age-fixture-backup";
       await command("seed-backup.log", "backup-db", uri(fixture.db), backup);
-      await command("seed-clone.log", "restore-db", backup, uri(clone));
+      await command("seed-clone.log", "restore-db", backup, uri(clone), String(index.t));
       await capture(["exec", peer, "/opt/datomic/bin/run", "-m", "triplex.age.gate",
         opts.run, "/tmp/age-fixture.json", fixture.sha, clone], path.join(dir, "probe.log"), controller.signal);
     }
     else {
-      const ns = opts.run === "successor" ? "triplex.age.successor" : "triplex.age.gate";
+      const ns = erasure ? "triplex.age.erased-successor"
+        : opts.run === "successor" ? "triplex.age.successor" : "triplex.age.gate";
       const args = opts.run.startsWith("fidelity-arms")
         ? ["fidelity-arms", opts.run.endsWith("-load") ? "load" : "standard"]
         : [opts.run];

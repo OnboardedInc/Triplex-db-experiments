@@ -24,7 +24,9 @@
   (println "DX_AGE1" (json/write-str (assoc data :event event :attempt (System/getenv "AGE_ATTEMPT"))))
   (flush))
 
-(defn seed! [{:keys [conn]} pop]
+(defn seed!
+  ([db pop] (seed! db pop (fn [owners] [owners []])))
+  ([{:keys [conn]} pop transform]
   (let [initial (d/db conn)
         attributes (into {} (map (fn [a] [(d/entid initial a) a])
                                   [:db/txInstant :triplex.entity/id :triplex.entity/rev :triplex.entity/row
@@ -38,9 +40,11 @@
                                (let [{:keys [owner fields]} (tape/person pop i)]
                                  {:db/id (str "e:" owner) :triplex.entity/id owner :triplex.entity/rev p
                                   :triplex.entity/row (mapv #(fixture/row-text (tape/seed-row pop i %)) (range fields))})) people)
+                [owners detached] (transform owners)
                 {:keys [db-after tx-data tempids]}
-                @(d/transact conn (conj owners {:db/id "datomic.tx" :triplex.tx/id tx-id
-                                                :triplex.tx/position p :triplex.tx/max-recorded-at clock}))
+                @(d/transact conn (into (conj owners {:db/id "datomic.tx" :triplex.tx/id tx-id
+                                                     :triplex.tx/position p :triplex.tx/max-recorded-at clock})
+                                       detached))
                 t (d/basis-t db-after) tx (d/t->tx t)
                 expected (into #{[tx :db/txInstant :engine-time] [tx :triplex.tx/id tx-id]
                                  [tx :triplex.tx/position p] [tx :triplex.tx/max-recorded-at clock]}
@@ -48,20 +52,21 @@
                                          (let [e (get tempids (:db/id o))]
                                            (concat [[e :triplex.entity/id (:triplex.entity/id o)] [e :triplex.entity/rev p]]
                                                    (map (fn [row] [e :triplex.entity/row row]) (:triplex.entity/row o))))) owners))
-                got (into #{} (for [x tx-data :when (and (:added x) (= tx (:tx x)))
+                got (into #{} (for [x tx-data :when (and (:added x) (= tx (:tx x)) (attributes (:a x)))
                                     :let [a (attributes (:a x)) v (:v x)]]
                                 [(:e x) a (if (and (= :db/txInstant a) (instance? java.util.Date v)) :engine-time v)]))]
-            (check! (and (< last-t t) (= (count expected) (count tx-data)) (= expected got))
+            (check! (and (< last-t t) (= (+ (count expected) (* 5 (count detached))) (count tx-data))
+                         (= expected got))
                     "Seed native datoms differ" {:position p :t t :last-t last-t :expected (count expected) :observed (count tx-data)})
             [(+ total (count tx-data)) t]))
-        [0 (d/basis-t initial)] (partition-all tape/seed-frame (range (:people pop)))))))
+        [0 (d/basis-t initial)] (partition-all tape/seed-frame (range (:people pop))))))))
 
 (defn stored-text [row ids]
   (let [text (fixture/row-text row)
         offset (+ 44 (count (:id row)) (if (= "ref" (:value_type row)) (count (:value_string row)) 0))
         p (:recorded_position row) plan (small/prepare text offset p ids)]
     (check! (seq plan) "Tape row no longer qualifies for the K encoder" {:id (:id row)})
-    (str (subs text 0 offset) (format "%016d" p)
+    (str (subs text 0 offset) (tape/digits 16 p)
          (apply str (interpose (Double/toString (double (:recorded_at row))) plan)))))
 
 (defn native-rows [rows ids] (mapv #(stored-text % ids) rows))
