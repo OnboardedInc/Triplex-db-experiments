@@ -1,5 +1,8 @@
 (ns triplex.gateway.feed
-  (:require [triplex.gateway.trace :as trace] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.admission :as admission] [triplex.gateway.codec :as codec])
+  (:require [clojure.data.json :as json] [triplex.gateway.privacy :as privacy] [triplex.gateway.trace :as trace]
+            [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.admission :as admission]
+            [triplex.gateway.codec :as codec] [triplex.gateway.save-ledger :as ledger]
+            [triplex.gateway.packed-journal :as packed] [triplex.gateway.slim :as slim])
   (:import [java.util.concurrent TimeUnit]))
 
 ;; [EXP-DF01] Why: R29/R41 E6 uses reports only as wakeups, always replaying the durable log.
@@ -18,6 +21,37 @@
     {:op op :entity (required (:triplex.entity/id (:f/subject f)))
      :attribute (required (:triplex.attr/key (:f/attr f))) :assertionId (required (:f/id f))
      :validFrom (required (:f/valid-from f)) :validTo (:f/valid-to f) :position (str (required position))}))
+(defn- project-lean [db {:keys [t]}]
+  (let [cut (d/as-of db t) tx (d/entity cut (d/t->tx t)) p (:triplex.tx/position tx)]
+    (if (nil? p)
+      {:t (str t) :kind "skipped" :reason "non-triplex"}
+      (let [journals (ledger/journals cut (d/t->tx t))
+            rows (mapcat (fn [[e _]]
+                           (map (comp privacy/packed-row slim/row-text)
+                                (concat (map :v (d/datoms cut :eavt e :triplex.entity/row))
+                                        (when (d/entid cut :triplex.journal/packed) (packed/rows cut e)))))
+                         journals)
+            records (group-by :attribute rows)
+            positions (or (seq (sort-by bigint (distinct (map :recorded_position (records ":_tx/position"))))) [p])
+            txids (or (seq (distinct (map :entity_id (records ":_tx/position")))) [(:triplex.tx/id tx)])
+            changes (mapv (fn [r]
+                            (let [c (json/read-str (:value_json r))]
+                              (cond-> {:op (required (get c "op")) :entity (required (get c "entityId"))
+                                       :attribute (required (get c "attribute")) :assertionId (required (get c "tripleId"))
+                                       :validFrom (required (get c "validFrom")) :validTo (get c "validTo")
+                                       :position (str (bigint (:recorded_position r)))}
+                                (= "erase" (get c "op")) (assoc :erasureSeq (str (get c "erasureSeq"))))))
+                          (records ":_tx/change"))
+            stamp (required (:triplex.tx/recorded-at tx))]
+        {:t (str t) :kind "commit"
+         :transaction (merge {:positions (mapv #(str (bigint %)) positions)
+                              :txIds (vec txids) :operationId (required (:triplex.tx/operation-id tx))
+                              :commandIds (vec (distinct (map :value_string (records ":_tx/command-id"))))
+                              :changes (vec (sort-by (juxt #(bigint (:position %)) :assertionId :op) changes))}
+                             (if (and (number? stamp) (<= 0 stamp 9007199254740991) (== stamp (long stamp)))
+                               {:stamp (str (long stamp)) :stampStatus "decided"}
+                               {:stamp nil :stampStatus "pending-RT01"}))}))))
+
 (defn project [db {:keys [t data]}]
   (let [cut (d/as-of db t) tx (d/entity cut (d/t->tx t)) p (:triplex.tx/position tx)]
     (if (nil? p)
@@ -123,7 +157,7 @@
                           (admission/execute admission/journals (fn []
                           (let [db (trace/span "d/db" "peer-call" (d/db conn)) end (inc (d/basis-t db))]
                             (if (>= start end) []
-                              (mapv #(project db %) (take n (d/tx-range (d/log conn) start end))))))))
+                              (mapv #((if privacy/*cut* project-lean project) db %) (take n (d/tx-range (d/log conn) start end))))))))
               rows (poll-log from limit wait-ms read-page
                      (fn []
                        (let [signal (when watch @(:signal watch))]

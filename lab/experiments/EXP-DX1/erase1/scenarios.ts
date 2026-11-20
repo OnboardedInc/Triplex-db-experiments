@@ -6,6 +6,7 @@ import { openNative } from "../import1/native.ts";
 import { bytes, sha, snapshot, type Source } from "../import1/source.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { activate } from "../int1/activation.ts";
+import { ErasureChanged } from "../../../bench/lib/datomic-erasure.ts";
 import { Account } from "../int1/account.ts";
 import { W0 } from "../../../bench/lib/w0-world.ts";
 import { deepOwnFacts, taskId } from "../../../bench/lib/deep-world.ts";
@@ -110,12 +111,14 @@ export async function publishWork(
     },
     overlap: (start: RunErase) => Promise<unknown>,
   ) => Promise<unknown>,
+  onOpen?: (comp: Awaited<ReturnType<typeof openComposition>>) => Promise<unknown>,
 ) {
   const comp = await openComposition("reach", "datomic", scope);
   const db = new DatabaseSync(path.join(dir, "publisher.sqlite"));
   const account = new Account(comp, "deep", binding, 0, 320, db);
   process.env.TX2_W0_OUTBOX_NAMESPACE = pageNamespace("erase1");
   try {
+    await onOpen?.(comp);
     const i = 0;
     const before = deepOwnFacts(i).find((f) => f.e === taskId(i, 0) && f.a === ":task/field-0");
     assert(before?.v.type === "string");
@@ -129,6 +132,7 @@ export async function publishWork(
         Array.from({ length: Math.min(8, account.count - first) }, (_, j) => first + j),
       );
     const cut = account.head;
+    assert((await account.world(i, cut)).facts.some((f) => f.v === value));
     return await exercise(
       comp,
       { people: [i], depths: [0], journal: [seed.txId], positions: [position], values: [[value]] },
@@ -141,6 +145,12 @@ export async function publishWork(
             erase = result;
           });
           return pause;
+        }).catch(async (error) => {
+          if (onOpen && error instanceof ErasureChanged) {
+            await assert.rejects(account.world(i, cut), ErasureChanged);
+            throw Object.assign(error, { guardedProjection: true });
+          }
+          throw error;
         });
         assert(erase && erase.sentAt >= started && erase.receivedAt <= wall());
         assert.equal(publish.cut.basis.tx, cut);

@@ -14,7 +14,7 @@ import type { ReadError } from "../errors/index.js";
 import { Triples } from "../store/Triples.js";
 import type { Triple } from "../Triple.js";
 import type { TemporalBasis } from "../Temporal.js";
-import type { TripleValue } from "../Value.js";
+import type { ReadValue } from "../Value.js";
 import * as CanonicalJson from "../content/CanonicalJson.js";
 import * as ContentId from "../content/ContentId.js";
 import * as BoolExpr from "./BoolExpr.js";
@@ -40,7 +40,7 @@ export class AmbiguousDecisionFactError extends Data.TaggedError("AmbiguousDecis
 export class UnsupportedDecisionFactError extends Data.TaggedError("UnsupportedDecisionFactError")<{
   readonly entity: string;
   readonly attribute: string;
-  readonly valueType: TripleValue["type"];
+  readonly valueType: ReadValue["type"];
   readonly message: string;
 }> {}
 
@@ -122,7 +122,7 @@ const factReads = (
   );
 };
 
-const scalarValue = (value: TripleValue): World.Value | undefined => {
+const scalarValue = (value: ReadValue): World.Value | undefined => {
   switch (value.type) {
     case "string":
     case "ref":
@@ -135,6 +135,7 @@ const scalarValue = (value: TripleValue): World.Value | undefined => {
       return value.value;
     case "json":
     case "integer":
+    case "erased":
       return undefined;
   }
 };

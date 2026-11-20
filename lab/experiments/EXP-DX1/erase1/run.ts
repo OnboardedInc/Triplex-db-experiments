@@ -15,7 +15,14 @@ import { deepOwnFacts, deepShape, taskId } from "../../../bench/lib/deep-world.t
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { ids, SEED_VALID_FROM, subjectOf } from "../../../bench/lib/world.ts";
 
-type Layout = "smoke" | "scale" | "batch" | "overlap" | "regression";
+type Layout =
+  | "smoke"
+  | "scale"
+  | "batch"
+  | "overlap"
+  | "regression"
+  | "ledger-regression"
+  | "ledger-overhead";
 type Attempt = {
   binding: string;
   nonce: string;
@@ -204,7 +211,10 @@ function blocks() {
     assert(run.people >= 250);
     return [makeGroup(mid - 25, 10, 32), makeGroup(mid, 100, 8)];
   }
-  const history = ["smoke", "regression"].includes(run.mode) ? 5 : 415;
+  const history =
+    run.mode === "smoke" || run.mode.endsWith("regression") || run.mode === "ledger-overhead"
+      ? 5
+      : 415;
   return [makeGroup(mid - 1, 1, 0), makeGroup(mid, 1, history)];
 }
 function makeGroup(first: number, n: number, depth: number): Acc {
@@ -663,12 +673,51 @@ async function restoreFixture(f: Fixture, staged: Staged) {
   }
 }
 
+async function seedFixture(f: Fixture, groups: Acc[], recordProgress: boolean) {
+  assert.equal(await f.comp.currentPosition(), 0);
+  const reserved = new Set(groups.flatMap((g) => g.people));
+  // [DX-ERASE1] Why: write the target's history between seed batches to reach several log regions.
+  // Rejected: appending every revision after the main seed, which artificially clusters the purge.
+  for (const group of groups) await f.seed(group.people, group);
+  const chunk = Math.min(800, Math.max(100, Math.floor(run.people / 16)));
+  for (let first = 0; first < run.people; first += chunk) {
+    const n = Math.min(chunk, run.people - first);
+    await f.seed(Array.from({ length: n }, (_, j) => first + j).filter((i) => !reserved.has(i)));
+    for (const group of groups)
+      for (const [i, subject] of group.people.entries())
+        for (
+          let revision = Math.floor((group.depths[i]! * first) / run.people) + 1;
+          revision <= Math.floor((group.depths[i]! * (first + n)) / run.people);
+          revision++
+        )
+          await f.edit(subject, revision, group);
+    if (recordProgress)
+      progress("seed", { people: first + n, facts: f.facts, position: f.position });
+    await getParent("guard");
+  }
+  if (recordProgress)
+    for (const group of groups)
+      progress("aged", {
+        people: group.people.length,
+        fieldSaves: group.depths.reduce((a, b) => a + b, 0),
+        position: f.position,
+      });
+}
+
 async function scale() {
   const fixtureName = "erase1-" + run.nonce;
   const comp = await openComposition("reach", "datomic", fixtureName);
   let f = new Fixture(comp, fixtureName);
   let reader: CompositionHandle | undefined;
   try {
+    if (run.mode === "ledger-regression") {
+      const authority = new DatomicClient(process.env.DATOMIC_URL!);
+      try {
+        await authority.declareProtection(f.db, [field(0)]);
+      } finally {
+        authority.close();
+      }
+    }
     let groups: Acc[];
     if (action === "check") {
       await getParent("guard");
@@ -685,35 +734,8 @@ async function scale() {
       groups = staged.data.groups;
       await restoreFixture(f, staged.data);
     } else {
-      assert.equal(await comp.currentPosition(), 0);
       groups = blocks();
-      const reserved = new Set(groups.flatMap((g) => g.people));
-      // [DX-ERASE1] Why: write the target's history between seed batches to reach several log regions.
-      // Rejected: appending every revision after the main seed, which artificially clusters the purge.
-      for (const group of groups) await f.seed(group.people, group);
-      const chunk = Math.min(800, Math.max(100, Math.floor(run.people / 16)));
-      for (let first = 0; first < run.people; first += chunk) {
-        const n = Math.min(chunk, run.people - first);
-        await f.seed(
-          Array.from({ length: n }, (_, j) => first + j).filter((i) => !reserved.has(i)),
-        );
-        for (const group of groups)
-          for (const [i, subject] of group.people.entries())
-            for (
-              let revision = Math.floor((group.depths[i]! * first) / run.people) + 1;
-              revision <= Math.floor((group.depths[i]! * (first + n)) / run.people);
-              revision++
-            )
-              await f.edit(subject, revision, group);
-        progress("seed", { people: first + n, facts: f.facts, position: f.position });
-        await getParent("guard");
-      }
-      for (const group of groups)
-        progress("aged", {
-          people: group.people.length,
-          fieldSaves: group.depths.reduce((a, b) => a + b, 0),
-          position: f.position,
-        });
+      await seedFixture(f, groups, true);
     }
     const basis = f.basis();
     assert.equal(
@@ -731,9 +753,74 @@ async function scale() {
       f = new Fixture(comp, fixtureName);
       await restoreFixture(f, stage);
     }
-    if (run.mode === "regression") {
+    if (run.mode.endsWith("regression")) {
       const { regression } = await import("./regression.ts");
-      await regression(f, groups[1]!.people[0]!, dir, run.binding, diag, getParent, output);
+      await regression(
+        f,
+        groups[1]!.people[0]!,
+        dir,
+        run.binding,
+        diag,
+        getParent,
+        output,
+        run.mode === "ledger-regression",
+      );
+      return;
+    }
+    if (run.mode === "ledger-overhead") {
+      const { measureW0Http } = await import("../../../bench/lib/w0-http.ts");
+      const otherName = fixtureName + "-guarded";
+      const guarded = await openComposition("reach", "datomic", otherName);
+      const probe = new DatomicClient(process.env.DATOMIC_URL!);
+      try {
+        const other = new Fixture(guarded, otherName);
+        await probe.declareProtection(other.db, [field(0)]);
+        await seedFixture(other, blocks(), false);
+        assert.equal(other.facts, f.facts);
+        const arms = await measured(async () => {
+          const observations = [];
+          for (const [candidate, which] of [
+            [f, "ledger-control"],
+            [other, "ledger-guarded"],
+          ] as const) {
+            await diag("index", { scope: candidate.scope });
+            const before = await storage();
+            const measuredTraffic = await measureW0Http(() =>
+              traffic(candidate, candidate.comp, candidate.basis(), which),
+            );
+            const bytes = (ending: RegExp) => {
+              const samples = measuredTraffic.samples.filter((r) => ending.test(String(r.path)));
+              return {
+                n: samples.length,
+                request: percentile(samples.map((r) => Number(r.requestBytes))),
+                response: percentile(samples.map((r) => Number(r.responseBytes))),
+              };
+            };
+            const after = await storage();
+            const wire: { request: number; response: number }[] = [];
+            probe.onRequest = (r) =>
+              wire.push({ request: r.requestBytes, response: r.responseBytes });
+            const rows = await probe.rows(candidate.db, {
+              entityIds: [ids.placement(run.people - 1)],
+              basis: candidate.basis(),
+            });
+            assert(rows.length && wire.length === 1);
+            observations.push({
+              which,
+              summary: measuredTraffic.value,
+              wire,
+              saveWire: bytes(/\/transact$/),
+              readWire: bytes(/\/(reach|reach-many|read)$/),
+              valueByteChange: after.valueBytes - before.valueBytes,
+            });
+          }
+          return observations;
+        });
+        output("ledger-overhead", { facts: f.facts, arms });
+      } finally {
+        probe.close();
+        await guarded.close();
+      }
       return;
     }
     if (run.mode === "overlap") {

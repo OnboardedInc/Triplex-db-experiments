@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [clojure.edn] [triplex.gateway.group :as group] [triplex.gateway.commit :as commit] [triplex.gateway.predecessor :as pred] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
+  (:require [triplex.gateway.privacy :as privacy] [clojure.edn] [triplex.gateway.group :as group] [triplex.gateway.commit :as commit] [triplex.gateway.predecessor :as pred] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:require [triplex.gateway.replay-capture :as replay-capture] [triplex.gateway.small-row :as small-row]
             [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed] [clojure.data.json :as json])
   (:import [java.util UUID]))
@@ -152,6 +152,7 @@
    (let [lean (lean? db)
          input (ordered-row-texts (expand-fresh input lean))
          new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
+         _ (privacy/validate-write! privacy/*cut* input rows)
          fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
          timed-rows (when (seq old) (into {} (keep (fn [r] (when-let [id (timed-retraction r)] [(:id r) id]))) fresh))
          source (when-some [p (get input "sourceK")] (safe-position p)) position (safe-position (get input "position"))
@@ -179,6 +180,10 @@
                [{:db/id "datomic.tx" :triplex.tx/position (marker position)
                  :triplex.tx/operation-id (get input "operationId") :triplex.tx/id (or (:id metadata) "")
                  :triplex.tx/recorded-at [:triplex/record-time (finite! (:recorded-at metadata))]}]
+               ;; [DX-ERASE1] Why: a late native write is fenced even if its peer request timed out.
+               ;; Rejected: releasing the gateway lock and trusting the delayed transactor outcome.
+               (when-let [seq (:seq privacy/*cut*)]
+                 [[:db/cas scope :triplex.scope/erasure-seq seq seq]])
                ;; [DX-B4-T1] Why: one physical commit can contain several logical journals.
                ;; Rejected: using only tx/id (drops nested transacts at interior cursors).
                (mapcat (fn [[entity rs]]
@@ -431,7 +436,7 @@
       (let [text (str e)]
         ;; [DX-THIN1] Why: preserve explicitly typed policy errors and the established transaction rejection for malformed row ordering.
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
-        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
@@ -564,7 +569,7 @@
         result {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
                   (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source")
      :basis basis :subjectAttribute (str attribute)
-     :rows (mapv #(wire-row (mask-retirement % basis))
+     :rows (mapv #(wire-row (privacy/masked (mask-retirement % basis)))
                  (filter (fn [r] (and (visible? r basis history)
                                      (or (not= route "live") (nil? (:retracted_at r)))
                                      (or (nil? entities) (some #{(:entity_id r)} entities))
@@ -594,7 +599,7 @@
         {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
                       (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source") :basis basis
          :subjectAttribute (str (if (= route "live") :f/live :f/subject))
-         :rows (mapv #(wire-row (mask-retirement % basis))
+         :rows (mapv #(wire-row (privacy/masked (mask-retirement % basis)))
                      (filter (fn [row]
                                (and (visible? row basis history)
                                     (or (not= route "live") (nil? (:retracted_at row)))

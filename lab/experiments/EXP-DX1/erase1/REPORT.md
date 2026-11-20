@@ -1,15 +1,15 @@
 # DX-ERASE1 · What erasing a person costs
 
-The newest integration code repeated the three leaks found in the first study.
+The merged integration code repeated the three leaks found in the first study.
 The local replica and its older snapshot also kept showing the value.
 The journal kept the old value, and the lean feed could not report the erase.
 The notice sender put the old payload in the recipient's effect and ledger.
-The joined Publish and restore fixtures needed another run after setup errors.
-These tests check the same original assertion before and after the erase.
+The new ledger returned the erased marker on old handles and replica views.
+It blocked the replay, stale Publish and notice, and protected the restored backup.
 
 **North star** P1–P3 and P5. Measure pinned reads, save tails, replay and Publish during excision. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
-Part 2. [Permanent regression tests and red evidence](REGRESSIONS.md).
+Part 2. [Regression tests and red evidence](REGRESSIONS.md) · [Ledger implementation, latency and receipt audit](LEDGER.md). The guarded Mac run verified all thirteen checks, including the joined stage race, actual backup restore, and the erased-SSN task. Save request bodies stayed at 7,442 B. Save p99 rose 1.73× and pinned read p99 rose 5.28× in the matched Mac comparison. Forcing full read responses accounted for the increased wire bytes.
 
 Part 1 measurements and handoff follow.
 

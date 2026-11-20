@@ -106,7 +106,17 @@ export async function local(opts, config, manager) {
   assert.equal(opts.holder, holder);
   const people = Number(opts.people);
   const mode = String(opts.run ?? "scale");
-  assert(["smoke", "scale", "batch", "overlap", "regression"].includes(mode));
+  assert(
+    [
+      "smoke",
+      "scale",
+      "batch",
+      "overlap",
+      "regression",
+      "ledger-regression",
+      "ledger-overhead",
+    ].includes(mode),
+  );
   assert(Number.isSafeInteger(people) && people >= 12 && people <= 100_000);
   assert(typeof opts.out === "string" && /^[a-z0-9][a-z0-9-]{0,40}$/.test(opts.out));
   const vault = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
@@ -123,7 +133,8 @@ export async function local(opts, config, manager) {
   const token = randomBytes(24).toString("hex");
   const roles = Object.keys(caps);
   const names = Object.fromEntries(roles.map((r) => [r, prefix + "-" + r]));
-  const archiveDir = mode === "regression" ? path.join(dir, "archive") : undefined;
+  const regression = mode.endsWith("regression");
+  const archiveDir = regression ? path.join(dir, "archive") : undefined;
   if (archiveDir) fs.mkdirSync(archiveDir);
   const owned = new Map();
   const volumes = new Set();
@@ -352,6 +363,9 @@ export async function local(opts, config, manager) {
         "-v",
         import.meta.dirname + ":/erase1:ro",
         ...(archiveDir ? ["-v", archiveDir + ":/dx-archive"] : []),
+        ...(mode.startsWith("ledger-")
+          ? ["-v", "/dx-authority", "-e", "TRIPLEX_ERASURE_DIRECTORY=/dx-authority"]
+          : []),
         "-p",
         new URL(endpoint).hostname + ":" + info.port + ":8080",
         "-e",
@@ -445,9 +459,8 @@ export async function local(opts, config, manager) {
         TRIPLEX_DATOMIC_LAYOUT: "lean",
         TX2_W0_POINT_JOURNAL: "1",
         DX_ERASE_TOKEN: token,
-        DX_ERASE_MEASURE: ["smoke", "regression"].includes(mode)
-          ? ""
-          : path.join(vault, "locks", "measure"),
+        DX_ERASE_MEASURE:
+          mode === "smoke" || regression ? "" : path.join(vault, "locks", "measure"),
       },
       stdio: ["ignore", "inherit", "inherit", "ipc"],
     });

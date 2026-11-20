@@ -1,5 +1,6 @@
 import {
   decodeValueColumns,
+  decodeReadValueColumns,
   storedValueDomain,
   ValueDomains,
   type TripleRow,
@@ -134,7 +135,7 @@ export function decodeRowTextColumns(values: unknown, version?: "1" | "2"): Trip
 }
 export function decodeRowTextArray(values: unknown, version?: "1" | "2"): TripleRow {
   const row = decodeRowTextColumns(values, version);
-  decodeValueColumns(row, storedValueDomain(ValueDomains.datomic, row.attribute));
+  decodeReadValueColumns(row, storedValueDomain(ValueDomains.datomic, row.attribute));
   return row;
 }
 export function decodeRowText(text: string): TripleRow {
