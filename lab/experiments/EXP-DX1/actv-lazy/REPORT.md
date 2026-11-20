@@ -1,8 +1,8 @@
 A 10,000-person release that previously took 1.205 seconds to show included the cost of starting a new reader process.
 The original trace measured 254 ms to make the release durable, 14 ms to check its receipt and 39 ms inside the first read.
-In a fresh trace, an already-connected reader returned the new answer 36 ms after durability at the median. A new process took 563 ms.
-On deep data, the corresponding medians were 29 ms and 625 ms. Both readers picked up the release on their next request.
-The existing reader made seven database requests on a miss. The shared-cut option reuses control data from the same database position.
+At 10,000 people a connected reader took 36 ms after durability on the original path and 19 ms with the shared cut. A fresh process took 563 ms and 499 ms.
+On the deep fixture the connected reader took 29 ms and 21 ms. Both paths picked up the release on the next request.
+The new reader uses four database requests on a miss and three on an exact repeat, down from seven and four. [Read budget](STAGES.md)
 An account record can describe every owed notice in one transaction. Storing changed output values also takes work proportional to the changes.
 The local joined experiment tests both costs. The earlier 10,000-person dispatcher took 25.6 seconds to record 1,650 individual notices.
 If a worker erases their number while a case submission is waiting, I recommend recording that it was due and pausing submission. [Owner decision](RETENTION.md)
