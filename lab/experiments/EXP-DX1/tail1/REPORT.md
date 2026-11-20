@@ -46,3 +46,5 @@ Image source pin changes under `packages/datomic/gateway/src/triplex/gateway/`, 
 
 - `lean.clj` `bafa5d00aaaf87321396674f16d6ffc03faa664100a75ce0024de7287ce58ca2` → `115812796134acf278ec30d71eabd9710fb121e7759475b28df97a43ed815fee`.
 - `storage.clj` `341f45cf51ea1f785292b72eca34951d7fe10c9ace55e69af8fbe9df71234b60` → `144e4ecd3742f1323669e67ddaa14dfd3bd69e22b9366ac5d02bcad1bb2bff66`.
+
+Pre-run ranges for all four arms and the bounded server replay command. [Forecasts](PREDICTIONS.md)
