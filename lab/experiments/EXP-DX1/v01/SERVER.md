@@ -7,7 +7,7 @@ Use one idle, dedicated bare-metal Linux server. The existing INT1 placement req
 Run this from a clean clone of the scorecard revision with Node 22 available. The command creates a fresh checkout and toolchain in a new build directory. It will refuse an existing build directory, changed or hidden source inputs, or unpinned files in the image context.
 
 ```bash
-COMMIT=b48ebd48d272f3b376a9775a24f32f23149b1025
+COMMIT=d72cd53954e14514538875b05d6902e36cf4be34
 BUILD=/var/tmp/triplex-v01-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
