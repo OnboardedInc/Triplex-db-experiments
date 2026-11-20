@@ -2,7 +2,7 @@
 
 ## Java 25 and ZGC
 
-Prepare the final integration revision with `sudo env DX_JAVA=25 bash lab/experiments/EXP-DX1/t1/bare-metal.sh --prepare "$COMMIT" "$BUILD"`. Run from its `repo` directory with its pinned Node on `PATH`. This builds both Java images and records their IDs and input manifest. Reuse the sealed `SEED_DIR` from the first JVM comparison at `46880aa47`. Keep it outside the new output directory. The seed receipt, run identity, population, position, dump size and dump digest are checked again.
+Prepare the final integration revision with `sudo env DX_JAVA=25 bash lab/experiments/EXP-DX1/t1/bare-metal.sh --prepare "$COMMIT" "$BUILD"`. This builds both Java images and records their IDs and input manifest. Run the campaign from `$BUILD/repository` with `$BUILD/tools/bin` on `PATH`. Reuse the sealed `SEED_DIR` from the first JVM comparison at `46880aa47`. Keep it outside the new output directory. The seed receipt, run identity, population, position, dump size and dump digest are checked again.
 
 ```sh
 env DOCKER_HOST=unix:///var/run/docker.sock node lab/bin/heavy.mjs --label DX-JVM1-server -- \
