@@ -228,9 +228,10 @@ Collect terminal run files from the Mac with the appropriate producer SHA. Both 
 
 ```sh
 export BENCH_SERVER
-python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect jvm1 46880aa47d7c580c400b457df0c8baf9e971e78a /var/tmp/triplex-bm1/day-n20-collector
-python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect int1-capacity 0dd4cbb24f10dad80e4263fd0c04159ce512b251 /var/tmp/triplex-bm1/day-n20-collector
-python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect rd1-aged 5f51de7d6ab09b884df61f5c260db7f6688726c1 /var/tmp/triplex-bm1/day-n20-collector
-python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect ha1-micro 14174308fa1b1f6ade7f3e1fe3ce58ca4bc173ba /var/tmp/triplex-bm1/day-n20-collector
-python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect prep1 7ca8525a9ea0c3810c7af6ba0b5a0e15552dd534 /var/tmp/triplex-bm1/day-n20-collector
+bench_control=/var/tmp/triplex-bm1/day-n20-followers
+python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect jvm1 46880aa47d7c580c400b457df0c8baf9e971e78a "$bench_control"
+python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect int1-capacity-retry 0dd4cbb24f10dad80e4263fd0c04159ce512b251 "$bench_control"
+python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect rd1-aged-retry 5f51de7d6ab09b884df61f5c260db7f6688726c1 "$bench_control"
+python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect ha1-micro 14174308fa1b1f6ade7f3e1fe3ce58ca4bc173ba "$bench_control"
+python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect prep1 7ca8525a9ea0c3810c7af6ba0b5a0e15552dd534 "$bench_control"
 ```
