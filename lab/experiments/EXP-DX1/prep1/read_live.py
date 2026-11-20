@@ -5,6 +5,7 @@ from collections import Counter, defaultdict
 import json
 import math
 from pathlib import Path
+from statistics import median
 import sys
 
 from read_probe import managed_events, sha
@@ -22,7 +23,9 @@ def read_live(out):
         for member in append["members"]:
             key = append["db"], str(member["t"])
             assert key not in native
-            native[key] = (member["read-at"], append["end"])
+            read, started, applied = (member[k] for k in ("read-at", "started-at", "applied-at"))
+            assert read <= started <= applied <= append["start"] <= append["end"]
+            native[key] = (read, started, applied, append["start"], append["end"])
     results, digests = [], {}
     for number, r in enumerate(rate_rows):
         arm, block = divmod(number, 3)
@@ -61,7 +64,7 @@ def read_live(out):
             if not receipt:
                 continue
             assert receipt["operationId"] == item["id"]
-            read, written = native[db, receipt["t"]["v"]]
+            read, _, _, _, written = native[db, receipt["t"]["v"]]
             assert start + int(item["sent"] * 1e6) <= read <= written
             if ack:
                 assert written <= start + int(item["end"] * 1e6)
@@ -71,8 +74,14 @@ def read_live(out):
                 assert variant == "prepare"
                 sent = stats["submittedNs"]
                 assert tries.setdefault(sent, stats) == stats
-        for members in groups.values():
+        full_groups = defaultdict(list)
+        for t, members in groups.items():
             assert all(m.get("groupSize", len(members)) == len(members) for m in members)
+            if len(members) == 8:
+                _, started, applied, appending, appended = native[db, t]
+                paths = {m["preparedStats"]["path"] for m in members if m.get("preparedStats")}
+                assert len(paths) <= 1
+                full_groups[next(iter(paths), "reference")].append((applied - started, appended - appending))
         positions = sorted(int(x["position"]["v"]) for x in durable)
         assert positions == list(range(r["positionBefore"] + 1, r["positionBefore"] + 1 + len(durable)))
         latencies.sort()
@@ -88,10 +97,14 @@ def read_live(out):
             "outcomes": r["outcomes"], "physical": len(groups),
             "preparedAttempts": len(tries), "preparedGroups": sum(x["path"] == "prepared" for x in tries.values()),
             "definitiveReplays": sum(x["replays"] for x in tries.values()),
+            "fullGroups": {path: {"count": len(samples),
+                                  "medianApplyMs": median(x[0] for x in samples) / 1e6,
+                                  "medianAppendMs": median(x[1] for x in samples) / 1e6}
+                           for path, samples in full_groups.items()},
         })
     assert len(results) == 12
     return {"attempt": attempt, "source": inputs["head"], "image": terminal["image"], "slot": terminal["slot"], "seconds": seconds,
-            "inputSha256": sha(out / "inputs.json"), "rawSha256": terminal["sha256"],
+            "inputSha256": sha(out / "inputs.json"), "rawSha256": terminal["sha256"], "verifierSha256": sha(Path(__file__)),
             "offerTapeDigests": digests, "windows": results}
 
 
@@ -100,6 +113,7 @@ if __name__ == "__main__":
         raise SystemExit("Verification requires enabled assertions")
     directory = Path(sys.argv[1])
     result = read_live(directory)
-    with (directory / "live-summary.json").open("x") as stream:
+    name = sys.argv[2] if len(sys.argv) > 2 else "live-summary.json"
+    with (directory / name).open("x") as stream:
         json.dump(result, stream, indent=2)
         stream.write("\n")

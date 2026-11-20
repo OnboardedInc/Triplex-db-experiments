@@ -4,7 +4,7 @@ The forecast was 25% to 55%, and both repeats were above it.
 Independent saves now prepare in parallel, and a ready second group can overlap the first.
 The checks covered exact receipts, history and the order and content of changes.
 At 50 and 235 offered saves per second, the Mac acknowledged more saves sooner. Peak results varied.
-The predicted server ceiling is about 385 saves per second, with a range of 320 to 450.
+The predicted server ceiling for this guard is about 300 saves per second, with a range of 260 to 360.
 Lean erasure and lost replies across a database restart still need direct evidence.
 
 **North star.** P2 durable saves and P6 isolation, with P1/P3 exact cuts and feed. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
@@ -38,6 +38,7 @@ Values are medians within the displayed occupancies. The full table includes the
 | 394 | 65.7 / 56.18 | 56.6 / 55.54 | 75.3 / 48.82 | invalid |
 
 Every offer in these shared-slot windows exceeded 50 ms or missed its ACK. All clean arms drained every offer. A3 at 235/s recovered 68 original receipts. At 394/s every one of its 526 CAS conflicts followed a lost durable predecessor known only to the database, invalidating that bookend. The corrected driver freezes the subject until it knows the durable predecessor.
-**Bare-metal forecast.** About 385 saves/s at today's field payload (320–450/s), against the original W1 estimate of 210–300/s. The model assumes eight members per 18–25 ms of effective service. At 50 and 235/s, predict 49–50 and 230–235 in-window saves/s with p99 of 25–45 and 30–100 ms. At 394/s, predict 315–394 in-window and p99 of 60–300 ms if capacity keeps pace. At 320/s, retaining every offer builds about 14 seconds of p99 wait over a minute.
+**Where the time went.** At 235/s the two prepared arms' median native apply for full groups was 89.0/89.8 ms, against W1's 4.2/5.2 ms. The median durable append stayed about 2 ms. Some of the work moved into the transactor's authoritative checks. At 394/s, after-drain durable rates in the three usable windows were 59.1, 60.0 and 66.9/s. `live-01/native-cost.json` recounts each native group by path.
+**Bare-metal forecast.** About 300 saves/s with this guard (260–360/s), against the original W1 estimate of 210–300/s. The range discounts the analyst's 320–450/s for the measured native apply cost and the modest peak rate gain. Predict 49–50 and 225–235 in-window saves/s at 50 and 235 offered with p99 of 25–45 and 35–130 ms. At 394 offered, predict 255–360/s and roughly 6–31 seconds of p99 wait over a minute if all offers queue. Serving 394/s needs a full eight-save cycle below 20.3 ms.
 **Server command.** Use two disposable SQL-backed gateways on the same reference hardware. Both use strict lean rows, ready-only cap eight, predecessor lookup, prepared-request reuse, stage clocks and fast replies. Set diagnostic bulk seed caps to 2,048 rows and 1,048,576 bytes. Enable `TX2_PARALLEL_PREPARE=1 TX2_PREPARE_WINDOW=prepare` only on the second gateway.
 `node --import tsx lab/experiments/EXP-DX1/prep1/live.ts "$DX_W1_URL" "$DX_PREP1_URL" 60`
