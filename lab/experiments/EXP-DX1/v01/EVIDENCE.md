@@ -31,3 +31,4 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 - `part2/import-p8b/SCORECARD-v0.1.md` and `part2/import-p8b/campaign/p8/` contain the exact suffix verification and its independently replayed offer log. `part2/import-p8a/` and the fixture logs retain the missing bulk-grant failure, the corrected run and both cleanups.
 - `part2/recovery-p9a/fault/` and `part2/recovery-p9a/move/` contain the separate ten-account HASYNC1 diagnostics. Their attempt records, receipt audit, read tapes, recovery events and cleanups bind the two owned slots.
 - `part2/import-p8b/final-render/SCORECARD-v0.1.md` is the final formatter applied to the same retained native campaign. `part2/final-card-checks.log` records renderer, loader and recovery tests and verifies the card rows and evidence links.
+- `part2/packages-final.log` and `part2/package-build-final.json` contain the final server revision’s clean package build and exact output hashes.

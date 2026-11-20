@@ -1,11 +1,11 @@
-Server 2 should use commit 909f335a7.
-It accepts the original SCALE1 image and transfer.
-It records partial observations for rows 1 through 4 and 6 through 8.
-The grouped configuration uses compact layout K.
-The per-person writer can be selected separately.
-Two Mac toy arms matched all 28 saves each.
-The Publish, failover and move toy checks ran on their own fixtures.
-Rows 5 and 9 still need held-seed adapters. Server timing is unverified.
+Server 2 should use commit 790d9e96e.
+It accepts the existing SCALE1 seed.
+It checks the AGE1 identity before a 1B run.
+It records partial observations for priorities 1 through 4 and 6 through 8.
+It uses compact layout K with a queryable journal and offers both writer settings.
+The Mac checks covered the toy seed, import pacing and all 13 output rows.
+Publish and the one-host recovery rehearsal still need held-seed adapters.
+Full-size restore, server timing and the per-person configuration remain unverified here.
 
 ## Part 2 verdict and receipt audit
 
@@ -52,7 +52,7 @@ The published producer opens a flat synthetic scope and loads its own fixture. I
 
 The card puts the selected writer, layout K, Java settings, actual gateway readbacks and forecast above the rows. It renders nine priority rows followed by four standing correctness rows. Physical cards with input records recheck the source, age label, writer and original image digest against each arm. The input record is linked from the card. The formatter preserves the individual observation denominators and never substitutes zero for an absent percentile.
 
-Four renderer tests and eleven published loader and recovery tests passed. Re-rendering the exact retained native import campaign checked all thirteen rows and all emitted local evidence links. The covered rows carry diagnostic clocks. The current physical command supplies partial observations for P1 through P4 and P6 through P8. P5 needs the published flat fixture adapted to the held namespaced pool. P9 needs a held K checkpoint format and time budget compatible with its rehearsal, plus two servers for any qualifying fault or move result. The integrated erasure witness, complete receipt retry coverage and physical no-loss check remain open.
+A fresh Mac clone of the final server source built all eight package tasks. Its pinned image inputs match the inputs used by the last native import gate. Four renderer tests and eleven published loader and recovery tests passed. Re-rendering the exact retained native import campaign checked all thirteen rows and all emitted local evidence links. The covered rows carry diagnostic clocks. The current physical command supplies partial observations for P1 through P4 and P6 through P8. P5 needs the published flat fixture adapted to the held namespaced pool. P9 needs a held K checkpoint format and time budget compatible with its rehearsal, plus two servers for any qualifying fault or move result. The integrated erasure witness, complete receipt retry coverage and physical no-loss check remain open.
 
 The latest INT1 state acknowledged the quiet pair and first-read baseline and reserved marginal P7 work for a growing-population census. The held scorecard reports its measured boot difference and cold-read samples. The deployable source stays pinned in the server handoff while the owner of INT1 integrates the subsequent commits.
 

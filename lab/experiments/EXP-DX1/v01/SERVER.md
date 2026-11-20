@@ -7,7 +7,7 @@ Use the held SCALE1 decision loader image on a dedicated bare-metal Ubuntu 24.04
 From a clean checkout at the stated revision with Node 22:
 
 ```bash
-COMMIT=909f335a76ed4ceb6cd341b5ff0799d729d38d15
+COMMIT=790d9e96e7c700aa0f59e53fc1259df3deb6913d
 BUILD=/var/tmp/triplex-v01-adopted-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
