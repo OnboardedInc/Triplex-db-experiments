@@ -67,7 +67,13 @@ export async function run(
     assert.equal(sealed.marker.cut, saveBefore.position);
     assert.equal(sealed.marker.release, W0.R2.hash);
     assert.equal(sealed.event.at, receipt.position);
-    const verify = async (position: number, authored: number, at: number) => {
+    const verify = async (
+      position: number,
+      authored: number,
+      at: number,
+      document = W0.R2.doc,
+      old = W0.R1.doc,
+    ) => {
       const base = seeded.world(1);
       const world = {
         subject,
@@ -79,8 +85,8 @@ export async function run(
       const read = await a.reader().readAt(subject, { position, validTime: valid });
       const [expected] = JSON.parse(
         await ref.oracle.call("check", {
-          document: W0.R2.doc,
-          old: W0.R1.doc,
+          document,
+          old,
           basis: { tx: position, validTime: valid },
           worlds: [world],
           fold: false,
@@ -95,6 +101,30 @@ export async function run(
       await verify(saveAfter.position, 2407, saveAfter.position),
     ];
     assert.deepEqual(await a.publish("priority", W0.R2.doc, valid, "owed"), receipt);
+    // [DX-ACT2] Why: prove the opposite ingress order on the joined server candidate. Rejected: treating a save that was already waiting in the first schedule as a save offered after Publish owns the turn.
+    const atNative = Promise.withResolvers<void>(),
+      proceed = Promise.withResolvers<void>(),
+      publishFirst = a.publish("publish-first", W0.R3.doc, valid, "owed", async () => {
+        atNative.resolve();
+        await proceed.promise;
+      });
+    await Promise.race([
+      atNative.promise,
+      publishFirst.then(() => assert.fail("Publish did not enter the held native turn")),
+    ]);
+    const offeredAfter = a.save("save-after-publish-first", edit(1593), valid);
+    proceed.resolve();
+    const [firstRelease, secondSave] = await Promise.all([publishFirst, offeredAfter]);
+    assert.equal(firstRelease.position, saveAfter.position + 1);
+    assert.equal(secondSave.position, firstRelease.position + 1);
+    const firstTail = await a.db.get<Tail>("tail", firstRelease.position),
+      firstMarker = await a.receipt(firstTail.value.sequence, firstRelease.position);
+    assert.equal(firstMarker.marker.cut, saveAfter.position);
+    assert.equal(firstMarker.marker.release, W0.R3.hash);
+    const oppositeOrder = [
+      await verify(firstRelease.position, 2407, saveAfter.position, W0.R3.doc, W0.R2.doc),
+      await verify(secondSave.position, 1593, secondSave.position, W0.R3.doc, W0.R2.doc),
+    ];
     const external: PublishObservation = { attempts: [] };
     let crossed = 0;
     // [DX-ACT2] Why: a second writer can still race a native predecessor. Deliberately move it at all three attempts and require the contender to stop without a new receipt. Rejected: testing only co-operative in-process callers.
@@ -130,6 +160,14 @@ export async function run(
           hash: sha256(canonical(sealed.event.value)),
         },
         oracle: exact,
+        publishFirst: {
+          position: firstRelease.position,
+          cut: firstMarker.marker.cut,
+          save: secondSave.position,
+          tx: firstRelease.txId,
+          hash: sha256(canonical(firstMarker.event.value)),
+          oracle: oppositeOrder,
+        },
         nativeRequest: writes[0],
         externalConflicts: crossed,
       }) + "\n",
