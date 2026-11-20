@@ -99,8 +99,10 @@ async function physicalCases(
           (c.people === 100000 ? 70 : 30) * 1024 ** 3,
         "Disk headroom for raw seed, WAL and observations",
       );
+      // [DX-INT1] Why: the deep identity admits 40-person physical fixtures only under the smoke slot namespace.
+      // Rejected: letting a short run use a full campaign slot identity.
       const out = path.join(dir, c.key),
-        slot = `tx2-dxscale1-int1-${tag}-${i}`;
+        slot = `tx2-dxscale1-${smoke ? "smoke-" : ""}int1-${tag}-${i}`;
       const id = createArm(source, slot, c, smoke);
       fs.mkdirSync(out);
       atomicJson(path.join(out, "attempt.json"), {

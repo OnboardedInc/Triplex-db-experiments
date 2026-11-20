@@ -8,6 +8,7 @@ import { deepSeed } from "../../../bench/lib/deep-trace.ts";
 import {
   frozenDeep,
   releaseDeepStart,
+  requireIdentity,
   type DeepIdentity,
 } from "../../../bench/lib/deep-profile.ts";
 import { fieldPlan } from "./field-plan.ts";
@@ -32,6 +33,7 @@ export function createArm(source: string, slot: string, c: CampaignCase, smoke: 
     nonce: randomUUID(),
     ...(c.profile === "field" ? { field: true as const } : {}),
   };
+  requireIdentity(identity);
   return { source, slot, case: c, identity, startedAt: Date.now(), smoke };
 }
 

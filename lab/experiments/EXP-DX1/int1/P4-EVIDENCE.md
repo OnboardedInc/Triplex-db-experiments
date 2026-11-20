@@ -7,7 +7,9 @@
 | `p4/checks/early-slope.json` | Recalculation from the original four fixed-activity observations in `p3-final-thin/import-samples.jsonl` and `p3-final-deep/import-samples.jsonl` on `d0a909ba4`. The [Part 3 manifest](GATEWAY-SHA256SUMS) covers those inputs. |
 | `p4/checks/pins-p4.json` | Pin comparison against the 43 acceptance files on the observed main revision. The frozen trace inputs match Part 3. |
 | `p4/checks/everything-plan-check.json` | Eight physical arms and the four 40-person preflight arms. The case list and treatment are shared by the runner and collector. |
-| `p4/checks/native/` | Source, installed image and source-input digests for each completed native gate. Raw build and selftest logs include the first failure. |
+| `p4/checks/native/` | Source, installed image and source-input digests for each completed native gate. Raw build and selftest logs include the first failures. |
+| `p4/checks/*-focused.log` | Ten notice tests and nine loader and oracle tests completed. The first SDK run found a legacy byte-order difference. The corrected identity-range run passed all 11 checks against the original fixture. |
+| `p4/checks/native-retry-in-memory.log` | The updated authoritative retry test completed 70 in-memory Datomic assertions, including the original receipt, new command conflict and unchanged head. |
 
 Observed integration heads at the 03:23 UTC source cut were W1 `596138919`, HA1 `46a788316`, ACT1 `3d4783226`, STG1 `cad4a60e3`, PREP1 `0f7438020` and RD1 `89cf9d4d2`.
 

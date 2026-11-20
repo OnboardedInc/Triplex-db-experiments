@@ -31,7 +31,7 @@ The four samples in each series come from `d0a909ba4`, before any remaining acti
 | PostgreSQL | 235 / 17 | 239 / 17 |
 | Driver | 117 / 7 | 118 / 7 |
 
-The fresh stacks spent 307–445 ms inside the read gateway on their first request. The fresh databases in an already-serving stack spent 92–113 ms there. After startup the deep population p99 was 90.03 ms on 100 first reads including both 34-task records. A restart or newly serving peer exposes the larger startup cost. The two comparisons used different fresh stacks, so they do not price any one part of scope opening by itself. [Gateway evidence](GATEWAY-EVIDENCE.md)
+The fresh stacks spent 307–445 ms inside the read gateway on their first request. The fresh databases in an already-serving stack spent 92–113 ms there. After startup the deep population p99 was 90.03 ms on 100 first reads including both 34-task records. A restart or newly serving peer exposes the larger startup cost. The comparisons used separate stacks. The gateway retains each opened native connection and its feed watcher until scope deletion. Per-scope row caps bound fact caches. [Gateway evidence](GATEWAY-EVIDENCE.md)
 
 ## Integration and physical command
 
