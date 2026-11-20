@@ -51,17 +51,17 @@ export class DeepAccount {
       new Objects(bound, this.db.account),
       this.binding,
       undefined,
-      debt ? undefined : () => this.repair(),
+      debt ? undefined : (id) => this.repair(id),
       !!debt,
     );
   }
   async debt(p: number) {
     return (await this.db.many<Debt>(["deep-debt"], p)).get("deep-debt");
   }
-  async repair() {
+  async repair(expectedId?: string) {
     const p = await this.comp.currentPosition(),
       debt = await this.debt(p);
-    if (!debt) return;
+    if (!debt || (expectedId !== undefined && debt.id !== expectedId)) return;
     const d = debt.value,
       subject = W0.placementId(d.index),
       h = (await this.control.head(d.sourceBefore)).value;

@@ -9,9 +9,9 @@ import { percentile } from "../../../bench/lib/w0-traffic.ts";
 import { Account } from "./account.ts";
 import { hash, Objects } from "./store.ts";
 import { emptyAudit, event, query, type Scheduled } from "./bench-rung.ts";
-import { seedFacts } from "./model.ts";
 import { CurrentDecisions, writerPipeline, type Admission } from "./service.ts";
 import { Window } from "./v3.ts";
+import { OrderedSaves } from "./save-queue.ts";
 import { measured } from "./measure-lock.ts";
 
 type Evidence = { scope: string; account: string; nonce: string; source: string; identity: string };
@@ -31,6 +31,7 @@ export class Timeline {
   private basis: W0.Basis;
   readonly oracle: ReturnType<typeof emptyAudit>;
   readonly cuts = new Map<number, number>();
+  readonly acknowledgements: { at: number; position: number }[] = [];
   readonly releaseHashes = new Map<number, string>([[0, W0.R1.hash]]);
   private serial: Promise<void> = Promise.resolve();
   constructor(oracle: ReturnType<typeof emptyAudit>, b: W0.Basis, p: number) {
@@ -42,6 +43,7 @@ export class Timeline {
   async add(seq: number, item: Recorded) {
     assert(seq > this.last && !this.items.has(seq));
     this.items.set(seq, item);
+    this.acknowledgements.push({ at: performance.now(), position: item.p });
     this.serial = this.serial.then(async () => {
       for (;;) {
         const n = this.last + 1,
@@ -108,6 +110,7 @@ type Trial = {
   read: number;
   queue: number;
   accountQueue: number;
+  sourceDebtMs: number;
   nativeQueue: number;
   native: number;
   inFlight: number;
@@ -126,10 +129,13 @@ export async function loadedOffers(
 ) {
   assert(total >= 3 && total % 3 === 0 && arms.length > 0);
 
+  const readTimes: { start: number; releaseSeq: number; position: number }[] = [],
+    releaseTimes: { start: number; ack: number; seq: number }[] = [];
   const samples: Trial[] = [],
     workers = Array(64).fill(0) as number[],
     reads = new Map<number, Map<string, Point>>(),
     saves = arms.map(() => ({ offered: 0, done: 0, burst: 0, maxQueued: 0, during: 0 })),
+    writeLat = arms.map(() => [] as number[]),
     readLat: number[] = [],
     windows: any[] = [];
   const releases = [W0.R2, W0.R3, W0.R1],
@@ -149,24 +155,34 @@ export async function loadedOffers(
     await measured(async () => {
       const start = performance.now(),
         before = saves.map((x) => x.done);
+      const releaseIntervals: { start: number; end: number }[] = [],
+        saveIntervals = arms.map(() => [] as { start: number; end: number }[]);
+      let started = 0,
+        onNext: (() => void) | undefined;
       let stop = false,
         active = 0,
-        outstanding = 0,
-        publishing = false;
-      const tails = arms.map(() => Promise.resolve());
-      function submit(arm: TrafficArm, index: number, burst: boolean) {
+        outstanding = 0;
+      const ingress = new OrderedSaves();
+      function submit(arm: TrafficArm, index: number, burst: boolean, offered: number) {
         const stats = saves[index]!,
           ordinal = stats.offered++;
         if (burst) stats.burst++;
         outstanding++;
         stats.maxQueued = Math.max(stats.maxQueued, stats.offered - stats.done);
-        tails[index] = tails[index]!.then(async () => {
+        void ingress.submit(arm.name, async () => {
           if (failure) return;
           active++;
+          const saveStart = performance.now();
+          if (index === 0) {
+            started++;
+            onNext?.();
+            onNext = undefined;
+          }
           try {
             await arm.write(ordinal, (n, x) => timeline.add(n, x));
             stats.done++;
-            if (publishing) stats.during++;
+            writeLat[index]!.push(performance.now() - offered);
+            saveIntervals[index]!.push({ start: saveStart, end: performance.now() });
           } catch (e) {
             failure = e;
           } finally {
@@ -188,7 +204,7 @@ export async function loadedOffers(
             await delay(Math.min(20, left));
             continue;
           }
-          submit(arm, j, isBurst);
+          submit(arm, j, isBurst, start + due);
           if (isBurst) surge++;
           else regular++;
         }
@@ -199,6 +215,7 @@ export async function loadedOffers(
             at = performance.now();
           try {
             const d = await reader.read(id);
+            readTimes.push({ start: at, releaseSeq: d.releaseSeq, position: d.position });
             capture({
               id,
               seq: d.seq,
@@ -222,6 +239,13 @@ export async function loadedOffers(
             performance.now() - start < 2100)
         )
           await delay(5);
+        if (total <= 6) {
+          const next = started + 1;
+          await new Promise<void>((ok) => {
+            onNext = ok;
+          });
+          assert(started >= next);
+        }
         const cadence = performance.now();
         for (let i = group; i < Math.min(total, group + 75); i++) {
           if (failure) throw failure;
@@ -233,13 +257,13 @@ export async function loadedOffers(
             inflight = active,
             queued = outstanding,
             pos = pipeline.length;
-          publishing = true;
           // [DX-ACT2] Why: decode the offered document after the clock starts; the only preexisting data is the ordinary parameter index. Rejected: staging or certifying the next release before Publish.
           const accountQueue = 0;
           const offered = W0.compileRelease(JSON.parse(JSON.stringify(releases[k]!.doc))),
             r = await a.seal(name, offered),
             ack = performance.now();
-          publishing = false;
+          releaseIntervals.push({ start: at, end: ack });
+          releaseTimes.push({ start: at, ack, seq: r.seq });
           assert(!r.retry, "new offer was already published");
           const register = timeline.add(r.seq, { p: r.position, doc: offered.doc }),
             id = ids[(i * 397 + 17) % ids.length]!,
@@ -280,6 +304,7 @@ export async function loadedOffers(
             read: read - ack,
             queue: accountQueue + native.reduce((n, x) => n + x.queuedForSaveMs, 0),
             accountQueue,
+            sourceDebtMs: r.sourceDebtMs,
             nativeQueue: native.reduce((n, x) => n + x.queuedForSaveMs, 0),
             native: native.reduce((n, x) => n + x.serviceMs, 0),
             inFlight: inflight,
@@ -293,13 +318,16 @@ export async function loadedOffers(
             console.log("loaded offers", i + 1, "complete", Math.round(samples.at(-1)!.A), "ms");
         }
       } finally {
-        publishing = false;
         stop = true;
         await Promise.all(writes);
         await Promise.all(loops);
-        await Promise.all(tails);
+        await ingress.drain();
       }
       if (failure) throw failure;
+      for (const [i, xs] of saveIntervals.entries())
+        saves[i]!.during += xs.filter((x) =>
+          releaseIntervals.some((r) => x.start < r.end && r.start < x.end),
+        ).length;
       assert(saves.every((s, j) => s.done > before[j]! && s.offered === s.done));
       windows.push({
         from: group,
@@ -326,6 +354,35 @@ export async function loadedOffers(
       workers.every((n) => n > 0) &&
       saves.every((s) => s.burst >= 55 && s.during > 0 && s.offered === s.done),
   );
+  let acknowledged = 0,
+    deadline = 0,
+    lastPosition = 0,
+    releaseIndex = 0,
+    deadlineIndex = 0,
+    receiptIndex = 0,
+    lateReads = 0;
+  const lateOffers = new Set<number>(),
+    receipts = timeline.acknowledgements;
+  for (const read of readTimes.sort((a, b) => a.start - b.start)) {
+    while (releaseIndex < releaseTimes.length && releaseTimes[releaseIndex]!.ack <= read.start)
+      acknowledged = releaseTimes[releaseIndex++]!.seq;
+    while (
+      deadlineIndex < releaseTimes.length &&
+      releaseTimes[deadlineIndex]!.start + 1000 <= read.start
+    )
+      deadline = releaseTimes[deadlineIndex++]!.seq;
+    while (receiptIndex < receipts.length && receipts[receiptIndex]!.at <= read.start)
+      lastPosition = Math.max(lastPosition, receipts[receiptIndex++]!.position);
+    assert(
+      read.releaseSeq >= acknowledged && read.position >= lastPosition,
+      "current read went behind an acknowledgement visible before invocation",
+    );
+    if (read.releaseSeq < deadline) {
+      lateReads++;
+      lateOffers.add(deadline);
+    }
+  }
+  assert(readTimes.length === readLat.length && releaseTimes.length === total);
   const summary = (arr: Trial[]) => ({
     count: arr.length,
     p50: percentile(
@@ -349,9 +406,18 @@ export async function loadedOffers(
     workers,
     readP99: percentile(readLat, 0.99),
     checked: readLat.length,
+    afterAckStale: 0,
+    afterOneSecondStale: lateReads,
+    affectedDeadlines: [...lateOffers],
     distinctReads: [...reads.values()].reduce((n, m) => n + m.size, 0),
     windows,
-    saves,
+    saves: saves.map((s, i) => ({
+      ...s,
+      account: arms[i]!.name,
+      ackP50: percentile(writeLat[i]!, 0.5),
+      ackP99: percentile(writeLat[i]!, 0.99),
+      ackMax: Math.max(...writeLat[i]!),
+    })),
     all: summary(samples),
     byRelease: Object.fromEntries(
       labels.map((l) => [l, summary(samples.filter((x) => x.label === l))]),
@@ -390,11 +456,13 @@ export async function run(dir: string, attempt: any) {
       const subject = W0.placementId(n + i);
       return {
         subject,
-        facts: w.facts.map((f): W0.Fact => ({
-          ...f,
-          e: f.e.replace(w.subject, subject),
-          v: typeof f.v === "string" ? f.v.replace(w.subject, subject) : f.v,
-        })),
+        facts: w.facts.map(
+          (f): W0.Fact => ({
+            ...f,
+            e: f.e.replace(w.subject, subject),
+            v: typeof f.v === "string" ? f.v.replace(w.subject, subject) : f.v,
+          }),
+        ),
       };
     });
     await neighbor.bootstrap(
@@ -437,7 +505,7 @@ export async function run(dir: string, attempt: any) {
       timeline,
       arms,
       pipe.samples,
-      201,
+      300,
       dir,
       { scope, account: "target", source: bind, identity: attempt.identity, nonce: attempt.nonce },
     );

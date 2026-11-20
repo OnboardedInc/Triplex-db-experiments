@@ -24,6 +24,8 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
           "native",
           "oracle",
           "pages",
+          "index-patch",
+          "index-overlay",
           "reopen",
           "recovery",
           "rules",
@@ -32,18 +34,19 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
           "store",
           "schedules.test",
           "service",
+          "save-queue",
           "measure-lock",
           "fence.test",
           "fence-abandon",
           "notify-contract.test",
           "delayed.test",
-          ...(mode === "crash" ? ["power"] : []),
+          "power",
           "erasure.test",
           "recovery.test",
           ...(mode === "schedules"
             ? []
             : mode === "price"
-              ? ["v3"]
+              ? ["v3", "physical-arms"]
               : [
                   "audit",
                   "screen",
@@ -51,6 +54,9 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
                   "bench-rung",
                   "loaded",
                   "page-control",
+                  ...(["solo", "deep-loaded", "solo-check", "preflight"].includes(mode)
+                    ? ["solo", "solo-proof", "solo-reference", "reference-traffic"]
+                    : []),
                   "v3",
                   ...(mode === "rungs" ? [] : ["deep", "server", "preflight", "full.test"]),
                 ]),
@@ -59,7 +65,14 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
     ),
     ...files("lab/bench/lib").filter((p) => p.endsWith(".ts")),
     ...files("lab/experiments/EXP-DX1/act1").filter((p) => p.endsWith(".ts")),
-    ...files("packages/w0/dist").filter((p) => p.endsWith(".js")),
+    ...["w0", "core", "qualification", "datomic"].flatMap((pkg) =>
+      files("packages/" + pkg + "/dist").filter((p) => p.endsWith(".js") || p.endsWith(".json")),
+    ),
+    ...files("packages/datomic/gateway/src").filter((p) => p.endsWith(".clj")),
+    "pnpm-lock.yaml",
+    "lab/bin/lib.mjs",
+    "lab/bin/heavy.mjs",
+    "lab/bin/heavy-lock.mjs",
     "lab/bin/engine.mjs",
     "lab/oracles/domain/w0.py",
     "lab/oracles/domain/population.py",
@@ -67,7 +80,7 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
     "lab/bench/lib/composition.ts",
     "lab/bench/lib/deep-activation.ts",
     "lab/world/W0/releases/index.json",
-    ...(mode === "preflight" || mode === "server"
+    ...(["preflight", "server", "solo", "solo-check", "deep-loaded"].includes(mode)
       ? [
           "scale1/bench.ts",
           "scale1/tenants.ts",
@@ -75,6 +88,8 @@ export function sources(mode = process.env.DELTA_GATE ?? "schedules") {
           "scale1/tenant-windows.json",
           "scale1/tenant-traces.json",
           "scale1/tenant-seeds.json",
+          "scale1/tenant-proof.ts",
+          "scale1/small-plan.ts",
           "act2/rung.ts",
           "act2/preflight.ts",
           "act2/preflight-runner.ts",

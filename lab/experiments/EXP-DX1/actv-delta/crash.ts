@@ -77,6 +77,20 @@ async function inspectCold(r: Case) {
       h = await a.head(p),
       receipt = await c.transactionByCommand(a.db.entity("cmd:event:crash-" + r.seq));
     assert(receipt.ok && receipt.value?.position === p);
+    const admitted = await c.transactionByCommand(a.db.entity("cmd:fence:crash-" + r.seq));
+    assert(admitted.ok && admitted.value && admitted.value.position < receipt.value.position);
+    const asserted = (tx: { changes: { op: string; entityId: string }[] }) =>
+      tx.changes
+        .filter((row) => row.op === "assert")
+        .map((row) => row.entityId)
+        .sort();
+    assert.deepEqual(asserted(admitted.value), [a.db.entity("fence")]);
+    assert.deepEqual(
+      asserted(receipt.value),
+      ["head", "event:" + r.seq, "claim:" + hash("crash-" + r.seq)]
+        .map((k) => a.db.entity(k))
+        .sort(),
+    );
     const rec = await a.db.get<Recipe>("event:" + r.seq, p),
       e = rec.value;
     assert.equal(rec.position, p);

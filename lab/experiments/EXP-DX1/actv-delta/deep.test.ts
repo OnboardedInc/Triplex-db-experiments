@@ -69,4 +69,41 @@ test("native-source debt survives a missing ACK and fences both the old publishe
   await assert.rejects(restored.control.admit("held-after-repair", held), /stale/);
   const seal = await restored.control.seal("release", W0.R2);
   assert.equal((await restored.readAt(s, seal.position)).output.release, W0.R2.hash);
+  const rows = await comp.sweepPage([taskId(t.first, 0)], {
+      position: seal.position,
+      validAt: V_W0,
+    }),
+    prior = rows.rows.find((f) => f.attribute === ":task/progress")!;
+  const another = {
+    ...cmd,
+    commandId: "second-lost-source",
+    operations: [
+      { op: "retract", id: prior.id },
+      { op: "assert", ...replacement, value: { type: "integer", value: "2" } },
+    ],
+    preconditions: [{ _tag: "TripleLive", id: prior.id }],
+  } as BuiltCommand;
+  await assert.rejects(lost.commit(t.first, another, V_W0, V_W0 - 100), /lost raw ACK/);
+  const rawCut = await comp.currentPosition(),
+    dirty = await new DeepAccount(comp, t.key, binding).decisionsAt([s], rawCut);
+  assert.equal(dirty.out.get(s)!.release, W0.R2.hash);
+  const next = await restored.control.seal("release-while-save-is-durable", W0.R3);
+  assert(
+    next.seq === seal.seq + 2 && next.sourceDebtMs > 0 && !(await restored.debt(next.position)),
+  );
+  const repair = await comp.transactionByCommand(
+      restored.db.entity("cmd:event:repair-" + another.commandId),
+    ),
+    record = await restored.db.get<{ parent: number; sourceCut: number }>(
+      "event:" + next.seq,
+      next.position,
+    );
+  assert(
+    repair.ok &&
+      repair.value?.position === record.value.sourceCut &&
+      record.value.parent === next.seq - 1,
+  );
+  assert.equal((await restored.readAt(s, next.position)).output.release, W0.R3.hash);
+  const replay = await restored.commit(t.first, another, V_W0, V_W0 - 100);
+  assert(replay.duplicate && replay.receipt.position === rawCut);
 });

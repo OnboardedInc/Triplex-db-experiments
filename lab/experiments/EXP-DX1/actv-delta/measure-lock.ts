@@ -9,6 +9,17 @@ export async function measured<T>(fn: () => Promise<T>): Promise<T> {
     assert(process.platform === "linux", "local timing requires the shared measurement lock");
     return fn();
   }
+  const inherited = process.env.DELTA_MEASURE_OWNER;
+  if (inherited) {
+    const [pid, nonce] = inherited.split("/");
+    assert(
+      Number(pid) === process.ppid &&
+        /^[a-f0-9-]{36}$/.test(nonce!) &&
+        readFileSync(path.join(dir, "delta-" + pid), "utf8") === nonce,
+      "invalid inherited measurement owner",
+    );
+    return fn();
+  }
   for (;;) {
     try {
       mkdirSync(dir);
@@ -21,8 +32,10 @@ export async function measured<T>(fn: () => Promise<T>): Promise<T> {
   const nonce = randomUUID(),
     owner = path.join(dir, "delta-" + process.pid);
   writeFileSync(owner, nonce, { flag: "wx" });
+  process.env.DELTA_MEASURE_OWNER = process.pid + "/" + nonce;
   const release = () => {
     assert.equal(readFileSync(owner, "utf8"), nonce);
+    delete process.env.DELTA_MEASURE_OWNER;
     unlinkSync(owner);
     rmdirSync(dir);
   };

@@ -1,7 +1,20 @@
+import { createHash } from "node:crypto";
 import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
 import { docker, inspect } from "../../../bin/lib.mjs";
 
+export function mountedGateway(id) {
+  return docker([
+    "exec",
+    id,
+    "sh",
+    "-c",
+    "cd /opt/gateway/src && find . -type f -exec sha256sum {} +",
+  ])
+    .split("\n")
+    .map((v) => [v.slice(68), v.slice(0, 64)])
+    .sort();
+}
 // [DX-ACT2] Why: kill only the three run-owned processes and restart the same storage volume. Rejected: stopping a shared resident or treating a warm peer cache as a crash proof.
 export async function recoverPower({ created, nonce, endpoint, gateway, sql }) {
   const old = {};
@@ -55,10 +68,17 @@ export async function recoverPower({ created, nonce, endpoint, gateway, sql }) {
         return r?.ok && (await r.json()).gatewaySourceHash === gateway;
       });
   }
+  assert.equal(
+    createHash("sha256")
+      .update(JSON.stringify(mountedGateway(created.get("gw"))))
+      .digest("hex"),
+    gateway,
+  );
   const sync = sql("select current_setting('fsync'),current_setting('synchronous_commit')");
   assert.equal(sync, "on|on");
   return {
     nonce,
+    gateway,
     original: old,
     restarted: Object.fromEntries(
       [...created].map(([role, id]) => [role, inspect(id).State.StartedAt]),

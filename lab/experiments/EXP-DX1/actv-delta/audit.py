@@ -9,6 +9,9 @@ import population
 worlds = {}
 history = []
 cache = {}
+dense_cache = {}
+all_changes = []
+by_subject = {}
 empty = {'items': [], 'pending': [], 'subjects': []}
 
 def run(op, x):
@@ -33,14 +36,23 @@ def run(op, x):
         return digest([w['subject'] for w in x])
     if op == 'event':
         assert x['seq']==len(history)
+        seq=x['seq']
+        if not x.get('subject') or not history or x['basis']['validTime']!=history[-1]['basis']['validTime'] or x['doc']!=history[-1]['doc']:
+            all_changes.append(seq)
+        if x.get('subject'):
+            by_subject.setdefault(x['subject'],[]).append(seq)
         history.append(x)
         return {'seq': x['seq'], 'release':w0.Release(x['doc']).hash}
+    if op == 'raw-answers':
+        b=x['basis'];r=w0.Release(x['doc'])
+        return [[w['subject'],digest(w0.evaluate_indexed(w0.validate_world(w,b['tx']),r,b['tx'],b['validTime']))] for w in x['worlds']]
     if op == 'answers':
         n=x['seq']; ev=history[n]; basis=ev['basis']; rel=w0.Release(ev['doc']); result=[]
         for s in x['subjects']:
             facts=list(worlds[s])
-            for d in history[1:n+1]:
-                if d.get('subject')!=s:continue
+            for j in by_subject.get(s,[]):
+                if j>n:break
+                d=history[j]
                 if 'worldAfter' in d:
                     assert d['worldAfter']['subject']==s
                     facts=list(d['worldAfter']['facts'])
@@ -51,14 +63,17 @@ def run(op, x):
             ix=w0.validate_world({'subject':s,'facts':facts},basis['tx'])
             result.append([s,digest(w0.evaluate_indexed(ix,rel,basis['tx'],basis['validTime']))])
         return result
-    if op == 'read':
+    if op in ('read','read-dense'):
+        saved=dense_cache if op=='read-dense' else cache
         result = []
         for s in x['subjects']:
             n=x['seq']
-            pos, facts, state, out, rows, ds = cache.get(s,(-1,list(worlds[s]),empty,None,[],[]))
+            pos, facts, state, out, rows, ds = saved.get(s,(-1,list(worlds[s]),empty,None,[],[]))
             if pos>n:
                 pos,facts,state,out=-1,list(worlds[s]),empty,None
-            for j in range(pos+1,n+1):
+            # [DX-ACT2] Why: only a local save or a release/clock change affects this person's publication. Always evaluate the requested final basis. Rejected: folding every other person's identical domain output at a 100k source cut.
+            steps=range(pos+1,n+1) if op=='read-dense' else sorted(j for j in set(all_changes+by_subject.get(s,[])+[n]) if pos<j<=n)
+            for j in steps:
                 ev=history[j];b=ev['basis'];r=w0.Release(ev['doc']);old=projection(out) if out else {}
                 if ev.get('subject')==s:
                     if 'worldAfter' in ev:
@@ -76,7 +91,7 @@ def run(op, x):
                 if ev.get('subject') in (None,s):
                     published=w0.op_publish({'state':state,'evaluations':[{k:out[k] for k in ('basis','release','subject','workItems')}]})
                     state,ds=published['state'],published['deliveries']
-            cache[s]=(n,facts,state,out,rows,ds)
+            saved[s]=(n,facts,state,out,rows,ds)
             result.append({'subject':s,'output':digest(out),'state':digest(state),'rows':rows,'deliveries':ds})
         return result
     raise ValueError(op)

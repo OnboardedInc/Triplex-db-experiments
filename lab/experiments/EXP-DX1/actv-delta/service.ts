@@ -29,13 +29,16 @@ export function writerPipeline(source: CompositionHandle) {
     transact(ops, meta) {
       const command = String(meta.commandId),
         queued = performance.now(),
+        route = /^actv-delta:([a-zA-Z0-9_-]+):cmd:(fence|reject|event):/.exec(command),
+        guard = (
+          meta.preconditions as { entityId?: string; tripleIds?: string[] }[] | undefined
+        )?.find((x) => x.entityId === "actv-delta:" + route?.[1] + ":fence"),
         release =
-          command.includes(":cmd:fence:") ||
-          command.includes(":cmd:reject:") ||
-          (command.includes(":cmd:event:") &&
-            (meta.preconditions as { entityId?: string; tripleIds?: string[] }[] | undefined)?.some(
-              (x) => x.entityId?.endsWith(":fence") && x.tripleIds?.length === 1,
-            )) === true;
+          route?.[2] === "fence" ||
+          route?.[2] === "reject" ||
+          (route?.[2] === "event" &&
+            guard?.tripleIds?.length === 1 &&
+            ops.some((op) => op.op === "retract" && op.id === guard.tripleIds![0]));
       const prior = active && !active.release ? active : undefined;
       return new Promise((ok, fail) => {
         const j: Job = {

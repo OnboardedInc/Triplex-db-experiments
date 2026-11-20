@@ -4,7 +4,7 @@ Sixty-four readers ran while two accounts submitted everyday saves and bursts of
 Two of the 201 releases took over a second. The slowest took 1.295 seconds.
 After the database restarted, a fresh reader recovered all 11,960 changed rows and 997 owed notices from the broad release.
 The narrow release recovered all 38 flag changes and owed no notices. Neither release had written a concrete output chunk.
-The cost of maintaining the smaller indexes is being measured on everyday saves.
+The indexes added 6.68% to database log bytes per saved fact, below the 15% target. Both arms wrote the same number of records on every save.
 The 100,000-person result still requires a server run.
 
 **Loaded publication and evidence audit**
@@ -24,5 +24,13 @@ crash.writer and recoverPower killed the issuing process immediately after the n
 The durable representation is the immutable release recipe, its authenticated epoch history, source/index cut and actual prior outbox. A consumer can recover every changed value and lifecycle sequence without a materialized result row. Subsequent saves reference that history by hash. The test covers process and storage-service crashes on the same host.
 
 The pinned NOTIFY1 host read the seed, two releases and an intervening save through the existing feed. Its delivered rows matched independent Python output, including order and payload.
+
+With separate page and root records, 111 of the 500 saves used four extra native operations. The first compact-index run alternated the order of ten paired 50-save blocks. Each arm committed 6,549 facts in 500 saves and recovered ten duplicates. Without/with indexes the WAL cost was 3,599/4,958 bytes per fact, database growth 3,480/4,782 and acknowledgment 7.57/7.75 ms per fact. price.run compared the same trace and receipts, the 62 touched people against Python and physical PostgreSQL size/LSN boundaries. Objects.decode verifies the original cut and logical page digest after applying a sparse patch. The tests also check the census complement, closed cases, old page versions and the full fallback for a newly tracked document type.
+
+The final index puts changed leaves and their directory entries inside the existing save event. The head carries one authenticated reference. The cache checks that its native position precedes the requested cut. The negative test first reproduced an incorrectly accepted future reference. Two alternating-block observations of cluster-wide WAL changed sign when the starting order changed. They do not isolate asynchronous index maintenance.
+
+Four fresh PostgreSQL stacks ran unindexed/indexed then indexed/unindexed. Each arm used its own empty volume, 500 original saves, 6,549 facts and ten duplicate sends. Datomic request-index/sync-index completed through the exact seed and final positions, with aligned PostgreSQL checkpoints. The means without/with the index were 4,507/4,808 WAL bytes, 4,314/4,604 database bytes, 1,039/1,075 request bytes and 4.07/4.29 ms per fact. The added WAL was 301 bytes per fact. None of the matched saves added a native operation.
+
+physical-arms validates per-command fact and operation counts, independent final outputs, cluster IDs, unique maintenance jobs, cut ordering, physical counters, same executable inputs and removal of every preceding arm’s volume. The fail-first historical-cut test and corrected run are retained. [Part 3 evidence checksums](PART3-SHA256SUMS)
 
 No acceptance pins or frozen workloads changed. Part 2’s original evidence is retained in [its manifest](SHA256SUMS).
