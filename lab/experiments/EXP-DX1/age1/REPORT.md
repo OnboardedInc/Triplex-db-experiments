@@ -1,6 +1,6 @@
 All accounts stay in one Datomic database.
 The aging tool writes a full journal and keeps one native transaction per save.
-The Mac comparison is queued behind another lab run.
+Two Mac admissions ended before any database started. A new attempt is queued.
 Larger ages have no measurements from this run yet.
 The server forecast depends on the rate of those complete writes.
 The successor rehearsal checks a single move for every account.
@@ -31,3 +31,7 @@ The successor prototype carries all 14 test accounts at one logical cut. It chec
 
 - The Mac read and feed measurements compare sampled content with the tape at their requested cut. Index adoption binds a native t; overlap samples require interval intersection. Backup checks the vendor segment readback at the selected t, then restored logical head, current and pinned values, receipt and feed in separate SQL storage.
 - The successor observation checks the exact pre/post-cut oracle and feed, then records physical erasure observations and routed marker results at the named cuts. It has no production erasure verdict.
+
+## Evidence to date
+
+The durable DX-AGE1 evidence root has cleanup receipts for fidelity-a and fidelity-b. Both record zero owned roles and volumes. The first attempt yielded its heavy token. The second lost a measurement-lease race. JavaScript syntax, target inversion, budget arithmetic and the fit implementation were checked locally. The Datomic gates and measured-rate server repricing remain open.
