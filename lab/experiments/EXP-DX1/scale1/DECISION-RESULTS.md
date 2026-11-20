@@ -116,6 +116,18 @@ Cgroup peaks in GiB through each sampled cell, including that arm's restore and 
 | r0-23p5 | 2.33 | 6.00 | 1.45 | 2.34 |
 | r0-39p4 | 2.55 | 6.00 | 1.47 | 2.34 |
 
+## arm-d7-wfix-pilot-seed
+
+10000 deep people per account, pooled layout, individual writer. Source `e1a3f01a7c5adcc7c017ee4363a40ed667338994`. Audited write path.
+
+16,245,050 current facts across 1 database(s). Ingest took 0.68 hours at 6598.71 facts/s. Exact claim and feed verification took 0.61 hours. PostgreSQL added 722.81 bytes per fact (one physical seed).
+
+Observed ingest cgroup peaks in GiB, from 41 progress snapshots.
+
+| Transactor | PostgreSQL | Write gateway | Read gateway |
+| ---: | ---: | ---: | ---: |
+| 4.80 | 6.00 | 0.27 | 2.83 |
+
 ## Matched single-account reader dose
 
 Latency differences compare the two restores of the sealed image from arm-d7-single-seed. Each condition ran once.
