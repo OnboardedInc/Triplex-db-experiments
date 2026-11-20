@@ -2616,3 +2616,20 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   head, fix in order with permanent regression tests, run the owed gates. DX-W1 continues part 5 in parallel.
 - **Consequence for the servers:** throughput and latency readings from the grouped write path taken before these
   fixes are diagnostic; no acceptance claim rests on them.
+
+## 2026-11-20 02:41 UTC (21:41 local, 2026-11-19): missed-notice defect fixed; sending rate; Mac disk incident
+
+- **DX-STG1 (`fa53e50cd`, Mac VM; `notify1/REPORT.md`).** Review finding 8 fixed (`707f53fe1`, `858fda585`): a save records
+  the whole enrolled roster whenever a smaller affected set cannot be proved; the verifier asks the oracle which
+  people changed and which did not, and catches a missing person in an old stored event; regression cases: shared
+  local floor, backdated two-hop floor on both sides of Publish, unaffected neighbour. Finding 9 accepted: the 21 to
+  68 ms was recipe admission in a quiet window; the one-second check now reads actual output, guard and debt data at
+  one captured cut with the receiver stopped (`9bdf31958`). 14 native and 14 in-memory checks pass. Sending: the old
+  sender spent 78.5 of 97.8 s on scheduled breaks; recipient-side progress and grouping reached 338 notices per second
+  in short trials past the read-latency limit; 46 per second inside both limits in a longer deep trial (before the
+  coverage fix); server forecast 35 to 55 per second. Part 4 assigned: the cost of the whole-roster fallback and an
+  exact narrower path through the ordered ranges; sending off the readers' path; one path with the joined Publish.
+- **Mac disk fell to 13 GiB at 21:38 local** (the lab VM grew from 55 to 69 GB as builders seeded, on top of new
+  worktrees). Removed: an 8.4 GB leftover trace-render index and a 3.3 GB derived chrome trace under
+  `evidence/DX-BM1/drv1a/offline-render/`, five finished analysts' worktrees, two finished functional-check volumes
+  (`tx2-datomic-s2-data`, `tx2-datomic-s3-data`) and dangling images. VM 69 to 37 GB used; Mac free 57 GiB.
