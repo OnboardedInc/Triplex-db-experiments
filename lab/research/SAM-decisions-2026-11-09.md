@@ -671,3 +671,15 @@ Launched at 18:53 local, Codex gpt-6.2-astra at max: PRED-QUEUE (the one commit 
 data), PRED-LOAD (loading and importing), PRED-HA (a second copy and failure at size; the ping between the two
 servers is 0.089 ms), PRED-READERS (the judged pair's read-side misses); DX-STG1 was put on explaining the
 notification rate before any server run of it. Output: private folder `research/2026-11-19-predictions/`.
+
+## 2026-11-19 about 20:05 local: Codex limit reset; agents move to gpt-6.2-sol at max
+
+Sam, verbatim:
+- "I reset the limit but can you switch from using Astra on Max to using 6.2 Sol on Max? If you have a harder problem
+  you could use 6.2 Astra on high if you won't need a very creative solution but really only do that for the most
+  creative ones."
+
+Orchestrator's reading: every Codex agent runs on `gpt-6.2-sol` at max effort from now. `gpt-6.2-astra` at high effort
+is kept for the few problems that need the most creative thinking (launcher role `creative`), and I name the reason
+each time I use it. The sentence as dictated says "if you won't need a very creative solution"; I read the second half
+("only do that for the most creative ones") as the rule. The launcher change is `a619d4eb4` on `main`.

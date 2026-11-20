@@ -2366,3 +2366,13 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   and sender. The reader arm failed twice in the bench (replica coverage, then the 64 GiB observation allowance after
   381,428,503 reads). `deep-live` (real field-save rates) is frozen and pushed (`4dc32a41`).
 - Waiting for Sam: buy Codex credits, let Claude agents take over, or pause until 2026-11-23.
+
+## 2026-11-20 01:12 UTC (20:12 local, 2026-11-19): all eight agents resumed on gpt-6.2-sol at max
+
+- Sam reset the Codex limit and moved the agents from `gpt-6.2-astra` at max to `gpt-6.2-sol` at max; Astra at high
+  effort only for the most creative problems (launcher role `creative`).
+- Resumed at 01:10 UTC with a restart note in front of each existing brief (private folder, `agents/prompts/
+  <ID>-restart-2010.md`): DX-BM1 (server 1 queue), DX-SCALE1 (server 2 campaign), DX-ACT2, DX-ACT1, DX-W1, DX-HA1,
+  DX-STG1, DX-THIN1. The ledger shows `gpt-6.2-sol` / `max` for all eight.
+- Both servers kept running their detached jobs through the 18-minute gap (four containers each at 20:09 local); neither
+  sat idle.
