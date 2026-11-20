@@ -20,7 +20,9 @@ Open the printed loopback address. Pick an account and a person to compare the c
 
 ## Evidence and limits
 
-The deterministic Git fixture, action discovery and loopback transport checks ran against this worktree. The lab pool-admitted native gate and the resumable bundle test were queued while a separate measurement lease was active. Their completed results belong here when available. The full population and first-start targets remain unmeasured. The snapshot probe checks PostgreSQL restoration at small scale, with full cold restore performance open.
+The deterministic Git fixture, action discovery and loopback transport checks passed. Stdio discovery returned all 13 tools in two JSON-RPC frames. The pinned lockfile validated offline in lockfile-only mode. Raw output and its source binding are in `evidence/DX-PLAY1/lightweight.txt` and `evidence/DX-PLAY1/lightweight-source.json`.
+
+The resumable bundle, workspace build and native database gates are queued behind the shared lab measurement. The admission readback showed DX-HA1 holding the measurement lease while DX-THIN1 still held a heavy token. The native startup, restore, browser and full-population measurements remain unverified.
 
 The release demo uses the shared ConfigStore and the HTTP package's configuration descriptors. An intentionally small status rule provides a visible answer and durable background materialization. The standalone Foldkit explorer continues to serve the generic Triples view. The Datomic dashboard has its own workspace panel for commit positions, traces, native query and Publish.
 
