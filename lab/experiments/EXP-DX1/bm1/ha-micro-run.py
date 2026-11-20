@@ -11,15 +11,18 @@ import sys
 import time
 import uuid
 
-from import_reading import micro_output
+from import_reading import micro_output, pipeline_output
 from overnight import import_inventory
 from producer_readings import digest, get
 
-ROOT = Path("/var/tmp/triplex-bm1/day-n20-ha1-micro")
+PIPELINED = sys.argv[2:] == ["pipeline"]
+ITEM = "ha1-pipeline" if PIPELINED else "ha1-micro"
+MODE = "load-pipeline" if PIPELINED else "load-micro"
+ROOT = Path("/var/tmp/triplex-bm1")/(("night-n20-" if PIPELINED else "day-n20-")+ITEM)
 REPO = ROOT/"build/repository"
 BIN = ROOT/"build/tools/bin"
-TAG = "bm1n20-microframes"
-SOURCE = "14174308fa1b1f6ade7f3e1fe3ce58ca4bc173ba"
+TAG = "bm1n20-pipeline" if PIPELINED else "bm1n20-microframes"
+SOURCE = "324a329d741f524f61f708cf5a2158db196e518a" if PIPELINED else "14174308fa1b1f6ade7f3e1fe3ce58ca4bc173ba"
 ENV = {**os.environ, "PATH": str(BIN)+":"+os.environ["PATH"],
        "DX_BARE_METAL": "1", "DOCKER_HOST": "unix:///var/run/docker.sock"}
 
@@ -40,7 +43,7 @@ def save(file, value):
 
 def status(state, following):
     temporary = ROOT/("status-"+uuid.uuid4().hex)
-    temporary.write_text(f"item=ha1-micro state={state} since={datetime.now(timezone.utc):%Y-%m-%dT%H:%M:%SZ} next={following}\n")
+    temporary.write_text(f"item={ITEM} state={state} since={datetime.now(timezone.utc):%Y-%m-%dT%H:%M:%SZ} next={following}\n")
     temporary.replace(ROOT.parent/"STATUS")
 
 
@@ -56,7 +59,7 @@ def cleanup():
         return
     # [DX-BM1] Why: the producer normally closes the stack. A killed unit still has exact attempt labels.
     # Rejected: stopping other runs by a shared tag or dropping the partial offer tapes.
-    found = import_inventory(request, mode_override="load-micro")
+    found = import_inventory(request, mode_override=MODE)
     for name in found["containers"]:
         with (ROOT/(name+"-aborted.log")).open("xb") as stream:
             try:
@@ -69,7 +72,7 @@ def cleanup():
     for name in found["volumes"]:
         if output("docker","volume","ls","-q","--filter","name=^"+name+"$") == name:
             call("docker","volume","rm",name)
-    remaining = import_inventory(request, mode_override="load-micro")
+    remaining = import_inventory(request, mode_override=MODE)
     assert remaining == {"containers": [], "networks": [], "volumes": []}
     save(receipt, {"requestSha256":digest(request_file), "inventory":remaining})
 
@@ -79,23 +82,28 @@ def run():
     assert output("git","diff","--name-only","HEAD") == ""
     local_gate = Path(__file__).resolve().parent/"SHA256SUMS"
     proof = "cd4c9abbe7137bc6f65fc101799dfb73fcdc6703bc6444ee168bdcdb08a9d0ff"
-    assert f"{proof}  day-n20/ha1-micro-agreement/collector.json" in local_gate.read_text().splitlines()
+    sample = "day-n20/ha1-micro-agreement/collector.json"
+    if PIPELINED:
+        sample = "day-n20/ha1-pipeline-agreement/collector.json"
+        proof, = [line.split()[0] for line in local_gate.read_text().splitlines() if line.endswith("  "+sample)]
+    assert f"{proof}  {sample}" in local_gate.read_text().splitlines()
     request = dict(root=str(ROOT), item=13, tag=TAG, source=SOURCE,
                    start=time.time(), smallEvidenceSha256=proof)
     save(ROOT/"request.json", request)
     status("measuring", "collector")
     try:
-        call(BIN/"node", "lab/bin/heavy.mjs", "--label", "DX-BM1-ha1-micro", "--",
+        call(BIN/"node", "lab/bin/heavy.mjs", "--label", "DX-BM1-"+ITEM, "--",
              BIN/"node", "--import", "tsx", "lab/experiments/EXP-DX1/ha1/bench.ts",
-             "load-micro", TAG, SOURCE, "-", "-", "-", ROOT/"run", str(uuid.uuid4()), "50",
-             "deep", "one-host", timeout=6600, stdin=subprocess.DEVNULL)
+             MODE, TAG, SOURCE, "-", "-", "-", ROOT/"run", str(uuid.uuid4()), "50",
+             "deep", "one-host", timeout=5000 if PIPELINED else 6600, stdin=subprocess.DEVNULL)
     finally:
         cleanup()
     campaign = get(ROOT/"run/campaign.json")
     assert [campaign[k] for k in ("tag", "sha", "mode", "sizes", "shape", "layout")] == [
-        TAG, SOURCE, "load-micro", [50], "deep", "one-host"]
-    directory, = (ROOT/"run").glob("load-micro-*")
-    result = micro_output(directory,SOURCE,TAG,request["start"])
+        TAG, SOURCE, MODE, [50], "deep", "one-host"]
+    directory, = (ROOT/"run").glob(MODE+"-*")
+    check = pipeline_output if PIPELINED else micro_output
+    result = check(directory,SOURCE,TAG,request["start"])
     # The published launcher serves reads and writes from the same gateway in this mode.
     events = [json.loads(line) for line in (directory/"events.jsonl").read_text().splitlines()]
     roles = {}
@@ -121,7 +129,7 @@ def run():
 
 
 if __name__ == "__main__":
-    assert sys.argv[1:] in (["run"],["cleanup"])
+    assert sys.argv[1:] in (["run"],["cleanup"],["run","pipeline"],["cleanup","pipeline"])
     if sys.argv[1] == "run":
         run()
     else:

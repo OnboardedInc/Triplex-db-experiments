@@ -17,6 +17,11 @@ MAC = Path.home()/"Claude/Projects/triplex-db-2/evidence"
 SLOTS = {
     "jvm25": ("night-n20-jvm25", ("small", "campaign", "restore-proofs", "adapter.json", "small-agreement.json", "collector.json")),
     "tail-backlog": ("night-n20-tail-backlog", ("small", "campaign", "restore-proofs", "adapter.json", "small-agreement.json", "collector.json")),
+    "erasure": ("night-n20-erasure", ("adapter.json", "measured", "guarded", "stage", "control-stage", "checkpoint.json", "collector.json",
+                                        "stack.json", "erase-clean.json", "measurement-failures.json", "fast-transactor-gc.log", "fast-gateway-gc.log",
+                                        "guarded-transactor-gc.log", "guarded-gateway-gc.log", "transactor.log", "postgres.log", "gateway.log")),
+    "erasure-small": ("night-n20-erasure-small", ("measured", "guarded", "stage", "control-stage", "checkpoint.json", "collector.json", "erase-clean.json")),
+    "ha1-pipeline": ("night-n20-ha1-pipeline", ("run", "collector.json", "cleanup.json", "worker.log")),
     "jvm1": ("day-n20-jvm1", ("seed/seed.json", "seed/results", "small/results", "campaign/results",
                              "seed.log", "campaign.log", "retry.log", "retry-resumed.log", "failed-unit.txt",
                              "cold-postgres.json", "retry",
@@ -47,6 +52,8 @@ def archive(name, revision):
     units = ["bm1n20-"+name+".service"]
     if name == "jvm1":
         units = ["bm1n20-jvm1-seed.service", "bm1n20-jvm1-campaign.service"]
+    if name == "erasure-small":
+        units = ["bm1n20-erasure.service"]
     states = {}
     for unit in units:
         state = subprocess.check_output(["systemctl", "show", unit, "-p",

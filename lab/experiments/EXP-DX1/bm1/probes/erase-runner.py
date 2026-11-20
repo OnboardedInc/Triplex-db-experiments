@@ -7,6 +7,7 @@ from pathlib import Path
 import re
 import secrets
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -18,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from producer_readings import digest, get
 
 SOURCE = "856c4c9ae41750af4565e93216d1ba92e2c6c5c5"
+FAST_SOURCE = "4054f548469e57b6aa82b06e93711c39b6867f7c"
 EXP = Path("lab/experiments/EXP-DX1")
 PGPORT = 56141
 TXPORT = 4334
@@ -29,12 +31,18 @@ def managed(request, cleanup=False):
     root = Path(request["root"])
     source = request["source"]
     tag = request["tag"]
-    assert source == SOURCE and request["item"] == 34 and tag in ("erasen20","erasen20b")
-    assert root == Path("/var/tmp/triplex-bm1/night-n19") / tag
+    fast = source == FAST_SOURCE and tag in ("erasen20fast","erasen20small")
+    small = fast and tag == "erasen20small"
+    people = 128 if small else 100_000
+    assert request["item"] == 34 and (fast or (source == SOURCE and tag in ("erasen20","erasen20b")))
+    binroot = Path("/var/tmp/triplex-bm1/night-n20-erasure")
+    expected = (binroot.with_name(binroot.name+"-small") if small else binroot) if fast else Path("/var/tmp/triplex-bm1/night-n19")/tag
+    assert root == expected
     resume = tag == "erasen20b"
     old = root.with_name("erasen20")
-    repo = root / "build/repository"
-    node = root / "build/tools/bin/node"
+    build = (binroot if fast else root)/"build"
+    repo = build/"repository"
+    node = build/"tools/bin/node"
     experiment = repo / EXP / "erase1"
     owner_file = root / "erase-owner.json"
     request_file = Path(request["directory"]) / "request.json"
@@ -84,7 +92,7 @@ def managed(request, cleanup=False):
         return
 
     assert shutil.disk_usage(root).free >= 80*2**30 and not output("docker","ps","-q")
-    assert not output("git","status","--porcelain")
+    assert not output("git","status","--porcelain","--untracked-files=no")
     for port in (PGPORT, TXPORT, WEBPORT):
         with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as probe:
             probe.bind((LOOPBACK,port))
@@ -108,7 +116,7 @@ def managed(request, cleanup=False):
     owner = {"source": source, "nonce": nonce, "prefix": prefix, "requestSha256": digest(request_file)}
     save(owner_file,owner)
     label = "tx2.erase1.holder="+nonce
-    images = get(root/"build/results/images.json")
+    images = get(build/"results/images.json")
     image = next(i for i in images if "tx2-datomic:1.0.7745-da00" in i["RepoTags"])
     pg_image = next(i for i in images if "postgres:17-alpine" in i["RepoTags"])
     assert image["Id"] == output("docker","image","inspect","--format","{{.Id}}","tx2-datomic:1.0.7745-da00")
@@ -126,7 +134,7 @@ def managed(request, cleanup=False):
                         "--name",prefix+"-java",image["Id"])
         run("docker","cp",helper+":"+java_home+"/.",jre,timeout=180)
         run("docker","rm",helper,timeout=30)
-    datomic = root/"build/image/datomic"
+    datomic = build/"image/datomic"
     codec = repo/"packages/datomic/src/codec-spec.json"
     files = repo/"packages/datomic/gateway"
     peer_pin, = [row.split()[0] for row in (repo/"lab/config/datomic/SHA256SUMS").read_text().splitlines()
@@ -169,6 +177,12 @@ def managed(request, cleanup=False):
                PATH=f"{node.parent}:{jre / 'bin'}:"+env["PATH"])
     sql = f"jdbc:postgresql://{LOOPBACK}:{PGPORT}/{db}"
     env["DATOMIC_URI_TEMPLATE"] = "datomic:sql://{db}?" + sql + "?user=postgres&password=" + env["PGPASSWORD"]
+    erasures = root/"erasures"
+    if fast:
+        erasures.mkdir(mode=0o700)
+        env.update(TRIPLEX_ERASURE_DIRECTORY=str(erasures),TRIPLEX_ERASURE_SHRED_GRACE_MS="0")
+        if small:
+            env["BM1_ERASE_SMALL"] = "1"
     pg = output("docker","run","-d","--pull","never","--name",prefix+"-pg","--label",label,"--network","host",
                 "--cpuset-cpus","1","--memory","6g","--memory-swap","6g","--mount",f"type=bind,src={pgdata},dst={pgdata}",
                 "-e","POSTGRES_DB="+db,"-e","POSTGRES_PASSWORD="+env["PGPASSWORD"],"-e","PGDATA="+str(pgdata),
@@ -202,26 +216,104 @@ def managed(request, cleanup=False):
         stream.write("\n".join(["protocol=sql","host="+LOOPBACK,f"port={TXPORT}", "sql-url="+sql,
               "sql-driver-class=org.postgresql.Driver","sql-user=postgres", "sql-password="+env["PGPASSWORD"],
               "memory-index-threshold=48m","memory-index-max=160m","object-cache-max=96m"])+"\n")
-    with (root/"transactor.log").open("x") as log:
-        tx = subprocess.Popen(["taskset","-c","0",datomic/"bin/transactor","-Xms256m","-Xmx5g","-XX:+UseG1GC",
-            "-Dlogback.configurationFile="+str(experiment/"logback.xml"),props],cwd=datomic,env=env,
-            stdout=log,stderr=subprocess.STDOUT)
-    wait_until(lambda: tx.poll() is None and tcp(TXPORT), "Datomic transactor")
-    gateway_env = {**env,"DATOMIC_JAVA_OPTS":"-Xms256m -Xmx4g -XX:+UseG1GC -Ddatomic.objectCacheMax=96m -Dtriplex.codec.spec="+str(codec)}
-    with (root/"gateway.log").open("x") as log:
-        gateway = subprocess.Popen(["taskset","-c","2",datomic/"bin/run","-m","erase1","gateway"],cwd=datomic,
-            env=gateway_env,stdout=log,stderr=subprocess.STDOUT)
+    def java_start(phase):
+        log_config = lambda role: f"-Xlog:gc*=info:file={root}/{phase}-{role}-gc.log:time,uptimemillis,level,tags:filecount=0"
+        opts = {**env, "DATOMIC_JAVA_OPTS":"-Xms256m -Xmx4g -XX:+UseG1GC -Ddatomic.objectCacheMax=96m -Dtriplex.codec.spec="+str(codec)}
+        if fast:
+            opts["DATOMIC_JAVA_OPTS"] += " "+log_config("gateway")
+        with (root/"transactor.log").open("a" if fast else "x") as log:
+            tx = subprocess.Popen(["taskset","-c","0",datomic/"bin/transactor","-Xms256m","-Xmx5g","-XX:+UseG1GC",
+                *([log_config("transactor")] if fast else []),
+                "-Dlogback.configurationFile="+str(experiment/"logback.xml"),props],cwd=datomic,env=env,
+                stdout=log,stderr=subprocess.STDOUT,start_new_session=fast)
+        wait_until(lambda: tx.poll() is None and tcp(TXPORT), "Datomic transactor")
+        with (root/"gateway.log").open("a" if fast else "x") as log:
+            gateway = subprocess.Popen(["taskset","-c","2",datomic/"bin/run","-m","erase1","gateway"],cwd=datomic,
+                env=opts,stdout=log,stderr=subprocess.STDOUT,start_new_session=fast)
 
-    def health():
-        if gateway.poll() is not None:
-            raise RuntimeError("The ERASE1 gateway exited")
-        with urlopen(env["DATOMIC_URL"]+"/health",timeout=2) as response:
-            return json.load(response) == {"datomicVersion":"1.0.7745","gatewaySourceHash":gateway_hash}
+        def health():
+            if gateway.poll() is not None:
+                raise RuntimeError("The ERASE1 gateway exited")
+            with urlopen(env["DATOMIC_URL"]+"/health",timeout=2) as response:
+                return json.load(response) == {"datomicVersion":"1.0.7745","gatewaySourceHash":gateway_hash}
 
-    wait_until(health,"ERASE1 gateway")
+        wait_until(health,"ERASE1 gateway")
+        return (gateway,tx)
+
+    processes = java_start("stage")
     save(root/"stack.json",{**owner,"pgContainer":pg,"images":{"postgres":pg_image["Id"],"tool":image["Id"]},
                           "gateway":gateway_hash,"peer":peer_pin})
     heavy = (node,"lab/bin/heavy.mjs","--label","DX-BM1","--","taskset","-c","3",node)
+    if fast:
+        def native(*values, seconds):
+            run(*heavy,experiment/".bm1-n20-server.mjs",*values,timeout=seconds)
+
+        def cold():
+            for child in processes:
+                if child.poll() is None:
+                    os.killpg(child.pid,signal.SIGTERM)
+                    child.wait(timeout=55)
+            for port in (TXPORT,WEBPORT):
+                with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as retired:
+                    retired.settimeout(2)
+                    assert retired.connect_ex((LOOPBACK,port)) != 0
+            run("docker","stop","--time","45",pg,timeout=65)
+            assert not (pgdata/"postmaster.pid").exists()
+            assert output("docker","inspect","--format","{{.State.ExitCode}}",pg) == "0"
+
+        def file_hashes(directory):
+            all_files = sorted(directory.rglob("*"))
+            assert not any(entry.is_symlink() for entry in all_files)
+            return {entry.relative_to(directory).as_posix():digest(entry) for entry in all_files if entry.is_file()}
+
+        stage, control = root/"stage/staged.json", root/"control-stage/staged.json"
+        native("stage-fast",stage.parent,seconds=9600)
+        native("stage-control",control.parent,seconds=9600)
+        for file in stage,control:
+            saved = get(file)
+            assert saved["mode"] == "fast" and saved["source"] == source and saved["nonce"] == nonce
+            assert saved["people"] == people and file.stat().st_mtime >= request["start"]
+        env["DX_ERASE_SEALED_SHA256"] = digest(stage)
+        assert get(stage)["data"]["facts"] == get(control)["data"]["facts"]
+        cold()
+        # [DX-BM1] Why: restart both measurements from the same sealed native keys, cut and table bytes.
+        # Rejected: letting the first erasure mutate the paired comparison's inputs or copying live PostgreSQL data.
+        frozen = root/"checkpoint"
+        frozen.mkdir(mode=0o700)
+        checkpoint = {d.name:file_hashes(d) for d in (pgdata,erasures)}
+        for directory in pgdata,erasures:
+            run("cp","-a","--reflink=auto",directory,frozen/directory.name,timeout=480)
+            assert file_hashes(frozen/directory.name) == checkpoint[directory.name]
+        save(root/"checkpoint.json",{**owner,"files":checkpoint,"stageSha256":digest(stage),"controlSha256":digest(control)})
+
+        def restart(phase):
+            run("docker","start",pg,timeout=65)
+            wait_until(lambda: output("pg_isready","-q",timeout=3) == "", "PostgreSQL reopen")
+            assert output("psql","-XAtq","-c","SELECT nonce FROM dx_erase1_scratch")==nonce
+            return java_start(phase)
+
+        failures = []
+        processes = restart("fast")
+        try:
+            native("check-fast",root/"measured",stage,seconds=3300)
+        except (subprocess.CalledProcessError,subprocess.TimeoutExpired) as error:
+            failures.append(str(error))
+        cold()
+        for directory in pgdata,erasures:
+            directory.rename(root/(directory.name+"-after-fast"))
+            run("cp","-a","--reflink=auto",frozen/directory.name,directory,timeout=480)
+            assert file_hashes(directory) == checkpoint[directory.name]
+        processes = restart("guarded")
+        try:
+            native("check-guarded",root/"guarded",stage,control,seconds=3300)
+        except (subprocess.CalledProcessError,subprocess.TimeoutExpired) as error:
+            failures.append(str(error))
+        cold()
+        if failures:
+            save(root/"measurement-failures.json",failures)
+        with (root/"collector.json").open("xb") as log:
+            run(sys.executable,Path(__file__).with_name("erase-fast-reading.py"),root,source,stdout=log,timeout=150)
+        return
     if not resume:
         run(*heavy,experiment/"server.mjs","stage",root/"stage",timeout=9000)
     stage = root/"stage/staged.json"

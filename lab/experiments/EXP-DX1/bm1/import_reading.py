@@ -14,20 +14,19 @@ SPLIT_ARMS = ("split-0-a", "split-2000", "split-0-b")
 MICRO_ARMS = ("micro-0-a", "micro-24", "micro-16", "micro-32", "micro-0-b")
 
 
-def read_arm(directory, attempt, name, rate=50, *, split=False, micro=False):
+def read_arm(directory, attempt, name, rate=50, *, split=False, micro=False, duration=108_000):
     # [DX-BM1] Why: join every scheduled offer and bulk ACK to this scope's immutable receipt.
     # Rejected: accepting an open-loop p99 after dropping expired, missing, or unverified offers.
     f = directory / (name + ".offers.json")
     tape = get(f)
-    duration = 108_000
     scope = "tx2-ha1-" + attempt["nonce"][:8] + "-" + name
     assert (tape["nonce"], tape["source"], tape["slot"], tape["scope"], tape["duration"]) == (
         attempt["nonce"], attempt["source"]["git"], attempt["slot"], scope, duration)
     assert math.isfinite(tape["start"])
-    due = {(actor, kind, i): i * 200 for actor, kind in (("quiet", "save"), ("quiet", "read")) for i in range(540)}
-    due.update({("live" + str(i % 10), "save", i): i * (1000//rate) for i in range(rate*108)})
+    due = {(actor, kind, i): i * 200 for actor, kind in (("quiet", "save"), ("quiet", "read")) for i in range(duration//200)}
+    due.update({("live" + str(i % 10), "save", i): i * (1000//rate) for i in range(rate*duration//1000)})
     if split or micro:
-        due.update({("live" + str(i % 10), "read", i): i * 20 for i in range(5400)})
+        due.update({("live" + str(i % 10), "read", i): i * 20 for i in range(duration//20)})
     native = {row["command"]: row["position"] for row in tape["native"]}
     assert len(native) == len(tape["native"]) == len(set(native.values()))
     bins = defaultdict(lambda: defaultdict(list))
@@ -145,6 +144,74 @@ def micro_output(directory, source, slot, start, *, capacity="one-host"):
                         "queryablePerSecond": queryable / (arm["duration"] / 1000),
                         "committedFrames": len(frames), "armSha256": digest(individual)})
     return {"source": source, "slot": slot, "nonce": nonce, "observationsSha256": digest(report), "arms": results}
+
+
+PIPELINE_ARMS = ("pipeline-0-a", "pipeline-16-2", "pipeline-24-2", "pipeline-16-1", "pipeline-24-1",
+                 "pipeline-16-4", "pipeline-24-4", "pipeline-16-8", "pipeline-24-8", "pipeline-0-b")
+
+
+def pipeline_output(directory, source, slot, start, *, small=False):
+    attempt = get(directory/"attempt.json")
+    report = directory/"observations.json"
+    body = get(report)
+    nonce = attempt["nonce"]
+    width_duration = 18_000 if small else 108_000
+    assert directory.name == "load-pipeline-"+nonce and attempt["mode"] == "load-pipeline"
+    assert (body["source"],body["slot"],body["nonce"]) == (attempt["source"],slot,nonce)
+    assert attempt["source"]["git"] == source and attempt["slot"] == slot
+    assert get(directory/"cleanup.json") == {"nonce":nonce,"containers":0,"networks":0}
+    names = ("pipeline-16-4", "pipeline-24-8") if small else PIPELINE_ARMS
+    results = []
+    for name, arm in zip(names, body["result"], strict=True):
+        tape_path = directory/(name+".offers.json")
+        individual = directory/("arm-"+name+".json")
+        assert start - 2 <= tape_path.stat().st_mtime <= report.stat().st_mtime
+        assert get(individual) == arm and arm["arm"] == name
+        checked = read_arm(directory, attempt, name, arm["rate"], micro=True, duration=width_duration)
+        assert checked["neighbors"] == arm["neighbors"]
+        tape = get(tape_path)
+        assert tape["hz"] == 240 and arm["offeredFrames"] == width_duration * 240 // 1000
+        width = int(name.split("-")[1])
+        assert arm["width"] == width
+        assert tape["lostReplies"] == (2 if width else 0)
+        commands = sorted(tape["ordered"], key=lambda r: r["first"])
+        seen = {r["position"]:r for r in commands}
+        for i, frame in enumerate(commands):
+            assert width and frame["first"] == i*(width//8) and frame["end"] == (i+1)*(width//8)
+            assert frame["facts"] == width
+        latest = 0
+        for marker in tape["markers"]:
+            if marker["done"] <= width_duration:
+                latest = max(latest, marker["end"])
+            assert marker["end"] == seen[marker["position"]]["end"]
+        assert arm["queryableFacts"] == latest*8
+        results.append(dict(arm=name, width=width, offers=sum(x["offered"] for values in checked["neighbors"].values() for x in values.values()),
+                            queryableFacts=latest*8, queryablePerSecond=latest*8000/width_duration,
+                            neighbors=checked["neighbors"], sha256=digest(tape_path)))
+    def pairs(cells):
+        before = cells[0]
+        after = cells[-1] if cells[-1]["arm"] == "pipeline-0-b" else None
+        def ratio(matched, account, kind, own):
+            if matched is None:
+                return None
+            control = matched["neighbors"][account][kind]
+            return {**control, "ratio": own["p99Ms"]/control["p99Ms"] if own["p99Ms"] is not None and control["p99Ms"] else None}
+        rows = []
+        for cell in cells[1:-1 if after else None]:
+            accounts=[dict(account=account, operations=[dict(kind=kind, **own,
+                        before=ratio(before,account,kind,own),after=ratio(after,account,kind,own))
+                        for kind,own in counts.items()]) for account,counts in cell["neighbors"].items()]
+            rows.append(dict(arm=cell["arm"],queryableFactsPerSecond=cell["queryablePerSecond"],accounts=accounts))
+        return rows
+    comparisons = []
+    if not small:
+        # Use the producer's account row ordering and independently reconstructed per-account outcomes.
+        for row,original in zip(results,body["result"],strict=True):
+            row["neighbors"] = {key:row["neighbors"][key] for key in original["neighbors"]}
+        comparisons = pairs(results)
+        assert get(directory/"load-pipeline-comparison.json") == comparisons
+        assert get(directory/"load-pipeline-early.json") == pairs(results[:3])
+    return dict(source=source, slot=slot, nonce=nonce, observationsSha256=digest(report), arms=results, comparisons=comparisons)
 
 
 def tail_attempt(root, r):
