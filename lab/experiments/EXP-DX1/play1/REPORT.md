@@ -18,11 +18,24 @@ Open the printed loopback address. Pick an account and a person to compare the c
 
 **North star** P1/P4 exact current and earlier reads, P2 atomic saves and receipts, P3 ordered resume, P5 Publish and P8 import. Laptop timings are diagnostic. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
+From the Mac lab, rerun the correctness gate with one ordinary heavy token and a fresh output directory.
+
+```sh
+node lab/bin/heavy.mjs --label DX-PLAY1-live -- node lab/bin/engine.mjs play1 \
+  --holder DX-PLAY1 --portable --browser --out "$PLAYGROUND_EVIDENCE_DIR"
+```
+
 ## Evidence and limits
 
 The deterministic Git fixture, action discovery and loopback transport checks passed. Stdio discovery returned all 13 tools in two JSON-RPC frames. The pinned lockfile validated offline in lockfile-only mode. Raw output and its source binding are in `evidence/DX-PLAY1/lightweight.txt` and `evidence/DX-PLAY1/lightweight-source.json`.
 
-The lab-admitted small bundle gate passed all four checks, including an HTTP range resume and refusal of a corrupt object. The original workspace preflight hit a pnpm option error. The store flag was corrected and the workspace build and native gate were requeued. The native startup, restore, browser and full-population measurements remain unverified.
+The lab-admitted small bundle gate passed all four checks, including an HTTP range resume and refusal of a corrupt object. The four workspace builds and the final playground TypeScript check passed under ordinary heavy tokens. Formatting and lint passed for the changed files. The package logs are `evidence/DX-PLAY1/build-ordinary-02.txt`, `evidence/DX-PLAY1/typecheck-final.txt` and `evidence/DX-PLAY1/fixture-test-retry.txt`.
+
+The `live-12` gate passed on source commit `3f2db8cc9` in a fresh database. It checked all 13 API actions, including exact current and historical records, the second submission's original receipt, stale and command-key conflicts, native query results, release answers and both MCP transports. Chromium exercised the dashboard with the live feed active through Publish and observed a background write. The quiesced PostgreSQL restore matched all 885 source rows. Teardown removed the attempt's containers, volume, network, built image and runtime directory, closed its HTTP listener and released its slot. The evidence is under `evidence/DX-PLAY1/live-12`. [Evidence checksums](SHA256SUMS)
+
+Earlier attempts are retained. A live dump produced a different row digest while Datomic was still running. The first Chromium launch was denied by the macOS sandbox. Later Chromium attempts reached an unavailable transactor during Publish even though its container was still running. The final path uses the reader for the feed watch, checks transactor liveness and quiesces the owned Datomic processes before dumping. All Mac timings are diagnostic.
+
+The full-population artifacts, replay and restore are unmeasured. The local start command supports the generated object bundle. The database dump is a gate probe. The lab gate exercised the portable stack launcher and teardown through `engine.mjs`. A standalone clean-clone run on an independent plain Docker installation was outside this gate. The final merge into the v0.1 integration branch and that branch's gate belong to the orchestrator. [Size and startup paths](SIZE.md)
 
 The release demo uses the shared ConfigStore and the HTTP package's configuration descriptors. An intentionally small status rule provides a visible answer and durable background materialization. The standalone Foldkit explorer continues to serve the generic Triples view. The Datomic dashboard has its own workspace panel for commit positions, traces, native query and Publish.
 
@@ -35,6 +48,6 @@ The initial plan push inherited a local Git identity. Its branch was immediately
 - Stack startup compares the fresh loopback gateway response to the expected version and source. It reads back the mounted source and codec file hashes from the labeled containers.
 - Saves use a durable command claim and an intent digest. The stale check binds the person's observed assertion identities to its write precondition. The response reads the write result at its receipt position.
 - Publish commits the configured policy and evaluates against the returned position. Background progress advances only after writes return their receipts. The live gate checks the visible action result against its independently expected status and compares the persisted answer.
-- The native gate exercises every action in one fresh scope and records the matching source and fixture identities plus the exact slot and attempt. The dump probe compares restored keys and values to the active SQL database and records the dump SHA-256.
+- The native gate exercises every action in one fresh scope and records the matching source and fixture identities plus the exact slot and attempt. The dump probe checks all three Datomic containers' attempt labels before stopping them, then compares restored keys and values with that attempt's quiesced PostgreSQL database and records the dump SHA-256.
 - Teardown inventories only the unique attempt label, checks zero owned Docker resources, rejects the former health endpoint, and releases the exact holder and slot. A failed cleanup preserves the reservation for investigation.
-- Acceptance files and pins were left unchanged.
+- No acceptance files or paths named in the acceptance checksum pins changed.
