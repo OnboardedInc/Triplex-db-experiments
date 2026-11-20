@@ -2916,3 +2916,22 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   have to be more than ten times faster. 19 local regressions pass.
 - **DX-STG1 is parked** (no part 6): there is no bar for sending time (asked of Sam, not urgent), the Mac cannot give a
   clean latency comparison tonight, and its server command joins the hand-over list.
+
+## 2026-11-20 06:33 UTC (01:33 local, 2026-11-20): DX-W1 part 5 in: record count cannot be made small enough; the lean layout refuses native queries
+
+- **DX-W1 part 5 (`67bc5285c`, Mac VM; `w1/REPORT.md`).** 10,000 saves per arm at 50 per second on four matching indexed
+  seeds, all 40,000 verified after collection, `VACUUM FULL` and restart. Per save, original / compact rows / K / P:
+  historical records 26.99 / 26.99 / 19.99 / 16.00; log bytes 5,424 / 4,996 / 4,124 / 4,969; settled PostgreSQL bytes
+  after rewrite 1,777 / 1,691 / 1,531 / 3,192 (P adds 2.5 times K's index segments). Records for one- and three-field
+  saves: 23/31 original, 16/24 K (`TX2_SAVE_LEDGER=1`: claim, journal and receipt share one entity; per-change and
+  per-subject rows stay), 14/18 P (`TX2_PACKED_JOURNAL=1`, opt-in). In a group of N saves of w fields: N × (15 + 5w) + 2
+  records for K. Ten deep accounts starting at 480 million records and 50 saves per second reach eight billion in
+  about 87 days with K, 109 with P (70 and 83 with large groups and an equal width mix). Clocks joined across
+  transactor, peer and replies for 78 of 78 groups: append 4.28 to 5.34 ms, append to peer receive 9 to 42 ms, peer
+  apply 1.4 to 3.5 ms, fan-out 0.9 to 1.9 ms; one 82-save group spent 146 ms in peer apply over 80 ms of JVM pauses.
+  The drop above 64 outstanding did not reproduce. Wire bytes 3,882 to 3,253 (one field).
+- **Gap found: on the lean layout the native query endpoint returns `LayoutUnsupported`.** Every bare-metal run so far
+  used lean. Q107-S requires the journal triples to be queryable through native queries, so no acceptance claim can
+  rest on lean until that is closed. Part 6 assigned: every documented query surface tested on lean with K and made
+  to answer as classic does, with its cost; one write-path branch reconciling its fixes with DX-WFIX1's; erasure
+  copies on lean with K.
