@@ -111,10 +111,23 @@
   (if-not *load-timing* (input-rows input lean new-ids)
     (let [start (System/nanoTime) rows (input-rows input lean new-ids)]
       (vreset! *load-timing* (- (System/nanoTime) start)) rows)))
+(defn expand-fresh [input lean]
+  (if-not (= "fresh-texts-v1" (get input "rowMode")) input
+    (let [texts (get input "freshTexts")]
+      (when-not (and lean (vector? texts) (seq texts)
+                     (not-any? #(contains? input %) ["rows" "newIds" "rowOrder" "rowTexts"]))
+        (codec/invalid "Mixed fresh batch encodings"))
+      (let [ids (mapv (fn [s]
+                        (when-not (and (string? s) (> (.length ^String s) 5) (= \2 (.charAt ^String s 0)))
+                          (codec/invalid "Invalid fresh row prefix"))
+                        (subs s 5 (+ 5 (Integer/parseInt s 1 5 16)))) texts)]
+        (when-not (= (count ids) (count (set ids))) (codec/invalid "Duplicate fresh row ID"))
+        ;; [DX-LOAD1] Why: ordinary compact validation compares each decoded row ID with the actual prefix. Rejected: a client assertion of empty history or a second source of row order.
+        (assoc input "rowMode" "texts" "newIds" ids "rowOrder" ids "rowTexts" (zipmap ids texts) "rows" [])))))
 (defn tx-data
   ([db input] (tx-data db input (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([db input scope]
-   (let [lean (lean? db) new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
+   (let [lean (lean? db) input (expand-fresh input lean) new-ids (set (get input "newIds")) rows (timed-input-rows input lean new-ids)
          fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
          source (when-some [p (get input "sourceK")] (safe-position p)) position (safe-position (get input "position"))
          span (safe-position (or (get input "span") (when source (- position source))))

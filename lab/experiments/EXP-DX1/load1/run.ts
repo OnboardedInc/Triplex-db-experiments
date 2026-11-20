@@ -1,10 +1,29 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import path from "node:path";
 import { root, runFile, until } from "../ha1/common.ts";
 import type { Stack } from "../ha1/stack.ts";
 export async function load(s: Stack, people: number) {
   const e = s.e;
   await s.tool();
+  const peer = "peer-1.0.7745.jar",
+    config = path.join(root, "lab/config/datomic");
+  const pinned = JSON.parse(readFileSync(path.join(config, "verification.json"), "utf8")).jars;
+  const peerSha = readFileSync(path.join(config, "SHA256SUMS"), "utf8")
+    .split("\n")
+    .find((l) => l.endsWith("  " + peer))!
+    .split(" ")[0];
+  const jars = Object.fromEntries([
+    [peer, peerSha],
+    ...Object.entries(pinned).map(([f, h]) => ["lib/" + f, h]),
+  ]);
+  const lines = (await s.exec("tool", "sha256sum", ...Object.keys(jars))).split("\n");
+  for (const line of lines) {
+    const [h, f] = line.trim().split(/\s+/);
+    assert(f && jars[f] === h);
+  }
+  assert.equal(lines.length, Object.keys(jars).length);
+  e.log("vendor-jars", { image: s.a.datomicId, jars });
   await s.postgres("pg", s.a);
   await s.database("pg", "moving");
   await s.tx("active", s.a, "pg", "moving");

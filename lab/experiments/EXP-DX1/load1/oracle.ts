@@ -23,7 +23,15 @@ export function ack(frame: Frame, r: Receipt) {
   const ids = frame.operations.map((o, i) => {
     const t = r.triples[i]!;
     assert.deepEqual(
-      [t.entityId, t.attribute, t.value, t.validFrom, t.validTo?._tag, t.recordedAt, t.txId?.value],
+      [
+        t.entityId,
+        t.attribute,
+        t.value,
+        t.validFrom,
+        t.validTo?._tag,
+        t.recordedAt,
+        (t.txId as any)?.value,
+      ],
       [o.entityId, o.attribute, o.value, o.validFrom, "None", r.instant, r.txId],
     );
     return t.id;

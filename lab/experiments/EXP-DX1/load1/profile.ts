@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import * as api from "../../../../packages/datomic/dist/index.js";
+import { runtimeApi } from "../../../bench/lib/triplex.ts";
 import { ModelJournal } from "../../../bench/lib/model-journal.ts";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 import { frames, identity, sourceId } from "./source.ts";
@@ -31,6 +32,10 @@ export async function profile(
   let current: any;
   api.DatomicClient.prototype.transact = async function (db, input, onSent) {
     assert(current && input.claims.length === 1 && current.command === input.claims[0]!.commandId);
+    assert.equal(
+      db,
+      "s2-" + Buffer.from(String(runtimeApi.DatabaseScope.test(scope))).toString("base64url"),
+    );
     const requests: any[] = [],
       observe = this.onRequest;
     this.onRequest = (s) => {

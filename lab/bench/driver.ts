@@ -497,6 +497,7 @@ async function run() {
     ? await seedFromManifest(bulkManifest, writer, log)
     : await seedRung({
         comp: writer, onReceipt: (operations, receipt) => modelWriter.bindReceipt(operations, receipt, "bulk-seed"), subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
+        inFlight: Number(process.env.TX2_DATOMIC_SEED_IN_FLIGHT ?? 1),
         recordSubjects: oracleRecordSet, recordAccounts: new Set([...oracleRecordSet].map((i) => accountOfSubject(i, accounts))), historySubjects: new Set(historySample), log,
       });
   report.seedPath = bulkManifest ? { kind: "bulk-index", manifest: config.seedManifest, nqSha256: bulkManifest.nq.sha256, quads: bulkManifest.nq.quads } : { kind: "transact" };
