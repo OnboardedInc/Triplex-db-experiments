@@ -29,6 +29,7 @@ The files below are relative to the durable Triplex lab vault's `evidence/DX-HAS
 | `hasync-fleet-dedicated-2d7dea95` | `514fa5644` | SQL bootstrap completed. Datomic rejected the undersized memory index configuration at startup. |
 | `hasync-fleet-shared-4ecda644` | `a20076137` | One system on the shared SQL pair. 17.50 s to a new save and 96 scheduled saves settled. First fleet admission at 06:31:52 UTC. |
 | `hasync-fleet-dedicated-bf166e22` | `a20076137` | One system on a dedicated SQL pair. 19.87 s to a new save and 110 scheduled saves settled. |
+| `hasync-fleet-shared-7d4c9384` | `a20076137` | Four systems on one pair. The last new save took 12.02 s, all 284 scheduled saves settled, and all cells had at most a 0.082 s gap between on-time reads. |
 
 ## Where the code publishes outcomes
 

@@ -3,8 +3,8 @@
 In the first Mac run that withheld a save reply, new saves resumed after 18.55 seconds.
 The system refused 90 saves during that cut. All 90 settled after retry with the same command ID.
 In the first planned move with scheduled traffic, a new save arrived after 13.56 seconds.
-The first index drill exposed a 24.04-second gap when reads pulled a wide diagnostic record on every offer.
-The revised index drill read field pages on schedule. Its longest read gap was 0.18 seconds.
+Four systems on one shared database pair all resumed saves within 12.03 seconds.
+The first saves across those four systems arrived within 64 milliseconds of one another.
 Choose A to reopen on one copy, B to wait for a replacement, or C to keep three machines. I recommend C. [Owner decision](OWNER-DECISION.md)
 
 ## Availability
@@ -41,6 +41,6 @@ node --import tsx lab/experiments/EXP-DX1/ha1/control.ts hasync-suite hasync-p9-
 
 Forecast 75–85 minutes plus up to four for launch and collection on the released pair with prepared builds. The 18 cells cover a 16M edited population, fleet recovery, idle load, standby replacement, stale-predecessor retry, every fault shape and save cost. The collector checks the retry receipt against the attempt's saved body, database, slot, source and oracle. The bare-metal run is pending. [Forecast and schedule](BENCH.md)
 
-The fleet first received Mac admission after 1 hour 19 minutes 34 seconds. One system recovered in 17.50 s on the shared pair and 19.87 s on the dedicated pair. The larger fleet, edited deep runs and both directional cuts remain queued. Physical power and management interlock qualification are pending.
+The first Mac admission took 1 hour 19 minutes 34 seconds. The three completed fleet cells waited a combined 3 hours 2 minutes 58 seconds. Shared single and four-system runs took 17.50 s and 12.02 s to the last new save. The dedicated single system took 19.87 s. Larger fleet runs, edited sizes and directional cuts remain queued. Physical power and its independent fence are unverified. [Fleet measurements](SCALE.md)
 
 Scoped TypeScript and focused HA and command recovery tests cover the gate. The replacement settlement checks the withheld and recovered receipts, exact same-input replay, scoped claim, ordered feed and oracle cuts. Its pending body and response are fresh and bound to the gate nonce, slot, source and scope. No acceptance pins moved. [Evidence and audit](EVIDENCE.md) · [Checksums](SHA256SUMS)
