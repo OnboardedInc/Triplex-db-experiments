@@ -1027,7 +1027,11 @@ export class DatomicClient {
       if (ack.operationId !== input.operationId) throw new TypeError("Commit operation mismatch");
       return receipt(claim.txId, ack);
     } catch (error) {
+      // [DX-WFIX1] Why: older writers can report a stale CAS for an already committed command.
+      // Rejected: retrying CAS or polling for a different command (a truly conflicting write stays refused).
+      const cas = error instanceof DatomicHttpError && error.code === "CasConflict";
       if (
+        !cas &&
         !(
           error instanceof DatomicTransportError ||
           (error instanceof DatomicHttpError &&
@@ -1057,6 +1061,7 @@ export class DatomicClient {
         } catch (readError) {
           if (!(readError instanceof DatomicTransportError)) throw readError;
         }
+        if (cas) break;
         const left = deadline - performance.now();
         if (left > 0) await new Promise((resolve) => setTimeout(resolve, Math.min(25, left)));
       } while (performance.now() < deadline);

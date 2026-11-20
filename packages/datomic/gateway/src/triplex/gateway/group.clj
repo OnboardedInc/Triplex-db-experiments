@@ -87,8 +87,6 @@
     (if-not entries out
       (let [entry (first entries)
             result (try
-                     (when (d/entid view [:triplex.tx/operation-id (:id entry)])
-                       (throw (ex-info "triplex.tx/operation-id already committed" {})))
                      (let [started (when stage-clock (System/nanoTime))
                            data ((:prepare entry) view)
                            prepared (when stage-clock (System/nanoTime))
@@ -101,7 +99,7 @@
                                            :speculative-micros (quot (- applied prepared) 1000)
                                            :reused (if (identical? data (:original-data entry)) 1 0))))
                      (catch Exception e
-                       (if (re-find #"TRIPLEX_CONFLICT|TRIPLEX_IDENTITY|TRIPLEX_CLOCK|:db.error/(?:unique-conflict|cas-failed)|triplex.tx/operation-id already committed" (str e))
+                       (if (re-find #"TRIPLEX_CONFLICT|TRIPLEX_IDENTITY|TRIPLEX_CLOCK|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|:db.error/(?:unique-conflict|cas-failed)" (str e))
                          {:error e} (throw e))))]
         (recur (or (get-in result [:report :db-after]) view) (next entries) (conj out result))))))
 (defn prefix [^String text] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16))))

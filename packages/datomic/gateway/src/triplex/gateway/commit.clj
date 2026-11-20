@@ -84,6 +84,14 @@
                (str (subs text 0 start) (json/write-str values))))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
      (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row]} payload
+           operation-id (or (:triplex.tx/operation-id (first ops)) (some :triplex.tx/operation-id ops))
+           command-ids (or (:command-ids payload) (keep :triplex.claim/command-id ops))
+           ;; [DX-WFIX1] Why: a committed retry can name a predecessor it already retired.
+           ;; Rejected: checking identities only at ingress (a queued request can hold a stale basis).
+           _ (when (and operation-id (d/entid db [:triplex.tx/operation-id operation-id]))
+               (throw (ex-info "TRIPLEX_OPERATION_DUPLICATE" {})))
+           _ (when (some #(d/entid db [:triplex.claim/command-id %]) command-ids)
+               (throw (ex-info "TRIPLEX_COMMAND_DUPLICATE" {})))
            head-v2 (= 2 (value scope :triplex.scope/head-version))
            latest (when head-v2 (newest-commit))
            h (if head-v2 (or (when latest (value latest :triplex.tx/position)) 0)
