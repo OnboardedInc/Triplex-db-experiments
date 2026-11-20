@@ -40,6 +40,11 @@ export class DatomicHttpError extends Error {
     super(message);
   }
 }
+class DatomicRequestTooLarge extends DatomicHttpError {
+  constructor() {
+    super(400, "InvalidValue", "Request too large");
+  }
+}
 export class DatomicTransportError extends Error {
   readonly _tag = "DatomicTransportError";
   constructor(message: string, options?: ErrorOptions) {
@@ -347,10 +352,10 @@ export class DatomicClient {
             : Buffer.from((fastPathEnabled("body") ? stringifyNativeExact : stringifyExact)(body)),
         );
     const byteLength = typeof bytes === "string" ? Buffer.byteLength(bytes) : (bytes?.length ?? 0);
-    if (path.endsWith("/transact") && byteLength > 4_194_304) {
-      onSent?.(false);
-      throw new DatomicHttpError(413, "RequestTooLarge", "Request too large");
-    }
+    // [DX-WFIX1] Why: validate the complete UTF-8 transaction after its final wire encoding and before opening a socket.
+    // Rejected: estimating row sizes (JSON escaping, envelopes and row texts all count against the same body cap).
+    if (path.endsWith("/transact") && byteLength > 4 * 1024 * 1024)
+      throw new DatomicRequestTooLarge();
     const serializeMicros = (performance.now() - serializeStart) * 1000;
     const remainingMs = timeoutMs - (performance.now() - started);
     if (remainingMs <= 0)
@@ -840,7 +845,7 @@ export class DatomicClient {
   async transact(
     db: string,
     input: {
-      onSent?: (published?: boolean) => void;
+      onSent?: (dispatched?: boolean) => void;
       groupAccount?: string;
       writeClass?: DatomicWriteClass;
       clientId?: string;
@@ -861,7 +866,7 @@ export class DatomicClient {
       handle?: string;
       release?: boolean;
     },
-    onSent?: (published?: boolean) => void,
+    onSent?: (dispatched?: boolean) => void,
   ): Promise<unknown> {
     // [DX-T1] Why: direct client users retain encoding and post-response validation in the same commit trace.
     // Rejected: starting the only trace after serialization at the HTTP boundary.
@@ -872,7 +877,7 @@ export class DatomicClient {
   private async transactTraced(
     db: string,
     input: Parameters<DatomicClient["transact"]>[1],
-    onSent?: (published?: boolean) => void,
+    onSent?: (dispatched?: boolean) => void,
   ): Promise<unknown> {
     const encodeSpan = beginSpan("client.transact-encode");
     const encodeStart = performance.now();
@@ -956,11 +961,16 @@ export class DatomicClient {
       delta?: number;
       recordedAt?: TaggedValue;
     };
+    let dispatched = true;
     try {
       response = await this.request("POST", `/v1/db/${db}/transact`, body, this.timeoutMs);
+    } catch (error) {
+      dispatched = !(error instanceof DatomicRequestTooLarge);
+      throw error;
     } finally {
       this.sentCallbacks.delete(sendKey);
-      onSent?.();
+      if (dispatched) onSent?.();
+      else onSent?.(false);
     }
     if (response.t && response.position) {
       const p = validateTagged(response.position);
@@ -1061,7 +1071,11 @@ export class DatomicClient {
       if (ack.operationId !== input.operationId) throw new TypeError("Commit operation mismatch");
       return receipt(claim.txId, ack);
     } catch (error) {
+      // [DX-WFIX1] Why: older writers can report a stale CAS for an already committed command.
+      // Rejected: retrying CAS or polling for a different command (a truly conflicting write stays refused).
+      const cas = error instanceof DatomicHttpError && error.code === "CasConflict";
       if (
+        !cas &&
         !(
           error instanceof DatomicTransportError ||
           (error instanceof DatomicHttpError &&
@@ -1091,6 +1105,7 @@ export class DatomicClient {
         } catch (readError) {
           if (!(readError instanceof DatomicTransportError)) throw readError;
         }
+        if (cas) break;
         const left = deadline - performance.now();
         if (left > 0) await new Promise((resolve) => setTimeout(resolve, Math.min(25, left)));
       } while (performance.now() < deadline);

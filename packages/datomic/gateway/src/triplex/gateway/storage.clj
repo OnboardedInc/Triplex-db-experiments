@@ -210,8 +210,7 @@
                              (if (and (not lean) (> (.length ^String text) 8000))
                                [[:db/add (str "e:" (:entity_id row)) :triplex.entity/row-overflow true]]
                                 (let [offset (+ 44 (.length ^String (:id row)) (if (= "ref" (:value_type row)) (.length ^String (:value_string row)) 0))
-                                      plan (when (and packed-rows (not (contains? timed-rows (:id row)))
-                                                      (not (packed-journal-set (:id row))))
+                                      plan (when (and packed-rows (not (packed-journal-set (:id row))))
                                              (small-row/prepare text offset (:recorded_position row) new-ids))]
                                   [[(if lean :triplex/assert :db/add) (str "e:" (:entity_id row)) :triplex.entity/row
                                    (if plan [:triplex/row (subs text 0 offset) (:recorded_position row) offset :row plan]
@@ -267,6 +266,8 @@
                        :live (vec (distinct (concat (get input "live" []) (map :id old))))
                        :rev-aevt (= "1" (System/getenv "TX2_REV_AEVT"))
                        :lean lean :slim-row (= 4 rows-version) :ops ops :times times :new-ids (vec new-ids) :assign-record-time (not= false (get input "assignRecordTime"))
+                       :command-ids (mapv #(get % "commandId") claims)
+                       :owners (vec (distinct (map :entity_id rows)))
                        ;; [DX-R3] Why: strict scopes also order empty/claim-only commits and every imported claim clock.
                        ;; Rejected: checking row timestamps only (a supported SPI commit can have no rows).
                        :record-clocks (vec (cons (:recorded-at metadata) (map #(get % "timestamp") claims)))
@@ -388,13 +389,13 @@
       (let [text (str e)]
         (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
-                       {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|cas-failed|unique-conflict" text) 409 400)
+                       {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
                         :code (cond (re-find #"TRIPLEX_CLOCK_EXHAUSTED" text) "ClockExhausted"
                                     (re-find #"TRIPLEX_CLOCK" text) "ClockConflict"
                                     (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
-                                    (re-find #"triplex.claim/command-id" text) "CommandConflict"
-                                    (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
+                                    (re-find #"TRIPLEX_COMMAND_DUPLICATE|triplex.claim/command-id" text) "CommandConflict"
+                                    (re-find #"TRIPLEX_OPERATION_DUPLICATE|triplex.tx/operation-id" text) "OperationDuplicate"
                                     (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e))))))
 (defn operation [db id]
   (if-let [{:keys [position t clock]} (group/receipt db id)]

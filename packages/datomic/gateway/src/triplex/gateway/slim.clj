@@ -1,5 +1,5 @@
 (ns triplex.gateway.slim
-  (:require [triplex.gateway.small-row :as small-row] [clojure.data.json :as json]))
+  (:require [triplex.gateway.small-row :as small-row] [clojure.data.json :as json] [clojure.walk :as walk]))
 
 ;; [DX-T1-8] Why: compress only the JSON suffix after authoritative clock/position assignment, preserving indexed prefixes.
 ;; Rejected: changing logical rows or UTF-8 conversion (unpaired UTF-16 code units must round-trip exactly).
@@ -47,8 +47,14 @@
     (str (subs text 0 body-start) (json/write-str packed))
     (if (.startsWith text "Z1" (int body-start))
       (str (subs text 0 body-start) (body (subs text body-start))) text)))
-(defn columns [^String text body-start]
-  (or (small-row/unpack text body-start) (json/read-str (body (subs text body-start)))))
+(def row-columns-code
+  (walk/postwalk-replace {'unpack-code small-row/unpack-code 'body-code decoder-code}
+    '(fn [^String text]
+       (let [start (+ 5 (Integer/parseInt text 1 5 16)) ref-start (+ start 36)
+             size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)
+             body-start (+ ref-start size 1)]
+         (or (unpack-code text body-start) (json/read-str (body-code (subs text body-start))))))))
+(def row-columns (eval row-columns-code))
 (defn row-text [^String text]
   (if (not= \2 (.charAt text 0)) text
     (let [start (+ 5 (Integer/parseInt text 1 5 16)) ref-start (+ start 36)

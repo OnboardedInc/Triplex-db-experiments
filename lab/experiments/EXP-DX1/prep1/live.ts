@@ -5,6 +5,7 @@ import { DatomicClient, DatomicHttpError } from "../../../../packages/datomic/di
 import { decodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import type { Fact } from "../../../bench/lib/world.ts";
 import { command } from "../w1/group/workload.ts";
+import type { WriterObservation } from "../w1/write-options.ts";
 
 type Input = ReturnType<typeof command>;
 type Receipt = {
@@ -300,6 +301,51 @@ const seconds = Number(secondsArg);
 assert(Number.isSafeInteger(seconds) && seconds > 0 && seconds <= 60);
 const attempt = attemptId || randomUUID();
 assert(selectedArm === undefined || /^[0-3]$/.test(selectedArm));
+
+async function checkWriter(c: DatomicClient, db: string, arm: number) {
+  const expectedSource = process.env.DX_PREP1_SOURCE_SHA256;
+  const expectedBoot = process.env.DX_PREP1_OPTIONS_ATTEMPT;
+  assert.match(expectedSource ?? "", /^[a-f0-9]{64}$/);
+  assert(expectedBoot);
+  const options = await c.request<
+    WriterObservation & {
+      preparedWriter: null | { mode: string; guard: string; installed: boolean };
+    }
+  >("GET", `/v1/db/${db}/write-options`);
+  assert.equal(options.database, db);
+  assert.equal(options.gatewaySourceHash, expectedSource);
+  assert.equal(options.attempt, expectedBoot);
+  assert.equal(options.rowsVersion, 3);
+  assert.equal(options.position, 0);
+  assert.equal(options.strictRecordClocks, true);
+  assert.equal(options.commitFunctionInstalled, true);
+  assert.match(options.commitFunction, /^:triplex\.write\/v-[a-f0-9]{24}$/);
+  assert.deepEqual(
+    options.preparedWriter,
+    arm === 1 || arm === 2
+      ? { mode: "basis", guard: ":triplex.group/apply-v1", installed: true }
+      : null,
+  );
+  assert.deepEqual(options.options, {
+    predecessorLookup: true,
+    groupCommit: true,
+    livePriority: true,
+    fieldCoalesce: false,
+    queueClock: true,
+    stageClock: true,
+    smallRows: false,
+    reusePrepared: true,
+    maxMembers: 8,
+    budgetMicros: null,
+    bulkRows: 2048,
+    bulkBytes: 1048576,
+    ledger: false,
+    packedJournal: false,
+    fastReply: true,
+  });
+  console.log("PREP1_WRITER " + JSON.stringify({ arm, attempt, observed: options }));
+}
+
 for (const [arm, url] of [first, second, second, first].entries()) {
   if (selectedArm !== undefined && Number(selectedArm) !== arm) continue;
   const c = new DatomicClient(url!, 35000);
@@ -307,6 +353,9 @@ for (const [arm, url] of [first, second, second, first].entries()) {
   try {
     const { db, created } = await c.create(scope, "lean", true, 35000);
     assert(created);
+    // [DX-PREP1] Why: both server arms must price the same fixed source on fresh opened scopes.
+    // Rejected: assuming the supplied URLs, environment or requested flag prove the installed writer.
+    if (selectedArm === undefined) await checkWriter(c, db, arm);
     const tapes = [50, 235, 394].map((rate, block) => schedule(rate, seconds, block));
     const seeded = await seed(c, db, [...new Set(tapes.flat().map((x) => x.subject))].sort());
     const frozen = new Set<string>();

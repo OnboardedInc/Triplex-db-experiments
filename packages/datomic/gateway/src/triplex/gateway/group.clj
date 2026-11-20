@@ -88,16 +88,18 @@
 (defn classify [db p input]
   (let [journals (set (:journal-entities p))
         owners (set (keep #(when (map? %) (:triplex.entity/id %)) (:ops p)))
-        ;; [DX-W1] Why: scope-owned checkpoints and configuration use reserved IDs, with no tenant membership fact.
-        ;; Rejected: dropping their dependency keys or making a scope-wide runtime hint mandatory.
-        business (remove #(or (journals %) (str/starts-with? % "_triplex/")) owners)
+        authored (remove journals (or (:owners p) owners))
+        ;; [DX-WFIX1] Why: the core reserves system entities within this verified database scope.
+        ;; Rejected: assigning scope maintenance to a caller-supplied account (or removing its dependency keys).
+        system? #(.startsWith ^String % "_triplex/")
+        business (remove system? authored)
         hint (get input "groupAccount")
         accounts (set (map #(or (second (re-matches #"acct/([A-Za-z0-9_-]{1,64})/.+" %))
                                 (when (:lean p) (persisted-account db %))) business))
         account (when (= 1 (count accounts)) (first accounts))]
     (when (and hint (seq business) (not= hint account))
       (throw (ex-info "Group account must match every business entity namespace" {:code "InvalidValue" :status 400 :write-policy true})))
-    {:account (or account :shared)
+    {:account (or account (if (and (seq authored) (empty? business)) :system :shared))
      :subject (when (= 1 (count business)) (first business))
      :scope-barrier (and policy/priority? (:scope-wide p) (some? (:source p)))
      :keys (set (concat (map #(vector :entity %) (concat owners (:entities p)))
@@ -120,8 +122,6 @@
     (if-not entries out
       (let [entry (first entries)
             result (try
-                     (when (d/entid view [:triplex.tx/operation-id (:id entry)])
-                       (throw (ex-info "triplex.tx/operation-id already committed" {})))
                      (let [started (when stage-clock (System/nanoTime))
                            data ((:prepare entry) view)
                            prepared (when stage-clock (System/nanoTime))
@@ -136,7 +136,7 @@
                                            :speculative-micros (quot (- applied prepared) 1000)
                                            :reused (if (identical? data (:original-data entry)) 1 0))))
                      (catch Exception e
-                       (if (re-find #"TRIPLEX_CONFLICT|TRIPLEX_IDENTITY|TRIPLEX_CLOCK|:db.error/(?:unique-conflict|cas-failed)|triplex.tx/operation-id already committed" (str e))
+                       (if (re-find #"TRIPLEX_CONFLICT|TRIPLEX_IDENTITY|TRIPLEX_CLOCK|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|:db.error/(?:unique-conflict|cas-failed)" (str e))
                          {:error e} (throw e))))]
         (recur (or (get-in result [:report :db-after]) view) (next entries) (conj out result))))))
 (defn prefix [^String text] (subs text 0 (+ 5 (Integer/parseInt text 1 5 16))))
@@ -423,7 +423,7 @@
                  (execute! conn batch))
                (catch Throwable t (doseq [e batch] (complete! e {:error t}))))
           (when-let [next-batch (locking lane
-                                 (if (empty? (:queue @lane)) (do (swap! lane assoc :active false) nil)
+                                 (if (empty? (:queue @lane)) (do (swap! lane assoc :active false :live-turns 0) nil)
                                    (let [[s taken] (choose @lane)] (reset! lane s) taken)))]
             (recur next-batch))))))
     (outcome-future p)))

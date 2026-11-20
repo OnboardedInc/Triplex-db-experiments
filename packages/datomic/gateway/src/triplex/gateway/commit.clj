@@ -32,24 +32,28 @@
                        end (str "2001a" (subs high 0 25) (char (inc (int (.charAt ^String high 25)))))]
                    (nil? (read-at :w1/new-range (first (d/index-range (d/history db) :triplex.entity/row start end)))))))))))))
 
-;; [DX-W1] Why: a queued retract names a predecessor whose authoritative clock may differ from its proposal.
-;; Rejected: copying a pending client's proposed assertion time into the durable journal.
+;; [DX-WFIX1] Why: the checked stored row owns the time, range, value and identity of the retracted assertion.
+;; Rejected: carrying the client's provisional assertion or maintaining a separate decoder for prepared writes.
 (def recorded-row-code
   '(fn [^String text]
-     (let [id-end (+ 5 (Integer/parseInt text 1 5 16))
-           ref-start (+ id-end 36)
-           start (+ ref-start 1 (Integer/parseInt text (+ id-end 32) ref-start 16))
-           read-bits (fn [p] (Double/longBitsToDouble (Long/parseUnsignedLong text p (+ p 16) 16)))
-           from (read-bits id-end) end (+ 16 id-end)
-           to (when-not (.startsWith text "----------------" end) (read-bits end))
-           clock (if (.startsWith text "!1" (+ start 19))
-                   (let [mask (Integer/parseInt text (+ start 21) (+ start 25) 16)]
-                     (nth (json/read-str (subs text (+ start 25))) (Integer/bitCount (bit-and mask 255))))
-                   (nth (json/read-str (slim-body-code (subs text start))) 10))]
-       {"recordedAt" (if (= "-0" clock) -0.0 clock) "validFrom" from "validTo" to})))
+     (let [[_ _ entity attr kind string number bool datetime data recorded from to _ entity-type _ tx]
+           (lean-columns-code text)
+           number-field (fn [x] (if (= "-0" x) -0.0 x))
+           value {"type" kind "value" (case kind
+                                      ("ref" "integer" "string" "blob") string
+                                      "number" (number-field number)
+                                      "boolean" (not (zero? bool))
+                                      "datetime" (number-field datetime)
+                                      "json" (json/read-str data))}]
+       (cond-> {"entityId" entity "attribute" attr "value" (if (= "blob" kind) (merge (json/read-str data) value) value)
+                "recordedAt" (number-field recorded) "validFrom" (number-field from)}
+         (some? to) (assoc "validTo" (number-field to))
+         entity-type (assoc "entityType" entity-type)
+         tx (assoc "assertionTxId" tx)))))
 
-(defmacro recorded-row-decoder []
-  (walk/postwalk-replace {'slim-body-code slim/decoder-code} recorded-row-code))
+(def compiled-recorded-row
+  (walk/postwalk-replace {'lean-columns-code slim/row-columns-code} recorded-row-code))
+(defmacro recorded-row-decoder [] compiled-recorded-row)
 (def recorded-row (recorded-row-decoder))
 
 ;; [DX-PREP1] Why: the reference and prepared writers stamp the same authoritative row and journal values.
@@ -62,11 +66,15 @@
            shifted (fn [p] (if (< lower p (inc provisional)) (+ p delta) p))]
        (letfn [(assign-change [text clock new-ids prior-rows]
                  (let [change (json/read-str text)
-                       prior (when (= "retract" (get change "op")) (get prior-rows (get change "tripleId")))
+                       id (get change "tripleId")
+                       prior (when (and (= "retract" (get change "op")) (not (new-ids id))) (prior-rows id))
+                       full (contains? prior "entityId")
                        change (cond-> change
-                                prior (merge (select-keys prior (keys change)))
-                                (new-ids (get change "tripleId")) (assoc "recordedAt" clock)
-                                (contains? change "retractedAt") (assoc "retractedAt" clock))]
+                                full (dissoc "validTo" "entityType" "assertionTxId")
+                                full (merge prior)
+                                (and prior (not full)) (merge (select-keys prior (keys change)))
+                                (new-ids id) (assoc "recordedAt" clock)
+                                (or full (contains? change "retractedAt")) (assoc "retractedAt" clock))]
                    (json/write-str change)))
                (assign-row [text offset clock new-ids prior-rows]
                  (let [start (- offset 2) values (json/read-str (subs text start))
@@ -89,8 +97,14 @@
                      (if packed
                        (do
                          (when-not server-clock (throw (ex-info "Packed row requires server clock" {})))
-                         (str text (if (= p provisional) final-digits (digits (shifted p)))
-                              (apply str (interpose (Double/toString (double clock)) packed))))
+                         (let [clock-text (Double/toString (double clock))
+                               fill #(apply str (interpose clock-text %))]
+                           (str text (if (= p provisional) final-digits (digits (shifted p)))
+                                (if (map? packed)
+                                  (str (fill (:before packed))
+                                       (json/write-str (assign-change (:change packed) clock new-id-set prior-rows))
+                                       (fill (:after packed)))
+                                  (fill packed)))))
                        (let [text (if (and (not= 0 delta) (< lower p (inc provisional)))
                                     (str (subs text 0 offset) (if (= p provisional) final-digits (digits (shifted p)))
                                          (subs text (+ offset 16))) text)
@@ -114,7 +128,8 @@
 ;; [DX-B3-M2] Why: the serial point belongs in Datomic, after parallel client staging.
 ;; Rejected: scope CAS in the peer (unrelated subjects conflict and queue).
 (def operation-code
-  '(letfn [(value [e a]
+  '(let [checked (volatile! {})]
+     (letfn [(value [e a]
              ;; [DX-T1-6] Why: the rev check can warm the same AEVT segment native cardinality-one replacement reads.
              ;; Rejected: changing stored identities or bypassing the serial revision conflict check.
              (:v (first (if (and (:rev-aevt payload) (= a :triplex.entity/rev))
@@ -141,24 +156,25 @@
                (when (and datom (.startsWith ^String (:v datom) prefix))
                  (let [marker (read-at :w1/retirement (first (d/seek-datoms db :eavt (:e datom) :triplex.entity/retired prefix)))]
                    (when-not (and marker (= (:a marker) (d/entid db :triplex.entity/retired))
-                                  (.startsWith ^String (:v marker) prefix)) (choose-read datom (do (vswap! checked assoc id datom) datom)))))))
+                                  (.startsWith ^String (:v marker) prefix))
+                     (vswap! checked assoc id datom)
+                     datom)))))
            ;; [DX-B5-L1] Why: legacy assertion identities remain reserved after retirement.
            ;; Rejected: accepting a reused retired ID (history would contain two incompatible rows for one identity).
            (identity-row [id]
              (let [prefix (str "2" (format "%04x" (.length ^String id)) id)
                    datom (read-at :w1/new-id (first (d/index-range (d/history db) :triplex.entity/row prefix nil)))]
                (when (and datom (.startsWith ^String (:v datom) prefix)) datom)))
-           (conflict []
-             ;; [DX-W1] Why: a durable resend can refer to the predecessor its first attempt retired.
-             ;; Rejected: returning a CAS failure before resolving the original operation or command.
-             (doseq [a [:triplex.tx/operation-id :triplex.claim/command-id]
-                     op (:ops payload)
-                     :when (instance? java.util.Map op)
-                     :let [id (get op a)]
-                     :when (and id (d/entid db [a id]))]
-               (throw (ex-info (str a " already committed") {})))
-             (throw (ex-info "TRIPLEX_CONFLICT" {})))]
+           (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
      (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row save-ledger timed-retractions packed-journal]} payload
+           operation-id (or (:triplex.tx/operation-id (first ops)) (some :triplex.tx/operation-id ops))
+           command-ids (or (:command-ids payload) (keep :triplex.claim/command-id ops))
+           ;; [DX-WFIX1] Why: a durable retry may still name the assertion its first attempt retired.
+           ;; Rejected: returning a predecessor conflict before checking the serialized claims.
+           _ (when (and operation-id (d/entid db [:triplex.tx/operation-id operation-id]))
+               (throw (ex-info "TRIPLEX_OPERATION_DUPLICATE" {})))
+           _ (when (some #(d/entid db [:triplex.claim/command-id %]) command-ids)
+               (throw (ex-info "TRIPLEX_COMMAND_DUPLICATE" {})))
            head-v2 (= 2 (value scope :triplex.scope/head-version))
            latest (when head-v2 (newest-commit))
            h (if head-v2 (or (when latest (value latest :triplex.tx/position)) 0)
@@ -196,9 +212,7 @@
        (when (and scope-wide (not= h source)) (conflict))
        (doseq [id live]
          (if lean
-           (if-let [row (row-id id)]
-             (when (and timed (timed id)) (vswap! prior-rows assoc id (recorded-row-code (:v row))))
-             (conflict))
+           (when-not (row-id id) (conflict))
            (if-let [e (d/entid db [:f/id id])]
              (do
                (when-not (value e :f/live) (conflict))
@@ -219,7 +233,11 @@
                             (or (when (d/entid db :triplex.group/position) (value e :triplex.group/position))
                                 (value e :triplex.tx/position)))
                           0) source) (conflict)))))
-       (let [replace-value (stamp-rows server-clock clock new-id-set lower provisional final slim-row @prior-rows)]
+       (let [stored (memoize (fn [id]
+                              (if-let [row (get @checked id)]
+                                (recorded-row-code (:v row))
+                                (get @prior-rows id))))
+             replace-value (stamp-rows server-clock clock new-id-set lower provisional final slim-row stored)]
          (let [empty-history (when (and lean (:identity-bounds payload))
                                (let [empty? (history-range-code db ops (:identity-bounds payload))]
                                  (record-range-result empty?) empty?))
@@ -289,7 +307,7 @@
                         (when journal-exists
                           [[:db/add scope :triplex.scope/feed-irregular true]])
                         (when irregular [[:db/add scope :triplex.scope/irregular true]])
-                        (when position-irregular [[:db/add scope :triplex.scope/position-regular false]]))))))))
+                        (when position-irregular [[:db/add scope :triplex.scope/position-regular false]])))))))))
  ;; [DX-T1-4] Why: the authored transaction function is observable even though Datomic's surrounding pipeline is closed.
 ;; Rejected: native DEBUG logs on the serial path, or requiring a tracing namespace on ordinary transactors.
 (defn instrument-code [operation]
@@ -311,7 +329,7 @@
                                           'save-ledger-code ledger/rewrite-code
                                           'packed-identity-code packed/identity-code
                                           'packed-encode-code packed/compiled-encode
-                                          'recorded-row-code (walk/postwalk-replace {'slim-body-code slim/decoder-code} recorded-row-code)
+                                          'recorded-row-code compiled-recorded-row
                                           'record-range-result observe} operation-code)
          op (if optimized? (list pred/normalization expanded) expanded)]
      (pred/expand (list 'read-at :w1/function op) optimized? measured?))))

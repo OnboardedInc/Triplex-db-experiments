@@ -100,7 +100,7 @@ const fieldStudy = fs.existsSync("/config/field-study")
   ? fs.readFileSync("/config/field-study", "utf8")
   : undefined;
 const clockPath = cwd + "/native-clock.xml";
-if (fieldStudy === "write-clock")
+if (fieldStudy === "write-clock") {
   fs.writeFileSync(
     clockPath,
     `<configuration>
@@ -112,6 +112,10 @@ if (fieldStudy === "write-clock")
     <root level="WARN"><appender-ref ref="clock"/></root>
   </configuration>`,
   );
+  // [DX-W1] Why: the transactor launcher reloads its distribution's logging file inside this disposable slot.
+  // Rejected: setting only the JVM property, which captured peer events but left the log-append clock unavailable.
+  fs.copyFileSync(clockPath, home + "/bin/logback.xml");
+}
 function clockJvm(role: string) {
   return fieldStudy === "write-clock"
     ? " -Dlogback.configurationFile=" +

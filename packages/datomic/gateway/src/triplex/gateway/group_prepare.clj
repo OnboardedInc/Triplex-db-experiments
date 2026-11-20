@@ -158,8 +158,7 @@
                              (or (nil? source) (not (predicates id))
                                  (and (or (nil? eid) (some? rev)) (<= (or rev 0) source)))) revisions)
                    (seq clocks) (every? #(and (number? %) (Double/isFinite (double %))) clocks))
-          (let [retirements (mapv #(retire db owner %) retired)
-                timed (set (:timed-retractions p))]
+          (let [retirements (mapv #(retire db owner %) retired)]
             (when (every? some? retirements)
               {:scope scope :flags signature :provisional provisional :operations ops
                :basis (d/basis-t db) :owner [subject owner]
@@ -167,9 +166,8 @@
                :id (:triplex.tx/id (first ops)) :operation (:triplex.tx/operation-id (first ops))
                ;; [DX-PREP1] Why: the exact stored row whose bytes the guard rechecks also owns the journal times.
                ;; Rejected: carrying a separate provisional predecessor clock.
-               :retirement-times (into {} (keep (fn [[_ prefix text]]
-                                                  (let [id (subs prefix 5)]
-                                                    (when (timed id) [id (commit/recorded-row text)]))))
+               :retirement-times (into {} (map (fn [[_ prefix text]]
+                                                 [(subs prefix 5) (commit/recorded-row text)]))
                                        retirements)
                :witness {:function [ident fn-tx] :entities revisions
                          :journal journal :retirements retirements :new-prefixes (mapv lean/prefix new-ids)}})))))))

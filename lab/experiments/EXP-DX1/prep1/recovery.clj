@@ -129,6 +129,13 @@
             journal (fn [] (w/feed name 8 10))
             present? #(str/includes? (pr-str %) marker)
             _ (assert (and (present? (business prior)) (present? (journal))))
+            retired (get-in (first (feed name 9 1)) [2 "retract"])
+            _ (assert (= {"value" {"type" "string" "value" marker}
+                          "validFrom" 1.0 "validTo" 30.0
+                          "recordedAt" 1008.0 "retractedAt" 1009.0
+                          "assertionTxId" "_tx/protected" "retractionTxId" "_tx/replacement"}
+                         (select-keys retired ["value" "validFrom" "validTo" "recordedAt" "retractedAt"
+                                                "assertionTxId" "retractionTxId"])))
             ;; [DX-PREP1] Why: run real lean attribute excision and inspect the independent value-bearing journal.
             ;; Rejected: equating index completion with end-to-end erasure.
             excision @(d/transact conn [{:db/id (d/tempid :db.part/user) :db/excise owner
@@ -154,6 +161,7 @@
                          :headBefore head :headAfter (storage/head-position (d/db conn))
                          :protectedInNative (present? texts) :protectedInJournal (present? remaining-journal)
                          :retry (w/outcome reply) :receipt (w/operation name "reuse")
+                         :retired retired
                          :certificateAfterExcision false})))))
 
 (let [[phase file] *command-line-args*]
