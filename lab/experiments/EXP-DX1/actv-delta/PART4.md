@@ -47,7 +47,7 @@ Saves completed entirely during reader traffic averaged 2.82 s across 188 FIFO s
 
 The 23.5 saves/s FIFO window reached the 15-minute limit before writing observations. Its schedule and the timeout are in evidence. The 39.4 saves/s arm did not start. The manager removed the data volume and released the slot. A negative control reproduces the wrong request observer while a save holds the lane. The follow-up requires the queued Publish to retain its own observer and the native race gate to see its write stages.
 
-The next attempt uses the current route's own resolved head and holds 64 background readers through one fixed offer window and all per-offer deadline probes. Both policies get the same exposure. Their outstanding commands may finish after the background reads stop. The attempt takes CPU samples at the end of reader load and after draining, and writes the deadline observations before the drain. This checkpoint alone carries no timing verdict.
+The next attempt uses the current route's own resolved head and also records when its release controls are available. It holds 64 background readers through one fixed offer window and all per-offer deadline probes. Both policies get the same exposure. Their outstanding commands may finish after the background reads stop. The attempt takes CPU samples at the end of reader load and after draining, and writes the deadline observations before the drain. This checkpoint alone carries no timing verdict.
 
 ## One-seed server campaign
 

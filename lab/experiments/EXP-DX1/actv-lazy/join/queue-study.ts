@@ -32,7 +32,7 @@ type Entry = Offered & {
   frames?: Record<string, unknown>[];
   receiptClock?: "native-ack" | "readback";
 };
-type Sample = RawDecision & { learned: number };
+type Sample = RawDecision & { learned: number; releaseAvailable: number };
 type Receipt = { commandId: string; position: number; txId: string; changes: any[] };
 const paths = ["public", "independent-route"] as const;
 const save = (file: string, value: unknown) =>
@@ -210,12 +210,17 @@ async function block(
       ) => {
         const invoked = ms(),
           id = fixture.roster[person]!;
-        let learned: number | undefined;
+        let learned: number | undefined, releaseAvailable: number | undefined;
         // [DX-ACT2] Why: time the current public route's own head read. Rejected: reading a second head just to create an explicit test pin.
         const r = await routes[route]!.readAt(id, { validTime: valid }, undefined, (stage) => {
           if (stage === "controls") learned = ms();
+          if (stage === "erasure-before") releaseAvailable ??= ms();
         });
-        assert(learned !== undefined && Number.isSafeInteger(r.basis.tx));
+        assert(
+          learned !== undefined &&
+            releaseAvailable !== undefined &&
+            Number.isSafeInteger(r.basis.tx),
+        );
         const position = r.basis.tx;
         raw.push({
           phase,
@@ -224,6 +229,7 @@ async function block(
           id,
           invoked,
           learned,
+          releaseAvailable,
           returned: ms(),
           position,
           seq: position,
@@ -447,6 +453,8 @@ async function block(
             graceMs: 0,
             readerHead: reply ? reply.learned - reply.invoked : null,
             readerAfterHead: reply ? reply.returned - reply.learned : null,
+            readerReleaseLookup: reply ? reply.releaseAvailable - reply.learned : null,
+            readerAfterRelease: reply ? reply.returned - reply.releaseAvailable : null,
             conflicts: obs.attempts.filter((x) => x.conflict).length,
           },
         ];
