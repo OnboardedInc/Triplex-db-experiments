@@ -148,4 +148,6 @@
                             (visit! (:v x))
                             [[:triplex.entity/id (:v x)] :triplex.entity/id (:v x)])
                           (d/datoms db :aevt :triplex.entity/id)))]
-    (into #{} (concat (mapcat facts rows) identities))))
+    ;; [DX-W1] Why: Datomic's negation plan indexes tuple sources by row position.
+    ;; Rejected: passing the deduplication set to d/query (basic joins pass, not-join can call nth on it).
+    (vec (into #{} (concat (mapcat facts rows) identities)))))

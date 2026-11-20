@@ -67,8 +67,7 @@ assert events[0]["v"] == [[k, "on"] for k in ("fsync", "synchronous_commit", "fu
 binding = {"slot": terminal["slot"], "image": slot["imageId"], "attempt": nonce,
            "inputs": sha(out / "inputs.json"), "raw": sha(raw), "verifier": sha(Path(__file__))}
 
-if study == "erase6":
-    assert [e["k"] for e in events] == ["sql", "finished"]
+def erasure_observation():
     (record,) = [json.loads(line[10:]) for line in lines if line.startswith("W1_ERASE6 ")]
     assert record["attempt"] == nonce and record["id"] == "canary-identity"
     key = record["db"][3:]
@@ -77,8 +76,13 @@ if study == "erase6":
     assert record["pinnedCode"] == record["freshCode"] == "ErasureQueryUnsupported"
     assert record["feedCode"] == record["pastLogCode"] == "FeedErasureUnsupported"
     assert all(type(record[k]) is bool for k in ("heldCleartext", "historyPresent", "journalCleartext"))
+    return record
+
+
+if study == "erase6":
+    assert [e["k"] for e in events] == ["sql", "finished"]
     with (out / ("observation-" + str(uuid.uuid4()) + ".json")).open("x") as f:
-        json.dump({**binding, "observation": record}, f, indent=2)
+        json.dump({**binding, "observation": erasure_observation()}, f, indent=2)
         print(f.name)
     sys.exit(0)
 
@@ -232,6 +236,7 @@ for i, (event, covered) in enumerate(zip(events[3:7], (False, True, True, False)
                   "requestBytes": quantiles([r["write"][0] for r in samples]),
                   "ackBytes": quantiles([r["write"][1] for r in samples]),
                   "datoms": sorted({r["write"][2] or 0 for r in samples})})
-proof = {**binding, "oracle": revision, "case": sha(queries), "expected": sha(answer), "costs": costs}
+proof = {**binding, "oracle": revision, "case": sha(queries), "expected": sha(answer), "costs": costs,
+         "erasure": erasure_observation()}
 (attempt / "verified.json").write_text(json.dumps(proof, indent=2) + "\n")
 print(attempt / "verified.json")
