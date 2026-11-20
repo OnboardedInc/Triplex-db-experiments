@@ -60,7 +60,8 @@ def estimate(paths):
                 ratio = rows / measured["proof"]["changes"]
                 wire = base["nativeRequestBytes"] + (measured["nativeRequestBytes"] - base["nativeRequestBytes"]) * ratio
                 fits.append({"rung":rung, "workSeconds":ms/1000, "transactionBytes":round(wire),
-                             "fitsGatewayEstimate":wire <= 4194304})
+                             "fitsGatewayEstimate":wire <= 4194304,
+                             "literalEncodedBytes":round(measured["proof"]["envelope"]["encodedBytes"] * n / rung)})
             forecasts[n][name] = {"changedPeople":owners, "changedRows":rows,
                                   "owed":owners if name=="wage-stored" else 0, "fits":fits}
     return forecasts
