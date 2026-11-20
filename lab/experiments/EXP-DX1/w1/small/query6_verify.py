@@ -113,6 +113,7 @@ if study == "query6-cost":
         writer = arm["writer"]
         assert writer["database"] == arm["db"] and writer["installedDefinitionMatches"] is True
         assert writer["ledger"] is True and writer["packedJournal"] is False and writer["leanNativeQuery"] is covered
+        assert writer["packedJournalCount"] == 0 and len(writer["selectedDefinitionSha256"]) == 64
         samples = arm["samples"]
         assert len(samples) == len({r["id"] for r in samples}) == 64
         for n, sample in enumerate(samples):
@@ -121,8 +122,8 @@ if study == "query6-cost":
             assert sample["saved"] > 0 and sample["readMs"] > 0 and all(x > 0 for x in sample["read"] + sample["write"])
         pooled[covered].extend(samples)
         costs.append({"covered": covered, **summarize_cost(samples)})
-    result = {**binding, "costs": costs, "pooled": {str(k): summarize_cost(v) for k, v in pooled.items()},
-              "erasure": erasure_observation()}
+    assert len({event["v"]["writer"]["selectedDefinitionSha256"] for event in events[1:5]}) == 1
+    result = {**binding, "costs": costs, "pooled": {str(k): summarize_cost(v) for k, v in pooled.items()}}
     with (out / ("verified-" + str(uuid.uuid4()) + ".json")).open("x") as f:
         json.dump(result, f, indent=2)
         print(f.name)

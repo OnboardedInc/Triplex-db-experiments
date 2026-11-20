@@ -39,6 +39,7 @@ async function withScope<T>(
   url: string,
   key: string,
   layout: Layout,
+  clock: number | null,
   run: (
     t: typeof Triples.Service,
     rt: ReturnType<typeof runtime>,
@@ -48,7 +49,7 @@ async function withScope<T>(
 ): Promise<T> {
   const client = new DatomicClient(url, 30000);
   const scope = DatabaseScope.test(key);
-  const rt = runtime(client, scope, layout);
+  const rt = runtime(client, scope, layout, clock);
   try {
     const created = await client.create(scope, layout, true);
     assert.equal(created.created, true);
@@ -65,7 +66,7 @@ function runtime(
   client: DatomicClient,
   scope: ReturnType<typeof DatabaseScope.test>,
   layout: Layout,
-  clock = 100,
+  clock: number | null,
 ) {
   return ManagedRuntime.make(
     Runtime.define({
@@ -82,7 +83,7 @@ function runtime(
     }).layer({
       scope,
       capabilities: Capabilities.none,
-      deterministic: { startTime: clock, seed: `query6-${clock}` },
+      ...(clock === null ? {} : { deterministic: { startTime: clock, seed: `query6-${clock}` } }),
     }),
   );
 }
@@ -98,7 +99,7 @@ const results = <T>(value: { results: readonly T[] }) => value.results;
 // [DX-W1] Why: keep the documented R-JNL-5 operations and record the exact bytes from the public SDK.
 // Rejected: comparing only the gateway status or counting synthetic journal rows as retained triples.
 export function queryProof(url: string, nonce: string, layout: Layout) {
-  return withScope(url, nonce + "-" + layout, layout, async (t, rt, client, db) => {
+  return withScope(url, nonce + "-" + layout, layout, 100, async (t, rt, client, db) => {
     const run = rt.runPromise;
     // [DX-W1] Why: use the real K writer while the reader's business clock stays at 100.
     // Rejected: disabling server-assigned record time, which bypasses the K save ledger.
@@ -425,17 +426,23 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
 // [DX-W1] Why: use identical saves and verify every recorded result outside each latency sample.
 // Rejected: attributing differences in row count or an unverified acknowledgement to query coverage.
 export function queryCost(url: string, nonce: string, layout: Layout, covered: boolean) {
-  return withScope(url, nonce, layout, async (t, rt, client, db) => {
+  return withScope(url, nonce, layout, null, async (t, rt, client, db) => {
     const run = rt.runPromise;
     const writer = await client.request<{
       database: string;
       ledger: boolean;
       packedJournal: boolean;
+      packedJournalCount: number;
       leanNativeQuery: boolean;
       installedDefinitionMatches: boolean;
+      selectedDefinitionSha256: string;
     }>("GET", `/v2/db/${db}/write-options`);
     assert.equal(writer.database, db);
-    assert(writer.ledger && !writer.packedJournal && writer.installedDefinitionMatches);
+    assert.equal(writer.ledger, true);
+    assert.equal(writer.packedJournal, false);
+    assert.equal(writer.packedJournalCount, 0);
+    assert.equal(writer.installedDefinitionMatches, true, JSON.stringify(writer));
+    assert.match(writer.selectedDefinitionSha256, /^[a-f0-9]{64}$/);
     assert.equal(writer.leanNativeQuery, covered);
     const seed = await run(
       t.transact(Array.from({ length: 48 }, (_, i) => a("e:" + i, ":field", "seed"))),
@@ -455,7 +462,8 @@ export function queryCost(url: string, nonce: string, layout: Layout, covered: b
       );
       const saved = performance.now() - start;
       const write = requests.find((entry) => entry.path.endsWith("/transact"));
-      assert(write && write.status === 200);
+      assert(write && write.status === 200 && write.position === committed.position);
+      assert(write.datoms !== undefined && write.datoms > 0);
       assert.equal(committed.position, seed.position + n + 1);
       assert.equal(committed.retracted, 1);
       last = committed.triples[0]!;

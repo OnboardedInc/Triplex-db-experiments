@@ -148,17 +148,22 @@
     (when (> (alength bytes) 4194304) (codec/invalid "Request too large"))
     (let [start (System/nanoTime) input (trace/span "gateway.request-parse" "gateway" (json/read-str (String. bytes "UTF-8")))]
       (.set request-parse-micros (quot (- (System/nanoTime) start) 1000)) (if (map? input) (with-meta input {:wire-bytes (alength bytes)}) input))))
+(defn writer-definition [function]
+  ;; [DX-W1] Why: the stored function exposes the normalized source fields as data.
+  ;; Rejected: Object.toString on a compiled function (its display can depend on the instance).
+  (pr-str (mapv #(get function %) [:lang :imports :requires :params :code])))
 (defn write-layout-options [db database]
   (let [selected (commit/entry db {} (lean/enabled? db))
         [variant body] (commit/variants [true false])
         actual (:db/fn (d/entity db selected))
+        source (when actual (writer-definition actual))
         expected (d/function {:lang :clojure :params '[db payload]
                                :requires '[[datomic.api :as d] [clojure.data.json :as json]]
                                :code (if (= selected variant) body commit/code)})]
     {:database database :scope (stored-scope db) :basis (str (d/basis-t db))
      :predecessorRequested (boolean pred/enabled) :predecessorSelected (= selected variant)
-     :selectedFunction (str selected) :selectedDefinitionSha256 (schema/sha256 (str actual))
-     :installedDefinitionMatches (and actual (= (str actual) (str expected)))
+     :selectedFunction (str selected) :selectedDefinitionSha256 (when source (schema/sha256 source))
+     :installedDefinitionMatches (and (some? source) (= source (writer-definition expected)))
      :ledger (boolean (or ledger/enabled packed/enabled)) :packedJournal (boolean packed/enabled)
      :packedJournalCount (if (d/entid db :triplex.journal/packed)
                            (reduce (fn [n _] (inc n)) 0 (d/datoms db :aevt :triplex.journal/packed)) 0)
