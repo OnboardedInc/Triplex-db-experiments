@@ -50,7 +50,7 @@ Current and pinned percentiles use 24 exact reads per arm and depth block. Cold 
 
 ```sh
 node lab/bin/heavy.mjs --label DX-COMPACT1 -- node lab/bin/engine.mjs compact-probe --holder DX-COMPACT1 --run prototype --image tx2-datomic:dx-w1-small-cost-69a7e6cd --out prototype-new
-node --experimental-strip-types lab/experiments/EXP-DX1/compact1/gate.ts "$attempt_dir"
+node --experimental-strip-types "$attempt_dir/source/gate.ts" "$attempt_dir"
 node lab/experiments/EXP-DX1/compact1/measure-summary.mjs "$attempt_dir"
 ```
 

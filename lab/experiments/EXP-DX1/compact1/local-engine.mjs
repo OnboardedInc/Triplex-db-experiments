@@ -97,8 +97,10 @@ export async function runCompactProbe(opts, config, manager) {
   assert(!process.env.DOCKER_HOST || process.env.DOCKER_HOST === DOCKER_HOST);
   const phase = opts.run;
   const profile = opts.profile ?? "baseline";
+  const loadPeople = Number(opts.people ?? "2000");
   assert(["floor", "layout", "prototype", "benchmark", "load"].includes(phase));
   assert(["baseline", "large-index", "parallel-index"].includes(profile));
+  assert(opts.people === undefined || (phase === "load" && [2000, 100000].includes(loadPeople)));
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
   const imageRef = opts.image ?? config.lanes.datomic.image;
   assert.match(imageRef, /^tx2-datomic:[a-z0-9][a-z0-9.-]{0,63}$/);
@@ -144,7 +146,7 @@ export async function runCompactProbe(opts, config, manager) {
           const candidate = ["s1", "s2", "s3"].map((key) => slotInfo(config, "datomic", key))
             .find((info) => !fs.existsSync(info.lockDir) && !live.some((row) => row.name === info.container));
           if (!candidate) return;
-          const diskForecastBytes = phase === "load" ? 2 * GiB : GiB;
+          const diskForecastBytes = (phase === "load" && loadPeople === 100000 ? 4 : phase === "load" ? 2 : 1) * GiB;
           const allowed = admission({
             config: { ...config, pool: { ...config.pool, memLimitBytes: Math.min(15 * GiB, config.pool.memLimitBytes) } },
             reservations: ledger.reservations, running: live, diskUsedBytes: vmDisk(config).usedBytes,
@@ -258,14 +260,15 @@ export async function runCompactProbe(opts, config, manager) {
     assert.deepEqual(boundFiles, new Map(Object.entries(sources)));
     const binding = {
       attempt, prefix, phase, profile, slot: slot.slot, source: sourceCommit, sourceHash, sources,
+      ...(phase === "load" ? { loadPeople } : {}),
       image: datomicImage, pgImage, jars, peerSha1, durability: durable, roles: Object.fromEntries(created), caps, settings,
       owner: sha256(fs.readFileSync(slot.ownerFile)), startedAt: new Date().toISOString(),
     };
     write("binding.json", binding);
     const namespace = phase === "floor" ? "triplex.compact.floor" : "triplex.compact.probe";
-    const invoke = (step, file) =>
-      capture(["exec", peerId, "/opt/datomic/bin/run", "-m", namespace, step], path.join(dir, file), abort.signal);
-    if (phase !== "prototype") await invoke(phase, "probe.log");
+    const invoke = (step, file, args = []) =>
+      capture(["exec", peerId, "/opt/datomic/bin/run", "-m", namespace, step, ...args], path.join(dir, file), abort.signal);
+    if (phase !== "prototype") await invoke(phase, "probe.log", phase === "load" ? [String(loadPeople)] : []);
     else {
       // [DX-COMPACT1] Why: an independent probe can still produce useful evidence after another probe fails.
       // Rejected: losing the capacity and read measurements after a semantic failure, or mixing concurrent timed arms.

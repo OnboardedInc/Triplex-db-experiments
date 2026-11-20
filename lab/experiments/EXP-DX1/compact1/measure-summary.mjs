@@ -157,13 +157,19 @@ function load(rows) {
   const load = rows.find((x) => x.kind === "load");
   const reads = rows.filter((x) => x.kind === "load-read");
   const heap = rows.find((x) => x.kind === "projection-heap");
-  assert.equal(load.people, 2000);
-  assert.equal(load.facts, 320000);
-  assert.equal(load.txs, 250);
+  assert.equal(load.people, binding.loadPeople ?? 2000);
+  assert.equal(load.facts, 160 * load.people);
+  assert.equal(load.txs, load.people / 8);
+  if (load.people === 100000) {
+    const progress = rows.filter((x) => x.kind === "seed-progress");
+    assert.deepEqual(progress.map((r) => [r.people, r.txs]), Array.from({ length: 10 }, (_, i) => [(i + 1) * 10000, (i + 1) * 1250]));
+    assert(progress.every((r, i) => r.wallMs > (progress[i - 1]?.wallMs ?? 0) && r.wallMs <= load.wallMs));
+  }
   assert(load.before.inserted <= load.after.inserted && load.after.inserted <= load.afterIndex.inserted);
-  assert.equal(reads.length, Math.ceil(load.people / 23));
+  const spacing = Math.max(23, Math.floor(load.people / 87));
+  assert.equal(reads.length, Math.ceil(load.people / spacing));
   reads.forEach((row, i) => {
-    assert.equal(row.person, i * 23);
+    assert.equal(row.person, i * spacing);
     assert.equal(row.facts, 160);
     assert(row.ms >= 0);
   });
@@ -171,6 +177,7 @@ function load(rows) {
   assert.equal(heap.facts, 20480);
   return {
     people: load.people, facts: load.facts, txs: load.txs, elapsedMs: load.wallMs,
+    indexCatchupMs: load.indexCatchupMs,
     factsPerSecond: round(load.facts * 1000 / load.wallMs),
     bodyBytesPerFact: round(load.bytes / load.facts),
     insertedWalBytesPerFact: round((load.after.inserted - load.before.inserted) / load.facts),

@@ -49,6 +49,9 @@
                                        (:adds (store/event last (store/claim last account (:command req))))))
                             (assoc p account pos)))
                         counts (map vector cohort requests outcomes))]
+          (when (and (>= people 10000) (zero? (mod (+ next (count cohort)) 10000)))
+            (floor/emit "seed-progress" {:people (+ next (count cohort)) :txs (inc txs)
+                                          :wallMs (floor/ms (- (System/nanoTime) start))}))
           ;; [DX-COMPACT1] Why: revision index i must refer to subject i across every cohort.
           ;; Rejected: assuming assoc! keeps the transient array-map after its first eight entries.
           (recur (+ next (count cohort)) (if collect? (into revs (map :position outcomes)) revs) p (inc txs)
@@ -249,19 +252,20 @@
       (finally ((:close w)) (d/release (:conn compact)) (d/release (:conn legacy))))))
 
 (defn heap-used [] (.getUsed (.getHeapMemoryUsage (ManagementFactory/getMemoryMXBean))))
-(defn load! []
-  (let [people 2000 facts 160 store (open-compact! "load" 128) conn (:conn store)
+(defn load! [people]
+  (assert (#{2000 100000} people))
+  (let [facts 160 store (open-compact! "load" 128) conn (:conn store)
         before (floor/pg-sample)
         rows (compact-seed! store people facts 8 false)
         after (floor/pg-sample)
-        indexed (floor/index! conn)
+        [index-ms indexed] (timed #(floor/index! conn))
         view (store/sync-view store)]
-    (assert (= people (reduce + (map #(store/head-position view %) f/accounts))))
+    (assert (every? #(= (quot people (count f/accounts)) (store/head-position view %)) f/accounts))
     (assert (zero? (.size ^java.util.LinkedHashMap (:cache store))))
     (floor/emit "load" (assoc (dissoc rows :revs) :people people :facts (* people facts)
-                              :indexedThrough indexed :before before :after after
+                              :indexedThrough indexed :indexCatchupMs index-ms :before before :after after
                               :afterIndex (floor/pg-sample)))
-    (doseq [i (range 0 people 23)]
+    (doseq [i (range 0 people (max 23 (quot people 87)))]
       (let [p (inc (quot i (count f/accounts)))
             [ms w] (timed #(store/world store view (f/account i) (f/root i) :current nil f/now-valid))]
         (assert (= (expected-world i p 0 0 0 false) (f/sorted-world w)))
@@ -288,12 +292,12 @@
     (floor/emit "recovery" {:receipt receipt :world world :erased erased :head (d/basis-t view)})
     (d/release conn)))
 
-(defn -main [mode]
+(defn -main [mode & args]
   (case mode
     "layout" (layout!)
     "oracle" (oracle/run!)
     "benchmark" (compare!)
-    "load" (load!)
+    "load" (load! (Long/parseLong (or (first args) "2000")))
     "recovery" (recovery!))
   (shutdown-agents)
   (System/exit 0))
