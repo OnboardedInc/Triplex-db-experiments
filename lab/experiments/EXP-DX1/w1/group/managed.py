@@ -70,7 +70,7 @@ for action in ["build","selftest"]:
         if shutil.disk_usage(repo).free < 5*1024**3:
             sys.exit("Below the lab disk floor")
         logfile = out / f"{action}-{attempt}.log"
-        cmd = ["node","lab/bin/heavy.mjs","--poll-ms","300","--label","DX-W1-"+action,"--","node","lab/bin/engine.mjs",action,"--lane","datomic","--holder","DX-W1"]
+        cmd = ["node","lab/bin/heavy.mjs","--poll-ms","100","--label","DX-W1-"+action,"--","node","lab/bin/engine.mjs",action,"--lane","datomic","--holder","DX-W1"]
         if action == "selftest" and args.field:
             cmd.extend(["--scratch-gib",str(scratch)])
         with logfile.open("x") as log:

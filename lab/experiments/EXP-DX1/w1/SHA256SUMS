@@ -128,3 +128,9 @@ f692f85f2f14e44bff7881bbca54b80b95673865fcd61c305c06ff9b1eec0c9f  DX-W1/write5-n
 56122bd9e4d22ce933258aaf31418c5e8a6a6b8b64ada4eadcfdfc73aedb4d31  DX-W1/write5-native-census/source.sha256
 ac5bf97506a7556295bdf2d5a9dbd1daefb0f1aa4910e4399f385413aeb96ab2  DX-W1/write5-native-census/head
 fed3c5f139aff58186cef93b53c68cde790cdfaeafb536c947fc61a95b94c57a  DX-W1/write5-native-census/attempt
+499c6afd023f8485e19aed89cf1df03adc1acdf7f8e3af6e7aed5d886bf5ceab  DX-W1/write5-wire/1-classic.json
+822984201d1a517b23e6dc8a8a8a370d255388dcc4f825dbc544bf78a0951633  DX-W1/write5-wire/1-ordered.json
+5b4dfecbde5e96b0ddfb87cfa1f34210f16b18b723b4c508440383fc8aec2162  DX-W1/write5-wire/3-classic.json
+78d9f0b02bac83ef2c6b5c3d68ff9a524731784466caa2a9bd434c1ab428d1a4  DX-W1/write5-wire/3-ordered.json
+914b488df8ce691875431a741eece03776573777065767532b3600cbe27e7b32  DX-W1/write5-wire/source.sha256
+6ed037a07ccbfd83e574faa81decf7ca0a4544965d8dc6a7c62bfee6415d90ed  DX-W1/write5-wire/wire.jsonl
