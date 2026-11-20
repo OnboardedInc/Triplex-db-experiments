@@ -129,6 +129,22 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
   ]);
 } else if (binding.mode === "--joined-server-smoke") {
   run("join/server.ts", ["64", dir, "--local"]);
+} else if (binding.mode === "--joined-part7") {
+  for (const f of ["settle-gate.ts", "future-gate.ts", "gate.ts"]) run("join/" + f, [dir]);
+  process.env.NOTIFY_NATIVE = "1";
+  const body = execFileSync(
+    process.execPath,
+    ["--experimental-strip-types", "--test", "lab/experiments/EXP-DX1/notify1/coverage.test.ts"],
+    { encoding: "utf8" },
+  );
+  assert.match(body, /# pass 7\b/);
+  assert.match(body, /# fail 0\b/);
+  writeFileSync(join(dir, "shared-coverage.tap"), body, { flag: "wx" });
+} else if (binding.mode === "--joined-role-gate") {
+  run("join/role-gate.ts", [dir]);
+} else if (binding.mode === "--joined-settle-price") {
+  assert(["64", "1000", "10000"].includes(binding.size!));
+  run("join/settle-price.ts", [dir, binding.size!, binding.size === "64" ? "3" : "60"]);
 } else if (binding.mode === "--joined-deep") {
   assert(["1000", "10000"].includes(binding.size!));
   run("join/deep-price.ts", [dir, binding.size!]);

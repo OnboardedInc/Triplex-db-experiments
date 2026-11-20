@@ -53,17 +53,33 @@ const reopen = async () => {
   a = new JoinedAccount(s);
 };
 let active: W0.ReleaseDoc | null = null;
-async function check(t: any, at: string, doc: W0.ReleaseDoc | undefined) {
+async function check(t: any, at: string, doc: W0.ReleaseDoc | undefined, shared = false) {
   const n = doc ? (await a.notices.observe()).value.sequence : undefined;
-  notes.push(
-    await ref.check(a, ids, world, doc ?? active!, { tx: t.position, validTime: at }, active, n),
+  const proof = await ref.check(
+    a,
+    ids,
+    world,
+    doc ?? active!,
+    { tx: t.position, validTime: at },
+    active,
+    n,
+    true,
+    true,
+    shared,
   );
+  if (shared)
+    assert(
+      proof.coverage &&
+        proof.coverage.affected.length >= 2 &&
+        proof.coverage.complement.includes(ids[0]!),
+    );
+  notes.push(proof);
   if (doc) active = doc;
 }
-async function runSave(id: string, e: Edit, at = valid, editor = a) {
+async function runSave(id: string, e: Edit, at = valid, editor = a, shared = false) {
   const r = await editor.save(id, e, at);
   apply(e.e, e.a, e.values, r.position);
-  await check(r, at, undefined);
+  await check(r, at, undefined, shared);
   return r;
 }
 function kill(msg: object) {
@@ -147,6 +163,13 @@ try {
   await runSave("back", { e: ids[1]!, a: "payRateCents", values: [1550] });
   const digest = sha256(canonical((await a.notices.observe()).value));
   assert(digest.length === 64);
+  await runSave(
+    "local-before",
+    { e: "loc:x", a: "localMinWageCents", values: [1810] },
+    valid,
+    a,
+    true,
+  );
   let raced = false;
   const contender = await openStore(scope);
   try {
@@ -158,11 +181,12 @@ try {
           {
             e: "jur:x",
             a: "stateMinWageCents",
-            values: [1800],
+            values: [2050],
             from: "2026-11-01T00:00:00.000000Z",
           },
           valid,
           new JoinedAccount(contender),
+          true,
         );
       }
     });
@@ -171,6 +195,13 @@ try {
   }
   assert(raced && r.changes.length === 4);
   await check(r, valid, W0.R1.doc);
+  await runSave(
+    "local-after",
+    { e: "loc:x", a: "localMinWageCents", values: [2250] },
+    valid,
+    a,
+    true,
+  );
   const stale = await propose(s, "w0", ids[1]!);
   assert.equal(
     await a.admit(stale, async () => {

@@ -1,12 +1,12 @@
 import assert from "node:assert/strict";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { execFile, execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { promisify } from "node:util";
 import { W0, canonical, sha256, type WorldRow } from "../../../../bench/lib/w0-world.ts";
-import { ids, type Fact } from "../../../../bench/lib/world.ts";
+import { ids, subjectOf, type Fact } from "../../../../bench/lib/world.ts";
 import { integer, string } from "../../../../bench/lib/deep-world.ts";
 import { makeDeepTrace } from "../../../../bench/lib/deep-trace.ts";
 import { liveArrivals, liveEdits } from "../../scale1/deep-live.ts";
@@ -18,10 +18,14 @@ import { JoinedAccount } from "./account.ts";
 import { rawDeep, replaceDeep } from "./deep.ts";
 import { authoredSeed, authoredWrite, compareSource, expectedPolicy } from "./deep-reference.ts";
 import { Reference } from "./check.ts";
+import { timings, verifyTimings } from "./observations.ts";
+import { cells, collect, format } from "./collect.ts";
+import { settlementPrices } from "./settle-price.ts";
 
 const [count, root, flag] = process.argv.slice(2),
   n = Number(count),
   smoke = flag === "--local";
+assert(flag === undefined || flag === "--settlement" || smoke);
 assert(root && (smoke ? n >= 64 && n <= 1000 : process.platform === "linux" && n === 100000));
 const ownerPath = process.env.TRIPLEX_LAB_SLOT_OWNER!,
   ownerBytes = readFileSync(ownerPath),
@@ -32,11 +36,17 @@ assert(
     owner.container &&
     owner.volume,
 );
-const save = (name: string, data: unknown) =>
-  writeFileSync(join(root, name + ".json"), JSON.stringify(data, null, 2) + "\n", {
+const produced = new Map<string, string>();
+const save = (name: string, data: unknown) => {
+  const bytes = JSON.stringify(data, null, 2) + "\n";
+  writeFileSync(join(root, name + ".json"), bytes, {
     flag: "wx",
     flush: /^(?:offer|terminal)-/.test(name),
   });
+  const digest = sha256(bytes);
+  produced.set(name, digest);
+  return digest;
+};
 const git = (...args: string[]) =>
   execFileSync("git", args, { encoding: "utf8", maxBuffer: 32 << 20 }).trim();
 const source = git("rev-parse", "HEAD");
@@ -66,6 +76,7 @@ for (const pkg of ["core", "qualification", "host", "datomic", "w0"]) {
 const config = join(process.env.TX2_CONFIG_DIR ?? ".", "lab/config/slots.json");
 const configDigest = sha256(readFileSync(config));
 const attempt = {
+  format,
   source,
   nonce: randomUUID(),
   owner: sha256(ownerBytes),
@@ -108,21 +119,14 @@ const authored = (i: number, p: number) =>
   tape.get(i)?.findLast((x) => x.p <= p)?.rows ?? authoredSeed(i, seeded.seedPosition(i));
 const expected = (i: number, p: number) => expectedPolicy(i, authored(i, p));
 const beforeMs = millis(valid);
-const plan = [
-  ["owed", 0],
-  ["staged", 0],
-  ["owed", 3.5],
-  ["staged", 3.5],
-  ["owed", 23.5],
-  ["staged", 23.5],
-] as const;
+const plan = cells;
 const windows = [];
+const seenReleases = new Set<string>();
 try {
   for (const [index, [mode, rate]] of plan.entries()) {
     const baseline = await account.publish("baseline-" + index, W0.R1.doc, valid, "owed");
     const priorSeq = (await account.notices.observe()).value.sequence;
     const offered = clock() + (smoke ? 200 : rate ? 29000 : 200),
-      cutoff = offered + 1000,
       windowStart = offered - (smoke ? 100 : rate ? 29000 : 0);
     const pending: Promise<unknown>[] = [];
     let tail = Promise.resolve(),
@@ -153,8 +157,11 @@ try {
     const subject = n - index - 1; // Distinct subjects for each first request.
     const probe = async () => {
       const started = clock(),
-        observed = await reader.readAt(seeded.roster[subject]!, { validTime: valid });
-      return { started, finished: clock(), ...observed };
+        position = await readStore.head(),
+        headObserved = clock(),
+        observed = await reader.readAt(seeded.roster[subject]!, { position, validTime: valid });
+      assert.equal(observed.basis.tx, position);
+      return { started, headObserved, finished: clock(), ...observed };
     };
     const delays: number[] = [];
     if (rate)
@@ -211,18 +218,16 @@ try {
         );
       }
     })();
-    const scheduledProbe = (async () => {
-      while (clock() < cutoff) await sleep(Math.max(1, cutoff - clock()));
-      return probe();
-    })();
-    // [DX-ACT1] Why: supervise the independent deadline observer even if the writer fails first. Rejected: dropping the offer on an unhandled observer rejection.
-    void scheduledProbe.catch(() => {});
     await sleep(Math.max(0, offered - clock()));
-    const ingress = clock();
+    const ingress = clock(),
+      cutoff = ingress + 1000;
     // [DX-ACT1] Why: author an unseen document on ingress and schedule the deadline read independently. Rejected: timing after compilation or making the deadline probe wait for the Publish ACK.
     const document = structuredClone(W0.R2.doc),
       days = [1, 2, 4, 5, 6, 7][index]!;
     Object.assign(document.rules.find((r) => r.id === "I9S2")!, { params: { businessDays: days } });
+    Object.assign(document.rules.find((r) => r.id === "OT")!, {
+      params: { thresholdMinutes: 2411 + index },
+    });
     const offer = {
       index,
       mode,
@@ -234,8 +239,33 @@ try {
       request: "publish-" + index,
       nonce: attempt.nonce,
     };
-    save("offer-" + index, offer);
-    const offerSha = sha256(readFileSync(join(root, "offer-" + index + ".json")));
+    const offerSha = save("offer-" + index, offer);
+    const scheduledProbe = (async () => {
+      while (clock() < cutoff) await sleep(Math.max(1, cutoff - clock()));
+      const observed = await probe();
+      save("deadline-" + index, { nonce: attempt.nonce, offerSha, observed });
+      return observed;
+    })();
+    // [DX-ACT1] Why: supervise deadline sources even if the writer fails first. Rejected: dropping the offer on an unhandled observer rejection.
+    void scheduledProbe.catch(() => {});
+    const witnessIndices = [subject, n - index - 9, Math.floor(n / 2) - index];
+    const witnessSubjects = witnessIndices.map((i) => seeded.roster[i]!);
+    const nonceAtDeadline = randomUUID();
+    const observeInNewProcess = promisify(execFile)(
+      process.execPath,
+      [
+        "--experimental-strip-types",
+        new URL("./read-witness.ts", import.meta.url).pathname,
+        store.scope,
+        "act2-deep",
+        nonceAtDeadline,
+        valid,
+        "at-" + (performance.timeOrigin + cutoff),
+        ...witnessSubjects,
+      ],
+      { encoding: "utf8", maxBuffer: 16 << 20, timeout: 120000 },
+    );
+    void observeInNewProcess.catch(() => {});
     let testedCut: number | undefined;
     try {
       const reply = await inOrder(async () => {
@@ -246,12 +276,19 @@ try {
             sources: "indexed",
           }),
         );
-        const durable = store.counters.ackObserved;
+        const receipt = store.counters.lastReceipt;
+        const matched =
+          receipt &&
+          receipt.commandId === result.value.commandId &&
+          receipt.txId === result.value.txId &&
+          receipt.position === result.value.position;
+        const durable = matched ? receipt.time : clock();
         assert(durable >= entered && durable <= clock());
         return {
           r: result.value,
           entered,
           durable,
+          durableClock: matched ? receipt.clock : "readback",
           stages: account.lastMaterial,
           wire: result.samples
             .filter((x) => String(x.path).endsWith("/transact"))
@@ -276,6 +313,8 @@ try {
       const sequence = priorSeq + 1,
         physical = await account.physical(sequence),
         newer = W0.compileRelease(document);
+      assert(!W0.RELEASES_BY_HASH.has(newer.hash) && !seenReleases.has(newer.hash));
+      seenReleases.add(newer.hash);
       assert(
         physical.marker.release === newer.hash &&
           physical.marker.seq === sequence &&
@@ -297,8 +336,47 @@ try {
         );
         assert.equal(read.json, oracle.json);
       }
-      const witnessIndices = [subject, n - index - 9, Math.floor(n / 2) - index];
-      const witnessSubjects = witnessIndices.map((i) => seeded.roster[i]!);
+      const cold = JSON.parse((await observeInNewProcess).stdout);
+      assert(
+        cold.scope === store.scope && cold.nonce === nonceAtDeadline && cold.pid !== process.pid,
+      );
+      assert(Number.isSafeInteger(cold.position) && cold.position >= baseline.position);
+      assert.equal(cold.reads.length, witnessSubjects.length);
+      const oracleDeadline = JSON.parse(
+        await ref.oracle.call("check", {
+          document: cold.position >= reply.r.position ? document : W0.R1.doc,
+          old: W0.R1.doc,
+          basis: { tx: cold.position, validTime: valid },
+          worlds: witnessIndices.map((i) => expected(i, cold.position)),
+          fold: false,
+        }),
+      );
+      for (const [i, read] of cold.reads.entries()) {
+        assert.equal(read.subject, witnessSubjects[i]);
+        assert.deepEqual(read.basis, { tx: cold.position, validTime: valid });
+        assert.equal(read.json, oracleDeadline[i].json);
+      }
+      const points = [
+        [subject, first.basis.tx],
+        [subject, deadline.basis.tx],
+        ...witnessIndices.map((i) => [i, cold.position]),
+      ];
+      const samples = [];
+      for (const [person, cut] of points) {
+        compareSource(
+          await rawDeep(readStore, person, { tx: cut, validTime: valid }),
+          authored(person, cut),
+        );
+        samples.push(expected(person, cut));
+      }
+      save("point-inputs-" + index, { nonce: attempt.nonce, baseline: W0.R1.doc, samples });
+      const coldDeadline = {
+        ...cold,
+        started: cold.started - performance.timeOrigin,
+        headObserved: cold.headObserved - performance.timeOrigin,
+        finished: cold.finished - performance.timeOrigin,
+        basis: { tx: cold.position, validTime: valid },
+      };
       const witnessNonce = randomUUID();
       const currentCut = await store.head();
       // [DX-ACT1] Why: a process with no remembered results reopens the exact observed cut. Rejected: taking the new process's later head as evidence for the deadline.
@@ -368,12 +446,21 @@ try {
         ingress,
         entered: reply.entered,
         durable: reply.durable,
-        offeredToDurableMs: reply.durable - offered,
-        firstCorrectMs: first.finished - offered,
-        noticeRecipeDurableMs: reply.durable - offered,
-        individualOwedDurableMs: null,
-        changedValuesDurableMs: mode === "staged" ? reply.durable - offered : null,
-        deadline: { ...deadline, onRelease: deadline.basis.tx >= reply.r.position },
+        durableClock: reply.durableClock,
+        ...timings(offer, {
+          entered: reply.entered,
+          durable: reply.durable,
+          nativeCut: reply.r.position,
+          first,
+          deadline,
+          coldDeadline,
+        }),
+        coldDeadline,
+        deadline: {
+          ...deadline,
+          onRelease: deadline.basis.tx >= reply.r.position,
+          scheduleLagMs: deadline.started - cutoff,
+        },
         freshWitness: {
           ...witness,
           deadlineChangedRows: oracleReads.map((r: { rows: unknown[] }) => r.rows.length),
@@ -390,8 +477,6 @@ try {
         wire: reply.wire,
         work: reply.stages,
         writes: rows,
-        deadlineMiss:
-          first.finished > cutoff || reply.durable > cutoff || deadline.basis.tx < reply.r.position,
       };
       save("window-" + index, result);
       save("terminal-" + index, {
@@ -405,16 +490,17 @@ try {
       });
       windows.push(result);
     } catch (error) {
+      const [observed] = await Promise.allSettled([scheduledProbe, observeInNewProcess]);
       save("terminal-" + index, {
         index,
         nonce: attempt.nonce,
         offerSha,
         status: "error",
-        cut: testedCut ?? null,
+        cut: testedCut ?? (observed?.status === "fulfilled" ? observed.value.basis.tx : null),
         elapsed: clock() - offered,
         error: String(error),
       });
-      await Promise.allSettled([traffic, scheduledProbe]);
+      await Promise.allSettled([traffic]);
       await Promise.allSettled(pending);
       throw error;
     }
@@ -445,6 +531,10 @@ try {
       false,
     );
     assert(proof.count === n && proof.changes > 0 && proof.owed > owedBefore);
+    assert(
+      proof.changedOwners === n && proof.changedRoster === seeded.rosterHash,
+      "All-person edit must change the independently enrolled subjects",
+    );
     save("proof-" + r.index, {
       ...proof,
       notices: proof.owed - owedBefore,
@@ -455,12 +545,48 @@ try {
     });
     previous = r.doc;
   }
+  const nativeSeed = createHash("sha256");
+  let nativeFacts = 0;
+  for (let start = 0; start < n; start += 32) {
+    const people = Array.from({ length: Math.min(32, n - start) }, (_, i) => start + i);
+    const rows = await store.rows(people.map(ids.placement), seeded.cut, valid);
+    const group = new Map<number, WorldRow[]>();
+    for (const row of rows) {
+      const person = subjectOf(row.entityId);
+      assert(person !== null && people.includes(person));
+      const list = group.get(person) ?? [];
+      list.push(row);
+      group.set(person, list);
+    }
+    for (const person of people) {
+      const actual = group.get(person)!;
+      compareSource(actual, authoredSeed(person, seeded.seedPosition(person)));
+      const sorted = actual
+        .map((r) =>
+          canonical([r.entityId, r.attribute, r.value, r.position, r.validFrom, r.validTo ?? null]),
+        )
+        .sort();
+      nativeSeed.update(canonical(sorted) + "\n");
+      nativeFacts += actual.length;
+    }
+  }
+  assert.equal(nativeFacts, seeded.facts);
+  save("server-seed", {
+    nonce: attempt.nonce,
+    n,
+    roster: seeded.rosterHash,
+    sources: seeded.sourceHash,
+    facts: nativeFacts,
+    nativeCut: seeded.cut,
+    nativeSeed: nativeSeed.digest("hex"),
+  });
   // The recipient stays offline through the measured windows. Post-run ordered delivery verifies the already-bound debt.
   const sink = await openStore("lazy-join-recipient-" + attempt.nonce);
   try {
     const dispatch = account.dispatcher(new Documents(sink.comp, "recipient"));
     await dispatch.drain();
     save("server-effects", await ref.receiver(account, dispatch));
+    save("server-effect-bytes", ref.owed);
   } finally {
     await sink.close();
   }
@@ -469,19 +595,41 @@ try {
   for (const [f, h] of Object.entries({ ...pins, ...build }))
     assert.equal(sha256(readFileSync(f)), h, f);
   assert.equal(sha256(readFileSync(config)), configDigest);
+  // [DX-ACT1] Why: seal the exact observation bytes produced from fresh native replies. Rejected: accepting an edited timing field by hashing whatever is on disk at the end.
+  for (const [name, digest] of produced)
+    assert.equal(sha256(readFileSync(join(root, name + ".json"))), digest, name);
+  for (const window of windows) {
+    const read = (name: string) =>
+      JSON.parse(readFileSync(join(root, name + "-" + window.index + ".json"), "utf8"));
+    const terminal = read("terminal"),
+      offer = read("offer"),
+      report = read("window");
+    assert(
+      terminal.status === "observed" &&
+        terminal.nonce === offer.nonce &&
+        terminal.nativeTx === report.nativeTx,
+    );
+    assert.equal(terminal.offerSha, produced.get("offer-" + window.index));
+    verifyTimings(offer, report);
+  }
   const outputs = Object.fromEntries(
     [
       "server-effects",
+      "server-effect-bytes",
+      "server-seed",
       ...(!smoke ? ["preflight/stage-gate", "preflight/idle-deadline"] : []),
       ...windows.flatMap((r) => [
         "offer-" + r.index,
         "terminal-" + r.index,
         "window-" + r.index,
         "proof-" + r.index,
+        "deadline-" + r.index,
+        "point-inputs-" + r.index,
       ]),
     ].map((f) => [f, sha256(readFileSync(join(root, f + ".json")))]),
   );
   save("server-observations", {
+    format,
     source,
     nonce: attempt.nonce,
     n,
@@ -497,6 +645,12 @@ try {
       deadlineMiss: x.deadlineMiss,
     })),
   });
+  save("server-collected", await collect(root, { source, owner: attempt.owner, n }));
+  if (flag === "--settlement") {
+    const extra = join(root, "settlement");
+    mkdirSync(extra);
+    await settlementPrices(extra, n, 60, 64);
+  }
 } finally {
   ref.oracle.close();
   await readStore.close();

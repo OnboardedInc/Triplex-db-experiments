@@ -56,7 +56,22 @@ export async function openStore(
   }
   const h = access === "write" ? await openTriples("datomic", scope) : undefined,
     comp = await openComposition("reach", "datomic", scope);
-  const counters = { writes: 0, accountReads: 0, subjectRoots: 0, rosterRoots: 0, ackObserved: 0 };
+  const counters = {
+    writes: 0,
+    accountReads: 0,
+    subjectRoots: 0,
+    rosterRoots: 0,
+    ackObserved: 0,
+    lastReceipt: undefined as
+      | {
+          commandId: string;
+          position: number;
+          txId: string;
+          time: number;
+          clock: "native-ack" | "readback";
+        }
+      | undefined,
+  };
   const rows = async (ids: string[], position: number, validTime = epoch) => {
     const basis = { position, validAt: millis(validTime) };
     for (const id of ids) {
@@ -135,13 +150,25 @@ export async function openStore(
         }),
       ),
     );
-    if (exit._tag === "Success") {
+    const ack = exit._tag === "Success" ? performance.now() : undefined;
+    if (ack !== undefined) {
       counters.writes++;
-      counters.ackObserved = performance.now();
+      counters.ackObserved = ack;
       onAck?.(counters.ackObserved);
     }
     const stored = await lookup(id);
-    if (stored) return check(stored);
+    if (stored) {
+      const receipt = check(stored);
+      // [DX-ACT1] Why: a recovered marker needs its own observation clock, even if an earlier stage received an ACK. Rejected: assigning the last arbitrary write's clock to this receipt.
+      counters.lastReceipt = {
+        commandId: id,
+        position: receipt.position,
+        txId: receipt.txId,
+        time: ack ?? performance.now(),
+        clock: ack === undefined ? "readback" : "native-ack",
+      };
+      return receipt;
+    }
     if ((await comp.currentPosition()) !== expected)
       throw new Conflict("Source changed at admission");
     throw Error(
