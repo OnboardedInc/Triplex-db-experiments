@@ -92,9 +92,11 @@
        [id, "baselinePayRateCents", 1500],
        [id, "weeklyMinutes", 2300 + i * 50],
      );
-@@ -148,12 +148,14 @@
+@@ -147,13 +147,16 @@
+   await runSave("back", { e: ids[1]!, a: "payRateCents", values: [1550] });
    const digest = sha256(canonical((await a.notices.observe()).value));
    assert(digest.length === 64);
++  const stoppedRecipient = await sink.head();
    let raced = false;
 +  let floor: { position: number; txId: string; sequence: number; affected: string[] } | undefined;
    const contender = await openStore(scope);
@@ -108,7 +110,7 @@
            "state-floor",
            {
              e: "jur:x",
-@@ -164,6 +166,10 @@
+@@ -164,12 +167,30 @@
            valid,
            new JoinedAccount(contender),
          );
@@ -119,7 +121,28 @@
        }
      });
    } finally {
-@@ -204,6 +210,14 @@
+     await contender.close();
+   }
+-  assert(raced && r.changes.length === 4);
++  assert(raced && floor && r.changes.length === 4);
++  // [DX-STG1] Why: inspect the racing save at the published source cut
++  // with the recipient still stopped. Rejected: counting later effects as
++  // evidence that the pending source selection was complete.
++  assert.equal(await sink.head(), stoppedRecipient);
++  assert(floor.position < r.position);
++  const pending = await a.notices.event(floor.sequence, r.position);
++  assert.equal(pending.at, floor.position);
++  assert.equal((await s.lookup("joined:state-floor"))?.txId, floor.txId);
++  const owed = await a.notices.select(pending, a.db, r.position, r.position, 0);
++  assert(owed.coverage && owed.coverage.indexAt);
++  assert.equal(owed.coverage.txId, floor.txId);
++  assert.deepEqual(owed.coverage.ids, floor.affected);
++  assert.equal(await sink.head(), stoppedRecipient);
++  const offlineCut = { recipientPosition: stoppedRecipient, publication: r.position, txId: r.txId };
+   await check(r, valid, W0.R1.doc);
+   const stale = await propose(s, "w0", ids[1]!);
+   assert.equal(
+@@ -204,6 +225,14 @@
    const sender = a.dispatcher(new Documents(sink.comp, "sink"));
    await sender.drain();
    const received = await ref.receiver(a, sender);
@@ -134,11 +157,11 @@
    const cnt = (await sender.effects()).length;
    await sender.drain();
    assert.equal((await sender.effects()).length, cnt);
-@@ -238,6 +252,7 @@
+@@ -238,6 +267,7 @@
          stops: 3,
          expected: notes,
          received,
-+        sharedFloor: { ...floor, complement, indexAt: selected.indexAt },
++        sharedFloor: { ...floor, complement, indexAt: selected.indexAt, offlineCut },
          checkedAt: before,
        },
        null,
