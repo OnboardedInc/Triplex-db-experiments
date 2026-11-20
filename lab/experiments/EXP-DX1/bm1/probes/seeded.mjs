@@ -263,8 +263,10 @@ async function prepareScaledFields() {
   const staticRoots = [0, 1, 257, 99999].map((i) => tenant(0) + ids.placement(i));
   const fixed = await peer.rows(db, { entityIds: staticRoots, basis: cut,
     pattern: { attribute: ":placement/stamp" } });
-  assert.equal(fixed.length, staticRoots.length);
-  assert(fixed.every((row) => staticRoots.includes(row.entity_id) && String(row.value_integer) === "0"));
+  // [DX-BM1] Why: the Datomic row codec stores exact integers as canonical text in value_string.
+  // Rejected: reading a nonexistent value_integer column or accepting the subject count alone.
+  assert.deepEqual(fixed.map((row) => row.entity_id).sort(), [...staticRoots].sort());
+  assert(fixed.every((row) => row.value_type === "integer" && row.value_string === "0"));
   const membership = await peer.rows(db, { entityIds: staticRoots, basis: cut,
     pattern: { attribute: ":subject/account" } });
   assert.equal(membership.length, staticRoots.length);
@@ -417,7 +419,7 @@ try {
               });
               assert(rows.some((o) => o.id === r.id && o.entity_id === r.entity_id &&
                 o.attribute === r.attribute && o.recorded_position === r.recorded_position &&
-                o.value_type === r.value_type && o.value_integer === r.value_integer));
+                o.value_type === r.value_type && o.value_string === r.value_string));
               fs.writeSync(
                 readBook,
                 JSON.stringify({
