@@ -391,14 +391,16 @@ fi
 # [DX-T1-5] Why: exercise the real installed transaction function and both layouts before a smoke stack.
 # Rejected: mocking the server-clock serial point or silently skipping the gateway's normal selftests.
 if [[ ${DX_GATEWAY_SELFTEST:-0} == 1 ]]; then
+  # [DX-JVM1] Why: the smoke preflight and the serving JVM must load the same tracked codec.
+  # Rejected: copying the whole gateway tree just to put the codec next to its source.
   docker run --rm --pull never --name "$prefix-selftest" --network none --memory 1500m --memory-swap 1500m \
-    -e "DATOMIC_JAVA_OPTS=$(probe_options '-Xms128m -Xmx1g')" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -v "$src:/opt/gateway:ro" \
+    -e "DATOMIC_JAVA_OPTS=$(probe_options "-Xms128m -Xmx1g$spec_java")" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -v "$src:/opt/gateway:ro" "${spec_mount[@]}" \
     --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.selftest > "$attempt/gateway-selftests.log" 2>&1
 fi
 if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
   mkdir -p "$attempt/trace/preflight"
   docker run --rm --pull never --name "$prefix-trace-check" --network none --memory 768m --memory-swap 768m \
-    -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=$(probe_options '-Xms128m -Xmx512m -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0')" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e TRIPLEX_TRACE_DIR=/test-trace -e TRIPLEX_TRACE_TEST_JFR=1 -v "$attempt/trace/preflight:/test-trace" -v "$src:/opt/gateway:ro" \
+    -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=$(probe_options "-Xms128m -Xmx512m -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0$spec_java")" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e TRIPLEX_TRACE_DIR=/test-trace -e TRIPLEX_TRACE_TEST_JFR=1 -v "$attempt/trace/preflight:/test-trace" -v "$src:/opt/gateway:ro" "${spec_mount[@]}" \
     --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.trace-test > "$attempt/gateway-trace-tests.log" 2>&1
 fi
 docker network create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-net" >/dev/null
