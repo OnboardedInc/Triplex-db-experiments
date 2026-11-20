@@ -431,17 +431,15 @@ try {
       emit("query-proof", { layout, ...(await queryProof(url, nonce, layout)) });
     await stop(proof);
   } else if (fieldStudy === "query6-cost") {
-    for (const [i, covered] of [false, true, true, false].entries()) {
-      const g = await gateway(false, {
-        TX2_SAVE_LEDGER: "1",
-        TX2_PACKED_JOURNAL: "0",
-        TX2_PREDECESSOR_LOOKUP: "1",
-        TX2_SMALL_ROWS: "1",
-        TX2_LEAN_NATIVE_QUERY: covered ? "1" : "0",
-      });
-      emit("query-cost", await queryCost(url, nonce + "-cost-" + i, "lean", covered));
-      await stop(g);
-    }
+    const g = await gateway(false, {
+      TX2_SAVE_LEDGER: "1",
+      TX2_PACKED_JOURNAL: "0",
+      TX2_PREDECESSOR_LOOKUP: "1",
+      TX2_SMALL_ROWS: "1",
+      TX2_LEAN_NATIVE_QUERY: "1",
+    });
+    emit("query-cost-paired", await queryCost(url, nonce + "-cost"));
+    await stop(g);
   } else if (fieldStudy === "queue") {
     for (const [i, priority] of [false, true, true, false].entries()) {
       const gw = await gateway(true, { TX2_LIVE_PRIORITY: priority ? "1" : "0" });

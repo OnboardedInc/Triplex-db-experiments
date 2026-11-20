@@ -89,16 +89,6 @@ def quantiles(values):
     return [values[math.ceil(q*len(values))-1] for q in (.5, .99)]
 
 
-def summarize_cost(samples):
-    return {"samples": len(samples), "saveMs": quantiles([r["saved"] for r in samples]),
-            "readMs": quantiles([r["readMs"] for r in samples]),
-            "requestBytes": quantiles([r["write"][0] for r in samples]),
-            "ackBytes": quantiles([r["write"][1] for r in samples]),
-            "readRequestBytes": quantiles([r["read"][0] for r in samples]),
-            "readReplyBytes": quantiles([r["read"][1] for r in samples]),
-            "datoms": sorted({r["write"][2] for r in samples})}
-
-
 if study == "erase6":
     assert [e["k"] for e in events] == ["sql", "finished"]
     with (out / ("observation-" + str(uuid.uuid4()) + ".json")).open("x") as f:
@@ -107,28 +97,36 @@ if study == "erase6":
     sys.exit(0)
 
 if study == "query6-cost":
-    assert [e["k"] for e in events] == ["sql", *["query-cost"] * 4, "finished"]
-    costs, pooled = [], {False: [], True: []}
-    for i, (event, covered) in enumerate(zip(events[1:5], (False, True, True, False), strict=True)):
-        arm = event["v"]
-        assert arm["nonce"] == f"{nonce}-cost-{i}" and arm["layout"] == "lean" and arm["covered"] is covered
-        key = arm["db"][3:]
-        assert json.loads(base64.urlsafe_b64decode(key + "=" * (-len(key) % 4)))[3] == arm["nonce"]
-        writer = arm["writer"]
-        assert writer["database"] == arm["db"] and writer["installedDefinitionMatches"] is True
-        assert writer["ledger"] is True and writer["packedJournal"] is False and writer["leanNativeQuery"] is covered
-        assert writer["packedJournalCount"] == 0 and len(writer["selectedDefinitionSha256"]) == 64
-        assert writer["predecessorSelected"] is True and writer["selectedFunction"].startswith(":triplex.write/v-")
-        samples = arm["samples"]
-        assert len(samples) == len({r["id"] for r in samples}) == 64
-        for n, sample in enumerate(samples):
-            assert [sample["n"], sample["command"], sample["position"], sample["expected"]] == [
-                n, f"save:{n}", n + 2, f"value:{n}"]
-            assert sample["saved"] > 0 and sample["readMs"] > 0 and all(x > 0 for x in sample["read"] + sample["write"])
-        pooled[covered].extend(samples)
-        costs.append({"covered": covered, **summarize_cost(samples)})
-    assert len({event["v"]["writer"]["selectedDefinitionSha256"] for event in events[1:5]}) == 1
-    result = {**binding, "costs": costs, "pooled": {str(k): summarize_cost(v) for k, v in pooled.items()}}
+    assert [e["k"] for e in events] == ["sql", "query-cost-paired", "finished"]
+    arm = events[1]["v"]
+    assert arm["nonce"] == f"{nonce}-cost" and arm["layout"] == "lean"
+    key = arm["db"][3:]
+    assert json.loads(base64.urlsafe_b64decode(key + "=" * (-len(key) % 4)))[3] == arm["nonce"]
+    writer = arm["writer"]
+    assert writer["database"] == arm["db"] and writer["installedDefinitionMatches"] is True
+    assert writer["ledger"] is True and writer["packedJournal"] is False and writer["leanNativeQuery"] is True
+    assert writer["packedJournalCount"] == 0 and len(writer["selectedDefinitionSha256"]) == 64
+    assert writer["predecessorSelected"] is True and writer["selectedFunction"].startswith(":triplex.write/v-")
+    samples = arm["samples"]
+    assert len(samples) == len({r["id"] for r in samples}) == 64
+    read_samples = {"match": [], "datalog": []}
+    for n, sample in enumerate(samples):
+        value = f"value:{n}"
+        assert [sample["n"], sample["command"], sample["position"], sample["expected"]] == [n, f"save:{n}", n + 2, value]
+        assert sample["saved"] > 0 and all(x > 0 for x in sample["write"])
+        assert [r["route"] for r in sample["reads"]] == (["match", "datalog"] if n % 2 == 0 else ["datalog", "match"])
+        for read in sample["reads"]:
+            assert read["value"] == value
+            assert read["calls"][-1] == ("q" if read["route"] == "datalog" else "read")
+            assert all(read[k] > 0 for k in ("readMs", "requestBytes", "responseBytes"))
+            read_samples[read["route"]].append(read)
+    result = {**binding, "samples": len(samples), "writer": writer,
+              "saveMs": quantiles([r["saved"] for r in samples]),
+              "requestBytes": quantiles([r["write"][0] for r in samples]),
+              "ackBytes": quantiles([r["write"][1] for r in samples]),
+              "datoms": sorted({r["write"][2] for r in samples}),
+              "reads": {route: {k: quantiles([r[k] for r in rows]) for k in ("readMs", "requestBytes", "responseBytes")}
+                        for route, rows in read_samples.items()}}
     with (out / ("verified-" + str(uuid.uuid4()) + ".json")).open("x") as f:
         json.dump(result, f, indent=2)
         print(f.name)

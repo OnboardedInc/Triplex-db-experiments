@@ -425,8 +425,8 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
 
 // [DX-W1] Why: use identical saves and verify every recorded result outside each latency sample.
 // Rejected: attributing differences in row count or an unverified acknowledgement to query coverage.
-export function queryCost(url: string, nonce: string, layout: Layout, covered: boolean) {
-  return withScope(url, nonce, layout, null, async (t, rt, client, db) => {
+export function queryCost(url: string, nonce: string) {
+  return withScope(url, nonce, "lean", null, async (t, rt, client, db) => {
     const run = rt.runPromise;
     const writer = await client.request<{
       database: string;
@@ -447,8 +447,10 @@ export function queryCost(url: string, nonce: string, layout: Layout, covered: b
     assert.match(writer.selectedDefinitionSha256, /^[a-f0-9]{64}$/);
     assert.match(writer.selectedFunction, /^:triplex\.write\/v-[a-f0-9]{24}$/);
     assert.equal(writer.predecessorSelected, true);
-    assert.equal(writer.leanNativeQuery, covered);
+    assert.equal(writer.leanNativeQuery, true);
     const attribute = ":price/field";
+    const query: DatalogQuery = { find: ["?v"], where: [["e:0", attribute, "?v"]] };
+    const pattern = { entityId: owner("e:0"), attribute: Attribute.make(attribute) };
     const seed = await run(
       t.transact(Array.from({ length: 48 }, (_, i) => a("e:" + i, attribute, "seed"))),
     );
@@ -475,42 +477,42 @@ export function queryCost(url: string, nonce: string, layout: Layout, covered: b
       const stored = await run(t.get(last.id));
       assert.deepEqual(stored, last);
       assert.deepEqual(last.value, { type: "string", value: expected });
-      const read = performance.now();
       const basis = { ...cut, recordedAt: committed.instant };
-      requests = [];
-      const answers = covered
-        ? results(
-            await run(
-              t.query(
-                {
-                  find: ["?v"],
-                  where: [["e:0", attribute, "?v"]],
-                },
-                { basis },
-              ),
-            ),
-          )
-        : (
-            await run(
-              t.match({ entityId: owner("e:0"), attribute: Attribute.make(attribute) }, basis),
-            )
-          ).map((row) => ({ "?v": row.value.value }));
-      const readMs = performance.now() - read;
-      assert.deepEqual(answers, [{ "?v": expected }]);
-      const response = requests.find((entry) => entry.path.endsWith(covered ? "/q" : "/read"));
-      assert(response && response.status === 200);
+      const reads = [];
+      // [DX-W1] Why: pair the routes at the same durable cut and alternate the first read.
+      // Rejected: comparing two gateway lifecycles, which can differ in cache state and CPU share.
+      for (const route of n % 2 === 0 ? ["match", "datalog"] : ["datalog", "match"]) {
+        requests = [];
+        const read = performance.now();
+        const answers =
+          route === "datalog"
+            ? results(await run(t.query(query, { basis })))
+            : (await run(t.match(pattern, basis))).map((row) => ({ "?v": row.value.value }));
+        const readMs = performance.now() - read;
+        assert.deepEqual(answers, [{ "?v": expected }]);
+        const endpoint = route === "datalog" ? "/q" : "/read";
+        const response = requests.find((entry) => entry.path.endsWith(endpoint));
+        assert(response && response.status === 200);
+        reads.push({
+          route,
+          readMs,
+          value: answers[0]?.["?v"],
+          calls: requests.map((entry) => entry.path.split("/").at(-1)),
+          requestBytes: requests.reduce((sum, entry) => sum + entry.requestBytes, 0),
+          responseBytes: requests.reduce((sum, entry) => sum + entry.responseBytes, 0),
+        });
+      }
       samples.push({
         n,
         command: "save:" + n,
         position: committed.position,
         id: last.id,
         saved,
-        readMs,
         expected,
         write: [write.requestBytes, write.responseBytes, write.datoms],
-        read: [response.requestBytes, response.responseBytes],
+        reads,
       });
     }
-    return { db, nonce, covered, layout, writer, samples };
+    return { db, nonce, layout: "lean", writer, samples };
   });
 }
