@@ -12,7 +12,7 @@ import subprocess
 import sys
 import time
 import uuid
-from producer_readings import capacity_memory, capacity_rung, group_arm, writer_options
+from producer_readings import capacity_agreement, capacity_memory, capacity_rung, group_arm, writer_options
 from import_reading import split_output, tail_attempt
 from activation_clock import activation_modes
 from joined_preflight import joined_output, point_readback
@@ -1160,13 +1160,7 @@ def result(r):
             file=folder/"bm1-reading.json"
             if not file.is_file():
                 return "partial","The 1k producer/collector agreement is sealed. The 1M rung is incomplete."
-            row=capacity_rung(folder,source,size)
-            assert (folder/"inputs.json").stat().st_mtime>=r["start"]
-            verify=get(folder/"producer-check.json")
-            assert (verify["source"],verify["slot"],verify["people"],verify["binding"],verify["latencyMs"])==(source,slot,size,row["binding"],row["latency"])
-            assert get(file)=={"source":source,"prefix":slot,"attempt":row["attempt"],"resultSha256":digest(folder/"result.json"),
-                               "producerSha256":digest(folder/"producer-check.json"),"latency":row["latency"],
-                               "memory":capacity_memory(folder,row,full=True)}
+            assert get(file)==capacity_agreement(folder,source,size,slot,r["start"])
         return "recorded",str(file)
     elif item==28:
         sys.path.insert(0,str(HERE/"probes"))

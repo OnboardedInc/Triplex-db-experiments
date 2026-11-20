@@ -59,6 +59,28 @@ class OvernightEvidence(unittest.TestCase):
             with self.assertRaises(AssertionError):
                 archive.seal(r,{**terminal,"tag":"wrong"})
 
+    def test_thin_rung_agreement_checks_the_actual_producer_summary(self):
+        from producer_readings import capacity_agreement
+
+        with tempfile.TemporaryDirectory() as temp:
+            folder=Path(temp)
+            source="a"*40
+            slot="tx2-dxint1-test"
+            start=time.time()-1
+            result={"slot":slot,"attempt":"small-attempt","binding":"b"*64,"latency":{}}
+            summary={"source":source,"slot":slot,"people":1000,"binding":result["binding"],"latencyMs":{}}
+            for name,value in (("inputs.json",{}),("result.json",result),("rung-summary.json",summary)):
+                (folder/name).write_text(json.dumps(value))
+            report=folder/"producer-check.json"
+            with patch("producer_readings.capacity_rung",return_value=result), patch("producer_readings.capacity_memory",return_value={}):
+                report.write_text(json.dumps({"accounts":[],"summary":summary}))
+                with self.assertRaises(AssertionError):
+                    capacity_agreement(folder,source,1000,slot,start)
+                report.write_text(json.dumps(summary))
+                self.assertEqual(capacity_agreement(folder,source,1000,slot,start)["attempt"],"small-attempt")
+                with self.assertRaises(AssertionError):
+                    capacity_agreement(folder,source,1000,slot,start+120)
+
     def test_thin_boundary_precedes_the_first_out_of_scope_arm(self):
         with tempfile.TemporaryDirectory() as temp:
             root=Path(temp);(root/"results").mkdir()

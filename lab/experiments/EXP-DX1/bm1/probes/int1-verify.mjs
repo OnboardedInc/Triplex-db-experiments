@@ -17,4 +17,8 @@ const spec = size === full.size ? full : { ...full, key: "bm1-thin-preflight", s
 const result = await verifyCase(out, spec, source, stack.prefix, stack, {
   sender: "3", readers: "5,6,7,9,10,11",
 }, "plain");
-process.stdout.write(JSON.stringify(result) + "\n");
+// [DX-BM1] Why: verifyCase writes and returns the versioned summary inside its account envelope.
+// Rejected: letting the large run start after hashing a receipt with different top-level fields.
+const written = JSON.parse(fs.readFileSync(path.join(out, "rung-summary.json")));
+assert.deepEqual(result.summary, written);
+process.stdout.write(JSON.stringify(written) + "\n");

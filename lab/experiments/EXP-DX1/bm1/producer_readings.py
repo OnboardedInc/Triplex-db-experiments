@@ -162,3 +162,18 @@ def capacity_memory(directory, result, *, full):
             "rows":{role:{"beforeRss":value,"afterRss":after[0][role],"bytesPerUntouched":(after[0][role]-value)/untouched}
                     for role,value in before[0].items()},
             "kvsBytesDelta":after[1]-before[1],"readerChargedBytesDelta":after[2]-before[2]}
+
+
+def capacity_agreement(folder, source, size, slot, start):
+    # [DX-BM1] Why: admit the next rung only after this producer's summary and the independent reductions agree.
+    # Rejected: hashing an existing verifier output without checking its actual result fields.
+    result=capacity_rung(folder,source,size)
+    report=folder/"producer-check.json"
+    producer=get(report)
+    assert producer==get(folder/"rung-summary.json")
+    assert all((folder/file).stat().st_mtime>=start for file in ("inputs.json","result.json","rung-summary.json","producer-check.json"))
+    assert result["slot"]==slot and [producer[k] for k in ("source","slot","people","binding","latencyMs")]==[
+        source,slot,size,result["binding"],result["latency"]]
+    return {"source":source,"prefix":slot,"attempt":result["attempt"],"resultSha256":digest(folder/"result.json"),
+            "producerSha256":digest(report),"latency":result["latency"],
+            "memory":capacity_memory(folder,result,full=True)}

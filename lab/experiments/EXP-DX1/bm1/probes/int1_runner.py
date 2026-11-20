@@ -10,7 +10,7 @@ import time
 import uuid
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
-from producer_readings import capacity_memory, capacity_rung, digest, get
+from producer_readings import capacity_agreement, digest, get
 
 EXP = Path("lab/experiments/EXP-DX1")
 
@@ -90,11 +90,7 @@ def process(r, clean=False):
         with (folder/"producer-check.json").open("x") as stream:
             run(node,"--import","tsx",Path(__file__).with_name("int1-verify.mjs"),folder,attached,source,size,
                 timeout=min(left,600),stdout=stream)
-        row=capacity_rung(folder,source,size)
-        assert row["slot"]==prefix and (folder/"inputs.json").stat().st_mtime>=r["start"]
-        save(folder/"bm1-reading.json",{"source":source,"prefix":prefix,"attempt":row["attempt"],
-             "resultSha256":digest(folder/"result.json"),"producerSha256":digest(folder/"producer-check.json"),
-             "latency":row["latency"],"memory":capacity_memory(folder,row,full=True)})
+        save(folder/"bm1-reading.json",capacity_agreement(folder,source,size,prefix,r["start"]))
 
 
 if __name__=="__main__":
