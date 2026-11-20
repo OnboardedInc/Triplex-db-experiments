@@ -205,6 +205,10 @@ export class CommittedRanges {
     )
       return;
     const previous = await a.event(e.value.sequence - 1, e.at - 1);
+    const erasure = await a.db.get<number>("erasure", sourceAt);
+    // [DX-STG1] Why: an earlier event may need its sealed work after historical
+    // source bytes are erased. Rejected: deriving membership from redacted rows.
+    if (erasure.value && (await a.db.get<number>("erasure", previous.at)).id !== erasure.id) return;
     // [DX-STG1] Why: moving the business clock can reveal a scheduled fact
     // or expiry outside any touched edge. Rejected: assuming a same-day save
     // cannot cross a validity boundary.

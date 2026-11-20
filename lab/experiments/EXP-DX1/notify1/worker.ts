@@ -82,6 +82,7 @@ if (process.argv[1] === import.meta.filename) {
     });
     const receiver = await recipient(job.recipient, job.directory);
     try {
+      if (job.sourceEndpoint) assert.equal(source.backend.url, job.sourceEndpoint);
       const budget = job.profileDir
         ? new (await import("./budget.ts")).Budget({
             epoch: job.epoch,
