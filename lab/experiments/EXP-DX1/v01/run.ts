@@ -96,7 +96,7 @@ if (run.error) process.exitCode = 1;
 function serverEnvironment() {
   // [DX-V01] Why: both arms use the committed treatment and launcher defaults.
   // Rejected: inherited JVM, Datomic, Docker and reader settings silently changing either arm.
-  return Object.fromEntries(["PATH", "LANG", "LC_ALL", "HOME"].flatMap((name) =>
+  return Object.fromEntries(["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT"].flatMap((name) =>
     process.env[name] ? [[name, process.env[name]]] : [],
   ));
 }

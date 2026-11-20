@@ -3,8 +3,8 @@ The reader and gateways kept the same person-cache entries through 600,000 thin 
 The read gateway still holds about 62 MiB of live Java objects at 10,000 and 30,000 deep people. Its resident memory rose by 18 MiB.
 The transactor committed 211 MiB more to its Java heap while its object-cache charge stayed flat. A saved ten-account run reached 5.37 GiB in its 6 GiB container.
 The final Mac import stopped at 49,469 confirmed people after an ambiguous write. We have two complete profiles and no measured resident plateau.
-The writer, erasure safeguards, fallback reader and Publish priority are on the shared branch. Six native suites and all 13 checks in the small erasure regression passed.
-The pooled campaign has forecasts for all eight priorities. The producer and collector agreed on the saved zero-reader arm. The loaded and field arms are still being checked.
+The writer, erasure safeguards, fallback reader and Publish priority are on the shared branch. Eight native suites and all 13 checks in the small erasure regression passed.
+The pooled campaign has forecasts for all eight priorities. The saved frozen baseline matched, and the loaded arm verified 50 local samples against the source. The field proof is still due.
 Lean storage still has open erasure and native query gaps. The campaign must keep those paths out of the judged run.
 
 ## One-database work
@@ -32,6 +32,6 @@ The earlier scope-cost study is complete. Its measured timing, thread counts and
 
 ## Integration and campaign
 
-The exact writer, erasure and Publish native builds each ran 27 tests with zero failures. The reader handoff changed only documentation and shared the erasure build. Core passed 861 tests. The Datomic SDK passed 426 tests with 52 opt-in tests skipped. Fourteen focused tests and the pooled TypeScript check passed. [Merge resolutions and evidence audit](P5-EVIDENCE.md) · [Checksums](P5-SHA256SUMS)
+Each native build ran 27 tests and 54,079 assertions with zero failures. The reader handoff changed only documentation and shared the preceding build. The latest writer merge passed 861 Core and 434 Datomic SDK tests, with 52 opt-in SDK cases skipped. The pooled TypeScript check passed. [Merge resolutions and evidence audit](P5-EVIDENCE.md) · [Checksums](P5-SHA256SUMS)
 
-Run `bash lab/experiments/EXP-DX1/int1/everything.sh BATCH UTC_CUTOFF --overnight` for ten accounts of 10,000 people. Omit `--overnight` for both rungs. The current SCALE1 million-person image uses different entity identities and lean storage. Both rungs capture and reuse a compatible legacy seed for their matched arms. [Campaign and options](P5-EVIDENCE.md)
+Run `bash lab/experiments/EXP-DX1/int1/everything.sh BATCH UTC_CUTOFF --overnight` for ten accounts of 10,000 people. Omit `--overnight` for both rungs. The command prepares the exact public revision before starting the preflight. The current SCALE1 million-person image uses different entity identities and lean storage. Both rungs capture and reuse a compatible legacy seed for their matched arms. [Campaign and options](P5-EVIDENCE.md)
