@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { pathToFileURL } from "node:url";
@@ -84,6 +85,40 @@ async function waitFor(probe, child, signal, deadline) {
     if (probe()) return;
     await delay(250, undefined, { signal });
   }
+}
+
+async function holdMacWindow(identity, signal, deadline) {
+  // [DX-TAIL1] Why: older lab runs share this lock around their measured offers.
+  // Rejected: holding it through the deep seed, or taking all four heavy tokens while seeding.
+  const lock = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2", "locks", "measure");
+  const owner = path.join(lock, "owner.json");
+  for (;;) {
+    signal.throwIfAborted();
+    assert(Date.now() < deadline, "Mac timing window unavailable before the replay deadline");
+    try {
+      fs.mkdirSync(lock);
+      break;
+    } catch (error) {
+      if (error.code !== "EEXIST") throw error;
+      console.log("DX-TAIL1 ready, waiting for the shared Mac timing window");
+      await delay(5000, undefined, { signal });
+    }
+  }
+  const record = { pid: process.pid, holder, slot: identity.slot, at: Date.now() };
+  try {
+    write(owner, record);
+  } catch (error) {
+    fs.rmdirSync(lock);
+    throw error;
+  }
+  return {
+    record,
+    release() {
+      assert.deepEqual(readJson(owner), record);
+      fs.unlinkSync(owner);
+      fs.rmdirSync(lock);
+    },
+  };
 }
 
 function reading(rows) {
@@ -348,8 +383,24 @@ export async function runTail(options, config, manager) {
   process.once("SIGINT", interrupt);
   process.once("SIGTERM", interrupt);
   const signal = controller.signal;
-  let reservation, driver, timer;
+  let reservation, driver, timer, macWindow, windowTimer;
   let measuredStart;
+  const releaseMacWindow = () => {
+    if (!macWindow) return;
+    const opened = macWindow;
+    macWindow = undefined;
+    clearTimeout(windowTimer);
+    try {
+      opened.release();
+      write(path.join(out, "timing-window.json"), {
+        identity,
+        openedAt: opened.record.at,
+        closedAt: Date.now(),
+      });
+    } catch (error) {
+      controller.abort(error);
+    }
+  };
   try {
     if (mac) {
       const bytes = Object.fromEntries(roles.map((role) => [role, caps[role] * MiB]));
@@ -598,8 +649,21 @@ export async function runTail(options, config, manager) {
     assert.deepEqual(ready.identity, identity);
     assert.deepEqual(ready.seed, readJson(input).seed);
     assert.equal(ready.trace, frozenDeep(0, 10000).sha256);
+    if (mac) macWindow = await holdMacWindow(identity, signal, latest - seconds * 1000 - 135_000);
     const { identity: _, ...readyBody } = ready;
-    const start = Date.now() + 6000;
+    const start = Date.now() + 12_000;
+    if (macWindow) {
+      if (options.full === true) {
+        // [DX-TAIL1] Why: the continuous 98.5-minute diagnostic must preserve the offer gaps.
+        // Rejected: monopolizing the lab lock for all 98.5 minutes or pausing the archived traffic.
+        windowTimer = setTimeout(releaseMacWindow, start + 240_000 - Date.now());
+      } else {
+        windowTimer = setTimeout(
+          () => controller.abort(Error("Mac measured hold reached fifteen minutes")),
+          macWindow.record.at + 890_000 - Date.now(),
+        );
+      }
+    }
     write(path.join(barrier, "go.json"), { ...identity, start, scopes: { s0: readyBody } });
     await waitFor(
       () => fs.existsSync(path.join(barrier, "s0.armed.json")),
@@ -631,6 +695,8 @@ export async function runTail(options, config, manager) {
     signal.throwIfAborted();
     assert.deepEqual(exit, { code: 0, signal: null }, "Driver failed; see driver.log");
     sample();
+    releaseMacWindow();
+    signal.throwIfAborted();
     const report = readJson(reportFile);
     assert.equal(report.traceStartAbsMs, start);
     assert.deepEqual(report.deep.identity, identity);
@@ -673,12 +739,19 @@ export async function runTail(options, config, manager) {
     ]);
   } finally {
     clearInterval(timer);
+    clearTimeout(windowTimer);
     if (driver) {
       driver.stop();
       await driver.done;
     }
+    releaseMacWindow();
     if (fs.existsSync(reportFile) && !fs.existsSync(path.join(out, "ns-report.json")))
       fs.copyFileSync(reportFile, path.join(out, "ns-report.json"), fs.constants.COPYFILE_EXCL);
+    for (const name of ["s0.ready.json", "s0.armed.json", "release.json"]) {
+      const file = path.join(barrier, name);
+      if (fs.existsSync(file))
+        fs.copyFileSync(file, path.join(out, name), fs.constants.COPYFILE_EXCL);
+    }
     if (reservation || !mac) {
       // [DX-TAIL1] Why: a partial startup still owns only its individually labelled objects.
       // Rejected: bulk pruning, wiping the shared Datomic slot or stopping other holders.

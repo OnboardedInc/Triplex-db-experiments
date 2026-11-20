@@ -37,8 +37,14 @@ def pauses(log):
         clock = uptime.search(line)
         if match and clock:
             gc_id, reason, duration, unit = match.groups()
-            kind = next((k for text, k in (("Full", "full"), ("Mixed", "mixed"), ("Young", "young"))
-                         if text in reason), "phase")
+            if reason.startswith("Full"):
+                kind = "full"
+            elif "(Mixed)" in reason:
+                kind = "mixed"
+            elif reason.startswith("Young"):
+                kind = "young"
+            else:
+                kind = "phase"
             yield {"gc": int(gc_id), "kind": kind, "humongous": "Humongous Allocation" in reason,
                    "reason": re.sub(r"\s+\d+[KMG]->\d+[KMG]\(\d+[KMG]\)$", "", reason),
                    "ms": float(duration) * {"ms": 1, "us": .001, "s": 1000}[unit],

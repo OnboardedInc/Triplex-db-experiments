@@ -58,6 +58,11 @@ def measure(out):
     assert report["oracle"]["modelCorrectOnSameReads"] == report["oracle"]["reads"] > 0
     start = report["traceStartAbsMs"]
     stop = start + attempt["seconds"] * 1000
+    if attempt["platform"] == "darwin":
+        lock = load(out / "timing-window.json")
+        assert lock["identity"] == identity and lock["openedAt"] <= start
+        assert lock["closedAt"] >= start + min(240, attempt["seconds"]) * 1000
+        assert 0 < lock["closedAt"] - lock["openedAt"] <= 900_000
     dir = out / "stack" / identity["slot"]
     trace = dir / "trace/raw"
     stack = load(dir / "stack.json")
@@ -106,6 +111,10 @@ def measure(out):
     assert observed.keys() == expected.keys()
     assert len(saved) == report["receiptCapture"]["matched"] == report["tailReplay"]["primary"] >= 5000
     assert len({r["position"] for r in saved.values()}) == len(saved)
+    assert load(out / "s0.armed.json")["identity"] == identity
+    release = load(out / "release.json")
+    assert all(release[part] == identity[part] for part in ("source", "slot", "nonce"))
+    assert release["start"] == start and release["armed"]["s0"] == load(out / "s0.armed.json")
     exchanges, replies = defaultdict(Counter), set()
     for role in ("gw-w", "gw-r"):
         with (trace / (role + ".jsonl")).open() as lines:
@@ -120,6 +129,7 @@ def measure(out):
                 replies.add(span["root"])
                 exchanges[span["traceId"]][span["name"].rsplit("/", 1)[-1]] += 1
     requests = sum(exchanges.values(), Counter())
+    transact_join_missing = sum("transact" not in exchanges[trace_id] for trace_id in saved)
     all_timed = [json.loads(line) for line in (out / "resources.jsonl").read_text().splitlines()]
     for sample in all_timed:
         assert sample["identity"] == identity and sample["ids"] == ids
@@ -154,8 +164,9 @@ def measure(out):
         "savesPerSecond": len(saved) / max(attempt["seconds"], (max(r["ackPublishedAt"] for r in saved.values()) - start) / 1000),
         "ackMs": quantiles([r["verdictMs"] for r in saved.values()]), "cpuMemory": cpu_memory,
         "gc": {role: timed_gc(trace, role, start, stop, history, indexes) for role in ("gw-w", "gw-r", "tx")},
-        "gatewayRequests": dict(requests), "requestsPerSave": requests.total() / len(saved),
-        "transactJoinMissing": sum("transact" not in exchanges[trace_id] for trace_id in saved),
+        "gatewayRequests": dict(requests),
+        "requestsPerSave": requests.total() / len(saved) if transact_join_missing == 0 else None,
+        "transactJoinMissing": transact_join_missing,
         "allocationSampleWeightBytesPerSave": sum(g["weightBytes"] for g in groups.values()) / len(saved) if groups else None,
         "allocationSampleWeightBytesPerSecond": sum(g["weightBytes"] for g in groups.values()) / attempt["seconds"] if groups else None,
         "allocationGroups": groups,
