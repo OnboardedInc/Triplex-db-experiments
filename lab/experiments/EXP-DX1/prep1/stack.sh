@@ -119,7 +119,7 @@ cache=32m index_threshold=32m
 if [[ "$PREP1_MODE" == "lookup-profile" ]]; then
   # [DX-PREP1] Why: make index leaves compete for cache on a short fixture.
   # Rejected: treating a fully resident Mac fixture as evidence that the serial path never fetches storage.
-  cache=2m index_threshold=1m
+  cache=2m index_threshold=8m
 fi
 cat >"$work/transactor.properties" <<EOF
 protocol=sql
