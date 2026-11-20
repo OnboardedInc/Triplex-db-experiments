@@ -3638,3 +3638,25 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
   keep layout K as is for version 0.1; add the narrower index (3 or 7 records per save) only if the 1 billion run
   shows a frequent journal query that needs it. Open: converting scopes that already hold clear protected values.
 - Running: DX-BM1, DX-SCALE1, DX-V01, DX-THIN1, DX-AGE1, DX-PREP1, DX-JVM1 (seven).
+
+## 2026-11-20 21:49 UTC (16:49 local, 2026-11-20): DX-PREP1 part 6 in (follow-up arm ready); first arm of the writer comparison read from server 1
+
+- **DX-PREP1 part 6 (`b1bbc9875`; server command pinned at `5191435dc`, one hour; `prep1/REPORT.md`).** The
+  fair-turn follow-up (rule off and on, 235 and 394 offered, quiet account alone and beside nine) with a forecast
+  per cell; six tests pass; local preflight matched 2,548 simulated saves to append records. Parked until the
+  server publishes a per-person arm; six agents running.
+- **Arm 1-0-K of the comparison (present grouped writer, one write gateway, source `7ca8525a9`), read directly
+  from server 1's `campaign/1-0-K/summary.json` by the orchestrator; not yet published by the driver.** Ten
+  accounts in one database, one account measured alone at 3.5 saves per second before each loaded cell:
+
+  | Offered per s | Stored | Expired | Delivered per s | Saves per append | Quiet account p99 loaded / alone (ms) |
+  | ---: | ---: | ---: | ---: | ---: | --- |
+  | 50 | 7,200 of 7,200 | 0 | 50.0 | 1.23 | 221.1 / 90.9 |
+  | 235 | 26,125 of 33,840 | 7,715 | 179.5 | 7.97 | 341.2 / 119.0 |
+  | 394 | 26,433 of 56,736 | 30,303 | 181.7 | 7.99 | 294.5 / 36.7 |
+  | 620 | 25,004 of 89,280 | 64,276 | 171.9 | 8.00 | 312.3 / 54.4 |
+
+  Reading: the present writer tops out at about 172 to 182 saves per second whatever is offered, with groups
+  already full at eight saves per append; beyond that saves expire (23, 53 and 72 percent). The loaded p99 covers
+  only saves that completed. Arm 1-1-S (per-person writer) started about 16:45 local; a watcher wakes the
+  orchestrator when its summary exists.
