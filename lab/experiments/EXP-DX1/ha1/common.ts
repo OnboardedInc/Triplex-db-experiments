@@ -144,9 +144,12 @@ function treeCode() {
     .filter((f) => f.endsWith(".ts"))
     .map((f) => path.join(import.meta.dirname, f));
   paths.push(
-    ...["lab/bin/engine.mjs", "lab/bin/lib.mjs", "packages/datomic/test/ha1-account.ts"].map((f) =>
-      path.join(root, f),
-    ),
+    ...[
+      "lab/bin/engine.mjs",
+      "lab/bin/lib.mjs",
+      "lab/bin/heavy-lock.mjs",
+      "packages/datomic/test/ha1-account.ts",
+    ].map((f) => path.join(root, f)),
   );
   return hash(
     JSON.stringify(paths.sort().map((f) => [path.relative(root, f), hash(fs.readFileSync(f))])),

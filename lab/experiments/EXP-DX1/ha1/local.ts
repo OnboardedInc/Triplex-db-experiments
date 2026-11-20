@@ -8,6 +8,7 @@ import {
   docker,
   dockerArgs,
   DOCKER_HOST,
+  LabError,
   LOCKS,
   listTx2Containers,
   pidAlive,
@@ -16,10 +17,12 @@ import {
   vmDisk,
   withPool,
 } from "../../../bin/lib.mjs";
+import { acquireMeasureLease, readMeasureLease } from "../../../bin/heavy-lock.mjs";
 import {
   Evidence,
   loadRoles,
   localRoleMiB,
+  microLoad,
   modeOf,
   splitLoad,
   roles,
@@ -186,7 +189,27 @@ export async function localDrill(opts: any, config: any, manager: any) {
     clean = false;
   const parentLease = path.join(folder, "locks", "measure");
   let measured = false;
+  let formal: Awaited<ReturnType<typeof acquireMeasureLease>> | undefined;
+  const admissionRetry = (reason: string) =>
+    new LabError("REFUSED", "DX-HA1 admission retry: " + reason);
   try {
+    if (microLoad(mode)) {
+      const disk = fs.statfsSync(root);
+      assert(disk.bavail * disk.bsize >= 5 * 2 ** 30, "Host disk floor");
+      const owner = readMeasureLease();
+      // [DX-LOAD3] Why: a foreign claimant drains heavy tokens, including the wrapper's token.
+      // Rejected: waiting inside the wrapper for a lease whose owner is waiting on us.
+      if (owner && !owner.stale) throw admissionRetry("measurement lease busy");
+      try {
+        const leaseOptions = { holder: String(opts.holder), timeoutMs: 30000 };
+        formal = await acquireMeasureLease(mode, leaseOptions);
+        assert(formal.owner?.holder === opts.holder && formal.owner.pid === process.pid);
+      } catch (error: any) {
+        if (error.code === "LEASE_TIMEOUT") throw admissionRetry(error.message);
+        throw error;
+      }
+    }
+    const admitUntil = performance.now() + 30000;
     for (;;) {
       const disk = fs.statfsSync(root);
       if (disk.bavail * disk.bsize < 5 * 2 ** 30) {
@@ -289,6 +312,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
         }
       }
       if (reserved) break;
+      if (formal && performance.now() > admitUntil) throw admissionRetry("no fitting VM slot");
       await sleep(5000);
     }
     const site: Site = {
@@ -377,5 +401,6 @@ export async function localDrill(opts: any, config: any, manager: any) {
       });
     if (acquired && (!reserved || clean) && readOwner(info)?.pid === process.pid)
       manager.releaseSlot(info);
+    formal?.release();
   }
 }
