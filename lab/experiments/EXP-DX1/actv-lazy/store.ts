@@ -1,8 +1,10 @@
 import { bytes as wireBytes } from "../import1/source.ts";
 import assert from "node:assert/strict";
+import { Cause, Exit } from "effect";
 import {
   requireDatomicSourcePosition,
   DatomicClient,
+  DatomicHttpError,
 } from "../../../../packages/datomic/dist/index.js";
 import { Effect, openTriples, runtimeApi } from "../../../bench/lib/triplex.ts";
 import { openComposition } from "../../../bench/lib/composition.ts";
@@ -28,6 +30,36 @@ export const fact = (entityId: string, attribute: string, data: unknown) => ({
 });
 export const value = (row: WorldRow) => JSON.parse(row.value.value);
 export class Conflict extends Error {}
+
+// [DX-ACT1] Why: a typed write-policy refusal proves this frame was rejected even if another writer advanced the source. Rejected: flattening the adapter's cause into a message or mistaking the other writer for a retryable conflict.
+export async function rejectUnrecordedWrite(
+  exit: Exit.Exit<unknown, unknown>,
+  expected: number,
+  head: () => Promise<number>,
+): Promise<never> {
+  const failure = Exit.isFailure(exit)
+    ? exit.cause.reasons.find(Cause.isFailReason)?.error
+    : undefined;
+  const native =
+    failure instanceof DatomicHttpError
+      ? failure
+      : failure instanceof Error
+        ? failure.cause
+        : undefined;
+  if (
+    native instanceof DatomicHttpError &&
+    ((native.status === 413 &&
+      (native.code === "BulkFrameTooLarge" || native.code === "WriteBudgetExceeded")) ||
+      (native.status === 429 && native.code === "WriteQueueFull"))
+  )
+    throw native;
+  if ((await head()) !== expected) throw new Conflict("Source changed at admission");
+  throw new Error(
+    "Native write had no receipt: " + (failure instanceof Error ? failure.message : exit._tag),
+    { cause: failure },
+  );
+}
+
 export type EventKind = "activation" | "source" | "due" | "erase" | "baseline";
 export interface Event {
   kind: EventKind;
@@ -169,12 +201,7 @@ export async function openStore(
       };
       return receipt;
     }
-    if ((await comp.currentPosition()) !== expected)
-      throw new Conflict("Source changed at admission");
-    throw Error(
-      "Native write had no receipt: " +
-        String(exit.cause?.reasons?.[0]?.error?.message ?? exit._tag),
-    );
+    return rejectUnrecordedWrite(exit, expected, () => comp.currentPosition());
   }
   async function controls(p: number, inputOnly = false) {
     const all = await rows(

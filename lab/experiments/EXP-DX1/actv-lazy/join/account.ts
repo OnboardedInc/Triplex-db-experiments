@@ -384,6 +384,20 @@ export class JoinedAccount {
       return r;
     });
   }
+  // [DX-ACT1] Why: recovering a committed command can be the first time this host sees it. Rejected: waking only on a newly handed-back ACK.
+  private observed(r: Awaited<ReturnType<Store["commit"]>>) {
+    if (
+      this.calendarListeners.size &&
+      r.changes.some((c: { entityId: string }) => c.entityId === this.db.prefix + "join-calendar")
+    )
+      for (const wake of this.calendarListeners) wake();
+    if (
+      this.noticeListeners.size &&
+      r.changes.some((c: { entityId: string }) => c.entityId.startsWith(this.db.prefix + "event:"))
+    )
+      for (const wake of this.noticeListeners) wake();
+    return r;
+  }
   private command(
     id: string,
     args: unknown,
@@ -424,7 +438,7 @@ export class JoinedAccount {
           attempt.recovered = true;
           attempt.finished = performance.now();
         }
-        return old;
+        return this.observed(old);
       }
       const p = await this.s.head();
       if (attempt) attempt.cut = p;
@@ -453,26 +467,13 @@ export class JoinedAccount {
         );
         if (attempt) attempt.finished = performance.now();
         assert.equal(r.position, (body.expected ?? p) + 1);
-        if (
-          r.changes.some(
-            (c: { entityId: string }) => c.entityId === this.db.prefix + "join-calendar",
-          )
-        )
-          for (const wake of this.calendarListeners) wake();
-        if (
-          this.noticeListeners.size &&
-          r.changes.some((c: { entityId: string }) =>
-            c.entityId.startsWith(this.db.prefix + "event:"),
-          )
-        )
-          for (const wake of this.noticeListeners) wake();
-        return r;
+        return this.observed(r);
       } catch (e) {
         const won = await this.original(id, intent);
         if (attempt) attempt.finished = performance.now();
         if (won) {
           if (attempt) attempt.recovered = true;
-          return won;
+          return this.observed(won);
         }
         if (!(e instanceof Conflict)) throw e;
         if (attempt) attempt.conflict = true;
