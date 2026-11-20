@@ -19,6 +19,7 @@ import {
 import { Evidence, modeOf, roles, root, runFile, sleep } from "./common.ts";
 import { drill } from "./run.ts";
 import { localCheckpoint } from "../hasync1/v2/local-checkpoint.ts";
+import { fleetCaps, fleetMode } from "../hasync1/v2/fleet-config.ts";
 import type { Site } from "./stack.ts";
 
 async function recoverLoad(nonce: string, config: any, manager: any, folder: string) {
@@ -133,6 +134,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
   );
   let info = slots[0],
     e: Evidence;
+  const acquiredSlots: typeof slots = [];
   function declare(slot: string) {
     const shape = opts["population-shape"] ?? "deep";
     assert(shape === "deep" || shape === "mixed");
@@ -149,33 +151,44 @@ export async function localDrill(opts: any, config: any, manager: any) {
     return attempt;
   }
   // [DX-HA1] Why: each child cap has a matching live reservation and unique name. Rejected: reusing a retained slot volume or double-counting a single opaque stack.
-  const wanted = Object.entries(roles).filter(([r]) =>
-    mode.startsWith("load-")
-      ? ["pg", "active", "write", "tool"].includes(r)
-      : mode === "replication"
-        ? ["pg", "target", "tool", "active", "write"].includes(r)
-        : mode === "move" ||
-          mode.startsWith("one-") ||
-          mode.startsWith("hasync-") ||
-          r !== "target",
-  );
+  const scopes = fleetMode(mode) ? Number(opts.systems ?? 1) : mode.startsWith("load-") ? 1 : 3;
+  const wanted = fleetMode(mode)
+    ? [...fleetCaps(mode, scopes, false)]
+    : Object.entries(roles).filter(([r]) =>
+        mode.startsWith("load-")
+          ? ["pg", "active", "write", "tool"].includes(r)
+          : mode === "replication"
+            ? ["pg", "target", "tool", "active", "write"].includes(r)
+            : mode === "move" ||
+              mode.startsWith("one-") ||
+              mode.startsWith("hasync-") ||
+              r !== "target",
+      );
   const people = Number(opts.people ?? 4);
   const smallLogicalCopy =
     mode === "one-account" && Number.isSafeInteger(people) && people > 0 && people <= 256;
   const checkpointRun = opts.checkpoint !== undefined || mode === "hasync-seed-edited";
+  const forecastRole = fleetMode(mode) ? "fleet-a-pg0" : "pg";
   const forecastBytes =
-    (checkpointRun
-      ? Math.max(2, Math.ceil(people / 2500))
-      : smallLogicalCopy
-        ? 1.5
-        : mode.startsWith("one-")
-          ? 3
-          : 1) *
+    (fleetMode(mode)
+      ? mode === "hasync-fleet-dedicated"
+        ? Math.max(1, Math.ceil(scopes / 2))
+        : 2
+      : checkpointRun
+        ? Math.max(2, Math.ceil(people / 2500))
+        : smallLogicalCopy
+          ? 1.5
+          : mode.startsWith("one-")
+            ? 3
+            : 1) *
     2 ** 30;
   const bytes = wanted.reduce((n, [, mb]) => n + mb * 2 ** 20, 0);
-  assert(bytes <= info.memBytes);
-  let acquired = false,
-    reserved = false,
+  const slotsNeeded = Math.ceil(bytes / info.memBytes);
+  assert(
+    slots.length >= slotsNeeded,
+    "Requested fleet needs more than one admitted slot; use --slot auto",
+  );
+  let reserved = false,
     clean = false;
   const parentLease = path.join(folder, "locks", "measure");
   let measured = false;
@@ -192,7 +205,10 @@ export async function localDrill(opts: any, config: any, manager: any) {
         });
         throw Error("Host disk floor");
       }
-      if (slots.some((slot) => !fs.existsSync(slot.lockDir)) && !fs.existsSync(parentLease)) {
+      if (
+        slots.filter((slot) => !fs.existsSync(slot.lockDir)).length >= slotsNeeded &&
+        !fs.existsSync(parentLease)
+      ) {
         try {
           await withPool((ledger: any) => {
             manager.assertMeasureAdmission(opts.holder);
@@ -207,12 +223,23 @@ export async function localDrill(opts: any, config: any, manager: any) {
             let ownedFile = false;
             try {
               const live = listTx2Containers({ all: true });
-              const candidate = slots.find(
-                (slot) =>
-                  !fs.existsSync(slot.lockDir) && !live.some((c: any) => c.name === slot.container),
-              );
-              if (!candidate) return;
-              info = candidate;
+              const nominated = slots
+                .filter(
+                  (slot) =>
+                    !fs.existsSync(slot.lockDir) &&
+                    !live.some((c: any) => c.name === slot.container),
+                )
+                .slice(0, slotsNeeded);
+              if (nominated.length < slotsNeeded) return;
+              info = nominated[0];
+              const available = nominated.map((slot) => slot.memBytes);
+              const assigned = new Map<string, string>();
+              for (const [role, mb] of [...wanted].sort((a, b) => b[1] - a[1])) {
+                const index = available.findIndex((room) => room >= mb * 2 ** 20);
+                assert(index >= 0, "Fleet roles do not fit admitted slots");
+                available[index] -= mb * 2 ** 20;
+                assigned.set(role, nominated[index].slot);
+              }
               const req = {
                 container: "tx2-ha1-admission",
                 memBytes: bytes,
@@ -235,7 +262,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
                 }).ok
               )
                 return;
-              e = declare(info.slot);
+              e = declare(nominated.map((slot) => slot.slot).join("+"));
               fs.writeFileSync(
                 path.join(parentLease, "owner.json"),
                 JSON.stringify({
@@ -248,20 +275,22 @@ export async function localDrill(opts: any, config: any, manager: any) {
                 { flag: "wx" },
               );
               ownedFile = true;
-              const slot = manager.acquireSlot(info, opts.holder, holder);
-              assert(slot.created);
-              acquired = true;
+              for (const candidate of nominated) {
+                const slot = manager.acquireSlot(candidate, opts.holder, holder);
+                assert(slot.created);
+                acquiredSlots.push(candidate);
+              }
               for (const [role, mb] of wanted)
                 ledger.reservations.push({
                   container: e.prefix + "-" + role,
                   holder: opts.holder,
                   lane: "datomic",
-                  slot: info.slot,
+                  slot: assigned.get(role),
                   pid: process.pid,
                   state: "drill",
                   memBytes: mb * 2 ** 20,
                   cpus: 1.5,
-                  diskForecastBytes: role === "pg" ? req.diskForecastBytes : 0,
+                  diskForecastBytes: role === forecastRole ? req.diskForecastBytes : 0,
                 });
               measured = true;
               reserved = true;
@@ -346,7 +375,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
       e!,
       site,
       site,
-      { people, scopes: mode.startsWith("load-") ? 1 : 3, capacity: "local" },
+      { people, scopes, capacity: "local" },
       () => {
         clean = true;
       },
@@ -372,7 +401,8 @@ export async function localDrill(opts: any, config: any, manager: any) {
         );
         appendEvent({ event: "ha1-released", holder, prefix: e.prefix });
       });
-    if (acquired && (!reserved || clean) && readOwner(info)?.pid === process.pid)
-      manager.releaseSlot(info);
+    if (!reserved || clean)
+      for (const slot of acquiredSlots)
+        if (readOwner(slot)?.pid === process.pid) manager.releaseSlot(slot);
   }
 }

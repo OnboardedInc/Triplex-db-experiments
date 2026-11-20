@@ -9,6 +9,7 @@ import { oneWhole } from "./one-whole.ts";
 import { oneFailover } from "./one-failover.ts";
 import { failures } from "./failures.ts";
 import type { Checkpoint } from "../hasync1/seed.ts";
+import { fleetCaps, fleetMode } from "../hasync1/v2/fleet-config.ts";
 export async function drill(
   e: Evidence,
   a: Site,
@@ -24,7 +25,13 @@ export async function drill(
     ownerGid?: number;
   },
 ) {
-  const s = new Stack(e, a, b, sync?.credentials);
+  const s = new Stack(
+    e,
+    a,
+    b,
+    sync?.credentials,
+    fleetMode(e.mode) ? fleetCaps(e.mode, profile.scopes, a !== b) : undefined,
+  );
   let cleanupShared: (() => Promise<void>) | undefined;
   let result: unknown;
   try {
@@ -38,7 +45,9 @@ export async function drill(
       const { SyncPair } = await import("../hasync1/pair.ts");
       const pair = new SyncPair(s, sync);
       cleanupShared = () => pair.cleanup();
-      if (e.mode.startsWith("hasync-seed-")) {
+      if (fleetMode(e.mode)) {
+        result = await (await import("../hasync1/v2/fleet.ts")).fleet(s, pair, profile.scopes);
+      } else if (e.mode.startsWith("hasync-seed-")) {
         assert(sync);
         const { buildCheckpoint } = await import("../hasync1/seed.ts");
         result = await buildCheckpoint(

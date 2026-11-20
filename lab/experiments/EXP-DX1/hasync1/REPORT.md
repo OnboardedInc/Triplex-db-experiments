@@ -45,3 +45,5 @@ Scoped TypeScript, 16 focused tests and the latch/route checks passed. The broad
 Part 2 records independent scheduled offers at five one-to-three-fact saves and 50 pinned reads per second per system. It seals the offer and outcome stream before resolving ambiguous saves under the original command IDs. Recovery clocks distinguish a newly offered on-time save from a recovered original or a late answer. [Schedule and recount](offers.ts)
 
 The edited deep rungs target 100,549, 1,000,464 and 2,704,806 active facts, with three retire-and-replace revisions on every fifth subject. Timings distinguish rewind, promotion, broker readiness, peer synchronization and first-touch exact reads. [Scale driver](v2/scale-local.ts)
+
+The fleet drill uses one active and one standby Datomic transactor per system. It compares one PostgreSQL pair with separate SQL schemas and roles against one SQL pair per system. Each system gets its own writer route, timed offers and oracle. The idle sample counts cgroup memory and CPU for every role. [Fleet driver](v2/fleet.ts)

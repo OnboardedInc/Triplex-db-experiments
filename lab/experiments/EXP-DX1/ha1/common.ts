@@ -44,6 +44,8 @@ export const modes = [
   "hasync-seed-legacy",
   "hasync-seed-lean",
   "hasync-seed-edited",
+  "hasync-fleet-shared",
+  "hasync-fleet-dedicated",
   "hasync-suite",
 ] as const;
 export type Mode = (typeof modes)[number];
@@ -56,7 +58,7 @@ export const roles = {
   read: 672,
   tool: 640,
 } as const;
-export type Role = keyof typeof roles;
+export type Role = keyof typeof roles | `fleet-${"a" | "b"}-${"pg" | "tx"}${number}`;
 export function modeOf(s: string): Mode {
   assert(modes.includes(s as Mode), "Unknown HA experiment");
   return s as Mode;
