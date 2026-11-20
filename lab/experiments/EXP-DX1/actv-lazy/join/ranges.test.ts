@@ -31,7 +31,7 @@ test("notice and stored-output ranges cover every independently changed row in b
   try {
     for (const validTime of [W0.POPULATION_VALID_TIME, "2026-12-31T00:00:00.000000Z"]) {
       const basis = { tx: 1000000, validTime },
-        page = leaf(worlds.map((w) => entry(w, basis)));
+        pages = [false, true].map((expanded) => leaf(worlds.map((w) => entry(w, basis, expanded))));
       for (const candidate of variants)
         for (const [old, next] of [
           [W0.R1, candidate],
@@ -46,29 +46,35 @@ test("notice and stored-output ranges cover every independently changed row in b
               fold: false,
             }),
           );
-          for (const kind of ["output", "notice"] as const) {
-            const mode = strategy(old, next, kind, true);
-            const selected = new Set(
-              mode === "all" ? page.ids : mode === "none" ? [] : hits(page, old, next, basis).ids,
-            );
-            for (const row of expected) {
-              const changed = row.rows.some(
-                ([key]: [string]) => kind === "output" || JSON.parse(key)[3] === "work",
+          for (const [version, page] of pages.entries())
+            for (const kind of ["output", "notice"] as const) {
+              const expanded = version === 1 && kind === "output";
+              const mode = strategy(old, next, kind, true, expanded);
+              const selected = new Set(
+                mode === "all"
+                  ? page.ids
+                  : mode === "none"
+                    ? []
+                    : hits(page, old, next, basis, expanded).ids,
               );
-              if (changed) {
-                assert(
-                  selected.has(row.subject),
-                  JSON.stringify([kind, row.subject, old.hash, next.hash, mode]),
+              for (const row of expected) {
+                const changed = row.rows.some(
+                  ([key]: [string]) => kind === "output" || JSON.parse(key)[3] === "work",
                 );
-                if (kind === "notice") owed++;
-                else display++;
+                if (changed) {
+                  assert(
+                    selected.has(row.subject),
+                    JSON.stringify([kind, expanded, row.subject, old.hash, next.hash, mode]),
+                  );
+                  if (kind === "notice") owed++;
+                  else display++;
+                }
+                checked++;
               }
-              checked++;
             }
-          }
         }
     }
-    assert.equal(checked, worlds.length * 2 * variants.length * 2 * 2);
+    assert.equal(checked, worlds.length * 2 * variants.length * 2 * 2 * 2);
     assert(owed > 0 && display > owed);
     assert(!indexInputs.has("weeklyMinutes") && !indexInputs.has("ssn"));
   } finally {
