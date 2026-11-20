@@ -95,6 +95,38 @@ def summarize(directory,mode,source,checkpoint,small=False):
             assert r["offset"]<=r["submitted"]<=r["firstPacket"]<=r["ackAt"]
     successful=[r for r in observations if r["disposition"]=="ack"]
     assert len(successful)==result["found"] and len({r["pos"] for r in successful})==len(successful)
+    if get(checkpoint).get("kind")=="scale1-single":
+        readback=directory/"field-readback.json"
+        assert sha(readback)==result["readbackSha256"]
+        checked=get(readback)
+        assert [checked[k] for k in ("source","slot","nonce","db","oldCut","newCut")]==[
+            source,plan["slot"],plan["nonce"],plan["db"],result["headBefore"],result["last"]]
+        excluded={by_offer[int(r["id"].rsplit("-",1)[1])]["entity"] for r in result["recovered"]}
+        assert checked["excludedAfterRecoveredCommit"]==len(excluded)
+        changed={row["entity"] for row in successful}-excluded
+        series=sorted(changed)
+        expected=series if small else series[::max(1,len(series)//24)]
+        assert checked["subjects"]==expected
+        locals_by_entity={o["entity"]:o["local"] for o in successful}
+        latest={}
+        for row in sorted(successful,key=lambda o:o["pos"]):
+            for field in range(row["width"]):
+                latest[row["entity"],field]=row
+        for cut,key in ((result["headBefore"],"before"),(result["last"],"after")):
+            assert [r["entity"] for r in checked[key]]==expected
+            for row in checked[key]:
+                assert row["expected"]==row["observed"]
+                seq=row["observed"]
+                assert [field[1] for field in seq]==[":task/field-"+str(i) for i in range(3)]
+                assert all(q[0]==row["entity"] and q[2] and q[3]=="string" and q[4] and q[6]<=cut for q in seq)
+                local=locals_by_entity[row["entity"]]
+                for i,field in enumerate(seq):
+                    save=latest.get((row["entity"],i)) if key=="after" else None
+                    revision=save["ordinal"]+1 if save else 0
+                    assert field[4]==hashlib.sha256(f"deep-field/{local}/0/{i}/{revision}".encode()).hexdigest()[:57]
+                    if save:
+                        assert field[2]==hashlib.sha256(f"{save['id']}/f{i}".encode()).hexdigest()[:26].upper()
+                        assert field[6]==save["pos"]
     own={r["t"] for r in successful}
     raw=directory/"engines"/plan["slot"]/"trace/raw"
     proof_trace=get(raw/"tx.jfr-complete.jsonl")
@@ -175,8 +207,11 @@ def summarize(directory,mode,source,checkpoint,small=False):
         assert len(suffix["commits"])==len(known) and int(suffix["high"])>=max(int(r["t"]) for r in known)>int(suffix["low"])
         raw=directory/"native-log.stdout"
         assert suffix["nativeLogSha256"]==sha(raw) and suffix["scriptSha256"]==sha(Path(__file__).with_name("size-log.clj"))
-        native_log,=[line.removeprefix("BM1_SIZE_JSON ") for line in raw.read_text().splitlines() if line.startswith("BM1_SIZE_JSON ")]
-        log=json.loads(native_log)
+        def native_size(file):
+            row,=[line.removeprefix("BM1_SIZE_JSON ") for line in file.read_text().splitlines() if line.startswith("BM1_SIZE_JSON ")]
+            return {**json.loads(row),"sha256":sha(file)}
+        log=native_size(raw)
+        assert log["mode"]=="log"
         assert [log[k] for k in ("database","low","high","basis")]==[plan["db"],suffix["low"],suffix["high"],suffix["basis"]]
         assert all(int(log["low"])<int(r["t"])<=int(log["high"]) for r in log["records"])
         assert all(a["t"]!=b["t"] and int(a["t"])<int(b["t"]) for a,b in zip(log["records"],log["records"][1:]))
@@ -189,6 +224,15 @@ def summarize(directory,mode,source,checkpoint,small=False):
             assert [reading[k] for k in ("nonce","source","slot","position")]==[plan["nonce"],source,plan["slot"],position]
             assert reading["receipt"]["completed"] is True and reading["receipt"]["database"]==plan["db"]
         indexed=get(directory/"indexed-size.json") if (directory/"indexed-size.json").is_file() else None
+        index_counts={}
+        for filename,mode,basis in (("before","indexed",log["low"]),
+                                    ("before-barrier","current",log["high"]),
+                                    ("indexed","indexed",log["high"])):
+            row=native_size(directory/("native-size-"+filename+".stdout"))
+            assert [row[k] for k in ("mode","database","low","high")]==[mode,plan["db"],basis,basis]
+            assert int(row["basis"])>=max(int(basis),int(row["indexedT"])) and row["segments"]>0 and row["indexDatoms"]>0
+            if mode=="indexed":assert int(row["indexedT"])>=int(basis)
+            index_counts[filename]=row
         turns={row["t"]:row["datoms"] for row in suffix["commits"]}
         assert all(r.get("datoms") in (None,turns[r["t"]]) for r in successful)
         def lsn(x):
@@ -202,6 +246,8 @@ def summarize(directory,mode,source,checkpoint,small=False):
         measurement["size"]={"nativeDatoms":sum(turns.values()),"nativeScope":entries,
                              "widths":Counter(r["width"] for r in successful),"before":before,"after":after,
                              "indexed":indexed,"index":index,"walBytes":wal,"nativeDatomsByWidth":by_width,
+                             "nativeIndexCounts":index_counts,
+                             "indexedSegmentsDelta":index_counts["indexed"]["segments"]-index_counts["before"]["segments"],
                              "nativeDatomsPerSave":sum(turns.values())/entries,"walBytesPerSave":wal/entries,
                              "grossRelationBytesPerSave":(after["relationBytes"]-before["relationBytes"])/entries,
                              "indexedRelationBytesPerSave":(indexed["relationBytes"]-before["relationBytes"])/entries if indexed else None,

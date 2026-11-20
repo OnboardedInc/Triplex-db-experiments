@@ -144,21 +144,27 @@ async function indexAt(label, head) {
   write(label, { source, slot, nonce, position: Number(head.position.v), receipt });
 }
 
-function nativeLog(before, after, found, recovered) {
+function nativeSize(mode, low, high, name) {
   const script = new URL("./size-log.clj", import.meta.url);
   assert.match(slot, /^tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-size[1-4]$/);
   const output = execFileSync(
     "docker",
     ["exec", "-i", "-e", "DATOMIC_JAVA_OPTS=-Xms128m -Xmx768m -Ddatomic.objectCacheMax=64m",
-      slot + "-gw-r", "/opt/datomic/bin/run", "clojure.main", "-", db, before.t.v, after.t.v],
+      slot + "-gw-r", "/opt/datomic/bin/run", "clojure.main", "-", mode, db, low, high],
     { input: fs.readFileSync(script), timeout: 120_000, maxBuffer: 16 << 20, encoding: "utf8" },
   );
-  fs.writeFileSync(file("native-log.stdout"), output, { flag: "wx" });
+  fs.writeFileSync(file(name), output, { flag: "wx" });
   const line = output.split("\n").filter(s => s.startsWith("BM1_SIZE_JSON "));
   assert.equal(line.length, 1);
   const raw = JSON.parse(line[0].slice("BM1_SIZE_JSON ".length));
-  assert.deepEqual([raw.database, raw.low, raw.high], [db, before.t.v, after.t.v]);
+  assert.deepEqual([raw.database, raw.low, raw.high, raw.mode], [db, low, high, mode]);
   assert(BigInt(raw.basis) >= BigInt(raw.high));
+  return raw;
+}
+
+function nativeLog(before, after, found, recovered) {
+  const script = new URL("./size-log.clj", import.meta.url);
+  const raw = nativeSize("log", before.t.v, after.t.v, "native-log.stdout");
   const expected = new Map([...found, ...recovered].map((row) => [row.t, row]));
   assert.equal(expected.size, found.length + recovered.length);
   const commits = [];
@@ -300,6 +306,7 @@ async function prepareScaledFields() {
 
 try {
   const initial = await restoreWitness();
+  const initialFields = new Map(old);
   const before = await writer.basis(db);
   assert(Number(before.position.v) === initial.through);
   if (readOptions) {
@@ -307,7 +314,10 @@ try {
     assert.equal(writerOptions.observed.position, initial.through);
     write("writer-options.json", writerOptions);
   }
-  if (stage === "size") await indexAt("index-before.json", before);
+  if (stage === "size") {
+    await indexAt("index-before.json", before);
+    nativeSize("indexed", before.t.v, before.t.v, "native-size-before.stdout");
+  }
   write("foreground-ready.json", { source, slot, nonce, head: initial.through });
   await gate("timing-gate.json");
   // The size comparison records a no-write baseline from the same indexed version.
@@ -518,9 +528,42 @@ try {
   );
   const after = await writer.basis(db);
   assert(Number(after.position.v) === last);
+  let readbackSha256;
+  if (scaled) {
+    // [DX-BM1] Why: compare stored field identities and bytes at the original and new cuts.
+    // Rejected: accepting an operation status alone as proof that the replacement payload was correct.
+    const uncertain = new Set(recovered.map((r) => tape[Number(r.id.split("-").at(-1))].entity));
+    const candidates = [...new Set(found.map((r) => r.entity))].filter((entity) => !uncertain.has(entity)).sort();
+    const selectedCuts = smoke ? candidates : candidates.filter((_, i) => i % Math.max(1, Math.floor(candidates.length / 24)) === 0);
+    const tags = (rows) => rows.filter((row) => [field(0), field(1), field(2)].includes(row.attribute))
+      .sort((a,b) => a.attribute.localeCompare(b.attribute)).map((row) =>
+        [row.entity_id, row.attribute, row.id, row.value_type, row.value_string, row.valid_from, row.recorded_position]);
+    const readChecked = async (at, expected) => {
+      const samples = [];
+      for (let i = 0; i < selectedCuts.length; i += 24) {
+        const keys = selectedCuts.slice(i, i + 24);
+        const actual = await peer.rows(db, { entityIds: keys, pattern: {}, basis: { ...cut, recordedPosition: at } });
+        for (const key of keys) {
+          const observed = tags(actual.filter((row) => row.entity_id === key));
+          const wanted = tags(expected.get(key));
+          assert.equal(wanted.length, 3);
+          assert.deepEqual(observed, wanted);
+          samples.push({ entity: key, expected: wanted, observed });
+        }
+      }
+      return samples;
+    };
+    assert(!smoke || selectedCuts.length > 0);
+    write("field-readback.json", { source, slot, nonce, db, oldCut: initial.through, newCut: last,
+      subjects: selectedCuts, excludedAfterRecoveredCommit: uncertain.size,
+      before: await readChecked(initial.through, initialFields), after: await readChecked(last, old) });
+    readbackSha256 = hashFile(file("field-readback.json"));
+  }
   if (stage === "size" && last > initial.through) {
     nativeLog(before, after, found, recovered);
+    nativeSize("current", after.t.v, after.t.v, "native-size-before-barrier.stdout");
     await indexAt("index.json", after);
+    nativeSize("indexed", after.t.v, after.t.v, "native-size-indexed.stdout");
   }
   write("result.json", {
     plan,
@@ -534,6 +577,7 @@ try {
     ),
     tapeSha256: hashFile(file("offers.jsonl")),
     outcomesSha256: hashFile(file("outcomes.jsonl")),
+    readbackSha256,
     ...(stage === "ceil"
       ? {
           readSha256: hashFile(file("reads.jsonl")),
