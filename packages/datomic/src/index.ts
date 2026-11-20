@@ -72,3 +72,12 @@ export * from "./replica/index.js";
 
 export { resumeCommitOrder } from "./CommitOrder.js";
 export * from "./tracing.js";
+
+export { requireDatomicSourcePosition, withDatomicImportClock } from "./TransactionContext.js";
+
+export {
+  withDatomicErasureSequence,
+  type ErasureFrontier,
+  type ErasureReceipt,
+  type ErasureSelector,
+} from "./erasure.js";

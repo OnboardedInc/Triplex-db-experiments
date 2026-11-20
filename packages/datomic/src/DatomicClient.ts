@@ -1,7 +1,21 @@
+import {
+  erasureWriteTicket,
+  type ErasureFrontier,
+  type ErasureReceipt,
+  type ErasureSelector,
+} from "./erasure.js";
 import { ByteCache } from "./ByteCache.js";
 import { PredecessorCache, RowCache, estimateRowBytes } from "./RowCache.js";
 import { createHash, randomUUID } from "node:crypto";
-import { decodeEntity, type CachedEntity, type ReachWire } from "./reach.js";
+import {
+  decodeEntity,
+  decodeReachPage,
+  reachResponse,
+  type CachedEntity,
+  type ReachPage,
+  type ReachWire,
+} from "./reach.js";
+import { databaseName } from "./scopeName.js";
 import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/feed";
 import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
@@ -99,6 +113,7 @@ export interface DatomicRequestSample {
   readonly gatewayMicros: number;
   readonly transactMicros: number;
   readonly waited: boolean;
+  readonly erasureSeq?: number;
   readonly datoms?: number;
   readonly position?: number;
 }
@@ -158,6 +173,12 @@ export class DatomicClient {
   private lastCommit: { db: string; position: number; t: string } | undefined;
   reachSession = randomUUID();
   readonly reachCache: ByteCache<CachedEntity>;
+  private readonly reachReplySequence = new WeakMap<object, number | null>();
+  private readonly reachSequence = new Map<string, number>();
+  private readonly reachStamps = new WeakMap<
+    CachedEntity,
+    { position: number; t: string; sequence: number }
+  >();
   readonly rowCache: RowCache;
   readonly predecessorCache: PredecessorCache;
   forceFullReach = false;
@@ -178,11 +199,13 @@ export class DatomicClient {
     faults: 0,
     declines: {} as Record<string, number>,
   };
+  private readonly historicalSessions = new Map<string, string>();
   // [DX-H7] Why: parsed reference IDs repeatedly rebuilt and hashed long database-prefixed keys.
   // Rejected: changing cache identity to an entity ID alone (cross-database collisions).
   private reachKeyDb: string | undefined;
   private readonly reachKeys = new Map<string, string>();
   private reachKeyBytes = 0;
+  private readonly reachKeyBudget: number;
   private cacheTimer: ReturnType<typeof setInterval> | undefined;
   cacheDiagnostics() {
     const stats = (c: {
@@ -206,7 +229,7 @@ export class DatomicClient {
       reachKeys: {
         bytes: this.reachKeyBytes,
         entries: this.reachKeys.size,
-        budgetBytes: 4 * 1024 ** 2,
+        budgetBytes: this.reachKeyBudget,
       },
     };
   }
@@ -220,8 +243,8 @@ export class DatomicClient {
     if (found !== undefined) return found;
     const key = prefix + id;
     const bytes = 128 + 2 * (id.length + key.length);
-    if (bytes <= 4 * 1024 ** 2) {
-      if (this.reachKeyBytes + bytes > 4 * 1024 ** 2) {
+    if (bytes <= this.reachKeyBudget) {
+      if (this.reachKeyBytes + bytes > this.reachKeyBudget) {
         this.reachKeys.clear();
         this.reachKeyBytes = 0;
       }
@@ -243,8 +266,13 @@ export class DatomicClient {
       readonly rowCacheBytes?: number;
       readonly predecessorCacheBytes?: number;
       readonly predecessorAttributes?: readonly string[];
+      readonly reachKeyBytes?: number;
+      readonly historicalRevisionReuse?: boolean;
     } = {},
   ) {
+    this.reachKeyBudget = cacheOptions.reachKeyBytes ?? 4 * 1024 ** 2;
+    if (!Number.isSafeInteger(this.reachKeyBudget) || this.reachKeyBudget < 0)
+      throw new RangeError("Invalid reach key budget");
     this.reachCache = new ByteCache(
       cacheOptions.entityCacheBytes ?? 16 * 1024 ** 2,
       (entity) => 256 + entity.storedRows.reduce((n, row) => n + 3 * estimateRowBytes(row), 0),
@@ -283,7 +311,9 @@ export class DatomicClient {
     this.reachKeys.clear();
     this.reachKeyBytes = 0;
     this.reachKeyDb = undefined;
+    this.historicalSessions.clear();
     this.reachCache.clear();
+    this.reachSequence.clear();
     this.rowCache.clear();
     this.predecessorCache.clear();
     this.layouts.clear();
@@ -442,6 +472,21 @@ export class DatomicClient {
                   status: res.statusCode ?? 0,
                 };
               const status = res.statusCode ?? 0;
+              const erasureHead = res.headers["x-triplex-erasure-seq"];
+              if (
+                erasureHead !== undefined &&
+                (path.endsWith("/reach") || path.endsWith("/reach-many"))
+              ) {
+                const sequence = Number(erasureHead);
+                this.reachReplySequence.set(
+                  data,
+                  Number.isSafeInteger(sequence) &&
+                    sequence >= 0 &&
+                    String(sequence) === erasureHead
+                    ? sequence
+                    : null,
+                );
+              }
               const sample: DatomicRequestSample | undefined =
                 observation || this.onRequest
                   ? {
@@ -461,6 +506,9 @@ export class DatomicClient {
                       gatewayMicros: Number(res.headers["x-tx2-gateway-micros"] ?? NaN),
                       transactMicros: Number(data["transactMicros"] ?? NaN),
                       waited: res.headers["x-tx2-waited"] === "true",
+                      ...(typeof erasureHead === "string"
+                        ? { erasureSeq: Number(erasureHead) }
+                        : {}),
                       ...(typeof data["datoms"] === "number" ? { datoms: data["datoms"] } : {}),
                       ...(data["position"] && typeof data["position"] === "object"
                         ? { position: Number((data["position"] as TaggedValue).v) }
@@ -511,14 +559,109 @@ export class DatomicClient {
   // [DX-B2-N2] Why: bind caches to database and revisions, and repair concurrent inline/reference races once.
   // Rejected: accepting a missing reference as an empty entity.
   private readonly reachInflight = new Set<Promise<void>>();
+  private acceptReachSequence(db: string, sequence: number | null | undefined) {
+    const previous = this.reachSequence.get(db);
+    if (
+      sequence === null ||
+      (previous !== undefined && (sequence === undefined || sequence < previous))
+    )
+      return false;
+    if (sequence !== undefined && sequence !== previous) this.reachSequence.set(db, sequence);
+    return true;
+  }
+  async readDemandWorld(
+    scope: string,
+    root: string,
+    basis: ResolvedTemporalBasis,
+    gzipRows = fastPathEnabled("demand-gzip"),
+  ) {
+    // [DX-THIN1] Why: one native cut validates every cached entity revision and returns all missing rows. Rejected: following the whole import journal to keep untouched worlds current.
+    const found = await this.reachEntities(databaseName(scope), [root], basis, true, gzipRows);
+    if (!found) return undefined;
+    for (const entity of found.entities.values()) {
+      if (
+        entity.storedRows.some(
+          (row) =>
+            !Number.isSafeInteger(row.recorded_position) ||
+            row.recorded_position < 1 ||
+            row.recorded_position > found.position,
+        )
+      )
+        throw new TypeError("Demand row outside its selected position");
+    }
+    const world = reachResponse(root, found.entities, basis, found.closures[0]![1]);
+    return { ...world, entities: found.closures[0]![1].length, requests: found.requests };
+  }
+
+  // [DX-RD1] Why: one native union walk for several roots at the identical two-clock cut.
+  // Rejected: batching across unequal valid times or answering a missing root from another cut.
+  async readHistoricalWorlds(
+    scope: string,
+    roots: readonly string[],
+    basis: ResolvedTemporalBasis,
+  ) {
+    if (
+      !roots.length ||
+      roots.length > 16 ||
+      new Set(roots).size !== roots.length ||
+      (basis.recordedAt === undefined && basis.recordedPosition === undefined)
+    )
+      throw new TypeError("Invalid historical read batch");
+    const found = await this.reachEntities(databaseName(scope), roots, basis, true);
+    if (!found) return undefined;
+    for (const entity of found.entities.values()) {
+      if (
+        entity.storedRows.some(
+          (row) =>
+            !Number.isSafeInteger(row.recorded_position) ||
+            row.recorded_position < 1 ||
+            row.recorded_position > found.position,
+        )
+      )
+        throw new TypeError("Historical row outside the selected position");
+    }
+    const worlds = found.closures.map(([root, closure]) => {
+      const result = reachResponse(root, found.entities, basis, closure);
+      let from = -Infinity,
+        to = Infinity;
+      // All reachable entities carry rows outside the requested valid time too. The first
+      // boundary changes either an output row or an edge, so a hit can never cross it.
+      for (const id of closure) {
+        for (const row of found.entities.get(id)!.storedRows) {
+          for (const at of [row.valid_from, row.valid_to]) {
+            if (at === null) continue;
+            if (at <= basis.validAt) from = Math.max(from, at);
+            else to = Math.min(to, at);
+          }
+        }
+      }
+      return { root, ...result, entities: closure.length, from, to };
+    });
+    return { worlds, requests: found.requests, position: found.position, t: found.t };
+  }
+
+  private reachSessionAt(db: string, basis: ResolvedTemporalBasis) {
+    if (!this.cacheOptions.historicalRevisionReuse) return this.reachSession;
+    const key = `${db}/${basis.recordedAt ?? ""}/${basis.recordedPosition ?? ""}`;
+    const found = this.historicalSessions.get(key);
+    if (found) return found;
+    // [DX-RD1] Why: an alternating cut must not overwrite the gateway's remembered revision on every other request.
+    // Rejected: one session per logical caller, or an unbounded session for every recorded instant.
+    if (this.historicalSessions.size >= 8)
+      this.historicalSessions.delete(this.historicalSessions.keys().next().value!);
+    const session = randomUUID();
+    this.historicalSessions.set(key, session);
+    return session;
+  }
   async reachEntities(
     db: string,
     roots: readonly string[],
     basis: ResolvedTemporalBasis,
     rowPage = false,
+    gzipRows = false,
   ) {
     return tracedRequest("read", "client.reach", {}, () =>
-      this.reachEntitiesTraced(db, roots, basis, rowPage),
+      this.reachEntitiesTraced(db, roots, basis, rowPage, gzipRows),
     );
   }
   private async reachEntitiesTraced(
@@ -526,6 +669,7 @@ export class DatomicClient {
     roots: readonly string[],
     basis: ResolvedTemporalBasis,
     rowPage: boolean,
+    gzipRows: boolean,
   ) {
     const older = [...this.reachInflight];
     let ingested!: () => void;
@@ -534,7 +678,7 @@ export class DatomicClient {
     });
     this.reachInflight.add(ready);
     try {
-      return await this.fetchReachEntities(db, roots, basis, rowPage, older, ingested);
+      return await this.fetchReachEntities(db, roots, basis, rowPage, gzipRows, older, ingested);
     } finally {
       ingested();
       this.reachInflight.delete(ready);
@@ -547,21 +691,41 @@ export class DatomicClient {
     roots: readonly string[],
     basis: ResolvedTemporalBasis,
     rowPage: boolean,
+    gzipRows: boolean,
     older: readonly Promise<void>[],
     ingested: () => void,
   ) {
+    const session = this.reachSessionAt(db, basis);
+    const page = async (route: string, input: Record<string, unknown>) => {
+      const wire = await this.request<ReachPage>("POST", route, {
+        ...input,
+        erasureRefs: true,
+        ...(gzipRows ? { gzipRows: true } : {}),
+      });
+      return {
+        response: gzipRows ? decodeReachPage(wire, this.maxResponseBytes) : (wire as ReachWire),
+        sequence: this.reachReplySequence.get(wire),
+      };
+    };
+    let requests = 0;
     for (let attempt = 0; attempt < 2; attempt++) {
-      const response = await this.request<ReachWire>(
-        "POST",
+      requests++;
+      const { response, sequence } = await page(
         `/v2/db/${db}/${roots.length === 1 ? "reach" : "reach-many"}`,
         {
           ...(roots.length === 1 ? { root: roots[0] } : { roots }),
           basis,
           ...(rowPage ? { rowPage: true } : {}),
-          session: this.reachSession,
+          session,
           ...(this.forceFullReach || attempt === 1 ? { full: true } : {}),
         },
       );
+      // [DX-ERASE1] Why: a delayed response cannot carry the cache back across an observed frontier.
+      // Rejected: waiting until after decoding or reporting rows to check the response sequence.
+      if (sequence === null || !this.acceptReachSequence(db, sequence)) {
+        if (attempt === 0) this.reachDiagnostics.fullRetries++;
+        continue;
+      }
       if (response.declined !== undefined) {
         this.reachDiagnostics.declines[response.declined] =
           (this.reachDiagnostics.declines[response.declined] ?? 0) + 1;
@@ -580,10 +744,34 @@ export class DatomicClient {
         )
           throw new TypeError("Reach response basis/shape mismatch");
         const prefix = `${db}\0`;
+        // [DX-INT1] Why: historical sessions keep their revision keys and guarded references still verify the native cut.
+        // Rejected: letting a revision match override the erasure sequence.
+        const key = (id: string, rev: number) =>
+          this.cacheOptions.historicalRevisionReuse
+            ? `${prefix}${id.length}:${id}/${rev}`
+            : this.reachKey(db, prefix, id);
+        const stamp =
+          sequence === undefined
+            ? undefined
+            : { position: response.position, t: response.t, sequence };
         const cache = {
-          get: (id: string) => this.reachCache.get(this.reachKey(db, prefix, id)),
-          set: (id: string, entity: CachedEntity) =>
-            this.reachCache.set(this.reachKey(db, prefix, id), entity),
+          get: (id: string, rev: number) => {
+            const hit = this.reachCache.get(key(id, rev));
+            if (hit?.rev !== rev) return;
+            if (!stamp) return hit;
+            const old = this.reachStamps.get(hit);
+            if (
+              old?.sequence === stamp.sequence &&
+              old.position === stamp.position &&
+              old.t === stamp.t
+            )
+              return hit;
+            return undefined;
+          },
+          set: (id: string, entity: CachedEntity) => {
+            if (stamp) this.reachStamps.set(entity, stamp);
+            this.reachCache.set(key(id, entity.rev), entity);
+          },
         };
         const entities = new Map<string, CachedEntity>();
         let missed = false;
@@ -616,8 +804,8 @@ export class DatomicClient {
               cache.set(id, decoded);
             } else {
               this.reachDiagnostics.referenceEntities++;
-              decoded = cache.get(id);
-              if (decoded?.rev === rev) {
+              decoded = cache.get(id, rev);
+              if (decoded) {
                 this.reachDiagnostics.referenceHits++;
                 // [DX-H7] Why: references are reads too; refresh only the small predecessor cache.
                 // Rejected: replaying row observers (would churn the row LRU on every reader cache hit).
@@ -638,8 +826,8 @@ export class DatomicClient {
           ) as [string, number][];
           const missing = () =>
             references.filter(([id, rev]) => {
-              const found = cache!.get(id);
-              if (found?.rev === rev) {
+              const found = cache.get(id, rev);
+              if (found) {
                 entities.set(id, found);
                 return false;
               }
@@ -648,6 +836,10 @@ export class DatomicClient {
           if (older.length) {
             this.reachDiagnostics.waits++;
             await Promise.allSettled(older);
+            if (this.reachSequence.get(db) !== sequence) {
+              if (attempt === 0) this.reachDiagnostics.fullRetries++;
+              continue;
+            }
             if (!missing().length) this.reachDiagnostics.waitHits++;
           }
           const need = missing();
@@ -655,14 +847,20 @@ export class DatomicClient {
             this.reachDiagnostics.needRequests++;
             this.reachDiagnostics.needEntities += need.length;
             try {
-              const repair = await this.request<ReachWire>("POST", `/v2/db/${db}/reach-many`, {
-                roots,
-                need: need.map(([id]) => id),
-                session: this.reachSession,
-                basis: { ...basis, recordedPosition: response.position },
-                ...(rowPage ? { rowPage: true } : {}),
-              });
+              requests++;
+              const { response: repair, sequence: repairedSequence } = await page(
+                `/v2/db/${db}/reach-many`,
+                {
+                  roots,
+                  need: need.map(([id]) => id),
+                  session,
+                  basis: { ...basis, recordedPosition: response.position },
+                  ...(rowPage ? { rowPage: true } : {}),
+                },
+              );
               if (
+                !this.acceptReachSequence(db, repairedSequence) ||
+                repairedSequence !== sequence ||
                 repair.declined ||
                 repair.position !== response.position ||
                 repair.t !== response.t ||
@@ -705,7 +903,13 @@ export class DatomicClient {
           )
             throw new TypeError("Reach closure binding mismatch");
         });
-        return { entities, closures: response.closures };
+        return {
+          entities,
+          closures: response.closures,
+          requests,
+          position: response.position,
+          t: response.t,
+        };
       } catch {
         this.reachDiagnostics.faults++;
         return undefined;
@@ -724,6 +928,29 @@ export class DatomicClient {
           if (typeof value === "string")
             this.reachDiagnostics.decodedTextBytes += Buffer.byteLength(value);
     }
+  }
+  declareProtection(db: string, attributes: readonly string[], sealed = false) {
+    return this.request("POST", `/v2/db/${db}/protection`, { attributes, sealed });
+  }
+  async erasureFrontier(db: string): Promise<ErasureFrontier> {
+    const result = await this.request<ErasureFrontier>("GET", `/v2/db/${db}/erasure-frontier`);
+    if (
+      result.database !== db ||
+      typeof result.protected !== "boolean" ||
+      !Number.isSafeInteger(result.seq) ||
+      result.seq < 0 ||
+      !result.erased ||
+      typeof result.erased !== "object" ||
+      Array.isArray(result.erased)
+    )
+      throw new TypeError("Erasure frontier scope or shape mismatch");
+    return result;
+  }
+  erase(db: string, commandId: string, selectors: readonly ErasureSelector[]) {
+    return this.request<ErasureReceipt>("POST", `/v2/db/${db}/erase`, { commandId, selectors });
+  }
+  restoreErasure(db: string) {
+    return this.request("POST", `/v2/db/${db}/restore-erasure`, {});
   }
   health(): Promise<DatomicHealth> {
     return this.request("GET", "/health");
@@ -883,7 +1110,17 @@ export class DatomicClient {
     const encodeStart = performance.now();
     // [DX-B5-L0] Why: two-argument transact wrappers preserve the input, and this callback never belongs on the wire.
     // Rejected: a third-argument-only callback (the NS publication observer drops it).
-    const { onSent: inputSent, newIds: ids, ...wireInput } = input;
+    const { onSent: inputSent, ...wireInput } = input;
+    const { rows: inputRows, newIds: ids, ...requestHeader } = wireInput;
+    const ticket = erasureWriteTicket();
+    const header = ticket
+      ? {
+          ...requestHeader,
+          erasureSeq: ticket.sequence,
+          erasureReplay: ticket.replay,
+          erasureSourceDatabase: ticket.sourceDatabase,
+        }
+      : requestHeader;
     onSent ??= inputSent;
     const compact = this.layouts.get(db) === "lean";
     const rowFast = fastPathEnabled("row"),
@@ -898,16 +1135,16 @@ export class DatomicClient {
       "retract_tx_id",
     ];
     const rows = compact
-      ? input.rows
+      ? inputRows
           .filter((row) => row.retracted_at !== null)
           .map((row) => {
             const encoded = encodeRow(row);
             return Object.fromEntries(retirementColumns.map((column) => [column, encoded[column]]));
           })
-      : input.rows.map(encodeRow);
+      : inputRows.map(encodeRow);
     const bounds =
       compact && fastPathEnabled("history-range") ? historyIdentityBounds(input.newIds) : undefined;
-    const texts = input.rows
+    const texts = inputRows
       .filter((r) => isNew(r.id))
       .map(
         (r) =>
@@ -931,25 +1168,49 @@ export class DatomicClient {
       this.orderedRowTexts.has(db) &&
       ids.length === texts.length &&
       new Set(ids).size === ids.length &&
-      rows.length + ids.length === input.rows.length &&
-      input.rows.every((r, i) =>
+      rows.length + ids.length === inputRows.length &&
+      inputRows.every((r, i) =>
         i < texts.length
           ? r.retracted_at === null && r.id === texts[i]![0] && ids[i] === r.id
           : r.retracted_at !== null && !isNew(r.id),
       );
+    // [DX-LOAD1] Why: an append-only lean batch carries the same new ID in the text prefix, map key and two arrays. Rejected: omitting IDs on mixed/retired input or trusting an empty subject at the peer.
+    const fresh =
+      compact &&
+      fastPathEnabled("fresh-texts") &&
+      inputRows.length >= 32 &&
+      inputRows.length === input.newIds.length &&
+      new Set(input.newIds).size === inputRows.length &&
+      inputRows.every(
+        (r) =>
+          isNew(r.id) &&
+          r.retracted_at === null &&
+          r.retracted_position === null &&
+          r.retract_tx_id === null,
+      ) &&
+      new Set(inputRows.map((r) => r.id)).size === inputRows.length;
     const body = {
-      ...wireInput,
+      // [DX-INT1] Why: updating the existing legacy keys preserves the frozen request bytes.
+      // Rejected: rebuilding the legacy header in compact-field order.
+      ...(fresh || ordered ? header : wireInput),
       ...(this.cacheOptions.writeClass ? { writeClass: this.cacheOptions.writeClass } : {}),
       ...(this.cacheOptions.groupAccount ? { groupAccount: this.cacheOptions.groupAccount } : {}),
       ...(bounds ? { historyIdentityBounds: bounds } : {}),
-      rows,
-      ...(ordered
-        ? { rowMode: "texts", rowOrder: "assertions-first-v1", rowTexts: texts.map((x) => x[1]) }
-        : {
-            newIds: ids,
-            ...(compact ? { rowMode: "texts", rowOrder: input.rows.map((row) => row.id) } : {}),
-            rowTexts: Object.fromEntries(texts),
-          }),
+      ...(fresh
+        ? { rowMode: "texts", freshTexts: texts.map(([, text]) => text) }
+        : ordered
+          ? {
+              rows,
+              rowMode: "texts",
+              rowOrder: "assertions-first-v1",
+              rowTexts: texts.map(([, text]) => text),
+            }
+          : {
+              rows,
+              newIds: ids,
+              ...(compact ? { rowMode: "texts", rowOrder: inputRows.map((row) => row.id) } : {}),
+              rowTexts: Object.fromEntries(texts),
+            }),
     };
     endSpan(encodeSpan);
     this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;

@@ -1,0 +1,48 @@
+# Recovery and moves with one shared database
+
+- After the active Datomic writer died, new writes resumed in 8.50–24.95 seconds across 13 local failures, up to 2,923,520 starting facts. Readers saw zero errors in 1,978 historical reads during those outages.
+- At 160 million facts, a similar recent write backlog and storage speed would put recovery in the same tens-of-seconds range. The two-server run is needed to establish whether writes resume within 60 seconds.
+- Restoring from Datomic took 29.30–33.71 seconds to a new write and lost 135–154 acknowledged writes. Restoring PostgreSQL with completed log files took 21.83–25.83 seconds and lost eight in each drill.
+- A synchronous second copy preserved all 8,432 earlier receipts on sudden primary loss. Across 4,096 writes per mode, the median rose from 11.13 to 12.52 ms. The 99th percentiles were 76.16 and 63.44 ms on one VM.
+- Moving the whole database paused writes for 15.47–15.62 seconds. Moving one account paused it for 0.47–0.71 seconds. Its neighbors kept writing and its old receipts, reads and feed position worked on the destination.
+- A planned move needs temporary capacity for both copies. The account move also stores each command and its history mapping. These Mac timings are diagnostic. The proposed 30-second move and 60-second failure limits await confirmation.
+
+## What changes the outage
+
+| Starting facts | Indexed, light writes (s) | Indexed, burst (s) | Recent writes, light (s) | Recent writes, burst (s) |
+| ---: | ---: | ---: | ---: | ---: |
+| 10,240 | 14.33 | 14.60 | 16.81 | 16.07 |
+| 163,840 | 8.50 | 16.90 | 20.81 | 24.95 |
+| 2,078,720 | 19.78 | 8.57 | 10.78 | 13.98 |
+| 2,923,520 | — | — | — | 22.00 |
+
+The replacement broker opened in 6.96–14.82 s. The original write peer completed a new synchronization in 8.18–23.63 s. The first receipt followed broker startup by 1.32–10.14 s. One tenant wrote in the light case and four in the burst. Before each kill, the single database handled 4.2–111.9 acknowledged ten-fact writes/s. Broker, peer and receipt times share the same kill clock and overlap. [Per-cell observations](PART2-MEASUREMENTS.md#transactor-loss)
+
+Datomic reported 0.16–37.22 MiB of native log replay in 0.016–2.216 s where its tail matched an actual account command. At the default five-second heartbeat, two missed beats and peer polling account for about eleven seconds of nominal discovery. Replay starts after election. The standby reads the shared persistent indexes. Write rate affects the unindexed tail and queued work. A larger cold index can change I/O and cache hits. On the surviving reader, first access took 17.5–99.6 ms and repeat access took 18.4–126.0 ms for the same correct rows. The gateway process stayed up during these elections. [Datomic HA](https://docs.datomic.com/operation/ha.html) · [Persistent indexing](https://docs.datomic.com/operation/capacity.html#indexing)
+
+The largest local rung held 18,272 deep subjects. Its PostgreSQL cluster occupied 1.89 GiB. Seeding used 12.9 minutes of the 15-minute admission. That left time for one saturated fault. Two of its four in-flight commands received their ACKs directly and two recovered their original receipts on retry. All four appeared once in the verified feed. Recovery time did not increase consistently with starting size. Faster durable storage, completing indexing before planned work, and a shorter tested heartbeat can shorten different parts. Shorter heartbeats increase sensitivity to network stalls and garbage collection. The paired commands can populate 160M deep-only or 230M mixed facts. [Bench commands](BENCH.md#shared-database-experiments)
+
+## Machine loss and planned moves
+
+| Seed facts | Datomic full (MB, s) | Datomic live delta (MB, s) | PostgreSQL base (MB, s) | WAL payload / complete archive MB | Recovery-point age, Datomic / WAL (s) |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 10,240 | 0.50 / 7.65 | 0.096 / 7.33 | 49.67 / 0.44 | 1.04 / 50.33 | 10.08 / 0.55 |
+| 163,840 | 22.82 / 8.12 | 0.093 / 7.74 | 94.25 / 1.25 | 1.52 / 50.33 | 18.73 / 0.80 |
+
+At the larger rung, per million seeded facts, Datomic’s full backup used 139.3 MB and 49.6 s. The PostgreSQL base used 575.3 MB and 7.6 s. The Datomic delta added 49.0 bytes per newly backed-up fact. Restore timing runs from fresh destination startup to a correct receipt. Datomic restores through its last verified native cut. PostgreSQL replays through the last complete archived segment. The eight subsequent writes deliberately fit in the next segment. Loss grows with the unarchived or unsnapshotted suffix. Backups alone cannot guarantee zero acknowledged loss. [Normalized costs](PART2-MEASUREMENTS.md#backup-and-wal) · [Datomic backups](https://docs.datomic.com/operation/backup.html) · [PostgreSQL WAL](https://www.postgresql.org/docs/17/continuous-archiving.html)
+
+The PostgreSQL synchronous arm used `fsync=on`, `synchronous_commit=on` and one named standby. Remote durable flush needs an independent failure domain and fencing before promotion. Losing that standby can stall commits. A surviving durable volume charges its own flush latency and requires fencing and reattachment. This Datomic version can perform two sequential SQL commits for one log append, so a remote flush can be paid more than once per application receipt. Protect the promoted primary with a replacement copy before promising protection from another failure. [PostgreSQL synchronous standby](https://www.postgresql.org/docs/17/warm-standby.html#SYNCHRONOUS-REPLICATION) · [Version-specific write path](https://github.com/OnboardedInc/Triplex-db-experiments/blob/exp/DX-RE1-transactor/lab/experiments/EXP-DX1/re1/TRANSACTOR-NOTES.md)
+
+Whole-database preparation streamed the base and WAL while clients wrote. The cut revoked source write access, waited for the named flush LSN, stopped the source transactor and promoted B. Before the first new write, the destination returned the old pin and the withheld receipt. Transactor startup accounted for 13.53–13.65 s. There were 0 errors across 361 historical read polls. [Physical move](one-whole.ts)
+
+For one account, live copy and verification took 2.76–18.00 s at 1,280–20,480 seeded facts. Every tested cut copied one three-fact command. At 20,480 seeded facts, the two PostgreSQL directories grew from 92.2 to 133.8 MB between seeding and the final audit, including WAL and neighbor writes. An earlier 1,280-fact pass took 3.95 s with the first version of the tenant feed. The native fence refuses a backlog above its limit while the source keeps serving. The hard maximum is eight one-position commands of 160 rows and 512 KiB each. Wall time still depends on I/O and contention. The durable router changes generation after the source seals and the destination verifies the suffix. [Tenant cutover](placement.ts)
+
+The tenant gateway supports namespaced legacy appends, same-account references and retirements from enrollment. It maps the original physical database’s times and positions, including gaps between that tenant’s commands. A database-wide feed containing other accounts stays at the source. Arbitrary pre-enrollment histories, protected-data erasure and production authorization need further work. The trials used Datomic Pro 1.0.7745 and PostgreSQL 17 on isolated volumes in one Mac VM. Sudden storage loss had no continuously probed standby reader. Cross-machine p99, full power loss and 0.5–0.75 billion annual history facts remain unmeasured. [Two-server commands](BENCH.md#shared-database-experiments)
+
+## Evidence and receipt audit
+
+- Admission and terminal observations bind the nonce, granted slot, revisions, executable and mounted hashes, actual image and process IDs, profile and verified cleanup. The two-site collector hashes the transferred archive and reconciles each declared trial. [Run](run.ts) · [Collector](control.ts) · [Raw index](PART2-EVIDENCE.md) · [Checksums](PART2-SHA256SUMS)
+- Population reads every seed receipt and three complete historical subjects. Each fault rereads all receipts, validates every live native feed change and checks the old pin against authored rows. The active and standby processes and peer synchronization are observed independently. [Shared fixture](one-db.ts) · [Faults](one-failover.ts)
+- Backup checks the native cut and segments or base manifest, exact archived segment, replay point and cluster identity. Fresh services reproduce all expected receipts and the feed, report each missing operation as absent and return a fresh write. Synchronous cost checks effective settings, raw samples and all receipts after primary destruction. [Backups](one-backup.ts) · [Sync and promotion](one-whole.ts)
+- Tenant copy compares the original receipt, canonical command, native feed and actual row-value digest at each sequence before advancing its durable verified prefix. The client checks the operation and record time against its command. The native source fence, observed target readback, persisted routing CAS, withheld ACK, old pins, source rejection, neighbor commit and destination-only write bind the cut. [Native fence](../../../../packages/datomic/gateway/src/triplex/gateway/ha_shared.clj) · [Tenant drill](one-account.ts)
+- Scoped typecheck, formatting, nine negative or boundary tests, 98 public client/feed tests and an independent evidence cross-check ran locally. The first offline run counted both suites twice through a scratch symlink. The rerun checked the two original files. The wider lab checker retains its pre-existing unlisted revision-race test. Acceptance pins and the frozen trace were unchanged. [Part 1](PART1.md)

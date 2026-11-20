@@ -55,7 +55,7 @@
       (cond
         (and (seq? form) (= 'assign-row (first form)) (vector? (second form)))
         '(assign-row [text offset clock new-ids prior-rows]
-           ;; [DX-WFIX1] Why: splicing the row preserves the writer's checked predecessor metadata.
+           ;; [DX-THIN1] Why: splicing uses the checked predecessor metadata from the serial writer.
            ;; Rejected: reconstructing a retraction from the proposed journal text.
            (triplex.gateway.layout-replay/splice-row text offset clock
              #(assign-change % clock new-ids prior-rows)))
@@ -86,6 +86,8 @@
                  (for [[e xs] (sort-by key rows)] [:db/add e :triplex.replay/packed (pack-rows (mapv #(nth % 3) xs))])))))
 (defn expand [shape db payload]
   (let [journals (set (map #(str "e:" %) (:journal-entities payload)))
+        ;; [DX-THIN1] Why: preserve the writer's serial checks for every claimed live assertion.
+        ;; Rejected: stripping untimed predecessors from the replay payload before validating it.
         payload (if (= shape "C")
                   (assoc payload :replay/watermark (when (:replay/head payload)
                                                     (value db (:replay/head payload) :triplex.replay/max-row-id)))

@@ -1,5 +1,5 @@
 (ns triplex.gateway.commit
-  (:require [clojure.walk :as walk] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.schema :as schema]
+  (:require [clojure.data.json :as json] [clojure.walk :as walk] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.schema :as schema]
             [triplex.gateway.trace :as trace] [triplex.gateway.predecessor :as pred]
             [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed]))
 
@@ -32,6 +32,99 @@
                        end (str "2001a" (subs high 0 25) (char (inc (int (.charAt ^String high 25)))))]
                    (nil? (read-at :w1/new-range (first (d/index-range (d/history db) :triplex.entity/row start end)))))))))))))
 
+;; [DX-WFIX1] Why: the checked stored row owns the time, range, value and identity of the retracted assertion.
+;; Rejected: carrying the client's provisional assertion or maintaining a separate decoder for prepared writes.
+(def recorded-row-code
+  '(fn [^String text]
+     (let [[_ _ entity attr kind string number bool datetime data recorded from to _ entity-type _ tx]
+           (lean-columns-code text)
+           number-field (fn [x] (if (= "-0" x) -0.0 x))
+           value {"type" kind "value" (case kind
+                                      ("ref" "integer" "string" "blob") string
+                                      "number" (number-field number)
+                                      "boolean" (not (zero? bool))
+                                      "datetime" (number-field datetime)
+                                      "json" (json/read-str data))}]
+       (cond-> {"entityId" entity "attribute" attr "value" (if (= "blob" kind) (merge (json/read-str data) value) value)
+                "recordedAt" (number-field recorded) "validFrom" (number-field from)}
+         (some? to) (assoc "validTo" (number-field to))
+         entity-type (assoc "entityType" entity-type)
+         tx (assoc "assertionTxId" tx)))))
+
+(def compiled-recorded-row
+  (walk/postwalk-replace {'lean-columns-code slim/row-columns-code} recorded-row-code))
+(defmacro recorded-row-decoder [] compiled-recorded-row)
+(def recorded-row (recorded-row-decoder))
+
+;; [DX-PREP1] Why: the reference and prepared writers stamp the same authoritative row and journal values.
+;; Rejected: a second encoder with different position, clock or retraction rules.
+(def stamp-code
+  '(fn [server-clock clock new-id-set lower provisional final slim-row prior-rows]
+     (let [delta (- final provisional)
+           digits (fn [p] (let [s (str p)] (str (subs "0000000000000000" (count s)) s)))
+           final-digits (digits final)
+           shifted (fn [p] (if (< lower p (inc provisional)) (+ p delta) p))]
+       (letfn [(assign-change [text clock new-ids prior-rows]
+                 (let [change (json/read-str text)
+                       id (get change "tripleId")
+                       prior (when (and (= "retract" (get change "op")) (not (new-ids id))) (prior-rows id))
+                       full (contains? prior "entityId")
+                       change (cond-> change
+                                full (dissoc "validTo" "entityType" "assertionTxId")
+                                full (merge prior)
+                                (and prior (not full)) (merge (select-keys prior (keys change)))
+                                (new-ids id) (assoc "recordedAt" clock)
+                                (or full (contains? change "retractedAt")) (assoc "retractedAt" clock))]
+                   (json/write-str change)))
+               (assign-row [text offset clock new-ids prior-rows]
+                 (let [start (- offset 2) values (json/read-str (subs text start))
+                       attr (nth values 3) journal (= "_Transaction" (nth values 14))
+                       values (cond-> (assoc values 10 clock)
+                                (and journal (= attr ":_tx/instant")) (assoc 8 clock)
+                                (and journal (= attr ":_tx/change")) (assoc 9 (assign-change (nth values 9) clock new-ids prior-rows)))]
+                   (str (subs text 0 start) (json/write-str values))))
+               (replace-value [x]
+                 (cond
+                   (and (instance? java.util.List x) (= :triplex/record-time (first x))) (if server-clock clock (second x))
+                   (and (instance? java.util.List x) (= :triplex/change (first x))) (if server-clock (assign-change (second x) clock new-id-set prior-rows) (second x))
+                   (and (instance? java.util.List x) (= :triplex/negative-zeros (first x)))
+                   (if (and server-clock (not= Long/MIN_VALUE (Double/doubleToRawLongBits clock)))
+                     (disj (second x) :recorded_at :retracted_at) (second x))
+                   (and (instance? java.util.List x) (= :triplex/position (first x))) (shifted (second x))
+                   (and (instance? java.util.List x) (= :triplex/double-position (first x))) (double (shifted (second x)))
+                   (and (instance? java.util.List x) (= :triplex/row (first x)))
+                   (let [[_ text p offset kind packed] x]
+                     (if packed
+                       (do
+                         (when-not server-clock (throw (ex-info "Packed row requires server clock" {})))
+                         (let [clock-text (Double/toString (double clock))
+                               fill #(apply str (interpose clock-text %))]
+                           (str text (if (= p provisional) final-digits (digits (shifted p)))
+                                (if (map? packed)
+                                  (str (fill (:before packed))
+                                       (json/write-str (assign-change (:change packed) clock new-id-set prior-rows))
+                                       (fill (:after packed)))
+                                  (fill packed)))))
+                       (let [text (if (and (not= 0 delta) (< lower p (inc provisional)))
+                                    (str (subs text 0 offset) (if (= p provisional) final-digits (digits (shifted p)))
+                                         (subs text (+ offset 16))) text)
+                             assigned (if-not server-clock text
+                                      (case kind
+                                        :row (assign-row text offset clock new-id-set prior-rows)
+                                        :retirement (str (subs text 0 (+ offset 16))
+                                                         (format "%016x" (Double/doubleToRawLongBits clock))
+                                                         (subs text (+ offset 32)))
+                                        text))]
+                         (if (and slim-row (= kind :row)) (slim-row-code assigned offset) assigned))))
+                   (instance? java.util.Map x) (into {} (map (fn [[k v]] [k (replace-value v)]) x))
+                   (instance? java.util.List x) (mapv replace-value x)
+                   :else x))]
+         replace-value))))
+
+(defmacro row-stamper []
+  (walk/postwalk-replace {'slim-row-code slim/encoder-code} stamp-code))
+(def stamp (row-stamper))
+
 ;; [DX-B3-M2] Why: the serial point belongs in Datomic, after parallel client staging.
 ;; Rejected: scope CAS in the peer (unrelated subjects conflict and queue).
 (def operation-code
@@ -50,7 +143,6 @@
                  ;; Rejected: walking the log backwards (unbounded marker suffix).
                  (let [datom (first (d/rseek-datoms db :aevt :triplex.tx/position tx))]
                    (when (and datom (= (:a datom) (d/entid db :triplex.tx/position))) (:e datom))))))
-           (digits [p] (let [s (str p)] (str (subs "0000000000000000" (count s)) s)))
            (row-id [id]
              (let [prefix (str "2" (format "%04x" (.length ^String id)) id)
                    datom (read-at :w1/old-live
@@ -73,51 +165,12 @@
              (let [prefix (str "2" (format "%04x" (.length ^String id)) id)
                    datom (read-at :w1/new-id (first (d/index-range (d/history db) :triplex.entity/row prefix nil)))]
                (when (and datom (.startsWith ^String (:v datom) prefix)) datom)))
-           (number-field [x] (if (= "-0" x) -0.0 x))
-           (assertion-meta [change datom]
-             ;; [DX-WFIX1] Why: the checked assertion can have been created by the last logical member.
-             ;; Rejected: copying the client's provisional clock, range or value into a durable retraction.
-             (let [[_ _ entity attr kind string number bool datetime data recorded from to _ entity-type _ tx]
-                   (lean-columns-code (:v datom))
-                   value {"type" kind "value" (case kind
-                           ("ref" "integer" "string" "blob") string
-                           "number" (number-field number)
-                           "boolean" (not (zero? bool))
-                           "datetime" (number-field datetime)
-                           "json" (json/read-str data))}
-                   value (if (= "blob" kind) (merge (json/read-str data) value) value)]
-               (cond-> (assoc (dissoc change "validTo" "entityType" "assertionTxId")
-                              "entityId" entity "attribute" attr "value" value
-                              "recordedAt" (number-field recorded) "validFrom" (number-field from))
-                 (some? to) (assoc "validTo" (number-field to))
-                 entity-type (assoc "entityType" entity-type)
-                 tx (assoc "assertionTxId" tx))))
-           (assign-change [text clock new-ids prior-rows]
-             (let [change (json/read-str text)
-                   id (get change "tripleId")
-                   retract (= "retract" (get change "op"))
-                   predecessor (when (and retract (not (new-ids id))) (get @checked id))
-                   legacy (when (and retract (not predecessor)) (get prior-rows id))
-                   change (cond-> change
-                            predecessor (assertion-meta predecessor)
-                            legacy (merge (select-keys legacy (keys change)))
-                            (new-ids id) (assoc "recordedAt" clock)
-                            (or predecessor (contains? change "retractedAt")) (assoc "retractedAt" clock))]
-               (json/write-str change)))
-           (assign-row [text offset clock new-ids prior-rows]
-             (let [start (- offset 2) values (json/read-str (subs text start))
-                   attr (nth values 3) journal (= "_Transaction" (nth values 14))
-                   values (cond-> (assoc values 10 clock)
-                            (and journal (= attr ":_tx/instant")) (assoc 8 clock)
-                            (and journal (= attr ":_tx/change")) (assoc 9 (assign-change (nth values 9) clock new-ids prior-rows)))]
-               (str (subs text 0 start) (json/write-str values))))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
-     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row
-                   save-ledger timed-retractions packed-journal]} payload
+     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row save-ledger timed-retractions packed-journal]} payload
            operation-id (or (:triplex.tx/operation-id (first ops)) (some :triplex.tx/operation-id ops))
            command-ids (or (:command-ids payload) (keep :triplex.claim/command-id ops))
-           ;; [DX-WFIX1] Why: a committed retry can name a predecessor it already retired.
-           ;; Rejected: checking identities only at ingress (a queued request can hold a stale basis).
+           ;; [DX-WFIX1] Why: a durable retry may still name the assertion its first attempt retired.
+           ;; Rejected: returning a predecessor conflict before checking the serialized claims.
            _ (when (and operation-id (d/entid db [:triplex.tx/operation-id operation-id]))
                (throw (ex-info "TRIPLEX_OPERATION_DUPLICATE" {})))
            _ (when (some #(d/entid db [:triplex.claim/command-id %]) command-ids)
@@ -125,9 +178,8 @@
            head-v2 (= 2 (value scope :triplex.scope/head-version))
            latest (when head-v2 (newest-commit))
            h (if head-v2 (or (when latest (value latest :triplex.tx/position)) 0)
-                 (value scope :triplex.scope/position)) final (+ h span) final-digits (digits final) delta (- final provisional)
+                 (value scope :triplex.scope/position)) final (+ h span)
            lower (- provisional span)
-           shifted (fn [p] (if (< lower p (inc provisional)) (+ p delta) p))
            row-a (d/entid db :triplex.entity/row)
            prior (if head-v2 (when latest (value latest :triplex.tx/max-recorded-at))
                      (value scope :triplex.scope/max-recorded-at))
@@ -185,42 +237,11 @@
                             (or (when (d/entid db :triplex.group/position) (value e :triplex.group/position))
                                 (value e :triplex.tx/position)))
                           0) source) (conflict)))))
-       (letfn [(replace-value [x]
-                 (cond
-                   (and (instance? java.util.List x) (= :triplex/record-time (first x))) (if server-clock clock (second x))
-                   (and (instance? java.util.List x) (= :triplex/change (first x))) (if server-clock (assign-change (second x) clock new-id-set @prior-rows) (second x))
-                   (and (instance? java.util.List x) (= :triplex/negative-zeros (first x)))
-                   (if (and server-clock (not= Long/MIN_VALUE (Double/doubleToRawLongBits clock)))
-                     (disj (second x) :recorded_at :retracted_at) (second x))
-                   (and (instance? java.util.List x) (= :triplex/position (first x))) (shifted (second x))
-                   (and (instance? java.util.List x) (= :triplex/double-position (first x))) (double (shifted (second x)))
-                   (and (instance? java.util.List x) (= :triplex/row (first x)))
-                   (let [[_ text p offset kind packed] x]
-                     (if packed
-                       (do
-                         (when-not server-clock (throw (ex-info "Packed row requires server clock" {})))
-                         (let [clock-text (Double/toString (double clock))
-                               fill #(apply str (interpose clock-text %))]
-                           (str text (if (= p provisional) final-digits (digits (shifted p)))
-                                (if (map? packed)
-                                  (str (fill (:before packed))
-                                       (json/write-str (assign-change (:change packed) clock new-id-set @prior-rows))
-                                       (fill (:after packed)))
-                                  (fill packed)))))
-                       (let [text (if (and (not= 0 delta) (< lower p (inc provisional)))
-                                    (str (subs text 0 offset) (if (= p provisional) final-digits (digits (shifted p)))
-                                         (subs text (+ offset 16))) text)
-                             assigned (if-not server-clock text
-                                      (case kind
-                                        :row (assign-row text offset clock new-id-set @prior-rows)
-                                        :retirement (str (subs text 0 (+ offset 16))
-                                                         (format "%016x" (Double/doubleToRawLongBits clock))
-                                                         (subs text (+ offset 32)))
-                                        text))]
-                         (if (and slim-row (= kind :row)) (slim-row-code assigned offset) assigned))))
-                   (instance? java.util.Map x) (into {} (map (fn [[k v]] [k (replace-value v)]) x))
-                   (instance? java.util.List x) (mapv replace-value x)
-                   :else x))]
+       (let [stored (memoize (fn [id]
+                              (if-let [row (get @checked id)]
+                                (recorded-row-code (:v row))
+                                (get @prior-rows id))))
+             replace-value (stamp-rows server-clock clock new-id-set lower provisional final slim-row stored)]
          (let [empty-history (when (and lean (:identity-bounds payload))
                                (let [empty? (history-range-code db ops (:identity-bounds payload))]
                                  (record-range-result empty?) empty?))
@@ -308,10 +329,11 @@
   ([observe] (expand-code observe false false))
   ([observe optimized? measured?]
    (let [expanded (walk/postwalk-replace {'slim-row-code slim/encoder-code 'history-range-code history-range-code
+                                          'stamp-rows (walk/postwalk-replace {'slim-row-code slim/encoder-code} stamp-code)
                                           'save-ledger-code ledger/rewrite-code
                                           'packed-identity-code packed/identity-code
                                           'packed-encode-code packed/compiled-encode
-                                          'lean-columns-code slim/row-columns-code
+                                          'recorded-row-code compiled-recorded-row
                                           'record-range-result observe} operation-code)
          op (if optimized? (list pred/normalization expanded) expanded)]
      (pred/expand (list 'read-at :w1/function op) optimized? measured?))))
@@ -319,10 +341,29 @@
   '(fn [result] (when triplex-trace-event
                   (try (.set triplex-trace-event 3 (cond (true? result) "empty" (false? result) "occupied" :else "ineligible"))
                        (catch Throwable _ nil)))))
-(def code (instrument-code (expand-code observe-range)))
+(def load-profile (= "1" (System/getenv "TX2_LOAD1_PROFILE")))
+;; [DX-LOAD1] Why: the peer cannot count history seeks made against the serialized db-before. Rejected: timing a second speculative d/with or inferring lookup counts from business facts.
+;; [DX-THIN1] Why: measure the serialized identity seeks also when a write uses an installed W1 variant.
+;; Rejected: replacing W1's selected predecessor proof with a profiling-only ordinary commit.
+(defn observe-load [body]
+  (if-not load-profile body
+    (list 'let '[load-start (System/nanoTime) singles (volatile! 0) seek-ns (volatile! 0)
+                 ranges (volatile! 0) empty-ranges (volatile! 0)]
+      (list 'let ['expanded
+        (walk/postwalk-replace
+          {'(identity-row id)
+           '(let [start (System/nanoTime) result (identity-row id)]
+              (vswap! singles inc) (vswap! seek-ns + (- (System/nanoTime) start)) result)
+           '(d/index-range (d/history db) :triplex.entity/row start end)
+           '(let [result (seq (d/index-range (d/history db) :triplex.entity/row start end))]
+              (vswap! ranges inc) (when-not result (vswap! empty-ranges inc)) result)}
+          body)]
+        '(conj expanded [:db/add "datomic.tx" :triplex.load/metrics
+                         (pr-str [(- (System/nanoTime) load-start) @singles @seek-ns @ranges @empty-ranges])])))))
+(def code (observe-load (instrument-code (expand-code observe-range))))
 (def variants
   (into {} (for [[opt profile] [[true false] [false true] [true true]]
-                 :let [body (instrument-code (expand-code observe-range opt profile))]]
+                 :let [body (observe-load (instrument-code (expand-code observe-range opt profile)))]]
              [[opt profile] [(keyword "triplex.write" (str "v-" (subs (schema/sha256 (pr-str body)) 0 24))) body]])))
 (defn entry [db input lean]
   (let [opt (boolean (and lean (if (and pred/diagnostic (contains? input "predecessorLookup"))
@@ -343,10 +384,11 @@
        observed
        (:db-after
         (trace/span "d/transact" "peer-wait"
-          @(d/transact conn [{:db/ident :triplex/commit
+          @(d/transact conn (cond-> [{:db/ident :triplex/commit
                              :db/fn (d/function {:lang :clojure :params '[db payload]
                                                 :requires '[[datomic.api :as d] [clojure.data.json :as json]] :code code})}
-                            [:db/add entity :triplex.scope/commit-fn-hash source-hash]])))))))
+                            [:db/add entity :triplex.scope/commit-fn-hash source-hash]]
+                            load-profile (conj (schema/attr :triplex.load/metrics :db.type/string))))))))))
 
 (defn install!
   ([conn scope] (install! conn scope (d/db conn)))

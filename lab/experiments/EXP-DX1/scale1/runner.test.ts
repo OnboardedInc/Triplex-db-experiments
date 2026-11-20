@@ -5,13 +5,23 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import assert from "node:assert/strict";
 import test from "node:test";
-import { capacity } from "./bench.ts";
+import { capacity, sameCampaignInputs } from "./bench.ts";
 import { dedicatedHost } from "./source.ts";
 import { cohort, type ScopeMeasurement } from "./measurements.ts";
 import { requireIdentity, DeepSeedWitness } from "../../../bench/lib/deep-profile.ts";
 import { deepOwnFacts } from "../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { randomUUID } from "node:crypto";
+
+test("an independent publisher change cannot admit a changed guarded-arm dependency", () => {
+  const ref = "exp/DX-ACT1-activation",
+    lazy = "lab/experiments/EXP-DX1/actv-lazy/dispatch-gate.ts",
+    guard = "lab/experiments/EXP-DX1/act2/preflight.ts";
+  assert(sameCampaignInputs(ref, [lazy]));
+  assert(!sameCampaignInputs(ref, [lazy], "lazy"));
+  assert(!sameCampaignInputs("exp/DX-BM1-bare-metal", [lazy]));
+  assert(!sameCampaignInputs(ref, [lazy, guard]));
+});
 
 // [DX-SCALE1] Why: one independently pipelined database does not reserve a second shared engine heap. Rejected: allowing live traffic on a seed-only grant, or treating installed disk capacity as available space.
 test("resource arithmetic reserves separate drivers, shared engines once and bounded parallel seed waves", () => {
@@ -105,6 +115,7 @@ test("pooling weights observed calls and binds independent databases and a commo
       primaries: values.length,
       committed: values.length,
       resends: 0,
+      expired: 0,
       missing: 0,
       ackMinutes: [],
       values: { all: values, L256: values },
@@ -137,4 +148,22 @@ test("the dedicated assignment binds machine, delivery and active governor", () 
   dedicatedHost(a, a.machineIdSha256, a.deliveredSha256, ["performance"], "1");
   assert.throws(() => dedicatedHost(a, "c".repeat(64), a.deliveredSha256, ["performance"], "1"));
   assert.throws(() => dedicatedHost(a, a.machineIdSha256, a.deliveredSha256, ["powersave"], "1"));
+});
+
+test("a receipt-only zero arm cannot shrink the loaded ledger below the observed reader volume", () => {
+  const gib = 1024 ** 3,
+    pilot = {
+      people: 10000,
+      facts: 1604464,
+      allocatedBytes: gib,
+      driverPeakBytes: 3 * gib,
+      seedDriverPeakBytes: gib,
+      sharedPeakBytes: 8 * gib,
+      spillBytes: 16 * 1024 ** 2,
+    };
+  const host = { memory: 92 * gib, disk: 800 * gib };
+  assert.equal(capacity(10000, 1, host, pilot, "reader").spillPer, 64 * gib);
+  const small = capacity(290, 100, host, pilot, "small");
+  assert.equal(small.sentinelSpill, 32 * gib);
+  assert.equal(small.liveDisk - small.seedDisk, 99 * small.spillPer + small.sentinelSpill);
 });

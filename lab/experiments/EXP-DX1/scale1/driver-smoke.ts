@@ -24,9 +24,17 @@ fs.writeFileSync(
   JSON.stringify({ source, tree, oracle: stageReplay(process.cwd(), oracle) }),
 );
 const activation = process.argv.includes("--activation"),
-  zero = process.argv.includes("--zero");
+  zero = process.argv.includes("--zero"),
+  readerStartup = process.argv.includes("--reader-startup");
 assert(!(activation && zero));
-const clients = [0, 1].map((account) => {
+const topology = process.argv.includes("--pooled")
+  ? "pooled"
+  : process.argv.includes("--separate")
+    ? "separate"
+    : null;
+if (readerStartup) assert(!topology && !activation && !zero);
+const physical = topology === "pooled" || readerStartup ? [0] : [0, 1];
+const clients = physical.map((account) => {
   const out = path.join(dir, `s${account}`);
   fs.mkdirSync(out);
   const fd = fs.openSync(path.join(out, "log"), "wx");
@@ -43,7 +51,10 @@ const clients = [0, 1].map((account) => {
       "--profile",
       "deep-smoke",
       "--rung",
-      "deep-smoke-40",
+      topology ? "tenant-smoke-" + (topology === "pooled" ? 8 : 4) : "deep-smoke-40",
+      ...(topology
+        ? ["--tenant-study", "smoke", "--tenant-topology", topology, "--oracle-rate", "0.2"]
+        : []),
       "--deep-account",
       String(account),
       "--deep-nonce",
@@ -61,7 +72,7 @@ const clients = [0, 1].map((account) => {
       "--reader-basis-wire",
       "delta",
       "--reader-threads",
-      "1",
+      readerStartup ? "6" : "1",
       "--oracle-root",
       oracle,
       "--output",
@@ -94,7 +105,7 @@ const endings = clients.map(
 );
 try {
   const limit = Date.now() + 360000;
-  while (![0, 1].every((i) => fs.existsSync(path.join(barrier, `s${i}.ready.json`)))) {
+  while (!physical.every((i) => fs.existsSync(path.join(barrier, `s${i}.ready.json`)))) {
     assert(
       Date.now() < limit && clients.every((c) => c.exitCode === null && c.signalCode === null),
       "An NS client failed before the start barrier",
@@ -102,7 +113,7 @@ try {
     await sleep(250);
   }
   const scopes = Object.fromEntries(
-    [0, 1].map((i) => {
+    physical.map((i) => {
       const { identity, ...ready } = JSON.parse(
         fs.readFileSync(path.join(barrier, `s${i}.ready.json`), "utf8"),
       );
@@ -121,7 +132,7 @@ try {
     JSON.stringify({ scopes, slot, nonce, source, start }),
   );
   fs.renameSync(path.join(barrier, "go.tmp"), path.join(barrier, "go.json"));
-  while (![0, 1].every((i) => fs.existsSync(path.join(barrier, `s${i}.armed.json`)))) {
+  while (!physical.every((i) => fs.existsSync(path.join(barrier, `s${i}.armed.json`)))) {
     assert(
       Date.now() < start - 250 &&
         clients.every((c) => c.exitCode === null && c.signalCode === null),
@@ -130,7 +141,7 @@ try {
   }
   releaseDeepStart(
     barrier,
-    [0, 1].map(
+    physical.map(
       (i) => JSON.parse(fs.readFileSync(path.join(barrier, `s${i}.ready.json`), "utf8")).identity,
     ),
     start,
@@ -141,7 +152,7 @@ try {
       throw Error("Functional driver deadline exceeded");
     }),
   ]);
-  const reports = [0, 1].map((i) =>
+  const reports = physical.map((i) =>
     JSON.parse(fs.readFileSync(path.join(dir, `s${i}/ns-report.json`), "utf8")),
   );
   const summary = reports.map((r, i) => ({
@@ -156,13 +167,42 @@ try {
     receiptCapture: r.receiptCapture,
     activation: r.deep.activationOracle,
     activationTraffic: r.deep.activationTraffic,
+    postlude: r.deep.tenantChecks,
     oracle: r.oracle,
     correctness: r.correctness,
     feed: r.priorities?.P3?.bars,
     errors: r.finalizationErrors,
   }));
   fs.writeFileSync(path.join(dir, "scope-checks.json"), JSON.stringify(summary, null, 2));
-  assert.deepEqual(codes, [0, 0]);
+  assert.deepEqual(
+    codes,
+    physical.map(() => 0),
+  );
+  if (topology)
+    for (const r of reports) {
+      assert(
+        r.deep.crossAccount.proof.total === (topology === "pooled" ? 8 : 4) &&
+          r.deep.crossAccount.proof.crossAccountSingleRequest === (topology === "pooled") &&
+          r.deep.tenantObservationsSha256,
+      );
+      const checks = r.deep.tenantChecks;
+      assert.deepEqual(checks.identity, r.deep.identity);
+      assert(
+        checks.checks.length === (topology === "pooled" ? 2 : 1) &&
+          checks.startedAt >= checks.timedEnd,
+      );
+      const proofBars = [...r.priorities.P2.bars, ...r.priorities.P3.bars];
+      for (const id of [
+        "NS-P2 duplicates return the original receipt",
+        "NS-P2 lost ACKs return the original receipt",
+        "NS-P3 corrections report their valid-time range",
+      ])
+        assert.equal(proofBars.find((x: any) => x.id === id)?.pass, true);
+      assert.deepEqual(
+        r.deep.crossAccount.seedProjection,
+        r.deep.crossAccount.proof.receiptProjection,
+      );
+    }
   if (activation)
     for (const r of reports)
       assert(
@@ -173,6 +213,14 @@ try {
           r.deep.activationTraffic.trafficHeldThrough >=
             Math.max(...reports.map((peer) => peer.deep.r2.endedAt)),
       );
+  if (readerStartup) {
+    const r = reports[0],
+      local = r.rawLocalSamples.find((p: any) => p.phase === "L4");
+    // [DX-SCALE1] Why: successful worker startup alone can conceal gateway fallback on every read. Rejected: accepting READY without a real replica payload compared to the source at the same cut.
+    assert(r.config.readerThreads === 6 && r.readerLifecycle.length === 6);
+    assert(r.readerLifecycle.every((w: any) => w.stopped && !w.failures.length));
+    assert(local?.ok && local.compared > 0 && local.compared === local.samples);
+  }
   for (const r of reports) {
     assert(
       r.traceStartAbsMs === start &&

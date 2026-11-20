@@ -1,6 +1,8 @@
 // [DX-H1] Why: Datomic publication is the TS client's transact-result boundary (TARGETS / Q98).
 // Rejected: stamping at the driver ACK or feed poll (would omit source-to-consumer time).
 let observer: ((position: number, operationId: string, diagnostics?: unknown, commandIds?: readonly string[]) => void) | undefined;
+let nativeReceipt: ((db: string, input: any, reply: any, position: number, commands: string[]) => void) | undefined;
+export function observeNativeReceipt(callback: typeof nativeReceipt) { nativeReceipt = callback; }
 const installed = new WeakSet<object>();
 // [DX-R3-P9] Why: alternating arms need actual source refusals and adapter replay counters without extra requests.
 // Rejected: inferring clock conflicts from terminal writer outcomes (internal retries can hide them).
@@ -71,7 +73,7 @@ export function installDatomicPublication(api: any) {
         );
       throw error;
     }
-    if (observer) {
+    if (observer || nativeReceipt) {
       const position = Number(result?.position?.v);
       if (
         result?.position?.t !== "long" ||
@@ -91,7 +93,8 @@ export function installDatomicPublication(api: any) {
       // Rejected: guessing the owning command from AsyncLocalStorage (a shared continuation can run under another request).
       const commandIds = input.claims.map((claim: any) => claim.commandId);
       if (commandIds.some((id: unknown) => typeof id !== "string" || !id)) throw Error("Invalid publication command identity");
-      observer(position, input.operationId, result.diagnostics ?? result.commitDiagnostics, commandIds);
+      observer?.(position, input.operationId, result.diagnostics ?? result.commitDiagnostics, commandIds);
+      nativeReceipt?.(db, input, result, position, commandIds);
     }
     return result;
   };

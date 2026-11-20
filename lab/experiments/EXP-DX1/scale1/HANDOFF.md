@@ -1,36 +1,33 @@
 # DX-SCALE1 handoff
 
-North star. Measure pinned reads, offer-to-ACK commits, feed lag, current worlds and verified release activation on one and ten independent deep accounts. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+Measure one shared Datomic commit pipeline first, followed by the same tenant-local writes through separate databases. The comparison holds the quiet account's offers and reader count fixed. [Targets](../../../TARGETS.md)
 
 <!-- state -->
-Item 1 zero-reader arm started at 18:35 UTC November 19. Its four-hour execution ceiling is 22:35 UTC, followed by bounded cleanup. The dedicated stack seeded 10,000 people and 1,604,464 verified facts. PostgreSQL grew by 953,516,032 bytes. The next measurement is the reader arm with this zero arm as its baseline.
+The owner restarted the campaign with the ten-account native seed first. The pooled setup is `arm-p6-i1-seed-a`, followed by staggered and coincident field saves. The earlier stop below belongs to the previous queue.
+
+The campaign stopped at 00:42:17 UTC November 20 (19:42:17 ET November 19) after item 1’s second failed reader. The first attempt missed local-replica coverage. The retry reached its 64 GiB observation limit at 00:39:48 UTC. Its stack was released at 00:40:24 UTC and the verified 11,090,251,343-byte raw archive completed on the server at 00:42:11 UTC. The server is free. Items 2–5 and their six new field-save executions are unstarted. The four compact transfers are indexed. [Failure evidence](evidence/arm-d19-i1-reader-b-diagnostic.md)
 <!-- end state -->
 
-With `BENCH_SERVER` set from the private brief, this one read-only command shows every dedicated unit and each arm’s stage.
+With the dedicated destination set in `BENCH_SERVER`, this command shows the queue, bounded units and stage files.
 
 ```sh
 node --import tsx lab/experiments/EXP-DX1/scale1/control.ts status
 ```
 
-On this assigned machine, `control.ts prepare` builds the exact published revision from anonymous HTTPS. Its ceiling is 35 minutes. Each `launch` refreshes BM1, checks the tested public head, checks the dedicated daemon, and starts a separate systemd unit with process-group and stack cleanup. Use a fresh tag for each attempt. The runner retains failures and aborts an arm after 15 minutes without workload evidence progress. A bound O-REPLAY process making CPU progress gets its original 15-, 60- or 90-minute size-dependent ceiling.
-
-| Order | People × scopes | Arms | Maximum time per arm |
+| Order | Population and layout | Work | Maximum per execution |
 | --- | --- | --- | --- |
-| 1 | 10,000 × 1 | zero then reader | 4 h each |
-| 2 | 100,000 × 1 | zero, reader, activation | 8 h, 8 h, 10 h |
-| 3 | 10,000 × 10 | zero, reader, activation | 4 h, 4 h, 10 h |
-| 4 | 90 × 100 people and 10 × 2,000 | Idle footprint, live sentinel and restart | Bounded dedicated diagnostic |
-| 5 | 100,000 × 10 | zero, reader, activation, or bounded parallel seed if only seeding fits | 8 h, 8 h, 10 h |
+| 1 | 10,000 people in one database | Zero, then readers | 4 h each |
+| 2 | 100,000 people in one database | Zero, readers, guarded release | 8 h, 8 h, 10 h |
+| 3 | Ten accounts of 10,000 in one database, then ten databases | 1, 2, 5 and 10 live, neighbor bursts, all-ten burst and one release. A third pooled arm enables group commit for the matched all-ten burst. The six deep-live executions repeat the two peak alignments in pooled individual, pooled grouped and separate individual configurations. | 10 h per arm |
+| 4 | 90 accounts of 100 and ten of 2,000 in one database, then 100 databases | Idle footprint, sentinel load and restart | 4 h per layout |
+| 5 | Ten accounts of 100,000 in one database | Serial seed, zero, readers, one guarded release. If only seeding fits, the zero-offer fallback records growth and the resource limit. | 24 h per execution |
 
-Once the tested revision is published, `control.ts campaign BATCH` runs the ordered sequence from the Mac. It validates the machine assignment, prepares the public checkout, waits for each cleanup and transfer, and uses the measured sizing from the matching single-account rung. Reusing the batch resumes from its verified terminal files. Set `DX_SCALE1_SOURCE` to retain the tested runtime revision across report-only commits.
+Each detached arm has its own systemd unit, source, nonce, cgroup ceiling, disk floor and exact-prefix cleanup. The queue rechecks terminal and transfer files before advancing. The original pair used `f0a80d99a748fcd9ccbe66eadcee50e84f5307a3`. The reader retry names the zero control on its corrected revision. The live plan records the exact public runtime for each arm, both layouts for items 3 and 4 and the single million-person seed for item 5. The server clock is UTC. The first account is the quiet sentinel. The second performs the release.
 
-The command takes `launch ITEM FRESH-TAG zero|reader|activation|seed`. For a reader, pass `--baseline ZERO-TAG`. Use `--sizing SINGLE-ARM-TAG` for an observed memory and disk estimate. Item 5 prefers the single-100k sizing receipt and can use the 10k receipt or the stated priors when a larger trial is partial. A capacity refusal leaves its arithmetic in the attempt directory before any engines start. Examples use shell variables for the deployment and attempt names.
+The detached `triplex-scale1-part4-handoff` unit checks both terminal receipts from the replacement pair before loading the integrated public controller. The continuation includes the all-ten-burst group-commit arm and closes on the second failure of any item. Source builds start between measured arms.
 
-```sh
-node --import tsx lab/experiments/EXP-DX1/scale1/control.ts launch 1 "$ZERO_TAG" zero
-node --import tsx lab/experiments/EXP-DX1/scale1/control.ts collect "$ZERO_TAG"
-node --import tsx lab/experiments/EXP-DX1/scale1/control.ts launch 1 "$READER_TAG" reader --baseline "$ZERO_TAG"
-node --import tsx lab/experiments/EXP-DX1/scale1/control.ts collect "$READER_TAG"
-```
+Use `control.ts collect TAG` after each terminal arm. Collection verifies manifest bytes, transfers summaries and anatomy within a cumulative limit of 500 MiB per item, and registers the attempt in the durable trace index. Every raw archive stays compressed on the server. An item’s second failed attempt ends the campaign.
 
-`collect` verifies the archive bytes and terminal identity, updates the durable trace index and regenerates the owner report. Archives under 2 GiB can be copied to the Mac. Larger raw archives retain their server path, size and SHA-256 in the transfer receipt. An unqualified or partial run retains its actual exit, last seed progress and cleanup inventory. Never infer an arm's end from its ceiling.
+ACT2 runs the 1,000-subject native preflight on each qualifying fresh stack before the large seed. Its release checks bind the public runtime, slot and attempt nonce. The two-account identity regression and 100,000-subject failure that prompted the preflight are documented in the [ACT2 report](../act2/REPORT.md).
+
+The before-run forecasts for items 2–5 and their verified observations are in [PREDICTIONS.md](PREDICTIONS.md). The six field-save executions belong to item 3.

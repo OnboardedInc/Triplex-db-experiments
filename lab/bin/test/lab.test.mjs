@@ -29,7 +29,8 @@ test('pool admits the two dev engines when only they run', () => {
 });
 
 test('pool counts external research probes and refuses with their names', () => {
-  const running = [{ name: 'tx2-probe-r7', running: true, memBytes: 5 * GiB }, { name: 'tx2-probe-r8', running: true, memBytes: 5 * GiB }];
+  const halfPool = Math.ceil(config.pool.memLimitBytes / 2);
+  const running = [{ name: 'tx2-probe-r7', running: true, memBytes: halfPool }, { name: 'tx2-probe-r8', running: true, memBytes: halfPool }];
   const verdict = lib.admission({ config, reservations: [], running, request: { container: 'tx2-xtdb-dev', memBytes: 3 * GiB, diskForecastBytes: GiB }, diskUsedBytes: 0 });
   assert.equal(verdict.ok, false);
   assert.match(verdict.reasons[0], /memory/);
@@ -50,9 +51,9 @@ test('a reserved container counts once even while it also runs', () => {
   assert.equal(verdict.memUsed, 3 * GiB);
 });
 
-test('disk forecast refuses past the 50 GiB used limit', () => {
+test('disk forecast refuses when both grants exceed the configured used limit', () => {
   const verdict = lib.admission({ config, reservations: [{ container: 'tx2-xtdb-dev', memBytes: GiB, diskForecastBytes: 8 * GiB, holder: 'a' }], running: [],
-    request: { container: 'tx2-xtdb-s1', memBytes: GiB, diskForecastBytes: 8 * GiB }, diskUsedBytes: 40 * GiB });
+    request: { container: 'tx2-xtdb-s1', memBytes: GiB, diskForecastBytes: 8 * GiB }, diskUsedBytes: config.pool.diskUsedLimitBytes - 10 * GiB });
   assert.equal(verdict.ok, false);
   assert.match(verdict.reasons[0], /disk/);
 });
@@ -246,6 +247,30 @@ test('measurement lease waits for every heavy token, then holds them all; others
   again.release();
 });
 
+test('disabled measurement lease uses one ordinary heavy token and never freezes admission', async () => {
+  const { acquireMeasureLease, readMeasureLease } = await import('../heavy-lock.mjs');
+  const marker = path.join(temp, 'locks', 'NO-MEASURE-LEASE');
+  const busy = await acquireHeavy('ordinary work');
+  fs.writeFileSync(marker, '');
+  try {
+    const lease = await acquireMeasureLease('diagnostic', { holder: 'diagnostic', pollMs: 20, timeoutMs: 200 });
+    try {
+      assert.equal(lease.tokens, 1);
+      assert.equal(lease.diagnostic, true);
+      assert.equal(lease.owner, null);
+      assert.equal(readMeasureLease(), null);
+      assert(!fs.existsSync(path.join(temp, 'locks', 'measure-lease')));
+      assert.equal(fs.readdirSync(path.join(temp, 'locks', 'heavy')).length, 2);
+    } finally {
+      lease.release();
+    }
+    assert.equal(fs.readdirSync(path.join(temp, 'locks', 'heavy')).length, 1);
+  } finally {
+    busy();
+    fs.unlinkSync(marker);
+  }
+});
+
 test('PAIR verdicts: departures INVALID, RED or over a third excluded INVALID_NOISE, decisive PAIRED_DECIDED; identity fails closed', async () => {
   const { pairVerdictOf, PAIR_DECISIVE } = await import('../receipt.mjs');
   const { DECISIVE } = await import('../../bench/lib/paired.ts');
@@ -378,7 +403,7 @@ test('Datomic addition leaves every existing slot effective-config hash unchange
   for (const lane of ['xtdb', 'qlever']) for (const [i, slot] of ['dev', 's1', 's2', 's3'].entries())
     assert.equal(effectiveConfig(config, lib.slotInfo(config, lane, slot)).sha256, expected[lane][i]);
 });
-test('Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist with an exclusive slot', async () => {
+test('Datomic resident is parkable, pins separate JVM CPUs and counts against an exclusive grant', async () => {
   const { effectiveConfig } = await import('../engine.mjs');
   const info = lib.slotInfo(config, 'datomic', 'dev');
   assert.equal(info.parkable, true);
@@ -395,23 +420,48 @@ test('Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist w
   const reservations = ['xtdb', 'qlever', 'datomic'].map(lane => {
     const s = lib.slotInfo(config, lane, 'dev'); return { container: s.container, memBytes: s.memBytes, diskForecastBytes: 0 };
   });
-  const verdict = lib.admission({ config, reservations, running: [], request: { container: 'tx2-xtdb-s1', memBytes: 3.5 * GiB, diskForecastBytes: 0 }, diskUsedBytes: 0 });
+  // [DX-THIN1] Why: test both sides of the same grant as the real pool size changes. Rejected: a fixed sum that already fits and never exercises refusal.
+  const request = { container: 'tx2-xtdb-s1', memBytes: 3.5 * GiB, diskForecastBytes: 0 };
+  const other = { container: 'tx2-other-work', memBytes: config.pool.memLimitBytes - reservations.reduce((n,r) => n + r.memBytes,0) - request.memBytes + 1, diskForecastBytes: 0 };
+  if (other.memBytes > 0) reservations.push(other);
+  const verdict = lib.admission({ config, reservations, running: [], request, diskUsedBytes: 0 });
   assert.equal(verdict.ok, false);
   assert.match(verdict.reasons.join(' '), /memory/);
+  assert.equal(lib.admission({ config, reservations: reservations.filter(r => r.container !== info.container), running: [], request, diskUsedBytes: 0 }).ok, true);
+});
+
+test('isolated Datomic runs preserve the acquired mount across both naming conventions', () => {
+  const nonce = 'a'.repeat(20), clone = structuredClone(config);
+  const slot = lib.slotInfo(clone, 'datomic', 's1', nonce);
+  assert.equal(slot.volume, slot.container + '-data-' + nonce);
+  clone.slots.datomic.s1.attemptVolumeNonce = nonce;
+  const prior = lib.slotInfo(clone, 'datomic', 's1');
+  assert.equal(prior.volume, slot.container + '-' + nonce + '-data');
+  assert.equal(prior.lockDir, slot.lockDir);
+  assert.throws(() => lib.slotInfo(clone, 'datomic', 's1', nonce), /one attempt volume/);
 });
 
 // [EXP-M01R] Why: production requires heavy.mjs around the gate; its parent permit must not deadlock an all-token lease. Rejected: testing an unwrapped lease only.
-test('wrapped measurement borrows only the direct parent heavy token and releases the other tokens', async () => {
-  const script = `
-    const { acquireMeasureLease } = await import(${JSON.stringify(new URL('../heavy-lock.mjs', import.meta.url).href)});
-    const lease = await acquireMeasureLease('wrapped', { holder: 'wrapped', pollMs: 20, timeoutMs: 1000 });
-    console.log('TOKENS=' + lease.tokens); lease.release();`;
-  const child = spawn(process.execPath, [new URL('../heavy.mjs', import.meta.url).pathname, '--label', 'wrapped-test', '--', process.execPath, '--input-type=module', '-e', script], { stdio: ['ignore', 'pipe', 'pipe'] });
-  let out = '', err = '';
-  child.stdout.on('data', d => { out += d; });
-  child.stderr.on('data', d => { err += d; });
-  const code = await new Promise(resolve => child.on('close', resolve));
-  assert.equal(code, 0, err);
-  assert.match(out, /TOKENS=2/);
-  assert.equal(fs.readdirSync(path.join(temp, 'locks', 'heavy')).length, 0);
-});
+for (const disabled of [false, true]) {
+  test(`wrapped measurement borrows the direct parent token (lease ${disabled ? 'disabled' : 'enabled'})`, async () => {
+    const marker = path.join(temp, 'locks', 'NO-MEASURE-LEASE');
+    if (disabled) fs.writeFileSync(marker, '');
+    try {
+      const script = `
+        const { acquireMeasureLease } = await import(${JSON.stringify(new URL('../heavy-lock.mjs', import.meta.url).href)});
+        const lease = await acquireMeasureLease('wrapped', { holder: 'wrapped', pollMs: 20, timeoutMs: 1000 });
+        console.log('TOKENS=' + lease.tokens); lease.release();`;
+      const child = spawn(process.execPath, [new URL('../heavy.mjs', import.meta.url).pathname, '--label', 'wrapped-test', '--', process.execPath, '--input-type=module', '-e', script], { stdio: ['ignore', 'pipe', 'pipe'] });
+      let out = '', err = '';
+      child.stdout.on('data', d => { out += d; });
+      child.stderr.on('data', d => { err += d; });
+      const code = await new Promise(resolve => child.on('close', resolve));
+      assert.equal(code, 0, err);
+      assert.equal(out.trim(), `TOKENS=${disabled ? 1 : 2}`);
+      if (disabled) assert.equal(err.trim(), '[lab] Measurement lease is disabled on this machine. Timings are diagnostic.');
+      assert.equal(fs.readdirSync(path.join(temp, 'locks', 'heavy')).length, 0);
+    } finally {
+      if (disabled) fs.unlinkSync(marker);
+    }
+  });
+}

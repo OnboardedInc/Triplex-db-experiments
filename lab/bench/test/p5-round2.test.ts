@@ -9,7 +9,7 @@ import { W0, V_W0, triplexValue, worldOf } from "../lib/w0-world.ts";
 import { seedW0 } from "../lib/w0-seed.ts";
 import { readW0Fingerprint, fingerprintSweep, FingerprintRefusal } from "../lib/w0-fingerprint.ts";
 import { recoverSweep } from "../lib/sweep-recovery.ts";
-import { subjectList, Controller } from "../lib/sweep.ts";
+import { subjectList, Controller, runW0Sweep } from "../lib/sweep.ts";
 import { applyW0Trace, trafficArm, ratioSummary } from "../lib/w0-traffic.ts";
 const dir = () => fs.mkdtempSync(path.join(os.tmpdir(), "p5-r2-"));
 test("shared G0 reads every subject and refuses altered digest/count/binding/partial/deadline", async () => {
@@ -146,6 +146,25 @@ test("controller counts consecutive breaches during hold; stopped limit resumes 
   assert.equal(c.update(s, 0), 2);
   assert.equal(c.update(s, 100), 0);
   assert.equal(c.update({ ...s, readRatio: 1 }, 1200), 1);
+});
+test("a throttled worker exits after its peer drains the final page", async () => {
+  const scope = randomUUID();
+  const comp = memoryComposition("xtdb", scope);
+  const subjects = subjectList(65);
+  for (const subject of subjects)
+    assert.ok((await comp.transact([{ op: "assert", entityId: subject, attribute: "weeklyMinutes",
+      value: triplexValue("weeklyMinutes", 2400), validFrom: 0 }], {})).ok);
+  const controller = new Controller(2, true);
+  controller.limit = 1;
+  const seen: string[] = [];
+  const result = await runW0Sweep({
+    comp, scope, composition: "memory", lane: "xtdb", subjects, basis: {position: 65, validAt: V_W0},
+    workers: 2, controller, sweepId: scope, cursor: path.join(dir(), "cursor"),
+    onPage: async (records) => { seen.push(...records.map((r) => r.subject)); },
+  });
+  assert.deepEqual(seen, subjects);
+  assert.equal(result.complete, true);
+  assert.equal(controller.limit, 1);
 });
 test("mapped scalar commands replace atomically and resend resolves the original position", async () => {
   const comp = memoryComposition("xtdb", randomUUID());

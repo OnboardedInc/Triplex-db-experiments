@@ -11,6 +11,7 @@ export {
   RecentReads,
   pullAt,
   type ReadBasis,
+  type ReadHistoryCoverage,
   type ReadDelta,
   type ReadImage,
 } from "./RecentReads.js";

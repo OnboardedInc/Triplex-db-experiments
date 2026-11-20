@@ -34,6 +34,7 @@ export async function sqliteStore(directory: string, scope: string) {
   };
   // [DX-ACT1] Why: price an actual durable Triplex commit with checkpoint and reopen on this host. Rejected: treating the memory composition's ACK time as durable service time.
   const store: OutboxStore & { close(): Promise<void> } = {
+    scopeName: scope,
     currentPosition: () => h.run(triples.currentPosition()),
     sweepPage: portableSweep(h).page,
     transact: (ops, meta) => outcome(h.triples.transact(ops, meta)),

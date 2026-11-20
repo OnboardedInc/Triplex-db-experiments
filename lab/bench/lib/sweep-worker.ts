@@ -82,7 +82,8 @@ port.on("message", async (msg) => {
       if ("error" in r) throw new Error(subject + ": " + r.error);
       // [DX-H6] Why: only outputs and a binding digest cross threads; preview worlds remain durable for full post-ACK verification.
       // Rejected: canonicalizing and transferring every fact a second time.
-      result.push({ subject, worldSha256: worldSha256(world), output: r.output, record: r.record });
+      result.push({ subject, worldSha256: worldSha256(world), output: r.output, record: r.record,
+        ...(workerData.includeRecoveryWorlds ? { world } : {}) });
     }
     const encodeStarted = performance.now(),
       encodeCpuStarted = cpu();

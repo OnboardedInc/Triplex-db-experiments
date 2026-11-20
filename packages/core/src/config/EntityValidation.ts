@@ -23,7 +23,7 @@ import { Triples } from "../store/Triples.js";
 import type { TransactionResult } from "../store/Triples.js";
 import { transactSystem } from "../store/systemNamespace.js";
 import type { Triple, TransactOp } from "../Triple.js";
-import type { TripleValue } from "../Value.js";
+import type { ReadValue, TripleValue } from "../Value.js";
 import * as CanonicalJson from "../content/CanonicalJson.js";
 import * as ContentId from "../content/ContentId.js";
 import * as ConfigNode from "./ConfigNode.js";
@@ -249,8 +249,15 @@ const assertOp = (
   value: value.type === "ref" ? { ...value, value: unsafe.entityId(value.value) } : value,
 });
 
-const nativeValue = (value: TripleValue): CanonicalJson.CanonicalValue => {
+const nativeValue = (value: ReadValue): CanonicalJson.CanonicalValue => {
   if (value.type === "integer") return value;
+  if (value.type === "erased")
+    return {
+      type: value.type,
+      valueType: value.valueType,
+      erasedAt: value.erasedAt,
+      erasureTxId: value.erasureTxId,
+    };
   if (value.type === "blob") {
     return {
       hash: value.value,
