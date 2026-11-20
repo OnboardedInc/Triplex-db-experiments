@@ -442,8 +442,9 @@ export async function runTail(options, config, manager) {
     archive = fs.realpathSync(options.archive);
   fs.mkdirSync(out, { recursive: false });
   diskFloor(out);
-  const nonce = randomUUID(),
+  const nonce = options["attempt-nonce"] ?? randomUUID(),
     slot = "tx2-dxscale1-tail1-" + nonce;
+  assert.match(nonce, /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/);
   const identity = {
     source: git("rev-parse", "HEAD"),
     slot,
@@ -603,7 +604,14 @@ export async function runTail(options, config, manager) {
     if (leaseBeforeSeed) {
       // [DX-TAIL1] Why: obtain the all-token lease before reserving memory after a seeded arm lost
       // its window on token drain. Rejected: holding the physical timing lock while waiting to seed.
-      measureLease = await takeMeasureLease(20 * 60_000);
+      const parent = readMeasureLease();
+      if (parent?.pid === process.ppid && !parent.stale) {
+        assert.equal(parent.holder, holder);
+        assert.equal(parent.label, holder + ":" + nonce);
+        measureLease = { owner: parent, waitedMs: null, release() {} };
+      } else {
+        measureLease = await takeMeasureLease(20 * 60_000);
+      }
       signal.throwIfAborted();
     }
     const admissionRequestedAt = Date.now();
@@ -922,7 +930,8 @@ export async function runTail(options, config, manager) {
         measureLease = await takeMeasureLease(maxWaitMs);
       }
       signal.throwIfAborted();
-      assert.equal(measureLease.owner.label, identity.slot);
+      assert([identity.slot, holder + ":" + identity.nonce].includes(measureLease.owner.label));
+      assert.deepEqual(readMeasureLease(), measureLease.owner);
     }
     const { identity: _, ...readyBody } = ready;
     const start = Date.now() + 12_000;

@@ -89,6 +89,10 @@ export async function acquireMeasureLease(label, { holder, pollMs = 1000, timeou
       const age = Date.now() - (fs.statSync(leaseDir(), { throwIfNoEntry: false })?.mtimeMs ?? Date.now());
       if ((owner && !pidAlive(owner.pid)) || (!owner && age > 30_000)) { breakStaleLock(leaseDir()); continue; }
       if (Date.now() - started > timeoutMs) throw Object.assign(new Error(`measurement lease held by pid ${owner?.pid} "${owner?.label}"`), { code: 'LEASE_TIMEOUT' });
+      if (Date.now() - announced > 30_000) {
+        process.stderr.write(`[lab] measurement lease: waiting for pid ${owner?.pid} "${owner?.label}" since ${owner?.at}\n`);
+        announced = Date.now();
+      }
       await sleep(pollMs);
     }
   }

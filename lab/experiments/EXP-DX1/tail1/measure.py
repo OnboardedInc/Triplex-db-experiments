@@ -84,7 +84,7 @@ def measure(out, incomplete=False):
         assert lock["closedAt"] >= start + locked_seconds * 1000
         assert 0 < lock["closedAt"] - lock["openedAt"] <= 900_000
         if not incomplete:
-            assert lock["measurementLease"]["label"] == identity["slot"]
+            assert lock["measurementLease"]["label"] in (identity["slot"], "DX-TAIL1:" + identity["nonce"])
             assert lock["measurementLease"]["holder"] == "DX-TAIL1"
     dir = out / "stack" / identity["slot"]
     trace = dir / "trace/raw"

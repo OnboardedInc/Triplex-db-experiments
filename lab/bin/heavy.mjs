@@ -6,7 +6,7 @@
 // [EXP-000] Why: four mkdir token directories lab/locks/heavy/<1..4>; a token whose owner pid is
 // dead is stale and broken. Rejected: a counter file (needs its own lock and crash recovery).
 import { spawn } from 'node:child_process';
-import { acquireHeavy } from './heavy-lock.mjs';
+import { acquireHeavy, acquireMeasureLease } from './heavy-lock.mjs';
 import { fail, main, parseArgs } from './lib.mjs';
 
 main(async () => {
@@ -16,7 +16,29 @@ main(async () => {
   // [EXP-W02-R2] Why: contested short gaps can starve a builder's ordered setup/checks at 1 s polling. Rejected: increasing HEAVY_SLOTS (would change the lab resource limit).
   const pollMs = Number(options['poll-ms'] ?? 1000);
   if (!Number.isSafeInteger(pollMs) || pollMs < 100 || pollMs > 30000) fail('USAGE', '--poll-ms must be an integer from 100 to 30000');
-  const release = await acquireHeavy(options.label ?? command.join(' '), { pollMs });
+  const label = options.label ?? command.join(' ');
+  const holder = options['measure-holder'];
+  let release;
+  if (holder !== undefined) {
+    if (typeof holder !== 'string' || !holder || !options.label)
+      fail('USAGE', '--measure-holder requires an explicit holder and --label');
+    // [DX-TAIL1] Why: lease users need to enter the same queue before any heavy token is issued.
+    // Rejected: winning a token first, then losing pool admission while the next lease drains it.
+    const controller = new AbortController();
+    const cancel = () => controller.abort(Error('Measurement lease request canceled'));
+    process.once('SIGINT', cancel);
+    process.once('SIGTERM', cancel);
+    try {
+      const lease = await acquireMeasureLease(label, { holder, pollMs, signal: controller.signal });
+      release = lease.release;
+      process.stderr.write(`[lab] measurement lease ready after ${lease.waitedMs} ms\n`);
+    } finally {
+      process.removeListener('SIGINT', cancel);
+      process.removeListener('SIGTERM', cancel);
+    }
+  } else {
+    release = await acquireHeavy(label, { pollMs });
+  }
   const code = await new Promise(resolve => {
     const child = spawn(command[0], command.slice(1), { stdio: 'inherit' });
     for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));
