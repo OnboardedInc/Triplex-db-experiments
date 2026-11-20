@@ -32,6 +32,8 @@ Staged receipt audit. `stage/checkStage/collectStage` verify the original scoped
 
 The first native staged gate verified a killed writer, an abandoned and collectable stage, a competing release, all-change and empty releases, and an original receipt after lost ACK. The idle boundary gate recorded the expiry event with zero saves and proved one recipient effect after reopening.
 
-Native stage, race and expiry evidence is complete. The 10,000-person comparison isolates ranges, threads, input reuse, staged writes and encoding. The deep price and local server-command smoke are queued. [Measured work and estimates](PART6-PRICE.md) · [Deep server command and predictions](SERVER.md)
+Native stage, race and expiry evidence is complete. The 10,000-person comparison isolates ranges, threads, input reuse, staged writes and encoding. The 10,000-deep price and local server-command smoke are queued. [Measured work and estimates](PART6-PRICE.md) · [Deep server command and predictions](SERVER.md)
 
 The final staged gate verified both orders of the same-person save and a new deep reader during an abandoned stage. The deep fixture’s independently encoded notice leaf costs 48.2 bytes per person at 10,000. [Evidence checksums](PART6-SHA256SUMS)
+
+At 1,000 deep people, receipt-only Publish took 68 ms durable and 85 ms to the first correct answer. Staging all 5,759 changed values took 1,052 / 1,068 ms using the notice-only index. The independent oracle verified 2,003 recipient effects. [Deep save costs](PART6-PRICE.md)

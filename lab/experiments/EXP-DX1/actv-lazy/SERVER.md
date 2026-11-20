@@ -1,6 +1,6 @@
 # One deep account on the server
 
-Predictions are planning estimates from the local compact calibration and the independently projected deep input inventory. An independent 1,000-person deep fixture census predicts 1,000 changed owners, 5,759 output rows and 799 changed work rows for R1 to R2. A broad deep release can change the due date for every person, so the compact result scales poorly to the deep profile even when the expanded index can supply every input. The numbers below are offer to durable, then to the first correct connected answer.
+Predictions are planning estimates from the local 10,000-person compact calibration and the native 1,000-person deep run. An independent 1,000-person deep fixture census predicts 1,000 changed owners, 5,759 output rows and 799 changed work rows for R1 to R2. A broad deep release can change the due date for every person, so the compact result scales poorly to the deep profile even when the expanded index can supply every input. The numbers below are offer to durable, then to the first correct connected answer.
 
 | Publish at 100,000 deep people | Quiet | 3.5 saves/s | 23.5 saves/s |
 | --- | --- | --- | --- |

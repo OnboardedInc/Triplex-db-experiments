@@ -22,6 +22,16 @@ Read and evaluation columns sum the individual operations. Four workers overlap 
 
 The deep fixture has 137,635 owned facts for 1,000 people and 1,604,464 for 10,000. Applying the exact notice-leaf codec to the independently authored seed used 48.1 and 48.2 bytes per person, respectively. These are encoded leaf values. The native account also carries membership addresses, census structures and database overhead. This calculation does not time a transaction.
 
+At 1,000 people on the actual deep source, receipt-only Publish took 68 ms to become durable and 85 ms through the first correct connected answer. Staged Publish using the notice-only index took 1052 / 1068 ms. It performed 1,000 native world pulls, stored 5,759 values in a 124,384-byte payload and applied 2,003 independently verified recipient effects across the whole experiment. Native enrolment took 18.9 s. The durable notice leaves measured 48.1 bytes per person, and address keys and values added 100.4 bytes per person.
+
+| Ordinary save, 1,000 deep people | Control / joined wall median (ms) | Control / joined native request (KiB) | Notice / index changes added |
+| --- | ---: | ---: | ---: |
+| Reader-only input | 65.1 / 66.1 | 9.5 / 9.7 | 0 / 0 |
+| Notice input, same posting | 81.7 / 71.4 | 9.5 / 19.5 | 3 / 0 |
+| Notice input, changed posting | 68.7 / 70.9 | 9.5 / 23.3 | 3 / 2 |
+
+Each cell has six saves. Raw source preparation is outside both clocks. Controls run before enrolment. Host contention and warm storage can change the latency delta at this sample size. The wire-byte and fact counts show the durable cost of notice and index maintenance.
+
 ## Planning estimates
 
 For the same compact distribution, subtract the measured request preparation and final marker request as fixed costs, then scale the remaining measured work by roster size. This simple projection includes cold worker cost in the scaled part. Data volume, writer queues and server hardware can change the slope.
