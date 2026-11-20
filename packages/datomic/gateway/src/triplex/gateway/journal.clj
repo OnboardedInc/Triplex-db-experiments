@@ -1,9 +1,14 @@
 (ns triplex.gateway.journal
-  (:require [triplex.gateway.slim :as slim] [triplex.gateway.trace :as trace] [clojure.data.json :as json] [datomic.api :as d] [triplex.gateway.lean :as lean] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.stats :as stats] [triplex.gateway.reach :as reach] [triplex.gateway.storage :as storage]))
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.slim :as slim] [triplex.gateway.trace :as trace] [clojure.data.json :as json] [datomic.api :as d] [triplex.gateway.lean :as lean] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.stats :as stats] [triplex.gateway.reach :as reach] [triplex.gateway.storage :as storage] [triplex.gateway.save-ledger :as ledger]
+            [triplex.gateway.packed-journal :as packed]))
 (set! *warn-on-reflection* false)
 ;; [DX-B4-T1] Why: these reads use only immutable indexes; a scope without the write-side proof declines.
 ;; Rejected: reconstructing journals through entity/pull/query or guessing legacy completeness.
 (defn value [db e a] (:v (first (d/datoms db :eavt e a))))
+(defn row-texts [db e]
+  (let [stored (map :v (d/datoms db :eavt e :triplex.entity/row))
+        restored (when (d/entid db :triplex.journal/packed) (packed/rows db e))]
+    (map slim/row-text (if (seq restored) (sort (concat stored restored)) stored))))
 (defn supported! [db name time-order?]
   (let [scope (:scope (reach/config name db))]
     (when-not (#{2 3 4} (value db scope :triplex.scope/rows-version)) (reach/decline! "rows-version"))
@@ -45,11 +50,10 @@
           cut-head (or (:position inner) (storage/head-position name db))
           ;; Physical positions are monotonic; nested logical journals are sorted within each physical commit.
           journals (mapcat (fn [tx]
-                             (let [links (vec (d/datoms db :eavt (:e tx) :triplex.tx/journals))]
-                               (sort-by second
-                                 (for [link links
-                                       :let [e (:v link) p (value db e :triplex.journal/position)]
-                                       :when (< after p (inc cut-head))] [e p (if (and (d/entid db :triplex.group/position) (d/entid db [:triplex.group/position p])) p (:v tx))]))))
+                             (sort-by second
+                               (for [[e p] (ledger/journals db (:e tx))
+                                     :when (< after p (inc cut-head))]
+                                 [e p (if (and (d/entid db :triplex.group/position) (d/entid db [:triplex.group/position p])) p (:v tx))])))
                            (d/index-range db :triplex.tx/position (inc after) nil))
           out (StringBuilder.)]
       (.append out "{\"availableAt\":") (.append out (System/currentTimeMillis)) (.append out ",\"head\":") (.append out (str cut-head)) (.append out ",\"transactions\":[")
@@ -58,11 +62,11 @@
         (when (pos? i) (.append out ","))
         (.append out "[") (reach/append-string! out (value db e :triplex.entity/id)) (.append out ",") (.append out (str p)) (.append out ",[")
         ;; Current rows are exact: supported scopes have never retired or extended a published journal.
-        (doseq [[j row] (map-indexed vector (d/datoms db :eavt e :triplex.entity/row))]
-          (when (pos? j) (.append out ",")) (reach/append-string! out (slim/row-text (:v row))))
+        (doseq [[j text] (map-indexed vector (row-texts db e))]
+          (when (pos? j) (.append out ",")) (reach/append-string! out (privacy/text text)))
         (.append out "]")
         (when (true? (get input "replicaRows"))
-          (let [rows (map #(lean/decode (:v %)) (d/datoms db :eavt e :triplex.entity/row))
+          (let [rows (map lean/decode (row-texts db e))
                 changed (vec (map :value_string (filter #(and (= "_Transaction" (:entity_type %)) (= ":_tx/changed-entity" (:attribute %))) rows)))
                 changes (for [row rows :when (and (= "_Transaction" (:entity_type row)) (= ":_tx/change" (:attribute row)))] (json/read-str (:value_json row)))
                 new-refs (set (for [c changes :when (and (= "assert" (get c "op")) (= "ref" (get-in c ["value" "type"])))] (get-in c ["value" "value"])))
@@ -89,7 +93,7 @@
   (try
     (supported! db name false)
     (let [claim (d/entid db [:triplex.claim/command-id (get input "commandId")])
-          id (when claim (value db claim :triplex.claim/tx-id)) out (StringBuilder.)]
+          id (when claim (ledger/claim-tx-id db claim)) out (StringBuilder.)]
       (.append out "{\"txId\":")
       (if id (reach/append-string! out id) (.append out "null"))
       (.append out "}") (str out))
@@ -97,15 +101,49 @@
 
 ;; [DX-B4-T2] Why: entity identity is an indexed lookup and journal rows are immutable in supported scopes.
 ;; Rejected: passing receipt reads through read-rows' entity reconstruction.
-(defn build-entity [db name input]
+(defn build-entity [current name input]
   (try
-    (supported! db name false)
-    (let [e (d/entid db [:triplex.entity/id (get input "txId")]) out (StringBuilder.)]
+    (supported! current name false)
+    (let [basis (get input "basis")
+          [db _ _ _ inner] (if basis (reach/select-db name current basis) [current])
+          e (d/entid db [:triplex.entity/id (get input "txId")])
+          cut (if inner (assoc basis "recordedPosition" (:position inner)) basis)
+          pos (when (and inner e) (or (ledger/implicit-position db e) (value db e :triplex.journal/position)))
+          texts (when (and e (not (and pos (> pos (:position inner))))) (row-texts db e))
+          texts (if cut (filter #(storage/visible? (lean/decode %) cut false) texts) texts)
+          out (StringBuilder.)]
       (when (and e (value db e :triplex.entity/row-overflow)) (reach/decline! "row-overflow"))
       (.append out "{\"rows\":[")
-      (doseq [[i row] (map-indexed vector (if e (d/datoms db :eavt e :triplex.entity/row) []))]
-        (when (pos? i) (.append out ",")) (reach/append-string! out (slim/row-text (:v row))))
+      (doseq [[i text] (map-indexed vector texts)]
+        (when (pos? i) (.append out ",")) (reach/append-string! out (privacy/text text)))
       (.append out "]}") (str out))
+    (catch Exception e (declined e))))
+
+(defn entity-positions [current name input]
+  ;; [DX-W1] Why: the typed history checks actual journal ownership in a pinned mixed layout.
+  ;; Rejected: approximating imported journal ownership from the current business rows.
+  (try
+    (supported! current name false)
+    (when-not (lean/enabled? current) (reach/decline! "rows-version"))
+    (admission/execute admission/journals
+      (fn []
+        (let [limit (get input "limit") owner (get input "entityId")
+              cut (get input "basis") before (get input "beforePosition" Long/MAX_VALUE)
+              p (storage/safe-position (get cut "recordedPosition"))
+              _ (when-not (and (integer? limit) (<= 1 limit 1001) (string? owner)) (throw (ex-info "Invalid journal history request" {})))
+              [db _ _ _ inner] (reach/select-db name current cut)
+              p (or (:position inner) p)
+              kept (java.util.ArrayDeque.)]
+          (doseq [tx (d/index-range db :triplex.tx/position 1 nil)
+                  [e position] (sort-by second (ledger/journals db (:e tx)))
+                  :when (and (<= position p) (< position before)
+                             (some (fn [text] (let [r (lean/decode text)]
+                                      (and (= "_Transaction" (:entity_type r)) (= ":_tx/changed-entity" (:attribute r))
+                                           (= "ref" (:value_type r))
+                                           (= owner (:value_string r)) (storage/visible? r cut false)))) (row-texts db e)))]
+            (.addLast kept [(value db e :triplex.entity/id) position])
+            (when (> (.size kept) limit) (.removeFirst kept)))
+          (json/write-str {:positions (vec (reverse (seq kept)))}))))
     (catch Exception e (declined e))))
 
 (defn command [db name input]

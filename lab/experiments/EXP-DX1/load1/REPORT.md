@@ -15,3 +15,7 @@ Server code is based on `31646e007`. Allow 30–45 minutes on one server, with a
 - [Evidence and receipt audit](EVIDENCE6.md) · [Archived measurements and checksum](SHA256SUMS.part6)
 
 [Part 5](PART5.md) preserves the single-frame frontier and four-minute sustained import check.
+
+## Version 0.1 intake
+
+- P8 uses the [single-server import matrix](MICRO-SERVER.md) and its per-account comparison. P9 uses the [single-server shared-database fault command](../ha1/BENCH.md#version-01-recovery-row-on-one-server). Host loss, synchronous commit cost and whole-database relocation need the paired runs described there.

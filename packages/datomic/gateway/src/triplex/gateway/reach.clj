@@ -1,5 +1,5 @@
 (ns triplex.gateway.reach
-  (:require [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission])
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.trace :as trace] [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.recent :as recent] [triplex.gateway.scope :as scope] [triplex.gateway.entity-cache :as cache] [triplex.gateway.admission :as admission] [triplex.gateway.save-ledger :as ledger])
   (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap] [java.util.concurrent.atomic AtomicInteger LongAdder]))
 (set! *warn-on-reflection* false)
 
@@ -173,8 +173,7 @@
                 ;; [DX-T1-8] Why: both JSON fragments and legacy text responses expose canonical logical rows.
                 ;; Rejected: emitting the compressed storage frame to replica/bootstrap or pinned read clients.
                 (let [body-start (+ ref-start ref-size 1)
-                      logical (if (.startsWith text "Z1" (int body-start))
-                                (str (subs text 0 body-start) (slim/body (subs text body-start))) text)]
+                      logical (if (= \2 (.charAt text 0)) (slim/logical-text text body-start) text)]
                 (.add texts logical)
                 (when (> (.size texts) row-limit) (decline! "row-budget"))
                 (if (= \1 (.charAt text 0)) (append-string! out logical)
@@ -203,7 +202,7 @@
         rev (if eid (if cached (:rev cached)
                       (long (cache/revision (:revision-view cfg) eid
                         (fn [] (let [revision (read-datom)] (vreset! witness revision)
-                                 (if revision (long (:v revision)) 0)))))) 0)
+                                 (long (or (:v revision) (ledger/implicit-position db eid) 0))))))) 0)
         value (if eid
                 (if (pos? rev)
                   (cache/lookup (cache/parsed-key name (:cache-generation cfg) eid rev) #(parse-entity db cfg eid rev (- 100000 (aget counts 0))))
@@ -222,7 +221,8 @@
 (defn read-entity-legacy [name db cfg id valid ^longs counts]
   (let [eid (entity-id db name id cfg) valid (double valid)
         rev (if eid (long (cache/revision (:revision-view cfg) eid
-                           (fn [] (long (or (:v (first (d/datoms db :eavt eid (:rev cfg)))) 0))))) 0)
+                           (fn [] (long (or (:v (first (d/datoms db :eavt eid (:rev cfg))))
+                                           (ledger/implicit-position db eid) 0))))) 0)
         value (if eid
                 (if (pos? rev)
                   (cache/lookup (cache/parsed-key name (:cache-generation cfg) eid rev)
@@ -251,6 +251,23 @@
       (when (pos? (aget n 0)) (.append out \,)) (aset n 0 1)
       (append-string! out (.next it))))
   (.append out \]))
+;; [DX-ERASE1] Why: rows unaffected by the frontier must keep their native Reach representation.
+;; Rejected: quoting every packed row on guarded inline replies (changes otherwise identical bytes).
+(defn- append-protected-rows! [^StringBuilder out texts ^String original]
+  (if (or (:sealed privacy/*cut*) (seq (:erased privacy/*cut*)))
+    (let [masked (mapv privacy/text texts)]
+      (if (every? true? (map identical? texts masked))
+        (.append out original)
+        (do
+          (.append out \[)
+          (doseq [[i ^String row] (map-indexed vector masked)]
+            (when (pos? i) (.append out \,))
+            (if (= \2 (.charAt row 0))
+              (.append out row (int (privacy/packed-tail row)) (.length row))
+              (append-string! out row)))
+          (.append out \]))))
+    (.append out original)))
+
 (defn build-response [name current input & [epoch recent-state]]
   (try
     (let [[db position t recent-eligible group-cut] (select-db name current (get input "basis") epoch)
@@ -267,7 +284,11 @@
           row-page? (true? (get input "rowPage"))
           entity-limit (if row-page? 50000 5000)
           entities (LinkedHashMap.) closures (ArrayList.) counts (long-array 1)
-          session-state (session-map name (get input "session") epoch)
+          ;; [DX-ERASE1] Why: only readers that check both cuts may reuse protected references.
+          ;; Rejected: enabling references for older SDKs that check revision alone.
+          session-state (when (or (not privacy/*cut*) (true? (get input "erasureRefs")))
+                          (session-map name (get input "session") epoch))
+          witness-cut (when-let [sequence (:seq privacy/*cut*)] [position t sequence])
           generation (when session-state @session-state)
           ^ConcurrentHashMap remembered (:entries generation) out (StringBuilder. 65536)]
       (when-not (and (vector? roots) (<= 1 (count roots) (if need 50000 5000))) (decline! "roots"))
@@ -308,14 +329,22 @@
           (while (.hasNext it)
             (let [^Map$Entry item (.next it) id (.getKey item) entry (.getValue item)
                   eid (nth entry 0) rev (long (nth entry 1)) texts (nth entry 2)
-                  inline (or (nil? remembered) full (nil? eid) (not= rev (.get remembered eid)))]
+                  saved (when (and remembered (not full) eid) (.get remembered eid))
+                  hit (if witness-cut
+                        (and (vector? saved) (= rev (nth saved 0)) (= witness-cut (nth saved 1)))
+                        (= rev saved))
+                  inline (not hit)]
               (when (pos? (aget n 0)) (.append out \,)) (aset n 0 1)
               (.append out \[) (append-string! out id) (.append out \,) (.append out rev)
               (when inline
                 (.append out \,)
-                (let [^String fragment (nth entry 4)] (.append out fragment))
+                (if privacy/*cut*
+                  (trace/span "reach/protected-inline" "gateway"
+                    (append-protected-rows! out texts (nth entry 4)))
+                  (.append out ^String (nth entry 4)))
                 ;; Overflow pages are entirely inline and leave the bounded map empty.
-                (when (and remembered eid (<= (.size entities) session-entry-limit)) (remember! generation eid rev)))
+                (when (and remembered eid (<= (.size entities) session-entry-limit))
+                  (remember! generation eid (if witness-cut [rev witness-cut] rev))))
               (.append out \]))))
         (.append out "],\"closures\":[")
         (let [it (.iterator closures) n (long-array 1)]

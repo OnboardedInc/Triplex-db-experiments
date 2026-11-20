@@ -7,7 +7,7 @@ import { publishChanged } from "../../../bench/lib/w0-replica.ts";
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
 import { evaluation, observe, open } from "./check.ts";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
-import type { GuardLayout } from "../../../bench/lib/w0-guarded.ts";
+import type { PublicationOptions } from "../../../bench/lib/w0-outbox.ts";
 
 type Input = [tx: number, rate: number, validTime?: string];
 const schedules: Record<string, Input[]> = {
@@ -26,7 +26,7 @@ const schedules: Record<string, Input[]> = {
     [20, 1500, "2026-11-04T11:59:59.999999Z"],
   ],
 };
-for (const layout of [undefined, "full-state", "guard-fact"] as const) {
+for (const layout of [undefined, "full-state", "guard-fact", "page-cut"] as const) {
   for (const [name, steps] of Object.entries(schedules)) {
     test((layout ?? "historical") + " / " + name, async (t) => {
       const scope = "act1-" + randomUUID(),
@@ -106,7 +106,7 @@ for (const layout of [undefined, "full-state", "guard-fact"] as const) {
           await comp.close();
           comp = await open(scope);
           const position = await comp.currentPosition();
-          const [actual] = await observe(comp, [record.subject], position);
+          const [actual] = await observe(comp, [record.subject], position, layout);
           t.diagnostic(JSON.stringify({ scope, position, record: wire, expected, actual }));
           if (layout || process.env.DX_ACT1_RED === "1") assert.deepEqual(actual, expected);
           else if (JSON.stringify(actual) !== JSON.stringify(expected)) divergences.push(i);
@@ -125,7 +125,11 @@ for (const layout of [undefined, "full-state", "guard-fact"] as const) {
   }
 }
 
-for (const layout of ["full-state", "guard-fact"] satisfies GuardLayout[]) {
+for (const layout of [
+  "full-state",
+  "guard-fact",
+  "page-cut",
+] satisfies PublicationOptions["layout"][]) {
   test(layout + " / lost ACK, rollback, retirement and restart", async (t) => {
     const scope = "act1-" + randomUUID(),
       oracle = new DomainOracle();
@@ -196,7 +200,7 @@ for (const layout of ["full-state", "guard-fact"] satisfies GuardLayout[]) {
         assert.deepEqual(JSON.parse(W0.receiveJson(twice)), replay);
         actualReceiver = twice.state;
         receiver = received.state;
-        const [actual] = await observe(comp, [record.subject], receipt.position);
+        const [actual] = await observe(comp, [record.subject], receipt.position, layout);
         t.diagnostic(
           JSON.stringify({
             scope,
@@ -256,7 +260,7 @@ for (const layout of ["full-state", "guard-fact"] satisfies GuardLayout[]) {
           await oracle.call("publish", { state: next, evaluations: [fast.wire, slow.wire] }),
         ).state;
         const position = await b.currentPosition();
-        const [actual] = await observe(b, [fast.record.subject], position);
+        const [actual] = await observe(b, [fast.record.subject], position, layout);
         t.diagnostic(
           JSON.stringify({
             scope,

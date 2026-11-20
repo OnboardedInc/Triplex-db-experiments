@@ -15,6 +15,7 @@ import { head, modeOf, root, runFile, supportsSingleHost } from "./common.ts";
 const [action, tag, layout = "two-host", extra] = process.argv.slice(2),
   mode = modeOf(action ?? "");
 assert(tag && /^[a-z][a-z0-9-]{2,40}$/.test(tag), "Expected experiment and a new attempt tag");
+assert(mode !== "native-checks");
 assert(!extra && (layout === "two-host" || (layout === "one-host" && supportsSingleHost(mode))));
 const single = layout === "one-host";
 const sites = single ? [0] : [0, 1];
@@ -45,9 +46,10 @@ const url = execFileSync("git", ["remote", "get-url", "origin"], {
   encoding: "utf8",
 }).trim();
 assert.equal(url, "https://github.com/OnboardedInc/Triplex-db-experiments.git");
-const branch = "exp/DX-HA1-failover-move",
-  git = (...args: string[]) => execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
-assert.equal(git("branch", "--show-current"), branch);
+const git = (...args: string[]) =>
+  execFileSync("git", args, { cwd: root, encoding: "utf8" }).trim();
+const branch = git("branch", "--show-current");
+assert(["exp/DX-HA1-failover-move", "exp/DX-INT1"].includes(branch));
 assert.equal(
   git("status", "--porcelain", "--untracked-files=normal"),
   "",
@@ -328,7 +330,7 @@ try {
       assert.equal(summary.profile.people, declaration.sizes[i]);
       assert.equal(summary.profile.capacity, layout);
       assert.deepEqual(clean, { nonce, containers: 0, networks: 0 });
-      if (supportsSingleHost(mode)) {
+      if (mode.startsWith("load-") && supportsSingleHost(mode)) {
         for (const arm of summary.result) {
           assert(/^[a-z0-9-]+$/.test(arm.arm) && arm.rate === declaration.sizes[i]);
           replayLive(member(sub + arm.arm + ".offers.json"), attempt, arm);

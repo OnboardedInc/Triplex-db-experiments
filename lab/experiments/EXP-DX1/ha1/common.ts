@@ -34,6 +34,7 @@ export const modes = [
   "load-micro",
   "load-volume",
   "load-pipeline",
+  "native-checks",
   "load-frontier-low",
   "load-frontier-high",
   "load-frontier-allowance",
@@ -58,7 +59,11 @@ export function microLoad(mode: string) {
 }
 export function supportsSingleHost(mode: Mode) {
   return (
-    mode === "load-tail" || mode.startsWith("load-frontier-") || splitLoad(mode) || microLoad(mode)
+    mode === "one-failover" ||
+    mode === "load-tail" ||
+    mode.startsWith("load-frontier-") ||
+    splitLoad(mode) ||
+    microLoad(mode)
   );
 }
 export function splitLoad(mode: string) {
@@ -76,6 +81,7 @@ export function loadRoles(mode: Mode): Role[] {
   ];
 }
 export function localRoleMiB(mode: Mode, role: Role) {
+  if (mode === "native-checks" && role === "tool") return 1280;
   if (splitLoad(mode)) {
     if (role === "active") return 896;
     if (role === "standby") return 768;
@@ -162,17 +168,25 @@ export class Evidence {
   readonly source: ReturnType<typeof inputs>;
   readonly dir: string;
   readonly start = clock();
+  readonly mode: Mode;
+  readonly slot: string;
+  readonly shape: "deep" | "mixed";
+  readonly faultCell: "all" | "tail-burst";
   constructor(
     parent: string,
-    readonly mode: Mode,
-    readonly slot: string,
-    readonly shape: "deep" | "mixed" = "deep",
-    readonly faultCell: "all" | "tail-burst" = "all",
+    mode: Mode,
+    slot: string,
+    shape: "deep" | "mixed" = "deep",
+    faultCell: "all" | "tail-burst" = "all",
   ) {
     assert(
       shape === "deep" || ["one-failover", "one-backup", "one-sync", "one-whole"].includes(mode),
       "This mode has a fixed population",
     );
+    this.mode = mode;
+    this.slot = slot;
+    this.shape = shape;
+    this.faultCell = faultCell;
     this.source = inputs(mode);
     fs.mkdirSync(parent, { recursive: true });
     this.dir = path.join(parent, mode + "-" + this.nonce);

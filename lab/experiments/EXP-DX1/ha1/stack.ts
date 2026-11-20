@@ -49,15 +49,17 @@ export class Stack {
   }
   async open() {
     for (const site of new Set([this.a, this.b])) {
-      const pg = await site.docker([
-        "image",
-        "inspect",
-        site.postgresImage ?? "postgres:17-alpine",
-        "--format",
-        "{{.Id}}",
-      ]);
-      assert.match(pg, /^sha256:[a-f0-9]{64}$/);
-      this.pgIds.set(site, pg);
+      if (this.e.mode !== "native-checks") {
+        const pg = await site.docker([
+          "image",
+          "inspect",
+          site.postgresImage ?? "postgres:17-alpine",
+          "--format",
+          "{{.Id}}",
+        ]);
+        assert.match(pg, /^sha256:[a-f0-9]{64}$/);
+        this.pgIds.set(site, pg);
+      }
       assert.equal(
         await site.docker(["image", "inspect", site.datomicId, "--format", "{{.Id}}"]),
         site.datomicId,

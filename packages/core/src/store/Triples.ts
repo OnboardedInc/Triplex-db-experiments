@@ -37,7 +37,7 @@ import type {
 } from "../errors/index.js";
 import type { DatalogQuery, WrappedQuery } from "../datalog/types.js";
 import type { TemporalBasis, ReadBasis } from "../Temporal.js";
-import type { TripleValue } from "../Value.js";
+import type { ReadValue } from "../Value.js";
 import type { Rule as ConstraintRule } from "../Constraint.js";
 import type { EntityPageCursor, EntityPageRequest, EntityPageSnapshot } from "../EntityPage.js";
 import type {
@@ -90,14 +90,15 @@ export interface TransactionMeta {
 }
 
 export interface TransactionChange {
-  readonly op: "assert" | "retract";
+  readonly op: "assert" | "retract" | "erase";
   readonly tripleId: TripleId;
   readonly entityId: EntityId;
   readonly attribute: string;
   /** Present on journals written by the bitemporal journal format. */
   readonly entityType?: string;
   /** The complete typed value, retained for assertions and retractions. */
-  readonly value?: TripleValue;
+  readonly value?: ReadValue;
+  readonly erasureSeq?: number;
   readonly validFrom?: number;
   readonly validTo?: number;
   readonly recordedAt?: number;

@@ -64,6 +64,7 @@ export interface SweepOptions {
   cursor: string;
   metricsFile?: string;
   workers: number;
+  includeRecoveryWorlds?: boolean;
   release?: string;
   activations?: readonly W0.Activation[];
   onPage: (records: readonly any[], page: number) => Promise<void | Record<string, number>>;
@@ -153,6 +154,7 @@ export async function runW0Sweep(o: SweepOptions) {
             lane: o.lane,
             scope: o.scope,
             worker: workerIndex,
+            includeRecoveryWorlds: o.includeRecoveryWorlds,
           },
         });
         threads.push(worker);
@@ -216,13 +218,12 @@ export async function runW0Sweep(o: SweepOptions) {
           (o.stopAfterPages === undefined || index < o.stopAfterPages)
         ) {
           if (failed) throw failed;
-          while (o.controller && (o.controller.limit === 0 || workerIndex >= o.controller.limit))
+          // [DX-BM1] Why: an admitted peer can claim the last page while this worker waits for capacity.
+          // Rejected: waiting for an idle lane to reopen after the work has already drained.
+          if (o.controller && workerIndex >= o.controller.limit) {
             await new Promise((r) => setTimeout(r, 10));
-          if (
-            index >= remaining.length ||
-            (o.stopAfterPages !== undefined && index >= o.stopAfterPages)
-          )
-            break;
+            continue;
+          }
           const assignedAtMs = performance.now() - sweepStarted;
           const workerCpuStart = process.cpuUsage();
           const pageIndex = remaining[index++]!,

@@ -32,16 +32,24 @@ export class Snapshot {
   readonly binding: string;
   readonly source: string;
   readonly scope: string;
+  readonly comp: CompositionHandle;
+  readonly shape: Shape | SnapshotData;
+  readonly subjects: number;
+  readonly width: number;
   private constructor(
-    readonly comp: CompositionHandle,
-    readonly shape: Shape | SnapshotData,
-    readonly subjects: number,
-    readonly width: number,
+    comp: CompositionHandle,
+    shape: Shape | SnapshotData,
+    subjects: number,
+    width: number,
     file: string,
     readonly adaptive?: { budgetMs: number },
     readonly orderedStride?: number,
   ) {
     assert(comp.scopeName && comp.backend.name === "datomic");
+    this.comp = comp;
+    this.shape = shape;
+    this.subjects = subjects;
+    this.width = width;
     this.scope = comp.scopeName;
     if (typeof shape !== "string") assert.equal(subjects, shape.groups);
     this.source = typeof shape === "string" ? sourceId(shape, subjects) : shape.seal;

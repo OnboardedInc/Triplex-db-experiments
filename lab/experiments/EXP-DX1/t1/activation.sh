@@ -4,14 +4,26 @@
 set -euo pipefail
 mode=${1:---plan}; prefix=${2:?tx2-dxt1-prefix}; subjects=${3:-1000}; operation=${4:-clone}; traffic=${5:-no-live}
 [[ $mode == --plan || $mode == --execute ]] && [[ $prefix =~ ^tx2-dxt1-[a-z0-9-]+$ ]] || exit 2
-[[ $subjects == 1000 || $subjects == 10000 || $subjects == 100000 ]] && [[ $operation == clone || $operation == seed || $operation == retained ]] || exit 2
+[[ $subjects == 1000 || $subjects == 10000 || $subjects == 100000 ]] || exit 2
+case $operation in clone|seed|retained|seed-only|pristine) ;; *) exit 2 ;; esac
 [[ $traffic == live || $traffic == no-live ]] && [[ $# -le 5 ]] || exit 2
 case $subjects in
   1000) seed=tx2-dxh5-seed-1000-pg-data;scope=dxh5-w0-1000-v1;;
   10000) seed=tx2-dxh8-seed-10000-pg-data;scope=dxh8-w0-10000-v1;;
   100000) seed=tx2-dxs5-seed-100000-pg-data;scope=dxs5-w0-100000-v1;;
 esac
-if [[ $operation == seed ]];then scope=dxt1-w0-$subjects-$prefix;fi
+if [[ $operation == seed || $operation == seed-only ]];then scope=dxt1-w0-$subjects-$prefix;fi
+if [[ $operation == pristine || $operation == seed-only ]]; then
+  batch=${DX_BM1_PRISTINE_BATCH:?parent seed batch required}
+  [[ $batch =~ ^[a-z0-9]{1,12}$ && $subjects == 100000 ]] || exit 2
+  if [[ $operation == seed-only ]]; then
+    [[ $traffic == no-live && $prefix == tx2-dxt1-bm1-"$batch"-seed ]] || exit 2
+  else
+    [[ $traffic == live && $prefix =~ ^tx2-dxt1-bm1-act[a-f0-9]{9}-activation-a$ ]] || exit 2
+    seed=bm1-pristine-$batch
+    scope=dxt1-w0-100000-tx2-dxt1-bm1-$batch-seed
+  fi
+fi
 retained_tag=tx2-dxt1-bm1-20261118d-activation
 if [[ $operation == retained ]];then
   [[ $subjects == 100000 && $prefix == tx2-dxt1-bm1-* ]] || exit 2
@@ -25,7 +37,7 @@ if [[ $mode == --plan ]];then
   printf '%s\n' 'Execution requires DX_ACTIVATION_STOP_AT with an explicit timezone; no keep-warm mechanism.'
   exit
 fi
-[[ $operation != retained || ${DX_BARE_METAL:-0} == 1 ]] || exit 2
+case $operation in retained|pristine|seed-only) [[ ${DX_BARE_METAL:-0} == 1 ]] || exit 2 ;; esac
 if [[ ${DX_ACTIVATION_HEAVY:-0} != 1 ]];then
   exec env DX_ACTIVATION_HEAVY=1 node lab/bin/heavy.mjs --label "DX-T1-activation-$prefix" -- bash "$0" "$@"
 fi
@@ -98,7 +110,7 @@ git ls-files --error-unmatch lab/experiments/EXP-DX1/t1/activation.sh lab/experi
 git rev-parse HEAD > "$out/head.txt"
 python3 - "$out/source.SHA256SUMS" <<'BUILD_BYTES'
 import hashlib,pathlib,subprocess,sys
-files=subprocess.check_output(['git','ls-files','-z','lab/bench/lib/w0-*','lab/oracles/domain','lab/world/W0','packages/w0','pnpm-lock.yaml','package.json','packages/datomic','lab/experiments/EXP-DX1/t1/activation.sh','lab/experiments/EXP-DX1/t1/activation-driver.ts','lab/experiments/EXP-DX1/t1/w0-seed.ts']).split(b'\0')
+files=subprocess.check_output(['git','ls-files','-z','lab/bench/lib/w0-*','lab/experiments/EXP-DX1/act2/*.ts','lab/oracles/domain','lab/world/W0','packages/w0','pnpm-lock.yaml','package.json','packages/datomic','lab/experiments/EXP-DX1/t1/activation.sh','lab/experiments/EXP-DX1/t1/activation-driver.ts','lab/experiments/EXP-DX1/t1/w0-seed.ts']).split(b'\0')
 with open(sys.argv[1],'x') as out:
  for name in files:
   if name:
@@ -111,7 +123,7 @@ python3 - "$out" "$prefix" "$scope" "$subjects" "$operation" <<'ATTEMPT'
 import hashlib,json,pathlib,sys,uuid
 p=pathlib.Path(sys.argv[1]);r={'run':sys.argv[2],'slot':sys.argv[2],'source':(p/'head.txt').read_text().strip(),'scope':sys.argv[3],'subjects':int(sys.argv[4]),'nonce':str(uuid.uuid4()),'programSha256':hashlib.sha256(pathlib.Path('lab/experiments/EXP-DX1/t1/activation-driver.ts').read_bytes()).hexdigest()}
 r['sourceManifestSha256']=hashlib.sha256((p/'source.SHA256SUMS').read_bytes()).hexdigest()
-if sys.argv[4]=='100000' and sys.argv[5] in ('clone','retained'):r['sealedCut']=4338757
+if sys.argv[4]=='100000' and sys.argv[5] in ('clone','retained','pristine'):r['sealedCut']=4338757
 (p/'activation-attempt.json').write_text(json.dumps(r,indent=2)+'\n')
 ATTEMPT
 nonce=$(python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["nonce"])' "$out/activation-attempt.json")
@@ -151,7 +163,7 @@ RETAINED_SEED
   export DX_BM1_RETAINED_SEED=1
 fi
 resources=true
-extra=();[[ $operation == seed ]] || extra=(--clone-seed "$seed")
+extra=();[[ $operation == seed || $operation == seed-only ]] || extra=(--clone-seed "$seed")
 progress starting-owned-stack
 (trap - EXIT TERM INT;exec env DX_STACK_WAIT_FOR_TRANSACTOR=1 bash lab/experiments/EXP-DX1/stack/up.sh "$prefix" --no-publish --cpus-tx 0 --cpus-pg 1 --cpus-gw-write 2 --cpus-gw-read "${DX_ACTIVATION_GW_READ_CPUS:-4}" \
   --tx-memory "$DX_TX_MEMORY" --pg-memory "$DX_PG_MEMORY" \
@@ -168,9 +180,14 @@ args=(--rung "$subjects" --scope "$scope" --workers 2 --runtime-workers --seed-f
 [[ $traffic != live ]] || args+=(--live --require-healthy-baseline --traffic-offset-s 120 --baseline-ms 100000 --live-warmup-ms 10000 --reader-workers 2)
 [[ $traffic != live || ${DX_P5_LIVE_READERS:-256} == 256 ]] || args+=(--live-readers "$DX_P5_LIVE_READERS")
 [[ ${DX_ACTIVATION_POST_CAPTURE:-0} != 1 ]] || args+=(--post-capture)
-[[ $subjects != 100000 || $operation == seed ]] || args+=(--seed-position 4338757 --activation-at-seed)
+if [[ $subjects == 100000 ]]; then
+  case $operation in
+    pristine) args+=(--seed-position 4338757) ;;
+    clone|retained) args+=(--seed-position 4338757 --activation-at-seed) ;;
+  esac
+fi
 driver=(lab/experiments/EXP-DX1/t1/activation-driver.ts "${args[@]}")
-if [[ $operation == seed ]];then driver=(lab/experiments/EXP-DX1/t1/w0-seed.ts "$scope" "$subjects" "$subjects" seed);fi
+if [[ $operation == seed || $operation == seed-only ]];then driver=(lab/experiments/EXP-DX1/t1/w0-seed.ts "$scope" "$subjects" "$subjects" seed);fi
 mkdir -p "$out/state"
 run_driver() {
   local log=$1;shift
@@ -185,15 +202,32 @@ run_driver() {
   -e "DX_ACTIVATION_NONCE=$nonce" -e "DX_ACTIVATION_BUILD_SHA256=$build_sha" \
   -e TX2_W0_POINT_JOURNAL=1 -e TX2_W0_RESTORE_INDEXED_JOURNAL=1 -e "DX_R1_DEADLINE=$(node -e 'console.log(Date.parse(process.argv[1]))' "$DX_ACTIVATION_STOP_AT")" \
   python:3.13-slim /tool/node --expose-gc --experimental-strip-types "$@" > "$out/$log" 2>&1) & child=$!
-wait "$child";child=
+local rc=0
+wait "$child" || rc=$?;child=
+  ((rc == 0)) || return "$rc"
   progress "finished $log"
 }
+# [DX-ACT2] Why: qualify the two-window oracle on this gateway before the first large seed command. Rejected: a Mac receipt or a smoke after seeding.
+if [[ $subjects == 100000 && ( $operation == seed || $operation == seed-only ) ]]; then
+  run_driver preflight.log lab/experiments/EXP-DX1/act2/preflight-runner.ts "$out/act2-preflight" "$(cat "$out/head.txt")" "$prefix" "$nonce" || {
+    rc=$?
+    python3 - "$out" "$rc" <<'PREFLIGHT_STATUS'
+import json, pathlib, sys
+root = pathlib.Path(sys.argv[1])
+detail = root / "act2-preflight" / "STATUS.json"
+state = json.loads(detail.read_bytes()) if detail.is_file() else {}
+reason = state.get("reason") or f"Preflight driver exited {sys.argv[2]} during {state.get('stage', 'startup')}"
+(root / "STATUS.json").write_text(json.dumps({"stage": "large seed stopped", "reason": reason}) + "\n")
+PREFLIGHT_STATUS
+    exit "$rc"
+  }
+fi
 run_driver driver.log "${driver[@]}"
-if [[ $operation == seed ]];then
+if [[ $operation == seed || $operation == seed-only ]];then
   # [DX-T1-14] Why: a durable checkpoint proves progress, while a fresh full readback proves the seeded world.
   # Rejected: call a generated/acknowledged command count a verified seed or stop before the independent fingerprint.
   run_driver seed-readback.log lab/experiments/EXP-DX1/t1/w0-seed.ts "$scope" "$subjects" "$subjects" verify
-  run_driver activation.log lab/experiments/EXP-DX1/t1/activation-driver.ts "${args[@]}"
+  if [[ $operation == seed ]];then run_driver activation.log lab/experiments/EXP-DX1/t1/activation-driver.ts "${args[@]}";fi
 fi
 log=driver.log;[[ $operation != seed ]] || log=activation.log
 # [DX-T1-14] Why: the final receipt binds the code and built package bytes that actually stayed fixed during this attempt.
@@ -207,5 +241,10 @@ for line in manifest.decode().splitlines():
  assert not p.is_absolute() and '..' not in p.parts
  assert hashlib.sha256(p.read_bytes()).hexdigest()==expected,'Source/build changed: '+name
 SOURCE_READBACK
+if [[ $operation == seed-only ]]; then
+  progress sealing-before-release
+  python3 lab/experiments/EXP-DX1/bm1/pristine-seed.py seal "$batch" "$prefix" "$out"
+  exit
+fi
 node lab/trace/activation-result.mjs "$out" "$log"
 progress "exact activation envelope checked"

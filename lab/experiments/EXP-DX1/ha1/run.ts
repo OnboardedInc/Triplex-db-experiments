@@ -8,6 +8,40 @@ import { oneAccount } from "./one-account.ts";
 import { oneWhole } from "./one-whole.ts";
 import { oneFailover } from "./one-failover.ts";
 import { failures } from "./failures.ts";
+async function gatewayChecks(s: Stack) {
+  await s.tool();
+  const before = await s.view("tool");
+  const result = [];
+  for (const name of [
+    "selftest",
+    "feed-test",
+    "commit-order-test",
+    "group-test",
+    "cache-key-test",
+    "recent-test",
+    "trace-test",
+  ]) {
+    // [DX-HA1] Why: run the gates against the exact mounted integration source in one small reservation.
+    // Rejected: borrowing another builder's image-only selftest output.
+    const stdout = await s.exec(
+      "tool",
+      "env",
+      "DATOMIC_JAVA_OPTS=-Xms96m -Xmx768m -XX:ActiveProcessorCount=2",
+      "bin/run",
+      "-m",
+      "triplex.gateway." + name,
+      s.e.nonce,
+    );
+    s.e.write("native-" + name, { nonce: s.e.nonce, role: before.Id, source: s.e.source, stdout });
+    const counts = /Ran (\d+) tests containing (\d+) assertions\./.exec(stdout);
+    assert(counts && Number(counts[1]) >= (name === "selftest" ? 27 : 1) && Number(counts[2]) > 0);
+    assert.match(stdout, /0 failures, 0 errors\./);
+    result.push({ name, tests: Number(counts[1]), assertions: Number(counts[2]) });
+  }
+  assert.equal((await s.view("tool")).Id, before.Id);
+  return result;
+}
+
 export async function drill(
   e: Evidence,
   a: Site,
@@ -32,6 +66,7 @@ export async function drill(
         profile.scopes,
         profile.capacity === "two-host" ? profile.people : 0,
       );
+    else if (e.mode === "native-checks") result = await gatewayChecks(s);
     else if (e.mode === "move") result = await move(s, profile.people);
     else if (e.mode === "replication") result = await replication(s);
     else if (e.mode === "one-failover") result = await oneFailover(s, profile.people);

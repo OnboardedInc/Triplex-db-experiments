@@ -1,5 +1,5 @@
 import { Schema } from "effect";
-import { TripleValue } from "./Value.js";
+import { ReadValue, TripleValue } from "./Value.js";
 import { TripleId, EntityId, Attribute, TransactionId } from "./Branded.js";
 import { RuleSchema as ConstraintRule } from "./Constraint.js";
 
@@ -43,7 +43,7 @@ export const TripleResponse = Schema.Struct({
   id: TripleId,
   entityId: EntityId,
   attribute: Schema.String,
-  value: TripleValue,
+  value: ReadValue,
   recordedAt: Schema.Number,
   validFrom: Schema.Number,
   validTo: Schema.NullOr(Schema.Number),
@@ -60,7 +60,7 @@ export const Triple = Schema.Struct({
   id: TripleId,
   entityId: EntityId,
   attribute: Attribute,
-  value: TripleValue,
+  value: ReadValue,
   recordedAt: Schema.Number,
   validFrom: Schema.Number,
   validTo: Schema.OptionFromOptional(Schema.Number),

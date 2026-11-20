@@ -1,5 +1,5 @@
 import {
-  decodeValueColumns,
+  decodeReadValueColumns,
   decodedPrimitiveValue,
   storedValueDomain,
   ValueDomains,
@@ -7,7 +7,7 @@ import {
 import { DatomicClient } from "./DatomicClient.js";
 import { decodeRowText } from "./rowText.js";
 import type { ReachWire } from "./reach.js";
-import type { ResolvedTemporalBasis, TripleValue } from "@triplex-build/triplex";
+import type { ResolvedTemporalBasis, ReadValue } from "@triplex-build/triplex";
 
 const stringColumns = [1, 2, 3, 4, 5, 9, 13, 14, 16];
 const numericColumns = [6, 7, 8, 10, 11, 12, 15];
@@ -16,7 +16,7 @@ export interface SweepRow {
   id: string;
   entityId: string;
   attribute: string;
-  value: TripleValue;
+  value: ReadValue;
   position: number;
   validFrom: number;
   validTo?: number;
@@ -85,7 +85,7 @@ export function decodeSweepRows(
         recordedAt: number,
         from: number,
         to: number | null,
-        value: TripleValue;
+        value: ReadValue;
       if (typeof values === "string") {
         const r = decodeRowText(values);
         rowId = r.id;
@@ -95,7 +95,7 @@ export function decodeSweepRows(
         recordedAt = r.recorded_at;
         from = r.valid_from;
         to = r.valid_to;
-        value = decodeValueColumns(r, storedValueDomain(ValueDomains.datomic, attribute));
+        value = decodeReadValueColumns(r, storedValueDomain(ValueDomains.datomic, attribute));
       } else {
         if (
           !Array.isArray(values) ||
@@ -184,7 +184,7 @@ export function decodeSweepRows(
           columns.value_boolean = values[7] === "-0" ? -0 : values[7];
           columns.value_datetime = values[8] === "-0" ? -0 : values[8];
           columns.value_json = values[9];
-          value = decodeValueColumns(columns, domain);
+          value = decodeReadValueColumns(columns, domain);
         }
       }
       if (

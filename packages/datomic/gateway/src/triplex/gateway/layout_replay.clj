@@ -37,7 +37,7 @@
         (or (= ch \]) (= ch \})) (recur (inc i) begin (dec depth) false false out)
         (and (= ch \,) (zero? depth)) (recur (inc i) (inc i) depth false false (conj out [begin i]))
         :else (recur (inc i) begin depth false false out)))))
-(defn splice-row [^String text offset clock new-ids]
+(defn splice-row [^String text offset clock assign-change]
   (let [ranges (column-ranges text (- offset 2))
         _ (when-not (= 17 (count ranges)) (throw (ex-info "Replay row column count" {})))
         token (fn [i] (let [[a b] (nth ranges i)] (subs text a b)))
@@ -45,10 +45,7 @@
         changes (cond-> {10 (json/write-str clock)}
                   (and journal (= attribute ":_tx/instant")) (assoc 8 (json/write-str clock))
                   (and journal (= attribute ":_tx/change"))
-                  (assoc 9 (let [v (json/read-str (json/read-str (token 9)))
-                                v (cond-> v (new-ids (get v "tripleId")) (assoc "recordedAt" clock)
-                                          (contains? v "retractedAt") (assoc "retractedAt" clock))]
-                             (json/write-str (json/write-str v)))))]
+                  (assoc 9 (json/write-str (assign-change (json/read-str (token 9))))))]
     (reduce (fn [s [i replacement]] (let [[a b] (nth ranges i)] (str (subs s 0 a) replacement (subs s b))))
             text (sort-by key > changes))))
 (def base-code (commit/expand-code 'identity))
@@ -57,7 +54,11 @@
     (fn [form]
       (cond
         (and (seq? form) (= 'assign-row (first form)) (vector? (second form)))
-        '(assign-row [text offset clock new-ids] (triplex.gateway.layout-replay/splice-row text offset clock new-ids))
+        '(assign-row [text offset clock new-ids prior-rows]
+           ;; [DX-THIN1] Why: splicing uses the checked predecessor metadata from the serial writer.
+           ;; Rejected: reconstructing a retraction from the proposed journal text.
+           (triplex.gateway.layout-replay/splice-row text offset clock
+             #(assign-change % clock new-ids prior-rows)))
         (and (seq? form) (= 'identity-row (first form)) (vector? (second form)))
         '(identity-row [id]
            (let [high (:replay/watermark payload)
@@ -85,10 +86,12 @@
                  (for [[e xs] (sort-by key rows)] [:db/add e :triplex.replay/packed (pack-rows (mapv #(nth % 3) xs))])))))
 (defn expand [shape db payload]
   (let [journals (set (map #(str "e:" %) (:journal-entities payload)))
-        retired (set (map #(nth % 2) (filter #(and (vector? %) (= :triplex/retract (first %))) (:ops payload))))
-        payload (if (= shape "C") (-> payload (update :live #(vec (remove retired %)))
-                                      (assoc :replay/watermark (when (:replay/head payload)
-                                                               (value db (:replay/head payload) :triplex.replay/max-row-id)))) payload)
+        ;; [DX-THIN1] Why: preserve the writer's serial checks for every claimed live assertion.
+        ;; Rejected: stripping untimed predecessors from the replay payload before validating it.
+        payload (if (= shape "C")
+                  (assoc payload :replay/watermark (when (:replay/head payload)
+                                                    (value db (:replay/head payload) :triplex.replay/max-row-id)))
+                  payload)
         base ((if (= shape "C") @expand-c @expand-a) db payload)
         packed (if (contains? #{"B" "C"} shape) (pack base journals) base)]
     (case shape

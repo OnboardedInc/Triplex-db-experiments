@@ -140,15 +140,18 @@ export async function localDrill(opts: any, config: any, manager: any) {
   assert(["auto", "s1", "s2", "s3"].includes(opts.slot));
   const mode = modeOf(opts.experiment);
   const diagnostic = opts.diagnostic === true;
-  assert(!microLoad(mode) || diagnostic, "Use --diagnostic for Mac import trials");
+  assert(
+    !(microLoad(mode) || mode === "native-checks") || diagnostic,
+    "Use --diagnostic for Mac correctness trials",
+  );
   const previousPg = opts["prepare-postgres"];
   assert(
     previousPg === undefined ||
       (diagnostic &&
-        (mode === "load-volume" || mode === "load-pipeline") &&
+        (microLoad(mode) || mode.startsWith("one-")) &&
         typeof previousPg === "string" &&
         /^sha256:[a-f0-9]{64}$/.test(previousPg)),
-    "--prepare-postgres expects the prior image ID for a local diagnostic import check",
+    "--prepare-postgres expects the prior image ID for a local diagnostic import or recovery check",
   );
   const slots = (opts.slot === "auto" ? ["s2", "s3", "s1"] : [opts.slot]).map((id) =>
     slotInfo(config, "datomic", id),
@@ -173,11 +176,13 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // [DX-HA1] Why: each child cap has a matching live reservation and unique name. Rejected: reusing a retained slot volume or double-counting a single opaque stack.
   const wanted = (Object.keys(roles) as Role[])
     .filter((r) =>
-      mode.startsWith("load-")
-        ? loadRoles(mode).includes(r)
-        : mode === "replication"
-          ? ["pg", "target", "tool", "active", "write"].includes(r)
-          : mode === "move" || mode.startsWith("one-") || r !== "target",
+      mode === "native-checks"
+        ? r === "tool"
+        : mode.startsWith("load-")
+          ? loadRoles(mode).includes(r)
+          : mode === "replication"
+            ? ["pg", "target", "tool", "active", "write"].includes(r)
+            : mode === "move" || mode.startsWith("one-") || r !== "target",
     )
     .map((role) => [role, localRoleMiB(mode, role)] as const);
   const people = Number(opts.people ?? 4);
@@ -331,7 +336,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
         return (out.stdout + (args[0] === "logs" ? out.stderr : "")).trim();
       },
     };
-    if (mode.startsWith("load-")) {
+    if (diagnostic || mode.startsWith("load-")) {
       try {
         // [DX-LOAD1] Why: the shared VM rotates built images; bind the immutable digest to the engine's build event and image label. Rejected: running a mutable tag or changing the shared config for another builder.
         const builds = fs

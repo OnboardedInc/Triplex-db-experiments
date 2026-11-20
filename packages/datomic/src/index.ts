@@ -17,6 +17,7 @@ class Connection extends Context.Service<Connection, DatomicClient>()(
 export function makeDatomicRuntime(options: {
   readonly url: string;
   readonly groupAccount?: string;
+  readonly writeClass?: import("./DatomicClient.js").DatomicWriteClass;
   readonly layout?: "lean" | "legacy";
   readonly entityCacheBytes?: number;
   readonly rowCacheBytes?: number;
@@ -70,3 +71,12 @@ export * from "./replica/index.js";
 
 export { resumeCommitOrder } from "./CommitOrder.js";
 export * from "./tracing.js";
+
+export { requireDatomicSourcePosition, withDatomicImportClock } from "./TransactionContext.js";
+
+export {
+  withDatomicErasureSequence,
+  type ErasureFrontier,
+  type ErasureReceipt,
+  type ErasureSelector,
+} from "./erasure.js";

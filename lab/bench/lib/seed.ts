@@ -10,6 +10,8 @@
 import { strict as assert } from "node:assert";
 import { Option } from "effect";
 import { windowed } from "./load-window.ts";
+import { deepOwnFacts } from "./deep-world.ts";
+import type { DeepSeedWitness } from "./deep-profile.ts";
 import { alignAssertIds } from "./receipt.ts";
 import type { CompositionHandle, Receipt } from "./composition.ts";
 import { seedOps } from "./commands.ts";
@@ -50,6 +52,11 @@ export function alignIds(operations: readonly any[], receipt: Receipt): (string 
 
 export async function seedRung(opts: {
   comp: CompositionHandle;
+  deep?: DeepSeedWitness;
+  restoredRunTag?:string;
+  deepRows?: (subject:number)=>Fact[];
+  seedAddressOf?:(subject:number)=>string;
+  deepProgress?: (subjects: number, facts: number, position: number) => void;
   onReceipt?: (operations: readonly any[], receipt: Receipt) => void;
   subjects: number;
   runTag: string;
@@ -64,9 +71,12 @@ export async function seedRung(opts: {
 }): Promise<SeedResult> {
   const { comp } = opts;
   const accounts = accountsFor(opts.subjects);
-  const depth = opts.inFlight ?? 1;
-  if (depth !== 1 && comp.backend.name !== "datomic") throw Error("Concurrent seed requires Datomic");
-  if (![1, 2, 4].includes(depth)) throw Error("Seed depth must be 1, 2 or 4");
+  const requestedDepth = opts.inFlight ?? 1;
+  if (requestedDepth !== 1 && comp.backend.name !== "datomic") throw Error("Concurrent seed requires Datomic");
+  if (![1, 2, 4].includes(requestedDepth)) throw Error("Seed depth must be 1, 2 or 4");
+  // [DX-THIN1] Why: the deep witness proves a contiguous journal in roster order.
+  // Rejected: passing independently completed bulk receipts to the ordered witness.
+  const depth = opts.deep ? 1 : requestedDepth;
   const started = performance.now();
   const state = new Map<number, SubjectState>();
   const versionIds = new Map<number, string[]>();
@@ -78,11 +88,13 @@ export async function seedRung(opts: {
   let n = 0;
 
   const commit = async (operations: any[], label: string, record: boolean, preconditions: any[] = []) => {
-    const commandId = `${opts.runTag}:seed:${label}`;
+    const commandId = `${opts.restoredRunTag??opts.runTag}:seed:${label}`;
     const meta = { commandId, actor: "bulk-seed", ...(preconditions.length ? { preconditions } : {}) };
     for (let attempt = 1; ; attempt++) {
       const t0 = performance.now();
-      let out = await comp.transact(operations, meta);
+      const previous=opts.restoredRunTag ? await comp.transactionByCommand(commandId) : undefined;
+      if(opts.restoredRunTag && (!previous?.ok || !previous.value || previous.value.commandId!==commandId)) throw Error("Missing original seed transaction in restored database");
+      let out = previous?.ok ? {ok:true as const,value:receiptOfRecord(previous.value)} : await comp.transact(operations, meta);
       if (!out.ok && out.tag === "CommandAlreadyCommittedError") {
         const found = await comp.transactionByCommand(commandId);
         if (found.ok && found.value) {
@@ -113,38 +125,54 @@ export async function seedRung(opts: {
         if (record) recorded.push({ commandId, operations, preconditions, actor: "bulk-seed", receipt: { txId: receipt.txId, position: receipt.position, instant: receipt.instant, assertionIds: alignIds(operations, receipt) } });
         return receipt;
       }
-      failures.push({ tag: out.tag, commandId, message: String(out.error?.message ?? out.error ?? "").slice(0, 300) });
-      if (attempt >= 8) throw new Error(`seed command ${commandId} failed ${attempt} times: ${out.tag} ${String(out.error?.message ?? out.error ?? "").slice(0, 300)}`);
+      const gateway = out.error?.cause;
+      // [DX-THIN1] Why: distinguish a declined synthetic campaign frame from an unavailable gateway.
+      // Rejected: recording all error bodies in ordinary application runs.
+      const detail = process.env.DX_INT1_SEED_ERRORS === "1" && gateway?._tag === "DatomicHttpError"
+        ? ` (${gateway.status} ${gateway.code} ${gateway.message})`
+        : "";
+      const message = (String(out.error?.message ?? out.error ?? "") + detail).slice(0, 300);
+      failures.push({ tag: out.tag, commandId, message });
+      if (opts.deep) opts.log(`seed: attempt ${attempt} failed for ${commandId}: ${out.tag} ${failures.at(-1)!.message}`);
+      if (attempt >= 8) throw new Error(`seed command ${commandId} failed ${attempt} times: ${out.tag} ${message}`);
       await new Promise((r) => setTimeout(r, 500 * attempt));
     }
   };
   const idOf = (receipt: Receipt, e: string, a: string) => receipt.triples.find((t) => t.entityId === e && t.attribute === a)?.id;
 
   // 1. shared worlds
-  for (let a = 0; a < accounts; a++) {
+  for (let a = 0; a < (opts.deep ? 0 : accounts); a++) {
     const facts = sharedFacts(a);
     for (let k = 0; k < facts.length; k += opts.batchFacts)
       await commit(seedOps(facts.slice(k, k + opts.batchFacts)), `acct${a}.${k}`, opts.recordAccounts.has(a));
   }
-  opts.log(`seed: ${accounts} shared account worlds in ${((performance.now() - started) / 1000).toFixed(1)} s`);
+  opts.log(`seed: ${opts.deep ? 0 : accounts} shared account worlds in ${((performance.now() - started) / 1000).toFixed(1)} s`);
   // 2. subjects, version 0
-  let stoppedEarly = false;
+  let lastDeepProgress = 0;
   function* batches() {
     let batch: Fact[] = [], members: number[] = [];
+    let deepBatch: { subject: number; rows: Fact[] }[] = [];
     for (let i = 0; i < opts.subjects; i++) {
-      const facts = ownFacts(i, accounts);
+      const facts = opts.deepRows ? opts.deepRows(i) : opts.deep ? deepOwnFacts(i) : ownFacts(i, accounts);
       if (batch.length + facts.length > opts.batchFacts && batch.length) {
-        yield {batch, members};
-        if (performance.now() - started > opts.budgetMs) { stoppedEarly = true; return; }
+        yield { batch, members, deepBatch };
+        if (performance.now() - started > opts.budgetMs) return;
         if (commands % 100 === 0) opts.log(`seed: ${n} subjects, ${assertions} assertions`);
-        batch = []; members = [];
+        batch = []; members = []; deepBatch = [];
       }
       batch.push(...facts); members.push(i);
+      if (opts.deep) deepBatch.push({ subject: i, rows: facts });
     }
-    if (batch.length) yield {batch, members};
+    if (batch.length) yield { batch, members, deepBatch };
   }
-  await windowed(batches(), depth, async ({batch, members}) => {
+  await windowed(batches(), depth, async ({ batch, members, deepBatch }) => {
     const receipt = await commit(seedOps(batch), `s${members[0]}-${members.at(-1)}`, members.some((i) => opts.recordSubjects.has(i)));
+    if (opts.deep) {
+      opts.deep.observe(deepBatch, receipt, SEED_VALID_FROM);
+      if (performance.now() - lastDeepProgress >= 15000 || opts.deep.subjects === opts.subjects || commands === 1) {
+        opts.deepProgress?.(opts.deep.subjects, opts.deep.facts, receipt.position); lastDeepProgress = performance.now();
+      }
+    }
     // [DX-LOAD1] Why: one index preserves first-assertion semantics across every member lookup in a pipelined batch. Rejected: rescanning two thousand returned rows for each subject and history field.
     const byEntity = new Map<string, Map<string,string>>();
     if (depth > 1) for (const t of receipt.triples) {
@@ -162,7 +190,7 @@ export async function seedRung(opts: {
         if (vIds.some((x) => !x)) throw new Error(`seed receipt lacks versioned ids for subject ${i}`);
         versionIds.set(i, vIds);
       }
-      state.set(i, { stamp: 0, stampId, stampValidFrom: SEED_VALID_FROM, address: seedAddress(i), addressId, addressValidFrom: SEED_VALID_FROM });
+      state.set(i, { stamp: 0, stampId, stampValidFrom: SEED_VALID_FROM, address: opts.seedAddressOf?.(i) ?? seedAddress(i), addressId, addressValidFrom: SEED_VALID_FROM });
     }
     n += members.length;
   });
@@ -178,7 +206,7 @@ export async function seedRung(opts: {
     seededSubjects: seeded, complete: seeded === opts.subjects, commands, assertions, retractions, wallMs,
     factsPerS: assertions / (wallMs / 1000),
     commitMs: { p50: latencies[Math.floor(latencies.length / 2)] ?? 0, max: latencies.at(-1) ?? 0 },
-    failures, firstPosition: Math.min(...positions), lastPosition: Math.max(...positions), lastInstant, positions, state, versionIds, recorded,
+    failures, firstPosition: positions[0] ?? 0, lastPosition: positions.at(-1) ?? 0, lastInstant, positions, state, versionIds, recorded,
   };
 }
 

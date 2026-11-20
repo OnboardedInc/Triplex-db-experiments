@@ -6,6 +6,8 @@ import { ReplicaSnapshot } from "../../../packages/datomic/dist/index.js";
 import { W0, canonical, sha256, worldOf, w0Basis } from "./w0-world.ts";
 import { buildIndex, selectRelease, type SelectorCut } from "./w0-selector.ts";
 
+import { pinWorker } from "./w0-cpus.ts";
+const assignedCpu = pinWorker("selector");
 const port = parentPort!,
   view = new ReplicaSnapshot(workerData.image);
 const cut: SelectorCut = workerData.cut,
@@ -75,6 +77,7 @@ port.once("message", (m) => {
   const used = process.threadCpuUsage(cpu);
   port.postMessage({
     type: "finish",
+    cpuAssignment: assignedCpu,
     coverage,
     cpuSeconds: (used.user + used.system) / 1e6,
     checkpointBytes: statSync(checkpoint).size,

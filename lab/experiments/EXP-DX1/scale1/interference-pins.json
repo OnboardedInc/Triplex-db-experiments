@@ -1,0 +1,122 @@
+[
+  {
+    "account": 0,
+    "sha256": "27f41e3fd53159810315d2919e4057325323ac6727346ead482ade0ff45254c9",
+    "primaries": [
+      586,
+      586,
+      586,
+      586,
+      5304,
+      5304
+    ]
+  },
+  {
+    "account": 1,
+    "sha256": "99ca8d0b8daa3337766fe6a38b99a88cd66ab8e9593fe45ce6e296c5402b689f",
+    "primaries": [
+      0,
+      554,
+      554,
+      554,
+      554,
+      5186
+    ]
+  },
+  {
+    "account": 2,
+    "sha256": "1b42d10ce9133b0e6e9783da9de985c0a18f24b62aef2ab73ab1dc84725283a1",
+    "primaries": [
+      0,
+      0,
+      574,
+      574,
+      574,
+      5245
+    ]
+  },
+  {
+    "account": 3,
+    "sha256": "80f89bbdb32e31108b3177ead4d78e7950362d4bf4977f74f05f219ed7bbb67c",
+    "primaries": [
+      0,
+      0,
+      590,
+      590,
+      590,
+      5321
+    ]
+  },
+  {
+    "account": 4,
+    "sha256": "1fdaf377936d14efbb5ac4e27f9a6a03f434dd99e96810b226d0cd4fa2fd16bb",
+    "primaries": [
+      0,
+      0,
+      577,
+      577,
+      577,
+      5299
+    ]
+  },
+  {
+    "account": 5,
+    "sha256": "716bb55f657248956aef134324c5dba45b8f04aca9203a42a86b322925f31178",
+    "primaries": [
+      0,
+      0,
+      0,
+      594,
+      594,
+      5310
+    ]
+  },
+  {
+    "account": 6,
+    "sha256": "d3b7d0b7ed3a923080e254668c9d5d4d7237356394292f7d0bc54f8ccdd54ef2",
+    "primaries": [
+      0,
+      0,
+      0,
+      602,
+      602,
+      5231
+    ]
+  },
+  {
+    "account": 7,
+    "sha256": "1d42eb3ee82a7d7399e2fa21903d1a1e526931034cb5b1139ab061c74d3098be",
+    "primaries": [
+      0,
+      0,
+      0,
+      600,
+      600,
+      5266
+    ]
+  },
+  {
+    "account": 8,
+    "sha256": "93aa15e4d1bb97cba4547bacc0953b002fe55654cb16f8df341f4e9eadc92919",
+    "primaries": [
+      0,
+      0,
+      0,
+      587,
+      587,
+      5287
+    ]
+  },
+  {
+    "account": 9,
+    "sha256": "27bd60d294373cfef34538d85c48c8339e966a0c43dfac2d8ba2213f3b23e93a",
+    "primaries": [
+      0,
+      0,
+      0,
+      593,
+      593,
+      5315
+    ]
+  }
+]

@@ -1,5 +1,6 @@
+import { deepCells } from "./lib/deep-world.ts";
 import { BasisWindow } from "./lib/basis-window.ts";
-import { beginTrace, withTrace, finishTrace, traceSync, traceAsync, flushTracing, currentTrace, traceResource } from "./lib/tracing.ts";
+import { beginTrace, withTrace, finishTrace, traceSync, traceAsync, flushTracing, currentTrace, traceResource, traceLevel } from "./lib/tracing.ts";
 import { describeReadError } from "./lib/read-error.ts";
 import { canonicalWorld } from "./lib/canonical.ts";
 import { requireDrained } from "./lib/reader-lifecycle.ts";
@@ -7,6 +8,7 @@ import { ReaderTurn } from "./lib/reader-turn.ts";
 import { Histogram } from "./lib/hist.ts";
 import { readerDiagnostics } from "./lib/reader-diagnostics.ts";
 import { httpCounts } from "./lib/http-counts.ts";
+import { ReadBatch, READ_BATCH_SIZE } from "./lib/read-batch.ts";
 /**
  * Reader worker thread: closed-loop subject pulls at a named basis, plus the P5 sweep.
  *
@@ -40,13 +42,18 @@ import { BUCKETS, HOP_SHARE, ids, subjectInCell, type Bucket, type Hop } from ".
 import { observe, type ReadRecord } from "./lib/observe.ts";
 
 export type ReaderConfig = {
+  deep?: boolean;
   replicaWorldCacheBytes?: number;
   replicaPort?: import("node:worker_threads").MessagePort;
   observationPort?: import("node:worker_threads").MessagePort;
+  historicalPort?: import("node:worker_threads").MessagePort;
+  installedHistoryBytes?: number;
   readPath?: "gateway" | "replica";
   splitTarget?: "pending" | "mixed";
   replicaHistoryMiB?: number;
+  replicaHistoryCoverage?: "global" | "closure";
   replicaYield?: "loop" | "fair";
+  traceEvery?: number;
   rawSampleLimit?: number;
   rawLocalMinimum?: number;
   replicaImage?: import("../../packages/datomic/dist/index.js").ReadImage;
@@ -76,10 +83,17 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
   if (shared && (cfg.readPath !== "replica" || cfg.replicaImage || cfg.replicaPort))
     throw Error("A shared reader must use the live replica index");
   const nowAbs = () => performance.timeOrigin + performance.now();
+  const traceEvery = cfg.traceEvery ?? 1;
+  if (!Number.isSafeInteger(traceEvery) || traceEvery < 1) throw Error("Invalid reader tracing interval");
+  let traceSequence = 0;
   const DAY = 86_400_000;
+  const cells = cfg.deep ? deepCells(cfg.subjects) : undefined;
 
   let comp: CompositionHandle;
-  const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader((cfg.replicaHistoryMiB ?? 64) * 1024 ** 2, shared?.index, cfg.replicaWorldCacheBytes ?? 32 * 1024 ** 2) : undefined;
+  const replica = cfg.readPath === "replica" ? new (await import("./lib/replica-reads.ts")).ReplicaReader((cfg.replicaHistoryMiB ?? 64) * 1024 ** 2, shared?.index, cfg.replicaWorldCacheBytes ?? 32 * 1024 ** 2, cfg.replicaHistoryCoverage) : undefined;
+  const historyApi = cfg.historicalPort ? await import("./lib/historical-fallback.ts") : undefined;
+  const exactHistory = cfg.historicalPort ? new historyApi!.HistoricalFallbackPort(cfg.historicalPort) : undefined;
+  if (replica && historyApi && cfg.installedHistoryBytes) replica.installedHistory = new historyApi.InstalledHistory(cfg.installedHistoryBytes);
   if (replica && cfg.replicaImage) replica.install(cfg.replicaImage);
   const turn = new ReaderTurn();
   const loopDelay = monitorEventLoopDelay({ resolution: 1 });
@@ -101,12 +115,12 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       replica!.apply(msg.delta);
     }
   });
-  const phases = new Map<number, { reads: number; reasons: Record<string, number>; straddleWait: Histogram; rawLocalSamples: number; rawFallbackSamples: number; timeOnlyReads: number; timeOnlyLocal: number }>();
+  const phases = new Map<number, { reads: number; reasons: Record<string, number>; ages: Record<string, number>; straddleWait: Histogram; rawLocalSamples: number; rawFallbackSamples: number; timeOnlyReads: number; timeOnlyLocal: number }>();
   let activeReads = 0, attemptedReads = 0, completedReads = 0;
   let readErrorCount = 0;
   const readErrors: any[] = [];
-  const finalDiagnostics = () => ({ strictRecordClocks: replica?.index.strictRecordClocks, readAttempts: { attempted: attemptedReads, completed: completedReads, active: activeReads }, readErrors: { count: readErrorCount, retained: readErrors }, gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics,
-    phases: Object.fromEntries([...phases].map(([p, s]) => [p, { reads: s.reads, rawLocalSamples: s.rawLocalSamples, rawFallbackSamples: s.rawFallbackSamples, timeOnlyReads: s.timeOnlyReads, timeOnlyLocal: s.timeOnlyLocal, fallbackReasons: s.reasons, straddleWait: s.straddleWait.toJSON() }])) });
+  const finalDiagnostics = () => ({ strictRecordClocks: replica?.index.strictRecordClocks, readAttempts: { attempted: attemptedReads, completed: completedReads, active: activeReads }, readErrors: { count: readErrorCount, retained: readErrors }, gateway: readerDiagnostics(), replica: replica?.diagnostics, installedHistory: replica?.installedHistory?.diagnostics, turn: turn.diagnostics,
+    phases: Object.fromEntries([...phases].map(([p, s]) => [p, { reads: s.reads, rawLocalSamples: s.rawLocalSamples, rawFallbackSamples: s.rawFallbackSamples, timeOnlyReads: s.timeOnlyReads, timeOnlyLocal: s.timeOnlyLocal, fallbackReasons: s.reasons, basisAgeSample: s.ages, straddleWait: s.straddleWait.toJSON() }])) });
   let phase = -1;
   let mode = "mixed";
   let wanted = 0;
@@ -115,22 +129,59 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
   const basisWindow = new BasisWindow<(typeof acked)[number]>();
   let hot: number[] = [];
   let records: ReadRecord[] = [];
+  const packed = cfg.observationPort && process.env.DX_READ_BATCH_WIRE !== "tuples" ? new ReadBatch() : undefined;
   let samples: any[] = [];
   let splitEvents: any[] = [];
   let observationSerial = 0;
   const observationPending = new Map<number, () => void>();
-  cfg.observationPort?.on("message", m => { observationPending.get(m.id)?.(); observationPending.delete(m.id); });
+  let credit: Promise<void> | undefined;
+  let releaseCredit: (() => void) | undefined;
+  let issued = 0;
+  const costs = { sampled: 0, issueSamples: 0, issueMs: 0, observeMs: 0, recordMs: 0, creditWaitMs: 0, creditWaits: 0, batches: 0 };
+  cfg.observationPort?.on("message", m => {
+    const done = observationPending.get(m.id);
+    if (!done) throw Error("Unexpected observation batch acknowledgement");
+    observationPending.delete(m.id);
+    if (m.buffer) packed!.recycle(m.buffer);
+    done();
+    releaseCredit?.();
+    credit = undefined; releaseCredit = undefined;
+  });
+  const hasReads = () => (packed?.length ?? records.length) || samples.length || splitEvents.length;
   function sendReads() {
+    if (!hasReads()) return Promise.resolve();
     if (!cfg.observationPort) { port.postMessage({ type: "reads", records, samples, splitEvents }); records = []; samples = []; splitEvents = []; return Promise.resolve(); }
+    if (observationPending.size >= 2) throw Error("No observation credit");
     const id = ++observationSerial;
     const done = new Promise<void>(resolve => observationPending.set(id, resolve));
-    cfg.observationPort.postMessage({ id, records, samples, splitEvents }); records = []; samples = []; splitEvents = [];
+    if (packed) {
+      const batch = packed.take();
+      cfg.observationPort.postMessage({ id, packed: batch, samples, splitEvents }, [batch.values.buffer]);
+    } else cfg.observationPort.postMessage({ id, records, samples, splitEvents });
+    records = []; samples = []; splitEvents = []; costs.batches++;
     return done;
   }
   async function observationCredit() {
-    // [DX-R3] Why: an unhealthy spill cannot grow an unbounded queue of exact tuples in the process.
-    // Rejected: dropping reads or blocking the writer thread with synchronous disk backpressure.
-    while (observationPending.size >= 2) await new Promise<void>(resolve => setTimeout(resolve, 1));
+    // [DX-RD1] Why: credits wake on the collector's real acknowledgement, including for in-flight reads.
+    // Rejected: one polling timer per blocked logical reader or unbounded structured-clone queues.
+    const start = performance.now();
+    costs.creditWaits++;
+    while (observationPending.size >= 2) await (credit ??= new Promise<void>(resolve => { releaseCredit = resolve; }));
+    costs.creditWaitMs += performance.now() - start;
+  }
+  function record(row: ReadRecord, sample?: unknown): void | Promise<void> {
+    if ((packed?.length ?? records.length) >= READ_BATCH_SIZE) return recordAfterCredit(row, sample);
+    if (packed) packed.push(row);
+    else records.push(row);
+    if (sample) samples.push(sample);
+    if (cfg.observationPort && observationPending.size < 2 && (packed?.length ?? records.length) === READ_BATCH_SIZE) void sendReads();
+  }
+  async function recordAfterCredit(row: ReadRecord, sample?: unknown): Promise<void> {
+    while ((packed?.length ?? records.length) >= READ_BATCH_SIZE) {
+      if (observationPending.size < 2) { void sendReads(); break; }
+      await observationCredit();
+    }
+    await record(row, sample);
   }
   let rawSamples = 0;
   const rawPending = new Set<number>();
@@ -149,14 +200,27 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
     });
   };
 
-  function pickSubject(rng: Rng): { subject: number; hotPick: boolean } {
+  type TenantReader = {first:number;people:number;interReadMs:number;key:string;matched?:boolean};
+  let tenantSeats: TenantReader[] = [];
+  let tenantHot = new Map<string,number[]>();
+  const tenantSamples = new Map<string,number[]>();
+  const within = (s:number,a:TenantReader) => s >= a.first && s < a.first + a.people;
+  function pickSubject(rng: Rng, seat?: TenantReader): { subject: number; hotPick: boolean } {
+    if (seat) {
+      if (seat.matched) return {subject:seat.first+rng.int(seat.people),hotPick:false};
+      let choices = tenantHot.get(seat.key);
+      if (!choices) { choices=hot.filter(s => within(s,seat)); tenantHot.set(seat.key,choices); }
+      if (choices.length && rng.next()<0.6) return {subject:choices[rng.int(choices.length)]!,hotPick:true};
+      return {subject:seat.first+rng.int(seat.people),hotPick:false};
+    }
     if (mode === "sample" && cfg.historySample.length) return { subject: cfg.historySample[rng.int(cfg.historySample.length)]!, hotPick: false };
     if (mode === "weighted") {
       const u = rng.next();
       const bucket: Bucket = u < BUCKETS.small.share ? "small" : u < BUCKETS.small.share + BUCKETS.medium.share ? "medium" : "large";
       const w = rng.next();
       const hop: Hop = w < HOP_SHARE[3] ? 3 : w < HOP_SHARE[3] + HOP_SHARE[4] ? 4 : 6;
-      const i = subjectInCell(cfg.subjects, cfg.accounts, bucket, hop, rng.next(), rng.next(), rng.next());
+      const i = cells ? cells.pick(bucket, hop, rng.next()) : subjectInCell(cfg.subjects, cfg.accounts, bucket, hop, rng.next(), rng.next(), rng.next());
+      if (cells && i === null) throw Error(`Deep P4 sample cell is empty: ${bucket}/${hop}`);
       return { subject: i ?? rng.int(cfg.subjects), hotPick: false };
     }
     if (hot.length && rng.next() < 0.6) return { subject: hot[rng.int(hot.length)]!, hotPick: true };
@@ -184,16 +248,21 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
     return [{ recordedAt: latest.instant, validAt: now - Math.floor(rng.next() * 90 * DAY) }, 2, latest.position, latest.txId];
   }
 
-  async function readOnce(subject: number, basis: Basis, kind: number, position: number, ph: number, opts: { keepRows: boolean; sweep?: boolean; straddleSeq?: number; assignedAt?: number; hotPick?: boolean }) {
+  function readOnce(subject: number, basis: Basis, kind: number, position: number, ph: number, opts: { keepRows: boolean; sweep?: boolean; straddleSeq?: number; assignedAt?: number; hotPick?: boolean }) {
+    // [DX-RD1] Why: the trace recorder can be sampled independently of the exact observation and oracle streams.
+    // Rejected: sampling correctness checks or writer traces to shrink reader overhead.
+    if (traceLevel === "off" || (++traceSequence % traceEvery !== 0 && !opts.keepRows))
+      return readOnceTraced(subject, basis, kind, position, ph, opts);
     const trace = beginTrace("read", "reader.pull", { phase: ph, worker: cfg.worker, oracle: opts.keepRows, position });
-    try { return await withTrace(trace, () => traceAsync("reader.execute", () => readOnceTraced(subject, basis, kind, position, ph, opts))); }
-    finally { finishTrace(trace); }
+    return withTrace(trace, () => traceAsync("reader.execute", () => readOnceTraced(subject, basis, kind, position, ph, opts))).finally(() => finishTrace(trace));
   }
   async function readOnceTraced(subject: number, basis: Basis, kind: number, position: number, ph: number, opts: { keepRows: boolean; sweep?: boolean; straddleSeq?: number; assignedAt?: number; hotPick?: boolean }) {
     activeReads++; attemptedReads++;
+    const timed = (attemptedReads & 255) === 1;
+    const sampleAge = (attemptedReads & 1023) === 1;
     const start = nowAbs();
     const t0 = performance.now();
-    const stats = phases.get(ph) ?? { reads: 0, reasons: {}, straddleWait: new Histogram(), rawLocalSamples: 0, rawFallbackSamples: 0, timeOnlyReads: 0, timeOnlyLocal: 0 };
+    const stats = phases.get(ph) ?? { reads: 0, reasons: {}, ages: {}, straddleWait: new Histogram(), rawLocalSamples: 0, rawFallbackSamples: 0, timeOnlyReads: 0, timeOnlyLocal: 0 };
     phases.set(ph, stats);
     const timeOnly = basis.recordedAt !== undefined && basis.recordedPosition === undefined;
     if (timeOnly) stats.timeOnlyReads++;
@@ -214,15 +283,26 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
         }
       : undefined;
     try {
-      const gateway = () => opts.sweep ? comp.sweepPull(ids.placement(subject), basis) : comp.pull(ids.placement(subject), basis, replica ? undefined : between);
+      const root = ids.placement(subject);
+      const gateway = () => opts.sweep ? comp.sweepPull(root, basis) : comp.pull(root, basis, replica ? undefined : between);
+      const miss = exactHistory && replica && !opts.sweep ? async () => {
+        const epoch = replica.historyEpoch;
+        const payload = await exactHistory.pull(root, basis);
+        if (!payload) return gateway();
+        if (replica.historyEpoch === epoch && replica.installedHistory && replica.canInstallHistory(basis))
+          replica.installedHistory.put(root, basis, payload);
+        return historyApi!.historicalResult(payload, false);
+      } : gateway;
       const pr = replica
-        ? await replica.pullAt(ids.placement(subject), basis, gateway, between, false, position)
+        ? await replica.pullAt(root, basis, miss, between, false, position)
         : await gateway();
       if (timeOnly && pr.route === "replica") stats.timeOnlyLocal++;
       // The wait for the straddled command's ACK is the driver's scheduling, not the store's service time.
       const latency = performance.now() - t0 - straddleWaitMs;
       if (evidence) { evidence.secondStepEnd = nowAbs(); evidence.route = pr.route; }
+      const observeStart = timed ? performance.now() : 0;
       const o = traceSync("reader.observe", () => observe(pr));
+      if (timed) costs.observeMs += performance.now() - observeStart;
       let gatewayCanonical: string | undefined;
       if (opts.keepRows && replica) {
         const reference = await traceAsync("reader.oracle-gateway", gateway);
@@ -232,14 +312,30 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
           throw Error("prepared full-row observation mismatch");
       }
       stats.reads++;
+      // [DX-RD1] Why: measure recorded cut age separately from a past valid-time selection.
+      // Rejected: classifying the 90-day valid-time draw as 90 days of replica history demand.
+      if (sampleAge) {
+        const age = Math.max(0, (start - basis.recordedAt) / 1000);
+        const ageBin = age < 1 ? "<1s" : age < 60 ? "1–60s" : age < 300 ? "1–5m" : age < 600 ? "5–10m" : age < 3600 ? "10–60m" : ">=60m";
+        const key = `${kind}/${ageBin}/${pr.route}`;
+        stats.ages[key] = (stats.ages[key] ?? 0) + 1;
+      }
       if (opts.keepRows) { if (pr.route === "replica") { stats.rawLocalSamples++; rawSamples++; } else stats.rawFallbackSamples++; }
       if (pr.route === "fallback") { const reason = pr.replicaFallbackReason ?? (opts.keepRows ? "oracle-raw" : "gateway"); stats.reasons[reason] = (stats.reasons[reason] ?? 0) + 1; }
       if (split > 0) stats.straddleWait.recordMs(straddleWaitMs);
-      records.push([ph, subject, basis.recordedAt, basis.validAt, start, latency, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, pr.route, pr.language, pr.waitedMs]);
-      if (opts.keepRows && (pr.route === "replica" || !replica || stats.rawFallbackSamples === 1))
-        samples.push({ phase: ph, subject, basis, position, start, route: pr.route, fullCanonical: canonicalWorld(pr.triples), gatewayCanonical, rows: pr.triples.map((t) => [t.entityId, t.attribute, t.value, t.validFrom ?? null, (t.validTo?._tag === "Some" ? t.validTo.value : null), t.id]) });
+      // [DX-RD1] Why: the raw independent replay sample and its actual tuple must reach the collector in the same batch.
+      // Rejected: trying to reconstruct the sample's timed observation after its fixed window has folded.
+      const sample = opts.keepRows && (pr.route === "replica" || !replica || stats.rawFallbackSamples === 1)
+        ? { phase: ph, subject, basis, position, start, route: pr.route, fullCanonical: canonicalWorld(pr.triples), gatewayCanonical,
+          rows: pr.triples.map(t => [t.entityId, t.attribute, t.value, t.validFrom ?? null, (t.validTo?._tag === "Some" ? t.validTo.value : null), t.id]) }
+        : undefined;
+      const recordStart = timed ? performance.now() : 0;
+      const pending = record([ph, subject, basis.recordedAt, basis.validAt, start, latency, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, pr.route, pr.language, pr.waitedMs], sample);
+      if (pending) await pending;
+      if (timed) { costs.recordMs += performance.now() - recordStart; costs.sampled++; }
     } catch (error: any) {
-      records.push([ph, subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? error?.name ?? "Error"), kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, "error", "", 0]);
+      const pending = record([ph, subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? error?.name ?? "Error"), kind, position, split, forcedPosition, opts.hotPick ? 1 : 0, "error", "", 0]);
+      if (pending) await pending;
       const detail = { worker: cfg.worker, phase: ph, subject, basis: { ...basis }, position, start, end: nowAbs(), traceId: currentTrace()?.traceId ?? null, error: describeReadError(error) };
       readErrorCount++;
       if (readErrors.length < 16) readErrors.push(detail);
@@ -249,24 +345,38 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
 
   async function loop(id: number) {
     let localReads = 0;
-    const rng = new Rng(seedOf(`reader:${cfg.seed}:${cfg.worker}:${id}`));
+    const defaultRng = new Rng(seedOf(`reader:${cfg.seed}:${cfg.worker}:${id}`));
+    const quietSeed = seedOf(`quiet-reader:${cfg.seed}:${cfg.worker}:${id}`);
+    let matchedPhase = -1, matchedRng = new Rng(quietSeed);
     running++;
     try {
       while (!stopping && id < wanted && acked.length > 0) {
-        await observationCredit();
-        if (replica && cfg.replicaYield !== "loop") await turn.enter();
+        if (observationPending.size >= 2) await observationCredit();
+        const queued = replica && cfg.replicaYield !== "loop" ? turn.enter() : undefined;
+        if (queued) await queued;
         if (stopping || id >= wanted) break;
-        const oracle = cfg.sampleSubjects.length > 0 && rng.next() < cfg.oracleRate;
-        let picked = oracle ? { subject: cfg.sampleSubjects[rng.int(cfg.sampleSubjects.length)]!, hotPick: false } : pickSubject(rng);
-        const [basis, kind, position] = pickBasis(rng);
+        const issueStart = (issued++ & 255) === 0 ? performance.now() : undefined;
+        const readPhase = phase, seat=tenantSeats[id];
+        // [DX-THIN1] Why: quiet seats replay the same deterministic subject draws in their matched windows.
+        // Rejected: chasing the neighbor-dependent hot set in a quiet-account comparison.
+        if (seat?.matched && matchedPhase !== readPhase) {
+          matchedPhase = readPhase;
+          matchedRng = new Rng(quietSeed);
+        }
+        const rng = seat?.matched ? matchedRng : defaultRng;
+        let candidates = seat ? tenantSamples.get(seat.key) : cfg.sampleSubjects;
+        if (!candidates) { candidates=cfg.sampleSubjects.filter(s=>within(s,seat!)); tenantSamples.set(seat!.key,candidates); }
+        const oracle = candidates.length > 0 && rng.next() < cfg.oracleRate;
+        let picked = oracle ? { subject: candidates[rng.int(candidates.length)]!, hotPick: false } : pickSubject(rng, seat);
+        const [basis, kind, position] = pickBasis(seat?.matched ? defaultRng : rng);
+        if (issueStart !== undefined) { costs.issueSamples++; costs.issueMs += performance.now() - issueStart; }
         let straddleSeq: number | undefined, assignedAt: number | undefined;
-        if (!oracle && mode === "mixed" && rng.next() < cfg.splitShare) {
-          const assignment = await ask({ type: "split-request" }, 2_000);
+        if (!oracle && !seat?.matched && mode === "mixed" && rng.next() < cfg.splitShare) {
+          const assignment = await ask({ type: "split-request", range:seat }, 2_000);
           if (assignment && assignment.subject >= 0) { picked = { subject: assignment.subject, hotPick: true }; straddleSeq = assignment.seq; assignedAt = assignment.assignedAt; }
         }
         // [DX-R3] Why: each phase owes local raw comparisons even after the global extra-sample budget is spent.
         // Rejected: charging open-clock fallbacks against the local quota (never exercises the copy).
-        const readPhase = phase;
         let keepRows = false;
         if (oracle) {
           const owesLocal = replica !== undefined && (phases.get(readPhase)?.rawLocalSamples ?? 0) < (cfg.rawLocalMinimum ?? 1);
@@ -276,6 +386,9 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
         if (keepRows) { rawPending.add(readPhase); if (!replica) rawSamples++; }
         try { await readOnce(picked.subject, basis, kind, position, readPhase, { keepRows, straddleSeq, assignedAt, hotPick: picked.hotPick }); }
         finally { if (keepRows) rawPending.delete(readPhase); }
+        // [DX-SCALE1] Why: low-traffic accounts have a real reader without turning each small scope into a saturated read loop. Rejected: zero readers in active accounts or sleeping on the sentinel's comparison windows.
+        const pace=seat?.interReadMs??interReadMs;
+        if(pace) {const next=performance.now()+pace;while(!stopping&&id<wanted&&phase===readPhase&&performance.now()<next) await new Promise<void>(resolve=>setTimeout(resolve,Math.min(250,next-performance.now())));}
         // [DX-R3] Why: pure local promises must yield for feed deltas, stop messages and phase changes.
         // Rejected: an uninterrupted microtask chain (starves the very follower it waits for).
         if (replica) {
@@ -289,6 +402,7 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
     }
   }
 
+  let interReadMs=0;
   const loops = new Set<number>();
   function setLevel(n: number) {
     wanted = n;
@@ -302,6 +416,10 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
   // [DX-H7] Why: Linux per-thread CPU excludes the writer and sibling reader isolates.
   // Rejected: process.cpuUsage in each worker (counts every worker repeatedly).
   const threadCpuMs = () => {
+    if (typeof process.threadCpuUsage === "function") {
+      const cpu = process.threadCpuUsage();
+      return (cpu.user + cpu.system) / 1000;
+    }
     if (process.platform !== "linux") return null;
     const stat = readFileSync("/proc/thread-self/stat", "utf8");
     const fields = stat.slice(stat.lastIndexOf(")") + 2).split(" ");
@@ -310,10 +428,11 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
   let elu = performance.eventLoopUtilization();
   const flush = setInterval(() => {
     const next = performance.eventLoopUtilization();
-    port.postMessage({ type: "elu", t: nowAbs(), elu: performance.eventLoopUtilization(next, elu).utilization, activeMs: performance.eventLoopUtilization(next, elu).active, threadCpuMs: threadCpuMs(), httpCounts: httpCounts(), diagnostics: { gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics, loopDelay: { p99Ms: loopDelay.percentile(99) / 1e6, maxMs: loopDelay.max / 1e6 }, deltas, deltaLag: deltaLag.summary() }, memory: process.memoryUsage(), running });
+    const interval = performance.eventLoopUtilization(next, elu);
+    port.postMessage({ type: "elu", t: nowAbs(), elu: interval.utilization, activeMs: interval.active, idleMs: interval.idle, threadCpuMs: threadCpuMs(), httpCounts: httpCounts(), diagnostics: { gateway: readerDiagnostics(), replica: replica?.diagnostics, turn: turn.diagnostics, loopDelay: { p99Ms: loopDelay.percentile(99) / 1e6, maxMs: loopDelay.max / 1e6 }, deltas, deltaLag: deltaLag.summary() }, memory: process.memoryUsage(), running });
     elu = next;
     loopDelay.reset();
-    if (records.length || samples.length) {
+    if (hasReads() && observationPending.size < 2) {
       void sendReads();
     }
   }, 500);
@@ -337,11 +456,13 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       replica?.apply(msg.delta);
     } else if (msg.type === "level") {
       phase = msg.phase;
+      tenantSeats=msg.tenants??[];
+      interReadMs=msg.interReadMs??0;
       mode = msg.mode ?? "mixed";
       setLevel(msg.readers);
     } else if (msg.type === "basis" || msg.type === "basis-delta") {
       acked = msg.type === "basis-delta" ? basisWindow.apply(msg.delta) : msg.acked;
-      hot = msg.hot;
+      hot = msg.hot; tenantHot.clear();
       if (wanted > loops.size) setLevel(wanted);
     } else if (msg.type === "split" || msg.type === "acked") {
       waiting.get(msg.token)?.(msg);
@@ -355,8 +476,9 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
             const subject = list[next++]!;
             // [DX-R3] Why: sweep reads must yield to the same feed/traffic budget as live readers.
             // Rejected: a 10k-subject local microtask chain that stalls every worker message.
-            await observationCredit();
-            if (replica && cfg.replicaYield !== "loop") await turn.enter();
+            if (observationPending.size >= 2) await observationCredit();
+            const queued = replica && cfg.replicaYield !== "loop" ? turn.enter() : undefined;
+            if (queued) await queued;
             if (stopping) break;
             await readOnce(subject, msg.basis, 0, msg.position, msg.phase, { keepRows: false, sweep: true });
           }
@@ -372,12 +494,17 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       requireDrained(running, activeReads);
       clearInterval(flush);
       loopDelay.disable();
+      if (observationPending.size >= 2) await observationCredit();
       await sendReads();
-      while (observationPending.size) await new Promise(resolve => setTimeout(resolve, 1));
+      await Promise.all([...observationPending.keys()].map(id => new Promise<void>(resolve => {
+        const done = observationPending.get(id)!;
+        observationPending.set(id, () => { done(); resolve(); });
+      })));
       cfg.observationPort?.close();
       cfg.replicaPort?.close();
+      exactHistory?.close();
       unsubscribe?.();
-      const diagnostics = finalDiagnostics();
+      const diagnostics = { ...finalDiagnostics(), costs, threadCpuMs: threadCpuMs() };
       await comp.close().catch(() => {});
       if (!shared) await flushTracing();
       port.postMessage({ type: "stopped", httpCounts: httpCounts(), diagnostics });
@@ -388,7 +515,7 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
     comp = await openComposition(cfg.composition, cfg.lane, cfg.scope);
     if (stopping) { await comp.close(); return; }
     await replicaReady;
-    port.postMessage({ type: "ready" });
+    port.postMessage({ type: "ready", memory:process.memoryUsage() });
   } catch (error: any) {
     clearInterval(flush);
     loopDelay.disable();
