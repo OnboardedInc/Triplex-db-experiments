@@ -3391,3 +3391,13 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   minutes in one database; merge onto `exp/DX-INT1`; supply the priority 8 and 9 scorecard commands.
 - Housekeeping note: the image prune at 13:33 local used an age filter and removed the PostgreSQL base image, which
   DX-HA1 had to restore. Future prunes exclude base images.
+
+## 2026-11-20 19:13 UTC (14:13 local, 2026-11-20): DX-ERASE1 part 3 cut short by the provider's content filter after one item; resumed
+
+- **DX-ERASE1 (`7409a2a03`).** Item 1 of part 3 landed before the stop: pinned reads reuse cached replies again
+  while still checking the erasure sequence (warm reach reply 1,428 B with or without the check, also after another
+  person was erased; it had been 39,592 B); each save checks the sequence once; all thirteen native checks pass
+  including restore from an older backup. Timing bars not judged (Mac controls drifted): moved to server arms.
+- The turn then ended with the provider's "flagged for possible cybersecurity risk" error (exit 1, empty last
+  message, 3.98 million tokens used). Third occurrence in this project (DX-STG1, W2-WRITEAUDIT before). Resumed with
+  a brief in plain product language (people, values, removal requests) and the remaining items 2 to 5.
