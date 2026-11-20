@@ -8,6 +8,7 @@ d86cb49dd44ce17a9da506b4e732433d5755f98bac9a709da0462523638defc5  int1/p5-checks
 144f2d4c8924d24736984149b174f164a080b1e7c6065ce84756ca0682b5bfd0  int1/p5-checks/collector-launch-checks.log
 5a474e2cb5445e12235eae50b347b39ff049d39bcb5b6e90c8c1c754c9280276  int1/p5-checks/compact-profile-summary.py
 971d313108eb3ca615d64eb003e9e04422e5e92141a507a16985d9aed1e76826  int1/p5-checks/core-gate.log
+453d8ef8517d0301cbc7ad374b8b262a22a15f484389f2cf0bb915094f8055b1  int1/p5-checks/erase-refresh-sdk-2.log
 3807b082b37493e604ef3aad10eecb58909799663c25a791dcc183d1e34871e8  int1/p5-checks/legacy-frame-probe-2.log
 cf2d64c637d54f74dc3de306b56c0e8bb82aaaf68769bb9193bec2687e43066e  int1/p5-checks/legacy-frame-probe.mjs
 cfacc1e6f2293430c4e30b6edec701c695efbda735192370a0338128e0440ad8  int1/p5-checks/memory-mapping-build.log
