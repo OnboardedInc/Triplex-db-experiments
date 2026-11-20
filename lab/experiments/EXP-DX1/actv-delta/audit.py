@@ -47,7 +47,7 @@ def run(op, x):
         b=x['basis'];r=w0.Release(x['doc'])
         return [[w['subject'],digest(w0.evaluate_indexed(w0.validate_world(w,b['tx']),r,b['tx'],b['validTime']))] for w in x['worlds']]
     if op == 'answers':
-        n=x['seq']; ev=history[n]; basis=ev['basis']; rel=w0.Release(ev['doc']); result=[]
+        n=x['seq']; ev=history[n]; basis={**ev['basis'],'tx':x.get('tx',ev['basis']['tx'])}; rel=w0.Release(ev['doc']); result=[]
         for s in x['subjects']:
             facts=list(worlds[s])
             for j in by_subject.get(s,[]):
@@ -92,7 +92,8 @@ def run(op, x):
                     published=w0.op_publish({'state':state,'evaluations':[{k:out[k] for k in ('basis','release','subject','workItems')}]})
                     state,ds=published['state'],published['deliveries']
             saved[s]=(n,facts,state,out,rows,ds)
-            result.append({'subject':s,'output':digest(out),'state':digest(state),'rows':rows,'deliveries':ds})
+            result.append({'subject':s,'output':digest(out),'state':digest(state),'rows':rows,'deliveries':ds,
+                **({'publication':[s,state['subjects'],state['items']]} if x.get('publication') else {})})
         return result
     raise ValueError(op)
 

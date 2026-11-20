@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { writeFileSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
 import { W0, canonical, sha256 } from "../../../../bench/lib/w0-world.ts";
@@ -17,7 +17,28 @@ import { authoredSeed, expectedPolicy } from "./deep-reference.ts";
 import { rawDeep, replaceDeep } from "./deep.ts";
 import { measure } from "./measure.ts";
 
-type Fixture = Awaited<ReturnType<typeof seed>>;
+type Fixture = Pick<
+  Awaited<ReturnType<typeof seed>>,
+  "id" | "n" | "facts" | "cut" | "seedPosition" | "roster" | "rosterHash" | "sourceHash"
+>;
+type ScopePreparation = Omit<Fixture, "seedPosition" | "roster"> & {
+  scope: string;
+  head: number;
+  seal: string;
+  generation: string;
+  positions: number[];
+  baseline: { position: number; tx: string };
+};
+type Preparation = {
+  version: 1;
+  rate: number;
+  source: ScopePreparation;
+  neighbour: ScopePreparation;
+  noticeCursor: number;
+  volume: string;
+  slot: string;
+  preparedBy: string;
+};
 type Read = { subject: number; p: number; started: number; elapsed: number; digest: string };
 type Write = { subject: number; offered: number; ack: number; p: number; tx: string };
 const p99 = (ms: number[]) => {
@@ -43,7 +64,7 @@ async function traffic(
   const scheduled: number[] = [],
     reads: Read[] = [],
     writes: Write[] = [];
-  liveArrivals(0, rate, 60, (at) => {
+  liveArrivals(0, rate, Math.ceil(seconds / 60) * 60, (at) => {
     if (at < seconds) scheduled.push(start + at * 1000);
   });
   const reader = account.reader(),
@@ -164,25 +185,150 @@ async function verifyReads(
   }
 }
 
-export async function settlementPrices(out: string, n: number, seconds = 60, readerCount = 4) {
+const ownedSlot = () => {
+  const owner = readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER!);
+  const slot = JSON.parse(owner.toString());
+  assert(slot.holder === "DX-ACT1" && slot.mode === "exclusive");
+  return { slot: slot.container as string, volume: slot.volume as string, owner: sha256(owner) };
+};
+
+function fixtureReadback(p: ScopePreparation): Fixture {
+  const roster = Array.from({ length: p.n }, (_, i) => W0.placementId(i));
+  assert.equal(sha256(canonical(roster)), p.rosterHash);
+  assert(
+    p.positions.length === p.n &&
+      p.positions.every(
+        (v, i) => Number.isSafeInteger(v) && v > 1 && v <= p.cut && v >= (p.positions[i - 1] ?? 0),
+      ),
+  );
+  return { ...p, roster, seedPosition: (i) => p.positions[i]! };
+}
+
+async function snapshot(
+  account: JoinedAccount,
+  f: Fixture,
+  baseline: Awaited<ReturnType<JoinedAccount["publish"]>>,
+): Promise<ScopePreparation> {
+  const s = account.s;
+  assert.equal((await s.lookup("origin"))?.txId, f.id);
+  const seal = await s.lookup("sealed-roster"),
+    head = await s.head();
+  assert(seal?.position === f.cut && head === baseline.position);
+  return {
+    scope: s.scope,
+    id: f.id,
+    n: f.n,
+    facts: f.facts,
+    cut: f.cut,
+    rosterHash: f.rosterHash,
+    sourceHash: f.sourceHash,
+    positions: f.roster.map((_, i) => f.seedPosition(i)),
+    head,
+    seal: seal.txId,
+    generation: (await s.controls(head)).generation,
+    baseline: { position: baseline.position, tx: baseline.txId },
+  };
+}
+
+async function reopening(account: JoinedAccount, p: ScopePreparation, command: string) {
+  const s = account.s,
+    fixture = fixtureReadback(p);
+  assert.equal(s.scope, p.scope);
+  assert.equal(await s.head(), p.head);
+  assert.equal((await s.controls(p.head)).generation, p.generation);
+  assert.equal((await s.lookup("origin"))?.txId, p.id);
+  const seal = await s.lookup("sealed-roster");
+  assert(seal?.position === p.cut && seal.txId === p.seal);
+  assert(await account.db.row("join-meta", p.head));
+  await account.install(fixture.roster, valid);
+  const baseline = await s.lookup("joined:" + command);
+  assert(baseline?.position === p.baseline.position && baseline.txId === p.baseline.tx);
+  const receipt = await account.receipt(1, p.head);
+  assert.equal(receipt.event.at, baseline.position);
+  assert.equal(receipt.marker.census, p.rosterHash);
+  assert.deepEqual(receipt.marker.document, W0.R1.doc);
+  return fixture;
+}
+
+export async function settlementPrices(
+  out: string,
+  n: number,
+  seconds = 60,
+  readerCount = 4,
+  phase?: { prepare: number } | { resume: Preparation; digest: string },
+) {
+  const prepared = phase && "resume" in phase ? phase.resume : undefined;
+  const prepareRate = phase && "prepare" in phase ? phase.prepare : undefined;
+  const slot = phase ? ownedSlot() : undefined;
+  if (prepared)
+    assert(
+      prepared.version === 1 &&
+        prepared.source.n === n &&
+        prepared.neighbour.n === 64 &&
+        prepared.volume === slot?.volume &&
+        prepared.slot === slot.slot &&
+        prepared.preparedBy !== slot.owner,
+    );
   const suffix = randomUUID(),
-    source = await openStore("lazy-settlement-price-" + suffix, "act2-deep"),
-    neighbour = await openStore("lazy-settlement-quiet-" + suffix, "act2-deep");
+    source = await openStore(
+      prepared?.source.scope ?? "lazy-settlement-price-" + suffix,
+      "act2-deep",
+    ),
+    neighbour = await openStore(
+      prepared?.neighbour.scope ?? "lazy-settlement-quiet-" + suffix,
+      "act2-deep",
+    );
   const a = new JoinedAccount(source),
     quiet = new JoinedAccount(neighbour),
     ref = new Reference(),
     services: number[] = [],
     queue = new BulkQueue(0.6, (ms) => services.push(ms));
-  const f = await seed(source, n),
-    nearby = await seed(neighbour, 64);
   const settle = await Settlement.open(a, queue);
   const result = [];
   let previous: W0.ReleaseDoc | null = null;
   try {
-    await a.install(f.roster, valid);
-    await quiet.install(nearby.roster, valid);
-    await quiet.publish("quiet-first", W0.R1.doc, valid, "owed");
-    for (const [i, rate] of [3.5, 23.5].entries()) {
+    const f = prepared ? await reopening(a, prepared.source, "baseline-0") : await seed(source, n),
+      nearby = prepared
+        ? await reopening(quiet, prepared.neighbour, "quiet-first")
+        : await seed(neighbour, 64);
+    if (!prepared) {
+      await a.install(f.roster, valid);
+      await quiet.install(nearby.roster, valid);
+      const quietBaseline = await quiet.publish("quiet-first", W0.R1.doc, valid, "owed");
+      if (prepareRate !== undefined) {
+        const base = await a.publish("baseline-0", W0.R1.doc, valid, "owed");
+        const complete = await settle.recorder.record(1);
+        assert(complete.current.event === 2 && complete.current.start === 0);
+        // [DX-ACT1] Why: park only the enrolled baseline and its exact native cursors. Rejected: holding the lab's timing lease through seeding or preparing the release that will be offered later.
+        save(out, "preparation", {
+          version: 1,
+          rate: prepareRate,
+          source: await snapshot(a, f, base),
+          neighbour: await snapshot(quiet, nearby, quietBaseline),
+          noticeCursor: complete.at,
+          slot: slot!.slot,
+          volume: slot!.volume,
+          preparedBy: slot!.owner,
+        } satisfies Preparation);
+        return;
+      }
+    }
+    if (prepared) {
+      assert.equal(await settle.recorder.archive.store.head(), prepared.noticeCursor);
+      const found = await settle.recorder.record(1);
+      assert(
+        found.at === prepared.noticeCursor &&
+          found.current.event === 2 &&
+          found.current.start === 0,
+      );
+      save(out, "reopened", {
+        preparation: phase && "digest" in phase ? phase.digest : null,
+        source: prepared.source.baseline,
+        neighbour: prepared.neighbour.baseline,
+        notice: found.at,
+      });
+    }
+    for (const [i, rate] of (prepared ? [prepared.rate] : [3.5, 23.5]).entries()) {
       const base = await a.publish("baseline-" + i, W0.R1.doc, valid, "owed");
       const seq = (await a.notices.observe()).value.sequence;
       await settle.recorder.record(seq);
@@ -221,6 +367,21 @@ export async function settlementPrices(out: string, n: number, seconds = 60, rea
           const [terminal, loaded] = await Promise.all([settle.settle(seq + 1, offer), also]);
           return { control, loaded, offer, visible, after, terminal, published, doc, charged };
         });
+      if (prepared) {
+        if (n !== 64) for (const x of [...control, ...loaded]) assert(x.writes.length >= 500);
+        save(out, "observed-" + i, {
+          scope: source.scope,
+          rate,
+          offer,
+          visible,
+          terminal,
+          tx: published.txId,
+          cut: published.position,
+          control,
+          loaded,
+          document: doc,
+        });
+      }
       assert.equal(terminal.values.state.status, "stored");
       const proof = await ref.check(
         a,
@@ -325,6 +486,8 @@ export async function settlementPrices(out: string, n: number, seconds = 60, rea
         markerMs: r.visible - r.offer,
         valuesMs: r.terminal.values.ms,
         noticeMs: r.terminal.notices.ms,
+        valuesAfterReceiptMs: r.terminal.values.ms - (r.visible - r.offer),
+        noticesAfterReceiptMs: r.terminal.notices.ms - (r.visible - r.offer),
         valuesClock: r.terminal.values.clock,
         noticeClock: r.terminal.notices.clock,
         proof: r.proof,
@@ -341,7 +504,25 @@ export async function settlementPrices(out: string, n: number, seconds = 60, rea
 }
 
 if (import.meta.filename === process.argv[1]) {
-  const [out, n, seconds, readers] = process.argv.slice(2);
+  const [out, n, seconds, readers, mode, arg] = process.argv.slice(2);
   assert(out && [64, 1000, 10000, 100000].includes(Number(n)));
-  await settlementPrices(out, Number(n), Number(seconds ?? 60), Number(readers ?? 4));
+  if (mode === "--prepare") {
+    assert(arg === "3.5" || arg === "23.5");
+    await settlementPrices(out, Number(n), 180, Number(readers), { prepare: Number(arg) });
+  } else if (mode === "--resume") {
+    assert(arg && Number(seconds) === (Number(n) === 64 ? 3 : 180));
+    const bytes = readFileSync(arg),
+      digest = sha256(bytes);
+    assert.equal(digest, process.env.DX_JOIN_PREPARATION_SHA256);
+    const witness: Preparation = JSON.parse(bytes.toString());
+    assert(witness.rate === 3.5 || witness.rate === 23.5);
+    assert.equal(witness.rate, Number(process.env.DX_JOIN_PREPARATION_RATE));
+    await settlementPrices(out, Number(n), Number(seconds), Number(readers), {
+      resume: witness,
+      digest,
+    });
+  } else {
+    assert(mode === undefined);
+    await settlementPrices(out, Number(n), Number(seconds ?? 60), Number(readers ?? 4));
+  }
 }

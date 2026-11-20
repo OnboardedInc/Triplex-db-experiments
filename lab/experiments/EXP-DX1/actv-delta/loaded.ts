@@ -500,7 +500,7 @@ export async function run(dir: string, attempt: any) {
     }
     await loadedOffers(
       a,
-      new CurrentDecisions(reader),
+      new CurrentDecisions(reader, null),
       ids,
       timeline,
       arms,
