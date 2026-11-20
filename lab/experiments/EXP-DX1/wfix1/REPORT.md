@@ -24,13 +24,13 @@ The audited base was the remote head `7a6a7e9ef` at dispatch. The exact review f
 
 **Checks** The receipt and retraction fixture went from 10 failures to 64 successful assertions. The combined native run passed 98 assertions across seven tests. Pinned O-REPLAY matched the raw feed, resumed page, pinned rows and durable tuples in all three modes. Sixteen SDK and eight W1 tests passed, along with the Datomic and W1 typechecks.
 
-**Integration** DX-W1 was merged through `6c0d81454`. The SDK and W1 regressions passed on the integrated source. The one- and three-fact narrow wire frames decoded byte for byte to the ordinary payloads. The downstream snapshots, per-finding results and tested merge steps are in [PORTS.md](PORTS.md).
+**Integration** DX-W1 was merged through `6c0d81454`. Its writer and regression files match the tested `0f92704d2` bytes. The merged run passed 98 native assertions, 641 packed and ledger parity assertions, 17 SDK tests and eight W1 tests. Both typechecks passed. Four separately configured integration cases skipped. Pinned O-REPLAY matched all three write modes. The one- and three-fact narrow wire frames decoded byte for byte to the ordinary payloads. [PORTS.md](PORTS.md)
 
 **Related writes** The import loader, joined Publish and notice sender recovered the original receipt when the relevant state advanced. The layout replay exposed a separate encoder that skipped the checked predecessor. Its native regression is queued. [RELATED.md](RELATED.md)
 
-**Mac SQL** Attempt `sql-01` started PostgreSQL 17 after 62m54s from image readiness. The staged gateway files match `cd2151749` byte for byte. The gateway died after the native commit at t=1014 with zero edit replies. Restart recovered the two exact receipts, head 3 and the pinned rows, changes and resumed page from O-REPLAY. Both wire profiles stored all 1,800 rows in solo and in real eight-member groups. The largest profile sent 4,194,304 bytes per member.
+**Mac SQL** Attempt `sql-01` started after 62m54s from image readiness. Its gateway bytes match `cd2151749`. Attempt `sql-merged-03` started after 82m14s in admission, including 79m07s after image readiness. It used the merged writer and staged layout replay decoder. Both PostgreSQL 17 runs recovered the original receipts after a pre-reply gateway kill at t=1014 and kept head 3. Pinned O-REPLAY matched the merged run's full raw feed, resumed page and pinned reads. Both wire profiles stored all 1,800 rows in solo and in real eight-member groups. The largest profile sent 4,194,304 bytes per member.
 
-Native excision reached its watermark and cleared native row text in both paths. Four journal entries retained their original values, each first ID reuse succeeded, and the head advanced. Lean value erasure remains unqualified. The first probe reused each ID twice in the same scope, so the second owner check was masked by the first reuse. Attempt `sql-merged-03` built and is waiting for a selftest slot. It uses fresh, separate scopes for each owner check.
+Native excision reached its watermark and cleared native row text. Each of four separate merged scopes retained all four journal entries, accepted all three ID reuses and advanced from head 4 to 7. This held with and without the predecessor option and for both the same and a different owner. Lean value erasure remains unqualified.
 
 **Receipt and verdict audit**
 
@@ -40,6 +40,7 @@ Native excision reached its watermark and cleared native row text in both paths.
 - `field/journal.ts`, `group/verify.py`, `verify_replay.py` compare full changes and cursors against the offered tape. The oracle comparison binds its pinned files, raw feed, fresh attempt, slot and source preimages.
 - `sql.mjs` and `sql_gate.clj` bind the pre-reply native witness to the managed attempt and fresh recovery, check exact tuple and row content, and require SQL durability settings to read back.
 - `sql-01/check-recovered.py` checks the witnessed stop, durable tuples, decoded changes and wide rows against the nonce, holder, image, actual gateway bytes and pinned oracle output. It retains the erasure failure and the scope of the owner test.
+- `check-sql-merged.py` checks the same bindings with the raw oracle result and compares the full wide rows, receipts, reused IDs and retained journal values in the four independent erasure probes.
 - `port-prepared.py` binds its three input files to the frozen merge tree. The serialized guard verifies command and operation identities, the selected function, basis, revisions and exact predecessor row bytes before using a prepared write.
 
 **Evidence** The durable folder is `evidence/DX-WFIX1/`. [SHA256SUMS](SHA256SUMS) indexes the baseline reproduction, regression logs, oracle comparisons and TypeScript tests.
