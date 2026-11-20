@@ -48,7 +48,7 @@ export function minuteSaves(rank: number) {
   // [DX-PLAY1] Why: tie the generated burst shape to the observed per-minute quantiles, with a target of 440k/day.
   // Rejected: assuming the mean is a flat offered rate across working and quiet minutes.
   if (rank < 720) return Math.round(40 + (168 * rank) / 720);
-  if (rank < 1425) return Math.round(208 + (725 * (rank - 720)) / 705);
+  if (rank < 1425) return Math.round(208 + (505 * (rank - 720)) / 705);
   if (rank < 1438) return Math.round(1408 + (652 * (rank - 1425)) / 13);
   return rank === 1438 ? 2060 : 2364;
 }

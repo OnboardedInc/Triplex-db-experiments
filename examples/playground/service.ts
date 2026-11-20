@@ -303,6 +303,7 @@ export class Playground {
     const release = this.releases.get(String(this.firstRelease["releaseId"]));
     if (release?.state !== "complete")
       throw new Error("Fixture release did not materialize: " + release?.error);
+    this.firstRelease = await this.readRelease(account, personAt(account, 0), release.id);
   }
 
   private async seedSmall(fixture: Fixture, signal: AbortSignal | undefined) {

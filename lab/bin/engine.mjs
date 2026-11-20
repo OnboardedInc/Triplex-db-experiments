@@ -842,6 +842,9 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'delta') return (await import('../experiments/EXP-DX1/actv-delta/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicSources });
   // [DX-ERASE1] Why: storage GC and excision need an owned SQL volume. Rejected: exercising irreversible maintenance on a resident.
   if (command === 'erase1') return (await import('../experiments/EXP-DX1/erase1/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicTree });
+  // [DX-PLAY1] Why: the portable stack uses the same launch code under an exclusive lab reservation.
+  // Rejected: running a second private Docker command path without pool admission.
+  if (command === 'play1') return (await import('../experiments/EXP-DX1/play1/local.ts')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
   if (options.lane === 'datomic' && command === 'build') return buildDatomic(config);
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
   if (options.lane === 'datomic' && command === 'image-remove') return removeThinImage(config, options);
