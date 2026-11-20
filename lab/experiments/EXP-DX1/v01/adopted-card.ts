@@ -90,10 +90,27 @@ export function writeAdoptedCard(run: Card) {
       `${a.commit.count}/${b.commit.count} commits, ${a.read.read.count}/${b.read.read.count} reads, ${a.feed.count}/${b.feed.count} feed observations`,
       evidence("p6-alone") + " · " + evidence("p6-235")]);
   }
+  const importPath = file("p8", "result.json");
+  if (fs.existsSync(importPath)) {
+    const r = JSON.parse(fs.readFileSync(importPath, "utf8"));
+    const bytes = fs.readFileSync(file("p8", "pace-32-fixed.offers.json"));
+    assert(neighbors && r.proof.cut > r.after);
+    assert.deepEqual([r.source, r.toy, r.slot, r.nonce, r.db, r.after, r.arm],
+      [run.source, run.toy, neighbors.slot, neighbors.attempt, neighbors.seed.database, neighbors.terminal, "pace-32-fixed"]);
+    assert.equal(createHash("sha256").update(bytes).digest("hex"), r.sha256);
+    const latency = Object.values(r.neighbors as Record<string, { read: { offered: number; ok: number; p99Ms: number }; save: { offered: number; ok: number; p99Ms: number } }>);
+    const reads = latency.map((x) => x.read), saves = latency.map((x) => x.save);
+    const totals = (rs: typeof reads) => rs.reduce((n, x) => n + x.ok, 0) + "/" + rs.reduce((n, x) => n + x.offered, 0);
+    const max = (rs: typeof reads) => tag(Math.max(...rs.map((x) => x.p99Ms ?? 0)));
+    rows.set("P8", [`Fixed-pace physical scope import: ${tag(r.fps)} facts/s, ${r.queryableFacts} queryable by the window end, ${r.proof.facts} verified. Highest per-account p99 ${max(saves)} ms for saves and ${max(reads)} ms for reads. Matched pacing controls and held-roster contention remain open.`,
+      run.toy ? "DIAGNOSTIC" : "NOT MEASURED", `${r.proof.observed} exact frames, ${totals(saves)} saves and ${totals(reads)} reads`,
+      "[import arm](" + path.relative(run.out, importPath) + ")"]);
+  }
   const field = ["P5", "P6", "P7", "P8", "P9"];
   const gaps: Record<string, string> = {
     P5: "The published INT1 Publish producer creates its own flat scope. No adapter binds it to the held SCALE1 roster and live release cut.",
     P6: "No verified same-scope alone and 235-save quiet-account pair from this attempt.",
+    P8: run.writer === "subject" ? "The published pacing oracle requires grouped writer grant metadata." : "No verified fixed-pace import arm from this attempt.",
   };
   const text = base.split("\n").map((line) => {
     if (line === "Population ten accounts of four deep people.") return "Population ten deep accounts in one SCALE1 database.";

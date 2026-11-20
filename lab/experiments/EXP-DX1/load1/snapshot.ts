@@ -343,7 +343,7 @@ export class Snapshot {
   async verify(
     complete = true,
     extra?: (r: any) => void,
-    { pageSize = extra ? 8 : 1, readDepth = 1, assertionSweep = false } = {},
+    { pageSize = extra ? 8 : 1, readDepth = 1, assertionSweep = false, after = 0 } = {},
   ) {
     const cut = await this.comp.currentPosition(),
       byPosition = this.ledger.prepare("SELECT * FROM frames WHERE position=?");
@@ -351,7 +351,10 @@ export class Snapshot {
     const last = !perSubject ? undefined : (await this.comp.feedPage(cut - 1, 1)).transactions[0];
     if (perSubject) assert(last?.position === cut && Number.isFinite(last.instant));
     const lastInstant = last?.instant as number;
-    let pos = 0,
+    // [DX-V01] Why: verify the contiguous suffix of a caller-verified held cut.
+    // Rejected: interpreting the loader’s existing rows as part of the current import.
+    assert(Number.isSafeInteger(after) && after >= 0 && after <= cut);
+    let pos = after,
       observed = 0,
       facts = 0,
       marker = 0;

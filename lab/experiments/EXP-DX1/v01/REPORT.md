@@ -34,6 +34,10 @@ The P6 Mac pair reused the actual loaded SCALE1 toy scope. The alone arm matched
 
 The residency adapter uses the INT1 physical role census and the compact guest's resident mapping reader. The first demand pull is pinned to the original loader cut and checks the exact rooted membership and first task field. The empty and restored observations, roster denominator, and first-read counts are in the digested arm archive. These two boot points supply a resident difference per roster person. The activity-matched slope remains unmeasured and the adapter emits no verdict. The Mac toy loader supplied ten distinct exact first pulls at 12.623 ms p99 with zero declined. The transactor and write and read gateways reported 115, 64 and 61 threads after restore. The engine removed the private volume and released the slot.
 
+## P8 audit
+
+The fixed-pace import uses the published loader with the starting cut checked by the preceding quiet-account arm. Its independent oracle compares each newly committed journal entry against the original acknowledged command, checks exact import claims and typed readback, and requires complete native position coverage from the verified prior cut. The worker replays the original offers and verifies the expected database, gateway clock identity, source, slot and attempt. The card re-hashes the tape and binds it to the previous arm. It reports one fixed-pace component. The matched control and held-roster contention bars remain open.
+
 ## Part 2 Publish adapter check
 
 The existing INT1 `actv-lazy/join/server.ts 64 --receipt-local` producer and its collector ran in a private K stack with an ordinary token. Its three rate windows offered 0, 3.5 and 23.5 saves per second. Their durable receipt observations were 293.360, 207.611 and 184.059 ms. Exact first-read observations were 410.365, 303.841 and 207.641 ms. The collector reported zero deadline misses with its original source and slot binding. These clocks are diagnostic. The volume was removed.

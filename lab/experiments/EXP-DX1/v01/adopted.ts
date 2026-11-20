@@ -242,6 +242,7 @@ export async function quietPair(out: string, source: string, peer: Peer, seed: A
     const r = await adoptedArm(folder, source, peer, seed, writer, cell === 235, toy, startHead, cell);
     startHead = r.terminal;
   }
+  return startHead;
 }
 
 export async function adoptedToy(out: string, source: string, peer: Peer, writer: Writer) {
@@ -258,6 +259,10 @@ export async function adoptedToy(out: string, source: string, peer: Peer, writer
     const seal = path.join(folder, "fixture.json");
     const seed = openScaleSeal(seal, hex(fs.readFileSync(seal)), true);
     const arm = await adoptedArm(folder, source, peer, seed, writer, loaded, true);
-    if (loaded) await quietPair(out, source, peer, seed, writer, true, arm.terminal);
+    if (loaded) {
+      const cut = await quietPair(out, source, peer, seed, writer, true, arm.terminal);
+      const { runImport } = await import("./import-arm.ts");
+      runImport(out, source, peer, seed, writer, true, cut);
+    }
   }
 }

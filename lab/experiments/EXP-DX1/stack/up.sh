@@ -592,6 +592,9 @@ for role in "${gateway_roles[@]}"; do
     [[ ${DX_PREDECESSOR_LOOKUP:-0} =~ ^[01]$ ]] || exit 2
     field_policy+=(-e "TX2_INT1_WRITE_READBACK=1" -e "TX2_PREDECESSOR_LOOKUP=${DX_PREDECESSOR_LOOKUP:-0}")
   fi
+  if [[ $role == w && ${DX_V01_IMPORT_TIMING:-0} == 1 ]]; then
+    field_policy+=(-e TX2_LOAD2_TIMING=1)
+  fi
   if [[ $mode == w ]]; then
     cpu=$gw_w port=$port_w
     if [[ $role != w ]]; then port=$((port_w + ${role#w} - 1)); fi

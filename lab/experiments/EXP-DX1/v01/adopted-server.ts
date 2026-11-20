@@ -63,7 +63,13 @@ for (const loaded of [false, true]) {
     assert(!stopping && Date.now() + 8 * 60_000 < end);
     const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency };
     const arm = await adoptedArm(out, source, peer, seed, writer as Writer, loaded, false, head);
-    if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
+    if (loaded && !stopping) {
+      const cut = await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
+      if (!stopping) {
+        const { runImport } = await import("./import-arm.ts");
+        runImport(campaign, source, peer, seed, writer, false, cut);
+      }
+    }
   } finally {
     scaleHost.clean(out, slot);
   }
