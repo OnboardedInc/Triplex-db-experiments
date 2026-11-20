@@ -3313,3 +3313,13 @@ Tonight: `night-window.sh` runs the two v3 pairs at 10,000 subjects from 19:30 l
   one-command scorecard for the nine priorities. The `lab/SCORECARD.md` on the merged branch dates from 2026-11-07
   and describes engines no longer used.
 - **DX-PLAY1** (xhigh, `exp/DX-PLAY1-playground`, base `exp/DX-INT1`): the playground.
+
+## 2026-11-20 16:59 UTC (11:59 local, 2026-11-20): playground data set redefined by Sam; DX-PLAY1 stopped and resumed
+
+- Sam's answers recorded verbatim in the decisions file; `lab/V0.1.md` updated (fcfa01b9a). DX-PLAY1 was stopped
+  about twelve minutes into its first brief and resumed with the new data section: two tiers (small in the
+  repository, full of 2 to 5 GB in Cloudflare R2 fetched at start), Onboarded's account structure with invented
+  values, one deep account at the reference shape and scale, one wide thin account with the same total facts, more
+  than one month of history, measured snapshot-against-load sizes, continuous compliance as a later TODO.
+- Open with Sam: which Cloudflare account holds the bucket and whether it may be publicly readable. Nothing is
+  created or uploaded until he answers.
