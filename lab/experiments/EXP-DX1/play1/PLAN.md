@@ -16,3 +16,7 @@ pnpm playground stop
 5. Run the product API gate with the pool-admitted stack and the browser journey through Playwright. Inspect the raw values, timestamps, operation identities, status and resource inventory. Retain gate evidence and record individual limitations.
 
 Use existing workspace Effect and Datomic dependencies and existing TypeScript and Playwright tooling. The browser UI and local HTTP host can use the platform, with no additional runtime dependencies. Keep Clojure and acceptance pins intact. Push each completed slice on the playground branch.
+
+## Revised data requirements
+
+The owner kept the local command and API and requested two tiers with one model. The small archive stays in Git. The full generator emits separately checksummed objects and a manifest for a local directory or R2 base URL. This branch will not provision or upload to a bucket. Build the accounts from schema relationships and synthetic values only. Measure a small native load and PostgreSQL dump/restore before forecasting the full build. The full layout has a 100,000-person deep account, a 4-million-person thin account, and smaller accounts. The wide interpretation holds total current fact count roughly equal to the deep account. Retain five weeks and the observed save-rate distribution in the generator. Continuous compliance has a reserved scenario entry.
