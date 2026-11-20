@@ -729,7 +729,7 @@ async function withMeasurementWindow() {
     try {
       const settings = {
         holder: `DX-RD1-${trial}`,
-        timeoutMs: 90_000,
+        timeoutMs: 240_000,
       };
       ({ release: releaseLease } = await acquireMeasureLease("DX-RD1 native replay", settings));
     } catch (error) {
