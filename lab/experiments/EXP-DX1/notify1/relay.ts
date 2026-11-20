@@ -1,3 +1,9 @@
+import {
+  readErasure,
+  recheckErasure,
+  verifySameErasureAuthority,
+  withErasure,
+} from "../../../bench/lib/datomic-erasure.ts";
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { setImmediate as yieldTurn, setTimeout as sleep } from "node:timers/promises";
@@ -95,6 +101,9 @@ export class Relay {
       previous: hash([source.prefix, t.epoch, "receiver-genesis"]),
     };
     if (cur.event > Math.min(opts.through ?? t.sequence, t.sequence)) return false;
+    const authority = await readErasure(source.store);
+    const sourceSequence = authority?.seq;
+    if (authority) verifySameErasureAuthority(source.store, this.sink.store);
     const [e, erasure] = await Promise.all([
       a.event(cur.event, sourceAt),
       source.get<number>("erasure", sourceAt),
@@ -179,6 +188,7 @@ export class Relay {
     // [DX-STG1] Why: erasure seals the historical work before destroying its evidence. If it moved during our reads, repeat at the new barrier. After this check a later erasure can only preserve the already-computed debt. Rejected: a cross-database source CAS that would put every batch back on the live write queue.
     if ((await source.get<number>("erasure", await source.head())).id !== erasure.id)
       throw new Conflict("Erasure changed during evaluation");
+    if (sourceSequence !== undefined) await recheckErasure(source.store, sourceSequence);
     const through = cur.start + ids.length,
       done = through === size;
     const next: Cursor = {
@@ -190,6 +200,7 @@ export class Relay {
     let packet: Packet | undefined;
     if (deliveries.length) {
       packet = {
+        ...(sourceSequence === undefined ? {} : { erasureSeq: sourceSequence }),
         epoch: t.epoch,
         account: source.prefix,
         batch: cur.batch + 1,
@@ -214,16 +225,28 @@ export class Relay {
       const receiverStart = performance.timeOrigin + performance.now();
       if (packet) {
         if (
-          !(await receiveOrdered(this.sink, source.prefix, packet, next.previous, undefined, {
-            binding,
-            ops,
-            checks,
-          }))
+          !(await receiveOrdered(
+            this.sink,
+            source.prefix,
+            packet,
+            next.previous,
+            undefined,
+            {
+              binding,
+              ops,
+              checks,
+            },
+            sourceSequence === undefined ? undefined : () => readErasure(source.store),
+          ))
         )
           return true;
         a.budget?.packet(packet);
       } else {
-        await state.commit("checkpoint:" + cur.event + ":" + cur.start, binding, ops, checks);
+        await withErasure(
+          sourceSequence,
+          () => state.commit("checkpoint:" + cur.event + ":" + cur.start, binding, ops, checks),
+          authority?.database,
+        );
       }
       a.budget?.mark("receiver-service", receiverStart);
     } catch (error) {

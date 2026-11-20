@@ -1,0 +1,9 @@
+<configuration>
+  <appender name="OUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder><pattern>%d{yyyy-MM-dd'T'HH:mm:ss.SSS'Z',UTC} %-5level %logger - %msg%n</pattern></encoder>
+  </appender>
+  <!-- [DX-ERASE1] Why: Datomic emits per-job counters here. Rejected: logging every transaction on the measured writer. -->
+  <logger name="datomic.index" level="INFO"/>
+  <logger name="datomic.garbage" level="DEBUG"/>
+  <root level="WARN"><appender-ref ref="OUT"/></root>
+</configuration>

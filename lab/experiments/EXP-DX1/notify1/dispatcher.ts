@@ -1,3 +1,10 @@
+import {
+  ErasureChanged,
+  readErasure,
+  recheckErasure,
+  verifySameErasureAuthority,
+  withErasure,
+} from "../../../bench/lib/datomic-erasure.ts";
 import assert from "node:assert/strict";
 import { setImmediate as yieldTurn, setTimeout as sleep } from "node:timers/promises";
 import { W0, canonical } from "../../../bench/lib/w0-world.ts";
@@ -15,6 +22,7 @@ interface Cursor {
   pending: string | null;
 }
 export interface Packet {
+  readonly erasureSeq?: number;
   epoch: string;
   account: string;
   batch: number;
@@ -92,6 +100,7 @@ export class Dispatcher {
       pending: null,
     };
     if (cursor.event > t.sequence) return false;
+    const seq = (await readErasure(db.store))?.seq;
     const e = await a.event(cursor.event, at);
     assert(
       e.value.epoch === t.epoch && e.value.parent === cursor.parent,
@@ -159,6 +168,7 @@ export class Dispatcher {
     };
     if (deliveries.length) {
       const packet: Packet = {
+        ...(seq === undefined ? {} : { erasureSeq: seq }),
         account: db.prefix,
         epoch: t.epoch,
         batch: cursor.batch + 1,
@@ -179,14 +189,16 @@ export class Dispatcher {
     await grant?.();
     const commit = performance.now();
     // [DX-STG1] Why: this CAS advances the actual published item ledger, immutable packet and contiguous cursor in one write, even when only retirements changed. Rejected: allocating sequences from receiver ACKs or a release-private ledger.
-    await db.commit(
-      "derive:" + cursor.event + ":" + cursor.start,
-      [e.id, next, hash(changes)],
-      [...changes, ...db.change("cursor", old, next)],
-      [
-        db.guard("cursor", old),
-        { _tag: "EntityState", entityId: db.prefix + "erasure", tripleIds: [guard.id] },
-      ],
+    await withErasure(seq, () =>
+      db.commit(
+        "derive:" + cursor.event + ":" + cursor.start,
+        [e.id, next, hash(changes)],
+        [...changes, ...db.change("cursor", old, next)],
+        [
+          db.guard("cursor", old),
+          { _tag: "EntityState", entityId: db.prefix + "erasure", tripleIds: [guard.id] },
+        ],
+      ),
     );
     this.metrics.visits++;
     if (selected.write) {
@@ -199,8 +211,21 @@ export class Dispatcher {
     return true;
   }
   async receive(p: Packet, digest: string, grant?: () => Promise<void>) {
+    const current = await readErasure(this.notices.db.store);
+    if (current?.seq !== p.erasureSeq) throw new ErasureChanged("Stale notice packet");
+    if (current) verifySameErasureAuthority(this.notices.db.store, this.sink.store);
     this.notices.budget?.packet(p);
-    if (await receiveOrdered(this.sink, this.notices.db.prefix, p, digest, grant))
+    if (
+      await receiveOrdered(
+        this.sink,
+        this.notices.db.prefix,
+        p,
+        digest,
+        grant,
+        undefined,
+        current ? () => readErasure(this.notices.db.store) : undefined,
+      )
+    )
       this.metrics.sinkWrites++;
   }
   async turn(
@@ -264,16 +289,24 @@ export class Dispatcher {
     }
   }
   async effects() {
+    const authority = await readErasure(this.notices.db.store);
     const origin = hash([this.notices.db.prefix, (await this.notices.observe()).value.epoch]);
     const at = await this.sink.head(),
       head = await this.sink.row<Receipt>("received:" + origin, at),
       effects: W0.Delivery[] = [];
-    for (let i = 1; i <= (head?.value.batch ?? 0); i++)
+    for (let i = 1; i <= (head?.value.batch ?? 0); i++) {
+      if (authority) {
+        const stored = await this.sink.row<number>("effect-erasure:" + origin + ":" + i, at);
+        if (stored?.value !== authority.seq)
+          throw new ErasureChanged("Retained effects require their current source frontier");
+      }
       effects.push(
         ...unpack<W0.Delivery[]>(
           (await this.sink.get<string>("effects:" + origin + ":" + i, at)).value,
         ),
       );
+    }
+    if (authority) await recheckErasure(this.notices.db.store, authority.seq);
     return effects;
   }
 }

@@ -1,3 +1,9 @@
+import {
+  erasureWriteTicket,
+  type ErasureFrontier,
+  type ErasureReceipt,
+  type ErasureSelector,
+} from "./erasure.js";
 import { ByteCache } from "./ByteCache.js";
 import { PredecessorCache, RowCache, estimateRowBytes } from "./RowCache.js";
 import { createHash, randomUUID } from "node:crypto";
@@ -107,6 +113,7 @@ export interface DatomicRequestSample {
   readonly gatewayMicros: number;
   readonly transactMicros: number;
   readonly waited: boolean;
+  readonly erasureSeq?: number;
   readonly datoms?: number;
   readonly position?: number;
 }
@@ -458,6 +465,7 @@ export class DatomicClient {
                   status: res.statusCode ?? 0,
                 };
               const status = res.statusCode ?? 0;
+              const erasureHead = res.headers["x-triplex-erasure-seq"];
               const sample: DatomicRequestSample | undefined =
                 observation || this.onRequest
                   ? {
@@ -477,6 +485,9 @@ export class DatomicClient {
                       gatewayMicros: Number(res.headers["x-tx2-gateway-micros"] ?? NaN),
                       transactMicros: Number(data["transactMicros"] ?? NaN),
                       waited: res.headers["x-tx2-waited"] === "true",
+                      ...(typeof erasureHead === "string"
+                        ? { erasureSeq: Number(erasureHead) }
+                        : {}),
                       ...(typeof data["datoms"] === "number" ? { datoms: data["datoms"] } : {}),
                       ...(data["position"] && typeof data["position"] === "object"
                         ? { position: Number((data["position"] as TaggedValue).v) }
@@ -845,6 +856,29 @@ export class DatomicClient {
             this.reachDiagnostics.decodedTextBytes += Buffer.byteLength(value);
     }
   }
+  declareProtection(db: string, attributes: readonly string[], sealed = false) {
+    return this.request("POST", `/v2/db/${db}/protection`, { attributes, sealed });
+  }
+  async erasureFrontier(db: string): Promise<ErasureFrontier> {
+    const result = await this.request<ErasureFrontier>("GET", `/v2/db/${db}/erasure-frontier`);
+    if (
+      result.database !== db ||
+      typeof result.protected !== "boolean" ||
+      !Number.isSafeInteger(result.seq) ||
+      result.seq < 0 ||
+      !result.erased ||
+      typeof result.erased !== "object" ||
+      Array.isArray(result.erased)
+    )
+      throw new TypeError("Erasure frontier scope or shape mismatch");
+    return result;
+  }
+  erase(db: string, commandId: string, selectors: readonly ErasureSelector[]) {
+    return this.request<ErasureReceipt>("POST", `/v2/db/${db}/erase`, { commandId, selectors });
+  }
+  restoreErasure(db: string) {
+    return this.request("POST", `/v2/db/${db}/restore-erasure`, {});
+  }
   health(): Promise<DatomicHealth> {
     return this.request("GET", "/health");
   }
@@ -1004,7 +1038,16 @@ export class DatomicClient {
     // [DX-B5-L0] Why: two-argument transact wrappers preserve the input, and this callback never belongs on the wire.
     // Rejected: a third-argument-only callback (the NS publication observer drops it).
     const { onSent: inputSent, ...wireInput } = input;
-    const { rows: inputRows, newIds: ids, ...header } = wireInput;
+    const { rows: inputRows, newIds: ids, ...requestHeader } = wireInput;
+    const ticket = erasureWriteTicket();
+    const header = ticket
+      ? {
+          ...requestHeader,
+          erasureSeq: ticket.sequence,
+          erasureReplay: ticket.replay,
+          erasureSourceDatabase: ticket.sourceDatabase,
+        }
+      : requestHeader;
     onSent ??= inputSent;
     const compact = this.layouts.get(db) === "lean";
     const rowFast = fastPathEnabled("row"),

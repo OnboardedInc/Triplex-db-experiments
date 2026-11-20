@@ -1,3 +1,4 @@
+import { readErasure, recheckErasure, withErasure } from "../../../../bench/lib/datomic-erasure.ts";
 import { bytes as transport } from "../../import1/source.ts";
 import assert from "node:assert/strict";
 import {
@@ -481,7 +482,8 @@ export class JoinedAccount {
     const xs = await this.s.rows([RELEASE], e.at),
       r = xs.find((x) => x.position === e.at);
     assert(r);
-    const m = value(r) as Marker;
+    const m = value(r) as Marker & { erasureSeq?: number };
+    await recheckErasure(this.s.comp, m.erasureSeq);
     assert(
       m.notice === h(e.value) &&
         m.seq === e.value.sequence &&
@@ -495,6 +497,7 @@ export class JoinedAccount {
     if (m.stage) {
       assert(
         m.storage === "staged" &&
+          m.stage.erasureSeq === m.erasureSeq &&
           m.stage.scope === this.s.scope &&
           m.stage.cut === m.cut &&
           m.stage.release === m.release &&
@@ -589,147 +592,168 @@ export class JoinedAccount {
       small = storage === "staged" && options.codec !== "legacy";
     assert(Number.isInteger(workers) && workers >= 1 && workers <= 8);
     const priceStart = performance.now();
+    const sequence = (await readErasure(this.s.comp))?.seq;
     this.lastMaterial = emptyMaterial();
-    return this.command(
-      id,
-      ["publish", doc, at, storage, options.sources ?? "native", workers, small],
-      async (p) => {
-        const { meta, c, tail } = await this.state(p);
-        assert(at >= c.at);
-        const prev = c.releases
-          .filter((r) => r.storage !== "scheduled" && r.from <= at)
-          .sort((a, b) => b.from.localeCompare(a.from) || b.tx - a.tx)[0];
-        const old = prev ? W0.compileRelease(prev.document) : undefined;
-        const req: Request = {
-          id,
-          document: doc,
-          kind: "activation",
-          release: doc.name,
-          validTime: at,
-          from: at,
-          selection: { kind: "census" },
-        };
-        const clock = emptyMaterial(),
-          begin = performance.now();
-        clock.prepMs = begin - priceStart;
-        const indexed = options.sources === "indexed" ? new Map<string, W0.World>() : undefined;
-        const ids =
-          storage === "owed"
-            ? []
-            : options.sources === "census"
-              ? await this.roster(meta.census, p)
-              : await this.choose(
-                  meta,
-                  p,
-                  at,
-                  old,
-                  next,
-                  "output",
-                  storage === "envelopes",
-                  indexed,
-                );
-        clock.selectionMs = performance.now() - begin;
-        const parts: string[] = [],
-          body: Stored[] = [];
-        let bytes = 0,
-          count = 0,
-          owners = 0;
-        const flush = () => {
-          if (!body.length) return;
-          const start = performance.now();
-          const packed = encode(body, small);
-          parts.push(packed);
-          this.stats.outputBytes += Buffer.byteLength(packed);
-          clock.encodeMs += performance.now() - start;
-          body.length = 0;
-          bytes = 0;
-        };
-        const evaluation = new Evaluation(workers, old, next, storage === "envelopes");
-        const materialStart = performance.now();
-        try {
-          for (let start = 0; start < ids.length; start += width * workers) {
-            const work = Array.from(
-              { length: Math.min(workers, Math.ceil((ids.length - start) / width)) },
-              (_, j) => ids.slice(start + j * width, start + (j + 1) * width),
-            );
-            const results = await Promise.all(
-              work.map(async (group, j) => {
-                const t = performance.now();
-                const snap = group.every((x) => indexed?.has(x))
-                  ? group.map((x) => indexed!.get(x)!)
-                  : await worldsAt(this.s, this.s.profile, group, { tx: p, validTime: at });
-                if (!group.every((x) => indexed?.has(x))) this.stats.worlds += snap.length;
-                clock.readMs += performance.now() - t;
-                return evaluation.page(j, { worlds: snap, basis: { tx: p + 1, validTime: at } });
-              }),
-            );
-            for (const result of results) {
-              clock.evaluateMs += result.evaluateMs;
-              for (const row of result.rows) {
-                const t = performance.now();
-                const size = Buffer.byteLength(canonical(small ? compact(row) : row));
-                clock.encodeMs += performance.now() - t;
-                if (bytes + size > (storage === "staged" ? 90000 : 96000)) flush();
-                body.push(row);
-                bytes += size;
-                owners++;
-                count += row.rows.length;
+    return withErasure(sequence, () =>
+      this.command(
+        id,
+        ["publish", doc, at, storage, options.sources ?? "native", workers, small],
+        async (p) => {
+          const { meta, c, tail } = await this.state(p);
+          assert(at >= c.at);
+          // [DX-THIN1] Why: the current erasure cut must use the effective predecessor release.
+          // Rejected: letting a future scheduled release define today's prior answers.
+          const prev = c.releases
+            .filter((r) => r.storage !== "scheduled" && r.from <= at)
+            .sort((a, b) => b.from.localeCompare(a.from) || b.tx - a.tx)[0];
+          const old = prev ? W0.compileRelease(prev.document) : undefined;
+          const req: Request = {
+            id,
+            document: doc,
+            kind: "activation",
+            release: doc.name,
+            validTime: at,
+            from: at,
+            selection: { kind: "census" },
+          };
+          const clock = emptyMaterial(),
+            begin = performance.now();
+          clock.prepMs = begin - priceStart;
+          // [DX-ERASE1] Why: retained posting pages have no current protected assertion identities.
+          // Rejected: handing their old facts to a Publish with a newly checked sequence.
+          const indexed =
+            options.sources === "indexed" && sequence === undefined
+              ? new Map<string, W0.World>()
+              : undefined;
+          const ids =
+            storage === "owed"
+              ? []
+              : options.sources === "census" || sequence !== undefined
+                ? await this.roster(meta.census, p)
+                : await this.choose(
+                    meta,
+                    p,
+                    at,
+                    old,
+                    next,
+                    "output",
+                    storage === "envelopes",
+                    indexed,
+                  );
+          clock.selectionMs = performance.now() - begin;
+          const parts: string[] = [],
+            body: Stored[] = [];
+          let bytes = 0,
+            count = 0,
+            owners = 0;
+          const flush = () => {
+            if (!body.length) return;
+            const start = performance.now();
+            const packed = encode(body, small);
+            parts.push(packed);
+            this.stats.outputBytes += Buffer.byteLength(packed);
+            clock.encodeMs += performance.now() - start;
+            body.length = 0;
+            bytes = 0;
+          };
+          const evaluation = new Evaluation(workers, old, next, storage === "envelopes");
+          const materialStart = performance.now();
+          try {
+            for (let start = 0; start < ids.length; start += width * workers) {
+              const work = Array.from(
+                { length: Math.min(workers, Math.ceil((ids.length - start) / width)) },
+                (_, j) => ids.slice(start + j * width, start + (j + 1) * width),
+              );
+              const results = await Promise.all(
+                work.map(async (group, j) => {
+                  const t = performance.now();
+                  const snap = group.every((x) => indexed?.has(x))
+                    ? group.map((x) => indexed!.get(x)!)
+                    : await worldsAt(this.s, this.s.profile, group, { tx: p, validTime: at });
+                  if (!group.every((x) => indexed?.has(x))) this.stats.worlds += snap.length;
+                  clock.readMs += performance.now() - t;
+                  return evaluation.page(j, { worlds: snap, basis: { tx: p + 1, validTime: at } });
+                }),
+              );
+              for (const result of results) {
+                clock.evaluateMs += result.evaluateMs;
+                for (const row of result.rows) {
+                  const t = performance.now();
+                  const size = Buffer.byteLength(canonical(small ? compact(row) : row));
+                  clock.encodeMs += performance.now() - t;
+                  if (bytes + size > (storage === "staged" ? 90000 : 96000)) flush();
+                  body.push(row);
+                  bytes += size;
+                  owners++;
+                  count += row.rows.length;
+                }
               }
             }
+            flush();
+          } finally {
+            await evaluation.close();
           }
-          flush();
-        } finally {
-          await evaluation.close();
-        }
-        clock.materialMs = performance.now() - materialStart;
-        const ops: Op[] = [];
-        let header: Stage | undefined,
-          expected = p;
-        if (storage === "staged" && parts.length) {
-          const t = performance.now();
-          const written = await stage(this.s, this.db, p, id, next.hash, parts, options.afterChunk);
-          header = written.header;
-          expected = written.predecessor;
-          clock.stages = written.writes;
-          clock.stageWriteMs = performance.now() - t;
-        }
-        const np = this.notices.plan({ ...tail, at: expected }, req);
-        assert(np.recipe.oldHash === (old?.hash ?? null));
-        if (storage !== "staged")
-          for (const [j, bytes] of parts.entries())
-            ops.push(this.db.put(dataKey(np.recipe.sequence, j), bytes));
-        this.lastMaterial = clock;
-        const m: Marker = {
-          joined: meta.epoch,
-          seq: np.recipe.sequence,
-          old: old?.doc ?? null,
-          document: doc,
-          release: next.hash,
-          cut: p,
-          at,
-          from: at,
-          kind: "activation",
-          storage,
-          output: { count, chunks: parts.length, hash: encodedHash(parts), owners },
-          ...(header ? { stage: header } : {}),
-          ...(small ? { codec: "compact" as const } : {}),
-          notice: h(np.recipe),
-          census: meta.census.members,
-          compiler: selector,
-        };
-        return {
-          ops: [fact(RELEASE, "lazy/activation", m), ...np.operations, ...ops],
-          expected,
-          context: {
-            epoch: meta.epoch,
-            notice: m.notice,
-            output: m.output,
-            stage: header?.attempt ?? null,
-          },
-        };
-      },
-      hook,
-      at,
+          clock.materialMs = performance.now() - materialStart;
+          const ops: Op[] = [];
+          let header: Stage | undefined,
+            expected = p;
+          if (storage === "staged" && parts.length) {
+            const t = performance.now();
+            const written = await stage(
+              this.s,
+              this.db,
+              p,
+              id,
+              next.hash,
+              parts,
+              options.afterChunk,
+              sequence,
+            );
+            header = written.header;
+            expected = written.predecessor;
+            clock.stages = written.writes;
+            clock.stageWriteMs = performance.now() - t;
+          }
+          const np = this.notices.plan({ ...tail, at: expected }, req);
+          assert(np.recipe.oldHash === (old?.hash ?? null));
+          if (storage !== "staged")
+            for (const [j, bytes] of parts.entries())
+              ops.push(this.db.put(dataKey(np.recipe.sequence, j), bytes));
+          this.lastMaterial = clock;
+          const m: Marker & { erasureSeq?: number } = {
+            joined: meta.epoch,
+            ...(sequence === undefined ? {} : { erasureSeq: sequence }),
+            seq: np.recipe.sequence,
+            old: old?.doc ?? null,
+            document: doc,
+            release: next.hash,
+            cut: p,
+            at,
+            from: at,
+            kind: "activation",
+            storage,
+            output: { count, chunks: parts.length, hash: encodedHash(parts), owners },
+            ...(header ? { stage: header } : {}),
+            ...(small ? { codec: "compact" as const } : {}),
+            notice: h(np.recipe),
+            census: meta.census.members,
+            compiler: selector,
+          };
+          if (sequence !== undefined) await recheckErasure(this.s.comp, sequence);
+          return {
+            ops: [fact(RELEASE, "lazy/activation", m), ...np.operations, ...ops],
+            expected,
+            context: {
+              epoch: meta.epoch,
+              notice: m.notice,
+              output: m.output,
+              stage: header?.attempt ?? null,
+            },
+          };
+        },
+        hook,
+        at,
+      ),
     );
   }
   async physical(seq: number) {

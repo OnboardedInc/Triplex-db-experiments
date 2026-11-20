@@ -1,5 +1,5 @@
 (ns triplex.gateway.journal
-  (:require [triplex.gateway.slim :as slim] [triplex.gateway.trace :as trace] [clojure.data.json :as json] [datomic.api :as d] [triplex.gateway.lean :as lean] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.stats :as stats] [triplex.gateway.reach :as reach] [triplex.gateway.storage :as storage] [triplex.gateway.save-ledger :as ledger]
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.slim :as slim] [triplex.gateway.trace :as trace] [clojure.data.json :as json] [datomic.api :as d] [triplex.gateway.lean :as lean] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.stats :as stats] [triplex.gateway.reach :as reach] [triplex.gateway.storage :as storage] [triplex.gateway.save-ledger :as ledger]
             [triplex.gateway.packed-journal :as packed]))
 (set! *warn-on-reflection* false)
 ;; [DX-B4-T1] Why: these reads use only immutable indexes; a scope without the write-side proof declines.
@@ -63,7 +63,7 @@
         (.append out "[") (reach/append-string! out (value db e :triplex.entity/id)) (.append out ",") (.append out (str p)) (.append out ",[")
         ;; Current rows are exact: supported scopes have never retired or extended a published journal.
         (doseq [[j text] (map-indexed vector (row-texts db e))]
-          (when (pos? j) (.append out ",")) (reach/append-string! out text))
+          (when (pos? j) (.append out ",")) (reach/append-string! out (privacy/text text)))
         (.append out "]")
         (when (true? (get input "replicaRows"))
           (let [rows (map lean/decode (row-texts db e))
@@ -115,7 +115,7 @@
       (when (and e (value db e :triplex.entity/row-overflow)) (reach/decline! "row-overflow"))
       (.append out "{\"rows\":[")
       (doseq [[i text] (map-indexed vector texts)]
-        (when (pos? i) (.append out ",")) (reach/append-string! out text))
+        (when (pos? i) (.append out ",")) (reach/append-string! out (privacy/text text)))
       (.append out "]}") (str out))
     (catch Exception e (declined e))))
 

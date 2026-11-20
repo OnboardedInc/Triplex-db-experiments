@@ -31,6 +31,8 @@
     "../lab/trace/native-transactions.mjs",
     "../lab/trace/cpu-profile.mjs",
     "../lab/experiments/EXP-DX1/h3/observe.mjs",
+    "../lab/experiments/EXP-DX1/erase1/local.mjs",
+    "../lab/experiments/EXP-DX1/erase1/server.mjs",
     "../examples/config-explorer/smoke.mjs",
     "../experiments/qlever-native-count-inventory-v1/runner.mjs",
     "../experiments/qlever-native-fault-preflight-v1/runner.mjs",

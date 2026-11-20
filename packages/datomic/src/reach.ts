@@ -7,7 +7,7 @@ import {
   type ReachResult,
 } from "@triplex-build/triplex";
 import {
-  decodeValueColumns,
+  decodeReadValueColumns,
   storedValueDomain,
   ValueDomains,
   type TripleRow,
@@ -55,7 +55,10 @@ export function decodeEntity(
       typeof values === "string" ? decodeRowText(values) : decodeRowTextColumns(values, "2");
     if (row.entity_id !== id) throw new TypeError("Reach entity binding mismatch");
     // Validate the value domain exactly once; retain the decoded value in the cached Triple.
-    const value = decodeValueColumns(row, storedValueDomain(ValueDomains.datomic, row.attribute));
+    const value = decodeReadValueColumns(
+      row,
+      storedValueDomain(ValueDomains.datomic, row.attribute),
+    );
     storedRows.push(freeze(row));
     observe?.(row);
     return freeze({
