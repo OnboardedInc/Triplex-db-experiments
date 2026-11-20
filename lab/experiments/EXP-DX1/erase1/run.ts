@@ -3,7 +3,11 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
-import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
+import {
+  DatomicClient,
+  flushTracing,
+  tracedRequest,
+} from "../../../../packages/datomic/dist/index.js";
 import { canonicalWorld } from "../../../bench/lib/canonical.ts";
 import {
   openComposition,
@@ -23,6 +27,8 @@ type Layout =
   | "regression"
   | "ledger-regression"
   | "ledger-overhead"
+  | "ledger-profile"
+  | "ledger-match"
   | "fast"
   | "fast-smoke";
 type Attempt = {
@@ -214,7 +220,9 @@ function blocks() {
     return [makeGroup(mid - 25, 10, 32), makeGroup(mid, 100, 8)];
   }
   const history =
-    run.mode === "smoke" || run.mode.endsWith("regression") || run.mode === "ledger-overhead"
+    run.mode === "smoke" ||
+    run.mode.endsWith("regression") ||
+    ["ledger-overhead", "ledger-profile", "ledger-match"].includes(run.mode)
       ? 5
       : 415;
   return [makeGroup(mid - 1, 1, 0), makeGroup(mid, 1, run.mode.startsWith("fast") ? 0 : history)];
@@ -259,6 +267,15 @@ class Fixture {
       recordedPosition: this.head.position,
       validAt: SEED_VALID_FROM,
       recordedAt: this.head.instant,
+    };
+  }
+  acceptErasure(command: { position: number; erasedAt: number; txId: string }) {
+    assert.equal(command.position, this.position + 1);
+    this.head = {
+      position: command.position,
+      txId: command.txId,
+      instant: command.erasedAt,
+      triples: [],
     };
   }
   stage(groups: Acc[]): Staged {
@@ -407,6 +424,7 @@ async function traffic(
   basis: Basis,
   label: string,
   erase?: () => Promise<any>,
+  runReaders = true,
 ) {
   const subjects = bystanders(),
     saved: Sample[] = [],
@@ -423,12 +441,17 @@ async function traffic(
     error: unknown,
     result: any,
     window: Window | undefined;
-  const workers = subjects
+  const workers = (runReaders ? subjects : [])
     .map(async (subject) => {
+      const pull = () => reader.pull(ids.placement(subject), basis);
       while (running) {
         const start = wall(),
           t = performance.now();
-        const r = await reader.pull(ids.placement(subject), basis);
+        // [DX-ERASE1] Why: the normal recorder samples fast reads even at full detail.
+        // Rejected: estimating median Reach cost from the retained slow-tail sample.
+        const r = await (run.mode === "ledger-profile"
+          ? tracedRequest("internal", "erase1.profile.read", { phase: label, subject }, pull)
+          : pull());
         const end = wall(),
           ms = performance.now() - t;
         assert.equal(
@@ -787,7 +810,7 @@ async function scale() {
       );
       return;
     }
-    if (run.mode === "ledger-overhead") {
+    if (["ledger-overhead", "ledger-profile", "ledger-match"].includes(run.mode)) {
       const { measureW0Http } = await import("../../../bench/lib/w0-http.ts");
       const otherName = fixtureName + "-guarded";
       const guarded = await openComposition("reach", "datomic", otherName);
@@ -797,16 +820,19 @@ async function scale() {
         await probe.declareProtection(other.db, [field(0)]);
         await seedFixture(other, blocks(), false);
         assert.equal(other.facts, f.facts);
+        const controlPin = f.basis(),
+          guardedPin = other.basis();
         const arms = await measured(async () => {
-          const observations = [];
-          for (const [candidate, which] of [
-            [f, "ledger-control"],
-            [other, "ledger-guarded"],
-          ] as const) {
+          const observe = async (
+            candidate: Fixture,
+            which: string,
+            pin: Basis,
+            runReaders = true,
+          ) => {
             await diag("index", { scope: candidate.scope });
             const before = await storage();
             const measuredTraffic = await measureW0Http(() =>
-              traffic(candidate, candidate.comp, candidate.basis(), which),
+              traffic(candidate, candidate.comp, pin, which, undefined, runReaders),
             );
             const bytes = (ending: RegExp) => {
               const samples = measuredTraffic.samples.filter((r) => ending.test(String(r.path)));
@@ -825,15 +851,65 @@ async function scale() {
               basis: candidate.basis(),
             });
             assert(rows.length && wire.length === 1);
-            observations.push({
+            return {
               which,
               summary: measuredTraffic.value,
               wire,
               saveWire: bytes(/\/transact$/),
               readWire: bytes(/\/(reach|reach-many|read)$/),
               valueByteChange: after.valueBytes - before.valueBytes,
+            };
+          };
+          if (run.mode !== "ledger-match")
+            return [
+              await observe(f, "ledger-control", controlPin),
+              await observe(other, "ledger-guarded", guardedPin),
+            ];
+          const parity = (sequence: number) =>
+            diag("reach-parity", {
+              scope: other.scope,
+              root: ids.placement(bystanders()[0]!),
+              basis: guardedPin,
+              sequence,
             });
-          }
+          const before = await parity(0);
+          const observations = [
+            await observe(f, "control-before", controlPin),
+            await observe(other, "guarded-before", guardedPin),
+            await observe(f, "control-middle", controlPin),
+          ];
+          const target = taskId(groups[1]!.people[0]!, 0);
+          const atPin = () => probe.rows(other.db, { entityIds: [target], basis: guardedPin });
+          const original = (await atPin()).find((r) => r.attribute === field(0));
+          assert(original?.value_string);
+          const erasure = await probe.erase(other.db, `${run.nonce}-matched-erase`, [
+            { id: original.id },
+          ]);
+          const marker = (await atPin()).find((r) => r.id === original.id);
+          assert.equal(erasure.seq, 1);
+          assert.equal(erasure.identities.length, 1);
+          assert.equal(erasure.identities[0]?.assertionId, original.id);
+          assert.equal(await other.comp.currentPosition(), erasure.position);
+          assert.equal(marker?.value_type, "erased");
+          assert(marker?.value_json && marker.value_string === null);
+          assert.deepEqual(JSON.parse(marker.value_json), {
+            type: "erased",
+            valueType: "string",
+            erasedAt: erasure.erasedAt,
+            erasureTxId: erasure.txId,
+          });
+          other.acceptErasure(erasure);
+          const after = await parity(1);
+          assert.equal(before.pin, after.pin);
+          assert.equal(before.warmSha256, after.warmSha256);
+          assert.equal(before.coldSha256, after.coldSha256);
+          output("ledger-reach-parity", { before, after, erasure });
+          observations.push(
+            await observe(other, "guarded-after", guardedPin),
+            await observe(f, "control-after", controlPin),
+            await observe(f, "control-without-readers", controlPin, false),
+            await observe(other, "guarded-without-readers", guardedPin, false),
+          );
           return observations;
         });
         output("ledger-overhead", { facts: f.facts, arms });
@@ -919,5 +995,9 @@ async function scale() {
 try {
   await scale();
 } finally {
-  process.disconnect?.();
+  try {
+    if (run.mode === "ledger-profile") await flushTracing();
+  } finally {
+    process.disconnect?.();
+  }
 }
