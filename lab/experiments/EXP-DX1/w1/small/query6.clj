@@ -90,16 +90,21 @@
                            "[(triplex.gateway.query/scalar $ ?aFact) ?actor]")
               current (str (pattern ":v") " [(triplex.gateway.query/visible $ ?f 1.0 nil 2)]")
               point (str (pattern ":_tx/change") " [?f :f/subject ?e] [?e :triplex.entity/id \"_tx/edit\"]")
+              disjunction (str (pattern ":_tx/change") " (or-join [?f] "
+                               "[?f :f/subject [:triplex.entity/id \"_tx/edit\"]] "
+                               "[?f :f/subject [:triplex.entity/id " (pr-str gt/root) "]])")
               queries [(native name (pattern ":_tx/change") "?id ?value" edit-world)
                        (native name (pattern ":_tx/changed-entity") "?id ?value" edit-world)
                        (native name point "?id ?value" edit-world)
                        (native name actor-join "?id ?actor" edit-world)
                        (native name current "?id ?value" edit-world)
                        (native name (pattern ":_tx/change") "?id ?value" earlier {"handle" held})
-                       (native name (str "[?f :f/id ?id] [?f :f/subject _] (not-join [?f] [?f :f/live _])") "?id" edit-world)]
+                       (native name (str "[?f :f/id ?id] [?f :f/subject _] (not-join [?f] [?f :f/live _])") "?id" edit-world)
+                       (native name disjunction "?id ?value" edit-world)]
               result (mapv answer queries)]
-          (is (= [3 2 2 2 1 1 1] (mapv count result)))
+          (is (= [3 2 2 2 1 1 1 2] (mapv count result)))
           (is (= [[ ["string" "later"] ["string" "later"] ]] (vec (nth result 4))))
+          (is (= (nth result 2) (peek result)))
           (storage/release! name held)
           {:queries result :feed feed :match [(match ":_tx/change" edit-world) (match ":_tx/changed-entity" earlier)]}))
       (finally (gateway/delete-scope! nil scope)))))

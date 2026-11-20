@@ -43,8 +43,14 @@
             (rewrite [form]
               (cond
                 (seq? form)
-                (let [n (case (first form) (not-join or-join) 2 1)]
-                  [(apply list (concat (take n form) (mapcat rewrite (drop n form))))])
+                (let [op (first form) n (case op (not-join or-join) 2 1)
+                      parts (map rewrite (drop n form))
+                      ;; [DX-W1] Why: lookup bindings belong to their disjunct's conjunction.
+                      ;; Rejected: flattening alternatives, which admits facts from unrelated owners.
+                      clauses (if (= 'or-join op)
+                                (map #(if (next %) (cons 'and %) (first %)) parts)
+                                (mapcat identity parts))]
+                  [(apply list (concat (take n form) clauses))])
                 (seq? (first form))
                 (let [[[f source fact & args] target] form]
                   (case f
