@@ -1,11 +1,11 @@
 The server branch is exp/DX-W1-commit-tail-reads. Run code head 9289362b1.
-K keeps separate changed-subject and change rows. Match and the new query option read those same rows.
+The cursor regression failed at reader clock 100. A new page now pins the committed position without a clock filter.
 Both tests wrote 17 records per save. The Mac point-read median was 4.8 ms for Match and 89.6 ms for paged Datalog.
 A query for one named entity can seek to it. A broad query still has to read stored histories.
 Queries that return classic Datomic fact numbers need reified fact records.
 After erasure, an old ordinary read and the journal still returned the value. The new native routes refused.
 P remains an experiment because its packed journal rows are absent from ordinary queries.
-The earlier 36 ms p99 measured lean with the native query route off. Full query coverage and erasure remain open.
+The cursor fix adds zero stored records. Existing cursors still resume at their original cut.
 
 | Surface | Lean K before and after | Test |
 | --- | --- | --- |
@@ -19,7 +19,7 @@ The earlier 36 ms p99 measured lean with the native query route off. Full query 
 
 **Remaining read work.** Broad queries admit up to 100,000 input datoms or 16 Mi characters. An AVET journal index adds 3 or 7 datoms and an estimated 134 or 302 key bytes for one- and three-field replacements, before storage encoding. Indexed subject history needs one changed-owner ref per save or a proved complete existing index. Reifying just the way-2 journal needs at least 21 or 49 classic fact datoms. With eight-byte refs and clocks and one-byte type tags, those values use about 185 or 421 bytes plus the full change JSON, before optional fields and storage overhead. Lean seeds have no original classic fact numbers. Fixing implicit pages requires using the recorded cut without a wall-clock filter and adds no stored records.
 
-**Evidence audit.** The native runner checks results, test count, nonce, sources and Datomic and Java inputs. The managed verifier binds Classic and K to fresh operations, receipt identities, O-REPLAY, source, image and slot. Timings compare the live writer's function fields with the staged definition and check the exact receipt, stored row and both answers at its cut. Native feed records bind to their durable log t. Journal membership uses stored refs. The adapter checks the hydrated subject and cut, and the SDK checks its selected position.
+**Evidence audit.** The page cursor binds the validated query and order, original recorded position, valid time and scope. Older cursors retain their explicit clock. It adds no persisted records. The focused Core regression failed before the fix and 19 tests passed afterward. The historical native and SQL proofs bind results to their original source, image, slot and attempt. The SDK fixture now requires the latest acknowledged save in both layouts.
 
 **One writer.** Integrated DX-WFIX1 through `4331d6fe8`. The cross-run freezes DX-W1 `67bc5285c` and DX-WFIX1 `d83214271`. WFIX's first six native cases found 11 assertion failures on DX-W1, and its SDK cases found three. DX-W1's layout, packed, priority and predecessor cases and commit-order test passed on the other writer. The options witness lacked its API on the old DX-W1 source. Six DX-W1 controller cases then passed with a complete fixture export on `4331d6fe8`. [WFIX fixtures](../wfix1/REPORT.md)
 

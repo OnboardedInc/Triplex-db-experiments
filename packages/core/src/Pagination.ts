@@ -40,22 +40,20 @@ const PaginationCursorEnvelopeSchema = Schema.Struct({
   queryFingerprint: Schema.String,
   scopeFingerprint: Schema.String,
   basis: Schema.Struct({
-    recordedAt: Schema.Number,
+    recordedAt: Schema.optional(Schema.Number),
     recordedPosition: Schema.Number,
     validAt: Schema.Number,
   }),
   values: Schema.Array(PaginationValueSchema),
 });
 
+type PageBasis = ResolvedTemporalBasis & { readonly recordedPosition: number };
+
 interface PaginationCursorEnvelope {
   readonly version: number;
   readonly queryFingerprint: string;
   readonly scopeFingerprint: string;
-  readonly basis: {
-    readonly recordedAt: number;
-    readonly recordedPosition: number;
-    readonly validAt: number;
-  };
+  readonly basis: PageBasis;
   readonly values: readonly PaginationValue[];
 }
 
@@ -64,10 +62,7 @@ export type PaginationCursor = string & { readonly PaginationCursor: unique symb
 export interface PreparedPagination {
   readonly query: WrappedQuery;
   readonly logicalQuery: WrappedQuery;
-  readonly basis: ResolvedTemporalBasis & {
-    readonly recordedAt: number;
-    readonly recordedPosition: number;
-  };
+  readonly basis: PageBasis;
   readonly orderBy: readonly OrderBySpec[];
   readonly cursorValues?: readonly PaginationValue[];
   readonly queryFingerprint: string;
@@ -125,19 +120,13 @@ export const normalizePaginationOrder = (query: WrappedQuery): readonly OrderByS
   return order;
 };
 
-const queryFingerprint = (
-  query: WrappedQuery,
-  basis: ResolvedTemporalBasis & {
-    readonly recordedAt: number;
-    readonly recordedPosition: number;
-  },
-): string =>
+const queryFingerprint = (query: WrappedQuery, basis: PageBasis): string =>
   ContentId.hash(
     ContentId.Domain.paginationCursor,
     CanonicalJson.encodeOrThrow({
       query: query as unknown as CanonicalJson.CanonicalValue,
       basis: {
-        recordedAt: basis.recordedAt,
+        ...(basis.recordedAt === undefined ? {} : { recordedAt: basis.recordedAt }),
         recordedPosition: basis.recordedPosition,
         validAt: basis.validAt,
       },
@@ -169,16 +158,17 @@ const decodeEnvelope = (cursor: string): PaginationCursorEnvelope => {
       cause: result.failure,
     });
   }
-  if (result.success.version !== 1) {
+  const { version, basis, values } = result.success;
+  if (version !== 1 && version !== 2) {
     throw new PaginationCursorError({
       reason: "unsupported_version",
       message: `Unsupported pagination cursor version ${result.success.version}`,
     });
   }
-  const { basis, values } = result.success;
   if (
-    !Number.isFinite(basis.recordedAt) ||
-    basis.recordedAt < 0 ||
+    (version === 1) !== (basis.recordedAt !== undefined) ||
+    (basis.recordedAt !== undefined &&
+      (!Number.isFinite(basis.recordedAt) || basis.recordedAt < 0)) ||
     !Number.isFinite(basis.validAt) ||
     basis.validAt < 0 ||
     !Number.isSafeInteger(basis.recordedPosition) ||
@@ -234,10 +224,7 @@ export const preparePagination = (input: {
   const envelope =
     input.query.cursor === undefined ? undefined : decodeEnvelope(input.query.cursor);
 
-  let basis: ResolvedTemporalBasis & {
-    readonly recordedAt: number;
-    readonly recordedPosition: number;
-  };
+  let basis: PageBasis;
   if (envelope !== undefined) {
     basis = envelope.basis;
     if (input.basis !== undefined) {
@@ -253,11 +240,11 @@ export const preparePagination = (input: {
       }
     }
   } else {
-    const resolved = resolveTemporalBasis(input.basis, input.now);
+    // [DX-W1] Why: the recorded position already pins the page including durable writes with a later clock.
+    // Rejected: substituting the business clock for an omitted recorded time (it can hide durable saves).
     basis = {
-      recordedAt: resolved.recordedAt ?? input.now,
+      ...resolveTemporalBasis(input.basis, input.now),
       recordedPosition: input.recordedPosition,
-      validAt: resolved.validAt,
     };
   }
 
@@ -312,7 +299,7 @@ export const finishPagination = (
   const last = results.at(-1)!;
   const values = prepared.orderBy.map(({ variable }) => last[variable] ?? null);
   const nextCursor = encodeEnvelope({
-    version: 1,
+    version: prepared.basis.recordedAt === undefined ? 2 : 1,
     queryFingerprint: prepared.queryFingerprint,
     scopeFingerprint: prepared.scopeFingerprint,
     basis: prepared.basis,

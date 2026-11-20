@@ -333,12 +333,14 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
         ["n:1", ":n/value", "?num"],
       ],
     };
-    // [DX-W1] Why: capture the implicit cursor clock and prove numeric parity at the acknowledged cut.
+    // [DX-W1] Why: a page must include the acknowledged clock-102 save with the reader still at 100.
     // Rejected: letting the deterministic reader's old wall time stand in for the write's recorded time.
     const implicit = await run(t.query(numerics, { basis: cut, includeBasis: true }));
     assert.equal(implicit.basis?.recordedPosition, next.position);
     const latest = { ...cut, recordedAt: next.instant };
     const exact = results(await run(t.query(numerics, { basis: latest })));
+    assert.equal(implicit.basis?.recordedAt, undefined);
+    assert.deepEqual(implicit.results, exact);
     assert.equal(
       exact[0]?.["?int"] && JSON.stringify(exact[0]["?int"]),
       JSON.stringify(integer("9007199254740993")),
@@ -414,7 +416,7 @@ export function queryProof(url: string, nonce: string, layout: Layout) {
         number: exact[0]?.["?num"],
         negativeZeroRejected: true,
       },
-      implicitNumericPage: { recordedAt: implicit.basis?.recordedAt, results: implicit.results },
+      implicitNumericPage: { recordedPosition: implicit.basis?.recordedPosition, results: implicit.results },
       recursive,
       explainBackend: explain.map((plan) => plan.queryPlan?.backend),
       log: commits.map((row) => row.transaction),
