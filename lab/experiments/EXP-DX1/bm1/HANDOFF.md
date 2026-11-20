@@ -150,5 +150,9 @@ The exact `6ef27404e` shared-PostgreSQL job finished at 04:21 EST. `overnight/i3
 | --- | ---: | ---: | --- | --- | --- |
 | Shared, 50 saves/s | 70.68 | 11,880 | 4.44, 1.17× / 1.22× | 7.92, 0.89× / 1.45× | 2.24× / 1.56× |
 | Shared, 100 saves/s | 72.88 | 17,280 | 4.87, 0.88× / 1.08× | 11.93, 1.34× / 1.14× | 1.43× / 2.92× |
+| Separate, 50 saves/s | 74.38 | 11,880 | 5.51, 1.40× / 2.09× | 7.85, 0.90× / 1.13× | 2.42× / 1.48× |
+| Separate, 100 saves/s | 70.76 | 17,280 | 5.32, 1.05× / 1.10× | 18.38, 1.58× / 0.97× | 3.14× / 2.80× |
 
-All quiet p99s used 540 samples per bookend or active window. All accounts verified every scheduled offer in both shared-PostgreSQL rate blocks. The shared results are separate Datomic pipelines inside one PostgreSQL process, on one storage device. They price the synthetic fixture and leave the full Priority 8 imports open. The client initially refused the new two-digit item number. The preserved archive and all member hashes verified after correcting the key parser.
+All quiet p99s used 540 samples per bookend or active window. All accounts verified every scheduled offer in both PostgreSQL layouts at both rates. Separate PostgreSQL finished at 04:36 EST and is collected in `overnight/i31-1`. The shared results are separate Datomic pipelines inside one PostgreSQL process, on one storage device. They price the synthetic fixture and leave the full Priority 8 imports open. The client initially refused the new two-digit item number. The preserved archive and all member hashes verified after correcting the key parser.
+
+STG1 `i32-1` completed the official 1k copied-route preflight. The first independent collector sought an optional `archive.ts` output that the published benchmark does not emit. Re-reading the original attempt, paired tapes and producer proof yielded identical results, 257.88 notices/s, 999 verified effects and four matched saves per side. The source, original request, staged report and preflight hashes travel separately into `i32-2`. The first archive remains intact. The full published command still runs its own bound native check and uses the remaining four-hour ceiling.

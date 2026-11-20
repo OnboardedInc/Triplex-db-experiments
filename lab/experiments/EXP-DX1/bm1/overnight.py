@@ -465,6 +465,11 @@ def bind(r):
         assert (item,attempt)==(21,2) and retained["source"]==r["source"]
         assert re.fullmatch(r"tx2-dxt1-bm1-n19probe-[a-f0-9]{8}-growth1",retained["slot"])
         assert re.fullmatch("[a-f0-9]{64}",retained["sha256"])
+    if "retainedNotice" in r:
+        retained=r["retainedNotice"]
+        assert (item,attempt)==(32,2) and retained["source"]==r["source"]==NOTICE_SOURCE
+        for key in ("requestSha256","preflightSha256","reportSha256"):
+            assert re.fullmatch("[a-f0-9]{64}",retained[key])
     return r
 
 
@@ -474,8 +479,9 @@ def make(item, attempt, start, deadline):
     directory.mkdir(parents=True,exist_ok=True)
     request=directory/"request.json"
     if request.exists(): return bind(get(request))
-    old=directory.parent/"retained-control.json"
-    retained=get(old) if (item,attempt)==(21,2) and old.is_file() else None
+    reuse={21:"retained-control.json",32:"retained-notice.json"}
+    old=directory.parent/reuse[item] if item in reuse and attempt==2 else None
+    retained=get(old) if old and old.is_file() else None
     prior=Path("/var/tmp/triplex-w1/grpw1a/source")
     if item==1 and attempt==1 and prior.is_file():
         head=prior.read_text().strip()
@@ -494,6 +500,8 @@ def make(item, attempt, start, deadline):
             **{i:"| Sealed "+s+"," for i,s in SCALE_PROBES.items()}}.get(item,f"| {item} ·")
     if (item,attempt)==(28,2):
         token="| RD1 mounted retry,"
+    if (item,attempt)==(32,2):
+        token="| STG1 retained preflight,"
     forecast=next(line for line in (HERE/"PREDICTIONS.md").read_text().splitlines() if line.startswith(token))
     r=dict(item=item,attempt=attempt,tag=tag,source=head,repo=str(repo),unit=unit,root=str(root),
            directory=str(directory),start=start,deadline=deadline,prediction=forecast,requested=stamp())
@@ -510,7 +518,7 @@ def make(item, attempt, start, deadline):
     if item in SCALE_PROBES:
         r["stableEndpoints"]=True
     if retained:
-        r["retainedControl"]=retained
+        r[{21:"retainedControl",32:"retainedNotice"}[item]]=retained
     put(request,bind(r))
     return r
 
@@ -654,7 +662,8 @@ def worker(r):
                 str(uuid.uuid4()),str(rate),"deep","one-host",cwd=repo,env=env)
             put(root/f"reading-{rate}.json",split_run(r,store,rate))
     elif r["item"]==32:
-        run(*heavy,"--import","tsx",HERE/"probes/notify_gate.mjs","run",tag,source,cwd=repo,env=env,timeout=1300)
+        if not r.get("retainedNotice"):
+            run(*heavy,"--import","tsx",HERE/"probes/notify_gate.mjs","run",tag,source,cwd=repo,env=env,timeout=1300)
         put(root/"preflight-reading.json",checked_notice(r,small=True))
         assert r["deadline"]-time.time()>=3600
         run(node,"--import","tsx",EXP/"notify1/bench.ts","launch",tag,"copied","16","0","4",cwd=repo,env=env,timeout=90)
@@ -716,6 +725,16 @@ def notice_dir(r, *, small=False):
 
 
 def checked_notice(r, *, small=False):
+    if small and (retained:=r.get("retainedNotice")):
+        # [DX-BM1] Why: the first native copied proof succeeded and remains in its original source-bound slot.
+        # Rejected: relabeling those observations as fresh or rerunning them after a collector format error.
+        old=NIGHT/"i32/1/request.json"
+        assert retained["requestSha256"]==digest(old)
+        prior=bind(get(old))
+        assert (prior["source"],prior["item"],prior["attempt"])==(r["source"],32,1)
+        row=checked_notice(prior,small=True)
+        assert all(row[k]==retained[k] for k in ("preflightSha256","reportSha256"))
+        return row
     folder=notice_dir(r,small=small)
     slot="tx2-dxscale1-"+folder.name
     row=notice_reading(folder,r["source"],slot,1000 if small else 100000,r["start"])
@@ -1354,15 +1373,23 @@ def setup_repair(item):
     # Rejected: resetting the clock for every partial run or waiting until its first evidence is lost.
     folder=NIGHT/f"i{item}"
     end=folder/"outcome.json"
-    if item not in (21,22,24,28) or not end.is_file() or (folder/"original-setup-outcome.json").exists():
+    if item not in (21,22,24,28,32) or not end.is_file() or (folder/"original-setup-outcome.json").exists():
         return None
-    state={21:"uncollected",22:"preflight-refused",24:"partial",28:"preflight-refused"}[item]
+    state={21:"uncollected",22:"preflight-refused",24:"partial",28:"preflight-refused",32:"preflight-refused"}[item]
     row=get(end)
     if (row.get("attempt"),row.get("state"))!=(1,state):
         return None
     prior=bind(get(folder/"1/request.json"))
     root=Path(prior["root"])
     worker=folder/"1/worker.log"
+    if item==32:
+        small=notice_dir(prior,small=True)
+        if (not complete_output(prior) and (small/"producer-preflight.json").is_file() and
+                str(small/"notice-preflight/archive.json") in worker.read_text(errors="replace")):
+            row=checked_notice(prior,small=True)
+            return {**{k:row[k] for k in ("source","preflightSha256","reportSha256")},
+                    "requestSha256":digest(folder/"1/request.json")}
+        return None
     if item==28:
         base=root/"evidence/tx2-dxt1-rd1p3-rdpairn20-small"
         zero=base.with_name(base.name+"-zero")/"driver/ns-report.json"
@@ -1416,6 +1443,11 @@ def one(item, attempts=(1,2)):
         start=dt.datetime.fromisoformat("2026-11-20T00:12:21+00:00").timestamp() if item==1 else time.time()
         put(timing,{"start":start})
     limit=start+ITEMS[item][3]*3600
+    if item==32 and (folder/"retained-notice.json").is_file():
+        original=get(folder/"original-setup-timing.json")["start"]
+        end_of_preflight=dt.datetime.fromisoformat(get(folder/"original-setup-outcome.json")["ended"]).timestamp()
+        assert 0<end_of_preflight-original<ITEMS[item][3]*3600
+        limit-=end_of_preflight-original
     entry=dict(item=item,state="incomplete",detail="Item deadline elapsed before an admission",ended=stamp())
     for attempt in attempts:
         if time.time()>=limit-90:break
@@ -1543,7 +1575,7 @@ def main():
     retry_restores=mode=="run-after-seed" and os.environ.get("DX_BM1_RESUME_RESTORES")=="1"
     repaired={}
     if retry_restores:
-        for item in (21,22,24,28):
+        for item in (21,22,24,28,32):
             if item not in scheduled:
                 continue
             try:
@@ -1585,7 +1617,8 @@ def main():
             saved_setup=folder/"original-setup-outcome.json"
             if item in repaired and end.is_file():
                 if repaired[item]:
-                    put(folder/"retained-control.json",repaired[item])
+                    retained_name={21:"retained-control.json",32:"retained-notice.json"}[item]
+                    put(folder/retained_name,repaired[item])
                 end.rename(saved_setup)
             if saved_setup.is_file() and not (folder/"original-setup-timing.json").exists():
                 (folder/"timing.json").rename(folder/"original-setup-timing.json")
