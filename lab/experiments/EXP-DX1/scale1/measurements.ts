@@ -1,3 +1,11 @@
+import {
+  BOUNDED_READER_PLAN,
+  READER_SECONDS,
+  READER_COUNT,
+  RECORD_EVERY,
+  boundedPhases,
+  readerWindow,
+} from "./bounded-readers.ts";
 import { liveProfile, livePeakWindow } from "./deep-live.ts";
 import assert from "node:assert/strict";
 import fs from "node:fs";
@@ -100,34 +108,85 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
   assert.equal(report.verdictClock, VERDICT_CLOCK);
   assert.equal(
     report.verdictPlanId,
-    id.tenant
-      ? id.tenant.live
-        ? liveProfile + "/" + id.tenant.live
-        : tenantTraceId + "/" + id.tenant.study
-      : id.arm === "activation"
-        ? "deep-activation/1"
-        : small
-          ? smallId
-          : mix
-            ? interferenceId
-            : V3_PLAN_ID,
+    id.bounded
+      ? BOUNDED_READER_PLAN
+      : id.tenant
+        ? id.tenant.live
+          ? liveProfile + "/" + id.tenant.live
+          : tenantTraceId + "/" + id.tenant.study
+        : id.arm === "activation"
+          ? "deep-activation/1"
+          : small
+            ? smallId
+            : mix
+              ? interferenceId
+              : V3_PLAN_ID,
   );
   for (const [file, hash] of Object.entries(report.benchSources))
     assert.equal(await fileHash(file), hash, `Harness source mismatch ${file}`);
   const hashes = Object.fromEntries(
     await Promise.all(Object.entries(files).map(async ([k, f]) => [k, await fileHash(f)])),
   );
-  const duration = id.tenant
-    ? tenantWindows(id.tenant, id.arm).at(-1)!.pattern === "activation"
-      ? report.writer.offeredUntilTraceS
-      : (report.phases.at(-1).end - commonStart) / 1000
-    : id.arm === "activation"
-      ? report.writer.offeredUntilTraceS
-      : small
-        ? smallSeconds
-        : mix
-          ? interferenceSeconds
-          : V3_OFFER_SECONDS;
+  if (id.bounded) {
+    const check = report.boundedReaders,
+      w = readerWindow(id),
+      actual = check?.window,
+      seal = check?.evidence;
+    assert.equal(check?.goodput, "unmeasured");
+    if (w) {
+      assert(
+        actual &&
+          actual.start === commonStart + 1000 * w.from &&
+          actual.end === commonStart + 1000 * w.to &&
+          Number.isFinite(actual.activeAt) &&
+          Number.isFinite(actual.stoppedAt) &&
+          actual.stoppedAt >= actual.end &&
+          actual.activeAt < actual.end &&
+          actual.readers === READER_COUNT &&
+          actual.workers === 2 &&
+          actual.sampleEvery === RECORD_EVERY,
+      );
+      assert(report.observationAccounting.completed > 0);
+    } else assert.equal(actual, null);
+    const file = path.join(dir, "bounded-read-samples.jsonl");
+    assert(
+      seal?.judged === report.correctness.reads &&
+        seal?.judged === report.observationAccounting.judged &&
+        seal.regular === Math.ceil(seal.judged / RECORD_EVERY) &&
+        seal.errors === report.correctness.errors &&
+        seal.mismatches === report.correctness.violations &&
+        fs.statSync(file).size === seal.bytes,
+    );
+    assert.equal(await fileHash(file), seal.sha256);
+    const fd = fs.openSync(file, "r");
+    try {
+      const header = Buffer.alloc(4096),
+        n = fs.readSync(fd, header, 0, header.length, 0);
+      const first = JSON.parse(header.subarray(0, n).toString().split("\n")[0]!);
+      assert.deepEqual(first, {
+        format: "triplex.bounded-observations/1",
+        identity: id,
+        every: RECORD_EVERY,
+      });
+    } finally {
+      fs.closeSync(fd);
+    }
+    hashes["bounded-read-samples.jsonl"] = seal.sha256;
+  }
+  const duration =
+    id.bounded && (id.arm === "reader" || id.arm === "zero")
+      ? READER_SECONDS
+      : id.tenant
+        ? tenantWindows(id.tenant, id.arm).at(-1)!.pattern === "activation"
+          ? report.writer.offeredUntilTraceS
+          : (report.phases.at(-1).end - commonStart) / 1000
+        : id.arm === "activation"
+          ? report.writer.offeredUntilTraceS
+          : small
+            ? smallSeconds
+            : mix
+              ? interferenceSeconds
+              : V3_OFFER_SECONDS;
   assert(Number.isFinite(duration) && duration > 0);
   const expected = new Map(
     plan.events.filter((e) => e.atMs < duration * 1000).map((e) => [`${e.seq}/${e.resend}`, e]),
@@ -139,14 +198,20 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     invalid: string[] =
       duration > 7200 ? ["Activation exceeded the frozen 7,200-second live traffic horizon"] : [];
   const mixPhases = id.tenant
-    ? tenantPhases(id.tenant, id.arm)
+    ? id.bounded
+      ? (boundedPhases(id) as ReturnType<typeof tenantPhases>)
+      : tenantPhases(id.tenant, id.arm)
     : small
       ? smallPhases(id.account)
       : mix
         ? interferencePhases(id.account)
         : [];
   if (id.tenant) {
-    for (const [i, p] of tenantWindows(id.tenant, id.arm).entries()) {
+    const windowsForReadback =
+      id.bounded && (id.arm === "reader" || id.arm === "zero")
+        ? [{ name: mixPhases[0]!.name, from: 0, seconds: READER_SECONDS, pattern: "steady" }]
+        : tenantWindows(id.tenant, id.arm);
+    for (const [i, p] of windowsForReadback.entries()) {
       const x = report.phases[i];
       assert(
         x.name === p.name &&
@@ -189,6 +254,9 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
       : undefined;
   const burstFrom = allBurst ? allBurst.start + report.config.settleS * 1000 : 0;
   const burstWrites: any[] = [];
+  const expiredTasks = new Map<string, number>();
+  let expiredDependents = 0,
+    expiredResends = 0;
   let primaries = 0,
     committed = 0,
     expired = 0,
@@ -244,7 +312,25 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
           w.startedAt - w.scheduledAt > report.config.writerDeadlineMs,
       );
     }
+    if (id.bounded && id.tenant?.live && !w.resend) {
+      const e = match as import("./tenants.ts").TenantEvent;
+      const key = e.tenant + "/" + e.localSubject + "/" + e.deep.task;
+      if (w.expired && e.kind === "person" && e.deep.fresh) expiredTasks.set(key, e.seq);
+      if (w.outcome === "expired-dependency") {
+        assert(
+          e.kind === "person" &&
+            !e.deep.fresh &&
+            !w.expired &&
+            w.attempts === 0 &&
+            !w.position &&
+            expiredTasks.has(key) &&
+            w.creationSeq === expiredTasks.get(key),
+        );
+        expiredDependents++;
+      }
+    }
     if (w.resend) {
+      expiredResends += Number(w.expired);
       resends++;
       continue;
     }
@@ -307,10 +393,12 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     report.receiptCapture.matched !== committed
   )
     invalid.push("Worker receipt observations differ from committed primaries");
-  if (expected.size || primaries !== committed || expired)
-    invalid.push(
-      `${expected.size} missing offers, ${primaries - committed} unsuccessful primaries, ${expired} expired`,
-    );
+  const offerLoss =
+    `${expected.size} missing offers, ${primaries - committed} unsuccessful primaries, ${expired} expired` +
+    (expiredDependents ? `, ${expiredDependents} blocked by expired creation` : "");
+  if (expected.size || primaries !== committed || expired) invalid.push(offerLoss);
+  const onlyExpiration =
+    expected.size === 0 && expired > 0 && primaries === committed + expired + expiredDependents;
   if (
     exit !== 0 ||
     report.status !== "DONE" ||
@@ -637,6 +725,10 @@ export async function readScope(dir: string, id: DeepIdentity, commonStart: numb
     committed,
     resends,
     expired,
+    expiredDependents,
+    expiredResends,
+    offerLoss,
+    onlyExpiration,
     missing: expected.size,
     invalid,
     values,
@@ -825,6 +917,8 @@ export function cohort(
       primaries: s.primaries,
       resends: s.resends,
       expired: s.expired,
+      expiredDependents: s.expiredDependents,
+      expiredResends: s.expiredResends,
       missing: s.missing,
       correctness: s.report.correctness,
       oracle: s.report.oracle,
@@ -856,24 +950,12 @@ export function cohort(
               first.id.tenant.live
                 ? scopes
                     .flatMap((s) =>
-                      s.invalid.filter(
-                        (r) =>
-                          !(
-                            s.missing === 0 &&
-                            s.expired > 0 &&
-                            s.primaries === s.committed + s.expired &&
-                            r ===
-                              "0 missing offers, " +
-                                s.expired +
-                                " unsuccessful primaries, " +
-                                s.expired +
-                                " expired"
-                          ),
-                      ),
+                      s.invalid.filter((r) => !(s.onlyExpiration && r === s.offerLoss)),
                     )
                     .join(", ") || null
                 : reason,
               first.id.tenant.live,
+              Boolean(first.id.bounded),
             ),
             layout: first.id.tenant.topology,
             sourceCuts: scopes.map((s) => ({

@@ -281,7 +281,8 @@ trace_env=(-e "TRIPLEX_TRACE_LEVEL=$trace_level" -e "TRIPLEX_TRACE_RUN=$prefix" 
 # Rejected: changing the default image or enabling diagnostics for earlier studies.
 if [[ -n ${DX_GROUP_COMMIT:-} ]]; then
   [[ $DX_GROUP_COMMIT =~ ^[01]$ && ${DX_GROUP_QUEUE_CLOCK:-0} =~ ^[01]$ ]] || exit 2
-  trace_env+=(-e "TX2_GROUP_COMMIT=$DX_GROUP_COMMIT" -e "TX2_GROUP_QUEUE_CLOCK=${DX_GROUP_QUEUE_CLOCK:-0}")
+  [[ ${DX_LIVE_PRIORITY:-0} =~ ^[01]$ ]] || exit 2
+  trace_env+=(-e "TX2_GROUP_COMMIT=$DX_GROUP_COMMIT" -e "TX2_GROUP_QUEUE_CLOCK=${DX_GROUP_QUEUE_CLOCK:-0}" -e "TX2_LIVE_PRIORITY=${DX_LIVE_PRIORITY:-0}")
 fi
 trace_env+=(-e "TRIPLEX_NATIVE_SETTINGS_READBACK=$native_readback")
 trace_mount=(-v "$attempt/trace/raw:/trace")

@@ -92,6 +92,7 @@ export class DeepSeedWitness {
 import { tenantAccounts, type TenantSpec } from "../../experiments/EXP-DX1/scale1/tenants.ts";
 export interface DeepIdentity {
   tenant?: TenantSpec;
+  bounded?: true;
   nonce: string;
   source: string;
   slot: string;

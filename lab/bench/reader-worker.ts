@@ -270,7 +270,7 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       while (!stopping && id < wanted && acked.length > 0) {
         await observationCredit();
         if (replica && cfg.replicaYield !== "loop") await turn.enter();
-        if (stopping || id >= wanted) break;
+        if (stopping || id >= wanted || boundedUntil !== undefined && nowAbs() >= boundedUntil) break;
         const readPhase = phase, seat=tenantSeats[id];
         let candidates = seat ? tenantSamples.get(seat.key) : cfg.sampleSubjects;
         if (!candidates) { candidates=cfg.sampleSubjects.filter(s=>within(s,seat!)); tenantSamples.set(seat!.key,candidates); }
@@ -310,6 +310,7 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
   }
 
   let interReadMs=0;
+  let boundedUntil: number | undefined;
   const loops = new Set<number>();
   function setLevel(n: number) {
     wanted = n;
@@ -360,6 +361,7 @@ export async function startReader(port: any, cfg: ReaderConfig, shared?: SharedR
       phase = msg.phase;
       tenantSeats=msg.tenants??[];
       interReadMs=msg.interReadMs??0;
+      boundedUntil=msg.boundedUntil;
       mode = msg.mode ?? "mixed";
       setLevel(msg.readers);
     } else if (msg.type === "basis" || msg.type === "basis-delta") {

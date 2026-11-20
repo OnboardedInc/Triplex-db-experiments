@@ -14,6 +14,13 @@ export interface ObservationRecords extends Iterable<ReadRecord> {
 const WIDTH = R.waitedMs + 1;
 const CHUNK = 4096;
 const text = new Set<number>([R.digest, R.error, R.route, R.language]);
+type InMemoryRecords = {
+  count: number;
+  chunks: ArrayBuffer[];
+  strings: (string | null)[];
+  phases: Map<number, Set<number>>;
+};
+
 // [DX-R3] Why: retain every observation losslessly without millions of boxed JS tuple fields.
 // Rejected: sampling reads, online judging before late ACKs, or retaining duplicate digest/route strings.
 export class ReadRecords implements ObservationRecords {
@@ -27,12 +34,20 @@ export class ReadRecords implements ObservationRecords {
   private flushedStrings = 0;
   private phases = new Map<number, Set<number>>();
   private readonly budget: SpillBudget | undefined;
+  private readonly memoryLimit: number | undefined;
   readonly directory: string | undefined;
   // [DX-R3] Why: full ladders retain tens of millions of exact observations until all late ACKs settle.
   // Rejected: sampling, online final judgments, or keeping the whole numeric log in client memory.
-  constructor(directory?: string, resume = false, budget?: SpillBudget) {
-    if (resume && budget) throw Error("A resumed observation log is read-only for budget accounting");
+  constructor(directory?: string, resume = false, budget?: SpillBudget, memoryLimit?: number) {
+    if (resume && budget)
+      throw Error("A resumed observation log is read-only for budget accounting");
     this.budget = budget;
+    this.memoryLimit = memoryLimit;
+    if (
+      memoryLimit !== undefined &&
+      (directory || !Number.isSafeInteger(memoryLimit) || memoryLimit < CHUNK * WIDTH * 8)
+    )
+      throw Error("Invalid in-memory observation allocation");
     this.directory = directory;
     if (!directory) return;
     if (!resume) fs.mkdirSync(directory);
@@ -42,7 +57,9 @@ export class ReadRecords implements ObservationRecords {
         throw Error("Invalid observation spill state");
       this.count = state.count;
       this.flushedStrings = state.flushedStrings;
-      this.phases = new Map((state.phases ?? []).map(([phase, chunks]: [number, number[]]) => [phase, new Set(chunks)]));
+      this.phases = new Map(
+        (state.phases ?? []).map(([phase, chunks]: [number, number[]]) => [phase, new Set(chunks)]),
+      );
       if (this.count) {
         this.activeChunk = Math.floor((this.count - 1) / CHUNK);
         const loaded = this.load(this.activeChunk);
@@ -63,8 +80,12 @@ export class ReadRecords implements ObservationRecords {
         if (!n) throw Error("Truncated observation spill");
         offset += n;
       }
-    } finally { fs.closeSync(fd); }
-    const strings = JSON.parse(fs.readFileSync(path.join(this.directory!, `${chunk}.json`), "utf8"));
+    } finally {
+      fs.closeSync(fd);
+    }
+    const strings = JSON.parse(
+      fs.readFileSync(path.join(this.directory!, `${chunk}.json`), "utf8"),
+    );
     return { chunk, data, strings };
   }
   private flushChunk() {
@@ -76,7 +97,10 @@ export class ReadRecords implements ObservationRecords {
       [`${this.activeChunk}.json`, JSON.stringify(this.strings)],
     ] as const) {
       const file = path.join(this.directory, name);
-      if (this.budget) { this.budget.replace(file, bytes); continue; }
+      if (this.budget) {
+        this.budget.replace(file, bytes);
+        continue;
+      }
       fs.writeFileSync(file + ".tmp", bytes);
       fs.renameSync(file + ".tmp", file);
     }
@@ -85,8 +109,16 @@ export class ReadRecords implements ObservationRecords {
     if (!this.directory) return;
     this.flushChunk();
     const state = path.join(this.directory, "state.json");
-    const bytes = JSON.stringify({ width: WIDTH, count: this.count, flushedStrings: this.flushedStrings, phases: [...this.phases].map(([phase, chunks]) => [phase, [...chunks]]) });
-    if (this.budget) { this.budget.replace(state, bytes); return; }
+    const bytes = JSON.stringify({
+      width: WIDTH,
+      count: this.count,
+      flushedStrings: this.flushedStrings,
+      phases: [...this.phases].map(([phase, chunks]) => [phase, [...chunks]]),
+    });
+    if (this.budget) {
+      this.budget.replace(state, bytes);
+      return;
+    }
     fs.writeFileSync(state + ".tmp", bytes);
     fs.renameSync(state + ".tmp", state);
   }
@@ -96,7 +128,9 @@ export class ReadRecords implements ObservationRecords {
     if (this.directory) fs.rmSync(this.directory, { recursive: true });
   }
   get residentBytes() {
-    return this.directory ? (this.active?.byteLength ?? 0) + (this.loaded?.data.byteLength ?? 0) : this.encodedBytes;
+    return this.directory
+      ? (this.active?.byteLength ?? 0) + (this.loaded?.data.byteLength ?? 0)
+      : this.encodedBytes;
   }
   get length() {
     return this.count;
@@ -134,7 +168,14 @@ export class ReadRecords implements ObservationRecords {
           this.active = new Float64Array(CHUNK * WIDTH);
         }
         data = this.active!;
-      } else data = this.chunks[chunk] ?? (this.chunks[chunk] = new Float64Array(CHUNK * WIDTH));
+      } else {
+        if (!this.chunks[chunk]) {
+          if (this.memoryLimit !== undefined && (chunk + 1) * CHUNK * WIDTH * 8 > this.memoryLimit)
+            throw Error("In-memory read observations reached their byte ceiling");
+          this.chunks[chunk] = new Float64Array(CHUNK * WIDTH);
+        }
+        data = this.chunks[chunk]!;
+      }
       const phase = value[R.phase];
       (this.phases.get(phase) ?? this.phases.set(phase, new Set()).get(phase)!).add(chunk);
       for (let col = 0; col < WIDTH; col++)
@@ -144,9 +185,35 @@ export class ReadRecords implements ObservationRecords {
     }
     return this.count;
   }
+  // [DX-SCALE1] Why: transfer every ten-minute observation to the final model without cloning the numeric buffers. Rejected: writing unchecked reads to disk or sampling before the comparison.
+  transfer(): InMemoryRecords {
+    if (this.directory) throw Error("Cannot transfer persistent records");
+    return {
+      count: this.count,
+      chunks: this.chunks.map((c) => c.buffer as ArrayBuffer),
+      strings: this.strings,
+      phases: this.phases,
+    };
+  }
+  static fromTransfer(received: InMemoryRecords, expected: number): ReadRecords {
+    if (
+      received.count !== expected ||
+      received.chunks.length !== Math.ceil(expected / CHUNK) ||
+      received.chunks.some((c) => !(c instanceof ArrayBuffer) || c.byteLength !== CHUNK * WIDTH * 8)
+    )
+      throw Error("Incomplete in-memory observation transfer");
+    const records = new ReadRecords();
+    records.count = expected;
+    records.chunks = received.chunks.map((c) => new Float64Array(c));
+    records.strings = received.strings;
+    records.phases = received.phases;
+    return records;
+  }
   private row(index: number): ReadRecord {
-    const chunk = Math.floor(index / CHUNK), offset = (index % CHUNK) * WIDTH;
-    let data: Float64Array, strings = this.strings;
+    const chunk = Math.floor(index / CHUNK),
+      offset = (index % CHUNK) * WIDTH;
+    let data: Float64Array,
+      strings = this.strings;
     if (!this.directory) data = this.chunks[chunk]!;
     else if (chunk === this.activeChunk) data = this.active!;
     else {
@@ -169,7 +236,12 @@ export class ReadRecords implements ObservationRecords {
   }
   forPhase(phase: number, fn: (record: ReadRecord, index: number) => void): void {
     const chunks = this.phases.get(phase);
-    if (!chunks) { this.forEach((r, k) => { if (r[R.phase] === phase) fn(r, k); }); return; }
+    if (!chunks) {
+      this.forEach((r, k) => {
+        if (r[R.phase] === phase) fn(r, k);
+      });
+      return;
+    }
     for (const chunk of chunks)
       for (let k = chunk * CHUNK, end = Math.min(this.count, (chunk + 1) * CHUNK); k < end; k++) {
         const row = this.row(k);

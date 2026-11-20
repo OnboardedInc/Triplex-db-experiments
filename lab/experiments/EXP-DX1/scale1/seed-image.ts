@@ -49,16 +49,17 @@ async function archiveStream(child: ReturnType<typeof spawn>, input: Readable, o
 export function checkImage(s: Seal, dest: DeepIdentity) {
   requireIdentity(dest);
   requireIdentity(s.identity);
+  const original = s.identity.tenant,
+    target = dest.tenant;
+  assert(original?.topology === "pooled" && target?.topology === "pooled");
+  assert(original.study === target.study && original.physical === target.physical);
   assert(
-    s.identity.tenant?.topology === "pooled" &&
-      ((s.identity.tenant.study === "million" && s.identity.arm === "zero") ||
-        (s.identity.tenant.study === "interference" && s.identity.arm === "seed")),
+    (original.study === "million" && ["zero", "seed"].includes(s.identity.arm)) ||
+      (original.study === "interference" && s.identity.arm === "seed"),
   );
-  assert.deepEqual(dest.tenant, s.identity.tenant);
-  assert(
-    dest.source === s.identity.source &&
-      s.scope === tenantScope(s.identity.tenant, s.identity.nonce),
-  );
+  // [DX-SCALE1] Why: the current runtime replays every original seed command and checks its receipt against the unchanged population digest. Rejected: seeding every writer treatment or trusting a dump from a different population.
+  assert(dest.source === s.identity.source || (dest.bounded && s.identity.arm === "seed"));
+  assert.equal(s.scope, tenantScope(original, s.identity.nonce));
   assert.equal(s.runTag, "deep-" + s.identity.nonce + "-s0");
   assert.equal(s.seed.people, dest.people);
   assert(
@@ -109,7 +110,8 @@ export async function restoreSeed(
   engines: Record<string, { id: string; address: string }>,
 ) {
   assert(
-    id.slot === "tx2-dxscale1-" + path.basename(dir) && ["reader", "activation"].includes(id.arm),
+    id.slot === "tx2-dxscale1-" + path.basename(dir) &&
+      ["zero", "reader", "activation", "interference"].includes(id.arm),
   );
   const parent = path.dirname(dir),
     source = path.join(parent, target);

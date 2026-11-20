@@ -1,3 +1,4 @@
+import { READER_CORES } from "./bounded-readers.ts";
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
@@ -404,6 +405,8 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   const dir = path.join(root, tag),
     attempt = get(path.join(dir, "attempt.json"));
   const spec = campaignItem(item, attempt.layout);
+  const cpus = attempt.bounded ? { ...planCpus, readers: READER_CORES } : planCpus;
+  assert.deepEqual(attempt.cpus, cpus);
   assert.deepEqual(attempt.spec, spec);
   const small = mode === "small",
     smallSeparate = small && attempt.layout !== "pooled";
@@ -423,6 +426,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   const env = {
     ...process.env,
     DX_GROUP_COMMIT: attempt.groupControl ? "1" : "0",
+    DX_LIVE_PRIORITY: attempt.bounded && attempt.groupControl ? "1" : "0",
     DX_GROUP_QUEUE_CLOCK: "0",
     DX_BARE_METAL: "1",
     DX_BARE_METAL_ROOT: dir,
@@ -472,13 +476,14 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     { env, cwd: repo, stdio: "inherit", timeout: 480000 },
   );
   const engines = placement(prefix);
-  if (item === 3 && attempt.layout === "pooled") {
+  if ([3, 5].includes(item) && attempt.layout === "pooled") {
     const expected = Number(Boolean(attempt.groupControl));
     const actual = JSON.parse(docker("inspect", engines["gw-w"].id))[0];
     assert(
       actual.Id === engines["gw-w"].id &&
         actual.Config.Env.includes("TX2_GROUP_COMMIT=" + expected) &&
-        actual.Config.Env.includes("TX2_GROUP_QUEUE_CLOCK=0"),
+        actual.Config.Env.includes("TX2_GROUP_QUEUE_CLOCK=0") &&
+        actual.Config.Env.includes("TX2_LIVE_PRIORITY=" + env.DX_LIVE_PRIORITY),
     );
     write(path.join(dir, "group-settings.json"), {
       source,
@@ -502,7 +507,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   write(path.join(dir, "disk-before.json"), before);
   const binding = { source, slot: prefix, nonce: attempt.nonce };
   const imageTrial = attempt.layout === "pooled" && item === 5;
-  const restoring = imageTrial && !!attempt.seedImageTag;
+  const restoring = !!attempt.seedImageTag;
   if (spec.people * spec.scopes >= 100000) {
     status(dir, "checking 1000 subjects before the large seed");
     try {
@@ -538,7 +543,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "taskset",
       [
         "-c",
-        [planCpus.senders, planCpus.readers].join(","),
+        [cpus.senders, cpus.readers].join(","),
         process.execPath,
         "--experimental-strip-types",
         "lab/experiments/EXP-DX1/actv-lazy/bench.ts",
@@ -622,9 +627,15 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       account: 0,
       people: spec.people,
       arm: mode,
-      tenant: { study: "million", topology: "pooled", physical: 0 },
+      tenant: {
+        study: spec.study!,
+        topology: "pooled",
+        physical: 0,
+        ...(attempt.live ? { live: attempt.live } : {}),
+      },
+      ...(attempt.bounded ? { bounded: true as const } : {}),
     };
-    status(dir, "restoring the verified million-person seed", { tag: attempt.seedImageTag });
+    status(dir, "restoring the verified PostgreSQL seed", { tag: attempt.seedImageTag });
     await restoreSeed(dir, attempt.seedImageTag, dest, engines);
   }
   if (small) {
@@ -661,6 +672,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       : undefined;
     const identity: DeepIdentity = {
       ...(tenant ? { tenant } : {}),
+      ...(attempt.bounded ? { bounded: true as const } : {}),
       account: i,
       people: tenant
         ? tenantAccounts(tenant).reduce((n, a) => n + a.people, 0)
@@ -675,7 +687,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
     write(path.join(out, "identity.json"), identity);
     const args = [
       "-c",
-      [planCpus.senders, planCpus.readers].join(","),
+      [cpus.senders, cpus.readers].join(","),
       process.execPath,
       ...(mode === "activation" || tenant?.study === "interference"
         ? ["--import", path.join(repo, "lab/experiments/EXP-DX1/scale1/evaluator-placement.mjs")]
@@ -712,7 +724,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--read-path",
       "replica",
       "--reader-threads",
-      smallSeparate && i !== 0 ? "1" : "6",
+      attempt.bounded ? "2" : smallSeparate && i !== 0 ? "1" : "6",
       "--seed-batch-facts",
       "2000",
       "--replica-history-mib",
@@ -730,6 +742,10 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       "--receipt-capture",
       mode === "seed" ? "sender" : "replica-worker",
     ];
+    if (attempt.bounded) {
+      args.push("--bounded-readers");
+      if (i !== 0 && mode !== "zero") args.push("--zero-readers");
+    }
     if (restoring) args.push("--verified-seed-image", path.join(dir, "restored-seed.json"));
     if (attempt.live) args.push("--peak-alignment", attempt.live);
     if (tenant) args.push("--tenant-study", tenant.study, "--tenant-topology", tenant.topology);
@@ -767,7 +783,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       heapMiB,
       sharedCgroupBytes: attempt.clientBudget,
       readerWorkers: smallSeparate && i !== 0 ? 1 : 6,
-      cpus: planCpus,
+      cpus,
     });
     const child = spawn("taskset", args, {
       cwd: repo,
@@ -789,8 +805,8 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
         DX_SERVER_RECORD_TIME: "1",
         DX_PUBLICATION_WAIT_MS: "30000",
         DX_STRICT_RECORD_CLOCKS: "1",
-        TRIPLEX_NODE_MAIN_CPUS: planCpus.senders,
-        TRIPLEX_NODE_WORKER_CPUS: planCpus.readers,
+        TRIPLEX_NODE_MAIN_CPUS: cpus.senders,
+        TRIPLEX_NODE_WORKER_CPUS: cpus.readers,
         TRIPLEX_BENCH_SPILL_MAX_BYTES: String(
           Math.floor(i === 0 ? (budget.sentinelSpill ?? budget.spillPer) : budget.spillPer),
         ),
@@ -1007,7 +1023,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   assert(disk, "No completed seed measurement");
   if (mode === "seed") {
     assert(exit.every((e) => e === 0));
-    if (item === 3 && attempt.layout === "pooled") {
+    if ([3, 5].includes(item) && attempt.layout === "pooled") {
       const w = get(path.join(raw[0]!, "seed-observed.json"));
       assert.deepEqual(w.identity, get(path.join(raw[0]!, "identity.json")));
       assert(
@@ -1050,6 +1066,7 @@ async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
       const input = path.join(repo, "runs", "DX-SCALE1", refs, `s${i}`),
         expected = {
           account: i,
+          ...(zero.bounded ? { bounded: true as const } : {}),
           people: spec.people,
           ...(found[i]!.id.tenant ? { tenant: found[i]!.id.tenant } : {}),
           source,
@@ -1431,6 +1448,8 @@ async function main() {
   }
   assert.equal(op, "launch");
   const publication = getopt("publication");
+  const bounded = process.argv.includes("--bounded-readers");
+  assert(!bounded || mode !== "seed");
   if (publication !== undefined)
     assert(
       publication === "lazy" && item === 2 && mode === "activation",
@@ -1557,24 +1576,32 @@ async function main() {
         settings.enabled === false,
     );
   }
-  // [DX-ACT2] Why: a standalone guarded activation can seed its own pooled account scope after preflight. Rejected: borrowing the image of a zero arm from another build.
-  if (
-    item === 5 &&
-    layout === "pooled" &&
-    mode !== "zero" &&
-    mode !== "seed" &&
-    (mode !== "activation" || seedImageTag)
-  ) {
-    assert(seedImageTag && /^[a-z][a-z0-9-]{2,40}$/.test(seedImageTag));
-    const origin = get(path.join(root, seedImageTag, "attempt.json")),
-      seal = get(path.join(root, seedImageTag, "seed-image.json"));
+  if (item === 5 && layout === "pooled" && mode === "reader") assert(seedImageTag);
+  if (seedImageTag) {
     assert(
-      origin.item === 5 &&
-        origin.mode === "zero" &&
+      [3, 5].includes(item) && layout === "pooled" && /^[a-z][a-z0-9-]{2,40}$/.test(seedImageTag),
+    );
+    const originDir = path.join(root, seedImageTag),
+      origin = get(path.join(originDir, "attempt.json"));
+    const seal = get(path.join(originDir, "seed-image.json")),
+      terminal = get(path.join(originDir, "terminal.json"));
+    assert(
+      origin.tag === seedImageTag &&
+        origin.item === item &&
         origin.layout === layout &&
-        origin.source === source &&
+        ((origin.mode === "seed" && bounded) ||
+          (origin.mode === "zero" && origin.source === source)) &&
+        terminal.tag === origin.tag &&
+        terminal.nonce === origin.nonce &&
+        terminal.source === origin.source &&
+        terminal.slot === origin.slot &&
+        terminal.cleanup &&
+        terminal.service === "success" &&
+        seal.identity.source === origin.source &&
         seal.identity.nonce === origin.nonce &&
-        seal.identity.slot === origin.slot,
+        seal.identity.slot === origin.slot &&
+        seal.seed.people === spec.people &&
+        seal.seed.facts === spec.facts,
     );
   }
   const canAttempt = capacity.host.memory > capacity.sharedReserve + 8 * GiB;
@@ -1594,6 +1621,7 @@ async function main() {
     assert.equal(prior.mode, "zero");
     assert.deepEqual(prior.spec, spec);
     assert.equal(prior.source, source);
+    assert.equal(Boolean(prior.bounded), bounded);
     assert(get(path.join(root, baselineTag, "terminal.json")).cleanup);
     assert(fs.existsSync(path.join(root, baselineTag, "summary.json")));
   }
@@ -1631,7 +1659,8 @@ async function main() {
     groupControl,
     ...(live ? { live, profile: "deep-live" } : {}),
     at: Date.now(),
-    cpus: planCpus,
+    cpus: bounded ? { ...planCpus, readers: READER_CORES } : planCpus,
+    ...(bounded ? { bounded: true } : {}),
     topology,
   });
   if (

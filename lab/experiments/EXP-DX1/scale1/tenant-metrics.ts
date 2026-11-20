@@ -138,6 +138,7 @@ export function compareTenants(
   all: readonly Account[],
   invalid: string | null,
   alignment?: PeakAlignment,
+  bounded = false,
 ) {
   assert(data.length);
   const names = data[0]!.windows.map((p) => p.name);
@@ -302,7 +303,7 @@ export function compareTenants(
                 highestLowerObservedWithinBar: null,
                 unjudged: invalid,
               }
-            : liveBoundary(windows),
+            : liveBoundary(windows, bounded),
           ninePeakQuiet: pooledQuietPeaks(windows, invalid),
         }
       : {}),
@@ -341,7 +342,10 @@ export function liveBoundary(
     nominalOfferedPerS?: number;
     ratios: { pass: boolean | null; id: string }[];
   }[],
+  commitOnly = false,
 ) {
+  const relevant = (rs: (typeof windows)[number]["ratios"]) =>
+    commitOnly ? rs.filter((r) => r.id.endsWith("-commit")) : rs;
   const points = windows
     .filter((w) => w.name !== "alone" && w.offered > 0 && w.offeredPerS !== null)
     .map((w) => ({
@@ -352,8 +356,11 @@ export function liveBoundary(
       expired: w.fullExpired ?? w.expired,
       failed: w.failed,
       quiet: w.sentinelRate === 3.5,
-      quietMiss: w.sentinelRate === 3.5 && w.ratios.some((r) => r.pass === false),
-      quietMet: w.sentinelRate === 3.5 && w.ratios.every((r) => r.pass === true),
+      quietMiss: w.sentinelRate === 3.5 && relevant(w.ratios).some((r) => r.pass === false),
+      quietMet:
+        w.sentinelRate === 3.5 &&
+        relevant(w.ratios).some((r) => r.pass === true) &&
+        relevant(w.ratios).every((r) => r.pass === true),
     }))
     .sort((a, b) => a.offeredPerS - b.offeredPerS);
   const first = points.find((p) => p.expired > 0 || p.quietMiss) ?? null;
@@ -361,7 +368,11 @@ export function liveBoundary(
     points
       .filter((p) => p.failed === 0 && p.quietMet && (!first || p.offeredPerS < first.offeredPerS))
       .at(-1) ?? null;
-  return { lowestObservedFailure: first, highestLowerObservedWithinBar: lower };
+  return {
+    lowestObservedFailure: first,
+    firstExpiry: points.find((p) => p.expired > 0) ?? null,
+    highestLowerObservedWithinBar: lower,
+  };
 }
 
 function pooledQuietPeaks(

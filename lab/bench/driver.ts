@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { BoundedReadEvidence } from "../experiments/EXP-DX1/scale1/bounded-read-evidence.ts";
+import { BOUNDED_READER_PLAN, RECORD_EVERY, READER_COUNT, boundedPhases, readerWindow } from "../experiments/EXP-DX1/scale1/bounded-readers.ts";
 import {seedAddress} from "./lib/world.ts";
 import {tenantAccounts, accountOfSubject as tenantOf, tenantQueries, tenantRows, tenantFacts, tenantRung, TenantWriters,type TenantSpec,type TenantEvent} from "../experiments/EXP-DX1/scale1/tenants.ts";
 import {tenantPlan,tenantPhases,tenantWindows,tenantReaders,tenantTraceId} from "../experiments/EXP-DX1/scale1/tenant-traffic.ts";
@@ -151,16 +153,19 @@ const interferenceOnly = deep && flag("deep-interference");
 if (smallOnly && (activationOnly || seedOnly || interferenceOnly || deepSmoke || flag("zero-readers"))) throw Error("Small scope study requires its separate low-rate arm");
 if (interferenceOnly && (activationOnly || seedOnly || deepSmoke || flag("zero-readers") || rung !== "deep-10k")) throw Error("Interference requires the complete deep-10k cohort");
 if ((activationOnly || seedOnly) && (flag("zero-readers") || activationOnly && seedOnly)) throw Error("Choose one deep arm");
-const fullLength = profile === "v3" || deep && !deepSmoke && !activationOnly && !seedOnly && !interferenceOnly && !smallOnly && !tenantSpec;
+const fullLength = profile === "v3" || !flag("bounded-readers") && deep && !deepSmoke && !activationOnly && !seedOnly && !interferenceOnly && !smallOnly && !tenantSpec;
 if (!deep && !(profile in PROFILES)) throw new Error(`--profile must be one of ${Object.keys(PROFILES).join("|")}`);
 const rungSubjects = devSubjects ? Number(devSubjects) : availableRungs[rung]!;
+const bounded = deep && flag("bounded-readers");
 const deepAccount = Number(opt("deep-account", "0"));
-const deepId = deep ? { ...(tenantSpec?{tenant:tenantSpec}:{}), source: process.env.TRIPLEX_TRACE_SOURCE!, slot: process.env.TRIPLEX_TRACE_SLOT!, nonce: opt("deep-nonce")!, people: rungSubjects, account: deepAccount, arm: seedOnly ? "seed" : tenantSpec?.study==="small" ? "small" : tenantSpec && ["smoke","interference"].includes(tenantSpec.study) ? "interference" : smallOnly ? "small" : interferenceOnly ? "interference" : activationOnly ? "activation" : flag("zero-readers") ? "zero" : "reader" } satisfies DeepIdentity : undefined;
+const deepId = deep ? { ...(bounded ? {bounded:true as const}:{}), ...(tenantSpec?{tenant:tenantSpec}:{}), source: process.env.TRIPLEX_TRACE_SOURCE!, slot: process.env.TRIPLEX_TRACE_SLOT!, nonce: opt("deep-nonce")!, people: rungSubjects, account: deepAccount, arm: seedOnly ? "seed" : tenantSpec?.study==="small" ? "small" : tenantSpec && ["smoke","interference"].includes(tenantSpec.study) ? "interference" : smallOnly ? "small" : interferenceOnly ? "interference" : activationOnly ? "activation" : flag("zero-readers") ? "zero" : "reader" } satisfies DeepIdentity : undefined;
 if (deepId) {
   requireIdentity(deepId);
   if (!opt("deep-barrier") || devSubjects || lane !== "datomic" || opt("seed-manifest") || opt("round-plan") || opt("idle-gaps-ms") || opt("oracle-root") === undefined || opt("seed", deepSeed(deepAccount)) !== deepSeed(deepAccount)) throw Error("Deep requires its named Datomic rung, independent oracle, account seed, and start barrier");
 }
 if(smallOnly) assert.equal(rungSubjects,smallPeople(deepAccount));
+const boundedWindow = deepId && readerWindow(deepId);
+if (bounded) assert(deepId && deepId.arm !== "seed" && opt("read-path") === "replica" && opt("reader-threads") === "2");
 const plannedTenants=tenantSpec&&deepId?tenantPlan(tenantSpec,deepId.arm):undefined;
 const tenantWriters=plannedTenants ? new TenantWriters(plannedTenants.accounts,plannedTenants.events,deepLive) : undefined;
 const deepPlan = plannedTenants ?? (smallOnly ? smallTrace(deepAccount) : interferenceOnly ? interferenceTrace(deepAccount) : deep ? frozenDeep(deepAccount, rungSubjects) : undefined);
@@ -316,7 +321,7 @@ const bulkManifest = config.seedManifest ? JSON.parse(fs.readFileSync(path.resol
 if (bulkManifest && (bulkManifest.subjects !== rungSubjects || bulkManifest.lane !== lane || bulkManifest.seed !== config.seed))
   throw new Error(`--seed-manifest is for ${bulkManifest.lane}/${bulkManifest.subjects} subjects/seed ${bulkManifest.seed}, not ${lane}/${rungSubjects}/${config.seed}`);
 const restoredSeed=opt("verified-seed-image")?JSON.parse(fs.readFileSync(opt("verified-seed-image")!,"utf8")):undefined;
-if(restoredSeed){assert(deepId && ["reader","activation"].includes(deepId.arm));assert.deepEqual(restoredSeed.identity,deepId);checkImage(restoredSeed.origin,deepId);}
+if(restoredSeed){assert(deepId && ["zero","reader","activation","interference"].includes(deepId.arm));assert.deepEqual(restoredSeed.identity,deepId);checkImage(restoredSeed.origin,deepId);}
 const scopeName = restoredSeed?.origin.scope ?? (bulkManifest ? bulkManifest.scope : `ns-${lane}-${config.rung.replace(/[^a-z0-9]/gi, "")}-${runTag}`);
 const now = () => performance.timeOrigin + performance.now();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -327,7 +332,7 @@ const log = (line: string) => {
   process.stderr.write(text + "\n");
 };
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
-const tenantSources = tenantSpec ? fs.readdirSync(path.join(REPO,"lab/experiments/EXP-DX1/scale1")).filter(f=>(f.startsWith("tenant")&&!f.endsWith("test.ts"))||f==="seed-image.ts"||f==="deep-live.ts"||f==="deep-live-pins.json").map(f=>"lab/experiments/EXP-DX1/scale1/"+f) : [];
+const tenantSources = tenantSpec ? fs.readdirSync(path.join(REPO,"lab/experiments/EXP-DX1/scale1")).filter(f=>(f.startsWith("tenant")&&!f.endsWith("test.ts"))||f==="seed-image.ts"||f==="deep-live.ts"||f==="deep-live-pins.json"||f.startsWith("bounded-read")).map(f=>"lab/experiments/EXP-DX1/scale1/"+f) : [];
 const BENCH_FILES = [...tenantSources,"lab/bench/driver.ts", "lab/trace/instrument.mjs", "lab/bench/reader-worker.ts", "lab/bench/side-worker.ts", "lab/bench/probe-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 if(smallOnly||interferenceOnly) {
   const names=smallOnly?["small-plan.ts","small-pins.json"]:["interference.ts","interference-pins.json"];
@@ -340,7 +345,7 @@ const report: Record<string, any> = latencyReceipt({
   qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v3: final-receipt ACK, minimum 500 commits, four-subject growth",
   verdictClock: VERDICT_CLOCK,
-  verdictPlanId: tenantSpec ? (tenantSpec.live ? liveProfile+"/"+tenantSpec.live : tenantTraceId+"/"+tenantSpec.study) : fullLength ? V3_PLAN_ID : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
+  verdictPlanId: bounded ? BOUNDED_READER_PLAN : tenantSpec ? (tenantSpec.live ? liveProfile+"/"+tenantSpec.live : tenantTraceId+"/"+tenantSpec.study) : fullLength ? V3_PLAN_ID : smallOnly ? smallId : interferenceOnly ? interferenceId : activationOnly ? "deep-activation/1" : `ns-${profile}/2`,
   status: "RUNNING",
   startedAt: new Date().toISOString(),
   config,
@@ -437,7 +442,8 @@ const readerFinalDiagnostics: any[] = [];
 const spillLimit = process.env.TRIPLEX_BENCH_SPILL_MAX_BYTES === undefined
   ? (config.profile === "v3" ? 28 * 1024 ** 3 : undefined) : Number(process.env.TRIPLEX_BENCH_SPILL_MAX_BYTES);
 if (spillLimit !== undefined && (!Number.isSafeInteger(spillLimit) || spillLimit <= 0)) throw Error("Invalid observation spill byte limit");
-const spill = config.readPath === "replica" ? new SpillThread(path.join(rawDir, `observations-${runTag}`), spillLimit) : undefined;
+const spill = config.readPath === "replica" ? new SpillThread(path.join(rawDir, `observations-${runTag}`), spillLimit,
+  bounded ? (boundedWindow ? 8 : 0.5) * 1024 ** 3 : undefined) : undefined;
 let records: ObservationRecords = [];
 function visitPhase(phase: number, fn: (record: ReadRecord, index: number) => void) {
   if (records instanceof ReadRecords) records.forPhase(phase, fn);
@@ -665,7 +671,7 @@ async function run() {
   const params: TraceParams = { ...TRACE_DEFAULTS, ...seriesParams, burstMultiplier: opt("burst-multiplier") ? config.burstMultiplier : (seriesParams.burstMultiplier ?? TRACE_DEFAULTS.burstMultiplier), steadyFactsPerS: (seriesParams.steadyFactsPerS ?? TRACE_DEFAULTS.steadyFactsPerS) * config.rateScale };
   const idle = config.idleGapsMs ? idlePlan(config.idleGapsMs, config.idleCommits, N,config.idleWarmupCommits) : null;
   const lastTenantWindow = tenantSpec && deepId ? tenantWindows(tenantSpec, deepId.arm).at(-1) : undefined;
-  const traceDurationS = lastTenantWindow ? lastTenantWindow.from + lastTenantWindow.seconds : idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
+  const traceDurationS = bounded && (deepId?.arm==="zero" || deepId?.arm==="reader") ? 600 : lastTenantWindow ? lastTenantWindow.from + lastTenantWindow.seconds : idle ? idle.durationS : pairPlan ? pairPlan.durationS : 7200;
   if (deepPlan) Object.assign(params, { sizeClasses: deepPlan.sizeClasses, steadyFactsPerS: (deepLive ? 3.5 : DEEP_RATE) * deepPlan.sizeClasses.reduce((n, c) => n + c.min * c.share, 0) });
   const events = deepPlan ? deepPlan.events : idle ? idle.events : generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
   if (!tenantSpec && config.receiptCapture === "replica-worker" &&
@@ -710,7 +716,7 @@ async function run() {
       return remote.pull(root, basis);
     };
   }
-  const workerCfg = (w: number) => ({ deep, replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders ? 0 : config.splitShare });
+  const workerCfg = (w: number) => ({ deep, replicaWorldCacheBytes: config.replicaWorldCacheMiB * 1024 ** 2, splitTarget: config.splitTarget, replicaHistoryMiB: config.replicaHistoryMiB, replicaYield: config.replicaYield, readPath: config.readPath, rawSampleLimit: config.readPath === "replica" ? Math.ceil(config.oracleMaxReads / config.readerThreads) : undefined, replicaImage: mainReplicaHost?.index.image(), subjectShards: config.readerSubjectAffinity ? config.readerThreads : 1, entityCacheBytes: config.readerEntityCacheMiB * 1024 ** 2, lane, scope: scopeName, composition: config.composition, seed: config.seed, worker: w, subjects: N, accounts, historySample: historyList, sampleSubjects: [...oracleSet], oracleRate: config.oracleRate, splitShare: config.zeroReaders || bounded ? 0 : config.splitShare });
   const workers: Worker[] = [];
   const stopped: Promise<void>[] = [];
   const readerLives: { worker: number; life: ReaderLifecycle }[] = [];
@@ -777,7 +783,7 @@ async function run() {
   }
   // [DX-R3] Why: cloning/installing the full window is bootstrap work, not a multi-second sweep-time writer stall.
   // Rejected: starting worker 99 from runSweep while the frozen writer is already issuing commands.
-  const preparedSweeper = replicaHost && !tenantSpec && !deepSmoke && !activationOnly && !interferenceOnly && !smallOnly && !config.zeroReaders && !config.readerLadderOnly
+  const preparedSweeper = replicaHost && !bounded && !tenantSpec && !deepSmoke && !activationOnly && !interferenceOnly && !smallOnly && !config.zeroReaders && !config.readerLadderOnly
     ? await startWorker(99, { ...workerCfg(99), sampleSubjects: [], oracleRate: 0, splitShare: 0 }) : undefined;
   // [DX-SCALE1] Why: READY follows actual seed image installation on every reader, including the sweep worker. Rejected: a timer or a socket deadline larger than one image transfer.
   if (afterReaderImages && replicaHost && "connect" in replicaHost)
@@ -809,6 +815,16 @@ async function run() {
   if (sendBasis) broadcast();
   const basisTimer = sendBasis ? setInterval(broadcast, 100) : undefined;
   const setReaders = (phase: number, wantedReaders: number, mode: string) => {
+    if (bounded && tenants) {
+      const account = tenants.find(a => a.index === 0);
+      assert(!wantedReaders || account && workers.length === 2 && wantedReaders === READER_COUNT);
+      workers.forEach((w,k) => {
+        const n = Math.floor(wantedReaders / workers.length) + Number(k < wantedReaders % workers.length);
+        const assigned = Array.from({length:n}, () => ({first:account!.first, people:account!.people,key:account!.key,interReadMs:0}));
+        w.postMessage({ type:"level", phase, mode, readers: n, tenants:assigned, boundedUntil: readCut?.end });
+      });
+      return;
+    }
     const readers = config.maxReaders === null ? wantedReaders : Math.min(wantedReaders, config.maxReaders);
     if (tenants && tenantSpec && deepId && phase >= 0) {
       const stage = tenantWindows(tenantSpec, deepId.arm)[phase]!;
@@ -824,7 +840,7 @@ async function run() {
       workers.forEach((w,k)=>w.postMessage({type:"level", phase, mode, readers:sets[k]!.length, tenants:sets[k]}));
       return;
     }
-    workers.forEach((w, k) => w.postMessage({ type: "level", phase, interReadMs:smallOnly && (deepAccount!==0 || phase===2) ? 15000:0, readers: Math.floor(readers / workers.length) + (k < readers % workers.length ? 1 : 0), mode }));
+    workers.forEach((w, k) => w.postMessage({ type: "level", phase, interReadMs:smallOnly && (deepAccount!==0 || phase===2) ? 15000:0, readers: Math.floor(readers / workers.length) + (k < readers % workers.length ? 1 : 0), mode, ...(readCut ? {boundedUntil:readCut.end}: {}) }));
   };
 
   // ---------------------------------------------------------------- writer (open loop)
@@ -833,6 +849,16 @@ async function run() {
   // scheduled instant in both arms (R22 section 1: only simultaneous pairing shares this host's noise).
   const traceStart = deepId ? await deepBarrier(path.resolve(opt("deep-barrier")!), deepId, { scope: scopeName, seed: report.deep.seed, trace: report.deep.trace }) : pairPlan ? await pairBarrier(N, report.trace.digest) : now() + 1000;
   report.traceStartAbsMs = traceStart;
+  const readCut = boundedWindow && {
+    start: traceStart + boundedWindow.from * 1000,
+    end: traceStart + boundedWindow.to * 1000,
+    activeAt: null as number | null,
+    stoppedAt: null as number | null,
+    readers: READER_COUNT,
+    workers: 2,
+    sampleEvery: RECORD_EVERY,
+  };
+  if (bounded) report.boundedReaders = { window: readCut ?? null, goodput: "unmeasured" };
   report.writerSourceDiagnostics = { start: datomicWriterDiagnostics() };
   report.serverRecordTime = process.env.DX_SERVER_RECORD_TIME !== "0";
   const jobs: Job[] = events.map((ev) => ({ key: ev.subject, scheduledAt: traceStart + ev.atMs, ev }));
@@ -855,6 +881,9 @@ async function run() {
   };
   const publicationTimes = new Map<number, any>();
   let probeThread: ProbeThread | null = null;
+  // [DX-SCALE1] Why: an expired follow-up creation leaves no task to edit. Count later dependent offers while preserving unaffected writes and their native receipts. Rejected: recreating a task under a different command or dropping dependent offers from the denominator.
+  const expiredTasks = new Map<string, number>();
+  const taskKey = (event: TenantEvent) => event.tenant+"/"+event.localSubject+"/"+event.deep.task;
   const jobTraces = new WeakMap<Job, Trace>();
   // [DX-T1-5] Why: native claim identity binds the witness to its measured job even with tracing off or interleaved fibers.
   // Rejected: ambient async context as proof of transaction ownership (failed the concurrent ordering gate).
@@ -870,6 +899,14 @@ async function run() {
     const out: any = { traceId: jobTraces.get(job)?.traceId, attempts: 0, tags: [] as string[], path: "direct" };
     outcomes.set(okey(ev), out);
     if (ev.resend) return resend(job, out);
+    if (bounded && deepLive && ev.stream==="background" && ev.kind==="person") {
+      const e=ev as TenantEvent, predecessor=expiredTasks.get(taskKey(e));
+      if (!e.deep.fresh && predecessor!==undefined) {
+        out.outcome="expired-dependency"; out.creationSeq=predecessor;
+        job.onDone?.(-1);
+        return;
+      }
+    }
     const st = state.get(ev.subject)!;
     const cmd = traceSync("driver.plan-and-encode-command", () => {
       if (ev.stream === "background" && tenantWriters) return tenantWriters.build(runTag, ev as TenantEvent, st, job.scheduledAt);
@@ -1015,6 +1052,8 @@ async function run() {
       const out = outcomes.get(okey(ev)) ?? {};
       out.traceId = trace?.traceId;
       out.queue = queue;
+      if (r.expired && bounded && deepLive && ev.stream==="background" && !ev.resend && ev.kind==="person" && (ev as TenantEvent).deep.fresh)
+        expiredTasks.set(taskKey(ev as TenantEvent),ev.seq);
       if (r.expired) { out.outcome = "unaccounted"; out.reason = "not sent: writer deadline passed"; r.job.onDone?.(-1); }
       const row = { ...(tenantSpec&&ev.stream==="background"?{tenant:(ev as TenantEvent).tenant,localSeq:(ev as TenantEvent).localSeq,localSubject:(ev as TenantEvent).localSubject}:{}), stream: ev.stream, seq: ev.seq, resend: ev.resend, kind: ev.kind, subject: ev.subject, facts: ev.facts, burst: ev.burst, active: ev.active, correction: ev.correction, ackLoss: ev.ackLoss,
         ...(idle ? { idleGapMs: (ev as IdleEvent).idleGapMs, idleWarmup: (ev as IdleEvent).idleWarmup } : {}),
@@ -1168,7 +1207,7 @@ async function run() {
   };
 
   // ---------------------------------------------------------------- phases
-  const plan: ReturnType<typeof nsPlan> = tenantSpec && deepId ? tenantPhases(tenantSpec,deepId.arm) : smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
+  const plan: ReturnType<typeof nsPlan> = bounded && deepId ? boundedPhases(deepId) : tenantSpec && deepId ? tenantPhases(tenantSpec,deepId.arm) : smallOnly ? smallPhases(deepAccount) : interferenceOnly ? interferencePhases(deepAccount) : activation ? [
     { name: "presweep", readers: 64, seconds: 100, measured: true, mode: "mixed" },
     { name: "activation", readers: 64, measured: true, mode: "mixed" },
   ] : deepSmoke ? [
@@ -1187,7 +1226,15 @@ async function run() {
     await confirmDeepStart(path.resolve(opt("deep-barrier")!),deepId,indexDb!,traceStart);
   }
   await sleep(Math.max(0, traceStart - now()));
+  const finishBounded = () => {
+    if (readCut && readCut.stoppedAt === null) {
+      readCut.stoppedAt = now();
+      setReaders(-1, 0, "mixed");
+    }
+  };
+  const readerStop = readCut && setTimeout(finishBounded, Math.max(0, readCut.end - now()));
   if (deep) void watermarkSampler(aux);
+  if (bounded && ["zero","reader"].includes(deepId!.arm)) scheduler.setUntil(traceStart + traceDurationS * 1000);
   if (deep && (fullLength || interferenceOnly || smallOnly)) scheduler.setUntil(traceStart + (smallOnly ? smallSeconds : interferenceOnly ? interferenceSeconds : V3_OFFER_SECONDS) * 1000);
   scheduler.start();
   probeScheduler?.start();
@@ -1239,7 +1286,9 @@ async function run() {
     phases.push(entry);
     phaseStarts.set(idx, start);
     await spill?.beginPhase(idx, start, config.settleS * 1000);
-    setReaders(idx, spec.readers, spec.mode ?? "mixed");
+    const activeReaders = readCut && now() >= readCut.end ? 0 : spec.readers;
+    if (readCut && activeReaders && readCut.activeAt === null) readCut.activeAt = now();
+    setReaders(idx, activeReaders, spec.mode ?? "mixed");
     const indexJob = indexClient && /^L[0-9]+(?:-[A-Z0-9]+)?$/.test(spec.name) && spec.seconds ? (async () => {
       const delay = Math.min(config.settleS * 1000, Math.max(0, spec.seconds! * 1000 - 1000));
       while (now() < start + delay) await sleep(Math.max(1, start + delay - now()));
@@ -1275,8 +1324,9 @@ async function run() {
       }
     }
     if (spec.name==="activation" && tenantReleasePhase) report.deep.tenantActivation=await tenantRelease(path.resolve(opt("deep-barrier")!),deepId!,start,start+spec.seconds!*1000,report.deep.r2);
+    if (bounded && !tenantSpec && spec.name === "activation" && readCut && now() < readCut.end) await sleep(readCut.end - now());
     entry.actualEnd = now();
-    entry.end = spec.name==="activation" && tenantReleasePhase ? report.deep.tenantActivation.endedAt : spec.traceFromS === undefined ? entry.actualEnd : start + spec.seconds! * 1000;
+    entry.end = spec.name==="activation" && tenantReleasePhase ? report.deep.tenantActivation.endedAt : spec.traceFromS === undefined || spec.seconds === undefined ? entry.actualEnd : start + spec.seconds * 1000;
     writerDelay.disable();
     entry.writerDiagnosticsEnd = datomicWriterDiagnostics();
     entry.writerThread = { elu: performance.eventLoopUtilization(writerEluStart).utilization, longestBlockedMs: writerDelay.max / 1e6, p99BlockedMs: writerDelay.percentile(99) / 1e6 };
@@ -1322,6 +1372,9 @@ async function run() {
   cpuMarks.push({ t: now(), cpu: process.cpuUsage() });
 
   // ---------------------------------------------------------------- wind down
+  if (readCut && now() < readCut.end) await sleep(readCut.end - now());
+  if (readerStop) clearTimeout(readerStop);
+  finishBounded();
   const endAt = now();
   const deepStage = (stage: string) => { if (deep) log(`deep finalization: ${stage}`); };
   deepStage("stopping offers");
@@ -1859,7 +1912,17 @@ function readVerdicts(): Uint8Array {
   const cpuUsage: typeof process.cpuUsage = threadScope ? (process as any).threadCpuUsage : process.cpuUsage;
   const cpuStart = cpuUsage(), wallStart = performance.now();
   const result = new Uint8Array(records.length);
-  records.forEach((r, k) => { const verdict = judgeRead(r); result[k] = VERDICTS.findIndex(v => v.kind === verdict.kind); });
+  const sample = bounded ? new BoundedReadEvidence(path.join(rawDir, "bounded-read-samples.jsonl"), deepId!) : undefined;
+  try {
+    records.forEach((r, k) => {
+      const cut=report.boundedReaders?.window;
+      if(bounded && cut && r[R.phase]>=0) assert(r[R.start]>=cut.start-1 && r[R.start]<cut.end,"Worker attempted a read outside its bounded window");
+      const verdict = judgeRead(r);
+      result[k] = VERDICTS.findIndex(v => v.kind === verdict.kind);
+      sample?.observe(k, r, verdict.kind);
+    });
+    if (sample) report.boundedReaders.evidence = sample.seal(result.length);
+  } finally { sample?.close(); }
   judgedReadCount = result.length;
   const cpu = cpuUsage(cpuStart);
   judgingCost = { cpuMs: (cpu.user + cpu.system) / 1000, wallMs: performance.now() - wallStart, reads: result.length, cpuMsPerRead: (cpu.user + cpu.system) / 1000 / result.length, cpuScope: threadScope ? "main thread" : "process upper bound, may include concurrent oracle worker" };
@@ -2190,7 +2253,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
     burstMainEluMean: mean(mainElu.filter(e => overlapsBurst((e.t - ctx.traceStart)/1000, (e.t - ctx.traceStart)/1000 + 0.001, report.trace.params)).map(e=>e.elu)),
     peakProcessBytes: process.resourceUsage().maxRSS * 1024, saturatedPhases: saturated, invalid: saturated.length > 0, processCpu: cpu, readerThreads: config.zeroReaders ? 0 : config.readerThreads, rule: "INVALID when a reader worker or the main thread has mean event-loop utilization > 0.9 in a measured window" };
   report.phases = ctx.phases.map((p) => ({ ...p, stats: strip(stats[p.name]) }));
-  report.priorities = { P1: p1, P2: p2, P3: p3, P4: p4, P5: p5 };
+  report.priorities = bounded ? { P2: p2, P3: p3, P5: p5 } : { P1: p1, P2: p2, P3: p3, P4: p4, P5: p5 };
   report.pooledPhases = Object.fromEntries(["L256", "L1024", "L256-legacy"].filter(n => stats[n]).map(n => [n, strip(stats[n])]));
   report.instrument = instrumentMetrics(report, writes, baseline, Histogram);
   report.compositionIdentity = { ...report.composition, watermarkSamples: watermarkSamples.length, note: "image digest, config hash and slot per assignment are bound by the gate (lab/bin/gate.mjs NS)" };

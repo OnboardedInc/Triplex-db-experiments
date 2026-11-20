@@ -178,11 +178,16 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
   const lines = [
     "# DX-SCALE1 · deep accounts",
     "",
+    ...(fs.existsSync(path.join(here, "COMMIT-ANATOMY.md"))
+      ? [
+          "Deep reader goodput is unmeasured. Deep averaged 0.733 SQL reads per save versus 0.277 for thin. The largest increase in the slowest percentile was before gateway entry. [Commit anatomy](COMMIT-ANATOMY.md)",
+        ]
+      : []),
     `One account of 100,000 people — ${ledgerLimit && !one ? "unmeasured because the campaign stopped at 10,000" : cost(one)}.`,
     `Ten accounts of 100,000 people sharing one database — ${ledgerLimit && !ten ? "unmeasured. The field-save profile offers 35/s steady, 235/s at its five-minute plateau and 394/s when peaks coincide" : cost(ten)}.${partialTen ? ` The bounded seed acknowledged ${partialPeople.toLocaleString("en-US")} of 1,000,000 people across ${partialTen.partial.scopes.length} attempted databases.` : ""}`,
     `The owner's release target is under one second. Activation for one account is ${ledgerLimit && !a1 ? "unmeasured" : act(a1)}. Activation among ten is ${ledgerLimit && !a10 ? "unmeasured" : act(a10)}.${costLine}`,
     ledgerLimit
-      ? "The 10,000-person reader stopped on its second attempt. The benchmark’s 64 GiB observation allowance filled after " +
+      ? "The preceding 10,000-person ladder stopped on its second attempt. The benchmark’s 64 GiB observation allowance filled after " +
         ledgerLimit.checkpointReads.toLocaleString("en-US") +
         " reads had been checkpointed. Database capacity and tenant isolation remain unresolved. [Failure evidence](evidence/arm-d19-i1-reader-b-diagnostic.md)"
       : emptied
@@ -338,7 +343,7 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
     "- `deep-activation.ts` checks the observed release, each page receipt and its changed bodies against the source cut, roster hashes and O-DOMAIN. `deep-commit-meter.ts` binds native transaction IDs, members, datoms and logical change rows to actual source replies. `measurements.ts` opens the new attempt’s receipt ledger, rehashes its bytes, validates its source, nonce and database, and recomputes the reported release and burst rates.",
     "- `measurements.ts` checks source hashes, cohort exits, complete planned offers and receipt positions, then recomputes the oracle comparisons and pooled bars from this attempt’s samples. Missing or invalid accounts leave the pooled result unjudged.",
     "- `bench.ts` reads database and volume allocation on the owned stack at the seed barrier, records the component limits and restores an empty exact-prefix inventory. `resources.ts` reads that stack’s cgroups and bound cache counters. `archive.ts` rehashes decoded raw files before removing their originals. `small-host.ts` binds each open, empty snapshot and post-restart full-row hash to its database and original cut. `scope-report.ts` reads verified transfer bytes and checks the roster and restart denominators.",
-    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The deep-live generator checks frozen field-save content and minute geometry. Its two calendars preserved all ten business-intent digests, and 20 focused tests passed, including an independent replay of 8 pinned reads after 70 field saves on the in-memory composition (254 entity queries). The native field-save follow-up and the post-merge trace-suite rerun were waiting for a local heavy-job slot at the campaign stop. [Field-save evidence](evidence/part5-functional.sha256) The tenant collector binds observed offers, expiries, ACKs and quiet ratios to those windows. Predictions are updated from the same verified transfers. The launcher records each freshly fetched upstream head and its changed paths. A guarded arm accepts independent lazy-publisher changes confined to its separate directory. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. A second failed item stops the queue.",
+    "- `source.ts` pins source and summary files. `control.ts` checks the fresh transfer, file hashes, nonce and cleanup. `catalog.ts` rechecks each report before indexing. `owner-report.ts` rehashes transferred summaries. `functional-note.ts` checks manifest hashes, clean sources, nonces, terminal oracle comparisons and original receipt counts before publishing local results. The deep-live generator checks frozen field-save content and minute geometry. Its two calendars preserved all ten business-intent digests, and 20 focused tests passed, including an independent replay of 8 pinned reads after 70 field saves on the in-memory composition (254 entity queries). The native field-save follow-up and the post-merge trace-suite rerun were waiting for a local heavy-job slot at the campaign stop. [Field-save evidence](evidence/part5-functional.sha256) The tenant collector binds observed offers, expiries, ACKs and quiet ratios to those windows. Predictions are updated from the same verified transfers. The launcher records each freshly fetched upstream head and its changed paths. A guarded arm accepts independent lazy-publisher changes confined to its separate directory. The detached queue checks each attempt, source, nonce, stage and terminal cleanup before advancing. The restarted queue advances past failed arms and retains them for retry. The bounded reader collector checks every observation against the complete receipt model in memory, seals the one-in-100 sample and every error and mismatch, and rechecks attempt identity, counts and bytes on collection. The zero comparison independently binds gateway and transactor spans and full receipt journal bytes to each historical attempt.",
     "- " + functionalNote(evidence, path.join(here, "evidence/part4-functional.sha256")),
     "",
     "All 43 acceptance files were checked for references to changed baseline sources. No acceptance pin changed. The frozen v3 offer digest remains unchanged. [Predictions and observations](PREDICTIONS.md) are recorded for each item. See [handoff](HANDOFF.md) for the queue and [resource layout](PROFILE.md) for sharing and measurement boundaries.",
@@ -446,6 +451,45 @@ export function updateReport(evidence: string, file = path.join(here, "REPORT.md
       const cells = rows[idx]!.split("|");
       assert(cells.length === 5);
       cells[3] = " " + actual + " ";
+      rows[idx] = cells.join("|");
+    }
+    for (const item of [1, 3, 4, 5]) {
+      const attempts = stages.filter((s) => s.tag.startsWith("arm-p6-i" + item + "-"));
+      if (!attempts.length) continue;
+      const idx = rows.findIndex((l) => l.startsWith("| P6." + item + " ·"));
+      assert(idx >= 0);
+      const cells = rows[idx]!.split("|");
+      assert(cells.length === 5);
+      cells[3] =
+        " " +
+        attempts
+          .map((s) => {
+            const m = s.summary,
+              boundary = m?.tenants?.loadBoundary,
+              failure = boundary?.lowestObservedFailure;
+            if (!m)
+              return (
+                s.tag +
+                " · " +
+                (s.terminal.service === "success" && s.disk?.facts
+                  ? s.disk.facts.toLocaleString("en-US") + " seed facts"
+                  : s.terminal.service)
+              );
+            const expiry = boundary?.firstExpiry;
+            return (
+              s.tag +
+              " · p99 " +
+              metric(m.commit.p99) +
+              " ms" +
+              (failure
+                ? ", first quiet ratio miss or expiry at " + round(failure.offeredPerS) + "/s"
+                : "") +
+              (expiry ? ", expiry from " + round(expiry.offeredPerS) + "/s" : "") +
+              (m.invalid.length ? ", unjudged checks recorded" : "")
+            );
+          })
+          .join(". ") +
+        ". ";
       rows[idx] = cells.join("|");
     }
     fs.writeFileSync(predictionFile, rows.join("\n"));

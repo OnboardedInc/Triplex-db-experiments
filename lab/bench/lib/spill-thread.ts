@@ -8,7 +8,10 @@ export class SpillThread {
   private worker: Worker;
   private batch: ReadRecord[] = [];
   private serial = 0;
-  private pending = new Map<number, { resolve(): void; reject(error: Error): void }>();
+  private pending = new Map<
+    number,
+    { resolve(value: unknown): void; reject(error: Error): void }
+  >();
   private closing = false;
   private error: Error | undefined;
   private delivered = 0;
@@ -17,10 +20,14 @@ export class SpillThread {
   diskBudget: Record<string, any> | undefined;
   onProgress: ((message: any) => void) | undefined;
   readonly directory: string;
-  constructor(directory: string, maxBytes?: number) {
+  private readonly memoryOnly: boolean;
+  constructor(directory: string, maxBytes?: number, memoryLimit?: number) {
+    this.memoryOnly = memoryLimit !== undefined;
     this.directory = directory;
-    this.worker = new Worker(new URL("./spill-worker.ts", import.meta.url), { workerData: { directory, maxBytes } });
-    this.worker.on("message", m => {
+    this.worker = new Worker(new URL("./spill-worker.ts", import.meta.url), {
+      workerData: { directory, maxBytes, memoryLimit },
+    });
+    this.worker.on("message", (m) => {
       if (m.type === "progress") {
         this.delivered = m.count;
         this.length = Math.max(this.length, m.count);
@@ -28,16 +35,28 @@ export class SpillThread {
         this.diskBudget = m.diskBudget;
         this.onProgress?.(m);
       }
-      if (m.type === "reply") { const p = this.pending.get(m.id); this.pending.delete(m.id); if (m.error) p?.reject(Error(m.error)); else p?.resolve(); }
+      if (m.type === "reply") {
+        const p = this.pending.get(m.id);
+        this.pending.delete(m.id);
+        if (m.error) p?.reject(Error(m.error));
+        else p?.resolve(m.memory);
+      }
     });
-    this.worker.on("error", (error: Error) => { this.error = error; for (const p of this.pending.values()) p.reject(error); });
-    this.worker.on("exit", code => {
-      if (!this.closing) { this.error ??= Error(`spill worker exited unexpectedly: ${code}`); for (const p of this.pending.values()) p.reject(this.error); }
+    this.worker.on("error", (error: Error) => {
+      this.error = error;
+      for (const p of this.pending.values()) p.reject(error);
+    });
+    this.worker.on("exit", (code) => {
+      if (!this.closing) {
+        this.error ??= Error(`spill worker exited unexpectedly: ${code}`);
+        for (const p of this.pending.values()) p.reject(this.error);
+      }
     });
   }
   push(row: ReadRecord) {
     if (this.error) throw this.error;
-    if (this.length - this.delivered > 200_000) throw Error("Observation spill backlog exceeded 200000 exact rows");
+    if (this.length - this.delivered > 200_000)
+      throw Error("Observation spill backlog exceeded 200000 exact rows");
     this.length++;
     this.batch.push(row);
     if (this.batch.length >= 512) this.flush();
@@ -53,10 +72,16 @@ export class SpillThread {
   private async rpc(type: string, args: any = {}) {
     if (this.error) throw this.error;
     const id = ++this.serial;
-    await new Promise<void>((resolve, reject) => { this.pending.set(id, { resolve, reject }); this.worker.postMessage({ type, id, ...args }); });
+    return new Promise<unknown>((resolve, reject) => {
+      this.pending.set(id, { resolve, reject });
+      this.worker.postMessage({ type, id, ...args });
+    });
   }
   private flush() {
-    if (this.batch.length) { this.worker.postMessage({ type: "rows", rows: this.batch }); this.batch = []; }
+    if (this.batch.length) {
+      this.worker.postMessage({ type: "rows", rows: this.batch });
+      this.batch = [];
+    }
   }
   async checkpoint() {
     if (this.error) throw this.error;
@@ -64,7 +89,18 @@ export class SpillThread {
     await this.rpc("checkpoint");
   }
   async finish() {
-    try { await this.checkpoint(); await this.rpc("trace-close"); } finally { this.closing = true; await this.worker.terminate(); }
-    return new ReadRecords(this.directory, true);
+    try {
+      await this.checkpoint();
+      await this.rpc("trace-close");
+      return this.memoryOnly
+        ? ReadRecords.fromTransfer(
+            (await this.rpc("take-memory")) as Parameters<typeof ReadRecords.fromTransfer>[0],
+            this.delivered,
+          )
+        : new ReadRecords(this.directory, true);
+    } finally {
+      this.closing = true;
+      await this.worker.terminate();
+    }
   }
 }

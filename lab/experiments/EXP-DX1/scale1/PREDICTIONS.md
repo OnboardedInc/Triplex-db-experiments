@@ -21,7 +21,7 @@ Forecasts below use the new order. An observation is entered alongside its origi
 | Item | Forecast before execution | Result |
 | --- | --- | --- |
 | P6.1 · ten deep accounts | One queue saturates around 150 offered saves/s with grouping off and 200/s with grouping on. I expect quiet commit p99 at 12–30× alone under nine hot neighbours, or 2–6× with verified fair turns. The 35/s steady case should keep up. | Pending. |
-| P6.2 · existing zero controls | I expect the larger transaction or serial storage work to explain at least 20 ms of the observed 50.93 ms p99 gap. Test stage distributions and aligned samples separately. | Pending. |
+| P6.2 · existing zero controls | I expect the larger transaction or serial storage work to explain at least 20 ms of the observed 50.93 ms p99 gap. Test stage distributions and aligned samples separately. | SQL reads rose from 0.277 to 0.733 per commit. Serial tx-with p99 rose by 1.96 ms, while the largest mean increase in the matched slowest percentile was 88.46 ms before gateway entry. The predicted 20 ms serial-stage contribution was unsupported. [Anatomy](COMMIT-ANATOMY.md) |
 | P6.3 · 100,000 people | One account has 75–190 ms commit p99. Page-guard activation exceeds one second. | Pending. |
 | P6.4 · hundred small accounts | Pooled busy-with-low goodput is 3.15–3.40 saves/s and quiet p99 is 0.90–1.25× alone. I expect 100 logical accounts to open in one database. | Pending. |
 | P6.5 · one million people | The pooled seed takes 9.7–12.7 hours at 520–850 PostgreSQL bytes per current fact. | Pending. |

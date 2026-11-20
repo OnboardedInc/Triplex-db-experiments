@@ -25,9 +25,10 @@ type Step = {
   retryOf?: string;
   groupControl?: string;
   live?: "staggered" | "coincident";
+  bounded?: true;
   bootstrapCache?: string;
 };
-type Plan = { label: string; steps: Step[]; final: boolean };
+type Plan = { label: string; steps: Step[]; final: boolean; keepGoing?: true };
 const label = process.argv[2] ?? "";
 const safe = (s: string) => /^[a-z][a-z0-9-]{2,40}$/.test(s);
 const sha = (s: string) => /^[0-9a-f]{40}$/.test(s);
@@ -157,6 +158,7 @@ async function run(step: Step) {
     const sizing =
       step.sizing ?? step.sizingChoices?.find((t) => exists(path.join(root, t, "sizing.json")));
     const opts = [
+      ...(step.bounded ? ["--bounded-readers"] : []),
       ...(step.live ? ["--profile", "deep-live", "--peak-alignment", step.live] : []),
       ...(step.layout ? ["--account-layout", step.layout] : []),
       ...(step.baseline ? ["--baseline", step.baseline] : []),
@@ -198,6 +200,7 @@ async function run(step: Step) {
       a.tag === step.tag &&
       a.layout === step.layout &&
       a.live === step.live &&
+      a.bounded === step.bounded &&
       a.groupControl === step.groupControl,
   );
   state({ stage: "running", step, ceilingUTC: new Date(a.at + a.ceiling * 1000).toISOString() });
@@ -324,8 +327,8 @@ async function run(step: Step) {
           Number.isSafeInteger(o.expired) &&
           o.expired > 0 &&
           o.missing === 0 &&
-          o.committed + o.expired === o.primaries &&
-          run.writer?.expired === o.expired &&
+          o.committed + o.expired + (o.expiredDependents ?? 0) === o.primaries &&
+          run.writer?.expired === o.expired + (o.expiredResends ?? 0) &&
           run.writer?.pendingAtEnd === 0;
 
         return (
@@ -339,10 +342,13 @@ async function run(step: Step) {
               (expiredLoad &&
                 r ===
                   "0 missing offers, " +
-                    o.expired +
+                    (o.expired + (o.expiredDependents ?? 0)) +
                     " unsuccessful primaries, " +
                     o.expired +
-                    " expired"),
+                    " expired" +
+                    (o.expiredDependents
+                      ? ", " + o.expiredDependents + " blocked by expired creation"
+                      : "")),
           ) &&
           o.correctness.reads > 0 &&
           o.correctness.reads === o.correctness.correct &&
@@ -404,17 +410,24 @@ async function main() {
     p.steps.forEach(identified);
     const failures = ledger.filter((row) => !row.success && !row.capacity);
     const twice = failures.find((a) => failures.filter((b) => b.item === a.item).length >= 2);
-    if (twice) {
+    if (twice && !p.keepGoing) {
       state({ stage: "stopped-after-two-failures", item: twice.item, ledger });
       process.exitCode = 2;
       return;
     }
     const step = p.steps.find((s) => !ledger.some((r) => r.tag === s.tag));
     if (!step) {
-      state({ stage: p.final ? "complete" : "plan-consumed", ledger });
+      const pending = failures.filter(
+        (f) => !ledger.some((r) => r.retryOf === f.tag && (r.success || r.capacity)),
+      );
+      state({
+        stage: !p.final ? "plan-consumed" : pending.length ? "finished-with-failures" : "complete",
+        ledger,
+      });
+
       return;
     }
-    if (failures.length) {
+    if (failures.length && !p.keepGoing) {
       const last = ledger.at(-1);
       if (
         !last.success &&
@@ -449,6 +462,17 @@ async function main() {
     }
     let outcome;
     try {
+      // [DX-SCALE1] Why: preserve an unrun dependency as an unresolved attempt and advance to independent comparisons. Rejected: stalling every later item after one missing control.
+      if (p.keepGoing) {
+        for (const required of [step.baseline, step.groupControl, step.seedImage]) {
+          if (!required) continue;
+          const result = ledger.find((r) => r.tag === required);
+          assert(
+            result?.success && !result.skipped,
+            "Required verified arm unavailable: " + required,
+          );
+        }
+      }
       outcome = await run(step);
     } catch (e) {
       outcome = { success: false, capacity: false, error: String(e) };
@@ -457,7 +481,7 @@ async function main() {
     fs.writeFileSync(ledgerFile + ".new", JSON.stringify(ledger, null, 2) + "\n");
     fs.renameSync(ledgerFile + ".new", ledgerFile);
     state({ stage: "collected-on-server", last: ledger.at(-1) });
-    if (!outcome.success && !outcome.capacity) {
+    if (!outcome.success && !outcome.capacity && !p.keepGoing) {
       const n = ledger.filter((r) => r.item === step.item && !r.success && !r.capacity).length;
       state({
         stage: n >= 2 ? "stopped-after-two-failures" : "first-failure-needs-retry",
