@@ -22,6 +22,7 @@ b641f1c2ce96c9d7845bb76ad250975c1cff6ce641cfa3b35b60e59a2bac3d04  int1/p6/v01-co
 1bda999483537959af50e73c32988bc05ed8604aab999c9e51edb619bb0f8421  int1/p6/v01-legacy-pair.tar.gz
 ee60a581e395c44e040d1932c7eba7d81d034520d8715e3ecf2ea830c6e98bb6  int1/p6/v01-residency.tar.gz
 b06f628ed7ee8880c810ebb77e24a263eb4d536f17b17d8b7912b8fbc68fede8  int1/p7/initial-native-merge.tar.gz
+65eca475ae9861d4e9070ffa17b1e8922933d8e08c9ea04d361eb734fb3af428  int1/p7/ordered-default-selector.tar.gz
 0e1d4fc5cd1a08b6afa4cc85494c57a2b7c2c4453851c47ab502dd1937e26442  int1/p7/ordered-erasure-first-attempt.tar.gz
 ff0797969e5975db7ee73c2b81f7ca2d541f38db785f97daf3d19caca19c606a  int1/p7/ordered-erasure-pair.tar.gz
 1235fa67f70102429740db9aff96bb46759e3b95ddc8827fcd2f0653083a50d3  int1/p7/ordered-native-pair.tar.gz

@@ -1,8 +1,8 @@
-The ordered writer passed the merged-tree gates at `2461efd4b`.
-Ordered per-person saves and the grouped writer both passed.
+The scorecard should pin `f25a46e02591a1c6b6a9495f7f2cce20249571f0`.
+Version 0.1 defaults to saving each person's changes together, with ordered assertion IDs.
 In the server comparison this writer delivered 393.92 saves a second, with every offer saved.
 The quiet account still waited too long when its neighbours were busy.
-The default and Java selector will be recorded after the gate merge.
+Java 21 with G1 is the default. Java 25 is available with either collector.
 The grouped writer is still selectable, and both modes keep a queryable journal.
 The restart checks kept the original receipt and refused reuse of retired IDs.
 The fresh and billion-record scorecards on this revision still need to run.
@@ -30,6 +30,6 @@ The scorecard producer and collector match original saves, the installed functio
 
 ## Default and physical limits
 
-Use `--writer grouped` for the grouped K control. `--writer subject` uses ordered IDs, numeric owner lookup and no prefetch hints. [Gate ledger](V0.1-STATE.md) · [Server command](../v01/SERVER.md)
+Use `--writer grouped` for the grouped K control. The default `--writer subject` uses ordered IDs, numeric owner lookup and no prefetch hints. Java options are `--jvm j21-g1`, `--jvm j25-g1` and `--jvm j25-zgc`. The selector checks covered all three JVM roles. The Java 25 choices still need a live scorecard run on this revision. [Gate ledger](V0.1-STATE.md) · [Server command](../v01/SERVER.md)
 
 At 235 and 394 offered saves per second with a 2 GiB transactor cache, the ordered arm delivered 234.90 and 393.92 with zero expiries. Quiet-account p99 reached 4.28× and 3.47× its solo p99. The Java 25 G1 comparison gained 5–9% throughput on its separate tape. All Mac timings are diagnostic. [Evidence checksums](V0.1-SHA256SUMS)
