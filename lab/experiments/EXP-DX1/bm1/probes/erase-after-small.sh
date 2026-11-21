@@ -2,7 +2,7 @@
 set -euo pipefail
 
 base=/var/tmp/triplex-bm1
-root=$base/night-n20-erasure-retry
+root=$base/night-n20-erasure-image
 small=$base/night-n20-erasure-small
 pin=4054f548469e57b6aa82b06e93711c39b6867f7c
 here=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
@@ -12,7 +12,7 @@ export DOCKER_HOST=unix:///var/run/docker.sock DX_BARE_METAL=1
 status() {
   local tmp
   tmp=$(mktemp "$base/status-erasure-retry.XXXXXX")
-  printf 'item=erasure-retry state=%s since=%s next=operator-review\n' "$1" "$(date -u +%FT%TZ)" > "$tmp"
+  printf 'item=erasure-image state=%s since=%s next=operator-review\n' "$1" "$(date -u +%FT%TZ)" > "$tmp"
   mv "$tmp" "$base/STATUS"
 }
 
@@ -53,7 +53,7 @@ assert measurement.stat().st_mtime >= request["start"] and read(measurement)["so
 assert read(measurement)["people"] == stage["people"]
 now = time.time()
 with (root/"request.json").open("x") as stream:
-    json.dump(dict(root=str(root),directory=str(root),tag="erasen20retry",item=34,
+    json.dump(dict(root=str(root),directory=str(root),tag="erasen20image",item=34,
                    start=now,deadline=now+18400,source=source,smallAgreementSha256=sha(measurement)),stream)
 PY
 status staging

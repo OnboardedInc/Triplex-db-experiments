@@ -49,14 +49,14 @@ def managed(request, cleanup=False):
     root = Path(request["root"])
     source = request["source"]
     tag = request["tag"]
-    fast = source == FAST_SOURCE and tag in ("erasen20fast","erasen20small","erasen20retry")
+    fast = source == FAST_SOURCE and tag in ("erasen20fast","erasen20small","erasen20retry","erasen20image")
     small = fast and tag == "erasen20small"
     people = 128 if small else 100_000
     assert request["item"] == 34 and (fast or (source == SOURCE and tag in ("erasen20","erasen20b")))
     binroot = Path("/var/tmp/triplex-bm1/night-n20-erasure")
     expected = (binroot.with_name(binroot.name+"-small") if small else binroot) if fast else Path("/var/tmp/triplex-bm1/night-n19")/tag
-    if tag == "erasen20retry":
-        expected = binroot.with_name(binroot.name+"-retry")
+    if tag in ("erasen20retry", "erasen20image"):
+        expected = binroot.with_name(binroot.name+("-retry" if tag=="erasen20retry" else "-image"))
     assert root == expected
     resume = tag == "erasen20b"
     old = root.with_name("erasen20")
@@ -137,8 +137,12 @@ def managed(request, cleanup=False):
     images = get(build/"results/images.json")
     image = next(i for i in images if "tx2-datomic:1.0.7745-da00" in i["RepoTags"])
     pg_image = next(i for i in images if "postgres:17-alpine" in i["RepoTags"])
-    assert image["Id"] == output("docker","image","inspect","--format","{{.Id}}","tx2-datomic:1.0.7745-da00")
-    assert pg_image["Id"] == output("docker","image","inspect","--format","{{.Id}}","postgres:17-alpine")
+    # [DX-BM1] Why: bind to the same immutable image used by this build and its small gate.
+    # Rejected: using the mutable tag last used by a different benchmark checkout.
+    for registered in image, pg_image:
+        ident = registered["Id"]
+        assert re.fullmatch(r"sha256:[a-f0-9]{64}",ident)
+        assert output("docker","image","inspect","--format","{{.Id}}",ident) == ident
     java_home, = [row.split("=",1)[1] for row in image["Config"]["Env"] if row.startswith("JAVA_HOME=")]
     assert java_home == "/opt/java/openjdk"
     # [DX-BM1] Why: the official Linux erasure wrapper launches a fresh native peer on the bench host.
