@@ -22,6 +22,9 @@
 (def attempt (System/getenv "PREP1_ATTEMPT"))
 (def mode (System/getenv "PREP1_MODE"))
 (def streaming? (= mode "subject-server"))
+(def lookup-every (if-let [n (System/getenv "PREP1_LOOKUP_EVERY")] (Long/parseLong n) 0))
+(assert (<= 0 lookup-every 4096))
+(def lookup-ordinal (AtomicLong. 0))
 (def diagnostic-events (ArrayBlockingQueue. 16384))
 (def ^ThreadMXBean cpu-bean (ManagementFactory/getThreadMXBean))
 (def ^:dynamic *profile* nil)
@@ -92,7 +95,7 @@
       (into {} (map #(str/split % #" " 2))
             (str/split-lines (String. buffer 0 n StandardCharsets/US_ASCII))))))
 
-(when (#{"profile" "cheap" "census" "subject-profile"} mode)
+(when (#{"profile" "cheap" "census" "subject-profile" "lookup-profile"} mode)
   ;; [DX-PREP1] Why: join samples to each native apply on the same VM monotonic clock.
   ;; Rejected: applying a whole-run CPU average to every group.
   (doto (Thread.
@@ -104,6 +107,133 @@
               (recur))))
     (.setDaemon true)
     (.start)))
+
+(def ^:dynamic *lookups* nil)
+(def ^:dynamic *inside-lookup* false)
+(def ^:dynamic *lookup-count* nil)
+(def ^:dynamic *outside-reads* nil)
+(def lookup-limit 1024)
+
+(defn lookup! [check f]
+  (if (and *lookups* (not *inside-lookup*) (<= (swap! *lookup-count* inc) lookup-limit))
+    (let [start (System/nanoTime)
+          sample (binding [*inside-lookup* true]
+                   (io/throw-if-ex!
+                     (io/with-io-stats f {:io-context :prep1/native-lookup :api :native-lookup})))
+          elapsed (- (System/nanoTime) start)]
+      (swap! *lookups* update check
+              (fn [{:keys [calls wallNs reads]}]
+                {:calls (inc (or calls 0)) :wallNs (+ (or wallNs 0) elapsed)
+                 :reads (merge-with + reads (get-in sample [:io-stats :reads]))}))
+      (:ret sample))
+    (f)))
+
+(defn wrap-lookup! [v classify realize]
+  (alter-var-root v
+    (fn [original]
+      (fn [& args]
+        (if (and *lookups* (not *inside-lookup*))
+          (lookup! (apply classify args) #(realize (apply original args)))
+          (apply original args))))))
+
+(defn instrument-lookup-api! []
+  ;; [DX-PREP1] Why: a seek can defer its first storage fetch until its first result.
+  ;; Rejected: timing only creation of an unrealized iterator or eagerly walking a whole range.
+  (doseq [op ['datoms 'index-range 'rseek-datoms]]
+    (wrap-lookup! (requiring-resolve (symbol "datomic.api" (name op)))
+      (fn [_ & args]
+        (let [[index key attribute] args]
+          (if (= 'index-range op) (str "api/range :avet " index)
+            (str "api/" op " " index " " (if (= :eavt index) attribute key)))))
+      (fn [rows]
+        ;; [DX-PREP1] Why: an Iterable can allocate a fresh seek per traversal.
+        ;; Rejected: discarding the realized sequence and observing a duplicate seek.
+        (let [result (seq rows)]
+          (when result (first result))
+          result))))
+  (wrap-lookup! (requiring-resolve 'datomic.api/entid)
+    (fn [_ k] (if (instance? java.util.List k)
+                (str "api/entid :avet " (first k))
+                (str "api/entid schema " (if (and (keyword? k) (= "triplex.subject" (namespace k))) "subject-fn" k))))
+    identity)
+  (wrap-lookup! (requiring-resolve 'datomic.builtins/compare-and-swap)
+    (constantly "native/cas :eavt") identity))
+
+(defn outside-read! [index counter n]
+  (when (and *outside-reads* (not *inside-lookup*) (= :sql counter))
+    (let [frames (into [] (comp (map #(.getClassName ^StackTraceElement %))
+                                (filter #(re-find #"^datomic\.(?:db|builtins|index|iter)\$" %))
+                                (take 6)) (.getStackTrace (Thread/currentThread)))]
+      (swap! *outside-reads* update (str @index " " (str/join " / " frames)) (fnil + 0) n))))
+
+(when (or (= "lookup-profile" mode) (and streaming? (pos? lookup-every)))
+  ;; [DX-PREP1] Why: shared native prefetch can load one leaf for several keys. Measure its real I/O once.
+  ;; Rejected: running extra point seeks to split a batch's shared storage reads across individual ids.
+  (doseq [op '[prefetch-identity prefetch-redundancy+uniqueness get-hook]]
+    (wrap-lookup! (ns-resolve 'datomic.db op) (constantly (str "native/" op)) identity))
+  (doseq [[op idx attr-offset] [['find-avet :avet 0] ['find-aevt :aevt 0] ['find-eavt :eavt 1]]]
+    (wrap-lookup! (ns-resolve 'datomic.db op)
+      (fn [snapshot & args]
+        (let [a (nth args attr-offset nil)
+              ident (when (number? a) ((requiring-resolve 'datomic.api/ident) snapshot a))]
+          (str "native/" op " " idx " " (or ident a "entity"))))
+      identity))
+  (let [index (ns-resolve 'datomic.measure.io-stats '*io-index*)]
+    (alter-var-root #'io/inc!
+      (fn [inc-io!]
+        (fn
+          ;; [DX-PREP1] Why: key remaining physical misses on the calling engine frame.
+          ;; Rejected: assigning all unmatched I/O to the last authored check.
+          ([counter]
+           (outside-read! index counter 1)
+           (inc-io! counter))
+          ([counter ^long n]
+           (outside-read! index counter n)
+           (.invokePrim ^clojure.lang.IFn$OLO inc-io! counter n))))))
+  (wrap-lookup! (ns-resolve 'datomic.db 'resolve-lookup-ref)
+    (constantly "native/resolve-lookup-ref :avet") identity)
+  (alter-var-root (ns-resolve 'datomic.db 'create-unique-value-validator)
+    (fn [factory]
+      (fn [snapshot]
+        (let [validate (factory snapshot)]
+          (if-not *lookups*
+            validate
+            (let [ident (requiring-resolve 'datomic.api/ident)]
+              (fn [^Datom datom]
+                (let [attr (ident snapshot (.a datom))]
+                  (if (#{:triplex.entity/id :triplex.tx/operation-id :triplex.claim/command-id
+                         :triplex.tx/position :triplex.group/position :triplex.scope/key :triplex.scope/bootstrap} attr)
+                    (lookup! (str "native/unique :avet " attr) #(validate datom))
+                    (validate datom))))))))))
+  (let [api (delay
+              (retain! "PREP1_NATIVE_PREFETCH"
+                {:setting (System/getProperty "datomic.prefetchProbes")
+                 :enabled (boolean ((requiring-resolve 'datomic.config/prefetch-enabled?)))
+                 :processors (.availableProcessors (Runtime/getRuntime))})
+              (instrument-lookup-api!))]
+    (alter-var-root #'db/with-tx
+      (fn [apply-tx]
+        (fn [snapshot dispatcher data]
+          ;; [DX-PREP1] Why: the apply and append can run on different native threads.
+          ;; Rejected: requiring the appender's thread name on an apply worker. Join by t and clock containment.
+          @api
+          (if (and streaming? (not (zero? (mod (.getAndIncrement lookup-ordinal) lookup-every))))
+            (apply-tx snapshot dispatcher data)
+            (binding [*lookups* (atom {}) *lookup-count* (atom 0) *outside-reads* (atom {})]
+            (let [basis-t (requiring-resolve 'datomic.api/basis-t)
+                  start (System/nanoTime) before (cpu)
+                  sample (io/throw-if-ex!
+                           (io/with-io-stats #(apply-tx snapshot dispatcher data)
+                             {:io-context :prep1/native-apply :api :native-apply}))
+                  end (System/nanoTime) cpu-ns (- (cpu) before)
+                  result (:ret sample)]
+              (when-let [after (:db-after result)]
+                (retain! "PREP1_LOOKUPS" {:db (writer-database) :t (str (basis-t after))
+                                          :beforeT (str (basis-t snapshot)) :sampleEvery lookup-every
+                                          :lookupCount @*lookup-count* :lookupLimit lookup-limit
+                                          :start start :end end :cpuNs cpu-ns :io (:io-stats sample)
+                                          :lookups @*lookups* :outsideSql @*outside-reads*}))
+              result))))))))
 
 (when (= "subject-profile" mode)
   ;; [DX-PREP1] Why: sample the native transaction application and bind its CPU time to db-after.
@@ -180,11 +310,21 @@
                 (fn []
                   ;; [DX-PREP1] Why: stream the whole arm without blocking the serialized append.
                   ;; Rejected: retaining only the first 16,384 append blocks at shutdown.
-                  (with-open [out (file/writer "/trace/prep1-native.ndjson")]
+                  ;; [DX-W1] Why: a sampled lookup spans the native apply, including the checks after function expansion.
+                  ;; Rejected: adding seeks or splitting an actual shared storage fetch across all the probes it served.
+                  (with-open [out (file/writer "/trace/prep1-native.ndjson")
+                              lookups (when (pos? lookup-every) (file/writer "/trace/prep1-lookups.ndjson"))]
                     (loop []
+                      (when lookups
+                        (loop []
+                          (when-let [[kind event] (.poll diagnostic-events)]
+                            (.write lookups (str (json/write-str (assoc event :kind kind)) "\n"))
+                            (recur))))
                       (if-let [event (.poll pending 100 java.util.concurrent.TimeUnit/MILLISECONDS)]
                         (do (.write out (str (json/write-str event) "\n")) (recur))
-                        (when-not @stop (.flush out) (recur))))
+                        (when-not @stop (.flush out) (when lookups (.flush lookups)) (recur))))
+                    (when lookups
+                      (.write lookups (str (json/write-str {:attempt attempt :dropped (.get dropped) :end true}) "\n")))
                     (.write out (str (json/write-str {:attempt attempt :dropped (.get dropped) :end true}) "\n"))))
                 "prep1-native-drain")]
     (.setDaemon drain true)

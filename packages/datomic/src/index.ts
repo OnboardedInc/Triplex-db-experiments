@@ -21,6 +21,9 @@ export function makeDatomicRuntime(options: {
   readonly layout?: "lean" | "legacy";
   readonly entityCacheBytes?: number;
   readonly rowCacheBytes?: number;
+  readonly predecessorCacheBytes?: number;
+  readonly predecessorAttributes?: readonly string[];
+  readonly receiptPredecessorAttributes?: readonly string[];
   readonly admissionQueue?: boolean;
   readonly maxRetries?: number;
   readonly serverRecordTime?: boolean;
@@ -58,6 +61,7 @@ export function makeDatomicRuntime(options: {
 }
 export * from "./codec.js";
 export * from "./DatomicClient.js";
+export { orderedSaveIdentity, type OrderedSaveIdentity } from "./orderedSaveIdentity.js";
 export {
   makeDatomicStorageAdapter,
   DatomicSerializationConflict,

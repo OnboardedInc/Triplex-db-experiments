@@ -25,11 +25,13 @@ import fs from 'node:fs';
 import net from 'node:net';
 import path from 'node:path';
 import {
-  CONFIG_DIR, ENGINE_DIR, LabError, POOL_FILE, dockerArgs, OWNER_FORMAT, REPO, admission, appendEvent, atomicJson, checkFollowerConfig,
+  CONFIG_DIR, DOCKER_HOST, ENGINE_DIR, LabError, POOL_FILE, dockerArgs, OWNER_FORMAT, REPO, admission, appendEvent, atomicJson, checkFollowerConfig,
   containersOnVolume, cpusetOverlap, defaultHolder, docker, dockerStats, fail, fmtBytes, inspect, listTx2Containers, loadSlots, main, now,
   parseArgs, parseCpuset, readJson, readOwner, reconcile, sha256, sleep, slotInfo, vmDisk, volumeBytes, volumeGuard, withPool, sha256File,
 } from './lib.mjs';
 import { readMeasureLease } from './heavy-lock.mjs';
+import { datomicRuntime, javaCompatibility, readVariantReceipt } from '../config/datomic/runtime.mjs';
+import { launchOptions } from '../experiments/EXP-DX1/jvm1/launch.mjs';
 
 // [EXP-M01] Why (R22 section 3; RULINGS Q60c): a `--cpus 2` quota is itself a noise source on this host (the busiest
 // slot used 1.9 cores while 77% of its 100 ms CFS periods were throttled). A slot with "regime": "cpuset" gets a
@@ -48,6 +50,18 @@ export const cpuList = text => {
 export const regimeOf = info => info.regime ?? 'quota';
 
 // [EXP-M01R] Why: main added follower and Datomic reservations after M01; every admission must honor the same lease. Rejected: guarding only writer up (allows new neighbors during a duet).
+function scorecardOutput(options, info) {
+  const output = options['scorecard-output'];
+  const holder = process.env.DX_V01_MAC_HOLDER ?? 'DX-V01';
+  if (process.platform !== 'darwin' || !['DX-V01', 'DX-THIN1'].includes(holder) || options.holder !== holder ||
+      info.lane !== 'datomic' || info.mode !== 'exclusive' ||
+      !process.env.TX2_EXCLUSIVE_VOLUME_ID || !/^tx2-dxthin-managed:/.test(info.laneConf.image) ||
+      typeof output !== 'string' || !output.startsWith(path.join(REPO, 'runs', 'DX-V01') + path.sep) ||
+      fs.realpathSync(output) !== output || !fs.statSync(output).isDirectory())
+    fail('REFUSED', 'Scorecard fixture needs its exclusive compact image, private volume and output');
+  return output;
+}
+
 export function assertMeasureAdmission(holder) {
   const lease = readMeasureLease();
   if (lease && !lease.stale && lease.holder !== holder)
@@ -94,14 +108,26 @@ export function assertSingleWriter(info, eff) {
 export function datomicTree(dir) {
   return verifiedTree(dir);
 }
-export function datomicSources() {
-  const config = datomicTree(path.join(CONFIG_DIR, 'lab/config/datomic'));
-  const gateway = datomicTree(path.join(CONFIG_DIR, 'packages/datomic/gateway'));
-  const codec = { path: 'codec-spec.json', bytes: fs.statSync(path.join(CONFIG_DIR, 'packages/datomic/src/codec-spec.json')).size,
-    sha256: sha256File(path.join(CONFIG_DIR, 'packages/datomic/src/codec-spec.json')) };
+export function datomicSources(root = CONFIG_DIR) {
+  const config = datomicTree(path.join(root, 'lab/config/datomic'));
+  const gateway = datomicTree(path.join(root, 'packages/datomic/gateway'));
+  const codec = { path: 'codec-spec.json', bytes: fs.statSync(path.join(root, 'packages/datomic/src/codec-spec.json')).size,
+    sha256: sha256File(path.join(root, 'packages/datomic/src/codec-spec.json')) };
   return { config, gateway, codec, sha256: sha256(JSON.stringify({ config, gateway, codec })) };
 }
 function assertDatomicImage(info) {
+  if (info.laneConf.variant) {
+    const receipt = info.laneConf.variant;
+    const expected = sha256(JSON.stringify({ sources: receipt.sources, distribution: receipt.distribution, runtime: receipt.runtime }));
+    const image = JSON.parse(docker(['image', 'inspect', receipt.imageId]))[0];
+    if (expected !== receipt.buildInputsSha256 || image.Id !== receipt.imageId
+      || image.Config.Labels?.['tx2.build-inputs-sha256'] !== expected
+      || image.Config.Labels?.['tx2.java-major'] !== receipt.runtime.major
+      || image.Config.Labels?.['tx2.java-base'] !== receipt.runtime.base
+      || datomicSources(REPO).sha256 !== receipt.sourceInputsSha256)
+      fail('REFUSED', 'Datomic variant image, Java or source differs from its build receipt');
+    return image;
+  }
   const out = docker(['image', 'inspect', info.laneConf.image], { allowFail: true });
   const image = out && JSON.parse(out)[0];
   if (!image || !info.laneConf.imageId || image.Id !== info.laneConf.imageId)
@@ -114,15 +140,26 @@ function datomicDiskFloor() {
   const disk = fs.statfsSync(REPO);
   if (disk.bavail * disk.bsize < 5 * 1024 ** 3) fail('REFUSED', 'Host free disk below 5 GiB');
 }
-async function buildDatomic(config) {
+async function buildDatomic(config, opts) {
   datomicDiskFloor();
+  const runtime = datomicRuntime();
+  const isolated = opts['variant-receipt'];
+  if (isolated) {
+    if (opts.holder !== 'DX-JVM1' || fs.existsSync(isolated))
+      fail('REFUSED', 'An isolated JVM build requires the assigned holder and a fresh receipt path');
+    // [DX-JVM1] Why: this image build reserves no engine slot and finishes under its ordinary heavy token.
+    // Rejected: checking slot admission again after the build has a token (races a pending lease drain).
+  } else if (runtime.major !== '21') {
+    fail('REFUSED', 'Build the alternate JRE with --variant-receipt and a private tag');
+  }
+  const root = isolated ? REPO : CONFIG_DIR;
   const download = '/Users/sam/Claude/Projects/triplex-db-2/downloads/datomic-pro-1.0.7745';
   const zip = path.join(download, 'datomic-pro-1.0.7745.zip');
   const dist = path.join(download, 'extracted/datomic-pro-1.0.7745');
-  const verification = readJson(path.join(CONFIG_DIR, 'lab/config/datomic/verification.json'));
+  const verification = readJson(path.join(root, 'lab/config/datomic/verification.json'));
   if (sha256File(zip) !== verification.zipSha256) fail('REFUSED', 'Datomic zip checksum differs');
   const peer = path.join(dist, 'peer-1.0.7745.jar');
-  const sums = fs.readFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/SHA256SUMS'), 'utf8');
+  const sums = fs.readFileSync(path.join(root, 'lab/config/datomic/SHA256SUMS'), 'utf8');
   if (!sums.includes(`${sha256File(peer)}  peer-1.0.7745.jar`)) fail('REFUSED', 'Datomic extracted peer checksum differs');
   const check = spawnSync('python3', ['-c', `import hashlib,pathlib,sys,zipfile
 root=pathlib.Path(sys.argv[2]); archive=zipfile.ZipFile(sys.argv[1]); prefix='datomic-pro-1.0.7745/'
@@ -131,21 +168,22 @@ actual={str(f.relative_to(root)):hashlib.sha256(f.read_bytes()).hexdigest() for 
 assert actual==expected, 'Extracted Datomic bytes differ from the pinned ZIP'
 `, zip, dist], { encoding: 'utf8' });
   if (check.status !== 0) fail('REFUSED', `Datomic extraction verification failed: ${check.stderr}`);
-  const gpg = spawnSync('gpg', ['--homedir', path.join(download, 'gnupg'), '--status-fd', '1', '--verify', path.join(CONFIG_DIR, 'lab/config/datomic/peer.jar.asc'), peer], { encoding: 'utf8' });
+  const gpg = spawnSync('gpg', ['--homedir', path.join(download, 'gnupg'), '--status-fd', '1', '--verify', path.join(root, 'lab/config/datomic/peer.jar.asc'), peer], { encoding: 'utf8' });
   if (gpg.status !== 0 || !gpg.stdout.includes(`VALIDSIG ${verification.fingerprint} `)) fail('REFUSED', 'Datomic peer signature failed');
-  const sources = datomicSources();
+  const sources = datomicSources(root);
   const distribution = datomicTree(dist);
-  const buildInputsSha256 = sha256(JSON.stringify({ sources, distribution }));
+  const buildInputsSha256 = sha256(JSON.stringify({ sources, distribution, ...(isolated ? { runtime } : {}) }));
+  const tag = isolated ? 'tx2-dxjvm1-jre' + runtime.major + ':' + buildInputsSha256.slice(0, 16) : config.lanes.datomic.image;
   const parent = path.join(ENGINE_DIR, 'datomic-build');
   fs.mkdirSync(parent, { recursive: true });
   const context = path.join(parent, `${buildInputsSha256}-${process.pid}-${Date.now()}`);
   const fileInput = (source, destination, file) => ({ source, destination, manifest: [{ ...file, path: '' }] });
   const staged = stageDatomicContext(context, [
     { source: dist, destination: 'datomic', manifest: distribution },
-    { source: path.join(CONFIG_DIR, 'lab/config/datomic'), destination: 'config', manifest: sources.config },
-    { source: path.join(CONFIG_DIR, 'packages/datomic/gateway'), destination: 'gateway', manifest: sources.gateway },
-    fileInput(path.join(CONFIG_DIR, 'packages/datomic/src/codec-spec.json'), 'gateway/codec-spec.json', sources.codec),
-    fileInput(path.join(CONFIG_DIR, 'lab/config/datomic/Dockerfile'), 'Dockerfile', sources.config.find(f => f.path === 'Dockerfile')),
+    { source: path.join(root, 'lab/config/datomic'), destination: 'config', manifest: sources.config },
+    { source: path.join(root, 'packages/datomic/gateway'), destination: 'gateway', manifest: sources.gateway },
+    fileInput(path.join(root, 'packages/datomic/src/codec-spec.json'), 'gateway/codec-spec.json', sources.codec),
+    fileInput(path.join(root, 'lab/config/datomic/Dockerfile'), 'Dockerfile', sources.config.find(f => f.path === 'Dockerfile')),
   ]);
   // [EXP-DA01] Why: ZIP extraction omits executable mode bits; only verified bin files receive the documented 0755 transform. Rejected: preserving arbitrary host executable bits.
   for (const name of fs.readdirSync(path.join(context, 'datomic/bin')))
@@ -155,13 +193,23 @@ assert actual==expected, 'Extracted Datomic bytes differ from the pinned ZIP'
   const buildxConfig = path.join(ENGINE_DIR, 'datomic-buildx');
   fs.mkdirSync(dockerConfig, { recursive: true });
   fs.mkdirSync(buildxConfig, { recursive: true });
-  const result = spawnSync('docker', dockerArgs(['build', '--platform', 'linux/arm64', '--build-arg', `BUILD_INPUTS_SHA256=${buildInputsSha256}`, '-t', config.lanes.datomic.image, context]), { stdio: 'inherit', env: { ...process.env, DOCKER_CONFIG: dockerConfig, BUILDX_CONFIG: buildxConfig } });
+  const result = spawnSync('docker', dockerArgs(['build', '--platform', 'linux/arm64', '--build-arg', `BUILD_INPUTS_SHA256=${buildInputsSha256}`, ...['DATOMIC_BASE=' + runtime.base, 'DATOMIC_JAVA_MAJOR=' + runtime.major, 'DATOMIC_JAVA_VERSION=' + runtime.version].flatMap(arg => ['--build-arg', arg]), '-t', tag, context]), { stdio: 'inherit', env: { ...process.env, DOCKER_CONFIG: dockerConfig, BUILDX_CONFIG: buildxConfig } });
   if (result.status !== 0) fail('DOCKER', 'Datomic image build failed');
-  if (sources.sha256 !== datomicSources().sha256) fail('REFUSED', 'Datomic source changed during build; image not pinned');
-  const image = JSON.parse(docker(['image', 'inspect', config.lanes.datomic.image]))[0];
+  if (sources.sha256 !== datomicSources(root).sha256) fail('REFUSED', 'Datomic source changed during build; image not pinned');
+  const image = JSON.parse(docker(['image', 'inspect', tag]))[0];
+  if (image.Config.Labels?.['tx2.java-major'] !== runtime.major || image.Config.Labels?.['tx2.java-base'] !== runtime.base
+    || image.Config.Labels?.['tx2.build-inputs-sha256'] !== buildInputsSha256)
+    fail('REFUSED', 'Built image labels do not match the exact Java and input bytes');
+  if (isolated) {
+    atomicJson(isolated, { imageId: image.Id, imageSize: image.Size, buildInputsSha256,
+      sourceInputsSha256: sources.sha256, tag, runtime, context, staged, sources, distribution, verification,
+      gpg: { stdout: gpg.stdout, stderr: gpg.stderr } }, { exclusive: true });
+    console.log(JSON.stringify({ imageId: image.Id, runtime, receipt: isolated }));
+    return;
+  }
   Object.assign(config.lanes.datomic, { imageId: image.Id, buildInputsSha256, sourceInputsSha256: sources.sha256 });
   // Update Datomic keys only, preserving existing lane configuration bytes.
-  const slotsFile = path.join(CONFIG_DIR, 'lab/config/slots.json');
+  const slotsFile = path.join(root, 'lab/config/slots.json');
   let text = fs.readFileSync(slotsFile, 'utf8');
   for (const key of ['imageId', 'buildInputsSha256', 'sourceInputsSha256']) {
     const value = config.lanes.datomic[key];
@@ -182,7 +230,7 @@ assert actual==expected, 'Extracted Datomic bytes differ from the pinned ZIP'
 async function selftestDatomic(config, opts) {
   datomicDiskFloor();
   const info = slotInfo(config, 'datomic', 'dev');
-  assertDatomicImage(info);
+  const image = assertDatomicImage(info);
   const name = 'tx2-datomic-selftest';
   // [DX-W1] Why: charge indexed diagnostic seeds against the same disk ledger as every other builder.
   // Rejected: letting an ephemeral SQL database inherit a zero-byte forecast.
@@ -202,7 +250,7 @@ async function selftestDatomic(config, opts) {
     appendEvent({ event: 'reserved', container: name, holder });
   });
   try {
-    const result = spawnSync('docker', dockerArgs(['run', '--rm', '--name', name, '--network', 'none', '--memory', String(1.5 * 1024 ** 3), '--memory-swap', String(1.5 * 1024 ** 3), '--cpus', '1', ...(scratchGiB ? ['-e', 'TX2_DIAGNOSTIC_SCRATCH_GIB=' + scratchGiB] : []), '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', `tx2.holder=${holder}`, info.laneConf.imageId, 'selftest']), { stdio: 'inherit' });
+    const result = spawnSync('docker', dockerArgs(['run', '--rm', '--name', name, '--network', 'none', '--memory', String(1.5 * 1024 ** 3), '--memory-swap', String(1.5 * 1024 ** 3), '--cpus', '1', ...(scratchGiB ? ['-e', 'TX2_DIAGNOSTIC_SCRATCH_GIB=' + scratchGiB] : []), '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', `tx2.holder=${holder}`, image.Id, 'selftest']), { stdio: 'inherit' });
     if (result.status !== 0) fail('ENGINE', 'Datomic selftest failed');
     appendEvent({ event: scratchGiB ? 'datomic-diagnostic-exited' : 'datomic-selftest-pass', imageId: info.laneConf.imageId });
   } finally {
@@ -215,7 +263,7 @@ async function selftestDatomic(config, opts) {
 // [DX-W1] Why: release only a staged image in the calling experiment's namespace after its slots close.
 // Rejected: a forced removal or pruning the lab VM's shared image cache.
 async function removeDiagnosticImage(config, opts) {
-  const namespace = {'DX-THIN1': /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/, 'DX-W1': /^tx2-datomic:dx-w1-[a-z0-9-]+-[a-f0-9]{8}$/};
+  const namespace = {'DX-THIN1': /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/, 'DX-PREP1': /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery|subject-native-suite)$/, 'DX-W1': /^tx2-datomic:dx-w1-[a-z0-9-]+-[a-f0-9]{8}$/};
   if (!Object.hasOwn(namespace, opts.holder) || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
   const info = slotInfo(config, 'datomic', 'dev');
   const tag = info.laneConf.image;
@@ -232,6 +280,30 @@ async function removeDiagnosticImage(config, opts) {
     appendEvent({ event: 'datomic-staged-image-removed', holder: opts.holder, imageId: image.Id, tag });
     console.log(JSON.stringify({ tag, imageId: image.Id, removed: true }));
   });
+}
+
+function recordDatomicJvms(info, eff) {
+  if (info.lane !== 'datomic') return;
+  const m = inspect(info.container);
+  if (!m?.State.Running || m.Image !== eff.effective.imageId
+    || m.Config.Labels?.['tx2.config-sha256'] !== eff.sha256)
+    fail('REFUSED', 'Datomic runtime identity differs from the launch');
+  // [DX-V01] Why: the admitted compact Mac fixture starts JVMs through thin1/slot.ts.
+  // Rejected: reading standard-launcher role logs from a fixture that does not produce them.
+  if (info.scorecardOutput) {
+    process.stderr.write('[lab] Compact Mac fixture: standard-launcher JVM flag readback is unavailable\n');
+    return;
+  }
+  const out = fs.mkdtempSync(path.join(path.dirname(eff.files.entrypoint), 'jvm-'));
+  const roles = ['tx', 'gw-w', ...(eff.effective.readerGateway ? ['gw-r'] : [])];
+  for (const role of roles) {
+    execFileSync('bash', [path.join(REPO, 'lab/experiments/EXP-DX1/jvm1/readback.sh'), m.Id, out, role, 'shared'],
+      { env: { ...process.env, DOCKER_HOST: process.env.TX2_DOCKER_HOST ?? DOCKER_HOST }, timeout: 15_000 });
+  }
+  atomicJson(path.join(out, 'identity.json'), {
+    configSha256: eff.sha256, id: m.Id, image: m.Image, startedAt: m.State.StartedAt, roles
+  });
+  process.stderr.write(`[lab] JVM final flags: ${out}\n`);
 }
 
 /** Effective engine configuration: the bytes the container actually runs with. */
@@ -268,11 +340,20 @@ export function effectiveConfig(config, info) {
     return { effective, sha256: sha256(JSON.stringify(effective)), files: { config: file } };
   }
   if (info.lane === 'datomic') {
-    const sources = datomicSources();
+    const runtime = info.laneConf.variant?.runtime ?? datomicRuntime('21');
+    const root = info.laneConf.variant ? REPO : CONFIG_DIR;
+    const sources = datomicSources(root);
     const transactor = path.join(dir, 'transactor.properties');
     const entrypoint = path.join(dir, 'entrypoint.sh');
-    fs.copyFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/transactor.properties'), transactor);
-    fs.copyFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/entrypoint.sh'), entrypoint);
+    const jvm = (role, options, cpus, control) => launchOptions(role, parseCpuset(cpus, config.vm.cpus).length,
+      options + ' ' + javaCompatibility(runtime.major).join(' '), control);
+    fs.copyFileSync(path.join(root, 'lab/config/datomic/transactor.properties'), transactor);
+    // [DX-JVM1] Why: bind the launch script separately while keeping the legacy Java 21 image source pin.
+    // Rejected: modifying the resident config or mounting the canonical uninstrumented script.
+    // [DX-INT1] Why: the compact scorecard uses the verified entrypoint in its own staged context.
+    // Rejected: replacing its SQL stack with the standard one-gateway launch.
+    const entryRoot = info.laneConf.image.startsWith('tx2-dxthin-managed:') ? root : REPO;
+    fs.copyFileSync(path.join(entryRoot, 'lab/config/datomic/entrypoint.sh'), entrypoint);
     let reader, readerGateway;
     if (info.readerPort !== undefined) {
       const p = info.readerPort;
@@ -302,7 +383,7 @@ export function effectiveConfig(config, info) {
       script = script.replace("gw=''", "gw=''\nreader=''")
         .replace('kill "$tx" 2>/dev/null', '[[ -z "$reader" ]] || kill "$reader" 2>/dev/null || true; kill "$tx" 2>/dev/null')
         .replace('wait -n "$tx" "$gw" || true', [
-          'DATOMIC_JAVA_OPTS="$READER_JAVA_OPTS" taskset -c "$READER_CPUS" bin/run -i /config/dedicated-reader.clj &',
+          'DATOMIC_JAVA_OPTS="$READER_JAVA_OPTS $jvm_flags -Dtriplex.jvm.role=gw-r" taskset -c "$READER_CPUS" bin/run -i /config/dedicated-reader.clj > >(tee "$jvm_dir/gw-r.log") 2>&1 &',
           'reader=$!',
           'wait -n "$tx" "$gw" "$reader" || true',
         ].join('\n'));
@@ -310,7 +391,7 @@ export function effectiveConfig(config, info) {
       const gc = role => ' -Xlog:gc*,safepoint:file=/data/log/' + role + '-gc.log:time,uptimemillis,tags:filecount=0';
       readerGateway = {
         port: p, publish: `127.0.0.1:${p}:8081`, cpus: info.readerCpus,
-        opts: info.readerOpts + gc('reader'), writerGc: gc('writer'),
+        opts: jvm('gw-r', info.readerOpts, info.readerCpus) + gc('reader'), writerGc: gc('writer'),
         source: sha256(body), entrypoint: sha256(script),
       };
     }
@@ -331,12 +412,14 @@ export function effectiveConfig(config, info) {
       trace = { dir: traceDir, run: info.traceRun, source: info.traceSource, entrypoint: sha256(script) };
     }
     const effective = {
-      lane: 'datomic', slot: info.slot, image: info.laneConf.image, imageId: info.laneConf.imageId,
+      lane: 'datomic', javaMajor: runtime.major, slot: info.slot, image: info.laneConf.image, imageId: info.laneConf.imageId,
       buildInputsSha256: info.laneConf.buildInputsSha256, sourceInputsSha256: sources.sha256,
       gatewaySourceSha256: sha256(JSON.stringify(sources.gateway)), configMountMode: 'ro',
-      transactorOpts: info.transactorOpts + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: info.gatewayOpts + (readerGateway?.writerGc ?? ''),
+      entrypointSha256: sha256File(entrypoint),
+      transactorOpts: jvm('tx', info.transactorOpts, info.txCpus) + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: jvm('gw-w', info.gatewayOpts, info.gwCpus, info.slot === 'dev' ? 'serial' : 'default') + (readerGateway?.writerGc ?? ''),
       ...(readerGateway ? { readerGateway } : {}),
       ...(trace ? { trace } : {}),
+      ...(info.scorecardOutput ? { scorecardOutput: info.scorecardOutput } : {}),
       txCpus: info.txCpus, gwCpus: info.gwCpus, profile: info.slot === 'dev' ? 'dev' : 'exclusive',
       memBytes: info.memBytes, cpus: info.cpus, ...pin,
       publish: `127.0.0.1:${info.port}:8080`, volume: `${info.volume}:/data`,
@@ -351,7 +434,7 @@ export function effectiveConfig(config, info) {
     return { effective, sha256: sha256(JSON.stringify(effective)), files: { transactor, entrypoint, ...(reader ? { reader } : {}) } };
   }
   // QLever: repo qlever-start.sh with the slot's query memory (-m). Port stays 7019 inside.
-  const original = fs.readFileSync(path.join(CONFIG_DIR, 'qlever-start.sh'), 'utf8');
+  const original = fs.readFileSync(path.join(root, 'qlever-start.sh'), 'utf8');
   if (!/ -m 2G /.test(original)) fail('CONFIG', 'qlever-start.sh no longer has "-m 2G"; update engine.mjs');
   // [EXP-QG1] Why: an exclusive slot can boot an immutable captured index or N-Quads
   // without mutating a running index. Rejected: docker cp over live index files (unsafe).
@@ -419,6 +502,7 @@ export function runArgs(info, eff, holder) {
   ];
   if (info.lane === 'datomic')
     return [...common, ...(e.readerGateway ? ['-p', e.readerGateway.publish, '-v', eff.files.reader + ':/config/dedicated-reader.clj:ro', '-e', 'READER_CPUS=' + e.readerGateway.cpus, '-e', 'READER_JAVA_OPTS=' + e.readerGateway.opts] : []), ...(e.trace ? ['-v', e.trace.dir + ':/lab-trace', '-e', 'TRIPLEX_TRACE_DIR=/lab-trace', '-e', 'TRIPLEX_TRACE_LEVEL=summary', '-e', 'TRIPLEX_TRACE_TX_JFR=1', '-e', 'TRIPLEX_TRACE_RUN=' + e.trace.run, '-e', 'TRIPLEX_TRACE_SOURCE=' + e.trace.source, '-e', 'TRIPLEX_TRACE_SLOT=' + info.container] : []), '-v', `${eff.files.transactor}:/config/transactor.properties:ro`, '-v', `${eff.files.entrypoint}:/config/entrypoint.sh:ro`, '-e', `TRANSACTOR_JAVA_OPTS=${e.transactorOpts}`, '-e', `GATEWAY_JAVA_OPTS=${e.gatewayOpts}`,
+      ...(e.scorecardOutput ? ['-v', `${REPO}:${REPO}:ro`, '-v', `${e.scorecardOutput}:${e.scorecardOutput}:rw`, '-v', `${info.volume}:/var/tmp`] : []),
       '-e', `TX_CPUS=${e.txCpus}`, '-e', `GW_CPUS=${e.gwCpus}`, '-e', `DATOMIC_PROFILE=${e.profile}`,
       '-e', `GATEWAY_SOURCE_SHA256=${e.gatewaySourceSha256}`, info.laneConf.imageId];
   if (info.lane === 'xtdb')
@@ -445,7 +529,7 @@ export async function probe(info) {
   }
   if (info.lane === 'datomic') {
     try {
-      const expected = sha256(JSON.stringify(datomicSources().gateway));
+      const expected = sha256(JSON.stringify(datomicSources(info.laneConf.variant ? REPO : CONFIG_DIR).gateway));
       const peers = [info.endpoint, ...(info.readerPort ? [`http://127.0.0.1:${info.readerPort}`] : [])];
       const results = await Promise.all(peers.map(async endpoint => {
         const response = await fetch(`${endpoint}/health`, { signal: AbortSignal.timeout(3000) });
@@ -591,6 +675,7 @@ async function up(config, info, opts) {
     if (existing?.State.Running && !opts.fresh) {
       const ready = await waitReady(info, 60_000);
       recordCgroup(info);
+      recordDatomicJvms(info, eff);
       process.stderr.write(`[lab] ${info.container} already running (${ready.why})\n`);
       process.stdout.write(exportsFor(info) + '\n');
       return;
@@ -639,6 +724,7 @@ async function up(config, info, opts) {
       }
       const ready = await waitReady(info);
       const cgroup = recordCgroup(info);
+      recordDatomicJvms(info, eff);
       await withPool(async ledger => {
         const entry = ledger.reservations.find(item => item.container === info.container);
         if (entry) Object.assign(entry, { state: 'running', pid: null, configSha256: eff.sha256, readyAt: now(), regime: regimeOf(info), cpuset: cgroup?.cpuset ?? null });
@@ -834,6 +920,11 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const command = positional[0];
   const config = loadSlots();
   if (command === 'status') return status(config);
+  if (command === 'jvm-replay') fail('USAGE', 'Use jvm-inventory for a short Mac diagnostic and jvm1/server.ts for collector comparisons');
+  if (command === 'jvm-inventory') return (await import('../experiments/EXP-DX1/jvm1/inventory.mjs')).inventory(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
+  // [DX-TAIL1] Why: the split SQL replay needs one pool-admitted private reservation.
+  // Rejected: launching the diagnostic against a resident or managing containers in the benchmark.
+  if (command === 'tail1') return (await import('../experiments/EXP-DX1/tail1/run.mjs')).runTail(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
   // [DX-HA1] Why: destructive process drills need an exclusive, pool-admitted SQL topology. Rejected: killing roles in a resident slot.
   if (command === 'ha1') {
     const { localDrill } = await import('../experiments/EXP-DX1/ha1/local.ts');
@@ -843,9 +934,43 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'delta') return (await import('../experiments/EXP-DX1/actv-delta/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicSources });
   // [DX-ERASE1] Why: storage GC and excision need an owned SQL volume. Rejected: exercising irreversible maintenance on a resident.
   if (command === 'erase1') return (await import('../experiments/EXP-DX1/erase1/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicTree });
-  if (options.lane === 'datomic' && command === 'build') return buildDatomic(config);
+  // [DX-PLAY1] Why: the portable stack uses the same launch code under an exclusive lab reservation.
+  // Rejected: running a second private Docker command path without pool admission.
+  if (command === 'play1') return (await import('../experiments/EXP-DX1/play1/local.ts')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
+  if (options.lane === 'datomic' && command === 'build') return buildDatomic(config, options);
+  if (options.lane === 'datomic' && ['up', 'selftest'].includes(command)) {
+    const runtime = datomicRuntime();
+    if (process.env.DX_DATOMIC_IMAGE_RECEIPT) {
+      const variant = readVariantReceipt(process.env.DX_DATOMIC_IMAGE_RECEIPT, runtime);
+      config.lanes.datomic = { ...config.lanes.datomic, ...variant, image: variant.tag, variant };
+    } else if (runtime.major !== '21') fail('REFUSED', 'Java 25 on the Mac requires a verified private build receipt');
+  }
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
   if (options.lane === 'datomic' && command === 'image-remove') return removeDiagnosticImage(config, options);
+  // [DX-V01] Why: run the existing Linux toy client in the exact owned compact slot.
+  // Rejected: VM shell access or running a benchmark with host/guest clocks mixed.
+  if (command === 'scorecard-fixture') {
+    const info = slotInfo(config, 'datomic', options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
+    const owner = readOwner(info), live = inspect(info.container);
+    const output = scorecardOutput(options, info);
+    const mount = destination => live?.Mounts?.find(m => m.Destination === destination);
+    if (owner?.holder !== options.holder || owner?.worktree !== REPO || owner?.volume !== info.volume ||
+        !live?.State?.Running || live.Config.Labels?.['tx2.holder'] !== options.holder ||
+        mount(REPO)?.Source !== REPO || mount(REPO)?.RW !== false || mount(output)?.RW !== true ||
+        mount('/var/tmp')?.Name !== info.volume)
+      fail('REFUSED', 'Scorecard fixture requires its active owned stack and exact mounts');
+    const configDir = fs.realpathSync(CONFIG_DIR);
+    if (!configDir.startsWith(path.join(REPO, 'runs') + path.sep))
+      fail('REFUSED', 'Scorecard fixture config must belong to this worktree');
+    const source = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO, encoding: 'utf8' }).trim();
+    const result = spawnSync('docker', dockerArgs(['exec', '-w', REPO, '-e', 'DX_V01_FIXTURE_SOURCE=' + source,
+      '-e', 'TRIPLEX_DATOMIC_FAST_PATHS=save-wire', live.Id, '/usr/local/bin/node',
+      '--no-warnings', '--experimental-transform-types', '--expose-gc', '--max-old-space-size=768',
+      'lab/experiments/EXP-DX1/thin1/managed.ts', '--guest', configDir, 'int1-adopted-proof', '80',
+      path.join(output, 'campaign')]), { stdio: 'inherit', timeout: 13 * 60_000 });
+    if (result.status !== 0) fail('ENGINE', 'Scorecard fixture failed');
+    return;
+  }
   if (command === 'cpu-sample') {
     const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
     const owner = readOwner(info);
@@ -885,6 +1010,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (!['up', 'down', 'logs'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
   if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');
   const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
+  if (command === 'up' && options['scorecard-output']) info.scorecardOutput = scorecardOutput(options, info);
   // [EXP-QG1] Why: overrides never reach shared residents; effective bytes bind the run.
   // Rejected: changing slots.json for everyone during a measurement window.
   if (options['qlever-memory'] || options['qlever-seed-dir']) {

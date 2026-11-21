@@ -80,6 +80,7 @@ function bindingInputs(manager) {
     "lab/experiments/EXP-DX1/actv-lazy",
     "lab/experiments/EXP-DX1/actv-delta",
     "lab/experiments/EXP-DX1/wfix1/regression.clj",
+    "lab/experiments/EXP-DX1/w1",
     "pnpm-lock.yaml",
   )
     .split("\n")
@@ -110,7 +111,9 @@ export async function local(opts, config, manager) {
   const people = Number(opts.people);
   const mode = String(opts.run ?? "scale");
   const subjectWriter = mode === "ledger-parallel" ? "1" : process.env.DX_ERASE1_SUBJECT_WRITER;
+  const orderedIds = process.env.DX_ERASE1_ORDERED_IDS;
   assert(subjectWriter === undefined || subjectWriter === "0" || subjectWriter === "1");
+  assert(orderedIds === undefined || (orderedIds === "1" && subjectWriter === "1"));
   assert(
     [
       "smoke",
@@ -184,7 +187,15 @@ export async function local(opts, config, manager) {
     assert(s.bavail * s.bsize >= minimum * GiB, "Host disk below " + minimum + " GiB");
     return s.bavail * s.bsize;
   }
-  write("inputs", { nonce, mode, people, caps, forecast, inputs });
+  write("inputs", {
+    nonce,
+    mode,
+    people,
+    caps,
+    forecast,
+    inputs,
+    ...(orderedIds ? { subjectOrderedIds: true } : {}),
+  });
   try {
     const waitingSince = Date.now();
     while (!info) {
@@ -424,6 +435,7 @@ export async function local(opts, config, manager) {
         ...(subjectWriter !== undefined
           ? ["-e", "TX2_SUBJECT_SAVE=" + subjectWriter, "-e", "TX2_INT1_WRITE_READBACK=1"]
           : []),
+        ...(orderedIds ? ["-e", "TX2_SUBJECT_ORDERED_IDS=1", "-e", "TX2_SUBJECT_NUMERIC_OWNER=1"] : []),
         "-e",
         "DX_ERASE_TOKEN=" + token,
         "-e",
