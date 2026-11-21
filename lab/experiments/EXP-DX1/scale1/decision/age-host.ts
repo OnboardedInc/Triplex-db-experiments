@@ -10,6 +10,7 @@ import { createHash } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileHash } from "../measurements.ts";
 import { activeUnitArgs, dedicatedHost } from "../source.ts";
+import { prepareFallback } from "./age-fallback.ts";
 import { read, verifiedOrigin, write, type SeedProof } from "./seed.ts";
 
 const bench = "/var/tmp/triplex-scale1";
@@ -433,7 +434,6 @@ async function main(
       "datomic:sql://{db}?" + d + "?user=" + role + "&password=" + password;
     const configFile = path.join(out, "config.json");
     write(configFile, config);
-    const log = fs.openSync(path.join(out, "runner.log"), "wx");
     const staged = Date.now();
     write(path.join(out, "restore.json"), {
       ...manifest,
@@ -451,29 +451,89 @@ async function main(
       DATOMIC_URI_TEMPLATE: uri(sqlJdbc),
       AGE_RESTORE_URI_TEMPLATE: uri(copyJdbc),
     };
-    runner = spawn(
-      process.execPath,
-      [path.join(ageCheckout, "lab/experiments/EXP-DX1/age1/server.mjs"), configFile],
-      {
-        cwd: ageCheckout,
-        stdio: ["ignore", log, log],
-        env: ageEnv,
-      },
-    );
-    fs.closeSync(log);
-    const result = await Promise.race([
-      exited(runner),
-      txDone.then(() => {
-        throw Error("Native transactor exited during AGE1");
-      }),
-    ]);
+    const ageRunner = path.join(ageCheckout, "lab/experiments/EXP-DX1/age1/server.mjs");
+    const runAge = (file: string, input: string, logName: string) => {
+      const log = fs.openSync(path.join(out, logName), "wx");
+      try {
+        runner = spawn(process.execPath, [file, input], {
+          cwd: ageCheckout,
+          stdio: ["ignore", log, log],
+          env: ageEnv,
+        });
+        return Promise.race([
+          exited(runner),
+          txDone.then(() => {
+            throw Error("Native transactor exited during AGE1");
+          }),
+        ]);
+      } finally {
+        fs.closeSync(log);
+      }
+    };
+    const result = await runAge(ageRunner, configFile, "runner.log");
     write(path.join(out, "exit.json"), {
       ...manifest,
       result,
       at: Date.now(),
       runnerStarted: staged,
     });
-    assert.equal(result, 0, "AGE1 ended before a sealed rung. Retain its first evidence");
+    if (result !== 0) {
+      const fallback = prepareFallback(out, ageRunner, config, staged);
+      assert(fallback, "AGE1 ended before a sealed rung. Retain its first evidence");
+      const fallbackConfig = path.join(out, "fallback-config.json");
+      const { runner: fallbackRunner, ...decision } = fallback;
+      const decidedAt = Date.now();
+      write(path.join(out, "fallback.json"), { ...manifest, ...decision, at: decidedAt });
+      write(fallbackConfig, {
+        ...config,
+        target: fallback.target,
+        fromRecords: fallback.seedRecords,
+        ratePrior: fallback.recordsPerSecond,
+        diagnosticDeadline: fallback.deadline,
+        diagnosticCalibrationLog: fallback.calibrationLog,
+        diagnosticRunnerSha: fallback.runnerSha,
+      });
+      // [DX-SCALE1] Why: reconcile the acknowledged native prefix on the same running transactor.
+      // Rejected: restoring the original seed or publishing the smaller seal as an aged scorecard input.
+      status("running the AGE1 diagnostic rung from the calibrated prefix");
+      const exit = await runAge(fallbackRunner, fallbackConfig, "fallback.log");
+      const diagnosticRung = path.join(config.output, String(fallback.target));
+      if (exit === 0) {
+        const file = path.join(diagnosticRung, "sealed.json");
+        const diagnostic = read(file);
+        const start = read(path.join(diagnosticRung, "admission.json"));
+        assert(diagnostic.source === ageSource && diagnostic.target === fallback.target);
+        assert(
+          diagnostic.records >= fallback.target &&
+            diagnostic.t > fallback.prefixT &&
+            diagnostic.head > manifest.cut,
+        );
+        assert(start.started >= decidedAt && diagnostic.bindingSha === start.binding.runSpecSha);
+        assert.deepEqual(
+          [start.binding.imageSha, start.binding.transferSha, start.binding.configSha],
+          [imageSha, transferSha, await fileHash(fallbackConfig)],
+        );
+        write(path.join(out, "fallback-seal.json"), {
+          ...manifest,
+          ...decision,
+          at: Date.now(),
+          sealSha: await fileHash(file),
+          records: diagnostic.records,
+          head: diagnostic.head,
+          t: diagnostic.t,
+        });
+        status("sealed AGE1 diagnostic rung");
+      } else {
+        write(path.join(out, "fallback-exit.json"), {
+          ...manifest,
+          ...decision,
+          exit,
+          at: Date.now(),
+        });
+        throw Error("AGE1 diagnostic stopped before sealing. Retain the calibrated prefix");
+      }
+      return;
+    }
     const rung = path.join(config.output, "1000000000");
     const seal = path.join(rung, "sealed.json");
     const sealSha = await fileHash(seal),
