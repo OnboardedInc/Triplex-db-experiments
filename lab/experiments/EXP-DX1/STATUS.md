@@ -4341,3 +4341,10 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **DX-RD1 resumed:** read path at full size (256 readers: 893 reads/s and 860 ms p99 on one core against a 100 ms bar; current pulls p99 50 ms against 25): time split per level, the shape of the ladder, changes with predictions, server command.
 - Server queue for the rented machine written to the private queue file.
 - Agents running: DX-SCALE1, DX-BM1, DX-REAL1, DX-V01, DX-ERASE2, DX-RD1.
+
+### 2026-11-21 10:29 local: lean next card ready with locked predictions; integration builder merging failover, Publish and playground (6 agents running)
+
+- **DX-V01 part 9 finished** (exit 0). Run commit `c1eeb2ef8` on `origin/exp/DX-V01-next-card` (head `4bc94a250`), INT1 pin `5f62059b1`. Arms: 1 headline zero readers, 2 headline loaded (both with the winning credit mode), 3 `barrier6` on the same setup; then `--assemble`. Five-minute windows. 280 minutes and USD 5.09; with three copies 293 minutes and USD 5.32. 31 focused tests and the Mac toy card passed.
+- **Predictions locked before the run:** stored per second at 394 offered: barrier6 351, rolling6 381, rolling12 394; at 620: 340, 388, 447. Quiet loaded commit p99: rolling6 36, 36, 43 ms at 235, 394, 620 (inside the 50 ms clause); rolling12 38, 43, 53 ms. P1 stays near 860 ms p99 at 256 readers; P8 about 3,193 facts/s; P5 and P9 NOT RUN on this card.
+- **DX-THIN1 part 10 resumed:** merge the Sunday failover run (`a43d57b36`), Publish at 100,000 from the held database (`43b186d9a`) and, if clean, the playground (`d8dac968c`) onto `exp/DX-INT1` without touching what the queued cards measure; update `int1/V0.1-STATE.md` with the owner's decisions.
+- Agents running: DX-SCALE1, DX-BM1, DX-REAL1, DX-ERASE2, DX-RD1, DX-THIN1.
