@@ -1,11 +1,11 @@
-Pin 6d3d44641 to resume the held 477 million record volume.
-The old checker missed index jobs because Datomic logs a different database identifier. The archived evidence qualifies all three runs.
-The solo loader ran at 15,243 records per second sustained. All three tests nearly filled their allowed cores.
-The new load uses six cores and keeps each new save in its own transaction.
-The file growth chiefly points to replaced index segments. The archive cannot assign exact bytes to each cause.
-Regular collection and ordinary PostgreSQL vacuum give a predicted size of 330–390 GB.
-The run stops if the measured pace or disk growth misses budget. Mac tests check correctness only.
-The scorecard receives the same handoff file and stopped database directory.
+Pin efd0c7560 to resume the held 514.7 million record volume.
+The load now has 26 paid hours and stops on two consecutive cycles below 6,500 records per second.
+The directory ceiling stays at 400 GB.
+The previous run needed more apply time per save and did more storage work.
+Deleting retired segments and vacuuming explain almost all of the maintenance time.
+The second window was slower. Two windows cannot predict a lasting trend.
+Keep the same engine settings. Plan about another 15 hours at the latest rate.
+The scorecard handoff is unchanged.
 
 # DX-AGE1 Part 4
 
@@ -41,3 +41,5 @@ The archived replay recovered 59, 44 and 30 qualifying index jobs. The first Mac
 The final engine gate passed at 108e9b02a. It collected 5,171 obsolete segments, vacuumed the SQL table, reopened the exact 59,842-record cut and matched the native catalog in the actual index-job log. The final runner changes affect Linux admission and timing accounting. The six-core rate and 1B footprint have yet to run on bare metal.
 
 Part 6 admission checks the old source, custody and stopped-hold hashes, matched attempt and cleanup, machine and seed, and exact cycle, checkpoint and population bytes. The new attempt independently checks the live catalog, native and logical cuts, indexed count and mutable checkpoint. The previous rows remain immutable in the new rate history. The rate decision uses consecutive completed cycles and the paid deadline includes both archived attempts. [Run limits](EXTENDED-LIMITS.md)
+
+The terminal archive replay matched 514,741,853 indexed records at native t 38,613,452 and 8,093 paid seconds. The Mac gate checked exact custody, wrong-machine and modified-cycle rejections, the two-cycle reset and equality boundaries, and the unchanged default. The resumed run itself was not executed here. [Timing analysis and forecast](LOAD-READOUT.md)
