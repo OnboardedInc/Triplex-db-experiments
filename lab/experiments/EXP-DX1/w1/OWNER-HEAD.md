@@ -14,7 +14,7 @@ North star P2 and P4. Count serial SQL fetches per save, then check current and 
 | Old and new people | An untouched person stores zero additional datoms. An eligible first replacement initializes the witness in the save transaction. Creation and all ordinary writers can continue without it. | First write takes the legacy live rows at a pinned peer cut and builds the initial pages from those identities, inside a bounded migration. Serial apply checks the legacy owner ID and revision and fences native removal before publishing the root. New people start with a first root and no legacy scan. Above the migration budget, stay on the existing path until a separately bounded migration can run. |
 | Global identity and removal | Keep the existing legacy/ordered historical prefix check, clock and revision checks, operation and claim uniqueness, transaction-function version and excision witness. Store no protected values in the witness. | Keep the common assertion-ID index over both layouts and never remove its identity evidence when removing a protected body. Look up old hashed identities exactly and ordered IDs by the existing interval with exact fallback. Keep the external removal sequence and native excision check. Head and pages contain only opaque IDs and never hold decrypted bodies or keys. |
 
-All reads must see one committed cut. Migration must publish only when its prepared live set is still current, then immediately support reads through a separate peer at the returned cut. Mixed physical formats can coexist in one database. For Step 2, every mutator capable of changing an owner, including bulk import and Publish, must either advance the authoritative head or compare and invalidate it atomically. Changing a public owner ID or running raw application excision can invalidate a head without advancing the legacy revision, so the Step 1 witness cannot replace either native guard. Existing clients need no routing change in Step 1.
+All reads must see one committed cut. Migration must publish only when its prepared live set is still current, then immediately support reads through a separate peer at the returned cut. Mixed physical formats can coexist in one database. For Step 2, every mutator capable of changing an owner, including bulk import and Publish, must either advance the authoritative head or compare and invalidate it atomically. The scope needs durable format admission so readers and rollback binaries unable to interpret migrated rows cannot open it for writes. Changing a public owner ID or running raw application excision can invalidate a head without advancing the legacy revision, so the Step 1 witness cannot replace either native guard. Existing clients need no routing change in Step 1, and disabling its writer option leaves all data readable.
 
 Step 2 keeps the transient root small by storing only a latest reference in the hot record. Immutable root events and pages grow in separate index ranges. The size of the hot state then follows the number of written people and the writer's locality, rather than retained history. Residency at 16 GiB is an experimental prediction. The old-row and clock checks that Datomic performs outside the authored function still need to be attributed under load.
 
@@ -24,7 +24,7 @@ Step 1 adds one assertion for initialization and an assertion plus retraction fo
 
 Step 2 targets one root value, one immutable root event, and new page pointers for changed pages, plus owner links for version and retirement events. A 160-row first-touch migration would write roughly five pages at 32 pointers per page plus the root, before any event or indexing overhead. As a planning range, allow 5–10 more datoms and 1–3 KiB of pre-index uncompressed data per save over the 17-datom plain case. Apply the same increment to the 22-datom protected case as a forecast. A 5–10 datom increment over 17 is 29–59% more datoms, so reaching a fixed native record count would take 23–37% less time at the same save rate. WAL, storage after maintenance and retained history amplification need measurement. The first migration cannot be amortized into per-save counts without stating the number of distinct people touched.
 
-The updated rolling6 baseline measured 1.35 SQL fetches/save at 394/s, 1.32 at 620/s and 0.61 at 235/s, reaching 454 saves/s at 620 with 2.25 of three transactor cores. That leaves CPU, queueing and commit/log costs outside the old-row hypothesis. The 8B 1.21 ms estimate is an apply-only ceiling. The Mac cache sweep could not reproduce production ratios. The model also missed the early aging loader's apply time by more than a factor of two. [Rolling run at 0e5795578](../bm1/ROLLING-READING.md) · [Part 9](RETIREMENT-READS.md)
+The updated rolling6 baseline measured 1.35 SQL fetches/save at 394/s, 1.32 at 620/s and 0.61 at 235/s, reaching 454 saves/s at 620 with 2.25 of three transactor cores. That leaves CPU, queueing and commit/log costs outside the old-row hypothesis. The 8B 1.21 ms estimate is an apply-only ceiling. The Mac cache sweep could not reproduce production ratios. The model also missed the early aging loader's apply time by more than a factor of two. The measured points are from `bm1/ROLLING-READING.md` at `0e5795578`. [Part 9](RETIREMENT-READS.md)
 
 Target for the complete design, using weighted, non-overlapping per-index SQL attribution with an explicit unattributed bucket:
 
@@ -44,3 +44,31 @@ Proposed rolling6 windows are 300 seconds fresh at 394 and 620, and 120 seconds 
 | Fresh, 620/s | .54/.65/.01/.12 · 1.8–2.3 ms · 425–485/s · 29–31 s | .52/.38/.01/.10 · 1.55–2.05 ms · 465–550/s · 26–31 s | .11/.11/.02/.02 · 1.05–1.4 ms · 520–610/s · 3–31 s |
 | 1B, 50/s | .60/.62/.02/.11 · 1.5–2.4 ms · 49–50/s · 0.04–0.5 s | .59/.34/.02/.11 · 1.3–2.0 ms · 49–50/s · 0.035–0.4 s | .10/.10/.03/.03 · 1.0–1.35 ms · 49–50/s · 0.02–0.2 s |
 | 1B, 235/s | .72/.82/.02/.14 · 1.9–2.65 ms · 228–235/s · 0.08–5 s | .70/.50/.02/.14 · 1.6–2.2 ms · 230–235/s · 0.07–4 s | .12/.12/.03/.03 · 1.1–1.4 ms · 231–235/s · 0.04–3 s |
+
+## Step 1 evidence
+
+| Mac diagnostic | Observed |
+| --- | --- |
+| Native parity and conflict | 909 assertions in seven tests, including same-owner races, stale cuts, historical ID reuse, business row and journal parity, and exact witness datoms. |
+| Barrier6 and rolling6 recovery | Each recorded 56 durable edits, checked the same receipts after restart and found none of the six refused offers in storage. Each recovered one withheld reply. The observer matched every receipt to its completed append with synchronous commit, fsync and full-page writes enabled. |
+| Sealed switch and removal | Both modes recovered the typed erased marker for the initial and post-switch assertions at their own cuts and through the held cut. Neither stored change body returned an original value. |
+| All 13 removal routes | Passed in both barrier6 and rolling6 using the sealed value written through the head-enabled ordered writer. The actual backup restore checked the same assertion; both stacks released their slots and removed temporary containers, volumes and network. |
+| In-process point read of 257 rows, 24 current and 24 pinned per arm | Baseline medians 8.64 ms current and 11.74 ms pinned. Two witness runs measured 6.28/7.24 ms and 6.91/5.69 ms. The control ran first in the same JVM. These measurements exercise the same logical projection and give no isolated speedup or comparison with the 1.65 ms full-size service reading. The new head adds no lookup to the product reader. |
+| Native records and bytes | Plain ordered fixture 24 on first touch and 25 thereafter, one add and then an add/retraction over the 23-record path. A sealed first replacement wrote 29 including the witness. The witness contained 54 UTF-8 bytes for the one-field ordered case, excluding log framing and index overhead. The previously reported 17/22 counts are from the compact layout. The first-stage witness runs do not use that layout. |
+
+The first-stage witness is bounded to at most three recent assertion IDs of at most 128 characters each and contains no application values or body keys. Counts above cover the logical native writes before index maintenance. Settled bytes and aging-rate change for the final layout are unmeasured. One no-history value per touched person caps the retained witness state while each update still writes in the durable log. [Evidence hashes](WRITE10-SHA256SUMS)
+
+For a fresh Mac attempt, the managed driver stages exact inputs and uses its own ordinary heavy tokens for image build and selftest. The route suite uses the removal stack already exposed by the lab engine.
+
+```sh
+DX_W1_OWNER_HEAD=1 python3 lab/experiments/EXP-DX1/prep1/manage.py \
+  "$DX_W1_EVIDENCE/owner-head-new" rolling-recovery 10 1 1 0 1 0
+
+for mode in barrier6 rolling6; do
+  DX_W1_OWNER_HEAD=1 DX_ERASE1_SUBJECT_WRITER=1 DX_ERASE1_ORDERED_IDS=1 \
+    node lab/bin/heavy.mjs --label "DX-W1-owner-head-routes-$mode" -- \
+    node --experimental-transform-types lab/bin/engine.mjs erase1 --holder DX-W1 \
+      --out "owner-head-new-$mode" --run ledger-authority-regression --people 12 \
+      --sealed-witness --credit-mode "$mode"
+done
+```

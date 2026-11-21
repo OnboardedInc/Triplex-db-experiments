@@ -1,15 +1,18 @@
 # DX-W1 part 10
 
-The first step adds an optional compact witness to a person's existing save. The witness holds position, clock and the identities added by that save.
-The existing revision and predecessor checks still decide. The witness has no effect on what a reader returns.
-Untouched people have no witness. An ordinary first assertion still uses the existing writer. An eligible replacement initializes the witness without a rewrite.
-The second step would move rows and retirements to new entities and make the compact current record authoritative. That is the proposed source of the scale improvement.
-The measured fresh rolling6 writer reached 454 saves per second at 620 offered. The nearly flat 8B estimate remains a forecast.
-The working design, cost model and gate scope are in [Owner head](lab/experiments/EXP-DX1/w1/OWNER-HEAD.md).
+Step 1 is an optional compact witness in each eligible save. It holds the save's position, clock and new assertion identities. Enable it with `TX2_SUBJECT_OWNER_HEAD=1` on the numeric ordered writer.
+The legacy revision, predecessor and identity checks still decide. The witness is never read to answer a query. Untouched people have no witness, and eligible replacements initialize it without a rewrite.
+A native one-field save wrote 24 records on first touch and 25 subsequently, one and two extra. A sealed first replacement wrote 29. The ordered witness was 54 UTF-8 bytes.
+The Mac checked exact results before and after the switch. The SQL recovery gate and all 13 sealed removal routes passed in both credit modes. The read timings are diagnostic.
+Step 2 would move facts to fresh entities and make the compact current record authoritative. That is the part expected to flatten storage reads.
+The fresh rolling6 baseline stored about 454 saves per second at 620 offered. The 8B prediction of 0.36 fetches and 1.21 ms per save applies to the completed design only.
+[Design, forecasts, and gate details](lab/experiments/EXP-DX1/w1/OWNER-HEAD.md)
 
-## Evidence audit
+## Audit
 
-- The new ACK field measures a witness only after the durable native report has the exact owner, native transaction, logical position, clock and assertion identities. The existing operation, claim, revision and journal checks still own acceptance of the save.
-- The native gate compares fresh reference and witness scopes, confirms the expected rows, held cuts, exact feed and native records, and counts the witness datoms by native t. The rolling gate checks actual launch readback, the observed witness on each real ACK, exact values at acknowledged cuts and recovered receipts after an actual refused append and restart.
-- The removal case checks values at both exact cuts before removal, then compares the returned erased markers and clock to that attempt's removal receipt. It uses a fresh protected scope per mode.
-- No server command is attached to the first step. It does not exercise the design's projected scale benefit.
+- The new ACK field measures the witness only after its exact owner, native transaction, logical position, clock and assertion identities appear in that save's durable native report. The operation, claim, committed revision and journal still own acceptance of the save.
+- The native gate compares reference and witness scopes and binds exact rows, prior cuts, stored journal, conflicts, physical retirement and witness bytes to the new scopes. It counts witness datoms at the native t returned by each save.
+- The SQL gate checks the actual option and exact witness ACKs, same-person order, exact pinned values and operation and journal receipts after restart. Its parser checks staged and built source bytes, image and attempt, zero-drop append streams, exact native t and database, and append completion before reply. A real appended transaction is required for every checked receipt and no operation exists for a refused append.
+- The targeted sealed-removal case checks both exact cuts before and after deletion, the held cut and the stored journal. It binds the exact removal markers, generation and ordering to the fresh protected scope and append t in each credit mode.
+- The thirteen-route suite uses the exact sealed assertion written by the head-enabled ordered writer under the named credit policy. Each route has a positive control followed by fresh content or refusal checks at that assertion identity. The runner binds the current source, slot, image, attempt, writer, authority scope, and actual backup and restore. The removal integration is based on `3669bee41`, which carries `db88af534`.
+- No acceptance files changed. The owner-head format movement and updated reader remain Step 2. The three-way server command is withheld until that code passes gates.
