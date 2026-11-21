@@ -116,7 +116,7 @@
                fresh (keep (fn [op]
                              (when (and (= :db/add (first op)) (= "owner-layout-version" (second op))
                                         (= :triplex.entity/row (nth op 2 nil)))
-                               (nth (stamp op) 3))) (filter vector? ops))]
+                               (nth (stamp op) 3))) (filter #(instance? java.util.List %) ops))]
            (pr-str [2 final clock mask (into retained fresh)]))
          (pr-str [1 final clock pages]))]
       [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]]))
@@ -241,11 +241,13 @@
                                 (when (= page-key-a (:a x))
                                   [(:v x) (:v (some #(when (and (= (:e x) (:e %)) (= page-a (:a %))) %) added))])))
                       added)]
-    (when-not (and (= 1 (count versions))
-                   (some #(and (= owner (:e %)) (= root-a (:a %)) (= target-root (:v %))) added)
-                   (= written (into {} (map (juxt page-key-attr page-attr)) (:written-pages plan)))
-                   (= (set expected-rows) (into #{} (comp (filter #(= row-a (:a %))) (map :v)) data))
-                   (= (set (map #(subject/retirement-text (lean/prefix %) position clock journal) retired-ids))
-                      (into #{} (comp (filter #(= retired-a (:a %))) (map :v)) data)))
-      (throw (ex-info "Owner layout durable report unavailable" {:status 503 :code "OutcomeUnknown"})))
+    (let [checks {:owner (= 1 (count versions))
+                  :root (boolean (some #(and (= owner (:e %)) (= root-a (:a %)) (= target-root (:v %))) added))
+                  :pages (= written (into {} (map (juxt page-key-attr page-attr)) (:written-pages plan)))
+                  :rows (= (set expected-rows) (into #{} (comp (filter #(= row-a (:a %))) (map :v)) data))
+                  :retirements (= (set (map #(subject/retirement-text (lean/prefix %) position clock journal) retired-ids))
+                                  (into #{} (comp (filter #(= retired-a (:a %))) (map :v)) data))}]
+      (when-not (every? true? (vals checks))
+        (throw (ex-info (str "Owner layout durable report unavailable " (pr-str checks))
+                        {:status 503 :code "OutcomeUnknown"}))))
     (assoc (subject/verify-report-at report plan revision) :subject-save (str ident))))
