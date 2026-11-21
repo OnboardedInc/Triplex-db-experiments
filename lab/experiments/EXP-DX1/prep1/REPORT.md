@@ -1,18 +1,10 @@
-Yes. One database durably accepted every offer at 394 saves/s (393.92/s inside the window) on a 16.25-million-fact repeated-person tape. Quiet-account isolation still failed.
-Server 2 full-size ceiling source `1dd5952cbc1b11251619a83a25e85be885edd588`. The prior attempt reached zero timed cells. SQL restore alone projected at least 76 minutes.
-`DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-ceiling -- bash lab/experiments/EXP-DX1/prep1/server.sh ceiling "$OUT" 1dd5952cbc1b11251619a83a25e85be885edd588 "$SCALE1_IMAGE" 77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b 1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154 --pg-data "$SCALE1_PGDATA"`
-Budget 20–35 minutes end to end from launch, including 12 minutes of offers, on the built checkout with the stopped directory ready. The existing 60-minute cap stays in force. The new estimate awaits Server 2.
-Use a new absolute `OUT` outside the checkout. `SCALE1_IMAGE` is the original metadata directory. `SCALE1_PGDATA` is the cleanly stopped PostgreSQL 17 seed directory or the driver’s stopped file copy. Allow space for one additional copy and WAL under Docker’s storage root.
-The runner mounts that directory read-only, copies it into an owned volume, and checks cut 87,002, the original loader claim, pooled membership and every selected predecessor before the unchanged 620/900 tape. [Cells and forecasts](CEILING.md)
-The local restart recovered the same ordered receipt and passed 781 assertions. The synthetic collector matched 3,056 receipts with a byte-identical plan. Server 2 still needs to run it. Smaller runs keep the dump path.
-
-Server 1 append-tail source `df1b45d6bca9013dfc7a6adc79c961242dfc5a03`. The driver uses the original sealed ten-account seed and a new output directory outside the checkout.
-`DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-tail -- bash lab/experiments/EXP-DX1/prep1/server.sh tail "$OUT" df1b45d6bca9013dfc7a6adc79c961242dfc5a03 "$SEALED"`
-This 75-minute run compares the original setup, separate WAL drive, transactor-only Java 25 ZGC, and fair turns. Synchronous commit stays on.
-At 394 offered I forecast 34 ms solo p99 and 3.5× under load for the control, 24 ms and 1.6× with separate WAL, 33 ms and 3.2× with ZGC, and 34 ms and 2.7× with fair turns. [Both rates, append forecasts and launch requirements](TAIL-APPEND.md)
-The local PostgreSQL restart gate recovered the original receipt and captured its insert and update on the actual backend. The four tape fixtures matched 2,548 ordered receipts.
-Linux WAL and checkpoint tracing awaits the server. The command verifies a synchronous commit before each tape and retains unattributed calls explicitly.
-The quiet-account bar remains 50 ms solo and at most 1.25× under load. This run and the full-size ceiling run are pending.
+Yes, one database stored every offer at 394 saves/s on the ten-account, 16-million-fact seed. Full size reached 278.08/s. The next tests combine the small-seed tail fixes and test more transactor headroom at full size.
+Server 1 combined arm source `d1224c27e5ac0fcacfa04cc4d2a11b0f328eacaa`. Start from the same sealed small seed and use a new absolute output directory outside the checkout.
+`DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-tail-combined -- bash lab/experiments/EXP-DX1/prep1/server.sh tail-combined "$OUT" d1224c27e5ac0fcacfa04cc4d2a11b0f328eacaa "$SEALED"`
+The 30-minute cap includes the restore, four 90-second cells and cleanup. Dedicated WAL, transactor-only Java 25 ZGC and fair turns run together. Synchronous commit stays on.
+Separate WAL already brought quiet solo p99 from 71.58 to 28.06 ms at 235 and from 82.76 to 6.99 ms at 394. The loaded ratios were 1.96× and 14.88×, above 1.25×.
+The combined forecast is zero expiries, 13/9 ms quiet solo p99 and 1.54×/1.89× at 235/394. [Every cell and launch requirements](TAIL-APPEND.md)
+The mixed-Java startup gate now checks each live JVM against its own pinned image. The WAL probe uses the successful fdatasync that Server 1 witnessed inside the matching flush. Bare-metal combined timing is pending.
 
 Merge candidate 3529d2579d2b9163f590ded891fc9d26130c8138 includes INT1 at 250c91916.
 Use `--writer subject-ordered` for the scorecard. Keep `--writer grouped` for the control.
@@ -20,7 +12,6 @@ In the direct gateway set `TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SU
 An SDK caller who wants ordered writes allocates and keeps one `orderedSaveIdentity` token per command. Use that block for the journal and all new assertion IDs, including journal rows. Existing callers may keep their IDs.
 At 235 and 394 offered, quiet p99 went from 73.66 to 315.42 ms and from 34.07 to 118.16 ms. The ratios were 4.28× and 3.47× against a 1.25× bar.
 Durable append and the wait to start it took 99% and 97% of the two loaded quiet p99 saves. Fair turns were off.
-The 620/900 ceiling command below uses the one-million-person sealed image. Its physical result is pending.
 
 **North star.** Durable, exact small saves and quiet-account tails in one database. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
@@ -28,9 +19,7 @@ The 620/900 ceiling command below uses the one-million-person sealed image. Its 
 
 **Quiet account.** Both ranked solo tails spent about 89% in append. The 394 loaded cell ran 293 appends/s, at 1.344 saves per append. Its p99 quiet save waited 80.12 ms after apply and then spent 34.00 ms in its own append. No ranked p99 save overlapped a material JVM pause. The two slower 394 saves overlapped about 79 ms of transactor safepoints. I forecast 25–35 ms solo and 1.2–1.4× loaded/solo if the append tail falls below 20 ms and excess handoff/competing work below 10 ms. Retain synchronous durable acknowledgments. [Attribution, complete shares and change](QUIET-ACCOUNT.md)
 
-**Full-size ceiling.** From clean source 8a116ed366d54ad7bca7b153d92d4f2eb4ea7041, set `OUT` to a new absolute directory and use the held SCALE1 image directory and both original metadata hashes. The launch is bounded at 60 minutes.
-`DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-ceiling -- bash lab/experiments/EXP-DX1/prep1/server.sh ceiling "$OUT" 8a116ed366d54ad7bca7b153d92d4f2eb4ea7041 "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" "$SCALE1_TRANSFER_SHA256"`.
-One restore, then 620 and 900 gross offers/s. Each loaded neighbour spans 1,900 people. Quiet schedules match their solo windows. The producer/collector fixture matched 3,056 ordered receipts across eight cells. [Command requirements, forecasts and mixed-format behaviour](CEILING.md)
+**Full-size ceiling.** The copied seed run at `1dd5952cb` delivered 278.08/274.28 saves/s with fair turns off/on at 620 offered. Fair turns brought quiet isolation from 14.11× to 1.34×. At 900 offered the measured range was 238.10–240.71 saves/s. All eight cells ran on the one-million-person seed. The 394 full-size rate remains unmeasured. [Original plan and forecasts](CEILING.md)
 
 **Mixed-format database.** Both the historical range and fallback refuse old IDs proposed as new, including across owners after retirement. Replacing an old current row uses its exact predecessor bytes. No historical old-ID probe is induced by that predecessor on later edits. Owner and row leaves can still go cold. The mixed-format SQL gate checked legacy → ordered → ordered, the exact retractions and retired-ID refusal. [ID and SDK contract](ORDERED-IDS.md)
 
@@ -41,7 +30,7 @@ The SDK packages built. Fourteen focused controller and scorecard tests and 19 S
 
 **Grouped fallback proposal.** At 235 offered, the measured gateway spent 39.40 of 44.31 ms per busy turn speculatively evaluating its members. Parallel same-basis preparation with one append projects 300–325 saves/s on two workers and 430–520 on four, if groups stay near eight and the storage reads overlap. It is a proposal. [One-page design and assumptions](GROUPED-PREPARATION.md)
 
-**Tail evidence audit.** The native restart reader checks the original ordered receipt, journal and reopened cut, and both SQL spans inside the exact append for the fresh staged source, image and attempt. The standard collector joins exact offers to durable journal receipts and native blocks, checking the fresh slot, writer options, source, and sealed inputs. The tail collector also requires the streamed restored dump hash, actual image and core masks, durability and WAL placement readbacks, fresh commit/flush/sync sentinel, matching backend/LSN, both terminal event counts and exact raw hashes. The launcher exposes summaries after owned teardown. The fixture output is marked synthetic. [Checksums](SHA256SUMS)
+**Tail evidence audit.** The native restart reader checks the original ordered receipt, journal and reopened cut, and both SQL spans inside the exact append for the fresh staged source, image and attempt. The standard collector joins exact offers to durable journal receipts and native blocks, checking the fresh slot, writer options, source, and sealed inputs. The tail collector also requires the streamed restored dump hash, actual image and core masks, durability and WAL placement readbacks, fresh commit/flush/sync sentinel, matching backend/LSN, both terminal event counts and exact raw hashes. The combined collector also verifies its sole arm, the fixed tape, six credits, each JVM image and collector, and the other-drive WAL readback. The launcher exposes summaries after owned teardown. The fixture output is marked synthetic. [Checksums](SHA256SUMS)
 
 **Copied-seed evidence audit.** The stack reads PostgreSQL 17’s clean-shutdown control state before copying and checks the matching control bytes after copying. The clone record binds the fresh attempt, source, image, seed digest and actual read-only and writable mounts. The producer checks both metadata digests, pooled roster proof for 1,000,000 people and 162,456,470 facts, current logical cut, loader journal and claim, 40 live membership rows and the chosen predecessor values. The collector binds that pre-offer record and the actual running PostgreSQL volume to the same fresh attempt, plan, seed and receipts. The Mac gate checks the helper’s exact staged source, the original receipt and pinned history after a fresh restart on the copied directory. [PostgreSQL control-data tool](https://www.postgresql.org/docs/17/app-pgcontroldata.html) · [Evidence checksums](SHA256SUMS)
 
