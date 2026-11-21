@@ -4228,3 +4228,14 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **DX-SCALE1 resumed** with the decision: watch for that commit, restart the load from the held cut, publish after the first cycle and every two hours.
 - **Server 2 idle since 05:59**; expected back at work by about 06:35.
 - Agents running: DX-SCALE1, DX-AGE1.
+
+### 2026-11-21 06:11 local: load restarting under the extended limits; builder's reading of the slow load (1 agent running)
+
+- **DX-AGE1 part 6 finished** (exit 0). Limits commit `efd0c7560` (published 06:05; driver adopted it at 06:08, `26ebe6dc8`); reading at head `a0eee1ea1`, `age1/LOAD-READOUT.md`.
+  1. **Writing waits on Datomic's serial apply:** mean apply 0.86 ms in the ladder, 1.46 and 1.65 ms in the two load windows, enough to account for nearly all of the transaction-rate limit. Cache hits fell, PostgreSQL buffer reads per record rose, WAL bytes per record roughly doubled. Not separable from the archive: the cost of reusing freed pages, PostgreSQL's one-core allowance, competing index I/O.
+  2. **Maintenance:** collection 194 and 319 s, vacuum 136 and 220 s, together 93% of recurring maintenance. Collecting less often delays page reuse and raises peak disk; more vacuum workers unlikely to help single-index relations.
+  3. **The fall persisted across samples** (median writing 13,152 to 11,894 records/s); two windows cannot establish a long-run trend.
+  4. **No setting change recommended.** Missing measurements: PostgreSQL CPU use and wait classes.
+- **Revised forecast:** at 9,023 records/s, 14 h 56 min more (17 h 11 min of paid loading in total); with a gradual fall to 7,300 at 1 billion, about 16 h 40 min more; at the new floor, 20 h 44 min more.
+- **Mine, to fill the missing measurement:** one read-only sample of per-process and per-core load on server 2, scheduled for about 06:36 while the load is writing (PostgreSQL's CPU set, use and throttling). It changes nothing on the server.
+- Agents running: DX-SCALE1.
