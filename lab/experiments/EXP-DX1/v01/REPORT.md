@@ -1,11 +1,17 @@
-Server 2 should use commit 790d9e96e.
-It accepts the existing SCALE1 seed.
-It checks the AGE1 identity before a 1B run.
-It records partial observations for priorities 1 through 4 and 6 through 8.
-It uses compact layout K with a queryable journal and offers both writer settings.
-The Mac checks covered the toy seed, import pacing and all 13 output rows.
-Publish and the one-host recovery rehearsal still need held-seed adapters.
-Full-size restore, server timing and the per-person configuration remain unverified here.
+Server 2 should keep commit 790d9e96e until INT1 names the ordered-writer integration.
+The two-writer preview ran from 67a7455fe and filled all 14 card rows.
+The ordered arm used the installed writer for all 211 benchmark saves.
+The grouped comparison measured commits and quiet-account work on the same toy population.
+The exact PREP1 SQL test passed 37 assertions.
+Both retired IDs were refused and four historical answers matched grouped.
+The primary forecast is 235 minutes and USD 4.27 per age.
+No bare-metal measurement was taken by this worktree.
+
+## Part 3 local preview
+
+The exact Clojure Part 10 test at PREP1 `8a116ed36` ran successfully before the ordered fixture. The adopted loader made two 80-person scopes in the ordered stack and one 80-person scope in the grouped stack. The ordered benchmark’s 211 replies all named the installed function and their ordered identity blocks. The grouped benchmark acknowledged all 183 offers. Each writer checked 48 pinned reads in each quiet cell. The ordered reference import verified 767 frames, 24,544 facts, all 270 offered saves and all 990 reads. Both retired-ID refusals left an unchanged head and no operation or claim. Both writer configurations retained four matching typed values and validity ranges. The engine removed both private volumes and released both reservations. Every local clock is diagnostic.
+
+INT1 still advertised `250c91916` when this preview was published. The preview keeps the existing guarded erasure branch and the published PREP1 ordered-ID checks. The designated integration still controls the release pin.
 
 ## Part 3 writer configuration audit
 

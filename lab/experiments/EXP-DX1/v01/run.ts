@@ -23,7 +23,10 @@ const price = Number(values["hourly-usd"]);
 assert(/^\d+(?:\.\d+)?$/.test(values["hourly-usd"]!) && Number.isFinite(price) && price > 0);
 assert(isWriter(values.writer), "Choose per-person-ordered or grouped");
 const minutes = values.writer === "grouped" ? budget.comparison + budget.cleanup : ceiling;
-const forecast = `Budget ${minutes} minutes including cleanup, up to USD ${(minutes / 60 * price).toFixed(2)} per age. Per-person-ordered runs the full adopted workload and includes a separate grouped comparison for P2 and P6. Grouped alone repeats only that comparison. The physical pair uses ${pairSeconds / 60} minutes of matched offers. Build and AGE1 provisioning are separate.`;
+const plan = values.writer === "grouped"
+  ? `Grouped repeats P2 and P6 only, with ${pairSeconds / 120} minutes of P2 offers.`
+  : `Per-person-ordered runs the full adopted workload and includes a grouped P2 and P6 comparison. The main P1–P4 pair uses ${pairSeconds / 60} minutes of matched offers.`;
+const forecast = `Budget ${minutes} minutes including cleanup, up to USD ${(minutes / 60 * price).toFixed(2)} per age. ${plan} Build and AGE1 provisioning are separate.`;
 if (values.plan) { console.log(forecast); process.exit(0); }
 assert(values.age === "fresh" || values.age === "1B");
 assert(values.commit && values.out && values.seed && values["image-sha256"] && values["transfer-sha256"]);

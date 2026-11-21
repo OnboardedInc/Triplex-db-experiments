@@ -32,3 +32,9 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 - `part2/recovery-p9a/fault/` and `part2/recovery-p9a/move/` contain the separate ten-account HASYNC1 diagnostics. Their attempt records, receipt audit, read tapes, recovery events and cleanups bind the two owned slots.
 - `part2/import-p8b/final-render/SCORECARD-v0.1.md` is the final formatter applied to the same retained native campaign. `part2/final-card-checks.log` records renderer, loader and recovery tests and verifies the card rows and evidence links.
 - `part2/packages-final.log` and `part2/package-build-final.json` contain the final server revision’s clean package build and exact output hashes.
+
+## Part 3 writer preview
+
+- `part3/preview-a/SCORECARD-v0.1.md` contains the 14-row Mac card. The campaign archive contains both configurations, the reference import, both retired-ID probes and the grouped history witness.
+- `part3/preview-a/campaign/PREP1-MIXED-TEST.log` contains the exact published native test. The two PREP1 unit logs capture 6 and 11 focused tests.
+- `part3/fixture-preview-a-1.log` records both admissions and volume removals. The package and image receipts bind source and build bytes.
