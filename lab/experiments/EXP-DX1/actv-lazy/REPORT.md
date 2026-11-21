@@ -1,8 +1,8 @@
-The held-database Publish candidate is on the DX-ACT1 branch. The previous priority candidate was `acc0f5c39`.
+Build the held-database server candidate at `43b186d9a175054cfb94b84ca6d5c76e6ee9b128`. It includes both credit modes.
 On bare metal at 25,000 people, every priority Publish gave the first correct answer within one second, including at peak.
 At peak the system offered 39.4 saves a second and stored 25.39. The same queue grew without any Publishes.
 The 30 Publishes held the turn for less than one second of a 150-second window. The old run used one core per JVM and serial saves.
-The new command opens the existing one-million-person database and publishes to one account of 100,000. It does not rebuild the roster.
+The new command opens the existing one-million-person database and publishes to one account of 100,000 without reseeding any people.
 The 100,000-person forecast is 60–180 ms p99 at 3.5 saves/s, 130–450 ms at 23.5, and 200–900 ms at 39.4, with the other accounts live at the two higher rates.
 The bare-metal result still decides whether the new path meets the one-second target and protects ordinary traffic.
 Assumed production cadence for confirmation is one Publish per account per hour during a busy deployment. The five-second test deliberately stresses the queue.
@@ -24,6 +24,8 @@ Earlier 10,000-person deep Mac checks found 48.2 encoded notice-leaf bytes per p
 Fresh-reader checks covered 10,000 and 25,000 thin people and 1,000 deep people. Each wrote four changes with no subject visits. The 25,000-person receipt took 79 ms and the sampled cold-read p99 was 27 ms on the Mac. Its index used 10.46 leaf bytes and 101.72 address bytes per person. JVM snapshots include index and heap activity and cannot isolate the 64-byte resident-memory bar.
 
 The revised 64-person smoke used the pinned candidate. The cold observer started within 5 ms of the cutoff in all three cells. The peak Mac diagnostic still missed with 758 ms behind an active save and 317 ms from entry to durable. Quiet and 3.5 saves/s observed the new release in time. All 15 point samples and 379 effects replayed exactly.
+
+The packed Mac correctness gate checked both credit modes on 80 people across ten accounts. It verified 7,632 save receipts, 384 reads, 86 concrete changes and eight notices. A fresh reader replayed old and new release pins. [Part 9 evidence](PART9-SHA256SUMS)
 
 ### Server command
 

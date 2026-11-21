@@ -47,6 +47,8 @@ Assumption for owner confirmation. One Publish per account per hour in a busy de
 
 ## Evidence and audit
 
+The bound Mac gate ran on `43b186d9a175054cfb94b84ca6d5c76e6ee9b128` in one managed slot with one ordinary token. It enrolled eight people in the selected account, and 80 in the pooled fixture. Adoption and notice setup took 1.20 seconds there, diagnostic only. Both credit arms checked eight burst receipts with their deadline samples, all 7,632 offered save receipts and all 384 scheduled field reads. The full first-release replay matched 86 changes and eight individual notices. It compared an archive-served answer to a derived answer and reopened the old and current release pins in a fresh reader process. The slot and its disposable volume were released. Focused TypeScript, shell syntax and 32 unit checks passed. The Mac gate used the managed gateway's writer. The full-size prepared mount, ordered writer under Publish and background timing await bare metal.
+
 The backlog numbers use the original BM1 peak `full/cell-2/observed.json`, its issued tape and the exact archived `publish-priority.ts` control from the `d767ae051` handoff. The two copied archive digests match TRANSFER. Screen and treatment rates count actual ACKs in their respective time windows. Pending counts follow the offered tape at +1s. [Evidence digest index](PART9-SHA256SUMS)
 
 - Adoption and setup compare pinned transfer bytes, selected scope identity and native loader claim, every selected account membership root at the original cut, and exact joined census readback. A new attempt and original seed head are required. Physical server evidence adds the template control, copy and WAL mounts, serving JVM boots and runtime build checks.
