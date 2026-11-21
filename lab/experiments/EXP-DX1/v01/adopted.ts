@@ -241,9 +241,9 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const pulls = loaded && !comparison && writer !== "grouped" && quietCell === undefined ? await currentPull(reader, seed, terminal, toy) : undefined;
     let p6;
     if (quietRead) {
-      const writes = new Histogram(), delivered = new Histogram();
+      const quietCommits = new Histogram(), delivered = new Histogram();
       for (const row of saves.filter((s) => s.account === 0)) {
-        writes.recordMs(row.end! - row.due);
+        quietCommits.recordMs(row.end! - row.due);
         const event = byPosition.get(row.receipt!.p)!;
         if (row.dispatched !== undefined && event.seen >= row.dispatched) delivered.recordMs(event.seen - row.dispatched);
       }
@@ -251,7 +251,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         totalOffers: tape.length, totalReceipts: saves.length, read: quietRead,
         acknowledgedInWindow: saves.filter((s) => s.status === "acked" && s.end! < start + interval).length,
         expired: writes.rows.filter((s) => s.status === "expired-before-dispatch").length,
-        commit: writes.summary(), feed: delivered.summary() };
+        commit: quietCommits.summary(), feed: delivered.summary() };
     }
     const evidence = path.join(out, "operations.json");
     jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, p6, p7 });

@@ -1,6 +1,8 @@
 # Run the v0.1 server scorecard
 
-Server 2 should run `RUNNER_COMMIT` from `exp/DX-V01-scorecard`. It incorporates INT1 launch pin `57580241dc4020f9ab7590839c72c00356fcedee`.
+Server 2 should run `fa9779a655f4894e6a7f2279c7e9fe4338788d95` from `exp/DX-V01-scorecard`. It incorporates INT1 launch pin `57580241dc4020f9ab7590839c72c00356fcedee`.
+
+The latest SCALE1 handoff records that AGE1 stopped at the time guard after calibrating at about 5,284 records/s. Run fresh first. The 1B command requires a later verified one-billion-record seal. [SCALE1 handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/58e4b1ca3865315e6b671fc4cbf07687d113c6f8/lab/experiments/EXP-DX1/scale1/HANDOFF.md)
 
 ## Campaign and forecast
 
@@ -13,9 +15,9 @@ Server 2 should run `RUNNER_COMMIT` from `exp/DX-V01-scorecard`. It incorporates
 
 The shared INT1 server profile gives the transactor three cores, a 24 GiB heap and 16 GiB object cache. It gives the writer four cores and the reader one core. PostgreSQL uses an 8 GiB cap and 2 GiB in shared buffers. Synchronous commit, fsync and full page writes stay on.
 
-The cap is **300 minutes and USD 5.45 per age** at USD 1.09/hour, including 15 minutes for cleanup. The other allowances are 105 minutes for the headline initial pair and P1–P4, 25 for P6, 10 for P7, 25 for P8 and up to 60 each for the two comparisons. The two comparison cards report P2 and P6 after the same six-minute field-write prelude, without the P1 reader ladder. The clock starts with copies already prepared. Build, aging and staging are separate. Allow staging time from four times the measured source allocation and the host's copy rate.
+The cap is **300 minutes and USD 5.45 per age** at USD 1.09/hour, including 15 minutes for cleanup. The other allowances are 105 minutes for the headline initial pair and P1–P4, 25 for P6, 10 for P7, 25 for P8 and up to 60 each for the two comparisons. The two comparison arms contribute P2 and P6 after the same six-minute field-write prelude, without the P1 reader ladder. The clock starts with copies already prepared. Build, aging and staging are separate. Allow staging time from four times the measured source allocation and the host's copy rate.
 
-P2 and P6 use the same loaded windows at 50, 235, 394 and 620 offered saves/s. Each has a matched 90-second quiet-only window, with 315 quiet saves on each side. The nine busy accounts use deterministic bands of 1,900 people each. The 50/s window visits only as many people as it has offers. Every server window uses six shared fair-turn credits. The field tape edits one or two fields on a single task per person, so the result does not settle the contract's larger P2 size bands or P6's Publish and import overlap.
+P2 and P6 use the same loaded windows at 50, 235, 394 and 620 offered saves/s. Each has a matched 90-second quiet-only window, with 315 quiet saves on each side. The nine busy accounts use deterministic bands of 1,900 people each. The 50/s window visits only as many people as it has offers. The P2 and P6 windows use six shared fair-turn credits. The field tape edits one or two fields on a single task per person, so the result does not settle the contract's larger P2 size bands or P6's Publish and import overlap.
 
 ## Predictions written before the run
 
@@ -40,7 +42,7 @@ These are engineering estimates for the weekend campaign. The full-size anchors 
 Use a clean checkout of `exp/DX-V01-scorecard` at the runner commit on the dedicated bare-metal Ubuntu host.
 
 ```bash
-COMMIT=RUNNER_COMMIT
+COMMIT=fa9779a655f4894e6a7f2279c7e9fe4338788d95
 BUILD=/var/tmp/triplex-v01-server-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
