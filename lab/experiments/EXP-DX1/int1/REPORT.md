@@ -36,3 +36,5 @@ The sender checks the operation and records predecessor values before releasing 
 ## Sunday failover integration audit
 
 The build and pair readiness records bind the declared commit, build receipt, manifest digest, seed cluster, fresh tag and both live host identities. Each case binds the cloned bytes and scope to a fresh attempt on the named roles, compares surviving native receipts and pinned field witnesses to the sent operations, and reports cleanup for those same objects. The local stopped-copy witness verifies manifest bytes and the exact fresh three-row sequence across promotion and replay. The compressed archive checksum indexes the collected attempt bytes. The two-server timing and second-fault observation remain open.
+
+Build `9cd20b29449456c1d8c2400fc45f8be331495530` for both Sunday roles. TypeScript and 24 tests passed. The stopped-copy gate matched three rows and three fresh clone boots. Policy B matched 27 failover receipts, the original lost reply, 79 planned-move receipts and 1,518 pinned reads. The shared sender stayed byte-for-byte intact. The adoption reader split preserves the existing dump check. [Evidence index](V0.1-SHA256SUMS)
