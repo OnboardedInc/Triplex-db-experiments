@@ -629,23 +629,24 @@ export class Stack {
     const beforeDump = compare ? await this.dumpSize() : undefined;
     const start = performance.now();
     const program = `(require '[datomic.api :as d] '[clojure.string :as s])
-      (let [uri (s/replace (System/getenv "DATOMIC_URI_TEMPLATE") "{db}" (System/getenv "PLAYGROUND_GC_DB"))
+      (try (let [uri (s/replace (System/getenv "DATOMIC_URI_TEMPLATE") "{db}" (System/getenv "PLAYGROUND_GC_DB"))
             conn (d/connect uri) cut (java.util.Date.) result (d/gc-storage conn cut)]
         (when (instance? clojure.lang.IDeref result) @result)
         (println (str "PLAYGROUND_GC " (.getTime cut)))
-        (d/release conn))`;
+        (d/release conn))
+        (catch Throwable e (println (str "PLAYGROUND_GC_ERROR " (.getName (class e))))))
+      (shutdown-agents)`;
     const launched = await docker(
       [
         "exec",
         "-e",
         `PLAYGROUND_GC_DB=${database}`,
-        "-e",
-        "DATOMIC_JAVA_OPTS=-Xms32m -Xmx192m -XX:+UseSerialGC -XX:ActiveProcessorCount=1",
         tx!,
-        "/opt/datomic/bin/run",
-        "-m",
-        "clojure.main",
-        "-e",
+        "bash",
+        "-c",
+        // The vendor bin/run flattens arguments. Preserve the entire expression as one JVM argument.
+        'cd /opt/datomic && exec java -server -Xms32m -Xmx192m -XX:+UseSerialGC -XX:ActiveProcessorCount=1 -cp "$(bin/classpath)" clojure.main -e "$1"',
+        "--",
         program,
       ],
       { ...archiveCommand(signal), timeoutMs },
@@ -653,7 +654,11 @@ export class Stack {
       throw new Error("Owned Datomic storage collection could not start");
     });
     const cutoff = /^PLAYGROUND_GC (\d+)$/m.exec(launched)?.[1];
-    if (!cutoff) throw new Error("The collector returned no cutoff");
+    if (!cutoff)
+      throw new Error(
+        "The collector returned no cutoff: " +
+          (/^PLAYGROUND_GC_ERROR ([\w.]+)$/m.exec(launched)?.[1] ?? "unknown result"),
+      );
     // The Peer API can acknowledge before physical DELETEs finish. Observe a falling census
     // followed by an unchanged window before stopping the transactor and exporting.
     let previous = before;
