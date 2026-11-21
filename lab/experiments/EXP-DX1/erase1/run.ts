@@ -56,6 +56,7 @@ type Attempt = {
   neighbourCheck?: boolean;
   cleanupStudy?: "separate" | "folded";
   authorityCost?: boolean;
+  sealedWitness?: boolean;
 };
 type Row = Receipt["triples"][number];
 type Fact = ReturnType<typeof deepOwnFacts>[number];
@@ -889,7 +890,8 @@ async function scale() {
     const sealed =
       run.mode.startsWith("fast") ||
       run.guardComparison ||
-      run.mode === "ledger-authority-parallel";
+      run.mode === "ledger-authority-parallel" ||
+      run.sealedWitness === true;
     if (
       parallel ||
       ["ledger-regression", "ledger-authority-regression", "ledger-reuse"].includes(run.mode) ||
@@ -899,7 +901,7 @@ async function scale() {
       try {
         await authority.declareProtection(
           f.db,
-          parallel ? [":v"] : sealed ? [":privacy/field"] : [field(0)],
+          parallel ? [":v"] : sealed && !run.sealedWitness ? [":privacy/field"] : [field(0)],
           sealed,
         );
       } finally {
@@ -979,6 +981,7 @@ async function scale() {
         getParent,
         output,
         run.mode.startsWith("ledger-"),
+        run.sealedWitness,
       );
       return;
     }

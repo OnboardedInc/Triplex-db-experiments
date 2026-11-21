@@ -113,6 +113,8 @@ export async function local(opts, config, manager) {
   const subjectWriter = mode.endsWith("-parallel") ? "1" : process.env.DX_ERASE1_SUBJECT_WRITER;
   const orderedIds = process.env.DX_ERASE1_ORDERED_IDS;
   const creditMode = opts["credit-mode"] ?? "barrier6";
+  const sealedWitness = opts["sealed-witness"] === true;
+  assert(!sealedWitness || mode === "ledger-authority-regression");
   assert(["barrier6", "rolling6"].includes(creditMode));
   assert(subjectWriter === undefined || subjectWriter === "0" || subjectWriter === "1");
   assert(orderedIds === undefined || (orderedIds === "1" && subjectWriter === "1"));
@@ -531,6 +533,7 @@ export async function local(opts, config, manager) {
       nonce,
       mode,
       creditMode,
+      sealedWitness,
       people,
       caps,
       slot: info.slot,

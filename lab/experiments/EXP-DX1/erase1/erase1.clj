@@ -306,6 +306,12 @@
                  "prepare" (prepare! conn input)
                  "erase" (erase! conn input)
                  "regression-excise" (regression-excise! conn input)
+                 "sealed-assertion" (let [id (get input "id") db (d/db conn)
+                                          record (lean/by-id db id)
+                                          detached (d/entid db [:triplex.private/id id])
+                                          body (when detached (scope/value db detached :triplex.private/body))]
+                                      {:id id :bodyPresent (boolean (envelope/body-key-handle body))
+                                       :pointer (boolean (and record (= (envelope/token id) (:value_string (lean/decode (:v record))))))})
                  "ciphertext-inventory" (ciphertext-inventory! conn input)
                  "ciphertext-cleanup" (ciphertext-cleanup! conn input)
                  "cleanup-barrier" (cleanup-barrier! conn input)

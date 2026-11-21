@@ -112,6 +112,7 @@ export async function regression(
   ipc: Call,
   output: (name: string, value: unknown) => void,
   ledger: boolean,
+  sealedWitness = false,
 ) {
   const client = new DatomicClient(process.env.DATOMIC_URL!, 35_000);
   const subjectWriter = process.env.DX_ERASE1_SUBJECT_WRITER;
@@ -256,6 +257,13 @@ export async function regression(
     value: before.value_string,
     txId: before.tx_id,
   };
+  if (sealedWitness) {
+    // [DX-ERASE2] Why: use a sealed value, with a checked native body, for the entire route suite.
+    // Rejected: inferring sealing from the requested policy or a gateway's plaintext readback.
+    const stored = await diag("sealed-assertion", { scope: f.scope, id: w.assertionId });
+    assert.deepEqual(stored, { id: w.assertionId, bodyPresent: true, pointer: true });
+    output("sealed-route-witness", { binding, database: f.db, cut: witnessCut, ...stored });
+  }
   const getJournal = () =>
     client.rows(f.db, { entityIds: [w.txId], pattern: { attribute: ":_tx/change" } });
   const previousJournal = await getJournal();
