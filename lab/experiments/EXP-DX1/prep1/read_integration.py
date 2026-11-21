@@ -81,7 +81,7 @@ def erasure(out, subject):
         assert route == entry and entry["check"] is True
     assert len(ids) == 1 and bool(next(iter(ids)))
     if ordered:
-        assert re.fullmatch(r"[0-7][0-9A-HJKMNP-TV-Z]{25}00", next(iter(ids)))
+        assert re.fullmatch(r"[0-7][0-9A-HJKMNP-TV-Z]{23}00", next(iter(ids)))
     return {"head": inputs["inputs"]["head"], "subject": subject, "routes": len(evidence),
             "orderedIds": ordered, "nonce": run["nonce"], "slot": run["slot"], "binding": run["binding"]}
 

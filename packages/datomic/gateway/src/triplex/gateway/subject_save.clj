@@ -49,8 +49,8 @@
        legacy-check)))
 
 (defn ordered-bounds [journal prefixes]
-  (when-let [[_ token] (re-matches #"_tx/([0-7][0-9A-HJKMNP-TV-Z]{25})" journal)]
-    (let [base (str "2001c" token) n (count prefixes)]
+  (when-let [[_ token] (re-matches #"_tx/([0-7][0-9A-HJKMNP-TV-Z]{23})00" journal)]
+    (let [base (str "2001a" token) n (count prefixes)]
       (when (and (<= 1 n 256)
                  (= prefixes (mapv #(str base (.charAt "0123456789ABCDEF" (quot % 16))
                                                 (.charAt "0123456789ABCDEF" (rem % 16))) (range n))))

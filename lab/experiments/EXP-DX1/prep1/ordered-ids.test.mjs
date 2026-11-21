@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { orderedSaveIdentity } from "../../../../packages/datomic/dist/index.js";
+import { TripleId, TransactionId } from "../../../../packages/core/dist/index.js";
 import { command } from "../w1/group/workload.ts";
 
 test("a client replays the same journal, assertion IDs, and change references", () => {
-  const token = "01J00000000000000000000001";
+  const token = "01J000000000000000000001";
   const create = () =>
     command(
       "same-command",
@@ -16,7 +17,9 @@ test("a client replays the same journal, assertion IDs, and change references", 
     );
   const first = create();
   assert.deepEqual(create(), first);
-  assert.equal(first.claims[0].txId, "_tx/" + token);
+  assert.equal(first.claims[0].txId, "_tx/" + token + "00");
+  assert.equal(TransactionId.make(first.claims[0].txId), first.claims[0].txId);
+  for (const id of first.newIds) assert.equal(TripleId.make(id), id);
   assert.deepEqual(
     first.newIds,
     first.rows.map((_, i) => token + "0" + i),

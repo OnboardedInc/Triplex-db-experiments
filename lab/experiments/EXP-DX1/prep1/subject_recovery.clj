@@ -34,7 +34,7 @@
         frame (native-journal (assoc a "sourceK" 1))]
     (if subject/ordered-ids? (gate/ordered-frame frame gate/ordered-token) frame)))
 (defn expected-journal []
-  (if subject/ordered-ids? (str "_tx/" gate/ordered-token) "_tx/edit-a"))
+  (if subject/ordered-ids? (str "_tx/" gate/ordered-token "00") "_tx/edit-a"))
 (defn expected-assertion []
   (if subject/ordered-ids? (str gate/ordered-token "04") "middle"))
 (defn open! []

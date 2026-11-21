@@ -16,10 +16,10 @@
             [triplex.gateway.write-policy :as policy]
             [wfix1-regression :as reference]))
 
-(def ordered-token "01J00000000000000000000001")
+(def ordered-token "01J000000000000000000001")
 (defn ordered-frame [input token]
   (let [before (get-in input ["claims" 0 "txId"])
-        tx (str "_tx/" token)
+        tx (str "_tx/" token "00")
         new-ids (input "newIds")
         ids (zipmap new-ids (map #(str token (format "%02X" %)) (range)))
         rename-tx #(if (= % before) tx %)

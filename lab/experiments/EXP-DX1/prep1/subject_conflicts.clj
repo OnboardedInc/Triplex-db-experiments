@@ -71,7 +71,7 @@
                   input (from input 4)
                   plan (prepared db input)
                   ready (subject/ordered-bounds (:journal plan) (:prefixes plan))]
-              (is (= (str "2001c" gate/ordered-token "00") (first ready)))
+              (is (= (str "2001a" gate/ordered-token "00") (first ready)))
               (is (= ready (:ordered-bounds plan)))
               (is (nil? (lean/by-id db id)))
               (is (some? (lean/by-id (d/history db) id)))

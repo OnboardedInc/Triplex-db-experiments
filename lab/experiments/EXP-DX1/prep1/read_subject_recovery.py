@@ -64,8 +64,8 @@ def inspect(root):
     assert before["planOperation"] == before["receipt"]["operationId"] == "edit-a"
     assert before["receipt"]["position"]["v"] == "2"
     assert before["receipt"]["recordedAt"]["v"] == 1001.0
-    token = "01J00000000000000000000001"
-    journal = "_tx/" + token if ordered else "_tx/edit-a"
+    token = "01J000000000000000000001"
+    journal = "_tx/" + token + "00" if ordered else "_tx/edit-a"
     assertion = token + "04" if ordered else "middle"
     assert after["feed"][:2] == [journal, 2]
     assert after["claim"]["txId"] == journal
