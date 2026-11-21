@@ -117,7 +117,9 @@
                              (when (and (= :db/add (first op)) (= "owner-layout-version" (second op))
                                         (= :triplex.entity/row (nth op 2 nil)))
                                (nth (stamp op) 3))) (filter #(instance? java.util.List %) ops))]
-           (pr-str [2 final clock mask (into retained fresh)]))
+           ;; [DX-W1] Why: Datomic supplies the wire collections as Java lists.
+           ;; Rejected: appending to the native list (it is not a persistent collection).
+           (pr-str [2 final clock (vec mask) (into (vec retained) fresh)]))
          (pr-str [1 final clock pages]))]
       [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]]))
 
