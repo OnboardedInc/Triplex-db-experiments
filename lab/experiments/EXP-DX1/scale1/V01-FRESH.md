@@ -28,3 +28,21 @@ The scorecard used the published `3a71c1767` workload and `92f8e6c30`, which cha
 Forecast and actual. The tuned forecast at 394 was 325–365/s and landed at 342.90. At 620 it forecast 330–380/s and measured 329.42. The ordered default forecast was 340–380 at 394 and 320–365 at 620. It delivered 296.59 and 305.24. Grouped forecast 147–182/s at 235 and above, with 167.78, 158.56 and 174.02 observed. Native elapsed time including live startup and cleanup was 78 min 35 s and USD 1.43 against a 300-minute, USD 5.45 cap. The systemd unit including its wait for staging took 87 min 26 s and USD 1.59.
 
 The archived benchmark is 105,763,500 bytes. The Mac copy contains the generated scorecard, all matched operation ledgers, observers, JVM logs and control receipts in the collection allowlist. The archive hash matched both hosts. [Scorecard and readout hashes](evidence/score-v01-fresh-tuned.sha256)
+
+## Predictions beside each scorecard row
+
+| Row | Forecast before the fresh run | Fresh observation |
+| --- | --- | --- |
+| P1 pinned reads | Exact pinned answers, higher p99 at the top of the reader ladder and continued writer progress. | Zero reported errors in 288,792 checked reads over six one-minute cells. L256 delivered 893.18/s at 860.16 ms p99. L1024 delivered 509.43/s at 2,375.68 ms p99. All 1,260 saves completed and the whole-window writer p99 ratio was 0.917×. |
+| P2 commits | Ordered near 50/s at 50 and 220–235/s at 235. At 394/620 expect 325–365/330–380 for the tuned setup and 340–380/320–365 for default. Grouped 147–182/s at 235 and above. | Both ordered setups met the delivery forecast through 235. Tuned delivered 342.90/329.42 at 394/620. Default delivered 296.59/305.24. Grouped delivered 167.78, 158.56 and 174.02 at 235, 394 and 620. The table above gives the offer counts and deadlines. |
+| P3 change feed | Exact order, positions and changes. Queueing and polling could widen the tail. | 1,260 exact changes in the loaded six-minute window. Dispatch-to-observation p99 98.30 ms. Crash resume and effects remain open. |
+| P4 current pulls | Exact projected fields and faster warm reads. | 1,000 current demands had p50 4.54 ms and p99 50.18 ms. The separate 200 first pulls had p99 66.56 ms. Depth and engine-byte checks remain open. |
+| P5 Publish | Separate Server 1 campaign. | Unmeasured on this held roster. |
+| P6 quiet account | Most busy ratios above 1.25×. At 394, about 3.35× tuned and 2.77× default. At 620, 2.29× tuned and 4.53× default. Grouped tails longest. | At 394, 5.08× tuned, 1.73× default and 11.34× grouped. At 620, 4.05×, 2.81× and 4.95×. The three writers also exceeded the commit bar at 50. Each side has 315 quiet saves, 3,840 reads and 315 feed entries. |
+| P7 idle cost | First pulls slower than current pulls. A single-population residency difference. | Cold first-pull p99 66.56 ms across 200 probes. Transactor/write/read added RSS was 16.89/55.35/70.32 B per roster person, with 102/67/61 threads. The untouched-person slope remains open. |
+| P8 paced import | Exact imported bytes and higher live lag. The fixed pace probes 3,000 facts/s. | 3,192.89 recorded facts/s across 108 seconds, 344,832 verified and 341,536 queryable by the window end. Highest account save/read p99 88.97/34.43 ms. A matched pacing control remains open. |
+| P9 machine loss and move | Separate two-host drill. | Unmeasured here. |
+| Queryable journal, receipts, mixed IDs | Exact journal and receipt matches. Both retired IDs refused and historical reads preserved. | All 1,260 loaded journal entries matched their receipts and durable claims were sampled. Both retired IDs returned `IdentityConflict`. Typed reads matched at the seed, pre-witness and both save cuts. |
+| Erasure and acknowledged-write loss | Separate drills. | Unmeasured here. |
+
+[Original forecasts](https://github.com/OnboardedInc/Triplex-db-experiments/blob/2e974a95b10a30a30ff3f46947df4f32beacc657/lab/experiments/EXP-DX1/v01/SERVER.md#predictions-written-before-the-run)
