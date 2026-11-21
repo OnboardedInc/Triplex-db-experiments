@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { rollingWidths, type Admission } from "./rolling-credits.ts";
+import { tx5ArmId } from "./rolling-launch.mjs";
 import { offers, sha, type Offer } from "../w1/field/schedule.ts";
 
 export const seconds = 144;
@@ -86,6 +87,7 @@ export const rollingArms: Arm[] = [
     ...ceilingArm, cacheGiB: 16, id: `1-rolling${credits}-S`, admission: { mode: "rolling", credits },
   })),
 ];
+export const rollingTx5Arm: Arm = { ...rollingArms.find((arm) => arm.id === "1-rolling6-S")!, id: tx5ArmId };
 
 export function freshArms(credits: number): Arm[] {
   assert(credits === 6 || credits === 12);
@@ -125,6 +127,11 @@ export function rollingPrediction(arm: Arm, rate: number, alone: boolean, nextCa
       [235, 235, 10, 70, 10, 55, 18, 39],
       [394, 394, 20, 125, 17, 90, 15, 49],
       [460, 475, 29800, 30035, 29940, 30035, 17, 66],
+    ],
+    [tx5ArmId]: [
+      [],
+      [394, 394, 22, 900, 9, 300, 21, 49],
+      [478, 500, 29_700, 30_025, 29_820, 30_025, 15, 55],
     ],
   };
   // The reserved debt lane can leave a long tail in the original offer cohort.
@@ -266,6 +273,9 @@ export function cells(
       ? [235, 394, 620].map((rate) => [rate, arm.admission!.credits] as const)
       : arm.scale ? ([[394, 6], [620, 6]] as const) : ceilingVariants;
     return variants.flatMap(([rate, credits], band) => {
+      // [DX-PREP1] Why: keep the 394 and 620 person bands identical to the three-rate control.
+      // Rejected: removing 235 before assigning the stable person bands.
+      if (arm.id === tx5ArmId && rate === 235) return [];
       // [DX-PREP1] Why: visit the account's working set broadly and give each treatment its own person band.
       // Rejected: replaying one hot tape onto both sides or claiming to reproduce a day in 90 seconds.
       const choose = (stream: Offer[]) =>

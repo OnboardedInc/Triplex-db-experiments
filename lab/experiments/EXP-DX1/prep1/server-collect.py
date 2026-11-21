@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 import re
+import subprocess
 import sys
 from pathlib import Path
 from rolling_latency import PhaseLatency, safepoints
@@ -90,13 +91,15 @@ def rolling_metrics(result, rows, selection):
                                        for v in turns.values()]) if selection["mode"] == "barrier" else None)
 
 
-def rolling_counters(directory, root, header, live):
+def rolling_counters(directory, root, header, live, masks=None):
     ready = read(directory / "counters-ready.json")
     assert (ready["source"], ready["slot"], ready["attempt"], ready["boot"]) == (
         header["commit"], header["slot"], header["nonce"], (directory / "boot-id").read_text().strip())
     assert ready["sender"] > 1 and ready["ticks"] > 0
     assert {role: (v["id"], v["pid"]) for role, v in ready["roles"].items()} == {
         c["Name"].removeprefix("/"+header["slot"]+"-"): (c["Id"], c["State"]["Pid"]) for c in read(live)}
+    if masks is not None:
+        assert ready["masks"] == {role: [int(cpu) for cpu in mask.split(",")] for role, mask in masks.items()}
     counters = directory / "counters.ndjson"
     samples = [json.loads(line) for line in counters.read_text().splitlines()]
     assert len(samples) > 60
@@ -158,6 +161,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered", "ceiling", "scale", "tail", "tail-combined", "rolling")
     scale = campaign == "scale"
     rolling = campaign == "rolling"
+    tx5 = arm["id"] == "1-rolling6-tx5-S"
     fresh_credits = plan.get("freshCredits")
     assert fresh_credits is None or (rolling and fresh_credits in (6, 12))
     wide = campaign == "ceiling" or scale or rolling
@@ -195,7 +199,10 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         choices = [
             (f"1-{mode}{credits}-S", {"mode": mode, "credits": credits})
             for mode, credits in (("barrier", 6), ("rolling", 6), ("rolling", 8), ("rolling", 12), ("rolling", 16))]
-        if fresh_credits:
+        if tx5:
+            assert fresh_credits is None and observed == [("1-rolling6-tx5-S", dict(mode="rolling", credits=6))]
+            assert "writeJvm" not in arm
+        elif fresh_credits:
             base = dict(mode="rolling", credits=fresh_credits)
             fresh = dict(base, freshFirst=True)
             assert observed == [(f"1-{mode}{fresh_credits}-S", selection)
@@ -227,7 +234,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     if rolling:
         assert [(c["label"], c["rate"], c["offered"], c["fairCredits"]) for c in arm["cells"]] == [
             (f"r{rate}-{mode}", rate, round((3.5 if mode == "alone" else rate) * plan["seconds"]), fair_credits)
-            for rate in (235, 394, 620) for mode in ("alone", "loaded")]
+            for rate in ((394, 620) if tx5 else (235, 394, 620)) for mode in ("alone", "loaded")]
     elif wide:
         variants = ((394, "on", 6), (620, "on", 6)) if scale else (
             (620, "off", 0), (620, "on", 6), (900, "on", 6), (900, "off", 0))
@@ -351,6 +358,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             config = native_path.parents[2] / "config"
             masks = {"tx": "0,7,8" if rolling else "0" if arm["scale"] == "base" else "0,7-8",
                      "pg": "1", "gw-w": "2,3,4,5" if rolling else "2-5", "gw-r": "6"}
+            if tx5:
+                masks.update({"tx": "0,4,5,7,8", "gw-w": "2,3"})
             assert {c["name"].removeprefix(header["slot"]+"-"): c["cpuset"] for c in stack["containers"]} == masks
             base_image_path = config / "java-image.txt"
             zgc_image_path = config / ("tx-java-image.txt" if rolling else "tail-tx-image.txt")
@@ -379,7 +388,16 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert all(sql["settings"][key] == "on" for key in ("fsync", "synchronous_commit", "full_page_writes"))
             pg_data_evidence.append(settings_path)
             if rolling:
-                profile = read(directory / "launch-profile.json")
+                profile_file = directory / "launch-profile.json"
+                profile = read(profile_file)
+                if tx5:
+                    # [DX-PREP1] Why: reconcile the requested split with this slot's startup bytes and live affinity.
+                    # Rejected: treating a declared core count or JVM option as an observed placement.
+                    witnessed = [config.parent / "tx-startup-wait.log", directory / "gw-w-placement.log",
+                                 config / "sql.properties"]
+                    subprocess.run(["node", str(Path(__file__).with_name("rolling-launch.mjs")),
+                                    str(profile_file), *map(str, witnessed)], check=True)
+                    pg_data_evidence.extend(witnessed)
                 if fresh_credits:
                     want_major = "25" if arm.get("writeJvm") else "21"
                     assert profile["creditMode"] == f"rolling{fair_credits}"
@@ -390,8 +408,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 assert (sql["settings"]["min_wal_size"], sql["settings"]["checkpoint_timeout"],
                         sql["settings"]["checkpoint_completion_target"], sql["settings"]["checkpoint_flush_after"]) == (
                             "80MB", "5min", "0.9", "256kB")
-                extra, counters = rolling_counters(directory, native_path.parent, header, live_pg)
-                pg_data_evidence.extend(extra + [directory / "launch-profile.json"])
+                extra, counters = rolling_counters(directory, native_path.parent, header, live_pg, masks if tx5 else None)
+                pg_data_evidence.extend(extra + [profile_file])
 
     native, end, block_no = {}, False, 0
     tail_appends = {}

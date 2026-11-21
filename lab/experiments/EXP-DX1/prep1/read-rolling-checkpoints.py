@@ -1,16 +1,22 @@
 """Verify transferred rolling checkpoints and identify which source data they contain."""
 
 import argparse
+from collections import defaultdict
+from datetime import datetime, timezone
 import hashlib
 import json
 import math
 from pathlib import Path
+import re
 import tarfile
 from rolling_latency import PhaseLatency, overlaps, safepoints
 
 
 SOURCE = "c8f903ce1142772751328b88d972cc527ca46dfc"
 IMAGE = "77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b"
+# [DX-PREP1] Why: compare the same elapsed bins in both arms, anchored to the published rolling-6 queue.
+# Rejected: selecting each arm's bins independently based on its observed apply or SQL cost.
+PLACEMENT_WINDOWS = {"building": ((200, 220), (270, 290)), "clearOrDraining": ((170, 190), (230, 250))}
 
 
 def digest(data):
@@ -96,7 +102,25 @@ def checked_checkpoint(root, label, manifest, raw_root=None):
                     cells=out, rawDelayLedger=ledger)
 
 
-def resource_windows(phase, analysis, samples, index, credits, ticks):
+def index_jobs(lines, database):
+    pending, jobs = {}, []
+    pattern = re.compile(r':event :update/create-index, :next-t (\d+), :id "([^"]+)", .*:phase :(begin|end),')
+    for line in lines:
+        match = pattern.search(line)
+        if not match or not match[2].startswith(database + "-"):
+            continue
+        t, db_id, phase = match.groups()
+        wall = datetime.fromisoformat(line.split(maxsplit=1)[0]).replace(tzinfo=timezone.utc).timestamp() * 1000
+        key = db_id, t
+        if phase == "begin":
+            assert key not in pending
+            pending[key] = wall
+        else:
+            jobs.append((pending.pop(key), wall))
+    return sorted(jobs)
+
+
+def resource_windows(phase, analysis, samples, index, jobs, credits, ticks):
     start = int(phase["phaseStartNs"])
     depth = 0
     cap_spans = []
@@ -123,6 +147,7 @@ def resource_windows(phase, analysis, samples, index, credits, ticks):
     if phase["label"] == "r394-loaded":
         windows.extend((i, i+10) for i in range(0, phase["seconds"], 10))
     out = []
+    wall = phase["phaseWallMs"]
     for lo, hi in windows:
         before, after = (min(samples, key=lambda s: abs(int(s["monoNs"])-start-i*1_000_000_000)) for i in (lo, hi))
         seconds = (int(after["monoNs"])-int(before["monoNs"]))/1e9
@@ -135,13 +160,17 @@ def resource_windows(phase, analysis, samples, index, credits, ticks):
                         neighbourCreditsFull=(overlaps(cap_spans, lo*1000, hi*1000)/((hi-lo)*1000)
                                               if endpoints else None),
                         cores=pins,
+                        throttledMs={role: (end["throttled_usec"]-before["cpu"][role]["throttled_usec"])/1e3
+                                     for role, end in after["cpu"].items()},
                         checkpointCount={k: after["pg"]["checkpointer"][k]-before["pg"]["checkpointer"][k]
                                          for k in ("num_timed", "num_requested")},
                         walMs={k: after["pg"]["wal"][k]-before["pg"]["wal"][k]
                                for k in ("wal_write_time", "wal_sync_time")},
                         indexAdoptions=[round((x["start"]-start/1e6)/1000, 2)
                                         for x in index if x["type"] == "index-adoption"
-                                        and lo <= (x["start"]-start/1e6)/1000 < hi]))
+                                        and lo <= (x["start"]-start/1e6)/1000 < hi],
+                        indexJobs=[[round((a-wall)/1000, 2), round((b-wall)/1000, 2)] for a, b in jobs
+                                   if a < wall+hi*1000 and b > wall+lo*1000]))
     return out
 
 
@@ -165,6 +194,9 @@ def read_delays(root, plan, header, summary):
         counters = [json.loads(line) for line in data]
     with witnessed(role_path, "prep1-index.ndjson").open() as data:
         index = [json.loads(line) for line in data]
+    with witnessed(role_path, "prep1-index-jobs.log").open() as data:
+        jobs = index_jobs(data, header["db"])
+    assert jobs
     assert index[-1] == {"attempt": header["nonce"], "type": "end", "dropped": 0}
     assert all(row["attempt"] == header["nonce"] for row in index)
     pauses = {}
@@ -195,6 +227,8 @@ def read_delays(root, plan, header, summary):
         assert phase["label"] == cell and phase["seconds"] == 300
         tape = plan["tapes"][cell]
         analysis = PhaseLatency(phase, pauses)
+        placement = defaultdict(list)
+        start = int(phase["phaseStartNs"])
         checked = 0
         for row, offer in zip(sorted(phase["rows"], key=lambda r: r["ordinal"]), tape, strict=True):
             assert (row["due"], row["account"], row["person"]) == tuple(offer[:3])
@@ -207,11 +241,33 @@ def read_delays(root, plan, header, summary):
                 assert block["end"] <= int(phase["phaseStartNs"]) + round(row["end"] * 1e6) + 100000
                 checked += 1
                 analysis.add(row, block, member)
+                if cell == "r394-loaded" and arm in ("1-rolling6-S", "1-rolling12-S"):
+                    second = (member["started-at"] - start) / 1e9
+                    reads = ack["nativeIoStats"]["reads"]
+                    assert ack.get("groupSize", 1) == 1
+                    apply = (member["applied-at"] - member["started-at"]) / 1e6
+                    sample = (apply, reads.get("sql", 0), reads.get("sql-ms", 0), reads.get("deserialize-ms", 0))
+                    for key, windows in PLACEMENT_WINDOWS.items():
+                        for lo, hi in windows:
+                            if lo <= second < hi:
+                                placement[key].append(sample)
+                                placement[f"{lo}:{hi}"].append(sample)
         assert checked == c["durable"]
         out[cell] = analysis.finished()
+        if placement:
+            out[cell]["applyAndReadsByPlacementWindow"] = {
+                name: dict(n=len(samples), meanApplyMs=sum(a[0] for a in samples)/len(samples),
+                           medianApplyMs=sorted(a[0] for a in samples)[(len(samples)-1)//2],
+                           p99ApplyMs=sorted(a[0] for a in samples)[math.ceil(.99*len(samples))-1],
+                           sqlReadsPerSave=sum(a[1] for a in samples)/len(samples),
+                           sqlMsPerSave=sum(a[2] for a in samples)/len(samples),
+                           deserializeMsPerSave=sum(a[3] for a in samples)/len(samples))
+                for name, samples in placement.items()
+            }
         if cell.endswith("-loaded"):
             out[cell]["resourceWindows"] = resource_windows(
-                phase, analysis, counters, index, summary["fairCredits"] if "rolling" in arm else 0, identity["ticks"])
+                phase, analysis, counters, index, jobs,
+                summary["fairCredits"] if "rolling" in arm else 0, identity["ticks"])
     return out
 
 

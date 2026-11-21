@@ -37,10 +37,10 @@ def cpu_file(container):
     return (Path("/sys/fs/cgroup") / path.lstrip("/") / "cpu.stat", pid, proc_stat(pid)[0])
 
 
-def sample_roles(roles):
+def sample_roles(roles, masks):
     out = {}
     for role, (path, pid, incarnation) in roles.items():
-        assert proc_stat(pid)[0] == incarnation and os.sched_getaffinity(pid) == ROLE_MASKS[role]
+        assert proc_stat(pid)[0] == incarnation and os.sched_getaffinity(pid) == masks[role]
         cpu = {line.split()[0]: int(line.split()[1]) for line in path.read_text().splitlines()}
         assert {"usage_usec", "nr_throttled", "throttled_usec"} <= cpu.keys()
         out[role] = cpu
@@ -49,7 +49,9 @@ def sample_roles(roles):
 
 def run(out, containers, slot, source, attempt, sender):
     assert sys.platform == "linux" and __debug__
-    assert re.fullmatch(r"tx2-dxprep1-[a-f0-9]{8}-1-(barrier6|rolling(6|8|12|16)|fresh(-zgc)?(6|12))-s", slot)
+    assert re.fullmatch(r"tx2-dxprep1-[a-f0-9]{8}-1-(barrier6|rolling(6|8|12|16)|rolling6-tx5|fresh(-zgc)?(6|12))-s", slot)
+    tx5 = slot.endswith("-rolling6-tx5-s")
+    masks = {**ROLE_MASKS, "tx": {0, 4, 5, 7, 8}, "gw-w": {2, 3}} if tx5 else ROLE_MASKS
     for _ in range(20):
         if os.sched_getaffinity(sender) == {9}:
             break
@@ -64,6 +66,8 @@ def run(out, containers, slot, source, attempt, sender):
                  ticks=os.sysconf("SC_CLK_TCK"), sender=sender, senderStartTicks=born,
                  roles={r: {"id": live[r]["Id"], "pid": p, "startTicks": start}
                         for r, (_, p, start) in roles.items()})
+    if tx5:
+        bound["masks"] = {r: sorted(mask) for r, mask in masks.items()}
     argv = ["docker", "exec", "-i", "-e", "PGOPTIONS=-c statement_timeout=3000",
             slot + "-pg", "psql", "-XqAt", "-U", "postgres", "-d", "datomic",
             "-v", "ON_ERROR_STOP=1"]
@@ -80,7 +84,7 @@ def run(out, containers, slot, source, attempt, sender):
                 if not done:
                     assert proc_stat(sender)[0] == born and os.sched_getaffinity(sender) == {9}
                     sender_ticks = proc_stat(sender)[1]
-                role_cpu = sample_roles(roles)
+                role_cpu = sample_roles(roles, masks)
                 pg.stdin.write(SQL)
                 pg.stdin.flush()
                 row = json.loads(pg.stdout.readline())

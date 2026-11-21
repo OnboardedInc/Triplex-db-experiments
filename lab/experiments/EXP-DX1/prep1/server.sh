@@ -57,12 +57,8 @@ if [[ ${DX_PREP1_CAMPAIGN:-} == rolling && $mode == arm ]]; then
   # [DX-PREP1] Why: consume the very same profile policy as the scorecard.
   # Rejected: hand-maintaining an almost-identical set of Java flags and SQL settings.
   mapfile -t profile < <(node --input-type=module -e '
-    import {launchProfile} from "./lab/experiments/EXP-DX1/jvm1/launch.mjs";
-    const [arm] = process.argv.slice(1);
-    const depth = arm.match(/(6|8|12|16)-S$/)?.[1];
-    const p = launchProfile("server", {txJvm:"j25-zgc",
-      creditMode: arm.includes("barrier") ? "barrier6" : "rolling" + depth,
-      writeJvm: arm.startsWith("1-fresh-zgc") ? "j25-zgc" : "j21-g1"});
+    import {rollingLaunchProfile} from "./lab/experiments/EXP-DX1/prep1/rolling-launch.mjs";
+    const p = rollingLaunchProfile(process.argv[1]);
     console.log([JSON.stringify(p), p.tx.cpus, p.pg.cpus, p["gw-w"].cpus, p["gw-r"].cpus,
       p.tx.memoryMiB, p.pg.memoryMiB, p["gw-w"].memoryMiB, p["gw-r"].memoryMiB,
       p.tx.flags.join(" "), p["gw-w"].flags.join(" "), p["gw-r"].flags.join(" "), p.tx.cacheMiB,
@@ -113,7 +109,7 @@ clear_scale_wal() {
   if [[ -n ${scale_wal_owned:-} ]]; then
     [[ $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == "${scale_wal_device:-/dev/nvme1n1}" &&
        $scale_wal_owned == "$scale_wal_mount/$owned" &&
-       $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(scale-wal-zgc|barrier6|rolling(6|8|12|16)|fresh(-zgc)?(6|12))-s$ &&
+       $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(scale-wal-zgc|barrier6|rolling(6|8|12|16)|rolling6-tx5|fresh(-zgc)?(6|12))-s$ &&
        ! -L $scale_wal_owned ]] || return 1
     rm -rf --one-file-system -- "$scale_wal_owned" || return 1
     unset scale_wal_owned DX_PREP1_SCALE_WAL_DIR
@@ -135,7 +131,9 @@ if [[ $mode == ceiling ]]; then
   exec timeout --kill-after=40s 3560s bash "$here/server.sh" ceiling-timed "${@:2}"
 elif [[ $mode == rolling ]]; then
   [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && -z ${DX_PREP1_FRESH_CREDITS:-} ]]
-  exec timeout --kill-after=40s 8960s bash "$here/server.sh" rolling-timed "${@:2}"
+  limit=8960
+  if [[ ${DX_PREP1_ROLLING_ARM:-} == rolling6-tx5 ]]; then limit=2060; fi
+  exec timeout --kill-after=40s "${limit}s" bash "$here/server.sh" rolling-timed "${@:2}"
 elif [[ $mode == fresh ]]; then
   [[ $# == 12 && $7 == --pg-data && $9 == --wal-mount &&
      ${11} == --write-jvm && ${12} == j25-zgc && -z ${DX_PREP1_ROLLING_ARM:-} ]]
@@ -224,7 +222,7 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
         arm_limit=2340
         selected=("1-rolling$DX_PREP1_FRESH_CREDITS-S" "1-fresh$DX_PREP1_FRESH_CREDITS-S" "1-fresh-zgc$DX_PREP1_FRESH_CREDITS-S")
       elif [[ -n ${DX_PREP1_ROLLING_ARM:-} ]]; then
-        [[ $DX_PREP1_ROLLING_ARM =~ ^(barrier6|rolling(6|8|12|16))$ ]]
+        [[ $DX_PREP1_ROLLING_ARM =~ ^(barrier6|rolling(6|8|12|16)|rolling6-tx5)$ ]]
         selected=("1-$DX_PREP1_ROLLING_ARM-S")
       else
         selected=(1-barrier6-S 1-rolling6-S 1-rolling12-S)
@@ -391,7 +389,11 @@ elif [[ $mode == arm ]]; then
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == scale ]]; then
     [[ $cell =~ ^1-scale-(base|cache|wal-zgc)-S$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == rolling ]]; then
-    [[ $cell =~ ^1-(barrier6|rolling(6|8|12|16)|fresh(-zgc)?(6|12))-S$ && $(cat "$out/source") == "$source" ]]
+    [[ $cell =~ ^1-(barrier6|rolling(6|8|12|16)|rolling6-tx5|fresh(-zgc)?(6|12))-S$ && $(cat "$out/source") == "$source" ]]
+    if [[ $cell == 1-rolling6-tx5-S ]]; then
+      [[ ${DX_PREP1_ROLLING_ARM:-} == rolling6-tx5 ]]
+      export DX_JVM1_TX_PROPERTIES='{"index-parallelism":1}'
+    fi
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == tail ]]; then
     [[ $cell =~ ^1-tail-(control|wal|zgc|fair)-S$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == tail-combined ]]; then
@@ -469,6 +471,12 @@ elif [[ $mode == arm ]]; then
     "$DX_STACK_EVIDENCE/$owned/stack.json" http://127.0.0.1:8495 "${urls[@]}")
   if [[ ${DX_PREP1_CAMPAIGN:-} == rolling ]]; then
     printf '%s\n' "${profile[0]}" > "$dir/launch-profile.json"
+    if [[ $cell == 1-rolling6-tx5-S ]]; then
+      attempt="$DX_STACK_EVIDENCE/$owned"
+      docker logs "$owned-gw-w" > "$dir/gw-w-placement.log" 2>&1
+      node "$here/rolling-launch.mjs" "$dir/launch-profile.json" "$attempt/tx-startup-wait.log" \
+        "$dir/gw-w-placement.log" "$attempt/config/sql.properties"
+    fi
     taskset -c 9 "${producer[@]}" "${args[@]}" & sender_pid=$!
     taskset -c 10 python3 "$here/rolling-counters.py" "$dir" "$DX_STACK_EVIDENCE/$owned/containers.json" \
       "$owned" "$source" "$DX_WRITE_OPTIONS_ATTEMPT" "$sender_pid" > "$dir/observer.log" 2>&1 & observer_pid=$!
