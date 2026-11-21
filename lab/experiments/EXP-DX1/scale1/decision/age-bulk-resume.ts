@@ -6,9 +6,151 @@ import { fileHash } from "../measurements.ts";
 import { read } from "./seed.ts";
 
 export type BulkContinuation = "load" | "measure-loaded";
+type Identity = {
+  source: string;
+  imageSha: string;
+  transferSha: string;
+  volume: string;
+  db: string;
+  seedCut: number;
+  machine: string;
+};
+export type RecoveredLadder = {
+  source: string;
+  imageSha: string;
+  machineHash: string;
+  db: string;
+  checkpointSha: string;
+  certificateSha: string;
+  records: number;
+  head: number;
+  t: number;
+  best: { rates: { sustained: number }; indexJobs: unknown[] };
+};
 const target = 1_000_000_000;
 const hex = /^[a-f0-9]{64}$/;
 const uuid = /^[a-f0-9-]{36}$/;
+
+async function copyState(source: string, out: string, sum: string) {
+  assert.match(sum, hex);
+  assert.equal(await fileHash(source), sum);
+  const to = path.join(out, path.basename(source));
+  fs.copyFileSync(source, to, fs.constants.COPYFILE_EXCL);
+  assert.equal(await fileHash(to), sum);
+}
+
+async function stoppedNetwork(
+  previous: string,
+  source: string,
+  terminal: { nonce: string; slot: string; invocationStarted: number; at: number },
+) {
+  const priorProps = path.join(previous, "sql.properties");
+  const propertiesSha = await fileHash(priorProps);
+  const network = read(path.join(previous, "runtime-network.json"));
+  assert.deepEqual(
+    [network.source, network.nonce, network.slot, network.propertiesSha],
+    [source, terminal.nonce, terminal.slot, propertiesSha],
+  );
+  assert(network.at >= terminal.invocationStarted && network.at <= terminal.at);
+  const ip = /^\d+\.\d+\.\d+\.\d+$/;
+  assert.match(network.subnet, /^\d+\.\d+\.\d+\.\d+\/\d{1,2}$/);
+  assert([network.gateway, network.primary, network.copy].every((x) => ip.test(x)));
+  assert(new Set([network.gateway, network.primary, network.copy]).size === 3);
+  const properties = fs.readFileSync(priorProps, "utf8");
+  assert(properties.includes("sql-url=jdbc:postgresql://" + network.primary + ":5432/datomic\n"));
+  const password = /^sql-password=([a-f0-9]{40})$/m.exec(properties)?.[1];
+  assert(password);
+  return { network, propertiesSha, password };
+}
+
+// [DX-SCALE1] Why: one corrected replay authorizes continuation of the archived, stopped cut.
+// Rejected: editing the original rejection, accepting the fastest raw rate alone, or opening a different volume.
+export async function stageMaintainedContinuation(
+  previous: string,
+  out: string,
+  mode: BulkContinuation,
+  identity: Identity,
+  evidence: string,
+  recovered: RecoveredLadder,
+) {
+  const { source, imageSha, transferSha, volume, db, seedCut, machine } = identity;
+  assert.deepEqual(
+    [recovered.imageSha, recovered.machineHash, recovered.db],
+    [imageSha, machine, db],
+  );
+  assert(recovered.best.rates.sustained >= 9900 && recovered.best.indexJobs.length >= 2);
+  const fromLadder = mode === "load";
+  const priorSource = fromLadder ? recovered.source : source;
+  const cleanup = read(path.join(previous, "cleanup.json"));
+  const terminal = read(path.join(previous, "exit.json"));
+  assert.deepEqual(cleanup.containers, []);
+  assert.deepEqual(
+    [
+      cleanup.nonce,
+      cleanup.source,
+      cleanup.imageSha,
+      cleanup.transferSha,
+      cleanup.resumedPrivateVolume,
+    ],
+    [terminal.nonce, priorSource, imageSha, transferSha, volume],
+  );
+  assert(cleanup.at >= terminal.at);
+  assert.equal(terminal.result, fromLadder ? 1 : 0);
+  const base = "age1-" + createHash("sha256").update(db).digest("hex") + ".edn";
+  const checkpoint = path.join(previous, base);
+  const population = checkpoint + ".population.edn";
+  const proofFiles = read(path.join(evidence, "custody.json")).files;
+  await copyState(population, out, proofFiles[base + ".population.edn"].sha256);
+  const network = await stoppedNetwork(previous, priorSource, terminal);
+  if (fromLadder) {
+    assert.equal(
+      await fileHash(path.join(evidence, "exit.json")),
+      await fileHash(path.join(previous, "exit.json")),
+    );
+    assert.equal(
+      await fileHash(path.join(evidence, "cleanup.json")),
+      await fileHash(path.join(previous, "cleanup.json")),
+    );
+    await copyState(checkpoint, out, recovered.checkpointSha);
+    return {
+      ...network,
+      cut: recovered.head,
+      nativeT: recovered.t,
+      records: recovered.records,
+      rate: 22000,
+      calibrationSha: recovered.certificateSha,
+      output: path.join(out, "rung"),
+    };
+  }
+  const output = path.join(previous, "rung");
+  const rung = path.join(output, String(target));
+  const loaded = read(path.join(rung, "bulk-loaded.json"));
+  const admitted = read(path.join(rung, "load-admission.json"));
+  assert(admitted.started >= terminal.runnerStarted && admitted.started <= terminal.at);
+  assert.deepEqual(
+    [loaded.source, loaded.machineHash, loaded.db, loaded.imageSha, loaded.calibrationSha],
+    [source, machine, db, imageSha, recovered.certificateSha],
+  );
+  assert.equal(admitted.binding.configSha, await fileHash(path.join(previous, "config.json")));
+  assert.equal(await fileHash(path.join(rung, "load-cycles.json")), loaded.cyclesSha);
+  assert(loaded.phase.bulkLoaded && loaded.phase.indexedRecords >= target);
+  assert.match(loaded.attempt, uuid);
+  for (const { file, sum } of loaded.artifacts) {
+    assert.match(sum, hex);
+    assert.equal(file, path.join(loaded.attempt, path.basename(file)));
+    assert.equal(await fileHash(path.join(rung, file)), sum);
+  }
+  await copyState(checkpoint, out, loaded.checkpointSha);
+  return {
+    ...network,
+    cut: seedCut + loaded.phase.to,
+    nativeT: loaded.phase.t,
+    records: loaded.phase.indexedRecords,
+    rate: 22000,
+    calibrationSha: recovered.certificateSha,
+    output,
+  };
+}
 
 // [DX-SCALE1] Why: resume the verified logical cut while preserving the first attempt's state and evidence.
 // Rejected: re-adopting the original seed or taking a checkpoint and network identity from different attempts.
@@ -16,15 +158,7 @@ export async function stageBulkContinuation(
   previous: string,
   out: string,
   mode: BulkContinuation,
-  identity: {
-    source: string;
-    imageSha: string;
-    transferSha: string;
-    volume: string;
-    db: string;
-    seedCut: number;
-    machine: string;
-  },
+  identity: Identity,
 ) {
   const { source, imageSha, transferSha, volume, db, seedCut, machine } = identity;
   const raw = path.join(previous, "rung", String(target));
@@ -45,8 +179,7 @@ export async function stageBulkContinuation(
   const label = mode === "load" ? "ladder" : "load";
   const admitted = read(path.join(raw, label + "-admission.json"));
   const priorConfig = path.join(previous, "config.json");
-  const priorProps = path.join(previous, "sql.properties");
-  const propertiesSha = await fileHash(priorProps);
+  const network = await stoppedNetwork(previous, source, terminal);
   assert.match(machine, hex);
   assert(admitted.started >= terminal.runnerStarted && admitted.started <= terminal.at);
   assert.deepEqual(
@@ -70,7 +203,7 @@ export async function stageBulkContinuation(
       calibration.db,
       calibration.propertiesSha,
     ],
-    [source, imageSha, machine, db, propertiesSha],
+    [source, imageSha, machine, db, network.propertiesSha],
   );
   assert.deepEqual(
     calibration.arms.map((row: { arm: { size: number } }) => row.arm.size),
@@ -106,11 +239,7 @@ export async function stageBulkContinuation(
     [population, prefix.population],
   ] as const;
   for (const [file, sum] of stateFiles) {
-    assert.match(sum, hex);
-    assert.equal(await fileHash(file), sum);
-    const to = path.join(out, path.basename(file));
-    fs.copyFileSync(file, to, fs.constants.COPYFILE_EXCL);
-    assert.equal(await fileHash(to), sum);
+    await copyState(file, out, sum);
   }
   const copied = path.join(out, "rung", String(target));
   fs.mkdirSync(copied, { recursive: true, mode: 0o700 });
@@ -136,19 +265,13 @@ export async function stageBulkContinuation(
       assert.equal(await fileHash(to), sum);
     }
   }
-  const network = read(path.join(previous, "runtime-network.json"));
-  assert.deepEqual(
-    [network.source, network.nonce, network.slot, network.propertiesSha],
-    [source, terminal.nonce, terminal.slot, propertiesSha],
-  );
-  assert(network.at >= terminal.invocationStarted && network.at <= terminal.at);
-  const ip = /^\d+\.\d+\.\d+\.\d+$/;
-  assert.match(network.subnet, /^\d+\.\d+\.\d+\.\d+\/\d{1,2}$/);
-  assert([network.gateway, network.primary, network.copy].every((x) => ip.test(x)));
-  assert(new Set([network.gateway, network.primary, network.copy]).size === 3);
-  const properties = fs.readFileSync(priorProps, "utf8");
-  assert(properties.includes("sql-url=jdbc:postgresql://" + network.primary + ":5432/datomic\n"));
-  const password = /^sql-password=([a-f0-9]{40})$/m.exec(properties)?.[1];
-  assert(password);
-  return { cut, nativeT, records, rate, network, propertiesSha, password };
+  return {
+    cut,
+    nativeT,
+    records,
+    rate,
+    ...network,
+    output: path.join(out, "rung"),
+    calibrationSha: undefined,
+  };
 }

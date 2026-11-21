@@ -116,3 +116,7 @@ The ladder observed 19,760.04 / 15,242.78 records/s (full / final steady) for so
 ## Tuned fresh scorecard
 
 Forecast 300 minutes maximum (USD 5.45) after copy and build. Both ordered writers should deliver nearly all of 50/s and 220–235/s at 235 offered. At 394 expect 325–365/s headline and 340–380/s ordered default. At 620 expect 330–380/s headline and 320–365/s default. Grouped prediction is 147–182/s at 235 and above. Most busy quiet-account p99 ratios will exceed 1.25×. [Pinned forecasts by row](https://github.com/OnboardedInc/Triplex-db-experiments/blob/2e974a95b10a30a30ff3f46947df4f32beacc657/lab/experiments/EXP-DX1/v01/SERVER.md#predictions-written-before-the-run)
+
+## Proposed maintained continuation
+
+AGE1 `9573487e0` qualifies the archived 477,456,017-record cut and forecasts 18,000–26,000 records/s including collection and vacuum. At those rates, the remaining 522.54M records take 5.58–8.06 h and USD 6.08–8.79. The 16 h combined loading cap includes the 44 min 47 s ladder. The projected maintained allocation is 330–390 GB under a 400 GB physical directory limit. The 24-save diagnostic projected 638 GB without collection. The first maintained 20-minute write epoch and its maintenance check decide whether the forecast holds. The next native-copy seal needs observed backup and restore headroom and has a separate three-hour, USD 3.27 ceiling. [Producer forecasts and placement](https://github.com/OnboardedInc/Triplex-db-experiments/blob/9573487e08f6ab82acd0c662ce552eca531a13ff/lab/experiments/EXP-DX1/age1/CONTINUATION.md)

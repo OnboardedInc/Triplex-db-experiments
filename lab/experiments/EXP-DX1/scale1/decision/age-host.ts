@@ -10,7 +10,12 @@ import { createHash } from "node:crypto";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileHash } from "../measurements.ts";
 import { activeUnitArgs, dedicatedHost } from "../source.ts";
-import { stageBulkContinuation, type BulkContinuation } from "./age-bulk-resume.ts";
+import {
+  stageBulkContinuation,
+  stageMaintainedContinuation,
+  type BulkContinuation,
+  type RecoveredLadder,
+} from "./age-bulk-resume.ts";
 import { prepareFallback } from "./age-fallback.ts";
 import { stoppedInventory } from "./pgdata.ts";
 import { read, verifiedOrigin, write, type SeedProof } from "./seed.ts";
@@ -20,6 +25,7 @@ const seedDir = path.join(bench, "decision/attempts/arm-d7-wfix-pool-seed");
 const bootstrap = "97852735506d9f04d7a2195ee11bc0535b7a2493";
 const ageFloor = "2859d6b15";
 const bulkSource = "acd350e927515b7c4d99f134f8600ea8de4d63f8";
+const maintainedSource = "9573487e08f6ab82acd0c662ce552eca531a13ff";
 const bulkPrefix = {
   records: 431778659,
   head: 187002,
@@ -76,9 +82,14 @@ async function main(
   resumeDiscovery = false,
   bulkLadder = false,
   bulkContinuation?: BulkContinuation,
+  ladderEvidence?: string,
 ) {
   const bulk = bulkLadder || bulkContinuation !== undefined;
   const bulkSettings = bulkLadder || bulkContinuation === "load";
+  const maintained = Boolean(ladderEvidence);
+  const maintainedLoading = maintained && bulkContinuation === "load";
+  const maintainedMeasurement = maintained && bulkContinuation === "measure-loaded";
+  assert(!maintained || bulkContinuation);
   assert(process.platform === "linux" && process.getuid?.() === 0);
   assert.equal(process.env.DOCKER_HOST, dockerEndpoint);
   assert.equal(path.dirname(out), bench);
@@ -96,7 +107,7 @@ async function main(
   assert.match(ageSource, /^[a-f0-9]{40}$/);
   assert.equal(call("git", ["rev-parse", "HEAD"], { cwd: ageCheckout }), ageSource);
   if (bulk) {
-    assert.equal(ageSource, bulkSource);
+    assert.equal(ageSource, maintained ? maintainedSource : bulkSource);
     assert.equal(call("git", ["status", "--porcelain"], { cwd: ageCheckout }), "");
   }
   call("git", ["merge-base", "--is-ancestor", ageFloor, ageSource], { cwd: ageCheckout });
@@ -259,22 +270,45 @@ async function main(
     assert(point.endsWith("/volumes/" + sourceVolume + "/_data"));
     assert(!fs.existsSync(path.join(point, "postmaster.pid")));
   }
-  const adopted = bulkContinuation
-    ? await stageBulkContinuation(
-        path.join(bench, bulkContinuation === "load" ? "age-v01-bulk-a" : "age-v01-bulk-b"),
-        out,
-        bulkContinuation,
-        {
-          source: ageSource,
-          imageSha,
-          transferSha,
-          volume: sourceVolume,
-          db: seed.scopes[0]!.db,
-          seedCut: seed.scopes[0]!.seedCut,
-          machine,
-        },
-      )
-    : undefined;
+  const ageLab = path.join(ageCheckout, "lab/experiments/EXP-DX1/age1");
+  let recovered: RecoveredLadder | undefined;
+  if (ladderEvidence) {
+    assert.equal(fs.realpathSync(ladderEvidence), ladderEvidence);
+    assert.equal(ladderEvidence, path.join(bench, "evidence-v01/age-v01-bulk-a/full/held"));
+    recovered = JSON.parse(
+      execFileSync(
+        process.execPath,
+        [path.join(ageLab, "recover-ladder.mjs"), ladderEvidence, "--full"],
+        { encoding: "utf8", timeout: 180000 },
+      ),
+    );
+    assert.equal(recovered?.source, bulkSource);
+  }
+  const previous = path.join(
+    bench,
+    bulkContinuation === "load" ? "age-v01-bulk-a" : "age-v01-bulk-b",
+  );
+  const originalIdentity = {
+    source: ageSource,
+    imageSha,
+    transferSha,
+    volume: sourceVolume,
+    db: seed.scopes[0]!.db,
+    seedCut: seed.scopes[0]!.seedCut,
+    machine,
+  };
+  const adopted = !bulkContinuation
+    ? undefined
+    : ladderEvidence && recovered
+      ? await stageMaintainedContinuation(
+          previous,
+          out,
+          bulkContinuation,
+          originalIdentity,
+          ladderEvidence,
+          recovered,
+        )
+      : await stageBulkContinuation(previous, out, bulkContinuation, originalIdentity);
   const pgdata = bulk ? JSON.parse(docker("volume", "inspect", sourceVolume))[0] : undefined;
   const sourceDir = pgdata?.Options?.device ?? pgdata?.Mountpoint;
   if (pgdata) {
@@ -289,12 +323,24 @@ async function main(
   const dataMount = sourceDir ?? bench;
   const copyReal = fs.realpathSync(copyMount);
   const sameFilesystem = fs.statSync(copyReal).dev === fs.statSync(dataMount).dev;
+  if (maintainedLoading) {
+    assert.equal(dataMount, "/mnt/triplex-scale1-held-age/calibrated-post-ladder/cluster");
+    assert.equal(fs.statSync(copyReal).dev, fs.statSync(bench).dev);
+    assert(!sameFilesystem);
+  }
+  const maintainedMargin = 16 * GiB;
+  const directoryLimit = Number(process.env.DX_SCALE1_AGE_DIRECTORY_LIMIT ?? 400e9);
+  assert(!maintained || [400e9, 450e9].includes(directoryLimit));
+  const sqlReserve = Number(process.env.DX_SCALE1_AGE_RESTORE_BUDGET ?? directoryLimit);
+  const allocated = maintained ? Number(call("du", ["-s", "-B1", dataMount]).split(/\s/)[0]) : 0;
+  assert(!maintained || (allocated > 0 && Number.isSafeInteger(allocated)));
   const forecastBytesPerRecord =
     bulkContinuation && process.env.DX_SCALE1_AGE_BYTES_PER_RECORD
       ? Number(process.env.DX_SCALE1_AGE_BYTES_PER_RECORD)
       : bytesPerAddedRecord;
-  const sqlCap =
-    bulkContinuation && process.env.DX_SCALE1_AGE_SQL_CAP
+  const sqlCap = maintained
+    ? directoryLimit - 5e9
+    : bulkContinuation && process.env.DX_SCALE1_AGE_SQL_CAP
       ? Number(process.env.DX_SCALE1_AGE_SQL_CAP)
       : 330e9;
   const copyBudget =
@@ -308,20 +354,28 @@ async function main(
   );
   assert(Number.isSafeInteger(sqlCap) && sqlCap >= 330e9 && sqlCap <= 800e9);
   assert(
-    Number.isSafeInteger(copyBudget) && copyBudget >= copyHeadroomBytes && copyBudget <= 800e9,
+    Number.isSafeInteger(copyBudget) &&
+      copyBudget >= (maintainedMeasurement ? 25 * GiB : copyHeadroomBytes) &&
+      copyBudget <= 800e9,
   );
   assert(Number.isSafeInteger(original.disk.after) && original.disk.after > 0);
   // [DX-SCALE1] Why: always leave room for backup and verification, plus a SQL dump on the legacy path.
   // Rejected: reserving the optional dump for a card that adopts stopped physical data.
   const grownSql = original.disk.after + (targetRecords - baselineRecords) * bytesPerAddedRecord;
-  const liveReservation = bulk
-    ? Math.max(0, targetRecords - (adopted?.records ?? bulkPrefix.records)) *
-        forecastBytesPerRecord +
-      12 * GiB
-    : grownSql + 24 * GiB - (resumeDiscovery ? original.disk.after : 0);
-  const copyReservation = bulk
-    ? copyBudget + 12 * GiB
-    : copyHeadroomBytes + (held ? 1 : 2) * grownSql + 24 * GiB;
+  const liveReservation = maintainedLoading
+    ? directoryLimit - allocated + maintainedMargin
+    : bulk
+      ? Math.max(0, targetRecords - (adopted?.records ?? bulkPrefix.records)) *
+          forecastBytesPerRecord +
+        12 * GiB
+      : grownSql + 24 * GiB - (resumeDiscovery ? original.disk.after : 0);
+  const copyReservation = maintainedLoading
+    ? directoryLimit + maintainedMargin
+    : maintainedMeasurement
+      ? copyBudget + maintainedMargin
+      : bulk
+        ? copyBudget + 12 * GiB
+        : copyHeadroomBytes + (held ? 1 : 2) * grownSql + 24 * GiB;
   const liveFree = free(dataMount),
     copyFree = free(copyReal);
   write(path.join(out, "storage-admission.json"), {
@@ -333,6 +387,7 @@ async function main(
     copyReservation,
     copyFree,
     ...(bulkContinuation ? { forecastBytesPerRecord, sqlCap, copyBudget } : {}),
+    ...(maintained ? { allocated, directoryLimit, sqlReserve } : {}),
     at: Date.now(),
   });
   assert(
@@ -361,7 +416,22 @@ async function main(
   }
   const copyDir = path.join(copyReal, path.basename(out));
   fs.mkdirSync(copyDir);
-  const copyData = path.join(copyDir, "restore-sql");
+  const restoreBase = maintainedMeasurement ? path.join(bench, "age-copy-scratch") : copyDir;
+  if (maintainedMeasurement) {
+    fs.mkdirSync(restoreBase, { recursive: true, mode: 0o700 });
+    assert.equal(fs.realpathSync(restoreBase), restoreBase);
+    assert(Number.isSafeInteger(sqlReserve) && sqlReserve >= allocated && sqlReserve <= 800e9);
+    assert(
+      free(restoreBase) >=
+        sqlReserve +
+          maintainedMargin +
+          (fs.statSync(copyDir).dev === fs.statSync(restoreBase).dev ? copyBudget : 0),
+    );
+  }
+  const copyData = path.join(
+    restoreBase,
+    maintainedMeasurement ? path.basename(out) + "-restore-sql" : "restore-sql",
+  );
   fs.mkdirSync(copyData);
   const password = adopted?.password ?? randomBytes(20).toString("hex");
   const manifest = {
@@ -592,10 +662,10 @@ async function main(
     );
     const properties = bulkSettings
       ? {
-          "memory-index-threshold": "128m",
+          "memory-index-threshold": maintainedLoading ? "256m" : "128m",
           "memory-index-max": "2g",
           "object-cache-max": "16g",
-          "index-parallelism": "2",
+          "index-parallelism": maintainedLoading ? "4" : "2",
         }
       : {
           "memory-index-threshold": "32m",
@@ -633,7 +703,7 @@ async function main(
         "\n",
       { mode: 0o600 },
     );
-    if (bulkContinuation === "load") {
+    if (bulkContinuation === "load" && !maintained) {
       assert.equal(await fileHash(txProps), adopted?.propertiesSha);
     }
     if (bulkSettings) {
@@ -654,11 +724,11 @@ async function main(
     status("starting native age transactor");
     const txLog = path.join(out, "tx.log");
     const eventLog = path.join(out, "bulk-events.log");
-    const ageLab = path.join(ageCheckout, "lab/experiments/EXP-DX1/age1");
+    const transactorCpus = maintainedLoading ? "0,2,3,4,5,6" : bulkSettings ? "0,2,3" : "0";
     const fd = fs.openSync(txLog, "wx");
     tx = spawn(
       "taskset",
-      ["-c", bulkSettings ? "0,2,3" : "0", path.join(vendorHome, "bin/transactor"), txProps],
+      ["-c", transactorCpus, path.join(vendorHome, "bin/transactor"), txProps],
       {
         stdio: ["ignore", fd, fd],
         env: {
@@ -669,9 +739,11 @@ async function main(
             ...(bulkSettings ? [path.join(ageLab, "src")] : []),
           ].join(":"),
           JAVA_OPTS: bulkSettings
-            ? "-Xms4g -Xmx24g -XX:ActiveProcessorCount=3 -XX:+UseG1GC " +
+            ? "-Xms4g -Xmx24g -XX:ActiveProcessorCount=" +
+              (maintainedLoading ? 6 : 3) +
+              " -XX:+UseG1GC " +
               "-Dlogback.configurationFile=" +
-              path.join(ageLab, "bulk-logback.xml")
+              path.join(ageLab, maintainedLoading ? "continuation-logback.xml" : "bulk-logback.xml")
             : "-Xms1g -Xmx5g -XX:+UseG1GC",
           ...(bulkSettings ? { AGE_TX_EVENT_LOG: eventLog } : {}),
         },
@@ -791,7 +863,7 @@ async function main(
       maxUsd: 10.8,
       seconds: 120,
       activePerAccount: 2000,
-      output: path.join(out, "rung"),
+      output: adopted?.output ?? path.join(out, "rung"),
       dataMount,
       copyMount: copyDir,
       maxSqlBytes: sqlCap,
@@ -812,6 +884,23 @@ async function main(
       peerCache: bulk ? "1g" : "768m",
       copyHeap: "2g",
       ...(bulkSettings ? { bulkEventLog: eventLog } : {}),
+      ...(maintainedLoading
+        ? {
+            pgData: dataMount,
+            postgresPid: Number(docker("inspect", "--format", "{{.State.Pid}}", pgName)),
+            scorecardMount: bench,
+            directoryLimitBytes: directoryLimit,
+            ladderEvidence,
+          }
+        : {}),
+      ...(maintainedMeasurement
+        ? {
+            restoreMount: restoreBase,
+            restoreHeadroomBytes: sqlReserve,
+            restorePgData: copyData,
+            restorePostgresPid: Number(docker("inspect", "--format", "{{.State.Pid}}", copyName)),
+          }
+        : {}),
     };
     const configFile = path.join(out, "config.json");
     write(configFile, config);
@@ -841,8 +930,13 @@ async function main(
       const log = fs.openSync(path.join(out, logName), "wx");
       try {
         runner = spawn(
-          process.execPath,
-          [file, ...(bulk ? [bulkContinuation ?? "ladder"] : []), input],
+          maintained ? "taskset" : process.execPath,
+          [
+            ...(maintained ? ["-c", "7,9,10", process.execPath] : []),
+            file,
+            ...(bulk ? [bulkContinuation ?? "ladder"] : []),
+            input,
+          ],
           {
             cwd: ageCheckout,
             stdio: ["ignore", log, log],
@@ -924,7 +1018,10 @@ async function main(
         ],
         [ageSource, machine, scope.db, imageSha, await fileHash(configFile)],
       );
-      assert.equal(output.calibrationSha, await fileHash(path.join(rung, "bulk-calibration.json")));
+      assert.equal(
+        output.calibrationSha,
+        adopted?.calibrationSha ?? (await fileHash(path.join(rung, "bulk-calibration.json"))),
+      );
       assert(output.phase.bulkLoaded && output.phase.indexedRecords >= targetRecords);
       const checkpoint = "age1-" + createHash("sha256").update(scope.db).digest("hex") + ".edn";
       assert.equal(await fileHash(path.join(out, checkpoint)), output.checkpointSha);
@@ -1006,7 +1103,7 @@ async function main(
     );
     const datum = seed.scopes[0]!.db;
     const state = path.join(
-      out,
+      path.dirname(config.output),
       "age1-" + createHash("sha256").update(datum).digest("hex") + ".edn",
     );
     const handoff = path.join(rung, "aged-scorecard.json");
@@ -1155,4 +1252,5 @@ await main(
   process.argv[8] === "resume-discovery",
   process.argv[8] === "bulk-ladder",
   process.argv[8] === "load" || process.argv[8] === "measure-loaded" ? process.argv[8] : undefined,
+  process.argv[9],
 );
