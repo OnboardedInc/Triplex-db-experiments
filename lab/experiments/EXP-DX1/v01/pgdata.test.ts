@@ -5,16 +5,15 @@ import path from "node:path";
 import { test } from "node:test";
 import { inspectPgdata, pgdataArgs } from "./pgdata.ts";
 
-test("the paired and grouped-only commands require a copy for each scheduled arm", () => {
-  assert.deepEqual(pgdataArgs([], undefined, false), []);
-  assert.deepEqual(pgdataArgs(["zero", "loaded", "default", "grouped"], "sealed", false),
-    ["sealed", "zero", "loaded", "default", "grouped"]);
-  assert.deepEqual(pgdataArgs(["grouped"], "sealed", true), ["sealed", "grouped"]);
-  assert.deepEqual(pgdataArgs(["current"], "sealed", false, 2), ["sealed", "current"]);
-  assert.throws(() => pgdataArgs(["a", "b"], "sealed", false, 2));
-  assert.throws(() => pgdataArgs(["current"], "sealed", true, 2));
-  assert.throws(() => pgdataArgs(["loaded"], "sealed", false));
-  assert.throws(() => pgdataArgs(["loaded"], undefined, true));
+test("lean staging requires three copies together or one per arm", () => {
+  assert.deepEqual(pgdataArgs([], undefined), []);
+  assert.deepEqual(pgdataArgs(["zero", "loaded", "barrier6"], "sealed"),
+    ["sealed", "zero", "loaded", "barrier6"]);
+  assert.deepEqual(pgdataArgs(["current"], "sealed", 3), ["sealed", "current"]);
+  assert.throws(() => pgdataArgs(["a", "b"], "sealed", 2));
+  assert.throws(() => pgdataArgs(["zero", "loaded", "default", "grouped"], "sealed"));
+  assert.throws(() => pgdataArgs(["loaded"], "sealed"));
+  assert.throws(() => pgdataArgs(["loaded"], undefined, 1));
 });
 
 test("the prepared directories must be separate, stopped, untouched copies of the sealed control", (t) => {

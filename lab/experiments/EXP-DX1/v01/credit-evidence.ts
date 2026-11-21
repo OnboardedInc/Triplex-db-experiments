@@ -30,7 +30,7 @@ export function checkAdmission(rows: readonly CreditRow[], selection: Admission)
     const delta = event.grant ? 1 : -1;
     if (event.grant) assert.equal(event.row.neighboursAhead, neighbours);
     active += delta;
-    if (event.row.account !== selection.quietAccount) neighbours += delta;
+    if (event.row.account !== (selection.quietAccount ?? 0)) neighbours += delta;
     assert(active >= 0 && active <= selection.credits);
     assert(neighbours >= 0 && neighbours < selection.credits);
   }

@@ -2,8 +2,9 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { defaultCreditMode } from "../jvm1/launch.mjs";
 import { parseCredits } from "./server-workload.ts";
-import { isWriter } from "./profile.ts";
+import { barrierRoot, isWriter } from "./profile.ts";
 import { cleanSource, packageBytes } from "./source.ts";
 
 const [action, commit, argument, writerArg, creditArg] = process.argv.slice(2);
@@ -11,7 +12,7 @@ assert(process.platform === "darwin" && commit && argument && path.isAbsolute(ar
 assert(["--packages", "--image", "--fixture", "--publish-fixture"].includes(action ?? ""));
 const writer = writerArg ?? (action === "--publish-fixture" ? "grouped" : "per-person-ordered");
 assert(isWriter(writer));
-const creditMode = parseCredits(creditArg);
+const creditMode = parseCredits(creditArg ?? process.env.DX_V01_CREDIT_MODE);
 const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 cleanSource(head);
 assert.match(commit, /^[a-f0-9]{40}$/);
@@ -73,14 +74,15 @@ if (action === "--packages") {
     console.log("Mac evidence staging " + fixture);
     const campaign = path.join(fixture, "campaign");
     fs.mkdirSync(campaign);
-    const fixtures = action === "--fixture" && writer === "per-person-ordered"
-      ? [["per-person-ordered", fixture], ["grouped", path.join(campaign, "grouped")]] as const : [[writer, fixture]] as const;
-    for (const [configuration, output] of fixtures) {
+    const fixtures = [{ mode: creditMode, output: fixture, comparison: false }];
+    if (action === "--fixture" && writer === "per-person-ordered")
+      fixtures.push({ mode: defaultCreditMode, output: path.dirname(path.join(campaign, barrierRoot)), comparison: true });
+    for (const { mode, output, comparison } of fixtures) {
       if (output !== fixture) fs.mkdirSync(path.join(output, "campaign"), { recursive: true });
       try {
         execFileSync(process.execPath, ["--no-warnings", "--experimental-transform-types",
           "lab/experiments/EXP-DX1/thin1/managed.ts", "--arm-compact", build, "int1-adopted-proof", "80", output],
-        { env: { ...env, DX_V01_MAC_WRITER: configuration, DX_V01_MAC_CREDIT_MODE: creditMode }, stdio: "inherit" });
+        { env: { ...env, DX_V01_MAC_WRITER: writer, DX_V01_CREDIT_MODE: mode, DX_V01_MAC_COMPARISON: comparison ? "1" : "0" }, stdio: "inherit" });
       } catch (error) {
         console.error(error);
         process.exitCode = 1;

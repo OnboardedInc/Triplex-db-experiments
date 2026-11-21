@@ -3,15 +3,17 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
+import { physicalArms } from "./profile.ts";
+
 export const pgdataTarget = "/var/lib/postgresql/data";
 export const pgdataGrowthGiB = 16;
 const used = ".triplex-v01-used";
 
-export function pgdataArgs(copies: string[], sealed: string | undefined, grouped: boolean, arm?: number) {
-  if (arm !== undefined) assert(sealed && copies.length === 1 && !grouped,
+export function pgdataArgs(copies: string[], sealed: string | undefined, arm?: number) {
+  if (arm !== undefined) assert(sealed && copies.length === 1,
     "A sequential arm needs --pgdata-source and exactly one --pgdata in the ordered campaign");
-  else assert(sealed ? copies.length === (grouped ? 1 : 4) : copies.length === 0,
-    "Use --pgdata-source with four --pgdata directories (headline zero, headline loaded, ordered server default, grouped), or one for grouped-only");
+  else assert(sealed ? copies.length === physicalArms : copies.length === 0,
+    "Use --pgdata-source with three --pgdata directories (headline zero, headline loaded, barrier6)");
   return sealed ? [sealed, ...copies] : [];
 }
 
@@ -69,7 +71,7 @@ export function preflightWal(walDirectory: string, data: readonly string[]) {
   const walDevice = nvmeDevice(wal);
   const dataDevices = data.map(nvmeDevice);
   assert(dataDevices.length >= 1 && dataDevices.every((device) => device === dataDevices[0]),
-    "Headline and default ordered PGDATA must use the same data NVMe");
+    "All lean scorecard copies must use the same data NVMe");
   assert.notEqual(walDevice, dataDevices[0], "WAL must be on a separate NVMe from the headline PostgreSQL data");
   return { wal, walDevice: path.basename(walDevice), dataDevice: path.basename(dataDevices[0]!) };
 }

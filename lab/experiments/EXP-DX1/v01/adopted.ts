@@ -15,11 +15,12 @@ import { checkAdoptedPeer, hex, openScaleSeal, type AdoptedSeed } from "./adopt.
 import { ladder, phaseSeconds, selectedWriter, type Writer } from "./profile.ts";
 import { cellPath, writerAdmission, ratedTape, serverCells, serverCellSeconds, type CreditMode, type ServerCell, type WindowSeconds } from "./server-workload.ts";
 
+import { defaultCreditMode } from "../jvm1/launch.mjs";
 import { collectCell, type physicalTelemetry } from "./cell-telemetry.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
 export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
-  telemetry?: ReturnType<typeof physicalTelemetry>; windowSeconds?: WindowSeconds; creditMode?: CreditMode;
+  telemetry?: ReturnType<typeof physicalTelemetry>; windowSeconds?: WindowSeconds; creditMode?: CreditMode; serialApply?: boolean;
   empty?: Residency; residency?: () => Residency | Promise<Residency> };
 export type QuietCell = "alone" | 235;
 export const jsonFile = (file: string, data: unknown) =>
@@ -89,7 +90,8 @@ async function quietReads(client: DatomicClient, seed: AdoptedSeed, start: numbe
   const h = new Histogram();
   for (const side of sides) h.merge(Histogram.fromJSON(side.latency));
   return { read: h.summary(), planned: sides.reduce((sum, r) => sum + r.planned, 0),
-    errors: sides.flatMap((r) => r.samples).filter((s) => s.error).length };
+    errors: sides.flatMap((r) => r.samples).filter((s) => s.error).length,
+    wrong: sides.flatMap((r) => r.samples).filter((s) => s.error?.startsWith("AssertionError")).length };
 }
 
 async function preload(client: DatomicClient, reader: DatomicClient, seed: AdoptedSeed, head: number, tape: Write[]) {
@@ -200,6 +202,8 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/);
       assert(options.subjectOrderedIds && options.subjectNumericOwner && !options.subjectPrefetch);
     }
+    assert.deepEqual([Boolean(options.subjectNarrowRevision), Boolean(options.subjectReusePredecessor)],
+      [Boolean(peer.serialApply), Boolean(peer.serialApply)]);
     assert.deepEqual([options.options.predecessorLookup, options.options.smallRows, options.options.ledger,
       options.options.packedJournal, options.options.groupCommit, options.options.reusePrepared,
       options.options.fastReply, options.options.livePriority, options.options.fieldCoalesce,
@@ -225,8 +229,8 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     feeding = feeder(journal, seed.scope.db, startHead, start + interval + 120_000, () => terminal, writer === "per-person-ordered");
     void feeding.catch(() => {});
     const quiet = quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, rated ? "alone" : quietCell as QuietCell, toy, rated ? windowSeconds : undefined);
-    const mode = peer.creditMode ?? "integration";
-    const selection = !toy || quietCell !== undefined || mode.startsWith("rolling:") ? writerAdmission(mode) : undefined;
+    const mode = peer.creditMode ?? defaultCreditMode;
+    const selection = !toy || quietCell !== undefined || mode !== defaultCreditMode ? writerAdmission(mode) : undefined;
     const credits = selection?.credits ?? 0;
     const [writes, phases, quietRead] = await Promise.all([
       play(senders, tape, start, peer.attempt, false, writer === "per-person-ordered", selection),
@@ -305,10 +309,10 @@ export async function quietPair(out: string, source: string, peer: Peer, seed: A
   return startHead;
 }
 
-export async function adoptedToy(out: string, source: string, peer: Peer, writer: Writer) {
+export async function adoptedToy(out: string, source: string, peer: Peer, writer: Writer, comparison = false) {
   assert(!process.env.DX_THIN_MEASURE);
-  peer.empty = await peer.residency?.();
-  for (const loaded of writer === "grouped" ? [true] : [false, true]) {
+  if (!comparison) peer.empty = await peer.residency?.();
+  for (const loaded of writer === "grouped" || comparison ? [true] : [false, true]) {
     const folder = path.join(out, loaded ? "loaded" : "zero");
     fs.mkdirSync(folder);
     const nonce = randomUUID();
@@ -318,9 +322,10 @@ export async function adoptedToy(out: string, source: string, peer: Peer, writer
     fs.writeFileSync(path.join(folder, "loader.log"), stdout, { flag: "wx" });
     const seal = path.join(folder, "fixture.json");
     const seed = openScaleSeal(seal, hex(fs.readFileSync(seal)), true);
-    const arm = await adoptedArm(folder, source, peer, seed, writer, loaded, true);
+    const arm = await adoptedArm(folder, source, peer, seed, writer, loaded, true, seed.scope.cut, undefined, comparison);
     if (loaded) {
       const cut = await quietPair(out, source, peer, seed, writer, true, arm.terminal);
+      if (comparison) continue;
       const { runImport } = await import("./import-arm.ts");
       const after = writer === "per-person-ordered" ? runImport(out, source, peer, seed, writer, true, cut) : cut;
       await recordMixedIds(out, source, peer, seed, writer, after, true);

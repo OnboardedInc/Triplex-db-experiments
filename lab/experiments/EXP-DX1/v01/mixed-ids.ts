@@ -134,7 +134,7 @@ export async function checkMixedIds(source: string, peer: Peer, seed: AdoptedSee
     assert.deepEqual(earlier.map(snapshot), expected);
     return { source, writer, slot: peer.slot, attempt: peer.attempt, database: db, imageSha256: seed.pin,
       startedAt, endedAt: now(), subject, other, cut, start, end, installed, refusals,
-      historical: earlier.map(snapshot), ids: earlier.map((r) => r.id), first, second };
+      expectedHistorical: expected, historical: earlier.map(snapshot), ids: earlier.map((r) => r.id), first, second };
   } finally { reader.close(); client.close(); }
 }
 

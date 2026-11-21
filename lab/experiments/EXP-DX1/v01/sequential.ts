@@ -2,12 +2,12 @@ import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { timeBudget, type Age, type JvmProfile, type Writer, type serverStages } from "./profile.ts";
+import { physicalArms, timeBudget, type writeDiagnostics, type Age, type JvmProfile, type Writer, type serverStages } from "./profile.ts";
 import { type Directory, type preflightWal } from "./pgdata.ts";
 import { cellPath, replaySeconds, serverCells, type WindowSeconds, type CreditMode } from "./server-workload.ts";
 
 type CampaignInput = {
-  source: string; age: Age; writer: Writer; jvm: JvmProfile; txJvm: JvmProfile;
+  source: string; age: Age; writer: Writer; jvm: JvmProfile; txJvm: JvmProfile; writeJvm: JvmProfile; diagnostics: ReturnType<typeof writeDiagnostics>;
   imagePin: string; transferPin: string; originalScope: { db: string; cut: number };
   separateWal: boolean; stages: ReturnType<typeof serverStages>; wal?: ReturnType<typeof preflightWal>;
   windowSeconds?: WindowSeconds; creditMode?: CreditMode;
@@ -26,7 +26,7 @@ type Completed = {
   invocationSha256: string; completedAt: number; attempt: string; slot: string;
   systemIdentifier: string; files: Record<string, string>;
 };
-const totalArms = 4;
+
 const seqFolder = (campaign: string) => path.join(path.dirname(campaign), "sequence");
 const seqFile = (campaign: string) => path.join(seqFolder(campaign), "inputs.json");
 const sha = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
@@ -57,7 +57,7 @@ export function openSequence(campaign: string, config: SequenceConfig) {
 }
 
 function armPaths(campaign: string, arm: number) {
-  assert(Number.isInteger(arm) && arm >= 1 && arm <= totalArms, "Choose arm 1, 2, 3 or 4");
+  assert(Number.isInteger(arm) && arm >= 1 && arm <= physicalArms, "Choose arm 1, 2 or 3");
   const folder = seqFolder(campaign);
   return { start: path.join(folder, `arm-${arm}-start.json`), end: path.join(folder, `arm-${arm}-complete.json`) };
 }
@@ -74,7 +74,7 @@ function armEvidence(sequence: Sequence, arm: number) {
       if (sequence.input.windowSeconds) files.push(stage.root + cellPath(cell) + "/telemetry.json");
     }
     if (!stage.comparison) files.push(`${anchor}/p7-empty/residency.json`, "p8/result.json", "p8/pace-32-fixed.offers.json");
-    if (stage.name !== "server-default") files.push(stage.root + "mixed-ids.json");
+    if (!stage.comparison) files.push(stage.root + "mixed-ids.json");
   }
   return { anchor, files };
 }
@@ -125,7 +125,7 @@ function readCompleted(campaign: string, sequence: Sequence, arm: number, verify
 export function sequenceProgress(campaign: string, sequence: Sequence | undefined, next?: number) {
   if (next !== undefined) armPaths(campaign, next);
   assert(sequence || next === 1, "Start the sequential campaign with arm 1");
-  const previous = Array.from({ length: next === undefined ? totalArms : next - 1 }, (_, i) =>
+  const previous = Array.from({ length: next === undefined ? physicalArms : next - 1 }, (_, i) =>
     readCompleted(campaign, sequence!, i + 1, next === undefined));
   assert.equal(new Set(previous.map(record => record.attempt)).size, previous.length, "Arm attempt was reused");
   assert.equal(new Set(previous.map(record => record.slot)).size, previous.length, "Arm slot was reused");

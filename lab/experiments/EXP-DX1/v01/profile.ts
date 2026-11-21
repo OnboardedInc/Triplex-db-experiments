@@ -1,5 +1,5 @@
 import { replaySeconds, serverCells, type WindowSeconds } from "./server-workload.ts";
-import { launchProfile } from "../jvm1/launch.mjs";
+import { defaultCreditMode, launchProfile } from "../jvm1/launch.mjs";
 export { defaultJvm, jvmProfiles, type JvmProfile } from "../jvm1/launch.mjs";
 
 export const writers = ["per-person-ordered", "grouped"] as const;
@@ -8,13 +8,13 @@ export function isWriter(value: unknown): value is Writer {
   return writers.some((writer) => writer === value);
 }
 export const writerIntegration = "f25a46e02591a1c6b6a9495f7f2cce20249571f0";
-export const launchIntegration = "57580241dc4020f9ab7590839c72c00356fcedee";
+export const launchIntegration = "5f62059b1fc03e8fffca0441f14ff4ddd4d7e734";
 export const defaultWriter: Writer = "per-person-ordered";
 export type Age = "fresh" | "1B";
 export function timeBudget(seconds: WindowSeconds) {
   const extra = serverCells.length * (seconds - replaySeconds) / 60;
-  const budget = { adoptionAndP1to4: 105, P6: 25 + extra, P7: 10, P8: 25, comparison: 120 + 2 * extra, cleanup: 15 };
-  return { budget, ceiling: Object.values(budget).reduce((a, b) => a + b, 0), comparisonMinutes: budget.comparison / 2 };
+  const budget = { adoptionAndP1to4: 89, P6: 25 + extra, P7: 10, P8: 25, comparison: 60 + extra, cleanup: 15 };
+  return { budget, ceiling: Object.values(budget).reduce((a, b) => a + b, 0), comparisonMinutes: budget.comparison };
 }
 export const { budget } = timeBudget(replaySeconds);
 export const ladder = [1, 4, 16, 64, 256, 1024];
@@ -53,20 +53,28 @@ export function selectedWriter(writer: Writer) {
   } as const;
 }
 
-export function serverStages(writer: Writer, headline: ReturnType<typeof launchProfile>, separateWal: boolean) {
-  const control = launchProfile("server");
-  const grouped = { root: writer === "grouped" ? "" : "grouped/campaign/", writer: "grouped", loaded: true,
-    comparison: true, name: "grouped", policy: control, separateWal: false } as const;
-  if (writer === "grouped") return [grouped];
+export const physicalArms = 3;
+export const barrierRoot = "barrier6/campaign/";
+
+export function serverStages(headline: ReturnType<typeof launchProfile>, separateWal: boolean) {
   return [
-    { root: "", writer, loaded: false, comparison: false, name: "headline", policy: headline, separateWal },
-    { root: "", writer, loaded: true, comparison: false, name: "headline", policy: headline, separateWal },
-    { root: "server-default/campaign/", writer, loaded: true, comparison: true, name: "server-default", policy: control, separateWal: false },
-    grouped,
+    { root: "", loaded: false, comparison: false, name: "headline", policy: headline, separateWal },
+    { root: "", loaded: true, comparison: false, name: "headline", policy: headline, separateWal },
+    { root: barrierRoot, loaded: true, comparison: true, name: "barrier6",
+      policy: { ...headline, creditMode: defaultCreditMode }, separateWal },
   ] as const;
 }
 
-export function stackOptions(writer: Writer, attempt: string) {
+export function writeDiagnostics(writer: Writer, env: NodeJS.ProcessEnv = {}) {
+  const serial = env.DX_W1_SERIAL_APPLY ?? "0", lookup = env.PREP1_LOOKUP_EVERY ?? "0";
+  if (!/^[01]$/.test(serial) || (serial === "1" && writer !== defaultWriter))
+    throw new RangeError("DX_W1_SERIAL_APPLY=1 requires the ordered subject writer");
+  if (!/^(0|[1-9][0-9]{0,3})$/.test(lookup) || Number(lookup) > 4096)
+    throw new RangeError("PREP1_LOOKUP_EVERY must be between 0 and 4096");
+  return { serialApply: serial === "1", lookupEvery: Number(lookup) };
+}
+
+export function stackOptions(writer: Writer, attempt: string, diagnostics = writeDiagnostics(writer)) {
   const settings = selectedWriter(writer);
   return {
     DX_GROUP_COMMIT: settings.TX2_GROUP_COMMIT,
@@ -78,6 +86,9 @@ export function stackOptions(writer: Writer, attempt: string) {
     DX_PREP1_SERVER: "1", DX_V01_ADOPTED_STACK: "1", DX_PREP1_SUBJECT: settings.TX2_SUBJECT_SAVE,
     TX2_SUBJECT_NUMERIC_OWNER: settings.TX2_SUBJECT_NUMERIC_OWNER, TX2_SUBJECT_ORDERED_IDS: settings.TX2_SUBJECT_ORDERED_IDS,
     TX2_SUBJECT_PREFETCH: settings.TX2_SUBJECT_PREFETCH,
+    TX2_SUBJECT_NARROW_REVISION: diagnostics.serialApply ? "1" : "0",
+    TX2_SUBJECT_REUSE_PREDECESSOR: diagnostics.serialApply ? "1" : "0",
+    PREP1_LOOKUP_EVERY: String(diagnostics.lookupEvery),
     DX_WRITE_OPTIONS_ATTEMPT: attempt, DX_V01_IMPORT_TIMING: "1",
   };
 }

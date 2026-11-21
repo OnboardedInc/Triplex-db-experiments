@@ -190,7 +190,8 @@ function setup(compact: boolean) {
   assert(["original", "demand"].includes(gwPolicy) && ["following", "validated"].includes(readMode));
   assert(peerGc === "g1" || (gwPolicy === "demand" && peerGc === "elastic"));
   const writeOptionsAttempt = mode === "int1-adopted-proof" ? randomUUID() : undefined;
-  const scorecardCreditMode = writeOptionsAttempt ? process.env.DX_V01_MAC_CREDIT_MODE : undefined;
+  const scorecardComparison = !!writeOptionsAttempt && process.env.DX_V01_MAC_COMPARISON === "1";
+  const scorecardCreditMode = writeOptionsAttempt ? process.env.DX_V01_CREDIT_MODE : undefined;
   const scorecardWriter = writeOptionsAttempt ? (process.env.DX_V01_MAC_WRITER ?? "grouped") : undefined;
   assert(!writeOptionsAttempt || isWriter(scorecardWriter));
   for (const [n, slot] of slots.entries()) {
@@ -220,7 +221,7 @@ function setup(compact: boolean) {
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
   write(cred, {
-    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, scorecardWriter, scorecardCreditMode,
+    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, scorecardWriter, scorecardCreditMode, scorecardComparison,
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
     memoryPoints, nativePools,
     readerPages: process.env.DX_INT1_READER_PAGES === "1",
@@ -288,6 +289,7 @@ function bind() {
       writeOptionsAttempt: attempt.writeOptionsAttempt,
       scorecardWriter: attempt.scorecardWriter,
       scorecardCreditMode: attempt.scorecardCreditMode,
+      scorecardComparison: attempt.scorecardComparison,
       compact: !!attempt.compact,
       census: attempt.census, cohort: attempt.cohort,
       gwPolicy: attempt.gwPolicy, readMode: attempt.readMode,
@@ -377,7 +379,7 @@ if (action === "--guest") {
       } catch { return []; }
     });
     assert(stack.managed.writeOptionsAttempt && isWriter(stack.managed.scorecardWriter) && commands.length >= 3);
-    if (stack.managed.scorecardWriter === "per-person-ordered") {
+    if (stack.managed.scorecardWriter === "per-person-ordered" && !stack.managed.scorecardComparison) {
       const { pgdataFixture } = await import("../v01/pgdata-fixture.ts");
       await pgdataFixture(out, process.env.DX_V01_FIXTURE_SOURCE!, stack.prefix, stack.managed.writeOptionsAttempt);
       const secret = read(cred).secret as string;
@@ -420,7 +422,7 @@ if (action === "--guest") {
     await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
       java: { placement: "owned Mac compact stack", commands }, residency,
-      creditMode: parseCredits(stack.managed.scorecardCreditMode) }, stack.managed.scorecardWriter);
+      creditMode: parseCredits(stack.managed.scorecardCreditMode) }, stack.managed.scorecardWriter, stack.managed.scorecardComparison);
   } else if (mode === "int1-campaign-proof") {
     assert(Number(rung) === 40);
     process.chdir(repo);

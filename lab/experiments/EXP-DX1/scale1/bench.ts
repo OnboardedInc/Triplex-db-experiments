@@ -465,8 +465,10 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
     ...options,
     DX_LAUNCH_PROFILE: policy?.profile,
     DX_TX_JAVA: policy?.tx.major,
+    DX_GW_WRITE_JAVA: policy?.["gw-w"].major,
+    DX_V01_CREDIT_MODE: options.DX_V01_ADOPTED_STACK === "1" ? policy?.creditMode : undefined,
     ...(policy ? {
-      DX_JAVA: policy["gw-w"].major,
+      DX_JAVA: policy["gw-r"].major,
       DX_GW_WRITE_MEMORY: policy["gw-w"].memoryMiB + "m",
       DX_GW_READ_MEMORY: policy["gw-r"].memoryMiB + "m",
       DX_GW_WRITE_JAVA_OPTS: policy["gw-w"].flags.join(" ") + " -Xlog:gc=info:file=/trace/gw-w-gc.log",

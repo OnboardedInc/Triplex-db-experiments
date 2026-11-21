@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { offers } from "../w1/field/schedule.ts";
-import { rollingWidths, type Admission } from "../prep1/rolling-credits.ts";
+import { creditModes, defaultCreditMode, type CreditMode } from "../jvm1/launch.mjs";
+export { creditModeSelection as writerAdmission } from "../prep1/rolling-credits.ts";
+export type { CreditMode } from "../jvm1/launch.mjs";
 import { ceilingSeconds, widePeople } from "../prep1/server-tape.ts";
 
 export const serverRates = [50, 235, 394, 620] as const;
@@ -11,18 +13,10 @@ export function parseWindow(text: string | undefined): WindowSeconds {
   assert(text === undefined || text === "90" || text === "300", "Choose --window-seconds 90 or 300");
   return text === "90" ? 90 : serverCellSeconds;
 }
-export type CreditMode = "integration" | "barrier" | `rolling:${(typeof rollingWidths)[number]}`;
-export function parseCredits(value = "integration"): CreditMode {
-  assert(value === "integration" || value === "barrier" || rollingWidths.some(width => value === `rolling:${width}`),
-    "Choose --credit-mode integration, barrier or rolling:6|8|12|16");
-  return value as CreditMode;
-}
-
-export function writerAdmission(mode: CreditMode): Admission {
-  // [DX-V01] Why: use PREP1's shared sender selector on the same tape for both writers.
-  // Rejected: implementing another admission scheduler or labelling numbered barriers as rolling.
-  return mode.startsWith("rolling:") ? { mode: "rolling", credits: Number(mode.slice(8)), quietAccount: 0 }
-    : { mode: "barrier", credits: 6 };
+export function parseCredits(value = defaultCreditMode): CreditMode {
+  const mode = creditModes.find(mode => mode === value);
+  assert(mode, "Choose --credit-mode barrier6|rolling6|rolling8|rolling12|rolling16");
+  return mode;
 }
 export { widePeople };
 export type ServerCell = { rate: (typeof serverRates)[number]; loaded: boolean };

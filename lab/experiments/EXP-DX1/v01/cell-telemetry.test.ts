@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { checkAdmission } from "./credit-evidence.ts";
 import { collectCell, nativeEvent, summarizeTelemetry } from "./cell-telemetry.ts";
-import { p99Miss, quietMiss } from "./card-verdict.ts";
+import { p99Miss, quietVerdict } from "./card-verdict.ts";
 import { windowStats } from "./windows.ts";
 
 test("throughput uses the ACK clock and latency retains the original offer cohort", () => {
@@ -64,10 +64,14 @@ test("measured misses retain their value, bar and sample requirements", () => {
   const observed = { count: 600, p99Ms: 860 };
   assert.match(p99Miss(false, observed, 100, "L256")!, /860 ms.*100 ms/);
   assert.equal(p99Miss(true, observed, 100, "L256"), undefined);
-  const alone = { count: 500, p99Ms: 20 }, busy = { count: 499, p99Ms: 24 };
-  assert.equal(quietMiss(alone, { ...busy, p99Ms: 30 }, 0, "H235"), undefined);
-  assert.match(quietMiss(alone, { count: 500, p99Ms: 26 }, 0, "H235")!, /20 → 26 ms.*1\.25/);
-  assert.match(quietMiss(alone, busy, 1, "H235")!, /1 quiet expiries.*zero/);
+  const alone = { count: 500, p99Ms: 20 }, busy = { count: 500, p99Ms: 50 };
+  assert.equal(quietVerdict(alone, { ...busy, count: 499 }, 0, 0).status, "PARTIAL");
+  assert.equal(quietVerdict(alone, busy, 0, 0).status, "MET");
+  assert.equal(quietVerdict({ ...alone, p99Ms: 80 }, { ...busy, p99Ms: 100 }, 0, 0).status, "MET");
+  assert.match(quietVerdict(alone, { ...busy, p99Ms: 50.02 }, 0, 0).reason, /50.02 ms.*2.501×/);
+  assert.equal(quietVerdict(alone, { ...busy, p99Ms: 50.02 }, 0, 0).status, "MISSED");
+  assert.equal(quietVerdict(alone, busy, 1, 0).status, "MISSED");
+  assert.equal(quietVerdict(alone, busy, 0, 1).status, "MISSED");
 });
 
 test("rolling evidence distinguishes outstanding credits from barrier turn numbers", () => {

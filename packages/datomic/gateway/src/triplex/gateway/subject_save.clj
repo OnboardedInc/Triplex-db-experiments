@@ -6,12 +6,15 @@
             [triplex.gateway.lean :as lean]
             [triplex.gateway.schema :as schema]
             [triplex.gateway.small-row :as small-row]
-            [triplex.gateway.scope :as scope]))
+            [triplex.gateway.scope :as scope]
+            [triplex.gateway.trace :as trace]))
 
 (def enabled (= "1" (System/getenv "TX2_SUBJECT_SAVE")))
 (def numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_NUMERIC_OWNER")))
 (def prefetch? (= "1" (System/getenv "TX2_SUBJECT_PREFETCH")))
 (def ordered-ids? (= "1" (System/getenv "TX2_SUBJECT_ORDERED_IDS")))
+(def narrow-revision? (and numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_NARROW_REVISION"))))
+(def reuse-predecessor? (= "1" (System/getenv "TX2_SUBJECT_REUSE_PREDECESSOR")))
 (def erase-generation :triplex.scope/erasure-seq)
 (def mutable-flags #{:triplex.scope/feed-irregular :triplex.scope/position-regular
                      :triplex.scope/irregular :triplex.scope/packed-journals})
@@ -104,7 +107,7 @@
        (when (> final 9007199254740991) (throw (ex-info "Invalid commit span" {})))
        (when-not (Double/isFinite clock) (throw (ex-info "TRIPLEX_CLOCK_EXHAUSTED" {})))
        (let [stamp (stamp-rows true clock #{} (dec provisional) provisional final false nil)]
-         (into [[:db/cas owner :triplex.entity/rev revision final]
+         (into [revision-update
                 [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]]
                (map stamp) ops)))))
 
@@ -117,6 +120,14 @@
     (walk/postwalk-replace {'stamp-rows commit/compiled-stamp-code
                           'mutable-flags mutable-flags
                           'check-history (if ordered-ids? ordered-history-guard history-guard)
+                          ;; [DX-W1] Why: this standalone native function can check the same db-before revision
+                          ;; through the revision attribute's narrow index. Rejected: trusting the gateway's old revision.
+                          'revision-update (if narrow-revision?
+                                             '(let [datom (first (d/datoms db :aevt :triplex.entity/rev owner))]
+                                                (when-not (= revision (:v datom))
+                                                  (throw (ex-info "TRIPLEX_CONFLICT" {})))
+                                                [:db/add owner :triplex.entity/rev final])
+                                             '[:db/cas owner :triplex.entity/rev revision final])
                           ;; [DX-PREP1] Why: the numeric owner must still own this public ID in db-before.
                           ;; Rejected: trusting the peer's lookup alone (an ID change can leave its revision intact).
                           'owner-witness-check (when numeric-owner?
@@ -179,9 +190,11 @@
              (string? (:attribute row)) (not (.startsWith ^String (:attribute row) ":_")))
     (:attribute row)))
 
-(defn render-ops [ops owner subject prior new-ids]
+(defn decode-predecessors [prior]
+  (into {} (map (fn [[id text]] [id (commit/recorded-row text)])) prior))
+
+(defn render-ops [ops owner subject prior prior-rows new-ids]
   (let [temp-owner (str "e:" subject)
-        prior-rows (into {} (map (fn [[id text]] [id (commit/recorded-row text)])) prior)
         rewrite #(commit/rewrite-change %1 %2 new-ids prior-rows)]
     (into []
       (keep (fn [op]
@@ -219,8 +232,12 @@
                (:lean p) (not (:slim-row p)) (= 1 (:span p)) (:assign-record-time p)
                (not-any? p [:scope-wide :position-irregular :irregular :save-ledger :packed-journal :bulk])
                (<= (count ops) 256) (every? prepared/small-op? ops))
-      (let [fn-tx (installed db) flags (when fn-tx (scope-witness db scope)) f (into {} flags)
-            owner (d/entid db [:triplex.entity/id subject]) revision (when owner (scope/value db owner :triplex.entity/rev))
+      (let [[fn-tx flags owner revision]
+            (trace/span "subject.plan-witnesses" "gateway"
+              (let [fn-tx (installed db) flags (when fn-tx (scope-witness db scope))
+                    owner (d/entid db [:triplex.entity/id subject])]
+                [fn-tx flags owner (when owner (scope/value db owner :triplex.entity/rev))]))
+            f (into {} flags)
             asserted (filterv #(and (vector? %) (= :triplex/assert (first %))) ops)
             retired (filterv #(and (vector? %) (= :triplex/retract (first %))) ops)
             business (filterv #(= (str "e:" subject) (second %)) asserted)
@@ -249,8 +266,17 @@
                    (= (count asserted) (count new-ids)) (= (set new-ids) (into #{} (map prepared/row-id) asserted))
                    (every? #(= 5 (count (nth % 3))) asserted)
                    (seq clocks) (every? #(and (number? %) (Double/isFinite (double %))) clocks))
-          (let [prior (into {} (keep (fn [id] (when-let [text (retirement db owner id)] [id text]))) live)
-                before (into #{} (map (comp field lean/decode)) (vals prior))
+          (let [prior (trace/span "subject.plan-predecessors" "gateway"
+                        (into {} (keep (fn [id] (when-let [text (retirement db owner id)] [id text]))) live))
+                ;; [DX-W1] Why: the journal already needs exact typed predecessor values.
+                ;; Rejected: decoding the same physical text again to validate the field.
+                decoded (when reuse-predecessor?
+                          (try (decode-predecessors prior) (catch Exception _ nil)))
+                before (if decoded
+                         (into #{} (map #(field {:attribute (get % "attribute")
+                                                :entity_type (get % "entityType")
+                                                :value_type (get-in % ["value" "type"])})) (vals decoded))
+                         (into #{} (map (comp field lean/decode)) (vals prior)))
                 after (into #{} (map (comp field lean/decode second #(nth % 3))) business)]
             (when (and (= (count live) (count prior) (count before) (count after))
                        (= before after) (not (contains? before nil)))
@@ -260,7 +286,8 @@
                          :provisional provisional :submitted-clock (reduce max (map double clocks))
                          :prefixes prefixes
                          :expected-erasure expected-erasure
-                         :ops (render-ops ops owner subject prior (set new-ids))}
+                         :ops (trace/span "subject.plan-render" "gateway"
+                                (render-ops ops owner subject prior (or decoded (decode-predecessors prior)) (set new-ids)))}
                   numeric-owner? (assoc :owner-key subject)
                   ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))
 

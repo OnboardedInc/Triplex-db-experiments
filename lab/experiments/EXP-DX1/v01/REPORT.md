@@ -1,3 +1,18 @@
+Lean scorecard runner on the next-card branch. The queued billion-record runner stays at 8cc32d380.
+The chosen credits drive both headline arms. The third arm uses barrier6 on the identical stack.
+Each arm takes one private copy. The cap is 280 minutes and USD 5.09, plus about thirteen minutes for three fresh copies.
+The quiet account clears its measured commit gate at 1.25 times alone or at 50 milliseconds loaded.
+The card keeps five-minute halves and counter archives. Publish and option B failover keep their separate runs.
+The ordered stack checks both retired assertion IDs and four historical values in the headline arm.
+The merged writer and launch pin is 5f62059b1. Both diagnostics are off in the planned fresh run.
+Mac clocks are diagnostic. The server driver supplies the winning credit mode.
+
+## Part 9 verdict and receipt audit
+
+- P6 applies the owner’s OR bar to the headline's matched burst commit gate. A quiet expiry or a verified wrong quiet answer fails the gate. Commit latency requires at least 500 journal-verified receipts on each side. The renderer recomputes the observations from the pinned tape and hashes, verifies the exact operation, receipt and journal position, checks the cell chain, and binds the device, mode, attempt and database to the selected physical launch. Solo and loaded read and feed observations accompany the result. Publish, import overlap and durable-effect timing remain open.
+- The mixed-ID witness lives in the headline stack after its verified P8 cut. The producer checks fresh operation IDs, both typed refusals, no operation or claim, unchanged native head and a successful fresh control. It compares four re-opened snapshots to the seed, prior row and exact readbacks of the two writes. The renderer checks those bytes, the bound cut, attempt and times and all refusal and save identities. Sequential completion hashes the witness alongside all other arm evidence.
+- The existing P1 and P7 miss decisions still require current source-bound and correctness-checked observations. The other rows retain their part 8 content and freshness checks. Sequential completion and assembly require three distinct attempts under the same manifest, with the exact treatment per arm, one common seal and validated file-copy controls. No acceptance pins moved.
+
 Run 7a8fc42003c30e01a72e9c3b45c22f0600ee665e on exp/DX-V01-next-card for the next cards. The queued 1B runner stays at 8cc32d380.
 P2 and P6 use 300-second cells with whole, first-half and second-half readings. Select 90 seconds to replay the earlier tape.
 Counters use the offer clock. Native clock events keep their own boundaries; absent sources and scheduling gaps appear on the card.
