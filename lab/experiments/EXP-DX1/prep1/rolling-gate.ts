@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync, writeFileSync } from "node:fs";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { decodeRowText } from "../../../../packages/datomic/dist/rowText.js";
-import { expectedSave, play, resolveUncertain, type Sender } from "../scale1/decision/writes.ts";
+import { expectedSave, play, resolveUncertain, type PublishInterleave, type Sender } from "../scale1/decision/writes.ts";
 import { now } from "../scale1/decision/observer.ts";
 import { expiryMs, field, operationId, sha, task, type Write } from "../scale1/decision/plan.ts";
 import { command } from "../w1/group/workload.ts";
@@ -14,7 +14,8 @@ assert(witnessPath && [6, 16].includes(credits));
 const attempt = process.env.PREP1_ATTEMPT!;
 assert.match(attempt, /^[a-f0-9-]{36}$/);
 const nonce = `${attempt}-${credits}`;
-const selection = { mode: "rolling", credits } as const;
+const freshFirst = process.env.PREP1_FRESH_FIRST === "1";
+const selection = { mode: "rolling", credits, freshFirst } as const;
 const url = process.env.PREP1_PEERS!;
 const client = new DatomicClient(url, 5000);
 const scope = JSON.stringify(["triplex-scope-v1", "test", "rolling", nonce, 0]);
@@ -86,6 +87,30 @@ async function before(witness: string) {
   }
   assert.equal(await head(db), cut + okTape.length);
 
+  const pressureRows = [];
+  if (freshFirst) {
+    // [DX-PREP1] Why: hold dispatch until four offers are queued on one fresh scope.
+    // Rejected: relying on elapsed engine speed to manufacture a stale predecessor.
+    const pressure: Write[] = [
+      { account: 1, subject: 0, ms: 0, width: 1, ordinal: 0, version: "pressure/0" },
+      { account: 1, subject: 0, ms: 96, width: 1, ordinal: 1, version: "pressure/1" },
+      { account: 1, subject: 1, ms: 97, width: 1, ordinal: 2, version: "pressure/2" },
+      { account: 0, subject: 0, ms: 98, width: 1, ordinal: 3, version: "pressure/3" },
+    ];
+    const pause: PublishInterleave = { paused: true, committed: () => {} };
+    const playback = play(senders, pressure, now() - 100, nonce, true, true, selection, pause);
+    assert.equal(pause.waiting!().reduce((a, b) => a + b, 0), pressure.length);
+    pause.paused = false;
+    pause.resume!();
+    const disposition = await playback;
+    const [old, successor, independent, quiet] = disposition.rows;
+    assert(disposition.rows.every((r) => r.status === "acked" && r.receipt && r.stage?.subjectOrderedIds));
+    assert.equal(quiet!.fairTurn, 1);
+    assert.equal(independent!.fairTurn, 2);
+    assert(old!.receipt!.p < successor!.receipt!.p);
+    pressureRows.push(...disposition.rows);
+  }
+  assert.equal(immediate, okTape.length + pressureRows.length);
   const lostTape = tape(credits, "lost");
   const lostId = operationId(nonce, lostTape[credits-1]!.version);
   let withheld: unknown;
@@ -112,7 +137,7 @@ async function before(witness: string) {
   await assert.rejects(() => real(db, { ...unresolved[1].input, operationId: nonce + "-new-operation" }),
     { code: "CommandConflict" });
   const beforeFailure = await head(db);
-  assert.equal(beforeFailure, cut + okTape.length + lostTape.length);
+  assert.equal(beforeFailure, cut + okTape.length + pressureRows.length + lostTape.length);
 
   // [DX-PREP1] Why: let the real transactor reject its next append while requests hold rolling credits.
   // Rejected: a timer-based stop or treating a fabricated failed HTTP response as a refused storage write.
@@ -130,7 +155,7 @@ async function before(witness: string) {
   assert(failed.rows.every((r) => r.status === "uncertain" && r.receipt === undefined));
   const proof: Witness = { attempt, db, head: beforeFailure,
     lost: { id: lostId, ...recovered.receipt, replyNs: replyClocks.get(lostId)! },
-    acked: [...ok.rows, ...lostResult.rows].map((r) => {
+    acked: [...ok.rows, ...pressureRows, ...lostResult.rows].map((r) => {
       assert(r.receipt);
       return { id: r.id, p: r.receipt.p, t: r.receipt.t, clock: r.receipt.clock, replyNs: replyClocks.get(r.id)! };
     }),
@@ -163,7 +188,7 @@ async function after(witness: string) {
   const original = await client.operation(db, recoveredId);
   assert.deepEqual([Number(original.position?.v), original.t?.v, original.recordedAt?.v],
     [proof.lost.p, proof.lost.t, proof.lost.clock]);
-  console.log("PREP1_ROLLING " + JSON.stringify({ attempt, credits, db, head: proof.head,
+  console.log("PREP1_ROLLING " + JSON.stringify({ attempt, credits, freshFirst, db, head: proof.head,
     durable: ids.length, refused: proof.missing.length, lost: proof.lost, checked: proof.acked }));
 }
 try {

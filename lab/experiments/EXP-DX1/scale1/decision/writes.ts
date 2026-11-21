@@ -7,6 +7,7 @@ import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
 import { command } from "../../w1/group/workload.ts";
 import { admission, type Admission } from "../../prep1/rolling-credits.ts";
+import { DeadlineOrder } from "../../prep1/deadline-order.ts";
 import {
   activeSubjects,
   expiryMs,
@@ -60,6 +61,7 @@ export type Save = {
   fairTurn?: number;
   neighboursAhead?: number;
   creditReleased?: number;
+  removalRetries?: number;
   status:
     | "offered"
     | "pending"
@@ -165,6 +167,14 @@ function bind(o: Save, a: Ack, candidate: ReturnType<typeof expectedSave>) {
   o.stage = stage;
 }
 
+export type PublishInterleave = {
+  paused: boolean;
+  drain?: () => Promise<void>;
+  resume?: () => void;
+  waiting?: () => number[];
+  committed: (row: Save) => void;
+};
+
 // [DX-SCALE1] Why: all tapes are open-loop, and a start deadline is evaluated before allocating the gateway request. Rejected: a single closed promise chain or counting an upstream expiration as a native commit limit.
 export async function play(
   scopes: Sender[],
@@ -174,7 +184,10 @@ export async function play(
   capture = false,
   orderedIds = false,
   selection?: Admission,
+  interleave?: PublishInterleave,
+  waitForRemoval = false,
 ) {
+  assert(!interleave || selection);
   const fair = selection && admission(scopes.length, selection);
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
     active = scopes.map(() => 0),
@@ -192,7 +205,7 @@ export async function play(
       response.path === `/v1/db/${save.db}/transact` &&
       Number.isFinite(response.written)
     ) {
-      save.sent = performance.timeOrigin + response.written;
+      if (!waitForRemoval || save.sent === undefined) save.sent = performance.timeOrigin + response.written;
       if (capture && Number.isFinite(response.headers))
         save.responseHeaders = performance.timeOrigin + response.headers;
       if (capture && "gatewayTraceparent" in response && typeof response.gatewayTraceparent === "string")
@@ -206,6 +219,9 @@ export async function play(
     assert(!entry.dispatched && !entry.sent);
   };
   const key = (r: Save) => r.account + "/" + r.subject;
+  const deadlines = selection?.freshFirst
+    ? new DeadlineOrder<(typeof queues)[number][number], string>(({ row }) => key(row))
+    : undefined;
   const predecessor = (r: Save) => owned.get(key(r)) ?? quarantined.get(key(r));
   const dequeue = (row: Save) => {
     const k = key(row);
@@ -215,7 +231,9 @@ export async function play(
   function expireQueue(account: number) {
     const q = queues[account]!;
     while (q[0] && now() >= q[0].row.due + expiryMs) {
-      const { row } = q.shift()!;
+      const offer = q.shift()!;
+      deadlines?.remove(offer);
+      const { row } = offer;
       dequeue(row);
       const k = key(row);
       if (capture) row.predecessor ??= predecessor(row);
@@ -230,13 +248,15 @@ export async function play(
     }
   }
 
-  const next = (account: number) => queues[account]!.findIndex(
-    ({ row }) => !owned.has(key(row)) && !quarantined.has(key(row)),
-  );
+  const allowed = ({ row }: (typeof queues)[number][number]) =>
+    !owned.has(key(row)) && !quarantined.has(key(row));
+  const next = (account: number) => queues[account]!.findIndex(allowed);
 
   function dispatch(account: number, index: number, ticket?: number, neighboursAhead?: number) {
     const sender = scopes[account]!;
-    const { e, row } = queues[account]!.splice(index, 1)[0]!;
+    const offer = queues[account]!.splice(index, 1)[0]!;
+    deadlines?.remove(offer);
+    const { e, row } = offer;
     dequeue(row);
     if (now() >= row.due + expiryMs) {
       expire(row, "dispatch");
@@ -256,9 +276,23 @@ export async function play(
     row.dispatched = now();
     row.status = "pending";
     inFlightSends.set(row.id, row);
+    const send = async () => {
+      for (;;) {
+        try {
+          return await sender.client.transact(row.db, candidate.input);
+        } catch (error) {
+          // [DX-ERASE2] Why: a removal can temporarily close admission or invalidate an already submitted plan.
+          // Rejected: dropping the queued save or allocating a new command identity.
+          if (!(error instanceof DatomicHttpError) ||
+              !["ErasureFrontierUnavailable", "CasConflict"].includes(error.code ?? "") ||
+              now() >= row.due + 15_000) throw error;
+          row.removalRetries = (row.removalRetries ?? 0) + 1;
+          await sleep(5);
+        }
+      }
+    };
     let p: Promise<void>;
-    p = sender.client
-      .transact(row.db, candidate.input)
+    p = (waitForRemoval ? send() : sender.client.transact(row.db, candidate.input))
       .then((value) => {
         row.end = now();
         assert(row.sent !== undefined, "Acknowledged write has no matching socket sample");
@@ -273,6 +307,7 @@ export async function play(
           };
         }
         row.status = "acked";
+        interleave?.committed(row);
       })
       .catch((error) => {
         row.end = now();
@@ -291,10 +326,10 @@ export async function play(
         active[account]!--;
         pending.delete(p);
         if (fair) {
-        row.creditReleased = now();
-        fair.resolved(row.status === "acked" || row.status === "refused", ticket);
-      }
-      pump(account);
+          row.creditReleased = now();
+          fair.resolved(row.status === "acked" || row.status === "refused", ticket);
+        }
+        pump(account);
       });
     pending.add(p);
   }
@@ -302,9 +337,16 @@ export async function play(
   function pump(account: number) {
     if (fair) {
       for (const a of scopes.keys()) expireQueue(a);
+      // [DX-ACT1] Why: allow the receipt to take the next turn with one exact shared source cut.
+      // Rejected: stopping the independent arrival clock or granting further credits during the handoff.
+      if (interleave?.paused) return;
       fair.dispatch(
         () => scopes.flatMap((_, a) => {
           if (active[a]! >= maxInflight) return [];
+          const queue = queues[a]!;
+          if (deadlines && a !== (selection?.quietAccount ?? 0))
+            return deadlines.ready(queue, now(), ({ row }) => row.due, allowed)
+              .map((candidate) => ({ account: a, ...candidate, due: queue[candidate.index]!.row.due }));
           const index = next(a);
           return index < 0 ? [] : [{ account: a, index, due: queues[a]![index]!.row.due }];
         }),
@@ -318,6 +360,16 @@ export async function play(
       if (index < 0) return;
       dispatch(account, index);
     }
+  }
+
+  if (interleave) {
+    interleave.drain = async () => {
+      assert(interleave.paused);
+      await Promise.all([...pending]);
+      assert.equal(pending.size, 0);
+    };
+    interleave.resume = () => pump(0);
+    interleave.waiting = () => queues.map((q) => q.length);
   }
 
   // [DX-SCALE1] Why: record the actual socket flush for successful requests, with a bounded map of active operations. Rejected: using the publication callback's error and finally notifications as packet timestamps.
@@ -351,7 +403,9 @@ export async function play(
       if (row.enqueued >= due + expiryMs) expire(row, "timer");
       else {
         if (capture) queuedTail.set(key(row), row.id);
-        q.push({ e, row });
+        const offer = { e, row };
+        q.push(offer);
+        deadlines?.add(offer);
         pump(e.account);
       }
     }

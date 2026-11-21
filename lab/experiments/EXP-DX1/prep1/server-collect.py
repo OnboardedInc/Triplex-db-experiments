@@ -7,6 +7,7 @@ import math
 import re
 import sys
 from pathlib import Path
+from rolling_latency import PhaseLatency, safepoints
 
 
 def read(path):
@@ -38,6 +39,10 @@ def rolling_metrics(result, rows, selection):
             continue
         assert row.get("ack") and row["due"] <= row["creditGranted"] <= row["sent"] <= row["end"] <= row["creditReleased"]
         assert row["creditGranted"] < row["due"] + 30_000
+        if selection.get("freshFirst") and row["account"] != 0:
+            assert row["overdueAtGrant"] == (row["due"] < row["creditGranted"] - 20)
+        else:
+            assert "overdueAtGrant" not in row
         holds.append(row["creditReleased"] - row["creditGranted"])
         turns[row["fairTurn"]].append(row)
         events.extend(((row["creditGranted"], 1, row["fairTurn"], row),
@@ -60,6 +65,14 @@ def rolling_metrics(result, rows, selection):
                 active.remove(ticket)
                 neighbours -= int(row["account"] != 0)
         assert not active and neighbours == 0
+    # [DX-PREP1] Why: sorting by scheduled offer restores the order that the workload promised per subject.
+    # Rejected: counting globally contiguous journal positions as evidence for per-person FIFO.
+    last_subject_position = {}
+    for row in rows:
+        if row.get("receipt"):
+            subject = row["account"], row["person"]
+            assert row["receipt"]["p"] > last_subject_position.get(subject, 0)
+            last_subject_position[subject] = row["receipt"]["p"]
 
     def stats(low, high):
         offered = [row for row in rows if low <= row["due"] < high]
@@ -70,7 +83,8 @@ def rolling_metrics(result, rows, selection):
                     expired=len(offered)-len(acked), ackedP50Ms=percentile(acked, .5),
                     ackedP99Ms=p99(acked), quietP99Ms=p99(quiet))
 
-    return dict(selection=selection, whole=stats(0, end), firstHalf=stats(0, end/2),
+    return dict(selection=selection, overdueGrants=sum(r.get("overdueAtGrant", False) for r in rows),
+                whole=stats(0, end), firstHalf=stats(0, end/2),
                 secondHalf=stats(end/2, end), creditHoldP99Ms=p99(holds),
                 barrierHoldP99Ms=p99([max(r["creditReleased"] for r in v) - min(r["creditGranted"] for r in v)
                                        for v in turns.values()]) if selection["mode"] == "barrier" else None)
@@ -144,6 +158,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered", "ceiling", "scale", "tail", "tail-combined", "rolling")
     scale = campaign == "scale"
     rolling = campaign == "rolling"
+    fresh_credits = plan.get("freshCredits")
+    assert fresh_credits is None or (rolling and fresh_credits in (6, 12))
     wide = campaign == "ceiling" or scale or rolling
     pg_data = False
     pg_data_evidence = []
@@ -179,7 +195,14 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         choices = [
             (f"1-{mode}{credits}-S", {"mode": mode, "credits": credits})
             for mode, credits in (("barrier", 6), ("rolling", 6), ("rolling", 8), ("rolling", 12), ("rolling", 16))]
-        assert observed == [choices[i] for i in (0, 1, 3)] or (len(observed) == 1 and observed[0] in choices)
+        if fresh_credits:
+            base = dict(mode="rolling", credits=fresh_credits)
+            fresh = dict(base, freshFirst=True)
+            assert observed == [(f"1-{mode}{fresh_credits}-S", selection)
+                                for mode, selection in (("rolling", base), ("fresh", fresh), ("fresh-zgc", fresh))]
+            assert [a.get("writeJvm") for a in plan["arms"]] == [None, None, "j25-zgc"]
+        else:
+            assert observed == [choices[i] for i in (0, 1, 3)] or (len(observed) == 1 and observed[0] in choices)
         assert all(a["writers"] == 1 and a["writer"] == "S" and a["numericOwner"] and a["orderedIds"]
                    and not a["reverse"] and not a["prefetch"] and a["cacheGiB"] == 16 for a in plan["arms"])
     elif scale:
@@ -337,11 +360,17 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             pg_data_evidence.append(base_image_path)
             if external_wal:
                 pg_data_evidence.append(zgc_image_path)
+            write_path = config / "gw-w-java-image.txt"
+            write_image = write_path.read_text().split("|") if fresh_credits else base_image
+            assert not fresh_credits or (write_image[1] == "25") == (arm.get("writeJvm") == "j25-zgc")
+            if fresh_credits:
+                pg_data_evidence.append(write_path)
             for role in roles:
                 container, = [c for c in stack["containers"] if c["name"] == header["slot"] + "-" + role]
-                assert container["imageId"] == (tx_image if role == "tx" else base_image)[0]
+                assert container["imageId"] == (tx_image if role == "tx" else write_image if role == "gw-w" else base_image)[0]
                 log = (native_path.parent / f"prep1-gc-{role}.log").read_text()
-                assert re.search(r"Using (?:The Z Garbage Collector|ZGC)" if role == "tx" and external_wal else "Using G1", log)
+                zgc = (role == "tx" and external_wal) or (role == "gw-w" and arm.get("writeJvm") == "j25-zgc")
+                assert re.search(r"Using (?:The Z Garbage Collector|ZGC)" if zgc else "Using G1", log)
             settings_path = directory / "pg-settings.json"
             sql = read(settings_path)
             data, wal, data_dev, wal_dev = sql["layout"]
@@ -350,6 +379,12 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert all(sql["settings"][key] == "on" for key in ("fsync", "synchronous_commit", "full_page_writes"))
             pg_data_evidence.append(settings_path)
             if rolling:
+                profile = read(directory / "launch-profile.json")
+                if fresh_credits:
+                    want_major = "25" if arm.get("writeJvm") else "21"
+                    assert profile["creditMode"] == f"rolling{fair_credits}"
+                    assert profile["gw-w"]["major"] == want_major and profile["gw-r"]["major"] == "21"
+                    assert profile["tx"]["major"] == "25"
                 assert sql["settings"]["track_io_timing"] == sql["settings"]["track_wal_io_timing"] == "on"
                 assert sql["settings"]["log_checkpoints"] == "on" and sql["settings"]["max_wal_size"] == "1GB"
                 assert (sql["settings"]["min_wal_size"], sql["settings"]["checkpoint_timeout"],
@@ -390,6 +425,11 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     assert end
 
     metrics, used_native, cut, last_clock, last_turn = [], set(), header["head"], -math.inf, 0
+    pauses = {}
+    if rolling and not fixture:
+        for role in ("tx", "gw-w", "gw-r"):
+            with (native_path.parent / f"prep1-gc-{role}.log").open() as log:
+                pauses[role] = safepoints(log)
     ordered_tokens = set()
     for expected in arm["cells"]:
         label = expected["label"]
@@ -404,6 +444,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         assert expected["tapeSha"] == result["tapeSha"]
         assert len(tape) == len(result["rows"]) == expected["offered"]
         rows = sorted(result["rows"], key=lambda r: r["ordinal"])
+        delay = PhaseLatency(result, pauses) if rolling and not fixture else None
         times, counts, block_ids, joined = collections.defaultdict(list), collections.Counter(), set(), set()
         in_window, stages_by_save, flush_ms = 0, collections.defaultdict(list), {}
         in_window_appends = set()
@@ -494,6 +535,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             if receipt:
                 block, chunk, member = native[receipt["t"]]
                 assert int(result["phaseStartNs"]) <= member["started-at"]
+                if delay and ack:
+                    delay.add(r, chunk, member)
                 if not fixture and ack:
                     assert chunk["end"] <= int(result["phaseStartNs"]) + math.ceil(r["end"] * 1e6) + 100000
                 stages_by_save["nativeWork"].append((member["applied-at"] - member["started-at"]) / 1e6)
@@ -536,6 +579,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert all(len(blocks) == 1 for blocks in turn_appends.values())
         pair = {a: p99(times[a]) if counts[a] == len(times[a]) else None for a in counts}
         metrics.append({"cell": label, "offered": len(rows), "durable": len(positions), "inWindow": in_window,
+                        **({"delayLedger": delay.finished()} if delay else {}),
                         **(rolling_metrics(result, rows, arm["admission"]) if rolling else {}),
                         **(cpu if rolling else {}),
                         "confirmedPerSecond": in_window / result["seconds"], "prepared": prepared,

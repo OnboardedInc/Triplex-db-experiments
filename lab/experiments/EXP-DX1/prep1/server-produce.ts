@@ -12,7 +12,8 @@ import {
 import { decodeRowText, encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import { ids, type Fact } from "../../../bench/lib/world.ts";
 import { FairTurns } from "./fair-turns.ts";
-import { admission, RollingCredits } from "./rolling-credits.ts";
+import { admission, type CreditScheduler } from "./rolling-credits.ts";
+import { DeadlineOrder } from "./deadline-order.ts";
 import {
   scaleAccount,
   scaleFields,
@@ -31,6 +32,7 @@ import {
   fairArms,
   fairPrediction,
   fairSeconds,
+  freshArms,
   operation,
   ownerArms,
   ownerPrediction,
@@ -90,7 +92,9 @@ assert(
     campaign === "tail" || campaign === "tail-combined",
 );
 const rollingArm = process.env.DX_PREP1_ROLLING_ARM;
+const freshCredits = process.env.DX_PREP1_FRESH_CREDITS;
 assert(rollingArm === undefined || (campaign === "rolling" && rollingArms.some((a) => a.id === `1-${rollingArm}-S`)));
+assert(freshCredits === undefined || (campaign === "rolling" && rollingArm === undefined));
 const campaignArms = {
   comparison: arms,
   fair: fairArms,
@@ -99,8 +103,9 @@ const campaignArms = {
   "storage-ordered": [storageOrderedArm],
   ceiling: [ceilingArm],
   scale: scaleArms,
-  rolling: rollingArms.filter((a) => rollingArm === undefined
-    ? [6, 12].includes(a.admission!.credits) : a.id === `1-${rollingArm}-S`),
+  rolling: freshCredits === undefined
+    ? rollingArms.filter((a) => rollingArm === undefined ? [6, 12].includes(a.admission!.credits) : a.id === `1-${rollingArm}-S`)
+    : freshArms(Number(freshCredits)),
   tail: tailArms,
   "tail-combined": [tailCombinedArm],
 }[campaign];
@@ -225,9 +230,10 @@ async function phase(
   frozen: Set<string>,
   cell: ReturnType<typeof cells>[number],
   orderedIds: boolean,
-  fair?: FairTurns | RollingCredits,
+  fair?: CreditScheduler,
   legacyIds?: ReadonlySet<string>,
   sampleCpu?: () => CpuSample,
+  freshFirst = false,
 ) {
   const inputs = new Map<string, Input>();
   const rows: {
@@ -242,6 +248,7 @@ async function phase(
     creditGranted?: number;
     neighboursAhead?: number;
     creditReleased?: number;
+    overdueAtGrant?: boolean;
     sent?: number;
     reason?: string;
     orderedToken?: string;
@@ -252,6 +259,9 @@ async function phase(
   const pending = new Set<Promise<void>>();
   const busy = new Set<string>(),
     queues = accounts.map(() => [] as number[]);
+  const deadlines = freshFirst
+    ? new DeadlineOrder<number, number>((n) => cell.tape[n]!.account * 100_000 + cell.tape[n]!.person)
+    : undefined;
   const cpuBefore = sampleCpu?.();
   const started = performance.now(),
     elapsed = () => performance.now() - started;
@@ -261,27 +271,32 @@ async function phase(
     nextPeer = 0;
   const deadline = cell.duration * 1000 + (rolling ? 30_000 : 1000);
   const expired = new Set<number>();
-  const pick = (account: number) => {
+  const allowed = (n: number) => {
+    const o = cell.tape[n]!;
+    const e = root(o.account, o.person);
+    return !busy.has(e) && !frozen.has(e);
+  };
+  const ready = (account: number) => {
     const queue = queues[account]!;
     const readyAt = rolling ? elapsed() : undefined;
     if (readyAt !== undefined)
-      while (queue.length && readyAt >= cell.tape[queue[0]!]!.ms + 30_000) expired.add(queue.shift()!);
-    const index = queues[account]!.findIndex((n) => {
-      const o = cell.tape[n]!;
-      const e = root(o.account, o.person);
-      return !busy.has(e) && !frozen.has(e);
-    });
-    if (index >= 0) return { account, index, due: cell.tape[queues[account]![index]!]!.ms, readyAt };
+      while (queue.length && readyAt >= cell.tape[queue[0]!]!.ms + 30_000) {
+        const ordinal = queue.shift()!;
+        deadlines?.remove(ordinal);
+        expired.add(ordinal);
+      }
+    const due = (ordinal: number) => cell.tape[ordinal]!.ms;
+    if (deadlines && account !== 0)
+      return deadlines.ready(queue, readyAt!, due, allowed)
+        .map((candidate) => ({ ...candidate, account, due: due(queue[candidate.index]!), readyAt }));
+    const index = queue.findIndex(allowed);
+    return index < 0 ? [] : [{ account, index, due: due(queue[index]!), readyAt, overdue: false }];
   };
   function dispatch() {
     if (elapsed() > deadline) return;
     if (fair) {
       fair.dispatch(
-        () =>
-          accounts.flatMap(({ index }) => {
-            const ready = pick(index);
-            return ready ? [ready] : [];
-          }),
+        () => accounts.flatMap(({ index }) => ready(index)),
         grant,
       );
       return;
@@ -289,7 +304,7 @@ async function phase(
     while (pending.size < 96 && elapsed() <= deadline) {
       let granted = false;
       for (let i = 0; i < queues.length; i++) {
-        const candidate = pick((turn + i) % queues.length);
+        const [candidate] = ready((turn + i) % queues.length);
         if (!candidate) continue;
         turn = (candidate.account + 1) % queues.length;
         grant(candidate);
@@ -299,8 +314,9 @@ async function phase(
       if (!granted) break;
     }
   }
-  function grant({ account, index, readyAt }: NonNullable<ReturnType<typeof pick>>, fairTurn?: number, neighboursAhead?: number) {
+  function grant({ account, index, readyAt, overdue }: ReturnType<typeof ready>[number], fairTurn?: number, neighboursAhead?: number) {
     const ordinal = queues[account]!.splice(index, 1)[0]!;
+    deadlines?.remove(ordinal);
     const n = ordinal,
       o = cell.tape[n]!,
       e = root(o.account, o.person),
@@ -328,6 +344,7 @@ async function phase(
       fairTurn,
       ...(readyAt === undefined ? {} : { creditGranted: readyAt }),
       ...(neighboursAhead === undefined ? {} : { neighboursAhead }),
+      ...(deadlines && account !== 0 ? { overdueAtGrant: overdue } : {}),
       sent,
       orderedToken: identity?.token,
       legacyPredecessors: legacyIds ? old.filter((row) => legacyIds.has(row.id)).length : undefined,
@@ -377,6 +394,7 @@ async function phase(
   for (const [n, o] of cell.tape.entries()) {
     while (elapsed() < o.ms) await sleep(Math.ceil(o.ms - elapsed()));
     queues[o.account]!.push(n);
+    deadlines?.add(n);
     dispatch();
   }
   while (pending.size) await Promise.all([...pending]);
@@ -643,6 +661,7 @@ async function armRun(
         schedulerFor(arm, fair, cell.credits),
         legacyIds,
         sampleCpu,
+        !!arm.admission?.freshFirst,
       );
       cut = result.after;
       save(`${out}/${cell.label}.json`, result);
@@ -769,6 +788,8 @@ async function preflight(out: string, arm: Arm) {
         !!arm.orderedIds,
         schedulerFor(arm, fair, cell.credits),
         legacyIds,
+        undefined,
+        !!arm.admission?.freshFirst,
       ),
     );
   save(out + "/complete.json", { nonce, slot: header.slot, commit: header.commit, cut: p });
@@ -812,6 +833,7 @@ else if (action === "adopt-scale") {
       seconds: duration,
       fairCredits: requestedCredits,
       ...(campaign !== "comparison" ? { campaign } : {}),
+      ...(freshCredits === undefined ? {} : { freshCredits: Number(freshCredits) }),
       tapes,
       arms: campaignArms.map((arm) => ({
         ...arm,
@@ -822,7 +844,7 @@ else if (action === "adopt-scale") {
           offered: tape.length,
           ...(credits !== undefined ? { fairCredits: credits } : {}),
           predicted: arm.admission
-            ? rollingPrediction(arm, rate, label.endsWith("-alone"))
+            ? rollingPrediction(arm, rate, label.endsWith("-alone"), freshCredits !== undefined)
             : arm.scale
             ? scalePrediction(arm, rate, label.endsWith("-alone"))
             : wide

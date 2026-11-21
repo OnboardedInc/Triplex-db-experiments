@@ -24,6 +24,7 @@ export type Arm = {
   tail?: "control" | "wal" | "zgc" | "fair" | "combined";
   scale?: "base" | "cache" | "wal-zgc";
   admission?: Admission;
+  writeJvm?: "j25-zgc";
 };
 export const arms: Arm[] = widths.flatMap((writers) =>
   (["K", "S", "S", "K"] as const).map((writer, repeat) => ({
@@ -86,7 +87,14 @@ export const rollingArms: Arm[] = [
   })),
 ];
 
-export function rollingPrediction(arm: Arm, rate: number, alone: boolean) {
+export function freshArms(credits: number): Arm[] {
+  assert(credits === 6 || credits === 12);
+  const control = rollingArms.find((arm) => arm.id === `1-rolling${credits}-S`)!;
+  const fresh = { ...control, id: `1-fresh${credits}-S`, admission: { ...control.admission!, freshFirst: true } };
+  return [control, fresh, { ...fresh, id: `1-fresh-zgc${credits}-S`, writeJvm: "j25-zgc" }];
+}
+
+export function rollingPrediction(arm: Arm, rate: number, alone: boolean, nextCampaign = false) {
   assert(arm.admission);
   const band = [235, 394, 620].indexOf(rate);
   assert(band >= 0);
@@ -119,7 +127,17 @@ export function rollingPrediction(arm: Arm, rate: number, alone: boolean) {
       [460, 475, 29800, 30035, 29940, 30035, 17, 66],
     ],
   };
-  const forecast = forecasts[arm.id]?.[band];
+  // The reserved debt lane can leave a long tail in the original offer cohort.
+  const fresh = arm.writeJvm
+    ? [[235, 235, 5, 400, 5, 29, 21, 35], [393, 394, 9, 300, 8, 48, 18, 45], [468, 483, 21, 29_980, 20, 29_980, 14, 49]]
+    : [[235, 235, 6, 1200, 5, 39, 30, 42], [392, 394, 10, 1300, 9, 85, 21, 53], [454, 480, 24, 29_990, 23, 29_990, 15, 57]];
+  const rolling6Repeat = [
+    [235, 235, 5, 2600, 5, 34, 30, 44],
+    [392, 392, 640, 6000, 320, 5100, 21, 54],
+    [454, 485, 29_730, 30_025, 29_820, 30_025, 15, 62],
+  ];
+  const forecast = (arm.admission.freshFirst ? fresh :
+    nextCampaign && arm.id === "1-rolling6-S" ? rolling6Repeat : forecasts[arm.id])?.[band];
   assert(forecast);
   const [serving, secondHalfServing, p50, p99, secondP50, secondP99, quietSolo, quietLoaded] = forecast;
   return alone ? { serving: 3.5, secondHalfServing: 3.5, p50: 7, p99: quietSolo,

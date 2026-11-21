@@ -1,7 +1,12 @@
 import { FairTurns } from "./fair-turns.ts";
+import { overdueGrantInterval } from "./deadline-order.ts";
 
-type Ready = { account: number; due: number };
-export type Admission = { mode: "barrier" | "rolling"; credits: number; quietAccount?: number };
+type Ready = { account: number; due: number; overdue?: boolean };
+export type Admission = { mode: "barrier" | "rolling"; credits: number; quietAccount?: number; freshFirst?: boolean };
+export interface CreditScheduler {
+  dispatch<T extends Ready>(ready: () => readonly T[], submit: (save: T, ticket: number, neighboursAhead?: number) => void): void;
+  resolved(known: boolean, ticket?: number): void;
+}
 export const rollingWidths = [6, 8, 12, 16] as const;
 
 // [DX-PREP1] Why: keep a credit free for quiet arrivals and release each live ticket on its own settlement.
@@ -13,11 +18,13 @@ export class RollingCredits {
   private readonly recent: number[] = [];
   private readonly served: number[];
   private neighbours = 0;
+  private freshGrants = 0;
 
   constructor(
     private readonly accountCount: number,
     private readonly credits: number,
     private readonly quietAccount: number,
+    private readonly freshFirst = false,
   ) {
     if (!rollingWidths.some((width) => width === credits) ||
         !Number.isInteger(quietAccount) || quietAccount < 0 || quietAccount >= accountCount) {
@@ -32,12 +39,17 @@ export class RollingCredits {
   ) {
     while (!this.uncertain && this.active.size < this.credits) {
       let next: T | undefined;
+      const preferOverdue = this.freshGrants >= overdueGrantInterval - 1;
       for (const save of ready()) {
         if (save.account === this.quietAccount) {
           next = save;
           break;
         }
         if (this.neighbours >= this.credits - 1) continue;
+        if (next && this.freshFirst && Boolean(save.overdue) !== Boolean(next.overdue)) {
+          if (Boolean(save.overdue) === preferOverdue) next = save;
+          continue;
+        }
         if (!next || this.served[save.account]! < this.served[next.account]! ||
             (this.served[save.account] === this.served[next.account] && save.due < next.due)) {
           next = save;
@@ -47,7 +59,10 @@ export class RollingCredits {
       const ahead = this.neighbours;
       const ticket = ++this.sequence;
       this.active.set(ticket, next.account);
-      if (next.account !== this.quietAccount) this.neighbours++;
+      if (next.account !== this.quietAccount) {
+        this.neighbours++;
+        if (this.freshFirst) this.freshGrants = next.overdue ? 0 : Math.min(overdueGrantInterval - 1, this.freshGrants + 1);
+      }
       this.recent.push(next.account);
       this.served[next.account]!++;
       if (this.recent.length > this.accountCount) this.served[this.recent.shift()!]!--;
@@ -66,8 +81,10 @@ export class RollingCredits {
   }
 }
 
-export function admission(accountCount: number, selection: Admission) {
+export function admission(accountCount: number, selection: Admission): CreditScheduler {
+  if (selection.freshFirst && selection.mode !== "rolling")
+    throw new Error("Fresh-first admission requires rolling credits");
   return selection.mode === "rolling"
-    ? new RollingCredits(accountCount, selection.credits, selection.quietAccount ?? 0)
+    ? new RollingCredits(accountCount, selection.credits, selection.quietAccount ?? 0, selection.freshFirst)
     : new FairTurns(accountCount, selection.credits);
 }

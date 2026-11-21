@@ -111,6 +111,9 @@ export function collectorOptions(major, collector, role, cores) {
 export const jvmProfiles = /** @type {const} */ (["j21-g1", "j25-g1", "j25-zgc"]);
 /** @typedef {(typeof jvmProfiles)[number]} JvmProfile */
 export const defaultJvm = /** @type {const} */ ("j21-g1");
+export const creditModes = /** @type {const} */ (["barrier6", "rolling6", "rolling8", "rolling12", "rolling16"]);
+/** @typedef {(typeof creditModes)[number]} CreditMode */
+export const defaultCreditMode = /** @type {const} */ ("barrier6");
 export const durablePostgres = Object.freeze({ fsync: "on", synchronous_commit: "on", full_page_writes: "on" });
 export const startupFlags = ["-XX:+PrintFlagsFinal", "-Xlog:gc+init=info,cds=info:stdout:uptimemillis,level,tags"];
 
@@ -153,17 +156,19 @@ export const laptopCaps = Object.freeze({ pg: 256, tx: laptop.tx.memory, write: 
 // [DX-INT1] Why: keep the portable limits and the full-size treatment in one launch policy.
 // Rejected: scaling all roles together or interpreting the reduced startup as physical placement evidence.
 /** @param {"laptop" | "server"} profile
- * @param {{ jvm?: JvmProfile, txJvm?: JvmProfile, reduced?: boolean, scale?: number }} [options] */
-export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, reduced = false, scale = 1 } = {}) {
+ * @param {{ jvm?: JvmProfile, txJvm?: JvmProfile, writeJvm?: JvmProfile, creditMode?: CreditMode, reduced?: boolean, scale?: number }} [options] */
+export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm = jvm,
+  creditMode = defaultCreditMode, reduced = false, scale = 1 } = {}) {
   assert(profile === "laptop" || profile === "server");
-  assert(jvmProfiles.includes(jvm) && jvmProfiles.includes(txJvm));
+  assert(jvmProfiles.includes(jvm) && jvmProfiles.includes(txJvm) && jvmProfiles.includes(writeJvm));
+  assert(creditModes.includes(creditMode), "Unknown credit mode");
   assert(profile === "server" ? scale === 1 : !reduced && [1, 2, 4].includes(scale));
   const portable = profile === "laptop" || reduced;
   /** @param {Role} role */
   const settings = (role) => {
     const placement = profile === "laptop" ? laptop[role] : server[role];
     const limits = portable ? laptop[role] : server[role];
-    const selected = role === "tx" ? txJvm : jvm;
+    const selected = role === "tx" ? txJvm : role === "gw-w" ? writeJvm : jvm;
     const major = selected === "j21-g1" ? "21" : "25";
     const collector = selected === "j25-zgc" ? "ZGC" :
       profile === "laptop" && limits.memory * scale < 1792 && selected === "j21-g1" ? "Serial" : "G1";
@@ -194,7 +199,7 @@ export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, reduced 
     } : {}),
   };
   return {
-    profile, reduced, tx: settings("tx"), "gw-w": settings("gw-w"), "gw-r": settings("gw-r"),
+    profile, reduced, creditMode, tx: settings("tx"), "gw-w": settings("gw-w"), "gw-r": settings("gw-r"),
     pg: { memoryMiB: portable ? laptopCaps.pg * scale : 8192, cpus: "1", settings: pgSettings },
     index: { threshold: portable ? "8m" : "256m", max: portable ? "32m" : "1g" },
     clients: { senders: "9", readers: "10,11" },

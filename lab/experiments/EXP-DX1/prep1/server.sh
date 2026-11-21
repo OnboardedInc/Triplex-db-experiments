@@ -10,7 +10,7 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 here=lab/experiments/EXP-DX1/prep1
 stack=lab/experiments/EXP-DX1/stack
-mode=${1:?expected run, storage, storage-ordered, ceiling, scale, rolling, tail, tail-combined, owner, fair or arm}
+mode=${1:?expected run, storage, storage-ordered, ceiling, scale, rolling, fresh, tail, tail-combined, owner, fair or arm}
 out=${2:?provide an absolute new output directory}
 source=${3:?provide the pinned Git commit}
 [[ "$out" == /* && "$source" =~ ^[a-f0-9]{40}$ && $(git rev-parse HEAD) == "$source" && -z $(git status --porcelain) ]]
@@ -58,17 +58,22 @@ if [[ ${DX_PREP1_CAMPAIGN:-} == rolling && $mode == arm ]]; then
   # Rejected: hand-maintaining an almost-identical set of Java flags and SQL settings.
   mapfile -t profile < <(node --input-type=module -e '
     import {launchProfile} from "./lab/experiments/EXP-DX1/jvm1/launch.mjs";
-    const p = launchProfile("server", {txJvm:"j25-zgc"});
+    const [arm] = process.argv.slice(1);
+    const depth = arm.match(/(6|8|12|16)-S$/)?.[1];
+    const p = launchProfile("server", {txJvm:"j25-zgc",
+      creditMode: arm.includes("barrier") ? "barrier6" : "rolling" + depth,
+      writeJvm: arm.startsWith("1-fresh-zgc") ? "j25-zgc" : "j21-g1"});
     console.log([JSON.stringify(p), p.tx.cpus, p.pg.cpus, p["gw-w"].cpus, p["gw-r"].cpus,
       p.tx.memoryMiB, p.pg.memoryMiB, p["gw-w"].memoryMiB, p["gw-r"].memoryMiB,
       p.tx.flags.join(" "), p["gw-w"].flags.join(" "), p["gw-r"].flags.join(" "), p.tx.cacheMiB,
-      p.index.threshold,p.index.max,Object.entries(p.pg.settings).map(([k,v]) => "-c "+k+"="+v).join(" ")].join("\n"));')
-  [[ ${#profile[@]} == 16 ]]
+      p.index.threshold,p.index.max,Object.entries(p.pg.settings).map(([k,v]) => "-c "+k+"="+v).join(" "),
+      p["gw-w"].major].join("\n"));' "${4:?}")
+  [[ ${#profile[@]} == 17 ]]
   up_args=(--port-write 8491 --port-read 8495 --cpus-tx "${profile[1]}" --cpus-pg "${profile[2]}"
     --cpus-gw-write "${profile[3]}" --cpus-gw-read "${profile[4]}" --tx-memory "${profile[5]}m" --pg-memory "${profile[6]}m"
     --tx-java-opts "${profile[9]}" --object-cache-max "${profile[12]}m" --memory-index-threshold "${profile[13]}"
     --memory-index-max "${profile[14]}" --pg-settings "${profile[15]}")
-  export DX_TX_JAVA=25 DX_LAUNCH_PROFILE=server
+  export DX_TX_JAVA=25 DX_GW_WRITE_JAVA="${profile[16]}" DX_LAUNCH_PROFILE=server
 fi
 nonce() { cat /proc/sys/kernel/random/uuid; }
 clean() {
@@ -108,7 +113,7 @@ clear_scale_wal() {
   if [[ -n ${scale_wal_owned:-} ]]; then
     [[ $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == "${scale_wal_device:-/dev/nvme1n1}" &&
        $scale_wal_owned == "$scale_wal_mount/$owned" &&
-       $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(scale-wal-zgc|barrier6|rolling(6|8|12|16))-s$ &&
+       $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(scale-wal-zgc|barrier6|rolling(6|8|12|16)|fresh(-zgc)?(6|12))-s$ &&
        ! -L $scale_wal_owned ]] || return 1
     rm -rf --one-file-system -- "$scale_wal_owned" || return 1
     unset scale_wal_owned DX_PREP1_SCALE_WAL_DIR
@@ -129,8 +134,14 @@ if [[ $mode == ceiling ]]; then
   [[ $# == 6 || ($# == 8 && $7 == --pg-data) ]]
   exec timeout --kill-after=40s 3560s bash "$here/server.sh" ceiling-timed "${@:2}"
 elif [[ $mode == rolling ]]; then
-  [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount ]]
+  [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && -z ${DX_PREP1_FRESH_CREDITS:-} ]]
   exec timeout --kill-after=40s 8960s bash "$here/server.sh" rolling-timed "${@:2}"
+elif [[ $mode == fresh ]]; then
+  [[ $# == 12 && $7 == --pg-data && $9 == --wal-mount &&
+     ${11} == --write-jvm && ${12} == j25-zgc && -z ${DX_PREP1_ROLLING_ARM:-} ]]
+  export DX_PREP1_FRESH_CREDITS=${DX_PREP1_FRESH_CREDITS:-6}
+  [[ $DX_PREP1_FRESH_CREDITS =~ ^(6|12)$ ]]
+  exec timeout --kill-after=40s 7160s bash "$here/server.sh" rolling-timed "${@:2:9}"
 elif [[ $mode == scale ]]; then
   [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount ]]
   exec timeout --kill-after=40s 2660s bash "$here/server.sh" scale-timed "${@:2}"
@@ -155,7 +166,7 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
     for ((cpu=0;cpu<=last_cpu;cpu++)); do taskset -c "$cpu" true; done
     core_count=$(lscpu -p=CPU,CORE,SOCKET | awk -F, -v max="$last_cpu" '$1 ~ /^[0-9]+$/ && $1 <= max {print $2 ":" $3}' | sort -u | wc -l)
     [[ $core_count == $((last_cpu+1)) ]]
-    unset DX_PREP1_SCALE_WAL_DIR DX_PREP1_TAIL_TX_ZGC DX_JAVA DX_TX_JAVA DX_DATOMIC_IMAGE_RECEIPT DX_BM1_WAL_MOUNT DX_BM1_WAL_AB
+    unset DX_PREP1_SCALE_WAL_DIR DX_PREP1_TAIL_TX_ZGC DX_JAVA DX_TX_JAVA DX_GW_WRITE_JAVA DX_DATOMIC_IMAGE_RECEIPT DX_BM1_WAL_MOUNT DX_BM1_WAL_AB
     export DX_PREP1_TX_CPUS=0 DX_PREP1_PG_CPUS=1 DX_PREP1_WRITE_CPUS=2-5 DX_PREP1_READ_CPUS=6 DX_INT1_GATEWAYS=original
     java25=$(DX_JAVA=25 DX_DATOMIC_IMAGE_RECEIPT="${DX_PREP1_JAVA25_RECEIPT:-}" node lab/config/datomic/runtime.mjs image)
     docker image inspect "$java25" >/dev/null
@@ -208,7 +219,11 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
     arm_limit=850
     if [[ $mode == rolling-timed ]]; then
       arm_limit=2950
-      if [[ -n ${DX_PREP1_ROLLING_ARM:-} ]]; then
+      if [[ -n ${DX_PREP1_FRESH_CREDITS:-} ]]; then
+        [[ $DX_PREP1_FRESH_CREDITS =~ ^(6|12)$ && -z ${DX_PREP1_ROLLING_ARM:-} ]]
+        arm_limit=2340
+        selected=("1-rolling$DX_PREP1_FRESH_CREDITS-S" "1-fresh$DX_PREP1_FRESH_CREDITS-S" "1-fresh-zgc$DX_PREP1_FRESH_CREDITS-S")
+      elif [[ -n ${DX_PREP1_ROLLING_ARM:-} ]]; then
         [[ $DX_PREP1_ROLLING_ARM =~ ^(barrier6|rolling(6|8|12|16))$ ]]
         selected=("1-$DX_PREP1_ROLLING_ARM-S")
       else
@@ -376,7 +391,7 @@ elif [[ $mode == arm ]]; then
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == scale ]]; then
     [[ $cell =~ ^1-scale-(base|cache|wal-zgc)-S$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == rolling ]]; then
-    [[ $cell =~ ^1-(barrier6|rolling(6|8|12|16))-S$ && $(cat "$out/source") == "$source" ]]
+    [[ $cell =~ ^1-(barrier6|rolling(6|8|12|16)|fresh(-zgc)?(6|12))-S$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == tail ]]; then
     [[ $cell =~ ^1-tail-(control|wal|zgc|fair)-S$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == tail-combined ]]; then

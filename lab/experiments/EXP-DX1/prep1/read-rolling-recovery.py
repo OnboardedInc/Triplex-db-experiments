@@ -18,6 +18,10 @@ def check(root):
                  "prep1/stack.sh", "prep1/observe.clj", "scale1/decision/writes.ts"):
         path = "lab/experiments/EXP-DX1/" + name
         assert inputs["runner"][path] == sha(repository / path)
+    if inputs.get("freshFirst"):
+        path = "lab/experiments/EXP-DX1/prep1/deadline-order.ts"
+        assert inputs["runner"][path] == sha(repository / path)
+        assert "lab/config/datomic/fresh-first" in inputs["stage"]
     attempt = terminal["attempt"]
     denied = events("PREP1_ROLLING_DENIED ")
     records = events("PREP1_ROLLING ")
@@ -29,10 +33,14 @@ def check(root):
         scope = json.dumps(["triplex-scope-v1", "test", "rolling", nonce, 0], separators=(",", ":"))
         db = "s2-" + base64.urlsafe_b64encode(scope.encode()).decode().rstrip("=")
         assert record["db"] == refusal["db"] == db
-        assert (record["credits"], record["head"], record["durable"], record["refused"]) == (width, 51+width, 50+width, width)
-        expected = set(f"{nonce}-{phase}-{n}" for phase, length in (("healthy", 50), ("lost", width)) for n in range(length))
+        assert record.get("freshFirst", False) == inputs.get("freshFirst", False)
+        pressure = 4 if record.get("freshFirst") else 0
+        assert (record["credits"], record["head"], record["durable"], record["refused"]) == (
+            width, 51 + width + pressure, 50 + width + pressure, width)
+        expected = set(f"{nonce}-{phase}-{n}" for phase, length in
+                       (("healthy", 50), ("pressure", pressure), ("lost", width)) for n in range(length))
         assert {r["id"] for r in record["checked"]} == expected
-        assert sorted(r["p"] for r in record["checked"]) == list(range(2, 52+width))
+        assert sorted(r["p"] for r in record["checked"]) == list(range(2, 52 + width + pressure))
         lost = record["lost"]
         original = {k: lost[k] for k in ("id", "p", "t", "clock", "replyNs")}
         assert original["id"] == f"{nonce}-lost-{width-1}" and original in record["checked"]
@@ -49,7 +57,8 @@ def check(root):
             assert receipt["clock"] > 0 and appended[receipt["t"]] <= int(receipt["replyNs"])
         assert len({r["t"] for r in record["checked"]}) == len(expected)
         output.append(dict(credits=width, durable=record["durable"], refused=width, original=lost))
-    return dict(attempt=attempt, source=inputs["head"], slot=terminal["slot"], image=terminal["image"],
+    return dict(attempt=attempt, source=inputs["head"], freshFirst=inputs.get("freshFirst", False),
+                slot=terminal["slot"], image=terminal["image"],
                 rawSha256=terminal["sha256"], cases=output)
 
 

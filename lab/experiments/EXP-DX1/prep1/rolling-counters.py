@@ -49,7 +49,7 @@ def sample_roles(roles):
 
 def run(out, containers, slot, source, attempt, sender):
     assert sys.platform == "linux" and __debug__
-    assert re.fullmatch(r"tx2-dxprep1-[a-f0-9]{8}-1-(barrier6|rolling(6|8|12|16))-s", slot)
+    assert re.fullmatch(r"tx2-dxprep1-[a-f0-9]{8}-1-(barrier6|rolling(6|8|12|16)|fresh(-zgc)?(6|12))-s", slot)
     for _ in range(20):
         if os.sched_getaffinity(sender) == {9}:
             break

@@ -61,6 +61,11 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     (config / "subject-owner").write_text(numeric_owner + "\n")
     (config / "subject-prefetch").write_text(prefetch + "\n")
     (config / "subject-ordered").write_text(ordered + "\n")
+    fresh_first = os.environ.get("DX_PREP1_TEST_FRESH_FIRST") == "1"
+    if fresh_first:
+        if mode != "rolling-recovery":
+            raise SystemExit("Fresh-first fixture requires rolling recovery")
+        (config / "fresh-first").touch()
     tail_sql = os.environ.get("DX_PREP1_TEST_TAIL_SQL") == "1"
     if tail_sql:
         if mode != "subject-recovery" or ordered != "1":
@@ -136,6 +141,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "numericOwner": numeric_owner == "1",
         "prefetch": prefetch == "1",
         "orderedIds": ordered == "1",
+        "freshFirst": fresh_first,
         "tailSql": tail_sql,
         "pgDataCopy": pgdata_copy,
         "pgDataWal": pgdata_mode == "wal",

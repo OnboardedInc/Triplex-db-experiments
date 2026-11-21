@@ -275,6 +275,7 @@ case "$PREP1_MODE" in
     done
     ;;
   rolling-recovery)
+    if [[ -f /config/fresh-first ]]; then export PREP1_FRESH_FIRST=1; fi
     # [DX-PREP1] Why: the bundle imports the SCALE1 observer helpers as a library.
     # Rejected: identifying the bundle itself as the observer's standalone IPC entry point.
     rolling_probe() { node --input-type=module -e '

@@ -1,3 +1,18 @@
+## Part 15 · fresh-first over rolling credits
+
+Rolling 6 stored all 118,200 offers at 394/s. It delivered 391.85/s in-window and still had 5.07 s second-half p99. [Busy and quiet readings](ROLLING-RESULTS.md)
+Fresh-first protects the newest eligible heads for other people and serves overdue work at least every eighth neighbour grant when both groups stay ready. It keeps the quiet reservation, same-person order and the existing 30-second expiry.
+Use the [three-arm command and forecasts](FRESH-FIRST.md) for the unchanged scheduler, fresh-first and fresh-first with Java 25 ZGC on the write gateway.
+The SQL gates reopened all 60 and 70 expected receipts at widths 6 and 16. They found the original lost receipts, no commits for either refused append window, and 108 exact immediate pinned reads.
+The fresh-first gate forced a mixed-age queue. The quiet offer went first, a fresh offer for another person overtook overdue work, and the overdue person's successor committed in order.
+At 394, the forecast for fresh-first plus writer ZGC is 393 in-window and 394/s late, with whole p99 300 ms, late p99 48 ms and 45 ms loaded quiet p99. These are predictions. No full-size fresh-first measurements are available.
+
+**North star P2.** Small durable saves and exact receipt order from the scheduled offer. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+
+**Gates.** Native replay ran under ordinary tokens, with a same-scope append failure and PostgreSQL restart after each rolling width. The transport fixture withholds the response only after the callback has received a real durable ACK. The checker binds the tested source and image, fresh slot and attempt, exact operation and native position and order, earliest ACK and every reopened receipt. All 29 scheduling, barrier, tape and seed tests and both clock-ledger tests passed. The receiver and producer checked all three synthetic arms at both depths with 1,261 receipts per arm. An initial typecheck exposed divergent generic signatures for barrier and rolling; the common credit interface passed the rerun. Bash syntax, Python compilation and the isolated writer profile check passed. Linux live runtime readback remains for the actual command.
+
+**Evidence and verdict audit.** Scheduler candidates are checked against the actual queued subject head and existing active/quarantine record before any call. They generate no receipts. Hard expiry still happens before submit. Every native verification binds the exact original and reopened bytes to the current observed attempt, image, scope, offer and native append. The server collector's new stage ledger joins each current attempt's exact tape, checked journal and native block, keeps unalignable HTTP time in its own bucket and verifies conservation after the 50 ms cut. Its new late-grant and predecessor-order checks use the monotonic clock and the original tape. The mixed-JVM verdict uses live role image IDs, collector, archive hashes and profile. The checkpoint readout verifies exact transferred content, current campaign, slot and input seal before counting offers or receipts. None of these checks issues a new durability or capacity verdict. No contract pins moved and no production engine code changed. [Evidence manifest](SHA256SUMS)
+
 ## Part 14 · rolling credit release
 
 The first server comparison is barrier 6, rolling 6 and rolling 12 on the sealed 162,456,470-fact seed. [Exact command and forecasts](ROLLING-CREDITS.md)
