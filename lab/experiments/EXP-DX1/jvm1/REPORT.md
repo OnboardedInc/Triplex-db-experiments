@@ -2,7 +2,7 @@
 At 235 saves a second, the slowest saves waited behind earlier groups of six. The loaded window followed five minutes of light traffic.
 The first half's p99 was 5.58 seconds. The second half's p99 was 46 milliseconds at essentially the same rate.
 The previous scorecard places 97% of the extra delay in that queue. It cannot tell us how much came from compiling code, cache misses, indexing or checkpoints.
-Use `5cb9d95ab214ea43d1bceae6c7094b7af296d885` for the three-arm cold-start test. Allow up to 59 minutes plus 15 seconds of shutdown grace.
+Use `c53146fbea10e0680ab7c406f04ae287eea9122f` for the three-arm cold-start test. Allow up to 59 minutes plus 15 seconds of shutdown grace.
 The test compares today's setup, startup settings, and those settings with a slower admission ramp. It counts every refused save.
 Java 25 ZGC stays on the transactor. Today's launch settings stay the default. No traffic or data reads were added to warm the system.
 The test is ready for the physical queue. The latter half of the benchmark was faster, but we still need the raw capture to say when and why it settled.
