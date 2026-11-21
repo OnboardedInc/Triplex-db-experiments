@@ -441,7 +441,23 @@ if (action === "--guest") {
         manager(["up", "--slot", readerSlot, "--exp", exp]);
       }
       bind();
-      if (scorecard && process.env.DX_V01_MAC_PUBLISH === "1") {
+      if (scorecard && process.env.DX_V01_MAC_HELD_PUBLISH === "1") {
+        // [DX-INT1] Why: run the held Publish oracle on the merged sender in the existing small reservation.
+        // Rejected: starting a second SQL stack or changing the normal scorecard fixture.
+        const slot = read(ownerFile(writerSlot)), attempt = read(cred);
+        const output = path.join(out, "held-publish");
+        fs.mkdirSync(output);
+        execFileSync(process.execPath, ["--no-warnings", "--experimental-transform-types",
+          "lab/experiments/EXP-DX1/actv-lazy/join/held-gate.ts", output], {
+          cwd: repo, stdio: "inherit", timeout: 5 * 60_000,
+          env: { ...process.env, DX_ACT1_NATIVE: "1", DATOMIC_URL: slot.endpoint,
+            DATOMIC_READ_URLS: slot.endpoint, TRIPLEX_LAB_SLOT_OWNER: ownerFile(writerSlot),
+            DX_ACT1_MANAGED_STACK: manifest,
+            TX2_WRITE_OPTIONS_ATTEMPT: attempt.writeOptionsAttempt, TRIPLEX_DATOMIC_LAYOUT: "lean",
+            TX2_SWEEP_STRICT: "1", TX2_W0_POINT_JOURNAL: "1", TX2_W0_RESTORE_INDEXED_JOURNAL: "1",
+            DX_STRICT_RECORD_CLOCKS: "1", DX_SERVER_RECORD_TIME: "1" },
+        });
+      } else if (scorecard && process.env.DX_V01_MAC_PUBLISH === "1") {
         // [DX-V01] Why: exercise the existing receipt producer on a bounded isolated toy fixture.
         // Rejected: timing a second full seed or reporting the private fixture as the held SCALE1 cut.
         const slot = read(ownerFile(writerSlot));

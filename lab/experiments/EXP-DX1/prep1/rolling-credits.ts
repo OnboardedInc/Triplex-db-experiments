@@ -15,11 +15,13 @@ export class RollingCredits {
   private readonly served: number[];
   private neighbours = 0;
 
-  constructor(
-    private readonly accountCount: number,
-    private readonly credits: number,
-    private readonly quietAccount: number,
-  ) {
+  private readonly accountCount: number;
+  private readonly credits: number;
+  private readonly quietAccount: number;
+  constructor(accountCount: number, credits: number, quietAccount: number) {
+    this.accountCount = accountCount;
+    this.credits = credits;
+    this.quietAccount = quietAccount;
     if (!rollingWidths.some((width) => width === credits) ||
         !Number.isInteger(quietAccount) || quietAccount < 0 || quietAccount >= accountCount) {
       throw new RangeError("Invalid rolling credit count or quiet account");

@@ -39,7 +39,8 @@ import { releaseDeepStart, type DeepIdentity } from "../../../bench/lib/deep-pro
 import { checkProfileFlags, launchProfile, roles as jvmRoles } from "../jvm1/launch.mjs";
 import { datomicRuntime } from "../../../config/datomic/runtime.mjs";
 
-type ServerLaunch = { policy: ReturnType<typeof launchProfile>; walDirectory?: string };
+type ServerLaunch = { policy: ReturnType<typeof launchProfile>; walDirectory?: string;
+  prepared?: { data: string; wal: string } };
 
 const GiB = 1024 ** 3,
   script = fileURLToPath(import.meta.url),
@@ -420,8 +421,10 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
   options: NodeJS.ProcessEnv = {}, launch?: ServerLaunch) {
   const policy = launch?.policy;
   assert(!policy || (policy.profile === "server" && !policy.reduced));
-  const walPath = launch?.walDirectory ? path.join(fs.realpathSync(launch.walDirectory), prefix) : undefined;
-  if (walPath) {
+  assert(!launch?.prepared || !launch.walDirectory);
+  const walPath = launch?.prepared?.wal ??
+    (launch?.walDirectory ? path.join(fs.realpathSync(launch.walDirectory), prefix) : undefined);
+  if (walPath && !launch?.prepared) {
     assert(/^tx2-dxscale1-[a-z0-9-]+$/.test(prefix) && !/[,"\r\n]/.test(walPath));
     assert(Object.values(childrenInventory(prefix)).every((xs) => !xs.length));
     fs.mkdirSync(walPath, { mode: 0o700 });
@@ -499,6 +502,7 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
       policy ? policy.tx.cacheMiB + "m" : "2560m",
       ...(policy ? ["--memory-index-threshold", policy.index.threshold, "--memory-index-max", policy.index.max] : []),
       ...(walPath ? ["--wal-directory", walPath] : []),
+      ...(launch?.prepared ? ["--prepared-pgdata", launch.prepared.data] : []),
       "--pg-settings",
       policy ? Object.entries(policy.pg.settings).map(([key, value]) => "-c " + key + "=" + value).join(" ")
         : "-c shared_buffers=1GB -c max_wal_size=8GB -c synchronous_commit=on -c fsync=on -c full_page_writes=on -c track_io_timing=on -c track_wal_io_timing=on",

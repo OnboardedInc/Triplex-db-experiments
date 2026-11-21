@@ -8,7 +8,7 @@ import { defaultWriter } from "./profile.ts";
 
 const [action, commit, argument] = process.argv.slice(2);
 assert(process.platform === "darwin" && commit && argument && path.isAbsolute(argument));
-assert(["--packages", "--image", "--fixture", "--publish-fixture"].includes(action ?? ""));
+assert(["--packages", "--image", "--fixture", "--publish-fixture", "--held-publish-fixture"].includes(action ?? ""));
 const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 cleanSource(head);
 assert.match(commit, /^[a-f0-9]{40}$/);
@@ -36,6 +36,7 @@ const env = {
   DX_V01_CREDIT_MODE: policy.creditMode,
   TURBO_TELEMETRY_DISABLED: "1",
   ...(action === "--publish-fixture" ? { DX_V01_MAC_PUBLISH: "1" } : {}),
+  ...(action === "--held-publish-fixture" ? { DX_V01_MAC_HELD_PUBLISH: "1" } : {}),
   DX_V01_LAB_RUNTIME: runtime,
   DX_INT1_GATEWAYS: "demand",
   DX_TOUCHED_READ_MODE: "following",

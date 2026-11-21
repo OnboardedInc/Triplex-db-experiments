@@ -165,6 +165,14 @@ function bind(o: Save, a: Ack, candidate: ReturnType<typeof expectedSave>) {
   o.stage = stage;
 }
 
+export type PublishInterleave = {
+  paused: boolean;
+  drain?: () => Promise<void>;
+  resume?: () => void;
+  waiting?: () => number[];
+  committed: (row: Save) => void;
+};
+
 // [DX-SCALE1] Why: all tapes are open-loop, and a start deadline is evaluated before allocating the gateway request. Rejected: a single closed promise chain or counting an upstream expiration as a native commit limit.
 export async function play(
   scopes: Sender[],
@@ -174,7 +182,9 @@ export async function play(
   capture = false,
   orderedIds = false,
   selection?: Admission,
+  interleave?: PublishInterleave,
 ) {
+  assert(!interleave || selection);
   const fair = selection && admission(scopes.length, selection);
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
     active = scopes.map(() => 0),
@@ -273,6 +283,7 @@ export async function play(
           };
         }
         row.status = "acked";
+        interleave?.committed(row);
       })
       .catch((error) => {
         row.end = now();
@@ -302,6 +313,9 @@ export async function play(
   function pump(account: number) {
     if (fair) {
       for (const a of scopes.keys()) expireQueue(a);
+      // [DX-ACT1] Why: allow the receipt to take the next turn with one exact shared source cut.
+      // Rejected: stopping the independent arrival clock or granting further credits during the handoff.
+      if (interleave?.paused) return;
       fair.dispatch(
         () => scopes.flatMap((_, a) => {
           if (active[a]! >= maxInflight) return [];
@@ -318,6 +332,16 @@ export async function play(
       if (index < 0) return;
       dispatch(account, index);
     }
+  }
+
+  if (interleave) {
+    interleave.drain = async () => {
+      assert(interleave.paused);
+      await Promise.all([...pending]);
+      assert.equal(pending.size, 0);
+    };
+    interleave.resume = () => pump(0);
+    interleave.waiting = () => queues.map((q) => q.length);
   }
 
   // [DX-SCALE1] Why: record the actual socket flush for successful requests, with a bounded map of active operations. Rejected: using the publication callback's error and finally notifications as packet timestamps.
