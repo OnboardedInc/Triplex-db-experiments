@@ -38,3 +38,4 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 - `part3/preview-a/SCORECARD-v0.1.md` contains the 14-row Mac card. The campaign archive contains both configurations, the reference import, both retired-ID probes and the grouped history witness.
 - `part3/preview-a/campaign/PREP1-MIXED-TEST.log` contains the exact published native test. The two PREP1 unit logs capture 6 and 11 focused tests.
 - `part3/fixture-preview-a-1.log` records both admissions and volume removals. The package and image receipts bind source and build bytes.
+- `part3/preview-card-checks.log` contains the four formatter tests, both command forecasts and failed replays of a stale witness and a changed historical value.
