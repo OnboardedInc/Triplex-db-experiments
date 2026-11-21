@@ -3955,3 +3955,35 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   tools. About 1.3 server hours went to the two failed attempts.
 - **Server 1:** two of the four append-tail arms are measured; the driver is finishing the other two after a
   role-specific Java check.
+
+## 2026-11-21 04:48 UTC (23:48 local, 2026-11-20): RESULTS: the ordered writer at full size stops near 278 per second; a separate log drive fixes the solo tail
+
+- **Full size, server 2 (`origin/exp/DX-SCALE1-deep-accounts` at `522633169`, `scale1/PREP1-CEILING.md`; source
+  `1dd5952cb`; ten accounts of 100,000 people, 162,456,470 facts, one database; neighbours spread over 1,900
+  people each; one write gateway; transactor/writer/reader on 1/4/1 cores; G1; 90 second cells; 18 min 53 s and
+  $0.34 from build to cleanup):**
+
+  | Offered per s | Fair turns | Forecast | Delivered per s | Expired | Quiet solo to loaded p99 (ms), ratio | Saves per append | Reads per save, seed / ordered predecessor |
+  | ---: | --- | ---: | ---: | ---: | --- | ---: | --- |
+  | 620 | off | 450 | 278.08 | 30,512 of 55,800 | 131.89 to 1,861.21, 14.11 | 1.126 | 1.839 / 0.621 |
+  | 620 | on | 350 | 274.28 | 30,930 | 167.18 to 224.61, 1.34 | 1.059 | 1.895 / 0.582 |
+  | 900 | on | 380 | 238.10 | 59,259 of 81,000 | 206.70 to 199.28, 0.96 | 1.009 | 2.094 / 1.693 |
+  | 900 | off | 520 | 240.71 | 58,850 | 115.98 to 1,150.09, 9.92 | 1.031 | 1.970 / 1.863 |
+
+  Reading: at full size with people spread out the ceiling is about 240 to 280 saves per second with this
+  configuration, above the busy-minute 235 and below the 394 peak; all four forecasts were too high; fair turns
+  bring the quiet ratio from 14.11 to 1.34 at 620 offered (bar 1.25) while absolute quiet p99 stays 199 to 225 ms
+  (bar 50); storage reads per save are back to about 2 where a save's predecessor is a seed row. 394 offered at
+  full size was not in the schedule.
+- **Append tail, server 1, first two arms (`bm1/APPEND-TAIL-READING.md`; ten accounts of 10,000 people; ordered
+  writer; synchronous commit witnessed before each arm):** with the write-ahead log on its own NVMe, quiet solo p99
+  71.58 to 28.06 ms at 235 offered and 82.76 to 6.99 ms at 394; loaded p99 518.69 to 54.96 ms (ratio 7.25 to 1.96)
+  and 338.13 to 103.99 ms (ratio 4.09 to 14.88, because the solo figure fell further); delivered 234.99 and 393.97
+  in both arms with every offer stored. Appends over 20 ms at 394 loaded: 57 to 17; of the 17, 16 overlapped a
+  transactor safepoint and none was assigned to WAL sync. The Java 25 ZGC transactor arm was refused by a startup
+  check and is being rerun with the fair-turn arm.
+- **DX-PREP1 part 13 assigned (three agents running: DX-BM1, DX-SCALE1, DX-PREP1):** a combined arm for server 1
+  (separate log drive, ZGC transactor, fair turns); the cause of the full-size ceiling from the bundle; a 45
+  minute full-size command at 394 and 620 offered with a 16 GiB transactor cache and three cores, then with the
+  separate log drive and ZGC.
+- Server 2 is preparing the three copies for the fresh scorecard with the ordered writer.
