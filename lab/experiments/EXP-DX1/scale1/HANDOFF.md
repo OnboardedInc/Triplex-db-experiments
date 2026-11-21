@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 38.53 through 2026-11-21 05:51 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 38.71 through 2026-11-21 06:01 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-AGE1 is running first from a private checksum-bound copy of the stopped fresh template. The default scorecard retry was canceled before it claimed a copy or produced cells. The completed first zero-reader arm is archived. Free space before AGE1 was 375.74 GB on root and 703.31 GB on the secondary drive. We retained the template and one untouched scorecard copy and released three disposable copies to meet the 579.57 GB secondary reservation. AGE1 uses a 9.9-hour native ceiling and the repaired same-byte vendor executables. Wait for the tuned scorecard pin. Run aged before fresh if the 1B seal exists.
+AGE1 is running first from a private checksum-bound copy of the stopped fresh template. The default scorecard retry was canceled before it claimed a copy or produced cells. The completed first zero-reader arm is archived. Free space before AGE1 was 375.74 GB on root and 703.31 GB on the secondary drive. We retained the template and one untouched scorecard copy and released three disposable copies to meet the 579.57 GB secondary reservation. The executable-mode repair reached a running transactor. The first Datomic peer received a stale discovery endpoint, so no calibration segment ran. Recovery reopens the same private working volume only after proving the failed discovery and absence of load, then verifies a fresh peer at the exact source cut. The native cap remains 9.9 hours. Wait for the tuned scorecard pin. Run aged before fresh if the 1B seal exists.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.

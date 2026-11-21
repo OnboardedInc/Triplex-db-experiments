@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync, spawn, type ChildProcess } from "node:child_process";
+import { execFileSync, spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
@@ -64,6 +64,7 @@ async function main(
   copyMount: string,
   exportCheckout: string,
   stoppedSeed?: string,
+  resumeDiscovery = false,
 ) {
   assert(process.platform === "linux" && process.getuid?.() === 0);
   assert.equal(process.env.DOCKER_HOST, dockerEndpoint);
@@ -73,7 +74,7 @@ async function main(
   const pgName = prefix + "-pg",
     copyName = prefix + "-copy";
   const netName = prefix + "-net",
-    sourceVolume = prefix + "-data";
+    sourceVolume = resumeDiscovery ? "scale1-age-v01-1b-c-data" : prefix + "-data";
   const loopback = Object.values(os.networkInterfaces())
     .flat()
     .find((a) => a?.internal && a.family === "IPv4")?.address;
@@ -104,7 +105,10 @@ async function main(
       .split("\n")
       .some((v) => [pgName, copyName].includes(v)),
   );
-  assert(!docker("volume", "ls", "--format", "{{.Name}}").split("\n").includes(sourceVolume));
+  assert.equal(
+    docker("volume", "ls", "--format", "{{.Name}}").split("\n").includes(sourceVolume),
+    resumeDiscovery,
+  );
   assert(!docker("network", "ls", "--format", "{{.Name}}").split("\n").includes(netName));
   assert(
     fs.existsSync(path.join(jdk, "java")) && fs.existsSync(path.join(jdk, "jcmd")),
@@ -145,13 +149,47 @@ async function main(
     assert.deepEqual(await stoppedInventory(stoppedSeed), manifest.inventory);
     held = { data: stoppedSeed, sealSha: await fileHash(sealPath), inventory: manifest.inventory };
   }
+  if (resumeDiscovery) {
+    assert(held && path.basename(out) === "age-v01-1b-d");
+    const prior = path.join(bench, "age-v01-1b-c");
+    const restored = read(path.join(prior, "restore.json"));
+    const exited = read(path.join(prior, "exit.json"));
+    const cleaned = read(path.join(prior, "cleanup.json"));
+    assert.deepEqual(
+      [
+        restored.source,
+        restored.imageSha,
+        restored.transferSha,
+        restored.cut,
+        restored.postgresTemplate,
+      ],
+      [ageSource, imageSha, transferSha, 87002, held.sealSha],
+    );
+    assert(exited.result !== 0 && exited.nonce === restored.nonce && exited.at >= restored.at);
+    assert(
+      cleaned.nonce === restored.nonce &&
+        cleaned.at >= exited.at &&
+        cleaned.retained.includes(sourceVolume),
+    );
+    assert.deepEqual(cleaned.containers, []);
+    const directory = path.join(prior, "rung/1000000000");
+    const attempts = fs.readdirSync(directory).filter((x) => /^[a-f0-9-]{36}$/.test(x));
+    assert.equal(attempts.length, 1);
+    const original = path.join(directory, attempts[0]!);
+    assert(!fs.existsSync(path.join(original, "rung.log")));
+    assert.match(
+      fs.readFileSync(path.join(original, "adopt.log"), "utf8"),
+      /UnknownHostException: .*seed-tx/,
+    );
+    assert.equal(docker("ps", "-aq", "--filter", "volume=" + sourceVolume), "");
+  }
   const copyReal = fs.realpathSync(copyMount);
   const sameFilesystem = fs.statSync(copyReal).dev === fs.statSync(bench).dev;
   assert(Number.isSafeInteger(original.disk.after) && original.disk.after > 0);
   // [DX-SCALE1] Why: always leave room for backup and verification, plus a SQL dump on the legacy path.
   // Rejected: reserving the optional dump for a card that adopts stopped physical data.
   const grownSql = original.disk.after + (targetRecords - baselineRecords) * bytesPerAddedRecord;
-  const liveReservation = grownSql + 24 * GiB;
+  const liveReservation = grownSql + 24 * GiB - (resumeDiscovery ? original.disk.after : 0);
   const copyReservation = copyHeadroomBytes + (held ? 1 : 2) * grownSql + 24 * GiB;
   const liveFree = free(bench),
     copyFree = free(copyReal);
@@ -203,6 +241,7 @@ async function main(
     invocationStarted,
     exporter,
     ...(held ? { postgresTemplate: held.sealSha } : {}),
+    ...(resumeDiscovery ? { resumedPrivateVolume: sourceVolume } : {}),
   };
   write(path.join(out, "identity.json"), manifest);
   const status = (stage: string) =>
@@ -223,9 +262,9 @@ async function main(
   try {
     docker("network", "create", netName);
     network = true;
-    docker("volume", "create", sourceVolume);
+    if (!resumeDiscovery) docker("volume", "create", sourceVolume);
     const restoreStarted = Date.now();
-    if (held) {
+    if (held && !resumeDiscovery) {
       status("copying the verified stopped SCALE1 template");
       const point = docker("volume", "inspect", "--format", "{{.Mountpoint}}", sourceVolume);
       assert(point.endsWith("/volumes/" + sourceVolume + "/_data"));
@@ -360,6 +399,8 @@ async function main(
     const jdbc = (addr: string, db: string) => "jdbc:postgresql://" + addr + ":5432/" + db;
     const sqlJdbc = jdbc(address(pgName), primaryDb),
       copyJdbc = jdbc(address(copyName), copyDb);
+    const uri = (d: string) =>
+      "datomic:sql://{db}?" + d + "?user=" + role + "&password=" + password;
     assert.equal(
       sql(
         pgName,
@@ -425,6 +466,63 @@ async function main(
       );
       await sleep(1000);
     }
+    // [DX-SCALE1] Why: SQL restores can retain the old peer discovery endpoint until the new transactor registers.
+    // Rejected: mapping the stale hostname or counting an unverified TCP listener as an adopted database.
+    status("verifying restored scope discovery before starting the aging clock");
+    const scope = seed.scopes[0]!;
+    const challenge = randomBytes(12).toString("hex");
+    const proof = challenge + ":" + scope.seedCut;
+    const cp = [
+      jar,
+      path.join(vendorHome, "lib/*"),
+      path.join(vendorHome, "resources"),
+      path.join(ageCheckout, "packages/datomic/gateway/src"),
+    ].join(":");
+    const check = `(require '[datomic.api :as d] '[triplex.gateway.main :as gw] '[triplex.gateway.storage :as store])
+      (let [name (System/getenv "DX_SCOPE") c (gw/connection (gw/db-uri name)) db @(d/sync c)
+            head (store/head-position db)]
+        (when-not (= head ${scope.seedCut}) (throw (ex-info "Unexpected discovery cut" {:head head})))
+        (println (str (System/getenv "DX_CHALLENGE") ":" head)))
+      (shutdown-agents) (System/exit 0)`;
+    const until = Date.now() + 120000;
+    let established = false;
+    do {
+      assert(tx.exitCode === null);
+      const fresh = spawnSync(
+        path.join(jdk, "java"),
+        ["-Xms128m", "-Xmx1g", "-cp", cp, "clojure.main", "-e", check],
+        {
+          timeout: 15000,
+          encoding: "utf8",
+          env: {
+            ...process.env,
+            DATOMIC_URI_TEMPLATE: uri(sqlJdbc),
+            DX_SCOPE: scope.db,
+            DX_CHALLENGE: challenge,
+          },
+        },
+      );
+      fs.appendFileSync(
+        path.join(out, "discovery.log"),
+        JSON.stringify({
+          at: Date.now(),
+          status: fresh.status,
+          matchedCut: fresh.stdout?.split(/\r?\n/).includes(proof) === true,
+        }) + "\n",
+        { mode: 0o600 },
+      );
+      established = fresh.status === 0 && fresh.stdout.split(/\r?\n/).includes(proof);
+      assert(!fresh.stderr?.includes("Unexpected discovery cut"));
+      if (!established) await sleep(4000);
+    } while (!established && Date.now() < until);
+    assert(established, "No fresh native peer rediscovered the exact restored cut");
+    write(path.join(out, "discovery.json"), {
+      ...manifest,
+      at: Date.now(),
+      challenge,
+      database: scope.db,
+      cut: scope.seedCut,
+    });
     const javaPids = call("ps", ["-eo", "pid=,comm="])
       .split("\n")
       .map((l) => /^\s*(\d+)\s+java$/.exec(l)?.[1])
@@ -472,8 +570,6 @@ async function main(
       peerCache: "768m",
       copyHeap: "2g",
     };
-    const uri = (d: string) =>
-      "datomic:sql://{db}?" + d + "?user=" + role + "&password=" + password;
     const configFile = path.join(out, "config.json");
     write(configFile, config);
     const staged = Date.now();
@@ -725,4 +821,5 @@ await main(
   process.argv[5]!,
   process.argv[6]!,
   process.argv[7],
+  process.argv[8] === "resume-discovery",
 );
