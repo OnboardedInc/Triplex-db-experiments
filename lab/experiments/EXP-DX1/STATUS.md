@@ -4060,7 +4060,7 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Server 2**: aging setup commits (`b197dbd7a`, `6f366b608`, `54913ad32`); no aging rate yet.
 - Agents running: DX-BM1, DX-SCALE1, DX-V01.
 
-### 2026-11-21 01:32 local: the 1 billion aging run measured 5,284 records per second (forecast 24,000) and stopped on its guard; aging builder resumed (4 agents running)
+### 2026-11-21 01:32 local: the 1 billion aging run measured 5,284 records per second (forecast 24,000) and stopped on its guard; aging builder resumed (3 agents running)
 
 - **Server 2, AGE1 calibration** (`origin/exp/DX-SCALE1-deep-accounts` `58e4b1ca3`): from 429,778,659 records, 100,000 saves and 2,000,000 records committed and verified in 378.514 s = **5,283.82 records/s**. Forecast was 24,000; the fallback band was 8,000 to 16,000. At that rate 1 billion needs about 30 more hours (about USD 33). The run's own time guard stopped it. Cost of the attempt: 9 min 40 s, USD 0.18. The working volume is held with its verified prefix (431,778,659 records). No 1B seal exists.
 - **My reading of the evidence archive** (copied to the private evidence folder, sha256 `504214da…d04b17`): the loader's stage clock shows 347.5 of 378.5 seconds (92%) waiting for the transactor to take the next save. The transactor ran with a 5 GiB heap, 32 MiB memory-index threshold, 512 MiB maximum, 512 MiB object cache and index parallelism 1. One save of 20 records per transaction gives 264 transactions per second, in line with tonight's full-size writer ceilings (202 to 362 saves per second). Forecast miss: the 24,000 figure did not come from a full-size measurement.
@@ -4078,3 +4078,16 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Its first step checks the live launch** (distinct NVMe devices, PostgreSQL mount and durability readback, Java versions and flags, cores and memory, transactor cache) before any offers.
 - **Server 2:** four fresh copies ready at 01:43 (17 min 25 s, USD 0.32); idle from about 01:40 waiting for this commit; driver still running.
 - Agents running: DX-BM1, DX-SCALE1, DX-AGE1.
+
+### 2026-11-21 01:57 local: faster aging load published; server 2 runs its ladder first, then the fresh scorecard (3 agents running)
+
+- **DX-AGE1 part 4 finished** in 22 minutes (exit 0). Commit `acd350e92` on `origin/exp/DX-AGE1-aged-database` (head `ad7e3faf2`), `age1/BULK-LOAD.md`.
+  - Attribution from the archive: 264 saves/s at 20 records each; 92% of the segment inside `transact-async` submission; transactor safepoints at most about 9% of elapsed time; loader safepoints 1.51 s. The archive cannot separate transaction apply, durable SQL writes and index back-pressure; the ladder records them on one clock.
+  - Forecast miss: the 24,000 figure extrapolated a small, contended Mac high point of 20,100 upward by 19% and needed 1,200 solo saves/s at 430 million records; the server delivered 264.
+  - Ladder on the held volume, same bulk transactor settings for all arms (24 GiB heap, three processors, object cache 16g, memory-index threshold 128m, maximum 2g, index parallelism 2, write concurrency 4), about 14 minutes of writing per arm, an arm counts only with two automatic index jobs inside its window.
+  - **Predictions before the run:** solo 7,000 to 9,500 records/s; 8 saves per transaction 11,000 to 19,000; 24 saves per transaction 16,000 to 28,000.
+  - What several saves per transaction changes in the aged database: logical cuts, receipts, feed pages, ordered identities and journal bytes per save are kept; one physical transaction covers up to 8 or 24 saves, so physical transaction count, raw log shape, ref and key mix and leaf packing differ from one save per transaction. The seal records which regions were loaded which way. The scorecard's aged input keeps its form.
+  - The full load refuses a sustained rate under 9,900 records/s or a forecast over 16 loading hours (USD 17.44).
+- **Server 2 order** (driver stopped and resumed at 01:58 with the new item; nothing was running a measurement): ladder (at most 60 minutes) -> fresh scorecard `3a71c1767` -> full 1 billion load only if an arm qualified -> aged scorecard.
+- **Disk at 1 billion:** the scorecard needs four copies at once, three on one device; at about 290 GB each that does not fit on the 879 GB and 890 GB devices. **DX-V01 part 7 resumed** to let the arms run one at a time from a copy made just before each arm.
+- Agents running: DX-BM1, DX-SCALE1, DX-V01.
