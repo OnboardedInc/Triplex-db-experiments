@@ -37,6 +37,7 @@ const env = {
   )),
   DX_V01_MAC_FIXTURE: "1",
   DX_V01_MAC_HOLDER: holder,
+  ...(process.env.DX_THIN1_CROSSCHECK === "1" ? { DX_THIN1_CROSSCHECK: "1" } : {}),
   ...(action === "--read-study-fixture" ? { DX_V01_MAC_READ_STUDY: "1" } : {}),
   TURBO_TELEMETRY_DISABLED: "1",
   ...(action === "--publish-fixture" ? { DX_V01_MAC_PUBLISH: "1" } : {}),

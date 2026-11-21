@@ -231,6 +231,7 @@ function setup(compact: boolean) {
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
   write(cred, {
     nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, scorecardWriter, scorecardCreditMode, scorecardComparison, realisticScorecard,
+    crossCheck: !!writeOptionsAttempt && process.env.DX_THIN1_CROSSCHECK === "1",
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
     memoryPoints, nativePools,
     readerPages: process.env.DX_INT1_READER_PAGES === "1",
@@ -307,6 +308,7 @@ function bind() {
       scorecardCreditMode: attempt.scorecardCreditMode,
       scorecardComparison: attempt.scorecardComparison,
       realisticScorecard: attempt.realisticScorecard,
+      crossCheck: attempt.crossCheck === true,
       compact: !!attempt.compact,
       census: attempt.census, cohort: attempt.cohort,
       gwPolicy: attempt.gwPolicy, readMode: attempt.readMode,
@@ -455,6 +457,12 @@ if (action === "--guest") {
       creditMode: parseCredits(stack.managed.scorecardCreditMode),
       realisticToySlot: stack.managed.realisticScorecard ? stack.containers[0].name : undefined }, stack.managed.scorecardWriter,
       stack.managed.scorecardComparison, readStudy);
+    if (stack.managed.crossCheck) {
+      // [DX-THIN1] Why: replay every toy database from position zero against the captured receipts before release.
+      // Rejected: checking after the slot is released, when the stack and its databases are gone.
+      const { crossCheck } = await import("../int1/card-crosscheck.ts");
+      await crossCheck(out, stack.writeUrl, stack.readUrl);
+    }
   } else if (mode === "int1-campaign-proof") {
     assert(Number(rung) === 40);
     process.chdir(repo);
