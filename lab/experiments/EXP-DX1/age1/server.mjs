@@ -123,11 +123,16 @@ function admit(config, configFile, mode) {
     assert(liveArgs.includes("-Xmx24g") || liveArgs.includes("-Xmx24576m"), "Bulk heap differs");
     assert(liveArgs.includes("-XX:ActiveProcessorCount=" + physicalCores), "Bulk transactor processor setting differs");
     const cpus = /^Cpus_allowed_list:\s*([\d,-]+)$/m.exec(fs.readFileSync("/proc/" + config.transactorPid + "/status", "utf8"))?.[1];
-    const cores = cpus?.split(",").reduce((n, span) => {
+    const cpuIds = cpus?.split(",").flatMap((span) => {
       const [first, last = first] = span.split("-").map(Number);
-      return n + last - first + 1;
-    }, 0);
-    assert.equal(cores, physicalCores, "Transactor CPU placement differs");
+      return Array.from({ length: last - first + 1 }, (_, i) => first + i);
+    }) ?? [];
+    assert.equal(cpuIds.length, physicalCores, "Transactor CPU placement differs");
+    if (mode === "load") {
+      const physical = new Set(cpuIds.map((cpu) => ["physical_package_id", "core_id"]
+        .map((name) => fs.readFileSync("/sys/devices/system/cpu/cpu" + cpu + "/topology/" + name, "utf8").trim()).join(":")));
+      assert.equal(physical.size, physicalCores, "Use six physical cores instead of sharing SMT siblings");
+    }
     const sqlUrl = /^\s*sql-url\s*=\s*(\S+)\s*$/m.exec(liveProperties.toString("utf8"))?.[1];
     assert(sqlUrl === env.AGE_SQL_JDBC, "Bulk transactor SQL target differs");
     const heapMiB = Number(config.peerHeap.slice(0, -1)) * (config.peerHeap.endsWith("g") ? 1024 : 1);
@@ -156,6 +161,8 @@ function admit(config, configFile, mode) {
     assert.equal(fs.statSync(config.dataMount).dev, fs.statSync(config.pgData).dev);
     assert.notEqual(fs.statSync(config.scorecardMount).dev, fs.statSync(config.dataMount).dev);
     assert(path.isAbsolute(config.ladderEvidence ?? ""));
+    assert.notEqual(fs.realpathSync(config.ladderEvidence), fs.realpathSync(path.dirname(config.output)),
+      "Stage the mutable checkpoint beside a new output, outside the archived evidence");
   }
   assert.deepEqual(running, allowJava, "Dedicated server Java process inventory differs");
   const machine = fs.readFileSync("/etc/machine-id", "utf8");
@@ -241,8 +248,9 @@ async function run(configFile, config, mode) {
       [binding.machineHash, binding.db, binding.imageSha], "Recovered ladder belongs to a different held database");
     const original = path.join(rung, "bulk-calibration-original.json");
     const corrected = path.join(rung, "bulk-calibration-corrected.json");
-    if (!fs.existsSync(original)) write(original, read(path.join(config.ladderEvidence, "rung/1000000000/bulk-calibration.json")));
-    assert.deepEqual(read(original), read(path.join(config.ladderEvidence, "rung/1000000000/bulk-calibration.json")));
+    if (!fs.existsSync(original)) fs.copyFileSync(path.join(config.ladderEvidence, "rung/1000000000/bulk-calibration.json"),
+      original, fs.constants.COPYFILE_EXCL);
+    assert.equal(fileSha(original), calibration.certificateSha);
     if (!fs.existsSync(corrected)) write(corrected, calibration);
     assert.deepEqual(read(corrected), calibration);
   }
@@ -391,6 +399,7 @@ async function run(configFile, config, mode) {
     if (calibration) {
       assert.equal(sha(inspected.nativeId), calibration.best.identitySha, "Live SQL catalog identity differs from the ladder");
       assert(inspected.t >= calibration.t && inspected.records >= calibration.records);
+      sameStorage(config.pgData, inspected.sqlDataDirectory, config.postgresPid);
       const sourceBytes = directory();
       assert(space(config.dataMount) > config.directoryLimitBytes - sourceBytes + directoryMargin,
         "Source NVMe lacks the approved directory growth plus reserve");
@@ -491,6 +500,13 @@ async function run(configFile, config, mode) {
       assert.deepEqual([loaded.source, loaded.machineHash, loaded.db, loaded.imageSha],
         [binding.source, binding.machineHash, binding.db, binding.imageSha]);
       for (const { file, sum } of loaded.artifacts) assert.equal(fileSha(path.join(rung, file)), sum);
+      if (loaded.cyclesSha) {
+        const cyclesFile = path.join(rung, "load-cycles.json");
+        assert.equal(fileSha(cyclesFile), loaded.cyclesSha);
+        const last = read(cyclesFile).at(-1);
+        assert.deepEqual([last.t, last.records], [loaded.phase.t, loaded.phase.indexedRecords]);
+        assert.equal(loaded.pgdataBytes < 450e9, true, "The loaded census exceeds the approved maximum footprint");
+      }
       assert(loaded.phase.bulkLoaded && loaded.phase.indexedRecords >= config.target && inspected.records >= config.target);
       const hereTx = binding.java.find((p) => p.pid === binding.options.txPid);
       assert.notDeepEqual([loaded.transactor.pid, loaded.transactor.startTicks], [hereTx.pid, hereTx.startTicks],

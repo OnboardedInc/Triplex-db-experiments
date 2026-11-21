@@ -35,3 +35,5 @@ The final fixture at acd350e92 matched 12 solo prefix, 88 grouped, and 12 solo t
 - Continuation admission checks recovered source and physical catalog against the live held cut and original ledger SHA. Each cycle binds the settings, indexed count, native cut, its fresh operator result and PostgreSQL relation counters. Raw data files and both copy mounts receive separate free-space checks. The prior seal still requires native backup and restore readback.
 
 [Updated loader and placement](CONTINUATION.md). [Evidence archives](EVIDENCE-ARCHIVES.sha256).
+
+The archived replay recovered 59, 44 and 30 qualifying index jobs. The first Mac collection check found zero persisted garbage marks. With more real replacement jobs, the next run collected 5,172 segments and PostgreSQL counted 5,173 deleted rows plus 25,034 TOAST rows. Plain vacuum kept the file size and cleared the dead-row estimate. A fresh verifier read the same cut (native t 4784) and 59,842 records, with the current, pinned, receipt and feed checks passing. Both runs released their slots, four containers and one volume each. Five JavaScript checks passed.

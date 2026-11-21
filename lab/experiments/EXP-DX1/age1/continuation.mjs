@@ -104,14 +104,18 @@ export async function continueLoad({
     assert(!forecastSlope(cycles, config.target, config.directoryLimitBytes - 8 * GiB).over,
       "Last maintained disk projection exceeds the approved ceiling");
     const remainingSeconds = Math.max(0, config.target - Math.max(already, inspected.records)) / prior;
+    const totalLoadingHours = (Date.now() - origin.started + calibration.chargedMs + remainingSeconds * 1000) / 3_600_000;
     console.log(JSON.stringify({ event: "bulk-continuation-forecast", records: Math.max(already, inspected.records),
-      rate: prior, seconds: remainingSeconds, totalLoadingHours:
-        (Date.now() - origin.started + calibration.chargedMs + remainingSeconds * 1000) / 3_600_000 }));
+      rate: prior, seconds: remainingSeconds, totalLoadingHours, totalLoadingUsd: totalLoadingHours * 1.09 }));
     assert(Date.now() + (remainingSeconds + 180) * 1000 < until(), "Rate cannot reach 1B in the loading budget");
     const wallStart = Date.now();
     const tag = "load-" + i;
+    const headroom = config.directoryLimitBytes - directory();
+    const epochMinutes = i === 1 ? 20 : headroom < 20e9 ? 5 : headroom < 40e9 ? 10 : 30;
+    // [DX-AGE1] Why: leave enough time for collection before the last tens of GB of free space disappear.
+    // Rejected: waiting for the physical ceiling to interrupt a full half-hour write window.
     const { phase, metrics, averageCores } = await bulkPhase(tag, continuationArm,
-      Math.min(until(), wallStart + (i === 1 ? 20 : 30) * minute), deadline, config.target);
+      Math.min(until(), wallStart + epochMinutes * minute), deadline, config.target);
     const maint = await checkpoint(tag + "-maintenance", phase.t, phase.indexedRecords, collect);
     const finishedAt = Date.now();
     const creditedSeconds = (finishedAt - (i === 1 ? origin.started : cycles.at(-1).finishedAt)) / 1000;

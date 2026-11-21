@@ -13,7 +13,7 @@ export const archived = {
   archiveSha: "15566860bfc6f748edade2041b254a1f2d8fd79562613e1a638ba4504704bac1",
   certificateSha: "a65a27d21b0ce86869b3f5319b61bacb985885337e9974e44e8e86472570c5ea",
   custodySha: "942160e6128547eb4da7638f28779f6f331209e52ae9fcdae42c08cd383e562e",
-  records: 477456017, t: 36749137, chargedMs: 2687000,
+  records: 477456017, t: 36749137, head: 2170108, chargedMs: 2687000,
 };
 export const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const shaFile = (f) => sha(fs.readFileSync(f));
@@ -30,10 +30,22 @@ export async function recoverLadder(dir) {
   const original = json(cert);
   const custody = json(custodyFile);
   assert.equal(custody.ended - custody.started, archived.chargedMs);
+  assert.deepEqual([custody.source, custody.exit], [archived.source, 1]);
+  const exitFile = path.join(dir, "exit.json");
+  assert.equal(shaFile(exitFile), custody.files["exit.json"].sha256);
+  const exit = json(exitFile);
+  assert.deepEqual([exit.source, exit.result], [archived.source, 1]);
+  assert.equal(exit.cut + original.arms.at(-1).phase.to, archived.head);
   assert.equal(custody.files[rungPath + "bulk-calibration.json"].sha256, archived.certificateSha);
   assert.deepEqual([original.source, original.lastT, original.lastRecords, original.best],
     [archived.source, archived.t, archived.records, undefined]);
   assert(uuid.test(original.attempt));
+  const dbKey = sha(original.db);
+  for (const file of [rungPath + "held-prefix.json", "age1-" + dbKey + ".edn", "age1-" + dbKey + ".edn.population.edn"]) {
+    const observed = shaFile(path.join(dir, file));
+    assert.equal(observed, custody.files[file].sha256);
+    if (file.endsWith(dbKey + ".edn")) assert.equal(observed, original.checkpointSha);
+  }
   const attempt = path.join(rung, original.attempt);
   for (const { file, sum } of original.artifacts) {
     assert.equal(path.join(original.attempt, path.basename(file)), file);
@@ -79,6 +91,7 @@ export async function recoverLadder(dir) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const recovered = await recoverLadder(process.argv[2]);
-  console.log(JSON.stringify({ source: recovered.source, t: recovered.t, records: recovered.records,
+  console.log(JSON.stringify(process.argv.includes("--full") ? recovered : { source: recovered.source, t: recovered.t,
+    head: recovered.head, records: recovered.records, checkpointSha: recovered.checkpointSha,
     arms: recovered.arms.map(({ size, indexJobs, rates }) => ({ size, jobs: indexJobs.length, rates })) }));
 }

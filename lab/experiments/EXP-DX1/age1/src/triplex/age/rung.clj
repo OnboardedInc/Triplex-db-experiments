@@ -311,7 +311,9 @@
     (gate/equal! (get-in pop [:seal :scope]) (gateway/stored-scope view) "Seed scope differs")
     (native/check! (<= (:observed state) head (or (:pending-end state) (get-in state [:bulk-pending :through]) (:observed state)))
                    "Rung head exceeds its pending write boundary" {:head head})
-    (native/emit "inspect" {:records (if-let [bulk (:bulk state)]
+    (native/emit "inspect" {:sqlDataDirectory (scale/sql (System/getenv "AGE_SQL_JDBC")
+                                                          #(scale/string-query % "select current_setting('data_directory')"))
+                            :records (if-let [bulk (:bulk state)]
                                        (+ (:base-records bulk) (:records bulk)
                                           (count-records pop (get bulk :loaded-at head) head))
                                        (+ (:seed-records pop) (count-records pop 0 head)))
