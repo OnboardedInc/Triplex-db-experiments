@@ -4541,3 +4541,23 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Rented server, rolling 8** (`origin/exp/DX-BM1-bare-metal` `f3fe1b786`): stored 235.00 / 394.00 / 455.69 per second at 235 / 394 / 620 offered (forecast 235 / 391 / 415); zero expired at 394; second-half ACK p50 / p99 4.35 / 34.70 ms at 235 and 625.25 / 5,836.91 ms at 394 (forecast 16 / 350); quiet p99 alone -> loaded 32.05 -> 57.16, 12.56 -> 57.96, 16.06 -> 75.93 ms. SQL reads per save 0.56 / 1.40 / 1.29; transactor 0.56 / 1.88 / 2.26 cores in second halves.
 - **Reading:** second-half p99 at 394 across widths 6 / 8 / 12 is 5,067 / 5,837 / 2,455 ms, not monotonic, so the width matters less than whether a backlog spell falls in the half measured; single five-minute runs cannot rank the widths on p99 at 394. Quiet loaded p99 is monotonic in the width (43.91, 54.00, 61.79 at 6; 57.16, 57.96, 75.93 at 8; 98.95, 105.67, 114.51 at 12), so `rolling6` stands.
 - The driver has queued the cache and core comparisons after the import run.
+
+### 2026-11-21 12:34 local: combined check of today's merges: nine combinations pass; a launch fault in Sunday's failover run and a missing entry for tonight's realistic card found (4 agents running)
+
+- **DX-CHK1 finished** (exit 0, 30 minutes). `origin/exp/DX-CHK1-combined-gates` `2b939a5d5`, `REPORT-DX-CHK1.md`. Each combination ended with an independent journal recount against receipts and a fresh-reader replay from position zero.
+
+  | Combination (all on `rolling6`, ordered writer, toy size) | Result |
+  | --- | --- |
+  | Removal on request + append retirement: 24 saves, 13 removal routes, backup restore, 36 positions replayed | Passed |
+  | Fair import + quiet account + Publish: 27 saves, eight import frames, exact Publish answer against the oracle, 46 positions | Passed |
+  | Read study (three cores, batches of eight, early filter) reading people being saved, removed and imported: 176 batched reads, 21 immediate readbacks | Passed; eleven import attempts got the typed temporary refusal `ErasureFrontierUnavailable` and retried under their original identities |
+  | Cold admission ramp + lost reply and resend: refused offer absent before resend, original receipt recovered | Passed |
+  | Write gateway on Java 25 ZGC with the removal combination | Passed |
+  | Realistic toy seed (5,600 people, one database) with removal; and with fair import, quiet account and Publish | Passed (101 and 106 positions) |
+  | Policy B failover with append retirement: primary killed and fenced, six acknowledged saves survived, six held offers resumed after a verified synchronous replacement | Passed on two PostgreSQL containers in one VM |
+  | Failed appends, serial revision check, sampled lookups: 56 durable receipts, six failed appends absent after restart, old and ordered id reuse refused | Passed |
+
+- **Faults it found and fixed on its branch (wiring, not design):** `hasync1/pair.ts` built `-e -e` before `HA1_FLEET_HTTP=1` (the Sunday failover launch would have failed); the fair-import launcher did the same with the retirement option; the strict recovery gate and the legacy recovery probe; a slash in an operation id made a receipt lookup return `absent` in a test; the removal resume check read only four log rows.
+- **Gaps it reported:** no entry on `exp/DX-INT1` launches tonight's realistic scorecard configuration (the card lives on the scorecard builder's own branch, `a36c88e6c`); `jvm1/cold-server.ts` hard-codes `barrier6`; a declared removal policy excludes the append-retirement marker for the whole protected scope; imports get temporary typed refusals while a removal is in flight.
+- **DX-THIN1 part 13 resumed:** take the fixes; new build commits for the failover run and the cold-start arms; merge the realistic card onto the one branch, run its exact configuration at toy size with the cross-checks, and name tonight's commit.
+- Agents running: DX-SCALE1, DX-BM1, DX-W1, DX-THIN1.
