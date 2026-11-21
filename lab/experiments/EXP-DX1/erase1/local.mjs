@@ -449,7 +449,14 @@ export async function local(opts, config, manager) {
           "-e",
           "GATEWAY_SOURCE_SHA256=" + gateway,
           ...(subjectWriter !== undefined
-            ? ["-e", "TX2_SUBJECT_SAVE=" + subjectWriter, "-e", "TX2_INT1_WRITE_READBACK=1"]
+            ? [
+                "-e",
+                "TX2_SUBJECT_SAVE=" + subjectWriter,
+                "-e",
+                "TX2_GROUP_COMMIT=" + (subjectWriter === "0" ? "1" : "0"),
+                "-e",
+                "TX2_INT1_WRITE_READBACK=1",
+              ]
             : []),
           ...(orderedIds
             ? ["-e", "TX2_SUBJECT_ORDERED_IDS=1", "-e", "TX2_SUBJECT_NUMERIC_OWNER=1"]

@@ -255,7 +255,7 @@ async function measure(writer: DatomicClient, reader: DatomicClient, writeAddres
   // Rejected: an insert/replace comparison or substituting client latency when the native counter is missing.
   const costs = [];
   for (const attribute of [plain, marked, plain]) {
-    const samples = [];
+    const samples: Awaited<ReturnType<typeof save>>[] = [];
     for (let i = 0; i < 104; i++) {
       const owner = task(victims, 200 + costs.length * 8 + (i % 4));
       const prior: Row | undefined = i >= 4 ? samples.at(i - 4)!.row : undefined;
@@ -437,7 +437,7 @@ async function measure(writer: DatomicClient, reader: DatomicClient, writeAddres
           await assert.rejects(
             reader.request("POST", `/v1/db/${db}/q`, {
               basis: pin,
-              query: { find: ["?e"], where: [["?e", marked, first.value]] },
+              edn: `[:find ?e :in $ :where [?e ${marked} ${JSON.stringify(first.value)}]]`,
             }),
             (e) => e instanceof DatomicHttpError && e.code === "ErasureQueryUnsupported",
           );
@@ -565,30 +565,39 @@ async function measure(writer: DatomicClient, reader: DatomicClient, writeAddres
         return { start, end };
       }
       assert(removal);
+      // [DX-ERASE2] Why: include the exact pending body set in scheduled ordinary index work.
+      // Rejected: forcing a separate build for the same range of ongoing writes.
       const cleanup = await diag<{
         ids: string[];
         matched: number;
         keysAbsent: number;
         seq: number;
         t: string;
-        requestedIndex: boolean;
-        finishedAt: number;
-      }>("ciphertext-cleanup", { ids: wanted });
-      const end = now();
+        requestedIndex?: unknown;
+      }>("ciphertext-cleanup", { ids: wanted, foldWithOrdinaryIndex: true });
       sameIds(cleanup.ids, wanted);
       assert(
         cleanup.seq === removal.seq &&
           cleanup.matched === wanted.length &&
           cleanup.keysAbsent === wanted.length,
       );
-      assert(typeof cleanup.requestedIndex === "boolean" && Number.isFinite(cleanup.finishedAt));
+      assert.equal(cleanup.requestedIndex, undefined);
       assert(BigInt(cleanup.t) > BigInt(removal.t));
+      const scheduled = await diag<{ t: number; basis: number; ms: number }>("index");
+      assert(
+        Number.isSafeInteger(scheduled.t) &&
+          scheduled.basis >= scheduled.t &&
+          BigInt(scheduled.t) >= BigInt(cleanup.t) &&
+          Number.isFinite(scheduled.ms),
+      );
       const verified = await diag<{ ids: string[]; t: string; finishedAt: number }>(
         "cleanup-barrier",
         { ids: wanted, t: cleanup.t },
       );
       sameIds(verified.ids, wanted);
       assert.equal(verified.t, cleanup.t);
+      assert(Number.isFinite(verified.finishedAt));
+      const end = now();
       const [read] = await available(() => reader.rows(db, { id: first.row.id, history: true }));
       assert(read && read.value_string === null);
       assert.deepEqual(JSON.parse(read.value_json!), marker(removal));
@@ -600,6 +609,7 @@ async function measure(writer: DatomicClient, reader: DatomicClient, writeAddres
         end,
         elapsedMs: end - start,
         cleanup,
+        scheduled,
         verified,
       });
       return { start, end };
