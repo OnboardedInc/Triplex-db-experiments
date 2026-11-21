@@ -1,4 +1,4 @@
-Use this branch's Part 4 command for the new ladder. Keep the original stopped volume and its verified prefix.
+Pin acd350e92 for the ladder, full load and seal. Keep the stopped working volume and its verified prefix.
 The first server run wrote 5,284 records per second. The loader waited mainly inside Datomic submission.
 The old archive cannot split that wait between applying saves, writing to disk, and indexing.
 The new ladder gets two complete index jobs before trusting an arm's rate.
@@ -24,3 +24,5 @@ The server must verify the rate. This branch has no one-billion seal yet.
 - The Mac fixture binds an archived source, active lab slot and native DB identities. It compares the mixed-format cut with the exact SCALE1 product path and passes the live bundle checks against expected history, scope, pinned reads and feed.
 
 The first Mac fixture found a lost pending queue drain and rejected its duplicate write. The corrected mixed-format fixture matched 12 solo prefix saves, 87 grouped saves, and 12 solo tail saves, and checked the settled history count. Both attempts released their slots, containers and volumes. [Evidence hashes](EVIDENCE-ARCHIVES.sha256)
+
+The final fixture at acd350e92 matched 12 solo prefix, 88 grouped, and 12 solo tail saves. It recovered a schema commit and two pipelined groups, used both group sizes, and confirmed the settled census and live scorecard cut. The clone transactor logged both the metrics callback and a scope-bound index job. The three JavaScript checks passed.
