@@ -1,4 +1,4 @@
-Pin 9573487e0 to resume the held 477 million record volume.
+Pin 6d3d44641 to resume the held 477 million record volume.
 The old checker missed index jobs because Datomic logs a different database identifier. The archived evidence qualifies all three runs.
 The solo loader ran at 15,243 records per second sustained. All three tests nearly filled their allowed cores.
 The new load uses six cores and keeps each new save in its own transaction.
@@ -37,3 +37,5 @@ The final fixture at acd350e92 matched 12 solo prefix, 88 grouped, and 12 solo t
 [Updated loader and placement](CONTINUATION.md). [Evidence archives](EVIDENCE-ARCHIVES.sha256).
 
 The archived replay recovered 59, 44 and 30 qualifying index jobs. The first Mac collection check found zero persisted garbage marks. With more real replacement jobs, the next run collected 5,172 segments and PostgreSQL counted 5,173 deleted rows plus 25,034 TOAST rows. Plain vacuum kept the file size and cleared the dead-row estimate. A fresh verifier read the same cut (native t 4784) and 59,842 records, with the current, pinned, receipt and feed checks passing. The gate's final logger check still used the temporary restore alias and refused that otherwise correct run. The fixture now checks the physical catalog returned by the fresh verifier. Both attempts released their slots, four containers and one volume each. Five JavaScript checks passed.
+
+The final engine gate passed at 108e9b02a. It collected 5,171 obsolete segments, vacuumed the SQL table, reopened the exact 59,842-record cut and matched the native catalog in the actual index-job log. The final runner changes affect Linux admission and timing accounting. The six-core rate and 1B footprint have yet to run on bare metal.
