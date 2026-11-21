@@ -154,7 +154,7 @@ INPUT_LEASE
     "$(node "$runtime_tool" image)" -m triplex.gateway.layout-input-audit "/inputs/$(basename "$2")"
   exit
 fi
-tx=6 pg=6 gw_w=5,6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume= wal_dir=
+tx=6 pg=6 gw_w=5,6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume= wal_dir= restored_pgdata=
 if [[ ${DX_INT1_GATEWAYS:-original} == demand ]]; then
   # [DX-THIN1] Why: apply the same peer limits on ordinary stack launches and the physical queue. Rejected: tuning only the Mac diagnostic container.
   demand_peer='-Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps'
@@ -179,6 +179,7 @@ while (($#)); do
   case "$1" in
     --no-publish) publish=false; shift; continue;;
     --clone-seed) seed_volume=$2;;
+    --real1-pgdata) restored_pgdata=$2;;
     --wal-directory) wal_dir=$2;;
     --cpus-tx) tx=$2;; --cpus-pg) pg=$2;;
     --cpus-gw-write) gw_w=$2;; --cpus-gw-read) gw_r=$2;;
@@ -191,6 +192,14 @@ while (($#)); do
   esac
   shift 2
 done
+# [DX-REAL1] Why: only the dedicated server runner can bind its newly verified copy.
+# Rejected: a writable bind of the originally held PostgreSQL tree.
+if [[ -n $restored_pgdata ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && $prefix == tx2-dxreal1-* && -z $seed_volume && -z $wal_dir ]]
+  [[ $(realpath -e "$restored_pgdata") == "$restored_pgdata" && -f $restored_pgdata/PG_VERSION ]]
+  [[ -f $restored_pgdata/../real1-copy.json && ! -e $restored_pgdata/postmaster.pid ]]
+  [[ $restored_pgdata != *','* && $restored_pgdata != *'"'* ]]
+fi
 # bin/run reads DATOMIC_JAVA_OPTS. Preserve precedence across the common and per-role options.
 peer_java() {
   local heap=$1 override=$2 options=$gw_java
@@ -522,11 +531,15 @@ CLONE_MOUNTS
   [[ $(docker inspect --format '{{.State.ExitCode}}' "$prefix-seed-copy") == 0 ]] || exit 1
   docker rm "$prefix-seed-copy" >/dev/null
   trap - EXIT
-else
+elif [[ -z $restored_pgdata ]]; then
   docker volume create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-pg-data" >/dev/null
 fi
+pgdata_mount=(-v "$prefix-pg-data:/var/lib/postgresql/data")
+if [[ -n $restored_pgdata ]]; then
+  pgdata_mount=(--mount "type=bind,source=$restored_pgdata,target=/var/lib/postgresql/data")
+fi
 docker run -d --pull never --name "$prefix-pg" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
-  -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
+  -e POSTGRES_PASSWORD=datomic "${pgdata_mount[@]}" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
 # Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
 ready=false
@@ -553,7 +566,7 @@ if [[ -n $wal_dir || ${DX_BM1_WAL_AB:-0} == 1 ]]; then
   ' sh "${wal_dir:+ssd}" > "$attempt/wal-placement.txt"
 fi
 # Vendor scripts use their own database/connect statements; keep their order and bytes.
-if [[ -z $seed_volume ]];then
+if [[ -z $seed_volume && -z $restored_pgdata ]];then
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   db=postgres
   [[ "$file" != postgres-table.sql ]] || db=datomic

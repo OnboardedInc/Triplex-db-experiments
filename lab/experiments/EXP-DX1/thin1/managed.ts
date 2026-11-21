@@ -10,8 +10,10 @@ import { type Writer } from "../v01/profile.ts";
 
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
 const scorecard = process.env.DX_V01_MAC_FIXTURE === "1";
-const holder = scorecard ? (process.env.DX_V01_MAC_HOLDER ?? "DX-V01") : "DX-THIN1";
-assert(holder === "DX-THIN1" || (scorecard && holder === "DX-V01"));
+const realistic = process.env.DX_REAL1_MAC_FIXTURE === "1";
+assert(!realistic || !scorecard);
+const holder = realistic ? "DX-REAL1" : scorecard ? (process.env.DX_V01_MAC_HOLDER ?? "DX-V01") : "DX-THIN1";
+assert(realistic || holder === "DX-THIN1" || (scorecard && holder === "DX-V01"));
 const integrated = [
   "int1-thin",
   "int1-deep",
@@ -22,6 +24,7 @@ const integrated = [
   "int1-idle",
   "int1-pooled",
   "int1-isolated",
+  "int1-real1",
 ].includes(mode ?? "");
 const repo = fileURLToPath(new URL("../../../../", import.meta.url)),
   dir = path.resolve(supplied ?? ".");
@@ -128,7 +131,7 @@ async function prepare() {
   const { verifiedTree } = await import(new URL("../../../bin/datomic-context.mjs", import.meta.url).href);
   // [DX-THIN1] Why: keep old and new private images addressable across a native gateway merge. Rejected: reusing a tag derived only from the launcher when the gateway or codec changes.
   cfg.lanes.datomic.image =
-    "tx2-dxthin-managed:" +
+    (realistic ? "tx2-dxthin-managed:real1-" : "tx2-dxthin-managed:") +
     createHash("sha256")
       .update(JSON.stringify([verifiedTree(imageFolder), verifiedTree(path.join(dir, "packages/datomic/gateway")), verifiedTree(path.join(dir, "packages/datomic/src"))]))
       .digest("hex")
@@ -410,6 +413,7 @@ if (action === "--guest") {
   assert.equal(process.platform, "darwin");
   if (action === "--build") await prepare();
   else if (action === "--bind") bind();
+  else if (action === "--remove" && realistic) console.log(manager(["image-remove", "--image-id", read(file).lanes.datomic.imageId]));
   else if (action === "--arm" || action === "--arm-compact") {
     const compact = action === "--arm-compact";
     assert(!compact || integrated);
@@ -420,10 +424,10 @@ if (action === "--guest") {
         out &&
         path.isAbsolute(out) &&
         (scorecard ? fs.statSync(out).isDirectory() && mode === "int1-adopted-proof" :
-          !fs.existsSync(out) && guestNode && path.isAbsolute(guestNode)),
+          !fs.existsSync(out) && (realistic ? mode === "int1-real1" && compact : guestNode && path.isAbsolute(guestNode))),
     );
     const disk = fs.statfsSync(repo, { bigint: true });
-    assert(disk.bavail * disk.bsize > 5n * 1024n ** 3n);
+    assert(disk.bavail * disk.bsize > (realistic ? 10n : 5n) * 1024n ** 3n);
     const slots = setup(compact);
     const writerSlot = slots[0]!,
       readerSlot = slots[1];
@@ -452,6 +456,19 @@ if (action === "--guest") {
             TRIPLEX_LAB_SLOT_OWNER: ownerFile(writerSlot), TX2_WRITE_OPTIONS_ATTEMPT: attempt.writeOptionsAttempt,
             TX2_SWEEP_STRICT: "1", TX2_W0_POINT_JOURNAL: "1", TX2_W0_RESTORE_INDEXED_JOURNAL: "1",
             TRIPLEX_DATOMIC_LAYOUT: "lean", DX_STRICT_RECORD_CLOCKS: "1", DX_SERVER_RECORD_TIME: "1" },
+        });
+      } else if (realistic) {
+        // [DX-REAL1] Why: run the toy client through the port of the pool-owned SQL stack.
+        // Rejected: a Mac measurement lease or building a second PostgreSQL stack for the fixture.
+        const owner = read(ownerFile(writerSlot));
+        assert.equal(owner.holder, holder);
+        const port = new URL(owner.endpoint).port;
+        execFileSync(process.execPath, ["--no-warnings", "--experimental-transform-types",
+          "lab/experiments/EXP-DX1/real1/server.ts", "toy", "--realistic-mix",
+          "--out", out, "--port-write", port, "--seconds", rung, "--sweep", "25"], {
+          cwd: repo, stdio: "inherit", timeout: 8 * 60_000,
+          env: { ...process.env, DX_REAL1_TOY_ADMISSION: "dx-real1-" + read(cred).nonce,
+            DX_REAL1_TOY_SLOT: owner.container },
         });
       } else if (scorecard) console.log(manager(["scorecard-fixture", "--slot", writerSlot, "--scorecard-output", out]));
       else execFileSync(
