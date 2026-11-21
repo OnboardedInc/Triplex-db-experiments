@@ -4,6 +4,7 @@ export interface ReadErrorCause {
   code?: string;
   status?: number;
   reason?: string;
+  frames?: string[];
 }
 
 // [DX-T1-10] Why: an outer ReadError hides socket failures that invalidate a full pair; retain bounded typed causes.
@@ -40,6 +41,14 @@ export function describeReadError(error: unknown): {
       code: label(e.code),
       status: typeof e.status === "number" && Number.isFinite(e.status) ? e.status : undefined,
       reason,
+      // [DX-V01] Why: name the code location for otherwise opaque native TypeErrors.
+      // Rejected: persisting the exception message or absolute paths (they can contain input values).
+      ...(e.name === "TypeError" && typeof e.stack === "string" ? {
+        frames: e.stack.split("\n").filter((line) => /^\s+at /.test(line)).flatMap((line) => {
+          const frame = line.match(/\/(lab\/bench\/[\w./-]+|packages\/datomic\/dist\/[\w./-]+):(\d+:\d+)\)?$/)?.slice(1);
+          return frame ? [frame.join(":")] : [];
+        }).slice(0, 4),
+      } : {}),
     });
     if (e.cause !== undefined) pending.push(e.cause);
     if (Array.isArray(e.errors)) pending.push(...e.errors.slice(0, 8));

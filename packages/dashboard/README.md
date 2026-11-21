@@ -70,3 +70,10 @@ historical read.
 - `src/data.ts` translates Triplex services into presentation models.
 - `src/main.ts` owns update and view composition.
 - `src/server.ts` composes a real backend, API routes, and static assets.
+
+## Datomic playground
+
+Run `pnpm playground start` at the repository root to open the Datomic view in
+`playground/`. It uses the local playground HTTP server for exact-cut reads,
+save receipts, feed polling and release answers. The same actions are available
+to agents through JSON and MCP. [Local agent workflow](../../AGENTS-PLAYGROUND.md)

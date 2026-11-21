@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { openComposition } from "../../../bench/lib/composition.ts";
 import { profile } from "./profile.ts";
-import { splitLoad } from "../ha1/common.ts";
+import { microLoad, splitLoad } from "../ha1/common.ts";
 const [mode, scope, arm, dir, people, capacity] = process.argv.slice(2);
 assert(scope && dir && arm && mode && people);
 const comp = await openComposition("reach", "datomic", scope);
@@ -17,6 +17,7 @@ try {
           : mode === "load-live" ||
               mode === "load-tail" ||
               mode.startsWith("load-frontier-") ||
+              microLoad(mode) ||
               splitLoad(mode)
             ? await (
                 await import("./live.ts")

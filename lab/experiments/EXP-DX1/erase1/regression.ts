@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { setTimeout as delay } from "node:timers/promises";
 import {
   DatomicClient,
   Replica,
@@ -16,8 +17,12 @@ import { Documents, hash, unpack } from "../notify1/store.ts";
 import { Dispatcher, type Packet } from "../notify1/dispatcher.ts";
 import { Fixture as NoticeFixture, originalWorld } from "../notify1/fixture.ts";
 import { Notices } from "../notify1/journal.ts";
+import { ReleaseCopy } from "../notify1/copy-plan.ts";
 import { openStore, fact } from "../actv-lazy/store.ts";
 import { JoinedAccount } from "../actv-lazy/join/account.ts";
+import { Archive } from "../actv-lazy/join/archive.ts";
+import { BulkQueue } from "../actv-lazy/join/bulk.ts";
+import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
 import { valid } from "../actv-lazy/fixture.ts";
 import { rosterRoot, rosterSeal } from "../actv-lazy/read.ts";
 import { W0, factValue, triplexValue } from "../../../bench/lib/w0-world.ts";
@@ -677,6 +682,150 @@ async function joinedRegression(
     verify("joined-marker-staging", false, { error: String(e) });
   } finally {
     await store.close();
+  }
+}
+
+export async function derivedRegression(
+  binding: string,
+  output: (name: string, value: unknown) => void,
+) {
+  const store = await openStore("lazy-erase-owed-" + binding.slice(0, 18));
+  const peer = new DatomicClient(process.env.DATOMIC_URL!);
+  const db = databaseFor(String(runtimeApi.DatabaseScope.test(store.scope)));
+  const account = new JoinedAccount(store);
+  const person = W0.placementId(0);
+  const release = Promise.withResolvers<void>();
+  const entered = Promise.withResolvers<void>();
+  let values: Archive | undefined;
+  let noticeArchive: Archive | undefined;
+  let control: Archive | undefined;
+  class HeldQueue extends BulkQueue {
+    calls = 0;
+    override async submit<T>(scope: string, work: () => Promise<T>) {
+      if (++this.calls === 2) entered.resolve();
+      await release.promise;
+      return super.submit(scope, work);
+    }
+  }
+  try {
+    await peer.declareProtection(db, ["bgcStatus"]);
+    const seed = (entityId: string, attribute: string, value: string | number) => ({
+      op: "assert" as const,
+      entityId,
+      attribute,
+      value: triplexValue(attribute, value),
+      validFrom: 0,
+    });
+    await store.input("owed-seed", { kind: "baseline", at: valid }, [
+      fact(rosterRoot(0), "lazy/members", [person]),
+      fact("members/seal", "lazy/roster-seal", rosterSeal([person])),
+      seed(person, "bgcStatus", "clear"),
+      seed(person, "weeklyMinutes", 2400),
+      seed(person, "location", "loc:canary"),
+      seed("loc:canary", "jurisdiction", "jur:canary"),
+      seed("loc:canary", "localMinWageCents", 1700),
+      seed("jur:canary", "stateMinWageCents", 1650),
+      seed(person, "payRateCents", 1660),
+    ]);
+    await account.install([person], valid);
+    await account.publish("owed-one", W0.R1.doc, valid, "owed", undefined, { sources: "census" });
+    const first = (await account.notices.observe()).value.sequence;
+    control = await Archive.open(account, new BulkQueue(1));
+    assert.equal((await control.runValues(first)).status, "stored");
+    assert((await control.stored(first)).output.length > 0);
+    await account.publish("owed-two", W0.R2.doc, valid, "owed", undefined, { sources: "census" });
+    const next = (await account.notices.observe()).value.sequence;
+    const event = await account.notices.event(next, await store.head());
+    const copy = new ReleaseCopy(store.comp, 1, false, 1);
+    assert.equal(await copy.suggest(account.notices, event, event.at), undefined);
+    assert.equal(copy.stats.captures, 0);
+    const queue = new HeldQueue(1);
+    values = await Archive.open(account, queue);
+    noticeArchive = await Archive.open(account, queue, "notices");
+    const before = [await values.store.head(), await noticeArchive.store.head()];
+    const attempts = [values.turn(next), new RecordedNotices(noticeArchive).record(next)];
+    const done = Promise.allSettled(attempts);
+    const originalRequest = DatomicClient.prototype.request;
+    const submitted = new Set<string>();
+    try {
+      DatomicClient.prototype.request = function <T>(
+        this: DatomicClient,
+        ...args: Parameters<DatomicClient["request"]>
+      ) {
+        const [, path, body] = args;
+        if (
+          path.endsWith("/transact") &&
+          body &&
+          typeof body === "object" &&
+          "erasureSourceDatabase" in body &&
+          body.erasureSourceDatabase === db &&
+          "erasureSeq" in body &&
+          body.erasureSeq === 0
+        ) {
+          submitted.add(path.split("/").at(-2)!);
+        }
+        return originalRequest.apply(this, args) as Promise<T>;
+      };
+      await Promise.race([
+        entered.promise,
+        ...attempts.map((pending) =>
+          pending.then(() => assert.fail("Archive completed before its held turn")),
+        ),
+        delay(5_000).then(() => assert.fail("Both archive turns must reach the held queue")),
+      ]);
+      const target = (await peer.rows(db, { entityIds: [person] })).find(
+        (row) => row.attribute === "bgcStatus",
+      );
+      assert(target?.value_string === "clear");
+      const erased = await peer.erase(db, "owed-value-removal", [{ id: target.id }]);
+      assert.equal(erased.seq, 1);
+      assert.equal(erased.identities[0]?.assertionId, target.id);
+      release.resolve();
+      const rejected = await done;
+      const replies = rejected.map((result) => {
+        if (result.status === "fulfilled") return { status: result.status };
+        const causes: string[] = [];
+        let cause: unknown = result.reason;
+        while (cause instanceof Error && causes.length < 4) {
+          causes.push(String(cause));
+          cause = cause.cause;
+        }
+        return { status: result.status, causes };
+      });
+      const after = [await values.store.head(), await noticeArchive.store.head()];
+      output("derived-observed", { replies, before, after, submitted: [...submitted] });
+      assert.deepEqual(
+        submitted,
+        new Set(
+          [values, noticeArchive].map(({ store: archiveStore }) =>
+            databaseFor(String(runtimeApi.DatabaseScope.test(archiveStore.scope))),
+          ),
+        ),
+      );
+      assert(
+        rejected.every(
+          (result) =>
+            result.status === "rejected" && taggedError(result.reason, "ErasureFrontierChanged"),
+        ),
+      );
+      assert.deepEqual(after, before);
+      await assert.rejects(control.stored(first), ErasureChanged);
+      output("derived-writer", {
+        first,
+        next,
+        erased,
+        before,
+        refused: rejected.length,
+        copiedImages: copy.stats.captures,
+      });
+    } finally {
+      release.resolve();
+      await done;
+      DatomicClient.prototype.request = originalRequest;
+    }
+  } finally {
+    peer.close();
+    await Promise.all([values?.close(), noticeArchive?.close(), control?.close(), store.close()]);
   }
 }
 

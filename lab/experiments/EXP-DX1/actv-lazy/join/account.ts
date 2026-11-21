@@ -33,11 +33,11 @@ import {
   type Request,
   type Event as NoticeEvent,
 } from "../../notify1/journal.ts";
-import { Documents, type Row, type Op } from "../../notify1/store.ts";
+import { Documents, type Op } from "../../notify1/store.ts";
 import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
 import { CLOCK, RELEASE, Conflict, fact, millis, value, type Store } from "../store.ts";
-import { calculate, worldsAt, type Proposal, type Point } from "../decision.ts";
+import { calculate, worldsAt, type Proposal } from "../decision.ts";
 import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
 import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
 import { AccountAdmission, type PublishObservation, type WriteAttempt } from "./admission.ts";
@@ -85,6 +85,7 @@ export type Marker = {
   from: string;
   kind: "activation";
   storage: Storage;
+  erasureSeq?: number;
   stage?: Stage;
   codec?: "compact";
   output: { count: number; chunks: number; hash: string; owners: number };
@@ -529,7 +530,7 @@ export class JoinedAccount {
     const xs = await this.s.rows([RELEASE], e.at),
       r = xs.find((x) => x.position === e.at);
     assert(r);
-    const m = value(r) as Marker & { erasureSeq?: number };
+    const m = value(r) as Marker;
     await recheckErasure(this.s.comp, m.erasureSeq);
     assert(
       m.notice === h(e.value) &&

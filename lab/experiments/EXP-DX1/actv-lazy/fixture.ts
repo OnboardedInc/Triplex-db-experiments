@@ -59,6 +59,9 @@ export async function seed(
   batchRows = 1500,
 ) {
   assert(Number.isSafeInteger(batchRows) && batchRows >= 1500 && batchRows <= 2000);
+  // [DX-INT1] Why: legacy encodes the seed facts and journal in the same request.
+  // Rejected: applying the lean frame size and hitting the gateway's body ceiling.
+  const frameRows = process.env.TRIPLEX_DATOMIC_LAYOUT === "legacy" ? 400 : batchRows;
   assert.equal(await store.head(), 0);
   assert(population !== "thin" || store.profile === "w0");
   const compact = population === "thin" ? thin : own;
@@ -97,7 +100,7 @@ export async function seed(
             validFrom: SEED_VALID_FROM,
           }));
     if (store.profile === "act2-deep") assert.equal(rows.length, deepShape(i).facts);
-    if (batch.length + rows.length > batchRows) await flush();
+    if (batch.length + rows.length > frameRows) await flush();
     people.push(i);
     batch.push(...rows);
     facts += rows.length;

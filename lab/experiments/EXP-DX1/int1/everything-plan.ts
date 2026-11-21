@@ -1,3 +1,4 @@
+import { measuredWriterG1 } from "../jvm1/launch.mjs";
 import { fieldRates } from "./field-plan.ts";
 import { pooledCampaignId, campaignWindows } from "../scale1/tenant-traffic.ts";
 
@@ -16,18 +17,15 @@ const gatewayHeap = [
 // [DX-THIN1] Why: keep TAIL1's measured collector selection even when the serving CPU mask changes.
 // Rejected: relying on JVM startup ergonomics or bringing in the unrelated receipt-cache variant.
 export const gatewayJvmOptions = {
-  "gw-w": [
-    ...gatewayHeap,
-    "-XX:+UseG1GC",
-    "-XX:MaxGCPauseMillis=25",
-    "-XX:G1HeapRegionSize=2m",
-    "-XX:+UnlockExperimentalVMOptions",
-    "-XX:G1NewSizePercent=5",
-    "-XX:G1MaxNewSizePercent=25",
-    "-XX:ConcGCThreads=1",
-  ],
+  "gw-w": [...gatewayHeap, ...measuredWriterG1],
   "gw-r": [...gatewayHeap, "-XX:+UseG1GC"],
 } as const;
+export const transactorJvmOptions = [
+  "-Xms256m",
+  "-Xmx5g",
+  "-XX:+UseG1GC",
+  "-XX:MaxGCPauseMillis=50",
+] as const;
 
 export function campaignCases(people: readonly number[] = populations) {
   return people.flatMap((n) =>
@@ -43,6 +41,10 @@ export function campaignCases(people: readonly number[] = populations) {
   );
 }
 export type CampaignCase = ReturnType<typeof campaignCases>[number];
+
+export function scorecardCases() {
+  return campaignCases([100_000]).filter((c) => c.profile === "frozen");
+}
 
 export function campaignTenant(c: CampaignCase, smoke: boolean) {
   return {
@@ -61,7 +63,7 @@ export const treatment = {
   DX_INT1_SEED_ERRORS: "1",
   DX_INT1_READERS: "touched",
   DX_INT1_DEEP_RELEASE: "ead90",
-  DX_STACK_EXPLICIT_GC: "1",
+  DX_TAIL1_TWO_WRITE_CORES: "1",
   DX_TOUCHED_READ_MODE: "following",
   DX_GROUP_COMMIT: "0",
   DX_GROUP_QUEUE_CLOCK: "0",
@@ -125,7 +127,7 @@ export function planSummary() {
     treatment,
     gatewayJvmOptions,
     excluded,
-    readerCores: 6,
+    readerCores: 5,
     savedOutputPreflight: campaignCases([4]),
     fieldWindows: Object.fromEntries(
       populations.map((n) => {

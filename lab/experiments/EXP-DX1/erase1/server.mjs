@@ -7,13 +7,27 @@ import { fileURLToPath } from "node:url";
 import { isIPv4 } from "node:net";
 import { verifiedTree } from "../../../bin/datomic-context.mjs";
 
-const [command, location, staged] = process.argv.slice(2);
+const [command, location, staged, control, ...extra] = process.argv.slice(2);
+const guardComparison = command === "check-guarded";
+const neighbourCheck = command === "check-neighbours";
+const seedRole = command === "stage-control" ? "control" : undefined;
 assert(
-  process.platform === "linux" && ["stage", "check", "stage-fast", "check-fast"].includes(command),
+  process.platform === "linux" &&
+    [
+      "stage",
+      "check",
+      "stage-fast",
+      "check-fast",
+      "stage-control",
+      "check-guarded",
+      "check-neighbours",
+    ].includes(command),
 );
 const action = command.startsWith("stage") ? "stage" : "check";
-const mode = command.endsWith("-fast") ? "fast" : "scale";
-assert(location && (action === "check" ? staged : staged === undefined));
+const mode =
+  command.endsWith("-fast") || guardComparison || neighbourCheck || seedRole ? "fast" : "scale";
+assert(location && !extra.length && (action === "check" ? staged : staged === undefined));
+assert(guardComparison === Boolean(control));
 const dir = path.resolve(location);
 /** @param {string} name */
 function env(name) {
@@ -84,6 +98,9 @@ const attempt = {
   attempt: randomUUID(),
   source,
   builds,
+  seedRole,
+  guardComparison,
+  neighbourCheck,
 };
 const health = await fetch(new URL("/health", endpoint));
 assert(health.ok);
@@ -113,11 +130,13 @@ assert.equal(
 assert.equal(fs.realpathSync(psql("SHOW data_directory")), fs.realpathSync(sqlData));
 // [DX-ERASE1] Why: staging and maintenance require the same disposable SQL store.
 // Rejected: inferring scratch-store ownership from an endpoint or database name alone.
-let stageSha256;
+let stageSha256, stagedSource, controlSha256;
 if (action === "stage") {
-  psql(
-    `CREATE TABLE dx_erase1_scratch(nonce text PRIMARY KEY); INSERT INTO dx_erase1_scratch VALUES ('${nonce}');`,
-  );
+  if (!seedRole)
+    psql(
+      `CREATE TABLE dx_erase1_scratch(nonce text PRIMARY KEY); INSERT INTO dx_erase1_scratch VALUES ('${nonce}');`,
+    );
+  assert.equal(psql("SELECT nonce FROM dx_erase1_scratch"), nonce);
 } else {
   assert(staged);
   assert.equal(psql("SELECT nonce FROM dx_erase1_scratch"), nonce);
@@ -125,19 +144,49 @@ if (action === "stage") {
   const plan = JSON.parse(raw.toString());
   assert.equal(plan.nonce, nonce);
   assert.equal(plan.people, attempt.people);
-  assert.equal(plan.source, source);
+  stagedSource = plan.source;
   // [DX-ERASE1] Why: a sealed check requires the authority enrolled before the original seed.
   // Rejected: reusing a staged native-excision seed (its rows were created without that authority).
   assert.equal(plan.mode, mode);
-  assert.deepEqual(plan.builds, builds);
   stageSha256 = sums(raw);
+  if (guardComparison || neighbourCheck) {
+    // [DX-ERASE1] Why: the held sealed copy may have been built at an earlier reviewed source.
+    // Rejected: accepting a staged manifest by name or restaging the full sealed fixture inside the timed check.
+    const sealedSha = env("DX_ERASE_SEALED_SHA256");
+    assert.match(sealedSha, /^[a-f0-9]{64}$/);
+    assert.equal(stageSha256, sealedSha);
+    assert.equal(plan.seedRole, undefined);
+    assert.match(stagedSource, /^[a-f0-9]{40}$/);
+    git("merge-base", "--is-ancestor", stagedSource, source);
+    if (guardComparison) {
+      const controlBytes = fs.readFileSync(control);
+      const plain = JSON.parse(controlBytes.toString());
+      assert.equal(plain.seedRole, "control");
+      assert.equal(plain.source, source);
+      assert.equal(plain.nonce, nonce);
+      assert.equal(plain.mode, mode);
+      assert.equal(plain.people, attempt.people);
+      assert.deepEqual(plain.builds, builds);
+      assert.equal(plain.data.facts, plan.data.facts);
+      controlSha256 = sums(controlBytes);
+    }
+  } else {
+    assert.equal(plan.source, source);
+    assert.deepEqual(plan.builds, builds);
+  }
 }
-const binding = { ...attempt, gateway: gatewaySourceHash, stageSha256 };
+const binding = {
+  ...attempt,
+  gateway: gatewaySourceHash,
+  stageSha256,
+  stagedSource,
+  controlSha256,
+};
 const run = { ...binding, binding: sums(JSON.stringify(binding)) };
 fs.writeFileSync(path.join(dir, "native.json"), JSON.stringify(run) + "\n", { flag: "wx" });
 const child = fork(
   path.join(import.meta.dirname, "run.ts"),
-  [dir, action, ...(staged ? [staged] : [])],
+  [dir, action, ...(staged ? [staged] : []), ...(control ? [control] : [])],
   {
     execArgv: ["--experimental-transform-types", "--max-old-space-size=2048"],
     env: {
@@ -220,11 +269,28 @@ try {
   assert.equal(git("status", "--porcelain", "--untracked-files=no"), "");
   assert.deepEqual(buildSums(), builds);
   if (action === "check" && mode === "fast") {
-    const observed = JSON.parse(fs.readFileSync(path.join(dir, "fast-result.json"), "utf8"));
+    const observed = JSON.parse(
+      fs.readFileSync(
+        path.join(
+          dir,
+          guardComparison
+            ? "guarded-comparison.json"
+            : neighbourCheck
+              ? "quiet-comparison.json"
+              : "fast-result.json",
+        ),
+        "utf8",
+      ),
+    );
     assert.equal(observed.binding, run.binding);
     assert.equal(observed.nonce, nonce);
     assert.equal(observed.mode, mode);
     assert.equal(observed.people, attempt.people);
+    if (guardComparison || neighbourCheck) {
+      if (guardComparison) assert.equal(observed.controlSha256, controlSha256);
+      assert.equal(observed.stageSha256, stageSha256);
+      assert.equal(observed.attempt, attempt.attempt);
+    }
     console.log(JSON.stringify(observed.data, null, 2));
   }
   if (action === "check" && mode === "scale") {

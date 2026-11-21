@@ -44,27 +44,44 @@ function signal(role: Role, action: Phase) {
       row.volume === owner.volume &&
       row.slot === owner.container,
   );
-  assert(/^\d+ [TRSDI]$/.test(row.observed));
+  assert((action === "pause" ? /^\d+ T$/ : /^\d+ [RSDI]$/).test(row.observed));
   return row;
 }
-async function hold(role: Role, go: () => Promise<unknown>, requireBlocked: boolean) {
+function unavailable(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  if (error.name === "TimeoutError" || ("_tag" in error && error._tag === "DatomicTransportError"))
+    return true;
+  if ("status" in error && (error.status === 502 || error.status === 503 || error.status === 504))
+    return true;
+  return unavailable(error.cause);
+}
+
+async function hold<T>(role: Role, go: () => Promise<T>, requireBlocked: boolean) {
   const from = signal(role, "pause");
-  let complete = false;
+  type Outcome = { reply: T } | { error: unknown };
+  let outcome: Outcome | undefined;
+  // [DX-ACT1] Why: a suspended dependency may fail fast before a commit is sent. Rejected: counting a transient rejection as an acknowledgement (or ignoring an arbitrary application error).
   const request = Promise.resolve()
     .then(go)
-    .finally(() => {
-      complete = true;
-    });
-  void request.catch(() => {});
+    .then(
+      (reply) => (outcome = { reply }),
+      (error: unknown) => (outcome = { error }),
+    );
   let to;
   try {
     await sleep(220);
-    if (requireBlocked)
-      assert.equal(complete, false, "Write completed while its native role was stopped");
   } finally {
     to = signal(role, "resume");
   }
-  return { from, to, reply: await request };
+  assert.equal(from.observed.split(" ")[0], to.observed.split(" ")[0]);
+  const whilePaused = outcome;
+  if (requireBlocked && whilePaused && "reply" in whilePaused)
+    assert.fail("Write was acknowledged while its native role was stopped");
+  const result = await request;
+  if ("reply" in result)
+    return { from, to, reply: result.reply, earlyReply: whilePaused !== undefined, failure: null };
+  if (!unavailable(result.error)) throw result.error;
+  return { from, to, reply: await go(), earlyReply: false, failure: String(result.error) };
 }
 const s = await openStore("lazy-role-matrix-" + randomUUID());
 const f = await seed(s, 64),
@@ -82,8 +99,9 @@ try {
       () => a.publish("before-" + role, W0.R2.doc, valid, "owed"),
       true,
     );
-    const r = first.reply as typeof baseline;
-    assert(r.position > position);
+    const r = first.reply;
+    assert.equal(r.position, position + 1);
+    assert.deepEqual(await a.publish("before-" + role, W0.R2.doc, valid, "owed"), r);
     const one = await ref.check(
       a,
       f.roster,
@@ -138,9 +156,9 @@ try {
     assert.deepEqual(after.reply, staged);
     faults.push({
       role,
-      before: [first.from, first.to, one],
+      before: [first.from, first.to, first.failure, one],
       between: [during, two],
-      after: [after.from, after.to, staged.txId],
+      after: [after.from, after.to, after.earlyReply, after.failure, staged.txId],
       cut: staged.position,
     });
     previous = W0.R1.doc;

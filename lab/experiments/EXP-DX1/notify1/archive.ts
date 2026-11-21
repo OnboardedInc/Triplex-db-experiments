@@ -1,3 +1,4 @@
+import { ErasureChanged, readErasure, recheckErasure } from "../../../bench/lib/datomic-erasure.ts";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -65,6 +66,10 @@ assert(
 const source = await openComposition("reach", "datomic", r.scope),
   rx = await recipient(r.receiver, r.receiver.startsWith("act1-") ? attempt : undefined);
 try {
+  // [DX-ERASE1] Why: this evidence exporter writes a reusable clear-text archive without an authority.
+  // Rejected: accepting a current removal sequence as permission to write unsealed bytes that can outlive it.
+  if (await readErasure(source))
+    throw new ErasureChanged("A protected source requires a sealed export");
   const db = new Documents(source, "account"),
     sink = new Documents(rx, "effects"),
     a = new Notices(source, "account", deep ? deepInputs(source, report.n) : new Fixture(source)),
@@ -127,6 +132,7 @@ try {
     effects,
     ledgers,
   };
+  await recheckErasure(source, undefined);
   const bytes = gzipSync(canonical(captures));
   if (reopened) {
     // [DX-STG1] Why: the entire receipt, effect log and item state must survive reopening the same physical volume. Rejected: a row count or a replay on a freshly seeded account.

@@ -1,6 +1,7 @@
 import { packOracle, verifiedRawManifest } from "./pack-oracle.mjs";
 import { buildWriterStats, writerStatsMarkdown } from "./writer-stats.mjs";
 import { buildNativeCounters, nativeCountersMarkdown } from "./native-counters.mjs";
+import { postgresEvents, wallBridge } from "./postgres-events.mjs";
 // Command-line run manifests are validated by the report reader.
 import fs from "node:fs";
 import path from "node:path";
@@ -38,12 +39,20 @@ if (!renderOnly) {
       fs.copyFileSync(file, path.join(raw, `${role}.log`), fs.constants.COPYFILE_EXCL);
   }
   const manifestPath = path.join(run, "trace-run.json");
+  const manifest = fs.existsSync(manifestPath) ? JSON.parse(fs.readFileSync(manifestPath, "utf8")) : null;
+  const sealPath = path.join(raw, "tx.jfr-complete.jsonl");
+  const sqlLog = path.join(raw, "pg.log");
+  const seal = fs.existsSync(sealPath) ? JSON.parse(fs.readFileSync(sealPath, "utf8")) : null;
+  const pgBinding = manifest && { run: manifest.tag, slot: manifest.slot, source: manifest.source };
+  const boundSeal = seal && pgBinding && ["run", "slot", "source"].every((key) => seal[key] === pgBinding[key]) && seal.role === "tx";
+  if (manifest?.level === "summary" && manifest.requirePostgres && fs.existsSync(sqlLog))
+    await postgresEvents(sqlLog, path.join(raw, "postgres-events.jsonl"), boundSeal ? seal : null, pgBinding);
+  const bridge = wallBridge(boundSeal ? seal : null);
   for (const [input, expected, output] of [
     ["postgres-samples.log", "postgres-sample", "postgres.jsonl"],
     ["postgres-waits.log", "postgres-wait", "postgres-waits.jsonl"],
   ]) {
-    if (!fs.existsSync(manifestPath) || !fs.existsSync(path.join(raw, input))) continue;
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+    if (!manifest || !fs.existsSync(path.join(raw, input))) continue;
     const lines = fs.readFileSync(path.join(raw, input), "utf8").split("\n");
     const samples = [];
     for (const line of lines)
@@ -51,8 +60,10 @@ if (!renderOnly) {
         const row = JSON.parse(line);
         if (row.type !== expected || !Number.isFinite(row.at) || row.at < manifest.startedAt - 1000)
           throw Error("Stale/invalid Postgres sample");
+        const clock = bridge(row.at);
         samples.push({
           ...row,
+          ...(clock ? { wallAt: row.at, at: clock.at, clock: clock.clock } : {}),
           type: "resource",
           process: "postgres",
           thread: 0,

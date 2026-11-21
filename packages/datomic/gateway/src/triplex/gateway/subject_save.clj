@@ -57,9 +57,19 @@
         (let [hi (peek prefixes)]
           [(first prefixes) (str (subs hi 0 (dec (count hi))) (char (inc (int (last hi)))))])))))
 
+;; [DX-ERASE1] Why: the value body has its own entity, so removing just that attribute cannot change a prepared predecessor.
+;; Rejected: assuming every native excision is either harmless or a reason to stop unrelated people.
+(defmacro changes-application-rows? [view]
+  `(let [db# ~view body# (d/entid db# :triplex.private/body)]
+     (some (fn [datom#]
+             (let [attrs# (mapv :v (d/datoms db# :eavt (:e datom#) :db.excise/attrs))]
+               (not (and body# (= [body#] attrs#)))))
+           (d/datoms db# :aevt :db/excise))))
+
+;; The same expression is expanded in the installed native function below.
 (def body
   '(let [{:keys [scope flags function owner revision journal operation command ops provisional
-                 submitted-clock prefixes]} plan
+                 submitted-clock prefixes expected-erasure]} plan
          value (fn [e a] (:v (first (d/datoms db :eavt e a))))
          [ident installed-at] function
          changed (into #{} (keep (fn [[a v]] (when (not= v (value scope a)) a))) flags)]
@@ -72,8 +82,12 @@
      (when (or (some #(not (mutable-flags %)) changed)
                owner-witness-check
                (not= installed-at (:tx (first (d/datoms db :eavt (d/entid db ident) :db/fn))))
-               (when-let [a (d/entid db :triplex.scope/erasure-ledger)] (value scope a))
-               (seq (d/datoms db :aevt :db/excise)))
+               (let [seen (reduce (fn [out [a v]] (assoc out a v)) {} flags)]
+                 (if (:triplex.scope/erasure-ledger seen)
+                   (not (and (integer? expected-erasure)
+                             (= expected-erasure (get seen :triplex.scope/erasure-seq))))
+                   (some? expected-erasure)))
+               (changes-application-rows? db))
        (throw (ex-info "TRIPLEX_CONFLICT" {:triplex.subject/stale true})))
      (when (or (seq changed) (d/entid db [:triplex.entity/id journal]))
        (throw (ex-info "TRIPLEX_SUBJECT_REPLAN" {})))
@@ -95,14 +109,19 @@
                (map stamp) ops)))))
 
 (def code
-  (walk/postwalk-replace {'stamp-rows commit/compiled-stamp-code
+  (walk/postwalk
+    (fn [node]
+      (if (and (seq? node) (= 'changes-application-rows? (first node)))
+        (macroexpand-1 (cons `changes-application-rows? (rest node)))
+        node))
+    (walk/postwalk-replace {'stamp-rows commit/compiled-stamp-code
                           'mutable-flags mutable-flags
                           'check-history (if ordered-ids? ordered-history-guard history-guard)
                           ;; [DX-PREP1] Why: the numeric owner must still own this public ID in db-before.
                           ;; Rejected: trusting the peer's lookup alone (an ID change can leave its revision intact).
                           'owner-witness-check (when numeric-owner?
                                                  '(not= (:owner-key plan) (value owner :triplex.entity/id)))}
-                         body))
+                         body)))
 (def source-hash (schema/sha256 (pr-str code)))
 (def ident (keyword "triplex.subject" (str "v-" (subs source-hash 0 24))))
 
@@ -181,8 +200,11 @@
                 :else op)))
       ops)))
 
-(defn plan [db [[commit-ident p]] input]
-  (let [{:keys [scope source entities live ops new-ids times record-clocks journal-entities provisional]} p
+(defn- plan-with-erasure [db [[commit-ident p]] input expected-erasure]
+  (let [{:keys [scope source entities live new-ids times record-clocks journal-entities provisional]} p
+        redundant-fence [:db/cas scope erase-generation expected-erasure expected-erasure]
+        matching (when (some? expected-erasure) (filter #{redundant-fence} (:ops p)))
+        ops (if (some? expected-erasure) (vec (remove #{redundant-fence} (:ops p))) (:ops p))
         ids (into #{} (keep :triplex.entity/id) (filter map? ops))
         journal (first journal-entities)
         subject (first (disj ids journal))]
@@ -211,8 +233,11 @@
                    (= true (:triplex.scope/strict-record-clocks f)) (= true (:triplex.scope/position-regular f))
                    (= 2 (:triplex.scope/feed-version f))
                    (not-any? f [:triplex.scope/feed-irregular :triplex.scope/irregular :triplex.scope/packed-journals])
-                   (not (:triplex.scope/erasure-ledger f))
-                   (not (seq (d/datoms db :aevt :db/excise)))
+                   (if (some? expected-erasure)
+                     (and (= 1 (count matching)) (:triplex.scope/erasure-ledger f)
+                          (= expected-erasure (get f erase-generation)))
+                     (not (:triplex.scope/erasure-ledger f)))
+                   (not (changes-application-rows? db))
                    (not (d/entid db [:triplex.entity/id journal]))
                    (integer? revision) (<= revision source (scope/head-position db scope))
                    (= 1 (count (:command-ids p))) (string? claim)
@@ -233,10 +258,14 @@
                 (cond-> {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
                          :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
                          :provisional provisional :submitted-clock (reduce max (map double clocks))
-                         :prefixes prefixes
+                         :prefixes prefixes :expected-erasure expected-erasure
                          :ops (render-ops ops owner subject prior (set new-ids))}
                   numeric-owner? (assoc :owner-key subject)
                   ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))
+
+(defn plan
+  ([db data input] (plan-with-erasure db data input nil))
+  ([db data input expected-erasure] (plan-with-erasure db data input expected-erasure)))
 
 (defn replan? [failure]
   (some (fn [cause]
@@ -247,7 +276,7 @@
   (let [durable-flags #(remove (comp mutable-flags first) %)]
     (and (= (durable-flags (:flags plan)) (durable-flags (scope-witness db (:scope plan))))
          (= (second (:function plan)) (installed db))
-         (not (seq (d/datoms db :aevt :db/excise))))))
+         (not (changes-application-rows? db)))))
 
 (defn verify-report [report {:keys [operation command journal owner ordered-bounds]}]
   (let [db (:db-after report) t (d/basis-t db) tx (d/t->tx t)
