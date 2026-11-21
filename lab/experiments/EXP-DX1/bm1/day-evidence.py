@@ -15,7 +15,8 @@ HERE = Path(__file__).resolve().parent
 SERVER = Path("/var/tmp/triplex-bm1")
 MAC = Path.home()/"Claude/Projects/triplex-db-2/evidence"
 SLOTS = {
-    "bench3-control": ("bench3", ("tuned-control", "receive-start", "receive-end", "seed-verification.json",
+    "bench3-control": ("bench3", ("tuned-control", "tuned-control-preflight", "control-preflight.log",
+        "receive-start", "receive-end", "seed-verification.json",
         "control-producer.sha256", "control.log", "wal-mount.json", "host-profile.txt",
         "control-build/results/IMAGE-INPUTS.SHA256SUMS",
         "control-build/results/java25-image.json", "control-build/results/images.json", "control-build/results/lscpu.txt")),
@@ -105,7 +106,8 @@ def archive(name, revision):
                  "bm1n21-publish-roster.service"]
     if name == "bench3-control":
         units = ["triplex-bench3-bootstrap.service", "triplex-bench3-java25.service",
-                 "triplex-bench3-seed-verify.service", "triplex-bench3-tuned-control.service"]
+                 "triplex-bench3-seed-verify.service", "triplex-bench3-tuned-control.service",
+                 "triplex-bench3-tuned-retry.service"]
     states = {}
     for unit in units:
         state = subprocess.check_output(["systemctl", "show", unit, "-p",

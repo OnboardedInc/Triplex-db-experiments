@@ -49,4 +49,4 @@ adapter=$root/scale-tuned-only.sh
 sed 's/for cell in 1-scale-base-S 1-scale-cache-S 1-scale-wal-zgc-S; do/for cell in 1-scale-wal-zgc-S; do/' "$raw" > "$adapter"
 sha256sum "$raw" "$adapter" > "$root/control-producer.sha256"
 printf 'item=bench3-tuned-control state=running since=%s next=collect\n' "$(date -u +%FT%TZ)" > "$status"
-exec node lab/bin/heavy.mjs --label DX-BM1-bench3-control -- timeout --kill-after=30s 1400s   bash "$adapter" scale-timed "$out" "$pin" "$root/verified-seed"   77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b   1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154   --pg-data "$root/verified-seed/cluster" --wal-mount "$wal"
+exec node lab/bin/heavy.mjs --label DX-BM1-bench3-control -- timeout --kill-after=30s 1400s   bash "$adapter" scale-timed "$out" "$pin" "$root/seed-metadata/arm-d7-wfix-pool-seed"   77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b   1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154   --pg-data "$root/verified-seed/cluster" --wal-mount "$wal"

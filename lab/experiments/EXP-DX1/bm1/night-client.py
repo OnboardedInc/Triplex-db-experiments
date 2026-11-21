@@ -22,6 +22,10 @@ DEST=os.environ.get("BENCH_SERVER","")
 KEY=os.environ.get("DX_BENCH_KEY",str(Path.home()/".ssh/triplex_bench_ed25519"))
 SSH=["ssh","-n","-F","/dev/null","-i",KEY,"-o","IdentitiesOnly=yes","-o","ForwardAgent=no",
      "-o","StrictHostKeyChecking=yes","-o","BatchMode=yes","-o","ConnectTimeout=8",DEST]
+if pinned_hosts := os.environ.get("DX_BENCH_KNOWN_HOSTS"):
+    # [DX-BM1] Why: keep a new rental's pinned key separate from the operator's SSH configuration.
+    # Rejected: relaxing host-key checks for evidence collection.
+    SSH[-1:-1] = ["-o", "UserKnownHostsFile="+pinned_hosts, "-o", "GlobalKnownHostsFile=/dev/null"]
 
 
 def remote(cmd,timeout=45):
