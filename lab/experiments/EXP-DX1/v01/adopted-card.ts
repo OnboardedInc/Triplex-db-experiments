@@ -10,7 +10,7 @@ import { launchProfile } from "../jvm1/launch.mjs";
 import { launchIntegration, selectedWriter, serverStages, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
 import { cellPath, lastServerCell, ratedTape, serverCellSeconds, serverRates, writerCredits, type CreditMode, type WindowSeconds } from "./server-workload.ts";
 
-import { operationId } from "../scale1/decision/plan.ts";
+import { operationId } from "../scale1/decision/operation-id.ts";
 import { summarizeTelemetry, type Telemetry } from "./cell-telemetry.ts";
 import { p99Miss, quietMiss } from "./card-verdict.ts";
 import { windowStats, type WindowWrite } from "./windows.ts";

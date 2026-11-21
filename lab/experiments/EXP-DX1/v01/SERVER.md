@@ -25,7 +25,7 @@ At 300 seconds, the loaded cells offer 50, 235, 394 and 620 saves/s. Each has a 
 
 The default credit selection inherits the current integration barrier with six credits. `--credit-mode barrier` requests it explicitly. `--credit-mode rolling:N` validates the requested credits and stops before launching until DX-PREP1 publishes the writer selector. Match the writer mode, seed cut, credit count and tape in both cards before comparing.
 
-To retain five-minute windows under 300 minutes, drop the grouped comparison arm first. That removes up to 88 minutes and yields a **296-minute, USD 5.38** proposed allocation. The fresh card already establishes the slower grouped baseline. Dropping 620 alone saves 30 minutes across the three treatments and leaves 354 minutes. Keep 620 if the immediate question is where rolling saturates. The supplied full command includes all four arms.
+To retain five-minute windows under 300 minutes, drop the grouped comparison arm first. That removes up to 88 minutes and yields a **296-minute, USD 5.38** proposed allocation. The fresh card already establishes the slower grouped baseline. Dropping that arm also leaves the paired mixed-ID history check open for the shortened campaign. Dropping 620 alone saves 30 minutes across the three treatments and leaves 354 minutes. Keep 620 if the immediate question is where rolling saturates. The supplied full command includes all four arms.
 
 ## Counters and retention
 
