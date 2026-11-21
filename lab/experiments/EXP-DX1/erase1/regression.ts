@@ -168,7 +168,7 @@ export async function regression(
     // [DX-PREP1] Why: erase a real ordered assertion through all thirteen existing routes.
     // Rejected: checking the writer switch while the erased witness still uses a legacy ID.
     const identity = orderedSaveIdentity();
-    const value = "ordered-witness/" + identity.token;
+    const value = "ordered-witness-" + identity.token;
     const input = command(
       "ordered-erasure-witness",
       [{ e: entityId, a: attribute, v: { type: "string", value } }],
