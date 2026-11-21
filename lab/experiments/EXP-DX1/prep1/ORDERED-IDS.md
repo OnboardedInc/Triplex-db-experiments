@@ -24,3 +24,20 @@ The copied single-gateway server arm had a 2 GiB transactor object cache. All th
 At 235 and 394, at least 85.4% and 78.4% of saves did their CAS without an EAVT storage fetch. The earlier 32 MiB diagnostic with disjoint owners measured 0.99 CAS fetches/save. I kept the existing owner revision for this round. The server tape revisits people and cannot establish a cache-residency guarantee for a million uniformly touched owners. A new revision entity would also need atomic updates on grouped, legacy and prepared writes. [Bound archive reading](SERVER-READING.md) · [Checksums](SHA256SUMS)
 
 The first native implementation produced 28-character assertion IDs. The protected regression found the raw journal masked them correctly but the SDK dropped the typed change because the core TripleId brand requires 26 characters. The 26-character format above preserves the existing contract. The first diagnostic is retained as failed-format evidence. [Checksums](SHA256SUMS)
+
+## Paired 32 MiB diagnostic with 26-character IDs
+
+Both arms committed and read back all 96 saves at 24 outstanding on 1,152 deep subjects per arm. The numeric-owner arms differed in the identity format and ordered guard. The original K/S numbers come from the earlier fixture, while the last two columns come from the new matched run. The observer attributed each fetch and reconciled each arm with its Datomic SQL total.
+
+| Serial lookup or cost | Earlier K | Earlier original S | Hashed, numeric owner | Ordered, numeric owner |
+| --- | ---: | ---: | ---: | ---: |
+| Historical AVET range or point, SQL reads/save | 0 | 3.65 | 5.917 | 0.021 |
+| Lazy AVET iteration outside a named call, reads/save | 0 | 0.63 | 0 | 0 |
+| Historical AVET API calls/save | 0 | 11 | 11 | 1 |
+| Owner CAS, EAVT reads/save | 0 | 0.99 | 0.021 | 0 |
+| Numeric owner public-ID witness, EAVT reads/save | 0 | absent | 1.000 | 1.000 |
+| Native row and retirement redundancy, AEVT reads/save | 1.12 | 1.14 | 1.146 | 1.167 |
+| Remaining calls and unscoped reads/save | 0 | about 0.6 | 0.281 | 0.406 |
+| **All SQL reads/save** | **1.12** | **7.02** | **8.365** | **2.594** |
+
+Historical reads fell from 568 to 2 and total reads from 803 to 249. The 1.5 reads/save target was missed. The exact public-ID witness accounted for one of the remaining reads on every ordered save. It protects against an identity change that leaves the revision untouched. The native CAS itself fetched nothing on the ordered arm. Diagnostic apply wall averaged 33.68 and 27.52 ms/save, of which historical lookup spans accounted for 18.30 and 0.057 ms/save. VM CPU pressure avg10 was 8.72–20.70% and 9.05–18.82%, respectively. The Mac wall figures include contention and instrumentation. [Original attribution](LOOKUP-READING.md) · [Checksums](SHA256SUMS)

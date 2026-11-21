@@ -1,10 +1,10 @@
-Not yet. The old per-person writer reached 111 of 394 offered saves/s in one database. The corrected ordered IDs need their fresh diagnostic and server run.
+Not yet. The old per-person writer reached 111 of 394 offered saves/s in one database. Ordered IDs cut small-cache reads from 8.37 to 2.59 per save, above the 1.5 target.
 The five-arm server comparison uses source `d3bd6a8b3e6924ebf5c1b53e77a5ca2d78d6b2f2`.
 Run `DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-storage -- bash lab/experiments/EXP-DX1/prep1/server.sh storage "$OUT" d3bd6a8b3e6924ebf5c1b53e77a5ca2d78d6b2f2 "$SEALED"`.
 Set `SEALED` to the earlier comparison’s sealed campaign directory and `OUT` to a new absolute directory. The hard limit is 89 minutes 20 seconds.
 The comparison uses one gateway, the same ten-account seed and the same saves at 235 and 394 offers/s. It measures the quiet account alone and beside nine neighbours.
-Historical assertion ID probes fetched at least half of the storage reads in the small-cache SQL trace. The owner revision check fetched about one segment per save.
-With native prefetch enabled, the hint arm fetched 976 segments against 457 without hints. The 32 MiB Mac fixture does not establish the effect at server cache sizes.
+Ordered IDs took the history check from 568 storage reads to two over 96 saves. The public-ID check for the owner still fetched one segment per save at a 32 MiB cache.
+The revision compare-and-set itself fetched no segments in the ordered arm. The earlier server trace bounded it to at most 0.24 reads per save at 394 offered.
 The fifth arm changes only the old per-person writer’s object cache from 2 to 16 GiB. It can show whether cache alone takes the reads off the critical path.
 
 **North star.** Durable, exact small saves and quiet-account tails in one database. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
@@ -16,6 +16,10 @@ The fifth arm changes only the old per-person writer’s object cache from 2 to 
 **Owner revision.** At the server's 2 GiB cache size, total EAVT storage loads capped CAS costs at 0.151 and 0.239 reads/save at 235 and 394 offered. At least 85.4% and 78.4% of saves did no EAVT fetch at all. I kept the existing CAS. This bound applies to the recorded tape and gives no uniform-access result for a million people. [Revision reading](ORDERED-IDS.md#owner-revision-at-the-server-cache-size)
 
 **Typed compatibility.** The first 28-character experiment reduced reads but tripped the typed journal's existing TripleId validation. It was corrected to reserve two ordinal characters within the original 26-character format.
+
+**SQL diagnostic.** History checks fell from 11 calls per save to one and read counts from 568 to 2. Total SQL reads fell from 803 to 249 across two matched 96-save arms. The ordered arm still spent 1.00 reads/save on the public-ID witness and 1.17 on native row redundancy. All 96 used ordered IDs, committed, and read back the same journal changes and exact pinned business rows. [Lookup comparison](ORDERED-IDS.md#paired-32-mib-diagnostic-with-26-character-ids) · [Checksums](SHA256SUMS)
+
+**Ordered correctness.** The native suite passed 27 tests and 54,079 assertions. Nine SQL tests and 760 assertions also passed, including a retired-ID collision under another owner. I stopped the gateway after the native commit, reopened PostgreSQL with its synchronous standby, and checked that both resend forms resolved to the exact original receipt, journal ID and position. All 13 removal routes passed against a persisted ordered assertion with a positive typed-journal witness before removal. [Checksums](SHA256SUMS)
 
 **Why reads happen.** The Mac trace reconciled 106 K and 674 S fetches to stock native counts. K’s were all native AEVT row/retirement redundancy. S’s historical AVET check accounted for 350 fetches within its span, owner CAS for 95, and another 60 appeared under lazy AVET iteration. Operation and command point checks fetched no SQL on this tape. Three unscoped S EAVT entity keys were unavailable. In the earlier server run, the grouped arm reached 179.5 and 181.7 saves/s and the per-person arm reached 140.6 and 111.1 at 235 and 394 offered. [Lookup table](LOOKUP-READING.md) · [Server reading](SERVER-READING.md)
 
@@ -39,4 +43,4 @@ Solo cells forecast 3.5 saves/s. K under load forecasts eight saves per append a
 
 **Grouped fallback proposal.** At 235 offered, the measured gateway spent 39.40 of 44.31 ms per busy turn speculatively evaluating its members. Parallel same-basis preparation with one append projects 300–325 saves/s on two workers and 430–520 on four, if groups stay near eight and the storage reads overlap. It is a proposal. [One-page design and assumptions](GROUPED-PREPARATION.md)
 
-**Evidence audit.** The probe checks exact acknowledgements, journal changes and pinned bytes for the fresh fixture. Its collector binds stage hashes, image, reservation, attempt, database and native t to the exact apply interval. The SQL restart gate binds the hint, source and flushes to matching receipt bytes. The launcher checks the original seal and owned resource cleanup. The server producer checks writer options and exact feed; its collector checks the bound tape, accepted receipt, native append, fresh JVM identity, cache/heap readback and tape positions before publication. No acceptance pins moved. [Checksums](SHA256SUMS)
+**Evidence audit.** The probe and collector check exact ACKs, journal changes and pinned bytes, binding staged hashes, image, holder, attempt, database and native transaction to the apply interval. The SQL restart verifier binds ordered IDs and replica flushes to the one durable receipt across the stop. The removal verifier checks its actual branded assertion and all 13 fresh routes against the source, nonce, slot and run cleanup. The native suite checks exact assertions and pins test source, image, run and terminal log. The server producer and collector bind the original seal, arm, source, tape and receipt to the native append, JVM readbacks and fresh stack. No acceptance pins moved. [Checksums](SHA256SUMS)
