@@ -3,7 +3,11 @@ import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
 import { setTimeout as sleep } from "node:timers/promises";
-import { DatomicClient, DatomicHttpError } from "../../../../packages/datomic/dist/index.js";
+import {
+  DatomicClient,
+  DatomicHttpError,
+  orderedSaveIdentity,
+} from "../../../../packages/datomic/dist/index.js";
 import { decodeRowText, encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import { ids, type Fact } from "../../../bench/lib/world.ts";
 import { FairTurns } from "./fair-turns.ts";
@@ -22,6 +26,7 @@ import {
   prediction,
   seconds,
   storageArms,
+  storageOrderedArm,
   storagePrediction,
   type Arm,
 } from "./server-tape.ts";
@@ -37,6 +42,7 @@ type Ack = {
   subjectSave?: string;
   subjectReplan?: boolean;
   subjectHintsAttached?: boolean;
+  subjectOrderedIds?: boolean;
   nativeComputeMs?: number;
   nativeIoStats?: unknown;
   timeline: Record<string, number>;
@@ -60,11 +66,16 @@ assert(
   campaign === "comparison" ||
     campaign === "fair" ||
     campaign === "owner" ||
-    campaign === "storage",
+    campaign === "storage" ||
+    campaign === "storage-ordered",
 );
-const campaignArms = { comparison: arms, fair: fairArms, owner: ownerArms, storage: storageArms }[
-  campaign
-];
+const campaignArms = {
+  comparison: arms,
+  fair: fairArms,
+  owner: ownerArms,
+  storage: storageArms,
+  "storage-ordered": [storageOrderedArm],
+}[campaign];
 const campaignSeconds = campaign === "comparison" ? seconds : fairSeconds;
 const creditsFor = (arm: Arm) => (arm.writer === "S" ? (arm.credits ?? requestedCredits) : 0);
 const root = (a: number, p: number) => ids.placement(accounts[a]!.first + p);
@@ -147,6 +158,7 @@ async function phase(
   fields: Map<string, Row[]>,
   frozen: Set<string>,
   cell: ReturnType<typeof cells>[number],
+  orderedIds: boolean,
   fair?: FairTurns,
 ) {
   const inputs = new Map<string, Input>();
@@ -161,8 +173,9 @@ async function phase(
     fairTurn?: number;
     sent?: number;
     reason?: string;
+    orderedToken?: string;
     ack?: Ack;
-    receipt?: { p: number; t: string; clock: number };
+    receipt?: { p: number; t: string; clock: number; journal?: string };
   }[] = [];
   const pending = new Set<Promise<void>>();
   const busy = new Set<string>(),
@@ -218,7 +231,8 @@ async function phase(
     if (o.extra) facts.push(fact(e, note, id));
     const previous = fields.get(e)!;
     const old = previous.filter((r) => r.attribute === answer || o.extra);
-    const input = command(id, facts, old);
+    const identity = orderedIds ? orderedSaveIdentity() : undefined;
+    const input = command(id, facts, old, true, false, identity);
     input.sourceK = Math.max(head, ...previous.map((r) => r.recorded_position));
     input.groupAccount = accounts[o.account]!.key;
     input.writeClass = "live";
@@ -235,6 +249,7 @@ async function phase(
       peer,
       fairTurn,
       sent,
+      orderedToken: identity?.token,
     };
     let known = false;
     const work = (async () => {
@@ -339,17 +354,30 @@ async function phase(
         root: input.entities![0]!,
         changes,
       });
+      if (rec.orderedToken) {
+        // [DX-PREP1] Why: the read peer must return the exact new journal identities submitted.
+        // Rejected: matching only a receipt's position or trusting the writer's ordered-path flag.
+        assert.equal(tx, orderedSaveIdentity(rec.orderedToken).transactionId);
+        assert.deepEqual(
+          decoded.map((row) => row.id).sort(),
+          input.rows
+            .filter((row) => row.entity_type === "_Transaction")
+            .map((row) => row.id)
+            .sort(),
+        );
+      }
+      const journal = rec.orderedToken ? tx : undefined;
       if (rec.ack) {
         assert.equal(Number(rec.ack.position.v), position);
         assert.equal(rec.ack.recordedAt.v, clock);
-        rec.receipt = { p: position, clock, t: rec.ack.t.v };
+        rec.receipt = { p: position, clock, t: rec.ack.t.v, journal };
       } else {
         const observed = await reader.operation(db, id);
         assert.equal(observed.operationId, id);
         assert.equal(Number(observed.position?.v), position);
         assert.equal(observed.recordedAt?.v, clock);
         assert(observed.t?.t === "long");
-        rec.receipt = { p: position, clock, t: observed.t.v };
+        rec.receipt = { p: position, clock, t: observed.t.v, journal };
       }
     }
   }
@@ -432,14 +460,13 @@ async function armRun(
       );
       assert.equal(Boolean(got.subjectNumericOwner), Boolean(arm.numericOwner));
       assert.equal(Boolean(got.subjectPrefetch), Boolean(arm.prefetch));
-      if (b) assert.match(got.subjectFunction, /^:triplex\.subject\/v-[0-9a-f]{24}$/);
-      if (campaign === "storage" && b)
-        assert.equal(
-          got.subjectFunction,
-          arm.numericOwner
-            ? ":triplex.subject/v-164887e4b4f0bb61c4213179"
-            : ":triplex.subject/v-b437f5017e1f10be90d166de",
-        );
+      assert.equal(Boolean(got.subjectOrderedIds), Boolean(arm.orderedIds));
+      // [DX-PREP1] Why: match the fresh, source-bound installed function and verify it again on every ACK.
+      // Rejected: copying a function identifier from a JVM with different generated Clojure symbols.
+      if (b) {
+        assert.match(got.subjectFunction, /^:triplex\.subject\/v-[0-9a-f]{24}$/);
+        assert.match(got.subjectFunctionTx, /^[1-9][0-9]*$/);
+      }
       options.push(got);
     }
     const opened = await reader.create(baseline.scope, "lean", true, 35_000);
@@ -466,7 +493,17 @@ async function armRun(
     const frozen = new Set<string>();
     let cut = head;
     for (const cell of schedule) {
-      const result = await phase(clients, reader, db, cut, fields, frozen, cell, fair);
+      const result = await phase(
+        clients,
+        reader,
+        db,
+        cut,
+        fields,
+        frozen,
+        cell,
+        !!arm.orderedIds,
+        fair,
+      );
       cut = result.after;
       save(`${out}/${cell.label}.json`, result);
     }
@@ -549,6 +586,7 @@ async function preflight(out: string, arm: Arm) {
         writePath: { function: arm.writer === "S" ? "mock/subject" : "mock/grouped" },
         ...(arm.writer === "S" ? { subjectSave: "mock/subject" } : {}),
         ...(arm.prefetch ? { subjectHintsAttached: true } : {}),
+        ...(arm.orderedIds ? { subjectOrderedIds: true } : {}),
       };
     },
   } as unknown as DatomicClient;
@@ -578,6 +616,7 @@ async function preflight(out: string, arm: Arm) {
         fields,
         new Set(),
         cell,
+        !!arm.orderedIds,
         fair,
       ),
     );
@@ -630,7 +669,7 @@ else if (action === "arm") {
           predicted:
             campaign === "owner"
               ? ownerPrediction(arm, rate, label.endsWith("-alone"))
-              : campaign === "storage"
+              : campaign === "storage" || campaign === "storage-ordered"
                 ? storagePrediction(arm, rate, label.endsWith("-alone"))
                 : campaign === "fair"
                   ? fairPrediction(arm, rate, label.endsWith("-alone"))

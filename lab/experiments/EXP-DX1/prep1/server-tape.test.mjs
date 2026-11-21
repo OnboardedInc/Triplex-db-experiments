@@ -9,6 +9,7 @@ import {
   ownerArms,
   ownerPrediction,
   storageArms,
+  storageOrderedArm,
   storagePrediction,
 } from "./server-tape.ts";
 
@@ -83,10 +84,14 @@ test("grouped, original prepared and numeric-owner arms share the same shortened
   }
 });
 
-test("the five storage arms reuse the real field tape and isolate the cache and hint changes", () => {
-  const [grouped, old, numeric, hinted, cache] = storageArms;
+test("the six storage arms reuse the real field tape and isolate the cache, hint and identity changes", () => {
+  const [grouped, old, numeric, hinted, cache, ordered] = storageArms;
   assert.deepEqual({ ...cache, id: old.id, cacheGiB: old.cacheGiB }, old);
   assert.deepEqual({ ...hinted, id: numeric.id, prefetch: false }, numeric);
+  assert.equal(ordered, storageOrderedArm);
+  const { orderedIds, ...orderedBase } = ordered;
+  assert.equal(orderedIds, true);
+  assert.deepEqual({ ...orderedBase, id: numeric.id }, numeric);
   assert.equal(grouped.writer, "K");
   const expected = cells(grouped).map(({ label, tapeSha, duration }) => [label, tapeSha, duration]);
   for (const arm of storageArms) {

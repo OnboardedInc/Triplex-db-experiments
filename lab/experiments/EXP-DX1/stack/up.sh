@@ -219,6 +219,7 @@ prepw=${DX_PREP1_WRITERS:-1}
 subject_save=${TX2_SUBJECT_SAVE:-0}
 subject_numeric_owner=${TX2_SUBJECT_NUMERIC_OWNER:-0}
 subject_prefetch=${TX2_SUBJECT_PREFETCH:-0}
+subject_ordered_ids=${TX2_SUBJECT_ORDERED_IDS:-0}
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prefix == tx2-dxprep1-* && $prepw =~ ^(1|2|4)$ && $publish == true ]]
   [[ ${DX_PREP1_SUBJECT:-0} =~ ^[01]$ && -z $seed_volume ]]
@@ -231,6 +232,7 @@ fi
 [[ $subject_save =~ ^[01]$ && $subject_numeric_owner =~ ^[01]$ ]]
 [[ $subject_numeric_owner == 0 || $subject_save == 1 ]]
 [[ $subject_prefetch =~ ^[01]$ && ( $subject_prefetch == 0 || $subject_save == 1 ) ]]
+[[ $subject_ordered_ids =~ ^[01]$ && ( $subject_ordered_ids == 0 || ( $subject_save == 1 && $subject_prefetch == 0 ) ) ]]
 network_tuning=()
 if [[ ${DX_IDLE_TCP:-default} != default ]]; then
   # [DX-T1-10] Why: test slow-start-after-idle only in this attempt's endpoint namespaces, leaving guest/global settings alone.
@@ -487,7 +489,8 @@ for role in "${gateway_roles[@]}"; do
   # [DX-PREP1] Why: carry the one opt-in setting through the normal writer launcher.
   # Rejected: coupling activation to trace collection or installing the writer on reader peers.
   if [[ $mode == w ]]; then
-    field_policy+=(-e "TX2_SUBJECT_SAVE=$subject_save" -e "TX2_SUBJECT_NUMERIC_OWNER=$subject_numeric_owner" -e "TX2_SUBJECT_PREFETCH=$subject_prefetch")
+    field_policy+=(-e "TX2_SUBJECT_SAVE=$subject_save" -e "TX2_SUBJECT_NUMERIC_OWNER=$subject_numeric_owner"
+      -e "TX2_SUBJECT_PREFETCH=$subject_prefetch" -e "TX2_SUBJECT_ORDERED_IDS=$subject_ordered_ids")
   fi
   if [[ $mode == w && -n ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
     [[ ${DX_PREDECESSOR_LOOKUP:-} =~ ^[01]$ && $DX_WRITE_OPTIONS_ATTEMPT =~ ^[a-f0-9-]{36}$ ]] || exit 2

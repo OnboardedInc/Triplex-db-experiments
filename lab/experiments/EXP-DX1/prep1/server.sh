@@ -10,7 +10,7 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 here=lab/experiments/EXP-DX1/prep1
 stack=lab/experiments/EXP-DX1/stack
-mode=${1:?expected run, storage, owner, fair or arm}
+mode=${1:?expected run, storage, storage-ordered, owner, fair or arm}
 out=${2:?provide an absolute new output directory}
 source=${3:?provide the pinned Git commit}
 [[ "$out" == /* && "$source" =~ ^[a-f0-9]{40}$ && $(git rev-parse HEAD) == "$source" && -z $(git status --porcelain) ]]
@@ -27,7 +27,7 @@ export DX_GW_WRITE_ENTITY_CACHE_BYTES=268435456 DX_GW_READ_ENTITY_CACHE_BYTES=26
 producer=(node --import tsx "$here/server-produce.ts")
 tx_memory=10g tx_cache=2g
 tx_java='-Xms1g -Xmx6g -XX:+UseG1GC -XX:MaxGCPauseMillis=50'
-if [[ $mode == arm && ${DX_PREP1_CAMPAIGN:-comparison} == storage ]]; then
+if [[ $mode == arm && ${DX_PREP1_CAMPAIGN:-comparison} =~ ^storage(-ordered)?$ ]]; then
   # [DX-PREP1] Why: reserve the same JVM and container budget for every cache comparison.
   # Rejected: changing the heap or CPU as well as the object cache between the two S arms.
   tx_memory=30g
@@ -56,14 +56,15 @@ clean() {
 on_exit() { ret=$?; trap - EXIT; clean; exit "$ret"; }
 trap on_exit EXIT
 trap 'exit 143' TERM INT
-if [[ $mode == fair || $mode == owner || $mode == storage ]]; then
+if [[ $mode == fair || $mode == owner || $mode == storage || $mode == storage-ordered ]]; then
   [[ $# == 4 ]]
   # [DX-PREP1] Why: cap time from seed verification through the last cleanup.
   # Rejected: four independent timeouts that let restore and teardown exceed the hour.
   total=3520
-  if [[ $mode == storage ]]; then total=5320; fi
+  if [[ $mode == storage ]]; then total=7000; fi
+  if [[ $mode == storage-ordered ]]; then total=1050; fi
   exec timeout --kill-after=40s "${total}s" bash "$here/server.sh" "$mode-timed" "$out" "$source" "$4"
-elif [[ $mode == fair-timed || $mode == owner-timed || $mode == storage-timed ]]; then
+elif [[ $mode == fair-timed || $mode == owner-timed || $mode == storage-timed || $mode == storage-ordered-timed ]]; then
   [[ $# == 4 && $4 == /* && ! -e $out && -z $(docker ps -q) ]]
   parent=$(realpath -e "$4")
   [[ -d $parent && -f $parent/SEAL.sha256 && $(head -c 5 "$parent/seed.pgdump") == PGDMP ]]
@@ -94,7 +95,12 @@ PY
   arm_limit=830
   if [[ $mode == owner-timed ]]; then cells=(1-group-K 1-old-S 1-fixed-S); fi
   if [[ $mode == storage-timed ]]; then
-    cells=(1-group-K 1-old-S 1-fixed-S 1-prefetch-S 1-cache-S)
+    cells=(1-group-K 1-old-S 1-fixed-S 1-prefetch-S 1-cache-S 1-ordered-S)
+    arm_limit=950
+  elif [[ $mode == storage-ordered-timed ]]; then
+    # [DX-PREP1] Why: append only the new arm after the earlier pin has started its controls.
+    # Rejected: repeating five completed controls or drawing a different seed for the new arm.
+    cells=(1-ordered-S)
     arm_limit=950
   fi
   for cell in "${cells[@]}"; do
@@ -105,7 +111,7 @@ PY
 elif [[ $mode == run ]]; then
   [[ $# == 3 && -z $(docker ps -q) ]]
   export DX_PREP1_CAMPAIGN=comparison
-  export TX2_SUBJECT_NUMERIC_OWNER=0 TX2_SUBJECT_PREFETCH=0
+  export TX2_SUBJECT_NUMERIC_OWNER=0 TX2_SUBJECT_PREFETCH=0 TX2_SUBJECT_ORDERED_IDS=0
   mkdir "$out"
   tag=$(nonce); tag=${tag%%-*}
   printf '%s\n' "$tag" > "$prefix_file"
@@ -147,7 +153,9 @@ elif [[ $mode == arm ]]; then
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == owner ]]; then
     [[ $cell =~ ^1-(group-K|old-S|fixed-S)$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == storage ]]; then
-    [[ $cell =~ ^1-(group-K|old-S|fixed-S|prefetch-S|cache-S)$ && $(cat "$out/source") == "$source" ]]
+    [[ $cell =~ ^1-(group-K|old-S|fixed-S|prefetch-S|cache-S|ordered-S)$ && $(cat "$out/source") == "$source" ]]
+  elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == storage-ordered ]]; then
+    [[ $cell == 1-ordered-S && $(cat "$out/source") == "$source" ]]
   else
     [[ $cell =~ ^(1|2|4)-(0-K|1-S|2-S|3-K)$ ]]
   fi
@@ -157,10 +165,11 @@ elif [[ $mode == arm ]]; then
   export DX_PREP1_DUMP="$dump" DX_PREP1_DUMP_SHA=$(awk '$2=="seed.pgdump" {print $1}' "$out/SEAL.sha256")
   export DX_PREP1_WRITERS=${cell%%-*}
   export DX_PREP1_SUBJECT=0 DX_GROUP_COMMIT=1 DX_LIVE_PRIORITY=1
-  export TX2_SUBJECT_NUMERIC_OWNER=0 TX2_SUBJECT_PREFETCH=0
+  export TX2_SUBJECT_NUMERIC_OWNER=0 TX2_SUBJECT_PREFETCH=0 TX2_SUBJECT_ORDERED_IDS=0
   if [[ $cell == *-S ]]; then export DX_PREP1_SUBJECT=1 DX_GROUP_COMMIT=0 DX_LIVE_PRIORITY=0; fi
-  if [[ $cell == 1-fixed-S || $cell == 1-prefetch-S ]]; then export TX2_SUBJECT_NUMERIC_OWNER=1; fi
+  if [[ $cell == 1-fixed-S || $cell == 1-prefetch-S || $cell == 1-ordered-S ]]; then export TX2_SUBJECT_NUMERIC_OWNER=1; fi
   if [[ $cell == 1-prefetch-S ]]; then export TX2_SUBJECT_PREFETCH=1; fi
+  if [[ $cell == 1-ordered-S ]]; then export TX2_SUBJECT_ORDERED_IDS=1; fi
   export DX_WRITE_OPTIONS_ATTEMPT=$(nonce)
   # Hold total configured writer heap and the writer CPU mask fixed across peer counts.
   export DX_GW_WRITE_JAVA_OPTS="-Xms$((512/DX_PREP1_WRITERS))m -Xmx$((4096/DX_PREP1_WRITERS))m -XX:+UseG1GC"

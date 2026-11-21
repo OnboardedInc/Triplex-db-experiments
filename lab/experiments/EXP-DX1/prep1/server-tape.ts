@@ -14,6 +14,7 @@ export type Arm = {
   numericOwner?: boolean;
   prefetch?: boolean;
   cacheGiB?: 2 | 16;
+  orderedIds?: boolean;
 };
 export const arms: Arm[] = widths.flatMap((writers) =>
   (["K", "S", "S", "K"] as const).map((writer, repeat) => ({
@@ -36,6 +37,16 @@ export const ownerArms: Arm[] = [
   { id: "1-old-S", writers: 1, writer: "S", reverse: false, numericOwner: false },
   { id: "1-fixed-S", writers: 1, writer: "S", reverse: false, numericOwner: true },
 ];
+export const storageOrderedArm: Arm = {
+  id: "1-ordered-S",
+  writers: 1,
+  writer: "S",
+  reverse: false,
+  numericOwner: true,
+  prefetch: false,
+  cacheGiB: 2,
+  orderedIds: true,
+};
 export const storageArms: Arm[] = [
   ...ownerArms.map((arm): Arm => ({ ...arm, cacheGiB: 2, prefetch: false })),
   {
@@ -56,6 +67,7 @@ export const storageArms: Arm[] = [
     prefetch: false,
     cacheGiB: 16,
   },
+  storageOrderedArm,
 ];
 const shortened = (arm: Arm) => arm.credits !== undefined || arm.numericOwner !== undefined;
 export const operation = (label: string, ordinal: number) => `${label}-${ordinal}`;
@@ -165,6 +177,21 @@ export function ownerPrediction(arm: Arm, rate: number, quietOnly: boolean) {
 export function storagePrediction(arm: Arm, rate: number, quietOnly: boolean) {
   const index = Number(rate === 394);
   const old = ownerPrediction(arm, rate, quietOnly);
+  if (arm.orderedIds) {
+    // [DX-PREP1] Why: keep residual native redundancy, owner checks and the one-save append in the price.
+    // Rejected: projecting the Mac's near-zero history reads as a zero-read serial point.
+    const solo = rate === 235 ? 45 : 22;
+    const quietP99Ms = quietOnly ? solo : rate === 235 ? 550 : 950;
+    return {
+      serving: quietOnly ? 3.5 : rate === 235 ? 225 : 205,
+      savesPerAppend: 1,
+      p99Ms: quietOnly ? solo : null,
+      quietP99Ms,
+      quietRatio: quietP99Ms / solo,
+      sqlReadsPerSave: quietOnly ? 2.6 : rate === 235 ? 2 : 2.2,
+      nativeApplyMsPerSave: quietOnly ? 2.6 : rate === 235 ? 2.2 : 3.7,
+    };
+  }
   // [DX-PREP1] Why: price only the reads that the lookup trace says are movable.
   // Rejected: treating a 16 GiB cache or an attached hint as proof of a storage-free apply.
   const treatment = arm.prefetch
