@@ -36,3 +36,19 @@ Pinned AGE1 `efd0c7560` failed the archived-cut entry probe with `ReferenceError
 The extension launched at 11:10:20 UTC and admitted at 11:13:47 UTC. Admission retained all three archived cycle rows, including initial maintenance. The running attempt reported the exact 514,741,853-record start and began offering new writes. Root had 455.63 GB free and spare had 268.19 GB free at the launch observation. The upstream follow-up kept the loading profile unchanged. [Launch observation digest](evidence/age-v01-bulk-d-progress.sha256) · [Upstream bottleneck analysis](https://github.com/OnboardedInc/Triplex-db-experiments/blob/a0eee1ea1cfe85a45511854f658af08a5435685f/lab/experiments/EXP-DX1/age1/LOAD-READOUT.md)
 
 The prepared measurement launch verifies the completed load's terminal state, live-attempt admission, seed and scope identities, phase nonce, final checkpoint, population, cycles and per-attempt artifact bytes. It stages independently checked copies in a new parent so `measure-loaded` may advance its checkpoint without altering the 1B load certificate. A focused fixture checked three adoptions and eleven refusals, including stale admission, swapped transfer and mismatched phase attempt. Live measurement and native restore are pending the 1B cut and the disk reservation.
+
+<!-- extended progress -->
+
+## Extended continuation progress
+
+Running at the last checked cut of **538,928,597 records**, native t 39,822,789. Observation at 2026-11-21 11:55:06 UTC. Server 2 accrued USD 45.15. Root had 455.554 GB free, spare 267.568 GB. At the last completed cycle’s maintained rate of 10,033.06/s, the unfilled portion is 12.77 loading hours (USD 13.91).
+
+| Window | Indexed records | Added | Writing / cycle seconds | Writing / maintained records/s | Cores / 6 | Completed automatic index jobs | PGDATA before → after maintenance GB | Net GB vs prior cut | Hours remaining at maintained rate |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 3 | 538,928,597 | 24,186,744 | 1796.0 / 2410.7 | 13,467.03 / 10,033.06 | 3.71 | 50 | 166.367 → 166.358 | 0.621 | 12.77 |
+
+The first resumed cycle collected 2,810,703 retired segments and recorded 15,937,050 TOAST deletions. The directory moved from 166.367 to 166.358 GB across collection and vacuum, about 8.64 MB less allocated. The first complete cycle plus setup took about 44 minutes and USD 0.80 in server time. The next completed window will show reuse after this maintenance.
+
+[Progress evidence](evidence/age-v01-bulk-d-progress.sha256)
+
+<!-- end extended progress -->

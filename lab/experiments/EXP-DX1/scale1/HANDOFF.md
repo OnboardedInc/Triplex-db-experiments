@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 44.44 through 2026-11-21 11:16 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 45.15 through 2026-11-21 11:55 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The extended 1B load is writing on Server 2 as `triplex-scale1-v01-age-bulk-d`. It launched at 11:10:20 UTC and admitted at 11:13:47 UTC from the verified stopped cut at 514,741,853 records, logical head 4,034,400 and native t 38,613,452. The outer unit has a 24-hour ceiling. The native runner limits cumulative paid loading to 26 hours, includes the original 2 h 14 min 53 s, and stops after two consecutive completed cycles below 6,500 records/s including maintenance. The 400 GB directory cap and the six-core profile continue. The original stop, seed archive, stopped fresh template and two pristine fresh copies remain held. The next publication follows the first completed write and maintenance cycle. [Load evidence](AGE1-LOAD.md) · [Forecast](PREDICTIONS.md#age1-extended-continuation) · [Fresh scorecard](V01-FRESH.md)
+The extended continuation is writing or maintaining as `triplex-scale1-v01-age-bulk-d`. Running at the last checked cut of **538,928,597 records**, native t 39,822,789. At the last completed cycle’s maintained rate of 10,033.06/s, the unfilled portion is 12.77 loading hours (USD 13.91). The policy is two completed cycles below 6,500 records/s, up to 26 paid loading hours from the original ladder, with the 400 GB cap and unchanged six-core profile. The prior hold archive, seed archive, stopped fresh template and two pristine fresh copies are retained. [Maintained load readings](AGE1-LOAD.md#extended-continuation-progress) · [Fresh scorecard](V01-FRESH.md)
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
