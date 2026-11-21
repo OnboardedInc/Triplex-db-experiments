@@ -29,12 +29,14 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
         client: DatomicClient,
         scope: string,
       ) => Promise<void>,
-      timeout = 1000,
+      // [DX-JVM1] Why: the correctness cases include the first SQL commit on a new scope.
+      // Rejected: imposing the deadline test's sub-second budget on ordinary transaction assertions.
+      resolutionTimeoutMs = 10_000,
     ) {
       const client = new DatomicClient(url, 5000);
       const scope = DatabaseScope.test(`da01-${randomUUID()}`);
       const adapter = makeDatomicStorageAdapter(client, scope, {
-        resolutionTimeoutMs: timeout,
+        resolutionTimeoutMs,
         layout: testLayout,
       });
       const create = client.create.bind(client);
@@ -174,17 +176,33 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")(
       }));
     it("returns an identifiable unknown outcome within the resolution budget", async () =>
       withStore(async (a, client) => {
-        client.transact = () => new Promise(() => {});
-        const started = Date.now();
-        const error = await Effect.runPromise(
-          a.withTransaction(insert(a, "hang")).pipe(Effect.flip),
-        );
-        expect(error).toBeInstanceOf(TransactionOutcomeUnknown);
-        if (error instanceof TransactionOutcomeUnknown) {
-          expect(error.operationId).toBeTruthy();
-          expect(error.attemptId).toBeTruthy();
+        let disconnect: (() => void) | undefined;
+        let dispatched = 0;
+        // [DX-JVM1] Why: withhold the reply after HTTP dispatch so the ordered sender still advances.
+        // Rejected: a never-settling pre-dispatch stub (leaves a process-wide sending ticket in subsequent tests).
+        client.transact = (_db, { onSent }) =>
+          new Promise<never>((_resolve, reject) => {
+            disconnect = () => reject(new Error("Injected missing reply"));
+            queueMicrotask(() => {
+              onSent?.();
+              if (onSent) dispatched++;
+            });
+          });
+        try {
+          const started = Date.now();
+          const error = await Effect.runPromise(
+            a.withTransaction(insert(a, "hang")).pipe(Effect.flip),
+          );
+          expect(dispatched).toBe(1);
+          expect(error).toBeInstanceOf(TransactionOutcomeUnknown);
+          if (error instanceof TransactionOutcomeUnknown) {
+            expect(error.operationId).toBeTruthy();
+            expect(error.attemptId).toBeTruthy();
+          }
+          expect(Date.now() - started).toBeLessThan(2000);
+        } finally {
+          disconnect?.();
         }
-        expect(Date.now() - started).toBeLessThan(2000);
       }, 200));
     it("returns the original transaction id for a duplicate command", async () =>
       withStore(async (a) => {

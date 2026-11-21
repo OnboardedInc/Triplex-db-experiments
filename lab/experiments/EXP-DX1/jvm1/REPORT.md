@@ -1,40 +1,22 @@
-# DX-JVM1 · Java 25 and ZGC
-Datomic already supports ZGC on Java 25. Our old image runs Java 21.
-This branch lets all three processes run on either Java version.
-Start with Java 21 and a two-core writer, Java 25 with G1, then Java 25 with ZGC.
-Use `9db1746cd13c76e5facdf4bac13255d01329351b` for the server. Budget 78 minutes for those three arms.
-A fourth arm brings the total to 104 minutes and gives G1 the same memory as ZGC.
-ZGC gets 13 GiB more reserved memory in this trial. The server still has to price the gain and check for stalls.
-On the shared Mac, 99% of writer pauses were at most 0.062 ms with ZGC and 31 ms with two-core G1. The server still needs to measure the effect on saves.
+# Why the first busy window was slow
+At 235 saves a second, the slowest saves waited behind earlier groups of six. The loaded window followed five minutes of light traffic.
+The first half's p99 was 5.58 seconds. The second half's p99 was 46 milliseconds at essentially the same rate.
+The previous scorecard places 97% of the extra delay in that queue. It cannot tell us how much came from compiling code, cache misses, indexing or checkpoints.
+Use `c53146fbea10e0680ab7c406f04ae287eea9122f` for the three-arm cold-start test. Allow up to 59 minutes plus 15 seconds of shutdown grace.
+The test compares today's setup, startup settings, and those settings with a slower admission ramp. It counts every refused save.
+Java 25 ZGC stays on the transactor. Today's launch settings stay the default. No traffic or data reads were added to warm the system.
+The test is ready for the physical queue. The latter half of the benchmark was faster, but we still need the raw capture to say when and why it settled.
 
-## Settings and evidence
+## Evidence and delivery
 
-- [Part 2 compatibility](JAVA25.md) · [Exact flags and rationale](COLLECTORS-PART2.md) · [Before-run forecasts and heap inputs](PREDICTIONS-PART2.md) · [Server command](SERVER.md)
-- [Part 1 inventory](INVENTORY.md) · [Sources](SOURCES.md) · [Configuration](CONFIGURATION.md) · [Mac measurements](MAC.md) · [Forecasts](PREDICTIONS.md)
-- Official Temurin 25.0.5+8 and the Java 21 base are digest-pinned. The signed Datomic 1.0.7745 distribution includes Clojure 1.12.5 and SLF4J 2.0.17. Java 25 enables both compatibility flags for all three classpath launches.
-- The private Linux Java 25 image built under an ordinary token and its gateway suite ran 27 tests with 54,079 successful assertions. The only warning in this run was Clojure's existing `identity` name shadowing. The next SQL startup attempt refused admission during another holder's lease, before starting containers. [Evidence hashes](SHA256SUMS)
-- The Java 25 image, 861 Core tests, 434 SDK tests, eight focused INT1 integration tests, and W1 type check reached their expected results at `d1987c09b`. The three retention tests passed earlier. The broad CheckJS run reported diagnostics outside the JVM launch files. [Gate hashes](SHA256SUMS)
-- The exact `d1987c09b` host-native Java 25 gate passed with G1 and ZGC, each with 27 tests and 54,079 assertions. The later INT1 oracle identity merge touched historical SCALE1 sample validation and evidence files. [Gate hashes](SHA256SUMS)
-- Mac checks use one ordinary heavy token each. The old replay entry point now directs collector comparisons to the server and startup diagnostics to the small Mac inventory. The optional three-role ZGC boot checks each observed collector under the same small exclusive reservation. No bench server was contacted.
-- The first Java 25 native run confirmed Clojure and SLF4J versions. Three tests needed container-only fixture paths. The host gate now maps just those three paths to unchanged files from its exact Git archive. The first attempt is retained.
-- Ordinary-token boots verified both Java versions and all three SQL-stack roles and cleaned up. The Java 25 transactor needed the native-access flag after Netty logged a restricted-library warning. Shared-Mac boot and idle memory numbers are recorded as diagnostics. [Boot table](JAVA25.md#diagnostic-startup-and-idle-memory-on-the-shared-mac) · [Hashes](SHA256SUMS)
-- The live Java 25 ZGC boot verified all three collectors and cleared the transactor warning. I corrected the first SQL SDK run's missing `DATOMIC_GATEWAY_URL` and sent both writer endpoint variables to the owned slot. The corrected full run reported seven adapter and one clock-order test failure before the four-minute timeout. Both stacks cleaned up. The full opt-in SQL suite remains open.
-- The GC parser was exercised with archived G1 and generational ZGC logs on the shared Mac. The check verified all three G1 roles, the ZGC writer's phase labels and rejection of a log from a different boot. Evidence and hashes are under `evidence/DX-JVM1/part2`.
-- The Java 21 fixed-activity census adds a shared-Mac reference of about 12,651 resident bytes per added untouched person between 10,000 and 30,000 people, mostly in the transactor. The matching ZGC slope is still open. [Census](../int1/P5-EVIDENCE.md)
-- A restore fixture consumed the exact expected bytes and rejected a changed stream. It exercised the stream verifier with a stand-in for PostgreSQL.
-- JVM settings live in `launch.mjs`. The integrated runner and TAIL1 arm definition both import the measured writer G1 flags. A selected experiment can still supply its own settings. The acceptance contract and SQL durability are unchanged.
-- The first two server arms keep the same G1 flags and placement to price the Java version change. The current experiment branch includes INT1 but still needs the inbound integration merge for version 0.1.
-- One initial push used Git's local author identity. The experiment branch tip was replaced with a commit that uses the generic Codex identity. The earlier remote object may still be retained.
+- Base `origin/exp/DX-INT1` was `6554dbca19554f83979827c691cda8c5c409abf9`, merged on the DX-JVM1 branch. The launch profiles, image pins, and Datomic and PostgreSQL durability are carried through. [Source, options and forecasts](COLD-START.md) · [Physical command](SERVER.md#cold-first-full-load-window-at-235s)
+- The full-size checkpoint contains hashes of the raw clocks and counters. The named archive omits their bytes. The compressed per-second CSV reconstructs the separate 90-second scorecard, including honest gaps through second 149. It records per-second stage shares and native SQL counters. [Evidence hashes](SHA256SUMS)
+- Local checks used ordinary heavy tokens. The rebuilt SDK, all 42 sender/credit/ordered-ID and SCALE1 checks, strict TypeScript, shell syntax, Python analyzer and Clojure observer load passed. Temurin 25 accepted six reduced JVM setups with the expected role collectors and tuned CDS readback. The host check omits Linux-only transparent-huge-page flags. Earlier failed gate attempts are retained in the manifest. No Mac latency result, new Mac image build, production admission change, physical clone, full-size timing, or server launch is claimed.
+- The optional ingress ramp is in the matched driver. It tests explicit early refusal with an unchanged offer clock and leaves production clients alone. The pinned Java artifacts supply bundled CDS. App AOT cache training is outside this runtime profile. The findings document what Java 25 supports and the separate advance-read options for an owner ruling. [Cold-start reading](COLD-START.md)
 
 ## Evidence audit
 
-- Variant build receipt compares ZIP, signature and staging bytes, binds current source and the exact Java parent, and verifies the resulting image identity and labels. Launchers verify runtime flags from fresh process startup, bind container ID and start ticks, and capture collector and memory constraints.
-- `native-java25.sh` archives the exact source, verifies vendor bytes and Java version, maps the three test fixture reads into that archive, and requires all 27 native tests and 54,079 assertions with zero failures or errors. The SQL inventory collects a fresh startup and checks stable JVM identities around the SDK command.
-- The Mac replay checks archive hash, schedules, source, reserved slot, distinct boots, receipts, oracle samples and owned cleanup. Its historical timings are shared-Mac diagnostics.
-- `server.ts` verifies the sealed seed and the digest of the bytes sent to `pg_restore`, the restored cut, W1 offers and durable results, and sampled reader contents before `field-summary.json`. The final result also checks fresh flags and GC log bytes, process identities, timings and owned cleanup. Counts and latency are measurements.
-- Image source changes from the integration base, old → new SHA-256:
-  - `lab/config/datomic/Dockerfile` `de1947c60e1cd169a285a877ce113a5585633df7c8bccf1669f7e7dd6f79664a` → `aa80d3a2ae0984db6f39fadf3ccb3015f2deaac704dfb9ad2bb74683836a2167`
-  - `lab/config/datomic/entrypoint.sh` `93ade9ed9cf4c741230b217b8c8a42b148a8d7152a1ee887ea7fca515cfe9c2d` → `8b762dbb668e91ae76b2121791671a04488eabf7666f59deb47d789824d265e3`
-  - `lab/config/datomic/transactor.properties` `762126e7626dae616553c9675fc5453ef7da01c10362e735982920aefef609cc` → `404281c4d749f2bd785297d592d1a052f6215ec79a4ccf2fe859a65753b29628`
-  - `packages/datomic/gateway/src/triplex/gateway/jfr.clj` `a703ed7772ab7fcdd62effde8135bc62f6b4325046a0f893a1165c8c08474d94` → `0c435b193a369f6dee40059452a41b9719046bac15bceaf06ac36e514e40994b`
-  - `packages/datomic/gateway/src/triplex/gateway/native_settings.clj` `0c3a527e0487f05cf93a033da059ed3175ab704f8fb510475ac120fe03c2b755` → `f77e08c1f8ad493c8faad2dfc79149562db19e1135de78f7340c46e77d8ea90b`
+- The analyzer binds each scorecard file to the arm's operation SHA-256 and checks the earlier ledger's source, slot, attempt, unique operation IDs and exact partition of time above 50 ms. The two archives and ledger have distinct SHA-256s.
+- The physical driver checks clean source, built SDK bytes and live image IDs, fresh per-arm identifiers and an owned path, the required control-file bytes before and after cloning, exact starting cut, verified writer options and post-window seed witnesses. The physical source pin certifies control bytes, plus live sample and journal checks of the prepared data. It is not a hash of every relation file.
+- Every published arm summary binds the same tape digest, exact offer count and owned counter process to the source and attempt. Acknowledged and recovered saves match the independently decoded journal IDs, ordered assertion IDs, positions, clocks and digests. Pre-dispatch refusals have no write dispatch or acknowledgment. Observed JVMs have fresh process/container and flag readback, a collector and image verification, and the index trace confirms installation in the same attempt. Cleanup verifies container, volume, network and WAL removal for the owned slot.
+- No acceptance contract pins were changed. The older Java comparison and SQL compatibility findings are retained in the Part 3 report at `b35baa3ee`.

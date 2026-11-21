@@ -192,9 +192,8 @@ export function activeSubjects(people: Density) {
   return preferred.get(people)!;
 }
 
-function count(cell: Cell, account: number, repeat: number, isolation: boolean) {
-  const duration = cellSeconds(cell, isolation);
-  if (solo(cell)) return account === 0 ? Math.round(cell * cellSeconds(cell)) : 0;
+function count(cell: Cell, account: number, repeat: number, isolation: boolean, duration: number) {
+  if (solo(cell)) return account === 0 ? Math.round(cell * duration) : 0;
   const sentinel = quietFor(repeat, isolation);
   if (account === sentinel) return quietRate * duration;
   if (cell === "alone") return 0;
@@ -204,12 +203,13 @@ function count(cell: Cell, account: number, repeat: number, isolation: boolean) 
 }
 
 // [DX-SCALE1] Why: fixed per-account offers and jitter are independent of completions. The quiet account replays identical offsets, subjects and widths in each repeat. Rejected: changing its dose when the queue grows.
-export function writeTape(people: Density, cell: Cell, repeat: number, isolation = false): Write[] {
+export function writeTape(people: Density, cell: Cell, repeat: number, isolation = false,
+  duration = cellSeconds(cell, isolation)): Write[] {
   const subjects = activeSubjects(people),
     choose = zipf(people / 50);
   return (solo(cell) ? [0] : accounts)
     .flatMap((account) => {
-      const n = count(cell, account, repeat, isolation);
+      const n = count(cell, account, repeat, isolation, duration);
       const rng = new Rng(
         seedOf(
           profileFor(solo(cell) ? "single" : "pooled", isolation) +
@@ -227,7 +227,7 @@ export function writeTape(people: Density, cell: Cell, repeat: number, isolation
           account,
           ordinal,
           subject: subjects[account]![index]!,
-          ms: (1000 * cellSeconds(cell, isolation) * (ordinal + rng.next())) / n,
+          ms: (1000 * duration * (ordinal + rng.next())) / n,
           width: w < 0.8 ? 1 : w < 0.95 ? 2 : 3,
           version: repeat + "/" + cell + "/" + account + "/" + ordinal,
         };

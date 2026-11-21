@@ -178,6 +178,15 @@ assert actual==expected, 'Extracted Datomic bytes differ from the pinned ZIP'
   const parent = path.join(ENGINE_DIR, 'datomic-build');
   fs.mkdirSync(parent, { recursive: true });
   const context = path.join(parent, `${buildInputsSha256}-${process.pid}-${Date.now()}`);
+  try {
+    return finishDatomicBuild(config, { context, distribution, dist, gpg, isolated, root, runtime, sources, tag, verification, buildInputsSha256 });
+  } finally {
+    // [DX-JVM1] Why: stage verified files for this build only. Rejected: retaining a second Datomic distribution for every private build.
+    if (isolated) fs.rmSync(context, { recursive: true, force: true });
+  }
+}
+
+function finishDatomicBuild(config, { context, distribution, dist, gpg, isolated, root, runtime, sources, tag, verification, buildInputsSha256 }) {
   const fileInput = (source, destination, file) => ({ source, destination, manifest: [{ ...file, path: '' }] });
   const staged = stageDatomicContext(context, [
     { source: dist, destination: 'datomic', manifest: distribution },
@@ -227,6 +236,29 @@ assert actual==expected, 'Extracted Datomic bytes differ from the pinned ZIP'
   atomicJson(path.join(context, 'build-receipt.json'), receipt);
   appendEvent({ event: 'datomic-build', imageId: image.Id, buildInputsSha256 });
   console.log(JSON.stringify({ ...config.lanes.datomic, imageSize: image.Size, receipt: path.join(context, 'build-receipt.json') }, null, 2));
+}
+
+function removeJvmImage(opts) {
+  if (opts.holder !== 'DX-JVM1' || typeof opts['variant-receipt'] !== 'string')
+    fail('USAGE', 'JVM image removal requires the DX-JVM1 holder and a variant receipt');
+  const runtime = datomicRuntime(readJson(opts['variant-receipt']).runtime?.major);
+  const receipt = readVariantReceipt(opts['variant-receipt'], runtime);
+  const raw = docker(['image', 'inspect', receipt.imageId], { allowFail: true });
+  if (!raw) return;
+  const [image] = JSON.parse(raw);
+  const labels = image.Config.Labels;
+  const tags = image.RepoTags ?? [];
+  const privateRepository = receipt.tag.split(':')[0];
+  // [DX-JVM1] Why: only remove the private image pinned by this receipt. Rejected: pruning dangling images or forcing removal from another owner's containers.
+  if (image.Id !== receipt.imageId || tags.some(tag => tag !== receipt.tag)
+    || image.RepoDigests?.some(digest => digest.split('@')[0] !== privateRepository)
+    || labels?.['tx2.java-major'] !== runtime.major || labels?.['tx2.java-base'] !== runtime.base
+    || labels?.['tx2.build-inputs-sha256'] !== receipt.buildInputsSha256)
+    fail('REFUSED', `Image ${receipt.imageId} does not belong to the private JVM variant receipt (tags: ${tags.length}, digests: ${image.RepoDigests?.length ?? 0})`);
+  if (docker(['ps', '-aq', '--filter', 'ancestor=' + image.Id])) fail('REFUSED', 'The private image still has a container');
+  docker(['image', 'rm', tags[0] ?? image.Id]);
+  if (docker(['image', 'inspect', image.Id], { allowFail: true })) fail('ENGINE', 'The private JVM image remains');
+  console.log(JSON.stringify({ imageId: image.Id, removed: true }));
 }
 async function selftestDatomic(config, opts) {
   datomicDiskFloor();
@@ -955,7 +987,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
     } else if (runtime.major !== '21') fail('REFUSED', 'Java 25 on the Mac requires a verified private build receipt');
   }
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
-  if (options.lane === 'datomic' && command === 'image-remove') return removeThinImage(config, options);
+  if (options.lane === 'datomic' && command === 'image-remove') return options.holder === 'DX-JVM1' ? removeJvmImage(options) : removeThinImage(config, options);
   // [DX-V01] Why: run the existing Linux toy client in the exact owned compact slot.
   // Rejected: VM shell access or running a benchmark with host/guest clocks mixed.
   if (command === 'scorecard-fixture') {
