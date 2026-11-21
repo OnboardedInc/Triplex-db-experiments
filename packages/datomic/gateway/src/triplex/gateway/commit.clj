@@ -35,46 +35,45 @@
 ;; [DX-WFIX1] Why: the checked stored row owns the time, range, value and identity of the retracted assertion.
 ;; Rejected: carrying the client's provisional assertion or maintaining a separate decoder for prepared writes.
 (def recorded-row-code
-  '(fn [text]
+  '(fn [^String text]
      (let [[_ _ entity attr kind string number bool datetime data recorded from to _ entity-type _ tx]
            (lean-columns-code text)
            number-field (fn [x] (if (= "-0" x) -0.0 x))
            value {"type" kind "value" (case kind
-                 ("ref" "integer" "string" "blob") string
-                 "number" (number-field number)
-                 "boolean" (not (zero? bool))
-                 "datetime" (number-field datetime)
-                 "json" (json/read-str data))}
-           value (if (= "blob" kind) (merge (json/read-str data) value) value)]
-       (cond-> {"entityId" entity "attribute" attr "value" value
+                                      ("ref" "integer" "string" "blob") string
+                                      "number" (number-field number)
+                                      "boolean" (not (zero? bool))
+                                      "datetime" (number-field datetime)
+                                      "json" (json/read-str data))}]
+       (cond-> {"entityId" entity "attribute" attr "value" (if (= "blob" kind) (merge (json/read-str data) value) value)
                 "recordedAt" (number-field recorded) "validFrom" (number-field from)}
          (some? to) (assoc "validTo" (number-field to))
          entity-type (assoc "entityType" entity-type)
          tx (assoc "assertionTxId" tx)))))
 
-(defmacro recorded-row-decoder []
+(def compiled-recorded-row
   (walk/postwalk-replace {'lean-columns-code slim/row-columns-code} recorded-row-code))
+(defmacro recorded-row-decoder [] compiled-recorded-row)
 (def recorded-row (recorded-row-decoder))
 
-;; [DX-PREP1] Why: the reference and the subject worker normalize the stored predecessor the same way.
-;; Rejected: independently rebuilding the journal change and risking different raw bytes.
+;; [DX-PREP1] Why: the subject worker and reference transaction stamp the same retraction.
+;; Rejected: a second normalizer with different predecessor metadata or byte order.
 (def change-code
   '(fn [change clock new-ids prior-rows]
      (let [id (get change "tripleId")
-           prior (when (and (= "retract" (get change "op")) (not (new-ids id)))
-                   (when prior-rows (prior-rows id)))
-           lean-prior (contains? prior "value")]
+           prior (when (and (= "retract" (get change "op")) (not (new-ids id))) (prior-rows id))
+           full (contains? prior "entityId")]
        (cond-> change
-         lean-prior (dissoc "validTo" "entityType" "assertionTxId")
-         lean-prior (merge prior)
-         (and prior (not lean-prior)) (merge (select-keys prior (keys change)))
+         full (dissoc "validTo" "entityType" "assertionTxId")
+         full (merge prior)
+         (and prior (not full)) (merge (select-keys prior (keys change)))
          (new-ids id) (assoc "recordedAt" clock)
-         (or lean-prior (contains? change "retractedAt")) (assoc "retractedAt" clock)))))
+         (or full (contains? change "retractedAt")) (assoc "retractedAt" clock)))))
 (defmacro change-rewriter [] change-code)
 (def rewrite-change (change-rewriter))
 
-;; [DX-INT1] Why: reference and prepared saves use the same position and clock transformations.
-;; Rejected: separately maintaining the packed rows and authoritative predecessor metadata.
+;; [DX-PREP1] Why: the reference and prepared writers stamp the same authoritative row and journal values.
+;; Rejected: a second encoder with different position, clock or retraction rules.
 (def stamp-code
   '(fn [server-clock clock new-id-set lower provisional final slim-row prior-rows]
      (let [delta (- final provisional)
@@ -84,13 +83,13 @@
        (letfn [(assign-change [text clock new-ids prior-rows]
                  (json/write-str (rewrite-change-code (json/read-str text) clock new-ids prior-rows)))
                (assign-row [text offset clock new-ids prior-rows]
-             (let [start (- offset 2) values (json/read-str (subs text start))
-                   attr (nth values 3) journal (= "_Transaction" (nth values 14))
-                   values (cond-> (assoc values 10 clock)
-                            (and journal (= attr ":_tx/instant")) (assoc 8 clock)
-                            (and journal (= attr ":_tx/change")) (assoc 9 (assign-change (nth values 9) clock new-ids prior-rows)))]
-               (str (subs text 0 start) (json/write-str values))))
-           (replace-value [x]
+                 (let [start (- offset 2) values (json/read-str (subs text start))
+                       attr (nth values 3) journal (= "_Transaction" (nth values 14))
+                       values (cond-> (assoc values 10 clock)
+                                (and journal (= attr ":_tx/instant")) (assoc 8 clock)
+                                (and journal (= attr ":_tx/change")) (assoc 9 (assign-change (nth values 9) clock new-ids prior-rows)))]
+                   (str (subs text 0 start) (json/write-str values))))
+               (replace-value [x]
                  (cond
                    (and (instance? java.util.List x) (= :triplex/record-time (first x))) (if server-clock clock (second x))
                    (and (instance? java.util.List x) (= :triplex/change (first x))) (if server-clock (assign-change (second x) clock new-id-set prior-rows) (second x))
@@ -177,8 +176,8 @@
      (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row save-ledger timed-retractions packed-journal import-predecessor]} payload
            operation-id (or (:triplex.tx/operation-id (first ops)) (some :triplex.tx/operation-id ops))
            command-ids (or (:command-ids payload) (keep :triplex.claim/command-id ops))
-           ;; [DX-WFIX1] Why: a committed retry can name a predecessor it already retired.
-           ;; Rejected: checking identities only at ingress (a queued request can hold a stale basis).
+           ;; [DX-WFIX1] Why: a durable retry may still name the assertion its first attempt retired.
+           ;; Rejected: returning a predecessor conflict before checking the serialized claims.
            _ (when (and operation-id (d/entid db [:triplex.tx/operation-id operation-id]))
                (throw (ex-info "TRIPLEX_OPERATION_DUPLICATE" {})))
            _ (when (some #(d/entid db [:triplex.claim/command-id %]) command-ids)
@@ -340,12 +339,12 @@
 (defn expand-code
   ([observe] (expand-code observe false false))
   ([observe optimized? measured?]
-   (let [expanded (walk/postwalk-replace {'stamp-rows compiled-stamp-code
-                                          'history-range-code history-range-code
+   (let [expanded (walk/postwalk-replace {'history-range-code history-range-code
+                                          'stamp-rows compiled-stamp-code
                                           'save-ledger-code ledger/rewrite-code
                                           'packed-identity-code packed/identity-code
                                           'packed-encode-code packed/compiled-encode
-                                          'recorded-row-code (walk/postwalk-replace {'lean-columns-code slim/row-columns-code} recorded-row-code)
+                                          'recorded-row-code compiled-recorded-row
                                           'record-range-result observe} operation-code)
          op (if optimized? (list pred/normalization expanded) expanded)]
      (pred/expand (list 'read-at :w1/function op) optimized? measured?))))

@@ -1,0 +1,136 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import {
+  arms,
+  ceilingArm,
+  cells,
+  fairArms,
+  fairPrediction,
+  fairSeconds,
+  ownerArms,
+  ownerPrediction,
+  storageArms,
+  storageOrderedArm,
+  storagePrediction,
+  widePeople,
+} from "./server-tape.ts";
+
+test("the four fair-policy arms share their sealed field inputs and matched quiet arrivals", () => {
+  const original = new Map(cells(arms[0]).map(({ label, tape }) => [label, tape]));
+  const first = new Map(cells(fairArms[0]).map(({ label, tapeSha }) => [label, tapeSha]));
+  const payload = ({ ms, ...offer }) => offer;
+  for (const arm of fairArms) {
+    const schedule = cells(arm);
+    assert.equal(schedule.length, 4);
+    for (const { label, tape, rate, tapeSha, duration } of schedule) {
+      assert.equal(tapeSha, first.get(label));
+      assert.equal(duration, fairSeconds);
+      assert.equal(tape.length, label.endsWith("-alone") ? 210 : rate * fairSeconds);
+      assert(tape.every(({ ms }, i) => ms >= (tape[i - 1]?.ms ?? 0) && ms < fairSeconds * 1000));
+      for (let account = 0; account < 10; account++) {
+        const taken = tape.filter((offer) => offer.account === account);
+        const fromSeed = original.get(label).filter((offer) => offer.account === account);
+        assert.deepEqual(taken.map(payload), fromSeed.slice(0, taken.length).map(payload));
+      }
+    }
+    for (const rate of [235, 394]) {
+      const quiet = schedule.find(({ label }) => label === `r${rate}-alone`).tape;
+      const loaded = schedule.find(({ label }) => label === `r${rate}-loaded`).tape;
+      assert.deepEqual(
+        loaded.filter(({ account }) => account === 0),
+        quiet,
+      );
+    }
+  }
+  for (const [a, b] of [
+    [0, 1],
+    [2, 3],
+  ])
+    assert.deepEqual(
+      cells(fairArms[a]).map((c) => c.label),
+      cells(fairArms[b]).map((c) => c.label),
+    );
+});
+
+test("ceiling cells span separate wide cohorts with exactly matched quiet offers", () => {
+  const schedule = cells(ceilingArm);
+  const prior = Array.from({ length: 10 }, () => new Set());
+  for (let i = 0; i < schedule.length; i += 2) {
+    const [solo, loaded] = schedule.slice(i, i + 2);
+    assert.equal(solo.tape.length, 315);
+    assert.equal(loaded.tape.length, loaded.rate * 90);
+    assert.equal(loaded.credits, [0, 6, 6, 0][i / 2]);
+    assert.equal(solo.credits, loaded.credits);
+    assert.deepEqual(
+      loaded.tape.filter((o) => !o.account),
+      solo.tape,
+    );
+    for (let account = 0; account < 10; account++) {
+      const people = new Set(loaded.tape.filter((o) => o.account === account).map((o) => o.person));
+      assert.equal(people.size, account ? widePeople : 315);
+      for (const id of people) {
+        assert(id >= 0 && id < 100_000 && !prior[account].has(id));
+        prior[account].add(id);
+      }
+    }
+  }
+});
+
+test("predictions express the one-credit round trip and distinguish a missing full-cohort tail", () => {
+  assert.deepEqual(
+    fairArms.map((arm) => fairPrediction(arm, 394, false).serving),
+    [383, 125, 125, 394],
+  );
+  assert.deepEqual(
+    fairArms.map((arm) => fairPrediction(arm, 394, false).p99Ms),
+    [null, null, null, 28],
+  );
+  for (const arm of fairArms) assert.equal(fairPrediction(arm, 235, true).serving, 3.5);
+});
+
+test("grouped, original prepared and numeric-owner arms share the same shortened tape and window order", () => {
+  assert.deepEqual(
+    ownerArms.map(({ writer, numericOwner }) => [writer, numericOwner]),
+    [
+      ["K", false],
+      ["S", false],
+      ["S", true],
+    ],
+  );
+  const expected = cells(fairArms[0]).map(({ label, tapeSha }) => [label, tapeSha]);
+  for (const arm of ownerArms) {
+    const schedule = cells(arm);
+    assert.deepEqual(
+      schedule.map(({ label, tapeSha }) => [label, tapeSha]),
+      expected,
+    );
+    assert(schedule.every(({ duration }) => duration === 60));
+    assert.equal(ownerPrediction(arm, 394, true).serving, 3.5);
+    assert(ownerPrediction(arm, 394, false).serving < 394);
+  }
+});
+
+test("the six storage arms reuse the real field tape and isolate the cache, hint and identity changes", () => {
+  const [grouped, old, numeric, hinted, cache, ordered] = storageArms;
+  assert.deepEqual({ ...cache, id: old.id, cacheGiB: old.cacheGiB }, old);
+  assert.deepEqual({ ...hinted, id: numeric.id, prefetch: false }, numeric);
+  assert.equal(ordered, storageOrderedArm);
+  const { orderedIds, ...orderedBase } = ordered;
+  assert.equal(orderedIds, true);
+  assert.deepEqual({ ...orderedBase, id: numeric.id }, numeric);
+  assert.equal(grouped.writer, "K");
+  const expected = cells(grouped).map(({ label, tapeSha, duration }) => [label, tapeSha, duration]);
+  for (const arm of storageArms) {
+    const schedule = cells(arm);
+    assert.deepEqual(
+      schedule.map(({ label, tapeSha, duration }) => [label, tapeSha, duration]),
+      expected,
+    );
+    for (const { label, rate } of schedule) {
+      const alone = label.endsWith("-alone");
+      const prediction = storagePrediction(arm, rate, alone);
+      assert.equal(alone ? prediction.serving : prediction.p99Ms, alone ? 3.5 : null);
+      assert(prediction.sqlReadsPerSave >= 0 && prediction.nativeApplyMsPerSave > 0);
+    }
+  }
+});

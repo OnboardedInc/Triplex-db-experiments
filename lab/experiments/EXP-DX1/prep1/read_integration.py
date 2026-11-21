@@ -3,6 +3,7 @@
 import hashlib
 import json
 from pathlib import Path
+import re
 import sys
 
 from read_probe import frozen_inputs, read, sha
@@ -30,7 +31,10 @@ def native(out):
     assert sha(log) == terminal["sha256"]
     lines = log.read_text().splitlines()
     proof, = [json.loads(line.removeprefix("PREP1_SUITE ")) for line in lines if line.startswith("PREP1_SUITE ")]
-    assert proof == {"attempt": inputs["attempt"], "subject": inputs["subject"]}
+    expected = {"attempt": inputs["attempt"], "subject": inputs["subject"]}
+    if "orderedIds" in inputs:
+        expected.update(orderedIds=inputs["orderedIds"], numericOwner=inputs["numericOwner"])
+    assert proof == expected
     summary, = [json.loads(line) for line in lines if line.startswith('{"test":')]
     assert summary["test"] == 27 and summary["pass"] >= 54079 and summary["fail"] == summary["error"] == 0
     return {"head": inputs["head"], "subject": inputs["subject"], "nativeTests": summary, **terminal}
@@ -44,7 +48,7 @@ def erasure(out, subject):
     assert run["sourceHash"] == encoded_hash(inputs["inputs"])
     assert run["nonce"] == inputs["nonce"] == cleanup["nonce"]
     assert run["mode"] == inputs["mode"] == "ledger-regression"
-    assert run["host"] == "mac-vm" and run["timings"] == "diagnostic"
+    assert run["host"] == "mac-vm" and run.get("timing", run.get("timings")) == "diagnostic"
     assert run["people"] == inputs["people"]
     assert run["slot"] == cleanup["slot"] and cleanup["released"] and not cleanup["errors"]
     restore = read(out / "exit-restore.json")
@@ -64,6 +68,8 @@ def erasure(out, subject):
     # Rejected: trusting exit zero or the aggregate checks without reopening the route witnesses.
     options = data("subject-writer-options")
     assert bool(options.get("subjectSave")) == subject and options["gatewaySourceHash"] == run["gateway"]
+    ordered = inputs.get("subjectOrderedIds", False)
+    assert bool(options.get("subjectOrderedIds")) == ordered
     assert options["database"].startswith("s2-") and options["commitFunctionInstalled"]
     evidence = data("regression-cases")["evidence"]
     assert len(evidence) == len(ERASURE_ROUTES) and {entry["route"] for entry in evidence} == ERASURE_ROUTES
@@ -74,8 +80,10 @@ def erasure(out, subject):
         ids.add(route.pop("id"))
         assert route == entry and entry["check"] is True
     assert len(ids) == 1 and bool(next(iter(ids)))
+    if ordered:
+        assert re.fullmatch(r"[0-7][0-9A-HJKMNP-TV-Z]{23}00", next(iter(ids)))
     return {"head": inputs["inputs"]["head"], "subject": subject, "routes": len(evidence),
-            "nonce": run["nonce"], "slot": run["slot"], "binding": run["binding"]}
+            "orderedIds": ordered, "nonce": run["nonce"], "slot": run["slot"], "binding": run["binding"]}
 
 
 if __name__ == "__main__":
