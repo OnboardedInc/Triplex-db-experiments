@@ -28,3 +28,7 @@ The smoke round trip binds the selected tier, manifest and chunk digests to a fr
 The clean-clone gate at `4ab794320dcc499016a7fcd26d523b558ba72e28` verified the 18,276,592-byte public snapshot and its manifest. It opened cuts 79, 493 and 933. TypeScript, seven tests, four clean package tasks, 17 API cases, both MCP transports and Chromium passed. Stop removed the original listener and all owned resources. The temporary clone, Publish image and scratch sources were removed. The full hosted data and manual workflow remain open.
 
 The billion-record runner keeps `8cc32d380` with `57580241d`. The next-card runner keeps `c1eeb2ef8` with `5f62059b1`. No acceptance pin moved. The server build commits above have separate Mac evidence archives in `int1/p10`, alongside the playground archive. The real two-host fault run and the physical prepared-data Publish run are still open. [Owner decisions and scorecard rows](V0.1-STATE.md) · [Evidence index](V0.1-SHA256SUMS)
+
+## Part 11 removal audit
+
+The native gate binds the selected writer, rolling admission, fresh operation and sealed assertion bytes to the live engine slot and verifies all named routes, original and restored receipts, and cleanup. Shared authority recovery checks current sequence, ciphertext, key absence and matching restored rows. The server stage binds the exact build, original seed, new attempt and disposable stopped copy to the live journal, each removal witness, cleanup identities and shutdown. Its observations await the physical run.

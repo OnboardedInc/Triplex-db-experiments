@@ -1,6 +1,6 @@
 (ns triplex.gateway.privacy
   (:require [clojure.data.json :as json] [clojure.string :as str] [datomic.api :as d]
-            [triplex.gateway.scope :as scope] [triplex.gateway.trace :as trace])
+            [triplex.gateway.authority-sql :as sql] [triplex.gateway.scope :as scope] [triplex.gateway.trace :as trace])
   (:import [java.nio.charset StandardCharsets]
            [java.nio.channels FileChannel]
            [java.nio.file Files Path Paths StandardCopyOption StandardOpenOption LinkOption]
@@ -50,7 +50,7 @@
       (sync-directory! dir)
       (finally (Files/deleteIfExists tmp)))))
 
-(defn guard [name work]
+(defn- file-guard [name work]
   ;; [DX-ERASE1] Why: one protected write or publication per scope across gateway processes.
   ;; Rejected: an in-memory mutex alone (an independent gateway would not join it).
   (let [m (get (swap! local-guards #(if (contains? % name) % (assoc % name (Object.)))) name)
@@ -62,31 +62,47 @@
           (when started (trace/interval! "privacy/write-lock-wait" "gateway" started (trace/clock) nil))
           (work))))))
 
+(defn guard [name work]
+  (if sql/url (sql/guard name work) (file-guard name work)))
+
+(defn record-text [name record]
+  (if sql/url (sql/read-record name record)
+    (let [p (path name record)] (when (exists? p) (Files/readString p)))))
+
+(defn- save-record! [name record wire]
+  (if sql/url (sql/put! name record wire) (replace! (path name record) wire)))
+
+(defn- remove-record! [name record]
+  (if sql/url (sql/delete! name record)
+    (let [p (path name record)]
+      (Files/delete p)
+      (sync-directory! (.getParent p)))))
+
 (defn enabled? [db]
   (and db (d/entid db :triplex.scope/erasure-ledger)
        (true? (scope/value db (scope/entity db) :triplex.scope/erasure-ledger))))
 
 (defn managed? [name db]
-  (or (enabled? db) (and root (exists? (path name "head.json")))))
+  (or (enabled? db) (if sql/url (some? (record-text name "head.json")) (and root (exists? (path name "head.json"))))))
 
 (defn register! [name attributes sealed?]
   (when-not (and (vector? attributes) (seq attributes) (= (count attributes) (count (set attributes)))
                  (every? #(and (string? %) (seq %) (not (.startsWith ^String % ":_tx/"))) attributes))
     (failure! 400 "InvalidProtectedAttributes" "Expected distinct declared protected attributes"))
-  (let [^Path p (path name "head.json")
-        parent (.getParent p)]
-    (Files/createDirectories parent (make-array java.nio.file.attribute.FileAttribute 0))
-    (sync-directory! (.getParent parent))
-    (guard name
-      (fn []
-        (if (exists? p)
-          (let [prior (json/read-str (Files/readString p))]
-            (when-not (and (= attributes (get prior "attributes")) (= (boolean sealed?) (get prior "sealed")))
-              (failure! 409 "ProtectionPolicyMismatch" "The protected attribute policy is immutable")))
-          (replace! p (json/write-str {"database" name "seq" 0 "seal" zeros
-                                      "attributes" attributes "sealed" (boolean sealed?)})))))))
+  (when-not sql/url
+    (let [parent (.getParent (path name "head.json"))]
+      (Files/createDirectories parent (make-array java.nio.file.attribute.FileAttribute 0))
+      (sync-directory! (.getParent parent))))
+  (guard name
+    (fn []
+      (if-let [wire (record-text name "head.json")]
+        (let [prior (json/read-str wire)]
+          (when-not (and (= attributes (get prior "attributes")) (= (boolean sealed?) (get prior "sealed")))
+            (failure! 409 "ProtectionPolicyMismatch" "The protected attribute policy is immutable")))
+        (save-record! name "head.json" (json/write-str {"database" name "seq" 0 "seal" zeros
+                                                         "attributes" attributes "sealed" (boolean sealed?)}))))))
 
-(defn- entry-path [name seq] (path name (str "erase-" seq ".json")))
+(defn- entry-record [seq] (str "erase-" seq ".json"))
 
 (defn- apply-entry [cut entry]
   (-> cut
@@ -104,11 +120,15 @@
 (defn cut
   ([name db] (cut name db false))
   ([name db allow-pending?]
-   (when (managed? name db)
-     (try
-       (when (and (not allow-pending?) (exists? (path name "pending.json"))) (unavailable!))
-       (let [wire (Files/readString (path name "head.json"))
-             prior (get @cache name)]
+   (try
+     (let [frontier (when sql/url (sql/read-frontier name))
+           pending (if sql/url (get frontier "pending.json")
+                     (when (and root (exists? (path name "pending.json"))) true))
+           wire (if sql/url (get frontier "head.json")
+                  (when root (record-text name "head.json")))]
+       (when (or wire (enabled? db))
+         (when (or (nil? wire) (and (not allow-pending?) pending)) (unavailable!))
+         (let [prior (get @cache name)]
          (if (= wire (:wire prior))
            prior
            (let [h (json/read-str wire)
@@ -122,7 +142,7 @@
                                   :attrs (set attrs) :sealed sealed?})
                    next (reduce
                           (fn [state seq]
-                            (let [raw (Files/readString (entry-path name seq))
+                            (let [raw (or (record-text name (entry-record seq)) (unavailable!))
                                   item (json/read-str raw)]
                               (when-not (and (= name (get item "database")) (= seq (get item "seq"))
                                              (= (:seal state) (get item "previous")) (= raw (json/write-str item)))
@@ -134,36 +154,35 @@
                  (unavailable!))
                (let [new (assoc next :wire wire)]
                  (swap! cache update name #(if (and % (> (:seq %) n)) % new))
-                 new)))))
-       (catch clojure.lang.ExceptionInfo e (throw e))
-       (catch Exception _ (unavailable!))))))
+                 new)))))))
+     (catch clojure.lang.ExceptionInfo e (throw e))
+     (catch Exception _ (unavailable!)))))
 
 (defn pending [name]
-  (let [p (path name "pending.json")]
-    (when (exists? p) (json/read-str (Files/readString p)))))
+  (some-> (record-text name "pending.json") json/read-str))
 
 (defn prepare! [name item]
-  (replace! (path name "pending.json") (json/write-str item)))
+  (save-record! name "pending.json" (json/write-str item)))
 
 (defn publish! [name current item]
   (let [prior (json/read-str (:wire current))
         seq (get item "seq")
         payload (json/write-str item)
-        p (entry-path name seq)]
-    (when-not (= seq (inc (:seq current))) (unavailable!))
-    (if (exists? p)
-      (when-not (= payload (Files/readString p)) (unavailable!))
-      (replace! p payload))
-    (replace! (path name "head.json")
-              (json/write-str (assoc prior "seq" seq "seal" (sha256 payload))))
-    (Files/delete (path name "pending.json"))
-    (sync-directory! (.getParent p))))
+        record (entry-record seq)
+        previous (record-text name record)
+        head (json/write-str (assoc prior "seq" seq "seal" (sha256 payload)))]
+    (when-not (and (= seq (inc (:seq current))) (or (nil? previous) (= previous payload))) (unavailable!))
+    (if sql/url
+      (sql/publish! name record payload (:wire current) head)
+      (do
+        (when-not previous (save-record! name record payload))
+        (save-record! name "head.json" head)
+        (remove-record! name "pending.json")))))
 
 (defn clear-completed! [name current]
   (when-let [p (pending name)]
     (when (= p (get-in current [:commands (get p "commandId")]))
-      (Files/delete (path name "pending.json"))
-      (sync-directory! (.getParent (path name "head.json"))))))
+      (remove-record! name "pending.json"))))
 
 (defn ensure-seq! [state offered]
   (when-not (and state (integer? offered) (= (:seq state) offered)) (stale!)))

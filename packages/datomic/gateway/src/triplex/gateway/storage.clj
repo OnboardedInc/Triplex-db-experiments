@@ -411,7 +411,7 @@
                         (finally (swap! timeline assoc :subjectHintsFinished (System/nanoTime)))))
            native-data (group/instrument [[subject/ident subject-plan]])
            options (concat (when hints [:hints hints])
-                           (when (or group/stage-clock trace/enabled) [:io-context :triplex.gateway/subject]))
+                           (when (or group/stage-clock trace/enabled (= "1" (System/getenv "TX2_REMOVAL_COST_READBACK"))) [:io-context :triplex.gateway/subject]))
            _ (swap! timeline assoc :predecessorReady (System/nanoTime))
            tx (trace/span "d/transact-async" "peer-call"
                 (apply d/transact-async conn native-data options))]
@@ -462,7 +462,8 @@
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
           ;; [DX-PREP1] Why: the unordered subject arm submits one native transaction and uses its actual durable report.
           ;; Rejected: bypassing protected-scope erasure or live/import admission, or applying the draft speculatively.
-          subject-plan (when (and subject/enabled (not (:sealed privacy/*cut*))
+          subject-plan (when (and subject/enabled
+                                  (or (not (:sealed privacy/*cut*)) (envelope/shared?))
                                   (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
                          (trace/span "subject.prepare" "gateway"
                            (if privacy/*cut*
@@ -498,6 +499,10 @@
                                            :scheduling (boolean (group/scheduling?))
                                            :packedRows (count (filter (fn [op] (and (vector? op) (= :triplex/assert (first op))
                                                                               (vector? (nth op 3 nil)) (= 6 (count (nth op 3))))) (:ops params)))}))
+        ;; [DX-ERASE2] Why: report Datomic's transaction application counter on the exact acknowledged save.
+        ;; Rejected: using gateway wait or HTTP latency as a transaction-thread measurement.
+        (and (= "1" (System/getenv "TX2_REMOVAL_COST_READBACK")) (number? (get-in report [:io-stats :api-ms])))
+        (assoc :nativeApplyMs (get-in report [:io-stats :api-ms]))
         (:subject-save report) (assoc :subjectSave (:subject-save report))
         (:subject-ordered-ids report) (assoc :subjectOrderedIds true)
         (:subject-hints-attached report) (assoc :subjectHintsAttached true)

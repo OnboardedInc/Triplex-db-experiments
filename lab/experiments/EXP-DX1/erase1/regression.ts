@@ -24,9 +24,10 @@ import { Archive } from "../actv-lazy/join/archive.ts";
 import { BulkQueue } from "../actv-lazy/join/bulk.ts";
 import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
 import { valid } from "../actv-lazy/fixture.ts";
-import { rosterRoot, rosterSeal } from "../actv-lazy/read.ts";
+import { LazyReader, rosterRoot, rosterSeal } from "../actv-lazy/read.ts";
 import { W0, factValue, triplexValue } from "../../../bench/lib/w0-world.ts";
 import { command } from "../w1/group/workload.ts";
+import { admission, creditModeSelection } from "../prep1/rolling-credits.ts";
 import { publishWork, replayErased } from "./scenarios.ts";
 
 interface Fixture {
@@ -111,6 +112,7 @@ export async function regression(
   ipc: Call,
   output: (name: string, value: unknown) => void,
   ledger: boolean,
+  sealedWitness = false,
 ) {
   const client = new DatomicClient(process.env.DATOMIC_URL!, 35_000);
   const subjectWriter = process.env.DX_ERASE1_SUBJECT_WRITER;
@@ -173,11 +175,14 @@ export async function regression(
   let witnessCut = f.position;
   let before = (await rows(entityId)).find((r) => r.attribute === attribute);
   assert(before && typeof before.value_string === "string" && typeof before.tx_id === "string");
-  if (orderedIds) {
+  if (subjectWriter !== undefined) {
     // [DX-PREP1] Why: erase a real ordered assertion through all thirteen existing routes.
     // Rejected: checking the writer switch while the erased witness still uses a legacy ID.
-    const identity = orderedSaveIdentity();
-    const value = "ordered-witness-" + identity.token;
+    const identity = orderedIds ? orderedSaveIdentity() : undefined;
+    const mode = process.env.DX_V01_CREDIT_MODE === "rolling6" ? "rolling6" : "barrier6";
+    const turns = admission(10, creditModeSelection(mode));
+    const witness = [{ account: 0, due: performance.now() }];
+    const value = "writer-witness-" + binding.slice(0, 24);
     const frontier = await client.erasureFrontier(f.db);
     assert(frontier.protected);
     const input = command(
@@ -189,30 +194,60 @@ export async function regression(
       identity,
     );
     input.sourceK = witnessCut;
-    const ack = (await client.transact(f.db, input)) as {
+    // [DX-ERASE2] Why: the assertion used by every route check must be saved under the selected credits.
+    // Rejected: printing a credit mode the sender has never used.
+    let sent: ReturnType<DatomicClient["transact"]> | undefined;
+    turns.dispatch(
+      () => witness,
+      (_entry, ticket) => {
+        witness.shift();
+        sent = client.transact(f.db, input).then(
+          (reply) => {
+            turns.resolved(true, ticket);
+            return reply;
+          },
+          (error) => {
+            turns.resolved(false, ticket);
+            throw error;
+          },
+        );
+      },
+    );
+    assert(sent && witness.length === 0);
+    const ack = (await sent) as {
       operationId: string;
       position: { v: string };
       subjectSave?: string;
       subjectOrderedIds?: boolean;
+      writePath?: { scheduling: boolean };
     };
     assert.equal(ack.operationId, input.operationId);
     // [DX-INT1] Why: the merged writer prepares protected saves at the observed removal generation.
     // Rejected: requiring a reference-path fallback and leaving prepared removal unexercised.
-    assert(subjectFunction);
-    assert.deepEqual([ack.subjectSave, ack.subjectOrderedIds], [subjectFunction, true]);
+    assert.deepEqual(
+      [ack.subjectSave, Boolean(ack.subjectOrderedIds)],
+      [subjectFunction, orderedIds],
+    );
+    assert.equal(ack.writePath?.scheduling, subjectWriter === "0");
     assert.deepEqual(await client.erasureFrontier(f.db), frontier);
     assert.equal(Number(ack.position.v), witnessCut + 1);
     witnessCut = Number(ack.position.v);
-    before = (await rows(entityId)).find((r) => r.id === identity.assertionId(0));
+    before = (await rows(entityId)).find((r) => r.id === input.newIds[0]);
     assert(
       before &&
-        before.tx_id === identity.transactionId &&
+        before.tx_id === input.claims[0]?.txId &&
         before.value_string === value &&
         before.recorded_position === witnessCut,
     );
-    output("ordered-erasure-witness", {
-      binding, database: f.db, function: subjectFunction, position: witnessCut,
-      assertionId: before.id, transactionId: identity.transactionId, generation: frontier.seq,
+    output("writer-removal-witness", {
+      binding,
+      mode,
+      database: f.db,
+      function: subjectFunction,
+      position: witnessCut,
+      assertionId: before.id,
+      transactionId: before.tx_id,
+      generation: frontier.seq,
     });
   }
   const w: Witness = {
@@ -222,6 +257,13 @@ export async function regression(
     value: before.value_string,
     txId: before.tx_id,
   };
+  if (sealedWitness) {
+    // [DX-ERASE2] Why: use a sealed value, with a checked native body, for the entire route suite.
+    // Rejected: inferring sealing from the requested policy or a gateway's plaintext readback.
+    const stored = await diag("sealed-assertion", { scope: f.scope, id: w.assertionId });
+    assert.deepEqual(stored, { id: w.assertionId, bodyPresent: true, pointer: true });
+    output("sealed-route-witness", { binding, database: f.db, cut: witnessCut, ...stored });
+  }
   const getJournal = () =>
     client.rows(f.db, { entityIds: [w.txId], pattern: { attribute: ":_tx/change" } });
   const previousJournal = await getJournal();
@@ -319,7 +361,9 @@ export async function regression(
       .find((c) => c.tripleId === w.assertionId);
     try {
       const typed = (await f.comp.feedPage(before.recorded_position - 1, 1)).transactions[0];
-      const typedChange = typed?.changes.find((c) => c.tripleId === w.assertionId);
+      const typedChange = typed?.changes.find(
+        (c: { tripleId?: string }) => c.tripleId === w.assertionId,
+      );
       const directMarker = marker(change?.value, erased.erasedAt, erased.txId);
       const typedMarker = marker(typedChange?.value, erased.erasedAt, erased.txId);
       verify(
@@ -495,6 +539,25 @@ export async function regression(
     }
   } else verify("backup-restore", false, { error: "Backup positive control unavailable" });
   output("regression-cases", { evidence });
+  if (ledger) {
+    // [DX-ERASE2] Why: a short or duplicate list could look green even with a route missing.
+    // Rejected: counting any set of true flags as the complete product regression.
+    assert.deepEqual(evidence.map(({ route }) => route).sort(), [
+      "backup-restore",
+      "feed-resume",
+      "fresh-history",
+      "import-replay",
+      "joined-marker-staging",
+      "journal",
+      "notice-recipient",
+      "notice-sender",
+      "open-handle",
+      "publish-barrier",
+      "replica-current",
+      "replica-retained",
+      "ssn-rule",
+    ]);
+  }
   assert(
     evidence.every(({ check }) => check),
     "Erasure contract: " +
@@ -837,6 +900,69 @@ export async function derivedRegression(
   } finally {
     peer.close();
     await Promise.all([values?.close(), noticeArchive?.close(), control?.close(), store.close()]);
+  }
+  await derivedMemoRegression(binding, output);
+}
+
+async function derivedMemoRegression(
+  binding: string,
+  output: (name: string, value: unknown) => void,
+) {
+  const store = await openStore("lazy-erase-memo-" + binding.slice(0, 18));
+  const peer = new DatomicClient(process.env.DATOMIC_URL!);
+  const db = databaseFor(String(runtimeApi.DatabaseScope.test(store.scope)));
+  const { subject, facts } = originalWorld(0);
+  try {
+    await peer.declareProtection(db, ["ssn"]);
+    await store.input(
+      "memo-source",
+      { kind: "baseline", at: valid },
+      facts.map(({ e, a, v }) => ({
+        op: "assert" as const,
+        entityId: e,
+        attribute: a,
+        value: triplexValue(a, v),
+        validFrom: 0,
+      })),
+    );
+    await store.input("memo-release", {
+      kind: "activation",
+      at: valid,
+      from: valid,
+      release: W0.R2.hash,
+    });
+    const pin = { position: await store.head(), validTime: valid };
+    const reader = new LazyReader(store, undefined, undefined, undefined, undefined, undefined, true);
+    const initial = await reader.readAt(subject, pin);
+    assert(initial.json.includes("everify.submit-case"));
+    assert.equal((await reader.readAt(subject, pin)).route, "exact-cache");
+    const target = (await peer.rows(db, { entityIds: [subject] })).find(
+      (row) => row.attribute === "ssn",
+    );
+    assert(target?.value_string === "000000000");
+    const erased = await peer.erase(db, "memo-removal", [{ id: target.id }]);
+    assert.equal(erased.seq, 1);
+    assert.deepEqual(
+      erased.identities.map((r) => r.assertionId),
+      [target.id],
+    );
+    const reopened = await reader.readAt(subject, pin);
+    const independent = await new LazyReader(store, undefined, undefined, undefined, undefined, undefined, true).readAt(subject, pin);
+    output("derived-reader", {
+      first: sha(initial.json),
+      reopened: sha(reopened.json),
+      independent: sha(independent.json),
+      basis: pin,
+      sourceSequence: erased.seq,
+      route: reopened.route,
+    });
+    assert.notEqual(reopened.route, "exact-cache");
+    assert(reopened.json.includes("everify.ssn-erased"));
+    assert(!reopened.json.includes("everify.submit-case"));
+    assert.equal(reopened.json, independent.json);
+  } finally {
+    peer.close();
+    await store.close();
   }
 }
 

@@ -31,3 +31,9 @@ The final native check returned both stale-sequence refusals with heads held at 
 The quiet-account check verifies the native feed against every new save receipt and compares the returned pinned rows to the exact saved control rows from this attempt. Its fixtures use the same one-database gateway identified by the launcher. The deferred-write check verifies both destination heads and captures fresh exact HTTP source tickets under the same owner, attempt and source bindings. The new checks emit observations and fail if their content, current attempt or bindings disagree. Mac timing remains diagnostic.
 
 [Evidence hashes relative to the experiment evidence directory](P3-WRITER-SHA256SUMS)
+
+## Reopening a pinned Publish answer
+
+The merged reader's local memo used the account's mask revision. A native removal advances a separate sequence. The old reader still returned its memoized E-Verify submit instruction at position 2 after the native removal reached sequence 1. A fresh reader at the same pin returned different bytes. The new check uses a separate synthetic account because the joined Publish install already refuses protected inputs that lack a retention rule.
+
+The fix includes the verified native sequence in the old-pin memo key and stops the protected packed shortcut from opening without an authority check. It starts the first check alongside the account-head read. The native regression warms the memo, removes the exact synthetic assertion, compares the reopened reader with a fresh reader at the same basis and requires the erased-SSN task with no E-Verify submit instruction. The archive-write checks continue to verify both destination claims on the source's old sequence.

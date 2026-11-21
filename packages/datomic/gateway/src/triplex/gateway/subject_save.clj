@@ -2,6 +2,7 @@
   (:require [clojure.walk :as walk]
             [datomic.api :as d]
             [triplex.gateway.commit :as commit]
+            [triplex.gateway.envelope :as envelope]
             [triplex.gateway.group-prepare :as prepared]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.schema :as schema]
@@ -213,6 +214,22 @@
                 :else op)))
       ops)))
 
+(def ^:private envelope-fields
+  #{:db/id :triplex.private/id :triplex.private/entity :triplex.private/attribute
+    :triplex.private/validity :triplex.private/body})
+
+(defn- envelope-op? [op]
+  (and (map? op) (= envelope-fields (set (keys op)))))
+
+(defn- envelope-for? [subject business op]
+  (let [id (:triplex.private/id op) row (business id)]
+    (and row (= subject (:triplex.private/entity op))
+         (= subject (:entity_id row))
+         (= (:attribute row) (:triplex.private/attribute op))
+         (= (envelope/token id) (:value_string row))
+         (= (str "protected:" id) (:db/id op))
+         (some? (envelope/body-key-handle (:triplex.private/body op))))))
+
 (defn- plan-with-erasure [db [[commit-ident p]] input expected-erasure]
   (let [{:keys [scope source entities live new-ids times record-clocks journal-entities provisional]} p
         redundant-fence [:db/cas scope erase-generation expected-erasure expected-erasure]
@@ -231,7 +248,8 @@
                (#{:triplex/commit (first (commit/variants [true false]))} commit-ident)
                (:lean p) (not (:slim-row p)) (= 1 (:span p)) (:assign-record-time p)
                (not-any? p [:scope-wide :position-irregular :irregular :save-ledger :packed-journal :bulk])
-               (<= (count ops) 256) (every? prepared/small-op? ops))
+               (<= (count ops) 256)
+               (every? #(or (prepared/small-op? %) (and (some? expected-erasure) (envelope-op? %))) ops))
       (let [[fn-tx flags owner revision]
             (trace/span "subject.plan-witnesses" "gateway"
               (let [fn-tx (installed db) flags (when fn-tx (scope-witness db scope))
@@ -242,7 +260,8 @@
             retired (filterv #(and (vector? %) (= :triplex/retract (first %))) ops)
             business (filterv #(= (str "e:" subject) (second %)) asserted)
             claim (first (:command-ids p)) clocks (concat times record-clocks)
-            op-header (first ops)]
+            op-header (first ops)
+            envelopes (filter envelope-op? ops)]
         (when (and fn-tx (some? (:triplex.scope/key f))
                    (= schema/schema-hash (:triplex.scope/schema-hash f))
                    (= commit/source-hash (:triplex.scope/commit-fn-hash f))
@@ -279,7 +298,14 @@
                          (into #{} (map (comp field lean/decode)) (vals prior)))
                 after (into #{} (map (comp field lean/decode second #(nth % 3))) business)]
             (when (and (= (count live) (count prior) (count before) (count after))
-                       (= before after) (not (contains? before nil)))
+                       (= before after) (not (contains? before nil))
+                       ;; [DX-ERASE1] Why: encrypted bodies must belong to these same fresh owner rows.
+                       ;; Rejected: accepting any secondary entity map in a per-person frame.
+                       (or (empty? envelopes)
+                           (let [by-id (into {} (map (juxt :id identity)
+                                                  (map (comp lean/decode second #(nth % 3)) business)))]
+                             (and (= (count envelopes) (count (set (map :triplex.private/id envelopes))))
+                                  (every? #(envelope-for? subject by-id %) envelopes)))))
               (let [prefixes (vec (sort (map lean/prefix new-ids)))]
                 (cond-> {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
                          :journal journal :operation (:triplex.tx/operation-id op-header) :command claim

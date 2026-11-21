@@ -172,13 +172,14 @@ fi
 pg_mem=${DX_PG_MEMORY:-512m} tx_mem=${DX_TX_MEMORY:-3g} gw_mem=1500m tx_java="-Xms256m -Xmx${DX_TX_HEAP:-2g}" gw_java=''
 # [DX-M2] Why: opt-in JVM arms preserve concurrent experiments' defaults. Rejected: changing the control globally.
 tx_java=${DX_TX_JAVA_OPTS:-$tx_java}
-index_threshold=${DX_INDEX_THRESHOLD:-128m} index_max=${DX_INDEX_MAX:-512m} object_cache=${DX_TX_OBJECT_CACHE:-${DX_OBJECT_CACHE:-128m}} pg_settings=''
+index_threshold=${DX_INDEX_THRESHOLD:-128m} index_max=${DX_INDEX_MAX:-512m} object_cache=${DX_TX_OBJECT_CACHE:-${DX_OBJECT_CACHE:-128m}} pg_settings='' pg_data=''
 quiet_loggers=${DX_QUIET_LOGS:-0} encrypt_channel=${DX_ENCRYPT_CHANNEL:-true} native_readback=${DX_NATIVE_SETTINGS_READBACK:-0}
 [[ $quiet_loggers =~ ^[01]$ && $encrypt_channel =~ ^(true|false)$ && $native_readback =~ ^[01]$ ]] || exit 2
 while (($#)); do
   case "$1" in
     --no-publish) publish=false; shift; continue;;
     --clone-seed) seed_volume=$2;;
+    --pg-data) pg_data=$2;;
     --wal-directory) wal_dir=$2;;
     --prepared-pgdata) prepared_pg=$2;;
     --cpus-tx) tx=$2;; --cpus-pg) pg=$2;;
@@ -244,7 +245,9 @@ if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   # [DX-V01] Why: the scorecard uses the same selected writer on private bridge endpoints.
   # Rejected: publishing ports solely to select the integrated per-person writer.
   [[ ( $prefix == tx2-dxprep1-* && $publish == true ) ||
-     ( ${DX_V01_ADOPTED_STACK:-0} == 1 && $prefix == tx2-dxscale1-v01-* && $publish == false && $prepw == 1 ) ]]
+     ( ${DX_V01_ADOPTED_STACK:-0} == 1 && $publish == false && $prepw == 1 &&
+       ( $prefix == tx2-dxscale1-v01-* || ( $prefix == tx2-dxscale1-removal-* && -n $pg_data ) ||
+         ( $prefix == tx2-dxscale1-publish-* && -n $prepared_pg ) ) ) ]]
   [[ ${DX_PREP1_SUBJECT:-0} =~ ^[01]$ && -z $seed_volume ]]
   (( port_w + prepw - 1 < port_r ))
   [[ -z ${DX_PREP1_DUMP:-} || -f $DX_PREP1_DUMP ]]
@@ -508,7 +511,18 @@ fi
 docker network create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-net" >/dev/null
 # [DX-T1-14] Why: activation uses a byte-verified fresh clone under the holder's lease; a sealed source is never writable.
 # Rejected: S5's old first-use/reuse fallback, incomplete copies, or attaching a transactor directly to a sealed seed.
-if [[ $seed_volume == bm1-pristine-* ]]; then
+if [[ -n ${pg_data:-} ]]; then
+  # [DX-ERASE2] Why: run only a disposable copy and require a clean PostgreSQL shutdown before startup.
+  # Rejected: accepting a directory merely because its postmaster pid file disappeared.
+  [[ ${DX_BARE_METAL:-0} == 1 && $prefix == tx2-dxscale1-removal-* && -z $seed_volume && -z $wal_dir && -z $prepared_pg ]]
+  [[ $pg_data == /* && $pg_data != *','* && -f $pg_data/global/pg_control && ! -e $pg_data/postmaster.pid ]]
+  [[ -z $(find "$pg_data" -type l -print -quit) ]]
+  pg_mount=(--mount "type=bind,src=$pg_data,dst=/var/lib/postgresql/data")
+  docker run --rm --pull never --name "$prefix-health" --read-only --network none \
+    --mount "type=bind,src=$pg_data,dst=/var/lib/postgresql/data,readonly" \
+    --entrypoint pg_controldata postgres:17-alpine /var/lib/postgresql/data > "$attempt/pg-before.txt"
+  grep -Eq '^Database cluster state:[[:space:]]+shut down$' "$attempt/pg-before.txt"
+elif [[ $seed_volume == bm1-pristine-* ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $seed_volume == bm1-pristine-"${DX_BM1_PRISTINE_BATCH:?}" ]] || exit 2
   python3 lab/experiments/EXP-DX1/bm1/pristine-seed.py clone "$DX_BM1_PRISTINE_BATCH" "$prefix" "$attempt"
 elif [[ -n $seed_volume ]];then
@@ -582,7 +596,7 @@ if [[ -n $wal_dir || ${DX_BM1_WAL_AB:-0} == 1 ]]; then
   ' sh "${wal_dir:+ssd}" > "$attempt/wal-placement.txt"
 fi
 # Vendor scripts use their own database/connect statements; keep their order and bytes.
-if [[ -z $seed_volume && -z $prepared_pg ]];then
+if [[ -z $seed_volume && -z $prepared_pg && -z $pg_data ]];then
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   db=postgres
   [[ "$file" != postgres-table.sql ]] || db=datomic
@@ -632,6 +646,20 @@ fi
 docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
   -e "JAVA_OPTS=$tx_java$trace_tx_java$final_flags" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" ${prep_tx[@]+"${prep_tx[@]}"} -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" "${tx_start[@]}" >/dev/null
 template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
+erase_env=()
+erase_mount=()
+gateway_main=triplex.gateway.main
+if [[ -n ${pg_data:-} ]]; then
+  [[ -n ${DX_ERASE2_SCOPE:-} && -n ${DX_ERASE2_FIELD:-} && -n ${DX_ERASE_TOKEN:-} && -n ${TRIPLEX_ERASURE_WRAPPING_KEY:-} ]]
+  docker exec "$prefix-pg" psql -Xq -v ON_ERROR_STOP=1 -U postgres -d postgres     -c 'CREATE DATABASE removal_authority OWNER datomic'
+  authority_jdbc=${template#*\?}
+  authority_jdbc=${authority_jdbc/\/datomic\?/\/removal_authority\?}
+  erase_env=(-e DX_ERASE2_SCOPE -e DX_ERASE2_FIELD -e DX_ERASE_TOKEN -e TRIPLEX_ERASURE_WRAPPING_KEY
+    -e TRIPLEX_ERASURE_SHRED_GRACE_MS=0 -e TX2_REMOVAL_COST_READBACK=1
+    -e "TRIPLEX_ERASURE_JDBC=$authority_jdbc")
+  erase_mount=(-v "$repo/lab/experiments/EXP-DX1/erase1:/erase1:ro")
+  gateway_main=erase1
+fi
 # [DX-BM1] Why: avoid probing catalog creation before the SQL transactor announces startup.
 # Rejected: treating an early location read failure as a missing database, or unbounded health fetches.
 if [[ ${DX_STACK_WAIT_FOR_TRANSACTOR:-0} == 1 ]]; then
@@ -734,11 +762,13 @@ for role in "${gateway_roles[@]}"; do
     fi
   fi
   docker run -d --pull never --restart on-failure:10 --name "$prefix-gw-$role" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$cpu" --memory "$mem" --memory-swap "$mem" \
-    ${ports[@]+"${ports[@]}"} ${tail1_env[@]+"${tail1_env[@]}"} "${trace_env[@]}" ${field_policy[@]+"${field_policy[@]}"} -e "TRIPLEX_TRACE_JFR=$role_jfr" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}${final_flags}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src \
+    ${ports[@]+"${ports[@]}"} ${tail1_env[@]+"${tail1_env[@]}"} "${trace_env[@]}" ${field_policy[@]+"${field_policy[@]}"} -e "TRIPLEX_TRACE_JFR=$role_jfr" -e "TRIPLEX_TRACE_PROCESS=gw-$role" "${trace_mount[@]}" -e "DATOMIC_JAVA_OPTS=${role_java}${spec_java}${role_trace_java}${final_flags}" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src${pg_data:+:/erase1} \
     -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template&ApplicationName=triplex-gw-$role" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \
     -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \
-    -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run "$image" -m triplex.gateway.main >/dev/null
+    -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} \
+    ${erase_env[@]+"${erase_env[@]}"} ${erase_mount[@]+"${erase_mount[@]}"} \
+    --entrypoint /opt/datomic/bin/run "$image" -m "$gateway_main" ${pg_data:+gateway} >/dev/null
   ok=false
   health_deadline=$((SECONDS + 180))
   while (( SECONDS < health_deadline )); do
@@ -777,7 +807,19 @@ docker exec "$prefix-pg" psql -X -At -U postgres -d datomic -c "SHOW log_min_dur
 if [[ ${DX_TAIL1_EVENT_TRACE:-0} == 1 ]]; then
   docker exec "$prefix-pg" psql -X -At -U postgres -d datomic -c "SHOW log_duration; SHOW log_line_prefix;" > "$attempt/postgres-event-settings.txt"
 fi
-docker inspect "$prefix-pg" "$prefix-tx" "${gateway_roles[@]/#/$prefix-gw-}" > "$attempt/containers.json"
+if [[ -n $pg_data ]]; then
+  # [DX-ERASE2] Why: container evidence needs immutable IDs and mounts, while the private gateway keeps its runtime secrets.
+  # Rejected: saving full inspect responses containing the ephemeral wrapping key.
+  docker inspect "$prefix-pg" "$prefix-tx" "${gateway_roles[@]/#/$prefix-gw-}" |
+    python3 -c 'import json,sys
+rows=json.load(sys.stdin)
+for row in rows:
+    row["Config"]["Env"]=[v for v in row["Config"]["Env"]
+                          if not v.startswith(("TRIPLEX_ERASURE_WRAPPING_KEY=", "DX_ERASE_TOKEN=", "TRIPLEX_ERASURE_JDBC="))]
+json.dump(rows,sys.stdout)' > "$attempt/containers.json"
+else
+  docker inspect "$prefix-pg" "$prefix-tx" "${gateway_roles[@]/#/$prefix-gw-}" > "$attempt/containers.json"
+fi
 for role in pg tx "${gateway_roles[@]/#/gw-}"; do docker exec "$prefix-$role" cat /proc/sys/net/ipv4/tcp_slow_start_after_idle > "$attempt/tcp-idle-$role.txt"; done
 if [[ ${DX_IDLE_SENTINEL:-0} == 1 ]]; then
   [[ $prefix == tx2-dxt1-* ]] || exit 2
