@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 40.68 through 2026-11-21 07:49 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 40.76 through 2026-11-21 07:53 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The AGE1 ladder finished every window at 07:46 UTC. It held at 477,456,017 records after the pinned index ID filter refused qualification. Raw matching events show 59, 44 and 30 automatic index adoptions. The best diagnostic rate was 18,081.59 records/s. The checked 65.09 MB archive is on the Mac. The physical working volume is moving with a full-tree verification ahead of the fresh tuned scorecard. Its 300-minute runner is building. No full load is queued. [Rates, capacity and archived evidence](AGE1-LADDER.md)
+The AGE1 ladder finished every window at 07:46 UTC. It held at 477,456,017 records after the pinned index ID filter refused qualification. Raw matching events show 59, 44 and 30 automatic index adoptions. The best diagnostic rate was 18,081.59 records/s. The checked 65.09 MB archive is on the Mac. The moved working volume is held on the spare device under the same registered name. All 1,495 stopped PostgreSQL files matched. The fresh tuned scorecard built and is queued behind the remaining two verified data copies. Its 300-minute native clock starts after staging. No full load is queued. [Rates, capacity and archived evidence](AGE1-LADDER.md)
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
