@@ -112,6 +112,14 @@ function admit(config, configFile, mode) {
     assert.deepEqual({ ...readerSettings, "write-concurrency": writeConcurrency }, bulkProperties);
     assert(liveArgs.includes("-Xmx24g") || liveArgs.includes("-Xmx24576m"), "Bulk heap differs");
     assert(liveArgs.includes("-XX:ActiveProcessorCount=3"), "Bulk transactor processor setting differs");
+    const cpus = /^Cpus_allowed_list:\s*([\d,-]+)$/m.exec(fs.readFileSync("/proc/" + config.transactorPid + "/status", "utf8"))?.[1];
+    const cores = cpus?.split(",").reduce((n, span) => {
+      const [first, last = first] = span.split("-").map(Number);
+      return n + last - first + 1;
+    }, 0);
+    assert.equal(cores, 3, "Bulk transactor needs exactly three allowed processors");
+    const sqlUrl = /^\s*sql-url\s*=\s*(\S+)\s*$/m.exec(liveProperties.toString("utf8"))?.[1];
+    assert(sqlUrl === env.AGE_SQL_JDBC, "Bulk transactor SQL target differs");
     const heapMiB = Number(config.peerHeap.slice(0, -1)) * (config.peerHeap.endsWith("g") ? 1024 : 1);
     assert(heapMiB >= 4096, "Load peer needs space for the 2 GiB in-memory index and report verification");
     assert(/^metrics-callback\s*=\s*triplex.age.telemetry\/capture!\s*$/m.test(liveProperties.toString("utf8")),

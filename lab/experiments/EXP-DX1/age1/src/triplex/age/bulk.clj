@@ -292,6 +292,17 @@
       (rung/save-state! file state true)
       (assoc result :indexedRecords actual :settle job :bulkLoaded ready?))))
 
+(defn assert-durability! []
+  (gate/equal! "on|on|on|0"
+                       (scale/sql (System/getenv "AGE_SQL_JDBC")
+                         #(scale/string-query %
+                            (str "select current_setting('fsync') || '|' || current_setting('synchronous_commit') || '|' "
+                                 "|| current_setting('full_page_writes') || '|' || (select count(*) "
+                                 "from pg_db_role_setting, unnest(setconfig) as c(value) "
+                                 "where setdatabase in (0, (select oid from pg_database where datname=current_database())) "
+                                 "and value like 'synchronous_commit=%' and value <> 'synchronous_commit=on')")))
+                       "Bulk SQL durability or role override differs"))
+
 (defn begin! [file manifest prefix-t prefix-head]
   (let [state (rung/load-state! file)
         db (rung/db-for (:population state))
@@ -302,10 +313,7 @@
                          [(:t state) (:observed state)]) "Held prefix differs")
         _ (native/check! (not (or (:pending-end state) (:finished state) (seq (:closed-rungs state))))
                          "Bulk cannot run across in-progress or sealed measurements" {})
-        _ (gate/equal! "on|on|on"
-                       (scale/sql (System/getenv "AGE_SQL_JDBC")
-                        #(scale/string-query % "select current_setting('fsync') || '|' || current_setting('synchronous_commit') || '|' || current_setting('full_page_writes')"))
-                       "Bulk SQL durability differs")
+        _ (assert-durability!)
         state (->> (enroll! file state db) (#(reconcile! file % db)))]
     (validate-cut! state db)
     [state db]))

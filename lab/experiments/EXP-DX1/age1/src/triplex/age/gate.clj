@@ -284,11 +284,12 @@
         seed (:seed-head pop)
         resolve-bulk #(requiring-resolve (symbol "triplex.age.bulk" %))
         resolve-rung #(requiring-resolve (symbol "triplex.age.rung" %))
+        _ ((resolve-bulk "assert-durability!"))
         observe (requiring-resolve 'triplex.age.scorecard/observe!)
         state-file (str (java.nio.file.Files/createTempFile "age-bulk-" ".edn"
                          (make-array java.nio.file.attribute.FileAttribute 0)))
         start {:population pop :manifest-sha pin :observed 0 :t (:seed-t pop) :closed-rungs {}}
-        through 99
+        through 124
         prefix 12
         batch 8
         prefix-reply (native/age! aged pop 0 prefix 8 true)

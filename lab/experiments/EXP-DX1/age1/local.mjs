@@ -237,10 +237,14 @@ export async function local(opts, config, manager) {
     const mounted = ["-v", source + ":/age:ro", "-e", "DATOMIC_EXT_CLASSPATH=" + classpath,
       ...flags.flatMap((flag) => ["-e", flag])];
     const transactor = (role, url) => {
+      const telemetry = role === "clone" && opts.run === "bulk-fixture";
+      const logConfig = telemetry ? "/age/" + experiment + "/bulk-logback.xml" : logback;
       const props = { protocol: "sql", host: names[role], port: 4334, "sql-url": url,
-        "sql-driver-class": "org.postgresql.Driver", "sql-user": "postgres", "sql-password": password, ...settings };
+        "sql-driver-class": "org.postgresql.Driver", "sql-user": "postgres", "sql-password": password, ...settings,
+        ...(telemetry ? { "metrics-callback": "triplex.age.telemetry/capture!" } : {}) };
       return run(role, datomic, [...mounted, "-e", "AGE_PROPERTIES=" + Object.entries(props).map(([k, v]) => k + "=" + v).join("\n"),
-        "-e", "JAVA_OPTS=-Xms128m -Xmx640m -XX:ActiveProcessorCount=2 -Dlogback.configurationFile=" + logback],
+        ...(telemetry ? ["-e", "AGE_TX_EVENT_LOG=/tmp/age-load-native.log"] : []),
+        "-e", "JAVA_OPTS=-Xms128m -Xmx640m -XX:ActiveProcessorCount=2 -Dlogback.configurationFile=" + logConfig],
         "/bin/sh", ["-ceu", 'while [ ! -f /tmp/age.ready ]; do sleep 1; done; printenv AGE_PROPERTIES > /tmp/age.properties; exec /opt/datomic/bin/transactor /tmp/age.properties']);
     };
     const startTransactor = async (role, id) => {
@@ -356,6 +360,15 @@ export async function local(opts, config, manager) {
       await startTransactor("clone", cloneTx);
       await capture(["exec", "-e", "AGE_CLONE_URI=" + uri(clone, cloneJdbc), "-e", "AGE_SQL_JDBC=" + cloneJdbc, peer, "/opt/datomic/bin/run", "-m", "triplex.age.gate",
         opts.run, "/tmp/age-fixture.json", fixture.sha, clone], path.join(dir, "probe.log"), controller.signal);
+      if (opts.run === "bulk-fixture") {
+        const log = path.join(dir, "bulk-events.log");
+        await capture(["exec", cloneTx, "cat", "/tmp/age-load-native.log"], log, controller.signal);
+        const lines = fs.readFileSync(log, "utf8").split("\n");
+        assert(lines.some((l) => l.includes('AGE_BULK_METRICS ') &&
+          l.includes('triplex.age.telemetry')), "Fresh transactor did not call the metric hook");
+        assert(lines.some((l) => l.includes(":event :update/create-index") && l.includes(":id " + JSON.stringify(clone))),
+          "Fresh transactor did not log this database's index job");
+      }
     }
     else if (opts.run === "native-suite") {
       // [DX-AGE1] Why: run INT1's native suite and compile the rung against the archived gateway source.
