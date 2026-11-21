@@ -49,17 +49,19 @@ def managed(request, cleanup=False):
     root = Path(request["root"])
     source = request["source"]
     tag = request["tag"]
-    fast = source == FAST_SOURCE and tag in ("erasen20fast","erasen20small","erasen20retry","erasen20image")
+    fast = source == FAST_SOURCE and tag in ("erasen20fast","erasen20small","erasen20retry","erasen20image","erasen20recover")
     small = fast and tag == "erasen20small"
     people = 128 if small else 100_000
     assert request["item"] == 34 and (fast or (source == SOURCE and tag in ("erasen20","erasen20b")))
     binroot = Path("/var/tmp/triplex-bm1/night-n20-erasure")
     expected = (binroot.with_name(binroot.name+"-small") if small else binroot) if fast else Path("/var/tmp/triplex-bm1/night-n19")/tag
-    if tag in ("erasen20retry", "erasen20image"):
-        expected = binroot.with_name(binroot.name+("-retry" if tag=="erasen20retry" else "-image"))
+    separate = {"erasen20retry":"-retry", "erasen20image":"-image", "erasen20recover":"-recovery"}
+    if tag in separate:
+        expected = binroot.with_name(binroot.name+separate[tag])
     assert root == expected
     resume = tag == "erasen20b"
-    old = root.with_name("erasen20")
+    recover = tag == "erasen20recover"
+    old = root.with_name("night-n20-erasure-image" if recover else "erasen20")
     build = (binroot if fast else root)/"build"
     repo = build/"repository"
     node = build/"tools/bin/node"
@@ -77,6 +79,11 @@ def managed(request, cleanup=False):
     def save(path, value):
         with path.open("x") as stream:
             stream.write(json.dumps(value, indent=2) + "\n")
+
+    def file_hashes(directory):
+        all_files = sorted(directory.rglob("*"))
+        assert not any(entry.is_symlink() for entry in all_files)
+        return {entry.relative_to(directory).as_posix():digest(entry) for entry in all_files if entry.is_file()}
 
     if cleanup and not owner_file.is_file():
         return
@@ -128,6 +135,20 @@ def managed(request, cleanup=False):
         assert not (old/"measured/seed.json").exists()
         assert "Terminating process - Heartbeat failed" in (old/"transactor.log").read_text()
         nonce = first["nonce"]
+    elif recover:
+        old_request = old/"request.json"
+        archived = get(old/"erase-clean.json")
+        stage = old/"stage/staged.json"
+        assert archived["source"] == get(old_request)["source"] == get(stage)["source"] == source
+        assert archived["requestSha256"] == digest(old_request) and not archived["remaining"]
+        assert get(stage)["people"] == people and get(stage)["nonce"] == archived["nonce"]
+        assert digest(stage) == request["priorStageSha256"]
+        assert get(old/"stage/driver-exit.json") == {"code":0,"signal":None}
+        assert get(old/"control-stage/driver-exit.json") == {"code":1,"signal":None}
+        assert not (old/"control-stage/staged.json").exists()
+        assert not (old/"measured").exists() and not (old/"pgdata/postmaster.pid").exists()
+        assert "Terminating process - Heartbeat failed" in (old/"transactor.log").read_text()
+        nonce = archived["nonce"]
     else:
         nonce = str(uuid.uuid4())
     prefix = "tx2-dxbm1-" + tag + "-" + nonce.replace("-", "")[:12]
@@ -148,7 +169,7 @@ def managed(request, cleanup=False):
     # [DX-BM1] Why: the official Linux erasure wrapper launches a fresh native peer on the bench host.
     # Rejected: borrowing a Java process, changing a global Java install, or using a different Datomic distribution.
     jre = root/"jdk"
-    if resume:
+    if resume or recover:
         jre.symlink_to(old/"jdk",target_is_directory=True)
     else:
         jre.mkdir()
@@ -168,22 +189,26 @@ def managed(request, cleanup=False):
     db = "erase1_" + nonce.replace("-", "")
     pgdata = root/"pgdata"
     password = secrets.token_hex(24)
-    if resume:
+    if resume or recover:
         # [DX-BM1] Why: compare the copied indexed fixture before starting its separate recovery.
         # Rejected: mutating the retained first attempt or rebuilding sixteen million already verified facts.
-        def files_at(directory):
-            members=sorted(directory.rglob("*"))
-            assert not any(f.is_symlink() for f in members)
-            return {f.relative_to(directory).as_posix():digest(f) for f in members if f.is_file()}
         before=max(time.time(), request["start"])
-        manifest=files_at(old/"pgdata")
-        assert manifest and files_at(pgdata)==manifest and (pgdata/"PG_VERSION").read_text().strip()=="17"
+        manifest=file_hashes(old/"pgdata")
+        if recover:
+            key_manifest=file_hashes(old/"erasures")
+            assert manifest and key_manifest
+            for name, checks in (("pgdata",manifest),("erasures",key_manifest)):
+                run("cp","-a","--reflink=auto",old/name,root/name,timeout=480)
+                assert file_hashes(root/name)==checks
+            save(root/"protected-edn-file-hashes.json", key_manifest)
+        assert manifest and file_hashes(pgdata)==manifest and (pgdata/"PG_VERSION").read_text().strip()=="17"
         shutil.copytree(old/"stage",root/"stage")
-        assert digest(root/"stage/staged.json")==first["stagedSha256"]
+        staged_sha = request["priorStageSha256"] if recover else first["stagedSha256"]
+        assert digest(root/"stage/staged.json")==staged_sha
         proof=root/"before-recovery-sha256.json"
         save(proof,manifest)
-        save(root/"restore-witness.json",{**owner,"priorRequestSha256":first["requestSha256"],
-             "stagedSha256":first["stagedSha256"],"physicalFilesSha256":digest(proof),"startedAt":before})
+        save(root/"restore-witness.json",{**owner,"priorRequestSha256":digest(old_request),
+             "stagedSha256":staged_sha,"physicalFilesSha256":digest(proof),"startedAt":before})
         (pgdata/"postmaster.pid").unlink(missing_ok=True)
         password, = [row.split("=",1)[1] for row in (old/"transactor.properties").read_text().splitlines()
                      if row.startswith("sql-password=")]
@@ -201,7 +226,8 @@ def managed(request, cleanup=False):
     env["DATOMIC_URI_TEMPLATE"] = "datomic:sql://{db}?" + sql + "?user=postgres&password=" + env["PGPASSWORD"]
     erasures = root/"erasures"
     if fast:
-        erasures.mkdir(mode=0o700)
+        if not recover:
+            erasures.mkdir(mode=0o700)
         env.update(TRIPLEX_ERASURE_DIRECTORY=str(erasures),TRIPLEX_ERASURE_SHRED_GRACE_MS="0")
         if small:
             env["BM1_ERASE_SMALL"] = "1"
@@ -227,7 +253,7 @@ def managed(request, cleanup=False):
             return True
 
     wait_until(lambda: output("pg_isready","-q",timeout=3) == "", "PostgreSQL")
-    if resume:
+    if resume or recover:
         assert output("psql","-XAtq","-c","SELECT nonce FROM dx_erase1_scratch")==nonce
     else:
         with (datomic/"bin/sql/postgres-table.sql").open("rb") as ddl:
@@ -283,18 +309,18 @@ def managed(request, cleanup=False):
             assert not (pgdata/"postmaster.pid").exists()
             assert output("docker","inspect","--format","{{.State.ExitCode}}",pg) == "0"
 
-        def file_hashes(directory):
-            all_files = sorted(directory.rglob("*"))
-            assert not any(entry.is_symlink() for entry in all_files)
-            return {entry.relative_to(directory).as_posix():digest(entry) for entry in all_files if entry.is_file()}
-
         stage, control = root/"stage/staged.json", root/"control-stage/staged.json"
-        native("stage-fast",stage.parent,seconds=9600)
+        if not recover:
+            native("stage-fast",stage.parent,seconds=9600)
         native("stage-control",control.parent,seconds=9600)
         for file in stage,control:
             saved = get(file)
             assert saved["mode"] == "fast" and saved["source"] == source and saved["nonce"] == nonce
-            assert saved["people"] == people and file.stat().st_mtime >= request["start"]
+            assert saved["people"] == people
+            if recover and file == stage:
+                assert digest(file) == request["priorStageSha256"]
+            else:
+                assert file.stat().st_mtime >= request["start"]
         env["DX_ERASE_SEALED_SHA256"] = digest(stage)
         assert get(stage)["data"]["facts"] == get(control)["data"]["facts"]
         cold()
