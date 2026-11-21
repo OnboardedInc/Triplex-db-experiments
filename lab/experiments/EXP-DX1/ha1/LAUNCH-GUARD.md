@@ -30,7 +30,7 @@ and writer settings and records where it stopped.
 | Realistic card | `scorecard.mjs --age realistic` | `a36c88e6c` | `tx2-dxscale1-v01-<12>`, `DX_V01_PGDATA` copy | Admitted, line 247 | Not on INT1 yet (combined-check gap) |
 | Realistic build | `real1/server.ts extend` | `8597e3ef7` | `tx2-dxreal1-<uuid>`, `--real1-pgdata`; writer allowlist not consulted | Admitted, line 200 and the `else` at 265 | Admitted, line 200 and 266 |
 | Writer arms | `prep1/server.sh` | `97aced1b1`, `73afad665`, `891ab9139` | `tx2-dxprep1-<tag>-<cell>`, published ports | Admitted, line 241 | Admitted, line 257 |
-| Failover | `hasync1/sunday.ts` | THIN1's next build | Does not use `stack/up.sh` | Not this guard | **Fails at launch on `666b625e5`**: `hasync1/pair.ts` builds `-e -e HA1_FLEET_HTTP=1`. Fixed on CHK1 `f8e05f25b`; needs that merge. |
+| Failover | `hasync1/sunday.ts` | THIN1's next build | Does not use `stack/up.sh` | Not this guard | **Fails at launch on `666b625e5`**: `hasync1/pair.ts` builds `-e -e HA1_FLEET_HTTP=1`. Fixed by CHK1 `f8e05f25b`, merged on INT1 at `8ab832093`; use that commit or later. |
 
 These checks run after the first stack container, so neither the dry run nor the Mac check covers them. I checked each by
 reading the launcher. The removal copy and the removal settings (lines 568–570 and 729–730) are all set by
@@ -124,3 +124,19 @@ is admitted at `666b625e5`. On INT1 the guard still refuses each of these:
     lines 323–330. That means retrying only `ErasureFrontierUnavailable` and `CasConflict`, with the same input and
     operation id, a deadline 15 s after the frame's due time and a retry count in the result. After a lost reply, look
     the frame up by its operation id before resending. Not built here.
+
+## Merge for the integration builder
+
+- **Paths:** this branch adds only files under `lab/experiments/EXP-DX1/ha1/`:
+  - `LAUNCH-GUARD.md`
+  - `launch-dry-run.sh`
+  - `dry-run/docker`
+  - `guard-check.sh`
+  - `guard-cases.sh`
+  - `guard-cases.txt`
+- **No runtime change:** no launcher, gateway or `stack/up.sh` change.
+- **Base:** `666b625e5`. INT1 `8ab832093` touches none of these paths.
+- **Merge:** `git merge --no-ff origin/exp/DX-HA1-failover-move`, or cherry-pick `d30f32c72` and `58140dd96`.
+- **Gate after merging:** `node lab/bin/heavy.mjs --label DX-INT1-guard -- bash lab/experiments/EXP-DX1/ha1/guard-check.sh`
+  must end `cases=23 mismatches=0`. Add a line for the merge head to `guard-cases.txt` to check it as well.
+- **If a later INT1 change edits the allowlist at lines 257 to 260:** keep the four clauses and the shared conjunction.
