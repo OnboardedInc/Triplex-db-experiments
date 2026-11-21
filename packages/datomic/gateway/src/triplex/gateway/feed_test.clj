@@ -24,6 +24,9 @@
                  d/datoms (fn [_# index# & components#]
                             (cond (= [index# (vec components#)] [:aevt [:triplex.scope/key]]) [{:e 999}]
                                   (= [index# (vec components#)] [:eavt [999 :triplex.scope/rows-version]]) [{:v 2}]
+                                  ;; [DX-HA1] Why: the public route reads the scope's protection bit before projecting the feed.
+                                  ;; Rejected: replacing the privacy route or accepting unexpected fake-peer reads.
+                                  (= [index# (vec components#)] [:eavt [999 :triplex.scope/erasure-ledger]]) []
                                   :else (throw (ex-info "Unexpected fake-peer index read" {}))))
                  d/db (constantly {}) d/basis-t (constantly 105) d/log identity
                  d/tx-range (fn [_# start# end#] (filter #(<= start# (:t %) (dec end#)) pages))]
@@ -82,7 +85,7 @@
     (with-redefs [main/connection (constantly :fake)]
       (let [response (main/handler {:request-method :get :uri "/v1/db/s2-Zg/log" :query-string "fromT=100&limit=2&waitMs=0"})
             body (json/read-str (:body response))]
-        (is (= 200 (:status response)))
+        (is (= 200 (:status response)) (pr-str body))
         (is (= "s2-Zg" (get body "database")))
         (is (= "102" (get body "nextT")))))))
 (defn -main [& _]

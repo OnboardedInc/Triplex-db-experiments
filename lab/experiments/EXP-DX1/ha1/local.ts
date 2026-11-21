@@ -19,6 +19,7 @@ import {
 } from "../../../bin/lib.mjs";
 import {
   Evidence,
+  head,
   loadRoles,
   localRoleMiB,
   microLoad,
@@ -145,6 +146,10 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // [DX-INT1] Why: recheck the merged loader and recovery with this builder's diagnostic slot.
   // Rejected: borrowing another builder's live reservation.
   assert(holder === owner || (holder === "DX-THIN1" && diagnostic));
+  if (mode === "load-fair") {
+    const { cleanSource } = await import("../v01/source.ts");
+    cleanSource(head());
+  }
   assert.equal(dockerArgs([])[1], DOCKER_HOST);
   const folder = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
   if (typeof opts.recover === "string") {
@@ -254,7 +259,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
       // [DX-HASYNC1] Why: a queued exclusive lab window needs this process's heavy token to drain. Rejected: holding the token while waiting for that same window to finish.
       if (diagnostic) manager.assertMeasureAdmission(opts.holder);
       const disk = fs.statfsSync(root);
-      const floorBytes = (holder === "DX-THIN1" ? 10 : 5) * 2 ** 30;
+      const floorBytes = (holder === "DX-THIN1" || mode === "load-fair" ? 10 : 5) * 2 ** 30;
       if (disk.bavail * disk.bsize < floorBytes) {
         e = declare(opts.slot);
         e.write("admission-refused", {

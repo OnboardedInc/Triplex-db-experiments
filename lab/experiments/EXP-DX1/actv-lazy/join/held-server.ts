@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { launchProfile } from "../../jvm1/launch.mjs";
+import { launchProfile, type CreditMode } from "../../jvm1/launch.mjs";
 import { readScaleJvms, scaleHost, startScaleStack } from "../../scale1/bench.ts";
 import { hex, readScaleSeal } from "../../v01/adopt.ts";
 import { jsonFile } from "../../v01/adopted.ts";
@@ -11,10 +11,17 @@ import { stackOptions } from "../../v01/profile.ts";
 import { cleanSource, verifyBuild } from "../../v01/source.ts";
 import { runHeld } from "./held-campaign.ts";
 
-const [source, image, imagePin, transferPin, templateDir, preparedDir, walDir, output] =
+const [source, image, imagePin, transferPin, templateDir, preparedDir, walDir, output, fair, rolling, width, credits] =
   process.argv.slice(2);
 assert(process.platform === "linux" && process.env.DX_BARE_METAL === "1" && output);
 assert(source && image && imagePin && transferPin && templateDir && preparedDir && walDir);
+if (fair) {
+  assert.equal(fair, "--fair-import");
+  assert.match(rolling ?? "", /^rolling(?:6|8|12|16)$/);
+  assert.match(width ?? "", /^(?:[89]|[1-5][0-9]|6[0-4])$/);
+  assert.match(credits ?? "", /^[1-5]$/);
+  assert.equal(process.argv.length, 14);
+}
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock");
 const queue = fs.statSync("/proc/self/fd/9");
 assert.deepEqual([queue.ino, queue.dev], [lock.ino, lock.dev]);
@@ -44,7 +51,9 @@ const out = path.resolve(output),
   );
 const slot = "tx2-dxscale1-publish-" + randomUUID().slice(0, 12).replace("-", ""),
   attempt = randomUUID();
-const policy = launchProfile("server", { jvm: "j21-g1", txJvm: "j25-zgc" });
+const policy = launchProfile("server", {
+  jvm: "j21-g1", txJvm: "j25-zgc", ...(fair ? { writeJvm: "j25-zgc" as const } : {}),
+});
 
 function control(dir: string) {
   assert.equal(fs.readFileSync(path.join(dir, "PG_VERSION"), "utf8").trim(), "17");
@@ -124,7 +133,7 @@ jsonFile(path.join(out, "physical-input.json"), {
 });
 
 process.once("SIGTERM", () => {
-  process.stderr.write("Held Publish campaign reached its deadline\n");
+  process.stderr.write("Prepared-copy campaign reached its deadline\n");
   scaleHost.clean(out, slot);
   process.exit(124);
 });
@@ -177,12 +186,11 @@ try {
   assert.equal(left.gatewaySourceHash, right.gatewaySourceHash);
   process.env.DATOMIC_URL = write;
   process.env.DATOMIC_READ_URLS = read;
-  await runHeld(
-    out,
-    source,
-    { write, read, java, slot, attempt, gatewaySource: left.gatewaySourceHash },
-    seed,
-  );
+  const peer = { write, read, java, slot, attempt, gatewaySource: left.gatewaySourceHash };
+  if (fair) {
+    const { runFair } = await import("../../load1/fair-campaign.ts");
+    await runFair(out, source, peer, seed, rolling as CreditMode, Number(width), Number(credits));
+  } else await runHeld(out, source, peer, seed);
   assert.deepEqual(
     [fs.statSync(template).dev, fs.statSync(template).ino, control(template)],
     [original.dev, original.ino, before],

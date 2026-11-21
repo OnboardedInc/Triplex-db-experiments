@@ -556,7 +556,8 @@ export class Stack {
   }
   async gateway(role: "write" | "read", site: Site, pg: "pg" | "target", store: string) {
     const size = process.platform === "linux" ? "1600" : "320";
-    const frontier = this.e.mode.startsWith("load-frontier-") || microLoad(this.e.mode);
+    const fair = this.e.mode === "load-fair";
+    const frontier = this.e.mode.startsWith("load-frontier-") || (microLoad(this.e.mode) && !fair);
     const split = splitLoad(this.e.mode);
     const priority = this.e.mode === "load-live" || this.e.mode === "load-tail" || frontier;
     const grouping = priority || (split && role === "write");
@@ -602,6 +603,19 @@ export class Stack {
               "-e",
             ]
           : []),
+        // [DX-HA1] Why: the compact gate serves the same ordered writer through an owned SQL stack.
+        // Rejected: checking mixed credits against the old grouped gateway or an unbound service.
+        ...(fair ? [
+          "TX2_PREDECESSOR_LOOKUP=1", "-e",
+          "TX2_SUBJECT_SAVE=1", "-e",
+          "TX2_SUBJECT_NUMERIC_OWNER=1", "-e",
+          "TX2_SUBJECT_ORDERED_IDS=1", "-e",
+          "TX2_GROUP_FAST_REPLY=1", "-e",
+          "TX2_GROUP_STAGE_CLOCK=1", "-e",
+          "TX2_LEAN_NATIVE_QUERY=1", "-e",
+          "TX2_LEAN_NATIVE_LOG=1", "-e",
+          "TX2_WRITE_OPTIONS_ATTEMPT=" + this.e.nonce, "-e",
+        ] : []),
         ...(this.e.mode === "one-account"
           ? [
               "HA1_SHARED_SCOPE=" + this.sharedScope(role),
