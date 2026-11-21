@@ -15,6 +15,12 @@ HERE = Path(__file__).resolve().parent
 SERVER = Path("/var/tmp/triplex-bm1")
 MAC = Path.home()/"Claude/Projects/triplex-db-2/evidence"
 SLOTS = {
+    "publish-priority": ("day-n21/publish-priority", ("order", "small", "full", "launch-1", "launch-2",
+        "launch-3", "owner.json",
+        "topology.json", "control-hashes.txt", "control/publish-overlay.py", "control/publish-priority.ts",
+        "control/publish-priority.sh", "seed-cutoff.txt", "worker.log", "pg.log", "tx.log", "gw-w.log",
+        "gw-r.log", "remaining.txt", "build/bootstrap.log", "build/results/lscpu.txt",
+        "build/results/IMAGE-INPUTS.SHA256SUMS", "build/results/bootstrap.exit")),
     "jvm25": ("night-n20-jvm25", ("small", "campaign", "restore-proofs", "adapter.json", "small-agreement.json", "collector.json")),
     "tail-backlog": ("night-n20-tail-backlog", ("small", "campaign", "restore-proofs", "adapter.json", "small-agreement.json", "collector.json")),
     "jvm25-retry": ("night-n20-jvm25-retry", ("small", "campaign", "restore-proofs", "adapter.json", "small-agreement.json", "collector.json")),
@@ -89,6 +95,10 @@ def archive(name, revision):
         units = ["bm1n20-prep1-followup.service"]
     if name == "prep1-tail":
         units = ["bm1n20-prep-tail.service"]
+    if name == "publish-priority":
+        units = ["bm1n21-publish-build-final.service", "bm1n21-publish-priority.service",
+                 "bm1n21-publish-retry.service", "bm1n21-publish-final.service",
+                 "bm1n21-publish-roster.service"]
     states = {}
     for unit in units:
         state = subprocess.check_output(["systemctl", "show", unit, "-p",
@@ -184,7 +194,8 @@ def collect(name, revision, control, mode="trees"):
     ticket = json.loads(ticket_bytes)
     assert ticket["item"] == name and ticket["producer"] == revision
     assert ticket["summary"]["bytes"] + (ticket["raw"] or {"bytes":0})["bytes"] < 1024**3
-    out = MAC/"DX-BM1/day-n20"/name
+    day = "day-n21" if name == "publish-priority" else "day-n20"
+    out = MAC/"DX-BM1"/day/name
     out.mkdir(parents=True, exist_ok=True)
     arrival_bytes = ticket["summary"]["bytes"] + (ticket["raw"] or {"bytes":0})["bytes"]
     assert shutil.disk_usage(out).free > 5*1024**3 + arrival_bytes, "Under the Mac evidence reserve after transfer"
@@ -214,7 +225,7 @@ def collect(name, revision, control, mode="trees"):
     transfer = out/"TRANSFER.json"
     transfer.write_bytes(ticket_bytes)
     index = MAC/"TRACE-INDEX.md"
-    key = f"bm1-friday-{name}"
+    key = f"bm1-saturday-{name}" if name == "publish-priority" else f"bm1-friday-{name}"
     if f"| {key} |" not in index.read_text():
         stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         with index.open("a") as stream:

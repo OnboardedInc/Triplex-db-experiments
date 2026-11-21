@@ -1,6 +1,12 @@
 # DX-BM1 bench handoff, November 19
 
-## Saturday handoff
+## Final priority-Publish run
+
+**The 25,000-person roster started at 01:15:30 EST on November 21. Server 1 cost about $67.40 at 01:16 EST**, using $1.09/hour since Wednesday 11:27 EST. The native stack is running `bm1n21-publish-roster.service` on the pinned INT1 integration `0196b9952e496c883a24b9ed05ef17fa886dfb00`, which contains ACT1 `acc0f5c39`. The original 100k volume had been removed. The fresh roster must finish full readback by 03:15 EST. The worker stops by 04:24 EST to leave time for final cleanup and collection before 04:35. The orchestrator owns deletion after this run.
+
+The same-account order gate and all six 64-person receipt-only offers completed and regraded from their saved output. The 39.4/s save-only check saw a growing queue. The full campaign keeps that rate so the Publish timing and save backlog will both be visible. The harness uses one deep account and one database for all timed writes, one Publish in flight, five seconds between offers and two fresh-read connections to the read gateway. The setup refusals, trials and JVM logs are preserved. Inspect `/var/tmp/triplex-bm1/STATUS` and `day-n21/publish-priority/worker.log` on the bench. [Forecasts](PREDICTIONS.md) · [Collector audit](COLLECTORS.md)
+
+## Earlier Saturday handoff
 
 **Ready for the orchestrator since 00:59:15 EST on November 21. Server 1 cost about $67.09 as of 01:00 EST at $1.09/hour since Wednesday 11:27 EST.** The last benchmark ended at 00:52:10. STATUS reads `item=queue state=handoff-ready`. No benchmark containers or erasure listeners remain and the second NVMe is unmounted. It retains the ext4 filesystem for later work. The orchestrator owns the two-server failover window and release.
 
