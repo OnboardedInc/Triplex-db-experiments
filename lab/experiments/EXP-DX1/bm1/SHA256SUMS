@@ -304,3 +304,6 @@ ee9551ce294c7288160ad52884660cbe2d15c0588d6150ecfc687d92a682b94f  day-n20/erasur
 c85c290e67cc4fde27ec7b76fabb0b994d3c4c540670b82df7f9850ccf62427a  day-n20/prep1-tail-syscall/raw.tar.zst
 654cbd7ed623c225f966dda497a8b941a55a3e96599a76ef3ada6ec6a8b51228  day-n20/prep1-tail-syscall/summary.tar.zst
 26e11fe7e73a511de91e064a63b4e19ddd865bedf61051f88d1a8d9e67474254  day-n20/prep1-tail-syscall/append-causes.tsv
+f5d249192e6c49d34485536327df69471939bfeac6e3aa9177723209b4fabc9d  day-n20/erasure-recovery/TRANSFER.json
+5e7f68e87c6b98bde674ddb349513db8f9be81daffeeb95883ef675eb6846d0e  day-n20/erasure-recovery/raw.tar.zst
+e059df79c807037f1b93a60607d46f3f6ccd056332cc6de76d9d46e1becde2cf  day-n20/erasure-recovery/summary.tar.zst
