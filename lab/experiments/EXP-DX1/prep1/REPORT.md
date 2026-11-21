@@ -3,8 +3,9 @@ At 235 and 394 offered, ordered IDs delivered 234.90 and 393.92 saves/s inside t
 The quiet account went from 73.66 to 315.42 ms and from 34.07 to 118.16 ms. The ratios were 4.28× and 3.47× against a 1.25× bar.
 Durable append and the wait to start it took 99% and 97% of the two loaded quiet p99 saves. The fair-turn rule was off.
 Both solo p99-ranked saves spent about 89% inside the append. G1 pauses affected some other saves, including the two slowest at 394 loaded.
-The next comparison will test 620 and 900 offered with a wider person tape and fair turns off and on.
-The measured ceiling above 394 and the full-size result remain open.
+Ceiling command (60 minutes) uses source 8a116ed366d54ad7bca7b153d92d4f2eb4ea7041 on the held SCALE1 seed.
+Run `DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-ceiling -- bash lab/experiments/EXP-DX1/prep1/server.sh ceiling "$OUT" 8a116ed366d54ad7bca7b153d92d4f2eb4ea7041 "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" "$SCALE1_TRANSFER_SHA256"`.
+The 620/900 comparison spans 1,900 people per neighbour with fair turns off and on. The fixture matched 3,056 receipts. The physical run is pending.
 Measured source df307c29c. [Quiet-account stage recount](QUIET-ACCOUNT.md).
 
 **North star.** Durable, exact small saves and quiet-account tails in one database. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
@@ -40,7 +41,7 @@ Measured source df307c29c. [Quiet-account stage recount](QUIET-ACCOUNT.md).
 
 Solo cells forecast 3.5 saves/s. For ordered IDs, both solo cells forecast 2.6 ms native apply and 2.6 reads/save. K under load forecasts eight saves per append and all other cells one. Loaded forecasts have expiries, which leave the complete-cohort p99 unavailable. The generated plan includes numbers for all 24 cells. At 394, the earlier S run's mean apply minus reported SQL and decode already leaves 2.63 ms before append, above the 2.54 ms/save budget. The new arm measures whether fewer seeks also cut that remainder.
 
-**Server preflight.** Ten unit tests and strict type checking passed. The simulated producer and collector joined all 3,822 fixture offers, including 637 ordered receipts in both launch modes, and rejected a changed ordered journal ID. The physical sixth arm is unrun here. [Checksums](SHA256SUMS)
+**Server preflight.** Eleven unit tests and strict type checking passed. The mixed-format SQL gate passed 781 assertions and retained the original receipt across both boots. [Ceiling and hashed-ID behaviour](CEILING.md). The simulated producer and collector joined all 3,822 fixture offers, including 637 ordered receipts in both launch modes, and rejected a changed ordered journal ID. The sixth arm subsequently ran on server 1. [Checksums](SHA256SUMS)
 
 **Grouped fallback proposal.** At 235 offered, the measured gateway spent 39.40 of 44.31 ms per busy turn speculatively evaluating its members. Parallel same-basis preparation with one append projects 300–325 saves/s on two workers and 430–520 on four, if groups stay near eight and the storage reads overlap. It is a proposal. [One-page design and assumptions](GROUPED-PREPARATION.md)
 

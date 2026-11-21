@@ -515,3 +515,12 @@ b5c7168cd005d1c30e06d6168958a8201bcca9c1179f434bb2a9c06717a9a651  p10-quiet/1-ca
 ef8adb86b6abb6055552d0e017108e69af616364258cfc2ff20b610a066c74e7  p10-quiet/1-group-K.json
 3f04b8aa934534deb63dabbc5999df1532d8e5b990f7eb7fb7fbfb9958d81652  p10-quiet/1-old-S.json
 da120789551de2ea9c75b294c2559ffd42498d20f89b9baa07d40c6281c25f41  p10-quiet/1-ordered-S.json
+fa13ff47c5c7d2e695f87f03662089d70f9fa81b155733ffba97f2bba69ad6d8  p10-mixed-format-01/verified.json
+43e55e5b3251221fa78d341c02b06ed078c0daeffa1d2e352960ae8cf970ff76  p10-mixed-format-01/inputs.json
+5658de1262b2a808f71ab6b53a8c9e84dd224774a08dada8fcf2df9b9923138b  p10-mixed-format-01/terminal.json
+1f6255e6c7c6c15ec66c33cb5783b6ab6ef17a3a418bd7ea869fd1dfaaee52ff  p10-mixed-format-01/selftest-1.log
+73f5b57c96cac0a15c2870d0986a284c9f2a262bdb9ad7ad887e614bddbb8726  p10-mixed-format-01/stage.tgz
+d4e13fe44ffca7a5e64977b897769608532ba55b68470c9afdd29a6bb7dea5eb  p10-mixed-format-01/image-remove.json
+6a9a9684f3f849636cc3ebfad6de5ddb4b7d544f25af94e3247e8b47531078f9  p10-ceiling-preflight-02/plan-1.json
+e5e83b08827d3a5775fb8281591cb3064ed20dbafddd38a46d1134ce5a842096  p10-ceiling-preflight-02/plan-90.json
+68aa7e6a807bb1e4dc6a0982736d9a3d201f44a0a69ce0de6cda10bacd6bb5fc  p10-ceiling-preflight-02/summary.json
