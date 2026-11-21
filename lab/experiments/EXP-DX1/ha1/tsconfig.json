@@ -6,8 +6,9 @@
     "allowImportingTsExtensions": true,
     "allowJs": true,
     "checkJs": false,
+    "noPropertyAccessFromIndexSignature": false,
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["*.ts", "../../../../packages/datomic/test/ha1-account.ts"]
+  "include": ["*.ts", "../hasync1/sunday*.ts", "../../../../packages/datomic/test/ha1-account.ts"]
 }

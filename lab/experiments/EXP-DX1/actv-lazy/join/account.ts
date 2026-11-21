@@ -33,11 +33,11 @@ import {
   type Request,
   type Event as NoticeEvent,
 } from "../../notify1/journal.ts";
-import { Documents, type Row, type Op } from "../../notify1/store.ts";
+import { Documents, type Op } from "../../notify1/store.ts";
 import { Dispatcher } from "../../notify1/dispatcher.ts";
 import { memberRange, width, type Census } from "../../notify1/census.ts";
-import { CLOCK, RELEASE, Conflict, fact, millis, value, type Store } from "../store.ts";
-import { calculate, worldsAt, type Proposal, type Point } from "../decision.ts";
+import { CLOCK, ORIGIN, RELEASE, Conflict, fact, millis, value, type Store } from "../store.ts";
+import { calculate, worldsAt, type Proposal } from "../decision.ts";
 import { deepImpact, rawDeep, replaceDeep } from "./deep.ts";
 import { subjectOf, type Fact } from "../../../../bench/lib/world.ts";
 import { AccountAdmission, type PublishObservation, type WriteAttempt } from "./admission.ts";
@@ -85,6 +85,7 @@ export type Marker = {
   from: string;
   kind: "activation";
   storage: Storage;
+  erasureSeq?: number;
   stage?: Stage;
   codec?: "compact";
   output: { count: number; chunks: number; hash: string; owners: number };
@@ -180,6 +181,7 @@ export class JoinedAccount {
     return ids;
   }
   private async suffix(after: number, p: number, setup = false) {
+    if (this.s.held && !setup) return this.s.held.verifyThrough(p);
     while (after < p) {
       const f = await this.s.comp.feedPage(after, 32);
       assert(f.transactions.length);
@@ -206,6 +208,33 @@ export class JoinedAccount {
         );
       }
     }
+  }
+  async installHeld(at: string) {
+    const s = this.s, source = s.held;
+    assert(source && W0.isInstant(at) && (await s.head()) === source.cut);
+    const ids = Array.from({ length: source.people }, (_, i) => W0.placementId(i));
+    const init = new Notices(s.comp, "joined", {
+      identity: selector,
+      roster: async () => ids,
+      worlds: async () => { throw Error("Unexpected held enrolment evaluation"); },
+    });
+    // [DX-ACT1] Why: the verified SCALE1 census already exists. Copy only notice enrolment pages into its joined epoch.
+    // Rejected: replaying the loader or deriving policy for every member before a Publish.
+    await init.create(source.seal, at);
+    const { census } = (await init.observe()).value;
+    assert.equal(census.members, h(ids));
+    const now = await s.head();
+    await this.suffix(source.cut, now, true);
+    const meta: Meta = { epoch: source.seal, census, valid: at, source: source.cut,
+      compiler: selector, scheduled: false };
+    await s.commit("join-held-enrolment", "lazy/join", [
+      fact(ORIGIN, "lazy/generation", { profile: s.profile, held: source.seal }),
+      this.db.put("join-meta", meta),
+      this.db.put("join-calendar", []),
+      fact(CLOCK, "lazy/slot", { joined: source.seal, kind: "baseline", at }),
+    ], now, { intent: h([source.seal, census, at]) });
+    assert.deepEqual(await this.roster(census, now), ids);
+    return meta;
   }
   async install(ids: string[], at: string, expanded = false) {
     ids = [...ids];
@@ -495,7 +524,7 @@ export class JoinedAccount {
   ) {
     const valid = at >= meta.valid && !(await this.db.row("join-invalid", p)),
       expanded = kind === "output" && !!meta.expanded,
-      mode = envelopes ? "all" : strategy(old, next, kind, valid, expanded);
+      mode = envelopes || this.s.held ? "all" : strategy(old, next, kind, valid, expanded);
     if (mode === "none") return [];
     if (mode === "all") return this.roster(meta.census, p);
     const out: string[] = [];
@@ -529,7 +558,7 @@ export class JoinedAccount {
     const xs = await this.s.rows([RELEASE], e.at),
       r = xs.find((x) => x.position === e.at);
     assert(r);
-    const m = value(r) as Marker & { erasureSeq?: number };
+    const m = value(r) as Marker;
     await recheckErasure(this.s.comp, m.erasureSeq);
     assert(
       m.notice === h(e.value) &&
@@ -632,6 +661,7 @@ export class JoinedAccount {
     hook?: () => Promise<void>,
     options: PublishOptions = {},
   ) {
+    assert(!this.s.held || storage === "owed", "Held campaign measures receipt-only Publish");
     doc = structuredClone(doc);
     const next = W0.compileRelease(doc);
     assert(["owed", "stored", "envelopes", "staged"].includes(storage) && W0.isInstant(at));
@@ -647,7 +677,7 @@ export class JoinedAccount {
         ["publish", doc, at, storage, options.sources ?? "native", workers, small],
         async (p) => {
           const { meta, c, tail } = await this.state(p);
-          assert(at >= c.at);
+          assert(this.s.held ? at === meta.valid : at >= c.at);
           // [DX-THIN1] Why: the current erasure cut must use the effective predecessor release.
           // Rejected: letting a future scheduled release define today's prior answers.
           const prev = c.releases

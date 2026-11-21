@@ -261,15 +261,15 @@ export class ReplicaReader {
         throw Error("replica split snapshot violation");
       // [DX-R3] Why: preserve lazy world descriptors across split reads without decoding entity bodies.
       // Rejected: object spread (invokes the triples getter and materializes the world).
-      return Object.assign(
-        Object.create(Object.getPrototypeOf(after), Object.getOwnPropertyDescriptors(after)),
-        {
-          route: before.route === "replica" && after.route === "replica" ? "replica" : "fallback",
-          roundTrips: before.roundTrips + after.roundTrips,
-          replicaFallbackReason: before.replicaFallbackReason ?? after.replicaFallbackReason,
-          waitedMs: before.waitedMs + after.waitedMs,
-        },
-      );
+      // [DX-V01] Why: fallback results already have read-only route metadata.
+      // Rejected: assigning over copied descriptors after construction (throws on a split fallback).
+      return Object.create(Object.getPrototypeOf(after), {
+        ...Object.getOwnPropertyDescriptors(after),
+        route: { value: before.route === "replica" && after.route === "replica" ? "replica" : "fallback", enumerable: true },
+        roundTrips: { value: before.roundTrips + after.roundTrips, enumerable: true },
+        replicaFallbackReason: { value: before.replicaFallbackReason ?? after.replicaFallbackReason, enumerable: true },
+        waitedMs: { value: before.waitedMs + after.waitedMs, enumerable: true },
+      });
     }
     let waitedMs = 0;
     // [DX-R3] Why: a receipt position can guide catch-up without changing a time-only read into a position-capped read.

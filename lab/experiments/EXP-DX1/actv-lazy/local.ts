@@ -202,7 +202,9 @@ if (binding.mode === "--proof" || binding.mode === "--functional") {
   ]);
 } else if (binding.mode === "--joined-size") {
   const [profile, n] = binding.size!.split(":");
-  assert((profile === "thin" || profile === "deep") && ["1000", "10000", "100000"].includes(n!));
+  const sizes =
+    profile === "thin" ? ["1000", "10000", "25000", "100000"] : ["1000", "10000", "100000"];
+  assert((profile === "thin" || profile === "deep") && sizes.includes(n!));
   run("join/scope-price.ts", [dir, n!, profile]);
 } else if (binding.mode === "--joined-fixed") {
   assert(["45", "180"].includes(binding.size!));

@@ -1,0 +1,7 @@
+<configuration>
+  <appender name="stderr" class="ch.qos.logback.core.ConsoleAppender">
+    <target>System.err</target>
+    <encoder><pattern>%date %-5level %logger - %msg%n</pattern></encoder>
+  </appender>
+  <root level="WARN"><appender-ref ref="stderr"/></root>
+</configuration>

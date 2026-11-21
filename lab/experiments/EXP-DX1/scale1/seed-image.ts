@@ -63,10 +63,11 @@ export function checkImage(s: Seal, dest: DeepIdentity) {
     assert(origin.campaign === "frozen" && target?.campaign && s.identity.arm === "zero");
     assert.deepEqual([origin.study, origin.topology, origin.physical], [target.study, target.topology, target.physical]);
   } else assert.deepEqual(target, origin);
-  assert(
-    dest.source === s.identity.source &&
-    s.scope === tenantScope(origin, s.identity.nonce),
-  );
+  // [DX-V01] Why: a scorecard compares current code on an already sealed population.
+  // Rejected: relabeling the producer's commit or skipping the live driver seed checks.
+  const held = /^tx2-dxscale1-int1-v01-/.test(dest.slot);
+  if (held) assert(campaign && target?.campaign === "frozen" && origin.study === "million");
+  assert((held || dest.source === s.identity.source) && s.scope === tenantScope(origin, s.identity.nonce));
   assert.equal(s.runTag, "deep-" + s.identity.nonce + "-s0");
   assert.equal(s.seed.people, dest.people);
   assert(
@@ -117,6 +118,8 @@ export async function restoreSeed(
   id: DeepIdentity,
   engines: Record<string, { id: string; address: string }>,
   campaignSeed?: string,
+  sealSha256?: string,
+  deadline?: number,
 ) {
   assert(
     campaignSeed ? Boolean(id.tenant?.campaign) && /^tx2-dxscale1-int1-/.test(id.slot) :
@@ -124,20 +127,42 @@ export async function restoreSeed(
   );
   const parent = path.dirname(dir),
     source = campaignSeed ?? path.join(parent, target);
-  if (campaignSeed) {
+  if (sealSha256) {
+    assert(campaignSeed && /^tx2-dxscale1-int1-v01-/.test(id.slot));
+    assert(fs.realpathSync(source) === source);
+    assert.match(sealSha256, /^[0-9a-f]{64}$/);
+  } else if (campaignSeed) {
     assert(fs.realpathSync(source) === source && path.dirname(source) === path.join(parent, "seeds"));
     assert(path.basename(source) === String(id.people / 10));
   } else assert(path.dirname(source) === parent && source !== dir);
-  const proof: Seal = JSON.parse(fs.readFileSync(path.join(source, "seed-image.json"), "utf8"));
+  const seal = fs.readFileSync(path.join(source, "seed-image.json"));
+  if (sealSha256) assert.equal(createHash("sha256").update(seal).digest("hex"), sealSha256);
+  const proof: Seal = JSON.parse(seal.toString("utf8"));
   checkImage(proof, id);
   assert(proof.identity.nonce !== id.nonce &&
     (campaignSeed ? proof.identity.slot !== id.slot : proof.identity.slot === "tx2-dxscale1-" + target));
   const file = path.join(source, "seed.pgdump");
   assert(fs.statSync(file).size === proof.bytes);
+  await restoreDump(file, proof.dumpSha256, id.slot, engines, deadline);
+  fs.writeFileSync(
+    path.join(dir, "restored-seed.json"),
+    JSON.stringify({ identity: id, origin: proof }),
+    { flag: "wx" },
+  );
+  return proof;
+}
+
+
+// [DX-V01] Why: use the same owned PostgreSQL restore for a SCALE1 operator-held dump.
+// Rejected: relabeling the loader artifacts as an INT1 driver seed.
+export async function restoreDump(file: string, expectedSha: string, slot: string,
+  engines: Record<string, { id: string; address: string }>, deadline?: number) {
+  assert(process.platform === "linux" && process.getuid?.() === 0 && process.env.DOCKER_HOST === "unix:///var/run/docker.sock");
+  assert(/^tx2-dxscale1-[a-z0-9-]+$/.test(slot) && /^[a-f0-9]{64}$/.test(expectedSha));
   for (const role of ["pg", "tx", "gw-w", "gw-r"])
     assert.equal(
       docker(["inspect", "--format", "{{.Name}}", engines[role]!.id]),
-      "/" + id.slot + "-" + role,
+      "/" + slot + "-" + role,
     );
   for (const role of ["gw-r", "gw-w", "tx"]) docker(["stop", "--time", "20", engines[role]!.id]);
   const g = spawn(
@@ -158,7 +183,12 @@ export async function restoreSeed(
     ],
     { stdio: ["pipe", "ignore", "inherit"] },
   );
-  assert.equal(await archiveStream(g, fs.createReadStream(file), g.stdin), proof.dumpSha256);
+  const timer = deadline ? setTimeout(() => g.kill("SIGKILL"), Math.max(0, deadline - Date.now())) : undefined;
+  try {
+    assert.equal(await archiveStream(g, fs.createReadStream(file), g.stdin), expectedSha);
+  } finally {
+    clearTimeout(timer);
+  }
   for (const role of ["tx", "gw-w", "gw-r"]) {
     docker(["start", engines[role]!.id]);
     engines[role]!.address = docker([
@@ -179,10 +209,4 @@ export async function restoreSeed(
       await sleep(500);
     }
   }
-  fs.writeFileSync(
-    path.join(dir, "restored-seed.json"),
-    JSON.stringify({ identity: id, origin: proof }),
-    { flag: "wx" },
-  );
-  return proof;
 }

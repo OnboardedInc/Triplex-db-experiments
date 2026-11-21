@@ -1,26 +1,30 @@
-Every account will share one Datomic database.
-The Mac now checks correctness with one ordinary slot at a time. Quiet-machine timing belongs on the servers.
-The shared branch keeps the write history queryable and the per-person writer optional.
-The durable Publish record is the point we count as stored. Background work settles values and notices afterward.
-The read gateway held about 62 MiB of live Java objects at both deep sizes. Its resident memory still grew.
-The transactor's Java heap grew while its object-cache charge held steady. The larger physical test will look for the plateau.
-The fresh and billion-record runs need matching sealed inputs and the merged scorecard.
-The merge table records what has been taken, what ran on this branch and what is still due.
+Build `9cd20b29449456c1d8c2400fc45f8be331495530` on both servers for Sunday failover.
+Build `bfef77d34d7cd72bc0bcc291086287655e277885` for Publish at 100,000 people.
+The Sunday checks recovered the original save reply and matched every checked read through the move.
+Version 0.1 holds saves after a machine loss until a second verified copy is ready.
+The small Publish run matched the full read and save tapes in both credit modes.
+The two queued scorecards still use their original builds.
+All Mac clocks are diagnostic. Full-size receipts, latency and recovery remain for the servers.
+The playground restored the public smoke data from a clean clone and passed its browser and agent checks.
 
-## Integration
+## Sunday failover integration audit
 
-[Current v0.1 merge and gate table](V0.1-STATE.md). [Earlier integration and memory evidence](P5-EVIDENCE.md). [Compressed part 6 evidence](V0.1-SHA256SUMS).
+The build and pair readiness records bind the declared commit, build receipt, manifest digest, seed cluster, fresh tag and both live host identities. Each case binds the cloned bytes and scope to a fresh attempt on the named roles, compares surviving native receipts and pinned field witnesses to the sent operations, and reports cleanup for those same objects. The local stopped-copy witness verifies manifest bytes and the exact fresh three-row sequence across promotion and replay. The compressed archive checksum indexes the collected attempt bytes. The two-server timing and second-fault observation remain open.
 
-The Mac admission patch came from 5c874bd26. Both marker tests used isolated temporary lock directories. The shared jobs used one ordinary token per command. The lease-disable path emits no verdict or receipt.
+Build `9cd20b29449456c1d8c2400fc45f8be331495530` for both Sunday roles. TypeScript and 24 tests passed. The stopped-copy gate matched three rows and three fresh clone boots. Policy B matched 27 failover receipts, the original lost reply, 79 planned-move receipts and 1,518 pinned reads. The shared sender stayed byte-for-byte intact. The adoption reader split preserves the existing dump check. [Evidence index](V0.1-SHA256SUMS)
 
-The restart released the interrupted owned slot, removed its volume and retired four scratch source copies. The interrupted-profiles archive retains the first complete resident-page checkpoint and the earlier saved-output comparison. The two physical memory terms are still open.
+## Held Publish integration audit
 
-The PREP1 merge kept the singular diagnostic timing field in the erasure harness. The four fairness checks and 724 native assertions passed on the runtime tree at 4f5105dc3. The fresh SQL recovery witness compared the exact original receipt, the feed, the native log and three pinned query results across restart. It checked the current attempt, image, source hashes, slot, durable native cut and two synchronous WAL flushes before recording the verified result. The report amendment changes only documentation and the checksums. No acceptance pins, bars or frozen inputs changed.
+The physical input checks bind the original image and transfer digests, stopped control record, prepared data and WAL mounts, immutable template and fresh engine identities to the clean build and queue lock. The local gate binds its startup attempt, source and live gateway digest to its reserved volume. The campaign matches each release recipe and each saved receipt to its contiguous native journal, and compares fixed-offset reads, settlement values, notice bytes and old/current reopened pins to the authored oracle at their cuts. Timely coverage uses the observed request clocks. These observations confer no acceptance verdict.
 
-The ACT1 merge was clean. Its legacy gate needed the gateway's omitted legacy layout field decoded as legacy and smaller seed frames. Both failed attempts are retained. The successful runtime tree at 783a2b917 matched both save and Publish orders, three typed predecessor conflicts, settlement across two stops and three shared-save worker stops.
+The clean build completed eight package tasks. TypeScript, shell syntax, 27 focused tests and 19 scheduler checks passed. The ordered writer matched 3,816 save receipts and 192 pinned reads per mode, plus four Publish receipts each. The independent settlement replay matched 86 values and eight notices. A fresh reader reopened old and new release cuts. The harness shared one managed gateway endpoint for local reads and writes. The physical campaign uses its own read gateway and dedicated WAL mount.
 
-The Publish gate independently compares pinned results and ordered effects to the oracle, checks the durable marker and the exact HTTP writer setting, and binds the new namespace, slot, runtime and cleanup to the attempt. Its source and JSON digests are in the archive. Physical Publish timing and the pooled receipt-only campaign remain open.
+The Sunday adoption split supplies the new physical launcher without changing the old dump size check. The sender's pause, drain and resume apply only with an explicit Publish controller. The default PostgreSQL mount and WAL validation matched the old script's argument and refusal checks. The Java image selections matched in all four tested combinations. The frozen inputs and 521 acceptance pins are unchanged. [Checksums](V0.1-SHA256SUMS)
 
-## Server work
+## Public playground integration audit
 
-Run the physical scorecard on the exact merged revision at both ages. The old frozen preflight had two exact arms. The field comparison, compatibility with the aged journal and physical age results remain open. [Earlier campaign and options](P5-EVIDENCE.md)
+The smoke round trip binds the selected tier, manifest and chunk digests to a fresh exact-source clone and the live canonical engine grant. Before readiness it checks the restored checkpoint and compares authored records at three exact cuts. It compares the HTTP and agent actions with their expected payloads and requires the browser check. Stop checks the original listener and exact owned Docker inventory before the round-trip record can be written. The runtime action receipts use durable save claims and pinned readback. No new acceptance verdict is emitted.
+
+The clean-clone gate at `4ab794320dcc499016a7fcd26d523b558ba72e28` verified the 18,276,592-byte public snapshot and its manifest. It opened cuts 79, 493 and 933. TypeScript, seven tests, four clean package tasks, 17 API cases, both MCP transports and Chromium passed. Stop removed the original listener and all owned resources. The temporary clone, Publish image and scratch sources were removed. The full hosted data and manual workflow remain open.
+
+The billion-record runner keeps `8cc32d380` with `57580241d`. The next-card runner keeps `c1eeb2ef8` with `5f62059b1`. No acceptance pin moved. The server build commits above have separate Mac evidence archives in `int1/p10`, alongside the playground archive. The real two-host fault run and the physical prepared-data Publish run are still open. [Owner decisions and scorecard rows](V0.1-STATE.md) · [Evidence index](V0.1-SHA256SUMS)

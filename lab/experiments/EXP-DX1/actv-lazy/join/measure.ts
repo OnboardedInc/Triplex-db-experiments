@@ -18,7 +18,6 @@ export async function measure<T>(run: () => Promise<T>) {
     // [DX-ACT1] Why: after a cold reopen, use the admission that the runner already holds through the timed blocks. Rejected: trying to acquire its own directory and waiting on both locks again.
     assert(dirname(token) === dir && /^lazy-block-[a-f0-9]+$/.test(basename(token)));
   } else {
-    // @ts-expect-error The native lab reservation manager has no TypeScript declarations.
     const { readMeasureLease } = await import("../../../../bin/heavy-lock.mjs");
     const waiting = performance.now();
     for (;;) {
