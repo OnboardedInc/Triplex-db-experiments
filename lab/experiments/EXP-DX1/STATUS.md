@@ -3906,3 +3906,19 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   one-paragraph account of the erasure item; Publish under load; any follow-up arm; final handoff.
 - **DX-V01 part 4 assigned:** re-pin to `f25a46e02`, toy rerun, `v01/SERVER.md` for server 2.
 - Running: DX-BM1, DX-SCALE1, DX-V01 (three).
+
+## 2026-11-21 03:26 UTC (22:26 local, 2026-11-20): server 2: the full-size ceiling run could not start (76 minute restore); the 1 billion run started instead
+
+- **Server 2 (`origin/exp/DX-SCALE1-deep-accounts` at `78beafe13`).** DX-PREP1's ceiling command accepted the
+  sealed image's digests and stopped during restore with zero timed cells: the measured COPY pace projects at
+  least 76 minutes before the 12 minutes of offers. The driver then started DX-AGE1's run at 21:59 local (9.9 hour
+  native deadline, 14 hour overall guard; the unused NVMe is mounted for it; the first attempt stopped at JDK
+  configuration and was repaired). The ordered writer is therefore still unmeasured at full size.
+- **DX-V01 part 4 (`693379bc0`; server commit `ce9507b0e`).** Scorecard re-pinned to the merged commit; toy card
+  fills all 14 rows with both writers on priorities 2 and 6; both retired-id forms refused; four historical reads
+  match across writers; 235 minutes and $4.27 per age; the optional ZGC row omitted. Its 38 minute allowance for
+  restore does not fit a 76 minute restore.
+- **Assigned (four agents running: DX-BM1, DX-SCALE1, DX-PREP1, DX-V01):** DX-PREP1 part 12 and DX-V01 part 5:
+  start from a file-level copy of the sealed seed's stopped PostgreSQL data directory (as the aging run does),
+  verified with the same proofs, instead of restoring the dump.
+- **Server 1** is building the append-tail test (`bm1n20-prep1-tail-syscall.service`, preparing at 22:24 local).
