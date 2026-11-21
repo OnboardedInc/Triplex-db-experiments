@@ -1,4 +1,12 @@
 Yes. One database durably accepted every offer at 394 saves/s (393.92/s inside the window) on a 16.25-million-fact repeated-person tape. Quiet-account isolation still failed.
+Server 1 append-tail source `df1b45d6bca9013dfc7a6adc79c961242dfc5a03`. The driver uses the original sealed ten-account seed and a new output directory outside the checkout.
+`DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-tail -- bash lab/experiments/EXP-DX1/prep1/server.sh tail "$OUT" df1b45d6bca9013dfc7a6adc79c961242dfc5a03 "$SEALED"`
+This 75-minute run compares the original setup, separate WAL drive, transactor-only Java 25 ZGC, and fair turns. Synchronous commit stays on.
+At 394 offered I forecast 34 ms solo p99 and 3.5× under load for the control, 24 ms and 1.6× with separate WAL, 33 ms and 3.2× with ZGC, and 34 ms and 2.7× with fair turns. [Both rates, append forecasts and launch requirements](TAIL-APPEND.md)
+The local PostgreSQL restart gate recovered the original receipt and captured its insert and update on the actual backend. The four tape fixtures matched 2,548 ordered receipts.
+Linux WAL and checkpoint tracing awaits the server. The command verifies a synchronous commit before each tape and retains unattributed calls explicitly.
+The quiet-account bar remains 50 ms solo and at most 1.25× under load. This run and the full-size ceiling run are pending.
+
 Merge candidate 3529d2579d2b9163f590ded891fc9d26130c8138 includes INT1 at 250c91916.
 Use `--writer subject-ordered` for the scorecard. Keep `--writer grouped` for the control.
 In the direct gateway set `TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1`. The launcher selects the first via `DX_PREP1_SUBJECT=1`.
@@ -25,5 +33,7 @@ One restore, then 620 and 900 gross offers/s. Each loaded neighbour spans 1,900 
 The SDK packages built. Fourteen focused controller and scorecard tests and 19 SDK tests passed. Two external SDK integration cases were skipped. Focused PREP1 TypeScript passed. The broader ad hoc SCALE1 type check still reports inherited optional request-trace hooks. The scorecard uses those hooks off. The full-size and physical scorecard runs remain pending.
 
 **Grouped fallback proposal.** At 235 offered, the measured gateway spent 39.40 of 44.31 ms per busy turn speculatively evaluating its members. Parallel same-basis preparation with one append projects 300–325 saves/s on two workers and 430–520 on four, if groups stay near eight and the storage reads overlap. It is a proposal. [One-page design and assumptions](GROUPED-PREPARATION.md)
+
+**Tail evidence audit.** The native restart reader checks the original ordered receipt, journal and reopened cut, and both SQL spans inside the exact append for the fresh staged source, image and attempt. The standard collector joins exact offers to durable journal receipts and native blocks, checking the fresh slot, writer options, source, and sealed inputs. The tail collector also requires the streamed restored dump hash, actual image and core masks, durability and WAL placement readbacks, fresh commit/flush/sync sentinel, matching backend/LSN, both terminal event counts and exact raw hashes. The launcher exposes summaries after owned teardown. The fixture output is marked synthetic. [Checksums](SHA256SUMS)
 
 **Evidence audit.** The p99 recount checks both transferred archives, the collector-attested hashes, plan, source, slot and attempt before joining ACKs to native intervals. The ceiling verifies pinned image, transfer, dump, exact predecessor values, tape, installed function, fresh attempt and durable journal before counting each receipt. Restart, removal and stock tests bind fresh source bytes, owned images, attempt, cut and cleanup to the tested observations. The scorecard rechecks the ordered count from hashed save rows tied to the armed function and attempt. No acceptance pins moved. [Checksums](SHA256SUMS)
