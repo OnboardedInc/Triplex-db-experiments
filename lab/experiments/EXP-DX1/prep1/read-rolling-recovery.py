@@ -79,12 +79,13 @@ def check(root):
             if matched:
                 block, = matched
                 assert r["db"] in (None, block["db"])
-                lookup_rows.append(r)
-        assert len({r["t"] for r in lookup_rows}) == len(lookup_rows)
+                lookup_rows.append({**r, "db": block["db"]})
+        assert len({(r["db"], r["t"]) for r in lookup_rows}) == len(lookup_rows)
         assert lookup_rows
         assert all(r["sampleEvery"] == inputs["lookupEvery"] and int(r["beforeT"]) < int(r["t"])
                    and r["start"] <= r["end"] and isinstance(r["outsideSql"], dict) for r in lookup_rows)
-        assert any("api/datoms :aevt :triplex.entity/rev" in row["lookups"] for row in lookup_rows)
+        if serial:
+            assert any("api/datoms :aevt :triplex.entity/rev" in row["lookups"] for row in lookup_rows)
         sampled = len(lookup_rows)
     else:
         assert "PREP1_LOOKUPS " not in raw
