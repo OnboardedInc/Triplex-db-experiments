@@ -303,7 +303,7 @@ python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect prep1-tenant 7ca8525
 
 ## Friday evening queue
 
-**Server 1 estimated running cost at 21:05 EST is $62.83** at $1.09/hr since Wednesday 11:27 EST. The orchestrator owns the release. The absolute remaining window ends Saturday at 12:00 EST.
+**Server 1 estimated running cost at 22:10 EST is $64.02** at $1.09/hr since Wednesday 11:27 EST. The orchestrator owns the release. The absolute remaining window ends Saturday at 12:00 EST.
 
 The active PREP1 `1-2-S` is a one-gateway mirror. The first component of the producer's cell name is the writer count. The server fenced only the parent loop while this child continued. The reordered supervisor waits for that child's output and cleanup, reopens the same seal for `2-1-S` then `2-0-K`, and skips the other repeats and four-gateway arms. The measured pair's first collector checks each source, plan, seed, summary and fresh terminal against the original request. After it records the pair, TAIL1 `da4c34f48` then JVM1 `5a9652780` take the original `46880aa47` verified seed. TAIL1 uses Java 21 G1 and varies the transactor cache from 256 to 2,560 MiB. The Java 21 G1, Java 25 G1 and Java 25 ZGC comparison keeps placement fixed. The new order has three JVM arms.
 
@@ -343,3 +343,5 @@ Ordered IDs reached 234.90/393.92 saves/s at 235/394 offered with 0.033/0.014 tr
 Pacing finished at 21:01 EST. The erasure retry cleared the port check and stopped at the image check because the pacing build had updated the shared tag. The exact image recorded by the erasure build remains present and matches its digest. The final launch uses that immutable identity. Collect `erasure-image` through control `night-n20-erasure-image-control` and keep both full-stage refusals.
 
 The four import pacing windows are independently verified. Feedback gave 1,715.56 facts/s and fixed pacing 2,986.07. Both doubled the quiet read p99 against the faster control and increased quiet-save p99 more than ninefold. All 47,520 live offers verified. The final runnable item is erasure on the original pinned image. [Every account and stage](HA1-PACING-READING.md)
+
+The new append-tail job uses the ordered writer at `df1b45d6b` with the original sealed ten-account inputs. The second NVMe was an unmounted signature-free whole disk and the root filesystem was on the first NVMe. Only the second disk is formatted, and only the WAL treatment mounts it. The work ceiling is 75 minutes after preparation. See `bm1n20-prep-tail.service` and the pending result in [forecasts](PREDICTIONS.md).
