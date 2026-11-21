@@ -1,34 +1,16 @@
-Build `9cd20b29449456c1d8c2400fc45f8be331495530` on both servers for Sunday failover.
-Build `bfef77d34d7cd72bc0bcc291086287655e277885` for Publish at 100,000 people.
-The Sunday checks recovered the original save reply and matched every checked read through the move.
-Version 0.1 holds saves after a machine loss until a second verified copy is ready.
-The small Publish run matched the full read and save tapes in both credit modes.
-The two queued scorecards still use their original builds.
-All Mac clocks are diagnostic. Full-size receipts, latency and recovery remain for the servers.
-The playground restored the public smoke data from a clean clone and passed its browser and agent checks.
+Build `3669bee4146c60d8b833c021ce0e1be3e341f611` for the removal stage.
+All 13 removal routes passed with both grouped and ordered saves under rolling credits.
+Both runs verified the stored sealed value before removal and performed an actual restore.
+The removal stage opens a disposable stopped copy of the original seed.
+The normal write path and queued scorecard pins keep their prior settings.
+The realistic database and the read gateway memory census follow this stage.
+The Mac checks are for correctness. Full server measurements remain open.
+The database continues to hold all accounts together.
 
-## Sunday failover integration audit
+## Removal integration
 
-The build and pair readiness records bind the declared commit, build receipt, manifest digest, seed cluster, fresh tag and both live host identities. Each case binds the cloned bytes and scope to a fresh attempt on the named roles, compares surviving native receipts and pinned field witnesses to the sent operations, and reports cleanup for those same objects. The local stopped-copy witness verifies manifest bytes and the exact fresh three-row sequence across promotion and replay. The compressed archive checksum indexes the collected attempt bytes. The two-server timing and second-fault observation remain open.
-
-Build `9cd20b29449456c1d8c2400fc45f8be331495530` for both Sunday roles. TypeScript and 24 tests passed. The stopped-copy gate matched three rows and three fresh clone boots. Policy B matched 27 failover receipts, the original lost reply, 79 planned-move receipts and 1,518 pinned reads. The shared sender stayed byte-for-byte intact. The adoption reader split preserves the existing dump check. [Evidence index](V0.1-SHA256SUMS)
-
-## Held Publish integration audit
-
-The physical input checks bind the original image and transfer digests, stopped control record, prepared data and WAL mounts, immutable template and fresh engine identities to the clean build and queue lock. The local gate binds its startup attempt, source and live gateway digest to its reserved volume. The campaign matches each release recipe and each saved receipt to its contiguous native journal, and compares fixed-offset reads, settlement values, notice bytes and old/current reopened pins to the authored oracle at their cuts. Timely coverage uses the observed request clocks. These observations confer no acceptance verdict.
-
-The clean build completed eight package tasks. TypeScript, shell syntax, 27 focused tests and 19 scheduler checks passed. The ordered writer matched 3,816 save receipts and 192 pinned reads per mode, plus four Publish receipts each. The independent settlement replay matched 86 values and eight notices. A fresh reader reopened old and new release cuts. The harness shared one managed gateway endpoint for local reads and writes. The physical campaign uses its own read gateway and dedicated WAL mount.
-
-The Sunday adoption split supplies the new physical launcher without changing the old dump size check. The sender's pause, drain and resume apply only with an explicit Publish controller. The default PostgreSQL mount and WAL validation matched the old script's argument and refusal checks. The Java image selections matched in all four tested combinations. The frozen inputs and 521 acceptance pins are unchanged. [Checksums](V0.1-SHA256SUMS)
-
-## Public playground integration audit
-
-The smoke round trip binds the selected tier, manifest and chunk digests to a fresh exact-source clone and the live canonical engine grant. Before readiness it checks the restored checkpoint and compares authored records at three exact cuts. It compares the HTTP and agent actions with their expected payloads and requires the browser check. Stop checks the original listener and exact owned Docker inventory before the round-trip record can be written. The runtime action receipts use durable save claims and pinned readback. No new acceptance verdict is emitted.
-
-The clean-clone gate at `4ab794320dcc499016a7fcd26d523b558ba72e28` verified the 18,276,592-byte public snapshot and its manifest. It opened cuts 79, 493 and 933. TypeScript, seven tests, four clean package tasks, 17 API cases, both MCP transports and Chromium passed. Stop removed the original listener and all owned resources. The temporary clone, Publish image and scratch sources were removed. The full hosted data and manual workflow remain open.
-
-The billion-record runner keeps `8cc32d380` with `57580241d`. The next-card runner keeps `c1eeb2ef8` with `5f62059b1`. No acceptance pin moved. The server build commits above have separate Mac evidence archives in `int1/p10`, alongside the playground archive. The real two-host fault run and the physical prepared-data Publish run are still open. [Owner decisions and scorecard rows](V0.1-STATE.md) · [Evidence index](V0.1-SHA256SUMS)
-
-## Part 11 removal audit
+Resolved the shared sender by selecting retries only in the removal stage. Ordinary saves still hand their native promise directly to the ACK handler. The Publish interlock and default WAL path remain available. The stopped-copy launcher uses the existing physical seed reader. Lazy Publish reads use the authority lookup only on a declared protected reader. The regression verified the same old-pin cached result is discarded after removal.
 
 The native gate binds the selected writer, rolling admission, fresh operation and sealed assertion bytes to the live engine slot and verifies all named routes, original and restored receipts, and cleanup. Shared authority recovery checks current sequence, ciphertext, key absence and matching restored rows. The server stage binds the exact build, original seed, new attempt and disposable stopped copy to the live journal, each removal witness, cleanup identities and shutdown. Its observations await the physical run.
+
+The two native gates matched all 13 routes, their fresh sealed and unsealed witnesses, and the exact writer modes, including the restored backup. Both volumes and slots were released. [Evidence index](V0.1-SHA256SUMS)
