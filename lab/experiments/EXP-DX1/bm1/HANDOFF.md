@@ -2,7 +2,7 @@
 
 ## Third rental for rolling credits
 
-**Ready at 09:32:53 EST on November 21, 19m53s after billing began.** The charge at 09:47 EST was about USD 0.63 at USD 1.09/hour. The 24-hour ceiling is 09:13 EST on November 22. Ubuntu 24.04, Docker, Node 22.23.2, pinned PostgreSQL 17 and Datomic Java 21 and 25 images are installed. The second NVMe is mounted at `/mnt/triplex-bench3-wal` for WAL. SMT is enabled and all 24 CPU policies read back `performance`, matching Server 2. The new SSH host key is pinned in the operator's private known-host file.
+**Ready at 09:32:53 EST on November 21, 19m53s after billing began.** The charge at 10:27 EST was about USD 1.35 at USD 1.09/hour. The 24-hour ceiling is 09:13 EST on November 22. Ubuntu 24.04, Docker, Node 22.23.2, pinned PostgreSQL 17 and Datomic Java 21 and 25 images are installed. The second NVMe is mounted at `/mnt/triplex-bench3-wal` for WAL. SMT is enabled and all 24 CPU policies read back `performance`, matching Server 2. The new SSH host key is pinned in the operator's private known-host file.
 
 The direct transfer took 12m32s, about 167 MB/s on average. The sender used idle I/O priority, nice 19 and a 300 MB/s cap. The stopped source path was outside all live container mounts. The receiver compared every file and directory with the published inventory, including 125,923,989,950 bytes across 1,452 files and logical cut 87,002. Both original SCALE1 metadata files match their published digests. The source key directory and receiver's temporary authorized key were removed and independently checked. The pristine copy stays under `bench3/verified-seed`. Evidence is under `evidence/DX-BM1/bench3/ready`. [SCALE1 custody](https://github.com/OnboardedInc/Triplex-db-experiments/blob/921f90944857938c2c207afb349d992dd4d55e83/lab/experiments/EXP-DX1/scale1/HANDOFF.md) · [Checks](COLLECTORS.md) · [SHA-256 manifest](SHA256SUMS)
 
@@ -16,6 +16,8 @@ The first control preflight refused the metadata directory name before any offer
 The rates reproduced within forecast. Quiet ratios exceeded the earlier host's 3.35× and 2.29× in both cells. The publisher recorded 31,033 and 33,693 ACKs during the measured windows. Later durable ACKs remain separate. No replans occurred. The Mac copy `evidence/DX-BM1/bench3/bench3-control` contains 1,884,839 summary bytes and 12,424,590 raw bytes. [Checksums](SHA256SUMS)
 
 The published rolling command and forecasts arrived while the control was running. The queued `triplex-bench3-rolling-main.service` started preparing at 09:46:09 EST, immediately after the control's scoped cleanup. Producer `c8f903ce1142772751328b88d972cc527ca46dfc` runs barrier 6, rolling 6 and rolling 12 in the `server` profile. Each arm has three matched five-minute quiet and loaded pairs. Rolling 8 and 16 have separate published single-arm selections. Check `/var/tmp/triplex-bm1/STATUS` and `bench3/rolling-main.log`. [Published forecasts](https://github.com/OnboardedInc/Triplex-db-experiments/blob/cb5e3cf7a2083b97f0a3fbc0d699a082a0940657/lab/experiments/EXP-DX1/prep1/ROLLING-CREDITS.md)
+
+Barrier 6 closed after all six five-minute cells and owned-volume cleanup. The rolling-6 arm follows from a separate clone. The compact barrier evidence is on the Mac and raw capture stays on the bench until the campaign closes. [Barrier result](ROLLING-READING.md#barrier-6)
 
 ## Final priority-Publish run
 
