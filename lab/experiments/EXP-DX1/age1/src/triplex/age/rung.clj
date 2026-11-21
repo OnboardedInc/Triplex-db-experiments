@@ -372,6 +372,9 @@
       "cold" (apply cold! args)
       "structure" (apply structure! args)
       "inspect" (apply inspect! args)
+      "restore-location" (native/emit "restore-location"
+                           {:directory (scale/sql (System/getenv "AGE_RESTORE_JDBC")
+                                         #(scale/string-query % "select current_setting('data_directory')"))})
       "restore-check" (let [[file t] args] (restore-check! file (Long/parseLong t)))
       "seal" (let [[file target] args] (seal! file (Long/parseLong target)))
       "scorecard-cut" (apply (requiring-resolve 'triplex.age.scorecard/-main) args)

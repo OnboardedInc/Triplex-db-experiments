@@ -60,3 +60,35 @@ test("reads and archives the exact fresh event bytes and rejects log rotation", 
   fs.writeFileSync(live, events.join("\n") + "\n");
   await assert.rejects(readBulkMetrics(live, offset, phase), /rotated/);
 });
+
+test("binds a physical SQL catalog ID to its logical database and transactor", async () => {
+  const id = "scope-a-abcdef12-abcd-0123-0123-abcdefabcdef";
+  const other = "scope-a-01234567-abcd-0123-0123-abcdefabcdef";
+  const scoped = [
+    index(20, id, 200, "begin"), index(25, id, 200, "end"),
+    index(40, id, 600, "begin"), index(120, id, 600, "end"),
+    index(41, other, 610, "begin"), index(100, other, 610, "end"),
+    index(58, "scope-a-shadow", 700, "begin"), index(120, "scope-a-shadow", 700, "end"),
+  ].map((s) => s.replace(":phase", ":pid 47, :phase"));
+  const wrongPid = [
+    index(52, id, 650, "begin"), index(110, id, 650, "end"),
+  ].map((s) => s.replace(":phase", ":pid 48, :phase"));
+  const metrics = [bucket(61, {}), bucket(121, {})];
+  const rows = [...scoped, ...wrongPid, ...metrics];
+  await assert.rejects(observeBulk(rows, { ...phase, pid: 47 }), /More than one physical/);
+  const x = await observeBulk(rows, { ...phase, pid: 47, nativeId: id });
+  assert.deepEqual(x.jobs.map((j) => j.nextT), [200, 600]);
+  assert.equal(x.nativeId, id);
+  assert.equal(x.sustainedRate, 15000);
+});
+
+test("requires sustained allocation growth before the forecast refuses", async () => {
+  const { forecastSlope, collectedSegments } = await import("./continuation.mjs");
+  assert.equal(forecastSlope([{ records: 500, pgdata: 165 }], 1000, 390).over, false);
+  assert.equal(forecastSlope([{ records: 500, pgdata: 165 }, { records: 550, pgdata: 205 },
+    { records: 600, pgdata: 220 }], 1000, 390).over, false);
+  assert.equal(forecastSlope([{ records: 500, pgdata: 165 }, { records: 550, pgdata: 205 },
+    { records: 600, pgdata: 245 }], 1000, 390).over, true);
+  assert.equal(collectedSegments("{:finished true, :segments 80}\n"), 80);
+  assert.throws(() => collectedSegments("{:finished false, :segments 80}\n"), /successful completion/);
+});

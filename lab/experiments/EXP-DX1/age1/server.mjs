@@ -7,7 +7,9 @@ import path from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { writeScorecard } from "./scorecard.mjs";
-import { bulkProperties, hold, ladderArms, minimumRate, readBulkMetrics } from "./bulk-metrics.mjs";
+import { bulkProperties, continuationProperties, hold, ladderArms, minimumRate, readBulkMetrics } from "./bulk-metrics.mjs";
+import { archived, recoverLadder } from "./recover-ladder.mjs";
+import { allocatedBytes, collectedSegments, continueLoad, continuationPrior, directoryMargin, sameStorage } from "./continuation.mjs";
 
 const here = import.meta.dirname;
 const repo = path.resolve(here, "../../../..");
@@ -49,7 +51,8 @@ function getProcess(pid) {
   const stat = file("stat").split(") ").at(-1).split(" ");
   const pss = Number(/^Pss:\s+(\d+) kB$/m.exec(file("smaps_rollup"))?.[1]);
   assert(Number.isFinite(pss) && pss > 0);
-  return { pid, startTicks: stat[19], pssKiB: pss, cmdSha: sha(file("cmdline")) };
+  return { pid, startTicks: stat[19], cpuTicks: Number(stat[11]) + Number(stat[12]),
+    pssKiB: pss, cmdSha: sha(file("cmdline")) };
 }
 
 function admit(config, configFile, mode) {
@@ -64,6 +67,11 @@ function admit(config, configFile, mode) {
   assert(safeInteger(config.maxSqlBytes, 10 * GiB, 64 * 1024 * GiB));
   assert(safeInteger(config.copyHeadroomBytes, 25 * GiB, 64 * 1024 * GiB));
   assert(safeInteger(config.bytesPerAddedRecord, 50, 2048));
+  if (mode === "measure-loaded" && config.restoreMount) {
+    assert(path.isAbsolute(config.restoreMount) && path.isAbsolute(config.restorePgData));
+    assert(safeInteger(config.restoreHeadroomBytes, 25 * GiB, 64 * 1024 * GiB));
+    assert.equal(fs.statSync(config.restoreMount).dev, fs.statSync(config.restorePgData).dev);
+  }
   assert([config.peerHeap, config.peerCache, config.copyHeap].every((s) => /^[1-9]\d*[mg]$/.test(s)));
   assert(config.maxHours > 0 && config.maxHours <= 9.9);
   assert(config.maxUsd > 0 && config.maxUsd <= 74 && config.maxHours * rateUsd <= config.maxUsd);
@@ -109,15 +117,17 @@ function admit(config, configFile, mode) {
   assert.deepEqual(readerSettings, options.properties);
   if (mode === "ladder" || mode === "load") {
     const writeConcurrency = /^\s*write-concurrency\s*=\s*(\S+)\s*$/m.exec(liveProperties.toString("utf8"))?.[1];
-    assert.deepEqual({ ...readerSettings, "write-concurrency": writeConcurrency }, bulkProperties);
+    const physicalCores = mode === "load" ? 6 : 3;
+    assert.deepEqual({ ...readerSettings, "write-concurrency": writeConcurrency },
+      mode === "load" ? continuationProperties : bulkProperties);
     assert(liveArgs.includes("-Xmx24g") || liveArgs.includes("-Xmx24576m"), "Bulk heap differs");
-    assert(liveArgs.includes("-XX:ActiveProcessorCount=3"), "Bulk transactor processor setting differs");
+    assert(liveArgs.includes("-XX:ActiveProcessorCount=" + physicalCores), "Bulk transactor processor setting differs");
     const cpus = /^Cpus_allowed_list:\s*([\d,-]+)$/m.exec(fs.readFileSync("/proc/" + config.transactorPid + "/status", "utf8"))?.[1];
     const cores = cpus?.split(",").reduce((n, span) => {
       const [first, last = first] = span.split("-").map(Number);
       return n + last - first + 1;
     }, 0);
-    assert.equal(cores, 3, "Bulk transactor needs exactly three allowed processors");
+    assert.equal(cores, physicalCores, "Transactor CPU placement differs");
     const sqlUrl = /^\s*sql-url\s*=\s*(\S+)\s*$/m.exec(liveProperties.toString("utf8"))?.[1];
     assert(sqlUrl === env.AGE_SQL_JDBC, "Bulk transactor SQL target differs");
     const heapMiB = Number(config.peerHeap.slice(0, -1)) * (config.peerHeap.endsWith("g") ? 1024 : 1);
@@ -129,7 +139,7 @@ function admit(config, configFile, mode) {
     const logOpt = liveArgs.find((a) => a.startsWith("-Dlogback.configurationFile=/"));
     assert(logOpt, "Bulk transactor requires its own event appender");
     const logConfig = "/proc/" + config.transactorPid + "/root" + logOpt.slice("-Dlogback.configurationFile=".length);
-    assert.equal(fileSha(logConfig), fileSha(path.join(here, "bulk-logback.xml")));
+    assert.equal(fileSha(logConfig), fileSha(path.join(here, mode === "load" ? "continuation-logback.xml" : "bulk-logback.xml")));
     eventLogStat(config);
   }
   const allowJava = [...new Set(config.javaPids)].sort((a, b) => a - b);
@@ -137,9 +147,19 @@ function admit(config, configFile, mode) {
     .split("\n").map((s) => /^\s*(\d+)\s+java\s*$/.exec(s)).filter(Boolean)
     .map((x) => Number(x[1])).sort((a, b) => a - b);
   assert(allowJava.includes(options.txPid));
+  if (mode === "load") {
+    assert.equal(allowJava.length, 1, "Storage collection requires an exclusive transactor with no other Java readers");
+    assert([400e9, 450e9].includes(config.directoryLimitBytes), "Choose an explicitly capacity-checked directory ceiling");
+    assert(path.isAbsolute(config.pgData) && path.isAbsolute(config.scorecardMount));
+    assert.equal(fs.readFileSync(path.join(config.pgData, "PG_VERSION"), "utf8").trim(), "17");
+    assert(fs.lstatSync(path.join(config.pgData, "pg_wal")).isDirectory(), "Source WAL must be included in PGDATA");
+    assert.equal(fs.statSync(config.dataMount).dev, fs.statSync(config.pgData).dev);
+    assert.notEqual(fs.statSync(config.scorecardMount).dev, fs.statSync(config.dataMount).dev);
+    assert(path.isAbsolute(config.ladderEvidence ?? ""));
+  }
   assert.deepEqual(running, allowJava, "Dedicated server Java process inventory differs");
   const machine = fs.readFileSync("/etc/machine-id", "utf8");
-  const { javaPids, transactorPid, expectedMeasureSettings, ...spec } = config;
+  const { javaPids, transactorPid, postgresPid, restorePostgresPid, expectedMeasureSettings, ...spec } = config;
   const { txPid, ...measurePolicy } = expectedMeasureSettings;
   return {
     source: config.source, configSha: fileSha(configFile), datomicSha: config.datomicSha,
@@ -171,9 +191,12 @@ async function run(configFile, config, mode) {
   const scopeLock = path.join(parent, "age1-writer-" + sha(binding.db) + ".lock");
   fs.mkdirSync(config.output, { recursive: true });
   if (!process.argv.includes("--locked")) {
-    console.log(JSON.stringify(bulk ? { phase: mode + "-forecast", start: hold.records, target: config.target,
-      maxLoadingHours: 16, maxLoadingUsd: 17.44, minimumRate, ladderMaxSeconds: 3600,
-      predictions: ladderArms } : { phase: "forecast", ...initial }));
+    console.log(JSON.stringify(mode === "load" ?
+      { phase: "continuation-forecast", prior: forecast(archived.records, config.target, continuationPrior, config.reserveHours),
+        priorPaidLoadingHours: archived.chargedMs / 3_600_000, maxLoadingHours: 16, maxLoadingUsd: 17.44,
+        minimumRate, directoryLimitBytes: config.directoryLimitBytes } : bulk ?
+      { phase: mode + "-forecast", start: hold.records, target: config.target, ladderMaxSeconds: 3600,
+        predictions: ladderArms } : { phase: "forecast", ...initial }));
     const result = await new Promise((resolve, reject) => {
       const child = spawn("flock", ["-F", "-n", scopeLock, process.execPath, fileURLToPath(import.meta.url),
         ...(mode === "legacy" ? [] : [mode]), configFile, "--locked"], { stdio: "inherit" });
@@ -212,22 +235,35 @@ async function run(configFile, config, mode) {
   assert.equal(origin.binding.runSpecSha, binding.runSpecSha);
   assert.equal(origin.binding.machineHash, binding.machineHash);
   const calibrationFile = path.join(rung, "bulk-calibration.json");
-  const calibration = mode === "load" ? read(calibrationFile) : null;
+  const calibration = mode === "load" ? await recoverLadder(config.ladderEvidence) : null;
   if (calibration) {
-    assert.equal(calibration.source, binding.source);
-    assert.equal(calibration.machineHash, binding.machineHash);
-    assert.equal(calibration.db, binding.db);
-    assert.equal(calibration.imageSha, binding.imageSha);
-    assert.equal(calibration.propertiesSha, config.transactorPropertiesSha);
-    for (const { file, sum } of calibration.artifacts) assert.equal(fileSha(path.join(rung, file)), sum);
+    assert.deepEqual([calibration.machineHash, calibration.db, calibration.imageSha],
+      [binding.machineHash, binding.db, binding.imageSha], "Recovered ladder belongs to a different held database");
+    const original = path.join(rung, "bulk-calibration-original.json");
+    const corrected = path.join(rung, "bulk-calibration-corrected.json");
+    if (!fs.existsSync(original)) write(original, read(path.join(config.ladderEvidence, "rung/1000000000/bulk-calibration.json")));
+    assert.deepEqual(read(original), read(path.join(config.ladderEvidence, "rung/1000000000/bulk-calibration.json")));
+    if (!fs.existsSync(corrected)) write(corrected, calibration);
+    assert.deepEqual(read(corrected), calibration);
   }
-  const deadline = origin.started + (bulk ? (mode === "ladder" ? 1 : 16 - calibration.elapsedMs / 3_600_000)
+  const deadline = origin.started + (bulk ? (mode === "ladder" ? 1 : 16 - calibration.chargedMs / 3_600_000)
     : config.maxHours) * 3_600_000;
   const reserve = config.copyHeadroomBytes;
+  const separateCopyPolicy = mode === "measure-loaded" && config.restoreMount;
+  let pgdataSample = 0;
+  let pgdataBytes;
+  const directory = () => {
+    pgdataSample = Date.now();
+    pgdataBytes = allocatedBytes(config.pgData);
+    assert(pgdataBytes < config.directoryLimitBytes - 4 * GiB, "PGDATA reached the loading ceiling margin");
+    return pgdataBytes;
+  };
   const stableFloor = () => {
     assert(Date.now() < deadline, "Rung time limit reached");
-    assert(space(config.dataMount) > 12 * GiB && space(config.copyMount) > 12 * GiB
-      && space(dir) > 5 * GiB, "Disk floor reached");
+    assert(space(config.dataMount) > (mode === "load" ? directoryMargin : 12 * GiB)
+      && space(config.copyMount) > 12 * GiB && space(dir) > 5 * GiB, "Disk floor reached");
+    if (separateCopyPolicy) assert(space(config.restoreMount) > directoryMargin, "Restore NVMe floor reached");
+    if (mode === "load" && Date.now() - pgdataSample > 15_000) directory();
   };
   stableFloor();
   const attempt = randomUUID();
@@ -320,7 +356,8 @@ async function run(configFile, config, mode) {
       return selected[0];
     };
     if (bulk) {
-      const proof = path.join(rung, "held-prefix.json");
+      const proofRoot = mode === "load" ? path.join(config.ladderEvidence, "rung/1000000000") : rung;
+      const proof = path.join(proofRoot, "held-prefix.json");
       assert.equal(fileSha(state + ".population.edn"), hold.population);
       if (!fs.existsSync(proof)) {
         assert.equal(mode, "ladder");
@@ -351,27 +388,55 @@ async function run(configFile, config, mode) {
       assert(deadline - Date.now() > (config.reserveHours * 3600 + 600) * 1000,
         "Insufficient time for calibration plus measurement reserve");
     }
-    const projected = Math.max(0, config.target - inspected.records) * config.bytesPerAddedRecord;
-    assert(inspected.sqlBytes + projected < config.maxSqlBytes, "Forecast exceeds source SQL cap");
-    if (fs.statSync(config.dataMount).dev === fs.statSync(config.copyMount).dev) {
-      assert(space(config.dataMount) > projected + reserve + 12 * GiB, "Combined growth and copy disk forecast does not fit");
+    if (calibration) {
+      assert.equal(sha(inspected.nativeId), calibration.best.identitySha, "Live SQL catalog identity differs from the ladder");
+      assert(inspected.t >= calibration.t && inspected.records >= calibration.records);
+      const sourceBytes = directory();
+      assert(space(config.dataMount) > config.directoryLimitBytes - sourceBytes + directoryMargin,
+        "Source NVMe lacks the approved directory growth plus reserve");
+      assert(space(config.scorecardMount) > config.directoryLimitBytes + directoryMargin,
+        "Scorecard NVMe lacks one drained scratch copy plus reserve");
+    } else if (separateCopyPolicy) {
+      const location = await peer("restore-location", "restore-location", "restore-location");
+      sameStorage(config.restorePgData, location.directory, config.restorePostgresPid);
+      if (fs.statSync(config.copyMount).dev === fs.statSync(config.restoreMount).dev) {
+        assert(space(config.copyMount) > reserve + config.restoreHeadroomBytes + directoryMargin,
+          "Backup and restore share a device without room for both");
+      } else {
+        assert(space(config.copyMount) > reserve + directoryMargin &&
+          space(config.restoreMount) > config.restoreHeadroomBytes + directoryMargin,
+          "Backup or restore cannot fit its separately reserved device");
+      }
     } else {
-      assert(space(config.dataMount) > projected + 12 * GiB && space(config.copyMount) > reserve + 12 * GiB,
-        "Projected age or copy footprint exceeds reserved free space");
+      const projected = Math.max(0, config.target - inspected.records) * config.bytesPerAddedRecord;
+      assert(inspected.sqlBytes + projected < config.maxSqlBytes, "Forecast exceeds source SQL cap");
+      if (fs.statSync(config.dataMount).dev === fs.statSync(config.copyMount).dev) {
+        assert(space(config.dataMount) > projected + reserve + 12 * GiB, "Combined growth and copy disk forecast does not fit");
+      } else {
+        assert(space(config.dataMount) > projected + 12 * GiB && space(config.copyMount) > reserve + 12 * GiB,
+          "Projected age or copy footprint exceeds reserved free space");
+      }
     }
     const bulkPhase = async (tag, arm, stop, limit, target) => {
       const offset = eventLogStat(config);
+      const cpuTime = Date.now();
+      const beforeCpu = getProcess(binding.options.txPid);
       const phase = await peer(tag, "bulk-phase", "bulk", state, config.imageSha, String(hold.t), String(hold.head),
         mode, String(arm.size), String(arm.depth), String(target), String(stop), String(limit));
       assert.deepEqual([phase.mode, phase.database, phase.manifestSha, phase.size, phase.depth],
         [mode, binding.db, config.imageSha, arm.size, arm.depth]);
       assert(phase.seconds > 0 && phase.records >= 0 && phase.indexedRecords === phase.historyEstimate);
+      const afterCpu = getProcess(binding.options.txPid);
+      assert.deepEqual([afterCpu.startTicks, afterCpu.cmdSha], [beforeCpu.startTicks, beforeCpu.cmdSha]);
+      const hz = Number(execFileSync("getconf", ["CLK_TCK"], { encoding: "utf8" }));
+      assert(hz > 0);
+      const averageCores = (afterCpu.cpuTicks - beforeCpu.cpuTicks) / hz / ((Date.now() - cpuTime) / 1000);
       const archive = mode === "ladder" ? path.join(logDir, tag + "-native.log.gz") : undefined;
-      const metrics = await readBulkMetrics(config.bulkEventLog, offset, phase, archive);
-      const observed = { arm, phase, metrics };
+      const metrics = await readBulkMetrics(config.bulkEventLog, offset, { ...phase, pid: binding.options.txPid }, archive);
+      const observed = { arm, phase, metrics, averageCores };
       write(path.join(logDir, tag + ".json"), observed);
       console.log(JSON.stringify({ event: "bulk-arm", tag, size: arm.size, depth: arm.depth,
-        seconds: phase.seconds, records: phase.records, ...metrics, minuteMetrics: metrics.minuteMetrics.length }));
+        seconds: phase.seconds, records: phase.records, averageCores, ...metrics, minuteMetrics: metrics.minuteMetrics.length }));
       return observed;
     };
     if (mode === "ladder") {
@@ -400,26 +465,23 @@ async function run(configFile, config, mode) {
       return;
     }
     if (mode === "load") {
-      assert(calibration.best?.metrics.sustainedRate >= minimumRate, "No eligible calibration");
-      const loadingStarted = path.join(rung, "load-start.json");
-      if (!fs.existsSync(loadingStarted)) {
-        assert.equal(fileSha(state), calibration.checkpointSha);
-        write(loadingStarted, { calibrationSha: fileSha(calibrationFile), initialCheckpointSha: fileSha(state) });
-      }
-      assert.equal(read(loadingStarted).calibrationSha, fileSha(calibrationFile));
-      const promised = calibration.best.metrics.sustainedRate;
-      const secondsNeeded = (config.target - inspected.records) / promised;
-      const remainingHours = Math.max(0, secondsNeeded / 3600);
-      const totalHours = (Date.now() - origin.started + calibration.elapsedMs) / 3_600_000 + remainingHours;
-      console.log(JSON.stringify({ event: "bulk-load-forecast", records: inspected.records, target: config.target,
-        rate: promised, remainingHours, totalHours, usd: totalHours * rateUsd }));
-      assert(Date.now() + (secondsNeeded + 300) * 1000 < deadline, "Sustained calibration rate cannot reach 1B before the loading deadline");
-      env.AGE_BULK_MIN_RATE = String(minimumRate);
-      const observed = await bulkPhase("load", calibration.best.arm, deadline - 300_000, deadline, config.target);
-      assert(observed.phase.bulkLoaded && observed.phase.indexedRecords >= config.target, "Budget ended before the 1B indexed cut");
+      const oracle = async (tag, step) => peer(tag, "maintenance", "maintenance", state, config.imageSha, step);
+      const sourceUri = env.DATOMIC_URI_TEMPLATE.replace("{db}", binding.db);
+      const collect = async (tag, cutoff) => {
+        const log = await commands(tag, java, ["-Xmx" + config.copyHeap, gcFlags(tag),
+          "-Dlogback.configurationFile=" + path.join(here, "server-logback.xml"),
+          "-Ddatomic.deleteConcurrency=8", "-Ddatomic.readConcurrency=16",
+          "-cp", cp, "clojure.main", "-m", "datomic.tools.gc-db", sourceUri, cutoff]);
+        return collectedSegments(fs.readFileSync(log, "utf8"));
+      };
+      const observed = await continueLoad({
+        config, read, write, hashes: fileSha, logDir, rung, state, origin, deadline, calibration, inspected,
+        bulkPhase, collect, sample: oracle, directory, stableFloor,
+      });
+      assert(observed.phase.bulkLoaded && observed.phase.indexedRecords >= config.target);
       finishJvmLogs();
       write(path.join(rung, "bulk-loaded.json"), { ...observed, attempt, source: binding.source, machineHash: binding.machineHash,
-        imageSha: binding.imageSha, db: binding.db, checkpointSha: fileSha(state), calibrationSha: fileSha(calibrationFile),
+        imageSha: binding.imageSha, db: binding.db, checkpointSha: fileSha(state), calibrationSha: calibration.certificateSha,
         transactor: binding.java.find((p) => p.pid === binding.options.txPid),
         artifacts: fs.readdirSync(logDir).map((f) => ({ file: path.join(attempt, f), sum: fileSha(path.join(logDir, f)) })) });
       return;
@@ -475,6 +537,8 @@ async function run(configFile, config, mode) {
     const ok = verify.output.split("\n").find((line) => line.includes(":event :verify-backup/complete"));
     assert(ok && ok.includes(":missing-segments #{}") && ok.includes(":unreadable-segments ()"));
     assert.equal(Number(/:t (\d+)[,}]/.exec(ok)?.[1]), r.t);
+    if (separateCopyPolicy) assert(space(config.restoreMount) > config.restoreHeadroomBytes + directoryMargin,
+      "Verified backup leaves insufficient allocation for the native restore");
     const restore = await vendor("restore", "restore-db", backup, restoreUri, String(r.t));
     assert(restore.output.split("\n").includes(":succeeded"));
     const restored = await peer("restore-readback", "restore-readback", "restore-check", state, String(r.t));

@@ -14,6 +14,7 @@
     (scale/sql (System/getenv "AGE_SQL_JDBC")
       #(scale/string-query %
          (str "select json_build_object('databaseBytes',pg_database_size(current_database()),"
+              "'directory',current_setting('data_directory'),"
               "'heapBytes',pg_relation_size(c.oid),'toastBytes',pg_total_relation_size(c.reltoastrelid),"
               "'indexBytes',pg_indexes_size(c.oid),"
               "'walBytes',(select coalesce(sum(size),0) from pg_ls_waldir()),"

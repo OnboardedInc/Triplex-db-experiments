@@ -1,0 +1,13 @@
+<configuration>
+  <!-- [DX-AGE1] Why: collect the native apply, indexing and metric stream with one UTC clock.
+       Rejected: timing transaction internals from peer enqueue or GC pauses. -->
+  <appender name="age" class="ch.qos.logback.core.FileAppender">
+    <file>${AGE_TX_EVENT_LOG}</file>
+    <append>true</append>
+    <encoder><pattern>%d{yyyy-MM-dd HH:mm:ss.SSS,UTC} %-5level %logger - %msg%n</pattern></encoder>
+  </appender>
+  <logger name="datomic.garbage" level="INFO"/>
+  <logger name="datomic.update" level="INFO"/>
+  <logger name="triplex.age.telemetry" level="INFO"/>
+  <root level="WARN"><appender-ref ref="age"/></root>
+</configuration>

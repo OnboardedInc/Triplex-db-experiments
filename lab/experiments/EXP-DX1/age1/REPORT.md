@@ -1,11 +1,11 @@
-Pin acd350e92 for the ladder, full load and seal. Keep the stopped working volume and its verified prefix.
-The first server run wrote 5,284 records per second. The loader waited mainly inside Datomic submission.
-The old archive cannot split that wait between applying saves, writing to disk, and indexing.
-The new ladder gets two complete index jobs before trusting an arm's rate.
-The ladder tries one, eight and twenty-four saves per transaction and takes at most one hour.
-If the best rate cannot finish at one billion within the sixteen-hour loading budget, the command stops.
-The scorecard still receives its original handoff at the sealed cut.
-The server must verify the rate. This branch has no one-billion seal yet.
+Resume the held 477 million record volume with the Part 5 loader.
+The old checker missed index jobs because Datomic logs a different database identifier. The archived evidence qualifies all three runs.
+The solo loader ran at 15,243 records per second sustained. All three tests nearly filled their allowed cores.
+The new load uses six cores and keeps each new save in its own transaction.
+The file growth chiefly points to replaced index segments. The archive cannot assign exact bytes to each cause.
+Regular collection and ordinary PostgreSQL vacuum give a predicted size of 330–390 GB.
+The run stops if the measured pace or disk growth misses budget. Mac tests check correctness only.
+The scorecard receives the same handoff file and stopped database directory.
 
 # DX-AGE1 Part 4
 
@@ -31,3 +31,7 @@ The final fixture at acd350e92 matched 12 solo prefix, 88 grouped, and 12 solo t
 
 - Corrected qualification replays the original sealed certificate, custody manifest and per-arm bytes, checks source/attempt/clock/PID/cut and a unique catalog ID, and preserves the original rejection. The live continuation independently checks its held checkpoint and physical ID before writing.
 - Maintenance requires a settled native cut after the old peer exits. Vendor collection completion and SQL table deletion/free-space signals accompany a separate fresh indexed count and cut comparison. The Mac fixture also reopens and checks the existing scorecard verifier after actual native collection and ordinary vacuum.
+
+- Continuation admission checks recovered source and physical catalog against the live held cut and original ledger SHA. Each cycle binds the settings, indexed count, native cut, its fresh operator result and PostgreSQL relation counters. Raw data files and both copy mounts receive separate free-space checks. The prior seal still requires native backup and restore readback.
+
+[Updated loader and placement](CONTINUATION.md). [Evidence archives](EVIDENCE-ARCHIVES.sha256).
