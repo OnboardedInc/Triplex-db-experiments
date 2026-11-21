@@ -232,6 +232,12 @@ Observed ingest cgroup peaks in GiB, from 466 progress snapshots.
 | ---: | ---: | ---: | ---: |
 | 4.80 | 6.00 | 0.27 | 3.30 |
 
+## arm-d7-v01-present
+
+100000 deep people per account, pooled layout, individual writer. Source `46deaaedbca66c60505c27b87265755d226df3de`. Audited write path.
+
+Terminal status checker-failed. Cells with a sealed writer ledger 0. Matched decision unmeasured.
+
 ## Matched single-account reader dose
 
 Latency differences compare the two restores of the sealed image from arm-d7-single-seed. Each condition ran once.

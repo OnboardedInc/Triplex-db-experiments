@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 35.12 through 2026-11-21 02:43 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 35.25 through 2026-11-21 02:50 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The million-person seed is sealed at cut 87,002. The dump and two manifests are read-only and immutable. The present writer stopped at 02:41 UTC during restore, with zero timed cells and confirmed cleanup. The ordered PREP1 ceiling service started at 02:42 UTC on November 21 with a 60-minute native and 110-minute overall ceiling.
+2026-11-21T02:50:36.076Z · Collected arm-d7-v01-present with service result checker-failed, 0 physical-scope report(s) and verified cleanup.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.

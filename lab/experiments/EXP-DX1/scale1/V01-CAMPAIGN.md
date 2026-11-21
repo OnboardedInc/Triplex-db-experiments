@@ -57,3 +57,4 @@ The AGE1 report selects `93ad03aa3` for the corrected aged logical replay and cu
 | Attempt | Terminal status | Native hours | USD | Compressed bytes | SHA-256 |
 | --- | --- | ---: | ---: | ---: | --- |
 | arm-d7-wfix-pool-seed | success | 16.25 | 17.71 | 98429 | `055d67c2a34ca2f31edc3a53832c34d17472c364103e64fdaffbab208dc07eb7` |
+| arm-d7-v01-present | checker-failed | 0.03 | 0.03 | 2866 | `d69101ae77160546fa45ba09c76ceb07e10da9f270a334b42aa4156286b71cf2` |
