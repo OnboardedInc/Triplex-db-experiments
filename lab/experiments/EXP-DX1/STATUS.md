@@ -4257,3 +4257,19 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - At this rate 12.77 loading hours remain (USD 13.91): the load ends at about 19:40 local. Server 2 at USD 45.15; total USD 113.44 of 200.
 - The builder's limits commit `efd0c7560` failed its entry probe on the server (`ReferenceError: minimumRate is not defined`); the driver repaired it in a one-file derivative (`d90b3728f`) with the same two-consecutive-cycles rule and verified it against the archived cut before launching. Durability, maintenance, storage and measurement code unchanged.
 - Agents running: DX-SCALE1.
+
+### 2026-11-21 08:56 local: 1 billion load at 603.9 million records; rate drifting down slowly (1 agent running)
+
+- **Server 2** (`origin/exp/DX-SCALE1-deep-accounts` `921f90944`, `scale1/AGE1-LOAD.md`), 30-minute write windows:
+
+  | Window | Settled records | Writing / with maintenance, records/s | Transactor cores of 6 | Index jobs | Directory after maintenance, GB |
+  | --- | ---: | ---: | ---: | ---: | ---: |
+  | 3 | 538,928,597 | 13,467.03 / 10,033.06 | 3.71 | 50 | 166.358 |
+  | 4 | 560,986,309 | 12,284.31 / 9,320.45 | 3.53 | 45 | 166.819 |
+  | 5 | 582,550,309 | 12,009.11 / 9,100.97 | 3.47 | 44 | 167.300 |
+  | 6 | 603,875,613 | 11,879.73 / 8,978.39 | 3.51 | 44 | 167.713 |
+
+- **Rate:** falling by 1 to 2% per window over the last three (9,320 -> 9,101 -> 8,978), consistent with the builder's forecast of a gradual decline (8,100 at 750 million, 7,300 at 1 billion). Floor is 6,500 for two consecutive cycles.
+- **Disk:** +3.0 GB for 126.4 million records since the initial collection (0.024 GB per million, against 0.29 on the fresh seed and 0.71 to 0.91 without collection). At this slope the directory at 1 billion is about 177 GB.
+- **Time:** 12.26 hours at the last rate; with the forecast decline about 14 hours: the load ends between 21:10 and 23:00 local. Server 2 at USD 47.33 (08:55); total USD 115.62 of 200.
+- Agents running: DX-SCALE1.
