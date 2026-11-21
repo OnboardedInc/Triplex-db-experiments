@@ -323,20 +323,22 @@
                   ;; Rejected: retaining only the first 16,384 append blocks at shutdown.
                   ;; [DX-W1] Why: a sampled lookup spans the native apply, including the checks after function expansion.
                   ;; Rejected: adding seeks or splitting an actual shared storage fetch across all the probes it served.
-                  (with-open [out (file/writer "/trace/prep1-native.ndjson")
-                              lookups (when (pos? lookup-every) (file/writer "/trace/prep1-lookups.ndjson"))]
-                    (loop []
-                      (when lookups
+                  (with-open [out (file/writer "/trace/prep1-native.ndjson")]
+                    (let [lookups (when (pos? lookup-every) (file/writer "/trace/prep1-lookups.ndjson"))]
+                      (try
                         (loop []
-                          (when-let [[kind event] (.poll diagnostic-events)]
-                            (.write lookups (str (json/write-str (assoc event :kind kind)) "\n"))
-                            (recur))))
-                      (if-let [event (.poll pending 100 java.util.concurrent.TimeUnit/MILLISECONDS)]
-                        (do (.write out (str (json/write-str event) "\n")) (recur))
-                        (when-not @stop (.flush out) (when lookups (.flush lookups)) (recur))))
-                    (when lookups
-                      (.write lookups (str (json/write-str {:attempt attempt :dropped (.get dropped) :end true}) "\n")))
-                    (.write out (str (json/write-str {:attempt attempt :dropped (.get dropped) :end true}) "\n"))))
+                          (when lookups
+                            (loop []
+                              (when-let [[kind event] (.poll diagnostic-events)]
+                                (.write lookups (str (json/write-str (assoc event :kind kind)) "\n"))
+                                (recur))))
+                          (if-let [event (.poll pending 100 java.util.concurrent.TimeUnit/MILLISECONDS)]
+                            (do (.write out (str (json/write-str event) "\n")) (recur))
+                            (when-not @stop (.flush out) (when lookups (.flush lookups)) (recur))))
+                        (let [terminal (str (json/write-str {:attempt attempt :dropped (.get dropped) :end true}) "\n")]
+                          (when lookups (.write lookups terminal))
+                          (.write out terminal))
+                        (finally (when lookups (.close lookups)))))))
                 "prep1-native-drain")]
     (.setDaemon drain true)
     (.start drain)
