@@ -39,6 +39,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     campaign = plan.get("campaign", "comparison")
     assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered", "ceiling", "tail")
     wide = campaign == "ceiling"
+    pg_data = False
+    pg_data_evidence = []
     tail = campaign == "tail"
     storage = campaign in ("storage", "storage-ordered", "ceiling") or tail
     ordered_ids = arm.get("orderedIds", False)
@@ -95,21 +97,53 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     if not fixture:
         assert header["seconds"] == (90 if wide or tail else 60 if followup else 144)
         assert re.fullmatch(r"[0-9a-f]{40}", header["commit"])
-        for key in ("seedSha", "dumpSha", "gatewaySource"):
+        for key in ("seedSha", "gatewaySource"):
             assert re.fullmatch(r"[0-9a-f]{64}", header[key])
         seal = {name: digest for digest, name in (line.split() for line in
                 (directory.parent / "SEAL.sha256").read_text().splitlines())}
         assert header["seedSha"] == seal["seed.json"] == sha(directory.parent / "seed.json")
-        assert header["dumpSha"] == seal["seed.pgdump"]
         assert seal["plan.json"] == sha(plan_path)
         if wide:
             seed = read(directory.parent / "seed.json")
-            assert (seed["facts"], seed["head"], seed["db"], seed["scope"], seed["dumpSha256"]) == (
-                162_456_470, header["head"], header["db"], header["scope"], header["dumpSha"])
+            pg_data = seed.get("storage") == "pg-data"
+            assert (seed["facts"], seed["head"], seed["db"], seed["scope"]) == (
+                162_456_470, 87002, header["db"], header["scope"]) and header["head"] == seed["head"]
+            if not pg_data:
+                assert seed["dumpSha256"] == header["dumpSha"]
             for key in ("imageSha256", "transferSha256"):
                 assert header[key] == seed[key] and re.fullmatch(r"[a-f0-9]{64}", seed[key])
             assert header["commit"] == (directory.parent / "source").read_text().strip()
-        elif followup:
+        if pg_data:
+            assert set(seal) == {"seed.json", "plan.json"} and "dumpSha" not in header
+            root = native_path.parents[2]
+            copy, observed, live_pg = (root / "pgdata-copy.json", directory / "seed-readback.json", root / "containers.json")
+            control, clone = root / "pgdata.control.sha256", root / "pgdata-copy-container.json"
+            assert sha(copy) == header["pgDataCopySha"] and sha(observed) == header["seedReadbackSha"]
+            copied, proof = read(copy), read(observed)
+            for key, value in (("source", header["commit"]), ("slot", header["slot"]),
+                               ("nonce", header["nonce"]), ("seedSha", header["seedSha"])):
+                assert copied[key] == proof[key] == value
+            assert copied["pgVersion"] == 17 and copied["volume"] == header["slot"] + "-pg-data"
+            assert re.fullmatch(r"[0-9a-f]{64}", copied["sourceControlSha"])
+            assert copied["sourceControlSha"] == control.read_text().strip() and copied["inspectSha"] == sha(clone)
+            assert copied["helperSha"] == sha(Path(__file__).with_name("copy-pgdata.sh"))
+            pg, = [c for c in read(live_pg) if c["Name"] == "/" + header["slot"] + "-pg"]
+            mount, = [m for m in pg["Mounts"] if m["Destination"] == "/var/lib/postgresql/data"]
+            assert pg["Image"] == copied["image"] and (mount["Type"], mount["Name"], mount["RW"]) == (
+                "volume", copied["volume"], True)
+            assert proof["pgDataCopySha"] == header["pgDataCopySha"] and proof["db"] == seed["db"]
+            assert (proof["position"], proof["facts"], proof["members"]) == (87002, 162_456_470, 40)
+            assert proof["owners"] == len({(o[1], o[2]) for tape in plan["tapes"].values() for o in tape})
+            for key in ("journalSha", "predecessorSha"):
+                assert re.fullmatch(r"[0-9a-f]{64}", proof[key])
+            claim_key = json.dumps([json.loads(seed["scope"])[3], seed["loaderSeal"], 2000], separators=(",", ":"))
+            loader = hashlib.sha256(claim_key.encode()).hexdigest()
+            assert re.fullmatch(rf"load1/{loader}/[0-9]+", proof["command"]) and proof["claim"].startswith("_tx/")
+            pg_data_evidence = [copy, observed, control, clone, live_pg]
+        else:
+            assert re.fullmatch(r"[0-9a-f]{64}", header["dumpSha"])
+            assert header["dumpSha"] == seal["seed.pgdump"]
+        if followup and not wide:
             # [DX-PREP1] Why: bind each mode to the earlier immutable seed and this fresh source.
             # Rejected: comparing two restores merely because they name the same population.
             original = (directory.parent / "comparison.SEAL.sha256").read_text().splitlines()
@@ -328,6 +362,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             m["quietP99Ratio"] = loaded / alone if loaded is not None and alone else None
 
     kept = [directory / "header.json", directory / "complete.json", native_path]
+    kept.extend(pg_data_evidence)
     kept.extend(directory / (m["cell"] + ".json") for m in metrics)
     if not fixture:
         kept.extend(native_path.parent / f"prep1-gc-{role}.log" for role in roles)
@@ -337,7 +372,9 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         elif followup:
             kept.extend(directory.parent / name for name in ("comparison.SEAL.sha256", "SEAL.sha256", "source"))
     return {"fixture": fixture, "source": header["commit"], "nonce": header["nonce"], "slot": header["slot"],
-            "seedSha": header["seedSha"], "dumpSha": header["dumpSha"], "planSha": sha(plan_path),
+            "seedSha": header["seedSha"], "planSha": sha(plan_path),
+            **({"storage": "pg-data", "pgDataCopySha": header["pgDataCopySha"],
+                "seedReadbackSha": header["seedReadbackSha"]} if pg_data else {"dumpSha": header["dumpSha"]}),
             "fairCredits": fair_credits, "numericOwner": bool(arm.get("numericOwner")),
             "prefetch": bool(arm.get("prefetch")), "cacheGiB": arm.get("cacheGiB"), "orderedIds": ordered_ids,
             "rawSha256": {path.name: sha(path) for path in kept}, "cells": metrics}

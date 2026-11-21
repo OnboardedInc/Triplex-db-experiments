@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { setTimeout as sleep } from "node:timers/promises";
 import {
@@ -437,9 +438,11 @@ async function armRun(
     baseline: Seed = JSON.parse(bytes.toString());
   const schedule = cells(arm);
   const adopted = wide ? (JSON.parse(bytes.toString()) as ReturnType<typeof scaleSeed>) : undefined;
+  const pgData = adopted?.storage === "pg-data";
   if (adopted) {
     assert.equal(adopted.facts, 162_456_470);
-    assert.equal(adopted.dumpSha256, process.env.DX_PREP1_DUMP_SHA);
+    assert.equal(pgData, Boolean(process.env.DX_PREP1_PGDATA));
+    if (!pgData) assert.equal(adopted.dumpSha256, process.env.DX_PREP1_DUMP_SHA);
   } else {
     assert.equal(baseline.roster, pooledDigest);
     assert.equal(baseline.facts, 16_245_050);
@@ -450,6 +453,15 @@ async function armRun(
   }
   const stack = load<{ gatewaySourceSha256: string; prefix: string }>(stackPath);
   assert.equal(stack.prefix, slot);
+  const seedSha = digest(bytes);
+  let pgDataCopySha: string | undefined;
+  if (pgData) {
+    const copyBytes = readFileSync(join(dirname(stackPath), "pgdata-copy.json"));
+    const copy = JSON.parse(copyBytes.toString());
+    assert.deepEqual([copy.source, copy.slot, copy.nonce, copy.seedSha, copy.volume, copy.pgVersion],
+      [commit, slot, nonce, seedSha, slot + "-pg-data", 17]);
+    pgDataCopySha = digest(copyBytes);
+  }
   assert.equal(urls.length, arm.writers);
   assert.equal(new Set([...urls, readerUrl]).size, arm.writers + 1);
   const clients = urls.map((url) => new DatomicClient(url, 8000));
@@ -499,13 +511,14 @@ async function armRun(
     const opened = await reader.create(baseline.scope, "lean", true, 35_000);
     assert(!opened.created && opened.db === baseline.db);
     assert.equal(await basis(reader, baseline.db), baseline.head);
-    const fields = adopted
+    const scale = adopted
       ? await scalePredecessors(
           reader,
           adopted,
           schedule.flatMap(({ tape }) => tape),
         )
-      : new Map(baseline.fields);
+      : undefined;
+    const fields = scale?.fields ?? new Map(baseline.fields);
     if (campaign !== "comparison")
       for (const { tape } of schedule)
         for (const offer of tape)
@@ -516,6 +529,16 @@ async function armRun(
     const fairCredits = creditsFor(arm);
     const fair = fairCredits ? new FairTurns(accounts.length, fairCredits) : undefined;
     const { scope, db, head } = baseline;
+    let seedReadbackSha: string | undefined;
+    if (pgData) {
+      assert(scale && adopted && scale.proof.members === 40);
+      // [DX-PREP1] Why: bind the live logical-cut checks to the disposable physical copy before offers.
+      // Rejected: accepting the archived metadata or the control-file digest by itself.
+      const witness = out + "/seed-readback.json";
+      save(witness, { source: commit, slot, nonce, db, seedSha, pgDataCopySha, facts: adopted.facts,
+        ...scale.proof, owners: fields.size, predecessorSha: digest(Buffer.from(JSON.stringify([...fields]))) });
+      seedReadbackSha = digest(readFileSync(witness));
+    }
     save(out + "/header.json", {
       arm,
       slot,
@@ -524,7 +547,7 @@ async function armRun(
       scope,
       db,
       head,
-      seedSha: digest(bytes),
+      seedSha,
       dumpSha: process.env.DX_PREP1_DUMP_SHA,
       options,
       fairCredits,
@@ -533,6 +556,7 @@ async function armRun(
       ...(adopted
         ? { imageSha256: adopted.imageSha256, transferSha256: adopted.transferSha256 }
         : {}),
+      ...(pgData ? { pgDataCopySha, seedReadbackSha } : {}),
     });
     const frozen = new Set<string>();
     let cut = head;
@@ -692,8 +716,8 @@ async function preflight(out: string, arm: Arm) {
 const [action, ...args] = process.argv.slice(2);
 if (action === "seed") await seed(args[0]!, args[1]!, args[2]!);
 else if (action === "adopt-scale") {
-  assert(wide && args.length === 3);
-  console.log(JSON.stringify(scaleSeed(args[0]!, args[1]!, args[2]!)));
+  assert(wide && (args.length === 3 || (args.length === 4 && args[3] === "--pg-data")));
+  console.log(JSON.stringify(scaleSeed(args[0]!, args[1]!, args[2]!, args[3] === "--pg-data")));
 } else if (action === "arm") {
   const [id, file, out, slot, commit, nonce, stack, reader, ...urls] = args;
   const arm = campaignArms.find((a) => a.id === id);

@@ -5,7 +5,7 @@ import path from "node:path";
 import type { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { decodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import { fieldValue, taskId } from "../../../bench/lib/deep-world.ts";
-import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
+import { ids, SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { sha } from "../w1/field/schedule.ts";
 
 type Row = Parameters<DatomicClient["transact"]>[1]["rows"][number];
@@ -18,6 +18,7 @@ type ScaleSeed = {
   transferSha256: string;
   dumpSha256: string;
   loaderSeal: string;
+  storage?: "pg-data";
 };
 export const scaleAccount = (a: number) => "account-" + String(a + 1).padStart(3, "0");
 export const scaleOwner = (a: number, i: number) => "acct/" + scaleAccount(a) + "/" + taskId(i, 0);
@@ -25,7 +26,7 @@ export const scaleFields = [":task/field-0", ":task/field-1"] as const;
 
 // [DX-PREP1] Why: adopt the held SCALE1 loader's actual bytes and cut.
 // Rejected: treating a matching fact count or the old small campaign's seal as the full-size seed.
-export function scaleSeed(dir: string, imagePin: string, transferPin: string): ScaleSeed {
+export function scaleSeed(dir: string, imagePin: string, transferPin: string, pgData = false): ScaleSeed {
   function pinned(name: string, expected: string) {
     assert.match(expected, /^[0-9a-f]{64}$/);
     const bytes = readFileSync(path.join(dir, name));
@@ -77,7 +78,12 @@ export function scaleSeed(dir: string, imagePin: string, transferPin: string): S
     [87002, 87002, 87002, 87001, image.facts, 1_000_000, loaderSeal],
   );
   assert.match(image.sha256, /^[0-9a-f]{64}$/);
-  assert(image.bytes > 0 && statSync(path.join(dir, "seed.pgdump")).size === image.bytes);
+  assert(Number.isSafeInteger(image.bytes) && image.bytes > 0);
+  if (pgData) {
+    assert.deepEqual(image.membership, [{ db: scope.db, position: scope.cut, checked: 40, coldFields: 20 }]);
+  } else {
+    assert.equal(statSync(path.join(dir, "seed.pgdump")).size, image.bytes);
+  }
   return {
     scope: key,
     db: scope.db,
@@ -87,6 +93,7 @@ export function scaleSeed(dir: string, imagePin: string, transferPin: string): S
     transferSha256: transferPin,
     dumpSha256: image.sha256,
     loaderSeal,
+    ...(pgData ? { storage: "pg-data" } : {}),
   };
 }
 
@@ -113,13 +120,29 @@ export async function scalePredecessors(
       command.startsWith(prefix) &&
       /^[0-9]+$/.test(command.slice(prefix.length)),
   );
-  assert.equal(await reader.claim(seed.db, command, seed.head), id);
+  const claim = await reader.claim(seed.db, command, seed.head);
+  assert.equal(claim, id);
 
   const fields = new Map<string, Row[]>();
   const owners = [
     ...new Map(targets.map(({ account, person }) => [scaleOwner(account, person), person])),
   ];
   const basis = { recordedPosition: seed.head, validAt: SEED_VALID_FROM };
+  let members = 0;
+  if (seed.storage === "pg-data") {
+    const expected = Array.from({ length: 10 }, (_, account) => {
+      const key = scaleAccount(account);
+      return [0, 1, 257, 99_999].map((person) => ["acct/" + key + "/" + ids.placement(person), key]);
+    }).flat();
+    const rows = await reader.rows(seed.db, {
+      entityIds: expected.map(([entity]) => entity!),
+      pattern: { attribute: ":subject/account" },
+      basis,
+    });
+    assert.deepEqual(rows.map((r) => [r.entity_id, r.value_string]).sort(), expected.sort());
+    assert(rows.every((r) => r.id && r.recorded_position > 0 && r.recorded_position <= seed.head));
+    members = rows.length;
+  }
   // Use the read peer's cache for the immutable predecessors. The writer and transactor still see the wide tape.
   for (let i = 0; i < owners.length; i += 96) {
     const batch = owners.slice(i, i + 96);
@@ -148,5 +171,5 @@ export async function scalePredecessors(
       fields.set(e, prior);
     }
   }
-  return fields;
+  return { fields, proof: { position, command, claim, journalSha: sha(text), members } };
 }

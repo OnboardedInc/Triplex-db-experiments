@@ -250,6 +250,14 @@ fi
 [[ $subject_numeric_owner == 0 || $subject_save == 1 ]]
 [[ $subject_prefetch =~ ^[01]$ && ( $subject_prefetch == 0 || $subject_save == 1 ) ]]
 [[ $subject_ordered_ids =~ ^[01]$ && ( $subject_ordered_ids == 0 || ( $subject_save == 1 && $subject_prefetch == 0 ) ) ]]
+prep_pgdata=${DX_PREP1_PGDATA:-}
+if [[ -n $prep_pgdata ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && ${DX_PREP1_SERVER:-0} == 1 && ${DX_PREP1_CAMPAIGN:-} == ceiling &&
+     $prefix =~ ^tx2-dxprep1-[a-f0-9]{8}-1-ceiling-s$ && -d $prep_pgdata && $prep_pgdata == /* &&
+     $prep_pgdata != *[,\"$'\n']* && -z $seed_volume && -z ${DX_PREP1_DUMP:-} && -z ${DX_JVM1_PG_RESTORE:-} &&
+     -z ${DX_BM1_WAL_MOUNT:-} && ${DX_BM1_WAL_AB:-0} == 0 ]]
+  [[ ${DX_PREP1_SEED_SHA:?} =~ ^[a-f0-9]{64}$ && ${DX_WRITE_OPTIONS_ATTEMPT:?} =~ ^[a-f0-9-]{36}$ ]]
+fi
 stack_labels=()
 tx_java=$(node "$jvm_tool" tx "$tx" "$tx_java")
 gw_w_java=$(node "$jvm_tool" gw-w "$gw_w" "$gw_w_java")
@@ -502,10 +510,46 @@ CLONE_MOUNTS
   docker rm "$prefix-seed-copy" >/dev/null
   trap - EXIT
 else
+  if [[ -n $prep_pgdata ]]; then
+    ! docker volume inspect "$prefix-pg-data" >/dev/null 2>&1 || exit 2
+  fi
   docker volume create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-pg-data" >/dev/null
 fi
+pg_image=postgres:17-alpine
+if [[ -n $prep_pgdata ]]; then
+  # [DX-PREP1] Why: copy the stopped SCALE1 directory once, read-only, into the owned PG volume.
+  # Rejected: replaying the large SQL dump or putting the held directory under a live postmaster.
+  pg_image=$(docker image inspect --format '{{.Id}}' "$pg_image")
+  copy_helper="$repo/lab/experiments/EXP-DX1/prep1/copy-pgdata.sh"
+  docker create --pull never --name "$prefix-seed-copy" --read-only --network none --memory 256m --memory-swap 256m \
+    --mount "type=bind,src=$prep_pgdata,dst=/from,readonly" --mount "type=volume,src=$prefix-pg-data,dst=/to" \
+    --mount "type=bind,src=$copy_helper,dst=/copy-pgdata.sh,readonly" \
+    --entrypoint /bin/sh "$pg_image" /copy-pgdata.sh /from /to >/dev/null
+  docker start -a "$prefix-seed-copy" > "$attempt/pgdata.control.sha256"
+  docker inspect "$prefix-seed-copy" > "$attempt/pgdata-copy-container.json"
+  python3 - "$attempt" "$prefix" "$prep_pgdata" "$DX_PREP1_SEED_SHA" "$DX_WRITE_OPTIONS_ATTEMPT" \
+    "$(git -C "$repo" rev-parse HEAD)" "$pg_image" "$copy_helper" <<'PGDATA_COPY'
+import hashlib, json, pathlib, re, sys
+directory, slot, source_dir, seed, attempt, source, image, helper = sys.argv[1:]
+root = pathlib.Path(directory)
+container, = json.loads((root/'pgdata-copy-container.json').read_text())
+assert not container['State']['Running'] and container['State']['ExitCode'] == 0
+assert container['Name'] == '/'+slot+'-seed-copy' and container['Image'] == image
+mounts = {m['Destination']: m for m in container['Mounts']}
+assert (mounts['/from']['Type'], mounts['/from']['Source'], mounts['/from']['RW']) == ('bind', source_dir, False)
+assert (mounts['/to']['Type'], mounts['/to']['Name'], mounts['/to']['RW']) == ('volume', slot+'-pg-data', True)
+assert (mounts['/copy-pgdata.sh']['Source'], mounts['/copy-pgdata.sh']['RW']) == (helper, False)
+control = (root/'pgdata.control.sha256').read_text().strip()
+assert re.fullmatch(r'[a-f0-9]{64}', control)
+with (root/'pgdata-copy.json').open('x') as f:
+    json.dump(dict(source=source, slot=slot, nonce=attempt, seedSha=seed, image=image, volume=slot+'-pg-data',
+                   pgVersion=17, sourceControlSha=control, helperSha=hashlib.sha256(pathlib.Path(helper).read_bytes()).hexdigest(),
+                   inspectSha=hashlib.sha256((root/'pgdata-copy-container.json').read_bytes()).hexdigest()), f)
+PGDATA_COPY
+  docker rm "$prefix-seed-copy" >/dev/null
+fi
 docker run -d --pull never --name "$prefix-pg" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
-  -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
+  -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" ${wal_mount[@]+"${wal_mount[@]}"} "$pg_image" postgres $pg_settings >/dev/null
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
 # Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
 ready=false
@@ -530,7 +574,7 @@ if [[ ${DX_BM1_WAL_AB:-0} == 1 ]]; then
   ' sh "${wal_dir:+ssd}" > "$attempt/wal-placement.txt"
 fi
 # Vendor scripts use their own database/connect statements; keep their order and bytes.
-if [[ -z $seed_volume ]];then
+if [[ -z $seed_volume && -z $prep_pgdata ]];then
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   db=postgres
   [[ "$file" != postgres-table.sql ]] || db=datomic
@@ -749,6 +793,11 @@ import json,pathlib,sys,datetime
 root=pathlib.Path(sys.argv[1]); rows=json.loads((root/'containers.json').read_text())
 durability=dict(zip(['fsync','synchronous_commit','full_page_writes','wal_sync_method'],(root/'durability.txt').read_text().splitlines()))
 assert all(durability[k]=='on' for k in ['fsync','synchronous_commit','full_page_writes'])
+if (root/'pgdata-copy.json').exists():
+    clone=json.loads((root/'pgdata-copy.json').read_text())
+    pg,=[r for r in rows if r['Name']=='/'+sys.argv[2]+'-pg']
+    mount,=[m for m in pg['Mounts'] if m['Destination']=='/var/lib/postgresql/data']
+    assert pg['Image']==clone['image'] and (mount['Type'],mount['Name'],mount['RW'])==('volume',clone['volume'],True)
 for role in ['w','r']:
     assert json.loads((root/('health-'+role+'.json')).read_text())['gatewaySourceHash']==sys.argv[3]
 out={'createdAt':datetime.datetime.now(datetime.timezone.utc).isoformat(),'prefix':sys.argv[2],'gatewaySourceSha256':sys.argv[3],

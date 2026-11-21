@@ -93,20 +93,34 @@ on_exit() {
 trap on_exit EXIT
 trap 'exit 143' TERM INT
 if [[ $mode == ceiling ]]; then
-  [[ $# == 6 ]]
-  exec timeout --kill-after=40s 3560s bash "$here/server.sh" ceiling-timed "$out" "$source" "$4" "$5" "$6"
+  [[ $# == 6 || ($# == 8 && $7 == --pg-data) ]]
+  exec timeout --kill-after=40s 3560s bash "$here/server.sh" ceiling-timed "${@:2}"
 elif [[ $mode == ceiling-timed ]]; then
-  [[ $# == 6 && $4 == /* && ! -e $out && -z $(docker ps -q) ]]
+  [[ ($# == 6 || ($# == 8 && $7 == --pg-data)) && $4 == /* && ! -e $out && -z $(docker ps -q) ]]
   parent=$(realpath -e "$4")
-  [[ -f $parent/seed.pgdump && $(head -c 5 "$parent/seed.pgdump") == PGDMP ]]
+  unset DX_PREP1_PGDATA DX_PREP1_DUMP DX_JVM1_PG_RESTORE
+  seed_mode=()
+  if [[ $# == 8 ]]; then
+    [[ $8 == /* ]]
+    DX_PREP1_PGDATA=$(realpath -e "$8")
+    [[ -d $DX_PREP1_PGDATA && $DX_PREP1_PGDATA != *[,\"$'\n']* && $DX_PREP1_PGDATA != / ]]
+    export DX_PREP1_PGDATA
+    seed_mode=(--pg-data)
+  else
+    [[ -f $parent/seed.pgdump && $(head -c 5 "$parent/seed.pgdump") == PGDMP ]]
+  fi
   mkdir "$out" "$DX_STACK_EVIDENCE"
   export DX_PREP1_CAMPAIGN=ceiling DX_PREP1_FAIR_CREDITS=0
-  "${producer[@]}" adopt-scale "$parent" "$5" "$6" > "$seed"
-  ln -s "$parent/seed.pgdump" "$dump"
+  "${producer[@]}" adopt-scale "$parent" "$5" "$6" "${seed_mode[@]}" > "$seed"
   "${producer[@]}" plan > "$out/plan.json"
-  dump_pin=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1])).dumpSha256' "$seed")
-  [[ $dump_pin =~ ^[a-f0-9]{64}$ ]]
-  (cd "$out"; sha256sum seed.json; printf '%s  seed.pgdump\n' "$dump_pin"; sha256sum plan.json) > "$out/SEAL.sha256"
+  if [[ -n ${DX_PREP1_PGDATA:-} ]]; then
+    (cd "$out"; sha256sum seed.json plan.json) > "$out/SEAL.sha256"
+  else
+    ln -s "$parent/seed.pgdump" "$dump"
+    dump_pin=$(node -p 'JSON.parse(require("node:fs").readFileSync(process.argv[1])).dumpSha256' "$seed")
+    [[ $dump_pin =~ ^[a-f0-9]{64}$ ]]
+    (cd "$out"; sha256sum seed.json; printf '%s  seed.pgdump\n' "$dump_pin"; sha256sum plan.json) > "$out/SEAL.sha256"
+  fi
   tag=$(nonce); tag=${tag%%-*}
   printf '%s\n' "$tag" > "$prefix_file"
   printf '%s\n' "$source" > "$out/source"
@@ -258,13 +272,20 @@ elif [[ $mode == arm ]]; then
   fi
   tag=$(cat "$prefix_file")
   [[ $tag =~ ^[0-9a-f]{8}$ && -z $(docker ps -q) ]]
-  if [[ ${DX_PREP1_CAMPAIGN:-comparison} == ceiling ]]; then
-    # The stack rehashes the dump before pg_restore. Check the other sealed files here.
+  if [[ -n ${DX_PREP1_PGDATA:-} ]]; then
+    [[ ${DX_PREP1_CAMPAIGN:-} == ceiling && ! -e $dump ]]
+    (cd "$out"; sha256sum --strict -c SEAL.sha256 > /dev/null)
+    unset DX_PREP1_DUMP DX_PREP1_DUMP_SHA
+    export DX_PREP1_SEED_SHA=$(sha256sum "$seed" | cut -d ' ' -f 1)
+  elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == ceiling ]]; then
+    # Keep the seed and plan checks outside the dump restore.
     (cd "$out"; sed -n '1p;3p' SEAL.sha256 | sha256sum --strict -c > /dev/null)
   else
     (cd "$out"; sha256sum --strict -c SEAL.sha256 > /dev/null)
   fi
-  export DX_PREP1_DUMP="$dump" DX_PREP1_DUMP_SHA=$(awk '$2=="seed.pgdump" {print $1}' "$out/SEAL.sha256")
+  if [[ -z ${DX_PREP1_PGDATA:-} ]]; then
+    export DX_PREP1_DUMP="$dump" DX_PREP1_DUMP_SHA=$(awk '$2=="seed.pgdump" {print $1}' "$out/SEAL.sha256")
+  fi
   export DX_PREP1_WRITERS=${cell%%-*}
   export DX_PREP1_SUBJECT=0 DX_GROUP_COMMIT=1 DX_LIVE_PRIORITY=1
   export TX2_SUBJECT_NUMERIC_OWNER=0 TX2_SUBJECT_PREFETCH=0 TX2_SUBJECT_ORDERED_IDS=0

@@ -58,7 +58,7 @@ wait_tcp() {
 }
 sql() { pg_run psql -XAtq -v ON_ERROR_STOP=1 -h "$work/socket" -U postgres "$@"; }
 start_postgres() {
-  setpriv --reuid=65534 --regid=65534 --clear-groups "$pg/postgres" -D "$work/data" -h "$addr" -k "$work/socket" -c shared_buffers=24MB -c track_wal_io_timing=on &
+  setpriv --reuid=65534 --regid=65534 --clear-groups "$pg/postgres" -D "${1:-$work/data}" -h "$addr" -k "$work/socket" -c shared_buffers=24MB -c track_wal_io_timing=on &
   children[0]=$!
   wait_tcp "$!" 5432
 }
@@ -319,7 +319,20 @@ case "$PREP1_MODE" in
     fi
     kill -INT "${children[0]}"
     wait "${children[0]}"
-    start_postgres
+    if [[ -f /config/copy-pgdata.sh ]]; then
+      # [DX-PREP1] Why: reopen the measured SQL receipt on the exact cold-copy helper used on the server.
+      # Rejected: exercising a mock PostgreSQL layout or continuing to use the old live data path.
+      mkdir "$work/clone"
+      control=$(PATH="$pg:$PATH" sh /config/copy-pgdata.sh "$work/data" "$work/clone")
+      start_postgres "$work/clone"
+      [[ $(sql -d datomic -c 'SHOW data_directory') == "$work/clone" ]]
+      held=$(sha256sum "$work/data/global/pg_control" | cut -d ' ' -f 1)
+      [[ $control == "$held" ]]
+      printf 'PREP1_PGDATA {"attempt":"%s","control":"%s","heldControl":"%s","reopenedCopy":true}\n' \
+        "$PREP1_ATTEMPT" "$control" "$held"
+    else
+      start_postgres
+    fi
     durability
     if [[ "$PREP1_MODE" == "subject-recovery" ]]; then start_standby; fi
     start_transactor

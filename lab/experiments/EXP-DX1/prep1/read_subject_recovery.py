@@ -44,6 +44,13 @@ def inspect(root):
         reads = [next(i for i, line in enumerate(lines) if line.startswith("PREP1_SUBJECT_RECOVERY ") and label in line)
                  for label in ("blocked-before-reply", "reopened")]
         assert reads[0] < stop < boots[0] < reads[1] < boots[1]
+        if inputs.get("pgDataCopy"):
+            copy, = events("PREP1_PGDATA ")
+            assert copy["attempt"] == attempt and copy["reopenedCopy"] is True
+            assert re.fullmatch(r"[0-9a-f]{64}", copy["control"]) and copy["heldControl"] == copy["control"]
+            reopened = next(i for i, line in enumerate(lines) if line.startswith("PREP1_PGDATA "))
+            assert boots[0] < reopened < reads[1]
+            result["pgDataCopy"] = copy
         assert after["originalOperation"] == [409, "OperationDuplicate"]
         assert after["newOperation"] == [409, "CommandConflict"]
         result.update(nativeTests=tests, replicaFlushes=flushes)
