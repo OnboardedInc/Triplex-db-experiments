@@ -1,5 +1,13 @@
 # DX-BM1 bench handoff, November 19
 
+## Third rental for rolling credits
+
+**The third rental began billing at 09:13 EST. Its estimated charge at 09:27 EST was USD 0.26 at USD 1.09/hour.** The 24-hour ceiling is 09:13 EST on November 22. Ubuntu 24.04, Docker, Node 22.23.2, pinned PostgreSQL 17 and both Datomic Java images are installed. The second NVMe is mounted at `/mnt/triplex-bench3-wal` for WAL. SMT remains enabled and all 24 CPU policies read back `performance`, matching Server 2. The new SSH host key is pinned in the operator's private known-host file.
+
+The stopped SCALE1 fresh template is streaming directly from Server 2 in `triplex-bench3-seed-transfer.service`. Its live control, seal, image and transfer digests matched the published custody record. It sits outside all live container mounts. The sender uses idle I/O priority, nice 19 and a 300 MB/s cap. The receiver verifies the entire tree before promoting it to `bench3/verified-seed`. A short-lived transfer key is scoped to this receive command. The source service and receiver each remove their copy on exit. The pristine template stays off the timed database mount, and each arm copies it locally. [SCALE1 custody](https://github.com/OnboardedInc/Triplex-db-experiments/blob/921f90944857938c2c207afb349d992dd4d55e83/lab/experiments/EXP-DX1/scale1/HANDOFF.md) · [Checks](COLLECTORS.md)
+
+Check `/var/tmp/triplex-bm1/STATUS` for setup and the control. PREP1's rolling command and forecasts at 14:27 UTC were pending at branch head `e7a977908`. If the seal is verified first, use the single tuned control from `6abc19f66` with the committed launcher and the matched 394 and 620 saves/s offers. [Predictions](PREDICTIONS.md)
+
 ## Final priority-Publish run
 
 **Server 1 can be deleted as of 02:04:56 EST on November 21. Its estimated charge through that time was $68.27 at $1.09/hour since Wednesday 11:27 EST.** The benchmark and cleanup ended at 01:58:26 EST. The container, volume and network inventory for this run is empty, no containers are running, and the second NVMe is unmounted. STATUS reads `item=queue state=deletion-ready since=2026-11-21T07:04:56Z next=orchestrator`. The orchestrator owns provider deletion and billing continues until then.

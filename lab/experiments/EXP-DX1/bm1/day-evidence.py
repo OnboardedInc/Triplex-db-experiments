@@ -15,6 +15,10 @@ HERE = Path(__file__).resolve().parent
 SERVER = Path("/var/tmp/triplex-bm1")
 MAC = Path.home()/"Claude/Projects/triplex-db-2/evidence"
 SLOTS = {
+    "bench3-control": ("bench3", ("tuned-control", "receive-start", "receive-end", "seed-verification.json",
+        "control-producer.sha256", "control.log", "wal-mount.json", "host-profile.txt",
+        "control-build/results/IMAGE-INPUTS.SHA256SUMS",
+        "control-build/results/java25-image.json", "control-build/results/images.json", "control-build/results/lscpu.txt")),
     "publish-priority": ("day-n21/publish-priority", ("order", "small", "full", "launch-1", "launch-2",
         "launch-3", "owner.json",
         "topology.json", "control-hashes.txt", "control/publish-overlay.py", "control/publish-priority.ts",
@@ -99,6 +103,9 @@ def archive(name, revision):
         units = ["bm1n21-publish-build-final.service", "bm1n21-publish-priority.service",
                  "bm1n21-publish-retry.service", "bm1n21-publish-final.service",
                  "bm1n21-publish-roster.service"]
+    if name == "bench3-control":
+        units = ["triplex-bench3-bootstrap.service", "triplex-bench3-java25.service",
+                 "triplex-bench3-seed-verify.service", "triplex-bench3-tuned-control.service"]
     states = {}
     for unit in units:
         state = subprocess.check_output(["systemctl", "show", unit, "-p",
@@ -194,7 +201,7 @@ def collect(name, revision, control, mode="trees"):
     ticket = json.loads(ticket_bytes)
     assert ticket["item"] == name and ticket["producer"] == revision
     assert ticket["summary"]["bytes"] + (ticket["raw"] or {"bytes":0})["bytes"] < 1024**3
-    day = "day-n21" if name == "publish-priority" else "day-n20"
+    day = "bench3" if name == "bench3-control" else ("day-n21" if name == "publish-priority" else "day-n20")
     out = MAC/"DX-BM1"/day/name
     out.mkdir(parents=True, exist_ok=True)
     arrival_bytes = ticket["summary"]["bytes"] + (ticket["raw"] or {"bytes":0})["bytes"]
@@ -225,7 +232,7 @@ def collect(name, revision, control, mode="trees"):
     transfer = out/"TRANSFER.json"
     transfer.write_bytes(ticket_bytes)
     index = MAC/"TRACE-INDEX.md"
-    key = f"bm1-saturday-{name}" if name == "publish-priority" else f"bm1-friday-{name}"
+    key = f"bm1-saturday-{name}" if day != "day-n20" else f"bm1-friday-{name}"
     if f"| {key} |" not in index.read_text():
         stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         with index.open("a") as stream:

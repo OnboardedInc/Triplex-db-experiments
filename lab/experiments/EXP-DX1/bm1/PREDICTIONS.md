@@ -98,3 +98,9 @@ The W1 builder published a separate Mac result at `9ce59930` after the entries a
 | Item | Forecast before launch | Observed |
 | --- | --- | --- |
 | Priority Publish on 25,000 deep people, 06:05 UTC | About 30–38 min to load and verify the fresh roster, scaled from 112 min for the 100k run. At 3.5 / 23.5 / 39.4 saves/s I expect first-correct p99 of 70–160 / 90–325 / 125–650 ms. I expect 30 / 30 / 28–30 of 30 within one second. The builder forecast 60–200 and 80–350 ms at the first two rates on 100k. Priority passes waiting saves, and the active save still finishes first. Five seconds per offer. | The full roster ingested in 30.55 min and verified in 0.87 min. All 30 offers per rate met one second, with first-correct p99 36.72 / 112.20 / 84.21 ms and zero stale responses. The low- and peak-rate p99s were below the forecast ranges. The peak had 437–2,426 saves queued or active at Publish ingress and still owed 2,527 live save ACKs one second after the window. |
+
+### Rolling credits on the third rental, 2026-11-21
+
+| Item | Forecast before launch | Observed |
+| --- | --- | --- |
+| Full-size tuned barrier control, if the rolling pin is pending when the seed is ready | At 394 and 620 saves/s offered, expect 330–360 and 350–380 ACKs/s inside each 90-second window. Server 2's matched tuned arm delivered 345.80 and 365.13/s, with 4,110 and 22,535 expired. The original builder forecast 394 and 440/s. This repeat keeps the six-credit barrier, three transactor cores, 16 GiB object cache and separate WAL with Java 25 ZGC. I expect about 4,000 and 22,500 expiries if those throughput rates reproduce. | Pending |
