@@ -3770,3 +3770,17 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
 - **Part 9 assigned (run-critical; three agents running):** assertion and journal ids ordered by, or derived from,
   the position the serial point assigns so the probe is hot or unnecessary; the owner's revision on a small dense
   record; rerun the diagnostic (target at most 1.5 reads per save); a sixth server arm.
+
+## 2026-11-21 00:23 UTC (19:23 local, 2026-11-20): DX-PREP1 part 9 in: ordered assertion ids remove the history reads; parked until the server arm reports
+
+- **DX-PREP1 part 9 (`62a2e07dc`; six-arm server command at `df307c29c`, bounded 117 min 20 s, or the sixth arm
+  alone in 18 min 10 s).** Assertion ids become 26-character ordered values with the ordinal reserved inside the
+  SDK's id. Matched small-cache diagnostic on the Mac, 96 saves: historical-index reads 568 to 2; total storage
+  reads per save 8.37 to 2.59 (target 1.5 missed); the owner's public-id check still fetches one segment per save;
+  the revision compare-and-set fetches none. Correctness: native suite, PostgreSQL restart, both resend forms,
+  retired-id rejection, all thirteen removal checks. Forecast for the server arm: 225 and 205 saves per second at
+  235 and 394 offered, 2.2 and 3.7 ms of apply, 2.0 and 2.2 reads per save. Its answer: not yet. Parked; two
+  agents running (DX-BM1, DX-SCALE1).
+- Orchestrator's note: the diagnostic uses a 32 MiB object cache so per-person leaves always fall out; on the
+  server (2 GiB, and 16 GiB in the cache arm) with a tape that reuses people, the remaining per-person reads may be
+  memory hits. The forecast may be low; only the server arm can say.
