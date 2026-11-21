@@ -38,9 +38,10 @@ const study = values["read-study"] === true;
 assert(study || !values["read-study-jvm"]);
 const readJvm = (values["read-study-jvm"] ?? values.jvm) as JvmProfile;
 const treatment = study ? launchProfile("server", { jvm: values.jvm as JvmProfile, txJvm, writeJvm, readJvm, creditMode, readTuned: true }) : undefined;
+const studyForecast = "Reader diagnostic with a 56-minute wall-clock cutoff and 90 seconds for termination.";
 const diagnostics = writeDiagnostics(values.writer);
 if (values.plan) {
-  console.log(forecast + ` Writer ${values.writer}, server profile, credits ${creditMode}. JVM ${values.jvm}, transactor JVM ${txJvm}, write gateway JVM ${writeJvm}.`);
+  console.log((study ? studyForecast : forecast) + ` Writer ${values.writer}, server profile, credits ${creditMode}. JVM ${values.jvm}, transactor JVM ${txJvm}, write gateway JVM ${writeJvm}.`);
   console.log(JSON.stringify({ ...launch, ...diagnostics }, null, 2));
   if (study) console.log(JSON.stringify({ treatment, cutoffMinutes: 56, batch: 8, rates: [50, 235], seats: [1, 4, 16, 64, 256, 1024] }, null, 2));
   process.exit(0);
@@ -56,7 +57,7 @@ const source = cleanSource(values.commit);
 verifyBuild(source, process.env.DX_V01_BUILD_RECEIPT);
 const out = path.resolve(values.out), campaign = path.join(out, "campaign");
 fs.mkdirSync(out, { mode: 0o700 });
-console.log(study ? "Reader diagnostic, 56-minute wall clock cutoff including restores and cleanup." : forecast);
+console.log(study ? studyForecast : forecast);
 const fd = fs.openSync(path.join(out, "campaign.log"), "wx", 0o600);
 const child = spawn("timeout", ["--kill-after=90s", String(study ? 56 : budget.adoptionAndP1to4 + budget.P6 + budget.P7 + 1) + "m", "bash",
   "lab/experiments/EXP-DX1/v01/adopted-server.sh", source, campaign, String(Date.now() + (study ? 53 : budget.adoptionAndP1to4) * 60_000),

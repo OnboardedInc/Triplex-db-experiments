@@ -88,12 +88,13 @@
   ([name db input visit-text!]
   (let [history? (true? (get input "history")) basis (get input "basis")
         selection (when-not history?
-              (try (trace/span "read.select-db" "peer-call" (reach/select-db name db basis))
+              (try (trace/read-span "read.select-db" "peer-call" (reach/select-db name db basis))
                    (catch clojure.lang.ExceptionInfo e (when-not (:declined (ex-data e)) (throw e)))))
         [cut _ _ _ inner] selection
         source (or cut db) id (get input "id") pattern (get input "pattern")
         attr (get pattern "attribute")
         attribute (when (and early-attribute-filter cut (not inner) (string? attr) (not (.startsWith ^String attr "?"))) attr)
+        sampled (trace/read-sample?)
         entities (or (get input "entityIds")
                      (when-let [entity (get pattern "entityId")]
                        (when-not (.startsWith ^String entity "?") [entity])))
@@ -103,13 +104,11 @@
     (filter #(or (nil? id) (= id (:id %)))
       (mapcat (fn [eid]
                 (cond inner (map #(decode (:v %)) (:datoms (group-cut/entity-slice inner eid)))
-                      cut (let [datoms (if (:readProfileId (some-> trace/*request* deref))
-                                         (trace/span "read.peer-entity" "peer-call" (vec (live-texts source eid)))
-                                         (live-texts source eid))]
-                            (if (:readProfileId (some-> trace/*request* deref))
+                      cut (if sampled
+                            (let [datoms (trace/span "read.peer-entity" "peer-call" (vec (live-texts source eid)))]
                               (trace/span "read.row-decode" "gateway"
                                 (trace/counter! :rowTexts (count datoms))
-                                (into [] (keep #(if attribute (decode-live attribute (:v %)) (decode (:v %)))) datoms))
-                              (if attribute (keep #(decode-live attribute (:v %)) datoms)
-                                  (map #(decode (:v %)) datoms))))
+                                (into [] (keep #(if attribute (decode-live attribute (:v %)) (decode (:v %)))) datoms)))
+                            (let [datoms (live-texts source eid)]
+                              (if attribute (keep #(decode-live attribute (:v %)) datoms) (map #(decode (:v %)) datoms))))
                       :else (history-entity db eid visit-text!))) eids)))))

@@ -161,9 +161,9 @@ export class DatomicClient {
   readonly agent: http.Agent;
   // [DX-RD1] Why: each explicitly sampled logical read owns its exchanges across awaits and any repair.
   // Rejected: assigning concurrent response callbacks to the last caller or allocating samples for the whole ladder.
-  private readonly readProfile = new AsyncLocalStorage<(sample: ReadWireSample) => void>();
+  private readProfile?: AsyncLocalStorage<(sample: ReadWireSample) => void>;
   withReadProfile<A>(observe: (sample: ReadWireSample) => void, read: () => A): A {
-    return this.readProfile.run(observe, read);
+    return (this.readProfile ??= new AsyncLocalStorage()).run(observe, read);
   }
   private activeObservation: DatomicCommitAttempt | undefined;
   // [DX-B6-1] Why: capture request attribution synchronously before the transport yields.
@@ -374,7 +374,7 @@ export class DatomicClient {
     onSent?: (published?: boolean) => void,
   ): Promise<T> {
     const started = performance.now();
-    const readProfile = this.readProfile.getStore();
+    const readProfile = this.readProfile?.getStore();
     const profileId = readProfile ? randomUUID().replaceAll("-", "") : undefined;
     const observation = this.activeObservation;
     const operationId =

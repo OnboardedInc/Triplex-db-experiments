@@ -101,6 +101,11 @@
            (let [end# (clock) record# {:id id# :parent parent# :name ~name :layer ~layer :start start# :end end# :thread (.getId (Thread/currentThread))}]
              (when (or (:readProfileId @*request*) (not= level "summary") (= "commit" (:kind @*request*)) (not= ~layer "gateway") (>= (- end# start#) 0.5) (some #(= id# (:parent %)) (:spans @*request*)))
                (swap! *request* (fn [r#] (if (< (count (:spans r#)) 8192) (update r# :spans conj record#) (update r# :truncated inc)))))))))))
+(defn read-sample? [] (and read-profile-enabled *request* (:readProfileId @*request*)))
+;; [DX-RD1] Why: leave ordinary scorecard tracing unchanged when per-read attribution is off.
+;; Rejected: always generating new spans inside the existing generic summary tracer.
+(defmacro read-span [name layer & body]
+  `(if (read-sample?) (span ~name ~layer ~@body) (do ~@body)))
 (defn finish! [request]
   (let [r (assoc @request :end (clock)) duration (- (:end r) (:start r))]
     ;; [DX-T1-15] Why: a scope open is rare, and its peer-sync count must survive successful fast follower recovery.

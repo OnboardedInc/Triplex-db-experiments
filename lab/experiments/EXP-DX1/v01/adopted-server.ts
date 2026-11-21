@@ -89,7 +89,9 @@ for (const loaded of [false, true]) {
       const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
       assert.deepEqual([native.source, native.slot, native.process], [source, slot, "gw-r"]);
       if (policy["gw-r"].cacheMiB !== null) assert.equal(native.datomic["datomic.objectCacheMax"].value, policy["gw-r"].cacheMiB * 1024 ** 2);
-      const counters = gatewayCounters(engines["gw-r"].id);
+      const readPeerCounters = containerCounters(engines["gw-r"].id);
+      const postgresCounters = containerCounters(engines.pg.id);
+      const counters = () => ({ readPeer: readPeerCounters(), postgres: postgresCounters() });
       let terminal = head;
       for (const rate of [50, 235] as const) {
         assert(!stopping && Date.now() + 4 * 60_000 < end);
@@ -110,12 +112,12 @@ for (const loaded of [false, true]) {
 
 // [DX-RD1] Why: process-group CPU and block I/O can distinguish a busy core from a blocked peer.
 // Rejected: treating wall time in a Datomic call as CPU or a PostgreSQL page-cache hit as physical I/O.
-function gatewayCounters(container: string) {
+function containerCounters(container: string) {
   const pid = execFileSync("docker", ["inspect", "--format", "{{.State.Pid}}", container], { encoding: "utf8" }).trim();
   assert(/^[1-9]\d*$/.test(pid));
   const group = fs.readFileSync(`/proc/${pid}/cgroup`, "utf8").match(/^0::(\/.+)$/m)?.[1];
   assert(group, "Reader study needs cgroup v2 per-container counters");
-  return () => Object.fromEntries(["cpu.stat", "cpu.pressure", "io.stat", "memory.current"].map((file) => {
+  return () => Object.fromEntries(["cpu.stat", "cpu.pressure", "io.stat", "io.pressure", "memory.current"].map((file) => {
     const name = path.join("/sys/fs/cgroup", group, file);
     return [file, fs.existsSync(name) ? fs.readFileSync(name, "utf8") : null];
   }));

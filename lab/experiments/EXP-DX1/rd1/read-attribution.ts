@@ -76,7 +76,7 @@ if (mode === "archive") {
     const beforeGateway = sameClock && route ? rounded(route.start - row.clock.offsetMs - (sample.sent - wire.clock.offsetMs)) : null;
     const spans: NumberRecord = {};
     for (const span of row.spans as Span[]) spans[span.name] = (spans[span.name] ?? 0) + (span.end - span.start);
-    matching.push({ id: sample.id, route: sample.route,
+    matching.push({ id: sample.id, route: sample.route, issuedAt: sample.issue, gatewayStart: row.start, gatewayEnd: row.end,
       seats: arm.p1.find((phase: { diagnostic: { startedAt: number; deadline: number } }) =>
         phase.diagnostic.startedAt <= sample.issue && sample.issue < phase.diagnostic.deadline)?.seats ?? null,
       reusedSocket: sample.reusedSocket, responseBytes: sample.responseBytes,

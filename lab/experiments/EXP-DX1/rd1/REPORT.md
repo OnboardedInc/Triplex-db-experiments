@@ -1,4 +1,6 @@
 # DX-RD1 part 3
+
+The later full-size read investigation and gate results are in [REPORT-DX-RD1.md](../../../../REPORT-DX-RD1.md).
 The biggest delay came after the gateway finished sending its response and before the reader handled it.
 That stage averaged 624 of the 729 milliseconds outside the gateway. It dominated 133 of 144 sampled misses.
 Checking other replies overlapped about 215 milliseconds and garbage collection overlapped 131. Some of that time overlapped both.

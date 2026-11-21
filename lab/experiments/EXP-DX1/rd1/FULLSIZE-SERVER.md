@@ -7,12 +7,13 @@ cd "$BUILD/repository"
 sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
   "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --commit "$COMMIT" \
   --age fresh --seed "$SCALE1_IMAGE" --image-sha256 "$SCALE1_IMAGE_SHA256" \
-  --transfer-sha256 "$SCALE1_TRANSFER_SHA256" --out "$RD1_OUT" --read-study
+  --transfer-sha256 "$SCALE1_TRANSFER_SHA256" --out "$RD1_OUT" --read-study \
+  --tx-jvm j25-zgc --wal-directory "$RD1_WAL_DIR"
 ```
 
-Use a new absolute `RD1_OUT`. Use `--writer grouped` for the alternative writer and a fresh output folder. `--read-study-jvm j25-zgc` changes only the tuned read gateway JVM in this comparison. G1 is the initial treatment because ZGC competes for cores during concurrent collection. Use `--plan --read-study` to see both policies without starting containers.
+Use a new absolute `RD1_OUT` and the prepared separate WAL directory. Both arms match the archived Java 25 ZGC transactor and Java 21 G1 writer unless overridden. Use `--writer grouped` for the alternative writer and a fresh output folder. `--read-study-jvm j25-zgc` changes only the tuned read gateway JVM in this comparison. G1 is the initial treatment because ZGC competes for cores during concurrent collection. Use `--plan --read-study --tx-jvm j25-zgc` to see both policies without starting containers.
 
-The command restores the same immutable dump for each arm. The saved rate is an open-loop **offer** rate. Each arm runs the six 30-second closed-loop levels at 50, then repeats at 235, followed after each ladder by 1,000 current pulls at its terminal cut. The driver uses cores 9–10 in both arms. The treatment moves one write-gateway core and the unused driver core to the reader. Record completed and expired saves beside the reader numbers. No reader prewarming or first-read fixture runs before the ladder. The 235 window naturally follows 50 in both arms. Treat startup/order as a possible confound when comparing levels.
+The command restores the same immutable dump for each arm. In the archived run, the loaded ladder started 132 seconds after the zero-reader arm finished. The saved rate is an open-loop **offer** rate. Each arm runs the six 30-second closed-loop levels at 50, then repeats at 235, followed after each ladder by 1,000 current pulls at its terminal cut. The driver uses cores 9–10 in both arms. The treatment moves one write-gateway core and the unused driver core to the reader. Record completed and expired saves beside the reader numbers. No reader prewarming or first-read fixture runs before the ladder. The 235 window naturally follows 50 in both arms. The same sampled recorder runs in both arms and replaces generic summary recording on these routes. Treat the recorder and startup order as differences from the archive.
 
 **Forecast before bare metal**. Each cell is p99 in ms / exact completed reads per second. Ranges include the possible cost of holding 235 offers/s. The archive came from only 3.5 offers/s.
 
