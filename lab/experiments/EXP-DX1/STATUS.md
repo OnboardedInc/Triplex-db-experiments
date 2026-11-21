@@ -3784,3 +3784,29 @@ had a handover since 10:28 local; the orchestrator first read these at 15:50).
 - Orchestrator's note: the diagnostic uses a 32 MiB object cache so per-person leaves always fall out; on the
   server (2 GiB, and 16 GiB in the cache arm) with a tape that reuses people, the remaining per-person reads may be
   memory hits. The forecast may be low; only the server arm can say.
+
+## 2026-11-21 00:54 UTC (19:54 local, 2026-11-20): server 1: Java 21 G1 against Java 25 G1 against Java 25 ZGC; two-gateway writer pair published
+
+Source: `origin/exp/DX-BM1-bare-metal` at `abd19b1ce`, `bm1/JVM25-READING.md`, `PREP1-READING.md`.
+
+- **Java comparison (present grouped writer, ten deep accounts in one database, source `5a9652780`, 81,444 saves
+  and 600 exact historical reads verified per arm, 42 min 15 s of arm time):**
+
+  | | Java 21 G1 | Java 25 G1 | Java 25 ZGC |
+  | --- | ---: | ---: | ---: |
+  | Delivered at 235 offered (saves per s) | 186.15 | 195.93 | 219.55 |
+  | Delivered at 394 offered | 174.22 | 189.58 | 245.33 |
+  | Transactor pauses: count, p99 / max ms | 503, 67.4 / 354.4 | 776, 75.1 / 108.1 | 196, 0.020 / 0.030 |
+  | Writer pauses: count, p99 / max ms | 263, 23.1 / 23.8 | 260, 23.4 / 23.6 | 145, 0.016 / 0.016 |
+  | Sum of role memory peaks | 7.83 GiB | 7.51 GiB | 15.78 GiB |
+  | Memory reserved for the stack | 24 GiB | 24 GiB | 37 GiB |
+  | Solo p99 at 23.5 per s (ms) | 361 | 248 | 253 |
+
+  ZGC logged zero allocation stalls. The memory-matched G1 arm was not run, so the gain cannot be split between the
+  collector and the extra memory. The quiet account beside nine neighbours stayed 8 to 55 times its solo p99 in
+  every arm, and solo tails stayed far above forecast (248 to 361 ms at 23.5 per second; 467 ms at 39.4 with ZGC).
+- **Two write gateways, 394 offered:** the grouped writer fell from 181.7 to 102.8 saves per second (saves per
+  append 7.99 to 1.02); the per-person writer went from 111.1 to 136.7 with about one save per append and zero
+  replans; quiet-account p99 ratios 27.64 (grouped) and 26.14 (per-person). Four-gateway arms were cut.
+- Server 1 now: the native tail and cache gate, then the ordered-identifier comparison, then erasure and import
+  pacing.
