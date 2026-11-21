@@ -1,4 +1,4 @@
-The scorecard should pin `9066ad9e19fe52d77f4df0f9d530fdd0311e9035`.
+The scorecard should pin `57580241dc4020f9ab7590839c72c00356fcedee`.
 Version 0.1 has a small laptop profile and a server profile for one database.
 The server gives the transactor three cores and a 16 GiB cache. The gateways get four cores for writes and one for reads.
 The server defaults to Java 21 with G1. One option switches the transactor to Java 25 with ZGC.
