@@ -1,5 +1,6 @@
 """Provide the disposable native PostgreSQL 17 and Datomic stack for ERASE1."""
 
+import errno
 import hashlib
 import json
 import os
@@ -27,16 +28,35 @@ WEBPORT = 8080
 LOOPBACK = socket.inet_ntoa(socket.INADDR_LOOPBACK.to_bytes(4,"big"))
 
 
+def require_ports(ports, timeout=90):
+    deadline = time.monotonic()+timeout
+    for port in ports:
+        while True:
+            with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as probe:
+                try:
+                    probe.bind((LOOPBACK,port))
+                except OSError as error:
+                    if error.errno != errno.EADDRINUSE or time.monotonic() >= deadline:
+                        raise RuntimeError(f"Erasure port {port} did not become bindable") from error
+                else:
+                    break
+            # [DX-BM1] Why: the verified small stack can leave TCP sockets in TIME_WAIT.
+            # Rejected: sharing an active port or sending traffic to keep the stack warm.
+            time.sleep(1)
+
+
 def managed(request, cleanup=False):
     root = Path(request["root"])
     source = request["source"]
     tag = request["tag"]
-    fast = source == FAST_SOURCE and tag in ("erasen20fast","erasen20small")
+    fast = source == FAST_SOURCE and tag in ("erasen20fast","erasen20small","erasen20retry")
     small = fast and tag == "erasen20small"
     people = 128 if small else 100_000
     assert request["item"] == 34 and (fast or (source == SOURCE and tag in ("erasen20","erasen20b")))
     binroot = Path("/var/tmp/triplex-bm1/night-n20-erasure")
     expected = (binroot.with_name(binroot.name+"-small") if small else binroot) if fast else Path("/var/tmp/triplex-bm1/night-n19")/tag
+    if tag == "erasen20retry":
+        expected = binroot.with_name(binroot.name+"-retry")
     assert root == expected
     resume = tag == "erasen20b"
     old = root.with_name("erasen20")
@@ -93,9 +113,7 @@ def managed(request, cleanup=False):
 
     assert shutil.disk_usage(root).free >= 80*2**30 and not output("docker","ps","-q")
     assert not output("git","status","--porcelain","--untracked-files=no")
-    for port in (PGPORT, TXPORT, WEBPORT):
-        with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as probe:
-            probe.bind((LOOPBACK,port))
+    require_ports((PGPORT, TXPORT, WEBPORT))
     first = None
     if resume:
         old_request = request_file.parents[1]/"1/request.json"
