@@ -4441,3 +4441,22 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **DX-PREP1 part 15 resumed:** reading of barrier 6 and rolling 6 (and 12 when published) from the checkpoints; why p99 at 394 is still 5 s with every save stored; why the quiet account is at 54 ms and not 36; the default credit mode; the next change toward p99 50 ms at 394, built, with a server command under 120 minutes including a write-gateway ZGC arm.
 - Server commands waiting for the rented server, in order: next card fresh with the winner; Publish at 100,000; realistic first rung and its card; reads ladder (56 min); cold start arms (60 min); erasure stage (86 min); imports (60 min); DX-PREP1's next change (120 min); two-server failover Sunday about 07:30.
 - Agents running: DX-SCALE1, DX-BM1, DX-THIN1, DX-W1, DX-PREP1.
+
+### 2026-11-21 11:26 local: model of save reads against database size; first reduction built; the design that keeps them flat is being built (5 agents running)
+
+- **DX-W1 part 9 finished** (exit 0). `origin/exp/DX-W1-commit-tail-reads` `ad2e188a9`, `w1/RETIREMENT-READS.md`.
+  - **Model (forecast; it misses the early aging-loader apply time by more than two times, and the Mac cache sweep could not reproduce production ratios)**, 16 GiB object cache:
+
+    | | 430 million records | 1 billion | 8 billion |
+    | --- | ---: | ---: | ---: |
+    | Object cache that would cover the current writer's working set | 32 GiB | 74 GiB | 595 GiB |
+    | Current writer: SQL fetches per save / mean apply | 1.20 / 1.87 ms | 1.86 / 2.38 ms | 2.31 / 2.73 ms |
+    | Append retirement (built) | 0.85 / 1.59 ms | 1.32 / 1.96 ms | 1.63 / 2.20 ms |
+    | Narrow revision seek (existing option) | 1.10 / 1.79 ms | 1.71 / 2.26 ms | 2.11 / 2.58 ms |
+    | Small owner head plus append-only versions (design only) | 0.20 / 1.09 ms | 0.30 / 1.16 ms | 0.36 / 1.21 ms |
+
+    A serial transactor's ceiling is one over apply: 2.73 ms is 366 saves/s (under the 394 required), 1.21 ms is 826.
+  - Cause in the model: the person's own rows and predecessor leaves are scattered across old index leaves that exceed the object cache as the database grows, while ordered identity checks stay near the hot tail.
+  - **Built, default off, no rewrite of existing data:** `TX2_SUBJECT_APPEND_RETIREMENT=1` removes 0.29 to 0.40 SQL fetches per save on the Mac toy seed (the AEVT lookup of the old row text during retraction); the EAVT owner lookup still fetches about once per save. Gates: 749 native assertions; barrier6 and rolling6 each recovered the original lost reply and kept six refused appends out of the journal. Server commands for the fresh and the 1 billion database published.
+- **DX-W1 part 10 resumed:** build the small owner head (one resident current witness per person; new facts and retirements append-only on new sequential entities; head initialised on a person's first write, no rewrite), with read-path cost measured, records per save, all exactness gates including removal across the switch, and server commands with predictions.
+- Agents running: DX-SCALE1, DX-BM1, DX-THIN1, DX-PREP1, DX-W1.
