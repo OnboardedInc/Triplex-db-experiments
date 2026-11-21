@@ -46,3 +46,10 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 - `part4/verify-runner-b.log` records the independent card and archive checks. `part4/runner-b/campaign/PREP1-MIXED-TEST.log` records the 37-assertion SQL compatibility test.
 - `part4/packages-runner-b.log` and `part4/package-build-runner-b.json` bind the clean checkout and built packages. `part4/image-build-runner-b.log` records the staged image. `part4/fixture-runner-b-1.log` records the two private slot admissions and volume removals.
 - `part4/merged-a/` contains the first paired card after the INT1 merge. The final runner updated the journal wording and replayed the paired fixture. `part4/runner-checks.log` records the focused renderer tests and command forecasts.
+
+## Part 5 prepared PostgreSQL
+
+- `part5/card-a/campaign/PGDATA-FIXTURE.json` records the native PostgreSQL 17 copy check, both SQL values and the wrong-digest refusal for the same source, slot and attempt.
+- `part5/card-a/SCORECARD-v0.1.md` is the paired toy card. `part5/verify-card-a.log` checks the 14 rows, both configurations, the PGDATA evidence binding and the mixed-ID results.
+- `part5/focused-checks.log` records the six focused tests, shell checks and startup forecasts. `part5/focused-first.log` preserves the initial test path-alias failure. `part5/platform-check.log` records the bare-metal detector regression check.
+- The package and image build receipts, slot lifecycle log and image removal result are in `part5/`.

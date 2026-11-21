@@ -1,11 +1,11 @@
-ce9507b0ed9b0604b69ed28646175df254b7c0c7
-Server 2 should run this commit for either age.
-The Mac toy card filled all 14 rows across ten accounts.
-The ordered writer ran the full workload. Grouped repeated the commits and quiet-account priorities.
-Both retired IDs were refused and four historical reads matched.
-The forecast is 235 minutes and USD 4.27 per age.
-The optional Java 25 ZGC comparison is outside the time budget.
-The fresh and aged bare-metal runs remain unverified.
+65ad0997c1e077b5ca3e0dc5b2f8304f6f65f51c
+Server 2 should run this commit for fresh and 1B.
+Each arm opens its own prepared PostgreSQL copy.
+The full-size dump projected at least 76 minutes for one restore.
+The fresh source needs about 115 GB for each copy.
+The Mac copied and reopened PostgreSQL 17 and refused a wrong digest.
+The forecast is 235 minutes and USD 4.27 per age after copy preparation.
+Neither full-size campaign has been run by this worktree.
 
 ## Part 5 prepared PostgreSQL audit
 
@@ -14,6 +14,10 @@ The prepared arm matches each private directory's PostgreSQL control bytes to th
 The storage readback records the exact source, arm slot, fresh attempt, PostgreSQL container ID, file identity and control digest. The physical renderer requires the current campaign's input and matches the readback to each arm before reaching the existing mixed-ID verdict. For 1B it also binds the fresh AGE1 readback to that arm, bundle, database and starting cut. The P7 empty census records its own slot, attempt, settings and roles before the prepared stack starts. The Mac PostgreSQL fixture records the copy's sealed value, changed value, exact control hash and mismatched-digest refusal with its native fixture source, slot and attempt. It supplies diagnostic evidence. This change adds no performance verdict or release PASS. No acceptance path or pin changed.
 
 The physical launcher now accepts the bare-metal detector's normal status 1 with output `none`. The focused platform check confirms that result reaches source validation and a virtual result stops the command. The runner writes the owned stack attempt record before startup so the existing cleanup can release the stack after either a normal arm or an early refusal.
+
+The Mac gate at `fb8c9527f` ran under an ordinary heavy token. It used the same PostgreSQL startup wrapper as the server path. It opened a stopped file-level copy, read the original row, changed the row in the copy and rechecked the original control digest. A separate invocation with a mismatched digest refused startup. The two-writer toy card also filled all 14 rows, matched 211 ordered and 183 grouped save acknowledgments and passed 37 PREP1 assertions. The engine released both reservations and removed both volumes and the staged image. The runner commit adds only the bare-metal status handling to that runtime test revision. Six focused tests and both shell syntax checks passed. [Evidence index](EVIDENCE.md)
+
+The Mac proof exercised the entrypoint on a private PG17 cluster and the scorecard separately on the compact Datomic fixture. The Linux Docker bind, full-size file-copy time, live SCALE1 check on Server 2 and AGE1 sealed-cut verification there remain unverified. The handoff budgets the campaigns after the file copies are ready and keeps the existing dump options available. [Server procedure](SERVER.md)
 
 ## Part 4 review of the pinned writer
 
