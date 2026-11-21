@@ -15,6 +15,10 @@ HERE = Path(__file__).resolve().parent
 SERVER = Path("/var/tmp/triplex-bm1")
 MAC = Path.home()/"Claude/Projects/triplex-db-2/evidence"
 SLOTS = {
+    "bench3-fair-import": ("bench3/queue/fair-import", ("result", "unit.log", "prepared/inventory.json",
+        "prepared/ready.txt", "build/BUILD-v0.1.json")),
+    "bench3-removal": ("bench3/queue/removal", ("result", "unit.log", "started",
+        "prepared/inventory.json", "prepared/ready.txt", "build/BUILD-v0.1.json")),
     "bench3-control": ("bench3", ("tuned-control", "tuned-control-preflight", "control-preflight.log",
         "receive-start", "receive-end", "seed-verification.json",
         "control-producer.sha256", "control.log", "wal-mount.json", "host-profile.txt",
@@ -87,6 +91,9 @@ for selection, arms in ROLLING_ARMS.items():
         ("plan.json", "seed.json", "source", "prefix", "SEAL.sha256", "scale-wal-mount.json",
          "engines", *("1-"+arm+"-S" for arm in arms)),
     )
+for selection in ("cache32", "tx5", "fresh"):
+    SLOTS["bench3-"+selection] = ("bench3/queue/"+selection, ("result", "started", "unit.log",
+        "build/results/IMAGE-INPUTS.SHA256SUMS", "build/results/images.json", "build/results/bootstrap.exit"))
 
 
 def load(filename):
@@ -118,7 +125,7 @@ def archive(name, revision):
         units = ["triplex-bench3-bootstrap.service", "triplex-bench3-java25.service",
                  "triplex-bench3-seed-verify.service", "triplex-bench3-tuned-control.service",
                  "triplex-bench3-tuned-retry.service"]
-    if name.startswith("bench3-rolling-"):
+    if name.startswith("bench3-") and name != "bench3-control":
         units = ["triplex-"+name+".service"]
     states = {}
     for unit in units:
