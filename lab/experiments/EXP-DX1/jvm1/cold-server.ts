@@ -67,7 +67,19 @@ for (const [arm, startup, ramp] of [
     const { engines } = startScaleStack(dir, slot, source, false, stackOptions("subject", attempt), {
       policy, walDirectory, coldSeed: { pgdata, control, log: coldStartLog },
     });
-    const trace = path.join(dir, "engines", slot, "trace/raw");
+    const stackEvidence = path.join(dir, "engines", slot);
+    const trace = path.join(stackEvidence, "trace/raw");
+    const [copy] = JSON.parse(fs.readFileSync(path.join(stackEvidence, "pgdata-copy-container.json"), "utf8"));
+    const mounts = new Map<string, { Source: string; Name?: string; RW: boolean }>(
+      copy.Mounts.map((mount: { Destination: string }) => [mount.Destination, mount]));
+    assert.deepEqual([copy.Name, copy.Image, copy.State.ExitCode],
+      ["/" + slot + "-seed-copy", engines.pg!.image, 0]);
+    assert.deepEqual([mounts.get("/from")?.Source, mounts.get("/from")?.RW], [pgdata, false]);
+    assert.deepEqual([mounts.get("/to")?.Name, mounts.get("/to")?.RW], [slot + "-pg-data", true]);
+    assert.deepEqual([mounts.get("/wal")?.Source, mounts.get("/wal")?.RW], [path.join(walDirectory, slot), true]);
+    const [copiedControl, copiedWal] = fs.readFileSync(path.join(stackEvidence, "pgdata.control.sha256"), "utf8").trim().split("\n");
+    assert.equal(copiedControl, control);
+    assert.match(copiedWal ?? "", /^[a-f0-9]{64}$/);
     const writer = new DatomicClient(`http://${engines["gw-w"]!.address}:8080`, 35000);
     const reader = new DatomicClient(`http://${engines["gw-r"]!.address}:8080`, 35000);
     const postgres = engines.pg!.id;
@@ -158,7 +170,7 @@ for (const [arm, startup, ramp] of [
       const firstAck = durable.filter((r) => r.status === "acked").reduce((min, row) => Math.min(min, row.end!), Infinity);
       assert(Number.isFinite(firstAck), "No acknowledged saves");
       jsonFile(path.join(dir, "journal.json"), journal);
-      jsonFile(path.join(dir, "observed.json"), { source, slot, attempt, control, tapeSha256, imagePin, policy, java, seedReadback,
+      jsonFile(path.join(dir, "observed.json"), { source, slot, attempt, control, copiedWal, tapeSha256, imagePin, policy, java, seedReadback,
         firstAcknowledgementAfterSeconds: (firstAck - ready) / 1000,
         ...summarizeOffers(writes.rows, start) });
     } finally {
