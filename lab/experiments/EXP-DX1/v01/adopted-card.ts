@@ -81,7 +81,7 @@ export function writeAdoptedCard(run: Card) {
       String(loaded.p3.entries), evidence("loaded")]);
     if (loaded.p4?.observed.count) rows.set("P4", [`Current demand pulls p50 ${tag(loaded.p4.observed.p50Ms)} ms, p99 ${tag(loaded.p4.observed.p99Ms)} ms. History depth and engine bytes remain open.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
       String(loaded.p4.observed.count), evidence("loaded")]);
-    rows.set("Journal queryable", [`Compared ${loaded.p3.entries} queryable K journal entries to original operation and predecessor expectations.`, "DIAGNOSTIC",
+    rows.set("Journal queryable", [`Compared ${loaded.p3.entries} queryable journal entries to original operation and predecessor expectations.`, "DIAGNOSTIC",
       String(loaded.p3.entries), evidence("loaded")]);
     rows.set("Receipts", [`Verified the journal against ${loaded.p2.receipts} receipts and reopened a sample of durable claims. The retry and lost-ACK bar is open.`, "DIAGNOSTIC",
       String(loaded.p2.receipts), evidence("loaded")]);
