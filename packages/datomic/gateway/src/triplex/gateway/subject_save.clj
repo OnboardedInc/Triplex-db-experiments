@@ -334,7 +334,7 @@
                                   (every? #(envelope-for? subject by-id %) envelopes)))))
               (let [prefixes (vec (sort (map lean/prefix new-ids)))
                     head-ids (when owner-head? (mapv prepared/row-id business))
-                    mark? (and append-retirement? (nil? expected-erasure)
+                    mark? (and append-retirement? (nil? expected-erasure) (empty? envelopes)
                                (not-any? #(and (vector? %) (= :triplex.entity/retired (nth % 2 nil))) ops))]
                 (cond-> {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
                          :journal journal :operation (:triplex.tx/operation-id op-header) :command claim

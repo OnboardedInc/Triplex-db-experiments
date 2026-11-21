@@ -7,6 +7,7 @@ export PREP1_ATTEMPT=$(cat /config/attempt)
 export TX2_SUBJECT_NUMERIC_OWNER=$(cat /config/subject-owner)
 export TX2_SUBJECT_PREFETCH=$(cat /config/subject-prefetch)
 export TX2_SUBJECT_ORDERED_IDS=$(cat /config/subject-ordered)
+export TX2_SUBJECT_APPEND_RETIREMENT=$(cat /config/subject-retirement 2>/dev/null || printf 0)
 export TX2_SUBJECT_NARROW_REVISION=$(cat /config/subject-serial 2>/dev/null || printf 0)
 export TX2_SUBJECT_REUSE_PREDECESSOR=$TX2_SUBJECT_NARROW_REVISION
 export TX2_SUBJECT_APPEND_RETIREMENT=$(cat /config/subject-retirement 2>/dev/null || printf 0)
@@ -290,6 +291,7 @@ case "$PREP1_MODE" in
       await import("/config/probe.mjs");
     ' "$@"; }
     credit_modes=(barrier6 rolling6 rolling12)
+    if [[ $TX2_SUBJECT_APPEND_RETIREMENT == 1 ]]; then credit_modes=(barrier6 rolling6); fi
     if [[ $TX2_SUBJECT_NARROW_REVISION == 1 ]]; then credit_modes=(rolling6); fi
     if [[ $TX2_SUBJECT_APPEND_RETIREMENT == 1 ]]; then credit_modes=(barrier6 rolling6); fi
     if [[ $TX2_SUBJECT_OWNER_HEAD == 1 ]]; then
@@ -314,7 +316,7 @@ case "$PREP1_MODE" in
         children[2]=$!
         wait "${children[2]}"
         unset 'children[2]'
-        for layout_arm in legacy migrated; do
+        for layout_arm in legacy append migrated covered; do
           TX2_SUBJECT_SAVE=1 TX2_SUBJECT_OWNER_HEAD=0 DX_W1_LAYOUT_FILE="$work/layout-reads" DX_W1_LAYOUT_ARM="$layout_arm" \
             java_role -i /config/regression.clj -i /config/owner_layout_gate.clj \
             -e '(do (owner-layout-gate/sample-reads! (System/getenv "DX_W1_LAYOUT_FILE") (System/getenv "DX_W1_LAYOUT_ARM")) (System/exit 0))' &

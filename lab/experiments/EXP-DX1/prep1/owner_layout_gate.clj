@@ -9,8 +9,8 @@
             [triplex.gateway.write-policy :as policy] [wfix1-regression :as reference]))
 
 (defn at-cut [input cut] (assoc input "sourceK" cut))
-(defn native-plan [db input]
-  (let [plan (layout/prepare db (storage/tx-data db input) input)]
+(defn native-plan [db input & [cover?]]
+  (let [plan (layout/prepare db (storage/tx-data db input) input cover?)]
     (assert plan (str "Fixture must qualify for owner layout preparation: " (get input "operationId")))
     plan))
 (defn append! [conn plan]
@@ -103,9 +103,25 @@
             (is (= ["winner" "winner value" 2] (field (d/db conn) owner)))
             (is (= {"status" "absent"} (reference/operation name "edit-a")))))))))
 
-(defn snapshot [db owner]
-  (let [rows (vec (current db owner))]
-    {:rows (count rows) :digest (schema/sha256 (pr-str rows))}))
+(defn snapshot [db owner arm]
+  (let [datoms (case arm
+                 ("legacy" "append") (layout/read-stage :legacy-range (vec (lean/live-texts db owner)))
+                 "covered" (or (layout/covered-live-datoms db owner) (layout/live-datoms db owner))
+                 (layout/live-datoms db owner))
+        rows (layout/read-stage :decode (vec (sort-by :id (map (comp lean/decode :v) datoms))))]
+    {:rows (count rows) :digest (layout/read-stage :digest (schema/sha256 (pr-str rows)))}))
+
+(defn- legacy-append! [conn db input append?]
+  (let [reply (with-redefs [subject/append-retirement? append?] (reference/send db input))
+        body (:body reply)
+        _ (assert (= [200 nil] (reference/outcome reply)))
+        t (parse-long (get-in body ["t" "v"]))
+        log (d/log conn)
+        entry (first (d/tx-range log t (inc t)))]
+    (assert (= (:t entry) t))
+    (assert (= (get body "datoms") (count (:data entry))))
+    (assert (= append? (true? (get body "subjectAppendRetirement"))))
+    {:tx-data (:data entry)}))
 
 (defn staged-reads! [path]
   (let [attempt (System/getenv "PREP1_ATTEMPT")
@@ -114,46 +130,48 @@
                       {:keys [db created]} (main/create-scope! nil wire "lean" true true)
                       conn (main/connection (main/db-uri db))
                       [seed a b] (reference/edits)
-                      migrate? (= arm "migrated")
+                      migrate? (contains? #{"migrated" "covered"} arm)
                       edit (fn [input cut]
                              (let [input (at-cut input cut)]
                                (if migrate?
-                                 (let [plan (native-plan (d/db conn) input)]
+                                 (let [plan (native-plan (d/db conn) input (= arm "covered"))]
                                    (assert plan)
                                    (append! conn plan))
-                                 (assert (= [200 nil] (reference/outcome (reference/send db input)))))))]
+                                 (legacy-append! conn db input (= arm "append")))))]
                   (assert created)
                   (layout/install-fixture! conn)
                   (assert (= [200 nil] (reference/outcome (reference/send db (seed-deeper seed)))))
-                  (edit a 1)
-                  (let [view (d/db conn) owner (d/entid view [:triplex.entity/id fixture/root])
-                        pinned {:t (d/basis-t view) :expected (snapshot view owner)}]
-                    (edit b 2)
-                    (let [current (d/db conn)]
+                  (let [first (edit a 1) view (d/db conn) owner (d/entid view [:triplex.entity/id fixture/root])
+                        pinned {:t (d/basis-t view) :expected (snapshot view owner arm)}]
+                    (let [next (edit b 2) current (d/db conn)]
                       (assert (= (boolean (scope/value current owner layout/root-attr)) migrate?))
-                      {:db db :owner owner :pinned pinned :current {:t (d/basis-t current) :expected (snapshot current owner)}
+                      {:db db :owner owner :pinned pinned :current {:t (d/basis-t current) :expected (snapshot current owner arm)}
+                       :counts {:first (counts first) :next (counts next)}
                        :journal (schema/sha256 (pr-str (reference/feed db 0 10)))}))))
-        fixtures (into {} (map (juxt identity build)) ["legacy" "migrated"])]
+        fixtures (into {} (map (juxt identity build)) ["legacy" "append" "migrated" "covered"])]
     (assert (apply = (map (fn [f] [(:journal f) (get-in f [:pinned :expected]) (get-in f [:current :expected])]) (vals fixtures))))
     (spit path (pr-str {:attempt attempt :fixtures fixtures}))))
 
 (defn sample-reads! [path arm]
   (let [{:keys [attempt fixtures]} (edn/read-string (slurp path))
-        {:keys [db owner pinned current journal]} (get fixtures arm)
+        {:keys [db owner pinned current journal counts]} (get fixtures arm)
         conn (main/connection (main/db-uri db))
         latest (d/db conn)
-        sample (fn [{:keys [t expected]}]
-                 (let [start (System/nanoTime)
+        sample (fn [{:keys [t expected]} profile?]
+                 (let [stages (when profile? (volatile! {}))
+                       start (System/nanoTime)
                        view (if (= t (d/basis-t latest)) latest (d/as-of latest t))
-                       actual (snapshot view owner)
+                       actual (binding [layout/*read-stages* stages] (snapshot view owner arm))
                        elapsed (- (System/nanoTime) start)]
                    (assert (= expected actual))
-                   elapsed))]
+                   (if stages @stages elapsed)))]
     (assert (= attempt (System/getenv "PREP1_ATTEMPT")))
     (assert (= (:t current) (d/basis-t latest)))
-    (assert (= (= arm "migrated") (boolean (scope/value latest owner layout/root-attr))))
-    (dotimes [_ 6] (sample current) (sample pinned))
+    (assert (= (contains? #{"migrated" "covered"} arm) (boolean (scope/value latest owner layout/root-attr))))
+    (dotimes [_ 6] (sample current false) (sample pinned false))
     (println "DX-W1_OWNER_LAYOUT_READ"
              (json/write-str {:attempt attempt :db db :arm arm :pid (.pid (java.lang.ProcessHandle/current))
                               :current current :pinned pinned :journal journal :clock "diagnostic-in-process"
-                              :ns (mapv (fn [_] [(sample current) (sample pinned)]) (range 24))}))))
+                              :counts counts
+                              :ns (mapv (fn [_] [(sample current false) (sample pinned false)]) (range 48))
+                              :stagesNs (mapv (fn [_] [(sample current true) (sample pinned true)]) (range 32))}))))

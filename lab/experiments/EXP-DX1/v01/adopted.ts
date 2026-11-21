@@ -10,8 +10,7 @@ import { fieldValue } from "../../../bench/lib/deep-world.ts";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { decodeFeed, now, readCell, type Begin, type Feed } from "../scale1/decision/observer.ts";
-import { accounts, cellSeconds, field, root, serialApplyTape, task, writeTape,
-  type Density, type SerialApplyRate, type Write } from "../scale1/decision/plan.ts";
+import { accounts, cellSeconds, field, root, serialApplyTape, task, writeTape, type Density, type SerialApplyRate, type Write } from "../scale1/decision/plan.ts";
 import { play, resolveUncertain, type Row, type Save, type Sender } from "../scale1/decision/writes.ts";
 import { creditModeSelection } from "../prep1/rolling-credits.ts";
 import { defaultCreditMode, type CreditMode } from "../jvm1/launch.mjs";
@@ -24,6 +23,7 @@ export type Peer = { write: string; read: string; slot: string; attempt: string;
   creditMode?: CreditMode; serialApply?: boolean;
   empty?: Residency; residency?: () => Residency | Promise<Residency> };
 export type QuietCell = "alone" | 235;
+export type RetirementStudy = { rate: SerialApplyRate; append: boolean; seconds: 120 | 300 };
 export type ReadStudy = { rate: 50 | 235; batch: number; sample: boolean; counters?: () => unknown };
 type ReadSamples = (Parameters<Parameters<DatomicClient["withReadProfile"]>[0]>[0] & { sdkDone?: number })[];
 const sampledRead = async <A>(client: DatomicClient, samples: ReadSamples, send: () => Promise<A>) => {
@@ -213,10 +213,7 @@ async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: numbe
 }
 
 export async function adoptedArm(out: string, source: string, peer: Peer, seed: AdoptedSeed, writer: Writer,
-  loaded: boolean, toy: boolean, startHead = seed.scope.cut, quietCell?: QuietCell,
-  trial?: ReadStudy | { rate: SerialApplyRate; append: boolean; seconds: 120 | 300 }) {
-  const retirement = trial && "append" in trial ? trial : undefined;
-  const study = trial && "batch" in trial ? trial : undefined;
+  loaded: boolean, toy: boolean, startHead = seed.scope.cut, quietCell?: QuietCell, study?: ReadStudy, retirement?: RetirementStudy) {
   const begin = now();
   const writerClient = new DatomicClient(peer.write, 35000);
   const reader = new DatomicClient(peer.read, 35000);
@@ -252,7 +249,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       options.options.stageClock, options.options.queueClock, options.options.maxMembers],
     [true, writer === "grouped", writer === "grouped", false, writer === "grouped", writer === "grouped",
       true, writer === "grouped", false, true, false, 32]);
-    const p7 = !study && !retirement && quietCell === undefined && peer.empty && peer.residency ? {
+    const p7 = !retirement && !study && quietCell === undefined && peer.empty && peer.residency ? {
       empty: peer.empty, restored: await peer.residency(), people: seed.image.people * accounts.length,
       cold: await currentPull(reader, seed, seed.scope.cut, toy, true),
     } : undefined;
@@ -269,6 +266,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const after = retirement ? process.hrtime.bigint() : undefined;
     const start = wall + 1200;
     const serialAnchor = retirement ? { wall, before: String(before), after: String(after) } : undefined;
+
     const interval = seconds * 1000;
     feeding = feeder(journal, seed.scope.db, startHead, start + interval + 120_000,
       () => terminal, writer === "subject");
@@ -297,6 +295,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       checkSavedIdentity(row, actual, writer, options.subjectFunction);
       if (retirement && row.status === "acked")
         assert.equal(Boolean(row.stage?.subjectAppendRetirement), retirement.append);
+
       saveHistogram.recordMs(row.end! - row.due);
     }
     for (const row of saves.filter((_, i) => i === 0 || i === saves.length - 1 || i % 100 === 0)) {

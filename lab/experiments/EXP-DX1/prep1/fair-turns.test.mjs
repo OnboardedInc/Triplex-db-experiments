@@ -69,3 +69,30 @@ test("an uncertain outcome keeps the next turn closed", () => {
   dispatch();
   assert.equal(sent.length, 2);
 });
+
+test("an enabled barrier leaves its reserved quiet credit unused by imports and busy saves", () => {
+  const scheduler = new FairTurns(4, 6, 0);
+  const neighbours = Array.from({ length: 20 }, (_, id) => ({
+    id, due: id, account: id % 3 + 1,
+  }));
+  const offered = [...neighbours];
+  const submitted = [];
+  const pump = () => scheduler.dispatch(() => offered, (item) => {
+    submitted.push(item);
+    offered.splice(offered.indexOf(item), 1);
+  });
+  pump();
+  assert.equal(submitted.length, 5);
+  assert(submitted.some((item) => item.account === 3));
+  const quiet = { id: 20, due: 20, account: 0 };
+  offered.push(quiet);
+  for (let i = 0; i < 4; i++) {
+    scheduler.resolved(true);
+    pump();
+    assert.equal(submitted.length, 5);
+  }
+  scheduler.resolved(true);
+  pump();
+  assert.equal(submitted[5], quiet);
+  assert.equal(submitted.length, 11);
+});

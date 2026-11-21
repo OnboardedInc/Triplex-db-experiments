@@ -143,7 +143,7 @@ export function expectedSave(o: Save, e: Write, prior: readonly Row[]) {
 }
 
 // [DX-SCALE1] Why: compare every logical field of the committed WFIX1 change records at the assigned clock. Rejected: proving only the retracted identity or ignoring the stored predecessor lifetime.
-export function expectedJournal(candidate: ReturnType<typeof expectedSave>, clock: number) {
+export function expectedJournal(candidate: { input: Pick<Input, "rows">; entity: string }, clock: number) {
   const changes = candidate.input.rows
     .filter((r) => r.entity_type === "_Transaction" && r.attribute === ":_tx/change")
     .map((row) => {
@@ -182,6 +182,13 @@ export type PublishInterleave = {
 };
 
 // [DX-SCALE1] Why: all tapes are open-loop, and a start deadline is evaluated before allocating the gateway request. Rejected: a single closed promise chain or counting an upstream expiration as a native commit limit.
+export type FairImport = {
+  limit: number;
+  end: number;
+  ready: () => boolean;
+  send: (grant: { at: number; ticket: number; neighboursAhead?: number }) => Promise<void>;
+};
+
 export async function play(
   scopes: Sender[],
   tape: Write[],
@@ -193,9 +200,22 @@ export async function play(
   interleave?: PublishInterleave,
   waitForRemoval = false,
   startup?: { ramp: boolean; stopped: () => boolean },
+  bulk?: FairImport,
 ) {
   assert(!interleave || selection);
-  const fair = selection && admission(scopes.length, selection);
+  const importingAccount = scopes.length;
+  if (bulk) {
+    assert(selection && Number.isInteger(bulk.limit) && bulk.limit > 0 && bulk.limit < selection.credits);
+    assert((selection.quietAccount ?? 0) < importingAccount);
+  }
+  const fair = selection && admission(importingAccount + Number(!!bulk), bulk
+    ? { ...selection, quietAccount: selection.quietAccount ?? 0 } : selection);
+  let bulkActive = 0;
+  let bulkFailed = false;
+  let bulkError: unknown;
+  const importReady = () => bulk && !bulkFailed && !admissionClosed && now() < bulk.end && bulk.ready();
+  let bulkDue = start;
+  let admissionClosed = false;
   const ramp = startup?.ramp === true;
   const admit = ramp ? startupAdmission() : undefined;
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
@@ -364,7 +384,9 @@ export async function play(
         pending.delete(p);
         if (fair) {
           row.creditReleased = now();
-          fair.resolved(row.status === "acked" || row.status === "refused", ticket);
+          const known = row.status === "acked" || row.status === "refused";
+          if (!known) admissionClosed = true;
+          fair.resolved(known, ticket);
         }
         pump(account);
       });
@@ -378,12 +400,41 @@ export async function play(
       // Rejected: stopping the independent arrival clock or granting further credits during the handoff.
       if (interleave?.paused) return;
       fair.dispatch(
-        () => scopes.flatMap((_, a) => {
-          if (active[a]! >= maxInflight) return [];
-          const index = next(a);
-          return index < 0 ? [] : [{ account: a, index, due: queues[a]![index]!.row.due }];
-        }),
-        (save, ticket, neighboursAhead?: number) => dispatch(save.account, save.index, ticket, neighboursAhead),
+        () => {
+          const ready = scopes.flatMap((_, a) => {
+            if (active[a]! >= maxInflight) return [];
+            const index = next(a);
+            return index < 0 ? [] : [{ account: a, index, due: queues[a]![index]!.row.due }];
+          });
+          if (bulk && bulkActive < bulk.limit && now() >= start && importReady())
+            ready.push({ account: importingAccount, index: 0, due: bulkDue });
+          return ready;
+        },
+        (offer, ticket, neighboursAhead?: number) => {
+          if (offer.account !== importingAccount) {
+            dispatch(offer.account, offer.index, ticket, neighboursAhead);
+            return;
+          }
+          // [DX-HA1] Why: settle imports in the same credit window and close ingress on ambiguity.
+          // Rejected: an independent bulk window or returning the credit before durable acknowledgement.
+          bulkActive++;
+          const at = now();
+          bulkDue = at;
+          let known = false;
+          const send = Promise.resolve().then(() => bulk!.send({ at, ticket,
+            ...(neighboursAhead === undefined ? {} : { neighboursAhead }) }))
+            .then(() => { known = true; }, (error) => {
+              bulkFailed = true;
+              bulkError = error;
+            })
+            .finally(() => {
+              bulkActive--;
+              pending.delete(send);
+              fair.resolved(known, ticket);
+              pump(account);
+            });
+          pending.add(send);
+        },
       );
       return;
     }
@@ -443,10 +494,11 @@ export async function play(
         pump(e.account);
       }
     }
-    while (pending.size || queues.some((q) => q.length)) {
+    while (pending.size || queues.some((q) => q.length) || importReady()) {
       for (const a of scopes.keys()) pump(a);
       await Promise.race([...pending, sleep(25)]);
     }
+    if (bulkFailed) throw bulkError;
     assert(!startup?.stopped(), "Write window stopped before verification");
     return { rows, unresolved };
   } finally {
