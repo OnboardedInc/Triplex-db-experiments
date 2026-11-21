@@ -48,7 +48,21 @@ def managed_events(out):
     inputs, image = frozen_inputs(out)
     terminal = read(out / "terminal.json")
     assert terminal["attempt"] == inputs["attempt"] and terminal["exit"] == 0
-    assert terminal["holder"] == "DX-PREP1" and terminal["slot"] == "tx2-datomic-selftest"
+    holder = "DX-PREP1"
+    if inputs.get("appendRetirement"):
+        assert inputs["mode"] == "rolling-recovery" and inputs["orderedIds"] and inputs["serialApply"]
+        holder = inputs["holder"]
+        assert holder in ("DX-CHK1", "DX-THIN1")
+        assert image["sources"]["sha256"]
+        staged = read(out / "stage/lab/config/slots.json")["lanes"]["datomic"]
+        attempt = inputs["attempt"]
+        tag = (f"tx2-dxthin-native:{hashlib.sha256(attempt.encode()).hexdigest()[:15]}"
+               if holder == "DX-THIN1" else f"tx2-datomic:dx-chk1-rolling-{attempt[:8]}")
+        assert staged["image"] == tag
+        assert staged["imageId"] == image["imageId"]
+        assert staged["buildInputsSha256"] == image["buildInputsSha256"]
+        assert staged["sourceInputsSha256"] == image["sources"]["sha256"]
+    assert terminal["holder"] == holder and terminal["slot"] == "tx2-datomic-selftest"
     assert terminal["image"] == image["imageId"]
     raw = out / terminal["log"]
     assert sha(raw) == terminal["sha256"]

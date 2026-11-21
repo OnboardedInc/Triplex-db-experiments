@@ -145,7 +145,12 @@ export async function localDrill(opts: any, config: any, manager: any) {
   assert(!pooled || ["hasync-ack", "hasync-move", "hasync-restart"].includes(mode));
   // [DX-INT1] Why: recheck the merged loader and recovery with this builder's diagnostic slot.
   // Rejected: borrowing another builder's live reservation.
-  assert(holder === owner || (holder === "DX-THIN1" && diagnostic));
+  const combined = opts.combined;
+  const cells = mode === "load-fair" ? ["fair", "read", "cold", "real-fair"] : ["failover"];
+  const ownedCombination = ["DX-CHK1", "DX-THIN1"].includes(holder) && diagnostic && cells.includes(combined) &&
+    (mode === "load-fair" || mode === "hasync-ack");
+  assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination);
+  assert(combined === undefined || ownedCombination);
   if (mode === "load-fair") {
     const { cleanSource } = await import("../v01/source.ts");
     cleanSource(head());
@@ -485,6 +490,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
         scopes,
         capacity: diagnostic ? "local-diagnostic" : "local",
         ...(pooled ? { pooled: true as const } : {}),
+        ...(combined ? { combined } : {}),
         ...(diagnostic ? { timing: "diagnostic" as const } : {}),
       },
       () => {

@@ -29,6 +29,10 @@ def check(root):
     records = events("PREP1_ROLLING ")
     modes = ["rolling6"] if serial else ["barrier6", "rolling6", "rolling12"]
     assert len(denied) == len(records) == len(modes)
+    if inputs.get("appendRetirement"):
+        assert all(r["appendRetirement"] is True for r in records)
+        replayed, = events("DX_CHK1_FULL_REPLAY ")
+        assert replayed == {"attempt": attempt, "db": records[0]["db"], "positions": 57, "recovered": 56}
     native = events("PREP1_NATIVE ")
     output = []
     for mode, record, refusal in zip(modes, records, denied, strict=True):

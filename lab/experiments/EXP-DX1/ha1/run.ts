@@ -92,6 +92,7 @@ export async function drill(
     capacity: string;
     pooled?: true;
     timing?: "diagnostic";
+    combined?: string;
   },
   release: () => void,
   sync?: {
@@ -122,11 +123,15 @@ export async function drill(
             : 100000),
     );
     await s.open();
-    if (e.mode.startsWith("hasync-")) {
+    if (profile.combined && e.mode === "load-fair")
+      result = await (await import("../chk1/campaign.ts")).campaign(s, profile.combined);
+    else if (e.mode.startsWith("hasync-")) {
       const { SyncPair } = await import("../hasync1/pair.ts");
-      const pair = new SyncPair(s, sync);
+      const pair = new SyncPair(s, sync, undefined, undefined, profile.combined === "failover");
       cleanupShared = () => pair.cleanup();
-      if (e.mode === "hasync-cold") {
+      if (profile.combined === "failover") {
+        result = await (await import("../chk1/failover.ts")).failover(pair);
+      } else if (e.mode === "hasync-cold") {
         const { checkStoppedPair } = await import("../hasync1/sunday-toy.ts");
         result = await checkStoppedPair(s);
       } else if (fleetMode(e.mode)) {

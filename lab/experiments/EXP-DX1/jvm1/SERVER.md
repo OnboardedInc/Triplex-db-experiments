@@ -33,8 +33,10 @@ Use [the commit named in REPORT.md](REPORT.md) with its [INT1 clean-build receip
 ```sh
 DX_V01_BUILD_RECEIPT="$BUILD_RECEIPT" bash lab/experiments/EXP-DX1/jvm1/cold-server.sh \
   "$(git rev-parse HEAD)" "$OUT" "$SEED_DIR" "$IMAGE_SHA256" "$TRANSFER_SHA256" \
-  "$STOPPED_PGDATA" "$PG_CONTROL_SHA256" "$WAL_MOUNT"
+  "$STOPPED_PGDATA" "$PG_CONTROL_SHA256" "$WAL_MOUNT" --credit-mode rolling6
 ```
+
+Omitting `--credit-mode` selects `barrier6`. The selected mode applies to all three arms and is recorded with the input.
 
 Three disposable copies run sequentially under the existing physical queue. Arms use today, startup tuning, and tuning plus bounded admission. Each is budgeted 18 minutes including copy and verification. The campaign uses a 55-minute work budget and a 59-minute outer deadline with a 15-second kill grace. The PostgreSQL copy must fit alongside 20 GiB headroom, with 16 GiB free on the WAL device. The driver records scoped page-cache eviction advice for a newly synced clone by applying `POSIX_FADV_DONTNEED` only to its files. The kernel may retain some pages. Ordinary process readiness, catalog checks and the one logical-head witness still occur before the first offer.
 

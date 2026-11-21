@@ -3,6 +3,7 @@ import { execFileSync, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { parseArgs } from "node:util";
 import { setTimeout as sleep } from "node:timers/promises";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 import { fieldValue } from "../../../bench/lib/deep-world.ts";
@@ -17,10 +18,16 @@ import { checkSavedIdentity, feeder, jsonFile } from "../v01/adopted.ts";
 import { stackOptions } from "../v01/profile.ts";
 import { cleanSource, verifyBuild } from "../v01/source.ts";
 import { coldAdmission } from "./cold-admission.mjs";
-import { coldStartLog, launchProfile } from "./launch.mjs";
+import { coldStartLog, creditModes, defaultCreditMode, launchProfile, type CreditMode } from "./launch.mjs";
 import { summarizeOffers } from "./cold-windows.mjs";
 
-const [source, out, seedDir, imagePin, transferPin, physicalDir, control, walMount] = process.argv.slice(2);
+const { values, positionals } = parseArgs({
+  allowPositionals: true, options: { "credit-mode": { type: "string", default: defaultCreditMode } },
+});
+const creditMode = values["credit-mode"] as CreditMode;
+assert(creditModes.includes(creditMode), "Unknown cold-start credit mode");
+assert.equal(positionals.length, 8);
+const [source, out, seedDir, imagePin, transferPin, physicalDir, control, walMount] = positionals;
 assert(source && out && seedDir && imagePin && transferPin && physicalDir && control && walMount);
 assert.match(control, /^[a-f0-9]{64}$/);
 assert(path.isAbsolute(out) && path.isAbsolute(physicalDir) && path.isAbsolute(walMount));
@@ -44,7 +51,7 @@ const tape = writeTape(100_000, 235, 0, false, 300);
 assert(tape.length === 70_500 && tape.filter((e) => e.account === 0).length === 1050);
 const tapeSha256 = hex(JSON.stringify(tape));
 fs.mkdirSync(out);
-jsonFile(path.join(out, "input.json"), { source, imagePin, transferPin, control, tapeSha256, admission: coldAdmission });
+jsonFile(path.join(out, "input.json"), { source, imagePin, transferPin, control, tapeSha256, creditMode, admission: coldAdmission });
 
 let stopped = false;
 const stop = () => { stopped = true; };
@@ -60,7 +67,7 @@ for (const [arm, startup, ramp] of [
   const attempt = randomUUID();
   const slot = "tx2-dxscale1-v01-cold-" + attempt.replace(/-/g, "").slice(0, 12);
   jsonFile(path.join(dir, "attempt.json"), { source, tag: arm, slot, attempt, control, imagePin, transferPin, tapeSha256 });
-  const policy = launchProfile("server", { jvm: "j21-g1", txJvm: "j25-zgc", creditMode: "barrier6", startup });
+  const policy = launchProfile("server", { jvm: "j21-g1", txJvm: "j25-zgc", creditMode, startup });
   assert(Object.values(scaleHost.childrenInventory(slot)).every((xs) => xs.length === 0));
   const startedAt = now();
   try {
@@ -128,7 +135,7 @@ for (const [arm, startup, ramp] of [
       assert(!stopped && Date.now() + 6 * 60_000 < armDeadline, "Not enough time after start");
       const start = now() + 200;
       jsonFile(path.join(dir, "start.json"), { source, slot, attempt, startedAt, ready, start });
-      const writes = await play(senders, tape, start, attempt, true, true, creditModeSelection("barrier6"), undefined, false,
+      const writes = await play(senders, tape, start, attempt, true, true, creditModeSelection(creditMode), undefined, false,
         { ramp, stopped: () => stopped || Date.now() + 45_000 >= armDeadline });
       jsonFile(path.join(dir, "sampling-stop.json"), { slot, commit: source, nonce: attempt });
       assert.equal(await collected, 0);

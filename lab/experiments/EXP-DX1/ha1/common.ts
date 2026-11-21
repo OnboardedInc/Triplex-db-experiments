@@ -187,6 +187,10 @@ function treeCode(mode?: Mode) {
       "packages/datomic/test/ha1-account.ts",
     ].map((f) => path.join(root, f)),
   );
+  if (mode === "load-fair" || mode === "hasync-ack") {
+    const checks = path.join(import.meta.dirname, "../chk1");
+    paths.push(...fs.readdirSync(checks).filter((f) => f.endsWith(".ts")).map((f) => path.join(checks, f)));
+  }
   if (mode === "load-fair")
     for (const f of [
       "actv-lazy/join/held-campaign.ts", "age1/scale1-fixture.mjs", "scale1/decision/observer.ts",

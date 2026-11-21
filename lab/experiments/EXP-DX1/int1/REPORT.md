@@ -28,3 +28,7 @@ Append retirement ACKs compare the actual transaction datoms to the expected own
 Build `1f64480bb26e7395f1a4ace848b5da646f3ae593` for `DX_W1_RETIREMENT_PAIR=1` with `v01/adopted-server.sh`. Took the feature, gates and paired server driver from W1 `ad2e188a9`. Kept the protected envelope and account frontier guards. The other W1 wire, query and local cache-pricing changes stay on W1’s branch.
 
 The exact-query replay and 813 native parity and conflict assertions passed. Restart kept the original receipt through both resend forms and two synchronous standby flushes. Append mode verified 112 durable saves and 12 refusals across barrier6 and rolling6, including both lost replies. Scoped TypeScript, 28 focused tests and the reducer success and tamper controls passed. The Mac clocks are diagnostic. The studied server variants still need their bare-metal runs.
+
+## Part 13 audit
+
+Combined recovery checks bind the real receipts, typed refusals, old cut and replacement flush to the fresh attempt and owned roles. Fresh-reader replay from zero checks contiguous positions and joins each selected receipt to its exact persisted operation and journal. Removal follows every cursor through the control cut and checks each page for the erased value, including after restore. Publish matches its recorded cut and independent answer. The native recovery reducer binds holder, attempt-specific image, staged bytes, source, native append and reply clocks. Cold plans record the selected credits in their bound inputs and use the same selection in the sender.

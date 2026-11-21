@@ -2,7 +2,7 @@
 # [DX-JVM1] Why: use the existing physical queue and bind the sender to its own CPU.
 # Rejected: a second queue that could silently admit concurrent runs.
 set -euo pipefail
-[[ $(uname -s) == Linux && $(id -u) == 0 && $# == 8 ]]
+[[ $(uname -s) == Linux && $(id -u) == 0 && ( $# == 8 || ( $# == 10 && ${9} == --credit-mode ) ) ]]
 umask 077
 mkdir -p /var/tmp/triplex-bm1
 exec 9>/var/tmp/triplex-bm1/dx-bm1-day.lock
