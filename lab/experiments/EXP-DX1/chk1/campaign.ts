@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { DatomicClient, DatomicTransportError } from "../../../../packages/datomic/dist/index.js";
+import {
+  DatomicClient,
+  DatomicTransportError,
+  orderedSaveIdentity,
+} from "../../../../packages/datomic/dist/index.js";
 import { W0 } from "../../../bench/lib/w0-world.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { JoinedAccount } from "../actv-lazy/join/account.ts";
@@ -318,21 +322,32 @@ export async function campaign(stack: Stack, cell: string) {
               [marker.marker.document, marker.event.value.request, marker.marker.cut],
               [doc, id, result.position - 1],
             );
-            const op = await writer.operation(db, "joined:" + id);
-            assert.deepEqual([op.status, Number(op.position?.v)], ["committed", result.position]);
+            const claim = await writer.request<{
+              txId: string;
+              receipt: Awaited<ReturnType<DatomicClient["operation"]>>;
+            }>("POST", "/v1/db/" + db + "/claim", {
+              commandId: "joined:" + id,
+              position: result.position,
+              receipt: true,
+            });
+            const op = claim.receipt;
+            assert.deepEqual(
+              [claim.txId, op.status, Number(op.position?.v)],
+              [result.txId, "committed", result.position],
+            );
+            assert(op.operationId);
             receipts.push({
-              id: "joined:" + id,
+              id: op.operationId,
+              command: "joined:" + id,
               p: result.position,
               t: String(op.t!.v),
               clock: Number(op.recordedAt!.v),
               tx: result.txId,
             });
-            const answer = await activation
-              .reader()
-              .readAt(W0.placementId(0), {
-                position: result.position,
-                validTime: W0.POPULATION_VALID_TIME,
-              });
+            const answer = await activation.reader().readAt(W0.placementId(0), {
+              position: result.position,
+              validTime: W0.POPULATION_VALID_TIME,
+            });
             assert.equal(answer.basis.tx, result.position);
             return result.position;
           } finally {
@@ -388,7 +403,9 @@ export async function campaign(stack: Stack, cell: string) {
           );
           assert.equal((await writer.operation(db, r.id)).status, "absent");
           const current = senders[1]!.rows.get(entities[1]!)!;
+          r.orderedToken = orderedSaveIdentity().token;
           const resend = expectedSave(r, tape[0]!, current).input;
+          resend.sourceK = current[0]!.recorded_position;
           const accepted = await writer.transactCommand(db, resend);
           record(r.id, accepted);
           assert.deepEqual(await writer.transactCommand(db, resend), accepted);

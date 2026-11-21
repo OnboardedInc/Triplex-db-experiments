@@ -628,7 +628,7 @@ export class Stack {
               "-e",
             ]
           : []),
-        ...(combination ? Object.entries(combination.settings).flatMap(([key, value]) => ["-e", key + "=" + value]).concat("-e") : []),
+        ...(combination ? Object.entries(combination.settings).flatMap(([key, value]) => [key + "=" + value, "-e"]) : []),
         "DATOMIC_URI_TEMPLATE=" + this.uri(pg, store, "{db}", site),
         "-e",
         "GATEWAY_SOURCE_SHA256=" + this.e.source.gateway,

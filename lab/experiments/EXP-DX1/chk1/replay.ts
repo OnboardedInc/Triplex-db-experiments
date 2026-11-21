@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
 
-export type Receipt = { id: string; p: number; t: string; clock: number; tx: string };
+export type Receipt = {
+  id: string;
+  p: number;
+  t: string;
+  clock: number;
+  tx: string;
+  command?: string;
+};
 type Page = Awaited<ReturnType<DatomicClient["log"]>>;
 type Commit = Extract<Page["rows"][number], { kind: "commit" }>;
 
@@ -31,7 +38,9 @@ export async function replay(endpoint: string, db: string, terminal: number, exp
             [row.t, tx.operationId, tx.stamp],
             [receipt.t, receipt.id, String(receipt.clock)],
           );
-          assert(tx.txIds.includes(receipt.tx) && tx.commandIds.includes(receipt.id));
+          assert(
+            tx.txIds.includes(receipt.tx) && tx.commandIds.includes(receipt.command ?? receipt.id),
+          );
           const [saved, journal] = await Promise.all([
             fresh.operation(db, receipt.id),
             fresh.rows(db, { entityIds: [receipt.tx], basis: { recordedPosition: p, validAt: 1 } }),
@@ -52,7 +61,7 @@ export async function replay(endpoint: string, db: string, terminal: number, exp
           );
           assert.deepEqual(
             journal.filter((f) => f.attribute === ":_tx/command-id").map((f) => f.value_string),
-            [receipt.id],
+            [receipt.command ?? receipt.id],
           );
           assert.deepEqual(
             journal.filter((f) => f.attribute === ":_tx/instant").map((f) => f.value_datetime),

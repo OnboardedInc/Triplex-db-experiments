@@ -64,7 +64,9 @@ export class SyncPair {
     readonly base?: { path: string; checkpoint?: Checkpoint; ownerUid?: number; ownerGid?: number },
     readonly powerFence?: PowerFence,
     readonly sunday?: SundayPair,
+    readonly combined = false,
   ) {
+    assert(!combined || (s.holder === "DX-CHK1" && s.a === s.b && !sunday));
     this.latch = s.e.prefix + "-fence";
     this.primaryData = s.e.prefix + "-pgdata";
   }
@@ -324,7 +326,7 @@ export class SyncPair {
         : undefined;
     });
     this.reader = await this.gateway("read", s.b, "target", grouped);
-    this.route = await ingress(this.writer, Boolean(this.sunday));
+    this.route = await ingress(this.writer, Boolean(this.sunday) || this.combined);
     this.account!.changeEndpoint(this.route.url, this.reader);
     await this.auditCheckpoint("before");
   }
@@ -488,9 +490,10 @@ export class SyncPair {
         "-e",
         "GATEWAY_SOURCE_SHA256=" + s.e.source.gateway,
         "-e",
-        ...(this.sunday
+        ...(this.sunday || this.combined
           ? [
               "HA1_FLEET_HTTP=1",
+              ...(this.combined ? ["TX2_SUBJECT_APPEND_RETIREMENT=1", "TX2_WRITE_OPTIONS_ATTEMPT=" + s.e.nonce] : []),
               ...Object.entries(selectedWriter("subject"))
                 .filter(([key]) => key.startsWith("TX2_"))
                 .map(([key, value]) => key + "=" + value),
