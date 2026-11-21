@@ -1,11 +1,11 @@
-Not yet. The old per-person writer reached 111 of 394 offered saves/s in one database. Ordered IDs cut small-cache reads from 8.37 to 2.59 per save, above the 1.5 target.
-The five-arm server comparison uses source `d3bd6a8b3e6924ebf5c1b53e77a5ca2d78d6b2f2`.
-Run `DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-storage -- bash lab/experiments/EXP-DX1/prep1/server.sh storage "$OUT" d3bd6a8b3e6924ebf5c1b53e77a5ca2d78d6b2f2 "$SEALED"`.
-Set `SEALED` to the earlier comparison’s sealed campaign directory and `OUT` to a new absolute directory. The hard limit is 89 minutes 20 seconds.
-The comparison uses one gateway, the same ten-account seed and the same saves at 235 and 394 offers/s. It measures the quiet account alone and beside nine neighbours.
-Ordered IDs took the history check from 568 storage reads to two over 96 saves. The public-ID check for the owner still fetched one segment per save at a 32 MiB cache.
-The revision compare-and-set itself fetched no segments in the ordered arm. The earlier server trace bounded it to at most 0.24 reads per save at 394 offered.
-The fifth arm changes only the old per-person writer’s object cache from 2 to 16 GiB. It can show whether cache alone takes the reads off the critical path.
+Not yet. The old per-person writer reached 111 of 394 offered saves/s in one database. Ordered IDs removed almost all history reads in the diagnostic. The ordered arm forecasts 205 saves/s at 394 offered until bare metal shows where the remaining time goes.
+Use clean source `df307c29c08a9045a4526769f5c917f66800eee4`. Set `SEALED` to the original comparison’s sealed campaign directory and `OUT` to a new absolute directory.
+Run all six with `DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-storage -- bash lab/experiments/EXP-DX1/prep1/server.sh storage "$OUT" df307c29c08a9045a4526769f5c917f66800eee4 "$SEALED"`.
+If the earlier five-arm campaign has started, append only the sixth with `DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-storage-ordered -- bash lab/experiments/EXP-DX1/prep1/server.sh storage-ordered "$OUT" df307c29c08a9045a4526769f5c917f66800eee4 "$SEALED"`.
+The full launch is bounded at 117 minutes 20 seconds. The sixth-only launch adds at most 18 minutes 10 seconds to the earlier campaign’s 89 minutes 20 seconds.
+The arms use one gateway, the same ten-account seed and the same saves at 235 and 394 offers/s. They measure the quiet account alone and beside nine neighbours.
+I forecast 225 and 205 saves/s for ordered IDs, with 2.2 and 3.7 ms of native apply and 2.0 and 2.2 storage reads per save under the two loads.
+The small-cache diagnostic fell from 8.37 to 2.59 reads per save and missed the 1.5 target. The public-ID check for an owner still fetched one segment per save.
 
 **North star.** Durable, exact small saves and quiet-account tails in one database. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
@@ -36,10 +36,11 @@ The fifth arm changes only the old per-person writer’s object cache from 2 to 
 | Numeric-owner S | 146 / 115 | 63 → 1,120 / 17 → 1,430 | 6.41 / 10.3 and 8.12 / 9.3 |
 | Numeric-owner S with prefetch | 125 / 100 | 73 → 1,320 / 20 → 1,690 | 7.0 / 11.3 and 8.7 / 10.3 |
 | Original S with 16 GiB cache | 210 / 185 | 35 → 700 / 12 → 880 | 2.1 / 2.2 and 3.6 / 2.2 |
+| Numeric-owner S with ordered IDs | 225 / 205 | 45 → 550 / 22 → 950 | 2.2 / 2.0 and 3.7 / 2.2 |
 
-Solo cells forecast 3.5 saves/s. K under load forecasts eight saves per append and all other cells one. Loaded forecasts have expiries, which leave the complete-cohort p99 unavailable. The generated plan includes numbers for all 20 cells.
+Solo cells forecast 3.5 saves/s. For ordered IDs, both solo cells forecast 2.6 ms native apply and 2.6 reads/save. K under load forecasts eight saves per append and all other cells one. Loaded forecasts have expiries, which leave the complete-cohort p99 unavailable. The generated plan includes numbers for all 24 cells. At 394, the earlier S run's mean apply minus reported SQL and decode already leaves 2.63 ms before append, above the 2.54 ms/save budget. The new arm measures whether fewer seeks also cut that remainder.
 
-**Local gates.** The hinted numeric-owner writer passed 8 SQL native tests and 762 assertions, including a real competing write after hint generation. The restart gate interrupted the reply after the synchronous native commit. The original operation and command resolved to the same original receipt, and the pinned, native and journal queries matched. Eight TypeScript unit tests and strict type checking passed. The simulated producer and collector matched 3,185 fixture offers to durable receipts and rejected a changed cache profile. The physical campaign is unrun here.
+**Server preflight.** Ten unit tests and strict type checking passed. The simulated producer and collector joined all 3,822 fixture offers, including 637 ordered receipts in both launch modes, and rejected a changed ordered journal ID. The physical sixth arm is unrun here. [Checksums](SHA256SUMS)
 
 **Grouped fallback proposal.** At 235 offered, the measured gateway spent 39.40 of 44.31 ms per busy turn speculatively evaluating its members. Parallel same-basis preparation with one append projects 300–325 saves/s on two workers and 430–520 on four, if groups stay near eight and the storage reads overlap. It is a proposal. [One-page design and assumptions](GROUPED-PREPARATION.md)
 
