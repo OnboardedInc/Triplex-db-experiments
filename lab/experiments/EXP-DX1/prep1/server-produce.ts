@@ -11,11 +11,20 @@ import {
 import { decodeRowText, encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import { ids, type Fact } from "../../../bench/lib/world.ts";
 import { FairTurns } from "./fair-turns.ts";
+import {
+  scaleAccount,
+  scaleFields,
+  scaleOwner,
+  scalePredecessors,
+  scaleSeed,
+} from "./ceiling-seed.ts";
 import { checkJournal } from "../w1/field/journal.ts";
 import { accounts, pooledDigest } from "../w1/group/population.ts";
 import { command, seedPooled } from "../w1/group/workload.ts";
 import {
   arms,
+  ceilingArm,
+  ceilingSeconds,
   cells,
   fairArms,
   fairPrediction,
@@ -57,8 +66,6 @@ type Seed = {
   fields: [string, Row[]][];
   seeds: Awaited<ReturnType<typeof seedPooled>>["seeds"];
 };
-const answer = ":field/answer-prep1",
-  note = ":field/note";
 const requestedCredits = Number(process.env.DX_PREP1_FAIR_CREDITS ?? 0);
 assert([0, 1, 2, 6].includes(requestedCredits));
 const campaign = process.env.DX_PREP1_CAMPAIGN ?? "comparison";
@@ -67,7 +74,8 @@ assert(
     campaign === "fair" ||
     campaign === "owner" ||
     campaign === "storage" ||
-    campaign === "storage-ordered",
+    campaign === "storage-ordered" ||
+    campaign === "ceiling",
 );
 const campaignArms = {
   comparison: arms,
@@ -75,10 +83,13 @@ const campaignArms = {
   owner: ownerArms,
   storage: storageArms,
   "storage-ordered": [storageOrderedArm],
+  ceiling: [ceilingArm],
 }[campaign];
-const campaignSeconds = campaign === "comparison" ? seconds : fairSeconds;
+const wide = campaign === "ceiling";
+const campaignSeconds = wide ? ceilingSeconds : campaign === "comparison" ? seconds : fairSeconds;
+const [answer, note] = wide ? scaleFields : ([":field/answer-prep1", ":field/note"] as const);
 const creditsFor = (arm: Arm) => (arm.writer === "S" ? (arm.credits ?? requestedCredits) : 0);
-const root = (a: number, p: number) => ids.placement(accounts[a]!.first + p);
+const root = wide ? scaleOwner : (a: number, p: number) => ids.placement(accounts[a]!.first + p);
 const fact = (e: string, a: string, value: string): Fact => ({
   e,
   a,
@@ -160,6 +171,7 @@ async function phase(
   cell: ReturnType<typeof cells>[number],
   orderedIds: boolean,
   fair?: FairTurns,
+  legacyIds?: ReadonlySet<string>,
 ) {
   const inputs = new Map<string, Input>();
   const rows: {
@@ -174,6 +186,7 @@ async function phase(
     sent?: number;
     reason?: string;
     orderedToken?: string;
+    legacyPredecessors?: number;
     ack?: Ack;
     receipt?: { p: number; t: string; clock: number; journal?: string };
   }[] = [];
@@ -234,7 +247,7 @@ async function phase(
     const identity = orderedIds ? orderedSaveIdentity() : undefined;
     const input = command(id, facts, old, true, false, identity);
     input.sourceK = Math.max(head, ...previous.map((r) => r.recorded_position));
-    input.groupAccount = accounts[o.account]!.key;
+    input.groupAccount = wide ? scaleAccount(o.account) : accounts[o.account]!.key;
     input.writeClass = "live";
     inputs.set(id, input);
     busy.add(e);
@@ -250,6 +263,7 @@ async function phase(
       fairTurn,
       sent,
       orderedToken: identity?.token,
+      legacyPredecessors: legacyIds ? old.filter((row) => legacyIds.has(row.id)).length : undefined,
     };
     let known = false;
     const work = (async () => {
@@ -386,6 +400,7 @@ async function phase(
     label: cell.label,
     rate: cell.rate,
     seconds: cell.duration,
+    ...(cell.credits !== undefined ? { fairCredits: cell.credits } : {}),
     tapeSha: cell.tapeSha,
     phaseStartNs,
     phaseWallMs,
@@ -409,18 +424,19 @@ async function armRun(
 ) {
   const bytes = readFileSync(file),
     baseline: Seed = JSON.parse(bytes.toString());
-  assert.equal(baseline.roster, pooledDigest);
-  assert.equal(baseline.facts, 16_245_050);
-  assert.deepEqual(
-    baseline.seeds.map((s) => [s.account, s.subjects, s.facts]),
-    accounts.map((a) => [a.index, 10000, 1_624_505]),
-  );
   const schedule = cells(arm);
-  const fields = new Map(baseline.fields);
-  if (campaign !== "comparison")
-    for (const { tape } of schedule)
-      for (const offer of tape)
-        assert(fields.has(root(offer.account, offer.person)), "sealed predecessor missing");
+  const adopted = wide ? (JSON.parse(bytes.toString()) as ReturnType<typeof scaleSeed>) : undefined;
+  if (adopted) {
+    assert.equal(adopted.facts, 162_456_470);
+    assert.equal(adopted.dumpSha256, process.env.DX_PREP1_DUMP_SHA);
+  } else {
+    assert.equal(baseline.roster, pooledDigest);
+    assert.equal(baseline.facts, 16_245_050);
+    assert.deepEqual(
+      baseline.seeds.map((s) => [s.account, s.subjects, s.facts]),
+      accounts.map((a) => [a.index, 10000, 1_624_505]),
+    );
+  }
   const stack = load<{ gatewaySourceSha256: string; prefix: string }>(stackPath);
   assert.equal(stack.prefix, slot);
   assert.equal(urls.length, arm.writers);
@@ -472,6 +488,20 @@ async function armRun(
     const opened = await reader.create(baseline.scope, "lean", true, 35_000);
     assert(!opened.created && opened.db === baseline.db);
     assert.equal(await basis(reader, baseline.db), baseline.head);
+    const fields = adopted
+      ? await scalePredecessors(
+          reader,
+          adopted,
+          schedule.flatMap(({ tape }) => tape),
+        )
+      : new Map(baseline.fields);
+    if (campaign !== "comparison")
+      for (const { tape } of schedule)
+        for (const offer of tape)
+          assert(fields.has(root(offer.account, offer.person)), "sealed predecessor missing");
+    const legacyIds = adopted
+      ? new Set([...fields.values()].flatMap((rows) => rows.map((r) => r.id)))
+      : undefined;
     const fairCredits = creditsFor(arm);
     const fair = fairCredits ? new FairTurns(accounts.length, fairCredits) : undefined;
     const { scope, db, head } = baseline;
@@ -489,6 +519,9 @@ async function armRun(
       fairCredits,
       seconds: campaignSeconds,
       gatewaySource: stack.gatewaySourceSha256,
+      ...(adopted
+        ? { imageSha256: adopted.imageSha256, transferSha256: adopted.transferSha256 }
+        : {}),
     });
     const frozen = new Set<string>();
     let cut = head;
@@ -502,10 +535,20 @@ async function armRun(
         frozen,
         cell,
         !!arm.orderedIds,
-        fair,
+        cell.credits === undefined
+          ? fair
+          : cell.credits
+            ? new FairTurns(accounts.length, cell.credits)
+            : undefined,
+        legacyIds,
       );
       cut = result.after;
       save(`${out}/${cell.label}.json`, result);
+      if (wide && cell === schedule[0])
+        assert(
+          result.rows.some((row) => row.ack?.subjectOrderedIds),
+          "The restored scope did not exercise the ordered writer",
+        );
     }
     save(out + "/complete.json", { nonce, slot, commit, cut });
   } finally {
@@ -605,6 +648,9 @@ async function preflight(out: string, arm: Arm) {
     fixture: true,
   };
   save(out + "/header.json", header);
+  const legacyIds = wide
+    ? new Set([...fields.values()].flatMap((rows) => rows.map((r) => r.id)))
+    : undefined;
   for (const cell of allCells)
     save(
       out + "/" + cell.label + ".json",
@@ -617,7 +663,12 @@ async function preflight(out: string, arm: Arm) {
         new Set(),
         cell,
         !!arm.orderedIds,
-        fair,
+        cell.credits === undefined
+          ? fair
+          : cell.credits
+            ? new FairTurns(accounts.length, cell.credits)
+            : undefined,
+        legacyIds,
       ),
     );
   save(out + "/complete.json", { nonce, slot: header.slot, commit: header.commit, cut: p });
@@ -629,7 +680,10 @@ async function preflight(out: string, arm: Arm) {
 
 const [action, ...args] = process.argv.slice(2);
 if (action === "seed") await seed(args[0]!, args[1]!, args[2]!);
-else if (action === "arm") {
+else if (action === "adopt-scale") {
+  assert(wide && args.length === 3);
+  console.log(JSON.stringify(scaleSeed(args[0]!, args[1]!, args[2]!)));
+} else if (action === "arm") {
   const [id, file, out, slot, commit, nonce, stack, reader, ...urls] = args;
   const arm = campaignArms.find((a) => a.id === id);
   assert(arm && file && out && slot && commit && nonce && stack && reader);
@@ -661,13 +715,26 @@ else if (action === "arm") {
       tapes,
       arms: campaignArms.map((arm) => ({
         ...arm,
-        cells: cells(arm, duration).map(({ label, rate, tape, tapeSha }) => ({
+        cells: cells(arm, duration).map(({ label, rate, tape, tapeSha, credits }) => ({
           label,
           rate,
           tapeSha,
           offered: tape.length,
-          predicted:
-            campaign === "owner"
+          ...(credits !== undefined ? { fairCredits: credits } : {}),
+          predicted: wide
+            ? {
+                serving: label.endsWith("-alone")
+                  ? 3.5
+                  : credits
+                    ? rate === 620
+                      ? 350
+                      : 380
+                    : rate === 620
+                      ? 450
+                      : 520,
+                maximumAwaitingReceipt: credits || 96,
+              }
+            : campaign === "owner"
               ? ownerPrediction(arm, rate, label.endsWith("-alone"))
               : campaign === "storage" || campaign === "storage-ordered"
                 ? storagePrediction(arm, rate, label.endsWith("-alone"))

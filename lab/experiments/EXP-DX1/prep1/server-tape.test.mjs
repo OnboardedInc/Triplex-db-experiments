@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   arms,
+  ceilingArm,
   cells,
   fairArms,
   fairPrediction,
@@ -11,6 +12,7 @@ import {
   storageArms,
   storageOrderedArm,
   storagePrediction,
+  widePeople,
 } from "./server-tape.ts";
 
 test("the four fair-policy arms share their sealed field inputs and matched quiet arrivals", () => {
@@ -48,6 +50,30 @@ test("the four fair-policy arms share their sealed field inputs and matched quie
       cells(fairArms[a]).map((c) => c.label),
       cells(fairArms[b]).map((c) => c.label),
     );
+});
+
+test("ceiling cells span separate wide cohorts with exactly matched quiet offers", () => {
+  const schedule = cells(ceilingArm);
+  const prior = Array.from({ length: 10 }, () => new Set());
+  for (let i = 0; i < schedule.length; i += 2) {
+    const [solo, loaded] = schedule.slice(i, i + 2);
+    assert.equal(solo.tape.length, 315);
+    assert.equal(loaded.tape.length, loaded.rate * 90);
+    assert.equal(loaded.credits, [0, 6, 6, 0][i / 2]);
+    assert.equal(solo.credits, loaded.credits);
+    assert.deepEqual(
+      loaded.tape.filter((o) => !o.account),
+      solo.tape,
+    );
+    for (let account = 0; account < 10; account++) {
+      const people = new Set(loaded.tape.filter((o) => o.account === account).map((o) => o.person));
+      assert.equal(people.size, account ? widePeople : 315);
+      for (const id of people) {
+        assert(id >= 0 && id < 100_000 && !prior[account].has(id));
+        prior[account].add(id);
+      }
+    }
+  }
 });
 
 test("predictions express the one-credit round trip and distinguish a missing full-cohort tail", () => {
