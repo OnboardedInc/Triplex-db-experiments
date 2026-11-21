@@ -475,26 +475,29 @@ export class Playground {
     return { early, middle, head: committed.position };
   }
 
-  async settleSnapshot(checkpoint: Checkpoint) {
+  async settleSnapshot(checkpoint: Checkpoint, longBuild = false) {
     const basis = await this.writer.basis(this.db);
     if (Number(basis.position.v) !== checkpoint.head) throw new Error("Snapshot head moved");
-    const index = await this.writer.request<{
-      database: string;
-      requestedT: string;
-      job: string;
-      completed: boolean;
-    }>("POST", "/v2/db/" + this.db + "/request-index", { waitMs: 120_000 }, 125_000);
-    // [DX-PLAY1] Why: charge settled durable index bytes to the tier being forecast.
-    // Rejected: a delay that can finish before the checkpoint is adopted by Datomic indexing.
-    if (
-      !index.completed ||
-      index.database !== this.db ||
-      !index.job ||
-      BigInt(index.requestedT) < BigInt(basis.t.v) ||
-      (await this.head()) !== checkpoint.head
-    )
-      throw new Error("Datomic did not index the snapshot cut");
-    return index;
+    const waitMs = longBuild ? 600_000 : 120_000;
+    // [DX-PLAY1] Why: server seeds may still be adopting a large index after a gateway wait expires.
+    // Rejected: exporting a head whose native index has yet to reach the exact checkpoint.
+    for (let i = 0; i < (longBuild ? 12 : 1); i++) {
+      const index = await this.writer.request<{
+        database: string;
+        requestedT: string;
+        job: string;
+        completed: boolean;
+      }>("POST", "/v2/db/" + this.db + "/request-index", { waitMs }, waitMs + 5000);
+      if (
+        index.database !== this.db ||
+        !index.job ||
+        BigInt(index.requestedT) < BigInt(basis.t.v) ||
+        (await this.head()) !== checkpoint.head
+      )
+        throw new Error("The index receipt differs from the snapshot cut");
+      if (index.completed) return index;
+    }
+    throw new Error("Datomic did not index the snapshot cut");
   }
 
   private async verifySnapshot(source: Restore) {

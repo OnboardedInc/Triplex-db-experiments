@@ -5,13 +5,14 @@ import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { parseArgs } from "node:util";
+import { labPrefix } from "./lab-grant.ts";
 import { loadFixture } from "./fixture.ts";
 import type { Reply } from "./actions.ts";
 import { dockerClient, loopback, memoryScale, port, repo, Stack } from "./stack.ts";
 
 const usage = `pnpm playground start [--port 4186] [--write-port 8486] [--read-port 8487] [--memory-scale 1|2|4] [--larger | --tier NAME --data SOURCE [--replay]]
 pnpm playground stop
-pnpm playground snapshot --tier NAME --deep N --daily N|real --out DIRECTORY [--max-bytes N] [--memory-scale 1|2|4]
+pnpm playground snapshot --tier NAME --deep N --daily N|scaled|real --out DIRECTORY [--collect] [--min-bytes N] [--max-bytes N] [--memory-scale 1|2|4]
 node examples/playground/cli.ts mcp [--port 4186]`;
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -27,6 +28,8 @@ const { values, positionals } = parseArgs({
     daily: { type: "string" },
     out: { type: "string" },
     "max-bytes": { type: "string" },
+    "min-bytes": { type: "string" },
+    collect: { type: "boolean" },
     "memory-scale": { type: "string", default: "1" },
     help: { type: "boolean", short: "h" },
   },
@@ -156,7 +159,10 @@ async function start() {
   )
     throw new Error(usage);
   const settings = dockerSettings();
-  checkPortableDocker(settings.dockerHost);
+  const admitted = await labPrefix(repo, settings.dockerHost, settings.context);
+  if (!admitted) checkPortableDocker(settings.dockerHost);
+  if (admitted && values["memory-scale"] !== "1")
+    throw new Error("The lab grant covers the laptop memory profile");
   const ports = {
     api: port(values.port),
     write: port(values["write-port"]),
@@ -166,7 +172,7 @@ async function start() {
   if (new Set(explicit).size !== explicit.length)
     throw new Error("Use a different port for each listener");
   const { openInstance } = await import("./instance.ts");
-  const prefix = "tx2-dxplay1-" + randomBytes(6).toString("hex");
+  const prefix = admitted ?? "tx2-dxplay1-" + randomBytes(6).toString("hex");
   const owner: Owner = {
     prefix,
     token: randomBytes(24).toString("hex"),
@@ -232,17 +238,23 @@ async function start() {
 async function makeSnapshot() {
   const { checkPlan, tierName } = await import("./snapshot.ts");
   const tier = values.tier;
-  const plan = {
+  const plan: import("./snapshot.ts").Shape = {
     deep: Number(values.deep),
-    daily: values.daily === "real" ? ("real" as const) : Number(values.daily),
+    daily:
+      values.daily === "real" || values.daily === "scaled" ? values.daily : Number(values.daily),
   };
   checkPlan(plan);
   const maxBytes = values["max-bytes"] === undefined ? undefined : Number(values["max-bytes"]);
+  const minBytes = values["min-bytes"] === undefined ? undefined : Number(values["min-bytes"]);
   if (
     !tierName.test(tier) ||
     tier === "small" ||
     !values.out ||
-    (maxBytes !== undefined && (!Number.isSafeInteger(maxBytes) || maxBytes < 1))
+    (maxBytes !== undefined && (!Number.isSafeInteger(maxBytes) || maxBytes < 1)) ||
+    (minBytes !== undefined &&
+      (!Number.isSafeInteger(minBytes) ||
+        minBytes < 1 ||
+        (maxBytes !== undefined && minBytes > maxBytes)))
   )
     throw new Error(usage);
   const output = resolve(values.out);
@@ -274,6 +286,8 @@ async function makeSnapshot() {
       ports: { write: 0, read: 0 },
       memoryScale: memoryScale(values["memory-scale"]),
       ...(maxBytes === undefined ? {} : { maxBytes }),
+      ...(minBytes === undefined ? {} : { minBytes }),
+      ...(values.collect ? { collection: { compare: false, timeoutMs: 6 * 60 * 60_000 } } : {}),
       beforeSeal: () => {
         if (git("rev-parse", "HEAD") !== sourceHead || git("status", "--porcelain"))
           throw new Error("Snapshot source changed; choose an output outside the checkout");
@@ -298,7 +312,9 @@ async function stop() {
     console.log("The playground is stopped.");
     return;
   }
-  checkPortableDocker(owner.dockerHost);
+  const admitted = await labPrefix(repo, owner.dockerHost, owner.context);
+  if (!admitted) checkPortableDocker(owner.dockerHost);
+  else if (admitted !== owner.prefix) throw new Error("The lab grant covers a different stack");
   if (pidExists(owner.pid)) {
     const response = await fetch(`http://${loopback}:${owner.port}/internal/stop`, {
       method: "POST",

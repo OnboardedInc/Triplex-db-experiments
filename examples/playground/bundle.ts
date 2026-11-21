@@ -55,22 +55,37 @@ export function minuteSaves(rank: number) {
   return rank === 1438 ? 2060 : 2364;
 }
 
+const minuteTotals = [0];
+for (let minute = 0; minute < 1440; minute++)
+  minuteTotals.push(minuteTotals[minute]! + minuteSaves(minute));
+
+export const realDailySaves = minuteTotals[1440]!;
+export const scaledDailySaves = (deep: number) =>
+  Math.max(1, Math.round((deep * realDailySaves) / 100_000));
+
 export function* saves(
   day: number,
   accounts: Profile[],
   sample: boolean,
   include = (_account: Profile, _index: number) => true,
+  scaled?: { daily: number; active: number },
 ): Generator<Frame> {
   const max = sample ? 180 : 1440;
   const large = accounts.slice(0, 2);
+  let first = true;
   for (let min = 0; min < max; min++) {
     const rankedMinute = (min * 137 + day * 103) % 1440;
-    const count = minuteSaves(rankedMinute);
+    // [DX-PLAY1] Why: round cumulative minute weights so a proportional tier keeps its exact
+    // daily total and burst shape. Rejected: an even rate or independent rounding of sparse minutes.
+    const count = scaled
+      ? Math.round((minuteTotals[rankedMinute + 1]! * scaled.daily) / realDailySaves) -
+        Math.round((minuteTotals[rankedMinute]! * scaled.daily) / realDailySaves)
+      : minuteSaves(rankedMinute);
     for (let save = 0; save < count; save += sample ? 237 : 1) {
       for (const [idx, account] of large.entries()) {
-        const active = Math.min(account.count, 1900);
+        const active = Math.min(account.count, scaled?.active ?? 1900);
         const base = (day * 2 * 1440 + min * 2 + idx) * 2400 + save;
-        const n = ((draw(base) % active) * 7919 + day * 1901) % account.count;
+        const n = scaled && first ? 0 : ((draw(base) % active) * 7919 + day * 1901) % account.count;
         if (!include(account, n)) continue;
         const root = personId(account, n);
         const rootEdit = idx === 1 || save % 6 === 0;
@@ -92,6 +107,7 @@ export function* saves(
           validAt: earlyAt + day * dayMs + min * 60_000 + Math.floor((save * 60_000) / count),
         };
       }
+      first = false;
     }
   }
   if (day === 14 || day === 28) {

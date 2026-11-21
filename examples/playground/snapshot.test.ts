@@ -3,8 +3,15 @@ import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { attrs } from "./fixture.ts";
-import { openSnapshot, parseSnapshot, snapshotSamples, writeSnapshot } from "./snapshot.ts";
+import { attrs, earlyAt } from "./fixture.ts";
+import { saves, scaledDailySaves } from "./bundle.ts";
+import {
+  openSnapshot,
+  parseSnapshot,
+  snapshotProfiles,
+  snapshotSamples,
+  writeSnapshot,
+} from "./snapshot.ts";
 
 test("snapshot chunks bind their bytes, tier and ordered cut positions", async () => {
   const dir = await mkdtemp(join(tmpdir(), "triplex-playground-snapshot-"));
@@ -46,12 +53,32 @@ test("snapshot chunks bind their bytes, tier and ordered cut positions", async (
 });
 
 test("the three cuts have independently generated values for edited deep and wide people", () => {
-  for (const plan of ["small", { deep: 32, daily: 5 }] as const) {
+  for (const plan of ["small", { deep: 32, daily: 5 }, { deep: 32, daily: "scaled" }] as const) {
     const samples = snapshotSamples(plan);
     for (const id of ["person:deep-1:0000001", "person:wide-2:0000001"]) {
       const note = samples.map((cut) => cut.byPerson.get(id)?.get(id)?.get(attrs.note));
       assert(note.every(Boolean));
       assert.equal(new Set(note).size, 3);
     }
+  }
+});
+
+test("the proportional schedule keeps the full day's save budget and minute bursts", () => {
+  const accounts = snapshotProfiles({ deep: 500, daily: "scaled" });
+  const daily = scaledDailySaves(500);
+  const firstDay = [...saves(1, accounts, false, undefined, { daily, active: 10 })];
+  for (const account of accounts.slice(0, 2)) {
+    const events = firstDay.filter(
+      (frame) => frame.kind === "save" && frame.target.startsWith("person:" + account.id + ":"),
+    );
+    assert.equal(events.length, daily);
+    const counts = new Map<number, number>();
+    for (const event of events) {
+      assert.equal(event.kind, "save");
+      const minute = Math.floor((event.validAt - earlyAt) / 60_000) - 1440;
+      assert(minute >= 0 && minute < 1440);
+      counts.set(minute, (counts.get(minute) ?? 0) + 1);
+    }
+    assert(Math.max(...counts.values()) >= 10);
   }
 });
