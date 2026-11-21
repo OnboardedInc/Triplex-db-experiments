@@ -150,7 +150,7 @@ async function main(
     held = { data: stoppedSeed, sealSha: await fileHash(sealPath), inventory: manifest.inventory };
   }
   if (resumeDiscovery) {
-    assert(held && /^age-v01-1b-[de]$/.test(path.basename(out)));
+    assert(held && /^age-v01-1b-[def]$/.test(path.basename(out)));
     const prior = path.join(bench, "age-v01-1b-c");
     const restored = read(path.join(prior, "restore.json"));
     const exited = read(path.join(prior, "exit.json"));
@@ -181,7 +181,7 @@ async function main(
       fs.readFileSync(path.join(original, "adopt.log"), "utf8"),
       /UnknownHostException: .*seed-tx/,
     );
-    if (path.basename(out) === "age-v01-1b-e") {
+    if (path.basename(out) !== "age-v01-1b-d") {
       const previous = path.join(bench, "age-v01-1b-d");
       const ended = read(path.join(previous, "cleanup.json"));
       assert.equal(ended.resumedPrivateVolume, sourceVolume);
@@ -190,6 +190,26 @@ async function main(
       assert(!fs.existsSync(path.join(previous, "rung")));
       assert(!fs.existsSync(path.join(previous, "discovery.json")));
       assert(fs.statSync(path.join(previous, "discovery.log")).size > 0);
+    }
+    if (path.basename(out) === "age-v01-1b-f") {
+      const previous = path.join(bench, "age-v01-1b-e");
+      const ended = read(path.join(previous, "cleanup.json"));
+      const discovered = read(path.join(previous, "discovery.json"));
+      assert.deepEqual(
+        [ended.nonce, ended.resumedPrivateVolume, ended.postgresTemplate],
+        [discovered.nonce, sourceVolume, held.sealSha],
+      );
+      assert.deepEqual(ended.containers, []);
+      assert.equal(discovered.cut, 87002);
+      const rung = path.join(previous, "rung/1000000000");
+      const admitted = fs.readdirSync(rung).filter((x) => /^[a-f0-9-]{36}$/.test(x));
+      assert.equal(admitted.length, 1);
+      const raw = path.join(rung, admitted[0]!);
+      assert(!fs.existsSync(path.join(raw, "rung.log")));
+      assert.match(
+        fs.readFileSync(path.join(raw, "adopt.log"), "utf8"),
+        /password authentication failed for user "postgres"/,
+      );
     }
     assert.equal(docker("ps", "-aq", "--filter", "volume=" + sourceVolume), "");
   }
@@ -338,7 +358,11 @@ async function main(
       }
       const roleSql =
         held && name === pgName
-          ? "ALTER ROLE datomic PASSWORD '" + password + "'"
+          ? "ALTER ROLE datomic PASSWORD '" +
+            password +
+            "';\nALTER ROLE postgres PASSWORD '" +
+            password +
+            "';"
           : "CREATE ROLE datomic LOGIN PASSWORD '" +
             password +
             "';\nCREATE DATABASE " +
@@ -407,8 +431,41 @@ async function main(
       return addr;
     };
     const jdbc = (addr: string, db: string) => "jdbc:postgresql://" + addr + ":5432/" + db;
-    const sqlJdbc = jdbc(address(pgName), primaryDb),
-      copyJdbc = jdbc(address(copyName), copyDb);
+    const primaryAddress = address(pgName),
+      copyAddress = address(copyName);
+    const sqlJdbc = jdbc(primaryAddress, primaryDb),
+      copyJdbc = jdbc(copyAddress, copyDb);
+    // [DX-SCALE1] Why: AGE1's JDBC counters authenticate as postgres across the private bridge.
+    // Rejected: assuming POSTGRES_PASSWORD updates an existing cluster or testing against loopback trust.
+    for (const [client, server, db] of [
+      [copyName, primaryAddress, primaryDb],
+      [pgName, copyAddress, copyDb],
+    ]) {
+      assert.equal(
+        call(
+          "docker",
+          [
+            "exec",
+            "-e",
+            "PGPASSWORD",
+            client!,
+            "psql",
+            "-XAtq",
+            "-w",
+            "-h",
+            server!,
+            "-U",
+            "postgres",
+            "-d",
+            db!,
+            "-c",
+            "SELECT 1",
+          ],
+          { env: { ...process.env, PGPASSWORD: password } },
+        ),
+        "1",
+      );
+    }
     const uri = (d: string) =>
       "datomic:sql://{db}?" + d + "?user=" + role + "&password=" + password;
     assert.equal(
