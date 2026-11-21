@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 38.42 through 2026-11-21 05:45 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 38.53 through 2026-11-21 05:51 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The cache, core and dedicated-WAL follow-up finished all twelve full-size cells. No configuration carried 394/s. The best delivered 361.51/s with 2,565 expired. The combined WAL and ZGC arm reached 345.80/s at 394 offered and 365.13/s at 620. The results and all JVM logs are archived. The fresh scorecard retry is queued on the original merged defaults behind its replacement copy. AGE1 follows using the repaired launcher and private copied template. [Measured table](SCALE-TUNE.md)
+AGE1 is running first from a private checksum-bound copy of the stopped fresh template. The default scorecard retry was canceled before it claimed a copy or produced cells. The completed first zero-reader arm is archived. Free space before AGE1 was 375.74 GB on root and 703.31 GB on the secondary drive. We retained the template and one untouched scorecard copy and released three disposable copies to meet the 579.57 GB secondary reservation. AGE1 uses a 9.9-hour native ceiling and the repaired same-byte vendor executables. Wait for the tuned scorecard pin. Run aged before fresh if the 1B seal exists.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
@@ -14,11 +14,9 @@ ssh -i "$DX_BENCH_KEY" -o IdentitiesOnly=yes "$BENCH_SERVER" 'sudo -n systemctl 
 
 | Order | Item | Allocation |
 | ---: | --- | ---: |
-| 1 | Present writer stopped during restore | Zero timed cells, evidence retained |
-| 2 | PREP1 adopted ordered per-person ceiling at 620 and 900/s | 60 minutes, plus build and archive verification. WAL repeat only if it fits one more hour |
-| 3 | v0.1 fresh scorecard with the released ordered writer | 235 minutes. AGE1 goes first if the runner is unpublished |
-| 4 | AGE1 calibration, then age to 1 billion native records if it fits | 9.9 h maximum, then exact-cut SQL dump |
-| 5 | v0.1 scorecard on the sealed 1B database and hashed SQL dump | 235 minutes |
+| 1 | AGE1 calibration and 1B rung from a private copied template | 9.9 h native maximum, with bounded setup and a stopped physical handoff |
+| 2 | Tuned ordered v0.1 scorecard on the 1B database | Wait for the published source. Requires a verified 1B seal |
+| 3 | Tuned ordered v0.1 scorecard on the fresh database | After the aged card, or first if AGE1 stops below 1B |
 
 `arm-d7-wfix-pilot-bounded` verified the options on its startup scope. On the restored scope the writer path received a response without the nonce. It recorded zero timed cells and cleaned up. The retry derives both roles from fresh replies at the original cut and verifies the active options through the same SDK clients that carry the measured writes. The pilot seed is reused from its original accepted transfer.
 
