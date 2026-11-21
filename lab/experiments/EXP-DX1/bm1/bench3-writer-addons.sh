@@ -21,6 +21,13 @@ case $selection in
     arms=(rolling6-tx5)
     export DX_PREP1_ROLLING_ARM=rolling6-tx5
     ;;
+  fresh)
+    pin=891ab9139eb4fa6defe2c5484ada332b84090e6f
+    command=fresh
+    prior=triplex-bench3-removal.service
+    arms=(rolling6 fresh6 fresh-zgc6)
+    export DX_PREP1_FRESH_CREDITS=6
+    ;;
   *) exit 2 ;;
 esac
 job=$root/queue/$selection
@@ -86,9 +93,11 @@ timeout -k 15s 20m env DX_JAVA=25 DX_NATIVE_BOOTSTRAP_CACHE="$root/rolling-build
 cd "$repo"
 [[ $(git rev-parse HEAD) == "$pin" && -z $(git status --porcelain) ]]
 record running collect
+writer_jvm=()
+if [[ $selection == fresh ]]; then writer_jvm=(--write-jvm j25-zgc); fi
 exec node lab/bin/heavy.mjs --label "DX-PREP1-$selection" -- \
   bash lab/experiments/EXP-DX1/prep1/server.sh "$command" "$out" "$pin" \
     "$root/seed-metadata/arm-d7-wfix-pool-seed" \
     77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b \
     1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154 \
-    --pg-data "$root/verified-seed/cluster" --wal-mount "$wal"
+    --pg-data "$root/verified-seed/cluster" --wal-mount "$wal" ${writer_jvm[@]+"${writer_jvm[@]}"}

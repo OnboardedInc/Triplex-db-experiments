@@ -1,5 +1,23 @@
 # DX-BM1 bench handoff, November 19
 
+## Driver takeover at 12:45 EST on November 21
+
+A new driver took over bench 3 at 12:45 EST after the previous driver stopped at about 12:38. The rental had cost about USD 3.85 at 17:45 UTC, at USD 1.09/hour from 14:13 UTC.
+
+**Running and queued on the server as systemd units, each waiting for the one before it:**
+
+| Order | Unit | Commit | Cap |
+| --- | --- | --- | --- |
+| 1 | `triplex-bench3-cache32` (running since 17:24:46 UTC) | PREP1 `97aced1b1`, 32 GiB cache on three, then five transactor cores | 60 min |
+| 2 | `triplex-bench3-tx5` | PREP1 `73afad665`, five transactor cores, 16 GiB cache | 35 min |
+| 3 | `triplex-bench3-removal` | INT1 build `3669bee41`, `erase1/SERVER-ERASE2.md` | 86 min plus build and copy |
+| 4 | `triplex-bench3-fresh` | PREP1 `891ab9139`, `prep1/FRESH-FIRST.md` | 120 min |
+| 5 | `triplex-bench3-realistic` | INT1 build `8597e3ef7`, first realistic rung, then `verify` | 16 h unit limit |
+
+**The reads ladder cannot run on this server as published.** RD1 `638864206` starts through `lab/bin/scorecard.mjs --read-study`. That path restores a logical dump: `lab/experiments/EXP-DX1/v01/adopt.ts` line 46 opens `seed.pgdump` beside the seed's `image.json`. Bench 3 holds only the verified physical copy and the seed's `image.json` and `transfer.json`; no `seed.pgdump` exists anywhere on its disks. The RD1 builder needs either a physical-copy path like `erase1/measure-server.ts --pg-data`, or the dump must be shipped here. The cold start item still waits for a credit-mode argument; `int1/V0.1-STATE.md` at `666b625e5` names none.
+
+**Next:** collect and publish cache32 and tx5 as each ends. Then prepare the W1 append-retirement pair (`ad2e188a9`, `w1/RETIREMENT-READS.md`) so that it runs between the removal stage and fresh-first, as the queue orders.
+
 ## Third rental for rolling credits
 
 **Ready at 09:32:53 EST on November 21, 19m53s after billing began.** The charge at 12:27 EST was about USD 3.52 at USD 1.09/hour. The rental may run until about 12:00 EST on November 22. Ubuntu 24.04, Docker, Node 22.23.2, pinned PostgreSQL 17 and Datomic Java 21 and 25 images are installed. The second NVMe is mounted at `/mnt/triplex-bench3-wal` for WAL. SMT is enabled and all 24 CPU policies read back `performance`, matching Server 2. The new SSH host key is pinned in the operator's private known-host file.
