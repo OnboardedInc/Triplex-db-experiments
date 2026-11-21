@@ -11,16 +11,19 @@ import { nativeMetrics } from "../thin1/native-metrics.ts";
 import { openScaleSeal, hex } from "./adopt.ts";
 import { budget, comparisonMinutes, isWriter, jvmProfiles, serverStages, stackOptions, type JvmProfile } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
-import { claimPgdata, inspectPgdata, pgdataArgs, pgdataTarget, preflightWal } from "./pgdata.ts";
+import { claimPgdata, inspectPgdata, pgdataArgs, pgdataTarget, preflightWal, sealedPgdata } from "./pgdata.ts";
+import { existingSequence, openSequence, startSequentialArm } from "./sequential.ts";
 
 const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, jvm, agedFile, agedPin,
-  agedDump, agedDumpPin, txJvm, walDirectory, pgdataSource, ...pgdataPaths] = process.argv.slice(2);
+  agedDump, agedDumpPin, txJvm, walDirectory, armText, startedText, forecast, pgdataSource, ...pgdataPaths] = process.argv.slice(2);
 assert(source && campaign && seedDir && imagePin && transferPin);
 assert(age === "fresh" || age === "1B");
 assert(isWriter(requestedWriter));
 assert(jvmProfiles.includes(jvm as JvmProfile) && jvmProfiles.includes(txJvm as JvmProfile));
 const policy = launchProfile("server", { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile });
 const stages = serverStages(requestedWriter, policy, !!walDirectory);
+assert(armText === "" || /^[1-4]$/.test(armText ?? ""), "Choose arm 1, 2, 3 or 4");
+const sequenceArm = armText ? Number(armText) : undefined;
 const end = Number(deadlineText);
 assert(Number.isSafeInteger(end) && end > Date.now());
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"), queue = fs.statSync(`/proc/${process.ppid}/fd/9`);
@@ -28,13 +31,17 @@ assert.equal(lock.ino, queue.ino); assert.equal(lock.dev, queue.dev);
 scaleHost.physical();
 process.env.DX_BARE_METAL = "1";
 verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
-pgdataArgs(pgdataPaths, pgdataSource, requestedWriter === "grouped");
+pgdataArgs(pgdataPaths, pgdataSource, requestedWriter === "grouped", sequenceArm);
 const copies = pgdataSource ? inspectPgdata(pgdataSource, pgdataPaths, fs.realpathSync(path.dirname(campaign))) : [];
 let wal: ReturnType<typeof preflightWal> | undefined;
 if (walDirectory) {
   try {
-    assert(copies.length === 4 && requestedWriter === "per-person-ordered", "Separate WAL needs the four prepared scorecard copies");
-    wal = preflightWal(walDirectory, copies.slice(0, 3).map(copy => copy.dir));
+    assert(copies.length === (sequenceArm === undefined ? 4 : 1) && requestedWriter === "per-person-ordered",
+      "Separate WAL needs prepared scorecard copies");
+    if (sequenceArm === 4) {
+      wal = existingSequence(campaign)?.input.wal;
+      assert(wal && fs.realpathSync(walDirectory) === wal.wal, "WAL directory changed since the headline arms");
+    } else wal = preflightWal(walDirectory, copies.slice(0, 3).map(copy => copy.dir));
   } catch (error) {
     launchFailure(error);
   }
@@ -44,20 +51,33 @@ const expected = age === "1B" ? openAged(agedFile, agedPin) : undefined;
 if (!copies.length && expected) {
   assert(agedDump && agedDumpPin && /^[a-f0-9]{64}$/.test(agedDumpPin));
 }
-fs.mkdirSync(campaign);
-jsonFile(path.join(campaign, "input.json"), { source, age, writer: requestedWriter, jvm, imagePin, transferPin, originalScope: seed.scope,
-  txJvm, separateWal: !!wal, stages, wal,
-  agedBundle: expected?.pin, agedDump: agedDumpPin || undefined, pgdata: copies.length ? copies : undefined });
+const input = { source, age, writer: requestedWriter, jvm: jvm as JvmProfile, imagePin, transferPin, originalScope: seed.scope,
+  txJvm: txJvm as JvmProfile, separateWal: !!wal, stages, wal,
+  agedBundle: expected?.pin, agedDump: agedDumpPin || undefined };
+let spent = 0, previousSystem: string | undefined;
+if (sequenceArm !== undefined) {
+  assert(pgdataSource && copies.length === 1 && forecast);
+  const sequence = openSequence(campaign, { input, sealed: sealedPgdata(pgdataSource),
+    cut: expected?.bundle.logicalHead ?? seed.scope.cut,
+    buildSha256: hex(fs.readFileSync(process.env.DX_V01_BUILD_RECEIPT!)), forecast });
+  const progress = startSequentialArm(campaign, sequence, sequenceArm, copies[0]!, Number(startedText));
+  spent = progress.elapsed;
+  previousSystem = progress.previous.at(-1)?.systemIdentifier;
+} else {
+  fs.mkdirSync(campaign);
+  jsonFile(path.join(campaign, "input.json"), { ...input, pgdata: copies.length ? copies : undefined });
+}
 let stopping = false;
 const stop = () => { stopping = true; };
 process.on("SIGTERM", stop);
 process.on("SIGINT", stop);
 const minute = 60_000;
-const pairedEnd = Math.min(end - budget.comparison * minute, Date.now() + budget.adoptionAndP1to4 * minute);
+const pairedEnd = Math.min(end - budget.comparison * minute, Date.now() - spent + budget.adoptionAndP1to4 * minute);
 const headlineEnd = Math.min(end - budget.comparison * minute,
-  Date.now() + (budget.adoptionAndP1to4 + budget.P6 + budget.P7 + budget.P8) * minute);
-let systemIdentifier: string | undefined;
+  Date.now() - spent + (budget.adoptionAndP1to4 + budget.P6 + budget.P7 + budget.P8) * minute);
+let systemIdentifier = previousSystem;
 for (const [i, stage] of stages.entries()) {
+  if (sequenceArm !== undefined && i + 1 !== sequenceArm) continue;
   const { writer, loaded, comparison } = stage;
   const stageEnd = comparison ? Math.min(end, Date.now() + comparisonMinutes * minute)
     : loaded ? Math.min(headlineEnd, pairedEnd + budget.P7 * minute) : pairedEnd;
@@ -66,7 +86,7 @@ for (const [i, stage] of stages.entries()) {
   fs.mkdirSync(root, { recursive: true });
   const out = path.join(root, loaded ? "loaded" : "zero");
   fs.mkdirSync(out);
-  const copy = copies[i];
+  const copy = copies[sequenceArm === undefined ? i : 0];
   const floor = copy ? 5 : age === "1B" ? 320 : 240;
   assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the scorecard arm");
   const emptyReference = copy && loaded && !comparison
@@ -130,6 +150,7 @@ for (const [i, stage] of stages.entries()) {
   } finally {
     scaleHost.clean(out, slot);
   }
+  if (sequenceArm !== undefined) assert(!stopping, "Sequential arm was interrupted");
 }
 
 function beginStack(out: string, slot: string, attempt: string) {

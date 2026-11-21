@@ -1,6 +1,6 @@
 # Run the v0.1 server scorecard
 
-Server 2 should run `3a71c17674ccff6a435f8829cd3da8933feb34b1` from `exp/DX-V01-scorecard`. It incorporates INT1 launch pin `57580241dc4020f9ab7590839c72c00356fcedee`.
+For sequential staging, run `RUNNER_COMMIT` from `exp/DX-V01-scorecard`. It incorporates INT1 launch pin `57580241dc4020f9ab7590839c72c00356fcedee`.
 
 The latest SCALE1 handoff records that AGE1 stopped at the time guard after calibrating at about 5,284 records/s. Run fresh first. The 1B command requires a later verified one-billion-record seal. [SCALE1 handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/58e4b1ca3865315e6b671fc4cbf07687d113c6f8/lab/experiments/EXP-DX1/scale1/HANDOFF.md)
 
@@ -42,7 +42,7 @@ These are engineering estimates for the weekend campaign. The full-size anchors 
 Use a clean checkout of `exp/DX-V01-scorecard` at the runner commit on the dedicated bare-metal Ubuntu host.
 
 ```bash
-COMMIT=3a71c17674ccff6a435f8829cd3da8933feb34b1
+COMMIT=RUNNER_COMMIT
 BUILD=/var/tmp/triplex-v01-server-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
@@ -71,7 +71,7 @@ sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.j
   --out /var/tmp/triplex-v01-fresh
 ```
 
-## 1 billion
+## 1 billion, four prepared copies
 
 ```bash
 sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
@@ -89,6 +89,36 @@ sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.j
 ```
 
 Use absolute paths and new output directories. Omitting the PGDATA and WAL flags selects the existing logical-dump path. That path also needs the original `seed.pgdump` and, for 1B, `--aged-dump` and `--aged-dump-sha256`.
+
+## 1 billion, one prepared copy at a time
+
+Measure all four arms in order using the same `SCORECARD_OUT`, source, build receipt, SCALE1 seal and AGE1 bundle. `SCORECARD_OUT` must be new for arm 1. The four-copy command remains available when all copies fit. Sequential assembly invokes the same renderer over the same four arm directories, with the same tapes, launch checks and 300-minute active budget. The earlier fresh runner at `3a71c17674ccff6a435f8829cd3da8933feb34b1` remains valid for the all-at-once procedure.
+
+```bash
+SCORECARD_OUT=/var/tmp/triplex-v01-1B
+scorecard_arm() {
+  sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json"     "AGE_JAVA=$AGE_JAVA" "AGE_DATOMIC_HOME=$AGE_DATOMIC_HOME"     "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --commit "$COMMIT" --out "$SCORECARD_OUT" --arm "$1"     --age 1B --writer per-person-ordered --jvm j21-g1 --tx-jvm j25-zgc     --wal-directory "$SCORECARD_WAL_DIRECTORY"     --seed "$SCALE1_IMAGE" --image-sha256 "$SCALE1_IMAGE_SHA256"     --transfer-sha256 "$SCALE1_TRANSFER_SHA256"     --aged-bundle "$AGE_HANDOFF_JSON" --aged-bundle-sha256 "$AGE_HANDOFF_SHA256"     --pgdata-source "$AGED_PGDATA_SOURCE" --pgdata "$2"
+}
+```
+
+Using the driver's existing copy procedure, make a fresh scratch copy of `AGED_PGDATA_SOURCE` immediately before each line. Set `AGED_PGDATA_COPY` to that copy's absolute path. After an arm exits successfully and reports completion, remove its scratch with the driver's usual cleanup before preparing the next copy. The same scratch path can be recreated for each arm. Keep the whole output directory.
+
+1. `scorecard_arm 1 "$AGED_PGDATA_COPY"`
+2. `scorecard_arm 2 "$AGED_PGDATA_COPY"`
+3. `scorecard_arm 3 "$AGED_PGDATA_COPY"`
+4. `scorecard_arm 4 "$AGED_PGDATA_COPY"`
+
+When all four are complete, assemble from the same built checkout.
+
+```bash
+sudo "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --commit "$COMMIT" --out "$SCORECARD_OUT" --assemble
+```
+
+Keep the stopped held source plus one separate data copy. Arms 1 and 2 also need the prepared WAL directory on the other NVMe, with room for the copied WAL files and 16 GiB of working space. Arms 1–3 place their scratch copies on the same data NVMe across invocations. Leave at least 16 GiB free on the copy filesystem after preparing each copy and 5 GiB on the evidence filesystem. Peak data allocation is **about 580 GB for a 290 GB aged directory**, plus WAL, margins and existing host usage.
+
+Copy time per arm is **aged source bytes ÷ measured copy bytes/s**. Four fresh copies took 17m 25s. With 124,827,727,539 bytes per fresh copy, that averages about 478 MB/s. At that rate, 290 GB would take about 10m 7s per arm, or about 40m 28s total. Use the driver's measured aged size and copy rate for scheduling. Time between invocations for staging and removal is outside the 300-minute campaign clock.
+
+The controller reports completion only after cleanup. A failed invocation with an arm log or start record requires a new campaign directory. Keep `sequence/`, `arm-1.log` through `arm-4.log` and `campaign/`. Assembly refuses a missing or repeated arm, a mismatched pinned source or cut, and any changed renderer evidence.
 
 ## Early check and evidence
 

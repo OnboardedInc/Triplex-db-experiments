@@ -1,0 +1,178 @@
+import assert from "node:assert/strict";
+import { createHash, randomUUID } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { ceiling, type Age, type JvmProfile, type Writer, type serverStages } from "./profile.ts";
+import { type Directory, type preflightWal } from "./pgdata.ts";
+import { cellPath, serverCells } from "./server-workload.ts";
+
+type CampaignInput = {
+  source: string; age: Age; writer: Writer; jvm: JvmProfile; txJvm: JvmProfile;
+  imagePin: string; transferPin: string; originalScope: { db: string; cut: number };
+  separateWal: boolean; stages: ReturnType<typeof serverStages>; wal?: ReturnType<typeof preflightWal>;
+  agedBundle?: string; agedDump?: string;
+};
+export type SequenceConfig = {
+  input: CampaignInput;
+  sealed: Directory;
+  cut: number;
+  buildSha256: string;
+  forecast: string;
+};
+type Sequence = SequenceConfig & { id: string };
+type Invocation = { sequenceSha256: string; arm: number; startedAt: number; copy: Directory };
+type Completed = {
+  invocationSha256: string; completedAt: number; attempt: string; slot: string;
+  systemIdentifier: string; files: Record<string, string>;
+};
+const totalArms = 4;
+const seqFolder = (campaign: string) => path.join(path.dirname(campaign), "sequence");
+const seqFile = (campaign: string) => path.join(seqFolder(campaign), "inputs.json");
+const sha = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
+const read = <T>(file: string): T => JSON.parse(fs.readFileSync(file, "utf8"));
+const write = (file: string, value: unknown) =>
+  fs.writeFileSync(file, JSON.stringify(value, null, 2) + "\n", { flag: "wx", mode: 0o600, flush: true });
+
+export function existingSequence(campaign: string): Sequence | undefined {
+  const file = seqFile(campaign);
+  if (fs.existsSync(file)) return read<Sequence>(file);
+}
+
+// [DX-V01] Why: the driver can delete and recreate a scratch copy, but the campaign and each arm have a single identity.
+// Rejected: inferring completion from an arm directory created before placement, offers or cleanup.
+export function openSequence(campaign: string, config: SequenceConfig) {
+  const existing = existingSequence(campaign);
+  if (existing) {
+    const { id, ...recorded } = existing;
+    assert.deepEqual(JSON.parse(JSON.stringify(config)), recorded, "Sequential campaign source, seal, cut or launch configuration changed");
+    return existing;
+  }
+  assert(!fs.existsSync(campaign), "Use a new output directory for sequential staging");
+  fs.mkdirSync(seqFolder(campaign), { mode: 0o700 });
+  const result = { id: randomUUID(), ...config };
+  write(seqFile(campaign), result);
+  fs.mkdirSync(campaign);
+  return result;
+}
+
+function armPaths(campaign: string, arm: number) {
+  assert(Number.isInteger(arm) && arm >= 1 && arm <= totalArms, "Choose arm 1, 2, 3 or 4");
+  const folder = seqFolder(campaign);
+  return { start: path.join(folder, `arm-${arm}-start.json`), end: path.join(folder, `arm-${arm}-complete.json`) };
+}
+
+function armEvidence(sequence: Sequence, arm: number) {
+  const stage = sequence.input.stages[arm - 1]!;
+  const anchor = stage.root + (stage.loaded ? "loaded" : "zero");
+  const files = ["attempt.json", "arm.json", "operations.json", "launch-check.json", "pgdata.json", "cleanup/inventory.json"]
+    .map(name => `${anchor}/${name}`);
+  if (sequence.input.age === "1B") files.push(`${anchor}/aged-live-check.json`);
+  if (stage.loaded) {
+    for (const cell of serverCells) {
+      files.push(stage.root + cellPath(cell) + "/arm.json", stage.root + cellPath(cell) + "/operations.json");
+    }
+    if (!stage.comparison) files.push(`${anchor}/p7-empty/residency.json`, "p8/result.json", "p8/pace-32-fixed.offers.json");
+    if (stage.name !== "server-default") files.push(stage.root + "mixed-ids.json");
+  }
+  return { anchor, files };
+}
+
+function checkAnchor(campaign: string, sequence: Sequence, invocation: Invocation, completedAt: number) {
+  const { anchor } = armEvidence(sequence, invocation.arm);
+  const readAnchor = <T>(file: string) => read<T>(path.join(campaign, anchor, file));
+  const arm = readAnchor<{ source: string; slot: string; attempt: string; firstCut: number; startedAt: number; endedAt: number;
+    seed: { database: string; originalCut: number; imageSha256: string } }>("arm.json");
+  assert.deepEqual([arm.source, arm.firstCut, arm.seed.database, arm.seed.originalCut, arm.seed.imageSha256],
+    [sequence.input.source, sequence.cut, sequence.input.originalScope.db, sequence.input.originalScope.cut, sequence.input.imagePin],
+    "Arm source or sealed cut differs");
+  assert(arm.startedAt >= invocation.startedAt && arm.endedAt >= arm.startedAt && arm.endedAt <= completedAt,
+    "Arm evidence must come from the current invocation");
+  const owned = readAnchor<{ source: string; slot: string; nonce: string }>("attempt.json");
+  assert.deepEqual([owned.source, owned.slot, owned.nonce], [arm.source, arm.slot, arm.attempt]);
+  const pgdata = readAnchor<{ source: string; slot: string; attempt: string; copy: Directory; systemIdentifier: string }>("pgdata.json");
+  assert.deepEqual([pgdata.source, pgdata.slot, pgdata.attempt, pgdata.copy],
+    [arm.source, arm.slot, arm.attempt, invocation.copy]);
+  assert.match(pgdata.systemIdentifier, /^[1-9][0-9]*$/);
+  const cleanup = readAnchor<{ at: number; before: { containers: string[] }; after: unknown }>("cleanup/inventory.json");
+  assert.deepEqual(cleanup.before.containers.toSorted(), ["gw-r", "gw-w", "pg", "tx"].map(role => `${arm.slot}-${role}`));
+  assert.deepEqual(cleanup.after, { containers: [], volumes: [], networks: [] });
+  assert(cleanup.at >= arm.endedAt && cleanup.at <= completedAt);
+  return { attempt: arm.attempt, slot: arm.slot, systemIdentifier: pgdata.systemIdentifier };
+}
+
+function readCompleted(campaign: string, sequence: Sequence, arm: number, verifyFiles: boolean) {
+  const loc = armPaths(campaign, arm);
+  assert(fs.existsSync(loc.end), `Missing completed arm ${arm}`);
+  const bytes = fs.readFileSync(loc.start), invocation: Invocation = JSON.parse(bytes.toString());
+  const completed = read<Completed>(loc.end);
+  assert.deepEqual([invocation.sequenceSha256, invocation.arm, invocation.copy.controlSha256, completed.invocationSha256],
+    [sha(fs.readFileSync(seqFile(campaign))), arm, sequence.sealed.controlSha256, sha(bytes)],
+    "Arm belongs to a different invocation or sealed source");
+  assert(Number.isSafeInteger(invocation.startedAt) && Number.isSafeInteger(completed.completedAt) &&
+    completed.completedAt >= invocation.startedAt);
+  const anchor = checkAnchor(campaign, sequence, invocation, completed.completedAt);
+  assert.deepEqual([completed.attempt, completed.slot, completed.systemIdentifier], [anchor.attempt, anchor.slot, anchor.systemIdentifier]);
+  const { files } = armEvidence(sequence, arm);
+  assert.deepEqual(Object.keys(completed.files), files, "Arm evidence inventory differs");
+  if (verifyFiles) for (const file of files) {
+    assert.equal(sha(fs.readFileSync(path.join(campaign, file))), completed.files[file], `Arm evidence differs: ${file}`);
+  }
+  return { ...invocation, ...completed };
+}
+
+export function sequenceProgress(campaign: string, sequence: Sequence | undefined, next?: number) {
+  if (next !== undefined) armPaths(campaign, next);
+  assert(sequence || next === 1, "Start the sequential campaign with arm 1");
+  const previous = Array.from({ length: next === undefined ? totalArms : next - 1 }, (_, i) =>
+    readCompleted(campaign, sequence!, i + 1, next === undefined));
+  assert.equal(new Set(previous.map(record => record.attempt)).size, previous.length, "Arm attempt was reused");
+  assert.equal(new Set(previous.map(record => record.slot)).size, previous.length, "Arm slot was reused");
+  for (const [i, record] of previous.entries()) {
+    assert.equal(record.systemIdentifier, previous[0]!.systemIdentifier, "Prepared PostgreSQL system identifiers differ");
+    if (i) assert(record.startedAt >= previous[i - 1]!.completedAt, "Sequential arms overlap");
+  }
+  if (next !== undefined) {
+    const paths = armPaths(campaign, next);
+    assert(!fs.existsSync(paths.start) && !fs.existsSync(paths.end), `Arm ${next} already started`);
+  }
+  const elapsed = previous.reduce((ms, step) => ms + step.completedAt - step.startedAt, 0);
+  assert(elapsed <= ceiling * 60_000, "Sequential campaign exceeded its active time budget");
+  return { previous, elapsed };
+}
+
+export function startSequentialArm(campaign: string, sequence: Sequence, arm: number, copy: Directory, startedAt: number) {
+  const progress = sequenceProgress(campaign, sequence, arm);
+  assert(Number.isSafeInteger(startedAt) && startedAt >= (progress.previous.at(-1)?.completedAt ?? 0) &&
+    startedAt <= Date.now(), "Sequential arm start is outside its invocation");
+  assert.equal(copy.controlSha256, sequence.sealed.controlSha256);
+  write(armPaths(campaign, arm).start,
+    { sequenceSha256: sha(fs.readFileSync(seqFile(campaign))), arm, startedAt, copy } satisfies Invocation);
+  return progress;
+}
+
+export function completeSequentialArm(campaign: string, sequence: Sequence, arm: number) {
+  const loc = armPaths(campaign, arm);
+  const bytes = fs.readFileSync(loc.start), invocation: Invocation = JSON.parse(bytes.toString());
+  assert.deepEqual([invocation.sequenceSha256, invocation.arm], [sha(fs.readFileSync(seqFile(campaign))), arm]);
+  const files = Object.fromEntries(armEvidence(sequence, arm).files
+    .map(file => [file, sha(fs.readFileSync(path.join(campaign, file)))]));
+  const completedAt = Date.now();
+  const anchor = checkAnchor(campaign, sequence, invocation, completedAt);
+  const spent = Array.from({ length: arm - 1 }, (_, i) => readCompleted(campaign, sequence, i + 1, false))
+    .reduce((ms, step) => ms + step.completedAt - step.startedAt, 0);
+  assert(spent + completedAt - invocation.startedAt <= ceiling * 60_000, "Sequential campaign exceeded its active time budget");
+  write(loc.end, { invocationSha256: sha(bytes), completedAt, files, ...anchor } satisfies Completed);
+}
+
+export function assembleSequential(campaign: string, source: string) {
+  const sequence = existingSequence(campaign);
+  assert(sequence && sequence.input.source === source, "Assembly must use the campaign's source commit");
+  const { previous } = sequenceProgress(campaign, sequence);
+  const inventory = ["inputs.json", ...previous.flatMap((_, i) => Object.values(armPaths(campaign, i + 1)).map(file => path.basename(file)))];
+  assert.deepEqual(fs.readdirSync(seqFolder(campaign)).sort(), inventory.sort(), "Unexpected or duplicate arm records");
+  const input = { ...sequence.input, pgdata: previous.map(arm => arm.copy) };
+  const manifest = path.join(campaign, "input.json");
+  if (fs.existsSync(manifest)) assert.deepEqual(read(manifest), input, "Assembled manifest differs");
+  else write(manifest, input);
+  return { ...sequence.input, forecast: sequence.forecast };
+}

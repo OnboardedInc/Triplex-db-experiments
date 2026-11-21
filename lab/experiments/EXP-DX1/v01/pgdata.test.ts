@@ -10,6 +10,9 @@ test("the paired and grouped-only commands require a copy for each scheduled arm
   assert.deepEqual(pgdataArgs(["zero", "loaded", "default", "grouped"], "sealed", false),
     ["sealed", "zero", "loaded", "default", "grouped"]);
   assert.deepEqual(pgdataArgs(["grouped"], "sealed", true), ["sealed", "grouped"]);
+  assert.deepEqual(pgdataArgs(["current"], "sealed", false, 2), ["sealed", "current"]);
+  assert.throws(() => pgdataArgs(["a", "b"], "sealed", false, 2));
+  assert.throws(() => pgdataArgs(["current"], "sealed", true, 2));
   assert.throws(() => pgdataArgs(["loaded"], "sealed", false));
   assert.throws(() => pgdataArgs(["loaded"], undefined, true));
 });

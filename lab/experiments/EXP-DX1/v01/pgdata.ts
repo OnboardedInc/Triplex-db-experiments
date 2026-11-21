@@ -7,8 +7,10 @@ export const pgdataTarget = "/var/lib/postgresql/data";
 export const pgdataGrowthGiB = 16;
 const used = ".triplex-v01-used";
 
-export function pgdataArgs(copies: string[], sealed: string | undefined, grouped: boolean) {
-  assert(sealed ? copies.length === (grouped ? 1 : 4) : copies.length === 0,
+export function pgdataArgs(copies: string[], sealed: string | undefined, grouped: boolean, arm?: number) {
+  if (arm !== undefined) assert(sealed && copies.length === 1 && !grouped,
+    "A sequential arm needs --pgdata-source and exactly one --pgdata in the ordered campaign");
+  else assert(sealed ? copies.length === (grouped ? 1 : 4) : copies.length === 0,
     "Use --pgdata-source with four --pgdata directories (headline zero, headline loaded, ordered server default, grouped), or one for grouped-only");
   return sealed ? [sealed, ...copies] : [];
 }
@@ -24,7 +26,11 @@ function identify(dir: string) {
     controlSha256: createHash("sha256").update(control).digest("hex") };
 }
 
-type Directory = ReturnType<typeof identify>;
+export type Directory = ReturnType<typeof identify>;
+
+export function sealedPgdata(source: string) {
+  return identify(fs.realpathSync(source));
+}
 
 function assertCopyTree(dir: string, dev: bigint) {
   for (const entry of fs.readdirSync(dir)) {

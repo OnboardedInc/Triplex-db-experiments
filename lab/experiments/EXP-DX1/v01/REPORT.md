@@ -7,6 +7,12 @@ The ceiling is 300 minutes and USD 5.45 per age after staging.
 The Mac checked the toy card and PG17 WAL relocation. Live bare-metal placement is still open.
 The driver has both commands and the predictions in SERVER.md.
 
+## Part 7 sequential staging audit
+
+Each invocation keeps the original launch, copy inspection and live scope checks. The sequence fixes the source commit, build receipt digest, seed and transfer digests, stopped PostgreSQL source directory identity and control digest, starting logical cut, AGE1 bundle when present, JVM policy and data and WAL placement. The first three arms verify the shared data device independently before startup. The live PostgreSQL system identifier must agree across the arms.
+
+The start record binds one ordinal, copy and invocation timestamp to the exact campaign manifest bytes. The exclusive per-arm log and start record refuse a second invocation. Completion is recorded after the worker exits successfully and the exact owned PostgreSQL and JVM containers, networks and volumes have been cleaned. It checks fresh timestamps, the owned slot and nonce, the independently opened database, starting cut and seed digest, and the observed copy. Completion hashes the evidence the renderer reads. Assembly joins each completion to its original start, requires exactly four ordered records with unique slots and attempts, rechecks the arm bindings and evidence hashes, and writes the same manifest used by the existing scorecard renderer. The renderer and its verdict checks are unchanged. No new performance verdict is assigned. No acceptance file or pin changed.
+
 ## Part 6 server profile audit
 
 The scorecard merges the exact INT1 server launch pin. Its first real headline copy checks that the selected WAL directory and ordered data copies resolve to different whole NVMe devices. The prepared launcher keeps the original copied WAL until the second-device copy is flushed. It checks the exact live bind and prevents reuse of the consumed PGDATA. This mounts only private storage. The stock INT1 SQL readback checks current durability settings and the live WAL path. The JVM checks read the two pinned image families and final collector flags from each current serving boot, verify effective CPU sets and memory caps, and check the live transactor cache argument. The per-arm launch record binds exact source, slot, attempt, policy and live container identities. The renderer checks it and the sealed or aged identity before reading the new comparison metrics.

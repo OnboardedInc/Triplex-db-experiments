@@ -8,6 +8,7 @@ import { launchProfile } from "../jvm1/launch.mjs";
 import { cleanSource, verifyBuild } from "./source.ts";
 import { pgdataArgs } from "./pgdata.ts";
 import { serverRates } from "./server-workload.ts";
+import { assembleSequential, completeSequentialArm, existingSequence, sequenceProgress } from "./sequential.ts";
 
 const { values } = parseArgs({
   options: {
@@ -18,13 +19,27 @@ const { values } = parseArgs({
     "aged-bundle": { type: "string" }, "aged-bundle-sha256": { type: "string" }, "aged-dump": { type: "string" },
     "aged-dump-sha256": { type: "string" }, out: { type: "string" }, commit: { type: "string" },
     pgdata: { type: "string", multiple: true }, "pgdata-source": { type: "string" },
+    arm: { type: "string" }, assemble: { type: "boolean" },
     "hourly-usd": { type: "string", default: "1.09" }, help: { type: "boolean" }, plan: { type: "boolean" },
   },
 });
 if (values.help) {
   console.log("scorecard.mjs --age fresh|1B --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered|grouped] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR]\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, ordered server default, grouped).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
+  console.log("For sequential staging, run --arm 1 through --arm 4 in order with one --pgdata per invocation and the same --out. Then run --assemble --commit COMMIT --out DIRECTORY.");
   process.exit(0);
 }
+if (values.assemble) {
+  assert(values.commit && values.out && !values.arm && !values.plan, "Use --assemble with --commit and --out");
+  const source = cleanSource(values.commit), out = path.resolve(values.out), campaign = path.join(out, "campaign");
+  assert(!fs.existsSync(path.join(out, "SCORECARD-v0.1.md")), "Campaign already assembled");
+  const input = assembleSequential(campaign, source);
+  const { writeAdoptedCard } = await import("./adopted-card.ts");
+  writeAdoptedCard({ ...input, toy: false, prepared: true, out, campaign });
+  console.log(path.join(out, "SCORECARD-v0.1.md"));
+  process.exit(0);
+}
+assert(values.arm === undefined || /^[1-4]$/.test(values.arm), "Choose arm 1, 2, 3 or 4");
+const arm = values.arm === undefined ? undefined : Number(values.arm);
 const price = Number(values["hourly-usd"]);
 assert(/^\d+(?:\.\d+)?$/.test(values["hourly-usd"]!) && Number.isFinite(price) && price > 0);
 assert(isWriter(values.writer), "Choose per-person-ordered or grouped");
@@ -33,9 +48,10 @@ const jvm = values.jvm as JvmProfile;
 const txJvm = (values["tx-jvm"] ?? jvm) as JvmProfile;
 assert(jvmProfiles.includes(txJvm), "Unknown transactor JVM profile");
 const headline = launchProfile("server", { jvm, txJvm });
-const pgdata = pgdataArgs(values.pgdata ?? [], values["pgdata-source"], values.writer === "grouped").map((dir) => path.resolve(dir));
+const pgdata = pgdataArgs(values.pgdata ?? [], values["pgdata-source"], values.writer === "grouped", arm).map((dir) => path.resolve(dir));
 const wal = values["wal-directory"] ? path.resolve(values["wal-directory"]) : "";
-assert(!wal || (pgdata.length === 5 && values.writer === "per-person-ordered"), "Separate WAL needs the four prepared scorecard copies");
+assert(!wal || ((arm !== undefined || pgdata.length === 5) && values.writer === "per-person-ordered"),
+  "Separate WAL needs prepared scorecard copies");
 assert(values.writer !== "grouped" || (jvm === defaultJvm && txJvm === defaultJvm), "The grouped comparison uses the default server JVM");
 const minutes = values.writer === "grouped" ? comparisonMinutes + budget.cleanup : ceiling;
 const plan = values.writer === "grouped"
@@ -62,13 +78,23 @@ assert(!host.error && host.status === 1 && host.stdout.trim() === "none", "Score
 const source = cleanSource(values.commit);
 verifyBuild(source, process.env.DX_V01_BUILD_RECEIPT);
 const out = path.resolve(values.out), campaign = path.join(out, "campaign");
-fs.mkdirSync(out, { mode: 0o700 });
+let spent = 0;
+if (arm !== undefined) {
+  const sequence = existingSequence(campaign);
+  if (sequence) assert.equal(sequence.input.source, source, "Sequential campaign source changed");
+  spent = sequenceProgress(campaign, sequence, arm).elapsed;
+  if (arm === 1) fs.mkdirSync(out, { mode: 0o700 });
+} else fs.mkdirSync(out, { mode: 0o700 });
 console.log(forecast);
-const fd = fs.openSync(path.join(out, "campaign.log"), "wx", 0o600);
-const child = spawn("timeout", ["--kill-after=" + budget.cleanup + "m", String(minutes - budget.cleanup) + "m", "bash",
-  "lab/experiments/EXP-DX1/v01/adopted-server.sh", source, campaign, String(Date.now() + (minutes - budget.cleanup) * 60_000),
+const log = path.join(out, arm === undefined ? "campaign.log" : `arm-${arm}.log`);
+const activeMs = (minutes - budget.cleanup) * 60_000 - spent;
+assert(activeMs > 0, "No active time remains for a sequential arm");
+const fd = fs.openSync(log, "wx", 0o600);
+const startedAt = Date.now();
+const child = spawn("timeout", ["--kill-after=" + budget.cleanup + "m", String(activeMs / 1000) + "s", "bash",
+  "lab/experiments/EXP-DX1/v01/adopted-server.sh", source, campaign, String(startedAt + activeMs),
   path.resolve(values.seed), values["image-sha256"], values["transfer-sha256"], values.age, values.writer, jvm,
-  ...aged.map((v) => v ?? ""), txJvm, wal, ...pgdata], {
+  ...aged.map((v) => v ?? ""), txJvm, wal, values.arm ?? "", String(startedAt), forecast, ...pgdata], {
   stdio: ["ignore", fd, fd],
   env: Object.fromEntries(["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME"]
     .flatMap((name) => process.env[name] ? [[name, process.env[name]]] : [])),
@@ -81,12 +107,23 @@ const exit = await new Promise<string>((done) => {
   child.once("close", (code, signal) => done(code === 0 ? "" : String(code ?? signal)));
 });
 process.removeListener("SIGINT", stop); process.removeListener("SIGTERM", stop);
+if (arm !== undefined) {
+  if (exit) {
+    console.error(`Arm ${arm} stopped. See ${log}`);
+    process.exit(1);
+  }
+  const sequence = existingSequence(campaign);
+  assert(sequence && sequence.input.source === source);
+  completeSequentialArm(campaign, sequence, arm);
+  console.log(`Arm ${arm} complete. Its scratch PGDATA may be removed.`);
+  process.exit(0);
+}
 const { writeAdoptedCard } = await import("./adopted-card.ts");
 writeAdoptedCard({ source, age: values.age, writer: values.writer, jvm, txJvm, separateWal: !!wal, toy: false, out, campaign, forecast, prepared: pgdata.length > 0,
   failure: exit ? "The adopted campaign stopped. See [campaign.log](campaign.log)." : undefined });
 console.log(path.join(out, "SCORECARD-v0.1.md"));
 if (exit) {
-  const early = fs.readFileSync(path.join(out, "campaign.log"), "utf8").split("\n")
+  const early = fs.readFileSync(log, "utf8").split("\n")
     .find(line => line.startsWith("[DX-V01] Early launch check stopped before offers."));
   if (early) console.error(early);
   process.exitCode = 1;
