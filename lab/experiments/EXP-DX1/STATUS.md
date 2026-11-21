@@ -4561,3 +4561,10 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Gaps it reported:** no entry on `exp/DX-INT1` launches tonight's realistic scorecard configuration (the card lives on the scorecard builder's own branch, `a36c88e6c`); `jvm1/cold-server.ts` hard-codes `barrier6`; a declared removal policy excludes the append-retirement marker for the whole protected scope; imports get temporary typed refusals while a removal is in flight.
 - **DX-THIN1 part 13 resumed:** take the fixes; new build commits for the failover run and the cold-start arms; merge the realistic card onto the one branch, run its exact configuration at toy size with the cross-checks, and name tonight's commit.
 - Agents running: DX-SCALE1, DX-BM1, DX-W1, DX-THIN1.
+
+### 2026-11-21 12:36 local: fair-import run refused at launch on the server (tooling); fix and a launch dry-run requested; cache arms running (5 agents running)
+
+- **Rented server** (`origin/exp/DX-BM1-bare-metal` `8943c4fcf`, `bm1/FAIR-IMPORT-READING.md`): the fair-import run (`52ad22640`) verified its inputs and then stopped before any offer: the held-copy runner names its slot `tx2-dxscale1-publish-*`, and the private-bridge writer allowlist in `stack/up.sh` admits only `tx2-dxscale1-v01-*`. Both modes UNJUDGED; no stack started; nothing left behind; about six minutes of server time. **The Publish run at 100,000 people uses the same runner and would be refused the same way.**
+- **DX-HA1 part 8 resumed:** smallest fix to the guard that keeps what it protects; a table of every launcher queued for tonight against the guard; a dry-run mode so the driver can pass all of tonight's launchers through their guards in minutes before committing hours; replacement commits for the import and Publish runs.
+- **Cache arms** (32 GiB object cache on three, then five transactor cores) started at 12:24:46 local; the five-core arm follows.
+- Agents running: DX-SCALE1, DX-BM1, DX-W1, DX-THIN1, DX-HA1.
