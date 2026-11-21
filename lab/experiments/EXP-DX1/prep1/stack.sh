@@ -299,6 +299,11 @@ case "$PREP1_MODE" in
       children[2]=$!
       wait "${children[2]}"
       unset 'children[2]'
+      # [DX-W1] Why: use the merged shared authority for a genuinely sealed subject save.
+      # Rejected: inferring protected-write coverage from a save that never used a body key.
+      sql -d postgres -c 'CREATE DATABASE removal_authority OWNER datomic'
+      export TRIPLEX_ERASURE_JDBC="jdbc:postgresql://$addr:5432/removal_authority?user=datomic&password=$secret"
+      export TRIPLEX_ERASURE_WRAPPING_KEY=$(node -p "require('node:crypto').randomBytes(32).toString('base64')")
     fi
     for credit_mode in "${credit_modes[@]}"; do
       subject_workers 1 "$TX2_SUBJECT_ORDERED_IDS"

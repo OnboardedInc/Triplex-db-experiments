@@ -102,6 +102,9 @@ def check(root):
             scope = json.dumps(["triplex-scope-v1", "test", "rolling-head", f"{attempt}-{run['mode']}", 0], separators=(",", ":"))
             db = "s2-" + base64.urlsafe_b64encode(scope.encode()).decode().rstrip("=")
             assert (run["db"], run["oldCut"], run["nextCut"], run["sequence"], run["removed"]) == (db, 1, 2, 1, 2)
+            save, append = appended[db, run["savedT"]]
+            _, removal_append = appended[db, run["removalT"]]
+            assert save["datom-count"] == run["saveDatoms"] and append["end"] < removal_append["start"]
         result.update(ownerHead=True, native=native_case, readTimings=reads,
                       ownerBytes=events("DX-W1_OWNER_BYTES "), removal=removal)
     return result

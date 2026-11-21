@@ -7,6 +7,7 @@ import { expiryMs, field, operationId, sha, task, type Write } from "../scale1/d
 import { creditModeSelection } from "./rolling-credits.ts";
 import type { CreditMode } from "../jvm1/launch.mjs";
 import { command } from "../w1/group/workload.ts";
+import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 
 const [phase, mode, witnessPath] = process.argv.slice(2);
 const selection = creditModeSelection(mode as CreditMode);
@@ -32,7 +33,7 @@ function tape(n: number, label: string, samePerson = false): Write[] {
 }
 
 async function exactRead(db: string, entity: string, position: number, id: string, value: string) {
-  const got = await client.rows(db, { entityIds: [entity], basis: { recordedPosition: position, validAt: 1 } });
+  const got = await client.rows(db, { entityIds: [entity], basis: { recordedPosition: position, validAt: SEED_VALID_FROM } });
   const visible = got.filter((r) => r.attribute === field(0));
   assert.deepEqual(visible.map((r) => [r.id, r.value_string]), [[id, value]]);
 }
@@ -48,7 +49,7 @@ async function checkRemovalAcrossHead() {
   const { db, created } = await client.create(protectedScope, "lean", true, 35000);
   assert(created);
   const entity = task(0, 789), attribute = field(0);
-  await client.declareProtection(db, [attribute]);
+  await client.declareProtection(db, [attribute], true);
   const fact = (value: string) => ({ e: entity, a: attribute, v: { type: "string" as const, value } });
   const old = command(nonce + "-protected-legacy", [fact("before-head")], [], false);
   const seed = await client.transact(db, old) as { subjectOwnerHeadBytes?: number };
@@ -58,7 +59,7 @@ async function checkRemovalAcrossHead() {
   assert(prior?.value_string === "before-head");
   const next = command(nonce + "-protected-head", [fact("after-head")], [prior], true, false, orderedSaveIdentity());
   const saved = await client.transact(db, { ...next, sourceK: pin.position }) as {
-    position: { v: string }; subjectOwnerHeadBytes?: number;
+    position: { v: string }; t: { v: string }; datoms: number; subjectOwnerHeadBytes?: number;
   };
   assert(saved.subjectOwnerHeadBytes);
   const nextCut = Number(saved.position.v);
@@ -67,14 +68,21 @@ async function checkRemovalAcrossHead() {
   const removal = await client.erase(db, nonce + "-remove", [{ id: prior.id }, { id: next.rows[0]!.id }]);
   assert.deepEqual(removal.identities.map((x) => x.assertionId).sort(), [prior.id, next.rows[0]!.id].sort());
   for (const [cut, id] of [[pin.position, prior.id], [nextCut, next.rows[0]!.id]] as const) {
-    const rows = await client.rows(db, { entityIds: [entity], basis: { recordedPosition: cut, validAt: 1 } });
+    const rows = await client.rows(db, { entityIds: [entity], basis: { recordedPosition: cut, validAt: SEED_VALID_FROM } });
     const erased = rows.find((r) => r.id === id);
     assert(erased?.value_type === "erased" && erased.value_string === null);
     assert.equal(JSON.parse(erased.value_json!).erasedAt, removal.erasedAt);
   }
+  const held = await client.rows(db, { entityIds: [entity], handle: pin.handle });
+  assert(held.some((r) => r.id === prior.id && r.value_type === "erased" && r.value_string === null));
+  const journal = await client.rows(db, { entityIds: [next.claims[0]!.txId] });
+  const bodies = journal.filter((r) => r.attribute === ":_tx/change").map((r) => r.value_json!);
+  assert.equal(bodies.length, 2);
+  assert(bodies.every((body) => !body.includes("before-head") && !body.includes("after-head")));
   await client.release(db, pin.handle);
   console.log("DX-W1_OWNER_REMOVAL " + JSON.stringify({ attempt, mode, db, oldCut: pin.position,
-    nextCut, removed: removal.identities.length, sequence: removal.seq, headBytes: saved.subjectOwnerHeadBytes }));
+    nextCut, removed: removal.identities.length, sequence: removal.seq, headBytes: saved.subjectOwnerHeadBytes,
+    savedT: saved.t.v, removalT: removal.t, saveDatoms: saved.datoms }));
 }
 
 type Receipt = { id: string; p: number; t: string; clock: number; tx: string; digest: string; replyNs: string; orderedToken?: string };

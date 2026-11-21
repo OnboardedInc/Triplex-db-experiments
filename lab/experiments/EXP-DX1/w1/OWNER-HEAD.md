@@ -20,7 +20,7 @@ Step 2 keeps the transient root small by storing only a latest reference in the 
 
 ## Cost and forecast before testing
 
-Step 1 adds one assertion for initialization and an assertion plus retraction for each replacement of the witness. It adds one narrow head attribute installation per database. No user read has to read it. The feature does not avoid the old-row probes in this step. An ordinary path that advances the legacy revision writes the same datoms as before and leaves the witness stale until the next eligible save.
+Step 1 adds one assertion for initialization and an assertion plus retraction for each replacement of the witness. It adds one narrow, no-history head attribute installation per database. The witness is never the source of an as-of answer. No user read has to read it. The feature does not avoid the old-row probes in this step. An ordinary path that advances the legacy revision writes the same datoms as before and leaves the witness stale until the next eligible save.
 
 Step 2 targets one root value, one immutable root event, and new page pointers for changed pages, plus owner links for version and retirement events. A 160-row first-touch migration would write roughly five pages at 32 pointers per page plus the root, before any event or indexing overhead. As a planning range, allow 5–10 more datoms and 1–3 KiB of pre-index uncompressed data per save over the 17-datom plain case. Apply the same increment to the 22-datom protected case as a forecast. A 5–10 datom increment over 17 is 29–59% more datoms, so reaching a fixed native record count would take 23–37% less time at the same save rate. WAL, storage after maintenance and retained history amplification need measurement. The first migration cannot be amortized into per-save counts without stating the number of distinct people touched.
 
@@ -35,3 +35,12 @@ Target for the complete design, using weighted, non-overlapping per-index SQL at
 | 8B | 0.15 / 0.14 / 0.04 / 0.03 | 1.21 ms |
 
 For a full 394 offered run, forecast 390–394 stored/s and quiet p99 of 35–70 ms with the completed head. At 620, forecast 520–610/s and quiet p99 of 45–100 ms. Aggregate scheduled-offer-to-ACK p99 can still reach the 30 s expiry region at 620 if sustainable capacity lies below offers. At 1B with 50 and 235 offered, forecast 49–50 and 231–235 stored/s, quiet p99 of 20–55 and 30–75 ms, and apply of 1.1–1.4 ms. Score these forecasts only after the completed layout passes the exactness and removal gates. Step 1 is an instrumentation and migration foundation and has no server arm.
+
+Proposed rolling6 windows are 300 seconds fresh at 394 and 620, and 120 seconds aged at 50 and 235, each from an independent prepared copy per writer with half-window samples every 64 native applications. The ranges below describe whole-window aggregate p99 from scheduled offer to durable ACK, including later ACKs for offers in the window. Report quiet/account tails and expiry separately. Each entry gives EAVT/AEVT/AVET/other mean SQL fetches per save, mean apply ms, durable saves/s, and aggregate p99. Other is unassigned SQL. These are hypotheses for the final three-way run.
+
+| Copy and offered | Current ordered writer | Append retirement | Completed head |
+| --- | --- | --- | --- |
+| Fresh, 394/s | .55/.67/.01/.12 · 1.7–2.1 ms · 385–394/s · 2–8 s | .53/.38/.01/.10 · 1.45–1.85 ms · 388–394/s · 0.4–6 s | .08/.08/.02/.02 · 1.0–1.3 ms · 390–394/s · 0.08–3 s |
+| Fresh, 620/s | .54/.65/.01/.12 · 1.8–2.3 ms · 425–485/s · 29–31 s | .52/.38/.01/.10 · 1.55–2.05 ms · 465–550/s · 26–31 s | .11/.11/.02/.02 · 1.05–1.4 ms · 520–610/s · 3–31 s |
+| 1B, 50/s | .60/.62/.02/.11 · 1.5–2.4 ms · 49–50/s · 0.04–0.5 s | .59/.34/.02/.11 · 1.3–2.0 ms · 49–50/s · 0.035–0.4 s | .10/.10/.03/.03 · 1.0–1.35 ms · 49–50/s · 0.02–0.2 s |
+| 1B, 235/s | .72/.82/.02/.14 · 1.9–2.65 ms · 228–235/s · 0.08–5 s | .70/.50/.02/.14 · 1.6–2.2 ms · 230–235/s · 0.07–4 s | .12/.12/.03/.03 · 1.1–1.4 ms · 231–235/s · 0.04–3 s |

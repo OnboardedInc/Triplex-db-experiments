@@ -115,7 +115,8 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     profile = json.loads(slots.read_text())
     if os.environ.get("DOCKER_HOST") != profile["dockerHost"]:
         raise SystemExit("Lab Docker endpoint does not match the configured endpoint")
-    tag = f"dx-w1-head-{out.name}" if owner_head == "1" else f"dx-prep1-{mode}"
+    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
+    tag = f"dx-w1-head-{out.name}-{head[:8]}" if owner_head == "1" else f"dx-prep1-{mode}"
     profile["lanes"]["datomic"]["image"] = f"tx2-datomic:{tag}"
     slots.write_text(json.dumps(profile, indent=2) + "\n")
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
@@ -129,7 +130,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
                              *((name, EXPERIMENT / name) for name in ("subject_gate.clj", "subject_conflicts.clj"))]:
             shutil.copyfile(source, config / name)
             source_paths.append(source)
-        (config / "source").write_text(subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True))
+        (config / "source").write_text(head + "\n")
     inputs = {
         "attempt": attempt,
         "mode": mode,
@@ -142,7 +143,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "lookupEvery": lookup_every,
         "ownerHead": owner_head == "1",
         "explicitProbes": mode == "lookup-profile" and prefetch == "1",
-        "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
+        "head": head,
         "stage": {str(p.relative_to(stage)): sha(p) for p in sorted(stage.rglob("*"))
                   if p.is_file() and p != slots},
         "runner": {str(p.relative_to(REPO)): sha(p) for p in sorted(set(source_paths))},
