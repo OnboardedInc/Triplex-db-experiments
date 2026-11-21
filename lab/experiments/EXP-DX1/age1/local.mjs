@@ -112,8 +112,8 @@ export async function local(opts, config, manager) {
     return;
   }
   assert.match(opts.out ?? "", /^[a-z0-9][a-z0-9-]{1,49}$/);
-  assert.match(opts.run ?? "", /^(fidelity|adopted-fidelity|fidelity-arms|fidelity-arms-load|successor|erased-successor|native-suite)$/);
-  const adopting = opts.run === "adopted-fidelity";
+  assert.match(opts.run ?? "", /^(fidelity|adopted-fidelity|bulk-fixture|fidelity-arms|fidelity-arms-load|successor|erased-successor|native-suite)$/);
+  const adopting = ["adopted-fidelity", "bulk-fixture"].includes(opts.run);
   const erasure = opts.run === "erased-successor";
   const caps = adopting ? { pg: 384, tx: 896, peer: 1280, clone: 896 } : { pg: 384, tx: 1024, peer: 1280 };
   const heavy = path.join(LOCKS, "heavy");
@@ -354,7 +354,7 @@ export async function local(opts, config, manager) {
       await command("seed-clone.log", "restore-db", backup, uri(clone, cloneJdbc), String(index.t));
       const cloneTx = transactor("clone", cloneJdbc);
       await startTransactor("clone", cloneTx);
-      await capture(["exec", "-e", "AGE_CLONE_URI=" + uri(clone, cloneJdbc), peer, "/opt/datomic/bin/run", "-m", "triplex.age.gate",
+      await capture(["exec", "-e", "AGE_CLONE_URI=" + uri(clone, cloneJdbc), "-e", "AGE_SQL_JDBC=" + cloneJdbc, peer, "/opt/datomic/bin/run", "-m", "triplex.age.gate",
         opts.run, "/tmp/age-fixture.json", fixture.sha, clone], path.join(dir, "probe.log"), controller.signal);
     }
     else if (opts.run === "native-suite") {

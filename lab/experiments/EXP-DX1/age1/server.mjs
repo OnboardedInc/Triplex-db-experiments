@@ -7,6 +7,7 @@ import path from "node:path";
 import { createInterface } from "node:readline";
 import { fileURLToPath } from "node:url";
 import { writeScorecard } from "./scorecard.mjs";
+import { bulkProperties, hold, ladderArms, minimumRate, readBulkMetrics } from "./bulk-metrics.mjs";
 
 const here = import.meta.dirname;
 const repo = path.resolve(here, "../../../..");
@@ -51,7 +52,7 @@ function getProcess(pid) {
   return { pid, startTicks: stat[19], pssKiB: pss, cmdSha: sha(file("cmdline")) };
 }
 
-function admit(config, configFile) {
+function admit(config, configFile, mode) {
   assert.equal(process.platform, "linux");
   const git = (args) => execFileSync("git", args, { cwd: repo, encoding: "utf8" }).trim();
   assert.equal(git(["rev-parse", "HEAD"]), config.source);
@@ -106,6 +107,17 @@ function admit(config, configFile) {
     .filter(Boolean).map(([, key, value]) => [key, value]));
   assert.equal(Object.keys(readerSettings).length, 4);
   assert.deepEqual(readerSettings, options.properties);
+  if (mode === "ladder" || mode === "load") {
+    const writeConcurrency = /^\s*write-concurrency\s*=\s*(\S+)\s*$/m.exec(liveProperties.toString("utf8"))?.[1];
+    assert.deepEqual({ ...readerSettings, "write-concurrency": writeConcurrency }, bulkProperties);
+    assert(liveArgs.includes("-Xmx24g") || liveArgs.includes("-Xmx24576m"), "Bulk heap differs");
+    assert(liveArgs.includes("-XX:ActiveProcessorCount=3"), "Bulk transactor processor setting differs");
+    const logOpt = liveArgs.find((a) => a.startsWith("-Dlogback.configurationFile=/"));
+    assert(logOpt, "Bulk transactor requires its own event appender");
+    const logConfig = "/proc/" + config.transactorPid + "/root" + logOpt.slice("-Dlogback.configurationFile=".length);
+    assert.equal(fileSha(logConfig), fileSha(path.join(here, "bulk-logback.xml")));
+    eventLogStat(config);
+  }
   const allowJava = [...new Set(config.javaPids)].sort((a, b) => a - b);
   const running = execFileSync("ps", ["-eo", "pid=,comm="], { encoding: "utf8" })
     .split("\n").map((s) => /^\s*(\d+)\s+java\s*$/.exec(s)).filter(Boolean)
@@ -124,17 +136,33 @@ function admit(config, configFile) {
   };
 }
 
-async function run(configFile, config) {
-  const binding = admit(config, configFile);
+function eventLogStat(config) {
+  assert(path.isAbsolute(config.bulkEventLog ?? ""), "Supply the transactor event log path");
+  const open = "/proc/" + config.transactorPid + "/fd";
+  const stat = (file) => { try { return fs.statSync(file); } catch { return null; } };
+  const log = fs.statSync(config.bulkEventLog);
+  assert(log.isFile());
+  assert(fs.readdirSync(open).some((fd) => {
+    const s = stat(path.join(open, fd));
+    return s && s.dev === log.dev && s.ino === log.ino;
+  }), "Native event file is not open by the admitted transactor");
+  return log;
+}
+
+async function run(configFile, config, mode) {
+  const bulk = mode === "ladder" || mode === "load";
+  const binding = admit(config, configFile, mode);
   const initial = forecast(config.fromRecords, config.target, config.ratePrior, config.reserveHours);
   const parent = path.dirname(config.output);
   const scopeLock = path.join(parent, "age1-writer-" + sha(binding.db) + ".lock");
   fs.mkdirSync(config.output, { recursive: true });
   if (!process.argv.includes("--locked")) {
-    console.log(JSON.stringify({ phase: "forecast", ...initial }));
+    console.log(JSON.stringify(bulk ? { phase: mode + "-forecast", start: hold.records, target: config.target,
+      maxLoadingHours: 16, maxLoadingUsd: 17.44, minimumRate, ladderMaxSeconds: 3600,
+      predictions: ladderArms } : { phase: "forecast", ...initial }));
     const result = await new Promise((resolve, reject) => {
       const child = spawn("flock", ["-F", "-n", scopeLock, process.execPath, fileURLToPath(import.meta.url),
-        configFile, "--locked"], { stdio: "inherit" });
+        ...(mode === "legacy" ? [] : [mode]), configFile, "--locked"], { stdio: "inherit" });
       for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => child.kill(signal));
       child.once("error", reject);
       child.once("exit", (code) => resolve(code ?? 1));
@@ -142,7 +170,7 @@ async function run(configFile, config) {
     process.exitCode = result;
     return;
   }
-  if (initial.hours >= config.maxHours || initial.usd > config.maxUsd) {
+  if (!bulk && mode !== "measure-loaded" && (initial.hours >= config.maxHours || initial.usd > config.maxUsd)) {
     console.log(JSON.stringify({ phase: "forecast-over-budget", calibrationMaxSaves: 100000 }));
   }
   const dir = config.output;
@@ -164,16 +192,28 @@ async function run(configFile, config) {
     console.log(JSON.stringify({ ...saved, scorecard: handoff }));
     return;
   }
-  const admitted = path.join(rung, "admission.json");
+  const admitted = path.join(rung, bulk ? mode + "-admission.json" : "admission.json");
   if (!fs.existsSync(admitted)) write(admitted, { started: Date.now(), binding });
   const origin = read(admitted);
   assert.equal(origin.binding.runSpecSha, binding.runSpecSha);
   assert.equal(origin.binding.machineHash, binding.machineHash);
-  const deadline = origin.started + config.maxHours * 3_600_000;
+  const calibrationFile = path.join(rung, "bulk-calibration.json");
+  const calibration = mode === "load" ? read(calibrationFile) : null;
+  if (calibration) {
+    assert.equal(calibration.source, binding.source);
+    assert.equal(calibration.machineHash, binding.machineHash);
+    assert.equal(calibration.db, binding.db);
+    assert.equal(calibration.imageSha, binding.imageSha);
+    assert.equal(calibration.propertiesSha, config.transactorPropertiesSha);
+    for (const { file, sum } of calibration.artifacts) assert.equal(fileSha(path.join(rung, file)), sum);
+  }
+  const deadline = origin.started + (bulk ? (mode === "ladder" ? 1 : 16 - calibration.elapsedMs / 3_600_000)
+    : config.maxHours) * 3_600_000;
   const reserve = config.copyHeadroomBytes;
   const stableFloor = () => {
     assert(Date.now() < deadline, "Rung time limit reached");
-    assert(space(config.dataMount) > 12 * GiB && space(config.copyMount) > 12 * GiB, "Disk floor reached");
+    assert(space(config.dataMount) > 12 * GiB && space(config.copyMount) > 12 * GiB
+      && space(dir) > 5 * GiB, "Disk floor reached");
   };
   stableFloor();
   const attempt = randomUUID();
@@ -265,7 +305,20 @@ async function run(configFile, config) {
       assert(fs.statSync(path.join(logDir, tag + "-gc.log")).size > 0);
       return selected[0];
     };
+    if (bulk) {
+      const proof = path.join(rung, "held-prefix.json");
+      assert.equal(fileSha(state + ".population.edn"), hold.population);
+      if (!fs.existsSync(proof)) {
+        assert.equal(mode, "ladder");
+        assert.equal(fileSha(state), hold.checkpoint);
+        write(proof, { ...hold, attempt, db: binding.db, imageSha: binding.imageSha, machineHash: binding.machineHash });
+      }
+      const prefix = read(proof);
+      for (const [key, value] of Object.entries({ ...hold, db: binding.db, imageSha: binding.imageSha, machineHash: binding.machineHash }))
+        assert.equal(prefix[key], value, "Held calibration prefix differs");
+    }
     if (!fs.existsSync(state)) {
+      assert.equal(mode, "legacy", "Existing adopted checkpoint required");
       const a = await peer("adopt", "adopt", "adopt", config.image, config.imageSha, state, String(config.activePerAccount));
       assert.equal(a.manifestSha, config.imageSha);
       assert.equal(a.name, binding.db);
@@ -277,7 +330,7 @@ async function run(configFile, config) {
     const corrected = forecast(Math.min(inspected.records, config.target), config.target, config.ratePrior, config.reserveHours);
     console.log(JSON.stringify({ phase: "observed-head-forecast", ...corrected }));
     write(path.join(logDir, "observed-forecast.json"), corrected);
-    if (!inspected.finished && Date.now() + corrected.hours * 3_600_000 >= deadline) {
+    if (!bulk && mode !== "measure-loaded" && !inspected.finished && Date.now() + corrected.hours * 3_600_000 >= deadline) {
       const requiredRate = Math.max(0, config.target - inspected.records) /
         Math.max(1, (deadline - Date.now()) / 1000 - config.reserveHours * 3600);
       console.log(JSON.stringify({ phase: "rate-calibration-required", requiredRate, calibrationMaxSaves: 100000 }));
@@ -291,6 +344,74 @@ async function run(configFile, config) {
     } else {
       assert(space(config.dataMount) > projected + 12 * GiB && space(config.copyMount) > reserve + 12 * GiB,
         "Projected age or copy footprint exceeds reserved free space");
+    }
+    const bulkPhase = async (tag, arm, stop, limit, target) => {
+      const offset = eventLogStat(config);
+      const phase = await peer(tag, "bulk-phase", "bulk", state, config.imageSha, String(hold.t), String(hold.head),
+        mode, String(arm.size), String(arm.depth), String(target), String(stop), String(limit));
+      assert.deepEqual([phase.mode, phase.database, phase.manifestSha, phase.size, phase.depth],
+        [mode, binding.db, config.imageSha, arm.size, arm.depth]);
+      assert(phase.seconds > 0 && phase.records >= 0 && phase.indexedRecords === phase.historyEstimate);
+      const metrics = await readBulkMetrics(config.bulkEventLog, offset, phase);
+      const observed = { arm, phase, metrics };
+      write(path.join(logDir, tag + ".json"), observed);
+      console.log(JSON.stringify({ event: "bulk-arm", tag, size: arm.size, depth: arm.depth,
+        seconds: phase.seconds, records: phase.records, ...metrics }));
+      return observed;
+    };
+    if (mode === "ladder") {
+      assert(!fs.existsSync(calibrationFile), "Ladder already recorded");
+      const arms = [];
+      for (const [i, arm] of ladderArms.entries()) {
+        // [DX-AGE1] Why: finalise evidence and drain the bounded queue within the one-hour admission.
+        // Rejected: granting each arm a fresh hour or making a forced index count as sustained.
+        const stop = Math.min(Date.now() + 14 * 60_000, deadline - 5 * 60_000);
+        assert(stop - Date.now() > 3 * 60_000, "Ladder cap leaves too little time for another arm");
+        const tag = "arm-" + i;
+        arms.push(await bulkPhase(tag, arm, stop, deadline, config.target));
+      }
+      const best = [...arms].filter((a) => a.metrics.sustainedRate !== null)
+        .sort((a, b) => b.metrics.sustainedRate - a.metrics.sustainedRate)[0];
+      finishJvmLogs();
+      const artifacts = fs.readdirSync(logDir).map((f) => ({ file: path.join(attempt, f), sum: fileSha(path.join(logDir, f)) }));
+      const last = arms.at(-1).phase;
+      const result = { attempt, source: binding.source, db: binding.db, machineHash: binding.machineHash,
+        imageSha: binding.imageSha, propertiesSha: config.transactorPropertiesSha,
+        elapsedMs: Date.now() - origin.started, checkpointSha: fileSha(state), lastT: last.t,
+        lastRecords: last.indexedRecords, arms, best, artifacts };
+      assert(result.elapsedMs <= 3_600_000, "Ladder exceeded its one-hour cap");
+      write(calibrationFile, result);
+      assert(best?.metrics.sustainedRate >= minimumRate, "No two-job calibration sustained 9,900 records/s. Preserve the prefix and stop.");
+      return;
+    }
+    if (mode === "load") {
+      assert(calibration.best?.metrics.sustainedRate >= minimumRate, "No eligible calibration");
+      const loadingStarted = path.join(rung, "load-start.json");
+      if (!fs.existsSync(loadingStarted)) {
+        assert.equal(fileSha(state), calibration.checkpointSha);
+        write(loadingStarted, { calibrationSha: fileSha(calibrationFile), initialCheckpointSha: fileSha(state) });
+      }
+      assert.equal(read(loadingStarted).calibrationSha, fileSha(calibrationFile));
+      const promised = calibration.best.metrics.sustainedRate;
+      const secondsNeeded = (config.target - inspected.records) / promised;
+      console.log(JSON.stringify({ event: "bulk-load-forecast", records: inspected.records, target: config.target,
+        rate: promised, hours: Math.max(0, secondsNeeded / 3600), usd: Math.max(0, secondsNeeded / 3600 * rateUsd) }));
+      assert(Date.now() + (secondsNeeded + 300) * 1000 < deadline, "Sustained calibration rate cannot reach 1B before the loading deadline");
+      env.AGE_BULK_MIN_RATE = String(minimumRate);
+      const observed = await bulkPhase("load", calibration.best.arm, deadline - 300_000, deadline, config.target);
+      assert(observed.phase.bulkLoaded && observed.phase.indexedRecords >= config.target, "Budget ended before the 1B indexed cut");
+      finishJvmLogs();
+      write(path.join(rung, "bulk-loaded.json"), { ...observed, attempt, source: binding.source, machineHash: binding.machineHash,
+        imageSha: binding.imageSha, db: binding.db, checkpointSha: fileSha(state), calibrationSha: fileSha(calibrationFile),
+        artifacts: fs.readdirSync(logDir).map((f) => ({ file: path.join(attempt, f), sum: fileSha(path.join(logDir, f)) })) });
+      return;
+    }
+    if (mode === "measure-loaded") {
+      const loaded = read(path.join(rung, "bulk-loaded.json"));
+      assert.deepEqual([loaded.source, loaded.machineHash, loaded.db, loaded.imageSha],
+        [binding.source, binding.machineHash, binding.db, binding.imageSha]);
+      for (const { file, sum } of loaded.artifacts) assert.equal(fileSha(path.join(rung, file)), sum);
+      assert(loaded.phase.bulkLoaded && loaded.phase.indexedRecords >= config.target && inspected.records >= config.target);
     }
     const r = await peer("rung", "rung", "rung", state, String(config.target), String(config.seconds),
       String(Math.floor(deadline)), String(Math.ceil(config.reserveHours * 3600)));
@@ -340,6 +461,7 @@ async function run(configFile, config) {
     const scorecardCut = await peer("scorecard-cut", "scorecard-cut", "scorecard-cut", state, binding.db,
       String(r.t), String(r.head), String(r.records), journal);
     const result = { attempt, bindingSha: binding.runSpecSha, source: binding.source, target: config.target,
+      agingEvidence: mode === "measure-loaded" ? fileSha(path.join(rung, "bulk-loaded.json")) : undefined,
       head: r.head, t: r.t, records: r.records, journal, cold, structure, endJava,
       checkpointSha: fileSha(state), seedLedgerSha: fileSha(state + ".population.edn"),
       measuredBy: r.observedBy, windowsBy: Object.fromEntries(Object.entries(r.windows)
@@ -363,5 +485,6 @@ async function run(configFile, config) {
 if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
   const [input, ...args] = process.argv.slice(2);
   if (input === "forecast") console.log(JSON.stringify(forecast(...args.map(Number))));
-  else await run(path.resolve(input), read(input));
+  else if (["ladder", "load", "measure-loaded"].includes(input)) await run(path.resolve(args[0]), read(args[0]), input);
+  else await run(path.resolve(input), read(input), "legacy");
 }

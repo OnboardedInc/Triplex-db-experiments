@@ -255,7 +255,8 @@
         (verify-state! state db)
         (gate/equal! [target (:t state)] [(:target frozen) (:t frozen)] "Frozen measurement targets a different cut")
         (native/emit "rung" frozen))
-      (let [[loaded growth] (advance! file db state target deadline reserve)
+      (let [[loaded growth] (if (:bulk-loaded state) [state []]
+                                (advance! file db state target deadline reserve))
             settling (or (:settle loaded) (scale/index! (:conn db)))
             aged-records (or (:aged-records loaded) (scale/records! (:conn db)))
             _ (native/check! (>= aged-records target) "Indexed record count is below target"
@@ -307,9 +308,12 @@
     (gate/equal! manifest (:manifest-sha state) "Rung refers to a different seed manifest")
     (gate/equal! "on|on|on" durability "SQL durability differs from the declared arm")
     (gate/equal! (get-in pop [:seal :scope]) (gateway/stored-scope view) "Seed scope differs")
-    (native/check! (<= (:observed state) head (get state :pending-end (:observed state)))
+    (native/check! (<= (:observed state) head (or (:pending-end state) (get-in state [:bulk-pending :through]) (:observed state)))
                    "Rung head exceeds its pending write boundary" {:head head})
-    (native/emit "inspect" {:records (+ (:seed-records pop) (count-records pop 0 head))
+    (native/emit "inspect" {:records (if-let [bulk (:bulk state)]
+                                       (+ (:base-records bulk) (:records bulk)
+                                          (count-records pop (get bulk :loaded-at head) head))
+                                       (+ (:seed-records pop) (count-records pop 0 head)))
                             :db (:name db) :head (+ before head) :sqlBytes (scale/bytes!)
                             :sqlDurability durability
                             :finished (boolean (or (:finished state)
@@ -360,6 +364,7 @@
       "rung" (let [[file target seconds deadline reserve] args]
                (rung! file (Long/parseLong target) (Long/parseLong seconds) (Long/parseLong deadline)
                       (Long/parseLong reserve)))
+      "bulk" (apply (requiring-resolve 'triplex.age.bulk/main!) args)
       "cold" (apply cold! args)
       "structure" (apply structure! args)
       "inspect" (apply inspect! args)
