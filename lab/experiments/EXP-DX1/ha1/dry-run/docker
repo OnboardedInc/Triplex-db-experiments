@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# [DX-HA1] Why: let any pinned launcher run its own input checks and every stack/up.sh guard ahead of the first
+# stack-owned container, then stop, so a launch refusal costs minutes instead of a queued server window.
+# Rejected: a new up.sh flag (tonight's runs are pinned to commits that predate it) and faking later Docker replies
+# (the launcher would go on to restore, seed or time against nothing).
+# Read-only queries go to the real daemon (DX_DRY_RUN_DOCKER) or, with DX_DRY_RUN_FAKE=1 on the Mac check, get empty
+# answers. The first command that would create, start, change or remove anything exits 97 and is logged.
+set -uo pipefail
+log=${DX_DRY_RUN_LOG:?DX_DRY_RUN_LOG names the call log}
+fake=${DX_DRY_RUN_FAKE:-0}
+printf 'call %q' "$@" >> "$log"; printf '\n' >> "$log"
+cmd=${1:-} sub=${2:-}
+[[ $cmd == --host || $cmd == -H ]] && { cmd=${3:-}; sub=${4:-}; }
+pass() {
+  if [[ $fake == 1 ]]; then
+    case "$cmd $sub" in
+      "info "*) printf '/var/lib/docker\n' ;;
+      "container inspect"|"volume inspect"|"network inspect"|"inspect "*) exit 1 ;;
+      *) : ;;
+    esac
+    exit 0
+  fi
+  exec "${DX_DRY_RUN_DOCKER:?DX_DRY_RUN_DOCKER names the real docker}" "$@"
+}
+readonly_run() {
+  # A throwaway reader such as `docker run --rm --network none --read-only --mount ...,readonly IMAGE pg_controldata`.
+  local a rm=0 none=0 ro=0 prev=
+  for a in "$@"; do
+    [[ $a == --rm ]] && rm=1
+    [[ $prev == --network && $a == none ]] && none=1
+    [[ $a == --read-only ]] && ro=1
+    if [[ $prev == --mount && $a != *,readonly* ]] || [[ $prev == -v && $a != *:ro ]] || [[ $a == --privileged || $a == -d || $a == --detach || $a == --name ]]; then return 1; fi
+    prev=$a
+  done
+  (( rm && none && ro ))
+}
+case "$cmd" in
+  info|version|ps|images|logs|inspect|stats|top|port|diff) pass "$@" ;;
+  image|container|volume|network|system|buildx)
+    case "$sub" in inspect|ls|list|df|history) [[ $fake == 1 && $cmd == image && $sub == inspect ]] || pass "$@" ;; esac ;;
+  run) if [[ $fake == 0 ]] && readonly_run "$@"; then pass "$@"; fi ;;
+esac
+{
+  printf 'DX-DRY-RUN stop before:'; printf ' %q' "$@"; printf '\n'
+} | tee -a "$log" >&2
+exit 97
