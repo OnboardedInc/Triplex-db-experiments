@@ -4249,3 +4249,11 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Reading:** the load is not limited by any CPU allowance, including PostgreSQL's single core, in this sample. That fits the builder's finding that the time is in Datomic's serial apply step (1.46 to 1.65 ms per save), which waits on synchronous storage reads; more cores cannot shorten a serial wait. One 10-second sample; it does not rule out short bursts where the PostgreSQL core is full.
 - **Decision:** no change to the running load. Logged under NEXT-WEEK 16h as a measurement for the settings candidate (a second PostgreSQL core is not supported by this sample for the load; the scorecard's save path has not been sampled the same way).
 - Load writing since 06:13 local (`530e581c7`). Agents running: DX-SCALE1.
+
+### 2026-11-21 07:10 local: 1 billion load, window 3: 10,033 records per second with maintenance; the dip in window 2 did not continue (1 agent running)
+
+- **Server 2** (`origin/exp/DX-SCALE1-deep-accounts` `be4ab9cc0`): window 3 (30 minutes of writing) added 24,186,744 records, writing 13,467.03 records/s, **10,033.06 with maintenance**, transactor 3.71 of six cores, 50 index jobs, directory 166.367 -> 166.358 GB (+0.621 GB against the prior cut). Settled at **538,928,597 records** at 06:55 local.
+- Writing rate by window: 13,270 / 11,928 / 13,467. The 10% fall between windows 1 and 2 was not a trend.
+- At this rate 12.77 loading hours remain (USD 13.91): the load ends at about 19:40 local. Server 2 at USD 45.15; total USD 113.44 of 200.
+- The builder's limits commit `efd0c7560` failed its entry probe on the server (`ReferenceError: minimumRate is not defined`); the driver repaired it in a one-file derivative (`d90b3728f`) with the same two-consecutive-cycles rule and verified it against the archived cut before launching. Durability, maintenance, storage and measurement code unchanged.
+- Agents running: DX-SCALE1.
