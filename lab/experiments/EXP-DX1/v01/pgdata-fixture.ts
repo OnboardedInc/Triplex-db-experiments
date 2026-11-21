@@ -33,8 +33,15 @@ export async function pgdataFixture(out: string, source: string, slot: string, a
   // Rejected: mocking the clean-shutdown check or relying on an initdb-only startup.
   const refused = spawnSync("/bin/sh", cmd, { ...options, env: { ...pgEnv, DX_V01_PGDATA_CONTROL_SHA: "0".repeat(64) } });
   assert.equal(refused.status, 1);
+  const sameDevice = path.join(directory, "same-device");
+  fs.mkdirSync(sameDevice);
+  const sameDeviceRefusal = spawnSync("/bin/sh", cmd, { ...options, env: { ...pgEnv, POSTGRES_INITDB_WALDIR: sameDevice } });
+  assert.equal(sameDeviceRefusal.status, 1);
+  const wal = fs.mkdtempSync("/dev/shm/dx-v01-wal-");
+  fs.chownSync(wal, 65534, 65534);
+  assert.notEqual(fs.statSync(wal).dev, fs.statSync(scratch).dev);
   const fd = fs.openSync(log, "a");
-  const server = spawn("/bin/sh", cmd, { ...options, env: pgEnv, stdio: ["ignore", fd, fd] });
+  const server = spawn("/bin/sh", cmd, { ...options, env: { ...pgEnv, POSTGRES_INITDB_WALDIR: wal }, stdio: ["ignore", fd, fd] });
   fs.closeSync(fd);
   const stopped = new Promise<number | null>((resolve, reject) => {
     server.once("error", reject);
@@ -50,14 +57,18 @@ export async function pgdataFixture(out: string, source: string, slot: string, a
     const opened = sql("SELECT value FROM witness");
     assert.equal(opened, "sealed");
     assert.equal(sql("UPDATE witness SET value = 'private' RETURNING value"), "private");
+    assert.equal(fs.readlinkSync(path.join(scratch, "pg_wal")), wal);
+    assert.equal(sql("SHOW synchronous_commit"), "on");
     const sourceControl = execFileSync("sha256sum", [path.join(original, "global", "pg_control")], { encoding: "utf8" }).split(" ")[0];
     assert.equal(sourceControl, copy!.controlSha256);
     fs.writeFileSync(path.join(out, "PGDATA-FIXTURE.json"), JSON.stringify({ source, slot, attempt, fileId,
-      controlSha256: sourceControl, originalValue: opened, copyValue: "private", wrongDigestExit: refused.status }) + "\n",
+      controlSha256: sourceControl, originalValue: opened, copyValue: "private", wrongDigestExit: refused.status,
+      sameDeviceExit: sameDeviceRefusal.status, separateWal: true, synchronousCommit: "on" }) + "\n",
       { flag: "wx", mode: 0o600 });
   } finally {
     server.kill("SIGINT");
     assert.equal(await stopped, 0);
     fs.rmSync(directory, { recursive: true, force: true });
+    fs.rmSync(wal, { recursive: true, force: true });
   }
 }

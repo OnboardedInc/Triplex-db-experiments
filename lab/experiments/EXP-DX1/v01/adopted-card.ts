@@ -6,15 +6,19 @@ import { Histogram } from "../../../bench/lib/hist.ts";
 import { render as emptyCard } from "./render.ts";
 import type { MixedIds } from "./mixed-ids.ts";
 import type { adoptedArm } from "./adopted.ts";
-import { physicalJvm, selectedWriter, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
+import { launchProfile } from "../jvm1/launch.mjs";
+import { launchIntegration, selectedWriter, serverStages, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
+import { cellPath, fairCredits, lastServerCell, ratedTape, serverCellSeconds, serverRates } from "./server-workload.ts";
 
 type Card = { source: string; age: Age; writer: Writer; jvm?: JvmProfile; toy: boolean; campaign: string; out: string; forecast: string;
-  prepared?: boolean; failure?: string };
+  prepared?: boolean; txJvm?: JvmProfile; separateWal?: boolean; failure?: string };
 type Observation = Awaited<ReturnType<typeof adoptedArm>>;
 const tag = (x: unknown) => (typeof x === "number" && Number.isFinite(x)) ? String(Number(x.toFixed(3))) : "—";
 export function writeAdoptedCard(run: Card) {
   const file = (arm: string, name: string) => path.join(run.campaign, arm, name);
-  const comparison = "grouped/campaign/";
+  const comparison = "grouped/campaign/", defaultComparison = "server-default/campaign/";
+  const policy = launchProfile("server", { jvm: run.jvm, txJvm: run.txJvm });
+  const stages = serverStages(run.writer, policy, !!run.separateWal);
   const readArm = (arm: string, load: boolean, writer = run.writer) => {
     if (!fs.existsSync(file(arm, "arm.json"))) return [];
     const x: Observation = JSON.parse(fs.readFileSync(file(arm, "arm.json"), "utf8"));
@@ -33,43 +37,51 @@ export function writeAdoptedCard(run: Card) {
       // Rejected: subtracting the logical record instant and clamping a negative duration to zero.
       if (due !== undefined && Number.isFinite(entry.seen) && entry.seen >= due) feed.recordMs(entry.seen - due);
     }
-    return [{ ...x, dispatchToFeed: feed.summary(), tape: raw.tape }];
+    return [{ ...x, dispatchToFeed: feed.summary(), tape: raw.tape, writes: raw.writes }];
   };
   const [zero] = readArm("zero", false), [loaded] = readArm("loaded", true);
   const [grouped] = run.writer === "per-person-ordered" ? readArm(comparison + "loaded", true, "grouped") : [];
-  const arms = [zero, loaded, grouped].filter((arm) => arm !== undefined);
+  const [control] = run.toy || run.writer === "grouped" ? [] : readArm(defaultComparison + "loaded", true);
+  const arms = [zero, loaded, control, grouped].filter((arm) => arm !== undefined);
   const inputsFile = path.join(run.campaign, "input.json");
   const prepared = run.prepared === true;
   if (!run.toy && arms.length) assert(fs.existsSync(inputsFile));
   if (!run.toy && fs.existsSync(inputsFile)) {
     const input = JSON.parse(fs.readFileSync(inputsFile, "utf8"));
-    assert.deepEqual([input.source, input.age, input.writer, input.jvm], [run.source, run.age, run.writer, run.jvm]);
+    assert.deepEqual([input.source, input.age, input.writer, input.jvm, input.txJvm, input.separateWal, input.stages],
+      [run.source, run.age, run.writer, run.jvm, run.txJvm, !!run.separateWal, stages]);
     assert.equal(Boolean(input.pgdata), prepared);
-    for (const arm of arms) assert.equal(arm.seed.imageSha256, input.imagePin);
-    if (prepared || run.age === "1B") {
-      const stages = run.writer === "grouped" ? [[loaded, "loaded"]] as const
-        : [[zero, "zero"], [loaded, "loaded"], [grouped, comparison + "loaded"]] as const;
-      if (prepared) assert.equal(input.pgdata.length, stages.length);
-      let systemIdentifier: string | undefined;
-      for (const [i, [arm, dir]] of stages.entries()) {
-        if (!arm) continue;
-        if (prepared) {
-          const observed = JSON.parse(fs.readFileSync(file(dir, "pgdata.json"), "utf8"));
-          assert.deepEqual([observed.source, observed.slot, observed.attempt, observed.copy],
-            [run.source, arm.slot, arm.attempt, input.pgdata[i]]);
-          assert.equal(observed.liveFileId, observed.copy.device + ":" + observed.copy.inode);
-          assert.match(observed.container, /^[a-f0-9]{64}$/);
-          assert(Number.isSafeInteger(observed.at) && observed.at <= arm.startedAt);
-          assert.match(observed.systemIdentifier, /^[1-9][0-9]*$/);
-          systemIdentifier ??= observed.systemIdentifier;
-          assert.equal(observed.systemIdentifier, systemIdentifier);
-        }
-        if (run.age === "1B") {
-          const aged = JSON.parse(fs.readFileSync(file(dir, "aged-live-check.json"), "utf8"));
-          assert.deepEqual([aged.source, aged.slot, aged.attempt, aged.database, aged.logicalHead, aged.bundleSha],
-            [run.source, arm.slot, arm.attempt, arm.seed.database, arm.firstCut, input.agedBundle]);
-          assert(aged.records >= 1_000_000_000 && Date.parse(aged.observedAt) <= arm.startedAt);
-        }
+    if (prepared) assert.equal(input.pgdata.length, stages.length);
+    let systemIdentifier: string | undefined;
+    for (const [i, stage] of stages.entries()) {
+      const dir = stage.root + (stage.loaded ? "loaded" : "zero");
+      const arm = stage.name === "headline" ? (stage.loaded ? loaded : zero)
+        : stage.name === "server-default" ? control : run.writer === "grouped" ? loaded : grouped;
+      if (!arm) continue;
+      assert.equal(arm.seed.imageSha256, input.imagePin);
+      const launch = JSON.parse(fs.readFileSync(file(dir, "launch-check.json"), "utf8"));
+      assert.deepEqual([launch.source, launch.slot, launch.attempt, launch.policy, launch.separateWal],
+        [run.source, arm.slot, arm.attempt, stage.policy, stage.separateWal]);
+      assert(Number.isSafeInteger(launch.at) && launch.at <= arm.startedAt);
+      assert.deepEqual(launch.java, (arm.settings.java as { role: string; container: string }[])
+        .map(({ role, container }) => ({ role, container })));
+      if (prepared) {
+        const observed = JSON.parse(fs.readFileSync(file(dir, "pgdata.json"), "utf8"));
+        assert.deepEqual([observed.source, observed.slot, observed.attempt, observed.copy],
+          [run.source, arm.slot, arm.attempt, input.pgdata[i]]);
+        assert.equal(observed.liveFileId, observed.copy.device + ":" + observed.copy.inode);
+        assert.match(observed.container, /^[a-f0-9]{64}$/);
+        assert.equal(observed.container, launch.postgres);
+        assert(Number.isSafeInteger(observed.at) && observed.at <= arm.startedAt);
+        assert.match(observed.systemIdentifier, /^[1-9][0-9]*$/);
+        systemIdentifier ??= observed.systemIdentifier;
+        assert.equal(observed.systemIdentifier, systemIdentifier);
+      }
+      if (run.age === "1B") {
+        const aged = JSON.parse(fs.readFileSync(file(dir, "aged-live-check.json"), "utf8"));
+        assert.deepEqual([aged.source, aged.slot, aged.attempt, aged.database, aged.logicalHead, aged.bundleSha],
+          [run.source, arm.slot, arm.attempt, arm.seed.database, arm.firstCut, input.agedBundle]);
+        assert(aged.records >= 1_000_000_000 && Date.parse(aged.observedAt) <= arm.startedAt);
       }
     }
   }
@@ -78,11 +90,11 @@ export function writeAdoptedCard(run: Card) {
     assert.deepEqual([zero.seed.originalCut, zero.tapeSha256], [loaded.seed.originalCut, loaded.tapeSha256]);
     if (!run.toy) assert.equal(zero.seed.imageSha256, loaded.seed.imageSha256);
   }
-  if (loaded && grouped) {
+  for (const other of [control, grouped]) if (loaded && other) {
     assert.deepEqual([loaded.firstCut, loaded.seed.originalCut, loaded.tapeSha256],
-      [grouped.firstCut, grouped.seed.originalCut, grouped.tapeSha256]);
-    assert.notEqual(grouped.attempt, loaded.attempt);
-    if (!run.toy) assert.equal(loaded.seed.imageSha256, grouped.seed.imageSha256);
+      [other.firstCut, other.seed.originalCut, other.tapeSha256]);
+    assert.notEqual(other.attempt, loaded.attempt);
+    if (!run.toy) assert.equal(loaded.seed.imageSha256, other.seed.imageSha256);
   }
   // [DX-V01] Why: a shortened tape can report exact observations while the original bars remain unqualified.
   // Rejected: awarding PASS from field-only reads, incomplete commit bands, or one verified arm.
@@ -99,7 +111,7 @@ export function writeAdoptedCard(run: Card) {
     reading: `${a.writer} p50 ${tag(a.p2.latency.p50Ms)} ms, p99 ${tag(a.p2.latency.p99Ms)} ms (${a.p2.receipts}/${a.p2.offered} receipts)`,
     samples: `${a.writer} ${a.p2.receipts}`, link: evidence(dir),
   }] : []);
-  if (commit.length) rows.set("P2", [commit.map((c) => c.reading).join(" · ") + ". This tape edits 1–3 fields.",
+  if (run.toy && commit.length) rows.set("P2", [commit.map((c) => c.reading).join(" · ") + ". This tape edits 1–3 fields.",
     diagnostic, commit.map((c) => c.samples).join(" · "), commit.map((c) => c.link).join(" · ")]);
   if (loaded && run.writer === "per-person-ordered") {
     const phases = loaded.p1.map((p) => `L${p.seats} ${tag(p.goodput)}/s, p99 ${tag(p.read.p99Ms)} ms, ${p.errors} errors`).join("; ");
@@ -134,7 +146,8 @@ export function writeAdoptedCard(run: Card) {
         evidence("loaded") + (prepared ? " · [empty stack](campaign/loaded/p7-empty/residency.json)" : "")]);
     }
   }
-  const [neighbors] = readArm("p6-235", true);
+  const lastQuiet = run.toy ? "p6-235" : lastServerCell;
+  const [neighbors] = readArm(lastQuiet, true);
   const quietRows = (prefix: string, writer: Writer, prior?: Observation) => {
     const [alone] = readArm(prefix + "p6-alone", false, writer), [loaded] = readArm(prefix + "p6-235", true, writer);
     if (!alone?.p6 || !loaded?.p6) return;
@@ -166,8 +179,72 @@ export function writeAdoptedCard(run: Card) {
   const groupedQuiet = run.writer === "per-person-ordered" ? quietRows(comparison, "grouped", grouped) : undefined;
   if (primaryQuiet && groupedQuiet) assert.deepEqual(primaryQuiet.tape, groupedQuiet.tape);
   const quiet = [primaryQuiet, groupedQuiet].filter((arm) => arm !== undefined);
-  if (quiet.length) rows.set("P6", [quiet.map((a) => a.reading).join(" · ") + " Durable effects, Publish and import overlap remain open.",
+  if (run.toy && quiet.length) rows.set("P6", [quiet.map((a) => a.reading).join(" · ") + " Durable effects, Publish and import overlap remain open.",
     diagnostic, quiet.map((a) => a.samples).join(" · "), quiet.map((a) => a.link).join(" · ")]);
+  const completedRates = new Set<string>();
+  if (!run.toy) {
+    const commits = [], pairs = [];
+    const treatments = run.writer === "grouped" ? [[loaded, "", "grouped"]] as const
+      : [[loaded, "", "headline"], [control, defaultComparison, "server default"], [grouped, comparison, "grouped"]] as const;
+    for (const [anchor, prefix, name] of treatments) {
+      if (!anchor) continue;
+      let prior = anchor;
+      for (const rate of serverRates) {
+        const soloPath = prefix + cellPath({rate, loaded: false}), loadPath = prefix + cellPath({rate, loaded: true});
+        const [solo] = readArm(soloPath, false, anchor.writer), [busy] = readArm(loadPath, true, anchor.writer);
+        if (!solo) break;
+        checkRated(solo, prior, rate, false);
+        if (!busy) break;
+        checkRated(busy, solo, rate, true);
+        const a = solo.p6!, b = busy.p6!;
+        assert.equal(a.read.planned, b.read.planned);
+        const ratio = (base: number | null, loaded: number | null) => tag(base && loaded !== null ? loaded / base : null);
+        commits.push({
+          reading: `${name} ${rate}/s: ${tag(b.acknowledgedInWindow / b.durationSeconds)}/s in window, ${b.totalReceipts}/${b.totalOffers} durable, ${b.expired} expired, p50/p99 ${tag(busy.p2.latency.p50Ms)}/${tag(busy.p2.latency.p99Ms)} ms`,
+          samples: `${name} ${rate}: ${b.totalReceipts}`, link: evidence(loadPath),
+        });
+        pairs.push({
+          reading: `${name} ${rate}/s: quiet commit p99 ${tag(a.commit.p99Ms)} → ${tag(b.commit.p99Ms)} ms (${ratio(a.commit.p99Ms, b.commit.p99Ms)}×), read ${ratio(a.read.read.p99Ms, b.read.read.p99Ms)}×, feed ${ratio(a.feed.p99Ms, b.feed.p99Ms)}×, ${a.read.errors + b.read.errors} read errors or misses`,
+          samples: `${name} ${rate}: ${a.commit.count}/${b.commit.count} commits, ${a.read.read.count}/${b.read.read.count} reads, ${a.feed.count}/${b.feed.count} feed`,
+          link: evidence(soloPath) + " · " + evidence(loadPath),
+        });
+        prior = busy;
+        if (rate === serverRates.at(-1)) completedRates.add(name);
+      }
+    }
+    if (commits.length) rows.set("P2", [commits.map(c => c.reading).join(" · ") + ". Completed-only field saves. Full size bands and retry coverage remain open.",
+      diagnostic, commits.map(c => c.samples).join(" · "), commits.map(c => c.link).join(" · ")]);
+    if (pairs.length) rows.set("P6", [pairs.map(c => c.reading).join(" · ") + ". Each side offers 315 quiet saves. Publish, import and durable-effect coverage remain open.",
+      diagnostic, pairs.map(c => c.samples).join(" · "), pairs.map(c => c.link).join(" · ")]);
+  }
+
+  function checkRated(arm: NonNullable<typeof loaded>, previous: Observation, rate: (typeof serverRates)[number], loadedCell: boolean) {
+    const cell = { rate, loaded: loadedCell };
+    assert.deepEqual([arm.attempt, arm.slot, arm.seed.database, arm.seed.imageSha256, arm.firstCut],
+      [previous.attempt, previous.slot, previous.seed.database, previous.seed.imageSha256, previous.terminal]);
+    assert(arm.startedAt >= previous.endedAt && arm.p6);
+    assert.deepEqual(arm.p6.quietCell, cell);
+    assert.deepEqual(arm.tape, ratedTape(100_000, cell));
+    assert.equal(arm.settings.fairCredits, fairCredits);
+    assert.equal(arm.p6.durationSeconds, serverCellSeconds);
+    const turns = new Map<number, number>();
+    for (const row of arm.writes as { dispatched?: number; fairTurn?: number }[]) {
+      if (row.dispatched === undefined) continue;
+      assert(Number.isSafeInteger(row.fairTurn) && row.fairTurn! > 0);
+      const count = (turns.get(row.fairTurn!) ?? 0) + 1;
+      assert(count <= fairCredits);
+      turns.set(row.fairTurn!, count);
+    }
+    const receipts = arm.writes.filter((r: any) => r.receipt);
+    assert.equal(arm.p6.totalOffers, arm.tape.length);
+    assert.equal(arm.p6.totalReceipts, receipts.length);
+    const latency = new Histogram();
+    for (const row of receipts) latency.recordMs(row.end - row.due);
+    assert.deepEqual(arm.p2.latency, latency.summary());
+    assert.equal(arm.p6.acknowledgedInWindow, arm.writes.filter((r: any) =>
+      r.receipt && r.status === "acked" && r.end < arm.start + serverCellSeconds * 1000).length);
+    assert.equal(arm.p6.expired, arm.writes.filter((r: any) => r.status === "expired-before-dispatch").length);
+  }
   let orderedWitnessStart: number | undefined;
   const importPath = file("p8", "result.json");
   if (fs.existsSync(importPath)) {
@@ -190,7 +267,7 @@ export function writeAdoptedCard(run: Card) {
     const archive = file(prefix + "mixed-ids.json", "");
     if (!fs.existsSync(archive)) return;
     const record: MixedIds = JSON.parse(fs.readFileSync(archive, "utf8"));
-    const [last] = readArm(prefix + "p6-235", true, writer);
+    const [last] = readArm(prefix + lastQuiet, true, writer);
     assert(last);
     assert.deepEqual([record.source, record.writer, record.slot, record.attempt, record.database, record.imageSha256, record.cut],
       [run.source, writer, last.slot, last.attempt, last.seed.database, last.seed.imageSha256, last.seed.originalCut]);
@@ -217,9 +294,11 @@ export function writeAdoptedCard(run: Card) {
     }
     return record;
   };
-  const mixed = run.writer === "per-person-ordered" && orderedWitnessStart !== undefined
+  const mixed = run.writer === "per-person-ordered" && orderedWitnessStart !== undefined &&
+    (run.toy || completedRates.has("headline"))
     ? readMixed("", run.writer, orderedWitnessStart) : undefined;
-  const groupedMixed = run.writer === "per-person-ordered" ? readMixed(comparison, "grouped") : undefined;
+  const groupedMixed = run.writer === "per-person-ordered" && (run.toy || completedRates.has("grouped"))
+    ? readMixed(comparison, "grouped") : undefined;
   if (mixed && groupedMixed) {
     // [DX-V01] Why: the raw typed value and valid range must agree at each matching semantic cut.
     // Rejected: comparing just hashes from unbound fixtures or equating logical clocks across different histories.
@@ -233,13 +312,14 @@ export function writeAdoptedCard(run: Card) {
   const field = ["P5", "P6", "P7", "P8", "P9"];
   const gaps: Record<string, string> = {
     P5: "The held SCALE1 roster has no Publish window in this run. [Server 1 measured Publish under load](https://github.com/OnboardedInc/Triplex-db-experiments/blob/530b88a6e9f7c9ca0593628bdbd7689707c87408/lab/experiments/EXP-DX1/bm1/HANDOFF.md#joined-publish-at-100000).",
-    P6: "No verified same-scope alone and 235-save quiet-account pair from this attempt.",
+    P6: "No verified matched quiet-account pair from this attempt.",
     P9: "A qualifying fault or move measurement needs two servers. [Separate HASYNC1 fault and move procedure](https://github.com/OnboardedInc/Triplex-db-experiments/blob/a0c47480f/lab/experiments/EXP-DX1/hasync1/SCORECARD.md). The one-host rehearsal uses its own physical checkpoint.",
     P8: "No verified fixed-pace import arm from this attempt.",
   };
   const text = base.trimEnd().split("\n").map((line) => {
     if (line === "## Run settings") return (run.writer === "per-person-ordered"
-      ? "Per-person-ordered runs the full adopted workload. Grouped repeats P2 and P6 only."
+      ? run.toy ? "Per-person-ordered runs the full adopted workload. Grouped repeats P2 and P6 only."
+        : "The headline ordered profile runs the full workload. Default ordered and grouped repeat P2 and P6 only."
       : "Grouped comparison only. This attempt covers P2 and P6.") + "\n\n" + line;
     if (line === "Population ten accounts of four deep people.") {
       if (run.toy) return "Population ten deep accounts in one SCALE1 toy database.";
@@ -259,7 +339,7 @@ export function writeAdoptedCard(run: Card) {
   const settings = {
     ...selectedWriter(run.writer),
     writerIntegration,
-    ...(run.toy ? {} : { jvm: run.jvm, physicalJvm: physicalJvm(run.jvm), postgresStartup: prepared ? "prepared PGDATA" : "logical dump" }),
+    ...(run.toy ? {} : { launchIntegration, stages, offeredRates: serverRates, fairCredits, postgresStartup: prepared ? "prepared PGDATA" : "logical dump" }),
     ...(run.writer === "per-person-ordered" ? { comparison: selectedWriter("grouped") } : {}),
     armReadbacks: arms.map((a) => a.settings),
   };

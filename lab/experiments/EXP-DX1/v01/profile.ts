@@ -1,4 +1,5 @@
-import { launchOptions } from "../jvm1/launch.mjs";
+import { launchProfile } from "../jvm1/launch.mjs";
+export { defaultJvm, jvmProfiles, type JvmProfile } from "../jvm1/launch.mjs";
 
 export const writers = ["per-person-ordered", "grouped"] as const;
 export type Writer = (typeof writers)[number];
@@ -6,13 +7,12 @@ export function isWriter(value: unknown): value is Writer {
   return writers.some((writer) => writer === value);
 }
 export const writerIntegration = "f25a46e02591a1c6b6a9495f7f2cce20249571f0";
+export const launchIntegration = "57580241dc4020f9ab7590839c72c00356fcedee";
 export const defaultWriter: Writer = "per-person-ordered";
-export const jvmProfiles = ["j21-g1", "j25-g1", "j25-zgc"] as const;
-export type JvmProfile = (typeof jvmProfiles)[number];
-export const defaultJvm: JvmProfile = "j21-g1";
 export type Age = "fresh" | "1B";
-export const budget = { adoptionAndP1to4: 105, P6: 20, P7: 10, P8: 25, comparison: 60, cleanup: 15 };
+export const budget = { adoptionAndP1to4: 105, P6: 25, P7: 10, P8: 25, comparison: 120, cleanup: 15 };
 export const ceiling = Object.values(budget).reduce((a, b) => a + b, 0);
+export const comparisonMinutes = budget.comparison / 2;
 export const ladder = [1, 4, 16, 64, 256, 1024];
 // [DX-V01] Why: freeze a bounded replica of the existing SCALE1 fixed field tape for both reader arms.
 // Rejected: extending the tape on the faster side or judging short samples as the full P1/P2 qualification.
@@ -49,23 +49,21 @@ export function selectedWriter(writer: Writer) {
   } as const;
 }
 
-export function physicalJvm(profile: JvmProfile = defaultJvm) {
-  const major = profile === "j21-g1" ? "21" : "25";
-  const selectedCollector = profile === "j25-zgc" ? "-XX:+UseZGC" : "-XX:+UseG1GC";
-  const peer = "-Xms256m -Xmx3g -Ddatomic.objectCacheMax=1536m";
-  const override = profile === "j25-zgc" ? " " + selectedCollector : "";
-  // [DX-INT1] Why: apply the selected collector to all roles in the same prepared image family.
-  // Rejected: selecting the Java version while silently retaining a different gateway collector.
-  return {
-    major, selectedCollector,
-    tx: launchOptions("tx", 1, "-Xms256m -Xmx5g" + override),
-    "gw-w": launchOptions("gw-w", 1, peer + override),
-    "gw-r": launchOptions("gw-r", 2, peer + override),
-  };
+export function serverStages(writer: Writer, headline: ReturnType<typeof launchProfile>, separateWal: boolean) {
+  const control = launchProfile("server");
+  const grouped = { root: writer === "grouped" ? "" : "grouped/campaign/", writer: "grouped", loaded: true,
+    comparison: true, name: "grouped", policy: control, separateWal: false } as const;
+  if (writer === "grouped") return [grouped];
+  return [
+    { root: "", writer, loaded: false, comparison: false, name: "headline", policy: headline, separateWal },
+    { root: "", writer, loaded: true, comparison: false, name: "headline", policy: headline, separateWal },
+    { root: "server-default/campaign/", writer, loaded: true, comparison: true, name: "server-default", policy: control, separateWal: false },
+    grouped,
+  ] as const;
 }
 
-export function stackOptions(writer: Writer, attempt: string, profile: JvmProfile = defaultJvm) {
-  const settings = selectedWriter(writer), jvm = physicalJvm(profile);
+export function stackOptions(writer: Writer, attempt: string) {
+  const settings = selectedWriter(writer);
   return {
     DX_GROUP_COMMIT: settings.TX2_GROUP_COMMIT,
     DX_GROUP_STAGE_CLOCK: "1", DX_W1_EXTRA: "1",
@@ -77,7 +75,5 @@ export function stackOptions(writer: Writer, attempt: string, profile: JvmProfil
     TX2_SUBJECT_NUMERIC_OWNER: settings.TX2_SUBJECT_NUMERIC_OWNER, TX2_SUBJECT_ORDERED_IDS: settings.TX2_SUBJECT_ORDERED_IDS,
     TX2_SUBJECT_PREFETCH: settings.TX2_SUBJECT_PREFETCH,
     DX_WRITE_OPTIONS_ATTEMPT: attempt, DX_V01_IMPORT_TIMING: "1",
-    DX_JAVA: jvm.major, DX_TX_JAVA_OPTS: jvm.tx,
-    DX_GW_WRITE_JAVA_OPTS: jvm["gw-w"], DX_GW_READ_JAVA_OPTS: jvm["gw-r"],
   };
 }

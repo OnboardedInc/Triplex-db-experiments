@@ -154,7 +154,7 @@ INPUT_LEASE
     "$(node "$runtime_tool" image)" -m triplex.gateway.layout-input-audit "/inputs/$(basename "$2")"
   exit
 fi
-tx=6 pg=6 gw_w=5,6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume=
+tx=6 pg=6 gw_w=5,6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume= wal_dir=
 if [[ ${DX_INT1_GATEWAYS:-original} == demand ]]; then
   # [DX-THIN1] Why: apply the same peer limits on ordinary stack launches and the physical queue. Rejected: tuning only the Mac diagnostic container.
   demand_peer='-Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps'
@@ -180,6 +180,7 @@ while (($#)); do
   case "$1" in
     --no-publish) publish=false; shift; continue;;
     --clone-seed) seed_volume=$2;;
+    --wal-directory) wal_dir=$2;;
     --cpus-tx) tx=$2;; --cpus-pg) pg=$2;;
     --cpus-gw-write) gw_w=$2;; --cpus-gw-read) gw_r=$2;;
     --pg-memory) pg_mem=$2;; --tx-memory) tx_mem=$2;; --gw-memory) gw_mem=$2;;
@@ -255,19 +256,26 @@ stack_labels=()
 tx_java=$(node "$jvm_tool" tx "$tx" "$tx_java")
 gw_w_java=$(node "$jvm_tool" gw-w "$gw_w" "$gw_w_java")
 gw_r_java=$(node "$jvm_tool" gw-r "$gw_r" "$gw_r_java")
-java_major=$(node "$runtime_tool" major)
-java_base=$(node "$runtime_tool" base)
-datomic_image=$(node "$runtime_tool" image)
-java_compatibility=$(node "$runtime_tool" compatibility)
-tx_java="$tx_java $java_compatibility"
-gw_w_java="$gw_w_java $java_compatibility"
-gw_r_java="$gw_r_java $java_compatibility"
+peer_major=$(node "$runtime_tool" major)
+tx_major=${DX_TX_JAVA:-$peer_major}
+peer_image=$(node "$runtime_tool" image)
+tx_image=$peer_image
+tx_receipt=${DX_DATOMIC_IMAGE_RECEIPT:-}
+if [[ $tx_major != "$peer_major" ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && -z $tx_receipt ]]
+  tx_image=$(DX_JAVA="$tx_major" node "$runtime_tool" image)
+fi
+tx_java="$tx_java $(DX_JAVA="$tx_major" node "$runtime_tool" compatibility)"
+peer_compatibility=$(node "$runtime_tool" compatibility)
+gw_w_java="$gw_w_java $peer_compatibility"
+gw_r_java="$gw_r_java $peer_compatibility"
 if [[ -n ${DX_TAIL1_ATTEMPT:-} ]]; then
   # [DX-TAIL1] Why: bind the owned stack to the reservation and reject name reuse at cleanup.
   # Rejected: inferring ownership from the slot number alone.
   [[ $prefix == tx2-dxscale1-tail1-* && $DX_TAIL1_ATTEMPT =~ ^[a-f0-9-]{36}$ ]]
   [[ $DX_TAIL1_IMAGE =~ ^sha256:[a-f0-9]{64}$ ]]
-  datomic_image=$DX_TAIL1_IMAGE
+  [[ $tx_major == "$peer_major" ]]
+  tx_image=$DX_TAIL1_IMAGE peer_image=$DX_TAIL1_IMAGE
   [[ ${DX_TAIL1_HOLDER:-DX-TAIL1} =~ ^DX-(TAIL1|JVM1|THIN1)$ ]]
   stack_labels=(--label "tx2.holder=${DX_TAIL1_HOLDER:-DX-TAIL1}" --label "tx2.tail1=$DX_TAIL1_ATTEMPT")
 fi
@@ -280,33 +288,76 @@ if [[ ${DX_IDLE_TCP:-default} != default ]]; then
 fi
 evidence=${DX_STACK_EVIDENCE:-$DX_EVIDENCE_ROOT/DX-H1}
 attempt="$evidence/$prefix"
+if [[ -n ${DX_LAUNCH_PROFILE:-} ]]; then
+  mkdir -p "$evidence"
+  mkdir "$attempt"
+fi
 mkdir -p "$attempt/sql" "$attempt/config" "$attempt/trace/raw"
 [[ ! -e "$attempt/stack.json" ]] || { echo "use a fresh prefix; evidence already exists" >&2; exit 2; }
 # [DX-BM1] Why: separate only WAL from the root data volume under the same durability settings.
 # Rejected: relocating the database or changing synchronous_commit (either would confound the WAL A/B).
 wal_mount=()
 if [[ -n ${DX_BM1_WAL_MOUNT:-} ]]; then
+  [[ -z $wal_dir ]]
   [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxt1-bm1-[a-z0-9]+-wal-ssd$ && $publish == false && -z $seed_volume ]]
   [[ $(findmnt -nro SOURCE --mountpoint "$DX_BM1_WAL_MOUNT") == /dev/nvme1n1 ]]
   wal_dir=$DX_BM1_WAL_MOUNT/$prefix
   mkdir -m 0700 "$wal_dir"
+fi
+if [[ -n $wal_dir ]]; then
+  # [DX-INT1] Why: verify the empty owned bind and the actual Docker data filesystem before creating a service.
+  # Rejected: inferring WAL separation from the directory name or from the host root filesystem.
+  [[ ${DX_BARE_METAL:-0} == 1 && -z $seed_volume ]] || exit 2
+  if [[ -n $pgdata ]]; then
+    data_location=$pgdata
+  else
+    docker_root=$(docker info --format '{{.DockerRootDir}}') || exit 2
+    data_location=$docker_root/volumes
+  fi
+  wal_real=$(realpath -e "$wal_dir") || exit 2
+  wal_device=$(stat -c %d "$wal_real") || exit 2
+  data_device=$(stat -c %d "$data_location") || exit 2
+  wal_entries=$(find "$wal_real" -mindepth 1 -maxdepth 1 -print -quit) || exit 2
+  if [[ $wal_dir != "$wal_real" || $wal_dir == *[,\"$'\n']* || ! -d $wal_dir || -n $wal_entries ||
+        ! $wal_device =~ ^[0-9]+$ || ! $data_device =~ ^[0-9]+$ || $wal_device == "$data_device" ]]; then
+    echo 'WAL needs an empty directory on a filesystem distinct from PostgreSQL data' >&2
+    exit 2
+  fi
   wal_mount=(-e POSTGRES_INITDB_WALDIR=/wal --mount "type=bind,source=$wal_dir,target=/wal")
 fi
 for role in pg tx gw-w gw-r extract; do
   if docker container inspect "$prefix-$role" >/dev/null 2>&1; then echo "container already exists: $prefix-$role" >&2; exit 2; fi
 done
-# [DX-JVM1] Why: bind all roles to one immutable image and the promised Temurin release before starting them.
+# [DX-JVM1] Why: bind each role to an immutable image and the promised Temurin release before starting it.
 # Rejected: trusting a mutable tag or filling a Java 25 run from the Java 21 image.
-image_meta=$(docker image inspect --format '{{.Id}}|{{index .Config.Labels "tx2.java-major"}}|{{index .Config.Labels "tx2.java-base"}}|{{index .Config.Labels "tx2.build-inputs-sha256"}}' "$datomic_image")
-IFS='|' read -r datomic_image image_major image_base image_hash <<< "$image_meta"
-[[ $datomic_image =~ ^sha256:[a-f0-9]{64}$ ]]
-if [[ $java_major != 21 || -n $image_major && $image_major != '<no value>' ]]; then
-  [[ $image_major == "$java_major" && $image_base == "$java_base" ]]
+pin_image() {
+  local major=$1 tag=$2 file=$3 meta id image_major image_base image_hash
+  meta=$(docker image inspect --format '{{.Id}}|{{index .Config.Labels "tx2.java-major"}}|{{index .Config.Labels "tx2.java-base"}}|{{index .Config.Labels "tx2.build-inputs-sha256"}}' "$tag")
+  IFS='|' read -r id image_major image_base image_hash <<< "$meta"
+  [[ $id =~ ^sha256:[a-f0-9]{64}$ ]] || return 1
+  if [[ $major != 21 || -n $image_major && $image_major != '<no value>' ]]; then
+    [[ $image_major == "$major" && $image_base == "$(DX_JAVA="$major" node "$runtime_tool" base)" ]] || return 1
+  fi
+  if [[ -n ${DX_DATOMIC_IMAGE_RECEIPT:-} ]]; then
+    [[ $image_hash == "$(DX_JAVA="$major" node "$runtime_tool" input-hash)" ]] || return 1
+  fi
+  printf '%s\n' "$meta" > "$file"
+  printf '%s' "$id"
+}
+datomic_image=$(pin_image "$peer_major" "$peer_image" "$attempt/config/java-image.txt")
+if [[ $tx_major == "$peer_major" && $tx_image == "$peer_image" ]]; then
+  tx_image=$datomic_image
+  cp "$attempt/config/java-image.txt" "$attempt/config/tx-java-image.txt"
+else
+  tx_image=$(pin_image "$tx_major" "$tx_image" "$attempt/config/tx-java-image.txt")
 fi
-if [[ -n ${DX_DATOMIC_IMAGE_RECEIPT:-} ]]; then
-  [[ $image_hash == "$(node "$runtime_tool" input-hash)" ]]
+if [[ -n ${DX_LAUNCH_PROFILE:-} ]]; then
+  printf 'Profile=%s WAL=%s\nPostgreSQL cores=%s memory=%s settings=%s\nDatomic object-cache=%s memory-index=%s/%s\nTransactor Java=%s image=%s cores=%s memory=%s flags=%s\nWrite gateway Java=%s image=%s cores=%s memory=%s flags=%s\nRead gateway Java=%s image=%s cores=%s memory=%s flags=%s\n' \
+    "$DX_LAUNCH_PROFILE" "${wal_dir:-PGDATA}" "$pg" "$pg_mem" "$pg_settings" "$object_cache" "$index_threshold" "$index_max" \
+    "$tx_major" "$tx_image" "$tx" "$tx_mem" "$tx_java" \
+    "$peer_major" "$datomic_image" "$gw_w" "${DX_GW_WRITE_MEMORY:-$gw_mem}" "$gw_w_java" \
+    "$peer_major" "$datomic_image" "$gw_r" "${DX_GW_READ_MEMORY:-$gw_mem}" "$gw_r_java"
 fi
-printf '%s\n' "$image_meta" > "$attempt/config/java-image.txt"
 docker image inspect postgres:17-alpine >/dev/null
 if [[ -z "$src" ]]; then
   src="$evidence/stage/$prefix"
@@ -451,10 +502,15 @@ if [[ -n $pgdata ]]; then
   pg_entry="$repo/lab/experiments/EXP-DX1/v01/pgdata-entrypoint.sh"
   docker create "${pg_args[@]}" --mount "type=bind,source=$pgdata,target=$pg_target" \
     --mount "type=bind,source=$pg_entry,target=/scorecard-pgdata-entrypoint.sh,readonly" \
+    ${wal_mount[@]+"${wal_mount[@]}"} \
     -e "DX_V01_PGDATA_FILE_ID=$DX_V01_PGDATA_FILE_ID" -e "DX_V01_PGDATA_CONTROL_SHA=$DX_V01_PGDATA_CONTROL_SHA" \
     --entrypoint /bin/sh postgres:17-alpine /scorecard-pgdata-entrypoint.sh postgres $pg_settings >/dev/null
   mount=$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/var/lib/postgresql/data"}}{{.Type}}|{{.Source}}|{{.RW}}{{end}}{{end}}' "$prefix-pg")
   [[ $mount == "bind|$pgdata|true" ]]
+  if [[ -n $wal_dir ]]; then
+    wal_bind=$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/wal"}}{{.Type}}|{{.Source}}|{{.RW}}{{end}}{{end}}' "$prefix-pg")
+    [[ $wal_bind == "bind|$wal_dir|true" ]]
+  fi
   docker start "$prefix-pg" >/dev/null
 elif [[ $seed_volume == bm1-pristine-* ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $seed_volume == bm1-pristine-"${DX_BM1_PRISTINE_BATCH:?}" ]] || exit 2
@@ -519,6 +575,8 @@ done
 [[ $ready == true ]] || { echo "Postgres TCP startup timed out" >&2; exit 1; }
 if [[ ${DX_BM1_WAL_AB:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxt1-bm1-[a-z0-9]+-wal-(root|ssd)$ ]]
+fi
+if [[ -n $wal_dir || ${DX_BM1_WAL_AB:-0} == 1 ]]; then
   docker exec "$prefix-pg" sh -ceu '
     data=$(psql -X -Atq -U postgres -c "SHOW data_directory")
     wal=$(readlink -f "$data/pg_wal")
@@ -565,7 +623,7 @@ assert digest.hexdigest() == expected, 'Restored dump bytes differ from the seal
 print(digest.hexdigest())
 PG_RESTORE
 fi
-tx_start=(--entrypoint /opt/datomic/bin/transactor "$datomic_image" /dxh1/sql.properties)
+tx_start=(--entrypoint /opt/datomic/bin/transactor "$tx_image" /dxh1/sql.properties)
 prep_tx=()
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   if [[ -n ${DX_PREP1_DUMP:-} ]]; then
@@ -577,7 +635,7 @@ if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   cp "$repo/lab/experiments/EXP-DX1/prep1/observe.clj" "$attempt/config/prep1-observe.clj"
   prep_tx=(-e "PREP1_ATTEMPT=${DX_WRITE_OPTIONS_ATTEMPT:?}" -e PREP1_MODE=subject-server)
   trace_tx_java+=' -Xlog:gc*,safepoint*=debug:file=/trace/prep1-gc-tx.log:time,uptimemillis,level,tags,pid,tid:filecount=0'
-  tx_start=(--entrypoint /bin/bash "$datomic_image" -c
+  tx_start=(--entrypoint /bin/bash "$tx_image" -c
     'exec java -server $JAVA_OPTS -cp "$(bin/classpath)" clojure.main -i /dxh1/prep1-observe.clj -m datomic.launcher /dxh1/sql.properties')
 fi
 docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
@@ -704,7 +762,9 @@ for role in "${gateway_roles[@]}"; do
 done
 for role in tx gw-w gw-r; do
   bash "$repo/lab/experiments/EXP-DX1/jvm1/readback.sh" "$prefix-$role" "$attempt/config" "$role"
-  grep -F "Version: $(node "$runtime_tool" version)" "$attempt/config/$role.gc-init.txt" >/dev/null
+  major=$peer_major
+  [[ $role != tx ]] || major=$tx_major
+  grep -F "Version: $(DX_JAVA="$major" node "$runtime_tool" version)" "$attempt/config/$role.gc-init.txt" >/dev/null
 done
 if [[ $native_readback == 1 ]]; then
   for role in tx gw-w gw-r; do

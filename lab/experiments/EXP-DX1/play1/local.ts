@@ -253,6 +253,7 @@ export async function local(
     deep?: string;
     daily?: string;
     writer?: string;
+    "server-startup"?: boolean;
   },
   config: Config,
   manager: Manager,
@@ -268,6 +269,8 @@ export async function local(
   assert(options.out, "Pass a fresh evidence directory");
   assert(options.writer === undefined || (options.portable && !options.snapshot &&
     (options.writer === "grouped" || options.writer === "subject")));
+  const serverStartup = options["server-startup"] === true;
+  assert(!serverStartup || (options.portable && !options.browser && !options.snapshot && !options.writer && !options.deep));
   const writerProbe = options.writer === undefined ? undefined : {
     ordered: options.writer === "subject", attempt: randomUUID(),
   };
@@ -297,6 +300,8 @@ export async function local(
     "lab/config/datomic/Dockerfile",
     "examples/playground/service.ts",
     "examples/playground/stack.ts",
+    "lab/experiments/EXP-DX1/jvm1/launch.mjs",
+    "lab/config/datomic/runtime.mjs",
     "examples/playground/live-gate.ts",
     "examples/playground/people.json.gz",
     "examples/playground/fixture.ts",
@@ -369,6 +374,7 @@ export async function local(
       directory: join(out, "instance"),
       fixture,
       writerProbe,
+      reducedServerStartup: serverStartup,
       apiPort: 0,
       ports: { write: 0, read: 0 },
       signal: shutdown.signal,
@@ -383,6 +389,28 @@ export async function local(
       network: [],
       image: [],
     });
+    if (serverStartup) {
+      const stack = new Stack(stackOptions);
+      const head = git(["rev-parse", "HEAD"]);
+      assert.equal(git(["status", "--porcelain"]), "", "Startup check needs committed source");
+      try {
+        const ready = await stack.start(false);
+        const launch = await stack.launchWitness();
+        const owner = readOwner(slot);
+        assert.equal(owner?.holder, holder);
+        assert.equal(owner?.pid, process.pid);
+        assert.equal(git(["rev-parse", "HEAD"]), head);
+        assert.equal(git(["status", "--porcelain"]), "");
+        await writeFile(join(out, "launch.json"), JSON.stringify({
+          head, prefix, holder, slot: slot.slot, sourceHashes, gatewaySource: ready.source,
+          timingClass: "Mac diagnostic startup", ...launch,
+        }, null, 2) + "\n", { flag: "wx" });
+      } finally {
+        const clean = await stack.stop();
+        await writeFile(join(out, "cleanup.json"), JSON.stringify(clean) + "\n", { flag: "wx" });
+      }
+      return;
+    }
     if (options.snapshot) {
       const sourceHead = git(["rev-parse", "HEAD"]);
       assert.equal(git(["status", "--porcelain"]), "", "Snapshot gates need committed source");

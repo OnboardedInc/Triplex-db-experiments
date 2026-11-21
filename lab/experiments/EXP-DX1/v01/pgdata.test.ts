@@ -7,7 +7,8 @@ import { inspectPgdata, pgdataArgs } from "./pgdata.ts";
 
 test("the paired and grouped-only commands require a copy for each scheduled arm", () => {
   assert.deepEqual(pgdataArgs([], undefined, false), []);
-  assert.deepEqual(pgdataArgs(["zero", "loaded", "grouped"], "sealed", false), ["sealed", "zero", "loaded", "grouped"]);
+  assert.deepEqual(pgdataArgs(["zero", "loaded", "default", "grouped"], "sealed", false),
+    ["sealed", "zero", "loaded", "default", "grouped"]);
   assert.deepEqual(pgdataArgs(["grouped"], "sealed", true), ["sealed", "grouped"]);
   assert.throws(() => pgdataArgs(["loaded"], "sealed", false));
   assert.throws(() => pgdataArgs(["loaded"], undefined, true));

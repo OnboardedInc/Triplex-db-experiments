@@ -1,39 +1,71 @@
-# Run the v0.1 scorecard
+# Run the v0.1 server scorecard
 
-Server 2 should run `65ad0997c1e077b5ca3e0dc5b2f8304f6f65f51c` from `exp/DX-V01-scorecard`. It combines the paired scorecard with INT1's writer pin `f25a46e02591a1c6b6a9495f7f2cce20249571f0`.
+Server 2 should run `RUNNER_COMMIT` from `exp/DX-V01-scorecard`. It incorporates INT1 launch pin `57580241dc4020f9ab7590839c72c00356fcedee`.
 
-Use the dedicated bare-metal Ubuntu 24.04 host. Each command holds the native campaign lock and starts one disposable PostgreSQL copy per arm. All ten accounts remain in one Datomic database. The prior full-size logical COPY projected at least 76 minutes per restore. [SCALE1 handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/78beafe13/lab/experiments/EXP-DX1/scale1/HANDOFF.md)
+## Campaign and forecast
 
-## Build from the published commit
+| Order | Purpose | Writer | JVM | PostgreSQL WAL |
+| --- | --- | --- | --- | --- |
+| 1 | Headline, no P1 readers | Ordered per-person | Transactor Java 25 ZGC, both gateways Java 21 G1 | Second NVMe |
+| 2 | Headline, loaded, all available rows | Ordered per-person | Same as arm 1 | Second NVMe |
+| 3 | Default server comparison, P2 and P6 | Ordered per-person | Java 21 G1 on all roles | Data NVMe |
+| 4 | Grouped comparison, P2 and P6 | Grouped | Java 21 G1 on all roles | Data device |
+
+The shared INT1 server profile gives the transactor three cores, a 24 GiB heap and 16 GiB object cache. It gives the writer four cores and the reader one core. PostgreSQL uses an 8 GiB cap and 2 GiB in shared buffers. Synchronous commit, fsync and full page writes stay on.
+
+The cap is **300 minutes and USD 5.45 per age** at USD 1.09/hour, including 15 minutes for cleanup. The other allowances are 105 minutes for the headline initial pair and P1–P4, 25 for P6, 10 for P7, 25 for P8 and up to 60 each for the two comparisons. The two comparison cards report P2 and P6 after the same six-minute field-write prelude, without the P1 reader ladder. The clock starts with copies already prepared. Build, aging and staging are separate. Allow staging time from four times the measured source allocation and the host's copy rate.
+
+P2 and P6 use the same loaded windows at 50, 235, 394 and 620 offered saves/s. Each has a matched 90-second quiet-only window, with 315 quiet saves on each side. The nine busy accounts use deterministic bands of 1,900 people each. The 50/s window visits only as many people as it has offers. Every server window uses six shared fair-turn credits. The field tape edits one or two fields on a single task per person, so the result does not settle the contract's larger P2 size bands or P6's Publish and import overlap.
+
+## Predictions written before the run
+
+These are engineering estimates for the weekend campaign. The full-size anchors are 345.80/s and 365.13/s with ZGC and separate WAL at 394 and 620, against 361.51/s and 351.19/s on default G1. The tuned headline quiet p99s were 65.99 → 221.10 ms at 394 and 25.18 → 57.67 ms at 620. The smaller combined run stored all 57,240 offers and had a quiet ratio of 1.36× at 235 and 4.28× at 394. The small run is a lower-pressure reference. The two headline changes are one combined treatment. [Full-size observations](https://github.com/OnboardedInc/Triplex-db-experiments/blob/64a76c50d/lab/experiments/EXP-DX1/scale1/SCALE-TUNE.md) · [Smaller combined run](https://github.com/OnboardedInc/Triplex-db-experiments/blob/31f33faf8/lab/experiments/EXP-DX1/bm1/APPEND-TAIL-READING.md)
+
+| Row | Fresh prediction | 1B prediction |
+| --- | --- | --- |
+| P1 pinned reads | Zero wrong pinned values. Read p99 rises at the top of the ladder on the one-core reader. The writer's 3.5/s reference should still make progress. | Same exactness. Higher tail latency and earlier goodput flattening if the larger persisted index displaces hot pages. |
+| P2 commits | Both ordered arms near 50/s at 50 and roughly 220–235/s at 235. At 394 expect 325–365/s headline and 340–380/s default, with expiries. At 620 expect 330–380/s headline and 320–365/s default. Grouped is expected to reach roughly its earlier 147–182/s ceiling at 235 and above. | Low rates should be close to fresh. At 394 and 620 predict flat to 15% lower delivery for the same configuration and wider tails if larger indexes add SQL reads per save. That bound is an estimate, with no aged calibration behind it. |
+| P3 ordered feed | Expect exact order, positions and changes for acknowledged saves. Queueing and polling may widen the loaded tail. Crash resume remains outside the run. | Same exactness. The larger journal can make a cold open slower. Resuming near the same logical head should limit steady-state change after the peer is warm. |
+| P4 current pulls | Expect exact projected fields and faster warm reads than first pulls. The full multi-hop latency bar remains open. | Warm current fields should stay closer to fresh than first pulls. More persisted pages can increase the first index fetch. |
+| P5 Publish | NOT MEASURED. The separate Server 1 Publish campaign is the source for under-load evidence. | NOT MEASURED. The held 1B cluster receives no Publish window here. [Publish campaign](https://github.com/OnboardedInc/Triplex-db-experiments/blob/530b88a6e9f7c9ca0593628bdbd7689707c87408/lab/experiments/EXP-DX1/bm1/HANDOFF.md#joined-publish-at-100000) |
+| P6 quiet account | Expect the light 50/s cell to have the least inflation. Expect most 235–620/s headline ratios to exceed 1.25×. At 394 the full-size prior is about 3.35× headline versus 2.77× default. At 620 the prior is 2.29× versus 4.53×. Grouped likely has the longest busy tails. | Expect higher solo and loaded p99 with a colder index. A higher solo denominator may lower the ratio without improving the loaded p99. The 1.25× bar remains unlikely at the busy rates. |
+| P7 idle cost | First pulls should be slower than warmed current pulls. The empty and populated JVM census will give a footprint difference at this one population. | Expect slower cold first pulls and more occupied pages at the same cap. The two snapshots leave the activity-matched memory slope open. |
+| P8 paced import | Expect exact imported bytes and more live lag during the overlap. The fixed pace can reveal whether the 3,000 facts/s target is plausible. | Expect less spare capacity and a higher live tail from larger indexes and cache competition. Exact receipts and replay should agree. |
+| P9 loss and move | NOT MEASURED. The next live test needs two hosts. | NOT MEASURED. The scheduled two-server procedure will provide this evidence. [Failover procedure](https://github.com/OnboardedInc/Triplex-db-experiments/blob/a0c47480f/lab/experiments/EXP-DX1/hasync1/SCORECARD.md) |
+| Journal, receipts and mixed IDs | Expect exact feed-to-receipt matches for stored saves, both retired IDs refused, and matching historical values across writers. | Expect the same results after the AGE1 identity confirms the restored cut. This row is independent of the latency estimate. |
+| Erasure and acknowledged-write loss | Both remain unmeasured by this campaign. | Both remain unmeasured by this campaign. |
+
+## Build
+
+Use a clean checkout of `exp/DX-V01-scorecard` at the runner commit on the dedicated bare-metal Ubuntu host.
 
 ```bash
-COMMIT=65ad0997c1e077b5ca3e0dc5b2f8304f6f65f51c
-BUILD=/var/tmp/triplex-v01-pgdata-build
+COMMIT=RUNNER_COMMIT
+BUILD=/var/tmp/triplex-v01-server-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
 cd "$BUILD/repository"
 ```
 
-Run the build from a clean checkout at `$COMMIT`. Startup verifies built package bytes and pinned local image identities.
+## Prepare the copies
 
-## Held inputs and copies
-
-- For both ages, set `SCALE1_IMAGE` to the original directory with its published tag and `image.json` and `transfer.json`. Set `SCALE1_TRANSFER_SHA256` from the recorded transfer digest and `SCALE1_IMAGE_SHA256` from the transfer's `summaryFiles["image.json"]`. The fresh seal contains 1,000,000 people in ten accounts, 162,456,470 business facts and logical cut 87,002.
-- For fresh, `FRESH_PGDATA_SOURCE` points to the held stopped PostgreSQL 17 data directory. For 1B, `AGED_PGDATA_SOURCE` points to the held stopped PostgreSQL directory at the exact AGE1 sealed cut. Supply the corresponding `AGE_HANDOFF_JSON` and recorded `AGE_HANDOFF_SHA256` plus `AGE_JAVA` and `AGE_DATOMIC_HOME` for the AGE1 fresh-peer check. `AGE_DATOMIC_HOME` is the Datomic 1.0.7745 distribution root. The handoff binds the original SCALE1 image, native identity, exact cuts and replay ledger.
-- Make three independent file-level copies from the stopped source for the chosen age using the SCALE1 driver's copy step. Give the command the directories that directly contain `PG_VERSION` in the order **ordered zero-reader, ordered loaded, grouped loaded**. Preserve ownership and permissions. Each copy needs its own files and an internal `pg_wal`. The runner reads each source's control bytes, mounts only private copies and marks each copy used before startup. Keep the source stopped and exclusive. Refresh copies for a rerun. The runner stops its stacks and leaves the scratch directories for the driver to remove.
-- The held fresh data directory is about **115 GB per copy**, or about **345 GB for three**. Size each 1B copy from the stopped aged directory's actual allocated bytes, for example with `du -sB1 "$AGED_PGDATA_SOURCE"`. Reserve three times that size and at least **16 GiB free on each filesystem hosting a copy** after staging. The copies can span filesystems. Keep at least 5 GiB free on the evidence filesystem.
-- Use absolute paths. Each `--out` directory must be new. Each command runs per-person-ordered in full and repeats P2 and P6 with grouped on its own copy. Both use Java 21 with G1.
+- Both ages need `SCALE1_IMAGE` with the published directory name and `image.json` and `transfer.json`. Use the recorded `SCALE1_TRANSFER_SHA256` and the transfer's `summaryFiles["image.json"]` as `SCALE1_IMAGE_SHA256`. The original seal covers 1,000,000 people, 162,456,470 business facts and logical cut 87,002.
+- Set `FRESH_PGDATA_SOURCE` or `AGED_PGDATA_SOURCE` to the held stopped PG17 directory. The 1B source must match `AGE_HANDOFF_JSON` and `AGE_HANDOFF_SHA256` at the exact AGE1 sealed cut. Supply `AGE_JAVA` and `AGE_DATOMIC_HOME`, the Datomic 1.0.7745 distribution root, for the fresh-peer check.
+- Stage four independent file-level copies per age, in the order above. Preserve ownership and permissions. Each path must directly contain `PG_VERSION` and a private internal `pg_wal`. The first three copies must be on the same data NVMe. Put grouped on the same data NVMe when space allows and record a different placement if necessary. The scorecard records each copy's device.
+- Each fresh copy needs about **115 GB**, or **460 GB for four**, plus the held source. Size each 1B copy from the stopped cluster's actual allocation with `du -sB1 "$AGED_PGDATA_SOURCE"`. Leave **16 GiB free on each copy filesystem** after staging and 5 GiB on the evidence filesystem.
+- Use `SCORECARD_WAL_DIRECTORY` on the second NVMe. Give it room for one copied `pg_wal` at a time and 16 GiB of additional working space. The command creates and cleans one private child for each headline arm. The source stays stopped and unmounted. After cleanup discard the four consumed scratch directories and use fresh copies for any retry.
 
 ## Fresh
 
 ```bash
 sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
   "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --commit "$COMMIT" \
-  --age fresh --writer per-person-ordered --jvm j21-g1 \
+  --age fresh --writer per-person-ordered --jvm j21-g1 --tx-jvm j25-zgc \
+  --wal-directory "$SCORECARD_WAL_DIRECTORY" \
   --seed "$SCALE1_IMAGE" --image-sha256 "$SCALE1_IMAGE_SHA256" \
-  --transfer-sha256 "$SCALE1_TRANSFER_SHA256" \
-  --pgdata-source "$FRESH_PGDATA_SOURCE" \
-  --pgdata "$FRESH_PGDATA_ZERO" --pgdata "$FRESH_PGDATA_LOADED" --pgdata "$FRESH_PGDATA_GROUPED" \
+  --transfer-sha256 "$SCALE1_TRANSFER_SHA256" --pgdata-source "$FRESH_PGDATA_SOURCE" \
+  --pgdata "$FRESH_PGDATA_ZERO" --pgdata "$FRESH_PGDATA_LOADED" \
+  --pgdata "$FRESH_PGDATA_DEFAULT" --pgdata "$FRESH_PGDATA_GROUPED" \
   --out /var/tmp/triplex-v01-fresh
 ```
 
@@ -43,21 +75,21 @@ sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.j
 sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
   "AGE_JAVA=$AGE_JAVA" "AGE_DATOMIC_HOME=$AGE_DATOMIC_HOME" \
   "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --commit "$COMMIT" \
-  --age 1B --writer per-person-ordered --jvm j21-g1 \
+  --age 1B --writer per-person-ordered --jvm j21-g1 --tx-jvm j25-zgc \
+  --wal-directory "$SCORECARD_WAL_DIRECTORY" \
   --seed "$SCALE1_IMAGE" --image-sha256 "$SCALE1_IMAGE_SHA256" \
   --transfer-sha256 "$SCALE1_TRANSFER_SHA256" \
   --aged-bundle "$AGE_HANDOFF_JSON" --aged-bundle-sha256 "$AGE_HANDOFF_SHA256" \
   --pgdata-source "$AGED_PGDATA_SOURCE" \
-  --pgdata "$AGED_PGDATA_ZERO" --pgdata "$AGED_PGDATA_LOADED" --pgdata "$AGED_PGDATA_GROUPED" \
+  --pgdata "$AGED_PGDATA_ZERO" --pgdata "$AGED_PGDATA_LOADED" \
+  --pgdata "$AGED_PGDATA_DEFAULT" --pgdata "$AGED_PGDATA_GROUPED" \
   --out /var/tmp/triplex-v01-1B
 ```
 
-For the existing logical dump path, omit all PGDATA options and retain `seed.pgdump` in the original SCALE1 image. For 1B also give `--aged-dump` and `--aged-dump-sha256`. The large-seed commands above need only the SCALE1 metadata and the stopped clusters.
+Use absolute paths and new output directories. Omitting the PGDATA and WAL flags selects the existing logical-dump path. That path also needs the original `seed.pgdump` and, for 1B, `--aged-dump` and `--aged-dump-sha256`.
 
-## Forecast and output
+## Early check and evidence
 
-The cap is **235 minutes and up to USD 4.27 for fresh**, and **235 minutes and up to USD 4.27 for 1B**, at USD 1.09/hour. Those budgets begin with prepared copies in place. Allow separately for build, AGE1 aging and three file-level copies at the host's measured copy rate. Full-size file-copy time has yet to be measured by this scorecard.
+The first arm verifies distinct actual NVMe devices before taking a writable copy. Before sending any offers it checks the live PostgreSQL mount, SQL durability readback, actual JVM flags and versions, cgroup placement and memory, transactor cache, and the restored scope. A refused launch prints an early stop message and retains `campaign.log`. The remaining arms repeat the applicable checks on their own copies.
 
-The 105-minute primary slice covers startup, identity checks and P1–P4. The remaining allowances are 20 minutes for P6, 10 for the P7 census, 25 for import, 60 for the grouped comparison and 15 for cleanup. P7 starts an empty reference stack in its own slot. It uses the same writer and JVM settings and closes before the prepared loaded arm starts.
-
-Keep the full output directory with `SCORECARD-v0.1.md`, each arm's `pgdata.json` and the 1B `aged-live-check.json` files. The card records both writers and the mixed-format retired-ID witness. P5 and P9 link to the separate Publish and two-server failover procedures. The optional Java 25 ZGC comparison remains outside the schedule.
+Keep the whole output directory. It contains `SCORECARD-v0.1.md`, `campaign.log`, the launch and JVM readbacks, PGDATA identity, WAL placement, rate tapes, receipts and cleanup inventory. The 1B output also includes the AGE1 live identity checks. P5 and P9 remain linked to their separate campaigns.

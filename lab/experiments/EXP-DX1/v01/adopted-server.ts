@@ -3,22 +3,24 @@ import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { scaleHost, startScaleStack } from "../scale1/bench.ts";
+import { readScaleJvms, scaleHost, startScaleStack } from "../scale1/bench.ts";
+import { launchProfile } from "../jvm1/launch.mjs";
 import { restoreDump } from "../scale1/seed-image.ts";
 import { adoptedArm, jsonFile, quietPair, recordMixedIds, type Residency } from "./adopted.ts";
 import { nativeMetrics } from "../thin1/native-metrics.ts";
 import { openScaleSeal, hex } from "./adopt.ts";
-import { budget, isWriter, jvmProfiles, physicalJvm, stackOptions, type Age, type JvmProfile } from "./profile.ts";
+import { budget, comparisonMinutes, isWriter, jvmProfiles, serverStages, stackOptions, type JvmProfile } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
-import { claimPgdata, inspectPgdata, pgdataArgs, pgdataTarget } from "./pgdata.ts";
+import { claimPgdata, inspectPgdata, pgdataArgs, pgdataTarget, preflightWal } from "./pgdata.ts";
 
 const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, jvm, agedFile, agedPin,
-  agedDump, agedDumpPin, pgdataSource, ...pgdataPaths] = process.argv.slice(2);
+  agedDump, agedDumpPin, txJvm, walDirectory, pgdataSource, ...pgdataPaths] = process.argv.slice(2);
 assert(source && campaign && seedDir && imagePin && transferPin);
 assert(age === "fresh" || age === "1B");
 assert(isWriter(requestedWriter));
-assert(jvmProfiles.includes(jvm as JvmProfile));
-const jvmProfile = jvm as JvmProfile;
+assert(jvmProfiles.includes(jvm as JvmProfile) && jvmProfiles.includes(txJvm as JvmProfile));
+const policy = launchProfile("server", { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile });
+const stages = serverStages(requestedWriter, policy, !!walDirectory);
 const end = Number(deadlineText);
 assert(Number.isSafeInteger(end) && end > Date.now());
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"), queue = fs.statSync(`/proc/${process.ppid}/fd/9`);
@@ -28,46 +30,59 @@ process.env.DX_BARE_METAL = "1";
 verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 pgdataArgs(pgdataPaths, pgdataSource, requestedWriter === "grouped");
 const copies = pgdataSource ? inspectPgdata(pgdataSource, pgdataPaths, fs.realpathSync(path.dirname(campaign))) : [];
+let wal: ReturnType<typeof preflightWal> | undefined;
+if (walDirectory) {
+  try {
+    assert(copies.length === 4 && requestedWriter === "per-person-ordered", "Separate WAL needs the four prepared scorecard copies");
+    wal = preflightWal(walDirectory, copies.slice(0, 3).map(copy => copy.dir));
+  } catch (error) {
+    launchFailure(error);
+  }
+}
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !copies.length);
 const expected = age === "1B" ? openAged(agedFile, agedPin) : undefined;
 if (!copies.length && expected) {
   assert(agedDump && agedDumpPin && /^[a-f0-9]{64}$/.test(agedDumpPin));
 }
 fs.mkdirSync(campaign);
-jsonFile(path.join(campaign, "input.json"), { source, age, writer: requestedWriter, jvm: jvmProfile, imagePin, transferPin, originalScope: seed.scope,
+jsonFile(path.join(campaign, "input.json"), { source, age, writer: requestedWriter, jvm, imagePin, transferPin, originalScope: seed.scope,
+  txJvm, separateWal: !!wal, stages, wal,
   agedBundle: expected?.pin, agedDump: agedDumpPin || undefined, pgdata: copies.length ? copies : undefined });
 let stopping = false;
 const stop = () => { stopping = true; };
 process.on("SIGTERM", stop);
 process.on("SIGINT", stop);
-const orderedEnd = Date.now() + budget.adoptionAndP1to4 * 60_000;
-const groupedDir = path.join(campaign, "grouped", "campaign");
-if (requestedWriter === "per-person-ordered") fs.mkdirSync(groupedDir, { recursive: true });
-const stages = requestedWriter === "per-person-ordered"
-  ? [{writer: requestedWriter, loaded: false}, {writer: requestedWriter, loaded: true}, {writer: "grouped", loaded: true}] as const
-  : [{writer: requestedWriter, loaded: true}] as const;
+const minute = 60_000;
+const pairedEnd = Math.min(end - budget.comparison * minute, Date.now() + budget.adoptionAndP1to4 * minute);
+const headlineEnd = Math.min(end - budget.comparison * minute,
+  Date.now() + (budget.adoptionAndP1to4 + budget.P6 + budget.P7 + budget.P8) * minute);
 let systemIdentifier: string | undefined;
-for (const [i, { writer, loaded }] of stages.entries()) {
-  const stageEnd = writer === "per-person-ordered" ? orderedEnd : Math.min(end, Date.now() + budget.comparison * 60_000);
-  assert(!stopping && Date.now() + 10 * 60_000 < stageEnd);
-  const root = writer === "grouped" && requestedWriter !== writer ? groupedDir : campaign;
+for (const [i, stage] of stages.entries()) {
+  const { writer, loaded, comparison } = stage;
+  const stageEnd = comparison ? Math.min(end, Date.now() + comparisonMinutes * minute)
+    : loaded ? Math.min(headlineEnd, pairedEnd + budget.P7 * minute) : pairedEnd;
+  assert(!stopping && Date.now() + 10 * minute < stageEnd, "Insufficient time to start the next scorecard arm");
+  const root = path.join(campaign, stage.root);
+  fs.mkdirSync(root, { recursive: true });
   const out = path.join(root, loaded ? "loaded" : "zero");
   fs.mkdirSync(out);
   const copy = copies[i];
   const floor = copy ? 5 : age === "1B" ? 320 : 240;
   assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the scorecard arm");
-  const emptyReference = copy && loaded && writer === "per-person-ordered"
-    ? await emptyResidency(path.join(out, "p7-empty"), jvmProfile) : undefined;
+  const emptyReference = copy && loaded && !comparison
+    ? await emptyResidency(path.join(out, "p7-empty"), stage.policy) : undefined;
   const attempt = randomUUID();
   const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
   beginStack(out, slot, attempt);
+  let verifiedLaunch = false;
   try {
-    const options = stackOptions(writer, attempt, jvmProfile);
+    const options = stackOptions(writer, attempt);
     if (copy) claimPgdata(copy, source, slot, attempt);
     const { engines } = startScaleStack(out, slot, source, writer === "grouped", copy ? {
       ...options, DX_V01_PGDATA: copy.dir, DX_V01_PGDATA_CONTROL_SHA: copy.controlSha256,
       DX_V01_PGDATA_FILE_ID: copy.device + ":" + copy.inode,
-    } : options);
+    } : options, { policy: stage.policy, walDirectory: stage.separateWal ? wal!.wal : undefined });
+    const java = checkLaunch(out, slot, attempt, engines, stage);
     const residency = () => stackResidency(slot, engines);
     let empty = emptyReference;
     if (copy) {
@@ -84,28 +99,34 @@ for (const [i, { writer, loaded }] of stages.entries()) {
       assert.equal(liveCluster[1], systemIdentifier, "Prepared arms must share the sealed PostgreSQL system identifier");
       jsonFile(path.join(out, "pgdata.json"), { source, slot, attempt, at: Date.now(), container, copy, liveFileId, systemIdentifier });
     } else {
-      if (writer === "per-person-ordered") empty = await residency();
+      if (!comparison) empty = await residency();
       await restoreDump(expected ? agedDump! : seed.dump, expected ? agedDumpPin! : seed.image.sha256, slot, engines,
         Math.min(stageEnd - 10 * 60_000, Date.now() + 42 * 60_000));
     }
     const write = `http://${engines["gw-w"]!.address}:8080`;
     const read = `http://${engines["gw-r"]!.address}:8080`;
-    const jw = await readJvm(engines, jvmProfile);
+    const jw = copy ? java : readScaleJvms(path.join(out, "restored-jvm"), engines, stage.policy);
     const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
     assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
     const head = expected ? await verifyAged(expected, out, slot, attempt, engines.pg!.address) : seed.scope.cut;
     assert(!stopping && Date.now() + 8 * 60_000 < stageEnd);
+    verifiedLaunch = true;
+    console.log(`[DX-V01] Verified live server startup for ${stage.name}/${loaded ? "loaded" : "zero"} before offers`);
     const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency };
-    const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head);
+    const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head, undefined, comparison);
     if (loaded && !stopping) {
-      const cut = await quietPair(root, source, peer, seed, writer, false, arm.terminal);
+      const quietEnd = comparison ? stageEnd : Math.min(headlineEnd - budget.P8 * minute, Date.now() + budget.P6 * minute);
+      const cut = await quietPair(root, source, peer, seed, writer, false, arm.terminal, quietEnd);
       let after = cut;
-      if (!stopping && writer === "per-person-ordered") {
+      if (!stopping && !comparison) {
         const { runImport } = await import("./import-arm.ts");
         after = runImport(root, source, peer, seed, writer, false, cut);
       }
-      if (!stopping) await recordMixedIds(root, source, peer, seed, writer, after);
+      if (!stopping && stage.name !== "server-default") await recordMixedIds(root, source, peer, seed, writer, after);
     }
+  } catch (error) {
+    if (!verifiedLaunch) launchFailure(error);
+    throw error;
   } finally {
     scaleHost.clean(out, slot);
   }
@@ -126,14 +147,14 @@ async function stackResidency(slot: string, engines: ReturnType<typeof startScal
   return observed.roles as Residency;
 }
 
-async function emptyResidency(out: string, profile: JvmProfile) {
+async function emptyResidency(out: string, policy: ReturnType<typeof launchProfile>) {
   fs.mkdirSync(out);
   const attempt = randomUUID();
   const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
   beginStack(out, slot, attempt);
   try {
-    const { engines } = startScaleStack(out, slot, source, false, stackOptions("per-person-ordered", attempt, profile));
-    const java = await readJvm(engines, profile);
+    const { engines } = startScaleStack(out, slot, source, false, stackOptions("per-person-ordered", attempt), { policy });
+    const java = readScaleJvms(path.join(out, "live-jvm"), engines, policy);
     const roles = await stackResidency(slot, engines);
     jsonFile(path.join(out, "residency.json"), { source, attempt, slot, at: Date.now(), java, roles });
     return roles;
@@ -176,17 +197,36 @@ async function verifyAged(expected: ReturnType<typeof openAged>, out: string, sl
   }
 }
 
-async function readJvm(engines: Record<string, { id: string }>, profile: JvmProfile) {
-  const expected = physicalJvm(profile);
-  const result = [];
-  for (const role of ["tx", "gw-w", "gw-r"]) {
-    const id = engines[role]!.id;
-    const args = execFileSync("docker", ["exec", id, "sh", "-ec",
-      'java -version 2>&1; for p in /proc/[0-9]*; do [ "$(cat "$p/comm" 2>/dev/null)" = java ] || continue; tr "\\000" "\\n" < "$p/cmdline" | grep -E "^(-X|-Ddatomic[.]|-Dlogback[.]|--enable-native-access|--sun-misc)" ; done'],
-    { encoding: "utf8", timeout: 10000 });
-    assert(args.includes('version "' + expected.major + "."));
-    assert(args.trim().split("\n").includes(expected.selectedCollector));
-    result.push({ role, container: id, observed: args.trim().split("\n") });
+function launchFailure(error: unknown): never {
+  const detail = error instanceof Error ? error.message.split("\n")[0] : String(error);
+  console.error("[DX-V01] Early launch check stopped before offers. " + detail);
+  throw error;
+}
+
+function checkLaunch(out: string, slot: string, attempt: string, engines: ReturnType<typeof startScaleStack>["engines"],
+  stage: ReturnType<typeof serverStages>[number]) {
+  const java = readScaleJvms(path.join(out, "live-jvm"), engines, stage.policy);
+  for (const { role, container, process } of java) {
+    const expected = stage.policy[role];
+    assert(process.split("\n").includes("memory.max=" + expected.memoryMiB * 2 ** 20), "Live JVM memory limit differs for " + role);
+    const cpuSet = (list: string) => list.split(",").flatMap((interval) => {
+      assert(/^\d+(?:-\d+)?$/.test(interval));
+      const [lo, hi = lo] = interval.split("-").map(Number);
+      return Array.from({ length: hi! - lo! + 1 }, (_, i) => lo! + i);
+    });
+    const effective = /^cpuset.cpus.effective=(.+)$/m.exec(process)?.[1];
+    assert(effective);
+    assert.deepEqual(cpuSet(effective), cpuSet(expected.cpus!), "Live JVM core placement differs for " + role);
+    if (expected.cacheMiB !== null) {
+      const pid = /^pid=(\d+)$/m.exec(process)?.[1];
+      assert(pid);
+      execFileSync("docker", ["exec", container, "sh", "-ceu",
+        'tr "\\000" "\\n" < "/proc/$1/cmdline" | grep -Fxq -- "$2"', "sh", pid, "-Ddatomic.objectCacheMax=" + expected.cacheMiB + "m"],
+        { timeout: 10000 });
+    }
   }
-  return result;
+  jsonFile(path.join(out, "launch-check.json"), { source, slot, attempt, at: Date.now(),
+    policy: stage.policy, separateWal: stage.separateWal, postgres: engines.pg!.id,
+    java: java.map(({ role, container }) => ({ role, container })) });
+  return java;
 }

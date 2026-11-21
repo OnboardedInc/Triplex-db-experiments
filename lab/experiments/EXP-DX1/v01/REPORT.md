@@ -7,6 +7,12 @@ The Mac copied and reopened PostgreSQL 17 and refused a wrong digest.
 The forecast is 235 minutes and USD 4.27 per age after copy preparation.
 Neither full-size campaign has been run by this worktree.
 
+## Part 6 server profile audit
+
+The scorecard merges the exact INT1 server launch pin. Its first real headline copy checks that the selected WAL directory and ordered data copies resolve to different whole NVMe devices. The prepared launcher keeps the original copied WAL until the second-device copy is flushed. It checks the exact live bind and prevents reuse of the consumed PGDATA. This mounts only private storage. The stock INT1 SQL readback checks current durability settings and the live WAL path. The JVM checks read the two pinned image families and final collector flags from each current serving boot, verify effective CPU sets and memory caps, and check the live transactor cache argument. The per-arm launch record binds exact source, slot, attempt, policy and live container identities. The renderer checks it and the sealed or aged identity before reading the new comparison metrics.
+
+The P2 and P6 evidence reader recomputes the exact fixed person tapes, archive hashes, in-window and expired counts, and completed-only latency. It checks fresh serial cut and attempt binding, the sealed database and the six-credit trace. These fields make no new performance verdict. The inherited mixed-ID PASS still requires exact refusal bytes, unchanged claims and paired typed reads tied to the launch, age, copy and sourced attempt. The native Mac PG17 WAL fixture records actual distinct filesystems, a same-device refusal and a durable write with synchronous commit. Its source, slot and attempt match the same diagnostic scorecard execution. No acceptance pin changed.
+
 ## Part 5 prepared PostgreSQL audit
 
 The prepared arm matches each private directory's PostgreSQL control bytes to the stopped source, checks for shared files, claims the copy once and verifies the exact bind mount before startup. The entrypoint rechecks the device and inode, control digest and clean shutdown state. The running SQL process confirms its data directory and the arms report the same PostgreSQL system identifier. This verifies storage attachment. SCALE1 still checks the sealed cut, manifest claim, loader receipt, roster and pinned field values from both gateways. For 1B the existing AGE1 fresh-peer check also compares its exact native identity, recorded cut, record count and replay ledger to the pinned bundle.

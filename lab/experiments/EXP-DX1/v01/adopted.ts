@@ -13,6 +13,7 @@ import { accounts, activeSubjects, cellSeconds, field, root, task, writeTape, ty
 import { play, resolveUncertain, type Row, type Save, type Sender } from "../scale1/decision/writes.ts";
 import { checkAdoptedPeer, hex, openScaleSeal, type AdoptedSeed } from "./adopt.ts";
 import { ladder, phaseSeconds, selectedWriter, type Writer } from "./profile.ts";
+import { cellPath, fairCredits, ratedTape, serverCells, serverCellSeconds, type ServerCell } from "./server-workload.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
 export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
@@ -86,14 +87,14 @@ async function quietReads(client: DatomicClient, seed: AdoptedSeed, start: numbe
     errors: sides.flatMap((r) => r.samples).filter((s) => s.error).length };
 }
 
-async function preload(client: DatomicClient, seed: AdoptedSeed, head: number, tape: Write[]) {
+async function preload(client: DatomicClient, reader: DatomicClient, seed: AdoptedSeed, head: number, tape: Write[]) {
   const senders: Sender[] = [];
   for (const a of accounts) {
     const entities = [...new Set(tape.filter((x) => x.account === a).map((x) => task(a, x.subject)))];
     const rows = new Map<string, Row[]>();
     for (let i = 0; i < entities.length; i += 64) {
       const batch = entities.slice(i, i + 64);
-      const found = await client.rows(seed.scope.db, {
+      const found = await reader.rows(seed.scope.db, {
         entityIds: batch, basis: { recordedPosition: head, validAt: SEED_VALID_FROM },
       });
       for (const entity of batch) rows.set(entity, [0, 1, 2].map((n) => {
@@ -167,7 +168,7 @@ async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: numbe
 }
 
 export async function adoptedArm(out: string, source: string, peer: Peer, seed: AdoptedSeed, writer: Writer,
-  loaded: boolean, toy: boolean, startHead = seed.scope.cut, quietCell?: QuietCell) {
+  loaded: boolean, toy: boolean, startHead = seed.scope.cut, quietCell?: QuietCell | ServerCell, comparison = false) {
   const begin = now();
   const writerClient = new DatomicClient(peer.write, 35000);
   const reader = new DatomicClient(peer.read, 35000);
@@ -197,21 +198,24 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       options.options.fastReply, options.options.livePriority, options.options.fieldCoalesce,
       options.options.stageClock, options.options.queueClock, options.options.maxMembers],
     [true, writer === "grouped", writer === "grouped", false, writer === "grouped", writer === "grouped", true, writer === "grouped", false, true, false, 32]);
-    const p7 = quietCell === undefined && writer !== "grouped" && peer.empty && peer.residency ? {
+    const p7 = quietCell === undefined && !comparison && writer !== "grouped" && peer.empty && peer.residency ? {
       empty: peer.empty, restored: await peer.residency(), people: seed.image.people * accounts.length,
       cold: await currentPull(reader, seed, seed.scope.cut, toy, true),
     } : undefined;
-    const seconds = toy ? 8 : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds(quietCell);
-    const tape = quietCell === undefined ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell, toy);
-    const senders = await preload(writerClient, seed, startHead, tape);
+    const rated = typeof quietCell === "object" ? quietCell : undefined;
+    const seconds = toy ? 8 : rated ? serverCellSeconds : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds("alone");
+    const tape = rated ? ratedTape(seed.image.people, rated) : quietCell === undefined
+      ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell as QuietCell, toy);
+    const senders = await preload(writerClient, rated ? reader : writerClient, seed, startHead, tape);
     const start = now() + 1200;
     const interval = seconds * 1000;
     feeding = feeder(journal, seed.scope.db, startHead, start + interval + 120_000, () => terminal, writer === "per-person-ordered");
     void feeding.catch(() => {});
-    const quiet = quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, quietCell, toy);
+    const quiet = quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, rated ? "alone" : quietCell as QuietCell, toy);
+    const credits = !toy || quietCell !== undefined ? fairCredits : 0;
     const [writes, phases, quietRead] = await Promise.all([
-      play(senders, tape, start, peer.attempt, false, writer === "per-person-ordered"),
-      quietCell === undefined ? readWindows(reader, seed, start, loaded, toy) : [], quiet,
+      play(senders, tape, start, peer.attempt, false, writer === "per-person-ordered", credits),
+      quietCell === undefined && !comparison ? readWindows(reader, seed, start, loaded, toy) : [], quiet,
     ]);
     await resolveUncertain(senders, writes.unresolved);
     const head = await writerClient.begin(seed.scope.db);
@@ -234,7 +238,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         ["committed", row.id, r.p, r.t, r.clock]);
       assert.equal(await writerClient.claim(seed.scope.db, row.id, r.p), r.tx);
     }
-    const pulls = loaded && writer !== "grouped" && quietCell === undefined ? await currentPull(reader, seed, terminal, toy) : undefined;
+    const pulls = loaded && !comparison && writer !== "grouped" && quietCell === undefined ? await currentPull(reader, seed, terminal, toy) : undefined;
     let p6;
     if (quietRead) {
       const writes = new Histogram(), delivered = new Histogram();
@@ -245,13 +249,15 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       }
       p6 = { quietCell, durationSeconds: seconds, quietOffers: tape.filter((e) => e.account === 0).length,
         totalOffers: tape.length, totalReceipts: saves.length, read: quietRead,
+        acknowledgedInWindow: saves.filter((s) => s.status === "acked" && s.end! < start + interval).length,
+        expired: writes.rows.filter((s) => s.status === "expired-before-dispatch").length,
         commit: writes.summary(), feed: delivered.summary() };
     }
     const evidence = path.join(out, "operations.json");
-    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, p6, p7 });
+    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, p6, p7 });
     const result = { source, writer, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
       loaded, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
-      observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java },
+      observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java, fairCredits: credits },
       p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
       p3: { entries: feed.length }, p4: pulls, p6, p7 };
     jsonFile(path.join(out, "arm.json"), result);
@@ -262,13 +268,14 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
 }
 
 export async function quietPair(out: string, source: string, peer: Peer, seed: AdoptedSeed, writer: Writer,
-  toy: boolean, startHead: number) {
-  const deadline = Date.now() + 30 * 60_000;
-  for (const cell of ["alone", 235] as const) {
-    assert(Date.now() + 120000 < deadline);
-    const folder = path.join(out, "p6-" + cell);
+  toy: boolean, startHead: number, deadline = Date.now() + 30 * 60_000) {
+  const cells = toy ? ["alone", 235] as const : serverCells;
+  for (const cell of cells) {
+    const rated = typeof cell === "object";
+    assert(Date.now() + 120000 < deadline, "Insufficient time for another matched quiet-account window");
+    const folder = path.join(out, rated ? cellPath(cell) : "p6-" + cell);
     fs.mkdirSync(folder);
-    const r = await adoptedArm(folder, source, peer, seed, writer, cell === 235, toy, startHead, cell);
+    const r = await adoptedArm(folder, source, peer, seed, writer, rated ? cell.loaded : cell === 235, toy, startHead, cell);
     startHead = r.terminal;
   }
   return startHead;
@@ -292,14 +299,17 @@ export async function adoptedToy(out: string, source: string, peer: Peer, writer
       const cut = await quietPair(out, source, peer, seed, writer, true, arm.terminal);
       const { runImport } = await import("./import-arm.ts");
       const after = writer === "per-person-ordered" ? runImport(out, source, peer, seed, writer, true, cut) : cut;
-      await recordMixedIds(out, source, peer, seed, writer, after);
+      await recordMixedIds(out, source, peer, seed, writer, after, true);
     }
   }
 }
 
 
-export async function recordMixedIds(out: string, source: string, peer: Peer, seed: AdoptedSeed, writer: Writer, start: number) {
-  const touched = new Set(activeSubjects(seed.image.people as Density)[accounts.at(-1)!]);
+export async function recordMixedIds(out: string, source: string, peer: Peer, seed: AdoptedSeed, writer: Writer, start: number, toy = false) {
+  const touched = new Set(accounts.slice(toy ? -1 : -2).flatMap(a => activeSubjects(seed.image.people as Density)[a]!));
+  if (!toy) for (const cell of serverCells.filter(c => c.loaded)) {
+    for (const offer of ratedTape(seed.image.people, cell)) if (offer.account >= 8) touched.add(offer.subject);
+  }
   let person = seed.image.people - 1;
   while (touched.has(person)) person--;
   assert(person >= 0);

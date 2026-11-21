@@ -8,8 +8,8 @@ export const pgdataGrowthGiB = 16;
 const used = ".triplex-v01-used";
 
 export function pgdataArgs(copies: string[], sealed: string | undefined, grouped: boolean) {
-  assert(sealed ? copies.length === (grouped ? 1 : 3) : copies.length === 0,
-    "Use --pgdata-source with three --pgdata directories (ordered zero, ordered loaded, grouped loaded), or one for grouped-only");
+  assert(sealed ? copies.length === (grouped ? 1 : 4) : copies.length === 0,
+    "Use --pgdata-source with four --pgdata directories (headline zero, headline loaded, ordered server default, grouped), or one for grouped-only");
   return sealed ? [sealed, ...copies] : [];
 }
 
@@ -38,6 +38,34 @@ function assertCopyTree(dir: string, dev: bigint) {
 
 function overlaps(a: string, b: string) {
   return a === b || a.startsWith(b + path.sep) || b.startsWith(a + path.sep);
+}
+
+function nvmeDevice(dir: string) {
+  const dev = fs.statSync(dir, { bigint: true }).dev;
+  // [DX-V01] Why: compare the whole Linux NVMe block device, not just its partition.
+  // Rejected: accepting two filesystems carved out of one NVMe namespace.
+  const major = ((dev >> 8n) & 0xfffn) | ((dev >> 32n) & 0xfffff000n);
+  const minor = (dev & 0xffn) | ((dev >> 12n) & 0xffffff00n);
+  let block: string;
+  try {
+    block = fs.realpathSync(`/sys/dev/block/${major}:${minor}`);
+  } catch {
+    throw new Error("Cannot resolve the NVMe backing device for the scorecard data or WAL directory");
+  }
+  if (fs.existsSync(path.join(block, "partition"))) block = path.dirname(block);
+  assert(/^nvme\d+n\d+$/.test(path.basename(block)), "Scorecard data and WAL must resolve to direct NVMe devices");
+  return block;
+}
+
+export function preflightWal(walDirectory: string, data: readonly string[]) {
+  const wal = fs.realpathSync(walDirectory);
+  assert(fs.statSync(wal).isDirectory() && !/[,\r\n"]/.test(wal), "WAL needs an existing bind directory");
+  const walDevice = nvmeDevice(wal);
+  const dataDevices = data.map(nvmeDevice);
+  assert(dataDevices.length >= 1 && dataDevices.every((device) => device === dataDevices[0]),
+    "Headline and default ordered PGDATA must use the same data NVMe");
+  assert.notEqual(walDevice, dataDevices[0], "WAL must be on a separate NVMe from the headline PostgreSQL data");
+  return { wal, walDevice: path.basename(walDevice), dataDevice: path.basename(dataDevices[0]!) };
 }
 
 export function inspectPgdata(source: string, paths: string[], output: string) {

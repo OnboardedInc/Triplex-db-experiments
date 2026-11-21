@@ -6,6 +6,7 @@ import {
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
 import { command } from "../../w1/group/workload.ts";
+import { FairTurns } from "../../prep1/fair-turns.ts";
 import {
   activeSubjects,
   expiryMs,
@@ -73,6 +74,7 @@ export type Save = {
     | "in-flight-limit"
     | "unresolved-predecessor"
     | "dispatch";
+  fairTurn?: number;
   pending?: number;
   queued?: number;
 };
@@ -169,7 +171,9 @@ export async function play(
   nonce: string,
   capture = false,
   orderedIds = false,
+  fairCredits = 0,
 ) {
+  const fair = fairCredits ? new FairTurns(scopes.length, fairCredits) : undefined;
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
     active = scopes.map(() => 0),
     owned = new Map<string, string>(),
@@ -205,9 +209,8 @@ export async function play(
     if (queuedTail.get(k) === row.id) queuedTail.delete(k);
   };
 
-  function pump(account: number) {
-    const q = queues[account]!,
-      sender = scopes[account]!;
+  function expireQueue(account: number) {
+    const q = queues[account]!;
     while (q[0] && now() >= q[0].row.due + expiryMs) {
       const { row } = q.shift()!;
       dequeue(row);
@@ -222,63 +225,89 @@ export async function play(
             : "dispatch";
       expire(row, cause);
     }
-    while (active[account]! < maxInflight && q.length) {
-      const next = q.findIndex((x) => !owned.has(key(x.row)) && !quarantined.has(key(x.row)));
-      if (next < 0) break;
-      const { e, row } = q.splice(next, 1)[0]!;
-      dequeue(row);
-      if (now() >= row.due + expiryMs) {
-        expire(row, "dispatch");
-        continue;
-      }
-      // [DX-INT1] Why: bind the identity block to this offered save through settling or recovering it.
-      // Rejected: minting a new block while looking up an uncertain receipt.
-      if (orderedIds) row.orderedToken = orderedSaveIdentity().token;
-      const prior = sender.rows.get(task(row.account, row.subject))!;
-      const candidate = expectedSave(row, e, prior);
-      if (orderedIds) candidate.input.sourceK = Math.max(sender.scope.cut, ...prior.map((field) => field.recorded_position));
-      owned.set(key(row), row.id);
-      active[account]!++;
-      row.dispatched = now();
-      row.status = "pending";
-      inFlightSends.set(row.id, row);
-      let p: Promise<void>;
-      p = sender.client
-        .transact(row.db, candidate.input)
-        .then((value) => {
-          row.end = now();
-          assert(row.sent !== undefined, "Acknowledged write has no matching socket sample");
-          const raw = value as Ack;
-          bind(row, raw, candidate);
-          const old = sender.rows.get(candidate.entity)!;
-          for (let i = 0; i < e.width; i++) {
-            old[i] = {
-              ...candidate.input.rows[i]!,
-              recorded_at: row.receipt!.clock,
-              recorded_position: row.receipt!.p,
-            };
-          }
-          row.status = "acked";
-        })
-        .catch((error) => {
-          row.end = now();
-          row.error = String(error);
-          if (error instanceof DatomicHttpError && error.code === "WriteBudgetExceeded") {
-            row.status = "refused";
-            return;
-          }
-          row.status = "uncertain";
-          unresolved.set(row, candidate);
-          quarantined.set(key(row), row.id);
-        })
-        .finally(() => {
-          inFlightSends.delete(row.id);
-          owned.delete(key(row));
-          active[account]!--;
-          pending.delete(p);
-          pump(account);
-        });
-      pending.add(p);
+  }
+
+  function next(account: number) {
+    return queues[account]!.findIndex(({ row }) => !owned.has(key(row)) && !quarantined.has(key(row)));
+  }
+  function dispatch(account: number, index: number, turn?: number) {
+    const sender = scopes[account]!;
+    const { e, row } = queues[account]!.splice(index, 1)[0]!;
+    dequeue(row);
+    if (now() >= row.due + expiryMs) {
+      expire(row, "dispatch");
+      fair?.resolved(true);
+      return;
+    }
+    row.fairTurn = turn;
+    // [DX-INT1] Why: bind the identity block to this offered save through settling or recovering it.
+    // Rejected: minting a new block while looking up an uncertain receipt.
+    if (orderedIds) row.orderedToken = orderedSaveIdentity().token;
+    const prior = sender.rows.get(task(row.account, row.subject))!;
+    const candidate = expectedSave(row, e, prior);
+    if (orderedIds) candidate.input.sourceK = Math.max(sender.scope.cut, ...prior.map((field) => field.recorded_position));
+    owned.set(key(row), row.id);
+    active[account]!++;
+    row.dispatched = now();
+    row.status = "pending";
+    inFlightSends.set(row.id, row);
+    let p: Promise<void>;
+    p = sender.client
+      .transact(row.db, candidate.input)
+      .then((value) => {
+        row.end = now();
+        assert(row.sent !== undefined, "Acknowledged write has no matching socket sample");
+        const raw = value as Ack;
+        bind(row, raw, candidate);
+        const old = sender.rows.get(candidate.entity)!;
+        for (let i = 0; i < e.width; i++) {
+          old[i] = {
+            ...candidate.input.rows[i]!,
+            recorded_at: row.receipt!.clock,
+            recorded_position: row.receipt!.p,
+          };
+        }
+        row.status = "acked";
+      })
+      .catch((error) => {
+        row.end = now();
+        row.error = String(error);
+        if (error instanceof DatomicHttpError && error.code === "WriteBudgetExceeded") {
+          row.status = "refused";
+          return;
+        }
+        row.status = "uncertain";
+        unresolved.set(row, candidate);
+        quarantined.set(key(row), row.id);
+      })
+      .finally(() => {
+        inFlightSends.delete(row.id);
+        owned.delete(key(row));
+        active[account]!--;
+        pending.delete(p);
+        fair?.resolved(row.status !== "uncertain");
+        pump(account);
+      });
+    pending.add(p);
+  }
+
+  function pump(account: number) {
+    if (fair) {
+      // [DX-V01] Why: arbitrate over the same eligible per-account heads with PREP1's six shared credits.
+      // Rejected: gating each gateway queue independently and allowing already queued neighbours to multiply a turn.
+      for (const a of scopes.keys()) expireQueue(a);
+      fair.dispatch(() => scopes.flatMap((_, a) => {
+        if (active[a]! >= maxInflight) return [];
+        const index = next(a);
+        return index === -1 ? [] : [{ account: a, index, due: queues[a]![index]!.row.due }];
+      }), (save, turn) => dispatch(save.account, save.index, turn));
+      return;
+    }
+    expireQueue(account);
+    while (active[account]! < maxInflight) {
+      const index = next(account);
+      if (index < 0) break;
+      dispatch(account, index);
     }
   }
 
