@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 39.13 through 2026-11-21 06:24 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 39.48 through 2026-11-21 06:43 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-AGE1 calibrated at 5,283.82 records/s from 429,778,659 native records. It verified 2,000,000 records over 100,000 saves, then stopped on the 1B time guard. This is below the fallback band. The exact checkpoint, complete terminal archive and stopped working volume are retained. The tuned scorecard has no aged input. Two additional fresh copies are being prepared while the tuned scorecard source is pending. Run that fresh card next.
+AGE1 calibrated at 5,283.82 records/s from 429,778,659 native records. It verified 2,000,000 records over 100,000 saves, then stopped on the 1B time guard. This is below the fallback band. The exact checkpoint, complete terminal archive and stopped working volume are retained. The tuned scorecard has no aged input. The fresh template and four independent copies are ready. One data copy sits on root for the separate-WAL arm. Free space is 101.36 GB on root and 451.27 GB on the secondary device. The tuned scorecard pin is still pending. It is the next eligible benchmark.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
