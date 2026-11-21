@@ -24,7 +24,7 @@ export type QuietCell = "alone" | 235;
 export const jsonFile = (file: string, data: unknown) =>
   fs.writeFileSync(file, JSON.stringify(data, null, 2) + "\n", { flag: "wx", flush: true, mode: 0o600 });
 
-const feeder = async (client: DatomicClient, db: string, from: number, deadline: number,
+export const feeder = async (client: DatomicClient, db: string, from: number, deadline: number,
   getEnd: () => number | undefined, ordered: boolean) => {
   const rows: Feed[] = [];
   let position = from;

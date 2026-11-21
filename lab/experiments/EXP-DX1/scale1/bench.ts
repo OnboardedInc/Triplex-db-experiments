@@ -39,7 +39,8 @@ import { releaseDeepStart, type DeepIdentity } from "../../../bench/lib/deep-pro
 import { checkProfileFlags, launchProfile, roles as jvmRoles } from "../jvm1/launch.mjs";
 import { datomicRuntime } from "../../../config/datomic/runtime.mjs";
 
-type ServerLaunch = { policy: ReturnType<typeof launchProfile>; walDirectory?: string };
+type ServerLaunch = { policy: ReturnType<typeof launchProfile>; walDirectory?: string;
+  coldSeed?: { pgdata: string; control: string; log: string } };
 
 const GiB = 1024 ** 3,
   script = fileURLToPath(import.meta.url),
@@ -378,7 +379,7 @@ function clean(dir: string, prefix: string) {
   fs.mkdirSync(path.join(dir, "cleanup"), { recursive: true });
   for (const n of before.containers) {
     assert(
-      [...roles, "extract", "health"].some((s) => n === `${prefix}-${s}`),
+      [...roles, "extract", "health", "seed-copy"].some((s) => n === `${prefix}-${s}`),
       `Unexpected owned container ${n}`,
     );
     fs.writeFileSync(
@@ -419,6 +420,7 @@ function clean(dir: string, prefix: string) {
 export function startScaleStack(dir: string, prefix: string, source: string, grouped = false,
   options: NodeJS.ProcessEnv = {}, launch?: ServerLaunch) {
   const policy = launch?.policy;
+  const cold = launch?.coldSeed;
   assert(!policy || (policy.profile === "server" && !policy.reduced));
   const walPath = launch?.walDirectory ? path.join(fs.realpathSync(launch.walDirectory), prefix) : undefined;
   if (walPath) {
@@ -463,6 +465,7 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
     DX_GW_READ_JAVA_OPTS:
       "-Xms256m -Xmx4g -Ddatomic.objectCacheMax=1536m -Xlog:gc=info:file=/trace/gw-r-gc.log",
     ...options,
+    ...(cold ? { DX_JVM1_COLD_PGDATA: cold.pgdata, DX_JVM1_COLD_CONTROL: cold.control } : {}),
     DX_LAUNCH_PROFILE: policy?.profile,
     DX_TX_JAVA: policy?.tx.major,
     DX_GW_WRITE_JAVA: policy?.["gw-w"].major,
@@ -471,13 +474,14 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
       DX_JAVA: policy["gw-r"].major,
       DX_GW_WRITE_MEMORY: policy["gw-w"].memoryMiB + "m",
       DX_GW_READ_MEMORY: policy["gw-r"].memoryMiB + "m",
-      DX_GW_WRITE_JAVA_OPTS: policy["gw-w"].flags.join(" ") + " -Xlog:gc=info:file=/trace/gw-w-gc.log",
-      DX_GW_READ_JAVA_OPTS: policy["gw-r"].flags.join(" ") + " -Xlog:gc=info:file=/trace/gw-r-gc.log",
+      DX_GW_WRITE_JAVA_OPTS: policy["gw-w"].flags.join(" ") + " -Xlog:gc=info:file=/trace/gw-w-gc.log" + (cold ? " " + cold.log.replace("%p", "gw-w") : ""),
+      DX_GW_READ_JAVA_OPTS: policy["gw-r"].flags.join(" ") + " -Xlog:gc=info:file=/trace/gw-r-gc.log" + (cold ? " " + cold.log.replace("%p", "gw-r") : ""),
     } : {}),
   };
   execFileSync(
-    "bash",
+    cold ? "taskset" : "bash",
     [
+      ...(cold ? ["-c", "0-11", "bash"] : []),
       "lab/experiments/EXP-DX1/stack/up.sh",
       prefix,
       "--no-publish",
@@ -494,7 +498,7 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
       "--tx-memory",
       policy ? policy.tx.memoryMiB + "m" : "6g",
       "--tx-java-opts",
-      (policy?.tx.flags.join(" ") ?? options.DX_TX_JAVA_OPTS ?? "-Xms256m -Xmx5g -XX:+UseG1GC -XX:MaxGCPauseMillis=50") + " -Xlog:gc=info:file=/trace/tx-gc.log",
+      (policy?.tx.flags.join(" ") ?? options.DX_TX_JAVA_OPTS ?? "-Xms256m -Xmx5g -XX:+UseG1GC -XX:MaxGCPauseMillis=50") + " -Xlog:gc=info:file=/trace/tx-gc.log" + (cold ? " " + cold.log.replace("%p", "tx") : ""),
       "--object-cache-max",
       policy ? policy.tx.cacheMiB + "m" : "2560m",
       ...(policy ? ["--memory-index-threshold", policy.index.threshold, "--memory-index-max", policy.index.max] : []),
@@ -503,7 +507,7 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
       policy ? Object.entries(policy.pg.settings).map(([key, value]) => "-c " + key + "=" + value).join(" ")
         : "-c shared_buffers=1GB -c max_wal_size=8GB -c synchronous_commit=on -c fsync=on -c full_page_writes=on -c track_io_timing=on -c track_wal_io_timing=on",
     ],
-    { env, cwd: repo, stdio: "inherit", timeout: 480000 },
+    { env, cwd: repo, stdio: "inherit", timeout: cold ? 720000 : 480000 },
   );
   const engines = placement(prefix);
   if (policy) {
@@ -534,7 +538,8 @@ export function readScaleJvms(dir: string, engines: ReturnType<typeof placement>
     assert(process.split("\n").includes("containerId=" + engine.id));
     assert(process.split("\n").includes("imageId=" + engine.image));
     const observed = fs.readFileSync(path.join(dir, role + ".flags.txt"), "utf8") +
-      fs.readFileSync(path.join(dir, role + ".gc-init.txt"), "utf8");
+      fs.readFileSync(path.join(dir, role + ".gc-init.txt"), "utf8") +
+      fs.readFileSync(path.join(dir, role + ".cds.txt"), "utf8");
     checkProfileFlags(policy[role], observed);
     assert(observed.includes("Version: " + datomicRuntime(policy[role].major).version));
     return { role, container: engine.id, observed: observed.split("\n"), process };

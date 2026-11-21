@@ -151,6 +151,7 @@ export function checkProfileFlags(expected, log) {
   const enabled = [...values].filter(([key, value]) => /^Use(Serial|Parallel|G1|Z|Shenandoah|Epsilon)GC$/.test(key) && value === "true");
   assert.equal(enabled.length, 1, "Expected exactly one active collector");
   assert.match(log, new RegExp(`\\[gc,init\\s*\\].*Version: ${expected.major}\\.`));
+  if (expected.flags.includes("-Xshare:on")) assert.match(log, /\[cds\s*\].*Mapped static\s+region #0/);
 }
 
 const laptop = {
@@ -163,19 +164,28 @@ const server = {
   "gw-w": { memory: 6144, initial: 512, heap: 4096, direct: 4096, cache: null, cpus: "2,3,4,5", cores: 4 },
   "gw-r": { memory: 5120, initial: 256, heap: 3072, direct: 3072, cache: null, cpus: "6", cores: 1 },
 };
+const startupTuning = {
+  tx: { initial: 4096, compilers: 2, threshold: "0.75", code: 32 },
+  "gw-w": { initial: 1024, compilers: 3, threshold: "0.65", code: 32 },
+  "gw-r": { initial: 512, compilers: 2, threshold: "1", code: 16 },
+};
+// [DX-JVM1] Why: record compilation and code-cache pressure while normal requests supply the workload.
+// Rejected: a boot script that submits transactions or trains profiles before traffic.
+export const coldStartLog = "-Xlog:gc*,safepoint,jit+compilation=debug,codecache=debug:file=/trace/%p-startup.log:utctime,uptimemillis,level,tags:filecount=4,filesize=32m";
 export const laptopCaps = Object.freeze({ pg: 256, tx: laptop.tx.memory, write: laptop["gw-w"].memory, read: laptop["gw-r"].memory });
 
 // [DX-INT1] Why: keep the portable limits and the full-size treatment in one launch policy.
 // Rejected: scaling all roles together or interpreting the reduced startup as physical placement evidence.
 /** @param {"laptop" | "server"} profile
- * @param {{ jvm?: JvmProfile, txJvm?: JvmProfile, writeJvm?: JvmProfile, creditMode?: CreditMode, reduced?: boolean, scale?: number }} [options] */
+ * @param {{ jvm?: JvmProfile, txJvm?: JvmProfile, writeJvm?: JvmProfile, creditMode?: CreditMode, reduced?: boolean, scale?: number, startup?: "today" | "tuned" }} [options] */
 export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm = jvm,
-  creditMode = defaultCreditMode, reduced = false, scale = 1 } = {}) {
+  creditMode = defaultCreditMode, reduced = false, scale = 1, startup = "today" } = {}) {
   assert(profile === "laptop" || profile === "server");
   assert(jvmProfiles.includes(jvm) && jvmProfiles.includes(txJvm) && jvmProfiles.includes(writeJvm));
   assert(creditModes.includes(creditMode), "Unknown credit mode");
   assert(profile === "server" ? scale === 1 : !reduced && [1, 2, 4].includes(scale));
   const portable = profile === "laptop" || reduced;
+  assert(startup === "today" || (startup === "tuned" && profile === "server"));
   /** @param {Role} role */
   const settings = (role) => {
     const placement = profile === "laptop" ? laptop[role] : server[role];
@@ -185,8 +195,17 @@ export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm
     const collector = selected === "j25-zgc" ? "ZGC" :
       profile === "laptop" && limits.memory * scale < 1792 && selected === "j21-g1" ? "Serial" : "G1";
     const cache = limits.cache;
+    const tuning = startup === "tuned" ? startupTuning[role] : undefined;
     const opts = [
-      "-Xms" + limits.initial + "m", "-Xmx" + limits.heap * scale + "m",
+      "-Xms" + (portable ? limits.initial : tuning?.initial ?? limits.initial) + "m",
+      "-Xmx" + limits.heap * scale + "m",
+      // [DX-JVM1] Why: budget compilation on the CPU each role already owns and keep full-tier code.
+      // Rejected: forcing all methods through a single tier or giving the one-core reader more compiler threads.
+      ...(tuning ? [
+        "-Xshare:on", "-XX:TieredStopAtLevel=4", "-XX:CICompilerCount=" + tuning.compilers,
+        "-XX:CompileThresholdScaling=" + tuning.threshold,
+        "-XX:InitialCodeCacheSize=" + tuning.code + "m", "-XX:ReservedCodeCacheSize=240m",
+      ] : []),
       "-XX:MaxDirectMemorySize=" + (role === "tx" ? limits.direct : limits.heap * scale) + "m",
       ...(portable && role === "tx" ? ["-XX:MaxMetaspaceSize=160m"] : []),
       ...(cache !== null ? ["-Ddatomic.objectCacheMax=" + cache + "m"] : []),
@@ -206,7 +225,10 @@ export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm
     ...(!portable ? {
       shared_buffers: "2GB", wal_sync_method: "fdatasync", checkpoint_timeout: "5min",
       checkpoint_completion_target: "0.9", checkpoint_flush_after: "256kB",
-      min_wal_size: "80MB", max_wal_size: "1GB", log_checkpoints: "on", log_timezone: "UTC",
+      // [DX-JVM1] Why: allow more WAL before a volume-requested checkpoint without changing durability.
+      // Rejected: altering background flush timing and durability at the same time.
+      min_wal_size: startup === "tuned" ? "512MB" : "80MB",
+      max_wal_size: startup === "tuned" ? "4GB" : "1GB", log_checkpoints: "on", log_timezone: "UTC",
       track_io_timing: "on", track_wal_io_timing: "on",
     } : {}),
   };
