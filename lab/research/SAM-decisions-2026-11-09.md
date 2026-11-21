@@ -831,3 +831,31 @@ Orchestrator's reading (two numbers appear in the message; this is my reading, t
    at high, capped at 6 running at once.
 4. Everything else I would have launched is logged for next week in `lab/experiments/EXP-DX1/NEXT-WEEK.md`.
 This replaces the direction of 2026-11-19 20:25 ("It's fine to launch a max number of agents").
+
+## 2026-11-21 about 09:10 local: build the rolling release now; do not wait for next week; six agents in total; playground data on Sam's Cloudflare, public
+
+Sam, verbatim:
+- "Yeah we should do the rolling release one for sure. Let's just run that as fast as we can. Are there other things
+  you need from me? What's the fullest set of things that you want to build, try, and test? I don't want to wait
+  until next week. What are we doing here?
+
+  No I'm saying run a total of 6 agents. Use those, spread in any kind of format across Codex or on Opus, using
+  Codex first. Then when that runs out you can switch over and use Opus.
+
+  Where are we at? What's the slowness then? What are our main lines of optimization that we still have to do, etc.?
+  You can just put the Cloudflare data on my Wrangler that I have here and it can be publicly readable. It's fine.
+  It's just test/demo data. It doesn't matter.
+
+  Can you explain to me the failover behavior one last time? I guess there are other things to do. What's the most
+  concerning? I need to fully understand where we're at for the overall project."
+
+Orchestrator's reading:
+1. The rolling release of fair-turn credits is approved and is the first priority. DX-PREP1 resumed at 09:14.
+2. The restraint of 2026-11-20 ("log it for next week") is lifted: work the backlog now. This corrects my reading of
+   that message.
+3. Agent limit, corrected: **six agents running at once in total**, Codex first (gpt-6.2-sol at xhigh), Opus 5.5 at
+   high when Codex runs out. My earlier reading (8 on Codex, 6 on Opus) was wrong.
+4. Playground data: use the Wrangler login on this Mac (Sam's Cloudflare account); the bucket may be publicly
+   readable; it is invented demo data. Still no personal details in the bucket, its name, or any commit.
+5. He asks for: the full state of the project, the cause of the slowness, the remaining lines of optimisation, the
+   failover options explained once more, what is most concerning, and what I need from him.
