@@ -17,3 +17,16 @@ test("serial comparison retains the field tape's quiet dose and open-loop schedu
     assert(tape.every((x, i) => x.ms >= 0 && x.ms < 300_000 && (i === 0 || x.ms >= tape[i - 1]!.ms)));
   }
 });
+
+test("the aged comparison offers both two-minute loads with the same quiet tape", () => {
+  const low = serialApplyTape(100000, 50, 120);
+  const high = serialApplyTape(100000, 235, 120);
+  const quiet = (tape: typeof low) => tape.filter((entry) => entry.account === 0)
+    .map(({ version: _version, ...fields }) => fields);
+  assert.equal(quiet(low).length, 420);
+  assert.deepEqual(quiet(low), quiet(high));
+  assert.equal(low.length, 6000);
+  assert.equal(high.length, 28200);
+  assert.equal(new Set([...low, ...high].map((entry) => entry.version)).size, 34200);
+  assert([...low, ...high].every((entry) => 0 <= entry.ms && entry.ms < 120000));
+});

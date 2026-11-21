@@ -242,14 +242,14 @@ export function writeTape(people: Density, cell: Cell, repeat: number, isolation
     (account) => count(cell, account, repeat, isolation));
 }
 
-export type SerialApplyRate = 394 | 620;
+export type SerialApplyRate = 50 | 235 | 394 | 620;
 export const serialApplySeconds = 300;
 // [DX-W1] Why: keep the same quiet dose and subject/width distribution at both diagnostic rates.
 // Rejected: changing the frozen scorecard's rates or offering extra saves only when the candidate completes one.
-export function serialApplyTape(people: Density, rate: SerialApplyRate) {
-  return offerTape(people, 394, 0, true, serialApplySeconds, (account) => account === quiet
-    ? quietRate * serialApplySeconds
-    : Math.floor(((rate - quietRate) * serialApplySeconds + 9 - account) / 9), "serial-" + rate);
+export function serialApplyTape(people: Density, rate: SerialApplyRate, duration = serialApplySeconds) {
+  return offerTape(people, 394, 0, true, duration, (account) => account === quiet
+    ? quietRate * duration
+    : Math.floor(((rate - quietRate) * duration + 9 - account) / 9), "serial-" + rate);
 }
 
 export type Read = { seat: number; ordinal: number; subject: number; ms: number };

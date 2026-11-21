@@ -33,7 +33,7 @@ def dist(xs):
     return {"mean": statistics.mean(xs), "p99": xs[math.ceil(0.99 * len(xs)) - 1]}
 
 
-def summarize(root, slot, attempt, source):
+def summarize(root, slot, attempt, source, age, credit_mode):
     run = read(root / "attempt.json")
     assert (run["slot"], run["attempt"], run["source"]) == (slot, attempt, source)
     trace = root / "engines" / slot / "trace/raw"
@@ -49,17 +49,21 @@ def summarize(root, slot, attempt, source):
     sample_keys, unjoined = set(), 0
     wanted_databases = set()
     output = []
-    for rate in (394, 620):
+    rates, seconds = ((394, 620), 300) if age == "fresh" else ((50, 235), 120)
+    half_seconds = seconds // 2
+    for rate in rates:
         window = root / str(rate)
         header = read(window / "arm.json")
         assert (header["slot"], header["attempt"], header["source"]) == (slot, attempt, source)
-        assert header["serial"] == {"rate": rate, "candidate": root.name == "narrow"}
+        assert header["retirement"] == {"rate": rate, "append": root.name == "append", "seconds": seconds}
+        assert header["settings"]["creditMode"] == credit_mode
+        assert header["settings"]["observed"]["subjectAppendRetirement"] == header["retirement"]["append"]
         raw = (window / "operations.json").read_bytes()
         assert hashlib.sha256(raw).hexdigest() == header["observationsSha256"]
         ops = json.loads(raw)
         # [DX-W1] Why: exact tape and journal identities bind each measured ACK to this copy and window.
         # Rejected: timing native background transactions or passing empty producer output.
-        assert len(ops["tape"]) == len(ops["writes"]) == rate * 300
+        assert len(ops["tape"]) == len(ops["writes"]) == rate * seconds
         feed = {row["position"]: row for row in ops["journal"]}
         saved = [row for row in ops["writes"] if row.get("receipt")]
         assert sorted(feed) == list(range(header["firstCut"] + 1, header["terminal"] + 1))
@@ -78,26 +82,28 @@ def summarize(root, slot, attempt, source):
         mid = (before + after) // 2
         durable = [(joins[(r["db"], r["receipt"]["t"])]["durable-at"], r) for r in saved]
         for at, row in durable:
+            ack = row["receipt"]
+            journal = feed[ack["p"]]
+            assert (row["db"], row["id"], ack["tx"], ack["digest"], ack["clock"]) == (
+                journal["db"], journal["id"], journal["tx"], journal["digest"], journal["clock"])
             if row["status"] == "acked":
                 observed = anchor["wall"] + (at - mid) / 1_000_000
                 assert row["sent"] - 2 <= observed <= row["end"] + 2
+                assert bool(row["stage"].get("subjectAppendRetirement")) == header["retirement"]["append"]
         halves = []
         for half in range(2):
-            lo = header["start"] + half * 150_000
-            hi = lo + 150_000
+            lo = header["start"] + half * half_seconds * 1000
+            hi = lo + half_seconds * 1000
             # [DX-W1] Why: on bare metal Node hrtime and JVM nanoTime use the same boot clock.
             # Rejected: treating the ACK or the application record clock as the durable append time.
             native_lo = mid + round((lo - anchor["wall"]) * 1_000_000)
-            native_hi = native_lo + 150_000_000_000
+            native_hi = native_lo + half_seconds * 1_000_000_000
             ready = [row for at, row in durable if native_lo <= at < native_hi]
             edge = (after - before) // 2 + 1000
             ambiguous = sum(min(abs(at - native_lo), abs(at - native_hi)) <= edge for at, _ in durable)
-            apply, sql, validate, plan = [], [], [], []
+            apply, io, validate, plan = [], [], [], []
             for row in ready:
                 ack = row["receipt"]
-                journal = feed[ack["p"]]
-                assert (row["db"], row["id"], ack["tx"], ack["digest"], ack["clock"]) == (
-                    journal["db"], journal["id"], journal["tx"], journal["digest"], journal["clock"])
                 key = (row["db"], ack["t"])
                 native = joins[key]
                 wanted_databases.add(row["db"])
@@ -106,21 +112,23 @@ def summarize(root, slot, attempt, source):
                 if row["status"] == "acked":
                     stage = row["stage"]
                     assert stage["subjectSave"] == header["settings"]["observed"]["subjectFunction"]
-                    sql.append(stage["nativeIoStats"]["reads"].get("sql", 0))
+                    io.append(stage["nativeIoStats"]["reads"])
                     clocks = stage["timeline"]
                     assert 0 <= clocks["payloadValidated"] <= clocks["payloadPrepared"]
                     validate.append(clocks["payloadValidated"] / 1000)
                     plan.append((clocks["payloadPrepared"] - clocks["payloadValidated"]) / 1000)
-            halves.append({"storedPerSecond": len(ready) / 150, "boundaryUncertain": ambiguous,
+            halves.append({"storedPerSecond": len(ready) / half_seconds, "boundaryUncertain": ambiguous,
                            "durableAckPerSecond": sum(r["status"] == "acked" and lo <= r["end"] < hi
-                                                      for r in saved) / 150, "applyMs": dist(apply),
-                           "sqlReadsPerSave": dist(sql), "sqlSamples": len(sql),
+                                                      for r in saved) / half_seconds, "applyMs": dist(apply),
+                           "sqlReadsPerSave": dist(row.get("sql", 0) for row in io), "sqlSamples": len(io),
+                           "indexLoadsPerSave": {index: dist(row.get(index + "-load", 0) for row in io)
+                                                 for index in ("eavt", "aevt", "avet", "vaet")},
                            "validateMs": dist(validate), "planMs": dist(plan),
                            "quietAckMs": dist(row["end"] - row["due"] for row in ready if row["account"] == 0)})
         output.append({"rate": rate, "halves": halves, "tapeSha256": header["tapeSha256"],
                        "firstCut": header["firstCut"], "terminal": header["terminal"],
                        "refusedOrExpired": len(ops["writes"]) - len(saved),
-                       "pinnedRead": ops["p6"]["read"],
+                       "pinnedRead": (ops.get("p6") or {}).get("read"),
                        "function": header["settings"]["observed"]["subjectFunction"]})
 
     assert len(wanted_databases) == 1
@@ -133,7 +141,7 @@ def summarize(root, slot, attempt, source):
             unjoined += 1
             continue
         native = joins[key]
-        assert event["start"] <= native["applied-at"] and event["end"] >= native["started-at"]
+        assert native["started-at"] <= event["start"] <= event["end"] <= native["applied-at"]
         assert event["lookupCount"] <= event["lookupLimit"]
         nm += 1
         for label, data in event["lookups"].items():
@@ -144,8 +152,8 @@ def summarize(root, slot, attempt, source):
         for stack, n in event["outsideSql"].items():
             unknown[stack] += n
     assert nm > 0
-    with (root / "serial-diagnostic.json").open("x") as stream:
-        json.dump({"source": source, "slot": slot, "attempt": attempt, "windows": output,
+    with (root / "retirement-diagnostic.json").open("x") as stream:
+        json.dump({"source": source, "slot": slot, "attempt": attempt, "age": age, "creditMode": credit_mode, "windows": output,
                    "lookupSamples": nm, "outOfWindowOrUnjoined": unjoined,
                    "lookupTotals": sampled, "outsideSql": unknown}, stream, indent=2)
         stream.write("\n")
@@ -153,5 +161,6 @@ def summarize(root, slot, attempt, source):
 
 if __name__ == "__main__":
     assert __debug__
-    directory, slot, attempt, source = sys.argv[1:]
-    summarize(Path(directory), slot, attempt, source)
+    directory, slot, attempt, source, age, credit_mode = sys.argv[1:]
+    assert age in ("fresh", "1B")
+    summarize(Path(directory), slot, attempt, source, age, credit_mode)

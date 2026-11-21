@@ -9,7 +9,8 @@ import { fieldValue } from "../../../bench/lib/deep-world.ts";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { decodeFeed, now, readCell, type Begin, type Feed } from "../scale1/decision/observer.ts";
-import { accounts, cellSeconds, field, root, task, writeTape, type Density, type Write } from "../scale1/decision/plan.ts";
+import { accounts, cellSeconds, field, root, serialApplyTape, task, writeTape,
+  type Density, type SerialApplyRate, type Write } from "../scale1/decision/plan.ts";
 import { play, resolveUncertain, type Row, type Save, type Sender } from "../scale1/decision/writes.ts";
 import { creditModeSelection } from "../prep1/rolling-credits.ts";
 import { defaultCreditMode, type CreditMode } from "../jvm1/launch.mjs";
@@ -80,9 +81,10 @@ export function quietTape(people: number, cell: QuietCell, toy: boolean) {
     .map((e) => ({ ...e, version: "p6/" + e.version }));
 }
 
-async function quietReads(client: DatomicClient, seed: AdoptedSeed, start: number, cell: QuietCell, toy: boolean) {
+async function quietReads(client: DatomicClient, seed: AdoptedSeed, start: number, cell: Begin["cell"],
+  toy: boolean, isolation = false) {
   const message: Begin = { kind: "begin", key: "p6-" + cell, repeat: 0, people: seed.image.people as Density,
-    cell, start, scopes: [seed.scope], withReaders: true };
+    cell, start, scopes: [seed.scope], withReaders: true, isolation };
   const sides = await Promise.all([readCell(client, 0, message, toy), readCell(client, 1, message, toy)]);
   const h = new Histogram();
   for (const side of sides) h.merge(Histogram.fromJSON(side.latency));
@@ -171,7 +173,8 @@ async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: numbe
 }
 
 export async function adoptedArm(out: string, source: string, peer: Peer, seed: AdoptedSeed, writer: Writer,
-  loaded: boolean, toy: boolean, startHead = seed.scope.cut, quietCell?: QuietCell) {
+  loaded: boolean, toy: boolean, startHead = seed.scope.cut, quietCell?: QuietCell,
+  retirement?: { rate: SerialApplyRate; append: boolean; seconds: 120 | 300 }) {
   const begin = now();
   const writerClient = new DatomicClient(peer.write, 35000);
   const reader = new DatomicClient(peer.read, 35000);
@@ -197,30 +200,41 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     if (writer === "subject") assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/);
     assert.deepEqual([Boolean(options.subjectNarrowRevision), Boolean(options.subjectReusePredecessor)],
       [Boolean(peer.serialApply), Boolean(peer.serialApply)]);
+    if (retirement) {
+      assert(writer === "subject" && !toy && loaded && quietCell === undefined);
+      assert.equal(Boolean(options.subjectAppendRetirement), retirement.append);
+    }
     assert.deepEqual([options.options.predecessorLookup, options.options.smallRows, options.options.ledger,
       options.options.packedJournal, options.options.groupCommit, options.options.reusePrepared,
       options.options.fastReply, options.options.livePriority, options.options.fieldCoalesce,
       options.options.stageClock, options.options.queueClock, options.options.maxMembers],
     [true, writer === "grouped", writer === "grouped", false, writer === "grouped", writer === "grouped",
       true, writer === "grouped", false, true, false, 32]);
-    const p7 = quietCell === undefined && peer.empty && peer.residency ? {
+    const p7 = !retirement && quietCell === undefined && peer.empty && peer.residency ? {
       empty: peer.empty, restored: await peer.residency(), people: seed.image.people * accounts.length,
       cold: await currentPull(reader, seed, seed.scope.cut, toy, true),
     } : undefined;
-    const seconds = toy ? 8 : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds(quietCell);
-    const tape = quietCell === undefined ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell, toy);
+    const seconds = retirement?.seconds ?? (toy ? 8 : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds(quietCell));
+    const tape = retirement ? serialApplyTape(seed.image.people as Density, retirement.rate, seconds)
+      : quietCell === undefined ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell, toy);
+    if (retirement) assert.equal(tape.length, retirement.rate * seconds);
     const senders = await preload(writerClient, seed, startHead, tape);
-    const start = now() + 1200;
+    const before = retirement ? process.hrtime.bigint() : undefined;
+    const wall = now();
+    const after = retirement ? process.hrtime.bigint() : undefined;
+    const start = wall + 1200;
+    const serialAnchor = retirement ? { wall, before: String(before), after: String(after) } : undefined;
     const interval = seconds * 1000;
     feeding = feeder(journal, seed.scope.db, startHead, start + interval + 120_000,
       () => terminal, writer === "subject");
     void feeding.catch(() => {});
-    const quiet = quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, quietCell, toy);
+    const quiet = retirement?.seconds === 300 ? quietReads(reader, seed, start, 394, false, true)
+      : quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, quietCell, toy);
     const creditMode = peer.creditMode ?? defaultCreditMode;
     const admission = creditModeSelection(creditMode);
     const [writes, phases, quietRead] = await Promise.all([
       play(senders, tape, start, peer.attempt, false, writer === "subject", admission),
-      quietCell === undefined ? readWindows(reader, seed, start, loaded, toy) : [], quiet,
+      !retirement && quietCell === undefined ? readWindows(reader, seed, start, loaded, toy) : [], quiet,
     ]);
     await resolveUncertain(senders, writes.unresolved);
     const head = await writerClient.begin(seed.scope.db);
@@ -235,6 +249,8 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       const r = row.receipt!, actual = byPosition.get(r.p);
       assert(actual);
       checkSavedIdentity(row, actual, writer, options.subjectFunction);
+      if (retirement && row.status === "acked")
+        assert.equal(Boolean(row.stage?.subjectAppendRetirement), retirement.append);
       saveHistogram.recordMs(row.end! - row.due);
     }
     for (const row of saves.filter((_, i) => i === 0 || i === saves.length - 1 || i % 100 === 0)) {
@@ -243,7 +259,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         ["committed", row.id, r.p, r.t, r.clock]);
       assert.equal(await writerClient.claim(seed.scope.db, row.id, r.p), r.tx);
     }
-    const pulls = loaded && quietCell === undefined ? await currentPull(reader, seed, terminal, toy) : undefined;
+    const pulls = !retirement && loaded && quietCell === undefined ? await currentPull(reader, seed, terminal, toy) : undefined;
     let p6;
     if (quietRead) {
       const writes = new Histogram(), delivered = new Histogram();
@@ -259,7 +275,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const evidence = path.join(out, "operations.json");
     jsonFile(evidence, { writes: writes.rows, journal: feed, tape, p6, p7 });
     const result = { source, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
-      loaded, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
+      loaded, retirement, serialAnchor, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
       observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, creditMode, observed: options, java: peer.java },
       p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
       p3: { entries: feed.length }, p4: pulls, p6, p7 };

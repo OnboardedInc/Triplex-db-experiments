@@ -7,6 +7,8 @@ A protected replacement stored 22 records versus 17 for the plain save. The plan
 The protected K tests covered held reads, replay, notices and backup restore. Declare protection before loading a fresh seed.
 Populated plaintext scopes still need a migration that preserves their history. The gateway refuses to switch them in place.
 
+[Part 9. Save reads as storage grows](RETIREMENT-READS.md)
+
 ## Query evidence
 
 - The controlled reader at 100 and durable save at 102 reproduced the missing page before the fix. Classic and actual K then matched O-REPLAY, including the exact int64, float and recorded position. The implicit clock selects valid time only. New cursors bind to the committed position. Old cursors retain their original selectors.
