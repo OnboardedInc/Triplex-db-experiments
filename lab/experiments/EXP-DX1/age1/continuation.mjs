@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { minimumRate } from "./bulk-metrics.mjs";
+import { belowFloor, loadingUsdPerHour } from "./extended-limits.mjs";
 
 const GiB = 2 ** 30;
 const minute = 60_000;
@@ -42,23 +42,34 @@ export function forecastSlope(samples, target, cap) {
 }
 
 export async function continueLoad({
-  config, read, write, hashes, logDir, rung, state, origin, deadline, calibration, inspected,
+  config, read, write, hashes, logDir, rung, state, origin, deadline, calibration, resume, paidMs, limits, inspected,
   bulkPhase, collect, sample, directory, stableFloor,
 }) {
   const startFile = path.join(rung, "load-start.json");
   const cycleFile = path.join(rung, "load-cycles.json");
+  const initialCut = resume ?? calibration;
   const start = {
-    calibrationSha: calibration.certificateSha, checkpointSha: calibration.checkpointSha,
-    catalogSha: calibration.best.identitySha, records: calibration.records, t: calibration.t,
+    calibrationSha: calibration.certificateSha, checkpointSha: initialCut.checkpointSha,
+    catalogSha: calibration.best.identitySha, records: initialCut.records, t: initialCut.t,
+    ...(resume && { stoppedHoldSha: resume.holdSha }),
   };
-  if (!fs.existsSync(startFile)) {
+  const verifyInitial = () => {
     assert(!inspected.pending);
     assert.deepEqual([inspected.t, inspected.records, hashes(state)], [start.t, start.records, start.checkpointSha]);
+    if (resume) assert.equal(inspected.head, resume.head);
+  };
+  if (!fs.existsSync(startFile)) {
+    verifyInitial();
     write(startFile, start);
   }
   assert.deepEqual(read(startFile), start);
 
+  if (resume && !fs.existsSync(cycleFile)) {
+    verifyInitial();
+    write(cycleFile, resume.cycles);
+  }
   const cycles = fs.existsSync(cycleFile) ? read(cycleFile) : [];
+  if (resume) assert.deepEqual(cycles.slice(0, resume.cycles.length), resume.cycles);
   const checkpoint = async (tag, t, records, gc) => {
     const before = await sample(tag + "-before", "sample");
     assert.deepEqual([before.t, before.records], [t, records]);
@@ -104,10 +115,14 @@ export async function continueLoad({
     assert(!forecastSlope(cycles, config.target, config.directoryLimitBytes - 8 * GiB).over,
       "Last maintained disk projection exceeds the approved ceiling");
     const remainingSeconds = Math.max(0, config.target - Math.max(already, inspected.records)) / prior;
-    const totalLoadingHours = (Date.now() - origin.started + calibration.chargedMs + remainingSeconds * 1000) / 3_600_000;
+    const totalLoadingHours = (Date.now() - origin.started + paidMs + remainingSeconds * 1000) / 3_600_000;
     console.log(JSON.stringify({ event: "bulk-continuation-forecast", records: Math.max(already, inspected.records),
-      rate: prior, seconds: remainingSeconds, totalLoadingHours, totalLoadingUsd: totalLoadingHours * 1.09 }));
-    assert(Date.now() + (remainingSeconds + 180) * 1000 < until(), "Rate cannot reach 1B in the loading budget");
+      rate: prior, seconds: remainingSeconds, totalLoadingHours, totalLoadingUsd: totalLoadingHours * loadingUsdPerHour }));
+    // [DX-AGE1] Why: keep the paid deadline firm while allowing a single slow cycle to recover.
+    // Rejected: an advisory forecast stopping the extended load before its consecutive-cycle rule.
+    if (limits.lowCycles === 1)
+      assert(Date.now() + (remainingSeconds + 180) * 1000 < until(), "Rate cannot reach 1B in the loading budget");
+    assert(Date.now() < until(), "Insufficient paid time for another write window");
     const wallStart = Date.now();
     const tag = "load-" + i;
     const headroom = config.directoryLimitBytes - directory();
@@ -120,7 +135,7 @@ export async function continueLoad({
     const finishedAt = Date.now();
     // [DX-AGE1] Why: one-time cleanup of the archived ladder belongs to elapsed budget.
     // Rejected: treating that inherited garbage backlog as part of every future cycle's steady rate.
-    const creditedSeconds = (finishedAt - cycles.at(-1).finishedAt) / 1000;
+    const creditedSeconds = (finishedAt - Math.max(origin.started, cycles.at(-1).finishedAt)) / 1000;
     const combinedRate = (maint.records - already) / creditedSeconds;
     // [DX-AGE1] Why: charge indexing, garbage collection and vacuum to the load budget.
     // Rejected: forecasting the full import solely from the write burst before maintenance.
@@ -133,7 +148,7 @@ export async function continueLoad({
     if (!phase.bulkLoaded) {
       assert(metrics.jobs.length >= 2 && metrics.sustainedRate !== null, "Continuation window did not span two complete automatic jobs");
       assert(phase.records < 1e6 || maint.segments > 0, "A growing write window found no collectible native segments");
-      assert(combinedRate >= minimumRate, "Continuation rate including maintenance is below 9,900 records/s");
+      assert(!belowFloor(cycles, limits), "The consecutive completed cycles are below the loading floor");
       assert(!growth.over, "Both maintained disk projections exceed the approved directory ceiling");
     } else result = phase;
   }

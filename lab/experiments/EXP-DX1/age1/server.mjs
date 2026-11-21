@@ -9,7 +9,8 @@ import { fileURLToPath } from "node:url";
 import { writeScorecard } from "./scorecard.mjs";
 import { bulkProperties, continuationProperties, hold, ladderArms, minimumRate, readBulkMetrics } from "./bulk-metrics.mjs";
 import { archived, recoverLadder } from "./recover-ladder.mjs";
-import { allocatedBytes, collectedSegments, continueLoad, continuationPrior, directoryMargin, sameStorage } from "./continuation.mjs";
+import { loadingLimits, readStoppedLoad, stoppedLoad } from "./extended-limits.mjs";
+import { allocatedBytes, collectedSegments, continueLoad, directoryMargin, sameStorage } from "./continuation.mjs";
 
 const here = import.meta.dirname;
 const repo = path.resolve(here, "../../../..");
@@ -160,13 +161,23 @@ function admit(config, configFile, mode) {
     assert(fs.lstatSync(path.join(config.pgData, "pg_wal")).isDirectory(), "Source WAL must be included in PGDATA");
     assert.equal(fs.statSync(config.dataMount).dev, fs.statSync(config.pgData).dev);
     assert.notEqual(fs.statSync(config.scorecardMount).dev, fs.statSync(config.dataMount).dev);
+    loadingLimits(config.loadingLimits);
+    if (config.resumeEvidence !== undefined) {
+      assert.equal(config.directoryLimitBytes, 400e9);
+      assert(path.isAbsolute(config.resumeEvidence));
+      assert.notEqual(fs.realpathSync(config.resumeEvidence), fs.realpathSync(path.dirname(config.output)),
+        "Keep the mutable checkpoint outside the stopped-volume evidence");
+    }
     assert(path.isAbsolute(config.ladderEvidence ?? ""));
     assert.notEqual(fs.realpathSync(config.ladderEvidence), fs.realpathSync(path.dirname(config.output)),
       "Stage the mutable checkpoint beside a new output, outside the archived evidence");
   }
   assert.deepEqual(running, allowJava, "Dedicated server Java process inventory differs");
   const machine = fs.readFileSync("/etc/machine-id", "utf8");
-  const { javaPids, transactorPid, postgresPid, restorePostgresPid, expectedMeasureSettings, ...spec } = config;
+  // [DX-AGE1] Why: a revised budget applies from the original start and is recorded in each attempt's config hash.
+  // Rejected: creating a new admission clock to change the floor or total paid time.
+  const { javaPids, transactorPid, postgresPid, restorePostgresPid, expectedMeasureSettings,
+    loadingLimits: _limits, ...spec } = config;
   const { txPid, ...measurePolicy } = expectedMeasureSettings;
   return {
     source: config.source, configSha: fileSha(configFile), datomicSha: config.datomicSha,
@@ -192,6 +203,7 @@ function eventLogStat(config) {
 
 async function run(configFile, config, mode) {
   const bulk = mode === "ladder" || mode === "load";
+  const limits = loadingLimits(mode === "load" ? config.loadingLimits : undefined);
   const binding = admit(config, configFile, mode);
   const initial = forecast(config.fromRecords, config.target, config.ratePrior, config.reserveHours);
   const parent = path.dirname(config.output);
@@ -199,9 +211,10 @@ async function run(configFile, config, mode) {
   fs.mkdirSync(config.output, { recursive: true });
   if (!process.argv.includes("--locked")) {
     console.log(JSON.stringify(mode === "load" ?
-      { phase: "continuation-forecast", prior: forecast(archived.records, config.target, continuationPrior, config.reserveHours),
-        priorPaidLoadingHours: archived.chargedMs / 3_600_000, maxLoadingHours: 16, maxLoadingUsd: 17.44,
-        minimumRate, directoryLimitBytes: config.directoryLimitBytes } : bulk ?
+      { phase: "continuation-forecast", prior: forecast(config.resumeEvidence ? stoppedLoad.records : archived.records,
+        config.target, config.ratePrior, config.reserveHours),
+        maxLoadingHours: limits.maxHours, maxLoadingUsd: limits.maxUsd,
+        minimumRate: limits.floor, consecutiveBelowFloor: limits.lowCycles, directoryLimitBytes: config.directoryLimitBytes } : bulk ?
       { phase: mode + "-forecast", start: hold.records, target: config.target, ladderMaxSeconds: 3600,
         predictions: ladderArms } : { phase: "forecast", ...initial }));
     const result = await new Promise((resolve, reject) => {
@@ -254,8 +267,10 @@ async function run(configFile, config, mode) {
     if (!fs.existsSync(corrected)) write(corrected, calibration);
     assert.deepEqual(read(corrected), calibration);
   }
-  const deadline = origin.started + (bulk ? (mode === "ladder" ? 1 : 16 - calibration.chargedMs / 3_600_000)
-    : config.maxHours) * 3_600_000;
+  const resume = calibration && config.resumeEvidence ? readStoppedLoad(config.resumeEvidence, binding, calibration) : null;
+  const paidMs = (calibration?.chargedMs ?? 0) + (resume?.chargedMs ?? 0);
+  const deadline = origin.started + (bulk ? (mode === "ladder" ? 3600_000 : limits.maxHours * 3600_000 - paidMs)
+    : config.maxHours * 3600_000);
   const reserve = config.copyHeadroomBytes;
   const separateCopyPolicy = mode === "measure-loaded" && config.restoreMount;
   let pgdataSample = 0;
@@ -484,7 +499,7 @@ async function run(configFile, config, mode) {
         return collectedSegments(fs.readFileSync(log, "utf8"));
       };
       const observed = await continueLoad({
-        config, read, write, hashes: fileSha, logDir, rung, state, origin, deadline, calibration, inspected,
+        config, read, write, hashes: fileSha, logDir, rung, state, origin, deadline, calibration, resume, paidMs, limits, inspected,
         bulkPhase, collect, sample: oracle, directory, stableFloor,
       });
       assert(observed.phase.bulkLoaded && observed.phase.indexedRecords >= config.target);
