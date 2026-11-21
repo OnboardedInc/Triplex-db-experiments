@@ -402,12 +402,19 @@
   ([conn data input timeline subject-plan]
    (if-not subject-plan
      (submit-reference! conn data input timeline)
-     (let [native-data (group/instrument [[subject/ident subject-plan]])
+     (let [hints (when subject/prefetch?
+                   (swap! timeline assoc :subjectHintsStarted (System/nanoTime))
+                   ;; [DX-PREP1] Why: Datomic prefetch can move cold reads, while the native guards own the decision.
+                   ;; Rejected: using the hint result or its database value as proof of absence or revision.
+                   (try (trace/span "subject.lookup-hints" "peer-call" (subject/lookup-hints (d/db conn) subject-plan))
+                        (catch Exception _ nil)
+                        (finally (swap! timeline assoc :subjectHintsFinished (System/nanoTime)))))
+           native-data (group/instrument [[subject/ident subject-plan]])
+           options (concat (when hints [:hints hints])
+                           (when (or group/stage-clock trace/enabled) [:io-context :triplex.gateway/subject]))
            _ (swap! timeline assoc :predecessorReady (System/nanoTime))
            tx (trace/span "d/transact-async" "peer-call"
-                (if (or group/stage-clock trace/enabled)
-                  (d/transact-async conn native-data :io-context :triplex.gateway/subject)
-                  (d/transact-async conn native-data)))]
+                (apply d/transact-async conn native-data options))]
        (swap! timeline assoc :submitted (System/nanoTime))
        (reify
          clojure.lang.IBlockingDeref
@@ -427,7 +434,8 @@
                    :else (let [retry (deref (submit-reference! conn (tx-data db input) input timeline) (remaining) timeout)]
                            (if (identical? timeout retry) timeout (assoc retry :subject-replan true)))))
                (identical? timeout result) timeout
-               :else (subject/verify-report result subject-plan)))))))))
+               :else (cond-> (subject/verify-report result subject-plan)
+                       hints (assoc :subject-hints-attached true))))))))))
 ;; [DX-B10] Why: a definitive preflight rejection resolves its sequence without a database write.
 ;; Rejected: skipping that turn (strands all later valid commands behind a permanent gap).
 (defn reject-ordered! [conn input error]
@@ -491,6 +499,8 @@
                                            :packedRows (count (filter (fn [op] (and (vector? op) (= :triplex/assert (first op))
                                                                               (vector? (nth op 3 nil)) (= 6 (count (nth op 3))))) (:ops params)))}))
         (:subject-save report) (assoc :subjectSave (:subject-save report))
+        (:subject-ordered-ids report) (assoc :subjectOrderedIds true)
+        (:subject-hints-attached report) (assoc :subjectHintsAttached true)
         (:subject-replan report) (assoc :subjectReplan true)
         (and load-timing (not (:subject-save report))) (assoc :loadProfile {:rowNs @load-timing :applyMs (get-in report [:io-stats :api-ms])
                        :tx (clojure.edn/read-string (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.load/metrics))})
@@ -499,7 +509,8 @@
         frame-size (assoc :frameSize frame-size)
         (and pred/diagnostic (true? (get input "readProfile"))) (assoc :readProfile (:io-stats report))
         group/stage-clock (assoc :nativeComputeMs (get-in report [:io-stats :api-ms]) :groupStages (:group-stages report)
-                                 :preparedStats (:prepared-stats report))
+                                 :preparedStats (:prepared-stats report)
+                                 :writerFunction (or (:subject-save report) (str (ffirst data))))
         (and group/stage-clock subject-profile) (assoc :nativeIoStats (:io-stats report))
         stamp (assoc :requestBytes (policy/request-size input) :preparedOps (count (:ops (second (first data)))) :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))

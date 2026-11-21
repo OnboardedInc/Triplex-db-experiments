@@ -190,6 +190,8 @@ function setup(compact: boolean) {
   assert(["original", "demand"].includes(gwPolicy) && ["following", "validated"].includes(readMode));
   assert(peerGc === "g1" || (gwPolicy === "demand" && peerGc === "elastic"));
   const writeOptionsAttempt = mode === "int1-adopted-proof" ? randomUUID() : undefined;
+  const fixtureWriter = process.env.DX_V01_MAC_WRITER ?? "grouped";
+  assert(fixtureWriter === "grouped" || fixtureWriter === "subject");
   for (const [n, slot] of slots.entries()) {
     const role = n === 0 ? "write" : "read";
     assert(!fs.existsSync(ownerFile(slot)), "Exclusive slot is in use");
@@ -201,7 +203,7 @@ function setup(compact: boolean) {
         : (compact ? "-Xms128m -Xmx600m" : "-Xms160m -Xmx896m") + " -Ddatomic.objectCacheMax=192m") +
       (compact ? " -Ddxthin.compact=yes" : "") + (memory ? " -Ddxthin.memory=yes" : "") +
       (mode === "int1-campaign-proof" ? " -Ddxthin.campaign=yes" : "") +
-      (writeOptionsAttempt ? " -Ddxthin.adopted=" + writeOptionsAttempt : "") +
+      (writeOptionsAttempt ? " -Ddxthin.adopted=" + writeOptionsAttempt + " -Ddxthin.fixtureWriter=" + fixtureWriter : "") +
       (nativePools ? " -Ddxthin.nativePools=yes -XX:NativeMemoryTracking=summary" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
       " -Ddxthin.secret=" +
@@ -217,7 +219,7 @@ function setup(compact: boolean) {
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
   write(cred, {
-    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt,
+    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, fixtureWriter,
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
     memoryPoints, nativePools,
     readerPages: process.env.DX_INT1_READER_PAGES === "1",
@@ -283,6 +285,7 @@ function bind() {
     managed: {
       nonce: attempt.nonce,
       writeOptionsAttempt: attempt.writeOptionsAttempt,
+      fixtureWriter: attempt.fixtureWriter,
       compact: !!attempt.compact,
       census: attempt.census, cohort: attempt.cohort,
       gwPolicy: attempt.gwPolicy, readMode: attempt.readMode,
@@ -371,6 +374,8 @@ if (action === "--guest") {
       } catch { return []; }
     });
     assert(stack.managed.writeOptionsAttempt && commands.length >= 3);
+    const writer: Writer = stack.managed.fixtureWriter;
+    assert(writer === "grouped" || writer === "subject");
     const residency = () => {
       const roles: Record<string, { rssBytes: number; threads: number }> = {};
       for (const pid of fs.readdirSync("/proc").filter((n) => /^\d+$/.test(n))) {
@@ -392,7 +397,7 @@ if (action === "--guest") {
     };
     await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
-      java: { placement: "owned Mac compact stack", commands }, residency }, "grouped" satisfies Writer);
+      java: { placement: "owned Mac compact stack", commands }, residency }, writer);
   } else if (mode === "int1-campaign-proof") {
     assert(Number(rung) === 40);
     process.chdir(repo);

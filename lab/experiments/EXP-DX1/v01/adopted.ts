@@ -4,13 +4,13 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
+import { DatomicClient, orderedSaveIdentity } from "../../../../packages/datomic/dist/index.js";
 import { fieldValue } from "../../../bench/lib/deep-world.ts";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { decodeFeed, now, readCell, type Begin, type Feed } from "../scale1/decision/observer.ts";
 import { accounts, cellSeconds, field, root, task, writeTape, type Density, type Write } from "../scale1/decision/plan.ts";
-import { play, resolveUncertain, type Row, type Sender } from "../scale1/decision/writes.ts";
+import { play, resolveUncertain, type Row, type Save, type Sender } from "../scale1/decision/writes.ts";
 import { checkAdoptedPeer, hex, openScaleSeal, type AdoptedSeed } from "./adopt.ts";
 import { ladder, phaseSeconds, selectedWriter, type Writer } from "./profile.ts";
 
@@ -21,7 +21,8 @@ export type QuietCell = "alone" | 235;
 export const jsonFile = (file: string, data: unknown) =>
   fs.writeFileSync(file, JSON.stringify(data, null, 2) + "\n", { flag: "wx", flush: true, mode: 0o600 });
 
-const feeder = async (client: DatomicClient, db: string, from: number, deadline: number, getEnd: () => number | undefined) => {
+const feeder = async (client: DatomicClient, db: string, from: number, deadline: number,
+  getEnd: () => number | undefined, ordered: boolean) => {
   const rows: Feed[] = [];
   let position = from;
   while (getEnd() === undefined || position < getEnd()!) {
@@ -31,13 +32,37 @@ const feeder = async (client: DatomicClient, db: string, from: number, deadline:
     const at = now();
     for (const tx of transactions) {
       assert.equal(tx[1], ++position);
-      rows.push(decodeFeed(db, tx, at));
+      rows.push(decodeFeed(db, tx, at, ordered));
     }
     if (!transactions.length) await sleep(25);
   }
   assert.equal(position, getEnd());
   return rows;
 };
+
+export function checkSavedIdentity(save: Save, row: Feed, writer: Writer, subjectFunction?: string) {
+  const receipt = save.receipt;
+  assert(receipt && (save.status === "acked" || save.status === "recovered"));
+  assert.equal(row.db, save.db);
+  assert.deepEqual([row.id, row.tx, row.position, row.clock, row.digest],
+    [save.id, receipt.tx, receipt.p, receipt.clock, receipt.digest]);
+  if (writer === "grouped") {
+    assert(save.orderedToken === undefined && !save.stage?.subjectOrderedIds);
+    return;
+  }
+  assert(save.orderedToken);
+  const block = orderedSaveIdentity(save.orderedToken);
+  // [DX-INT1] Why: confirm the ordered identities in the native journal from a separate read peer.
+  // Rejected: reporting an ordered save solely from configured flags or from its own acknowledgment.
+  assert.equal(row.tx, block.transactionId);
+  assert.deepEqual(row.journalIds,
+    Array.from({ length: 4 + 2 * save.width }, (_, i) => block.assertionId(save.width + i)));
+  if (save.status === "acked") {
+    assert(subjectFunction);
+    assert.equal(save.stage?.subjectSave, subjectFunction);
+    assert.equal(save.stage?.subjectOrderedIds, true);
+  }
+}
 
 export function matchedTape(people: number, seconds: number) {
   const original = writeTape(people as Density, "alone", 0);
@@ -164,12 +189,15 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     assert(options.commitFunctionInstalled && options.strictRecordClocks && options.rowsVersion === 3);
     assert.match(options.commitFunction, /^:triplex\.write\/v-[a-f0-9]{24}$/);
     assert.equal(options.subjectSave === true, writer === "subject");
+    assert.deepEqual([Boolean(options.subjectNumericOwner), Boolean(options.subjectOrderedIds),
+      Boolean(options.subjectPrefetch)], [writer === "subject", writer === "subject", false]);
     if (writer === "subject") assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/);
     assert.deepEqual([options.options.predecessorLookup, options.options.smallRows, options.options.ledger,
       options.options.packedJournal, options.options.groupCommit, options.options.reusePrepared,
       options.options.fastReply, options.options.livePriority, options.options.fieldCoalesce,
       options.options.stageClock, options.options.queueClock, options.options.maxMembers],
-    [true, true, true, false, writer === "grouped", writer === "grouped", true, true, false, true, false, 32]);
+    [true, writer === "grouped", writer === "grouped", false, writer === "grouped", writer === "grouped",
+      true, writer === "grouped", false, true, false, 32]);
     const p7 = quietCell === undefined && peer.empty && peer.residency ? {
       empty: peer.empty, restored: await peer.residency(), people: seed.image.people * accounts.length,
       cold: await currentPull(reader, seed, seed.scope.cut, toy, true),
@@ -179,11 +207,12 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const senders = await preload(writerClient, seed, startHead, tape);
     const start = now() + 1200;
     const interval = seconds * 1000;
-    feeding = feeder(journal, seed.scope.db, startHead, start + interval + 120_000, () => terminal);
+    feeding = feeder(journal, seed.scope.db, startHead, start + interval + 120_000,
+      () => terminal, writer === "subject");
     void feeding.catch(() => {});
     const quiet = quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, quietCell, toy);
     const [writes, phases, quietRead] = await Promise.all([
-      play(senders, tape, start, peer.attempt),
+      play(senders, tape, start, peer.attempt, false, writer === "subject"),
       quietCell === undefined ? readWindows(reader, seed, start, loaded, toy) : [], quiet,
     ]);
     await resolveUncertain(senders, writes.unresolved);
@@ -198,7 +227,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     for (const row of saves) {
       const r = row.receipt!, actual = byPosition.get(r.p);
       assert(actual);
-      assert.deepEqual([actual.id, actual.tx, actual.clock, actual.digest], [row.id, r.tx, r.clock, r.digest]);
+      checkSavedIdentity(row, actual, writer, options.subjectFunction);
       saveHistogram.recordMs(row.end! - row.due);
     }
     for (const row of saves.filter((_, i) => i === 0 || i === saves.length - 1 || i % 100 === 0)) {

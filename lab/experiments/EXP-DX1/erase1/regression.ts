@@ -5,6 +5,7 @@ import {
   DatomicClient,
   Replica,
   datomicReplicaSource,
+  orderedSaveIdentity,
 } from "../../../../packages/datomic/dist/index.js";
 import { openComposition, type CompositionHandle } from "../../../bench/lib/composition.ts";
 import { taskId } from "../../../bench/lib/deep-world.ts";
@@ -25,6 +26,7 @@ import { RecordedNotices } from "../actv-lazy/join/recorded.ts";
 import { valid } from "../actv-lazy/fixture.ts";
 import { rosterRoot, rosterSeal } from "../actv-lazy/read.ts";
 import { W0, factValue, triplexValue } from "../../../bench/lib/w0-world.ts";
+import { command } from "../w1/group/workload.ts";
 import { publishWork, replayErased } from "./scenarios.ts";
 
 interface Fixture {
@@ -112,6 +114,7 @@ export async function regression(
 ) {
   const client = new DatomicClient(process.env.DATOMIC_URL!, 35_000);
   const subjectWriter = process.env.DX_ERASE1_SUBJECT_WRITER;
+  const orderedIds = process.env.DX_ERASE1_ORDERED_IDS === "1";
   if (subjectWriter !== undefined) {
     // [DX-PREP1] Why: prove which writer setting actually reached the protected regression gateway.
     // Rejected: trusting launcher flags or a readback from another scope.
@@ -120,9 +123,13 @@ export async function regression(
       subjectSave?: boolean;
       subjectFunction?: string;
       subjectFunctionTx?: string;
+      subjectOrderedIds?: boolean;
+      subjectNumericOwner?: boolean;
     }>("GET", `/v1/db/${f.db}/write-options`);
     assert.equal(opts.database, f.db);
     assert.equal(Boolean(opts.subjectSave), subjectWriter === "1");
+    assert.equal(Boolean(opts.subjectOrderedIds), orderedIds);
+    assert.equal(Boolean(opts.subjectNumericOwner), orderedIds);
     if (subjectWriter === "1") {
       assert.match(opts.subjectFunction ?? "", /^:triplex\.subject\/v-[0-9a-f]{24}$/);
       assert(Number(opts.subjectFunctionTx) > 0);
@@ -161,8 +168,44 @@ export async function regression(
   const root = ids.placement(subject);
   const entityId = taskId(subject, 0);
   const attribute = ":task/field-0";
-  const before = (await rows(entityId)).find((r) => r.attribute === attribute);
+  let witnessCut = f.position;
+  let before = (await rows(entityId)).find((r) => r.attribute === attribute);
   assert(before && typeof before.value_string === "string" && typeof before.tx_id === "string");
+  if (orderedIds) {
+    // [DX-PREP1] Why: erase a real ordered assertion through all thirteen existing routes.
+    // Rejected: checking the writer switch while the erased witness still uses a legacy ID.
+    const identity = orderedSaveIdentity();
+    const value = "ordered-witness-" + identity.token;
+    const input = command(
+      "ordered-erasure-witness",
+      [{ e: entityId, a: attribute, v: { type: "string", value } }],
+      [before],
+      true,
+      false,
+      identity,
+    );
+    input.sourceK = witnessCut;
+    const ack = (await client.transact(f.db, input)) as {
+      operationId: string;
+      position: { v: string };
+      subjectSave?: string;
+    };
+    assert.equal(ack.operationId, input.operationId);
+    assert.equal(
+      ack.subjectSave,
+      undefined,
+      "Protected writes must take the erasure-fenced reference path",
+    );
+    assert.equal(Number(ack.position.v), witnessCut + 1);
+    witnessCut = Number(ack.position.v);
+    before = (await rows(entityId)).find((r) => r.id === identity.assertionId(0));
+    assert(
+      before &&
+        before.tx_id === identity.transactionId &&
+        before.value_string === value &&
+        before.recorded_position === witnessCut,
+    );
+  }
   const w: Witness = {
     entityId,
     attribute,
@@ -178,8 +221,8 @@ export async function regression(
     datomicReplicaSource(client, f.db, () => f.comp.currentPosition()),
     SEED_VALID_FROM,
   );
-  await replica.bootstrap([root], f.position);
-  const heldReplica = await replica.snapshotAt(f.position);
+  await replica.bootstrap([root], witnessCut);
+  const heldReplica = await replica.snapshotAt(witnessCut);
   const hasWitness = (world: ReturnType<typeof replica.world>) =>
     world.some(
       (r) => r.id === w.assertionId && r.value.type === "string" && r.value.value === w.value,
@@ -213,7 +256,7 @@ export async function regression(
   const evidence: Evidence[] = [];
   const verify = (route: string, check: boolean, detail: Record<string, unknown>) => {
     evidence.push({ route, check, detail });
-    output("regression-" + route, { cut: f.position, id: w.assertionId, ...evidence.at(-1) });
+    output("regression-" + route, { cut: witnessCut, id: w.assertionId, ...evidence.at(-1) });
   };
   let beforeArchive = false;
   try {
@@ -268,13 +311,23 @@ export async function regression(
     try {
       const typed = (await f.comp.feedPage(before.recorded_position - 1, 1)).transactions[0];
       const typedChange = typed?.changes.find((c) => c.tripleId === w.assertionId);
+      const directMarker = marker(change?.value, erased.erasedAt, erased.txId);
+      const typedMarker = marker(typedChange?.value, erased.erasedAt, erased.txId);
       verify(
         "journal",
         typed?.txId === w.txId &&
-          marker(change?.value, erased.erasedAt, erased.txId) &&
-          marker(typedChange?.value, erased.erasedAt, erased.txId) &&
+          directMarker &&
+          typedMarker &&
           !contains([journal, typed], w.value),
-        { stale: contains([journal, typed], w.value), rows: journal.length },
+        {
+          stale: contains([journal, typed], w.value),
+          rows: journal.length,
+          transactionMatches: typed?.txId === w.txId,
+          directMarker,
+          typedMarker,
+          hasTypedChange: typedChange !== undefined,
+          hasDirectChange: change !== undefined,
+        },
       );
     } catch (e) {
       verify("journal", false, { error: String(e), stale: contains(journal, w.value) });

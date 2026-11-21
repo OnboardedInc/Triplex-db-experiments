@@ -143,6 +143,7 @@ export interface StackOptions {
   signal?: AbortSignal;
   cachedImage?: string;
   memoryScale?: 1 | 2 | 4;
+  writerProbe?: { ordered: boolean; attempt: string };
 }
 
 class ContainerExited extends Error {}
@@ -182,6 +183,9 @@ export class Stack {
 
   async start(gatewaySpans = true, restore?: Restore) {
     const { docker, prefix, directory, ports, signal, cachedImage } = this.#opts;
+    // [DX-INT1] Why: the admitted playground gate exercises a lean save on the same peers as the legacy demo.
+    // Rejected: changing the snapshot layout or using a separate unobserved test stack.
+    const probe = this.#opts.writerProbe;
     const scale = this.#opts.memoryScale ?? 1;
     const pg = prefix + "-pg";
     const tx = prefix + "-tx";
@@ -385,6 +389,23 @@ export class Stack {
         `DATOMIC_URI_TEMPLATE=datomic:sql://{db}?${sqlUrl}?user=datomic&password=${secret}`,
         "-e",
         `GATEWAY_SOURCE_SHA256=${source}`,
+        ...(probe
+          ? [
+              "-e", "TX2_LEAN_NATIVE_LOG=1",
+              "-e", "TX2_LEAN_NATIVE_QUERY=1",
+              ...(role === "write" ? [
+                "-e", "TX2_WRITE_OPTIONS_ATTEMPT=" + probe.attempt,
+                "-e", "TX2_SAVE_LEDGER=" + Number(!probe.ordered),
+                "-e", "TX2_SMALL_ROWS=" + Number(!probe.ordered),
+                "-e", "TX2_GROUP_COMMIT=" + (probe.ordered ? "0" : "1"),
+                "-e", "TX2_GROUP_REUSE_PREPARED=" + (probe.ordered ? "0" : "1"),
+                "-e", "TX2_SUBJECT_SAVE=" + Number(probe.ordered),
+                "-e", "TX2_SUBJECT_NUMERIC_OWNER=" + Number(probe.ordered),
+                "-e", "TX2_SUBJECT_ORDERED_IDS=" + Number(probe.ordered),
+                "-e", "TX2_SUBJECT_PREFETCH=0",
+              ] : []),
+            ]
+          : []),
         "-e",
         "TX2_ENTITY_CACHE_BYTES=8388608",
         "-e",

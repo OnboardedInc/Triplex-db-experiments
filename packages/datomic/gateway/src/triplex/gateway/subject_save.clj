@@ -9,6 +9,9 @@
             [triplex.gateway.scope :as scope]))
 
 (def enabled (= "1" (System/getenv "TX2_SUBJECT_SAVE")))
+(def numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_NUMERIC_OWNER")))
+(def prefetch? (= "1" (System/getenv "TX2_SUBJECT_PREFETCH")))
+(def ordered-ids? (= "1" (System/getenv "TX2_SUBJECT_ORDERED_IDS")))
 (def erase-generation :triplex.scope/erasure-seq)
 (def mutable-flags #{:triplex.scope/feed-irregular :triplex.scope/position-regular
                      :triplex.scope/irregular :triplex.scope/packed-journals})
@@ -23,6 +26,47 @@
            (d/datoms db# :aevt :db/excise))))
 
 ;; The same expression is expanded in the installed native function below.
+;; [DX-PREP1] Why: owner CAS protects predecessor bytes, but an assertion identity is global, including retired rows.
+;; Rejected: owner revision or a present-only index for new IDs (another owner can consume the ID).
+(def history-guard
+  '(let [history (d/history db)
+        lo (first prefixes) hi (last prefixes)
+        empty-range (and (= (subs lo 0 5) (subs hi 0 5)) (< (int (last hi)) 127)
+                         (let [end (str (subs hi 0 (dec (count hi))) (char (inc (int (last hi)))))]
+                           (nil? (first (d/index-range history :triplex.entity/row lo end)))))]
+    (when (and (not empty-range)
+               (some (fn [^String prefix]
+                       (when-let [datom (first (d/index-range history :triplex.entity/row prefix nil))]
+                         (.startsWith ^String (:v datom) prefix)))
+                     prefixes))
+      ;; The reference establishes error precedence if a predecessor also changed.
+      (throw (ex-info "TRIPLEX_SUBJECT_REPLAN" {})))))
+
+;; [DX-PREP1] Why: one containing interval proves global absence for the whole ordered save.
+;; Rejected: skipping history (another owner may have used a supplied ID) or rejecting unrelated IDs in the interval.
+(def ordered-history-guard
+  (walk/postwalk-replace {'legacy-check history-guard}
+    '(if-let [[start end] (:ordered-bounds plan)]
+       (let [wanted (set prefixes) width (count start)]
+         (loop [rows (seq (d/index-range (d/history db) :triplex.entity/row start end)) inspected 0]
+           (when-let [datom (first rows)]
+             (if (= inspected 128)
+               legacy-check
+               (let [^String text (:v datom)]
+                 (when (and (>= (.length text) width) (contains? wanted (subs text 0 width)))
+                   (throw (ex-info "TRIPLEX_SUBJECT_REPLAN" {})))
+                 (recur (next rows) (inc inspected)))))))
+       legacy-check)))
+
+(defn ordered-bounds [journal prefixes]
+  (when-let [[_ token] (re-matches #"_tx/([0-7][0-9A-HJKMNP-TV-Z]{23})00" journal)]
+    (let [base (str "2001a" token) n (count prefixes)]
+      (when (and (<= 1 n 256)
+                 (= prefixes (mapv #(str base (.charAt "0123456789ABCDEF" (quot % 16))
+                                                (.charAt "0123456789ABCDEF" (rem % 16))) (range n))))
+        (let [hi (peek prefixes)]
+          [(first prefixes) (str (subs hi 0 (dec (count hi))) (char (inc (int (last hi)))))])))))
+
 (def body
   '(let [{:keys [scope flags function owner revision journal operation command ops provisional
                  submitted-clock prefixes expected-erasure]} plan
@@ -36,6 +80,7 @@
      ;; [DX-PREP1] Why: excision can remove a predecessor without updating its owner revision.
      ;; Rejected: trusting even a recently synced peer after an erase has been requested.
      (when (or (some #(not (mutable-flags %)) changed)
+               owner-witness-check
                (not= installed-at (:tx (first (d/datoms db :eavt (d/entid db ident) :db/fn))))
                (let [seen (reduce (fn [out [a v]] (assoc out a v)) {} flags)]
                  (if (:triplex.scope/erasure-ledger seen)
@@ -46,20 +91,7 @@
        (throw (ex-info "TRIPLEX_CONFLICT" {:triplex.subject/stale true})))
      (when (or (seq changed) (d/entid db [:triplex.entity/id journal]))
        (throw (ex-info "TRIPLEX_SUBJECT_REPLAN" {})))
-     ;; [DX-PREP1] Why: owner CAS protects predecessor bytes, but an assertion identity is global, including retired rows.
-     ;; Rejected: owner revision or a present-only index for new IDs (another owner can consume the ID).
-     (let [history (d/history db)
-           lo (first prefixes) hi (last prefixes)
-           empty-range (and (= (subs lo 0 5) (subs hi 0 5)) (< (int (last hi)) 127)
-                            (let [end (str (subs hi 0 (dec (count hi))) (char (inc (int (last hi)))))]
-                              (nil? (first (d/index-range history :triplex.entity/row lo end)))))]
-       (when (and (not empty-range)
-                  (some (fn [^String prefix]
-                          (when-let [datom (first (d/index-range history :triplex.entity/row prefix nil))]
-                            (.startsWith ^String (:v datom) prefix)))
-                        prefixes))
-         ;; The reference establishes error precedence if a predecessor also changed.
-         (throw (ex-info "TRIPLEX_SUBJECT_REPLAN" {}))))
+     check-history
      (let [native-tx (d/t->tx (d/basis-t db))
            latest (if (value native-tx :triplex.tx/position)
                     native-tx
@@ -82,22 +114,49 @@
       (if (and (seq? node) (= 'changes-application-rows? (first node)))
         (macroexpand-1 (cons `changes-application-rows? (rest node)))
         node))
-    (walk/postwalk-replace {'stamp-rows commit/compiled-stamp-code 'mutable-flags mutable-flags} body)))
+    (walk/postwalk-replace {'stamp-rows commit/compiled-stamp-code
+                          'mutable-flags mutable-flags
+                          'check-history (if ordered-ids? ordered-history-guard history-guard)
+                          ;; [DX-PREP1] Why: the numeric owner must still own this public ID in db-before.
+                          ;; Rejected: trusting the peer's lookup alone (an ID change can leave its revision intact).
+                          'owner-witness-check (when numeric-owner?
+                                                 '(not= (:owner-key plan) (value owner :triplex.entity/id)))}
+                         body)))
 (def source-hash (schema/sha256 (pr-str code)))
 (def ident (keyword "triplex.subject" (str "v-" (subs source-hash 0 24))))
+
+;; [DX-PREP1] Why: capture the two dominant segment keys without evaluating or stamping a command again.
+;; Rejected: speculative apply of the whole save (duplicates normalization and produces an unused draft).
+(def prefetch-code
+  (walk/postwalk-replace {'check-history history-guard}
+    '(do (first (d/datoms db :eavt owner :triplex.entity/rev))
+         check-history
+         [])))
+(def prefetch-ident
+  (keyword "triplex.subject" (str "prefetch-" (subs (schema/sha256 (pr-str prefetch-code)) 0 24))))
 
 (defn installed [db]
   (when-let [eid (d/entid db ident)]
     (:tx (first (d/datoms db :eavt eid :db/fn)))))
 
 (defn install! [conn db]
-  (if (and enabled (not (and (installed db) (d/entid db erase-generation))))
-    (:db-after @(d/transact conn (cond-> []
-      (not (d/entid db erase-generation)) (conj (schema/attr erase-generation :db.type/long))
-      (not (installed db)) (conj {:db/ident ident :db/fn (d/function
-        {:lang :clojure :params '[db plan] :requires '[[datomic.api :as d] [clojure.data.json :as json]]
-         :code code})}))))
-    db))
+  (if-not enabled
+    db
+    (let [missing (cond-> []
+                    (not (d/entid db erase-generation))
+                    (conj (schema/attr erase-generation :db.type/long))
+                    (not (installed db))
+                    (conj {:db/ident ident :db/fn (d/function
+                      {:lang :clojure :params '[db plan] :requires '[[datomic.api :as d] [clojure.data.json :as json]]
+                       :code code})})
+                    (and prefetch? (not (d/entid db prefetch-ident)))
+                    (conj {:db/ident prefetch-ident :db/fn (d/function
+                      {:lang :clojure :params '[db owner prefixes] :requires '[[datomic.api :as d]]
+                       :code prefetch-code})}))]
+      (if (seq missing) (:db-after @(d/transact conn missing)) db))))
+
+(defn lookup-hints [db {:keys [owner prefixes]}]
+  (:hints (d/with db [[prefetch-ident owner prefixes]] :return-hints true)))
 
 (defn scope-witness [db scope-id]
   (into (prepared/scope-flags db scope-id)
@@ -121,18 +180,23 @@
     (:attribute row)))
 
 (defn render-ops [ops owner subject prior new-ids]
-  (let [prior-rows (into {} (map (fn [[id text]] [id (commit/recorded-row text)])) prior)
+  (let [temp-owner (str "e:" subject)
+        prior-rows (into {} (map (fn [[id text]] [id (commit/recorded-row text)])) prior)
         rewrite #(commit/rewrite-change %1 %2 new-ids prior-rows)]
     (into []
       (keep (fn [op]
               (cond
+                ;; [DX-PREP1] Why: business rows can use the existing number guarded by identity and revision.
+                ;; Rejected: resolving a unique upsert again inside Datomic. The new journal still uses its tempid.
+                (and numeric-owner? (map? op) (= temp-owner (:db/id op)) (= subject (:triplex.entity/id op))) nil
                 (and (vector? op) (= :triplex/assert (first op)))
                 (let [[_ eid attr [tag text position offset kind]] op]
-                  [:db/add eid attr [tag (subs text 0 offset) position offset kind
+                  [:db/add (if (and numeric-owner? (= eid temp-owner)) owner eid)
+                   attr [tag (subs text 0 offset) position offset kind
                                      (small-row/ordinary-plan text offset rewrite)]])
                 (and (vector? op) (= :triplex/retract (first op)))
                 [:db/retract owner :triplex.entity/row (prior (nth op 2))]
-                (and (vector? op) (= :triplex.entity/rev (nth op 2)) (= (str "e:" subject) (second op))) nil
+                (and (vector? op) (= :triplex.entity/rev (nth op 2)) (= temp-owner (second op))) nil
                 :else op)))
       ops)))
 
@@ -190,12 +254,15 @@
                 after (into #{} (map (comp field lean/decode second #(nth % 3))) business)]
             (when (and (= (count live) (count prior) (count before) (count after))
                        (= before after) (not (contains? before nil)))
-              {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
-               :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
-               :provisional provisional :submitted-clock (reduce max (map double clocks))
-               :prefixes (vec (sort (map lean/prefix new-ids)))
-               :expected-erasure expected-erasure
-               :ops (render-ops ops owner subject prior (set new-ids))})))))))
+              (let [prefixes (vec (sort (map lean/prefix new-ids)))]
+                (cond-> {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
+                         :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
+                         :provisional provisional :submitted-clock (reduce max (map double clocks))
+                         :prefixes prefixes
+                         :expected-erasure expected-erasure
+                         :ops (render-ops ops owner subject prior (set new-ids))}
+                  numeric-owner? (assoc :owner-key subject)
+                  ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))
 
 (defn plan
   ([db data input] (plan-with-erasure db data input nil))
@@ -212,7 +279,7 @@
          (= (second (:function plan)) (installed db))
          (not (changes-application-rows? db)))))
 
-(defn verify-report [report {:keys [operation command journal owner]}]
+(defn verify-report [report {:keys [operation command journal owner ordered-bounds]}]
   (let [db (:db-after report) t (d/basis-t db) tx (d/t->tx t)
         cmd (d/entid db [:triplex.claim/command-id command])
         journal-eid (d/entid db [:triplex.entity/id journal])
@@ -228,4 +295,5 @@
                    journal-eid (= journal-eid (scope/value db tx :triplex.tx/journals))
                    (= position (scope/value db journal-eid :triplex.journal/position)))
       (throw (ex-info "Prepared subject receipt unavailable" {:status 503 :code "OutcomeUnknown"})))
-    (assoc report :subject-save (str ident))))
+    (cond-> (assoc report :subject-save (str ident))
+      ordered-bounds (assoc :subject-ordered-ids true))))

@@ -229,6 +229,10 @@ for port in "$port_w" "$port_r"; do
 done
 repo=$(cd "$(dirname "$0")/../../../.." && pwd)
 prepw=${DX_PREP1_WRITERS:-1}
+subject_save=${TX2_SUBJECT_SAVE:-0}
+subject_numeric_owner=${TX2_SUBJECT_NUMERIC_OWNER:-0}
+subject_prefetch=${TX2_SUBJECT_PREFETCH:-0}
+subject_ordered_ids=${TX2_SUBJECT_ORDERED_IDS:-0}
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
   # [DX-V01] Why: the scorecard uses the same selected writer on private bridge endpoints.
@@ -238,9 +242,14 @@ if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_PREP1_SUBJECT:-0} =~ ^[01]$ && -z $seed_volume ]]
   (( port_w + prepw - 1 < port_r ))
   [[ -z ${DX_PREP1_DUMP:-} || -f $DX_PREP1_DUMP ]]
+  subject_save=${DX_PREP1_SUBJECT:-0}
 else
   [[ $prepw == 1 && -z ${DX_PREP1_DUMP:-} ]]
 fi
+[[ $subject_save =~ ^[01]$ && $subject_numeric_owner =~ ^[01]$ ]]
+[[ $subject_numeric_owner == 0 || $subject_save == 1 ]]
+[[ $subject_prefetch =~ ^[01]$ && ( $subject_prefetch == 0 || $subject_save == 1 ) ]]
+[[ $subject_ordered_ids =~ ^[01]$ && ( $subject_ordered_ids == 0 || ( $subject_save == 1 && $subject_prefetch == 0 ) ) ]]
 stack_labels=()
 tx_java=$(node "$jvm_tool" tx "$tx" "$tx_java")
 gw_w_java=$(node "$jvm_tool" gw-w "$gw_w" "$gw_w_java")
@@ -568,6 +577,12 @@ for role in "${gateway_roles[@]}"; do
   # [DX-W1] Why: bootstrap is finished on the other peer before the single authoritative writer admits live traffic.
   # Rejected: allowing a large labeled import through the live writer's frame cap during measurement.
   field_policy=()
+  # [DX-PREP1] Why: carry the one opt-in setting through the normal writer launcher.
+  # Rejected: coupling activation to trace collection or installing the writer on reader peers.
+  if [[ $mode == w ]]; then
+    field_policy+=(-e "TX2_SUBJECT_SAVE=$subject_save" -e "TX2_SUBJECT_NUMERIC_OWNER=$subject_numeric_owner"
+      -e "TX2_SUBJECT_PREFETCH=$subject_prefetch" -e "TX2_SUBJECT_ORDERED_IDS=$subject_ordered_ids")
+  fi
   if [[ $mode == w && -n ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
     [[ ${DX_PREDECESSOR_LOOKUP:-} =~ ^[01]$ && $DX_WRITE_OPTIONS_ATTEMPT =~ ^[a-f0-9-]{36}$ ]] || exit 2
     field_policy+=(-e "TX2_PREDECESSOR_LOOKUP=$DX_PREDECESSOR_LOOKUP" -e "TX2_WRITE_OPTIONS_ATTEMPT=$DX_WRITE_OPTIONS_ATTEMPT")
@@ -618,7 +633,7 @@ for role in "${gateway_roles[@]}"; do
   role_trace_java=$trace_gw_java
   if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
     role_trace_java+=" -Xlog:gc*,safepoint*=debug:file=/trace/prep1-gc-gw-$role.log:time,uptimemillis,level,tags,pid,tid:filecount=0"
-    if [[ $mode == w ]]; then field_policy+=(-e "TX2_SUBJECT_SAVE=${DX_PREP1_SUBJECT:-0}" -e TX2_SUBJECT_PROFILE=1); fi
+    if [[ $mode == w ]]; then field_policy+=(-e TX2_SUBJECT_PROFILE=1); fi
   fi
   role_jfr=$TRIPLEX_TRACE_GW_JFR
   if [[ $role == w && -n ${DX_TAIL1_ATTEMPT:-} && ${DX_TAIL1_EVENT_TRACE:-0} != 1 ]]; then

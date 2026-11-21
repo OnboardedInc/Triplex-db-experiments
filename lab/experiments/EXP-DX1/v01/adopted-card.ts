@@ -4,7 +4,9 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import { render as emptyCard } from "./render.ts";
-import type { adoptedArm } from "./adopted.ts";
+import { checkSavedIdentity, type adoptedArm } from "./adopted.ts";
+import type { Feed } from "../scale1/decision/observer.ts";
+import type { Save } from "../scale1/decision/writes.ts";
 import { selectedWriter, type Age, type Writer } from "./profile.ts";
 
 type Card = { source: string; age: Age; writer: Writer; toy: boolean; campaign: string; out: string; forecast: string; failure?: string };
@@ -19,11 +21,24 @@ export function writeAdoptedCard(run: Card) {
     assert.deepEqual([x.source, x.fixture, x.loaded], [run.source, run.toy, load]);
     assert(x.startedAt <= x.start && x.start < x.endedAt && x.seed.head === x.firstCut);
     assert.equal(createHash("sha256").update(bytes).digest("hex"), x.observationsSha256);
-    const raw = JSON.parse(bytes.toString());
+    const raw = JSON.parse(bytes.toString()) as {
+      p6?: Observation["p6"]; p7?: Observation["p7"];
+      tape: unknown[]; writes: Save[]; journal: Feed[];
+    };
     assert.deepEqual(raw.p6, x.p6);
     assert.deepEqual(raw.p7, x.p7);
-    const dispatch = new Map<string, number>(raw.writes.filter((r: any) => r.receipt && Number.isFinite(r.dispatched))
-      .map((r: any) => [r.id, r.dispatched]));
+    assert.equal(createHash("sha256").update(JSON.stringify(raw.tape)).digest("hex"), x.tapeSha256);
+    const receipts = new Map(raw.writes.filter((save) => save.receipt).map((save) => [save.id, save]));
+    assert(receipts.size === x.p2.receipts && raw.journal.length === receipts.size);
+    const dispatch = new Map<string, number>();
+    for (const row of raw.journal) {
+      const save = receipts.get(row.id);
+      assert(save);
+      checkSavedIdentity(save, row, run.writer, x.settings.observed.subjectFunction);
+      receipts.delete(row.id);
+      if (save.dispatched !== undefined) dispatch.set(save.id, save.dispatched);
+    }
+    assert.equal(receipts.size, 0);
     const feed = new Histogram();
     for (const entry of raw.journal) {
       const due = dispatch.get(entry.id);
@@ -61,7 +76,7 @@ export function writeAdoptedCard(run: Card) {
       String(loaded.p3.entries), evidence("loaded")]);
     if (loaded.p4?.observed.count) rows.set("P4", [`Current demand pulls p50 ${tag(loaded.p4.observed.p50Ms)} ms, p99 ${tag(loaded.p4.observed.p99Ms)} ms. History depth and engine bytes remain open.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
       String(loaded.p4.observed.count), evidence("loaded")]);
-    rows.set("Journal queryable", [`Compared ${loaded.p3.entries} queryable K journal entries to original operation and predecessor expectations.`, "DIAGNOSTIC",
+    rows.set("Journal queryable", [`Compared ${loaded.p3.entries} queryable journal entries to original operation and predecessor expectations.`, "DIAGNOSTIC",
       String(loaded.p3.entries), evidence("loaded")]);
     rows.set("Receipts", [`Verified the journal against ${loaded.p2.receipts} receipts and reopened a sample of durable claims. The retry and lost-ACK bar is open.`, "DIAGNOSTIC",
       String(loaded.p2.receipts), evidence("loaded")]);

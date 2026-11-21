@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { setTimeout as sleep } from "node:timers/promises";
-import { DatomicClient, DatomicHttpError } from "../../../../../packages/datomic/dist/index.js";
+import {
+  DatomicClient, DatomicHttpError, orderedSaveIdentity,
+} from "../../../../../packages/datomic/dist/index.js";
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
 import { command } from "../../w1/group/workload.ts";
@@ -35,6 +37,8 @@ type Ack = {
   transactMicros?: number;
   groupStages?: Record<string, number>;
   timeline?: Record<string, number>;
+  subjectSave?: string;
+  subjectOrderedIds?: boolean;
 };
 export type Save = {
   id: string;
@@ -50,6 +54,7 @@ export type Save = {
   responseHeaders?: number;
   responseTrace?: string;
   predecessor?: string;
+  orderedToken?: string;
   end?: number;
   status:
     | "offered"
@@ -116,7 +121,8 @@ export function expectedSave(o: Save, e: Write, prior: readonly Row[]) {
     v: { type: "string", value: sha([e.version, i]).slice(0, 57) },
   }));
   const input = {
-    ...command(o.id, facts, old),
+    ...command(o.id, facts, old, true, false,
+      o.orderedToken === undefined ? undefined : orderedSaveIdentity(o.orderedToken)),
     live: old.map((r) => r.id),
     groupAccount: keyFor(o.account),
     writeClass: "live" as const,
@@ -162,6 +168,7 @@ export async function play(
   start: number,
   nonce: string,
   capture = false,
+  orderedIds = false,
 ) {
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
     active = scopes.map(() => 0),
@@ -224,7 +231,12 @@ export async function play(
         expire(row, "dispatch");
         continue;
       }
-      const candidate = expectedSave(row, e, sender.rows.get(task(row.account, row.subject))!);
+      // [DX-INT1] Why: bind the identity block to this offered save through settling or recovering it.
+      // Rejected: minting a new block while looking up an uncertain receipt.
+      if (orderedIds) row.orderedToken = orderedSaveIdentity().token;
+      const prior = sender.rows.get(task(row.account, row.subject))!;
+      const candidate = expectedSave(row, e, prior);
+      if (orderedIds) candidate.input.sourceK = Math.max(sender.scope.cut, ...prior.map((field) => field.recorded_position));
       owned.set(key(row), row.id);
       active[account]!++;
       row.dispatched = now();
