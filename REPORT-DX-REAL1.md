@@ -14,18 +14,18 @@ North star follows P1 and P2 on a realistic one-database population, with the P6
 
 TARGETS §1.2 gives the thin range of 1–4.5 million and ~160 facts per deep subject. It specifies no thin fact count. Use the eight W0 answer facts in THIN1, plus the two SCALE1 account/member facts per root. Use SCALE1's ten small accounts at 2,000 and ninety at 100, each with the existing deep subject generator. The 28 native records per thin person are an estimate of ten assertions, ten change records and two entity bookkeeping records for four entities, before per-frame metadata. The small estimate uses SCALE1's native-to-business ratio. [Thin fixture](lab/experiments/EXP-DX1/thin1/population.ts) · [Small sizes](lab/experiments/EXP-DX1/scale1/small-plan.ts)
 
-TARGETS §2 and §2.1 fix 95% active-subject saves and 5% uniform, at least half of subgraph reads overlapping writes within 60 seconds (§1 P1), an 80/15/5 read basis mix, and 10–100 reads per save. It gives no fractions by account type. Proposed busy shares for both foreground streams are 80% deep, 15% thin, 5% small. The quiet deep account keeps its independent control, and the first-read sweep is a separate denominator. These shares assume applicants in the wide account are less likely to be active than deep subjects. Confirm the tenant shares, thin shape, and small-account depth before using them as a fixed comparison.
+TARGETS §2 and §2.1 fix 95% active-subject saves and 5% uniform, at least half of subgraph reads overlapping writes within 60 seconds (§1 P1), an 80/15/5 read basis mix, and 10–100 reads per save. It gives no fractions by account type. Proposed busy shares for both foreground streams are 80% deep, 15% thin, 5% small. The quiet deep account adds an independent control. The implied shares across the public 300-second window are about 84.6% deep including quiet, 11.6% thin and 3.9% small. The first-read sweep has its own denominator. These shares assume applicants in the wide account are less likely to be active than deep subjects. Confirm the tenant shares, thin shape, and small-account depth before using them as a fixed comparison.
 
 Use the verified SCALE1 exact import mechanism for new people. AGE1's faster native path is calibrated on replacing existing rows with known predecessor identities. Its calibration omits new-owner creation and the SCALE1 import claims and feed contract. Use its settled-index and storage maintenance approach where it applies. Budget against the observed SCALE1 ~5,800 facts/s ingestion and ~6,120 facts/s verification and the slower ~3,193 facts/s live P8 reference. Plan roughly 2–3 hours for the first rung (USD 2.18–3.27), 5–7 hours for the full rung (USD 5.45–7.63), and about 138 GB and 166 GB stopped respectively, before copy/WAL headroom. The storage estimate applies the held ~293 bytes/native record to added records. Verify against actual SQL bytes, WAL and stopped tree bytes.
 
 ## Driver procedure
 
-Use the commit at the head of this report's branch. Prepare Node 22, the built public packages, Datomic 1.0.7745 and PostgreSQL 17 with the existing [v0.1 build command](lab/experiments/EXP-DX1/v01/SERVER.md). The runner uses the lab's bare-metal stack launcher. It needs eight available logical CPUs numbered 0–7, room for the copied cluster plus 40 GiB (first) or 100 GiB (full), and 5 GiB free on the evidence filesystem. The held PGDATA must be a clean PG17 shutdown, include private internal WAL, and already have the normal scorecard fixture roles. Use the `inventory.treeSha` from its SCALE1 physical handoff, the original image and transfer digests, and separate new output and data parents.
+Use runtime commit `3c618698e4035e341124203df806d49b162992fb`. Prepare Node 22, the built public packages, Datomic 1.0.7745 and PostgreSQL 17 with the existing [v0.1 build command](lab/experiments/EXP-DX1/v01/SERVER.md). The runner uses the lab's bare-metal stack launcher. It needs eight available logical CPUs numbered 0–7, room for the copied cluster plus 40 GiB (first) or 100 GiB (full), and 5 GiB free on the evidence filesystem. The held PGDATA must be a clean PG17 shutdown, include private internal WAL, and already have the normal scorecard fixture roles. Use the `inventory.treeSha` from its SCALE1 physical handoff, the original image and transfer digests, and separate new output and data parents.
 
 ```bash
-COMMIT=$(git rev-parse HEAD)
+COMMIT=3c618698e4035e341124203df806d49b162992fb
 runner=lab/experiments/EXP-DX1/real1/server.ts
-sudo env "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
+sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
   "$NODE22" --no-warnings --experimental-transform-types "$runner" extend \
   --commit "$COMMIT" --profile first \
   --seed "$SCALE1_IMAGE" --image-sha256 "$SCALE1_IMAGE_SHA256" \
@@ -46,7 +46,7 @@ sudo "$NODE22" --no-warnings --experimental-transform-types "$runner" verify \
 Run one quiet-only copy (append `--quiet-only`) and one loaded copy with the same command, independent paths and the same sealed parent. The read gateway receives its first subject reads during the run. The writer gateway performs startup identity checks. Subject sampling, receipts and pinned reads are bound to the selected seal and a new attempt. The driver leaves scratch PGDATA stopped for inspection and removes its containers and network. The driver agent owns disposal of the server scratch and should retain the extension seed.
 
 ```bash
-sudo env "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
+sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
   "$NODE22" --no-warnings --experimental-transform-types "$runner" measure \
   --commit "$COMMIT" --realistic-mix --seconds 300 --sweep 10000 \
   --seed "$NEW_SEAL_DIRECTORY" --image-sha256 "$REAL1_IMAGE_SHA256" \
@@ -85,3 +85,14 @@ The workload has no cache-priming pass. Its P7 cohort excludes all foreground su
 - **Workload result** in `workload.ts`. A successful output requires the original and duplicate receipt bytes, exact feed order/coverage, exact pinned read digests and exact distinct cold replies. Every observation is from a new attempt and its fresh stopped copy, and carries the image source, seed slot, starting cut and tape digest. This emits measurements and counts without assigning scorecard PASS.
 - **Measurement completion anchor** in `server.ts`. It binds the exact workload bytes to the new slot and build, pinned seal and source tree after the run has passed its receipt checks, its PostgreSQL copy has stopped cleanly and the owned containers and network have disappeared.
 - No contract files or pinned input paths were changed.
+
+
+## Verification and handoff
+
+The final pool-admitted Mac SQL toy run used runtime commit `3c618698e4035e341124203df806d49b162992fb`. One Datomic database held 5,600 people and 121,920 facts. The extension added 62,120 verified facts in 32 frames, sealing at logical cut 66. The driver checked 169 stored saves through cut 235, including three scheduled resends and two simulated lost-acknowledgement replays. It checked 1,690 exact pinned foreground reads, of which 845 targeted the recent saved subject, and 25 first reads at the untouched thin cut. The band counts were 1,358 latest, 249 recent and 83 past. All Mac clocks are diagnostic.
+
+Strict TypeScript, shell syntax and three focused tests passed. The generated 300-second tape for both server profiles covers all 100 small accounts and preserves 1,042 identical quiet primary offers. It schedules 2,878 busy deep, 553 thin and 163 small primaries. These are generated offers. No bare-metal server was started or measured here.
+
+The earlier shared-image check refused a mismatched image. The first private image build failed in a Docker layer writer and the retry built the pinned image. The first compact-stack attempt exposed the standard-launcher flag readback mismatch. The next attempt verified and sealed the population, then exposed the typed duplicate reply from the public adapter. The corrected attempt resolves that reply against the original durable command. The final attempt removed its container and volume and returned its reservation. The private image was removed and the final lab inventory showed no active DX-REAL1 reservation.
+
+The compressed Mac archive is `evidence/DX-REAL1/mac-evidence.tar.gz` under the lab's durable project store. It includes the initial failures, final receipt positions and read digests, seed ledgers, generated tapes and cleanup. The [SHA-256 manifest](lab/experiments/EXP-DX1/real1/evidence/SHA256SUMS) identifies the archived bytes. Bare-metal timings, full scale stopped size, the activity-matched P7 residency slope, independent review, and adoption by the two downstream harnesses remain open.
