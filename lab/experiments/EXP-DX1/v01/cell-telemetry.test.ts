@@ -28,6 +28,7 @@ test("native events keep their native clock, exact boundary and checkpoint cause
   assert.equal(nativeEvent(stamp + " INFO datomic.update - {:event :update/new-index}", false)[0]!.kind, "index-adoption");
   assert.equal(nativeEvent(stamp + " INFO datomic.util - {:event :metrics, :MemoryIndexMB {:lo 10, :hi 40, :sum 50, :count 2}}", false)[0]!.memoryHighMB, 40);
   assert.equal(nativeEvent(stamp + " WARN datomic.update - memory-index backpressure", false)[0]!.kind, "memory-alarm");
+  assert.equal(nativeEvent(stamp + " INFO datomic - {:AlarmBackPressure {:sum 3, :count 2}}", false)[0]!.alarmCount, 3);
   assert.deepEqual(nativeEvent("PG message without timestamp", true), []);
 });
 
@@ -43,10 +44,14 @@ test("one clock keeps both boundaries and fails closed for a stale slot or inval
         pg: { at, wal: { wal_bytes: 12 }, checkpointer: { num_timed: 0 }, io: [{}] } };
     },
     async events() {
-      return { errors: ["synthetic native log unavailable"], events: [] };
+      return { errors: ["synthetic native log unavailable"], events: [
+        { kind: "memory-index", at: start + 100, line: "index memory", memoryHighMB: 5 },
+        { kind: "index-start", at: start + 1100, line: "index start" },
+      ] };
     },
   }, binding, AbortSignal.timeout(5000));
   assert.deepEqual(raw.samples.map(x => x.due), [start, start + 1000, start + 2000]);
+  assert.deepEqual(raw.samples.map(s => s.native.lastMemory?.at ?? null), [null, start + 100, start + 100]);
   assert.match(summarizeTelemetry(raw, binding, now()), /PG stat views 3\/3 samples, 0 missed ticks/);
   assert.throws(() => summarizeTelemetry(raw, { ...binding, slot: "stale" }, now()), /cut or time window differs/);
   const stale = structuredClone(raw);

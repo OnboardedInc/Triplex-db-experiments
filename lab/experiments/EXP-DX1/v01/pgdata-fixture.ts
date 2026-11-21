@@ -3,6 +3,7 @@ import { execFileSync, spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
+import { counterSql } from "./cell-telemetry.ts";
 import { inspectPgdata } from "./pgdata.ts";
 
 export async function pgdataFixture(out: string, source: string, slot: string, attempt: string) {
@@ -59,11 +60,14 @@ export async function pgdataFixture(out: string, source: string, slot: string, a
     assert.equal(sql("UPDATE witness SET value = 'private' RETURNING value"), "private");
     assert.equal(fs.readlinkSync(path.join(scratch, "pg_wal")), wal);
     assert.equal(sql("SHOW synchronous_commit"), "on");
+    const stats = JSON.parse(sql(counterSql));
+    assert(stats.wal && "wal_bytes" in stats.wal && stats.checkpointer && "num_timed" in stats.checkpointer &&
+      Array.isArray(stats.io) && stats.io.length && Math.abs(stats.at - Date.now()) < 5_000);
     const sourceControl = execFileSync("sha256sum", [path.join(original, "global", "pg_control")], { encoding: "utf8" }).split(" ")[0];
     assert.equal(sourceControl, copy!.controlSha256);
     fs.writeFileSync(path.join(out, "PGDATA-FIXTURE.json"), JSON.stringify({ source, slot, attempt, fileId,
       controlSha256: sourceControl, originalValue: opened, copyValue: "private", wrongDigestExit: refused.status,
-      sameDeviceExit: sameDeviceRefusal.status, separateWal: true, synchronousCommit: "on" }) + "\n",
+      sameDeviceExit: sameDeviceRefusal.status, separateWal: true, synchronousCommit: "on", stats }) + "\n",
       { flag: "wx", mode: 0o600 });
   } finally {
     server.kill("SIGINT");

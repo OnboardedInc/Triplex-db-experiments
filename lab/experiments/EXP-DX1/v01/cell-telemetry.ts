@@ -14,15 +14,15 @@ type Engines = Partial<Record<string, { id: string; cgroup: string }>>;
 type Cpu = { usage_usec: number; nr_throttled: number; throttled_usec: number; pressure: string };
 type Pg = { at: number; wal: Record<string, unknown>; checkpointer: Record<string, unknown>; io: unknown[] };
 type EventKind = "index-start" | "index-complete" | "index-adoption" | "memory-index" | "memory-alarm" | "checkpoint-start" | "checkpoint-end";
-type Event = { kind: EventKind; at: number; line: string; callback?: true; cause?: string; memoryHighMB?: number };
+type Event = { kind: EventKind; at: number; line: string; callback?: true; cause?: string; memoryHighMB?: number; alarmCount?: number };
 type Binding = { source: string; slot: string; attempt: string; database: string; firstCut: number; cell: ServerCell; start: number; end: number };
 type Sample = { due: number; at: number; until: number; sender: NodeJS.CpuUsage; cpu?: Record<Role, Cpu>; pg?: Pg; errors: string[] };
-type Events = { events: Event[]; errors: string[] };
+type Events = { events: Event[]; errors: string[]; priorMemory?: Event };
 type Probe = {
   sample(due: number, signal: AbortSignal): Promise<Sample>;
   events(binding: Binding, signal: AbortSignal): Promise<Events>;
 };
-const sql = `SELECT json_build_object(
+export const counterSql = `SELECT json_build_object(
   'at', extract(epoch FROM clock_timestamp()) * 1000,
   'wal', (SELECT row_to_json(w) FROM pg_stat_wal w),
   'checkpointer', (SELECT row_to_json(c) FROM pg_stat_checkpointer c),
@@ -59,8 +59,10 @@ export function nativeEvent(line: string, postgres: boolean): Event[] {
     if (line.includes(":phase :end")) events.push({ kind: "index-complete", at, line });
   }
   if (line.includes(":event :update/new-index")) events.push({ kind: "index-adoption", at, line });
-  const memory = /:(?:MemoryIndexMB|MemIndexMB)\s*\{[^}]*:hi\s+([\d.Ee+-]+)/.exec(line);
+  const memory = /:(?:MemoryIndexMB|MemIndexMB)\s+(?:\{[^}]*:hi\s+)?([\d.Ee+-]+)/.exec(line);
   if (memory && finite(Number(memory[1]))) events.push({ kind: "memory-index", at, line, memoryHighMB: Number(memory[1]) });
+  const alarms = /:AlarmBackPressure\s+(?:\{[^}]*:sum\s+)?([\d.Ee+-]+)/.exec(line);
+  if (alarms && counter(Number(alarms[1]))) events.push({ kind: "memory-alarm", at, line, alarmCount: Number(alarms[1]) });
   if (/\b(?:WARN|ERROR)\b/.test(line) && /mem(?:ory)?[- ]?index|back.pressure/i.test(line)) {
     events.push({ kind: "memory-alarm", at, line });
   }
@@ -79,7 +81,7 @@ export function physicalTelemetry(out: string, engines: Engines): Probe {
         Promise.all(roles.map(async role =>
           [role, await cpuRead(engines[role]!.cgroup)] as const)),
         shell("docker", ["exec", engines.pg!.id, "psql", "-XAtq", "-v", "ON_ERROR_STOP=1",
-          "-U", "postgres", "-d", "datomic", "-c", sql], limits(signal)),
+          "-U", "postgres", "-d", "datomic", "-c", counterSql], limits(signal)),
       ]);
       const until = clock();
       const sample: Sample = { due, at, until, sender, errors };
@@ -106,7 +108,7 @@ export function physicalTelemetry(out: string, engines: Engines): Probe {
         shell("docker", ["logs", "--timestamps", "--since", since, "--until", until, engines.pg!.id], limits(signal)),
         shell("docker", ["exec", engines.tx!.id, "sh", "-c",
           'from="$1"; to="$2"; set -- /opt/datomic/log/*.log; test -f "$1" || exit 3; ' +
-          'grep -hE ":update/(new-index|create-index)|MemoryIndexMB|MemIndexMB|[mM]em(ory)?[- ]?[Ii]ndex|back.pressure" "$@" | ' +
+          'grep -hE ":update/(new-index|create-index)|MemoryIndexMB|MemIndexMB|AlarmBackPressure|[mM]em(ory)?[- ]?[Ii]ndex|back.pressure" "$@" | ' +
           `awk -v from="$from" -v to="$to" '{t=substr($0,1,23); if(t>=from && t<=to)print}'`,
           "scorecard-index-log",
           since.slice(0, 23).replace("T", " "), until.slice(0, 23).replace("T", " ")],
@@ -138,17 +140,22 @@ export function physicalTelemetry(out: string, engines: Engines): Probe {
             dropped = Math.max(dropped, state?.dropped ?? 0);
             if (row.type === "index-adoption" && row.completed && finite(row.end))
               events.push({ kind: "index-adoption", at: align(row.end), line, callback: true });
-            const mb = row.counters?.memoryIndexMB?.hi;
-            if (row.type === "metrics" && finite(mb) && finite(row.at))
-              events.push({ kind: "memory-index", at: align(row.at), line, memoryHighMB: mb, callback: true });
+            if (row.type !== "metrics" || !finite(row.at)) continue;
+            const metric = row.counters?.memoryIndexMB;
+            const mb = metric?.hi ?? metric;
+            if (finite(mb)) events.push({ kind: "memory-index", at: align(row.at), line, memoryHighMB: mb, callback: true });
+            const alarm = row.metrics?.AlarmBackPressure;
+            const alarmCount = alarm?.sum ?? alarm;
+            if (counter(alarmCount)) events.push({ kind: "memory-alarm", at: align(row.at), line, alarmCount, callback: true });
           }
           if (!installed || dropped) errors.push(`Datomic adoption observer installed=${installed}, dropped=${dropped}`);
         } catch (error) {
           errors.push("Datomic metrics or adoption trace: " + failure(error));
         }
       } else errors.push("Datomic metrics or adoption trace: " + failure(callback.reason));
-      return { events: events.filter(e => e.at >= binding.start && e.at <= binding.end)
-        .sort((a, b) => a.at - b.at), errors };
+      events.sort((a, b) => a.at - b.at);
+      return { events: events.filter(e => e.at >= binding.start && e.at <= binding.end),
+        priorMemory: events.findLast(e => e.kind === "memory-index" && e.at < binding.start), errors };
     },
   };
 }
@@ -165,7 +172,20 @@ export async function collectCell(probe: Probe, binding: Binding, signal: AbortS
   }
   await sleep(1100, undefined, { signal }); // Flush the once-per-second native recorder past the end boundary.
   const native = await probe.events(binding, signal);
-  return { binding, samples, ...native };
+  // [DX-V01] Why: make the native cadence visible at each host tick.
+  // Rejected: resampling a minute bucket as a new measurement each second or assigning a future bucket to a past ACK.
+  let next = 0;
+  let memory = native.priorMemory;
+  const joined = samples.map(sample => {
+    const from = next;
+    while (native.events[next] && native.events[next]!.at <= Math.min(sample.at, binding.end)) {
+      const event = native.events[next++]!;
+      if (event.kind === "memory-index") memory = event;
+    }
+    return { ...sample, native: { from, until: next,
+      lastMemory: memory ? { at: memory.at, highMB: memory.memoryHighMB } : null } };
+  });
+  return { binding, samples: joined, ...native };
 }
 
 export type Telemetry = Awaited<ReturnType<typeof collectCell>>;
@@ -175,12 +195,22 @@ export function summarizeTelemetry(raw: Telemetry, expected: Binding, endedAt: n
   const { start, end } = expected;
   assert(raw.samples.length >= 1);
   let previous = -Infinity;
+  if (raw.priorMemory) assert(raw.priorMemory.kind === "memory-index" && raw.priorMemory.at < start &&
+    finite(raw.priorMemory.memoryHighMB));
+  let next = 0, memory = raw.priorMemory;
   for (const s of raw.samples) {
     assert(s.due >= start && s.due <= end && Number.isInteger((s.due - start) / 1000));
     assert(s.due > previous && s.at >= s.due && s.until >= s.at && s.until <= endedAt);
     assert(counter(s.sender.user) && counter(s.sender.system));
     assert(!s.cpu || roles.every(role => validCpu(s.cpu![role])));
     assert(!s.pg || validPg(s.pg, s.at, s.until));
+    assert.equal(s.native.from, next);
+    while (raw.events[next] && raw.events[next]!.at <= Math.min(s.at, end)) {
+      const event = raw.events[next++]!;
+      if (event.kind === "memory-index") memory = event;
+    }
+    assert.equal(s.native.until, next);
+    assert.deepEqual(s.native.lastMemory, memory ? { at: memory.at, highMB: memory.memoryHighMB } : null);
     previous = s.due;
   }
   const [first, last] = [raw.samples[0]!, raw.samples.at(-1)!];
@@ -196,13 +226,18 @@ export function summarizeTelemetry(raw: Telemetry, expected: Binding, endedAt: n
   });
   const senderUs = last.sender.user + last.sender.system - first.sender.user - first.sender.system;
   const sender = completeBoundaries && senderUs >= 0 ? percent(senderUs) : "unavailable";
-  for (const e of raw.events) {
-    assert(e.at >= start && e.at <= end && typeof e.line === "string" && e.line.length);
+  for (const [i, e] of raw.events.entries()) {
+    assert(e.at >= (raw.events[i - 1]?.at ?? start) && e.at <= end && typeof e.line === "string" && e.line.length);
   }
+  assert.equal(next, raw.events.length);
   const counts = (kind: EventKind) => {
     const rows = raw.events.filter(e => e.kind === kind);
     return rows.some(e => e.callback) ? rows.filter(e => e.callback).length : rows.length;
   };
+  const alarms = raw.events.filter(e => e.kind === "memory-alarm");
+  const measures = alarms.filter(e => e.alarmCount !== undefined);
+  const alarmMetrics = measures.some(e => e.callback) ? measures.filter(e => e.callback) : measures;
+  const alarmTotal = alarmMetrics.reduce((sum, e) => sum + e.alarmCount!, 0);
   const causes = [...new Set(raw.events.filter(e => e.kind === "checkpoint-start").map(e => e.cause))].join(", ");
   const mem = raw.events.flatMap(e => e.memoryHighMB === undefined ? [] : [e.memoryHighMB]);
   const missed = (end - start) / 1000 + 1 - raw.samples.length;
@@ -215,5 +250,5 @@ export function summarizeTelemetry(raw: Telemetry, expected: Binding, endedAt: n
   const gaps = raw.errors.length ? ` Native source gaps: ${raw.errors.join(". ")}.` : "";
   return `CPU ${cpu.join(" · ")} · sender process ${sender}. PG stat views ${pgSamples}/${raw.samples.length} samples, ${missed} missed ticks${wal}.` +
     ` Checkpoints ${counts("checkpoint-start")} starts${causes ? " (" + causes + ")" : ""}/${counts("checkpoint-end")} ends.` +
-    ` Datomic ${counts("index-start")} index starts/${counts("index-adoption")} adoptions · memory-index high ${mem.length ? Math.max(...mem) + " MB" : "unavailable in window"} · ${counts("memory-alarm")} logged alarms.${gaps}`;
+    ` Datomic ${counts("index-start")} index starts/${counts("index-adoption")} adoptions · memory-index high ${mem.length ? Math.max(...mem) + " MB" : "unavailable in window"} · ${alarmMetrics.length ? alarmTotal : "unavailable"} alarm count across metric buckets, ${alarms.length - measures.length} warning/error events.${gaps}`;
 }
