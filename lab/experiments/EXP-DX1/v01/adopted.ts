@@ -177,9 +177,12 @@ async function realisticBackground(client: DatomicClient, seed: AdoptedSeed, sta
 
 async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: number, toy: boolean, cold = false) {
   const h = new Histogram();
+  const byKind = { deep: new Histogram(), thin: new Histogram(), small: new Histogram() };
   let unavailable = 0;
   const basis = { recordedPosition: head, validAt: SEED_VALID_FROM };
-  const probes = toy ? 10 : cold ? 200 : 1000;
+  // [DX-V01] Why: one full mix cycle exercises every account kind even on the Mac.
+  // Rejected: ten toy pulls, which reach only deep subjects.
+  const probes = toy ? (seed.realistic ? 20 : 10) : cold ? 200 : 1000;
   for (let i = 0; i < probes; i++) {
     const a = i % accounts.length, person = seed.image.people - (cold ? 2 : 1) - Math.floor(i / accounts.length);
     const mixed = seed.realistic && realisticSubject(seed.realistic, i);
@@ -200,8 +203,11 @@ async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: numbe
       assert.deepEqual(expected[0]!.value, fieldValue(person, 0, 0, 0));
     }
     h.recordMs(elapsed);
+    if (mixed) byKind[mixed.account.kind].recordMs(elapsed);
   }
-  return { unavailable, observed: h.summary() };
+  return { unavailable, observed: h.summary(), byKind: seed.realistic ? {
+    deep: byKind.deep.summary(), thin: byKind.thin.summary(), small: byKind.small.summary(),
+  } : undefined };
 }
 
 export async function adoptedArm(out: string, source: string, peer: Peer, seed: AdoptedSeed, writer: Writer,

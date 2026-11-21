@@ -157,8 +157,13 @@ export function writeAdoptedCard(run: Card) {
       String(loaded.p1.reduce((a, p) => a + p.read.count, 0)), evidence("loaded")]);
     if (loaded.p3.entries) rows.set("P3", [`${loaded.p3.entries} ordered exact changes${loaded.seed.realistic ? ` (busy deep/thin/small ${armMix(loaded.writes).join("/")})` : ""}; dispatch-to-observation p99 ${tag(loaded.dispatchToFeed.p99Ms)} ms across ${loaded.dispatchToFeed.count} observations. Durable effects and crash resume are open.`, partial,
       String(loaded.p3.entries), evidence("loaded")]);
-    if (loaded.p4?.observed.count) rows.set("P4", [`Current demand pulls p50 ${tag(loaded.p4.observed.p50Ms)} ms, p99 ${tag(loaded.p4.observed.p99Ms)} ms. History depth and engine bytes remain open.`, partial,
+    if (loaded.p4?.observed.count) {
+      const byKind = loaded.p4.byKind;
+      if (byKind) assert.equal(Object.values(byKind).reduce((n, summary) => n + summary.count, 0), loaded.p4.observed.count);
+      const cohorts = byKind ? " " + Object.entries(byKind).map(([kind, h]) => `${kind} p99 ${tag(h.p99Ms)} ms (n=${h.count})`).join(" · ") + "." : "";
+      rows.set("P4", [`Current demand pulls p50 ${tag(loaded.p4.observed.p50Ms)} ms, p99 ${tag(loaded.p4.observed.p99Ms)} ms.${cohorts} History depth and engine bytes remain open.`, partial,
       String(loaded.p4.observed.count), evidence("loaded")]);
+    }
     if (loaded.p3.entries) rows.set("Journal queryable", [`Compared ${loaded.p3.entries} queryable journal entries to original operation and predecessor expectations.`, partial,
       String(loaded.p3.entries), evidence("loaded")]);
     if (loaded.p2.receipts) rows.set("Receipts", [`Verified the journal against ${loaded.p2.receipts} receipts and reopened a sample of durable claims. The retry and lost-ACK bar is open.`, partial,
@@ -279,7 +284,7 @@ export function writeAdoptedCard(run: Card) {
           samples: `${name} ${rate}: ${b.totalReceipts}`, link: evidence(loadPath),
         });
         pairs.push({
-          reading: `${name} ${rate}/s: ${result.status} on quiet commit gate (${result.reason}). Quiet commit p99 ${tag(a.commit.p99Ms)} → ${tag(b.commit.p99Ms)} ms (${ratio(a.commit.p99Ms, b.commit.p99Ms)}×), read ${tag(a.read.read.p99Ms)} → ${tag(b.read.read.p99Ms)} ms (${ratio(a.read.read.p99Ms, b.read.read.p99Ms)}×), dispatch-to-feed ${tag(a.feed.p99Ms)} → ${tag(b.feed.p99Ms)} ms (${ratio(a.feed.p99Ms, b.feed.p99Ms)}×), ${a.read.errors + b.read.errors} read errors or misses`,
+          reading: `${name} ${rate}/s: ${result.status} on quiet commit gate (${result.reason}). Quiet commit p99 ${tag(a.commit.p99Ms)} → ${tag(b.commit.p99Ms)} ms (${ratio(a.commit.p99Ms, b.commit.p99Ms)}×), read ${tag(a.read.read.p99Ms)} → ${tag(b.read.read.p99Ms)} ms (${ratio(a.read.read.p99Ms, b.read.read.p99Ms)}×), dispatch-to-feed ${tag(a.feed.p99Ms)} → ${tag(b.feed.p99Ms)} ms (${ratio(a.feed.p99Ms, b.feed.p99Ms)}×), ${a.read.errors + b.read.errors} read errors or misses${b.mixedReads ? `; background checked deep/thin/small ${b.mixedReads.mix.deep}/${b.mixedReads.mix.thin}/${b.mixedReads.mix.small}, ${b.mixedReads.errors} missed` : ""}`,
           samples: `${name} ${rate}: ${a.commit.count}/${b.commit.count} commits, ${a.read.read.count}/${b.read.read.count} reads, ${a.feed.count}/${b.feed.count} feed`,
           link: evidence(soloPath) + " · " + evidence(loadPath),
         });

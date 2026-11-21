@@ -60,4 +60,5 @@ const byRole = Object.fromEntries(roles.map(role => {
 }));
 fs.writeFileSync(out, JSON.stringify({ source, first: first.seal, full: full.seal, host: first.host,
   attempts: [first.arm.attempt, full.arm.attempt], sweep: [first.point.start, first.point.n], settings: first.settings,
-  firstReadP99Ms: [first.point.read.p99Ms, full.point.read.p99Ms], byRole }, null, 2) + "\n", { flag: "wx", mode: 0o600 });
+  firstReadP99Ms: [first.point.read.p99Ms, full.point.read.p99Ms], byRole,
+  totalOutsidePostgres: Object.values(byRole).reduce((sum, role) => sum + role.bytesPerUntouchedThinPerson, 0) }, null, 2) + "\n", { flag: "wx", mode: 0o600 });
