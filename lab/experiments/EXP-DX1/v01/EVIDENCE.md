@@ -39,3 +39,10 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 - `part3/preview-a/campaign/PREP1-MIXED-TEST.log` contains the exact published native test. The two PREP1 unit logs capture 6 and 11 focused tests.
 - `part3/fixture-preview-a-1.log` records both admissions and volume removals. The package and image receipts bind source and build bytes.
 - `part3/preview-card-checks.log` contains the four formatter tests, both command forecasts and failed replays of a stale witness and a changed historical value.
+
+## Part 4 INT1 re-pin
+
+- `part4/runner-b/SCORECARD-v0.1.md` is the 14-row diagnostic card from the server runner commit. The adjacent campaign directory contains the two matched writer archives and the mixed-format witnesses.
+- `part4/verify-runner-b.log` records the independent card and archive checks. `part4/runner-b/campaign/PREP1-MIXED-TEST.log` records the 37-assertion SQL compatibility test.
+- `part4/packages-runner-b.log` and `part4/package-build-runner-b.json` bind the clean checkout and built packages. `part4/image-build-runner-b.log` records the staged image. `part4/fixture-runner-b-1.log` records the two private slot admissions and volume removals.
+- `part4/merged-a/` contains the first paired card after the INT1 merge. The final runner updated the journal wording and replayed the paired fixture. `part4/runner-checks.log` records the focused renderer tests and command forecasts.

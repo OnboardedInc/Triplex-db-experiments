@@ -1,17 +1,21 @@
-Server 2 should keep commit 790d9e96e until INT1 names the ordered-writer integration.
-The two-writer preview ran from 67a7455fe and filled all 14 card rows.
-The ordered arm used the installed writer for all 211 benchmark saves.
-The grouped comparison measured commits and quiet-account work on the same toy population.
-The exact PREP1 SQL test passed 37 assertions.
-Both retired IDs were refused and four historical answers matched grouped.
-The primary forecast is 235 minutes and USD 4.27 per age.
-No bare-metal measurement was taken by this worktree.
+ce9507b0ed9b0604b69ed28646175df254b7c0c7
+Server 2 should run this commit for either age.
+The Mac toy card filled all 14 rows across ten accounts.
+The ordered writer ran the full workload. Grouped repeated the commits and quiet-account priorities.
+Both retired IDs were refused and four historical reads matched.
+The forecast is 235 minutes and USD 4.27 per age.
+The optional Java 25 ZGC comparison is outside the time budget.
+The fresh and aged bare-metal runs remain unverified.
 
 ## Part 4 review of the pinned writer
 
-The scorecard merges INT1 at `f25a46e02591a1c6b6a9495f7f2cce20249571f0` and uses its Datomic package tree byte for byte. The resulting scorecard commit keeps the paired restore and mixed-format check on top of that integration. The comparison restores the original seal before it runs grouped P2 and P6. Each physical arm reads back the requested Java version and collector from all three processes. The requested JVM also forms part of the campaign identity.
+The scorecard merges INT1 at `f25a46e02591a1c6b6a9495f7f2cce20249571f0` and uses its tracked Datomic source tree byte for byte. The resulting scorecard commit keeps the paired restore and mixed-format check on top of that integration. The comparison restores the original seal before it runs grouped P2 and P6. Each physical arm reads back the requested Java version and collector from all three processes. The requested JVM also forms part of the campaign identity.
 
 The strengthened ordered ACK check compares the returned block to the exact journal entity and each decoded row ID on the independently read journal. It uses the same command, writer, slot, source and fresh attempt binding as the original ACK check. The P6 and P7 renderer reopens their digested raw observations before displaying metrics. This integration adds no performance verdict. The mixed-ID row still requires exact refusals, absent claims, unchanged destinations and matching typed history from fresh archives. No acceptance pin changed.
+
+The native SCALE1 loader made 80-person fixtures in private slots. One ordinary heavy token covered the paired card. The independent check matched 211 ordered acknowledgments and 183 grouped acknowledgments. The import verified 749 frames, 23,968 facts, 270/270 saves and 990/990 reads. The native PREP1 compatibility test passed 37 assertions. Both retired IDs produced IdentityConflict and the four typed snapshots matched. The engine removed both volumes and released the reservations. P5 and P9 retain their separate evidence links. Every Mac timing is diagnostic. [Evidence index](EVIDENCE.md)
+
+Both server commands select the INT1 Java 21 G1 default. Java 25 G1 and ZGC remain selectable for an entire campaign. An additional ordered ZGC arm has no existing P2 and P6 shortcut. Its independent restore alone has a 42-minute allowance. The optional arm was left out. The full-size restores and their runtime remain unverified here. [Server procedure](SERVER.md)
 
 ## Part 3 local preview
 
