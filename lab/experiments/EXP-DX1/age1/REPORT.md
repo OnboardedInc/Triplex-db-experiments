@@ -1,4 +1,4 @@
-Resume the held 477 million record volume with the Part 5 loader.
+Pin 9573487e0 to resume the held 477 million record volume.
 The old checker missed index jobs because Datomic logs a different database identifier. The archived evidence qualifies all three runs.
 The solo loader ran at 15,243 records per second sustained. All three tests nearly filled their allowed cores.
 The new load uses six cores and keeps each new save in its own transaction.
