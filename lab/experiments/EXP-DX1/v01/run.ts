@@ -3,28 +3,38 @@ import { execFileSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { budget, ceiling, pairSeconds } from "./profile.ts";
+import { budget, ceiling, defaultJvm, defaultWriter, jvmProfiles, pairSeconds, type JvmProfile } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
+import { launchProfile } from "../jvm1/launch.mjs";
 
 const { values } = parseArgs({
   options: {
     age: { type: "string" }, seed: { type: "string" }, "image-sha256": { type: "string" },
-    "transfer-sha256": { type: "string" }, writer: { type: "string", default: "grouped" },
+    "transfer-sha256": { type: "string" }, writer: { type: "string", default: defaultWriter },
+    jvm: { type: "string", default: defaultJvm },
+    "tx-jvm": { type: "string" }, "wal-directory": { type: "string" },
     "aged-bundle": { type: "string" }, "aged-bundle-sha256": { type: "string" }, "aged-dump": { type: "string" },
     "aged-dump-sha256": { type: "string" }, out: { type: "string" }, commit: { type: "string" },
     "hourly-usd": { type: "string", default: "1.09" }, help: { type: "boolean" }, plan: { type: "boolean" },
   },
 });
 if (values.help) {
-  console.log("scorecard.mjs --age fresh|1B --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer grouped|subject|subject-ordered]\nFor 1B add --aged-bundle FILE --aged-bundle-sha256 SHA --aged-dump FILE --aged-dump-sha256 SHA.\nscorecard.mjs --plan");
+  console.log("scorecard.mjs --age fresh|1B --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer grouped|subject] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR]\nFor 1B add --aged-bundle FILE --aged-bundle-sha256 SHA --aged-dump FILE --aged-dump-sha256 SHA.\nscorecard.mjs --plan");
   process.exit(0);
 }
 const price = Number(values["hourly-usd"]);
 assert(/^\d+(?:\.\d+)?$/.test(values["hourly-usd"]!) && Number.isFinite(price) && price > 0);
 const forecast = `Budget ${ceiling} minutes including cleanup, up to USD ${(ceiling / 60 * price).toFixed(2)} per age. This revision allocates ${budget.adoptionAndP1to4} minutes to restore and partial P1–P4 coverage, including ${pairSeconds / 60} minutes of matched offers. Build and AGE1 provisioning are separate.`;
-if (values.plan) { console.log(forecast); process.exit(0); }
+assert(values.writer === "grouped" || values.writer === "subject");
+assert(jvmProfiles.includes(values.jvm as JvmProfile), "Unknown scorecard JVM profile");
+const txJvm = (values["tx-jvm"] ?? values.jvm) as JvmProfile;
+const launch = launchProfile("server", { jvm: values.jvm as JvmProfile, txJvm });
+if (values.plan) {
+  console.log(forecast + ` Writer ${values.writer}, server profile. JVM ${values.jvm}, transactor JVM ${txJvm}.`);
+  console.log(JSON.stringify(launch, null, 2));
+  process.exit(0);
+}
 assert(values.age === "fresh" || values.age === "1B");
-assert(values.writer === "grouped" || values.writer === "subject" || values.writer === "subject-ordered");
 assert(values.commit && values.out && values.seed && values["image-sha256"] && values["transfer-sha256"]);
 const aged = [values["aged-bundle"], values["aged-bundle-sha256"], values["aged-dump"], values["aged-dump-sha256"]];
 assert(values.age === "1B" ? aged.every(Boolean) : aged.every((v) => !v));
@@ -38,8 +48,8 @@ console.log(forecast);
 const fd = fs.openSync(path.join(out, "campaign.log"), "wx", 0o600);
 const child = spawn("timeout", ["--kill-after=90s", String(budget.adoptionAndP1to4 + budget.P6 + budget.P7 + 1) + "m", "bash",
   "lab/experiments/EXP-DX1/v01/adopted-server.sh", source, campaign, String(Date.now() + budget.adoptionAndP1to4 * 60_000),
-  path.resolve(values.seed), values["image-sha256"], values["transfer-sha256"], values.age, values.writer,
-  ...aged.map((v) => v ?? "")], {
+  path.resolve(values.seed), values["image-sha256"], values["transfer-sha256"], values.age, values.writer, values.jvm!,
+  ...aged.map((v) => v ?? ""), txJvm, values["wal-directory"] ? path.resolve(values["wal-directory"]) : ""], {
   stdio: ["ignore", fd, fd],
   env: Object.fromEntries(["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME"]
     .flatMap((name) => process.env[name] ? [[name, process.env[name]]] : [])),

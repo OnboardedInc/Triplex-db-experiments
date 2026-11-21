@@ -16,6 +16,16 @@
 (def mutable-flags #{:triplex.scope/feed-irregular :triplex.scope/position-regular
                      :triplex.scope/irregular :triplex.scope/packed-journals})
 
+;; [DX-ERASE1] Why: the value body has its own entity, so removing just that attribute cannot change a prepared predecessor.
+;; Rejected: assuming every native excision is either harmless or a reason to stop unrelated people.
+(defmacro changes-application-rows? [view]
+  `(let [db# ~view body# (d/entid db# :triplex.private/body)]
+     (some (fn [datom#]
+             (let [attrs# (mapv :v (d/datoms db# :eavt (:e datom#) :db.excise/attrs))]
+               (not (and body# (= [body#] attrs#)))))
+           (d/datoms db# :aevt :db/excise))))
+
+;; The same expression is expanded in the installed native function below.
 ;; [DX-PREP1] Why: owner CAS protects predecessor bytes, but an assertion identity is global, including retired rows.
 ;; Rejected: owner revision or a present-only index for new IDs (another owner can consume the ID).
 (def history-guard
@@ -57,16 +67,6 @@
         (let [hi (peek prefixes)]
           [(first prefixes) (str (subs hi 0 (dec (count hi))) (char (inc (int (last hi)))))])))))
 
-;; [DX-ERASE1] Why: the value body has its own entity, so removing just that attribute cannot change a prepared predecessor.
-;; Rejected: assuming every native excision is either harmless or a reason to stop unrelated people.
-(defmacro changes-application-rows? [view]
-  `(let [db# ~view body# (d/entid db# :triplex.private/body)]
-     (some (fn [datom#]
-             (let [attrs# (mapv :v (d/datoms db# :eavt (:e datom#) :db.excise/attrs))]
-               (not (and body# (= [body#] attrs#)))))
-           (d/datoms db# :aevt :db/excise))))
-
-;; The same expression is expanded in the installed native function below.
 (def body
   '(let [{:keys [scope flags function owner revision journal operation command ops provisional
                  submitted-clock prefixes expected-erasure]} plan
@@ -258,7 +258,8 @@
                 (cond-> {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
                          :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
                          :provisional provisional :submitted-clock (reduce max (map double clocks))
-                         :prefixes prefixes :expected-erasure expected-erasure
+                         :prefixes prefixes
+                         :expected-erasure expected-erasure
                          :ops (render-ops ops owner subject prior (set new-ids))}
                   numeric-owner? (assoc :owner-key subject)
                   ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))

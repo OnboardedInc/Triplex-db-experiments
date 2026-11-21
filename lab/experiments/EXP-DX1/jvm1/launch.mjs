@@ -108,6 +108,99 @@ export function collectorOptions(major, collector, role, cores) {
   ];
 }
 
+export const jvmProfiles = /** @type {const} */ (["j21-g1", "j25-g1", "j25-zgc"]);
+/** @typedef {(typeof jvmProfiles)[number]} JvmProfile */
+export const defaultJvm = /** @type {const} */ ("j21-g1");
+export const durablePostgres = Object.freeze({ fsync: "on", synchronous_commit: "on", full_page_writes: "on" });
+export const startupFlags = ["-XX:+PrintFlagsFinal", "-Xlog:gc+init=info,cds=info:stdout:uptimemillis,level,tags"];
+
+// [DX-INT1] Why: check what HotSpot applied in the actual process, including flags interpreted by the vendor launcher.
+// Rejected: using the desired environment variables as a startup witness.
+/** @param {ReturnType<typeof launchProfile>["tx"]} expected @param {string} log */
+export function checkProfileFlags(expected, log) {
+  const values = new Map([...log.matchAll(/^\s*\w+\s+(\w+)\s+=\s+(\S+)\s+\{/gm)]
+    .map((match) => [match[1], match[2]]));
+  for (const flag of expected.flags) {
+    if (!flag.startsWith("-XX:") && !/^-Xm[sx]/.test(flag)) continue;
+    const [, key, value] = flag.match(/^-XX:([\w]+)=(.+)$/) ??
+      flag.match(/^-(Xms|Xmx)(.+)$/) ??
+      [null, flag.slice(5), flag[4] === "+" ? "true" : "false"];
+    const expectedKey = key === "Xms" ? "InitialHeapSize" : key === "Xmx" ? "MaxHeapSize" : key;
+    const size = value.match(/^(\d+)([kmg])$/i);
+    const wanted = size ? String(Number(size[1]) * 1024 ** ("kmg".indexOf(size[2].toLowerCase()) + 1)) : value;
+    const actual = values.get(expectedKey);
+    assert(actual !== undefined, "Missing final JVM flag " + expectedKey);
+    assert(actual === wanted || (Number.isFinite(Number(wanted)) && Number(actual) === Number(wanted)),
+      `JVM ${expectedKey} expected ${wanted}, observed ${actual}`);
+  }
+  const enabled = [...values].filter(([key, value]) => /^Use(Serial|Parallel|G1|Z|Shenandoah|Epsilon)GC$/.test(key) && value === "true");
+  assert.equal(enabled.length, 1, "Expected exactly one active collector");
+  assert.match(log, new RegExp(`\\[gc,init\\s*\\].*Version: ${expected.major}\\.`));
+}
+
+const laptop = {
+  tx: { memory: 1280, initial: 128, heap: 640, direct: 128, metaspace: 160, cache: 64, cores: 2 },
+  "gw-w": { memory: 640, initial: 64, heap: 352, direct: 352, cache: 32, cores: 2 },
+  "gw-r": { memory: 640, initial: 64, heap: 352, direct: 352, cache: 32, cores: 2 },
+};
+const server = {
+  tx: { memory: 30720, initial: 1024, heap: 24576, direct: 24576, cache: 16384, cpus: "0,7,8", cores: 3 },
+  "gw-w": { memory: 6144, initial: 512, heap: 4096, direct: 4096, cache: null, cpus: "2,3,4,5", cores: 4 },
+  "gw-r": { memory: 5120, initial: 256, heap: 3072, direct: 3072, cache: null, cpus: "6", cores: 1 },
+};
+export const laptopCaps = Object.freeze({ pg: 256, tx: laptop.tx.memory, write: laptop["gw-w"].memory, read: laptop["gw-r"].memory });
+
+// [DX-INT1] Why: keep the portable limits and the full-size treatment in one launch policy.
+// Rejected: scaling all roles together or interpreting the reduced startup as physical placement evidence.
+/** @param {"laptop" | "server"} profile
+ * @param {{ jvm?: JvmProfile, txJvm?: JvmProfile, reduced?: boolean, scale?: number }} [options] */
+export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, reduced = false, scale = 1 } = {}) {
+  assert(profile === "laptop" || profile === "server");
+  assert(jvmProfiles.includes(jvm) && jvmProfiles.includes(txJvm));
+  assert(profile === "server" ? scale === 1 : !reduced && [1, 2, 4].includes(scale));
+  const portable = profile === "laptop" || reduced;
+  /** @param {Role} role */
+  const settings = (role) => {
+    const placement = profile === "laptop" ? laptop[role] : server[role];
+    const limits = portable ? laptop[role] : server[role];
+    const selected = role === "tx" ? txJvm : jvm;
+    const major = selected === "j21-g1" ? "21" : "25";
+    const collector = selected === "j25-zgc" ? "ZGC" :
+      profile === "laptop" && limits.memory * scale < 1792 && selected === "j21-g1" ? "Serial" : "G1";
+    const cache = limits.cache;
+    const opts = [
+      "-Xms" + limits.initial + "m", "-Xmx" + limits.heap * scale + "m",
+      "-XX:MaxDirectMemorySize=" + (role === "tx" ? limits.direct : limits.heap * scale) + "m",
+      ...(portable && role === "tx" ? ["-XX:MaxMetaspaceSize=160m"] : []),
+      ...(cache !== null ? ["-Ddatomic.objectCacheMax=" + cache + "m"] : []),
+      ...(!portable && role === "tx" ? ["-Ddatomic.prefetchProbes=true"] : []),
+      ...(collector === "ZGC" ? collectorOptions(major, collector, role, placement.cores)
+        : ["-XX:+Use" + collector + "GC"]),
+    ];
+    return {
+      major, collector, cores: placement.cores,
+      cpus: "cpus" in placement ? placement.cpus : null,
+      memoryMiB: limits.memory * scale, cacheMiB: cache,
+      flags: launchOptions(role, placement.cores, opts.join(" ")).split(" "),
+    };
+  };
+  const pgSettings = {
+    ...durablePostgres,
+    ...(!portable ? {
+      shared_buffers: "2GB", wal_sync_method: "fdatasync", checkpoint_timeout: "5min",
+      checkpoint_completion_target: "0.9", checkpoint_flush_after: "256kB",
+      min_wal_size: "80MB", max_wal_size: "1GB", log_checkpoints: "on", log_timezone: "UTC",
+      track_io_timing: "on", track_wal_io_timing: "on",
+    } : {}),
+  };
+  return {
+    profile, reduced, tx: settings("tx"), "gw-w": settings("gw-w"), "gw-r": settings("gw-r"),
+    pg: { memoryMiB: portable ? laptopCaps.pg * scale : 8192, cpus: "1", settings: pgSettings },
+    index: { threshold: portable ? "8m" : "256m", max: portable ? "32m" : "1g" },
+    clients: { senders: "9", readers: "10,11" },
+  };
+}
+
 // [DX-JVM1] Why: hold cores, durability and Datomic parameters fixed during the Java comparison.
 // Rejected: treating extra heap as a collector gain. The fourth arm matches ZGC's allocation budget.
 /** @param {string} arm */

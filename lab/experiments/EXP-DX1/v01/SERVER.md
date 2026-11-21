@@ -23,12 +23,18 @@ Set `SCALE1_IMAGE` to the held decision arm directory containing `image.json`, `
 cd "$BUILD/repository"
 sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
   "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --commit "$COMMIT" \
-  --age fresh --writer grouped --seed "$SCALE1_IMAGE" \
+  --age fresh --seed "$SCALE1_IMAGE" \
   --image-sha256 "$SCALE1_IMAGE_SHA256" --transfer-sha256 "$SCALE1_TRANSFER_SHA256" \
   --out /var/tmp/triplex-v01-adopted-fresh
 ```
 
-Set `--writer subject-ordered` on a separate attempt to exercise the numeric-owner writer and ordered client IDs. The scorecard records how many acknowledgments actually took that path. The original `--writer subject` remains selectable. The card records grouping, compact rows, queryable K journal, installed commit function and all JVM role settings from startup readback.
+The default uses the per-person writer with client-minted ordered assertion IDs, numeric owner lookup and the `server` launch profile. The transactor has three cores, a 24 GiB heap and a 16 GiB object cache. The write gateway has four cores and a 4 GiB heap. The read gateway has one core and a 3 GiB heap. Use `--writer grouped` for the compact K control. In both configurations the journal stays queryable. The card checks the installed writer and the three serving JVM boots after each restore.
+
+All three roles default to Java 21 G1. Use `--tx-jvm j25-zgc` to change only the transactor. The existing `--jvm j25-g1` and `--jvm j25-zgc` settings change all roles. The prepared build binds both Java images.
+
+Supply `--wal-directory DIR` to put the disposable PostgreSQL WAL on a dedicated mounted filesystem. The launcher checks the device against Docker's volume store before starting and checks the live PostgreSQL paths after startup. Each arm gets its own fresh child directory and removes it after shutdown. Synchronous commit, fsync and full page writes stay enabled.
+
+`int1/everything.sh` also defaults to the server profile and accepts `DX_TX_JVM=j25-zgc` and `DX_WAL_DIRECTORY`. The playground and Mac correctness gates use their small laptop settings.
 
 ## Aged 1B
 
@@ -38,7 +44,7 @@ Use the original SCALE1 image inputs, the AGE1 handoff bundle and an independent
 sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
   "AGE_JAVA=$AGE_JAVA" "AGE_DATOMIC_HOME=$AGE_DATOMIC_HOME" \
   "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --commit "$COMMIT" \
-  --age 1B --writer grouped --seed "$SCALE1_IMAGE" \
+  --age 1B --seed "$SCALE1_IMAGE" \
   --image-sha256 "$SCALE1_IMAGE_SHA256" --transfer-sha256 "$SCALE1_TRANSFER_SHA256" \
   --aged-bundle "$AGE_HANDOFF_JSON" --aged-bundle-sha256 "$AGE_HANDOFF_SHA256" \
   --aged-dump "$AGED_PGDUMP" --aged-dump-sha256 "$AGED_DUMP_SHA256" \

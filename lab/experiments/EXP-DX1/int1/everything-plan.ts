@@ -1,4 +1,4 @@
-import { measuredWriterG1 } from "../jvm1/launch.mjs";
+import { launchProfile, measuredWriterG1 } from "../jvm1/launch.mjs";
 import { fieldRates } from "./field-plan.ts";
 import { pooledCampaignId, campaignWindows } from "../scale1/tenant-traffic.ts";
 
@@ -7,6 +7,7 @@ export const profiles = ["frozen", "field"] as const;
 export type CampaignProfile = (typeof profiles)[number];
 export const populations = [10_000, 100_000] as const;
 export const loads = ["zero", "reader"] as const;
+
 const gatewayHeap = [
   "-Xms64m",
   "-Xmx384m",
@@ -14,8 +15,8 @@ const gatewayHeap = [
   "-XX:MinHeapFreeRatio=15",
   "-XX:MaxHeapFreeRatio=30",
 ];
-// [DX-THIN1] Why: keep TAIL1's measured collector selection even when the serving CPU mask changes.
-// Rejected: relying on JVM startup ergonomics or bringing in the unrelated receipt-cache variant.
+// [DX-INT1] Why: verify saved archives with the launch expectations they used.
+// Rejected: changing archived observations when the server preset changes.
 export const gatewayJvmOptions = {
   "gw-w": [...gatewayHeap, ...measuredWriterG1],
   "gw-r": [...gatewayHeap, "-XX:+UseG1GC"],
@@ -125,9 +126,9 @@ export function planSummary() {
       field: { id: pooledCampaignId + "/field", ratesPerAccount: fieldRates },
     },
     treatment,
-    gatewayJvmOptions,
+    launch: launchProfile("server"),
     excluded,
-    readerCores: 5,
+    readerCores: 2,
     savedOutputPreflight: campaignCases([4]),
     fieldWindows: Object.fromEntries(
       populations.map((n) => {

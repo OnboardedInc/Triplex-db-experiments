@@ -1,4 +1,5 @@
 {
   "extends": "../../../bench/tsconfig.json",
+  "compilerOptions": { "allowJs": true },
   "include": ["./*.ts", "../../../bench/driver.ts", "../../../bench/reader-worker.ts"]
 }

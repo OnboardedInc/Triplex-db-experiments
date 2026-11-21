@@ -36,6 +36,10 @@ import {
   summaryFiles,
 } from "./source.ts";
 import { releaseDeepStart, type DeepIdentity } from "../../../bench/lib/deep-profile.ts";
+import { checkProfileFlags, launchProfile, roles as jvmRoles } from "../jvm1/launch.mjs";
+import { datomicRuntime } from "../../../config/datomic/runtime.mjs";
+
+type ServerLaunch = { policy: ReturnType<typeof launchProfile>; walDirectory?: string };
 
 const GiB = 1024 ** 3,
   script = fileURLToPath(import.meta.url),
@@ -397,14 +401,34 @@ function clean(dir: string, prefix: string) {
   }
   const after = childrenInventory(prefix);
   assert(Object.values(after).every((xs) => !xs.length));
+  const walRecord = path.join(dir, "wal-directory.json");
+  if (fs.existsSync(walRecord)) {
+    const wal = get(walRecord);
+    const stat = fs.lstatSync(wal.directory);
+    assert(wal.slot === prefix && path.basename(wal.directory) === prefix &&
+      fs.realpathSync(wal.directory) === wal.directory && stat.isDirectory());
+    assert.deepEqual([stat.dev, stat.ino], [wal.dev, wal.ino]);
+    fs.rmSync(wal.directory, { recursive: true });
+  }
   fs.writeFileSync(
     path.join(dir, "cleanup", "inventory.json"),
     JSON.stringify({ at: Date.now(), before, after }),
   );
 }
 // [DX-STG1] Why: notification trials use the same cold native stack, placement and cleanup as SCALE1. Rejected: a second server launcher with different durability settings.
-export function startScaleStack(dir: string, prefix: string, source: string, grouped = false, options: NodeJS.ProcessEnv = {}) {
-  const twoWriterCores = options.DX_TAIL1_TWO_WRITE_CORES === "1";
+export function startScaleStack(dir: string, prefix: string, source: string, grouped = false,
+  options: NodeJS.ProcessEnv = {}, launch?: ServerLaunch) {
+  const policy = launch?.policy;
+  assert(!policy || (policy.profile === "server" && !policy.reduced));
+  const walPath = launch?.walDirectory ? path.join(fs.realpathSync(launch.walDirectory), prefix) : undefined;
+  if (walPath) {
+    assert(/^tx2-dxscale1-[a-z0-9-]+$/.test(prefix) && !/[,"\r\n]/.test(walPath));
+    assert(Object.values(childrenInventory(prefix)).every((xs) => !xs.length));
+    fs.mkdirSync(walPath, { mode: 0o700 });
+    const { dev, ino } = fs.statSync(walPath);
+    fs.writeFileSync(path.join(dir, "wal-directory.json"), JSON.stringify({ directory: walPath, slot: prefix, dev, ino }), { flag: "wx" });
+  }
+  const twoWriterCores = !policy && options.DX_TAIL1_TWO_WRITE_CORES === "1";
   if (twoWriterCores) {
     // [DX-TAIL1] Why: give the writer a separate physical core.
     // Rejected: counting two sibling hardware threads as the two-core arm.
@@ -439,6 +463,15 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
     DX_GW_READ_JAVA_OPTS:
       "-Xms256m -Xmx4g -Ddatomic.objectCacheMax=1536m -Xlog:gc=info:file=/trace/gw-r-gc.log",
     ...options,
+    DX_LAUNCH_PROFILE: policy?.profile,
+    DX_TX_JAVA: policy?.tx.major,
+    ...(policy ? {
+      DX_JAVA: policy["gw-w"].major,
+      DX_GW_WRITE_MEMORY: policy["gw-w"].memoryMiB + "m",
+      DX_GW_READ_MEMORY: policy["gw-r"].memoryMiB + "m",
+      DX_GW_WRITE_JAVA_OPTS: policy["gw-w"].flags.join(" ") + " -Xlog:gc=info:file=/trace/gw-w-gc.log",
+      DX_GW_READ_JAVA_OPTS: policy["gw-r"].flags.join(" ") + " -Xlog:gc=info:file=/trace/gw-r-gc.log",
+    } : {}),
   };
   execFileSync(
     "bash",
@@ -447,28 +480,63 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
       prefix,
       "--no-publish",
       "--cpus-tx",
-      planCpus.transactor,
+      policy?.tx.cpus ?? planCpus.transactor,
       "--cpus-pg",
-      planCpus.postgres,
+      policy?.pg.cpus ?? planCpus.postgres,
       "--cpus-gw-write",
-      twoWriterCores ? planCpus.writerGateway + ",5" : planCpus.writerGateway,
+      policy?.["gw-w"].cpus ?? (twoWriterCores ? planCpus.writerGateway + ",5" : planCpus.writerGateway),
       "--cpus-gw-read",
-      planCpus.readerGateway,
+      policy?.["gw-r"].cpus ?? planCpus.readerGateway,
       "--pg-memory",
-      "6g",
+      policy ? policy.pg.memoryMiB + "m" : "6g",
       "--tx-memory",
-      "6g",
+      policy ? policy.tx.memoryMiB + "m" : "6g",
       "--tx-java-opts",
-      (options.DX_TX_JAVA_OPTS ?? "-Xms256m -Xmx5g -XX:+UseG1GC -XX:MaxGCPauseMillis=50") + " -Xlog:gc=info:file=/trace/tx-gc.log",
+      (policy?.tx.flags.join(" ") ?? options.DX_TX_JAVA_OPTS ?? "-Xms256m -Xmx5g -XX:+UseG1GC -XX:MaxGCPauseMillis=50") + " -Xlog:gc=info:file=/trace/tx-gc.log",
       "--object-cache-max",
-      "2560m",
+      policy ? policy.tx.cacheMiB + "m" : "2560m",
+      ...(policy ? ["--memory-index-threshold", policy.index.threshold, "--memory-index-max", policy.index.max] : []),
+      ...(walPath ? ["--wal-directory", walPath] : []),
       "--pg-settings",
-      "-c shared_buffers=1GB -c max_wal_size=8GB -c synchronous_commit=on -c fsync=on -c full_page_writes=on -c track_io_timing=on -c track_wal_io_timing=on",
+      policy ? Object.entries(policy.pg.settings).map(([key, value]) => "-c " + key + "=" + value).join(" ")
+        : "-c shared_buffers=1GB -c max_wal_size=8GB -c synchronous_commit=on -c fsync=on -c full_page_writes=on -c track_io_timing=on -c track_wal_io_timing=on",
     ],
     { env, cwd: repo, stdio: "inherit", timeout: 480000 },
   );
   const engines = placement(prefix);
+  if (policy) {
+    for (const role of [...jvmRoles, "pg"] as const) {
+      const expected: ServerLaunch["policy"]["tx" | "pg"] = policy[role];
+      assert.equal(engines[role].cpus, expected.cpus);
+      assert.equal(engines[role].memory, expected.memoryMiB * 2 ** 20);
+    }
+    const keys = Object.keys(policy.pg.settings) as (keyof typeof policy.pg.settings)[];
+    const actual = docker("exec", engines.pg.id, "psql", "-XAtq", "-U", "postgres", "-d", "datomic",
+      "-c", keys.map((key) => "SHOW " + key).join("; ")).trim().split("\n");
+    assert.deepEqual(actual, keys.map((key) => policy.pg.settings[key]));
+    fs.writeFileSync(path.join(dir, "launch-profile.json"), JSON.stringify({ source, prefix, policy, engines, wal: !!walPath }, null, 2),
+      { flag: "wx" });
+  }
   return { env, engines };
+}
+
+// [DX-INT1] Why: a restore restarts the JVMs, so prove the new boots before taking offers.
+// Rejected: applying pre-restore Startup flags to a later process instance.
+export function readScaleJvms(dir: string, engines: ReturnType<typeof placement>, policy: ServerLaunch["policy"]) {
+  fs.mkdirSync(dir);
+  return jvmRoles.map((role) => {
+    const engine = engines[role];
+    execFileSync("bash", ["lab/experiments/EXP-DX1/jvm1/readback.sh", engine.id, dir, role],
+      { cwd: repo, timeout: 30_000 });
+    const process = fs.readFileSync(path.join(dir, role + ".process.txt"), "utf8");
+    assert(process.split("\n").includes("containerId=" + engine.id));
+    assert(process.split("\n").includes("imageId=" + engine.image));
+    const observed = fs.readFileSync(path.join(dir, role + ".flags.txt"), "utf8") +
+      fs.readFileSync(path.join(dir, role + ".gc-init.txt"), "utf8");
+    checkProfileFlags(policy[role], observed);
+    assert(observed.includes("Version: " + datomicRuntime(policy[role].major).version));
+    return { role, container: engine.id, observed: observed.split("\n"), process };
+  });
 }
 async function arm(item: number, tag: string, mode: DeepIdentity["arm"]) {
   const dir = path.join(root, tag),

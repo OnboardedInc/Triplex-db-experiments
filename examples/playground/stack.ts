@@ -6,10 +6,12 @@ import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
 import { inflateRawSync } from "node:zlib";
 import type { Restore } from "./snapshot.ts";
+import { checkProfileFlags, laptopCaps, launchProfile, roles, startupFlags } from "../../lab/experiments/EXP-DX1/jvm1/launch.mjs";
+import { datomicRuntime } from "../../lab/config/datomic/runtime.mjs";
 
 export const repo = resolve(import.meta.dirname, "../..");
 export const loopback = "127.0.0.1";
-export const caps = { pg: 256, tx: 1280, write: 640, read: 640 } as const;
+export const caps = laptopCaps;
 export function memoryScale(value: string): 1 | 2 | 4 {
   if (value === "1" || value === "2" || value === "4") return Number(value) as 1 | 2 | 4;
   throw new Error("Choose a memory scale of 1, 2 or 4");
@@ -143,6 +145,8 @@ export interface StackOptions {
   signal?: AbortSignal;
   cachedImage?: string;
   memoryScale?: 1 | 2 | 4;
+  reducedServerStartup?: boolean;
+  writerProbe?: { ordered: boolean; attempt: string };
 }
 
 class ContainerExited extends Error {}
@@ -182,7 +186,11 @@ export class Stack {
 
   async start(gatewaySpans = true, restore?: Restore) {
     const { docker, prefix, directory, ports, signal, cachedImage } = this.#opts;
+    // [DX-INT1] Why: the admitted playground gate exercises a lean save on the same peers as the legacy demo.
+    // Rejected: changing the snapshot layout or using a separate unobserved test stack.
+    const probe = this.#opts.writerProbe;
     const scale = this.#opts.memoryScale ?? 1;
+    const launch = this.launchProfile();
     const pg = prefix + "-pg";
     const tx = prefix + "-tx";
     const network = prefix + "-net";
@@ -212,6 +220,7 @@ export class Stack {
     );
     const image = cachedImage ?? (await buildImage(docker, directory, prefix));
     signal?.throwIfAborted();
+    console.log(JSON.stringify({ stack: prefix, image, dockerCpuQuota: 2, ...launch }));
     await docker(["network", "create", "--label", this.label, network]);
     await docker(["volume", "create", "--label", this.label, volume]);
     const runnable = (role: keyof typeof caps, name: string) => [
@@ -242,6 +251,8 @@ export class Stack {
       "-v",
       `${volume}:/var/lib/postgresql/data`,
       "postgres:17-alpine",
+      "postgres",
+      ...Object.entries(launch.pg.settings).flatMap(([key, value]) => ["-c", key + "=" + value]),
     ]);
     await waitFor(
       async () => {
@@ -297,9 +308,9 @@ export class Stack {
         "sql-url": sqlUrl,
         "sql-user": "datomic",
         "sql-password": secret,
-        "memory-index-threshold": "8m",
-        "memory-index-max": "32m",
-        "object-cache-max": "64m",
+        "memory-index-threshold": launch.index.threshold,
+        "memory-index-max": launch.index.max,
+        "object-cache-max": launch.tx.cacheMiB + "m",
         "encrypt-channel": "true",
       }),
     );
@@ -334,11 +345,8 @@ export class Stack {
       "--entrypoint",
       "/opt/datomic/bin/transactor",
       image,
-      "-Xms128m",
-      `-Xmx${640 * scale}m`,
-      "-XX:MaxMetaspaceSize=160m",
-      "-XX:MaxDirectMemorySize=128m",
-      "-XX:+ExitOnOutOfMemoryError",
+      ...launch.tx.flags,
+      ...startupFlags,
       "/tmp/sql.properties",
     ]);
     await docker(["cp", localConfig, `${tx}:/tmp/sql.properties`]);
@@ -380,11 +388,28 @@ export class Stack {
           ? [...mount(this.traceDir, "/trace"), "-e", "TRIPLEX_TRACE_DIR=/trace"]
           : []),
         "-e",
-        `DATOMIC_JAVA_OPTS=-Xms64m -Xmx${352 * scale}m -Ddatomic.objectCacheMax=32m -XX:+ExitOnOutOfMemoryError`,
+        "DATOMIC_JAVA_OPTS=" + [...launch[role === "write" ? "gw-w" : "gw-r"].flags, ...startupFlags].join(" "),
         "-e",
         `DATOMIC_URI_TEMPLATE=datomic:sql://{db}?${sqlUrl}?user=datomic&password=${secret}`,
         "-e",
         `GATEWAY_SOURCE_SHA256=${source}`,
+        ...(probe
+          ? [
+              "-e", "TX2_LEAN_NATIVE_LOG=1",
+              "-e", "TX2_LEAN_NATIVE_QUERY=1",
+              ...(role === "write" ? [
+                "-e", "TX2_WRITE_OPTIONS_ATTEMPT=" + probe.attempt,
+                "-e", "TX2_SAVE_LEDGER=" + Number(!probe.ordered),
+                "-e", "TX2_SMALL_ROWS=" + Number(!probe.ordered),
+                "-e", "TX2_GROUP_COMMIT=" + (probe.ordered ? "0" : "1"),
+                "-e", "TX2_GROUP_REUSE_PREPARED=" + (probe.ordered ? "0" : "1"),
+                "-e", "TX2_SUBJECT_SAVE=" + Number(probe.ordered),
+                "-e", "TX2_SUBJECT_NUMERIC_OWNER=" + Number(probe.ordered),
+                "-e", "TX2_SUBJECT_ORDERED_IDS=" + Number(probe.ordered),
+                "-e", "TX2_SUBJECT_PREFETCH=0",
+              ] : []),
+            ]
+          : []),
         "-e",
         "TX2_ENTITY_CACHE_BYTES=8388608",
         "-e",
@@ -549,6 +574,53 @@ export class Stack {
     );
     await docker(["cp", pg + ":" + file, local], archiveCommand(signal));
     await docker(["exec", pg, "rm", file]);
+  }
+
+  launchProfile() {
+    return this.#opts.reducedServerStartup
+      ? launchProfile("server", { reduced: true })
+      : launchProfile("laptop", { scale: this.#opts.memoryScale ?? 1 });
+  }
+
+  // [DX-INT1] Why: verify the running JVM and its own startup log inside the admitted stack.
+  // Rejected: running java -version in a new process or trusting the constructed argument list.
+  async launchWitness() {
+    const { docker, prefix } = this.#opts;
+    const policy = this.launchProfile();
+    const observed = [];
+    for (const role of roles) {
+      const name = prefix + "-" + ({ tx: "tx", "gw-w": "write", "gw-r": "read" })[role];
+      const inspect = async (id: string) => {
+        const row = JSON.parse(await docker(["inspect", id]))[0];
+        if (row.Name !== "/" + name || !row.State.Running || row.Config.Labels[ownership] !== prefix)
+          throw new Error("Launch witness lost its owned container");
+        return { id: row.Id, image: row.Image, started: row.State.StartedAt, restarts: row.RestartCount,
+          memory: row.HostConfig.Memory, cpuQuota: row.HostConfig.NanoCpus };
+      };
+      const engine = await inspect(name);
+      const process = () => docker(["exec", engine.id, "bash", "-ceu", [
+        "java_pid=",
+        'for p in /proc/[0-9]*; do if [[ $(cat "$p/comm" 2>/dev/null || :) == java ]]; then',
+        '  test -z "$java_pid"; java_pid=${p##*/}; fi; done',
+        'test -n "$java_pid"; printf "pid=%s\\n" "$java_pid"; cut -d " " -f22 "/proc/$java_pid/stat"',
+        'tr "\\000" "\\n" < "/proc/$java_pid/cmdline" | grep -E "^-Ddatomic.objectCacheMax="',
+      ].join("\n")]);
+      const boot = await process();
+      const flags = await docker(["logs", "--since", engine.started, engine.id]);
+      checkProfileFlags(policy[role], flags);
+      if (!flags.includes("Version: " + datomicRuntime(policy[role].major).version) ||
+          !boot.split("\n").includes("-Ddatomic.objectCacheMax=" + policy[role].cacheMiB + "m") ||
+          engine.memory !== policy[role].memoryMiB * 2 ** 20 || engine.cpuQuota !== 2e9 ||
+          boot !== await process() || JSON.stringify(engine) !== JSON.stringify(await inspect(engine.id)))
+        throw new Error("Live JVM differs from launch policy for " + role);
+      observed.push({ role, engine, boot, flags: flags.split("\n").filter((line) =>
+        /^\s*\w+\s+\w+\s+=\s+\S+\s+\{/.test(line) || line.includes("[gc,init")) });
+    }
+    const keys = Object.keys(policy.pg.settings) as (keyof typeof policy.pg.settings)[];
+    const actual = (await docker(["exec", prefix + "-pg", "psql", "-XAtq", "-U", "postgres", "-d", "datomic",
+      "-c", keys.map((key) => "SHOW " + key).join("; ")])).trim().split("\n");
+    if (keys.some((key, i) => actual[i] !== policy.pg.settings[key])) throw new Error("PostgreSQL launch settings differ");
+    return { policy, observed, postgres: Object.fromEntries(keys.map((key, i) => [key, actual[i]])) };
   }
 
   async inventory() {

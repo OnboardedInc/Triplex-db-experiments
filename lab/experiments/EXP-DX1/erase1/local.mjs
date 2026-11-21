@@ -79,8 +79,8 @@ function bindingInputs(manager) {
     "lab/experiments/EXP-DX1/notify1",
     "lab/experiments/EXP-DX1/actv-lazy",
     "lab/experiments/EXP-DX1/actv-delta",
-    "lab/experiments/EXP-DX1/w1",
     "lab/experiments/EXP-DX1/wfix1/regression.clj",
+    "lab/experiments/EXP-DX1/w1",
     "pnpm-lock.yaml",
   )
     .split("\n")
@@ -429,7 +429,7 @@ export async function local(opts, config, manager) {
         ...(subjectWriter !== undefined
           ? ["-e", "TX2_SUBJECT_SAVE=" + subjectWriter, "-e", "TX2_INT1_WRITE_READBACK=1"]
           : []),
-        ...(orderedIds ? ["-e", "TX2_SUBJECT_NUMERIC_OWNER=1", "-e", "TX2_SUBJECT_ORDERED_IDS=1"] : []),
+        ...(orderedIds ? ["-e", "TX2_SUBJECT_ORDERED_IDS=1", "-e", "TX2_SUBJECT_NUMERIC_OWNER=1"] : []),
         "-e",
         "DX_ERASE_TOKEN=" + token,
         "-e",

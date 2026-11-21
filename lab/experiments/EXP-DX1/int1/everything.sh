@@ -32,7 +32,12 @@ else
   seconds=$(( $(date -u -d "$cutoff" +%s) - $(date -u +%s) - 60 ))
   [[ $seconds -gt 0 ]]
   prepared="$out/prepared-$batch"
-  timeout --kill-after=45s "${seconds}s" bash lab/experiments/EXP-DX1/t1/bare-metal.sh \
+  case ${DX_TX_JVM:-j21-g1} in
+    j21-g1) build_java=21 ;;
+    j25-g1|j25-zgc) build_java=25 ;;
+    *) echo 'Unknown transactor JVM profile' >&2; exit 2 ;;
+  esac
+  DX_JAVA=$build_java timeout --kill-after=45s "${seconds}s" bash lab/experiments/EXP-DX1/t1/bare-metal.sh \
     --prepare "$revision" "$prepared"
   [[ $(cat "$prepared/results/bootstrap.exit") == 0 ]]
   export PATH="$prepared/tools/bin:$PATH" DOCKER_CONFIG="$prepared/docker-config"

@@ -115,7 +115,7 @@ export async function regression(
   const client = new DatomicClient(process.env.DATOMIC_URL!, 35_000);
   const subjectWriter = process.env.DX_ERASE1_SUBJECT_WRITER;
   const orderedIds = process.env.DX_ERASE1_ORDERED_IDS === "1";
-  let orderedFunction: string | undefined;
+  let subjectFunction: string | undefined;
   if (subjectWriter !== undefined) {
     // [DX-PREP1] Why: prove which writer setting actually reached the protected regression gateway.
     // Rejected: trusting launcher flags or a readback from another scope.
@@ -130,13 +130,11 @@ export async function regression(
     assert.equal(opts.database, f.db);
     assert.equal(Boolean(opts.subjectSave), subjectWriter === "1");
     assert.equal(Boolean(opts.subjectOrderedIds), orderedIds);
+    assert.equal(Boolean(opts.subjectNumericOwner), orderedIds);
     if (subjectWriter === "1") {
       assert.match(opts.subjectFunction ?? "", /^:triplex\.subject\/v-[0-9a-f]{24}$/);
       assert(Number(opts.subjectFunctionTx) > 0);
-      if (orderedIds) {
-        assert.equal(opts.subjectNumericOwner, true);
-        orderedFunction = opts.subjectFunction;
-      }
+      subjectFunction = opts.subjectFunction;
     } else {
       assert.equal(opts.subjectFunction, undefined);
       assert.equal(opts.subjectFunctionTx, undefined);
@@ -180,6 +178,8 @@ export async function regression(
     // Rejected: checking the writer switch while the erased witness still uses a legacy ID.
     const identity = orderedSaveIdentity();
     const value = "ordered-witness-" + identity.token;
+    const frontier = await client.erasureFrontier(f.db);
+    assert(frontier.protected);
     const input = command(
       "ordered-erasure-witness",
       [{ e: entityId, a: attribute, v: { type: "string", value } }],
@@ -192,33 +192,17 @@ export async function regression(
     const ack = (await client.transact(f.db, input)) as {
       operationId: string;
       position: { v: string };
-      t: { v: string };
       subjectSave?: string;
       subjectOrderedIds?: boolean;
     };
     assert.equal(ack.operationId, input.operationId);
-    // [DX-PREP1] Why: the merged writer can prepare a protected save under its exact erasure generation.
-    // Rejected: forcing the legacy route in the fixture, since that leaves the protected ordered path untested.
-    assert(
-      orderedFunction && ack.subjectSave === orderedFunction && ack.subjectOrderedIds === true,
-    );
+    // [DX-INT1] Why: the merged writer prepares protected saves at the observed removal generation.
+    // Rejected: requiring a reference-path fallback and leaving prepared removal unexercised.
+    assert(subjectFunction);
+    assert.deepEqual([ack.subjectSave, ack.subjectOrderedIds], [subjectFunction, true]);
+    assert.deepEqual(await client.erasureFrontier(f.db), frontier);
     assert.equal(Number(ack.position.v), witnessCut + 1);
     witnessCut = Number(ack.position.v);
-    const operation = await client.operation(f.db, input.operationId);
-    assert.deepEqual(
-      [operation.status, operation.operationId, operation.position?.v, operation.t?.v],
-      ["committed", ack.operationId, ack.position.v, ack.t.v],
-    );
-    assert.equal(await client.claim(f.db, input.operationId, witnessCut), identity.transactionId);
-    output("ordered-writer-witness", {
-      binding,
-      function: orderedFunction,
-      operation: operation.operationId,
-      t: operation.t?.v,
-      cut: witnessCut,
-      journal: identity.transactionId,
-      id: identity.assertionId(0),
-    });
     before = (await rows(entityId)).find((r) => r.id === identity.assertionId(0));
     assert(
       before &&
@@ -226,6 +210,10 @@ export async function regression(
         before.value_string === value &&
         before.recorded_position === witnessCut,
     );
+    output("ordered-erasure-witness", {
+      binding, database: f.db, function: subjectFunction, position: witnessCut,
+      assertionId: before.id, transactionId: identity.transactionId, generation: frontier.seq,
+    });
   }
   const w: Witness = {
     entityId,

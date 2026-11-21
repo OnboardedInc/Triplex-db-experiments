@@ -3,6 +3,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { cleanSource, packageBytes } from "./source.ts";
+import { defaultWriter } from "./profile.ts";
 
 const [action, commit, argument] = process.argv.slice(2);
 assert(process.platform === "darwin" && commit && argument && path.isAbsolute(argument));
@@ -13,6 +14,8 @@ assert.match(commit, /^[a-f0-9]{40}$/);
 execFileSync("git", ["merge-base", "--is-ancestor", commit, head]);
 const holder = process.env.DX_V01_MAC_HOLDER ?? "DX-V01";
 assert(holder === "DX-V01" || holder === "DX-THIN1");
+const writer = process.env.DX_V01_MAC_WRITER ?? defaultWriter;
+assert(writer === "grouped" || writer === "subject");
 const disk = fs.statfsSync(".");
 assert(disk.bavail * disk.bsize >= (holder === "DX-THIN1" ? 10 : 5) * 1024 ** 3);
 const staging = path.resolve("runs/DX-V01");
@@ -27,6 +30,7 @@ const env = {
   )),
   DX_V01_MAC_FIXTURE: "1",
   DX_V01_MAC_HOLDER: holder,
+  DX_V01_MAC_WRITER: writer,
   TURBO_TELEMETRY_DISABLED: "1",
   ...(action === "--publish-fixture" ? { DX_V01_MAC_PUBLISH: "1" } : {}),
   DX_V01_LAB_RUNTIME: runtime,
@@ -79,7 +83,7 @@ if (action === "--packages") {
     }
     if (action === "--fixture") {
       const { writeAdoptedCard } = await import("./adopted-card.ts");
-      writeAdoptedCard({ source: commit, age: "fresh", writer: "grouped", toy: true, campaign,
+      writeAdoptedCard({ source: commit, age: "fresh", writer, toy: true, campaign,
         out: fixture, forecast: "Mac diagnostics from the SCALE1 loader fixture." });
     }
   }
