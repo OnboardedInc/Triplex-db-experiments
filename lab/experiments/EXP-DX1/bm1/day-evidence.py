@@ -16,7 +16,7 @@ SERVER = Path("/var/tmp/triplex-bm1")
 MAC = Path.home()/"Claude/Projects/triplex-db-2/evidence"
 SLOTS = {
     "bench3-fair-import": ("bench3/queue/fair-import", ("result", "unit.log", "prepared/inventory.json",
-        "prepared/ready.txt", "build/BUILD-v0.1.json")),
+        "prepared/ready.txt", "build/BUILD-v0.1.json", "dry-run")),
     "bench3-removal": ("bench3/queue/removal", ("result", "unit.log", "started",
         "prepared/inventory.json", "prepared/ready.txt", "build/BUILD-v0.1.json")),
     "bench3-cold": ("bench3/queue/cold", ("result", "unit.log", "started", "cold.log", "build/BUILD-v0.1.json")),

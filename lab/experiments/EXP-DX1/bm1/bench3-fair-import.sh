@@ -5,7 +5,7 @@ set -euo pipefail
 # Rejected: reusing the rolling arm's database or changing the matched import frame.
 root=$1
 mode=${2:-run}
-pin=52ad22640c863f101155d90a3d2b35f797904d23
+pin=8ab8320936b646eb5f18fa893966137ad768fc40
 [[ $root == /var/tmp/triplex-bm1/bench3 && $EUID == 0 && $(systemd-detect-virt) == none ]]
 job=$root/queue/fair-import
 build=$job/build
@@ -41,12 +41,28 @@ fi
 
 [[ $mode == run && -z $(docker ps -q) ]]
 state preparing measure
+# [DX-BM1] Why: INT1 8ab832093 carries the prepared-copy writer clause that refused 52ad22640 (ha1/LAUNCH-GUARD.md).
+# Rebuild right before the run, because later builds retag the shared image names.
+# Rejected: reusing the refused attempt's build or copy.
+rm -rf --one-file-system "$build" "$job/build-input"
 bash "$root/bench3-v01-build.sh" "$root" fair-import "$pin"
 cd "$build/repository"
 [[ $(git rev-parse HEAD) == "$pin" ]]
 export DX_V01_BUILD_RECEIPT="$build/BUILD-v0.1.json"
 touch /var/tmp/triplex-bm1/dx-bm1-day.lock
 node lab/bin/heavy.mjs --label DX-BM1-import-copy -- bash "$root/bench3-prepare-copy.sh" "$root" fair-import separate
+# Dry run first (DX-HA1 ha1/launch-dry-run.sh from INT1 54d644fd6): the launcher's own checks and the stack guard run
+# for real, and the first container create is refused. Only an ADMITTED verdict continues to the measured run.
+state dry-run measure
+bash "$root/tools/dry-run/launch-dry-run.sh" "$job/dry-run" -- \
+  bash lab/experiments/EXP-DX1/load1/fair-server.sh "$pin" \
+    "$root/seed-metadata/arm-d7-wfix-pool-seed" \
+    77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b \
+    1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154 \
+    "$root/verified-seed/cluster" "$job/dry-run-out" --pg-data "$job/prepared/cluster" \
+    --wal-dir "$wal" --credit-mode rolling6 --frame-facts 32 --import-credits 1
+[[ $(head -c 8 "$job/dry-run/verdict.txt") == ADMITTED ]]
+[[ -z $(docker ps -aq --filter name=tx2-dxscale1-) ]]
 state running collect
 exec node lab/bin/heavy.mjs --label DX-BM1-fair-import -- \
   bash lab/experiments/EXP-DX1/load1/fair-server.sh "$pin" \
