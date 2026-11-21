@@ -20,7 +20,7 @@ type Image = {
 export type AdoptedSeed = ReturnType<typeof openScaleSeal>;
 export const scopeKey = (name: string) => JSON.stringify(["triplex-scope-v1", "test", "test", name, 0]);
 
-export function openScaleSeal(file: string, pin: string, toy = false, transferPin?: string) {
+export function readScaleSeal(file: string, pin: string, toy = false, transferPin?: string) {
   const bytes = fs.readFileSync(file);
   assert.match(pin, digest);
   assert.equal(hex(bytes), pin, "SCALE1 image digest differs");
@@ -58,9 +58,15 @@ export function openScaleSeal(file: string, pin: string, toy = false, transferPi
       [image.source, image.nonce, "success", pin]);
     assert.equal(path.basename(path.dirname(file)), transfer.tag);
     assert.match(image.sha256, digest);
-    assert(Number.isSafeInteger(image.bytes) && image.bytes > 0 && fs.statSync(dump).size === image.bytes);
+    assert(Number.isSafeInteger(image.bytes) && image.bytes > 0);
   }
   return { image, scope, proof, key, pin, dump, transferPin };
+}
+
+export function openScaleSeal(file: string, pin: string, toy = false, transferPin?: string) {
+  const seed = readScaleSeal(file, pin, toy, transferPin);
+  if (!toy) assert.equal(fs.statSync(seed.dump).size, seed.image.bytes);
+  return seed;
 }
 
 export async function checkAdoptedPeer(client: DatomicClient, seed: AdoptedSeed, expectedHead: number) {
@@ -75,7 +81,7 @@ export async function checkAdoptedPeer(client: DatomicClient, seed: AdoptedSeed,
   // The loader sequence is a group cursor, so obtain its command from the original durable journal.
   const result = await client.request<{ transactions: [string, number, string[]][] }>(
     "POST", "/v2/db/" + scope.db + "/transactions", { after: scope.cut - 1, limit: 1 });
-  const [[tx, position, encoded]] = result.transactions;
+  const [tx, position, encoded] = result.transactions[0]!;
   assert.equal(position, scope.cut);
   const terminal = encoded.map(decodeRowText).find((row) => row.attribute === ":_tx/command-id")?.value_string;
   assert(typeof terminal === "string" && terminal.startsWith(prefix));

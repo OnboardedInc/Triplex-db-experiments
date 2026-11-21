@@ -1,25 +1,33 @@
-# Failover on the shared version 0.1 database
+# Sunday failover at full size
 
-Take the Priority 9 work from `49d4b8139` on top of INT1 `51d0aff35`. It includes the second copy, the fence, the move and the same-database resend check.
-All ten accounts use one Datomic database in the new drill. The independent replay checks the edit before and after the lost reply.
-Saves wait for a second copy by default. Set `HA1_RECOVERY_POLICY=A` to reopen on one copy with an alarm. [Owner decision](OWNER-DECISION.md)
-The first server phase runs the four Priority 9 checks. Fleet and size measurements can start after their evidence is collected. [Server run](BENCH.md)
-The server run needs a sealed copy of the ten-account database at each age. The earlier Mac drills kept every confirmed save, but the updated checks are still running.
-The older account move is in INT1. Take the newer ordered import work separately from HA1. [Branch map](INTEGRATION.md)
+The Sunday run is ready to take into INT1. It uses ten accounts in one database and starts from the same stopped 126 GB copy on each server.
+Run server A first, then server B. The plan reserves 234 of the 240 minutes and uses the existing SSH port.
+On the first failure, I expect every acknowledged save to survive under either policy.
+I expect B to take 4–14 minutes to reopen saves while it rebuilds protection. A should reopen in 18–65 seconds, with one copy.
+A second failure during that one-copy window is expected to make 150–2,050 acknowledged saves unavailable, depending on the save rate.
+The planned move is forecast at 25–65 seconds against the 30-second limit. Sunday will supply the first full-size two-server measurements.
+The organizer needs to publish the merged INT1 build, match the two cold copies and enable the dedicated SSH tunnel before 05:00.
+
+## Driver handoff
+
+[Two role commands, inputs, budgets and forecasts](SUNDAY.md) · [One-page reading sheet](SUNDAY-READING.md) · [Owner options](OWNER-DECISION.md) · [SDK retry contract](SDK-RETRY.md)
+
+Built against INT1 `8ae07b227690fd760aa5fd8cec9055c3147170da`, merged locally at `2b60cc4c8`. Use the new INT1 commit after bringing over this change. Both roles verify the built package bytes and the pinned image IDs before starting. The run uses the `server` profile with Java 21 G1 and the ordered field writer. It records the live JVM flags and synchronous PostgreSQL settings.
+
+Each arm clones a fresh work directory on each server. The B rebuild uses the original staged seed plus retained WAL from the promoted timeline. The A second-fault observation queries the previously fenced disk in recovery after stopping B. The run never deletes a seed or destroys B's disk to prove loss. It exercises loss of the database processes on a reachable host. Provider power fencing, emergency restoration to a blank replacement server, and the third-copy policy are outside this weekend's test.
 
 ## Mac correctness
 
-The earlier eight Mac drills settled 782 scheduled saves once, with 689 original-ID retries. They returned 7,779 exact reads within the caller deadline. The old disk refused writer startup, and the planned move confirmed the first new receipt on two copies. Those drills waited 54 min 19 s in the ordinary queue. The earlier four fleet cells waited a combined 4 h 3 min 7 s. [Earlier evidence and diagnostics](https://github.com/OnboardedInc/Triplex-db-experiments/blob/a9f076753/lab/experiments/EXP-DX1/hasync1/REPORT.md)
+At 1,210 facts the Policy B lost-reply and planned-move rehearsals settled all 167 scheduled saves once, including 138 retries with the original command, and returned 1,658 exact reads within the caller deadline. The stopped-directory gate used two PostgreSQL containers. The first attempt caught the Alpine checksum option mismatch before startup. On the corrected attempt the cold standby booted, kept the first record after promotion, then replayed the two later records in order from the original seed on the new timeline. The archive keeps the first failure and three successful attempts, each with its source, slot and cleanup record. Mac clocks are diagnostic.
 
-The integrated correctness gates offer five saves and fifty reads per second, rotate the pinned reads across ten accounts, and keep the original operation identity through retry. Mac timings are diagnostic. [Gate and receipt audit](EVIDENCE.md) · [Archives](SHA256SUMS.archives)
+HA TypeScript and the Core and Datomic builds passed. Three Sunday checks and fourteen HA and scorecard checks passed. The first mixed test invocation used Vitest on Node test files. The separate correct runners passed. The full monorepo suite and the actual SSH, full-size load, copy and recovery measurements on the two servers are pending.
 
-## Bare-metal scorecard
+## Receipt and verdict audit
 
-```sh
-P9_AGE=fresh P9_SEAL_SHA256="$FRESH_SEAL_SHA256" \
-node --import tsx lab/experiments/EXP-DX1/ha1/control.ts hasync-suite "$TAG"
-```
+- Cold-copy marker and toy receipt. The verified manifest, every cloned file and clean PG17 system identifier match. The role's live read-only mount, image, nonce and fresh container ID bind the report. The toy checks exact ordered records through replay at the recorded LSN.
+- Original size and scope. Both servers check the independent SCALE1 transfer and image digests, the original checkpoint, and the stopped-directory hash. The live gateway checks the one database, recorded cut, terminal and manifest claims, and exact account rows.
+- Scheduled saves and reads. The fresh nonce names operation IDs. The proxy ties each completed ACK to the route that forwarded it. The survivor returns the same ID, position, Datomic transaction and clock. Field samples match written values and scheduled read rows match the pinned expected values. Missing or changed observations remain in the first attempt's evidence.
+- B and the move. PostgreSQL confirms the promoted timeline, the verified replica in recovery and its synchronous flush at or beyond the checked cut. The timing comes from the actual fault or seal and a confirmed new-route receipt. The A second-fault comparison requires both transactors and B's data process stopped and the exact A disk in recovery without upstream.
+- Link and returning disk. The tunnel compares fresh random probe bytes with a loopback control. The optional return checks the exact fenced containers and disk, observed refusal and the same attempt's system identifier. Evidence archives have SHA-256 sidecars. No acceptance pins changed.
 
-The fresh ten-account forecast is 17–30 minutes with a prepared build and checkpoint. The first stage measures acknowledged loss, the first new save, pinned reads, and the first protected save after sealing writes for the move. The one-server commands label their two copies on one host as a rehearsal. [Four row commands](SCORECARD.md)
-
-Fleet and the two edited size rungs run only if the window allows. Forecast 39–79 minutes with the optional phase. The fresh and 1B physical snapshots, copy throughput, hardware fence and paired timings remain unverified. The scorecard still needs to be taken into INT1 and run at both ages. [Forecast and schedule](BENCH.md) · [Version 0.1](https://github.com/OnboardedInc/Triplex-db-experiments/blob/main/lab/V0.1.md)
+[Mac evidence archive checksum](SHA256SUMS.archives) · [Previous integration and branch map](INTEGRATION.md) · [Previous gate audit](EVIDENCE.md)

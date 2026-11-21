@@ -32,3 +32,7 @@ The original 394-offer full-size scorecard stored 342.90 saves/s in-window. PREP
 ## Evidence audit
 
 The sender checks the operation and records predecessor values before releasing a settled credit. The SQL fixture checks the selected writer and scoped operation settings, compares immediate pinned fields, then independently checks reopened journal bytes, operation receipts, both resend outcomes and absent operations after native append denial. The recount binds the stage files, actual image, fresh slot and nonce. It joins each durable receipt to its own native append before the caller's observed response. The lookup recount joins exact transaction and the containing native apply clocks to bind unnamed apply-thread events to the right database. The scorecard checks its exact saved bytes and actual JVM role settings. All 521 pins and the frozen inputs matched. [Archives and checksums](V0.1-SHA256SUMS)
+
+## Sunday failover integration audit
+
+The build and pair readiness records bind the declared commit, build receipt, manifest digest, seed cluster, fresh tag and both live host identities. Each case binds the cloned bytes and scope to a fresh attempt on the named roles, compares surviving native receipts and pinned field witnesses to the sent operations, and reports cleanup for those same objects. The local stopped-copy witness verifies manifest bytes and the exact fresh three-row sequence across promotion and replay. The compressed archive checksum indexes the collected attempt bytes. The two-server timing and second-fault observation remain open.

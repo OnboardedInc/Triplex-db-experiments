@@ -1,5 +1,7 @@
 # The paired version 0.1 failover run
 
+For the Sunday two-server policy comparison on the staged full-size image, use [Sunday's role commands](SUNDAY.md) and [reading sheet](SUNDAY-READING.md).
+
 From the clean published revision, supply the two released SSH targets through `BENCH_SERVER` and `BENCH_SERVER_B` and the dedicated private link through `HA1_LINK_A` and `HA1_LINK_B`. The host manifests must assign both machines to DX-HASYNC1. Build the exact revision on both hosts before the timed window. Choose a new tag for each run. [Scorecard rows](SCORECARD.md)
 
 ```sh
