@@ -8,9 +8,13 @@
             [triplex.gateway.storage :as storage] [triplex.gateway.subject-save :as subject]
             [triplex.gateway.write-policy :as policy] [wfix1-regression :as reference]))
 
-(defn at-cut [input cut] (assoc input "sourceK" cut "position" cut))
-(defn native-plan [db input] (layout/prepare db (storage/tx-data db input) input))
-(defn append! [conn plan] (layout/verify-report @(d/transact conn [[layout/ident plan]]) plan))
+(defn at-cut [input cut] (assoc input "sourceK" cut))
+(defn native-plan [db input]
+  (let [plan (layout/prepare db (storage/tx-data db input) input)]
+    (assert plan (str "Fixture must qualify for owner layout preparation: " (get input "operationId")))
+    plan))
+(defn append! [conn plan]
+  (layout/verify-report @(d/transact-async conn [[layout/ident plan]] :io-context :dx-w1/owner-layout) plan))
 
 (defn current [db owner]
   (sort-by :id (map (comp lean/decode :v) (layout/live-datoms db owner))))
@@ -27,6 +31,7 @@
 
 (defn counts [report]
   {:datoms (count (:tx-data report))
+   :io (select-keys (get-in report [:io-stats :reads]) [:sql :eavt-load :aevt-load :avet-load :vaet-load])
    :addedTextBytes (reduce + (map #(if (and (:added %) (string? (:v %)))
                                    (alength (.getBytes ^String (:v %) java.nio.charset.StandardCharsets/UTF_8)) 0)
                                  (:tx-data report)))})
