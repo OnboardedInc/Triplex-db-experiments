@@ -10,6 +10,9 @@ import { defaultCreditMode, launchProfile } from "../jvm1/launch.mjs";
 import { barrierRoot, launchIntegration, selectedWriter, writeDiagnostics, serverStages, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
 import { cellPath, lastServerCell, ratedTape, serverCellSeconds, serverRates, writerAdmission, type CreditMode, type WindowSeconds } from "./server-workload.ts";
 
+import { realisticTape, sweepSize, thinLimit, realPin } from "./realistic-plan.ts";
+import type { RealisticBinding } from "./realistic.ts";
+import type { Image } from "../real1/seal.ts";
 import { operationId } from "../scale1/decision/operation-id.ts";
 import { summarizeTelemetry, type Telemetry } from "./cell-telemetry.ts";
 import { checkAdmission } from "./credit-evidence.ts";
@@ -17,6 +20,7 @@ import { p99Miss, quietVerdict } from "./card-verdict.ts";
 import { windowStats, type WindowWrite } from "./windows.ts";
 
 type Card = { source: string; age: Age; writer: Writer; jvm?: JvmProfile; toy: boolean; campaign: string; out: string; forecast: string;
+  realistic?: RealisticBinding;
   windowSeconds?: WindowSeconds; creditMode?: CreditMode;
   prepared?: boolean; txJvm?: JvmProfile; writeJvm?: JvmProfile; diagnostics?: ReturnType<typeof writeDiagnostics>; separateWal?: boolean; failure?: string };
 type Observation = Awaited<ReturnType<typeof adoptedArm>>;
@@ -36,8 +40,8 @@ export function writeAdoptedCard(run: Card) {
     assert(x.startedAt <= x.start && x.start < x.endedAt && x.seed.head === x.firstCut);
     assert.equal(createHash("sha256").update(bytes).digest("hex"), x.observationsSha256);
     const raw = JSON.parse(bytes.toString());
-    assert.deepEqual([raw.p1, raw.p4, raw.p6, raw.p7, raw.selection, raw.fairCredits],
-      [x.p1, x.p4, x.p6, x.p7, x.settings.selection, x.settings.fairCredits]);
+    assert.deepEqual([raw.p1, raw.p4, raw.p6, raw.p7, raw.thin, raw.selection, raw.fairCredits],
+      [x.p1, x.p4, x.p6, x.p7, x.thin, x.settings.selection, x.settings.fairCredits]);
     assert.equal(x.settings.creditMode, mode);
     const admission = writerAdmission(mode);
     if (x.p6 || !run.toy || admission.mode === "rolling") {
@@ -66,6 +70,7 @@ export function writeAdoptedCard(run: Card) {
     const input = JSON.parse(fs.readFileSync(inputsFile, "utf8"));
     assert.deepEqual([input.source, input.age, input.writer, input.jvm, input.txJvm, input.writeJvm, input.diagnostics, input.separateWal, input.stages, input.windowSeconds, input.creditMode],
       [run.source, run.age, run.writer, run.jvm, run.txJvm, run.writeJvm, diagnostics, !!run.separateWal, stages, windowSeconds, creditMode]);
+    assert.deepEqual(input.realistic, run.realistic);
     assert.equal(Boolean(input.pgdata), prepared);
     if (prepared) assert.equal(input.pgdata.length, stages.length);
     let systemIdentifier: string | undefined;
@@ -74,7 +79,18 @@ export function writeAdoptedCard(run: Card) {
       const arm = stage.name === "headline" ? (stage.loaded ? loaded : zero)
         : control;
       if (!arm) continue;
-      assert.equal(arm.seed.imageSha256, input.imagePin);
+      if (run.realistic) {
+        const seal = run.realistic;
+        assert.equal(seal.imagePin, input.imagePin);
+        assert.equal(seal.transferPin, input.transferPin);
+        assert.equal(arm.seed.imageSha256, seal.parent.imageSha);
+        assert.deepEqual(arm.seed.realistic, seal);
+        assert.deepEqual([arm.firstCut, arm.seed.originalCut, arm.seed.database], [seal.cut, seal.parent.cut, seal.parent.db]);
+        const live = JSON.parse(fs.readFileSync(file(dir, "realistic-live.json"), "utf8"));
+        assert.deepEqual([live.source, live.slot, live.attempt, live.seal, live.native],
+          [run.source, arm.slot, arm.attempt, seal, [seal.cut, seal.census.nativeT, seal.census.nativeRecords]]);
+        assert(live.at <= arm.startedAt);
+      } else assert.equal(arm.seed.imageSha256, input.imagePin);
       const launch = JSON.parse(fs.readFileSync(file(dir, "launch-check.json"), "utf8"));
       assert.deepEqual([launch.source, launch.slot, launch.attempt, launch.policy, launch.diagnostics, launch.separateWal],
         [run.source, arm.slot, arm.attempt, stage.policy, diagnostics, stage.separateWal]);
@@ -132,13 +148,14 @@ export function writeAdoptedCard(run: Card) {
   if (commit.length) rows.set("P2", [commit.map((c) => c.reading).join(" · ") + ". Prelude only. Rated save windows, latency bands and retry coverage remain open.",
     partial, commit.map((c) => c.samples).join(" · "), commit.map((c) => c.link).join(" · ")]);
   if (loaded && run.writer === "per-person-ordered") {
-    const phases = loaded.p1.map((p) => `L${p.seats} ${tag(p.goodput)}/s, p99 ${tag(p.read.p99Ms)} ms, ${p.errors} errors`).join("; ");
+    const phases = loaded.p1.map(p => `L${p.seats} ${tag(p.goodput)}/s, p99 ${tag(p.read.p99Ms)} ms, ${p.errors} errors` +
+      (p.mix ? `, checked deep/thin/small ${p.mix.deep}/${p.mix.thin}/${p.mix.small}` : "")).join("; ");
     const baseline = zero?.p2.latency.p99Ms;
     const ratio = baseline && loaded.p2.latency.p99Ms !== null ? loaded.p2.latency.p99Ms / baseline : null;
     const miss = zero && p99Miss(run.toy, loaded.p1.find(p => p.seats === 256)?.read, 100, "L256 checked field-read p99");
     if (loaded.p1.some(p => p.read.count || p.errors)) rows.set("P1", [`${miss ? miss + ". " : ""}${phases}. Whole-tape writer p99 ratio ${tag(ratio)}. Exact seed-cut field probes; full-world and recovery coverage remain open.`, miss ? "MISSED" : partial,
       String(loaded.p1.reduce((a, p) => a + p.read.count, 0)), evidence("loaded")]);
-    if (loaded.p3.entries) rows.set("P3", [`${loaded.p3.entries} ordered exact changes; dispatch-to-observation p99 ${tag(loaded.dispatchToFeed.p99Ms)} ms across ${loaded.dispatchToFeed.count} observations. Durable effects and crash resume are open.`, partial,
+    if (loaded.p3.entries) rows.set("P3", [`${loaded.p3.entries} ordered exact changes${loaded.seed.realistic ? ` (busy deep/thin/small ${armMix(loaded.writes).join("/")})` : ""}; dispatch-to-observation p99 ${tag(loaded.dispatchToFeed.p99Ms)} ms across ${loaded.dispatchToFeed.count} observations. Durable effects and crash resume are open.`, partial,
       String(loaded.p3.entries), evidence("loaded")]);
     if (loaded.p4?.observed.count) rows.set("P4", [`Current demand pulls p50 ${tag(loaded.p4.observed.p50Ms)} ms, p99 ${tag(loaded.p4.observed.p99Ms)} ms. History depth and engine bytes remain open.`, partial,
       String(loaded.p4.observed.count), evidence("loaded")]);
@@ -165,6 +182,32 @@ export function writeAdoptedCard(run: Card) {
         coldMiss ? "MISSED" : partial, `${p.cold.observed.count} first pulls and two residency points`,
         evidence("loaded") + (prepared ? " · [empty stack](campaign/loaded/p7-empty/residency.json)" : "")]);
     }
+  }
+  let realistic: Image | undefined;
+  if (run.age === "realistic" && loaded) {
+    const name = run.toy ? "loaded/realistic-seed/image.json" : "realistic-image.json";
+    const bytes = fs.readFileSync(file(name, ""));
+    assert.equal(createHash("sha256").update(bytes).digest("hex"), loaded.seed.realistic?.imagePin);
+    realistic = JSON.parse(bytes.toString()) as Image;
+    assert.equal(realistic.proof.cut, loaded.firstCut);
+    assert.equal(createHash("sha256").update(JSON.stringify(realistic.accounts)).digest("hex"), loaded.seed.realistic?.rosterSha);
+  }
+  if (loaded?.thin && realistic) {
+    const p = loaded.thin, account = realistic.accounts[10]!;
+    assert.equal(account.kind, "thin");
+    assert.deepEqual([p.cut, p.n, p.thin, p.start, p.read.count],
+      [loaded.firstCut, sweepSize(realistic.profile), account.people, thinLimit(account, realistic.profile), sweepSize(realistic.profile)]);
+    assert(loaded.startedAt <= p.before.at && p.before.at <= p.after.at && p.after.at <= loaded.start);
+    const roles = ["tx", "gw-w", "gw-r"];
+    const bytes = (point: typeof p.before, role: string) => {
+      const stats = point.roles[role];
+      assert(stats && Number.isSafeInteger(stats.rssBytes) && stats.rssBytes > 0 && stats.threads > 0);
+      return stats.rssBytes;
+    };
+    const readings = roles.map(role => `${role} ${bytes(p.before, role)} → ${bytes(p.after, role)} RSS bytes (${tag((bytes(p.after, role) - bytes(p.before, role)) / p.n)} added B/first-read person)`);
+    const miss = p99Miss(run.toy, p.read, 100, "Checked first thin read p99");
+    rows.set("P7", [`${miss ? miss + ". " : ""}Thin first-read p99 ${tag(p.read.p99Ms)} ms. ${readings.join(" · ")}. The sweep measures first-touch change. Marginal untouched bytes require the first/full pairing.`,
+      miss ? "MISSED" : partial, `${p.n} distinct thin people and two residency points`, evidence("loaded")]);
   }
   const lastQuiet = run.toy ? "p6-235" : lastServerCell;
   const [neighbors] = readArm(lastQuiet, true);
@@ -230,8 +273,9 @@ export function writeAdoptedCard(run: Card) {
         const result = quietVerdict(a.commit, b.commit, expired, a.read.wrong + b.read.wrong);
         if (name === "headline") headlineVerdicts.push(result.status);
         const ratio = (base: number | null, loaded: number | null) => tag(base && loaded !== null ? loaded / base : null);
+        const mix = armMix(busy.writes);
         commits.push({
-          reading: `${name} ${rate}/s: ${tag(b.acknowledgedInWindow / b.durationSeconds)}/s in window, ${b.totalReceipts}/${b.totalOffers} durable, ${b.expired} expired, p50/p99 ${tag(busy.p2.latency.p50Ms)}/${tag(busy.p2.latency.p99Ms)} ms`,
+          reading: `${name} ${rate}/s: ${tag(b.acknowledgedInWindow / b.durationSeconds)}/s in window, ${b.totalReceipts}/${b.totalOffers} durable, ${b.expired} expired${busy.seed.realistic ? `, deep/thin/small receipts ${mix.join("/")}` : ""}, p50/p99 ${tag(busy.p2.latency.p50Ms)}/${tag(busy.p2.latency.p99Ms)} ms`,
           samples: `${name} ${rate}: ${b.totalReceipts}`, link: evidence(loadPath),
         });
         pairs.push({
@@ -253,6 +297,13 @@ export function writeAdoptedCard(run: Card) {
         completedRates.has("headline") && headlineVerdicts.every(v => v === "MET") ? "MET" : partial, pairs.map(c => c.samples).join(" · "), pairs.map(c => c.link).join(" · ")]);
   }
 
+  function armMix(writes: { receipt?: unknown; account: number }[]) {
+    const n = [0, 0, 0];
+    for (const row of writes) if (row.receipt && row.account !== 0)
+      n[row.account < 10 ? 0 : row.account === 10 ? 1 : 2]!++;
+    return n;
+  }
+
   function addWindows(writes: WindowWrite[], arm: Observation, title: string) {
     for (const w of windowStats(writes, arm.start, arm.p6!.durationSeconds)) {
       cellWindows.push(`| ${title} | ${w.name} | ${tag(w.storedPerSecond)} | ${tag(w.latency.p50Ms)} | ${tag(w.latency.p99Ms)} | ${tag(w.senderWait.p99Ms)} | ${w.offered} | ${w.acked} | ${w.latency.count} | ${w.expired} |`);
@@ -265,7 +316,14 @@ export function writeAdoptedCard(run: Card) {
       [previous.attempt, previous.slot, previous.seed.database, previous.seed.imageSha256, previous.terminal]);
     assert(arm.startedAt >= previous.endedAt && arm.p6);
     assert.deepEqual(arm.p6.quietCell, cell);
-    assert.deepEqual(arm.tape, ratedTape(100_000, cell, windowSeconds));
+    if (arm.seed.realistic) {
+      const bytes = fs.readFileSync(file("realistic-image.json", ""));
+      assert.equal(createHash("sha256").update(bytes).digest("hex"), arm.seed.realistic.imagePin);
+      const shape: Image = JSON.parse(bytes.toString());
+      assert.deepEqual(arm.seed.realistic, run.realistic);
+      assert.deepEqual(arm.tape.map(({ owner: _owner, ...offer }: any) => offer),
+        realisticTape(shape, cellPath(cell), windowSeconds, cell.loaded ? cell.rate - 3.5 : 0));
+    } else assert.deepEqual(arm.tape, ratedTape(100_000, cell, windowSeconds));
     assert.equal(arm.writes.length, arm.tape.length);
     for (const [i, row] of arm.writes.entries()) {
       const offer = arm.tape[i]!;
@@ -375,6 +433,9 @@ export function writeAdoptedCard(run: Card) {
         : "The headline ordered profile runs the full workload. Barrier6 repeats P2 and P6 on the same launch profile."
       : "Grouped comparison only. This attempt covers P2 and P6.") + "\n\n" + line;
     if (line === "Population ten accounts of four deep people.") {
+      if (run.age === "realistic") return realistic
+        ? `Population ${realistic.accounts.length} accounts with ${realistic.people.toLocaleString("en-US")} people in one REAL1 database.`
+        : "Population sealed by REAL1.";
       if (run.toy) return "Population ten deep accounts in one SCALE1 toy database.";
       return "Population ten deep accounts of 100,000 people in one SCALE1 database." +
         (fs.existsSync(inputsFile) ? " [Held seal and run inputs](campaign/input.json)." : "");
@@ -400,6 +461,7 @@ export function writeAdoptedCard(run: Card) {
   const settings = {
     ...selectedWriter(run.writer),
     writerIntegration,
+    ...(run.age === "realistic" ? { realisticSealRuntime: realPin, seed: loaded?.seed.realistic, busyMix: "80% deep, 15% thin, 5% small" } : {}),
     creditMode, admission: run.toy && admission.mode === "barrier" ? { ...admission, scope: "quiet cells" } : admission,
     ...(run.toy ? {} : { launchIntegration, stages, offeredRates: serverRates, windowSeconds, postgresStartup: prepared ? "prepared PGDATA" : "logical dump" }),
     diagnostics, comparison: defaultCreditMode,

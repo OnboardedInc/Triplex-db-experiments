@@ -179,6 +179,7 @@ export type Write = {
   ms: number;
   width: number;
   version: string;
+  owner?: string;
 };
 const preferred = new Map<Density, number[][]>();
 export function activeSubjects(people: Density) {

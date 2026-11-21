@@ -1,3 +1,19 @@
+The realistic card uses three arms on one extended database. The afternoon fresh runner stays at c1eeb2ef8.
+It verifies the original loader, stopped tree bytes, extension receipt and the native census before offers.
+Busy work draws 80 percent deep, 15 percent thin and 5 percent small. The quiet deep control keeps its own tape.
+The first-rung cap is 330 minutes and USD 6.00, plus about sixteen minutes for three fresh copies.
+The thin sweep measures checked first-read latency and first-touch residency in each run.
+The untouched-person slope takes two matched sealed rungs on the same host.
+The deck of predictions is in the server handoff. The REAL1 builder can keep the existing seal format.
+Mac fixture timings are diagnostic. Bare-metal mixed traffic and residency remain open.
+
+## Part 10 receipt and verdict audit
+
+- Adoption uses REAL1’s exact pinned producer, signed-by-digest output bytes, separately pinned parent image and transfer, exact regenerated roster/proof, SQLite ledger digest and full held and scratch tree inventories. Live adoption ties the original cut and loader command to SCALE1 and the extension command, durable claim, indexed native T/count and head to this locked slot and copy.
+- The ordered sender’s new owner is regenerated from the account kind, namespace and person. The operation, predecessor, durable receipt and full native journal checks remain in force. The renderer hashes the raw observations, regenerates the rated tape from the pinned roster and verifies the exact scope, operation sequence and durable contents at this attempt’s cut.
+- P7 sweeps a fixed cohort of unique thin people excluded from foreground traffic. Every pinned world matches the generated typed members and carries the observed first-read latency. Both process residency snapshots bracket the sweep and are bound to the current arm. The separate slope tool checks both staged campaign manifests and evidence digests, common parent, host, release, matched settings and disjoint attempts before pricing the difference between before-sweep points. It reports observations without promoting a one-rung memory datum to a marginal pass.
+- P1, P6 and mixed-identity verdicts still use the content, freshness and binding checks described below. The mixed-ID witness stays under the original and current verified cuts. No acceptance files moved.
+
 Run c1eeb2ef8667394832b03e8115a66d5d4a422945 on exp/DX-V01-next-card for the lean fresh card. The queued billion-record runner stays at 8cc32d380.
 The chosen credits drive both headline arms. The third arm uses barrier6 on the identical stack.
 Each arm takes one private copy. The cap is 280 minutes and USD 5.09, plus about thirteen minutes for three fresh copies.

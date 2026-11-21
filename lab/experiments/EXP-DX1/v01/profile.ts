@@ -10,10 +10,10 @@ export function isWriter(value: unknown): value is Writer {
 export const writerIntegration = "f25a46e02591a1c6b6a9495f7f2cce20249571f0";
 export const launchIntegration = "5f62059b1fc03e8fffca0441f14ff4ddd4d7e734";
 export const defaultWriter: Writer = "per-person-ordered";
-export type Age = "fresh" | "1B";
-export function timeBudget(seconds: WindowSeconds) {
+export type Age = "fresh" | "1B" | "realistic";
+export function timeBudget(seconds: WindowSeconds, realistic = false) {
   const extra = serverCells.length * (seconds - replaySeconds) / 60;
-  const budget = { adoptionAndP1to4: 89, P6: 25 + extra, P7: 10, P8: 25, comparison: 60 + extra, cleanup: 15 };
+  const budget = { adoptionAndP1to4: realistic ? 109 : 89, P6: (realistic ? 30 : 25) + extra, P7: realistic ? 25 : 10, P8: 25, comparison: (realistic ? 70 : 60) + extra, cleanup: 15 };
   return { budget, ceiling: Object.values(budget).reduce((a, b) => a + b, 0), comparisonMinutes: budget.comparison };
 }
 export const { budget } = timeBudget(replaySeconds);

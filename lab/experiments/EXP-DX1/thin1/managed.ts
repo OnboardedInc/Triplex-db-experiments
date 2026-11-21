@@ -190,6 +190,7 @@ function setup(compact: boolean) {
   assert(["original", "demand"].includes(gwPolicy) && ["following", "validated"].includes(readMode));
   assert(peerGc === "g1" || (gwPolicy === "demand" && peerGc === "elastic"));
   const writeOptionsAttempt = mode === "int1-adopted-proof" ? randomUUID() : undefined;
+  const realisticScorecard = !!writeOptionsAttempt && process.env.DX_V01_MAC_AGE === "realistic";
   const scorecardComparison = !!writeOptionsAttempt && process.env.DX_V01_MAC_COMPARISON === "1";
   const scorecardCreditMode = writeOptionsAttempt ? process.env.DX_V01_CREDIT_MODE : undefined;
   const scorecardWriter = writeOptionsAttempt ? (process.env.DX_V01_MAC_WRITER ?? "grouped") : undefined;
@@ -221,7 +222,7 @@ function setup(compact: boolean) {
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
   write(cred, {
-    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, scorecardWriter, scorecardCreditMode, scorecardComparison,
+    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, scorecardWriter, scorecardCreditMode, scorecardComparison, realisticScorecard,
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
     memoryPoints, nativePools,
     readerPages: process.env.DX_INT1_READER_PAGES === "1",
@@ -290,6 +291,7 @@ function bind() {
       scorecardWriter: attempt.scorecardWriter,
       scorecardCreditMode: attempt.scorecardCreditMode,
       scorecardComparison: attempt.scorecardComparison,
+      realisticScorecard: attempt.realisticScorecard,
       compact: !!attempt.compact,
       census: attempt.census, cohort: attempt.cohort,
       gwPolicy: attempt.gwPolicy, readMode: attempt.readMode,
@@ -422,7 +424,8 @@ if (action === "--guest") {
     await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
       java: { placement: "owned Mac compact stack", commands }, residency,
-      creditMode: parseCredits(stack.managed.scorecardCreditMode) }, stack.managed.scorecardWriter, stack.managed.scorecardComparison);
+      creditMode: parseCredits(stack.managed.scorecardCreditMode),
+      realisticToySlot: stack.managed.realisticScorecard ? stack.containers[0].name : undefined }, stack.managed.scorecardWriter, stack.managed.scorecardComparison);
   } else if (mode === "int1-campaign-proof") {
     assert(Number(rung) === 40);
     process.chdir(repo);

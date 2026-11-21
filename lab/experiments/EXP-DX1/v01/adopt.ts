@@ -17,7 +17,10 @@ type Image = {
   layout: string; verification: string; scopes: Scope[]; bytes: number; sha256: string;
   proofs: { cursor: number; facts: number; cut: number; observed: number; sourceSeal: string }[];
 };
-export type AdoptedSeed = ReturnType<typeof openScaleSeal>;
+export type AdoptedSeed = ReturnType<typeof openScaleSeal> & {
+  realistic?: import("../real1/seal.ts").Image;
+  realisticBinding?: import("./realistic.ts").RealisticBinding;
+};
 export const scopeKey = (name: string) => JSON.stringify(["triplex-scope-v1", "test", "test", name, 0]);
 
 export function openScaleSeal(file: string, pin: string, toy = false, transferPin?: string, requireDump = true) {

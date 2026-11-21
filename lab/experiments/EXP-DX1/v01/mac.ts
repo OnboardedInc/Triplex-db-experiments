@@ -7,11 +7,13 @@ import { parseCredits } from "./server-workload.ts";
 import { barrierRoot, isWriter } from "./profile.ts";
 import { cleanSource, packageBytes } from "./source.ts";
 
-const [action, commit, argument, writerArg, creditArg] = process.argv.slice(2);
+const [action, commit, argument, writerArg, creditArg, ageArg] = process.argv.slice(2);
 assert(process.platform === "darwin" && commit && argument && path.isAbsolute(argument));
 assert(["--packages", "--image", "--fixture", "--publish-fixture"].includes(action ?? ""));
 const writer = writerArg ?? (action === "--publish-fixture" ? "grouped" : "per-person-ordered");
 assert(isWriter(writer));
+assert(ageArg === undefined || ageArg === "realistic");
+const age = ageArg === "realistic" ? ageArg : "fresh";
 const creditMode = parseCredits(creditArg ?? process.env.DX_V01_CREDIT_MODE);
 const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 cleanSource(head);
@@ -82,7 +84,7 @@ if (action === "--packages") {
       try {
         execFileSync(process.execPath, ["--no-warnings", "--experimental-transform-types",
           "lab/experiments/EXP-DX1/thin1/managed.ts", "--arm-compact", build, "int1-adopted-proof", "80", output],
-        { env: { ...env, DX_V01_MAC_WRITER: writer, DX_V01_CREDIT_MODE: mode, DX_V01_MAC_COMPARISON: comparison ? "1" : "0" }, stdio: "inherit" });
+        { env: { ...env, DX_V01_MAC_WRITER: writer, DX_V01_CREDIT_MODE: mode, DX_V01_MAC_AGE: age, DX_V01_MAC_COMPARISON: comparison ? "1" : "0" }, stdio: "inherit" });
       } catch (error) {
         console.error(error);
         process.exitCode = 1;
@@ -90,7 +92,7 @@ if (action === "--packages") {
     }
     if (action === "--fixture") {
       const { writeAdoptedCard } = await import("./adopted-card.ts");
-      writeAdoptedCard({ source: commit, age: "fresh", writer, creditMode, toy: true, campaign,
+      writeAdoptedCard({ source: commit, age, writer, creditMode, toy: true, campaign,
         out: fixture, forecast: "Mac diagnostics from the SCALE1 loader fixture." });
     }
   }

@@ -6,11 +6,14 @@ import { physicalArms, timeBudget, type writeDiagnostics, type Age, type JvmProf
 import { type Directory, type preflightWal } from "./pgdata.ts";
 import { cellPath, replaySeconds, serverCells, type WindowSeconds, type CreditMode } from "./server-workload.ts";
 
+import type { RealisticBinding } from "./realistic.ts";
+
 type CampaignInput = {
   source: string; age: Age; writer: Writer; jvm: JvmProfile; txJvm: JvmProfile; writeJvm: JvmProfile; diagnostics: ReturnType<typeof writeDiagnostics>;
   imagePin: string; transferPin: string; originalScope: { db: string; cut: number };
   separateWal: boolean; stages: ReturnType<typeof serverStages>; wal?: ReturnType<typeof preflightWal>;
   windowSeconds?: WindowSeconds; creditMode?: CreditMode;
+  realistic?: RealisticBinding;
   agedBundle?: string; agedDump?: string;
 };
 export type SequenceConfig = {
@@ -67,13 +70,17 @@ function armEvidence(sequence: Sequence, arm: number) {
   const anchor = stage.root + (stage.loaded ? "loaded" : "zero");
   const files = ["attempt.json", "arm.json", "operations.json", "launch-check.json", "pgdata.json", "cleanup/inventory.json"]
     .map(name => `${anchor}/${name}`);
+  if (sequence.input.realistic) files.push(`${anchor}/realistic-live.json`);
   if (sequence.input.age === "1B") files.push(`${anchor}/aged-live-check.json`);
   if (stage.loaded) {
     for (const cell of serverCells) {
       files.push(stage.root + cellPath(cell) + "/arm.json", stage.root + cellPath(cell) + "/operations.json");
       if (sequence.input.windowSeconds) files.push(stage.root + cellPath(cell) + "/telemetry.json");
     }
-    if (!stage.comparison) files.push(`${anchor}/p7-empty/residency.json`, "p8/result.json", "p8/pace-32-fixed.offers.json");
+    if (!stage.comparison) {
+      if (!sequence.input.realistic) files.push(`${anchor}/p7-empty/residency.json`);
+      files.push("p8/result.json", "p8/pace-32-fixed.offers.json");
+    }
     if (!stage.comparison) files.push(stage.root + "mixed-ids.json");
   }
   return { anchor, files };
@@ -83,9 +90,9 @@ function checkAnchor(campaign: string, sequence: Sequence, invocation: Invocatio
   const { anchor } = armEvidence(sequence, invocation.arm);
   const readAnchor = <T>(file: string) => read<T>(path.join(campaign, anchor, file));
   const arm = readAnchor<{ source: string; slot: string; attempt: string; firstCut: number; startedAt: number; endedAt: number;
-    seed: { database: string; originalCut: number; imageSha256: string } }>("arm.json");
+    seed: { database: string; originalCut: number; imageSha256: string; realistic?: RealisticBinding } }>("arm.json");
   assert.deepEqual([arm.source, arm.firstCut, arm.seed.database, arm.seed.originalCut, arm.seed.imageSha256],
-    [sequence.input.source, sequence.cut, sequence.input.originalScope.db, sequence.input.originalScope.cut, sequence.input.imagePin],
+    [sequence.input.source, sequence.cut, sequence.input.originalScope.db, sequence.input.originalScope.cut, sequence.input.realistic?.parent.imageSha ?? sequence.input.imagePin],
     "Arm source or sealed cut differs");
   assert(arm.startedAt >= invocation.startedAt && arm.endedAt >= arm.startedAt && arm.endedAt <= completedAt,
     "Arm evidence must come from the current invocation");
@@ -95,6 +102,14 @@ function checkAnchor(campaign: string, sequence: Sequence, invocation: Invocatio
   assert.deepEqual([pgdata.source, pgdata.slot, pgdata.attempt, pgdata.copy],
     [arm.source, arm.slot, arm.attempt, invocation.copy]);
   assert.match(pgdata.systemIdentifier, /^[1-9][0-9]*$/);
+  if (sequence.input.realistic) {
+    const seal = sequence.input.realistic;
+    assert.deepEqual(arm.seed.realistic, seal);
+    const live = readAnchor<{ source: string; slot: string; attempt: string; at: number; native: number[]; seal: RealisticBinding }>("realistic-live.json");
+    assert.deepEqual([live.source, live.slot, live.attempt, live.seal, live.native],
+      [arm.source, arm.slot, arm.attempt, seal, [seal.cut, seal.census.nativeT, seal.census.nativeRecords]]);
+    assert(live.at >= invocation.startedAt && live.at <= arm.startedAt);
+  }
   const cleanup = readAnchor<{ at: number; before: { containers: string[] }; after: unknown }>("cleanup/inventory.json");
   assert.deepEqual(cleanup.before.containers.toSorted(), ["gw-r", "gw-w", "pg", "tx"].map(role => `${arm.slot}-${role}`));
   assert.deepEqual(cleanup.after, { containers: [], volumes: [], networks: [] });
@@ -138,7 +153,7 @@ export function sequenceProgress(campaign: string, sequence: Sequence | undefine
     assert(!fs.existsSync(paths.start) && !fs.existsSync(paths.end), `Arm ${next} already started`);
   }
   const elapsed = previous.reduce((ms, step) => ms + step.completedAt - step.startedAt, 0);
-  assert(elapsed <= timeBudget(sequence?.input.windowSeconds ?? replaySeconds).ceiling * 60_000, "Sequential campaign exceeded its active time budget");
+  assert(elapsed <= timeBudget(sequence?.input.windowSeconds ?? replaySeconds, sequence?.input.age === "realistic").ceiling * 60_000, "Sequential campaign exceeded its active time budget");
   return { previous, elapsed };
 }
 
@@ -162,7 +177,7 @@ export function completeSequentialArm(campaign: string, sequence: Sequence, arm:
   const anchor = checkAnchor(campaign, sequence, invocation, completedAt);
   const spent = Array.from({ length: arm - 1 }, (_, i) => readCompleted(campaign, sequence, i + 1, false))
     .reduce((ms, step) => ms + step.completedAt - step.startedAt, 0);
-  assert(spent + completedAt - invocation.startedAt <= timeBudget(sequence?.input.windowSeconds ?? replaySeconds).ceiling * 60_000, "Sequential campaign exceeded its active time budget");
+  assert(spent + completedAt - invocation.startedAt <= timeBudget(sequence?.input.windowSeconds ?? replaySeconds, sequence?.input.age === "realistic").ceiling * 60_000, "Sequential campaign exceeded its active time budget");
   write(loc.end, { invocationSha256: sha(bytes), completedAt, files, ...anchor } satisfies Completed);
 }
 

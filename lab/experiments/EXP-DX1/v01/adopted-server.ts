@@ -8,23 +8,24 @@ import { launchProfile } from "../jvm1/launch.mjs";
 import { restoreDump } from "../scale1/seed-image.ts";
 import { adoptedArm, jsonFile, quietPair, recordMixedIds, type Residency } from "./adopted.ts";
 import { nativeMetrics } from "../thin1/native-metrics.ts";
-import { openScaleSeal, hex } from "./adopt.ts";
+import { openScaleSeal, hex, type AdoptedSeed } from "./adopt.ts";
 import { timeBudget, defaultWriter, physicalArms, writeDiagnostics, jvmProfiles, serverStages, stackOptions, type JvmProfile } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
 import { claimPgdata, inspectPgdata, pgdataArgs, pgdataTarget, preflightWal, sealedPgdata } from "./pgdata.ts";
 import { openSequence, startSequentialArm } from "./sequential.ts";
 
 import { parseWindow, parseCredits } from "./server-workload.ts";
+import { realSeed, proveRealistic } from "./realistic.ts";
 import { physicalTelemetry } from "./cell-telemetry.ts";
 
 const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, jvm, agedFile, agedPin,
   agedDump, agedDumpPin, txJvm, walDirectory, armText, startedText, forecast, windowText, creditText, writeJvm, pgdataSource, ...pgdataPaths] = process.argv.slice(2);
 assert(source && campaign && seedDir && imagePin && transferPin);
-assert(age === "fresh" || age === "1B");
+assert(age === "fresh" || age === "1B" || age === "realistic");
 assert(requestedWriter === defaultWriter);
 assert(jvmProfiles.includes(jvm as JvmProfile) && jvmProfiles.includes(txJvm as JvmProfile));
 const windowSeconds = parseWindow(windowText), creditMode = parseCredits(creditText);
-const { budget, comparisonMinutes } = timeBudget(windowSeconds);
+const { budget, comparisonMinutes } = timeBudget(windowSeconds, age === "realistic");
 const policy = launchProfile("server", { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile, writeJvm: writeJvm as JvmProfile, creditMode });
 const diagnostics = writeDiagnostics(requestedWriter, process.env);
 const stages = serverStages(policy, !!walDirectory);
@@ -48,19 +49,22 @@ if (walDirectory) {
     launchFailure(error);
   }
 }
-const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !copies.length);
+if (age === "realistic") assert(sequenceArm && copies.length === 1 && pgdataSource && windowSeconds === 300);
+const seed: AdoptedSeed = age === "realistic"
+  ? await realSeed(fs.realpathSync(seedDir), imagePin, transferPin, fs.realpathSync(pgdataSource!), copies.map(copy => copy.dir))
+  : openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !copies.length);
 const expected = age === "1B" ? openAged(agedFile, agedPin) : undefined;
 if (!copies.length && expected) {
   assert(agedDump && agedDumpPin && /^[a-f0-9]{64}$/.test(agedDumpPin));
 }
-const input = { source, age, writer: requestedWriter, jvm: jvm as JvmProfile, imagePin, transferPin, originalScope: seed.scope,
+const input = { source, age, writer: requestedWriter, jvm: jvm as JvmProfile, imagePin, transferPin, originalScope: seed.scope, realistic: seed.realisticBinding,
   txJvm: txJvm as JvmProfile, writeJvm: writeJvm as JvmProfile, diagnostics, separateWal: !!wal, stages, wal, windowSeconds, creditMode,
   agedBundle: expected?.pin, agedDump: agedDumpPin || undefined };
 let spent = 0, previousSystem: string | undefined;
 if (sequenceArm !== undefined) {
   assert(pgdataSource && copies.length === 1 && forecast);
   const sequence = openSequence(campaign, { input, sealed: sealedPgdata(pgdataSource),
-    cut: expected?.bundle.logicalHead ?? seed.scope.cut,
+    cut: expected?.bundle.logicalHead ?? seed.realistic?.proof.cut ?? seed.scope.cut,
     buildSha256: hex(fs.readFileSync(process.env.DX_V01_BUILD_RECEIPT!)), forecast });
   const progress = startSequentialArm(campaign, sequence, sequenceArm, copies[0]!, Number(startedText));
   spent = progress.elapsed;
@@ -68,6 +72,13 @@ if (sequenceArm !== undefined) {
 } else {
   fs.mkdirSync(campaign);
   jsonFile(path.join(campaign, "input.json"), { ...input, pgdata: copies.length ? copies : undefined });
+}
+if (seed.realistic) {
+  const destination = path.join(campaign, "realistic-image.json");
+  const bytes = fs.readFileSync(path.join(seedDir, "image.json"));
+  assert.equal(hex(bytes), imagePin);
+  if (fs.existsSync(destination)) assert.equal(hex(fs.readFileSync(destination)), imagePin);
+  else fs.writeFileSync(destination, bytes, { flag: "wx", mode: 0o600 });
 }
 let stopping = false;
 const stop = () => { stopping = true; };
@@ -92,7 +103,7 @@ for (const [i, stage] of stages.entries()) {
   const copy = copies[sequenceArm === undefined ? i : 0];
   const floor = copy ? 5 : age === "1B" ? 320 : 240;
   assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the scorecard arm");
-  const emptyReference = copy && loaded && !comparison
+  const emptyReference = copy && loaded && !comparison && !seed.realistic
     ? await emptyResidency(path.join(out, "p7-empty"), stage.policy) : undefined;
   const attempt = randomUUID();
   const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
@@ -131,7 +142,11 @@ for (const [i, stage] of stages.entries()) {
     const jw = copy ? java : readScaleJvms(path.join(out, "restored-jvm"), engines, stage.policy);
     const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
     assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
-    const head = expected ? await verifyAged(expected, out, slot, attempt, engines.pg!.address) : seed.scope.cut;
+    if (seed.realistic) {
+      const native = await proveRealistic(write, seed.realistic, engines["gw-w"]!.id);
+      jsonFile(path.join(out, "realistic-live.json"), { at: Date.now(), source, slot, attempt, native, host: hex(fs.readFileSync("/etc/machine-id")), seal: seed.realisticBinding });
+    }
+    const head = expected ? await verifyAged(expected, out, slot, attempt, engines.pg!.address) : seed.realistic?.proof.cut ?? seed.scope.cut;
     assert(!stopping && Date.now() + 8 * 60_000 < stageEnd);
     verifiedLaunch = true;
     console.log(`[DX-V01] Verified live server startup for ${stage.name}/${loaded ? "loaded" : "zero"} before offers`);
