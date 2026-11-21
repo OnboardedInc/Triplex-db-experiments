@@ -121,3 +121,23 @@ The Mac copy is at `evidence/DX-BM1/bench3/bench3-cache32`. It holds the 9,657,1
 **Verdict against the falsifier.** The falsifier needed indexing to keep raising apply to 2.5–3.0 ms and reads to about 1.6 per save, with queues and spare capacity. That did not happen: reads were flat at 0.48–0.49 inside and outside jobs, and apply stayed under 1 ms. The forecast's capacity at 620 matched: 485.61/526.77 stored against 478/500, with a sustained spell of 40,359 waiting against about 42,600 deficits. The latency forecasts at 394 missed by 1.6× on busy saves and 1.4× on the quiet account. **Against cache32, the larger cache is the change that matters.** At 620 offered, the 32 GiB cache on three cores stored 620.00/s with no expiries, and it read 0.04 instead of 0.49 per save late at 394. At 394, the second-half busy p99 ranges from 468 to 656 ms across tx5 and both cache32 arms. All three keep the same cold first minute. In the second half, the transactor averaged 1.19 cores at 394 and 2.44 at 620, and the two-core write gateway 0.87 and 1.18.
 
 Solo cells verified 1,050 of 1,050 offers each. Loaded cells verified 118,200 of 118,200 at 394; at 620, 161,016 of 186,000 were acknowledged and 24,984 expired. The Mac copy is at `evidence/DX-BM1/bench3/bench3-tx5`, with the 7,401,632-byte summary and 57,389,683-byte raw archives checked member by member, and the pinned-analyser readout. The rental had cost about USD 5.03 at 18:50 UTC. [Checksums](SHA256SUMS)
+
+## Fresh-first ordering (fresh)
+
+**Fresh-first moved the tail onto older offers instead of removing it, so the original-clock hypothesis missed.** Three arms ran on PREP1 `891ab9139`: rolling 6 as today, fresh-first with six credits, and fresh-first with a ZGC write gateway. Each used the 16 GiB cache, three transactor cores, the held fresh copy and separate WAL. At 394 offered, fresh-first cut the busy p50 from 1,437.63 ms to 22.30 and 16.41 ms. It raised the whole-window p99 from 7,958 ms to 19,709 and 19,417 ms. All three arms stored 394/s with no expiries, and all three still had spells of over 1,000 waiting offers in the second half, two each in rolling 6 and fresh-first. The forecast was 6,000 / 1,300 / 300 ms whole and 5,100 / 85 / 48 ms in the second half.
+
+| Arm at 394 offered | ACKs/s whole, forecast→actual | Second half, forecast→actual | Busy p50 / p99 ms whole | Busy p99 ms second half, forecast→actual | Late waiting max; spells ≥300 / ≥1,000 | Quiet loaded p99 ms, forecast→actual |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Rolling 6 | 392→393.97 | 392→401.26 | 1,437.63 / 7,957.86 | 5,100→4,587.52 | 1,793; 3 / 2 | 54→48.51 |
+| Fresh-first 6 | 392→394.00 | 394→402.39 | 22.30 / 19,709.32 | 85→10,331.74 | 1,485; 3 / 3 | 53→51.18 |
+| Fresh-first 6, ZGC writer | 393→394.00 | 394→396.73 | 16.41 / 19,417.31 | 48→4,592.40 | 755; 1 / 0 | 45→81.80 |
+
+| Arm | 235 offered: stored/s, second-half busy p99 ms, quiet loaded p99 ms | 620 offered: stored/s whole / second half, expired, quiet loaded p99 ms |
+| --- | --- | --- |
+| Rolling 6 | 235.00, 36.32, 44.15 | 454.50 / 482.92, 37,295, 127.97 |
+| Fresh-first 6 | 235.00, 35.89, 45.38 | 468.78 / 505.73, 31,856, 200.99 |
+| Fresh-first 6, ZGC writer | 235.00, 14.55, 39.75 | 485.03 / 514.81, 26,836, 264.10 |
+
+At 235 offered, all three arms meet the owner's 50 ms quiet-account rule. The ZGC writer arm also cut the second-half busy p99 to 14.55 ms. The rolling 6 reference here repeats this morning's rolling 6 arm on the same pin family: 393.97 against 391.85 stored/s, a second-half p99 of 4,588 against 5,067 ms, and quiet p99 at 394 of 48.51 against 54.00 ms. **Against the cache32 result,** the 32 GiB cache removed the late spells that fresh-first only reorders. On three cores at 394 offered, its second-half p99 was 521 ms with no late spell of 300 waiting offers. Every solo cell verified 1,050 of 1,050 offers. Loaded cells verified every acknowledged offer; at 620 the expired offers are listed above.
+
+The Mac copy is at `evidence/DX-BM1/bench3/bench3-fresh`, with the 15,112,523-byte summary and 215,777,094-byte raw archives checked member by member, and the pinned-analyser readout. The rental had cost about USD 8.12 at 21:40 UTC. [Checksums](SHA256SUMS)
