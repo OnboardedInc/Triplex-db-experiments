@@ -25,7 +25,10 @@ const seedDir = path.join(bench, "decision/attempts/arm-d7-wfix-pool-seed");
 const bootstrap = "97852735506d9f04d7a2195ee11bc0535b7a2493";
 const ageFloor = "2859d6b15";
 const bulkSource = "acd350e927515b7c4d99f134f8600ea8de4d63f8";
-const maintainedSource = "9573487e08f6ab82acd0c662ce552eca531a13ff";
+const maintainedSources = [
+  "6d3d44641efacdcd9b3d6fefa299a3b0ace6f885",
+  "9573487e08f6ab82acd0c662ce552eca531a13ff",
+];
 const bulkPrefix = {
   records: 431778659,
   head: 187002,
@@ -107,7 +110,7 @@ async function main(
   assert.match(ageSource, /^[a-f0-9]{40}$/);
   assert.equal(call("git", ["rev-parse", "HEAD"], { cwd: ageCheckout }), ageSource);
   if (bulk) {
-    assert.equal(ageSource, maintained ? maintainedSource : bulkSource);
+    assert(maintained ? maintainedSources.includes(ageSource) : ageSource === bulkSource);
     assert.equal(call("git", ["status", "--porcelain"], { cwd: ageCheckout }), "");
   }
   call("git", ["merge-base", "--is-ancestor", ageFloor, ageSource], { cwd: ageCheckout });
