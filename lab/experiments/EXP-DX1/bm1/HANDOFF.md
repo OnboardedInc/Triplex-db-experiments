@@ -2,11 +2,20 @@
 
 ## Third rental for rolling credits
 
-**Ready at 09:32:53 EST on November 21, 19m53s after billing began.** The charge at 09:39 EST was about USD 0.49 at USD 1.09/hour. The 24-hour ceiling is 09:13 EST on November 22. Ubuntu 24.04, Docker, Node 22.23.2, pinned PostgreSQL 17 and Datomic Java 21 and 25 images are installed. The second NVMe is mounted at `/mnt/triplex-bench3-wal` for WAL. SMT is enabled and all 24 CPU policies read back `performance`, matching Server 2. The new SSH host key is pinned in the operator's private known-host file.
+**Ready at 09:32:53 EST on November 21, 19m53s after billing began.** The charge at 09:47 EST was about USD 0.63 at USD 1.09/hour. The 24-hour ceiling is 09:13 EST on November 22. Ubuntu 24.04, Docker, Node 22.23.2, pinned PostgreSQL 17 and Datomic Java 21 and 25 images are installed. The second NVMe is mounted at `/mnt/triplex-bench3-wal` for WAL. SMT is enabled and all 24 CPU policies read back `performance`, matching Server 2. The new SSH host key is pinned in the operator's private known-host file.
 
 The direct transfer took 12m32s, about 167 MB/s on average. The sender used idle I/O priority, nice 19 and a 300 MB/s cap. The stopped source path was outside all live container mounts. The receiver compared every file and directory with the published inventory, including 125,923,989,950 bytes across 1,452 files and logical cut 87,002. Both original SCALE1 metadata files match their published digests. The source key directory and receiver's temporary authorized key were removed and independently checked. The pristine copy stays under `bench3/verified-seed`. Evidence is under `evidence/DX-BM1/bench3/ready`. [SCALE1 custody](https://github.com/OnboardedInc/Triplex-db-experiments/blob/921f90944857938c2c207afb349d992dd4d55e83/lab/experiments/EXP-DX1/scale1/HANDOFF.md) · [Checks](COLLECTORS.md) · [SHA-256 manifest](SHA256SUMS)
 
-PREP1's rolling command and predictions were still pending at readiness. The control from `6abc19f66` first refused the metadata directory name before any offers. Its launcher now stages the same two files under the original attempt name so the producer can check that binding. The retry `triplex-bench3-tuned-retry.service` began at 09:35:28 EST and uses only one disposable clone for the tuned 394 and 620 saves/s control. Check `/var/tmp/triplex-bm1/STATUS` or the retry unit. [Predictions](PREDICTIONS.md)
+The first control preflight refused the metadata directory name before any offers. Its launcher placed the original bytes under their published attempt name and retried on one disposable clone. The retry closed at 09:46 EST. It used the six-credit barrier, Java 25 ZGC on three transactor cores, a 16 GiB cache, Java 21 gateways, separate WAL and synchronous commit. All four 90-second cells independently reconciled the planned offers and durable native journal. [Before-launch forecasts](PREDICTIONS.md)
+
+| Offered saves/s | Forecast ACKs/s | Bench 3 ACKs/s | Server 2 ACKs/s | Bench 3 durable / offered | Expired | Quiet p99 alone → loaded | Quiet ratio |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 394 | 330–360 | 344.81 | 345.80 | 31,279 / 35,460 | 4,181 | 54.97 → 313.29 ms | 5.70× |
+| 620 | 350–380 | 374.37 | 365.13 | 34,145 / 55,800 | 21,655 | 17.98 → 61.24 ms | 3.41× |
+
+The rates reproduced within forecast. Quiet ratios exceeded the earlier host's 3.35× and 2.29× in both cells. The publisher recorded 31,033 and 33,693 ACKs during the measured windows. Later durable ACKs remain separate. No replans occurred. The Mac copy `evidence/DX-BM1/bench3/bench3-control` contains 1,884,839 summary bytes and 12,424,590 raw bytes. [Checksums](SHA256SUMS)
+
+The published rolling command and forecasts arrived while the control was running. The queued `triplex-bench3-rolling-main.service` started preparing at 09:46:09 EST, immediately after the control's scoped cleanup. Producer `c8f903ce1142772751328b88d972cc527ca46dfc` runs barrier 6, rolling 6 and rolling 12 in the `server` profile. Each arm has three matched five-minute quiet and loaded pairs. Rolling 8 and 16 have separate published single-arm selections. Check `/var/tmp/triplex-bm1/STATUS` and `bench3/rolling-main.log`. [Published forecasts](https://github.com/OnboardedInc/Triplex-db-experiments/blob/cb5e3cf7a2083b97f0a3fbc0d699a082a0940657/lab/experiments/EXP-DX1/prep1/ROLLING-CREDITS.md)
 
 ## Final priority-Publish run
 

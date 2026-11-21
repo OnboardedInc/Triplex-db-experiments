@@ -77,6 +77,16 @@ SLOTS = {
     "prep1-tenant": ("day-n20-prep1-tenant", ("adapter", "smoke", "campaign", "native-small-agreement.json", "worker.log",
                                             "finish-current-fence.txt", "two-gateway.log")),
 }
+ROLLING_ARMS = {
+    "main": ("barrier6", "rolling6", "rolling12"),
+    **{arm: (arm,) for arm in ("barrier6", "rolling6", "rolling8", "rolling12", "rolling16")},
+}
+for selection, arms in ROLLING_ARMS.items():
+    SLOTS["bench3-rolling-"+selection] = (
+        "bench3/rolling-"+selection,
+        ("plan.json", "seed.json", "source", "prefix", "SEAL.sha256", "scale-wal-mount.json",
+         "engines", *("1-"+arm+"-S" for arm in arms)),
+    )
 
 
 def load(filename):
@@ -108,6 +118,8 @@ def archive(name, revision):
         units = ["triplex-bench3-bootstrap.service", "triplex-bench3-java25.service",
                  "triplex-bench3-seed-verify.service", "triplex-bench3-tuned-control.service",
                  "triplex-bench3-tuned-retry.service"]
+    if name.startswith("bench3-rolling-"):
+        units = ["triplex-"+name+".service"]
     states = {}
     for unit in units:
         state = subprocess.check_output(["systemctl", "show", unit, "-p",
@@ -133,6 +145,8 @@ def archive(name, revision):
             else:
                 raw.append((label, file))
     log = SERVER/((root.name.replace("prep1-tail", "prep-tail") if name=="prep1-tail-syscall" else root.name)+".log")
+    if name.startswith("bench3-rolling-"):
+        log = root.parent/(root.name+".log")
     if log.is_file():
         summaries.append(("unit.log", log))
     assert summaries, f"No result files in {root.name}"
@@ -203,7 +217,7 @@ def collect(name, revision, control, mode="trees"):
     ticket = json.loads(ticket_bytes)
     assert ticket["item"] == name and ticket["producer"] == revision
     assert ticket["summary"]["bytes"] + (ticket["raw"] or {"bytes":0})["bytes"] < 1024**3
-    day = "bench3" if name == "bench3-control" else ("day-n21" if name == "publish-priority" else "day-n20")
+    day = "bench3" if name.startswith("bench3-") else ("day-n21" if name == "publish-priority" else "day-n20")
     out = MAC/"DX-BM1"/day/name
     out.mkdir(parents=True, exist_ok=True)
     arrival_bytes = ticket["summary"]["bytes"] + (ticket["raw"] or {"bytes":0})["bytes"]
