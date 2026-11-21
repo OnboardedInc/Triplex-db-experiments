@@ -303,7 +303,7 @@ python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect prep1-tenant 7ca8525
 
 ## Friday evening queue
 
-**Server 1 estimated running cost at 20:56 EST is $62.66** at $1.09/hr since Wednesday 11:27 EST. The orchestrator owns the release. The absolute remaining window ends Saturday at 12:00 EST.
+**Server 1 estimated running cost at 20:57 EST is $62.69** at $1.09/hr since Wednesday 11:27 EST. The orchestrator owns the release. The absolute remaining window ends Saturday at 12:00 EST.
 
 The active PREP1 `1-2-S` is a one-gateway mirror. The first component of the producer's cell name is the writer count. The server fenced only the parent loop while this child continued. The reordered supervisor waits for that child's output and cleanup, reopens the same seal for `2-1-S` then `2-0-K`, and skips the other repeats and four-gateway arms. The measured pair's first collector checks each source, plan, seed, summary and fresh terminal against the original request. After it records the pair, TAIL1 `da4c34f48` then JVM1 `5a9652780` take the original `46880aa47` verified seed. TAIL1 uses Java 21 G1 and varies the transactor cache from 256 to 2,560 MiB. The Java 21 G1, Java 25 G1 and Java 25 ZGC comparison keeps placement fixed. The new order has three JVM arms.
 
@@ -337,3 +337,5 @@ The three arms finished at 19:32 EST with all 244,332 offered saves durable and 
 Both cache settings passed their fresh native eight-save gates. The recorded JVM generations and all 4,728 full clock joins matched independently. At 2.5 GiB the mean SQL count fell from 14.73 to 9.68 per save and ACK p99 fell from 286.13 to 173.37 ms. Ordered PREP1 began its native small gate after cleanup at 19:52 EST. Erasure and import pacing remain detached behind it. [Cache readings](TAIL-CACHE-READING.md)
 
 Ordered PREP1 ended at 20:48 EST. The 128-person erasure gate completed both checks. Full staging stopped at 20:52 EST when bind returned EADDRINUSE after small cleanup. Import pacing started immediately. A fresh erasure stage follows it with bounded passive bind retries and the accepted small gate's fingerprints. Collect `erasure-retry` via `night-n20-erasure-retry-control`. Inspect `bm1n20-ha1-paced.service` and `bm1n20-erasure-retry.service` for the two remaining ready items.
+
+Ordered IDs reached 234.90/393.92 saves/s at 235/394 offered with 0.033/0.014 transaction-thread SQL reads/save. The Mac compressed bundle has all 152,640 offered rows, including expiries, and all three JVM pause logs. [Verified four-arm table](PREP1-STORAGE-READING.md)
