@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 35.25 through 2026-11-21 02:50 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 35.44 through 2026-11-21 03:01 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-2026-11-21T02:50:36.076Z · Collected arm-d7-v01-present with service result checker-failed, 0 physical-scope report(s) and verified cleanup.
+The full-size archived seed is immutable. PREP1 accepted both metadata digests and the dump SHA, then stopped during restore at 02:57 UTC with zero timed cells. The measured COPY pace projects at least 76 minutes before the 12-minute offer schedule. Both stopped attempts have copied terminal evidence and confirmed cleanup. The unused NVMe is mounted for AGE1. The first AGE1 attempt stopped at JDK configuration before restore. The JDK was repaired and the AGE1 retry started at 02:59 UTC on November 21. It has a 9.9-hour native deadline and a separate 14-hour overall guard for build, restore and exact-cut export.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.

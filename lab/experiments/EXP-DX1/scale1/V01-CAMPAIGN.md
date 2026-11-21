@@ -6,9 +6,9 @@ The November 20 evening handoff puts the full-size ordered per-person ceiling fi
 | --- | --- | --- |
 | Existing fresh seed | About 7.8 h for ingestion, with 162,456,470 current facts. From the handoff, about 4–6 h for remaining claims, feed and seal at USD 4.36–6.54. | Sealed 1,000,000 people, 162,456,470 facts and 87,001 frames at cut 87,002. Ingest 7.78 h, verification 7.38 h, archive and hash 1.04 h. |
 | Trimmed current writer | Up to 3 h (USD 3.27) from restore through the timed run. At least two pairs per rate are scheduled first. | Stopped by direction during restore. No timed cells. Native 1 min 39 s, about USD 0.03. |
-| PREP1 comparison | The adopted ceiling arm takes 60 min (USD 1.09), with up to 50 min of build and dump verification (USD 0.91). | Started November 21 at 02:42 UTC on the pinned full-size image. |
+| PREP1 comparison | The adopted ceiling arm takes 60 min (USD 1.09), with up to 50 min of build and dump verification (USD 0.91). | Accepted the immutable image and SHA. Stopped during the single-core SQL restore at 02:57 UTC. Zero timed cells. Setup through cleanup 14 min 56 s, about USD 0.27. |
 | Fresh scorecard | 235 minutes (USD 4.27), plus clean build, conditional on compatible restore and exact replay. | Waiting for the ordered INT1 runner named in the scorecard handoff. |
-| AGE1 | 9.60 h (USD 10.46) at 24k records/s, cap 9.9 h (USD 10.79). A 430M native start needs about 23k/s or better. Add a separate restore unless it reuses the fresh restored storage. | Awaiting exact starting native count and calibration. |
+| AGE1 | 9.60 h (USD 10.46) at 24k records/s, cap 9.9 h (USD 10.79). A 430M native start needs about 23k/s or better. Add a separate restore unless it reuses the fresh restored storage. | The first setup failed before restore because the JDK package needed the standard man-page directory. Both packages were configured and verified. The retry started November 21 at 02:59 UTC on the mounted spare. |
 | 1B scorecard | 235 minutes (USD 4.27), conditional on the aged seal and updated exact replay. | Waiting for AGE1 and its exact-cut SQL dump. |
 
 The requested finish is Saturday 17:00 ET. The ceiling, two scorecards, 1B calibration and rung, and extra aged SQL export total about 20–22 h at the published forecasts, before any WAL repeat or restore repair. The combined budget was about USD 103 spent of USD 200 at the revised handoff. Use AGE1 ahead of the fresh card if the ordered runner has not been handed off. Budget the optional 620/s WAL repeat at at most 1 additional hour and USD 1.09, only if a fresh equivalent restore and the repeat fit without jeopardizing the scored work.
@@ -38,11 +38,17 @@ PREP1 now names `8a116ed366d54ad7bca7b153d92d4f2eb4ea7041` for its one-hour ceil
 
 | Offers/s and fair turns | Forecast inside window | Actual |
 | --- | ---: | --- |
-| Matched quiet controls, 3.5/s | 3.5/s, 315 offers per control | Awaiting execution |
-| 620/s, off | 450/s, up to 96 awaiting receipts | Awaiting execution |
-| 620/s, on | 350/s, up to 6 awaiting receipts | Awaiting execution |
-| 900/s, on | 380/s, up to 6 awaiting receipts | Awaiting execution |
-| 900/s, off | 520/s, up to 96 awaiting receipts | Awaiting execution |
+| Matched quiet controls, 3.5/s | 3.5/s, 315 offers per control | Unmeasured in the first attempt |
+| 620/s, off | 450/s, up to 96 awaiting receipts | Unmeasured in the first attempt |
+| 620/s, on | 350/s, up to 6 awaiting receipts | Unmeasured in the first attempt |
+| 900/s, on | 380/s, up to 6 awaiting receipts | Unmeasured in the first attempt |
+| 900/s, off | 520/s, up to 96 awaiting receipts | Unmeasured in the first attempt |
+
+### Full-image restore blocker
+
+The pinned PREP1 producer accepted the SCALE1 image and transfer manifests. The launch wrapper independently rehashed the 131,838,300,610-byte dump in 100.1 seconds. The single-core COPY had processed 81,840,120,620 expanded bytes at 02:56:10 UTC and 88,754,340,744 bytes at 02:57:07 UTC. The original COPY had already exceeded 549,482,753,296 expanded bytes near its end. That pace projects to at least 76 minutes of restore, with 12 minutes of offers, predecessor checks, and cleanup still needed inside the 60-minute cap. The first attempt was stopped before timing and had empty container, volume and network inventories after scoped cleanup.
+
+The PREP1 command needs a measured restore above about 191 MB/s of expanded input before overhead, or a separately verified PostgreSQL physical template and a fresh disposable clone. A decompression or placement change may use additional cores **only** during setup. Restore placement must return to one PostgreSQL core for the timed control, and both policies must use the same cold-cut validation and durability. The scorecard's two 42-minute restore deadlines require at least 218 MB/s before overhead. The optional 620/s WAL repeat also needs a verified faster restore and an explicitly supported independent WAL mount for this producer. The older WAL switch binds a different producer slot and device. A base append-tail reading remains unmeasured.
 
 ## Scorecard and aging dependencies
 
@@ -50,7 +56,7 @@ The earlier scorecard explicitly refused SCALE1. The revised `v01/SERVER.md` sel
 
 AGE1 `2859d6b15` runs unchanged for the 1B target. If its first exact 100,000-save segment measures 8,000–16,000 records/s and the official load deadline rejects continuation, the SCALE1 host checks the original attempt, observed starting count, sample and checkpoint. A separately hashed diagnostic launcher retains the same SQL and transactor, original deadline and three-hour reserve. It selects 620M/670M/720M/770M/800M or a lower rounded target from the remaining budget and uses the official native prefix reconciliation and copy checks. A diagnostic seal goes to its own directory and is ineligible for either 1B artifact. Nine focused fixture checks and the decision TypeScript gate passed. Bare-metal calibration remains pending. Its deployment needs an exclusively held restored SQL stack, the expected transactor settings and observed JVM PIDs, JDK, and a separate SQL restore database using the official Datomic tables. Both JDBC destinations and credentials stay in the operator environment. Its native count and bounded rate calibration determine whether it continues.
 
-The AGE1 report selects `93ad03aa3` for the corrected aged logical replay and cut exporter. It can run against the sealed `2859d6b15` rung before stopping its transactor. Scorecard checks that bundle on the restored peer before offers. AGE1’s independent SQL verification remains in its budget. The additional scorecard dump is forecast at 1–2 h and USD 1.09–2.18. Its disk reserve includes the native backup, verification store and immutable dump. Server 2's spare NVMe has no visible partitions, mount, filesystem signature or owner. The projected backup and restored-copy reserves need a separate filesystem. The evening handoff authorizes formatting and mounting that unused drive. The system disk and held seed are excluded.
+The AGE1 report selects `93ad03aa3` for the corrected aged logical replay and cut exporter. It can run against the sealed `2859d6b15` rung before stopping its transactor. Scorecard checks that bundle on the restored peer before offers. AGE1’s independent SQL verification remains in its budget. The additional scorecard dump is forecast at 1–2 h and USD 1.09–2.18. Its disk reserve includes the native backup, verification store and immutable dump. Server 2's spare NVMe has no visible partitions, mount, filesystem signature or owner. The projected backup and restored-copy reserves need a separate filesystem. The unused drive was formatted and mounted. It has 955,208,196,096 available bytes after mount. The system disk remained the root mount, and the held seed manifests and dump remain immutable.
 
 ## Received result bundles
 
@@ -58,3 +64,5 @@ The AGE1 report selects `93ad03aa3` for the corrected aged logical replay and cu
 | --- | --- | ---: | ---: | ---: | --- |
 | arm-d7-wfix-pool-seed | success | 16.25 | 17.71 | 98429 | `055d67c2a34ca2f31edc3a53832c34d17472c364103e64fdaffbab208dc07eb7` |
 | arm-d7-v01-present | checker-failed | 0.03 | 0.03 | 2866 | `d69101ae77160546fa45ba09c76ceb07e10da9f270a334b42aa4156286b71cf2` |
+| prep-v01-ceiling-base | stopped during restore | 0.249 | 0.27 | 4213405 | `a75f5a0dbffe697d8de46a1a4226e83c753058b967c43bfc095ac41fa94611a7` |
+| age-v01-1b | JDK setup failed before restore | 0.001 | <0.01 | 4081 | `f7df45aa303454345e360df791167dc143e9392e4bdcc747d6f3d0fa2e2014a6` |
