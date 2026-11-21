@@ -9,10 +9,8 @@ set -uo pipefail
 log=${DX_DRY_RUN_LOG:?DX_DRY_RUN_LOG names the call log}
 fake=${DX_DRY_RUN_FAKE:-0}
 printf 'call %q' "$@" >> "$log"; printf '\n' >> "$log"
-words=()
-for a in "$@"; do [[ $a == -* ]] || words+=("$a"); done
 cmd=${1:-} sub=${2:-}
-[[ $cmd == --host || $cmd == -H ]] && { shift 2; cmd=${1:-}; sub=${2:-}; }
+[[ $cmd == --host || $cmd == -H ]] && { cmd=${3:-}; sub=${4:-}; }
 pass() {
   if [[ $fake == 1 ]]; then
     case "$cmd $sub" in

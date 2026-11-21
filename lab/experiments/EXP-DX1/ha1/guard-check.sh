@@ -10,11 +10,11 @@ here=lab/experiments/EXP-DX1/ha1
 work=$(mktemp -d)
 trap 'rm -rf "$work"; docker volume rm -f tx2-dxha1-guard-node >/dev/null 2>&1 || true' EXIT
 mkdir -p "$work/w/trees" "$work/w/dry-run"
-cp "$here/dry-run/docker" "$work/w/dry-run/docker"; cp "$here/guard-cases.sh" "$here/guard-cases.txt" "$work/w/"
+cp "$here/dry-run/docker" "$work/w/dry-run/docker"; cp "$here/launch-dry-run.sh" "$work/w/launch-dry-run.sh"; cp "$here/guard-cases.sh" "$here/guard-cases.txt" "$work/w/"
 mv "$work/w/guard-cases.txt" "$work/w/cases.txt"
 for commit in $(awk '!/^#/ && NF {print $2}' "$here/guard-cases.txt" | sort -u); do
   mkdir "$work/w/trees/$commit"
-  git archive "$commit" -- lab/experiments/EXP-DX1/stack lab/config/datomic ':(glob)lab/experiments/EXP-DX1/**/*.ts' \
+  git archive "$commit" -- lab/experiments/EXP-DX1/stack lab/config/datomic packages/datomic/gateway packages/datomic/src/codec-spec.json ':(glob)lab/experiments/EXP-DX1/**/*.ts' \
     ':(glob)lab/experiments/EXP-DX1/**/*.mjs' ':(exclude,glob)**/*.test.ts' | tar -x -C "$work/w/trees/$commit"
 done
 docker volume create tx2-dxha1-guard-node >/dev/null

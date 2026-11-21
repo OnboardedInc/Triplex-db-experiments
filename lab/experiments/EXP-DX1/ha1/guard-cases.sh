@@ -80,5 +80,38 @@ while read -r name commit expect extra; do
     *) echo "unknown case $name"; fails=$((fails+1)) ;;
   esac
 done < /w/cases.txt
+# The server wrapper itself, in pass-through mode against a stand-in daemon that answers like an empty host.
+mkdir -p /w/daemon
+cat > /w/daemon/docker <<'DAEMON'
+#!/usr/bin/env bash
+case "$1 ${2:-}" in
+  "info "*) echo /var/lib/docker ;;
+  "container inspect"|"volume inspect"|"network inspect") exit 1 ;;
+  "image inspect")
+    tag=${!#}
+    case $tag in
+      *jre25*) printf 'sha256:%s|25|%s|\n' "$(printf 'b%.0s' {1..64})" "$(DX_JAVA=25 node lab/config/datomic/runtime.mjs base)" ;;
+      postgres:*) printf '[]\n' ;;
+      *) printf 'sha256:%s|||\n' "$(printf 'a%.0s' {1..64})" ;;
+    esac ;;
+  *) : ;;
+esac
+DAEMON
+chmod +x /w/daemon/docker
+wrapper_case() {
+  local name=$1 commit=$2 expect=$3 tree=/w/trees/$2 code got
+  mapfile -t envs < <(set -o pipefail; scale_env "$tree")
+  (cd "$tree" && env -u DX_DRY_RUN_FAKE PATH=/w/daemon:$PATH "${envs[@]}" DX_GW_WRITE_JAVA=25 DX_STACK_EVIDENCE=/tmp/ev/$name \
+    bash /w/dry-run/../launch-dry-run.sh "/tmp/wrap-$name" -- bash lab/experiments/EXP-DX1/stack/up.sh "$pub" "${server_args[@]}" "${held[@]}") \
+    > "/tmp/wrap-$name.out" 2>&1
+  code=$?
+  got=$(head -1 "/tmp/wrap-$name/verdict.txt" 2>/dev/null | cut -d' ' -f1)
+  n=$((n+1)); [[ $got == "$expect" ]] || fails=$((fails+1))
+  printf '%-4s %-28s %-9s expect=%-8s got=%-8s wrapper-exit=%s %s\n' "$([[ $got == "$expect" ]] && echo ok || echo FAIL)" \
+    "$name" "${commit:0:9}" "$expect" "$got" "$code" "$(sed -n 2p "/tmp/wrap-$name/verdict.txt" 2>/dev/null | cut -c1-110)"
+  [[ $got == "$expect" ]] || tail -8 "/tmp/wrap-$name.out" | sed 's/^/     | /'
+}
+wrapper_case wrapper-fair-int1 666b625e5 ADMITTED
+wrapper_case wrapper-fair-refused-pin 52ad22640 REFUSED
 echo "cases=$n mismatches=$fails"
 (( fails == 0 ))

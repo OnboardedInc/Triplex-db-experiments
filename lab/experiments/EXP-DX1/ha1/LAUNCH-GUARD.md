@@ -98,7 +98,9 @@ commit's own `stackOptions("subject")`. It runs `stack/up.sh` under `bash -x` in
 512 MiB) with the stand-in answering empty. Inputs are a stub prepared copy, WAL on a separate tmpfs, the server's slot
 `tx2-dxscale1-publish-249dd49021f` and the server's Java and PostgreSQL options. CPU lists are cut to the VM's eight
 cores; the CPU check is unrelated to the route. Result at 2026-11-21 12:54 local (diagnostic, correctness only):
-**21 cases, 0 mismatches.** The refusal reproduces at the exact test,
+**23 cases, 0 mismatches.** Two of them run `launch-dry-run.sh` itself in pass-through mode against a stand-in daemon
+that answers like an empty host. The fair input at `666b625e5` gives ADMITTED, stopping at
+`docker create --name tx2-dxscale1-publish-249dd49021f-extract`. At `52ad22640` it gives REFUSED with no Docker change. The refusal reproduces at the exact test,
 `[[ tx2-dxscale1-publish-249dd49021f == tx2-dxscale1-v01-* ]]`, for both `52ad22640` and `bfef77d34`, and the same input
 is admitted at `666b625e5`. On INT1 the guard still refuses each of these:
 
