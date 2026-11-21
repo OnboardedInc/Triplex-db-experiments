@@ -216,7 +216,11 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       : quietCell === undefined ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell, toy);
     if (serial) assert.equal(tape.length, serial.rate * seconds);
     const senders = await preload(writerClient, seed, startHead, tape);
-    const start = now() + 1200;
+    const monoBefore = serial ? process.hrtime.bigint() : undefined;
+    const wall = now();
+    const monoAfter = serial ? process.hrtime.bigint() : undefined;
+    const start = wall + 1200;
+    const serialAnchor = serial ? { wall, before: String(monoBefore), after: String(monoAfter) } : undefined;
     const interval = seconds * 1000;
     feeding = feeder(journal, seed.scope.db, startHead, start + interval + 120_000,
       () => terminal, writer === "subject");
@@ -264,7 +268,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const evidence = path.join(out, "operations.json");
     jsonFile(evidence, { writes: writes.rows, journal: feed, tape, p6, p7 });
     const result = { source, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
-      loaded, serial, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
+      loaded, serial, serialAnchor, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
       observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java },
       p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
       p3: { entries: feed.length }, p4: pulls, p6, p7 };
