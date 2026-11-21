@@ -306,11 +306,17 @@ fi
 if [[ -n $wal_dir ]]; then
   # [DX-INT1] Why: verify the empty owned bind and the actual Docker data filesystem before creating a service.
   # Rejected: inferring WAL separation from the directory name or from the host root filesystem.
-  [[ ${DX_BARE_METAL:-0} == 1 && -z $seed_volume ]]
-  docker_root=$(docker info --format '{{.DockerRootDir}}')
-  [[ $wal_dir == "$(realpath -e "$wal_dir")" && $wal_dir != *[,\"$'\n']* &&
-     -d $wal_dir && -z $(find "$wal_dir" -mindepth 1 -maxdepth 1 -print -quit) &&
-     $(stat -c %d "$wal_dir") != "$(stat -c %d "$docker_root/volumes")" ]]
+  [[ ${DX_BARE_METAL:-0} == 1 && -z $seed_volume ]] || exit 2
+  docker_root=$(docker info --format '{{.DockerRootDir}}') || exit 2
+  wal_real=$(realpath -e "$wal_dir") || exit 2
+  wal_device=$(stat -c %d "$wal_real") || exit 2
+  data_device=$(stat -c %d "$docker_root/volumes") || exit 2
+  wal_entries=$(find "$wal_real" -mindepth 1 -maxdepth 1 -print -quit) || exit 2
+  if [[ $wal_dir != "$wal_real" || $wal_dir == *[,\"$'\n']* || ! -d $wal_dir || -n $wal_entries ||
+        ! $wal_device =~ ^[0-9]+$ || ! $data_device =~ ^[0-9]+$ || $wal_device == "$data_device" ]]; then
+    echo 'WAL needs an empty directory on a filesystem distinct from the Docker volumes' >&2
+    exit 2
+  fi
   wal_mount=(-e POSTGRES_INITDB_WALDIR=/wal --mount "type=bind,source=$wal_dir,target=/wal")
 fi
 for role in pg tx gw-w gw-r extract; do
@@ -333,7 +339,12 @@ pin_image() {
   printf '%s' "$id"
 }
 datomic_image=$(pin_image "$peer_major" "$peer_image" "$attempt/config/java-image.txt")
-tx_image=$(pin_image "$tx_major" "$tx_image" "$attempt/config/tx-java-image.txt")
+if [[ $tx_major == "$peer_major" && $tx_image == "$peer_image" ]]; then
+  tx_image=$datomic_image
+  cp "$attempt/config/java-image.txt" "$attempt/config/tx-java-image.txt"
+else
+  tx_image=$(pin_image "$tx_major" "$tx_image" "$attempt/config/tx-java-image.txt")
+fi
 if [[ -n ${DX_LAUNCH_PROFILE:-} ]]; then
   printf 'Profile=%s WAL=%s\nPostgreSQL cores=%s memory=%s settings=%s\nDatomic object-cache=%s memory-index=%s/%s\nTransactor Java=%s image=%s cores=%s memory=%s flags=%s\nWrite gateway Java=%s image=%s cores=%s memory=%s flags=%s\nRead gateway Java=%s image=%s cores=%s memory=%s flags=%s\n' \
     "$DX_LAUNCH_PROFILE" "${wal_dir:-PGDATA}" "$pg" "$pg_mem" "$pg_settings" "$object_cache" "$index_threshold" "$index_max" \

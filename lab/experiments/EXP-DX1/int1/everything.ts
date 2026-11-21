@@ -91,7 +91,7 @@ async function physicalCases(
 ) {
   const txJvm = (process.env.DX_TX_JVM ?? "j21-g1") as JvmProfile;
   const policy = launchProfile("server", { txJvm });
-  const walDirectory = process.env.DX_WAL_DIRECTORY;
+  const walDirectory = process.env.DX_WAL_DIRECTORY ?? "";
   const oracle = path.join(dir, "oracle");
   atomicJson(path.join(dir, "oracle-source.json"), stageReplay(repo, oracle));
   atomicJson(path.join(dir, "physical-inputs.json"), {
