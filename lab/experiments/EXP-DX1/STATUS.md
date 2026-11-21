@@ -4060,7 +4060,7 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Server 2**: aging setup commits (`b197dbd7a`, `6f366b608`, `54913ad32`); no aging rate yet.
 - Agents running: DX-BM1, DX-SCALE1, DX-V01.
 
-### 2026-11-21 01:45 local: the 1 billion aging run measured 5,284 records per second (forecast 24,000) and stopped on its guard; aging builder resumed (4 agents running)
+### 2026-11-21 01:32 local: the 1 billion aging run measured 5,284 records per second (forecast 24,000) and stopped on its guard; aging builder resumed (4 agents running)
 
 - **Server 2, AGE1 calibration** (`origin/exp/DX-SCALE1-deep-accounts` `58e4b1ca3`): from 429,778,659 records, 100,000 saves and 2,000,000 records committed and verified in 378.514 s = **5,283.82 records/s**. Forecast was 24,000; the fallback band was 8,000 to 16,000. At that rate 1 billion needs about 30 more hours (about USD 33). The run's own time guard stopped it. Cost of the attempt: 9 min 40 s, USD 0.18. The working volume is held with its verified prefix (431,778,659 records). No 1B seal exists.
 - **My reading of the evidence archive** (copied to the private evidence folder, sha256 `504214da…d04b17`): the loader's stage clock shows 347.5 of 378.5 seconds (92%) waiting for the transactor to take the next save. The transactor ran with a 5 GiB heap, 32 MiB memory-index threshold, 512 MiB maximum, 512 MiB object cache and index parallelism 1. One save of 20 records per transaction gives 264 transactions per second, in line with tonight's full-size writer ceilings (202 to 362 saves per second). Forecast miss: the 24,000 figure did not come from a full-size measurement.
