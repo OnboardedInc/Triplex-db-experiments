@@ -103,6 +103,18 @@
             (is (= ["winner" "winner value" 2] (field (d/db conn) owner)))
             (is (= {"status" "absent"} (reference/operation name "edit-a")))))))))
 
+(deftest framed-root-round-trips
+  ;; [Opus W1] Why: IDs and row texts are customer bytes; the header holds only numbers and lengths.
+  ;; Rejected: trusting that IDs never contain the header's separators.
+  (let [encode @#'layout/cover-root decode @#'layout/decode-root
+        mask ["a,b" "x\ny" "q\"\\" "🧭"] rows ["r1\n,4," "2"]
+        raw (encode 17 1.800000000055E12 mask rows)
+        root (decode raw)]
+    (is (= [17 1.800000000055E12 mask rows] [(:position root) (:clock root) (:mask root) (:texts root)]))
+    (is (= (Double/doubleToRawLongBits -0.0) (Double/doubleToRawLongBits (:clock (decode (encode 1 -0.0 [] ["x"]))))))
+    (is (thrown? Exception (decode (str raw "!"))))
+    (is (thrown? Exception (decode (encode 1 0.0 (mapv str (range 9)) ["x"]))))))
+
 (defn- read-rows [db owner arm]
   (let [datoms (case arm
                  ("legacy" "append") (layout/read-stage :legacy-range (vec (lean/live-texts db owner)))
@@ -345,3 +357,86 @@
                                 :reads (read-shape (latest covered) (:owner covered) "covered")}
                       :timing {:current (time-pair (view legacy "legacy" nil) (view covered "covered" nil))
                                :pinned (time-pair (view legacy "legacy" (pin legacy)) (view covered "covered" (pin covered)))}})))))))
+
+(defn- owner-of [i] (str "acct/test/serial-" i))
+
+(defn- for-owner [owner input]
+  ;; [Opus W1] Why: the shared edit frames name one fixture person; the serial probe needs many people in one scope.
+  ;; Rejected: a second frame builder (it could drift from the journal shape the writers verify).
+  (rows/row-input
+    (-> input
+        (dissoc "rowTexts")
+        (assoc "entities" [owner])
+        (update "rows"
+                (fn [rows]
+                  (mapv (fn [wire]
+                          (let [row (storage/decode-row wire)]
+                            (storage/wire-row
+                              (cond-> row
+                                (= fixture/root (:entity_id row)) (assoc :entity_id owner)
+                                (= fixture/root (:value_string row)) (assoc :value_string owner)
+                                (= ":_tx/change" (:attribute row))
+                                (update :value_json #(json/write-str (assoc (json/read-str %) "entityId" owner)))))))
+                        rows))))))
+
+(def serial-people 256)
+(def serial-width 160)
+(def serial-edits 64)
+(defn- serial-person [i] (mod (* i 67) serial-people))
+
+(defn serial-seed! [path]
+  ;; [Opus W1] Why: one indexed seed per writer so every measured save starts from storage, not the memory index.
+  ;; Rejected: reusing the resident gate fixtures (they never fetch a segment).
+  (let [attempt (System/getenv "PREP1_ATTEMPT")
+        scopes (into {} (for [arm ["legacy" "append" "covered"]]
+                          (let [wire (json/write-str ["triplex-scope-v1" "test" "layout-serial" (str attempt "-" arm) 0])
+                                {:keys [db created]} (main/create-scope! nil wire "lean" true true)
+                                conn (main/connection (main/db-uri db))]
+                            (assert created)
+                            (layout/install-fixture! conn)
+                            (doseq [i (range serial-people)]
+                              (let [base (reference/edit-frame (str "seed-" i) (str "p" i "-v") "old value" -9.0 40.0 nil)
+                                    extra (for [j (range (dec serial-width))]
+                                            (fixture/row (str "p" i "-s" j "-0") fixture/root (str ":spare/" j)
+                                                         (str "value-" i "-" j) (str "_tx/seed-" i)))
+                                    input (for-owner (owner-of i)
+                                                     (-> base (update "rows" into (map storage/wire-row extra))
+                                                         (update "newIds" into (map :id extra))))]
+                                (assert (= [200 nil] (reference/outcome (reference/send db input))))))
+                            (let [t (d/basis-t (d/db conn))]
+                              @(d/request-index conn)
+                              @(d/sync-index conn t)
+                              [arm {:db db :seedT t :position (storage/head-position (d/db conn))}]))))]
+    (spit path (pr-str {:attempt attempt :scopes scopes}))
+    (println "DX-W1_SERIAL_SEED" (json/write-str {:attempt attempt :people serial-people :width serial-width
+                                                  :scopes scopes}))))
+
+(defn serial-edits! [path arm round]
+  ;; [Opus W1] Why: the same people, fields and order for every writer after a transactor restart.
+  ;; Rejected: comparing writers on different people or with a warm transactor cache.
+  (let [{:keys [attempt scopes]} (edn/read-string (slurp path))
+        {:keys [db]} (get scopes arm)
+        conn (main/connection (main/db-uri db))
+        saves (vec (for [i (range serial-edits)]
+                     (let [p (serial-person i) owner (owner-of p) j (mod i 7)
+                           db-now (d/db conn)
+                           input (at-cut (for-owner owner (field-edit (str "e" round "-" p) (str ":spare/" j)
+                                                                      (str "p" p "-s" j "-" round)
+                                                                      (str "edit-" round "-" p "-🧭")
+                                                                      (str "p" p "-s" j "-" (dec round))))
+                                         (storage/head-position db-now))
+                           report (case arm
+                                    "covered" (let [plan (native-plan db-now input true)]
+                                                (assert (get-in plan [:owner-layout :cover]))
+                                                (append! conn plan))
+                                    "append" (legacy-append! conn db input true)
+                                    "legacy" (legacy-append! conn db input false))
+                           after (d/db conn)
+                           owner-e (d/entid after [:triplex.entity/id owner])
+                           rows (read-rows after owner-e (if (= arm "covered") "covered" "legacy"))]
+                       (assert (= (str "edit-" round "-" p "-🧭")
+                                  (some #(when (= (str ":spare/" j) (:attribute %)) (:value_string %)) rows)))
+                       (assert (= serial-width (count rows)))
+                       {:t (str (d/basis-t after)) :datoms (count (:tx-data report))})))]
+    (assert (= attempt (System/getenv "PREP1_ATTEMPT")))
+    (println "DX-W1_SERIAL" (json/write-str {:attempt attempt :arm arm :round round :db db :saves saves}))))

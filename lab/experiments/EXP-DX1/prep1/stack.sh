@@ -339,6 +339,27 @@ case "$PREP1_MODE" in
         children[2]=$!
         wait "${children[2]}"
         unset 'children[2]'
+        # [Opus W1] Why: count serial storage reads by index for the three writers on indexed seeds, each from a cold transactor.
+        # Rejected: the resident two-save fixture (zero fetches for every arm).
+        TX2_SUBJECT_SAVE=1 TX2_SUBJECT_OWNER_HEAD=0 DX_W1_SERIAL_FILE="$work/serial" \
+          java_role -i /config/regression.clj -i /config/owner_layout_gate.clj \
+          -e '(do (owner-layout-gate/serial-seed! (System/getenv "DX_W1_SERIAL_FILE")) (System/exit 0))' &
+        children[2]=$!
+        wait "${children[2]}"
+        unset 'children[2]'
+        for serial_round in 1 2; do
+          for serial_arm in legacy append covered; do
+            kill "${children[1]}"
+            wait "${children[1]}" || true
+            start_transactor
+            TX2_SUBJECT_SAVE=1 TX2_SUBJECT_OWNER_HEAD=0 DX_W1_SERIAL_FILE="$work/serial" DX_W1_SERIAL_ARM="$serial_arm" \
+              DX_W1_SERIAL_ROUND="$serial_round" java_role -i /config/regression.clj -i /config/owner_layout_gate.clj \
+              -e '(do (owner-layout-gate/serial-edits! (System/getenv "DX_W1_SERIAL_FILE") (System/getenv "DX_W1_SERIAL_ARM") (parse-long (System/getenv "DX_W1_SERIAL_ROUND"))) (System/exit 0))' &
+            children[2]=$!
+            wait "${children[2]}"
+            unset 'children[2]'
+          done
+        done
       fi
       TX2_SUBJECT_SAVE=1 java_role /config/serial-gate.clj &
       children[2]=$!

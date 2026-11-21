@@ -18,11 +18,12 @@
 
 (defn root-text [position clock pages] (pr-str [1 position clock pages]))
 (def ^:private cover-root-code
-  ;; [DX-W1] Why: the row text is already encoded and length-framed inside the root.
-  ;; Rejected: rereading and allocating escaped row strings in the EDN reader on each point query.
+  ;; [Opus W1] Why: every part is length-framed after one comma header, so a point read never runs the EDN reader.
+  ;; Rejected: the version 3 EDN header (about 10 us of a 0.23 ms read on the Mac for the reader and escaped IDs).
   '(fn [position clock mask rows]
-     (str (pr-str [3 position clock (vec mask) (mapv count rows)])
-          "\n" (apply str rows))))
+     (let [parts (concat mask rows)]
+       (str "4," position "," (Double/doubleToRawLongBits (double clock)) "," (count mask) ","
+            (apply str (interpose "," (map count parts))) "\n" (apply str parts)))))
 
 (defmacro ^:private coverage-encoder [] cover-root-code)
 (def ^:private cover-root (coverage-encoder))
@@ -34,8 +35,25 @@
       (when (= (last cuts) (.length raw))
         (mapv (fn [from to] (subs raw from to)) cuts (rest cuts))))))
 
+(defn- decode-framed [^String raw]
+  (let [split (.indexOf raw "\n")
+        ^"[Ljava.lang.String;" head (when (pos? split) (.split (subs raw 0 split) ","))
+        n (when head (- (alength head) 4))
+        masked (when head (Long/parseLong (aget head 3)))
+        widths (when head (mapv #(Long/parseLong (aget head (+ 4 %))) (range n)))]
+    (when-not (and head (pos? n) (<= 0 masked n) (<= masked cover-limit) (<= 1 (- n masked) cover-limit)
+                   (every? pos? widths) (= (- (.length raw) split 1) (reduce + widths)))
+      (throw (ex-info "Invalid owner projection root" {})))
+    (let [cuts (vec (reductions + (inc split) widths))
+          parts (mapv (fn [i] (subs raw (cuts i) (cuts (inc i)))) (range n))]
+      {:raw raw :position (Long/parseLong (aget head 1))
+       :clock (Double/longBitsToDouble (Long/parseLong (aget head 2)))
+       :mask (subvec parts 0 masked) :texts (subvec parts masked)})))
+
 (defn- decode-root [^String raw]
   (when raw
+    (if (.startsWith raw "4,")
+      (decode-framed raw)
     (let [split (.indexOf raw "\n")
           [version position clock a b] (edn/read-string (if (neg? split) raw (subs raw 0 split)))
           texts (case version
@@ -50,7 +68,7 @@
         (throw (ex-info "Invalid owner projection root" {})))
       (cond-> {:raw raw :position position :clock clock}
         (= 1 version) (assoc :keys a)
-        texts (assoc :mask a :texts texts)))))
+        texts (assoc :mask a :texts texts))))))
 
 (defn- read-root [db owner] (decode-root (scope/value db owner root-attr)))
 
