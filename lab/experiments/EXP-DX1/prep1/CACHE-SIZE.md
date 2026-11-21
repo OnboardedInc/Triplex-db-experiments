@@ -42,7 +42,7 @@ The larger heap and smaller direct cap make the extra cache feasible. The primar
 
 ```bash
 DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-cache32 -- \
-  bash lab/experiments/EXP-DX1/prep1/server.sh cache32 "$CACHE32_OUT" "$(git rev-parse HEAD)" \
+  bash lab/experiments/EXP-DX1/prep1/server.sh cache32 "$CACHE32_OUT" 97aced1b1128ca54da2a72003299f38d805f1abc \
   "$SCALE1_IMAGE" 77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b \
   1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154 \
   --pg-data "$SCALE1_PGDATA" --wal-mount "$SCALE1_WAL_MOUNT"

@@ -1,7 +1,7 @@
 ## Part 17 · 32 GiB object cache
 
 The 394/s episodes added EAVT and AEVT segment loads, with read peaks before adoption. The old checkpoints do not show cache occupancy or evictions. [Three-arm cache reading and per-second evidence](CACHE-SIZE.md#what-the-checkpoints-can-see)
-Run the separate [cache32 command](CACHE-SIZE.md#server-add-on) for both memory treatments from the source that introduced this add-on. Previous fresh and five-core commands keep their exact pins.
+Run the separate [cache32 command](CACHE-SIZE.md#server-add-on) for both memory treatments at `97aced1b1128ca54da2a72003299f38d805f1abc`. Previous fresh and five-core commands keep their exact pins.
 Each treatment uses 48 GiB ZGC heap, 8 GiB direct limit and a 60 GiB transactor container. All four role caps total 79 GiB. The arm pair has a 60-minute limit.
 At 394/s forecast 394 stored/s in both arms, late p99 90 ms with three cores or 60 ms with five, and quiet p99 47 or 43 ms. [All forecasts and falsifiers](CACHE-SIZE.md#forecast-before-launch)
 Mac launch and flag checks passed under one ordinary token. Linux readback and performance remain untested. Evidence is in `evidence/DX-PREP1/p17-cache`. [Checksums](SHA256SUMS)
