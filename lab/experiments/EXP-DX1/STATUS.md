@@ -3922,3 +3922,13 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   start from a file-level copy of the sealed seed's stopped PostgreSQL data directory (as the aging run does),
   verified with the same proofs, instead of restoring the dump.
 - **Server 1** is building the append-tail test (`bm1n20-prep1-tail-syscall.service`, preparing at 22:24 local).
+
+## 2026-11-21 03:39 UTC (22:39 local, 2026-11-20): the full-size ceiling command starts from a copied data directory; server 1 is measuring the append-tail arms
+
+- **DX-PREP1 part 12 (`cdc72d45f`; runnable `1dd5952cb`).** The ceiling runner accepts a stopped PostgreSQL data
+  directory, copies it to a private volume and verifies logical cut 87,002 before the 620 and 900 schedule;
+  estimated 20 to 35 minutes, 60 minute cap. Local restart recovered the original ordered receipt (781
+  assertions); fixture matched 3,056 receipts. A full-size append-tail run would still need the write-ahead log of
+  an existing cluster relocated. Parked.
+- **Server 1:** the append-tail comparison is measuring (control arm up since about 22:33 local).
+- Running: DX-BM1, DX-SCALE1, DX-V01 (three).
