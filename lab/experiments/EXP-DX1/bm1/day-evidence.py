@@ -19,6 +19,8 @@ SLOTS = {
         "prepared/ready.txt", "build/BUILD-v0.1.json", "dry-run")),
     "bench3-removal": ("bench3/queue/removal", ("result", "unit.log", "started",
         "prepared/inventory.json", "prepared/ready.txt", "build/BUILD-v0.1.json")),
+    "bench3-publish100k": ("bench3/queue/publish100k", ("result", "unit.log", "prepared/inventory.json",
+        "prepared/ready.txt", "build/BUILD-v0.1.json", "dry-run")),
     "bench3-cold": ("bench3/queue/cold", ("result", "unit.log", "started", "cold.log", "build/BUILD-v0.1.json")),
     "bench3-rd1": ("bench3/queue/rd1", ("result", "unit.log", "started", "ladders.log", "affinity.log",
         "build/BUILD-v0.1.json")),
