@@ -44,6 +44,8 @@ SLOTS = {
     "prep1-ordered": ("night-n20-prep-ordered", ("small", "campaign", "adapter.json", "small-agreement.json", "collector.json")),
     "prep1-tail": ("night-n20-prep-tail", ("campaign", "filesystem.log", "bpf-version.txt",
                                         "bpf-smoke.log", "bpf-debs.sha256", "build/results/IMAGE-INPUTS.SHA256SUMS")),
+    "prep1-tail-syscall": ("night-n20-prep-tail-syscall", ("campaign", "filesystem.log", "bpf-version.txt",
+                                          "bpf-smoke.log", "adapter.json", "build/results/IMAGE-INPUTS.SHA256SUMS")),
     "jvm1": ("day-n20-jvm1", ("seed/seed.json", "seed/results", "small/results", "campaign/results",
                              "seed.log", "campaign.log", "retry.log", "retry-resumed.log", "failed-unit.txt",
                              "cold-postgres.json", "retry",
