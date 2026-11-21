@@ -4068,3 +4068,13 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **DX-AGE1 part 4 resumed** (run-critical): attribute the rate from the archive, design the faster load (settings, several saves per transaction, more in flight), write predictions, publish a calibration ladder of at most 60 minutes that includes two full index jobs, then the full-run command. Budget for the aging: at most 16 hours of loading (USD 17.44), which needs 9,900 records/s sustained; target 6.6 hours.
 - **Server 2 now:** making two more fresh copies for the tuned scorecard; runs the fresh scorecard when DX-V01 publishes the re-pin, the aging ladder when DX-AGE1 publishes, whichever comes first.
 - Agents running: DX-BM1, DX-SCALE1, DX-V01, DX-AGE1.
+
+### 2026-11-21 01:50 local: scorecard re-pinned to the server profile; server 2 runs it on the fresh database first (3 agents running)
+
+- **DX-V01 part 6 finished** in 18 minutes (exit 0). Server commit `3a71c1767` on `origin/exp/DX-V01-scorecard` (head `2e974a95b`), on INT1 pin `57580241d`.
+- **Four arms per age, each on its own prepared PostgreSQL copy:** (1) headline, no readers; (2) headline, loaded, all rows; (3) default server profile, P2 and P6; (4) grouped writer, P2 and P6. Headline = ordered per-person writer, transactor on Java 25 ZGC, both gateways on Java 21 G1, PostgreSQL write log on the other NVMe. Offered 50, 235, 394, 620 per second; six fair-turn credits; neighbours over 1,900 people each.
+- **Cap: 300 minutes and USD 5.45 per age** from prepared copies; about 460 GB for four fresh copies.
+- **Predictions written before the run** (`v01/SERVER.md`): at 394 offered, 325 to 365 delivered on the headline and 340 to 380 on the default profile; at 620, 330 to 380 and 320 to 365; grouped 147 to 182; most busy quiet-account ratios over 1.25; at 1B, flat to 15% lower delivery at 394 and 620. P5 and P9 NOT MEASURED in this campaign.
+- **Its first step checks the live launch** (distinct NVMe devices, PostgreSQL mount and durability readback, Java versions and flags, cores and memory, transactor cache) before any offers.
+- **Server 2:** four fresh copies ready at 01:43 (17 min 25 s, USD 0.32); idle from about 01:40 waiting for this commit; driver still running.
+- Agents running: DX-BM1, DX-SCALE1, DX-AGE1.
