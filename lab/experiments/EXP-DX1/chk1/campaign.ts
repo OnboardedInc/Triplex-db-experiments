@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { randomBytes } from "node:crypto";
 import path from "node:path";
 import {
   DatomicClient,
@@ -31,10 +32,11 @@ import {
 import { hex, openScaleSeal } from "../v01/adopt.ts";
 import { pinnedFields } from "../v01/pinned-fields.ts";
 import { replay, type Receipt } from "./replay.ts";
+import { protectedReads } from "./read.ts";
 
 export async function campaign(stack: Stack, cell: string) {
   const { e, a } = stack;
-  const realistic = cell === "real-fair" || cell === "scorecard";
+  const realistic = cell === "real-fair";
   const cold = cell === "cold";
   const readStudy = cell === "read";
   const fair = !cold;
@@ -47,6 +49,18 @@ export async function campaign(stack: Stack, cell: string) {
   await stack.tool();
   await stack.postgres("pg", a);
   await stack.database("pg", "moving");
+  const authority: Record<string, string> = {};
+  if (readStudy) {
+    await stack.sql("pg", "CREATE DATABASE removal_authority");
+    const wrap = randomBytes(32).toString("base64");
+    stack.redactions.add(wrap);
+    authority.TRIPLEX_ERASURE_JDBC =
+      "jdbc:postgresql://" +
+      stack.name("pg") +
+      "/removal_authority?user=postgres&password=" +
+      stack.admin;
+    authority.TRIPLEX_ERASURE_WRAPPING_KEY = wrap;
+  }
   assert.equal(
     await stack.sql("pg", "SHOW synchronous_commit; SHOW fsync; SHOW full_page_writes", "moving"),
     "on\non\non",
@@ -54,7 +68,7 @@ export async function campaign(stack: Stack, cell: string) {
   await stack.tx("active", a, "pg", "moving");
   await until("ordered writer", async () => (await stack.broker("active")) || undefined);
   await stack.gateway("write", a, "pg", "moving", {
-    settings: writerSettings,
+    settings: { ...authority, ...writerSettings },
     cores: 2,
     java: launchOptions("gw-w", 2, "-Xms96m -Xmx320m -Ddatomic.objectCacheMax=32m"),
   });
@@ -64,7 +78,7 @@ export async function campaign(stack: Stack, cell: string) {
     "-Xms96m -Xmx320m -Ddatomic.objectCacheMax=32m",
   );
   await stack.gateway("read", a, "pg", "moving", {
-    settings: { TX2_READ_FILTER_EARLY: readStudy ? "1" : "0" },
+    settings: { ...authority, TX2_READ_FILTER_EARLY: readStudy ? "1" : "0" },
     cores: readStudy ? 3 : 2,
     java: readFlags + " " + startupFlags.join(" "),
   });
@@ -84,6 +98,10 @@ export async function campaign(stack: Stack, cell: string) {
     (await stack.view("read")).Config.Env.includes("TX2_READ_FILTER_EARLY=" + Number(readStudy)),
     true,
   );
+  if (readStudy) {
+    e.write("read-jvm", { nonce: e.nonce, role: readMember.id, earlyFilter: true, ...readLaunch });
+    return protectedReads(e, writeUrl, readUrl);
+  }
   Object.assign(process.env, {
     DATOMIC_URL: writeUrl,
     DATOMIC_READ_URLS: readUrl,
@@ -361,7 +379,7 @@ export async function campaign(stack: Stack, cell: string) {
         db,
         field(0),
         { recordedPosition: cut, validAt: SEED_VALID_FROM },
-        readStudy ? 8 : 1,
+        1,
         (send, size) => {
           batchSizes.push(size);
           return send();
@@ -420,7 +438,7 @@ export async function campaign(stack: Stack, cell: string) {
       assert.equal(terminal - cut, receipts.length);
       const commits = await replay(readUrl, db, terminal, receipts);
       if (ledger) await ledger.verifyThrough(terminal);
-      assert.equal(readStudy ? Math.max(...batchSizes) : 1, readStudy ? entities.length : 1);
+      assert(batchSizes.length > 0 && batchSizes.every((size) => size === 1));
       if (fair) {
         assert.equal(imports.length, 8);
         assert.equal(peak, 2);

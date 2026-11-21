@@ -997,8 +997,7 @@ async function scale() {
           assert.deepEqual([terminal.position, terminal.txId], [seed.cut, seed.terminalTx]);
           f.acceptSeedHead(seed.cut, seed.terminalTx);
           output("combined-realistic-seed", { seed, accounts: roster("toy") });
-        }
-        await f.write(combined.trafficSeed, [], "combined-rolling-seed");
+        } else await f.write(combined.trafficSeed, [], "combined-rolling-seed");
       }
       await regression(
         f,

@@ -37,6 +37,7 @@ export class Stack {
   readonly pgIds = new Map<Site, string>();
   readonly secret: string;
   readonly admin: string;
+  readonly redactions = new Set<string>();
   readonly e: Evidence;
   readonly a: Site;
   readonly b: Site;
@@ -291,7 +292,8 @@ export class Stack {
     }
   }
   redact(s: string) {
-    return s.replaceAll(this.secret, "[redacted]").replaceAll(this.admin, "[redacted]");
+    for (const secret of [this.secret, this.admin, ...this.redactions]) s = s.replaceAll(secret, "[redacted]");
+    return s;
   }
   private loadTraceArgs(process: string) {
     if (microLoad(this.e.mode) && process === "tx")

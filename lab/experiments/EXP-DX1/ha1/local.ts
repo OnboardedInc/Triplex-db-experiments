@@ -146,7 +146,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
   // [DX-INT1] Why: recheck the merged loader and recovery with this builder's diagnostic slot.
   // Rejected: borrowing another builder's live reservation.
   const combined = opts.combined;
-  const cells = mode === "load-fair" ? ["fair", "read", "cold", "real-fair", "scorecard"] : ["failover"];
+  const cells = mode === "load-fair" ? ["fair", "read", "cold", "real-fair"] : ["failover"];
   const ownedCombination = holder === "DX-CHK1" && diagnostic && cells.includes(combined) &&
     (mode === "load-fair" || mode === "hasync-ack");
   assert(holder === owner || (holder === "DX-THIN1" && diagnostic) || ownedCombination);

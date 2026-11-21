@@ -489,7 +489,6 @@ export class SyncPair {
           "&connectTimeout=1&hostRecheckSeconds=1",
         "-e",
         "GATEWAY_SOURCE_SHA256=" + s.e.source.gateway,
-        "-e",
         ...(this.sunday || this.combined
           ? [
               "HA1_FLEET_HTTP=1",
@@ -498,7 +497,7 @@ export class SyncPair {
                 .filter(([key]) => key.startsWith("TX2_"))
                 .map(([key, value]) => key + "=" + value),
             ].flatMap((setting) => ["-e", setting])
-          : ["TX2_GROUP_COMMIT=" + Number(grouped)]),
+          : ["-e", "TX2_GROUP_COMMIT=" + Number(grouped)]),
         "-e",
         "DATOMIC_JAVA_OPTS=" +
           (this.sunday
