@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execFileSync, spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
@@ -42,7 +42,10 @@ const aged = [values["aged-bundle"], values["aged-bundle-sha256"], values["aged-
 assert(values.age === "1B" ? (pgdata.length ? aged.slice(0, 2).every(Boolean) && !aged[2] && !aged[3] : aged.every(Boolean))
   : aged.every((v) => !v), "Provide the required AGE1 identity and choose one PostgreSQL startup path");
 assert(process.platform === "linux" && process.getuid?.() === 0);
-assert.equal(execFileSync("systemd-detect-virt", { encoding: "utf8" }).trim(), "none");
+// [DX-V01] Why: systemd reports "none" with exit 1 on bare metal.
+// Rejected: treating its successful bare-metal detection as an execution error.
+const host = spawnSync("systemd-detect-virt", [], { encoding: "utf8", timeout: 5000 });
+assert(!host.error && host.status === 1 && host.stdout.trim() === "none", "Scorecard requires a bare-metal Linux host");
 const source = cleanSource(values.commit);
 verifyBuild(source, process.env.DX_V01_BUILD_RECEIPT);
 const out = path.resolve(values.out), campaign = path.join(out, "campaign");
