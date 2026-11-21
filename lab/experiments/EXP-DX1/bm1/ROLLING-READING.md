@@ -63,3 +63,21 @@ At 394 offered, all 118,200 saves ACKed inside the five-minute window. The throu
 All solo cells observed 3.5 ACKs/s with 1,050 durable offers each and zero expiry. Their forecast p50 was 7 ms. The transactor averaged 0.67 / 1.83 / 2.36 cores in the loaded second halves at 235 / 394 / 620. Whole-window mean SQL reads per durable save were 0.71 / 1.37 / 1.24. The 15,329,280-byte checkpoint is at `evidence/DX-BM1/bench3/checkpoints/rolling12/checkpoint.tar`. [Checksums](SHA256SUMS)
 
 The full main-campaign evidence is on the Mac at `evidence/DX-BM1/bench3/bench3-rolling-main`. Its 14,316,289-byte summary and 208,114,992-byte raw archives were checked against both transfer manifests and decoded member hashes. The per-arm checkpoint digests are listed separately. [Checksums](SHA256SUMS)
+
+## Rolling 8
+
+At 394 offered, rolling 8 delivered 394.00/s and zero expiries. Busy p99 was 7.48 s over the whole window and 5.84 s in the second half, well above forecasts of 1.9 s and 350 ms. Quiet p99 was 57.16 / 57.96 / 75.93 ms at 235 / 394 / 620. All three miss the quiet diagnostic rule of 50 ms or 1.25× solo. At 235, rolling 6 met that rule with 43.91 ms. The formal P2 save-latency row remains UNJUDGED because the credit comparison lacks the P1 reader load. Rolling 16 was cancelled before preparation on the owner's direction.
+
+| Offered | ACKs/s whole forecast→actual | First half actual | Second half forecast→actual | Whole ACK p50/p99 ms forecast→actual | First-half ACK p50/p99 ms | Second-half ACK p50/p99 ms forecast→actual | Expired first + second |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 235 | 235→235.00 | 234.99 | 235→235.01 | 10/78→5.07/2,793.84 | 6.81/2,863.59 | 10/60→4.35/34.70 | 0 + 0 |
+| 394 | 391→394.00 | 390.19 | 394→397.81 | 150/1,900→1,281.70/7,480.40 | 2,131.95/7,579.43 | 16/350→625.25/5,836.91 | 0 + 0 |
+| 620 | 415→455.69 | 429.07 | 427→482.31 | 29,900/30,035→29,689.08/30,028.68 | 29,572.09/30,028.61 | 29,950/30,035→29,742.16/30,028.71 | 15,807 + 18,313 |
+
+| Offered | Quiet p99 ms solo / loaded forecast→actual | Quiet ratio | Solo p50 ms whole / first / second | Solo p99 ms first / second | Loaded quiet p99 ms first / second |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 235 | 18/37→32.05/57.16 | 1.78× | 9.94/11.92/7.83 | 39.53/15.24 | 74.57/36.24 |
+| 394 | 15/39→12.56/57.96 | 4.62× | 6.98/7.07/6.91 | 15.22/12.18 | 55.69/60.74 |
+| 620 | 17/46→16.06/75.93 | 4.73× | 7.31/7.55/7.08 | 30.13/13.00 | 52.57/347.55 |
+
+Each solo cell verified 1,050 durable offers at 3.5/s. Loaded in-window/durable counts were 70,500/70,500, 118,200/118,200 and 136,706/151,880. Whole-window native SQL reads/save averaged 0.56 / 1.40 / 1.29. Second-half transactor CPU averaged 0.56 / 1.88 / 2.26 cores. The 15,329,280-byte checkpoint passed the exact source, current slot and content checks after the unit closed. The Mac archive at `evidence/DX-BM1/bench3/bench3-rolling-rolling8` contains 8,818,210 summary bytes and 71,164,303 raw bytes, verified member by member. [Checksums](SHA256SUMS)
