@@ -304,13 +304,23 @@ export async function regression(
     try {
       const typed = (await f.comp.feedPage(before.recorded_position - 1, 1)).transactions[0];
       const typedChange = typed?.changes.find((c) => c.tripleId === w.assertionId);
+      const directMarker = marker(change?.value, erased.erasedAt, erased.txId);
+      const typedMarker = marker(typedChange?.value, erased.erasedAt, erased.txId);
       verify(
         "journal",
         typed?.txId === w.txId &&
-          marker(change?.value, erased.erasedAt, erased.txId) &&
-          marker(typedChange?.value, erased.erasedAt, erased.txId) &&
+          directMarker &&
+          typedMarker &&
           !contains([journal, typed], w.value),
-        { stale: contains([journal, typed], w.value), rows: journal.length },
+        {
+          stale: contains([journal, typed], w.value),
+          rows: journal.length,
+          transactionMatches: typed?.txId === w.txId,
+          directMarker,
+          typedMarker,
+          hasTypedChange: typedChange !== undefined,
+          hasDirectChange: change !== undefined,
+        },
       );
     } catch (e) {
       verify("journal", false, { error: String(e), stale: contains(journal, w.value) });
