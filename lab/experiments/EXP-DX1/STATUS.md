@@ -4184,3 +4184,21 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Unexplained and now under analysis (DX-PREP1 part 13, Mac only, from the card's archive):** why p99 is 119 ms at 50 per second and 2.4 s at 235 when the aging ladder showed the transactor taking 762 to 988 solo saves per second at this size. Candidates I gave it to test, none confirmed: PostgreSQL held to one core, checkpoints every 1 GB of WAL, index jobs, the gateway's own stages, the sender. It is to propose settings that can be applied before the 1 billion card, with predictions.
 - **Server 2:** driver resumed at 04:27 with approval for the 1 billion load (`6d3d44641`) and its between-window maintenance. The server sat free 04:20 to about 04:30.
 - Agents running: DX-SCALE1, DX-PREP1.
+
+### 2026-11-21 04:45 local: why saves are slow on the fresh full-size card: the fair-turn writer waits for a whole turn (1 agent running)
+
+- **DX-PREP1 part 13 finished** in 17 minutes (exit 0; Mac only). `origin/exp/DX-PREP1-parallel-prepare` `e7a977908`, `prep1/SCORECARD-FRESH-READING.md`, per-save ledgers recounted independently.
+
+  | Loaded window | Saves over 50 ms | Time beyond 50 ms, save-seconds | Share waiting behind earlier turns | Own native queue / apply / append |
+  | --- | ---: | ---: | ---: | ---: |
+  | Headline 50/s | 163 / 4,500 | 7.8 | 39.6% | 26.6% / 18.3% / 1.5% |
+  | Headline 235/s | 10,312 / 21,150 | 7,371.4 | 97.3% | 0.83% / 0.39% / 0.08% |
+  | Default 50/s | 300 / 4,500 | 22.3 | 51.4% | 13.0% / 9.4% / 9.6% |
+  | Default 235/s | 12,381 / 21,150 | 2,472.3 | 92.0% | 2.58% / 1.25% / 0.43% |
+
+- **Cause of the 343 ceiling at 394 offered:** the six-credit writer releases no credit until the slowest ACK of the turn is durable. Needed turn time at 394 is 15.23 ms; measured mean 16.88 ms (headline) and 18.68 ms (default). Over 99% of turns used all six credits. Apply 1.86 ms per save with 1.19 SQL reads per save; append mean 0.57 ms; gateway preparation mean 2.73 ms, p99 25.92 ms; native queue mean 3.87 ms.
+- **Start of each window:** first-30-second offers hold 96.8% of the excess time at headline 235; sender wait p99 2,447 ms in the first half against 132 ms in the second; at 394, 302.4 saves/s in the first half and 383.4 in the second. Cause of the slow start not separable from the archive.
+- **Quiet account:** at headline 235 the p99-ranked quiet save waited 81 ms behind three earlier turns; a ready quiet account still inherits the drain of the turn in progress.
+- **Not answerable from this archive:** checkpoint frequency, WAL sync around checkpoints, PostgreSQL CPU saturation, index jobs, memory-index back-pressure (no counters on one clock).
+- **Decisions (mine):** the 1 billion card keeps the measured headline setup, so fresh and 1 billion compare; the settings candidate (PostgreSQL two cores, `max_wal_size` 4GB; forecast 350 to 365 at 394) is logged as NEXT-WEEK 16h and not run, because its forecast gain is 2 to 6% and it would cost 80 minutes of server time. The code change (credits released per durable ACK, NEXT-WEEK 16g) is the main lever; under Sam's rule of 2026-11-20 it is not a run-critical launch, so it is logged and put to Sam as a question.
+- Agents running: DX-SCALE1.

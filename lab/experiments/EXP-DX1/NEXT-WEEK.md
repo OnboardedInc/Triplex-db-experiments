@@ -104,6 +104,29 @@ to 365 saves per second at full size on a similar transactor the same night. Com
 the `server` profile's values against the ladder's) and measure the product writer with the ladder's transactor
 settings.
 
+16g. **TOP ITEM. Release fair-turn credits one at a time (reading of the fresh full-size scorecard, 2026-11-21 04:43
+local, `origin/exp/DX-PREP1-parallel-prepare` `e7a977908`, `prep1/SCORECARD-FRESH-READING.md`).** The six-credit
+writer waits for the slowest durable ACK of a turn before it releases any credit. At 394 offered it must turn over
+every 15.23 ms; it averaged 16.88 ms on the headline setup (18.68 ms on the default), which caps delivery at 343
+(297). Over 99% of turns used all six credits. At 235 offered, 97.3% of the time beyond 50 ms was waiting behind
+earlier turns; own native queue, apply and append together were about 1.3%. Proposal: rolling credits released per
+durable ACK (compare 6, 8, 12, 16), one reserved quiet opportunity, a cap on already-submitted neighbour saves
+ahead of it, the existing per-person order fence kept. Builder's forecast: 390 to 440 per second at 620 offered
+with 12 rolling credits; quiet loaded p99 35 to 55 ms at 235 and 394. Asked Sam on 2026-11-21 whether to build it
+this weekend while server 2 is still rented (one 80-minute rerun, about USD 1.45).
+
+16h. **Settings candidate from the same reading (not applied; the 1 billion card keeps the measured headline
+setup so the two cards compare):** PostgreSQL on two cores, `max_wal_size` 4GB, `min_wal_size` 512MB; write gateway
+on three cores. Forecast 350 to 365 at 394 offered and 335 to 350 at 620. Rejected if 394 stays at or below 345
+with turns still at 16.7 ms or more. Needs per-role CPU, checkpoint logs and index job events on one clock, which
+the fresh card's archive does not have.
+
+16i. **Scorecard windows start cold and are 90 seconds long.** Offers in the first 30 seconds account for 96.8% of
+the time beyond 50 ms at 235 offered on the headline setup; sender wait p99 fell from 2,447 ms to 132 ms between
+the two halves; at 394 delivery was 302.4 per second in the first half and 383.4 in the second. The card should
+report the halves separately and run longer windows. The archive cannot separate cache state, maintenance and
+workload phase as the cause.
+
 ## Not started, deferred past version 0.1 or past the weekend
 
 17. Aging beyond 1 billion records (2, 4, 8 billion) when there is budget; the growth model's predictions are the
