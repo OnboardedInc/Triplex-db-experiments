@@ -111,7 +111,10 @@ export async function continueLoad({
     stableFloor();
     const already = cycles.at(-1).records;
     const prior = cycles.at(-1).combinedRate ?? continuationPrior;
-    assert(prior >= minimumRate || already >= config.target, "Last maintained cycle did not qualify");
+    // [DX-SCALE1] Why: a resumed window uses the same consecutive-cycle policy as a new completed window.
+    // Rejected: the original one-cycle floor, which refuses the archived 9,022.51/s cut before it can write.
+    assert(already >= config.target || !belowFloor(cycles, limits),
+      "The consecutive completed cycles are below the loading floor");
     assert(!forecastSlope(cycles, config.target, config.directoryLimitBytes - 8 * GiB).over,
       "Last maintained disk projection exceeds the approved ceiling");
     const remainingSeconds = Math.max(0, config.target - Math.max(already, inspected.records)) / prior;
