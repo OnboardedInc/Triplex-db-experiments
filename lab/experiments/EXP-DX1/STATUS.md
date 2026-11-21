@@ -4108,3 +4108,11 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Cloud total at 02:06: USD 108.23 of 200** (server 2 at USD 39.94 and running). My earlier "about 111 to 112" was an overestimate of about USD 3.
 - Server 2: driver adopting the held aging volume for the ladder (`e2fd38cf6`, 02:01).
 - Agents running: DX-SCALE1, DX-V01.
+
+### 2026-11-21 02:13 local: the 1 billion scorecard can run one arm at a time (1 agent running)
+
+- **DX-V01 part 7 finished** (exit 0). Commit for the 1 billion card: `8cc32d380` on `origin/exp/DX-V01-scorecard` (head `0af801036`). `scorecard_arm 1` to `4`, each from one scratch copy made just before it and removed after, then `--assemble`, which builds and verifies the card.
+- Disk peak about 580 GB (held 290 GB source plus one copy) plus the write log on the other NVMe; about 10 min 7 s of copying per arm at the fresh copy rate. Cap unchanged: 300 minutes and USD 5.45 of measuring.
+- Differs from `3a71c1767` only in staging, tests and handoff files under `v01/` (`adopted-server.ts`, `pgdata.ts`, `run.ts`, `sequential.ts`, two tests, four documents). Workloads and card renderer unchanged, so the fresh card (`3a71c1767`, four copies at once) and the 1 billion card measure the same things. Sixteen local checks and the 14-row Mac replay passed. Not yet verified: sequential execution at full size, aged copy speed.
+- The driver gets this at its next handoff (noted in the private queue file).
+- Agents running: DX-SCALE1.
