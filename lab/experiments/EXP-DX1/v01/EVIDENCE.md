@@ -59,3 +59,9 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 - `part6/native-card.tar.gz` retains the Mac toy card and source-bound campaign. `part6/SCORECARD-v0.1.md` is the diagnostic view. `part6/verify-server-b.log` records the card, WAL and fair-turn checks.
 - `part6/focused-final.log` records the twelve tests, shell checks and 300-minute launch plan.
 - `part6/native-first-refusal.tar.gz` and `part6/fixture-server-a-1.log` retain the first attempt that exposed the quiet expiry counter. The final log and package and image receipts identify the replay, cleanup and reused image.
+
+## Part 7 sequential staging
+
+- `part7/focused-final.log` covers the four-arm manifest, refusal cases and active-time accounting. It compares the published prior launch plan to both invocation modes. `part7/assemble-cli.log` records the missing-arm refusal through the public command.
+- `part7/native-card.tar.gz` contains the 14-row diagnostic replay on the 80-person toy seed. `part7/SCORECARD-v0.1.md` is its card and `part7/verify-sequential-a.log` records the checks and cleanup.
+- The package build receipt, staged image and slot lifecycle logs are in `part7/`. The fixture ran at `f9b7e0c0b`. The server runner adds preflight retry logging to that source.

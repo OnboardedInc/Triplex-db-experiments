@@ -1,17 +1,21 @@
-3a71c17674ccff6a435f8829cd3da8933feb34b1
-Server 2 should run fresh first. AGE1 stopped short of the 1B seal.
-The headline uses INT1's server profile, transactor Java 25 ZGC and a separate WAL NVMe.
-Default ordered and grouped each contribute P2 and P6 from their own copies.
-The command uses four prepared copies, six fair-turn credits and four offered rates.
-The ceiling is 300 minutes and USD 5.45 per age after staging.
-The Mac checked the toy card and PG17 WAL relocation. Live bare-metal placement is still open.
-The driver has both commands and the predictions in SERVER.md.
+8cc32d380dc56559477535e18130dbd0f3bff555
+Server 2 can run the billion-record scorecard with one prepared copy at a time.
+Run arms 1 through 4 in order and assemble after the fourth completes.
+Peak storage is the held source plus one scratch copy, about 580 GB at the estimated aged size.
+The existing 300-minute measurement budget is shared across all four arms.
+The legacy four-copy invocation and the measurement code and checks are unchanged.
+Sixteen local checks and the 14-row diagnostic Mac replay passed.
+The server commands and copy estimate are in SERVER.md.
 
 ## Part 7 sequential staging audit
 
 Each invocation keeps the original launch, copy inspection and live scope checks. The sequence fixes the source commit, build receipt digest, seed and transfer digests, stopped PostgreSQL source directory identity and control digest, starting logical cut, AGE1 bundle when present, JVM policy and data and WAL placement. The first three arms verify the shared data device independently before startup. The live PostgreSQL system identifier must agree across the arms.
 
 The start record binds one ordinal, copy and invocation timestamp to the exact campaign manifest bytes. The start record is written exclusively under the existing host queue lock and refuses a second launch. Each invocation gets its own log, so early refusals can be retried before the arm is claimed. Completion is recorded after the worker exits successfully and the exact owned PostgreSQL and JVM containers, networks and volumes have been cleaned. It checks fresh timestamps, the owned slot and nonce, the independently opened database, starting cut and seed digest, and the observed copy. Completion hashes the evidence the renderer reads. Assembly joins each completion to its original start, requires exactly four ordered records with unique slots and attempts, rechecks the arm bindings and evidence hashes, and writes the same manifest used by the existing scorecard renderer. The renderer and its verdict checks are unchanged. No new performance verdict is assigned. No acceptance file or pin changed.
+
+The changes from `3a71c1767` are staging, tests and handoff documentation. No workload, collector, stack launch policy or renderer file changed. Under this directory the changed files are `adopted-server.ts`, `pgdata.ts`, `pgdata.test.ts`, `run.ts`, `sequential.ts`, `sequential.test.ts`, `EVIDENCE.md`, `REPORT.md`, `SERVER.md` and `SHA256SUMS`. The old and new all-at-once plans and the four sequential commands print the same forecast and treatment policies. [Server handoff](SERVER.md)
+
+The local sequence tests assembled four toy arm records into the same renderer input as the four-copy form. They refused incomplete, duplicate, altered and wrong-source or wrong-cut evidence. The clock test excludes the gaps between invocations, and the public assembly command refused a missing arm without producing a card. A native Mac regression at `f9b7e0c0b` used one ordinary heavy token and the 80-person fixture. It filled all 14 diagnostic rows and checked copied PG17, separate WAL and synchronous commit. Both volumes and the staged image were removed. The runner's subsequent changes affect early CLI retry logging. Full-size sequential startup, assembly and actual aged copy speed remain unverified. [Evidence index](EVIDENCE.md)
 
 ## Part 6 server profile audit
 

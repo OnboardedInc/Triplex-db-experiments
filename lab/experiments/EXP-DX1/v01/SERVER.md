@@ -1,6 +1,6 @@
 # Run the v0.1 server scorecard
 
-For sequential staging, run `RUNNER_COMMIT` from `exp/DX-V01-scorecard`. It incorporates INT1 launch pin `57580241dc4020f9ab7590839c72c00356fcedee`.
+For sequential staging, run `8cc32d380dc56559477535e18130dbd0f3bff555` from `exp/DX-V01-scorecard`. It incorporates INT1 launch pin `57580241dc4020f9ab7590839c72c00356fcedee`.
 
 The latest SCALE1 handoff records that AGE1 stopped at the time guard after calibrating at about 5,284 records/s. Run fresh first. The 1B command requires a later verified one-billion-record seal. [SCALE1 handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/58e4b1ca3865315e6b671fc4cbf07687d113c6f8/lab/experiments/EXP-DX1/scale1/HANDOFF.md)
 
@@ -42,7 +42,7 @@ These are engineering estimates for the weekend campaign. The full-size anchors 
 Use a clean checkout of `exp/DX-V01-scorecard` at the runner commit on the dedicated bare-metal Ubuntu host.
 
 ```bash
-COMMIT=RUNNER_COMMIT
+COMMIT=8cc32d380dc56559477535e18130dbd0f3bff555
 BUILD=/var/tmp/triplex-v01-server-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
