@@ -3876,3 +3876,16 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   the second drive; transactor on Java 25 with ZGC; fair turns on), each append over 20 ms assigned to WAL sync,
   checkpoint writeback, a pause or the handoff; synchronous commit on in every arm.
 - Running: DX-BM1, DX-SCALE1, DX-THIN1, DX-PREP1 (four).
+
+## 2026-11-21 02:56 UTC (21:56 local, 2026-11-20): server 1: import pacing does not protect neighbours with the grouped writer
+
+- **Import pacing (`origin/exp/DX-BM1-bare-metal`, `bm1/HA1-PACING-READING.md`; DX-HA1 source `e1b5d34d2`; one
+  database, ten noisy accounts and one quiet, 32 facts per frame, one frame in flight, 47,520 live offers all
+  matched):** feedback pacing delivered 1,715.56 queryable facts per second (it cut its cap from 110 to 32 frames
+  per second within 64 s); fixed pacing 2,986.07. Quiet save p99 60.75 and 62.84 ms against controls of 12.73
+  before and 6.61 after (4.77 to 9.51 times); quiet read p99 10.11 and 15.59 ms (1.80 to 3.81 times). Every live
+  account's save p99 was 5 to 14 times its control in both arms. Builder's forecast had been 14 to 24 ms under
+  feedback. Priority 8 fails on neighbours at any tested import rate with the grouped writer. Logged in
+  `NEXT-WEEK.md` item 8: repeat on the per-person ordered writer.
+- Server 1 is on its last ready item (erasure on the original pinned image); DX-PREP1's append-tail command is
+  due within the hour. Server 2 has reordered around the ordered writer's ceiling.

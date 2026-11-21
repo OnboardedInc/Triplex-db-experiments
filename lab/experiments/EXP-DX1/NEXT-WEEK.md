@@ -22,7 +22,12 @@ defined in `lab/V0.1.md` on main.
 
 ## Follow-ups from results already in
 
-8. **Import interference in one database (DX-HA1 finished part 6 at `e1b5d34d2` on 2026-11-20 and is parked;
+8. **Import pacing did not protect neighbours (server 1, 2026-11-20 21:01 local, `bm1/HA1-PACING-READING.md`,
+   grouped writer):** feedback pacing 1,715.56 queryable facts per second, fixed pacing 2,986.07; quiet save p99
+   60.75 and 62.84 ms against controls of 12.73 and 6.61 ms (4.8 to 9.5 times); quiet read p99 1.8 to 3.8 times.
+   Even at 32 frames per second every live account's save p99 was 5 to 14 times its control. Next: the same test
+   on the per-person ordered writer (import frames as prepared saves with ordered ids), then import on its own
+   gateway process. Earlier entry (DX-HA1 finished part 6 at `e1b5d34d2` on 2026-11-20 and is parked;
    `load1/MICRO-ATTRIBUTION.md`, `MICRO-SERVER.md`).** Its attribution of the server run: a quiet save at p99 spent
    18 to 25 ms in the write gateway's queue; gateway pauses overlapped 7 to 10 of the 12 slowest reads in each import
    arm; the archive cannot separate CPU contention from storage wait. Its next server run (15 to 25 minutes, on
