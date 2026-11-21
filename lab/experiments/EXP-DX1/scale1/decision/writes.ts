@@ -291,10 +291,10 @@ export async function play(
         active[account]!--;
         pending.delete(p);
         if (fair) {
-        row.creditReleased = now();
-        fair.resolved(row.status === "acked" || row.status === "refused", ticket);
-      }
-      pump(account);
+          row.creditReleased = now();
+          fair.resolved(row.status === "acked" || row.status === "refused", ticket);
+        }
+        pump(account);
       });
     pending.add(p);
   }

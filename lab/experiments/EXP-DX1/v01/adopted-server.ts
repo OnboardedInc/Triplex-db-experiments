@@ -3,20 +3,22 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { readScaleJvms, scaleHost, startScaleStack } from "../scale1/bench.ts";
-import { launchProfile } from "../jvm1/launch.mjs";
+import { defaultCreditMode, launchProfile, type CreditMode } from "../jvm1/launch.mjs";
 import { restoreDump } from "../scale1/seed-image.ts";
 import { adoptedArm, jsonFile, quietPair, type Residency } from "./adopted.ts";
 import { nativeMetrics } from "../thin1/native-metrics.ts";
 import { openScaleSeal, hex } from "./adopt.ts";
-import { stackOptions, type Age, type JvmProfile, type Writer } from "./profile.ts";
+import { stackOptions, writeDiagnostics, type Age, type JvmProfile, type Writer } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
 
 const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, writer, jvm, agedFile, agedPin, agedDump, agedDumpPin,
-  txJvm = jvm, walDirectory = ""] = process.argv.slice(2);
+  txJvm = jvm, walDirectory = "", writeJvm = jvm, creditMode = defaultCreditMode] = process.argv.slice(2);
 assert(source && campaign && seedDir && imagePin && transferPin);
 assert(age === "fresh" || age === "1B");
 assert(writer === "grouped" || writer === "subject");
-const policy = launchProfile("server", { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile });
+const policy = launchProfile("server", { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile,
+  writeJvm: writeJvm as JvmProfile, creditMode: creditMode as CreditMode });
+const diagnostics = writeDiagnostics(writer);
 const end = Number(deadlineText);
 assert(Number.isSafeInteger(end) && end > Date.now());
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"), queue = fs.statSync(`/proc/${process.ppid}/fd/9`);
@@ -27,7 +29,7 @@ verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
 fs.mkdirSync(campaign);
-jsonFile(path.join(campaign, "input.json"), { source, age, writer, policy, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
+jsonFile(path.join(campaign, "input.json"), { source, age, writer, policy, diagnostics, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
   agedBundle: expected?.pin, agedDump: expected?.dumpPin });
 let stopping = false;
 const stop = () => { stopping = true; };
@@ -44,7 +46,7 @@ for (const loaded of [false, true]) {
   jsonFile(path.join(out, "attempt.json"), { source, tag: path.basename(out), slot, attempt });
   assert(Object.values(scaleHost.childrenInventory(slot)).every((x) => x.length === 0));
   try {
-    const { engines } = startScaleStack(out, slot, source, writer === "grouped", stackOptions(writer, attempt), { policy, walDirectory });
+    const { engines } = startScaleStack(out, slot, source, writer === "grouped", stackOptions(writer, attempt, diagnostics), { policy, walDirectory });
     const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
     const residency = async () => {
       const { write, read } = peerUrls();
@@ -64,7 +66,8 @@ for (const loaded of [false, true]) {
     assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
     const head = expected ? await verifyAged(expected, out, engines.pg!.address) : seed.scope.cut;
     assert(!stopping && Date.now() + 8 * 60_000 < end);
-    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency };
+    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw,
+      creditMode: policy.creditMode, serialApply: diagnostics.serialApply, empty, residency };
     const arm = await adoptedArm(out, source, peer, seed, writer as Writer, loaded, false, head);
     if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
   } finally {

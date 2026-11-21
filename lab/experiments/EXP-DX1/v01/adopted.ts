@@ -11,11 +11,14 @@ import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { decodeFeed, now, readCell, type Begin, type Feed } from "../scale1/decision/observer.ts";
 import { accounts, cellSeconds, field, root, task, writeTape, type Density, type Write } from "../scale1/decision/plan.ts";
 import { play, resolveUncertain, type Row, type Save, type Sender } from "../scale1/decision/writes.ts";
+import { creditModeSelection } from "../prep1/rolling-credits.ts";
+import { defaultCreditMode, type CreditMode } from "../jvm1/launch.mjs";
 import { checkAdoptedPeer, hex, openScaleSeal, type AdoptedSeed } from "./adopt.ts";
 import { ladder, phaseSeconds, selectedWriter, type Writer } from "./profile.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
 export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
+  creditMode?: CreditMode; serialApply?: boolean;
   empty?: Residency; residency?: () => Residency | Promise<Residency> };
 export type QuietCell = "alone" | 235;
 export const jsonFile = (file: string, data: unknown) =>
@@ -192,6 +195,8 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     assert.deepEqual([Boolean(options.subjectNumericOwner), Boolean(options.subjectOrderedIds),
       Boolean(options.subjectPrefetch)], [writer === "subject", writer === "subject", false]);
     if (writer === "subject") assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/);
+    assert.deepEqual([Boolean(options.subjectNarrowRevision), Boolean(options.subjectReusePredecessor)],
+      [Boolean(peer.serialApply), Boolean(peer.serialApply)]);
     assert.deepEqual([options.options.predecessorLookup, options.options.smallRows, options.options.ledger,
       options.options.packedJournal, options.options.groupCommit, options.options.reusePrepared,
       options.options.fastReply, options.options.livePriority, options.options.fieldCoalesce,
@@ -211,8 +216,10 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       () => terminal, writer === "subject");
     void feeding.catch(() => {});
     const quiet = quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, quietCell, toy);
+    const creditMode = peer.creditMode ?? defaultCreditMode;
+    const admission = creditModeSelection(creditMode);
     const [writes, phases, quietRead] = await Promise.all([
-      play(senders, tape, start, peer.attempt, false, writer === "subject"),
+      play(senders, tape, start, peer.attempt, false, writer === "subject", admission),
       quietCell === undefined ? readWindows(reader, seed, start, loaded, toy) : [], quiet,
     ]);
     await resolveUncertain(senders, writes.unresolved);
@@ -253,7 +260,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     jsonFile(evidence, { writes: writes.rows, journal: feed, tape, p6, p7 });
     const result = { source, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
       loaded, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
-      observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java },
+      observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, creditMode, observed: options, java: peer.java },
       p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
       p3: { entries: feed.length }, p4: pulls, p6, p7 };
     // [DX-V01] Why: require the complete toy tape and exact read results before publishing the arm.

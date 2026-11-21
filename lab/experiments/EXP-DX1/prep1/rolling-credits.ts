@@ -1,4 +1,5 @@
 import { FairTurns } from "./fair-turns.ts";
+import { creditModes, defaultCreditMode, type CreditMode } from "../jvm1/launch.mjs";
 
 type Ready = { account: number; due: number };
 export type Admission = { mode: "barrier" | "rolling"; credits: number; quietAccount?: number };
@@ -70,4 +71,11 @@ export function admission(accountCount: number, selection: Admission) {
   return selection.mode === "rolling"
     ? new RollingCredits(accountCount, selection.credits, selection.quietAccount ?? 0)
     : new FairTurns(accountCount, selection.credits);
+}
+
+export function creditModeSelection(mode: CreditMode = defaultCreditMode): Admission {
+  if (!creditModes.includes(mode)) throw new RangeError("Unknown credit mode");
+  return mode === defaultCreditMode
+    ? { mode: "barrier", credits: 6 }
+    : { mode: "rolling", credits: Number(mode.slice("rolling".length)) };
 }

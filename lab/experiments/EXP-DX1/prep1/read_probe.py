@@ -58,6 +58,8 @@ def managed_events(out):
 def run_events(inputs, lines):
     attempt = inputs["attempt"]
     boots = 2 if inputs["mode"] in ("recovery", "subject-recovery") else 1
+    if inputs["mode"] == "rolling-recovery":
+        boots = 2 if inputs["serialApply"] else 4
     assert [line for line in lines if line.startswith("PREP1_SQL ")] == [
         f"PREP1_SQL {key} on" for key in ("fsync", "synchronous_commit", "full_page_writes")
     ] * boots

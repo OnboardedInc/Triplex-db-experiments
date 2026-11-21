@@ -30,8 +30,8 @@ def disk_floor():
         raise SystemExit("Host free disk below 5 GiB")
 
 
-def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefetch="0", ordered="0"):
-    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery", "subject-recovery", "subject-query", "subject-native-suite", "subject-profile", "lookup-profile"):
+def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefetch="0", ordered="0", serial="0"):
+    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery", "subject-recovery", "subject-query", "subject-native-suite", "subject-profile", "lookup-profile", "rolling-recovery"):
         raise SystemExit("Unknown managed probe mode")
     if subject not in ("0", "1"):
         raise SystemExit("Subject writer setting must be 0 or 1")
@@ -41,6 +41,9 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         raise SystemExit("Prefetch requires the prepared writer")
     if ordered not in ("0", "1") or (ordered == "1" and (subject != "1" or prefetch != "0")):
         raise SystemExit("Ordered IDs require the prepared writer without hints")
+    if serial not in ("0", "1") or (serial == "1" and (ordered != "1" or numeric_owner != "1")):
+        raise SystemExit("Serial apply requires ordered IDs and a numeric owner")
+    lookup_every = 3 if serial == "1" and mode == "rolling-recovery" else 0
     out.mkdir()
     attempt = str(uuid.uuid4())
     stage = out / "stage"
@@ -61,6 +64,8 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     (config / "subject-owner").write_text(numeric_owner + "\n")
     (config / "subject-prefetch").write_text(prefetch + "\n")
     (config / "subject-ordered").write_text(ordered + "\n")
+    (config / "subject-serial").write_text(serial + "\n")
+    (config / "lookup-every").write_text(str(lookup_every) + "\n")
     if mode == "live":
         if not 1 <= int(seconds) <= 60:
             raise SystemExit("Live window must be 1 to 60 seconds")
@@ -92,7 +97,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     disk_floor()
     esbuild = REPO / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
     metafile = out / "bundle.json"
-    driver = "live.ts" if mode == "live" else "probe.ts"
+    driver = {"live": "live.ts", "rolling-recovery": "rolling-gate.ts"}.get(mode, "probe.ts")
     if not clojure_inputs and mode != "subject-native-suite":
         subprocess.run([
             esbuild, str(EXPERIMENT.relative_to(REPO) / driver), "--bundle", "--platform=node",
@@ -119,6 +124,8 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "numericOwner": numeric_owner == "1",
         "prefetch": prefetch == "1",
         "orderedIds": ordered == "1",
+        "serialApply": serial == "1",
+        "lookupEvery": lookup_every,
         "explicitProbes": mode == "lookup-profile" and prefetch == "1",
         "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
         "stage": {str(p.relative_to(stage)): sha(p) for p in sorted(stage.rglob("*"))
