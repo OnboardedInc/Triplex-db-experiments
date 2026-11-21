@@ -3842,3 +3842,11 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   fair-turn rule; behaviour on a database whose rows have old-format ids; merge). DX-THIN1 part 7 (merge the
   ordered-id writer onto `exp/DX-INT1`, state the default). DX-V01 part 3 (scorecard with the per-person ordered
   writer as a configuration, a correctness row for old and new id formats).
+
+## 2026-11-21 02:39 UTC (21:39 local, 2026-11-20): DX-V01 part 3 preview in; waiting on the merge to re-pin
+
+- **DX-V01 part 3 (`e188e5aa1`, a two-writer preview).** Mac run filled all 14 rows with both writers shown for
+  priorities 2 and 6; all 211 ordered benchmark saves used the installed ordered writer; a retired old-format id
+  and a retired new-format id were both refused; four historical answers matched the grouped configuration. Rows 5
+  and 9 NOT MEASURED with links. Server 2 stays on `790d9e96e` until DX-THIN1 publishes the ordered-writer merge
+  on `exp/DX-INT1`; then DX-V01 is resumed to re-pin. Four agents running (DX-BM1, DX-SCALE1, DX-PREP1, DX-THIN1).
