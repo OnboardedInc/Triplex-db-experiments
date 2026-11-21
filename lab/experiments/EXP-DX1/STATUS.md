@@ -4348,3 +4348,21 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Predictions locked before the run:** stored per second at 394 offered: barrier6 351, rolling6 381, rolling12 394; at 620: 340, 388, 447. Quiet loaded commit p99: rolling6 36, 36, 43 ms at 235, 394, 620 (inside the 50 ms clause); rolling12 38, 43, 53 ms. P1 stays near 860 ms p99 at 256 readers; P8 about 3,193 facts/s; P5 and P9 NOT RUN on this card.
 - **DX-THIN1 part 10 resumed:** merge the Sunday failover run (`a43d57b36`), Publish at 100,000 from the held database (`43b186d9a`) and, if clean, the playground (`d8dac968c`) onto `exp/DX-INT1` without touching what the queued cards measure; update `int1/V0.1-STATE.md` with the owner's decisions.
 - Agents running: DX-SCALE1, DX-BM1, DX-REAL1, DX-ERASE2, DX-RD1, DX-THIN1.
+
+### 2026-11-21 10:30 local: realistic database designed and its build command ready; scorecard builder adopting it (6 agents running)
+
+- **DX-REAL1 finished** (exit 0, 24 minutes). `origin/exp/DX-REAL1-realistic-seed`, runtime `3c618698e`, head `3ea2f1e1d`, `REPORT-DX-REAL1.md`. Extends an independent copy of the held full-size database in the same Datomic database, through SCALE1's verified import path, then settles indexing, vacuums, stops and seals.
+
+  | Rung | Accounts | People | Facts | Estimated native records | Estimated stopped size | Build |
+  | --- | ---: | ---: | ---: | ---: | ---: | --- |
+  | Held today | 10 | 1,000,000 deep | 162,456,470 | 429.8 million | 126 GB | done |
+  | First | 111 | 2,029,000 (+1,000,000 thin, +29,000 in 100 small accounts) | 176,779,960 | 469 million | 138 GB | 2 to 3 h, USD 2.18 to 3.27 |
+  | Full | 111 | 5,529,000 (4,500,000 thin) | 211,779,960 | 567 million | 166 GB | 5 to 7 h, USD 5.45 to 7.63 |
+
+  - **Assumptions for Sam to confirm:** a thin person has eight business facts plus two membership facts (the targets give no thin fact count); small accounts are ten of 2,000 people and ninety of 100; busy saves and reads split 80% deep, 15% thin, 5% small, with the quiet deep account as control (the targets give no split by account kind).
+  - **Predictions for the mixed measurement:** foreground save p99 20 to 100 ms; quiet commit p99 inflation 1.1 to 2.0 times; first read of an untouched thin person p99 6 to 35 ms; 64 to 90 resident bytes per untouched thin person.
+  - Mac gate at toy size: 169 saves, 1,690 pinned reads, 25 first reads of untouched thin people.
+  - Still needed: the scorecard and DX-PREP1's harness must recognise the extended seal (its report says how).
+- **DX-V01 part 10 resumed:** a `realistic` card age on the next-card line with the realistic mix and a proper priority 7 measurement; `fresh` unchanged.
+- **Plan for the rented server after the rolling arms:** next card (293 min) -> Publish at 100,000 (90 min) -> realistic first rung build (2 to 3 h) and its mixed measurement -> reads ladder and erasure stage when their commands exist -> two-server failover at about 05:00 Sunday.
+- Agents running: DX-SCALE1, DX-BM1, DX-ERASE2, DX-RD1, DX-THIN1, DX-V01.
