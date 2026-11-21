@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { offers } from "../w1/field/schedule.ts";
+import { rollingWidths, type Admission } from "../prep1/rolling-credits.ts";
 import { ceilingSeconds, widePeople } from "../prep1/server-tape.ts";
 
 export const serverRates = [50, 235, 394, 620] as const;
@@ -10,20 +11,19 @@ export function parseWindow(text: string | undefined): WindowSeconds {
   assert(text === undefined || text === "90" || text === "300", "Choose --window-seconds 90 or 300");
   return text === "90" ? 90 : serverCellSeconds;
 }
-export type CreditMode = "integration" | "barrier" | `rolling:${number}`;
+export type CreditMode = "integration" | "barrier" | `rolling:${(typeof rollingWidths)[number]}`;
 export function parseCredits(value = "integration"): CreditMode {
-  assert(value === "integration" || value === "barrier" ||
-    (/^rolling:[1-9][0-9]*$/.test(value) && Number.isSafeInteger(Number(value.slice(8)))),
-    "Choose --credit-mode integration, barrier or rolling:N");
+  assert(value === "integration" || value === "barrier" || rollingWidths.some(width => value === `rolling:${width}`),
+    "Choose --credit-mode integration, barrier or rolling:6|8|12|16");
   return value as CreditMode;
 }
-export function writerCredits(mode: CreditMode) {
-  // [DX-V01] Why: refuse an unwired treatment. Rejected: relabelling barrier throughput as rolling.
-  // DX-PREP1 HANDOFF: bind the published rolling writer selector here once it is available.
-  assert(!mode.startsWith("rolling:"), "Rolling credit mode is waiting for DX-PREP1's published writer option");
-  return fairCredits;
+
+export function writerAdmission(mode: CreditMode): Admission {
+  // [DX-V01] Why: use PREP1's shared sender selector on the same tape for both writers.
+  // Rejected: implementing another admission scheduler or labelling numbered barriers as rolling.
+  return mode.startsWith("rolling:") ? { mode: "rolling", credits: Number(mode.slice(8)), quietAccount: 0 }
+    : { mode: "barrier", credits: 6 };
 }
-export const fairCredits = 6;
 export { widePeople };
 export type ServerCell = { rate: (typeof serverRates)[number]; loaded: boolean };
 export const cellPath = (cell: ServerCell) => "p6-" + cell.rate + "-" + (cell.loaded ? "loaded" : "alone");

@@ -14,7 +14,7 @@ import { cleanSource, verifyBuild } from "./source.ts";
 import { claimPgdata, inspectPgdata, pgdataArgs, pgdataTarget, preflightWal, sealedPgdata } from "./pgdata.ts";
 import { existingSequence, openSequence, startSequentialArm } from "./sequential.ts";
 
-import { parseWindow, parseCredits, writerCredits } from "./server-workload.ts";
+import { parseWindow, parseCredits } from "./server-workload.ts";
 import { physicalTelemetry } from "./cell-telemetry.ts";
 
 const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, jvm, agedFile, agedPin,
@@ -24,7 +24,6 @@ assert(age === "fresh" || age === "1B");
 assert(isWriter(requestedWriter));
 assert(jvmProfiles.includes(jvm as JvmProfile) && jvmProfiles.includes(txJvm as JvmProfile));
 const windowSeconds = parseWindow(windowText), creditMode = parseCredits(creditText);
-const credits = writerCredits(creditMode);
 const { budget, comparisonMinutes } = timeBudget(windowSeconds);
 const policy = launchProfile("server", { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile });
 const stages = serverStages(requestedWriter, policy, !!walDirectory);
@@ -138,7 +137,7 @@ for (const [i, stage] of stages.entries()) {
     assert(!stopping && Date.now() + 8 * 60_000 < stageEnd);
     verifiedLaunch = true;
     console.log(`[DX-V01] Verified live server startup for ${stage.name}/${loaded ? "loaded" : "zero"} before offers`);
-    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency, windowSeconds, creditMode, credits, telemetry: physicalTelemetry(out, engines) };
+    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency, windowSeconds, creditMode, telemetry: physicalTelemetry(out, engines) };
     const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head, undefined, comparison);
     if (loaded && !stopping) {
       const quietEnd = comparison ? stageEnd : Math.min(headlineEnd - budget.P8 * minute, Date.now() + budget.P6 * minute);

@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { launchProfile } from "../jvm1/launch.mjs";
 import { timeBudget, serverStages } from "./profile.ts";
-import { parseCredits, ratedTape, writerCredits, serverRates, widePeople } from "./server-workload.ts";
+import { parseCredits, ratedTape, writerAdmission, serverRates, widePeople } from "./server-workload.ts";
 
 test("server schedule keeps the default JVM on both comparison arms", () => {
   const stages = serverStages("per-person-ordered", launchProfile("server", { txJvm: "j25-zgc" }), true);
@@ -30,9 +30,11 @@ test("each offered-rate pair uses the same quiet offsets and the wide neighbour 
   }
 });
 
-test("the credit selection never relabels barrier observations as rolling", () => {
-  assert.equal(writerCredits(parseCredits()), 6);
-  assert.equal(writerCredits(parseCredits("barrier")), 6);
-  assert.throws(() => writerCredits(parseCredits("rolling:6")), /published writer option/);
-  assert.throws(() => parseCredits("rolling:0"), /Choose --credit-mode/);
+test("credit mode selects the published writer admission", () => {
+  assert.deepEqual(writerAdmission(parseCredits()), { mode: "barrier", credits: 6 });
+  assert.deepEqual(writerAdmission(parseCredits("barrier")), { mode: "barrier", credits: 6 });
+  for (const credits of [6, 8, 12, 16]) {
+    assert.deepEqual(writerAdmission(parseCredits(`rolling:${credits}`)), { mode: "rolling", credits, quietAccount: 0 });
+  }
+  assert.throws(() => parseCredits("rolling:7"), /Choose --credit-mode/);
 });

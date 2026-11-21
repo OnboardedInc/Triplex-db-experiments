@@ -8,10 +8,11 @@ import type { MixedIds } from "./mixed-ids.ts";
 import type { adoptedArm } from "./adopted.ts";
 import { launchProfile } from "../jvm1/launch.mjs";
 import { launchIntegration, selectedWriter, serverStages, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
-import { cellPath, lastServerCell, ratedTape, serverCellSeconds, serverRates, writerCredits, type CreditMode, type WindowSeconds } from "./server-workload.ts";
+import { cellPath, lastServerCell, ratedTape, serverCellSeconds, serverRates, writerAdmission, type CreditMode, type WindowSeconds } from "./server-workload.ts";
 
 import { operationId } from "../scale1/decision/operation-id.ts";
 import { summarizeTelemetry, type Telemetry } from "./cell-telemetry.ts";
+import { checkAdmission } from "./credit-evidence.ts";
 import { p99Miss, quietMiss } from "./card-verdict.ts";
 import { windowStats, type WindowWrite } from "./windows.ts";
 
@@ -22,7 +23,7 @@ type Observation = Awaited<ReturnType<typeof adoptedArm>>;
 const tag = (x: unknown) => (typeof x === "number" && Number.isFinite(x)) ? String(Number(x.toFixed(3))) : "—";
 export function writeAdoptedCard(run: Card) {
   const windowSeconds = run.windowSeconds ?? serverCellSeconds, creditMode = run.creditMode ?? "integration";
-  const credits = writerCredits(creditMode);
+  const admission = writerAdmission(creditMode);
   const file = (arm: string, name: string) => path.join(run.campaign, arm, name);
   const comparison = "grouped/campaign/", defaultComparison = "server-default/campaign/";
   const policy = launchProfile("server", { jvm: run.jvm, txJvm: run.txJvm });
@@ -35,7 +36,14 @@ export function writeAdoptedCard(run: Card) {
     assert(x.startedAt <= x.start && x.start < x.endedAt && x.seed.head === x.firstCut);
     assert.equal(createHash("sha256").update(bytes).digest("hex"), x.observationsSha256);
     const raw = JSON.parse(bytes.toString());
-    assert.deepEqual([raw.p1, raw.p4, raw.p6, raw.p7], [x.p1, x.p4, x.p6, x.p7]);
+    assert.deepEqual([raw.p1, raw.p4, raw.p6, raw.p7, raw.selection, raw.fairCredits],
+      [x.p1, x.p4, x.p6, x.p7, x.settings.selection, x.settings.fairCredits]);
+    assert.equal(x.settings.creditMode, creditMode);
+    if (x.p6 || !run.toy || admission.mode === "rolling") {
+      assert.deepEqual(x.settings.selection, admission);
+      assert.equal(x.settings.fairCredits, admission.credits);
+      checkAdmission(raw.writes, admission);
+    }
     const dispatch = new Map<string, number>(raw.writes.filter((r: any) => r.receipt && Number.isFinite(r.dispatched))
       .map((r: any) => [r.id, r.dispatched]));
     const feed = new Histogram();
@@ -264,16 +272,7 @@ export function writeAdoptedCard(run: Card) {
       assert.deepEqual([row.id, row.db, row.due, row.account, row.subject, row.width, row.ordinal],
         [operationId(arm.attempt, offer.version), arm.seed.database, arm.start + offer.ms, offer.account, offer.subject, offer.width, offer.ordinal]);
     }
-    assert.deepEqual([arm.settings.fairCredits, arm.settings.creditMode], [credits, creditMode]);
     assert.equal(arm.p6.durationSeconds, windowSeconds);
-    const turns = new Map<number, number>();
-    for (const row of arm.writes as { dispatched?: number; fairTurn?: number }[]) {
-      if (row.dispatched === undefined) continue;
-      assert(Number.isSafeInteger(row.fairTurn) && row.fairTurn! > 0);
-      const count = (turns.get(row.fairTurn!) ?? 0) + 1;
-      assert(count <= credits);
-      turns.set(row.fairTurn!, count);
-    }
     const receipts = arm.writes.filter((r: any) => r.receipt);
     assert.equal(arm.p6.totalOffers, arm.tape.length);
     assert.equal(arm.p6.totalReceipts, receipts.length);
@@ -402,7 +401,8 @@ export function writeAdoptedCard(run: Card) {
   const settings = {
     ...selectedWriter(run.writer),
     writerIntegration,
-    ...(run.toy ? {} : { launchIntegration, stages, offeredRates: serverRates, windowSeconds, creditMode, fairCredits: credits, postgresStartup: prepared ? "prepared PGDATA" : "logical dump" }),
+    creditMode, admission: run.toy && admission.mode === "barrier" ? { ...admission, scope: "quiet cells" } : admission,
+    ...(run.toy ? {} : { launchIntegration, stages, offeredRates: serverRates, windowSeconds, postgresStartup: prepared ? "prepared PGDATA" : "logical dump" }),
     ...(run.writer === "per-person-ordered" ? { comparison: selectedWriter("grouped") } : {}),
     armReadbacks: arms.map((a) => a.settings),
   };

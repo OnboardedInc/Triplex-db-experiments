@@ -13,13 +13,13 @@ import { accounts, activeSubjects, cellSeconds, field, root, task, writeTape, ty
 import { play, resolveUncertain, type Row, type Save, type Sender } from "../scale1/decision/writes.ts";
 import { checkAdoptedPeer, hex, openScaleSeal, type AdoptedSeed } from "./adopt.ts";
 import { ladder, phaseSeconds, selectedWriter, type Writer } from "./profile.ts";
-import { cellPath, fairCredits, ratedTape, serverCells, serverCellSeconds, type CreditMode, type ServerCell, type WindowSeconds } from "./server-workload.ts";
+import { cellPath, writerAdmission, ratedTape, serverCells, serverCellSeconds, type CreditMode, type ServerCell, type WindowSeconds } from "./server-workload.ts";
 
 import { collectCell, type physicalTelemetry } from "./cell-telemetry.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
 export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
-  telemetry?: ReturnType<typeof physicalTelemetry>; windowSeconds?: WindowSeconds; creditMode?: CreditMode; credits?: number;
+  telemetry?: ReturnType<typeof physicalTelemetry>; windowSeconds?: WindowSeconds; creditMode?: CreditMode;
   empty?: Residency; residency?: () => Residency | Promise<Residency> };
 export type QuietCell = "alone" | 235;
 export const jsonFile = (file: string, data: unknown) =>
@@ -225,9 +225,11 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     feeding = feeder(journal, seed.scope.db, startHead, start + interval + 120_000, () => terminal, writer === "per-person-ordered");
     void feeding.catch(() => {});
     const quiet = quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, rated ? "alone" : quietCell as QuietCell, toy, rated ? windowSeconds : undefined);
-    const credits = !toy || quietCell !== undefined ? peer.credits ?? fairCredits : 0;
+    const mode = peer.creditMode ?? "integration";
+    const selection = !toy || quietCell !== undefined || mode.startsWith("rolling:") ? writerAdmission(mode) : undefined;
+    const credits = selection?.credits ?? 0;
     const [writes, phases, quietRead] = await Promise.all([
-      play(senders, tape, start, peer.attempt, false, writer === "per-person-ordered", credits),
+      play(senders, tape, start, peer.attempt, false, writer === "per-person-ordered", selection),
       quietCell === undefined && !comparison ? readWindows(reader, seed, start, loaded, toy) : [], quiet,
     ]);
     await resolveUncertain(senders, writes.unresolved);
@@ -273,10 +275,10 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       telemetrySha256 = hex(fs.readFileSync(name));
     }
     const evidence = path.join(out, "operations.json");
-    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, p1: phases, p4: pulls, p6, p7 });
+    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, selection, p1: phases, p4: pulls, p6, p7 });
     const result = { source, writer, telemetrySha256, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
       loaded, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
-      observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java, creditMode: peer.creditMode, fairCredits: credits },
+      observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java, creditMode: mode, selection, fairCredits: credits },
       p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
       p3: { entries: feed.length }, p4: pulls, p6, p7 };
     jsonFile(path.join(out, "arm.json"), result);

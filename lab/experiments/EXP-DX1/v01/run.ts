@@ -8,7 +8,7 @@ import { timeBudget, defaultJvm, defaultWriter, isWriter, jvmProfiles, pairSecon
 import { launchProfile } from "../jvm1/launch.mjs";
 import { cleanSource, verifyBuild } from "./source.ts";
 import { pgdataArgs } from "./pgdata.ts";
-import { parseCredits, parseWindow, serverRates, writerCredits } from "./server-workload.ts";
+import { parseCredits, parseWindow, serverRates, writerAdmission } from "./server-workload.ts";
 import { assembleSequential, completeSequentialArm, existingSequence, sequenceProgress } from "./sequential.ts";
 
 const { values } = parseArgs({
@@ -26,7 +26,7 @@ const { values } = parseArgs({
   },
 });
 if (values.help) {
-  console.log("scorecard.mjs --age fresh|1B --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered|grouped] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR] [--window-seconds 90|300] [--credit-mode integration|barrier|rolling:N]\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, ordered server default, grouped).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
+  console.log("scorecard.mjs --age fresh|1B --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered|grouped] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR] [--window-seconds 90|300] [--credit-mode integration|barrier|rolling:6|8|12|16]\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, ordered server default, grouped).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
   console.log("For sequential staging, run --arm 1 through --arm 4 in order with one --pgdata per invocation and the same --out. Then run --assemble --commit COMMIT --out DIRECTORY.");
   process.exit(0);
 }
@@ -66,15 +66,13 @@ const storage = pgdata.length ? "Starts from prepared PGDATA copies. File-level 
 const forecast = `Budget ${minutes} minutes including cleanup, up to USD ${(minutes / 60 * price).toFixed(2)} per age. ${plan} Server profile with gateway JVM ${jvm}, headline transactor ${txJvm}, and ${wal ? "separate WAL" : "WAL on PGDATA"}. P2 and P6 offered rates ${serverRates.join(", ")} saves/s for ${windowSeconds} seconds per cell. Credit selection ${creditMode}. ${storage}`;
 if (values.plan) {
   console.log(forecast);
-  if (creditMode.startsWith("rolling:")) console.log("DX-PREP1 rolling writer selector is pending.");
+  console.log("Writer admission " + JSON.stringify(writerAdmission(creditMode)));
   console.log(JSON.stringify(serverStages(values.writer, headline, !!wal), null, 2));
   process.exit(0);
 }
-writerCredits(creditMode);
 assert(values.age === "fresh" || values.age === "1B");
 assert(values.commit && values.out && values.seed && values["image-sha256"] && values["transfer-sha256"]);
 const aged = [values["aged-bundle"], values["aged-bundle-sha256"], values["aged-dump"], values["aged-dump-sha256"]];
-writerCredits(creditMode);
 assert(values.age === "1B" ? (pgdata.length ? aged.slice(0, 2).every(Boolean) && !aged[2] && !aged[3] : aged.every(Boolean))
   : aged.every((v) => !v), "Provide the required AGE1 identity and choose one PostgreSQL startup path");
 assert(process.platform === "linux" && process.getuid?.() === 0);

@@ -163,8 +163,7 @@ export function physicalTelemetry(out: string, engines: Engines): Probe {
 export async function collectCell(probe: Probe, binding: Binding, signal: AbortSignal) {
   const samples: Sample[] = [];
   for (let due = binding.start; due <= binding.end; due += 1000) {
-    const delay = Math.ceil(due - clock());
-    if (delay > 0) await sleep(delay, undefined, { signal });
+    while (clock() < due) await sleep(Math.ceil(due - clock()), undefined, { signal });
     // [DX-V01] Why: retain missed ticks instead of issuing a simulated catch-up burst of SQL probes.
     // Rejected: backfilling samples with a later stats snapshot.
     if (due !== binding.end && clock() >= due + 1000) continue;

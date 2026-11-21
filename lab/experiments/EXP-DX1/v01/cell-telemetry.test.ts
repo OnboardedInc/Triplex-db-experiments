@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { checkAdmission } from "./credit-evidence.ts";
 import { collectCell, nativeEvent, summarizeTelemetry } from "./cell-telemetry.ts";
 import { p99Miss, quietMiss } from "./card-verdict.ts";
 import { windowStats } from "./windows.ts";
@@ -67,4 +68,18 @@ test("measured misses retain their value, bar and sample requirements", () => {
   assert.equal(quietMiss(alone, { ...busy, p99Ms: 30 }, 0, "H235"), undefined);
   assert.match(quietMiss(alone, { count: 500, p99Ms: 26 }, 0, "H235")!, /20 → 26 ms.*1\.25/);
   assert.match(quietMiss(alone, busy, 1, "H235")!, /1 quiet expiries.*zero/);
+});
+
+test("rolling evidence distinguishes outstanding credits from barrier turn numbers", () => {
+  const mode = { mode: "rolling", credits: 6, quietAccount: 0 } as const;
+  const writes = [
+    { account: 1, dispatched: 1, end: 4, fairTurn: 1, neighboursAhead: 0, creditReleased: 5 },
+    { account: 2, dispatched: 2, end: 6, fairTurn: 2, neighboursAhead: 1, creditReleased: 7 },
+    { account: 0, dispatched: 3, end: 4, fairTurn: 3, neighboursAhead: 2, creditReleased: 4 },
+    { account: 1, dispatched: 5, end: 6, fairTurn: 4, neighboursAhead: 1, creditReleased: 7 },
+  ];
+  checkAdmission(writes, mode);
+  assert.throws(() => checkAdmission(writes, { mode: "barrier", credits: 6 }));
+  assert.throws(() => checkAdmission(writes.map(row => ({ ...row, neighboursAhead: 0 })), mode));
+  assert.throws(() => checkAdmission(writes.map(row => ({ ...row, creditReleased: row.end - 1 })), mode));
 });

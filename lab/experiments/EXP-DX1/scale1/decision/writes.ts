@@ -6,7 +6,7 @@ import {
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
 import { command } from "../../w1/group/workload.ts";
-import { FairTurns } from "../../prep1/fair-turns.ts";
+import { admission, type Admission } from "../../prep1/rolling-credits.ts";
 import {
   activeSubjects,
   expiryMs,
@@ -57,6 +57,9 @@ export type Save = {
   predecessor?: string;
   orderedToken?: string;
   end?: number;
+  fairTurn?: number;
+  neighboursAhead?: number;
+  creditReleased?: number;
   status:
     | "offered"
     | "pending"
@@ -74,7 +77,6 @@ export type Save = {
     | "in-flight-limit"
     | "unresolved-predecessor"
     | "dispatch";
-  fairTurn?: number;
   pending?: number;
   queued?: number;
 };
@@ -171,9 +173,9 @@ export async function play(
   nonce: string,
   capture = false,
   orderedIds = false,
-  fairCredits = 0,
+  selection?: Admission,
 ) {
-  const fair = fairCredits ? new FairTurns(scopes.length, fairCredits) : undefined;
+  const fair = selection && admission(scopes.length, selection);
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
     active = scopes.map(() => 0),
     owned = new Map<string, string>(),
@@ -193,7 +195,8 @@ export async function play(
       save.sent = performance.timeOrigin + response.written;
       if (capture && Number.isFinite(response.headers))
         save.responseHeaders = performance.timeOrigin + response.headers;
-      if (capture && response.gatewayTraceparent) save.responseTrace = response.gatewayTraceparent;
+      if (capture && "gatewayTraceparent" in response && typeof response.gatewayTraceparent === "string")
+        save.responseTrace = response.gatewayTraceparent;
     }
   };
   const expire = (entry: Save, cause: NonNullable<Save["expiryCause"]>) => {
@@ -227,19 +230,21 @@ export async function play(
     }
   }
 
-  function next(account: number) {
-    return queues[account]!.findIndex(({ row }) => !owned.has(key(row)) && !quarantined.has(key(row)));
-  }
-  function dispatch(account: number, index: number, turn?: number) {
+  const next = (account: number) => queues[account]!.findIndex(
+    ({ row }) => !owned.has(key(row)) && !quarantined.has(key(row)),
+  );
+
+  function dispatch(account: number, index: number, ticket?: number, neighboursAhead?: number) {
     const sender = scopes[account]!;
     const { e, row } = queues[account]!.splice(index, 1)[0]!;
     dequeue(row);
     if (now() >= row.due + expiryMs) {
       expire(row, "dispatch");
-      fair?.resolved(true);
+      fair?.resolved(true, ticket);
       return;
     }
-    row.fairTurn = turn;
+    if (ticket !== undefined) row.fairTurn = ticket;
+    if (neighboursAhead !== undefined) row.neighboursAhead = neighboursAhead;
     // [DX-INT1] Why: bind the identity block to this offered save through settling or recovering it.
     // Rejected: minting a new block while looking up an uncertain receipt.
     if (orderedIds) row.orderedToken = orderedSaveIdentity().token;
@@ -285,7 +290,10 @@ export async function play(
         owned.delete(key(row));
         active[account]!--;
         pending.delete(p);
-        fair?.resolved(row.status !== "uncertain");
+        if (fair) {
+          row.creditReleased = now();
+          fair.resolved(row.status === "acked" || row.status === "refused", ticket);
+        }
         pump(account);
       });
     pending.add(p);
@@ -293,28 +301,30 @@ export async function play(
 
   function pump(account: number) {
     if (fair) {
-      // [DX-V01] Why: arbitrate over the same eligible per-account heads with PREP1's six shared credits.
-      // Rejected: gating each gateway queue independently and allowing already queued neighbours to multiply a turn.
       for (const a of scopes.keys()) expireQueue(a);
-      fair.dispatch(() => scopes.flatMap((_, a) => {
-        if (active[a]! >= maxInflight) return [];
-        const index = next(a);
-        return index === -1 ? [] : [{ account: a, index, due: queues[a]![index]!.row.due }];
-      }), (save, turn) => dispatch(save.account, save.index, turn));
+      fair.dispatch(
+        () => scopes.flatMap((_, a) => {
+          if (active[a]! >= maxInflight) return [];
+          const index = next(a);
+          return index < 0 ? [] : [{ account: a, index, due: queues[a]![index]!.row.due }];
+        }),
+        (save, ticket, neighboursAhead?: number) => dispatch(save.account, save.index, ticket, neighboursAhead),
+      );
       return;
     }
     expireQueue(account);
     while (active[account]! < maxInflight) {
       const index = next(account);
-      if (index < 0) break;
+      if (index < 0) return;
       dispatch(account, index);
     }
   }
 
   // [DX-SCALE1] Why: record the actual socket flush for successful requests, with a bounded map of active operations. Rejected: using the publication callback's error and finally notifications as packet timestamps.
+  const diagnosticClient = (c: DatomicClient) => c as DatomicClient & { onRequestFailure?: typeof observe };
   for (const s of scopes) {
     s.client.onRequest = observe;
-    if (capture) s.client.onRequestFailure = observe;
+    if (capture) diagnosticClient(s.client).onRequestFailure = observe;
   }
   try {
     // Ten clients with the same per-account request cap serve either placement.
@@ -353,7 +363,7 @@ export async function play(
   } finally {
     for (const s of scopes) {
       delete s.client.onRequest;
-      if (capture) delete s.client.onRequestFailure;
+      if (capture) delete diagnosticClient(s.client).onRequestFailure;
     }
   }
 }

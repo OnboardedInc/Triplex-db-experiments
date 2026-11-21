@@ -7,6 +7,10 @@ P1 and checked cold P7 reads can show a measured miss. Incomplete scope stays pa
 The twelve-core proposal is for the integration owner. The launcher still uses the existing core assignments.
 The two-writer Mac gate uses only an ordinary heavy token. Its clocks are diagnostic.
 
+## Rolling credit evidence
+
+The scorecard uses PREP1 admission and its shared sender from b0ffdd2ab. The producer archives the applied selection and every dispatched grant, observed release and neighbour count. Rendering checks the raw archive hash, this attempt's source and cut, the exact selected mode, and the grant/release clocks before computing any row. It verifies the live rolling cap and reserved quiet slot against concurrent tickets. A new mode cannot reuse a sequential campaign's prior arms. Rolling admission issues no receipt, and counted writes still require the exact native journal join.
+
 ## Part 8 gates
 
 The fresh source checkout built all eight package tasks and the managed Datomic image. The native toy ran both ordered per-person and grouped, verified exact saves and the retired-ID and history checks, and rendered all fourteen obligations. The checker independently recomputed twelve quiet-account windows from native offer and ACK times. A live PostgreSQL 17 copy executed the same SQL for all three stat views. The focused gate passed fifteen tests, including mismatched clock or slot refusal, paired p99 denominators and publication guards. All eight 90-second offer tapes matched the original source byte for byte. The first attempt completed both native configurations but stopped during host collection because a renderer import loaded an unrelated package outside the clean clone. Its compressed archive is retained. Both rerun reservations, both toy volumes, the owned image and the scratch checkout were removed. [Evidence and checksums](EVIDENCE.md)
