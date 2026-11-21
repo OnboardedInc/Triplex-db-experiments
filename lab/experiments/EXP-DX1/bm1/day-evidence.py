@@ -26,6 +26,7 @@ SLOTS = {
     "ha1-pipeline": ("night-n20-ha1-pipeline", ("run", "collector.json", "cleanup.json", "worker.log")),
     "ha1-paced": ("night-n20-ha1-paced", ("run", "collector.json", "cleanup.json", "worker.log")),
     "prep1-followup": ("night-n20-prep-followup", ("small", "campaign", "adapter.json", "small-agreement.json", "collector.json")),
+    "prep1-storage": ("night-n20-prep-storage", ("small", "campaign", "adapter.json", "small-agreement.json", "collector.json")),
     "jvm1": ("day-n20-jvm1", ("seed/seed.json", "seed/results", "small/results", "campaign/results",
                              "seed.log", "campaign.log", "retry.log", "retry-resumed.log", "failed-unit.txt",
                              "cold-postgres.json", "retry",
@@ -61,6 +62,8 @@ def archive(name, revision):
         units = ["bm1n20-erasure.service"]
     if name == "prep1-tenant" and (root/"finish-current-fence.txt").exists():
         units.append("bm1n20-prep1-two.service")
+    if name == "prep1-storage":
+        units = ["bm1n20-prep1-followup.service"]
     states = {}
     for unit in units:
         state = subprocess.check_output(["systemctl", "show", unit, "-p",

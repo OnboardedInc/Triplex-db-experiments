@@ -265,3 +265,9 @@ e6280b67af516b527870da6165f1aefa2198efeadff71167adfb535409786b45  day-n20/tail-b
 9eda056ff5f97c5aeec1af8dd986badf688a3477884f3b980ab52c7e5f6c0cda  day-n20/int1-capacity/TRANSFER.json
 2fd8ada55a808cf7c1362b462e7f23aa1cd051d8c3eca4a329d182ee2857d3fa  day-n20/int1-capacity/first-reads.json
 ca3f317967034911b8f36c37cdb4b2e63f855698970a0c365430364fb5b9bb42  day-n20/rd1-aged/TRANSFER.json
+a776089bb800fe1b25d3c990a71ae966bed4d9f1e6dd71e4695b08fa12fea2ab  day-n20/jvm25/TRANSFER.json
+f2f4124547559e3f7b1e4ed50c925843180296e60fb4f68f257a110b0ca73d44  day-n20/jvm25/summary.tar.zst
+9f9239757f84edbeab4d9bbbe7730f3b2590da878e4dbc7f42ed65cbfad93c81  day-n20/jvm25/raw.tar.zst
+0104ee69399b103adae0d02e1bc8692c2c896f2885fdae784ff027e06699b629  day-n20/tail-backlog-integrated/TRANSFER.json
+bc6ba80eeca6d4d59241b90a4b374e487bf74ae48715b6c841bc8c75a78de3a8  day-n20/tail-backlog-integrated/summary.tar.zst
+d04e7e085460adaaa0f8180fed0b80145d1047e79c197d738a0e94888f3fe4af  day-n20/tail-backlog-integrated/raw.tar.zst
