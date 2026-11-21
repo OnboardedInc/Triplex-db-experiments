@@ -115,6 +115,7 @@ export async function regression(
   const client = new DatomicClient(process.env.DATOMIC_URL!, 35_000);
   const subjectWriter = process.env.DX_ERASE1_SUBJECT_WRITER;
   const orderedIds = process.env.DX_ERASE1_ORDERED_IDS === "1";
+  let subjectFunction: string | undefined;
   if (subjectWriter !== undefined) {
     // [DX-PREP1] Why: prove which writer setting actually reached the protected regression gateway.
     // Rejected: trusting launcher flags or a readback from another scope.
@@ -133,6 +134,7 @@ export async function regression(
     if (subjectWriter === "1") {
       assert.match(opts.subjectFunction ?? "", /^:triplex\.subject\/v-[0-9a-f]{24}$/);
       assert(Number(opts.subjectFunctionTx) > 0);
+      subjectFunction = opts.subjectFunction;
     } else {
       assert.equal(opts.subjectFunction, undefined);
       assert.equal(opts.subjectFunctionTx, undefined);
@@ -176,6 +178,8 @@ export async function regression(
     // Rejected: checking the writer switch while the erased witness still uses a legacy ID.
     const identity = orderedSaveIdentity();
     const value = "ordered-witness-" + identity.token;
+    const frontier = await client.erasureFrontier(f.db);
+    assert(frontier.protected);
     const input = command(
       "ordered-erasure-witness",
       [{ e: entityId, a: attribute, v: { type: "string", value } }],
@@ -189,13 +193,14 @@ export async function regression(
       operationId: string;
       position: { v: string };
       subjectSave?: string;
+      subjectOrderedIds?: boolean;
     };
     assert.equal(ack.operationId, input.operationId);
-    assert.equal(
-      ack.subjectSave,
-      undefined,
-      "Protected writes must take the erasure-fenced reference path",
-    );
+    // [DX-INT1] Why: the merged writer prepares protected saves at the observed removal generation.
+    // Rejected: requiring a reference-path fallback and leaving prepared removal unexercised.
+    assert(subjectFunction);
+    assert.deepEqual([ack.subjectSave, ack.subjectOrderedIds], [subjectFunction, true]);
+    assert.deepEqual(await client.erasureFrontier(f.db), frontier);
     assert.equal(Number(ack.position.v), witnessCut + 1);
     witnessCut = Number(ack.position.v);
     before = (await rows(entityId)).find((r) => r.id === identity.assertionId(0));
@@ -205,6 +210,10 @@ export async function regression(
         before.value_string === value &&
         before.recorded_position === witnessCut,
     );
+    output("ordered-erasure-witness", {
+      binding, database: f.db, function: subjectFunction, position: witnessCut,
+      assertionId: before.id, transactionId: identity.transactionId, generation: frontier.seq,
+    });
   }
   const w: Witness = {
     entityId,
