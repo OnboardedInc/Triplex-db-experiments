@@ -13,11 +13,13 @@ A new driver took over bench 3 at 12:45 EST after the previous driver stopped at
 | failed | `triplex-bench3-removal`, 18:53:58 UTC | INT1 build `3669bee41` | CPU refusal before any container; see below |
 | failed | `triplex-bench3-rd1`, control ladder, 18:57 UTC | RD1 `ca93f5165` | Same refusal; see below |
 | failed | `triplex-bench3-removal2`, 19:05:53 UTC | INT1 build `3669bee41` | Image IDs moved by later builds; see below |
-| 1 | `triplex-bench3-cold` (preparing since 19:06:30 UTC; `queue/cold/run.sh` = `bench3-cold.sh`) | INT1 `8ab832093`, `jvm1/cold-server.sh ... --credit-mode rolling6` | build, then 59 min |
-| 2 | `triplex-bench3-removal2` (`queue/removal/run.sh` = `bench3-removal.sh`) | INT1 build `3669bee41`, `erase1/SERVER-ERASE2.md` | build, new copy, then 86 min |
-| 3 | `triplex-bench3-rd1` (`queue/rd1/run.sh` = `bench3-rd1.sh`) | RD1 `ca93f5165`, prepared-copy reader ladders, control then tuned, rolling 6 | build, then 2 × (copy + 32 min) |
-| 4 | `triplex-bench3-fresh` (`queue/fresh/run.sh` = `bench3-writer-addons.sh`, waiting for `rd1`) | PREP1 `891ab9139`, `prep1/FRESH-FIRST.md` | 120 min |
-| 5 | `triplex-bench3-realistic` (`queue/realistic/run.sh` = `bench3-realistic.sh`) | INT1 build `8597e3ef7`, first realistic rung, then `verify` | 2–3 h plus verify |
+| failed | `triplex-bench3-cold`, 19:13:30 UTC | INT1 `8ab832093`, `jvm1/cold-server.sh ... --credit-mode rolling6` | Runner assertion before the first offer; see below |
+| 1 | `triplex-bench3-removal2` (preparing since 19:13:14 UTC; `queue/removal/run.sh` = `bench3-removal.sh`) | INT1 build `3669bee41`, `erase1/SERVER-ERASE2.md` | build, new copy, then 86 min |
+| 2 | `triplex-bench3-rd1` (`queue/rd1/run.sh` = `bench3-rd1.sh`) | RD1 `ca93f5165`, prepared-copy reader ladders, control then tuned, rolling 6 | build, then 2 × (copy + 32 min) |
+| 3 | `triplex-bench3-fresh` (`queue/fresh/run.sh` = `bench3-writer-addons.sh`, waiting for `rd1`) | PREP1 `891ab9139`, `prep1/FRESH-FIRST.md` | 120 min |
+| 4 | `triplex-bench3-realistic` (`queue/realistic/run.sh` = `bench3-realistic.sh`) | INT1 build `8597e3ef7`, first realistic rung, then `verify` | 2–3 h plus verify |
+
+**The cold start arms stopped on a runner assertion, with no offers made.** The stack started on the builder's own command, and the startup and catalog checks passed. Then `jvm1/cold-server.ts` line 118 at `8ab832093` failed: `assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/)` received `null`. The write gateway's `/write-options` for the held fresh copy at cut 87,002 reports subject save, numeric owner and ordered IDs, but no installed subject function. The other full-size runners on this seed, `prep1/live.ts` line 390 and `v01/adopted.ts` line 239, pass the same check after their own setup. So the cold runner is probably missing the step that installs or reports the function before its first offer. **The JVM1 builder must fix this.** The fix must keep the no-warming rule: installing the function is a write, so it has to be part of the measured start or happen before the stopped copy is made. The evidence is on the Mac at `evidence/DX-BM1/bench3/bench3-cold`. The cold slot's containers, volume and WAL were released by the runner itself.
 
 **Every launcher now rebuilds right before its run.** Each `v01/build.ts` build retags the shared names `tx2-datomic:1.0.7745-da00` and `-jre25`. The removal build made at 18:47 therefore no longer matched its receipt once the rd1 and cold builds had run. The second removal attempt was refused on image IDs before any container started. The rd1 unit, which would have reused an equally stale build, was stopped during its copy. A rebuild takes one to two minutes with the warm layer cache.
 

@@ -19,6 +19,9 @@ SLOTS = {
         "prepared/ready.txt", "build/BUILD-v0.1.json")),
     "bench3-removal": ("bench3/queue/removal", ("result", "unit.log", "started",
         "prepared/inventory.json", "prepared/ready.txt", "build/BUILD-v0.1.json")),
+    "bench3-cold": ("bench3/queue/cold", ("result", "unit.log", "started", "cold.log", "build/BUILD-v0.1.json")),
+    "bench3-rd1": ("bench3/queue/rd1", ("result", "unit.log", "started", "ladders.log", "affinity.log",
+        "build/BUILD-v0.1.json")),
     "bench3-realistic": ("bench3/queue/realistic", ("result", "unit.log", "started", "verify.json",
         "verified-pins.sha256", "stopped/real1-copy.json", "build/BUILD-v0.1.json")),
     "bench3-realistic-card": ("bench3/queue/realistic-card", ("result", "unit.log", "started",
@@ -131,6 +134,9 @@ def archive(name, revision):
                  "triplex-bench3-tuned-retry.service"]
     if name.startswith("bench3-") and name != "bench3-control":
         units = ["triplex-"+name+".service"]
+    if name == "bench3-removal":
+        # [DX-BM1] Why: the first removal unit was refused at stack start; the measured run is the repaired unit.
+        units = ["triplex-bench3-removal2.service"]
     states = {}
     for unit in units:
         state = subprocess.check_output(["systemctl", "show", unit, "-p",
