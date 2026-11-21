@@ -1,5 +1,6 @@
 (ns triplex.gateway.owner-layout
   (:require [clojure.edn :as edn]
+            [clojure.walk :as walk]
             [datomic.api :as d] [triplex.gateway.commit :as commit]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.scope :as scope]
@@ -16,18 +17,40 @@
 (def version "owner-layout-version")
 
 (defn root-text [position clock pages] (pr-str [1 position clock pages]))
-(defn- decode-root [raw]
+(def ^:private cover-root-code
+  ;; [DX-W1] Why: the row text is already encoded and length-framed inside the root.
+  ;; Rejected: rereading and allocating escaped row strings in the EDN reader on each point query.
+  '(fn [position clock mask rows]
+     (str (pr-str [3 position clock (vec mask) (mapv count rows)])
+          "\n" (apply str rows))))
+
+(defmacro ^:private coverage-encoder [] cover-root-code)
+(def ^:private cover-root (coverage-encoder))
+
+(defn- inline-texts [^String raw start widths]
+  (when (and (vector? widths) (<= (count widths) cover-limit)
+             (every? #(and (integer? %) (pos? %) (<= % (.length raw))) widths))
+    (let [cuts (reductions + start widths)]
+      (when (= (last cuts) (.length raw))
+        (mapv (fn [from to] (subs raw from to)) cuts (rest cuts))))))
+
+(defn- decode-root [^String raw]
   (when raw
-    (let [[version position clock a b] (edn/read-string raw)]
+    (let [split (.indexOf raw "\n")
+          [version position clock a b] (edn/read-string (if (neg? split) raw (subs raw 0 split)))
+          texts (case version
+                  2 (when (and (vector? b) (every? string? b)) b)
+                  3 (when-not (neg? split) (inline-texts raw (inc split) b))
+                  nil)]
       (when-not (and (integer? position) (number? clock) (vector? a) (every? string? a)
                      (case version
                        1 (<= (count a) page-limit)
-                       2 (and (<= (count a) cover-limit) (vector? b) (<= (count b) cover-limit) (every? string? b))
+                       (2 3) (and (<= (count a) cover-limit) (some? texts) (<= (count texts) cover-limit))
                        false))
         (throw (ex-info "Invalid owner projection root" {})))
       (cond-> {:raw raw :position position :clock clock}
         (= 1 version) (assoc :keys a)
-        (= 2 version) (assoc :mask a :texts b)))))
+        texts (assoc :mask a :texts texts)))))
 
 (defn- read-root [db owner] (decode-root (scope/value db owner root-attr)))
 
@@ -59,21 +82,24 @@
 (defn covered-live-datoms [db owner]
   ;; [DX-W1] Why: the covering root and legacy rows share one owner range at the selected basis.
   ;; Rejected: opening a page and then the public-ID and owner indexes for each edited row.
-  (let [[root-a row-a retired-a] (mapv #(d/entid db %) [root-attr :triplex.entity/row :triplex.entity/retired])
+  (let [root-a (d/entid db root-attr)
+        row-a (d/entid db :triplex.entity/row)
+        retired-a (d/entid db :triplex.entity/retired)
         {:keys [raw legacy retired]}
         (read-stage :owner-range
-          (reduce (fn [out datom]
-                    (let [a (:a datom)]
-                      (cond (= a row-a) (update out :legacy conj datom)
-                            (= a root-a) (assoc out :raw (:v datom))
-                            (= a retired-a) (update out :retired conj (row-id datom))
-                            :else out)))
-                  {:legacy [] :retired #{}} (d/datoms db :eavt owner)))
+          (let [legacy (java.util.ArrayList.) retired (java.util.HashSet.) root (volatile! nil)]
+            (doseq [datom (d/datoms db :eavt owner)]
+              (let [a (:a datom)]
+                (cond (= a row-a) (.add legacy datom)
+                      (= a root-a) (vreset! root (:v datom))
+                      (= a retired-a) (.add retired (row-id datom)))))
+            {:legacy legacy :retired retired :raw @root}))
         root (read-stage :root-decode (decode-root raw))]
     (when (or (nil? root) (:texts root))
       (read-stage :mask
-        (let [masked (into retired (:mask root))]
-          (into (filterv #(not (contains? masked (row-id %))) legacy)
+        (do
+          (.addAll ^java.util.Set retired (or (:mask root) []))
+          (into (filterv #(not (.contains ^java.util.Set retired (row-id %))) legacy)
                 (map #(hash-map :v %)) (:texts root)))))))
 
 (defn live-datoms [db owner]
@@ -119,11 +145,11 @@
                                (nth (stamp op) 3))) (filter #(instance? java.util.List %) ops))]
            ;; [DX-W1] Why: Datomic supplies the wire collections as Java lists.
            ;; Rejected: appending to the native list (it is not a persistent collection).
-           (pr-str [2 final clock (vec mask) (into (vec retained) fresh)]))
+           (cover-root-encoder final clock mask (into (vec retained) fresh)))
          (pr-str [1 final clock pages]))]
       [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]]))
 
-(def code (subject/compile-code update-code))
+(def code (subject/compile-code (walk/postwalk-replace {'cover-root-encoder cover-root-code} update-code)))
 (def ident (keyword "triplex.owner" (str "v-" (subs (schema/sha256 (pr-str code)) 0 24))))
 
 (defn install-fixture! [conn]
@@ -237,7 +263,7 @@
                                          (peek (stamp op)))))
                             ops)
         target-root (if-let [[mask retained] (get-in plan [:owner-layout :cover])]
-                      (pr-str [2 position clock mask (into retained expected-rows)])
+                      (cover-root position clock mask (into retained expected-rows))
                       (root-text position clock (get-in plan [:owner-layout :pages])))
         written (into {} (keep (fn [x]
                                 (when (= page-key-a (:a x))

@@ -115,7 +115,7 @@
 
 (defn- spare-edit [i]
   (let [attribute (str ":spare/" i)
-        input (reference/edit-frame (str "edit-spare-" i) (str "replacement-" i) (str "new-value-" i)
+        input (reference/edit-frame (str "edit-spare-" i) (str "replacement-" i) (str "new-value-\uD83E\uDDED\n" i)
                                     2.0 12.0 (str "spare-" i))]
     (rows/row-input
       (update input "rows"
@@ -208,15 +208,19 @@
         {:keys [db owner pinned current journal counts]} (get fixtures arm)
         conn (main/connection (main/db-uri db))
         latest (d/db conn)
-        sample (fn [{:keys [t expected]} profile?]
+        truth (into {} (map (fn [{:keys [t expected]}]
+                             (let [actual (read-rows (d/as-of latest t) owner arm)]
+                               (assert (= expected (row-summary actual)))
+                               [t actual]))) [current pinned])
+        sample (fn [{:keys [t]} profile?]
                  (let [stages (when profile? (volatile! {}))
                        start (System/nanoTime)
                        view (if (= t (d/basis-t latest)) latest (d/as-of latest t))
                        actual (binding [layout/*read-stages* stages] (read-rows view owner arm))
                        elapsed (- (System/nanoTime) start)]
-                   ;; [DX-W1] Why: validate every sample outside the read clock.
-                   ;; Rejected: timing the oracle digest and attributing it to the reader.
-                   (assert (= expected (row-summary actual)))
+                   ;; [DX-W1] Why: verify every read against the rows bound to its cut at startup.
+                   ;; Rejected: rehashing the same rows after every read (allocates into the next sample).
+                   (assert (= (truth t) actual))
                    (if stages @stages elapsed)))]
     (assert (= attempt (System/getenv "PREP1_ATTEMPT")))
     (assert (= (:t current) (d/basis-t latest)))
