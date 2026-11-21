@@ -7,6 +7,7 @@ import { expiryMs, field, operationId, sha, task, type Write } from "../scale1/d
 import { creditModeSelection } from "./rolling-credits.ts";
 import type { CreditMode } from "../jvm1/launch.mjs";
 import { command } from "../w1/group/workload.ts";
+import { replay } from "../chk1/replay.ts";
 
 const [phase, mode, witnessPath] = process.argv.slice(2);
 const selection = creditModeSelection(mode as CreditMode);
@@ -130,6 +131,27 @@ async function before(witness: string) {
     { code: "CommandConflict" });
   const beforeFailure = await head(db);
   assert.equal(beforeFailure, cut + okTape.length + lostTape.length);
+  if (process.env.DX_CHK1_APPEND_GATE === "1") {
+    // [DX-CHK1] Why: prove neither identity representation can be reused after retirement.
+    // Rejected: a duplicate command ID that can fail before testing assertion uniqueness.
+    const sample = ok.rows[0]!;
+    assert(sample.orderedToken);
+    const retired = [change.rows[0]!.id, orderedSaveIdentity(sample.orderedToken).assertionId(0)];
+    for (const [i, id] of retired.entries()) {
+      const attemptId = nonce + "-retired-reuse-" + i;
+      const draft = command(attemptId, [{ e: "reuse-control-" + i, a: field(0),
+        v: { type: "string", value: "unexpected" } }], [], false);
+      draft.rows[0] = { ...draft.rows[0]!, id };
+      draft.newIds[0] = id;
+      await assert.rejects(() => real(db, draft), { code: "IdentityConflict" });
+      assert.equal((await client.operation(db, attemptId)).status, "absent");
+    }
+    await assert.rejects(() => client.rows(db, {
+      entityIds: [task(0, 0)], basis: { recordedPosition: beforeFailure + 1, validAt: 1 }, basisWaitMs: 1,
+    }), { code: "BasisNotAvailable" });
+    assert.equal(await head(db), beforeFailure);
+    console.log("DX_CHK1_REUSE " + JSON.stringify({ attempt, db, legacy: retired[0], ordered: retired[1], futureCut: beforeFailure + 1 }));
+  }
 
   // [DX-PREP1] Why: let the real transactor reject its next append while requests hold rolling credits.
   // Rejected: a timer-based stop or treating a fabricated failed HTTP response as a refused storage write.
@@ -193,6 +215,11 @@ async function after(witness: string) {
       [r.id, r.p, r.t, r.clock]);
   }
   for (const id of proof.missing) assert.equal((await client.operation(db, id)).status, "absent");
+  if (process.env.DX_CHK1_APPEND_GATE === "1") {
+    const full = await replay(url, db, proof.head, proof.acked);
+    assert.equal(full.length, proof.head);
+    console.log("DX_CHK1_FULL_REPLAY " + JSON.stringify({ attempt, db, positions: full.length, recovered: proof.acked.length }));
+  }
   const recoveredId = operationId(nonce, tape(credits, "lost")[credits-1]!.version);
   const original = await client.operation(db, recoveredId);
   assert.deepEqual([Number(original.position?.v), original.t?.v, original.recordedAt?.v],

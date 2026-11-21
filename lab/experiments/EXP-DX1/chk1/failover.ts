@@ -98,6 +98,21 @@ export async function failover(pair: SyncPair) {
   };
 
   try {
+    const options = await reader.request<{
+      attempt: string;
+      database: string;
+      subjectOrderedIds: boolean;
+      subjectAppendRetirement: boolean;
+    }>("GET", "/v1/db/" + db + "/write-options");
+    assert.deepEqual(
+      [
+        options.attempt,
+        options.database,
+        options.subjectOrderedIds,
+        options.subjectAppendRetirement,
+      ],
+      [s.e.nonce, db, true, true],
+    );
     const initialRows = await Promise.all(owners.map((owner) => read(initial.position, owner)));
     const before = await turn(inputs("before", initialRows), initial.position);
     known.push(...before);
@@ -127,7 +142,15 @@ export async function failover(pair: SyncPair) {
     assert(heldObserved && pair.replacement);
     const after = await turn(held, oldCut);
     known.push(...after);
-    const flushed = await pair.verifyReplacement(pair.replacement);
+    const latest = after.reduce((last, next) => (next.p > last.p ? next : last));
+    await replay(pair.reader, db, oldCut + after.length, [latest]);
+    const flushed = await pair.verifyReplacement(pair.replacement, {
+      operationId: latest.id,
+      position: { t: "long", v: String(latest.p) },
+      t: { t: "long", v: latest.t },
+      recordedAt: { t: "double", v: latest.clock },
+    });
+
     const terminal = oldCut + after.length;
     const commits = await replay(pair.reader, db, terminal, known);
     s.e.write("combined-failover-replay", {

@@ -61,6 +61,7 @@ export async function duringRemoval<T extends Erased>(
     let removal: Promise<T> | undefined;
     client.transact = (...args) => {
       const input = args[1];
+      assert(input.live?.length === 1);
       proof.set(input.operationId, {
         id: input.rows[0]!.id,
         prior: input.live[0]!,

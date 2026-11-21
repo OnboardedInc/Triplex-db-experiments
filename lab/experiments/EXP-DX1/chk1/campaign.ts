@@ -8,6 +8,8 @@ import {
   orderedSaveIdentity,
 } from "../../../../packages/datomic/dist/index.js";
 import { W0 } from "../../../bench/lib/w0-world.ts";
+import { DomainOracle } from "../../../bench/lib/w0-gates.ts";
+import { authoredSeed, authoredWrite, expectedPolicy } from "../actv-lazy/join/deep-reference.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { JoinedAccount } from "../actv-lazy/join/account.ts";
 import { seedToy } from "../actv-lazy/join/held-campaign.ts";
@@ -242,20 +244,26 @@ export async function campaign(stack: Stack, cell: string) {
         return ack;
       };
       const selection = creditModeSelection("rolling6");
+      const quiet = old.find((row) => row.entity_id === entities[0])!;
+      let quietWorld = authoredSeed(0, quiet.recorded_position);
       const tape: Write[] = cold
         ? [
             { ordinal: 0, account: 1, subject: 0, ms: 0, width: 1, version: "rate-refused" },
             { ordinal: 1, account: 0, subject: 0, ms: 100, width: 1, version: "quiet" },
             { ordinal: 2, account: 1, subject: 0, ms: 250, width: 1, version: "lost" },
           ]
-        : Array.from({ length: 24 }, (_, ordinal) => ({
-            ordinal,
-            account: ordinal % 6,
-            subject: 0,
-            ms: Math.floor(ordinal / 6) * 250 + (ordinal % 6) * 10,
-            width: 1,
-            version: "live-" + ordinal,
-          }));
+        : [
+            ...Array.from({ length: 25 }, (_, ordinal) => ({
+              ordinal,
+              account: 1 + (ordinal % 5),
+              subject: 0,
+              width: 1,
+              ms: Math.floor(ordinal / 5) * 250 + (ordinal % 5) * 10,
+              version: "busy-" + ordinal,
+            })),
+            { ordinal: 25, account: 0, subject: 0, width: 1, ms: 0, version: "quiet-before" },
+            { ordinal: 26, account: 0, subject: 0, width: 1, ms: 800, version: "quiet-after" },
+          ].sort((a, b) => a.ms - b.ms || b.ordinal - a.ordinal);
       if (cold) lost = operationId(e.nonce, "lost");
       const imports: {
         index: number;
@@ -272,7 +280,23 @@ export async function campaign(stack: Stack, cell: string) {
       const start = now() + 100;
       const gate: PublishInterleave = {
         paused: false,
-        committed: (row) => ledger?.saved(row),
+        committed: (row) => {
+          ledger?.saved(row);
+          if (row.account !== 0) return;
+          const edited = out.get(row.id)!.rows[0]!;
+          quietWorld = authoredWrite(
+            quietWorld,
+            [
+              {
+                e: edited.entity_id.split("/").at(-1)!,
+                a: edited.attribute,
+                v: { type: "string", value: edited.value_string! },
+              },
+            ],
+            row.receipt!.p,
+            edited.valid_from,
+          );
+        },
       };
       const activity = play(
         senders,
@@ -366,6 +390,21 @@ export async function campaign(stack: Stack, cell: string) {
               validTime: W0.POPULATION_VALID_TIME,
             });
             assert.equal(answer.basis.tx, result.position);
+            const oracle = new DomainOracle(
+              new URL("../actv-lazy/join/oracle.py", import.meta.url).pathname,
+            );
+            try {
+              const text = await oracle.call("check", {
+                document: doc,
+                old: null,
+                basis: answer.basis,
+                worlds: [expectedPolicy(0, quietWorld)],
+                fold: false,
+              });
+              assert.equal(answer.json, JSON.parse(text)[0].json);
+            } finally {
+              oracle.close();
+            }
             return result.position;
           } finally {
             gate.paused = false;
@@ -446,6 +485,12 @@ export async function campaign(stack: Stack, cell: string) {
             imports.some((f) => f.receipt.position < published) &&
             imports.some((f) => f.receipt.position > published),
         );
+        const quietSaves = result.rows.filter((row) => row.account === 0);
+        assert.deepEqual(
+          quietSaves.map((row) => row.status),
+          ["acked", "acked"],
+        );
+        assert(quietSaves[0]!.receipt!.p < published && quietSaves[1]!.receipt!.p > published);
       }
       let prev = 0;
       for (const { frame, receipt } of imports.toSorted((x, y) => x.index - y.index)) {

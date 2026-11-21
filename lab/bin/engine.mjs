@@ -301,12 +301,13 @@ async function selftestDatomic(config, opts) {
 // [DX-THIN1] Why: release only staged images that this experiment built and whose slots have closed.
 // Rejected: a forced removal or pruning the lab VM's shared image cache.
 async function removeThinImage(config, opts) {
-  if (!['DX-THIN1', 'DX-PREP1', 'DX-REAL1', 'DX-RD1'].includes(opts.holder) || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
+  if (!['DX-THIN1', 'DX-PREP1', 'DX-REAL1', 'DX-RD1', 'DX-CHK1'].includes(opts.holder) || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
   const info = slotInfo(config, 'datomic', 'dev');
   const tag = info.laneConf.image;
   // [DX-PREP1] Why: a diagnostic retry can discard its exact staged image after the slot exits.
   // Rejected: pruning the image store shared with other builders.
   const ownedTag = {
+    'DX-CHK1': /^tx2-datomic:dx-chk1-rolling-[a-f0-9]{8}$/,
     'DX-REAL1': /^tx2-dxthin-managed:real1-[a-f0-9]{16}$/,
     'DX-THIN1': /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/,
     'DX-PREP1': /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery|subject-native-suite)$/,

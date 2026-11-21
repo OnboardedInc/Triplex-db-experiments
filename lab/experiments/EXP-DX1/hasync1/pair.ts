@@ -886,12 +886,16 @@ export class SyncPair {
       replay: await this.sql("pg", "select pg_last_wal_replay_lsn()"),
     };
   }
-  async verifyReplacement(copy: Awaited<ReturnType<SyncPair["startReplacement"]>>) {
+  async verifyReplacement(copy: Awaited<ReturnType<SyncPair["startReplacement"]>>,
+    combinedReceipt?: Awaited<ReturnType<Account["send"]>>) {
+    // [DX-CHK1] Why: use the already pinned, ordered receipt on the strict rolling fixture.
+    // Rejected: adding a legacy recovery-probe write with its own authored clock.
+    assert(!combinedReceipt || this.combined);
     const s = this.s;
     const ac = this.account!;
     assert.equal(s.members.get("pg")!.id, copy.new);
-    const receipt = await ac.send(ac.intent("first-reprotected", 3));
-    await ac.pinned(receipt);
+    const receipt = combinedReceipt ?? await ac.send(ac.intent("first-reprotected", 3));
+    if (!combinedReceipt) await ac.pinned(receipt);
     const cut = await this.sql("target", "select pg_current_wal_flush_lsn()");
     const flush = await wait(
       "the protected save is durable on the fresh standby",
