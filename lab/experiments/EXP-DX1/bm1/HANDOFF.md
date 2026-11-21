@@ -4,19 +4,22 @@
 
 A new driver took over bench 3 at 12:45 EST after the previous driver stopped at about 12:38. The rental had cost about USD 3.85 at 17:45 UTC, at USD 1.09/hour from 14:13 UTC.
 
-**Queue on the server at 19:05 UTC, as chained systemd units; each waits for the one before it:**
+**Queue on the server at 19:10 UTC, as chained systemd units; each waits for the one before it:**
 
 | Order | Unit | Commit | Cap |
 | --- | --- | --- | --- |
 | done | `triplex-bench3-cache32` | PREP1 `97aced1b1` | [Reading](ROLLING-READING.md#32-gib-object-cache-cache32) |
 | done | `triplex-bench3-tx5` | PREP1 `73afad665` | [Reading](ROLLING-READING.md#five-transactor-cores-with-the-16-gib-cache-tx5) |
-| failed | `triplex-bench3-removal`, 18:53:58 UTC | INT1 build `3669bee41` | Refused before any container; see below |
+| failed | `triplex-bench3-removal`, 18:53:58 UTC | INT1 build `3669bee41` | CPU refusal before any container; see below |
 | failed | `triplex-bench3-rd1`, control ladder, 18:57 UTC | RD1 `ca93f5165` | Same refusal; see below |
-| 1 | `triplex-bench3-removal2` (preparing since 19:01:40 UTC; `queue/removal/run.sh` = `bench3-removal.sh`, repaired) | INT1 build `3669bee41`, `erase1/SERVER-ERASE2.md` | new copy, then 86 min |
-| 2 | `triplex-bench3-rd1` (`queue/rd1/run.sh` = `bench3-rd1.sh`, repaired) | RD1 `ca93f5165`, prepared-copy reader ladders, control then tuned, rolling 6 | 2 × (copy + 32 min) |
-| 3 | `triplex-bench3-cold` (`queue/cold/run.sh` = `bench3-cold.sh`) | INT1 `8ab832093`, `jvm1/cold-server.sh ... --credit-mode rolling6` | 20 min build, then 59 min |
-| 4 | `triplex-bench3-fresh` (`queue/fresh/run.sh` = `bench3-writer-addons.sh`, waiting for `cold`) | PREP1 `891ab9139`, `prep1/FRESH-FIRST.md` | 120 min |
+| failed | `triplex-bench3-removal2`, 19:05:53 UTC | INT1 build `3669bee41` | Image IDs moved by later builds; see below |
+| 1 | `triplex-bench3-cold` (preparing since 19:06:30 UTC; `queue/cold/run.sh` = `bench3-cold.sh`) | INT1 `8ab832093`, `jvm1/cold-server.sh ... --credit-mode rolling6` | build, then 59 min |
+| 2 | `triplex-bench3-removal2` (`queue/removal/run.sh` = `bench3-removal.sh`) | INT1 build `3669bee41`, `erase1/SERVER-ERASE2.md` | build, new copy, then 86 min |
+| 3 | `triplex-bench3-rd1` (`queue/rd1/run.sh` = `bench3-rd1.sh`) | RD1 `ca93f5165`, prepared-copy reader ladders, control then tuned, rolling 6 | build, then 2 × (copy + 32 min) |
+| 4 | `triplex-bench3-fresh` (`queue/fresh/run.sh` = `bench3-writer-addons.sh`, waiting for `rd1`) | PREP1 `891ab9139`, `prep1/FRESH-FIRST.md` | 120 min |
 | 5 | `triplex-bench3-realistic` (`queue/realistic/run.sh` = `bench3-realistic.sh`) | INT1 build `8597e3ef7`, first realistic rung, then `verify` | 2–3 h plus verify |
+
+**Every launcher now rebuilds right before its run.** Each `v01/build.ts` build retags the shared names `tx2-datomic:1.0.7745-da00` and `-jre25`. The removal build made at 18:47 therefore no longer matched its receipt once the rd1 and cold builds had run. The second removal attempt was refused on image IDs before any container started. The rd1 unit, which would have reused an equally stale build, was stopped during its copy. A rebuild takes one to two minutes with the warm layer cache.
 
 **The server had no measurement running between 18:59:47 and 19:01:40 UTC.** I stopped the waiting units to re-chain them, and the stop of `cold` let `removal2` start while cold's seed-copy container was still exiting. `removal2`'s empty-Docker check refused it, as intended. The cold attempt that I stopped had reached its first seed copy, with no offers. Its result and log are kept under `queue/cold/stopped-1900`, and its container, volume and WAL directory were removed by exact slot name.
 

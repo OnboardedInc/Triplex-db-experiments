@@ -47,6 +47,10 @@ fi
 [[ $mode == run && ! -e $out && ! -e $job/stopped && -z $(docker ps -q) ]]
 date -u +%FT%TZ > "$job/started"
 record preparing extend
+# [DX-BM1] Why: every v01 build retags the shared tx2-datomic image names, so a build made before another item's
+# build no longer matches its receipt's image IDs (removal2 refused at 19:05 UTC). Rebuild right before each run.
+# Rejected: reusing a receipt whose tags a later build moved.
+rm -rf --one-file-system "$build" "$job/build-input"
 timeout -k 15s 20m bash "$root/bench3-v01-build.sh" "$root" realistic "$pin"
 cd "$build/repository"
 [[ $(git rev-parse HEAD) == "$pin" && -z $(git status --porcelain) ]]
