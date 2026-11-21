@@ -30,7 +30,7 @@ export async function untouchedCensus(stack: Stack, out: string, secret: string,
     const db = created.db;
     const account: Account = { kind: "thin", id: 10, people: 4096 };
     let head = 0, people = 0, lastT = 0n, pid: number | undefined, ticks: string | undefined;
-    let originalGauge: unknown;
+    let originalGauge: unknown, gatewayWrapper: number | undefined;
     const frames: { first: number; last: number; operation: string; position: number; tx: string }[] = [];
     const observeHead = async () => {
       for (let n = 0; n < 40; n++) {
@@ -92,7 +92,18 @@ export async function untouchedCensus(stack: Stack, out: string, secret: string,
         pid ??= profile.pid;
         ticks ??= profile.startTicks;
         assert(profile.pid === pid && profile.startTicks === ticks && ticks && Number(ticks) > 0);
-        assert(samples.every((m) => m.gatewayPid === pid));
+        // [DX-INT1] Why: the launcher can remain above the profiled JVM.
+        // Rejected: attributing a shell PID to the Java histogram or matching on a process name.
+        gatewayWrapper ??= samples[0]!.gatewayPid;
+        assert(Number.isSafeInteger(gatewayWrapper) && gatewayWrapper! > 1);
+        assert(samples.every((m) => m.gatewayPid === gatewayWrapper));
+        const ancestor = (child: number): boolean => {
+          if (child === gatewayWrapper) return true;
+          if (child <= 1) return false;
+          const stat = fs.readFileSync("/proc/" + child + "/stat", "utf8");
+          return ancestor(Number(stat.slice(stat.lastIndexOf(") ") + 2).split(" ")[1]));
+        };
+        assert(ancestor(pid!));
         assert(histogram.startsWith(pid + ":"));
         assert.equal(profile.chargedBytes, profile.caches.reduce((sum: number, c: { units: number; bytesPerUnit: number }) =>
           sum + c.units * c.bytesPerUnit, 0));
@@ -103,7 +114,7 @@ export async function untouchedCensus(stack: Stack, out: string, secret: string,
         assert.equal(gauge.idMemo.inserts, originalGauge);
         const name = population + (indexed ? "-indexed" : "-live"), bytes = gzipSync(histogram);
         fs.writeFileSync(path.join(out, name + ".histogram.gz"), bytes, { flag: "wx" });
-        save(name, { ...identity, db, population, head, indexed, index, samples, profile, gauge,
+        save(name, { ...identity, db, population, head, indexed, index, samples, gatewayWrapper, profile, gauge,
           histogram: sha(bytes), totals: parseHistogram(histogram) });
       }
     }
