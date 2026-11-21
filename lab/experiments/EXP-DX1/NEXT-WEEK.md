@@ -71,6 +71,20 @@ defined in `lab/V0.1.md` on main.
     many distinct old cuts and on the 1 billion record database.
 16. **Java 25:** eight unexplained failures in the broad SQL suite; resolve before any default changes.
 
+16a. **Full-size capacity and fairness (state at 2026-11-21 01:00 local).** Ordered writer, ten accounts of 100,000
+    people in one database: 361.51 saves per second delivered at 394 offered with the transactor on three cores and
+    16 GiB (7 percent expired); the transactor used 1.1 to 1.5 of its three cores, so the limit is elsewhere
+    (gateway preparation, the six-credit fair turns, about 0.75 to 1.1 storage reads per save for a person's own
+    rows). To do: attribute it; two write gateways now that the serial step is cheap; a 32 GiB cache; the person's
+    current rows on a dense record; fair-turn credit size. Quiet account: best 2.29 times at full size, 1.36 on
+    the small seed with the combined settings (bar 1.25); the six remaining slow appends in the combined arm are
+    unattributed. Each treatment ran once: repeat the key arms.
+16b. **Two-server failover measurements (priority 9)** were not run this weekend: server 2 was occupied and server 1
+    was released. Needs both servers for 17 to 30 minutes plus setup, and Sam's A, B or C choice.
+16c. **Erasure full stage on server 1** stopped after both fixtures were sealed because a shutdown check still
+    reached a listener (tooling); the 128-person check verified.
+16d. **Memory-matched G1 against ZGC** (G1 with 37 GiB reserved) to separate the collector from the memory.
+
 ## Not started, deferred past version 0.1 or past the weekend
 
 17. Aging beyond 1 billion records (2, 4, 8 billion) when there is budget; the growth model's predictions are the

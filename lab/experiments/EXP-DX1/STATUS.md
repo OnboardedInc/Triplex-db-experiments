@@ -4031,3 +4031,23 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   (DX-SCALE1 stopped and resumed). DX-THIN1 part 8 assigned: `laptop` and `server` profiles in the launch
   settings (server: transactor three cores, 16 GiB object cache, optional separate WAL directory, ZGC one setting
   away); then DX-V01 re-pins. Running: DX-BM1, DX-SCALE1, DX-THIN1 (three).
+
+## 2026-11-21 06:01 UTC (01:01 local, 2026-11-21): RESULT: combined settings meet the 50 ms bar alone and under load on the small seed; server 1 gets one last run
+
+- **Combined arm, server 1 (`origin/exp/DX-BM1-bare-metal` at `31f33faf8`, `bm1/APPEND-TAIL-READING.md`; ordered
+  writer, separate log drive, transactor on Java 25 ZGC, fair turns; ten accounts of 10,000 people; all 57,240
+  offers stored, nothing expired):**
+
+  | Offered per s | Delivered per s | Quiet solo p99 | Quiet loaded p99 | Ratio |
+  | ---: | ---: | ---: | ---: | ---: |
+  | 235 | 234.99 | 31.19 ms | 42.39 ms | 1.36 |
+  | 394 | 393.97 | 7.93 ms | 33.98 ms | 4.28 |
+
+  All four p99 values are under the 50 ms bar; both ratios exceed 1.25 (the forecast was 13 and 9 ms solo and
+  ratios of 1.54 and 1.89). The six append calls over 20 ms in this arm are unattributed.
+- **Server 1 queue empty at 00:59 local** (cost of server 1 $67.09 at 01:00). Publish under load had not run
+  because the 100,000-person roster volume was removed; the erasure full stage stopped on a shutdown check after
+  its 128-person check verified. DX-BM1 resumed for one last item: rebuild the roster and run Publish under load
+  with priority (hard cap 3 h 30 min, a smaller roster if it can be built in under 40 minutes), then the final
+  handoff; the orchestrator deletes server 1 after that. The two-server failover window is logged for next week.
+- Running: DX-BM1, DX-SCALE1, DX-THIN1 (three).
