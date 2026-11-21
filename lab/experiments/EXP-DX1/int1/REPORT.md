@@ -5,7 +5,7 @@ Version 0.1 holds saves after a machine loss until a second verified copy is rea
 The small Publish run matched the full read and save tapes in both credit modes.
 The two queued scorecards still use their original builds.
 All Mac clocks are diagnostic. Full-size receipts, latency and recovery remain for the servers.
-The public playground smoke gate follows the server work.
+The playground restored the public smoke data from a clean clone and passed its browser and agent checks.
 
 ## Sunday failover integration audit
 
@@ -24,3 +24,7 @@ The Sunday adoption split supplies the new physical launcher without changing th
 ## Public playground integration audit
 
 The smoke round trip binds the selected tier, manifest and chunk digests to a fresh exact-source clone and the live canonical engine grant. Before readiness it checks the restored checkpoint and compares authored records at three exact cuts. It compares the HTTP and agent actions with their expected payloads and requires the browser check. Stop checks the original listener and exact owned Docker inventory before the round-trip record can be written. The runtime action receipts use durable save claims and pinned readback. No new acceptance verdict is emitted.
+
+The clean-clone gate at `4ab794320dcc499016a7fcd26d523b558ba72e28` verified the 18,276,592-byte public snapshot and its manifest. It opened cuts 79, 493 and 933. TypeScript, seven tests, four clean package tasks, 17 API cases, both MCP transports and Chromium passed. Stop removed the original listener and all owned resources. The temporary clone, Publish image and scratch sources were removed. The full hosted data and manual workflow remain open.
+
+The billion-record runner keeps `8cc32d380` with `57580241d`. The next-card runner keeps `c1eeb2ef8` with `5f62059b1`. No acceptance pin moved. The server build commits above have separate Mac evidence archives in `int1/p10`, alongside the playground archive. The real two-host fault run and the physical prepared-data Publish run are still open. [Owner decisions and scorecard rows](V0.1-STATE.md) · [Evidence index](V0.1-SHA256SUMS)
