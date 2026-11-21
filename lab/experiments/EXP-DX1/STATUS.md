@@ -4051,3 +4051,11 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   with priority (hard cap 3 h 30 min, a smaller roster if it can be built in under 40 minutes), then the final
   handoff; the orchestrator deletes server 1 after that. The two-server failover window is logged for next week.
 - Running: DX-BM1, DX-SCALE1, DX-THIN1 (three).
+
+### 2026-11-21 01:30 local: server profile merged; scorecard builder resumed to re-pin (3 agents running)
+
+- **DX-THIN1 part 8 finished** (exit 0). `origin/exp/DX-INT1` at `8ae07b227`; scorecard pin `57580241d`. Launch settings now have a `laptop` and a `server` profile. The scorecard defaults to `server`: three transactor cores, 24 GiB heap, 16 GiB object cache, Java 21 G1. `--tx-jvm j25-zgc` (ZGC on the transactor only) and `--wal-directory DIR` (PostgreSQL write log on a separate device) are selectable; the launcher refuses to start when the separation cannot be verified. Both laptop writer modes passed their gates. Not yet verified on bare metal: full-size placement, the mixed Java arrangement, the separate write log.
+- **DX-V01 part 6 resumed** (run-critical): re-pin the scorecard to `57580241d`; headline arms use the server profile with transactor ZGC and the separate write log; comparison rows for the default server profile and the grouped writer; predictions written into `v01/SERVER.md` before the run; at most 300 minutes per age.
+- **Server 1**: idle 00:52 to 01:07 (queue ended 00:59, new brief 01:01); building the Publish under load image at 01:08. Idle watcher re-armed.
+- **Server 2**: aging setup commits (`b197dbd7a`, `6f366b608`, `54913ad32`); no aging rate yet.
+- Agents running: DX-BM1, DX-SCALE1, DX-V01.
