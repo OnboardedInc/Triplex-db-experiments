@@ -11,7 +11,7 @@ No bare-metal measurement was taken by this worktree.
 
 The exact Clojure Part 10 test at PREP1 `8a116ed36` ran successfully before the ordered fixture. The adopted loader made two 80-person scopes in the ordered stack and one 80-person scope in the grouped stack. The ordered benchmark’s 211 replies all named the installed function and their ordered identity blocks. The grouped benchmark acknowledged all 183 offers. Each writer checked 48 pinned reads in each quiet cell. The ordered reference import verified 767 frames, 24,544 facts, all 270 offered saves and all 990 reads. Both retired-ID refusals left an unchanged head and no operation or claim. Both writer configurations retained four matching typed values and validity ranges. The engine removed both private volumes and released both reservations. Every local clock is diagnostic.
 
-INT1 still advertised `250c91916` when this preview was published. The preview keeps the existing guarded erasure branch and the published PREP1 ordered-ID checks. The designated integration still controls the release pin.
+INT1 still advertised `250c91916` when this preview was published. The preview keeps the existing guarded erasure branch and the published PREP1 ordered-ID checks. The designated integration still controls the release pin. The preview instructions record both commands and their costs. [Server procedure](SERVER.md)
 
 ## Part 3 writer configuration audit
 

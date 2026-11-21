@@ -1,58 +1,54 @@
 # Run the v0.1 scorecard
 
-Use the held SCALE1 decision loader image on a dedicated bare-metal Ubuntu 24.04 server. The process uses the existing native queue lock, 12 allowed physical cores numbered 0 through 11, and disposable PostgreSQL restores. The original archive stays immutable. Allow at least 240 GiB of free scratch for fresh and 320 GiB for 1B.
+Server 2 should retain `790d9e96e` until INT1 names the ordered-writer integration. The commands below reproduce the two-writer preview. The Mac fixture verified the candidate. Full-size operation at either age remains open. [Current server handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/4fece9022f9ebbf3d633756117e9c899d6578a70/lab/experiments/EXP-DX1/v01/SERVER.md)
+
+Use a dedicated bare-metal Ubuntu 24.04 server. The command holds the native queue lock and makes disposable restores of the sealed SCALE1 database. All measured accounts share one Datomic database in each arm. Allow at least 240 GiB free for fresh and 320 GiB for 1B. The held archives remain immutable.
 
 ## Build ahead of the allocation
 
-From a clean checkout at the stated revision with Node 22:
+Build from a clean checkout of the public scorecard branch at the pinned runner commit. The report names the corresponding INT1 writer integration.
 
 ```bash
-COMMIT=790d9e96e7c700aa0f59e53fc1259df3deb6913d
-BUILD=/var/tmp/triplex-v01-adopted-build
+COMMIT=483408dc3b4ca9851646bf91f8e72810fc2507b2
+BUILD=/var/tmp/triplex-v01-ordered-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
 ```
 
-The build pins Node, PostgreSQL, the Datomic distribution and the Java 25 native image. The scorecard verifies the resolved image IDs and generated package SHA-256s before startup and under the native queue lock.
+The build pins Node, PostgreSQL, Datomic and the native Java 25 image. Startup rechecks the resolved image IDs and generated package hashes.
 
-## Fresh SCALE1
+## Choose the sealed input
 
-Set `SCALE1_IMAGE` to the held decision arm directory containing `image.json`, `transfer.json` and `seed.pgdump`. Use the original transfer SHA-256 and its independently recorded `summaryFiles["image.json"]` digest. Keep the directory's published tag. The producer had ten accounts, 1,000,000 people, 162,456,470 current business facts and logical cut 87,002.
+Set `SCALE1_IMAGE` to the held directory containing `image.json`, `transfer.json` and `seed.pgdump`. Use the separately recorded `SCALE1_TRANSFER_SHA256` and the transfer's `summaryFiles["image.json"]` digest as `SCALE1_IMAGE_SHA256`. Keep the published directory tag. The original cut has 1,000,000 people across ten accounts, 162,456,470 business facts and logical position 87,002.
+
+Set `AGE=fresh` for the original seal. For `AGE=1B`, also supply the sealed AGE1 handoff, its hash, PostgreSQL dump of that exact aged cut and its hash, and the AGE1 Java and Datomic paths. The verifier runs against each restored peer's native identity, cuts, history count, receipts and replay ledger before offers.
 
 ```bash
 cd "$BUILD/repository"
-sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
-  "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --commit "$COMMIT" \
-  --age fresh --writer grouped --seed "$SCALE1_IMAGE" \
-  --image-sha256 "$SCALE1_IMAGE_SHA256" --transfer-sha256 "$SCALE1_TRANSFER_SHA256" \
-  --out /var/tmp/triplex-v01-adopted-fresh
+age_args=()
+if [[ "$AGE" == 1B ]]; then
+  age_args=(--aged-bundle "$AGE_HANDOFF_JSON" --aged-bundle-sha256 "$AGE_HANDOFF_SHA256" \
+    --aged-dump "$AGED_PGDUMP" --aged-dump-sha256 "$AGED_DUMP_SHA256")
+fi
+scorecard() {
+  sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
+    "AGE_JAVA=${AGE_JAVA:-}" "AGE_DATOMIC_HOME=${AGE_DATOMIC_HOME:-}" \
+    "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --commit "$COMMIT" \
+    --age "$AGE" --seed "$SCALE1_IMAGE" \
+    --image-sha256 "$SCALE1_IMAGE_SHA256" --transfer-sha256 "$SCALE1_TRANSFER_SHA256" \
+    "${age_args[@]}" "$@"
+}
 ```
 
-Set `--writer subject` on a separate attempt to use the integrated per-person writer. The card records grouping, compact rows, queryable K journal, installed commit function and all JVM role settings from startup readback.
-
-## Aged 1B
-
-Use the original SCALE1 image inputs, the AGE1 handoff bundle and an independently prepared PostgreSQL dump of that exact sealed aged cut. Supply `AGE_JAVA` and `AGE_DATOMIC_HOME` for the pinned AGE1 checker. The bundle's native database identity, logical and physical cuts, history count, receipts and replay ledger are checked against the restored peer before writes.
+## Run the card or rerun the grouped comparison
 
 ```bash
-sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
-  "AGE_JAVA=$AGE_JAVA" "AGE_DATOMIC_HOME=$AGE_DATOMIC_HOME" \
-  "$BUILD/tools/bin/node" lab/bin/scorecard.mjs --commit "$COMMIT" \
-  --age 1B --writer grouped --seed "$SCALE1_IMAGE" \
-  --image-sha256 "$SCALE1_IMAGE_SHA256" --transfer-sha256 "$SCALE1_TRANSFER_SHA256" \
-  --aged-bundle "$AGE_HANDOFF_JSON" --aged-bundle-sha256 "$AGE_HANDOFF_SHA256" \
-  --aged-dump "$AGED_PGDUMP" --aged-dump-sha256 "$AGED_DUMP_SHA256" \
-  --out /var/tmp/triplex-v01-adopted-1b
+scorecard --writer per-person-ordered --out "/var/tmp/triplex-v01-$AGE"
+scorecard --writer grouped --out "/var/tmp/triplex-v01-$AGE-grouped"
 ```
 
-The budget is 235 minutes per age and up to USD 4.27 at USD 1.09 per hour. The first stage uses at most 105 minutes including both restores, 12 minutes of matched offers and collection. Budgets for P5 through P9 are 25, 30, 15, 25 and 20 minutes, with 15 minutes reserved for cleanup. The base card reports shortened P1–P4 observations and names the bars that still need qualifying evidence. Preserve the output directory with its campaign archives.
+The first command is the release candidate. It runs the full adopted workload and then the grouped P2 and P6 comparison in the same card. The second command is an optional grouped-only replay. Use it for a separate comparison attempt. The primary command already includes grouped within the per-age budget.
 
-The INT1 Publish command was exercised on its own 64-person Mac fixture. It requires a held-scope adapter before it can supply this scorecard's P5 evidence.
+At USD 1.09 per hour, the primary campaign is capped at 235 minutes and USD 4.27 per age. The grouped-only replay has a 75-minute ceiling and costs up to USD 1.36. The plan allows 105 minutes for the principal restores and P1–P4, 20 for the quiet pair, 10 for the role census, 25 for import pacing, 60 for the grouped comparison and 15 for cleanup. Bare-metal duration depends on restore and verification speed. The grouped arm measures the same P2 offer schedule and matched P6 windows from the same seal. Keep the complete output directory.
 
-P6 runs after the loaded arm on the same adopted scope. It compares the quiet account alone and at 235 aggregate offers per second, with identical quiet offer and read schedules. It reports age-matched commit, pinned field read and journal-observation components. The P6 obligation also needs durable feed effects and Publish and import overlap.
-
-P7 samples first demand pulls at the retained loader cut and records empty and restored residency by role. An untouched-person slope under matched activity remains open.
-
-P8 runs the existing fixed 32-fact pacing arm after P6 in the same database under the grouped writer. The fixed cell offers 50 saves per second across its synthetic active accounts and tracks verified import frames, queryable facts and per-account tails. It is a component of P8. The matched pacing controls, deep and wide volumes and per-person-writer pacing remain open.
-
-P9 remains unmeasured in this command. The HASYNC1 one-host rehearsal requires its own verified legacy physical checkpoint and two ten-minute offer windows. SCALE1 supplies a K logical dump. Each qualifying machine-loss or move measurement needs two servers. [Published HASYNC1 procedure](../hasync1/SCORECARD.md)
+The card records the writer, concrete layout and Java settings, P2 and P6 samples by configuration, and the result of the mixed-ID witness. The per-person arm uses the reference path for its import probe. The held P5 row links to server 1's separate Publish results. P9 links to the separate failover procedure and requires two servers for a qualifying result.
