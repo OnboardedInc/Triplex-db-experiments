@@ -12,7 +12,7 @@ Prepare the unguarded control outside the timed window using the same scratch st
 timeout --kill-after=15s 55m node lab/experiments/EXP-DX1/erase1/server.mjs check-guarded erase1-guarded-check erase1-fast-stage/staged.json erase1-control-stage/staged.json
 ```
 
-The comparison runs unguarded, guarded, unguarded, guarded, unguarded. Each block offers the same 500 saves under four pinned readers. The driver verifies the receipt for every save and the returned rows for every read. It erases a separate sealed assertion between the two guarded blocks, and checks the marker at its original pin and the retained detached body. Report each guarded ratio against both surrounding controls. The targets apply to both phases and both operations.
+For the shared-authority candidate, stage both arms with the same PostgreSQL authority configuration used for the protected-save check, and keep a copy of each stage. The comparison runs unguarded, guarded, unguarded, guarded, unguarded. Each block offers the same 500 saves under four pinned readers. The driver verifies the receipt for every save and the returned rows for every read. It erases a separate sealed assertion between the two guarded blocks, and checks the marker at its original pin and the retained detached body. Report each guarded ratio against both surrounding controls. The targets apply to both phases and both operations.
 
 | Guarded / unguarded | Predicted p50 | Predicted p99 | Required p50 / p99 |
 | --- | ---: | ---: | ---: |
