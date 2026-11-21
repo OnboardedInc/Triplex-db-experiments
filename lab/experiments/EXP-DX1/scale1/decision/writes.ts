@@ -41,6 +41,7 @@ type Ack = {
   timeline?: Record<string, number>;
   subjectSave?: string;
   subjectOrderedIds?: boolean;
+  subjectAppendRetirement?: boolean;
 };
 export type Save = {
   id: string;

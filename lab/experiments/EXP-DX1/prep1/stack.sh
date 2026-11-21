@@ -7,6 +7,7 @@ export PREP1_ATTEMPT=$(cat /config/attempt)
 export TX2_SUBJECT_NUMERIC_OWNER=$(cat /config/subject-owner)
 export TX2_SUBJECT_PREFETCH=$(cat /config/subject-prefetch)
 export TX2_SUBJECT_ORDERED_IDS=$(cat /config/subject-ordered)
+export TX2_SUBJECT_APPEND_RETIREMENT=$(cat /config/subject-retirement 2>/dev/null || printf 0)
 export TX2_SUBJECT_NARROW_REVISION=$(cat /config/subject-serial 2>/dev/null || printf 0)
 export TX2_SUBJECT_REUSE_PREDECESSOR=$TX2_SUBJECT_NARROW_REVISION
 export PREP1_LOOKUP_EVERY=$(cat /config/lookup-every 2>/dev/null || printf 0)
@@ -288,6 +289,7 @@ case "$PREP1_MODE" in
       await import("/config/probe.mjs");
     ' "$@"; }
     credit_modes=(barrier6 rolling6 rolling12)
+    if [[ $TX2_SUBJECT_APPEND_RETIREMENT == 1 ]]; then credit_modes=(barrier6 rolling6); fi
     if [[ $TX2_SUBJECT_NARROW_REVISION == 1 ]]; then credit_modes=(rolling6); fi
     for credit_mode in "${credit_modes[@]}"; do
       subject_workers 1 "$TX2_SUBJECT_ORDERED_IDS"

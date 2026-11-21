@@ -458,6 +458,7 @@
           load-timing (when commit/load-profile (volatile! 0))
           data (try (binding [*load-timing* load-timing] (trace/span "commit.prepare-and-validate" "gateway" (tx-data db input (scope/entity db))))
                     (catch Exception e (reject-ordered! conn input e)))
+          validated (when (= "1" (System/getenv "TX2_SUBJECT_RETIREMENT_TRACE")) (System/nanoTime))
           frame-size (group/frame-measurement (second (first data)) input)
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
           ;; [DX-PREP1] Why: the unordered subject arm submits one native transaction and uses its actual durable report.
@@ -471,7 +472,8 @@
                              (subject/plan db data input))))
           start (System/nanoTime)
           ready-ms (when group/queue-clock (System/currentTimeMillis))
-          timeline (atom {:requestParsed parsed :payloadPrepared start})
+          timeline (atom (cond-> {:requestParsed parsed :payloadPrepared start}
+                           validated (assoc :payloadValidated validated)))
           report (trace/span "peer.transact-await (includes order/network/storage)" "peer-wait" (deref (submit! conn data input timeline subject-plan) 5000 ::timeout))
           completed (System/nanoTime)
           transact-micros (quot (- completed start) 1000)
@@ -505,6 +507,7 @@
         (assoc :nativeApplyMs (get-in report [:io-stats :api-ms]))
         (:subject-save report) (assoc :subjectSave (:subject-save report))
         (:subject-ordered-ids report) (assoc :subjectOrderedIds true)
+        (:subject-append-retirement report) (assoc :subjectAppendRetirement true)
         (:subject-hints-attached report) (assoc :subjectHintsAttached true)
         (:subject-replan report) (assoc :subjectReplan true)
         (and load-timing (not (:subject-save report))) (assoc :loadProfile {:rowNs @load-timing :applyMs (get-in report [:io-stats :api-ms])

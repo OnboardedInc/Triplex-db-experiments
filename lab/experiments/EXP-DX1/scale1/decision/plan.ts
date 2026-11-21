@@ -203,13 +203,13 @@ function count(cell: Cell, account: number, repeat: number, isolation: boolean, 
 }
 
 // [DX-SCALE1] Why: fixed per-account offers and jitter are independent of completions. The quiet account replays identical offsets, subjects and widths in each repeat. Rejected: changing its dose when the queue grows.
-export function writeTape(people: Density, cell: Cell, repeat: number, isolation = false,
-  duration = cellSeconds(cell, isolation)): Write[] {
+function offerTape(people: Density, cell: Cell, repeat: number, isolation: boolean,
+  duration: number, countFor: (account: number) => number, tag: string | number = cell): Write[] {
   const subjects = activeSubjects(people),
     choose = zipf(people / 50);
   return (solo(cell) ? [0] : accounts)
     .flatMap((account) => {
-      const n = count(cell, account, repeat, isolation, duration);
+      const n = countFor(account);
       const rng = new Rng(
         seedOf(
           profileFor(solo(cell) ? "single" : "pooled", isolation) +
@@ -229,11 +229,27 @@ export function writeTape(people: Density, cell: Cell, repeat: number, isolation
           subject: subjects[account]![index]!,
           ms: (1000 * duration * (ordinal + rng.next())) / n,
           width: w < 0.8 ? 1 : w < 0.95 ? 2 : 3,
-          version: repeat + "/" + cell + "/" + account + "/" + ordinal,
+          version: repeat + "/" + tag + "/" + account + "/" + ordinal,
         };
       });
     })
     .sort((a, b) => a.ms - b.ms);
+}
+
+export function writeTape(people: Density, cell: Cell, repeat: number, isolation = false,
+  duration = cellSeconds(cell, isolation)): Write[] {
+  return offerTape(people, cell, repeat, isolation, duration,
+    (account) => count(cell, account, repeat, isolation, duration));
+}
+
+export type SerialApplyRate = 50 | 235 | 394 | 620;
+export const serialApplySeconds = 300;
+// [DX-W1] Why: keep the same quiet dose and subject/width distribution at both diagnostic rates.
+// Rejected: changing the frozen scorecard's rates or offering extra saves only when the candidate completes one.
+export function serialApplyTape(people: Density, rate: SerialApplyRate, duration = serialApplySeconds) {
+  return offerTape(people, 394, 0, true, duration, (account) => account === quiet
+    ? quietRate * duration
+    : Math.floor(((rate - quietRate) * duration + 9 - account) / 9), "serial-" + rate);
 }
 
 export type Read = { seat: number; ordinal: number; subject: number; ms: number };

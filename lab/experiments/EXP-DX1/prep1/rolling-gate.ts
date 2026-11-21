@@ -13,6 +13,7 @@ const selection = creditModeSelection(mode as CreditMode);
 const credits = selection.credits;
 const ordered = process.env.TX2_SUBJECT_ORDERED_IDS === "1";
 const serial = process.env.TX2_SUBJECT_NARROW_REVISION === "1";
+const appendRetirement = process.env.TX2_SUBJECT_APPEND_RETIREMENT === "1";
 assert(phase === "before" || phase === "after");
 assert(witnessPath && mode);
 const attempt = process.env.PREP1_ATTEMPT!;
@@ -42,7 +43,7 @@ async function head(db: string) {
 }
 
 type Receipt = { id: string; p: number; t: string; clock: number; tx: string; digest: string; replyNs: string; orderedToken?: string };
-type Witness = { attempt: string; mode: string; ordered: boolean; serial: boolean; db: string; head: number;
+type Witness = { attempt: string; mode: string; ordered: boolean; serial: boolean; appendRetirement: boolean; db: string; head: number;
   lost: Receipt; acked: Receipt[]; missing: string[]; immediate: number; submitted: number };
 
 async function before(witness: string) {
@@ -59,12 +60,14 @@ async function before(witness: string) {
   const options = await client.request<{
     attempt: string; database: string; position: number;
     subjectSave?: boolean; subjectOrderedIds?: boolean; subjectNarrowRevision?: boolean; subjectReusePredecessor?: boolean;
+    subjectAppendRetirement?: boolean;
     options: { groupCommit: boolean; ledger: boolean };
   }>("GET", "/v1/db/" + db + "/write-options");
   assert.deepEqual([options.attempt, options.database, options.position], [attempt, db, cut]);
   assert.deepEqual([Boolean(options.subjectSave), Boolean(options.subjectOrderedIds), options.options.groupCommit,
     options.options.ledger, Boolean(options.subjectNarrowRevision), Boolean(options.subjectReusePredecessor)],
     [ordered, ordered, !ordered, !ordered, serial, serial]);
+  assert.equal(Boolean(options.subjectAppendRetirement), appendRetirement);
   const rowsByOwner = new Map([...templates].map(([e], i) => [e, change.rows.slice(i * 4, i * 4 + 4)
     .map((r) => ({ ...r, recorded_position: cut, recorded_at: seed.recordedAt.v }))]));
   const senders: Sender[] = Array.from({ length: 10 }, () => ({
@@ -92,6 +95,7 @@ async function before(witness: string) {
   for (const e of okTape) {
     const saved = ok.rows[e.ordinal]!;
     assert(saved.status === "acked" && Boolean(saved.stage?.subjectOrderedIds) === ordered && saved.receipt);
+    assert.equal(Boolean(saved.stage?.subjectAppendRetirement), appendRetirement);
     const exact = expectedSave(saved, e, rowsByOwner.get(task(e.account, e.subject))!);
     await exactRead(db, exact.entity, saved.receipt.p, exact.input.rows[0]!.id, sha([e.version, 0]).slice(0, 57));
     const sequence = ok.rows.filter((s) => s.account === e.account && s.subject === e.subject);
@@ -145,7 +149,7 @@ async function before(witness: string) {
   assert.equal(submitted, granted);
   assert(failed.rows.every((r, i) => r.status === (i < granted ? "uncertain" : "expired-before-dispatch") &&
     r.receipt === undefined && (r.dispatched !== undefined) === (i < granted)));
-  const proof: Witness = { attempt, mode: mode!, ordered, serial, immediate, submitted, db, head: beforeFailure,
+  const proof: Witness = { attempt, mode: mode!, ordered, serial, appendRetirement, immediate, submitted, db, head: beforeFailure,
     lost: { id: lostId, ...recovered.receipt, replyNs: replyClocks.get(lostId)! },
     acked: [...ok.rows, ...lostResult.rows].map((r) => {
       assert(r.receipt);
@@ -158,6 +162,7 @@ async function before(witness: string) {
 async function after(witness: string) {
   const proof = JSON.parse(readFileSync(witness, "utf8")) as Witness;
   assert.deepEqual([proof.attempt, proof.mode, proof.ordered, proof.serial], [attempt, mode, ordered, serial]);
+  assert.equal(proof.appendRetirement, appendRetirement);
   const opened = await client.create(scope, "lean", true, 35000);
   assert.equal(opened.created, false);
   assert.equal(opened.db, proof.db);
@@ -193,7 +198,7 @@ async function after(witness: string) {
   assert.deepEqual([Number(original.position?.v), original.t?.v, original.recordedAt?.v],
     [proof.lost.p, proof.lost.t, proof.lost.clock]);
   console.log("PREP1_ROLLING " + JSON.stringify({ attempt, credits, db, head: proof.head,
-    mode, ordered, serial, immediate: proof.immediate, submitted: proof.submitted, durable: journal.length, refused: proof.missing.length, lost: proof.lost, checked: proof.acked }));
+    mode, ordered, serial, appendRetirement, immediate: proof.immediate, submitted: proof.submitted, durable: journal.length, refused: proof.missing.length, lost: proof.lost, checked: proof.acked }));
 }
 try {
   if (phase === "before") await before(witnessPath);

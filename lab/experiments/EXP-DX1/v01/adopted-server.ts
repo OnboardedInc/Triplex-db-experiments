@@ -24,6 +24,10 @@ const control = launchProfile("server", launchOptions);
 const tuned = studyJvm && launchProfile("server", { ...launchOptions, readJvm: studyJvm as JvmProfile, readTuned: true });
 assert(!tuned || age === "fresh");
 const diagnostics = writeDiagnostics(writer);
+const retirement = process.env.DX_W1_RETIREMENT_PAIR === "1";
+if (retirement) assert(!tuned && writer === "subject" && jvm === "j21-g1" && writeJvm === "j21-g1" &&
+  txJvm === "j25-zgc" && path.isAbsolute(walDirectory) && diagnostics.lookupEvery === 64 && !diagnostics.serialApply);
+
 const end = Number(deadlineText);
 assert(Number.isSafeInteger(end) && end > Date.now());
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"), queue = fs.statSync(`/proc/${process.ppid}/fd/9`);
@@ -35,7 +39,7 @@ verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
 fs.mkdirSync(campaign);
-jsonFile(path.join(campaign, "input.json"), { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
+jsonFile(path.join(campaign, "input.json"), { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, retirement: retirement || undefined, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
   agedBundle: expected?.pin, agedDump: expected?.dumpPin });
 let stopping = false;
 const stop = () => { stopping = true; };
@@ -44,7 +48,7 @@ process.on("SIGINT", stop);
 for (const loaded of [false, true]) {
   assert(!stopping && Date.now() + 10 * 60_000 < end);
   const policy = loaded && tuned ? tuned : control;
-  const out = path.join(campaign, tuned ? (loaded ? "tuned" : "control") : (loaded ? "loaded" : "zero"));
+  const out = path.join(campaign, retirement ? (loaded ? "append" : "reference") : tuned ? (loaded ? "tuned" : "control") : (loaded ? "loaded" : "zero"));
   fs.mkdirSync(out);
   const floor = age === "1B" ? 320 : 240;
   assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the disposable restore");
@@ -56,7 +60,7 @@ for (const loaded of [false, true]) {
     const options = stackOptions(writer, attempt, diagnostics);
     const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
       ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0",
-    } : options, { policy, walDirectory });
+    } : retirement ? { ...options, TX2_SUBJECT_APPEND_RETIREMENT: loaded ? "1" : "0" } : options, { policy, walDirectory });
     const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
     const residency = async () => {
       const { write, read } = peerUrls();
@@ -66,7 +70,7 @@ for (const loaded of [false, true]) {
         containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
       return observed.roles as Residency;
     };
-    const empty = tuned ? undefined : await residency();
+    const empty = tuned || retirement ? undefined : await residency();
     const raw = path.join(out, "engines", slot, "trace", "raw");
     await restoreDump(expected?.dump ?? seed.dump, expected?.dumpPin ?? seed.image.sha256, slot, engines,
       Math.min(end - 9 * 60_000, Date.now() + (tuned ? 11 : 42) * 60_000), tuned ? () => {
@@ -104,11 +108,38 @@ for (const loaded of [false, true]) {
       }
       continue;
     }
-    const arm = await adoptedArm(out, source, peer, seed, writer as Writer, loaded, false, head);
-    if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
+    if (retirement) {
+      let cut = head;
+      const [rates, seconds] = age === "fresh" ? [[394, 620], 300] as const : [[50, 235], 120] as const;
+      for (const rate of rates) {
+        assert(!stopping && Date.now() + (seconds + 120) * 1000 < end);
+        const window = path.join(out, String(rate));
+        fs.mkdirSync(window);
+        const result = await adoptedArm(window, source, peer, seed, writer, true, false, cut, undefined, undefined,
+          { rate, append: loaded, seconds });
+        cut = result.terminal;
+      }
+    } else {
+      const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head);
+      if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
+    }
   } finally {
     scaleHost.clean(out, slot);
   }
+  if (retirement) execFileSync("python3", ["-I", "lab/experiments/EXP-DX1/w1/serial/summarize.py",
+    out, slot, attempt, source, age, creditMode], { stdio: "inherit" });
+}
+
+if (retirement) {
+  const arms = ["reference", "append"].map((arm) =>
+    JSON.parse(fs.readFileSync(path.join(campaign, arm, "retirement-diagnostic.json"), "utf8")));
+  assert(arms.every((arm) => arm.source === source && arm.creditMode === creditMode));
+  assert.notEqual(arms[0].attempt, arms[1].attempt);
+  assert.notEqual(arms[0].slot, arms[1].slot);
+  assert.deepEqual(arms[0].windows.map((x: { tapeSha256: string }) => x.tapeSha256),
+    arms[1].windows.map((x: { tapeSha256: string }) => x.tapeSha256));
+  assert.equal(arms[0].windows[0].firstCut, arms[1].windows[0].firstCut);
+  jsonFile(path.join(campaign, "retirement-comparison.json"), { source, age, creditMode, imagePin, transferPin, arms });
 }
 
 // [DX-RD1] Why: process-group CPU and block I/O can distinguish a busy core from a blocked peer.
