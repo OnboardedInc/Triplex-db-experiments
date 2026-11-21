@@ -1,13 +1,15 @@
-Run ad8ab673a04e2f8a2bc02b4bbac642fd63caedbb on exp/DX-V01-next-card for the next cards. The queued 1B runner stays at 8cc32d380.
+Run 7a8fc42003c30e01a72e9c3b45c22f0600ee665e on exp/DX-V01-next-card for the next cards. The queued 1B runner stays at 8cc32d380.
 P2 and P6 use 300-second cells with whole, first-half and second-half readings. Select 90 seconds to replay the earlier tape.
 Counters use the offer clock. Native clock events keep their own boundaries; absent sources and scheduling gaps appear on the card.
 The full forecast is 384 minutes and USD 6.98 per age. The 90-second campaign is 300 minutes and USD 5.45.
-The credit selection passes integration or barrier through the current six-credit sender. Rolling waits for the published selector.
+The integration default is barrier with six credits. The scorecard can also select PREP1 rolling admission at widths 6, 8, 12 and 16.
 P1 and checked cold P7 reads can show a measured miss. Incomplete scope stays partial. Publish and failover remain separate.
 The twelve-core proposal is for the integration owner. The launcher still uses the existing core assignments.
 The two-writer Mac gate uses only an ordinary heavy token. Its clocks are diagnostic.
 
 ## Rolling credit evidence
+
+The exact release candidate ran the ordered and grouped Mac toy with rolling width 6. Both archived the applied mode, distinct tickets, neighbour counts and grant/release clocks. The renderer reconstructed outstanding tickets and filled all fourteen obligations. Thirty-one focused tests include the published scheduler's barrier and rolling tests. All timing is diagnostic. The earlier barrier-only runner at ad8ab673a04e2f8a2bc02b4bbac642fd63caedbb completed both Mac writer modes. The Mac runs do not establish rolling throughput at any width. [Evidence and checksums](EVIDENCE.md)
 
 The scorecard uses PREP1 admission and its shared sender from b0ffdd2ab. The producer archives the applied selection and every dispatched grant, observed release and neighbour count. Rendering checks the raw archive hash, this attempt's source and cut, the exact selected mode, and the grant/release clocks before computing any row. It verifies the live rolling cap and reserved quiet slot against concurrent tickets. A new mode cannot reuse a sequential campaign's prior arms. Rolling admission issues no receipt, and counted writes still require the exact native journal join.
 

@@ -71,3 +71,6 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 - `part8/native-card-next-b.tar.gz`, its index and `part8/SCORECARD-next-b.md` retain the two diagnostic native configurations and the PG17 stats witness.
 - `part8/unit-next-b.log` and `part8/verify-next-b.log` bind the rendered evidence, the recomputed window counts and the fifteen gate checks. `part8/replay-90.log` binds all eight original offer tapes.
 - `part8/fixture-next-b-1.log`, the clean-build logs and image retirement record identify the owned slot, build and cleanup. The first collection refusal and its native inputs remain in `part8/fixture-next-a-1.log` and `part8/native-refused-next-a.tar.gz`.
+
+- `part8/native-card-rolling-six.tar.gz`, its index and `part8/SCORECARD-rolling-six.md` retain the clean candidate's native rolling-width-six card with both writers. `part8/verify-rolling-six.log` confirms actual ticket bounds, correctly filled rows and the exact PG17 readback. The clean build and cleanup logs identify that exact candidate.
+- `part8/unit-rolling-six.log` records all 31 focused tests, including the published schedule and negative credit-mode evidence checks.

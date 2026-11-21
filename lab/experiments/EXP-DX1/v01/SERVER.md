@@ -62,7 +62,7 @@ These are engineering estimates from the earlier benchmark. In the five-minute c
 Use a clean checkout of `exp/DX-V01-next-card` at the runner commit on the dedicated bare-metal Ubuntu host.
 
 ```bash
-COMMIT=ad8ab673a04e2f8a2bc02b4bbac642fd63caedbb
+COMMIT=7a8fc42003c30e01a72e9c3b45c22f0600ee665e
 BUILD=/var/tmp/triplex-v01-next-card-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
