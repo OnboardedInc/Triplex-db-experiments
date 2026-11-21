@@ -4,17 +4,20 @@
 
 A new driver took over bench 3 at 12:45 EST after the previous driver stopped at about 12:38. The rental had cost about USD 3.85 at 17:45 UTC, at USD 1.09/hour from 14:13 UTC.
 
-**Queue on the server at 18:55 UTC, as chained systemd units; each waits for the one before it:**
+**Queue on the server at 19:05 UTC, as chained systemd units; each waits for the one before it:**
 
 | Order | Unit | Commit | Cap |
 | --- | --- | --- | --- |
 | done | `triplex-bench3-cache32` | PREP1 `97aced1b1` | [Reading](ROLLING-READING.md#32-gib-object-cache-cache32) |
 | done | `triplex-bench3-tx5` | PREP1 `73afad665` | [Reading](ROLLING-READING.md#five-transactor-cores-with-the-16-gib-cache-tx5) |
-| 1 | `triplex-bench3-removal` (preparing since 18:47:39 UTC) | INT1 build `3669bee41`, `erase1/SERVER-ERASE2.md` | 86 min plus build and copy |
-| 2 | `triplex-bench3-rd1` (`queue/rd1/run.sh` = `bench3-rd1.sh`) | RD1 `ca93f5165`, prepared-copy reader ladders, control then tuned, rolling 6 | 20 min build, then 2 × (copy + 32 min) |
-| 3 | `triplex-bench3-cold` (`queue/cold/run.sh` = `bench3-cold.sh`) | INT1 `8ab832093`, `jvm1/cold-server.sh ... --credit-mode rolling6` | 20 min build, then 59 min |
-| 4 | `triplex-bench3-fresh` (`queue/fresh/run.sh` = `bench3-writer-addons.sh`, now waiting for `cold`) | PREP1 `891ab9139`, `prep1/FRESH-FIRST.md` | 120 min |
+| failed | `triplex-bench3-removal`, 18:53:58 UTC | INT1 build `3669bee41` | Refused before any container; see below |
+| 1 | `triplex-bench3-rd1` (copying the control copy since 18:54:47 UTC; `queue/rd1/run.sh` = `bench3-rd1.sh`) | RD1 `ca93f5165`, prepared-copy reader ladders, control then tuned, rolling 6 | 2 × (copy + 32 min) |
+| 2 | `triplex-bench3-cold` (`queue/cold/run.sh` = `bench3-cold.sh`) | INT1 `8ab832093`, `jvm1/cold-server.sh ... --credit-mode rolling6` | 20 min build, then 59 min |
+| 3 | `triplex-bench3-removal2` (`queue/removal/run.sh` = `bench3-removal.sh`, repaired) | INT1 build `3669bee41`, `erase1/SERVER-ERASE2.md` | new copy, then 86 min |
+| 4 | `triplex-bench3-fresh` (`queue/fresh/run.sh` = `bench3-writer-addons.sh`, now waiting for `removal2`) | PREP1 `891ab9139`, `prep1/FRESH-FIRST.md` | 120 min |
 | 5 | `triplex-bench3-realistic` (`queue/realistic/run.sh` = `bench3-realistic.sh`) | INT1 build `8597e3ef7`, first realistic rung, then `verify` | 2–3 h plus verify |
+
+**The removal stage was refused at stack start, and the repaired run is queued third.** `erase1/measure-server.ts` line 708 calls `startScaleStack`. That runs `stack/up.sh` with `--cpus-tx 0,7,8 --cpus-pg 1 --cpus-gw-write 2,3,4,5 --cpus-gw-read 6`. Under `DX_BARE_METAL=1`, `stack/up.sh` lines 208–222 at `3669bee41` check each requested CPU against `os.sched_getaffinity(0)` of the calling process: `AssertionError: unavailable or duplicate CPU`. The ERASE2 command starts the driver under `taskset -c 9,10,11`, so cores 0–8 are never in its affinity. Removal on a prepared copy also needs `DX_BARE_METAL=1` (line 517), so as written the command cannot pass on any host. No container, copy write or offer happened. The failed attempt's `result`, log and copy inventory are kept under `queue/removal/failed-cpu-1853` on the server, and its 118 GB copy was removed. The repair, in `bench3-removal.sh`, starts the driver unpinned. Once the removal transactor container is running, before the readiness checks and the first offer, it pins the driver and all its threads to 9,10,11 with `taskset -a -p`, and logs this in `driver-pin.log`. The stack is started only once. The ERASE2 builder, or DX-BM1 who owns the check, should make the check use the host's online CPUs, or have the runner pin itself after stack start.
 
 `bench3-slots-down.sh` releases the stack slots that the rd1 and cold runs record, if a unit stops early.
 

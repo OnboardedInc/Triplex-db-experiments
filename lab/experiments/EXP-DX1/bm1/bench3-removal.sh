@@ -54,9 +54,23 @@ export DX_V01_BUILD_RECEIPT="$build/BUILD-v0.1.json" TRIPLEX_DATOMIC_FAST_PATHS=
 touch /var/tmp/triplex-bm1/dx-bm1-day.lock
 node lab/bin/heavy.mjs --label DX-BM1-removal-copy -- bash "$root/bench3-prepare-copy.sh" "$root" removal internal
 record running collect
+# [DX-BM1] Why: stack/up.sh checks requested stack CPUs against the caller's own affinity on bare metal, so a driver
+# started under taskset 9,10,11 is refused for cores 0-8 before any container exists (first attempt, 18:53 UTC).
+# Start the driver unpinned, then pin it and its threads to 9,10,11 once its transactor container runs, before offers.
+# Rejected: skipping the bare-metal check, or leaving the driver free to share the stack's cores during the windows.
+(
+  for _ in $(seq 1 900); do
+    if docker ps --format '{{.Names}}' | grep -Eq '^tx2-dxscale1-removal-[0-9a-f]{8}-[0-9a-f]{3}-tx$'; then
+      for pid in $(pgrep -f 'erase1/measure-server.ts'); do taskset -a -p -c 9,10,11 "$pid"; done
+      exit 0
+    fi
+    sleep 1
+  done
+  echo "no removal transactor within 900 s"
+) > "$job/driver-pin.log" 2>&1 &
 exec node lab/bin/heavy.mjs --label DX-ERASE2 -- \
   flock --no-fork -n /var/tmp/triplex-bm1/dx-bm1-day.lock timeout --kill-after=90s 86m \
-  taskset -c 9,10,11 node --experimental-transform-types lab/experiments/EXP-DX1/erase1/measure-server.ts \
+  node --experimental-transform-types lab/experiments/EXP-DX1/erase1/measure-server.ts \
   --profile server --credit-mode rolling6 --commit "$pin" \
   --seed "$root/seed-metadata/arm-d7-wfix-pool-seed" \
   --image-sha256 77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b \
