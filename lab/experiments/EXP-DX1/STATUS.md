@@ -4150,3 +4150,37 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Order after it:** load (about 6 to 8 hours) -> the aging builder's own measurements -> aged scorecard, one arm at a time (`8cc32d380`). Driver brief ready in the private prompts folder.
 - **Cloud:** USD 68.29 (server 1, deleted) + about USD 41.3 (server 2) = about USD 109.6 of 200.
 - Agents running: DX-SCALE1.
+
+### 2026-11-21 04:26 local: FRESH FULL-SIZE v0.1 SCORECARD (server 2); 1 billion load started; analysis of the slow saves started (2 agents running)
+
+- **Run:** `origin/exp/DX-SCALE1-deep-accounts` `1ed7bbfd7`; scorecard `3a71c1767`, launch pin `57580241d`; 03:02 to 04:20 local (78 minutes of the 300 allowed, about USD 1.42). Ten accounts of 100,000 people, 162,456,470 facts, one database. Four arms, 12 matched pairs, all completed. The live launch check passed (two NVMe devices, Java 25 ZGC transactor beside Java 21 G1 gateways, server profile). Card and archive in the private evidence folder (`DX-SCALE1/score-v01-fresh-tuned/full`).
+- **P2 commits and P6 quiet account** (90-second windows; latency from scheduled offer to durable ACK; bar p50 <= 10 ms, p99 <= 50 ms; quiet ratio <= 1.25):
+
+  | Arm | Offered/s | Stored in window/s | Stored / offered | Expired | p50 / p99 ms | Quiet account p99 alone -> loaded |
+  | --- | ---: | ---: | --- | ---: | --- | --- |
+  | Headline (server profile, transactor Java 25 ZGC, separate WAL) | 50 | 50.00 | 4,500 / 4,500 | 0 | 9.727 / 118.783 | 22.911 -> 53.503 (2.34x) |
+  | | 235 | 234.98 | 21,150 / 21,150 | 0 | 47.103 / 2,392.063 | 20.095 -> 88.063 (4.38x) |
+  | | 394 | 342.90 | 35,460 / 35,460 | 0 | 9,895.935 / 12,517.375 | 13.695 -> 69.631 (5.08x) |
+  | | 620 | 329.42 | 39,554 / 55,800 | 16,246 | 29,753.343 / 30,130.828 | 18.943 -> 76.799 (4.05x) |
+  | Default server profile (Java 21 G1, WAL on data device) | 50 | 50.00 | 4,500 / 4,500 | 0 | 8.831 / 204.799 | 26.751 -> 151.551 (5.67x) |
+  | | 235 | 232.59 | 21,150 / 21,150 | 0 | 82.431 / 1,105.919 | 43.519 -> 113.663 (2.61x) |
+  | | 394 | 296.59 | 35,460 / 35,460 | 0 | 15,138.815 / 23,192.139 | 67.071 -> 115.711 (1.73x) |
+  | | 620 | 305.24 | 37,144 / 55,800 | 18,656 | 29,753.343 / 30,146.559 | 41.215 -> 115.711 (2.81x) |
+  | Grouped writer | 50 | 50.00 | 4,500 / 4,500 | 0 | 7.359 / 528.383 | 40.959 -> 569.343 (13.9x) |
+  | | 235 | 167.78 | 21,150 / 21,150 | 0 | 19,136.511 / 29,491.199 | 36.095 -> 201.727 (5.59x) |
+  | | 394 | 158.56 | 20,401 / 35,460 | 15,059 | 30,015.487 / 30,146.559 | 48.383 -> 548.863 (11.34x) |
+  | | 620 | 174.02 | 22,063 / 55,800 | 33,737 | 30,015.487 / 30,146.559 | 43.263 -> 214.015 (4.95x) |
+
+- **Other rows (headline arm):**
+  - P1 pinned reads, zero errors at every level: 1 reader 606.4/s p99 5.95 ms; 4: 624.5/s, 56.3 ms; 16: 618.9/s, 93.7 ms; 64: 1,560.8/s, 146.4 ms; 256: 893.2/s, 860.2 ms; 1,024: 509.4/s, 2,375.7 ms. Writer p99 ratio over the tape 0.917. Bar at 256 readers is read p99 <= 100 ms: not met on the one-core read gateway.
+  - P3 feed: 1,260 changes in exact order; dispatch to observation p99 98.3 ms (bar 250 ms).
+  - P4 current pulls: p50 4.543 ms, p99 50.175 ms (bar 5 and 25).
+  - P7: first pull p99 66.559 ms (bar 100); added resident bytes per roster person: transactor 16.9, write gateway 55.4, read gateway 70.3 (bar 64).
+  - P8 import: 3,192.9 facts/s (target 3,000), 344,832 facts verified; highest per-account p99 during it 88.97 ms for saves and 34.43 ms for reads; reference import path.
+  - P5 and P9: not in this run. Mixed old and ordered identities: PASS (both retired IDs refused; four paired snapshots match).
+  - The card marks every priority row "NOT MEASURED" as a verdict because each reading covers part of its bar; the readings above are real measurements.
+- **Predictions against results:** headline at 394: predicted 325 to 365, measured 342.9 (hit). Default at 394: predicted 340 to 380, measured 296.6 (miss, lower). Headline at 620: 330 to 380, measured 329.4 (just under). Default at 620: 320 to 365, measured 305.2 (miss). Grouped 147 to 182: measured 158.6 to 174.0 (hit). At 235: 220 to 235 predicted, 232.6 to 235.0 measured (hit). Quiet ratios over 1.25: hit. **No prediction was written for latency at 235, and that is where the result is worst** (p99 2.4 s on the headline against 42 ms on the small seed).
+- **What it says:** at full size the new writer stores everything through 394 offered per second (none expired) but not in time: latency is inside the bar only at the median at 50 per second. The headline setup beats the default profile on delivery at 394 (343 against 297) and on the quiet account (54 to 88 ms loaded against 114 to 152 ms). The old grouped writer cannot carry 235.
+- **Unexplained and now under analysis (DX-PREP1 part 13, Mac only, from the card's archive):** why p99 is 119 ms at 50 per second and 2.4 s at 235 when the aging ladder showed the transactor taking 762 to 988 solo saves per second at this size. Candidates I gave it to test, none confirmed: PostgreSQL held to one core, checkpoints every 1 GB of WAL, index jobs, the gateway's own stages, the sender. It is to propose settings that can be applied before the 1 billion card, with predictions.
+- **Server 2:** driver resumed at 04:27 with approval for the 1 billion load (`6d3d44641`) and its between-window maintenance. The server sat free 04:20 to about 04:30.
+- Agents running: DX-SCALE1, DX-PREP1.
