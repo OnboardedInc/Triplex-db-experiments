@@ -11,6 +11,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { fileHash } from "../measurements.ts";
 import { activeUnitArgs, dedicatedHost } from "../source.ts";
 import { prepareFallback } from "./age-fallback.ts";
+import { stoppedInventory } from "./pgdata.ts";
 import { read, verifiedOrigin, write, type SeedProof } from "./seed.ts";
 
 const bench = "/var/tmp/triplex-scale1";
@@ -20,12 +21,11 @@ const ageFloor = "2859d6b15";
 const sourceLayout = "lean";
 const GiB = 2 ** 30;
 const dockerEndpoint = "unix:///var/run/docker.sock";
-const vendorHome = path.join(
+const vendorCache = path.join(
   bench,
   "build-" + bootstrap,
   "downloads/extracted/datomic-pro-1.0.7745",
 );
-const jar = path.join(vendorHome, "datomic-transactor-pro-1.0.7745.jar");
 const jdk = "/usr/lib/jvm/java-21-openjdk-amd64/bin";
 const role = "datomic";
 const primaryDb = "datomic";
@@ -63,6 +63,7 @@ async function main(
   ageSource: string,
   copyMount: string,
   exportCheckout: string,
+  stoppedSeed?: string,
 ) {
   assert(process.platform === "linux" && process.getuid?.() === 0);
   assert.equal(process.env.DOCKER_HOST, dockerEndpoint);
@@ -109,7 +110,7 @@ async function main(
     fs.existsSync(path.join(jdk, "java")) && fs.existsSync(path.join(jdk, "jcmd")),
     "Native JDK 21 is required",
   );
-  assert.equal(fs.readFileSync(path.join(vendorHome, "VERSION"), "utf8").trim(), "1.0.7745");
+  assert.equal(fs.readFileSync(path.join(vendorCache, "VERSION"), "utf8").trim(), "1.0.7745");
   const image = path.join(seedDir, "image.json"),
     transfer = path.join(seedDir, "transfer.json"),
     imageSha = await fileHash(image),
@@ -128,14 +129,30 @@ async function main(
   const seed = verifiedOrigin(seedDir, identity, transferSha, true);
   assert.equal(seed.facts, 162456470);
   assert.equal(seed.scopes[0]?.seedCut, 87002);
+  let held;
+  if (stoppedSeed) {
+    assert.match(
+      stoppedSeed,
+      /^\/(?:var\/tmp\/triplex-scale1\/pgdata|mnt\/triplex-scale1-pgdata)\/[a-z0-9-]+\/cluster$/,
+    );
+    const sealPath = path.join(path.dirname(stoppedSeed), "sealed-pgdata.json");
+    const manifest = read(sealPath);
+    assert.equal(manifest.data, stoppedSeed);
+    assert.deepEqual(
+      [manifest.seed.imageSha, manifest.seed.transferSha, manifest.seed.dumpSha, manifest.seed.cut],
+      [imageSha, transferSha, seed.sha256, 87002],
+    );
+    assert.deepEqual(await stoppedInventory(stoppedSeed), manifest.inventory);
+    held = { data: stoppedSeed, sealSha: await fileHash(sealPath), inventory: manifest.inventory };
+  }
   const copyReal = fs.realpathSync(copyMount);
   const sameFilesystem = fs.statSync(copyReal).dev === fs.statSync(bench).dev;
   assert(Number.isSafeInteger(original.disk.after) && original.disk.after > 0);
-  // [DX-SCALE1] Why: the native backup, verification restore and separate
-  // scorecard dump coexist. Rejected: assuming the dump will compress enough.
+  // [DX-SCALE1] Why: always leave room for backup and verification, plus a SQL dump on the legacy path.
+  // Rejected: reserving the optional dump for a card that adopts stopped physical data.
   const grownSql = original.disk.after + (targetRecords - baselineRecords) * bytesPerAddedRecord;
   const liveReservation = grownSql + 24 * GiB;
-  const copyReservation = copyHeadroomBytes + 2 * grownSql + 24 * GiB;
+  const copyReservation = copyHeadroomBytes + (held ? 1 : 2) * grownSql + 24 * GiB;
   const liveFree = free(bench),
     copyFree = free(copyReal);
   write(path.join(out, "storage-admission.json"), {
@@ -160,6 +177,18 @@ async function main(
   );
   const pgImage = imageIndex.find((i) => i.RepoTags?.includes("postgres:17-alpine"))?.Id;
   assert(pgImage && /^sha256:[a-f0-9]{64}$/.test(pgImage));
+  // [DX-SCALE1] Why: the cached vendor ZIP extraction lacks launch bits.
+  // Rejected: rewriting the retained vendor cache or restarting another full SQL restore to discover this.
+  const vendorHome = path.join(out, "datomic-runtime");
+  const jar = path.join(vendorHome, "datomic-transactor-pro-1.0.7745.jar");
+  fs.cpSync(vendorCache, vendorHome, { recursive: true, force: false, errorOnExist: true });
+  assert.equal(await fileHash(jar), await fileHash(path.join(vendorCache, path.basename(jar))));
+  for (const tool of ["transactor", "datomic", "run", "classpath"]) {
+    const native = path.join(vendorHome, "bin", tool);
+    assert.equal(await fileHash(native), await fileHash(path.join(vendorCache, "bin", tool)));
+    fs.chmodSync(native, 0o755);
+    fs.accessSync(native, fs.constants.X_OK);
+  }
   const copyDir = path.join(copyReal, path.basename(out));
   fs.mkdirSync(copyDir);
   const copyData = path.join(copyDir, "restore-sql");
@@ -173,6 +202,7 @@ async function main(
     pgImage,
     invocationStarted,
     exporter,
+    ...(held ? { postgresTemplate: held.sealSha } : {}),
   };
   write(path.join(out, "identity.json"), manifest);
   const status = (stage: string) =>
@@ -194,6 +224,17 @@ async function main(
     docker("network", "create", netName);
     network = true;
     docker("volume", "create", sourceVolume);
+    const restoreStarted = Date.now();
+    if (held) {
+      status("copying the verified stopped SCALE1 template");
+      const point = docker("volume", "inspect", "--format", "{{.Mountpoint}}", sourceVolume);
+      assert(point.endsWith("/volumes/" + sourceVolume + "/_data"));
+      assert.deepEqual(fs.readdirSync(point), []);
+      execFileSync("cp", ["--archive", "--reflink=auto", "--", held.data + "/.", point + "/"], {
+        timeout: 900000,
+      });
+      assert.deepEqual(await stoppedInventory(point), held.inventory);
+    }
     status("provisioning owned SQL stores");
     for (const [name, db, mount] of [
       [pgName, primaryDb, sourceVolume],
@@ -246,55 +287,56 @@ async function main(
           await sleep(1000);
         }
       }
-      sql(
-        name,
-        "postgres",
-        "CREATE ROLE datomic LOGIN PASSWORD '" +
-          password +
-          "';\nCREATE DATABASE " +
-          db +
-          " OWNER datomic;\n",
-      );
+      const roleSql =
+        held && name === pgName
+          ? "ALTER ROLE datomic PASSWORD '" + password + "'"
+          : "CREATE ROLE datomic LOGIN PASSWORD '" +
+            password +
+            "';\nCREATE DATABASE " +
+            db +
+            " OWNER datomic;\n";
+      sql(name, "postgres", roleSql);
       if (name === copyName) {
         sql(name, db, fs.readFileSync(path.join(vendorHome, "bin/sql/postgres-table.sql"), "utf8"));
         sql(name, db, "ALTER TABLE public.datomic_kvs OWNER TO datomic;");
       }
     }
-    status("restoring immutable SCALE1 image");
-    const restoreStarted = Date.now();
-    const digest = createHash("sha256");
-    const stream = new Transform({
-      transform(data, _encoding, done) {
-        digest.update(data);
-        done(null, data);
-      },
-    });
-    const restoreLog = fs.openSync(path.join(out, "pg-restore.log"), "wx");
-    try {
-      const child = spawn(
-        "docker",
-        [
-          "exec",
-          "-i",
-          pgName,
-          "pg_restore",
-          "--exit-on-error",
-          "--single-transaction",
-          "-U",
-          "postgres",
-          "-d",
-          primaryDb,
-        ],
-        { stdio: ["pipe", restoreLog, restoreLog] },
-      );
-      const [code] = await Promise.all([
-        exited(child),
-        pipeline(fs.createReadStream(path.join(seedDir, "seed.pgdump")), stream, child.stdin!),
-      ]);
-      assert.equal(code, 0);
-      assert.equal(digest.digest("hex"), seed.sha256);
-    } finally {
-      fs.closeSync(restoreLog);
+    if (!held) {
+      status("restoring immutable SCALE1 image");
+      const digest = createHash("sha256");
+      const stream = new Transform({
+        transform(data, _encoding, done) {
+          digest.update(data);
+          done(null, data);
+        },
+      });
+      const restoreLog = fs.openSync(path.join(out, "pg-restore.log"), "wx");
+      try {
+        const child = spawn(
+          "docker",
+          [
+            "exec",
+            "-i",
+            pgName,
+            "pg_restore",
+            "--exit-on-error",
+            "--single-transaction",
+            "-U",
+            "postgres",
+            "-d",
+            primaryDb,
+          ],
+          { stdio: ["pipe", restoreLog, restoreLog] },
+        );
+        const [code] = await Promise.all([
+          exited(child),
+          pipeline(fs.createReadStream(path.join(seedDir, "seed.pgdump")), stream, child.stdin!),
+        ]);
+        assert.equal(code, 0);
+        assert.equal(digest.digest("hex"), seed.sha256);
+      } finally {
+        fs.closeSync(restoreLog);
+      }
     }
     docker("update", "--cpuset-cpus", "1", pgName);
     for (const [container, db] of [
@@ -590,6 +632,22 @@ async function main(
           .split("\n")
           .some((line) => new RegExp("^\\s*" + txPid + "\\s+java$").test(line)),
     );
+    if (held) {
+      // [DX-SCALE1] Why: v0.1 consumes an independently cloned stopped cluster and exact replay.
+      // Rejected: spending another large export and reserving disk for a compatibility dump.
+      write(path.join(out, "aged-pgdata.json"), {
+        ...manifest,
+        sealSha,
+        sourceVolume,
+        cut: sealed.head,
+        t: sealed.t,
+        records: sealed.records,
+        bundleSha: await fileHash(handoff),
+        at: Date.now(),
+      });
+      status("sealed aged rung with a stopped PostgreSQL handoff");
+      return;
+    }
     docker("update", "--cpuset-cpus", "1,8", pgName);
     const dump = path.join(copyDir, "aged.pgdump");
     const partial = dump + ".partial";
@@ -666,4 +724,5 @@ await main(
   process.argv[4]!,
   process.argv[5]!,
   process.argv[6]!,
+  process.argv[7],
 );
