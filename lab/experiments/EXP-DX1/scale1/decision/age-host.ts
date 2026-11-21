@@ -120,7 +120,9 @@ async function main(
   if (bulk) {
     assert(
       maintained
-        ? maintainedSources.includes(ageSource) || Boolean(resumeEvidence)
+        ? maintainedSources.includes(ageSource) ||
+            Boolean(resumeEvidence) ||
+            (maintainedMeasurement && ageSource === extendedSource)
         : ageSource === bulkSource,
     );
     assert.equal(call("git", ["status", "--porcelain"], { cwd: ageCheckout }), "");
@@ -301,7 +303,11 @@ async function main(
   }
   const previous = path.join(
     bench,
-    bulkContinuation === "load" ? "age-v01-bulk-a" : "age-v01-bulk-b",
+    bulkContinuation === "load"
+      ? "age-v01-bulk-a"
+      : ageSource === extendedSource
+        ? "age-v01-bulk-d"
+        : "age-v01-bulk-b",
   );
   const originalIdentity = {
     source: ageSource,
@@ -334,6 +340,7 @@ async function main(
             originalIdentity,
             ladderEvidence,
             recovered,
+            maintainedMeasurement && ageSource === extendedSource,
           )
         : await stageBulkContinuation(previous, out, bulkContinuation, originalIdentity));
   const pgdata = bulk ? JSON.parse(docker("volume", "inspect", sourceVolume))[0] : undefined;

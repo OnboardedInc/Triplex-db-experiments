@@ -133,6 +133,7 @@ export async function stageMaintainedContinuation(
   identity: Identity,
   evidence: string,
   recovered: RecoveredLadder,
+  separateMeasurement = false,
 ) {
   const { source, imageSha, transferSha, volume, db, seedCut, machine } = identity;
   assert.deepEqual(
@@ -183,11 +184,21 @@ export async function stageMaintainedContinuation(
       output: path.join(out, "rung"),
     };
   }
-  const output = path.join(previous, "rung");
-  const rung = path.join(output, String(target));
+  const rung = path.join(previous, "rung", String(target));
+  const output = path.join(separateMeasurement ? out : previous, "rung");
   const loaded = read(path.join(rung, "bulk-loaded.json"));
   const admitted = read(path.join(rung, "load-admission.json"));
   assert(admitted.started >= terminal.runnerStarted && admitted.started <= terminal.at);
+  assert.deepEqual(
+    [
+      admitted.binding.source,
+      admitted.binding.machineHash,
+      admitted.binding.db,
+      admitted.binding.imageSha,
+      admitted.binding.transferSha,
+    ],
+    [source, machine, db, imageSha, transferSha],
+  );
   assert.deepEqual(
     [loaded.source, loaded.machineHash, loaded.db, loaded.imageSha, loaded.calibrationSha],
     [source, machine, db, imageSha, recovered.certificateSha],
@@ -196,10 +207,25 @@ export async function stageMaintainedContinuation(
   assert.equal(await fileHash(path.join(rung, "load-cycles.json")), loaded.cyclesSha);
   assert(loaded.phase.bulkLoaded && loaded.phase.indexedRecords >= target);
   assert.match(loaded.attempt, uuid);
+  assert.equal(loaded.phase.attempt, loaded.attempt);
+  const stagedRung = path.join(output, String(target));
+  if (separateMeasurement) {
+    // [DX-SCALE1] Why: measurement advances its own checkpoint while the exact loaded cut stays archived.
+    // Rejected: running the measurement against the load's original state directory.
+    fs.mkdirSync(stagedRung, { recursive: true, mode: 0o700 });
+    fs.mkdirSync(path.join(stagedRung, loaded.attempt), { mode: 0o700 });
+    const certificate = path.join(rung, "bulk-loaded.json");
+    await copyState(certificate, stagedRung, await fileHash(certificate));
+    await copyState(path.join(rung, "load-cycles.json"), stagedRung, loaded.cyclesSha);
+  }
   for (const { file, sum } of loaded.artifacts) {
     assert.match(sum, hex);
     assert.equal(file, path.join(loaded.attempt, path.basename(file)));
-    assert.equal(await fileHash(path.join(rung, file)), sum);
+    if (separateMeasurement) {
+      await copyState(path.join(rung, file), path.join(stagedRung, loaded.attempt), sum);
+    } else {
+      assert.equal(await fileHash(path.join(rung, file)), sum);
+    }
   }
   await copyState(checkpoint, out, loaded.checkpointSha);
   return {
