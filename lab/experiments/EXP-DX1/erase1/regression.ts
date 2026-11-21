@@ -120,6 +120,7 @@ export async function regression(
   const client = new DatomicClient(process.env.DATOMIC_URL!, 35_000);
   const subjectWriter = process.env.DX_ERASE1_SUBJECT_WRITER;
   const orderedIds = process.env.DX_ERASE1_ORDERED_IDS === "1";
+  const ownerHead = process.env.DX_W1_OWNER_HEAD === "1";
   let subjectFunction: string | undefined;
   if (subjectWriter !== undefined) {
     // [DX-PREP1] Why: prove which writer setting actually reached the protected regression gateway.
@@ -131,11 +132,13 @@ export async function regression(
       subjectFunctionTx?: string;
       subjectOrderedIds?: boolean;
       subjectNumericOwner?: boolean;
+      subjectOwnerHead?: boolean;
     }>("GET", `/v1/db/${f.db}/write-options`);
     assert.equal(opts.database, f.db);
     assert.equal(Boolean(opts.subjectSave), subjectWriter === "1");
     assert.equal(Boolean(opts.subjectOrderedIds), orderedIds);
     assert.equal(Boolean(opts.subjectNumericOwner), orderedIds);
+    assert.equal(Boolean(opts.subjectOwnerHead), ownerHead);
     if (subjectWriter === "1") {
       assert.match(opts.subjectFunction ?? "", /^:triplex\.subject\/v-[0-9a-f]{24}$/);
       assert(Number(opts.subjectFunctionTx) > 0);
@@ -222,6 +225,7 @@ export async function regression(
       position: { v: string };
       subjectSave?: string;
       subjectOrderedIds?: boolean;
+      subjectOwnerHeadBytes?: number;
       writePath?: { scheduling: boolean };
     };
     assert.equal(ack.operationId, input.operationId);
@@ -232,6 +236,7 @@ export async function regression(
       [subjectFunction, orderedIds],
     );
     assert.equal(ack.writePath?.scheduling, subjectWriter === "0");
+    assert.equal(Boolean(ack.subjectOwnerHeadBytes), ownerHead);
     assert.deepEqual(await client.erasureFrontier(f.db), frontier);
     assert.equal(Number(ack.position.v), witnessCut + 1);
     witnessCut = Number(ack.position.v);
@@ -251,6 +256,7 @@ export async function regression(
       assertionId: before.id,
       transactionId: before.tx_id,
       generation: frontier.seq,
+      ownerHeadBytes: ack.subjectOwnerHeadBytes,
     });
   }
   const w: Witness = {

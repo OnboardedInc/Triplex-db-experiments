@@ -26,6 +26,7 @@ type Layout =
   | "overlap"
   | "regression"
   | "ledger-regression"
+  | "sealed-k-regression"
   | "ledger-authority-regression"
   | "ledger-authority-parallel"
   | "fast-authority-regression"

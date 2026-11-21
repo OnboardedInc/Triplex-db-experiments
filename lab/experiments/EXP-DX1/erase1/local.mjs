@@ -114,7 +114,9 @@ export async function local(opts, config, manager) {
   const orderedIds = process.env.DX_ERASE1_ORDERED_IDS;
   const creditMode = opts["credit-mode"] ?? "barrier6";
   const sealedWitness = opts["sealed-witness"] === true;
+  const ownerHead = process.env.DX_W1_OWNER_HEAD === "1";
   assert(!sealedWitness || mode === "ledger-authority-regression");
+  assert(!ownerHead || (sealedWitness && orderedIds === "1" && subjectWriter === "1"));
   assert(["barrier6", "rolling6"].includes(creditMode));
   assert(subjectWriter === undefined || subjectWriter === "0" || subjectWriter === "1");
   assert(orderedIds === undefined || (orderedIds === "1" && subjectWriter === "1"));
@@ -469,6 +471,7 @@ export async function local(opts, config, manager) {
           ...(orderedIds
             ? ["-e", "TX2_SUBJECT_ORDERED_IDS=1", "-e", "TX2_SUBJECT_NUMERIC_OWNER=1"]
             : []),
+          ...(ownerHead ? ["-e", "TX2_SUBJECT_OWNER_HEAD=1"] : []),
           ...(mode === "fast-authority-regression" ? ["-e", "TX2_REMOVAL_COST_READBACK=1"] : []),
           "-e",
           "DX_ERASE_TOKEN=" + token,
@@ -540,6 +543,7 @@ export async function local(opts, config, manager) {
       mode,
       creditMode,
       sealedWitness,
+      ownerHead,
       people,
       caps,
       slot: info.slot,
