@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { memoryPlan } from "../int1/memory-plan.ts";
 import { nodeImage, pgImage } from "../v01/source.ts";
-import { isWriter, type Writer } from "../v01/profile.ts";
+import { isWriter } from "../v01/profile.ts";
 
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
 const scorecard = process.env.DX_V01_MAC_FIXTURE === "1";
@@ -190,9 +190,8 @@ function setup(compact: boolean) {
   assert(["original", "demand"].includes(gwPolicy) && ["following", "validated"].includes(readMode));
   assert(peerGc === "g1" || (gwPolicy === "demand" && peerGc === "elastic"));
   const writeOptionsAttempt = mode === "int1-adopted-proof" ? randomUUID() : undefined;
-  const scorecardWriter: Writer | undefined = writeOptionsAttempt
-    ? "per-person-ordered" === process.env.DX_V01_MAC_WRITER ? "per-person-ordered" : "grouped"
-    : undefined;
+  const scorecardWriter = writeOptionsAttempt ? (process.env.DX_V01_MAC_WRITER ?? "grouped") : undefined;
+  assert(!writeOptionsAttempt || isWriter(scorecardWriter));
   for (const [n, slot] of slots.entries()) {
     const role = n === 0 ? "write" : "read";
     assert(!fs.existsSync(ownerFile(slot)), "Exclusive slot is in use");
@@ -286,6 +285,7 @@ function bind() {
     managed: {
       nonce: attempt.nonce,
       writeOptionsAttempt: attempt.writeOptionsAttempt,
+      scorecardWriter: attempt.scorecardWriter,
       compact: !!attempt.compact,
       census: attempt.census, cohort: attempt.cohort,
       gwPolicy: attempt.gwPolicy, readMode: attempt.readMode,
@@ -374,6 +374,25 @@ if (action === "--guest") {
       } catch { return []; }
     });
     assert(stack.managed.writeOptionsAttempt && isWriter(stack.managed.scorecardWriter) && commands.length >= 3);
+    if (stack.managed.scorecardWriter === "per-person-ordered") {
+      const secret = read(cred).secret as string;
+      assert.match(secret, /^[a-f0-9]{40}$/);
+      const host = new URL(stack.writeUrl).hostname;
+      const uri = "datomic:sql://{db}?jdbc:postgresql://" + host + ":5432/datomic?user=datomic&password=" + secret;
+      const gate = spawnSync("/opt/datomic/bin/run", [path.join(repo, "lab/experiments/EXP-DX1/v01/prep1-mixed-test.clj")], {
+        cwd: "/opt/datomic", encoding: "utf8", timeout: 60_000,
+        env: { ...process.env, DX_V01_FIXTURE_REPO: repo, WFIX1_URI: uri,
+          DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
+          DATOMIC_JAVA_OPTS: "-Xms48m -Xmx384m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
+          TX2_SUBJECT_SAVE: "1", TX2_SUBJECT_ORDERED_IDS: "1", TX2_SUBJECT_NUMERIC_OWNER: "1",
+          TX2_SUBJECT_PREFETCH: "0", TX2_LEAN_NATIVE_QUERY: "1", TX2_LEAN_NATIVE_LOG: "1",
+        },
+      });
+      const log = ((gate.stdout ?? "") + (gate.stderr ?? "")).replaceAll(secret, "[redacted]");
+      fs.writeFileSync(path.join(out, "PREP1-MIXED-TEST.log"), log, { flag: "wx" });
+      assert.equal(gate.status, 0, "Published PREP1 mixed-ID test failed");
+      assert.match(log, /DX_V01_PREP1_MIXED.*:fail 0.*:error 0/);
+    }
     const residency = () => {
       const roles: Record<string, { rssBytes: number; threads: number }> = {};
       for (const pid of fs.readdirSync("/proc").filter((n) => /^\d+$/.test(n))) {

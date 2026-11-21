@@ -96,9 +96,12 @@ export function writeAdoptedCard(run: Card) {
     }
   }
   const [neighbors] = readArm("p6-235", true);
-  const quietRows = (prefix: string, writer: Writer) => {
+  const quietRows = (prefix: string, writer: Writer, prior?: Observation) => {
     const [alone] = readArm(prefix + "p6-alone", false, writer), [loaded] = readArm(prefix + "p6-235", true, writer);
     if (!alone?.p6 || !loaded?.p6) return;
+    assert(prior);
+    assert.deepEqual([alone.attempt, alone.slot, alone.seed.database, alone.firstCut],
+      [prior.attempt, prior.slot, prior.seed.database, prior.terminal]);
     if (!run.toy && fs.existsSync(inputsFile)) {
       const { imagePin } = JSON.parse(fs.readFileSync(inputsFile, "utf8"));
       assert.equal(alone.seed.imageSha256, imagePin);
@@ -120,8 +123,8 @@ export function writeAdoptedCard(run: Card) {
       tape: loaded.tape,
     };
   };
-  const primaryQuiet = quietRows("", run.writer);
-  const groupedQuiet = run.writer === "per-person-ordered" ? quietRows(comparison, "grouped") : undefined;
+  const primaryQuiet = quietRows("", run.writer, loaded);
+  const groupedQuiet = run.writer === "per-person-ordered" ? quietRows(comparison, "grouped", grouped) : undefined;
   if (primaryQuiet && groupedQuiet) assert.deepEqual(primaryQuiet.tape, groupedQuiet.tape);
   const quiet = [primaryQuiet, groupedQuiet].filter((arm) => arm !== undefined);
   if (quiet.length) rows.set("P6", [quiet.map((a) => a.reading).join(" · ") + " Durable effects, Publish and import overlap remain open.",
@@ -158,8 +161,15 @@ export function writeAdoptedCard(run: Card) {
     assert.equal(record.ids.length, 4);
     assert.equal(record.ids[2], record.first.row.id);
     assert.equal(record.ids[3], record.second.row.id);
-    assert.equal(record.first.observed.position, record.start + 1);
-    assert.equal(record.second.observed.position, record.start + 2);
+    assert.deepEqual([record.installed.attempt, record.installed.database, record.installed.position],
+      [record.attempt, record.database, record.start]);
+    for (const [i, role, sample] of [[1, "first", record.first], [2, "second", record.second]] as const) {
+      assert.deepEqual([sample.observed.db, sample.observed.position, sample.observed.id],
+        [record.database, record.start + i, record.attempt + "-mixed-" + role]);
+      assert.deepEqual(record.historical[i + 1]?.slice(0, 3),
+        [record.subject, sample.row.attribute, { type: "string", value: "scorecard-history-" + (i === 1 ? "one" : "two") }]);
+    }
+    assert.equal(record.end, record.start + (writer === "per-person-ordered" ? 3 : 2));
     if (writer === "per-person-ordered") {
       assert.deepEqual(record.refusals.map(({ format, id, reason, operation, claim, head }) => [format, id, reason, operation, claim, head]),
         [["old-format", record.ids[0], "IdentityConflict", "absent", null, record.start + 2],

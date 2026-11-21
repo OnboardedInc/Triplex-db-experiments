@@ -63,8 +63,8 @@ export async function checkMixedIds(source: string, peer: Peer, seed: AdoptedSee
       sourceK: position, live: [prior.id], writeClass: "live" as const };
     return { input, entity: fact.e, identity };
   };
-  const commit = async (stage: string, at: number, prior: Row, text: string, subjectFunction?: string) => {
-    const candidate = make(stage, prior, text, at, ordered);
+  const commit = async (stage: string, at: number, prior: Row, text: string, subjectFunction?: string, useOrdered = ordered) => {
+    const candidate = make(stage, prior, text, at, useOrdered);
     const { input, identity } = candidate;
     const ack = await client.transact(db, input) as {
       operationId: string; position: { v: string }; t: { v: string }; recordedAt: { v: number };
@@ -124,7 +124,7 @@ export async function checkMixedIds(source: string, peer: Peer, seed: AdoptedSee
         refusals.push({ format, id, command: input.operationId, journal: input.claims[0]!.txId, reason, operation: operation.status,
           claim, head });
       }
-      await commit("control", start + 2, prior, "scorecard-fresh-control", installed.subjectFunction);
+      await commit("control", start + 2, prior, "scorecard-fresh-control", installed.subjectFunction, false);
     }
     const end = await getHead();
     assert.equal(end, start + (ordered ? 3 : 2));
