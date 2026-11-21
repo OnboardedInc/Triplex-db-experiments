@@ -3,7 +3,7 @@ All 13 removal routes passed with both grouped and ordered saves under rolling c
 Both runs verified the stored sealed value before removal and performed an actual restore.
 The removal stage opens a disposable stopped copy of the original seed.
 The normal write path and queued scorecard pins keep their prior settings.
-The realistic database and the read gateway memory census follow this stage.
+The realistic database build is `8597e3ef7a73fc5ce81a448614c11c4e9e8db293`. The toy held 5,600 people together.
 The Mac checks are for correctness. Full server measurements remain open.
 The database continues to hold all accounts together.
 
@@ -18,3 +18,5 @@ The two native gates matched all 13 routes, their fresh sealed and unsealed witn
 ## Realistic seed audit
 
 The extension checks every frame against regenerated typed facts, the original receipt and the contiguous feed suffix under the new namespace. The candidate physical seal binds the verified parent, exact copy tree, native census, clean stop and the fresh output ledger. The toy workload compares every scheduled pinned answer, journal change and resend with the independently regenerated tape. Its terminal observations bind the source, attempt, slot, starting seal and hashed bytes. The server verifies the copy again before launching it.
+
+The launch conflict leaves a single PostgreSQL mount selection. REAL1 supplies its own explicit copy path. It reuses the existing physical seal reader and keeps the normal dump check intact. The exact toy source passed TypeScript, shell syntax and three focused tests. At the 66-position seal it matched 32 extension frames, 62,120 new facts, 837 saves, 24 resends, 8,370 pinned reads and 25 first reads. The engine removed the private volume. [Checksums](V0.1-SHA256SUMS)
