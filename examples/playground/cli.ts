@@ -11,7 +11,7 @@ import { dockerClient, loopback, memoryScale, port, repo, Stack } from "./stack.
 
 const usage = `pnpm playground start [--port 4186] [--write-port 8486] [--read-port 8487] [--memory-scale 1|2|4] [--larger | --tier NAME --data SOURCE [--replay]]
 pnpm playground stop
-pnpm playground snapshot --tier NAME --deep N --daily N|real --out DIRECTORY [--max-bytes N] [--memory-scale 1|2|4]
+pnpm playground snapshot --tier NAME --deep N --daily N|real --out DIRECTORY [--collect] [--min-bytes N] [--max-bytes N] [--memory-scale 1|2|4]
 node examples/playground/cli.ts mcp [--port 4186]`;
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -27,6 +27,8 @@ const { values, positionals } = parseArgs({
     daily: { type: "string" },
     out: { type: "string" },
     "max-bytes": { type: "string" },
+    "min-bytes": { type: "string" },
+    collect: { type: "boolean" },
     "memory-scale": { type: "string", default: "1" },
     help: { type: "boolean", short: "h" },
   },
@@ -238,11 +240,16 @@ async function makeSnapshot() {
   };
   checkPlan(plan);
   const maxBytes = values["max-bytes"] === undefined ? undefined : Number(values["max-bytes"]);
+  const minBytes = values["min-bytes"] === undefined ? undefined : Number(values["min-bytes"]);
   if (
     !tierName.test(tier) ||
     tier === "small" ||
     !values.out ||
-    (maxBytes !== undefined && (!Number.isSafeInteger(maxBytes) || maxBytes < 1))
+    (maxBytes !== undefined && (!Number.isSafeInteger(maxBytes) || maxBytes < 1)) ||
+    (minBytes !== undefined &&
+      (!Number.isSafeInteger(minBytes) ||
+        minBytes < 1 ||
+        (maxBytes !== undefined && minBytes > maxBytes)))
   )
     throw new Error(usage);
   const output = resolve(values.out);
@@ -274,6 +281,8 @@ async function makeSnapshot() {
       ports: { write: 0, read: 0 },
       memoryScale: memoryScale(values["memory-scale"]),
       ...(maxBytes === undefined ? {} : { maxBytes }),
+      ...(minBytes === undefined ? {} : { minBytes }),
+      ...(values.collect ? { collection: { compare: false, timeoutMs: 6 * 60 * 60_000 } } : {}),
       beforeSeal: () => {
         if (git("rev-parse", "HEAD") !== sourceHead || git("status", "--porcelain"))
           throw new Error("Snapshot source changed; choose an output outside the checkout");

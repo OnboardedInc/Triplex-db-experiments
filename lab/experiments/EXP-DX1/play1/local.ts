@@ -70,28 +70,38 @@ async function writerGate(
 ) {
   // [DX-INT1] Why: the live playground sets its SDK tracing before this extra probe opens.
   // Rejected: importing the SDK during launcher startup and silently changing demo tracing.
-  const [{ DatomicClient, orderedSaveIdentity }, { decodeRowText }, { command }] = await Promise.all([
-    import("../../../../packages/datomic/dist/index.js"),
-    import("../../../../packages/datomic/dist/rowText.js"),
-    import("../w1/group/workload.ts"),
-  ]);
+  const [{ DatomicClient, orderedSaveIdentity }, { decodeRowText }, { command }] =
+    await Promise.all([
+      import("../../../../packages/datomic/dist/index.js"),
+      import("../../../../packages/datomic/dist/rowText.js"),
+      import("../w1/group/workload.ts"),
+    ]);
   const write = new DatomicClient(urls.write);
   const read = new DatomicClient(urls.read);
   const scope = JSON.stringify(["triplex-scope-v1", "test", "play1-writer", probe.attempt, 0]);
   const entity = "acct/playground/lean-writer";
   const attr = ":person/status";
-  const value = (text: string) => ({ e: entity, a: attr, v: { type: "string" as const, value: text } });
+  const value = (text: string) => ({
+    e: entity,
+    a: attr,
+    v: { type: "string" as const, value: text },
+  });
   try {
     const { db, created } = await write.create(scope, "lean", true, 30000);
     assert(created);
     await write.transact(db, command("play1-writer-seed", [value("before")]));
     const { handle, position } = await read.begin(db);
     try {
-      const readAt = (recordedPosition: number) => read.rows(db, {
-        entityIds: [entity], basis: { recordedPosition, validAt: 0 },
-      });
+      const readAt = (recordedPosition: number) =>
+        read.rows(db, {
+          entityIds: [entity],
+          basis: { recordedPosition, validAt: 0 },
+        });
       const before = await readAt(position);
-      assert.deepEqual(before.map((row) => row.value_string), ["before"]);
+      assert.deepEqual(
+        before.map((row) => row.value_string),
+        ["before"],
+      );
       const opts = await write.request<{
         attempt: string;
         database: string;
@@ -109,7 +119,12 @@ async function writerGate(
         [probe.attempt, db, position, source],
       );
       assert.deepEqual(
-        [opts.subjectSave, opts.subjectNumericOwner, opts.subjectOrderedIds, opts.subjectPrefetch].map(Boolean),
+        [
+          opts.subjectSave,
+          opts.subjectNumericOwner,
+          opts.subjectOrderedIds,
+          opts.subjectPrefetch,
+        ].map(Boolean),
         [probe.ordered, probe.ordered, probe.ordered, false],
       );
       assert.equal(opts.options.groupCommit, !probe.ordered);
@@ -122,13 +137,14 @@ async function writerGate(
         groupAccount: "playground",
         writeClass: "live" as const,
       };
-      const ack = await write.transact(db, input) as {
+      const ack = (await write.transact(db, input)) as {
         subjectSave?: string;
         subjectOrderedIds?: boolean;
         operationId: string;
         position: { v: string };
       };
-      const cut = Number(ack.position.v), expected = input.claims[0]!.txId;
+      const cut = Number(ack.position.v),
+        expected = input.claims[0]!.txId;
       assert.deepEqual([ack.operationId, cut], [operation, position + 1]);
       assert.equal(await read.claim(db, operation, cut), expected);
       if (probe.ordered) {
@@ -136,11 +152,17 @@ async function writerGate(
         assert.deepEqual([ack.subjectSave, ack.subjectOrderedIds], [opts.subjectFunction, true]);
       } else assert(!ack.subjectOrderedIds);
       const { transactions } = await read.request<{ transactions: [string, number, string[]][] }>(
-        "POST", "/v2/db/" + db + "/transactions", { after: position, limit: 1 });
+        "POST",
+        "/v2/db/" + db + "/transactions",
+        { after: position, limit: 1 },
+      );
       assert.equal(transactions.length, 1);
       const [tx, observed, wire] = transactions[0]!;
       assert.deepEqual([tx, observed], [expected, cut]);
-      const ids = wire.map(decodeRowText).map((row) => row.id).sort();
+      const ids = wire
+        .map(decodeRowText)
+        .map((row) => row.id)
+        .sort();
       const expectedJournalIds = input.rows
         .filter((row) => row.entity_type === "_Transaction")
         .map((row) => row.id)
@@ -252,6 +274,8 @@ export async function local(
     snapshot?: string;
     deep?: string;
     daily?: string;
+    collect?: boolean;
+    "keep-bundle"?: boolean;
     writer?: string;
     "server-startup"?: boolean;
   },
@@ -261,19 +285,37 @@ export async function local(
   const holder = options.holder;
   // [DX-INT1] Why: the integrated playground diagnostic owns its own portable slot and image.
   // Rejected: using another builder's holder identity or cached image.
-  assert(process.platform === "darwin" && (holder === "DX-PLAY1" || (holder === "DX-THIN1" && options.portable)));
+  assert(
+    process.platform === "darwin" &&
+      (holder === "DX-PLAY1" || (holder === "DX-THIN1" && options.portable)),
+  );
   assert(
     (process.env.TX2_DOCKER_HOST ?? DOCKER_HOST) === DOCKER_HOST,
     "Use the private lab Docker endpoint",
   );
   assert(options.out, "Pass a fresh evidence directory");
-  assert(options.writer === undefined || (options.portable && !options.snapshot &&
-    (options.writer === "grouped" || options.writer === "subject")));
+  assert(
+    options.writer === undefined ||
+      (options.portable &&
+        !options.snapshot &&
+        (options.writer === "grouped" || options.writer === "subject")),
+  );
   const serverStartup = options["server-startup"] === true;
-  assert(!serverStartup || (options.portable && !options.browser && !options.snapshot && !options.writer && !options.deep));
-  const writerProbe = options.writer === undefined ? undefined : {
-    ordered: options.writer === "subject", attempt: randomUUID(),
-  };
+  assert(
+    !serverStartup ||
+      (options.portable &&
+        !options.browser &&
+        !options.snapshot &&
+        !options.writer &&
+        !options.deep),
+  );
+  const writerProbe =
+    options.writer === undefined
+      ? undefined
+      : {
+          ordered: options.writer === "subject",
+          attempt: randomUUID(),
+        };
   const out = resolve(options.out);
   await mkdir(out);
   const prefix = "tx2-dxplay1-" + randomBytes(6).toString("hex");
@@ -401,10 +443,24 @@ export async function local(
         assert.equal(owner?.pid, process.pid);
         assert.equal(git(["rev-parse", "HEAD"]), head);
         assert.equal(git(["status", "--porcelain"]), "");
-        await writeFile(join(out, "launch.json"), JSON.stringify({
-          head, prefix, holder, slot: slot.slot, sourceHashes, gatewaySource: ready.source,
-          timingClass: "Mac diagnostic startup", ...launch,
-        }, null, 2) + "\n", { flag: "wx" });
+        await writeFile(
+          join(out, "launch.json"),
+          JSON.stringify(
+            {
+              head,
+              prefix,
+              holder,
+              slot: slot.slot,
+              sourceHashes,
+              gatewaySource: ready.source,
+              timingClass: "Mac diagnostic startup",
+              ...launch,
+            },
+            null,
+            2,
+          ) + "\n",
+          { flag: "wx" },
+        );
       } finally {
         const clean = await stack.stop();
         await writeFile(join(out, "cleanup.json"), JSON.stringify(clean) + "\n", { flag: "wx" });
@@ -422,6 +478,8 @@ export async function local(
         sourceHead,
         slot: slot.slot,
         timingClass: "laptop diagnostic",
+        ...(options.collect ? { collection: { compare: true, timeoutMs: 90_000 } } : {}),
+        keepBundle: options["keep-bundle"] === true,
         ...(options.browser
           ? {
               verifyBrowser: async (url: string) => {
@@ -453,7 +511,9 @@ export async function local(
     });
     if (writerProbe) {
       const observed = await writerGate(ready.urls, ready.gatewaySource, writerProbe);
-      await writeFile(join(out, "writer.json"), JSON.stringify(observed, null, 2) + "\n", { flag: "wx" });
+      await writeFile(join(out, "writer.json"), JSON.stringify(observed, null, 2) + "\n", {
+        flag: "wx",
+      });
     }
     const browserError = options.browser ? await browserGate(out, instance.server.url) : undefined;
     const transactor = JSON.parse(

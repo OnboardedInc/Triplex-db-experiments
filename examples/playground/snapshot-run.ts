@@ -24,6 +24,8 @@ type Options = Omit<StackOptions, "directory"> & {
   slot?: string;
   beforeSeal?: () => void;
   maxBytes?: number;
+  minBytes?: number;
+  collection?: { compare: boolean; timeoutMs: number };
   verifyBrowser?: (url: string) => Promise<void>;
 };
 
@@ -51,6 +53,9 @@ export async function runSnapshot(options: Options) {
     const checkpoint = await capture.snapshotCheckpoint(plan);
     const index = await capture.settleSnapshot(checkpoint);
     const buildPeaks = await initial.stack.memoryPeaks();
+    const collection = options.collection
+      ? await initial.stack.collect(index.database, options.collection)
+      : undefined;
     const buildMs = performance.now() - buildStart;
     const dumpStart = performance.now();
     await initial.stack.dump(archive);
@@ -68,6 +73,10 @@ export async function runSnapshot(options: Options) {
     if (options.maxBytes !== undefined && downloadBytes > options.maxBytes)
       throw new Error(
         "Snapshot download exceeds the requested budget: " + downloadBytes + " bytes",
+      );
+    if (options.minBytes !== undefined && downloadBytes < options.minBytes)
+      throw new Error(
+        "Snapshot download falls below the requested size: " + downloadBytes + " bytes",
       );
     const dumpMs = performance.now() - dumpStart;
     await rm(archive);
@@ -128,6 +137,7 @@ export async function runSnapshot(options: Options) {
       timingClass,
       checkpoint,
       index,
+      collection,
       prefix,
       slot: options.slot,
       manifestSha256: published.checksum,

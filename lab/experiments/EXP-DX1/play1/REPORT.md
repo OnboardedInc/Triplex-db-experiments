@@ -74,3 +74,7 @@ The orchestrator confirmed that the superseded plan commit used the generic lab 
 ## Manual clean-clone workflow
 
 Once the workflow file is on the repository's default branch, open Actions, choose **Playground clean clone**, select the branch to test and click **Run workflow**. The CLI equivalent is `gh workflow run playground-clean-clone.yml --ref exp/DX-INT1` after the playground is merged there. This implementation did not dispatch the workflow. [GitHub manual workflow documentation](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)
+
+## Storage collection audit
+
+The collector runs only inside the generated transactor against the indexed scope of the current build. Both owned gateways are stopped before the recent cutoff is requested. The receipt requires a lower PostgreSQL live row count, a lower live value byte count and a stable observation window while the transactor remains alive. The resulting archive must reopen all three generated cuts in a fresh stack. The byte bounds are checked against the produced manifest and chunks before a successful bundle is retained. [Datomic storage collection guidance](https://docs.datomic.com/operation/capacity.html)

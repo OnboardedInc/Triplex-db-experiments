@@ -6,7 +6,13 @@ import { setTimeout as delay } from "node:timers/promises";
 import { promisify } from "node:util";
 import { inflateRawSync } from "node:zlib";
 import type { Restore } from "./snapshot.ts";
-import { checkProfileFlags, laptopCaps, launchProfile, roles, startupFlags } from "../../lab/experiments/EXP-DX1/jvm1/launch.mjs";
+import {
+  checkProfileFlags,
+  laptopCaps,
+  launchProfile,
+  roles,
+  startupFlags,
+} from "../../lab/experiments/EXP-DX1/jvm1/launch.mjs";
 import { datomicRuntime } from "../../lab/config/datomic/runtime.mjs";
 
 export const repo = resolve(import.meta.dirname, "../..");
@@ -300,6 +306,7 @@ export class Stack {
       template,
     ]);
     const sqlUrl = `jdbc:postgresql://${pg}:5432/datomic`;
+    const uriTemplate = `datomic:sql://{db}?${sqlUrl}?user=datomic&password=${secret}`;
     const settings = new Map(
       Object.entries({
         protocol: "sql",
@@ -342,6 +349,8 @@ export class Stack {
       "create",
       ...runnable("tx", tx),
       ...sources,
+      "-e",
+      `DATOMIC_URI_TEMPLATE=${uriTemplate}`,
       "--entrypoint",
       "/opt/datomic/bin/transactor",
       image,
@@ -388,26 +397,40 @@ export class Stack {
           ? [...mount(this.traceDir, "/trace"), "-e", "TRIPLEX_TRACE_DIR=/trace"]
           : []),
         "-e",
-        "DATOMIC_JAVA_OPTS=" + [...launch[role === "write" ? "gw-w" : "gw-r"].flags, ...startupFlags].join(" "),
+        "DATOMIC_JAVA_OPTS=" +
+          [...launch[role === "write" ? "gw-w" : "gw-r"].flags, ...startupFlags].join(" "),
         "-e",
-        `DATOMIC_URI_TEMPLATE=datomic:sql://{db}?${sqlUrl}?user=datomic&password=${secret}`,
+        `DATOMIC_URI_TEMPLATE=${uriTemplate}`,
         "-e",
         `GATEWAY_SOURCE_SHA256=${source}`,
         ...(probe
           ? [
-              "-e", "TX2_LEAN_NATIVE_LOG=1",
-              "-e", "TX2_LEAN_NATIVE_QUERY=1",
-              ...(role === "write" ? [
-                "-e", "TX2_WRITE_OPTIONS_ATTEMPT=" + probe.attempt,
-                "-e", "TX2_SAVE_LEDGER=" + Number(!probe.ordered),
-                "-e", "TX2_SMALL_ROWS=" + Number(!probe.ordered),
-                "-e", "TX2_GROUP_COMMIT=" + (probe.ordered ? "0" : "1"),
-                "-e", "TX2_GROUP_REUSE_PREPARED=" + (probe.ordered ? "0" : "1"),
-                "-e", "TX2_SUBJECT_SAVE=" + Number(probe.ordered),
-                "-e", "TX2_SUBJECT_NUMERIC_OWNER=" + Number(probe.ordered),
-                "-e", "TX2_SUBJECT_ORDERED_IDS=" + Number(probe.ordered),
-                "-e", "TX2_SUBJECT_PREFETCH=0",
-              ] : []),
+              "-e",
+              "TX2_LEAN_NATIVE_LOG=1",
+              "-e",
+              "TX2_LEAN_NATIVE_QUERY=1",
+              ...(role === "write"
+                ? [
+                    "-e",
+                    "TX2_WRITE_OPTIONS_ATTEMPT=" + probe.attempt,
+                    "-e",
+                    "TX2_SAVE_LEDGER=" + Number(!probe.ordered),
+                    "-e",
+                    "TX2_SMALL_ROWS=" + Number(!probe.ordered),
+                    "-e",
+                    "TX2_GROUP_COMMIT=" + (probe.ordered ? "0" : "1"),
+                    "-e",
+                    "TX2_GROUP_REUSE_PREPARED=" + (probe.ordered ? "0" : "1"),
+                    "-e",
+                    "TX2_SUBJECT_SAVE=" + Number(probe.ordered),
+                    "-e",
+                    "TX2_SUBJECT_NUMERIC_OWNER=" + Number(probe.ordered),
+                    "-e",
+                    "TX2_SUBJECT_ORDERED_IDS=" + Number(probe.ordered),
+                    "-e",
+                    "TX2_SUBJECT_PREFETCH=0",
+                  ]
+                : []),
             ]
           : []),
         "-e",
@@ -553,10 +576,10 @@ export class Stack {
     );
   }
 
-  async dump(local: string) {
-    const { docker, prefix, signal } = this.#opts;
-    const roles = [prefix + "-write", prefix + "-read", prefix + "-tx"];
-    for (const name of roles) {
+  private async ownedRoles(roles: string[]) {
+    const { docker, prefix } = this.#opts;
+    const names = roles.map((role) => prefix + "-" + role);
+    for (const name of names) {
       const owner = await docker([
         "inspect",
         "--format",
@@ -565,7 +588,121 @@ export class Stack {
       ]);
       if (owner !== prefix) throw new Error("Snapshot role ownership changed");
     }
-    await docker(["stop", "--time", "10", ...roles]);
+    return names;
+  }
+
+  private async storageCensus() {
+    const { docker, prefix, signal } = this.#opts;
+    const text = await docker(
+      [
+        "exec",
+        prefix + "-pg",
+        "psql",
+        "-XAt",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-U",
+        "postgres",
+        "-d",
+        "datomic",
+        "-c",
+        "SELECT count(*), coalesce(sum(octet_length(val)),0) FROM datomic_kvs",
+      ],
+      archiveCommand(signal),
+    );
+    if (!/^\d+\|\d+$/.test(text)) throw new Error("Invalid Datomic storage census");
+    const [rows, bytes] = text.split("|").map(Number);
+    if (!Number.isSafeInteger(rows) || !Number.isSafeInteger(bytes) || !rows || !bytes)
+      throw new Error("Empty or invalid Datomic storage census");
+    return { rows, bytes };
+  }
+
+  async collect(database: string, { compare, timeoutMs }: { compare: boolean; timeoutMs: number }) {
+    const { docker, signal } = this.#opts;
+    if (!/^s2-[A-Za-z0-9_-]+$/.test(database))
+      throw new Error("Invalid owned Datomic database name");
+    const [tx, , ...readers] = await this.ownedRoles(["tx", "pg", "write", "read"]);
+    // [DX-PLAY1] Why: collect only this offline-to-users import, after index adoption and peer shutdown.
+    // Rejected: collecting a resident or lending its superseded segments to the public snapshot.
+    await docker(["stop", "--time", "10", ...readers]);
+    const before = await this.storageCensus();
+    const beforeDump = compare ? await this.dumpSize() : undefined;
+    const start = performance.now();
+    const program = `(require '[datomic.api :as d] '[clojure.string :as s])
+      (let [uri (s/replace (System/getenv "DATOMIC_URI_TEMPLATE") "{db}" (System/getenv "PLAYGROUND_GC_DB"))
+            conn (d/connect uri) cut (java.util.Date.) result (d/gc-storage conn cut)]
+        (when (instance? clojure.lang.IDeref result) @result)
+        (println (str "PLAYGROUND_GC " (.getTime cut)))
+        (d/release conn))`;
+    const launched = await docker(
+      [
+        "exec",
+        "-e",
+        `PLAYGROUND_GC_DB=${database}`,
+        "-e",
+        "DATOMIC_JAVA_OPTS=-Xms32m -Xmx192m -XX:+UseSerialGC -XX:ActiveProcessorCount=1",
+        tx!,
+        "/opt/datomic/bin/run",
+        "-m",
+        "clojure.main",
+        "-e",
+        program,
+      ],
+      { ...archiveCommand(signal), timeoutMs },
+    ).catch(() => {
+      throw new Error("Owned Datomic storage collection could not start");
+    });
+    const cutoff = /^PLAYGROUND_GC (\d+)$/m.exec(launched)?.[1];
+    if (!cutoff) throw new Error("The collector returned no cutoff");
+    // The Peer API can acknowledge before physical DELETEs finish. Observe a falling census
+    // followed by an unchanged window before stopping the transactor and exporting.
+    let previous = before;
+    let repeats = 0;
+    while (performance.now() - start < timeoutMs) {
+      await delay(2000, undefined, { signal });
+      const current = await this.storageCensus();
+      repeats =
+        current.rows === previous.rows && current.bytes === previous.bytes ? repeats + 1 : 0;
+      previous = current;
+      if (repeats >= 5 && current.rows < before.rows && current.bytes < before.bytes) {
+        const state = await docker(["inspect", "--format", "{{.State.Running}}", tx!]);
+        if (state !== "true") throw new Error("The transactor stopped during collection");
+        return {
+          database,
+          cutoffMs: Number(cutoff),
+          before,
+          after: current,
+          beforeDump,
+          elapsedMs: performance.now() - start,
+        };
+      }
+    }
+    throw new Error("Datomic collection did not show reduced, stable SQL storage");
+  }
+
+  private async dumpSize() {
+    const { docker, prefix, signal } = this.#opts;
+    const pg = prefix + "-pg";
+    const file = "/tmp/playground-before-collection.dump";
+    try {
+      await docker(
+        ["exec", pg, "pg_dump", "-U", "postgres", "-Fc", "-Z", "6", "-d", "datomic", "-f", file],
+        archiveCommand(signal),
+      );
+      return Number(await docker(["exec", pg, "stat", "-c", "%s", file]));
+    } finally {
+      await docker(["exec", pg, "rm", "-f", file]);
+    }
+  }
+
+  async dump(local: string) {
+    const { docker, prefix, signal } = this.#opts;
+    await docker([
+      "stop",
+      "--time",
+      "10",
+      ...(await this.ownedRoles(["write", "read", "tx", "pg"])).slice(0, 3),
+    ]);
     const pg = prefix + "-pg";
     const file = "/tmp/playground-export.dump";
     await docker(
@@ -589,38 +726,84 @@ export class Stack {
     const policy = this.launchProfile();
     const observed = [];
     for (const role of roles) {
-      const name = prefix + "-" + ({ tx: "tx", "gw-w": "write", "gw-r": "read" })[role];
+      const name = prefix + "-" + { tx: "tx", "gw-w": "write", "gw-r": "read" }[role];
       const inspect = async (id: string) => {
         const row = JSON.parse(await docker(["inspect", id]))[0];
-        if (row.Name !== "/" + name || !row.State.Running || row.Config.Labels[ownership] !== prefix)
+        if (
+          row.Name !== "/" + name ||
+          !row.State.Running ||
+          row.Config.Labels[ownership] !== prefix
+        )
           throw new Error("Launch witness lost its owned container");
-        return { id: row.Id, image: row.Image, started: row.State.StartedAt, restarts: row.RestartCount,
-          memory: row.HostConfig.Memory, cpuQuota: row.HostConfig.NanoCpus };
+        return {
+          id: row.Id,
+          image: row.Image,
+          started: row.State.StartedAt,
+          restarts: row.RestartCount,
+          memory: row.HostConfig.Memory,
+          cpuQuota: row.HostConfig.NanoCpus,
+        };
       };
       const engine = await inspect(name);
-      const process = () => docker(["exec", engine.id, "bash", "-ceu", [
-        "java_pid=",
-        'for p in /proc/[0-9]*; do if [[ $(cat "$p/comm" 2>/dev/null || :) == java ]]; then',
-        '  test -z "$java_pid"; java_pid=${p##*/}; fi; done',
-        'test -n "$java_pid"; printf "pid=%s\\n" "$java_pid"; cut -d " " -f22 "/proc/$java_pid/stat"',
-        'tr "\\000" "\\n" < "/proc/$java_pid/cmdline" | grep -E "^-Ddatomic.objectCacheMax="',
-      ].join("\n")]);
+      const process = () =>
+        docker([
+          "exec",
+          engine.id,
+          "bash",
+          "-ceu",
+          [
+            "java_pid=",
+            'for p in /proc/[0-9]*; do if [[ $(cat "$p/comm" 2>/dev/null || :) == java ]]; then',
+            '  test -z "$java_pid"; java_pid=${p##*/}; fi; done',
+            'test -n "$java_pid"; printf "pid=%s\\n" "$java_pid"; cut -d " " -f22 "/proc/$java_pid/stat"',
+            'tr "\\000" "\\n" < "/proc/$java_pid/cmdline" | grep -E "^-Ddatomic.objectCacheMax="',
+          ].join("\n"),
+        ]);
       const boot = await process();
       const flags = await docker(["logs", "--since", engine.started, engine.id]);
       checkProfileFlags(policy[role], flags);
-      if (!flags.includes("Version: " + datomicRuntime(policy[role].major).version) ||
-          !boot.split("\n").includes("-Ddatomic.objectCacheMax=" + policy[role].cacheMiB + "m") ||
-          engine.memory !== policy[role].memoryMiB * 2 ** 20 || engine.cpuQuota !== 2e9 ||
-          boot !== await process() || JSON.stringify(engine) !== JSON.stringify(await inspect(engine.id)))
+      if (
+        !flags.includes("Version: " + datomicRuntime(policy[role].major).version) ||
+        !boot.split("\n").includes("-Ddatomic.objectCacheMax=" + policy[role].cacheMiB + "m") ||
+        engine.memory !== policy[role].memoryMiB * 2 ** 20 ||
+        engine.cpuQuota !== 2e9 ||
+        boot !== (await process()) ||
+        JSON.stringify(engine) !== JSON.stringify(await inspect(engine.id))
+      )
         throw new Error("Live JVM differs from launch policy for " + role);
-      observed.push({ role, engine, boot, flags: flags.split("\n").filter((line) =>
-        /^\s*\w+\s+\w+\s+=\s+\S+\s+\{/.test(line) || line.includes("[gc,init")) });
+      observed.push({
+        role,
+        engine,
+        boot,
+        flags: flags
+          .split("\n")
+          .filter((line) => /^\s*\w+\s+\w+\s+=\s+\S+\s+\{/.test(line) || line.includes("[gc,init")),
+      });
     }
     const keys = Object.keys(policy.pg.settings) as (keyof typeof policy.pg.settings)[];
-    const actual = (await docker(["exec", prefix + "-pg", "psql", "-XAtq", "-U", "postgres", "-d", "datomic",
-      "-c", keys.map((key) => "SHOW " + key).join("; ")])).trim().split("\n");
-    if (keys.some((key, i) => actual[i] !== policy.pg.settings[key])) throw new Error("PostgreSQL launch settings differ");
-    return { policy, observed, postgres: Object.fromEntries(keys.map((key, i) => [key, actual[i]])) };
+    const actual = (
+      await docker([
+        "exec",
+        prefix + "-pg",
+        "psql",
+        "-XAtq",
+        "-U",
+        "postgres",
+        "-d",
+        "datomic",
+        "-c",
+        keys.map((key) => "SHOW " + key).join("; "),
+      ])
+    )
+      .trim()
+      .split("\n");
+    if (keys.some((key, i) => actual[i] !== policy.pg.settings[key]))
+      throw new Error("PostgreSQL launch settings differ");
+    return {
+      policy,
+      observed,
+      postgres: Object.fromEntries(keys.map((key, i) => [key, actual[i]])),
+    };
   }
 
   async inventory() {
