@@ -1,6 +1,8 @@
 ## Part 14 · rolling credit release
 
 The first server comparison is barrier 6, rolling 6 and rolling 12 on the sealed 162,456,470-fact seed. [Exact command and forecasts](ROLLING-CREDITS.md)
+Server source `c8f903ce1142772751328b88d972cc527ca46dfc`. Check out this exact revision before launch.
+`DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-rolling -- bash lab/experiments/EXP-DX1/prep1/server.sh rolling "$OUT" c8f903ce1142772751328b88d972cc527ca46dfc "$SCALE1_IMAGE" 77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b 1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154 --pg-data "$SCALE1_PGDATA" --wal-mount "$SCALE1_WAL_MOUNT"`
 INT1 can cherry-pick `b0ffdd2abaaa02b117984b516b6e9e04a6cc9306` onto `8ae07b227` for the scheduler and shared sender. The runner also uses this branch's stopped-copy support.
 The six-credit barrier remains the default fair policy. Rolling reserves one slot and picks the ready quiet account first. At widths 6 and 12 there can be at most five or eleven previously submitted neighbours ahead of it.
 A rolling credit settles after its own validated durable ACK. The person and basis fences run as before. An uncertain outcome closes admission while outstanding requests finish, preserving the operation and command needed for recovery.
