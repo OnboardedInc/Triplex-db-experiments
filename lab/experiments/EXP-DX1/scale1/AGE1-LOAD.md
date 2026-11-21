@@ -41,13 +41,18 @@ The prepared measurement launch verifies the completed load's terminal state, li
 
 ## Extended continuation progress
 
-Running at the last checked cut of **538,928,597 records**, native t 39,822,789. Observation at 2026-11-21 11:55:06 UTC. Server 2 accrued USD 45.15. Root had 455.554 GB free, spare 267.568 GB. At the last completed cycle’s maintained rate of 10,033.06/s, the unfilled portion is 12.77 loading hours (USD 13.91).
+Running at the last checked cut of **603,875,613 records**, native t 43,070,140. Observation at 2026-11-21 13:55:07 UTC. Server 2 accrued USD 47.33. Root had 455.352 GB free, spare 266.213 GB. At the last completed cycle’s maintained rate of 8,978.39/s, the unfilled portion is 12.26 loading hours (USD 13.36).
 
-| Window | Indexed records | Added | Writing / cycle seconds | Writing / maintained records/s | Cores / 6 | Completed automatic index jobs | PGDATA before → after maintenance GB | Net GB vs prior cut | Hours remaining at maintained rate |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| 3 | 538,928,597 | 24,186,744 | 1796.0 / 2410.7 | 13,467.03 / 10,033.06 | 3.71 | 50 | 166.367 → 166.358 | 0.621 | 12.77 |
+| Window | Indexed records | Added | Writing / cycle seconds | Writing / maintained records/s | Cores / 6 | Completed automatic index jobs | PGDATA before → after maintenance GB | Net GB vs prior cut | Collected segments | TOAST deletions | Hours remaining at maintained rate |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 3 | 538,928,597 | 24,186,744 | 1796.0 / 2410.7 | 13,467.03 / 10,033.06 | 3.71 | 50 | 166.367 → 166.358 | 0.621 | 2,810,703 | 15,937,050 | 12.77 |
+| 4 | 560,986,309 | 22,057,712 | 1795.6 / 2366.6 | 12,284.31 / 9,320.45 | 3.53 | 45 | 166.827 → 166.819 | 0.460 | 2,670,357 | 14,930,108 | 13.08 |
+| 5 | 582,550,309 | 21,564,000 | 1795.6 / 2369.4 | 12,009.11 / 9,100.97 | 3.47 | 44 | 167.308 → 167.300 | 0.481 | 2,640,079 | 14,625,508 | 12.74 |
+| 6 | 603,875,613 | 21,325,304 | 1795.1 / 2375.2 | 11,879.73 / 8,978.39 | 3.51 | 44 | 167.721 → 167.713 | 0.413 | 2,631,639 | 14,806,075 | 12.26 |
 
-The first resumed cycle collected 2,810,703 retired segments and recorded 15,937,050 TOAST deletions. The directory moved from 166.367 to 166.358 GB across collection and vacuum, about 8.64 MB less allocated. The first complete cycle plus setup took about 44 minutes and USD 0.80 in server time. The next completed window will show reuse after this maintenance.
+After the first resumed collection, the next window added 22,057,712 records while allocated space moved by 0.469 GB before its own maintenance.
+
+The four resumed cycles added 89,133,760 indexed records and 1.975 GB of occupied PGDATA. The startup followed a full-file custody census, so the first cycle includes storage state from those reads. The next three complete cycles averaged 8,978.39–9,320.45/s with the same loading profile.
 
 [Progress evidence](evidence/age-v01-bulk-d-progress.sha256)
 
