@@ -1,9 +1,10 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 44.17 through 2026-11-21 11:01 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 44.29 through 2026-11-21 11:08 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
 AGE1 stopped at 10:56:16 UTC (05:56 ET). The second maintained cycle averaged 9,022.51 records/s, below the 9,900 floor. The held database settled at 514,741,853 records, logical head 4,034,400 and native t 38,613,452, with 165.74 GB allocated before PostgreSQL shutdown. The 12.22 MB continuation archive is checksum-matched on the Mac. The 1B copy seal and aged scorecard have no eligible input. The settled database is stopped. The stopped inventory hashed all 1,511 files at the verified cut. Server 2 became free at 10:59:15 UTC (05:59 ET) after the inventory. The immutable seed, stopped fresh template and two pristine fresh copies remain held. [Maintained load and evidence](AGE1-LOAD.md) · [Fresh scorecard](V01-FRESH.md)
+The orchestrator extended loading from the held 514,741,853-record cut. AGE1 pin `efd0c7560` is published. The original stop remains archived, with a separate immutable input extraction and a new writable attempt. `triplex-scale1-v01-age-bulk-d` is the continuation unit, with a 24-hour outer ceiling including setup and a 26-hour cumulative paid loading limit (2 h 14 min 53 s charged before launch). Stop after two consecutive complete cycles below 6,500 records/s including maintenance. The directory cap remains 400 GB. [Renewed forecast](PREDICTIONS.md#age1-extended-continuation)
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
@@ -16,7 +17,7 @@ ssh -i "$DX_BENCH_KEY" -o IdentitiesOnly=yes "$BENCH_SERVER" 'sudo -n systemctl 
 | ---: | --- | ---: |
 | 1 | AGE1 bulk ladder on the calibrated cut | 25 min setup cutoff, 60 min total (USD 1.09) |
 | 2 | Tuned ordered v0.1 fresh scorecard | Up to 300 min after staging (USD 5.45) |
-| 3 | AGE1 1B continuation | Only with a qualifying ladder arm at or above 9,900 records/s. Up to 16 loading hours including the ladder (USD 17.44) |
+| 3 | AGE1 1B continuation | Exact held cut verified; two consecutive maintained cycles below 6,500 records/s stop, up to 26 paid loading hours (USD 28.34 cumulative) |
 | 4 | Tuned ordered v0.1 aged scorecard | Requires a verified 1B seal |
 
 `arm-d7-wfix-pilot-bounded` verified the options on its startup scope. On the restored scope the writer path received a response without the nonce. It recorded zero timed cells and cleaned up. The retry derives both roles from fresh replies at the original cut and verifies the active options through the same SDK clients that carry the measured writes. The pilot seed is reused from its original accepted transfer.

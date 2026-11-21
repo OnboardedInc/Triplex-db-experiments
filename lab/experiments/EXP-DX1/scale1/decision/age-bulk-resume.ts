@@ -30,6 +30,14 @@ export type RecoveredLadder = {
 const target = 1_000_000_000;
 const hex = /^[a-f0-9]{64}$/;
 const uuid = /^[a-f0-9-]{36}$/;
+const stoppedLoad = {
+  source: "6d3d44641efacdcd9b3d6fefa299a3b0ace6f885",
+  holdSha: "646eee96678dcd06e924005a3dccbe37213accac2850769454ecee33d94a4e4a",
+  records: 514741853,
+  t: 38613452,
+  cut: 4034400,
+  rate: 9022.51,
+};
 
 async function copyState(source: string, out: string, sum: string) {
   assert.match(sum, hex);
@@ -61,6 +69,59 @@ async function stoppedNetwork(
   const password = /^sql-password=([a-f0-9]{40})$/m.exec(properties)?.[1];
   assert(password);
   return { network, propertiesSha, password };
+}
+
+// [DX-SCALE1] Why: carry the archived state and the matching stopped cluster into a separate continuation.
+// Rejected: changing the retained attempt's output or opening the volume as the original fresh seed.
+export async function stageExtendedLoad(
+  previous: string,
+  out: string,
+  identity: Identity,
+  evidence: string,
+  calibration: RecoveredLadder,
+) {
+  const holdFile = path.join(evidence, "stopped-hold.json");
+  assert.equal(await fileHash(holdFile), stoppedLoad.holdSha);
+  const hold = read(holdFile);
+  const terminal = read(path.join(previous, "exit.json"));
+  const cleanup = read(path.join(previous, "cleanup.json"));
+  assert.deepEqual(
+    [calibration.imageSha, calibration.machineHash, calibration.db],
+    [identity.imageSha, identity.machine, identity.db],
+  );
+  assert.deepEqual(
+    [hold.source, hold.volume, hold.imageSha, hold.transferSha, hold.records, hold.t],
+    [
+      stoppedLoad.source,
+      identity.volume,
+      identity.imageSha,
+      identity.transferSha,
+      stoppedLoad.records,
+      stoppedLoad.t,
+    ],
+  );
+  assert.deepEqual([terminal.nonce, terminal.slot, terminal.result], [hold.nonce, hold.slot, 1]);
+  assert.deepEqual(cleanup.containers, []);
+  assert(terminal.at <= cleanup.at && cleanup.at <= hold.verifiedAt);
+  for (const file of ["exit.json", "cleanup.json"]) {
+    assert.equal(
+      await fileHash(path.join(previous, file)),
+      await fileHash(path.join(evidence, file)),
+    );
+  }
+  const base = "age1-" + createHash("sha256").update(identity.db).digest("hex") + ".edn";
+  await copyState(path.join(evidence, base), out, hold.checkpointSha);
+  await copyState(path.join(evidence, base + ".population.edn"), out, hold.populationSha);
+  return {
+    ...(await stoppedNetwork(previous, stoppedLoad.source, terminal)),
+    cut: stoppedLoad.cut,
+    nativeT: stoppedLoad.t,
+    records: stoppedLoad.records,
+    rate: stoppedLoad.rate,
+    calibrationSha: calibration.certificateSha,
+    output: path.join(out, "rung"),
+    inventory: hold.inventory,
+  };
 }
 
 // [DX-SCALE1] Why: one corrected replay authorizes continuation of the archived, stopped cut.

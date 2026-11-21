@@ -12,6 +12,7 @@ import { fileHash } from "../measurements.ts";
 import { activeUnitArgs, dedicatedHost } from "../source.ts";
 import {
   stageBulkContinuation,
+  stageExtendedLoad,
   stageMaintainedContinuation,
   type BulkContinuation,
   type RecoveredLadder,
@@ -29,6 +30,7 @@ const maintainedSources = [
   "6d3d44641efacdcd9b3d6fefa299a3b0ace6f885",
   "9573487e08f6ab82acd0c662ce552eca531a13ff",
 ];
+const extendedSource = "efd0c75606860163699831fc5da2654b782ce11c";
 const bulkPrefix = {
   records: 431778659,
   head: 187002,
@@ -86,6 +88,7 @@ async function main(
   bulkLadder = false,
   bulkContinuation?: BulkContinuation,
   ladderEvidence?: string,
+  resumeEvidence?: string,
 ) {
   const bulk = bulkLadder || bulkContinuation !== undefined;
   const bulkSettings = bulkLadder || bulkContinuation === "load";
@@ -93,6 +96,11 @@ async function main(
   const maintainedLoading = maintained && bulkContinuation === "load";
   const maintainedMeasurement = maintained && bulkContinuation === "measure-loaded";
   assert(!maintained || bulkContinuation);
+  assert.equal(Boolean(resumeEvidence), ageSource === extendedSource && maintainedLoading);
+  if (resumeEvidence) {
+    assert.equal(resumeEvidence, path.join(bench, "evidence-v01/age-v01-bulk-b/full/held"));
+    assert.equal(fs.realpathSync(resumeEvidence), resumeEvidence);
+  }
   assert(process.platform === "linux" && process.getuid?.() === 0);
   assert.equal(process.env.DOCKER_HOST, dockerEndpoint);
   assert.equal(path.dirname(out), bench);
@@ -110,7 +118,11 @@ async function main(
   assert.match(ageSource, /^[a-f0-9]{40}$/);
   assert.equal(call("git", ["rev-parse", "HEAD"], { cwd: ageCheckout }), ageSource);
   if (bulk) {
-    assert(maintained ? maintainedSources.includes(ageSource) : ageSource === bulkSource);
+    assert(
+      maintained
+        ? maintainedSources.includes(ageSource) || Boolean(resumeEvidence)
+        : ageSource === bulkSource,
+    );
     assert.equal(call("git", ["status", "--porcelain"], { cwd: ageCheckout }), "");
   }
   call("git", ["merge-base", "--is-ancestor", ageFloor, ageSource], { cwd: ageCheckout });
@@ -300,18 +312,30 @@ async function main(
     seedCut: seed.scopes[0]!.seedCut,
     machine,
   };
-  const adopted = !bulkContinuation
-    ? undefined
-    : ladderEvidence && recovered
-      ? await stageMaintainedContinuation(
-          previous,
+  const extended =
+    resumeEvidence && recovered
+      ? await stageExtendedLoad(
+          path.join(bench, "age-v01-bulk-b"),
           out,
-          bulkContinuation,
           originalIdentity,
-          ladderEvidence,
+          resumeEvidence,
           recovered,
         )
-      : await stageBulkContinuation(previous, out, bulkContinuation, originalIdentity);
+      : undefined;
+  const adopted =
+    extended ??
+    (!bulkContinuation
+      ? undefined
+      : ladderEvidence && recovered
+        ? await stageMaintainedContinuation(
+            previous,
+            out,
+            bulkContinuation,
+            originalIdentity,
+            ladderEvidence,
+            recovered,
+          )
+        : await stageBulkContinuation(previous, out, bulkContinuation, originalIdentity));
   const pgdata = bulk ? JSON.parse(docker("volume", "inspect", sourceVolume))[0] : undefined;
   const sourceDir = pgdata?.Options?.device ?? pgdata?.Mountpoint;
   if (pgdata) {
@@ -322,6 +346,10 @@ async function main(
         sourceDir === "/mnt/triplex-scale1-held-age/calibrated-post-ladder/cluster",
     );
     assert(!fs.existsSync(path.join(sourceDir, "postmaster.pid")));
+  }
+  if (extended) {
+    assert.equal(sourceDir, "/mnt/triplex-scale1-held-age/calibrated-post-ladder/cluster");
+    assert.deepEqual(await stoppedInventory(sourceDir), extended.inventory);
   }
   const dataMount = sourceDir ?? bench;
   const copyReal = fs.realpathSync(copyMount);
@@ -334,6 +362,7 @@ async function main(
   const maintainedMargin = 16 * GiB;
   const directoryLimit = Number(process.env.DX_SCALE1_AGE_DIRECTORY_LIMIT ?? 400e9);
   assert(!maintained || [400e9, 450e9].includes(directoryLimit));
+  assert(!extended || directoryLimit === 400e9);
   const sqlReserve = Number(process.env.DX_SCALE1_AGE_RESTORE_BUDGET ?? directoryLimit);
   const allocated = maintained ? Number(call("du", ["-s", "-B1", dataMount]).split(/\s/)[0]) : 0;
   assert(!maintained || (allocated > 0 && Number.isSafeInteger(allocated)));
@@ -894,6 +923,12 @@ async function main(
             scorecardMount: bench,
             directoryLimitBytes: directoryLimit,
             ladderEvidence,
+            ...(extended
+              ? {
+                  resumeEvidence,
+                  loadingLimits: { floor: 6500, lowCycles: 2, maxHours: 26, maxUsd: 28.34 },
+                }
+              : {}),
           }
         : {}),
       ...(maintainedMeasurement
@@ -1259,4 +1294,5 @@ await main(
   process.argv[8] === "bulk-ladder",
   process.argv[8] === "load" || process.argv[8] === "measure-loaded" ? process.argv[8] : undefined,
   process.argv[9],
+  process.argv[10],
 );
