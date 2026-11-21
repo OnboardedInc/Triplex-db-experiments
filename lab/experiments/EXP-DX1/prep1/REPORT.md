@@ -1,11 +1,11 @@
-Not yet. The old per-person writer reached 111 of 394 offered saves/s in one database. Ordered IDs removed almost all history reads in the diagnostic. The ordered arm forecasts 205 saves/s at 394 offered until bare metal shows where the remaining time goes.
-Use clean source `df307c29c08a9045a4526769f5c917f66800eee4`. Set `SEALED` to the original comparison’s sealed campaign directory and `OUT` to a new absolute directory.
-Run all six with `DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-storage -- bash lab/experiments/EXP-DX1/prep1/server.sh storage "$OUT" df307c29c08a9045a4526769f5c917f66800eee4 "$SEALED"`.
-If the earlier five-arm campaign has started, append only the sixth with `DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-storage-ordered -- bash lab/experiments/EXP-DX1/prep1/server.sh storage-ordered "$OUT" df307c29c08a9045a4526769f5c917f66800eee4 "$SEALED"`.
-The full launch is bounded at 117 minutes 20 seconds. The sixth-only launch adds at most 18 minutes 10 seconds to the earlier campaign’s 89 minutes 20 seconds.
-The arms use one gateway, the same ten-account seed and the same saves at 235 and 394 offers/s. They measure the quiet account alone and beside nine neighbours.
-I forecast 225 and 205 saves/s for ordered IDs, with 2.2 and 3.7 ms of native apply and 2.0 and 2.2 storage reads per save under the two loads.
-The small-cache diagnostic fell from 8.37 to 2.59 reads per save and missed the 1.5 target. The public-ID check for an owner still fetched one segment per save.
+Yes. One database durably accepted every offer at 394 saves/s (393.92/s inside the window) on the 16.25-million-fact repeated-person tape, with one gateway and a 2 GiB transactor cache. Quiet-account isolation still fails.
+At 235 and 394 offered, ordered IDs delivered 234.90 and 393.92 saves/s inside the window, with no expiries at either rate.
+The quiet account went from 73.66 to 315.42 ms and from 34.07 to 118.16 ms. The ratios were 4.28× and 3.47× against a 1.25× bar.
+Durable append and the wait to start it took 99% and 97% of the two loaded quiet p99 saves. The fair-turn rule was off.
+Both solo p99-ranked saves spent about 89% inside the append. G1 pauses affected some other saves, including the two slowest at 394 loaded.
+The next comparison will test 620 and 900 offered with a wider person tape and fair turns off and on.
+The measured ceiling above 394 and the full-size result remain open.
+Measured source df307c29c. [Quiet-account stage recount](QUIET-ACCOUNT.md).
 
 **North star.** Durable, exact small saves and quiet-account tails in one database. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
