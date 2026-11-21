@@ -9,11 +9,15 @@ import sys
 pin = "df1b45d6bca9013dfc7a6adc79c961242dfc5a03"
 directory = Path("lab/experiments/EXP-DX1/prep1")
 repo = Path(sys.argv[1]).resolve()
+remaining = sys.argv[2:] == ["remaining"]
+assert remaining or len(sys.argv) == 2
 assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip() == pin
 
 proof = {}
-for filename in ("server.sh", "tail-observe.py", "tail-postgres.bt"):
-    path = directory / filename
+names = ("prep1/server.sh", "prep1/tail-observe.py", "prep1/tail-postgres.bt")
+for name in (*names, "stack/up.sh") if remaining else names:
+    path = directory.parent / name
+    filename = path.name
     original = (repo/path).read_bytes()
     assert original == subprocess.check_output(["git", "show", f"{pin}:{path}"], cwd=repo)
     source = original.decode()
@@ -27,6 +31,20 @@ for filename in ("server.sh", "tail-observe.py", "tail-postgres.bt"):
         replace("git status --porcelain", "git status --porcelain --untracked-files=no")
         replace('bash "$here/server.sh"', 'bash "$here/.bm1-server.sh"', 5)
         replace('"$here/tail-observe.py"', '"$here/.bm1-tail-observe.py"', 2)
+        if remaining:
+            replace('cells=(1-tail-control-S 1-tail-wal-S 1-tail-zgc-S 1-tail-fair-S)',
+                    'cells=(1-tail-zgc-S 1-tail-fair-S)')
+            replace('bash "$stack/up.sh"', 'bash "$stack/.bm1-up.sh"', 2)
+    elif filename == "up.sh":
+        # [DX-BM1] Why: the mixed-runtime arm checks each actual JVM against its own pinned image.
+        # Rejected: expecting Java 21 from the verified Java 25 transactor or disabling the version check.
+        replace('  grep -F "Version: $(node "$runtime_tool" version)" "$attempt/config/$role.gc-init.txt" >/dev/null',
+                '''  if [[ $role == tx && ${DX_PREP1_TAIL_TX_ZGC:-0} == 1 ]]; then
+    expected_version=$(j25 version)
+  else
+    expected_version=$(node "$runtime_tool" version)
+  fi
+  grep -F "Version: $expected_version" "$attempt/config/$role.gc-init.txt" >/dev/null''')
     elif filename == "tail-observe.py":
         replace('with_name("tail-postgres.bt")', 'with_name(".bm1-tail-postgres.bt")')
     else:
@@ -51,9 +69,10 @@ tracepoint:syscalls:sys_exit_fdatasync /@wal[tid]/ {
 
 ''')
     data = source.encode()
-    with (repo/directory/(".bm1-"+filename)).open("xb") as output:
+    with (repo/path.with_name(".bm1-"+filename)).open("xb") as output:
         output.write(data)
-    proof[filename] = {"original": hashlib.sha256(original).hexdigest(),
-                       "adapted": hashlib.sha256(data).hexdigest()}
+    proof[name] = {"original": hashlib.sha256(original).hexdigest(),
+                   "adapted": hashlib.sha256(data).hexdigest()}
 
-print(json.dumps({"source": pin, "observer": "fdatasync-within-XLogFlush", "files": proof}, indent=2))
+print(json.dumps({"source": pin, "observer": "fdatasync-within-XLogFlush",
+                  "remaining": remaining, "files": proof}, indent=2))

@@ -4,7 +4,7 @@ set -euo pipefail
 base=/var/tmp/triplex-bm1
 item=${2:-prep1-tail}
 original=$base/night-n20-prep-tail
-case $item in prep1-tail|prep1-tail-syscall) ;; *) exit 2 ;; esac
+case $item in prep1-tail|prep1-tail-syscall|prep1-tail-remaining) ;; *) exit 2 ;; esac
 root=$base/night-n20-$item
 repo=$root/build/repository
 pin=df1b45d6bca9013dfc7a6adc79c961242dfc5a03
@@ -68,7 +68,7 @@ git -c credential.helper= clone --quiet --single-branch --no-checkout --branch e
 git -C "$root/producer" checkout --quiet --detach "$pin"
 bash "$root/producer/$exp/t1/bare-metal.sh" --prepare "$pin" "$root/build"
 
-if [[ $item == prep1-tail-syscall && -x $original/bin/bpftrace ]]; then
+if [[ $item != prep1-tail && -x $original/bin/bpftrace ]]; then
   (cd "$original/bpf-debs" && sha256sum -c "$original/bpf-debs.sha256")
   export PATH="$original/bin:$PATH"
 fi
@@ -100,8 +100,10 @@ cd "$repo"
 bpftrace --version > "$root/bpf-version.txt"
 timeout 15s bpftrace -e 'BEGIN { printf("enabled\n"); exit(); }' > "$root/bpf-smoke.log" 2>&1
 launch=$exp/prep1/server.sh
-if [[ $item == prep1-tail-syscall ]]; then
-  python3 "$(dirname -- "${BASH_SOURCE[0]}")/prep1-tail-syscall.py" "$repo" > "$root/adapter.json"
+if [[ $item != prep1-tail ]]; then
+  selected=()
+  if [[ $item == prep1-tail-remaining ]]; then selected=(remaining); fi
+  python3 "$(dirname -- "${BASH_SOURCE[0]}")/prep1-tail-syscall.py" "$repo" "${selected[@]}" > "$root/adapter.json"
   launch=$exp/prep1/.bm1-server.sh
 fi
 status measuring
