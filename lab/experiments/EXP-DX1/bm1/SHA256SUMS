@@ -296,3 +296,7 @@ f0b15896db25f119b005895754673c692c4f90d01ab6cbd9625d08d4d350024d  day-n20/erasur
 868fc309f16d7265a2593880a12dff6180a36144648f650f428b8985151c47de  day-n20/erasure-image/TRANSFER.json
 5e981eebb6072290e27868a429050ea8f90a1643014de8aaf09c3e6dfab904d9  day-n20/erasure-image/raw.tar.zst
 ee9551ce294c7288160ad52884660cbe2d15c0588d6150ecfc687d92a682b94f  day-n20/erasure-image/summary.tar.zst
+0fc1bc44573ae67d31d70de1be83ed5d6fed6ef9ac5e326c89b5fde894c32f70  day-n20/prep1-tail/TRANSFER.json
+4a29b50e6f7d047c26251b05284bbc63e6bc563ecfa5c063f864ddfb2a3af92e  day-n20/prep1-tail/raw.tar.zst
+19c9e2e8f5d552d5a4926cc5025a02d68e553142514ece47214c93941e1e82a6  day-n20/prep1-tail/summary.tar.zst
+45f4567badfa54d1bcee07901eb0934c533f62999391414ea20143814cb1a299  day-n20/prep1-tail/service-correction.txt

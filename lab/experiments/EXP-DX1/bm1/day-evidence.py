@@ -44,7 +44,7 @@ SLOTS = {
     "prep1-ordered": ("night-n20-prep-ordered", ("small", "campaign", "adapter.json", "small-agreement.json", "collector.json")),
     "prep1-tail": ("night-n20-prep-tail", ("campaign", "filesystem.log", "bpf-version.txt",
                                         "bpf-smoke.log", "bpf-debs.sha256", "build/results/IMAGE-INPUTS.SHA256SUMS")),
-    "prep1-tail-syscall": ("night-n20-prep-tail-syscall", ("campaign", "filesystem.log", "bpf-version.txt",
+    "prep1-tail-syscall": ("night-n20-prep1-tail-syscall", ("campaign", "filesystem.log", "bpf-version.txt",
                                           "bpf-smoke.log", "adapter.json", "build/results/IMAGE-INPUTS.SHA256SUMS")),
     "jvm1": ("day-n20-jvm1", ("seed/seed.json", "seed/results", "small/results", "campaign/results",
                              "seed.log", "campaign.log", "retry.log", "retry-resumed.log", "failed-unit.txt",
@@ -83,6 +83,8 @@ def archive(name, revision):
         units.append("bm1n20-prep1-two.service")
     if name == "prep1-storage":
         units = ["bm1n20-prep1-followup.service"]
+    if name == "prep1-tail":
+        units = ["bm1n20-prep-tail.service"]
     states = {}
     for unit in units:
         state = subprocess.check_output(["systemctl", "show", unit, "-p",
@@ -107,7 +109,7 @@ def archive(name, revision):
                 summaries.append((label, file))
             else:
                 raw.append((label, file))
-    log = SERVER/(root.name+".log")
+    log = SERVER/((root.name.replace("prep1-tail", "prep-tail") if name=="prep1-tail-syscall" else root.name)+".log")
     if log.is_file():
         summaries.append(("unit.log", log))
     assert summaries, f"No result files in {root.name}"
