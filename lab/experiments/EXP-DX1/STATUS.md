@@ -3944,3 +3944,14 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - Server 2's order after the 1 billion run: DX-PREP1 ceiling at `1dd5952cb`; scorecard at `65ad0997c` on the aged
   database, then on a fresh copy. The driver has these in `cloud/QUEUE-ADDITIONS.md` only; it must be told at its
   next handover or by a resume when the aging run reports.
+
+## 2026-11-21 04:16 UTC (23:16 local, 2026-11-20): server 2: the 1 billion run has not started (two tooling failures); the full-size ceiling runs first
+
+- **Server 2 (`origin/exp/DX-SCALE1-deep-accounts` at `33c7c03f3`).** DX-AGE1's first attempt stopped at JDK
+  configuration; the second restored the exact SQL archive in about 65 minutes and then could not execute the
+  extracted Datomic launcher, so no calibration or aging ran. The restored PostgreSQL volume was stopped and kept.
+  The driver is making a checksum-bound stopped template from it, then runs DX-PREP1's ceiling (the ordered writer
+  at full size), then the ordered scorecard; DX-AGE1 resumes from a verified physical copy with executable vendor
+  tools. About 1.3 server hours went to the two failed attempts.
+- **Server 1:** two of the four append-tail arms are measured; the driver is finishing the other two after a
+  role-specific Java check.
