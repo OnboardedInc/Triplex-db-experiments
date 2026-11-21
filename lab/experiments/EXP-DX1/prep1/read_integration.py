@@ -81,7 +81,14 @@ def erasure(out, subject):
         assert route == entry and entry["check"] is True
     assert len(ids) == 1 and bool(next(iter(ids)))
     if ordered:
-        assert re.fullmatch(r"[0-7][0-9A-HJKMNP-TV-Z]{23}00", next(iter(ids)))
+        witness_id = next(iter(ids))
+        assert re.fullmatch(r"[0-7][0-9A-HJKMNP-TV-Z]{23}00", witness_id)
+        if options.get("subjectNumericOwner"):
+            witness = data("ordered-writer-witness")
+            assert witness["id"] == witness_id and witness["journal"] == "_tx/" + witness_id
+            assert witness["function"] == options["subjectFunction"]
+            assert witness["operation"] == "ordered-erasure-witness"
+            assert int(witness["t"]) > 0 and witness["cut"] > 0
     return {"head": inputs["inputs"]["head"], "subject": subject, "routes": len(evidence),
             "orderedIds": ordered, "nonce": run["nonce"], "slot": run["slot"], "binding": run["binding"]}
 
