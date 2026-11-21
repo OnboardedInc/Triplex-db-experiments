@@ -4330,3 +4330,14 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   - Mac checks: 167 saves settled once and 1,658 exact reads through the lost-reply and move drills.
 - **DX-ERASE2 launched** (fresh session from `origin/exp/DX-ERASE1-erasure-cost` `2a2d7df49`, where I committed the stopped session's two unfinished notes): finish the three items of 2026-11-20, merge onto INT1, cost bars, fix the tooling fault and publish the full-size server stage with predictions, describe the scorecard rows' change.
 - Agents running: DX-SCALE1, DX-BM1, DX-ACT1, DX-REAL1, DX-V01, DX-ERASE2.
+
+### 2026-11-21 10:25 local: Publish at 100,000 people ready for the server; last night's save backlog explained; reads builder resumed (6 agents running)
+
+- **DX-ACT1 part 9 finished** (exit 0). `origin/exp/DX-ACT1-activation` head `86b097b8c`, server build `43b186d9a` (`actv-lazy/PART9.md`): opens the held full-size database, publishes to one account of 100,000 people beside the other nine, runs `barrier6` and `rolling6`, no reseeding.
+  - **Last night's backlog at 39.4 offered was not caused by Publish:** a save-only control on the same old settings stored 27.90 saves/s, about 82% of the gap; the 30 priority Publishes occupied 0.53% of the window (about 1% of the gap). That run used serial save admission with one core per JVM and never the six-credit barrier. Not separable from the archive: CPU limit against serial save cost.
+  - **Predictions (first correct answer p99, barrier / rolling):** 3.5 saves/s in the Publish account: 60 to 180 ms both; 23.5: 130 to 450 / 100 to 400 ms; 39.4: 200 to 900 / 160 to 800 ms. All rows forecast inside the 100-second floor for 100,000 people. Peak save p99 forecast to exceed 1.5 times quiet in both modes. Background settlement after a quiet Publish: 16 to 40 minutes for changed values, 20 to 45 minutes for individual notices.
+  - Mac gate: 7,632 save receipts, 384 field reads, fresh-reader replay, both credit modes.
+  - **Assumption for Sam to confirm:** a realistic rate is one Publish per account per hour during a busy deployment; one every five seconds is a stress test.
+- **DX-RD1 resumed:** read path at full size (256 readers: 893 reads/s and 860 ms p99 on one core against a 100 ms bar; current pulls p99 50 ms against 25): time split per level, the shape of the ladder, changes with predictions, server command.
+- Server queue for the rented machine written to the private queue file.
+- Agents running: DX-SCALE1, DX-BM1, DX-REAL1, DX-V01, DX-ERASE2, DX-RD1.
