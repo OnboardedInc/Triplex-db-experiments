@@ -1,15 +1,21 @@
-The realistic card uses three arms on one extended database. The afternoon fresh runner stays at c1eeb2ef8.
+Run a36c88e6c5eeb2dbc8cbcd66282939fdc1ebdab4 for the three-arm realistic card. The afternoon fresh runner stays at c1eeb2ef8.
 It verifies the original loader, stopped tree bytes, extension receipt and the native census before offers.
 Busy work draws 80 percent deep, 15 percent thin and 5 percent small. The quiet deep control keeps its own tape.
 The first-rung cap is 330 minutes and USD 6.00, plus about sixteen minutes for three fresh copies.
 The thin sweep measures checked first-read latency and first-touch residency in each run.
 The untouched-person slope takes two matched sealed rungs on the same host.
-The deck of predictions is in the server handoff. The REAL1 builder can keep the existing seal format.
+The pre-run predictions are in the server handoff. The REAL1 builder can keep the existing seal format.
 Mac fixture timings are diagnostic. Bare-metal mixed traffic and residency remain open.
+
+## Part 10 gates
+
+The managed Mac run built all eight package tasks in a clean checkout and used one ordinary token for each heavy step. The three toy arms opened 21 accounts, 5,600 people and 121,920 facts in one database per arm. Every arm separately verified original cut 33 and extension cut 66. Exact ordered receipts included deep, thin and small accounts. The loaded pull probe completed 16 deep, three thin and one small world. The cold sweep verified 25 distinct thin worlds with two current process RSS snapshots. The card emitted all nine priority rows, and the same-size relation tampering and wrong transfer digest controls both refused. The focused suite passed 34 tests. Both owned slots, both volumes, the private image and the scratch checkout were released or removed. Mac timings are diagnostic.
+
+Live physical adoption, full-size latency, and the first/full untouched-person residency slope remain unmeasured. The first-rung card supplies first-read latency and a first-touch RSS delta. The slope command uses both independently sealed rungs and also reports the sum outside PostgreSQL. [Server commands and comparisons](SERVER.md) · [Evidence and checksums](EVIDENCE.md)
 
 ## Part 10 receipt and verdict audit
 
-- Adoption uses REAL1’s exact pinned producer, signed-by-digest output bytes, separately pinned parent image and transfer, exact regenerated roster/proof, SQLite ledger digest and full held and scratch tree inventories. Live adoption ties the original cut and loader command to SCALE1 and the extension command, durable claim, indexed native T/count and head to this locked slot and copy.
+- Adoption uses REAL1’s exact pinned producer, digest-pinned output bytes, separately pinned parent image and transfer, exact regenerated roster/proof, SQLite ledger digest and full held and scratch tree inventories. Live adoption ties the original cut and loader command to SCALE1 and the extension command, durable claim, indexed native T/count and head to this locked slot and copy.
 - The ordered sender’s new owner is regenerated from the account kind, namespace and person. The operation, predecessor, durable receipt and full native journal checks remain in force. The renderer hashes the raw observations, regenerates the rated tape from the pinned roster and verifies the exact scope, operation sequence and durable contents at this attempt’s cut.
 - P7 sweeps a fixed cohort of unique thin people excluded from foreground traffic. Every pinned world matches the generated typed members and carries the observed first-read latency. Both process residency snapshots bracket the sweep and are bound to the current arm. The separate slope tool checks both staged campaign manifests and evidence digests, common parent, host, release, matched settings and disjoint attempts before pricing the difference between before-sweep points. It reports observations without promoting a one-rung memory datum to a marginal pass.
 - P1, P6 and mixed-identity verdicts still use the content, freshness and binding checks described below. The mixed-ID witness stays under the original and current verified cuts. No acceptance files moved.

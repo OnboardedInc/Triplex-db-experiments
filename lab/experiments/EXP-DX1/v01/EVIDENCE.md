@@ -80,3 +80,9 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 - `part9/native-lean.tar.gz`, its index and `part9/SCORECARD-lean.md` contain the pinned Mac toy's two rolling12 headline arms, the ordered barrier6 comparison, and the saved mixed-ID and PostgreSQL 17 checks.
 - `part9/verify-lean.log` verifies all fourteen obligations and twelve quiet windows from their offer and ACK clocks. `part9/unit-final.log` records 31 focused tests. `part9/unit-lean.log` retains the earlier test rounding mismatch. The two plan logs record selector precedence, matched core and WAL policy, and opt-in flags.
 - The package, image build, fixture and retirement logs identify the exact runner, the two ordinary reservations and cleanup.
+
+## Part 10 realistic card
+
+- `part10/native-real-b.tar.gz`, its index and `part10/SCORECARD-real-b.md` preserve the exact pinned Mac toy arms and their two reader residency points. The archive holds the seed manifests, extension ledgers, ordered saves, and exact loader and mixed-ID checks.
+- `part10/verify-real-b.log`, `part10/seal-real-b.log` and `part10/unit-real-b.log` record the mixed-cohort and sealed-cut checks, the physical-tree and transfer refusal controls, and all 34 focused tests.
+- The package, image, fixture and retirement logs bind the clean build and owned cleanup. The earlier `real-a` run used the initial ten-pull toy probe. Both sets of clocks are diagnostic.
