@@ -175,11 +175,6 @@ function setup(compact: boolean) {
   const original = read(path.join(main, "lab/config/slots.json")).slots.datomic;
   const gwPolicy = process.env.DX_INT1_GATEWAYS ?? "original";
   const readMode = process.env.DX_TOUCHED_READ_MODE ?? "following";
-  // [DX-INT1] Why: force cache eviction in a short toy population to distinguish it from permanent roster state.
-  // Rejected: interpreting two samples below the native cache limit as a leak.
-  const censusCache = process.env.DX_INT1_CENSUS_CACHE_MIB;
-  assert(censusCache === undefined ||
-    (mode === "int1-untouched-census" && compact && gwPolicy === "demand" && censusCache === "4"));
   const peerGc = process.env.DX_INT1_PEER_GC ?? "g1";
   const smallHeap = process.env.DX_INT1_PEER_HEAP === "128m";
   assert([undefined, "default", "128m"].includes(process.env.DX_INT1_PEER_HEAP));
@@ -208,7 +203,7 @@ function setup(compact: boolean) {
     assert(!fs.existsSync(ownerFile(slot)), "Exclusive slot is in use");
     const settings = (cfg.slots.datomic[slot] = { ...original[slot] });
     settings.gatewayOpts =
-      (gwPolicy === "demand" ? (smallHeap ? "-Xmx128m" : "-Xmx384m") + " -Ddxthin.cache=demand -Ddatomic.objectCacheMax=" + (censusCache ?? "32") + "m " +
+      (gwPolicy === "demand" ? (smallHeap ? "-Xmx128m" : "-Xmx384m") + " -Ddxthin.cache=demand -Ddatomic.objectCacheMax=32m " +
         (peerGc === "elastic" ? "-Xms32m -XX:+UseZGC -XX:+ZGenerational -XX:SoftMaxHeapSize=96m -XX:ZUncommitDelay=1" :
           "-Xms64m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps")
         : (compact ? "-Xms128m -Xmx600m" : "-Xms160m -Xmx896m") + " -Ddatomic.objectCacheMax=192m") +
@@ -375,9 +370,9 @@ if (action === "--guest") {
   }
   process.argv = [process.execPath, run, "live", mode, rung, out];
   if (mode === "int1-untouched-census") {
-    assert(rung === "4096" && process.env.DX_V01_FIXTURE_SOURCE);
+    assert((rung === "4096" || rung === "24576") && process.env.DX_V01_FIXTURE_SOURCE);
     const { untouchedCensus } = await import("../int1/untouched-census.ts");
-    await untouchedCensus(stack, out!, read(cred).secret, process.env.DX_V01_FIXTURE_SOURCE);
+    await untouchedCensus(stack, out!, read(cred).secret, process.env.DX_V01_FIXTURE_SOURCE, Number(rung));
   } else if (mode === "int1-adopted-proof") {
     process.chdir(repo);
     const { adoptedToy } = await import("../v01/adopted.ts");
@@ -437,7 +432,7 @@ if (action === "--guest") {
         out &&
         path.isAbsolute(out) &&
         (scorecard ? fs.statSync(out).isDirectory() && (mode === "int1-adopted-proof" ||
-          (mode === "int1-untouched-census" && holder === "DX-THIN1" && rung === "4096")) :
+          (mode === "int1-untouched-census" && holder === "DX-THIN1" && (rung === "4096" || rung === "24576"))) :
           !fs.existsSync(out) && (realistic ? mode === "int1-real1" && compact : guestNode && path.isAbsolute(guestNode))),
     );
     const disk = fs.statfsSync(repo, { bigint: true });
@@ -504,7 +499,7 @@ if (action === "--guest") {
             DX_REAL1_TOY_SLOT: owner.container },
         });
       } else if (scorecard) console.log(manager(["scorecard-fixture", "--slot", writerSlot, "--scorecard-output", out,
-        ...(mode === "int1-untouched-census" ? ["--untouched-census"] : [])]));
+        ...(mode === "int1-untouched-census" ? ["--untouched-census", rung] : [])]));
       else execFileSync(
         "colima",
         [

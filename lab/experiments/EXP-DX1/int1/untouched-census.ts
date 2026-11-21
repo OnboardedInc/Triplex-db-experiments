@@ -12,8 +12,10 @@ import { parseHistogram } from "./gateway-profile.ts";
 
 const sha = (value: Buffer | string) => createHash("sha256").update(value).digest("hex");
 
-export async function untouchedCensus(stack: Stack, out: string, secret: string, source: string) {
+export async function untouchedCensus(stack: Stack, out: string, secret: string, source: string, high: number) {
   assert(process.platform === "linux" && /^[a-f0-9]{40}$/.test(source) && stack.managed?.compact);
+  assert(high === 4096 || high === 24576);
+  const low = high === 4096 ? 1024 : 16384;
   const peer = stack.managed.peers.find((p) => p.role === "read")!;
   const container = stack.containers.find((c) => c.id === peer.id);
   assert(container);
@@ -28,7 +30,7 @@ export async function untouchedCensus(stack: Stack, out: string, secret: string,
     const created = await write.create(JSON.stringify(["triplex-scope-v1", "test", "test", "census-" + attempt, 0]), "lean", true);
     assert(created.created && created.strictRecordClocks);
     const db = created.db;
-    const account: Account = { kind: "thin", id: 10, people: 4096 };
+    const account: Account = { kind: "thin", id: 10, people: high };
     let head = 0, people = 0, lastT = 0n, pid: number | undefined, ticks: string | undefined;
     let originalGauge: unknown, gatewayWrapper: number | undefined;
     const frames: { first: number; last: number; operation: string; position: number; tx: string }[] = [];
@@ -45,7 +47,7 @@ export async function untouchedCensus(stack: Stack, out: string, secret: string,
     // [DX-INT1] Why: connect one read peer before adding people, then wait for metadata cuts only.
     // Rejected: reading a roster member to tell whether the peer has caught up.
     await observeHead();
-    for (const population of [1024, 4096]) {
+    for (const population of [low, high]) {
       while (people < population) {
         const first = people, last = first + 32, operation = attempt + "/" + first;
         const rows = Array.from({ length: last - first }, (_, i) => facts(account, first + i)).flat();
@@ -123,12 +125,12 @@ export async function untouchedCensus(stack: Stack, out: string, secret: string,
       entityIds: [subject(account, i), ...Array.from({ length: 3 }, (_, n) => subject(account, i) + "/ans:" + n)],
       basis: { recordedPosition: position, validAt: Date.UTC(2026, 0, 1) },
     });
-    for (const [i, cut, exists] of [[0, 32, true], [4095, 32, false], [4095, head, true]] as const) {
+    for (const [i, cut, exists] of [[0, low / 32, true], [high - 1, low / 32, false], [high - 1, head, true]] as const) {
       const rows = await hard(i, cut);
       assert.deepEqual(rows.map((r) => JSON.stringify([r.entity_id, r.attribute, r.value_type, r.value_string])).sort(),
         (exists ? facts(account, i).map((r) => JSON.stringify([r.e, r.a, r.v.type, r.v.value])).sort() : []));
     }
-    save("census", { ...identity, db, head, people, touchedDuringSamples: 0, frames });
+    save("census", { ...identity, db, head, people, sampled: [low, high], touchedDuringSamples: 0, frames });
   } finally {
     write.close();
     read.close();
