@@ -89,7 +89,7 @@ unmount_wal() {
 }
 clear_scale_wal() {
   if [[ -n ${scale_wal_owned:-} ]]; then
-    [[ $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == /dev/nvme1n1 &&
+    [[ $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == /dev/nvme0n1 &&
        $scale_wal_owned == "$scale_wal_mount/$owned" && $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-scale-wal-zgc-s$ && ! -L $scale_wal_owned ]] || return 1
     rm -rf --one-file-system -- "$scale_wal_owned" || return 1
     unset scale_wal_owned DX_PREP1_SCALE_WAL_DIR
@@ -115,8 +115,8 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed ]]; then
   if [[ $mode == scale-timed ]]; then
     [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && ${10} == /* ]]
     scale_wal_mount=$(realpath -e "${10}")
-    [[ $scale_wal_mount != *[,\"$'\n']* && $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == /dev/nvme1n1 &&
-       $(findmnt -nro FSTYPE --mountpoint "$scale_wal_mount") == ext4 && $(findmnt -nro SOURCE /) == /dev/nvme0n1p2 ]]
+    [[ $scale_wal_mount != *[,\"$'\n']* && $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == /dev/nvme0n1 &&
+       $(findmnt -nro FSTYPE --mountpoint "$scale_wal_mount") == ext4 && $(findmnt -nro SOURCE /) == /dev/nvme1n1p2 ]]
     [[ -f /sys/fs/cgroup/cgroup.controllers ]]
     for cpu in {0..8}; do taskset -c "$cpu" true; done
     core_count=$(lscpu -p=CPU,CORE,SOCKET | awk -F, '$1 ~ /^[0-8]$/ { print $2 ":" $3 }' | sort -u | wc -l)

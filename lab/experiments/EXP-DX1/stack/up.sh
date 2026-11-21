@@ -261,7 +261,7 @@ if [[ -n $prep_pgdata ]]; then
 fi
 if [[ ${DX_PREP1_CAMPAIGN:-} == scale && $prefix == *-scale-wal-zgc-s ]]; then
   [[ -n $prep_pgdata && $prep_wal == /* && $prep_wal != *[,\"$'\n']* && ${prep_wal##*/} == "$prefix" &&
-     -d $prep_wal && ! -L $prep_wal && $(findmnt -nro SOURCE --mountpoint "$(dirname "$prep_wal")") == /dev/nvme1n1 ]]
+     -d $prep_wal && ! -L $prep_wal && $(findmnt -nro SOURCE --mountpoint "$(dirname "$prep_wal")") == /dev/nvme0n1 ]]
 else
   [[ -z $prep_wal ]]
 fi

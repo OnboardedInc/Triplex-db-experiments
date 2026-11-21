@@ -154,7 +154,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             if external_wal:
                 device_path = directory.parent / "scale-wal-mount.json"
                 device, = read(device_path)["filesystems"]
-                assert (device["source"], device["fstype"]) == ("/dev/nvme1n1", "ext4")
+                assert (device["source"], device["fstype"]) == ("/dev/nvme0n1", "ext4")
                 wal_mount = str(Path(device["target"]) / header["slot"])
                 wal, = [m for m in pg["Mounts"] if m["Destination"] == "/wal"]
                 assert (wal["Type"], wal["Source"], wal["RW"]) == ("bind", wal_mount, True)
