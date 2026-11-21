@@ -3889,3 +3889,20 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   `NEXT-WEEK.md` item 8: repeat on the per-person ordered writer.
 - Server 1 is on its last ready item (erasure on the original pinned image); DX-PREP1's append-tail command is
   due within the hour. Server 2 has reordered around the ordered writer's ceiling.
+
+## 2026-11-21 03:09 UTC (22:09 local, 2026-11-20): the ordered writer is the version 0.1 default on the one branch; server 1 idle seven minutes, restarted on the append-tail test
+
+- **DX-THIN1 part 7 (`exp/DX-INT1` at `ef2519409`; scorecard pin `f25a46e02`).** Ordered per-person saves are
+  the default; `--writer grouped` selects the grouped writer; Java 21 with G1 stays the default with
+  `--jvm j25-g1` and `--jvm j25-zgc` available. Both writer modes pass the native suite, restart and resend
+  checks, all thirteen removal routes, the playground's browser run and the scorecard toy run (the ordered toy
+  matched all 211 id blocks against the native journal); 439 SDK tests per mode. Parked.
+- **DX-PREP1 part 11 (`64de862e8`; server command at `df1b45d6b`, 75 minutes; `prep1/TAIL-APPEND.md`).** Four
+  arms on the ordered writer: control; write-ahead log on the second NVMe; transactor on Java 25 with ZGC; fair
+  turns on; synchronous commit on throughout. Forecast at 394 offered, quiet solo p99 and loaded ratio: 34 ms and
+  3.5; 24 ms and 1.6; 33 ms and 3.2; 34 ms and 2.7. Parked.
+- **Server 1** finished import pacing at 21:01 and its erasure item ended "incomplete, operator review" at 22:05
+  local; nothing was running at 22:07 to 22:12. DX-BM1 stopped and resumed with: the append-tail test now; a
+  one-paragraph account of the erasure item; Publish under load; any follow-up arm; final handoff.
+- **DX-V01 part 4 assigned:** re-pin to `f25a46e02`, toy rerun, `v01/SERVER.md` for server 2.
+- Running: DX-BM1, DX-SCALE1, DX-V01 (three).
