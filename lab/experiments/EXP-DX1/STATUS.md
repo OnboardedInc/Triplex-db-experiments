@@ -4366,3 +4366,20 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **DX-V01 part 10 resumed:** a `realistic` card age on the next-card line with the realistic mix and a proper priority 7 measurement; `fresh` unchanged.
 - **Plan for the rented server after the rolling arms:** next card (293 min) -> Publish at 100,000 (90 min) -> realistic first rung build (2 to 3 h) and its mixed measurement -> reads ladder and erasure stage when their commands exist -> two-server failover at about 05:00 Sunday.
 - Agents running: DX-SCALE1, DX-BM1, DX-ERASE2, DX-RD1, DX-THIN1, DX-V01.
+
+### 2026-11-21 10:43 local: old-rule reference arm with five-minute windows; erasure finished and mergeable; cold-start analysis started (6 agents running)
+
+- **Rented server, barrier 6, five-minute windows** (`origin/exp/DX-BM1-bare-metal` `86fc52d30`, `bm1/ROLLING-READING.md`; producer `c8f903ce1`):
+
+  | Offered/s | Stored/s whole (forecast -> actual) | Second half stored/s | ACK p50 / p99 whole | ACK p50 / p99 first half | ACK p50 / p99 second half | Expired |
+  | --- | --- | ---: | --- | --- | --- | ---: |
+  | 235 | 235 -> 235.00 | 234.97 | 8.28 / 5,303.03 ms | 15.35 / 5,575.28 ms | **6.61 / 45.68 ms** | 0 |
+  | 394 | 351 -> 353.12 | 365.83 | 25,604 / 29,996 ms | 17,113 / 27,489 ms | 28,073 / 30,005 ms | 1,060 |
+  | 620 | 340 -> 391.78 | 409.16 | 29,939 / 30,022 ms | 29,878 / 30,021 ms | 29,969 / 30,024 ms | 54,553 |
+
+  Quiet account p99 alone -> loaded: 31.19 -> 86.43 ms (2.77x) at 235; 14.53 -> 114.57 ms (7.88x) at 394; 15.67 -> 126.87 ms (8.10x) at 620. Transactor cores in the loaded second halves: 0.65 / 1.78 / 1.87 of three. SQL reads per durable save: 0.70 / 1.30 / 1.01.
+  - **Reading:** settled, the old rule meets the save-speed bar (p50 10 ms, p99 50 ms) at 235 offered on the full-size database; the 2.4 s of last night's card was the cold start inside a 90-second window. The first 150 seconds after a start are about a hundred times slower at p99. The quiet account fails both the 1.25 ratio and the 50 ms clause under the old rule.
+  - Predictions: 394 stored hit (351 forecast, 353 measured); 620 better than forecast (340, 392); second-half p99 at 235 better (110 ms forecast, 45.68); whole-window p99 at 235 worse (1.6 s forecast, 5.3 s); quiet loaded p99 at 394 worse (73 ms forecast, 114.57).
+- **DX-ERASE2 finished** (exit 0, 27 minutes, no provider interruption). `origin/exp/DX-ERASE2-removal` `db88af534`, fast-forwardable from INT1 `f8057d113`. All 13 route checks pass in both writer modes with `rolling6`. Parallel saves and deferred Publish writes refused correctly after a removal. Mac diagnostic of apply medians: 1.74 ms plain, 1.01 ms protected, 0.81 ms plain (the two controls bracket the protected one, so the 0.3 ms bar is unresolved on the Mac); server forecast 0.1 to 0.8 ms added. Cleanup folded into scheduled indexing: 138 -> 99 index leaves and 3.57 -> 2.24 s to verified absence for 100 sealed bodies on the Mac; full-size forecast 8 to 75 s and 1.10 to 2.00 times quiet save p99. Server stage: the listener probe is replaced by exact container shutdown and a clean PostgreSQL stop check; command published (86 minutes; forecast 150 to 900 ms to durable acknowledgement, 250 to 1,800 ms through the live checks). Open for Sam: logged as NEXT-WEEK 16k.
+- **DX-JVM1 part 4 resumed:** second-by-second account of the first 150 seconds after a start, start-up settings that are not warming (built), and a separate list of anything that reads data ahead of demand for Sam to rule on (not built).
+- Agents running: DX-SCALE1, DX-BM1, DX-RD1, DX-THIN1, DX-V01, DX-JVM1.

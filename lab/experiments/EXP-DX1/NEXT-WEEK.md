@@ -153,6 +153,19 @@ the two halves; at 394 delivery was 302.4 per second in the first half and 383.4
 report the halves separately and run longer windows. The archive cannot separate cache state, maintenance and
 workload phase as the cause.
 
+16j. **Cold start (rented server, five-minute barrier-6 arm, 2026-11-21 10:27 local, `origin/exp/DX-BM1-bare-metal`
+`86fc52d30`, `bm1/ROLLING-READING.md`).** At 235 offered on the full-size database the first half of the window
+(0 to 150 s after a fresh start on a just-copied database) read ACK p50 15.35 ms and p99 5,575 ms; the second half
+read 6.61 ms and 45.68 ms, inside the save-speed bar. A restart in production would show the same stretch. Sam's
+standing rule forbids any keep-warm mechanism, so the work is: attribute the first 150 seconds (compiled code, object
+cache, PostgreSQL buffers, page cache, first index job), apply start-up settings that are not warming, and put
+anything that reads data ahead of demand to Sam as a question. DX-JVM1 part 4 started 10:45 local.
+
+16k. **Erasure decisions for Sam (DX-ERASE2, 2026-11-21, `origin/exp/DX-ERASE2-removal` `db88af534`):** the deadline
+for physically deleting sealed value bodies after a removal; where the durable removal record and the wrapping keys
+live in production; changing one account's protected-field policy after traffic has begun is not supported yet
+(fields must be declared protected before the first save).
+
 ## Not started, deferred past version 0.1 or past the weekend
 
 17. Aging beyond 1 billion records (2, 4, 8 billion) when there is budget; the growth model's predictions are the
