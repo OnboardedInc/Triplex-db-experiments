@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 39.77 through 2026-11-21 06:59 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 40.13 through 2026-11-21 07:19 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-AGE1 solo calibration stopped below the original fallback band at 5,283.82 records/s. The owner placed the new pinned bulk ladder ahead of the fresh tuned scorecard. It resumes the held calibrated 431,778,659-record working volume. A verified relocation of the earlier stopped restore frees space for ladder admission and leaves the calibrated volume available. The fresh template is held. Scorecard staging still needs three independent prepared copies on the data device for the two separate-WAL headlines and ordered default. The original sealed image and transfer remain held.
+The AGE1 bulk ladder started at 07:01:43 UTC with a 60-minute cap. Solo finished at 19,760.04 records/s and 15,242.78/s in its final samples. The pinned parser reports zero automatic indexes because Datomic logs a UUID-suffixed physical database ID. The raw start and end events are present. The grouped arms are still running. The fresh template and the calibrated working volume remain held. The earlier unaged restore was relocated after matching the hashes and privileges of all 1,453 files. [Ladder reading](AGE1-LADDER.md)
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
