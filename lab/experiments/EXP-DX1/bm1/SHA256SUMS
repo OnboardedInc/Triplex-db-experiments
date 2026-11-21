@@ -315,3 +315,6 @@ fd97f5e756aa9612a7003936e637ad12219172602fc725931cf893ac4be95427  day-n20/prep1-
 24d162cc0d51c02af83115dda6e556c60774b906ae11d02a00c26fce208b621b  day-n20/prep1-tail-combined/raw.tar.zst
 4b47855f65203907c95280ab37849677d03e5272df9923d04e4071825f7e3c2e  day-n20/prep1-tail-combined/summary.tar.zst
 59f385eb799d47eb63063beb9634b9825e270d0648d963a4e3949f4eafe74518  day-n20/prep1-tail-combined/append-causes.tsv
+924af477936f57f62e44b3849235f538c21d637fdb184b979a7d7dd4d85bb28b  day-n21/publish-priority/TRANSFER.json
+20126f096407098f9ac4fd1ecb288fd7b4527fd0ce7db25ee93e2f25ec3d675a  day-n21/publish-priority/summary.tar.zst
+4e2cf0a3ba4557d5691d0024e75f4a6a26a925f8c0b29f3b980e1c994e552bfd  day-n21/publish-priority/raw.tar.zst
