@@ -14,3 +14,7 @@ Resolved the shared sender by selecting retries only in the removal stage. Ordin
 The native gate binds the selected writer, rolling admission, fresh operation and sealed assertion bytes to the live engine slot and verifies all named routes, original and restored receipts, and cleanup. Shared authority recovery checks current sequence, ciphertext, key absence and matching restored rows. The server stage binds the exact build, original seed, new attempt and disposable stopped copy to the live journal, each removal witness, cleanup identities and shutdown. Its observations await the physical run.
 
 The two native gates matched all 13 routes, their fresh sealed and unsealed witnesses, and the exact writer modes, including the restored backup. Both volumes and slots were released. [Evidence index](V0.1-SHA256SUMS)
+
+## Realistic seed audit
+
+The extension checks every frame against regenerated typed facts, the original receipt and the contiguous feed suffix under the new namespace. The candidate physical seal binds the verified parent, exact copy tree, native census, clean stop and the fresh output ledger. The toy workload compares every scheduled pinned answer, journal change and resend with the independently regenerated tape. Its terminal observations bind the source, attempt, slot, starting seal and hashed bytes. The server verifies the copy again before launching it.

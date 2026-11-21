@@ -263,12 +263,16 @@ async function selftestDatomic(config, opts) {
 // [DX-THIN1] Why: release only staged images that this experiment built and whose slots have closed.
 // Rejected: a forced removal or pruning the lab VM's shared image cache.
 async function removeThinImage(config, opts) {
-  if (!['DX-THIN1', 'DX-PREP1'].includes(opts.holder) || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
+  if (!['DX-THIN1', 'DX-PREP1', 'DX-REAL1'].includes(opts.holder) || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
   const info = slotInfo(config, 'datomic', 'dev');
   const tag = info.laneConf.image;
   // [DX-PREP1] Why: a diagnostic retry can discard its exact staged image after the slot exits.
   // Rejected: pruning the image store shared with other builders.
-  const ownedTag = opts.holder === 'DX-THIN1' ? /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/ : /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery|subject-native-suite)$/;
+  const ownedTag = {
+    'DX-REAL1': /^tx2-dxthin-managed:real1-[a-f0-9]{16}$/,
+    'DX-THIN1': /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/,
+    'DX-PREP1': /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery|subject-native-suite)$/,
+  }[opts.holder];
   if (!ownedTag.test(tag)) fail('REFUSED', 'Only the holder’s staged image tags may be removed');
   if (info.laneConf.imageId !== opts['image-id']) fail('REFUSED', 'The staged configuration is pinned to a different image');
   await withPool(async ledger => {
@@ -292,7 +296,8 @@ function recordDatomicJvms(info, eff) {
     fail('REFUSED', 'Datomic runtime identity differs from the launch');
   // [DX-V01] Why: the admitted compact Mac fixture starts JVMs through thin1/slot.ts.
   // Rejected: reading standard-launcher role logs from a fixture that does not produce them.
-  if (info.scorecardOutput) {
+  if (info.scorecardOutput || (m.Config.Labels?.['tx2.holder'] === 'DX-REAL1' &&
+      /^tx2-dxthin-managed:real1-[a-f0-9]{16}$/.test(info.laneConf.image))) {
     process.stderr.write('[lab] Compact Mac fixture: standard-launcher JVM flag readback is unavailable\n');
     return;
   }
