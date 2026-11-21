@@ -113,10 +113,8 @@
 (defn- row-summary [rows]
   {:rows (count rows) :digest (schema/sha256 (pr-str rows))})
 
-(defn- spare-edit [i]
-  (let [attribute (str ":spare/" i)
-        input (reference/edit-frame (str "edit-spare-" i) (str "replacement-" i) (str "new-value-\uD83E\uDDED\n" i)
-                                    2.0 12.0 (str "spare-" i))]
+(defn- field-edit [command attribute id value predecessor]
+  (let [input (reference/edit-frame command id value 2.0 12.0 predecessor)]
     (rows/row-input
       (update input "rows"
               (fn [rows]
@@ -129,6 +127,10 @@
                                                    #(json/write-str (assoc (json/read-str %) "attribute" attribute)))
                               row))))
                       rows))))))
+
+(defn- spare-edit [i]
+  (field-edit (str "edit-spare-" i) (str ":spare/" i) (str "replacement-" i) (str "new-value-\uD83E\uDDED\n" i)
+              (str "spare-" i)))
 
 (deftest covering-limit-preserves-legacy-cuts
   (with-redefs [subject/enabled true subject/owner-head? false
@@ -232,3 +234,114 @@
                               :counts counts
                               :ns (mapv (fn [_] [(sample current false) (sample pinned false)]) (range 96))
                               :stagesNs (mapv (fn [_] [(sample current true) (sample pinned true)]) (range 32))}))))
+
+(defn- paired-sample [latest {:keys [owner]} arm {:keys [t]} truth]
+  (let [start (System/nanoTime)
+        view (if (= t (d/basis-t latest)) latest (d/as-of latest t))
+        actual (read-rows view owner arm)
+        elapsed (- (System/nanoTime) start)]
+    (assert (= (truth t) actual))
+    elapsed))
+
+(defn paired-reads! [path round]
+  ;; [Opus W1] Why: one JVM reads every arm in a shuffled order each round, so JIT, GC and CPU-clock drift hit all arms alike.
+  ;; Rejected: one JVM per arm only (identical legacy and append read code differed by 20% between JVMs).
+  (let [{:keys [attempt fixtures]} (edn/read-string (slurp path))
+        arms ["legacy" "append" "migrated" "covered"]
+        state (into {} (for [arm arms]
+                         (let [{:keys [db owner pinned current] :as f} (get fixtures arm)
+                               latest (d/db (main/connection (main/db-uri db)))]
+                           (assert (= (:t current) (d/basis-t latest)))
+                           [arm {:f f :latest latest
+                                 :truth (into {} (map (fn [{:keys [t expected]}]
+                                                        (let [rows (read-rows (d/as-of latest t) owner arm)]
+                                                          (assert (= expected (row-summary rows)))
+                                                          [t rows]))) [current pinned])}])))
+        rng (java.util.Random. (long (hash [attempt round])))
+        sample-round (fn []
+                       (into {} (for [arm (let [l (java.util.ArrayList. ^java.util.Collection arms)]
+                                            (java.util.Collections/shuffle l rng) l)]
+                                  (let [{:keys [f latest truth]} (state arm)]
+                                    [arm [(paired-sample latest f arm (:current f) truth)
+                                          (paired-sample latest f arm (:pinned f) truth)]]))))]
+    (assert (= attempt (System/getenv "PREP1_ATTEMPT")))
+    (dotimes [_ 64] (sample-round))
+    (let [rounds (vec (repeatedly 192 sample-round))]
+      (println "DX-W1_OWNER_LAYOUT_PAIRED"
+               (json/write-str {:attempt attempt :round round :pid (.pid (java.lang.ProcessHandle/current))
+                                :clock "diagnostic-in-process" :order "shuffled-per-round"
+                                :ns (into {} (for [arm arms] [arm (mapv #(get % arm) rounds)]))})))))
+
+(defn- text-bytes [v]
+  (if (string? v) (alength (.getBytes ^String v java.nio.charset.StandardCharsets/UTF_8)) 8))
+
+(defn- range-shape [datoms]
+  {:datoms (count datoms) :bytes (reduce + (map (comp text-bytes :v) datoms))})
+
+(defn- read-shape [db owner arm]
+  ;; [Opus W1] Why: at full size a cold read pays per index leaf, so count the EAVT range each projection walks.
+  ;; Rejected: Mac timings alone (the toy index is resident and cannot show leaf crossings).
+  (let [history (d/history db)
+        attrs [:triplex.entity/retired :triplex.entity/row]
+        walk (fn [source] (if (= arm "covered") (vec (d/datoms source :eavt owner))
+                              (vec (mapcat #(d/datoms source :eavt owner %) attrs))))]
+    {:current (range-shape (walk db)) :pinnedHistory (range-shape (walk history))}))
+
+(defn- record-shape [db tx-data]
+  (into (sorted-map) (frequencies (map (fn [x] (str (d/ident db (:a x)) (if (:added x) " +" " -"))) tx-data))))
+
+(defn- time-pair [legacy covered]
+  (let [one (fn [{:keys [db owner arm]}] (let [at (System/nanoTime)] (read-rows db owner arm) (- (System/nanoTime) at)))
+        median (fn [xs] (let [v (vec (sort xs))] (nth v (quot (count v) 2))))]
+    (dotimes [_ 48] (one legacy) (one covered))
+    (let [pairs (vec (repeatedly 96 #(vector (one legacy) (one covered))))]
+      {:legacyNs (median (map first pairs)) :coveredNs (median (map second pairs))})))
+
+(defn shape-report! []
+  ;; [Opus W1] Why: account for every record a save adds and every datom a read walks as edits and edited width grow.
+  ;; Rejected: a single two-save, one-field fixture (it fixes the cover at one text and the history at two saves).
+  (let [attempt (System/getenv "PREP1_ATTEMPT")
+        tapes {"one-field" 1 "two-field" 2 "eight-field" 8}
+        saves 16]
+    (doseq [[tape width] tapes]
+      (let [steps (vec (for [i (range saves)]
+                         (let [f (mod i width) n (quot i width)]
+                           [(str tape "-" i) (str ":spare/" f) (str "f" f "-" (inc n)) (str "value-" f "-" (inc n) "-🧭")
+                            (if (zero? n) (str "spare-" f) (str "f" f "-" n))])))
+            build (fn [arm]
+                    (let [wire (json/write-str ["triplex-scope-v1" "test" "layout-shape" (str attempt "-" tape "-" arm) 0])
+                          {:keys [db created]} (main/create-scope! nil wire "lean" true true)
+                          conn (main/connection (main/db-uri db))
+                          [seed] (reference/edits)]
+                      (assert created)
+                      (layout/install-fixture! conn)
+                      (assert (= [200 nil] (reference/outcome (reference/send db (seed-deeper seed)))))
+                      (let [owner (d/entid (d/db conn) [:triplex.entity/id fixture/root])
+                            per-save (mapv (fn [i [command attribute id value predecessor]]
+                                             (let [input (at-cut (field-edit command attribute id value predecessor) (inc i))
+                                                   plan (when (= arm "covered") (native-plan (d/db conn) input true))
+                                                   report (if plan (append! conn plan) (legacy-append! conn db input false))
+                                                   after (d/db conn)]
+                                               (merge (counts report)
+                                                      {:t (d/basis-t after) :cover (boolean (get-in plan [:owner-layout :cover]))
+                                                       :records (record-shape after (:tx-data report))})))
+                                           (range) steps)]
+                        {:db db :conn conn :owner owner :saves per-save})))
+            legacy (build "legacy") covered (build "covered")
+            latest (fn [{:keys [conn]}] (d/db conn))
+            rows-at (fn [x arm t] (read-rows (d/as-of (latest x) t) (:owner x) arm))]
+        (doseq [[l c] (map vector (:saves legacy) (:saves covered))]
+          (assert (= (rows-at legacy "legacy" (:t l)) (rows-at covered "covered" (:t c))) (str tape " cut " (:t c))))
+        (assert (= (schema/sha256 (pr-str (reference/feed (:db legacy) 0 (+ 2 saves))))
+                   (schema/sha256 (pr-str (reference/feed (:db covered) 0 (+ 2 saves))))))
+        (let [pin (fn [x] (:t (first (:saves x))))
+              view (fn [x arm t] {:db (if t (d/as-of (latest x) t) (latest x)) :owner (:owner x) :arm arm})]
+          (println "DX-W1_OWNER_LAYOUT_SHAPE"
+                   (json/write-str
+                     {:attempt attempt :tape tape :width width :saves saves :clock "diagnostic-in-process"
+                      :legacy {:saves (mapv #(dissoc % :t :cover) (:saves legacy))
+                               :reads (read-shape (latest legacy) (:owner legacy) "legacy")}
+                      :covered {:saves (mapv #(dissoc % :t) (:saves covered))
+                                :reads (read-shape (latest covered) (:owner covered) "covered")}
+                      :timing {:current (time-pair (view legacy "legacy" nil) (view covered "covered" nil))
+                               :pinned (time-pair (view legacy "legacy" (pin legacy)) (view covered "covered" (pin covered)))}})))))))

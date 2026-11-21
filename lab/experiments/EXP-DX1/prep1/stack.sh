@@ -323,6 +323,22 @@ case "$PREP1_MODE" in
           wait "${children[2]}"
           unset 'children[2]'
         done
+        # [Opus W1] Why: compare arms inside each JVM in shuffled order, three fresh JVMs in all.
+        # Rejected: ranking arms from one JVM each (identical read code differed by 20% between JVMs).
+        for layout_round in 1 2 3; do
+          TX2_SUBJECT_SAVE=1 TX2_SUBJECT_OWNER_HEAD=0 DX_W1_LAYOUT_FILE="$work/layout-reads" DX_W1_LAYOUT_ROUND="$layout_round" \
+            java_role -i /config/regression.clj -i /config/owner_layout_gate.clj \
+            -e '(do (owner-layout-gate/paired-reads! (System/getenv "DX_W1_LAYOUT_FILE") (parse-long (System/getenv "DX_W1_LAYOUT_ROUND"))) (System/exit 0))' &
+          children[2]=$!
+          wait "${children[2]}"
+          unset 'children[2]'
+        done
+        TX2_SUBJECT_SAVE=1 TX2_SUBJECT_OWNER_HEAD=0 \
+          java_role -i /config/regression.clj -i /config/owner_layout_gate.clj \
+          -e '(do (owner-layout-gate/shape-report!) (System/exit 0))' &
+        children[2]=$!
+        wait "${children[2]}"
+        unset 'children[2]'
       fi
       TX2_SUBJECT_SAVE=1 java_role /config/serial-gate.clj &
       children[2]=$!
