@@ -3810,3 +3810,35 @@ Source: `origin/exp/DX-BM1-bare-metal` at `abd19b1ce`, `bm1/JVM25-READING.md`, `
   replans; quiet-account p99 ratios 27.64 (grouped) and 26.14 (per-person). Four-gateway arms were cut.
 - Server 1 now: the native tail and cache gate, then the ordered-identifier comparison, then erasure and import
   pacing.
+
+## 2026-11-21 02:05 UTC (21:05 local, 2026-11-20): RESULT: the per-person writer with ordered assertion ids carried 394 saves per second in one database on bare metal
+
+Source: `origin/exp/DX-BM1-bare-metal` at `2fcc0d420`, `bm1/PREP1-STORAGE-READING.md`; bundle on the Mac under
+`evidence/DX-BM1/day-n20/prep1-ordered`. Writer source `df307c29c`. One write gateway, ten accounts (16 million
+facts) in one database, Java 21 G1, transactor/writer/reader on 1/4/1 cores, heaps 24/4/3 GiB, one arm per
+treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offers all accounted for.
+
+| Writer | Offered per s | Delivered per s | Expired | Saves per append | Storage reads per save | Apply p50 / p99 ms | Quiet account p99 solo to loaded (ms), ratio |
+| --- | ---: | ---: | ---: | ---: | ---: | --- | --- |
+| Grouped, 2 GiB cache | 235 | 147.03 | 5,030 | 7.984 | 0.017 | 0.185 / 1.421 | 90.80 to 682.40, 7.52 |
+| Grouped, 2 GiB cache | 394 | 155.38 | 14,029 | 7.983 | 0.014 | 0.171 / 0.629 | 116.74 to 486.78, 4.17 |
+| Per-person as it was, 2 GiB | 235 | 142.57 | 5,363 | 1.040 | 7.393 | 5.250 / 24.690 | 90.59 to 1,908.97, 21.07 |
+| Per-person as it was, 2 GiB | 394 | 165.80 | 13,303 | 1.035 | 7.978 | 5.000 / 13.860 | 127.78 to 1,193.52, 9.34 |
+| Per-person as it was, 16 GiB | 235 | 199.22 | 1,752 | 1.093 | 3.719 | 3.410 / 17.170 | 102.94 to 1,820.23, 17.68 |
+| Per-person as it was, 16 GiB | 394 | 393.92 | 0 | 1.152 | 0.710 | 0.740 / 5.330 | 112.45 to 558.09, 4.96 |
+| Per-person, ordered ids, 2 GiB | 235 | 234.90 | 0 | 1.262 | 0.033 | 0.250 / 4.830 | 73.66 to 315.42, 4.28 |
+| Per-person, ordered ids, 2 GiB | 394 | 393.92 | 0 | 1.344 | 0.014 | 0.260 / 2.760 | 34.07 to 118.16, 3.47 |
+
+- **Reading.** Ordered ids stored every offered save at both rates (all 38,160) with almost no storage reads on
+  the transaction thread; the forecast had been 225 and 205 per second with about two reads per save. A larger
+  cache alone also reached 393.92 at 394 once warm, and failed at 235 (which ran first, colder). Still failing:
+  the quiet account at 3.47 to 4.28 times its solo p99 (bar 1.25) and solo p99 of 34 to 128 ms (bar 50 ms); native
+  ready-to-append p99 52 to 97 ms. Limits of the evidence: one arm per treatment; the 394 window follows the 235
+  window; the tape reuses a small set of people; the seed is one tenth of full size; 620 offered was not run.
+- **Cache pair (DX-TAIL1's test, `bm1/TAIL-CACHE-READING.md`):** at 2.5 GiB the mean storage reads per deep save
+  fell from 14.73 to 9.68 and ACK p99 from 286.13 to 173.37 ms.
+- **Assigned (all run-critical; five agents running: DX-BM1, DX-SCALE1, DX-PREP1, DX-THIN1, DX-V01):** DX-PREP1
+  part 10 (attribute the quiet-account and solo tails; a command for 620 and 900 offered, a spread tape and the
+  fair-turn rule; behaviour on a database whose rows have old-format ids; merge). DX-THIN1 part 7 (merge the
+  ordered-id writer onto `exp/DX-INT1`, state the default). DX-V01 part 3 (scorecard with the per-person ordered
+  writer as a configuration, a correctness row for old and new id formats).
