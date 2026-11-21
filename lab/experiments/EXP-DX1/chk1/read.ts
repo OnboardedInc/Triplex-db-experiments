@@ -9,7 +9,7 @@ import { field, task, type Write } from "../scale1/decision/plan.ts";
 import { play, type Sender } from "../scale1/decision/writes.ts";
 import { pinnedFields } from "../v01/pinned-fields.ts";
 import { command } from "../w1/group/workload.ts";
-import { replay, type Receipt } from "./replay.ts";
+import { replay, saveAck, type Receipt } from "./replay.ts";
 
 export async function protectedReads(e: Evidence, writeUrl: string, readUrl: string) {
   const writer = new DatomicClient(writeUrl, 35_000);
@@ -102,7 +102,7 @@ export async function protectedReads(e: Evidence, writeUrl: string, readUrl: str
         void erase.catch(() => {});
       }
       const ack = await request;
-      const cut = Number(ack.position.v);
+      const cut = Number(saveAck(ack).position.v);
       const { id, value_string, entity_id } = input.rows[0]!;
       const actual = await available(() =>
         reader.rows(db, {
@@ -164,9 +164,14 @@ export async function protectedReads(e: Evidence, writeUrl: string, readUrl: str
               basis: { recordedPosition: saved.position, validAt: 1 },
             }),
           );
+          const expected = frame.input.rows.slice(0, frame.facts.length).map((row) => ({
+            ...row,
+            recorded_position: saved.position,
+            recorded_at: saved.recordedAt,
+          }));
           assert.deepEqual(
-            observed.map((r) => [r.attribute, r.value_type, r.value_ref ?? r.value_string]).sort(),
-            frame.facts.map((f) => [f.a, f.v.type, f.v.value]).sort(),
+            observed.toSorted((a, b) => a.id.localeCompare(b.id)),
+            expected.toSorted((a, b) => a.id.localeCompare(b.id)),
           );
           frames.push({ index, position: saved.position });
         },

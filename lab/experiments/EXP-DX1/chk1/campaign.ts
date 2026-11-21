@@ -28,10 +28,11 @@ import {
   play,
   resolveUncertain,
   type Sender,
+  type PublishInterleave,
 } from "../scale1/decision/writes.ts";
 import { hex, openScaleSeal } from "../v01/adopt.ts";
 import { pinnedFields } from "../v01/pinned-fields.ts";
-import { replay, type Receipt } from "./replay.ts";
+import { replay, saveAck, type Receipt } from "./replay.ts";
 import { protectedReads } from "./read.ts";
 
 export async function campaign(stack: Stack, cell: string) {
@@ -214,7 +215,7 @@ export async function campaign(stack: Stack, cell: string) {
         scope: scopeInfo,
         rows: new Map([[entity, old.filter((row) => row.entity_id === entity)]]),
       }));
-      const out = new Map<string, ReturnType<typeof expectedSave>["input"]>();
+      const out = new Map<string, Parameters<DatomicClient["transact"]>[1]>();
       let lost: string | undefined;
       let lostAck: unknown;
       const transmit = writer.transact.bind(writer);
@@ -222,7 +223,7 @@ export async function campaign(stack: Stack, cell: string) {
         const input = args[1];
         out.set(input.operationId, input);
         const ack = await transmit(...args);
-        const p = Number(ack.position.v);
+        const p = Number(saveAck(ack).position.v);
         const fresh = input.rows[0]!;
         assert.deepEqual(
           (
@@ -269,11 +270,9 @@ export async function campaign(stack: Stack, cell: string) {
         fire = resolve;
       });
       const start = now() + 100;
-      const gate = {
+      const gate: PublishInterleave = {
         paused: false,
-        committed: (row: Parameters<HeldLedger["saved"]>[0]) => ledger?.saved(row),
-        drain: undefined as (() => Promise<void>) | undefined,
-        resume: undefined as (() => void) | undefined,
+        committed: (row) => ledger?.saved(row),
       };
       const activity = play(
         senders,
@@ -449,17 +448,22 @@ export async function campaign(stack: Stack, cell: string) {
         );
       }
       let prev = 0;
-      for (const { index, frame, receipt } of imports.toSorted((x, y) => x.index - y.index)) {
+      for (const { frame, receipt } of imports.toSorted((x, y) => x.index - y.index)) {
         assert(receipt.position > prev);
         prev = receipt.position;
         const rows = await reader.rows(db, {
           entityIds: [frame.entity],
           basis: { recordedPosition: terminal, validAt: SEED_VALID_FROM },
         });
-        const actual = rows
-          .map((r) => [r.attribute, r.value_type, r.value_ref ?? r.value_string])
-          .sort();
-        assert.deepEqual(actual, frame.facts.map((f) => [f.a, f.v.type, f.v.value]).sort());
+        const expected = frame.input.rows.slice(0, frame.facts.length).map((row) => ({
+          ...row,
+          recorded_position: receipt.position,
+          recorded_at: receipt.recordedAt,
+        }));
+        assert.deepEqual(
+          rows.toSorted((a, b) => a.id.localeCompare(b.id)),
+          expected.toSorted((a, b) => a.id.localeCompare(b.id)),
+        );
         const wire = await reader.request<{ transactions: Parameters<typeof decodeFeed>[1][] }>(
           "POST",
           "/v2/db/" + db + "/transactions",

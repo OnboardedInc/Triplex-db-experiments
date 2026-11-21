@@ -9,6 +9,24 @@ export type Receipt = {
   tx: string;
   command?: string;
 };
+type SaveAck = {
+  operationId: string;
+  position: { v: string };
+  t: { v: string };
+  recordedAt: { v: number };
+  subjectAppendRetirement?: boolean;
+};
+export function saveAck(value: unknown): SaveAck {
+  const ack = value as SaveAck;
+  assert(
+    ack &&
+      typeof ack.operationId === "string" &&
+      /^\d+$/.test(ack.position?.v) &&
+      /^\d+$/.test(ack.t?.v) &&
+      Number.isFinite(ack.recordedAt?.v),
+  );
+  return ack;
+}
 type Page = Awaited<ReturnType<DatomicClient["log"]>>;
 type Commit = Extract<Page["rows"][number], { kind: "commit" }>;
 
@@ -43,7 +61,11 @@ export async function replay(endpoint: string, db: string, terminal: number, exp
           );
           const [saved, journal] = await Promise.all([
             fresh.operation(db, receipt.id),
-            fresh.rows(db, { entityIds: [receipt.tx], basis: { recordedPosition: p, validAt: 1 } }),
+            fresh.rows(db, {
+              entityIds: [receipt.tx],
+              history: true,
+              basis: { recordedPosition: p },
+            }),
           ]);
           assert.deepEqual(
             [

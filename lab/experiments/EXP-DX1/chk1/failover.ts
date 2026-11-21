@@ -4,7 +4,7 @@ import { admission, creditModeSelection } from "../prep1/rolling-credits.ts";
 import { field, task } from "../scale1/decision/plan.ts";
 import type { SyncPair } from "../hasync1/pair.ts";
 import { command } from "../w1/group/workload.ts";
-import { replay, type Receipt } from "./replay.ts";
+import { replay, saveAck, type Receipt } from "./replay.ts";
 
 export async function failover(pair: SyncPair) {
   const { s } = pair;
@@ -64,7 +64,8 @@ export async function failover(pair: SyncPair) {
         offers.splice(offers.indexOf(entry), 1);
         const input = wave[entry.account]!;
         const pending = ingress.transact(db, input).then(
-          async (ack) => {
+          async (result) => {
+            const ack = saveAck(result);
             assert.equal(ack.operationId, input.operationId);
             assert.equal(ack.subjectAppendRetirement, true);
             scheduler.resolved(true, ticket);
