@@ -1,11 +1,15 @@
-# DX-W1 part 9
+# DX-W1 part 10
 
-Take the tip of `exp/DX-W1-commit-tail-reads` for the experiment. The product change is `cea3f1db9`, based on integration commit `057cc1eb4`.
-The new option retires the old value by recording its end, avoiding part of the search needed to retract its full text. It starts off and needs no seed rewrite.
-On the Mac toy seed it saved 0.29–0.40 storage fetches per save. There was still about one fetch per save for the person's identity.
-For a 16 GiB cache, the forecast at 430 million, 1 billion and 8 billion records is 0.85, 1.32 and 1.63 fetches per save with the option, versus 1.20, 1.86 and 2.31 today.
-The native gate checked exact history and conflicts. Barrier6 and rolling6 each recovered the original lost reply and kept six refused appends out of the journal.
-The next design puts each person's current version in a small record. It is a candidate for keeping write reads flat as history grows.
-The toy could not reproduce the full-size cache ratios. The two server comparisons are prepared and unrun.
+The first step adds an optional compact witness to a person's existing save. The witness holds position, clock and the identities added by that save.
+The existing revision and predecessor checks still decide. The witness has no effect on what a reader returns.
+Untouched people have no witness. An ordinary first assertion still uses the existing writer. An eligible replacement initializes the witness without a rewrite.
+The second step would move rows and retirements to new entities and make the compact current record authoritative. That is the proposed source of the scale improvement.
+The measured fresh rolling6 writer reached 454 saves per second at 620 offered. The nearly flat 8B estimate remains a forecast.
+The working design, cost model and gate scope are in [Owner head](lab/experiments/EXP-DX1/w1/OWNER-HEAD.md).
 
-[Model, design costs, Mac counts, audit and server commands](lab/experiments/EXP-DX1/w1/RETIREMENT-READS.md) · [Evidence hashes](lab/experiments/EXP-DX1/w1/WRITE9-SHA256SUMS). The part 8 report is retained at `ff4346209`.
+## Evidence audit
+
+- The new ACK field measures a witness only after the durable native report has the exact owner, native transaction, logical position, clock and assertion identities. The existing operation, claim, revision and journal checks still own acceptance of the save.
+- The native gate compares fresh reference and witness scopes, confirms the expected rows, held cuts, exact feed and native records, and counts the witness datoms by native t. The rolling gate checks actual launch readback, the observed witness on each real ACK, exact values at acknowledged cuts and recovered receipts after an actual refused append and restart.
+- The removal case checks values at both exact cuts before removal, then compares the returned erased markers and clock to that attempt's removal receipt. It uses a fresh protected scope per mode.
+- No server command is attached to the first step. It does not exercise the design's projected scale benefit.

@@ -43,6 +43,9 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         raise SystemExit("Ordered IDs require the prepared writer without hints")
     if serial not in ("0", "1") or (serial == "1" and (ordered != "1" or numeric_owner != "1")):
         raise SystemExit("Serial apply requires ordered IDs and a numeric owner")
+    owner_head = os.environ.get("DX_W1_OWNER_HEAD", "0")
+    if owner_head not in ("0", "1") or (owner_head == "1" and (mode, ordered, numeric_owner) != ("rolling-recovery", "1", "1")):
+        raise SystemExit("The owner head gate requires the ordered rolling-recovery fixture")
     lookup_every = 3 if serial == "1" and mode == "rolling-recovery" else 0
     out.mkdir()
     attempt = str(uuid.uuid4())
@@ -65,6 +68,7 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     (config / "subject-prefetch").write_text(prefetch + "\n")
     (config / "subject-ordered").write_text(ordered + "\n")
     (config / "subject-serial").write_text(serial + "\n")
+    (config / "subject-head").write_text(owner_head + "\n")
     (config / "lookup-every").write_text(str(lookup_every) + "\n")
     if mode == "live":
         if not 1 <= int(seconds) <= 60:
@@ -109,13 +113,21 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     profile = json.loads(slots.read_text())
     if os.environ.get("DOCKER_HOST") != profile["dockerHost"]:
         raise SystemExit("Lab Docker endpoint does not match the configured endpoint")
-    profile["lanes"]["datomic"]["image"] = f"tx2-datomic:dx-prep1-{mode}"
+    tag = f"dx-w1-head-{out.name}" if owner_head == "1" else f"dx-prep1-{mode}"
+    profile["lanes"]["datomic"]["image"] = f"tx2-datomic:{tag}"
     slots.write_text(json.dumps(profile, indent=2) + "\n")
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
     if clojure_inputs:
         source_paths.extend(clojure_inputs)
     elif mode != "subject-native-suite":
         source_paths.extend(REPO / p for p in json.loads(metafile.read_text())["inputs"])
+    if owner_head == "1":
+        for name, source in [("serial-gate.clj", EXPERIMENT.parent / "w1/serial/gate.clj"),
+                             ("regression.clj", EXPERIMENT.parent / "wfix1/regression.clj"),
+                             *((name, EXPERIMENT / name) for name in ("subject_gate.clj", "subject_conflicts.clj"))]:
+            shutil.copyfile(source, config / name)
+            source_paths.append(source)
+        (config / "source").write_text(subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True))
     inputs = {
         "attempt": attempt,
         "mode": mode,
@@ -126,6 +138,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "orderedIds": ordered == "1",
         "serialApply": serial == "1",
         "lookupEvery": lookup_every,
+        "ownerHead": owner_head == "1",
         "explicitProbes": mode == "lookup-profile" and prefetch == "1",
         "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
         "stage": {str(p.relative_to(stage)): sha(p) for p in sorted(stage.rglob("*"))
@@ -139,8 +152,9 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
 def run_stage(out, inputs):
     stage = out / "stage"
     slots = stage / "lab/config/slots.json"
-    env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots),
-               TX2_ENGINE_DIR=str(REPO / "runs/engines/prep1"))
+    holder = "DX-W1" if inputs.get("ownerHead") else "DX-PREP1"
+    engine_state = out / "engine-state" if inputs.get("ownerHead") else REPO / "runs/engines/prep1"
+    env = dict(os.environ, TX2_CONFIG_DIR=str(stage), TX2_SLOTS_FILE=str(slots), TX2_ENGINE_DIR=str(engine_state))
     attempt = inputs["attempt"]
     if any(sha(stage / path) != digest for path, digest in inputs["stage"].items()):
         raise SystemExit("Staged source bytes changed")
@@ -154,8 +168,8 @@ def run_stage(out, inputs):
                 break
             if path.exists():
                 continue
-            args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"DX-PREP1-{out.name}-{action}", "--"]
-            args += ["node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", "DX-PREP1"]
+            args = ["node", "lab/bin/heavy.mjs", "--poll-ms", "100", "--label", f"{holder}-{out.name}-{action}", "--"]
+            args += ["node", "lab/bin/engine.mjs", action, "--lane", "datomic", "--holder", holder]
             if action == "selftest":
                 args += ["--scratch-gib", "1"]
             with path.open("x") as log:
@@ -168,7 +182,7 @@ def run_stage(out, inputs):
                 else:
                     image = json.loads(slots.read_text())["lanes"]["datomic"]["imageId"]
                     record(out / "terminal.json", {"attempt": attempt, "exit": code, "image": image,
-                                                  "holder": "DX-PREP1", "slot": "tx2-datomic-selftest",
+                                                  "holder": holder, "slot": "tx2-datomic-selftest",
                                                   "log": path.name, "sha256": sha(path),
                                                   "timings": "diagnostic"})
                 print(f"{action} finished", flush=True)

@@ -2,6 +2,7 @@
   (:require [clojure.walk :as walk]
             [datomic.api :as d]
             [triplex.gateway.commit :as commit]
+            [triplex.gateway.envelope :as envelope]
             [triplex.gateway.group-prepare :as prepared]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.schema :as schema]
@@ -16,6 +17,9 @@
 (def narrow-revision? (and numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_NARROW_REVISION"))))
 (def reuse-predecessor? (= "1" (System/getenv "TX2_SUBJECT_REUSE_PREDECESSOR")))
 (def append-retirement? (and numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_APPEND_RETIREMENT"))))
+(def owner-head? (and enabled numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_OWNER_HEAD"))))
+(def owner-head-attr :triplex.owner/head)
+(defn head-text [position clock ids] (pr-str [1 position clock ids]))
 (def erase-generation :triplex.scope/erasure-seq)
 (def mutable-flags #{:triplex.scope/feed-irregular :triplex.scope/position-regular
                      :triplex.scope/irregular :triplex.scope/packed-journals})
@@ -108,8 +112,7 @@
        (when (> final 9007199254740991) (throw (ex-info "Invalid commit span" {})))
        (when-not (Double/isFinite clock) (throw (ex-info "TRIPLEX_CLOCK_EXHAUSTED" {})))
        (let [stamp (stamp-rows true clock #{} (dec provisional) provisional final false nil)]
-         (into [revision-update
-                [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]]
+         (into head-update
                (map stamp) ops)))))
 
 (def code
@@ -133,7 +136,15 @@
                           ;; Rejected: trusting the peer's lookup alone (an ID change can leave its revision intact).
                           'owner-witness-check (when numeric-owner?
                                                  '(not= (:owner-key plan) (value owner :triplex.entity/id)))}
-                         body)))
+                         (walk/postwalk-replace
+                           {'head-update (if owner-head?
+                                           ;; [DX-W1] Why: the native position, clock and new identities bind the witness to this applied revision.
+                                           ;; Rejected: storing the peer's provisional cut or a plaintext copy of each row.
+                                           '(cond-> [revision-update [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]]
+                                              (:head-ids plan) (conj [:db/add owner :triplex.owner/head
+                                                                     (pr-str [1 final clock (:head-ids plan)])]))
+                                           '[revision-update [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]])}
+                           body))))
 (def source-hash (schema/sha256 (pr-str code)))
 (def ident (keyword "triplex.subject" (str "v-" (subs source-hash 0 24))))
 
@@ -157,6 +168,8 @@
     (let [missing (cond-> []
                     (not (d/entid db erase-generation))
                     (conj (schema/attr erase-generation :db.type/long))
+                    (and owner-head? (not (d/entid db owner-head-attr)))
+                    (conj (assoc (schema/attr owner-head-attr :db.type/string) :db/noHistory true))
                     (not (installed db))
                     (conj {:db/ident ident :db/fn (d/function
                       {:lang :clojure :params '[db plan] :requires '[[datomic.api :as d] [clojure.data.json :as json]]
@@ -226,6 +239,22 @@
                 :else op)))
       ops)))
 
+(def ^:private envelope-fields
+  #{:db/id :triplex.private/id :triplex.private/entity :triplex.private/attribute
+    :triplex.private/validity :triplex.private/body})
+
+(defn- envelope-op? [op]
+  (and (map? op) (= envelope-fields (set (keys op)))))
+
+(defn- envelope-for? [subject business op]
+  (let [id (:triplex.private/id op) row (business id)]
+    (and row (= subject (:triplex.private/entity op))
+         (= subject (:entity_id row))
+         (= (:attribute row) (:triplex.private/attribute op))
+         (= (envelope/token id) (:value_string row))
+         (= (str "protected:" id) (:db/id op))
+         (some? (envelope/body-key-handle (:triplex.private/body op))))))
+
 (defn- plan-with-erasure [db [[commit-ident p]] input expected-erasure]
   (let [{:keys [scope source entities live new-ids times record-clocks journal-entities provisional]} p
         redundant-fence [:db/cas scope erase-generation expected-erasure expected-erasure]
@@ -244,7 +273,8 @@
                (#{:triplex/commit (first (commit/variants [true false]))} commit-ident)
                (:lean p) (not (:slim-row p)) (= 1 (:span p)) (:assign-record-time p)
                (not-any? p [:scope-wide :position-irregular :irregular :save-ledger :packed-journal :bulk])
-               (<= (count ops) 256) (every? prepared/small-op? ops))
+               (<= (count ops) 256)
+               (every? #(or (prepared/small-op? %) (and (some? expected-erasure) (envelope-op? %))) ops))
       (let [[fn-tx flags owner revision]
             (trace/span "subject.plan-witnesses" "gateway"
               (let [fn-tx (installed db) flags (when fn-tx (scope-witness db scope))
@@ -255,7 +285,8 @@
             retired (filterv #(and (vector? %) (= :triplex/retract (first %))) ops)
             business (filterv #(= (str "e:" subject) (second %)) asserted)
             claim (first (:command-ids p)) clocks (concat times record-clocks)
-            op-header (first ops)]
+            op-header (first ops)
+            envelopes (filter envelope-op? ops)]
         (when (and fn-tx (some? (:triplex.scope/key f))
                    (= schema/schema-hash (:triplex.scope/schema-hash f))
                    (= commit/source-hash (:triplex.scope/commit-fn-hash f))
@@ -292,8 +323,16 @@
                          (into #{} (map (comp field lean/decode)) (vals prior)))
                 after (into #{} (map (comp field lean/decode second #(nth % 3))) business)]
             (when (and (= (count live) (count prior) (count before) (count after))
-                       (= before after) (not (contains? before nil)))
+                       (= before after) (not (contains? before nil))
+                       ;; [DX-ERASE1] Why: encrypted bodies must belong to these same fresh owner rows.
+                       ;; Rejected: accepting any secondary entity map in a per-person frame.
+                       (or (empty? envelopes)
+                           (let [by-id (into {} (map (juxt :id identity)
+                                                  (map (comp lean/decode second #(nth % 3)) business)))]
+                             (and (= (count envelopes) (count (set (map :triplex.private/id envelopes))))
+                                  (every? #(envelope-for? subject by-id %) envelopes)))))
               (let [prefixes (vec (sort (map lean/prefix new-ids)))
+                    head-ids (when owner-head? (mapv prepared/row-id business))
                     mark? (and append-retirement? (nil? expected-erasure)
                                (not-any? #(and (vector? %) (= :triplex.entity/retired (nth % 2 nil))) ops))]
                 (cond-> {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
@@ -305,6 +344,8 @@
                                 (render-ops ops owner subject prior (or decoded (decode-predecessors prior)) (set new-ids)
                                   (when mark? [provisional journal])))}
                   mark? (assoc :retirement-prefixes (mapv lean/prefix live))
+                  (and (seq head-ids) (every? #(and (string? %) (<= (count %) 128)) head-ids))
+                  (assoc :head-ids head-ids)
                   numeric-owner? (assoc :owner-key subject)
                   ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))
 
@@ -323,12 +364,14 @@
          (= (second (:function plan)) (installed db))
          (not (changes-application-rows? db)))))
 
-(defn verify-report [report {:keys [operation command journal owner ordered-bounds retirement-prefixes]}]
+(defn verify-report [report {:keys [operation command journal owner ordered-bounds retirement-prefixes head-ids]}]
   (let [db (:db-after report) t (d/basis-t db) tx (d/t->tx t)
         cmd (d/entid db [:triplex.claim/command-id command])
         journal-eid (d/entid db [:triplex.entity/id journal])
         position (scope/value db tx :triplex.tx/position)
-        clock (scope/value db tx :triplex.tx/recorded-at)]
+        clock (scope/value db tx :triplex.tx/recorded-at)
+        head (when (and head-ids (integer? position) (some? clock)) (head-text position clock head-ids))
+        head-attr (when head (d/entid db owner-head-attr))]
     ;; [DX-PREP1] Why: only the matching native report can acknowledge a prepared save.
     ;; Rejected: publishing the peer's draft, or resolving the receipt on a newer database value.
     (when-not (and (= operation (scope/value db tx :triplex.tx/operation-id))
@@ -347,8 +390,15 @@
                              actual (into #{} (keep #(when (and (= attr (:a %)) (= owner (:e %))
                                                                        (:added %) (= tx (:tx %))) (:v %)))
                                           (:tx-data report))]
-                         (= expected actual))))
+                         (= expected actual)))
+                   ;; [DX-W1] Why: report the witness only when its exact bytes landed for this owner in this transaction.
+                   ;; Rejected: reading a newer witness or treating a requested launch setting as a write.
+                   (or (nil? head-ids)
+                       (and head-attr
+                            (some #(and (= head-attr (:a %)) (= owner (:e %)) (= tx (:tx %))
+                                        (:added %) (= head (:v %))) (:tx-data report)))))
       (throw (ex-info "Prepared subject receipt unavailable" {:status 503 :code "OutcomeUnknown"})))
     (cond-> (assoc report :subject-save (str ident))
       ordered-bounds (assoc :subject-ordered-ids true)
+      head (assoc :subject-owner-head-bytes (alength (.getBytes ^String head java.nio.charset.StandardCharsets/UTF_8)))
       retirement-prefixes (assoc :subject-append-retirement true))))

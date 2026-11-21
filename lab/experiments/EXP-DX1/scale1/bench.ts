@@ -40,7 +40,7 @@ import { checkProfileFlags, launchProfile, roles as jvmRoles } from "../jvm1/lau
 import { datomicRuntime } from "../../../config/datomic/runtime.mjs";
 
 type ServerLaunch = { policy: ReturnType<typeof launchProfile>; walDirectory?: string;
-  prepared?: { data: string; wal: string } };
+  prepared?: { data: string; wal: string }; pgData?: string };
 
 const GiB = 1024 ** 3,
   script = fileURLToPath(import.meta.url),
@@ -422,6 +422,7 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
   const policy = launch?.policy;
   assert(!policy || (policy.profile === "server" && !policy.reduced));
   assert(!launch?.prepared || !launch.walDirectory);
+  assert(!launch?.pgData || (!launch.prepared && !launch.walDirectory));
   const walPath = launch?.prepared?.wal ??
     (launch?.walDirectory ? path.join(fs.realpathSync(launch.walDirectory), prefix) : undefined);
   if (walPath && !launch?.prepared) {
@@ -503,6 +504,7 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
       ...(policy ? ["--memory-index-threshold", policy.index.threshold, "--memory-index-max", policy.index.max] : []),
       ...(walPath ? ["--wal-directory", walPath] : []),
       ...(launch?.prepared ? ["--prepared-pgdata", launch.prepared.data] : []),
+      ...(launch?.pgData ? ["--pg-data", launch.pgData] : []),
       "--pg-settings",
       policy ? Object.entries(policy.pg.settings).map(([key, value]) => "-c " + key + "=" + value).join(" ")
         : "-c shared_buffers=1GB -c max_wal_size=8GB -c synchronous_commit=on -c fsync=on -c full_page_writes=on -c track_io_timing=on -c track_wal_io_timing=on",

@@ -26,6 +26,9 @@ type Layout =
   | "overlap"
   | "regression"
   | "ledger-regression"
+  | "ledger-authority-regression"
+  | "ledger-authority-parallel"
+  | "fast-authority-regression"
   | "ledger-overhead"
   | "ledger-profile"
   | "ledger-match"
@@ -35,6 +38,8 @@ type Layout =
   | "guard-prepared-smoke"
   | "fast"
   | "fast-neighbours-smoke"
+  | "fast-cleanup-separate"
+  | "fast-cleanup-folded"
   | "fast-smoke";
 type Attempt = {
   binding: string;
@@ -49,6 +54,9 @@ type Attempt = {
   seedRole?: "control";
   guardComparison?: boolean;
   neighbourCheck?: boolean;
+  cleanupStudy?: "separate" | "folded";
+  authorityCost?: boolean;
+  sealedWitness?: boolean;
 };
 type Row = Receipt["triples"][number];
 type Fact = ReturnType<typeof deepOwnFacts>[number];
@@ -879,24 +887,35 @@ async function scale() {
       return;
     }
     const sealedK = run.mode === "sealed-k-regression";
-    const sealed = run.mode.startsWith("fast") || run.guardComparison;
+    const parallel = run.mode.endsWith("-parallel");
+    const sealed =
+      run.mode.startsWith("fast") ||
+      run.guardComparison ||
+      run.mode === "ledger-authority-parallel" ||
+      run.sealedWitness === true || sealedK;
     if (
-      sealedK || ["ledger-regression", "ledger-reuse", "ledger-parallel"].includes(run.mode) ||
+      sealedK || parallel ||
+      ["ledger-regression", "ledger-authority-regression", "ledger-reuse"].includes(run.mode) ||
       (sealed && action !== "check" && !run.seedRole)
     ) {
       const authority = new DatomicClient(process.env.DATOMIC_URL!);
       try {
         await authority.declareProtection(
           f.db,
-          sealed ? [":privacy/field"] : [run.mode === "ledger-parallel" ? ":v" : field(0)],
-          sealed || sealedK,
+          parallel ? [":v"] : sealed && !run.sealedWitness && !sealedK ? [":privacy/field"] : [field(0)],
+          sealed,
         );
       } finally {
         authority.close();
       }
     }
-    if (run.mode === "ledger-parallel") {
+    if (parallel) {
       output("parallel-writer", await diag("parallel-writer", { scope: f.scope }));
+      return;
+    }
+    if (run.mode === "fast-authority-regression") {
+      const { checkSharedAuthority } = await import("./authority.ts");
+      await checkSharedAuthority(f, run.nonce, getParent, diag, output);
       return;
     }
     let groups: Acc[];
@@ -934,7 +953,12 @@ async function scale() {
     }
     if (run.neighbourCheck) {
       const { quietNeighbours } = await import("./quiet.ts");
-      await quietNeighbours(f, run.nonce, diag, output, action === "check");
+      await quietNeighbours(f, run.nonce, diag, output, action === "check", run.cleanupStudy);
+      return;
+    }
+    if (run.authorityCost) {
+      const { compareSharedAuthoritySaves } = await import("./authority.ts");
+      await compareSharedAuthoritySaves(f, run.nonce, diag, output, 500);
       return;
     }
     if (run.mode === "ledger-reuse") {
@@ -957,7 +981,8 @@ async function scale() {
         diag,
         getParent,
         output,
-        run.mode !== "regression",
+        run.mode.startsWith("ledger-") || sealedK,
+        run.sealedWitness,
         sealedK,
       );
       return;

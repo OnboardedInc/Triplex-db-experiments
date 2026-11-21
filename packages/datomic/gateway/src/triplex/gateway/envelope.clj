@@ -1,11 +1,12 @@
 (ns triplex.gateway.envelope
   (:require [clojure.data.json :as json] [clojure.string :as str] [datomic.api :as d]
-            [triplex.gateway.privacy :as privacy] [triplex.gateway.scope :as scope])
+            [triplex.gateway.authority-sql :as sql] [triplex.gateway.privacy :as privacy] [triplex.gateway.scope :as scope])
   (:import [java.nio.charset StandardCharsets]
            [java.nio.file Files Path Paths StandardOpenOption StandardCopyOption]
            [java.nio.file.attribute PosixFilePermissions]
            [java.security SecureRandom]
            [java.util Base64 Arrays UUID]
+           [java.util.concurrent ConcurrentLinkedQueue ConcurrentHashMap]
            [javax.crypto Cipher]
            [javax.crypto.spec GCMParameterSpec SecretKeySpec]))
 
@@ -58,8 +59,63 @@
     (.updateAAD cipher ^bytes context)
     (.doFinal cipher ^bytes data)))
 
+;; [DX-ERASE1] Why: each random key is committed before its handle can be picked up by a save.
+;; Rejected: saving one key synchronously for every assertion (it doubles the durable write path).
+(def ^:private batches (ConcurrentHashMap.))
+(def ^:private batch-size 256)
+(def ^:private wrapping-key
+  (delay (let [wire (System/getenv "TRIPLEX_ERASURE_WRAPPING_KEY")
+               b (when wire (.decode (Base64/getDecoder) ^String wire))]
+           (when-not (and b (= 32 (alength ^bytes b))) (privacy/unavailable!))
+           b)))
+
+(defn- pool [name]
+  (.computeIfAbsent batches name
+    (reify java.util.function.Function (apply [_ _] (ConcurrentLinkedQueue.)))))
+
+(defn- wrap-key [name handle key]
+  (let [nonce (random-bytes 12)]
+    (byte-array (concat nonce (crypto Cipher/ENCRYPT_MODE @wrapping-key nonce
+                                     (utf8 (json/write-str [name handle])) key)))))
+
+(defn- open-key [name handle]
+  (let [^bytes wrapped (or (sql/key-by-id name handle) (privacy/unavailable!))]
+    (crypto Cipher/DECRYPT_MODE @wrapping-key (Arrays/copyOfRange wrapped 0 12)
+            (utf8 (json/write-str [name handle])) (Arrays/copyOfRange wrapped 12 (alength wrapped)))))
+
+(defn- refill! [name]
+  (let [^ConcurrentLinkedQueue keys (pool name)]
+    (locking keys
+      (when (< (.size keys) batch-size)
+        (let [batch (vec (repeatedly batch-size #(vector (str (UUID/randomUUID)) (random-bytes 32))))]
+          (try
+            (sql/issue! name (mapv (fn [[handle key]] [handle (wrap-key name handle key)]) batch))
+            (.addAll keys batch)
+            (catch Throwable e
+              (doseq [[_ key] batch] (Arrays/fill ^bytes key (byte 0)))
+              (throw e))))))))
+
+(defn shared? [] (some? sql/url))
+
+(defn provision! [name sealed?]
+  (when (and sql/url sealed?) (refill! name)))
+
+(defn- take-key! [name id]
+  (when (contains? (:erased privacy/*cut*) id) (privacy/stale!))
+  (if sql/url
+    (let [^ConcurrentLinkedQueue keys (pool name)]
+      (or (.poll keys) (privacy/failure! 503 "EnvelopeKeyPoolEmpty" "Retry the protected save after replenishment")))
+    [nil (issue! name id)]))
+
+(defn body-key-handle [wire]
+  (when (and (string? wire) (str/starts-with? wire "sql/"))
+    (let [handle (second (str/split wire #"/" 3))]
+      (when-not (re-matches #"[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}" handle)
+        (privacy/unavailable!))
+      handle)))
+
 (defn seal! [name {:keys [id entity_id attribute value_string valid_from valid_to]}]
-  (let [key (issue! name id) nonce (random-bytes 12) encoder (Base64/getEncoder)
+  (let [[handle key] (take-key! name id) nonce (random-bytes 12) encoder (Base64/getEncoder)
         interval (json/write-str [(bit-text valid_from) (bit-text valid_to)])]
     (try
       {:db/id (str "protected:" id) :triplex.private/id id
@@ -67,7 +123,7 @@
        :triplex.private/validity interval
        ;; [DX-W1] Why: JSON escapes preserve every UTF-16 code unit in a protected string.
        ;; Rejected: using Java UTF-8 replacement for an unmatched surrogate in an application value.
-       :triplex.private/body (str "s1." (.encodeToString encoder nonce) "."
+       :triplex.private/body (str (when handle (str "sql/" handle "/")) "s1." (.encodeToString encoder nonce) "."
                                  (.encodeToString encoder (crypto Cipher/ENCRYPT_MODE key nonce
                                              (aad name id entity_id attribute interval) (utf8 (json/write-str value_string)))))}
       (finally (Arrays/fill ^bytes key (byte 0))))))
@@ -79,7 +135,8 @@
      :attribute (scope/value db e :triplex.private/attribute)
      :value_type "string"
      :valid_from (from-bits from)
-     :valid_to (from-bits to)}))
+     :valid_to (from-bits to)
+     :key_handle (body-key-handle (scope/value db e :triplex.private/body))}))
 
 (defn decode! [name db id entity attribute wire]
   (when-not (= (token id) wire) (privacy/unavailable!))
@@ -88,10 +145,14 @@
           _ (when-not eid (privacy/unavailable!))
           ciphertext (scope/value db eid :triplex.private/body)
           interval (scope/value db eid :triplex.private/validity)
-          encoded? (str/starts-with? ciphertext "s1.")
-          [nonce body] (str/split (if encoded? (subs ciphertext 3) ciphertext) #"\." 2)
+          handle (body-key-handle ciphertext)
+          payload (if handle (nth (str/split ciphertext #"/" 3) 2) ciphertext)
+          encoded? (str/starts-with? payload "s1.")
+          [nonce body] (str/split (if encoded? (subs payload 3) payload) #"\." 2)
           decoder (Base64/getDecoder)
-          key (read-key (key-file name id))]
+          key (if sql/url
+                (if handle (open-key name handle) (privacy/unavailable!))
+                (if-not handle (read-key (key-file name id)) (privacy/unavailable!)))]
       (try
         (let [clear (crypto Cipher/DECRYPT_MODE key (.decode decoder ^String nonce)
                             (aad name id entity attribute interval) (.decode decoder ^String body))]
@@ -104,32 +165,53 @@
 (defn erase-keys! [name identities]
   ;; [DX-ERASE1] Why: revoke independent keys before submitting optional native cleanup.
   ;; Rejected: waiting for Datomic to reclaim ciphertext before deleting its keys.
-  (doseq [r identities] (Files/deleteIfExists (key-file name (get r "assertionId"))))
-  (privacy/sync-directory! (key-directory name)))
+  (if sql/url
+    (sql/shred! name (keep #(get % "keyHandle") identities))
+    (do
+      (doseq [r identities] (Files/deleteIfExists (key-file name (get r "assertionId"))))
+      (privacy/sync-directory! (key-directory name)))))
+
+(defn key-present? [name id handle]
+  (if sql/url
+    (boolean (when handle (sql/key-by-id name handle)))
+    (privacy/exists? (key-file name id))))
 
 (defonce shredded (atom {}))
 (def grace-ms (Long/parseLong (or (System/getenv "TRIPLEX_ERASURE_SHRED_GRACE_MS") "300000")))
 
+(defn- authority-scopes []
+  (if sql/url
+    (sql/scopes)
+    (let [root (Paths/get privacy/root (make-array String 0))]
+      (when (privacy/exists? root)
+        (with-open [scopes (Files/list root)]
+          (into [] (keep (fn [dir]
+                          (let [head (.resolve ^Path dir "head.json")]
+                            (when (privacy/exists? head)
+                              (let [name (get (json/read-str (Files/readString head)) "database")]
+                                (when (= head (privacy/path name "head.json")) name))))))
+                (.toArray scopes)))))))
+
 (defn- shred-published! []
-  (let [root (Paths/get privacy/root (make-array String 0))
-        cutoff (- (System/currentTimeMillis) grace-ms)]
-    (when (privacy/exists? root)
-      (with-open [scopes (Files/list root)]
-        (doseq [dir (.toArray scopes)]
-          (let [head (.resolve ^Path dir "head.json")]
-            (when (privacy/exists? head)
-              (try
-                (let [name (get (json/read-str (Files/readString head)) "database")
-                      cut (when (= head (privacy/path name "head.json")) (privacy/cut name nil))]
-                  (when (:sealed cut)
-                    (let [from (long (get @shredded name 0))
-                          due (->> (:commands cut) vals (sort-by #(get % "seq"))
-                                   (drop-while #(<= (get % "seq") from))
-                                   (take-while #(<= (get % "erasedAt") cutoff)))]
-                      (when (seq due)
-                        (erase-keys! name (mapcat #(get % "identities") due))
-                        (swap! shredded assoc name (get (last due) "seq"))))))
-                (catch Exception _ nil)))))))))
+  (let [cutoff (- (System/currentTimeMillis) grace-ms)]
+    (doseq [name (authority-scopes)]
+      (try
+        (let [cut (privacy/cut name nil)]
+          (when (:sealed cut)
+            (let [from (long (get @shredded name 0))
+                  due (->> (:commands cut) vals (sort-by #(get % "seq"))
+                           (drop-while #(<= (get % "seq") from))
+                           (take-while #(<= (get % "erasedAt") cutoff)))]
+              (when (seq due)
+                (erase-keys! name (mapcat #(get % "identities") due))
+                (swap! shredded assoc name (get (last due) "seq"))))))
+        (catch Exception _ nil)))))
+
+(defn- maintain-keys! []
+  (shred-published!)
+  (when sql/url
+    (doseq [name (.keySet batches)]
+      (try (refill! name) (catch Exception _ nil)))))
 
 ;; [DX-ERASE1] Why: the durable published prefix survives a restart and schedules key removal before any native indexing.
 ;; Rejected: making native cleanup the only caller that revokes a key.
@@ -138,7 +220,7 @@
     (doto (Thread. ^Runnable
             (fn []
               (loop []
-                (try (shred-published!) (catch Exception _ nil))
+                (try (maintain-keys!) (catch Exception _ nil))
                 (let [continue? (try (Thread/sleep 500) true (catch InterruptedException _ false))]
                   (when continue? (recur)))))
             "triplex-envelope-shred")
@@ -146,7 +228,7 @@
       (.start))))
 
 (defn start! []
-  (when privacy/root @shred-worker))
+  (when (or privacy/root sql/url) @shred-worker))
 
 (defn protect [name state input rows]
   (if-not (:sealed state) {:rows rows :input input}

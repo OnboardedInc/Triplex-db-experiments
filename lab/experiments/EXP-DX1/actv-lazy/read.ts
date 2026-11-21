@@ -4,6 +4,7 @@ import {
   datomicReplicaSource,
 } from "../../../../packages/datomic/dist/index.js";
 import { runtimeApi } from "../../../bench/lib/triplex.ts";
+import { readErasure } from "../../../bench/lib/datomic-erasure.ts";
 import assert from "node:assert/strict";
 import { canonical, sha256, W0, worldOf } from "../../../bench/lib/w0-world.ts";
 import {
@@ -94,6 +95,7 @@ export class LazyReader {
   private cache = new Map<string, string>();
   private used = 0;
   private erased = -1;
+  private removed?: number;
   private replica?: Awaited<ReturnType<typeof captureDemand>>;
   attach(view: Awaited<ReturnType<typeof captureDemand>>) {
     assert(view.scope === this.store.scope && this.format === "w0");
@@ -102,6 +104,7 @@ export class LazyReader {
   private readonly now: () => string;
   private readonly path: "legacy" | "shared-cut";
   private readonly archive?: ArchivedAnswer;
+  private readonly protectedScope: boolean;
   constructor(
     store: Store,
     format: Format = "w0",
@@ -109,10 +112,12 @@ export class LazyReader {
     now = () => new Date().toISOString().replace("Z", "000Z"),
     path: "legacy" | "shared-cut" = "legacy",
     archive?: ArchivedAnswer,
+    protectedScope = false,
   ) {
     this.now = now;
     this.path = path;
     this.archive = archive;
+    this.protectedScope = protectedScope;
     this.store = store;
     this.format = format;
     this.limit = byteLimit;
@@ -129,8 +134,12 @@ export class LazyReader {
   ) {
     stage?.("head");
     const offered = this.now();
-    const s = this.store,
-      head = await s.head();
+    const s = this.store;
+    // [DX-INT1] Why: a declared protected scope needs authority on every cached read.
+    // Rejected: a new authority request on the ordinary Publish path.
+    const [head, initialAuthority] = this.protectedScope
+      ? await Promise.all([s.head(), readErasure(s.comp)])
+      : [await s.head(), undefined];
     stage?.("pin");
     const p = await resolvePin(s, pin, head);
     stage?.("controls");
@@ -139,8 +148,11 @@ export class LazyReader {
     assert(W0.isInstant(b.validTime));
     const shared = this.path === "shared-cut";
     let frontier = head;
-    for (;;) {
+    for (let authority = initialAuthority; ; authority = this.protectedScope ? await readErasure(s.comp) : undefined) {
       stage?.("erasure-before");
+      // [DX-ERASE1] Why: a native removal changes every old pin without writing a Lazy account mask.
+      // Rejected: relying on the mask revision alone to authorize cached output.
+      const sequence = authority?.seq;
       const latest = shared
           ? frontier === p
             ? c
@@ -149,18 +161,24 @@ export class LazyReader {
         barrier = maskVersion(latest);
       assert(!p || latest.generation === c.generation, "Read generation changed");
       const stable = async () => {
-        const end = await s.head();
+        const [end, verified] = await Promise.all([
+          s.head(),
+          sequence === undefined ? undefined : readErasure(s.comp),
+        ]);
+        if (sequence !== verified?.seq) return false;
         if (shared && end === frontier) return true;
         frontier = end;
         const after = await s.controls(end);
         return barrier === maskVersion(after) && (!p || after.generation === c.generation);
       };
       stage?.("memo");
-      if (barrier !== this.erased) {
+      if (barrier !== this.erased || sequence !== this.removed) {
         this.cache.clear();
-        if (this.replica && this.replica.erasure !== barrier) this.replica = undefined;
+        if (this.replica && (this.replica.erasure !== barrier || sequence !== undefined))
+          this.replica = undefined;
         this.used = 0;
         this.erased = barrier;
+        this.removed = sequence;
       }
       const key = canonical([
         s.scope,
@@ -171,6 +189,7 @@ export class LazyReader {
         b,
         winner(c, b),
         barrier,
+        ...(this.protectedScope ? [sequence ?? null] : []),
       ]);
       const saved = this.cache.get(key);
       if (saved !== undefined) {
@@ -193,6 +212,7 @@ export class LazyReader {
       const r = this.replica,
         eligible =
           r &&
+          sequence === undefined &&
           r.generation === c.generation &&
           r.erasure === barrier &&
           r.validTime === b.validTime &&
@@ -233,10 +253,15 @@ export class LazyReader {
     const b = { tx: position, validTime },
       c = await s.controls(position);
     for (;;) {
+      const sequence = this.protectedScope ? (await readErasure(s.comp))?.seq : undefined;
       const current = await s.controls(await s.head()),
         worlds = await worldsAt(s, this.format, subjects, b);
       const rows = worlds.map((w) => evaluate(s, this.format, w, b, c, current).json);
-      if (maskVersion(current) === maskVersion(await s.controls(await s.head()))) return rows;
+      if (
+        maskVersion(current) === maskVersion(await s.controls(await s.head())) &&
+        (sequence === undefined || (await readErasure(s.comp))?.seq === sequence)
+      )
+        return rows;
     }
   }
   async list(

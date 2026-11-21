@@ -14,6 +14,7 @@ const credits = selection.credits;
 const ordered = process.env.TX2_SUBJECT_ORDERED_IDS === "1";
 const serial = process.env.TX2_SUBJECT_NARROW_REVISION === "1";
 const appendRetirement = process.env.TX2_SUBJECT_APPEND_RETIREMENT === "1";
+const ownerHead = process.env.TX2_SUBJECT_OWNER_HEAD === "1";
 assert(phase === "before" || phase === "after");
 assert(witnessPath && mode);
 const attempt = process.env.PREP1_ATTEMPT!;
@@ -42,11 +43,46 @@ async function head(db: string) {
   return pin.position;
 }
 
+async function checkRemovalAcrossHead() {
+  const protectedScope = JSON.stringify(["triplex-scope-v1", "test", "rolling-head", nonce, 0]);
+  const { db, created } = await client.create(protectedScope, "lean", true, 35000);
+  assert(created);
+  const entity = task(0, 789), attribute = field(0);
+  await client.declareProtection(db, [attribute]);
+  const fact = (value: string) => ({ e: entity, a: attribute, v: { type: "string" as const, value } });
+  const old = command(nonce + "-protected-legacy", [fact("before-head")], [], false);
+  const seed = await client.transact(db, old) as { subjectOwnerHeadBytes?: number };
+  assert(!seed.subjectOwnerHeadBytes);
+  const pin = await client.begin(db);
+  const [prior] = await client.rows(db, { entityIds: [entity], handle: pin.handle });
+  assert(prior?.value_string === "before-head");
+  const next = command(nonce + "-protected-head", [fact("after-head")], [prior], true, false, orderedSaveIdentity());
+  const saved = await client.transact(db, { ...next, sourceK: pin.position }) as {
+    position: { v: string }; subjectOwnerHeadBytes?: number;
+  };
+  assert(saved.subjectOwnerHeadBytes);
+  const nextCut = Number(saved.position.v);
+  await exactRead(db, entity, nextCut, next.rows[0]!.id, "after-head");
+  await exactRead(db, entity, pin.position, prior.id, "before-head");
+  const removal = await client.erase(db, nonce + "-remove", [{ id: prior.id }, { id: next.rows[0]!.id }]);
+  assert.deepEqual(removal.identities.map((x) => x.assertionId).sort(), [prior.id, next.rows[0]!.id].sort());
+  for (const [cut, id] of [[pin.position, prior.id], [nextCut, next.rows[0]!.id]] as const) {
+    const rows = await client.rows(db, { entityIds: [entity], basis: { recordedPosition: cut, validAt: 1 } });
+    const erased = rows.find((r) => r.id === id);
+    assert(erased?.value_type === "erased" && erased.value_string === null);
+    assert.equal(JSON.parse(erased.value_json!).erasedAt, removal.erasedAt);
+  }
+  await client.release(db, pin.handle);
+  console.log("DX-W1_OWNER_REMOVAL " + JSON.stringify({ attempt, mode, db, oldCut: pin.position,
+    nextCut, removed: removal.identities.length, sequence: removal.seq, headBytes: saved.subjectOwnerHeadBytes }));
+}
+
 type Receipt = { id: string; p: number; t: string; clock: number; tx: string; digest: string; replyNs: string; orderedToken?: string };
 type Witness = { attempt: string; mode: string; ordered: boolean; serial: boolean; appendRetirement: boolean; db: string; head: number;
-  lost: Receipt; acked: Receipt[]; missing: string[]; immediate: number; submitted: number };
+  ownerHead: boolean; lost: Receipt; acked: Receipt[]; missing: string[]; immediate: number; submitted: number };
 
 async function before(witness: string) {
+  if (ownerHead) await checkRemovalAcrossHead();
   const { db, created } = await client.create(scope, "lean", true, 35000);
   assert(created);
   const seedSet = [...tape(credits, "seed"), ...tape(50, "repeat", true)];
@@ -61,6 +97,7 @@ async function before(witness: string) {
     attempt: string; database: string; position: number;
     subjectSave?: boolean; subjectOrderedIds?: boolean; subjectNarrowRevision?: boolean; subjectReusePredecessor?: boolean;
     subjectAppendRetirement?: boolean;
+    subjectOwnerHead?: boolean;
     options: { groupCommit: boolean; ledger: boolean };
   }>("GET", "/v1/db/" + db + "/write-options");
   assert.deepEqual([options.attempt, options.database, options.position], [attempt, db, cut]);
@@ -68,6 +105,7 @@ async function before(witness: string) {
     options.options.ledger, Boolean(options.subjectNarrowRevision), Boolean(options.subjectReusePredecessor)],
     [ordered, ordered, !ordered, !ordered, serial, serial]);
   assert.equal(Boolean(options.subjectAppendRetirement), appendRetirement);
+  assert.equal(Boolean(options.subjectOwnerHead), ownerHead);
   const rowsByOwner = new Map([...templates].map(([e], i) => [e, change.rows.slice(i * 4, i * 4 + 4)
     .map((r) => ({ ...r, recorded_position: cut, recorded_at: seed.recordedAt.v }))]));
   const senders: Sender[] = Array.from({ length: 10 }, () => ({
@@ -96,6 +134,7 @@ async function before(witness: string) {
     const saved = ok.rows[e.ordinal]!;
     assert(saved.status === "acked" && Boolean(saved.stage?.subjectOrderedIds) === ordered && saved.receipt);
     assert.equal(Boolean(saved.stage?.subjectAppendRetirement), appendRetirement);
+    assert.equal(Boolean(saved.stage?.subjectOwnerHeadBytes), ownerHead);
     const exact = expectedSave(saved, e, rowsByOwner.get(task(e.account, e.subject))!);
     await exactRead(db, exact.entity, saved.receipt.p, exact.input.rows[0]!.id, sha([e.version, 0]).slice(0, 57));
     const sequence = ok.rows.filter((s) => s.account === e.account && s.subject === e.subject);
@@ -121,7 +160,8 @@ async function before(witness: string) {
   assert(unresolved && lostResult.unresolved.size === 1 && unresolved[0].id === lostId && withheld);
   await resolveUncertain(senders, lostResult.unresolved);
   const recovered = unresolved[0];
-  const initial = withheld as { position: { v: string }; t: { v: string }; recordedAt: { v: number } };
+  const initial = withheld as { position: { v: string }; t: { v: string }; recordedAt: { v: number }; subjectOwnerHeadBytes?: number };
+  assert.equal(Boolean(initial.subjectOwnerHeadBytes), ownerHead);
   assert(recovered.status === "recovered" && recovered.receipt);
   assert.deepEqual([recovered.receipt.p, recovered.receipt.t, recovered.receipt.clock],
     [Number(initial.position.v), initial.t.v, initial.recordedAt.v]);
@@ -149,7 +189,7 @@ async function before(witness: string) {
   assert.equal(submitted, granted);
   assert(failed.rows.every((r, i) => r.status === (i < granted ? "uncertain" : "expired-before-dispatch") &&
     r.receipt === undefined && (r.dispatched !== undefined) === (i < granted)));
-  const proof: Witness = { attempt, mode: mode!, ordered, serial, appendRetirement, immediate, submitted, db, head: beforeFailure,
+  const proof: Witness = { attempt, mode: mode!, ordered, serial, appendRetirement, ownerHead, immediate, submitted, db, head: beforeFailure,
     lost: { id: lostId, ...recovered.receipt, replyNs: replyClocks.get(lostId)! },
     acked: [...ok.rows, ...lostResult.rows].map((r) => {
       assert(r.receipt);
@@ -163,6 +203,7 @@ async function after(witness: string) {
   const proof = JSON.parse(readFileSync(witness, "utf8")) as Witness;
   assert.deepEqual([proof.attempt, proof.mode, proof.ordered, proof.serial], [attempt, mode, ordered, serial]);
   assert.equal(proof.appendRetirement, appendRetirement);
+  assert.equal(proof.ownerHead, ownerHead);
   const opened = await client.create(scope, "lean", true, 35000);
   assert.equal(opened.created, false);
   assert.equal(opened.db, proof.db);
@@ -198,7 +239,7 @@ async function after(witness: string) {
   assert.deepEqual([Number(original.position?.v), original.t?.v, original.recordedAt?.v],
     [proof.lost.p, proof.lost.t, proof.lost.clock]);
   console.log("PREP1_ROLLING " + JSON.stringify({ attempt, credits, db, head: proof.head,
-    mode, ordered, serial, appendRetirement, immediate: proof.immediate, submitted: proof.submitted, durable: journal.length, refused: proof.missing.length, lost: proof.lost, checked: proof.acked }));
+    mode, ordered, serial, appendRetirement, ownerHead, immediate: proof.immediate, submitted: proof.submitted, durable: journal.length, refused: proof.missing.length, lost: proof.lost, checked: proof.acked }));
 }
 try {
   if (phase === "before") await before(witnessPath);

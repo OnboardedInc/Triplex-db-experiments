@@ -10,6 +10,7 @@ export TX2_SUBJECT_ORDERED_IDS=$(cat /config/subject-ordered)
 export TX2_SUBJECT_NARROW_REVISION=$(cat /config/subject-serial 2>/dev/null || printf 0)
 export TX2_SUBJECT_REUSE_PREDECESSOR=$TX2_SUBJECT_NARROW_REVISION
 export TX2_SUBJECT_APPEND_RETIREMENT=$(cat /config/subject-retirement 2>/dev/null || printf 0)
+export TX2_SUBJECT_OWNER_HEAD=$(cat /config/subject-head 2>/dev/null || printf 0)
 export PREP1_LOOKUP_EVERY=$(cat /config/lookup-every 2>/dev/null || printf 0)
 if [[ "$PREP1_MODE" == subject-native-suite ]]; then
   # [DX-PREP1] Why: exercise the stock native suite with the real process setting on fresh memory scopes.
@@ -291,6 +292,14 @@ case "$PREP1_MODE" in
     credit_modes=(barrier6 rolling6 rolling12)
     if [[ $TX2_SUBJECT_NARROW_REVISION == 1 ]]; then credit_modes=(rolling6); fi
     if [[ $TX2_SUBJECT_APPEND_RETIREMENT == 1 ]]; then credit_modes=(barrier6 rolling6); fi
+    if [[ $TX2_SUBJECT_OWNER_HEAD == 1 ]]; then
+      credit_modes=(barrier6 rolling6)
+      export TRIPLEX_ERASURE_DIRECTORY="$work/privacy"
+      TX2_SUBJECT_SAVE=1 java_role /config/serial-gate.clj &
+      children[2]=$!
+      wait "${children[2]}"
+      unset 'children[2]'
+    fi
     for credit_mode in "${credit_modes[@]}"; do
       subject_workers 1 "$TX2_SUBJECT_ORDERED_IDS"
       rolling_probe before "$credit_mode" "$work/$credit_mode.json"

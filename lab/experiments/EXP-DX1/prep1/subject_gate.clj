@@ -1,5 +1,6 @@
 (ns subject-gate
-  (:require [clojure.data.json :as json]
+  (:require [clojure.edn :as edn]
+            [clojure.data.json :as json]
             [clojure.test :refer [deftest is testing]]
             [clojure.walk :as walk]
             [datomic.api :as d]
@@ -60,6 +61,8 @@
         (let [[seed a b] (reference/edits)
               seed-result (reference/send name (deep-seed seed))
               options (main/write-options name)
+              seeded (d/db conn)
+              seed-owner (d/entid seeded [:triplex.entity/id fixture/root])
               handle (get-in (reference/route name "v1" "snapshot" {}) [:body "handle"])
               native d/transact-async
               submitted (atom [])
@@ -74,6 +77,8 @@
               native-t (get-in receipt ["t" "v"])
               found (reference/expect-receipt name "edit-a" "_tx/edit-a" "edit-a" 2 1001.0)]
           (is (= [200 nil] (reference/outcome seed-result)))
+          (is (nil? (when (d/entid seeded subject/owner-head-attr)
+                      (scope/value seeded seed-owner subject/owner-head-attr))))
           (is (= [[200 nil] [200 nil]] (mapv reference/outcome results)) (pr-str results))
           (is (= native-t (get-in found ["t" "v"])))
           (is (= (vec (repeat 2 (if enabled subject/ident :triplex/commit))) @submitted))
@@ -87,6 +92,20 @@
           (let [db (d/db conn)
                 eid (d/entid db [:triplex.entity/id fixture/root])
                 markers (mapv (comp lean/retirement :v) (d/datoms db :eavt eid :triplex.entity/retired))]
+            (when (and enabled subject/owner-head?)
+              (let [witness (scope/value db eid subject/owner-head-attr)
+                    head-id (d/entid db subject/owner-head-attr)
+                    counts (mapv #(get-in % [:body "datoms"]) results)
+                    txs (mapv #(d/t->tx (parse-long (get-in % [:body "t" "v"]))) results)
+                    datoms (fn [tx] (filter #(= head-id (:a %)) (:data (first (d/tx-range (d/log conn) tx (inc tx))))))]
+                (is (true? (:subjectOwnerHead options)))
+                (is (= [1 3 1002.0 ["new"]] (edn/read-string witness)))
+                (is (= [(count (subject/head-text 2 1001.0 ["middle"])) (count witness)]
+                       (mapv #(get-in % [:body "subjectOwnerHeadBytes"]) results)))
+                (is (= [1 2] (mapv (comp count datoms) txs)))
+                (println "DX-W1_OWNER_BYTES" (json/write-str {:attempt (System/getenv "PREP1_ATTEMPT")
+                    :append append? :datoms counts :headDatoms (mapv (comp count datoms) txs)
+                    :headBytes (mapv #(get-in % [:body "subjectOwnerHeadBytes"]) results)}))))
             (is (= (if append? [["old" 2 1001.0 "_tx/edit-a"] ["middle" 3 1002.0 "_tx/edit-b"]] [])
                    (->> markers (sort-by :retracted_position)
                         (mapv (juxt :id :retracted_position :retracted_at :retract_tx_id)))))
@@ -106,6 +125,20 @@
             (is (= ["old"] (read {"handle" handle})))
             (is (= ["new"] (read {})))
             (is (= [200 nil] (reference/outcome (reference/route name "v1" "release" {"handle" handle})))))
+          (when (and subject/owner-head? (not append?))
+            (let [sample (fn [cut expected]
+                           (let [basis (cond-> {"validAt" 5.0} cut (assoc "recordedPosition" cut))
+                                 input {"entityIds" [fixture/root] "basis" basis}
+                                 start (System/nanoTime)
+                                 response (reference/route name "v1" "read" input)
+                                 elapsed (- (System/nanoTime) start)
+                                 result (get-in response [:body "rows"])]
+                             (is (= [200 257 expected] [(:status response) (count result)
+                                                         (some #(when (= ":v" (get-in % ["attribute" "v"])) (get-in % ["id" "v"])) result)]))
+                             elapsed))
+                  times (mapv (fn [_] [(sample nil "new") (sample 1 "old")]) (range 24))]
+              (println "DX-W1_OWNER_READ" (json/write-str {:attempt (System/getenv "PREP1_ATTEMPT")
+                        :ownerHead enabled :rows 257 :timesNs times :timings "diagnostic-in-process"}))))
           {:nativeRows (native-rows (d/db conn))
            :observations (-> actual (update :receipts #(mapv (fn [r] (update r "receipt" dissoc "t")) %))
                                     (update :operations #(mapv (fn [r] (dissoc r "t")) %)))})))))
