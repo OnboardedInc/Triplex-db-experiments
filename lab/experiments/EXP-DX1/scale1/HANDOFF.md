@@ -1,25 +1,24 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 35.07 through 2026-11-21 02:40 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 35.12 through 2026-11-21 02:43 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-2026-11-21T02:40:25.810Z · Collected arm-d7-wfix-pool-seed with service result success, 1 physical-scope report(s) and verified cleanup. arm-d7-v01-present started at 2026-11-21T02:40:03.543Z with execution ceiling 2026-11-21T05:40:03.543Z.
+The million-person seed is sealed at cut 87,002. The dump and two manifests are read-only and immutable. The present writer stopped at 02:41 UTC during restore, with zero timed cells and confirmed cleanup. The ordered PREP1 ceiling service started at 02:42 UTC on November 21 with a 60-minute native and 110-minute overall ceiling.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
 
 ```sh
-node --import tsx lab/experiments/EXP-DX1/scale1/control.ts status
+ssh -i "$DX_BENCH_KEY" -o IdentitiesOnly=yes "$BENCH_SERVER" 'sudo -n systemctl list-units --all "triplex-scale1-*"'
 ```
 
 | Order | Item | Allocation |
 | ---: | --- | ---: |
-| 1 | Finish verifying and seal the existing full pooled seed | Existing 18 h native ceiling |
-| 2 | Present writer at 35, 50, 235 and 394 saves/s with matched quiet windows | 3 h maximum |
-| 3 | PREP1 adopted ordered per-person ceiling at 620 and 900/s; same-seed writer and gateway-count controls when available | 60 minutes plus build and archive verification for the ceiling |
-| 4 | v0.1 fresh scorecard on adopted source 790d9e96e | 235 minutes |
-| 5 | AGE1 calibration, then age to 1 billion native records if it fits | 9.9 h maximum |
-| 6 | v0.1 scorecard on the sealed 1B database and hashed SQL dump | 235 minutes |
+| 1 | Present writer stopped during restore | Zero timed cells, evidence retained |
+| 2 | PREP1 adopted ordered per-person ceiling at 620 and 900/s | 60 minutes, plus build and archive verification. WAL repeat only if it fits one more hour |
+| 3 | v0.1 fresh scorecard with the released ordered writer | 235 minutes. AGE1 goes first if the runner is unpublished |
+| 4 | AGE1 calibration, then age to 1 billion native records if it fits | 9.9 h maximum, then exact-cut SQL dump |
+| 5 | v0.1 scorecard on the sealed 1B database and hashed SQL dump | 235 minutes |
 
 `arm-d7-wfix-pilot-bounded` verified the options on its startup scope. On the restored scope the writer path received a response without the nonce. It recorded zero timed cells and cleaned up. The retry derives both roles from fresh replies at the original cut and verifies the active options through the same SDK clients that carry the measured writes. The pilot seed is reused from its original accepted transfer.
 
