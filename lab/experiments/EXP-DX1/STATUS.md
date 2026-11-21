@@ -4303,3 +4303,12 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Launched:** DX-THIN1 part 9 (merge `b0ffdd2ab`, W1's trace and option, selectable ZGC on the write gateway; new pin; default stays barrier until measured); DX-HASYNC1 part 5 (two-server failover commands for Sunday morning: policy B, policy A with a second failure, planned move, fence; predictions; four hours on both servers).
 - **Mac disk** fell to 9 GiB at 09:19; 65 old image build copies (19 GB) in the writer builder's worktree plus stale images and build cache removed; 41 GiB free; janitor now removes build copies older than three hours.
 - Agents running: DX-SCALE1, DX-BM1, DX-V01, DX-PLAY1, DX-THIN1, DX-HASYNC1.
+
+### 2026-11-21 09:53 local: next scorecard ready (five-minute windows, halves, counters, verdicts); Publish builder resumed (6 agents running)
+
+- **DX-V01 part 8 finished** (exit 0). Commit for the next cards: `7a8fc4200` on the new branch `origin/exp/DX-V01-next-card` (head `0e0dd7050`). The queued 1 billion card stays on `8cc32d380`.
+  - Adds: one prepared copy at a time; five-minute P2 and P6 windows with whole and half readings; counters on the save clock; verdicts MET, MISSED, PARTIAL, NOT RUN; credit mode selectable (barrier 6 default; rolling 6, 8, 12, 16). The 90-second option reproduces all eight original offer tapes byte for byte.
+  - Cost per age: 384 minutes and USD 6.98 for the full card with five-minute windows; 296 minutes and USD 5.38 without the grouped comparison.
+  - Proposed cores on a twelve-core server: transactor 3, PostgreSQL 2, write gateway 2, read gateway 3, sender 1, reader driver 1. **Prediction: P1 read p99 at 256 readers 290 to 450 ms** (860 ms measured on one read-gateway core; bar 100 ms). So more cores alone is predicted not to meet the P1 read bar.
+- **DX-ACT1 part 9 resumed:** Publish with priority at 100,000 people on the server profile, adopting the full-size database already on the servers (no 3.25-hour roster build); explain the save backlog at 39.4 offered; server command under 90 minutes with predictions.
+- Agents running: DX-SCALE1, DX-BM1, DX-PLAY1, DX-THIN1, DX-HASYNC1, DX-ACT1.
