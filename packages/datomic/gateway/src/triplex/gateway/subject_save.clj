@@ -115,7 +115,7 @@
          (into head-update
                (map stamp) ops)))))
 
-(def code
+(defn compile-code [layout-update]
   (walk/postwalk
     (fn [node]
       (if (and (seq? node) (= 'changes-application-rows? (first node)))
@@ -137,14 +137,15 @@
                           'owner-witness-check (when numeric-owner?
                                                  '(not= (:owner-key plan) (value owner :triplex.entity/id)))}
                          (walk/postwalk-replace
-                           {'head-update (if owner-head?
+                           {'head-update (or layout-update (if owner-head?
                                            ;; [DX-W1] Why: the native position, clock and new identities bind the witness to this applied revision.
                                            ;; Rejected: storing the peer's provisional cut or a plaintext copy of each row.
                                            '(cond-> [revision-update [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]]
                                               (:head-ids plan) (conj [:db/add owner :triplex.owner/head
                                                                      (pr-str [1 final clock (:head-ids plan)])]))
-                                           '[revision-update [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]])}
+                                           '[revision-update [:db/add "datomic.tx" :triplex.tx/max-recorded-at clock]]))}
                            body))))
+(def code (compile-code nil))
 (def source-hash (schema/sha256 (pr-str code)))
 (def ident (keyword "triplex.subject" (str "v-" (subs source-hash 0 24))))
 
@@ -255,7 +256,7 @@
          (= (str "protected:" id) (:db/id op))
          (some? (envelope/body-key-handle (:triplex.private/body op))))))
 
-(defn- plan-with-erasure [db [[commit-ident p]] input expected-erasure]
+(defn- plan-with-erasure [db [[commit-ident p]] input expected-erasure predecessor revision-at]
   (let [{:keys [scope source entities live new-ids times record-clocks journal-entities provisional]} p
         redundant-fence [:db/cas scope erase-generation expected-erasure expected-erasure]
         matching (when (some? expected-erasure) (filter #{redundant-fence} (:ops p)))
@@ -279,7 +280,7 @@
             (trace/span "subject.plan-witnesses" "gateway"
               (let [fn-tx (installed db) flags (when fn-tx (scope-witness db scope))
                     owner (d/entid db [:triplex.entity/id subject])]
-                [fn-tx flags owner (when owner (scope/value db owner :triplex.entity/rev))]))
+                [fn-tx flags owner (when owner (revision-at db owner))]))
             f (into {} flags)
             asserted (filterv #(and (vector? %) (= :triplex/assert (first %))) ops)
             retired (filterv #(and (vector? %) (= :triplex/retract (first %))) ops)
@@ -311,7 +312,7 @@
                    (every? #(= 5 (count (nth % 3))) asserted)
                    (seq clocks) (every? #(and (number? %) (Double/isFinite (double %))) clocks))
           (let [prior (trace/span "subject.plan-predecessors" "gateway"
-                        (into {} (keep (fn [id] (when-let [text (retirement db owner id)] [id text]))) live))
+                        (into {} (keep (fn [id] (when-let [text (predecessor db owner id)] [id text]))) live))
                 ;; [DX-W1] Why: the journal already needs exact typed predecessor values.
                 ;; Rejected: decoding the same physical text again to validate the field.
                 decoded (when reuse-predecessor?
@@ -350,8 +351,11 @@
                   ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))
 
 (defn plan
-  ([db data input] (plan-with-erasure db data input nil))
-  ([db data input expected-erasure] (plan-with-erasure db data input expected-erasure)))
+  ([db data input] (plan db data input nil))
+  ([db data input expected-erasure]
+   (plan-with-erasure db data input expected-erasure retirement #(scope/value %1 %2 :triplex.entity/rev)))
+  ([db data input expected-erasure predecessor revision-at]
+   (plan-with-erasure db data input expected-erasure predecessor revision-at)))
 
 (defn replan? [failure]
   (some (fn [cause]
@@ -364,7 +368,7 @@
          (= (second (:function plan)) (installed db))
          (not (changes-application-rows? db)))))
 
-(defn verify-report [report {:keys [operation command journal owner ordered-bounds retirement-prefixes head-ids]}]
+(defn verify-report-at [report {:keys [operation command journal owner ordered-bounds retirement-prefixes head-ids]} revision-at]
   (let [db (:db-after report) t (d/basis-t db) tx (d/t->tx t)
         cmd (d/entid db [:triplex.claim/command-id command])
         journal-eid (d/entid db [:triplex.entity/id journal])
@@ -376,7 +380,7 @@
     ;; Rejected: publishing the peer's draft, or resolving the receipt on a newer database value.
     (when-not (and (= operation (scope/value db tx :triplex.tx/operation-id))
                    (= journal (scope/value db tx :triplex.tx/id))
-                   (integer? position) (= position (scope/value db owner :triplex.entity/rev))
+                   (integer? position) (= position (revision-at db owner))
                    (some? clock)
                    cmd (= tx (scope/value db cmd :triplex.claim/tx))
                    (= journal (scope/value db cmd :triplex.claim/tx-id))
@@ -402,3 +406,6 @@
       ordered-bounds (assoc :subject-ordered-ids true)
       head (assoc :subject-owner-head-bytes (alength (.getBytes ^String head java.nio.charset.StandardCharsets/UTF_8)))
       retirement-prefixes (assoc :subject-append-retirement true))))
+
+(defn verify-report [report plan]
+  (verify-report-at report plan #(scope/value %1 %2 :triplex.entity/rev)))

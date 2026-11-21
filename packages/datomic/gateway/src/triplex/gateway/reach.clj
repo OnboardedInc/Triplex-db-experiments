@@ -270,7 +270,7 @@
 
 (defn build-response [name current input & [epoch recent-state]]
   (try
-    (let [[db position t recent-eligible group-cut] (select-db name current (get input "basis") epoch)
+    (let [[db position t recent-eligible group-cut] (trace/read-span "reach.select-db" "peer-call" (select-db name current (get input "basis") epoch))
           base-cfg (config name current epoch)
           cfg (assoc base-cfg :group-cut group-cut :identity-db current :connection-generation epoch :selected-t t :recent-state recent-state :recent-eligible recent-eligible
                 :revision-view (cache/revision-view [name epoch (:cache-generation base-cfg) t])) valid (double (get-in input ["basis" "validAt"]))
@@ -302,7 +302,7 @@
           (while (not (.isEmpty queue))
             (let [id (.remove queue)
                   entry (or (.get entities id)
-                            (let [value (read-entity name db cfg id valid counts)]
+                            (let [value (trace/read-span "reach.read-entity" "peer-call" (read-entity name db cfg id valid counts))]
                               (.put entities id value)
                               (when (> (.size entities) entity-limit) (decline! "entity-budget")) value))
                   ^ArrayList refs (if (or need (and (= id root) (shallow-roots root))) (ArrayList.) (nth entry 3)) it (.iterator refs)]

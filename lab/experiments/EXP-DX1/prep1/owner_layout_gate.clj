@@ -1,0 +1,92 @@
+(ns owner-layout-gate
+  (:require [clojure.data.json :as json] [clojure.test :refer [deftest is]]
+            [datomic.api :as d]
+            [triplex.gateway.group :as group] [triplex.gateway.group-test :as fixture]
+            [triplex.gateway.lean :as lean] [triplex.gateway.owner-layout :as layout]
+            [triplex.gateway.scope :as scope] [triplex.gateway.selftest :as rows]
+            [triplex.gateway.storage :as storage] [triplex.gateway.subject-save :as subject]
+            [triplex.gateway.write-policy :as policy] [wfix1-regression :as reference]))
+
+(defn at-cut [input cut] (assoc input "sourceK" cut "position" cut))
+(defn native-plan [db input] (layout/prepare db (storage/tx-data db input) input))
+(defn append! [conn plan] (layout/verify-report @(d/transact conn [[layout/ident plan]]) plan))
+
+(defn current [db owner]
+  (sort-by :id (map (comp lean/decode :v) (layout/live-datoms db owner))))
+
+(defn field [db owner]
+  (some #(when (= ":v" (:attribute %)) [(:id %) (:value_string %) (:recorded_position %)])
+        (current db owner)))
+
+(defn seed-deeper [input]
+  (let [extra (for [i (range 80)]
+                (fixture/row (str "spare-" i) fixture/root (str ":spare/" i) (str "value-" i) "_tx/seed"))]
+    (rows/row-input (-> input (update "rows" into (map storage/wire-row extra))
+                             (update "newIds" into (map :id extra))))))
+
+(defn counts [report]
+  {:datoms (count (:tx-data report))
+   :addedTextBytes (reduce + (map #(if (and (:added %) (string? (:v %)))
+                                   (alength (.getBytes ^String (:v %) java.nio.charset.StandardCharsets/UTF_8)) 0)
+                                 (:tx-data report)))})
+
+(deftest migration-and-stable-pages
+  (with-redefs [subject/enabled true group/enabled false policy/priority? false policy/field-only? false policy/budget-us nil]
+    (reference/in-scope
+      (fn [name conn]
+        (let [[seed edit-a edit-b] (reference/edits)
+              installed (layout/install-fixture! conn)]
+          (is (nil? (d/entid installed [:triplex.entity/id fixture/root])))
+          (is (= [200 nil] (reference/outcome (reference/send name (seed-deeper seed)))))
+          (let [before (d/db conn)
+                owner (d/entid before [:triplex.entity/id fixture/root])
+                prior (current before owner)
+                first-plan (native-plan before (at-cut edit-a 1))]
+            (is (nil? (scope/value before owner layout/root-attr)))
+            (is (= 81 (count prior)))
+            (is (= 3 (count (:written-pages first-plan))))
+            (let [first-report (append! conn first-plan)
+                  migrated (:db-after first-report)]
+              (is (= "old" (first (field before owner))))
+              (is (= ["middle" "intermediate value" 2] (field migrated owner)))
+              (is (= (remove #(= ":v" (:attribute %)) prior)
+                     (remove #(= ":v" (:attribute %)) (current migrated owner))))
+              (is (thrown? Exception @(d/transact conn [[layout/ident first-plan]])))
+              (is (= 2 (storage/head-position (d/db conn))))
+              (is (= "old" (:id (lean/decode (:v (lean/by-id migrated "old"))))))
+              (let [next-plan (native-plan migrated (at-cut edit-b 2))
+                    report (append! conn next-plan)
+                    after (:db-after report)
+                    version (first (d/datoms after :aevt layout/owner-attr))
+                    txids (mapv first (reference/feed name 0 10))]
+                (is (= 1 (count (:written-pages next-plan))))
+                (is (= 3 (layout/revision after owner)))
+                (is (= 1 (scope/value after owner :triplex.entity/rev)))
+                (is (= "new" (first (field after owner))))
+                (is (= prior (current (d/as-of after (d/basis-t before)) owner)))
+                (is (= (current migrated owner) (current (d/as-of after (d/basis-t migrated)) owner)))
+                (is (= owner (:v version)))
+                (is (not= owner (:e version)))
+                (is (= ["_tx/edit-a" "_tx/edit-b"] (filterv #{"_tx/edit-a" "_tx/edit-b"} txids)))
+                (is (= (d/basis-t after) (parse-long (get-in (reference/operation name "edit-b") ["t" "v"]))))
+                (println "DX-W1_OWNER_LAYOUT_COUNTS"
+                         (json/write-str {:attempt (System/getenv "PREP1_ATTEMPT")
+                                          :db name :first (counts first-report) :next (counts report)}))))))))))
+
+(deftest migration-refuses-a-won-legacy-race
+  (with-redefs [subject/enabled true group/enabled false policy/priority? false policy/field-only? false policy/budget-us nil]
+    (reference/in-scope
+      (fn [name conn]
+        (layout/install-fixture! conn)
+        (let [[seed edit-a] (reference/edits)]
+          (is (= [200 nil] (reference/outcome (reference/send name seed))))
+          (let [before (d/db conn)
+                owner (d/entid before [:triplex.entity/id fixture/root])
+                stale (native-plan before (at-cut edit-a 1))
+                race (reference/edit-frame "race" "winner" "winner value" 2.0 12.0 "old")]
+            (is (= [200 nil] (reference/outcome (reference/send name (at-cut race 1)))))
+            (is (thrown-with-msg? Exception #"TRIPLEX_CONFLICT" @(d/transact conn [[layout/ident stale]])))
+            (is (= 2 (storage/head-position (d/db conn))))
+            (is (nil? (scope/value (d/db conn) owner layout/root-attr)))
+            (is (= ["winner" "winner value" 2] (field (d/db conn) owner)))
+            (is (= {"status" "absent"} (reference/operation name "edit-a")))))))))

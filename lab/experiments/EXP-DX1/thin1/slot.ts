@@ -287,6 +287,7 @@ const gateway = (label: "write" | "read", secondary = false) => {
         " -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
       DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
       DATOMIC_URI_TEMPLATE: template,
+      ...(label === "read" && property("readStudy") === "yes" ? { TX2_READ_FILTER_EARLY: "1" } : {}),
       ...(demand ? { TX2_ID_CACHE_BYTES: "1048576", TX2_ID_CACHE_ENTRIES: "4096",
         TX2_REACH_SESSION_ENTRIES: "4096", TX2_ENTITY_CACHE_BYTES: "8388608" } : {}),
       ...(adopted ? { TX2_LEAN_NATIVE_QUERY: "1", TX2_LEAN_NATIVE_LOG: "1" } : {}),

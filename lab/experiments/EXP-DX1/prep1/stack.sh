@@ -299,6 +299,18 @@ case "$PREP1_MODE" in
       children[2]=$!
       wait "${children[2]}"
       unset 'children[2]'
+      if [[ -f /config/owner_layout_gate.clj ]]; then
+        TX2_SUBJECT_SAVE=1 WFIX1_URI="$DATOMIC_URI_TEMPLATE" java_role -i /config/regression.clj \
+          -i /config/owner_layout_gate.clj -e '
+            (let [r (clojure.test/run-tests (quote owner-layout-gate))]
+              (println "DX-W1_OWNER_LAYOUT_GATE" (clojure.data.json/write-str
+                (assoc r :attempt (System/getenv "PREP1_ATTEMPT") :source (.trim (slurp "/config/source")))))
+              (shutdown-agents)
+              (System/exit (if (zero? (+ (:fail r) (:error r))) 0 1)))' &
+        children[2]=$!
+        wait "${children[2]}"
+        unset 'children[2]'
+      fi
       # [DX-W1] Why: use the merged shared authority for a genuinely sealed subject save.
       # Rejected: inferring protected-write coverage from a save that never used a body key.
       sql -d postgres -c 'CREATE DATABASE removal_authority OWNER datomic'

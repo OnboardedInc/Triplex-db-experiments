@@ -192,9 +192,8 @@ export function activeSubjects(people: Density) {
   return preferred.get(people)!;
 }
 
-function count(cell: Cell, account: number, repeat: number, isolation: boolean) {
-  const duration = cellSeconds(cell, isolation);
-  if (solo(cell)) return account === 0 ? Math.round(cell * cellSeconds(cell)) : 0;
+function count(cell: Cell, account: number, repeat: number, isolation: boolean, duration: number) {
+  if (solo(cell)) return account === 0 ? Math.round(cell * duration) : 0;
   const sentinel = quietFor(repeat, isolation);
   if (account === sentinel) return quietRate * duration;
   if (cell === "alone") return 0;
@@ -237,9 +236,10 @@ function offerTape(people: Density, cell: Cell, repeat: number, isolation: boole
     .sort((a, b) => a.ms - b.ms);
 }
 
-export function writeTape(people: Density, cell: Cell, repeat: number, isolation = false): Write[] {
-  return offerTape(people, cell, repeat, isolation, cellSeconds(cell, isolation),
-    (account) => count(cell, account, repeat, isolation));
+export function writeTape(people: Density, cell: Cell, repeat: number, isolation = false,
+  duration = cellSeconds(cell, isolation)): Write[] {
+  return offerTape(people, cell, repeat, isolation, duration,
+    (account) => count(cell, account, repeat, isolation, duration));
 }
 
 export type SerialApplyRate = 50 | 235 | 394 | 620;

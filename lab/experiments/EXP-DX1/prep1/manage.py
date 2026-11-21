@@ -127,7 +127,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     if owner_head == "1":
         for name, source in [("serial-gate.clj", EXPERIMENT.parent / "w1/serial/gate.clj"),
                              ("regression.clj", EXPERIMENT.parent / "wfix1/regression.clj"),
-                             *((name, EXPERIMENT / name) for name in ("subject_gate.clj", "subject_conflicts.clj"))]:
+                             *((name, EXPERIMENT / name) for name in ("subject_gate.clj", "subject_conflicts.clj", "owner_layout_gate.clj"))]:
             shutil.copyfile(source, config / name)
             source_paths.append(source)
         (config / "source").write_text(head + "\n")

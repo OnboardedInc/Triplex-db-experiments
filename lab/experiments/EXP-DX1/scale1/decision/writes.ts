@@ -7,6 +7,7 @@ import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
 import { command } from "../../w1/group/workload.ts";
 import { admission, type Admission } from "../../prep1/rolling-credits.ts";
+import { coldAdmission, startupAdmission } from "../../jvm1/cold-admission.mjs";
 import {
   activeSubjects,
   expiryMs,
@@ -67,6 +68,7 @@ export type Save = {
     | "offered"
     | "pending"
     | "acked"
+    | "startup-refused"
     | "expired-before-dispatch"
     | "refused"
     | "uncertain"
@@ -80,6 +82,8 @@ export type Save = {
     | "in-flight-limit"
     | "unresolved-predecessor"
     | "dispatch";
+  startupRefusal?: "rate" | "queue";
+  predecessorReadMs?: number;
   pending?: number;
   queued?: number;
 };
@@ -88,6 +92,7 @@ export type Sender = {
   client: DatomicClient;
   scope: Scope;
   rows: Map<string, Row[]>;
+  loadPredecessor?: (entity: string) => Promise<Row[]>;
 };
 
 export async function preload(client: DatomicClient, scope: Scope, people: Density, a: number) {
@@ -187,9 +192,12 @@ export async function play(
   selection?: Admission,
   interleave?: PublishInterleave,
   waitForRemoval = false,
+  startup?: { ramp: boolean; stopped: () => boolean },
 ) {
   assert(!interleave || selection);
   const fair = selection && admission(scopes.length, selection);
+  const ramp = startup?.ramp === true;
+  const admit = ramp ? startupAdmission() : undefined;
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
     active = scopes.map(() => 0),
     owned = new Map<string, string>(),
@@ -219,6 +227,13 @@ export async function play(
     entry.end = now();
     assert(!entry.dispatched && !entry.sent);
   };
+  function refuse(row: Save, reason: NonNullable<Save["startupRefusal"]>) {
+    assert(!row.dispatched && !row.sent);
+    row.status = "startup-refused";
+    row.startupRefusal = reason;
+    row.end = now();
+  }
+  const queueMs = ramp ? coldAdmission.queueMs : expiryMs;
   const key = (r: Save) => r.account + "/" + r.subject;
   const predecessor = (r: Save) => owned.get(key(r)) ?? quarantined.get(key(r));
   const dequeue = (row: Save) => {
@@ -228,9 +243,13 @@ export async function play(
 
   function expireQueue(account: number) {
     const q = queues[account]!;
-    while (q[0] && now() >= q[0].row.due + expiryMs) {
+    while (q[0] && now() >= q[0].row.due + queueMs) {
       const { row } = q.shift()!;
       dequeue(row);
+      if (ramp) {
+        refuse(row, "queue");
+        continue;
+      }
       const k = key(row);
       if (capture) row.predecessor ??= predecessor(row);
       const cause = quarantined.has(k)
@@ -252,8 +271,9 @@ export async function play(
     const sender = scopes[account]!;
     const { e, row } = queues[account]!.splice(index, 1)[0]!;
     dequeue(row);
-    if (now() >= row.due + expiryMs) {
-      expire(row, "dispatch");
+    if (now() >= row.due + queueMs) {
+      if (ramp) refuse(row, "queue");
+      else expire(row, "dispatch");
       fair?.resolved(true, ticket);
       return;
     }
@@ -262,18 +282,24 @@ export async function play(
     // [DX-INT1] Why: bind the identity block to this offered save through settling or recovering it.
     // Rejected: minting a new block while looking up an uncertain receipt.
     if (orderedIds) row.orderedToken = orderedSaveIdentity().token;
-    const prior = sender.rows.get(task(row.account, row.subject))!;
-    const candidate = expectedSave(row, e, prior);
-    if (orderedIds) candidate.input.sourceK = Math.max(sender.scope.cut, ...prior.map((field) => field.recorded_position));
+    const entity = task(row.account, row.subject);
+    const cached = sender.rows.get(entity);
+    assert(cached || sender.loadPredecessor, "Missing predecessor");
+    function draft(prior: Row[]) {
+      const value = expectedSave(row, e, prior);
+      if (orderedIds) value.input.sourceK = Math.max(sender.scope.cut, ...prior.map((field) => field.recorded_position));
+      return value;
+    }
+    let candidate = cached ? draft(cached) : undefined;
     owned.set(key(row), row.id);
     active[account]!++;
     row.dispatched = now();
     row.status = "pending";
     inFlightSends.set(row.id, row);
-    const send = async () => {
+    const send = async (input: ReturnType<typeof expectedSave>["input"]) => {
       for (;;) {
         try {
-          return await sender.client.transact(row.db, candidate.input);
+          return await sender.client.transact(row.db, input);
         } catch (error) {
           // [DX-ERASE2] Why: a removal can temporarily close admission or invalidate an already submitted plan.
           // Rejected: dropping the queued save or allocating a new command identity.
@@ -285,9 +311,22 @@ export async function play(
         }
       }
     };
-    let p: Promise<void>;
-    p = (waitForRemoval ? send() : sender.client.transact(row.db, candidate.input))
+    // [DX-JVM1] Why: a cold run fetches the exact predecessor only for an admitted save under its subject lock.
+    // Rejected: a timed leg that starts after an all-subject cache fill.
+    const submit = (input: ReturnType<typeof expectedSave>["input"]) =>
+      waitForRemoval ? send(input) : sender.client.transact(row.db, input);
+    const sent = candidate ? submit(candidate.input) : Promise.resolve().then(async () => {
+      assert(sender.loadPredecessor, "Missing predecessor");
+      const readStart = now();
+      const prior = await sender.loadPredecessor(entity);
+      row.predecessorReadMs = now() - readStart;
+      sender.rows.set(entity, prior);
+      candidate = draft(prior);
+      return submit(candidate.input);
+    });
+    const p: Promise<void> = sent
       .then((value) => {
+        assert(candidate);
         row.end = now();
         assert(row.sent !== undefined, "Acknowledged write has no matching socket sample");
         const raw = value as Ack;
@@ -306,6 +345,10 @@ export async function play(
       .catch((error) => {
         row.end = now();
         row.error = String(error);
+        if (!candidate) {
+          row.status = "refused";
+          return;
+        }
         if (error instanceof DatomicHttpError && error.code === "WriteBudgetExceeded") {
           row.status = "refused";
           return;
@@ -371,6 +414,7 @@ export async function play(
   try {
     // Ten clients with the same per-account request cap serve either placement.
     for (const e of tape) {
+      if (startup?.stopped()) break;
       const due = start + e.ms;
       while (now() < due) await sleep(Math.ceil(due - now()));
       const q = queues[e.account]!,
@@ -390,7 +434,9 @@ export async function play(
       };
       if (capture) row.predecessor = queuedTail.get(key(row)) ?? predecessor(row);
       rows.push(row);
-      if (row.enqueued >= due + expiryMs) expire(row, "timer");
+      if (admit && !admit(e.account, e.ms)) refuse(row, "rate");
+      else if (ramp && row.enqueued >= due + queueMs) refuse(row, "queue");
+      else if (row.enqueued >= due + expiryMs) expire(row, "timer");
       else {
         if (capture) queuedTail.set(key(row), row.id);
         q.push({ e, row });
@@ -401,6 +447,7 @@ export async function play(
       for (const a of scopes.keys()) pump(a);
       await Promise.race([...pending, sleep(25)]);
     }
+    assert(!startup?.stopped(), "Write window stopped before verification");
     return { rows, unresolved };
   } finally {
     for (const s of scopes) {

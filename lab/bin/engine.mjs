@@ -53,9 +53,10 @@ export const regimeOf = info => info.regime ?? 'quota';
 function scorecardOutput(options, info) {
   const output = options['scorecard-output'];
   const holder = process.env.DX_V01_MAC_HOLDER ?? 'DX-V01';
-  if (process.platform !== 'darwin' || !['DX-V01', 'DX-THIN1'].includes(holder) || options.holder !== holder ||
+  const image = holder === 'DX-RD1' ? /^tx2-dxthin-rd1:[a-f0-9]{16}$/ : /^tx2-dxthin-managed:/;
+  if (process.platform !== 'darwin' || !['DX-V01', 'DX-THIN1', 'DX-RD1'].includes(holder) || options.holder !== holder ||
       info.lane !== 'datomic' || info.mode !== 'exclusive' ||
-      !process.env.TX2_EXCLUSIVE_VOLUME_ID || !/^tx2-dxthin-managed:/.test(info.laneConf.image) ||
+      !process.env.TX2_EXCLUSIVE_VOLUME_ID || !image.test(info.laneConf.image) ||
       typeof output !== 'string' || !output.startsWith(path.join(REPO, 'runs', 'DX-V01') + path.sep) ||
       fs.realpathSync(output) !== output || !fs.statSync(output).isDirectory())
     fail('REFUSED', 'Scorecard fixture needs its exclusive compact image, private volume and output');
@@ -177,6 +178,15 @@ assert actual==expected, 'Extracted Datomic bytes differ from the pinned ZIP'
   const parent = path.join(ENGINE_DIR, 'datomic-build');
   fs.mkdirSync(parent, { recursive: true });
   const context = path.join(parent, `${buildInputsSha256}-${process.pid}-${Date.now()}`);
+  try {
+    return finishDatomicBuild(config, { context, distribution, dist, gpg, isolated, root, runtime, sources, tag, verification, buildInputsSha256 });
+  } finally {
+    // [DX-JVM1] Why: stage verified files for this build only. Rejected: retaining a second Datomic distribution for every private build.
+    if (isolated) fs.rmSync(context, { recursive: true, force: true });
+  }
+}
+
+function finishDatomicBuild(config, { context, distribution, dist, gpg, isolated, root, runtime, sources, tag, verification, buildInputsSha256 }) {
   const fileInput = (source, destination, file) => ({ source, destination, manifest: [{ ...file, path: '' }] });
   const staged = stageDatomicContext(context, [
     { source: dist, destination: 'datomic', manifest: distribution },
@@ -227,6 +237,29 @@ assert actual==expected, 'Extracted Datomic bytes differ from the pinned ZIP'
   appendEvent({ event: 'datomic-build', imageId: image.Id, buildInputsSha256 });
   console.log(JSON.stringify({ ...config.lanes.datomic, imageSize: image.Size, receipt: path.join(context, 'build-receipt.json') }, null, 2));
 }
+
+function removeJvmImage(opts) {
+  if (opts.holder !== 'DX-JVM1' || typeof opts['variant-receipt'] !== 'string')
+    fail('USAGE', 'JVM image removal requires the DX-JVM1 holder and a variant receipt');
+  const runtime = datomicRuntime(readJson(opts['variant-receipt']).runtime?.major);
+  const receipt = readVariantReceipt(opts['variant-receipt'], runtime);
+  const raw = docker(['image', 'inspect', receipt.imageId], { allowFail: true });
+  if (!raw) return;
+  const [image] = JSON.parse(raw);
+  const labels = image.Config.Labels;
+  const tags = image.RepoTags ?? [];
+  const privateRepository = receipt.tag.split(':')[0];
+  // [DX-JVM1] Why: only remove the private image pinned by this receipt. Rejected: pruning dangling images or forcing removal from another owner's containers.
+  if (image.Id !== receipt.imageId || tags.some(tag => tag !== receipt.tag)
+    || image.RepoDigests?.some(digest => digest.split('@')[0] !== privateRepository)
+    || labels?.['tx2.java-major'] !== runtime.major || labels?.['tx2.java-base'] !== runtime.base
+    || labels?.['tx2.build-inputs-sha256'] !== receipt.buildInputsSha256)
+    fail('REFUSED', `Image ${receipt.imageId} does not belong to the private JVM variant receipt (tags: ${tags.length}, digests: ${image.RepoDigests?.length ?? 0})`);
+  if (docker(['ps', '-aq', '--filter', 'ancestor=' + image.Id])) fail('REFUSED', 'The private image still has a container');
+  docker(['image', 'rm', tags[0] ?? image.Id]);
+  if (docker(['image', 'inspect', image.Id], { allowFail: true })) fail('ENGINE', 'The private JVM image remains');
+  console.log(JSON.stringify({ imageId: image.Id, removed: true }));
+}
 async function selftestDatomic(config, opts) {
   datomicDiskFloor();
   const info = slotInfo(config, 'datomic', 'dev');
@@ -262,12 +295,20 @@ async function selftestDatomic(config, opts) {
 
 // [DX-W1] Why: release only a staged image in the calling experiment's namespace after its slots close.
 // Rejected: a forced removal or pruning the lab VM's shared image cache.
-async function removeDiagnosticImage(config, opts) {
-  const namespace = {'DX-THIN1': /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/, 'DX-PREP1': /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery|subject-native-suite)$/, 'DX-W1': /^tx2-datomic:dx-w1-[a-z0-9-]+-[a-f0-9]{8}$/};
-  if (!Object.hasOwn(namespace, opts.holder) || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
+async function removeThinImage(config, opts) {
+  if (!['DX-THIN1', 'DX-PREP1', 'DX-REAL1', 'DX-RD1', 'DX-W1'].includes(opts.holder) || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
   const info = slotInfo(config, 'datomic', 'dev');
   const tag = info.laneConf.image;
-  if (!namespace[opts.holder].test(tag)) fail('REFUSED', 'Only the holder’s staged diagnostic image tag may be removed');
+  // [DX-PREP1] Why: a diagnostic retry can discard its exact staged image after the slot exits.
+  // Rejected: pruning the image store shared with other builders.
+  const ownedTag = {
+    'DX-REAL1': /^tx2-dxthin-managed:real1-[a-f0-9]{16}$/,
+    'DX-THIN1': /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/,
+    'DX-PREP1': /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery|subject-native-suite)$/,
+    'DX-RD1': /^(?:tx2-datomic:dx-rd1-fresh-reads|tx2-dxthin-rd1:[a-f0-9]{16})$/,
+     'DX-W1': /^tx2-datomic:dx-w1-[a-z0-9-]+-[a-f0-9]{8}$/,
+  }[opts.holder];
+  if (!ownedTag.test(tag)) fail('REFUSED', 'Only the holder’s staged image tags may be removed');
   if (info.laneConf.imageId !== opts['image-id']) fail('REFUSED', 'The staged configuration is pinned to a different image');
   await withPool(async ledger => {
     assertMeasureAdmission(opts.holder);
@@ -290,7 +331,8 @@ function recordDatomicJvms(info, eff) {
     fail('REFUSED', 'Datomic runtime identity differs from the launch');
   // [DX-V01] Why: the admitted compact Mac fixture starts JVMs through thin1/slot.ts.
   // Rejected: reading standard-launcher role logs from a fixture that does not produce them.
-  if (info.scorecardOutput) {
+  if (info.scorecardOutput || (m.Config.Labels?.['tx2.holder'] === 'DX-REAL1' &&
+      /^tx2-dxthin-managed:real1-[a-f0-9]{16}$/.test(info.laneConf.image))) {
     process.stderr.write('[lab] Compact Mac fixture: standard-launcher JVM flag readback is unavailable\n');
     return;
   }
@@ -352,7 +394,7 @@ export function effectiveConfig(config, info) {
     // Rejected: modifying the resident config or mounting the canonical uninstrumented script.
     // [DX-INT1] Why: the compact scorecard uses the verified entrypoint in its own staged context.
     // Rejected: replacing its SQL stack with the standard one-gateway launch.
-    const entryRoot = info.laneConf.image.startsWith('tx2-dxthin-managed:') ? root : REPO;
+    const entryRoot = /^tx2-dxthin-(?:managed|rd1):/.test(info.laneConf.image) ? root : REPO;
     fs.copyFileSync(path.join(entryRoot, 'lab/config/datomic/entrypoint.sh'), entrypoint);
     let reader, readerGateway;
     if (info.readerPort !== undefined) {
@@ -946,7 +988,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
     } else if (runtime.major !== '21') fail('REFUSED', 'Java 25 on the Mac requires a verified private build receipt');
   }
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
-  if (options.lane === 'datomic' && command === 'image-remove') return removeDiagnosticImage(config, options);
+  if (options.lane === 'datomic' && command === 'image-remove') return options.holder === 'DX-JVM1' ? removeJvmImage(options) : removeThinImage(config, options);
   // [DX-V01] Why: run the existing Linux toy client in the exact owned compact slot.
   // Rejected: VM shell access or running a benchmark with host/guest clocks mixed.
   if (command === 'scorecard-fixture') {
@@ -963,11 +1005,21 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
     if (!configDir.startsWith(path.join(REPO, 'runs') + path.sep))
       fail('REFUSED', 'Scorecard fixture config must belong to this worktree');
     const source = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO, encoding: 'utf8' }).trim();
+    // [DX-INT1] Why: the census must attach inside the admitted compact fixture with verified mounts.
+    // Rejected: a separate VM shell or an attachment to a shared resident JVM.
+    const census = options['untouched-census'];
+    if (census !== undefined && (options.holder !== 'DX-THIN1' || !['4096', '24576'].includes(String(census))))
+      fail('REFUSED', 'The untouched census needs its assigned holder and one of the supported short rungs');
     const result = spawnSync('docker', dockerArgs(['exec', '-w', REPO, '-e', 'DX_V01_FIXTURE_SOURCE=' + source,
+      '-e', 'DX_V01_MAC_HOLDER=' + options.holder,
+      ...(options.holder === 'DX-THIN1' && !census && process.env.DX_V01_MAC_READ_STUDY === '1'
+        ? ['-e', 'DX_V01_MAC_READ_STUDY=1'] : []),
       '-e', 'TRIPLEX_DATOMIC_FAST_PATHS=save-wire', live.Id, '/usr/local/bin/node',
       '--no-warnings', '--experimental-transform-types', '--expose-gc', '--max-old-space-size=768',
-      'lab/experiments/EXP-DX1/thin1/managed.ts', '--guest', configDir, 'int1-adopted-proof', '80',
-      path.join(output, 'campaign')]), { stdio: 'inherit', timeout: 13 * 60_000 });
+      'lab/experiments/EXP-DX1/thin1/managed.ts', '--guest', configDir,
+      ...(census ? ['int1-untouched-census', String(census), path.join(output, 'census')] :
+        ['int1-adopted-proof', '80', path.join(output, 'campaign')])]),
+      { stdio: 'inherit', timeout: (census ? 7 : 13) * 60_000 });
     if (result.status !== 0) fail('ENGINE', 'Scorecard fixture failed');
     return;
   }

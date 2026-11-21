@@ -1,6 +1,6 @@
 (ns triplex.gateway.lean
   (:require [triplex.gateway.group-cut :as group-cut] [triplex.gateway.slim :as slim] [datomic.api :as d] [triplex.gateway.reach :as reach]
-            [triplex.gateway.save-ledger :as ledger]))
+            [triplex.gateway.save-ledger :as ledger] [triplex.gateway.trace :as trace]))
 (set! *warn-on-reflection* false)
 ;; [DX-B5-L2] Why: only row text and native history contain lean facts; no reified fallback exists.
 ;; Rejected: empty answers from :f indexes, or decoding through d/entity/d/pull/d/q.
@@ -24,18 +24,27 @@
         :else value))
 ;; [DX-TAIL1] Why: canonical row texts already decode to a positional vector.
 ;; Rejected: building a lazy sequence and one key/value vector per column or changing malformed-input behavior.
-(defn decode
-  ([text] (decode text false))
-  ([^String text direct?]
-   (let [values (slim/row-columns text)
-         live {:retracted_at nil :retracted_position nil :retract_tx_id nil}
+(defn- decode-columns [values direct?]
+   (let [live {:retracted_at nil :retracted_position nil :retract_tx_id nil}
          row (if (and direct? (vector? values) (= (count columns) (count values)))
                (persistent! (reduce-kv (fn [acc i value]
                                          (let [column (nth columns i)]
                                            (assoc! acc column (decode-column column value))))
                                        (transient live) values))
                (into live (map (fn [column value] [column (decode-column column value)]) columns values)))]
-     (if (= ":_tx/position" (:attribute row)) (assoc row :value_number (double (:recorded_position row))) row))))
+     (if (= ":_tx/position" (:attribute row)) (assoc row :value_number (double (:recorded_position row))) row)))
+(defn decode
+  ([text] (decode text false))
+  ([^String text direct?] (decode-columns (slim/row-columns text) direct?)))
+
+(def early-attribute-filter (= "1" (System/getenv "TX2_READ_FILTER_EARLY")))
+
+;; [DX-RD1] Why: the exact attribute is already column 3, so unrelated live rows need no public map.
+;; Rejected: filtering substrings in the encoded text (would confuse fields and escaping).
+(defn decode-live [attribute ^String text]
+  (let [values (slim/row-columns text)]
+    (when (or (nil? attribute) (= attribute (nth values 3 nil)))
+      (decode-columns values (some? attribute)))))
 (defn by-id [db id]
   (let [p (prefix id) datom (first (d/index-range db :triplex.entity/row p nil))]
     (when (and datom (.startsWith ^String (:v datom) p)) datom)))
@@ -82,10 +91,13 @@
   ([name db input visit-text!]
   (let [history? (true? (get input "history")) basis (get input "basis")
         selection (when-not history?
-              (try (reach/select-db name db basis)
+              (try (trace/read-span "read.select-db" "peer-call" (reach/select-db name db basis))
                    (catch clojure.lang.ExceptionInfo e (when-not (:declined (ex-data e)) (throw e)))))
         [cut _ _ _ inner] selection
         source (or cut db) id (get input "id") pattern (get input "pattern")
+        attr (get pattern "attribute")
+        attribute (when (and early-attribute-filter cut (not inner) (string? attr) (not (.startsWith ^String attr "?"))) attr)
+        sampled (trace/read-sample?)
         entities (or (get input "entityIds")
                      (when-let [entity (get pattern "entityId")]
                        (when-not (.startsWith ^String entity "?") [entity])))
@@ -96,5 +108,11 @@
     (filter #(or (nil? id) (= id (:id %)))
       (mapcat (fn [eid]
                 (cond inner (map decode-datom (:datoms (group-cut/entity-slice inner eid)))
-                      cut (map #(decode (:v %)) (live-texts source eid visit-text!))
+                      cut (if sampled
+                            (let [datoms (trace/span "read.peer-entity" "peer-call" (vec (live-texts source eid visit-text!)))]
+                              (trace/span "read.row-decode" "gateway"
+                                (trace/counter! :rowTexts (count datoms))
+                                (into [] (keep #(if attribute (decode-live attribute (:v %)) (decode (:v %)))) datoms)))
+                            (let [datoms (live-texts source eid visit-text!)]
+                              (if attribute (keep #(decode-live attribute (:v %)) datoms) (map #(decode (:v %)) datoms))))
                       :else (history-entity db eid visit-text!))) eids)))))

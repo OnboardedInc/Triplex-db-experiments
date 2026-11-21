@@ -1,5 +1,6 @@
 (ns triplex.gateway.selftest
   (:require [clojure.test :refer :all] [triplex.gateway.transaction-shape :as tx-shape] [clojure.data.json :as json] [datomic.api :as d]
+            [ring.core.protocols :as protocols] [triplex.gateway.trace :as trace]
             [triplex.gateway.jfr :as jfr] [triplex.gateway.slim :as slim] [triplex.gateway.admission :as admission] [triplex.gateway.reach :as reach] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema] [triplex.gateway.layout-replay :as replay]))
 
  ;; [DX-B7] Why: old selftests predate mandatory row texts and the explicit layout/name parameters.
@@ -773,6 +774,49 @@
               (is (= "IdentityConflict" (get err "code")))
               (is (= (d/basis-t db) (d/basis-t (gateway/sync-db (str base db-name)))))))
           (finally (gateway/delete-scope! base scope)))))))
+
+;; [DX-RD1] Why: use one real as-of peer for both request shapes and check the sampled wire body.
+;; Rejected: equating two empty results or inferring native timings from the response header.
+(deftest sampled-pinned-field-reads
+  (let [base "datomic:mem://" scope (json/write-str ["triplex-scope-v1" "test" "test" (str (java.util.UUID/randomUUID)) 0])
+        name (:db (gateway/create-scope! base scope "lean" true true))
+        uri (str base name) conn (gateway/connection uri)
+        row (fn [owner attr value p]
+              {:id (str owner attr p) :entity_id owner :attribute attr :value_type "string" :value_string value
+               :recorded_at (double p) :recorded_position p :valid_from 0.0 :schema_version 1 :tx_id (str "tx" p)})
+        commit (fn [p rs] (storage/commit! name conn (gateway/sync-db uri)
+                           (row-input {"sourceK" (dec p) "position" p "operationId" (str "commit-" p)
+                                       "rows" (mapv storage/wire-row rs) "newIds" (mapv :id rs) "claims" []})))
+        mark "123456789012345678901234567890ab" emit (atom [])
+        read (fn [enabled cut]
+               (let [input {"entityIds" ["a" "b" "a" "missing"] "pattern" {"attribute" ":v"}
+                            "basis" {"validAt" 10.0 "recordedPosition" cut}}
+                     request {:request-method :post :uri (str "/v1/db/" name "/read")
+                              :headers {"x-triplex-read-profile" mark}
+                              :body (java.io.ByteArrayInputStream. (.getBytes (json/write-str input) "UTF-8"))}
+                     out (java.io.ByteArrayOutputStream.)]
+                 (with-redefs [lean/early-attribute-filter enabled trace/read-profile-enabled true trace/emit! #(swap! emit conj (json/read-str (json/write-str %)))]
+                   (let [response (trace/handler gateway/route-handler request)]
+                     (is (= 200 (:status response)))
+                     (is (= mark (get-in response [:headers "x-triplex-read-profile"])))
+                     (protocols/write-body-to-stream (:body response) response out)
+                     (mapv storage/decode-row (get (json/read-str (.toString out "UTF-8")) "rows"))))))]
+    (try
+      (commit 1 [(row "a" ":v" "old" 1) (row "a" ":other" "ignore" 1)])
+      (commit 2 [(row "b" ":v" "new" 2) (row "b" ":other" "ignore" 2)])
+      (doseq [[cut expected] [[1 #{["a" "old"]}] [2 #{["a" "old"] ["b" "new"]}]]]
+        (let [before (read false cut) after (read true cut)]
+          (is (= before after))
+          (is (= expected (set (map (juxt :entity_id :value_string) after))))
+          (is (= (count expected) (count after)))))
+      (is (= 4 (count @emit)))
+      (doseq [sample @emit]
+        (is (= mark (get sample "readProfileId")))
+        (is (pos? (get-in sample ["attributes" "responseBytes"])))
+        (is (map? (get-in sample ["attributes" "peerIoStats"])))
+        (is (every? (set (map #(get % "name") (get sample "spans")))
+                    ["read.resolve-position" "gateway.admission-wait" "read.row-decode" "gateway.response-write"])))
+      (finally (gateway/delete-scope! base scope)))))
 
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (with-redefs [gateway/uri-template "datomic:mem://{db}"] (run-tests 'triplex.gateway.selftest))]
