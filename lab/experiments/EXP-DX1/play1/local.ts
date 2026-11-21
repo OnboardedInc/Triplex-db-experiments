@@ -30,6 +30,8 @@ import {
   withPool,
 } from "../../../bin/lib.mjs";
 
+import { roundTrip } from "./roundtrip.ts";
+
 const run = promisify(execFile);
 type Config = Parameters<typeof slotInfo>[0];
 type Slot = ReturnType<typeof slotInfo>;
@@ -39,7 +41,7 @@ type Manager = {
   assertMeasureAdmission: (holder: string) => void;
 };
 
-async function browserGate(out: string, url: string) {
+async function browserGate(out: string, url: string, cwd = repo) {
   const result = await run(
     process.execPath,
     [
@@ -49,7 +51,7 @@ async function browserGate(out: string, url: string) {
       "--output",
       join(out, "browser"),
     ],
-    { cwd: repo, timeout: 180_000, env: { ...process.env, PLAYGROUND_TEST_URL: url } },
+    { cwd, timeout: 180_000, env: { ...process.env, PLAYGROUND_TEST_URL: url } },
   ).then(
     (output) => ({ output }),
     (error: Error & { stdout?: string; stderr?: string }) => ({ output: error, error }),
@@ -276,6 +278,10 @@ export async function local(
     daily?: string;
     collect?: boolean;
     "keep-bundle"?: boolean;
+    roundtrip?: string;
+    data?: string;
+    sha256?: string;
+    store?: string;
     writer?: string;
     "server-startup"?: boolean;
   },
@@ -299,6 +305,20 @@ export async function local(
       (options.portable &&
         !options.snapshot &&
         (options.writer === "grouped" || options.writer === "subject")),
+  );
+  assert(
+    options.roundtrip === undefined ||
+      (holder === "DX-PLAY1" &&
+        options.portable &&
+        options.browser &&
+        !options.snapshot &&
+        !options.writer &&
+        !options.deep &&
+        !options["server-startup"] &&
+        options.data &&
+        options.sha256 &&
+        options.store),
+    "Use --roundtrip TIER --portable --browser --data HTTPS_URL --sha256 SHA256 --store DIRECTORY",
   );
   const serverStartup = options["server-startup"] === true;
   assert(
@@ -431,6 +451,29 @@ export async function local(
       network: [],
       image: [],
     });
+    if (options.roundtrip) {
+      const head = git(["rev-parse", "HEAD"]);
+      assert.equal(git(["status", "--porcelain"]), "", "Round trip needs committed source");
+      await roundTrip({
+        out,
+        stack: new Stack(stackOptions),
+        prefix,
+        ownerFile: slot.ownerFile,
+        head,
+        slot: slot.slot,
+        host: DOCKER_HOST,
+        tier: options.roundtrip,
+        source: options.data!,
+        sha256: options.sha256!,
+        store: options.store!,
+        signal: shutdown.signal,
+        chromium: async (url, cwd) => {
+          const error = await browserGate(out, url, cwd);
+          if (error) throw error;
+        },
+      });
+      return;
+    }
     if (serverStartup) {
       const stack = new Stack(stackOptions);
       const head = git(["rev-parse", "HEAD"]);

@@ -5,6 +5,7 @@ import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import { parseArgs } from "node:util";
+import { labPrefix } from "./lab-grant.ts";
 import { loadFixture } from "./fixture.ts";
 import type { Reply } from "./actions.ts";
 import { dockerClient, loopback, memoryScale, port, repo, Stack } from "./stack.ts";
@@ -158,7 +159,10 @@ async function start() {
   )
     throw new Error(usage);
   const settings = dockerSettings();
-  checkPortableDocker(settings.dockerHost);
+  const admitted = await labPrefix(repo, settings.dockerHost, settings.context);
+  if (!admitted) checkPortableDocker(settings.dockerHost);
+  if (admitted && values["memory-scale"] !== "1")
+    throw new Error("The lab grant covers the laptop memory profile");
   const ports = {
     api: port(values.port),
     write: port(values["write-port"]),
@@ -168,7 +172,7 @@ async function start() {
   if (new Set(explicit).size !== explicit.length)
     throw new Error("Use a different port for each listener");
   const { openInstance } = await import("./instance.ts");
-  const prefix = "tx2-dxplay1-" + randomBytes(6).toString("hex");
+  const prefix = admitted ?? "tx2-dxplay1-" + randomBytes(6).toString("hex");
   const owner: Owner = {
     prefix,
     token: randomBytes(24).toString("hex"),
@@ -307,7 +311,9 @@ async function stop() {
     console.log("The playground is stopped.");
     return;
   }
-  checkPortableDocker(owner.dockerHost);
+  const admitted = await labPrefix(repo, owner.dockerHost, owner.context);
+  if (!admitted) checkPortableDocker(owner.dockerHost);
+  else if (admitted !== owner.prefix) throw new Error("The lab grant covers a different stack");
   if (pidExists(owner.pid)) {
     const response = await fetch(`http://${loopback}:${owner.port}/internal/stop`, {
       method: "POST",

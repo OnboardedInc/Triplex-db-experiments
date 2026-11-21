@@ -78,3 +78,9 @@ Once the workflow file is on the repository's default branch, open Actions, choo
 ## Storage collection audit
 
 The collector runs only inside the generated transactor against the indexed scope of the current build. Both owned gateways are stopped before the recent cutoff is requested. The receipt requires a lower PostgreSQL live row count, a lower live value byte count and a stable observation window while the transactor remains alive. The resulting archive must reopen all three generated cuts in a fresh stack. The byte bounds are checked against the produced manifest and chunks before a successful bundle is retained. [Datomic storage collection guidance](https://docs.datomic.com/operation/capacity.html)
+
+## Hosted snapshot observation audit
+
+- The collector runs the pinned Datomic peer in this attempt's labeled transactor. The offline database name comes from the gateway index receipt for this exact commit cut. The copy used for publication has a fresh restore with byte and generated-record checks at all three cuts.
+- The uploader compares the local manifest with the restore record, checks every local object's length and SHA-256, and checks the public bytes at their versioned keys. It publishes the exact manifest only after the chunks read back correctly.
+- The R2 round-trip gate requires a fresh clone at the committed source and an active reservation for all four roles. It compares the manifest checksum with the published value, checks observed records against the generator, runs Chromium against the same endpoint and checks the owned inventory and endpoint after shutdown.

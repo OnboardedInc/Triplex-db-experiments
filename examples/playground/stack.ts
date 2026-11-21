@@ -635,24 +635,41 @@ export class Stack {
         (println (str "PLAYGROUND_GC " (.getTime cut)))
         (d/release conn))
         (catch Throwable e (println (str "PLAYGROUND_GC_ERROR " (.getName (class e))))))
-      (shutdown-agents)`;
-    const launched = await docker(
-      [
-        "exec",
-        "-e",
-        `PLAYGROUND_GC_DB=${database}`,
-        tx!,
-        "bash",
-        "-c",
-        // The vendor bin/run flattens arguments. Preserve the entire expression as one JVM argument.
-        'cd /opt/datomic && exec java -server -Xms32m -Xmx192m -XX:+UseSerialGC -XX:ActiveProcessorCount=1 -cp "$(bin/classpath)" clojure.main -e "$1"',
-        "--",
-        program,
-      ],
-      { ...archiveCommand(signal), timeoutMs },
-    ).catch(() => {
-      throw new Error("Owned Datomic storage collection could not start");
-    });
+      (flush)
+      (System/exit 0)`;
+    // [DX-PLAY1] Why: use the bundled launcher with a single owned file path and its normal bridge.
+    // Rejected: flattening a multi-line expression into the vendor shell's argument expansion.
+    const local = join(this.#opts.directory, "storage-collection.clj");
+    const remote = "/tmp/playground-storage-collection.clj";
+    await writeFile(local, program, { mode: 0o600, flag: "wx" });
+    let launched;
+    try {
+      await docker(["cp", local, tx + ":" + remote]);
+      launched = await docker(
+        [
+          "exec",
+          "-e",
+          `PLAYGROUND_GC_DB=${database}`,
+          "-e",
+          "DATOMIC_JAVA_OPTS=-Xms32m -Xmx192m -XX:+UseSerialGC -XX:ActiveProcessorCount=1",
+          tx!,
+          "/opt/datomic/bin/run",
+          "-i",
+          remote,
+        ],
+        { ...archiveCommand(signal), timeoutMs },
+      );
+    } catch (error) {
+      const summary =
+        /Syntax error [^\n]+|ClassNotFoundException: [\w.$]+|Could not find or load main class [\w.$]+|executable file not found|ETIMEDOUT|SIGKILL/.exec(
+          String(error),
+        )?.[0];
+      throw new Error(
+        "Owned Datomic storage collection could not start: " + (summary ?? "subprocess failed"),
+      );
+    } finally {
+      await rm(local, { force: true });
+    }
     const cutoff = /^PLAYGROUND_GC (\d+)$/m.exec(launched)?.[1];
     if (!cutoff)
       throw new Error(
