@@ -9,7 +9,7 @@ import { fieldValue } from "../../../bench/lib/deep-world.ts";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { decodeFeed, now, readCell, type Begin, type Feed } from "../scale1/decision/observer.ts";
-import { accounts, cellSeconds, field, root, task, writeTape, type Density, type Write } from "../scale1/decision/plan.ts";
+import { accounts, activeSubjects, cellSeconds, field, root, task, writeTape, type Density, type Write } from "../scale1/decision/plan.ts";
 import { play, resolveUncertain, type Row, type Sender } from "../scale1/decision/writes.ts";
 import { checkAdoptedPeer, hex, openScaleSeal, type AdoptedSeed } from "./adopt.ts";
 import { ladder, phaseSeconds, selectedWriter, type Writer } from "./profile.ts";
@@ -272,7 +272,18 @@ export async function adoptedToy(out: string, source: string, peer: Peer, writer
     if (loaded) {
       const cut = await quietPair(out, source, peer, seed, writer, true, arm.terminal);
       const { runImport } = await import("./import-arm.ts");
-      if (writer === "per-person-ordered") runImport(out, source, peer, seed, writer, true, cut);
+      const after = writer === "per-person-ordered" ? runImport(out, source, peer, seed, writer, true, cut) : cut;
+      await recordMixedIds(out, source, peer, seed, writer, after);
     }
   }
+}
+
+
+export async function recordMixedIds(out: string, source: string, peer: Peer, seed: AdoptedSeed, writer: Writer, start: number) {
+  const touched = new Set(activeSubjects(seed.image.people as Density)[accounts.at(-1)!]);
+  let person = seed.image.people - 1;
+  while (touched.has(person)) person--;
+  assert(person >= 0);
+  const { checkMixedIds } = await import("./mixed-ids.ts");
+  jsonFile(path.join(out, "mixed-ids.json"), await checkMixedIds(source, peer, seed, writer, start, person));
 }

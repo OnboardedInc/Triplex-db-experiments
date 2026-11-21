@@ -14,11 +14,11 @@ test("the held-seed card preserves all obligations after a stopped campaign", (t
     failure: "The campaign stopped. See the retained log.",
   });
   const card = fs.readFileSync(path.join(out, "SCORECARD-v0.1.md"), "utf8");
-  const rows = card.split("\n").filter((row) => /^\| (P\d |Journal queryable|Erased value never returned|Receipts|No acknowledged write lost)/.test(row));
-  assert.equal(rows.length, 13);
+  const rows = card.split("\n").filter((row) => /^\| (P\d |Journal queryable|Erased value never returned|Receipts|No acknowledged write lost|Mixed assertion identities)/.test(row));
+  assert.equal(rows.length, 14);
   assert.deepEqual(rows.slice(0, 9).map((row) => Number(row[3])), [1, 2, 3, 4, 5, 6, 7, 8, 9]);
   const columnCounts = rows.map((row) => row.split("|").slice(1, -1).length);
-  assert.deepEqual(columnCounts, Array(13).fill(6));
+  assert.deepEqual(columnCounts, Array(14).fill(6));
   assert.match(card, /Mac toy run\. All numbers are diagnostic\./);
   assert.match(card, /"TX2_SUBJECT_SAVE": "1"/);
   assert.match(rows[4]!, /held SCALE1 roster/);

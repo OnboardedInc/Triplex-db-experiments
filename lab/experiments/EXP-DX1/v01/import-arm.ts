@@ -21,4 +21,9 @@ export function runImport(out: string, source: string, peer: Peer, seed: Adopted
       TX2_W0_POINT_JOURNAL: "1",
     }, timeout: (toy ? 3 : budget.P8) * 60_000, stdio: "inherit",
   });
+  const r = JSON.parse(fs.readFileSync(path.join(folder, "result.json"), "utf8"));
+  assert.deepEqual([r.source, r.nonce, r.slot, r.writer, r.after, r.db],
+    [source, peer.attempt, peer.slot, writer, cut, seed.scope.db]);
+  assert(Number.isSafeInteger(r.proof.cut) && r.proof.cut > cut);
+  return r.proof.cut as number;
 }

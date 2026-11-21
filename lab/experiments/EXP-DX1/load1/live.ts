@@ -199,12 +199,15 @@ export async function live(
       const bulk = command.startsWith("load1/");
       // [DX-V01] Why: the per-person profile dispatches imports through the reference writer.
       // Rejected: crediting that path with the grouped admission guarantees.
-      if (held?.referenceImport) assert(reply.bulkGrant == null && reply.serialHold == null);
+      if (held?.referenceImport) {
+        assert(reply.bulkGrant == null && reply.serialHold == null);
+        assert(reply.groupSize === undefined || reply.groupSize === 1);
+      }
       else {
         assert(reply.bulkGrant && reply.bulkGrant.bulk === bulk);
         if (bulk) assert(!reply.bulkGrant["runnable-live"] && reply.groupSize === 1);
+        assert(Number.isSafeInteger(reply.groupSize) && reply.groupSize >= 1 && reply.groupSize <= (held?.maxGroup ?? 8));
       }
-      assert(Number.isSafeInteger(reply.groupSize) && reply.groupSize >= 1 && reply.groupSize <= (held?.maxGroup ?? 8));
       retain({
         command,
         op: reply.operationId,

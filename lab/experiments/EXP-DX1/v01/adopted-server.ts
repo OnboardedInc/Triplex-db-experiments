@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { scaleHost, startScaleStack } from "../scale1/bench.ts";
 import { restoreDump } from "../scale1/seed-image.ts";
-import { adoptedArm, jsonFile, quietPair, type Residency } from "./adopted.ts";
+import { adoptedArm, jsonFile, quietPair, recordMixedIds, type Residency } from "./adopted.ts";
 import { nativeMetrics } from "../thin1/native-metrics.ts";
 import { openScaleSeal, hex } from "./adopt.ts";
 import { budget, isWriter, stackOptions, type Age } from "./profile.ts";
@@ -73,10 +73,12 @@ for (const { writer, loaded } of stages) {
     const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head);
     if (loaded && !stopping) {
       const cut = await quietPair(root, source, peer, seed, writer, false, arm.terminal);
+      let after = cut;
       if (!stopping && writer === "per-person-ordered") {
         const { runImport } = await import("./import-arm.ts");
-        runImport(root, source, peer, seed, writer, false, cut);
+        after = runImport(root, source, peer, seed, writer, false, cut);
       }
+      if (!stopping) await recordMixedIds(root, source, peer, seed, writer, after);
     }
   } finally {
     scaleHost.clean(out, slot);

@@ -4,6 +4,7 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import { render as emptyCard } from "./render.ts";
+import type { MixedIds } from "./mixed-ids.ts";
 import type { adoptedArm } from "./adopted.ts";
 import { physicalJvm, selectedWriter, type Age, type Writer } from "./profile.ts";
 
@@ -125,6 +126,7 @@ export function writeAdoptedCard(run: Card) {
   const quiet = [primaryQuiet, groupedQuiet].filter((arm) => arm !== undefined);
   if (quiet.length) rows.set("P6", [quiet.map((a) => a.reading).join(" · ") + " Durable effects, Publish and import overlap remain open.",
     diagnostic, quiet.map((a) => a.samples).join(" · "), quiet.map((a) => a.link).join(" · ")]);
+  let orderedWitnessStart: number | undefined;
   const importPath = file("p8", "result.json");
   if (fs.existsSync(importPath)) {
     const r = JSON.parse(fs.readFileSync(importPath, "utf8"));
@@ -133,6 +135,7 @@ export function writeAdoptedCard(run: Card) {
     assert.deepEqual([r.source, r.toy, r.slot, r.nonce, r.db, r.after, r.arm, r.writer, r.referenceImport],
       [run.source, run.toy, neighbors.slot, neighbors.attempt, neighbors.seed.database, neighbors.terminal, "pace-32-fixed", run.writer, true]);
     assert.equal(createHash("sha256").update(bytes).digest("hex"), r.sha256);
+    orderedWitnessStart = r.proof.cut;
     const latency = Object.values(r.neighbors as Record<string, { read: { offered: number; ok: number; p99Ms: number }; save: { offered: number; ok: number; p99Ms: number } }>);
     const reads = latency.map((x) => x.read), saves = latency.map((x) => x.save);
     const totals = (rs: typeof reads) => rs.reduce((n, x) => n + x.ok, 0) + "/" + rs.reduce((n, x) => n + x.offered, 0);
@@ -141,6 +144,43 @@ export function writeAdoptedCard(run: Card) {
       run.toy ? "DIAGNOSTIC" : "NOT MEASURED", `${r.proof.observed} exact frames, ${totals(saves)} saves and ${totals(reads)} reads`,
       "[import arm](" + path.relative(run.out, importPath) + ")"]);
   }
+  const readMixed = (prefix: string, writer: Writer, expectedStart?: number) => {
+    const archive = file(prefix + "mixed-ids.json", "");
+    if (!fs.existsSync(archive)) return;
+    const record: MixedIds = JSON.parse(fs.readFileSync(archive, "utf8"));
+    const [last] = readArm(prefix + "p6-235", true, writer);
+    assert(last);
+    assert.deepEqual([record.source, record.writer, record.slot, record.attempt, record.database, record.imageSha256, record.cut],
+      [run.source, writer, last.slot, last.attempt, last.seed.database, last.seed.imageSha256, last.seed.originalCut]);
+    assert.equal(record.start, expectedStart ?? last.terminal);
+    assert(record.startedAt >= last.endedAt && record.endedAt >= record.startedAt);
+    assert.equal(record.historical.length, 4);
+    assert.equal(record.ids.length, 4);
+    assert.equal(record.ids[2], record.first.row.id);
+    assert.equal(record.ids[3], record.second.row.id);
+    assert.equal(record.first.observed.position, record.start + 1);
+    assert.equal(record.second.observed.position, record.start + 2);
+    if (writer === "per-person-ordered") {
+      assert.deepEqual(record.refusals.map(({ format, id, reason, operation, claim, head }) => [format, id, reason, operation, claim, head]),
+        [["old-format", record.ids[0], "IdentityConflict", "absent", null, record.start + 2],
+         ["ordered", record.ids[2], "IdentityConflict", "absent", null, record.start + 2]]);
+      assert.equal(record.first.row.id, record.first.token + "00");
+    }
+    return record;
+  };
+  const mixed = run.writer === "per-person-ordered" && orderedWitnessStart !== undefined
+    ? readMixed("", run.writer, orderedWitnessStart) : undefined;
+  const groupedMixed = run.writer === "per-person-ordered" ? readMixed(comparison, "grouped") : undefined;
+  if (mixed && groupedMixed) {
+    // [DX-V01] Why: the raw typed value and valid range must agree at each matching semantic cut.
+    // Rejected: comparing just hashes from unbound fixtures or equating logical clocks across different histories.
+    assert.deepEqual([mixed.subject, mixed.cut, mixed.historical], [groupedMixed.subject, groupedMixed.cut, groupedMixed.historical]);
+    if (!run.toy) assert.equal(mixed.imageSha256, groupedMixed.imageSha256);
+    const links = ["mixed-ids.json", comparison + "mixed-ids.json"].map((name) =>
+      "[identity witness](" + path.relative(run.out, file(name, "")) + ")").join(" · ");
+    rows.set("Mixed assertion identities", ["Both retired IDs returned IdentityConflict under fresh commands. Earlier typed answers matched grouped at the seed, pre-witness and two save cuts.",
+      run.toy ? "DIAGNOSTIC" : "PASS", "2 refusals and 4 paired snapshots", links]);
+  }
   const field = ["P5", "P6", "P7", "P8", "P9"];
   const gaps: Record<string, string> = {
     P5: "The published INT1 Publish producer creates its own flat scope. No adapter binds it to the held SCALE1 roster and live release cut.",
@@ -148,7 +188,7 @@ export function writeAdoptedCard(run: Card) {
     P9: "One-host rehearsal requires the published HASYNC1 legacy PostgreSQL base backup, compatible ten-account proofs and two 10-minute windows. The held SCALE1 K archive is a logical dump. Each qualifying fault or move measurement needs two servers.",
     P8: "No verified fixed-pace import arm from this attempt.",
   };
-  const text = base.split("\n").map((line) => {
+  const text = base.trimEnd().split("\n").map((line) => {
     if (line === "## Run settings") return (run.writer === "per-person-ordered"
       ? "Per-person-ordered runs the full adopted workload. Grouped repeats P2 and P6 only."
       : "Grouped comparison only. This attempt covers P2 and P6.") + "\n\n" + line;
@@ -162,7 +202,11 @@ export function writeAdoptedCard(run: Card) {
     if (!key || !match) return line;
     const values = rows.get(key) ?? (run.writer === "grouped" && /^P[13478]$/.test(key) ? ["Grouped comparison covers P2 and P6.", "NOT MEASURED", "0", "—"] : field.includes(key) ? [gaps[key] ?? "No same-seed adapter for this row at this revision.", "NOT MEASURED", "0", "—"] : undefined);
     return values ? `| ${match[1]!.trim()} | ${match[3]!.trim()} | ${values.join(" | ")} |` : line;
-  }).join("\n").replaceAll("No compatible measurement from this attempt.", run.failure ?? "No compatible measurement from this attempt.");
+  }).concat([
+    "| Mixed assertion identities | Retired old-format and ordered IDs are refused and pinned earlier values match grouped. | " +
+    (rows.get("Mixed assertion identities") ?? ["The paired mixed-ID witness is unavailable in this attempt.", "NOT MEASURED", "0", "—"]).join(" | ") + " |",
+    "",
+  ]).join("\n").replaceAll("No compatible measurement from this attempt.", run.failure ?? "No compatible measurement from this attempt.");
   const settings = {
     ...selectedWriter(run.writer),
     ...(run.toy ? {} : { physicalJvm: physicalJvm() }),

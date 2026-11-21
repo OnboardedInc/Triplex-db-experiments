@@ -13,6 +13,12 @@ The selected writer is read back from the freshly opened database. The per-perso
 
 The per-person configuration disables live-priority scheduling, small-row packing and the save ledger switch because those settings prevent the prepared path. The logical journal remains queryable through both gateways. The fixed-pace import uses the reference writer in this configuration and retains the existing logical oracle without claiming grouped grants or serial holds.
 
+## Part 3 mixed-ID correctness audit
+
+The mixed-ID witness selects a sealed member outside the timed writer cohort. The first two fresh saves must match their accepted claim, exact journal, typed row and logical position. The ordered arm checks the installed function on both ACKs. The old ID comes from a pinned read at the original loader cut. The new ID is read back from the first ordered save after the second retires it. The two reuse probes carry distinct fresh operation and journal IDs and name a different existing owner. They require the exact typed IdentityConflict, absent operation and claim, unchanged destination row and unchanged database head. A fresh-ID control then commits against that same destination. The test follows PREP1's ordered retirement collision gate.
+
+The card authorizes the mixed-ID correctness status only when both fresh archives bind to the current invocation, cut, source, slot, writer, attempt and held image. It checks both refusal outcomes and equal typed values and validity at four matched cuts. The native writer treats reuse across owners as a global identity conflict. Mac evidence gets DIAGNOSTIC. This change adds no other PASS path.
+
 ## Part 2 verdict and receipt audit
 
 - The fresh adoption reads the exact operator-pinned SCALE1 image and transfer. The transfer binds the producer, nonce, successful terminal result and image digest. The restore checks the exact dump hash while streaming it onto a private slot. Both peers check the original logical cut, stored scope, loader manifest receipt, terminal loader command and exact pinned members and fields. The aged branch checks the original fresh identity against the AGE1 bundle and calls the published fresh-peer verifier on the actual restored database before offers.
