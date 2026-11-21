@@ -111,6 +111,8 @@ All eight goodput observations landed in their forecast ranges. Five p99 estimat
 
 From 431,778,659 indexed records, forecast 7,000–9,500 records/s for solo, 11,000–19,000 for 8 saves/transaction and 16,000–28,000 for 24 saves/transaction. Each arm writes for roughly 14 minutes and needs two completed natural index jobs. The ladder has a 25-minute setup cutoff and a 60-minute server ceiling (USD 1.09). A 24k/s winner would leave about 6.12 h of continued loading after the illustrative 39.7M ladder records. A rate below 9,900/s or a loading forecast over 16 hours does not qualify. [Pinned design](https://github.com/OnboardedInc/Triplex-db-experiments/blob/acd350e927515b7c4d99f134f8600ea8de4d63f8/lab/experiments/EXP-DX1/age1/BULK-LOAD.md)
 
+The ladder observed 19,760.04 / 15,242.78 records/s (full / final steady) for solo, 16,989.76 / 16,330.62 for groups of eight and 18,081.59 / 20,509.38 for groups of 24. The solo result exceeded forecast and both grouped arms fell in range. All three recovered index censuses exceeded two, but the pinned checker emitted no qualifying arm. Actual wall time was 44 min 47 s and USD 0.81. [Ladder results](AGE1-LADDER.md)
+
 ## Tuned fresh scorecard
 
 Forecast 300 minutes maximum (USD 5.45) after copy and build. Both ordered writers should deliver nearly all of 50/s and 220–235/s at 235 offered. At 394 expect 325–365/s headline and 340–380/s ordered default. At 620 expect 330–380/s headline and 320–365/s default. Grouped prediction is 147–182/s at 235 and above. Most busy quiet-account p99 ratios will exceed 1.25×. [Pinned forecasts by row](https://github.com/OnboardedInc/Triplex-db-experiments/blob/2e974a95b10a30a30ff3f46947df4f32beacc657/lab/experiments/EXP-DX1/v01/SERVER.md#predictions-written-before-the-run)
