@@ -4,10 +4,20 @@ set -euo pipefail
 base=/var/tmp/triplex-bm1
 item=${2:-prep1-tail}
 original=$base/night-n20-prep-tail
-case $item in prep1-tail|prep1-tail-syscall|prep1-tail-remaining) ;; *) exit 2 ;; esac
+case $item in
+  prep1-tail|prep1-tail-syscall|prep1-tail-remaining|prep1-tail-combined) ;;
+  *) exit 2 ;;
+esac
 root=$base/night-n20-$item
 repo=$root/build/repository
 pin=df1b45d6bca9013dfc7a6adc79c961242dfc5a03
+action=tail
+label=DX-PREP1-tail
+if [[ $item == prep1-tail-combined ]]; then
+  pin=d1224c27e5ac0fcacfa04cc4d2a11b0f328eacaa
+  action=tail-combined
+  label=DX-PREP1-tail-combined
+fi
 exp=lab/experiments/EXP-DX1
 disk=/dev/nvme1n1
 mode=${1:?run or cleanup}
@@ -28,7 +38,7 @@ if [[ $mode == cleanup ]]; then
     owned() {
       docker ps -a --format '{{.Names}}' && docker network ls --format '{{.Name}}' && docker volume ls --format '{{.Name}}'
     }
-    for arm in control wal zgc fair; do
+    for arm in control wal zgc fair combined; do
       slot=tx2-dxprep1-$prefix-1-tail-$arm-s
       if grep -q "^$slot-" <<<"$(owned)"; then
         (cd "$repo" && timeout 120s bash "$exp/stack/down.sh" "$slot" --volumes)
@@ -100,12 +110,12 @@ cd "$repo"
 bpftrace --version > "$root/bpf-version.txt"
 timeout 15s bpftrace -e 'BEGIN { printf("enabled\n"); exit(); }' > "$root/bpf-smoke.log" 2>&1
 launch=$exp/prep1/server.sh
-if [[ $item != prep1-tail ]]; then
+if [[ $item == prep1-tail-syscall || $item == prep1-tail-remaining ]]; then
   selected=()
   if [[ $item == prep1-tail-remaining ]]; then selected=(remaining); fi
   python3 "$(dirname -- "${BASH_SOURCE[0]}")/prep1-tail-syscall.py" "$repo" "${selected[@]}" > "$root/adapter.json"
   launch=$exp/prep1/.bm1-server.sh
 fi
 status measuring
-node lab/bin/heavy.mjs --label DX-PREP1-tail -- bash "$launch" tail "$root/campaign" "$pin" "$base/day-n20-prep1-tenant/campaign"
+node lab/bin/heavy.mjs --label "$label" -- bash "$launch" "$action" "$root/campaign" "$pin" "$base/day-n20-prep1-tenant/campaign"
 status measured
