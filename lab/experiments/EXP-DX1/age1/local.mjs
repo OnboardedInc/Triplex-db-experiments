@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { spawn, execFileSync } from "node:child_process";
 import { randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
+import { matchesPhysicalId } from "./bulk-metrics.mjs";
 import { createServer } from "node:net";
 import os from "node:os";
 import path from "node:path";
@@ -389,8 +390,14 @@ export async function local(opts, config, manager) {
         const lines = fs.readFileSync(log, "utf8").split("\n");
         assert(lines.some((l) => l.includes('AGE_BULK_METRICS ') &&
           l.includes('triplex.age.telemetry')), "Fresh transactor did not call the metric hook");
-        assert(lines.some((l) => l.includes(":event :update/create-index") && l.includes(":id " + JSON.stringify(clone))),
-          "Fresh transactor did not log this database's index job");
+        const observations = fs.readFileSync(path.join(dir, "probe.log"), "utf8").split("\n")
+          .filter((line) => line.startsWith("DX_AGE1 ")).map((line) => JSON.parse(line.slice(8)))
+          .filter((row) => row.event === "bulk-fixture" && row.attempt === attempt);
+        assert.equal(observations.length, 1);
+        const [{ readback }] = observations;
+        assert(matchesPhysicalId(readback.database, readback.nativeId));
+        assert(lines.some((l) => l.includes(":event :update/create-index") &&
+          l.includes(":id " + JSON.stringify(readback.nativeId))), "Fresh transactor did not log the native catalog's index job");
       }
     }
     else if (opts.run === "native-suite") {
