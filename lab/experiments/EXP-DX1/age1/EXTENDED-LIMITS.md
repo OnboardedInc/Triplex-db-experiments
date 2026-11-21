@@ -1,6 +1,6 @@
 # Resume the held 514.7M cut
 
-Use the Step 1 code pin for the held PostgreSQL volume. Keep the stopped run at `6d3d44641` and its evidence intact. The custodian still verifies the stopped inventory before opening the private volume.
+Use Step 1 pin `efd0c75606860163699831fc5da2654b782ce11c` for the held PostgreSQL volume. Keep the stopped run at `6d3d44641` and its evidence intact. The custodian still verifies the stopped inventory before opening the private volume.
 
 In the Linux load configuration, keep the existing Datomic profile and the 400 GB directory ceiling. Use a new writable output parent with exact copies of the terminal `.edn` checkpoint and its `.population.edn` ledger beside the output directory. Set `source` to the full code pin. Keep `ladderEvidence` pointing at the original extracted ladder and set `resumeEvidence` to a separate, immutable extraction of the stopped load. Put the separately published `stopped-hold.json` alongside that extraction's `custody.json`. The exact stopped archive SHA-256 is `f402912526dbf0b7773d71518cf7df84dfbbc65681922850d212c300a453ba9f`. The stopped hold SHA-256 is `646eee96678dcd06e924005a3dccbe37213accac2850769454ecee33d94a4e4a`.
 
