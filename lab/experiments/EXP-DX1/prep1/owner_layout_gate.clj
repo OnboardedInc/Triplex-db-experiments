@@ -404,7 +404,7 @@
                                                          (update "newIds" into (map :id extra))))]
                                 (assert (= [200 nil] (reference/outcome (reference/send db input))))))
                             (let [t (d/basis-t (d/db conn))]
-                              @(d/request-index conn)
+                              (d/request-index conn)
                               @(d/sync-index conn t)
                               [arm {:db db :seedT t :position (storage/head-position (d/db conn))}]))))]
     (spit path (pr-str {:attempt attempt :scopes scopes}))

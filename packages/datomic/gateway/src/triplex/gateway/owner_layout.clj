@@ -106,19 +106,29 @@
         {:keys [raw legacy retired]}
         (read-stage :owner-range
           (let [legacy (java.util.ArrayList.) retired (java.util.HashSet.) root (volatile! nil)]
-            (doseq [datom (d/datoms db :eavt owner)]
-              (let [a (:a datom)]
+            (doseq [^datomic.Datom datom (d/datoms db :eavt owner)]
+              (let [a (.a datom)]
                 (cond (= a row-a) (.add legacy datom)
-                      (= a root-a) (vreset! root (:v datom))
+                      (= a root-a) (vreset! root (.v datom))
                       (= a retired-a) (.add retired (row-id datom)))))
             {:legacy legacy :retired retired :raw @root}))
         root (read-stage :root-decode (decode-root raw))]
     (when (or (nil? root) (:texts root))
       (read-stage :mask
-        (do
-          (.addAll ^java.util.Set retired (or (:mask root) []))
-          (into (filterv #(not (.contains ^java.util.Set retired (row-id %))) legacy)
-                (map #(hash-map :v %)) (:texts root)))))))
+        ;; [Opus W1] Why: at most eight masked IDs, each matched as the exact length-tagged row prefix without allocating.
+        ;; Rejected: cutting an ID substring from every legacy row and probing a hash set.
+        (let [^"[Ljava.lang.String;" prefixes (into-array String (map lean/prefix (:mask root)))
+              n (alength prefixes)
+              masked? (fn [^String text]
+                        (loop [i 0]
+                          (cond (= i n) false
+                                (.startsWith text ^String (aget prefixes i)) true
+                                :else (recur (inc i)))))
+              keep? (if (.isEmpty retired)
+                      (fn [^datomic.Datom datom] (not (masked? (.v datom))))
+                      (fn [^datomic.Datom datom]
+                        (not (or (masked? (.v datom)) (.contains retired (row-id datom))))))]
+          (into (filterv keep? legacy) (map #(hash-map :v %)) (:texts root)))))))
 
 (defn live-datoms [db owner]
   ;; [DX-W1] Why: the selected durable basis defines the root and every referenced row together.
