@@ -34,6 +34,8 @@ def check(root):
     for mode, record, refusal in zip(modes, records, denied, strict=True):
         width = int(mode.removeprefix("barrier").removeprefix("rolling"))
         assert (record["mode"], record["ordered"], record["serial"], record["immediate"]) == (mode, ordered, serial, 50)
+        submitted = 1 if mode == "barrier6" else width
+        assert record.get("submitted", width) == submitted
         nonce = f"{attempt}-{mode}"
         scope = json.dumps(["triplex-scope-v1", "test", "rolling", nonce, 0], separators=(",", ":"))
         db = "s2-" + base64.urlsafe_b64encode(scope.encode()).decode().rstrip("=")
@@ -60,7 +62,7 @@ def check(root):
             assert receipt["clock"] > 0 and appended[receipt["t"]][1]["end"] <= int(receipt["replyNs"])
         if ordered:
             assert len({r["t"] for r in record["checked"]}) == len(expected)
-        output.append(dict(mode=mode, credits=width, durable=record["durable"], refused=width, original=lost))
+        output.append(dict(mode=mode, credits=width, submitted=submitted, durable=record["durable"], refused=width, original=lost))
     raw = (root / terminal["log"]).read_text()
     sampled = 0
     if inputs["lookupEvery"]:

@@ -43,7 +43,7 @@ async function head(db: string) {
 
 type Receipt = { id: string; p: number; t: string; clock: number; tx: string; digest: string; replyNs: string; orderedToken?: string };
 type Witness = { attempt: string; mode: string; ordered: boolean; serial: boolean; db: string; head: number;
-  lost: Receipt; acked: Receipt[]; missing: string[]; immediate: number };
+  lost: Receipt; acked: Receipt[]; missing: string[]; immediate: number; submitted: number };
 
 async function before(witness: string) {
   const { db, created } = await client.create(scope, "lean", true, 35000);
@@ -139,9 +139,13 @@ async function before(witness: string) {
     return real(...args);
   };
   const failed = await play(senders, failureTape, now(), nonce, true, ordered, selection);
-  assert.equal(submitted, credits);
-  assert(failed.rows.every((r) => r.status === "uncertain" && r.receipt === undefined));
-  const proof: Witness = { attempt, mode: mode!, ordered, serial, immediate, db, head: beforeFailure,
+  // [DX-INT1] Why: the first barrier turn starts on the first isolated offer. Once its append fails, the rest stay queued.
+  // Rejected: counting queued offers as native failures or expecting a turn to wait for the full batch.
+  const granted = selection.mode === "barrier" ? 1 : credits;
+  assert.equal(submitted, granted);
+  assert(failed.rows.every((r, i) => r.status === (i < granted ? "uncertain" : "expired-before-dispatch") &&
+    r.receipt === undefined && (r.dispatched !== undefined) === (i < granted)));
+  const proof: Witness = { attempt, mode: mode!, ordered, serial, immediate, submitted, db, head: beforeFailure,
     lost: { id: lostId, ...recovered.receipt, replyNs: replyClocks.get(lostId)! },
     acked: [...ok.rows, ...lostResult.rows].map((r) => {
       assert(r.receipt);
@@ -189,7 +193,7 @@ async function after(witness: string) {
   assert.deepEqual([Number(original.position?.v), original.t?.v, original.recordedAt?.v],
     [proof.lost.p, proof.lost.t, proof.lost.clock]);
   console.log("PREP1_ROLLING " + JSON.stringify({ attempt, credits, db, head: proof.head,
-    mode, ordered, serial, immediate: proof.immediate, durable: journal.length, refused: proof.missing.length, lost: proof.lost, checked: proof.acked }));
+    mode, ordered, serial, immediate: proof.immediate, submitted: proof.submitted, durable: journal.length, refused: proof.missing.length, lost: proof.lost, checked: proof.acked }));
 }
 try {
   if (phase === "before") await before(witnessPath);
