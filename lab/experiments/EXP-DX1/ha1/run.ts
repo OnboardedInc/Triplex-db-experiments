@@ -165,7 +165,9 @@ export async function drill(
           pooled: profile.pooled === true,
         });
       }
-    } else if (e.mode.startsWith("load-"))
+    } else if (e.mode === "load-fair")
+      result = await (await import("../load1/fair-local.ts")).fairLocal(s);
+    else if (e.mode.startsWith("load-"))
       result = await (await import("../load1/run.ts")).load(s, profile.people);
     else if (e.mode === "failures")
       result = await failures(

@@ -1,28 +1,15 @@
-# DX-HA1 · Import pacing in one database
+# DX-HA1 · Import alongside live saves
 
-On bare metal, 32 facts per frame loaded 3,983 facts per second. The quiet account's p99 rose to 37.59 ms for saves and 15.98 ms for reads.
-The quiet saves at p99 spent 18–25 ms in the writer queue. Many of the slowest reads overlapped a pause in the shared gateway.
-The two no-import controls differed by 1.9× for saves. Against the faster control, all three earlier frame sizes missed the neighbour limit.
-The next server run compares feedback with fixed pacing at 32 facts per frame. Both keep one frame outstanding in the same database.
-[Server command](MICRO-SERVER.md) · [Attribution and forecast](MICRO-ATTRIBUTION.md)
-The paced import ran locally at `633595994`. Allow 15–25 minutes on one server, within a 90-minute allocation.
+An import now shares the same write credits as live saves. It cannot take the quiet account's reserved credit.
+At 32 facts per frame, the import needs 94 durable frames per second to meet the target.
+We expect 1,400–2,400 facts per second with the six-credit barrier and 2,400–3,350 with rolling credits.
+We expect quiet saves at 48–78 ms with the barrier and 35–52 ms with rolling credits. Live reads still need to meet their own limit.
+The Mac run is a correctness check. A server run is needed to establish both the speed and the effect on neighbours.
+The [server command](FAIR-SERVER.md) runs both credit modes in one database with 235 other saves per second. It allows under 60 minutes.
 
-## Pace experiment
-
-- The merged Mac check verified 33,952 imported facts, original receipts, both in-window queryable prefixes and every live offer. It kept one frame outstanding. The two feedback reviews stayed at 110 tokens/s against the noisy leading control. The archived-offer replay and regression test exercise the slowdown. Mac timings are diagnostic.
-
-## Evidence and earlier pipeline experiment
-
-- The archived means sum to 21.84 ms across 4,943 frame matches. The 8 ms required at 24 facts is a target. The [stage split and forecasts](PREDICTIONS-PART6.md) describe how to falsify the model.
-- The client counts every frame through the durable checkpoint. Pressure from two pending live saves halves the window, and four reduce it to one. The gateway schedules ready live saves ahead of queued bulk requests. It releases a bulk turn only when its peer future resolves.
-- A cluster-side predecessor check refuses a suffix whose earlier frame has no committed claim. Durable frame identity combines the source, scope, width and ordinal with the exact original content. Client checkpoint replay looks up each original receipt.
-- [Evidence and receipt audit](EVIDENCE6.md) · [Archived measurements and checksum](SHA256SUMS.part6)
-
-[Part 5](PART5.md) preserves the single-frame frontier and four-minute sustained import check.
-
-## Version 0.1 intake
-
-- Merged INT1 `0196b9952`. Core passed 861 tests, Datomic passed 434 with 52 opt-in tests skipped, and the focused and retention suites passed 36. The seven native suites passed 65 tests after the legacy feed fixture correction. The earlier pipeline proof checked 11,472 facts on the prior merged code.
-- The refreshed shared database recovered in all four transactor fault cells with all 780 pinned-read probes, receipts and feed checks verified. Mac recovery took 15.91–21.09 seconds.
-- The refreshed planned move verified 173 receipts and 250 pinned probes, with a 22.79-second Mac pause. The preceding merged run took 31.74 seconds. Both timings are diagnostic and the 30-second target remains open on bare metal.
-- P8 uses the [single-server import matrix](MICRO-SERVER.md) and its per-account comparison. P9 uses the [single-server shared-database fault command](../ha1/BENCH.md#version-01-recovery-row-on-one-server). Host loss, synchronous commit cost and whole-database relocation need the paired runs described there.
+- Built against INT1 `057cc1eb4`. The current sender is unchanged unless an import producer is enabled. Frame size and its concurrent credit limit are settings. In barrier mode a quiet arrival after a turn starts still waits for that turn. Rolling retains an immediate quiet grant when otherwise eligible.
+- A full deep-account load takes roughly 89 minutes at the target. The five-minute test offers that much input lazily and measures the verified portion by half. The workload has one immutable subject per frame and preserves its feed order using the standard command sequence.
+- The [predictions](PREDICTIONS-PART7.md) give the arithmetic, limits and fallback. If saturated neighbours leave too few grants, an importer holding one fair share cannot reach the target there. An isolated request process with a shared serial budget would still need at least 94 frames/s at this width.
+- Run the [Mac correctness gate](FAIR-SERVER.md#mac-correctness) under a single ordinary token. No bare-metal execution was dispatched.
+- Audit. The existing command receipt path holds the grant through durable response or claim recovery. Stable command, transaction and assertion IDs bind the source stream, frame width and ordinal to its exact rows. Measured results require a fresh nonce, slot, source, write options, restored image pin and fresh journal suffix. The comparison verifies the live receipt and journal, each imported native journal digest and every imported row, and accounts for all offered reads and saves. The diagnostic exercises a discarded reply and checks the original receipt and unchanged head after retry. No new verdict is generated.
+- [Part 6](PART6.md) preserves the fixed and feedback pacing experiment and the earlier evidence. [Priority 9](../ha1/BENCH.md#version-01-recovery-row-on-one-server) has the separate fault and move commands.

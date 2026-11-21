@@ -72,7 +72,7 @@ export class RollingCredits {
 export function admission(accountCount: number, selection: Admission) {
   return selection.mode === "rolling"
     ? new RollingCredits(accountCount, selection.credits, selection.quietAccount ?? 0)
-    : new FairTurns(accountCount, selection.credits);
+    : new FairTurns(accountCount, selection.credits, selection.quietAccount);
 }
 
 export function creditModeSelection(mode: CreditMode = defaultCreditMode): Admission {

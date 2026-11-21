@@ -35,6 +35,7 @@ export const modes = [
   "load-volume",
   "load-pipeline",
   "load-paced",
+  "load-fair",
   "native-checks",
   "load-frontier-low",
   "load-frontier-high",
@@ -80,7 +81,8 @@ export function microLoad(mode: string) {
     mode === "load-micro" ||
     mode === "load-volume" ||
     mode === "load-pipeline" ||
-    mode === "load-paced"
+    mode === "load-paced" ||
+    mode === "load-fair"
   );
 }
 export function supportsSingleHost(mode: Mode) {
@@ -102,7 +104,7 @@ export function loadRoles(mode: Mode): Role[] {
     "active",
     "write",
     "tool",
-    ...(splitLoad(mode)
+    ...(mode === "load-fair" ? (["read"] as Role[]) : splitLoad(mode)
       ? (["standby", "read", ...(mode === "load-split-pg" ? ["target"] : [])] as Role[])
       : []),
   ];
@@ -185,6 +187,12 @@ function treeCode(mode?: Mode) {
       "packages/datomic/test/ha1-account.ts",
     ].map((f) => path.join(root, f)),
   );
+  if (mode === "load-fair")
+    for (const f of [
+      "actv-lazy/join/held-campaign.ts", "age1/scale1-fixture.mjs", "scale1/decision/observer.ts",
+      "scale1/decision/plan.ts", "scale1/decision/writes.ts", "prep1/fair-turns.ts",
+      "prep1/rolling-credits.ts", "v01/adopt.ts", "v01/adopted.ts", "w1/group/workload.ts",
+    ]) paths.push(path.join(root, "lab/experiments/EXP-DX1", f));
   if (mode?.startsWith("hasync-")) {
     const dir = path.join(import.meta.dirname, "../hasync1");
     for (const f of fs

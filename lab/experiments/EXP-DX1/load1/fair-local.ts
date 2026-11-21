@@ -1,0 +1,49 @@
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { seedToy } from "../actv-lazy/join/held-campaign.ts";
+import { until } from "../ha1/common.ts";
+import type { Stack } from "../ha1/stack.ts";
+import { hex, openScaleSeal } from "../v01/adopt.ts";
+import { runFair } from "./fair-campaign.ts";
+
+export async function fairLocal(stack: Stack) {
+  const { e, a, b } = stack;
+  assert(process.platform === "darwin" && a === b);
+  assert.equal(process.env.TRIPLEX_DATOMIC_FAST_PATHS, "save-wire");
+  await stack.tool();
+  await stack.postgres("pg", a);
+  await stack.database("pg", "moving");
+  assert.equal(
+    await stack.sql("pg", "SHOW synchronous_commit; SHOW fsync; SHOW full_page_writes", "moving"),
+    "on\non\non",
+  );
+  await stack.tx("active", a, "pg", "moving");
+  await until("ordered writer", async () => (await stack.broker("active")) || undefined);
+  await stack.gateway("write", a, "pg", "moving");
+  await stack.gateway("read", a, "pg", "moving");
+  const [write, read] = await Promise.all([stack.ready("write"), stack.ready("read")]);
+  const fixture = path.join(e.dir, "fixture");
+  fs.mkdirSync(fixture);
+  seedToy(fixture, randomUUID(), write, e.source.git);
+  const file = path.join(fixture, "fixture.json");
+  const seed = openScaleSeal(file, hex(fs.readFileSync(file)), true);
+  return runFair(
+    e.dir,
+    e.source.git,
+    {
+      slot: e.slot,
+      attempt: e.nonce,
+      write,
+      read,
+      gatewaySource: e.source.gateway,
+      java: { origin: "managed-laptop" },
+    },
+    seed,
+    "rolling6",
+    32,
+    2,
+    true,
+  );
+}
