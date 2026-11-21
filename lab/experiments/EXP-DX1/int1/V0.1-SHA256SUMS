@@ -30,3 +30,10 @@ ff0797969e5975db7ee73c2b81f7ca2d541f38db785f97daf3d19caca19c606a  int1/p7/ordere
 d53b0a65726c3a6015fd986b1f457851d7b15cd90ee3bec6b88018da9f77011f  int1/p7/ordered-playground-pair.tar.gz
 7fa2dfad6e0044444fe19669f99e67df8b134a4445f64d814d4aaf4cee408534  int1/p7/ordered-scorecard-pair.tar.gz
 bcb5ccaf130d1e3a7bc8ca5b9f7d8823201b64efdedb6a2961e95098b3497483  int1/p7/ordered-sdk-pair.tar.gz
+918a42000943dd9ee8f3c3446f56720405a73c0a79083dea0191b6fd8a40c97a  int1/p8/laptop-erasure.tar.gz
+d6c5853d706cb069df1a7ea2c4ab4b771a2bf555d72e680260cb7e0c5d9f09cb  int1/p8/laptop-native.tar.gz
+e7ec077169011a0c54d54dee0e0dfbdd43606f37238dc0579a2e11dcc0a5c5aa  int1/p8/laptop-playground.tar.gz
+e76f11e4d23d8662461d4c64fe2b0b1b038f49eddd547a306d0ef26f6690531a  int1/p8/laptop-scorecard.tar.gz
+649f08b8f16501c254ff12713374bf50fc01bac42e9734ec53f6383767708594  int1/p8/server-final-policy.tar.gz
+ae48ef665549c20c6f93495b5093fec20fc7c5b83ac95babda57d36551f3ace2  int1/p8/server-startup-sdk.tar.gz
+9bacc348fad6a770b3efc65c1521743273edb068bdd6277ae377f43360c95d4a  int1/p8/server-wal-preflight.tar.gz
