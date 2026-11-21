@@ -4136,3 +4136,17 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **DX-AGE1 part 5 resumed** (run-critical): fix the checker match; explain the two prediction misses and choose the load's settings (more transactor cores if CPU is the limit); find what the extra bytes are and bound them (periodic `gc-storage` during the load; target aged directory 400 GB or less); disk plan; predictions before publishing.
 - **Server 2 now:** moving the held aging volume, then the fresh scorecard (`3a71c1767`, 300 minutes). The load follows it.
 - Agents running: DX-SCALE1, DX-AGE1.
+
+### 2026-11-21 03:19 local: 1 billion load ready (checker fixed, storage collection added); fresh scorecard running on server 2 (1 agent running)
+
+- **DX-AGE1 part 5 finished** in 23 minutes (exit 0). Server commit `6d3d44641` on `origin/exp/DX-AGE1-aged-database` (head `a7f98fce8`), `age1/CONTINUATION.md`.
+  - **Checker:** the corrected match binds Datomic's UUID-suffixed catalog ID to the original database and transactor; replaying the archived ladder bytes recovers 59, 44 and 30 index jobs and qualifies all three arms; the original refusal is kept beside the corrected certificate. No ladder rerun.
+  - **What limited the ladder:** 2.66 to 2.71 of three cores; index jobs ran during 83%, 90% and 91% of the write windows; apply cost 44 to 56 microseconds per indexed record; WAL sync means under 0.30 ms; no back-pressure alarms; memory index under 458 MiB of 2 GiB. Larger groups cut physical transactions from 818,218 to 70,275 and 25,112 while the per-record apply and index work stayed. **Not separable from the archive:** which of the five settings changed after the first run was the big one.
+  - **Load settings:** solo saves at depth 256, six physical cores, four index workers, memory-index threshold 256m, 24 GiB heap, 16 GiB object cache, 2 GiB memory-index maximum, write concurrency 4.
+  - **Disk:** the ladder logged about 1.48 million index segment writes for 141,449 net new segments, so replaced segments are the main suspect; PostgreSQL generated 37.06 GB of WAL and retained 1.66 GB. The archive cannot split the rest exactly. The load now runs Datomic's `datomic.tools.gc-db` and an ordinary PostgreSQL vacuum after the held cut and after each write window (20 minutes first, then 30).
+  - **Predictions before the run:** 18,000 to 26,000 records/s including maintenance; 5.58 to 8.06 more loading hours (USD 6.08 to 8.79); 330 to 390 GB at 1 billion with a 400 GB ceiling. Stops under 9,900 records/s, over 16 loading hours in total, or when two completed cycles both project past the ceiling.
+  - Mac gate: 5,171 obsolete segments collected, vacuumed, exact 59,842-record cut reopened with the scorecard verifier passing.
+- **Server 2:** the fresh scorecard (`3a71c1767`) started about 03:11 local; four containers up at 03:19; ends about 08:15. The driver is already preparing its wrapper for the load.
+- **Order after it:** load (about 6 to 8 hours) -> the aging builder's own measurements -> aged scorecard, one arm at a time (`8cc32d380`). Driver brief ready in the private prompts folder.
+- **Cloud:** USD 68.29 (server 1, deleted) + about USD 41.3 (server 2) = about USD 109.6 of 200.
+- Agents running: DX-SCALE1.
