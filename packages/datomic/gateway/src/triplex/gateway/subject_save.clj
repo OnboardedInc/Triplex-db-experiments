@@ -351,7 +351,8 @@
                   ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))
 
 (defn plan
-  ([db data input] (plan db data input nil))
+  ([db data input]
+   (plan-with-erasure db data input nil retirement #(scope/value %1 %2 :triplex.entity/rev)))
   ([db data input expected-erasure]
    (plan-with-erasure db data input expected-erasure retirement #(scope/value %1 %2 :triplex.entity/rev)))
   ([db data input expected-erasure predecessor revision-at]

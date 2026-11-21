@@ -41,7 +41,8 @@
           (let [before (d/db conn)
                 owner (d/entid before [:triplex.entity/id fixture/root])
                 prior (current before owner)
-                first-plan (native-plan before (at-cut edit-a 1))]
+                first-plan (native-plan before (at-cut edit-a 1))
+                contender (native-plan before (at-cut (reference/edit-frame "contender" "loser" "loser value" 2.0 12.0 "old") 1))]
             (is (nil? (scope/value before owner layout/root-attr)))
             (is (= 81 (count prior)))
             (is (= 3 (count (:written-pages first-plan))))
@@ -52,6 +53,8 @@
               (is (= (remove #(= ":v" (:attribute %)) prior)
                      (remove #(= ":v" (:attribute %)) (current migrated owner))))
               (is (thrown? Exception @(d/transact conn [[layout/ident first-plan]])))
+              (is (thrown-with-msg? Exception #"TRIPLEX_CONFLICT" @(d/transact conn [[layout/ident contender]])))
+              (is (= {"status" "absent"} (reference/operation name "contender")))
               (is (= 2 (storage/head-position (d/db conn))))
               (is (= "old" (:id (lean/decode (:v (lean/by-id migrated "old"))))))
               (let [next-plan (native-plan migrated (at-cut edit-b 2))

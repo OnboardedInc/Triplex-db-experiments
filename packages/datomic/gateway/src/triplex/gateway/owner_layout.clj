@@ -1,6 +1,6 @@
 (ns triplex.gateway.owner-layout
   (:require [clojure.edn :as edn]
-            [datomic.api :as d]
+            [datomic.api :as d] [triplex.gateway.commit :as commit]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.scope :as scope]
             [triplex.gateway.schema :as schema]
@@ -40,9 +40,11 @@
   ;; [DX-W1] Why: the selected durable basis defines the root and every referenced row together.
   ;; Rejected: reading the latest root for a historical cut or scanning the owner's growing version log.
   (if-let [{:keys [keys]} (read-root db owner)]
-    (mapv (fn [id] (or (owned-row db owner id)
-                       (throw (ex-info "Missing projected assertion" {:id id}))))
-          (mapcat #(page db %) keys))
+    (let [legacy (into {} (map (fn [datom] [(:id (lean/decode (:v datom))) datom]))
+                       (d/datoms db :eavt owner :triplex.entity/row))]
+      (mapv (fn [id] (or (legacy id) (owned-row db owner id)
+                         (throw (ex-info "Missing projected assertion" {:id id}))))
+            (mapcat #(page db %) keys)))
     (vec (lean/live-texts db owner))))
 
 (defn revision [db owner]
@@ -86,10 +88,11 @@
 (defn- pages-after [db owner page-keys replacements journal]
   (let [pages (if (some? page-keys)
                 (mapv #(page db %) page-keys)
-                (let [prior (take (inc (* page-size page-limit)) (lean/live-texts db owner))]
-                  (when (> (count prior) (* page-size page-limit))
+                (let [limit (* page-size page-limit)
+                      native (take (inc limit) (d/datoms db :eavt owner :triplex.entity/row))]
+                  (when (> (count native) limit)
                     (throw (ex-info "Owner migration exceeds page budget" {})))
-                  (mapv vec (partition-all page-size (map (comp :id lean/decode :v) prior)))))
+                  (mapv vec (partition-all page-size (map (comp :id lean/decode :v) (lean/live-texts db owner))))))
         wanted (set (mapcat identity pages))]
     (when-not (every? wanted (keys replacements))
       (throw (ex-info "Owner predecessor is absent from the selected pages" {})))
@@ -142,9 +145,9 @@
              :owner-layout {:before-root (:raw root) :pages (:keys pages)}
              :ops (into (version-ops owner journal provisional ops) (:writes pages))
              :written-pages (:writes pages)
-             :retired-ids (set (vals old)) :added-ids (set (vals fresh))))))
+             :retired-ids (set (vals old))))))
 
-(defn verify-report [report {:keys [owner journal retired-ids added-ids] :as plan}]
+(defn verify-report [report {:keys [owner journal retired-ids ops provisional] :as plan}]
   (let [db (:db-after report)
         tx (d/t->tx (d/basis-t db))
         position (scope/value db tx :triplex.tx/position)
@@ -159,6 +162,11 @@
         target-root (root-text position clock (get-in plan [:owner-layout :pages]))
         page-a (d/entid db page-attr)
         page-key-a (d/entid db page-key-attr)
+        expected-rows (into #{} (keep (fn [op]
+                                       (when (and (vector? op) (= :db/add (first op))
+                                                  (= version (second op)) (= :triplex.entity/row (nth op 2 nil)))
+                                         (peek (commit/stamp true clock #{} (dec provisional) provisional position false nil op)))))
+                            ops)
         written (into {} (keep (fn [x]
                                 (when (= page-key-a (:a x))
                                   [(:v x) (:v (some #(when (and (= (:e x) (:e %)) (= page-a (:a %))) %) added))])))
@@ -166,7 +174,7 @@
     (when-not (and (= 1 (count versions))
                    (some #(and (= owner (:e %)) (= root-a (:a %)) (= target-root (:v %))) added)
                    (= written (into {} (map (juxt page-key-attr page-attr)) (:written-pages plan)))
-                   (= added-ids (into #{} (comp (filter #(= row-a (:a %))) (map (comp :id lean/decode :v))) data))
+                   (= expected-rows (into #{} (comp (filter #(= row-a (:a %))) (map :v)) data))
                    (= (set (map #(subject/retirement-text (lean/prefix %) position clock journal) retired-ids))
                       (into #{} (comp (filter #(= retired-a (:a %))) (map :v)) data)))
       (throw (ex-info "Owner layout durable report unavailable" {:status 503 :code "OutcomeUnknown"})))

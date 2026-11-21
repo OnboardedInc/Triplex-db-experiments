@@ -295,10 +295,6 @@ case "$PREP1_MODE" in
     if [[ $TX2_SUBJECT_OWNER_HEAD == 1 ]]; then
       credit_modes=(barrier6 rolling6)
       export TRIPLEX_ERASURE_DIRECTORY="$work/privacy"
-      TX2_SUBJECT_SAVE=1 java_role /config/serial-gate.clj &
-      children[2]=$!
-      wait "${children[2]}"
-      unset 'children[2]'
       if [[ -f /config/owner_layout_gate.clj ]]; then
         TX2_SUBJECT_SAVE=1 WFIX1_URI="$DATOMIC_URI_TEMPLATE" java_role -i /config/regression.clj \
           -i /config/owner_layout_gate.clj -e '
@@ -311,6 +307,10 @@ case "$PREP1_MODE" in
         wait "${children[2]}"
         unset 'children[2]'
       fi
+      TX2_SUBJECT_SAVE=1 java_role /config/serial-gate.clj &
+      children[2]=$!
+      wait "${children[2]}"
+      unset 'children[2]'
       # [DX-W1] Why: use the merged shared authority for a genuinely sealed subject save.
       # Rejected: inferring protected-write coverage from a save that never used a body key.
       sql -d postgres -c 'CREATE DATABASE removal_authority OWNER datomic'

@@ -120,7 +120,7 @@ for (const loaded of [false, true]) {
       }
     } else {
       const arm = await adoptedArm(out, source, peer, seed, writer as Writer, loaded, false, head);
-    if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
+      if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
     }
   } finally {
     scaleHost.clean(out, slot);
