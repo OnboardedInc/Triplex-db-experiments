@@ -4218,3 +4218,13 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Decision:** no change to the running load. No agent launched for it.
 - **Cost:** server 2 USD 43.38 at 05:17; total USD 111.67 of 200. Projected: load to about 19:00, builder's measurements about 3 hours, aged card about 2.5 hours, end about 00:30 on 2026-11-22, total about USD 133.
 - Agents running: DX-SCALE1.
+
+### 2026-11-21 06:03 local: the 1 billion load stopped on its floor at 514.7 million records; limits extended, builder and driver resumed (2 agents running)
+
+- **Server 2** (`origin/exp/DX-SCALE1-deep-accounts` `15ecd2d39`, `scale1/AGE1-LOAD.md`): window 2 (30 minutes of writing) added 21,415,220 records at 11,927.62 records/s writing and **9,022.51 with maintenance**, under the 9,900 floor; the run's guard stopped it at 514,741,853 records (native t 38,613,452), directory 165.74 GB. Transactor 3.43 of six cores; 44 index jobs; 2,628,312 segments collected. Continuation so far: 1 h 30 min, USD 1.64; paid loading in total 2 h 14 min 53 s.
+- **Readings:** writing rate fell 10% between the two windows (13,270 to 11,928); maintenance took about 30% on top of writing in both (354 s after 1,196 s; 578 s after 1,795 s), so longer windows do not reduce its share; disk: 37.3 million records added for 1.03 GB after the initial collection, far better than predicted.
+- **Decision (mine, as stated to Sam at 05:30):** more time, not a smaller age. New limits: stop only when two consecutive cycles are both under 6,500 records/s with maintenance; total paid loading up to 26 hours (USD 28.34); directory ceiling unchanged at 400 GB. Worst case this adds about USD 26 of loading; projected campaign total about USD 137 to 146 of 200.
+- **DX-AGE1 part 6 resumed** (run-critical): step 1, publish the new limits alone (`age1/EXTENDED-LIMITS.md`), within about 20 minutes; step 2, say from the terminal archive why writing is slower than the ladder on idle cores, where maintenance time goes, whether the fall is a trend, and whether one setting change at a window boundary is well supported.
+- **DX-SCALE1 resumed** with the decision: watch for that commit, restart the load from the held cut, publish after the first cycle and every two hours.
+- **Server 2 idle since 05:59**; expected back at work by about 06:35.
+- Agents running: DX-SCALE1, DX-AGE1.
