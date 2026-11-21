@@ -39,7 +39,7 @@ import { releaseDeepStart, type DeepIdentity } from "../../../bench/lib/deep-pro
 import { checkProfileFlags, launchProfile, roles as jvmRoles } from "../jvm1/launch.mjs";
 import { datomicRuntime } from "../../../config/datomic/runtime.mjs";
 
-type ServerLaunch = { policy: ReturnType<typeof launchProfile>; walDirectory?: string };
+type ServerLaunch = { policy: ReturnType<typeof launchProfile>; walDirectory?: string; pgData?: string };
 
 const GiB = 1024 ** 3,
   script = fileURLToPath(import.meta.url),
@@ -499,6 +499,7 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
       policy ? policy.tx.cacheMiB + "m" : "2560m",
       ...(policy ? ["--memory-index-threshold", policy.index.threshold, "--memory-index-max", policy.index.max] : []),
       ...(walPath ? ["--wal-directory", walPath] : []),
+      ...(launch?.pgData ? ["--pg-data", launch.pgData] : []),
       "--pg-settings",
       policy ? Object.entries(policy.pg.settings).map(([key, value]) => "-c " + key + "=" + value).join(" ")
         : "-c shared_buffers=1GB -c max_wal_size=8GB -c synchronous_commit=on -c fsync=on -c full_page_writes=on -c track_io_timing=on -c track_wal_io_timing=on",

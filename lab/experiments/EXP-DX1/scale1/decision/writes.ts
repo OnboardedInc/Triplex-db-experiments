@@ -60,6 +60,7 @@ export type Save = {
   fairTurn?: number;
   neighboursAhead?: number;
   creditReleased?: number;
+  removalRetries?: number;
   status:
     | "offered"
     | "pending"
@@ -174,6 +175,7 @@ export async function play(
   capture = false,
   orderedIds = false,
   selection?: Admission,
+  waitForRemoval = false,
 ) {
   const fair = selection && admission(scopes.length, selection);
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
@@ -192,7 +194,7 @@ export async function play(
       response.path === `/v1/db/${save.db}/transact` &&
       Number.isFinite(response.written)
     ) {
-      save.sent = performance.timeOrigin + response.written;
+      if (!waitForRemoval || save.sent === undefined) save.sent = performance.timeOrigin + response.written;
       if (capture && Number.isFinite(response.headers))
         save.responseHeaders = performance.timeOrigin + response.headers;
       if (capture && "gatewayTraceparent" in response && typeof response.gatewayTraceparent === "string")
@@ -256,9 +258,23 @@ export async function play(
     row.dispatched = now();
     row.status = "pending";
     inFlightSends.set(row.id, row);
+    const send = async () => {
+      for (;;) {
+        try {
+          return await sender.client.transact(row.db, candidate.input);
+        } catch (error) {
+          // [DX-ERASE2] Why: a removal can temporarily close admission or invalidate an already submitted plan.
+          // Rejected: dropping the queued save or allocating a new command identity.
+          if (!waitForRemoval || !(error instanceof DatomicHttpError) ||
+              !["ErasureFrontierUnavailable", "CasConflict"].includes(error.code ?? "") ||
+              now() >= row.due + 15_000) throw error;
+          row.removalRetries = (row.removalRetries ?? 0) + 1;
+          await sleep(5);
+        }
+      }
+    };
     let p: Promise<void>;
-    p = sender.client
-      .transact(row.db, candidate.input)
+    p = send()
       .then((value) => {
         row.end = now();
         assert(row.sent !== undefined, "Acknowledged write has no matching socket sample");

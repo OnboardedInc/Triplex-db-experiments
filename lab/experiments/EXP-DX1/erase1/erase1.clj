@@ -5,6 +5,7 @@
             [ring.adapter.jetty :as jetty]
             [triplex.gateway.lean :as lean]
             [triplex.gateway.envelope :as envelope]
+            [triplex.gateway.erase :as erase]
             [triplex.gateway.privacy :as privacy]
             [triplex.gateway.reach :as reach]
             [triplex.gateway.main :as main]
@@ -18,6 +19,8 @@
 (def token (System/getenv "DX_ERASE_TOKEN"))
 (def nonce (System/getenv "DX_ERASE_NONCE"))
 (def plans (atom nil))
+(def server-scope (System/getenv "DX_ERASE2_SCOPE"))
+(def server-field (System/getenv "DX_ERASE2_FIELD"))
 (defn check! [ok message] (when-not ok (throw (ex-info message {}))))
 (defn until [x] (let [v (deref x 480000 ::timeout)] (check! (not= ::timeout v) "Native operation timed out") v))
 (defn wall-ms [] (let [t (Instant/now)] (+ (* 1000.0 (.getEpochSecond t)) (/ (.getNano t) 1e6))))
@@ -25,7 +28,9 @@
 (defn scope-name! [input]
   (let [s (get input "scope") [_ org project db generation] (json/read-str (scope/validate! s))]
     (check! (and (= org "test") (= project "test") (= generation 0)
-                 (re-matches (re-pattern (str "erase1-" nonce "(?:-[a-z]+)?")) db)) "Unexpected attempt scope")
+                 (if server-scope
+                   (= s server-scope)
+                   (re-matches (re-pattern (str "erase1-" nonce "(?:-[a-z]+)?")) db))) "Unexpected attempt scope")
     (scope/name-for s)))
 (defn connect! [input open]
   (let [name (scope-name! input) conn (open (main/db-uri name)) db (until (d/sync conn))]
@@ -286,6 +291,14 @@
            (if (= op "clock") {:now (wall-ms)}
              (let [conn (connect! input main/connection)]
                (case op
+                 "server-protection" (let [position (get input "position")
+                                            db (erase/sync! conn)]
+                                        (check! (and server-scope server-field (integer? position) (pos? position)
+                                                     (envelope/shared?)
+                                                     (not (privacy/enabled? db)))
+                                                "Expected an unopened sealed seed with shared removal storage")
+                                        (erase/declare! (scope-name! input) conn db
+                                                        {"attributes" [server-field] "sealed" true} position))
                  "parallel-writer" (do
                                      (load-file "/erase1-writer-check/regression.clj")
                                      (load-file "/erase1/parallel.clj")
@@ -315,14 +328,15 @@
 
 (defn -main [mode]
   (case mode
-    "gateway" (do
+    "gateway" (if server-scope (main/serve! handle 8080)
+              (do
                 (envelope/start!)
                 (d/create-database (main/db-uri "tx2-health"))
                 ;; [DX-ERASE1] Why: bare-metal diagnostics bind to the prepared loopback interface.
                 ;; Rejected: exposing native fixture controls on the server's public interfaces.
                 (jetty/run-jetty handle (cond-> {:port 8080 :join? true :min-threads 8 :max-threads 48}
                                          (System/getenv "DX_ERASE_BIND_HOST")
-                                         (assoc :host (System/getenv "DX_ERASE_BIND_HOST")))))
+                                         (assoc :host (System/getenv "DX_ERASE_BIND_HOST"))))))
     "fresh" (let [input (json/read-str (slurp *in*)) conn (connect! input d/connect)
                   t (get input "t") plan (into {} (map (fn [[k v]] [(keyword k) v])) (get input "plan"))
                   db (until (d/sync-excise conn t))]

@@ -33,19 +33,24 @@
     (when (= db ::timeout) (privacy/unavailable!))
     db))
 
-(defn declare! [name conn db input]
-  (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))]
-    (when-not (and (lean/enabled? db) (or (privacy/enabled? db) (= 0 (scope/head-position db (scope/entity db)))))
-      (privacy/failure! 409 "ProtectedScopeNeedsMigration" "Declare protection before saving into the scope"))
-    (privacy/register! name attrs sealed?)
-    (envelope/provision! name sealed?)
-    (privacy/guard name
-      (fn []
-        (when-not (privacy/enabled? (install-cut-guard! conn (sync! conn)))
-          (let [written (deref (d/transact conn [[:db/add (scope/entity db) :triplex.scope/erasure-ledger true]
-                                      [:db/add (scope/entity db) :triplex.scope/erasure-seq 0]]) 5000 ::timeout)]
-            (when (= written ::timeout) (privacy/unavailable!))))))
-    {:database name :attributes attrs :sealed sealed? :erasure {:seq (:seq (privacy/cut name (sync! conn)))}}))
+(defn declare!
+  ([name conn db input] (declare! name conn db input nil))
+  ;; [DX-ERASE2] Why: the private server driver overlays a new synthetic field on a sealed seed before traffic starts.
+  ;; Rejected: treating an ordinary product request as proof that a populated field has no clear history.
+  ([name conn db input staged-position]
+    (let [attrs (get input "attributes") sealed? (true? (get input "sealed"))]
+      (when-not (and (lean/enabled? db) (or (privacy/enabled? db)
+                   (= (or staged-position 0) (scope/head-position db (scope/entity db)))))
+        (privacy/failure! 409 "ProtectedScopeNeedsMigration" "Declare protection before saving into the scope"))
+      (privacy/register! name attrs sealed?)
+      (envelope/provision! name sealed?)
+      (privacy/guard name
+        (fn []
+          (when-not (privacy/enabled? (install-cut-guard! conn (sync! conn)))
+            (let [written (deref (d/transact conn [[:db/add (scope/entity db) :triplex.scope/erasure-ledger true]
+                                        [:db/add (scope/entity db) :triplex.scope/erasure-seq 0]]) 5000 ::timeout)]
+              (when (= written ::timeout) (privacy/unavailable!))))))
+      {:database name :attributes attrs :sealed sealed? :erasure {:seq (:seq (privacy/cut name (sync! conn)))}})))
 
 (defn identity [row]
   (cond-> {"assertionId" (:id row) "entity" (:entity_id row) "attribute" (:attribute row)

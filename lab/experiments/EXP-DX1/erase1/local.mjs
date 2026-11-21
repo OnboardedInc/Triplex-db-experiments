@@ -112,6 +112,8 @@ export async function local(opts, config, manager) {
   const mode = String(opts.run ?? "scale");
   const subjectWriter = mode.endsWith("-parallel") ? "1" : process.env.DX_ERASE1_SUBJECT_WRITER;
   const orderedIds = process.env.DX_ERASE1_ORDERED_IDS;
+  const creditMode = opts["credit-mode"] ?? "barrier6";
+  assert(["barrier6", "rolling6"].includes(creditMode));
   assert(subjectWriter === undefined || subjectWriter === "0" || subjectWriter === "1");
   assert(orderedIds === undefined || (orderedIds === "1" && subjectWriter === "1"));
   assert(
@@ -186,7 +188,7 @@ export async function local(opts, config, manager) {
   let info, network, run, child;
   function diskFloor() {
     const s = fs.statfsSync(REPO);
-    const minimum = holder === "DX-THIN1" ? 10 : 5;
+    const minimum = ["DX-THIN1", "DX-ERASE2"].includes(holder) ? 10 : 5;
     assert(s.bavail * s.bsize >= minimum * GiB, "Host disk below " + minimum + " GiB");
     return s.bavail * s.bsize;
   }
@@ -449,7 +451,10 @@ export async function local(opts, config, manager) {
           ...(subjectWriter !== undefined
             ? ["-e", "TX2_SUBJECT_SAVE=" + subjectWriter, "-e", "TX2_INT1_WRITE_READBACK=1"]
             : []),
-          ...(orderedIds ? ["-e", "TX2_SUBJECT_ORDERED_IDS=1", "-e", "TX2_SUBJECT_NUMERIC_OWNER=1"] : []),
+          ...(orderedIds
+            ? ["-e", "TX2_SUBJECT_ORDERED_IDS=1", "-e", "TX2_SUBJECT_NUMERIC_OWNER=1"]
+            : []),
+          ...(mode === "fast-authority-regression" ? ["-e", "TX2_REMOVAL_COST_READBACK=1"] : []),
           "-e",
           "DX_ERASE_TOKEN=" + token,
           "-e",
@@ -518,6 +523,7 @@ export async function local(opts, config, manager) {
     run = {
       nonce,
       mode,
+      creditMode,
       people,
       caps,
       slot: info.slot,
@@ -545,6 +551,7 @@ export async function local(opts, config, manager) {
         TRIPLEX_DATOMIC_LAYOUT: "lean",
         TX2_W0_POINT_JOURNAL: "1",
         DX_ERASE_TOKEN: token,
+        DX_V01_CREDIT_MODE: creditMode,
         ...(profile
           ? {
               ...traceEnv,

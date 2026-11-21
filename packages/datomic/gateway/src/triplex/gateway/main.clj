@@ -368,7 +368,7 @@
     (route-handler-base request)))
 
 (defn handler [request] (trace/handler route-handler request))
-(defn -main [& [port]]
+(defn serve! [serve-handler port]
   (envelope/start!)
   (d/create-database (db-uri "tx2-health"))
   ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.
@@ -379,5 +379,8 @@
     (try (sync-db (db-uri name))
          (catch Exception e
            (when (some #{name} (d/get-database-names (db-uri "*"))) (throw e)))))
-  (jetty/run-jetty handler {:port (if port (Integer/parseInt port) 8080)
+  (jetty/run-jetty serve-handler {:port port
                            :host "0.0.0.0" :join? true :min-threads 8 :max-threads 512}))
+
+(defn -main [& [port]]
+  (serve! handler (if port (Integer/parseInt port) 8080)))

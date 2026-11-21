@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
-import { DatomicClient, DatomicHttpError } from "../../../../packages/datomic/dist/index.js";
+import {
+  DatomicClient,
+  DatomicHttpError,
+  orderedSaveIdentity,
+} from "../../../../packages/datomic/dist/index.js";
 import type { CompositionHandle } from "../../../bench/lib/composition.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
+import { command } from "../w1/group/workload.ts";
 
 type Signal = (op: string, data: object) => Promise<unknown>;
 const protectedField = ":privacy/field";
@@ -149,6 +154,77 @@ export async function compareSharedAuthoritySaves(
     await peer.declareProtection(f.db, [protectedField], true);
     let position = Number((await peer.basis(f.db)).position.v);
     let receiptNumber = 0;
+    if (process.env.DX_ERASE1_ORDERED_IDS === "1") {
+      // [DX-ERASE2] Why: bind the native application counter to a real ordered save and its stored row.
+      // Rejected: calling the peer's round-trip clock transaction-thread time.
+      const { subjectFunction } = await peer.request<{ subjectFunction: string }>(
+        "GET",
+        `/v1/db/${f.db}/write-options`,
+      );
+      assert.match(subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/);
+      const arms = [];
+      for (const attribute of [plainField, protectedField, plainField]) {
+        const rows = [];
+        const clocks = [];
+        for (let i = 0; i < count + 4; i++) {
+          const prior: Awaited<ReturnType<DatomicClient["rows"]>>[number] | undefined = rows[i - 4];
+          const owner = `authority/cost-${arms.length}/person-${i % 4}`;
+          const value = `protected-cost-${i}-${nonce}`;
+          const identity = orderedSaveIdentity();
+          const id = `cost-${nonce}-${++receiptNumber}`;
+          const input = command(
+            id,
+            [{ e: owner, a: attribute, v: { type: "string", value } }],
+            prior ? [prior] : [],
+            true,
+            false,
+            identity,
+          );
+          input.sourceK = position;
+          const start = performance.now();
+          const ack = (await peer.transact(f.db, input)) as {
+            operationId: string;
+            position: { v: string };
+            t: { v: string };
+            subjectSave?: string;
+            subjectOrderedIds?: boolean;
+            nativeApplyMs?: number;
+            datoms?: number;
+          };
+          const e2eMs = performance.now() - start;
+          assert.deepEqual([ack.operationId, Number(ack.position.v)], [id, ++position]);
+          assert.equal(await peer.claim(f.db, id, position), identity.transactionId);
+          const [row] = await peer.rows(f.db, { id: identity.assertionId(0) });
+          assert(
+            row &&
+              row.value_string === value &&
+              row.entity_id === owner &&
+              row.attribute === attribute,
+          );
+          assert.equal(row.recorded_position, position);
+          rows.push(row);
+          if (i >= 4) {
+            assert.deepEqual([ack.subjectSave, ack.subjectOrderedIds], [subjectFunction, true]);
+            clocks.push({
+              id: row.id,
+              t: ack.t.v,
+              e2eMs,
+              nativeApplyMs: ack.nativeApplyMs ?? null,
+              datoms: ack.datoms,
+            });
+          }
+        }
+        arms.push(clocks);
+      }
+      output("authority-native-saves", {
+        timing: "Mac diagnostic",
+        authority,
+        count,
+        subjectFunction,
+        arms,
+      });
+      return;
+    }
     const samples = {
       plainBefore: [] as number[],
       sealed: [] as number[],
