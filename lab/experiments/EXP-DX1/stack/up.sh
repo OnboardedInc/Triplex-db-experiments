@@ -632,19 +632,21 @@ if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
 fi
 docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \
   -e "JAVA_OPTS=$tx_java$trace_tx_java$final_flags" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src "${trace_env[@]}" ${prep_tx[@]+"${prep_tx[@]}"} -e "TRIPLEX_TRACE_JFR=$TRIPLEX_TRACE_TX_JFR" -e TRIPLEX_TRACE_PROCESS=tx "${trace_mount[@]}" -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" "${tx_start[@]}" >/dev/null
+template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 erase_env=()
 erase_mount=()
 gateway_main=triplex.gateway.main
 if [[ -n ${pg_data:-} ]]; then
   [[ -n ${DX_ERASE2_SCOPE:-} && -n ${DX_ERASE2_FIELD:-} && -n ${DX_ERASE_TOKEN:-} && -n ${TRIPLEX_ERASURE_WRAPPING_KEY:-} ]]
   docker exec "$prefix-pg" psql -Xq -v ON_ERROR_STOP=1 -U postgres -d postgres     -c 'CREATE DATABASE removal_authority OWNER datomic'
+  authority_jdbc=${template#*\?}
+  authority_jdbc=${authority_jdbc/\/datomic\?/\/removal_authority\?}
   erase_env=(-e DX_ERASE2_SCOPE -e DX_ERASE2_FIELD -e DX_ERASE_TOKEN -e TRIPLEX_ERASURE_WRAPPING_KEY
     -e TRIPLEX_ERASURE_SHRED_GRACE_MS=0 -e TX2_REMOVAL_COST_READBACK=1
-    -e "TRIPLEX_ERASURE_JDBC=jdbc:postgresql://$prefix-pg:5432/removal_authority?user=datomic&password=datomic")
+    -e "TRIPLEX_ERASURE_JDBC=$authority_jdbc")
   erase_mount=(-v "$repo/lab/experiments/EXP-DX1/erase1:/erase1:ro")
   gateway_main=erase1
 fi
-template="datomic:sql://{db}?jdbc:postgresql://$prefix-pg:5432/datomic?user=datomic&password=datomic"
 # [DX-BM1] Why: avoid probing catalog creation before the SQL transactor announces startup.
 # Rejected: treating an early location read failure as a missing database, or unbounded health fetches.
 if [[ ${DX_STACK_WAIT_FOR_TRANSACTOR:-0} == 1 ]]; then

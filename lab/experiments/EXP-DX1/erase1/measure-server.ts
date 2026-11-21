@@ -82,6 +82,7 @@ const seed = openScaleSeal(
   values["image-sha256"],
   false,
   values["transfer-sha256"],
+  "stopped-copy",
 );
 const db = seed.scope.db;
 const attempt = randomUUID();
@@ -314,12 +315,11 @@ async function measure(writer: DatomicClient, reader: DatomicClient, writeAddres
   const senders = await preload(writer, seed, head, baseTape);
   for (const sender of senders) sender.client = connect(writeAddress);
   let removal: Erase | undefined;
-  const checkRoutes = async (receipt: Erase, handle: string) => {
-    const t0 = now();
+  const checkRoutes = async (receipt: Erase, handle: string, acknowledged: number) => {
     const markerBytes = marker(receipt);
     const readWitness = (rows: readonly Row[]) => {
       const row = rows.find((r) => r.id === first.row.id);
-      assert(row && row.value_string === null);
+      assert(row && row.value_type === "erased" && row.value_string === null);
       assert.deepEqual(JSON.parse(row.value_json!), markerBytes);
       const { value_type: _type, value_string: _string, value_json: _json, ...observed } = row;
       const {
@@ -380,6 +380,7 @@ async function measure(writer: DatomicClient, reader: DatomicClient, writeAddres
             wanted,
           );
           for (const r of results) {
+            assert.equal(r.value_type, "erased");
             assert.equal(r.value_string, null);
             assert.deepEqual(JSON.parse(r.value_json!), markerBytes);
             const previous = targets.find((target) => target.row.id === r.id)!.row;
@@ -447,7 +448,7 @@ async function measure(writer: DatomicClient, reader: DatomicClient, writeAddres
     const results = await Promise.allSettled(
       checks.map(async ([route, check]) => {
         await available(check);
-        return { route, elapsedFromAcknowledgementMs: now() - t0 };
+        return { route, elapsedFromAcknowledgementMs: now() - acknowledged };
       }),
     );
     const observed = results.map((result, index) =>
@@ -543,7 +544,7 @@ async function measure(writer: DatomicClient, reader: DatomicClient, writeAddres
           wanted,
         );
         assert(held);
-        const routes = await checkRoutes(removal, held.handle);
+        const routes = await checkRoutes(removal, held.handle, acknowledged);
         const end = now();
         assert.deepEqual(await writer.erase(db, commandId, selectors), removal);
         assert.equal(

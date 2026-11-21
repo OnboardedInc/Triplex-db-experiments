@@ -20,7 +20,8 @@ type Image = {
 export type AdoptedSeed = ReturnType<typeof openScaleSeal>;
 export const scopeKey = (name: string) => JSON.stringify(["triplex-scope-v1", "test", "test", name, 0]);
 
-export function openScaleSeal(file: string, pin: string, toy = false, transferPin?: string) {
+export function openScaleSeal(file: string, pin: string, toy = false, transferPin?: string,
+  input: "dump" | "stopped-copy" = "dump") {
   const bytes = fs.readFileSync(file);
   assert.match(pin, digest);
   assert.equal(hex(bytes), pin, "SCALE1 image digest differs");
@@ -58,7 +59,10 @@ export function openScaleSeal(file: string, pin: string, toy = false, transferPi
       [image.source, image.nonce, "success", pin]);
     assert.equal(path.basename(path.dirname(file)), transfer.tag);
     assert.match(image.sha256, digest);
-    assert(Number.isSafeInteger(image.bytes) && image.bytes > 0 && fs.statSync(dump).size === image.bytes);
+    assert(Number.isSafeInteger(image.bytes) && image.bytes > 0);
+    // [DX-ERASE2] Why: a physical copy supplies the seed bytes, with the same independent manifest and live witnesses.
+    // Rejected: requiring a second full copy in logical dump form for a physical-copy run.
+    if (input === "dump") assert.equal(fs.statSync(dump).size, image.bytes);
   }
   return { image, scope, proof, key, pin, dump, transferPin };
 }

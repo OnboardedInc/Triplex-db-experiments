@@ -21,7 +21,7 @@ These are planning ranges for the fresh ten-account database. The earlier server
 
 ## Driver command
 
-Use the clean removal branch revision and the corresponding `v01/build.ts` build receipt. The input is a **disposable writable copy** of a cleanly stopped PostgreSQL 17 cluster for the original fresh SCALE1 seed. Obtain `image.json`, `transfer.json` and their independent SHA-256 pins through the normal seed handoff. Leave the original sealed cluster separate. The driver writes into the disposable copy and leaves it stopped for evidence. It puts the lab authority in a separate PostgreSQL database under that same disposable server cluster. Actual gateway-host-loss deployment has separate data backups and wrapping key custody.
+Use the clean removal branch revision and the corresponding `v01/build.ts` build receipt. The input is a **disposable writable copy** of a cleanly stopped PostgreSQL 17 cluster for the original fresh SCALE1 seed. Obtain `image.json`, `transfer.json` and their independent SHA-256 pins through the normal seed handoff. Leave the original sealed cluster separate. The stopped copy supplies the data bytes, so the original logical dump is optional. The driver writes into the disposable copy and leaves it stopped for evidence. It puts the lab authority in a separate PostgreSQL database under that same disposable server cluster. Actual gateway-host-loss deployment has separate data backups and wrapping key custody.
 
 ```sh
 export DOCKER_HOST=unix:///var/run/docker.sock
@@ -30,7 +30,7 @@ export TRIPLEX_DATOMIC_FAST_PATHS=save-wire
 mkdir -p /var/tmp/triplex-bm1
 flock --no-fork -n /var/tmp/triplex-bm1/dx-bm1-day.lock \
   timeout --kill-after=90s 86m \
-  node --experimental-transform-types lab/experiments/EXP-DX1/erase1/measure-server.ts \
+  taskset -c 9,10,11 node --experimental-transform-types lab/experiments/EXP-DX1/erase1/measure-server.ts \
   --profile server --credit-mode rolling6 --commit "$(git rev-parse HEAD)" \
   --seed "$SEAL_DIR" --image-sha256 "$IMAGE_PIN" --transfer-sha256 "$TRANSFER_PIN" \
   --pg-data "$DISPOSABLE_PG_COPY" --out "$NEW_RUN_DIR"
@@ -44,4 +44,4 @@ The prior runner kept launcher PIDs, stopped them only while their process leade
 
 ## Scorecard handoff
 
-In the next-card adopted runner, add a removal arm consuming the same seed and new field setup. Run it after the performance arms on a fresh disposable copy. Keep the restore and deferred-Publish fixture from `regression.ts` for the standing product gate. Feed `route-checks.json` and the complete regression cases into the renderer. Require matching source, attempt, slot, database, seed pin, assertion identities and named checks before changing either row from NOT RUN. A partial file should identify missing cases. The scorecard branch has no DX-ERASE2 edits.
+In the next-card adopted runner, add a removal arm consuming the same seed and new field setup. Run it after the performance arms on a fresh disposable copy. Keep the restore and deferred-Publish fixture from `regression.ts` for the standing product gate. Feed `route-checks.json` and the complete regression cases into the renderer. Require matching source, attempt, slot, database, seed pin, assertion identities and named checks before changing either row from NOT RUN. A partial file should identify missing cases. The current renderer spells the empty status `NOT MEASURED`. The scorecard branch has no DX-ERASE2 edits.
