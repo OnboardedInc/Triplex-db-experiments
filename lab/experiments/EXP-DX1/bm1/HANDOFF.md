@@ -14,10 +14,10 @@ A new driver took over bench 3 at 12:45 EST after the previous driver stopped at
 | failed | `triplex-bench3-rd1`, control ladder, 18:57 UTC | RD1 `ca93f5165` | Same refusal; see below |
 | failed | `triplex-bench3-removal2`, 19:05:53 UTC | INT1 build `3669bee41` | Image IDs moved by later builds; see below |
 | failed | `triplex-bench3-cold`, 19:13:30 UTC | INT1 `8ab832093`, `jvm1/cold-server.sh ... --credit-mode rolling6` | Runner assertion before the first offer; see below |
-| 1 | `triplex-bench3-removal2` (preparing since 19:13:14 UTC; `queue/removal/run.sh` = `bench3-removal.sh`) | INT1 build `3669bee41`, `erase1/SERVER-ERASE2.md` | build, new copy, then 86 min |
-| 2 | `triplex-bench3-rd1` (`queue/rd1/run.sh` = `bench3-rd1.sh`) | RD1 `ca93f5165`, prepared-copy reader ladders, control then tuned, rolling 6 | build, then 2 × (copy + 32 min) |
-| 3 | `triplex-bench3-fresh` (`queue/fresh/run.sh` = `bench3-writer-addons.sh`, waiting for `rd1`) | PREP1 `891ab9139`, `prep1/FRESH-FIRST.md` | 120 min |
-| 4 | `triplex-bench3-realistic` (`queue/realistic/run.sh` = `bench3-realistic.sh`) | INT1 build `8597e3ef7`, first realistic rung, then `verify` | 2–3 h plus verify |
+| done | `triplex-bench3-removal2` ([reading](REMOVAL-READING.md)); `queue/removal/run.sh` = `bench3-removal.sh`) | INT1 build `3669bee41`, `erase1/SERVER-ERASE2.md` | build, new copy, then 86 min |
+| failed | `triplex-bench3-rd1`, 19:43:38 UTC ([reading](RD1-READING.md)) | RD1 `ca93f5165` | Control ran; control seal missing, so tuned was refused |
+| 1 | `triplex-bench3-fresh` (running since 19:43:28 UTC; `queue/fresh/run.sh` = `bench3-writer-addons.sh`) | PREP1 `891ab9139`, `prep1/FRESH-FIRST.md` | 120 min |
+| 2 | `triplex-bench3-realistic` (`queue/realistic/run.sh` = `bench3-realistic.sh`) | INT1 build `8597e3ef7`, first realistic rung, then `verify` | 2–3 h plus verify |
 
 **The cold start arms stopped on a runner assertion, with no offers made.** The stack started on the builder's own command, and the startup and catalog checks passed. Then `jvm1/cold-server.ts` line 118 at `8ab832093` failed: `assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/)` received `null`. The write gateway's `/write-options` for the held fresh copy at cut 87,002 reports subject save, numeric owner and ordered IDs, but no installed subject function. The other full-size runners on this seed, `prep1/live.ts` line 390 and `v01/adopted.ts` line 239, pass the same check after their own setup. So the cold runner is probably missing the step that installs or reports the function before its first offer. **The JVM1 builder must fix this.** The fix must keep the no-warming rule: installing the function is a write, so it has to be part of the measured start or happen before the stopped copy is made. The evidence is on the Mac at `evidence/DX-BM1/bench3/bench3-cold`. The cold slot's containers, volume and WAL were released by the runner itself.
 
