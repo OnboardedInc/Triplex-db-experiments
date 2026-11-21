@@ -85,6 +85,16 @@ defined in `lab/V0.1.md` on main.
     reached a listener (tooling); the 128-person check verified.
 16d. **Memory-matched G1 against ZGC** (G1 with 37 GiB reserved) to separate the collector from the memory.
 
+16e. **Publish with priority under load (server 1's last run, 2026-11-21 02:05 local, `origin/exp/DX-BM1-bare-metal`
+`d767ae051`).** At 25,000 deep people, one account in one database, old settings (Java 21 G1, one core per JVM): all
+90 Publishes gave a correct first answer inside one second; first-answer p99 36.72, 112.20 and 84.21 ms at 3.5, 23.5
+and 39.4 offered saves per second (30 Publishes per rate). Open: (a) **the same at 100,000 people** was not measured
+(a fresh 100k seed needs about 3.25 hours); (b) **at 39.4 offered the account's saves were acknowledged at only
+25.39 per second, 2,527 were still pending one second after the window, and save p99 including queueing was 119.67
+seconds**, with one Publish every five seconds: find out whether Publish priority starves saves at that Publish rate
+or whether the one-core settings were the limit, and repeat on the `server` profile; (c) what a realistic Publish
+rate is for the deepest account (ask Sam or measure from production).
+
 ## Not started, deferred past version 0.1 or past the weekend
 
 17. Aging beyond 1 billion records (2, 4, 8 billion) when there is budget; the growth model's predictions are the

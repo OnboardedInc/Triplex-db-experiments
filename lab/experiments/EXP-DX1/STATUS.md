@@ -4091,3 +4091,20 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Server 2 order** (driver stopped and resumed at 01:58 with the new item; nothing was running a measurement): ladder (at most 60 minutes) -> fresh scorecard `3a71c1767` -> full 1 billion load only if an arm qualified -> aged scorecard.
 - **Disk at 1 billion:** the scorecard needs four copies at once, three on one device; at about 290 GB each that does not fit on the 879 GB and 890 GB devices. **DX-V01 part 7 resumed** to let the arms run one at a time from a copy made just before each arm.
 - Agents running: DX-BM1, DX-SCALE1, DX-V01.
+
+### 2026-11-21 02:07 local: Publish with priority measured at 25,000 people; server 1 deleted (2 agents running; scorecard builder working)
+
+- **Server 1's last run** (`origin/exp/DX-BM1-bare-metal` `d767ae051`, code INT1 `0196b9952` with ACT1 `acc0f5c39`): 25,000 deep people (3,988,500 facts, built in 30.55 min because a 100k seed would not fit the cap), one account in one database, Java 21 G1, one core per JVM, one Publish every five seconds.
+
+  | Offered saves/s | First correct answer p50 / p99 ms | Within 1 s | Saves waiting at Publish (min / median / max) | Save ACKs/s | Saves pending 1 s after window |
+  | --- | --- | --- | --- | --- | --- |
+  | 3.5 | 19.83 / 36.72 | 30/30 | 0 / 0 / 0 | 3.50 | 0 |
+  | 23.5 | 36.45 / 112.20 | 30/30 | 0 / 1 / 8 | 23.38 | 0 |
+  | 39.4 | 56.74 / 84.21 | 30/30 | 437 / 1,355.5 / 2,426 | 25.39 | 2,527 |
+
+- Publish waited at most 48.02 ms for an active save. Driver's forecasts: 70 to 160 ms at 3.5 (measured better), 90 to 325 at 23.5 (inside), 125 to 650 at 39.4 (measured better). p99 here is the maximum of 30.
+- **Open from this run:** not measured at 100,000 people (the 2.051 s reading of 2026-11-20 morning at 23.5 saves/s was at 100k without priority, so the two are not the same size); at 39.4 offered the account's saves fell behind (25.39 acknowledged per second, save p99 119.67 s including queueing) on the old one-core settings. Logged as NEXT-WEEK 16e.
+- **Server 1 deleted at 02:06 local** through the provider after `STATUS` showed `deletion-ready`, nothing was running and the Publish evidence checksums matched on the Mac. 62.65 h, **USD 68.29**. Lost with it, by choice: the small ten-account database files and the erasure staging fixtures (rebuildable).
+- **Cloud total at 02:06: USD 108.23 of 200** (server 2 at USD 39.94 and running). My earlier "about 111 to 112" was an overestimate of about USD 3.
+- Server 2: driver adopting the held aging volume for the ladder (`e2fd38cf6`, 02:01).
+- Agents running: DX-SCALE1, DX-V01.
