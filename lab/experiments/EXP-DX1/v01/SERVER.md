@@ -4,7 +4,7 @@ Use the commit in the Build section for the next cards on `exp/DX-V01-next-card`
 
 The queued 1B comparison still runs `8cc32d380dc56559477535e18130dbd0f3bff555` on `exp/DX-V01-scorecard`. Follow its pinned [one-copy handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/0af801036141177bc48ad1883b4b12d3dd5ef961/lab/experiments/EXP-DX1/v01/SERVER.md).
 
-The latest SCALE1 handoff records that AGE1 stopped at the time guard after calibrating at about 5,284 records/s. Run fresh first. The 1B command requires a later verified one-billion-record seal. [SCALE1 handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/58e4b1ca3865315e6b671fc4cbf07687d113c6f8/lab/experiments/EXP-DX1/scale1/HANDOFF.md)
+The earlier SCALE1 handoff records that AGE1 stopped at the time guard after calibrating at about 5,284 records/s. The 1B command needs the verified one-billion-record seal and its matching identity bundle. [SCALE1 handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/58e4b1ca3865315e6b671fc4cbf07687d113c6f8/lab/experiments/EXP-DX1/scale1/HANDOFF.md)
 
 ## Campaign and forecast
 
@@ -62,7 +62,7 @@ These are engineering estimates from the earlier benchmark. In the five-minute c
 Use a clean checkout of `exp/DX-V01-next-card` at the runner commit on the dedicated bare-metal Ubuntu host.
 
 ```bash
-COMMIT=NEXT_CARD_RUNNER
+COMMIT=ad8ab673a04e2f8a2bc02b4bbac642fd63caedbb
 BUILD=/var/tmp/triplex-v01-next-card-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types \
   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"

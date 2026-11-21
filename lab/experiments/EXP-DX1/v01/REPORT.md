@@ -1,4 +1,4 @@
-Next-card runner on separate branch exp/DX-V01-next-card. The queued 1B runner stays at 8cc32d380.
+Run ad8ab673a04e2f8a2bc02b4bbac642fd63caedbb on exp/DX-V01-next-card for the next cards. The queued 1B runner stays at 8cc32d380.
 P2 and P6 use 300-second cells with whole, first-half and second-half readings. Select 90 seconds to replay the earlier tape.
 Counters use the offer clock. Native clock events keep their own boundaries; absent sources and scheduling gaps appear on the card.
 The full forecast is 384 minutes and USD 6.98 per age. The 90-second campaign is 300 minutes and USD 5.45.
@@ -6,6 +6,12 @@ The credit selection passes integration or barrier through the current six-credi
 P1 and checked cold P7 reads can show a measured miss. Incomplete scope stays partial. Publish and failover remain separate.
 The twelve-core proposal is for the integration owner. The launcher still uses the existing core assignments.
 The two-writer Mac gate uses only an ordinary heavy token. Its clocks are diagnostic.
+
+## Part 8 gates
+
+The fresh source checkout built all eight package tasks and the managed Datomic image. The native toy ran both ordered per-person and grouped, verified exact saves and the retired-ID and history checks, and rendered all fourteen obligations. The checker independently recomputed twelve quiet-account windows from native offer and ACK times. A live PostgreSQL 17 copy executed the same SQL for all three stat views. The focused gate passed fifteen tests, including mismatched clock or slot refusal, paired p99 denominators and publication guards. All eight 90-second offer tapes matched the original source byte for byte. The first attempt completed both native configurations but stopped during host collection because a renderer import loaded an unrelated package outside the clean clone. Its compressed archive is retained. Both rerun reservations, both toy volumes, the owned image and the scratch checkout were removed. [Evidence and checksums](EVIDENCE.md)
+
+The wider Linux launch, cgroup and checkpoint capture under live bare-metal load, and rolling performance remain unverified. The Mac clocks are diagnostic. No acceptance pins moved. Against 3a71c1767 this branch carries the earlier sequential copy staging and the fresh server's Docker PID census compatibility fix, as well as the new time windows, provenance-checked counters, verdicts and credit selector. [Server commands and forecast](SERVER.md)
 
 ## Part 8 evidence and verdict audit
 

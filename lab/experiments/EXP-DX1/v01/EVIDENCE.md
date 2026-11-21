@@ -65,3 +65,9 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 - `part7/focused-final.log` covers the four-arm manifest, refusal cases and active-time accounting. It compares the published prior launch plan to both invocation modes. `part7/assemble-cli.log` records the missing-arm refusal through the public command.
 - `part7/native-card.tar.gz` contains the 14-row diagnostic replay on the 80-person toy seed. `part7/SCORECARD-v0.1.md` is its card and `part7/verify-sequential-a.log` records the checks and cleanup.
 - The package build receipt, staged image and slot lifecycle logs are in `part7/`. The fixture ran at `f9b7e0c0b`. The server runner adds preflight retry logging to that source.
+
+## Part 8 next-card gates
+
+- `part8/native-card-next-b.tar.gz`, its index and `part8/SCORECARD-next-b.md` retain the two diagnostic native configurations and the PG17 stats witness.
+- `part8/unit-next-b.log` and `part8/verify-next-b.log` bind the rendered evidence, the recomputed window counts and the fifteen gate checks. `part8/replay-90.log` binds all eight original offer tapes.
+- `part8/fixture-next-b-1.log`, the clean-build logs and image retirement record identify the owned slot, build and cleanup. The first collection refusal and its native inputs remain in `part8/fixture-next-a-1.log` and `part8/native-refused-next-a.tar.gz`.
