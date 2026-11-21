@@ -4283,3 +4283,23 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Backlog file** rewritten as a queue (`NEXT-WEEK.md`): running six, next nine in order.
 - **1 billion load:** 603.9 million at 08:55, 8,978 records/s with maintenance; ends about 21:10 to 23:00 local.
 - **Cloud:** about USD 116.2 of 200 at 09:20 (first rental 68.29, server 2 about 47.8, new rental 0.1). Projected about USD 170 with both servers through Sunday midday.
+
+### 2026-11-21 09:43 local: rolling release built and gated (28 minutes); rented server running; reads per full-size save named (6 agents running)
+
+- **DX-PREP1 part 14, step 1 finished** (exit 0). `origin/exp/DX-PREP1-parallel-prepare`: scheduler and shared sender `b0ffdd2ab`; server commit `c8f903ce1`; head `cb5e3cf7a`; `prep1/ROLLING-CREDITS.md`.
+  - Rolling releases one ticket after its own durable ACK is validated. The first credit is reserved for the quiet account; an eligible quiet save has at most 5, 7, 11 or 15 already-submitted neighbour saves ahead of it at widths 6, 8, 12, 16. An ambiguous result quarantines the person and closes the window. Default stays the six-credit barrier.
+  - Mac gates at rolling 6 and 16: PostgreSQL reopened with all 56 and 66 expected receipts including both withheld replies' original receipts; no save denied before append appeared after restart; all 100 immediate pinned reads matched; barrier replay byte-identical.
+  - **Predictions before the run** (full size, five-minute windows; stored per second whole window / second half; quiet p99 alone -> loaded):
+
+    | Arm | 235 offered | 394 offered | 620 offered | Loaded p99 at 235, second half | Quiet at 394 |
+    | --- | --- | --- | --- | ---: | --- |
+    | Barrier 6 | 235 / 235 | 351 / 367 | 340 / 355 | 110 ms | 15 -> 73 ms |
+    | Rolling 6 | 235 / 235 | 381 / 388 | 388 / 402 | 64 ms | 15 -> 36 ms |
+    | Rolling 12 | 235 / 235 | 394 / 394 | 447 / 462 | 55 ms | 15 -> 43 ms |
+
+  - Falsifiers: no gain over the barrier at 394 with rolling 12; second half under 388 per second or any expiry at 394; a quiet ratio larger than the barrier's. Next limit expected: serial apply (1.86 ms per save, about 537 per second).
+- **Rented server `triplex-bench-3`:** ready in under 30 minutes (bootstrap and the full-size seed copied from server 2); running its control (the tuned full-size arm) at 09:42; the driver watches for `c8f903ce1` and runs barrier 6, rolling 6, rolling 12 next (112 to 135 minutes forecast).
+- **DX-W1 part 8 finished** (exit 0), `origin/exp/DX-W1-commit-tail-reads` `ff4346209`: 1.194 SQL fetches per full-size save. By index, loads per save: EAVT 0.840 (owner identity and revision, scope and function witnesses, latest position and clock), AEVT 0.977 (native row redundancy checks, excision witness, position fallback), AVET 0.00054 (operation, command and journal uniqueness, historical identities; the ordered identities work). The archive's overlapping counters cannot assign fetches to single lookups; a sampled per-attribute trace is added (off by default). Opt-in serial revision check with predecessor decode reuse: predicted apply 1.50 to 1.85 ms and 385 to 394 stored at 394 offered, 480 to 550 at 620 (modest). **Gateway preparation tail:** garbage-collection pauses on the write gateway account for at least 85.8% of preparation time in the slowest 1%; follow-up is ZGC on the write gateway.
+- **Launched:** DX-THIN1 part 9 (merge `b0ffdd2ab`, W1's trace and option, selectable ZGC on the write gateway; new pin; default stays barrier until measured); DX-HASYNC1 part 5 (two-server failover commands for Sunday morning: policy B, policy A with a second failure, planned move, fence; predictions; four hours on both servers).
+- **Mac disk** fell to 9 GiB at 09:19; 65 old image build copies (19 GB) in the writer builder's worktree plus stale images and build cache removed; 41 GiB free; janitor now removes build copies older than three hours.
+- Agents running: DX-SCALE1, DX-BM1, DX-V01, DX-PLAY1, DX-THIN1, DX-HASYNC1.
