@@ -1,6 +1,6 @@
 # Full-size pinned read comparison
 
-Run on the prepared fresh SCALE1 copy with ten accounts in one database. Use the exact DX-RD1 run commit, its [prepared build](../v01/SERVER.md), and the held image and transfer pins. The existing native queue serializes access. Allow 240 GiB of free scratch. The command stops at 56 minutes and allows 90 seconds for termination. A restore exceeding its 11-minute stream budget leaves an incomplete comparison. Build preparation is separate.
+Run on the prepared fresh SCALE1 copy with ten accounts in one database. Use the DX-RD1 run commit `6388642061226f470c227b890bdf1fd145126f11`, its [prepared build](../v01/SERVER.md), and the held image and transfer pins. The existing native queue serializes access. Allow 240 GiB of free scratch. The command stops at 56 minutes and allows 90 seconds for termination. A restore exceeding its 11-minute stream budget leaves an incomplete comparison. Build preparation is separate.
 
 ```bash
 cd "$BUILD/repository"
