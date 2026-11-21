@@ -18,6 +18,14 @@ const bench = "/var/tmp/triplex-scale1";
 const seedDir = path.join(bench, "decision/attempts/arm-d7-wfix-pool-seed");
 const bootstrap = "97852735506d9f04d7a2195ee11bc0535b7a2493";
 const ageFloor = "2859d6b15";
+const bulkSource = "acd350e927515b7c4d99f134f8600ea8de4d63f8";
+const bulkPrefix = {
+  records: 431778659,
+  head: 187002,
+  t: 34766053,
+  checkpoint: "4d1ab9fa2a1adf9ba0e2dc73ef5a71fd8adf7d4780e40c52090acb6f92242a04",
+  population: "d51c7a42bd10d651b5971a32bc4aa7d281ec582cc5add5181ae32492ab786b5e",
+};
 const sourceLayout = "lean";
 const GiB = 2 ** 30;
 const dockerEndpoint = "unix:///var/run/docker.sock";
@@ -65,16 +73,17 @@ async function main(
   exportCheckout: string,
   stoppedSeed?: string,
   resumeDiscovery = false,
+  bulkLadder = false,
 ) {
   assert(process.platform === "linux" && process.getuid?.() === 0);
   assert.equal(process.env.DOCKER_HOST, dockerEndpoint);
   assert.equal(path.dirname(out), bench);
-  assert.match(path.basename(out), /^age-v01-1b(?:-[a-z])?$/);
+  assert.match(path.basename(out), bulkLadder ? /^age-v01-bulk-[a-z]$/ : /^age-v01-1b(?:-[a-z])?$/);
   const prefix = "scale1-" + path.basename(out);
   const pgName = prefix + "-pg",
     copyName = prefix + "-copy";
   const netName = prefix + "-net",
-    sourceVolume = resumeDiscovery ? "scale1-age-v01-1b-c-data" : prefix + "-data";
+    sourceVolume = resumeDiscovery || bulkLadder ? "scale1-age-v01-1b-c-data" : prefix + "-data";
   const loopback = Object.values(os.networkInterfaces())
     .flat()
     .find((a) => a?.internal && a.family === "IPv4")?.address;
@@ -82,6 +91,10 @@ async function main(
   assert.equal(path.dirname(ageCheckout), bench);
   assert.match(ageSource, /^[a-f0-9]{40}$/);
   assert.equal(call("git", ["rev-parse", "HEAD"], { cwd: ageCheckout }), ageSource);
+  if (bulkLadder) {
+    assert.equal(ageSource, bulkSource);
+    assert.equal(call("git", ["status", "--porcelain"], { cwd: ageCheckout }), "");
+  }
   call("git", ["merge-base", "--is-ancestor", ageFloor, ageSource], { cwd: ageCheckout });
   assert.equal(path.dirname(exportCheckout), bench);
   const exporter = call("git", ["rev-parse", "HEAD"], { cwd: exportCheckout });
@@ -107,7 +120,7 @@ async function main(
   );
   assert.equal(
     docker("volume", "ls", "--format", "{{.Name}}").split("\n").includes(sourceVolume),
-    resumeDiscovery,
+    resumeDiscovery || bulkLadder,
   );
   assert(!docker("network", "ls", "--format", "{{.Name}}").split("\n").includes(netName));
   assert(
@@ -213,14 +226,46 @@ async function main(
     }
     assert.equal(docker("ps", "-aq", "--filter", "volume=" + sourceVolume), "");
   }
+  if (bulkLadder) {
+    // [DX-SCALE1] Why: continue the verified checkpoint on its stopped volume and keep its old evidence immutable.
+    // Rejected: re-adopting the original image or rewriting the source calibration checkpoint.
+    const prior = path.join(bench, "age-v01-1b-f");
+    const cleanup = read(path.join(prior, "cleanup.json"));
+    const terminal = read(path.join(prior, "exit.json"));
+    assert.deepEqual(cleanup.containers, []);
+    assert.deepEqual(
+      [cleanup.nonce, cleanup.resumedPrivateVolume, cleanup.imageSha, cleanup.transferSha],
+      [terminal.nonce, sourceVolume, imageSha, transferSha],
+    );
+    assert(cleanup.at >= terminal.at && terminal.result !== 0);
+    const base = "age1-" + createHash("sha256").update(seed.scopes[0]!.db).digest("hex") + ".edn";
+    for (const [file, digest] of [
+      [base, bulkPrefix.checkpoint],
+      [base + ".population.edn", bulkPrefix.population],
+    ] as const) {
+      const input = path.join(prior, file);
+      const output = path.join(out, file);
+      assert.equal(await fileHash(input), digest);
+      fs.copyFileSync(input, output, fs.constants.COPYFILE_EXCL);
+      assert.equal(await fileHash(output), digest);
+    }
+    assert.equal(docker("ps", "-aq", "--filter", "volume=" + sourceVolume), "");
+    const point = docker("volume", "inspect", "--format", "{{.Mountpoint}}", sourceVolume);
+    assert(point.endsWith("/volumes/" + sourceVolume + "/_data"));
+    assert(!fs.existsSync(path.join(point, "postmaster.pid")));
+  }
   const copyReal = fs.realpathSync(copyMount);
   const sameFilesystem = fs.statSync(copyReal).dev === fs.statSync(bench).dev;
   assert(Number.isSafeInteger(original.disk.after) && original.disk.after > 0);
   // [DX-SCALE1] Why: always leave room for backup and verification, plus a SQL dump on the legacy path.
   // Rejected: reserving the optional dump for a card that adopts stopped physical data.
   const grownSql = original.disk.after + (targetRecords - baselineRecords) * bytesPerAddedRecord;
-  const liveReservation = grownSql + 24 * GiB - (resumeDiscovery ? original.disk.after : 0);
-  const copyReservation = copyHeadroomBytes + (held ? 1 : 2) * grownSql + 24 * GiB;
+  const liveReservation = bulkLadder
+    ? (targetRecords - bulkPrefix.records) * bytesPerAddedRecord + 12 * GiB
+    : grownSql + 24 * GiB - (resumeDiscovery ? original.disk.after : 0);
+  const copyReservation = bulkLadder
+    ? copyHeadroomBytes + 12 * GiB
+    : copyHeadroomBytes + (held ? 1 : 2) * grownSql + 24 * GiB;
   const liveFree = free(bench),
     copyFree = free(copyReal);
   write(path.join(out, "storage-admission.json"), {
@@ -272,6 +317,7 @@ async function main(
     exporter,
     ...(held ? { postgresTemplate: held.sealSha } : {}),
     ...(resumeDiscovery ? { resumedPrivateVolume: sourceVolume } : {}),
+    ...(bulkLadder ? { resumedPrivateVolume: sourceVolume, bulkPrefix } : {}),
   };
   write(path.join(out, "identity.json"), manifest);
   const status = (stage: string) =>
@@ -292,7 +338,7 @@ async function main(
   try {
     docker("network", "create", netName);
     network = true;
-    if (!resumeDiscovery) docker("volume", "create", sourceVolume);
+    if (!resumeDiscovery && !bulkLadder) docker("volume", "create", sourceVolume);
     const restoreStarted = Date.now();
     if (held && !resumeDiscovery) {
       status("copying the verified stopped SCALE1 template");
@@ -342,6 +388,7 @@ async function main(
           "full_page_writes=on",
           "-c",
           "track_io_timing=on",
+          ...(bulkLadder ? ["-c", "track_wal_io_timing=on"] : []),
         ],
         { env: { ...process.env, POSTGRES_PASSWORD: password } },
       );
@@ -357,7 +404,7 @@ async function main(
         }
       }
       const roleSql =
-        held && name === pgName
+        (held || bulkLadder) && name === pgName
           ? "ALTER ROLE datomic PASSWORD '" +
             password +
             "';\nALTER ROLE postgres PASSWORD '" +
@@ -374,7 +421,7 @@ async function main(
         sql(name, db, "ALTER TABLE public.datomic_kvs OWNER TO datomic;");
       }
     }
-    if (!held) {
+    if (!held && !bulkLadder) {
       status("restoring immutable SCALE1 image");
       const digest = createHash("sha256");
       const stream = new Transform({
@@ -476,12 +523,19 @@ async function main(
       ),
       "on|on|on",
     );
-    const properties = {
-      "memory-index-threshold": "32m",
-      "memory-index-max": "512m",
-      "object-cache-max": "512m",
-      "index-parallelism": "1",
-    };
+    const properties = bulkLadder
+      ? {
+          "memory-index-threshold": "128m",
+          "memory-index-max": "2g",
+          "object-cache-max": "16g",
+          "index-parallelism": "2",
+        }
+      : {
+          "memory-index-threshold": "32m",
+          "memory-index-max": "512m",
+          "object-cache-max": "512m",
+          "index-parallelism": "1",
+        };
     const txProps = path.join(out, "sql.properties");
     const applied = {
       ...properties,
@@ -491,6 +545,9 @@ async function main(
       "sql-url": sqlJdbc,
       "sql-user": role,
       "sql-password": password,
+      ...(bulkLadder
+        ? { "write-concurrency": "4", "metrics-callback": "triplex.age.telemetry/capture!" }
+        : {}),
     };
     const template = fs.readFileSync(
       path.join(vendorHome, "config/samples/sql-transactor-template.properties"),
@@ -511,16 +568,30 @@ async function main(
     );
     status("starting native age transactor");
     const txLog = path.join(out, "tx.log");
+    const eventLog = path.join(out, "bulk-events.log");
+    const ageLab = path.join(ageCheckout, "lab/experiments/EXP-DX1/age1");
     const fd = fs.openSync(txLog, "wx");
-    tx = spawn("taskset", ["-c", "0", path.join(vendorHome, "bin/transactor"), txProps], {
-      stdio: ["ignore", fd, fd],
-      env: {
-        ...process.env,
-        PATH: jdk + ":" + process.env.PATH,
-        DATOMIC_EXT_CLASSPATH: path.join(ageCheckout, "packages/datomic/gateway/src"),
-        JAVA_OPTS: "-Xms1g -Xmx5g -XX:+UseG1GC",
+    tx = spawn(
+      "taskset",
+      ["-c", bulkLadder ? "0,2,3" : "0", path.join(vendorHome, "bin/transactor"), txProps],
+      {
+        stdio: ["ignore", fd, fd],
+        env: {
+          ...process.env,
+          PATH: jdk + ":" + process.env.PATH,
+          DATOMIC_EXT_CLASSPATH: [
+            path.join(ageCheckout, "packages/datomic/gateway/src"),
+            ...(bulkLadder ? [path.join(ageLab, "src")] : []),
+          ].join(":"),
+          JAVA_OPTS: bulkLadder
+            ? "-Xms4g -Xmx24g -XX:ActiveProcessorCount=3 -XX:+UseG1GC " +
+              "-Dlogback.configurationFile=" +
+              path.join(ageLab, "bulk-logback.xml")
+            : "-Xms1g -Xmx5g -XX:+UseG1GC",
+          ...(bulkLadder ? { AGE_TX_EVENT_LOG: eventLog } : {}),
+        },
       },
-    });
+    );
     const txDone = exited(tx);
     txFinished = txDone;
     void txDone.catch(() => {});
@@ -538,17 +609,20 @@ async function main(
     status("verifying restored scope discovery before starting the aging clock");
     const scope = seed.scopes[0]!;
     const challenge = randomBytes(12).toString("hex");
-    const proof = challenge + ":" + scope.seedCut;
+    const cut = bulkLadder ? bulkPrefix.head : scope.seedCut;
+    const proof = challenge + ":" + cut;
     const cp = [
       jar,
       path.join(vendorHome, "lib/*"),
       path.join(vendorHome, "resources"),
       path.join(ageCheckout, "packages/datomic/gateway/src"),
     ].join(":");
-    const check = `(require '[datomic.api :as d] '[triplex.gateway.main :as gw] '[triplex.gateway.storage :as store])
+    const check = `(require '[datomic.api :as d] '[triplex.gateway.main :as gw] '[triplex.gateway.storage :as store]
+                              ${bulkLadder ? "'[triplex.age.adopt :as adopt]" : ""})
       (let [name (System/getenv "DX_SCOPE") c (gw/connection (gw/db-uri name)) db @(d/sync c)
             head (store/head-position db)]
-        (when-not (= head ${scope.seedCut}) (throw (ex-info "Unexpected discovery cut" {:head head})))
+        (when-not (and (= head ${cut}) ${bulkLadder ? "(= (adopt/exact-position-t db head) " + bulkPrefix.t + ")" : "true"})
+          (throw (ex-info "Unexpected discovery cut" {:head head :t (d/basis-t db)})))
         (println (str (System/getenv "DX_CHALLENGE") ":" head)))
       (shutdown-agents) (System/exit 0)`;
     const until = Date.now() + 120000;
@@ -562,7 +636,7 @@ async function main(
           "-Xmx1g",
           "-Dtriplex.codec.spec=" + path.join(ageCheckout, "packages/datomic/src/codec-spec.json"),
           "-cp",
-          cp,
+          bulkLadder ? cp + ":" + path.join(ageLab, "src") : cp,
           "clojure.main",
           "-e",
           check,
@@ -599,7 +673,8 @@ async function main(
       at: Date.now(),
       challenge,
       database: scope.db,
-      cut: scope.seedCut,
+      cut,
+      ...(bulkLadder ? { nativeT: bulkPrefix.t } : {}),
     });
     const javaPids = call("ps", ["-eo", "pid=,comm="])
       .split("\n")
@@ -620,7 +695,7 @@ async function main(
     const config = {
       source: ageSource,
       target: targetRecords,
-      fromRecords: baselineRecords,
+      fromRecords: bulkLadder ? bulkPrefix.records : baselineRecords,
       ratePrior: 24000,
       reserveHours: 3,
       maxHours: 9.9,
@@ -644,9 +719,10 @@ async function main(
       javaPids,
       measureSettings,
       expectedMeasureSettings,
-      peerHeap: "2g",
-      peerCache: "768m",
+      peerHeap: bulkLadder ? "6g" : "2g",
+      peerCache: bulkLadder ? "1g" : "768m",
       copyHeap: "2g",
+      ...(bulkLadder ? { bulkEventLog: eventLog } : {}),
     };
     const configFile = path.join(out, "config.json");
     write(configFile, config);
@@ -656,7 +732,7 @@ async function main(
       restoreMs: staged - restoreStarted,
       at: staged,
     });
-    status("running AGE1 admission and rate calibration");
+    status(bulkLadder ? "running AGE1 bulk ladder" : "running AGE1 admission and rate calibration");
     const ageEnv = {
       ...process.env,
       AGE_JAVA: path.join(jdk, "java"),
@@ -671,7 +747,7 @@ async function main(
     const runAge = (file: string, input: string, logName: string) => {
       const log = fs.openSync(path.join(out, logName), "wx");
       try {
-        runner = spawn(process.execPath, [file, input], {
+        runner = spawn(process.execPath, [file, ...(bulkLadder ? ["ladder"] : []), input], {
           cwd: ageCheckout,
           stdio: ["ignore", log, log],
           env: ageEnv,
@@ -693,6 +769,47 @@ async function main(
       at: Date.now(),
       runnerStarted: staged,
     });
+    if (bulkLadder) {
+      if (result !== 0) {
+        status("bulk ladder stopped");
+        throw Error("Review the held AGE1 bulk ladder before any further loading");
+      }
+      const rung = path.join(config.output, String(targetRecords));
+      const calibration = read(path.join(rung, "bulk-calibration.json"));
+      const admission = read(path.join(rung, "ladder-admission.json"));
+      assert(admission.started >= staged && admission.started <= Date.now());
+      assert.deepEqual(
+        [
+          calibration.source,
+          calibration.machineHash,
+          calibration.db,
+          calibration.imageSha,
+          calibration.propertiesSha,
+        ],
+        [
+          ageSource,
+          admission.binding.machineHash,
+          scope.db,
+          imageSha,
+          config.transactorPropertiesSha,
+        ],
+      );
+      assert.equal(admission.binding.configSha, await fileHash(configFile));
+      assert.match(calibration.attempt, /^[a-f0-9-]{36}$/);
+      assert(calibration.arms.length === 3 && calibration.best.metrics.jobs.length >= 2);
+      assert(
+        calibration.best.metrics.sustainedRate >= 9900 &&
+          calibration.lastRecords > bulkPrefix.records,
+      );
+      for (const { file, sum } of calibration.artifacts) {
+        assert.equal(file, path.join(calibration.attempt, path.basename(file)));
+        assert.equal(await fileHash(path.join(rung, file)), sum);
+      }
+      const checkpoint = "age1-" + createHash("sha256").update(scope.db).digest("hex") + ".edn";
+      assert.equal(await fileHash(path.join(out, checkpoint)), calibration.checkpointSha);
+      status("bulk ladder qualified an arm");
+      return;
+    }
     if (result !== 0) {
       const fallback = prepareFallback(out, ageRunner, config, staged);
       assert(fallback, "AGE1 ended before a sealed rung. Retain its first evidence");
@@ -900,4 +1017,5 @@ await main(
   process.argv[6]!,
   process.argv[7],
   process.argv[8] === "resume-discovery",
+  process.argv[8] === "bulk-ladder",
 );

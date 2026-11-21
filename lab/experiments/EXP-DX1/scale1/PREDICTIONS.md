@@ -106,3 +106,11 @@ The two field-save arms start from the same verified image. They use the same of
 | Single 39.4 | 39.4/s | 39.0–39.4 ACK/s and 6–11 / 40–115 ms.<br>Observed 39.40/s (n=2364), 3.46/63.23 ms. [Cell results](DECISION-RESULTS.md) | 38.5–39.4 ACK/s and 7–14 / 55–130 ms.<br>Observed 39.40/s (n=2364), 3.34/46.85 ms. [Cell results](DECISION-RESULTS.md) |
 
 All eight goodput observations landed in their forecast ranges. Five p99 estimates landed in range. Both first-window medians were above forecast, and the other six were below it. At 3.5/s the first-window native compute p99 was 47.62 ms without readers and 55.30 ms with readers (525 saves per condition). At 39.4/s the corresponding values were 12.48 and 11.90 ms (2,364 saves per condition). Each condition ran once in rate order. These measurements leave warm-up and rate effects unresolved. [Stage intervals](DECISION-RESULTS.md)
+
+## AGE1 bulk ladder before the fresh card
+
+From 431,778,659 indexed records, forecast 7,000–9,500 records/s for solo, 11,000–19,000 for 8 saves/transaction and 16,000–28,000 for 24 saves/transaction. Each arm writes for roughly 14 minutes and needs two completed natural index jobs. The ladder has a 25-minute setup cutoff and a 60-minute server ceiling (USD 1.09). A 24k/s winner would leave about 6.12 h of continued loading after the illustrative 39.7M ladder records. A rate below 9,900/s or a loading forecast over 16 hours does not qualify. [Pinned design](https://github.com/OnboardedInc/Triplex-db-experiments/blob/acd350e927515b7c4d99f134f8600ea8de4d63f8/lab/experiments/EXP-DX1/age1/BULK-LOAD.md)
+
+## Tuned fresh scorecard
+
+Forecast 300 minutes maximum (USD 5.45) after copy and build. Both ordered writers should deliver nearly all of 50/s and 220–235/s at 235 offered. At 394 expect 325–365/s headline and 340–380/s ordered default. At 620 expect 330–380/s headline and 320–365/s default. Grouped prediction is 147–182/s at 235 and above. Most busy quiet-account p99 ratios will exceed 1.25×. [Pinned forecasts by row](https://github.com/OnboardedInc/Triplex-db-experiments/blob/2e974a95b10a30a30ff3f46947df4f32beacc657/lab/experiments/EXP-DX1/v01/SERVER.md#predictions-written-before-the-run)

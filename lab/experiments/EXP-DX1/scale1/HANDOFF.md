@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 39.48 through 2026-11-21 06:43 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 39.77 through 2026-11-21 06:59 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-AGE1 calibrated at 5,283.82 records/s from 429,778,659 native records. It verified 2,000,000 records over 100,000 saves, then stopped on the 1B time guard. This is below the fallback band. The exact checkpoint, complete terminal archive and stopped working volume are retained. The tuned scorecard has no aged input. The fresh template and four independent copies are ready. One data copy sits on root for the separate-WAL arm. Free space is 101.36 GB on root and 451.27 GB on the secondary device. The tuned scorecard pin is still pending. It is the next eligible benchmark.
+AGE1 solo calibration stopped below the original fallback band at 5,283.82 records/s. The owner placed the new pinned bulk ladder ahead of the fresh tuned scorecard. It resumes the held calibrated 431,778,659-record working volume. A verified relocation of the earlier stopped restore frees space for ladder admission and leaves the calibrated volume available. The fresh template is held. Scorecard staging still needs three independent prepared copies on the data device for the two separate-WAL headlines and ordered default. The original sealed image and transfer remain held.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
@@ -14,9 +14,10 @@ ssh -i "$DX_BENCH_KEY" -o IdentitiesOnly=yes "$BENCH_SERVER" 'sudo -n systemctl 
 
 | Order | Item | Allocation |
 | ---: | --- | ---: |
-| 1 | AGE1 calibration and 1B rung from a private copied template | 9.9 h native maximum, with bounded setup and a stopped physical handoff |
-| 2 | Tuned ordered v0.1 scorecard on the 1B database | Wait for the published source. Requires a verified 1B seal |
-| 3 | Tuned ordered v0.1 scorecard on the fresh database | After the aged card, or first if AGE1 stops below 1B |
+| 1 | AGE1 bulk ladder on the calibrated cut | 25 min setup cutoff, 60 min total (USD 1.09) |
+| 2 | Tuned ordered v0.1 fresh scorecard | Up to 300 min after staging (USD 5.45) |
+| 3 | AGE1 1B continuation | Only with a qualifying ladder arm at or above 9,900 records/s. Up to 16 loading hours including the ladder (USD 17.44) |
+| 4 | Tuned ordered v0.1 aged scorecard | Requires a verified 1B seal |
 
 `arm-d7-wfix-pilot-bounded` verified the options on its startup scope. On the restored scope the writer path received a response without the nonce. It recorded zero timed cells and cleaned up. The retry derives both roles from fresh replies at the original cut and verifies the active options through the same SDK clients that carry the measured writes. The pilot seed is reused from its original accepted transfer.
 
