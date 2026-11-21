@@ -139,6 +139,8 @@
     (if-not entries out
       (let [entry (first entries)
             result (try
+                     (when (d/entid view [:triplex.tx/operation-id (:id entry)])
+                       (throw (ex-info "TRIPLEX_OPERATION_DUPLICATE" {})))
                      (let [started (when stage-clock (System/nanoTime))
                            data ((:prepare entry) view)
                            prepared (when stage-clock (System/nanoTime))

@@ -54,7 +54,9 @@ export function campaignWindows(s: TenantSpec, arm: string): TenantWindow[] {
     const seats = [quiet, ...Array.from({ length: 9 }, (_, i) =>
       Math.floor((readers - quiet) / 9) + Number(i < (readers - quiet) % 9),
     )];
-    const rates = [fieldRates.steady[0], ...Array<number>(9).fill(neighborRate)];
+    // [DX-V01] Why: the compact smoke stack exercises every field window and exact effect under ordinary admission.
+    // Rejected: reusing the physical neighbour load and expiring most of the toy commands.
+    const rates = [fieldRates.steady[0], ...Array<number>(9).fill(smoke ? neighborRate / 8 : neighborRate)];
     windows.push({
       name, from, seconds, active: neighborRate > 0 ? 10 : 1, pattern: "steady",
       readers, seats, rates,

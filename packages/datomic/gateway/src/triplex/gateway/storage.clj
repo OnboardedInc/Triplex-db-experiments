@@ -24,6 +24,7 @@
       (throw (ex-info "Snapshot expired or belongs to another database" {:status 409 :code "SnapshotExpired"})))
     (:db entry)))
 (defn decode-row [row] (into {} (map (fn [[k v]] [(keyword k) (when (some? v) (codec/decode-value v))]) row)))
+(def ^:private direct-row-decode? (= "1" (System/getenv "TX2_TAIL1_ROW_DECODE")))
 ;; [DX-B5-L6] Why: fresh lean rows already carry every column in their canonical text.
 ;; Rejected: decoding a second full tagged map per row after the client encoded both copies.
 (defn input-rows [input lean new-ids]
@@ -46,7 +47,7 @@
         (mapv (fn [id]
                 (if (new-ids id)
                   (let [text (get texts id) _ (when-not (string? text) (codec/invalid "Missing compact row text"))
-                        row (update (lean/decode text) :recorded_at double) retirement (get by-id id)]
+                        row (update (lean/decode text direct-row-decode?) :recorded_at double) retirement (get by-id id)]
                     (when-not (and (= id (:id row))
                                    (or (nil? retirement) (and (= (:entity_id row) (:entity_id retirement))
                                                               (= (:entity_type row) (:entity_type retirement)))))
@@ -100,7 +101,14 @@
            (when (:created_by row) {:f/created-by (:created_by row)})
            (when (:entity_type row) {:f/entity-type (:entity_type row)}) value)))
  ;; [EXP-DX1] Why: live row datoms are exact write-time wire values. Rejected: rebuilding values on every pull.
-(defn row-prefix [^String id] (str "2" (format "%04x" (.length id)) id))
+(defn row-prefix [^String id]
+  ;; [DX-TAIL1] Why: a fixed hex length prefix only needs left padding.
+  ;; Rejected: allocating a Formatter per row or truncating a length greater than four digits.
+  (let [n (.length id)]
+    (str "2" (if direct-row-decode?
+               (let [digits (Integer/toHexString n)]
+                 (str (subs "0000" 0 (max 0 (- 4 (.length ^String digits)))) digits))
+               (format "%04x" n)) id)))
 (defn ordered-row-texts [input]
   ;; [DX-W1] Why: the frame order and encoded identity provide both index keys from one wire array.
   ;; Rejected: inferring order from a JSON object or changing the meaning of an irregular SPI request.
@@ -394,12 +402,19 @@
   ([conn data input timeline subject-plan]
    (if-not subject-plan
      (submit-reference! conn data input timeline)
-     (let [native-data (group/instrument [[subject/ident subject-plan]])
+     (let [hints (when subject/prefetch?
+                   (swap! timeline assoc :subjectHintsStarted (System/nanoTime))
+                   ;; [DX-PREP1] Why: Datomic prefetch can move cold reads, while the native guards own the decision.
+                   ;; Rejected: using the hint result or its database value as proof of absence or revision.
+                   (try (trace/span "subject.lookup-hints" "peer-call" (subject/lookup-hints (d/db conn) subject-plan))
+                        (catch Exception _ nil)
+                        (finally (swap! timeline assoc :subjectHintsFinished (System/nanoTime)))))
+           native-data (group/instrument [[subject/ident subject-plan]])
+           options (concat (when hints [:hints hints])
+                           (when (or group/stage-clock trace/enabled) [:io-context :triplex.gateway/subject]))
            _ (swap! timeline assoc :predecessorReady (System/nanoTime))
            tx (trace/span "d/transact-async" "peer-call"
-                (if (or group/stage-clock trace/enabled)
-                  (d/transact-async conn native-data :io-context :triplex.gateway/subject)
-                  (d/transact-async conn native-data)))]
+                (apply d/transact-async conn native-data options))]
        (swap! timeline assoc :submitted (System/nanoTime))
        (reify
          clojure.lang.IBlockingDeref
@@ -419,7 +434,8 @@
                    :else (let [retry (deref (submit-reference! conn (tx-data db input) input timeline) (remaining) timeout)]
                            (if (identical? timeout retry) timeout (assoc retry :subject-replan true)))))
                (identical? timeout result) timeout
-               :else (subject/verify-report result subject-plan)))))))))
+               :else (cond-> (subject/verify-report result subject-plan)
+                       hints (assoc :subject-hints-attached true))))))))))
 ;; [DX-B10] Why: a definitive preflight rejection resolves its sequence without a database write.
 ;; Rejected: skipping that turn (strands all later valid commands behind a permanent gap).
 (defn reject-ordered! [conn input error]
@@ -484,6 +500,8 @@
                                            :packedRows (count (filter (fn [op] (and (vector? op) (= :triplex/assert (first op))
                                                                               (vector? (nth op 3 nil)) (= 6 (count (nth op 3))))) (:ops params)))}))
         (:subject-save report) (assoc :subjectSave (:subject-save report))
+        (:subject-ordered-ids report) (assoc :subjectOrderedIds true)
+        (:subject-hints-attached report) (assoc :subjectHintsAttached true)
         (:subject-replan report) (assoc :subjectReplan true)
         (and load-timing (not (:subject-save report))) (assoc :loadProfile {:rowNs @load-timing :applyMs (get-in report [:io-stats :api-ms])
                        :tx (clojure.edn/read-string (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.load/metrics))})
@@ -492,7 +510,8 @@
         frame-size (assoc :frameSize frame-size)
         (and pred/diagnostic (true? (get input "readProfile"))) (assoc :readProfile (:io-stats report))
         group/stage-clock (assoc :nativeComputeMs (get-in report [:io-stats :api-ms]) :groupStages (:group-stages report)
-                                 :preparedStats (:prepared-stats report))
+                                 :preparedStats (:prepared-stats report)
+                                 :writerFunction (or (:subject-save report) (str (ffirst data))))
         (and group/stage-clock subject-profile) (assoc :nativeIoStats (:io-stats report))
         stamp (assoc :requestBytes (policy/request-size input) :preparedOps (count (:ops (second (first data)))) :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
@@ -505,12 +524,14 @@
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
                        {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
-                        :code (cond (re-find #"TRIPLEX_IMPORT_PREDECESSOR" text) "ImportPredecessorMissing"
+                        :code (cond (re-find #"TRIPLEX_OPERATION_DUPLICATE" text) "OperationDuplicate"
+                                    (re-find #"TRIPLEX_COMMAND_DUPLICATE" text) "CommandConflict"
+                                    (re-find #"TRIPLEX_IMPORT_PREDECESSOR" text) "ImportPredecessorMissing"
                                     (re-find #"TRIPLEX_CLOCK_EXHAUSTED" text) "ClockExhausted"
                                     (re-find #"TRIPLEX_CLOCK" text) "ClockConflict"
                                     (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"
-                                    (re-find #"TRIPLEX_COMMAND_DUPLICATE|triplex.claim/command-id" text) "CommandConflict"
-                                    (re-find #"TRIPLEX_OPERATION_DUPLICATE|triplex.tx/operation-id" text) "OperationDuplicate"
+                                    (re-find #"triplex.claim/command-id" text) "CommandConflict"
+                                    (re-find #"triplex.tx/operation-id" text) "OperationDuplicate"
                                     (re-find #"f/id" text) "IdentityConflict" :else "TransactionRejected")} e))))))
 (defn operation [db id]
   (if-let [{:keys [position t clock]} (group/receipt db id)]

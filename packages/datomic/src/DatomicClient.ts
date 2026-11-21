@@ -266,6 +266,7 @@ export class DatomicClient {
       readonly rowCacheBytes?: number;
       readonly predecessorCacheBytes?: number;
       readonly predecessorAttributes?: readonly string[];
+      readonly receiptPredecessorAttributes?: readonly string[];
       readonly reachKeyBytes?: number;
       readonly historicalRevisionReuse?: boolean;
     } = {},
@@ -280,6 +281,7 @@ export class DatomicClient {
     this.predecessorCache = new PredecessorCache(
       cacheOptions.predecessorCacheBytes,
       cacheOptions.predecessorAttributes,
+      cacheOptions.receiptPredecessorAttributes,
     );
     this.rowCache = new RowCache(
       Number.MAX_SAFE_INTEGER,
@@ -1370,6 +1372,8 @@ export class DatomicClient {
           }
         } catch (readError) {
           if (!(readError instanceof DatomicTransportError)) throw readError;
+          // [DX-HASYNC1] Why: an interrupted claim lookup keeps the decision unknown. Rejected: returning a definite conflict without reading the claim.
+          if (cas) throw readError;
         }
         if (cas) break;
         const left = deadline - performance.now();

@@ -8,6 +8,7 @@ import { isDeepStrictEqual } from "node:util";
 import { runtimeApi } from "./triplex.ts";
 import type { Basis, CompositionHandle, PullResult } from "./composition.ts";
 import { ReplicaReader, ReplicaReadHost, replicaEndpoint } from "./replica-reads.ts";
+import { tenantCatalog } from "../../experiments/EXP-DX1/scale1/tenants.ts";
 
 function unavailable(error: unknown) {
   return (
@@ -97,8 +98,11 @@ export function touchedComposition(base: CompositionHandle): CompositionHandle {
       async close() { reader.close(); await base.close(); } };
   }
   let live: ReplicaReadHost | undefined;
-  const open = async (root: string) => {
+  const open = async (root: string, retryCut = true): Promise<{ host: ReplicaReadHost; reader: ReplicaReader } | undefined> => {
     const position = await base.currentPosition();
+    // [DX-V01] Why: the pooled legacy tape uses the stable catalog to prove its starting clock.
+    // Rejected: letting the first concurrently edited person choose whether the worker can start following.
+    const witness = process.env.DX_INT1_LEGACY_TOUCHED === "1" ? tenantCatalog : root;
     try {
       const host = await ReplicaReadHost.open(
         scope,
@@ -110,14 +114,19 @@ export function touchedComposition(base: CompositionHandle): CompositionHandle {
         "reader",
         replicaEndpoint(process.env, "reader"),
         "touched",
-        root,
+        witness,
       );
       const reader = new ReplicaReader(undefined, host.index);
       host.subscribe((delta) => reader.notify(delta.reset));
       live = host;
       return { host, reader };
     } catch (error) {
-      if (error instanceof Replica.UnsupportedScope) return undefined;
+      if (error instanceof Replica.UnsupportedScope) {
+        // [DX-V01] Why: an exact initial journal cut can still be settling when the first real read arrives.
+        // Rejected: permanently pinning the reader to source after one unavailable cut or accepting an unproven cut.
+        if (retryCut && error.reason === "legacy-replica-journal-cut") return open(root, false);
+        return undefined;
+      }
       throw error;
     }
   };

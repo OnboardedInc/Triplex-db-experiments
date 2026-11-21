@@ -1,16 +1,38 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   DatomicTransportError,
   RecentReads,
   Replica,
 } from "../../../../packages/datomic/dist/index.js";
-import type { Basis } from "../../../bench/lib/composition.ts";
-import { ReplicaReader } from "../../../bench/lib/replica-reads.ts";
-import { touchedPull } from "../../../bench/lib/touched-reads.ts";
+import type { Basis, CompositionHandle } from "../../../bench/lib/composition.ts";
+import { ReplicaReader, ReplicaReadHost } from "../../../bench/lib/replica-reads.ts";
+import { touchedComposition, touchedPull } from "../../../bench/lib/touched-reads.ts";
 import { firstValid, person, seedHead } from "./population.ts";
 import { trialStore } from "./trial-store.ts";
 
 describe("touched read through the public gateway", () => {
+  it("retries an unavailable exact journal cut once and honors a protection refusal", async () => {
+    const open = vi.spyOn(ReplicaReadHost, "open")
+      .mockRejectedValueOnce(new Replica.UnsupportedScope("legacy-replica-journal-cut"))
+      .mockRejectedValueOnce(new Replica.UnsupportedScope("legacy-replica-protection"));
+    const fallback = { triples: [], entities: 0, depth: 0, roundTrips: 1,
+      route: "source", language: "reach", waitedMs: 0 };
+    const currentPosition = vi.fn().mockResolvedValueOnce(18).mockResolvedValueOnce(19);
+    const base = { scopeName: "diagnostic", currentPosition, pull: vi.fn(async () => fallback) };
+    vi.stubEnv("DX_TOUCHED_READ_MODE", "following");
+    try {
+      const reader = touchedComposition(base as unknown as CompositionHandle);
+      const basis = { recordedPosition: 17, validAt: firstValid };
+      expect(await reader.pull("root", basis)).toBe(fallback);
+      expect(await reader.pull("root", basis)).toBe(fallback);
+      expect(open.mock.calls.map((call) => call[3].position)).toEqual([18, 19]);
+      expect(base.pull).toHaveBeenCalledWith("root", basis, undefined);
+    } finally {
+      open.mockRestore();
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("falls back on transport failure and surfaces an admission content error", async () => {
     const store = await trialStore(50, "thin-reader-test", false);
     const p = seedHead(50),
