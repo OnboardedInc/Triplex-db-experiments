@@ -4239,3 +4239,13 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Revised forecast:** at 9,023 records/s, 14 h 56 min more (17 h 11 min of paid loading in total); with a gradual fall to 7,300 at 1 billion, about 16 h 40 min more; at the new floor, 20 h 44 min more.
 - **Mine, to fill the missing measurement:** one read-only sample of per-process and per-core load on server 2, scheduled for about 06:36 while the load is writing (PostgreSQL's CPU set, use and throttling). It changes nothing on the server.
 - Agents running: DX-SCALE1.
+
+### 2026-11-21 06:36 local: one read-only CPU sample during the 1 billion load: nothing is saturated (1 agent running)
+
+- **Sample at 11:36:04 UTC** (06:36 local), about 23 minutes into the extended load's first write window; taken by the orchestrator over SSH with `top`, `ps`, `/proc/stat`, `docker stats` and the containers' cgroup counters; nothing on the server was changed. Saved in the private evidence folder (`DX-SCALE1/age-v01-bulk-d-orchestrator-sample`).
+  - PostgreSQL container: pinned to core 1, **49% busy over 5 s (65% in the Docker one-shot sample), 4% I/O wait, zero throttled periods.** About eight backends at 4 to 8% each, plus an autovacuum worker; one in `SELECT`, one in `INSERT` at the instant sampled.
+  - Transactor JVM: 172.6% of one core over 10 s (1.7 of its six cores), 24.9 GiB resident. Loader JVM: 56.5%.
+  - No core above 50% busy; cores 11 to 23 idle.
+- **Reading:** the load is not limited by any CPU allowance, including PostgreSQL's single core, in this sample. That fits the builder's finding that the time is in Datomic's serial apply step (1.46 to 1.65 ms per save), which waits on synchronous storage reads; more cores cannot shorten a serial wait. One 10-second sample; it does not rule out short bursts where the PostgreSQL core is full.
+- **Decision:** no change to the running load. Logged under NEXT-WEEK 16h as a measurement for the settings candidate (a second PostgreSQL core is not supported by this sample for the load; the scorecard's save path has not been sampled the same way).
+- Load writing since 06:13 local (`530e581c7`). Agents running: DX-SCALE1.

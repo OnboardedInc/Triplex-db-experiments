@@ -119,7 +119,10 @@ this weekend while server 2 is still rented (one 80-minute rerun, about USD 1.45
 setup so the two cards compare):** PostgreSQL on two cores, `max_wal_size` 4GB, `min_wal_size` 512MB; write gateway
 on three cores. Forecast 350 to 365 at 394 offered and 335 to 350 at 620. Rejected if 394 stays at or below 345
 with turns still at 16.7 ms or more. Needs per-role CPU, checkpoint logs and index job events on one clock, which
-the fresh card's archive does not have.
+the fresh card's archive does not have. Measurement added 2026-11-21 06:36 local, during the 1 billion load (not the scorecard's save path): PostgreSQL's
+single core was 49 to 65% busy with 4% I/O wait and no throttling, the transactor used 1.7 of six cores and no core
+was over 50% busy, so a second PostgreSQL core is not supported by that sample for the load. Take the same sample
+during a scorecard window before trying the candidate.
 
 16i. **Scorecard windows start cold and are 90 seconds long.** Offers in the first 30 seconds account for 96.8% of
 the time beyond 50 ms at 235 offered on the headline setup; sender wait p99 fell from 2,447 ms to 132 ms between
