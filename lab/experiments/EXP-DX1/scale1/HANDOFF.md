@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 36.66 through 2026-11-21 04:08 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 36.84 through 2026-11-21 04:18 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-AGE1 released Server 2 after its second tooling failure. The second attempt fully restored the exact SQL archive in about 65 minutes. The extracted Datomic launcher could not be executed, so no calibration or aging ran. Its PostgreSQL volume was stopped and retained before any native offers. The next stage makes a private stopped template from this fresh copy and then runs the pinned PREP1 ceiling. The sealed original dump and both manifests remain immutable. The released ordered scorecard follows PREP1.
+AGE1 released Server 2 after its second tooling failure. The second attempt fully restored the exact SQL archive in about 65 minutes. The extracted Datomic launcher could not be executed, so no calibration or aging ran. Its PostgreSQL volume was stopped and retained before any native offers. The private stopped template sealed in 481.29 seconds and preserved the held original. The PREP1 stopped-copy retry is running from 1dd5952c, with a 60-minute native ceiling plus build. The sealed original dump and both manifests remain immutable. The released ordered scorecard follows PREP1.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
