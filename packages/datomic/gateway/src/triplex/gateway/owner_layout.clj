@@ -124,6 +124,7 @@
                           (cond (= i n) false
                                 (.startsWith text ^String (aget prefixes i)) true
                                 :else (recur (inc i)))))
+              ^java.util.Set retired retired
               keep? (if (.isEmpty retired)
                       (fn [^datomic.Datom datom] (not (masked? (.v datom))))
                       (fn [^datomic.Datom datom]
