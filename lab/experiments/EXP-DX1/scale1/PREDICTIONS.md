@@ -83,7 +83,7 @@ Forecast one 162,456,470-fact image at 6,500 verified ingested facts/s, 6.94 h t
 | --- | --- |
 | Small pooled image | At 5,800–6,500 facts/s, 42–47 min for 16,245,050 facts.<br>Observed 0.68 h at 6598.71 facts/s. arm-d7-wfix-pilot-seed. |
 | Single-account image | 16,245,647 facts at 5,800–6,800/s, or 40–47 min before independent verification.<br>Observed 0.69 h at 6540.77 facts/s. arm-d7-single-seed. |
-| Full pooled image | At 5,800–6,500 facts/s, 6.94–7.78 h for 162,456,470 facts. |
+| Full pooled image | At 5,800–6,500 facts/s, 6.94–7.78 h for 162,456,470 facts.<br>Observed 7.78 h at 5798.56 facts/s. arm-d7-wfix-pool-seed. |
 | Full split image | At 5,800–6,500 total facts/s, 6.94–7.78 h for the same 162,456,470 facts placed across two databases. |
 
 The 16.25-million-fact predecessor needed 40.0 minutes to ingest and 36.5 more to verify 8,701 claims and feed frames. At equal per-frame rates, full verification adds about 6.1 hours per million-person image after ingest. Before launching the held placement study I now expect 29–34 hours for both layouts, including the audited pilot, restores and timed cells, at USD 31.61–37.06. The guard remains 38 hours and USD 41.42. This extrapolation uses one seed.

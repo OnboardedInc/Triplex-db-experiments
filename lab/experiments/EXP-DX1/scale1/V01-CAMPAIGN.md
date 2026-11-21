@@ -49,3 +49,9 @@ The earlier scorecard explicitly refused SCALE1. The revised `v01/SERVER.md` sel
 AGE1 `2859d6b15` supports SCALE1 adoption once the image and transfer are sealed. Its deployment needs an exclusively held restored SQL stack, the expected transactor settings and observed JVM PIDs, JDK, and a separate SQL restore database using the official Datomic tables. Both JDBC destinations and credentials stay in the operator environment. Its native count and bounded rate calibration determine whether it continues.
 
 The AGE1 report selects `93ad03aa3` for the corrected aged logical replay and cut exporter. It can run against the sealed `2859d6b15` rung before stopping its transactor. Scorecard checks that bundle on the restored peer before offers. AGE1’s independent SQL verification remains in its budget. The additional scorecard dump is forecast at 1–2 h and USD 1.09–2.18. Its disk reserve includes the native backup, verification store and immutable dump. Server 2's spare NVMe has no visible partitions, mount, filesystem signature or owner. The projected backup and restored-copy reserves need a separate filesystem. Initialization is pending authorization.
+
+## Received result bundles
+
+| Attempt | Terminal status | Native hours | USD | Compressed bytes | SHA-256 |
+| --- | --- | ---: | ---: | ---: | --- |
+| arm-d7-wfix-pool-seed | success | 16.25 | 17.71 | 98429 | `055d67c2a34ca2f31edc3a53832c34d17472c364103e64fdaffbab208dc07eb7` |

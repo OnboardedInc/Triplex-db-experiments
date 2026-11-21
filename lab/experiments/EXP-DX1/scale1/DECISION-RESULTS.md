@@ -1,6 +1,6 @@
 # Decision cells
 
-Offered rate and goodput use the same rated interval. The historical pilot uses 90-second cells. The full-size one-database study uses 12 five-minute pairs per rate and writer policy. The single account uses 150, 120, 300 and 60 seconds at 3.5, 4.9, 23.5 and 39.4/s, from the same image with and without a 600-second reader dose. p50 and p99 use original durable acknowledgements. Expiry is before SDK dispatch. The sentinel keeps 3.5/s and replays 64 pinned reader seats in both conditions. Every durable feed change is checked.
+Offered rate and goodput use the same rated interval. The historical pilot uses 90-second cells. The full-size v0.1 present-writer arm uses up to four five-minute pairs per rate. The single account uses 150, 120, 300 and 60 seconds at 3.5, 4.9, 23.5 and 39.4/s, from the same image with and without a 600-second reader dose. p50 and p99 use original durable acknowledgements. Expiry is before SDK dispatch. The sentinel keeps 3.5/s and replays 64 pinned reader seats in both conditions. Every durable feed change is checked.
 
 The primary budget requires p50 ≤10 ms, p99 ≤50 ms, all primary dispositions exact with no expiry, rejection or missing offers, at least 99% of ACKs in the window and at most 1 s of drain. The quiet p99 bar is ≤1.25× for saves, pinned reads and feed lag. November 20 ruling uses one database. Full-size paired intervals preserve five-minute windows, with adjacent-pair blocks as sensitivity.
 
@@ -205,6 +205,32 @@ Cgroup peaks in GiB through each sampled cell, including that arm's restore and 
 | r1-235 | 4.01 | 6.00 | 3.06 | 1.87 |
 | r1-50 | 4.02 | 6.00 | 3.06 | 1.89 |
 | r1-35 | 4.02 | 6.00 | 3.06 | 1.89 |
+
+## arm-d7-wfix-pool-seed
+
+100000 deep people per account, pooled layout, individual writer. Source `97852735506d9f04d7a2195ee11bc0535b7a2493`. Audited write path.
+
+162,456,470 current facts across 1 database(s). Ingest took 7.78 hours at 5798.56 facts/s. Exact claim and feed verification took 7.38 hours. PostgreSQL added 755.85 bytes per fact (one physical seed).
+
+Loader checkpoints record acknowledged progress before the independent claim and feed verification.
+
+| Scope | Latest sampled people | Latest sampled facts | Early facts/s | Late facts/s | PostgreSQL GiB at last sample |
+| ---: | ---: | ---: | --- | --- | ---: |
+| 1 | 999267 | 162309947 | 6430.04 (n=1036 frames, 300.9 s) | 5306.63 (n=856 frames, 301.1 s) | 114.24 |
+
+| Checkpoint span | Acknowledged facts/s | Transactor CPU (% of one core) | PostgreSQL CPU (%) | PostgreSQL read / written MiB |
+| --- | --- | ---: | ---: | ---: |
+| First ten intervals | 6426.00 (n=2069 frames, 601.4 s) | 94.91 | 11.72 | 0.00 / 8416.30 |
+| Last ten intervals | 5349.74 (n=1724 frames, 601.7 s) | 94.07 | 10.66 | 12.02 / 7444.35 |
+
+The block totals include all PostgreSQL cgroup I/O during the span. Serial-point storage reads per native commit and their kinds are unmeasured in this seed.
+
+
+Observed ingest cgroup peaks in GiB, from 466 progress snapshots.
+
+| Transactor | PostgreSQL | Write gateway | Read gateway |
+| ---: | ---: | ---: | ---: |
+| 4.80 | 6.00 | 0.27 | 3.30 |
 
 ## Matched single-account reader dose
 

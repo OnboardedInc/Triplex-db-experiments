@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 34.81 through 2026-11-21 02:26 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 35.07 through 2026-11-21 02:40 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The pooled seed's full loader ledger has 1,000,000 people, 162,456,470 facts and 87,001 acknowledged frames. The verifier finished the full claim and feed replay and pinned member checks on November 21 at 01:36 UTC. Ingest took 7.78 h and verification 7.38 h. The immutable SQL archive is being written. The current seed ceiling is 2026-11-21T04:24:01.788Z. The superseded two-writer relay is stopped. The active seed and its original controller were left running. The detached v0.1 present-writer relay is waiting for the verified seed transfer. It is pinned to 46deaaedb with a three-hour native ceiling.
+2026-11-21T02:40:25.810Z · Collected arm-d7-wfix-pool-seed with service result success, 1 physical-scope report(s) and verified cleanup. arm-d7-v01-present started at 2026-11-21T02:40:03.543Z with execution ceiling 2026-11-21T05:40:03.543Z.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
