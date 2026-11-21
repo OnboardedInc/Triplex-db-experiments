@@ -11,9 +11,6 @@ import { loadFixture } from "../../../../examples/playground/fixture.ts";
 import { liveGate } from "../../../../examples/playground/live-gate.ts";
 import { runSnapshot } from "../../../../examples/playground/snapshot-run.ts";
 import { checkPlan, type SeedPlan } from "../../../../examples/playground/snapshot.ts";
-import { DatomicClient, orderedSaveIdentity } from "../../../../packages/datomic/dist/index.js";
-import { decodeRowText } from "../../../../packages/datomic/dist/rowText.js";
-import { command } from "../w1/group/workload.ts";
 import {
   caps,
   dockerClient,
@@ -71,10 +68,17 @@ async function writerGate(
   source: string,
   probe: { attempt: string; ordered: boolean },
 ) {
+  // [DX-INT1] Why: the live playground sets its SDK tracing before this extra probe opens.
+  // Rejected: importing the SDK during launcher startup and silently changing demo tracing.
+  const [{ DatomicClient, orderedSaveIdentity }, { decodeRowText }, { command }] = await Promise.all([
+    import("../../../../packages/datomic/dist/index.js"),
+    import("../../../../packages/datomic/dist/rowText.js"),
+    import("../w1/group/workload.ts"),
+  ]);
   const write = new DatomicClient(urls.write);
   const read = new DatomicClient(urls.read);
   const scope = JSON.stringify(["triplex-scope-v1", "test", "play1-writer", probe.attempt, 0]);
-  const entity = "playground/lean-writer";
+  const entity = "acct/playground/lean-writer";
   const attr = ":person/status";
   const value = (text: string) => ({ e: entity, a: attr, v: { type: "string" as const, value: text } });
   try {
