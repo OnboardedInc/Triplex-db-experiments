@@ -375,6 +375,8 @@ if (action === "--guest") {
     });
     assert(stack.managed.writeOptionsAttempt && isWriter(stack.managed.scorecardWriter) && commands.length >= 3);
     if (stack.managed.scorecardWriter === "per-person-ordered") {
+      const { pgdataFixture } = await import("../v01/pgdata-fixture.ts");
+      await pgdataFixture(out, process.env.DX_V01_FIXTURE_SOURCE!, stack.prefix, stack.managed.writeOptionsAttempt);
       const secret = read(cred).secret as string;
       assert.match(secret, /^[a-f0-9]{40}$/);
       const host = new URL(stack.writeUrl).hostname;

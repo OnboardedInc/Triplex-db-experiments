@@ -20,7 +20,7 @@ type Image = {
 export type AdoptedSeed = ReturnType<typeof openScaleSeal>;
 export const scopeKey = (name: string) => JSON.stringify(["triplex-scope-v1", "test", "test", name, 0]);
 
-export function openScaleSeal(file: string, pin: string, toy = false, transferPin?: string) {
+export function openScaleSeal(file: string, pin: string, toy = false, transferPin?: string, requireDump = true) {
   const bytes = fs.readFileSync(file);
   assert.match(pin, digest);
   assert.equal(hex(bytes), pin, "SCALE1 image digest differs");
@@ -58,7 +58,8 @@ export function openScaleSeal(file: string, pin: string, toy = false, transferPi
       [image.source, image.nonce, "success", pin]);
     assert.equal(path.basename(path.dirname(file)), transfer.tag);
     assert.match(image.sha256, digest);
-    assert(Number.isSafeInteger(image.bytes) && image.bytes > 0 && fs.statSync(dump).size === image.bytes);
+    assert(Number.isSafeInteger(image.bytes) && image.bytes > 0);
+    if (requireDump) assert.equal(fs.statSync(dump).size, image.bytes);
   }
   return { image, scope, proof, key, pin, dump, transferPin };
 }

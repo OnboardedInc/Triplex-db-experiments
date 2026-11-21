@@ -10,8 +10,10 @@ import { nativeMetrics } from "../thin1/native-metrics.ts";
 import { openScaleSeal, hex } from "./adopt.ts";
 import { budget, isWriter, jvmProfiles, physicalJvm, stackOptions, type Age, type JvmProfile } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
+import { claimPgdata, inspectPgdata, pgdataArgs, pgdataTarget } from "./pgdata.ts";
 
-const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, jvm, agedFile, agedPin, agedDump, agedDumpPin] = process.argv.slice(2);
+const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, jvm, agedFile, agedPin,
+  agedDump, agedDumpPin, pgdataSource, ...pgdataPaths] = process.argv.slice(2);
 assert(source && campaign && seedDir && imagePin && transferPin);
 assert(age === "fresh" || age === "1B");
 assert(isWriter(requestedWriter));
@@ -24,11 +26,16 @@ assert.equal(lock.ino, queue.ino); assert.equal(lock.dev, queue.dev);
 scaleHost.physical();
 process.env.DX_BARE_METAL = "1";
 verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
-const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin);
-const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
+pgdataArgs(pgdataPaths, pgdataSource, requestedWriter === "grouped");
+const copies = pgdataSource ? inspectPgdata(pgdataSource, pgdataPaths, fs.realpathSync(path.dirname(campaign))) : [];
+const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !copies.length);
+const expected = age === "1B" ? openAged(agedFile, agedPin) : undefined;
+if (!copies.length && expected) {
+  assert(agedDump && agedDumpPin && /^[a-f0-9]{64}$/.test(agedDumpPin));
+}
 fs.mkdirSync(campaign);
 jsonFile(path.join(campaign, "input.json"), { source, age, writer: requestedWriter, jvm: jvmProfile, imagePin, transferPin, originalScope: seed.scope,
-  agedBundle: expected?.pin, agedDump: expected?.dumpPin });
+  agedBundle: expected?.pin, agedDump: agedDumpPin || undefined, pgdata: copies.length ? copies : undefined });
 let stopping = false;
 const stop = () => { stopping = true; };
 process.on("SIGTERM", stop);
@@ -39,37 +46,54 @@ if (requestedWriter === "per-person-ordered") fs.mkdirSync(groupedDir, { recursi
 const stages = requestedWriter === "per-person-ordered"
   ? [{writer: requestedWriter, loaded: false}, {writer: requestedWriter, loaded: true}, {writer: "grouped", loaded: true}] as const
   : [{writer: requestedWriter, loaded: true}] as const;
-for (const { writer, loaded } of stages) {
+let systemIdentifier: string | undefined;
+for (const [i, { writer, loaded }] of stages.entries()) {
   const stageEnd = writer === "per-person-ordered" ? orderedEnd : Math.min(end, Date.now() + budget.comparison * 60_000);
   assert(!stopping && Date.now() + 10 * 60_000 < stageEnd);
   const root = writer === "grouped" && requestedWriter !== writer ? groupedDir : campaign;
   const out = path.join(root, loaded ? "loaded" : "zero");
   fs.mkdirSync(out);
-  const floor = age === "1B" ? 320 : 240;
-  assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the disposable restore");
+  const copy = copies[i];
+  const floor = copy ? 5 : age === "1B" ? 320 : 240;
+  assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the scorecard arm");
+  const emptyReference = copy && loaded && writer === "per-person-ordered"
+    ? await emptyResidency(path.join(out, "p7-empty"), jvmProfile) : undefined;
   const attempt = randomUUID();
   const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
-  assert(Object.values(scaleHost.childrenInventory(slot)).every((x) => x.length === 0));
+  beginStack(out, slot, attempt);
   try {
-    const { engines } = startScaleStack(out, slot, source, writer === "grouped", stackOptions(writer, attempt, jvmProfile));
-    const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
-    const residency = async () => {
-      const { write, read } = peerUrls();
-      const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
-      assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
-      const observed = await nativeMetrics({ prefix: slot, writeUrl: write, readUrl: read, gatewaySourceSha256: health.gatewaySourceHash,
-        containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
-      return observed.roles as Residency;
-    };
-    const empty = writer === "per-person-ordered" ? await residency() : undefined;
-    await restoreDump(expected?.dump ?? seed.dump, expected?.dumpPin ?? seed.image.sha256, slot, engines,
-      Math.min(stageEnd - 10 * 60_000, Date.now() + 42 * 60_000));
+    const options = stackOptions(writer, attempt, jvmProfile);
+    if (copy) claimPgdata(copy, source, slot, attempt);
+    const { engines } = startScaleStack(out, slot, source, writer === "grouped", copy ? {
+      ...options, DX_V01_PGDATA: copy.dir, DX_V01_PGDATA_CONTROL_SHA: copy.controlSha256,
+      DX_V01_PGDATA_FILE_ID: copy.device + ":" + copy.inode,
+    } : options);
+    const residency = () => stackResidency(slot, engines);
+    let empty = emptyReference;
+    if (copy) {
+      const container = engines.pg!.id;
+      const liveFileId = execFileSync("docker", ["exec", container, "stat", "-c", "%d:%i", pgdataTarget],
+        { encoding: "utf8", timeout: 10000 }).trim();
+      assert.equal(liveFileId, copy.device + ":" + copy.inode);
+      const liveCluster = execFileSync("docker", ["exec", container, "psql", "-XAtq", "-v", "ON_ERROR_STOP=1", "-U", "postgres",
+        "-d", "datomic", "-c", "SELECT current_setting('data_directory'), system_identifier FROM pg_control_system()"],
+        { encoding: "utf8", timeout: 10000 }).trim().split("|");
+      assert.equal(liveCluster[0], pgdataTarget);
+      assert.match(liveCluster[1] ?? "", /^[1-9][0-9]*$/);
+      systemIdentifier ??= liveCluster[1];
+      assert.equal(liveCluster[1], systemIdentifier, "Prepared arms must share the sealed PostgreSQL system identifier");
+      jsonFile(path.join(out, "pgdata.json"), { source, slot, attempt, at: Date.now(), container, copy, liveFileId, systemIdentifier });
+    } else {
+      if (writer === "per-person-ordered") empty = await residency();
+      await restoreDump(expected ? agedDump! : seed.dump, expected ? agedDumpPin! : seed.image.sha256, slot, engines,
+        Math.min(stageEnd - 10 * 60_000, Date.now() + 42 * 60_000));
+    }
     const write = `http://${engines["gw-w"]!.address}:8080`;
     const read = `http://${engines["gw-r"]!.address}:8080`;
     const jw = await readJvm(engines, jvmProfile);
     const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
     assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
-    const head = expected ? await verifyAged(expected, out, engines.pg!.address) : seed.scope.cut;
+    const head = expected ? await verifyAged(expected, out, slot, attempt, engines.pg!.address) : seed.scope.cut;
     assert(!stopping && Date.now() + 8 * 60_000 < stageEnd);
     const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency };
     const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head);
@@ -87,8 +111,39 @@ for (const { writer, loaded } of stages) {
   }
 }
 
-function openAged(label: Age, file?: string, pin?: string, dump?: string, dumpPin?: string) {
-  assert(label === "1B" && file && pin && dump && dumpPin && /^[a-f0-9]{64}$/.test(dumpPin));
+function beginStack(out: string, slot: string, attempt: string) {
+  assert(Object.values(scaleHost.childrenInventory(slot)).every((x) => x.length === 0));
+  jsonFile(path.join(out, "attempt.json"), { source, slot, nonce: attempt, tag: path.basename(out) });
+}
+
+async function stackResidency(slot: string, engines: ReturnType<typeof startScaleStack>["engines"]) {
+  const writeUrl = `http://${engines["gw-w"]!.address}:8080`;
+  const readUrl = `http://${engines["gw-r"]!.address}:8080`;
+  const health = await (await fetch(new URL("/health", writeUrl), { signal: AbortSignal.timeout(2000) })).json() as any;
+  assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
+  const observed = await nativeMetrics({ prefix: slot, writeUrl, readUrl, gatewaySourceSha256: health.gatewaySourceHash,
+    containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
+  return observed.roles as Residency;
+}
+
+async function emptyResidency(out: string, profile: JvmProfile) {
+  fs.mkdirSync(out);
+  const attempt = randomUUID();
+  const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
+  beginStack(out, slot, attempt);
+  try {
+    const { engines } = startScaleStack(out, slot, source, false, stackOptions("per-person-ordered", attempt, profile));
+    const java = await readJvm(engines, profile);
+    const roles = await stackResidency(slot, engines);
+    jsonFile(path.join(out, "residency.json"), { source, attempt, slot, at: Date.now(), java, roles });
+    return roles;
+  } finally {
+    scaleHost.clean(out, slot);
+  }
+}
+
+function openAged(file?: string, pin?: string) {
+  assert(file && pin);
   const bytes = fs.readFileSync(file);
   assert.equal(hex(bytes), pin);
   const bundle = JSON.parse(bytes.toString());
@@ -97,10 +152,10 @@ function openAged(label: Age, file?: string, pin?: string, dump?: string, dumpPi
   assert.equal(bundle.scope, seed.key);
   assert(Number.isSafeInteger(bundle.logicalHead) && bundle.logicalHead > seed.scope.cut);
   assert(bundle.records >= 1_000_000_000);
-  return { file, pin, dump, dumpPin, bundle };
+  return { file, pin, bundle };
 }
 
-async function verifyAged(expected: ReturnType<typeof openAged>, out: string, postgres: string) {
+async function verifyAged(expected: ReturnType<typeof openAged>, out: string, slot: string, attempt: string, postgres: string) {
   assert(process.env.AGE_JAVA && process.env.AGE_DATOMIC_HOME);
   // [DX-V01] Why: check the fresh peer against the exact aged replay bundle before touching the restored arm.
   // Rejected: treating the 1B label or the dump size as proof of age.
@@ -113,7 +168,7 @@ async function verifyAged(expected: ReturnType<typeof openAged>, out: string, po
   try {
     const result = checkScorecard(expected.file, expected.pin);
     assert.equal(result.logicalHead, expected.bundle.logicalHead);
-    jsonFile(path.join(out, "aged-live-check.json"), result);
+    jsonFile(path.join(out, "aged-live-check.json"), { ...result, source, slot, attempt });
     return result.logicalHead;
   } finally {
     if (original === undefined) delete process.env.DATOMIC_URI_TEMPLATE;

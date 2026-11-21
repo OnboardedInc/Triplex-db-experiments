@@ -8,7 +8,8 @@ import type { MixedIds } from "./mixed-ids.ts";
 import type { adoptedArm } from "./adopted.ts";
 import { physicalJvm, selectedWriter, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
 
-type Card = { source: string; age: Age; writer: Writer; jvm?: JvmProfile; toy: boolean; campaign: string; out: string; forecast: string; failure?: string };
+type Card = { source: string; age: Age; writer: Writer; jvm?: JvmProfile; toy: boolean; campaign: string; out: string; forecast: string;
+  prepared?: boolean; failure?: string };
 type Observation = Awaited<ReturnType<typeof adoptedArm>>;
 const tag = (x: unknown) => (typeof x === "number" && Number.isFinite(x)) ? String(Number(x.toFixed(3))) : "—";
 export function writeAdoptedCard(run: Card) {
@@ -38,10 +39,39 @@ export function writeAdoptedCard(run: Card) {
   const [grouped] = run.writer === "per-person-ordered" ? readArm(comparison + "loaded", true, "grouped") : [];
   const arms = [zero, loaded, grouped].filter((arm) => arm !== undefined);
   const inputsFile = path.join(run.campaign, "input.json");
+  const prepared = run.prepared === true;
+  if (!run.toy && arms.length) assert(fs.existsSync(inputsFile));
   if (!run.toy && fs.existsSync(inputsFile)) {
     const input = JSON.parse(fs.readFileSync(inputsFile, "utf8"));
     assert.deepEqual([input.source, input.age, input.writer, input.jvm], [run.source, run.age, run.writer, run.jvm]);
+    assert.equal(Boolean(input.pgdata), prepared);
     for (const arm of arms) assert.equal(arm.seed.imageSha256, input.imagePin);
+    if (prepared || run.age === "1B") {
+      const stages = run.writer === "grouped" ? [[loaded, "loaded"]] as const
+        : [[zero, "zero"], [loaded, "loaded"], [grouped, comparison + "loaded"]] as const;
+      if (prepared) assert.equal(input.pgdata.length, stages.length);
+      let systemIdentifier: string | undefined;
+      for (const [i, [arm, dir]] of stages.entries()) {
+        if (!arm) continue;
+        if (prepared) {
+          const observed = JSON.parse(fs.readFileSync(file(dir, "pgdata.json"), "utf8"));
+          assert.deepEqual([observed.source, observed.slot, observed.attempt, observed.copy],
+            [run.source, arm.slot, arm.attempt, input.pgdata[i]]);
+          assert.equal(observed.liveFileId, observed.copy.device + ":" + observed.copy.inode);
+          assert.match(observed.container, /^[a-f0-9]{64}$/);
+          assert(Number.isSafeInteger(observed.at) && observed.at <= arm.startedAt);
+          assert.match(observed.systemIdentifier, /^[1-9][0-9]*$/);
+          systemIdentifier ??= observed.systemIdentifier;
+          assert.equal(observed.systemIdentifier, systemIdentifier);
+        }
+        if (run.age === "1B") {
+          const aged = JSON.parse(fs.readFileSync(file(dir, "aged-live-check.json"), "utf8"));
+          assert.deepEqual([aged.source, aged.slot, aged.attempt, aged.database, aged.logicalHead, aged.bundleSha],
+            [run.source, arm.slot, arm.attempt, arm.seed.database, arm.firstCut, input.agedBundle]);
+          assert(aged.records >= 1_000_000_000 && Date.parse(aged.observedAt) <= arm.startedAt);
+        }
+      }
+    }
   }
   if (zero && loaded) {
     assert(!zero.loaded && loaded.loaded && zero.firstCut === loaded.firstCut);
@@ -87,12 +117,21 @@ export function writeAdoptedCard(run: Card) {
       String(loaded.p2.receipts), evidence("loaded")]);
     if (loaded.p7) {
       const p = loaded.p7;
+      if (prepared) {
+        const empty = JSON.parse(fs.readFileSync(file("loaded/p7-empty", "residency.json"), "utf8"));
+        assert.equal(empty.source, run.source);
+        assert.notEqual(empty.attempt, loaded.attempt);
+        assert.notEqual(empty.slot, loaded.slot);
+        assert(empty.at <= loaded.startedAt);
+        assert.deepEqual(empty.roles, p.empty);
+      }
       const footprint = ["tx", "gw-w", "gw-r"].map((role) => {
         const restored = p.restored[role]!, empty = p.empty[role]!;
         return `${role} ${restored.threads} threads, ${tag((restored.rssBytes - empty.rssBytes) / p.people)} added RSS bytes per roster person`;
       }).join("; ");
       rows.set("P7", [`First demand pull at the original cut p99 ${tag(p.cold.observed.p99Ms)} ms, ${p.cold.unavailable} declined. ${footprint}. An activity-matched untouched-person memory slope is unmeasured.`,
-        run.toy ? "DIAGNOSTIC" : "NOT MEASURED", `${p.cold.observed.count} first pulls and two residency points`, evidence("loaded")]);
+        run.toy ? "DIAGNOSTIC" : "NOT MEASURED", `${p.cold.observed.count} first pulls and two residency points`,
+        evidence("loaded") + (prepared ? " · [empty stack](campaign/loaded/p7-empty/residency.json)" : "")]);
     }
   }
   const [neighbors] = readArm("p6-235", true);
@@ -220,7 +259,7 @@ export function writeAdoptedCard(run: Card) {
   const settings = {
     ...selectedWriter(run.writer),
     writerIntegration,
-    ...(run.toy ? {} : { jvm: run.jvm, physicalJvm: physicalJvm(run.jvm) }),
+    ...(run.toy ? {} : { jvm: run.jvm, physicalJvm: physicalJvm(run.jvm), postgresStartup: prepared ? "prepared PGDATA" : "logical dump" }),
     ...(run.writer === "per-person-ordered" ? { comparison: selectedWriter("grouped") } : {}),
     armReadbacks: arms.map((a) => a.settings),
   };

@@ -170,6 +170,7 @@ fi
 # Rejected: replacing defaults globally (would change other agents' measurements).
 # [orchestrator merge] Flags (DX-S3) win; DX_* environment variables (DX-H3) are the fallback; then the old defaults.
 pg_mem=${DX_PG_MEMORY:-512m} tx_mem=${DX_TX_MEMORY:-3g} gw_mem=1500m tx_java="-Xms256m -Xmx${DX_TX_HEAP:-2g}" gw_java=''
+pgdata=${DX_V01_PGDATA:-}
 # [DX-M2] Why: opt-in JVM arms preserve concurrent experiments' defaults. Rejected: changing the control globally.
 tx_java=${DX_TX_JAVA_OPTS:-$tx_java}
 index_threshold=${DX_INDEX_THRESHOLD:-128m} index_max=${DX_INDEX_MAX:-512m} object_cache=${DX_TX_OBJECT_CACHE:-${DX_OBJECT_CACHE:-128m}} pg_settings=''
@@ -430,10 +431,32 @@ if [[ ${DX_TRACE_TEST_GATEWAY:-0} == 1 ]]; then
     -e TRIPLEX_TRACE_LEVEL=off -e "DATOMIC_JAVA_OPTS=$(probe_options '-Xms128m -Xmx512m -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=0')" -e DATOMIC_EXT_CLASSPATH=/opt/gateway/src -e TRIPLEX_TRACE_DIR=/test-trace -e TRIPLEX_TRACE_TEST_JFR=1 -v "$attempt/trace/preflight:/test-trace" -v "$src:/opt/gateway:ro" \
     --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.trace-test > "$attempt/gateway-trace-tests.log" 2>&1
 fi
+if [[ -n $pgdata ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && ${DX_V01_ADOPTED_STACK:-0} == 1 &&
+     $prefix == tx2-dxscale1-v01-* && $publish == false &&
+     -z $seed_volume && -z ${DX_BM1_WAL_MOUNT:-} && -z ${DX_JVM1_PG_RESTORE:-} && -z ${DX_PREP1_DUMP:-} ]]
+  [[ $pgdata == /* && -d $pgdata && ${DX_V01_PGDATA_FILE_ID:-} =~ ^[0-9]+:[0-9]+$ &&
+     ${DX_V01_PGDATA_CONTROL_SHA:-} =~ ^[a-f0-9]{64}$ ]]
+fi
 docker network create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-net" >/dev/null
+pg_target=/var/lib/postgresql/data
+pg_args=(--pull never --name "$prefix-pg" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net"
+  ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem"
+  -e POSTGRES_PASSWORD=datomic)
 # [DX-T1-14] Why: activation uses a byte-verified fresh clone under the holder's lease; a sealed source is never writable.
 # Rejected: S5's old first-use/reuse fallback, incomplete copies, or attaching a transactor directly to a sealed seed.
-if [[ $seed_volume == bm1-pristine-* ]]; then
+if [[ -n $pgdata ]]; then
+  # [DX-V01] Why: inspect the exact private bind mount before starting PostgreSQL.
+  # Rejected: writing to the sealed source or populating a newly created volume.
+  pg_entry="$repo/lab/experiments/EXP-DX1/v01/pgdata-entrypoint.sh"
+  docker create "${pg_args[@]}" --mount "type=bind,source=$pgdata,target=$pg_target" \
+    --mount "type=bind,source=$pg_entry,target=/scorecard-pgdata-entrypoint.sh,readonly" \
+    -e "DX_V01_PGDATA_FILE_ID=$DX_V01_PGDATA_FILE_ID" -e "DX_V01_PGDATA_CONTROL_SHA=$DX_V01_PGDATA_CONTROL_SHA" \
+    --entrypoint /bin/sh postgres:17-alpine /scorecard-pgdata-entrypoint.sh postgres $pg_settings >/dev/null
+  mount=$(docker inspect --format '{{range .Mounts}}{{if eq .Destination "/var/lib/postgresql/data"}}{{.Type}}|{{.Source}}|{{.RW}}{{end}}{{end}}' "$prefix-pg")
+  [[ $mount == "bind|$pgdata|true" ]]
+  docker start "$prefix-pg" >/dev/null
+elif [[ $seed_volume == bm1-pristine-* ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $seed_volume == bm1-pristine-"${DX_BM1_PRISTINE_BATCH:?}" ]] || exit 2
   python3 lab/experiments/EXP-DX1/bm1/pristine-seed.py clone "$DX_BM1_PRISTINE_BATCH" "$prefix" "$attempt"
 elif [[ -n $seed_volume ]];then
@@ -479,13 +502,18 @@ CLONE_MOUNTS
 else
   docker volume create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-pg-data" >/dev/null
 fi
-docker run -d --pull never --name "$prefix-pg" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
-  -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
+if [[ -z $pgdata ]]; then
+  docker run -d "${pg_args[@]}" -v "$prefix-pg-data:$pg_target" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
+fi
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
 # Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
 ready=false
 for ((i=0;i<90;i++)); do
   if docker exec "$prefix-pg" pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; then ready=true; break; fi
+  if [[ -n $pgdata && $(docker inspect --format '{{.State.Running}}' "$prefix-pg") != true ]]; then
+    docker logs --tail 20 "$prefix-pg" >&2
+    exit 1
+  fi
   sleep 1
 done
 [[ $ready == true ]] || { echo "Postgres TCP startup timed out" >&2; exit 1; }
@@ -505,7 +533,7 @@ if [[ ${DX_BM1_WAL_AB:-0} == 1 ]]; then
   ' sh "${wal_dir:+ssd}" > "$attempt/wal-placement.txt"
 fi
 # Vendor scripts use their own database/connect statements; keep their order and bytes.
-if [[ -z $seed_volume ]];then
+if [[ -z $seed_volume && -z $pgdata ]];then
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   db=postgres
   [[ "$file" != postgres-table.sql ]] || db=datomic

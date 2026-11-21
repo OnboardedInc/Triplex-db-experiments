@@ -7,6 +7,12 @@ The forecast is 235 minutes and USD 4.27 per age.
 The optional Java 25 ZGC comparison is outside the time budget.
 The fresh and aged bare-metal runs remain unverified.
 
+## Part 5 prepared PostgreSQL audit
+
+The prepared arm matches each private directory's PostgreSQL control bytes to the stopped source, checks for shared files, claims the copy once and verifies the exact bind mount before startup. The entrypoint rechecks the device and inode, control digest and clean shutdown state. The running SQL process confirms its data directory and the arms report the same PostgreSQL system identifier. This verifies storage attachment. SCALE1 still checks the sealed cut, manifest claim, loader receipt, roster and pinned field values from both gateways. For 1B the existing AGE1 fresh-peer check also compares its exact native identity, recorded cut, record count and replay ledger to the pinned bundle.
+
+The storage readback records the exact source, arm slot, fresh attempt, PostgreSQL container ID, file identity and control digest. The physical renderer requires the current campaign's input and matches the readback to each arm before reaching the existing mixed-ID verdict. For 1B it also binds the fresh AGE1 readback to that arm, bundle, database and starting cut. The P7 empty census records its own slot, attempt, settings and roles before the prepared stack starts. The Mac PostgreSQL fixture records the copy's sealed value, changed value, exact control hash and mismatched-digest refusal with its native fixture source, slot and attempt. It supplies diagnostic evidence. This change adds no performance verdict or release PASS. No acceptance path or pin changed.
+
 ## Part 4 review of the pinned writer
 
 The scorecard merges INT1 at `f25a46e02591a1c6b6a9495f7f2cce20249571f0` and uses its tracked Datomic source tree byte for byte. The resulting scorecard commit keeps the paired restore and mixed-format check on top of that integration. The comparison restores the original seal before it runs grouped P2 and P6. Each physical arm reads back the requested Java version and collector from all three processes. The requested JVM also forms part of the campaign identity.
