@@ -6,6 +6,7 @@
             [triplex.gateway.group :as group]
             [triplex.gateway.group-test :as fixture]
             [triplex.gateway.lean :as lean]
+            [triplex.gateway.main :as main]
             [triplex.gateway.scope :as scope]
             [triplex.gateway.storage :as storage]
             [triplex.gateway.subject-save :as subject]
@@ -54,6 +55,69 @@
     (is (nil? (get (reference/claim name (get-in input ["claims" 0 "commandId"])) "receipt")))
     (is (not-any? #(= (get-in input ["claims" 0 "txId"]) (first %)) (reference/feed name 2 10)))))
 
+(deftest ordered-block-collision-keeps-old-ids-reserved
+  (when subject/ordered-ids?
+    (with-redefs [subject/enabled true group/enabled false policy/priority? false policy/field-only? false policy/budget-us nil]
+      (reference/in-scope
+        (fn [name conn]
+          (let [[a] (seed name)
+                input (gate/ordered-frame a gate/ordered-token)
+                id (str gate/ordered-token "04")
+                legacy #(on other (reference/edit-frame %1 %2 "legacy" 0.0 nil %3))]
+            (is (true? (:subjectOrderedIds (main/write-options name))))
+            (ref-write name (legacy "legacy-occupy" id nil))
+            (ref-write name (legacy "legacy-retire" "replacement" id))
+            (let [db (d/db conn)
+                  input (from input 4)
+                  plan (prepared db input)
+                  ready (subject/ordered-bounds (:journal plan) (:prefixes plan))]
+              (is (= (str "2001a" gate/ordered-token "00") (first ready)))
+              (is (= ready (:ordered-bounds plan)))
+              (is (nil? (lean/by-id db id)))
+              (is (some? (lean/by-id (d/history db) id)))
+              (is (= [400 "IdentityConflict"] (reference/outcome (reference/send name input))))
+              (is (= {"status" "absent"} (reference/operation name "edit-a")))
+              (is (= 4 (storage/head-position (d/db conn)))))))))))
+
+(deftest lookup-only-hints-and-authoritative-cas
+  (when subject/prefetch?
+    (with-redefs [subject/enabled true group/enabled false policy/priority? false policy/field-only? false policy/budget-us nil]
+      (reference/in-scope
+        (fn [name conn]
+          (let [[a b] (seed name)
+                lookup d/with
+                hint subject/lookup-hints
+                native d/transact-async
+                attached (atom nil)
+                first-ack (with-redefs [d/with
+                                       (fn [db data & opts]
+                                         (is (= subject/prefetch-ident (ffirst data)))
+                                         (is (= [:return-hints true] (vec opts)))
+                                         (let [result (apply lookup db data opts)]
+                                           (is (some? (:hints result)))
+                                           (is (every? #(= (d/entid db :db/txInstant) (:a %)) (:tx-data result)))
+                                           (reset! attached (:hints result))
+                                           result))
+                                       d/transact-async
+                                       (fn [c data & opts]
+                                         (is (= subject/ident (ffirst data)))
+                                         (is (identical? @attached (:hints (apply hash-map opts))))
+                                         (apply native c data opts))]
+                            (reference/send name a))]
+            (is (= [200 nil] (reference/outcome first-ack)))
+            (is (true? (get-in first-ack [:body "subjectHintsAttached"])))
+            ;; [DX-PREP1] Why: a valid hint can survive a competing write but never its stale receipt.
+            ;; Rejected: testing stale input only before hints existed.
+            (with-redefs [subject/lookup-hints
+                          (fn [db plan]
+                            (let [hints (hint db plan)]
+                              (is (some? hints))
+                              (ref-write name (reference/edit-frame "after-hint" "hint-winner" "winner" 2.0 12.0 "middle"))
+                              hints))]
+              (is (= [409 "CasConflict"] (reference/outcome (reference/send name b)))))
+            (is (= {"status" "absent"} (reference/operation name "edit-b")))
+            (is (= 4 (storage/head-position (d/db conn))))))))))
+
 (deftest dependency-matrix
   (with-redefs [subject/enabled true group/enabled false policy/priority? false policy/field-only? false policy/budget-us nil]
     (testing "A true same-person writer changes the revision and invalidates the planned predecessor"
@@ -64,6 +128,32 @@
             (race-before-submit name conn a #(ref-write name race) [409 "CasConflict"])
             (is (= 3 (storage/head-position (d/db conn))))
             (is (= "winner" (:value_string (lean/decode (:v (lean/by-id (d/db conn) "winner"))))))))))
+    (when subject/numeric-owner?
+      (testing "The resolved owner replaces only the business upsert and a renamed owner cannot commit"
+        (reference/in-scope
+          (fn [name conn]
+            (let [[a] (seed name)
+                  db (d/db conn)
+                  plan (prepared db a)
+                  owner (:owner plan)
+                  prior (with-redefs [subject/numeric-owner? false] (prepared db a))
+                  identity-map {:db/id (str "e:" fixture/root) :triplex.entity/id fixture/root}
+                  first-row? (fn [key op]
+                               (and (vector? op) (= [:db/add key :triplex.entity/row] (subvec op 0 3))))]
+              (is (= fixture/root (:owner-key plan)))
+              (is (nil? (:owner-key prior)))
+              (is (some #{identity-map} (:ops prior)))
+              (is (not-any? #{identity-map} (:ops plan)))
+              (is (some (partial first-row? owner) (:ops plan)))
+              (is (not-any? (partial first-row? (str "e:" fixture/root)) (:ops plan)))
+              (is (some #(= (:journal plan) (:triplex.entity/id %)) (:ops plan)))
+              (race-before-submit name conn a
+                (fn []
+                  @(d/transact conn [[:db/add owner :triplex.entity/id "reassigned-owner"]])
+                  (is (= (:revision plan) (scope/value (d/db conn) owner :triplex.entity/rev))))
+                [409 "CasConflict"])
+              (is (= 2 (storage/head-position (d/db conn))))
+              (is (nil? (d/entid (d/db conn) [:triplex.entity/id fixture/root]))))))))
     (testing "An unrelated logical append advances the clock and does not invalidate the prepared owner"
       (reference/in-scope
         (fn [name conn]

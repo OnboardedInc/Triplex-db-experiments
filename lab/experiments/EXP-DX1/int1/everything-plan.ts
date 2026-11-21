@@ -1,4 +1,4 @@
-import { pooledJvmOptions } from "../jvm1/launch.mjs";
+import { launchProfile, measuredWriterG1 } from "../jvm1/launch.mjs";
 import { fieldRates } from "./field-plan.ts";
 import { pooledCampaignId, campaignWindows } from "../scale1/tenant-traffic.ts";
 
@@ -7,7 +7,26 @@ export const profiles = ["frozen", "field"] as const;
 export type CampaignProfile = (typeof profiles)[number];
 export const populations = [10_000, 100_000] as const;
 export const loads = ["zero", "reader"] as const;
-export const { tx: transactorJvmOptions, ...gatewayJvmOptions } = pooledJvmOptions;
+
+const gatewayHeap = [
+  "-Xms64m",
+  "-Xmx384m",
+  "-Ddatomic.objectCacheMax=32m",
+  "-XX:MinHeapFreeRatio=15",
+  "-XX:MaxHeapFreeRatio=30",
+];
+// [DX-INT1] Why: verify saved archives with the launch expectations they used.
+// Rejected: changing archived observations when the server preset changes.
+export const gatewayJvmOptions = {
+  "gw-w": [...gatewayHeap, ...measuredWriterG1],
+  "gw-r": [...gatewayHeap, "-XX:+UseG1GC"],
+} as const;
+export const transactorJvmOptions = [
+  "-Xms256m",
+  "-Xmx5g",
+  "-XX:+UseG1GC",
+  "-XX:MaxGCPauseMillis=50",
+] as const;
 
 export function campaignCases(people: readonly number[] = populations) {
   return people.flatMap((n) =>
@@ -23,6 +42,10 @@ export function campaignCases(people: readonly number[] = populations) {
   );
 }
 export type CampaignCase = ReturnType<typeof campaignCases>[number];
+
+export function scorecardCases() {
+  return campaignCases([100_000]).filter((c) => c.profile === "frozen");
+}
 
 export function campaignTenant(c: CampaignCase, smoke: boolean) {
   return {
@@ -103,9 +126,9 @@ export function planSummary() {
       field: { id: pooledCampaignId + "/field", ratesPerAccount: fieldRates },
     },
     treatment,
-    gatewayJvmOptions,
+    launch: launchProfile("server"),
     excluded,
-    readerCores: 5,
+    readerCores: 2,
     savedOutputPreflight: campaignCases([4]),
     fieldWindows: Object.fromEntries(
       populations.map((n) => {

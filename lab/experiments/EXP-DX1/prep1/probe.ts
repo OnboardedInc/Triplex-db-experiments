@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { setTimeout as sleep } from "node:timers/promises";
-import { DatomicClient, DatomicHttpError } from "../../../../packages/datomic/dist/index.js";
+import {
+  DatomicClient,
+  DatomicHttpError,
+  orderedSaveIdentity,
+} from "../../../../packages/datomic/dist/index.js";
 import { decodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import type { Fact } from "../../../bench/lib/world.ts";
 import { command } from "../w1/group/workload.ts";
@@ -8,29 +12,34 @@ import { command } from "../w1/group/workload.ts";
 const mode = process.env.PREP1_MODE;
 const arm = process.env.PREP1_ARM;
 const subjectProfile = mode === "subject-profile";
+const lookupProfile = mode === "lookup-profile";
+const orderedIds = lookupProfile && arm === "D1";
+const subjectProbe = subjectProfile || lookupProfile;
 const deep = mode === "profile" || mode === "census";
 const guardProbe = deep || mode === "cheap";
-const depths = subjectProfile
-  ? [1, 2, 4, 6].flatMap((n) => [n, n, n])
-  : mode === "census"
-    ? [8]
-    : guardProbe
-      ? [32]
-      : mode === "ortho"
-        ? [1, 8, 32, 32, 8, 1]
-        : [32, 32];
-const count = subjectProfile ? 30 : guardProbe ? 96 : 192;
-const subjectCount = deep ? 1200 : depths.length * count;
+const depths = lookupProfile
+  ? [24]
+  : subjectProfile
+    ? [1, 2, 4, 6].flatMap((n) => [n, n, n])
+    : mode === "census"
+      ? [8]
+      : guardProbe
+        ? [32]
+        : mode === "ortho"
+          ? [1, 8, 32, 32, 8, 1]
+          : [32, 32];
+const count = lookupProfile ? 96 : subjectProfile ? 30 : guardProbe ? 96 : 192;
+const subjectCount = lookupProfile ? 1152 : deep ? 1200 : depths.length * count;
 // [DX-PREP1] Why: sample across the same seeded depth as the earlier open-loop experiment.
 // Rejected: a narrow prefix of that database, where all historical lookups can share the same index leaves.
-const subjectFor = (offer: number) => (deep ? (offer * 67) % subjectCount : offer);
+const subjectFor = (offer: number) => (deep || lookupProfile ? (offer * 67) % subjectCount : offer);
 const depth = 160;
 const attempt = process.env.PREP1_ATTEMPT!;
 const scope = JSON.stringify([
   "triplex-scope-v1",
   "test",
   "prep1",
-  guardProbe || subjectProfile ? `${attempt}-${arm}` : attempt,
+  guardProbe || subjectProbe ? `${attempt}-${arm}` : attempt,
   0,
 ]);
 const peers = (process.env.PREP1_PEERS ?? process.env.PREP1_URL!)
@@ -56,6 +65,8 @@ type Ack = {
   datoms: number;
   subjectSave?: string;
   subjectReplan?: boolean;
+  subjectHintsAttached?: boolean;
+  subjectOrderedIds?: boolean;
   requestBytes: number;
   nativeComputeMs: number;
   submitToNativeEntryMs: number;
@@ -90,7 +101,7 @@ async function censusWrite(
     return { ack: (await peer.transact(db, input)) as Ack, recovered: false };
   } catch (failure) {
     if (
-      mode !== "census" ||
+      (mode !== "census" && mode !== "lookup-profile") ||
       !(failure instanceof DatomicHttpError) ||
       failure.code !== "OutcomeUnknown"
     )
@@ -151,7 +162,7 @@ try {
   const seedHead = await c.begin(db);
   await c.release(db, seedHead.handle);
   assert.equal(seedHead.position, seeds.length / 8);
-  if (subjectProfile) {
+  if (subjectProbe) {
     const installed = [];
     for (const [i, client] of peers.entries()) {
       if (i > 0) assert.equal((await client.create(scope, "lean", true, 35000)).db, db);
@@ -159,6 +170,8 @@ try {
         database: string;
         position: number;
         subjectSave?: boolean;
+        subjectPrefetch?: boolean;
+        subjectOrderedIds?: boolean;
         subjectFunction?: string;
         subjectFunctionTx?: string;
         options: { groupCommit: boolean; livePriority: boolean; fieldCoalesce: boolean };
@@ -166,7 +179,9 @@ try {
       assert.equal(observed.database, db);
       assert.equal(observed.position, seedHead.position);
       assert.equal(peers.length, Number(arm![1]));
-      assert.equal(!!observed.subjectSave, arm!.startsWith("B"));
+      assert.equal(!!observed.subjectSave, !arm!.startsWith("A"));
+      assert.equal(!!observed.subjectPrefetch, arm === "C1");
+      assert.equal(!!observed.subjectOrderedIds, orderedIds);
       assert.equal(observed.options.groupCommit, arm!.startsWith("A"));
       assert.equal(observed.options.livePriority, arm!.startsWith("A"));
       assert.equal(observed.options.fieldCoalesce, false);
@@ -185,9 +200,9 @@ try {
     subjects: seeds.length,
     facts: seeds.length * depth,
   });
-  if (subjectProfile) {
+  if (subjectProbe) {
     const idleStart = BigInt(now());
-    await sleep(30100);
+    await sleep(lookupProfile ? 8000 : 30100);
     emit("idle", { db, elapsedNs: (BigInt(now()) - idleStart).toString() });
   }
 
@@ -200,8 +215,11 @@ try {
         `edit-${i}`,
         facts(subject, width, "edited"),
         seeds[subject]!.slice(0, width),
+        true,
+        false,
+        orderedIds ? orderedSaveIdentity() : undefined,
       );
-      return subjectProfile ? { ...edit, sourceK: seedHead.position } : edit;
+      return subjectProbe ? { ...edit, sourceK: seedHead.position } : edit;
     });
     const head = seedHead.position + block * count;
     let next = 0;
@@ -218,6 +236,7 @@ try {
             const { ack, recovered } = await censusWrite(peers[peer]!, db, input);
             const end = now();
             assert.equal(ack.operationId, input.operationId);
+            assert.equal("subjectOrderedIds" in ack && ack.subjectOrderedIds, orderedIds);
             recorded.push({
               index,
               begin,
@@ -324,7 +343,7 @@ try {
     });
   }
   emit("finished", { db, head: seedHead.position + depths.length * count });
-  if (subjectProfile) await c.delete(scope);
+  if (subjectProbe) await c.delete(scope);
 } finally {
   for (const peer of peers) peer.close();
 }

@@ -50,6 +50,27 @@ const payload: HistoricalPayload = {
   ]),
 };
 
+test("split reads retain lazy rows and combine read-only fallback metadata", async () => {
+  const reader = new ReplicaReader(0);
+  let pulls = 0;
+  let materializations = 0;
+  const result = await reader.pullAt("root", basis, async () => {
+    pulls++;
+    return {
+      ...payload.result,
+      observation: { digest: "empty", stamp: -1, stamps: 0, facts: 0, bytes: 0 },
+      get triples() { materializations++; return []; },
+    };
+  }, async () => assert.equal(pulls, 1));
+  assert.equal(pulls, 2);
+  assert.equal(materializations, 0);
+  assert.equal(result.route, "fallback");
+  assert.equal(result.roundTrips, 2);
+  assert.equal(result.replicaFallbackReason, "copy-unavailable");
+  assert.deepEqual(result.triples, []);
+  assert.equal(materializations, 1);
+});
+
 test("a fallback port refuses a reply from another requested cut", async () => {
   const { port1, port2 } = new MessageChannel();
   const input = new HistoricalFallbackPort(port1);

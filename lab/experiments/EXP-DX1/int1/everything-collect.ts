@@ -17,13 +17,14 @@ import {
   campaignCases,
   campaignTenant,
   gatewayJvmOptions,
+  scorecardCases,
   transactorJvmOptions,
   treatment,
   type CampaignCase,
 } from "./everything-plan.ts";
+import { checkProfileFlags, launchProfile, roles as jvmRoles } from "../jvm1/launch.mjs";
 import { replayRevision } from "../scale1/source.ts";
 import { atomicJson, type Arm } from "./everything-arm.ts";
-import { pooledWriterCpus } from "../jvm1/launch.mjs";
 import { verifyNativeRecordingFiles } from "../../../trace/native-recording.mjs";
 
 const read = (f: string) => JSON.parse(fs.readFileSync(f, "utf8"));
@@ -31,8 +32,9 @@ export function openPlan(
   dir: string,
   source: string,
   smoke: boolean,
-  placement: "leased-mac" | "physical",
+  placement: "leased-mac" | "mac-diagnostic" | "physical",
   overnight = false,
+  heldSeal?: string,
 ) {
   const plan = {
     source,
@@ -41,7 +43,8 @@ export function openPlan(
     treatment,
     createdAt: Date.now(),
     overnight,
-    cases: campaignCases(smoke ? [4] : overnight ? [10_000] : undefined),
+    ...(heldSeal ? { heldSeal } : {}),
+    cases: heldSeal ? scorecardCases() : campaignCases(smoke ? [4] : overnight ? [10_000] : undefined),
     oracle: read(path.join(dir, "oracle-source.json")),
     placementInputs: read(path.join(dir, "physical-inputs.json")),
   };
@@ -102,7 +105,7 @@ async function checkInputs(dir: string, plan: ReturnType<typeof read>) {
   assert(declared.has(base + "cli.py"));
   const observed = (await index(path.join(dir, "oracle"))).map(([f]) => f).sort();
   assert.deepEqual(observed, [...declared].sort());
-  if (plan.placement === "leased-mac") {
+  if (plan.placement !== "physical") {
     assert(placement.containers.length === 1 && /^[a-f0-9]{64}$/.test(placement.gatewaySource));
     assert(/^tx2-dxthin-/.test(placement.slot));
   }
@@ -320,10 +323,15 @@ export async function collect(dir: string, mode: "produce" | "verify") {
   assert.equal(typeof plan.overnight, "boolean");
   assert.deepEqual(
     plan.cases,
-    campaignCases(plan.smoke ? [4] : plan.overnight ? [10_000] : undefined),
+    plan.heldSeal ? scorecardCases() : campaignCases(plan.smoke ? [4] : plan.overnight ? [10_000] : undefined),
   );
+  if (plan.heldSeal) {
+    assert(!plan.smoke && !plan.overnight && plan.placement === "physical");
+    assert.equal(await fileHash(path.join(dir, "held-seal.json")), plan.heldSeal);
+  }
   assert.deepEqual(plan.treatment, treatment);
-  assert(plan.placement === "physical" || (plan.placement === "leased-mac" && plan.smoke));
+  const mac = ["leased-mac", "mac-diagnostic"].includes(plan.placement);
+  assert(plan.placement === "physical" || (mac && plan.smoke));
   await checkInputs(dir, plan);
   const seen = new Set<string>(),
     prior = new Map<string, ScopeMeasurement>();
@@ -339,7 +347,7 @@ export async function collect(dir: string, mode: "produce" | "verify") {
       result = read(terminal),
       id = arm.identity;
     assert.deepEqual(result.arm, arm);
-    if (plan.placement === "leased-mac") assert.equal(id.slot, plan.placementInputs.slot);
+    if (mac) assert.equal(id.slot, plan.placementInputs.slot);
     assert(
       result.start > arm.startedAt &&
         result.endedAt > result.start &&
@@ -359,7 +367,10 @@ export async function collect(dir: string, mode: "produce" | "verify") {
     );
     assert.deepEqual(released.armed.s0.identity, id);
     const raw = await readScope(out, id, result.start, result.code);
-    if (plan.placement === "leased-mac") {
+    if (plan.heldSeal) {
+      assert.deepEqual(raw.report.deep.restoredSeed?.origin, read(path.join(dir, "held-seal.json")));
+    }
+    if (mac) {
       assert.deepEqual(raw.report.harnessStorage, {
         requested: "owned-ext4",
         filesystemType: 0xef53,
@@ -381,34 +392,57 @@ export async function collect(dir: string, mode: "produce" | "verify") {
       assert(clean.at >= result.endedAt && clean.before.containers.length === 4);
       assert(Object.values(clean.after).every((x) => Array.isArray(x) && x.length === 0));
       const placement = read(path.join(out, "placement.json"));
-      const launch = read(path.join(out, "gateway-jvm.json"));
-      assert.deepEqual(launch.identity, id);
-      assert(launch.capturedAt >= arm.startedAt && launch.capturedAt <= result.start);
-      assert.deepEqual(
-        launch.vm.map((r: any) => r.role),
-        Object.keys(gatewayJvmOptions),
-      );
-      for (const row of launch.vm) {
-        const role = row.role as keyof typeof gatewayJvmOptions;
-        assert(row.container === placement[role].id);
-        assert(gatewayJvmOptions[role].every((flag) => row.actual.includes(flag)));
-        assert.equal(row.actual.filter((flag: string) => /^-XX:\+Use.*GC$/.test(flag)).length, 1);
-        assert.equal(
-          row.actual.filter((flag: string) => flag.startsWith("-Xmx")).at(-1),
-          "-Xmx384m",
+      if (plan.placementInputs.launch) {
+        const policy = launchProfile("server", { txJvm: plan.placementInputs.txJvm });
+        const { creditMode: _creditMode, ...previousPolicy } = policy;
+        assert.deepEqual(plan.placementInputs.launch, Object.hasOwn(plan.placementInputs.launch, "creditMode")
+          ? policy : previousPolicy);
+        const launch = read(path.join(out, "serving-jvm.json"));
+        assert.deepEqual(launch.identity, id);
+        assert(launch.capturedAt >= arm.startedAt && launch.capturedAt <= result.start);
+        assert.deepEqual(launch.vm.map((row: { role: string }) => row.role), jvmRoles);
+        for (const role of [...jvmRoles, "pg"] as const) {
+          assert.equal(placement[role].cpus, policy[role].cpus);
+          assert.equal(placement[role].memory, policy[role].memoryMiB * 2 ** 20);
+        }
+        for (const [i, role] of jvmRoles.entries()) {
+          const row = launch.vm[i];
+          assert.equal(row.container, placement[role].id);
+          assert(row.process.split("\n").includes("containerId=" + placement[role].id));
+          assert(row.process.split("\n").includes("imageId=" + placement[role].image));
+          checkProfileFlags(policy[role], row.observed.join("\n"));
+        }
+      } else {
+        const launch = read(path.join(out, "gateway-jvm.json"));
+        assert.deepEqual(launch.identity, id);
+        assert(launch.capturedAt >= arm.startedAt && launch.capturedAt <= result.start);
+        assert.deepEqual(
+          launch.vm.map((r: any) => r.role),
+          Object.keys(gatewayJvmOptions),
         );
+        for (const row of launch.vm) {
+          const role = row.role as keyof typeof gatewayJvmOptions;
+          assert(row.container === placement[role].id);
+          const flags = gatewayJvmOptions[role];
+          assert(flags.every((flag) => row.actual.includes(flag)));
+          assert.equal(row.actual.filter((flag: string) => /^-XX:\+Use.*GC$/.test(flag)).length, 1);
+          assert.equal(
+            row.actual.filter((flag: string) => flag.startsWith("-Xmx")).at(-1),
+            "-Xmx384m",
+          );
+        }
+        const transactor = read(path.join(out, "transactor-jvm.json"));
+        assert.deepEqual(transactor.identity, id);
+        assert(transactor.capturedAt >= arm.startedAt && transactor.capturedAt <= result.start);
+        assert.equal(transactor.vm.container, placement.tx.id);
+        assert(transactorJvmOptions.every((flag) => transactor.vm.actual.includes(flag)));
+        assert.equal(placement["gw-w"].cpus, "2,5");
       }
-      const transactor = read(path.join(out, "transactor-jvm.json"));
-      assert.deepEqual(transactor.identity, id);
-      assert(transactor.capturedAt >= arm.startedAt && transactor.capturedAt <= result.start);
-      assert.equal(transactor.vm.container, placement.tx.id);
-      assert(transactorJvmOptions.every((flag) => transactor.vm.actual.includes(flag)));
       const recording = read(path.join(out, "native-recording.json"));
       assert.deepEqual(
         [recording.source, recording.slot, recording.nonce],
         [id.source, id.slot, id.nonce],
       );
-      assert.equal(placement["gw-w"].cpus, pooledWriterCpus);
       for (const role of ["tx", "gw-w", "gw-r", "pg"])
         assert.equal(recording.processes[role].id, placement[role].id);
       assert(recording.sqlCoverage.qualified > 0 && recording.mappedWalSamples >= 2);

@@ -50,6 +50,18 @@ export const cpuList = text => {
 export const regimeOf = info => info.regime ?? 'quota';
 
 // [EXP-M01R] Why: main added follower and Datomic reservations after M01; every admission must honor the same lease. Rejected: guarding only writer up (allows new neighbors during a duet).
+function scorecardOutput(options, info) {
+  const output = options['scorecard-output'];
+  const holder = process.env.DX_V01_MAC_HOLDER ?? 'DX-V01';
+  if (process.platform !== 'darwin' || !['DX-V01', 'DX-THIN1'].includes(holder) || options.holder !== holder ||
+      info.lane !== 'datomic' || info.mode !== 'exclusive' ||
+      !process.env.TX2_EXCLUSIVE_VOLUME_ID || !/^tx2-dxthin-managed:/.test(info.laneConf.image) ||
+      typeof output !== 'string' || !output.startsWith(path.join(REPO, 'runs', 'DX-V01') + path.sep) ||
+      fs.realpathSync(output) !== output || !fs.statSync(output).isDirectory())
+    fail('REFUSED', 'Scorecard fixture needs its exclusive compact image, private volume and output');
+  return output;
+}
+
 export function assertMeasureAdmission(holder) {
   const lease = readMeasureLease();
   if (lease && !lease.stale && lease.holder !== holder)
@@ -283,10 +295,13 @@ async function selftestDatomic(config, opts) {
 // [DX-THIN1] Why: release only staged images that this experiment built and whose slots have closed.
 // Rejected: a forced removal or pruning the lab VM's shared image cache.
 async function removeThinImage(config, opts) {
-  if (opts.holder !== 'DX-THIN1' || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
+  if (!['DX-THIN1', 'DX-PREP1'].includes(opts.holder) || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
   const info = slotInfo(config, 'datomic', 'dev');
   const tag = info.laneConf.image;
-  if (!/^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/.test(tag)) fail('REFUSED', 'Only staged DX-THIN1 image tags may be removed');
+  // [DX-PREP1] Why: a diagnostic retry can discard its exact staged image after the slot exits.
+  // Rejected: pruning the image store shared with other builders.
+  const ownedTag = opts.holder === 'DX-THIN1' ? /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/ : /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery|subject-native-suite)$/;
+  if (!ownedTag.test(tag)) fail('REFUSED', 'Only the holder’s staged image tags may be removed');
   if (info.laneConf.imageId !== opts['image-id']) fail('REFUSED', 'The staged configuration is pinned to a different image');
   await withPool(async ledger => {
     assertMeasureAdmission(opts.holder);
@@ -307,6 +322,12 @@ function recordDatomicJvms(info, eff) {
   if (!m?.State.Running || m.Image !== eff.effective.imageId
     || m.Config.Labels?.['tx2.config-sha256'] !== eff.sha256)
     fail('REFUSED', 'Datomic runtime identity differs from the launch');
+  // [DX-V01] Why: the admitted compact Mac fixture starts JVMs through thin1/slot.ts.
+  // Rejected: reading standard-launcher role logs from a fixture that does not produce them.
+  if (info.scorecardOutput) {
+    process.stderr.write('[lab] Compact Mac fixture: standard-launcher JVM flag readback is unavailable\n');
+    return;
+  }
   const out = fs.mkdtempSync(path.join(path.dirname(eff.files.entrypoint), 'jvm-'));
   const roles = ['tx', 'gw-w', ...(eff.effective.readerGateway ? ['gw-r'] : [])];
   for (const role of roles) {
@@ -363,7 +384,10 @@ export function effectiveConfig(config, info) {
     fs.copyFileSync(path.join(root, 'lab/config/datomic/transactor.properties'), transactor);
     // [DX-JVM1] Why: bind the launch script separately while keeping the legacy Java 21 image source pin.
     // Rejected: modifying the resident config or mounting the canonical uninstrumented script.
-    fs.copyFileSync(path.join(REPO, 'lab/config/datomic/entrypoint.sh'), entrypoint);
+    // [DX-INT1] Why: the compact scorecard uses the verified entrypoint in its own staged context.
+    // Rejected: replacing its SQL stack with the standard one-gateway launch.
+    const entryRoot = info.laneConf.image.startsWith('tx2-dxthin-managed:') ? root : REPO;
+    fs.copyFileSync(path.join(entryRoot, 'lab/config/datomic/entrypoint.sh'), entrypoint);
     let reader, readerGateway;
     if (info.readerPort !== undefined) {
       const p = info.readerPort;
@@ -429,6 +453,7 @@ export function effectiveConfig(config, info) {
       transactorOpts: jvm('tx', info.transactorOpts, info.txCpus) + (trace ? ' -XX:StartFlightRecording=name=triplex,settings=/opt/gateway/trace.jfc,dumponexit=false,maxsize=32m -Ddatomic.metricsCallback=triplex.gateway.trace/metrics' : ''), gatewayOpts: jvm('gw-w', info.gatewayOpts, info.gwCpus) + (readerGateway?.writerGc ?? ''),
       ...(readerGateway ? { readerGateway } : {}),
       ...(trace ? { trace } : {}),
+      ...(info.scorecardOutput ? { scorecardOutput: info.scorecardOutput } : {}),
       txCpus: info.txCpus, gwCpus: info.gwCpus, profile: info.slot === 'dev' ? 'dev' : 'exclusive',
       memBytes: info.memBytes, cpus: info.cpus, ...pin,
       publish: `127.0.0.1:${info.port}:8080`, volume: `${info.volume}:/data`,
@@ -511,6 +536,7 @@ export function runArgs(info, eff, holder) {
   ];
   if (info.lane === 'datomic')
     return [...common, ...(e.readerGateway ? ['-p', e.readerGateway.publish, '-v', eff.files.reader + ':/config/dedicated-reader.clj:ro', '-e', 'READER_CPUS=' + e.readerGateway.cpus, '-e', 'READER_JAVA_OPTS=' + e.readerGateway.opts] : []), ...(e.trace ? ['-v', e.trace.dir + ':/lab-trace', '-e', 'TRIPLEX_TRACE_DIR=/lab-trace', '-e', 'TRIPLEX_TRACE_LEVEL=summary', '-e', 'TRIPLEX_TRACE_TX_JFR=1', '-e', 'TRIPLEX_TRACE_RUN=' + e.trace.run, '-e', 'TRIPLEX_TRACE_SOURCE=' + e.trace.source, '-e', 'TRIPLEX_TRACE_SLOT=' + info.container] : []), '-v', `${eff.files.transactor}:/config/transactor.properties:ro`, '-v', `${eff.files.entrypoint}:/config/entrypoint.sh:ro`, '-e', `TRANSACTOR_JAVA_OPTS=${e.transactorOpts}`, '-e', `GATEWAY_JAVA_OPTS=${e.gatewayOpts}`,
+      ...(e.scorecardOutput ? ['-v', `${REPO}:${REPO}:ro`, '-v', `${e.scorecardOutput}:${e.scorecardOutput}:rw`, '-v', `${info.volume}:/var/tmp`] : []),
       '-e', `TX_CPUS=${e.txCpus}`, '-e', `GW_CPUS=${e.gwCpus}`, '-e', `DATOMIC_PROFILE=${e.profile}`,
       '-e', `GATEWAY_SOURCE_SHA256=${e.gatewaySourceSha256}`, info.laneConf.imageId];
   if (info.lane === 'xtdb')
@@ -942,6 +968,9 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'delta') return (await import('../experiments/EXP-DX1/actv-delta/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicSources });
   // [DX-ERASE1] Why: storage GC and excision need an owned SQL volume. Rejected: exercising irreversible maintenance on a resident.
   if (command === 'erase1') return (await import('../experiments/EXP-DX1/erase1/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicTree });
+  // [DX-PLAY1] Why: the portable stack uses the same launch code under an exclusive lab reservation.
+  // Rejected: running a second private Docker command path without pool admission.
+  if (command === 'play1') return (await import('../experiments/EXP-DX1/play1/local.ts')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
   if (options.lane === 'datomic' && command === 'build') return buildDatomic(config, options);
   if (options.lane === 'datomic' && ['up', 'selftest'].includes(command)) {
     const runtime = datomicRuntime();
@@ -952,6 +981,30 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   }
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
   if (options.lane === 'datomic' && command === 'image-remove') return options.holder === 'DX-JVM1' ? removeJvmImage(options) : removeThinImage(config, options);
+  // [DX-V01] Why: run the existing Linux toy client in the exact owned compact slot.
+  // Rejected: VM shell access or running a benchmark with host/guest clocks mixed.
+  if (command === 'scorecard-fixture') {
+    const info = slotInfo(config, 'datomic', options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
+    const owner = readOwner(info), live = inspect(info.container);
+    const output = scorecardOutput(options, info);
+    const mount = destination => live?.Mounts?.find(m => m.Destination === destination);
+    if (owner?.holder !== options.holder || owner?.worktree !== REPO || owner?.volume !== info.volume ||
+        !live?.State?.Running || live.Config.Labels?.['tx2.holder'] !== options.holder ||
+        mount(REPO)?.Source !== REPO || mount(REPO)?.RW !== false || mount(output)?.RW !== true ||
+        mount('/var/tmp')?.Name !== info.volume)
+      fail('REFUSED', 'Scorecard fixture requires its active owned stack and exact mounts');
+    const configDir = fs.realpathSync(CONFIG_DIR);
+    if (!configDir.startsWith(path.join(REPO, 'runs') + path.sep))
+      fail('REFUSED', 'Scorecard fixture config must belong to this worktree');
+    const source = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO, encoding: 'utf8' }).trim();
+    const result = spawnSync('docker', dockerArgs(['exec', '-w', REPO, '-e', 'DX_V01_FIXTURE_SOURCE=' + source,
+      '-e', 'TRIPLEX_DATOMIC_FAST_PATHS=save-wire', live.Id, '/usr/local/bin/node',
+      '--no-warnings', '--experimental-transform-types', '--expose-gc', '--max-old-space-size=768',
+      'lab/experiments/EXP-DX1/thin1/managed.ts', '--guest', configDir, 'int1-adopted-proof', '80',
+      path.join(output, 'campaign')]), { stdio: 'inherit', timeout: 13 * 60_000 });
+    if (result.status !== 0) fail('ENGINE', 'Scorecard fixture failed');
+    return;
+  }
   if (command === 'cpu-sample') {
     const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
     const owner = readOwner(info);
@@ -991,6 +1044,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (!['up', 'down', 'logs'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
   if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');
   const info = slotInfo(config, options.lane, options.slot, process.env.TX2_EXCLUSIVE_VOLUME_ID);
+  if (command === 'up' && options['scorecard-output']) info.scorecardOutput = scorecardOutput(options, info);
   // [EXP-QG1] Why: overrides never reach shared residents; effective bytes bind the run.
   // Rejected: changing slots.json for everyone during a measurement window.
   if (options['qlever-memory'] || options['qlever-seed-dir']) {

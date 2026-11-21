@@ -77,9 +77,13 @@ export function command(
   old: Input["rows"] = [],
   publish = true,
   denseJournalIds = false,
+  ordered?: import("../../../../../packages/datomic/dist/index.js").OrderedSaveIdentity,
 ): Input {
-  const tx = txFor(id),
+  const tx = ordered?.transactionId ?? txFor(id),
     subjects = [...new Set([...facts.map((f) => f.e), ...old.map((r) => r.entity_id)])];
+  let assertionOrdinal = 0;
+  const assertionId = (legacy: () => string) =>
+    ordered ? ordered.assertionId(assertionOrdinal++) : legacy();
   const rows = facts.map((f, i) =>
     createPackedRow(
       {
@@ -90,7 +94,7 @@ export function command(
       },
       tx,
       clock,
-      token(id + "/f" + i),
+      assertionId(() => token(id + "/f" + i)),
       1,
     ),
   );
@@ -110,9 +114,11 @@ export function command(
       },
       tx,
       clock,
-      denseJournalIds && (a === "change" || a === "changed-entity")
-        ? token(id + "/journal-run").slice(0, 25) + String.fromCharCode(65 + packedOrdinal++)
-        : token(id + "/j" + suffix),
+      assertionId(() =>
+        denseJournalIds && (a === "change" || a === "changed-entity")
+          ? token(id + "/journal-run").slice(0, 25) + String.fromCharCode(65 + packedOrdinal++)
+          : token(id + "/j" + suffix),
+      ),
       1,
     );
   if (publish) {

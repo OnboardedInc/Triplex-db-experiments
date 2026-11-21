@@ -54,7 +54,8 @@ export class Histogram {
 
   recordUs(us: number): void {
     const v = Math.max(0, us);
-    this.counts[bucketIndex(v)]++;
+    const bucket = bucketIndex(v);
+    this.counts[bucket] = this.counts[bucket]! + 1;
     this.count++;
     this.sumUs += v;
     if (v < this.minUs) this.minUs = v;
@@ -77,7 +78,10 @@ export class Histogram {
     for (let missing = us - expectedIntervalUs; missing >= expectedIntervalUs; missing -= expectedIntervalUs) this.recordUs(missing);
   }
   merge(other: Histogram): this {
-    for (let i = 0; i < SIZE; i++) if (other.counts[i]) this.counts[i] += other.counts[i];
+    for (let i = 0; i < SIZE; i++) {
+      const count = other.counts[i]!;
+      if (count) this.counts[i] = this.counts[i]! + count;
+    }
     this.count += other.count;
     this.sumUs += other.sumUs;
     this.minUs = Math.min(this.minUs, other.minUs);

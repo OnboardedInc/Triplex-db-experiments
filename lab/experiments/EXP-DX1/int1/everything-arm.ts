@@ -3,6 +3,7 @@ import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { pipeline } from "node:stream/promises";
 import { setTimeout as wait } from "node:timers/promises";
 import { deepSeed } from "../../../bench/lib/deep-trace.ts";
 import {
@@ -60,16 +61,18 @@ async function sameArtifact(a: string, b: string): Promise<void> {
   }
 }
 
-function copyRawArtifact(source: string, target: string) {
+export async function copyArtifact(source: string, target: string): Promise<void> {
   const entry = fs.lstatSync(source);
   if (entry.isDirectory()) {
-    fs.mkdirSync(target, { mode: 0o700 });
-    for (const child of fs.readdirSync(source)) {
-      copyRawArtifact(path.join(source, child), path.join(target, child));
+    fs.mkdirSync(target);
+    for (const name of fs.readdirSync(source)) {
+      await copyArtifact(path.join(source, name), path.join(target, name));
     }
   } else {
-    assert(entry.isFile(), "Unexpected driver output entry");
-    fs.copyFileSync(source, target, fs.constants.COPYFILE_EXCL);
+    // [DX-V01] Why: byte streams work across the private volume and the Mac output mount.
+    // Rejected: copying host ownership and mode metadata through the guest file sharing layer.
+    assert(entry.isFile(), "Expected a regular artifact");
+    await pipeline(fs.createReadStream(source), fs.createWriteStream(target, { flags: "wx", mode: 0o600 }));
   }
 }
 
@@ -85,9 +88,7 @@ async function archiveDriverOutput(staging: string, output: string) {
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== "EXDEV") throw error;
       const transfer = target + ".transfer";
-      // [DX-INT1] Why: guest directories cross into the shared host mount.
-      // Rejected: recursively preserving guest directory metadata on the host mount.
-      copyRawArtifact(original, transfer);
+      await copyArtifact(original, transfer);
       await sameArtifact(original, transfer);
       fs.renameSync(transfer, target);
       fs.rmSync(original, { recursive: true });

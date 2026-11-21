@@ -77,7 +77,13 @@ export async function drill(
   e: Evidence,
   a: Site,
   b: Site,
-  profile: { people: number; scopes: number; capacity: string; pooled?: true; timing?: "diagnostic" },
+  profile: {
+    people: number;
+    scopes: number;
+    capacity: string;
+    pooled?: true;
+    timing?: "diagnostic";
+  },
   release: () => void,
   sync?: {
     path: string;
@@ -111,7 +117,10 @@ export async function drill(
       const { SyncPair } = await import("../hasync1/pair.ts");
       const pair = new SyncPair(s, sync);
       cleanupShared = () => pair.cleanup();
-      if (fleetMode(e.mode)) {
+      if (e.mode === "hasync-cold") {
+        const { checkStoppedPair } = await import("../hasync1/sunday-toy.ts");
+        result = await checkStoppedPair(s);
+      } else if (fleetMode(e.mode)) {
         result = await (await import("../hasync1/v2/fleet.ts")).fleet(s, pair, profile.scopes);
       } else if (e.mode.startsWith("hasync-seed-")) {
         assert(sync);
