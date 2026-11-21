@@ -43,6 +43,11 @@ if [[ $action == queue ]]; then
     [[ ! -f $base/night-n20-skip-writer-followup ]] || break
     sleep 10
   done
+  if [[ ${BM1_WAIT_FOR_CACHE:-0} == 1 ]]; then
+    # [DX-BM1] Why: wait for the single-server cache retry to finish its scoped cleanup before staging erasure.
+    # Rejected: starting erasure on a second database while the cache replay is still measuring.
+    wait_terminal bm1n20-tail-generation-wait.service || exit 75
+  fi
   for item in erasure ha1-paced; do
     # [DX-BM1] Why: preserve at least one hour for the ready shared-database import before midday.
     # Rejected: starting a 5.5-hour erasure stage too late to respect the release window.

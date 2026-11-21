@@ -12,6 +12,7 @@ PRODUCERS = {
     "tail-backlog": ("da4c34f48f3749afcacfe45ac51a727ab0a2160a", BASE/"tail1/backlog-server.ts"),
     "jvm25-retry": ("5a96527807fd646fbc866b33dc72565481c409e0", BASE/"jvm1/server.ts"),
     "tail-backlog-integrated": ("5a96527807fd646fbc866b33dc72565481c409e0", BASE/"tail1/backlog-server.ts"),
+    "tail-backlog-generation": ("5a96527807fd646fbc866b33dc72565481c409e0", BASE/"tail1/backlog-server.ts"),
 }
 SEED_SOURCE = "46880aa47d7c580c400b457df0c8baf9e971e78a"
 
@@ -55,8 +56,14 @@ def build(item, repo):
         replace('    const { label, schedule } = windows[0];',
                 '    const { label } = windows[0];\n    const schedule = process.env.BM1_TAIL_SMALL ? windows[0].schedule.slice(0, 8) : windows[0].schedule;')
         replace('schedule.length === 2364,','schedule.length === (process.env.BM1_TAIL_SMALL ? 8 : 2364),')
+        if item == "tail-backlog-generation":
+            replace('          await runWorker(dir, policy.cpus.sender, env, deadline - Date.now() - 60_000);',
+                    '''          await runWorker(dir, policy.cpus.sender, env, deadline - Date.now() - 60_000);
+          // [DX-BM1] Why: capture two WAL counter samples in the short gate outside its offers.
+          // Rejected: bypassing the collector's bracket or adding traffic to the measured phase.
+          if (process.env.BM1_TAIL_SMALL) await new Promise((resolve) => setTimeout(resolve, 5500));''')
     shared_sha = None
-    if item in ("jvm25-retry", "tail-backlog-integrated"):
+    if item in ("jvm25-retry", "tail-backlog-integrated", "tail-backlog-generation"):
         if item.startswith("jvm25"):
             replace('"../w1/bench.ts"','"../w1/.bm1-n20-bench.ts"')
         else:

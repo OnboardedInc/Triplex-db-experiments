@@ -6,7 +6,7 @@ item=${2:?night queue item}
 case $item in
   jvm25|jvm25-retry) branch=exp/DX-JVM1-settings; pin=5a96527807fd646fbc866b33dc72565481c409e0; entry=jvm1/server.ts ;;
   tail-backlog) branch=exp/DX-TAIL1-gc-pauses; pin=da4c34f48f3749afcacfe45ac51a727ab0a2160a; entry=tail1/backlog-server.ts ;;
-  tail-backlog-integrated) branch=exp/DX-JVM1-settings; pin=5a96527807fd646fbc866b33dc72565481c409e0; entry=tail1/backlog-server.ts ;;
+  tail-backlog-integrated|tail-backlog-generation) branch=exp/DX-JVM1-settings; pin=5a96527807fd646fbc866b33dc72565481c409e0; entry=tail1/backlog-server.ts ;;
   *) exit 2 ;;
 esac
 base=/var/tmp/triplex-bm1
@@ -57,6 +57,10 @@ python3 "$control/night-n20-source.py" "$item" "$repo" > "$root/adapter.json"
 adapter="$exp/${entry%/*}/.bm1-n20-${entry##*/}"
 mkdir "$root/restore-compat" "$root/restore-proofs"
 install -m 755 "$control/jvm1-snapshot.py" "$root/restore-compat/docker"
+if [[ $item == tail-backlog-generation ]]; then
+  install -m 444 "$control/jvm-trace-generation.sh" "$root/restore-compat/jvm-trace-generation.sh"
+  sha256sum "$root/restore-compat/jvm-trace-generation.sh" > "$root/generation-wrapper.sha256"
+fi
 export BM1_COLD_CAMPAIGN=$item PATH="$root/restore-compat:$PATH"
 if [[ $item == jvm25* ]]; then
   run=(node --import tsx "$adapter" run-part2-three)

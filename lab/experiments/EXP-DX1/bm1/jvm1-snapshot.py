@@ -26,6 +26,7 @@ NEXT = {
     "tail-backlog": "da4c34f48f3749afcacfe45ac51a727ab0a2160a",
     "jvm25-retry": "5a96527807fd646fbc866b33dc72565481c409e0",
     "tail-backlog-integrated": "5a96527807fd646fbc866b33dc72565481c409e0",
+    "tail-backlog-generation": "5a96527807fd646fbc866b33dc72565481c409e0",
 }
 
 
@@ -174,12 +175,32 @@ def replay(args):
           physicalManifestSha256=sha(PROOF),logicalDumpSha256=seed["dumpSha256"], seedCut=seed["seedCut"]))
 
 
+def isolate_gateway_traces(args, wrapper):
+    if args[:2] != ["run", "-d"] or "--name" not in args:
+        return args
+    name = args[args.index("--name")+1]
+    match = re.fullmatch(r"tx2-dxt1-jvm1-[0-9a-f-]{36}-(gw-[wr])",name)
+    if not match:
+        return args
+    role, = match.groups()
+    entry = args.index("--entrypoint")
+    assert args[entry+1] == "/opt/datomic/bin/run"
+    image, *command = args[entry+2:]
+    assert command == ["-m","triplex.gateway.main"]
+    assert "TRIPLEX_TRACE_PROCESS="+role in args and "TRIPLEX_TRACE_JFR=1" in args
+    return [*args[:entry], "-v", f"{wrapper}:/bm1-jvm-trace-generation.sh:ro",
+            "--entrypoint", "/bin/bash", image, "/bm1-jvm-trace-generation.sh",
+            "/trace", role, "/opt/datomic/bin/run", *command]
+
+
 if __name__ == "__main__":
     argv = sys.argv[1:]
     if Path(sys.argv[0]).name == "docker":
         if len(argv) >= 4 and argv[:2] == ["exec","-i"] and argv[3] == "pg_restore":
             replay(argv)
         else:
+            if os.environ.get("BM1_COLD_CAMPAIGN") == "tail-backlog-generation":
+                argv = isolate_gateway_traces(argv, Path(sys.argv[0]).with_name("jvm-trace-generation.sh"))
             os.execve(DOCKER,[DOCKER,*argv],ENV)
     else:
         assert argv == ["provision"]
