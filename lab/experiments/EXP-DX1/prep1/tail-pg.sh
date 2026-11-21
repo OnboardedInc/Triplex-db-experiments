@@ -4,7 +4,7 @@ action=${1:?}
 slot=${2:?}
 [[ $# == 2 && $(uname -s) == Linux && ${DX_BARE_METAL:-0} == 1 &&
    ${DOCKER_HOST:-} == unix:///var/run/docker.sock &&
-   $slot =~ ^tx2-dxprep1-[a-f0-9]{8}-1-tail-(control|wal|zgc|fair)-s$ ]]
+   $slot =~ ^tx2-dxprep1-[a-f0-9]{8}-1-tail-(control|wal|zgc|fair|combined)-s$ ]]
 pg="$slot-pg"
 sql=(docker exec -i "$pg" psql -XqAt -v ON_ERROR_STOP=1 -U postgres)
 case "$action" in

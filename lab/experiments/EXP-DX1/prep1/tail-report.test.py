@@ -78,11 +78,11 @@ class TailJoin(unittest.TestCase):
             self.assertEqual(tail.observer.sentinel(directory, 24),
                              {"hostPid": 420, "sqlPid": 24, "start": 20, "end": 40, "lsn": 50})
 
-    def test_collect_binds_wal_arm_to_receipt_clock_restore_and_readback(self):
+    def test_collect_binds_combined_arm_to_receipt_clock_restore_and_mixed_java_readback(self):
         with TemporaryDirectory() as root:
             parent = Path(root)
-            arm = parent / "1-tail-wal-S"
-            engine = parent / "engines" / "tx2-dxprep1-22222222-1-tail-wal-s"
+            arm = parent / "1-tail-combined-S"
+            engine = parent / "engines" / "tx2-dxprep1-22222222-1-tail-combined-s"
             trace = engine / "trace" / "raw"
             trace.mkdir(parents=True)
             arm.mkdir()
@@ -90,7 +90,7 @@ class TailJoin(unittest.TestCase):
             write = tail.observer.write
             sha = tail.observer.sha
             attempt = {"source": "a"*40, "slot": engine.name, "nonce": "b"*36}
-            write(arm/"header.json", {**attempt, "commit": attempt["source"], "arm": {"tail": "wal"}, "db": "seed"})
+            write(arm/"header.json", {**attempt, "commit": attempt["source"], "arm": {"tail": "combined"}, "db": "seed"})
             write(arm/"complete.json", {"cut": 5})
             write(parent/"plan.json", {"cells": ["r235-loaded"]})
             write(parent/"wal-mount.json", {"filesystems": [{"source": "/dev/nvme1n1",
@@ -99,13 +99,15 @@ class TailJoin(unittest.TestCase):
             roles = dict(zip(("pg", "tx", "gw-w", "gw-r"), ("1", "0", "2-5", "6"), strict=True))
             ids = [f"container-{role}" for role in roles]
             write(engine/"stack.json", {"prefix": engine.name, "containers": [
-                {"id": cid, "name": f"{engine.name}-{role}", "imageId": "image", "cpuset": cpuset}
+                {"id": cid, "name": f"{engine.name}-{role}", "imageId": "image25" if role == "tx" else "image", "cpuset": cpuset}
                 for cid, (role, cpuset) in zip(ids, roles.items(), strict=True)]})
             (engine/"config"/"java-image.txt").write_text("image|21|base|hash\n")
+            (engine/"config"/"tail-tx-image.txt").write_text("image25|25|base|hash\n")
             (engine/"restore.sha256").write_text("dump\n")
             logs = [trace/f"prep1-gc-{role}.log" for role in ("tx", "gw-w", "gw-r")]
             for log in logs:
-                log.write_text('[2026-01-01T00:00:00.000+0000][info][gc] Using G1\n')
+                gc = "The Z Garbage Collector" if log.name == "prep1-gc-tx.log" else "G1"
+                log.write_text(f'[2026-01-01T00:00:00.000+0000][info][gc] Using {gc}\n')
             native = trace/"prep1-native.ndjson"
             common = {"db": "seed", "attempt": attempt["nonce"], "start": 60*MS, "end": 110*MS}
             native.write_text("".join(json.dumps(row)+"\n" for row in (

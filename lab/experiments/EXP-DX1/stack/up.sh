@@ -299,10 +299,10 @@ if [[ -n ${DX_BM1_WAL_MOUNT:-} ]]; then
   mkdir -m 0700 "$wal_dir"
   wal_mount=(-e POSTGRES_INITDB_WALDIR=/wal --mount "type=bind,source=$wal_dir,target=/wal")
 fi
-if [[ ${DX_PREP1_CAMPAIGN:-} == tail ]]; then
-  [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxprep1-[a-f0-9]{8}-1-tail-(control|wal|zgc|fair)-s$ && -z $seed_volume && ${DX_PREP1_SERVER:-0} == 1 ]]
+if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxprep1-[a-f0-9]{8}-1-tail-(control|wal|zgc|fair|combined)-s$ && -z $seed_volume && ${DX_PREP1_SERVER:-0} == 1 ]]
   [[ -z ${DX_BM1_WAL_MOUNT:-} && ${DX_BM1_WAL_AB:-0} == 0 ]]
-  if [[ $prefix == *-wal-s ]]; then
+  if [[ $prefix =~ -tail-(wal|combined)-s$ ]]; then
     [[ $(findmnt -nro SOURCE --mountpoint "${DX_PREP1_TAIL_WAL_MOUNT:?}") == /dev/nvme1n1 ]]
     wal_dir=$DX_PREP1_TAIL_WAL_MOUNT/$prefix
     [[ -d $wal_dir && ! -L $wal_dir && -z $(ls -A "$wal_dir") ]]
@@ -330,7 +330,7 @@ tx_image=$datomic_image
 if [[ ${DX_PREP1_TAIL_TX_ZGC:-0} == 1 ]]; then
   # [DX-PREP1] Why: move only the transactor to the pinned Java 25 release and JVM1's collector.
   # Rejected: changing both gateways or letting a mutable tag silently select the wrong runtime.
-  [[ ${DX_PREP1_CAMPAIGN:-} == tail && $prefix == *-zgc-s && $java_major == 21 ]]
+  [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ && $prefix =~ -tail-(zgc|combined)-s$ && $java_major == 21 ]]
   j25() { DX_JAVA=25 DX_DATOMIC_IMAGE_RECEIPT="${DX_PREP1_JAVA25_RECEIPT:-}" node "$runtime_tool" "$@"; }
   tx_meta=$(docker image inspect --format '{{.Id}}|{{index .Config.Labels "tx2.java-major"}}|{{index .Config.Labels "tx2.java-base"}}|{{index .Config.Labels "tx2.build-inputs-sha256"}}' "$(j25 image)")
   IFS='|' read -r tx_image tx_major tx_base tx_hash <<< "$tx_meta"
@@ -583,9 +583,9 @@ done
 fi
 # [DX-JVM1] Why: restore one sealed seed into a fresh PostgreSQL volume before any measured JVM starts.
 # Rejected: running the large import during the timed arm or attaching a writable original.
-if [[ -n ${DX_JVM1_PG_RESTORE:-} || ${DX_PREP1_CAMPAIGN:-} == tail ]]; then
+if [[ -n ${DX_JVM1_PG_RESTORE:-} || ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
   restore_flags=()
-  if [[ ${DX_PREP1_CAMPAIGN:-} == tail ]]; then
+  if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
     [[ -z ${DX_JVM1_PG_RESTORE:-} && ${DX_BARE_METAL:-0} == 1 && -z $seed_volume && -f ${DX_PREP1_DUMP:?} ]]
     restore_dump=$DX_PREP1_DUMP restore_sha=${DX_PREP1_DUMP_SHA:?}
     restore_flags+=(--single-transaction)
@@ -617,7 +617,7 @@ fi
 tx_start=(--entrypoint /opt/datomic/bin/transactor "$tx_image" /dxh1/sql.properties)
 prep_tx=()
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
-  if [[ -n ${DX_PREP1_DUMP:-} && ${DX_PREP1_CAMPAIGN:-} != tail ]]; then
+  if [[ -n ${DX_PREP1_DUMP:-} && ! ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
     [[ -z ${DX_JVM1_PG_RESTORE:-} ]]
     # [DX-PREP1] Why: restore the same sealed bytes before any peer or transactor opens the arm.
     # Rejected: clearing rows in a warm database or measuring an incremental restore.
@@ -625,7 +625,7 @@ if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   fi
   cp "$repo/lab/experiments/EXP-DX1/prep1/observe.clj" "$attempt/config/prep1-observe.clj"
   prep_tx=(-e "PREP1_ATTEMPT=${DX_WRITE_OPTIONS_ATTEMPT:?}" -e PREP1_MODE=subject-server)
-  if [[ ${DX_PREP1_CAMPAIGN:-} == tail ]]; then prep_tx+=(-e PREP1_TAIL_SQL=1); fi
+  if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then prep_tx+=(-e PREP1_TAIL_SQL=1); fi
   trace_tx_java+=' -Xlog:gc*,safepoint*=debug:file=/trace/prep1-gc-tx.log:time,uptimemillis,level,tags,pid,tid:filecount=0'
   tx_start=(--entrypoint /bin/bash "$tx_image" -c
     'exec java -server $JAVA_OPTS -cp "$(bin/classpath)" clojure.main -i /dxh1/prep1-observe.clj -m datomic.launcher /dxh1/sql.properties')
@@ -751,7 +751,14 @@ for role in "${gateway_roles[@]}"; do
 done
 for role in tx gw-w gw-r; do
   bash "$repo/lab/experiments/EXP-DX1/jvm1/readback.sh" "$prefix-$role" "$attempt/config" "$role"
-  grep -F "Version: $(node "$runtime_tool" version)" "$attempt/config/$role.gc-init.txt" >/dev/null
+  # [DX-PREP1] Why: verify each live role against its own pinned image (also witnessed by DX-BM1).
+  # Rejected: expecting the gateway release from a deliberately upgraded transactor.
+  if [[ $role == tx && ${DX_PREP1_TAIL_TX_ZGC:-0} == 1 ]]; then
+    expected_version=$(j25 version)
+  else
+    expected_version=$(node "$runtime_tool" version)
+  fi
+  grep -F "Version: $expected_version" "$attempt/config/$role.gc-init.txt" >/dev/null
 done
 if [[ $native_readback == 1 ]]; then
   for role in tx gw-w gw-r; do

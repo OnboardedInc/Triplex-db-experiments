@@ -37,11 +37,11 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     assert {k: v for k, v in arm.items() if k != "cells"} == header["arm"]
     assert plan["seconds"] == header["seconds"]
     campaign = plan.get("campaign", "comparison")
-    assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered", "ceiling", "tail")
+    assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered", "ceiling", "tail", "tail-combined")
     wide = campaign == "ceiling"
     pg_data = False
     pg_data_evidence = []
-    tail = campaign == "tail"
+    tail = campaign in ("tail", "tail-combined")
     storage = campaign in ("storage", "storage-ordered", "ceiling") or tail
     ordered_ids = arm.get("orderedIds", False)
     followup = campaign != "comparison"
@@ -61,9 +61,9 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         ]
         assert fair_credits == 0
     if tail:
+        names = ("combined",) if campaign == "tail-combined" else ("control", "wal", "zgc", "fair")
         assert [(a["id"], a["tail"], a["credits"]) for a in plan["arms"]] == [
-            (f"1-tail-{name}-S", name, 6 if name == "fair" else 0)
-            for name in ("control", "wal", "zgc", "fair")]
+            (f"1-tail-{name}-S", name, 6 if name in ("fair", "combined") else 0) for name in names]
         assert all(a["writer"] == "S" and a["writers"] == 1 and a["numericOwner"]
                    and a["orderedIds"] and not a["reverse"] and not a["prefetch"] and a["cacheGiB"] == 2
                    for a in plan["arms"])

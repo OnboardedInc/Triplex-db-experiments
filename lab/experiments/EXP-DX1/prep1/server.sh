@@ -10,7 +10,7 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 here=lab/experiments/EXP-DX1/prep1
 stack=lab/experiments/EXP-DX1/stack
-mode=${1:?expected run, storage, storage-ordered, ceiling, tail, owner, fair or arm}
+mode=${1:?expected run, storage, storage-ordered, ceiling, tail, tail-combined, owner, fair or arm}
 out=${2:?provide an absolute new output directory}
 source=${3:?provide the pinned Git commit}
 [[ "$out" == /* && "$source" =~ ^[a-f0-9]{40}$ && $(git rev-parse HEAD) == "$source" && -z $(git status --porcelain) ]]
@@ -28,16 +28,16 @@ producer=(node --import tsx "$here/server-produce.ts")
 tx_memory=10g tx_cache=2g
 tx_java='-Xms1g -Xmx6g -XX:+UseG1GC -XX:MaxGCPauseMillis=50'
 pg_settings='-c shared_buffers=2GB -c track_wal_io_timing=on'
-if [[ $mode == arm && ${DX_PREP1_CAMPAIGN:-comparison} =~ ^(storage(-ordered)?|ceiling|tail)$ ]]; then
+if [[ $mode == arm && ${DX_PREP1_CAMPAIGN:-comparison} =~ ^(storage(-ordered)?|ceiling|tail(-combined)?)$ ]]; then
   # [DX-PREP1] Why: reserve the same JVM and container budget for every cache comparison.
   # Rejected: changing the heap or CPU as well as the object cache between the two S arms.
   tx_memory=30g
   if [[ ${4:-} == 1-cache-S ]]; then tx_cache=16g; fi
   tx_java="-Xms1g -Xmx24g -XX:+UseG1GC -XX:MaxGCPauseMillis=50 -Ddatomic.objectCacheMax=$tx_cache -Ddatomic.prefetchProbes=true"
 fi
-if [[ ${DX_PREP1_CAMPAIGN:-} == tail && $mode == arm ]]; then
+if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ && $mode == arm ]]; then
   pg_settings+=' -c fsync=on -c synchronous_commit=on -c full_page_writes=on -c wal_sync_method=fdatasync -c checkpoint_timeout=5min -c checkpoint_completion_target=0.9 -c checkpoint_flush_after=256kB -c min_wal_size=80MB -c max_wal_size=1GB -c log_checkpoints=on -c log_timezone=UTC'
-  if [[ ${4:-} == 1-tail-zgc-S ]]; then
+  if [[ ${4:-} =~ ^1-tail-(zgc|combined)-S$ ]]; then
     collector=$(node --input-type=module -e 'import {collectorOptions} from "./lab/experiments/EXP-DX1/jvm1/launch.mjs"; console.log(collectorOptions("25", "ZGC", "tx", 1).join(" "))')
     tx_java="-Xms1g -Xmx24g $collector -Ddatomic.objectCacheMax=$tx_cache -Ddatomic.prefetchProbes=true"
     export DX_PREP1_TAIL_TX_ZGC=1
@@ -75,7 +75,7 @@ unmount_wal() {
   if [[ -n ${mounted_wal:-} ]]; then
     [[ $(findmnt -nro SOURCE --mountpoint "$mounted_wal") == /dev/nvme1n1 ]] || return 1
     if [[ ${wal_created:-0} == 1 ]]; then
-      [[ ${wal_owner:-} =~ ^tx2-dxprep1-[a-f0-9]{8}-1-tail-wal-s$ && ! -L $mounted_wal/$wal_owner ]] || return 1
+      [[ ${wal_owner:-} =~ ^tx2-dxprep1-[a-f0-9]{8}-1-tail-(wal|combined)-s$ && ! -L $mounted_wal/$wal_owner ]] || return 1
       rm -rf --one-file-system -- "$mounted_wal/$wal_owner" || return 1
     fi
     umount "$mounted_wal" || return 1
@@ -130,7 +130,7 @@ elif [[ $mode == ceiling-timed ]]; then
   owned="tx2-dxprep1-$tag-1-ceiling-s"
   bash "$here/server.sh" arm "$out" "$source" 1-ceiling-S
   unset owned
-elif [[ $mode == fair || $mode == owner || $mode == storage || $mode == storage-ordered || $mode == tail ]]; then
+elif [[ $mode == fair || $mode == owner || $mode == storage || $mode == storage-ordered || $mode =~ ^tail(-combined)?$ ]]; then
   [[ $# == 4 ]]
   # [DX-PREP1] Why: cap time from seed verification through the last cleanup.
   # Rejected: four independent timeouts that let restore and teardown exceed the hour.
@@ -138,11 +138,12 @@ elif [[ $mode == fair || $mode == owner || $mode == storage || $mode == storage-
   if [[ $mode == storage ]]; then total=7000; fi
   if [[ $mode == storage-ordered ]]; then total=1050; fi
   if [[ $mode == tail ]]; then total=4460; fi
+  if [[ $mode == tail-combined ]]; then total=1760; fi
   exec timeout --kill-after=40s "${total}s" bash "$here/server.sh" "$mode-timed" "$out" "$source" "$4"
-elif [[ $mode == fair-timed || $mode == owner-timed || $mode == storage-timed || $mode == storage-ordered-timed || $mode == tail-timed ]]; then
+elif [[ $mode == fair-timed || $mode == owner-timed || $mode == storage-timed || $mode == storage-ordered-timed || $mode =~ ^tail(-combined)?-timed$ ]]; then
   [[ $# == 4 && $4 == /* && ! -e $out && -z $(docker ps -q) ]]
   parent=$(realpath -e "$4")
-  if [[ $mode == tail-timed ]]; then
+  if [[ $mode =~ ^tail(-combined)?-timed$ ]]; then
     command -v bpftrace >/dev/null
     taskset -c 7 true
     [[ -f /sys/fs/cgroup/cgroup.controllers && -b /dev/nvme1n1 && $(lsblk -nr -o TYPE /dev/nvme1n1) == disk ]]
@@ -192,10 +193,13 @@ PY
   elif [[ $mode == tail-timed ]]; then
     cells=(1-tail-control-S 1-tail-wal-S 1-tail-zgc-S 1-tail-fair-S)
     arm_limit=1070
+  elif [[ $mode == tail-combined-timed ]]; then
+    cells=(1-tail-combined-S)
+    arm_limit=1610
   fi
   for cell in "${cells[@]}"; do
     owned="tx2-dxprep1-$tag-${cell,,}"
-    if [[ $cell == 1-tail-wal-S ]]; then
+    if [[ $cell =~ ^1-tail-(wal|combined)-S$ ]]; then
       # [DX-PREP1] Why: use only the reserved second NVMe for this arm's fresh WAL files.
       # Rejected: formatting a device, mounting it during controls, or falling back to root transparently.
       wal_owner=$owned
@@ -210,7 +214,7 @@ PY
     timeout --foreground --kill-after=20s "${arm_limit}s" bash "$here/server.sh" arm "$out" "$source" "$cell"
     unset owned
     unmount_wal
-    if [[ $mode == tail-timed ]]; then
+    if [[ $mode =~ ^tail(-combined)?-timed$ ]]; then
       mv "$out/$cell/summary.tmp" "$out/$cell/summary.json"
       mv "$out/$cell/tail-summary.tmp" "$out/$cell/tail-summary.json"
     fi
@@ -267,6 +271,8 @@ elif [[ $mode == arm ]]; then
     [[ $cell == 1-ceiling-S && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == tail ]]; then
     [[ $cell =~ ^1-tail-(control|wal|zgc|fair)-S$ && $(cat "$out/source") == "$source" ]]
+  elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == tail-combined ]]; then
+    [[ $cell == 1-tail-combined-S && $(cat "$out/source") == "$source" ]]
   else
     [[ $cell =~ ^(1|2|4)-(0-K|1-S|2-S|3-K)$ ]]
   fi
@@ -313,7 +319,7 @@ elif [[ $mode == arm ]]; then
     role=w; if ((i>1)); then role=w$i; fi
     [[ -s "$trace/prep1-gc-gw-$role.log" ]]
   done
-  if [[ ${DX_PREP1_CAMPAIGN:-} == tail ]]; then
+  if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
     bash "$here/tail-pg.sh" settings "$owned" > "$dir/pg-settings.json"
     pids=()
     for role in pg tx gw-w gw-r; do pids+=("$(docker inspect --format '{{.State.Pid}}' "$owned-$role")"); done
@@ -332,21 +338,21 @@ elif [[ $mode == arm ]]; then
   fi
   "${producer[@]}" arm "$cell" "$seed" "$dir" "$owned" "$source" "$DX_WRITE_OPTIONS_ATTEMPT" \
     "$DX_STACK_EVIDENCE/$owned/stack.json" http://127.0.0.1:8495 "${urls[@]}"
-  if [[ ${DX_PREP1_CAMPAIGN:-} == tail ]]; then
+  if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
     bash "$here/tail-pg.sh" stats "$owned" > "$dir/pg-after.json"
     docker stop -t 15 "$owned-gw-w" "$owned-gw-r" >/dev/null
   fi
   docker stop -t 30 "$owned-tx" >/dev/null
-  if [[ ${DX_PREP1_CAMPAIGN:-} == tail ]]; then
+  if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
     stop_observer
     docker logs --timestamps "$owned-pg" > "$dir/postgres.log" 2>&1
   fi
   python3 "$here/server-collect.py" "$out/plan.json" "$dir" "$trace/prep1-native.ndjson" > "$dir/summary.tmp"
-  if [[ ${DX_PREP1_CAMPAIGN:-} == tail ]]; then
+  if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
     python3 "$here/tail-report.py" "$dir" "$trace" "$dir/summary.tmp"
   fi
   clean
   unset owned
-  if [[ ${DX_PREP1_CAMPAIGN:-} != tail ]]; then mv "$dir/summary.tmp" "$dir/summary.json"; fi
+  if [[ ! ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then mv "$dir/summary.tmp" "$dir/summary.json"; fi
 else exit 2
 fi

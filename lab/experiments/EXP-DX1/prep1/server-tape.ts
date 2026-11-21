@@ -19,7 +19,7 @@ export type Arm = {
   prefetch?: boolean;
   cacheGiB?: 2 | 16;
   orderedIds?: boolean;
-  tail?: "control" | "wal" | "zgc" | "fair";
+  tail?: "control" | "wal" | "zgc" | "fair" | "combined";
 };
 export const arms: Arm[] = widths.flatMap((writers) =>
   (["K", "S", "S", "K"] as const).map((writer, repeat) => ({
@@ -81,6 +81,9 @@ export const tailArms: Arm[] = (["control", "wal", "zgc", "fair"] as const).map(
   tail,
   credits: tail === "fair" ? 6 : 0,
 }));
+export const tailCombinedArm: Arm = {
+  ...storageOrderedArm, id: "1-tail-combined-S", tail: "combined", credits: 6,
+};
 
 export function tailPrediction(arm: Arm, rate: number, solo: boolean) {
   assert(arm.tail && (rate === 235 || rate === 394));
@@ -104,10 +107,15 @@ export function tailPrediction(arm: Arm, rate: number, solo: boolean) {
       [74, 3, 61, 82, 4.6, 230],
       [34, 2.7, 4.4, 34, 2.8, 160],
     ],
+    combined: [
+      [13, 1.54, 2, 14, 2.3, 32],
+      [9, 1.89, 1.3, 12, 2.6, 42],
+    ],
   } as const;
   const [quietSoloP99Ms, ratio, soloP99, soloMax, loadedP99, loadedMax] =
     estimates[arm.tail][rate === 235 ? 0 : 1];
   return {
+    ...(arm.tail === "combined" ? { serving: solo ? 3.5 : rate, expired: 0 } : {}),
     quietSoloP99Ms,
     quietP99Ratio: solo ? 1 : ratio,
     appendP99Ms: solo ? soloP99 : loadedP99,

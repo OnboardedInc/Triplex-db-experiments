@@ -39,6 +39,7 @@ import {
   storageOrderedArm,
   storagePrediction,
   tailArms,
+  tailCombinedArm,
   tailPrediction,
   tailSeconds,
   type Arm,
@@ -80,7 +81,7 @@ assert(
     campaign === "storage" ||
     campaign === "storage-ordered" ||
     campaign === "ceiling" ||
-    campaign === "tail",
+    campaign === "tail" || campaign === "tail-combined",
 );
 const campaignArms = {
   comparison: arms,
@@ -90,13 +91,14 @@ const campaignArms = {
   "storage-ordered": [storageOrderedArm],
   ceiling: [ceilingArm],
   tail: tailArms,
+  "tail-combined": [tailCombinedArm],
 }[campaign];
 const wide = campaign === "ceiling";
 const campaignSeconds = wide
   ? ceilingSeconds
   : campaign === "comparison"
     ? seconds
-    : campaign === "tail"
+    : campaign === "tail" || campaign === "tail-combined"
       ? tailSeconds
       : fairSeconds;
 const [answer, note] = wide ? scaleFields : ([":field/answer-prep1", ":field/note"] as const);
@@ -769,7 +771,7 @@ else if (action === "adopt-scale") {
                       : 520,
                 maximumAwaitingReceipt: credits || 96,
               }
-            : campaign === "tail"
+            : arm.tail
               ? tailPrediction(arm, rate, label.endsWith("-alone"))
               : campaign === "owner"
                 ? ownerPrediction(arm, rate, label.endsWith("-alone"))

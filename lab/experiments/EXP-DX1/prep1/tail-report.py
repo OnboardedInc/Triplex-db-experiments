@@ -160,17 +160,17 @@ def collect(directory, trace, standard_path):
     assert probe["bpfScriptSha256"] == terminal["files"]["postgres.bt"]
     native = trace / "prep1-native.ndjson"
     assert standard["rawSha256"][native.name] == observer.sha(native)
+    zgc = header["arm"]["tail"] in ("zgc", "combined")
     for role in ("tx", "gw-w", "gw-r"):
         path = trace / f"prep1-gc-{role}.log"
         assert standard["rawSha256"][path.name] == observer.sha(path)
         text = path.read_text()
-        is_zgc = role == "tx" and header["arm"]["tail"] == "zgc"
+        is_zgc = role == "tx" and zgc
         assert re.search(r"Using (?:The Z Garbage Collector|ZGC)" if is_zgc else r"Using G1", text)
     config = trace.parents[1] / "config"
     base_image = (config / "java-image.txt").read_text().split("|")
-    tx_image = ((config / "tail-tx-image.txt").read_text().split("|")
-                if header["arm"]["tail"] == "zgc" else base_image)
-    assert base_image[1] in {"21", "<no value>", ""} and (tx_image[1] == "25") == (header["arm"]["tail"] == "zgc")
+    tx_image = (config / "tail-tx-image.txt").read_text().split("|") if zgc else base_image
+    assert base_image[1] in {"21", "<no value>", ""} and (tx_image[1] == "25") == zgc
     for role, cpuset in (("pg", "1"), ("tx", "0"), ("gw-w", "2-5"), ("gw-r", "6")):
         c, = [c for c in stack["containers"] if c["name"] == f'{probe["slot"]}-{role}']
         assert c["cpuset"] == cpuset
@@ -179,7 +179,7 @@ def collect(directory, trace, standard_path):
 
     pg = read(directory / "pg-settings.json")
     data, wal, data_dev, wal_dev = pg["layout"]
-    separate = header["arm"]["tail"] == "wal"
+    separate = header["arm"]["tail"] in ("wal", "combined")
     assert int(pg["version"]) // 10000 == 17
     assert wal == ("/wal" if separate else data+"/pg_wal") and (data_dev != wal_dev) == separate
     mount_proof = []
@@ -289,7 +289,7 @@ def collect(directory, trace, standard_path):
                        p.name: observer.sha(p) for p in (joined, stack_path, restore, directory/"sentinel.json",
                          directory/"observer-end.json", directory/"pg-settings.json", directory/"pg-before.json",
                          directory/"pg-after.json", directory/"postgres.log", config/"java-image.txt", *mount_proof,
-                         *([config/"tail-tx-image.txt"] if header["arm"]["tail"] == "zgc" else []))}}}, output)
+                         *([config/"tail-tx-image.txt"] if zgc else []))}}}, output)
         output.write("\n")
 
 

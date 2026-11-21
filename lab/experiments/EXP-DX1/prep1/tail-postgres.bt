@@ -28,13 +28,19 @@ uretprobe:@PG@:XLogFlush /@flush[tid]/ {
   delete(@lsn[tid]);
 }
 
-uprobe:@PG@:issue_xlog_fsync /cgroup == cgroupid("@CG@")/ {
+// [DX-PREP1] Why: count successful fdatasync on the same backend inside XLogFlush (DX-BM1 witnessed it).
+// Rejected: the separate issue_xlog_fsync entry that the measured PostgreSQL build did not call.
+tracepoint:syscalls:sys_enter_fdatasync /@flush[tid]/ {
   @wal[tid] = nsecs(monotonic);
+  @walfd[tid] = (uint64)args.fd;
 }
-uretprobe:@PG@:issue_xlog_fsync /@wal[tid]/ {
-  @emitted = count();
-  printf("W\t%d\t%llu\t%llu\t0\n", pid, @wal[tid], nsecs(monotonic));
+tracepoint:syscalls:sys_exit_fdatasync /@wal[tid]/ {
+  if (args.ret == 0) {
+    @emitted = count();
+    printf("W\t%d\t%llu\t%llu\t%llu\n", pid, @wal[tid], nsecs(monotonic), @walfd[tid]);
+  }
   delete(@wal[tid]);
+  delete(@walfd[tid]);
 }
 
 uprobe:@PG@:CreateCheckPoint /cgroup == cgroupid("@CG@")/ {

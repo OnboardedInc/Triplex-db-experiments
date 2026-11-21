@@ -52,7 +52,7 @@ def record(directory, stack_path, source, attempt, pids):
     assert sys.platform == "linux" and os.geteuid() == 0 and __debug__
     stack = json.loads(stack_path.read_text())
     slot = stack["prefix"]
-    assert re.fullmatch(r"tx2-dxprep1-[a-f0-9]{8}-1-tail-(control|wal|zgc|fair)-s", slot)
+    assert re.fullmatch(r"tx2-dxprep1-[a-f0-9]{8}-1-tail-(control|wal|zgc|fair|combined)-s", slot)
     assert re.fullmatch(r"[a-f0-9]{40}", source) and re.fullmatch(r"[a-f0-9-]{36}", attempt)
     assert len(pids) == 4 and all(pid > 1 for pid in pids)
     boot = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
