@@ -32,11 +32,19 @@ The default uses the per-person writer with client-minted ordered assertion IDs,
 
 All three roles default to Java 21 G1. Use `--tx-jvm j25-zgc` to change only the transactor. The existing `--jvm j25-g1` and `--jvm j25-zgc` settings change all roles. The prepared build binds both Java images.
 
+Use `--write-jvm j25-zgc` to put only the write gateway on Java 25 ZGC. The option can be combined with `--tx-jvm`.
+
+The sender defaults to `--credit-mode barrier6`. Choose `rolling6`, `rolling8`, `rolling12` or `rolling16` to release credits individually and reserve one for account zero. The same choices can be set through `DX_V01_CREDIT_MODE`, including on the Mac fixture.
+
+Set `PREP1_LOOKUP_EVERY=64` for sampled native lookups. Set `DX_W1_SERIAL_APPLY=1` with `--writer subject` to select the narrow revision check and reuse decoded predecessors. Both settings default off. The scorecard applies the chosen write diagnostic to both matched reader arms.
+
 Supply `--wal-directory DIR` to put the disposable PostgreSQL WAL on a dedicated mounted filesystem. The launcher checks the device against Docker's volume store before starting and checks the live PostgreSQL paths after startup. Each arm gets its own fresh child directory and removes it after shutdown. Synchronous commit, fsync and full page writes stay enabled.
 
 `int1/everything.sh` also defaults to the server profile and accepts `DX_TX_JVM=j25-zgc` and `DX_WAL_DIRECTORY`. The playground and Mac correctness gates use their small laptop settings.
 
 ## Aged 1B
+
+The existing billion-record card uses the earlier `57580241d` pin and the DX-V01 `8cc32d380` handoff.
 
 Use the original SCALE1 image inputs, the AGE1 handoff bundle and an independently prepared PostgreSQL dump of that exact sealed aged cut. Supply `AGE_JAVA` and `AGE_DATOMIC_HOME` for the pinned AGE1 checker. The bundle's native database identity, logical and physical cuts, history count, receipts and replay ledger are checked against the restored peer before writes.
 
