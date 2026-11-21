@@ -1,4 +1,4 @@
-Lean scorecard runner on the next-card branch. The queued billion-record runner stays at 8cc32d380.
+Run c1eeb2ef8667394832b03e8115a66d5d4a422945 on exp/DX-V01-next-card for the lean fresh card. The queued billion-record runner stays at 8cc32d380.
 The chosen credits drive both headline arms. The third arm uses barrier6 on the identical stack.
 Each arm takes one private copy. The cap is 280 minutes and USD 5.09, plus about thirteen minutes for three fresh copies.
 The quiet account clears its measured commit gate at 1.25 times alone or at 50 milliseconds loaded.
@@ -6,6 +6,12 @@ The card keeps five-minute halves and counter archives. Publish and option B fai
 The ordered stack checks both retired assertion IDs and four historical values in the headline arm.
 The merged writer and launch pin is 5f62059b1. Both diagnostics are off in the planned fresh run.
 Mac clocks are diagnostic. The server driver supplies the winning credit mode.
+
+## Part 9 gates and open results
+
+A clean source checkout built all eight package tasks and the managed image. The toy reopened rolling12 headline zero and loaded, plus a barrier6 ordered control. The independent checker verified all fourteen diagnostic rows, twelve quiet whole/half windows, the two retired-ID refusals and four exact pinned values, both credit settings, and PostgreSQL 17's three stat views. The 31 focused tests cover the exact OR threshold and its sample floor, the published credit scheduler, closed assembly, slot binding and tamper refusal. The first focused run exposed a rounding expectation in the test's explanatory ratio; its log is retained. Both toy reservations and volumes, the owned image and the scratch checkout were removed. [Checksums and evidence](EVIDENCE.md)
+
+The CLI plan verified explicit mode precedence over the environment, the same requested WAL policy in all three arms, and the optional write-only JDK and diagnostic settings. Those optional settings are off in the driver command. Linux device placement, elapsed time, physical telemetry and performance await the fresh server. The chosen mode remains the driver's input. [Server command and pre-run forecasts](SERVER.md)
 
 ## Part 9 verdict and receipt audit
 

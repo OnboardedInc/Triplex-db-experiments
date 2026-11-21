@@ -74,3 +74,9 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 
 - `part8/native-card-rolling-six.tar.gz`, its index and `part8/SCORECARD-rolling-six.md` retain the clean candidate's native rolling-width-six card with both writers. `part8/verify-rolling-six.log` confirms actual ticket bounds, correctly filled rows and the exact PG17 readback. The clean build and cleanup logs identify that exact candidate.
 - `part8/unit-rolling-six.log` records all 31 focused tests, including the published schedule and negative credit-mode evidence checks.
+
+## Part 9 lean fresh card
+
+- `part9/native-lean.tar.gz`, its index and `part9/SCORECARD-lean.md` contain the pinned Mac toy's two rolling12 headline arms, the ordered barrier6 comparison, and the saved mixed-ID and PostgreSQL 17 checks.
+- `part9/verify-lean.log` verifies all fourteen obligations and twelve quiet windows from their offer and ACK clocks. `part9/unit-final.log` records 31 focused tests. `part9/unit-lean.log` retains the earlier test rounding mismatch. The two plan logs record selector precedence, matched core and WAL policy, and opt-in flags.
+- The package, image build, fixture and retirement logs identify the exact runner, the two ordinary reservations and cleanup.

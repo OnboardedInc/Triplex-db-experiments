@@ -36,7 +36,7 @@ These predictions use the matched full-size barrier6, rolling6 and rolling12 for
 Use a clean checkout on `exp/DX-V01-next-card`. Build during staging.
 
 ```bash
-COMMIT=LEAN_RUNNER_COMMIT
+COMMIT=c1eeb2ef8667394832b03e8115a66d5d4a422945
 BUILD=/var/tmp/triplex-v01-lean-build
 sudo "$(command -v node)" --no-warnings --experimental-transform-types   lab/experiments/EXP-DX1/v01/build.ts "$COMMIT" "$BUILD"
 cd "$BUILD/repository"
