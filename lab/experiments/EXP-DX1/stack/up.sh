@@ -745,10 +745,14 @@ for role in "${gateway_roles[@]}"; do
     mem=${DX_GW_WRITE_MEMORY:-$gw_mem}; role_java=$gw_w_java; image=$write_image
   else
     mem=${DX_GW_READ_MEMORY:-$gw_mem}; role_java=$gw_r_java; image=$datomic_image
+    field_policy+=(-e "TX2_READ_PROFILE=${DX_RD1_READ_PROFILE:-0}" -e "TX2_READ_FILTER_EARLY=${DX_RD1_READ_FILTER:-0}")
   fi
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
   [[ $mode != w ]] || entity_cache_bytes=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-268435456}
   role_trace_java=$trace_gw_java
+  if [[ $mode == r && ${DX_RD1_READ_PROFILE:-0} == 1 ]]; then
+    role_trace_java+=" -Ddatomic.metricsCallback=triplex.gateway.trace/metrics -Xlog:gc*,safepoint=info:file=/trace/rd1-gc.log:time,uptimemillis,level,tags:filecount=0"
+  fi
   if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
     role_trace_java+=" -Xlog:gc*,safepoint*=debug:file=/trace/prep1-gc-gw-$role.log:time,uptimemillis,level,tags,pid,tid:filecount=0"
     if [[ $mode == w ]]; then field_policy+=(-e TX2_SUBJECT_PROFILE=1); fi

@@ -53,9 +53,10 @@ export const regimeOf = info => info.regime ?? 'quota';
 function scorecardOutput(options, info) {
   const output = options['scorecard-output'];
   const holder = process.env.DX_V01_MAC_HOLDER ?? 'DX-V01';
-  if (process.platform !== 'darwin' || !['DX-V01', 'DX-THIN1'].includes(holder) || options.holder !== holder ||
+  const image = holder === 'DX-RD1' ? /^tx2-dxthin-rd1:[a-f0-9]{16}$/ : /^tx2-dxthin-managed:/;
+  if (process.platform !== 'darwin' || !['DX-V01', 'DX-THIN1', 'DX-RD1'].includes(holder) || options.holder !== holder ||
       info.lane !== 'datomic' || info.mode !== 'exclusive' ||
-      !process.env.TX2_EXCLUSIVE_VOLUME_ID || !/^tx2-dxthin-managed:/.test(info.laneConf.image) ||
+      !process.env.TX2_EXCLUSIVE_VOLUME_ID || !image.test(info.laneConf.image) ||
       typeof output !== 'string' || !output.startsWith(path.join(REPO, 'runs', 'DX-V01') + path.sep) ||
       fs.realpathSync(output) !== output || !fs.statSync(output).isDirectory())
     fail('REFUSED', 'Scorecard fixture needs its exclusive compact image, private volume and output');
@@ -263,7 +264,7 @@ async function selftestDatomic(config, opts) {
 // [DX-THIN1] Why: release only staged images that this experiment built and whose slots have closed.
 // Rejected: a forced removal or pruning the lab VM's shared image cache.
 async function removeThinImage(config, opts) {
-  if (!['DX-THIN1', 'DX-PREP1', 'DX-REAL1'].includes(opts.holder) || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
+  if (!['DX-THIN1', 'DX-PREP1', 'DX-REAL1', 'DX-RD1'].includes(opts.holder) || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
   const info = slotInfo(config, 'datomic', 'dev');
   const tag = info.laneConf.image;
   // [DX-PREP1] Why: a diagnostic retry can discard its exact staged image after the slot exits.
@@ -272,6 +273,7 @@ async function removeThinImage(config, opts) {
     'DX-REAL1': /^tx2-dxthin-managed:real1-[a-f0-9]{16}$/,
     'DX-THIN1': /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/,
     'DX-PREP1': /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery|subject-native-suite)$/,
+    'DX-RD1': /^(?:tx2-datomic:dx-rd1-fresh-reads|tx2-dxthin-rd1:[a-f0-9]{16})$/,
   }[opts.holder];
   if (!ownedTag.test(tag)) fail('REFUSED', 'Only the holder’s staged image tags may be removed');
   if (info.laneConf.imageId !== opts['image-id']) fail('REFUSED', 'The staged configuration is pinned to a different image');
@@ -359,7 +361,7 @@ export function effectiveConfig(config, info) {
     // Rejected: modifying the resident config or mounting the canonical uninstrumented script.
     // [DX-INT1] Why: the compact scorecard uses the verified entrypoint in its own staged context.
     // Rejected: replacing its SQL stack with the standard one-gateway launch.
-    const entryRoot = info.laneConf.image.startsWith('tx2-dxthin-managed:') ? root : REPO;
+    const entryRoot = /^tx2-dxthin-(?:managed|rd1):/.test(info.laneConf.image) ? root : REPO;
     fs.copyFileSync(path.join(entryRoot, 'lab/config/datomic/entrypoint.sh'), entrypoint);
     let reader, readerGateway;
     if (info.readerPort !== undefined) {
@@ -976,6 +978,9 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
     if (census !== undefined && (options.holder !== 'DX-THIN1' || !['4096', '24576'].includes(String(census))))
       fail('REFUSED', 'The untouched census needs its assigned holder and one of the supported short rungs');
     const result = spawnSync('docker', dockerArgs(['exec', '-w', REPO, '-e', 'DX_V01_FIXTURE_SOURCE=' + source,
+      '-e', 'DX_V01_MAC_HOLDER=' + options.holder,
+      ...(options.holder === 'DX-THIN1' && !census && process.env.DX_V01_MAC_READ_STUDY === '1'
+        ? ['-e', 'DX_V01_MAC_READ_STUDY=1'] : []),
       '-e', 'TRIPLEX_DATOMIC_FAST_PATHS=save-wire', live.Id, '/usr/local/bin/node',
       '--no-warnings', '--experimental-transform-types', '--expose-gc', '--max-old-space-size=768',
       'lab/experiments/EXP-DX1/thin1/managed.ts', '--guest', configDir,

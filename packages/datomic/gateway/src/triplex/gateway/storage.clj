@@ -689,7 +689,7 @@
             _ (when-not (#{"history" "live"} route) (codec/invalid "Unknown read route"))
             _ (assert-subject-route! db basis (if (= route "live") :f/live :f/subject))
             _ (when (and (= route "live") history) (unavailable! "Position-retired route cannot enumerate history"))
-            _ (await-position db (get basis "recordedPosition") (get input "basisWaitMs") (fn [_] db))]
+            _ (trace/read-span "read.confirm-position" "peer-call" (await-position db (get basis "recordedPosition") (get input "basisWaitMs") (fn [_] db)))]
         (admission/execute admission/reads (fn []
         {:route (cond (= route "live") "live" (get input "staged") "staged" (get input "handle") "held"
                       (and (some? (get basis "recordedPosition")) (< (get basis "recordedPosition") (head-position current))) "as-of" :else "source") :basis basis
@@ -705,7 +705,7 @@
                                             [["entityId" :entity_id] ["attribute" :attribute] ["entityType" :entity_type]])))
                              ;; [DX-B5-L2] Why: an explicit imported row position cannot move its physical publication into an older snapshot.
                              ;; Rejected: filtering full head history only by row position (differs from legacy read-db).
-                             (lean/rows name (at-position db (get basis "recordedPosition")) input)))}))))))
+                             (lean/rows name (trace/read-span "read.resolve-position" "peer-call" (at-position db (get basis "recordedPosition"))) input)))}))))))
 
 ;; [EXP-DX1] Why: snapshot, claim and known by-id rows share one immutable prefetch cut.
 ;; Rejected: separate claim/read HTTP calls (R51's six-round-trip commit).

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
@@ -12,24 +13,29 @@ import { stackOptions, writeDiagnostics, type Age, type JvmProfile, type Writer 
 import { cleanSource, verifyBuild } from "./source.ts";
 
 const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, writer, jvm, agedFile, agedPin, agedDump, agedDumpPin,
-  txJvm = jvm, walDirectory = "", writeJvm = jvm, creditMode = defaultCreditMode] = process.argv.slice(2);
+  txJvm = jvm, walDirectory = "", writeJvm = jvm, creditMode = defaultCreditMode, studyJvm = "", readCache = ""] = process.argv.slice(2);
 assert(source && campaign && seedDir && imagePin && transferPin);
 assert(age === "fresh" || age === "1B");
 assert(writer === "grouped" || writer === "subject");
-const policy = launchProfile("server", { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile,
-  writeJvm: writeJvm as JvmProfile, creditMode: creditMode as CreditMode });
+const launchOptions = { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile,
+  writeJvm: writeJvm as JvmProfile, creditMode: creditMode as CreditMode,
+  readCacheMiB: readCache ? Number(readCache) as 32 | 1536 | 3072 : undefined };
+const control = launchProfile("server", launchOptions);
+const tuned = studyJvm && launchProfile("server", { ...launchOptions, readJvm: studyJvm as JvmProfile, readTuned: true });
+assert(!tuned || age === "fresh");
 const diagnostics = writeDiagnostics(writer);
 const end = Number(deadlineText);
 assert(Number.isSafeInteger(end) && end > Date.now());
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"), queue = fs.statSync(`/proc/${process.ppid}/fd/9`);
 assert.equal(lock.ino, queue.ino); assert.equal(lock.dev, queue.dev);
 scaleHost.physical();
+if (tuned) execFileSync("taskset", ["-apc", "9,10", String(process.pid)]);
 process.env.DX_BARE_METAL = "1";
 verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
 fs.mkdirSync(campaign);
-jsonFile(path.join(campaign, "input.json"), { source, age, writer, policy, diagnostics, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
+jsonFile(path.join(campaign, "input.json"), { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
   agedBundle: expected?.pin, agedDump: expected?.dumpPin });
 let stopping = false;
 const stop = () => { stopping = true; };
@@ -37,7 +43,8 @@ process.on("SIGTERM", stop);
 process.on("SIGINT", stop);
 for (const loaded of [false, true]) {
   assert(!stopping && Date.now() + 10 * 60_000 < end);
-  const out = path.join(campaign, loaded ? "loaded" : "zero");
+  const policy = loaded && tuned ? tuned : control;
+  const out = path.join(campaign, tuned ? (loaded ? "tuned" : "control") : (loaded ? "loaded" : "zero"));
   fs.mkdirSync(out);
   const floor = age === "1B" ? 320 : 240;
   assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the disposable restore");
@@ -46,7 +53,10 @@ for (const loaded of [false, true]) {
   jsonFile(path.join(out, "attempt.json"), { source, tag: path.basename(out), slot, attempt });
   assert(Object.values(scaleHost.childrenInventory(slot)).every((x) => x.length === 0));
   try {
-    const { engines } = startScaleStack(out, slot, source, writer === "grouped", stackOptions(writer, attempt, diagnostics), { policy, walDirectory });
+    const options = stackOptions(writer, attempt, diagnostics);
+    const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
+      ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0",
+    } : options, { policy, walDirectory });
     const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
     const residency = async () => {
       const { write, read } = peerUrls();
@@ -56,9 +66,17 @@ for (const loaded of [false, true]) {
         containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
       return observed.roles as Residency;
     };
-    const empty = await residency();
+    const empty = tuned ? undefined : await residency();
+    const raw = path.join(out, "engines", slot, "trace", "raw");
     await restoreDump(expected?.dump ?? seed.dump, expected?.dumpPin ?? seed.image.sha256, slot, engines,
-      Math.min(end - 10 * 60_000, Date.now() + 42 * 60_000));
+      Math.min(end - 9 * 60_000, Date.now() + (tuned ? 11 : 42) * 60_000), tuned ? () => {
+        // [DX-RD1] Why: the restored reader requires a new trace file for its own JVM boot.
+        // Rejected: appending samples to an empty-stack JVM's observations or discarding those observations.
+        for (const file of ["gw-r.jsonl", "rd1-gc.log", "gw-r-native-settings.json"]) {
+          const from = path.join(raw, file);
+          if (fs.existsSync(from)) fs.renameSync(from, from + ".before-restore");
+        }
+      } : undefined);
     const write = `http://${engines["gw-w"]!.address}:8080`;
     const read = `http://${engines["gw-r"]!.address}:8080`;
     const jw = readScaleJvms(path.join(out, "restored-jvm"), engines, policy);
@@ -68,11 +86,42 @@ for (const loaded of [false, true]) {
     assert(!stopping && Date.now() + 8 * 60_000 < end);
     const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw,
       creditMode: policy.creditMode, serialApply: diagnostics.serialApply, empty, residency };
+    if (tuned) {
+      const native = JSON.parse(fs.readFileSync(path.join(raw, "gw-r-native-settings.json"), "utf8"));
+      assert.deepEqual([native.source, native.slot, native.process], [source, slot, "gw-r"]);
+      if (policy["gw-r"].cacheMiB !== null) assert.equal(native.datomic["datomic.objectCacheMax"].value, policy["gw-r"].cacheMiB * 1024 ** 2);
+      const readPeerCounters = containerCounters(engines["gw-r"].id);
+      const postgresCounters = containerCounters(engines.pg.id);
+      const counters = () => ({ readPeer: readPeerCounters(), postgres: postgresCounters() });
+      let terminal = head;
+      for (const rate of [50, 235] as const) {
+        assert(!stopping && Date.now() + 4 * 60_000 < end);
+        const folder = path.join(out, String(rate));
+        fs.mkdirSync(folder);
+        const arm = await adoptedArm(folder, source, peer, seed, writer, true, false, terminal, undefined,
+          { rate, batch: loaded ? 8 : 1, sample: true, counters });
+        terminal = arm.terminal;
+      }
+      continue;
+    }
     const arm = await adoptedArm(out, source, peer, seed, writer as Writer, loaded, false, head);
     if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
   } finally {
     scaleHost.clean(out, slot);
   }
+}
+
+// [DX-RD1] Why: process-group CPU and block I/O can distinguish a busy core from a blocked peer.
+// Rejected: treating wall time in a Datomic call as CPU or a PostgreSQL page-cache hit as physical I/O.
+function containerCounters(container: string) {
+  const pid = execFileSync("docker", ["inspect", "--format", "{{.State.Pid}}", container], { encoding: "utf8" }).trim();
+  assert(/^[1-9]\d*$/.test(pid));
+  const group = fs.readFileSync(`/proc/${pid}/cgroup`, "utf8").match(/^0::(\/.+)$/m)?.[1];
+  assert(group, "Reader study needs cgroup v2 per-container counters");
+  return () => Object.fromEntries(["cpu.stat", "cpu.pressure", "io.stat", "io.pressure", "memory.current"].map((file) => {
+    const name = path.join("/sys/fs/cgroup", group, file);
+    return [file, fs.existsSync(name) ? fs.readFileSync(name, "utf8") : null];
+  }));
 }
 
 function openAged(label: Age, file?: string, pin?: string, dump?: string, dumpPin?: string) {

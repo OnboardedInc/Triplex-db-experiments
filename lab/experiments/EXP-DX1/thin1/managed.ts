@@ -3,6 +3,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { memoryPlan } from "../int1/memory-plan.ts";
 import { nodeImage, pgImage } from "../v01/source.ts";
@@ -11,10 +12,12 @@ import { type Writer } from "../v01/profile.ts";
 
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
 const scorecard = process.env.DX_V01_MAC_FIXTURE === "1";
+const readStudy = process.env.DX_V01_MAC_HOLDER === "DX-RD1" || process.env.DX_V01_MAC_READ_STUDY === "1";
+assert(!readStudy || scorecard || (action === "--guest" && process.env.DX_V01_FIXTURE_SOURCE));
 const realistic = process.env.DX_REAL1_MAC_FIXTURE === "1";
 assert(!realistic || !scorecard);
 const holder = realistic ? (process.env.DX_REAL1_MAC_HOLDER ?? "DX-REAL1") : scorecard ? (process.env.DX_V01_MAC_HOLDER ?? "DX-V01") : "DX-THIN1";
-assert((realistic && holder === "DX-REAL1") || holder === "DX-THIN1" || (scorecard && holder === "DX-V01"));
+assert((realistic && holder === "DX-REAL1") || holder === "DX-THIN1" || (scorecard && ["DX-V01", "DX-RD1"].includes(holder)));
 const integrated = [
   "int1-thin",
   "int1-deep",
@@ -133,7 +136,7 @@ async function prepare() {
   const { verifiedTree } = await import(new URL("../../../bin/datomic-context.mjs", import.meta.url).href);
   // [DX-THIN1] Why: keep old and new private images addressable across a native gateway merge. Rejected: reusing a tag derived only from the launcher when the gateway or codec changes.
   cfg.lanes.datomic.image =
-    (holder === "DX-REAL1" ? "tx2-dxthin-managed:real1-" : "tx2-dxthin-managed:") +
+    (holder === "DX-REAL1" ? "tx2-dxthin-managed:real1-" : holder === "DX-RD1" ? "tx2-dxthin-rd1:" : "tx2-dxthin-managed:") +
     createHash("sha256")
       .update(JSON.stringify([verifiedTree(imageFolder), verifiedTree(path.join(dir, "packages/datomic/gateway")), verifiedTree(path.join(dir, "packages/datomic/src"))]))
       .digest("hex")
@@ -210,6 +213,7 @@ function setup(compact: boolean) {
       (compact ? " -Ddxthin.compact=yes" : "") + (memory ? " -Ddxthin.memory=yes" : "") +
       (mode === "int1-campaign-proof" ? " -Ddxthin.campaign=yes" : "") +
       (writeOptionsAttempt ? " -Ddxthin.adopted=" + writeOptionsAttempt + " -Ddxthin.fixtureWriter=" + fixtureWriter : "") +
+      (readStudy ? " -Ddxthin.readStudy=yes" : "") +
       (nativePools ? " -Ddxthin.nativePools=yes -XX:NativeMemoryTracking=summary" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
       " -Ddxthin.secret=" +
@@ -242,10 +246,17 @@ function witness(slot: string) {
       owner.mode === "exclusive" &&
       fs.realpathSync(owner.worktree) === fs.realpathSync(repo),
   );
-  const line = manager(["logs", "--slot", slot, "--tail", "2000"])
-    .split("\n")
-    .filter((l) => l.startsWith("DXTHIN-SLOT "))
-    .at(-1);
+  const find = () => manager(["logs", "--slot", slot, "--tail", "2000"])
+    .split("\n").filter((l) => l.startsWith("DXTHIN-SLOT ")).at(-1);
+  // [DX-RD1] Why: the compact read peer can still be starting when the managed writer reports healthy.
+  // Rejected: binding a half-started stack or giving the slot a fixed startup delay.
+  const end = Date.now() + (attempt.compact ? 45_000 : 0);
+  const wait = new Int32Array(new SharedArrayBuffer(4));
+  let line = find();
+  while (!line && Date.now() < end) {
+    Atomics.wait(wait, 0, 0, 250);
+    line = find();
+  }
   assert(line, "Missing live slot identity");
   const event = JSON.parse(line.slice(12));
   assert(
@@ -377,6 +388,15 @@ if (action === "--guest") {
     process.chdir(repo);
     const { adoptedToy } = await import("../v01/adopted.ts");
     const { readResidentMappings } = await import("./heap-residency.ts");
+    const readyBy = Date.now() + 45_000;
+    for (;;) {
+      try {
+        const answer = await fetch(new URL("/health", stack.readUrl), { signal: AbortSignal.timeout(1000) });
+        if (answer.ok && (await answer.json() as { gatewaySourceHash: string }).gatewaySourceHash === stack.gatewaySourceSha256) break;
+      } catch {}
+      assert(Date.now() < readyBy, "Compact read gateway did not become healthy");
+      await delay(250);
+    }
     const commands = fs.readdirSync("/proc").filter((n) => /^\d+$/.test(n)).flatMap((n) => {
       const file = "/proc/" + n + "/cmdline";
       try {
@@ -408,7 +428,7 @@ if (action === "--guest") {
     };
     await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
-      java: { placement: "owned Mac compact stack", commands }, creditMode: stack.managed.creditMode, residency }, writer);
+      java: { placement: "owned Mac compact stack", commands }, creditMode: stack.managed.creditMode, residency }, writer, readStudy);
   } else if (mode === "int1-campaign-proof") {
     assert(Number(rung) === 40);
     process.chdir(repo);

@@ -156,7 +156,7 @@ export async function restoreSeed(
 // [DX-V01] Why: use the same owned PostgreSQL restore for a SCALE1 operator-held dump.
 // Rejected: relabeling the loader artifacts as an INT1 driver seed.
 export async function restoreDump(file: string, expectedSha: string, slot: string,
-  engines: Record<string, { id: string; address: string }>, deadline?: number) {
+  engines: Record<string, { id: string; address: string }>, deadline?: number, stopped?: () => void) {
   assert(process.platform === "linux" && process.getuid?.() === 0 && process.env.DOCKER_HOST === "unix:///var/run/docker.sock");
   assert(/^tx2-dxscale1-[a-z0-9-]+$/.test(slot) && /^[a-f0-9]{64}$/.test(expectedSha));
   for (const role of ["pg", "tx", "gw-w", "gw-r"])
@@ -165,6 +165,7 @@ export async function restoreDump(file: string, expectedSha: string, slot: strin
       "/" + slot + "-" + role,
     );
   for (const role of ["gw-r", "gw-w", "tx"]) docker(["stop", "--time", "20", engines[role]!.id]);
+  stopped?.();
   const g = spawn(
     "docker",
     [

@@ -38,3 +38,7 @@ The reduced-server startup verified the three live JVMs and durable PostgreSQL s
 Forecast for a later realistic pair using the new limit. Expect 0–50 resident bytes per added untouched thin person in the read gateway, from 1 million to 4.5 million thin people with identical touched IDs and settings. The measured weighted cache ceiling of 30.2 MB by itself can contribute at most 8.63 weighted bytes over that denominator. Remaining resident growth includes live index state and JVM allocation. A repeated slope above 50 falsifies the forecast. Above 64 the read gateway alone misses P7. The cold p99 must still stay at or below 100 ms, and other roles still count toward the overall byte bar.
 
 The full-size removal, realistic seed and two-rung memory runs remain on the servers. The Mac evidence is diagnostic. The three sealed archives under `int1/p11/` cover removal, realistic seed and P7. [Evidence checksums](V0.1-SHA256SUMS)
+
+### Part 12 gate audit
+
+RD1's native checks compare exact pinned filtered rows and held cuts. The local read-study toy uses fresh scopes and tapes and checks reads and save receipts against the independent model on the owned image, slot and package build. The retrospective reader joins verify original archive hashes, source, slot, tape and request identities, status and response size. They classify archived samples and do not issue a new verdict. [Cache decision](READ-CACHE.md)
