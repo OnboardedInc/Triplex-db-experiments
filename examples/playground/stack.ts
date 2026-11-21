@@ -182,6 +182,7 @@ export class Stack {
   readonly label: string;
   readonly traceDir: string;
   readonly #opts: StackOptions;
+  #databaseSecret = "";
   constructor(opts: StackOptions) {
     if (!/^tx2-dxplay1-[a-f0-9]{12}$/.test(opts.prefix))
       throw new Error("Invalid playground owner");
@@ -246,6 +247,7 @@ export class Stack {
       "core=0",
     ];
     const secret = randomBytes(24).toString("hex");
+    this.#databaseSecret = secret;
     await docker([
       "run",
       "-d",
@@ -643,8 +645,10 @@ export class Stack {
     const remote = "/tmp/playground-storage-collection.clj";
     await writeFile(local, program, { mode: 0o600, flag: "wx" });
     let launched;
+    let stage = "copy";
     try {
       await docker(["cp", local, tx + ":" + remote]);
+      stage = "launch";
       launched = await docker(
         [
           "exec",
@@ -660,12 +664,9 @@ export class Stack {
         { ...archiveCommand(signal), timeoutMs },
       );
     } catch (error) {
-      const summary =
-        /Syntax error [^\n]+|ClassNotFoundException: [\w.$]+|Could not find or load main class [\w.$]+|executable file not found|ETIMEDOUT|SIGKILL/.exec(
-          String(error),
-        )?.[0];
+      const summary = String(error).replaceAll(this.#databaseSecret, "[redacted]");
       throw new Error(
-        "Owned Datomic storage collection could not start: " + (summary ?? "subprocess failed"),
+        "Owned Datomic storage collection failed during " + stage + ": " + summary.slice(0, 2000),
       );
     } finally {
       await rm(local, { force: true });
