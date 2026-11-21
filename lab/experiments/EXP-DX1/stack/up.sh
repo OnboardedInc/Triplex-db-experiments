@@ -447,7 +447,14 @@ if [[ $quiet_loggers == 1 ]]; then
   # [DX-T1-6] Why: the binary native appender detaches file appenders itself; quiet logging must remain on in a native profile.
   # Rejected: restoring synchronous vendor file logging while measuring the transactor's counters.
   [[ $TRIPLEX_TRACE_NATIVE_LOGS == 0 ]] || { echo 'Quiet logging conflicts with native file capture' >&2; exit 2; }
-  trace_tx_java+=' -Dlogback.configurationFile=/dxh1/quiet-logback.xml'
+  if [[ ${DX_V01_CELL_COUNTERS:-0} == 1 ]]; then
+    # [DX-V01] Why: keep the first native index-job boundary and alarms without restoring per-transaction DEBUG.
+    # Rejected: deriving index-job starts from a later adoption or enabling all native logger categories.
+    sed 's/name="datomic.update" level="WARN"/name="datomic.update" level="INFO"/' "$attempt/config/quiet-logback.xml" > "$attempt/config/scorecard-tx-logback.xml"
+    trace_tx_java+=' -Dlogback.configurationFile=/dxh1/scorecard-tx-logback.xml -Duser.timezone=UTC'
+  else
+    trace_tx_java+=' -Dlogback.configurationFile=/dxh1/quiet-logback.xml'
+  fi
   trace_gw_java+=' -Dlogback.configurationFile=/dxh1/quiet-logback.xml'
 fi
 if [[ $native_readback == 1 && $TRIPLEX_TRACE_TX_JFR == 0 && $TRIPLEX_TRACE_NATIVE_LOGS == 0 && $TRIPLEX_TRACE_GATEWAY == 0 ]]; then

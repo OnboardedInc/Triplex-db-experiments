@@ -2,14 +2,15 @@ import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { ceiling, type Age, type JvmProfile, type Writer, type serverStages } from "./profile.ts";
+import { timeBudget, type Age, type JvmProfile, type Writer, type serverStages } from "./profile.ts";
 import { type Directory, type preflightWal } from "./pgdata.ts";
-import { cellPath, serverCells } from "./server-workload.ts";
+import { cellPath, replaySeconds, serverCells, type WindowSeconds, type CreditMode } from "./server-workload.ts";
 
 type CampaignInput = {
   source: string; age: Age; writer: Writer; jvm: JvmProfile; txJvm: JvmProfile;
   imagePin: string; transferPin: string; originalScope: { db: string; cut: number };
   separateWal: boolean; stages: ReturnType<typeof serverStages>; wal?: ReturnType<typeof preflightWal>;
+  windowSeconds?: WindowSeconds; creditMode?: CreditMode;
   agedBundle?: string; agedDump?: string;
 };
 export type SequenceConfig = {
@@ -70,6 +71,7 @@ function armEvidence(sequence: Sequence, arm: number) {
   if (stage.loaded) {
     for (const cell of serverCells) {
       files.push(stage.root + cellPath(cell) + "/arm.json", stage.root + cellPath(cell) + "/operations.json");
+      if (sequence.input.windowSeconds) files.push(stage.root + cellPath(cell) + "/telemetry.json");
     }
     if (!stage.comparison) files.push(`${anchor}/p7-empty/residency.json`, "p8/result.json", "p8/pace-32-fixed.offers.json");
     if (stage.name !== "server-default") files.push(stage.root + "mixed-ids.json");
@@ -136,7 +138,7 @@ export function sequenceProgress(campaign: string, sequence: Sequence | undefine
     assert(!fs.existsSync(paths.start) && !fs.existsSync(paths.end), `Arm ${next} already started`);
   }
   const elapsed = previous.reduce((ms, step) => ms + step.completedAt - step.startedAt, 0);
-  assert(elapsed <= ceiling * 60_000, "Sequential campaign exceeded its active time budget");
+  assert(elapsed <= timeBudget(sequence?.input.windowSeconds ?? replaySeconds).ceiling * 60_000, "Sequential campaign exceeded its active time budget");
   return { previous, elapsed };
 }
 
@@ -160,7 +162,7 @@ export function completeSequentialArm(campaign: string, sequence: Sequence, arm:
   const anchor = checkAnchor(campaign, sequence, invocation, completedAt);
   const spent = Array.from({ length: arm - 1 }, (_, i) => readCompleted(campaign, sequence, i + 1, false))
     .reduce((ms, step) => ms + step.completedAt - step.startedAt, 0);
-  assert(spent + completedAt - invocation.startedAt <= ceiling * 60_000, "Sequential campaign exceeded its active time budget");
+  assert(spent + completedAt - invocation.startedAt <= timeBudget(sequence?.input.windowSeconds ?? replaySeconds).ceiling * 60_000, "Sequential campaign exceeded its active time budget");
   write(loc.end, { invocationSha256: sha(bytes), completedAt, files, ...anchor } satisfies Completed);
 }
 

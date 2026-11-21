@@ -13,10 +13,13 @@ import { accounts, activeSubjects, cellSeconds, field, root, task, writeTape, ty
 import { play, resolveUncertain, type Row, type Save, type Sender } from "../scale1/decision/writes.ts";
 import { checkAdoptedPeer, hex, openScaleSeal, type AdoptedSeed } from "./adopt.ts";
 import { ladder, phaseSeconds, selectedWriter, type Writer } from "./profile.ts";
-import { cellPath, fairCredits, ratedTape, serverCells, serverCellSeconds, type ServerCell } from "./server-workload.ts";
+import { cellPath, fairCredits, ratedTape, serverCells, serverCellSeconds, type CreditMode, type ServerCell, type WindowSeconds } from "./server-workload.ts";
+
+import { collectCell, type physicalTelemetry } from "./cell-telemetry.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
 export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
+  telemetry?: ReturnType<typeof physicalTelemetry>; windowSeconds?: WindowSeconds; creditMode?: CreditMode; credits?: number;
   empty?: Residency; residency?: () => Residency | Promise<Residency> };
 export type QuietCell = "alone" | 235;
 export const jsonFile = (file: string, data: unknown) =>
@@ -77,9 +80,11 @@ export function quietTape(people: number, cell: QuietCell, toy: boolean) {
     .map((e) => ({ ...e, version: "p6/" + e.version }));
 }
 
-async function quietReads(client: DatomicClient, seed: AdoptedSeed, start: number, cell: QuietCell, toy: boolean) {
+async function quietReads(client: DatomicClient, seed: AdoptedSeed, start: number, cell: QuietCell, toy: boolean, windowSeconds?: WindowSeconds) {
   const message: Begin = { kind: "begin", key: "p6-" + cell, repeat: 0, people: seed.image.people as Density,
-    cell, start, scopes: [seed.scope], withReaders: true };
+    cell, start, scopes: [seed.scope], withReaders: true,
+    // [DX-V01] Why: observe both halves on the same pinned read tape. Rejected: placing all quiet reads in the cold half.
+    readerWindow: windowSeconds === 300 ? { from: 15000, duration: 270000 } : undefined };
   const sides = await Promise.all([readCell(client, 0, message, toy), readCell(client, 1, message, toy)]);
   const h = new Histogram();
   for (const side of sides) h.merge(Histogram.fromJSON(side.latency));
@@ -175,6 +180,8 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
   const journal = new DatomicClient(peer.read, 35000);
   let terminal: number | undefined;
   let feeding: ReturnType<typeof feeder> | undefined;
+  const abort = new AbortController();
+  let telemetry: ReturnType<typeof collectCell> | undefined;
   try {
     const adopted = await checkAdoptedPeer(reader, seed, startHead);
     const writerOpened = peer.write === peer.read ? adopted : await checkAdoptedPeer(writerClient, seed, startHead);
@@ -203,16 +210,22 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       cold: await currentPull(reader, seed, seed.scope.cut, toy, true),
     } : undefined;
     const rated = typeof quietCell === "object" ? quietCell : undefined;
-    const seconds = toy ? 8 : rated ? serverCellSeconds : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds("alone");
-    const tape = rated ? ratedTape(seed.image.people, rated) : quietCell === undefined
+    const windowSeconds = peer.windowSeconds ?? serverCellSeconds;
+    const seconds = toy ? 8 : rated ? windowSeconds : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds("alone");
+    const tape = rated ? ratedTape(seed.image.people, rated, windowSeconds) : quietCell === undefined
       ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell as QuietCell, toy);
     const senders = await preload(writerClient, rated ? reader : writerClient, seed, startHead, tape);
     const start = now() + 1200;
     const interval = seconds * 1000;
+    if (rated && peer.telemetry) {
+      telemetry = collectCell(peer.telemetry, { source, slot: peer.slot, attempt: peer.attempt, database: seed.scope.db,
+        firstCut: startHead, cell: rated, start, end: start + interval }, abort.signal);
+      void telemetry.catch(() => {});
+    }
     feeding = feeder(journal, seed.scope.db, startHead, start + interval + 120_000, () => terminal, writer === "per-person-ordered");
     void feeding.catch(() => {});
-    const quiet = quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, rated ? "alone" : quietCell as QuietCell, toy);
-    const credits = !toy || quietCell !== undefined ? fairCredits : 0;
+    const quiet = quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, rated ? "alone" : quietCell as QuietCell, toy, rated ? windowSeconds : undefined);
+    const credits = !toy || quietCell !== undefined ? peer.credits ?? fairCredits : 0;
     const [writes, phases, quietRead] = await Promise.all([
       play(senders, tape, start, peer.attempt, false, writer === "per-person-ordered", credits),
       quietCell === undefined && !comparison ? readWindows(reader, seed, start, loaded, toy) : [], quiet,
@@ -253,16 +266,24 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         expired: writes.rows.filter((s) => s.status === "expired-before-dispatch").length,
         commit: quietCommits.summary(), feed: delivered.summary() };
     }
+    let telemetrySha256: string | undefined;
+    if (telemetry) {
+      const name = path.join(out, "telemetry.json");
+      jsonFile(name, await telemetry);
+      telemetrySha256 = hex(fs.readFileSync(name));
+    }
     const evidence = path.join(out, "operations.json");
-    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, p6, p7 });
-    const result = { source, writer, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
+    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, p1: phases, p4: pulls, p6, p7 });
+    const result = { source, writer, telemetrySha256, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
       loaded, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
-      observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java, fairCredits: credits },
+      observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java, creditMode: peer.creditMode, fairCredits: credits },
       p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
       p3: { entries: feed.length }, p4: pulls, p6, p7 };
     jsonFile(path.join(out, "arm.json"), result);
     return result;
   } finally {
+    abort.abort();
+    await telemetry?.catch(() => {});
     writerClient.close(); reader.close(); journal.close();
   }
 }
@@ -272,7 +293,8 @@ export async function quietPair(out: string, source: string, peer: Peer, seed: A
   const cells = toy ? ["alone", 235] as const : serverCells;
   for (const cell of cells) {
     const rated = typeof cell === "object";
-    assert(Date.now() + 120000 < deadline, "Insufficient time for another matched quiet-account window");
+    const minimum = rated ? ((peer.windowSeconds ?? serverCellSeconds) + 30) * 1000 : 120000;
+    assert(Date.now() + minimum < deadline, "Insufficient time for another matched quiet-account window");
     const folder = path.join(out, rated ? cellPath(cell) : "p6-" + cell);
     fs.mkdirSync(folder);
     const r = await adoptedArm(folder, source, peer, seed, writer, rated ? cell.loaded : cell === 235, toy, startHead, cell);
@@ -308,7 +330,7 @@ export async function adoptedToy(out: string, source: string, peer: Peer, writer
 export async function recordMixedIds(out: string, source: string, peer: Peer, seed: AdoptedSeed, writer: Writer, start: number, toy = false) {
   const touched = new Set(accounts.slice(toy ? -1 : -2).flatMap(a => activeSubjects(seed.image.people as Density)[a]!));
   if (!toy) for (const cell of serverCells.filter(c => c.loaded)) {
-    for (const offer of ratedTape(seed.image.people, cell)) if (offer.account >= 8) touched.add(offer.subject);
+    for (const offer of ratedTape(seed.image.people, cell, peer.windowSeconds)) if (offer.account >= 8) touched.add(offer.subject);
   }
   let person = seed.image.people - 1;
   while (touched.has(person)) person--;

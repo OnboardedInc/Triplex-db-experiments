@@ -23,8 +23,8 @@ test("the held-seed card preserves all obligations after a stopped campaign", (t
   assert.match(card, /"TX2_SUBJECT_SAVE": "1"/);
   assert.match(rows[4]!, /Server 1 measured Publish under load/);
   assert.match(rows[8]!, /needs two servers/);
-  assert(rows.every((row) => row.includes("| NOT MEASURED |")));
-  assert.doesNotMatch(card, /\| PASS \||\| FAIL \|/);
+  assert(rows.every((row) => row.includes("| NOT RUN |")));
+  assert.doesNotMatch(card, /\| (?:MET|MISSED|NOT MEASURED) \|/);
 });
 
 test("the physical card rejects run inputs carrying a different age label", (t) => {

@@ -1,3 +1,20 @@
+Next-card runner on separate branch exp/DX-V01-next-card. The queued 1B runner stays at 8cc32d380.
+P2 and P6 use 300-second cells with whole, first-half and second-half readings. Select 90 seconds to replay the earlier tape.
+Counters use the offer clock. Native clock events keep their own boundaries; absent sources and scheduling gaps appear on the card.
+The full forecast is 384 minutes and USD 6.98 per age. The 90-second campaign is 300 minutes and USD 5.45.
+The credit selection passes integration or barrier through the current six-credit sender. Rolling waits for the published selector.
+P1 and checked cold P7 reads can show a measured miss. Incomplete scope stays partial. Publish and failover remain separate.
+The twelve-core proposal is for the integration owner. The launcher still uses the existing core assignments.
+The two-writer Mac gate uses only an ordinary heavy token. Its clocks are diagnostic.
+
+## Part 8 evidence and verdict audit
+
+- P1 and P7 can say MISSED only with a finite, nonempty observed p99 over the 100 ms bar on a physical run. The native producer checks each included answer against the original cut. The card checks the source and fixture mode, physical launch, seed, arm interval and hash of the observations, including the exact phase or cold-pull summary. The P1 comparison also binds both arms to one tape and seed cut. Wider P1 world and recovery checks and the P7 population slope remain open.
+- P6 can say MISSED on a matched physical quiet-account cell with a quiet expiry or with at least 500 verified quiet receipts on each side and a p99 ratio above 1.25. The card regenerates the scheduled tape, binds each observed write to its operation ID, subject, width and offer time, joins receipts from this slot to the exact native journal IDs, positions, clocks and digests, and rebuilds the quiet latency histogram. It checks that each cell extends the previous cut and starts after it finishes. Other overlap scenarios stay open.
+- Mixed assertion identities retains the existing physical proof, now called MET. The two refusals and four typed snapshots are bound to this attempt and slot, both writers and the common seed and cut. The evidence must follow the exact last cell and import stage. The frozen staged form independently checks every arm's evidence manifest. Toy readings in any of these paths stay PARTIAL.
+- PARTIAL reports observed rows and identifies the remaining bar. The pipeline retains the evidence bindings and native correctness checks for the other rows. NOT RUN has no observations and gives the reason. Counters do not decide any verdict.
+- The rated telemetry is written exclusively inside its cell directory. The renderer verifies its hash, source, slot, attempt, database, prior cut, treatment and matching host-clock window. It checks each scheduled tick and actual sample bracket and marks absent PG/cgroup observations and native-source gaps. Sequential assembly includes every such file in the arm hash inventory.
+
 8cc32d380dc56559477535e18130dbd0f3bff555
 Server 2 can run the billion-record scorecard with one prepared copy at a time.
 Run arms 1 through 4 in order and assemble after the fourth completes.

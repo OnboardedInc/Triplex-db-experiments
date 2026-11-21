@@ -243,6 +243,7 @@ export function readTape(
   cell?: Cell,
   enabled = true,
   isolation = false,
+  window = readWindow(cell, isolation),
 ): Read[] {
   if (!enabled) return [];
   const rng = new Rng(
@@ -254,7 +255,7 @@ export function readTape(
         people,
     ),
   );
-  const { from, duration } = readWindow(cell, isolation);
+  const { from, duration } = window;
   return Array.from({ length: (readers * duration) / 1000 }, (_, ordinal) => ({
     seat: ordinal % readers,
     ordinal,

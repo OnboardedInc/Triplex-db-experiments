@@ -4,6 +4,8 @@ The release scorecard adopts the held SCALE1 database with ten deep accounts of 
 
 `node lab/bin/scorecard.mjs --plan` prints the allocation and cost. The [server handoff](experiments/EXP-DX1/v01/SERVER.md) gives the clean-build and unattended run commands. Each output directory contains `SCORECARD-v0.1.md` with nine ranked priorities, four standing correctness checks and links to the measured evidence. Use the [readiness table](experiments/EXP-DX1/v01/READINESS.md) for current integration gaps.
 
-`PASS` requires the complete bar and checked evidence from the physical attempt. `FAIL` identifies a measured miss. `NOT MEASURED` identifies an unavailable or unqualified result and explains the gap. Mac runs display diagnostic numbers.
+`MET` requires the complete bar and checked evidence from the physical attempt. `MISSED` prints the observed miss and its bar. `PARTIAL` identifies the measured component and the open scope. `NOT RUN` identifies an unavailable result and explains the gap. Mac readings are diagnostic and appear as `PARTIAL`.
 
 The adopted command records components of P1–P4 and P6–P8. P5 and P9 explain their current held-seed requirements in the card. The fixed-pace P8 arm uses the grouped writer.
+
+Next-card P2 and P6 cells default to 300 seconds. Use `--window-seconds 90` to select the earlier offer tape. Both forms report the whole cell and each half, plus a link to the same-clock counters for each physical cell.

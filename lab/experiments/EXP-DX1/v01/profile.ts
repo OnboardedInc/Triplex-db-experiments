@@ -1,3 +1,4 @@
+import { replaySeconds, serverCells, type WindowSeconds } from "./server-workload.ts";
 import { launchProfile } from "../jvm1/launch.mjs";
 export { defaultJvm, jvmProfiles, type JvmProfile } from "../jvm1/launch.mjs";
 
@@ -10,9 +11,12 @@ export const writerIntegration = "f25a46e02591a1c6b6a9495f7f2cce20249571f0";
 export const launchIntegration = "57580241dc4020f9ab7590839c72c00356fcedee";
 export const defaultWriter: Writer = "per-person-ordered";
 export type Age = "fresh" | "1B";
-export const budget = { adoptionAndP1to4: 105, P6: 25, P7: 10, P8: 25, comparison: 120, cleanup: 15 };
-export const ceiling = Object.values(budget).reduce((a, b) => a + b, 0);
-export const comparisonMinutes = budget.comparison / 2;
+export function timeBudget(seconds: WindowSeconds) {
+  const extra = serverCells.length * (seconds - replaySeconds) / 60;
+  const budget = { adoptionAndP1to4: 105, P6: 25 + extra, P7: 10, P8: 25, comparison: 120 + 2 * extra, cleanup: 15 };
+  return { budget, ceiling: Object.values(budget).reduce((a, b) => a + b, 0), comparisonMinutes: budget.comparison / 2 };
+}
+export const { budget } = timeBudget(replaySeconds);
 export const ladder = [1, 4, 16, 64, 256, 1024];
 // [DX-V01] Why: freeze a bounded replica of the existing SCALE1 fixed field tape for both reader arms.
 // Rejected: extending the tape on the faster side or judging short samples as the full P1/P2 qualification.

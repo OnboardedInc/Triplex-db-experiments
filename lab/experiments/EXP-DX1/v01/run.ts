@@ -4,11 +4,11 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { budget, ceiling, comparisonMinutes, defaultJvm, defaultWriter, isWriter, jvmProfiles, pairSeconds, serverStages, type JvmProfile } from "./profile.ts";
+import { timeBudget, defaultJvm, defaultWriter, isWriter, jvmProfiles, pairSeconds, serverStages, type JvmProfile } from "./profile.ts";
 import { launchProfile } from "../jvm1/launch.mjs";
 import { cleanSource, verifyBuild } from "./source.ts";
 import { pgdataArgs } from "./pgdata.ts";
-import { serverRates } from "./server-workload.ts";
+import { parseCredits, parseWindow, serverRates, writerCredits } from "./server-workload.ts";
 import { assembleSequential, completeSequentialArm, existingSequence, sequenceProgress } from "./sequential.ts";
 
 const { values } = parseArgs({
@@ -20,12 +20,13 @@ const { values } = parseArgs({
     "aged-bundle": { type: "string" }, "aged-bundle-sha256": { type: "string" }, "aged-dump": { type: "string" },
     "aged-dump-sha256": { type: "string" }, out: { type: "string" }, commit: { type: "string" },
     pgdata: { type: "string", multiple: true }, "pgdata-source": { type: "string" },
+    "window-seconds": { type: "string" }, "credit-mode": { type: "string" },
     arm: { type: "string" }, assemble: { type: "boolean" },
     "hourly-usd": { type: "string", default: "1.09" }, help: { type: "boolean" }, plan: { type: "boolean" },
   },
 });
 if (values.help) {
-  console.log("scorecard.mjs --age fresh|1B --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered|grouped] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR]\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, ordered server default, grouped).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
+  console.log("scorecard.mjs --age fresh|1B --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered|grouped] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR] [--window-seconds 90|300] [--credit-mode integration|barrier|rolling:N]\nFor prepared PostgreSQL use --pgdata-source SEALED_PGDATA with --pgdata COPY once per arm (headline zero, headline loaded, ordered server default, grouped).\nFor 1B also provide --aged-bundle FILE --aged-bundle-sha256 SHA. Without prepared directories, also provide --aged-dump FILE --aged-dump-sha256 SHA for 1B.\nscorecard.mjs --plan");
   console.log("For sequential staging, run --arm 1 through --arm 4 in order with one --pgdata per invocation and the same --out. Then run --assemble --commit COMMIT --out DIRECTORY.");
   process.exit(0);
 }
@@ -54,21 +55,26 @@ const wal = values["wal-directory"] ? path.resolve(values["wal-directory"]) : ""
 assert(!wal || ((arm !== undefined || pgdata.length === 5) && values.writer === "per-person-ordered"),
   "Separate WAL needs prepared scorecard copies");
 assert(values.writer !== "grouped" || (jvm === defaultJvm && txJvm === defaultJvm), "The grouped comparison uses the default server JVM");
+const windowSeconds = parseWindow(values["window-seconds"]), creditMode = parseCredits(values["credit-mode"]);
+const { budget, ceiling, comparisonMinutes } = timeBudget(windowSeconds);
 const minutes = values.writer === "grouped" ? comparisonMinutes + budget.cleanup : ceiling;
 const plan = values.writer === "grouped"
   ? "Grouped repeats P2 and P6 only."
   : `Per-person-ordered runs the full adopted workload, then default ordered and grouped each repeat P2 and P6. The P1–P4 pair uses ${pairSeconds / 60} minutes of matched offers.`;
 const storage = pgdata.length ? "Starts from prepared PGDATA copies. File-level preparation, build and AGE1 provisioning are separate."
   : "Without prepared PGDATA, this command uses logical dumps. Build and AGE1 provisioning are separate.";
-const forecast = `Budget ${minutes} minutes including cleanup, up to USD ${(minutes / 60 * price).toFixed(2)} per age. ${plan} Server profile with gateway JVM ${jvm}, headline transactor ${txJvm}, and ${wal ? "separate WAL" : "WAL on PGDATA"}. P2 and P6 offered rates ${serverRates.join(", ")} saves/s. ${storage}`;
+const forecast = `Budget ${minutes} minutes including cleanup, up to USD ${(minutes / 60 * price).toFixed(2)} per age. ${plan} Server profile with gateway JVM ${jvm}, headline transactor ${txJvm}, and ${wal ? "separate WAL" : "WAL on PGDATA"}. P2 and P6 offered rates ${serverRates.join(", ")} saves/s for ${windowSeconds} seconds per cell. Credit selection ${creditMode}. ${storage}`;
 if (values.plan) {
   console.log(forecast);
+  if (creditMode.startsWith("rolling:")) console.log("DX-PREP1 rolling writer selector is pending.");
   console.log(JSON.stringify(serverStages(values.writer, headline, !!wal), null, 2));
   process.exit(0);
 }
+writerCredits(creditMode);
 assert(values.age === "fresh" || values.age === "1B");
 assert(values.commit && values.out && values.seed && values["image-sha256"] && values["transfer-sha256"]);
 const aged = [values["aged-bundle"], values["aged-bundle-sha256"], values["aged-dump"], values["aged-dump-sha256"]];
+writerCredits(creditMode);
 assert(values.age === "1B" ? (pgdata.length ? aged.slice(0, 2).every(Boolean) && !aged[2] && !aged[3] : aged.every(Boolean))
   : aged.every((v) => !v), "Provide the required AGE1 identity and choose one PostgreSQL startup path");
 assert(process.platform === "linux" && process.getuid?.() === 0);
@@ -101,7 +107,7 @@ const startedAt = Date.now();
 const child = spawn("timeout", ["--kill-after=" + budget.cleanup + "m", String(activeMs / 1000) + "s", "bash",
   "lab/experiments/EXP-DX1/v01/adopted-server.sh", source, campaign, String(startedAt + activeMs),
   path.resolve(values.seed), values["image-sha256"], values["transfer-sha256"], values.age, values.writer, jvm,
-  ...aged.map((v) => v ?? ""), txJvm, wal, values.arm ?? "", String(startedAt), forecast, ...pgdata], {
+  ...aged.map((v) => v ?? ""), txJvm, wal, values.arm ?? "", String(startedAt), forecast, String(windowSeconds), creditMode, ...pgdata], {
   stdio: ["ignore", fd, fd],
   env: Object.fromEntries(["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME"]
     .flatMap((name) => process.env[name] ? [[name, process.env[name]]] : [])),
@@ -126,7 +132,7 @@ if (arm !== undefined) {
   process.exit(0);
 }
 const { writeAdoptedCard } = await import("./adopted-card.ts");
-writeAdoptedCard({ source, age: values.age, writer: values.writer, jvm, txJvm, separateWal: !!wal, toy: false, out, campaign, forecast, prepared: pgdata.length > 0,
+writeAdoptedCard({ source, age: values.age, writer: values.writer, jvm, txJvm, separateWal: !!wal, toy: false, out, campaign, forecast, windowSeconds, creditMode, prepared: pgdata.length > 0,
   failure: exit ? "The adopted campaign stopped. See [campaign.log](campaign.log)." : undefined });
 console.log(path.join(out, "SCORECARD-v0.1.md"));
 if (exit) {

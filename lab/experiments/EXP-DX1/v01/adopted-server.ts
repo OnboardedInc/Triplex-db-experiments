@@ -9,17 +9,23 @@ import { restoreDump } from "../scale1/seed-image.ts";
 import { adoptedArm, jsonFile, quietPair, recordMixedIds, type Residency } from "./adopted.ts";
 import { nativeMetrics } from "../thin1/native-metrics.ts";
 import { openScaleSeal, hex } from "./adopt.ts";
-import { budget, comparisonMinutes, isWriter, jvmProfiles, serverStages, stackOptions, type JvmProfile } from "./profile.ts";
+import { timeBudget, isWriter, jvmProfiles, serverStages, stackOptions, type JvmProfile } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
 import { claimPgdata, inspectPgdata, pgdataArgs, pgdataTarget, preflightWal, sealedPgdata } from "./pgdata.ts";
 import { existingSequence, openSequence, startSequentialArm } from "./sequential.ts";
 
+import { parseWindow, parseCredits, writerCredits } from "./server-workload.ts";
+import { physicalTelemetry } from "./cell-telemetry.ts";
+
 const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, jvm, agedFile, agedPin,
-  agedDump, agedDumpPin, txJvm, walDirectory, armText, startedText, forecast, pgdataSource, ...pgdataPaths] = process.argv.slice(2);
+  agedDump, agedDumpPin, txJvm, walDirectory, armText, startedText, forecast, windowText, creditText, pgdataSource, ...pgdataPaths] = process.argv.slice(2);
 assert(source && campaign && seedDir && imagePin && transferPin);
 assert(age === "fresh" || age === "1B");
 assert(isWriter(requestedWriter));
 assert(jvmProfiles.includes(jvm as JvmProfile) && jvmProfiles.includes(txJvm as JvmProfile));
+const windowSeconds = parseWindow(windowText), creditMode = parseCredits(creditText);
+const credits = writerCredits(creditMode);
+const { budget, comparisonMinutes } = timeBudget(windowSeconds);
 const policy = launchProfile("server", { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile });
 const stages = serverStages(requestedWriter, policy, !!walDirectory);
 assert(armText === "" || /^[1-4]$/.test(armText ?? ""), "Choose arm 1, 2, 3 or 4");
@@ -52,7 +58,7 @@ if (!copies.length && expected) {
   assert(agedDump && agedDumpPin && /^[a-f0-9]{64}$/.test(agedDumpPin));
 }
 const input = { source, age, writer: requestedWriter, jvm: jvm as JvmProfile, imagePin, transferPin, originalScope: seed.scope,
-  txJvm: txJvm as JvmProfile, separateWal: !!wal, stages, wal,
+  txJvm: txJvm as JvmProfile, separateWal: !!wal, stages, wal, windowSeconds, creditMode,
   agedBundle: expected?.pin, agedDump: agedDumpPin || undefined };
 let spent = 0, previousSystem: string | undefined;
 if (sequenceArm !== undefined) {
@@ -96,7 +102,7 @@ for (const [i, stage] of stages.entries()) {
   beginStack(out, slot, attempt);
   let verifiedLaunch = false;
   try {
-    const options = stackOptions(writer, attempt);
+    const options = { ...stackOptions(writer, attempt), DX_V01_CELL_COUNTERS: "1" };
     if (copy) claimPgdata(copy, source, slot, attempt);
     const { engines } = startScaleStack(out, slot, source, writer === "grouped", copy ? {
       ...options, DX_V01_PGDATA: copy.dir, DX_V01_PGDATA_CONTROL_SHA: copy.controlSha256,
@@ -132,7 +138,7 @@ for (const [i, stage] of stages.entries()) {
     assert(!stopping && Date.now() + 8 * 60_000 < stageEnd);
     verifiedLaunch = true;
     console.log(`[DX-V01] Verified live server startup for ${stage.name}/${loaded ? "loaded" : "zero"} before offers`);
-    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency };
+    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency, windowSeconds, creditMode, credits, telemetry: physicalTelemetry(out, engines) };
     const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head, undefined, comparison);
     if (loaded && !stopping) {
       const quietEnd = comparison ? stageEnd : Math.min(headlineEnd - budget.P8 * minute, Date.now() + budget.P6 * minute);
