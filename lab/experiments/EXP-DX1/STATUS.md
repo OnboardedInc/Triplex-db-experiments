@@ -4202,3 +4202,19 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Not answerable from this archive:** checkpoint frequency, WAL sync around checkpoints, PostgreSQL CPU saturation, index jobs, memory-index back-pressure (no counters on one clock).
 - **Decisions (mine):** the 1 billion card keeps the measured headline setup, so fresh and 1 billion compare; the settings candidate (PostgreSQL two cores, `max_wal_size` 4GB; forecast 350 to 365 at 394) is logged as NEXT-WEEK 16h and not run, because its forecast gain is 2 to 6% and it would cost 80 minutes of server time. The code change (credits released per durable ACK, NEXT-WEEK 16g) is the main lever; under Sam's rule of 2026-11-20 it is not a run-critical launch, so it is logged and put to Sam as a question.
 - Agents running: DX-SCALE1.
+
+### 2026-11-21 05:25 local: 1 billion load, first maintained cycle: 10,241 records per second, disk growth near zero (1 agent running)
+
+- **Server 2** (`origin/exp/DX-SCALE1-deep-accounts` `e6a2590e1`, `scale1/AGE1-LOAD.md`; load source `6d3d44641`; started 04:26 local).
+
+  | Step | Settled records | Added | Seconds | Writing / with maintenance, records/s | Transactor cores of 6 | Index jobs | Database directory before -> after maintenance, GB | Segments collected |
+  | --- | ---: | ---: | ---: | ---: | ---: | ---: | --- | ---: |
+  | Initial collection and vacuum | 477,456,017 | 0 | 1,403.1 | | | | 164.703 -> 164.707 | 4,749,920 |
+  | Window 1 (20 min) | 493,326,633 | 15,870,616 | 1,549.7 | 13,270.05 / 10,240.98 | 3.54 | 32 | 164.848 -> 164.849 | 1,632,493 |
+
+- **Speed prediction missed:** forecast 18,000 to 26,000 records/s with maintenance; measured 10,240.98 (writing alone 13,270.05, below the three-core ladder's 15,243 to 19,760). The transactor used 3.54 of six cores, so doubling its cores did not help and CPU allowance is not the limit here. The builder's own falsifier ("a rate near the ladder with spare CPU redirects attention to index or SQL waits or the loader") applies. Cause not known.
+- **Disk prediction beaten:** the first window added 15.9 million records for 0.141 GB of directory growth, because PostgreSQL reused the space freed by the initial collection (4.75 million obsolete segments, 48.9 million TOAST rows). The 638 GB projection without collection no longer applies. Whether later windows keep reusing space is the next reading.
+- **Time:** at 10,241 records/s the load needs about 13.74 more hours from 05:17 (ends about 19:00), 15.31 hours in total with the ladder and the initial collection, against the 16-hour limit and above the 9,900 floor by 3%. Later windows are 30 minutes, so the maintenance share (354 s per cycle here) should fall. If the run's guard stops it, I extend the time (budget allows) rather than accept a smaller size: stated to Sam on 2026-11-21 as my decision to make at that point.
+- **Decision:** no change to the running load. No agent launched for it.
+- **Cost:** server 2 USD 43.38 at 05:17; total USD 111.67 of 200. Projected: load to about 19:00, builder's measurements about 3 hours, aged card about 2.5 hours, end about 00:30 on 2026-11-22, total about USD 133.
+- Agents running: DX-SCALE1.
