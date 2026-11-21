@@ -162,10 +162,11 @@
         target-root (root-text position clock (get-in plan [:owner-layout :pages]))
         page-a (d/entid db page-attr)
         page-key-a (d/entid db page-key-attr)
+        stamp (commit/stamp true clock #{} (dec provisional) provisional position false nil)
         expected-rows (into #{} (keep (fn [op]
                                        (when (and (vector? op) (= :db/add (first op))
                                                   (= version (second op)) (= :triplex.entity/row (nth op 2 nil)))
-                                         (peek (commit/stamp true clock #{} (dec provisional) provisional position false nil op)))))
+                                         (peek (stamp op)))))
                             ops)
         written (into {} (keep (fn [x]
                                 (when (= page-key-a (:a x))

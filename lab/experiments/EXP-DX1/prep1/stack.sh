@@ -306,6 +306,22 @@ case "$PREP1_MODE" in
         children[2]=$!
         wait "${children[2]}"
         unset 'children[2]'
+        # [DX-W1] Why: pin identical truth in both arms and reboot the reading JVM for each one.
+        # Rejected: comparing a warmed treatment with a control that shares its JVM and object cache.
+        TX2_SUBJECT_SAVE=1 TX2_SUBJECT_OWNER_HEAD=0 DX_W1_LAYOUT_FILE="$work/layout-reads" \
+          java_role -i /config/regression.clj -i /config/owner_layout_gate.clj \
+          -e '(do (owner-layout-gate/staged-reads! (System/getenv "DX_W1_LAYOUT_FILE")) (System/exit 0))' &
+        children[2]=$!
+        wait "${children[2]}"
+        unset 'children[2]'
+        for layout_arm in legacy migrated; do
+          TX2_SUBJECT_SAVE=1 TX2_SUBJECT_OWNER_HEAD=0 DX_W1_LAYOUT_FILE="$work/layout-reads" DX_W1_LAYOUT_ARM="$layout_arm" \
+            java_role -i /config/regression.clj -i /config/owner_layout_gate.clj \
+            -e '(do (owner-layout-gate/sample-reads! (System/getenv "DX_W1_LAYOUT_FILE") (System/getenv "DX_W1_LAYOUT_ARM")) (System/exit 0))' &
+          children[2]=$!
+          wait "${children[2]}"
+          unset 'children[2]'
+        done
       fi
       TX2_SUBJECT_SAVE=1 java_role /config/serial-gate.clj &
       children[2]=$!

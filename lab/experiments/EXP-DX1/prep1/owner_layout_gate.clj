@@ -1,8 +1,9 @@
 (ns owner-layout-gate
   (:require [clojure.data.json :as json] [clojure.test :refer [deftest is]]
-            [datomic.api :as d]
+            [datomic.api :as d] [clojure.edn :as edn]
             [triplex.gateway.group :as group] [triplex.gateway.group-test :as fixture]
             [triplex.gateway.lean :as lean] [triplex.gateway.owner-layout :as layout]
+            [triplex.gateway.main :as main] [triplex.gateway.schema :as schema]
             [triplex.gateway.scope :as scope] [triplex.gateway.selftest :as rows]
             [triplex.gateway.storage :as storage] [triplex.gateway.subject-save :as subject]
             [triplex.gateway.write-policy :as policy] [wfix1-regression :as reference]))
@@ -93,3 +94,57 @@
             (is (nil? (scope/value (d/db conn) owner layout/root-attr)))
             (is (= ["winner" "winner value" 2] (field (d/db conn) owner)))
             (is (= {"status" "absent"} (reference/operation name "edit-a")))))))))
+
+(defn snapshot [db owner]
+  (let [rows (vec (current db owner))]
+    {:rows (count rows) :digest (schema/sha256 (pr-str rows))}))
+
+(defn staged-reads! [path]
+  (let [attempt (System/getenv "PREP1_ATTEMPT")
+        build (fn [arm]
+                (let [wire (json/write-str ["triplex-scope-v1" "test" "layout-read" (str attempt "-" arm) 0])
+                      {:keys [db created]} (main/create-scope! nil wire "lean" true true)
+                      conn (main/connection (main/db-uri db))
+                      [seed a b] (reference/edits)
+                      migrate? (= arm "migrated")
+                      edit (fn [input cut]
+                             (let [input (at-cut input cut)]
+                               (if migrate?
+                                 (let [plan (native-plan (d/db conn) input)]
+                                   (assert plan)
+                                   (append! conn plan))
+                                 (assert (= [200 nil] (reference/outcome (reference/send db input)))))))]
+                  (assert created)
+                  (layout/install-fixture! conn)
+                  (assert (= [200 nil] (reference/outcome (reference/send db (seed-deeper seed)))))
+                  (edit a 1)
+                  (let [view (d/db conn) owner (d/entid view [:triplex.entity/id fixture/root])
+                        pinned {:t (d/basis-t view) :expected (snapshot view owner)}]
+                    (edit b 2)
+                    (let [current (d/db conn)]
+                      (assert (= (boolean (scope/value current owner layout/root-attr)) migrate?))
+                      {:db db :owner owner :pinned pinned :current {:t (d/basis-t current) :expected (snapshot current owner)}}))))
+        fixtures (into {} (map (juxt identity build)) ["legacy" "migrated"])]
+    (assert (apply = (map (fn [f] (mapv #(get-in f [% :expected]) [:pinned :current])) (vals fixtures))))
+    (spit path (pr-str {:attempt attempt :fixtures fixtures}))))
+
+(defn sample-reads! [path arm]
+  (let [{:keys [attempt fixtures]} (edn/read-string (slurp path))
+        {:keys [db owner pinned current]} (get fixtures arm)
+        conn (main/connection (main/db-uri db))
+        latest (d/db conn)
+        sample (fn [{:keys [t expected]}]
+                 (let [start (System/nanoTime)
+                       view (if (= t (d/basis-t latest)) latest (d/as-of latest t))
+                       actual (snapshot view owner)
+                       elapsed (- (System/nanoTime) start)]
+                   (assert (= expected actual))
+                   elapsed))]
+    (assert (= attempt (System/getenv "PREP1_ATTEMPT")))
+    (assert (= (:t current) (d/basis-t latest)))
+    (assert (= (= arm "migrated") (boolean (scope/value latest owner layout/root-attr))))
+    (dotimes [_ 6] (sample current) (sample pinned))
+    (println "DX-W1_OWNER_LAYOUT_READ"
+             (json/write-str {:attempt attempt :db db :arm arm :pid (.pid (java.lang.ProcessHandle/current))
+                              :current current :pinned pinned :clock "diagnostic-in-process"
+                              :ns (mapv (fn [_] [(sample current) (sample pinned)]) (range 24))}))))
