@@ -20,3 +20,7 @@ The two native gates matched all 13 routes, their fresh sealed and unsealed witn
 The extension checks every frame against regenerated typed facts, the original receipt and the contiguous feed suffix under the new namespace. The candidate physical seal binds the verified parent, exact copy tree, native census, clean stop and the fresh output ledger. The toy workload compares every scheduled pinned answer, journal change and resend with the independently regenerated tape. Its terminal observations bind the source, attempt, slot, starting seal and hashed bytes. The server verifies the copy again before launching it.
 
 The launch conflict leaves a single PostgreSQL mount selection. REAL1 supplies its own explicit copy path. It reuses the existing physical seal reader and keeps the normal dump check intact. The exact toy source passed TypeScript, shell syntax and three focused tests. At the 66-position seal it matched 32 extension frames, 62,120 new facts, 837 saves, 24 resends, 8,370 pinned reads and 25 first reads. The engine removed the private volume. [Checksums](V0.1-SHA256SUMS)
+
+## Untouched-person census audit
+
+The Mac sampler runs only in the engine-owned compact stack. One reader process observes each metadata cut without reading people. It ties its complete live histogram, raw RSS samples, cache weights, counters and index request to its image, current process identity, fresh challenge and verified append receipts. After profiling, exact old-cut and current reads check both present and absent people. These are diagnostic observations.

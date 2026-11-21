@@ -970,11 +970,17 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
     if (!configDir.startsWith(path.join(REPO, 'runs') + path.sep))
       fail('REFUSED', 'Scorecard fixture config must belong to this worktree');
     const source = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO, encoding: 'utf8' }).trim();
+    // [DX-INT1] Why: the census must attach inside the admitted compact fixture with verified mounts.
+    // Rejected: a separate VM shell or an attachment to a shared resident JVM.
+    const census = options['untouched-census'] === true;
+    if (census && options.holder !== 'DX-THIN1') fail('REFUSED', 'The untouched census needs its assigned holder');
     const result = spawnSync('docker', dockerArgs(['exec', '-w', REPO, '-e', 'DX_V01_FIXTURE_SOURCE=' + source,
       '-e', 'TRIPLEX_DATOMIC_FAST_PATHS=save-wire', live.Id, '/usr/local/bin/node',
       '--no-warnings', '--experimental-transform-types', '--expose-gc', '--max-old-space-size=768',
-      'lab/experiments/EXP-DX1/thin1/managed.ts', '--guest', configDir, 'int1-adopted-proof', '80',
-      path.join(output, 'campaign')]), { stdio: 'inherit', timeout: 13 * 60_000 });
+      'lab/experiments/EXP-DX1/thin1/managed.ts', '--guest', configDir,
+      ...(census ? ['int1-untouched-census', '4096', path.join(output, 'census')] :
+        ['int1-adopted-proof', '80', path.join(output, 'campaign')])]),
+      { stdio: 'inherit', timeout: (census ? 7 : 13) * 60_000 });
     if (result.status !== 0) fail('ENGINE', 'Scorecard fixture failed');
     return;
   }

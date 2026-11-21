@@ -26,6 +26,7 @@ const integrated = [
   "int1-pooled",
   "int1-isolated",
   "int1-real1",
+  "int1-untouched-census",
 ].includes(mode ?? "");
 const repo = fileURLToPath(new URL("../../../../", import.meta.url)),
   dir = path.resolve(supplied ?? ".");
@@ -368,7 +369,11 @@ if (action === "--guest") {
     process.env.DX_THIN_MEASURE = path.resolve(armRoot, "../../..", "locks", "measure");
   }
   process.argv = [process.execPath, run, "live", mode, rung, out];
-  if (mode === "int1-adopted-proof") {
+  if (mode === "int1-untouched-census") {
+    assert(rung === "4096" && process.env.DX_V01_FIXTURE_SOURCE);
+    const { untouchedCensus } = await import("../int1/untouched-census.ts");
+    await untouchedCensus(stack, out!, read(cred).secret, process.env.DX_V01_FIXTURE_SOURCE);
+  } else if (mode === "int1-adopted-proof") {
     process.chdir(repo);
     const { adoptedToy } = await import("../v01/adopted.ts");
     const { readResidentMappings } = await import("./heap-residency.ts");
@@ -426,7 +431,8 @@ if (action === "--guest") {
         Number.isSafeInteger(Number(rung)) &&
         out &&
         path.isAbsolute(out) &&
-        (scorecard ? fs.statSync(out).isDirectory() && mode === "int1-adopted-proof" :
+        (scorecard ? fs.statSync(out).isDirectory() && (mode === "int1-adopted-proof" ||
+          (mode === "int1-untouched-census" && holder === "DX-THIN1" && rung === "4096")) :
           !fs.existsSync(out) && (realistic ? mode === "int1-real1" && compact : guestNode && path.isAbsolute(guestNode))),
     );
     const disk = fs.statfsSync(repo, { bigint: true });
@@ -492,7 +498,8 @@ if (action === "--guest") {
           env: { ...process.env, DX_REAL1_TOY_ADMISSION: "dx-real1-" + read(cred).nonce,
             DX_REAL1_TOY_SLOT: owner.container },
         });
-      } else if (scorecard) console.log(manager(["scorecard-fixture", "--slot", writerSlot, "--scorecard-output", out]));
+      } else if (scorecard) console.log(manager(["scorecard-fixture", "--slot", writerSlot, "--scorecard-output", out,
+        ...(mode === "int1-untouched-census" ? ["--untouched-census"] : [])]));
       else execFileSync(
         "colima",
         [
