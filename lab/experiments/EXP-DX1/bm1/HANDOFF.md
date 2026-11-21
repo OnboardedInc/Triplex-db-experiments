@@ -303,7 +303,7 @@ python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect prep1-tenant 7ca8525
 
 ## Friday evening queue
 
-**Server 1 estimated running cost at 00:10 EST is $66.19** at $1.09/hr since Wednesday 11:27 EST. The orchestrator owns the release. The absolute remaining window ends Saturday at 12:00 EST.
+**Server 1 estimated running cost at 00:40 EST is $66.73** at $1.09/hr since Wednesday 11:27 EST. The orchestrator owns the release. The absolute remaining window ends Saturday at 12:00 EST.
 
 The active PREP1 `1-2-S` is a one-gateway mirror. The first component of the producer's cell name is the writer count. The server fenced only the parent loop while this child continued. The reordered supervisor waits for that child's output and cleanup, reopens the same seal for `2-1-S` then `2-0-K`, and skips the other repeats and four-gateway arms. The measured pair's first collector checks each source, plan, seed, summary and fresh terminal against the original request. After it records the pair, TAIL1 `da4c34f48` then JVM1 `5a9652780` take the original `46880aa47` verified seed. TAIL1 uses Java 21 G1 and varies the transactor cache from 256 to 2,560 MiB. The Java 21 G1, Java 25 G1 and Java 25 ZGC comparison keeps placement fixed. The new order has three JVM arms.
 
@@ -357,3 +357,5 @@ The append retry's first sentinel linked a fresh commit, flush and successful sy
 The control and separate-WAL append arms completed and validated. Java 25 actually reported version 25.0.5+8-LTS, but the launcher compared the transactor to the Java 21 gateway pin. Neither ZGC nor fair turns offered work in that attempt. The two-arm completion keeps both existing arms and validates each JVM against its pinned runtime. It follows the active erasure recovery and uses the same tape, sealed dump and observer. Inspect `bm1n20-prep1-tail-remaining.service` after erasure. The four readings span two sessions. [Verified append results](APPEND-TAIL-READING.md)
 
 The combined experiment is pinned at `d1224c27e5ac0fcacfa04cc4d2a11b0f328eacaa` and queued directly behind the active two-arm append completion. It uses the same seed, the published native observer, fair turns, the existing dedicated ext4 WAL device and the mixed Java pin. Its ceiling is 30 minutes. Collect `prep1-tail-combined` after its service ends. See the erasure disposition above for the two sealed stages and the final shutdown failure.
+
+The ZGC and fair-turn arms completed at 00:36 EST with all 114,480 offers durable. Their compressed archives and each per-append cause are on the Mac. The stock combined pin began at 00:37 EST without needing a new filesystem. [All four readings](APPEND-TAIL-READING.md)
