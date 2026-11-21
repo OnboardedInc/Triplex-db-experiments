@@ -309,6 +309,39 @@ case "$PREP1_MODE" in
       stop_subject_workers 1
     done
     ;;
+  cache-retirement)
+    # [DX-W1] Why: reset the native cache against the same indexed SQL bytes for every treatment.
+    # Rejected: changing entity density or comparing a hot cache with an already-mutated seed.
+    seed="$work/cache-seed.json"
+    export TX2_LEAN_NATIVE_QUERY=1 TX2_LEAN_NATIVE_LOG=1
+    subject_workers 1 1
+    db=$(node /config/cache.mjs seed "$seed")
+    stop_subject_workers 1
+    java_role /config/cache_index.clj "$db" &
+    children[2]=$!
+    wait "${children[2]}"
+    unset 'children[2]'
+    kill "${children[1]}"
+    wait "${children[1]}" || true
+    pg_run pg_dump -h "$work/socket" -U postgres -d datomic -Fc > "$work/cache.pgdump"
+    export DX_W1_CACHE_SEED=$(sha256sum "$work/cache.pgdump" | cut -d ' ' -f 1)
+    original=$PREP1_ATTEMPT
+    for pair in 128m:0 128m:1 64m:1 64m:0 32m:0 32m:1; do
+      cap=${pair%:*}
+      marker=${pair#*:}
+      export PREP1_ATTEMPT="$original-$pair" TX2_SUBJECT_APPEND_RETIREMENT="$marker"
+      test "$(sha256sum "$work/cache.pgdump" | cut -d ' ' -f 1)" = "$DX_W1_CACHE_SEED"
+      pg_run pg_restore -h "$work/socket" -U postgres -d datomic --clean --if-exists --exit-on-error < "$work/cache.pgdump"
+      sed -i "s/^object-cache-max=.*/object-cache-max=$cap/" "$work/transactor.properties"
+      grep -Fx "object-cache-max=$cap" "$work/transactor.properties"
+      PREP1_MODE=lookup-profile start_transactor
+      subject_workers 1 1
+      node /config/cache.mjs measure "$seed" "$cap" "$marker"
+      stop_subject_workers 1
+      kill "${children[1]}"
+      wait "${children[1]}" || true
+    done
+    ;;
   subject-query)
     export WFIX1_URI="$DATOMIC_URI_TEMPLATE" TX2_LEAN_NATIVE_QUERY=1 TX2_LEAN_NATIVE_LOG=1
     export TX2_SUBJECT_SAVE="$(cat /config/subject)"
