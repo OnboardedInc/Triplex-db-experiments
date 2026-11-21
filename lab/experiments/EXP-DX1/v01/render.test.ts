@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { test } from "node:test";
 import { render, type Run } from "./render.ts";
+import { selectedWriter, stackOptions } from "./profile.ts";
 
 const source = "a".repeat(40);
 const context = (campaign: string): Run => ({
@@ -12,6 +13,16 @@ const context = (campaign: string): Run => ({
   seal: "a".repeat(64),
 });
 const rows = (card: string) => card.split("\n").filter((line) => /^\| P\d /.test(line));
+
+test("subject-ordered selects the executable writer and leaves the grouped control intact", () => {
+  const ordered = selectedWriter("subject-ordered");
+  assert.deepEqual([ordered.TX2_SUBJECT_SAVE, ordered.TX2_SUBJECT_NUMERIC_OWNER, ordered.TX2_SUBJECT_ORDERED_IDS], ["1", "1", "1"]);
+  assert.deepEqual([ordered.TX2_GROUP_COMMIT, ordered.TX2_LIVE_PRIORITY, ordered.TX2_SMALL_ROWS, ordered.TX2_SAVE_LEDGER], ["0", "0", "0", "0"]);
+  const on = stackOptions("subject-ordered", "attempt");
+  const off = stackOptions("grouped", "attempt");
+  assert.deepEqual([on.DX_PREP1_SUBJECT, on.TX2_SUBJECT_NUMERIC_OWNER, on.TX2_SUBJECT_ORDERED_IDS], ["1", "1", "1"]);
+  assert.deepEqual([off.DX_GROUP_COMMIT, off.DX_W1_LEDGER, off.DX_SMALL_ROWS, off.DX_PREP1_SUBJECT, off.TX2_SUBJECT_ORDERED_IDS], ["1", "1", "1", "0", "0"]);
+});
 
 test("failed campaign still describes every priority and standing ruling", () => {
   const card = render({ ...context("/missing"), error: "Campaign stopped." }, "/missing");

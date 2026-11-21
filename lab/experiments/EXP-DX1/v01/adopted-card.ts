@@ -20,6 +20,12 @@ export function writeAdoptedCard(run: Card) {
     assert(x.startedAt <= x.start && x.start < x.endedAt && x.seed.head === x.firstCut);
     assert.equal(createHash("sha256").update(bytes).digest("hex"), x.observationsSha256);
     const raw = JSON.parse(bytes.toString());
+    const countOrdered = raw.writes.filter((r: any) => r.receipt && r.stage?.subjectOrderedIds === true);
+    if (run.writer === "subject-ordered") {
+      assert(x.settings.observed.subjectOrderedIds === true && x.settings.observed.attempt === x.attempt);
+      assert(countOrdered.length > 0 && countOrdered.length === x.p2.orderedReceipts);
+      assert(countOrdered.every((r: any) => r.stage.subjectSave === x.settings.observed.subjectFunction));
+    } else assert.equal(countOrdered.length, 0);
     assert.deepEqual(raw.p6, x.p6);
     assert.deepEqual(raw.p7, x.p7);
     const dispatch = new Map<string, number>(raw.writes.filter((r: any) => r.receipt && Number.isFinite(r.dispatched))
@@ -55,7 +61,8 @@ export function writeAdoptedCard(run: Card) {
     const ratio = baseline && loaded.p2.latency.p99Ms !== null ? loaded.p2.latency.p99Ms / baseline : null;
     rows.set("P1", [`${phases}. Whole-tape writer p99 ratio ${tag(ratio)}. Exact seed-cut field probes; full-world and recovery coverage remain open.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
       String(loaded.p1.reduce((a, p) => a + p.read.count, 0)), evidence("loaded")]);
-    rows.set("P2", [`Scheduled offer to ACK p50 ${tag(loaded.p2.latency.p50Ms)} ms, p99 ${tag(loaded.p2.latency.p99Ms)} ms. ${loaded.p2.receipts}/${loaded.p2.offered} receipts. This tape edits 1–3 fields.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
+    const ordered = run.writer === "subject-ordered" ? ` ${loaded.p2.orderedReceipts} used ordered IDs.` : "";
+    rows.set("P2", [`Scheduled offer to ACK p50 ${tag(loaded.p2.latency.p50Ms)} ms, p99 ${tag(loaded.p2.latency.p99Ms)} ms. ${loaded.p2.receipts}/${loaded.p2.offered} receipts.${ordered} This tape edits 1–3 fields.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
       String(loaded.p2.receipts), evidence("loaded")]);
     rows.set("P3", [`${loaded.p3.entries} ordered exact changes; dispatch-to-observation p99 ${tag(loaded.dispatchToFeed.p99Ms)} ms across ${loaded.dispatchToFeed.count} observations. Durable effects and crash resume are open.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
       String(loaded.p3.entries), evidence("loaded")]);

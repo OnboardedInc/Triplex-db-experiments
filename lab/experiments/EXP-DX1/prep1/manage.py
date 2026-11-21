@@ -81,8 +81,11 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     # Rejected: copying PostgreSQL and Node layers onto the shared VM for a native-only gate.
     if mode != "subject-native-suite":
         recipe = config / "Dockerfile"
-        recipe.write_text("FROM postgres:17-alpine AS prep_pg\nFROM node:22.23.2-bookworm-slim AS prep_node\n"
-                          + recipe.read_text() + """
+        # [DX-PREP1] Why: keep INT1's base-image ARG global when adding the fixture build stages.
+        # Rejected: inserting a FROM before DATOMIC_BASE is declared.
+        preamble, base = recipe.read_text().split("\nFROM ", 1)
+        recipe.write_text(preamble + "\nFROM postgres:17-alpine AS prep_pg\n"
+                          "FROM node:22.23.2-bookworm-slim AS prep_node\nFROM " + base + """
 COPY --from=prep_pg / /opt/thin-pg/
 COPY --from=prep_node /usr/local/bin/node /usr/local/bin/node
 RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
