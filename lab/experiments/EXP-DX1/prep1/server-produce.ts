@@ -37,6 +37,9 @@ import {
   storageArms,
   storageOrderedArm,
   storagePrediction,
+  tailArms,
+  tailPrediction,
+  tailSeconds,
   type Arm,
 } from "./server-tape.ts";
 
@@ -75,7 +78,8 @@ assert(
     campaign === "owner" ||
     campaign === "storage" ||
     campaign === "storage-ordered" ||
-    campaign === "ceiling",
+    campaign === "ceiling" ||
+    campaign === "tail",
 );
 const campaignArms = {
   comparison: arms,
@@ -84,9 +88,16 @@ const campaignArms = {
   storage: storageArms,
   "storage-ordered": [storageOrderedArm],
   ceiling: [ceilingArm],
+  tail: tailArms,
 }[campaign];
 const wide = campaign === "ceiling";
-const campaignSeconds = wide ? ceilingSeconds : campaign === "comparison" ? seconds : fairSeconds;
+const campaignSeconds = wide
+  ? ceilingSeconds
+  : campaign === "comparison"
+    ? seconds
+    : campaign === "tail"
+      ? tailSeconds
+      : fairSeconds;
 const [answer, note] = wide ? scaleFields : ([":field/answer-prep1", ":field/note"] as const);
 const creditsFor = (arm: Arm) => (arm.writer === "S" ? (arm.credits ?? requestedCredits) : 0);
 const root = wide ? scaleOwner : (a: number, p: number) => ids.placement(accounts[a]!.first + p);
@@ -734,13 +745,15 @@ else if (action === "adopt-scale") {
                       : 520,
                 maximumAwaitingReceipt: credits || 96,
               }
-            : campaign === "owner"
-              ? ownerPrediction(arm, rate, label.endsWith("-alone"))
-              : campaign === "storage" || campaign === "storage-ordered"
-                ? storagePrediction(arm, rate, label.endsWith("-alone"))
-                : campaign === "fair"
-                  ? fairPrediction(arm, rate, label.endsWith("-alone"))
-                  : prediction(arm.writers, arm.writer, rate, label.endsWith("-alone")),
+            : campaign === "tail"
+              ? tailPrediction(arm, rate, label.endsWith("-alone"))
+              : campaign === "owner"
+                ? ownerPrediction(arm, rate, label.endsWith("-alone"))
+                : campaign === "storage" || campaign === "storage-ordered"
+                  ? storagePrediction(arm, rate, label.endsWith("-alone"))
+                  : campaign === "fair"
+                    ? fairPrediction(arm, rate, label.endsWith("-alone"))
+                    : prediction(arm.writers, arm.writer, rate, label.endsWith("-alone")),
         })),
       })),
     }),

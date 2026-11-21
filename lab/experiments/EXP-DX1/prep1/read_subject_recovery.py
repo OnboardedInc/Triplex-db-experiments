@@ -78,9 +78,19 @@ def inspect(root):
             for r in after["nativeLog"]["transaction"]["changes"]} == {
                 ("retract", "old", ":v"), ("assert", assertion, ":v"),
             }
-    committed = [member for block in events("PREP1_NATIVE ") if block["db"] == db
-                 for member in block["members"] if str(member["t"]) == before["nativeT"]]
+    blocks = events("PREP1_NATIVE ")
+    committed = [block for block in blocks if block["db"] == db
+                 for member in block.get("members", []) if str(member["t"]) == before["nativeT"]]
     assert len(committed) == 1
+    if inputs.get("tailSql"):
+        measured, = [block for block in blocks if block.get("tailAppend") and block["db"] == db
+                     and (block["start"], block["end"], block["bytes"]) ==
+                         (committed[0]["start"], committed[0]["end"], committed[0]["bytes"])]
+        assert {call["op"] for call in measured["sql"]} >= {"insert", "update"}
+        assert all(isinstance(call["pid"], int) and call["pid"] > 0 and
+                   measured["start"] <= call["start"] < call["end"] <= measured["end"]
+                   for call in measured["sql"])
+        result["appendSql"] = measured
     return dict(result, held=before, observed=after)
 
 

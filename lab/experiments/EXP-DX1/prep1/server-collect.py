@@ -37,9 +37,10 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     assert {k: v for k, v in arm.items() if k != "cells"} == header["arm"]
     assert plan["seconds"] == header["seconds"]
     campaign = plan.get("campaign", "comparison")
-    assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered", "ceiling")
+    assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered", "ceiling", "tail")
     wide = campaign == "ceiling"
-    storage = campaign in ("storage", "storage-ordered", "ceiling")
+    tail = campaign == "tail"
+    storage = campaign in ("storage", "storage-ordered", "ceiling") or tail
     ordered_ids = arm.get("orderedIds", False)
     followup = campaign != "comparison"
     fair_credits = header.get("fairCredits", 0)
@@ -57,7 +58,14 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             ("1-fixed-S", 1, "S", False, True),
         ]
         assert fair_credits == 0
-    if storage:
+    if tail:
+        assert [(a["id"], a["tail"], a["credits"]) for a in plan["arms"]] == [
+            (f"1-tail-{name}-S", name, 6 if name == "fair" else 0)
+            for name in ("control", "wal", "zgc", "fair")]
+        assert all(a["writer"] == "S" and a["writers"] == 1 and a["numericOwner"]
+                   and a["orderedIds"] and not a["reverse"] and not a["prefetch"] and a["cacheGiB"] == 2
+                   for a in plan["arms"])
+    elif storage:
         controls = [
             ("1-group-K", 1, "K", False, False, False, 2, False),
             ("1-old-S", 1, "S", False, False, False, 2, False),
@@ -85,7 +93,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         ]
     roles = ["tx", "gw-r", "gw-w"] + [f"gw-w{i}" for i in range(2, arm["writers"] + 1)]
     if not fixture:
-        assert header["seconds"] == (90 if wide else 60 if followup else 144)
+        assert header["seconds"] == (90 if wide or tail else 60 if followup else 144)
         assert re.fullmatch(r"[0-9a-f]{40}", header["commit"])
         for key in ("seedSha", "dumpSha", "gatewaySource"):
             assert re.fullmatch(r"[0-9a-f]{64}", header[key])
@@ -142,6 +150,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert tx_container["memory"] == 30 << 30
 
     native, end, block_no = {}, False, 0
+    tail_appends = {}
     with native_path.open() as file:
         for raw in file:
             row = json.loads(raw)
@@ -150,10 +159,19 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 assert row["dropped"] == 0
                 end = True
                 continue
+            if row.get("tailAppend") is True:
+                assert tail and row["start"] <= row["end"]
+                interval = (row["start"], row["end"])
+                assert interval not in tail_appends
+                tail_appends[interval] = row
+                continue
             if row["db"] != header["db"]:
                 continue
             assert len(row["members"]) == len(row["bytes"]) > 0
             assert row["start"] <= row["end"]
+            if tail and not fixture:
+                detail = tail_appends[(row["start"], row["end"])]
+                assert not detail.get("failed") and detail["db"] == row["db"] and detail["bytes"] == row["bytes"]
             block_no += 1
             for member, size in zip(row["members"], row["bytes"], strict=True):
                 assert size > 0 and member["read-at"] <= member["started-at"] <= member["applied-at"] <= row["start"]
@@ -276,7 +294,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert min(r["sent"] for r in members) >= last_reply
             last_reply = max(r["end"] for r in members)
             last_turn = turn
-        if followup and not wide and cell_credits:
+        if followup and not wide and not tail and cell_credits:
             assert all(len(blocks) == 1 for blocks in turn_appends.values())
         pair = {a: p99(times[a]) if counts[a] == len(times[a]) else None for a in counts}
         metrics.append({"cell": label, "offered": len(rows), "durable": len(positions), "inWindow": in_window,
@@ -296,6 +314,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                         "nativeIoPerSave": {key: {"mean": sum(samples) / len(samples), "p99": p99(samples)}
                                             for key, samples in native_io.items()},
                         "appendP99Ms": p99(list(flush_ms.values())),
+                        **({"appendMaxMs": max(flush_ms.values(), default=None)} if tail else {}),
                         "fairTurns": len(turns), "maxAppendsPerTurn": max(map(len, turn_appends.values()), default=0),
                         "nativeT": len(joined), "appends": len(block_ids),
                         "savesPerAppend": len(positions) / len(block_ids) if block_ids else None,

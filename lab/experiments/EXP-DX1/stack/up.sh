@@ -291,6 +291,18 @@ if [[ -n ${DX_BM1_WAL_MOUNT:-} ]]; then
   mkdir -m 0700 "$wal_dir"
   wal_mount=(-e POSTGRES_INITDB_WALDIR=/wal --mount "type=bind,source=$wal_dir,target=/wal")
 fi
+if [[ ${DX_PREP1_CAMPAIGN:-} == tail ]]; then
+  [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxprep1-[a-f0-9]{8}-1-tail-(control|wal|zgc|fair)-s$ && -z $seed_volume && ${DX_PREP1_SERVER:-0} == 1 ]]
+  [[ -z ${DX_BM1_WAL_MOUNT:-} && ${DX_BM1_WAL_AB:-0} == 0 ]]
+  if [[ $prefix == *-wal-s ]]; then
+    [[ $(findmnt -nro SOURCE --mountpoint "${DX_PREP1_TAIL_WAL_MOUNT:?}") == /dev/nvme1n1 ]]
+    wal_dir=$DX_PREP1_TAIL_WAL_MOUNT/$prefix
+    [[ -d $wal_dir && ! -L $wal_dir && -z $(ls -A "$wal_dir") ]]
+    wal_mount=(-e POSTGRES_INITDB_WALDIR=/wal --mount "type=bind,source=$wal_dir,target=/wal")
+  else
+    [[ -z ${DX_PREP1_TAIL_WAL_MOUNT:-} ]]
+  fi
+fi
 for role in pg tx gw-w gw-r extract; do
   if docker container inspect "$prefix-$role" >/dev/null 2>&1; then echo "container already exists: $prefix-$role" >&2; exit 2; fi
 done
@@ -306,6 +318,19 @@ if [[ -n ${DX_DATOMIC_IMAGE_RECEIPT:-} ]]; then
   [[ $image_hash == "$(node "$runtime_tool" input-hash)" ]]
 fi
 printf '%s\n' "$image_meta" > "$attempt/config/java-image.txt"
+tx_image=$datomic_image
+if [[ ${DX_PREP1_TAIL_TX_ZGC:-0} == 1 ]]; then
+  # [DX-PREP1] Why: move only the transactor to the pinned Java 25 release and JVM1's collector.
+  # Rejected: changing both gateways or letting a mutable tag silently select the wrong runtime.
+  [[ ${DX_PREP1_CAMPAIGN:-} == tail && $prefix == *-zgc-s && $java_major == 21 ]]
+  j25() { DX_JAVA=25 DX_DATOMIC_IMAGE_RECEIPT="${DX_PREP1_JAVA25_RECEIPT:-}" node "$runtime_tool" "$@"; }
+  tx_meta=$(docker image inspect --format '{{.Id}}|{{index .Config.Labels "tx2.java-major"}}|{{index .Config.Labels "tx2.java-base"}}|{{index .Config.Labels "tx2.build-inputs-sha256"}}' "$(j25 image)")
+  IFS='|' read -r tx_image tx_major tx_base tx_hash <<< "$tx_meta"
+  [[ $tx_image =~ ^sha256:[a-f0-9]{64}$ && $tx_major == 25 && $tx_base == "$(j25 base)" ]]
+  if [[ -n ${DX_PREP1_JAVA25_RECEIPT:-} ]]; then [[ $tx_hash == "$(j25 input-hash)" ]]; fi
+  printf '%s\n' "$tx_meta" > "$attempt/config/tail-tx-image.txt"
+  tx_java="$tx_java $(j25 compatibility)"
+fi
 docker image inspect postgres:17-alpine >/dev/null
 if [[ -z "$src" ]]; then
   src="$evidence/stage/$prefix"
@@ -514,19 +539,27 @@ done
 fi
 # [DX-JVM1] Why: restore one sealed seed into a fresh PostgreSQL volume before any measured JVM starts.
 # Rejected: running the large import during the timed arm or attaching a writable original.
-if [[ -n ${DX_JVM1_PG_RESTORE:-} ]]; then
-  [[ ${DX_BARE_METAL:-0} == 1 && $prefix == tx2-dxt1-jvm1-* && -z $seed_volume && -f $DX_JVM1_PG_RESTORE ]]
+if [[ -n ${DX_JVM1_PG_RESTORE:-} || ${DX_PREP1_CAMPAIGN:-} == tail ]]; then
+  restore_flags=()
+  if [[ ${DX_PREP1_CAMPAIGN:-} == tail ]]; then
+    [[ -z ${DX_JVM1_PG_RESTORE:-} && ${DX_BARE_METAL:-0} == 1 && -z $seed_volume && -f ${DX_PREP1_DUMP:?} ]]
+    restore_dump=$DX_PREP1_DUMP restore_sha=${DX_PREP1_DUMP_SHA:?}
+    restore_flags+=(--single-transaction)
+  else
+    [[ ${DX_BARE_METAL:-0} == 1 && $prefix == tx2-dxt1-jvm1-* && -z $seed_volume && -f $DX_JVM1_PG_RESTORE ]]
+    restore_dump=$DX_JVM1_PG_RESTORE restore_sha=$DX_JVM1_PG_RESTORE_SHA256
+  fi
   # [DX-JVM1] Why: verify the actual stream given to pg_restore.
   # Rejected: checksumming a separate open of a dump that can change while restoring.
-  python3 - "$prefix-pg" "$DX_JVM1_PG_RESTORE" "$DX_JVM1_PG_RESTORE_SHA256" \
+  python3 - "$prefix-pg" "$restore_dump" "$restore_sha" "${restore_flags[@]}" \
     > "$attempt/restore.sha256" 2> "$attempt/restore.log" <<'PG_RESTORE'
 import hashlib, subprocess, sys
-container, dump, expected = sys.argv[1:]
+container, dump, expected, *flags = sys.argv[1:]
 digest = hashlib.sha256()
 with open(dump, 'rb') as source:
     assert source.peek(5)[:5] == b'PGDMP', 'Expected a custom PostgreSQL dump'
     with subprocess.Popen(['docker', 'exec', '-i', container, 'pg_restore', '-U', 'postgres',
-                           '--clean', '--if-exists', '--exit-on-error', '-d', 'datomic'],
+                           '--clean', '--if-exists', '--exit-on-error', *flags, '-d', 'datomic'],
                           stdin=subprocess.PIPE, stdout=sys.stderr) as restore:
         with restore.stdin:
             while (block := source.read(1024 * 1024)):
@@ -537,10 +570,10 @@ assert digest.hexdigest() == expected, 'Restored dump bytes differ from the seal
 print(digest.hexdigest())
 PG_RESTORE
 fi
-tx_start=(--entrypoint /opt/datomic/bin/transactor "$datomic_image" /dxh1/sql.properties)
+tx_start=(--entrypoint /opt/datomic/bin/transactor "$tx_image" /dxh1/sql.properties)
 prep_tx=()
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
-  if [[ -n ${DX_PREP1_DUMP:-} ]]; then
+  if [[ -n ${DX_PREP1_DUMP:-} && ${DX_PREP1_CAMPAIGN:-} != tail ]]; then
     [[ -z ${DX_JVM1_PG_RESTORE:-} ]]
     # [DX-PREP1] Why: restore the same sealed bytes before any peer or transactor opens the arm.
     # Rejected: clearing rows in a warm database or measuring an incremental restore.
@@ -548,8 +581,9 @@ if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   fi
   cp "$repo/lab/experiments/EXP-DX1/prep1/observe.clj" "$attempt/config/prep1-observe.clj"
   prep_tx=(-e "PREP1_ATTEMPT=${DX_WRITE_OPTIONS_ATTEMPT:?}" -e PREP1_MODE=subject-server)
+  if [[ ${DX_PREP1_CAMPAIGN:-} == tail ]]; then prep_tx+=(-e PREP1_TAIL_SQL=1); fi
   trace_tx_java+=' -Xlog:gc*,safepoint*=debug:file=/trace/prep1-gc-tx.log:time,uptimemillis,level,tags,pid,tid:filecount=0'
-  tx_start=(--entrypoint /bin/bash "$datomic_image" -c
+  tx_start=(--entrypoint /bin/bash "$tx_image" -c
     'exec java -server $JAVA_OPTS -cp "$(bin/classpath)" clojure.main -i /dxh1/prep1-observe.clj -m datomic.launcher /dxh1/sql.properties')
 fi
 docker run -d --pull never --name "$prefix-tx" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$tx" --memory "$tx_mem" --memory-swap "$tx_mem" \

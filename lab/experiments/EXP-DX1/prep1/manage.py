@@ -61,6 +61,11 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     (config / "subject-owner").write_text(numeric_owner + "\n")
     (config / "subject-prefetch").write_text(prefetch + "\n")
     (config / "subject-ordered").write_text(ordered + "\n")
+    tail_sql = os.environ.get("DX_PREP1_TEST_TAIL_SQL") == "1"
+    if tail_sql:
+        if mode != "subject-recovery" or ordered != "1":
+            raise SystemExit("Tail SQL fixture requires ordered subject recovery")
+        (config / "tail-sql").write_text("1\n")
     if mode == "live":
         if not 1 <= int(seconds) <= 60:
             raise SystemExit("Live window must be 1 to 60 seconds")
@@ -122,6 +127,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "numericOwner": numeric_owner == "1",
         "prefetch": prefetch == "1",
         "orderedIds": ordered == "1",
+        "tailSql": tail_sql,
         "explicitProbes": mode == "lookup-profile" and prefetch == "1",
         "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
         "stage": {str(p.relative_to(stage)): sha(p) for p in sorted(stage.rglob("*"))

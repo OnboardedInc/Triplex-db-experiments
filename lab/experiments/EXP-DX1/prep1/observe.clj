@@ -6,19 +6,25 @@
             [datomic.io :as dio]
             [datomic.log :as log]
             [datomic.measure.io-stats :as io]
+            [datomic.sql :as sql]
             [datomic.transaction :as tx])
   (:import [datomic Datom]
            [java.io FileInputStream]
            [java.lang.management ManagementFactory ThreadMXBean]
            [java.nio.charset StandardCharsets]
+           [java.sql Connection SQLException]
            [java.util.concurrent ArrayBlockingQueue]
-           [java.util.concurrent.atomic AtomicLong]))
+           [java.util.concurrent.atomic AtomicLong]
+           [org.postgresql PGConnection]))
 
 ;; [DX-PREP1] Why: the pinned writer calls append and then reports the same block's transaction metadata.
 ;; Rejected: attributing all non-apply peer time or cluster-wide WAL time to the log write.
 (def pending (ArrayBlockingQueue. 16384))
 (def dropped (AtomicLong. 0))
 (def appended (ThreadLocal.))
+(def tail-sql? (= "1" (System/getenv "PREP1_TAIL_SQL")))
+(def ^:dynamic *append-sql* nil)
+(def ^:dynamic *borrowed-pid* nil)
 (def attempt (System/getenv "PREP1_ATTEMPT"))
 (def mode (System/getenv "PREP1_MODE"))
 (def streaming? (= mode "subject-server"))
@@ -272,15 +278,50 @@
                 (portion! *profile* (= "reads" (:mode @*profile*)) check member #(validate datom))
                 (validate datom)))))))))
 
+(when tail-sql?
+  ;; [DX-PREP1] Why: a span carries the actual borrowed backend PID and is attached to its own append.
+  ;; Rejected: assigning an unrelated PostgreSQL write to the append because their clocks overlap.
+  (alter-var-root #'sql/connect
+    (fn [connect]
+      (fn [spec]
+        (let [^Connection conn (connect spec)]
+          (when *borrowed-pid*
+            (let [pid (try (.getBackendPID ^PGConnection (.unwrap conn PGConnection))
+                          (catch SQLException _ nil)
+                          (catch AbstractMethodError _ nil))]
+              (reset! *borrowed-pid* pid)))
+          conn))))
+  (doseq [[k v] [["insert" #'sql/insert] ["update" #'sql/update]]]
+    (alter-var-root v
+      (fn [f]
+        (fn [& args]
+          (if-not *append-sql*
+            (apply f args)
+            (let [backend (atom nil) start (System/nanoTime)]
+              (binding [*borrowed-pid* backend]
+                (try (apply f args)
+                     (finally (swap! *append-sql* conj {:op k :pid @backend :start start :end (System/nanoTime)})))))))))))
+
 (alter-var-root #'log/append
   (fn [append]
     (fn [log cluster block]
       (let [sizes (mapv #(dio/remaining (:fressianed-tx %)) block)
-            start (System/nanoTime)
-            result (append log cluster block)
-            end (System/nanoTime)]
-        (.set appended {:bytes sizes :start start :end end})
-        result))))
+            spans (when tail-sql? (atom []))
+            start (System/nanoTime)]
+        (try
+          (let [result (if spans (binding [*append-sql* spans] (append log cluster block)) (append log cluster block))
+                timing {:bytes sizes :start start :end (System/nanoTime)}]
+            (.set appended timing)
+            (when (and spans (not (.offer pending (assoc timing :attempt attempt :db (writer-database)
+                                                         :tailAppend true :sql @spans))))
+              (.incrementAndGet dropped))
+            result)
+          (catch Throwable failure
+            (.remove appended)
+            (when (and spans (not (.offer pending {:attempt attempt :db (writer-database) :tailAppend true
+                                                   :failed true :start start :end (System/nanoTime) :sql @spans})))
+              (.incrementAndGet dropped))
+            (throw failure)))))))
 
 (alter-var-root #'tx/transactions-completed!
   (fn [complete]

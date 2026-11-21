@@ -4,6 +4,9 @@ import { offers, sha, type Offer } from "../w1/field/schedule.ts";
 export const seconds = 144;
 export const fairSeconds = 60;
 export const ceilingSeconds = 90;
+// [DX-PREP1] Why: the four measured windows span the five-minute checkpoint period.
+// Rejected: a four-minute capture that could miss its first timed checkpoint entirely.
+export const tailSeconds = 90;
 export const rates = [50, 235, 394, 620] as const;
 export const widths = [1, 2, 4] as const;
 export type Arm = {
@@ -11,11 +14,12 @@ export type Arm = {
   writers: number;
   writer: "K" | "S";
   reverse: boolean;
-  credits?: 0 | 1;
+  credits?: 0 | 1 | 6;
   numericOwner?: boolean;
   prefetch?: boolean;
   cacheGiB?: 2 | 16;
   orderedIds?: boolean;
+  tail?: "control" | "wal" | "zgc" | "fair";
 };
 export const arms: Arm[] = widths.flatMap((writers) =>
   (["K", "S", "S", "K"] as const).map((writer, repeat) => ({
@@ -71,6 +75,45 @@ export const storageArms: Arm[] = [
   storageOrderedArm,
 ];
 export const ceilingArm: Arm = { ...storageOrderedArm, id: "1-ceiling-S" };
+export const tailArms: Arm[] = (["control", "wal", "zgc", "fair"] as const).map((tail) => ({
+  ...storageOrderedArm,
+  id: `1-tail-${tail}-S`,
+  tail,
+  credits: tail === "fair" ? 6 : 0,
+}));
+
+export function tailPrediction(arm: Arm, rate: number, solo: boolean) {
+  assert(arm.tail && (rate === 235 || rate === 394));
+  // [DX-PREP1] Why: price storage changes separately from pauses and admission.
+  // Rejected: forecasting that ZGC or fair turns eliminate an append blocked on durable I/O.
+  const estimates = {
+    // Rows: quiet solo, quiet ratio, solo append p99/max, loaded append p99/max.
+    control: [
+      [74, 4.3, 61, 82, 4.7, 233],
+      [34, 3.5, 4.4, 34, 2.8, 168],
+    ],
+    wal: [
+      [30, 1.7, 14, 35, 2.5, 120],
+      [24, 1.6, 3, 25, 1.8, 85],
+    ],
+    zgc: [
+      [72, 4.1, 58, 80, 4.5, 225],
+      [33, 3.2, 4.2, 32, 2.7, 158],
+    ],
+    fair: [
+      [74, 3, 61, 82, 4.6, 230],
+      [34, 2.7, 4.4, 34, 2.8, 160],
+    ],
+  } as const;
+  const [quietSoloP99Ms, ratio, soloP99, soloMax, loadedP99, loadedMax] =
+    estimates[arm.tail][rate === 235 ? 0 : 1];
+  return {
+    quietSoloP99Ms,
+    quietP99Ratio: solo ? 1 : ratio,
+    appendP99Ms: solo ? soloP99 : loadedP99,
+    appendMaxMs: solo ? soloMax : loadedMax,
+  };
+}
 const ceilingVariants = [
   [620, 0],
   [620, 6],
@@ -104,7 +147,13 @@ function newCells(arm: Arm, duration: number) {
 
 export function cells(
   arm: Arm,
-  duration = arm.id === ceilingArm.id ? ceilingSeconds : shortened(arm) ? fairSeconds : seconds,
+  duration = arm.id === ceilingArm.id
+    ? ceilingSeconds
+    : arm.tail
+      ? tailSeconds
+      : shortened(arm)
+        ? fairSeconds
+        : seconds,
 ): {
   label: string;
   rate: number;
