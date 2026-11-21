@@ -4431,3 +4431,13 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   - **Predictions at 256 readers with 50 saves/s:** three read cores and permits 290 to 450 ms and 1,900 to 2,700 reads/s; same-basis batches of up to eight on one core 310 to 600 ms; early exact field filter 590 to 850 ms; 6 GiB heap and 3 GiB object cache 540 to 810 ms; **all combined 80 to 155 ms and 2,800 to 4,500 reads/s** (95 to 205 ms with 235 saves/s). Current pulls p99 forecast 20 to 40 ms (50.18 measured; bar 25). The combined setting takes one core from the write gateway, so the command records saves at every reader level.
   - Mac gates: 115,798 pinned reads with zero errors across both writer modes and both request shapes; native suite 28 tests.
 - Agents running: DX-SCALE1, DX-BM1, DX-HA1, DX-THIN1, DX-W1. Rolling 12 arm running on the rented server.
+
+### 2026-11-21 11:14 local: imports through fair credits built; writer builder reading the rolling arms (5 agents running)
+
+- **DX-HA1 part 7 finished** (exit 0). `52ad22640` (based on INT1 `057cc1eb4`), `load1/FAIR-SERVER.md`: an importing account competes for the same credits as busy accounts and cannot use the reserved quiet credit; frame size and credit limit are settings; default off.
+  - Arithmetic: at 32 facts per frame, 3,000 facts/s needs 94 durable frames/s (one every 10.67 ms); at 1.5 ms of apply per frame that is about 14% of the serial writer; if all nine busy accounts stay queued, equal sharing needs about 940 grants/s in total to sustain it.
+  - **Predictions:** barrier6: 1,400 to 2,400 queryable facts/s, quiet commit p99 48 to 78 ms; winning rolling mode: 2,400 to 3,350 facts/s, quiet 35 to 52 ms.
+  - Mac gate: 23,360 imported facts, 342 live saves, 504 pinned reads across both modes; original receipt recovered after a discarded reply; 33 focused tests.
+- **DX-PREP1 part 15 resumed:** reading of barrier 6 and rolling 6 (and 12 when published) from the checkpoints; why p99 at 394 is still 5 s with every save stored; why the quiet account is at 54 ms and not 36; the default credit mode; the next change toward p99 50 ms at 394, built, with a server command under 120 minutes including a write-gateway ZGC arm.
+- Server commands waiting for the rented server, in order: next card fresh with the winner; Publish at 100,000; realistic first rung and its card; reads ladder (56 min); cold start arms (60 min); erasure stage (86 min); imports (60 min); DX-PREP1's next change (120 min); two-server failover Sunday about 07:30.
+- Agents running: DX-SCALE1, DX-BM1, DX-THIN1, DX-W1, DX-PREP1.
