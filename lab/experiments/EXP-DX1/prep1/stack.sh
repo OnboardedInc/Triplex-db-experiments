@@ -293,7 +293,6 @@ case "$PREP1_MODE" in
     credit_modes=(barrier6 rolling6 rolling12)
     if [[ $TX2_SUBJECT_APPEND_RETIREMENT == 1 ]]; then credit_modes=(barrier6 rolling6); fi
     if [[ $TX2_SUBJECT_NARROW_REVISION == 1 ]]; then credit_modes=(rolling6); fi
-    if [[ $TX2_SUBJECT_APPEND_RETIREMENT == 1 ]]; then credit_modes=(barrier6 rolling6); fi
     if [[ $TX2_SUBJECT_OWNER_HEAD == 1 ]]; then
       credit_modes=(barrier6 rolling6)
       export TRIPLEX_ERASURE_DIRECTORY="$work/privacy"

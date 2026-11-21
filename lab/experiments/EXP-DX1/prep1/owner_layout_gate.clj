@@ -103,13 +103,64 @@
             (is (= ["winner" "winner value" 2] (field (d/db conn) owner)))
             (is (= {"status" "absent"} (reference/operation name "edit-a")))))))))
 
-(defn snapshot [db owner arm]
+(defn- read-rows [db owner arm]
   (let [datoms (case arm
                  ("legacy" "append") (layout/read-stage :legacy-range (vec (lean/live-texts db owner)))
                  "covered" (or (layout/covered-live-datoms db owner) (layout/live-datoms db owner))
-                 (layout/live-datoms db owner))
-        rows (layout/read-stage :decode (vec (sort-by :id (map (comp lean/decode :v) datoms))))]
-    {:rows (count rows) :digest (layout/read-stage :digest (schema/sha256 (pr-str rows)))}))
+                 (layout/live-datoms db owner))]
+    (layout/read-stage :decode (vec (sort-by :id (map (comp lean/decode :v) datoms))))))
+
+(defn- row-summary [rows]
+  {:rows (count rows) :digest (schema/sha256 (pr-str rows))})
+
+(defn- spare-edit [i]
+  (let [attribute (str ":spare/" i)
+        input (reference/edit-frame (str "edit-spare-" i) (str "replacement-" i) (str "new-value-" i)
+                                    2.0 12.0 (str "spare-" i))]
+    (rows/row-input
+      (update input "rows"
+              (fn [rows]
+                (mapv (fn [wire]
+                        (let [row (storage/decode-row wire)]
+                          (storage/wire-row
+                            (case (:attribute row)
+                              ":v" (assoc row :attribute attribute)
+                              ":_tx/change" (update row :value_json
+                                                   #(json/write-str (assoc (json/read-str %) "attribute" attribute)))
+                              row))))
+                      rows))))))
+
+(deftest covering-limit-preserves-legacy-cuts
+  (with-redefs [subject/enabled true subject/owner-head? false
+                group/enabled false policy/priority? false policy/field-only? false policy/budget-us nil]
+    (reference/in-scope
+      (fn [legacy control]
+        (reference/in-scope
+          (fn [covered candidate]
+            (layout/install-fixture! candidate)
+            (let [[seed] (reference/edits)]
+              (doseq [db [legacy covered]]
+                (is (= [200 nil] (reference/outcome (reference/send db (seed-deeper seed)))))))
+            (let [before (d/db candidate)
+                  owner (d/entid before [:triplex.entity/id fixture/root])
+                  legacy-owner (d/entid (d/db control) [:triplex.entity/id fixture/root])
+                  cuts (mapv (fn [i]
+                               (let [edit (at-cut (spare-edit i) (inc i))
+                                     plan (native-plan (d/db candidate) edit true)
+                                     backed (<= (inc i) layout/cover-limit)]
+                                 (is (= [200 nil] (reference/outcome (reference/send legacy edit))))
+                                 (is (= backed (boolean (get-in plan [:owner-layout :cover]))))
+                                 (let [after (:db-after (append! candidate plan))
+                                       expected (read-rows (d/db control) legacy-owner "legacy")]
+                                   (is (= expected (read-rows after owner "covered")))
+                                   [(d/basis-t after) expected])))
+                             (range (inc layout/cover-limit)))
+                  after (d/db candidate)]
+              (is (= (read-rows before owner "covered")
+                     (read-rows (d/as-of after (d/basis-t before)) owner "covered")))
+              (doseq [[t expected] cuts]
+                (is (= expected (read-rows (d/as-of after t) owner "covered"))))
+              (is (= (reference/feed legacy 0 20) (reference/feed covered 0 20))))))))))
 
 (defn- legacy-append! [conn db input append?]
   (let [reply (with-redefs [subject/append-retirement? append?] (reference/send db input))
@@ -142,10 +193,10 @@
                   (layout/install-fixture! conn)
                   (assert (= [200 nil] (reference/outcome (reference/send db (seed-deeper seed)))))
                   (let [first (edit a 1) view (d/db conn) owner (d/entid view [:triplex.entity/id fixture/root])
-                        pinned {:t (d/basis-t view) :expected (snapshot view owner arm)}]
+                        pinned {:t (d/basis-t view) :expected (row-summary (read-rows view owner arm))}]
                     (let [next (edit b 2) current (d/db conn)]
                       (assert (= (boolean (scope/value current owner layout/root-attr)) migrate?))
-                      {:db db :owner owner :pinned pinned :current {:t (d/basis-t current) :expected (snapshot current owner arm)}
+                      {:db db :owner owner :pinned pinned :current {:t (d/basis-t current) :expected (row-summary (read-rows current owner arm))}
                        :counts {:first (counts first) :next (counts next)}
                        :journal (schema/sha256 (pr-str (reference/feed db 0 10)))}))))
         fixtures (into {} (map (juxt identity build)) ["legacy" "append" "migrated" "covered"])]
@@ -161,17 +212,19 @@
                  (let [stages (when profile? (volatile! {}))
                        start (System/nanoTime)
                        view (if (= t (d/basis-t latest)) latest (d/as-of latest t))
-                       actual (binding [layout/*read-stages* stages] (snapshot view owner arm))
+                       actual (binding [layout/*read-stages* stages] (read-rows view owner arm))
                        elapsed (- (System/nanoTime) start)]
-                   (assert (= expected actual))
+                   ;; [DX-W1] Why: validate every sample outside the read clock.
+                   ;; Rejected: timing the oracle digest and attributing it to the reader.
+                   (assert (= expected (row-summary actual)))
                    (if stages @stages elapsed)))]
     (assert (= attempt (System/getenv "PREP1_ATTEMPT")))
     (assert (= (:t current) (d/basis-t latest)))
     (assert (= (contains? #{"migrated" "covered"} arm) (boolean (scope/value latest owner layout/root-attr))))
-    (dotimes [_ 6] (sample current false) (sample pinned false))
+    (dotimes [_ 32] (sample current false) (sample pinned false))
     (println "DX-W1_OWNER_LAYOUT_READ"
              (json/write-str {:attempt attempt :db db :arm arm :pid (.pid (java.lang.ProcessHandle/current))
                               :current current :pinned pinned :journal journal :clock "diagnostic-in-process"
                               :counts counts
-                              :ns (mapv (fn [_] [(sample current false) (sample pinned false)]) (range 48))
+                              :ns (mapv (fn [_] [(sample current false) (sample pinned false)]) (range 96))
                               :stagesNs (mapv (fn [_] [(sample current true) (sample pinned true)]) (range 32))}))))

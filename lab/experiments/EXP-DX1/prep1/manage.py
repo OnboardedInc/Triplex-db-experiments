@@ -46,7 +46,9 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     owner_head = os.environ.get("DX_W1_OWNER_HEAD", "0")
     if owner_head not in ("0", "1") or (owner_head == "1" and (mode, ordered, numeric_owner) != ("rolling-recovery", "1", "1")):
         raise SystemExit("The owner head gate requires the ordered rolling-recovery fixture")
-    lookup_every = 3 if serial == "1" and mode == "rolling-recovery" else 0
+    # [DX-W1] Why: match both saves per owner-layout arm to their transactor read counters.
+    # Rejected: treating empty peer I/O metadata as zero native storage reads.
+    lookup_every = 1 if owner_head == "1" else 3 if serial == "1" and mode == "rolling-recovery" else 0
     out.mkdir()
     attempt = str(uuid.uuid4())
     stage = out / "stage"
