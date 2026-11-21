@@ -78,6 +78,9 @@
                 (is (not= owner (:e version)))
                 (is (= ["_tx/edit-a" "_tx/edit-b"] (filterv #{"_tx/edit-a" "_tx/edit-b"} txids)))
                 (is (= (d/basis-t after) (parse-long (get-in (reference/operation name "edit-b") ["t" "v"]))))
+                (let [reuse (native-plan after (at-cut (reference/edit-frame "reuse-legacy" "old" "reused" 2.0 12.0 "new") 3))]
+                  (is (thrown-with-msg? Exception #"TRIPLEX_SUBJECT_REPLAN" @(d/transact conn [[layout/ident reuse]])))
+                  (is (= {"status" "absent"} (reference/operation name "reuse-legacy"))))
                 (println "DX-W1_OWNER_LAYOUT_COUNTS"
                          (json/write-str {:attempt (System/getenv "PREP1_ATTEMPT")
                                           :db name :first (counts first-report) :next (counts report)}))))))))))
@@ -128,14 +131,15 @@
                     (edit b 2)
                     (let [current (d/db conn)]
                       (assert (= (boolean (scope/value current owner layout/root-attr)) migrate?))
-                      {:db db :owner owner :pinned pinned :current {:t (d/basis-t current) :expected (snapshot current owner)}}))))
+                      {:db db :owner owner :pinned pinned :current {:t (d/basis-t current) :expected (snapshot current owner)}
+                       :journal (schema/sha256 (pr-str (reference/feed db 0 10)))}))))
         fixtures (into {} (map (juxt identity build)) ["legacy" "migrated"])]
-    (assert (apply = (map (fn [f] (mapv #(get-in f [% :expected]) [:pinned :current])) (vals fixtures))))
+    (assert (apply = (map (fn [f] [(:journal f) (get-in f [:pinned :expected]) (get-in f [:current :expected])]) (vals fixtures))))
     (spit path (pr-str {:attempt attempt :fixtures fixtures}))))
 
 (defn sample-reads! [path arm]
   (let [{:keys [attempt fixtures]} (edn/read-string (slurp path))
-        {:keys [db owner pinned current]} (get fixtures arm)
+        {:keys [db owner pinned current journal]} (get fixtures arm)
         conn (main/connection (main/db-uri db))
         latest (d/db conn)
         sample (fn [{:keys [t expected]}]
@@ -151,5 +155,5 @@
     (dotimes [_ 6] (sample current) (sample pinned))
     (println "DX-W1_OWNER_LAYOUT_READ"
              (json/write-str {:attempt attempt :db db :arm arm :pid (.pid (java.lang.ProcessHandle/current))
-                              :current current :pinned pinned :clock "diagnostic-in-process"
+                              :current current :pinned pinned :journal journal :clock "diagnostic-in-process"
                               :ns (mapv (fn [_] [(sample current) (sample pinned)]) (range 24))}))))

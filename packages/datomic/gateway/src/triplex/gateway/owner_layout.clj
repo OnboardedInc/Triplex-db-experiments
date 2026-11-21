@@ -36,11 +36,15 @@
     (when (and datom (or (= owner (:e datom)) (= owner (scope/value db (:e datom) owner-attr))))
       datom)))
 
+(defn- row-id [datom]
+  (let [^String text (:v datom)]
+    (subs text 5 (+ 5 (Integer/parseInt text 1 5 16)))))
+
 (defn live-datoms [db owner]
   ;; [DX-W1] Why: the selected durable basis defines the root and every referenced row together.
   ;; Rejected: reading the latest root for a historical cut or scanning the owner's growing version log.
   (if-let [{:keys [keys]} (read-root db owner)]
-    (let [legacy (into {} (map (fn [datom] [(:id (lean/decode (:v datom))) datom]))
+    (let [legacy (into {} (map (juxt row-id identity))
                        (d/datoms db :eavt owner :triplex.entity/row))]
       (mapv (fn [id] (or (legacy id) (owned-row db owner id)
                          (throw (ex-info "Missing projected assertion" {:id id}))))
@@ -92,7 +96,7 @@
                       native (take (inc limit) (d/datoms db :eavt owner :triplex.entity/row))]
                   (when (> (count native) limit)
                     (throw (ex-info "Owner migration exceeds page budget" {})))
-                  (mapv vec (partition-all page-size (map (comp :id lean/decode :v) (lean/live-texts db owner))))))
+                  (mapv vec (partition-all page-size (map row-id (lean/live-texts db owner))))))
         wanted (set (mapcat identity pages))]
     (when-not (every? wanted (keys replacements))
       (throw (ex-info "Owner predecessor is absent from the selected pages" {})))
