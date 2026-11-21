@@ -1,3 +1,22 @@
+## Part 14 · rolling credit release
+
+The first server comparison is barrier 6, rolling 6 and rolling 12 on the sealed 162,456,470-fact seed. [Exact command and forecasts](ROLLING-CREDITS.md)
+INT1 can cherry-pick `b0ffdd2abaaa02b117984b516b6e9e04a6cc9306` onto `8ae07b227` for the scheduler and shared sender. The runner also uses this branch's stopped-copy support.
+The six-credit barrier remains the default fair policy. Rolling reserves one slot and picks the ready quiet account first. At widths 6 and 12 there can be at most five or eleven previously submitted neighbours ahead of it.
+A rolling credit settles after its own validated durable ACK. The person and basis fences run as before. An uncertain outcome closes admission while outstanding requests finish, preserving the operation and command needed for recovery.
+The Mac runs covered 6 and 16 credits, same-person ordering, expiry, 100 immediate pinned reads, two withheld replies and failed durable appends followed by PostgreSQL restart. After reopen there were 56 and 66 exact receipts and zero receipts for either denied window. Each observed ACK followed its native append.
+The server windows are five minutes. Three arms use 90 minutes of offers with a 150-minute campaign cap. The matched profile uses separate WAL, transactor Java 25 ZGC, one writer gateway and no added cache warm-up.
+The forecast at 394/s is 351 / 381 / 394 stored in-window for the three arms. At 620/s the forecast is 340 / 388 / 447. Wider rolling credits may make the quiet tail worse. [Forecasts by window and rate](ROLLING-CREDITS.md#forecast-before-launch)
+Bare-metal throughput and Linux telemetry are still unmeasured. The isolated harness keeps the same launch profile and compares writer admission, with journal verification after the windows.
+
+**North star P2.** Per-person exact order, durable ACK and scheduled-offer latency. [Scope](../../../SCOPE.md) · [Priorities](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
+
+The 26 unit/tape tests include the byte-identical barrier replay and FIFO/LIFO/rotating rolling schedules. TypeScript, shell syntax and the Python readers checked. Producer and collector reconciled 1,261 synthetic receipts per width and independently checked the full 300-second tape. The separate native restart suite had 781 assertions. The native fixture first failed during Node startup because its bundled observer saw the bundle as its IPC entry point. The corrected fixture ran in the managed Datomic slot under ordinary tokens. No Mac timing is a throughput result.
+
+**Evidence and verdict audit.** The scheduler emits grant/release metadata and uses the existing SDK receipt validation. It issues no new receipt. Unit schedules use exact expected grant order, predecessor positions and terminal journal bytes. The native restart gate checks stage/image hashes, fresh slot and attempt, exact seeded scope, exact command census, original receipt and pinned row readback. It joins each checked receipt to the native append and its ACK clock and verifies missing operations against the reopened journal. The server producer validates seed/control and source/attempt settings, exact operations and complete journal rows. Its collector checks fresh native membership and durability settings before counting an ACK, rebuilds credit capacity from recorded grants/releases, and binds clock, telemetry and raw files to the same arm. Synthetic producer/collector fixtures are labelled separately. No contract pins moved. [Evidence manifest](SHA256SUMS)
+
+### Earlier PREP1 reports
+
 Yes, one database stored every offer at 394 saves/s on the ten-account, 16-million-fact seed. Full size has yet to reach 394 and measured 278.08/s. The next full-size run tests more cache and cores, separate WAL and ZGC.
 Server 1 combined arm source `d1224c27e5ac0fcacfa04cc4d2a11b0f328eacaa`. Start from the same sealed small seed and use a new absolute output directory outside the checkout.
 `DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-tail-combined -- bash lab/experiments/EXP-DX1/prep1/server.sh tail-combined "$OUT" d1224c27e5ac0fcacfa04cc4d2a11b0f328eacaa "$SEALED"`

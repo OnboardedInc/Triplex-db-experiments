@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { performance } from "node:perf_hooks";
 import { setTimeout as sleep } from "node:timers/promises";
@@ -12,6 +12,7 @@ import {
 import { decodeRowText, encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 import { ids, type Fact } from "../../../bench/lib/world.ts";
 import { FairTurns } from "./fair-turns.ts";
+import { admission, RollingCredits } from "./rolling-credits.ts";
 import {
   scaleAccount,
   scaleFields,
@@ -34,6 +35,9 @@ import {
   ownerArms,
   ownerPrediction,
   prediction,
+  rollingArms,
+  rollingPrediction,
+  rollingSeconds,
   scaleArms,
   scalePrediction,
   seconds,
@@ -82,9 +86,11 @@ assert(
     campaign === "owner" ||
     campaign === "storage" ||
     campaign === "storage-ordered" ||
-    campaign === "ceiling" || campaign === "scale" ||
+    campaign === "ceiling" || campaign === "scale" || campaign === "rolling" ||
     campaign === "tail" || campaign === "tail-combined",
 );
+const rollingArm = process.env.DX_PREP1_ROLLING_ARM;
+assert(rollingArm === undefined || (campaign === "rolling" && rollingArms.some((a) => a.id === `1-${rollingArm}-S`)));
 const campaignArms = {
   comparison: arms,
   fair: fairArms,
@@ -93,11 +99,14 @@ const campaignArms = {
   "storage-ordered": [storageOrderedArm],
   ceiling: [ceilingArm],
   scale: scaleArms,
+  rolling: rollingArms.filter((a) => rollingArm === undefined
+    ? [6, 12].includes(a.admission!.credits) : a.id === `1-${rollingArm}-S`),
   tail: tailArms,
   "tail-combined": [tailCombinedArm],
 }[campaign];
-const wide = campaign === "ceiling" || campaign === "scale";
-const campaignSeconds = wide
+const rolling = campaign === "rolling";
+const wide = rolling || campaign === "ceiling" || campaign === "scale";
+const campaignSeconds = rolling ? rollingSeconds : wide
   ? ceilingSeconds
   : campaign === "comparison"
     ? seconds
@@ -105,7 +114,11 @@ const campaignSeconds = wide
       ? tailSeconds
       : fairSeconds;
 const [answer, note] = wide ? scaleFields : ([":field/answer-prep1", ":field/note"] as const);
-const creditsFor = (arm: Arm) => (arm.writer === "S" ? (arm.credits ?? requestedCredits) : 0);
+const creditsFor = (arm: Arm) => (arm.writer === "S" ? (arm.admission?.credits ?? arm.credits ?? requestedCredits) : 0);
+function schedulerFor(arm: Arm, fallback: FairTurns | undefined, credits?: number) {
+  if (arm.admission) return admission(accounts.length, arm.admission);
+  return credits === undefined ? fallback : credits ? new FairTurns(accounts.length, credits) : undefined;
+}
 const root = wide ? scaleOwner : (a: number, p: number) => ids.placement(accounts[a]!.first + p);
 const fact = (e: string, a: string, value: string): Fact => ({
   e,
@@ -212,7 +225,7 @@ async function phase(
   frozen: Set<string>,
   cell: ReturnType<typeof cells>[number],
   orderedIds: boolean,
-  fair?: FairTurns,
+  fair?: FairTurns | RollingCredits,
   legacyIds?: ReadonlySet<string>,
   sampleCpu?: () => CpuSample,
 ) {
@@ -226,6 +239,9 @@ async function phase(
     end: number;
     peer?: number;
     fairTurn?: number;
+    creditGranted?: number;
+    neighboursAhead?: number;
+    creditReleased?: number;
     sent?: number;
     reason?: string;
     orderedToken?: string;
@@ -243,14 +259,19 @@ async function phase(
   const phaseWallMs = Date.now();
   let turn = 0,
     nextPeer = 0;
-  const deadline = cell.duration * 1000 + 1000;
+  const deadline = cell.duration * 1000 + (rolling ? 30_000 : 1000);
+  const expired = new Set<number>();
   const pick = (account: number) => {
+    const queue = queues[account]!;
+    const readyAt = rolling ? elapsed() : undefined;
+    if (readyAt !== undefined)
+      while (queue.length && readyAt >= cell.tape[queue[0]!]!.ms + 30_000) expired.add(queue.shift()!);
     const index = queues[account]!.findIndex((n) => {
       const o = cell.tape[n]!;
       const e = root(o.account, o.person);
       return !busy.has(e) && !frozen.has(e);
     });
-    if (index >= 0) return { account, index, due: cell.tape[queues[account]![index]!]!.ms };
+    if (index >= 0) return { account, index, due: cell.tape[queues[account]![index]!]!.ms, readyAt };
   };
   function dispatch() {
     if (elapsed() > deadline) return;
@@ -278,7 +299,7 @@ async function phase(
       if (!granted) break;
     }
   }
-  function grant({ account, index }: NonNullable<ReturnType<typeof pick>>, fairTurn?: number) {
+  function grant({ account, index, readyAt }: NonNullable<ReturnType<typeof pick>>, fairTurn?: number, neighboursAhead?: number) {
     const ordinal = queues[account]!.splice(index, 1)[0]!;
     const n = ordinal,
       o = cell.tape[n]!,
@@ -305,11 +326,14 @@ async function phase(
       due: o.ms,
       peer,
       fairTurn,
+      ...(readyAt === undefined ? {} : { creditGranted: readyAt }),
+      ...(neighboursAhead === undefined ? {} : { neighboursAhead }),
       sent,
       orderedToken: identity?.token,
       legacyPredecessors: legacyIds ? old.filter((row) => legacyIds.has(row.id)).length : undefined,
     };
     let known = false;
+    let settled: (typeof rows)[number] | undefined;
     const work = (async () => {
       let ack: Ack;
       try {
@@ -320,11 +344,12 @@ async function phase(
         known =
           err instanceof DatomicHttpError && err.status < 500 && err.code !== "OperationDuplicate";
         frozen.add(e);
-        rows.push({
+        settled = {
           ...record,
           end: elapsed(),
           reason: err instanceof DatomicHttpError ? err.code : "transport",
-        });
+        };
+        rows.push(settled);
         return;
       }
       const end = elapsed();
@@ -337,12 +362,14 @@ async function phase(
           .slice(0, facts.length)
           .map((r) => assigned(r, Number(ack.position.v), ack.recordedAt.v)),
       ]);
-      rows.push({ ...record, end, ack });
+      settled = { ...record, end, ack };
+      rows.push(settled);
       known = true;
     })().finally(() => {
       pending.delete(work);
       busy.delete(e);
-      fair?.resolved(known);
+      if (rolling && settled) settled.creditReleased = elapsed();
+      fair?.resolved(known, fairTurn);
       dispatch();
     });
     pending.add(work);
@@ -355,7 +382,7 @@ async function phase(
   while (pending.size) await Promise.all([...pending]);
   const drained = elapsed();
   const cpuAfter = sampleCpu?.();
-  for (const n of queues.flat()) {
+  for (const n of [...expired, ...queues.flat()]) {
     const o = cell.tape[n]!;
     rows.push({
       id: operation(cell.label, n),
@@ -592,6 +619,14 @@ async function armRun(
         : {}),
       ...(pgData ? { pgDataCopySha, seedReadbackSha } : {}),
     });
+    if (rolling) {
+      const ready = out + "/counters-ready.json";
+      const deadline = performance.now() + 5000;
+      while (!existsSync(ready) && performance.now() < deadline) await sleep(25);
+      const witness = load<{ slot: string; source: string; attempt: string; sender: number }>(ready);
+      assert.deepEqual([witness.slot, witness.source, witness.attempt, witness.sender],
+        [slot, commit, nonce, process.pid]);
+    }
     const frozen = new Set<string>();
     const sampleCpu = arm.scale ? transactorCpu(stackPath, slot) : undefined;
     let cut = head;
@@ -605,16 +640,14 @@ async function armRun(
         frozen,
         cell,
         !!arm.orderedIds,
-        cell.credits === undefined
-          ? fair
-          : cell.credits
-            ? new FairTurns(accounts.length, cell.credits)
-            : undefined,
+        schedulerFor(arm, fair, cell.credits),
         legacyIds,
         sampleCpu,
       );
       cut = result.after;
       save(`${out}/${cell.label}.json`, result);
+      if (rolling) assert(result.rows.every((row) => !row.reason || row.reason === "expired"),
+        "Rolling experiment stopped after a non-expiry outcome; retain the partial cell and recovery witness");
       if (wide && cell === schedule[0])
         assert(
           result.rows.some((row) => row.ack?.subjectOrderedIds),
@@ -734,11 +767,7 @@ async function preflight(out: string, arm: Arm) {
         new Set(),
         cell,
         !!arm.orderedIds,
-        cell.credits === undefined
-          ? fair
-          : cell.credits
-            ? new FairTurns(accounts.length, cell.credits)
-            : undefined,
+        schedulerFor(arm, fair, cell.credits),
         legacyIds,
       ),
     );
@@ -792,7 +821,9 @@ else if (action === "adopt-scale") {
           tapeSha,
           offered: tape.length,
           ...(credits !== undefined ? { fairCredits: credits } : {}),
-          predicted: arm.scale
+          predicted: arm.admission
+            ? rollingPrediction(arm, rate, label.endsWith("-alone"))
+            : arm.scale
             ? scalePrediction(arm, rate, label.endsWith("-alone"))
             : wide
             ? {

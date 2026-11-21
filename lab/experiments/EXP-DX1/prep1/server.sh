@@ -10,7 +10,7 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 here=lab/experiments/EXP-DX1/prep1
 stack=lab/experiments/EXP-DX1/stack
-mode=${1:?expected run, storage, storage-ordered, ceiling, scale, tail, tail-combined, owner, fair or arm}
+mode=${1:?expected run, storage, storage-ordered, ceiling, scale, rolling, tail, tail-combined, owner, fair or arm}
 out=${2:?provide an absolute new output directory}
 source=${3:?provide the pinned Git commit}
 [[ "$out" == /* && "$source" =~ ^[a-f0-9]{40}$ && $(git rev-parse HEAD) == "$source" && -z $(git status --porcelain) ]]
@@ -53,6 +53,23 @@ up_args=(--port-write 8491 --port-read 8495 --cpus-tx "${DX_PREP1_TX_CPUS:-0}" -
   --pg-memory 8g --tx-memory "$tx_memory" --tx-java-opts "$tx_java"
   --object-cache-max "$tx_cache" --memory-index-threshold 256m --memory-index-max 1g
   --pg-settings "$pg_settings")
+if [[ ${DX_PREP1_CAMPAIGN:-} == rolling && $mode == arm ]]; then
+  # [DX-PREP1] Why: consume the very same profile policy as the scorecard.
+  # Rejected: hand-maintaining an almost-identical set of Java flags and SQL settings.
+  mapfile -t profile < <(node --input-type=module -e '
+    import {launchProfile} from "./lab/experiments/EXP-DX1/jvm1/launch.mjs";
+    const p = launchProfile("server", {txJvm:"j25-zgc"});
+    console.log([JSON.stringify(p), p.tx.cpus, p.pg.cpus, p["gw-w"].cpus, p["gw-r"].cpus,
+      p.tx.memoryMiB, p.pg.memoryMiB, p["gw-w"].memoryMiB, p["gw-r"].memoryMiB,
+      p.tx.flags.join(" "), p["gw-w"].flags.join(" "), p["gw-r"].flags.join(" "), p.tx.cacheMiB,
+      p.index.threshold,p.index.max,Object.entries(p.pg.settings).map(([k,v]) => "-c "+k+"="+v).join(" ")].join("\n"));')
+  [[ ${#profile[@]} == 16 ]]
+  up_args=(--port-write 8491 --port-read 8495 --cpus-tx "${profile[1]}" --cpus-pg "${profile[2]}"
+    --cpus-gw-write "${profile[3]}" --cpus-gw-read "${profile[4]}" --tx-memory "${profile[5]}m" --pg-memory "${profile[6]}m"
+    --tx-java-opts "${profile[9]}" --object-cache-max "${profile[12]}m" --memory-index-threshold "${profile[13]}"
+    --memory-index-max "${profile[14]}" --pg-settings "${profile[15]}")
+  export DX_TX_JAVA=25 DX_LAUNCH_PROFILE=server
+fi
 nonce() { cat /proc/sys/kernel/random/uuid; }
 clean() {
   if [[ -n ${owned:-} ]]; then
@@ -89,8 +106,10 @@ unmount_wal() {
 }
 clear_scale_wal() {
   if [[ -n ${scale_wal_owned:-} ]]; then
-    [[ $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == /dev/nvme1n1 &&
-       $scale_wal_owned == "$scale_wal_mount/$owned" && $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-scale-wal-zgc-s$ && ! -L $scale_wal_owned ]] || return 1
+    [[ $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == "${scale_wal_device:-/dev/nvme1n1}" &&
+       $scale_wal_owned == "$scale_wal_mount/$owned" &&
+       $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(scale-wal-zgc|barrier6|rolling(6|8|12|16))-s$ &&
+       ! -L $scale_wal_owned ]] || return 1
     rm -rf --one-file-system -- "$scale_wal_owned" || return 1
     unset scale_wal_owned DX_PREP1_SCALE_WAL_DIR
   fi
@@ -98,6 +117,7 @@ clear_scale_wal() {
 on_exit() {
   ret=$?
   trap - EXIT
+  if [[ -n ${sender_pid:-} ]]; then kill -TERM "$sender_pid" 2>/dev/null || true; wait "$sender_pid" || true; fi
   stop_observer || ret=1
   # Keep the WAL mounted if the owned stack could not be removed.
   if clean; then unmount_wal && clear_scale_wal || ret=1; else ret=1; fi
@@ -108,20 +128,34 @@ trap 'exit 143' TERM INT
 if [[ $mode == ceiling ]]; then
   [[ $# == 6 || ($# == 8 && $7 == --pg-data) ]]
   exec timeout --kill-after=40s 3560s bash "$here/server.sh" ceiling-timed "${@:2}"
+elif [[ $mode == rolling ]]; then
+  [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount ]]
+  exec timeout --kill-after=40s 8960s bash "$here/server.sh" rolling-timed "${@:2}"
 elif [[ $mode == scale ]]; then
   [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount ]]
   exec timeout --kill-after=40s 2660s bash "$here/server.sh" scale-timed "${@:2}"
-elif [[ $mode == ceiling-timed || $mode == scale-timed ]]; then
-  if [[ $mode == scale-timed ]]; then
+elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed ]]; then
+  if [[ $mode == scale-timed || $mode == rolling-timed ]]; then
     [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && ${10} == /* ]]
     scale_wal_mount=$(realpath -e "${10}")
-    [[ $scale_wal_mount != *[,\"$'\n']* && $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == /dev/nvme1n1 &&
-       $(findmnt -nro FSTYPE --mountpoint "$scale_wal_mount") == ext4 && $(findmnt -nro SOURCE /) == /dev/nvme0n1p2 ]]
+    scale_wal_device=$(findmnt -nro SOURCE --mountpoint "$scale_wal_mount")
+    [[ $scale_wal_mount != *[,\"$'\n']* && $(findmnt -nro FSTYPE --mountpoint "$scale_wal_mount") == ext4 ]]
+    if [[ $mode == rolling-timed ]]; then
+      disk_of() { lsblk -ndo PKNAME,KNAME "$1" | awk 'NF==2 {print $1} NF==1 {print $1}'; }
+      docker_root=$(docker info --format '{{.DockerRootDir}}')
+      data_disk=$(disk_of "$(findmnt -nro SOURCE --target "$docker_root/volumes")")
+      wal_disk=$(disk_of "$scale_wal_device")
+      [[ $data_disk =~ ^nvme[0-9]+n[0-9]+$ && $wal_disk =~ ^nvme[0-9]+n[0-9]+$ && $data_disk != "$wal_disk" ]]
+      export DX_PREP1_ROLLING_WAL_DEVICE=$scale_wal_device
+    else
+      [[ $scale_wal_device == /dev/nvme1n1 && $(findmnt -nro SOURCE /) == /dev/nvme0n1p2 ]]
+    fi
     [[ -f /sys/fs/cgroup/cgroup.controllers ]]
-    for cpu in {0..8}; do taskset -c "$cpu" true; done
-    core_count=$(lscpu -p=CPU,CORE,SOCKET | awk -F, '$1 ~ /^[0-8]$/ { print $2 ":" $3 }' | sort -u | wc -l)
-    [[ $core_count == 9 ]]
-    unset DX_PREP1_SCALE_WAL_DIR DX_PREP1_TAIL_TX_ZGC DX_JAVA DX_DATOMIC_IMAGE_RECEIPT DX_BM1_WAL_MOUNT DX_BM1_WAL_AB
+    last_cpu=8; if [[ $mode == rolling-timed ]]; then last_cpu=11; fi
+    for ((cpu=0;cpu<=last_cpu;cpu++)); do taskset -c "$cpu" true; done
+    core_count=$(lscpu -p=CPU,CORE,SOCKET | awk -F, -v max="$last_cpu" '$1 ~ /^[0-9]+$/ && $1 <= max {print $2 ":" $3}' | sort -u | wc -l)
+    [[ $core_count == $((last_cpu+1)) ]]
+    unset DX_PREP1_SCALE_WAL_DIR DX_PREP1_TAIL_TX_ZGC DX_JAVA DX_TX_JAVA DX_DATOMIC_IMAGE_RECEIPT DX_BM1_WAL_MOUNT DX_BM1_WAL_AB
     export DX_PREP1_TX_CPUS=0 DX_PREP1_PG_CPUS=1 DX_PREP1_WRITE_CPUS=2-5 DX_PREP1_READ_CPUS=6 DX_INT1_GATEWAYS=original
     java25=$(DX_JAVA=25 DX_DATOMIC_IMAGE_RECEIPT="${DX_PREP1_JAVA25_RECEIPT:-}" node lab/config/datomic/runtime.mjs image)
     docker image inspect "$java25" >/dev/null
@@ -138,6 +172,15 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed ]]; then
     [[ -d $DX_PREP1_PGDATA && $DX_PREP1_PGDATA != *[,\"$'\n']* && $DX_PREP1_PGDATA != / ]]
     export DX_PREP1_PGDATA
     seed_mode=(--pg-data)
+    if [[ $mode == rolling-timed ]]; then
+      # [DX-PREP1] Why: bound each disposable clone and its raw telemetry before the first arm.
+      # Rejected: starting copies when removing an older database would be needed to finish.
+      seed_bytes=$(du -sB1 -- "$DX_PREP1_PGDATA" | cut -f1)
+      data_free=$(df -B1 --output=avail "$docker_root/volumes" | tail -n1)
+      wal_free=$(df -B1 --output=avail "$scale_wal_mount" | tail -n1)
+      evidence_free=$(df -B1 --output=avail "$(dirname "$out")" | tail -n1)
+      (( data_free > seed_bytes+32*1024**3 && wal_free > 16*1024**3 && evidence_free > 16*1024**3 ))
+    fi
   else
     [[ -f $parent/seed.pgdump && $(head -c 5 "$parent/seed.pgdump") == PGDMP ]]
   fi
@@ -157,18 +200,29 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed ]]; then
   printf '%s\n' "$tag" > "$prefix_file"
   printf '%s\n' "$source" > "$out/source"
   chmod a-w "$out"/{SEAL.sha256,source,seed.json,plan.json,prefix}
-  if [[ $mode == scale-timed ]]; then
+  if [[ $mode == scale-timed || $mode == rolling-timed ]]; then
     # [DX-PREP1] Why: reopen the same stopped cut independently for each transactor policy.
     # Rejected: letting earlier edits warm the people and leaves for later treatments.
     findmnt --json --mountpoint "$scale_wal_mount" -o SOURCE,TARGET,FSTYPE > "$out/scale-wal-mount.json"
-    for cell in 1-scale-base-S 1-scale-cache-S 1-scale-wal-zgc-S; do
+    selected=(1-scale-base-S 1-scale-cache-S 1-scale-wal-zgc-S)
+    arm_limit=850
+    if [[ $mode == rolling-timed ]]; then
+      arm_limit=2950
+      if [[ -n ${DX_PREP1_ROLLING_ARM:-} ]]; then
+        [[ $DX_PREP1_ROLLING_ARM =~ ^(barrier6|rolling(6|8|12|16))$ ]]
+        selected=("1-$DX_PREP1_ROLLING_ARM-S")
+      else
+        selected=(1-barrier6-S 1-rolling6-S 1-rolling12-S)
+      fi
+    fi
+    for cell in "${selected[@]}"; do
       owned="tx2-dxprep1-$tag-${cell,,}"
-      if [[ $cell == 1-scale-wal-zgc-S ]]; then
+      if [[ $cell == 1-scale-wal-zgc-S || $mode == rolling-timed ]]; then
         mkdir -m 0700 "$scale_wal_mount/$owned"
         scale_wal_owned=$scale_wal_mount/$owned
         export DX_PREP1_SCALE_WAL_DIR=$scale_wal_owned
       fi
-      timeout --foreground --kill-after=20s 850s bash "$here/server.sh" arm "$out" "$source" "$cell"
+      timeout --foreground --kill-after=20s "${arm_limit}s" bash "$here/server.sh" arm "$out" "$source" "$cell"
       clear_scale_wal
       unset owned
       mv "$out/$cell/summary.tmp" "$out/$cell/summary.json"
@@ -321,6 +375,8 @@ elif [[ $mode == arm ]]; then
     [[ $cell == 1-ceiling-S && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == scale ]]; then
     [[ $cell =~ ^1-scale-(base|cache|wal-zgc)-S$ && $(cat "$out/source") == "$source" ]]
+  elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == rolling ]]; then
+    [[ $cell =~ ^1-(barrier6|rolling(6|8|12|16))-S$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == tail ]]; then
     [[ $cell =~ ^1-tail-(control|wal|zgc|fair)-S$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == tail-combined ]]; then
@@ -331,7 +387,7 @@ elif [[ $mode == arm ]]; then
   tag=$(cat "$prefix_file")
   [[ $tag =~ ^[0-9a-f]{8}$ && -z $(docker ps -q) ]]
   if [[ -n ${DX_PREP1_PGDATA:-} ]]; then
-    [[ ${DX_PREP1_CAMPAIGN:-} =~ ^(ceiling|scale)$ && ! -e $dump ]]
+    [[ ${DX_PREP1_CAMPAIGN:-} =~ ^(ceiling|scale|rolling)$ && ! -e $dump ]]
     (cd "$out"; sha256sum --strict -c SEAL.sha256 > /dev/null)
     unset DX_PREP1_DUMP DX_PREP1_DUMP_SHA
     export DX_PREP1_SEED_SHA=$(sha256sum "$seed" | cut -d ' ' -f 1)
@@ -356,12 +412,17 @@ elif [[ $mode == arm ]]; then
   export DX_GW_WRITE_JAVA_OPTS="-Xms$((512/DX_PREP1_WRITERS))m -Xmx$((4096/DX_PREP1_WRITERS))m -XX:+UseG1GC"
   export DX_GW_WRITE_MEMORY="$((6144/DX_PREP1_WRITERS))m"
   export DX_GW_READ_JAVA_OPTS='-Xms256m -Xmx3g -XX:+UseG1GC' DX_GW_READ_MEMORY=5g
+  if [[ ${DX_PREP1_CAMPAIGN:-} == rolling ]]; then
+    export TX2_SUBJECT_NUMERIC_OWNER=1 TX2_SUBJECT_ORDERED_IDS=1
+    export DX_GW_WRITE_JAVA_OPTS="${profile[10]}" DX_GW_READ_JAVA_OPTS="${profile[11]}"
+    export DX_GW_WRITE_MEMORY="${profile[7]}m" DX_GW_READ_MEMORY="${profile[8]}m"
+  fi
   owned="tx2-dxprep1-$tag-${cell,,}"
   dir="$out/$cell"
   mkdir "$dir"
   cat /proc/sys/kernel/random/boot_id > "$dir/boot-id"
   bash "$stack/up.sh" "$owned" "${up_args[@]}" > "$dir/start.log" 2>&1
-  if [[ ${DX_PREP1_CAMPAIGN:-} == scale ]]; then bash "$here/tail-pg.sh" settings "$owned" > "$dir/pg-settings.json"; fi
+  if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^(scale|rolling)$ ]]; then bash "$here/tail-pg.sh" settings "$owned" > "$dir/pg-settings.json"; fi
   urls=()
   for ((i=0;i<DX_PREP1_WRITERS;i++)); do urls+=("http://127.0.0.1:$((8491+i))"); done
   trace="$DX_STACK_EVIDENCE/$owned/trace/raw"
@@ -389,15 +450,33 @@ elif [[ $mode == arm ]]; then
     python3 "$here/tail-observe.py" sentinel "$dir" "$(head -n 1 "$dir/probe-pid.txt")"
     bash "$here/tail-pg.sh" stats "$owned" > "$dir/pg-before.json"
   fi
-  "${producer[@]}" arm "$cell" "$seed" "$dir" "$owned" "$source" "$DX_WRITE_OPTIONS_ATTEMPT" \
-    "$DX_STACK_EVIDENCE/$owned/stack.json" http://127.0.0.1:8495 "${urls[@]}"
+  args=(arm "$cell" "$seed" "$dir" "$owned" "$source" "$DX_WRITE_OPTIONS_ATTEMPT"
+    "$DX_STACK_EVIDENCE/$owned/stack.json" http://127.0.0.1:8495 "${urls[@]}")
+  if [[ ${DX_PREP1_CAMPAIGN:-} == rolling ]]; then
+    printf '%s\n' "${profile[0]}" > "$dir/launch-profile.json"
+    taskset -c 9 "${producer[@]}" "${args[@]}" & sender_pid=$!
+    taskset -c 10 python3 "$here/rolling-counters.py" "$dir" "$DX_STACK_EVIDENCE/$owned/containers.json" \
+      "$owned" "$source" "$DX_WRITE_OPTIONS_ATTEMPT" "$sender_pid" > "$dir/observer.log" 2>&1 & observer_pid=$!
+    while kill -0 "$sender_pid" 2>/dev/null && kill -0 "$observer_pid" 2>/dev/null; do sleep 1; done
+    if [[ ! -s $dir/complete.json ]] && ! kill -0 "$observer_pid" 2>/dev/null; then
+      wait "$observer_pid"
+      exit 1
+    fi
+    wait "$sender_pid"; unset sender_pid
+    wait "$observer_pid"; unset observer_pid
+  else
+    "${producer[@]}" "${args[@]}"
+  fi
   if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
     bash "$here/tail-pg.sh" stats "$owned" > "$dir/pg-after.json"
   fi
-  if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^(scale|tail(-combined)?)$ ]]; then
+  if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^(scale|rolling|tail(-combined)?)$ ]]; then
     docker stop -t 15 "$owned-gw-w" "$owned-gw-r" >/dev/null
   fi
   docker stop -t 30 "$owned-tx" >/dev/null
+  if [[ ${DX_PREP1_CAMPAIGN:-} == rolling ]]; then
+    docker logs --timestamps "$owned-pg" > "$dir/postgres.log" 2>&1
+  fi
   if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
     stop_observer
     docker logs --timestamps "$owned-pg" > "$dir/postgres.log" 2>&1
@@ -408,6 +487,6 @@ elif [[ $mode == arm ]]; then
   fi
   clean
   unset owned
-  if [[ ! ${DX_PREP1_CAMPAIGN:-} =~ ^(scale|tail(-combined)?)$ ]]; then mv "$dir/summary.tmp" "$dir/summary.json"; fi
+  if [[ ! ${DX_PREP1_CAMPAIGN:-} =~ ^(scale|rolling|tail(-combined)?)$ ]]; then mv "$dir/summary.tmp" "$dir/summary.json"; fi
 else exit 2
 fi

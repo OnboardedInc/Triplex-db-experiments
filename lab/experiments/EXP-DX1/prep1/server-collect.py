@@ -21,8 +21,112 @@ def sha(path):
     return h.hexdigest()
 
 
+def percentile(xs, fraction):
+    return sorted(xs)[math.ceil(len(xs) * fraction) - 1] if xs else None
+
+
 def p99(xs):
-    return sorted(xs)[math.ceil(len(xs) * .99) - 1] if xs else None
+    return percentile(xs, .99)
+
+
+def rolling_metrics(result, rows, selection):
+    end = result["seconds"] * 1000
+    holds, events, turns = [], [], collections.defaultdict(list)
+    for row in rows:
+        if "sent" not in row:
+            assert row.get("reason") == "expired"
+            continue
+        assert row.get("ack") and row["due"] <= row["creditGranted"] <= row["sent"] <= row["end"] <= row["creditReleased"]
+        assert row["creditGranted"] < row["due"] + 30_000
+        holds.append(row["creditReleased"] - row["creditGranted"])
+        turns[row["fairTurn"]].append(row)
+        events.extend(((row["creditGranted"], 1, row["fairTurn"], row),
+                       (row["creditReleased"], 0, row["fairTurn"], row)))
+
+    # [DX-PREP1] Why: reconstruct outstanding neighbour tickets from independently observed grant/release times.
+    # Rejected: trusting the producer's reported outstanding count or treating rolling tickets as barrier turns.
+    width = selection["credits"]
+    if selection["mode"] == "rolling":
+        assert sorted(turns) == list(range(1, len(turns) + 1)) and all(len(v) == 1 for v in turns.values())
+        active, neighbours = set(), 0
+        for _, grant, ticket, row in sorted(events, key=lambda e: e[:3]):
+            if grant:
+                assert row["neighboursAhead"] == neighbours
+                active.add(ticket)
+                neighbours += int(row["account"] != 0)
+                assert 0 <= neighbours < width and len(active) <= width
+            else:
+                assert ticket in active
+                active.remove(ticket)
+                neighbours -= int(row["account"] != 0)
+        assert not active and neighbours == 0
+
+    def stats(low, high):
+        offered = [row for row in rows if low <= row["due"] < high]
+        acked = [r["end"] - r["due"] for r in offered if r.get("ack")]
+        quiet = [r["end"] - r["due"] for r in offered if r.get("ack") and r["account"] == 0]
+        in_window = sum(r.get("ack") is not None and low <= r["end"] < high for r in rows)
+        return dict(rate=in_window * 1000 / (high-low), offers=len(offered), acks=len(acked),
+                    expired=len(offered)-len(acked), ackedP50Ms=percentile(acked, .5),
+                    ackedP99Ms=p99(acked), quietP99Ms=p99(quiet))
+
+    return dict(selection=selection, whole=stats(0, end), firstHalf=stats(0, end/2),
+                secondHalf=stats(end/2, end), creditHoldP99Ms=p99(holds),
+                barrierHoldP99Ms=p99([max(r["creditReleased"] for r in v) - min(r["creditGranted"] for r in v)
+                                       for v in turns.values()]) if selection["mode"] == "barrier" else None)
+
+
+def rolling_counters(directory, root, header, live):
+    ready = read(directory / "counters-ready.json")
+    assert (ready["source"], ready["slot"], ready["attempt"], ready["boot"]) == (
+        header["commit"], header["slot"], header["nonce"], (directory / "boot-id").read_text().strip())
+    assert ready["sender"] > 1 and ready["ticks"] > 0
+    assert {role: (v["id"], v["pid"]) for role, v in ready["roles"].items()} == {
+        c["Name"].removeprefix("/"+header["slot"]+"-"): (c["Id"], c["State"]["Pid"]) for c in read(live)}
+    counters = directory / "counters.ndjson"
+    samples = [json.loads(line) for line in counters.read_text().splitlines()]
+    assert len(samples) > 60
+    for i, s in enumerate(samples):
+        assert int(s["monoNs"]) <= int(s["endMonoNs"])
+        assert s["cpu"].keys() == ready["roles"].keys() and s["pg"]["durable"] == "on"
+        assert {"wal_write", "wal_sync", "wal_write_time", "wal_sync_time"} <= s["pg"]["wal"].keys()
+        assert {"num_timed", "num_requested", "write_time", "sync_time"} <= s["pg"]["checkpointer"].keys()
+        assert s["pg"]["io"] and s["pg"]["backend"] == samples[0]["pg"]["backend"]
+        if i:
+            prior = samples[i-1]
+            assert 0 < int(s["monoNs"]) - int(prior["monoNs"]) <= 3_000_000_000
+            assert s["senderTicks"] >= prior["senderTicks"]
+            assert all(s["cpu"][r]["usage_usec"] >= prior["cpu"][r]["usage_usec"] for r in s["cpu"])
+    index = root / "prep1-index.ndjson"
+    index_rows = [json.loads(line) for line in index.read_text().splitlines()]
+    assert index_rows and all(r["attempt"] == header["nonce"] for r in index_rows)
+    assert index_rows[-1] == {"attempt": header["nonce"], "type": "end", "dropped": 0}
+    assert any(r.get("observer", {}).get("status") == "installed" for r in index_rows)
+    assert any(r.get("gauges", {}).get("MemoryIndexMB") is not None for r in index_rows)
+    jobs, pg = root / "prep1-index-jobs.log", directory / "postgres.log"
+    assert jobs.is_file() and pg.stat().st_size > 0
+    return [directory / "counters-ready.json", counters, index, jobs, pg], samples
+
+
+def rolling_cpu(samples, result, ticks):
+    start = int(result["phaseStartNs"])
+    half = result["seconds"] * 500_000_000
+    times = [int(s["monoNs"]) for s in samples]
+
+    def span(lo, hi):
+        before = samples[min(range(len(samples)), key=lambda i: abs(times[i] - lo))]
+        after = samples[min(range(len(samples)), key=lambda i: abs(times[i] - hi))]
+        elapsed = (int(after["monoNs"]) - int(before["monoNs"])) / 1e9
+        assert elapsed > 0
+        roles = {}
+        for role, cpu in after["cpu"].items():
+            delta = {k: cpu[k] - before["cpu"][role][k] for k in ("usage_usec", "nr_throttled", "throttled_usec")}
+            assert all(v >= 0 for v in delta.values())
+            roles[role] = dict(meanCores=delta["usage_usec"] / (elapsed * 1e6),
+                               throttledPeriods=delta["nr_throttled"], throttledMs=delta["throttled_usec"]/1e3)
+        return dict(seconds=elapsed, roles=roles, senderMeanCores=(after["senderTicks"] - before["senderTicks"])/(ticks*elapsed))
+
+    return dict(firstHalf=span(start, start + half), secondHalf=span(start + half, start + 2*half))
 
 
 def collect(plan_path, directory, native_path, allow_fixture=False):
@@ -37,9 +141,10 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     assert {k: v for k, v in arm.items() if k != "cells"} == header["arm"]
     assert plan["seconds"] == header["seconds"]
     campaign = plan.get("campaign", "comparison")
-    assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered", "ceiling", "scale", "tail", "tail-combined")
+    assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered", "ceiling", "scale", "tail", "tail-combined", "rolling")
     scale = campaign == "scale"
-    wide = campaign == "ceiling" or scale
+    rolling = campaign == "rolling"
+    wide = campaign == "ceiling" or scale or rolling
     pg_data = False
     pg_data_evidence = []
     tail = campaign in ("tail", "tail-combined")
@@ -47,8 +152,9 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     ordered_ids = arm.get("orderedIds", False)
     followup = campaign != "comparison"
     fair_credits = header.get("fairCredits", 0)
-    assert fair_credits in (0, 1, 2, 6) and (not fair_credits or arm["writer"] == "S")
-    assert fair_credits == (arm.get("credits", plan.get("fairCredits", 0)) if arm["writer"] == "S" else 0)
+    assert fair_credits in ((6, 8, 12, 16) if rolling else (0, 1, 2, 6)) and (not fair_credits or arm["writer"] == "S")
+    expected_credits = arm.get("admission", {}).get("credits", arm.get("credits", plan.get("fairCredits", 0)))
+    assert fair_credits == (expected_credits if arm["writer"] == "S" else 0)
     if campaign == "fair":
         assert [(a["id"], a["writers"], a["writer"], a["reverse"], a["credits"]) for a in plan["arms"]] == [
             ("1-off-S", 1, "S", False, 0), ("1-on-S", 1, "S", False, 1),
@@ -68,6 +174,14 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         assert all(a["writer"] == "S" and a["writers"] == 1 and a["numericOwner"]
                    and a["orderedIds"] and not a["reverse"] and not a["prefetch"] and a["cacheGiB"] == 2
                    for a in plan["arms"])
+    elif rolling:
+        observed = [(a["id"], a["admission"]) for a in plan["arms"]]
+        choices = [
+            (f"1-{mode}{credits}-S", {"mode": mode, "credits": credits})
+            for mode, credits in (("barrier", 6), ("rolling", 6), ("rolling", 8), ("rolling", 12), ("rolling", 16))]
+        assert observed == [choices[i] for i in (0, 1, 3)] or (len(observed) == 1 and observed[0] in choices)
+        assert all(a["writers"] == 1 and a["writer"] == "S" and a["numericOwner"] and a["orderedIds"]
+                   and not a["reverse"] and not a["prefetch"] and a["cacheGiB"] == 16 for a in plan["arms"])
     elif scale:
         assert [(a["id"], a["scale"], a["cacheGiB"], a["credits"]) for a in plan["arms"]] == [
             (f"1-scale-{name}-S", name, size, 6) for name, size in (("base", 2), ("cache", 16), ("wal-zgc", 16))]
@@ -87,7 +201,11 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         assert [(a["id"], a["writers"], a["writer"], a["reverse"], a["numericOwner"], a["prefetch"],
                  a["cacheGiB"], a.get("orderedIds", False)) for a in plan["arms"]] == expected_arms
         assert fair_credits == 0
-    if wide:
+    if rolling:
+        assert [(c["label"], c["rate"], c["offered"], c["fairCredits"]) for c in arm["cells"]] == [
+            (f"r{rate}-{mode}", rate, round((3.5 if mode == "alone" else rate) * plan["seconds"]), fair_credits)
+            for rate in (235, 394, 620) for mode in ("alone", "loaded")]
+    elif wide:
         variants = ((394, "on", 6), (620, "on", 6)) if scale else (
             (620, "off", 0), (620, "on", 6), (900, "on", 6), (900, "off", 0))
         assert [(c["label"], c["rate"], c["offered"], c["fairCredits"]) for c in arm["cells"]] == [
@@ -103,7 +221,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         ]
     roles = ["tx", "gw-r", "gw-w"] + [f"gw-w{i}" for i in range(2, arm["writers"] + 1)]
     if not fixture:
-        assert header["seconds"] == (90 if wide or tail else 60 if followup else 144)
+        assert header["seconds"] == (300 if rolling else 90 if wide or tail else 60 if followup else 144)
         assert re.fullmatch(r"[0-9a-f]{40}", header["commit"])
         for key in ("seedSha", "gatewaySource"):
             assert re.fullmatch(r"[0-9a-f]{64}", header[key])
@@ -114,7 +232,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         if wide:
             seed = read(directory.parent / "seed.json")
             pg_data = seed.get("storage") == "pg-data"
-            assert not scale or pg_data
+            assert not (scale or rolling) or pg_data
             assert (seed["facts"], seed["head"], seed["db"], seed["scope"]) == (
                 162_456_470, 87002, header["db"], header["scope"]) and header["head"] == seed["head"]
             if not pg_data:
@@ -150,11 +268,12 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             loader = hashlib.sha256(claim_key.encode()).hexdigest()
             assert re.fullmatch(rf"load1/{loader}/[0-9]+", proof["command"]) and proof["claim"].startswith("_tx/")
             pg_data_evidence = [copy, observed, control, clone, live_pg]
-            external_wal = scale and arm["scale"] == "wal-zgc"
+            external_wal = rolling or (scale and arm["scale"] == "wal-zgc")
             if external_wal:
                 device_path = directory.parent / "scale-wal-mount.json"
                 device, = read(device_path)["filesystems"]
-                assert (device["source"], device["fstype"]) == ("/dev/nvme1n1", "ext4")
+                assert re.fullmatch(r"/dev/nvme\d+n\d+(p\d+)?", device["source"]) if rolling else device["source"] == "/dev/nvme1n1"
+                assert device["fstype"] == "ext4"
                 wal_mount = str(Path(device["target"]) / header["slot"])
                 wal, = [m for m in pg["Mounts"] if m["Destination"] == "/wal"]
                 assert (wal["Type"], wal["Source"], wal["RW"]) == ("bind", wal_mount, True)
@@ -200,16 +319,18 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             tx_jvm = read(native_path.parent / "tx-native-settings.json")
             assert (tx_jvm["run"], tx_jvm["slot"], tx_jvm["source"], tx_jvm["process"]) == (
                 header["slot"], header["slot"], header["commit"], "tx")
-            assert tx_jvm["jvm"]["objectCacheMax"] == f'{arm["cacheGiB"]}g'
+            assert tx_jvm["jvm"]["objectCacheMax"] in (f'{arm["cacheGiB"]}g', f'{arm["cacheGiB"]*1024}m')
             assert tx_jvm["jvm"]["prefetchProbes"] == "true" and tx_jvm["jvm"]["prefetchEnabled"] is True
             assert 23 << 30 <= tx_jvm["jvm"]["maxHeapBytes"] <= 24 << 30
             tx_container, = [container for container in stack["containers"] if container["name"] == header["slot"] + "-tx"]
             assert tx_container["memory"] == 30 << 30
-        if scale:
+        if scale or rolling:
             config = native_path.parents[2] / "config"
-            masks = {"tx": "0" if arm["scale"] == "base" else "0,7-8", "pg": "1", "gw-w": "2-5", "gw-r": "6"}
+            masks = {"tx": "0,7,8" if rolling else "0" if arm["scale"] == "base" else "0,7-8",
+                     "pg": "1", "gw-w": "2,3,4,5" if rolling else "2-5", "gw-r": "6"}
             assert {c["name"].removeprefix(header["slot"]+"-"): c["cpuset"] for c in stack["containers"]} == masks
-            base_image_path, zgc_image_path = config / "java-image.txt", config / "tail-tx-image.txt"
+            base_image_path = config / "java-image.txt"
+            zgc_image_path = config / ("tx-java-image.txt" if rolling else "tail-tx-image.txt")
             base_image = base_image_path.read_text().split("|")
             tx_image = zgc_image_path.read_text().split("|") if external_wal else base_image
             assert base_image[1] in ("21", "", "<no value>") and (tx_image[1] == "25") == external_wal
@@ -228,6 +349,14 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert sql["settings"]["wal_sync_method"] == "fdatasync"
             assert all(sql["settings"][key] == "on" for key in ("fsync", "synchronous_commit", "full_page_writes"))
             pg_data_evidence.append(settings_path)
+            if rolling:
+                assert sql["settings"]["track_io_timing"] == sql["settings"]["track_wal_io_timing"] == "on"
+                assert sql["settings"]["log_checkpoints"] == "on" and sql["settings"]["max_wal_size"] == "1GB"
+                assert (sql["settings"]["min_wal_size"], sql["settings"]["checkpoint_timeout"],
+                        sql["settings"]["checkpoint_completion_target"], sql["settings"]["checkpoint_flush_after"]) == (
+                            "80MB", "5min", "0.9", "256kB")
+                extra, counters = rolling_counters(directory, native_path.parent, header, live_pg)
+                pg_data_evidence.extend(extra + [directory / "launch-profile.json"])
 
     native, end, block_no = {}, False, 0
     tail_appends = {}
@@ -330,7 +459,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 stages_by_save["httpRoundTrip"].append(r["end"] - r["sent"])
                 if ack.get("nativeComputeMs") is not None:
                     stages_by_save["nativeCompute"].append(ack["nativeComputeMs"])
-                if scale and not fixture:
+                if (scale or rolling) and not fixture:
                     stages_by_save["gatewayPreparation"].append(stages["payloadPrepared"] / 1000)
                     stages_by_save["gatewayPredecessor"].append((stages["predecessorReady"] - stages["payloadPrepared"]) / 1000)
                     stages_by_save["submitToNativeEntry"].append(ack.get("submitToNativeEntryMs", 0))
@@ -377,7 +506,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 joined.add(receipt["t"])
                 block_ids.add(block)
         if wide and not fixture:
-            assert len({p[2] for p in tape if p[1] == 0}) == 315
+            assert len({p[2] for p in tape if p[1] == 0}) == round(result["seconds"] * 3.5)
             if label.endswith("-loaded"):
                 assert [p for p in tape if p[1] == 0] == plan["tapes"][label.removesuffix("-loaded") + "-alone"]
                 assert all(len({p[2] for p in tape if p[1] == a}) == 1900 for a in range(1, 10))
@@ -390,16 +519,25 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert pos == cut + 1 and clock > last_clock
             cut, last_clock = pos, clock
         assert cut == result["after"]
-        last_reply = -math.inf
-        for turn, members in sorted(turns.items()):
-            assert turn == last_turn + 1 and len(members) <= cell_credits
-            assert min(r["sent"] for r in members) >= last_reply
-            last_reply = max(r["end"] for r in members)
-            last_turn = turn
+        if not rolling or arm["admission"]["mode"] == "barrier":
+            last_reply = -math.inf
+            for turn, members in sorted(turns.items()):
+                assert turn == last_turn + 1 and len(members) <= cell_credits
+                assert min(r["sent"] for r in members) >= last_reply
+                last_reply = max(r.get("creditReleased", r["end"]) for r in members)
+                last_turn = turn
+        if rolling and not fixture:
+            start = int(result["phaseStartNs"])
+            stop = start + result["seconds"]*1_000_000_000
+            assert int(counters[0]["monoNs"]) <= start < stop <= int(counters[-1]["monoNs"])
+            assert sum(start <= int(s["monoNs"]) < stop for s in counters) >= result["seconds"] - 2
+            cpu["rollingCpu"] = rolling_cpu(counters, result, read(directory / "counters-ready.json")["ticks"])
         if followup and not wide and not tail and cell_credits:
             assert all(len(blocks) == 1 for blocks in turn_appends.values())
         pair = {a: p99(times[a]) if counts[a] == len(times[a]) else None for a in counts}
         metrics.append({"cell": label, "offered": len(rows), "durable": len(positions), "inWindow": in_window,
+                        **(rolling_metrics(result, rows, arm["admission"]) if rolling else {}),
+                        **(cpu if rolling else {}),
                         "confirmedPerSecond": in_window / result["seconds"], "prepared": prepared,
                         "replans": sum(bool(r.get("ack", {}).get("subjectReplan")) for r in rows if r.get("ack")),
                         "missingAcks": sum(counts.values()) - sum(map(len, times.values())),

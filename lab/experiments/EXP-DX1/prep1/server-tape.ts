@@ -1,9 +1,11 @@
 import assert from "node:assert/strict";
+import { rollingWidths, type Admission } from "./rolling-credits.ts";
 import { offers, sha, type Offer } from "../w1/field/schedule.ts";
 
 export const seconds = 144;
 export const fairSeconds = 60;
 export const ceilingSeconds = 90;
+export const rollingSeconds = 300;
 // [DX-PREP1] Why: the four measured windows span the five-minute checkpoint period.
 // Rejected: a four-minute capture that could miss its first timed checkpoint entirely.
 export const tailSeconds = 90;
@@ -21,6 +23,7 @@ export type Arm = {
   orderedIds?: boolean;
   tail?: "control" | "wal" | "zgc" | "fair" | "combined";
   scale?: "base" | "cache" | "wal-zgc";
+  admission?: Admission;
 };
 export const arms: Arm[] = widths.flatMap((writers) =>
   (["K", "S", "S", "K"] as const).map((writer, repeat) => ({
@@ -76,6 +79,53 @@ export const storageArms: Arm[] = [
   storageOrderedArm,
 ];
 export const ceilingArm: Arm = { ...storageOrderedArm, id: "1-ceiling-S" };
+export const rollingArms: Arm[] = [
+  { ...ceilingArm, cacheGiB: 16, id: "1-barrier6-S", admission: { mode: "barrier", credits: 6 } },
+  ...rollingWidths.map((credits): Arm => ({
+    ...ceilingArm, cacheGiB: 16, id: `1-rolling${credits}-S`, admission: { mode: "rolling", credits },
+  })),
+];
+
+export function rollingPrediction(arm: Arm, rate: number, alone: boolean) {
+  assert(arm.admission);
+  const band = [235, 394, 620].indexOf(rate);
+  assert(band >= 0);
+  // [DX-PREP1] Why: estimate saturated latency with backlog and the 30 s expiry, on the scheduled-offer clock.
+  // Rejected: treating native service p99 as client p99 when offered load exceeds goodput.
+  const forecasts: Record<string, number[][]> = {
+    "1-barrier6-S": [
+      [235, 235, 24, 1600, 12, 110, 18, 75],
+      [351, 367, 16500, 30020, 23200, 30020, 15, 73],
+      [340, 355, 29910, 30040, 29950, 30040, 17, 84],
+    ],
+    "1-rolling6-S": [
+      [235, 235, 11, 95, 10, 64, 18, 36],
+      [381, 388, 4500, 10400, 7000, 10400, 15, 36],
+      [388, 402, 29920, 30035, 29960, 30035, 17, 43],
+    ],
+    "1-rolling8-S": [
+      [235, 235, 10, 78, 10, 60, 18, 37],
+      [391, 394, 150, 1900, 16, 350, 15, 39],
+      [415, 427, 29900, 30035, 29950, 30035, 17, 46],
+    ],
+    "1-rolling12-S": [
+      [235, 235, 10, 67, 10, 55, 18, 38],
+      [394, 394, 18, 105, 16, 80, 15, 43],
+      [447, 462, 29850, 30030, 29950, 30030, 17, 53],
+    ],
+    "1-rolling16-S": [
+      [235, 235, 10, 70, 10, 55, 18, 39],
+      [394, 394, 20, 125, 17, 90, 15, 49],
+      [460, 475, 29800, 30035, 29940, 30035, 17, 66],
+    ],
+  };
+  const forecast = forecasts[arm.id]?.[band];
+  assert(forecast);
+  const [serving, secondHalfServing, p50, p99, secondP50, secondP99, quietSolo, quietLoaded] = forecast;
+  return alone ? { serving: 3.5, secondHalfServing: 3.5, p50: 7, p99: quietSolo,
+    secondP50: 7, secondP99: quietSolo, quietP99: quietSolo } :
+    { serving, secondHalfServing, p50, p99, secondP50, secondP99, quietP99: quietLoaded };
+}
 export const scaleArms: Arm[] = (["base", "cache", "wal-zgc"] as const).map((scale) => ({
   ...storageOrderedArm,
   id: `1-scale-${scale}-S`,
@@ -178,7 +228,7 @@ function newCells(arm: Arm, duration: number) {
 
 export function cells(
   arm: Arm,
-  duration = arm.id === ceilingArm.id || arm.scale
+  duration = arm.admission ? rollingSeconds : arm.id === ceilingArm.id || arm.scale
     ? ceilingSeconds
     : arm.tail
       ? tailSeconds
@@ -191,10 +241,12 @@ export function cells(
   tape: Offer[];
   duration: number;
   tapeSha: string;
-  credits?: 0 | 6;
+  credits?: number;
 }[] {
-  if (arm.id === ceilingArm.id || arm.scale) {
-    const variants = arm.scale ? ([[394, 6], [620, 6]] as const) : ceilingVariants;
+  if (arm.id === ceilingArm.id || arm.scale || arm.admission) {
+    const variants = arm.admission
+      ? [235, 394, 620].map((rate) => [rate, arm.admission!.credits] as const)
+      : arm.scale ? ([[394, 6], [620, 6]] as const) : ceilingVariants;
     return variants.flatMap(([rate, credits], band) => {
       // [DX-PREP1] Why: visit the account's working set broadly and give each treatment its own person band.
       // Rejected: replaying one hot tape onto both sides or claiming to reproduce a day in 90 seconds.
@@ -215,7 +267,8 @@ export function cells(
       );
       assert.equal(loaded.length, rate * duration);
       return [quiet, loaded].map((tape, i) => ({
-        label: `r${rate}-${credits ? "on" : "off"}-${i ? "loaded" : "alone"}`,
+        label: arm.admission ? `r${rate}-${i ? "loaded" : "alone"}` :
+          `r${rate}-${credits ? "on" : "off"}-${i ? "loaded" : "alone"}`,
         rate,
         tape,
         duration,

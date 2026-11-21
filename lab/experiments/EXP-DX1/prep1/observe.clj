@@ -38,6 +38,41 @@
   (when-not (.offer diagnostic-events [prefix (assoc event :attempt attempt)])
     (.incrementAndGet dropped)))
 
+(def rolling-index? (= "1" (System/getenv "PREP1_ROLLING_INDEX")))
+(def rolling-fixture (when (= mode "rolling-recovery") (file/file (System/getenv "PREP1_ROLLING_FAIL_PATH"))))
+(defn rolling-metrics [metrics]
+  ((requiring-resolve 'triplex.gateway.native-settings/metrics) metrics)
+  (when rolling-index?
+    (retain! "metrics" {:type "metrics" :monoNs (str (System/nanoTime)) :wallMs (System/currentTimeMillis)
+                       :gauges (select-keys metrics [:MemoryIndexMB :AlarmBackPressure :CreateEntireIndexMsec])})))
+
+(when rolling-index?
+  ;; [DX-PREP1] Why: timestamp actual adoption separately from the vendor's index build start/end.
+  ;; Rejected: inferring adoption from creation of an index job.
+  (let [install! (requiring-resolve 'triplex.gateway.native-counters/install!)
+        drain! (requiring-resolve 'triplex.gateway.native-counters/drain!)
+        status (requiring-resolve 'triplex.gateway.native-counters/status)
+        done (atom false)
+        clock #(double (/ (System/nanoTime) 1000000.0))
+        thread (Thread.
+                 (fn []
+                   (with-open [out (file/writer "/trace/prep1-index.ndjson")]
+                     (let [emit (fn [row] (.write out (str (json/write-str (assoc row :attempt attempt)) "\n")))]
+                       (loop []
+                         (let [state (install! clock)]
+                           (emit {:type "sample" :monoNs (str (System/nanoTime)) :wallMs (System/currentTimeMillis)
+                                  :observer state}))
+                         (drain! emit)
+                         (loop []
+                           (when-let [[_ row] (.poll diagnostic-events)] (emit row) (recur)))
+                         (.flush out)
+                         (when-not @done (Thread/sleep 1000) (recur)))
+                       (emit {:type "end" :dropped (+ (.get dropped) (:dropped (status)))})))))]
+    (.setDaemon thread true)
+    (.start thread)
+    (.addShutdownHook (Runtime/getRuntime)
+      (Thread. (fn [] (reset! done true) (.join thread 2500))))))
+
 (defn portion! [profile read? check member f]
   (let [start (System/nanoTime) before (cpu)
         stats (when read?
@@ -309,6 +344,15 @@
             spans (when tail-sql? (atom []))
             start (System/nanoTime)]
         (try
+          (when (and rolling-fixture (.isFile rolling-fixture)
+                     (= (writer-database) (slurp rolling-fixture)))
+            ;; [DX-PREP1] Why: the fixture denies the real append before storage for the chosen fresh scope.
+            ;; Rejected: synthesizing an error after the command might already be durable.
+            (let [marker (file/file (str rolling-fixture ".observed"))]
+              (when-not (.isFile marker)
+                (spit marker (str (writer-database) "\n"))
+                (println "PREP1_ROLLING_DENIED" (json/write-str {:attempt attempt :db (writer-database)}))))
+            (throw (java.io.IOException. "PREP1 rolling fixture denied durable append")))
           (let [result (if spans (binding [*append-sql* spans] (append log cluster block)) (append log cluster block))
                 timing {:bytes sizes :start start :end (System/nanoTime)}]
             (.set appended timing)

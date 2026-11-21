@@ -31,7 +31,7 @@ def disk_floor():
 
 
 def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefetch="0", ordered="0"):
-    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery", "subject-recovery", "subject-query", "subject-native-suite", "subject-profile", "lookup-profile"):
+    if mode not in ("ortho", "prepare", "two", "live", "profile", "cheap", "census", "recovery", "subject-recovery", "subject-query", "subject-native-suite", "subject-profile", "lookup-profile", "rolling-recovery"):
         raise SystemExit("Unknown managed probe mode")
     if subject not in ("0", "1"):
         raise SystemExit("Subject writer setting must be 0 or 1")
@@ -108,7 +108,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     disk_floor()
     esbuild = REPO / "node_modules/.pnpm/esbuild@0.28.2/node_modules/esbuild/bin/esbuild"
     metafile = out / "bundle.json"
-    driver = "live.ts" if mode == "live" else "probe.ts"
+    driver = {"live": "live.ts", "rolling-recovery": "rolling-gate.ts"}.get(mode, "probe.ts")
     if not clojure_inputs and mode != "subject-native-suite":
         subprocess.run([
             esbuild, str(EXPERIMENT.relative_to(REPO) / driver), "--bundle", "--platform=node",
@@ -120,7 +120,8 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
     profile = json.loads(slots.read_text())
     if os.environ.get("DOCKER_HOST") != profile["dockerHost"]:
         raise SystemExit("Lab Docker endpoint does not match the configured endpoint")
-    profile["lanes"]["datomic"]["image"] = f"tx2-datomic:dx-prep1-{mode}"
+    tag_mode = "subject-recovery" if mode == "rolling-recovery" else mode
+    profile["lanes"]["datomic"]["image"] = f"tx2-datomic:dx-prep1-{tag_mode}"
     slots.write_text(json.dumps(profile, indent=2) + "\n")
     source_paths = [p for p in EXPERIMENT.iterdir() if p.suffix in (".ts", ".clj", ".py", ".sh", ".mjs")]
     if clojure_inputs:

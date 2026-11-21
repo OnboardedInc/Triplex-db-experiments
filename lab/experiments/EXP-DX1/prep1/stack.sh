@@ -141,6 +141,7 @@ log-dir=$work
 pid-file=$work/tx.pid
 EOF
 export PREP1_URL="http://$addr:8080"
+if [[ $PREP1_MODE == rolling-recovery ]]; then export PREP1_ROLLING_FAIL_PATH="$work/failed-db"; fi
 export DATOMIC_URI_TEMPLATE="datomic:sql://{db}?jdbc:postgresql://$addr:5432/datomic?user=datomic&password=$secret"
 export DATOMIC_EXT_CLASSPATH=/opt/gateway/src
 export DATOMIC_JAVA_OPTS="-Xms96m -Xmx368m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:MaxDirectMemorySize=64m -XX:+ExitOnOutOfMemoryError -Ddatomic.objectCacheMax=$cache -Dtriplex.codec.spec=/opt/gateway/codec-spec.json"
@@ -271,6 +272,31 @@ case "$PREP1_MODE" in
       esac
       PREP1_ARM="$arm" node /config/probe.mjs
       stop_gateway
+    done
+    ;;
+  rolling-recovery)
+    # [DX-PREP1] Why: the bundle imports the SCALE1 observer helpers as a library.
+    # Rejected: identifying the bundle itself as the observer's standalone IPC entry point.
+    rolling_probe() { node --input-type=module -e '
+      process.argv.splice(1, 0, "rolling-gate");
+      await import("/config/probe.mjs");
+    ' "$@"; }
+    for credits in 6 16; do
+      subject_workers 1 1
+      rolling_probe before "$credits" "$work/rolling-$credits.json"
+      stop_subject_workers 1
+      kill "${children[1]}" 2>/dev/null || true
+      wait "${children[1]}" || true
+      test -s "$PREP1_ROLLING_FAIL_PATH" && test -s "$PREP1_ROLLING_FAIL_PATH.observed"
+      rm -- "$PREP1_ROLLING_FAIL_PATH" "$PREP1_ROLLING_FAIL_PATH.observed"
+      kill -INT "${children[0]}"
+      wait "${children[0]}"
+      start_postgres
+      durability
+      start_transactor
+      subject_workers 1 1
+      rolling_probe after "$credits" "$work/rolling-$credits.json"
+      stop_subject_workers 1
     done
     ;;
   subject-query)
