@@ -4412,3 +4412,22 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   - Server command: three five-minute arms under 60 minutes.
 - **DX-W1 part 9 resumed (concern 3, saves slow as the database grows):** a model of what a save reads by index against database and cache size, checked against the four measured sizes; designs that keep reads per save flat to 8 billion records with predictions; a Mac experiment that shrinks the cache to mimic size; first design built behind a setting; server commands.
 - Agents running: DX-SCALE1, DX-BM1, DX-RD1, DX-HA1, DX-THIN1, DX-W1.
+
+### 2026-11-21 11:06 local: ROLLING 6 AT FULL SIZE: 391.85 stored per second at 394 offered, zero expired; reads analysis finished (5 agents running)
+
+- **Rented server, rolling 6, five-minute windows** (`origin/exp/DX-BM1-bare-metal` `0e5795578`, `bm1/ROLLING-READING.md`; producer `c8f903ce1`; full-size database, headline setup):
+
+  | Offered/s | Stored/s whole: barrier 6 -> rolling 6 (forecast) | Expired: barrier -> rolling | ACK p50 / p99 second half, rolling 6 | Quiet p99 alone -> loaded, rolling 6 (barrier) |
+  | --- | --- | --- | --- | --- |
+  | 235 | 235.00 -> 235.00 (235) | 0 -> 0 | 4.52 / 31.82 ms | 30.85 -> 43.91 ms, 1.42x (31.19 -> 86.43, 2.77x) |
+  | 394 | 353.12 -> **391.85** (381) | 1,060 -> **0** | 320.79 / 5,067.37 ms | 21.60 -> 54.00 ms, 2.50x (14.53 -> 114.57, 7.88x) |
+  | 620 | 391.78 -> 454.02 (388) | 54,553 -> 36,164 | 29,821 / 30,024 ms | 14.97 -> 61.79 ms, 4.13x (15.67 -> 126.87, 8.10x) |
+
+  At 394 all 118,200 offers became durable (117,554 inside the window). Whole-window ACK p50 / p99 at 394: 635.99 / 5,976.42 ms (barrier: 25,604 / 29,996). At 235 whole-window p99 2,631.67 ms (cold start), second half 31.82 ms. Transactor cores in second halves: 0.61 / 1.84 / 2.25 of three. SQL reads per durable save: 0.61 / 1.35 / 1.32.
+  - **Against predictions:** stored at 394 beat the forecast (381 -> 391.85); at 620 beat it (388 -> 454.02); second-half p99 at 235 beat it (64 -> 31.82 ms); **latency at 394 beat it but is still seconds** (forecast p99 10,400, measured 5,976); quiet loaded p99 missed (36 forecast; 43.91, 54.00, 61.79 measured).
+  - **Against the bars:** save speed met at 235 once settled (4.52 / 31.82 ms). At 394 every save is stored but p99 is 5 s: 394 is 87% of this mode's saturation rate (454), and the window starts cold. Priority 6 with the 50 ms clause: met at 235 (43.91 ms), missed narrowly at 394 (54.00; second half 50.67) and at 620 (61.79).
+- **DX-RD1 finished** (exit 0). `origin/exp/DX-RD1-readers` head `0a94314de`, tested commit `638864206`, `rd1/FULLSIZE-SERVER.md`.
+  - From the fresh card: mean read 1.65 ms at 1 reader, 25.84 ms at 16, 40.93 ms at 64, 285.48 ms at 256; garbage-collection pauses on the read gateway 5.92, 10.71, 8.24, 11.78 s per 60 s (longest 78, 78, 112, 497 ms). The one-core gateway admitted one request at a time to the pinned read path. Without all logged pause time the ceiling would still be 1,823 reads/s at 64 and 1,124 at 256. Not separable from the archive: client and transport, admission, basis resolution, peer storage work, decode, response; a new opt-in trace records them.
+  - **Predictions at 256 readers with 50 saves/s:** three read cores and permits 290 to 450 ms and 1,900 to 2,700 reads/s; same-basis batches of up to eight on one core 310 to 600 ms; early exact field filter 590 to 850 ms; 6 GiB heap and 3 GiB object cache 540 to 810 ms; **all combined 80 to 155 ms and 2,800 to 4,500 reads/s** (95 to 205 ms with 235 saves/s). Current pulls p99 forecast 20 to 40 ms (50.18 measured; bar 25). The combined setting takes one core from the write gateway, so the command records saves at every reader level.
+  - Mac gates: 115,798 pinned reads with zero errors across both writer modes and both request shapes; native suite 28 tests.
+- Agents running: DX-SCALE1, DX-BM1, DX-HA1, DX-THIN1, DX-W1. Rolling 12 arm running on the rented server.
