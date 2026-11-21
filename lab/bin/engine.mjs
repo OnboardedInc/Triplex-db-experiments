@@ -360,7 +360,7 @@ export function effectiveConfig(config, info) {
     // Rejected: modifying the resident config or mounting the canonical uninstrumented script.
     // [DX-INT1] Why: the compact scorecard uses the verified entrypoint in its own staged context.
     // Rejected: replacing its SQL stack with the standard one-gateway launch.
-    const entryRoot = info.laneConf.image.startsWith('tx2-dxthin-managed:') ? root : REPO;
+    const entryRoot = /^tx2-dxthin-(?:managed|rd1):/.test(info.laneConf.image) ? root : REPO;
     fs.copyFileSync(path.join(entryRoot, 'lab/config/datomic/entrypoint.sh'), entrypoint);
     let reader, readerGateway;
     if (info.readerPort !== undefined) {

@@ -3,6 +3,7 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { memoryPlan } from "../int1/memory-plan.ts";
 import { nodeImage, pgImage } from "../v01/source.ts";
@@ -377,6 +378,15 @@ if (action === "--guest") {
     process.chdir(repo);
     const { adoptedToy } = await import("../v01/adopted.ts");
     const { readResidentMappings } = await import("./heap-residency.ts");
+    const readyBy = Date.now() + 45_000;
+    for (;;) {
+      try {
+        const answer = await fetch(new URL("/health", stack.readUrl), { signal: AbortSignal.timeout(1000) });
+        if (answer.ok && (await answer.json() as { gatewaySourceHash: string }).gatewaySourceHash === stack.gatewaySourceSha256) break;
+      } catch {}
+      assert(Date.now() < readyBy, "Compact read gateway did not become healthy");
+      await delay(250);
+    }
     const commands = fs.readdirSync("/proc").filter((n) => /^\d+$/.test(n)).flatMap((n) => {
       const file = "/proc/" + n + "/cmdline";
       try {
