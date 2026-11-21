@@ -361,11 +361,12 @@ pin_role() {
 tx_image=$(pin_role "$tx_major" "$tx_image" "$attempt/config/tx-java-image.txt")
 write_image=$(pin_role "$write_major" "$write_image" "$attempt/config/gw-w-java-image.txt")
 if [[ -n ${DX_LAUNCH_PROFILE:-} ]]; then
-  printf 'Profile=%s credits=%s WAL=%s\nPostgreSQL cores=%s memory=%s settings=%s\nDatomic object-cache=%s memory-index=%s/%s\nTransactor Java=%s image=%s cores=%s memory=%s flags=%s\nWrite gateway Java=%s image=%s cores=%s memory=%s flags=%s\nRead gateway Java=%s image=%s cores=%s memory=%s flags=%s\n' \
-    "$DX_LAUNCH_PROFILE" "${DX_V01_CREDIT_MODE:-barrier6}" "${wal_dir:-PGDATA}" "$pg" "$pg_mem" "$pg_settings" "$object_cache" "$index_threshold" "$index_max" \
+  printf 'Profile=%s WAL=%s\nPostgreSQL cores=%s memory=%s settings=%s\nDatomic object-cache=%s memory-index=%s/%s\nTransactor Java=%s image=%s cores=%s memory=%s flags=%s\nWrite gateway Java=%s image=%s cores=%s memory=%s flags=%s\nRead gateway Java=%s image=%s cores=%s memory=%s flags=%s\n' \
+    "$DX_LAUNCH_PROFILE" "${wal_dir:-PGDATA}" "$pg" "$pg_mem" "$pg_settings" "$object_cache" "$index_threshold" "$index_max" \
     "$tx_major" "$tx_image" "$tx" "$tx_mem" "$tx_java" \
     "$write_major" "$write_image" "$gw_w" "${DX_GW_WRITE_MEMORY:-$gw_mem}" "$gw_w_java" \
     "$peer_major" "$datomic_image" "$gw_r" "${DX_GW_READ_MEMORY:-$gw_mem}" "$gw_r_java"
+  if [[ -n ${DX_V01_CREDIT_MODE:-} ]]; then printf 'Scorecard credits=%s\n' "$DX_V01_CREDIT_MODE"; fi
   printf 'Narrow revision=%s predecessor decode reuse=%s lookup sampling interval=%s\n' "$subject_narrow_revision" "$subject_reuse_predecessor" "$lookup_every"
 fi
 docker image inspect postgres:17-alpine >/dev/null

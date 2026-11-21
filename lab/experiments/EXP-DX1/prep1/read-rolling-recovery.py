@@ -1,12 +1,13 @@
 """Verify exact receipts and append order from both fresh rolling SQL restart fixtures."""
 
 import base64
+import hashlib
 import json
 from pathlib import Path
 import subprocess
 import sys
 
-from read_probe import managed_events, sha
+from read_probe import managed_events
 
 
 def check(root):
@@ -17,11 +18,12 @@ def check(root):
     assert inputs["subject"] == inputs["numericOwner"] == ordered
     assert not serial or ordered
     repository = Path.cwd()
-    assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repository, text=True).strip() == inputs["head"]
+    assert subprocess.check_output(["git", "rev-parse", inputs["head"] + "^{commit}"], cwd=repository, text=True).strip() == inputs["head"]
     for name in ("prep1/rolling-gate.ts", "prep1/rolling-credits.ts",
                  "prep1/stack.sh", "prep1/observe.clj", "scale1/decision/writes.ts"):
         path = "lab/experiments/EXP-DX1/" + name
-        assert inputs["runner"][path] == sha(repository / path)
+        actual = subprocess.check_output(["git", "show", inputs["head"] + ":" + path], cwd=repository)
+        assert inputs["runner"][path] == hashlib.sha256(actual).hexdigest()
     attempt = terminal["attempt"]
     denied = events("PREP1_ROLLING_DENIED ")
     records = events("PREP1_ROLLING ")
@@ -42,7 +44,9 @@ def check(root):
         assert sorted(r["p"] for r in record["checked"]) == list(range(2, 52+width))
         lost = record["lost"]
         original = {k: lost[k] for k in ("id", "p", "t", "clock", "replyNs")}
-        assert original["id"] == f"{nonce}-lost-{width-1}" and original in record["checked"]
+        assert original["id"] == f"{nonce}-lost-{width-1}"
+        checked, = [r for r in record["checked"] if r["id"] == original["id"]]
+        assert {k: checked[k] for k in original} == original
         appended = {}
         for block in native:
             if block["db"] != db:
@@ -51,9 +55,9 @@ def check(root):
                 t = str(member["t"])
                 assert t not in appended
                 assert member["read-at"] <= member["started-at"] <= member["applied-at"] <= block["start"] <= block["end"]
-                appended[t] = block["end"]
+                appended[t] = (member, block)
         for receipt in record["checked"]:
-            assert receipt["clock"] > 0 and appended[receipt["t"]] <= int(receipt["replyNs"])
+            assert receipt["clock"] > 0 and appended[receipt["t"]][1]["end"] <= int(receipt["replyNs"])
         if ordered:
             assert len({r["t"] for r in record["checked"]}) == len(expected)
         output.append(dict(mode=mode, credits=width, durable=record["durable"], refused=width, original=lost))
@@ -61,8 +65,17 @@ def check(root):
     sampled = 0
     if inputs["lookupEvery"]:
         receipts = {r["t"] for record in records for r in record["checked"]}
-        lookup_rows = [r for r in events("PREP1_LOOKUPS ")
-                       if r["db"] == records[0]["db"] and r["t"] in receipts]
+        # [DX-W1] Why: apply can be on a native thread without a named writer database.
+        # Rejected: guessing the database from the sample ordinal or matching only a recycled transaction number.
+        lookup_rows = []
+        for r in events("PREP1_LOOKUPS "):
+            if r["t"] not in receipts:
+                continue
+            member, block = appended[r["t"]]
+            if member["started-at"] <= r["start"] <= r["end"] <= member["applied-at"] <= block["start"]:
+                assert r["db"] in (None, block["db"])
+                lookup_rows.append(r)
+        assert len({r["t"] for r in lookup_rows}) == len(lookup_rows)
         assert lookup_rows
         assert all(r["sampleEvery"] == inputs["lookupEvery"] and int(r["beforeT"]) < int(r["t"])
                    and r["start"] <= r["end"] and isinstance(r["outsideSql"], dict) for r in lookup_rows)
