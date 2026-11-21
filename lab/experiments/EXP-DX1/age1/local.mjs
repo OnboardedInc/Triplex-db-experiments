@@ -358,9 +358,32 @@ export async function local(opts, config, manager) {
       await command("seed-clone.log", "restore-db", backup, uri(clone, cloneJdbc), String(index.t));
       const cloneTx = transactor("clone", cloneJdbc);
       await startTransactor("clone", cloneTx);
-      await capture(["exec", "-e", "AGE_CLONE_URI=" + uri(clone, cloneJdbc), "-e", "AGE_SQL_JDBC=" + cloneJdbc, peer, "/opt/datomic/bin/run", "-m", "triplex.age.gate",
+      const gcState = "/tmp/age-gc-state.edn";
+      const cloneEnv = ["-e", "AGE_CLONE_URI=" + uri(clone, cloneJdbc), "-e", "AGE_SQL_JDBC=" + cloneJdbc];
+      await capture(["exec", ...cloneEnv, "-e", "AGE_GC_FIXTURE_STATE=" + gcState, peer, "/opt/datomic/bin/run", "-m", "triplex.age.gate",
         opts.run, "/tmp/age-fixture.json", fixture.sha, clone], path.join(dir, "probe.log"), controller.signal);
       if (opts.run === "bulk-fixture") {
+        const sample = async (phase) => {
+          const file = path.join(dir, "gc-" + phase + ".log");
+          await capture(["exec", ...cloneEnv, peer, "/opt/datomic/bin/run", "-m", "triplex.age.rung",
+            "maintenance", gcState, fixture.sha, phase], file, controller.signal);
+          const found = fs.readFileSync(file, "utf8").split("\n").filter((line) => line.startsWith("DX_AGE1 "));
+          assert.equal(found.length, 1);
+          const result = JSON.parse(found[0].slice(8));
+          assert.deepEqual([result.attempt, result.event, result.operation], [attempt, "maintenance", phase]);
+          return result;
+        };
+        const beforeGc = await sample("sample");
+        const gc = path.join(dir, "gc-native.log");
+        await capture(["exec", peer, "/opt/datomic/bin/run", "-m", "datomic.tools.gc-db", uri(clone, cloneJdbc),
+          new Date().toISOString()], gc, controller.signal);
+        const collected = fs.readFileSync(gc, "utf8").split("\n")
+          .map((line) => /^\{:finished true, :segments (\d+)\}$/.exec(line)).find(Boolean);
+        assert(Number(collected?.[1]) > 0, "Fixture did not collect obsolete index segments");
+        const vacuum = await sample("vacuum");
+        const reopened = await sample("fixture-verify");
+        assert.deepEqual([beforeGc.t, beforeGc.records], [reopened.t, reopened.records]);
+        assert(vacuum.sql.deleted > beforeGc.sql.deleted, "Native collection did not delete PostgreSQL segment rows");
         const log = path.join(dir, "bulk-events.log");
         await capture(["exec", cloneTx, "cat", "/tmp/age-load-native.log"], log, controller.signal);
         const lines = fs.readFileSync(log, "utf8").split("\n");

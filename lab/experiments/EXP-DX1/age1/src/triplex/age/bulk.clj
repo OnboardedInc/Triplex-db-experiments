@@ -9,7 +9,8 @@
             [triplex.age.tape :as tape]
             [triplex.gateway.group :as group]
             [triplex.gateway.storage :as storage])
-  (:import [datomic.db Db]))
+  (:import [datomic.db Db]
+           [datomic.peer Connection]))
 
 (defn now [] (System/currentTimeMillis))
 
@@ -264,6 +265,7 @@
                              {:remaining remaining :seconds-left seconds-left :recent-rate recent-rate}))))
         (if stop?
           [state {:size size :depth depth :from first-save :to (:observed state) :fromT begin-t :t (:t state)
+                  :nativeId (str (.-db_id ^Connection conn))
                   :wallStart start :wallEnd current :seconds (/ (- current start) 1000.0)
                   :indexStartT index-start :indexEndT (index-t conn) :samples samples
                   :records added :historyEstimate total :logRecords (- (get-in state [:bulk :log-records]) (:log-records prior))

@@ -10,7 +10,8 @@
             [triplex.age.tape :as tape]
             [triplex.gateway.main :as gateway]
             [triplex.gateway.storage :as storage])
-  (:import [java.nio.file Files Path]))
+  (:import [java.nio.file Files Path]
+           [datomic.peer Connection]))
 
 (defn current! [{:keys [conn]}]
   (let [db (deref (d/sync conn) 60000 nil)]
@@ -315,6 +316,8 @@
                                           (count-records pop (get bulk :loaded-at head) head))
                                        (+ (:seed-records pop) (count-records pop 0 head)))
                             :db (:name db) :head (+ before head) :sqlBytes (scale/bytes!)
+                            :t (d/basis-t view) :nativeId (str (.-db_id ^Connection (:conn db)))
+                            :pending (boolean (:bulk-pending state))
                             :sqlDurability durability
                             :finished (boolean (or (:finished state)
                                                    (some #(= (:t state) (:t %)) (vals (:closed-rungs state)))))
@@ -365,6 +368,7 @@
                (rung! file (Long/parseLong target) (Long/parseLong seconds) (Long/parseLong deadline)
                       (Long/parseLong reserve)))
       "bulk" (apply (requiring-resolve 'triplex.age.bulk/main!) args)
+      "maintenance" (apply (requiring-resolve 'triplex.age.maintenance/inspect-cut!) args)
       "cold" (apply cold! args)
       "structure" (apply structure! args)
       "inspect" (apply inspect! args)

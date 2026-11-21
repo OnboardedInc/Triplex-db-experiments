@@ -18,6 +18,9 @@ export const bulkProperties = {
   "index-parallelism": "2",
   "write-concurrency": "4",
 };
+export const continuationProperties = {
+  ...bulkProperties, "memory-index-threshold": "256m", "index-parallelism": "4",
+};
 export const hold = {
   t: 34766053, head: 187002, records: 431778659,
   checkpoint: "4d1ab9fa2a1adf9ba0e2dc73ef5a71fd8adf7d4780e40c52090acb6f92242a04",
@@ -27,9 +30,16 @@ export const hold = {
 const ptime = (s) => Date.parse(s.slice(0, 23).replace(" ", "T") + "Z");
 const num = (s, label) => Number(new RegExp(":" + label + " (\\d+(?:\\.\\d+)?(?:E[+-]?\\d+)?)\\b").exec(s)?.[1]);
 
+export function matchesPhysicalId(logical, physical) {
+  return typeof physical === "string" && (physical === logical ||
+    (physical.startsWith(logical + "-") &&
+      /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(physical.slice(logical.length + 1))));
+}
+
 export async function observeBulk(lines, phase) {
   const begins = new Map();
   const jobs = [];
+  const nativeIds = new Set();
   const process = { n: 0, ms: 0, applyMs: 0, segmentSqlMs: 0, segmentSqlN: 0 };
   const storage = { n: 0, ms: 0 };
   const backPressure = { count: 0, memoryIndexMaxMB: null };
@@ -37,6 +47,7 @@ export async function observeBulk(lines, phase) {
   for await (const line of lines) {
     const wall = ptime(line);
     if (wall < phase.wallStart || wall > phase.wallEnd || !Number.isFinite(wall)) continue;
+    if (phase.pid !== undefined && !line.includes(" - AGE_BULK_METRICS ") && num(line, "pid") !== phase.pid) continue;
     const marker = " - AGE_BULK_METRICS ";
     if (line.includes(marker)) {
       const metrics = JSON.parse(line.slice(line.indexOf(marker) + marker.length));
@@ -51,8 +62,11 @@ export async function observeBulk(lines, phase) {
       }
       continue;
     }
-    const ix = line.includes(":event :update/create-index") && line.includes(":id " + JSON.stringify(phase.database));
-    if (ix) {
+    const ix = line.includes(":event :update/create-index") ? /:id "([^"]+)"/.exec(line)?.[1] : undefined;
+    // [DX-AGE1] Why: SQL indexing logs identify the physical catalog entry, with an allocated UUID.
+    // Rejected: equality against the alias or unrestricted prefix matching across two catalogs.
+    if (matchesPhysicalId(phase.database, ix) && (!phase.nativeId || phase.nativeId === ix)) {
+      nativeIds.add(ix);
       const t = num(line, "next-t");
       if (line.includes(":phase :begin") && t > phase.fromT) begins.set(t, wall);
       if (line.includes(":phase :end") && begins.has(t) && t <= phase.t + 1) {
@@ -76,6 +90,7 @@ export async function observeBulk(lines, phase) {
   }
   // [DX-AGE1] Why: count same-scope start/end pairs that wrote a published index during ongoing writes.
   // Rejected: counting a request-index after the sample or rating the in-memory first burst.
+  assert(nativeIds.size <= 1, "More than one physical database ID in this arm");
   const complete = jobs.filter((job) => job.nextT <= phase.indexEndT + 1);
   const tail = phase.samples.filter((row, i) => i > 0 && row.seconds >= 25).slice(-4);
   let tailRate = null;
@@ -85,7 +100,7 @@ export async function observeBulk(lines, phase) {
   const wallRate = phase.records / phase.seconds;
   const sustainedRate = complete.length >= 2 && tailRate !== null && minuteMetrics.length >= 2
     ? Math.min(wallRate, tailRate) : null;
-  return { jobs: complete, createdJobs: jobs, process, storage, backPressure, minuteMetrics, wallRate, tailRate, sustainedRate };
+  return { nativeId: [...nativeIds][0], jobs: complete, createdJobs: jobs, process, storage, backPressure, minuteMetrics, wallRate, tailRate, sustainedRate };
 }
 
 export function walDelta(phase) {
@@ -103,8 +118,8 @@ export async function readBulkMetrics(file, offset, phase, archive) {
   const fd = fs.openSync(file, "r");
   try {
     const end = fs.fstatSync(fd);
-  assert.deepEqual([end.dev, end.ino], [offset.dev, offset.ino], "Transactor event log rotated during the arm");
-  assert(end.size >= offset.size, "Transactor event log truncated during the arm");
+    assert.deepEqual([end.dev, end.ino], [offset.dev, offset.ino], "Transactor event log rotated during the arm");
+    assert(end.size >= offset.size, "Transactor event log truncated during the arm");
     const range = () => fs.createReadStream(file, { fd, autoClose: false, start: offset.size, end: end.size - 1 });
     const lines = end.size === offset.size ? [] : createInterface({ input: range(), crlfDelay: Infinity });
     const observed = await observeBulk(lines, phase);

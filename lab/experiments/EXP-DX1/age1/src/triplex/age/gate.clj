@@ -336,6 +336,10 @@
       (let [records (+ (:indexedRecords settled) ((resolve-rung "count-records") pop n finish))
             state (assoc loaded :observed finish :t t)
             checked (observe state aged t (+ seed finish) records)]
+        (when-let [maintenance-file (System/getenv "AGE_GC_FIXTURE_STATE")]
+          (adopt/persist! (str maintenance-file ".population.edn") pop false)
+          ((resolve-rung "save-state!") maintenance-file
+           (assoc state :population-sha ((resolve-rung "ledger-hash") (str maintenance-file ".population.edn"))) false))
         (native/emit "bulk-fixture" {:source (:source seal) :manifestSha pin :prefix prefix
                                      :grouped (- n prefix) :soloTail 12 :census records
                                      :readback checked :adoptedDatabases [name clone]})))))

@@ -26,3 +26,8 @@ The server must verify the rate. This branch has no one-billion seal yet.
 The first Mac fixture found a lost pending queue drain and rejected its duplicate write. The corrected mixed-format fixture matched 12 solo prefix saves, 87 grouped saves, and 12 solo tail saves, and checked the settled history count. Both attempts released their slots, containers and volumes. [Evidence hashes](EVIDENCE-ARCHIVES.sha256)
 
 The final fixture at acd350e92 matched 12 solo prefix, 88 grouped, and 12 solo tail saves. It recovered a schema commit and two pipelined groups, used both group sizes, and confirmed the settled census and live scorecard cut. The clone transactor logged both the metrics callback and a scope-bound index job. The three JavaScript checks passed.
+
+## Part 5 evidence audit
+
+- Corrected qualification replays the original sealed certificate, custody manifest and per-arm bytes, checks source/attempt/clock/PID/cut and a unique catalog ID, and preserves the original rejection. The live continuation independently checks its held checkpoint and physical ID before writing.
+- Maintenance requires a settled native cut after the old peer exits. Vendor collection completion and SQL table deletion/free-space signals accompany a separate fresh indexed count and cut comparison. The Mac fixture also reopens and checks the existing scorecard verifier after actual native collection and ordinary vacuum.
