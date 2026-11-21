@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 41.73 through 2026-11-21 08:47 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 42.40 through 2026-11-21 09:24 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The fresh tuned scorecard passed its first live startup at 08:03 UTC. The 300-minute native clock began at about 08:02 UTC. Three verified data copies are on root. The grouped comparison uses the spare, which also holds the separately bound WAL for the headline. Free space at first startup was 90.88 GB on root and 142.22 GB on the spare. The AGE1 ladder is held on the spare at 477,456,017 indexed records. AGE1's corrected replay independently qualified the archived ladder. The original loader pin refuses that archive. The held database has no load running. The new maintained continuation changes the source pin, adds named between-window collection, and needs released scorecard scratch and a new live disk admission. [Live admission and copy hashes](evidence/score-v01-fresh-tuned-admission.sha256) · [Ladder reading](AGE1-LADDER.md)
+The fresh tuned scorecard finished at 09:20:49 UTC, with all four arms and 12 matched pairs. The checked 105.76 MB archive and assembled card are on the Mac. Server 2 has been free since that time, with 87.78 GB free on root and 143.21 GB on the spare. The sealed seed, stopped fresh template, scorecard copies and 477,456,017-record working database are held. AGE1's corrected replay qualifies the ladder. Its maintained loader needs the revised pin and between-window index collection, which await authorization. There is no 1B seal and no queued load. [Fresh scorecard](V01-FRESH.md) · [Ladder and recovery](AGE1-LADDER.md)
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
