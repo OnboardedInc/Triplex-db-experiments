@@ -30,7 +30,7 @@ const maintainedSources = [
   "6d3d44641efacdcd9b3d6fefa299a3b0ace6f885",
   "9573487e08f6ab82acd0c662ce552eca531a13ff",
 ];
-const extendedSource = "efd0c75606860163699831fc5da2654b782ce11c";
+const extendedSource = "d90b3728fc6e1ef823d7974fc11fe21af7ffd9fe";
 const bulkPrefix = {
   records: 431778659,
   head: 187002,
