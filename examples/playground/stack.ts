@@ -655,7 +655,7 @@ export class Stack {
           "-e",
           `PLAYGROUND_GC_DB=${database}`,
           "-e",
-          "DATOMIC_JAVA_OPTS=-Xms32m -Xmx192m -XX:+UseSerialGC -XX:ActiveProcessorCount=1",
+          "DATOMIC_JAVA_OPTS=-Xms32m -Xmx192m -XX:+UseSerialGC -XX:ActiveProcessorCount=1 -Ddatomic.objectCacheMax=32m -Ddatomic.memoryIndexThreshold=8m -Ddatomic.memoryIndexMax=32m",
           tx!,
           "/opt/datomic/bin/run",
           "-i",

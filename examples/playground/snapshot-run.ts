@@ -51,7 +51,7 @@ export async function runSnapshot(options: Options) {
   try {
     const capture = await initial.ready;
     const checkpoint = await capture.snapshotCheckpoint(plan);
-    const index = await capture.settleSnapshot(checkpoint);
+    const index = await capture.settleSnapshot(checkpoint, (settings.memoryScale ?? 1) > 1);
     const buildPeaks = await initial.stack.memoryPeaks();
     const collection = options.collection
       ? await initial.stack.collect(index.database, options.collection)
