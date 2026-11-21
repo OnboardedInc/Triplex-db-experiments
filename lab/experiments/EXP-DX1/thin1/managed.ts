@@ -6,7 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { memoryPlan } from "../int1/memory-plan.ts";
 import { nodeImage, pgImage } from "../v01/source.ts";
-import { type Writer } from "../v01/profile.ts";
+import { isWriter, type Writer } from "../v01/profile.ts";
 
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
 const scorecard = process.env.DX_V01_MAC_FIXTURE === "1";
@@ -190,6 +190,9 @@ function setup(compact: boolean) {
   assert(["original", "demand"].includes(gwPolicy) && ["following", "validated"].includes(readMode));
   assert(peerGc === "g1" || (gwPolicy === "demand" && peerGc === "elastic"));
   const writeOptionsAttempt = mode === "int1-adopted-proof" ? randomUUID() : undefined;
+  const scorecardWriter: Writer | undefined = writeOptionsAttempt
+    ? "per-person-ordered" === process.env.DX_V01_MAC_WRITER ? "per-person-ordered" : "grouped"
+    : undefined;
   for (const [n, slot] of slots.entries()) {
     const role = n === 0 ? "write" : "read";
     assert(!fs.existsSync(ownerFile(slot)), "Exclusive slot is in use");
@@ -201,7 +204,7 @@ function setup(compact: boolean) {
         : (compact ? "-Xms128m -Xmx600m" : "-Xms160m -Xmx896m") + " -Ddatomic.objectCacheMax=192m") +
       (compact ? " -Ddxthin.compact=yes" : "") + (memory ? " -Ddxthin.memory=yes" : "") +
       (mode === "int1-campaign-proof" ? " -Ddxthin.campaign=yes" : "") +
-      (writeOptionsAttempt ? " -Ddxthin.adopted=" + writeOptionsAttempt : "") +
+      (writeOptionsAttempt ? " -Ddxthin.adopted=" + writeOptionsAttempt + " -Ddxthin.scorecardWriter=" + scorecardWriter : "") +
       (nativePools ? " -Ddxthin.nativePools=yes -XX:NativeMemoryTracking=summary" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
       " -Ddxthin.secret=" +
@@ -217,7 +220,7 @@ function setup(compact: boolean) {
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
   write(cred, {
-    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt,
+    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, scorecardWriter,
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
     memoryPoints, nativePools,
     readerPages: process.env.DX_INT1_READER_PAGES === "1",
@@ -370,7 +373,7 @@ if (action === "--guest") {
         return /^(?:.*\/)?java$/.test(args[0] ?? "") ? [args.filter((v) => /^(-X|--add|datomic\.launcher|triplex\.gateway)/.test(v))] : [];
       } catch { return []; }
     });
-    assert(stack.managed.writeOptionsAttempt && commands.length >= 3);
+    assert(stack.managed.writeOptionsAttempt && isWriter(stack.managed.scorecardWriter) && commands.length >= 3);
     const residency = () => {
       const roles: Record<string, { rssBytes: number; threads: number }> = {};
       for (const pid of fs.readdirSync("/proc").filter((n) => /^\d+$/.test(n))) {
@@ -392,7 +395,7 @@ if (action === "--guest") {
     };
     await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
-      java: { placement: "owned Mac compact stack", commands }, residency }, "grouped" satisfies Writer);
+      java: { placement: "owned Mac compact stack", commands }, residency }, stack.managed.scorecardWriter);
   } else if (mode === "int1-campaign-proof") {
     assert(Number(rung) === 40);
     process.chdir(repo);

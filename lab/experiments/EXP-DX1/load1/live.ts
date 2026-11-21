@@ -71,7 +71,7 @@ export async function live(
   arm: string,
   server: boolean,
   mode = "load-live",
-  held?: { after: number; maxGroup: number; clockRun: string },
+  held?: { after: number; maxGroup: number; clockRun: string; referenceImport?: boolean },
 ) {
   const traceTail = mode === "load-tail",
     frontier = mode.startsWith("load-frontier-");
@@ -197,8 +197,13 @@ export async function live(
     try {
       assert.equal(input.operationId, reply.operationId);
       const bulk = command.startsWith("load1/");
-      assert(reply.bulkGrant && reply.bulkGrant.bulk === bulk);
-      if (bulk) assert(!reply.bulkGrant["runnable-live"] && reply.groupSize === 1);
+      // [DX-V01] Why: the per-person profile dispatches imports through the reference writer.
+      // Rejected: crediting that path with the grouped admission guarantees.
+      if (held?.referenceImport) assert(reply.bulkGrant == null && reply.serialHold == null);
+      else {
+        assert(reply.bulkGrant && reply.bulkGrant.bulk === bulk);
+        if (bulk) assert(!reply.bulkGrant["runnable-live"] && reply.groupSize === 1);
+      }
       assert(Number.isSafeInteger(reply.groupSize) && reply.groupSize >= 1 && reply.groupSize <= (held?.maxGroup ?? 8));
       retain({
         command,
@@ -576,7 +581,7 @@ export async function live(
         const recoveredWithoutTiming =
           (diagnosticVolume || (paced && !server)) && byCommand.get(entry.command)?.recovered;
         const service =
-          (budget || micro) && !recoveredWithoutTiming ? measure(entry.command) : undefined;
+          (budget || micro) && !recoveredWithoutTiming && !held?.referenceImport ? measure(entry.command) : undefined;
         if (micro) lastFrame = { frame: f, position: entry.position, ids: entry.ids };
         if (service && budget) budget.observe(entry.facts, service.ms);
         ordered.push({
@@ -632,7 +637,7 @@ export async function live(
         slot: process.env.TRIPLEX_TRACE_SLOT,
         scope,
         expectedDb,
-        ...(held ? { after: held.after } : {}),
+        ...(held ? { after: held.after, referenceImport: held.referenceImport } : {}),
         start,
         duration,
         clockBefore,

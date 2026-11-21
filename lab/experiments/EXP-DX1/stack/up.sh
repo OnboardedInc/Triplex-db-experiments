@@ -599,7 +599,7 @@ for role in "${gateway_roles[@]}"; do
     field_policy+=(-e "TX2_INT1_WRITE_READBACK=1" -e "TX2_PREDECESSOR_LOOKUP=${DX_PREDECESSOR_LOOKUP:-0}")
   fi
   if [[ $role == w && ${DX_V01_IMPORT_TIMING:-0} == 1 ]]; then
-    field_policy+=(-e TX2_LOAD1_PRIORITY=1 -e TX2_LOAD2_TIMING=1)
+    field_policy+=(-e "TX2_LOAD1_PRIORITY=${DX_GROUP_COMMIT:-0}" -e TX2_LOAD2_TIMING=1)
   fi
   if [[ $mode == r && ${DX_V01_ADOPTED_STACK:-0} == 1 && ${DX_W1_JOURNAL_QUERY:-0} == 1 ]]; then
     # [DX-V01] Why: the scorecard independently checks the layout K journal through the read peer.

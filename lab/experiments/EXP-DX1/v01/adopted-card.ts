@@ -12,11 +12,12 @@ type Observation = Awaited<ReturnType<typeof adoptedArm>>;
 const tag = (x: unknown) => (typeof x === "number" && Number.isFinite(x)) ? String(Number(x.toFixed(3))) : "—";
 export function writeAdoptedCard(run: Card) {
   const file = (arm: string, name: string) => path.join(run.campaign, arm, name);
-  const readArm = (arm: string, load: boolean) => {
+  const comparison = "grouped/campaign/";
+  const readArm = (arm: string, load: boolean, writer = run.writer) => {
     if (!fs.existsSync(file(arm, "arm.json"))) return [];
     const x: Observation = JSON.parse(fs.readFileSync(file(arm, "arm.json"), "utf8"));
     const bytes = fs.readFileSync(file(arm, "operations.json"));
-    assert.deepEqual([x.source, x.fixture, x.loaded], [run.source, run.toy, load]);
+    assert.deepEqual([x.source, x.fixture, x.loaded, x.writer], [run.source, run.toy, load, writer]);
     assert(x.startedAt <= x.start && x.start < x.endedAt && x.seed.head === x.firstCut);
     assert.equal(createHash("sha256").update(bytes).digest("hex"), x.observationsSha256);
     const raw = JSON.parse(bytes.toString());
@@ -33,7 +34,8 @@ export function writeAdoptedCard(run: Card) {
     return [{ ...x, dispatchToFeed: feed.summary(), tape: raw.tape }];
   };
   const [zero] = readArm("zero", false), [loaded] = readArm("loaded", true);
-  const arms = [zero, loaded].filter((arm) => arm !== undefined);
+  const [grouped] = run.writer === "per-person-ordered" ? readArm(comparison + "loaded", true, "grouped") : [];
+  const arms = [zero, loaded, grouped].filter((arm) => arm !== undefined);
   const inputsFile = path.join(run.campaign, "input.json");
   if (!run.toy && fs.existsSync(inputsFile)) {
     const input = JSON.parse(fs.readFileSync(inputsFile, "utf8"));
@@ -45,6 +47,12 @@ export function writeAdoptedCard(run: Card) {
     assert.deepEqual([zero.seed.originalCut, zero.tapeSha256], [loaded.seed.originalCut, loaded.tapeSha256]);
     if (!run.toy) assert.equal(zero.seed.imageSha256, loaded.seed.imageSha256);
   }
+  if (loaded && grouped) {
+    assert.deepEqual([loaded.firstCut, loaded.seed.originalCut, loaded.tapeSha256],
+      [grouped.firstCut, grouped.seed.originalCut, grouped.tapeSha256]);
+    assert.notEqual(grouped.attempt, loaded.attempt);
+    if (!run.toy) assert.equal(loaded.seed.imageSha256, grouped.seed.imageSha256);
+  }
   // [DX-V01] Why: a shortened tape can report exact observations while the original bars remain unqualified.
   // Rejected: awarding PASS from field-only reads, incomplete commit bands, or one verified arm.
   const base = emptyCard({ ...run, startedAt: new Date(zero?.startedAt ?? Date.now()).toISOString(),
@@ -54,14 +62,20 @@ export function writeAdoptedCard(run: Card) {
     return "[adopted arm](" + rel + ")";
   };
   const rows = new Map<string, string[]>();
-  if (loaded) {
+  const diagnostic = run.toy ? "DIAGNOSTIC" : "NOT MEASURED";
+  const p2Arms = [[loaded, "loaded"], [grouped, comparison + "loaded"]] as const;
+  const commit = p2Arms.flatMap(([a, dir]) => a ? [{
+    reading: `${a.writer} p50 ${tag(a.p2.latency.p50Ms)} ms, p99 ${tag(a.p2.latency.p99Ms)} ms (${a.p2.receipts}/${a.p2.offered} receipts)`,
+    samples: `${a.writer} ${a.p2.receipts}`, link: evidence(dir),
+  }] : []);
+  if (commit.length) rows.set("P2", [commit.map((c) => c.reading).join(" · ") + ". This tape edits 1–3 fields.",
+    diagnostic, commit.map((c) => c.samples).join(" · "), commit.map((c) => c.link).join(" · ")]);
+  if (loaded && run.writer === "per-person-ordered") {
     const phases = loaded.p1.map((p) => `L${p.seats} ${tag(p.goodput)}/s, p99 ${tag(p.read.p99Ms)} ms, ${p.errors} errors`).join("; ");
     const baseline = zero?.p2.latency.p99Ms;
     const ratio = baseline && loaded.p2.latency.p99Ms !== null ? loaded.p2.latency.p99Ms / baseline : null;
     rows.set("P1", [`${phases}. Whole-tape writer p99 ratio ${tag(ratio)}. Exact seed-cut field probes; full-world and recovery coverage remain open.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
       String(loaded.p1.reduce((a, p) => a + p.read.count, 0)), evidence("loaded")]);
-    rows.set("P2", [`Scheduled offer to ACK p50 ${tag(loaded.p2.latency.p50Ms)} ms, p99 ${tag(loaded.p2.latency.p99Ms)} ms. ${loaded.p2.receipts}/${loaded.p2.offered} receipts. This tape edits 1–3 fields.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
-      String(loaded.p2.receipts), evidence("loaded")]);
     rows.set("P3", [`${loaded.p3.entries} ordered exact changes; dispatch-to-observation p99 ${tag(loaded.dispatchToFeed.p99Ms)} ms across ${loaded.dispatchToFeed.count} observations. Durable effects and crash resume are open.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
       String(loaded.p3.entries), evidence("loaded")]);
     if (loaded.p4?.observed.count) rows.set("P4", [`Current demand pulls p50 ${tag(loaded.p4.observed.p50Ms)} ms, p99 ${tag(loaded.p4.observed.p99Ms)} ms. History depth and engine bytes remain open.`, run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
@@ -80,35 +94,50 @@ export function writeAdoptedCard(run: Card) {
         run.toy ? "DIAGNOSTIC" : "NOT MEASURED", `${p.cold.observed.count} first pulls and two residency points`, evidence("loaded")]);
     }
   }
-  const [alone] = readArm("p6-alone", false), [neighbors] = readArm("p6-235", true);
-  if (alone?.p6 && neighbors?.p6) {
-    const a = alone.p6, b = neighbors.p6;
+  const [neighbors] = readArm("p6-235", true);
+  const quietRows = (prefix: string, writer: Writer) => {
+    const [alone] = readArm(prefix + "p6-alone", false, writer), [loaded] = readArm(prefix + "p6-235", true, writer);
+    if (!alone?.p6 || !loaded?.p6) return;
+    if (!run.toy && fs.existsSync(inputsFile)) {
+      const { imagePin } = JSON.parse(fs.readFileSync(inputsFile, "utf8"));
+      assert.equal(alone.seed.imageSha256, imagePin);
+      assert.equal(loaded.seed.imageSha256, imagePin);
+    }
+    const a = alone.p6, b = loaded.p6;
     assert.deepEqual([a.quietCell, b.quietCell], ["alone", 235]);
     assert.deepEqual([alone.slot, alone.attempt, alone.seed.database, alone.terminal],
-      [neighbors.slot, neighbors.attempt, neighbors.seed.database, neighbors.firstCut]);
+      [loaded.slot, loaded.attempt, loaded.seed.database, loaded.firstCut]);
     const quiet = (ops: any[]) => ops.filter((e) => e.account === 0).map((e) => [e.ms, e.subject, e.width]);
-    assert.deepEqual(quiet(alone.tape), quiet(neighbors.tape));
+    assert.deepEqual(quiet(alone.tape), quiet(loaded.tape));
     assert.equal(a.read.planned, b.read.planned);
-    const ratio = (base: number | null, loaded: number | null) => tag(base && loaded !== null ? loaded / base : null);
+    const ratio = (base: number | null, observed: number | null) => tag(base && observed !== null ? observed / base : null);
     const total = (r: typeof a) => r.totalOffers + "/" + r.totalReceipts;
-    rows.set("P6", [`Quiet-account p99 ratios for commits ${ratio(a.commit.p99Ms, b.commit.p99Ms)}, pinned reads ${ratio(a.read.read.p99Ms, b.read.read.p99Ms)}, dispatch-to-feed ${ratio(a.feed.p99Ms, b.feed.p99Ms)}. ${total(a)} and ${total(b)} offers/receipts. ${a.read.errors + b.read.errors} read errors or missed offers. Durable effects, Publish and import overlap remain open.`,
-      run.toy ? "DIAGNOSTIC" : "NOT MEASURED",
-      `${a.commit.count}/${b.commit.count} commits, ${a.read.read.count}/${b.read.read.count} reads, ${a.feed.count}/${b.feed.count} feed observations`,
-      evidence("p6-alone") + " · " + evidence("p6-235")]);
-  }
+    return {
+      reading: `${writer} quiet p99 ratios for commits ${ratio(a.commit.p99Ms, b.commit.p99Ms)}, pinned reads ${ratio(a.read.read.p99Ms, b.read.read.p99Ms)}, dispatch-to-feed ${ratio(a.feed.p99Ms, b.feed.p99Ms)}. ${total(a)} and ${total(b)} offers/receipts. ${a.read.errors + b.read.errors} read errors or missed offers.`,
+      samples: `${writer} ${a.commit.count}/${b.commit.count} commits, ${a.read.read.count}/${b.read.read.count} reads, ${a.feed.count}/${b.feed.count} feed observations`,
+      link: evidence(prefix + "p6-alone") + " · " + evidence(prefix + "p6-235"),
+      tape: loaded.tape,
+    };
+  };
+  const primaryQuiet = quietRows("", run.writer);
+  const groupedQuiet = run.writer === "per-person-ordered" ? quietRows(comparison, "grouped") : undefined;
+  if (primaryQuiet && groupedQuiet) assert.deepEqual(primaryQuiet.tape, groupedQuiet.tape);
+  const quiet = [primaryQuiet, groupedQuiet].filter((arm) => arm !== undefined);
+  if (quiet.length) rows.set("P6", [quiet.map((a) => a.reading).join(" · ") + " Durable effects, Publish and import overlap remain open.",
+    diagnostic, quiet.map((a) => a.samples).join(" · "), quiet.map((a) => a.link).join(" · ")]);
   const importPath = file("p8", "result.json");
   if (fs.existsSync(importPath)) {
     const r = JSON.parse(fs.readFileSync(importPath, "utf8"));
     const bytes = fs.readFileSync(file("p8", "pace-32-fixed.offers.json"));
     assert(neighbors && r.proof.cut > r.after);
-    assert.deepEqual([r.source, r.toy, r.slot, r.nonce, r.db, r.after, r.arm],
-      [run.source, run.toy, neighbors.slot, neighbors.attempt, neighbors.seed.database, neighbors.terminal, "pace-32-fixed"]);
+    assert.deepEqual([r.source, r.toy, r.slot, r.nonce, r.db, r.after, r.arm, r.writer, r.referenceImport],
+      [run.source, run.toy, neighbors.slot, neighbors.attempt, neighbors.seed.database, neighbors.terminal, "pace-32-fixed", run.writer, true]);
     assert.equal(createHash("sha256").update(bytes).digest("hex"), r.sha256);
     const latency = Object.values(r.neighbors as Record<string, { read: { offered: number; ok: number; p99Ms: number }; save: { offered: number; ok: number; p99Ms: number } }>);
     const reads = latency.map((x) => x.read), saves = latency.map((x) => x.save);
     const totals = (rs: typeof reads) => rs.reduce((n, x) => n + x.ok, 0) + "/" + rs.reduce((n, x) => n + x.offered, 0);
     const max = (rs: typeof reads) => tag(Math.max(...rs.map((x) => x.p99Ms).filter((x) => Number.isFinite(x))));
-    rows.set("P8", [`The fixed-pace import in the adopted scope recorded ${tag(r.fps)} facts/s, ${r.queryableFacts} queryable by the window end, ${r.proof.facts} verified. Highest per-account p99 ${max(saves)} ms for saves and ${max(reads)} ms for reads. Matched pacing controls and held-roster contention remain open.`,
+    rows.set("P8", [`The fixed-pace import in the adopted scope recorded ${tag(r.fps)} facts/s, ${r.queryableFacts} queryable by the window end, ${r.proof.facts} verified. Highest per-account p99 ${max(saves)} ms for saves and ${max(reads)} ms for reads. This uses the reference import path alongside the per-person configuration. Grouped admission guarantees and matched pacing controls remain open.`,
       run.toy ? "DIAGNOSTIC" : "NOT MEASURED", `${r.proof.observed} exact frames, ${totals(saves)} saves and ${totals(reads)} reads`,
       "[import arm](" + path.relative(run.out, importPath) + ")"]);
   }
@@ -117,9 +146,12 @@ export function writeAdoptedCard(run: Card) {
     P5: "The published INT1 Publish producer creates its own flat scope. No adapter binds it to the held SCALE1 roster and live release cut.",
     P6: "No verified same-scope alone and 235-save quiet-account pair from this attempt.",
     P9: "One-host rehearsal requires the published HASYNC1 legacy PostgreSQL base backup, compatible ten-account proofs and two 10-minute windows. The held SCALE1 K archive is a logical dump. Each qualifying fault or move measurement needs two servers.",
-    P8: run.writer === "subject" ? "The published pacing oracle requires grouped writer grant metadata." : "No verified fixed-pace import arm from this attempt.",
+    P8: "No verified fixed-pace import arm from this attempt.",
   };
   const text = base.split("\n").map((line) => {
+    if (line === "## Run settings") return (run.writer === "per-person-ordered"
+      ? "Per-person-ordered runs the full adopted workload. Grouped repeats P2 and P6 only."
+      : "Grouped comparison only. This attempt covers P2 and P6.") + "\n\n" + line;
     if (line === "Population ten accounts of four deep people.") {
       if (run.toy) return "Population ten deep accounts in one SCALE1 toy database.";
       return "Population ten deep accounts of 100,000 people in one SCALE1 database." +
@@ -128,12 +160,13 @@ export function writeAdoptedCard(run: Card) {
     const match = /^\| ((P\d) [^|]+|Journal queryable|Receipts) \| ([^|]+) \|/.exec(line);
     const key = match?.[2] ?? match?.[1]?.trim();
     if (!key || !match) return line;
-    const values = rows.get(key) ?? (field.includes(key) ? [gaps[key] ?? "No same-seed adapter for this row at this revision.", "NOT MEASURED", "0", "—"] : undefined);
+    const values = rows.get(key) ?? (run.writer === "grouped" && /^P[13478]$/.test(key) ? ["Grouped comparison covers P2 and P6.", "NOT MEASURED", "0", "—"] : field.includes(key) ? [gaps[key] ?? "No same-seed adapter for this row at this revision.", "NOT MEASURED", "0", "—"] : undefined);
     return values ? `| ${match[1]!.trim()} | ${match[3]!.trim()} | ${values.join(" | ")} |` : line;
   }).join("\n").replaceAll("No compatible measurement from this attempt.", run.failure ?? "No compatible measurement from this attempt.");
   const settings = {
     ...selectedWriter(run.writer),
     ...(run.toy ? {} : { physicalJvm: physicalJvm() }),
+    ...(run.writer === "per-person-ordered" ? { comparison: selectedWriter("grouped") } : {}),
     armReadbacks: arms.map((a) => a.settings),
   };
   fs.writeFileSync(path.join(run.out, "SCORECARD-v0.1.md"),

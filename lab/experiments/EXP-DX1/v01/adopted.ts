@@ -62,7 +62,7 @@ async function quietReads(client: DatomicClient, seed: AdoptedSeed, start: numbe
     errors: sides.flatMap((r) => r.samples).filter((s) => s.error).length };
 }
 
-async function preload(client: DatomicClient, seed: AdoptedSeed, head: number, tape: Write[]) {
+async function preload(client: DatomicClient, seed: AdoptedSeed, head: number, tape: Write[], writer: Writer) {
   const senders: Sender[] = [];
   for (const a of accounts) {
     const entities = [...new Set(tape.filter((x) => x.account === a).map((x) => task(a, x.subject)))];
@@ -79,7 +79,7 @@ async function preload(client: DatomicClient, seed: AdoptedSeed, head: number, t
         return value[0]!;
       }));
     }
-    senders.push({ client, scope: { ...seed.scope, cut: head }, rows });
+    senders.push({ client, scope: { ...seed.scope, cut: head }, rows, ordered: writer === "per-person-ordered" });
   }
   return senders;
 }
@@ -161,20 +161,23 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       [peer.attempt, seed.scope.db, startHead, peer.gatewaySource]);
     assert(options.commitFunctionInstalled && options.strictRecordClocks && options.rowsVersion === 3);
     assert.match(options.commitFunction, /^:triplex\.write\/v-[a-f0-9]{24}$/);
-    assert.equal(options.subjectSave === true, writer === "subject");
-    if (writer === "subject") assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/);
+    assert.equal(options.subjectSave === true, writer === "per-person-ordered");
+    if (writer === "per-person-ordered") {
+      assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/);
+      assert(options.subjectOrderedIds && options.subjectNumericOwner && !options.subjectPrefetch);
+    }
     assert.deepEqual([options.options.predecessorLookup, options.options.smallRows, options.options.ledger,
       options.options.packedJournal, options.options.groupCommit, options.options.reusePrepared,
       options.options.fastReply, options.options.livePriority, options.options.fieldCoalesce,
       options.options.stageClock, options.options.queueClock, options.options.maxMembers],
-    [true, true, true, false, writer === "grouped", writer === "grouped", true, true, false, true, false, 32]);
-    const p7 = quietCell === undefined && peer.empty && peer.residency ? {
+    [true, writer === "grouped", writer === "grouped", false, writer === "grouped", writer === "grouped", true, writer === "grouped", false, true, false, 32]);
+    const p7 = quietCell === undefined && writer !== "grouped" && peer.empty && peer.residency ? {
       empty: peer.empty, restored: await peer.residency(), people: seed.image.people * accounts.length,
       cold: await currentPull(reader, seed, seed.scope.cut, toy, true),
     } : undefined;
     const seconds = toy ? 8 : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds(quietCell);
     const tape = quietCell === undefined ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell, toy);
-    const senders = await preload(writerClient, seed, startHead, tape);
+    const senders = await preload(writerClient, seed, startHead, tape, writer);
     const start = now() + 1200;
     const interval = seconds * 1000;
     feeding = feeder(journal, seed.scope.db, startHead, start + interval + 120_000, () => terminal);
@@ -197,6 +200,13 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       const r = row.receipt!, actual = byPosition.get(r.p);
       assert(actual);
       assert.deepEqual([actual.id, actual.tx, actual.clock, actual.digest], [row.id, r.tx, r.clock, r.digest]);
+      if (writer === "per-person-ordered") {
+        assert(row.orderedToken && r.tx === "_tx/" + row.orderedToken + "00");
+        if (row.status === "acked") {
+          assert.equal(row.stage?.subjectSave, options.subjectFunction);
+          assert.equal(row.stage?.subjectOrderedIds, true);
+        }
+      }
       saveHistogram.recordMs(row.end! - row.due);
     }
     for (const row of saves.filter((_, i) => i === 0 || i === saves.length - 1 || i % 100 === 0)) {
@@ -205,7 +215,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         ["committed", row.id, r.p, r.t, r.clock]);
       assert.equal(await writerClient.claim(seed.scope.db, row.id, r.p), r.tx);
     }
-    const pulls = loaded && quietCell === undefined ? await currentPull(reader, seed, terminal, toy) : undefined;
+    const pulls = loaded && writer !== "grouped" && quietCell === undefined ? await currentPull(reader, seed, terminal, toy) : undefined;
     let p6;
     if (quietRead) {
       const writes = new Histogram(), delivered = new Histogram();
@@ -220,7 +230,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     }
     const evidence = path.join(out, "operations.json");
     jsonFile(evidence, { writes: writes.rows, journal: feed, tape, p7 });
-    const result = { source, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
+    const result = { source, writer, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
       loaded, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
       observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java },
       p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
@@ -248,7 +258,7 @@ export async function quietPair(out: string, source: string, peer: Peer, seed: A
 export async function adoptedToy(out: string, source: string, peer: Peer, writer: Writer) {
   assert(!process.env.DX_THIN_MEASURE);
   peer.empty = await peer.residency?.();
-  for (const loaded of [false, true]) {
+  for (const loaded of writer === "grouped" ? [true] : [false, true]) {
     const folder = path.join(out, loaded ? "loaded" : "zero");
     fs.mkdirSync(folder);
     const nonce = randomUUID();
@@ -262,7 +272,7 @@ export async function adoptedToy(out: string, source: string, peer: Peer, writer
     if (loaded) {
       const cut = await quietPair(out, source, peer, seed, writer, true, arm.terminal);
       const { runImport } = await import("./import-arm.ts");
-      runImport(out, source, peer, seed, writer, true, cut);
+      if (writer === "per-person-ordered") runImport(out, source, peer, seed, writer, true, cut);
     }
   }
 }

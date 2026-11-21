@@ -9,7 +9,7 @@ test("the held-seed card preserves all obligations after a stopped campaign", (t
   const out = fs.mkdtempSync(path.join(os.tmpdir(), "dx-v01-adopted-card-"));
   t.after(() => fs.rmSync(out, { recursive: true, force: true }));
   writeAdoptedCard({
-    source: "a".repeat(40), age: "fresh", writer: "subject", toy: true,
+    source: "a".repeat(40), age: "fresh", writer: "per-person-ordered", toy: true,
     campaign: path.join(out, "campaign"), out, forecast: "Budget 235 minutes",
     failure: "The campaign stopped. See the retained log.",
   });

@@ -8,13 +8,13 @@ import { restoreDump } from "../scale1/seed-image.ts";
 import { adoptedArm, jsonFile, quietPair, type Residency } from "./adopted.ts";
 import { nativeMetrics } from "../thin1/native-metrics.ts";
 import { openScaleSeal, hex } from "./adopt.ts";
-import { stackOptions, type Age, type Writer } from "./profile.ts";
+import { budget, isWriter, stackOptions, type Age } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
 
-const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, writer, agedFile, agedPin, agedDump, agedDumpPin] = process.argv.slice(2);
+const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, agedFile, agedPin, agedDump, agedDumpPin] = process.argv.slice(2);
 assert(source && campaign && seedDir && imagePin && transferPin);
 assert(age === "fresh" || age === "1B");
-assert(writer === "grouped" || writer === "subject");
+assert(isWriter(requestedWriter));
 const end = Number(deadlineText);
 assert(Number.isSafeInteger(end) && end > Date.now());
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"), queue = fs.statSync(`/proc/${process.ppid}/fd/9`);
@@ -25,15 +25,23 @@ verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
 fs.mkdirSync(campaign);
-jsonFile(path.join(campaign, "input.json"), { source, age, writer, imagePin, transferPin, originalScope: seed.scope,
+jsonFile(path.join(campaign, "input.json"), { source, age, writer: requestedWriter, imagePin, transferPin, originalScope: seed.scope,
   agedBundle: expected?.pin, agedDump: expected?.dumpPin });
 let stopping = false;
 const stop = () => { stopping = true; };
 process.on("SIGTERM", stop);
 process.on("SIGINT", stop);
-for (const loaded of [false, true]) {
-  assert(!stopping && Date.now() + 10 * 60_000 < end);
-  const out = path.join(campaign, loaded ? "loaded" : "zero");
+const orderedEnd = Date.now() + budget.adoptionAndP1to4 * 60_000;
+const groupedDir = path.join(campaign, "grouped", "campaign");
+if (requestedWriter === "per-person-ordered") fs.mkdirSync(groupedDir, { recursive: true });
+const stages = requestedWriter === "per-person-ordered"
+  ? [{writer: requestedWriter, loaded: false}, {writer: requestedWriter, loaded: true}, {writer: "grouped", loaded: true}] as const
+  : [{writer: requestedWriter, loaded: true}] as const;
+for (const { writer, loaded } of stages) {
+  const stageEnd = writer === "per-person-ordered" ? orderedEnd : Math.min(end, Date.now() + budget.comparison * 60_000);
+  assert(!stopping && Date.now() + 10 * 60_000 < stageEnd);
+  const root = writer === "grouped" && requestedWriter !== writer ? groupedDir : campaign;
+  const out = path.join(root, loaded ? "loaded" : "zero");
   fs.mkdirSync(out);
   const floor = age === "1B" ? 320 : 240;
   assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the disposable restore");
@@ -51,23 +59,23 @@ for (const loaded of [false, true]) {
         containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
       return observed.roles as Residency;
     };
-    const empty = await residency();
+    const empty = writer === "per-person-ordered" ? await residency() : undefined;
     await restoreDump(expected?.dump ?? seed.dump, expected?.dumpPin ?? seed.image.sha256, slot, engines,
-      Math.min(end - 10 * 60_000, Date.now() + 42 * 60_000));
+      Math.min(stageEnd - 10 * 60_000, Date.now() + 42 * 60_000));
     const write = `http://${engines["gw-w"]!.address}:8080`;
     const read = `http://${engines["gw-r"]!.address}:8080`;
     const jw = await readJvm(engines);
     const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
     assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
     const head = expected ? await verifyAged(expected, out, engines.pg!.address) : seed.scope.cut;
-    assert(!stopping && Date.now() + 8 * 60_000 < end);
+    assert(!stopping && Date.now() + 8 * 60_000 < stageEnd);
     const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency };
-    const arm = await adoptedArm(out, source, peer, seed, writer as Writer, loaded, false, head);
+    const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head);
     if (loaded && !stopping) {
-      const cut = await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
-      if (!stopping) {
+      const cut = await quietPair(root, source, peer, seed, writer, false, arm.terminal);
+      if (!stopping && writer === "per-person-ordered") {
         const { runImport } = await import("./import-arm.ts");
-        runImport(campaign, source, peer, seed, writer, false, cut);
+        runImport(root, source, peer, seed, writer, false, cut);
       }
     }
   } finally {

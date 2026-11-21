@@ -3,28 +3,29 @@ import { execFileSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
-import { budget, ceiling, pairSeconds } from "./profile.ts";
+import { budget, ceiling, isWriter, pairSeconds } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
 
 const { values } = parseArgs({
   options: {
     age: { type: "string" }, seed: { type: "string" }, "image-sha256": { type: "string" },
-    "transfer-sha256": { type: "string" }, writer: { type: "string", default: "grouped" },
+    "transfer-sha256": { type: "string" }, writer: { type: "string", default: "per-person-ordered" },
     "aged-bundle": { type: "string" }, "aged-bundle-sha256": { type: "string" }, "aged-dump": { type: "string" },
     "aged-dump-sha256": { type: "string" }, out: { type: "string" }, commit: { type: "string" },
     "hourly-usd": { type: "string", default: "1.09" }, help: { type: "boolean" }, plan: { type: "boolean" },
   },
 });
 if (values.help) {
-  console.log("scorecard.mjs --age fresh|1B --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer grouped|subject]\nFor 1B add --aged-bundle FILE --aged-bundle-sha256 SHA --aged-dump FILE --aged-dump-sha256 SHA.\nscorecard.mjs --plan");
+  console.log("scorecard.mjs --age fresh|1B --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer per-person-ordered|grouped]\nFor 1B add --aged-bundle FILE --aged-bundle-sha256 SHA --aged-dump FILE --aged-dump-sha256 SHA.\nscorecard.mjs --plan");
   process.exit(0);
 }
 const price = Number(values["hourly-usd"]);
 assert(/^\d+(?:\.\d+)?$/.test(values["hourly-usd"]!) && Number.isFinite(price) && price > 0);
-const forecast = `Budget ${ceiling} minutes including cleanup, up to USD ${(ceiling / 60 * price).toFixed(2)} per age. This revision allocates ${budget.adoptionAndP1to4} minutes to restore and partial P1–P4 coverage, including ${pairSeconds / 60} minutes of matched offers. Quiet-account pairing has ${budget.P6} minutes, first reads and census ${budget.P7}, and grouped import pacing ${budget.P8}. Build and AGE1 provisioning are separate.`;
+assert(isWriter(values.writer), "Choose per-person-ordered or grouped");
+const minutes = values.writer === "grouped" ? budget.comparison + budget.cleanup : ceiling;
+const forecast = `Budget ${minutes} minutes including cleanup, up to USD ${(minutes / 60 * price).toFixed(2)} per age. Per-person-ordered runs the full adopted workload and includes a separate grouped comparison for P2 and P6. Grouped alone repeats only that comparison. The physical pair uses ${pairSeconds / 60} minutes of matched offers. Build and AGE1 provisioning are separate.`;
 if (values.plan) { console.log(forecast); process.exit(0); }
 assert(values.age === "fresh" || values.age === "1B");
-assert(values.writer === "grouped" || values.writer === "subject");
 assert(values.commit && values.out && values.seed && values["image-sha256"] && values["transfer-sha256"]);
 const aged = [values["aged-bundle"], values["aged-bundle-sha256"], values["aged-dump"], values["aged-dump-sha256"]];
 assert(values.age === "1B" ? aged.every(Boolean) : aged.every((v) => !v));
@@ -36,8 +37,8 @@ const out = path.resolve(values.out), campaign = path.join(out, "campaign");
 fs.mkdirSync(out, { mode: 0o700 });
 console.log(forecast);
 const fd = fs.openSync(path.join(out, "campaign.log"), "wx", 0o600);
-const child = spawn("timeout", ["--kill-after=" + budget.cleanup + "m", String(budget.adoptionAndP1to4 + budget.P6 + budget.P7 + budget.P8 + 1) + "m", "bash",
-  "lab/experiments/EXP-DX1/v01/adopted-server.sh", source, campaign, String(Date.now() + budget.adoptionAndP1to4 * 60_000),
+const child = spawn("timeout", ["--kill-after=" + budget.cleanup + "m", String(minutes - budget.cleanup) + "m", "bash",
+  "lab/experiments/EXP-DX1/v01/adopted-server.sh", source, campaign, String(Date.now() + (minutes - budget.cleanup) * 60_000),
   path.resolve(values.seed), values["image-sha256"], values["transfer-sha256"], values.age, values.writer,
   ...aged.map((v) => v ?? "")], {
   stdio: ["ignore", fd, fd],

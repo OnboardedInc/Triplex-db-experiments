@@ -2,11 +2,14 @@ import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { isWriter } from "./profile.ts";
 import { cleanSource, packageBytes } from "./source.ts";
 
-const [action, commit, argument] = process.argv.slice(2);
+const [action, commit, argument, writerArg] = process.argv.slice(2);
 assert(process.platform === "darwin" && commit && argument && path.isAbsolute(argument));
 assert(["--packages", "--image", "--fixture", "--publish-fixture"].includes(action ?? ""));
+const writer = writerArg ?? (action === "--publish-fixture" ? "grouped" : "per-person-ordered");
+assert(isWriter(writer));
 const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 cleanSource(head);
 assert.match(commit, /^[a-f0-9]{40}$/);
@@ -67,15 +70,22 @@ if (action === "--packages") {
     console.log("Mac evidence staging " + fixture);
     const campaign = path.join(fixture, "campaign");
     fs.mkdirSync(campaign);
-    try {
-      managed(["--arm-compact", build, "int1-adopted-proof", "80", fixture]);
-    } catch (error) {
-      console.error(error);
-      process.exitCode = 1;
+    const fixtures = action === "--fixture" && writer === "per-person-ordered"
+      ? [["per-person-ordered", fixture], ["grouped", path.join(campaign, "grouped")]] as const : [[writer, fixture]] as const;
+    for (const [configuration, output] of fixtures) {
+      if (output !== fixture) fs.mkdirSync(path.join(output, "campaign"), { recursive: true });
+      try {
+        execFileSync(process.execPath, ["--no-warnings", "--experimental-transform-types",
+          "lab/experiments/EXP-DX1/thin1/managed.ts", "--arm-compact", build, "int1-adopted-proof", "80", output],
+        { env: { ...env, DX_V01_MAC_WRITER: configuration }, stdio: "inherit" });
+      } catch (error) {
+        console.error(error);
+        process.exitCode = 1;
+      }
     }
     if (action === "--fixture") {
       const { writeAdoptedCard } = await import("./adopted-card.ts");
-      writeAdoptedCard({ source: commit, age: "fresh", writer: "grouped", toy: true, campaign,
+      writeAdoptedCard({ source: commit, age: "fresh", writer, toy: true, campaign,
         out: fixture, forecast: "Mac diagnostics from the SCALE1 loader fixture." });
     }
   }
