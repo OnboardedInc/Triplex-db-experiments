@@ -489,6 +489,7 @@ async function run(configFile, config, mode) {
       });
       assert(observed.phase.bulkLoaded && observed.phase.indexedRecords >= config.target);
       finishJvmLogs();
+      stableFloor();
       write(path.join(rung, "bulk-loaded.json"), { ...observed, attempt, source: binding.source, machineHash: binding.machineHash,
         imageSha: binding.imageSha, db: binding.db, checkpointSha: fileSha(state), calibrationSha: calibration.certificateSha,
         transactor: binding.java.find((p) => p.pid === binding.options.txPid),

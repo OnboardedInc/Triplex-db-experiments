@@ -118,7 +118,9 @@ export async function continueLoad({
       Math.min(until(), wallStart + epochMinutes * minute), deadline, config.target);
     const maint = await checkpoint(tag + "-maintenance", phase.t, phase.indexedRecords, collect);
     const finishedAt = Date.now();
-    const creditedSeconds = (finishedAt - (i === 1 ? origin.started : cycles.at(-1).finishedAt)) / 1000;
+    // [DX-AGE1] Why: one-time cleanup of the archived ladder belongs to elapsed budget.
+    // Rejected: treating that inherited garbage backlog as part of every future cycle's steady rate.
+    const creditedSeconds = (finishedAt - cycles.at(-1).finishedAt) / 1000;
     const combinedRate = (maint.records - already) / creditedSeconds;
     // [DX-AGE1] Why: charge indexing, garbage collection and vacuum to the load budget.
     // Rejected: forecasting the full import solely from the write burst before maintenance.
