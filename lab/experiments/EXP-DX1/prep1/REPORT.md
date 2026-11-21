@@ -1,8 +1,8 @@
 ## Part 15 · fresh-first over rolling credits
 
-Rolling 6 stored all 118,200 offers at 394/s. It delivered 391.85/s in-window and still had 5.07 s second-half p99. [Busy and quiet readings](ROLLING-RESULTS.md)
+Use rolling 6 for the one-branch headline. At 394/s it stored all 118,200 offers, with a 5.07 s late p99. Rolling 12 had a shorter late busy tail but nearly doubled quiet p99. [Busy and quiet readings](ROLLING-RESULTS.md)
 Fresh-first protects the newest eligible heads for other people and serves overdue work at least every eighth neighbour grant when both groups stay ready. It keeps the quiet reservation, same-person order and the existing 30-second expiry.
-Use the [three-arm command and forecasts](FRESH-FIRST.md) for the unchanged scheduler, fresh-first and fresh-first with Java 25 ZGC on the write gateway.
+Server source and fresh-first code commit `891ab9139eb4fa6defe2c5484ada332b84090e6f`. The [three-arm command](FRESH-FIRST.md#server-handoff) pins this checkout and covers rolling 6, fresh-first and fresh-first with writer Java 25 ZGC.
 The SQL gates reopened all 60 and 70 expected receipts at widths 6 and 16. They found the original lost receipts, no commits for either refused append window, and 108 exact immediate pinned reads.
 The fresh-first gate forced a mixed-age queue. The quiet offer went first, a fresh offer for another person overtook overdue work, and the overdue person's successor committed in order.
 At 394, the forecast for fresh-first plus writer ZGC is 393 in-window and 394/s late, with whole p99 300 ms, late p99 48 ms and 45 ms loaded quiet p99. These are predictions. No full-size fresh-first measurements are available.

@@ -14,7 +14,7 @@ On the assigned physical host, use a clean, built checkout at the server revisio
 
 ```bash
 DX_PREP1_FRESH_CREDITS=6 DX_BARE_METAL=1 node lab/bin/heavy.mjs --label DX-PREP1-fresh -- \
-  bash lab/experiments/EXP-DX1/prep1/server.sh fresh "$OUT" "$(git rev-parse HEAD)" \
+  bash lab/experiments/EXP-DX1/prep1/server.sh fresh "$OUT" 891ab9139eb4fa6defe2c5484ada332b84090e6f \
   "$SCALE1_IMAGE" 77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b \
   1fabec59f36ca6fa1cdfb0070d6c85258fa310b1ab3b96d5ab75dd62dc06a154 \
   --pg-data "$SCALE1_PGDATA" --wal-mount "$SCALE1_WAL_MOUNT" --write-jvm j25-zgc
@@ -40,4 +40,4 @@ All numbers are predictions. Busy rate is in-window ACKs per second. Busy latenc
 | Fresh-first + writer ZGC | 394 | 393 / 394 | 9 / 300 | 8 / 48 | 18 → 45 |
 | Fresh-first + writer ZGC | 620 | 468 / 483 | 21 / 29,980 | 20 / 29,980 | 14 → 49 |
 
-At 235 and 394 prefer zero expiry. At 620 the respective forecasts imply roughly 36k, 48k and 44k expiries after drain, since the queue policy leaves some older work in debt. The throughput forecast for fresh-first depends on sender CPU staying well below one full core. The ZGC prediction depends on less pause overlap without a new writer CPU bottleneck. Reject the policy if it shifts tail time to overdue people without reducing original-clock busy p99 or decreases durable delivery materially at 394. The 50 ms target applies to the whole qualifying offer cohort, so even the forecast ZGC arm would leave that bar open despite a second half below 50 ms. [Fresh full-size reading](SCORECARD-FRESH-READING.md)
+The 235 and 394 forecasts assume zero expiry. At 620 the respective forecasts imply roughly 36k, 48k and 44k expiries after drain, since the queue policy leaves some older work in debt. The throughput forecast for fresh-first depends on sender CPU staying well below one full core. The ZGC prediction depends on less pause overlap without a new writer CPU bottleneck. Reject the policy if it shifts tail time to overdue people without reducing original-clock busy p99 or decreases durable delivery materially at 394. The 50 ms target applies to the whole qualifying offer cohort, so even the forecast ZGC arm would leave that bar open despite a second half below 50 ms. [Fresh full-size reading](SCORECARD-FRESH-READING.md)

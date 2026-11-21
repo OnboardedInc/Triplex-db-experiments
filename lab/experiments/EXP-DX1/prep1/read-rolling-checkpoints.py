@@ -3,9 +3,10 @@
 import argparse
 import hashlib
 import json
+import math
 from pathlib import Path
 import tarfile
-from rolling_latency import PhaseLatency, safepoints
+from rolling_latency import PhaseLatency, overlaps, safepoints
 
 
 SOURCE = "c8f903ce1142772751328b88d972cc527ca46dfc"
@@ -75,11 +76,73 @@ def checked_checkpoint(root, label, manifest, raw_root=None):
                         "creditHoldP99Ms", "barrierHoldP99Ms", "rollingCpu", "nativeIoPerSave",
                         "savesPerAppend", "readsByPredecessor")}
             out[key]["notYetAcked"] = [left["offers"] - first_acks, c["offered"] - c["inWindow"]]
+            # [DX-PREP1] Why: bound overlap without pretending separately ranked saves are the same rows.
+            # Rejected: adding p99s or subtracting them as a stage decomposition.
+            http_p99 = c["stageP99Ms"]["httpRoundTrip"]
+            possible_long_http = c["durable"] - math.ceil(c["durable"] * .99)
+            floors = {}
+            for side, half in (("firstHalf", left), ("secondHalf", right)):
+                at_least = half["acks"] - math.ceil(half["acks"] * .5) + 1 - possible_long_http
+                extra = half["ackedP50Ms"] - 50
+                if at_least > 0 and extra > http_p99:
+                    floors[side] = dict(savesAtLeast=at_least,
+                                        extraBeforeSendSec=at_least * (extra-http_p99) / 1000,
+                                        shareWithinSubcohort=(extra-http_p99) / extra)
+            out[key]["preSendFloor"] = floors
         ledger = read_delays(raw_root, plan, header, summary) if raw_root else None
         return dict(archiveSha256=archive_sha, source=SOURCE, slot=summary["slot"], nonce=summary["nonce"],
                     members=sorted(names), rawPresent=sorted(n for n in names if Path(n).name in {
                         "r394-loaded.json", "prep1-native.ndjson", "counters.ndjson", "prep1-gc-gw-w.log"}),
                     cells=out, rawDelayLedger=ledger)
+
+
+def resource_windows(phase, analysis, samples, index, credits, ticks):
+    start = int(phase["phaseStartNs"])
+    depth = 0
+    cap_spans = []
+    endpoints = []
+    for row in phase["rows"]:
+        if credits and row["account"] != 0 and row.get("ack") and "creditReleased" in row:
+            endpoints.extend(((row["creditGranted"], 1), (row["creditReleased"], -1)))
+    for when, delta in sorted(endpoints):
+        if depth == credits-1 and delta == -1:
+            cap_spans.append((cap_start, when))
+        depth += delta
+        assert 0 <= depth <= credits-1
+        if depth == credits-1 and delta == 1:
+            cap_start = when
+    assert depth == 0
+    apply_spans = []
+    for lo, hi, _ in sorted(analysis.applies):
+        if apply_spans and lo <= apply_spans[-1][1]:
+            apply_spans[-1] = (apply_spans[-1][0], max(hi, apply_spans[-1][1]))
+        else:
+            apply_spans.append((lo, hi))
+    second = phase["seconds"] // 2
+    windows = [(0, second), (second, phase["seconds"])]
+    if phase["label"] == "r394-loaded":
+        windows.extend((i, i+10) for i in range(0, phase["seconds"], 10))
+    out = []
+    for lo, hi in windows:
+        before, after = (min(samples, key=lambda s: abs(int(s["monoNs"])-start-i*1_000_000_000)) for i in (lo, hi))
+        seconds = (int(after["monoNs"])-int(before["monoNs"]))/1e9
+        assert seconds > 0
+        pins = {role: (end["usage_usec"]-before["cpu"][role]["usage_usec"])/(1e6*seconds)
+                for role, end in after["cpu"].items()}
+        pins["sender"] = (after["senderTicks"]-before["senderTicks"])/(ticks*seconds)
+        out.append(dict(fromSec=lo, toSec=hi,
+                        nativeApplyBusy=overlaps(apply_spans, lo*1000, hi*1000)/((hi-lo)*1000),
+                        neighbourCreditsFull=(overlaps(cap_spans, lo*1000, hi*1000)/((hi-lo)*1000)
+                                              if endpoints else None),
+                        cores=pins,
+                        checkpointCount={k: after["pg"]["checkpointer"][k]-before["pg"]["checkpointer"][k]
+                                         for k in ("num_timed", "num_requested")},
+                        walMs={k: after["pg"]["wal"][k]-before["pg"]["wal"][k]
+                               for k in ("wal_write_time", "wal_sync_time")},
+                        indexAdoptions=[round((x["start"]-start/1e6)/1000, 2)
+                                        for x in index if x["type"] == "index-adoption"
+                                        and lo <= (x["start"]-start/1e6)/1000 < hi]))
+    return out
 
 
 def read_delays(root, plan, header, summary):
@@ -96,6 +159,14 @@ def read_delays(root, plan, header, summary):
         return candidates[0]
 
     role_path = f"{slot}/trace/raw"
+    identity = json.loads(witnessed(arm, "counters-ready.json").read_bytes())
+    assert (identity["source"], identity["slot"], identity["attempt"]) == (SOURCE, slot, header["nonce"])
+    with witnessed(arm, "counters.ndjson").open() as data:
+        counters = [json.loads(line) for line in data]
+    with witnessed(role_path, "prep1-index.ndjson").open() as data:
+        index = [json.loads(line) for line in data]
+    assert index[-1] == {"attempt": header["nonce"], "type": "end", "dropped": 0}
+    assert all(row["attempt"] == header["nonce"] for row in index)
     pauses = {}
     for role in ("tx", "gw-w", "gw-r"):
         with witnessed(role_path, f"prep1-gc-{role}.log").open() as data:
@@ -119,8 +190,6 @@ def read_delays(root, plan, header, summary):
     assert ended
     out = {}
     for c in summary["cells"]:
-        if not c["cell"].endswith("-loaded"):
-            continue
         cell = c["cell"]
         phase = json.loads(witnessed(arm, f"{cell}.json").read_bytes())
         assert phase["label"] == cell and phase["seconds"] == 300
@@ -140,6 +209,9 @@ def read_delays(root, plan, header, summary):
                 analysis.add(row, block, member)
         assert checked == c["durable"]
         out[cell] = analysis.finished()
+        if cell.endswith("-loaded"):
+            out[cell]["resourceWindows"] = resource_windows(
+                phase, analysis, counters, index, summary["fairCredits"] if "rolling" in arm else 0, identity["ticks"])
     return out
 
 
