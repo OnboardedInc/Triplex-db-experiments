@@ -4,13 +4,17 @@ set -euo pipefail
 cd /opt/datomic
 export PREP1_MODE=$(cat /config/mode)
 export PREP1_ATTEMPT=$(cat /config/attempt)
+export TX2_SUBJECT_NUMERIC_OWNER=$(cat /config/subject-owner)
+export TX2_SUBJECT_PREFETCH=$(cat /config/subject-prefetch)
+export TX2_SUBJECT_ORDERED_IDS=$(cat /config/subject-ordered)
 if [[ "$PREP1_MODE" == subject-native-suite ]]; then
   # [DX-PREP1] Why: exercise the stock native suite with the real process setting on fresh memory scopes.
   # Rejected: adding PostgreSQL and a transactor for tests written to run in one JVM.
   export DATOMIC_EXT_CLASSPATH=/opt/gateway/src
   export DATOMIC_JAVA_OPTS="-Xms96m -Xmx768m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError"
   export TX2_SUBJECT_SAVE="$(cat /config/subject)"
-  printf 'PREP1_SUITE {"attempt":"%s","subject":%s}\n' "$PREP1_ATTEMPT" "$TX2_SUBJECT_SAVE"
+  printf 'PREP1_SUITE {"attempt":"%s","subject":%s,"numericOwner":%s,"orderedIds":%s}\n' \
+    "$PREP1_ATTEMPT" "$TX2_SUBJECT_SAVE" "$TX2_SUBJECT_NUMERIC_OWNER" "$TX2_SUBJECT_ORDERED_IDS"
   exec bin/run -m triplex.gateway.selftest
 fi
 work=$(mktemp -d)
@@ -114,6 +118,12 @@ if [[ "$PREP1_MODE" == "subject-recovery" || "$PREP1_MODE" == "subject-profile" 
   start_standby
 fi
 umask 077
+cache=32m index_threshold=32m
+if [[ "$PREP1_MODE" == "lookup-profile" ]]; then
+  # [DX-PREP1] Why: make index leaves compete for cache on a short fixture.
+  # Rejected: treating a fully resident Mac fixture as evidence that the serial path never fetches storage.
+  cache=32m index_threshold=8m
+fi
 cat >"$work/transactor.properties" <<EOF
 protocol=sql
 host=$addr
@@ -123,16 +133,21 @@ sql-driver-class=org.postgresql.Driver
 sql-url=jdbc:postgresql://$addr:5432/datomic
 sql-user=datomic
 sql-password=$secret
-memory-index-threshold=32m
+memory-index-threshold=$index_threshold
 memory-index-max=80m
-object-cache-max=32m
+object-cache-max=$cache
 log-dir=$work
 pid-file=$work/tx.pid
 EOF
 export PREP1_URL="http://$addr:8080"
 export DATOMIC_URI_TEMPLATE="datomic:sql://{db}?jdbc:postgresql://$addr:5432/datomic?user=datomic&password=$secret"
 export DATOMIC_EXT_CLASSPATH=/opt/gateway/src
-export DATOMIC_JAVA_OPTS="-Xms96m -Xmx368m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:MaxDirectMemorySize=64m -XX:+ExitOnOutOfMemoryError -Ddatomic.objectCacheMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json"
+export DATOMIC_JAVA_OPTS="-Xms96m -Xmx368m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:MaxDirectMemorySize=64m -XX:+ExitOnOutOfMemoryError -Ddatomic.objectCacheMax=$cache -Dtriplex.codec.spec=/opt/gateway/codec-spec.json"
+if [[ $PREP1_MODE == lookup-profile && $TX2_SUBJECT_PREFETCH == 1 ]]; then
+  # [DX-PREP1] Why: both arms need the same active native dispatcher on the one-CPU slot.
+  # Rejected: attaching hints to a transaction while native probe dispatch is disabled.
+  export DATOMIC_JAVA_OPTS="$DATOMIC_JAVA_OPTS -Ddatomic.prefetchProbes=true"
+fi
 java_role() { exec java -server $DATOMIC_JAVA_OPTS -cp "$(bin/classpath)" clojure.main "$@"; }
 # [DX-PREP1] Why: run the normal pinned launcher after attaching an attempt-local native observer.
 # Rejected: a separate JVM's SQL polling as a substitute for the actual durable append interval.
@@ -168,7 +183,8 @@ subject_workers() {
     TX2_SUBJECT_SAVE=$subject TX2_GROUP_COMMIT=$((1-subject)) TX2_LIVE_PRIORITY=$((1-subject)) \
       TX2_PREDECESSOR_LOOKUP=1 TX2_GROUP_REUSE_PREPARED=1 TX2_GROUP_STAGE_CLOCK=1 \
       TX2_GROUP_FAST_REPLY=1 TX2_INT1_WRITE_READBACK=1 TX2_SUBJECT_PROFILE=1 \
-      DATOMIC_JAVA_OPTS="-Xms$((128/n))m -Xmx${share}m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -Ddatomic.objectCacheMax=24m -Ddatomic.memoryIndexMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json" \
+      TX2_BULK_ROWS=2048 TX2_BULK_BYTES=1048576 \
+      DATOMIC_JAVA_OPTS="-Xms$((128/n))m -Xmx${share}m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -Ddatomic.objectCacheMax=32m -Ddatomic.memoryIndexMax=32m -Dtriplex.codec.spec=/opt/gateway/codec-spec.json" \
       java_role -i bin/bridge.clj -m triplex.gateway.main "$port" &
     children[$((4+i))]=$!
     PREP1_PEERS="${PREP1_PEERS:+$PREP1_PEERS,}http://$addr:$port"
@@ -216,6 +232,22 @@ case "$PREP1_MODE" in
         wal_snapshot "$arm" after
         stop_subject_workers "$n"
       done
+    done
+    ;;
+  lookup-profile)
+    arms=(A1 B1)
+    if [[ $TX2_SUBJECT_PREFETCH == 1 ]]; then arms=(B1 C1); fi
+    if [[ $TX2_SUBJECT_ORDERED_IDS == 1 ]]; then arms=(B1 D1); fi
+    for arm in "${arms[@]}"; do
+      subject=1
+      if [[ "$arm" == A1 ]]; then subject=0; fi
+      export TX2_SUBJECT_PREFETCH=0
+      if [[ "$arm" == C1 ]]; then export TX2_SUBJECT_PREFETCH=1; fi
+      export TX2_SUBJECT_ORDERED_IDS=0
+      if [[ "$arm" == D1 ]]; then export TX2_SUBJECT_ORDERED_IDS=1; fi
+      subject_workers 1 "$subject"
+      PREP1_ARM="$arm" node /config/probe.mjs
+      stop_subject_workers 1
     done
     ;;
   profile|cheap|census)

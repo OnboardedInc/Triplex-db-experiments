@@ -13,7 +13,7 @@ export function configuration(env = process.env) {
       ? level === "off"
         ? []
         : level === "summary"
-          ? ["node", "gateway"]
+          ? COMPONENTS.filter((component) => component !== "native-logs")
           : COMPONENTS
       : env.TRIPLEX_TRACE_COMPONENTS.split(",").filter(Boolean);
   if (
@@ -24,7 +24,16 @@ export function configuration(env = process.env) {
   if (level === "off" && requested.length) throw Error("Off cannot enable a recorder");
   const components = [...requested].sort();
   const has = (name) => components.includes(name);
-  if (env.DX_TX_NATIVE_JFR === "1" && has("native-logs"))
+  // [DX-TAIL1] Why: ordinary summary traces must retain native database/t even in an unconfigured scorecard.
+  // Rejected: synchronous vendor logs by default, and silently enabling another recorder in an ablation.
+  const nativeJfr =
+    env.DX_TX_NATIVE_JFR === "1" ||
+    (env.DX_TX_NATIVE_JFR !== "0" &&
+      level === "summary" &&
+      has("tx-jfr") &&
+      has("gateway") &&
+      !has("native-logs"));
+  if (nativeJfr && has("native-logs"))
     throw Error("Binary native TX capture requires native file logging off");
   const system = !!env.TRIPLEX_TRACE_SESSION || level !== "off";
   return {
@@ -38,7 +47,7 @@ export function configuration(env = process.env) {
     requireNodeCpuProfile: has("node") && env.DX_NODE_PROFILE === "1",
     requirePostgres: has("postgres"),
     requireTransactorFunction: has("tx-jfr") && has("gateway"),
-    requireTransactorStats: has("tx-jfr") && has("gateway") && env.DX_TX_NATIVE_JFR === "1",
+    requireTransactorStats: has("tx-jfr") && has("gateway") && nativeJfr,
     session: env.TRIPLEX_TRACE_SESSION ?? null,
     queueExpected: has("node"),
     nativeCommandBinding: has("node"),
@@ -52,6 +61,7 @@ export function configuration(env = process.env) {
         ["GW_JFR", has("gw-jfr")],
         ["POSTGRES", has("postgres")],
         ["NATIVE_LOGS", has("native-logs")],
+        ["TX_NATIVE_JFR", has("tx-jfr") && nativeJfr],
         ["SYSTEM", system],
       ].map(([key, value]) => [`TRIPLEX_TRACE_${key}`, value ? "1" : "0"]),
     ),

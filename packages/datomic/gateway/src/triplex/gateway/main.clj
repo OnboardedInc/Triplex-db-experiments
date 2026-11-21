@@ -1,5 +1,5 @@
 (ns triplex.gateway.main
-  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
+  (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [triplex.gateway.erase :as erase] [triplex.gateway.group :as group] [triplex.gateway.group-prepare :as prepared] [triplex.gateway.trace :as trace] [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty] [triplex.gateway.save-ledger :as ledger]
             [triplex.gateway.recent :as recent] [triplex.gateway.entity-cache :as entity-cache] [triplex.gateway.lean :as lean] [triplex.gateway.journal :as journal] [triplex.gateway.stats :as stats] [triplex.gateway.commit :as commit] [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]
             [triplex.gateway.predecessor :as pred] [triplex.gateway.packed-journal :as packed]
             [triplex.gateway.lean-feed :as lean-feed] [triplex.gateway.lean-query :as lean-query]
@@ -109,7 +109,11 @@
         entity (scope/entity db)
         selected (commit/entry db {} (lean/enabled? db))
         selected-id (d/entid db selected)
-        installed? (and selected-id (some? (storage/value db selected-id :db/fn)))]
+        installed? (and selected-id (some? (storage/value db selected-id :db/fn)))
+        guard (when prepared/enabled
+                (if prepared/basis-enabled prepared/basis-ident (prepared/active-guard)))
+        guard-id (when guard (d/entid db guard))
+        subject-t (when subject/enabled (subject/installed db))]
     (cond-> {:database name :attempt write-options-attempt
              :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")
              :t (str (d/basis-t db)) :position (storage/head-position name db)
@@ -117,6 +121,9 @@
              :rowsVersion (storage/value db entity :triplex.scope/rows-version)
              :commitFunction (str selected) :commitFunctionInstalled (boolean installed?)
              :baseFunctionHash (storage/value db entity :triplex.scope/commit-fn-hash)
+             :preparedWriter (when guard {:mode (if prepared/basis-enabled "basis" "full")
+                                          :guard (str guard)
+                                          :installed (boolean (and guard-id (storage/value db guard-id :db/fn)))})
              :options {:predecessorLookup pred/enabled :groupCommit group/enabled
                        :livePriority policy/priority? :fieldCoalesce policy/field-only?
                        :queueClock group/queue-clock :stageClock group/stage-clock
@@ -125,8 +132,11 @@
                        :bulkRows policy/bulk-rows :bulkBytes policy/bulk-bytes
                        :ledger (boolean (or ledger/enabled packed/enabled))
                        :packedJournal (boolean packed/enabled) :fastReply (boolean group/fast-reply)}}
-      subject/enabled (assoc :subjectSave true :subjectFunction (when (subject/installed db) (str subject/ident))
-                             :subjectFunctionTx (some-> (subject/installed db) str)))))
+      subject/enabled (assoc :subjectSave true :subjectFunction (when subject-t (str subject/ident))
+                             :subjectNumericOwner subject/numeric-owner?
+                             :subjectOrderedIds subject/ordered-ids?
+                             :subjectPrefetch (boolean (and subject/prefetch? (d/entid db subject/prefetch-ident)))
+                             :subjectFunctionTx (some-> subject-t str)))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
 ;; Rejected: timing the StringBuilder alone (response bytes are not ready yet).

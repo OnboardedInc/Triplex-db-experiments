@@ -20,6 +20,15 @@ test("the legacy import splits at complete subjects within the campaign frame li
   assert.equal(new Set(roots).size, people);
 });
 
+test("the driver and controller bind the same campaign with differently ordered options", () => {
+  for (const loaded of campaignCases([4]).filter((c) => c.load === "reader")) {
+    const controller = campaignTenant(loaded, true);
+    const { campaign, study, topology, physical } = controller;
+    const driver = { campaign, study, topology, physical };
+    assert.equal(tenantPlan(controller, "zero").sha256, tenantPlan(driver, "reader").sha256);
+  }
+});
+
 test("the full import can complete at the 3,000 facts per second floor", () => {
   for (const people of [10_000, 100_000]) {
     const field = campaignCases([people]).find((c) => c.profile === "field" && c.load === "reader")!;
@@ -67,6 +76,11 @@ test("the saved proof tapes bind all ten accounts and keep quiet offer slots and
     Array(10).fill(4),
   );
   const windows = campaignWindows(campaign, "reader");
+  const offerRate = (plan: typeof windows, name: string) => plan.find((w) => w.name === name)!.rates!;
+  assert.deepEqual(offerRate(windows, "import"), offerRate(windows, "import-control"));
+  assert.equal(offerRate(windows, "import")[1], 4.9 / 8);
+  const physical = campaignWindows(campaignTenant(loaded!, false), "reader");
+  assert.equal(offerRate(physical, "import")[1], 4.9);
   const offsets = (name: string) => {
     const w = windows.find((v) => v.name === name)!;
     return b.events

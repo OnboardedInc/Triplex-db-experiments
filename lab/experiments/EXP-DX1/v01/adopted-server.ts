@@ -1,0 +1,107 @@
+import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { readScaleJvms, scaleHost, startScaleStack } from "../scale1/bench.ts";
+import { launchProfile } from "../jvm1/launch.mjs";
+import { restoreDump } from "../scale1/seed-image.ts";
+import { adoptedArm, jsonFile, quietPair, type Residency } from "./adopted.ts";
+import { nativeMetrics } from "../thin1/native-metrics.ts";
+import { openScaleSeal, hex } from "./adopt.ts";
+import { stackOptions, type Age, type JvmProfile, type Writer } from "./profile.ts";
+import { cleanSource, verifyBuild } from "./source.ts";
+
+const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, writer, jvm, agedFile, agedPin, agedDump, agedDumpPin,
+  txJvm = jvm, walDirectory = ""] = process.argv.slice(2);
+assert(source && campaign && seedDir && imagePin && transferPin);
+assert(age === "fresh" || age === "1B");
+assert(writer === "grouped" || writer === "subject");
+const policy = launchProfile("server", { jvm: jvm as JvmProfile, txJvm: txJvm as JvmProfile });
+const end = Number(deadlineText);
+assert(Number.isSafeInteger(end) && end > Date.now());
+const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"), queue = fs.statSync(`/proc/${process.ppid}/fd/9`);
+assert.equal(lock.ino, queue.ino); assert.equal(lock.dev, queue.dev);
+scaleHost.physical();
+process.env.DX_BARE_METAL = "1";
+verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
+const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin);
+const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
+fs.mkdirSync(campaign);
+jsonFile(path.join(campaign, "input.json"), { source, age, writer, policy, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
+  agedBundle: expected?.pin, agedDump: expected?.dumpPin });
+let stopping = false;
+const stop = () => { stopping = true; };
+process.on("SIGTERM", stop);
+process.on("SIGINT", stop);
+for (const loaded of [false, true]) {
+  assert(!stopping && Date.now() + 10 * 60_000 < end);
+  const out = path.join(campaign, loaded ? "loaded" : "zero");
+  fs.mkdirSync(out);
+  const floor = age === "1B" ? 320 : 240;
+  assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the disposable restore");
+  const attempt = randomUUID();
+  const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
+  jsonFile(path.join(out, "attempt.json"), { source, tag: path.basename(out), slot, attempt });
+  assert(Object.values(scaleHost.childrenInventory(slot)).every((x) => x.length === 0));
+  try {
+    const { engines } = startScaleStack(out, slot, source, writer === "grouped", stackOptions(writer, attempt), { policy, walDirectory });
+    const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
+    const residency = async () => {
+      const { write, read } = peerUrls();
+      const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
+      assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
+      const observed = await nativeMetrics({ prefix: slot, writeUrl: write, readUrl: read, gatewaySourceSha256: health.gatewaySourceHash,
+        containers: Object.entries(engines).map(([role, e]) => ({ id: e.id, name: `${slot}-${role}`, imageId: e.image })) });
+      return observed.roles as Residency;
+    };
+    const empty = await residency();
+    await restoreDump(expected?.dump ?? seed.dump, expected?.dumpPin ?? seed.image.sha256, slot, engines,
+      Math.min(end - 10 * 60_000, Date.now() + 42 * 60_000));
+    const write = `http://${engines["gw-w"]!.address}:8080`;
+    const read = `http://${engines["gw-r"]!.address}:8080`;
+    const jw = readScaleJvms(path.join(out, "restored-jvm"), engines, policy);
+    const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
+    assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
+    const head = expected ? await verifyAged(expected, out, engines.pg!.address) : seed.scope.cut;
+    assert(!stopping && Date.now() + 8 * 60_000 < end);
+    const peer = { write, read, slot, attempt, gatewaySource: health.gatewaySourceHash, java: jw, empty, residency };
+    const arm = await adoptedArm(out, source, peer, seed, writer as Writer, loaded, false, head);
+    if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
+  } finally {
+    scaleHost.clean(out, slot);
+  }
+}
+
+function openAged(label: Age, file?: string, pin?: string, dump?: string, dumpPin?: string) {
+  assert(label === "1B" && file && pin && dump && dumpPin && /^[a-f0-9]{64}$/.test(dumpPin));
+  const bytes = fs.readFileSync(file);
+  assert.equal(hex(bytes), pin);
+  const bundle = JSON.parse(bytes.toString());
+  assert.equal(bundle.version, "triplex-age1-scorecard/1");
+  assert.equal(bundle.sourceSeed?.["manifest-sha"], seed.pin);
+  assert.equal(bundle.scope, seed.key);
+  assert(Number.isSafeInteger(bundle.logicalHead) && bundle.logicalHead > seed.scope.cut);
+  assert(bundle.records >= 1_000_000_000);
+  return { file, pin, dump, dumpPin, bundle };
+}
+
+async function verifyAged(expected: ReturnType<typeof openAged>, out: string, postgres: string) {
+  assert(process.env.AGE_JAVA && process.env.AGE_DATOMIC_HOME);
+  // [DX-V01] Why: check the fresh peer against the exact aged replay bundle before touching the restored arm.
+  // Rejected: treating the 1B label or the dump size as proof of age.
+  const { checkScorecard } = await import("../age1/scorecard.mjs");
+  const original = process.env.DATOMIC_URI_TEMPLATE;
+  const sql = new URL(`postgresql://${postgres}/datomic`);
+  sql.searchParams.set("user", "datomic");
+  sql.searchParams.set("password", "datomic");
+  process.env.DATOMIC_URI_TEMPLATE = "datomic:sql://{db}?jdbc:postgresql:" + sql.href.slice("postgresql:".length);
+  try {
+    const result = checkScorecard(expected.file, expected.pin);
+    assert.equal(result.logicalHead, expected.bundle.logicalHead);
+    jsonFile(path.join(out, "aged-live-check.json"), result);
+    return result.logicalHead;
+  } finally {
+    if (original === undefined) delete process.env.DATOMIC_URI_TEMPLATE;
+    else process.env.DATOMIC_URI_TEMPLATE = original;
+  }
+}

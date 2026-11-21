@@ -8,7 +8,7 @@ roles=(gw-r gw-w tx pg)
 if [[ $prefix == tx2-dxprep1-* && ${DX_BARE_METAL:-0} == 1 ]]; then roles=(gw-r gw-w4 gw-w3 gw-w2 gw-w tx pg); fi
 # [DX-T1] Why: interrupted startup may leave one of the runner's short-lived helpers behind.
 # Rejected: releasing a measurement lease while an owned client or writable volume survives.
-if [[ $prefix == tx2-dxt1-* ]]; then roles+=(driver health cgroups extract trace-check idle-sentinel seed-copy core-cache); fi
+if [[ $prefix == tx2-dxt1-* ]]; then roles+=(driver health cgroups extract selftest trace-check idle-sentinel seed-copy core-cache); fi
 for role in "${roles[@]}"; do
   docker rm -f "$prefix-$role" >/dev/null 2>&1 || true
 done
