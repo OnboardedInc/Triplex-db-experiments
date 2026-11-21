@@ -6,12 +6,13 @@ import {
   manifestReader,
   maxManifestBytes,
   saves,
+  scaledDailySaves,
   type Frame,
   type VerifiedObject,
 } from "./bundle.ts";
 import { datomicVersion, hash } from "./stack.ts";
 
-export type Shape = { deep: number; daily: number | "real" };
+export type Shape = { deep: number; daily: number | "real" | "scaled" };
 export const maxDailySaves = 450_000;
 export type SeedPlan = Shape | "small";
 export type SeedFrame = Frame | { kind: "middle" };
@@ -53,7 +54,9 @@ export function checkPlan(plan: SeedPlan) {
     plan !== "small" &&
     (!plan ||
       !natural(plan.deep, 1, 100_000) ||
-      (plan.daily === "real" ? plan.deep !== 100_000 : !natural(plan.daily, 1, maxDailySaves)))
+      (plan.daily === "real"
+        ? plan.deep !== 100_000
+        : plan.daily !== "scaled" && !natural(plan.daily, 1, maxDailySaves)))
   )
     throw new Error("Invalid snapshot population or daily save quota");
 }
@@ -86,7 +89,12 @@ function* events(
 ): Generator<SeedFrame> {
   for (let day = 1; day <= 35; day++) {
     if (plan.daily === "real") yield* saves(day, accounts, false, include);
-    else {
+    else if (plan.daily === "scaled") {
+      yield* saves(day, accounts, false, include, {
+        daily: scaledDailySaves(plan.deep),
+        active: Math.max(1, Math.round((plan.deep * 1900) / 100_000)),
+      });
+    } else {
       const time = earlyAt + day * dayMs;
       for (let i = 0; i < plan.daily; i++) {
         for (let accountIndex = 0; accountIndex < 2; accountIndex++) {

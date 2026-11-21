@@ -352,7 +352,10 @@ export async function local(
       ? "small"
       : {
           deep: Number(options.deep),
-          daily: options.daily === "real" ? "real" : Number(options.daily),
+          daily:
+            options.daily === "real" || options.daily === "scaled"
+              ? options.daily
+              : Number(options.daily),
         };
   checkPlan(plan);
   const sources = [

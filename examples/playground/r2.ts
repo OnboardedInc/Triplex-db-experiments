@@ -88,6 +88,7 @@ async function publish(dir: string, tier: string, commands: boolean) {
     // Rejected: accepting hash-valid input from an arbitrary directory without a checked restore.
     assert.equal(evidence.manifestSha256, bundle.checksum);
     assert.equal(evidence.tier, tier);
+    assert.equal(evidence.prefix, bundle.manifest.run);
     assert.deepEqual(evidence.plan, bundle.manifest.plan);
     assert.deepEqual(evidence.checkpoint, bundle.manifest.checkpoint);
     assert.deepEqual(evidence.cleanup, { ps: [], volume: [], network: [], image: [] });

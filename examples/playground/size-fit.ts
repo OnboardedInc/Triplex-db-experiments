@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { minuteSaves } from "./bundle.ts";
+import { realDailySaves as fullDaily, scaledDailySaves } from "./bundle.ts";
 import { personAt } from "./fixture.ts";
 import { catalogs } from "./model.ts";
 import { snapshotProfiles, type Shape } from "./snapshot.ts";
@@ -83,18 +83,16 @@ const shapeData = (plan: Shape) => {
       Math.floor(account.count / cycle.length) * cycle.reduce((n, facts) => n + facts, 0);
     initialFacts += cycle.slice(0, account.count % cycle.length).reduce((n, facts) => n + facts, 0);
   }
-  const daily = plan.daily === "real" ? fullDaily : plan.daily;
+  const daily =
+    plan.daily === "real"
+      ? fullDaily
+      : plan.daily === "scaled"
+        ? scaledDailySaves(plan.deep)
+        : plan.daily;
   return { initialFacts, saves: daily * 35 * 2 };
 };
 
-const fullDaily = Array.from({ length: 1440 }, (_, min) => minuteSaves(min)).reduce(
-  (a, b) => a + b,
-  0,
-);
-const proportional = (deep: number): Shape => ({
-  deep,
-  daily: Math.max(1, Math.round((deep / 100_000) * fullDaily)),
-});
+const proportional = (deep: number): Shape => ({ deep, daily: "scaled" });
 
 function forecast(samples: Sample[]) {
   assert(samples.length >= 3 && new Set(samples.map((row) => row.sourceHead)).size === 1);

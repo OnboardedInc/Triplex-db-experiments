@@ -12,7 +12,7 @@ import { dockerClient, loopback, memoryScale, port, repo, Stack } from "./stack.
 
 const usage = `pnpm playground start [--port 4186] [--write-port 8486] [--read-port 8487] [--memory-scale 1|2|4] [--larger | --tier NAME --data SOURCE [--replay]]
 pnpm playground stop
-pnpm playground snapshot --tier NAME --deep N --daily N|real --out DIRECTORY [--collect] [--min-bytes N] [--max-bytes N] [--memory-scale 1|2|4]
+pnpm playground snapshot --tier NAME --deep N --daily N|scaled|real --out DIRECTORY [--collect] [--min-bytes N] [--max-bytes N] [--memory-scale 1|2|4]
 node examples/playground/cli.ts mcp [--port 4186]`;
 const { values, positionals } = parseArgs({
   allowPositionals: true,
@@ -238,9 +238,10 @@ async function start() {
 async function makeSnapshot() {
   const { checkPlan, tierName } = await import("./snapshot.ts");
   const tier = values.tier;
-  const plan = {
+  const plan: import("./snapshot.ts").Shape = {
     deep: Number(values.deep),
-    daily: values.daily === "real" ? ("real" as const) : Number(values.daily),
+    daily:
+      values.daily === "real" || values.daily === "scaled" ? values.daily : Number(values.daily),
   };
   checkPlan(plan);
   const maxBytes = values["max-bytes"] === undefined ? undefined : Number(values["max-bytes"]);
