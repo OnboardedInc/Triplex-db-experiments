@@ -303,7 +303,7 @@ python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect prep1-tenant 7ca8525
 
 ## Friday evening queue
 
-**Server 1 estimated running cost at 19:44 EST is $61.35** at $1.09/hr since Wednesday 11:27 EST. The orchestrator owns the release. The absolute remaining window ends Saturday at 12:00 EST.
+**Server 1 estimated running cost at 19:47 EST is $61.41** at $1.09/hr since Wednesday 11:27 EST. The orchestrator owns the release. The absolute remaining window ends Saturday at 12:00 EST.
 
 The active PREP1 `1-2-S` is a one-gateway mirror. The first component of the producer's cell name is the writer count. The server fenced only the parent loop while this child continued. The reordered supervisor waits for that child's output and cleanup, reopens the same seal for `2-1-S` then `2-0-K`, and skips the other repeats and four-gateway arms. The measured pair's first collector checks each source, plan, seed, summary and fresh terminal against the original request. After it records the pair, TAIL1 `da4c34f48` then JVM1 `5a9652780` take the original `46880aa47` verified seed. TAIL1 uses Java 21 G1 and varies the transactor cache from 256 to 2,560 MiB. The Java 21 G1, Java 25 G1 and Java 25 ZGC comparison keeps placement fixed. The new order has three JVM arms.
 
@@ -327,3 +327,7 @@ df -g .
 ```
 
 After each child becomes terminal, use `day-evidence.py collect ITEM FULL_PRODUCER_SHA CONTROL_DIR --bundles` on the Mac. Use control `night-n20-reordered-control` for `prep1-tenant`, `jvm25` and `tail-backlog`. Use `night-n20-recovery-control` for `jvm25-retry`, `tail-backlog-integrated`, `erasure`, `erasure-small` and `ha1-paced`. Use `night-n20-storage-control` for `prep1-storage`. Use `night-n20-generation-control` for `tail-backlog-generation`. Use `night-n20-ordered-control` for `prep1-ordered` and the Java collector replay. Paths are under `/var/tmp/triplex-bm1`. The manifest keeps compressed sizes, hashes, service outcomes and original producer receipts. The client rechecks every compressed member and leaves at least 5 GiB free. The grouped K lane has live priority enabled and S uses direct prepared saves. The newer fair-credit ingress is unavailable at this pin. The K/S contrast cannot isolate that later rule.
+
+### Java 25 completed comparison
+
+The three arms finished at 19:32 EST with all 244,332 offered saves durable and all 1,800 pinned reads exact. Independent replay accepted the original run after correcting the 0.361 ms mtime skew. The first refusal and raw bytes remain in the compressed bundle. ZGC gave 219.55/245.33 saves/s at 235/394 offered compared with Java 25 G1's 195.93/189.58. Memory capacity reserved grew from 24 to 37 GiB. The native TAIL gate runs separately and still requires all three JFR seals. The four-arm ordered-ID retry waits after TAIL. Both runs have scoped cleanup and queue into erasure and import pacing. [All Java clocks and evidence](JVM25-READING.md)
