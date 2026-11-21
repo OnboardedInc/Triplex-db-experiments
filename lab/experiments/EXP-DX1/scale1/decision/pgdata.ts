@@ -101,6 +101,16 @@ const sql = (container: string, database: string, command: string) =>
     command,
   );
 
+// [DX-SCALE1] Why: the scorecard opens a sealed cluster with the benchmark fixture roles.
+// Rejected: assuming container startup can change login on an existing PostgreSQL directory.
+export function normalizeScorecardRoles(container: string) {
+  sql(
+    container,
+    "postgres",
+    "ALTER ROLE datomic PASSWORD 'datomic'; ALTER ROLE postgres PASSWORD 'datomic'",
+  );
+}
+
 async function prepare(dir: string, imageSha: string, transferSha: string) {
   assert(digest.test(imageSha) && digest.test(transferSha));
   assert.equal(await fileHash(path.join(archive, "image.json")), imageSha);
@@ -407,11 +417,7 @@ async function adoptRestoredAge(dir: string, imageSha: string, transferSha: stri
         await sleep(1000);
       }
     }
-    sql(
-      id,
-      "postgres",
-      "ALTER ROLE datomic PASSWORD 'datomic'; ALTER ROLE postgres PASSWORD 'datomic'",
-    );
+    normalizeScorecardRoles(id);
     assert.equal(
       sql(
         id,

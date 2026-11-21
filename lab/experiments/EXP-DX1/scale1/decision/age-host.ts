@@ -17,7 +17,7 @@ import {
   type RecoveredLadder,
 } from "./age-bulk-resume.ts";
 import { prepareFallback } from "./age-fallback.ts";
-import { stoppedInventory } from "./pgdata.ts";
+import { normalizeScorecardRoles, stoppedInventory } from "./pgdata.ts";
 import { read, verifiedOrigin, write, type SeedProof } from "./seed.ts";
 
 const bench = "/var/tmp/triplex-scale1";
@@ -1154,6 +1154,9 @@ async function main(
       // Rejected: spending another large export and reserving disk for a compatibility dump.
       let stoppedData;
       if (bulk) {
+        // [DX-SCALE1] Why: fixture login is part of reopening the exact aged cluster with the pinned card.
+        // Rejected: normalizing each scratch after sealing, which changes its PostgreSQL control digest.
+        if (maintainedMeasurement) normalizeScorecardRoles(pgName);
         call("docker", ["stop", "--time", "120", pgName], { timeout: 130000 });
         assert.equal(docker("inspect", "--format", "{{.State.ExitCode}}", pgName), "0");
         assert.equal(docker("inspect", "--format", "{{.State.Running}}", pgName), "false");
