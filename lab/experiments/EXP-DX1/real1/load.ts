@@ -121,6 +121,7 @@ export async function load(
   url: string,
   out: string,
   checkResources: () => void,
+  onToyParent?: (proof: { sourceSeal: string; cursor: number; cut: number; facts: number; observed: number }) => void,
 ) {
   process.env.DATOMIC_URL = url;
   process.env.TRIPLEX_DATOMIC_LAYOUT = "lean";
@@ -160,6 +161,7 @@ export async function load(
           });
           parent.cut = result.cut;
           parent.facts = result.facts;
+          onToyParent?.({ ...result, sourceSeal: base.seal });
         } finally {
           snapshot.close();
         }

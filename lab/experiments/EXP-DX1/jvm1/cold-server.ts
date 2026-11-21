@@ -71,7 +71,7 @@ for (const [arm, startup, ramp] of [
   assert(Object.values(scaleHost.childrenInventory(slot)).every((xs) => xs.length === 0));
   const startedAt = now();
   try {
-    const { engines } = startScaleStack(dir, slot, source, false, stackOptions("subject", attempt), {
+    const { engines } = startScaleStack(dir, slot, source, false, stackOptions("per-person-ordered", attempt), {
       policy, walDirectory, coldSeed: { pgdata, control, log: coldStartLog },
     });
     const stackEvidence = path.join(dir, "engines", slot);
@@ -152,7 +152,7 @@ for (const [arm, startup, ramp] of [
       for (const row of durable) {
         const observed = byPosition.get(row.receipt!.p);
         assert(observed);
-        checkSavedIdentity(row, observed, "subject", options.subjectFunction);
+        checkSavedIdentity(row, observed, "per-person-ordered", options.subjectFunction);
         byPosition.delete(row.receipt!.p);
       }
       assert.equal(byPosition.size, 0);

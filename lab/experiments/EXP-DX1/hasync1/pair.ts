@@ -493,8 +493,10 @@ export class SyncPair {
           ? [
               "HA1_FLEET_HTTP=1",
               ...(this.combined ? ["TX2_SUBJECT_APPEND_RETIREMENT=1", "TX2_WRITE_OPTIONS_ATTEMPT=" + s.e.nonce] : []),
-              ...Object.entries(selectedWriter("subject"))
-                .filter(([key]) => key.startsWith("TX2_"))
+              // [DX-THIN1] Why: the card added two import-timing keys to the writer settings; keep the Sunday gateway unchanged.
+              // Rejected: forwarding scorecard-only import instrumentation to the failover gateway.
+              ...Object.entries(selectedWriter("per-person-ordered"))
+                .filter(([key]) => key.startsWith("TX2_") && key !== "TX2_LOAD1_PRIORITY" && key !== "TX2_LOAD2_TIMING")
                 .map(([key, value]) => key + "=" + value),
             ].flatMap((setting) => ["-e", setting])
           : ["-e", "TX2_GROUP_COMMIT=" + Number(grouped)]),

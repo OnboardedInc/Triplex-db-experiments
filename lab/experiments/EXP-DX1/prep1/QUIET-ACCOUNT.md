@@ -1,0 +1,26 @@
+# Quiet-account latency on the ordered writer
+
+At 394 offered saves/s, the ordered writer durably acknowledged all 23,640 offers, at 393.92/s inside 60 seconds. It used one gateway, a ten-account 16,245,050-fact database, a repeated-person tape, a 2 GiB transactor cache and Java 21 G1. Its 34.07 ms quiet solo p99 rose to 118.16 ms with neighbours, or 3.47×. At 235 offered, all 14,100 offers stored and the corresponding times were 73.66 → 315.42 ms, or 4.28×. Both ratios miss 1.25×. The absolute bar is 50 ms.
+
+Each stage below is a share of the **same save at the 208th of 210 quiet-account observations**, in rank order of due-to-ACK duration. The stage shares add up, apart from rounding. Safepoint overlap estimates below the table use wall clocks and are already inside the stage times.
+
+| Offered / quiet context | Quiet p99 | Sender queue | Send → native read | Native read → apply | Native apply | Ready → append | Append call | Append end → ACK |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 235 / solo | 73.66 ms | 1.7% | 4.0% | 0.3% | 1.4% | 0.4% | 89.1% | 3.2% |
+| 235 / loaded | 315.42 ms | 0.1% | 0.3% | <0.1% | 0.1% | 25.2% | 73.8% | 0.5% |
+| 394 / solo | 34.07 ms | 2.9% | 4.3% | 0.5% | 1.4% | 0.6% | 88.6% | 1.8% |
+| 394 / loaded | 118.16 ms | 0.5% | 1.2% | 0.1% | 0.2% | 67.8% | 28.8% | 1.5% |
+
+## What sets the tail
+
+- At 235 loaded, the quiet save waited 79.64 ms after apply, with an earlier append running for 79.60 ms of that wait. Its own append took 232.85 ms. At 394 it waited 80.12 ms, with observed earlier appends occupying 31.59 ms of that interval, then spent 34.00 ms in its own append. The remaining 48.53 ms was time outside observed append calls. The trace cannot distinguish scheduler delay, appender bookkeeping or time waiting for a batch to be handed off there. Across all saves the ready-to-append p99 was 97.33 and 52.41 ms. An append call measures entry through return of Datomic's durable log write. It includes storage and coordination time. It does not isolate PostgreSQL WAL sync from the rest of that call.
+- There were 11,174 and 17,583 appends, of which 186.20 and 293.03 started per second inside the windows, at 1.262 and 1.344 saves per append. Append-call p50/p99/max was 0.38/4.74/232.85 ms and 0.34/2.83/168.23 ms. Start-to-start p99 was 35.62 and 23.15 ms. A single active append limits the next durable acknowledgment. Individual append time and gaps between calls matter alongside batch fill. Holding 1.344 saves per append would require about 461 and 670 appends/s for 620 and 900 saves/s. At solo there were 210 single-save appends per window. Their p50/p99/max were 0.79/61.37/82.02 ms and 0.42/4.37/33.94 ms.
+- The ordered p99 saves spent 0.91, 0.41, 0.71 and 0.50 ms respectively in gateway parse-to-submit, inside the send-to-native column. The sender queues for those four saves were all below 1.3 ms. The trace has no per-request CPU counters. Those clocks bound the observed gateway stage. Fair turns were **off**. The sender rotated over ready accounts and permitted up to 96 pending saves. Fair turns can reduce the work ahead of the quiet save. The quiet save still needs its own append and cannot interrupt an active one.
+- No p99 save overlapped a transactor or reader safepoint. One overlapped about 0.05 ms of a writer safepoint. At 394 loaded the two slower quiet saves each overlapped 78.82 ms of transactor safepoint time. The largest transactor/writer/reader safepoints in the four cells were 5.08/0.18/0.11, 118.61/26.44/34.31, 67.02/9.73/12.33 and 160.93/13.09/45.12 ms. The control solo p99s span 90.59–127.78 ms. Three overlapped 59–78 ms of transactor safepoints during apply. The other three spent 62, 108 or a combined 118 ms waiting for or executing append. The cited ZGC comparison supports testing a collector change for the pause component. The ordered p99s leave the append stalls as separate work.
+- All four p99-ranked ordered saves were offered 25–45 seconds into the cell. The very first 235 solo save took 217 ms, with native apply the largest stage. Dropping the first five seconds leaves quiet p99s at 73.66, 418.28, 42.89 and 261.43 ms in the four cells. The larger trimmed values partly reflect a different nearest-rank cutoff. The tail persists well into the windows.
+
+## Change to measure
+
+Keep synchronous acknowledgments. Timestamp PostgreSQL WAL sync, checkpoint writeback and the appender handoff in the same clock domain, then compare the same tape with WAL on an isolated low-latency device and a bounded fair-turn treatment. Compare ZGC separately at the same cache and heap. If own-append tails fall below 20 ms and excess handoff/competing append time below 10 ms, I forecast 25–35 ms quiet solo p99 and 1.2–1.4× loaded/solo at 235–394. The 1.25× target is conditional on the tighter end of the handoff result. Fair turns alone can leave a 65–233 ms append intact.
+
+The recount verifies the transfer archives, sealed collector files, campaign source, tape, attempt and native time for each receipt. It joined all 38,160 ordered saves and reranked all four matched sets of 210. Two control writer logs have extra shutdown lines after their verified prefixes. The per-save calculation uses the collector-bound prefixes. [Checksums](SHA256SUMS)

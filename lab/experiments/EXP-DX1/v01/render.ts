@@ -7,7 +7,7 @@ type Bar = { id: string; value: unknown; pass: boolean | null; bar?: string };
 type Row = { name: string; bar: string; reading: string; status: string; samples: string; evidence: string };
 export type Run = {
   source: string;
-  age: "fresh" | "1B";
+  age: "fresh" | "1B" | "realistic";
   toy: boolean;
   startedAt: string;
   forecast: string;

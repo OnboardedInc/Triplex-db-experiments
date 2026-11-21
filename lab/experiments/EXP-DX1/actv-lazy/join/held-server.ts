@@ -138,7 +138,7 @@ process.once("SIGTERM", () => {
   process.exit(124);
 });
 try {
-  const { engines } = startScaleStack(out, slot, source, false, stackOptions("subject", attempt), {
+  const { engines } = startScaleStack(out, slot, source, false, stackOptions("per-person-ordered", attempt), {
     policy,
     prepared: { data: prepared, wal },
   });

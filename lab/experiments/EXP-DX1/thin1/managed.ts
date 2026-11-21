@@ -7,8 +7,7 @@ import { setTimeout as delay } from "node:timers/promises";
 import { fileURLToPath } from "node:url";
 import { memoryPlan } from "../int1/memory-plan.ts";
 import { nodeImage, pgImage } from "../v01/source.ts";
-import { defaultCreditMode, launchProfile, type CreditMode } from "../jvm1/launch.mjs";
-import { type Writer } from "../v01/profile.ts";
+import { isWriter } from "../v01/profile.ts";
 
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
 const scorecard = process.env.DX_V01_MAC_FIXTURE === "1";
@@ -198,9 +197,11 @@ function setup(compact: boolean) {
   assert(["original", "demand"].includes(gwPolicy) && ["following", "validated"].includes(readMode));
   assert(peerGc === "g1" || (gwPolicy === "demand" && peerGc === "elastic"));
   const writeOptionsAttempt = mode === "int1-adopted-proof" ? randomUUID() : undefined;
-  const fixtureWriter = process.env.DX_V01_MAC_WRITER ?? "grouped";
-  const { creditMode } = launchProfile("laptop", { creditMode: (process.env.DX_V01_CREDIT_MODE ?? defaultCreditMode) as CreditMode });
-  assert(fixtureWriter === "grouped" || fixtureWriter === "subject");
+  const realisticScorecard = !!writeOptionsAttempt && process.env.DX_V01_MAC_AGE === "realistic";
+  const scorecardComparison = !!writeOptionsAttempt && process.env.DX_V01_MAC_COMPARISON === "1";
+  const scorecardCreditMode = writeOptionsAttempt ? process.env.DX_V01_CREDIT_MODE : undefined;
+  const scorecardWriter = writeOptionsAttempt ? (process.env.DX_V01_MAC_WRITER ?? "grouped") : undefined;
+  assert(!writeOptionsAttempt || isWriter(scorecardWriter));
   for (const [n, slot] of slots.entries()) {
     const role = n === 0 ? "write" : "read";
     assert(!fs.existsSync(ownerFile(slot)), "Exclusive slot is in use");
@@ -212,7 +213,7 @@ function setup(compact: boolean) {
         : (compact ? "-Xms128m -Xmx600m" : "-Xms160m -Xmx896m") + " -Ddatomic.objectCacheMax=192m") +
       (compact ? " -Ddxthin.compact=yes" : "") + (memory ? " -Ddxthin.memory=yes" : "") +
       (mode === "int1-campaign-proof" ? " -Ddxthin.campaign=yes" : "") +
-      (writeOptionsAttempt ? " -Ddxthin.adopted=" + writeOptionsAttempt + " -Ddxthin.fixtureWriter=" + fixtureWriter : "") +
+      (writeOptionsAttempt ? " -Ddxthin.adopted=" + writeOptionsAttempt + " -Ddxthin.scorecardWriter=" + scorecardWriter : "") +
       (readStudy ? " -Ddxthin.readStudy=yes" : "") +
       (nativePools ? " -Ddxthin.nativePools=yes -XX:NativeMemoryTracking=summary" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
@@ -229,7 +230,7 @@ function setup(compact: boolean) {
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
   write(cred, {
-    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, fixtureWriter, creditMode,
+    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, scorecardWriter, scorecardCreditMode, scorecardComparison, realisticScorecard,
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
     memoryPoints, nativePools,
     readerPages: process.env.DX_INT1_READER_PAGES === "1",
@@ -302,8 +303,10 @@ function bind() {
     managed: {
       nonce: attempt.nonce,
       writeOptionsAttempt: attempt.writeOptionsAttempt,
-      fixtureWriter: attempt.fixtureWriter,
-      creditMode: attempt.creditMode,
+      scorecardWriter: attempt.scorecardWriter,
+      scorecardCreditMode: attempt.scorecardCreditMode,
+      scorecardComparison: attempt.scorecardComparison,
+      realisticScorecard: attempt.realisticScorecard,
       compact: !!attempt.compact,
       census: attempt.census, cohort: attempt.cohort,
       gwPolicy: attempt.gwPolicy, readMode: attempt.readMode,
@@ -386,6 +389,7 @@ if (action === "--guest") {
     await untouchedCensus(stack, out!, read(cred).secret, process.env.DX_V01_FIXTURE_SOURCE, Number(rung));
   } else if (mode === "int1-adopted-proof") {
     process.chdir(repo);
+    const { parseCredits } = await import("../v01/server-workload.ts");
     const { adoptedToy } = await import("../v01/adopted.ts");
     const { readResidentMappings } = await import("./heap-residency.ts");
     const readyBy = Date.now() + 45_000;
@@ -404,9 +408,28 @@ if (action === "--guest") {
         return /^(?:.*\/)?java$/.test(args[0] ?? "") ? [args.filter((v) => /^(-X|--add|datomic\.launcher|triplex\.gateway)/.test(v))] : [];
       } catch { return []; }
     });
-    assert(stack.managed.writeOptionsAttempt && commands.length >= 3);
-    const writer: Writer = stack.managed.fixtureWriter;
-    assert(writer === "grouped" || writer === "subject");
+    assert(stack.managed.writeOptionsAttempt && isWriter(stack.managed.scorecardWriter) && commands.length >= 3);
+    if (stack.managed.scorecardWriter === "per-person-ordered" && !stack.managed.scorecardComparison) {
+      const { pgdataFixture } = await import("../v01/pgdata-fixture.ts");
+      await pgdataFixture(out, process.env.DX_V01_FIXTURE_SOURCE!, stack.prefix, stack.managed.writeOptionsAttempt);
+      const secret = read(cred).secret as string;
+      assert.match(secret, /^[a-f0-9]{40}$/);
+      const host = new URL(stack.writeUrl).hostname;
+      const uri = "datomic:sql://{db}?jdbc:postgresql://" + host + ":5432/datomic?user=datomic&password=" + secret;
+      const gate = spawnSync("/opt/datomic/bin/run", [path.join(repo, "lab/experiments/EXP-DX1/v01/prep1-mixed-test.clj")], {
+        cwd: "/opt/datomic", encoding: "utf8", timeout: 60_000,
+        env: { ...process.env, DX_V01_FIXTURE_REPO: repo, WFIX1_URI: uri,
+          DATOMIC_EXT_CLASSPATH: "/opt/gateway/src",
+          DATOMIC_JAVA_OPTS: "-Xms48m -Xmx384m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -Dtriplex.codec.spec=/opt/gateway/codec-spec.json",
+          TX2_SUBJECT_SAVE: "1", TX2_SUBJECT_ORDERED_IDS: "1", TX2_SUBJECT_NUMERIC_OWNER: "1",
+          TX2_SUBJECT_PREFETCH: "0", TX2_LEAN_NATIVE_QUERY: "1", TX2_LEAN_NATIVE_LOG: "1",
+        },
+      });
+      const log = ((gate.stdout ?? "") + (gate.stderr ?? "")).replaceAll(secret, "[redacted]");
+      fs.writeFileSync(path.join(out, "PREP1-MIXED-TEST.log"), log, { flag: "wx" });
+      assert.equal(gate.status, 0, "Published PREP1 mixed-ID test failed");
+      assert.match(log, /DX_V01_PREP1_MIXED.*:fail 0.*:error 0/);
+    }
     const residency = () => {
       const roles: Record<string, { rssBytes: number; threads: number }> = {};
       for (const pid of fs.readdirSync("/proc").filter((n) => /^\d+$/.test(n))) {
@@ -428,7 +451,10 @@ if (action === "--guest") {
     };
     await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
-      java: { placement: "owned Mac compact stack", commands }, creditMode: stack.managed.creditMode, residency }, writer, readStudy);
+      java: { placement: "owned Mac compact stack", commands }, residency,
+      creditMode: parseCredits(stack.managed.scorecardCreditMode),
+      realisticToySlot: stack.managed.realisticScorecard ? stack.containers[0].name : undefined }, stack.managed.scorecardWriter,
+      stack.managed.scorecardComparison, readStudy);
   } else if (mode === "int1-campaign-proof") {
     assert(Number(rung) === 40);
     process.chdir(repo);

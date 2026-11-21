@@ -37,8 +37,9 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     assert {k: v for k, v in arm.items() if k != "cells"} == header["arm"]
     assert plan["seconds"] == header["seconds"]
     campaign = plan.get("campaign", "comparison")
-    assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered")
-    storage = campaign in ("storage", "storage-ordered")
+    assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered", "ceiling")
+    wide = campaign == "ceiling"
+    storage = campaign in ("storage", "storage-ordered", "ceiling")
     ordered_ids = arm.get("orderedIds", False)
     followup = campaign != "comparison"
     fair_credits = header.get("fairCredits", 0)
@@ -65,11 +66,18 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             ("1-cache-S", 1, "S", False, False, False, 16, False),
         ]
         ordered_arm = ("1-ordered-S", 1, "S", False, True, False, 2, True)
-        expected_arms = controls + [ordered_arm] if campaign == "storage" else [ordered_arm]
+        expected_arms = ([('1-ceiling-S', *ordered_arm[1:])] if wide else
+                         controls + [ordered_arm] if campaign == "storage" else [ordered_arm])
         assert [(a["id"], a["writers"], a["writer"], a["reverse"], a["numericOwner"], a["prefetch"],
                  a["cacheGiB"], a.get("orderedIds", False)) for a in plan["arms"]] == expected_arms
         assert fair_credits == 0
-    if followup:
+    if wide:
+        assert [(c["label"], c["rate"], c["offered"], c["fairCredits"]) for c in arm["cells"]] == [
+            (f"r{rate}-{kind}-{mode}", rate, round((3.5 if mode == "alone" else rate) * plan["seconds"]), credits)
+            for rate, kind, credits in ((620, "off", 0), (620, "on", 6), (900, "on", 6), (900, "off", 0))
+            for mode in ("alone", "loaded")
+        ]
+    elif followup:
         phases = ("loaded", "alone") if arm["reverse"] else ("alone", "loaded")
         assert [(c["label"], c["rate"], c["offered"]) for c in arm["cells"]] == [
             (f"r{rate}-{phase}", rate, round((3.5 if phase == "alone" else rate) * plan["seconds"]))
@@ -77,7 +85,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         ]
     roles = ["tx", "gw-r", "gw-w"] + [f"gw-w{i}" for i in range(2, arm["writers"] + 1)]
     if not fixture:
-        assert header["seconds"] == (60 if followup else 144)
+        assert header["seconds"] == (90 if wide else 60 if followup else 144)
         assert re.fullmatch(r"[0-9a-f]{40}", header["commit"])
         for key in ("seedSha", "dumpSha", "gatewaySource"):
             assert re.fullmatch(r"[0-9a-f]{64}", header[key])
@@ -86,7 +94,14 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         assert header["seedSha"] == seal["seed.json"] == sha(directory.parent / "seed.json")
         assert header["dumpSha"] == seal["seed.pgdump"]
         assert seal["plan.json"] == sha(plan_path)
-        if followup:
+        if wide:
+            seed = read(directory.parent / "seed.json")
+            assert (seed["facts"], seed["head"], seed["db"], seed["scope"], seed["dumpSha256"]) == (
+                162_456_470, header["head"], header["db"], header["scope"], header["dumpSha"])
+            for key in ("imageSha256", "transferSha256"):
+                assert header[key] == seed[key] and re.fullmatch(r"[a-f0-9]{64}", seed[key])
+            assert header["commit"] == (directory.parent / "source").read_text().strip()
+        elif followup:
             # [DX-PREP1] Why: bind each mode to the earlier immutable seed and this fresh source.
             # Rejected: comparing two restores merely because they name the same population.
             original = (directory.parent / "comparison.SEAL.sha256").read_text().splitlines()
@@ -152,6 +167,10 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     for expected in arm["cells"]:
         label = expected["label"]
         result = read(directory / (label + ".json"))
+        cell_credits = expected.get("fairCredits", fair_credits)
+        if wide:
+            assert result["fairCredits"] == cell_credits
+            last_turn = 0
         tape = plan["tapes"][label]
         assert result["label"] == label and result["rate"] == expected["rate"]
         assert result["head"] == cut and result["seconds"] == header["seconds"]
@@ -164,6 +183,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         turn_appends = collections.defaultdict(set)
         prepared, hinted = 0, 0
         ordered_before = len(ordered_tokens)
+        old_reads = collections.Counter()
         native_io = collections.defaultdict(list)
         for i, (r, offer) in enumerate(zip(rows, tape, strict=True)):
             assert (r["ordinal"], r["id"], r["due"], r["account"], r["person"]) == (
@@ -172,8 +192,10 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             if "sent" in r:
                 assert r["sent"] >= r["due"] and r["end"] >= r["sent"]
                 assert 0 <= r["peer"] < arm["writers"]
-                if fair_credits:
+                if cell_credits:
                     turns[r["fairTurn"]].append(r)
+                if wide:
+                    assert r["legacyPredecessors"] in (0, 1, 2)
             ack, receipt = r.get("ack"), r.get("receipt")
             token = r.get("orderedToken")
             assert bool(token) == (ordered_ids and "sent" in r)
@@ -208,6 +230,10 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                     native_io["applyMs"].append(ack["nativeComputeMs"] / width)
                     for counter in ("sql", "sql-ms", "deserialize-ms", "eavt-load", "aevt-load", "avet-load"):
                         native_io[counter].append(reads.get(counter, 0) / width)
+                    if wide:
+                        age = "seedPredecessor" if r["legacyPredecessors"] else "orderedPredecessor"
+                        old_reads[(age, "saves")] += 1
+                        old_reads[(age, "sql")] += reads.get("sql", 0)
                 if ack.get("subjectSave"):
                     assert arm["writer"] == "S" and ack["subjectSave"] == ack["writePath"]["function"]
                     if not fixture:
@@ -226,10 +252,17 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 stages_by_save["nativeWork"].append((member["applied-at"] - member["started-at"]) / 1e6)
                 stages_by_save["nativeReadyToAppend"].append((chunk["start"] - member["applied-at"]) / 1e6)
                 flush_ms[block] = (chunk["end"] - chunk["start"]) / 1e6
-                if fair_credits:
+                if cell_credits:
                     turn_appends[r["fairTurn"]].add(block)
                 joined.add(receipt["t"])
                 block_ids.add(block)
+        if wide and not fixture:
+            assert len({p[2] for p in tape if p[1] == 0}) == 315
+            if label.endswith("-loaded"):
+                assert [p for p in tape if p[1] == 0] == plan["tapes"][label.removesuffix("-loaded") + "-alone"]
+                assert all(len({p[2] for p in tape if p[1] == a}) == 1900 for a in range(1, 10))
+            elif not metrics:
+                assert prepared > 0
         assert used_native.isdisjoint(joined)
         used_native.update(joined)
         positions = sorted((r["receipt"]["p"], r["receipt"]["clock"]) for r in rows if r.get("receipt"))
@@ -239,11 +272,11 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         assert cut == result["after"]
         last_reply = -math.inf
         for turn, members in sorted(turns.items()):
-            assert turn == last_turn + 1 and len(members) <= fair_credits
+            assert turn == last_turn + 1 and len(members) <= cell_credits
             assert min(r["sent"] for r in members) >= last_reply
             last_reply = max(r["end"] for r in members)
             last_turn = turn
-        if followup and fair_credits:
+        if followup and not wide and cell_credits:
             assert all(len(blocks) == 1 for blocks in turn_appends.values())
         pair = {a: p99(times[a]) if counts[a] == len(times[a]) else None for a in counts}
         metrics.append({"cell": label, "offered": len(rows), "durable": len(positions), "inWindow": in_window,
@@ -257,6 +290,9 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                         "hintsAttached": hinted,
                         "orderedSubmitted": len(ordered_tokens) - ordered_before,
                         "orderedPrepared": prepared if ordered_ids else 0,
+                        **({"fairCredits": cell_credits, "observedPeople": [len({p[2] for p in tape if p[1] == a}) for a in range(10)],
+                            "readsByPredecessor": {age: {k: old_reads[(age, k)] for k in ("saves", "sql")}
+                                                   for age in ("seedPredecessor", "orderedPredecessor")}} if wide else {}),
                         "nativeIoPerSave": {key: {"mean": sum(samples) / len(samples), "p99": p99(samples)}
                                             for key, samples in native_io.items()},
                         "appendP99Ms": p99(list(flush_ms.values())),
@@ -277,7 +313,9 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     if not fixture:
         kept.extend(native_path.parent / f"prep1-gc-{role}.log" for role in roles)
         kept.extend(native_path.parent / f"{role}-native-settings.json" for role in roles)
-        if followup:
+        if wide:
+            kept.extend(directory.parent / name for name in ("seed.json", "SEAL.sha256", "source"))
+        elif followup:
             kept.extend(directory.parent / name for name in ("comparison.SEAL.sha256", "SEAL.sha256", "source"))
     return {"fixture": fixture, "source": header["commit"], "nonce": header["nonce"], "slot": header["slot"],
             "seedSha": header["seedSha"], "dumpSha": header["dumpSha"], "planSha": sha(plan_path),

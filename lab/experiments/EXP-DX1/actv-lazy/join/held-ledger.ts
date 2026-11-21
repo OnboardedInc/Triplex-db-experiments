@@ -76,7 +76,7 @@ export class HeldLedger {
             checkSavedIdentity(
               want,
               decodeFeed(this.database, frame, now(), ordered),
-              ordered ? "subject" : "grouped",
+              ordered ? "per-person-ordered" : "grouped",
               this.subjectFunction,
             );
           } else {

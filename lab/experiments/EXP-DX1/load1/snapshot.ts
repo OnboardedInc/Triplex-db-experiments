@@ -343,22 +343,25 @@ export class Snapshot {
   async verify(
     complete = true,
     extra?: (r: any) => void,
-    { pageSize = extra ? 8 : 1, readDepth = 1, assertionSweep = false,
-      exclusiveSuffixAfter, feedOnly = false }: {
-        pageSize?: number; readDepth?: number; assertionSweep?: boolean;
-        exclusiveSuffixAfter?: number; feedOnly?: boolean;
-      } = {},
+    { pageSize = extra ? 8 : 1, readDepth = 1, assertionSweep = false, after = 0, exclusiveSuffixAfter, feedOnly = false }: {
+      pageSize?: number; readDepth?: number; assertionSweep?: boolean; after?: number;
+      exclusiveSuffixAfter?: number; feedOnly?: boolean;
+    } = {},
   ) {
     const cut = await this.comp.currentPosition(),
       byPosition = this.ledger.prepare("SELECT * FROM frames WHERE position=?");
     assert(!feedOnly || (exclusiveSuffixAfter !== undefined && !assertionSweep));
-    if (exclusiveSuffixAfter !== undefined)
-      assert(Number.isSafeInteger(exclusiveSuffixAfter) && exclusiveSuffixAfter >= 0 && exclusiveSuffixAfter < cut);
+    if (exclusiveSuffixAfter !== undefined) {
+      assert(after === 0 && Number.isSafeInteger(exclusiveSuffixAfter) && exclusiveSuffixAfter >= 0 && exclusiveSuffixAfter < cut);
+    }
     const perSubject = typeof this.shape !== "string" && !assertionSweep && !feedOnly;
     const last = !perSubject ? undefined : (await this.comp.feedPage(cut - 1, 1)).transactions[0];
     if (perSubject) assert(last?.position === cut && Number.isFinite(last.instant));
     const lastInstant = last?.instant as number;
-    let pos = exclusiveSuffixAfter ?? 0,
+    // [DX-V01] Why: verify the contiguous suffix of a caller-verified held cut.
+    // Rejected: interpreting the loader’s existing rows as part of the current import.
+    assert(Number.isSafeInteger(after) && after >= 0 && after <= cut);
+    let pos = exclusiveSuffixAfter ?? after,
       observed = 0,
       facts = 0,
       marker = 0;
