@@ -159,3 +159,17 @@ The Mac copy is at `evidence/DX-BM1/bench3/bench3-fresh`, with the 15,112,523-by
 All predictions for the repeat held, except that the three-core second-half p99 came in below its range. The five-core split's first-60-second reads, 0.67 in the second bin, also fell just below theirs. The repeat therefore confirms the first run's verdict. The cache size removes the late reads. Three transactor cores with three write-gateway cores is the better split at 620. What remains at 394 is the first minute after a cold start. On three cores, quiet second-half p99 reached 102.73 ms at 394 and 231.04 ms at 620. The quiet account's tail is not fixed by the cache. Peak transactor memory was 50.1 and 50.9 GiB of 60 GiB.
 
 The Mac copy is at `evidence/DX-BM1/bench3/bench3-cache32b`, with the 9,748,813-byte summary and 117,902,172-byte raw archives checked member by member, and the pinned-analyser readout. Rental cost about USD 9.34 at 22:47 UTC. [Checksums](SHA256SUMS)
+
+## Rolling 6, second run (rolling6r)
+
+**The morning's rolling 6 result repeated.** PREP1 `c8f903ce1` ran with `DX_PREP1_ROLLING_ARM=rolling6`, the 16 GiB cache and a fresh build, from 22:44 to 23:24 UTC. At 235 offered, the quiet account again met the owner's 50 ms rule. At 394, the arm again kept up, with a multi-second tail.
+
+| Offered | Stored/s whole / second half | Expired | Busy p50 / p99 ms whole | Second-half busy p99 ms, morning → repeat (prediction) | Late spells ≥300 / ≥1,000 | Quiet loaded p99 ms, morning → repeat (prediction) |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 235 | 235.00 / 234.97 | 0 | 5.63 / 2,656.11 | 40.88 | 0 / 0 | 43.91 → 44.84 (40–50) |
+| 394 | 394.00 / 400.81 | 0 | 911.29 / 7,905.68 | 5,067 → 2,823.98 (3,000–7,000) | 4 / 1 | 54.00 → 46.44 (45–60) |
+| 620 | 439.59 / 462.05 | 41,466 | 29,782 / 30,023 | 30,024 | 1 / 1, up to 54,191 waiting | 61.79 → 56.29 |
+
+Both falsifiers held. Quiet p99 at 235 was under 55 ms, and stored/s at 394 was not below 385. The second-half p99 at 394 came in under its range, and 620 stored 0.41/s below its 440 floor. Across three 16 GiB rolling 6 runs today, second-half p99 at 394 was 5,067, 4,588 and 2,824 ms. Across two 32 GiB three-core runs it was 521 and 269 ms. **The cache size, not run-to-run noise, separates them.**
+
+The Mac copy is at `evidence/DX-BM1/bench3/bench3-rolling6r`, with the 8,849,004-byte summary and 70,078,300-byte raw archives checked member by member, and the pinned-analyser readout. Rental cost about USD 10.05 at 23:26 UTC. [Checksums](SHA256SUMS)
