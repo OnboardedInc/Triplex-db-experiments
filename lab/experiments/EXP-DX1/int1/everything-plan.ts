@@ -1,4 +1,4 @@
-import { launchProfile } from "../jvm1/launch.mjs";
+import { launchProfile, measuredWriterG1 } from "../jvm1/launch.mjs";
 import { fieldRates } from "./field-plan.ts";
 import { pooledCampaignId, campaignWindows } from "../scale1/tenant-traffic.ts";
 
@@ -7,6 +7,26 @@ export const profiles = ["frozen", "field"] as const;
 export type CampaignProfile = (typeof profiles)[number];
 export const populations = [10_000, 100_000] as const;
 export const loads = ["zero", "reader"] as const;
+
+const gatewayHeap = [
+  "-Xms64m",
+  "-Xmx384m",
+  "-Ddatomic.objectCacheMax=32m",
+  "-XX:MinHeapFreeRatio=15",
+  "-XX:MaxHeapFreeRatio=30",
+];
+// [DX-INT1] Why: verify saved archives with the launch expectations they used.
+// Rejected: changing archived observations when the server preset changes.
+export const gatewayJvmOptions = {
+  "gw-w": [...gatewayHeap, ...measuredWriterG1],
+  "gw-r": [...gatewayHeap, "-XX:+UseG1GC"],
+} as const;
+export const transactorJvmOptions = [
+  "-Xms256m",
+  "-Xmx5g",
+  "-XX:+UseG1GC",
+  "-XX:MaxGCPauseMillis=50",
+] as const;
 
 export function campaignCases(people: readonly number[] = populations) {
   return people.flatMap((n) =>
@@ -44,6 +64,7 @@ export const treatment = {
   DX_INT1_SEED_ERRORS: "1",
   DX_INT1_READERS: "touched",
   DX_INT1_DEEP_RELEASE: "ead90",
+  DX_TAIL1_TWO_WRITE_CORES: "1",
   DX_TOUCHED_READ_MODE: "following",
   DX_GROUP_COMMIT: "0",
   DX_GROUP_QUEUE_CLOCK: "0",

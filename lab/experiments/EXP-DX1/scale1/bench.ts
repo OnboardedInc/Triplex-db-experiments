@@ -428,7 +428,7 @@ export function startScaleStack(dir: string, prefix: string, source: string, gro
     const { dev, ino } = fs.statSync(walPath);
     fs.writeFileSync(path.join(dir, "wal-directory.json"), JSON.stringify({ directory: walPath, slot: prefix, dev, ino }), { flag: "wx" });
   }
-  const twoWriterCores = options.DX_TAIL1_TWO_WRITE_CORES === "1";
+  const twoWriterCores = !policy && options.DX_TAIL1_TWO_WRITE_CORES === "1";
   if (twoWriterCores) {
     // [DX-TAIL1] Why: give the writer a separate physical core.
     // Rejected: counting two sibling hardware threads as the two-core arm.
