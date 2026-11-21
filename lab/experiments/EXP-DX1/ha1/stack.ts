@@ -95,8 +95,10 @@ export class Stack {
     argv: string[],
     port?: number,
     externalPort?: number,
+    cpuCount?: number,
   ) {
     assert(!this.members.has(role));
+    assert(cpuCount === undefined || (this.holder === "DX-CHK1" && cpuCount === 3));
     const image = postgresRole(role) ? this.pgIds.get(site)! : site.datomicId;
     const cross = this.a !== this.b;
     const server = process.platform === "linux";
@@ -156,7 +158,7 @@ export class Stack {
       mb + "m",
       ...(this.placement?.has(role)
         ? ["--cpuset-cpus", this.placement.get(role)!]
-        : ["--cpus", server ? "3" : "1.5"]),
+        : ["--cpus", cpuCount?.toString() ?? (server ? "3" : "1.5")]),
       "--network",
       this.networks.get(site)!,
       ...published,
@@ -554,7 +556,9 @@ export class Stack {
   sharedDb(role: "write" | "read") {
     return "s2-" + Buffer.from(this.sharedScope(role)).toString("base64url");
   }
-  async gateway(role: "write" | "read", site: Site, pg: "pg" | "target", store: string) {
+  async gateway(role: "write" | "read", site: Site, pg: "pg" | "target", store: string,
+    combination?: { settings: Record<string, string>; java: string; cores: number }) {
+    assert(!combination || this.holder === "DX-CHK1");
     const size = process.platform === "linux" ? "1600" : "320";
     const fair = this.e.mode === "load-fair";
     const frontier = this.e.mode.startsWith("load-frontier-") || (microLoad(this.e.mode) && !fair);
@@ -624,17 +628,15 @@ export class Stack {
               "-e",
             ]
           : []),
+        ...(combination ? Object.entries(combination.settings).flatMap(([key, value]) => ["-e", key + "=" + value]).concat("-e") : []),
         "DATOMIC_URI_TEMPLATE=" + this.uri(pg, store, "{db}", site),
         "-e",
         "GATEWAY_SOURCE_SHA256=" + this.e.source.gateway,
         "-e",
-        "DATOMIC_JAVA_OPTS=-Xms96m -Xmx" +
-          size +
-          "m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=64m" +
-          (this.e.mode === "load-tail" ? javaRecording : "") +
-          (microLoad(this.e.mode)
-            ? " -Xlog:gc*:file=/tmp/load5-gc.log:time,uptimemillis,level,tags"
-            : ""),
+        "DATOMIC_JAVA_OPTS=" + (combination?.java ??
+          ("-Xms96m -Xmx" + size + "m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=64m" +
+            (this.e.mode === "load-tail" ? javaRecording : "") +
+            (microLoad(this.e.mode) ? " -Xlog:gc*:file=/tmp/load5-gc.log:time,uptimemillis,level,tags" : ""))),
       ],
       "/opt/datomic/bin/run",
       [
@@ -646,6 +648,8 @@ export class Stack {
             : "triplex.gateway.main",
       ],
       8080,
+      undefined,
+      combination?.cores === 3 ? 3 : undefined,
     );
     return this.endpoint(role);
   }

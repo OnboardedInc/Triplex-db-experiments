@@ -92,6 +92,7 @@ export async function drill(
     capacity: string;
     pooled?: true;
     timing?: "diagnostic";
+    combined?: string;
   },
   release: () => void,
   sync?: {
@@ -122,7 +123,9 @@ export async function drill(
             : 100000),
     );
     await s.open();
-    if (e.mode.startsWith("hasync-")) {
+    if (profile.combined && e.mode === "load-fair")
+      result = await (await import("../chk1/campaign.ts")).campaign(s, profile.combined);
+    else if (e.mode.startsWith("hasync-")) {
       const { SyncPair } = await import("../hasync1/pair.ts");
       const pair = new SyncPair(s, sync);
       cleanupShared = () => pair.cleanup();

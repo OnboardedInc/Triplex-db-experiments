@@ -48,6 +48,7 @@ type Attempt = {
   mode: Layout;
   slot: string;
   source?: string;
+  sourceHash?: string;
   stageSha256?: string;
   stagedSource?: string;
   controlSha256?: string;
@@ -289,6 +290,12 @@ class Fixture {
       validAt: SEED_VALID_FROM,
       recordedAt: this.head.instant,
     };
+  }
+  acceptSeedHead(position: number, txId: string) {
+    assert(this.head && position > this.head.position);
+    // [DX-CHK1] Why: rejoin the real loader's verified logical position before adding the rolling traffic sentinels.
+    // Rejected: resetting the erase fixture to a zero basis after mixed population load.
+    this.head = { ...this.head, position, txId, triples: [] };
   }
   acceptErasure(command: { position: number; erasedAt: number; txId: string }) {
     assert.equal(command.position, this.position + 1);
@@ -972,6 +979,27 @@ async function scale() {
     }
     if (run.mode.endsWith("regression")) {
       const { regression } = await import("./regression.ts");
+      const nonce = process.env.DX_CHK1_REMOVAL;
+      const combined = nonce ? await import("../chk1/removal.ts") : undefined;
+      if (combined) {
+        assert.equal(nonce, run.nonce);
+        if (process.env.DX_CHK1_REALISTIC === "1") {
+          const { load } = await import("../real1/load.ts");
+          const { roster } = await import("../real1/population.ts");
+          const seed = await load({ scope: f.name, db: f.db, tag: "toy-parent", imageSha: digest(f.scope),
+            pgdataSha: digest("toy"), transferSha: digest(nonce), cut: f.position, facts: 0, people: 500 },
+          "toy", run.sourceHash!, process.env.DATOMIC_URL!, dir, () => {
+            const free = fs.statfsSync(dir);
+            assert(free.bavail * free.bsize >= 10 * 2 ** 30);
+          });
+          const rows = await comp.feedPage(seed.cut - 1, 1);
+          const terminal = rows.transactions[0]!;
+          assert.deepEqual([terminal.position, terminal.txId], [seed.cut, seed.terminalTx]);
+          f.acceptSeedHead(seed.cut, seed.terminalTx);
+          output("combined-realistic-seed", { seed, accounts: roster("toy") });
+        }
+        await f.write(combined.trafficSeed, [], "combined-rolling-seed");
+      }
       await regression(
         f,
         groups[1]!.people[0]!,
@@ -982,6 +1010,7 @@ async function scale() {
         output,
         run.mode.startsWith("ledger-"),
         run.sealedWitness,
+        combined ? (erase) => combined.duringRemoval(process.env.DATOMIC_URL!, f.db, nonce!, erase, output) : undefined,
       );
       return;
     }

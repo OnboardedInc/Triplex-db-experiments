@@ -47,7 +47,9 @@ export function readVariantReceipt(file, runtime = datomicRuntime()) {
   assert.equal(receipt.buildInputsSha256, createHash("sha256").update(JSON.stringify({
     sources: receipt.sources, distribution: receipt.distribution, runtime,
   })).digest("hex"));
-  assert.equal(receipt.tag, "tx2-dxjvm1-jre" + runtime.major + ":" + receipt.buildInputsSha256.slice(0, 16));
+  assert(receipt.holder === undefined || receipt.holder === "DX-CHK1");
+  const repository = receipt.holder === "DX-CHK1" ? "tx2-dxchk1-jre" : "tx2-dxjvm1-jre";
+  assert.equal(receipt.tag, repository + runtime.major + ":" + receipt.buildInputsSha256.slice(0, 16));
   return receipt;
 }
 

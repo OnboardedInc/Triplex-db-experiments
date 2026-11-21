@@ -146,7 +146,7 @@ async function buildDatomic(config, opts) {
   const runtime = datomicRuntime();
   const isolated = opts['variant-receipt'];
   if (isolated) {
-    if (opts.holder !== 'DX-JVM1' || fs.existsSync(isolated))
+    if (!['DX-JVM1', 'DX-CHK1'].includes(opts.holder) || fs.existsSync(isolated))
       fail('REFUSED', 'An isolated JVM build requires the assigned holder and a fresh receipt path');
     // [DX-JVM1] Why: this image build reserves no engine slot and finishes under its ordinary heavy token.
     // Rejected: checking slot admission again after the build has a token (races a pending lease drain).
@@ -174,19 +174,22 @@ assert actual==expected, 'Extracted Datomic bytes differ from the pinned ZIP'
   const sources = datomicSources(root);
   const distribution = datomicTree(dist);
   const buildInputsSha256 = sha256(JSON.stringify({ sources, distribution, ...(isolated ? { runtime } : {}) }));
-  const tag = isolated ? 'tx2-dxjvm1-jre' + runtime.major + ':' + buildInputsSha256.slice(0, 16) : config.lanes.datomic.image;
+  // [DX-CHK1] Why: keep JVM test images and cleanup owned by the combined gate.
+  // Rejected: retagging or removing the JVM1 builder's existing image.
+  const holder = isolated && opts.holder === 'DX-CHK1' ? opts.holder : undefined;
+  const tag = isolated ? (holder ? 'tx2-dxchk1-jre' : 'tx2-dxjvm1-jre') + runtime.major + ':' + buildInputsSha256.slice(0, 16) : config.lanes.datomic.image;
   const parent = path.join(ENGINE_DIR, 'datomic-build');
   fs.mkdirSync(parent, { recursive: true });
   const context = path.join(parent, `${buildInputsSha256}-${process.pid}-${Date.now()}`);
   try {
-    return finishDatomicBuild(config, { context, distribution, dist, gpg, isolated, root, runtime, sources, tag, verification, buildInputsSha256 });
+    return finishDatomicBuild(config, { context, distribution, dist, gpg, holder, isolated, root, runtime, sources, tag, verification, buildInputsSha256 });
   } finally {
     // [DX-JVM1] Why: stage verified files for this build only. Rejected: retaining a second Datomic distribution for every private build.
     if (isolated) fs.rmSync(context, { recursive: true, force: true });
   }
 }
 
-function finishDatomicBuild(config, { context, distribution, dist, gpg, isolated, root, runtime, sources, tag, verification, buildInputsSha256 }) {
+function finishDatomicBuild(config, { context, distribution, dist, gpg, holder, isolated, root, runtime, sources, tag, verification, buildInputsSha256 }) {
   const fileInput = (source, destination, file) => ({ source, destination, manifest: [{ ...file, path: '' }] });
   const staged = stageDatomicContext(context, [
     { source: dist, destination: 'datomic', manifest: distribution },
@@ -203,7 +206,7 @@ function finishDatomicBuild(config, { context, distribution, dist, gpg, isolated
   const buildxConfig = path.join(ENGINE_DIR, 'datomic-buildx');
   fs.mkdirSync(dockerConfig, { recursive: true });
   fs.mkdirSync(buildxConfig, { recursive: true });
-  const result = spawnSync('docker', dockerArgs(['build', '--platform', 'linux/arm64', '--build-arg', `BUILD_INPUTS_SHA256=${buildInputsSha256}`, ...['DATOMIC_BASE=' + runtime.base, 'DATOMIC_JAVA_MAJOR=' + runtime.major, 'DATOMIC_JAVA_VERSION=' + runtime.version].flatMap(arg => ['--build-arg', arg]), '-t', tag, context]), { stdio: 'inherit', env: { ...process.env, DOCKER_CONFIG: dockerConfig, BUILDX_CONFIG: buildxConfig } });
+  const result = spawnSync('docker', dockerArgs(['build', '--platform', 'linux/arm64', '--build-arg', `BUILD_INPUTS_SHA256=${buildInputsSha256}`, ...['DATOMIC_BASE=' + runtime.base, 'DATOMIC_JAVA_MAJOR=' + runtime.major, 'DATOMIC_JAVA_VERSION=' + runtime.version].flatMap(arg => ['--build-arg', arg]), ...(holder ? ['--label', 'tx2.lab-holder=' + holder] : []), '-t', tag, context]), { stdio: 'inherit', env: { ...process.env, DOCKER_CONFIG: dockerConfig, BUILDX_CONFIG: buildxConfig } });
   if (result.status !== 0) fail('DOCKER', 'Datomic image build failed');
   if (sources.sha256 !== datomicSources(root).sha256) fail('REFUSED', 'Datomic source changed during build; image not pinned');
   const image = JSON.parse(docker(['image', 'inspect', tag]))[0];
@@ -212,7 +215,7 @@ function finishDatomicBuild(config, { context, distribution, dist, gpg, isolated
     fail('REFUSED', 'Built image labels do not match the exact Java and input bytes');
   if (isolated) {
     atomicJson(isolated, { imageId: image.Id, imageSize: image.Size, buildInputsSha256,
-      sourceInputsSha256: sources.sha256, tag, runtime, context, staged, sources, distribution, verification,
+      sourceInputsSha256: sources.sha256, tag, runtime, context, staged, sources, distribution, verification, ...(holder ? { holder } : {}),
       gpg: { stdout: gpg.stdout, stderr: gpg.stderr } }, { exclusive: true });
     console.log(JSON.stringify({ imageId: image.Id, runtime, receipt: isolated }));
     return;
@@ -239,10 +242,11 @@ function finishDatomicBuild(config, { context, distribution, dist, gpg, isolated
 }
 
 function removeJvmImage(opts) {
-  if (opts.holder !== 'DX-JVM1' || typeof opts['variant-receipt'] !== 'string')
-    fail('USAGE', 'JVM image removal requires the DX-JVM1 holder and a variant receipt');
+  if (!['DX-JVM1', 'DX-CHK1'].includes(opts.holder) || typeof opts['variant-receipt'] !== 'string')
+    fail('USAGE', 'JVM image removal requires the assigned holder and a variant receipt');
   const runtime = datomicRuntime(readJson(opts['variant-receipt']).runtime?.major);
   const receipt = readVariantReceipt(opts['variant-receipt'], runtime);
+  if ((receipt.holder ?? 'DX-JVM1') !== opts.holder) fail('OWNERSHIP', 'Variant receipt belongs to a different holder');
   const raw = docker(['image', 'inspect', receipt.imageId], { allowFail: true });
   if (!raw) return;
   const [image] = JSON.parse(raw);
@@ -252,6 +256,7 @@ function removeJvmImage(opts) {
   // [DX-JVM1] Why: only remove the private image pinned by this receipt. Rejected: pruning dangling images or forcing removal from another owner's containers.
   if (image.Id !== receipt.imageId || tags.some(tag => tag !== receipt.tag)
     || image.RepoDigests?.some(digest => digest.split('@')[0] !== privateRepository)
+    || (receipt.holder && labels?.['tx2.lab-holder'] !== receipt.holder)
     || labels?.['tx2.java-major'] !== runtime.major || labels?.['tx2.java-base'] !== runtime.base
     || labels?.['tx2.build-inputs-sha256'] !== receipt.buildInputsSha256)
     fail('REFUSED', `Image ${receipt.imageId} does not belong to the private JVM variant receipt (tags: ${tags.length}, digests: ${image.RepoDigests?.length ?? 0})`);
@@ -974,7 +979,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   // [DX-ACT2] Why: the SQL activation experiment must reserve its small roles in the shared pool and remove only its private volumes. Rejected: launching a bench stack outside the slot manager.
   if (command === 'delta') return (await import('../experiments/EXP-DX1/actv-delta/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicSources });
   // [DX-ERASE1] Why: storage GC and excision need an owned SQL volume. Rejected: exercising irreversible maintenance on a resident.
-  if (command === 'erase1') return (await import('../experiments/EXP-DX1/erase1/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicTree });
+  if (command === 'erase1') return (await import('../experiments/EXP-DX1/erase1/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicTree, datomicSources });
   // [DX-PLAY1] Why: the portable stack uses the same launch code under an exclusive lab reservation.
   // Rejected: running a second private Docker command path without pool admission.
   if (command === 'play1') return (await import('../experiments/EXP-DX1/play1/local.ts')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
@@ -987,7 +992,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
     } else if (runtime.major !== '21') fail('REFUSED', 'Java 25 on the Mac requires a verified private build receipt');
   }
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
-  if (options.lane === 'datomic' && command === 'image-remove') return options.holder === 'DX-JVM1' ? removeJvmImage(options) : removeThinImage(config, options);
+  if (options.lane === 'datomic' && command === 'image-remove') return options['variant-receipt'] ? removeJvmImage(options) : removeThinImage(config, options);
   // [DX-V01] Why: run the existing Linux toy client in the exact owned compact slot.
   // Rejected: VM shell access or running a benchmark with host/guest clocks mixed.
   if (command === 'scorecard-fixture') {
