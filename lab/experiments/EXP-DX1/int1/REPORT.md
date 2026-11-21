@@ -33,3 +33,7 @@ The scorecard producer and collector match original saves, the installed functio
 Use `--writer grouped` for the grouped K control. The default `--writer subject` uses ordered IDs, numeric owner lookup and no prefetch hints. Java options are `--jvm j21-g1`, `--jvm j25-g1` and `--jvm j25-zgc`. The selector checks covered all three JVM roles. The Java 25 choices still need a live scorecard run on this revision. [Gate ledger](V0.1-STATE.md) · [Server command](../v01/SERVER.md)
 
 At 235 and 394 offered saves per second with a 2 GiB transactor cache, the ordered arm delivered 234.90 and 393.92 with zero expiries. Quiet-account p99 reached 4.28× and 3.47× its solo p99. The Java 25 G1 comparison gained 5–9% throughput on its separate tape. All Mac timings are diagnostic. [Evidence checksums](V0.1-SHA256SUMS)
+
+## Launch audit
+
+The reduced startup witness compares final flags, pinned Java release, object-cache arguments, container caps and live PostgreSQL durability. It reads fresh startup logs between two observations of the same process and checks the exact source and reservation. The physical launcher checks the requested device before starting PostgreSQL and reads back live WAL placement and durability. The scorecard checks the three JVM boots after restore. The campaign collector rechecks the source-bound launch policy, final flags, container images and fresh capture window before classifying saved observations.

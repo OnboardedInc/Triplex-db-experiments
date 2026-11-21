@@ -5,19 +5,21 @@ import path from "node:path";
 import { parseArgs } from "node:util";
 import { budget, ceiling, defaultJvm, defaultWriter, jvmProfiles, pairSeconds, type JvmProfile } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
+import { launchProfile } from "../jvm1/launch.mjs";
 
 const { values } = parseArgs({
   options: {
     age: { type: "string" }, seed: { type: "string" }, "image-sha256": { type: "string" },
     "transfer-sha256": { type: "string" }, writer: { type: "string", default: defaultWriter },
     jvm: { type: "string", default: defaultJvm },
+    "tx-jvm": { type: "string" }, "wal-directory": { type: "string" },
     "aged-bundle": { type: "string" }, "aged-bundle-sha256": { type: "string" }, "aged-dump": { type: "string" },
     "aged-dump-sha256": { type: "string" }, out: { type: "string" }, commit: { type: "string" },
     "hourly-usd": { type: "string", default: "1.09" }, help: { type: "boolean" }, plan: { type: "boolean" },
   },
 });
 if (values.help) {
-  console.log("scorecard.mjs --age fresh|1B --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer grouped|subject] [--jvm j21-g1|j25-g1|j25-zgc]\nFor 1B add --aged-bundle FILE --aged-bundle-sha256 SHA --aged-dump FILE --aged-dump-sha256 SHA.\nscorecard.mjs --plan");
+  console.log("scorecard.mjs --age fresh|1B --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer grouped|subject] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm j21-g1|j25-g1|j25-zgc] [--wal-directory DIR]\nFor 1B add --aged-bundle FILE --aged-bundle-sha256 SHA --aged-dump FILE --aged-dump-sha256 SHA.\nscorecard.mjs --plan");
   process.exit(0);
 }
 const price = Number(values["hourly-usd"]);
@@ -25,8 +27,11 @@ assert(/^\d+(?:\.\d+)?$/.test(values["hourly-usd"]!) && Number.isFinite(price) &
 const forecast = `Budget ${ceiling} minutes including cleanup, up to USD ${(ceiling / 60 * price).toFixed(2)} per age. This revision allocates ${budget.adoptionAndP1to4} minutes to restore and partial P1–P4 coverage, including ${pairSeconds / 60} minutes of matched offers. Build and AGE1 provisioning are separate.`;
 assert(values.writer === "grouped" || values.writer === "subject");
 assert(jvmProfiles.includes(values.jvm as JvmProfile), "Unknown scorecard JVM profile");
+const txJvm = (values["tx-jvm"] ?? values.jvm) as JvmProfile;
+const launch = launchProfile("server", { jvm: values.jvm as JvmProfile, txJvm });
 if (values.plan) {
-  console.log(forecast + ` Writer ${values.writer}, JVM ${values.jvm}.`);
+  console.log(forecast + ` Writer ${values.writer}, server profile. JVM ${values.jvm}, transactor JVM ${txJvm}.`);
+  console.log(JSON.stringify(launch, null, 2));
   process.exit(0);
 }
 assert(values.age === "fresh" || values.age === "1B");
@@ -44,7 +49,7 @@ const fd = fs.openSync(path.join(out, "campaign.log"), "wx", 0o600);
 const child = spawn("timeout", ["--kill-after=90s", String(budget.adoptionAndP1to4 + budget.P6 + budget.P7 + 1) + "m", "bash",
   "lab/experiments/EXP-DX1/v01/adopted-server.sh", source, campaign, String(Date.now() + budget.adoptionAndP1to4 * 60_000),
   path.resolve(values.seed), values["image-sha256"], values["transfer-sha256"], values.age, values.writer, values.jvm!,
-  ...aged.map((v) => v ?? "")], {
+  ...aged.map((v) => v ?? ""), txJvm, values["wal-directory"] ? path.resolve(values["wal-directory"]) : ""], {
   stdio: ["ignore", fd, fd],
   env: Object.fromEntries(["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME"]
     .flatMap((name) => process.env[name] ? [[name, process.env[name]]] : [])),

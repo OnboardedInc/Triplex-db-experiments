@@ -28,9 +28,13 @@ sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.j
   --out /var/tmp/triplex-v01-adopted-fresh
 ```
 
-The default uses the per-person writer with client-minted ordered assertion IDs, numeric owner lookup and Java 21 with G1. Use `--writer grouped` for the compact K control. In both configurations the journal stays queryable. The card checks the installed writer and observed JVM role settings.
+The default uses the per-person writer with client-minted ordered assertion IDs, numeric owner lookup and the `server` launch profile. The transactor has three cores, a 24 GiB heap and a 16 GiB object cache. The write gateway has four cores and a 4 GiB heap. The read gateway has one core and a 3 GiB heap. Use `--writer grouped` for the compact K control. In both configurations the journal stays queryable. The card checks the installed writer and the three serving JVM boots after each restore.
 
-Select Java 25 with G1 using `--jvm j25-g1`, or use `--jvm j25-zgc` for Java 25 with ZGC. The prepared build binds both Java images. These choices apply to the transactor and both gateways.
+All three roles default to Java 21 G1. Use `--tx-jvm j25-zgc` to change only the transactor. The existing `--jvm j25-g1` and `--jvm j25-zgc` settings change all roles. The prepared build binds both Java images.
+
+Supply `--wal-directory DIR` to put the disposable PostgreSQL WAL on a dedicated mounted filesystem. The launcher checks the device against Docker's volume store before starting and checks the live PostgreSQL paths after startup. Each arm gets its own fresh child directory and removes it after shutdown. Synchronous commit, fsync and full page writes stay enabled.
+
+`int1/everything.sh` also defaults to the server profile and accepts `DX_TX_JVM=j25-zgc` and `DX_WAL_DIRECTORY`. The playground and Mac correctness gates use their small laptop settings.
 
 ## Aged 1B
 
