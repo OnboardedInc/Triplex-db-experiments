@@ -4,19 +4,23 @@
 
 A new driver took over bench 3 at 12:45 EST after the previous driver stopped at about 12:38. The rental had cost about USD 3.85 at 17:45 UTC, at USD 1.09/hour from 14:13 UTC.
 
-**Running and queued on the server as systemd units, each waiting for the one before it:**
+**Queue on the server at 18:55 UTC, as chained systemd units; each waits for the one before it:**
 
 | Order | Unit | Commit | Cap |
 | --- | --- | --- | --- |
-| 1 | `triplex-bench3-cache32` (running since 17:24:46 UTC) | PREP1 `97aced1b1`, 32 GiB cache on three, then five transactor cores | 60 min |
-| 2 | `triplex-bench3-tx5` | PREP1 `73afad665`, five transactor cores, 16 GiB cache | 35 min |
-| 3 | `triplex-bench3-removal` | INT1 build `3669bee41`, `erase1/SERVER-ERASE2.md` | 86 min plus build and copy |
-| 4 | `triplex-bench3-fresh` | PREP1 `891ab9139`, `prep1/FRESH-FIRST.md` | 120 min |
-| 5 | `triplex-bench3-realistic` | INT1 build `8597e3ef7`, first realistic rung, then `verify` | 16 h unit limit |
+| done | `triplex-bench3-cache32` | PREP1 `97aced1b1` | [Reading](ROLLING-READING.md#32-gib-object-cache-cache32) |
+| done | `triplex-bench3-tx5` | PREP1 `73afad665` | [Reading](ROLLING-READING.md#five-transactor-cores-with-the-16-gib-cache-tx5) |
+| 1 | `triplex-bench3-removal` (preparing since 18:47:39 UTC) | INT1 build `3669bee41`, `erase1/SERVER-ERASE2.md` | 86 min plus build and copy |
+| 2 | `triplex-bench3-rd1` (`queue/rd1/run.sh` = `bench3-rd1.sh`) | RD1 `ca93f5165`, prepared-copy reader ladders, control then tuned, rolling 6 | 20 min build, then 2 × (copy + 32 min) |
+| 3 | `triplex-bench3-cold` (`queue/cold/run.sh` = `bench3-cold.sh`) | INT1 `8ab832093`, `jvm1/cold-server.sh ... --credit-mode rolling6` | 20 min build, then 59 min |
+| 4 | `triplex-bench3-fresh` (`queue/fresh/run.sh` = `bench3-writer-addons.sh`, now waiting for `cold`) | PREP1 `891ab9139`, `prep1/FRESH-FIRST.md` | 120 min |
+| 5 | `triplex-bench3-realistic` (`queue/realistic/run.sh` = `bench3-realistic.sh`) | INT1 build `8597e3ef7`, first realistic rung, then `verify` | 2–3 h plus verify |
 
-**The reads ladder cannot run on this server as published.** RD1 `638864206` starts through `lab/bin/scorecard.mjs --read-study`. That path restores a logical dump: `lab/experiments/EXP-DX1/v01/adopt.ts` line 46 opens `seed.pgdump` beside the seed's `image.json`. Bench 3 holds only the verified physical copy and the seed's `image.json` and `transfer.json`; no `seed.pgdump` exists anywhere on its disks. The RD1 builder needs either a physical-copy path like `erase1/measure-server.ts --pg-data`, or the dump must be shipped here. The cold start item still waits for a credit-mode argument; `int1/V0.1-STATE.md` at `666b625e5` names none.
+`bench3-slots-down.sh` releases the stack slots that the rd1 and cold runs record, if a unit stops early.
 
-**Next:** collect and publish cache32 and tx5 as each ends. Then prepare the W1 append-retirement pair (`ad2e188a9`, `w1/RETIREMENT-READS.md`) so that it runs between the removal stage and fresh-first, as the queue orders.
+**The reads ladder could not run from the dump at `638864206`.** That path opens `seed.pgdump` beside `image.json` (`v01/adopt.ts` line 46), and bench 3 holds only the physical copy. RD1 `ca93f5165` starts each ladder from a private copy of the held directory instead, so it is queued. The append-retirement pair is still blocked for the same reason: `1f64480bb` and the INT1 head both restore `seed.pgdump`, so it needs a prepared-copy path like RD1's. The cold start item uses `8ab832093`, which `int1/V0.1-STATE.md` (part 13) names for the credit-mode argument.
+
+**Next:** collect and publish each item as it ends. The realistic card waits for the orchestrator to confirm INT1 `55278014a` (`int1/V0.1-STATE.md`, part 13). If the queue empties first, the fallback is a repeat of rolling 6 with the 32 GiB cache.
 
 ## Third rental for rolling credits
 

@@ -24,7 +24,7 @@ case $selection in
   fresh)
     pin=891ab9139eb4fa6defe2c5484ada332b84090e6f
     command=fresh
-    prior=triplex-bench3-removal.service
+    prior=triplex-bench3-cold.service
     arms=(rolling6 fresh6 fresh-zgc6)
     export DX_PREP1_FRESH_CREDITS=6
     ;;
