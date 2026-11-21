@@ -21,7 +21,7 @@ test("the held-seed card preserves all obligations after a stopped campaign", (t
   assert.deepEqual(columnCounts, Array(14).fill(6));
   assert.match(card, /Mac toy run\. All numbers are diagnostic\./);
   assert.match(card, /"TX2_SUBJECT_SAVE": "1"/);
-  assert.match(rows[4]!, /held SCALE1 roster/);
+  assert.match(rows[4]!, /Server 1 measured Publish under load/);
   assert.match(rows[8]!, /needs two servers/);
   assert(rows.every((row) => row.includes("| NOT MEASURED |")));
   assert.doesNotMatch(card, /\| PASS \||\| FAIL \|/);

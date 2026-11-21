@@ -183,9 +183,9 @@ export function writeAdoptedCard(run: Card) {
   }
   const field = ["P5", "P6", "P7", "P8", "P9"];
   const gaps: Record<string, string> = {
-    P5: "The published INT1 Publish producer creates its own flat scope. No adapter binds it to the held SCALE1 roster and live release cut.",
+    P5: "The held SCALE1 roster has no Publish window in this run. [Server 1 measured Publish under load](https://github.com/OnboardedInc/Triplex-db-experiments/blob/530b88a6e9f7c9ca0593628bdbd7689707c87408/lab/experiments/EXP-DX1/bm1/HANDOFF.md#joined-publish-at-100000).",
     P6: "No verified same-scope alone and 235-save quiet-account pair from this attempt.",
-    P9: "One-host rehearsal requires the published HASYNC1 legacy PostgreSQL base backup, compatible ten-account proofs and two 10-minute windows. The held SCALE1 K archive is a logical dump. Each qualifying fault or move measurement needs two servers.",
+    P9: "A qualifying fault or move measurement needs two servers. [Separate HASYNC1 fault and move procedure](https://github.com/OnboardedInc/Triplex-db-experiments/blob/a0c47480f/lab/experiments/EXP-DX1/hasync1/SCORECARD.md). The one-host rehearsal uses its own physical checkpoint.",
     P8: "No verified fixed-pace import arm from this attempt.",
   };
   const text = base.trimEnd().split("\n").map((line) => {

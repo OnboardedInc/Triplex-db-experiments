@@ -19,6 +19,10 @@ The mixed-ID witness selects a sealed member outside the timed writer cohort. Th
 
 The card authorizes the mixed-ID correctness status only when both fresh archives bind to the current invocation, cut, source, slot, writer, attempt and held image. It checks both refusal outcomes and equal typed values and validity at four matched cuts. The native writer treats reuse across owners as a global identity conflict. Mac evidence gets DIAGNOSTIC. This change adds no other PASS path.
 
+## Part 3 separate P5 and P9 measurements
+
+The held scorecard leaves P5 and P9 unmeasured. P5 links to server 1's joined Publish campaign with 100,000 people, including the separate 23.5-save/s receipt window that missed one second. P9 links to the HASYNC1 fault and move procedure and states the two-server requirement.
+
 ## Part 2 verdict and receipt audit
 
 - The fresh adoption reads the exact operator-pinned SCALE1 image and transfer. The transfer binds the producer, nonce, successful terminal result and image digest. The restore checks the exact dump hash while streaming it onto a private slot. Both peers check the original logical cut, stored scope, loader manifest receipt, terminal loader command and exact pinned members and fields. The aged branch checks the original fresh identity against the AGE1 bundle and calls the published fresh-peer verifier on the actual restored database before offers.
