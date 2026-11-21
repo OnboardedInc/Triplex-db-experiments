@@ -3850,3 +3850,29 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   and a retired new-format id were both refused; four historical answers matched the grouped configuration. Rows 5
   and 9 NOT MEASURED with links. Server 2 stays on `790d9e96e` until DX-THIN1 publishes the ordered-writer merge
   on `exp/DX-INT1`; then DX-V01 is resumed to re-pin. Four agents running (DX-BM1, DX-SCALE1, DX-PREP1, DX-THIN1).
+
+## 2026-11-21 02:41 UTC (21:41 local, 2026-11-20): DX-PREP1 part 10 in: the remaining tail is the durable append; server 2 switched to the ordered writer's full-size ceiling
+
+- **DX-PREP1 part 10 (`b99ea1a72`; merge candidate `3529d2579`, includes `exp/DX-INT1` `250c91916`;
+  `prep1/QUIET-ACCOUNT.md`, `CEILING.md`).** Settings: `TX2_SUBJECT_SAVE=1 TX2_SUBJECT_NUMERIC_OWNER=1
+  TX2_SUBJECT_ORDERED_IDS=1`; scorecard option `--writer subject-ordered`; an SDK caller allocates one
+  `orderedSaveIdentity` per command and uses that block for the journal and new assertion ids; existing callers
+  may keep their ids. Gates pass with the ordered writer off and on (native, PostgreSQL restart, thirteen removal
+  routes). Existing hashed ids need no rewrite: an old id proposed again is refused, also after retraction and
+  under another owner.
+- **Where the quiet account's p99 goes with ordered ids (the 208th of 210 observations):** at 394 loaded
+  (118.16 ms) 67.8 percent waiting from ready to append and 28.8 percent in the append call; at 235 loaded
+  (315.42 ms) 25.2 and 73.8 percent; solo (34.07 and 73.66 ms) 88.6 and 89.1 percent in the append call. Append
+  calls: p50/p99/max 0.38/4.74/232.85 ms at 235 and 0.34/2.83/168.23 ms at 394; 186 and 293 appends per second at
+  1.262 and 1.344 saves per append. Fair turns were off. Transactor safepoints up to 161 ms in the cells; no
+  p99-ranked ordered save overlapped one. Forecast if own-append tails fall under 20 ms and handoff under 10 ms:
+  quiet solo p99 25 to 35 ms and a loaded ratio of 1.2 to 1.4.
+- **Server 2 re-ordered** (DX-SCALE1 stopped and resumed; seed sealed at about 21:38 local): stop the grouped
+  writer's three-hour run that had just started; run DX-PREP1's ceiling command on the full-size image (620 and 900
+  offered, fair turns off and on, neighbours spread over 1,900 people each; forecast 450 and 520 delivered with
+  fair turns off); if time, repeat one pair with the write-ahead log on the unused second NVMe; then the scorecard
+  with the ordered writer, the 1 billion run, the scorecard on the aged database.
+- **DX-PREP1 part 11 assigned:** a 75 minute server 1 command separating the causes of the append tail (WAL on
+  the second drive; transactor on Java 25 with ZGC; fair turns on), each append over 20 ms assigned to WAL sync,
+  checkpoint writeback, a pause or the handoff; synchronous commit on in every arm.
+- Running: DX-BM1, DX-SCALE1, DX-THIN1, DX-PREP1 (four).
