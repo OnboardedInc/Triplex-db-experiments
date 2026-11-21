@@ -8,7 +8,8 @@ import {
   reachableRows,
   type WorldRow,
 } from "../../../bench/lib/w0-world.ts";
-import { readDeepWorlds } from "../../../bench/lib/deep-activation.ts";
+import { policyWorld, readDeepWorlds } from "../../../bench/lib/deep-activation.ts";
+import { ids, subjectOf } from "../../../bench/lib/world.ts";
 import { parseOutbox } from "../../../bench/lib/w0-outbox-state.ts";
 import { CURSOR, fact, membership, millis, value, type Controls, type Store } from "./store.ts";
 
@@ -30,6 +31,31 @@ export function winner(c: Controls, b: Point) {
   return active[0]?.id ?? null;
 }
 export const maskVersion = (c: Controls) => Math.max(0, ...c.masks.map((r) => r.position));
+export function heldWorlds(rows: readonly WorldRow[], prefix: string, account: string, people: number[],
+  basis: { position: number; validAt: number }) {
+  const by = new Map(people.map((person) => [person, [] as WorldRow[]]));
+  // [DX-ACT1] Why: normalize only after proving that all source entities and references belong to the selected account.
+  // Rejected: dropping the namespace before checking isolation.
+  const local = (raw: string) => {
+    assert(raw.startsWith(prefix), "Foreign account in a pinned world");
+    return raw.slice(prefix.length);
+  };
+  for (const row of rows) {
+    const entityId = local(row.entityId), owner = subjectOf(entityId);
+    const subject = owner === null ? undefined : by.get(owner);
+    assert(subject, "Foreign subject in a pinned world");
+    const value = row.value.type === "ref" ? { ...row.value, value: local(row.value.value) } : row.value;
+    if (value.type === "ref") assert.equal(subjectOf(value.value), owner);
+    subject.push({ ...row, entityId, value });
+  }
+  return people.map((i) => {
+    const body = by.get(i)!;
+    const root = body.filter((r) => r.entityId === ids.placement(i));
+    assert.deepEqual(root.filter((r) => r.attribute === ":subject/account").map((r) => r.value.value), [account]);
+    assert.deepEqual(root.filter((r) => r.attribute === ":subject/member").map((r) => r.value.value), [String(i)]);
+    return policyWorld(i, body, basis);
+  });
+}
 export async function worldsAt(store: Store, format: Format, subjects: string[], b: Point) {
   assert(
     subjects.length <= 64 &&
@@ -41,6 +67,13 @@ export async function worldsAt(store: Store, format: Format, subjects: string[],
   if (!subjects.length) return [];
   if (format === "act2-deep") {
     assert(subjects.every((s) => /^pl:s[0-9]{8}$/.test(s)));
+    if (store.held) {
+      const { prefix, account, people } = store.held;
+      const members = subjects.map((s) => Number(s.slice(4)));
+      assert(members.every((i) => i < people) && new Set(members).size === members.length);
+      const rows = await store.rows(members.map((i) => prefix + ids.placement(i)), b.tx, b.validTime);
+      return heldWorlds(rows, prefix, account, members, { position: b.tx, validAt: millis(b.validTime) });
+    }
     return readDeepWorlds(
       store.comp,
       subjects.map((s) => Number(s.slice(4))),

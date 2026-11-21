@@ -3,16 +3,27 @@ import { spawn } from "node:child_process";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { Reply } from "./actions.ts";
-import { attrs, expected, generate, loadFixture } from "./fixture.ts";
+import { attrs, loadFixture } from "./fixture.ts";
+import { personId, personName } from "./model.ts";
+import { manifestReader } from "./bundle.ts";
+import { parseSnapshot, snapshotProfiles, snapshotSamples, type SeedPlan } from "./snapshot.ts";
 import { setTimeout as delay } from "node:timers/promises";
 import { repo } from "./stack.ts";
 
 type Row = Record<string, any>;
 
-export async function liveGate(url: string, checksum: string) {
-  const fixture = generate();
-  const account = fixture.accounts[0]!;
-  const person = account.people[0]!;
+export async function liveGate(
+  url: string,
+  checksum: string,
+  options: { plan?: SeedPlan; cwd?: string } = {},
+) {
+  const { plan = "small", cwd = repo } = options;
+  const accounts = snapshotProfiles(plan);
+  const account = accounts[0]!;
+  const person = { id: personId(account, 0), name: personName(account, 0) };
+  const samples = snapshotSamples(plan);
+  const initial = samples[0]!.byPerson.get(person.id)!;
+  const latest = samples.at(-1)!.byPerson.get(person.id)!;
   const subject = { accountId: account.id, personId: person.id };
   const observed = new Map<string, { reply: Reply; status: number }>();
   const run = async (action: string, input: object = {}, status = 200, key = action) => {
@@ -33,13 +44,16 @@ export async function liveGate(url: string, checksum: string) {
   assert.equal(catalog["fixtureSha256"], checksum);
   assert.deepEqual(
     catalog["records"].map((a: Row) => [a["id"], a["people"]]),
-    fixture.accounts.map((a) => [a.id, a.count]),
+    accounts.map((a) => [a.id, a.count]),
   );
   assert.ok(catalog["firstRelease"]?.receipt?.txId);
   const people = await run("people", { accountId: account.id });
   assert.deepEqual(
     people["records"],
-    account.people.map(({ id, name }) => ({ id, name })),
+    Array.from({ length: Math.min(100, account.count) }, (_, i) => ({
+      id: personId(account, i),
+      name: personName(account, i),
+    })),
   );
   const rootFields = (reply: Row) =>
     Object.fromEntries(
@@ -48,23 +62,25 @@ export async function liveGate(url: string, checksum: string) {
         .map((row: Row) => [row["attribute"], row["value"]]),
     );
   const current = await run("current", subject);
-  assert.deepEqual(rootFields(current), expected(person, fixture.currentAt));
-  const map = new Map(
-    current["records"].map((row: Row) => [
-      JSON.stringify([row["entityId"], row["attribute"]]),
-      row["value"],
-    ]),
-  );
-  assert.equal(map.size, current["records"].length);
-  for (const child of person.owned)
-    for (const [attribute, value, kind] of child.facts) {
-      assert.equal(
-        map.get(JSON.stringify([child.id, attribute])),
-        kind === "integer" ? value : kind === "boolean" ? Number(value === "true") : value,
-      );
-    }
+  const checkRecords = (reply: Row, expected: typeof latest) => {
+    const fields = new Map(
+      reply["records"].map((row: Row) => [
+        JSON.stringify([row["entityId"], row["attribute"]]),
+        row["value"],
+      ]),
+    );
+    assert.equal(fields.size, reply["records"].length);
+    assert.equal(
+      fields.size,
+      [...expected.values()].reduce((n, facts) => n + facts.size, 0),
+    );
+    for (const [id, facts] of expected)
+      for (const [attribute, value] of facts)
+        assert.equal(fields.get(JSON.stringify([id, attribute])), value, id + " " + attribute);
+  };
+  checkRecords(current, latest);
   const earlier = await run("earlier", subject);
-  assert.deepEqual(rootFields(earlier), expected(person, fixture.earlyAt));
+  checkRecords(earlier, initial);
   assert(earlier["diff"].some((row: Row) => row["attribute"] === attrs.note));
   assert(earlier["position"] < current["position"]);
   const history = await run("history", subject);
@@ -78,7 +94,7 @@ export async function liveGate(url: string, checksum: string) {
     history["records"][0].changes.some(
       (change: Row) =>
         change["attribute"] === attrs.note &&
-        change["value"]?.value === expected(person, fixture.currentAt)[attrs.note],
+        change["value"]?.value === latest.get(person.id)!.get(attrs.note),
     ),
   );
   const checkpoint = await run("feed", {}, 200, "feed-start");
@@ -139,7 +155,7 @@ export async function liveGate(url: string, checksum: string) {
     await delay(250);
   }
   assert.equal(materialized?.["progress"].state, "complete");
-  assert.equal(materialized["progress"].written, account.people.length);
+  assert.equal(materialized["progress"].written, account.count);
   assert.deepEqual(materialized["records"], release["records"]);
   const erasure = await run("erase", subject, 503);
   assert.equal(erasure["error"].code, "ErasureUnavailable");
@@ -192,7 +208,7 @@ export async function liveGate(url: string, checksum: string) {
     rootFields(viaHttp?.["result"].structuredContent)[attrs.note],
     write.changes[attrs.note],
   );
-  const viaStdio = await stdioCall(new URL(url).port, subject);
+  const viaStdio = await stdioCall(new URL(url).port, subject, cwd);
   assert.equal(
     rootFields(viaStdio["result"].structuredContent)[attrs.note],
     write.changes[attrs.note],
@@ -218,9 +234,9 @@ export async function liveGate(url: string, checksum: string) {
   );
 }
 
-async function stdioCall(port: string, subject: object) {
+async function stdioCall(port: string, subject: object, cwd: string) {
   const child = spawn(process.execPath, ["examples/playground/cli.ts", "mcp", "--port", port], {
-    cwd: repo,
+    cwd,
     stdio: ["pipe", "pipe", "pipe"],
   });
   const result = new Promise<Row>((resolve, reject) => {
@@ -256,6 +272,18 @@ async function stdioCall(port: string, subject: object) {
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   const url = process.argv[2];
   assert(url && /^http:\/\/127\.0\.0\.1:\d+$/.test(url), "Use the fresh local playground address");
-  const results = await liveGate(url, loadFixture().checksum);
+  const [tier, source, expectedSha] = process.argv.slice(3);
+  let results;
+  if (tier || source || expectedSha) {
+    assert(
+      tier && source && expectedSha && /^[a-f0-9]{64}$/.test(expectedSha),
+      "Pass the snapshot tier, data address and expected manifest SHA-256 together",
+    );
+    const manifest = await manifestReader(source, resolve(repo, ".cache/playground-data"));
+    assert.equal(manifest.checksum, expectedSha);
+    results = await liveGate(url, expectedSha, {
+      plan: parseSnapshot(manifest.initial, tier).plan,
+    });
+  } else results = await liveGate(url, loadFixture().checksum);
   console.log(JSON.stringify(results, null, 2));
 }

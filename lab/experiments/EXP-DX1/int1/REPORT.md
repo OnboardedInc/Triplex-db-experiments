@@ -1,28 +1,30 @@
-The scorecard should pin `57580241dc4020f9ab7590839c72c00356fcedee`.
-Version 0.1 has a small laptop profile and a server profile for one database.
-The server gives the transactor three cores and a 16 GiB cache. The gateways get four cores for writes and one for reads.
-The server defaults to Java 21 with G1. One option switches the transactor to Java 25 with ZGC.
-An operator can place the PostgreSQL write-ahead log on a separate filesystem. Saves still wait for durable storage.
-At full size, the best 394-offer run saved 361.51 per second and 7.23% of offers expired.
-The best quiet-account tail at 620 offers took 2.29 times as long under load.
-The Mac verified the laptop checks and a reduced-memory server startup. The fresh and billion-record scorecards still need bare metal.
+Build `9cd20b29449456c1d8c2400fc45f8be331495530` on both servers for Sunday failover.
+Build `bfef77d34d7cd72bc0bcc291086287655e277885` for Publish at 100,000 people.
+The Sunday checks recovered the original save reply and matched every checked read through the move.
+Version 0.1 holds saves after a machine loss until a second verified copy is ready.
+The small Publish run matched the full read and save tapes in both credit modes.
+The two queued scorecards still use their original builds.
+All Mac clocks are diagnostic. Full-size receipts, latency and recovery remain for the servers.
+The playground restored the public smoke data from a clean clone and passed its browser and agent checks.
 
-## Gates
+## Sunday failover integration audit
 
-| Gate | Result |
-| --- | --- |
-| Laptop SDK and package checks | Nine build tasks and both typechecks. 439 SDK tests passed and 53 were skipped in each writer mode. 18 focused tests passed. |
-| Laptop native | 27 tests and 54,079 assertions for each writer. The grouped and ordered restart cases checked two synchronous flushes each, both resend responses and retired IDs. |
-| Laptop erasure | Each writer checked all 13 routes, including journal, feed, pinned reads and backup restore. |
-| Laptop playground | Each writer passed 17 API cases, Chromium and separate native journal checks. The restored PostgreSQL dumps matched 928 grouped and 958 ordered rows. |
-| Laptop scorecard toy | Each writer matched 211 receipts, 96 quiet reads and 20 cold pulls. The ordered journal matched 211 ID blocks. |
-| Reduced Mac server startup | Actual Java 21.0.13+9 G1 across transactor, writer and reader. Final processor counts 3/4/1, max heaps 640/352/352 MiB and caches 64/32/32 MiB. All PostgreSQL durability switches were on. |
-| Preflight | Same-device, nonempty, malformed and unavailable-device WAL inputs were rejected in the shell fixture. Separate-device input chose the WAL bind and initdb setting. |
+The build and pair readiness records bind the declared commit, build receipt, manifest digest, seed cluster, fresh tag and both live host identities. Each case binds the cloned bytes and scope to a fresh attempt on the named roles, compares surviving native receipts and pinned field witnesses to the sent operations, and reports cleanup for those same objects. The local stopped-copy witness verifies manifest bytes and the exact fresh three-row sequence across promotion and replay. The compressed archive checksum indexes the collected attempt bytes. The two-server timing and second-fault observation remain open.
 
-The reduced startup used the shared server policy with laptop memory and the Mac reservation's two-core Docker quota per container. The Linux run still needs to verify physical placement, the full cache budget and the combined Java 25 ZGC and separate-WAL startup. The startup, SDK, native, playground and toy gates ran at `42ecd1420`. Erasure ran at `6d5edfc35`. The WAL shell checks, final launch plans and scale typecheck cover the follow-up launch changes through `9066ad9e1`. Earlier Mac refusals involved disk admission, cleanup with another owned slot still active, and a transient Docker build failure. [Evidence checksums](V0.1-SHA256SUMS)
+Build `9cd20b29449456c1d8c2400fc45f8be331495530` for both Sunday roles. TypeScript and 24 tests passed. The stopped-copy gate matched three rows and three fresh clone boots. Policy B matched 27 failover receipts, the original lost reply, 79 planned-move receipts and 1,518 pinned reads. The shared sender stayed byte-for-byte intact. The adoption reader split preserves the existing dump check. [Evidence index](V0.1-SHA256SUMS)
 
-## Evidence audit
+## Held Publish integration audit
 
-The startup witness checks final HotSpot flags, pinned releases, cache arguments and live SQL switches. It reads fresh logs between two observations of the same process and binds the result to exact source bytes, image and reservation. The physical launcher verifies the empty WAL directory and devices before startup, then checks the live mount and PostgreSQL settings. The scorecard rechecks the three serving JVM boots after restore. The integrated campaign collector checks the source-bound policy, final flags, image IDs and capture window before classifying observations. All 521 pins and the frozen inputs matched their recorded digests.
+The physical input checks bind the original image and transfer digests, stopped control record, prepared data and WAL mounts, immutable template and fresh engine identities to the clean build and queue lock. The local gate binds its startup attempt, source and live gateway digest to its reserved volume. The campaign matches each release recipe and each saved receipt to its contiguous native journal, and compares fixed-offset reads, settlement values, notice bytes and old/current reopened pins to the authored oracle at their cuts. Timely coverage uses the observed request clocks. These observations confer no acceptance verdict.
 
-The launch and Mac gates are indexed in the [version 0.1 state table](V0.1-STATE.md). The physical comparison used ten 100,000-person accounts, fair turns and 1,900 people per busy neighbour. The scorecard retains its own tapes. Select `--tx-jvm j25-zgc` and `--wal-directory DIR` for the combined server treatment. [Server command](../v01/SERVER.md)
+The clean build completed eight package tasks. TypeScript, shell syntax, 27 focused tests and 19 scheduler checks passed. The ordered writer matched 3,816 save receipts and 192 pinned reads per mode, plus four Publish receipts each. The independent settlement replay matched 86 values and eight notices. A fresh reader reopened old and new release cuts. The harness shared one managed gateway endpoint for local reads and writes. The physical campaign uses its own read gateway and dedicated WAL mount.
+
+The Sunday adoption split supplies the new physical launcher without changing the old dump size check. The sender's pause, drain and resume apply only with an explicit Publish controller. The default PostgreSQL mount and WAL validation matched the old script's argument and refusal checks. The Java image selections matched in all four tested combinations. The frozen inputs and 521 acceptance pins are unchanged. [Checksums](V0.1-SHA256SUMS)
+
+## Public playground integration audit
+
+The smoke round trip binds the selected tier, manifest and chunk digests to a fresh exact-source clone and the live canonical engine grant. Before readiness it checks the restored checkpoint and compares authored records at three exact cuts. It compares the HTTP and agent actions with their expected payloads and requires the browser check. Stop checks the original listener and exact owned Docker inventory before the round-trip record can be written. The runtime action receipts use durable save claims and pinned readback. No new acceptance verdict is emitted.
+
+The clean-clone gate at `4ab794320dcc499016a7fcd26d523b558ba72e28` verified the 18,276,592-byte public snapshot and its manifest. It opened cuts 79, 493 and 933. TypeScript, seven tests, four clean package tasks, 17 API cases, both MCP transports and Chromium passed. Stop removed the original listener and all owned resources. The temporary clone, Publish image and scratch sources were removed. The full hosted data and manual workflow remain open.
+
+The billion-record runner keeps `8cc32d380` with `57580241d`. The next-card runner keeps `c1eeb2ef8` with `5f62059b1`. No acceptance pin moved. The server build commits above have separate Mac evidence archives in `int1/p10`, alongside the playground archive. The real two-host fault run and the physical prepared-data Publish run are still open. [Owner decisions and scorecard rows](V0.1-STATE.md) · [Evidence index](V0.1-SHA256SUMS)

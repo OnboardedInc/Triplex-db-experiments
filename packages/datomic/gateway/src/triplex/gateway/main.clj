@@ -138,6 +138,7 @@
                              :subjectOrderedIds subject/ordered-ids?
                              :subjectNarrowRevision subject/narrow-revision?
                              :subjectReusePredecessor subject/reuse-predecessor?
+                             :subjectAppendRetirement subject/append-retirement?
                              :subjectPrefetch (boolean (and subject/prefetch? (d/entid db subject/prefetch-ident)))
                              :subjectFunctionTx (some-> subject-t str)))))
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})

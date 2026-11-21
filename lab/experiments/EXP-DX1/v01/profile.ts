@@ -38,7 +38,17 @@ export function selectedWriter(writer: Writer) {
   } as const;
 }
 
-export function stackOptions(writer: Writer, attempt: string) {
+export function writeDiagnostics(writer: Writer, env = process.env) {
+  const serial = env.DX_W1_SERIAL_APPLY ?? "0";
+  const lookup = env.PREP1_LOOKUP_EVERY ?? "0";
+  if (!/^[01]$/.test(serial) || (serial === "1" && writer !== "subject"))
+    throw new RangeError("DX_W1_SERIAL_APPLY=1 requires the ordered subject writer");
+  if (!/^(0|[1-9][0-9]{0,3})$/.test(lookup) || Number(lookup) > 4096)
+    throw new RangeError("PREP1_LOOKUP_EVERY must be between 0 and 4096");
+  return { serialApply: serial === "1", lookupEvery: Number(lookup) };
+}
+
+export function stackOptions(writer: Writer, attempt: string, diagnostics = writeDiagnostics(writer, {})) {
   const policy = selectedWriter(writer);
   return {
     DX_GROUP_COMMIT: policy.TX2_GROUP_COMMIT,
@@ -51,6 +61,9 @@ export function stackOptions(writer: Writer, attempt: string) {
     TX2_SUBJECT_NUMERIC_OWNER: policy.TX2_SUBJECT_NUMERIC_OWNER,
     TX2_SUBJECT_ORDERED_IDS: policy.TX2_SUBJECT_ORDERED_IDS,
     TX2_SUBJECT_PREFETCH: policy.TX2_SUBJECT_PREFETCH,
+    TX2_SUBJECT_NARROW_REVISION: diagnostics.serialApply ? "1" : "0",
+    TX2_SUBJECT_REUSE_PREDECESSOR: diagnostics.serialApply ? "1" : "0",
+    PREP1_LOOKUP_EVERY: String(diagnostics.lookupEvery),
     DX_WRITE_OPTIONS_ATTEMPT: attempt,
   };
 }

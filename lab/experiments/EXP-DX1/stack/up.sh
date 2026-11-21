@@ -154,7 +154,7 @@ INPUT_LEASE
     "$(node "$runtime_tool" image)" -m triplex.gateway.layout-input-audit "/inputs/$(basename "$2")"
   exit
 fi
-tx=6 pg=6 gw_w=5,6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume= wal_dir=
+tx=6 pg=6 gw_w=5,6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume= wal_dir= prepared_pg=
 if [[ ${DX_INT1_GATEWAYS:-original} == demand ]]; then
   # [DX-THIN1] Why: apply the same peer limits on ordinary stack launches and the physical queue. Rejected: tuning only the Mac diagnostic container.
   demand_peer='-Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps'
@@ -180,6 +180,7 @@ while (($#)); do
     --no-publish) publish=false; shift; continue;;
     --clone-seed) seed_volume=$2;;
     --wal-directory) wal_dir=$2;;
+    --prepared-pgdata) prepared_pg=$2;;
     --cpus-tx) tx=$2;; --cpus-pg) pg=$2;;
     --cpus-gw-write) gw_w=$2;; --cpus-gw-read) gw_r=$2;;
     --pg-memory) pg_mem=$2;; --tx-memory) tx_mem=$2;; --gw-memory) gw_mem=$2;;
@@ -234,8 +235,11 @@ subject_save=${TX2_SUBJECT_SAVE:-0}
 subject_numeric_owner=${TX2_SUBJECT_NUMERIC_OWNER:-0}
 subject_prefetch=${TX2_SUBJECT_PREFETCH:-0}
 subject_ordered_ids=${TX2_SUBJECT_ORDERED_IDS:-0}
+append_retirement=${TX2_SUBJECT_APPEND_RETIREMENT:-0}
 subject_narrow_revision=${TX2_SUBJECT_NARROW_REVISION:-0}
 subject_reuse_predecessor=${TX2_SUBJECT_REUSE_PREDECESSOR:-0}
+lookup_every=${PREP1_LOOKUP_EVERY:-0}
+[[ $lookup_every =~ ^(0|[1-9][0-9]{0,3})$ ]] && (( lookup_every <= 4096 )) || exit 2
 if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prepw =~ ^(1|2|4)$ ]]
   # [DX-V01] Why: the scorecard uses the same selected writer on private bridge endpoints.
@@ -251,35 +255,40 @@ else
 fi
 [[ $subject_save =~ ^[01]$ && $subject_numeric_owner =~ ^[01]$ ]]
 [[ $subject_numeric_owner == 0 || $subject_save == 1 ]]
+[[ $append_retirement =~ ^[01]$ && ( $append_retirement == 0 || $subject_numeric_owner == 1 ) ]]
 [[ $subject_prefetch =~ ^[01]$ && ( $subject_prefetch == 0 || $subject_save == 1 ) ]]
 [[ $subject_ordered_ids =~ ^[01]$ && ( $subject_ordered_ids == 0 || ( $subject_save == 1 && $subject_prefetch == 0 ) ) ]]
-[[ $subject_narrow_revision =~ ^[01]$ && $subject_reuse_predecessor =~ ^[01]$ ]]
-[[ $subject_narrow_revision == 0 || $subject_numeric_owner == 1 ]]
-[[ $subject_reuse_predecessor == 0 || $subject_save == 1 ]]
+[[ $subject_narrow_revision =~ ^[01]$ && $subject_reuse_predecessor =~ ^[01]$ ]] || exit 2
+[[ ( $subject_narrow_revision == 0 && $subject_reuse_predecessor == 0 ) || ( $subject_ordered_ids == 1 && $subject_numeric_owner == 1 ) ]] || exit 2
 stack_labels=()
 tx_java=$(node "$jvm_tool" tx "$tx" "$tx_java")
 gw_w_java=$(node "$jvm_tool" gw-w "$gw_w" "$gw_w_java")
 gw_r_java=$(node "$jvm_tool" gw-r "$gw_r" "$gw_r_java")
 peer_major=$(node "$runtime_tool" major)
 tx_major=${DX_TX_JAVA:-$peer_major}
+write_major=${DX_GW_WRITE_JAVA:-$peer_major}
 peer_image=$(node "$runtime_tool" image)
-tx_image=$peer_image
-tx_receipt=${DX_DATOMIC_IMAGE_RECEIPT:-}
-if [[ $tx_major != "$peer_major" ]]; then
-  [[ ${DX_BARE_METAL:-0} == 1 && -z $tx_receipt ]]
-  tx_image=$(DX_JAVA="$tx_major" node "$runtime_tool" image)
-fi
+role_image() {
+  if [[ $1 == "$peer_major" ]]; then
+    printf '%s' "$peer_image"
+  else
+    [[ ${DX_BARE_METAL:-0} == 1 && -z ${DX_DATOMIC_IMAGE_RECEIPT:-} ]] || return 1
+    DX_JAVA="$1" node "$runtime_tool" image
+  fi
+}
+tx_image=$(role_image "$tx_major")
+write_image=$(role_image "$write_major")
 tx_java="$tx_java $(DX_JAVA="$tx_major" node "$runtime_tool" compatibility)"
 peer_compatibility=$(node "$runtime_tool" compatibility)
-gw_w_java="$gw_w_java $peer_compatibility"
+gw_w_java="$gw_w_java $(DX_JAVA="$write_major" node "$runtime_tool" compatibility)"
 gw_r_java="$gw_r_java $peer_compatibility"
 if [[ -n ${DX_TAIL1_ATTEMPT:-} ]]; then
   # [DX-TAIL1] Why: bind the owned stack to the reservation and reject name reuse at cleanup.
   # Rejected: inferring ownership from the slot number alone.
   [[ $prefix == tx2-dxscale1-tail1-* && $DX_TAIL1_ATTEMPT =~ ^[a-f0-9-]{36}$ ]]
   [[ $DX_TAIL1_IMAGE =~ ^sha256:[a-f0-9]{64}$ ]]
-  [[ $tx_major == "$peer_major" ]]
-  tx_image=$DX_TAIL1_IMAGE peer_image=$DX_TAIL1_IMAGE
+  [[ $tx_major == "$peer_major" && $write_major == "$peer_major" ]]
+  tx_image=$DX_TAIL1_IMAGE peer_image=$DX_TAIL1_IMAGE write_image=$DX_TAIL1_IMAGE
   [[ ${DX_TAIL1_HOLDER:-DX-TAIL1} =~ ^DX-(TAIL1|JVM1|THIN1)$ ]]
   stack_labels=(--label "tx2.holder=${DX_TAIL1_HOLDER:-DX-TAIL1}" --label "tx2.tail1=$DX_TAIL1_ATTEMPT")
 fi
@@ -301,6 +310,16 @@ mkdir -p "$attempt/sql" "$attempt/config" "$attempt/trace/raw"
 # [DX-BM1] Why: separate only WAL from the root data volume under the same durability settings.
 # Rejected: relocating the database or changing synchronous_commit (either would confound the WAL A/B).
 wal_mount=()
+pg_mount=(-v "$prefix-pg-data:/var/lib/postgresql/data")
+if [[ -n $prepared_pg ]]; then
+  # [DX-ACT1] Why: mount only the exclusive, stopped copy after the server launcher checks its original template.
+  # Rejected: restoring the logical dump or ever attaching the held template to PostgreSQL.
+  [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxscale1-publish-[a-f0-9]+$ &&
+      $publish == false && -z $seed_volume && -n $wal_dir && $prepared_pg == "$(realpath -e "$prepared_pg")" &&
+      $prepared_pg != *[,\"$'\n']* && $(cat "$prepared_pg/PG_VERSION") == 17 &&
+      ! -e $prepared_pg/postmaster.pid && $(readlink "$prepared_pg/pg_wal") == /wal ]]
+  pg_mount=(--mount "type=bind,source=$prepared_pg,target=/var/lib/postgresql/data")
+fi
 if [[ -n ${DX_BM1_WAL_MOUNT:-} ]]; then
   [[ -z $wal_dir ]]
   [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxt1-bm1-[a-z0-9]+-wal-ssd$ && $publish == false && -z $seed_volume ]]
@@ -315,9 +334,10 @@ if [[ -n $wal_dir ]]; then
   docker_root=$(docker info --format '{{.DockerRootDir}}') || exit 2
   wal_real=$(realpath -e "$wal_dir") || exit 2
   wal_device=$(stat -c %d "$wal_real") || exit 2
-  data_device=$(stat -c %d "$docker_root/volumes") || exit 2
+  data_device=$(stat -c %d "${prepared_pg:-$docker_root/volumes}") || exit 2
   wal_entries=$(find "$wal_real" -mindepth 1 -maxdepth 1 -print -quit) || exit 2
-  if [[ $wal_dir != "$wal_real" || $wal_dir == *[,\"$'\n']* || ! -d $wal_dir || -n $wal_entries ||
+  if [[ $wal_dir != "$wal_real" || $wal_dir == *[,\"$'\n']* || ! -d $wal_dir ||
+        ( -z $prepared_pg && -n $wal_entries ) || ( -n $prepared_pg && -z $wal_entries ) ||
         ! $wal_device =~ ^[0-9]+$ || ! $data_device =~ ^[0-9]+$ || $wal_device == "$data_device" ]]; then
     echo 'WAL needs an empty directory on a filesystem distinct from the Docker volumes' >&2
     exit 2
@@ -344,18 +364,24 @@ pin_image() {
   printf '%s' "$id"
 }
 datomic_image=$(pin_image "$peer_major" "$peer_image" "$attempt/config/java-image.txt")
-if [[ $tx_major == "$peer_major" && $tx_image == "$peer_image" ]]; then
-  tx_image=$datomic_image
-  cp "$attempt/config/java-image.txt" "$attempt/config/tx-java-image.txt"
-else
-  tx_image=$(pin_image "$tx_major" "$tx_image" "$attempt/config/tx-java-image.txt")
-fi
+pin_role() {
+  if [[ $1 == "$peer_major" && $2 == "$peer_image" ]]; then
+    cp "$attempt/config/java-image.txt" "$3" || return 1
+    printf '%s' "$datomic_image"
+  else
+    pin_image "$@"
+  fi
+}
+tx_image=$(pin_role "$tx_major" "$tx_image" "$attempt/config/tx-java-image.txt")
+write_image=$(pin_role "$write_major" "$write_image" "$attempt/config/gw-w-java-image.txt")
 if [[ -n ${DX_LAUNCH_PROFILE:-} ]]; then
   printf 'Profile=%s WAL=%s\nPostgreSQL cores=%s memory=%s settings=%s\nDatomic object-cache=%s memory-index=%s/%s\nTransactor Java=%s image=%s cores=%s memory=%s flags=%s\nWrite gateway Java=%s image=%s cores=%s memory=%s flags=%s\nRead gateway Java=%s image=%s cores=%s memory=%s flags=%s\n' \
     "$DX_LAUNCH_PROFILE" "${wal_dir:-PGDATA}" "$pg" "$pg_mem" "$pg_settings" "$object_cache" "$index_threshold" "$index_max" \
     "$tx_major" "$tx_image" "$tx" "$tx_mem" "$tx_java" \
-    "$peer_major" "$datomic_image" "$gw_w" "${DX_GW_WRITE_MEMORY:-$gw_mem}" "$gw_w_java" \
+    "$write_major" "$write_image" "$gw_w" "${DX_GW_WRITE_MEMORY:-$gw_mem}" "$gw_w_java" \
     "$peer_major" "$datomic_image" "$gw_r" "${DX_GW_READ_MEMORY:-$gw_mem}" "$gw_r_java"
+  if [[ -n ${DX_V01_CREDIT_MODE:-} ]]; then printf 'Scorecard credits=%s\n' "$DX_V01_CREDIT_MODE"; fi
+  printf 'Narrow revision=%s predecessor decode reuse=%s lookup sampling interval=%s\n' "$subject_narrow_revision" "$subject_reuse_predecessor" "$lookup_every"
 fi
 docker image inspect postgres:17-alpine >/dev/null
 if [[ -z "$src" ]]; then
@@ -527,11 +553,11 @@ CLONE_MOUNTS
   [[ $(docker inspect --format '{{.State.ExitCode}}' "$prefix-seed-copy") == 0 ]] || exit 1
   docker rm "$prefix-seed-copy" >/dev/null
   trap - EXIT
-else
+elif [[ -z $prepared_pg ]]; then
   docker volume create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-pg-data" >/dev/null
 fi
 docker run -d --pull never --name "$prefix-pg" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
-  -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
+  -e POSTGRES_PASSWORD=datomic "${pg_mount[@]}" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
 # Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
 ready=false
@@ -558,7 +584,7 @@ if [[ -n $wal_dir || ${DX_BM1_WAL_AB:-0} == 1 ]]; then
   ' sh "${wal_dir:+ssd}" > "$attempt/wal-placement.txt"
 fi
 # Vendor scripts use their own database/connect statements; keep their order and bytes.
-if [[ -z $seed_volume ]];then
+if [[ -z $seed_volume && -z $prepared_pg ]];then
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   db=postgres
   [[ "$file" != postgres-table.sql ]] || db=datomic
@@ -600,8 +626,7 @@ if [[ ${DX_PREP1_SERVER:-0} == 1 ]]; then
     docker exec -i "$prefix-pg" pg_restore --clean --if-exists --exit-on-error --single-transaction -U postgres -d datomic < "$DX_PREP1_DUMP" > "$attempt/restore.log" 2>&1
   fi
   cp "$repo/lab/experiments/EXP-DX1/prep1/observe.clj" "$attempt/config/prep1-observe.clj"
-  prep_tx=(-e "PREP1_ATTEMPT=${DX_WRITE_OPTIONS_ATTEMPT:?}" -e PREP1_MODE=subject-server
-    -e "PREP1_LOOKUP_EVERY=${PREP1_LOOKUP_EVERY:-0}")
+  prep_tx=(-e "PREP1_ATTEMPT=${DX_WRITE_OPTIONS_ATTEMPT:?}" -e PREP1_MODE=subject-server -e "PREP1_LOOKUP_EVERY=$lookup_every")
   trace_tx_java+=' -Xlog:gc*,safepoint*=debug:file=/trace/prep1-gc-tx.log:time,uptimemillis,level,tags,pid,tid:filecount=0'
   tx_start=(--entrypoint /bin/bash "$tx_image" -c
     'exec java -server $JAVA_OPTS -cp "$(bin/classpath)" clojure.main -i /dxh1/prep1-observe.clj -m datomic.launcher /dxh1/sql.properties')
@@ -636,8 +661,8 @@ for role in "${gateway_roles[@]}"; do
   if [[ $mode == w ]]; then
     field_policy+=(-e "TX2_SUBJECT_SAVE=$subject_save" -e "TX2_SUBJECT_NUMERIC_OWNER=$subject_numeric_owner"
       -e "TX2_SUBJECT_PREFETCH=$subject_prefetch" -e "TX2_SUBJECT_ORDERED_IDS=$subject_ordered_ids"
-      -e "TX2_SUBJECT_NARROW_REVISION=$subject_narrow_revision"
-      -e "TX2_SUBJECT_REUSE_PREDECESSOR=$subject_reuse_predecessor")
+      -e "TX2_SUBJECT_APPEND_RETIREMENT=$append_retirement"
+      -e "TX2_SUBJECT_NARROW_REVISION=$subject_narrow_revision" -e "TX2_SUBJECT_REUSE_PREDECESSOR=$subject_reuse_predecessor")
   fi
   if [[ $mode == w && -n ${DX_WRITE_OPTIONS_ATTEMPT:-} ]]; then
     [[ ${DX_PREDECESSOR_LOOKUP:-} =~ ^[01]$ && $DX_WRITE_OPTIONS_ATTEMPT =~ ^[a-f0-9-]{36}$ ]] || exit 2
@@ -680,9 +705,9 @@ for role in "${gateway_roles[@]}"; do
   else cpu=$gw_r port=$port_r; fi
   ports=(); [[ $publish == false ]] || ports=(-p "127.0.0.1:$port:8080")
   if [[ $mode == w ]]; then
-    mem=${DX_GW_WRITE_MEMORY:-$gw_mem}; role_java=$gw_w_java
+    mem=${DX_GW_WRITE_MEMORY:-$gw_mem}; role_java=$gw_w_java; image=$write_image
   else
-    mem=${DX_GW_READ_MEMORY:-$gw_mem}; role_java=$gw_r_java
+    mem=${DX_GW_READ_MEMORY:-$gw_mem}; role_java=$gw_r_java; image=$datomic_image
   fi
   entity_cache_bytes=${DX_GW_READ_ENTITY_CACHE_BYTES:-268435456}
   [[ $mode != w ]] || entity_cache_bytes=${DX_GW_WRITE_ENTITY_CACHE_BYTES:-268435456}
@@ -716,7 +741,7 @@ for role in "${gateway_roles[@]}"; do
     -e "TRIPLEX_LAYOUT_REPLAY=$([[ $role == w ]] && echo ${DX_LAYOUT_REPLAY:-0} || echo 0)" -e "TX2_SLIM_ROWS=${DX_SLIM_ROWS:-0}" -e "TX2_REV_AEVT=${DX_REV_AEVT:-0}" -e "TX2_COMMIT_HINTS=${DX_COMMIT_HINTS:-false}" -e "DATOMIC_URI_TEMPLATE=$template&ApplicationName=triplex-gw-$role" -e "GATEWAY_SOURCE_SHA256=$gateway_hash" \
     -e "TX2_ENTITY_CACHE_BYTES=$entity_cache_bytes" -e "TX2_ID_CACHE_ENTRIES=${DX_ID_CACHE_ENTRIES:-2097152}" -e "TX2_ID_CACHE_BYTES=${DX_ID_CACHE_BYTES:-536870912}" \
     -e "TX2_REACH_SESSION_ENTRIES=${DX_GW_SESSION_ENTRIES:-1000000}" \
-    -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run "$datomic_image" -m triplex.gateway.main >/dev/null
+    -v "$src:/opt/gateway:ro" -v "$attempt/config:/dxh1:ro" ${spec_mount[@]+"${spec_mount[@]}"} --entrypoint /opt/datomic/bin/run "$image" -m triplex.gateway.main >/dev/null
   ok=false
   health_deadline=$((SECONDS + 180))
   while (( SECONDS < health_deadline )); do
@@ -730,7 +755,7 @@ done
 for role in tx gw-w gw-r; do
   bash "$repo/lab/experiments/EXP-DX1/jvm1/readback.sh" "$prefix-$role" "$attempt/config" "$role"
   major=$peer_major
-  [[ $role != tx ]] || major=$tx_major
+  case $role in tx) major=$tx_major;; gw-w) major=$write_major;; esac
   grep -F "Version: $(DX_JAVA="$major" node "$runtime_tool" version)" "$attempt/config/$role.gc-init.txt" >/dev/null
 done
 if [[ $native_readback == 1 ]]; then

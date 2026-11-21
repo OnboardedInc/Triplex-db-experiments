@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { memoryPlan } from "../int1/memory-plan.ts";
 import { nodeImage, pgImage } from "../v01/source.ts";
+import { defaultCreditMode, launchProfile, type CreditMode } from "../jvm1/launch.mjs";
 import { type Writer } from "../v01/profile.ts";
 
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
@@ -191,6 +192,7 @@ function setup(compact: boolean) {
   assert(peerGc === "g1" || (gwPolicy === "demand" && peerGc === "elastic"));
   const writeOptionsAttempt = mode === "int1-adopted-proof" ? randomUUID() : undefined;
   const fixtureWriter = process.env.DX_V01_MAC_WRITER ?? "grouped";
+  const { creditMode } = launchProfile("laptop", { creditMode: (process.env.DX_V01_CREDIT_MODE ?? defaultCreditMode) as CreditMode });
   assert(fixtureWriter === "grouped" || fixtureWriter === "subject");
   for (const [n, slot] of slots.entries()) {
     const role = n === 0 ? "write" : "read";
@@ -219,7 +221,7 @@ function setup(compact: boolean) {
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
   write(cred, {
-    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, fixtureWriter,
+    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, fixtureWriter, creditMode,
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
     memoryPoints, nativePools,
     readerPages: process.env.DX_INT1_READER_PAGES === "1",
@@ -286,6 +288,7 @@ function bind() {
       nonce: attempt.nonce,
       writeOptionsAttempt: attempt.writeOptionsAttempt,
       fixtureWriter: attempt.fixtureWriter,
+      creditMode: attempt.creditMode,
       compact: !!attempt.compact,
       census: attempt.census, cohort: attempt.cohort,
       gwPolicy: attempt.gwPolicy, readMode: attempt.readMode,
@@ -397,7 +400,7 @@ if (action === "--guest") {
     };
     await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
-      java: { placement: "owned Mac compact stack", commands }, residency }, writer);
+      java: { placement: "owned Mac compact stack", commands }, creditMode: stack.managed.creditMode, residency }, writer);
   } else if (mode === "int1-campaign-proof") {
     assert(Number(rung) === 40);
     process.chdir(repo);
@@ -438,7 +441,23 @@ if (action === "--guest") {
         manager(["up", "--slot", readerSlot, "--exp", exp]);
       }
       bind();
-      if (scorecard && process.env.DX_V01_MAC_PUBLISH === "1") {
+      if (scorecard && process.env.DX_V01_MAC_HELD_PUBLISH === "1") {
+        // [DX-INT1] Why: run the held Publish oracle on the merged sender in the existing small reservation.
+        // Rejected: starting a second SQL stack or changing the normal scorecard fixture.
+        const slot = read(ownerFile(writerSlot)), attempt = read(cred);
+        const output = path.join(out, "held-publish");
+        fs.mkdirSync(output);
+        execFileSync(process.execPath, ["--no-warnings", "--experimental-transform-types",
+          "lab/experiments/EXP-DX1/actv-lazy/join/held-gate.ts", output], {
+          cwd: repo, stdio: "inherit", timeout: 5 * 60_000,
+          env: { ...process.env, DX_ACT1_NATIVE: "1", DATOMIC_URL: slot.endpoint,
+            DATOMIC_READ_URLS: slot.endpoint, TRIPLEX_LAB_SLOT_OWNER: ownerFile(writerSlot),
+            DX_ACT1_MANAGED_STACK: manifest,
+            TX2_WRITE_OPTIONS_ATTEMPT: attempt.writeOptionsAttempt, TRIPLEX_DATOMIC_LAYOUT: "lean",
+            TX2_SWEEP_STRICT: "1", TX2_W0_POINT_JOURNAL: "1", TX2_W0_RESTORE_INDEXED_JOURNAL: "1",
+            DX_STRICT_RECORD_CLOCKS: "1", DX_SERVER_RECORD_TIME: "1" },
+        });
+      } else if (scorecard && process.env.DX_V01_MAC_PUBLISH === "1") {
         // [DX-V01] Why: exercise the existing receipt producer on a bounded isolated toy fixture.
         // Rejected: timing a second full seed or reporting the private fixture as the held SCALE1 cut.
         const slot = read(ownerFile(writerSlot));

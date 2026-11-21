@@ -9,14 +9,16 @@ import { fieldValue } from "../../../bench/lib/deep-world.ts";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { decodeFeed, now, readCell, type Begin, type Feed } from "../scale1/decision/observer.ts";
-import { accounts, cellSeconds, field, root, serialApplySeconds, serialApplyTape, task, writeTape,
-  type Density, type SerialApplyRate, type Write } from "../scale1/decision/plan.ts";
+import { accounts, cellSeconds, field, root, task, writeTape, type Density, type Write } from "../scale1/decision/plan.ts";
 import { play, resolveUncertain, type Row, type Save, type Sender } from "../scale1/decision/writes.ts";
+import { creditModeSelection } from "../prep1/rolling-credits.ts";
+import { defaultCreditMode, type CreditMode } from "../jvm1/launch.mjs";
 import { checkAdoptedPeer, hex, openScaleSeal, type AdoptedSeed } from "./adopt.ts";
 import { ladder, phaseSeconds, selectedWriter, type Writer } from "./profile.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
 export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
+  creditMode?: CreditMode; serialApply?: boolean;
   empty?: Residency; residency?: () => Residency | Promise<Residency> };
 export type QuietCell = "alone" | 235;
 export const jsonFile = (file: string, data: unknown) =>
@@ -78,10 +80,9 @@ export function quietTape(people: number, cell: QuietCell, toy: boolean) {
     .map((e) => ({ ...e, version: "p6/" + e.version }));
 }
 
-async function quietReads(client: DatomicClient, seed: AdoptedSeed, start: number,
-  cell: Begin["cell"], toy: boolean, isolation = false) {
+async function quietReads(client: DatomicClient, seed: AdoptedSeed, start: number, cell: QuietCell, toy: boolean) {
   const message: Begin = { kind: "begin", key: "p6-" + cell, repeat: 0, people: seed.image.people as Density,
-    cell, start, scopes: [seed.scope], withReaders: true, isolation };
+    cell, start, scopes: [seed.scope], withReaders: true };
   const sides = await Promise.all([readCell(client, 0, message, toy), readCell(client, 1, message, toy)]);
   const h = new Histogram();
   for (const side of sides) h.merge(Histogram.fromJSON(side.latency));
@@ -89,7 +90,7 @@ async function quietReads(client: DatomicClient, seed: AdoptedSeed, start: numbe
     errors: sides.flatMap((r) => r.samples).filter((s) => s.error).length };
 }
 
-async function preload(client: DatomicClient, seed: AdoptedSeed, head: number, tape: Write[]) {
+export async function preload(client: DatomicClient, seed: AdoptedSeed, head: number, tape: Write[]) {
   const senders: Sender[] = [];
   for (const a of accounts) {
     const entities = [...new Set(tape.filter((x) => x.account === a).map((x) => task(a, x.subject)))];
@@ -170,8 +171,7 @@ async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: numbe
 }
 
 export async function adoptedArm(out: string, source: string, peer: Peer, seed: AdoptedSeed, writer: Writer,
-  loaded: boolean, toy: boolean, startHead = seed.scope.cut, quietCell?: QuietCell,
-  serial?: { rate: SerialApplyRate; candidate: boolean }) {
+  loaded: boolean, toy: boolean, startHead = seed.scope.cut, quietCell?: QuietCell) {
   const begin = now();
   const writerClient = new DatomicClient(peer.write, 35000);
   const reader = new DatomicClient(peer.read, 35000);
@@ -194,42 +194,33 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     assert.equal(options.subjectSave === true, writer === "subject");
     assert.deepEqual([Boolean(options.subjectNumericOwner), Boolean(options.subjectOrderedIds),
       Boolean(options.subjectPrefetch)], [writer === "subject", writer === "subject", false]);
-    if (serial) {
-      assert(writer === "subject" && !toy && loaded && quietCell === undefined);
-      assert.deepEqual([options.subjectNarrowRevision, options.subjectReusePredecessor],
-        [serial.candidate, serial.candidate]);
-    }
     if (writer === "subject") assert.match(options.subjectFunction, /^:triplex\.subject\/v-[a-f0-9]{24}$/);
+    assert.deepEqual([Boolean(options.subjectNarrowRevision), Boolean(options.subjectReusePredecessor)],
+      [Boolean(peer.serialApply), Boolean(peer.serialApply)]);
     assert.deepEqual([options.options.predecessorLookup, options.options.smallRows, options.options.ledger,
       options.options.packedJournal, options.options.groupCommit, options.options.reusePrepared,
       options.options.fastReply, options.options.livePriority, options.options.fieldCoalesce,
       options.options.stageClock, options.options.queueClock, options.options.maxMembers],
     [true, writer === "grouped", writer === "grouped", false, writer === "grouped", writer === "grouped",
       true, writer === "grouped", false, true, false, 32]);
-    const p7 = !serial && quietCell === undefined && peer.empty && peer.residency ? {
+    const p7 = quietCell === undefined && peer.empty && peer.residency ? {
       empty: peer.empty, restored: await peer.residency(), people: seed.image.people * accounts.length,
       cold: await currentPull(reader, seed, seed.scope.cut, toy, true),
     } : undefined;
-    const seconds = serial ? serialApplySeconds : toy ? 8
-      : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds(quietCell);
-    const tape = serial ? serialApplyTape(seed.image.people as Density, serial.rate)
-      : quietCell === undefined ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell, toy);
-    if (serial) assert.equal(tape.length, serial.rate * seconds);
+    const seconds = toy ? 8 : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds(quietCell);
+    const tape = quietCell === undefined ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell, toy);
     const senders = await preload(writerClient, seed, startHead, tape);
-    const monoBefore = serial ? process.hrtime.bigint() : undefined;
-    const wall = now();
-    const monoAfter = serial ? process.hrtime.bigint() : undefined;
-    const start = wall + 1200;
-    const serialAnchor = serial ? { wall, before: String(monoBefore), after: String(monoAfter) } : undefined;
+    const start = now() + 1200;
     const interval = seconds * 1000;
     feeding = feeder(journal, seed.scope.db, startHead, start + interval + 120_000,
       () => terminal, writer === "subject");
     void feeding.catch(() => {});
-    const quiet = serial ? quietReads(reader, seed, start, 394, false, true)
-      : quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, quietCell, toy);
+    const quiet = quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, quietCell, toy);
+    const creditMode = peer.creditMode ?? defaultCreditMode;
+    const admission = creditModeSelection(creditMode);
     const [writes, phases, quietRead] = await Promise.all([
-      play(senders, tape, start, peer.attempt, false, writer === "subject"),
-      !serial && quietCell === undefined ? readWindows(reader, seed, start, loaded, toy) : [], quiet,
+      play(senders, tape, start, peer.attempt, false, writer === "subject", admission),
+      quietCell === undefined ? readWindows(reader, seed, start, loaded, toy) : [], quiet,
     ]);
     await resolveUncertain(senders, writes.unresolved);
     const head = await writerClient.begin(seed.scope.db);
@@ -252,7 +243,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         ["committed", row.id, r.p, r.t, r.clock]);
       assert.equal(await writerClient.claim(seed.scope.db, row.id, r.p), r.tx);
     }
-    const pulls = !serial && loaded && quietCell === undefined ? await currentPull(reader, seed, terminal, toy) : undefined;
+    const pulls = loaded && quietCell === undefined ? await currentPull(reader, seed, terminal, toy) : undefined;
     let p6;
     if (quietRead) {
       const writes = new Histogram(), delivered = new Histogram();
@@ -268,8 +259,8 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const evidence = path.join(out, "operations.json");
     jsonFile(evidence, { writes: writes.rows, journal: feed, tape, p6, p7 });
     const result = { source, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
-      loaded, serial, serialAnchor, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
-      observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java },
+      loaded, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
+      observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, creditMode, observed: options, java: peer.java },
       p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
       p3: { entries: feed.length }, p4: pulls, p6, p7 };
     // [DX-V01] Why: require the complete toy tape and exact read results before publishing the arm.

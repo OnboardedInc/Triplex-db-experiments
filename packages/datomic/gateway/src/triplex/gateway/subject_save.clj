@@ -15,6 +15,7 @@
 (def ordered-ids? (= "1" (System/getenv "TX2_SUBJECT_ORDERED_IDS")))
 (def narrow-revision? (and numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_NARROW_REVISION"))))
 (def reuse-predecessor? (= "1" (System/getenv "TX2_SUBJECT_REUSE_PREDECESSOR")))
+(def append-retirement? (and numeric-owner? (= "1" (System/getenv "TX2_SUBJECT_APPEND_RETIREMENT"))))
 (def erase-generation :triplex.scope/erasure-seq)
 (def mutable-flags #{:triplex.scope/feed-irregular :triplex.scope/position-regular
                      :triplex.scope/irregular :triplex.scope/packed-journals})
@@ -193,7 +194,11 @@
 (defn decode-predecessors [prior]
   (into {} (map (fn [[id text]] [id (commit/recorded-row text)])) prior))
 
-(defn render-ops [ops owner subject prior prior-rows new-ids]
+(defn retirement-text [prefix position clock journal]
+  (str prefix (format "%016d" position)
+       (format "%016x" (Double/doubleToRawLongBits (double clock))) journal))
+
+(defn render-ops [ops owner subject prior prior-rows new-ids marker]
   (let [temp-owner (str "e:" subject)
         rewrite #(commit/rewrite-change %1 %2 new-ids prior-rows)]
     (into []
@@ -208,7 +213,15 @@
                    attr [tag (subs text 0 offset) position offset kind
                                      (small-row/ordinary-plan text offset rewrite)]])
                 (and (vector? op) (= :triplex/retract (first op)))
-                [:db/retract owner :triplex.entity/row (prior (nth op 2))]
+                (if marker
+                  (let [[position journal] marker
+                        prefix (lean/prefix (nth op 2))]
+                    ;; [DX-W1] Why: the serial revision checks the certified predecessor while an exact cut marker records its retirement.
+                    ;; Rejected: asking Datomic to re-find the old row solely to physically retract it.
+                    [:db/add owner :triplex.entity/retired
+                     [:triplex/row (retirement-text prefix position 0.0 journal)
+                      position (count prefix) :retirement]])
+                  [:db/retract owner :triplex.entity/row (prior (nth op 2))])
                 (and (vector? op) (= :triplex.entity/rev (nth op 2)) (= temp-owner (second op))) nil
                 :else op)))
       ops)))
@@ -280,14 +293,18 @@
                 after (into #{} (map (comp field lean/decode second #(nth % 3))) business)]
             (when (and (= (count live) (count prior) (count before) (count after))
                        (= before after) (not (contains? before nil)))
-              (let [prefixes (vec (sort (map lean/prefix new-ids)))]
+              (let [prefixes (vec (sort (map lean/prefix new-ids)))
+                    mark? (and append-retirement? (nil? expected-erasure)
+                               (not-any? #(and (vector? %) (= :triplex.entity/retired (nth % 2 nil))) ops))]
                 (cond-> {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
                          :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
                          :provisional provisional :submitted-clock (reduce max (map double clocks))
                          :prefixes prefixes
                          :expected-erasure expected-erasure
                          :ops (trace/span "subject.plan-render" "gateway"
-                                (render-ops ops owner subject prior (or decoded (decode-predecessors prior)) (set new-ids)))}
+                                (render-ops ops owner subject prior (or decoded (decode-predecessors prior)) (set new-ids)
+                                  (when mark? [provisional journal])))}
+                  mark? (assoc :retirement-prefixes (mapv lean/prefix live))
                   numeric-owner? (assoc :owner-key subject)
                   ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))
 
@@ -306,21 +323,32 @@
          (= (second (:function plan)) (installed db))
          (not (changes-application-rows? db)))))
 
-(defn verify-report [report {:keys [operation command journal owner ordered-bounds]}]
+(defn verify-report [report {:keys [operation command journal owner ordered-bounds retirement-prefixes]}]
   (let [db (:db-after report) t (d/basis-t db) tx (d/t->tx t)
         cmd (d/entid db [:triplex.claim/command-id command])
         journal-eid (d/entid db [:triplex.entity/id journal])
-        position (scope/value db tx :triplex.tx/position)]
+        position (scope/value db tx :triplex.tx/position)
+        clock (scope/value db tx :triplex.tx/recorded-at)]
     ;; [DX-PREP1] Why: only the matching native report can acknowledge a prepared save.
     ;; Rejected: publishing the peer's draft, or resolving the receipt on a newer database value.
     (when-not (and (= operation (scope/value db tx :triplex.tx/operation-id))
                    (= journal (scope/value db tx :triplex.tx/id))
                    (integer? position) (= position (scope/value db owner :triplex.entity/rev))
-                   (some? (scope/value db tx :triplex.tx/recorded-at))
+                   (some? clock)
                    cmd (= tx (scope/value db cmd :triplex.claim/tx))
                    (= journal (scope/value db cmd :triplex.claim/tx-id))
                    journal-eid (= journal-eid (scope/value db tx :triplex.tx/journals))
-                   (= position (scope/value db journal-eid :triplex.journal/position)))
+                   (= position (scope/value db journal-eid :triplex.journal/position))
+                   ;; [DX-W1] Why: a marker ACK must name the exact accepted owner, cut, clock and predecessor.
+                   ;; Rejected: accepting the draft or seeking the old row again after commit.
+                   (or (nil? retirement-prefixes)
+                       (let [attr (d/entid db :triplex.entity/retired)
+                             expected (set (map #(retirement-text % position clock journal) retirement-prefixes))
+                             actual (into #{} (keep #(when (and (= attr (:a %)) (= owner (:e %))
+                                                                       (:added %) (= tx (:tx %))) (:v %)))
+                                          (:tx-data report))]
+                         (= expected actual))))
       (throw (ex-info "Prepared subject receipt unavailable" {:status 503 :code "OutcomeUnknown"})))
     (cond-> (assoc report :subject-save (str ident))
-      ordered-bounds (assoc :subject-ordered-ids true))))
+      ordered-bounds (assoc :subject-ordered-ids true)
+      retirement-prefixes (assoc :subject-append-retirement true))))

@@ -7,6 +7,9 @@ import { DatomicClient } from "../../../../packages/datomic/test/ha1-account.ts"
 import { ingress } from "./ingress.ts";
 import type { Checkpoint } from "./seed.ts";
 import type { PowerFence } from "./power-fence.ts";
+import { coldCopy, coldMount, type ColdSeed } from "./sunday-seed.ts";
+import { checkProfileFlags, launchProfile, startupFlags } from "../jvm1/launch.mjs";
+import { selectedWriter } from "../v01/profile.ts";
 import {
   lsn,
   Supervisor,
@@ -40,6 +43,8 @@ const pgArgs = [
   "wal_keep_size=512MB",
 ];
 type SqlRole = "pg" | "target";
+export const sundayProfile = launchProfile("server");
+export type SundayPair = { primary: ColdSeed; standby: ColdSeed; scope: string };
 export class SyncPair {
   readonly latch: string;
   readonly primaryData: string;
@@ -52,14 +57,31 @@ export class SyncPair {
   timeline = 0;
   writer = "";
   reader = "";
+  nextWriter = "";
   initialFlush = "";
   constructor(
     readonly s: Stack,
     readonly base?: { path: string; checkpoint?: Checkpoint; ownerUid?: number; ownerGid?: number },
     readonly powerFence?: PowerFence,
+    readonly sunday?: SundayPair,
   ) {
     this.latch = s.e.prefix + "-fence";
     this.primaryData = s.e.prefix + "-pgdata";
+  }
+  get storage() {
+    return this.sunday ? "datomic" : "moving";
+  }
+  get postgresArgs() {
+    return this.sunday
+      ? [
+          ...pgArgs,
+          ...Object.entries(sundayProfile.pg.settings).flatMap(([k, v]) => ["-c", k + "=" + v]),
+          "-c",
+          "wal_keep_size=32GB",
+          "-c",
+          "listen_addresses=*",
+        ]
+      : pgArgs;
   }
   async docker(
     role: Role,
@@ -138,6 +160,7 @@ export class SyncPair {
         "POSTGRES_PASSWORD=" + s.admin,
         ...this.volume(),
         ...this.dataMount(),
+        ...(this.sunday ? coldMount(this.sunday.primary) : []),
         ...(this.base
           ? [
               "--mount",
@@ -151,17 +174,39 @@ export class SyncPair {
       [
         "-ceu",
         guard +
+          (this.sunday ? coldCopy : "") +
           (cp
             ? 'actual=$(sha256sum "/base/$BASE_LAYOUT/backup_manifest"); test "${actual%% *}" = "$BASE_MANIFEST"; pg_verifybackup "/base/$BASE_LAYOUT"; cp -a "/base/$BASE_LAYOUT/." "$PGDATA/"; '
             : "") +
           'exec docker-entrypoint.sh postgres "$@"',
         "primary",
-        ...pgArgs,
+        ...this.postgresArgs,
       ],
       s.a === s.b ? undefined : 5432,
     );
-    await this.pgReady("pg", false, cp ? 360000 : timeouts.setup);
-    if (!cp) {
+    await this.pgReady("pg", false, this.sunday ? 720000 : cp ? 360000 : timeouts.setup);
+    if (this.sunday) {
+      assert.match(s.secret, /^[a-f0-9]{36}$/);
+      assert.match(s.admin, /^[a-f0-9]{36}$/);
+      await this.sql(
+        "pg",
+        "ALTER ROLE datomic PASSWORD '" +
+          s.secret +
+          "'; ALTER ROLE postgres PASSWORD '" +
+          s.admin +
+          "'",
+      );
+      await this.sql(
+        "pg",
+        "DO $$ BEGIN IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname='ha1stream') THEN " +
+          "ALTER ROLE ha1stream LOGIN REPLICATION PASSWORD '" +
+          s.secret +
+          "'; ELSE " +
+          "CREATE ROLE ha1stream LOGIN REPLICATION PASSWORD '" +
+          s.secret +
+          "'; END IF; END $$",
+      );
+    } else if (!cp) {
       await s.database("pg", "moving");
       await replicationRole(s);
     }
@@ -174,7 +219,7 @@ export class SyncPair {
       this.writer,
       cp?.key,
       options.writeTimeout,
-      cp?.scope,
+      cp?.scope ?? this.sunday?.scope,
     );
     this.account = ac;
     if (cp) {
@@ -186,7 +231,7 @@ export class SyncPair {
         hash(JSON.stringify({ receipts: cp.receipts, history: cp.history ?? null })),
         cp.seal,
       );
-    } else await ac.open(options.lean ? "lean" : "legacy", options.lean ?? false);
+    } else if (!this.sunday) await ac.open(options.lean ? "lean" : "legacy", options.lean ?? false);
     const setup = cp ?? (await options.init?.(ac));
     assert.match(
       (this.cluster = await this.sql("pg", "select system_identifier from pg_control_system()")),
@@ -196,6 +241,10 @@ export class SyncPair {
     assert.match(tli, /^[0-9A-F]{8}$/);
     this.timeline = parseInt(tli, 16);
     if (cp) assert.equal(this.cluster, cp.cluster);
+    if (this.sunday) {
+      assert.equal(this.cluster, this.sunday.primary.cluster);
+      await this.checkCold("pg", this.sunday.primary);
+    }
     return { ac, setup };
   }
   async clone(replicationHost?: string, replicationPort = 5432) {
@@ -215,27 +264,49 @@ export class SyncPair {
     await s.start(
       "target",
       s.b,
-      ["-e", "REPLICATION=" + conn],
+      this.sunday
+        ? coldMount(this.sunday.standby, "FIRST 1 (sync_a)", conn)
+        : ["-e", "REPLICATION=" + conn],
       "/bin/sh",
       [
         "-ceu",
-        drop +
-          'chown postgres:postgres "$PGDATA"; chmod 700 "$PGDATA"; ' +
-          '"$drop" postgres pg_basebackup --checkpoint=fast -D "$PGDATA" -X stream -R -d "$REPLICATION"; ' +
-          'printf "%s\\n" "synchronous_standby_names = \'FIRST 1 (sync_a)\'" >> "$PGDATA/postgresql.auto.conf"; ' +
+        (this.sunday
+          ? coldCopy
+          : drop +
+            'chown postgres:postgres "$PGDATA"; chmod 700 "$PGDATA"; ' +
+            '"$drop" postgres pg_basebackup --checkpoint=fast -D "$PGDATA" -X stream -R -d "$REPLICATION"; ' +
+            'printf "%s\\n" "synchronous_standby_names = \'FIRST 1 (sync_a)\'" >> "$PGDATA/postgresql.auto.conf"; ') +
           'exec docker-entrypoint.sh postgres "$@"',
         "standby",
-        ...pgArgs,
+        ...this.postgresArgs,
       ],
       s.a === s.b ? undefined : 5432,
     );
-    await this.pgReady("target", true, this.base?.checkpoint ? 360000 : timeouts.setup);
+    await this.pgReady(
+      "target",
+      true,
+      this.sunday ? 720000 : this.base?.checkpoint ? 360000 : timeouts.setup,
+    );
+    if (this.sunday) await this.checkCold("target", this.sunday.standby);
     const received = await wait("initial WAL receiver", timeouts.setup, () =>
       this.candidate().catch(() => undefined),
     );
     assert.equal(received.cluster, this.cluster);
     assert.equal(received.timeline, this.timeline);
     return { copyMs: performance.now() - start, received };
+  }
+  async checkCold(role: SqlRole, seed: ColdSeed) {
+    const m = this.s.members.get(role)!;
+    const view = await this.s.view(role);
+    assert(
+      view.Mounts.some(
+        (x: { Source: string; Destination: string; RW: boolean }) =>
+          x.Source === seed.directory && x.Destination === "/cold" && !x.RW,
+      ),
+    );
+    const logs = await m.site.docker(["logs", "--tail", "35", m.id]);
+    assert(logs.split("\n").includes("verified-cold-copy " + seed.sha256));
+    this.mark("cold-copy", { role, id: m.id, sha256: seed.sha256, cluster: seed.cluster });
   }
   async service(grouped = false) {
     const s = this.s;
@@ -253,7 +324,7 @@ export class SyncPair {
         : undefined;
     });
     this.reader = await this.gateway("read", s.b, "target", grouped);
-    this.route = await ingress(this.writer);
+    this.route = await ingress(this.writer, Boolean(this.sunday));
     this.account!.changeEndpoint(this.route.url, this.reader);
     await this.auditCheckpoint("before");
   }
@@ -313,7 +384,9 @@ export class SyncPair {
         "(select 1 from pg_stat_replication where application_name='sync_b' and state='streaming' and sync_state='sync')," +
         "coalesce((select flush_lsn::text from pg_stat_replication where application_name='sync_b'), '0/0')," +
         "coalesce((select max(extract(epoch from (clock_timestamp()-query_start))*1000)::bigint from pg_stat_activity " +
-        "where wait_event='SyncRep' and datname='moving'),0) where not pg_is_in_recovery()",
+        "where wait_event='SyncRep' and datname='" +
+        this.storage +
+        "'),0) where not pg_is_in_recovery()",
     ).catch(() => undefined);
     if (!row) return undefined;
     const [configured, sync, flush, waiting] = row.split("|");
@@ -336,16 +409,18 @@ export class SyncPair {
       "port=4334",
       "sql-url=jdbc:postgresql://" +
         hosts.join(",") +
-        "/moving?targetServerType=primary&connectTimeout=" +
+        "/" +
+        this.storage +
+        "?targetServerType=primary&connectTimeout=" +
         timeouts.jdbcConnectSeconds +
         "&hostRecheckSeconds=1",
       "sql-driver-class=org.postgresql.Driver",
-      "sql-user=moving",
+      "sql-user=" + this.storage,
       "sql-password=" + s.secret,
       "heartbeat-interval-msec=" + timeouts.heartbeat,
-      "memory-index-threshold=32m",
-      "memory-index-max=96m",
-      "object-cache-max=64m",
+      "memory-index-threshold=" + (this.sunday ? sundayProfile.index.threshold : "32m"),
+      "memory-index-max=" + (this.sunday ? sundayProfile.index.max : "96m"),
+      "object-cache-max=" + (this.sunday ? sundayProfile.tx.cacheMiB + "m" : "64m"),
     ];
     const bench = site.privateAddress !== undefined;
     await s.start(
@@ -362,9 +437,13 @@ export class SyncPair {
       [
         "-ceu",
         (role === "active" ? guard : "") +
-          'printf "%s\\n" "$HA_PROPERTIES" > /tmp/hasync.properties; exec bin/transactor -Xms96m -Xmx' +
-          (process.platform === "linux" ? "1400" : "288") +
-          "m -XX:ActiveProcessorCount=2 /tmp/hasync.properties",
+          'printf "%s\\n" "$HA_PROPERTIES" > /tmp/hasync.properties; exec bin/transactor ' +
+          (this.sunday
+            ? [...sundayProfile.tx.flags, ...startupFlags].join(" ")
+            : "-Xms96m -Xmx" +
+              (process.platform === "linux" ? "1400" : "288") +
+              "m -XX:ActiveProcessorCount=2") +
+          " /tmp/hasync.properties",
       ],
       bench ? 4334 : undefined,
     );
@@ -395,30 +474,67 @@ export class SyncPair {
       return probe;
     });
   }
-  async gateway(role: "write" | "read", site: Site, storage: SqlRole, grouped = false) {
+  async gateway(role: "write" | "read" | "write-b", site: Site, storage: SqlRole, grouped = false) {
     const s = this.s;
+    const profile = sundayProfile[role === "read" ? "gw-r" : "gw-w"];
     await s.start(
       role,
       site,
       [
         "-e",
         "DATOMIC_URI_TEMPLATE=" +
-          s.uri(storage, "moving", "{db}", site) +
+          s.uri(storage, this.storage, "{db}", site) +
           "&connectTimeout=1&hostRecheckSeconds=1",
         "-e",
         "GATEWAY_SOURCE_SHA256=" + s.e.source.gateway,
         "-e",
-        "TX2_GROUP_COMMIT=" + Number(grouped),
+        ...(this.sunday
+          ? [
+              "HA1_FLEET_HTTP=1",
+              ...Object.entries(selectedWriter("subject"))
+                .filter(([key]) => key.startsWith("TX2_"))
+                .map(([key, value]) => key + "=" + value),
+            ].flatMap((setting) => ["-e", setting])
+          : ["TX2_GROUP_COMMIT=" + Number(grouped)]),
         "-e",
-        "DATOMIC_JAVA_OPTS=-Xms96m -Xmx" +
-          (process.platform === "linux" ? "1600" : "320") +
-          "m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=64m",
+        "DATOMIC_JAVA_OPTS=" +
+          (this.sunday
+            ? [...profile.flags, ...startupFlags].join(" ")
+            : "-Xms96m -Xmx" +
+              (process.platform === "linux" ? "1600" : "320") +
+              "m -XX:ActiveProcessorCount=2 -Ddatomic.objectCacheMax=64m"),
       ],
       "/opt/datomic/bin/run",
       ["-m", "triplex.gateway.ha-observer", "8080"],
       8080,
     );
     return s.ready(role);
+  }
+  async checkServerProfile() {
+    if (!this.sunday) return;
+    for (const [role, profile] of [
+      ["active", sundayProfile.tx],
+      ["standby", sundayProfile.tx],
+      ["write", sundayProfile["gw-w"]],
+      ["read", sundayProfile["gw-r"]],
+    ] as const) {
+      await this.checkJvm(role, profile);
+    }
+  }
+  async checkJvm(role: Role, profile: typeof sundayProfile.tx) {
+    const m = this.s.members.get(role)!;
+    const view = await this.s.view(role);
+    assert.equal(view.HostConfig.CpusetCpus, profile.cpus);
+    assert.equal(view.HostConfig.Memory, profile.memoryMiB * 2 ** 20);
+    checkProfileFlags(profile, await m.site.docker(["logs", "--tail", "1400", m.id]));
+    this.mark("server-jvm", {
+      role,
+      id: m.id,
+      profile: "server",
+      cpus: profile.cpus,
+      memoryMiB: profile.memoryMiB,
+      flags: profile.flags,
+    });
   }
   async fence(planned: boolean) {
     const s = this.s;
@@ -509,7 +625,7 @@ export class SyncPair {
           m.Name === this.primaryData && m.Destination === "/var/lib/postgresql/data" && m.RW,
       ),
     );
-    await this.sql("target", "CHECKPOINT", "postgres", 5000);
+    await this.sql("target", "CHECKPOINT", "postgres", this.sunday ? 120000 : 5000);
     // [DX-HASYNC1] Why: only a new container that first rewinds the fenced disk and verifies recovery may serve A again. Rejected: clearing the old startup interlock.
     await this.docker("pg", "rm");
     s.members.delete("pg");
@@ -538,11 +654,15 @@ export class SyncPair {
           'printf "primary_conninfo = \'%s\'\\n" "$REJOIN_STREAM" >> "$PGDATA/postgresql.auto.conf"; ' +
           'test -f "$PGDATA/standby.signal"; exec docker-entrypoint.sh postgres "$@"',
         "rejoin",
-        ...pgArgs,
+        ...this.postgresArgs,
       ],
       s.a === s.b ? undefined : 5432,
     );
-    await this.pgReady("pg", true, Math.max(0, timeouts.rejoin - (performance.now() - start)));
+    await this.pgReady(
+      "pg",
+      true,
+      Math.max(0, (this.sunday ? 240000 : timeouts.rejoin) - (performance.now() - start)),
+    );
     assert.equal(
       await this.sql("pg", "select system_identifier from pg_control_system()"),
       this.cluster,
@@ -609,6 +729,10 @@ export class SyncPair {
     } finally {
       peer.close();
     }
+    if (this.sunday) {
+      this.nextWriter ||= await this.gateway("write-b", this.s.b, "target");
+      await this.checkJvm("write-b", sundayProfile["gw-w"]);
+    }
   }
   async probeOldDiskBoot() {
     const s = this.s;
@@ -666,31 +790,42 @@ export class SyncPair {
     await s.start(
       "pg",
       s.a,
-      ["-e", "REPLACEMENT=" + conn],
+      this.sunday ? coldMount(this.sunday.primary, "", conn) : ["-e", "REPLACEMENT=" + conn],
       "/bin/sh",
       [
         "-ceu",
-        drop +
-          'chown postgres:postgres "$PGDATA"; chmod 700 "$PGDATA"; ' +
-          '"$drop" postgres pg_basebackup -D "$PGDATA" -d "$REPLACEMENT" --checkpoint=fast -X stream -R --manifest-checksums=SHA256; ' +
-          'pg_verifybackup "$PGDATA"; du -sk "$PGDATA" | sed "s/^/backup-kib /"; test -f "$PGDATA/standby.signal"; ' +
+        (this.sunday
+          ? coldCopy
+          : drop +
+            'chown postgres:postgres "$PGDATA"; chmod 700 "$PGDATA"; ' +
+            '"$drop" postgres pg_basebackup -D "$PGDATA" -d "$REPLACEMENT" --checkpoint=fast -X stream -R --manifest-checksums=SHA256; ' +
+            'pg_verifybackup "$PGDATA"; ') +
+          'du -sk "$PGDATA" | sed "s/^/backup-kib /"; test -f "$PGDATA/standby.signal"; ' +
           'exec docker-entrypoint.sh postgres "$@"',
         "replacement",
-        ...pgArgs,
+        ...this.postgresArgs,
       ],
       s.a === s.b ? undefined : 5432,
     );
-    await this.pgReady("pg", true, this.base?.checkpoint ? 360000 : timeouts.setup);
+    await this.pgReady(
+      "pg",
+      true,
+      this.sunday ? 720000 : this.base?.checkpoint ? 360000 : timeouts.setup,
+    );
     const copiedMs = performance.now() - start;
     assert.equal(
       await this.sql("pg", "select system_identifier from pg_control_system()"),
       this.cluster,
     );
     const expected = await this.sql("target", "select pg_current_wal_flush_lsn()");
-    await wait("replacement catches the survivor release prefix", timeouts.replay, async () => {
-      const v = await this.sql("pg", "select pg_last_wal_replay_lsn()").catch(() => "");
-      return v && lsn(v) >= lsn(expected) ? v : undefined;
-    });
+    await wait(
+      "replacement catches the survivor release prefix",
+      this.sunday ? 120000 : timeouts.replay,
+      async () => {
+        const v = await this.sql("pg", "select pg_last_wal_replay_lsn()").catch(() => "");
+        return v && lsn(v) >= lsn(expected) ? v : undefined;
+      },
+    );
     await this.sql("target", "ALTER SYSTEM SET synchronous_standby_names='FIRST 1 (sync_a)'");
     assert.equal(await this.sql("target", "select pg_reload_conf()"), "t");
     await wait("replacement required for commits", timeouts.replay, async () => {
@@ -705,8 +840,49 @@ export class SyncPair {
     assert(mbr.id !== old.Id && !mbr.volumes.includes(this.primaryData));
     const log = await mbr.site.docker(["logs", "--tail", "35", mbr.id]);
     const m = /^backup-kib (\d+)\s/m.exec(log);
-    assert(m && log.includes("backup successfully verified"));
+    assert(m);
+    if (this.sunday) await this.checkCold("pg", this.sunday.primary);
+    else assert(log.includes("backup successfully verified"));
     return { old: old.Id, new: mbr.id, copiedMs, bytes: Number(m[1]) * 1024, expected, start };
+  }
+  async inspectFirstDisk() {
+    assert(this.sunday);
+    const s = this.s;
+    assert(!(await s.view("active")).State.Running && !(await s.view("standby")).State.Running);
+    assert(!(await s.view("target")).State.Running && !(await s.view("pg")).State.Running);
+    assert.equal(
+      await s.exec("tool", "cat", "/ha-fence/closed"),
+      `fenced:${s.e.nonce}:${this.cluster}`,
+    );
+    // [DX-HASYNC1] Why: read the first disk after the last writer is stopped, with PostgreSQL in forced recovery. Rejected: destroying the second disk or restarting the fenced primary as a writer.
+    await s.remove("write");
+    await s.remove("pg");
+    await s.start(
+      "pg",
+      s.a,
+      [...this.dataMount()],
+      "/bin/sh",
+      [
+        "-ceu",
+        'printf "\\nprimary_conninfo = \'\'\\nrestore_command = \'\'\\n" >> "$PGDATA/postgresql.auto.conf"; touch "$PGDATA/standby.signal"; exec docker-entrypoint.sh postgres "$@"',
+        "first-disk-readback",
+        ...this.postgresArgs,
+      ],
+      5432,
+    );
+    await this.pgReady("pg", true, 240000);
+    assert.equal(
+      await this.sql("pg", "select system_identifier from pg_control_system()"),
+      this.cluster,
+    );
+    assert.equal(await this.sql("pg", "select count(*) from pg_stat_wal_receiver"), "0");
+    const url = await this.gateway("write", s.a, "pg");
+    return {
+      url,
+      id: s.members.get("pg")!.id,
+      cluster: this.cluster,
+      replay: await this.sql("pg", "select pg_last_wal_replay_lsn()"),
+    };
   }
   async verifyReplacement(copy: Awaited<ReturnType<SyncPair["startReplacement"]>>) {
     const s = this.s;
@@ -795,7 +971,7 @@ export class SyncPair {
       },
       promote: () => this.promote(),
       activate: (policy, kind) => this.activate(policy, kind),
-      publish: () => route.publish(this.reader),
+      publish: () => route.publish(this.sunday ? this.nextWriter : this.reader),
       observe: (stage, data) => this.mark(stage, data),
     };
     return new Supervisor(port, this.initialFlush);

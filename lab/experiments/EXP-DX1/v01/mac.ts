@@ -3,11 +3,12 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { cleanSource, packageBytes } from "./source.ts";
+import { defaultCreditMode, launchProfile, type CreditMode } from "../jvm1/launch.mjs";
 import { defaultWriter } from "./profile.ts";
 
 const [action, commit, argument] = process.argv.slice(2);
 assert(process.platform === "darwin" && commit && argument && path.isAbsolute(argument));
-assert(["--packages", "--image", "--fixture", "--publish-fixture"].includes(action ?? ""));
+assert(["--packages", "--image", "--fixture", "--publish-fixture", "--held-publish-fixture"].includes(action ?? ""));
 const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
 cleanSource(head);
 assert.match(commit, /^[a-f0-9]{40}$/);
@@ -16,6 +17,7 @@ const holder = process.env.DX_V01_MAC_HOLDER ?? "DX-V01";
 assert(holder === "DX-V01" || holder === "DX-THIN1");
 const writer = process.env.DX_V01_MAC_WRITER ?? defaultWriter;
 assert(writer === "grouped" || writer === "subject");
+const policy = launchProfile("laptop", { creditMode: (process.env.DX_V01_CREDIT_MODE ?? defaultCreditMode) as CreditMode });
 const disk = fs.statfsSync(".");
 assert(disk.bavail * disk.bsize >= (holder === "DX-THIN1" ? 10 : 5) * 1024 ** 3);
 const staging = path.resolve("runs/DX-V01");
@@ -31,8 +33,10 @@ const env = {
   DX_V01_MAC_FIXTURE: "1",
   DX_V01_MAC_HOLDER: holder,
   DX_V01_MAC_WRITER: writer,
+  DX_V01_CREDIT_MODE: policy.creditMode,
   TURBO_TELEMETRY_DISABLED: "1",
   ...(action === "--publish-fixture" ? { DX_V01_MAC_PUBLISH: "1" } : {}),
+  ...(action === "--held-publish-fixture" ? { DX_V01_MAC_HELD_PUBLISH: "1" } : {}),
   DX_V01_LAB_RUNTIME: runtime,
   DX_INT1_GATEWAYS: "demand",
   DX_TOUCHED_READ_MODE: "following",

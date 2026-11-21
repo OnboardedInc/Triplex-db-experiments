@@ -7,6 +7,10 @@ export PREP1_ATTEMPT=$(cat /config/attempt)
 export TX2_SUBJECT_NUMERIC_OWNER=$(cat /config/subject-owner)
 export TX2_SUBJECT_PREFETCH=$(cat /config/subject-prefetch)
 export TX2_SUBJECT_ORDERED_IDS=$(cat /config/subject-ordered)
+export TX2_SUBJECT_NARROW_REVISION=$(cat /config/subject-serial 2>/dev/null || printf 0)
+export TX2_SUBJECT_REUSE_PREDECESSOR=$TX2_SUBJECT_NARROW_REVISION
+export TX2_SUBJECT_APPEND_RETIREMENT=$(cat /config/subject-retirement 2>/dev/null || printf 0)
+export PREP1_LOOKUP_EVERY=$(cat /config/lookup-every 2>/dev/null || printf 0)
 if [[ "$PREP1_MODE" == subject-native-suite ]]; then
   # [DX-PREP1] Why: exercise the stock native suite with the real process setting on fresh memory scopes.
   # Rejected: adding PostgreSQL and a transactor for tests written to run in one JVM.
@@ -140,6 +144,11 @@ log-dir=$work
 pid-file=$work/tx.pid
 EOF
 export PREP1_URL="http://$addr:8080"
+if [[ $PREP1_MODE == rolling-recovery ]]; then
+  export PREP1_ROLLING_FAIL_PATH="$work/failed-db"
+  export TX2_WRITE_OPTIONS_ATTEMPT="$PREP1_ATTEMPT" TX2_LEAN_NATIVE_QUERY=1 TX2_LEAN_NATIVE_LOG=1
+  export TX2_SAVE_LEDGER=$((1-TX2_SUBJECT_ORDERED_IDS)) TX2_SMALL_ROWS=$((1-TX2_SUBJECT_ORDERED_IDS))
+fi
 export DATOMIC_URI_TEMPLATE="datomic:sql://{db}?jdbc:postgresql://$addr:5432/datomic?user=datomic&password=$secret"
 export DATOMIC_EXT_CLASSPATH=/opt/gateway/src
 export DATOMIC_JAVA_OPTS="-Xms96m -Xmx368m -XX:ActiveProcessorCount=1 -XX:+UseSerialGC -XX:MaxDirectMemorySize=64m -XX:+ExitOnOutOfMemoryError -Ddatomic.objectCacheMax=$cache -Dtriplex.codec.spec=/opt/gateway/codec-spec.json"
@@ -270,6 +279,34 @@ case "$PREP1_MODE" in
       esac
       PREP1_ARM="$arm" node /config/probe.mjs
       stop_gateway
+    done
+    ;;
+  rolling-recovery)
+    # [DX-PREP1] Why: the bundle imports the SCALE1 observer helpers as a library.
+    # Rejected: identifying the bundle itself as the observer's standalone IPC entry point.
+    rolling_probe() { node --input-type=module -e '
+      process.argv.splice(1, 0, "rolling-gate");
+      await import("/config/probe.mjs");
+    ' "$@"; }
+    credit_modes=(barrier6 rolling6 rolling12)
+    if [[ $TX2_SUBJECT_NARROW_REVISION == 1 ]]; then credit_modes=(rolling6); fi
+    if [[ $TX2_SUBJECT_APPEND_RETIREMENT == 1 ]]; then credit_modes=(barrier6 rolling6); fi
+    for credit_mode in "${credit_modes[@]}"; do
+      subject_workers 1 "$TX2_SUBJECT_ORDERED_IDS"
+      rolling_probe before "$credit_mode" "$work/$credit_mode.json"
+      stop_subject_workers 1
+      kill "${children[1]}" 2>/dev/null || true
+      wait "${children[1]}" || true
+      test -s "$PREP1_ROLLING_FAIL_PATH" && test -s "$PREP1_ROLLING_FAIL_PATH.observed"
+      rm -- "$PREP1_ROLLING_FAIL_PATH" "$PREP1_ROLLING_FAIL_PATH.observed"
+      kill -INT "${children[0]}"
+      wait "${children[0]}"
+      start_postgres
+      durability
+      start_transactor
+      subject_workers 1 "$TX2_SUBJECT_ORDERED_IDS"
+      rolling_probe after "$credit_mode" "$work/$credit_mode.json"
+      stop_subject_workers 1
     done
     ;;
   subject-query)

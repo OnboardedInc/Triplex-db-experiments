@@ -501,6 +501,7 @@
                                                                               (vector? (nth op 3 nil)) (= 6 (count (nth op 3))))) (:ops params)))}))
         (:subject-save report) (assoc :subjectSave (:subject-save report))
         (:subject-ordered-ids report) (assoc :subjectOrderedIds true)
+        (:subject-append-retirement report) (assoc :subjectAppendRetirement true)
         (:subject-hints-attached report) (assoc :subjectHintsAttached true)
         (:subject-replan report) (assoc :subjectReplan true)
         (and load-timing (not (:subject-save report))) (assoc :loadProfile {:rowNs @load-timing :applyMs (get-in report [:io-stats :api-ms])

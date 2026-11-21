@@ -52,8 +52,8 @@
          (map (fn [x] [(v (:e x)) (:v x) (:added x)]))
          frequencies)))
 
-(defn run-replacement [enabled]
-  (with-redefs [subject/enabled enabled subject/prefetch? false group/enabled false
+(defn run-replacement [enabled append?]
+  (with-redefs [subject/enabled enabled subject/append-retirement? append? subject/prefetch? false group/enabled false
                 policy/priority? false policy/field-only? false policy/budget-us nil]
     (reference/in-scope
       (fn [name conn]
@@ -84,6 +84,16 @@
           (is (= {"status" "absent"} (reference/operation name "new-operation")))
           (is (= found (get (reference/claim name "edit-a") "receipt")))
           (is (= 3 (storage/head-position (d/db conn))))
+          (let [db (d/db conn)
+                eid (d/entid db [:triplex.entity/id fixture/root])
+                markers (mapv (comp lean/retirement :v) (d/datoms db :eavt eid :triplex.entity/retired))]
+            (is (= (if append? [["old" 2 1001.0 "_tx/edit-a"] ["middle" 3 1002.0 "_tx/edit-b"]] [])
+                   (->> markers (sort-by :retracted_position)
+                        (mapv (juxt :id :retracted_position :retracted_at :retract_tx_id)))))
+            (is (= (if append? [true true] [nil nil])
+                   (mapv #(get-in % [:body "subjectAppendRetirement"]) results)))
+            (is (= (if append? 0 2)
+                   (count (remove :added (d/datoms (d/history db) :eavt eid :triplex.entity/row))))))
           (is (= "intermediate value" (get-in actual [:feed 2 2 "retract" "value" "value"])))
           (is (= 1001.0 (get-in actual [:feed 2 2 "retract" "recordedAt"])))
           (is (= 1002.0 (get-in actual [:feed 2 2 "retract" "retractedAt"])))
@@ -101,7 +111,12 @@
                                     (update :operations #(mapv (fn [r] (dissoc r "t")) %)))})))))
 
 (deftest one-field-replacement
-  (is (= (run-replacement false) (run-replacement true))))
+  (is (= (run-replacement false false) (run-replacement true false))))
+
+(deftest append-retirement-retains-logical-bytes
+  (when subject/numeric-owner?
+    (is (= (:observations (run-replacement true false))
+           (:observations (run-replacement true true))))))
 
 (deftest clock-fragments-are-ordinary-row-bytes
   (let [[seed input] (reference/edits)

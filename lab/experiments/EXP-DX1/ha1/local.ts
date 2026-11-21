@@ -205,16 +205,18 @@ export async function localDrill(opts: any, config: any, manager: any) {
     ? [...fleetCaps(mode, scopes, false)]
     : Object.entries(roles)
         .filter(([r]) =>
-          mode === "native-checks"
-            ? r === "tool"
-            : mode.startsWith("load-")
-              ? loadRoles(mode).includes(r as Role)
-            : mode === "replication"
-              ? ["pg", "target", "tool", "active", "write"].includes(r)
-              : mode === "move" ||
-                mode.startsWith("one-") ||
-                mode.startsWith("hasync-") ||
-                r !== "target",
+          mode === "hasync-cold"
+            ? ["pg", "target"].includes(r)
+            : mode === "native-checks"
+              ? r === "tool"
+              : mode.startsWith("load-")
+                ? loadRoles(mode).includes(r as Role)
+                : mode === "replication"
+                  ? ["pg", "target", "tool", "active", "write"].includes(r)
+                  : mode === "move" ||
+                    mode.startsWith("one-") ||
+                    mode.startsWith("hasync-") ||
+                    r !== "target",
         )
         .map(([r]) => [r, localRoleMiB(mode, r as Role)] as const);
   const people = Number(opts.people ?? (pooled ? 10 : 4));

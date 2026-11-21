@@ -1,3 +1,6 @@
+7c2f78b960cfc531fae623ffb75783b3aba24aef52794b2497ad5db8dfa9d024  int1/p10/playground-gates.tar.gz
+9568bbf310268283836d2f9c1f63b75d1e8472dd8bf5e1df5d7ce45549cdef50  int1/p10/publish-gates.tar.gz
+854c7f627270e5d4a88264facb2503a89c234fb0e93f919c666f8a946368cbb1  int1/p10/sunday-gates.tar.gz
 85182c033c62c5abddbaa111f83a82faa9ab9c3dfeb6ab5a195df9810052489c  int1/p6/act1-first-attempt.tar.gz
 5c673e866f1fe64ac137af99ffbb23cd00fbc999f457de187de799736827db4c  int1/p6/act1-legacy-import-refusal.tar.gz
 d1e67322c56890c3eac150f7e41ab05580bc1bf2e52c82f39dcc1ad6ec0624f1  int1/p6/act1-publish.tar.gz
@@ -37,3 +40,8 @@ e76f11e4d23d8662461d4c64fe2b0b1b038f49eddd547a306d0ef26f6690531a  int1/p8/laptop
 649f08b8f16501c254ff12713374bf50fc01bac42e9734ec53f6383767708594  int1/p8/server-final-policy.tar.gz
 ae48ef665549c20c6f93495b5093fec20fc7c5b83ac95babda57d36551f3ace2  int1/p8/server-startup-sdk.tar.gz
 9bacc348fad6a770b3efc65c1521743273edb068bdd6277ae377f43360c95d4a  int1/p8/server-wal-preflight.tar.gz
+e29848c98f4a6eb97a29122e0d248a0acef7248f26ac51618a54c24f9d8f51c6  int1/p9/credit-launch-sdk.tar.gz
+162bf6dc554085c6b875304bb366e3e69ef8c97b634a7179648ffe90bbe11afb  int1/p9/first-sql-witnesses.tar.gz
+af150326fac514c9eea1e0a006812e85844f51269c92e7be00aa9ed21afa878b  int1/p9/launch-audit-final.tar.gz
+45f248de505bcf670854d60ce22282cc8506c105e63d2bd2b7a4547ea2b0b25a  int1/p9/scorecard-toys.tar.gz
+4daa4db9cf56a9933814f0378e343206555d5c577697eea27b6e3e5ef5cea86c  int1/p9/sql-credit-matrix.tar.gz

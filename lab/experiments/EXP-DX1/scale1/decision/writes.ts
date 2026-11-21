@@ -6,6 +6,7 @@ import {
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
 import { command } from "../../w1/group/workload.ts";
+import { admission, type Admission } from "../../prep1/rolling-credits.ts";
 import {
   activeSubjects,
   expiryMs,
@@ -39,6 +40,7 @@ type Ack = {
   timeline?: Record<string, number>;
   subjectSave?: string;
   subjectOrderedIds?: boolean;
+  subjectAppendRetirement?: boolean;
 };
 export type Save = {
   id: string;
@@ -56,6 +58,9 @@ export type Save = {
   predecessor?: string;
   orderedToken?: string;
   end?: number;
+  fairTurn?: number;
+  neighboursAhead?: number;
+  creditReleased?: number;
   status:
     | "offered"
     | "pending"
@@ -161,6 +166,14 @@ function bind(o: Save, a: Ack, candidate: ReturnType<typeof expectedSave>) {
   o.stage = stage;
 }
 
+export type PublishInterleave = {
+  paused: boolean;
+  drain?: () => Promise<void>;
+  resume?: () => void;
+  waiting?: () => number[];
+  committed: (row: Save) => void;
+};
+
 // [DX-SCALE1] Why: all tapes are open-loop, and a start deadline is evaluated before allocating the gateway request. Rejected: a single closed promise chain or counting an upstream expiration as a native commit limit.
 export async function play(
   scopes: Sender[],
@@ -169,7 +182,11 @@ export async function play(
   nonce: string,
   capture = false,
   orderedIds = false,
+  selection?: Admission,
+  interleave?: PublishInterleave,
 ) {
+  assert(!interleave || selection);
+  const fair = selection && admission(scopes.length, selection);
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
     active = scopes.map(() => 0),
     owned = new Map<string, string>(),
@@ -189,7 +206,8 @@ export async function play(
       save.sent = performance.timeOrigin + response.written;
       if (capture && Number.isFinite(response.headers))
         save.responseHeaders = performance.timeOrigin + response.headers;
-      if (capture && response.gatewayTraceparent) save.responseTrace = response.gatewayTraceparent;
+      if (capture && "gatewayTraceparent" in response && typeof response.gatewayTraceparent === "string")
+        save.responseTrace = response.gatewayTraceparent;
     }
   };
   const expire = (entry: Save, cause: NonNullable<Save["expiryCause"]>) => {
@@ -205,9 +223,8 @@ export async function play(
     if (queuedTail.get(k) === row.id) queuedTail.delete(k);
   };
 
-  function pump(account: number) {
-    const q = queues[account]!,
-      sender = scopes[account]!;
+  function expireQueue(account: number) {
+    const q = queues[account]!;
     while (q[0] && now() >= q[0].row.due + expiryMs) {
       const { row } = q.shift()!;
       dequeue(row);
@@ -222,70 +239,117 @@ export async function play(
             : "dispatch";
       expire(row, cause);
     }
-    while (active[account]! < maxInflight && q.length) {
-      const next = q.findIndex((x) => !owned.has(key(x.row)) && !quarantined.has(key(x.row)));
-      if (next < 0) break;
-      const { e, row } = q.splice(next, 1)[0]!;
-      dequeue(row);
-      if (now() >= row.due + expiryMs) {
-        expire(row, "dispatch");
-        continue;
-      }
-      // [DX-INT1] Why: bind the identity block to this offered save through settling or recovering it.
-      // Rejected: minting a new block while looking up an uncertain receipt.
-      if (orderedIds) row.orderedToken = orderedSaveIdentity().token;
-      const prior = sender.rows.get(task(row.account, row.subject))!;
-      const candidate = expectedSave(row, e, prior);
-      if (orderedIds) candidate.input.sourceK = Math.max(sender.scope.cut, ...prior.map((field) => field.recorded_position));
-      owned.set(key(row), row.id);
-      active[account]!++;
-      row.dispatched = now();
-      row.status = "pending";
-      inFlightSends.set(row.id, row);
-      let p: Promise<void>;
-      p = sender.client
-        .transact(row.db, candidate.input)
-        .then((value) => {
-          row.end = now();
-          assert(row.sent !== undefined, "Acknowledged write has no matching socket sample");
-          const raw = value as Ack;
-          bind(row, raw, candidate);
-          const old = sender.rows.get(candidate.entity)!;
-          for (let i = 0; i < e.width; i++) {
-            old[i] = {
-              ...candidate.input.rows[i]!,
-              recorded_at: row.receipt!.clock,
-              recorded_position: row.receipt!.p,
-            };
-          }
-          row.status = "acked";
-        })
-        .catch((error) => {
-          row.end = now();
-          row.error = String(error);
-          if (error instanceof DatomicHttpError && error.code === "WriteBudgetExceeded") {
-            row.status = "refused";
-            return;
-          }
-          row.status = "uncertain";
-          unresolved.set(row, candidate);
-          quarantined.set(key(row), row.id);
-        })
-        .finally(() => {
-          inFlightSends.delete(row.id);
-          owned.delete(key(row));
-          active[account]!--;
-          pending.delete(p);
-          pump(account);
-        });
-      pending.add(p);
+  }
+
+  const next = (account: number) => queues[account]!.findIndex(
+    ({ row }) => !owned.has(key(row)) && !quarantined.has(key(row)),
+  );
+
+  function dispatch(account: number, index: number, ticket?: number, neighboursAhead?: number) {
+    const sender = scopes[account]!;
+    const { e, row } = queues[account]!.splice(index, 1)[0]!;
+    dequeue(row);
+    if (now() >= row.due + expiryMs) {
+      expire(row, "dispatch");
+      fair?.resolved(true, ticket);
+      return;
+    }
+    if (ticket !== undefined) row.fairTurn = ticket;
+    if (neighboursAhead !== undefined) row.neighboursAhead = neighboursAhead;
+    // [DX-INT1] Why: bind the identity block to this offered save through settling or recovering it.
+    // Rejected: minting a new block while looking up an uncertain receipt.
+    if (orderedIds) row.orderedToken = orderedSaveIdentity().token;
+    const prior = sender.rows.get(task(row.account, row.subject))!;
+    const candidate = expectedSave(row, e, prior);
+    if (orderedIds) candidate.input.sourceK = Math.max(sender.scope.cut, ...prior.map((field) => field.recorded_position));
+    owned.set(key(row), row.id);
+    active[account]!++;
+    row.dispatched = now();
+    row.status = "pending";
+    inFlightSends.set(row.id, row);
+    let p: Promise<void>;
+    p = sender.client
+      .transact(row.db, candidate.input)
+      .then((value) => {
+        row.end = now();
+        assert(row.sent !== undefined, "Acknowledged write has no matching socket sample");
+        const raw = value as Ack;
+        bind(row, raw, candidate);
+        const old = sender.rows.get(candidate.entity)!;
+        for (let i = 0; i < e.width; i++) {
+          old[i] = {
+            ...candidate.input.rows[i]!,
+            recorded_at: row.receipt!.clock,
+            recorded_position: row.receipt!.p,
+          };
+        }
+        row.status = "acked";
+        interleave?.committed(row);
+      })
+      .catch((error) => {
+        row.end = now();
+        row.error = String(error);
+        if (error instanceof DatomicHttpError && error.code === "WriteBudgetExceeded") {
+          row.status = "refused";
+          return;
+        }
+        row.status = "uncertain";
+        unresolved.set(row, candidate);
+        quarantined.set(key(row), row.id);
+      })
+      .finally(() => {
+        inFlightSends.delete(row.id);
+        owned.delete(key(row));
+        active[account]!--;
+        pending.delete(p);
+        if (fair) {
+          row.creditReleased = now();
+          fair.resolved(row.status === "acked" || row.status === "refused", ticket);
+        }
+        pump(account);
+      });
+    pending.add(p);
+  }
+
+  function pump(account: number) {
+    if (fair) {
+      for (const a of scopes.keys()) expireQueue(a);
+      // [DX-ACT1] Why: allow the receipt to take the next turn with one exact shared source cut.
+      // Rejected: stopping the independent arrival clock or granting further credits during the handoff.
+      if (interleave?.paused) return;
+      fair.dispatch(
+        () => scopes.flatMap((_, a) => {
+          if (active[a]! >= maxInflight) return [];
+          const index = next(a);
+          return index < 0 ? [] : [{ account: a, index, due: queues[a]![index]!.row.due }];
+        }),
+        (save, ticket, neighboursAhead?: number) => dispatch(save.account, save.index, ticket, neighboursAhead),
+      );
+      return;
+    }
+    expireQueue(account);
+    while (active[account]! < maxInflight) {
+      const index = next(account);
+      if (index < 0) return;
+      dispatch(account, index);
     }
   }
 
+  if (interleave) {
+    interleave.drain = async () => {
+      assert(interleave.paused);
+      await Promise.all([...pending]);
+      assert.equal(pending.size, 0);
+    };
+    interleave.resume = () => pump(0);
+    interleave.waiting = () => queues.map((q) => q.length);
+  }
+
   // [DX-SCALE1] Why: record the actual socket flush for successful requests, with a bounded map of active operations. Rejected: using the publication callback's error and finally notifications as packet timestamps.
+  const diagnosticClient = (c: DatomicClient) => c as DatomicClient & { onRequestFailure?: typeof observe };
   for (const s of scopes) {
     s.client.onRequest = observe;
-    if (capture) s.client.onRequestFailure = observe;
+    if (capture) diagnosticClient(s.client).onRequestFailure = observe;
   }
   try {
     // Ten clients with the same per-account request cap serve either placement.
@@ -324,7 +388,7 @@ export async function play(
   } finally {
     for (const s of scopes) {
       delete s.client.onRequest;
-      if (capture) delete s.client.onRequestFailure;
+      if (capture) delete diagnosticClient(s.client).onRequestFailure;
     }
   }
 }
