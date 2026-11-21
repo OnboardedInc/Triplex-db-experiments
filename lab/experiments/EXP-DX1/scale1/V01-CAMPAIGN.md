@@ -6,7 +6,7 @@ The November 20 evening handoff puts the full-size ordered per-person ceiling fi
 | --- | --- | --- |
 | Existing fresh seed | About 7.8 h for ingestion, with 162,456,470 current facts. From the handoff, about 4–6 h for remaining claims, feed and seal at USD 4.36–6.54. | Sealed 1,000,000 people, 162,456,470 facts and 87,001 frames at cut 87,002. Ingest 7.78 h, verification 7.38 h, archive and hash 1.04 h. |
 | Trimmed current writer | Up to 3 h (USD 3.27) from restore through the timed run. At least two pairs per rate are scheduled first. | Stopped by direction during restore. No timed cells. Native 1 min 39 s, about USD 0.03. |
-| PREP1 comparison | The adopted ceiling arm takes 60 min (USD 1.09), with up to 50 min of build and dump verification (USD 0.91). | Accepted the immutable image and SHA. Stopped during the single-core SQL restore at 02:57 UTC. Zero timed cells. Setup through cleanup 14 min 56 s, about USD 0.27. |
+| PREP1 comparison | The adopted ceiling arm takes 60 min (USD 1.09), with up to 50 min of build and dump verification (USD 0.91). | The first logical restore was stopped without offers after 14 min 56 s (USD 0.27). The stopped-copy retry completed all eight cells in 18 min 53 s from build through cleanup (USD 0.34). [Full-size ceiling](PREP1-CEILING.md) |
 | Fresh scorecard | 235 minutes (USD 4.27), plus clean build, conditional on compatible restore and exact replay. | Ordered source `65ad0997c` now accepts stopped PostgreSQL 17 copies. Stage the verified physical template after AGE1. |
 | AGE1 | 9.60 h (USD 10.46) at 24k records/s, cap 9.9 h (USD 10.79). A 430M native start needs about 23k/s or better. Add a separate restore unless it reuses the fresh restored storage. | The first setup failed before restore because the JDK package needed the standard man-page directory. Both packages were configured and verified. The retry completed the full SQL restore at 04:05 UTC, then could not execute the extracted Datomic transactor launcher. No calibration offers. Setup through cleanup 66 min 10 s (USD 1.20). The next AGE1 attempt uses a checksum-bound copy of the fresh template and restores the execute bits on a per-attempt copy of the vendor scripts. Budget 8–15 minutes (USD 0.15–0.27) for setup, then the original native deadline. The exact-cut physical volume and verified AGE1 replay replace the optional logical SQL export on this path. |
 | 1B scorecard | 235 minutes (USD 4.27), conditional on the aged seal and updated exact replay. | Waiting for AGE1 and its exact-cut SQL dump. |
@@ -38,11 +38,11 @@ PREP1 now names `8a116ed366d54ad7bca7b153d92d4f2eb4ea7041` for its one-hour ceil
 
 | Offers/s and fair turns | Forecast inside window | Actual |
 | --- | ---: | --- |
-| Matched quiet controls, 3.5/s | 3.5/s, 315 offers per control | Unmeasured in the first attempt |
-| 620/s, off | 450/s, up to 96 awaiting receipts | Unmeasured in the first attempt |
-| 620/s, on | 350/s, up to 6 awaiting receipts | Unmeasured in the first attempt |
-| 900/s, on | 380/s, up to 6 awaiting receipts | Unmeasured in the first attempt |
-| 900/s, off | 520/s, up to 96 awaiting receipts | Unmeasured in the first attempt |
+| Matched quiet controls, 3.5/s | 3.5/s, 315 offers per control | All four delivered 3.5/s, 315/315 and zero expiries each. |
+| 620/s, off | 450/s, up to 96 awaiting receipts | 278.08/s, n=25,027 in window. 30,512 expired. |
+| 620/s, on | 350/s, up to 6 awaiting receipts | 274.28/s, n=24,685 in window. 30,930 expired. |
+| 900/s, on | 380/s, up to 6 awaiting receipts | 238.10/s, n=21,429 in window. 59,259 expired. |
+| 900/s, off | 520/s, up to 96 awaiting receipts | 240.71/s, n=21,664 in window. 58,850 expired. |
 
 ### Full-image restore blocker
 
@@ -74,3 +74,4 @@ The AGE1 report selects `93ad03aa3` for the corrected aged logical replay and cu
 | age-v01-1b | JDK setup failed before restore | 0.001 | <0.01 | 4081 | `f7df45aa303454345e360df791167dc143e9392e4bdcc747d6f3d0fa2e2014a6` |
 | age-v01-1b-b | launcher execute permission after verified restore | 1.103 | 1.20 | 11713 | `c41bab94ac0a233beac52699beb00a442c989a8033ae732584c0badb7aff02ff` |
 | pgdata-fresh-a | stopped fresh PGDATA sealed | 0.134 | 0.15 | 1174 | `d78a09b93f75d25d105199529a4e70124e13e3d507b1e13b4546eb2548812b9b` |
+| prep-v01-ceiling-physical | all eight cells verified | 0.315 | 0.34 | 26498418 | `b367e20a92f9f41048a31b8a8e5edc42176979702d65ed8480ff36a6201fb42a` |
