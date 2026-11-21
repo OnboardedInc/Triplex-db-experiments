@@ -46,3 +46,5 @@ The archived benchmark is 105,763,500 bytes. The Mac copy contains the generated
 | Erasure and acknowledged-write loss | Separate drills. | Unmeasured here. |
 
 [Original forecasts](https://github.com/OnboardedInc/Triplex-db-experiments/blob/2e974a95b10a30a30ff3f46947df4f32beacc657/lab/experiments/EXP-DX1/v01/SERVER.md#predictions-written-before-the-run)
+
+The 1B column remains unmeasured. The maintained AGE1 continuation stopped at 514,741,853 indexed records when its second write-and-maintenance cycle fell below the 9,900 records/s floor. No 1B replay or independent native-copy seal was produced. [Continuation and custody](AGE1-LOAD.md)
