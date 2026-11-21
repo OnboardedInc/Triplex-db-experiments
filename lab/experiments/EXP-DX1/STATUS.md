@@ -4003,3 +4003,31 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   full-size follow-up before the fresh scorecard, then the 1 billion run, then the aged scorecard; server 1 runs
   the combined arm after the two arms in progress, then Publish under load, the erasure note and its final handoff.
 - Running: DX-BM1, DX-SCALE1 (two).
+
+## 2026-11-21 05:49 UTC (00:49 local, 2026-11-21): RESULTS: full size with a tuned transactor reaches 346 to 365 per second; all four append-tail arms in
+
+- **Full size, tuned (server 2, `origin/exp/DX-SCALE1-deep-accounts` at `64a76c50d`, `scale1/SCALE-TUNE.md`;
+  ordered writer, fair turns on, 90 second cells, each arm on its own clean copy; 32 min 9 s, $0.58):**
+
+  | Transactor | Offered per s | Forecast | Delivered per s | Expired | Quiet solo to loaded p99 (ms), ratio | Reads per save | Apply mean ms per save | Transactor CPU cores |
+  | --- | ---: | ---: | ---: | ---: | --- | ---: | ---: | ---: |
+  | 1 core, 2 GiB, G1 | 394 | 277 | 201.83 | 17,199 of 35,460 | 115.45 to 445.54, 3.86 | 1.811 | 3.743 | 0.740 of 1 |
+  | 1 core, 2 GiB, G1 | 620 | 273 | 187.12 | 38,707 of 55,800 | 89.75 to 444.09, 4.95 | 2.018 | 4.021 | 0.797 of 1 |
+  | 3 cores, 16 GiB, G1 | 394 | 365 | 361.51 | 2,565 | 68.88 to 190.81, 2.77 | 0.738 | 1.703 | 1.146 of 3 |
+  | 3 cores, 16 GiB, G1 | 620 | 405 | 351.19 | 23,611 | 41.13 to 186.13, 4.53 | 0.961 | 1.852 | 1.104 of 3 |
+  | 3 cores, 16 GiB, separate WAL, ZGC | 394 | 394 | 345.80 | 4,110 | 65.99 to 221.10, 3.35 | 0.787 | 1.858 | 1.346 of 3 |
+  | 3 cores, 16 GiB, separate WAL, ZGC | 620 | 440 | 365.13 | 22,535 | 25.18 to 57.67, 2.29 | 1.109 | 1.778 | 1.493 of 3 |
+
+  Reading: no tested configuration stored every offer at 394 at full size; the best delivered 361.51 (7 percent
+  expired). Cores and cache take the ceiling from about 200 to about 350 to 365; the separate log drive with ZGC
+  cut append maxima from 59 to 97 ms down to 17 to 21 ms and the loaded quiet p99 at 620 to 57.67 ms; every quiet
+  ratio still exceeds 1.25. The base arm here (201.83) is lower than the earlier ceiling run's 274 to 278 on the
+  same settings: one arm per treatment, so run-to-run spread is at least that large.
+- **Append tail, all four arms on the 16 million fact seed (server 1, `bm1/APPEND-TAIL-READING.md`, `81312ea18`),
+  quiet p99 solo and loaded at 394 offered:** control 82.76 and 338.13 ms; separate WAL 6.99 and 103.99; transactor
+  on Java 25 ZGC 72.83 and 237.87 (safepoint-assigned slow appends gone, WAL sync ones remain); fair turns 56.29
+  and 433.41 (ratio 7.70; throughput unchanged). Each change removes its own cause; the combined arm is queued.
+- **Order changes:** server 2 runs the 1 billion record run now and holds the scorecard for a tuned configuration
+  (DX-SCALE1 stopped and resumed). DX-THIN1 part 8 assigned: `laptop` and `server` profiles in the launch
+  settings (server: transactor three cores, 16 GiB object cache, optional separate WAL directory, ZGC one setting
+  away); then DX-V01 re-pins. Running: DX-BM1, DX-SCALE1, DX-THIN1 (three).
