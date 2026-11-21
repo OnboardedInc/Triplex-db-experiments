@@ -1,7 +1,7 @@
 ## Part 16 · five transactor cores
 
 The 394/s backlog spells coincided with active index jobs. Rolling 6 apply rose from 1.40 to 2.79 ms and SQL reads rose from 0.99 to 1.57 per save. Rolling 12 showed the same pattern. [Cohort table and index clock](CORE-SPLIT.md)
-Run the [fourth-arm command](CORE-SPLIT.md#fourth-arm) from the checkout that introduced the core split. It moves two writer cores to the transactor and leaves the queued three-arm run at `891ab9139`.
+Run the [fourth-arm command](CORE-SPLIT.md#fourth-arm) from `73afad665ac2ccecea62161b8dfb6a3a48287057`. It moves two writer cores to the transactor and leaves the queued three-arm run at `891ab9139`.
 The separate 35-minute add-on runs 394 and 620 only. Forecast at 394 is 394/s stored, 300 ms late busy p99 and 49 ms loaded quiet p99. At 620 forecast 478/s, 30,025 ms and 55 ms.
 Launch-policy tests checked both JVM roles, the original plan byte for byte, matched tapes and a synthetic producer/collector run with 1,022 receipts. No engine ran on the Mac.
 The checkpoint analysis and launch gates are in `evidence/DX-PREP1/p16-placement`. The five-core arm still needs its live server readback and measurement. [Verification and prediction](CORE-SPLIT.md#checks-and-custody)
