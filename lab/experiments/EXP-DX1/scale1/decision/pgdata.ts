@@ -315,6 +315,141 @@ async function prepare(dir: string, imageSha: string, transferSha: string) {
   }
 }
 
+async function adoptRestoredAge(dir: string, imageSha: string, transferSha: string) {
+  const age = path.join(bench, "age-v01-1b-b");
+  assert(digest.test(imageSha) && digest.test(transferSha));
+  assert.equal(await fileHash(path.join(archive, "image.json")), imageSha);
+  assert.equal(await fileHash(path.join(archive, "transfer.json")), transferSha);
+  const image = read(path.join(archive, "image.json"));
+  const transfer = read(path.join(archive, "transfer.json"));
+  assert.deepEqual(
+    [transfer.result, transfer.source, transfer.nonce, transfer.summaryFiles["image.json"]],
+    ["success", image.source, image.nonce, imageSha],
+  );
+  const ident = read(path.join(age, "identity.json"));
+  const state = read(path.join(age, "STATUS.json"));
+  const cleanup = read(path.join(age, "cleanup.json"));
+  assert.deepEqual(
+    [ident.source, ident.imageSha, ident.transferSha, ident.cut],
+    ["2859d6b1578b431043aa8064371693c9da595338", imageSha, transferSha, 87002],
+  );
+  for (const observation of [state, cleanup]) {
+    assert.deepEqual([observation.nonce, observation.slot], [ident.nonce, ident.slot]);
+    assert(observation.at >= ident.invocationStarted);
+  }
+  assert.equal(state.stage, "starting native age transactor");
+  assert.equal(ident.slot, "scale1-age-v01-1b-b-pg");
+  assert.deepEqual(cleanup.containers, []);
+  assert(!fs.existsSync(path.join(age, "rung")));
+  assert(!fs.existsSync(path.join(age, "restore.json")));
+  const failure = fs.readFileSync(path.join(age, "tx.log"), "utf8");
+  assert.match(failure, /^taskset: failed to execute .*\/bin\/transactor: Permission denied\s*$/);
+  const volume = "scale1-age-v01-1b-b-data";
+  assert(cleanup.retained.includes(volume));
+  assert.equal(docker("ps", "-aq", "--filter", "volume=" + volume), "");
+  const from = docker("volume", "inspect", "--format", "{{.Mountpoint}}", volume);
+  assert(from.endsWith("/volumes/" + volume + "/_data"));
+  assert.match(ident.pgImage, /^sha256:[a-f0-9]{64}$/);
+  assert.equal(docker("image", "inspect", "--format", "{{.Id}}", ident.pgImage), ident.pgImage);
+  const started = Date.now(),
+    nonce = randomUUID(),
+    slot = "scale1-pgdata-" + nonce.slice(0, 8);
+  const original = await stoppedInventory(from);
+  assert(original.bytes >= image.disk.after * 0.9);
+  assert(remaining(path.dirname(dir)) >= original.bytes + 24 * GiB);
+  fs.mkdirSync(dir, { mode: 0o700 });
+  const data = path.join(dir, "cluster");
+  const status = (stage: string) =>
+    fs.writeFileSync(
+      path.join(dir, "STATUS.json"),
+      JSON.stringify({ stage, started, nonce, slot, at: Date.now() }) + "\n",
+    );
+  status("copying the exact stopped restore before any Datomic traffic");
+  call("cp", ["--archive", "--reflink=auto", "--", from, data], 900000);
+  assert.deepEqual(await stoppedInventory(data), original);
+  // [DX-SCALE1] Why: match both downstream launchers' fixture login on a private clone.
+  // Rejected: changing the held restoration or reading its generated password into evidence.
+  const id = docker(
+    "run",
+    "-d",
+    "--pull",
+    "never",
+    "--name",
+    slot,
+    "--network",
+    "none",
+    "--cpuset-cpus",
+    "1,8",
+    "--memory",
+    "8g",
+    "--memory-swap",
+    "8g",
+    "--mount",
+    "type=bind,source=" + data + ",target=/var/lib/postgresql/data",
+    ident.pgImage,
+    "postgres",
+    "-c",
+    "synchronous_commit=on",
+    "-c",
+    "fsync=on",
+    "-c",
+    "full_page_writes=on",
+  );
+  assert(/^[a-f0-9]{64}$/.test(id));
+  try {
+    const until = Date.now() + 120000;
+    for (;;) {
+      try {
+        docker("exec", id, "pg_isready", "-U", "postgres", "-d", "datomic");
+        break;
+      } catch {
+        assert(Date.now() < until);
+        await sleep(1000);
+      }
+    }
+    sql(
+      id,
+      "postgres",
+      "ALTER ROLE datomic PASSWORD 'datomic'; ALTER ROLE postgres PASSWORD 'datomic'",
+    );
+    assert.equal(
+      sql(
+        id,
+        "datomic",
+        "SELECT current_setting('fsync'), current_setting('synchronous_commit'), current_setting('full_page_writes')",
+      ),
+      "on|on|on",
+    );
+  } finally {
+    docker("stop", "--time", "25", id);
+    assert.equal(docker("inspect", "--format", "{{.State.ExitCode}}", id), "0");
+    docker("rm", id);
+  }
+  status("hashing the stopped fixture-compatible template");
+  const inventory = await stoppedInventory(data);
+  assert.deepEqual(await stoppedInventory(from), original);
+  write(path.join(dir, "sealed-pgdata.json"), {
+    source: call("git", ["rev-parse", "HEAD"]),
+    seed: {
+      source: image.source,
+      nonce: image.nonce,
+      cut: 87002,
+      imageSha,
+      transferSha,
+      dumpSha: image.sha256,
+    },
+    restoredAge: { nonce: ident.nonce, slot: ident.slot, stagedAt: state.at, original },
+    postgres: ident.pgImage,
+    data,
+    nonce,
+    slot,
+    started,
+    sealed: Date.now(),
+    inventory,
+  });
+  status("sealed the stopped fresh PostgreSQL template");
+}
+
 async function clone(sealPath: string, destinations: string[]) {
   assert(
     destinations.length >= 1 &&
@@ -377,9 +512,10 @@ if (process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url) 
   );
   assert.equal(docker("ps", "-q"), "");
   const [verb, ...args] = process.argv.slice(2);
-  if (verb === "prepare") {
+  if (verb === "prepare" || verb === "adopt-restored-age") {
     assert.equal(args.length, 3);
-    await prepare(assignedPath(args[0]!), args[1]!, args[2]!);
+    const run = verb === "prepare" ? prepare : adoptRestoredAge;
+    await run(assignedPath(args[0]!), args[1]!, args[2]!);
   } else {
     assert.equal(verb, "clone");
     const [seal, ...copies] = args;

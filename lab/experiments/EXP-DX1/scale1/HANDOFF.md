@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 36.35 through 2026-11-21 03:51 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 36.66 through 2026-11-21 04:08 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The full-size archived seed is immutable. PREP1 accepted both metadata digests and the dump SHA, then stopped during restore at 02:57 UTC with zero timed cells. The measured COPY pace projects at least 76 minutes before the 12-minute offer schedule. Both stopped attempts have copied terminal evidence and confirmed cleanup. The unused NVMe is mounted for AGE1. The first AGE1 attempt stopped at JDK configuration before restore. The JDK was repaired and the AGE1 retry started at 02:59 UTC on November 21. It has a 9.9-hour native deadline and a separate 14-hour overall guard for build, restore and exact-cut export. Its two-core SQL restore processed 268.31 GB of expanded COPY input by 03:32 UTC. PREP1 at 1dd5952c and the ordered scorecard at 65ad0997c now accept stopped PostgreSQL copies. A SHA-verified fresh template will prepare their next attempt after AGE1 releases.
+AGE1 released Server 2 after its second tooling failure. The second attempt fully restored the exact SQL archive in about 65 minutes. The extracted Datomic launcher could not be executed, so no calibration or aging ran. Its PostgreSQL volume was stopped and retained before any native offers. The next stage makes a private stopped template from this fresh copy and then runs the pinned PREP1 ceiling. The sealed original dump and both manifests remain immutable. The released ordered scorecard follows PREP1.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
