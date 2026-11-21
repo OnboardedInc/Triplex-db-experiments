@@ -393,7 +393,9 @@ export async function collect(dir: string, mode: "produce" | "verify") {
       const placement = read(path.join(out, "placement.json"));
       if (plan.placementInputs.launch) {
         const policy = launchProfile("server", { txJvm: plan.placementInputs.txJvm });
-        assert.deepEqual(plan.placementInputs.launch, policy);
+        const { creditMode: _creditMode, ...previousPolicy } = policy;
+        assert.deepEqual(plan.placementInputs.launch, Object.hasOwn(plan.placementInputs.launch, "creditMode")
+          ? policy : previousPolicy);
         const launch = read(path.join(out, "serving-jvm.json"));
         assert.deepEqual(launch.identity, id);
         assert(launch.capturedAt >= arm.startedAt && launch.capturedAt <= result.start);

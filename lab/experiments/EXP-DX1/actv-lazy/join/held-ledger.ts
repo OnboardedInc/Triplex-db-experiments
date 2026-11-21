@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { setTimeout as sleep } from "node:timers/promises";
 import { DatomicClient } from "../../../../../packages/datomic/dist/index.js";
 import { decodeRowText } from "../../../../../packages/datomic/dist/rowText.js";
 import { now, decodeFeed } from "../../scale1/decision/observer.ts";
@@ -48,6 +49,7 @@ export class HeldLedger {
   // Rejected: accepting a policy cut solely because its global transaction number advanced.
   verifyThrough(position: number, mayAwaitAck = false) {
     const next = this.serial.then(async () => {
+      const deadline = now() + 500;
       while (this.cursor < position) {
         const available = Math.min(100, position - this.cursor),
           after = this.cursor;
@@ -56,10 +58,13 @@ export class HeldLedger {
           "/v2/db/" + this.database + "/transactions",
           { after, limit: available },
         );
-        assert(
-          transactions.length && transactions.length <= available,
-          "Missing native journal suffix",
-        );
+        assert(transactions.length <= available);
+        if (!transactions.length) {
+          if (mayAwaitAck) return;
+          assert(now() < deadline, "Missing native journal suffix");
+          await sleep(5);
+          continue;
+        }
         for (const frame of transactions) {
           const [tx, p, encoded] = frame;
           assert.equal(p, this.cursor + 1);

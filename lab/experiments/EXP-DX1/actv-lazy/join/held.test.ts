@@ -39,10 +39,14 @@ test("account-qualified deep facts preserve independent answer provenance and re
     heldWorlds(body, prefix, keyFor(0), [i], { position, validAt: SEED_VALID_FROM });
   const [actual] = project(),
     expected = expectedPolicy(i, authoredSeed(i, position));
-  const order = (r: typeof expected.facts) => r.map((f) => JSON.stringify(f)).sort();
+  const order = (r: typeof actual.facts) => r.map((f) => JSON.stringify(f)).sort();
   assert.deepEqual(order(actual!.facts), order(expected.facts));
   const ref = body.find((r) => r.value.type === "ref")!;
-  ref.value = { type: "ref", value: ref.value.value.replace(prefix, "acct/" + keyFor(1) + "/") };
+  assert.equal(typeof ref.value.value, "string");
+  ref.value = {
+    type: "ref",
+    value: String(ref.value.value).replace(prefix, "acct/" + keyFor(1) + "/"),
+  };
   assert.throws(project, /Foreign account/);
 });
 

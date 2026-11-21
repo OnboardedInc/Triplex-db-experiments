@@ -3,6 +3,7 @@
 # Rejected: taking the laptop measurement lease or falling back to a fresh roster build.
 set -euo pipefail
 [[ $(uname -s) == Linux && $# == 8 && -r ${DX_V01_BUILD_RECEIPT:?} ]]
+[[ -f /var/tmp/triplex-bm1/dx-bm1-day.lock ]]
 exec 9<>/var/tmp/triplex-bm1/dx-bm1-day.lock
 flock -xn 9
 export DX_BARE_METAL=1 TRIPLEX_DATOMIC_LAYOUT=lean TRIPLEX_DATOMIC_FAST_PATHS=save-wire

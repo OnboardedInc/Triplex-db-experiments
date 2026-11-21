@@ -22,6 +22,11 @@
 (def attempt (System/getenv "PREP1_ATTEMPT"))
 (def mode (System/getenv "PREP1_MODE"))
 (def streaming? (= mode "subject-server"))
+(def lookup-every (if-let [n (System/getenv "PREP1_LOOKUP_EVERY")] (Long/parseLong n) 0))
+(assert (<= 0 lookup-every 4096))
+(def lookup-ordinal (AtomicLong. 0))
+(def sampled-lookups? (and (pos? lookup-every) (or streaming? (= mode "rolling-recovery"))))
+(def rolling-fixture (when (= mode "rolling-recovery") (file/file (System/getenv "PREP1_ROLLING_FAIL_PATH"))))
 (def diagnostic-events (ArrayBlockingQueue. 16384))
 (def ^ThreadMXBean cpu-bean (ManagementFactory/getThreadMXBean))
 (def ^:dynamic *profile* nil)
@@ -163,7 +168,7 @@
                                 (take 6)) (.getStackTrace (Thread/currentThread)))]
       (swap! *outside-reads* update (str @index " " (str/join " / " frames)) (fnil + 0) n))))
 
-(when (= "lookup-profile" mode)
+(when (or (= "lookup-profile" mode) sampled-lookups?)
   ;; [DX-PREP1] Why: shared native prefetch can load one leaf for several keys. Measure its real I/O once.
   ;; Rejected: running extra point seeks to split a batch's shared storage reads across individual ids.
   (doseq [op '[prefetch-identity prefetch-redundancy+uniqueness get-hook]]
@@ -214,7 +219,9 @@
           ;; [DX-PREP1] Why: the apply and append can run on different native threads.
           ;; Rejected: requiring the appender's thread name on an apply worker. Join by t and clock containment.
           @api
-          (binding [*lookups* (atom {}) *lookup-count* (atom 0) *outside-reads* (atom {})]
+          (if (and sampled-lookups? (not (zero? (mod (.getAndIncrement lookup-ordinal) lookup-every))))
+            (apply-tx snapshot dispatcher data)
+            (binding [*lookups* (atom {}) *lookup-count* (atom 0) *outside-reads* (atom {})]
             (let [basis-t (requiring-resolve 'datomic.api/basis-t)
                   start (System/nanoTime) before (cpu)
                   sample (io/throw-if-ex!
@@ -223,10 +230,12 @@
                   end (System/nanoTime) cpu-ns (- (cpu) before)
                   result (:ret sample)]
               (when-let [after (:db-after result)]
-                (retain! "PREP1_LOOKUPS" {:t (str (basis-t after)) :lookupCount @*lookup-count* :lookupLimit lookup-limit
+                (retain! "PREP1_LOOKUPS" {:db (writer-database) :t (str (basis-t after))
+                                          :beforeT (str (basis-t snapshot)) :sampleEvery lookup-every
+                                          :lookupCount @*lookup-count* :lookupLimit lookup-limit
                                           :start start :end end :cpuNs cpu-ns :io (:io-stats sample)
                                           :lookups @*lookups* :outsideSql @*outside-reads*}))
-              result)))))))
+              result))))))))
 
 (when (= "subject-profile" mode)
   ;; [DX-PREP1] Why: sample the native transaction application and bind its CPU time to db-after.
@@ -277,6 +286,15 @@
     (fn [log cluster block]
       (let [sizes (mapv #(dio/remaining (:fressianed-tx %)) block)
             start (System/nanoTime)
+            ;; [DX-PREP1] Why: deny the real append before storage for this fresh fixture scope.
+            ;; Rejected: manufacturing a transport error after storage may have committed the transaction.
+            _ (when (and rolling-fixture (.isFile rolling-fixture)
+                         (= (writer-database) (slurp rolling-fixture)))
+                (let [marker (file/file (str rolling-fixture ".observed"))]
+                  (when-not (.isFile marker)
+                    (spit marker (str (writer-database) "\n"))
+                    (println "PREP1_ROLLING_DENIED" (json/write-str {:attempt attempt :db (writer-database)}))))
+                (throw (java.io.IOException. "PREP1 rolling fixture denied durable append")))
             result (append log cluster block)
             end (System/nanoTime)]
         (.set appended {:bytes sizes :start start :end end})
@@ -303,12 +321,24 @@
                 (fn []
                   ;; [DX-PREP1] Why: stream the whole arm without blocking the serialized append.
                   ;; Rejected: retaining only the first 16,384 append blocks at shutdown.
+                  ;; [DX-W1] Why: a sampled lookup spans the native apply, including the checks after function expansion.
+                  ;; Rejected: adding seeks or splitting an actual shared storage fetch across all the probes it served.
                   (with-open [out (file/writer "/trace/prep1-native.ndjson")]
-                    (loop []
-                      (if-let [event (.poll pending 100 java.util.concurrent.TimeUnit/MILLISECONDS)]
-                        (do (.write out (str (json/write-str event) "\n")) (recur))
-                        (when-not @stop (.flush out) (recur))))
-                    (.write out (str (json/write-str {:attempt attempt :dropped (.get dropped) :end true}) "\n"))))
+                    (let [lookups (when (pos? lookup-every) (file/writer "/trace/prep1-lookups.ndjson"))]
+                      (try
+                        (loop []
+                          (when lookups
+                            (loop []
+                              (when-let [[kind event] (.poll diagnostic-events)]
+                                (.write lookups (str (json/write-str (assoc event :kind kind)) "\n"))
+                                (recur))))
+                          (if-let [event (.poll pending 100 java.util.concurrent.TimeUnit/MILLISECONDS)]
+                            (do (.write out (str (json/write-str event) "\n")) (recur))
+                            (when-not @stop (.flush out) (when lookups (.flush lookups)) (recur))))
+                        (let [terminal (str (json/write-str {:attempt attempt :dropped (.get dropped) :end true}) "\n")]
+                          (when lookups (.write lookups terminal))
+                          (.write out terminal))
+                        (finally (when lookups (.close lookups)))))))
                 "prep1-native-drain")]
     (.setDaemon drain true)
     (.start drain)

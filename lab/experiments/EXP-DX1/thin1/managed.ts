@@ -6,6 +6,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { memoryPlan } from "../int1/memory-plan.ts";
 import { nodeImage, pgImage } from "../v01/source.ts";
+import { defaultCreditMode, launchProfile, type CreditMode } from "../jvm1/launch.mjs";
 import { type Writer } from "../v01/profile.ts";
 
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
@@ -191,6 +192,7 @@ function setup(compact: boolean) {
   assert(peerGc === "g1" || (gwPolicy === "demand" && peerGc === "elastic"));
   const writeOptionsAttempt = mode === "int1-adopted-proof" ? randomUUID() : undefined;
   const fixtureWriter = process.env.DX_V01_MAC_WRITER ?? "grouped";
+  const { creditMode } = launchProfile("laptop", { creditMode: (process.env.DX_V01_CREDIT_MODE ?? defaultCreditMode) as CreditMode });
   assert(fixtureWriter === "grouped" || fixtureWriter === "subject");
   for (const [n, slot] of slots.entries()) {
     const role = n === 0 ? "write" : "read";
@@ -219,7 +221,7 @@ function setup(compact: boolean) {
   const census = process.env.DX_INT1_CENSUS ?? "held", cohort = process.env.DX_INT1_COHORT ?? "stride";
   assert(["held", "seed-only"].includes(census) && ["stride", "spread"].includes(cohort));
   write(cred, {
-    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, fixtureWriter,
+    nonce, secret, slots, compact, census, cohort, writeOptionsAttempt, fixtureWriter, creditMode,
     gwPolicy, readMode, peerGc, smallHeap, seedFeed, rowWire,
     memoryPoints, nativePools,
     readerPages: process.env.DX_INT1_READER_PAGES === "1",
@@ -286,6 +288,7 @@ function bind() {
       nonce: attempt.nonce,
       writeOptionsAttempt: attempt.writeOptionsAttempt,
       fixtureWriter: attempt.fixtureWriter,
+      creditMode: attempt.creditMode,
       compact: !!attempt.compact,
       census: attempt.census, cohort: attempt.cohort,
       gwPolicy: attempt.gwPolicy, readMode: attempt.readMode,
@@ -397,7 +400,7 @@ if (action === "--guest") {
     };
     await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
-      java: { placement: "owned Mac compact stack", commands }, residency }, writer);
+      java: { placement: "owned Mac compact stack", commands }, creditMode: stack.managed.creditMode, residency }, writer);
   } else if (mode === "int1-campaign-proof") {
     assert(Number(rung) === 40);
     process.chdir(repo);

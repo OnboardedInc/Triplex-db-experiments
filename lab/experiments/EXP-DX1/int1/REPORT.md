@@ -1,28 +1,34 @@
-The scorecard should pin `57580241dc4020f9ab7590839c72c00356fcedee`.
-Version 0.1 has a small laptop profile and a server profile for one database.
-The server gives the transactor three cores and a 16 GiB cache. The gateways get four cores for writes and one for reads.
-The server defaults to Java 21 with G1. One option switches the transactor to Java 25 with ZGC.
-An operator can place the PostgreSQL write-ahead log on a separate filesystem. Saves still wait for durable storage.
-At full size, the best 394-offer run saved 361.51 per second and 7.23% of offers expired.
-The best quiet-account tail at 620 offers took 2.29 times as long under load.
-The Mac verified the laptop checks and a reduced-memory server startup. The fresh and billion-record scorecards still need bare metal.
+The next scorecards should pin `5f62059b1fc03e8fffca0441f14ff4ddd4d7e734`.
+The billion-record scorecard keeps the earlier `57580241d` pin.
+The default allows up to six saves in a turn. Rolling mode returns each credit when its own reply is validated.
+Rolling mode reserves one opportunity for the quiet account even while neighbours are busy.
+Either launch profile can select rolling credits. The write gateway can select Java 25 ZGC on its own.
+The sampled lookup trace and serial revision option both start off.
+The Mac checked exact saved replies, immediate reads and PostgreSQL recovery in both writer modes.
+The fresh full-size comparison is still running. Its throughput and quiet-account numbers are forecasts.
 
-## Gates
+## Integration
 
-| Gate | Result |
-| --- | --- |
-| Laptop SDK and package checks | Nine build tasks and both typechecks. 439 SDK tests passed and 53 were skipped in each writer mode. 18 focused tests passed. |
-| Laptop native | 27 tests and 54,079 assertions for each writer. The grouped and ordered restart cases checked two synchronous flushes each, both resend responses and retired IDs. |
-| Laptop erasure | Each writer checked all 13 routes, including journal, feed, pinned reads and backup restore. |
-| Laptop playground | Each writer passed 17 API cases, Chromium and separate native journal checks. The restored PostgreSQL dumps matched 928 grouped and 958 ordered rows. |
-| Laptop scorecard toy | Each writer matched 211 receipts, 96 quiet reads and 20 cold pulls. The ordered journal matched 211 ID blocks. |
-| Reduced Mac server startup | Actual Java 21.0.13+9 G1 across transactor, writer and reader. Final processor counts 3/4/1, max heaps 640/352/352 MiB and caches 64/32/32 MiB. All PostgreSQL durability switches were on. |
-| Preflight | Same-device, nonempty, malformed and unavailable-device WAL inputs were rejected in the shell fixture. Separate-device input chose the WAL bind and initdb setting. |
+Took PREP1 `b0ffdd2ab` at `2fa0a5e37`. The shared sender validates the original operation and advances the person's predecessor before releasing its credit. An uncertain outcome freezes admission as the outstanding requests settle. Account 0 has a reserved credit at each rolling width. Select `--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16` or `DX_V01_CREDIT_MODE`. Select `--write-jvm j25-zgc` for the write gateway alone. The JVM plan and startup evidence name each role.
 
-The reduced startup used the shared server policy with laptop memory and the Mac reservation's two-core Docker quota per container. The Linux run still needs to verify physical placement, the full cache budget and the combined Java 25 ZGC and separate-WAL startup. The startup, SDK, native, playground and toy gates ran at `42ecd1420`. Erasure ran at `6d5edfc35`. The WAL shell checks, final launch plans and scale typecheck cover the follow-up launch changes through `9066ad9e1`. Earlier Mac refusals involved disk admission, cleanup with another owned slot still active, and a transient Docker build failure. [Evidence checksums](V0.1-SHA256SUMS)
+Took W1's sampled lookup observer and the ordered writer's narrow native revision check with predecessor decode reuse from `ff4346209`. Select `PREP1_LOOKUP_EVERY=64` to sample and `DX_W1_SERIAL_APPLY=1` for the candidate. W1's separate server driver and unrelated query and protected-K commits stayed on W1. The next-card five-minute window and counters work is on DX-V01.
+
+## Mac correctness gates
+
+| Gate | Grouped K | Ordered per-person |
+| --- | --- | --- |
+| Barrier 6 | 56 exact reopened receipts, 50 immediate reads, 6 absent after denial | Same counts |
+| Rolling 6 | 56 exact reopened receipts, 50 immediate reads, 6 absent after denial | Same counts |
+| Rolling 12 | 62 exact reopened receipts, 50 immediate reads, 12 absent after denial | Same counts |
+| Scorecard toy | Barrier 6, 211 receipts, 96 quiet reads, 20 cold pulls | Rolling 12, same counts, 211 ordered journal ID blocks |
+| SDK | 439 passed, 53 skipped | 439 passed, 53 skipped |
+
+All six SQL arms recovered the lost reply and checked both resend forms. The barrier made one failed submission and left five queued offers absent. Rolling made six or twelve failed submissions. The first barrier fixture expected a full turn. The corrected fixture checks which offers actually reached the gateway. All 19 scheduler tests and 18 focused tests passed.
+
+W1 serial apply passed nine tests and 760 assertions, including the same-person race, retired IDs, exact restart recovery and two synchronous standby flushes. Its rolling 6 SQL sample covered 19 matched revision lookups and 56 exact reopened receipts. The image dry check confirmed that a writer-only Java 25 launch selects the pinned writer image and leaves Java 21 on the other two roles. Streaming lookup files and live mixed Java remain to be verified on Linux.
+
+The original 394-offer full-size scorecard stored 342.90 saves/s in-window. PREP1 forecasts 351, 381 and 394 for barrier 6, rolling 6 and rolling 12 at 394, with rolling quiet p99 of 36–43 ms. The Mac runs were correctness diagnostics. Live write-gateway Java 25 ZGC and full-size rolling efficacy still need Linux evidence.
 
 ## Evidence audit
 
-The startup witness checks final HotSpot flags, pinned releases, cache arguments and live SQL switches. It reads fresh logs between two observations of the same process and binds the result to exact source bytes, image and reservation. The physical launcher verifies the empty WAL directory and devices before startup, then checks the live mount and PostgreSQL settings. The scorecard rechecks the three serving JVM boots after restore. The integrated campaign collector checks the source-bound policy, final flags, image IDs and capture window before classifying observations. All 521 pins and the frozen inputs matched their recorded digests.
-
-The launch and Mac gates are indexed in the [version 0.1 state table](V0.1-STATE.md). The physical comparison used ten 100,000-person accounts, fair turns and 1,900 people per busy neighbour. The scorecard retains its own tapes. Select `--tx-jvm j25-zgc` and `--wal-directory DIR` for the combined server treatment. [Server command](../v01/SERVER.md)
+The sender checks the operation and records predecessor values before releasing a settled credit. The SQL fixture checks the selected writer and scoped operation settings, compares immediate pinned fields, then independently checks reopened journal bytes, operation receipts, both resend outcomes and absent operations after native append denial. The recount binds the stage files, actual image, fresh slot and nonce. It joins each durable receipt to its own native append before the caller's observed response. The lookup recount joins exact transaction and the containing native apply clocks to bind unnamed apply-thread events to the right database. The scorecard checks its exact saved bytes and actual JVM role settings. All 521 pins and the frozen inputs matched. [Archives and checksums](V0.1-SHA256SUMS)

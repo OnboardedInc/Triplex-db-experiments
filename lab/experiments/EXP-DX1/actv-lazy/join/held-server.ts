@@ -71,6 +71,18 @@ const before = control(template);
 assert.equal(control(prepared), before, "The PostgreSQL copy does not match the stopped template");
 for (const dir of [template, prepared])
   assert.deepEqual(fs.readdirSync(path.join(dir, "pg_tblspc")), []);
+const linkScan = (dir: string, ...expr: string[]) =>
+  execFileSync("find", [dir, "-xdev", ...expr, "-print", "-quit"], {
+    encoding: "utf8",
+    timeout: 45_000,
+  }).trim();
+assert.equal(linkScan(prepared, "-type", "l", "!", "-path", path.join(prepared, "pg_wal")), "");
+for (const dir of [prepared, wal]) {
+  // [DX-ACT1] Why: the copy may share filesystem blocks but its files must have independent write identities.
+  // Rejected: a hard-linked copy that mutates the stopped template when PostgreSQL opens it.
+  assert.equal(linkScan(dir, "-type", "f", "-links", "+1"), "");
+}
+assert.equal(linkScan(wal, "-type", "l"), "");
 const original = fs.statSync(template);
 const copy = fs.statSync(prepared);
 assert(original.dev !== copy.dev || original.ino !== copy.ino);

@@ -6,6 +6,7 @@ import {
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
 import { command } from "../../w1/group/workload.ts";
+import { admission, type Admission } from "../../prep1/rolling-credits.ts";
 import {
   activeSubjects,
   expiryMs,
@@ -18,12 +19,9 @@ import {
   type Density,
   type Write,
 } from "./plan.ts";
-import { FairTurns } from "../../prep1/fair-turns.ts";
 import { journalHash, now, type Scope } from "./observer.ts";
 
 type Input = Parameters<DatomicClient["transact"]>[1];
-type RequestObserver = NonNullable<DatomicClient["onRequest"]>;
-type TraceClient = DatomicClient & { onRequestFailure?: RequestObserver };
 export type Row = Input["rows"][number];
 type Ack = {
   operationId: string;
@@ -59,6 +57,9 @@ export type Save = {
   predecessor?: string;
   orderedToken?: string;
   end?: number;
+  fairTurn?: number;
+  neighboursAhead?: number;
+  creditReleased?: number;
   status:
     | "offered"
     | "pending"
@@ -164,7 +165,6 @@ function bind(o: Save, a: Ack, candidate: ReturnType<typeof expectedSave>) {
   o.stage = stage;
 }
 
-// [DX-SCALE1] Why: all tapes are open-loop, and a start deadline is evaluated before allocating the gateway request. Rejected: a single closed promise chain or counting an upstream expiration as a native commit limit.
 export type PublishInterleave = {
   paused: boolean;
   drain?: () => Promise<void>;
@@ -173,6 +173,7 @@ export type PublishInterleave = {
   committed: (row: Save) => void;
 };
 
+// [DX-SCALE1] Why: all tapes are open-loop, and a start deadline is evaluated before allocating the gateway request. Rejected: a single closed promise chain or counting an upstream expiration as a native commit limit.
 export async function play(
   scopes: Sender[],
   tape: Write[],
@@ -180,19 +181,21 @@ export async function play(
   nonce: string,
   capture = false,
   orderedIds = false,
+  selection?: Admission,
   interleave?: PublishInterleave,
 ) {
+  assert(!interleave || selection);
+  const fair = selection && admission(scopes.length, selection);
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
     active = scopes.map(() => 0),
     owned = new Map<string, string>(),
     pending = new Set<Promise<void>>(),
     rows: Save[] = [];
-  const fair = interleave && new FairTurns(scopes.length, 6);
   const quarantined = new Map<string, string>();
   const queuedTail = new Map<string, string>();
   const unresolved = new Map<Save, ReturnType<typeof expectedSave>>();
   const inFlightSends = new Map<string, Save>();
-  const observe: RequestObserver = (response: Parameters<RequestObserver>[0] & { gatewayTraceparent?: string }) => {
+  const observe: NonNullable<DatomicClient["onRequest"]> = (response) => {
     const save = inFlightSends.get(response.operationId ?? "");
     if (
       save &&
@@ -202,7 +205,8 @@ export async function play(
       save.sent = performance.timeOrigin + response.written;
       if (capture && Number.isFinite(response.headers))
         save.responseHeaders = performance.timeOrigin + response.headers;
-      if (capture && response.gatewayTraceparent) save.responseTrace = response.gatewayTraceparent;
+      if (capture && "gatewayTraceparent" in response && typeof response.gatewayTraceparent === "string")
+        save.responseTrace = response.gatewayTraceparent;
     }
   };
   const expire = (entry: Save, cause: NonNullable<Save["expiryCause"]>) => {
@@ -218,7 +222,7 @@ export async function play(
     if (queuedTail.get(k) === row.id) queuedTail.delete(k);
   };
 
-  function pump(account: number) {
+  function expireQueue(account: number) {
     const q = queues[account]!;
     while (q[0] && now() >= q[0].row.due + expiryMs) {
       const { row } = q.shift()!;
@@ -234,39 +238,23 @@ export async function play(
             : "dispatch";
       expire(row, cause);
     }
-    const ready = (a: number) => queues[a]!.findIndex(
-      (x) => !owned.has(key(x.row)) && !quarantined.has(key(x.row)),
-    );
-    // [DX-ACT1] Why: drain the already submitted credit turn while offered saves keep queuing.
-    // Rejected: pausing the arrival clock or letting the next turn overtake a pending receipt.
-    if (fair) {
-      if (interleave!.paused) return;
-      fair.dispatch(
-        () => scopes.flatMap((_, a) => {
-          const next = ready(a);
-          if (next < 0) return [];
-          const due = queues[a]![next]!.row.due;
-          return now() < due + expiryMs ? [{ account: a, next, due }] : [];
-        }),
-        ({ account: a, next }) => send(a, next),
-      );
-      return;
-    }
-    while (active[account]! < maxInflight && q.length) {
-      const next = ready(account);
-      if (next < 0) break;
-      send(account, next);
-    }
   }
 
-  function send(account: number, index: number) {
-    const { e, row } = queues[account]!.splice(index, 1)[0]!;
+  const next = (account: number) => queues[account]!.findIndex(
+    ({ row }) => !owned.has(key(row)) && !quarantined.has(key(row)),
+  );
+
+  function dispatch(account: number, index: number, ticket?: number, neighboursAhead?: number) {
     const sender = scopes[account]!;
+    const { e, row } = queues[account]!.splice(index, 1)[0]!;
     dequeue(row);
-    if (!fair && now() >= row.due + expiryMs) {
+    if (now() >= row.due + expiryMs) {
       expire(row, "dispatch");
+      fair?.resolved(true, ticket);
       return;
     }
+    if (ticket !== undefined) row.fairTurn = ticket;
+    if (neighboursAhead !== undefined) row.neighboursAhead = neighboursAhead;
     // [DX-INT1] Why: bind the identity block to this offered save through settling or recovering it.
     // Rejected: minting a new block while looking up an uncertain receipt.
     if (orderedIds) row.orderedToken = orderedSaveIdentity().token;
@@ -313,10 +301,37 @@ export async function play(
         owned.delete(key(row));
         active[account]!--;
         pending.delete(p);
-        fair?.resolved(row.status === "acked" || row.status === "refused");
+        if (fair) {
+          row.creditReleased = now();
+          fair.resolved(row.status === "acked" || row.status === "refused", ticket);
+        }
         pump(account);
       });
     pending.add(p);
+  }
+
+  function pump(account: number) {
+    if (fair) {
+      for (const a of scopes.keys()) expireQueue(a);
+      // [DX-ACT1] Why: allow the receipt to take the next turn with one exact shared source cut.
+      // Rejected: stopping the independent arrival clock or granting further credits during the handoff.
+      if (interleave?.paused) return;
+      fair.dispatch(
+        () => scopes.flatMap((_, a) => {
+          if (active[a]! >= maxInflight) return [];
+          const index = next(a);
+          return index < 0 ? [] : [{ account: a, index, due: queues[a]![index]!.row.due }];
+        }),
+        (save, ticket, neighboursAhead?: number) => dispatch(save.account, save.index, ticket, neighboursAhead),
+      );
+      return;
+    }
+    expireQueue(account);
+    while (active[account]! < maxInflight) {
+      const index = next(account);
+      if (index < 0) return;
+      dispatch(account, index);
+    }
   }
 
   if (interleave) {
@@ -325,14 +340,15 @@ export async function play(
       await Promise.all([...pending]);
       assert.equal(pending.size, 0);
     };
-    interleave.resume = () => { for (const account of scopes.keys()) pump(account); };
+    interleave.resume = () => pump(0);
     interleave.waiting = () => queues.map((q) => q.length);
   }
 
   // [DX-SCALE1] Why: record the actual socket flush for successful requests, with a bounded map of active operations. Rejected: using the publication callback's error and finally notifications as packet timestamps.
+  const diagnosticClient = (c: DatomicClient) => c as DatomicClient & { onRequestFailure?: typeof observe };
   for (const s of scopes) {
     s.client.onRequest = observe;
-    if (capture) (s.client as TraceClient).onRequestFailure = observe;
+    if (capture) diagnosticClient(s.client).onRequestFailure = observe;
   }
   try {
     // Ten clients with the same per-account request cap serve either placement.
@@ -371,7 +387,7 @@ export async function play(
   } finally {
     for (const s of scopes) {
       delete s.client.onRequest;
-      if (capture) delete (s.client as TraceClient).onRequestFailure;
+      if (capture) delete diagnosticClient(s.client).onRequestFailure;
     }
   }
 }
