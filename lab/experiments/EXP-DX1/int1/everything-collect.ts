@@ -18,6 +18,7 @@ import {
   campaignTenant,
   gatewayJvmOptions,
   scorecardCases,
+  transactorJvmOptions,
   treatment,
   type CampaignCase,
 } from "./everything-plan.ts";
@@ -394,19 +395,44 @@ export async function collect(dir: string, mode: "produce" | "verify") {
       assert(launch.capturedAt >= arm.startedAt && launch.capturedAt <= result.start);
       assert.deepEqual(
         launch.vm.map((r: any) => r.role),
-        [...Object.keys(gatewayJvmOptions), ...(plan.heldSeal ? ["tx"] : [])],
+        Object.keys(gatewayJvmOptions),
       );
       for (const row of launch.vm) {
-        const role = row.role as keyof typeof gatewayJvmOptions | "tx";
+        const role = row.role as keyof typeof gatewayJvmOptions;
         assert(row.container === placement[role].id);
-        const flags = role === "tx" ? ["-Xmx5g", "-XX:+UseG1GC"] : gatewayJvmOptions[role];
+        const flags = gatewayJvmOptions[role];
         assert(flags.every((flag) => row.actual.includes(flag)));
         assert.equal(row.actual.filter((flag: string) => /^-XX:\+Use.*GC$/.test(flag)).length, 1);
         assert.equal(
           row.actual.filter((flag: string) => flag.startsWith("-Xmx")).at(-1),
-          role === "tx" ? "-Xmx5g" : "-Xmx384m",
+          "-Xmx384m",
         );
       }
+      const transactor = read(path.join(out, "transactor-jvm.json"));
+      assert.deepEqual(transactor.identity, id);
+      assert(transactor.capturedAt >= arm.startedAt && transactor.capturedAt <= result.start);
+      assert.equal(transactor.vm.container, placement.tx.id);
+      assert(transactorJvmOptions.every((flag) => transactor.vm.actual.includes(flag)));
+      const recording = read(path.join(out, "native-recording.json"));
+      assert.deepEqual(
+        [recording.source, recording.slot, recording.nonce],
+        [id.source, id.slot, id.nonce],
+      );
+      assert.equal(placement["gw-w"].cpus, "2,5");
+      for (const role of ["tx", "gw-w", "gw-r", "pg"])
+        assert.equal(recording.processes[role].id, placement[role].id);
+      assert(recording.sqlCoverage.qualified > 0 && recording.mappedWalSamples >= 2);
+      for (const file of [
+        "tx.jfr",
+        "gw-w.jfr",
+        "gw-r.jfr",
+        "postgres-events.jsonl",
+        "postgres-wal.jsonl",
+      ])
+        assert.equal(
+          recording.traceBytes[file],
+          await fileHash(path.join(out, "engines", id.slot, "trace", "raw", file)),
+        );
     }
     const key = `${c.people}/${c.profile}`,
       zero = prior.get(key);

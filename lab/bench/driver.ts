@@ -184,7 +184,7 @@ const deepPlan = plannedTenants ?? (smallOnly ? smallTrace(deepAccount) : interf
 const tailOffers = opt("tail1-offers");
 const tailSeconds = opt("tail1-seconds");
 if ((tailOffers === undefined) !== (tailSeconds === undefined) ||
-    (tailOffers && (!fullLength || !deep || deepField || tenantSpec || deepId?.arm !== "zero" || deepAccount !== 0 || rungSubjects !== 10000)))
+    (tailOffers && (!fullLength || !deep || deepField || tenantSpec || pooledCampaign || deepId?.arm !== "zero" || deepAccount !== 0 || rungSubjects !== 10000)))
   throw Error("DX-TAIL1 requires the original zero-reader deep-10k account and a schedule");
 const tailReplay = tailOffers
   ? matchOffers(JSON.parse(fs.readFileSync(tailOffers, "utf8")), frozenDeep(0, 10000), Number(tailSeconds))

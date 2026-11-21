@@ -20,8 +20,11 @@
       (re-find #"gateway\.main\$(timed|response)|gateway\.storage\$commit_BANG_" names) "reply-and-commit"
       :else "other")))
 
-(let [[file from to] *command-line-args*
-      from (Long/parseLong from) to (Long/parseLong to)
+;; [DX-TAIL1] Why: bin/run's bridge can consume positional Clojure arguments.
+;; Rejected: relying on *command-line-args* at script load.
+(let [file "/profile.jfr"
+      from (Long/parseLong (System/getenv "DX_TAIL1_PROFILE_FROM"))
+      to (Long/parseLong (System/getenv "DX_TAIL1_PROFILE_TO"))
       totals (atom {}) hotspots (atom {}) coverage (atom [nil nil])]
   (with-open [recording (RecordingFile. (Paths/get file (make-array String 0)))]
     (while (.hasMoreEvents recording)

@@ -3,7 +3,8 @@
   (:import [jdk.jfr FlightRecorder Recording EventFactory AnnotationElement ValueDescriptor Name]
            [jdk.jfr.consumer RecordingFile RecordedEvent]
            [java.nio.file Paths]
-           [java.io BufferedWriter FileWriter]))
+           [java.io BufferedWriter FileWriter]
+           [java.lang.management ManagementFactory]))
 ;; [DX-T1] Why: the pinned image is a JRE; use the built-in consumer while the JVM is alive.
 ;; Rejected: racing JFR's own VM shutdown hook or downloading a JDK/jcmd image.
 (def finished (atom false))
@@ -13,6 +14,18 @@
 (def clock-factory (delay (EventFactory/create [(AnnotationElement. Name "triplex.ClockSync")]
                             [(ValueDescriptor. Long/TYPE "beforeNanos") (ValueDescriptor. Long/TYPE "afterNanos")])))
 (def installed (atom nil))
+(def jvm-start-ms (.getStartTime (ManagementFactory/getRuntimeMXBean)))
+(defn runtime-sample []
+  ;; [DX-TAIL1] Why: role-local cgroup counters are read between offers on the existing flusher.
+  ;; Rejected: infer throttling from Docker CPU usage or run a new sampler on the save thread.
+  (let [runtime (Runtime/getRuntime)]
+    {:type "jvm-runtime" :wallAt (System/currentTimeMillis)
+     :uptimeMs (.getUptime (ManagementFactory/getRuntimeMXBean))
+     :processors (.availableProcessors runtime)
+     :heapMaxBytes (.maxMemory runtime) :heapCommittedBytes (.totalMemory runtime)
+     :collectors (mapv #(.getName %) (ManagementFactory/getGarbageCollectorMXBeans))
+     :cpuStat (try (into {} (map (fn [line] (let [[k v] (str/split line #" +")] [k (Long/parseLong v)])))
+                          (str/split-lines (slurp "/sys/fs/cgroup/cpu.stat"))) (catch Exception _ nil))}))
 (def transaction-ids (java.util.concurrent.atomic.AtomicLong. (System/nanoTime)))
 (def transaction-factory (delay
   (EventFactory/create [(AnnotationElement. Name "triplex.TransactionFunction")]
@@ -34,7 +47,8 @@
         (.set event 0 (:traceId context)) (.set event 1 (:parent context)) (.set event 2 id)
         (.begin event) event))))
 (def native-factory (delay (EventFactory/create [(AnnotationElement. Name "triplex.NativeTransaction")]
-                            [(ValueDescriptor. String "message") (ValueDescriptor. String "writerThread")])))
+                            [(ValueDescriptor. String "message") (ValueDescriptor. String "writerThread")
+                             (ValueDescriptor. Long/TYPE "logWallMs")])))
 ;; Source: https://docs.datomic.com/reference/io-stats.html (native process/apply scopes).
 ;; [DX-T1-4] Why: capture the native t/process/apply/io counters without a FileAppender write on the serial path.
 ;; Rejected: DEBUG logging every native message or inventing storage time from a peer future.
@@ -47,7 +61,8 @@
                      (try (let [message (.getFormattedMessage event)]
                             (when (and (.startsWith ^String message "{") (.contains ^String message ":event :tx/process"))
                               (let [record (.newEvent ^EventFactory @native-factory)]
-                                (.begin record) (.set record 0 message) (.set record 1 (.getThreadName event)) (.commit record))))
+                                (.begin record) (.set record 0 message) (.set record 1 (.getThreadName event))
+                                (.set record 2 (long (.getTimeStamp event))) (.commit record))))
                           (catch Throwable _ nil))))]
     (.setContext appender context) (.setName appender "triplex-native-jfr") (.start appender)
     (.detachAndStopAllAppenders logger) (.setAdditive logger false)
@@ -58,6 +73,7 @@
         database-hash (when name (let [hash (.digest (java.security.MessageDigest/getInstance "SHA-256") (.getBytes ^String name "UTF-8"))]
                                   (format "%064x" (java.math.BigInteger. 1 hash))))]
     {:nativeType "triplex.NativeTransaction" :databaseHash database-hash :datomicT (str (:t data))
+     :logWallMs (when (.hasField event "logWallMs") (.getLong event "logWallMs"))
      :nativeStats (select-keys data [:msec :apply-msec :io-stats :pf-stats :tx-stats :datom-count])}))
 (defn clock-sample! []
   (when (realized? clock-factory)
@@ -88,7 +104,9 @@
     {:thread (when thread (.getJavaThreadId thread)) :threadName (when thread (.getJavaName thread))
      :fields (into {} (keep (fn [k] (when (.hasField event k) [k (.getValue event k)]))
                          ["host" "address" "port" "bytesRead" "bytesWritten" "timeout" "endOfStream"
-                          "compileId" "compiler" "compileLevel" "isOsr" "codeSize" "inlinedBytes" "succeeded" "phase"]))
+                          "compileId" "compiler" "compileLevel" "isOsr" "codeSize" "inlinedBytes" "succeeded" "phase"
+                          "gcId" "safepointId" "name" "cause" "operation" "blocking" "youngCollector" "oldCollector"
+                          "parallelGCThreads" "concurrentGCThreads" "initialSize" "maxSize"]))
      :compiledMethod (when (.hasField event "method")
                        (let [method (.getValue event "method")]
                          (when method (str (.getName (.getType method)) "/" (.getName method)))))
@@ -104,7 +122,8 @@
     (with-open [r (RecordingFile. (Paths/get file (make-array String 0)))
                 w (BufferedWriter. (FileWriter. (str file ".jsonl")))]
       (loop [count 0]
-        (if-not (.hasMoreEvents r) {:events count :clockSamples (clojure.core/count points) :clockMaxUncertaintyMs uncertainty}
+        (if-not (.hasMoreEvents r) {:events count :clockSamples (clojure.core/count points) :clockMaxUncertaintyMs uncertainty
+                                   :clockAnchors points}
           (let [^RecordedEvent event (.readEvent r) name (.getName (.getEventType event))]
             (if (= name "triplex.ClockSync") (recur count)
               (let [detail (details event) transaction (= name "triplex.TransactionFunction") native (= name "triplex.NativeTransaction")
@@ -115,6 +134,8 @@
                              ;; [DX-T1-12] Why: JFR duration ticks survive wall steps; a discontinuous epoch anchor cannot locate an event on another process's trace.
                              ;; Rejected: stretch a pause across a guest clock step or infer a Mac/guest overlap without a clock bridge.
                              :clock (assoc (:clock identity) :uncertaintyMs (+ uncertainty 0.001) :crossProcessQualified (empty? discontinuities) :jfrAnchorStepsMs discontinuities)
+                             :wallStart (millis (.getStartTime event)) :wallEnd (millis (.getEndTime event))
+                             :jvmStartWallMs jvm-start-ms
                              :start (+ offset (monotonic-at points (millis (.getStartTime event))))
                              :jfrDurationMs (/ (double (.toNanos (.getDuration event))) 1000000.0)
                              :end (+ offset (monotonic-at points (millis (.getStartTime event))) (/ (double (.toNanos (.getDuration event))) 1000000.0))})) "\n"))

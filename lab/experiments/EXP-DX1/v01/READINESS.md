@@ -1,5 +1,7 @@
 # DX-V01 merge readiness
 
+The [INT1 gate table](../int1/V0.1-STATE.md) tracks the current integrated source. The trials below record the earlier merge order and source snapshots.
+
 North star covers P1–P9 on one Datomic database. Parts come from `origin/main` `cf738d13cee41ad27f4a092d36a550119257af4b` and its [V0.1 table](https://github.com/OnboardedInc/Triplex-db-experiments/blob/cf738d13cee41ad27f4a092d36a550119257af4b/lab/V0.1.md). The base under test is `origin/exp/DX-INT1` `8b1bb2c843688a2379e25bbc8545b5c68b0c2284`. November 20 remote heads matched the local snapshots. Each outstanding source was trial-merged separately into the clean DX-V01 worktree with `--no-commit --no-ff` and then aborted. Counts are `INT1..source`; they include reports and prior experiments. Gates below describe availability and recorded runs on ancestral integration commits ([integration evidence](../int1/P5-EVIDENCE.md)).
 
 | Required part | Source and newest commit | Ancestor | Unmerged | Trial merge | Gates on INT1 | Missing |

@@ -20,6 +20,12 @@ export const gatewayJvmOptions = {
   "gw-w": [...gatewayHeap, ...measuredWriterG1],
   "gw-r": [...gatewayHeap, "-XX:+UseG1GC"],
 } as const;
+export const transactorJvmOptions = [
+  "-Xms256m",
+  "-Xmx5g",
+  "-XX:+UseG1GC",
+  "-XX:MaxGCPauseMillis=50",
+] as const;
 
 export function campaignCases(people: readonly number[] = populations) {
   return people.flatMap((n) =>
@@ -57,6 +63,7 @@ export const treatment = {
   DX_INT1_SEED_ERRORS: "1",
   DX_INT1_READERS: "touched",
   DX_INT1_DEEP_RELEASE: "ead90",
+  DX_TAIL1_TWO_WRITE_CORES: "1",
   DX_TOUCHED_READ_MODE: "following",
   DX_GROUP_COMMIT: "0",
   DX_GROUP_QUEUE_CLOCK: "0",
@@ -120,7 +127,7 @@ export function planSummary() {
     treatment,
     gatewayJvmOptions,
     excluded,
-    readerCores: 6,
+    readerCores: 5,
     savedOutputPreflight: campaignCases([4]),
     fieldWindows: Object.fromEntries(
       populations.map((n) => {

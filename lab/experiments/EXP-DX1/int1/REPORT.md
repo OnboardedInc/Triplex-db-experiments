@@ -4,8 +4,8 @@ The shared branch keeps the write history queryable and the per-person writer op
 The durable Publish record is the point we count as stored. Background work settles values and notices afterward.
 The read gateway held about 62 MiB of live Java objects at both deep sizes. Its resident memory still grew.
 The transactor's Java heap grew while its object-cache charge held steady. The larger physical test will look for the plateau.
-The fresh and billion-record runs need matching sealed inputs and the merged scorecard.
-The merge table records what has been taken, what ran on this branch and what is still due.
+The scorecard can reopen the original shared database and report partial read, save, feed, quiet-account and memory observations. Both physical runs remain open.
+The local dashboard and agent API work on the small fixture and the restored snapshot. The full hosted data and playground erasure remain open.
 
 ## Integration
 
@@ -33,6 +33,18 @@ The synchronous recovery recount compares preserved account memberships and seed
 
 JVM1 conflicted in the shared stack launcher. Its launch policy owns image, heap and collector selection. The merge preserves the optional prepared writer, its fixed restore path and its observation hooks. The host Java 25 suite at 1d7196814 passed 54,079 assertions with each collector. The archive binds the runtime release, pinned vendor ZIP, exact Git source, observed collector flags and both fresh outputs. The three-role Java 25 SQL launch remains outside this local gate.
 
+TAIL1 conflicted in the driver, engine, launcher, scorecard plan and recorder files. JVM1 keeps launch policy and TAIL1 supplies recording and the second writer core. The following reader remains selected. The native gate at 9385270c0 matched 192 saves and 960 assertion IDs, with three fresh JVM seals. Three focused parser and startup-artifact tests passed. The gate keeps rejected startup files separately, compares exact receipts and native event positions, and checks the ready processes, source, slot and digests. No acceptance pin or frozen input changed.
+
+The scorecard merge kept held-seed and trace binding in two conflicts. It also takes the newer SCALE1 and AGE1 adoption. The older compact gate verified both frozen arms and refused the incomplete field arm. The final clean build and native K gate at 4c5209499 matched 56 saves and journal entries, 14,543 pinned reads and ten current pulls. Both peers must expose the queryable K journal. No physical verdict was issued.
+
+The adopted producer checks the original loader receipt, pinned values, observed writer choices and native journal bytes against each save before publishing. The saved-output recount checks the same tape and cut in both fresh, source-bound arms and compares every receipt to its journal entry. The independent recount agreed with the rendered card. The physical aged adapter also requires the pinned bundle and verifies its restored cut. [Server command](../v01/SERVER.md)
+
+The playground merge kept the Java-aware engine dispatch and added the portable playground command. Four builds, TypeScript and six fixture tests passed. Both native arms at 8c7f766b0 checked 17 API cases and Chromium. The live dump matched 910 PostgreSQL rows. The snapshot reopened cuts 46, 65 and 90. A live feed poll closed during shutdown.
+
+The local API gate compares fresh fixture and restored values, receipts, ordered feed cursors and conflict responses. Its receipts bind the checked source, fixture or manifest, owned slot and fresh attempts. Both stacks verified empty owned inventories and a closed listener. The manual remote workflow and hosted full bundle were outside these gates. [Playground guide](../../../../AGENTS-PLAYGROUND.md)
+
+The final scorecard refresh matched 211 receipts and journal entries, 96 quiet pinned reads and 20 first pulls at cb2120c1b. Its collector and independent recount checked digests, offered tape, same-slot cut continuity and fresh process samples. Both memory forecasts render as unmeasured. The pin audit found zero changes across 521 digests. [Memory forecasts](V0.1-MEMORY.md)
+
 ## Server work
 
-Run the physical scorecard on the exact merged revision at both ages. The old frozen preflight had two exact arms. The field comparison, compatibility with the aged journal and physical age results remain open. [Earlier campaign and options](P5-EVIDENCE.md)
+Run the physical scorecard on the exact merged revision at both ages. Full frozen coverage, held-seed Publish, import and machine loss adapters, and live validation of the aged restore remain open. [Earlier campaign and options](P5-EVIDENCE.md)

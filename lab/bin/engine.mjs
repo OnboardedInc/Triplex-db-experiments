@@ -52,7 +52,8 @@ export const regimeOf = info => info.regime ?? 'quota';
 // [EXP-M01R] Why: main added follower and Datomic reservations after M01; every admission must honor the same lease. Rejected: guarding only writer up (allows new neighbors during a duet).
 function scorecardOutput(options, info) {
   const output = options['scorecard-output'];
-  if (process.platform !== 'darwin' || options.holder !== 'DX-V01' ||
+  const holder = process.env.DX_V01_MAC_HOLDER ?? 'DX-V01';
+  if (process.platform !== 'darwin' || !['DX-V01', 'DX-THIN1'].includes(holder) || options.holder !== holder ||
       info.lane !== 'datomic' || info.mode !== 'exclusive' ||
       !process.env.TX2_EXCLUSIVE_VOLUME_ID || !/^tx2-dxthin-managed:/.test(info.laneConf.image) ||
       typeof output !== 'string' || !output.startsWith(path.join(REPO, 'runs', 'DX-V01') + path.sep) ||
@@ -298,13 +299,16 @@ async function removeThinImage(config, opts) {
 
 function recordDatomicJvms(info, eff) {
   if (info.lane !== 'datomic') return;
-  // [DX-V01] Why: the compact launcher records all three role processes inside its owned guest.
-  // Rejected: asking the canonical entrypoint's two-role recorder for files the compact launcher does not write.
-  if (/^tx2-dxthin-managed:/.test(info.laneConf.image)) return;
   const m = inspect(info.container);
   if (!m?.State.Running || m.Image !== eff.effective.imageId
     || m.Config.Labels?.['tx2.config-sha256'] !== eff.sha256)
     fail('REFUSED', 'Datomic runtime identity differs from the launch');
+  // [DX-V01] Why: the admitted compact Mac fixture starts JVMs through thin1/slot.ts.
+  // Rejected: reading standard-launcher role logs from a fixture that does not produce them.
+  if (info.scorecardOutput) {
+    process.stderr.write('[lab] Compact Mac fixture: standard-launcher JVM flag readback is unavailable\n');
+    return;
+  }
   const out = fs.mkdtempSync(path.join(path.dirname(eff.files.entrypoint), 'jvm-'));
   const roles = ['tx', 'gw-w', ...(eff.effective.readerGateway ? ['gw-r'] : [])];
   for (const role of roles) {
@@ -361,10 +365,10 @@ export function effectiveConfig(config, info) {
     fs.copyFileSync(path.join(root, 'lab/config/datomic/transactor.properties'), transactor);
     // [DX-JVM1] Why: bind the launch script separately while keeping the legacy Java 21 image source pin.
     // Rejected: modifying the resident config or mounting the canonical uninstrumented script.
-    // [DX-V01] Why: the staged compact image owns its PostgreSQL and two peer launcher.
-    // Rejected: mounting the resident entrypoint over a verified experiment launcher.
-    const launcherRoot = /^tx2-dxthin-managed:/.test(info.laneConf.image) ? root : REPO;
-    fs.copyFileSync(path.join(launcherRoot, 'lab/config/datomic/entrypoint.sh'), entrypoint);
+    // [DX-INT1] Why: the compact scorecard uses the verified entrypoint in its own staged context.
+    // Rejected: replacing its SQL stack with the standard one-gateway launch.
+    const entryRoot = info.laneConf.image.startsWith('tx2-dxthin-managed:') ? root : REPO;
+    fs.copyFileSync(path.join(entryRoot, 'lab/config/datomic/entrypoint.sh'), entrypoint);
     let reader, readerGateway;
     if (info.readerPort !== undefined) {
       const p = info.readerPort;
@@ -933,6 +937,9 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'status') return status(config);
   if (command === 'jvm-replay') fail('USAGE', 'Use jvm-inventory for a short Mac diagnostic and jvm1/server.ts for collector comparisons');
   if (command === 'jvm-inventory') return (await import('../experiments/EXP-DX1/jvm1/inventory.mjs')).inventory(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
+  // [DX-TAIL1] Why: the split SQL replay needs one pool-admitted private reservation.
+  // Rejected: launching the diagnostic against a resident or managing containers in the benchmark.
+  if (command === 'tail1') return (await import('../experiments/EXP-DX1/tail1/run.mjs')).runTail(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
   // [DX-HA1] Why: destructive process drills need an exclusive, pool-admitted SQL topology. Rejected: killing roles in a resident slot.
   if (command === 'ha1') {
     const { localDrill } = await import('../experiments/EXP-DX1/ha1/local.ts');
@@ -942,6 +949,9 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'delta') return (await import('../experiments/EXP-DX1/actv-delta/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicSources });
   // [DX-ERASE1] Why: storage GC and excision need an owned SQL volume. Rejected: exercising irreversible maintenance on a resident.
   if (command === 'erase1') return (await import('../experiments/EXP-DX1/erase1/local.mjs')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission, datomicTree });
+  // [DX-PLAY1] Why: the portable stack uses the same launch code under an exclusive lab reservation.
+  // Rejected: running a second private Docker command path without pool admission.
+  if (command === 'play1') return (await import('../experiments/EXP-DX1/play1/local.ts')).local(options, config, { acquireSlot, releaseSlot, assertMeasureAdmission });
   if (options.lane === 'datomic' && command === 'build') return buildDatomic(config, options);
   if (options.lane === 'datomic' && ['up', 'selftest'].includes(command)) {
     const runtime = datomicRuntime();
@@ -968,7 +978,8 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
     if (!configDir.startsWith(path.join(REPO, 'runs') + path.sep))
       fail('REFUSED', 'Scorecard fixture config must belong to this worktree');
     const source = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO, encoding: 'utf8' }).trim();
-    const result = spawnSync('docker', dockerArgs(['exec', '-w', REPO, '-e', 'DX_V01_FIXTURE_SOURCE=' + source, live.Id, '/usr/local/bin/node',
+    const result = spawnSync('docker', dockerArgs(['exec', '-w', REPO, '-e', 'DX_V01_FIXTURE_SOURCE=' + source,
+      '-e', 'TRIPLEX_DATOMIC_FAST_PATHS=save-wire', live.Id, '/usr/local/bin/node',
       '--no-warnings', '--experimental-transform-types', '--expose-gc', '--max-old-space-size=768',
       'lab/experiments/EXP-DX1/thin1/managed.ts', '--guest', configDir, 'int1-adopted-proof', '80',
       path.join(output, 'campaign')]), { stdio: 'inherit', timeout: 13 * 60_000 });

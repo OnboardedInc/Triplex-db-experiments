@@ -195,6 +195,9 @@ export async function executeArm(
       TRIPLEX_TRACE_SOURCE: source,
       TRIPLEX_TRACE_SLOT: slot,
       TRIPLEX_TRACE_RUN: slot,
+      ...(env.TRIPLEX_TRACE_LEVEL === "summary"
+        ? { TRIPLEX_TRACE_DIR: path.join(staging, "trace", "raw") }
+        : {}),
       DX_INT1_NATIVE_WRITE_READBACK: "1",
       ...(guest ? { DX_HARNESS_STORAGE: guest } : {}),
     },

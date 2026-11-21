@@ -61,30 +61,6 @@ def timed_gc(directory, role, start, stop, history, indexes, startup):
             "allocationStalls": {"count": len(allocation_stalls), "ms": quantiles(allocation_stalls)}}
 
 
-
-# [DX-JVM1] Why: price allocation pressure in all three roles even when a closed
-# JVM lacks a sampled allocation recording. Rejected: treating heap growth as exact allocated bytes.
-def heap_growth(directory, role, start, stop, saved):
-    sizes = []
-    scale = {"K": 1024, "M": 2**20, "G": 2**30}
-    occupancy = re.compile(r"\bPause .*?(\d+)([KMG])->(\d+)([KMG])\(\d+[KMG]\)\s+[\d.]+ms$")
-    for log in directory.glob(f"{role}.log*"):
-        for line in log.read_text().splitlines():
-            match = occupancy.search(line)
-            stamp = re.match(r"\[([^\]]+)\]", line)
-            if match and stamp:
-                at = datetime.fromisoformat(stamp[1]).timestamp() * 1000
-                if start <= at < stop:
-                    before, before_unit, after, after_unit = match.groups()
-                    sizes.append((at, int(before) * scale[before_unit], int(after) * scale[after_unit]))
-    sizes.sort()
-    if len(sizes) < 2:
-        return None
-    covered = sum(sizes[0][0] <= r["ackPublishedAt"] < sizes[-1][0] for r in saved.values())
-    growth = sum(max(0, b[1] - a[2]) for a, b in zip(sizes, sizes[1:]))
-    return {"bytesPerCoveredAck": growth / covered if covered else None,
-            "coveredAcks": covered, "occupancyEvents": len(sizes)}
-
 def measure(out, incomplete=False):
     attempt, report = load(out / "attempt.json"), load(out / "ns-report.json")
     identity = attempt["identity"]
@@ -101,15 +77,15 @@ def measure(out, incomplete=False):
         assert report["oracle"]["modelCorrectOnSameReads"] == report["oracle"]["reads"] > 0
     start = report["traceStartAbsMs"]
     stop = start + attempt["seconds"] * 1000
-    if attempt["platform"] == "darwin":
+    if attempt["platform"] == "darwin" and attempt.get("timing") != "shared-mac-diagnostic":
         lock = load(out / "timing-window.json")
         assert lock["identity"] == identity and lock["openedAt"] <= start
         locked_seconds = 240 if attempt["seconds"] == 5910 else attempt["seconds"]
         assert lock["closedAt"] >= start + locked_seconds * 1000
         assert 0 < lock["closedAt"] - lock["openedAt"] <= 900_000
         if not incomplete:
-            assert lock["measurementLease"]["label"] == identity["slot"]
-            assert lock["measurementLease"]["holder"] == ("DX-JVM1" if attempt.get("jvmArm") else "DX-TAIL1")
+            assert lock["measurementLease"]["label"] in (identity["slot"], "DX-TAIL1:" + identity["nonce"])
+            assert lock["measurementLease"]["holder"] == "DX-TAIL1"
     dir = out / "stack" / identity["slot"]
     trace = dir / "trace/raw"
     stack = load(dir / "stack.json")
@@ -124,11 +100,7 @@ def measure(out, incomplete=False):
         assert not row["oom"] and all(row[key] == ready[key] for key in ("startedAt", "restarts"))
     jvm = {}
     for role in ("gw-w", "gw-r", "tx"):
-        settings_dir = trace if attempt.get("jvmArm") else dir / "config"
-        row = load(settings_dir / (role + "-native-settings.json"))
-        if attempt.get("jvmArm"):
-            boot = datetime.fromisoformat(effective["readyRuntime"][role]["startedAt"]).timestamp() * 1000
-            assert row["at"] >= boot - 1
+        row = load(dir / "config" / (role + "-native-settings.json"))
         assert row["source"] == identity["source"] and row["slot"] == identity["slot"] and row["process"] == role
         heap = row["jvm"]["maxHeapBytes"] / (2 ** 20)
         assert 0 < heap <= attempt["caps"][role]
@@ -220,45 +192,10 @@ def measure(out, incomplete=False):
         groups = alloc["groups"]
     history = [(p["actualStart"], p["actualEnd"]) for p in report["phases"] if p["name"].startswith(("p4h", "grow"))]
     indexes = [(j["driverRequestedAtMs"], j["driverCompletedAtMs"]) for j in report["maintenance"]["events"]]
-    restart = None
-    if attempt.get("jvmArm"):
-        restart = load(out / "restart.json")
-        assert restart["identity"] == identity and restart["ids"] == ids
-        assert restart["readyRuntime"] == effective["readyRuntime"]
-        first_ack = min(saved.values(), key=lambda r: r["ackPublishedAt"])
-        assert restart["startedAt"] <= restart["readyAt"] <= start <= first_ack["scheduledAt"]
-        restart = {"readinessMs": restart["readyAt"] - restart["startedAt"],
-                   "readyToOfferMs": first_ack["scheduledAt"] - restart["readyAt"],
-                   "firstAckMs": first_ack["ackPublishedAt"] - restart["startedAt"],
-                   "firstAckOfferMs": first_ack["verdictMs"]}
-    in_index = [row for row in saved.values()
-                if any(row["scheduledAt"] < b and row["ackPublishedAt"] >= a for a, b in indexes)]
-    index_ids = {r["traceId"] for r in in_index}
-    outside_index = [r for r in saved.values() if r["traceId"] not in index_ids]
-    native_index = []
-    tx_trace = trace / "tx.jsonl"
-    if tx_trace.is_file():
-        with tx_trace.open() as lines:
-            for line in lines:
-                row = json.loads(line)
-                if row.get("type") != "metrics" or not start + 60_000 <= row["at"] <= stop:
-                    continue
-                assert row["source"] == identity["source"] and row["slot"] == identity["slot"]
-                value = row.get("counters", {}).get("indexJobMsec")
-                if isinstance(value, dict) and value.get("count", 0) > 0:
-                    native_index.append({"at": row["at"], "durationDistribution": value})
     write_json(out / ("incomplete-measurement.json" if incomplete else "measurement.json"), {
         "identity": identity, "archive": archive["archive"], "arm": attempt["arm"], "seconds": attempt["seconds"],
-        "jvmArm": attempt.get("jvmArm"), "restart": restart,
-        "explicitIndex": {"jobs": len(indexes), "ms": quantiles([b - a for a, b in indexes]),
-                          "overlappedSaves": len(in_index), "otherSaves": len(outside_index),
-                          "overlapAckMs": quantiles([r["verdictMs"] for r in in_index]),
-                          "outsideAckMs": quantiles([r["verdictMs"] for r in outside_index])},
-        "nativeIndexMetricBuckets": native_index,
-        "betweenGcHeapGrowth": {role: heap_growth(trace, role, start, stop, saved)
-                                for role in ("tx", "gw-w", "gw-r")},
         "driverStatus": report["status"], "sampleFloorMet": len(saved) >= 5000,
-        "saves": len(saved), "primaryOutcomes": dict(primary_outcomes), "resendOutcomes": dict(resend_outcomes),
+        "timing": attempt.get("timing", "historical"), "saves": len(saved), "primaryOutcomes": dict(primary_outcomes), "resendOutcomes": dict(resend_outcomes),
         "resolvedLostAcks": lost_ack["returnedOriginal"] if lost_ack else None,
         "savesPerSecond": len(saved) / max(attempt["seconds"], (max(r["ackPublishedAt"] for r in saved.values()) - start) / 1000),
         "ackMs": quantiles([r["verdictMs"] for r in saved.values()]), "cpuMemory": cpu_memory,

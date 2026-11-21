@@ -288,12 +288,13 @@ const gateway = (label: "write" | "read", secondary = false) => {
       DATOMIC_URI_TEMPLATE: template,
       ...(demand ? { TX2_ID_CACHE_BYTES: "1048576", TX2_ID_CACHE_ENTRIES: "4096",
         TX2_REACH_SESSION_ENTRIES: "4096", TX2_ENTITY_CACHE_BYTES: "8388608" } : {}),
+      ...(adopted ? { TX2_LEAN_NATIVE_QUERY: "1", TX2_LEAN_NATIVE_LOG: "1" } : {}),
       ...(adopted && label === "write" ? {
         TX2_WRITE_OPTIONS_ATTEMPT: adopted, TX2_LOAD1_PRIORITY: "1", TX2_LOAD2_TIMING: "1", TRIPLEX_TRACE_RUN: adopted, TX2_PREDECESSOR_LOOKUP: "1", TX2_SMALL_ROWS: "1",
         TX2_SAVE_LEDGER: "1", TX2_PACKED_JOURNAL: "0", TX2_GROUP_FAST_REPLY: "1",
         TX2_GROUP_COMMIT: "1", TX2_GROUP_REUSE_PREPARED: "1", TX2_GROUP_MAX_MEMBERS: "32",
         TX2_GROUP_STAGE_CLOCK: "1", TX2_GROUP_QUEUE_CLOCK: "0", TX2_LIVE_PRIORITY: "1",
-        TX2_FIELD_COALESCE: "0", TX2_LEAN_NATIVE_QUERY: "1", TX2_LEAN_NATIVE_LOG: "1",
+        TX2_FIELD_COALESCE: "0",
       } : {}),
       ...(campaign && label === "write" ? {
         TX2_INT1_WRITE_READBACK: "1", TX2_PREDECESSOR_LOOKUP: "0", TX2_SMALL_ROWS: "0", TX2_GROUP_STAGE_CLOCK: "1",
