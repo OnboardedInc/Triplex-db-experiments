@@ -150,7 +150,7 @@ async function main(
     held = { data: stoppedSeed, sealSha: await fileHash(sealPath), inventory: manifest.inventory };
   }
   if (resumeDiscovery) {
-    assert(held && path.basename(out) === "age-v01-1b-d");
+    assert(held && /^age-v01-1b-[de]$/.test(path.basename(out)));
     const prior = path.join(bench, "age-v01-1b-c");
     const restored = read(path.join(prior, "restore.json"));
     const exited = read(path.join(prior, "exit.json"));
@@ -181,6 +181,16 @@ async function main(
       fs.readFileSync(path.join(original, "adopt.log"), "utf8"),
       /UnknownHostException: .*seed-tx/,
     );
+    if (path.basename(out) === "age-v01-1b-e") {
+      const previous = path.join(bench, "age-v01-1b-d");
+      const ended = read(path.join(previous, "cleanup.json"));
+      assert.equal(ended.resumedPrivateVolume, sourceVolume);
+      assert.equal(ended.postgresTemplate, held.sealSha);
+      assert.deepEqual(ended.containers, []);
+      assert(!fs.existsSync(path.join(previous, "rung")));
+      assert(!fs.existsSync(path.join(previous, "discovery.json")));
+      assert(fs.statSync(path.join(previous, "discovery.log")).size > 0);
+    }
     assert.equal(docker("ps", "-aq", "--filter", "volume=" + sourceVolume), "");
   }
   const copyReal = fs.realpathSync(copyMount);
@@ -490,10 +500,20 @@ async function main(
       assert(tx.exitCode === null);
       const fresh = spawnSync(
         path.join(jdk, "java"),
-        ["-Xms128m", "-Xmx1g", "-cp", cp, "clojure.main", "-e", check],
+        [
+          "-Xms128m",
+          "-Xmx1g",
+          "-Dtriplex.codec.spec=" + path.join(ageCheckout, "packages/datomic/src/codec-spec.json"),
+          "-cp",
+          cp,
+          "clojure.main",
+          "-e",
+          check,
+        ],
         {
           timeout: 15000,
           encoding: "utf8",
+          cwd: ageCheckout,
           env: {
             ...process.env,
             DATOMIC_URI_TEMPLATE: uri(sqlJdbc),
@@ -508,6 +528,7 @@ async function main(
           at: Date.now(),
           status: fresh.status,
           matchedCut: fresh.stdout?.split(/\r?\n/).includes(proof) === true,
+          error: fresh.stderr?.match(/\b[A-Za-z]+(?:Exception|Error)\b/)?.[0],
         }) + "\n",
         { mode: 0o600 },
       );
