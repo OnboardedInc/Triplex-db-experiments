@@ -1,6 +1,8 @@
 // @ts-nocheck -- [EXP-CHECKJS] Native log lines and run configuration are checked at runtime.
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import { pipeline } from "node:stream/promises";
+import { createGzip } from "node:zlib";
 import { createInterface } from "node:readline";
 
 export const minimumRate = 9900;
@@ -31,9 +33,24 @@ export async function observeBulk(lines, phase) {
   const process = { n: 0, ms: 0, applyMs: 0, segmentSqlMs: 0, segmentSqlN: 0 };
   const storage = { n: 0, ms: 0 };
   const backPressure = { count: 0, memoryIndexMaxMB: null };
+  const minuteMetrics = [];
   for await (const line of lines) {
     const wall = ptime(line);
     if (wall < phase.wallStart || wall > phase.wallEnd || !Number.isFinite(wall)) continue;
+    const marker = " - AGE_BULK_METRICS ";
+    if (line.includes(marker)) {
+      const metrics = JSON.parse(line.slice(line.indexOf(marker) + marker.length));
+      // [DX-AGE1] Why: a callback bucket can span a change of treatment.
+      // Rejected: attributing the adjoining arm's minute to this one.
+      if (wall >= phase.wallStart + 60_000) {
+        minuteMetrics.push({ wall, metrics });
+        const high = metrics.MemoryIndexMB?.hi ?? metrics.MemoryIndexMB;
+        if (Number.isFinite(high)) backPressure.memoryIndexMaxMB = Math.max(backPressure.memoryIndexMaxMB ?? 0, high);
+        const alarms = metrics.AlarmBackPressure?.sum ?? metrics.AlarmBackPressure;
+        if (Number.isFinite(alarms)) backPressure.count += alarms;
+      }
+      continue;
+    }
     const ix = line.includes(":event :update/create-index") && line.includes(":id " + JSON.stringify(phase.database));
     if (ix) {
       const t = num(line, "next-t");
@@ -56,9 +73,6 @@ export async function observeBulk(lines, phase) {
       storage.n++;
       storage.ms += num(line, "msec");
     }
-    if (line.includes("AlarmBackPressure")) backPressure.count++;
-    const memory = /(?::MemoryIndexMB|\bMemoryIndexMB)\s+(\d+(?:\.\d+)?)/.exec(line);
-    if (memory) backPressure.memoryIndexMaxMB = Math.max(backPressure.memoryIndexMaxMB ?? 0, Number(memory[1]));
   }
   // [DX-AGE1] Why: count same-scope start/end pairs that wrote a published index during ongoing writes.
   // Rejected: counting a request-index after the sample or rating the in-memory first burst.
@@ -69,24 +83,36 @@ export async function observeBulk(lines, phase) {
     tailRate = tail.reduce((n, row) => n + row.intervalRecords, 0) / tail.reduce((n, row) => n + row.seconds, 0);
   }
   const wallRate = phase.records / phase.seconds;
-  const sustainedRate = complete.length >= 2 && tailRate !== null ? Math.min(wallRate, tailRate) : null;
-  return { jobs: complete, createdJobs: jobs, process, storage, backPressure, wallRate, tailRate, sustainedRate };
+  const sustainedRate = complete.length >= 2 && tailRate !== null && minuteMetrics.length >= 2
+    ? Math.min(wallRate, tailRate) : null;
+  return { jobs: complete, createdJobs: jobs, process, storage, backPressure, minuteMetrics, wallRate, tailRate, sustainedRate };
 }
 
 export function walDelta(phase) {
   const start = JSON.parse(phase.walStart);
   const end = JSON.parse(phase.walEnd);
   assert.equal(start.wal.stats_reset, end.wal.stats_reset, "WAL counters reset mid-arm");
+  assert.equal(start.trackWalIoTiming, "on");
+  assert.equal(end.trackWalIoTiming, "on");
   return { timed: end.trackWalIoTiming === "on",
     ...Object.fromEntries(["wal_records", "wal_bytes", "wal_write", "wal_sync", "wal_write_time", "wal_sync_time"]
       .filter((k) => k in start.wal && k in end.wal).map((k) => [k, Number(end.wal[k]) - Number(start.wal[k])])) };
 }
 
-export async function readBulkMetrics(file, offset, phase) {
-  const end = fs.statSync(file);
+export async function readBulkMetrics(file, offset, phase, archive) {
+  const fd = fs.openSync(file, "r");
+  try {
+    const end = fs.fstatSync(fd);
   assert.deepEqual([end.dev, end.ino], [offset.dev, offset.ino], "Transactor event log rotated during the arm");
   assert(end.size >= offset.size, "Transactor event log truncated during the arm");
-  const lines = end.size === offset.size ? [] :
-    createInterface({ input: fs.createReadStream(file, { start: offset.size, end: end.size - 1 }), crlfDelay: Infinity });
-  return { ...await observeBulk(lines, phase), wal: walDelta(phase), logRange: [offset.size, end.size] };
+    const range = () => fs.createReadStream(file, { fd, autoClose: false, start: offset.size, end: end.size - 1 });
+    const lines = end.size === offset.size ? [] : createInterface({ input: range(), crlfDelay: Infinity });
+    const observed = await observeBulk(lines, phase);
+    if (archive && end.size > offset.size) {
+      await pipeline(range(), createGzip(), fs.createWriteStream(archive, { flags: "wx", mode: 0o600 }));
+    }
+    return { ...observed, wal: walDelta(phase), logRange: [offset.size, end.size] };
+  } finally {
+    fs.closeSync(fd);
+  }
 }

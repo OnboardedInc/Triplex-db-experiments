@@ -112,6 +112,12 @@ function admit(config, configFile, mode) {
     assert.deepEqual({ ...readerSettings, "write-concurrency": writeConcurrency }, bulkProperties);
     assert(liveArgs.includes("-Xmx24g") || liveArgs.includes("-Xmx24576m"), "Bulk heap differs");
     assert(liveArgs.includes("-XX:ActiveProcessorCount=3"), "Bulk transactor processor setting differs");
+    const heapMiB = Number(config.peerHeap.slice(0, -1)) * (config.peerHeap.endsWith("g") ? 1024 : 1);
+    assert(heapMiB >= 4096, "Load peer needs space for the 2 GiB in-memory index and report verification");
+    assert(/^metrics-callback\s*=\s*triplex.age.telemetry\/capture!\s*$/m.test(liveProperties.toString("utf8")),
+      "Bulk needs the Datomic metrics callback");
+    const cp = liveArgs[liveArgs.indexOf("-cp") + 1]?.split(":") ?? [];
+    assert(cp.includes(path.join(here, "src")), "Bulk metrics callback must be from this source checkout");
     const logOpt = liveArgs.find((a) => a.startsWith("-Dlogback.configurationFile=/"));
     assert(logOpt, "Bulk transactor requires its own event appender");
     const logConfig = "/proc/" + config.transactorPid + "/root" + logOpt.slice("-Dlogback.configurationFile=".length);
@@ -352,11 +358,12 @@ async function run(configFile, config, mode) {
       assert.deepEqual([phase.mode, phase.database, phase.manifestSha, phase.size, phase.depth],
         [mode, binding.db, config.imageSha, arm.size, arm.depth]);
       assert(phase.seconds > 0 && phase.records >= 0 && phase.indexedRecords === phase.historyEstimate);
-      const metrics = await readBulkMetrics(config.bulkEventLog, offset, phase);
+      const archive = mode === "ladder" ? path.join(logDir, tag + "-native.log.gz") : undefined;
+      const metrics = await readBulkMetrics(config.bulkEventLog, offset, phase, archive);
       const observed = { arm, phase, metrics };
       write(path.join(logDir, tag + ".json"), observed);
       console.log(JSON.stringify({ event: "bulk-arm", tag, size: arm.size, depth: arm.depth,
-        seconds: phase.seconds, records: phase.records, ...metrics }));
+        seconds: phase.seconds, records: phase.records, ...metrics, minuteMetrics: metrics.minuteMetrics.length }));
       return observed;
     };
     if (mode === "ladder") {

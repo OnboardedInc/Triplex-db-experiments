@@ -116,7 +116,7 @@
               (recur through (conj pending (sent next through)) last))
 
             (seq pending)
-            (recur next (pop pending) (accept last (peek pending)))
+            (recur next (clojure.core/pop pending) (accept last (peek pending)))
 
             :else last))]
     (assoc summary :stage-ms (zipmap [:tape :encode :enqueue :blockedAwait :ackValidate]
