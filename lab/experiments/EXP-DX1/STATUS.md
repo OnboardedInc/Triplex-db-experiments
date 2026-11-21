@@ -4116,3 +4116,23 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - Differs from `3a71c1767` only in staging, tests and handoff files under `v01/` (`adopted-server.ts`, `pgdata.ts`, `run.ts`, `sequential.ts`, two tests, four documents). Workloads and card renderer unchanged, so the fresh card (`3a71c1767`, four copies at once) and the 1 billion card measure the same things. Sixteen local checks and the 14-row Mac replay passed. Not yet verified: sequential execution at full size, aged copy speed.
 - The driver gets this at its next handoff (noted in the private queue file).
 - Agents running: DX-SCALE1.
+
+### 2026-11-21 02:54 local: aging ladder ran at 15,000 to 20,500 records per second; checker bug and disk growth block the full load; aging builder resumed (2 agents running)
+
+- **Server 2, AGE1 bulk ladder** (`origin/exp/DX-SCALE1-deep-accounts` `93e49dfb0`, `scale1/AGE1-LADDER.md`; source `acd350e92`; 44 min 47 s, USD 0.81). Bulk transactor settings in every arm: 24 GiB heap, three cores, 16 GiB object cache, memory-index threshold 128m and maximum 2g, index parallelism 2, write concurrency 4. Java 21 G1.
+
+  | Saves per transaction x in flight | Predicted records/s | Full window / final steady records/s | Index jobs in window | Transactor CPU of 3 cores | PostgreSQL GB added per million records |
+  | --- | ---: | ---: | ---: | ---: | ---: |
+  | 1 x 256 | 7,000 to 9,500 | 19,760.04 / 15,242.78 | 59 | 2.689 | 0.710 |
+  | 8 x 16 | 11,000 to 19,000 | 16,989.76 / 16,330.62 | 44 | 2.662 | 0.828 |
+  | 24 x 16 | 16,000 to 28,000 | 18,081.59 / 20,509.38 | 30 | 2.712 | 0.910 |
+
+- **Prediction check.** Mine and the builder's for the solo arm (7,000 to 9,500) were wrong by about two times: settings alone took solo saves from 264 to 762 to 988 per second. The prediction that several saves per transaction would give two to three times was also wrong: it added little or nothing. All three arms sit near the transactor's three-core allowance (2.66 to 2.71 cores).
+- **Not yet attributed:** which setting made the difference, and what holds all arms near the same rate.
+- **Side reading for the product writer (logged, no work):** a full-size transactor took 762 to 988 solo saves per second from one loader, against 346 to 365 delivered by the product writer tonight at full size. The product writer's limit is therefore probably not the transactor's raw transaction rate.
+- **Blocker 1:** the ladder's own checker qualified no arm, because it matched the logical database name exactly and excluded Datomic's UUID-suffixed physical database ID; it counted zero index jobs where the raw events show 59, 44 and 30. The full load refuses without a qualified arm.
+- **Blocker 2, disk:** the fresh seed is 0.29 GB per million records; the ladder added 0.71 to 0.91 GB per million. At 0.91 the database is about 638 GB at 1 billion, against devices of 879 GB and 890 GB, with a scratch copy and a separate write log device needed by the scorecard. Likely cause, not yet confirmed: index segments replaced by each index job and waiting for Datomic's storage garbage collection.
+- **At 18,082 records/s** the remaining 522.5 million records take about 8.0 hours (USD 8.75).
+- **DX-AGE1 part 5 resumed** (run-critical): fix the checker match; explain the two prediction misses and choose the load's settings (more transactor cores if CPU is the limit); find what the extra bytes are and bound them (periodic `gc-storage` during the load; target aged directory 400 GB or less); disk plan; predictions before publishing.
+- **Server 2 now:** moving the held aging volume, then the fresh scorecard (`3a71c1767`, 300 minutes). The load follows it.
+- Agents running: DX-SCALE1, DX-AGE1.

@@ -95,6 +95,15 @@ seconds**, with one Publish every five seconds: find out whether Publish priorit
 or whether the one-core settings were the limit, and repeat on the `server` profile; (c) what a realistic Publish
 rate is for the deepest account (ask Sam or measure from production).
 
+16f. **Where the product writer's limit is at full size (reading from the aging ladder, 2026-11-21 02:46 local,
+`origin/exp/DX-SCALE1-deep-accounts` `93e49dfb0`).** One loader with 256 saves in flight put 762 to 988 solo saves
+per second (20 records each) through a three-core transactor on the full-size database, with a 24 GiB heap, 16 GiB
+object cache, 128 MiB memory-index threshold, 2 GiB maximum, index parallelism 2. The product writer delivered 346
+to 365 saves per second at full size on a similar transactor the same night. Compare the two paths step by step
+(gateway preparation, fair-turn credits, per-person row reads, reads per save 0.74 to 1.1, memory-index settings:
+the `server` profile's values against the ladder's) and measure the product writer with the ladder's transactor
+settings.
+
 ## Not started, deferred past version 0.1 or past the weekend
 
 17. Aging beyond 1 billion records (2, 4, 8 billion) when there is budget; the growth model's predictions are the
