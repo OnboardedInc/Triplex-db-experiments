@@ -43,3 +43,23 @@ At 394 offered, all 118,200 saves became durable and the in-window rate rose fro
 | 620 | 17/43→14.97/61.79 | 4.13× | 7.33/7.61/7.00 | 30.50/12.29 | 61.79/44.80 |
 
 All solo cells observed 3.5 ACKs/s with 1,050 durable offers each and zero expiries. Their forecast p50 was 7 ms. In the second halves at 235 / 394 / 620, the transactor used 0.61 / 1.84 / 2.25 cores on average. Whole-window mean SQL reads per durable save were 0.61 / 1.35 / 1.32. At 394, 117,554 of 118,200 ACKs landed inside the timed window. The complete arm and cleanup preceded its 15,329,280-byte Mac checkpoint at `evidence/DX-BM1/bench3/checkpoints/rolling6/checkpoint.tar`. [Checksums](SHA256SUMS)
+
+## Rolling 12
+
+At 394 offered, all 118,200 saves ACKed inside the five-minute window. The throughput matched the forecast and the whole-window ACK p99 was 7.05 s against 105 ms forecast. Even the second half reached 2.46 s against 80 ms. Compared with rolling 6, quiet p99 nearly doubled from 54.00 to 105.67 ms. At 620 offered the wider window raised throughput from 454.02 to 473.80/s, ahead of the 447/s forecast, and reduced expiries from 36,164 to 26,865.
+
+| Offered | ACKs/s whole forecast→actual | First half actual | Second half forecast→actual | Whole ACK p50/p99 ms forecast→actual | First-half ACK p50/p99 ms | Second-half ACK p50/p99 ms forecast→actual | Expired first + second |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 235 | 235→235.00 | 235.03 | 235→234.97 | 10/67→5.46/2,661.95 | 6.83/2,741.01 | 10/55→4.79/32.28 | 0 + 0 |
+| 394 | 394→394.00 | 392.79 | 394→395.21 | 18/105→610.93/7,051.54 | 1,193.86/7,227.13 | 16/80→220.46/2,455.35 | 0 + 0 |
+| 620 | 447→473.80 | 440.70 | 462→506.89 | 29,850/30,030→29,179.26/30,042.57 | 29,018.73/30,040.09 | 29,950/30,030→29,203.15/30,044.49 | 11,192 + 15,673 |
+
+| Offered | Quiet p99 ms solo / loaded forecast→actual | Quiet ratio | Solo p50 ms whole / first / second | Solo p99 ms first / second | Loaded quiet p99 ms first / second |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 235 | 18/38→31.95/98.95 | 3.10× | 9.50/11.95/7.71 | 35.81/14.85 | 119.48/37.30 |
+| 394 | 15/43→30.23/105.67 | 3.50× | 7.02/7.21/6.77 | 34.14/13.19 | 105.67/87.12 |
+| 620 | 17/53→23.65/114.51 | 4.84× | 7.17/7.46/6.92 | 23.65/13.32 | 81.43/371.07 |
+
+All solo cells observed 3.5 ACKs/s with 1,050 durable offers each and zero expiry. Their forecast p50 was 7 ms. The transactor averaged 0.67 / 1.83 / 2.36 cores in the loaded second halves at 235 / 394 / 620. Whole-window mean SQL reads per durable save were 0.71 / 1.37 / 1.24. The 15,329,280-byte checkpoint is at `evidence/DX-BM1/bench3/checkpoints/rolling12/checkpoint.tar`. [Checksums](SHA256SUMS)
+
+The full main-campaign evidence is on the Mac at `evidence/DX-BM1/bench3/bench3-rolling-main`. Its 14,316,289-byte summary and 208,114,992-byte raw archives were checked against both transfer manifests and decoded member hashes. The per-arm checkpoint digests are listed separately. [Checksums](SHA256SUMS)
