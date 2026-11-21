@@ -36,6 +36,11 @@ cd "$build/repository"
 [[ $(git rev-parse HEAD) == "$pin" && -z $(git status --porcelain) ]]
 export DX_V01_BUILD_RECEIPT="$build/BUILD-v0.1.json"
 mkdir -p "$wal"
+# The tuned read study pins its own driver to 9,10 before its stack starts (v01/adopted-server.ts line 32).
+bash "$root/bench3-affinity.sh" 'v01/adopted-server.ts' '^tx2-dxscale1-v01-[0-9a-f]{8}-[0-9a-f]{3}-tx$' 9,10 \
+  >> "$job/affinity.log" 2>&1 &
+watcher=$!
+trap 'kill "$watcher" 2>/dev/null || true' EXIT
 
 ladder() {
   record "copying-$1" measure
