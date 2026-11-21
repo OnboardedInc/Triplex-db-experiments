@@ -118,7 +118,7 @@ Keep the stopped held source plus one separate data copy. Arms 1 and 2 also need
 
 Copy time per arm is **aged source bytes ÷ measured copy bytes/s**. Four fresh copies took 17m 25s. With 124,827,727,539 bytes per fresh copy, that averages about 478 MB/s. At that rate, 290 GB would take about 10m 7s per arm, or about 40m 28s total. Use the driver's measured aged size and copy rate for scheduling. Time between invocations for staging and removal is outside the 300-minute campaign clock.
 
-The controller reports completion only after cleanup. A failed invocation with an arm log or start record requires a new campaign directory. Keep `sequence/`, `arm-1.log` through `arm-4.log` and `campaign/`. Assembly refuses a missing or repeated arm, a mismatched pinned source or cut, and any changed renderer evidence.
+The controller reports completion only after cleanup. An early refusal before the start record can be retried. A failure after the arm is claimed requires a new campaign directory. Keep `sequence/`, the `arm-*.log` files and `campaign/`. Assembly refuses a missing or repeated arm, a mismatched pinned source or cut, and any changed renderer evidence.
 
 ## Early check and evidence
 

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
+import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { parseArgs } from "node:util";
@@ -83,10 +84,16 @@ if (arm !== undefined) {
   const sequence = existingSequence(campaign);
   if (sequence) assert.equal(sequence.input.source, source, "Sequential campaign source changed");
   spent = sequenceProgress(campaign, sequence, arm).elapsed;
-  if (arm === 1) fs.mkdirSync(out, { mode: 0o700 });
+  if (arm === 1 && !sequence) {
+    if (fs.existsSync(out)) assert(fs.readdirSync(out).every(name => /^arm-1-[a-f0-9-]{36}\.log$/.test(name)),
+      "Use a new output directory for sequential staging");
+    else fs.mkdirSync(out, { mode: 0o700 });
+  }
 } else fs.mkdirSync(out, { mode: 0o700 });
 console.log(forecast);
-const log = path.join(out, arm === undefined ? "campaign.log" : `arm-${arm}.log`);
+// [DX-V01] Why: retain early preflight refusals while allowing a retry before the server claimed the arm.
+// Rejected: reusing a log or requiring a new campaign after a busy queue refusal.
+const log = path.join(out, arm === undefined ? "campaign.log" : `arm-${arm}-${randomUUID()}.log`);
 const activeMs = (minutes - budget.cleanup) * 60_000 - spent;
 assert(activeMs > 0, "No active time remains for a sequential arm");
 const fd = fs.openSync(log, "wx", 0o600);
