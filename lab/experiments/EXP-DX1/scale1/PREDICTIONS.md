@@ -134,3 +134,5 @@ Before resuming from 514,741,853 records, forecast **9,022.51 records/s** includ
 First completed resumed cycle. Writing delivered 13,467.03/s; including collection and vacuum the cycle delivered 10,033.06/s, 11.2% above the 9,022.51/s forecast. The cut reached 538,928,597 indexed records and occupied 166.358 GB. The current rate projects 12.77 more loading hours (USD 13.91). [Continued measurements](AGE1-LOAD.md#extended-continuation-progress)
 
 Four completed resumed cycles. The load added 89,133,760 indexed records in 2.64 h including maintenance, averaging 9,360.92/s. The latest cycle gave 8,978.39/s versus the 9,022.51/s forecast and projects 12.26 hours (USD 13.36) remaining. [Four complete windows](AGE1-LOAD.md#extended-continuation-progress)
+
+Seven completed resumed cycles. Since the preceding publication, the loader added 63,339,600 records at 8,776.45/s including maintenance. The latest cycle gave 8,601.33/s versus the original 9,022.51/s forecast and projects 10.75 hours (USD 11.71) remaining. [Seven complete windows](AGE1-LOAD.md#extended-continuation-progress)

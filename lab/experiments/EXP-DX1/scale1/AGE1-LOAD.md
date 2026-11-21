@@ -41,7 +41,7 @@ The prepared measurement launch verifies the completed load's terminal state, li
 
 ## Extended continuation progress
 
-Running at the last checked cut of **603,875,613 records**, native t 43,070,140. Observation at 2026-11-21 13:55:07 UTC. Server 2 accrued USD 47.33. Root had 455.352 GB free, spare 266.213 GB. At the last completed cycle’s maintained rate of 8,978.39/s, the unfilled portion is 12.26 loading hours (USD 13.36).
+Running at the last checked cut of **667,215,213 records**, native t 46,237,120. Observation at 2026-11-21 15:55:17 UTC. Server 2 accrued USD 49.51. Root had 455.158 GB free, spare 264.858 GB. At the last completed cycle’s maintained rate of 8,601.33/s, the unfilled portion is 10.75 loading hours (USD 11.71).
 
 | Window | Indexed records | Added | Writing / cycle seconds | Writing / maintained records/s | Cores / 6 | Completed automatic index jobs | PGDATA before → after maintenance GB | Net GB vs prior cut | Collected segments | TOAST deletions | Hours remaining at maintained rate |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
@@ -49,10 +49,13 @@ Running at the last checked cut of **603,875,613 records**, native t 43,070,140.
 | 4 | 560,986,309 | 22,057,712 | 1795.6 / 2366.6 | 12,284.31 / 9,320.45 | 3.53 | 45 | 166.827 → 166.819 | 0.460 | 2,670,357 | 14,930,108 | 13.08 |
 | 5 | 582,550,309 | 21,564,000 | 1795.6 / 2369.4 | 12,009.11 / 9,100.97 | 3.47 | 44 | 167.308 → 167.300 | 0.481 | 2,640,079 | 14,625,508 | 12.74 |
 | 6 | 603,875,613 | 21,325,304 | 1795.1 / 2375.2 | 11,879.73 / 8,978.39 | 3.51 | 44 | 167.721 → 167.713 | 0.413 | 2,631,639 | 14,806,075 | 12.26 |
+| 7 | 625,297,697 | 21,422,084 | 1795.2 / 2416.1 | 11,932.83 / 8,866.34 | 3.51 | 44 | 168.198 → 168.190 | 0.477 | 2,623,291 | 14,812,618 | 11.74 |
+| 8 | 646,510,949 | 21,213,252 | 1795.4 / 2393.8 | 11,815.16 / 8,861.81 | 3.51 | 44 | 168.634 → 168.627 | 0.437 | 2,588,561 | 14,688,052 | 11.08 |
+| 9 | 667,215,213 | 20,704,264 | 1795.4 / 2407.1 | 11,531.84 / 8,601.33 | 3.52 | 43 | 169.075 → 169.068 | 0.441 | 2,578,373 | 14,791,133 | 10.75 |
 
 After the first resumed collection, the next window added 22,057,712 records while allocated space moved by 0.469 GB before its own maintenance.
 
-The four resumed cycles added 89,133,760 indexed records and 1.975 GB of occupied PGDATA. The startup followed a full-file custody census, so the first cycle includes storage state from those reads. The next three complete cycles averaged 8,978.39–9,320.45/s with the same loading profile.
+The seven resumed cycles added 152,473,360 indexed records in 4.65 h and 3.330 GB of occupied PGDATA. The startup followed a full-file custody census, so the first cycle includes storage state from those reads. The latest three complete cycles averaged 8,776.45 records/s with the same loading profile.
 
 [Progress evidence](evidence/age-v01-bulk-d-progress.sha256)
 

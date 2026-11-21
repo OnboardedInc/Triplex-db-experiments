@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 47.33 through 2026-11-21 13:55 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 49.51 through 2026-11-21 15:55 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The extended continuation is writing or maintaining as `triplex-scale1-v01-age-bulk-d`. Running at the last checked cut of **603,875,613 records**, native t 43,070,140. At the last completed cycle’s maintained rate of 8,978.39/s, the unfilled portion is 12.26 loading hours (USD 13.36). The policy is two completed cycles below 6,500 records/s, up to 26 paid loading hours from the original ladder, with the 400 GB cap and unchanged six-core profile. The prior hold archive, seed archive, stopped fresh template and two pristine fresh copies are retained. [Maintained load readings](AGE1-LOAD.md#extended-continuation-progress) · [Fresh scorecard](V01-FRESH.md)
+The extended continuation is writing or maintaining as `triplex-scale1-v01-age-bulk-d`. Running at the last checked cut of **667,215,213 records**, native t 46,237,120. At the last completed cycle’s maintained rate of 8,601.33/s, the unfilled portion is 10.75 loading hours (USD 11.71). The policy is two completed cycles below 6,500 records/s, up to 26 paid loading hours from the original ladder, with the 400 GB cap and unchanged six-core profile. The prior hold archive, seed archive, stopped fresh template and two pristine fresh copies are retained. [Maintained load readings](AGE1-LOAD.md#extended-continuation-progress) · [Fresh scorecard](V01-FRESH.md)
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
