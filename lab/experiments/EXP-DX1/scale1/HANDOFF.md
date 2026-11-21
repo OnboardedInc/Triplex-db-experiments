@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 37.79 through 2026-11-21 05:10 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 37.84 through 2026-11-21 05:13 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The fresh scorecard ended after its ordered zero-reader arm. Its empty-residency stage hit a Docker process-listing error. Preserve that attempt and its first completed arm. The new 45-minute full-size cache, core and WAL follow-up goes next on the same cut. Its admission checks reflect Server 2’s actual root and secondary NVMe enumeration. The spare mount and held template stay in place. Continue with the fresh scorecard, then AGE1 and its aged scorecard. [Pre-run forecasts](SCALE-TUNE.md)
+The fresh scorecard ended after its ordered zero-reader arm. Its empty-residency stage hit a Docker process-listing error. Preserve that attempt and its first completed arm. The 45-minute full-size cache, core and WAL follow-up is running. The first scorecard completed 1,260 ACKs and exact feed entries before its census error. The corrected retry remains on the merged defaults. Its admission checks reflect Server 2’s actual root and secondary NVMe enumeration. The spare mount and held template stay in place. Continue with the fresh scorecard, then AGE1 and its aged scorecard. [Pre-run forecasts](SCALE-TUNE.md)
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
