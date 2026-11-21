@@ -4,8 +4,8 @@ Both runs verified the stored sealed value before removal and performed an actua
 The removal stage opens a disposable stopped copy of the original seed.
 The normal write path and queued scorecard pins keep their prior settings.
 The realistic database build is `8597e3ef7a73fc5ce81a448614c11c4e9e8db293`. The toy held 5,600 people together.
-The Mac checks are for correctness. Full server measurements remain open.
-The database continues to hold all accounts together.
+The untouched-person census found native index memory growing while the app caches stayed empty.
+New server builds cap the read peer cache at 32 MiB. The full-size memory and read-latency checks remain open.
 
 ## Removal integration
 
@@ -24,3 +24,11 @@ The launch conflict leaves a single PostgreSQL mount selection. REAL1 supplies i
 ## Untouched-person census audit
 
 The Mac sampler runs only in the engine-owned compact stack. One reader process observes each metadata cut without reading people. It ties its complete live histogram, raw RSS samples, cache weights, counters and index request to its image, current process identity, fresh challenge and verified append receipts. After profiling, exact old-cut and current reads check both present and absent people. These are diagnostic observations.
+
+## P7 memory
+
+Every sample had zero ID memo and row-cache entries. The 1,024-to-4,096 post-index comparison added 1,354 live heap bytes per untouched person, including 874 bytes of byte arrays, 202 of long arrays and 132 of strings. Datomic's measured cache charge rose from 2.62 to 8.53 MB. The sizes are shallow allocation totals, so the classes alone cannot name each referent. Indexing reduced the live growth from 3,045 to 1,354 bytes per added person, consistent with index novelty and cached pages.
+
+The 16,384-to-24,576 post-index comparison kept the native cache around 30 MB under the 32 MiB setting. Cache charge rose 47 weighted bytes per added person, live heap rose 143 bytes and natural RSS rose 1,106 bytes. These same-process Mac diagnostics price a live import. Cache weight is separate from resident memory.
+
+The new named server profile applies the demonstrated 32 MiB cap to the read role. The standalone demand launch already uses it. No new setting and no extra subject reads are needed. The source-bound native trials checked exact existence and absence at old and current cuts after filling the cache. The failed 4 MiB startup and initial PID-binding failure are retained.

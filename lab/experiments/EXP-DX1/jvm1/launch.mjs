@@ -149,7 +149,9 @@ const laptop = {
 const server = {
   tx: { memory: 30720, initial: 1024, heap: 24576, direct: 24576, cache: 16384, cpus: "0,7,8", cores: 3 },
   "gw-w": { memory: 6144, initial: 512, heap: 4096, direct: 4096, cache: null, cpus: "2,3,4,5", cores: 4 },
-  "gw-r": { memory: 5120, initial: 256, heap: 3072, direct: 3072, cache: null, cpus: "6", cores: 1 },
+  // [DX-INT1] Why: bound the cold reader's native index cache when server JVM options override the demand fallback.
+  // Rejected: shrinking the shared transactor cache or loading people before demand.
+  "gw-r": { memory: 5120, initial: 256, heap: 3072, direct: 3072, cache: 32, cpus: "6", cores: 1 },
 };
 export const laptopCaps = Object.freeze({ pg: 256, tx: laptop.tx.memory, write: laptop["gw-w"].memory, read: laptop["gw-r"].memory });
 
