@@ -87,7 +87,7 @@ async function quietReads(client: DatomicClient, seed: AdoptedSeed, start: numbe
     errors: sides.flatMap((r) => r.samples).filter((s) => s.error).length };
 }
 
-async function preload(client: DatomicClient, seed: AdoptedSeed, head: number, tape: Write[]) {
+export async function preload(client: DatomicClient, seed: AdoptedSeed, head: number, tape: Write[]) {
   const senders: Sender[] = [];
   for (const a of accounts) {
     const entities = [...new Set(tape.filter((x) => x.account === a).map((x) => task(a, x.subject)))];

@@ -154,7 +154,7 @@ INPUT_LEASE
     "$(node "$runtime_tool" image)" -m triplex.gateway.layout-input-audit "/inputs/$(basename "$2")"
   exit
 fi
-tx=6 pg=6 gw_w=5,6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume= wal_dir=
+tx=6 pg=6 gw_w=5,6 gw_r=7 port_w=8491 port_r=8492 src= publish=true spec= seed_volume= wal_dir= prepared_pg=
 if [[ ${DX_INT1_GATEWAYS:-original} == demand ]]; then
   # [DX-THIN1] Why: apply the same peer limits on ordinary stack launches and the physical queue. Rejected: tuning only the Mac diagnostic container.
   demand_peer='-Ddatomic.objectCacheMax=32m -XX:MinHeapFreeRatio=15 -XX:MaxHeapFreeRatio=30 -XX:-ShrinkHeapInSteps'
@@ -180,6 +180,7 @@ while (($#)); do
     --no-publish) publish=false; shift; continue;;
     --clone-seed) seed_volume=$2;;
     --wal-directory) wal_dir=$2;;
+    --prepared-pgdata) prepared_pg=$2;;
     --cpus-tx) tx=$2;; --cpus-pg) pg=$2;;
     --cpus-gw-write) gw_w=$2;; --cpus-gw-read) gw_r=$2;;
     --pg-memory) pg_mem=$2;; --tx-memory) tx_mem=$2;; --gw-memory) gw_mem=$2;;
@@ -296,6 +297,16 @@ mkdir -p "$attempt/sql" "$attempt/config" "$attempt/trace/raw"
 # [DX-BM1] Why: separate only WAL from the root data volume under the same durability settings.
 # Rejected: relocating the database or changing synchronous_commit (either would confound the WAL A/B).
 wal_mount=()
+pg_mount=(-v "$prefix-pg-data:/var/lib/postgresql/data")
+if [[ -n $prepared_pg ]]; then
+  # [DX-ACT1] Why: mount only the exclusive, stopped copy after the server launcher checks its original template.
+  # Rejected: restoring the logical dump or ever attaching the held template to PostgreSQL.
+  [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxscale1-publish-[a-f0-9]+$ &&
+      $publish == false && -z $seed_volume && -n $wal_dir && $prepared_pg == "$(realpath -e "$prepared_pg")" &&
+      $prepared_pg != *[,\"$'\n']* && $(cat "$prepared_pg/PG_VERSION") == 17 &&
+      ! -e $prepared_pg/postmaster.pid && $(readlink "$prepared_pg/pg_wal") == /wal ]]
+  pg_mount=(--mount "type=bind,source=$prepared_pg,target=/var/lib/postgresql/data")
+fi
 if [[ -n ${DX_BM1_WAL_MOUNT:-} ]]; then
   [[ -z $wal_dir ]]
   [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxt1-bm1-[a-z0-9]+-wal-ssd$ && $publish == false && -z $seed_volume ]]
@@ -310,9 +321,10 @@ if [[ -n $wal_dir ]]; then
   docker_root=$(docker info --format '{{.DockerRootDir}}') || exit 2
   wal_real=$(realpath -e "$wal_dir") || exit 2
   wal_device=$(stat -c %d "$wal_real") || exit 2
-  data_device=$(stat -c %d "$docker_root/volumes") || exit 2
+  data_device=$(stat -c %d "${prepared_pg:-$docker_root/volumes}") || exit 2
   wal_entries=$(find "$wal_real" -mindepth 1 -maxdepth 1 -print -quit) || exit 2
-  if [[ $wal_dir != "$wal_real" || $wal_dir == *[,\"$'\n']* || ! -d $wal_dir || -n $wal_entries ||
+  if [[ $wal_dir != "$wal_real" || $wal_dir == *[,\"$'\n']* || ! -d $wal_dir ||
+        ( -z $prepared_pg && -n $wal_entries ) || ( -n $prepared_pg && -z $wal_entries ) ||
         ! $wal_device =~ ^[0-9]+$ || ! $data_device =~ ^[0-9]+$ || $wal_device == "$data_device" ]]; then
     echo 'WAL needs an empty directory on a filesystem distinct from the Docker volumes' >&2
     exit 2
@@ -522,11 +534,11 @@ CLONE_MOUNTS
   [[ $(docker inspect --format '{{.State.ExitCode}}' "$prefix-seed-copy") == 0 ]] || exit 1
   docker rm "$prefix-seed-copy" >/dev/null
   trap - EXIT
-else
+elif [[ -z $prepared_pg ]]; then
   docker volume create ${stack_labels[@]+"${stack_labels[@]}"} "$prefix-pg-data" >/dev/null
 fi
 docker run -d --pull never --name "$prefix-pg" ${stack_labels[@]+"${stack_labels[@]}"} --network "$prefix-net" ${network_tuning[@]+"${network_tuning[@]}"} --cpuset-cpus "$pg" --memory "$pg_mem" --memory-swap "$pg_mem" \
-  -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
+  -e POSTGRES_PASSWORD=datomic "${pg_mount[@]}" ${wal_mount[@]+"${wal_mount[@]}"} postgres:17-alpine postgres $pg_settings >/dev/null
 # [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
 # Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
 ready=false
@@ -553,7 +565,7 @@ if [[ -n $wal_dir || ${DX_BM1_WAL_AB:-0} == 1 ]]; then
   ' sh "${wal_dir:+ssd}" > "$attempt/wal-placement.txt"
 fi
 # Vendor scripts use their own database/connect statements; keep their order and bytes.
-if [[ -z $seed_volume ]];then
+if [[ -z $seed_volume && -z $prepared_pg ]];then
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   db=postgres
   [[ "$file" != postgres-table.sql ]] || db=datomic

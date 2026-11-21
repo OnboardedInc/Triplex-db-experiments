@@ -48,21 +48,24 @@ export class Archive {
   readonly source: JoinedAccount;
   readonly store: Store;
   readonly queue: BulkQueue;
-  private constructor(source: JoinedAccount, store: Store, queue: BulkQueue) {
+  private constructor(source: JoinedAccount, store: Store, queue: BulkQueue, channel: string) {
     this.source = source;
     this.store = store;
     this.queue = queue;
-    this.db = new Documents(store.comp, "settlement");
+    this.db = new Documents(store.comp, source.s.held ? "settlement-" + channel : "settlement");
   }
   static async open(
     source: JoinedAccount,
     queue: BulkQueue,
     channel: "values" | "notices" = "values",
   ) {
-    const store = await openStore(
-      "lazy-settlement-" + hash([source.s.scope, channel]).slice(0, 40),
-    );
-    return new Archive(source, store, queue);
+    const s = source.s;
+    // [DX-ACT1] Why: the held scorecard includes archive writes and indexes in the same physical database.
+    // Rejected: benchmarking background work in two empty databases.
+    const store = s.held
+      ? await openStore(s.scope, s.profile, "write", s.held)
+      : await openStore("lazy-settlement-" + hash([s.scope, channel]).slice(0, 40));
+    return new Archive(source, store, queue, channel);
   }
   close() {
     return this.store.close();
@@ -248,11 +251,14 @@ export class Archive {
           return;
         const { marker, event, census } = await source.receipt(r.seq, b.tx);
         const identity = identityOf(s.scope, marker, event.at);
-        const a = await source.db.row<number>(address(subject), marker.cut);
-        if (!a) return;
+        const ordinal = /^pl:s[0-9]{8}$/.test(subject) ? Number(subject.slice(4)) : -1;
+        const leaf = s.held
+          ? ordinal >= 0 && ordinal < census.count ? Math.floor(ordinal / width) : undefined
+          : (await source.db.row<number>(address(subject), marker.cut))?.value;
+        if (leaf === undefined) return;
         const at = await this.store.head(),
           keys = Array.from({ length: width / step }, (_, i) =>
-            pageKey(r.seq, a.value * width + i * step),
+            pageKey(r.seq, leaf * width + i * step),
           );
         for (const page of (await this.db.rows<Page>(keys, at)).values()) {
           assert(

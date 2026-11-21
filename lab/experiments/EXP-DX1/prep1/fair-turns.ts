@@ -12,10 +12,11 @@ export class FairTurns {
   private readonly recent: number[] = [];
   private readonly served: number[];
 
-  constructor(
-    private readonly accountCount: number,
-    private readonly credits: number,
-  ) {
+  private readonly accountCount: number;
+  private readonly credits: number;
+  constructor(accountCount: number, credits: number) {
+    this.accountCount = accountCount;
+    this.credits = credits;
     this.served = Array<number>(accountCount).fill(0);
   }
 

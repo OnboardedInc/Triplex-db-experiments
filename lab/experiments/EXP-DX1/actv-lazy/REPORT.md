@@ -1,11 +1,11 @@
-Priority server candidate `acc0f5c39ed7dafc4c1539ce7353fa11750e6f9b`. The code is merged on INT1 at `0196b9952e496c883a24b9ed05ef17fa886dfb00`.
-On bare metal, one write recorded the release and what notices it owed in 46 ms. The first correct answer came at 56 ms.
-At 3.5 saves per second the receipt and answer took 53 and 63 ms. At 23.5 saves per second they took 2.043 and 2.051 seconds.
-The busy receipt waited 2.020 seconds behind 50 saves. A new release can now pass waiting saves in its own account. The active save finishes first.
-The owner chose the permanent receipt as the stored point. The earlier server run took 13.0 to 18.6 seconds to write every changed value before that point.
-At 10,000 deep people and 3.5 saves per second, the Mac recorded values after 216 seconds and individual notices after 254 seconds. Laptop clocks are diagnostic.
-While those values are being written, a reader works out the same answer from the release and its recorded cut. The recovery gate compared both answers.
-The 100,000-person priority path and common-database scorecard still need server measurements. Protected-input notice retention remains open.
+The held-database Publish candidate is on the DX-ACT1 branch. The previous priority candidate was `acc0f5c39`.
+On bare metal at 25,000 people, every priority Publish gave the first correct answer within one second, including at peak.
+At peak the system offered 39.4 saves a second and stored 25.39. The same queue grew without any Publishes.
+The 30 Publishes held the turn for less than one second of a 150-second window. The old run used one core per JVM and serial saves.
+The new command opens the existing one-million-person database and publishes to one account of 100,000. It does not rebuild the roster.
+The 100,000-person forecast is 60–180 ms p99 at 3.5 saves/s, 130–450 ms at 23.5, and 200–900 ms at 39.4, with the other accounts live at the two higher rates.
+The bare-metal result still decides whether the new path meets the one-second target and protects ordinary traffic.
+Assumed production cadence for confirmation is one Publish per account per hour during a busy deployment. The five-second test deliberately stresses the queue.
 
 The completed BM1 replay at `48f55759494f6a6a04eeb6aa5284dde3e166d431` verified all 16,045,255 seeded facts, 3,240 save receipts and 342,881 ordered notice effects across six windows. Each broad release changed about 490,000 values across all 100,000 people. Its separate background campaign was stopped after the release windows were proved. [Verified results and digests](PART8.md#server-observations-at-100000-people)
 
@@ -27,12 +27,8 @@ The revised 64-person smoke used the pinned candidate. The cold observer started
 
 ### Server command
 
-Use the priority candidate on the first line in a managed exclusive gateway with live priority enabled. This runs the 1,000-person preflight and three receipt-only windows at quiet, 3.5 and 23.5 saves/s. Forecast peak receipt and first answer are 70–300 and 80–350 ms under sustainable load. Record the paired 100,000-person background clocks separately with 64 readers. [Environment, commands and predictions](SERVER.md)
+[Held scale command, budget, backlog analysis and forecasts](PART9.md). The previous command remains in [the separate-scope server instructions](SERVER.md).
 
-```sh
-TX2_SWEEP_STRICT=1 TX2_W0_POINT_JOURNAL=1 TX2_W0_RESTORE_INDEXED_JOURNAL=1 TRIPLEX_DATOMIC_LAYOUT=lean node lab/bin/heavy.mjs --label DX-ACT1 -- node --experimental-strip-types lab/experiments/EXP-DX1/actv-lazy/join/server.ts 100000 "$DX_LAZY_OUT" --receipt
-```
+The earlier six-window collector replayed all 30 point witnesses and 757 effects at 64 people. It rejects a missing terminal and late sampling cannot count as a hit. [Review response](REVIEW2.md)
 
-The earlier six-window collector replayed all 30 point witnesses and 757 effects at 64 people. It rejects a missing terminal, late sampling cannot count as a hit, and each offer compiled a distinct release absent from the startup set. [Review response](REVIEW2.md)
-
-The experiment uses separate logical scopes. INT1 needs the same-cut Publish, visibility and settlement proof on the scorecard's single physical database at both fresh and one billion records. No acceptance pins, W0 files, workload trace or declared bars moved. [Evidence checksums](PART8-SHA256SUMS)
+The earlier experiment used separate logical scopes. The held runner uses one physical database. Full-size and one-billion-record evidence remain open. [Earlier evidence checksums](PART8-SHA256SUMS)

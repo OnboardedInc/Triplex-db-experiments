@@ -61,6 +61,15 @@ export async function rejectUnrecordedWrite(
 }
 
 export type EventKind = "activation" | "source" | "due" | "erase" | "baseline";
+export type HeldSource = {
+  account: string;
+  prefix: string;
+  people: number;
+  cut: number;
+  seal: string;
+  verifyThrough: (position: number) => Promise<void>;
+  committed: (receipt: { position: number; txId: string; commandId: string }) => void;
+};
 export interface Event {
   kind: EventKind;
   at: string;
@@ -74,8 +83,11 @@ export async function openStore(
   scope: string,
   profile: "w0" | "act2-deep" = "w0",
   access: "write" | "read" = "write",
+  held?: HeldSource,
 ) {
-  assert(/^lazy-[a-z0-9-]+$/.test(scope));
+  assert(held
+    ? profile === "act2-deep" && /^dx-scale-decision-[0-9a-f-]+-0$/.test(scope)
+    : /^lazy-[a-z0-9-]+$/.test(scope));
   const key = String(runtimeApi.DatabaseScope.test(scope)),
     client = new DatomicClient(process.env.DATOMIC_URL!);
   try {
@@ -86,6 +98,7 @@ export async function openStore(
     const policy = await client.create(key, layout, true);
     assert(
       (policy.layout ?? "legacy") === layout &&
+        (!held || !policy.created) &&
         policy.strictRecordClocks &&
         policy.db === "s2-" + Buffer.from(key).toString("base64url"),
     );
@@ -198,6 +211,7 @@ export async function openStore(
     const stored = await lookup(id);
     if (stored) {
       const receipt = check(stored);
+      held?.committed(receipt);
       // [DX-ACT1] Why: a recovered marker needs its own observation clock, even if an earlier stage received an ACK. Rejected: assigning the last arbitrary write's clock to this receipt.
       counters.lastReceipt = {
         commandId: id,
@@ -215,10 +229,12 @@ export async function openStore(
       inputOnly ? [RELEASE, CLOCK, ORIGIN] : [RELEASE, CLOCK, MASK, CURSOR, ORIGIN],
       p,
     );
-    const birth = all.find(
-      (r) => r.position === 1 && (r.entityId === ORIGIN || r.entityId === RELEASE),
-    );
-    if (p)
+    const birth = held
+      ? all.find((r) => r.entityId === ORIGIN && r.position > held.cut)
+      : all.find((r) => r.position === 1 && (r.entityId === ORIGIN || r.entityId === RELEASE));
+    if (held && p > held.cut && birth)
+      assert.deepEqual(value(birth), { profile, held: held.seal });
+    if (p && !held)
       assert(birth && value(birth).profile === profile, "Foreign source profile or generation");
     const releases = all
       .filter((r) => r.entityId === RELEASE)
@@ -238,7 +254,7 @@ export async function openStore(
       ...masks.map((r) => r.position),
     );
     return {
-      generation: birth?.id ?? "uninitialized",
+      generation: (birth && held ? held.seal : birth?.id) ?? "uninitialized",
       releases,
       at,
       clock: clocks[0],
@@ -253,6 +269,7 @@ export async function openStore(
     ops: readonly any[] = [],
     onAck?: (t: number) => void,
   ) {
+    assert(!held, "Held seeds use joined admission");
     assert(h, "A demand reader has no source write authority");
     assert(
       W0.isInstant(event.at) &&
@@ -392,6 +409,7 @@ export async function openStore(
   return {
     scope,
     profile,
+    held,
     counters,
     effectsClear,
     cursorReceipt,
