@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 33.23 through 2026-11-21 00:59 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 34.81 through 2026-11-21 02:26 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The pooled seed's full loader ledger has 1,000,000 people, 162,456,470 facts and 87,001 acknowledged frames. The verifier checked every durable claim and had replayed 75,500 of 87,002 feed positions by November 21 at 00:57 UTC. The immutable image and transfer follow the replay. The current seed ceiling is 2026-11-21T04:24:01.788Z. The superseded two-writer relay is stopped. The active seed and its original controller were left running. The detached v0.1 present-writer relay is waiting for the verified seed transfer. It is pinned to 46deaaedb with a three-hour native ceiling.
+The pooled seed's full loader ledger has 1,000,000 people, 162,456,470 facts and 87,001 acknowledged frames. The verifier finished the full claim and feed replay and pinned member checks on November 21 at 01:36 UTC. Ingest took 7.78 h and verification 7.38 h. The immutable SQL archive is being written. The current seed ceiling is 2026-11-21T04:24:01.788Z. The superseded two-writer relay is stopped. The active seed and its original controller were left running. The detached v0.1 present-writer relay is waiting for the verified seed transfer. It is pinned to 46deaaedb with a three-hour native ceiling.
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
@@ -16,7 +16,7 @@ node --import tsx lab/experiments/EXP-DX1/scale1/control.ts status
 | ---: | --- | ---: |
 | 1 | Finish verifying and seal the existing full pooled seed | Existing 18 h native ceiling |
 | 2 | Present writer at 35, 50, 235 and 394 saves/s with matched quiet windows | 3 h maximum |
-| 3 | PREP1 grouped and per-person writers with 1, 2 and 4 write gateways | Six hours of nominal arm ceilings after compatible fast restores |
+| 3 | PREP1 adopted ordered per-person ceiling at 620 and 900/s; same-seed writer and gateway-count controls when available | 60 minutes plus build and archive verification for the ceiling |
 | 4 | v0.1 fresh scorecard on adopted source 790d9e96e | 235 minutes |
 | 5 | AGE1 calibration, then age to 1 billion native records if it fits | 9.9 h maximum |
 | 6 | v0.1 scorecard on the sealed 1B database and hashed SQL dump | 235 minutes |

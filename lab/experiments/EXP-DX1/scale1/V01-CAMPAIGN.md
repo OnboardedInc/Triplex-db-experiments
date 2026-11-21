@@ -6,12 +6,12 @@ The one-database release needs the grouped versus per-person comparison and the 
 | --- | --- | --- |
 | Existing fresh seed | About 7.8 h for ingestion, with 162,456,470 current facts. From the handoff, about 4–6 h for remaining claims, feed and seal at USD 4.36–6.54. | Ledger shows 1,000,000 people, 162,456,470 facts and 87,001 frames at cut 87,002. Verification in progress. |
 | Trimmed current writer | Up to 3 h (USD 3.27) from restore through the timed run. At least two pairs per rate are scheduled first. | Awaiting the seal. |
-| PREP1 comparison | Twelve 29-minute arms give 5.8 h (USD 6.32) once compatible storage and restore admission are ready. The published restore method does not fit this seed. | Awaiting compatibility below. |
+| PREP1 comparison | Original 1/2/4-gateway matrix gives 5.8 h (USD 6.32) after compatible fast restores. The adopted ceiling arm takes 60 min (USD 1.09), with up to 50 min of build and dump verification (USD 0.91). | Adopted ceiling ready after the present writer. Same-seed grouped-versus-per-person and gateway-count controls remain open. |
 | Fresh scorecard | 197 timed minutes and 235 minutes total (USD 3.58–4.27), conditional on compatible restore and exact replay. | Adopted runner published as 790d9e96e. Awaiting the seal and prior stages. |
 | AGE1 | 9.60 h (USD 10.46) at 24k records/s, cap 9.9 h (USD 10.79). A 430M native start needs about 23k/s or better. Add a separate restore unless it reuses the fresh restored storage. | Awaiting exact starting native count and calibration. |
 | 1B scorecard | 235 minutes (USD 4.27), conditional on the aged seal and updated exact replay. | Adopted runner published as 790d9e96e. Awaiting AGE1 and its exact-cut SQL dump. |
 
-The serial nominal allocations above total about 30–32 hours from the handoff, excluding tooling repair or an extra restore. Saturday 18:00 ET is the target. Meeting it needs several hours of faster restore, abbreviated successful or calibrated arms, or an earlier finish to the seed checks. With the published caps alone, plan for about USD 33–36 more on this server. If PREP1 still cannot adopt the held seed after the present-writer arm, the ready fresh scorecard can use the server while PREP1 is adapted. AGE1 can go before the fresh scorecard if the card is unavailable and AGE1 storage is ready.
+The serial nominal allocations above total about 30–32 hours from the handoff, excluding tooling repair or an extra restore. Saturday 18:00 ET is the target. Meeting it needs several hours of faster restore, abbreviated successful or calibrated arms, or an earlier finish to the seed checks. With the published caps alone, plan for about USD 33–36 more on this server. Run the compatible PREP1 ceiling after the present writer. The fresh scorecard follows if the requested full matrix still lacks compatible restores. AGE1 can go before the fresh scorecard if the card is unavailable and AGE1 storage is ready.
 
 ## What PREP1 needs to adopt the large seed
 
@@ -29,6 +29,18 @@ PREP1's published pre-run model gives settled saves/s, worst-account p99 in ms, 
 | 235 | 235 / 30 / 13.76× | 235 / 27.48 / 1.19× | 235 / 27.48 / 1.19× |
 | 394 | 255 / 77,739 / 14.53× | 383 / 4,122 / 1.22× | 394 / 28 / 1.22× |
 | 620 | 255 / 204,086 / 22.00× | 383 / 88,244 / 1.26× | 620 / 28.36 / 1.26× |
+
+## PREP1 full-size ceiling addition
+
+PREP1 now names `8a116ed366d54ad7bca7b153d92d4f2eb4ea7041` for its one-hour ceiling command. It accepts the original SCALE1 seed with both pinned metadata files and uses one independent SQL restore. Verify the immutable dump digest explicitly before launch. The arm uses the corrected write path, ordered per-person saves, one write gateway and four matched 90-second pairs. It reads back its options and preserves stage clocks and all three JVM pause logs. The arm compares fair turns off and on at 620 and 900/s. Its warm order and 1,900 selected people per neighbour are part of the treatment. It supplies a full-size capacity and quiet-save isolation measurement. It leaves the original matched writer comparison and gateway-count treatment open.
+
+| Offers/s and fair turns | Forecast inside window | Actual |
+| --- | ---: | --- |
+| Matched quiet controls, 3.5/s | 3.5/s, 315 offers per control | Awaiting execution |
+| 620/s, off | 450/s, up to 96 awaiting receipts | Awaiting execution |
+| 620/s, on | 350/s, up to 6 awaiting receipts | Awaiting execution |
+| 900/s, on | 380/s, up to 6 awaiting receipts | Awaiting execution |
+| 900/s, off | 520/s, up to 96 awaiting receipts | Awaiting execution |
 
 ## Scorecard and aging dependencies
 
