@@ -28,6 +28,7 @@ SLOTS = {
     "ha1-paced": ("night-n20-ha1-paced", ("run", "collector.json", "cleanup.json", "worker.log")),
     "prep1-followup": ("night-n20-prep-followup", ("small", "campaign", "adapter.json", "small-agreement.json", "collector.json")),
     "prep1-storage": ("night-n20-prep-storage", ("small", "campaign", "adapter.json", "small-agreement.json", "collector.json")),
+    "prep1-ordered": ("night-n20-prep-ordered", ("small", "campaign", "adapter.json", "small-agreement.json", "collector.json")),
     "jvm1": ("day-n20-jvm1", ("seed/seed.json", "seed/results", "small/results", "campaign/results",
                              "seed.log", "campaign.log", "retry.log", "retry-resumed.log", "failed-unit.txt",
                              "cold-postgres.json", "retry",
@@ -153,7 +154,7 @@ def collect(name, revision, control, mode="trees"):
     assert mode in ("trees","--bundles")
     tool = load("night-client.py")
     report = shlex.quote(str(Path(control)/"lab/experiments/EXP-DX1/bm1/day-evidence.py"))
-    worker = f"/usr/bin/python3 {report} archive {shlex.quote(name)} {shlex.quote(revision)}"
+    worker = f"nice -n 15 ionice -c 3 /usr/bin/python3 {report} archive {shlex.quote(name)} {shlex.quote(revision)}"
     ticket_path = Path(tool.remote(worker, timeout=300).decode().strip())
     assert ticket_path == SERVER/SLOTS[name][0]/"transfer"/"TRANSFER.json"
     ticket_bytes = tool.remote("cat "+shlex.quote(str(ticket_path)))

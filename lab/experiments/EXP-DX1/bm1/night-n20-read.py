@@ -91,7 +91,9 @@ def collect(item, repo, campaign, small):
         slot = request["arm"]["slot"]
         start = request_file.stat().st_mtime
         if "startedAt" in request:
-            assert request["startedAt"]/1000 <= start
+            # [DX-BM1] Why: VFS may stamp a file on an earlier kernel tick than Date.now().
+            # Rejected: broad timestamp slack or accepting a completion before the attempt.
+            assert request["startedAt"] * 1_000_000 - request_file.stat().st_mtime_ns <= 5_000_000
         completed = directory/("field-summary.json" if java else "joined.json")
         assert start <= completed.stat().st_mtime <= request["deadline"]/1000 + 1
         assert completed.stat().st_mtime <= manifest.stat().st_mtime
