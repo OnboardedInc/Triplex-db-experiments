@@ -28,8 +28,8 @@ Next, as slots free, in this order:
 
 ## Waiting on a decision from Sam
 
-1. **Failover after a machine loss: A, B or C** (`origin/exp/DX-HASYNC1-sync-failover`, `hasync1/OWNER-DECISION.md`).
-   B is the default until he answers. C needs a third machine and a provider that allows three servers.
+1. ~~Failover after a machine loss: A, B or C.~~ Answered 2026-11-21: **B for version 0.1; C at version 1.0**
+   (`lab/V0.1.md`).
 2. ~~Which Cloudflare account holds the playground's test data, and may it be publicly readable.~~ Answered
    2026-11-21: his account through the Wrangler login on the Mac; public read is fine. Bucket
    `triplex-playground-data` created with a public address.
@@ -72,7 +72,7 @@ Next, as slots free, in this order:
     correctness rows. Left open by DX-W1 (parked 2026-11-20 at `25c9eeb79`): converting a scope that already holds
     protected values in clear (the gateway refuses the conversion and leaves the data readable); the
     clean-consumer packaging check; bare-metal timing of the one-request point query.
-12a. **A query cannot filter by the value of a protected field** once an account has a removal policy (typed
+12a. CLOSED 2026-11-21 (Sam: never needed; mark data sensitive or redacted and refuse queries by its value). Was: **A query cannot filter by the value of a protected field** once an account has a removal policy (typed
     refusal `ErasureQueryUnsupported`; a direct read of the field still works). If the product needs "find the
     person with this SSN" or duplicate-SSN detection, that needs a design (for example a keyed digest index). Ask
     Sam whether it does.
