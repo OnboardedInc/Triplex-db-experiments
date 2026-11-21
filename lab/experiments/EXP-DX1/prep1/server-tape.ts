@@ -20,6 +20,7 @@ export type Arm = {
   cacheGiB?: 2 | 16;
   orderedIds?: boolean;
   tail?: "control" | "wal" | "zgc" | "fair" | "combined";
+  scale?: "base" | "cache" | "wal-zgc";
 };
 export const arms: Arm[] = widths.flatMap((writers) =>
   (["K", "S", "S", "K"] as const).map((writer, repeat) => ({
@@ -75,6 +76,28 @@ export const storageArms: Arm[] = [
   storageOrderedArm,
 ];
 export const ceilingArm: Arm = { ...storageOrderedArm, id: "1-ceiling-S" };
+export const scaleArms: Arm[] = (["base", "cache", "wal-zgc"] as const).map((scale) => ({
+  ...storageOrderedArm,
+  id: `1-scale-${scale}-S`,
+  scale,
+  cacheGiB: scale === "base" ? 2 : 16,
+  credits: 6,
+}));
+
+export function scalePrediction(arm: Arm, rate: number, solo: boolean) {
+  assert(arm.scale && (rate === 394 || rate === 620));
+  // [DX-PREP1] Why: predict the loaded rate separately from the cold quiet path.
+  // Rejected: carrying the small-seed zero-read or ratio forecast to 1,900-person neighbour bands.
+  const estimates = {
+    // Loaded delivery, quiet solo p99, loaded ratio, solo SQL reads/save, loaded SQL reads/save.
+    base: [[277, 135, 1.40, 2.5, 1.55], [273, 155, 1.40, 2.5, 1.55]],
+    cache: [[365, 91, 1.50, 1.5, 0.45], [405, 100, 1.50, 1.5, 0.58]],
+    "wal-zgc": [[394, 21, 1.32, 1.5, 0.45], [440, 20, 1.68, 1.5, 0.58]],
+  } as const;
+  const [serving, quietSoloP99Ms, ratio, soloReads, loadedReads] = estimates[arm.scale][rate === 394 ? 0 : 1];
+  return { serving: solo ? 3.5 : serving, quietSoloP99Ms, quietP99Ratio: solo ? 1 : ratio,
+    sqlReadsPerSave: solo ? soloReads : loadedReads, maximumAwaitingReceipt: 6 };
+}
 export const tailArms: Arm[] = (["control", "wal", "zgc", "fair"] as const).map((tail) => ({
   ...storageOrderedArm,
   id: `1-tail-${tail}-S`,
@@ -155,7 +178,7 @@ function newCells(arm: Arm, duration: number) {
 
 export function cells(
   arm: Arm,
-  duration = arm.id === ceilingArm.id
+  duration = arm.id === ceilingArm.id || arm.scale
     ? ceilingSeconds
     : arm.tail
       ? tailSeconds
@@ -170,8 +193,9 @@ export function cells(
   tapeSha: string;
   credits?: 0 | 6;
 }[] {
-  if (arm.id === ceilingArm.id)
-    return ceilingVariants.flatMap(([rate, credits], band) => {
+  if (arm.id === ceilingArm.id || arm.scale) {
+    const variants = arm.scale ? ([[394, 6], [620, 6]] as const) : ceilingVariants;
+    return variants.flatMap(([rate, credits], band) => {
       // [DX-PREP1] Why: visit the account's working set broadly and give each treatment its own person band.
       // Rejected: replaying one hot tape onto both sides or claiming to reproduce a day in 90 seconds.
       const choose = (stream: Offer[]) =>
@@ -199,6 +223,7 @@ export function cells(
         credits,
       }));
     });
+  }
   if (!shortened(arm)) return newCells(arm, duration);
   return newCells(arm, seconds)
     .filter(({ rate }) => rate === 235 || rate === 394)

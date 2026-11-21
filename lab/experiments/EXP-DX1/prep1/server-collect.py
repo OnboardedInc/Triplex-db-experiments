@@ -37,12 +37,13 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     assert {k: v for k, v in arm.items() if k != "cells"} == header["arm"]
     assert plan["seconds"] == header["seconds"]
     campaign = plan.get("campaign", "comparison")
-    assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered", "ceiling", "tail", "tail-combined")
-    wide = campaign == "ceiling"
+    assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered", "ceiling", "scale", "tail", "tail-combined")
+    scale = campaign == "scale"
+    wide = campaign == "ceiling" or scale
     pg_data = False
     pg_data_evidence = []
     tail = campaign in ("tail", "tail-combined")
-    storage = campaign in ("storage", "storage-ordered", "ceiling") or tail
+    storage = campaign in ("storage", "storage-ordered") or wide or tail
     ordered_ids = arm.get("orderedIds", False)
     followup = campaign != "comparison"
     fair_credits = header.get("fairCredits", 0)
@@ -67,6 +68,11 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         assert all(a["writer"] == "S" and a["writers"] == 1 and a["numericOwner"]
                    and a["orderedIds"] and not a["reverse"] and not a["prefetch"] and a["cacheGiB"] == 2
                    for a in plan["arms"])
+    elif scale:
+        assert [(a["id"], a["scale"], a["cacheGiB"], a["credits"]) for a in plan["arms"]] == [
+            (f"1-scale-{name}-S", name, size, 6) for name, size in (("base", 2), ("cache", 16), ("wal-zgc", 16))]
+        assert all(a["writers"] == 1 and a["writer"] == "S" and a["numericOwner"] and a["orderedIds"]
+                   and not a["reverse"] and not a["prefetch"] for a in plan["arms"])
     elif storage:
         controls = [
             ("1-group-K", 1, "K", False, False, False, 2, False),
@@ -82,9 +88,11 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                  a["cacheGiB"], a.get("orderedIds", False)) for a in plan["arms"]] == expected_arms
         assert fair_credits == 0
     if wide:
+        variants = ((394, "on", 6), (620, "on", 6)) if scale else (
+            (620, "off", 0), (620, "on", 6), (900, "on", 6), (900, "off", 0))
         assert [(c["label"], c["rate"], c["offered"], c["fairCredits"]) for c in arm["cells"]] == [
             (f"r{rate}-{kind}-{mode}", rate, round((3.5 if mode == "alone" else rate) * plan["seconds"]), credits)
-            for rate, kind, credits in ((620, "off", 0), (620, "on", 6), (900, "on", 6), (900, "off", 0))
+            for rate, kind, credits in variants
             for mode in ("alone", "loaded")
         ]
     elif followup:
@@ -106,6 +114,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         if wide:
             seed = read(directory.parent / "seed.json")
             pg_data = seed.get("storage") == "pg-data"
+            assert not scale or pg_data
             assert (seed["facts"], seed["head"], seed["db"], seed["scope"]) == (
                 162_456_470, 87002, header["db"], header["scope"]) and header["head"] == seed["head"]
             if not pg_data:
@@ -125,7 +134,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 assert copied[key] == proof[key] == value
             assert copied["pgVersion"] == 17 and copied["volume"] == header["slot"] + "-pg-data"
             assert re.fullmatch(r"[0-9a-f]{64}", copied["sourceControlSha"])
-            assert copied["sourceControlSha"] == control.read_text().strip() and copied["inspectSha"] == sha(clone)
+            control_sha, *wal_digests = control.read_text().splitlines()
+            assert copied["sourceControlSha"] == control_sha and copied["inspectSha"] == sha(clone)
             assert copied["helperSha"] == sha(Path(__file__).with_name("copy-pgdata.sh"))
             pg, = [c for c in read(live_pg) if c["Name"] == "/" + header["slot"] + "-pg"]
             mount, = [m for m in pg["Mounts"] if m["Destination"] == "/var/lib/postgresql/data"]
@@ -140,6 +150,19 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             loader = hashlib.sha256(claim_key.encode()).hexdigest()
             assert re.fullmatch(rf"load1/{loader}/[0-9]+", proof["command"]) and proof["claim"].startswith("_tx/")
             pg_data_evidence = [copy, observed, control, clone, live_pg]
+            external_wal = scale and arm["scale"] == "wal-zgc"
+            if external_wal:
+                device_path = directory.parent / "scale-wal-mount.json"
+                device, = read(device_path)["filesystems"]
+                assert (device["source"], device["fstype"]) == ("/dev/nvme1n1", "ext4")
+                wal_mount = str(Path(device["target"]) / header["slot"])
+                wal, = [m for m in pg["Mounts"] if m["Destination"] == "/wal"]
+                assert (wal["Type"], wal["Source"], wal["RW"]) == ("bind", wal_mount, True)
+                assert copied["walDirectory"] == wal_mount
+                assert [copied["walFilesSha"]] == wal_digests and re.fullmatch(r"[0-9a-f]{64}", wal_digests[0])
+                pg_data_evidence.append(device_path)
+            else:
+                assert not wal_digests and all(m["Destination"] != "/wal" for m in pg["Mounts"])
         else:
             assert re.fullmatch(r"[0-9a-f]{64}", header["dumpSha"])
             assert header["dumpSha"] == seal["seed.pgdump"]
@@ -182,6 +205,29 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             assert 23 << 30 <= tx_jvm["jvm"]["maxHeapBytes"] <= 24 << 30
             tx_container, = [container for container in stack["containers"] if container["name"] == header["slot"] + "-tx"]
             assert tx_container["memory"] == 30 << 30
+        if scale:
+            config = native_path.parents[2] / "config"
+            masks = {"tx": "0" if arm["scale"] == "base" else "0,7-8", "pg": "1", "gw-w": "2-5", "gw-r": "6"}
+            assert {c["name"].removeprefix(header["slot"]+"-"): c["cpuset"] for c in stack["containers"]} == masks
+            base_image_path, zgc_image_path = config / "java-image.txt", config / "tail-tx-image.txt"
+            base_image = base_image_path.read_text().split("|")
+            tx_image = zgc_image_path.read_text().split("|") if external_wal else base_image
+            assert base_image[1] in ("21", "", "<no value>") and (tx_image[1] == "25") == external_wal
+            pg_data_evidence.append(base_image_path)
+            if external_wal:
+                pg_data_evidence.append(zgc_image_path)
+            for role in roles:
+                container, = [c for c in stack["containers"] if c["name"] == header["slot"] + "-" + role]
+                assert container["imageId"] == (tx_image if role == "tx" else base_image)[0]
+                log = (native_path.parent / f"prep1-gc-{role}.log").read_text()
+                assert re.search(r"Using (?:The Z Garbage Collector|ZGC)" if role == "tx" and external_wal else "Using G1", log)
+            settings_path = directory / "pg-settings.json"
+            sql = read(settings_path)
+            data, wal, data_dev, wal_dev = sql["layout"]
+            assert wal == ("/wal/pg_wal" if external_wal else data + "/pg_wal") and (data_dev != wal_dev) == external_wal
+            assert sql["settings"]["wal_sync_method"] == "fdatasync"
+            assert all(sql["settings"][key] == "on" for key in ("fsync", "synchronous_commit", "full_page_writes"))
+            pg_data_evidence.append(settings_path)
 
     native, end, block_no = {}, False, 0
     tail_appends = {}
@@ -231,6 +277,22 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         rows = sorted(result["rows"], key=lambda r: r["ordinal"])
         times, counts, block_ids, joined = collections.defaultdict(list), collections.Counter(), set(), set()
         in_window, stages_by_save, flush_ms = 0, collections.defaultdict(list), {}
+        in_window_appends = set()
+        cpu = {}
+        if scale and not fixture:
+            before, after = (result["transactorCpu"][edge] for edge in ("before", "after"))
+            assert before["container"] == after["container"] == tx_container["id"]
+            assert before["pid"] == after["pid"] > 1
+            live_tx, = [c for c in read(live_pg) if c["Name"] == "/" + header["slot"] + "-tx"]
+            assert (before["container"], before["pid"]) == (live_tx["Id"], live_tx["State"]["Pid"])
+            start, end = int(before["monoNs"]), int(after["monoNs"])
+            start_cell = int(result["phaseStartNs"])
+            assert start <= start_cell < end and abs((end - start_cell) / 1e6 - result["drained"]) < 500
+            used = after["usageUsec"] - before["usageUsec"]
+            cores = 1 if arm["scale"] == "base" else 3
+            assert 0 < used <= (end-start) / 1000 * (cores + 0.02)
+            cpu = {"transactorCpuMeanCores": used*1000 / (end-start),
+                   "transactorCpuSeconds": used / 1e6, "cpuWindowSeconds": (end-start) / 1e9}
         turns = collections.defaultdict(list)
         turn_appends = collections.defaultdict(set)
         prepared, hinted = 0, 0
@@ -268,6 +330,10 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 stages_by_save["httpRoundTrip"].append(r["end"] - r["sent"])
                 if ack.get("nativeComputeMs") is not None:
                     stages_by_save["nativeCompute"].append(ack["nativeComputeMs"])
+                if scale and not fixture:
+                    stages_by_save["gatewayPreparation"].append(stages["payloadPrepared"] / 1000)
+                    stages_by_save["gatewayPredecessor"].append((stages["predecessorReady"] - stages["payloadPrepared"]) / 1000)
+                    stages_by_save["submitToNativeEntry"].append(ack.get("submitToNativeEntryMs", 0))
                 if "subjectHintsStarted" in stages:
                     assert arm.get("prefetch")
                     assert stages["payloadPrepared"] <= stages["subjectHintsStarted"] <= stages["subjectHintsFinished"] <= stages["submitted"]
@@ -304,6 +370,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 stages_by_save["nativeWork"].append((member["applied-at"] - member["started-at"]) / 1e6)
                 stages_by_save["nativeReadyToAppend"].append((chunk["start"] - member["applied-at"]) / 1e6)
                 flush_ms[block] = (chunk["end"] - chunk["start"]) / 1e6
+                if int(result["phaseStartNs"]) <= chunk["end"] < int(result["phaseStartNs"]) + result["seconds"] * 1_000_000_000:
+                    in_window_appends.add(block)
                 if cell_credits:
                     turn_appends[r["fairTurn"]].add(block)
                 joined.add(receipt["t"])
@@ -348,7 +416,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                         "nativeIoPerSave": {key: {"mean": sum(samples) / len(samples), "p99": p99(samples)}
                                             for key, samples in native_io.items()},
                         "appendP99Ms": p99(list(flush_ms.values())),
-                        **({"appendMaxMs": max(flush_ms.values(), default=None)} if tail else {}),
+                        **({"appendMaxMs": max(flush_ms.values(), default=None)} if tail or scale else {}),
+                        **({"appendsPerSecond": len(in_window_appends) / result["seconds"], **cpu} if scale else {}),
                         "fairTurns": len(turns), "maxAppendsPerTurn": max(map(len, turn_appends.values()), default=0),
                         "nativeT": len(joined), "appends": len(block_ids),
                         "savesPerAppend": len(positions) / len(block_ids) if block_ids else None,

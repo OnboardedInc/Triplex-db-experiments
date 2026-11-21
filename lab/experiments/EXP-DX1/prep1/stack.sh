@@ -323,7 +323,18 @@ case "$PREP1_MODE" in
       # [DX-PREP1] Why: reopen the measured SQL receipt on the exact cold-copy helper used on the server.
       # Rejected: exercising a mock PostgreSQL layout or continuing to use the old live data path.
       mkdir "$work/clone"
-      control=$(PATH="$pg:$PATH" sh /config/copy-pgdata.sh "$work/data" "$work/clone")
+      wal_target=()
+      if [[ -f /config/pgdata-wal ]]; then
+        # A separate tmpfs exercises cross-device moves without claiming physical durability on the Mac.
+        wal_target=("$(mktemp -d /dev/shm/prep1-wal.XXXXXX)")
+      fi
+      copy_proof=$(PATH="$pg:$PATH" sh /config/copy-pgdata.sh "$work/data" "$work/clone" "${wal_target[@]}")
+      control=$(head -n 1 <<< "$copy_proof")
+      if ((${#wal_target[@]})); then
+        wal_sha=$(sed -n '2p' <<< "$copy_proof")
+        [[ $wal_sha =~ ^[a-f0-9]{64}$ && $(readlink -f "$work/clone/pg_wal") == "${wal_target[0]}/pg_wal" && ! -L $work/data/pg_wal ]]
+        printf 'PREP1_PGDATA_WAL {"attempt":"%s","walFilesSha":"%s"}\n' "$PREP1_ATTEMPT" "$wal_sha"
+      fi
       start_postgres "$work/clone"
       [[ $(sql -d datomic -c 'SHOW data_directory') == "$work/clone" ]]
       held=$(sha256sum "$work/data/global/pg_control" | cut -d ' ' -f 1)

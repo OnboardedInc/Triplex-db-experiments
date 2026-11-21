@@ -51,6 +51,10 @@ def inspect(root):
             reopened = next(i for i, line in enumerate(lines) if line.startswith("PREP1_PGDATA "))
             assert boots[0] < reopened < reads[1]
             result["pgDataCopy"] = copy
+            if inputs.get("pgDataWal"):
+                wal, = events("PREP1_PGDATA_WAL ")
+                assert wal["attempt"] == attempt and re.fullmatch(r"[a-f0-9]{64}", wal["walFilesSha"])
+                result["pgDataWal"] = wal
         assert after["originalOperation"] == [409, "OperationDuplicate"]
         assert after["newOperation"] == [409, "CommandConflict"]
         result.update(nativeTests=tests, replicaFlushes=flushes)

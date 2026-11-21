@@ -10,7 +10,7 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 here=lab/experiments/EXP-DX1/prep1
 stack=lab/experiments/EXP-DX1/stack
-mode=${1:?expected run, storage, storage-ordered, ceiling, tail, tail-combined, owner, fair or arm}
+mode=${1:?expected run, storage, storage-ordered, ceiling, scale, tail, tail-combined, owner, fair or arm}
 out=${2:?provide an absolute new output directory}
 source=${3:?provide the pinned Git commit}
 [[ "$out" == /* && "$source" =~ ^[a-f0-9]{40}$ && $(git rev-parse HEAD) == "$source" && -z $(git status --porcelain) ]]
@@ -28,17 +28,22 @@ producer=(node --import tsx "$here/server-produce.ts")
 tx_memory=10g tx_cache=2g
 tx_java='-Xms1g -Xmx6g -XX:+UseG1GC -XX:MaxGCPauseMillis=50'
 pg_settings='-c shared_buffers=2GB -c track_wal_io_timing=on'
-if [[ $mode == arm && ${DX_PREP1_CAMPAIGN:-comparison} =~ ^(storage(-ordered)?|ceiling|tail(-combined)?)$ ]]; then
+tx_cores=1
+if [[ $mode == arm && ${DX_PREP1_CAMPAIGN:-comparison} =~ ^(storage(-ordered)?|ceiling|scale|tail(-combined)?)$ ]]; then
   # [DX-PREP1] Why: reserve the same JVM and container budget for every cache comparison.
   # Rejected: changing the heap or CPU as well as the object cache between the two S arms.
   tx_memory=30g
-  if [[ ${4:-} == 1-cache-S ]]; then tx_cache=16g; fi
+  if [[ ${4:-} =~ ^1-(cache|scale-(cache|wal-zgc))-S$ ]]; then tx_cache=16g; fi
   tx_java="-Xms1g -Xmx24g -XX:+UseG1GC -XX:MaxGCPauseMillis=50 -Ddatomic.objectCacheMax=$tx_cache -Ddatomic.prefetchProbes=true"
 fi
-if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ && $mode == arm ]]; then
+if [[ ${DX_PREP1_CAMPAIGN:-} == scale && $mode == arm && ${4:-} != 1-scale-base-S ]]; then
+  export DX_PREP1_TX_CPUS=0,7-8
+  tx_cores=3
+fi
+if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^(scale|tail(-combined)?)$ && $mode == arm ]]; then
   pg_settings+=' -c fsync=on -c synchronous_commit=on -c full_page_writes=on -c wal_sync_method=fdatasync -c checkpoint_timeout=5min -c checkpoint_completion_target=0.9 -c checkpoint_flush_after=256kB -c min_wal_size=80MB -c max_wal_size=1GB -c log_checkpoints=on -c log_timezone=UTC'
-  if [[ ${4:-} =~ ^1-tail-(zgc|combined)-S$ ]]; then
-    collector=$(node --input-type=module -e 'import {collectorOptions} from "./lab/experiments/EXP-DX1/jvm1/launch.mjs"; console.log(collectorOptions("25", "ZGC", "tx", 1).join(" "))')
+  if [[ ${4:-} =~ ^1-(tail-(zgc|combined)|scale-wal-zgc)-S$ ]]; then
+    collector=$(node --input-type=module -e 'import {collectorOptions} from "./lab/experiments/EXP-DX1/jvm1/launch.mjs"; console.log(collectorOptions("25", "ZGC", "tx", Number(process.argv[1])).join(" "))' "$tx_cores")
     tx_java="-Xms1g -Xmx24g $collector -Ddatomic.objectCacheMax=$tx_cache -Ddatomic.prefetchProbes=true"
     export DX_PREP1_TAIL_TX_ZGC=1
   fi
@@ -82,12 +87,20 @@ unmount_wal() {
     unset mounted_wal DX_PREP1_TAIL_WAL_MOUNT wal_created
   fi
 }
+clear_scale_wal() {
+  if [[ -n ${scale_wal_owned:-} ]]; then
+    [[ $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == /dev/nvme1n1 &&
+       $scale_wal_owned == "$scale_wal_mount/$owned" && $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-scale-wal-zgc-s$ && ! -L $scale_wal_owned ]] || return 1
+    rm -rf --one-file-system -- "$scale_wal_owned" || return 1
+    unset scale_wal_owned DX_PREP1_SCALE_WAL_DIR
+  fi
+}
 on_exit() {
   ret=$?
   trap - EXIT
   stop_observer || ret=1
   # Keep the WAL mounted if the owned stack could not be removed.
-  if clean; then unmount_wal || ret=1; else ret=1; fi
+  if clean; then unmount_wal && clear_scale_wal || ret=1; else ret=1; fi
   exit "$ret"
 }
 trap on_exit EXIT
@@ -95,12 +108,31 @@ trap 'exit 143' TERM INT
 if [[ $mode == ceiling ]]; then
   [[ $# == 6 || ($# == 8 && $7 == --pg-data) ]]
   exec timeout --kill-after=40s 3560s bash "$here/server.sh" ceiling-timed "${@:2}"
-elif [[ $mode == ceiling-timed ]]; then
-  [[ ($# == 6 || ($# == 8 && $7 == --pg-data)) && $4 == /* && ! -e $out && -z $(docker ps -q) ]]
+elif [[ $mode == scale ]]; then
+  [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount ]]
+  exec timeout --kill-after=40s 2660s bash "$here/server.sh" scale-timed "${@:2}"
+elif [[ $mode == ceiling-timed || $mode == scale-timed ]]; then
+  if [[ $mode == scale-timed ]]; then
+    [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && ${10} == /* ]]
+    scale_wal_mount=$(realpath -e "${10}")
+    [[ $scale_wal_mount != *[,\"$'\n']* && $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == /dev/nvme1n1 &&
+       $(findmnt -nro FSTYPE --mountpoint "$scale_wal_mount") == ext4 && $(findmnt -nro SOURCE /) == /dev/nvme0n1p2 ]]
+    [[ -f /sys/fs/cgroup/cgroup.controllers ]]
+    for cpu in {0..8}; do taskset -c "$cpu" true; done
+    core_count=$(lscpu -p=CPU,CORE,SOCKET | awk -F, '$1 ~ /^[0-8]$/ { print $2 ":" $3 }' | sort -u | wc -l)
+    [[ $core_count == 9 ]]
+    unset DX_PREP1_SCALE_WAL_DIR DX_PREP1_TAIL_TX_ZGC DX_JAVA DX_DATOMIC_IMAGE_RECEIPT DX_BM1_WAL_MOUNT DX_BM1_WAL_AB
+    export DX_PREP1_TX_CPUS=0 DX_PREP1_PG_CPUS=1 DX_PREP1_WRITE_CPUS=2-5 DX_PREP1_READ_CPUS=6 DX_INT1_GATEWAYS=original
+    java25=$(DX_JAVA=25 DX_DATOMIC_IMAGE_RECEIPT="${DX_PREP1_JAVA25_RECEIPT:-}" node lab/config/datomic/runtime.mjs image)
+    docker image inspect "$java25" >/dev/null
+  else
+    [[ $# == 6 || ($# == 8 && $7 == --pg-data) ]]
+  fi
+  [[ $4 == /* && ! -e $out && -z $(docker ps -q) ]]
   parent=$(realpath -e "$4")
   unset DX_PREP1_PGDATA DX_PREP1_DUMP DX_JVM1_PG_RESTORE
   seed_mode=()
-  if [[ $# == 8 ]]; then
+  if [[ $# -ge 8 ]]; then
     [[ $8 == /* ]]
     DX_PREP1_PGDATA=$(realpath -e "$8")
     [[ -d $DX_PREP1_PGDATA && $DX_PREP1_PGDATA != *[,\"$'\n']* && $DX_PREP1_PGDATA != / ]]
@@ -110,7 +142,7 @@ elif [[ $mode == ceiling-timed ]]; then
     [[ -f $parent/seed.pgdump && $(head -c 5 "$parent/seed.pgdump") == PGDMP ]]
   fi
   mkdir "$out" "$DX_STACK_EVIDENCE"
-  export DX_PREP1_CAMPAIGN=ceiling DX_PREP1_FAIR_CREDITS=0
+  export DX_PREP1_CAMPAIGN=${mode%-timed} DX_PREP1_FAIR_CREDITS=0
   "${producer[@]}" adopt-scale "$parent" "$5" "$6" "${seed_mode[@]}" > "$seed"
   "${producer[@]}" plan > "$out/plan.json"
   if [[ -n ${DX_PREP1_PGDATA:-} ]]; then
@@ -125,11 +157,29 @@ elif [[ $mode == ceiling-timed ]]; then
   printf '%s\n' "$tag" > "$prefix_file"
   printf '%s\n' "$source" > "$out/source"
   chmod a-w "$out"/{SEAL.sha256,source,seed.json,plan.json,prefix}
-  # [DX-PREP1] Why: restore the full seed once and use disjoint cohorts in one time-bounded run.
-  # Rejected: counting two unbounded restores against the one-hour experiment.
-  owned="tx2-dxprep1-$tag-1-ceiling-s"
-  bash "$here/server.sh" arm "$out" "$source" 1-ceiling-S
-  unset owned
+  if [[ $mode == scale-timed ]]; then
+    # [DX-PREP1] Why: reopen the same stopped cut independently for each transactor policy.
+    # Rejected: letting earlier edits warm the people and leaves for later treatments.
+    findmnt --json --mountpoint "$scale_wal_mount" -o SOURCE,TARGET,FSTYPE > "$out/scale-wal-mount.json"
+    for cell in 1-scale-base-S 1-scale-cache-S 1-scale-wal-zgc-S; do
+      owned="tx2-dxprep1-$tag-${cell,,}"
+      if [[ $cell == 1-scale-wal-zgc-S ]]; then
+        mkdir -m 0700 "$scale_wal_mount/$owned"
+        scale_wal_owned=$scale_wal_mount/$owned
+        export DX_PREP1_SCALE_WAL_DIR=$scale_wal_owned
+      fi
+      timeout --foreground --kill-after=20s 850s bash "$here/server.sh" arm "$out" "$source" "$cell"
+      clear_scale_wal
+      unset owned
+      mv "$out/$cell/summary.tmp" "$out/$cell/summary.json"
+    done
+  else
+    # [DX-PREP1] Why: the original ceiling uses disjoint cohorts in one restored database.
+    # Rejected: counting two unbounded restores against the one-hour experiment.
+    owned="tx2-dxprep1-$tag-1-ceiling-s"
+    bash "$here/server.sh" arm "$out" "$source" 1-ceiling-S
+    unset owned
+  fi
 elif [[ $mode == fair || $mode == owner || $mode == storage || $mode == storage-ordered || $mode =~ ^tail(-combined)?$ ]]; then
   [[ $# == 4 ]]
   # [DX-PREP1] Why: cap time from seed verification through the last cleanup.
@@ -269,6 +319,8 @@ elif [[ $mode == arm ]]; then
     [[ $cell == 1-ordered-S && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == ceiling ]]; then
     [[ $cell == 1-ceiling-S && $(cat "$out/source") == "$source" ]]
+  elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == scale ]]; then
+    [[ $cell =~ ^1-scale-(base|cache|wal-zgc)-S$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == tail ]]; then
     [[ $cell =~ ^1-tail-(control|wal|zgc|fair)-S$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == tail-combined ]]; then
@@ -279,7 +331,7 @@ elif [[ $mode == arm ]]; then
   tag=$(cat "$prefix_file")
   [[ $tag =~ ^[0-9a-f]{8}$ && -z $(docker ps -q) ]]
   if [[ -n ${DX_PREP1_PGDATA:-} ]]; then
-    [[ ${DX_PREP1_CAMPAIGN:-} == ceiling && ! -e $dump ]]
+    [[ ${DX_PREP1_CAMPAIGN:-} =~ ^(ceiling|scale)$ && ! -e $dump ]]
     (cd "$out"; sha256sum --strict -c SEAL.sha256 > /dev/null)
     unset DX_PREP1_DUMP DX_PREP1_DUMP_SHA
     export DX_PREP1_SEED_SHA=$(sha256sum "$seed" | cut -d ' ' -f 1)
@@ -296,9 +348,9 @@ elif [[ $mode == arm ]]; then
   export DX_PREP1_SUBJECT=0 DX_GROUP_COMMIT=1 DX_LIVE_PRIORITY=1
   export TX2_SUBJECT_NUMERIC_OWNER=0 TX2_SUBJECT_PREFETCH=0 TX2_SUBJECT_ORDERED_IDS=0
   if [[ $cell == *-S ]]; then export DX_PREP1_SUBJECT=1 DX_GROUP_COMMIT=0 DX_LIVE_PRIORITY=0; fi
-  if [[ $cell == 1-fixed-S || $cell == 1-prefetch-S || $cell == 1-ordered-S || $cell == 1-ceiling-S || $cell == 1-tail-*-S ]]; then export TX2_SUBJECT_NUMERIC_OWNER=1; fi
+  if [[ $cell == 1-fixed-S || $cell == 1-prefetch-S || $cell == 1-ordered-S || $cell == 1-ceiling-S || $cell == 1-tail-*-S || $cell == 1-scale-*-S ]]; then export TX2_SUBJECT_NUMERIC_OWNER=1; fi
   if [[ $cell == 1-prefetch-S ]]; then export TX2_SUBJECT_PREFETCH=1; fi
-  if [[ $cell == 1-ordered-S || $cell == 1-ceiling-S || $cell == 1-tail-*-S ]]; then export TX2_SUBJECT_ORDERED_IDS=1; fi
+  if [[ $cell == 1-ordered-S || $cell == 1-ceiling-S || $cell == 1-tail-*-S || $cell == 1-scale-*-S ]]; then export TX2_SUBJECT_ORDERED_IDS=1; fi
   export DX_WRITE_OPTIONS_ATTEMPT=$(nonce)
   # Hold total configured writer heap and the writer CPU mask fixed across peer counts.
   export DX_GW_WRITE_JAVA_OPTS="-Xms$((512/DX_PREP1_WRITERS))m -Xmx$((4096/DX_PREP1_WRITERS))m -XX:+UseG1GC"
@@ -309,6 +361,7 @@ elif [[ $mode == arm ]]; then
   mkdir "$dir"
   cat /proc/sys/kernel/random/boot_id > "$dir/boot-id"
   bash "$stack/up.sh" "$owned" "${up_args[@]}" > "$dir/start.log" 2>&1
+  if [[ ${DX_PREP1_CAMPAIGN:-} == scale ]]; then bash "$here/tail-pg.sh" settings "$owned" > "$dir/pg-settings.json"; fi
   urls=()
   for ((i=0;i<DX_PREP1_WRITERS;i++)); do urls+=("http://127.0.0.1:$((8491+i))"); done
   trace="$DX_STACK_EVIDENCE/$owned/trace/raw"
@@ -340,6 +393,8 @@ elif [[ $mode == arm ]]; then
     "$DX_STACK_EVIDENCE/$owned/stack.json" http://127.0.0.1:8495 "${urls[@]}"
   if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then
     bash "$here/tail-pg.sh" stats "$owned" > "$dir/pg-after.json"
+  fi
+  if [[ ${DX_PREP1_CAMPAIGN:-} =~ ^(scale|tail(-combined)?)$ ]]; then
     docker stop -t 15 "$owned-gw-w" "$owned-gw-r" >/dev/null
   fi
   docker stop -t 30 "$owned-tx" >/dev/null
@@ -353,6 +408,6 @@ elif [[ $mode == arm ]]; then
   fi
   clean
   unset owned
-  if [[ ! ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ ]]; then mv "$dir/summary.tmp" "$dir/summary.json"; fi
+  if [[ ! ${DX_PREP1_CAMPAIGN:-} =~ ^(scale|tail(-combined)?)$ ]]; then mv "$dir/summary.tmp" "$dir/summary.json"; fi
 else exit 2
 fi

@@ -34,6 +34,8 @@ import {
   ownerArms,
   ownerPrediction,
   prediction,
+  scaleArms,
+  scalePrediction,
   seconds,
   storageArms,
   storageOrderedArm,
@@ -80,7 +82,7 @@ assert(
     campaign === "owner" ||
     campaign === "storage" ||
     campaign === "storage-ordered" ||
-    campaign === "ceiling" ||
+    campaign === "ceiling" || campaign === "scale" ||
     campaign === "tail" || campaign === "tail-combined",
 );
 const campaignArms = {
@@ -90,10 +92,11 @@ const campaignArms = {
   storage: storageArms,
   "storage-ordered": [storageOrderedArm],
   ceiling: [ceilingArm],
+  scale: scaleArms,
   tail: tailArms,
   "tail-combined": [tailCombinedArm],
 }[campaign];
-const wide = campaign === "ceiling";
+const wide = campaign === "ceiling" || campaign === "scale";
 const campaignSeconds = wide
   ? ceilingSeconds
   : campaign === "comparison"
@@ -110,6 +113,31 @@ const fact = (e: string, a: string, value: string): Fact => ({
   v: { type: "string", value },
 });
 const digest = (bytes: Buffer) => createHash("sha256").update(bytes).digest("hex");
+type CpuSample = { container: string; pid: number; monoNs: string; usageUsec: number };
+
+function transactorCpu(stackPath: string, slot: string): () => CpuSample {
+  const containers = load<{ Name: string; Id: string; State: { Pid: number } }[]>(
+    join(dirname(stackPath), "containers.json"),
+  );
+  const tx = containers.find((c) => c.Name === `/${slot}-tx`);
+  assert(tx && /^[0-9a-f]{64}$/.test(tx.Id) && Number.isSafeInteger(tx.State.Pid) && tx.State.Pid > 1);
+  const pid = tx.State.Pid;
+  const membership = `/proc/${pid}/cgroup`;
+  const anchored = readFileSync(membership, "utf8");
+  const groups = /^0::(\/[a-zA-Z0-9._/-]+)\n$/.exec(anchored);
+  assert(groups && (groups[1]!.endsWith(`/${tx.Id}`) || groups[1]!.endsWith(`/docker-${tx.Id}.scope`)));
+  const cpuStat = `/sys/fs/cgroup${groups[1]}/cpu.stat`;
+  // [DX-PREP1] Why: price CPU use from the exact live container at both ends of the offered cell.
+  // Rejected: inferring CPU saturation from wall time that includes SQL reads or a pinned core count.
+  return () => {
+    assert.equal(readFileSync(membership, "utf8"), anchored);
+    const match = /^usage_usec (\d+)$/m.exec(readFileSync(cpuStat, "utf8"));
+    const usageUsec = Number(match?.[1]);
+    assert(Number.isSafeInteger(usageUsec) && usageUsec > 0);
+    return { container: tx.Id, pid, monoNs: process.hrtime.bigint().toString(), usageUsec };
+  };
+}
+
 function load<T>(file: string): T {
   return JSON.parse(readFileSync(file, "utf8"));
 }
@@ -186,6 +214,7 @@ async function phase(
   orderedIds: boolean,
   fair?: FairTurns,
   legacyIds?: ReadonlySet<string>,
+  sampleCpu?: () => CpuSample,
 ) {
   const inputs = new Map<string, Input>();
   const rows: {
@@ -207,6 +236,7 @@ async function phase(
   const pending = new Set<Promise<void>>();
   const busy = new Set<string>(),
     queues = accounts.map(() => [] as number[]);
+  const cpuBefore = sampleCpu?.();
   const started = performance.now(),
     elapsed = () => performance.now() - started;
   const phaseStartNs = process.hrtime.bigint().toString();
@@ -324,6 +354,7 @@ async function phase(
   }
   while (pending.size) await Promise.all([...pending]);
   const drained = elapsed();
+  const cpuAfter = sampleCpu?.();
   for (const n of queues.flat()) {
     const o = cell.tape[n]!;
     rows.push({
@@ -419,6 +450,7 @@ async function phase(
     phaseStartNs,
     phaseWallMs,
     drained,
+    ...(cpuBefore && cpuAfter ? { transactorCpu: { before: cpuBefore, after: cpuAfter } } : {}),
     head,
     after,
     rows,
@@ -561,6 +593,7 @@ async function armRun(
       ...(pgData ? { pgDataCopySha, seedReadbackSha } : {}),
     });
     const frozen = new Set<string>();
+    const sampleCpu = arm.scale ? transactorCpu(stackPath, slot) : undefined;
     let cut = head;
     for (const cell of schedule) {
       const result = await phase(
@@ -578,6 +611,7 @@ async function armRun(
             ? new FairTurns(accounts.length, cell.credits)
             : undefined,
         legacyIds,
+        sampleCpu,
       );
       cut = result.after;
       save(`${out}/${cell.label}.json`, result);
@@ -758,7 +792,9 @@ else if (action === "adopt-scale") {
           tapeSha,
           offered: tape.length,
           ...(credits !== undefined ? { fairCredits: credits } : {}),
-          predicted: wide
+          predicted: arm.scale
+            ? scalePrediction(arm, rate, label.endsWith("-alone"))
+            : wide
             ? {
                 serving: label.endsWith("-alone")
                   ? 3.5

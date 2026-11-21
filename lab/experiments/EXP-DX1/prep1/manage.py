@@ -66,11 +66,14 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
         if mode != "subject-recovery" or ordered != "1":
             raise SystemExit("Tail SQL fixture requires ordered subject recovery")
         (config / "tail-sql").write_text("1\n")
-    pgdata_copy = os.environ.get("DX_PREP1_TEST_PGDATA") == "1"
+    pgdata_mode = os.environ.get("DX_PREP1_TEST_PGDATA", "")
+    pgdata_copy = pgdata_mode in ("1", "wal")
     if pgdata_copy:
         if mode != "subject-recovery":
             raise SystemExit("PGDATA copy fixture requires subject recovery")
         shutil.copyfile(EXPERIMENT / "copy-pgdata.sh", config / "copy-pgdata.sh")
+        if pgdata_mode == "wal":
+            (config / "pgdata-wal").touch()
     if mode == "live":
         if not 1 <= int(seconds) <= 60:
             raise SystemExit("Live window must be 1 to 60 seconds")
@@ -134,6 +137,7 @@ RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
         "orderedIds": ordered == "1",
         "tailSql": tail_sql,
         "pgDataCopy": pgdata_copy,
+        "pgDataWal": pgdata_mode == "wal",
         "explicitProbes": mode == "lookup-profile" and prefetch == "1",
         "head": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip(),
         "stage": {str(p.relative_to(stage)): sha(p) for p in sorted(stage.rglob("*"))

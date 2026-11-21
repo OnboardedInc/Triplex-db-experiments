@@ -251,12 +251,19 @@ fi
 [[ $subject_prefetch =~ ^[01]$ && ( $subject_prefetch == 0 || $subject_save == 1 ) ]]
 [[ $subject_ordered_ids =~ ^[01]$ && ( $subject_ordered_ids == 0 || ( $subject_save == 1 && $subject_prefetch == 0 ) ) ]]
 prep_pgdata=${DX_PREP1_PGDATA:-}
+prep_wal=${DX_PREP1_SCALE_WAL_DIR:-}
 if [[ -n $prep_pgdata ]]; then
-  [[ ${DX_BARE_METAL:-0} == 1 && ${DX_PREP1_SERVER:-0} == 1 && ${DX_PREP1_CAMPAIGN:-} == ceiling &&
-     $prefix =~ ^tx2-dxprep1-[a-f0-9]{8}-1-ceiling-s$ && -d $prep_pgdata && $prep_pgdata == /* &&
+  [[ ${DX_BARE_METAL:-0} == 1 && ${DX_PREP1_SERVER:-0} == 1 && ${DX_PREP1_CAMPAIGN:-} =~ ^(ceiling|scale)$ &&
+     $prefix =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(ceiling|scale-(base|cache|wal-zgc))-s$ && -d $prep_pgdata && $prep_pgdata == /* &&
      $prep_pgdata != *[,\"$'\n']* && -z $seed_volume && -z ${DX_PREP1_DUMP:-} && -z ${DX_JVM1_PG_RESTORE:-} &&
      -z ${DX_BM1_WAL_MOUNT:-} && ${DX_BM1_WAL_AB:-0} == 0 ]]
   [[ ${DX_PREP1_SEED_SHA:?} =~ ^[a-f0-9]{64}$ && ${DX_WRITE_OPTIONS_ATTEMPT:?} =~ ^[a-f0-9-]{36}$ ]]
+fi
+if [[ ${DX_PREP1_CAMPAIGN:-} == scale && $prefix == *-scale-wal-zgc-s ]]; then
+  [[ -n $prep_pgdata && $prep_wal == /* && $prep_wal != *[,\"$'\n']* && ${prep_wal##*/} == "$prefix" &&
+     -d $prep_wal && ! -L $prep_wal && $(findmnt -nro SOURCE --mountpoint "$(dirname "$prep_wal")") == /dev/nvme1n1 ]]
+else
+  [[ -z $prep_wal ]]
 fi
 stack_labels=()
 tx_java=$(node "$jvm_tool" tx "$tx" "$tx_java")
@@ -292,6 +299,7 @@ mkdir -p "$attempt/sql" "$attempt/config" "$attempt/trace/raw"
 # [DX-BM1] Why: separate only WAL from the root data volume under the same durability settings.
 # Rejected: relocating the database or changing synchronous_commit (either would confound the WAL A/B).
 wal_mount=()
+if [[ -n $prep_wal ]]; then wal_mount=(--mount "type=bind,source=$prep_wal,target=/wal"); fi
 if [[ -n ${DX_BM1_WAL_MOUNT:-} ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && $prefix =~ ^tx2-dxt1-bm1-[a-z0-9]+-wal-ssd$ && $publish == false && -z $seed_volume ]]
   [[ $(findmnt -nro SOURCE --mountpoint "$DX_BM1_WAL_MOUNT") == /dev/nvme1n1 ]]
@@ -330,7 +338,8 @@ tx_image=$datomic_image
 if [[ ${DX_PREP1_TAIL_TX_ZGC:-0} == 1 ]]; then
   # [DX-PREP1] Why: move only the transactor to the pinned Java 25 release and JVM1's collector.
   # Rejected: changing both gateways or letting a mutable tag silently select the wrong runtime.
-  [[ ${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ && $prefix =~ -tail-(zgc|combined)-s$ && $java_major == 21 ]]
+  [[ $java_major == 21 && ((${DX_PREP1_CAMPAIGN:-} =~ ^tail(-combined)?$ && $prefix =~ -tail-(zgc|combined)-s$) ||
+     (${DX_PREP1_CAMPAIGN:-} == scale && $prefix == *-scale-wal-zgc-s && -n $prep_wal)) ]]
   j25() { DX_JAVA=25 DX_DATOMIC_IMAGE_RECEIPT="${DX_PREP1_JAVA25_RECEIPT:-}" node "$runtime_tool" "$@"; }
   tx_meta=$(docker image inspect --format '{{.Id}}|{{index .Config.Labels "tx2.java-major"}}|{{index .Config.Labels "tx2.java-base"}}|{{index .Config.Labels "tx2.build-inputs-sha256"}}' "$(j25 image)")
   IFS='|' read -r tx_image tx_major tx_base tx_hash <<< "$tx_meta"
@@ -521,16 +530,21 @@ if [[ -n $prep_pgdata ]]; then
   # Rejected: replaying the large SQL dump or putting the held directory under a live postmaster.
   pg_image=$(docker image inspect --format '{{.Id}}' "$pg_image")
   copy_helper="$repo/lab/experiments/EXP-DX1/prep1/copy-pgdata.sh"
+  copy_wal=() wal_target=()
+  if [[ -n $prep_wal ]]; then
+    copy_wal=("${wal_mount[@]}" --tmpfs /tmp:size=4m)
+    wal_target=(/wal)
+  fi
   docker create --pull never --name "$prefix-seed-copy" --read-only --network none --memory 256m --memory-swap 256m \
     --mount "type=bind,src=$prep_pgdata,dst=/from,readonly" --mount "type=volume,src=$prefix-pg-data,dst=/to" \
     --mount "type=bind,src=$copy_helper,dst=/copy-pgdata.sh,readonly" \
-    --entrypoint /bin/sh "$pg_image" /copy-pgdata.sh /from /to >/dev/null
+    "${copy_wal[@]}" --entrypoint /bin/sh "$pg_image" /copy-pgdata.sh /from /to "${wal_target[@]}" >/dev/null
   docker start -a "$prefix-seed-copy" > "$attempt/pgdata.control.sha256"
   docker inspect "$prefix-seed-copy" > "$attempt/pgdata-copy-container.json"
   python3 - "$attempt" "$prefix" "$prep_pgdata" "$DX_PREP1_SEED_SHA" "$DX_WRITE_OPTIONS_ATTEMPT" \
-    "$(git -C "$repo" rev-parse HEAD)" "$pg_image" "$copy_helper" <<'PGDATA_COPY'
+    "$(git -C "$repo" rev-parse HEAD)" "$pg_image" "$copy_helper" "$prep_wal" <<'PGDATA_COPY'
 import hashlib, json, pathlib, re, sys
-directory, slot, source_dir, seed, attempt, source, image, helper = sys.argv[1:]
+directory, slot, source_dir, seed, attempt, source, image, helper, wal_dir = sys.argv[1:]
 root = pathlib.Path(directory)
 container, = json.loads((root/'pgdata-copy-container.json').read_text())
 assert not container['State']['Running'] and container['State']['ExitCode'] == 0
@@ -539,12 +553,18 @@ mounts = {m['Destination']: m for m in container['Mounts']}
 assert (mounts['/from']['Type'], mounts['/from']['Source'], mounts['/from']['RW']) == ('bind', source_dir, False)
 assert (mounts['/to']['Type'], mounts['/to']['Name'], mounts['/to']['RW']) == ('volume', slot+'-pg-data', True)
 assert (mounts['/copy-pgdata.sh']['Source'], mounts['/copy-pgdata.sh']['RW']) == (helper, False)
-control = (root/'pgdata.control.sha256').read_text().strip()
-assert re.fullmatch(r'[a-f0-9]{64}', control)
+control, *wal_digest = (root/'pgdata.control.sha256').read_text().splitlines()
+assert all(re.fullmatch(r'[a-f0-9]{64}', value) for value in [control, *wal_digest])
+if wal_dir:
+    assert (mounts['/wal']['Type'], mounts['/wal']['Source'], mounts['/wal']['RW']) == ('bind', wal_dir, True)
+    assert len(wal_digest) == 1
+else:
+    assert '/wal' not in mounts and not wal_digest
 with (root/'pgdata-copy.json').open('x') as f:
     json.dump(dict(source=source, slot=slot, nonce=attempt, seedSha=seed, image=image, volume=slot+'-pg-data',
                    pgVersion=17, sourceControlSha=control, helperSha=hashlib.sha256(pathlib.Path(helper).read_bytes()).hexdigest(),
-                   inspectSha=hashlib.sha256((root/'pgdata-copy-container.json').read_bytes()).hexdigest()), f)
+                   inspectSha=hashlib.sha256((root/'pgdata-copy-container.json').read_bytes()).hexdigest(),
+                   **(dict(walDirectory=wal_dir, walFilesSha=wal_digest[0]) if wal_dir else {})), f)
 PGDATA_COPY
   docker rm "$prefix-seed-copy" >/dev/null
 fi
