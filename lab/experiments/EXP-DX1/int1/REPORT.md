@@ -1,37 +1,11 @@
-The next scorecards should pin `5f62059b1fc03e8fffca0441f14ff4ddd4d7e734`.
-The billion-record scorecard keeps the earlier `57580241d` pin.
-The default allows up to six saves in a turn. Rolling mode returns each credit when its own reply is validated.
-Rolling mode reserves one opportunity for the quiet account even while neighbours are busy.
-Either launch profile can select rolling credits. The write gateway can select Java 25 ZGC on its own.
-The sampled lookup trace and serial revision option both start off.
-The Mac checked exact saved replies, immediate reads and PostgreSQL recovery in both writer modes.
-The fresh full-size comparison is still running. Its throughput and quiet-account numbers are forecasts.
-
-## Integration
-
-Took PREP1 `b0ffdd2ab` at `2fa0a5e37`. The shared sender validates the original operation and advances the person's predecessor before releasing its credit. An uncertain outcome freezes admission as the outstanding requests settle. Account 0 has a reserved credit at each rolling width. Select `--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16` or `DX_V01_CREDIT_MODE`. Select `--write-jvm j25-zgc` for the write gateway alone. The JVM plan and startup evidence name each role.
-
-Took W1's sampled lookup observer and the ordered writer's narrow native revision check with predecessor decode reuse from `ff4346209`. Select `PREP1_LOOKUP_EVERY=64` to sample and `DX_W1_SERIAL_APPLY=1` for the candidate. W1's separate server driver and unrelated query and protected-K commits stayed on W1. The next-card five-minute window and counters work is on DX-V01.
-
-## Mac correctness gates
-
-| Gate | Grouped K | Ordered per-person |
-| --- | --- | --- |
-| Barrier 6 | 56 exact reopened receipts, 50 immediate reads, 6 absent after denial | Same counts |
-| Rolling 6 | 56 exact reopened receipts, 50 immediate reads, 6 absent after denial | Same counts |
-| Rolling 12 | 62 exact reopened receipts, 50 immediate reads, 12 absent after denial | Same counts |
-| Scorecard toy | Barrier 6, 211 receipts, 96 quiet reads, 20 cold pulls | Rolling 12, same counts, 211 ordered journal ID blocks |
-| SDK | 439 passed, 53 skipped | 439 passed, 53 skipped |
-
-All six SQL arms recovered the lost reply and checked both resend forms. The barrier made one failed submission and left five queued offers absent. Rolling made six or twelve failed submissions. The first barrier fixture expected a full turn. The corrected fixture checks which offers actually reached the gateway. All 19 scheduler tests and 18 focused tests passed.
-
-W1 serial apply passed nine tests and 760 assertions, including the same-person race, retired IDs, exact restart recovery and two synchronous standby flushes. Its rolling 6 SQL sample covered 19 matched revision lookups and 56 exact reopened receipts. The image dry check confirmed that a writer-only Java 25 launch selects the pinned writer image and leaves Java 21 on the other two roles. Streaming lookup files and live mixed Java remain to be verified on Linux.
-
-The original 394-offer full-size scorecard stored 342.90 saves/s in-window. PREP1 forecasts 351, 381 and 394 for barrier 6, rolling 6 and rolling 12 at 394, with rolling quiet p99 of 36–43 ms. The Mac runs were correctness diagnostics. Live write-gateway Java 25 ZGC and full-size rolling efficacy still need Linux evidence.
-
-## Evidence audit
-
-The sender checks the operation and records predecessor values before releasing a settled credit. The SQL fixture checks the selected writer and scoped operation settings, compares immediate pinned fields, then independently checks reopened journal bytes, operation receipts, both resend outcomes and absent operations after native append denial. The recount binds the stage files, actual image, fresh slot and nonce. It joins each durable receipt to its own native append before the caller's observed response. The lookup recount joins exact transaction and the containing native apply clocks to bind unnamed apply-thread events to the right database. The scorecard checks its exact saved bytes and actual JVM role settings. All 521 pins and the frozen inputs matched. [Archives and checksums](V0.1-SHA256SUMS)
+Build `9cd20b29449456c1d8c2400fc45f8be331495530` on both servers for Sunday failover.
+Build `bfef77d34d7cd72bc0bcc291086287655e277885` for Publish at 100,000 people.
+The Sunday checks recovered the original save reply and matched every checked read through the move.
+Version 0.1 holds saves after a machine loss until a second verified copy is ready.
+The small Publish run matched the full read and save tapes in both credit modes.
+The two queued scorecards still use their original builds.
+All Mac clocks are diagnostic. Full-size receipts, latency and recovery remain for the servers.
+The public playground smoke gate follows the server work.
 
 ## Sunday failover integration audit
 
@@ -42,3 +16,7 @@ Build `9cd20b29449456c1d8c2400fc45f8be331495530` for both Sunday roles. TypeScri
 ## Held Publish integration audit
 
 The physical input checks bind the original image and transfer digests, stopped control record, prepared data and WAL mounts, immutable template and fresh engine identities to the clean build and queue lock. The local gate binds its startup attempt, source and live gateway digest to its reserved volume. The campaign matches each release recipe and each saved receipt to its contiguous native journal, and compares fixed-offset reads, settlement values, notice bytes and old/current reopened pins to the authored oracle at their cuts. Timely coverage uses the observed request clocks. These observations confer no acceptance verdict.
+
+The clean build completed eight package tasks. TypeScript, shell syntax, 27 focused tests and 19 scheduler checks passed. The ordered writer matched 3,816 save receipts and 192 pinned reads per mode, plus four Publish receipts each. The independent settlement replay matched 86 values and eight notices. A fresh reader reopened old and new release cuts. The harness shared one managed gateway endpoint for local reads and writes. The physical campaign uses its own read gateway and dedicated WAL mount.
+
+The Sunday adoption split supplies the new physical launcher without changing the old dump size check. The sender's pause, drain and resume apply only with an explicit Publish controller. The default PostgreSQL mount and WAL validation matched the old script's argument and refusal checks. The Java image selections matched in all four tested combinations. The frozen inputs and 521 acceptance pins are unchanged. [Checksums](V0.1-SHA256SUMS)
