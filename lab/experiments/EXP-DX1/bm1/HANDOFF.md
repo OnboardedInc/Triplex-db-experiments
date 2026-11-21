@@ -1,5 +1,13 @@
 # DX-BM1 bench handoff, November 19
 
+## Saturday handoff
+
+**Ready for the orchestrator since 00:59:15 EST on November 21. Server 1 cost about $67.09 as of 01:00 EST at $1.09/hour since Wednesday 11:27 EST.** The last benchmark ended at 00:52:10. STATUS reads `item=queue state=handoff-ready`. No benchmark containers or erasure listeners remain and the second NVMe is unmounted. It retains the ext4 filesystem for later work. The orchestrator owns the two-server failover window and release.
+
+The control, separate WAL, transactor ZGC, fair turns and combined tapes verified. The combined arm had zero expiries and 393.97 saves/s at 394 offered. Quiet p99 was 7.93 ms solo and 33.98 ms loaded. The 4.28× ratio exceeded 1.25×. No priority-Publish rerun launched. The original ACT1 cut 11,669 survives as census and readback evidence. Its cleanup removed the physical volume, and a fresh seed would exceed the 90-minute limit before the three single offers of the pinned command. No further erasure run is queued. [Append readings](APPEND-TAIL-READING.md) · [Erasure disposition](#erasure-stage-disposition)
+
+The bench retains `day-n20-prep1-tenant/campaign` with the original sealed inputs, the cold JVM1 copy, the full erasure staging directories and raw append traces. The Mac's `evidence/DX-BM1/day-n20` contains compressed copies for `prep1-tail`, `prep1-tail-syscall`, `prep1-tail-remaining`, `prep1-tail-combined`, `erasure-small`, `erasure`, `erasure-retry`, `erasure-image` and `erasure-recovery`. It also holds the earlier Java, cache, storage and pacing campaigns. Each completed append bundle includes the cause ledger for every physical call over 20 ms. The PostgreSQL and key-store files remain only on the server. [Sizes and paths](APPEND-TAIL-READING.md) · [SHA-256 manifest](SHA256SUMS)
+
 **North star.** DX-ACT1 measures durable guards for 100k W0 subjects with 256 live readers. The published P5 target specifies 64. P1–P4 use one full v3 pair and both tracing-off controls. [Scope](../../../SCOPE.md) · [North star](../../../NORTH-STAR.md) · [Targets](../../../TARGETS.md)
 
 The three sender arms completed and their bundles and checksummed COMPARISON.md are on the Mac under evidence/DX-BM1. The new sender measured 41.705 ms all-primary p99 with 38,826 correct receipt reads. The older 73.78 s activation omitted durable guards. Its historical seed cut is valid. Later writes make its current head unsuitable for a fresh guarded activation.
@@ -303,7 +311,7 @@ python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect prep1-tenant 7ca8525
 
 ## Friday evening queue
 
-**Server 1 estimated running cost at 00:40 EST is $66.73** at $1.09/hr since Wednesday 11:27 EST. The orchestrator owns the release. The absolute remaining window ends Saturday at 12:00 EST.
+**Server 1 estimated running cost at 01:00 EST is $67.09** at $1.09/hr since Wednesday 11:27 EST. The orchestrator owns the release. The absolute remaining window ends Saturday at 12:00 EST.
 
 The active PREP1 `1-2-S` is a one-gateway mirror. The first component of the producer's cell name is the writer count. The server fenced only the parent loop while this child continued. The reordered supervisor waits for that child's output and cleanup, reopens the same seal for `2-1-S` then `2-0-K`, and skips the other repeats and four-gateway arms. The measured pair's first collector checks each source, plan, seed, summary and fresh terminal against the original request. After it records the pair, TAIL1 `da4c34f48` then JVM1 `5a9652780` take the original `46880aa47` verified seed. TAIL1 uses Java 21 G1 and varies the transactor cache from 256 to 2,560 MiB. The Java 21 G1, Java 25 G1 and Java 25 ZGC comparison keeps placement fixed. The new order has three JVM arms.
 
