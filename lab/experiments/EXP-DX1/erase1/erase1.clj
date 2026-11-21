@@ -252,6 +252,10 @@
            (if (= op "clock") {:now (wall-ms)}
              (let [conn (connect! input main/connection)]
                (case op
+                 "parallel-writer" (do
+                                     (load-file "/erase1-writer-check/regression.clj")
+                                     (load-file "/erase1/parallel.clj")
+                                     ((ns-resolve 'erase1-parallel 'run!) (scope-name! input) conn))
                  "prepare" (prepare! conn input)
                  "erase" (erase! conn input)
                  "regression-excise" (regression-excise! conn input)

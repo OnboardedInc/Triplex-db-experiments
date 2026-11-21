@@ -74,11 +74,19 @@ else
   curl -fsSLo "$work/downloads/node.tar.xz" "https://nodejs.org/dist/v$version/node-v$version-linux-$node_arch.tar.xz"
   curl -fsSLo "$work/downloads/node-SHASUMS256.txt" "https://nodejs.org/dist/v$version/SHASUMS256.txt"
 fi
-python3 - "$work/downloads" "$version" "$node_arch" <<'PY_NODE'
+python3 - "$work/downloads" "$version" "$node_arch" "${DX_V01_PIN_IMAGES:-0}" <<'PY_NODE'
 import pathlib,hashlib,sys
 p=pathlib.Path(sys.argv[1]);name=f'node-v{sys.argv[2]}-linux-{sys.argv[3]}.tar.xz'
 rows=[line.split() for line in (p/'node-SHASUMS256.txt').read_text().splitlines()]
 expected=[h for h,n in rows if n==name];assert len(expected)==1
+# [DX-V01] Why: the release compiler archive must match the committed digest too.
+# Rejected: trusting the checksum fetched alongside an unpinned build input.
+if sys.argv[4]=='1':
+ pins = {
+  'node-v22.23.2-linux-arm64.tar.xz': 'fff4078c5def658577f92c88db7db3bc0072924bfb93fe52c1e744a54e94abb8',
+  'node-v22.23.2-linux-x64.tar.xz': 'd60acfe00a2932254bb0ad20e01b0d74397a0875595de719654b214f4b03f307',
+ }
+ assert expected[0]==pins[name], 'Pinned Node checksum differs from the release manifest'
 assert hashlib.sha256((p/'node.tar.xz').read_bytes()).hexdigest()==expected[0]
 PY_NODE
 tar -xJf "$work/downloads/node.tar.xz" --strip-components=1 -C "$work/tools"
@@ -117,12 +125,34 @@ for f in sorted(context.rglob('*')):
  if f.is_file():rows.append(f'{hashlib.sha256(f.read_bytes()).hexdigest()}  {f.relative_to(context)}')
 (p/'results/IMAGE-INPUTS.SHA256SUMS').write_text('\n'.join(rows)+'\n')
 PY_DATOMIC
-docker pull --platform "linux/$arch" node:22.23.2-bookworm-slim
-docker pull --platform "linux/$arch" postgres:17-alpine
+# [DX-V01] Why: server scorecard runs bind the two reused stack tags to immutable inputs.
+# Rejected: silently rebuilding from refreshed registry tags.
+if [[ ${DX_V01_PIN_IMAGES:-0} == 1 ]]; then
+  refs=$(node --no-warnings --experimental-transform-types --input-type=module -e \
+    'import {nodeImage, pgImage} from "./lab/experiments/EXP-DX1/v01/source.ts"; console.log(nodeImage, pgImage)')
+  for image in $refs; do
+    docker pull --platform "linux/$arch" "$image"
+    docker tag "$image" "${image%@*}"
+  done
+else
+  docker pull --platform "linux/$arch" node:22.23.2-bookworm-slim
+  docker pull --platform "linux/$arch" postgres:17-alpine
+fi
 build_hash=$(sha256sum "$work/results/IMAGE-INPUTS.SHA256SUMS" | cut -d' ' -f1)
-node lab/bin/heavy.mjs --label DX-T1-native-image -- docker build --platform "linux/$arch" --build-arg "BUILD_INPUTS_SHA256=$build_hash" -t tx2-datomic:1.0.7745-da00 "$work/image"
-docker image inspect tx2-datomic:1.0.7745-da00 node:22.23.2-bookworm-slim postgres:17-alpine > "$work/results/images.json"
-[[ $(docker image inspect --format '{{.Architecture}}' tx2-datomic:1.0.7745-da00) == "$arch" ]] || exit 2
+# [DX-JVM1] Why: a prepared checkout can compare both JREs against the same signed vendor archive.
+# Rejected: replacing the Java 21 tag before the matched comparison.
+java_tag() { DX_JAVA=$1 node lab/config/datomic/runtime.mjs "$2"; }
+[[ ${DX_JAVA:-21} == 21 || $DX_JAVA == 25 ]]
+majors=(21)
+[[ ${DX_JAVA:-21} != 25 ]] || majors+=(25)
+images=(node:22.23.2-bookworm-slim postgres:17-alpine)
+for major in "${majors[@]}"; do
+  tag=$(java_tag "$major" tag)
+  node lab/bin/heavy.mjs --label "DX-T1-native-image-$major" -- docker build --platform "linux/$arch"     --build-arg "BUILD_INPUTS_SHA256=$build_hash" --build-arg "DATOMIC_BASE=$(java_tag "$major" base)"     --build-arg "DATOMIC_JAVA_MAJOR=$major" --build-arg "DATOMIC_JAVA_VERSION=$(java_tag "$major" version)"     -t "$tag" "$work/image"
+  [[ $(docker image inspect --format '{{.Architecture}}' "$tag") == "$arch" ]]
+  images+=("$tag")
+done
+docker image inspect "${images[@]}" > "$work/results/images.json"
 lscpu > "$work/results/lscpu.txt";lsblk -o NAME,TYPE,SIZE,FSTYPE,MOUNTPOINTS > "$work/results/disks.txt"
 [[ $mode != --prepare ]] || exit 0
 export DX_COMPILER_POLICY=early DX_NATIVE_GATES=0

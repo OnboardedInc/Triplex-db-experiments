@@ -56,6 +56,22 @@
 (defmacro recorded-row-decoder [] compiled-recorded-row)
 (def recorded-row (recorded-row-decoder))
 
+;; [DX-PREP1] Why: the subject worker and reference transaction stamp the same retraction.
+;; Rejected: a second normalizer with different predecessor metadata or byte order.
+(def change-code
+  '(fn [change clock new-ids prior-rows]
+     (let [id (get change "tripleId")
+           prior (when (and (= "retract" (get change "op")) (not (new-ids id))) (prior-rows id))
+           full (contains? prior "entityId")]
+       (cond-> change
+         full (dissoc "validTo" "entityType" "assertionTxId")
+         full (merge prior)
+         (and prior (not full)) (merge (select-keys prior (keys change)))
+         (new-ids id) (assoc "recordedAt" clock)
+         (or full (contains? change "retractedAt")) (assoc "retractedAt" clock)))))
+(defmacro change-rewriter [] change-code)
+(def rewrite-change (change-rewriter))
+
 ;; [DX-PREP1] Why: the reference and prepared writers stamp the same authoritative row and journal values.
 ;; Rejected: a second encoder with different position, clock or retraction rules.
 (def stamp-code
@@ -65,17 +81,7 @@
            final-digits (digits final)
            shifted (fn [p] (if (< lower p (inc provisional)) (+ p delta) p))]
        (letfn [(assign-change [text clock new-ids prior-rows]
-                 (let [change (json/read-str text)
-                       id (get change "tripleId")
-                       prior (when (and (= "retract" (get change "op")) (not (new-ids id))) (prior-rows id))
-                       full (contains? prior "entityId")
-                       change (cond-> change
-                                full (dissoc "validTo" "entityType" "assertionTxId")
-                                full (merge prior)
-                                (and prior (not full)) (merge (select-keys prior (keys change)))
-                                (new-ids id) (assoc "recordedAt" clock)
-                                (or full (contains? change "retractedAt")) (assoc "retractedAt" clock))]
-                   (json/write-str change)))
+                 (json/write-str (rewrite-change-code (json/read-str text) clock new-ids prior-rows)))
                (assign-row [text offset clock new-ids prior-rows]
                  (let [start (- offset 2) values (json/read-str (subs text start))
                        attr (nth values 3) journal (= "_Transaction" (nth values 14))
@@ -121,8 +127,9 @@
                    :else x))]
          replace-value))))
 
-(defmacro row-stamper []
-  (walk/postwalk-replace {'slim-row-code slim/encoder-code} stamp-code))
+(def compiled-stamp-code
+  (walk/postwalk-replace {'slim-row-code slim/encoder-code 'rewrite-change-code change-code} stamp-code))
+(defmacro row-stamper [] compiled-stamp-code)
 (def stamp (row-stamper))
 
 ;; [DX-B3-M2] Why: the serial point belongs in Datomic, after parallel client staging.
@@ -166,7 +173,7 @@
                    datom (read-at :w1/new-id (first (d/index-range (d/history db) :triplex.entity/row prefix nil)))]
                (when (and datom (.startsWith ^String (:v datom) prefix)) datom)))
            (conflict [] (throw (ex-info "TRIPLEX_CONFLICT" {})))]
-     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row save-ledger timed-retractions packed-journal]} payload
+     (let [{:keys [scope source provisional span lean live entities scope-wide ops times record-clocks replay-safe irregular position-irregular journal-entities assign-record-time new-ids slim-row save-ledger timed-retractions packed-journal import-predecessor]} payload
            operation-id (or (:triplex.tx/operation-id (first ops)) (some :triplex.tx/operation-id ops))
            command-ids (or (:command-ids payload) (keep :triplex.claim/command-id ops))
            ;; [DX-WFIX1] Why: a durable retry may still name the assertion its first attempt retired.
@@ -191,6 +198,10 @@
            has-packed (and (d/entid db :triplex.scope/packed-journals) (value scope :triplex.scope/packed-journals))
            ops (if merge-ledger
                  (save-ledger-code ops (first journal-entities) save-ledger) ops)
+           ;; [DX-HA1] Why: the previous durable claim must exist on the serial basis after any failure.
+           ;; Rejected: trusting enqueue order to prove that an earlier future actually committed.
+           _ (when (and import-predecessor (not (d/entid db [:triplex.claim/command-id import-predecessor])))
+               (throw (ex-info "TRIPLEX_IMPORT_PREDECESSOR" {})))
            _ (when (not= (boolean slim-row) (= 4 (value scope :triplex.scope/rows-version)))
                (throw (ex-info "TRIPLEX_SLIM_LAYOUT_MISMATCH" {})))
            _ (when (and strict-clocks (some #(or (not (number? %)) (not (Double/isFinite (double %)))) (concat times record-clocks)))
@@ -328,8 +339,8 @@
 (defn expand-code
   ([observe] (expand-code observe false false))
   ([observe optimized? measured?]
-   (let [expanded (walk/postwalk-replace {'slim-row-code slim/encoder-code 'history-range-code history-range-code
-                                          'stamp-rows (walk/postwalk-replace {'slim-row-code slim/encoder-code} stamp-code)
+   (let [expanded (walk/postwalk-replace {'history-range-code history-range-code
+                                          'stamp-rows compiled-stamp-code
                                           'save-ledger-code ledger/rewrite-code
                                           'packed-identity-code packed/identity-code
                                           'packed-encode-code packed/compiled-encode

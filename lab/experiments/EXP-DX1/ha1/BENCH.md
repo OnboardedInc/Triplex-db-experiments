@@ -41,3 +41,15 @@ Set `HA1_PEOPLE` to a comma-separated list of subject counts to select rungs. Se
 The optional `HA1_BENCH_SHAPE=mixed` population adds three wide accounts of 4.5 million, 3 million and 1.2 million subjects at eight facts each, plus 100 small accounts of 50 subjects at 80 facts each, alongside the ten deep accounts at the full rung. Smaller rungs scale these additions proportionally. For example, `HA1_BENCH_SHAPE=mixed HA1_PEOPLE=1000000 node --import tsx lab/experiments/EXP-DX1/ha1/control.ts one-failover full-mix-election` requests 230 million current facts in one database. The source and observation record actual counts. The annual history horizon remains a separate input.
 
 For a local capacity measurement, `--slot auto --experiment one-failover --people 1000000 --fault-cell tail-burst` spends the larger part of one admission on seeding and executes one saturated fault. The capacity arm reserves 3 GiB for storage and stops growth at 2.25 GiB of measured PostgreSQL allocation, the host free-space floor or the seed deadline. The ordinary four-cell experiment reserves more time for fault injection.
+
+## Version 0.1 recovery row on one server
+
+Run the shared-database transactor drill from the published DX-HA1 branch, or from the published DX-INT1 branch after intake. Supply the assigned server and a fresh tag.
+
+```sh
+HA1_PEOPLE=1000,10000 HA1_BENCH_HOURS=2 node --import tsx lab/experiments/EXP-DX1/ha1/control.ts one-failover v01-shared-election one-host
+```
+
+This checks election, original receipts, feed resume and ongoing pinned historical reads in the indexed and recent-write cases. Both Datomic transactors and PostgreSQL run on the assigned server. The earlier Mac range was 8.50–24.95 seconds with no failed historical read probes. Expect tens of seconds for these two rungs. The target is a correct new receipt within 60 seconds, zero acknowledged writes lost and continuous pinned reads. The planned move target is a pause of at most 30 seconds. The fresh and billion-record scorecard cases need the designated compatible seeds.
+
+Use two independent machines to measure loss of the primary host, synchronous remote flush latency and restart, and a planned whole-database switch to storage on a different machine. Use `one-sync` for the first two, `one-whole` for planned relocation, and `one-backup` for backup transfer and restore after losing the original storage. See the [paired commands](#shared-database-experiments). The single-host command checks process failure and does not stand in for either failure domain.

@@ -1,37 +1,28 @@
-All accounts will share one Datomic database.
-The reader and gateways kept the same person-cache entries through 600,000 thin people and 40,000 deep people at fixed activity.
-The read gateway still holds about 62 MiB of live Java objects at 10,000 and 30,000 deep people. Its resident memory rose by 18 MiB.
-The transactor committed 211 MiB more to its Java heap while its object-cache charge stayed flat. A saved ten-account run reached 5.37 GiB in its 6 GiB container.
-The final Mac import stopped at 49,469 confirmed people after an ambiguous write. We have two complete profiles and no measured resident plateau.
-The writer, erasure safeguards, fallback reader and Publish priority are on the shared branch. Eight native suites and all 13 checks in the small erasure regression passed.
-The pooled campaign has forecasts for all eight priorities. The saved frozen baseline matched, and the loaded arm verified 50 local samples against the source. The field proof is still due.
-Lean storage still has open erasure and native query gaps. The campaign must keep those paths out of the judged run.
+The scorecard should pin `57580241dc4020f9ab7590839c72c00356fcedee`.
+Version 0.1 has a small laptop profile and a server profile for one database.
+The server gives the transactor three cores and a 16 GiB cache. The gateways get four cores for writes and one for reads.
+The server defaults to Java 21 with G1. One option switches the transactor to Java 25 with ZGC.
+An operator can place the PostgreSQL write-ahead log on a separate filesystem. Saves still wait for durable storage.
+At full size, the best 394-offer run saved 361.51 per second and 7.23% of offers expired.
+The best quiet-account tail at 620 offers took 2.29 times as long under load.
+The Mac verified the laptop checks and a reduced-memory server startup. The fresh and billion-record scorecards still need bare metal.
 
-## One-database work
+## Gates
 
-Pooled forecasts for the two population rungs and every bar through P8. [Forecasts](P5-PREDICTIONS.md) · [Bars](https://github.com/OnboardedInc/Triplex-db-experiments/blob/7a0b6080b924437a6067c6457faa511448f39e26/lab/TARGETS.md)
+| Gate | Result |
+| --- | --- |
+| Laptop SDK and package checks | Nine build tasks and both typechecks. 439 SDK tests passed and 53 were skipped in each writer mode. 18 focused tests passed. |
+| Laptop native | 27 tests and 54,079 assertions for each writer. The grouped and ordered restart cases checked two synchronous flushes each, both resend responses and retired IDs. |
+| Laptop erasure | Each writer checked all 13 routes, including journal, feed, pinned reads and backup restore. |
+| Laptop playground | Each writer passed 17 API cases, Chromium and separate native journal checks. The restored PostgreSQL dumps matched 928 grouped and 958 ordered rows. |
+| Laptop scorecard toy | Each writer matched 211 receipts, 96 quiet reads and 20 cold pulls. The ordered journal matched 211 ID blocks. |
+| Reduced Mac server startup | Actual Java 21.0.13+9 G1 across transactor, writer and reader. Final processor counts 3/4/1, max heaps 640/352/352 MiB and caches 64/32/32 MiB. All PostgreSQL durability switches were on. |
+| Preflight | Same-device, nonempty, malformed and unavailable-device WAL inputs were rejected in the shell fixture. Separate-device input chose the WAL bind and initdb setting. |
 
-The fixed-activity census keeps three natural RSS samples at each population before requesting Java class histograms and Native Memory Tracking. The observer checks the target role, live PID and start time, challenge and image. The report reopens the compressed bytes and checks the totals, native pools, actual roster, pinned cut and unchanged admission counters. All Mac timings are diagnostic.
+The reduced startup used the shared server policy with laptop memory and the Mac reservation's two-core Docker quota per container. The Linux run still needs to verify physical placement, the full cache budget and the combined Java 25 ZGC and separate-WAL startup. The startup, SDK, native, playground and toy gates ran at `42ecd1420`. Erasure ran at `6d5edfc35`. The WAL shell checks, final launch plans and scale typecheck cover the follow-up launch changes through `9066ad9e1`. Earlier Mac refusals involved disk admission, cleanup with another owned slot still active, and a transient Docker build failure. [Evidence checksums](V0.1-SHA256SUMS)
 
-The transactor census uses a 840 MiB Java heap, a configured 192 MiB object cache and memory-index threshold/maximum of 8/32 MiB. The read gateway uses a 384 MiB heap, a 32 MiB peer cache, an 8 MiB row budget and a 1 MiB identity budget. Native committed bytes, live heap and OS residency have different denominators.
+## Evidence audit
 
-The two census checkpoints attribute most of the transactor’s 223 MiB RSS increase to a 211 MiB increase in committed heap. Its tracked memory outside the heap grew 1.83 MiB. The read gateway’s heap commitment grew 1 MiB and its tracked memory outside the heap grew 2.44 MiB. Its residual RSS and the plateau are still open. [Native pool table](P5-EVIDENCE.md)
+The startup witness checks final HotSpot flags, pinned releases, cache arguments and live SQL switches. It reads fresh logs between two observations of the same process and binds the result to exact source bytes, image and reservation. The physical launcher verifies the empty WAL directory and devices before startup, then checks the live mount and PostgreSQL settings. The scorecard rechecks the three serving JVM boots after restore. The integrated campaign collector checks the source-bound policy, final flags, image IDs and capture window before classifying observations. All 521 pins and the frozen inputs matched their recorded digests.
 
-## Previous observations
-
-| Role | Thin RSS MiB at 100,000 / 300,000 / 600,000 | Last B/person | Deep RSS MiB at 10,000 / 30,000 / 40,000 | Last B/person |
-| --- | ---: | ---: | ---: | ---: |
-| Reader | 140.68 / 140.68 / 140.68 | 0 | 140.88 / 140.88 / 141.00 | 13.1 |
-| Read gateway | 310.07 / 325.21 / 324.18 | −3.6 | 314.78 / 326.00 / 329.07 | 321.5 |
-| Write gateway | 325.52 / 322.20 / 324.68 | 8.7 | 329.18 / 337.62 / 327.12 | −1,100.6 |
-| Transactor | 773.46 / 916.64 / 1,038.64 | 426.4 | 830.21 / 981.41 / 1,020.79 | 4,129.6 |
-| PostgreSQL | 1,378.63 / 1,663.68 / 1,831.46 | 586.5 | 1,785.60 / 1,873.73 / 1,868.75 | −523.1 |
-| Driver | 227.68 / 235.13 / 237.45 | 8.1 | 287.36 / 398.68 / 461.55 | 6,592.9 |
-
-The earlier scope-cost study is complete. Its measured timing, thread counts and source bindings are preserved with the rest of part 4. [Evidence](P4-EVIDENCE.md) · [Checksums](P4-SHA256SUMS)
-
-## Integration and campaign
-
-Each native build ran 27 tests and 54,079 assertions with zero failures. The reader handoff changed only documentation and shared the preceding build. The latest writer merge passed 861 Core and 434 Datomic SDK tests, with 52 opt-in SDK cases skipped. The pooled TypeScript check passed. [Merge resolutions and evidence audit](P5-EVIDENCE.md) · [Checksums](P5-SHA256SUMS)
-
-Run `bash lab/experiments/EXP-DX1/int1/everything.sh BATCH UTC_CUTOFF --overnight` for ten accounts of 10,000 people. Omit `--overnight` for both rungs. The command prepares the exact public revision before starting the preflight. The current SCALE1 million-person image uses different entity identities and lean storage. Both rungs capture and reuse a compatible legacy seed for their matched arms. [Campaign and options](P5-EVIDENCE.md)
+The launch and Mac gates are indexed in the [version 0.1 state table](V0.1-STATE.md). The physical comparison used ten 100,000-person accounts, fair turns and 1,900 people per busy neighbour. The scorecard retains its own tapes. Select `--tx-jvm j25-zgc` and `--wal-directory DIR` for the combined server treatment. [Server command](../v01/SERVER.md)

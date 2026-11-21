@@ -29,7 +29,12 @@ type Layout =
   | "ledger-overhead"
   | "ledger-profile"
   | "ledger-match"
+  | "ledger-reuse"
+  | "ledger-parallel"
+  | "ledger-derived"
+  | "guard-prepared-smoke"
   | "fast"
+  | "fast-neighbours-smoke"
   | "fast-smoke";
 type Attempt = {
   binding: string;
@@ -39,6 +44,11 @@ type Attempt = {
   slot: string;
   source?: string;
   stageSha256?: string;
+  stagedSource?: string;
+  controlSha256?: string;
+  seedRole?: "control";
+  guardComparison?: boolean;
+  neighbourCheck?: boolean;
 };
 type Row = Receipt["triples"][number];
 type Fact = ReturnType<typeof deepOwnFacts>[number];
@@ -222,10 +232,13 @@ function blocks() {
   const history =
     run.mode === "smoke" ||
     run.mode.endsWith("regression") ||
-    ["ledger-overhead", "ledger-profile", "ledger-match"].includes(run.mode)
+    ["ledger-overhead", "ledger-profile", "ledger-match", "ledger-reuse"].includes(run.mode)
       ? 5
       : 415;
-  return [makeGroup(mid - 1, 1, 0), makeGroup(mid, 1, run.mode.startsWith("fast") ? 0 : history)];
+  return [
+    makeGroup(mid - 1, 1, 0),
+    makeGroup(mid, 1, run.mode.startsWith("fast") || run.guardComparison ? 0 : history),
+  ];
 }
 function makeGroup(first: number, n: number, depth: number): Acc {
   return {
@@ -481,7 +494,10 @@ async function traffic(
   try {
     for (let j = 0; running && j < count; j++) {
       const subject = subjects[j % subjects.length]!;
-      last = await f.edit(subject, j + 1 + basis.recordedPosition! * 1_000_000 + f.position);
+      const revision = run.guardComparison
+        ? 1_000_000_000 + j
+        : j + 1 + basis.recordedPosition! * 1_000_000 + f.position;
+      last = await f.edit(subject, revision);
       saved.push({
         start: last.start,
         end: last.end,
@@ -729,36 +745,168 @@ async function seedFixture(f: Fixture, groups: Acc[], recordProgress: boolean) {
       });
 }
 
+async function loadStage(
+  f: Fixture,
+  file: string,
+  sha: string | undefined,
+  source: string | undefined,
+) {
+  const raw = fs.readFileSync(file);
+  assert.equal(createHash("sha256").update(raw).digest("hex"), sha);
+  const staged = JSON.parse(raw.toString()) as Attempt & { data: Staged };
+  assert(staged.nonce === run.nonce && staged.people === run.people && staged.source === source);
+  assert.deepEqual(
+    staged.data.groups.map(({ people, depths }) => [people, depths]),
+    blocks().map(({ people, depths }) => [people, depths]),
+  );
+  await restoreFixture(f, staged.data);
+  return staged.data.groups;
+}
+
+async function comparePreparedGuard(guarded: Fixture) {
+  const { measureW0Http } = await import("../../../bench/lib/w0-http.ts");
+  const address = process.env.DATOMIC_URL!;
+  const controlName = guarded.name + "-control";
+  const composition = await openComposition("reach", "datomic", controlName);
+  const peer = new DatomicClient(address);
+  try {
+    let control = new Fixture(composition, controlName);
+    if (action === "check") {
+      await loadStage(control, process.argv[5]!, run.controlSha256, run.source);
+    } else {
+      const groups = blocks();
+      await seedFixture(control, groups, false);
+      const manifest = control.stage(groups);
+      control = new Fixture(composition, controlName);
+      await restoreFixture(control, manifest);
+    }
+    assert.equal(control.facts, guarded.facts);
+    const plainHead = await peer.erasureFrontier(control.db);
+    const guardedHead = await peer.erasureFrontier(guarded.db);
+    assert(!plainHead.protected && plainHead.seq === 0);
+    assert(guardedHead.protected && guardedHead.seq === 0);
+    const controlPin = control.basis();
+    const guardedPin = guarded.basis();
+    assert.equal(controlPin.recordedPosition, guardedPin.recordedPosition);
+    // [DX-ERASE1] Why: both arms send the same workload through the public routes at their original sealed seed cut.
+    // Rejected: bypassing the guard on a database that contains protected values.
+    const observe = async (f: Fixture, pin: Basis, label: string) => {
+      const { value, samples } = await measureW0Http(() => traffic(f, f.comp, pin, label));
+      const responseBytes = (ending: RegExp) =>
+        percentile(
+          samples.filter((r) => ending.test(String(r.path))).map((r) => Number(r.responseBytes)),
+        );
+      return {
+        ...value,
+        reachBytes: responseBytes(/\/reach(?:-many)?$/),
+        saveBytes: responseBytes(/\/transact$/),
+      };
+    };
+    const before = await observe(control, controlPin, "control-before");
+    const guardedBefore = await observe(guarded, guardedPin, "guarded-before");
+    const middle = await observe(control, controlPin, "control-middle");
+    const attribute = ":privacy/field";
+    const entity = `guard-comparison-${run.nonce}`;
+    const added = await guarded.write(
+      [{ e: entity, a: attribute, v: { type: "string", value: mark(0, 0, 1) } }],
+      [],
+      "comparison",
+    );
+    const [id] = added.assertionIds;
+    assert(id);
+    const plantedPin = guarded.basis();
+    const erased = await peer.erase(guarded.db, `${run.nonce}-guard-comparison`, [{ id }]);
+    const atOldPin = await peer.rows(guarded.db, { entityIds: [entity], basis: plantedPin });
+    const marker = atOldPin.find((r) => r.id === id);
+    assert.equal(erased.seq, 1);
+    assert.equal(erased.identities.length, 1);
+    assert.equal(erased.identities[0]?.assertionId, id);
+    assert(marker?.value_type === "erased" && marker.value_string === null && marker.value_json);
+    assert.deepEqual(JSON.parse(marker.value_json), {
+      type: "erased",
+      valueType: "string",
+      erasedAt: erased.erasedAt,
+      erasureTxId: erased.txId,
+    });
+    const detached = await diag("key-state", { scope: guarded.scope, id });
+    assert.equal(detached.id, id);
+    assert.equal(detached.seq, erased.seq);
+    assert.equal(detached.bodyPresent, true);
+    guarded.acceptErasure(erased);
+    const guardedAfter = await observe(guarded, guardedPin, "guarded-after");
+    const after = await observe(control, controlPin, "control-after");
+    const compare = (actual: typeof before, reference: typeof before) => {
+      const pair = (a: typeof actual.reads, b: typeof reference.reads) => {
+        assert(a.p50 && a.p99 && b.p50 && b.p99);
+        return { p50: a.p50 / b.p50, p99: a.p99 / b.p99 };
+      };
+      assert.equal(actual.writes.n, 500);
+      assert.equal(reference.writes.n, 500);
+      assert(actual.reachBytes.n && reference.reachBytes.n && actual.reads.n && reference.reads.n);
+      return {
+        against: reference.label,
+        saves: pair(actual.writes, reference.writes),
+        reads: pair(actual.reads, reference.reads),
+      };
+    };
+    output("guarded-comparison", {
+      facts: guarded.facts,
+      erased,
+      bars: { p50: 1.05, p99: 1.1 },
+      predictions: {
+        saves: { p50: [1.0, 1.08], p99: [1.0, 1.18] },
+        reads: { p50: [1.0, 1.07], p99: [1.0, 1.15] },
+      },
+      observations: [before, guardedBefore, middle, guardedAfter, after],
+      beforeErasure: [compare(guardedBefore, before), compare(guardedBefore, middle)],
+      afterErasure: [compare(guardedAfter, middle), compare(guardedAfter, after)],
+    });
+  } finally {
+    peer.close();
+    await composition.close();
+  }
+}
+
 async function scale() {
-  const fixtureName = "erase1-" + run.nonce;
+  const fixtureName = "erase1-" + run.nonce + (run.seedRole === "control" ? "-control" : "");
   const comp = await openComposition("reach", "datomic", fixtureName);
   let f = new Fixture(comp, fixtureName);
   let reader: CompositionHandle | undefined;
   try {
-    if (run.mode === "ledger-regression" || (run.mode.startsWith("fast") && action !== "check")) {
+    if (run.mode === "ledger-derived") {
+      const { derivedRegression } = await import("./regression.ts");
+      await derivedRegression(run.binding, output);
+      return;
+    }
+    const sealed = run.mode.startsWith("fast") || run.guardComparison;
+    if (
+      ["ledger-regression", "ledger-reuse", "ledger-parallel"].includes(run.mode) ||
+      (sealed && action !== "check" && !run.seedRole)
+    ) {
       const authority = new DatomicClient(process.env.DATOMIC_URL!);
       try {
-        const sealed = run.mode.startsWith("fast");
-        await authority.declareProtection(f.db, sealed ? [":privacy/field"] : [field(0)], sealed);
+        await authority.declareProtection(
+          f.db,
+          sealed ? [":privacy/field"] : [run.mode === "ledger-parallel" ? ":v" : field(0)],
+          sealed,
+        );
       } finally {
         authority.close();
       }
     }
+    if (run.mode === "ledger-parallel") {
+      output("parallel-writer", await diag("parallel-writer", { scope: f.scope }));
+      return;
+    }
     let groups: Acc[];
     if (action === "check") {
       await getParent("guard");
-      const rawStage = fs.readFileSync(process.argv[4]!);
-      assert.equal(createHash("sha256").update(rawStage).digest("hex"), run.stageSha256);
-      const staged = JSON.parse(rawStage.toString()) as Attempt & { data: Staged };
-      assert(
-        staged.nonce === run.nonce && staged.people === run.people && staged.source === run.source,
+      groups = await loadStage(
+        f,
+        process.argv[4]!,
+        run.stageSha256,
+        run.stagedSource ?? run.source,
       );
-      assert.deepEqual(
-        staged.data.groups.map(({ people, depths }) => [people, depths]),
-        blocks().map(({ people, depths }) => [people, depths]),
-      );
-      groups = staged.data.groups;
-      await restoreFixture(f, staged.data);
     } else {
       groups = blocks();
       await seedFixture(f, groups, true);
@@ -772,6 +920,25 @@ async function scale() {
     if (action === "stage") {
       await collect(f, "stage-gc", true);
       output("staged", f.stage(groups));
+      return;
+    }
+    if (run.guardComparison) {
+      if (action === "run") {
+        const manifest = f.stage(groups);
+        f = new Fixture(comp, fixtureName);
+        await restoreFixture(f, manifest);
+      }
+      await comparePreparedGuard(f);
+      return;
+    }
+    if (run.neighbourCheck) {
+      const { quietNeighbours } = await import("./quiet.ts");
+      await quietNeighbours(f, run.nonce, diag, output, action === "check");
+      return;
+    }
+    if (run.mode === "ledger-reuse") {
+      const { checkErasedIdentity } = await import("./reuse.ts");
+      await checkErasedIdentity(f, field(0), run.nonce, diag, output);
       return;
     }
     if (run.mode === "smoke") {

@@ -79,6 +79,8 @@ function bindingInputs(manager) {
     "lab/experiments/EXP-DX1/notify1",
     "lab/experiments/EXP-DX1/actv-lazy",
     "lab/experiments/EXP-DX1/actv-delta",
+    "lab/experiments/EXP-DX1/wfix1/regression.clj",
+    "lab/experiments/EXP-DX1/w1",
     "pnpm-lock.yaml",
   )
     .split("\n")
@@ -108,6 +110,10 @@ export async function local(opts, config, manager) {
   assert(typeof holder === "string" && /^DX-[A-Z0-9-]{1,26}$/.test(holder));
   const people = Number(opts.people);
   const mode = String(opts.run ?? "scale");
+  const subjectWriter = mode === "ledger-parallel" ? "1" : process.env.DX_ERASE1_SUBJECT_WRITER;
+  const orderedIds = process.env.DX_ERASE1_ORDERED_IDS;
+  assert(subjectWriter === undefined || subjectWriter === "0" || subjectWriter === "1");
+  assert(orderedIds === undefined || (orderedIds === "1" && subjectWriter === "1"));
   assert(
     [
       "smoke",
@@ -119,7 +125,12 @@ export async function local(opts, config, manager) {
       "ledger-overhead",
       "ledger-profile",
       "ledger-match",
+      "ledger-reuse",
+      "ledger-parallel",
+      "ledger-derived",
+      "guard-prepared-smoke",
       "fast-smoke",
+      "fast-neighbours-smoke",
       "fast",
     ].includes(mode),
   );
@@ -169,10 +180,19 @@ export async function local(opts, config, manager) {
   let info, network, run, child;
   function diskFloor() {
     const s = fs.statfsSync(REPO);
-    assert(s.bavail * s.bsize >= 5 * GiB, "Host disk below 5 GiB");
+    const minimum = holder === "DX-THIN1" ? 10 : 5;
+    assert(s.bavail * s.bsize >= minimum * GiB, "Host disk below " + minimum + " GiB");
     return s.bavail * s.bsize;
   }
-  write("inputs", { nonce, mode, people, caps, forecast, inputs });
+  write("inputs", {
+    nonce,
+    mode,
+    people,
+    caps,
+    forecast,
+    inputs,
+    ...(orderedIds ? { subjectOrderedIds: true } : {}),
+  });
   try {
     const waitingSince = Date.now();
     while (!info) {
@@ -379,6 +399,9 @@ export async function local(opts, config, manager) {
           ":/opt/gateway/codec-spec.json:ro",
         "-v",
         import.meta.dirname + ":/erase1:ro",
+        ...(mode === "ledger-parallel"
+          ? ["-v", path.resolve(import.meta.dirname, "../wfix1") + ":/erase1-writer-check:ro"]
+          : []),
         ...(archiveDir ? ["-v", archiveDir + ":/dx-archive"] : []),
         ...(profile
           ? [
@@ -393,7 +416,7 @@ export async function local(opts, config, manager) {
               }).flatMap(([k, v]) => ["-e", k + "=" + v]),
             ]
           : []),
-        ...(mode.startsWith("ledger-") || mode.startsWith("fast")
+        ...(mode.startsWith("ledger-") || mode.startsWith("fast") || mode === "guard-prepared-smoke"
           ? ["-v", "/dx-authority", "-e", "TRIPLEX_ERASURE_DIRECTORY=/dx-authority"]
           : []),
         ...(mode.startsWith("fast") ? ["-e", "TRIPLEX_ERASURE_SHRED_GRACE_MS=0"] : []),
@@ -403,6 +426,10 @@ export async function local(opts, config, manager) {
         "DATOMIC_URI_TEMPLATE=" + uri,
         "-e",
         "GATEWAY_SOURCE_SHA256=" + gateway,
+        ...(subjectWriter !== undefined
+          ? ["-e", "TX2_SUBJECT_SAVE=" + subjectWriter, "-e", "TX2_INT1_WRITE_READBACK=1"]
+          : []),
+        ...(orderedIds ? ["-e", "TX2_SUBJECT_ORDERED_IDS=1", "-e", "TX2_SUBJECT_NUMERIC_OWNER=1"] : []),
         "-e",
         "DX_ERASE_TOKEN=" + token,
         "-e",
@@ -480,6 +507,7 @@ export async function local(opts, config, manager) {
       freeBytes: diskFloor(),
       host: "mac-vm",
       timing: "diagnostic",
+      guardComparison: mode === "guard-prepared-smoke",
     };
     run.binding = sha256(JSON.stringify(run));
     write("native", run);

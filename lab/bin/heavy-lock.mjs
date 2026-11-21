@@ -42,8 +42,9 @@ const holders = () => fs.readdirSync(dir()).filter(name => /^\d+$/.test(name))
  * pool instead of competing for it). The lease holder itself already holds every token, so its own heavy steps
  * pass at once with a no-op release.
  */
-export async function acquireHeavy(label, { pollMs = 1000 } = {}) {
+export async function acquireHeavy(label, { pollMs = 1000, timeoutMs = Infinity } = {}) {
   fs.mkdirSync(dir(), { recursive: true });
+  const started = Date.now();
   let announced = 0;
   for (;;) {
     const lease = readMeasureLease();
@@ -54,6 +55,8 @@ export async function acquireHeavy(label, { pollMs = 1000 } = {}) {
         if (release) return release;
       }
     }
+    if (Date.now() - started > timeoutMs)
+      throw Object.assign(new Error(`heavy tokens still held by ${holders().join(', ')}`), { code: 'LEASE_TIMEOUT' });
     if (Date.now() - announced > 30_000) {
       process.stderr.write(lease && !lease.stale
         ? `[lab] heavy: waiting; measurement lease held by pid ${lease.pid} "${lease.label}" since ${lease.at}\n`
@@ -73,11 +76,21 @@ export async function acquireHeavy(label, { pollMs = 1000 } = {}) {
  * Rejected: pausing other agents' engines or repinning the dev residents (never without Sam; another holder's engine
  * is never stopped or recreated).
  */
-export async function acquireMeasureLease(label, { holder, pollMs = 1000, timeoutMs = Infinity } = {}) {
+export async function acquireMeasureLease(label, { holder, pollMs = 1000, timeoutMs = Infinity, signal } = {}) {
   fs.mkdirSync(dir(), { recursive: true });
   const started = Date.now();
+  if (fs.existsSync(path.join(LOCKS, 'NO-MEASURE-LEASE'))) {
+    // [DX-V01] Why: Mac correctness can share the pool, and a wrapped gate already has one token.
+    // Rejected: draining the pool or waiting for a second token behind the wrapping process.
+    process.stderr.write('[lab] Measurement lease is disabled on this machine. Timings are diagnostic.\n');
+    const parentHasToken = fs.readdirSync(dir()).filter(name => /^\d+$/.test(name))
+      .some(name => readJson(path.join(dir(), name, 'owner.json'), null)?.pid === process.ppid);
+    const release = parentHasToken ? () => {} : await acquireHeavy(label, { pollMs, timeoutMs });
+    return { release, owner: null, waitedMs: Date.now() - started, tokens: 1, diagnostic: true };
+  }
   let announced = 0;
   for (;;) {
+    signal?.throwIfAborted();
     try {
       fs.mkdirSync(leaseDir());
       atomicJson(path.join(leaseDir(), 'owner.json'), { pid: process.pid, label, holder: holder ?? null, at: now() });
@@ -101,6 +114,9 @@ export async function acquireMeasureLease(label, { holder, pollMs = 1000, timeou
   process.on('exit', releaseAll);
   try {
     while (releases.size < HEAVY_SLOTS) {
+      // [DX-TAIL1] Why: a cancelled attempt must release the lease and any tokens already drained.
+      // Rejected: waiting out the full timeout while other builders remain frozen.
+      signal?.throwIfAborted();
       for (let index = 1; index <= HEAVY_SLOTS; index++) {
         if (releases.has(index)) continue;
         // [EXP-M01R] Why: heavy.mjs waits for its single child while retaining a token; borrow that exact parent permit so a wrapped PAIR can drain the pool. Rejected: releasing another process's token or bypassing the other tokens.

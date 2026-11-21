@@ -1,7 +1,8 @@
 (ns triplex.gateway.storage
   (:require [triplex.gateway.privacy :as privacy] [triplex.gateway.envelope :as envelope] [clojure.edn] [triplex.gateway.group :as group] [triplex.gateway.commit :as commit] [triplex.gateway.predecessor :as pred] [triplex.gateway.write-policy :as policy] [triplex.gateway.trace :as trace] [triplex.gateway.schema :as schema] [triplex.gateway.commit-order :as order] [triplex.gateway.scope :as scope] [triplex.gateway.feed :as feed] [triplex.gateway.admission :as admission] [triplex.gateway.lean :as lean] [triplex.gateway.stats :as stats] [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:require [triplex.gateway.replay-capture :as replay-capture] [triplex.gateway.small-row :as small-row]
-            [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed] [clojure.data.json :as json])
+            [triplex.gateway.save-ledger :as ledger] [triplex.gateway.packed-journal :as packed]
+            [triplex.gateway.subject-save :as subject] [clojure.data.json :as json])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* false)
@@ -23,6 +24,7 @@
       (throw (ex-info "Snapshot expired or belongs to another database" {:status 409 :code "SnapshotExpired"})))
     (:db entry)))
 (defn decode-row [row] (into {} (map (fn [[k v]] [(keyword k) (when (some? v) (codec/decode-value v))]) row)))
+(def ^:private direct-row-decode? (= "1" (System/getenv "TX2_TAIL1_ROW_DECODE")))
 ;; [DX-B5-L6] Why: fresh lean rows already carry every column in their canonical text.
 ;; Rejected: decoding a second full tagged map per row after the client encoded both copies.
 (defn input-rows [input lean new-ids]
@@ -45,7 +47,7 @@
         (mapv (fn [id]
                 (if (new-ids id)
                   (let [text (get texts id) _ (when-not (string? text) (codec/invalid "Missing compact row text"))
-                        row (update (lean/decode text) :recorded_at double) retirement (get by-id id)]
+                        row (update (lean/decode text direct-row-decode?) :recorded_at double) retirement (get by-id id)]
                     (when-not (and (= id (:id row))
                                    (or (nil? retirement) (and (= (:entity_id row) (:entity_id retirement))
                                                               (= (:entity_type row) (:entity_type retirement)))))
@@ -99,7 +101,14 @@
            (when (:created_by row) {:f/created-by (:created_by row)})
            (when (:entity_type row) {:f/entity-type (:entity_type row)}) value)))
  ;; [EXP-DX1] Why: live row datoms are exact write-time wire values. Rejected: rebuilding values on every pull.
-(defn row-prefix [^String id] (str "2" (format "%04x" (.length id)) id))
+(defn row-prefix [^String id]
+  ;; [DX-TAIL1] Why: a fixed hex length prefix only needs left padding.
+  ;; Rejected: allocating a Formatter per row or truncating a length greater than four digits.
+  (let [n (.length id)]
+    (str "2" (if direct-row-decode?
+               (let [digits (Integer/toHexString n)]
+                 (str (subs "0000" 0 (max 0 (- 4 (.length ^String digits)))) digits))
+               (format "%04x" n)) id)))
 (defn ordered-row-texts [input]
   ;; [DX-W1] Why: the frame order and encoded identity provide both index keys from one wire array.
   ;; Rejected: inferring order from a JSON object or changing the meaning of an irregular SPI request.
@@ -146,6 +155,15 @@
         (when-not (= (count ids) (count (set ids))) (codec/invalid "Duplicate fresh row ID"))
         ;; [DX-LOAD1] Why: ordinary compact validation compares each decoded row ID with the actual prefix. Rejected: a client assertion of empty history or a second source of row order.
         (assoc input "rowMode" "texts" "newIds" ids "rowOrder" ids "rowTexts" (zipmap ids texts) "rows" [])))))
+(def import-pipeline? (= "1" (System/getenv "TX2_IMPORT_PIPELINE")))
+(defn import-predecessor [claims]
+  (when import-pipeline?
+    (let [ids (filter #(and (string? %) (.startsWith ^String % "load1/pipeline-")) (keep #(get % "commandId") claims))]
+      (when (seq ids)
+        (let [[_ stream ordinal] (re-matches #"load1/(pipeline-[a-f0-9]{64})/(0|[1-9][0-9]{0,14})" (first ids))]
+          (when-not (and stream (= 1 (count claims))) (codec/invalid "Invalid ordered import claim"))
+          (let [n (Long/parseLong ordinal)]
+            (if (zero? n) "load1/manifest/import" (str "load1/" stream "/" (dec n)))))))))
 (defn tx-data
   ([db input] (tx-data db input (:e (first (d/datoms db :aevt :triplex.scope/key)))))
   ([db input scope]
@@ -170,6 +188,7 @@
                               (packed/identity-run (keep (fn [r] (when (and (= "_Transaction" (:entity_type r))
                                                                            (#{":_tx/change" ":_tx/changed-entity"} (:attribute r))) (:id r))) fresh)))
          packed-journal-set (set packed-journal-ids)
+         predecessor (import-predecessor claims)
          metadata {:position position
                    :recorded-at (cond (seq fresh) (:recorded_at sample) (seq old) (:retracted_at sample)
                                       (seq claims) (get (first claims) "timestamp") :else (double (System/currentTimeMillis)))
@@ -310,6 +329,7 @@
                                             (#{"bulk-import" "bulk-seed"} (:value_string r))
                                             (some #(= (:entity_id r) (get % "txId")) claims))) fresh))
                        (assoc :bulk true)
+                       predecessor (assoc :import-predecessor predecessor)
                        (and lean (get input "historyIdentityBounds"))
                        (assoc :identity-bounds (get input "historyIdentityBounds")))]])))
 ;; [DX-B10] Why: only contiguous client sequences enter Datomic, even when HTTP arrivals reorder.
@@ -319,6 +339,7 @@
 ;; expanded data (would move invariant checks off the authoritative transaction).
 (def commit-hints? (= "true" (System/getenv "TX2_COMMIT_HINTS")))
 (def writer-readback (= "1" (System/getenv "TX2_INT1_WRITE_READBACK")))
+(def subject-profile (= "1" (System/getenv "TX2_SUBJECT_PROFILE")))
 (defn transaction-hints [conn data timeline]
   (when commit-hints?
     (try
@@ -341,7 +362,7 @@
                (not-any? #(d/entid view [:triplex.entity/id %]) journals))
         data
         (tx-data view input (:scope p))))))
-(defn submit! [conn data input timeline]
+(defn submit-reference! [conn data input timeline]
   (let [hints (transaction-hints conn data timeline)
         solo (bound-fn []
                  (swap! timeline assoc :predecessorReady (System/nanoTime))
@@ -375,6 +396,46 @@
     (if-let [client (get input "clientId")]
       (order/enqueue! client (get input "sendSequence") (get input "operationId") submit order/gap-ms order/buffer-limit [conn input])
       (submit))))
+
+(defn submit!
+  ([conn data input timeline] (submit-reference! conn data input timeline))
+  ([conn data input timeline subject-plan]
+   (if-not subject-plan
+     (submit-reference! conn data input timeline)
+     (let [hints (when subject/prefetch?
+                   (swap! timeline assoc :subjectHintsStarted (System/nanoTime))
+                   ;; [DX-PREP1] Why: Datomic prefetch can move cold reads, while the native guards own the decision.
+                   ;; Rejected: using the hint result or its database value as proof of absence or revision.
+                   (try (trace/span "subject.lookup-hints" "peer-call" (subject/lookup-hints (d/db conn) subject-plan))
+                        (catch Exception _ nil)
+                        (finally (swap! timeline assoc :subjectHintsFinished (System/nanoTime)))))
+           native-data (group/instrument [[subject/ident subject-plan]])
+           options (concat (when hints [:hints hints])
+                           (when (or group/stage-clock trace/enabled) [:io-context :triplex.gateway/subject]))
+           _ (swap! timeline assoc :predecessorReady (System/nanoTime))
+           tx (trace/span "d/transact-async" "peer-call"
+                (apply d/transact-async conn native-data options))]
+       (swap! timeline assoc :submitted (System/nanoTime))
+       (reify
+         clojure.lang.IBlockingDeref
+         (deref [_ ms timeout]
+           (let [start (System/nanoTime)
+                 remaining #(max 0 (- ms (quot (- (System/nanoTime) start) 1000000)))
+                 result (try (deref tx ms timeout)
+                             (catch Exception e (if (subject/replan? e) ::subject-replan (throw e))))]
+             (cond
+               (= result ::subject-replan)
+               ;; [DX-PREP1] Why: a definite refusal can only be retried from a fresh authoritative view.
+               ;; Rejected: resubmitting a timed-out write or using the peer frame that the serial check rejected.
+               (let [db (deref (d/sync conn) (remaining) timeout)]
+                 (cond
+                   (identical? timeout db) timeout
+                   (not (subject/retry-safe? db subject-plan)) (throw (ex-info "TRIPLEX_CONFLICT" {}))
+                   :else (let [retry (deref (submit-reference! conn (tx-data db input) input timeline) (remaining) timeout)]
+                           (if (identical? timeout retry) timeout (assoc retry :subject-replan true)))))
+               (identical? timeout result) timeout
+               :else (cond-> (subject/verify-report result subject-plan)
+                       hints (assoc :subject-hints-attached true))))))))))
 ;; [DX-B10] Why: a definitive preflight rejection resolves its sequence without a database write.
 ;; Rejected: skipping that turn (strands all later valid commands behind a permanent gap).
 (defn reject-ordered! [conn input error]
@@ -399,10 +460,18 @@
                     (catch Exception e (reject-ordered! conn input e)))
           frame-size (group/frame-measurement (second (first data)) input)
           _ (try (group/bound-frame! frame-size) (catch Exception e (reject-ordered! conn input e)))
+          ;; [DX-PREP1] Why: the unordered subject arm submits one native transaction and uses its actual durable report.
+          ;; Rejected: bypassing protected-scope erasure or live/import admission, or applying the draft speculatively.
+          subject-plan (when (and subject/enabled (not (:sealed privacy/*cut*))
+                                  (not (or policy/priority? policy/field-only? policy/budget-us replay-capture/enabled)))
+                         (trace/span "subject.prepare" "gateway"
+                           (if privacy/*cut*
+                             (subject/plan db data input (:seq privacy/*cut*))
+                             (subject/plan db data input))))
           start (System/nanoTime)
           ready-ms (when group/queue-clock (System/currentTimeMillis))
           timeline (atom {:requestParsed parsed :payloadPrepared start})
-          report (trace/span "peer.transact-await (includes order/network/storage)" "peer-wait" (deref (submit! conn data input timeline) 5000 ::timeout))
+          report (trace/span "peer.transact-await (includes order/network/storage)" "peer-wait" (deref (submit! conn data input timeline subject-plan) 5000 ::timeout))
           completed (System/nanoTime)
           transact-micros (quot (- completed start) 1000)
           stamp (when (and group/queue-clock (not= report ::timeout))
@@ -425,18 +494,24 @@
         ;; [DX-THIN1] Why: report the selected installed function and real packed frames on this receipt.
         ;; Rejected: claiming a treatment from the requested environment alone.
         writer-readback (assoc :writePath (let [[ident params] (first data)]
-                                          {:function (str ident) :historyRange (boolean (:identity-bounds params))
+                                          {:function (or (:subject-save report) (str ident)) :historyRange (boolean (:identity-bounds params))
                                            :scheduling (boolean (group/scheduling?))
                                            :packedRows (count (filter (fn [op] (and (vector? op) (= :triplex/assert (first op))
                                                                               (vector? (nth op 3 nil)) (= 6 (count (nth op 3))))) (:ops params)))}))
-        load-timing (assoc :loadProfile {:rowNs @load-timing :applyMs (get-in report [:io-stats :api-ms])
+        (:subject-save report) (assoc :subjectSave (:subject-save report))
+        (:subject-ordered-ids report) (assoc :subjectOrderedIds true)
+        (:subject-hints-attached report) (assoc :subjectHintsAttached true)
+        (:subject-replan report) (assoc :subjectReplan true)
+        (and load-timing (not (:subject-save report))) (assoc :loadProfile {:rowNs @load-timing :applyMs (get-in report [:io-stats :api-ms])
                        :tx (clojure.edn/read-string (value (:db-after report) (d/t->tx (d/basis-t (:db-after report))) :triplex.load/metrics))})
         group/bulk-priority (assoc :bulkGrant (:bulk-grant report))
         (:serial-hold report) (assoc :serialHold (:serial-hold report))
         frame-size (assoc :frameSize frame-size)
         (and pred/diagnostic (true? (get input "readProfile"))) (assoc :readProfile (:io-stats report))
         group/stage-clock (assoc :nativeComputeMs (get-in report [:io-stats :api-ms]) :groupStages (:group-stages report)
-                                 :preparedStats (:prepared-stats report) :writerFunction (str (ffirst data)))
+                                 :preparedStats (:prepared-stats report)
+                                 :writerFunction (or (:subject-save report) (str (ffirst data))))
+        (and group/stage-clock subject-profile) (assoc :nativeIoStats (:io-stats report))
         stamp (assoc :requestBytes (policy/request-size input) :preparedOps (count (:ops (second (first data)))) :submitToNativeEntryMs (- (second stamp) (first stamp)) :readyToNativeEntryMs (- (second stamp) ready-ms))
         (:group-size report) (assoc :groupSize (:group-size report) :groupQueueMicros (quot (:group-wait-ns report) 1000))))
     (catch Exception e
@@ -444,12 +519,13 @@
       (let [text (str e)]
         ;; [DX-THIN1] Why: preserve explicitly typed policy errors and the established transaction rejection for malformed row ordering.
         ;; Rejected: treating every codec InvalidValue as a policy error before checking the transaction result.
-        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
+        (when (or (:write-policy (ex-data e)) (#{"OutcomeUnknown" "WriteQueueFull" "BulkFrameTooLarge" "ErasureFrontierChanged" "ErasureReplayDeclined" "ErasedAssertionIdentity" "ProtectedTypeUnsupported"} (:code (ex-data e))) (.startsWith (str (:code (ex-data e))) "CommitOrder")) (throw e))
         (throw (ex-info (if (re-find #"TRIPLEX_CLOCK" text) (clock-conflict-message (.getMessage e)) (.getMessage e))
-                       {:status (if (re-find #"TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
+                       {:status (if (re-find #"TRIPLEX_IMPORT_PREDECESSOR|TRIPLEX_CLOCK|TRIPLEX_CONFLICT|TRIPLEX_(?:OPERATION|COMMAND)_DUPLICATE|cas-failed|unique-conflict" text) 409 400)
                         :maximum (when-let [[_ maximum] (re-find #"TRIPLEX_CLOCK ([0-9.Ee+-]+)" text)] (Double/parseDouble maximum))
                         :code (cond (re-find #"TRIPLEX_OPERATION_DUPLICATE" text) "OperationDuplicate"
                                     (re-find #"TRIPLEX_COMMAND_DUPLICATE" text) "CommandConflict"
+                                    (re-find #"TRIPLEX_IMPORT_PREDECESSOR" text) "ImportPredecessorMissing"
                                     (re-find #"TRIPLEX_CLOCK_EXHAUSTED" text) "ClockExhausted"
                                     (re-find #"TRIPLEX_CLOCK" text) "ClockConflict"
                                     (re-find #"TRIPLEX_CONFLICT|cas-failed|triplex.tx/position" text) "CasConflict"

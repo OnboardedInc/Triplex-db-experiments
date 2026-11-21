@@ -21,6 +21,7 @@ import {
   Evidence,
   loadRoles,
   localRoleMiB,
+  microLoad,
   modeOf,
   splitLoad,
   roles,
@@ -136,15 +137,34 @@ export async function localDrill(opts: any, config: any, manager: any) {
   assert.equal(process.platform, "darwin");
   const mode = modeOf(opts.experiment);
   const syncMode = mode.startsWith("hasync-");
-  const holder = syncMode ? "DX-HASYNC1" : "DX-HA1";
+  const owner = syncMode ? "DX-HASYNC1" : "DX-HA1";
+  const holder = opts.holder as string;
   const diagnostic = syncMode || opts.diagnostic === true;
   const pooled = opts.pooled === true;
   assert(!pooled || ["hasync-ack", "hasync-move", "hasync-restart"].includes(mode));
-  assert.equal(opts.holder, holder);
+  // [DX-INT1] Why: recheck the merged loader and recovery with this builder's diagnostic slot.
+  // Rejected: borrowing another builder's live reservation.
+  assert(holder === owner || (holder === "DX-THIN1" && diagnostic));
   assert.equal(dockerArgs([])[1], DOCKER_HOST);
   const folder = path.join(os.homedir(), "Claude", "Projects", "triplex-db-2");
-  if (typeof opts.recover === "string") return recoverLoad(opts.recover, config, manager, folder);
+  if (typeof opts.recover === "string") {
+    assert.equal(opts.holder, "DX-HA1");
+    return recoverLoad(opts.recover, config, manager, folder);
+  }
   assert(["auto", "s1", "s2", "s3"].includes(opts.slot));
+  assert(
+    !(microLoad(mode) || mode === "native-checks") || diagnostic,
+    "Use --diagnostic for Mac correctness trials",
+  );
+  const previousPg = opts["prepare-postgres"];
+  assert(
+    previousPg === undefined ||
+      (diagnostic &&
+        (microLoad(mode) || mode.startsWith("one-")) &&
+        typeof previousPg === "string" &&
+        /^sha256:[a-f0-9]{64}$/.test(previousPg)),
+    "--prepare-postgres expects the prior image ID for a local diagnostic import or recovery check",
+  );
   const slots = (opts.slot === "auto" ? ["s2", "s3", "s1"] : [opts.slot]).map((id) =>
     slotInfo(config, "datomic", id),
   );
@@ -162,6 +182,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
       slot,
       shape,
       faultCell,
+      opts.holder,
     );
     if (diagnostic)
       attempt.write("diagnostic", {
@@ -184,8 +205,10 @@ export async function localDrill(opts: any, config: any, manager: any) {
     ? [...fleetCaps(mode, scopes, false)]
     : Object.entries(roles)
         .filter(([r]) =>
-          mode.startsWith("load-")
-            ? loadRoles(mode).includes(r as Role)
+          mode === "native-checks"
+            ? r === "tool"
+            : mode.startsWith("load-")
+              ? loadRoles(mode).includes(r as Role)
             : mode === "replication"
               ? ["pg", "target", "tool", "active", "write"].includes(r)
               : mode === "move" ||
@@ -208,7 +231,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
         ? Math.max(2, Math.ceil(people / 2500))
         : smallLogicalCopy
           ? 1.5
-          : mode.startsWith("one-") || splitLoad(mode)
+          : mode.startsWith("one-") || splitLoad(mode) || mode === "load-volume"
             ? 3
             : mode === "load-tail"
               ? 2
@@ -229,12 +252,13 @@ export async function localDrill(opts: any, config: any, manager: any) {
       // [DX-HASYNC1] Why: a queued exclusive lab window needs this process's heavy token to drain. Rejected: holding the token while waiting for that same window to finish.
       if (diagnostic) manager.assertMeasureAdmission(opts.holder);
       const disk = fs.statfsSync(root);
-      if (disk.bavail * disk.bsize < 5 * 2 ** 30) {
+      const floorBytes = (holder === "DX-THIN1" ? 10 : 5) * 2 ** 30;
+      if (disk.bavail * disk.bsize < floorBytes) {
         e = declare(opts.slot);
         e.write("admission-refused", {
           nonce: e.nonce,
           freeBytes: disk.bavail * disk.bsize,
-          floorBytes: 5 * 2 ** 30,
+          floorBytes,
           rolesStarted: 0,
         });
         throw Error("Host disk floor");
@@ -369,7 +393,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
         return (out.stdout + (args[0] === "logs" ? out.stderr : "")).trim();
       },
     };
-    if (mode.startsWith("load-") || mode.startsWith("hasync-")) {
+    if (diagnostic || mode.startsWith("load-") || mode.startsWith("hasync-")) {
       try {
         // [DX-LOAD1] Why: the shared VM rotates built images; bind the immutable digest to the engine's build event and image label. Rejected: running a mutable tag or changing the shared config for another builder.
         const builds = fs
@@ -410,6 +434,38 @@ export async function localDrill(opts: any, config: any, manager: any) {
         throw error;
       }
     }
+    if (previousPg) {
+      try {
+        const inspect = (ref: string) =>
+          site.docker(["image", "inspect", ref, "--format", "{{.Id}}"]).catch((error: Error) => {
+            if (/No such image/.test(error.message)) return undefined;
+            throw error;
+          });
+        const tag = "postgres:17-alpine";
+        const retained = await inspect(previousPg);
+        let current = retained ?? (await inspect(tag));
+        if (!current) {
+          // [DX-LOAD3] Why: restore the official dependency through the engine using an anonymous client.
+          // Rejected: an implicit container pull or binding the historical image ID to a newer build.
+          const config = fs.mkdtempSync(path.join(os.tmpdir(), "ha1-registry-"));
+          try {
+            await runFile("docker", ["--config", config, ...dockerArgs(["pull", "--quiet", tag])], {
+              encoding: "utf8",
+              timeout: 120000,
+            });
+            current = await inspect(tag);
+          } finally {
+            fs.rmSync(config, { recursive: true, force: true });
+          }
+        }
+        assert(current && /^sha256:[a-f0-9]{64}$/.test(current));
+        site.postgresImage = current;
+        e!.log("postgres-image", { previous: previousPg, current, retained: retained === current });
+      } catch (error) {
+        clean = true;
+        throw error;
+      }
+    }
     clean = true;
     const sync = localCheckpoint(e!, folder, opts.checkpoint, people);
     clean = false;
@@ -422,6 +478,7 @@ export async function localDrill(opts: any, config: any, manager: any) {
         scopes,
         capacity: diagnostic ? "local-diagnostic" : "local",
         ...(pooled ? { pooled: true as const } : {}),
+        ...(diagnostic ? { timing: "diagnostic" as const } : {}),
       },
       () => {
         clean = true;

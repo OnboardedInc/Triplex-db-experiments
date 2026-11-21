@@ -266,6 +266,7 @@ export class DatomicClient {
       readonly rowCacheBytes?: number;
       readonly predecessorCacheBytes?: number;
       readonly predecessorAttributes?: readonly string[];
+      readonly receiptPredecessorAttributes?: readonly string[];
       readonly reachKeyBytes?: number;
       readonly historicalRevisionReuse?: boolean;
     } = {},
@@ -280,6 +281,7 @@ export class DatomicClient {
     this.predecessorCache = new PredecessorCache(
       cacheOptions.predecessorCacheBytes,
       cacheOptions.predecessorAttributes,
+      cacheOptions.receiptPredecessorAttributes,
     );
     this.rowCache = new RowCache(
       Number.MAX_SAFE_INTEGER,
@@ -1113,14 +1115,6 @@ export class DatomicClient {
     const { onSent: inputSent, ...wireInput } = input;
     const { rows: inputRows, newIds: ids, ...requestHeader } = wireInput;
     const ticket = erasureWriteTicket();
-    const header = ticket
-      ? {
-          ...requestHeader,
-          erasureSeq: ticket.sequence,
-          erasureReplay: ticket.replay,
-          erasureSourceDatabase: ticket.sourceDatabase,
-        }
-      : requestHeader;
     onSent ??= inputSent;
     const compact = this.layouts.get(db) === "lean";
     const rowFast = fastPathEnabled("row"),
@@ -1192,7 +1186,20 @@ export class DatomicClient {
     const body = {
       // [DX-INT1] Why: updating the existing legacy keys preserves the frozen request bytes.
       // Rejected: rebuilding the legacy header in compact-field order.
-      ...(fresh || ordered ? header : wireInput),
+      ...(fresh || ordered ? requestHeader : wireInput),
+      // [DX-ERASE1] Why: the source removal sequence fences every wire form.
+      // Rejected: adding the ticket only to compact writes (legacy and mixed frames can also replay protected values).
+      ...(ticket
+        ? {
+            erasureSeq: ticket.sequence,
+            erasureReplay: ticket.replay,
+            ...(ticket.sourceDatabase === undefined
+              ? {}
+              : {
+                  erasureSourceDatabase: ticket.sourceDatabase,
+                }),
+          }
+        : {}),
       ...(this.cacheOptions.writeClass ? { writeClass: this.cacheOptions.writeClass } : {}),
       ...(this.cacheOptions.groupAccount ? { groupAccount: this.cacheOptions.groupAccount } : {}),
       ...(bounds ? { historyIdentityBounds: bounds } : {}),
