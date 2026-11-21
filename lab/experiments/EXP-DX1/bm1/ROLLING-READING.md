@@ -141,3 +141,21 @@ Solo cells verified 1,050 of 1,050 offers each. Loaded cells verified 118,200 of
 At 235 offered, all three arms meet the owner's 50 ms quiet-account rule. The ZGC writer arm also cut the second-half busy p99 to 14.55 ms. The rolling 6 reference here repeats this morning's rolling 6 arm on the same pin family: 393.97 against 391.85 stored/s, a second-half p99 of 4,588 against 5,067 ms, and quiet p99 at 394 of 48.51 against 54.00 ms. **Against the cache32 result,** the 32 GiB cache removed the late spells that fresh-first only reorders. On three cores at 394 offered, its second-half p99 was 521 ms with no late spell of 300 waiting offers. Every solo cell verified 1,050 of 1,050 offers. Loaded cells verified every acknowledged offer; at 620 the expired offers are listed above.
 
 The Mac copy is at `evidence/DX-BM1/bench3/bench3-fresh`, with the 15,112,523-byte summary and 215,777,094-byte raw archives checked member by member, and the pinned-analyser readout. The rental had cost about USD 8.12 at 21:40 UTC. [Checksums](SHA256SUMS)
+
+## 32 GiB cache, second run (cache32b)
+
+**The second run of the 32 GiB cache pair repeated the first.** It ran unchanged at PREP1 `97aced1b1`, from 21:48 to 22:43 UTC. Late SQL reads per save stayed near zero, both splits stored 394.00/s with no expiries, and three cores again kept up with 620 offered while five did not. The cold first minute again set the whole-window tail.
+
+| Arm, 394 offered | Stored/s, run 1 → run 2 | Second-half busy p99 ms, run 1 → run 2 (prediction) | Whole p99 ms, run 1 → run 2 | Quiet loaded p99 ms, run 1 → run 2 | Late SQL reads/save outside / inside jobs, run 2 | First 60 s reads/save, run 2 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Three cores | 394.00 → 394.00 | 520.99 → 269.16 (350–800) | 14,287 → 15,432 | 61.81 → 59.39 | 0.047 / 0.0005 | 1.49, 1.07 |
+| Five cores | 394.00 → 394.00 | 655.96 → 530.99 (450–950) | 9,973 → 10,637 | 47.63 → 55.28 | 0.040 / 0.0004 | 1.17, 0.67 |
+
+| Arm, 620 offered | Stored/s whole, run 1 → run 2 | Expired, run 2 | Second-half busy p99 ms, run 1 → run 2 | Late spell, run 2 |
+| --- | ---: | ---: | ---: | --- |
+| Three cores | 620.00 → 620.00 | 0 | 708.99 → 724.78 | none of 300 waiting offers |
+| Five cores | 617.86 → 617.75 | 0 | 5,867 → 11,382 | one spell from 150 to 288 s, up to 7,397 waiting |
+
+All predictions for the repeat held, except that the three-core second-half p99 came in below its range. The five-core split's first-60-second reads, 0.67 in the second bin, also fell just below theirs. The repeat therefore confirms the first run's verdict. The cache size removes the late reads. Three transactor cores with three write-gateway cores is the better split at 620. What remains at 394 is the first minute after a cold start. On three cores, quiet second-half p99 reached 102.73 ms at 394 and 231.04 ms at 620. The quiet account's tail is not fixed by the cache. Peak transactor memory was 50.1 and 50.9 GiB of 60 GiB.
+
+The Mac copy is at `evidence/DX-BM1/bench3/bench3-cache32b`, with the 9,748,813-byte summary and 117,902,172-byte raw archives checked member by member, and the pinned-analyser readout. Rental cost about USD 9.34 at 22:47 UTC. [Checksums](SHA256SUMS)
