@@ -1,17 +1,23 @@
-65ad0997c1e077b5ca3e0dc5b2f8304f6f65f51c
-Server 2 should run this commit for fresh and 1B.
-Each arm opens its own prepared PostgreSQL copy.
-The full-size dump projected at least 76 minutes for one restore.
-The fresh source needs about 115 GB for each copy.
-The Mac copied and reopened PostgreSQL 17 and refused a wrong digest.
-The forecast is 235 minutes and USD 4.27 per age after copy preparation.
-Neither full-size campaign has been run by this worktree.
+3a71c17674ccff6a435f8829cd3da8933feb34b1
+Server 2 should run fresh first. AGE1 stopped short of the 1B seal.
+The headline uses INT1's server profile, transactor Java 25 ZGC and a separate WAL NVMe.
+Default ordered and grouped each contribute P2 and P6 from their own copies.
+The command uses four prepared copies, six fair-turn credits and four offered rates.
+The ceiling is 300 minutes and USD 5.45 per age after staging.
+The Mac checked the toy card and PG17 WAL relocation. Live bare-metal placement is still open.
+The driver has both commands and the predictions in SERVER.md.
 
 ## Part 6 server profile audit
 
 The scorecard merges the exact INT1 server launch pin. Its first real headline copy checks that the selected WAL directory and ordered data copies resolve to different whole NVMe devices. The prepared launcher keeps the original copied WAL until the second-device copy is flushed. It checks the exact live bind and prevents reuse of the consumed PGDATA. This mounts only private storage. The stock INT1 SQL readback checks current durability settings and the live WAL path. The JVM checks read the two pinned image families and final collector flags from each current serving boot, verify effective CPU sets and memory caps, and check the live transactor cache argument. The per-arm launch record binds exact source, slot, attempt, policy and live container identities. The renderer checks it and the sealed or aged identity before reading the new comparison metrics.
 
 The P2 and P6 evidence reader recomputes the exact fixed person tapes, archive hashes, in-window and expired counts, and completed-only latency. It checks fresh serial cut and attempt binding, the sealed database and the six-credit trace. These fields make no new performance verdict. The inherited mixed-ID PASS still requires exact refusal bytes, unchanged claims and paired typed reads tied to the launch, age, copy and sourced attempt. The native Mac PG17 WAL fixture records actual distinct filesystems, a same-device refusal and a durable write with synchronous commit. Its source, slot and attempt match the same diagnostic scorecard execution. No acceptance pin changed.
+
+The runner incorporates `57580241dc4020f9ab7590839c72c00356fcedee` as a merge parent and uses its tracked Datomic tree and launch policy. Both comparisons fit the 300-minute plan. This keeps the separate WAL and transactor ZGC treatment next to the ordered default because the full-size evidence shows a lower quiet ratio at 620 and lower delivery at 394. The run tests the combination. Its six-minute field prelude and one-task rated tape constrain how directly its measurements can be compared with earlier PREP1 runs. [Predictions and commands](SERVER.md)
+
+Twelve focused checks passed. The first Mac card exposed a shadowed variable in the quiet-window expiry count. The corrected source reused the verified image and filled all 14 toy rows. The two quiet pairs recorded at most six dispatches per fair turn. A copied PG17 cluster refused a wrong control digest and same-device WAL, then opened with its copied WAL on a distinct filesystem and synchronous commit enabled. The engine removed both volumes and the staged image. The Mac never ran a full server profile or measured bare-metal latency. The actual NVMe and mixed-JVM startup, rated throughput, and fresh and 1B completion remain open. [Evidence index](EVIDENCE.md)
+
+SCALE1 reported that the 429,778,659-record seed calibrated at 5,283.82 records/s and the controller stopped on its 1B time guard. Its retained intermediate volume cannot fill the 1B command. [SCALE1 handoff](https://github.com/OnboardedInc/Triplex-db-experiments/blob/58e4b1ca3865315e6b671fc4cbf07687d113c6f8/lab/experiments/EXP-DX1/scale1/HANDOFF.md)
 
 ## Part 5 prepared PostgreSQL audit
 

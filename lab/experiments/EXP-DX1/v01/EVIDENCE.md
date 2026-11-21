@@ -53,3 +53,9 @@ The [checksum index](SHA256SUMS) is relative to the lab vault's `evidence/DX-V01
 - `part5/card-a/SCORECARD-v0.1.md` is the paired toy card. `part5/verify-card-a.log` checks the 14 rows, both configurations, the PGDATA evidence binding and the mixed-ID results.
 - `part5/focused-checks.log` records the six focused tests, shell checks and startup forecasts. `part5/focused-first.log` preserves the initial test path-alias failure. `part5/platform-check.log` records the bare-metal detector regression check.
 - The package and image build receipts, slot lifecycle log and image removal result are in `part5/`.
+
+## Part 6 server profile
+
+- `part6/native-card.tar.gz` retains the Mac toy card and source-bound campaign. `part6/SCORECARD-v0.1.md` is the diagnostic view. `part6/verify-server-b.log` records the card, WAL and fair-turn checks.
+- `part6/focused-final.log` records the twelve tests, shell checks and 300-minute launch plan.
+- `part6/native-first-refusal.tar.gz` and `part6/fixture-server-a-1.log` retain the first attempt that exposed the quiet expiry counter. The final log and package and image receipts identify the replay, cleanup and reused image.
