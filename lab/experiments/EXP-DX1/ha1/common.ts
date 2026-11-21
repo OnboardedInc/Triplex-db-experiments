@@ -42,6 +42,7 @@ export const modes = [
   "load-split-sql",
   "load-split-pg",
   "hasync-smoke",
+  "hasync-cold",
   "hasync-commit",
   "hasync-ack",
   "hasync-index",
@@ -71,7 +72,7 @@ export const roles = {
   read: 672,
   tool: 640,
 } as const;
-export type Role = keyof typeof roles | `fleet-${"a" | "b"}-${"pg" | "tx"}${number}`;
+export type Role = keyof typeof roles | "write-b" | `fleet-${"a" | "b"}-${"pg" | "tx"}${number}`;
 // [DX-LOAD1] Why: peak-rate arms keep several fresh databases in one transactor process. Rejected: reusing the 560 MiB failure-drill cap after a measured cgroup OOM.
 // [DX-LOAD2] Why: the same bound campaign can reserve just one machine for a same-host comparison.
 export function microLoad(mode: string) {
@@ -200,6 +201,18 @@ function treeCode(mode?: Mode) {
       paths.push(path.join(root, "lab/experiments/EXP-DX1/scale1", f + ".ts"));
     for (const f of ["ack-audit", "runner", "score", "seed", "suite", "verify"])
       paths.push(path.join(root, "lab/experiments/EXP-DX1/p9", f + ".ts"));
+    for (const f of [
+      "jvm1/launch.mjs",
+      "v01/profile.ts",
+      "v01/source.ts",
+      "v01/adopt.ts",
+      "scale1/decision/plan.ts",
+      "scale1/decision/field-save.ts",
+      "w1/group/workload.ts",
+      "w1/group/population.ts",
+      "w1/write-options.ts",
+    ])
+      paths.push(path.join(root, "lab/experiments/EXP-DX1", f));
   }
   return hash(
     JSON.stringify(paths.sort().map((f) => [path.relative(root, f), hash(fs.readFileSync(f))])),

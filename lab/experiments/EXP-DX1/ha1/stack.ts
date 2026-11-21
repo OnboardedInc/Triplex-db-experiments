@@ -48,6 +48,7 @@ export class Stack {
     b: Site,
     credentials?: { secret: string; admin: string },
     readonly caps?: ReadonlyMap<Role, number>,
+    readonly placement?: ReadonlyMap<Role, string>,
   ) {
     this.e = e;
     this.a = a;
@@ -153,8 +154,9 @@ export class Stack {
       mb + "m",
       "--memory-swap",
       mb + "m",
-      "--cpus",
-      server ? "3" : "1.5",
+      ...(this.placement?.has(role)
+        ? ["--cpuset-cpus", this.placement.get(role)!]
+        : ["--cpus", server ? "3" : "1.5"]),
       "--network",
       this.networks.get(site)!,
       ...published,
@@ -633,12 +635,12 @@ export class Stack {
     );
     return this.endpoint(role);
   }
-  async endpoint(role: "write" | "read") {
+  async endpoint(role: "write" | "read" | "write-b") {
     const m = this.members.get(role)!,
       port = (await this.view(role)).NetworkSettings.Ports["8080/tcp"][0].HostPort;
     return "http://" + (m.site.privateAddress ?? loopback) + ":" + port;
   }
-  async ready(role: "write" | "read") {
+  async ready(role: "write" | "read" | "write-b") {
     const url = await this.endpoint(role);
     await until("gateway " + role, async () => {
       const r = await fetch(url + "/health", { signal: AbortSignal.timeout(2500) }).catch(

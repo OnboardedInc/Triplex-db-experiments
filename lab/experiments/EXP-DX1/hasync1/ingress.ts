@@ -4,20 +4,26 @@ import { once } from "node:events";
 import { loopback } from "../ha1/common.ts";
 import { timeouts, wait } from "./supervisor.ts";
 
-export async function ingress(first: string) {
+export async function ingress(first: string, distinguishSealed = false) {
   let writer = new URL(first);
   let sealed = false;
   let generation = 0;
   let inFlight = 0;
+  const acknowledgements = new Map<string, number>();
   const agent = new http.Agent({ keepAlive: true, maxSockets: 128 });
   const server = http.createServer((req, res) => {
-    const unavailable = () => {
+    const unavailable = (blockedBeforeSend = false) => {
       res.writeHead(503, { "content-type": "application/json" });
-      res.end('{"code":"SyncTimeout","message":"Writer unavailable during cutover"}');
+      res.end(
+        JSON.stringify({
+          code: blockedBeforeSend && distinguishSealed ? "WriterSealed" : "SyncTimeout",
+          message: "Writer unavailable during cutover",
+        }),
+      );
     };
     if (sealed) {
       req.resume();
-      unavailable();
+      unavailable(true);
       return;
     }
     const offeredTo = generation;
@@ -45,8 +51,17 @@ export async function ingress(first: string) {
           if (res.destroyed || res.writableEnded) return;
           // [DX-HASYNC1] Why: no old-route response can escape after the cut. Rejected: streaming an ACK across a generation change.
           if (offeredTo !== generation) return unavailable();
+          const payload = Buffer.concat(chunks);
+          if (distinguishSealed && reply.statusCode === 200 && req.url?.endsWith("/transact")) {
+            try {
+              const { operationId } = JSON.parse(payload.toString("utf8"));
+              if (typeof operationId === "string") acknowledgements.set(operationId, offeredTo);
+            } catch {
+              return unavailable();
+            }
+          }
           res.writeHead(reply.statusCode!, reply.headers);
-          res.end(Buffer.concat(chunks));
+          res.end(payload);
         });
       },
     );
@@ -66,6 +81,14 @@ export async function ingress(first: string) {
   assert(addr && typeof addr !== "string");
   return {
     url: "http://" + loopback + ":" + addr.port,
+    // [DX-HASYNC1] Why: attribute the delivered receipt to the exact route that forwarded it.
+    // Rejected: classifying by the caller start time (a socket can dispatch across the change).
+    receiptEpoch(id: string) {
+      const epoch = acknowledgements.get(id);
+      acknowledgements.delete(id);
+      return epoch;
+    },
+    currentEpoch: () => generation,
     seal() {
       sealed = true;
       generation++;

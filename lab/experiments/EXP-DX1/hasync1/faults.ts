@@ -131,7 +131,7 @@ async function podForSave(pair: SyncPair, ac: Account) {
   return { id: changed[0]![0], rev: changed[0]![1], pin };
 }
 
-async function checkOldRestart(pair: SyncPair) {
+export async function checkOldRestart(pair: SyncPair) {
   const result = await Promise.all(
     (["pg", "active"] as const).map(async (role) => {
       const before = await pair.s.view(role, timeouts.control);

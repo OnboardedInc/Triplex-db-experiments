@@ -4,8 +4,9 @@ import {
   DatomicClient, DatomicHttpError, orderedSaveIdentity,
 } from "../../../../../packages/datomic/dist/index.js";
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
-import { SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
-import { command } from "../../w1/group/workload.ts";
+import { SEED_VALID_FROM } from "../../../../bench/lib/world.ts";
+import { expectedSave, type Row } from "./field-save.ts";
+export { expectedSave, type Row } from "./field-save.ts";
 import {
   activeSubjects,
   expiryMs,
@@ -13,15 +14,12 @@ import {
   keyFor,
   maxInflight,
   operationId,
-  sha,
   task,
   type Density,
   type Write,
 } from "./plan.ts";
 import { journalHash, now, type Scope } from "./observer.ts";
 
-type Input = Parameters<DatomicClient["transact"]>[1];
-export type Row = Input["rows"][number];
 type Ack = {
   operationId: string;
   position: { v: string };
@@ -109,25 +107,6 @@ export async function preload(client: DatomicClient, scope: Scope, people: Densi
   assert.equal(found.size, chosen.length);
   for (const x of found.values()) assert(x.length === 3 && x.every(Boolean));
   return found;
-}
-
-export function expectedSave(o: Save, e: Write, prior: readonly Row[]) {
-  const entity = task(o.account, o.subject);
-  const old = prior.slice(0, e.width);
-  assert(old.length === e.width && old.every((r) => r.entity_id === entity));
-  const facts: Fact[] = old.map((row, i) => ({
-    e: entity,
-    a: row.attribute,
-    v: { type: "string", value: sha([e.version, i]).slice(0, 57) },
-  }));
-  const input = {
-    ...command(o.id, facts, old, true, false,
-      o.orderedToken === undefined ? undefined : orderedSaveIdentity(o.orderedToken)),
-    live: old.map((r) => r.id),
-    groupAccount: keyFor(o.account),
-    writeClass: "live" as const,
-  };
-  return { input, entity };
 }
 
 // [DX-SCALE1] Why: compare every logical field of the committed WFIX1 change records at the assigned clock. Rejected: proving only the retracted identity or ignoring the stored predecessor lifetime.
