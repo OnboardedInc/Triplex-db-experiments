@@ -859,3 +859,37 @@ Orchestrator's reading:
    readable; it is invented demo data. Still no personal details in the bucket, its name, or any commit.
 5. He asks for: the full state of the project, the cause of the slowness, the remaining lines of optimisation, the
    failover options explained once more, what is most concerning, and what I need from him.
+
+## 2026-11-21 about 10:00 local: answers to the open decisions; concern 4 (realistic data set) sooner; server before playground
+
+Sam, verbatim:
+- "For the failover let's go with B until a second copy exists. That works for me and then we'll do C for production.
+  I agree. Put that on the roadmap for the future: when you go to 1.0, then we can do that other one. We can go to C.
+
+  Keep your 1-through-6 concern, your 1-through-7 concerns, and make sure that we start to work towards those at some
+  point as we continue. Especially in number 4 I want to get that happening sooner rather than later. We're testing
+  on a realistic dataset for everything ideally but only add it in whenever it starts to make sense.
+
+  For decisions from me I answered to failover. For number 2 the 50 ms clause works for me. The budget is still fine.
+  Let's keep it like that.
+
+  No, Onboard doesn't need to look up people by SSN once an account has a removal policy. No we never need to do
+  that. We should have a way to mark data as sensitive or redacted and not let that work.
+
+  I agree with number 4. For number 5 we'll do that later. Let's just get the server as good as we can and then we
+  can start to work on the playground after that.
+
+  This is my response to all the questions above in your full thing, your full response above to my last question."
+
+Orchestrator's reading:
+1. Failover: option B for version 0.1; option C on the roadmap for version 1.0. Recorded in `lab/V0.1.md`.
+2. The seven concerns I listed stay on the list and get worked. Concern 4 (the wide thin account and the hundred
+   small accounts in the same full-size database as the ten deep ones) moves up: a builder starts on it now.
+3. Priority 6 is met when the ratio is at most 1.25 or the quiet account's loaded commit p99 stays at or under
+   50 ms. Recorded in `lab/TARGETS.md`.
+4. Budget stays at $200.
+5. No lookup by the value of a protected field, ever; the refusal stays; marking data sensitive or redacted must
+   exist. NEXT-WEEK item 12a is closed as "not needed".
+6. Server work first; playground work after. The playground's server builds are not scheduled now; DX-PLAY1 stays
+   parked with its public smoke data set published.
+7. Continuous compliance scenarios: later.
