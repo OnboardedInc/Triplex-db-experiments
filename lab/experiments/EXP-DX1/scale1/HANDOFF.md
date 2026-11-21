@@ -1,9 +1,9 @@
 # DX-SCALE1 handoff
 
-Server 2 accrued about USD 43.38 through 2026-11-21 10:17 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
+Server 2 accrued about USD 44.14 through 2026-11-21 10:59 UTC, at USD 1.09/hour from November 19 at 18:30 UTC. The owner fixed the v0.1 budget at USD 200 across both servers. The campaign uses one database. [Run order and timings](V01-CAMPAIGN.md) · [Forecasts](PREDICTIONS.md)
 
 <!-- state -->
-The maintained import is running at the last settled cut of 493,326,633 indexed records. Free space at this checkpoint was 461.52 GB on root and 269.08 GB on the spare. The sealed seed, fresh template and two pristine copies remain held. [Maintained load readings](AGE1-LOAD.md) · [Fresh scorecard](V01-FRESH.md)
+AGE1 stopped at 10:56:16 UTC (05:56 ET). The second maintained cycle averaged 9,022.51 records/s, below the 9,900 floor. The held database settled at 514,741,853 records, logical head 4,034,400 and native t 38,613,452, with 165.74 GB allocated before PostgreSQL shutdown. The 12.22 MB continuation archive is checksum-matched on the Mac. The 1B copy seal and aged scorecard have no eligible input. The settled database is stopped. A read-only file inventory is finishing. The immutable seed, stopped fresh template and two pristine fresh copies remain held. [Maintained load and evidence](AGE1-LOAD.md) · [Fresh scorecard](V01-FRESH.md)
 <!-- end state -->
 
 With the dedicated destination in `BENCH_SERVER`, this command shows active stages and their ceilings.
