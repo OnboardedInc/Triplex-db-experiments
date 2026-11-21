@@ -156,26 +156,33 @@ export const laptopCaps = Object.freeze({ pg: 256, tx: laptop.tx.memory, write: 
 // [DX-INT1] Why: keep the portable limits and the full-size treatment in one launch policy.
 // Rejected: scaling all roles together or interpreting the reduced startup as physical placement evidence.
 /** @param {"laptop" | "server"} profile
- * @param {{ jvm?: JvmProfile, txJvm?: JvmProfile, writeJvm?: JvmProfile, creditMode?: CreditMode, reduced?: boolean, scale?: number }} [options] */
+ * @param {{ jvm?: JvmProfile, txJvm?: JvmProfile, writeJvm?: JvmProfile, readJvm?: JvmProfile, readTuned?: boolean, creditMode?: CreditMode, reduced?: boolean, scale?: number }} [options] */
 export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm = jvm,
-  creditMode = defaultCreditMode, reduced = false, scale = 1 } = {}) {
+  readJvm = jvm, readTuned = false, creditMode = defaultCreditMode, reduced = false, scale = 1 } = {}) {
   assert(profile === "laptop" || profile === "server");
-  assert(jvmProfiles.includes(jvm) && jvmProfiles.includes(txJvm) && jvmProfiles.includes(writeJvm));
+  assert([jvm, txJvm, writeJvm, readJvm].every((v) => jvmProfiles.includes(v)));
   assert(creditModes.includes(creditMode), "Unknown credit mode");
   assert(profile === "server" ? scale === 1 : !reduced && [1, 2, 4].includes(scale));
   const portable = profile === "laptop" || reduced;
+  assert(!readTuned || !portable);
+  // [DX-RD1] Why: leave two client cores available and give the read peer three physical cores.
+  // Rejected: sharing the new read cores with the transmitter or verifier.
+  const placementServer = readTuned ? { ...server,
+    "gw-w": { ...server["gw-w"], cpus: "2,3,4", cores: 3 },
+    "gw-r": { ...server["gw-r"], cpus: "5,6,11", cores: 3, memory: 9216, heap: 6144, direct: 1024, cache: 3072 },
+  } : server;
   /** @param {Role} role */
   const settings = (role) => {
-    const placement = profile === "laptop" ? laptop[role] : server[role];
-    const limits = portable ? laptop[role] : server[role];
-    const selected = role === "tx" ? txJvm : role === "gw-w" ? writeJvm : jvm;
+    const placement = profile === "laptop" ? laptop[role] : placementServer[role];
+    const limits = portable ? laptop[role] : placementServer[role];
+    const selected = role === "tx" ? txJvm : role === "gw-w" ? writeJvm : readJvm;
     const major = selected === "j21-g1" ? "21" : "25";
     const collector = selected === "j25-zgc" ? "ZGC" :
       profile === "laptop" && limits.memory * scale < 1792 && selected === "j21-g1" ? "Serial" : "G1";
     const cache = limits.cache;
     const opts = [
       "-Xms" + limits.initial + "m", "-Xmx" + limits.heap * scale + "m",
-      "-XX:MaxDirectMemorySize=" + (role === "tx" ? limits.direct : limits.heap * scale) + "m",
+      "-XX:MaxDirectMemorySize=" + (role === "tx" || (readTuned && role === "gw-r") ? limits.direct : limits.heap * scale) + "m",
       ...(portable && role === "tx" ? ["-XX:MaxMetaspaceSize=160m"] : []),
       ...(cache !== null ? ["-Ddatomic.objectCacheMax=" + cache + "m"] : []),
       ...(!portable && role === "tx" ? ["-Ddatomic.prefetchProbes=true"] : []),
@@ -202,7 +209,7 @@ export function launchProfile(profile, { jvm = defaultJvm, txJvm = jvm, writeJvm
     profile, reduced, creditMode, tx: settings("tx"), "gw-w": settings("gw-w"), "gw-r": settings("gw-r"),
     pg: { memoryMiB: portable ? laptopCaps.pg * scale : 8192, cpus: "1", settings: pgSettings },
     index: { threshold: portable ? "8m" : "256m", max: portable ? "32m" : "1g" },
-    clients: { senders: "9", readers: "10,11" },
+    clients: { senders: "9", readers: readTuned ? "10" : "10,11" },
   };
 }
 

@@ -13,6 +13,7 @@ const { values } = parseArgs({
     "transfer-sha256": { type: "string" }, writer: { type: "string", default: defaultWriter },
     jvm: { type: "string", default: defaultJvm },
     "tx-jvm": { type: "string" }, "write-jvm": { type: "string" },
+    "read-study": { type: "boolean" }, "read-study-jvm": { type: "string" },
     "credit-mode": { type: "string", default: process.env.DX_V01_CREDIT_MODE ?? defaultCreditMode },
     "wal-directory": { type: "string" },
     "aged-bundle": { type: "string" }, "aged-bundle-sha256": { type: "string" }, "aged-dump": { type: "string" },
@@ -33,13 +34,19 @@ const txJvm = (values["tx-jvm"] ?? values.jvm) as JvmProfile;
 const writeJvm = (values["write-jvm"] ?? values.jvm) as JvmProfile;
 const creditMode = values["credit-mode"] as CreditMode;
 const launch = launchProfile("server", { jvm: values.jvm as JvmProfile, txJvm, writeJvm, creditMode });
+const study = values["read-study"] === true;
+assert(study || !values["read-study-jvm"]);
+const readJvm = (values["read-study-jvm"] ?? values.jvm) as JvmProfile;
+const treatment = study ? launchProfile("server", { jvm: values.jvm as JvmProfile, txJvm, writeJvm, readJvm, creditMode, readTuned: true }) : undefined;
 const diagnostics = writeDiagnostics(values.writer);
 if (values.plan) {
   console.log(forecast + ` Writer ${values.writer}, server profile, credits ${creditMode}. JVM ${values.jvm}, transactor JVM ${txJvm}, write gateway JVM ${writeJvm}.`);
   console.log(JSON.stringify({ ...launch, ...diagnostics }, null, 2));
+  if (study) console.log(JSON.stringify({ treatment, cutoffMinutes: 56, batch: 8, rates: [50, 235], seats: [1, 4, 16, 64, 256, 1024] }, null, 2));
   process.exit(0);
 }
 assert(values.age === "fresh" || values.age === "1B");
+assert(!study || values.age === "fresh", "The short reader study requires the fresh prepared copy");
 assert(values.commit && values.out && values.seed && values["image-sha256"] && values["transfer-sha256"]);
 const aged = [values["aged-bundle"], values["aged-bundle-sha256"], values["aged-dump"], values["aged-dump-sha256"]];
 assert(values.age === "1B" ? aged.every(Boolean) : aged.every((v) => !v));
@@ -49,12 +56,13 @@ const source = cleanSource(values.commit);
 verifyBuild(source, process.env.DX_V01_BUILD_RECEIPT);
 const out = path.resolve(values.out), campaign = path.join(out, "campaign");
 fs.mkdirSync(out, { mode: 0o700 });
-console.log(forecast);
+console.log(study ? "Reader diagnostic, 56-minute wall clock cutoff including restores and cleanup." : forecast);
 const fd = fs.openSync(path.join(out, "campaign.log"), "wx", 0o600);
-const child = spawn("timeout", ["--kill-after=90s", String(budget.adoptionAndP1to4 + budget.P6 + budget.P7 + 1) + "m", "bash",
-  "lab/experiments/EXP-DX1/v01/adopted-server.sh", source, campaign, String(Date.now() + budget.adoptionAndP1to4 * 60_000),
+const child = spawn("timeout", ["--kill-after=90s", String(study ? 56 : budget.adoptionAndP1to4 + budget.P6 + budget.P7 + 1) + "m", "bash",
+  "lab/experiments/EXP-DX1/v01/adopted-server.sh", source, campaign, String(Date.now() + (study ? 53 : budget.adoptionAndP1to4) * 60_000),
   path.resolve(values.seed), values["image-sha256"], values["transfer-sha256"], values.age, values.writer, values.jvm!,
-  ...aged.map((v) => v ?? ""), txJvm, values["wal-directory"] ? path.resolve(values["wal-directory"]) : "", writeJvm, creditMode], {
+  ...aged.map((v) => v ?? ""), txJvm, values["wal-directory"] ? path.resolve(values["wal-directory"]) : "", writeJvm, creditMode,
+  study ? readJvm : ""], {
   stdio: ["ignore", fd, fd],
   env: Object.fromEntries(["PATH", "LANG", "LC_ALL", "HOME", "DX_V01_BUILD_RECEIPT", "AGE_JAVA", "AGE_DATOMIC_HOME", "DX_W1_SERIAL_APPLY", "PREP1_LOOKUP_EVERY"]
     .flatMap((name) => process.env[name] ? [[name, process.env[name]]] : [])),
@@ -67,6 +75,11 @@ const exit = await new Promise<string>((done) => {
   child.once("close", (code, signal) => done(code === 0 ? "" : String(code ?? signal)));
 });
 process.removeListener("SIGINT", stop); process.removeListener("SIGTERM", stop);
+if (study) {
+  console.log(path.join(out, "campaign.log"));
+  if (exit) process.exitCode = 1;
+  process.exit();
+}
 const { writeAdoptedCard } = await import("./adopted-card.ts");
 writeAdoptedCard({ source, age: values.age, writer: values.writer, toy: false, out, campaign, forecast,
   failure: exit ? "The adopted campaign stopped. See [campaign.log](campaign.log)." : undefined });

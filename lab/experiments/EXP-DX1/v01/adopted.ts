@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
+import { performance } from "node:perf_hooks";
 import { setTimeout as sleep } from "node:timers/promises";
 import { DatomicClient, orderedSaveIdentity } from "../../../../packages/datomic/dist/index.js";
 import { fieldValue } from "../../../bench/lib/deep-world.ts";
@@ -15,12 +16,23 @@ import { creditModeSelection } from "../prep1/rolling-credits.ts";
 import { defaultCreditMode, type CreditMode } from "../jvm1/launch.mjs";
 import { checkAdoptedPeer, hex, openScaleSeal, type AdoptedSeed } from "./adopt.ts";
 import { ladder, phaseSeconds, selectedWriter, type Writer } from "./profile.ts";
+import { pinnedFields } from "./pinned-fields.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
 export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
   creditMode?: CreditMode; serialApply?: boolean;
   empty?: Residency; residency?: () => Residency | Promise<Residency> };
 export type QuietCell = "alone" | 235;
+export type ReadStudy = { rate: 50 | 235; batch: number; sample: boolean; counters?: () => unknown };
+type ReadSamples = (Parameters<Parameters<DatomicClient["withReadProfile"]>[0]>[0] & { sdkDone?: number })[];
+const sampledRead = async <A>(client: DatomicClient, samples: ReadSamples, send: () => Promise<A>) => {
+  const own: ReadSamples = [];
+  try { return await client.withReadProfile((row) => own.push(row), send); }
+  finally {
+    const sdkDone = now();
+    for (const row of own) samples.push({ ...row, sdkDone });
+  }
+};
 export const jsonFile = (file: string, data: unknown) =>
   fs.writeFileSync(file, JSON.stringify(data, null, 2) + "\n", { flag: "wx", flush: true, mode: 0o600 });
 
@@ -112,16 +124,31 @@ async function preload(client: DatomicClient, seed: AdoptedSeed, head: number, t
   return senders;
 }
 
-async function readWindows(client: DatomicClient, seed: AdoptedSeed, start: number, loaded: boolean, toy: boolean) {
+async function readWindows(client: DatomicClient, seed: AdoptedSeed, start: number, loaded: boolean, toy: boolean,
+  study?: ReadStudy, samples: ReadSamples = []) {
   const intervals = toy ? [1, 4] : ladder;
-  const duration = toy ? 4 : phaseSeconds;
+  const duration = toy ? 4 : study ? 30 : phaseSeconds;
   const phases = [];
   const requested = { recordedPosition: seed.scope.cut, validAt: SEED_VALID_FROM };
   for (const [i, seats] of intervals.entries()) {
     await sleep(Math.max(0, start + i * duration * 1000 - now()));
     const end = start + (i + 1) * duration * 1000;
     const delay = new Histogram();
-    let errors = 0;
+    const cpu = study && process.cpuUsage(), elu = study && performance.eventLoopUtilization();
+    const begin = study?.counters?.();
+    const seen = study && new Uint8Array(Math.ceil(seed.image.people * accounts.length / 8));
+    const perSeat = study && new Uint32Array(seats);
+    let errors = 0, unique = 0, exchanges = 0, groupTotal = 0, peakQueued = 0, peakSockets = 0;
+    const send = pinnedFields(client, seed.scope.db, field(0), requested, study?.batch ?? 1, (send, size) => {
+      if (!study) return send();
+      groupTotal += size;
+      return ++exchanges % 128 === 0 && study.sample ? sampledRead(client, samples, send) : send();
+    });
+    const poll = study && setInterval(() => {
+      peakQueued = Math.max(peakQueued, Object.values(client.agent.requests).reduce((n, xs) => n + (xs?.length ?? 0), 0));
+      peakSockets = Math.max(peakSockets, Object.values(client.agent.sockets).reduce((n, xs) => n + (xs?.length ?? 0), 0));
+    }, 250);
+    const startedAt = now();
     await Promise.all(Array.from({ length: loaded ? seats : 0 }, async (_, seat) => {
       let n = seat;
       while (now() < end) {
@@ -129,21 +156,33 @@ async function readWindows(client: DatomicClient, seed: AdoptedSeed, start: numb
         const entity = task(a, subject);
         const issued = now();
         try {
-          const result = await client.rows(seed.scope.db, { entityIds: [entity], pattern: { attribute: field(0) }, basis: requested });
+          const result = await send(entity);
           assert.equal(result.length, 1);
           assert.deepEqual([result[0]!.entity_id, result[0]!.attribute, result[0]!.value_string],
             [entity, field(0), fieldValue(subject, 0, 0, 0).value]);
           assert(result[0]!.recorded_position <= requested.recordedPosition);
-          if (now() <= end) delay.recordMs(now() - issued);
+          const checked = now();
+          if (checked <= end) {
+            delay.recordMs(checked - issued);
+            if (seen && perSeat) {
+              perSeat[seat] = perSeat[seat]! + 1;
+              const key = a * seed.image.people + subject, bit = 1 << (key % 8), index = Math.floor(key / 8);
+              if ((seen[index]! & bit) === 0) { seen[index] = seen[index]! | bit; unique++; }
+            }
+          }
         } catch { errors++; }
       }
     }));
-    phases.push({ seats: loaded ? seats : 0, goodput: delay.count / duration, errors, read: delay.summary() });
+    if (poll) clearInterval(poll);
+    phases.push({ seats: loaded ? seats : 0, goodput: delay.count / duration, errors, read: delay.summary(),
+      diagnostic: study ? { startedAt, deadline: end, drainedAt: now(), unique, perSeat: Array.from(perSeat || []), exchanges,
+        groupTotal, peakQueued, peakSockets, cpu: process.cpuUsage(cpu || undefined),
+        eventLoop: performance.eventLoopUtilization(elu || undefined), gateway: { begin, end: study.counters?.() } } : undefined });
   }
   return phases;
 }
 
-async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: number, toy: boolean, cold = false) {
+async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: number, toy: boolean, cold = false, samples?: ReadSamples) {
   const h = new Histogram();
   let unavailable = 0;
   const basis = { recordedPosition: head, validAt: SEED_VALID_FROM };
@@ -152,7 +191,8 @@ async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: numbe
     const a = i % accounts.length, person = seed.image.people - (cold ? 2 : 1) - Math.floor(i / accounts.length);
     const id = root(a, person);
     const start = now();
-    const found = await client.readDemandWorld(seed.key, id, basis, false);
+    const pull = () => client.readDemandWorld(seed.key, id, basis, false);
+    const found = await (samples && i % 16 === 0 ? sampledRead(client, samples, pull) : pull());
     if (!found) { unavailable++; continue; }
     const elapsed = now() - start;
     const member = found.triples.filter((r) => r.entityId === id && r.attribute === ":subject/member");
@@ -171,7 +211,7 @@ async function currentPull(client: DatomicClient, seed: AdoptedSeed, head: numbe
 }
 
 export async function adoptedArm(out: string, source: string, peer: Peer, seed: AdoptedSeed, writer: Writer,
-  loaded: boolean, toy: boolean, startHead = seed.scope.cut, quietCell?: QuietCell) {
+  loaded: boolean, toy: boolean, startHead = seed.scope.cut, quietCell?: QuietCell, study?: ReadStudy) {
   const begin = now();
   const writerClient = new DatomicClient(peer.write, 35000);
   const reader = new DatomicClient(peer.read, 35000);
@@ -179,8 +219,8 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
   let terminal: number | undefined;
   let feeding: ReturnType<typeof feeder> | undefined;
   try {
-    const adopted = await checkAdoptedPeer(reader, seed, startHead);
-    const writerOpened = peer.write === peer.read ? adopted : await checkAdoptedPeer(writerClient, seed, startHead);
+    const adopted = await checkAdoptedPeer(study ? writerClient : reader, seed, startHead);
+    const writerOpened = study || peer.write === peer.read ? adopted : await checkAdoptedPeer(writerClient, seed, startHead);
     assert.deepEqual(writerOpened, adopted);
     const selected = selectedWriter(writer);
     // [DX-V01] Why: the SDK selects its wire path while its module loads.
@@ -203,12 +243,15 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
       options.options.stageClock, options.options.queueClock, options.options.maxMembers],
     [true, writer === "grouped", writer === "grouped", false, writer === "grouped", writer === "grouped",
       true, writer === "grouped", false, true, false, 32]);
-    const p7 = quietCell === undefined && peer.empty && peer.residency ? {
+    const p7 = !study && quietCell === undefined && peer.empty && peer.residency ? {
       empty: peer.empty, restored: await peer.residency(), people: seed.image.people * accounts.length,
       cold: await currentPull(reader, seed, seed.scope.cut, toy, true),
     } : undefined;
-    const seconds = toy ? 8 : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds(quietCell);
-    const tape = quietCell === undefined ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell, toy);
+    const seconds = toy ? 8 : study ? 30 * ladder.length : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds(quietCell);
+    const tape = study ? [0, 1].flatMap((block) => writeTape(seed.image.people as Density, study.rate, block)
+      .map((entry) => ({ ...entry, ms: entry.ms + 90_000 * block, version: `rd1/${study.rate}/${entry.version}` })))
+      .filter((entry) => entry.ms < seconds * 1000 && (!toy || entry.ordinal % 20 === 0))
+      : quietCell === undefined ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell, toy);
     const senders = await preload(writerClient, seed, startHead, tape);
     const start = now() + 1200;
     const interval = seconds * 1000;
@@ -218,9 +261,10 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const quiet = quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, quietCell, toy);
     const creditMode = peer.creditMode ?? defaultCreditMode;
     const admission = creditModeSelection(creditMode);
+    const samples: ReadSamples = [];
     const [writes, phases, quietRead] = await Promise.all([
       play(senders, tape, start, peer.attempt, false, writer === "subject", admission),
-      quietCell === undefined ? readWindows(reader, seed, start, loaded, toy) : [], quiet,
+      quietCell === undefined ? readWindows(reader, seed, start, loaded, toy, study, samples) : [], quiet,
     ]);
     await resolveUncertain(senders, writes.unresolved);
     const head = await writerClient.begin(seed.scope.db);
@@ -243,7 +287,11 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         ["committed", row.id, r.p, r.t, r.clock]);
       assert.equal(await writerClient.claim(seed.scope.db, row.id, r.p), r.tx);
     }
-    const pulls = loaded && quietCell === undefined ? await currentPull(reader, seed, terminal, toy) : undefined;
+    const pulls = loaded && quietCell === undefined ? await currentPull(reader, seed, terminal, toy, false,
+      study?.sample ? samples : undefined) : undefined;
+    if (study) jsonFile(path.join(out, "read-wire.json"), { source, slot: peer.slot, attempt: peer.attempt,
+      clock: { bootId: process.platform === "linux" ? fs.readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim() : null,
+        offsetMs: now() - Number(process.hrtime.bigint()) / 1e6 }, samples });
     let p6;
     if (quietRead) {
       const writes = new Histogram(), delivered = new Histogram();
@@ -261,6 +309,12 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const result = { source, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
       loaded, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
       observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, creditMode, observed: options, java: peer.java },
+      study: study && { rate: study.rate, batch: study.batch, savesByLevel: phases.map((phase, i) => {
+        const bucket = writes.rows.filter((row) => row.due >= start + i * 30_000 && row.due < start + (i + 1) * 30_000);
+        const latency = new Histogram();
+        for (const row of bucket) if (row.receipt) latency.recordMs(row.end! - row.due);
+        return { seats: phase.seats, offered: bucket.length, received: latency.count, latency: latency.summary() };
+      }) },
       p1: phases, p2: { offered: tape.length, receipts: saves.length, latency: saveHistogram.summary() },
       p3: { entries: feed.length }, p4: pulls, p6, p7 };
     // [DX-V01] Why: require the complete toy tape and exact read results before publishing the arm.
@@ -268,7 +322,10 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     if (toy) {
       assert(result.p2.offered > 0);
       assert.deepEqual([result.p2.receipts, result.p3.entries], [result.p2.offered, result.p2.offered]);
-      if (quietCell === undefined) {
+      if (study) {
+        assert(result.p1.every((phase) => phase.errors === 0 && phase.read.count > 0));
+        assert.deepEqual([pulls?.observed.count, pulls?.unavailable], [10, 0]);
+      } else if (quietCell === undefined) {
         assert.equal(result.p2.offered, 28);
         assert(result.p1.every((phase) => phase.errors === 0 && (phase.read.count > 0) === loaded));
         assert.deepEqual([p7?.cold.observed.count, p7?.cold.unavailable], [10, 0]);
@@ -297,11 +354,11 @@ export async function quietPair(out: string, source: string, peer: Peer, seed: A
   }
 }
 
-export async function adoptedToy(out: string, source: string, peer: Peer, writer: Writer) {
+export async function adoptedToy(out: string, source: string, peer: Peer, writer: Writer, readStudy = false) {
   assert(!process.env.DX_THIN_MEASURE);
-  peer.empty = await peer.residency?.();
+  if (!readStudy) peer.empty = await peer.residency?.();
   for (const loaded of [false, true]) {
-    const folder = path.join(out, loaded ? "loaded" : "zero");
+    const folder = path.join(out, readStudy ? (loaded ? "batch" : "single") : (loaded ? "loaded" : "zero"));
     fs.mkdirSync(folder);
     const nonce = randomUUID();
     const stdout = execFileSync(process.execPath, ["--no-warnings", "--experimental-transform-types",
@@ -310,7 +367,8 @@ export async function adoptedToy(out: string, source: string, peer: Peer, writer
     fs.writeFileSync(path.join(folder, "loader.log"), stdout, { flag: "wx" });
     const seal = path.join(folder, "fixture.json");
     const seed = openScaleSeal(seal, hex(fs.readFileSync(seal)), true);
-    const arm = await adoptedArm(folder, source, peer, seed, writer, loaded, true);
-    if (loaded) await quietPair(out, source, peer, seed, writer, true, arm.terminal);
+    const arm = await adoptedArm(folder, source, peer, seed, writer, readStudy || loaded, true, seed.scope.cut, undefined,
+      readStudy ? { rate: 50, batch: loaded ? 8 : 1, sample: false } : undefined);
+    if (loaded && !readStudy) await quietPair(out, source, peer, seed, writer, true, arm.terminal);
   }
 }

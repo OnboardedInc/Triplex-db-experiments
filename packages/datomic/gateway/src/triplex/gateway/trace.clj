@@ -1,7 +1,9 @@
 (ns triplex.gateway.trace
   (:require [clojure.data.json :as json] [clojure.string :as str] [ring.core.protocols :as protocols] [triplex.gateway.jfr :as jfr]
-            [triplex.gateway.native-settings] [triplex.gateway.native-counters :as native-counters])
+            [triplex.gateway.native-settings] [triplex.gateway.native-counters :as native-counters]
+            [datomic.measure.io-stats :as io])
   (:import [java.io BufferedWriter FileWriter File]
+           [java.lang.management ManagementFactory ThreadMXBean]
            [java.nio.file Files Paths]
            [java.util UUID] [org.slf4j MDC]
            [java.util.concurrent.atomic AtomicLong]))
@@ -12,6 +14,9 @@
 (def enabled (and (not= level "off") (not= "0" (System/getenv "TRIPLEX_TRACE_GATEWAY"))))
 (def jfr-enabled (if-let [v (System/getenv "TRIPLEX_TRACE_JFR")] (= v "1") enabled))
 (def native-enabled (= "1" (System/getenv "TRIPLEX_TRACE_NATIVE_LOGS")))
+(def read-profile-enabled (= "1" (System/getenv "TX2_READ_PROFILE")))
+(def ^ThreadMXBean thread-cpu (when read-profile-enabled (ManagementFactory/getThreadMXBean)))
+(defn cpu-ns [] (when (and thread-cpu (.isThreadCpuTimeEnabled thread-cpu)) (.getCurrentThreadCpuTime thread-cpu)))
 (def ^:dynamic *request* nil)
 (def ^:dynamic *parent* nil)
 (def ids (AtomicLong. (.getMostSignificantBits (UUID/randomUUID))))
@@ -47,7 +52,7 @@
 (defn flush! []
   (when (= "tx" (:process identity-fields)) (native-counters/drain! emit!))
   (when (realized? writer) (when-let [^BufferedWriter w @writer] (locking w (.flush w)))))
-(when (or enabled jfr-enabled native-enabled)
+(when (or enabled jfr-enabled native-enabled read-profile-enabled)
   (when jfr-enabled (jfr/install! (:process identity-fields) identity-fields))
   (let [t (Thread. ^Runnable (fn [] (while true (Thread/sleep 1000)
         (when (= "tx" (:process identity-fields))
@@ -94,27 +99,39 @@
          (finally
            (if old# (MDC/put "trace_id" old#) (MDC/remove "trace_id"))
            (let [end# (clock) record# {:id id# :parent parent# :name ~name :layer ~layer :start start# :end end# :thread (.getId (Thread/currentThread))}]
-             (when (or (not= level "summary") (= "commit" (:kind @*request*)) (not= ~layer "gateway") (>= (- end# start#) 0.5) (some #(= id# (:parent %)) (:spans @*request*)))
+             (when (or (:readProfileId @*request*) (not= level "summary") (= "commit" (:kind @*request*)) (not= ~layer "gateway") (>= (- end# start#) 0.5) (some #(= id# (:parent %)) (:spans @*request*)))
                (swap! *request* (fn [r#] (if (< (count (:spans r#)) 8192) (update r# :spans conj record#) (update r# :truncated inc)))))))))))
 (defn finish! [request]
   (let [r (assoc @request :end (clock)) duration (- (:end r) (:start r))]
     ;; [DX-T1-15] Why: a scope open is rare, and its peer-sync count must survive successful fast follower recovery.
     ;; Rejected: inferring the sync count from a sampled absence, or turning on full tracing for every read.
-    (when (or (= level "full") (= (:kind r) "commit") (= (:name r) "gateway /v1/db/create")
+    (when (or (:readProfileId r) (= level "full") (= (:kind r) "commit") (= (:name r) "gateway /v1/db/create")
               (>= duration 50) (sampled? (:traceId r)))
       (emit! r))))
 (defn handler [f request]
-  (if-not enabled (let [r (f request) p (parse-parent (get-in request [:headers "traceparent"]))]
+  (let [profile-route (and read-profile-enabled (re-find #"/(?:read|reach|reach-many)$" (or (:uri request) "")))
+        candidate (when profile-route (get-in request [:headers "x-triplex-read-profile"]))
+        sample (when (and candidate (re-matches #"[a-f0-9]{32}" candidate)) candidate)]
+  (if-not (or sample (and enabled (not profile-route))) (let [r (f request) p (parse-parent (get-in request [:headers "traceparent"]))]
                    (cond-> r p (assoc-in [:headers "traceparent"] (str "00-" (:trace p) "-" (id) "-01"))))
     (let [parent (parse-parent (get-in request [:headers "traceparent"])) root (id)
           trace (or (:trace parent) (str/replace (str (UUID/randomUUID)) "-" ""))
           route (str/replace (or (:uri request) "") #"/s2?-[^/]+" "/{db}")
-          state (atom (merge identity-fields {:schema "triplex.trace.v1" :type "request" :kind (if (or (.endsWith route "/transact") (= "commit" (get-in request [:headers "x-triplex-trace-kind"]))) "commit" "read")
+          state (atom (merge identity-fields (when sample {:readProfileId sample}) {:schema "triplex.trace.v1" :type "request" :kind (if (or (.endsWith route "/transact") (= "commit" (get-in request [:headers "x-triplex-trace-kind"]))) "commit" "read")
                          :traceId trace :root root :parent (:parent parent) :thread (.getId (Thread/currentThread))
                          :start (clock) :name (str "gateway " route) :spans [] :truncated 0 :counters {} :attributes {}}))]
       (binding [*request* state *parent* root]
         (try
-          (let [response (span "gateway.route" "gateway" (f request))
+          (let [response (span "gateway.route" "gateway"
+                           ;; [DX-RD1] Why: bind peer I/O to the sampled calling thread and include lazy index realization.
+                           ;; Rejected: borrowing a different request's SQL counters or profiling every read.
+                           (if sample
+                             (let [cpu (cpu-ns)
+                                   measured (io/throw-if-ex! (io/with-io-stats #(f request) {:io-context :triplex/pinned-read :api :lookup}))]
+                               (when cpu (attribute! :handlerCpuNs (- (cpu-ns) cpu)))
+                               (attribute! :peerIoStats (:io-stats measured))
+                               (:ret measured))
+                             (f request)))
                 bytes (span "gateway.response-encode" "gateway"
                         (let [body (:body response)] (if (string? body) (.getBytes ^String body "UTF-8") body)))
                 wrapped (reify protocols/StreamableResponseBody
@@ -123,10 +140,12 @@
                               (try (span "gateway.response-write" "gateway" (.write ^java.io.OutputStream output ^bytes bytes) (.flush ^java.io.OutputStream output))
                                    (finally (finish! state))))))]
             (attribute! :status (:status response))
+            (when sample (attribute! :responseBytes (alength ^bytes bytes)))
             (-> response (assoc :body wrapped)
                 (assoc-in [:headers "Content-Length"] (str (alength ^bytes bytes)))
-                (assoc-in [:headers "traceparent"] (str "00-" trace "-" root "-01"))))
-          (catch Throwable error (attribute! :failed true) (finish! state) (throw error)))))))
+                (assoc-in [:headers "traceparent"] (str "00-" trace "-" root "-01"))
+                (cond-> sample (assoc-in [:headers "x-triplex-read-profile"] sample))))
+          (catch Throwable error (attribute! :failed true) (finish! state) (throw error))))))))
 ;; [DX-T1-12] Why: the documented ObjectCache distribution counts requests and sums hits; invalid or empty shapes stay unknown.
 ;; Source: https://docs.datomic.com/operation/monitoring.html
 ;; Rejected: infer a ratio from a numeric gauge, or report an index-job duration as an adoption boundary.
@@ -144,4 +163,4 @@
 (defn metrics [metrics]
   ;; [DX-T1-12] Why: cache and index metrics use the buffered recorder even when synchronous vendor INFO logs are quiet.
   ;; Rejected: require native file logging merely to see cache hit rates or index pressure.
-  (when (or enabled jfr-enabled native-enabled) (emit! {:type "metrics" :at (clock) :metrics metrics :counters (counter-summary metrics)})))
+  (when (or enabled jfr-enabled native-enabled read-profile-enabled) (emit! {:type "metrics" :at (clock) :metrics metrics :counters (counter-summary metrics)})))

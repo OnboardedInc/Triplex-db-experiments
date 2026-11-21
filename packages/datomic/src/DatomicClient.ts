@@ -7,6 +7,7 @@ import {
 import { ByteCache } from "./ByteCache.js";
 import { PredecessorCache, RowCache, estimateRowBytes } from "./RowCache.js";
 import { createHash, randomUUID } from "node:crypto";
+import { AsyncLocalStorage } from "node:async_hooks";
 import {
   decodeEntity,
   decodeReachPage,
@@ -136,12 +137,34 @@ export interface DatomicCommitSample {
   returned: number;
   attempts: DatomicCommitAttempt[];
 }
+type ReadWireSample = {
+  id: string;
+  route: string;
+  status: number;
+  issue: number;
+  encoded: number;
+  socket: number;
+  sent: number;
+  headers: number;
+  bodyEnd: number;
+  parsed: number;
+  reusedSocket: boolean;
+  responseBytes: number;
+  echo: string | string[] | undefined;
+};
+
 export class DatomicClient {
   // [DX-B2-N3] Why: opt-in transport observations measure real calls without a second HTTP request.
   // Rejected: inferring gateway CPU or transact time from client wall latency.
   onRequest?: (sample: DatomicRequestSample) => void;
   onCommit?: (sample: DatomicCommitSample) => void;
   readonly agent: http.Agent;
+  // [DX-RD1] Why: each explicitly sampled logical read owns its exchanges across awaits and any repair.
+  // Rejected: assigning concurrent response callbacks to the last caller or allocating samples for the whole ladder.
+  private readonly readProfile = new AsyncLocalStorage<(sample: ReadWireSample) => void>();
+  withReadProfile<A>(observe: (sample: ReadWireSample) => void, read: () => A): A {
+    return this.readProfile.run(observe, read);
+  }
   private activeObservation: DatomicCommitAttempt | undefined;
   // [DX-B6-1] Why: capture request attribution synchronously before the transport yields.
   // Rejected: a mutable callback spanning an await (concurrent fibers would borrow each other's observations).
@@ -351,6 +374,8 @@ export class DatomicClient {
     onSent?: (published?: boolean) => void,
   ): Promise<T> {
     const started = performance.now();
+    const readProfile = this.readProfile.getStore();
+    const profileId = readProfile ? randomUUID().replaceAll("-", "") : undefined;
     const observation = this.activeObservation;
     const operationId =
       body &&
@@ -397,7 +422,8 @@ export class DatomicClient {
       const exchange = beginSpan("client.http", "gateway-wait");
       const parent = traceparent(exchange);
       let written = NaN,
-        headers = NaN;
+        headers = NaN,
+        socket = NaN;
       let completed = false;
       const complete = bindTraceCallback(() => {
         if (completed) return;
@@ -430,6 +456,7 @@ export class DatomicClient {
           headers: {
             Accept: "application/json",
             traceparent: parent,
+            ...(profileId ? { "x-triplex-read-profile": profileId } : {}),
             // [DX-T1] Why: summary must retain every step of commits, including their begin/read routes and worker hops.
             // Rejected: sampling a fast /begin because its route looks read-only while it belongs to a commit.
             ...(traceLevel === "summary" &&
@@ -474,6 +501,14 @@ export class DatomicClient {
                   status: res.statusCode ?? 0,
                 };
               const status = res.statusCode ?? 0;
+              if (readProfile && profileId) {
+                const origin = performance.timeOrigin;
+                readProfile({ id: profileId, route: path.slice(path.lastIndexOf("/") + 1),
+                  status, issue: origin + started, encoded: origin + socketStarted, socket: origin + socket,
+                  sent: origin + written, headers: origin + headers, bodyEnd: origin + bodyEnd,
+                  parsed: origin + performance.now(), reusedSocket: req.reusedSocket, responseBytes: size,
+                  echo: res.headers["x-triplex-read-profile"] });
+              }
               const erasureHead = res.headers["x-triplex-erasure-seq"];
               if (
                 erasureHead !== undefined &&
@@ -538,6 +573,7 @@ export class DatomicClient {
           });
         },
       );
+      if (profileId) req.once("socket", () => { socket = performance.now(); });
       if (observation) observation.httpCalls++;
       const timer = setTimeout(
         () => req.destroy(new Error("Gateway deadline exceeded")),

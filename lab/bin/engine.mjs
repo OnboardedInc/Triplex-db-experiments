@@ -53,9 +53,10 @@ export const regimeOf = info => info.regime ?? 'quota';
 function scorecardOutput(options, info) {
   const output = options['scorecard-output'];
   const holder = process.env.DX_V01_MAC_HOLDER ?? 'DX-V01';
-  if (process.platform !== 'darwin' || !['DX-V01', 'DX-THIN1'].includes(holder) || options.holder !== holder ||
+  const image = holder === 'DX-RD1' ? /^tx2-dxthin-rd1:[a-f0-9]{16}$/ : /^tx2-dxthin-managed:/;
+  if (process.platform !== 'darwin' || !['DX-V01', 'DX-THIN1', 'DX-RD1'].includes(holder) || options.holder !== holder ||
       info.lane !== 'datomic' || info.mode !== 'exclusive' ||
-      !process.env.TX2_EXCLUSIVE_VOLUME_ID || !/^tx2-dxthin-managed:/.test(info.laneConf.image) ||
+      !process.env.TX2_EXCLUSIVE_VOLUME_ID || !image.test(info.laneConf.image) ||
       typeof output !== 'string' || !output.startsWith(path.join(REPO, 'runs', 'DX-V01') + path.sep) ||
       fs.realpathSync(output) !== output || !fs.statSync(output).isDirectory())
     fail('REFUSED', 'Scorecard fixture needs its exclusive compact image, private volume and output');
@@ -263,12 +264,17 @@ async function selftestDatomic(config, opts) {
 // [DX-THIN1] Why: release only staged images that this experiment built and whose slots have closed.
 // Rejected: a forced removal or pruning the lab VM's shared image cache.
 async function removeThinImage(config, opts) {
-  if (!['DX-THIN1', 'DX-PREP1'].includes(opts.holder) || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
+  if (!['DX-THIN1', 'DX-PREP1', 'DX-RD1'].includes(opts.holder) || !opts['image-id']) fail('USAGE', 'Image removal needs the assigned holder and exact image id');
   const info = slotInfo(config, 'datomic', 'dev');
   const tag = info.laneConf.image;
   // [DX-PREP1] Why: a diagnostic retry can discard its exact staged image after the slot exits.
   // Rejected: pruning the image store shared with other builders.
-  const ownedTag = opts.holder === 'DX-THIN1' ? /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/ : /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery|subject-native-suite)$/;
+  const ownedTags = {
+    'DX-THIN1': /^tx2-dxthin-(?:managed|native):[a-f0-9]{15,16}$/,
+    'DX-PREP1': /^tx2-datomic:dx-prep1-(?:lookup-profile|subject-recovery|subject-native-suite)$/,
+    'DX-RD1': /^(?:tx2-datomic:dx-rd1-fresh-reads|tx2-dxthin-rd1:[a-f0-9]{16})$/,
+  };
+  const ownedTag = ownedTags[opts.holder];
   if (!ownedTag.test(tag)) fail('REFUSED', 'Only the holder’s staged image tags may be removed');
   if (info.laneConf.imageId !== opts['image-id']) fail('REFUSED', 'The staged configuration is pinned to a different image');
   await withPool(async ledger => {
@@ -966,6 +972,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
       fail('REFUSED', 'Scorecard fixture config must belong to this worktree');
     const source = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: REPO, encoding: 'utf8' }).trim();
     const result = spawnSync('docker', dockerArgs(['exec', '-w', REPO, '-e', 'DX_V01_FIXTURE_SOURCE=' + source,
+      '-e', 'DX_V01_MAC_HOLDER=' + options.holder,
       '-e', 'TRIPLEX_DATOMIC_FAST_PATHS=save-wire', live.Id, '/usr/local/bin/node',
       '--no-warnings', '--experimental-transform-types', '--expose-gc', '--max-old-space-size=768',
       'lab/experiments/EXP-DX1/thin1/managed.ts', '--guest', configDir, 'int1-adopted-proof', '80',

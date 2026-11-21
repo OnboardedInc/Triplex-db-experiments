@@ -12,7 +12,7 @@ import { type Writer } from "../v01/profile.ts";
 const [action, supplied, mode, rung, out, guestNode] = process.argv.slice(2);
 const scorecard = process.env.DX_V01_MAC_FIXTURE === "1";
 const holder = scorecard ? (process.env.DX_V01_MAC_HOLDER ?? "DX-V01") : "DX-THIN1";
-assert(holder === "DX-THIN1" || (scorecard && holder === "DX-V01"));
+assert(holder === "DX-THIN1" || (scorecard && ["DX-V01", "DX-RD1"].includes(holder)));
 const integrated = [
   "int1-thin",
   "int1-deep",
@@ -129,7 +129,7 @@ async function prepare() {
   const { verifiedTree } = await import(new URL("../../../bin/datomic-context.mjs", import.meta.url).href);
   // [DX-THIN1] Why: keep old and new private images addressable across a native gateway merge. Rejected: reusing a tag derived only from the launcher when the gateway or codec changes.
   cfg.lanes.datomic.image =
-    "tx2-dxthin-managed:" +
+    (holder === "DX-RD1" ? "tx2-dxthin-rd1:" : "tx2-dxthin-managed:") +
     createHash("sha256")
       .update(JSON.stringify([verifiedTree(imageFolder), verifiedTree(path.join(dir, "packages/datomic/gateway")), verifiedTree(path.join(dir, "packages/datomic/src"))]))
       .digest("hex")
@@ -206,6 +206,7 @@ function setup(compact: boolean) {
       (compact ? " -Ddxthin.compact=yes" : "") + (memory ? " -Ddxthin.memory=yes" : "") +
       (mode === "int1-campaign-proof" ? " -Ddxthin.campaign=yes" : "") +
       (writeOptionsAttempt ? " -Ddxthin.adopted=" + writeOptionsAttempt + " -Ddxthin.fixtureWriter=" + fixtureWriter : "") +
+      (holder === "DX-RD1" ? " -Ddxthin.readStudy=yes" : "") +
       (nativePools ? " -Ddxthin.nativePools=yes -XX:NativeMemoryTracking=summary" : "") + " -XX:+ExitOnOutOfMemoryError -Ddxthin.run=" +
       nonce +
       " -Ddxthin.secret=" +
@@ -400,7 +401,8 @@ if (action === "--guest") {
     };
     await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
-      java: { placement: "owned Mac compact stack", commands }, creditMode: stack.managed.creditMode, residency }, writer);
+      java: { placement: "owned Mac compact stack", commands }, creditMode: stack.managed.creditMode, residency }, writer,
+      process.env.DX_V01_MAC_HOLDER === "DX-RD1");
   } else if (mode === "int1-campaign-proof") {
     assert(Number(rung) === 40);
     process.chdir(repo);
