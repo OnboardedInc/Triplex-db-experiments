@@ -288,3 +288,8 @@ ee8608e2e5f992ccb066bc87e2a431b78bddab08e8918981f833317411f63963  day-n20/erasur
 eca4921ac7fcaf5184d9ead8926abb3b2b21750573f1ee2785b0e1874fd7519d  day-n20/erasure-small/summary.tar.zst
 7e6201b9dad8a19a63b7dd3374ca3c6a7cc55dd14c4a96a7371dc028f5f1e210  day-n20/erasure/TRANSFER.json
 4d9ddfbeb1ea1c458f8f0a431feec60a141ee7b6565c9425f5dd1dc872ee5a2c  day-n20/erasure/summary.tar.zst
+3db54830dd51719b360b25479abdbe6613bef1be58afb7e0e918f4428e794d53  day-n20/ha1-paced/TRANSFER.json
+86be8be7152e5e390f9814f2d41eb6f62f612d455b65fa273c0e55784b61afe5  day-n20/ha1-paced/raw.tar.zst
+79d231cb83f30b37a4609884324ed0f6d4a73ec237318cc341dd5a11ed5d3f05  day-n20/ha1-paced/summary.tar.zst
+f0b15896db25f119b005895754673c692c4f90d01ab6cbd9625d08d4d350024d  day-n20/erasure-retry/TRANSFER.json
+06c4d88552d35f7763483cdcb42867652423222d5e40304bd632cde5498ea34a  day-n20/erasure-retry/summary.tar.zst
