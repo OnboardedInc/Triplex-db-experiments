@@ -3932,3 +3932,15 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   an existing cluster relocated. Parked.
 - **Server 1:** the append-tail comparison is measuring (control arm up since about 22:33 local).
 - Running: DX-BM1, DX-SCALE1, DX-V01 (three).
+
+## 2026-11-21 03:42 UTC (22:42 local, 2026-11-20): scorecard starts each arm from a prepared copy; two agents running
+
+- **DX-V01 part 5 (`1536386b9`; server commit `65ad0997c`; `v01/SERVER.md`).** Each scorecard arm starts from
+  its own prepared PostgreSQL copy and runs the SCALE1 or AGE1 identity checks before any offers; the dump path
+  remains. About 115 GB per fresh copy; 235 minutes and $4.27 per age after copy preparation. Six focused tests
+  pass; Mac evidence: a PostgreSQL 17 copy startup, a wrong-digest refusal, all 14 toy rows. The Linux bind mount
+  and both full-size campaigns are unverified. Parked.
+- Running: DX-BM1 (server 1, append-tail arms), DX-SCALE1 (server 2, 1 billion run).
+- Server 2's order after the 1 billion run: DX-PREP1 ceiling at `1dd5952cb`; scorecard at `65ad0997c` on the aged
+  database, then on a fresh copy. The driver has these in `cloud/QUEUE-ADDITIONS.md` only; it must be told at its
+  next handover or by a resume when the aging run reports.
