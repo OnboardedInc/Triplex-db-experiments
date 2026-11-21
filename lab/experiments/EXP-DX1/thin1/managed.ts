@@ -416,6 +416,11 @@ if (action === "--guest") {
       assert.deepEqual(Object.keys(roles).sort(), ["gw-r", "gw-w", "tx"]);
       return roles;
     };
+    if (process.env.DX_V01_MAC_HOLDER === "DX-RD1") {
+      // [DX-RD1] Why: prove the prepared-copy admission and entrypoint on real PG17 bytes before the reader ladders.
+      const { preparedFixture } = await import("../rd1/prepared-fixture.ts");
+      await preparedFixture(out, process.env.DX_V01_FIXTURE_SOURCE!, stack.prefix, stack.managed.writeOptionsAttempt);
+    }
     await adoptedToy(out, process.env.DX_V01_FIXTURE_SOURCE!, { write: stack.writeUrl, read: stack.readUrl,
       slot: stack.prefix, attempt: stack.managed.writeOptionsAttempt, gatewaySource: stack.gatewaySourceSha256,
       java: { placement: "owned Mac compact stack", commands }, creditMode: stack.managed.creditMode, residency }, writer,

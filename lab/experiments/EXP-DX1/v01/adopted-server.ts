@@ -11,6 +11,7 @@ import { nativeMetrics } from "../thin1/native-metrics.ts";
 import { openScaleSeal, hex } from "./adopt.ts";
 import { stackOptions, writeDiagnostics, type Age, type JvmProfile, type Writer } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
+import { openPreparedLadder } from "../rd1/prepared.ts";
 
 const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, writer, jvm, agedFile, agedPin, agedDump, agedDumpPin,
   txJvm = jvm, walDirectory = "", writeJvm = jvm, creditMode = defaultCreditMode, studyJvm = ""] = process.argv.slice(2);
@@ -31,30 +32,43 @@ scaleHost.physical();
 if (tuned) execFileSync("taskset", ["-apc", "9,10", String(process.pid)]);
 process.env.DX_BARE_METAL = "1";
 verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
-const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin);
+// [DX-RD1] Why: a prepared read study names its ladder and one private PostgreSQL copy through the environment.
+// Rejected: a dump restore on a server that holds only the stopped full-size directory.
+const preparedSource = process.env.DX_RD1_PGDATA_SOURCE ?? "";
+assert(!preparedSource || (tuned && age === "fresh" && process.env.DX_RD1_LADDER && process.env.DX_RD1_PGDATA),
+  "A prepared read study needs --read-study, the fresh seal, --ladder and one --pgdata copy");
+const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin, !preparedSource);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
-fs.mkdirSync(campaign);
-jsonFile(path.join(campaign, "input.json"), { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
-  agedBundle: expected?.pin, agedDump: expected?.dumpPin });
+const record = { source, age, writer, policy: control, treatment: tuned || undefined, diagnostics, separateWal: !!walDirectory, imagePin, transferPin, originalScope: seed.scope,
+  agedBundle: expected?.pin, agedDump: expected?.dumpPin };
+const prepared = preparedSource ? openPreparedLadder({ campaign, ladder: process.env.DX_RD1_LADDER!, source: preparedSource,
+  copy: process.env.DX_RD1_PGDATA!, wal: walDirectory || undefined, record }) : undefined;
+if (!prepared) {
+  fs.mkdirSync(campaign);
+  jsonFile(path.join(campaign, "input.json"), record);
+}
 let stopping = false;
 const stop = () => { stopping = true; };
 process.on("SIGTERM", stop);
 process.on("SIGINT", stop);
 for (const loaded of [false, true]) {
+  if (prepared && loaded !== prepared.loaded) continue;
   assert(!stopping && Date.now() + 10 * 60_000 < end);
   const policy = loaded && tuned ? tuned : control;
   const out = path.join(campaign, tuned ? (loaded ? "tuned" : "control") : (loaded ? "loaded" : "zero"));
   fs.mkdirSync(out);
-  const floor = age === "1B" ? 320 : 240;
+  const floor = prepared ? 5 : age === "1B" ? 320 : 240;
   assert(scaleHost.available(out) >= floor * 1024 ** 3, "Insufficient free space for the disposable restore");
   const attempt = randomUUID();
   const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
   jsonFile(path.join(out, "attempt.json"), { source, tag: path.basename(out), slot, attempt });
   assert(Object.values(scaleHost.childrenInventory(slot)).every((x) => x.length === 0));
+  let systemIdentifier = "";
   try {
     const options = stackOptions(writer, attempt, diagnostics);
+    prepared?.claim(slot, attempt);
     const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
-      ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0",
+      ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0", ...prepared?.env,
     } : options, { policy, walDirectory });
     const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
     const residency = async () => {
@@ -67,7 +81,8 @@ for (const loaded of [false, true]) {
     };
     const empty = tuned ? undefined : await residency();
     const raw = path.join(out, "engines", slot, "trace", "raw");
-    await restoreDump(expected?.dump ?? seed.dump, expected?.dumpPin ?? seed.image.sha256, slot, engines,
+    if (prepared) systemIdentifier = prepared.live(out, slot, attempt, engines.pg!.id);
+    else await restoreDump(expected?.dump ?? seed.dump, expected?.dumpPin ?? seed.image.sha256, slot, engines,
       Math.min(end - 9 * 60_000, Date.now() + (tuned ? 11 : 42) * 60_000), tuned ? () => {
         // [DX-RD1] Why: the restored reader requires a new trace file for its own JVM boot.
         // Rejected: appending samples to an empty-stack JVM's observations or discarding those observations.
@@ -101,6 +116,7 @@ for (const loaded of [false, true]) {
           { rate, batch: loaded ? 8 : 1, sample: true, counters });
         terminal = arm.terminal;
       }
+      if (prepared) assert(!stopping, "Prepared ladder was interrupted");
       continue;
     }
     const arm = await adoptedArm(out, source, peer, seed, writer as Writer, loaded, false, head);
@@ -108,6 +124,7 @@ for (const loaded of [false, true]) {
   } finally {
     scaleHost.clean(out, slot);
   }
+  if (prepared) prepared.complete(slot, attempt, systemIdentifier);
 }
 
 // [DX-RD1] Why: process-group CPU and block I/O can distinguish a busy core from a blocked peer.
