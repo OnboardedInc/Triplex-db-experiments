@@ -290,23 +290,27 @@
         start {:population pop :manifest-sha pin :observed 0 :t (:seed-t pop) :closed-rungs {}}
         through 99
         prefix 12
-        batch 3
+        batch 8
         prefix-reply (native/age! aged pop 0 prefix 8 true)
         prefix-state (assoc start :t (:t prefix-reply) :observed prefix)
         _ ((resolve-rung "save-state!") state-file prefix-state true)
-        enrolled ((resolve-bulk "enroll!") state-file prefix-state aged)
+        expected-schema (filterv #(not (d/entid (d/db (:conn aged)) (:db/ident %))) group/group-schema)
+        enrolling (assoc prefix-state :bulk-enrolling (mapv :db/ident expected-schema))
+        _ ((resolve-rung "save-state!") state-file enrolling true)
+        _ (when (seq expected-schema) @(d/transact (:conn aged) expected-schema))
+        enrolled ((resolve-bulk "enroll!") state-file enrolling aged)
         view ((resolve-bulk "validate-cut!") enrolled aged)
-        pending (assoc enrolled :bulk-pending {:through (+ prefix 2 batch) :size batch})
+        pending (assoc enrolled :bulk-pending {:through (+ prefix (* 3 batch)) :size batch})
         before (System/currentTimeMillis)
         _ ((resolve-rung "save-state!") state-file pending true)
-        first-group ((resolve-bulk "commit-series!") aged pop view enrolled batch 4 (+ prefix batch) (+ before 90000))
+        first-group ((resolve-bulk "commit-series!") aged pop view enrolled batch 3 (+ prefix (* 2 batch)) (+ before 90000))
         ;; [DX-AGE1] Why: reopen a real nonempty pending suffix before loading the next phase.
         ;; Rejected: testing recovery only with an empty writer queue.
         recovered ((resolve-bulk "reconcile!") state-file pending aged)
         _ (equal! [(:observed first-group) (:t first-group)] [(:observed recovered) (:t recovered)]
                   "Recovered group does not match the live native receipt")
         target (+ (get-in recovered [:bulk :base-records]) 1800)
-        [loaded summary] ((resolve-bulk "phase!") state-file recovered aged batch 4 target
+        [loaded summary] ((resolve-bulk "phase!") state-file recovered aged 24 1 target
                           (+ before 90000) (+ before 120000) 1)
         settled ((resolve-bulk "settle!") state-file loaded aged summary true)
         n (:observed loaded)

@@ -1,5 +1,6 @@
 (ns triplex.age.bulk
-  (:require [datomic.api :as d]
+  (:require [clojure.data.json :as json]
+            [datomic.api :as d]
             [triplex.age.adopt :as adopt]
             [triplex.age.gate :as gate]
             [triplex.age.native :as native]
@@ -163,22 +164,54 @@
 
 (defn enroll! [file state db]
   (if (:bulk state) state
-    (let [view (sync-and-bind! state db)
+    (let [conn (:conn db)
+          view (rung/verify-state! state db)
           pop (:population state)
+          prefix-t (:t state)
+          pending (:bulk-enrolling state)
           before (+ (:seed-records pop) (rung/count-records pop 0 (:observed state)))
-          missing (remove #(d/entid view (:db/ident %)) group/group-schema)
-          report (when (seq missing) @(d/transact (:conn db) (vec missing)))
-          ;; [DX-AGE1] Why: pin the historical count before accepting any grouped member.
-          ;; Rejected: extrapolating history size from raw log frames with duplicate retractions.
-          schema-t (if report (d/basis-t (:db-after report)) (:t state))
-          _ (scale/index! (:conn db))
-          actual (scale/records! (:conn db))
-          state (assoc state :bulk (merge empty-counts
-                                    {:prefix-t (:t state) :prefix-saves (:observed state)
-                                     :prefix-records before :schema-t schema-t :base-records actual}))]
-      (native/check! (<= before actual (+ before 100)) "Bulk enrollment census differs" {:expected before :observed actual})
-      (rung/save-state! file state true)
-      state)))
+          missing (filterv #(not (d/entid view (:db/ident %))) group/group-schema)
+          wanted (or pending (mapv :db/ident missing))
+          _ (when-not pending
+              (sync-and-bind! state db)
+              (rung/save-state! file (assoc state :bulk-enrolling wanted) true))
+          attrs (filterv (comp (set wanted) :db/ident) group/group-schema)
+          _ (when (= prefix-t (d/basis-t view))
+              (gate/equal! attrs missing "Unexpected pre-enrollment schema")
+              (when (seq missing) @(d/transact conn missing)))
+          after (rung/current! db)
+          schema-t (d/basis-t after)]
+      (if (seq attrs)
+        (let [written (vec (d/tx-range (d/log conn) (inc prefix-t) (inc schema-t)))
+              tx (d/t->tx schema-t)
+              schema-tags #{:db/ident :db/valueType :db/cardinality :db/unique}
+              expected (into #{} (for [spec attrs
+                                      [k v] spec
+                                      :let [e (d/entid after (:db/ident spec))]]
+                                  [e k (if (= k :db/ident) v (d/entid after v))]))
+              observed (into #{} (for [x (:data (first written))
+                                      :let [a (d/ident after (:a x))]
+                                      :when (schema-tags a)]
+                                  [(:e x) a (:v x)]))]
+          (native/check! (and (= 1 (count written)) (= schema-t (:t (first written)))
+                              (every? #(and (:added %) (= tx (:tx %))
+                                            (contains? (into schema-tags #{:db/txInstant :db.install/attribute})
+                                                       (d/ident after (:a %))))
+                                      (:data (first written))))
+                         "Native writes outside the planned schema frame" {:t schema-t})
+          (gate/equal! expected observed "Group schema log differs from the planned definitions"))
+        (gate/equal! prefix-t schema-t "Native writes during empty schema enrollment"))
+      ;; [DX-AGE1] Why: pin the historical count before accepting any grouped member.
+      ;; Rejected: extrapolating history size from raw log frames with duplicate retractions.
+      (scale/index! conn)
+      (let [actual (scale/records! conn)
+            state (-> state (dissoc :bulk-enrolling)
+                      (assoc :bulk (merge empty-counts
+                                     {:prefix-t prefix-t :prefix-saves (:observed state)
+                                      :prefix-records before :schema-t schema-t :base-records actual})))]
+        (native/check! (<= before actual (+ before 100)) "Bulk enrollment census differs" {:expected before :observed actual})
+        (rung/save-state! file state true)
+        state))))
 
 (defn validate-cut! [state db]
   (let [view (rung/verify-state! state db)
@@ -196,6 +229,8 @@
         begin-t (:t state)
         prior (:bulk state)
         wal (sql-counters)
+        _ (gate/equal! "on" (:trackWalIoTiming (json/read-str wal :key-fn keyword))
+                       "Enable PostgreSQL track_wal_io_timing before bulk admission")
         index-start (index-t conn)
         min-rate (some-> (System/getenv "AGE_BULK_MIN_RATE") Long/parseLong)
         first-save (:observed state)]

@@ -401,8 +401,10 @@ async function run(configFile, config, mode) {
       assert.equal(read(loadingStarted).calibrationSha, fileSha(calibrationFile));
       const promised = calibration.best.metrics.sustainedRate;
       const secondsNeeded = (config.target - inspected.records) / promised;
+      const remainingHours = Math.max(0, secondsNeeded / 3600);
+      const totalHours = (Date.now() - origin.started + calibration.elapsedMs) / 3_600_000 + remainingHours;
       console.log(JSON.stringify({ event: "bulk-load-forecast", records: inspected.records, target: config.target,
-        rate: promised, hours: Math.max(0, secondsNeeded / 3600), usd: Math.max(0, secondsNeeded / 3600 * rateUsd) }));
+        rate: promised, remainingHours, totalHours, usd: totalHours * rateUsd }));
       assert(Date.now() + (secondsNeeded + 300) * 1000 < deadline, "Sustained calibration rate cannot reach 1B before the loading deadline");
       env.AGE_BULK_MIN_RATE = String(minimumRate);
       const observed = await bulkPhase("load", calibration.best.arm, deadline - 300_000, deadline, config.target);
@@ -410,6 +412,7 @@ async function run(configFile, config, mode) {
       finishJvmLogs();
       write(path.join(rung, "bulk-loaded.json"), { ...observed, attempt, source: binding.source, machineHash: binding.machineHash,
         imageSha: binding.imageSha, db: binding.db, checkpointSha: fileSha(state), calibrationSha: fileSha(calibrationFile),
+        transactor: binding.java.find((p) => p.pid === binding.options.txPid),
         artifacts: fs.readdirSync(logDir).map((f) => ({ file: path.join(attempt, f), sum: fileSha(path.join(logDir, f)) })) });
       return;
     }
@@ -419,6 +422,16 @@ async function run(configFile, config, mode) {
         [binding.source, binding.machineHash, binding.db, binding.imageSha]);
       for (const { file, sum } of loaded.artifacts) assert.equal(fileSha(path.join(rung, file)), sum);
       assert(loaded.phase.bulkLoaded && loaded.phase.indexedRecords >= config.target && inspected.records >= config.target);
+      const hereTx = binding.java.find((p) => p.pid === binding.options.txPid);
+      assert.notDeepEqual([loaded.transactor.pid, loaded.transactor.startTicks], [hereTx.pid, hereTx.startTicks],
+        "Start a fresh transactor under the measurement profile first");
+      const measurementInput = path.join(rung, "measurement-input.json");
+      const want = { loadedSha: fileSha(path.join(rung, "bulk-loaded.json")), checkpointSha: loaded.checkpointSha };
+      if (!fs.existsSync(measurementInput)) {
+        assert.equal(fileSha(state), loaded.checkpointSha, "Live measurement must start on the exact loaded cut");
+        write(measurementInput, want);
+      }
+      assert.deepEqual(read(measurementInput), want);
     }
     const r = await peer("rung", "rung", "rung", state, String(config.target), String(config.seconds),
       String(Math.floor(deadline)), String(Math.ceil(config.reserveHours * 3600)));
