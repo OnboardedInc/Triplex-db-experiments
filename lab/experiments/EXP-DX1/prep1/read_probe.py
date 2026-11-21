@@ -48,7 +48,8 @@ def managed_events(out):
     inputs, image = frozen_inputs(out)
     terminal = read(out / "terminal.json")
     assert terminal["attempt"] == inputs["attempt"] and terminal["exit"] == 0
-    assert terminal["holder"] == "DX-PREP1" and terminal["slot"] == "tx2-datomic-selftest"
+    assert terminal["holder"] == ("DX-W1" if inputs.get("ownerHead") else "DX-PREP1")
+    assert terminal["slot"] == "tx2-datomic-selftest"
     assert terminal["image"] == image["imageId"]
     raw = out / terminal["log"]
     assert sha(raw) == terminal["sha256"]
@@ -59,7 +60,7 @@ def run_events(inputs, lines):
     attempt = inputs["attempt"]
     boots = 2 if inputs["mode"] in ("recovery", "subject-recovery") else 1
     if inputs["mode"] == "rolling-recovery":
-        boots = 2 if inputs["serialApply"] else 4
+        boots = 3 if inputs.get("ownerHead") else 2 if inputs["serialApply"] else 4
     assert [line for line in lines if line.startswith("PREP1_SQL ")] == [
         f"PREP1_SQL {key} on" for key in ("fsync", "synchronous_commit", "full_page_writes")
     ] * boots

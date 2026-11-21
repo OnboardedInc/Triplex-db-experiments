@@ -90,8 +90,10 @@ def main(out, mode="ortho", seconds="10", subject="1", numeric_owner="0", prefet
     # Rejected: copying PostgreSQL and Node layers onto the shared VM for a native-only gate.
     if mode != "subject-native-suite":
         recipe = config / "Dockerfile"
-        recipe.write_text("FROM postgres:17-alpine AS prep_pg\nFROM node:22.23.2-bookworm-slim AS prep_node\n"
-                          + recipe.read_text() + """
+        before, main, rest = recipe.read_text().partition("FROM ${DATOMIC_BASE}")
+        assert main and "\nARG DATOMIC_BASE=" in before
+        recipe.write_text(before + "FROM postgres:17-alpine AS prep_pg\nFROM node:22.23.2-bookworm-slim AS prep_node\n"
+                          + main + rest + """
 COPY --from=prep_pg / /opt/thin-pg/
 COPY --from=prep_node /usr/local/bin/node /usr/local/bin/node
 RUN ln -s /opt/thin-pg/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1 \
