@@ -27,6 +27,7 @@ const env = {
     process.env[name] ? [[name, process.env[name]]] : [],
   )),
   DX_V01_MAC_FIXTURE: "1",
+  TURBO_TELEMETRY_DISABLED: "1",
   ...(action === "--publish-fixture" ? { DX_V01_MAC_PUBLISH: "1" } : {}),
   DX_V01_LAB_RUNTIME: runtime,
   DX_INT1_GATEWAYS: "demand",

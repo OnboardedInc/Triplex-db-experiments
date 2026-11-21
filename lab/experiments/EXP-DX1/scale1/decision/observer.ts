@@ -27,6 +27,7 @@ export type Feed = {
   clock: number;
   seen: number;
   digest: string;
+  journalIds?: string[];
 };
 export type ReadResult = {
   latency: ReturnType<Histogram["toJSON"]>;
@@ -54,7 +55,7 @@ type Wire = [string, number, string[]];
 export const journalHash = (root: string, changes: readonly Record<string, unknown>[]) =>
   sha([root, changes.map(canonicalJson).sort()]);
 
-export function decodeFeed(db: string, row: Wire, seen: number): Feed {
+export function decodeFeed(db: string, row: Wire, seen: number, includeJournalIds = false): Feed {
   const [tx, position, text] = row;
   const fields = text.map(decodeRowText),
     attr = (a: string) => fields.filter((f) => f.attribute === ":_tx/" + a),
@@ -79,6 +80,7 @@ export function decodeFeed(db: string, row: Wire, seen: number): Feed {
     clock: instant[0]!.value_datetime!,
     seen,
     digest: journalHash(owner[0]!.value_string!, changes),
+    ...(includeJournalIds ? { journalIds: fields.map((field) => field.id).sort() } : {}),
   };
 }
 

@@ -7,6 +7,12 @@ Both retired IDs were refused and four historical answers matched grouped.
 The primary forecast is 235 minutes and USD 4.27 per age.
 No bare-metal measurement was taken by this worktree.
 
+## Part 4 review of the pinned writer
+
+The scorecard merges INT1 at `f25a46e02591a1c6b6a9495f7f2cce20249571f0` and uses its Datomic package tree byte for byte. The resulting scorecard commit keeps the paired restore and mixed-format check on top of that integration. The comparison restores the original seal before it runs grouped P2 and P6. Each physical arm reads back the requested Java version and collector from all three processes. The requested JVM also forms part of the campaign identity.
+
+The strengthened ordered ACK check compares the returned block to the exact journal entity and each decoded row ID on the independently read journal. It uses the same command, writer, slot, source and fresh attempt binding as the original ACK check. The P6 and P7 renderer reopens their digested raw observations before displaying metrics. This integration adds no performance verdict. The mixed-ID row still requires exact refusals, absent claims, unchanged destinations and matching typed history from fresh archives. No acceptance pin changed.
+
 ## Part 3 local preview
 
 The exact Clojure Part 10 test at PREP1 `8a116ed36` ran successfully before the ordered fixture. The adopted loader made two 80-person scopes in the ordered stack and one 80-person scope in the grouped stack. The ordered benchmark’s 211 replies all named the installed function and their ordered identity blocks. The grouped benchmark acknowledged all 183 offers. Each writer checked 48 pinned reads in each quiet cell. The ordered reference import verified 767 frames, 24,544 facts, all 270 offered saves and all 990 reads. Both retired-ID refusals left an unchanged head and no operation or claim. Both writer configurations retained four matching typed values and validity ranges. The engine removed both private volumes and released both reservations. Every local clock is diagnostic.

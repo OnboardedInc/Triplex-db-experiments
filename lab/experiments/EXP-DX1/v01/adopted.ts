@@ -4,13 +4,13 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { DatomicClient } from "../../../../packages/datomic/dist/index.js";
+import { DatomicClient, orderedSaveIdentity } from "../../../../packages/datomic/dist/index.js";
 import { fieldValue } from "../../../bench/lib/deep-world.ts";
 import { Histogram } from "../../../bench/lib/hist.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { decodeFeed, now, readCell, type Begin, type Feed } from "../scale1/decision/observer.ts";
 import { accounts, activeSubjects, cellSeconds, field, root, task, writeTape, type Density, type Write } from "../scale1/decision/plan.ts";
-import { play, resolveUncertain, type Row, type Sender } from "../scale1/decision/writes.ts";
+import { play, resolveUncertain, type Row, type Save, type Sender } from "../scale1/decision/writes.ts";
 import { checkAdoptedPeer, hex, openScaleSeal, type AdoptedSeed } from "./adopt.ts";
 import { ladder, phaseSeconds, selectedWriter, type Writer } from "./profile.ts";
 
@@ -21,7 +21,7 @@ export type QuietCell = "alone" | 235;
 export const jsonFile = (file: string, data: unknown) =>
   fs.writeFileSync(file, JSON.stringify(data, null, 2) + "\n", { flag: "wx", flush: true, mode: 0o600 });
 
-const feeder = async (client: DatomicClient, db: string, from: number, deadline: number, getEnd: () => number | undefined) => {
+const feeder = async (client: DatomicClient, db: string, from: number, deadline: number, getEnd: () => number | undefined, ordered: boolean) => {
   const rows: Feed[] = [];
   let position = from;
   while (getEnd() === undefined || position < getEnd()!) {
@@ -31,13 +31,37 @@ const feeder = async (client: DatomicClient, db: string, from: number, deadline:
     const at = now();
     for (const tx of transactions) {
       assert.equal(tx[1], ++position);
-      rows.push(decodeFeed(db, tx, at));
+      rows.push(decodeFeed(db, tx, at, ordered));
     }
     if (!transactions.length) await sleep(25);
   }
   assert.equal(position, getEnd());
   return rows;
 };
+
+export function checkSavedIdentity(save: Save, row: Feed, writer: Writer, subjectFunction?: string) {
+  const receipt = save.receipt;
+  assert(receipt && (save.status === "acked" || save.status === "recovered"));
+  assert.equal(row.db, save.db);
+  assert.deepEqual([row.id, row.tx, row.position, row.clock, row.digest],
+    [save.id, receipt.tx, receipt.p, receipt.clock, receipt.digest]);
+  if (writer === "grouped") {
+    assert(save.orderedToken === undefined && !save.stage?.subjectOrderedIds);
+    return;
+  }
+  assert(save.orderedToken);
+  const block = orderedSaveIdentity(save.orderedToken);
+  // [DX-INT1] Why: confirm the ordered identities in the native journal from a separate read peer.
+  // Rejected: reporting an ordered save solely from configured flags or from its own acknowledgment.
+  assert.equal(row.tx, block.transactionId);
+  assert.deepEqual(row.journalIds,
+    Array.from({ length: 4 + 2 * save.width }, (_, i) => block.assertionId(save.width + i)));
+  if (save.status === "acked") {
+    assert(subjectFunction);
+    assert.equal(save.stage?.subjectSave, subjectFunction);
+    assert.equal(save.stage?.subjectOrderedIds, true);
+  }
+}
 
 export function matchedTape(people: number, seconds: number) {
   const original = writeTape(people as Density, "alone", 0);
@@ -62,7 +86,7 @@ async function quietReads(client: DatomicClient, seed: AdoptedSeed, start: numbe
     errors: sides.flatMap((r) => r.samples).filter((s) => s.error).length };
 }
 
-async function preload(client: DatomicClient, seed: AdoptedSeed, head: number, tape: Write[], writer: Writer) {
+async function preload(client: DatomicClient, seed: AdoptedSeed, head: number, tape: Write[]) {
   const senders: Sender[] = [];
   for (const a of accounts) {
     const entities = [...new Set(tape.filter((x) => x.account === a).map((x) => task(a, x.subject)))];
@@ -79,7 +103,7 @@ async function preload(client: DatomicClient, seed: AdoptedSeed, head: number, t
         return value[0]!;
       }));
     }
-    senders.push({ client, scope: { ...seed.scope, cut: head }, rows, ordered: writer === "per-person-ordered" });
+    senders.push({ client, scope: { ...seed.scope, cut: head }, rows });
   }
   return senders;
 }
@@ -155,7 +179,9 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const writerOpened = peer.write === peer.read ? adopted : await checkAdoptedPeer(writerClient, seed, startHead);
     assert.deepEqual(writerOpened, adopted);
     const selected = selectedWriter(writer);
-    process.env.TRIPLEX_DATOMIC_FAST_PATHS = selected.TRIPLEX_DATOMIC_FAST_PATHS;
+    // [DX-V01] Why: the SDK selects its wire path while its module loads.
+    // Rejected: setting the environment after the SDK import and reporting an unused option.
+    assert.equal(process.env.TRIPLEX_DATOMIC_FAST_PATHS, selected.TRIPLEX_DATOMIC_FAST_PATHS);
     const options = await writerClient.request<any>("GET", "/v1/db/" + seed.scope.db + "/write-options");
     assert.deepEqual([options.attempt, options.database, options.position, options.gatewaySourceHash],
       [peer.attempt, seed.scope.db, startHead, peer.gatewaySource]);
@@ -177,14 +203,14 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     } : undefined;
     const seconds = toy ? 8 : quietCell === undefined ? phaseSeconds * ladder.length : cellSeconds(quietCell);
     const tape = quietCell === undefined ? matchedTape(seed.image.people, seconds) : quietTape(seed.image.people, quietCell, toy);
-    const senders = await preload(writerClient, seed, startHead, tape, writer);
+    const senders = await preload(writerClient, seed, startHead, tape);
     const start = now() + 1200;
     const interval = seconds * 1000;
-    feeding = feeder(journal, seed.scope.db, startHead, start + interval + 120_000, () => terminal);
+    feeding = feeder(journal, seed.scope.db, startHead, start + interval + 120_000, () => terminal, writer === "per-person-ordered");
     void feeding.catch(() => {});
     const quiet = quietCell === undefined ? Promise.resolve(undefined) : quietReads(reader, seed, start, quietCell, toy);
     const [writes, phases, quietRead] = await Promise.all([
-      play(senders, tape, start, peer.attempt),
+      play(senders, tape, start, peer.attempt, false, writer === "per-person-ordered"),
       quietCell === undefined ? readWindows(reader, seed, start, loaded, toy) : [], quiet,
     ]);
     await resolveUncertain(senders, writes.unresolved);
@@ -199,14 +225,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     for (const row of saves) {
       const r = row.receipt!, actual = byPosition.get(r.p);
       assert(actual);
-      assert.deepEqual([actual.id, actual.tx, actual.clock, actual.digest], [row.id, r.tx, r.clock, r.digest]);
-      if (writer === "per-person-ordered") {
-        assert(row.orderedToken && r.tx === "_tx/" + row.orderedToken + "00");
-        if (row.status === "acked") {
-          assert.equal(row.stage?.subjectSave, options.subjectFunction);
-          assert.equal(row.stage?.subjectOrderedIds, true);
-        }
-      }
+      checkSavedIdentity(row, actual, writer, options.subjectFunction);
       saveHistogram.recordMs(row.end! - row.due);
     }
     for (const row of saves.filter((_, i) => i === 0 || i === saves.length - 1 || i % 100 === 0)) {
@@ -229,7 +248,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
         commit: writes.summary(), feed: delivered.summary() };
     }
     const evidence = path.join(out, "operations.json");
-    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, p7 });
+    jsonFile(evidence, { writes: writes.rows, journal: feed, tape, p6, p7 });
     const result = { source, writer, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
       loaded, firstCut: startHead, terminal, seed: adopted, tapeSha256: hex(JSON.stringify(tape)),
       observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java },

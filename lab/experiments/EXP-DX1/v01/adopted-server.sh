@@ -3,6 +3,7 @@
 # Rejected: overlapping restores with other campaigns or exporting inherited Docker settings.
 set -euo pipefail
 export DOCKER_HOST=unix:///var/run/docker.sock
+export TRIPLEX_DATOMIC_FAST_PATHS=save-wire
 export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_TERMINAL_PROMPT=0
 unset DOCKER_CONTEXT DOCKER_TLS DOCKER_TLS_VERIFY DOCKER_CERT_PATH
 umask 077

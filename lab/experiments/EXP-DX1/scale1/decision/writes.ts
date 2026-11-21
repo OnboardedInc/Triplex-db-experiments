@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { setTimeout as sleep } from "node:timers/promises";
-import { DatomicClient, DatomicHttpError, orderedSaveIdentity } from "../../../../../packages/datomic/dist/index.js";
+import {
+  DatomicClient, DatomicHttpError, orderedSaveIdentity,
+} from "../../../../../packages/datomic/dist/index.js";
 import { fieldValue } from "../../../../bench/lib/deep-world.ts";
 import { SEED_VALID_FROM, type Fact } from "../../../../bench/lib/world.ts";
 import { command } from "../../w1/group/workload.ts";
@@ -79,7 +81,6 @@ export type Sender = {
   client: DatomicClient;
   scope: Scope;
   rows: Map<string, Row[]>;
-  ordered?: boolean;
 };
 
 export async function preload(client: DatomicClient, scope: Scope, people: Density, a: number) {
@@ -110,7 +111,7 @@ export async function preload(client: DatomicClient, scope: Scope, people: Densi
   return found;
 }
 
-export function expectedSave(o: Save, e: Write, prior: readonly Row[], orderedCut?: number) {
+export function expectedSave(o: Save, e: Write, prior: readonly Row[]) {
   const entity = task(o.account, o.subject);
   const old = prior.slice(0, e.width);
   assert(old.length === e.width && old.every((r) => r.entity_id === entity));
@@ -119,15 +120,14 @@ export function expectedSave(o: Save, e: Write, prior: readonly Row[], orderedCu
     a: row.attribute,
     v: { type: "string", value: sha([e.version, i]).slice(0, 57) },
   }));
-  const ordered = orderedCut === undefined ? undefined : orderedSaveIdentity(o.orderedToken);
   const input = {
-    ...command(o.id, facts, old, true, false, ordered),
-    ...(ordered ? { sourceK: Math.max(orderedCut!, ...old.map((row) => row.recorded_position)) } : {}),
+    ...command(o.id, facts, old, true, false,
+      o.orderedToken === undefined ? undefined : orderedSaveIdentity(o.orderedToken)),
     live: old.map((r) => r.id),
     groupAccount: keyFor(o.account),
     writeClass: "live" as const,
   };
-  return { input, entity, ordered };
+  return { input, entity };
 }
 
 // [DX-SCALE1] Why: compare every logical field of the committed WFIX1 change records at the assigned clock. Rejected: proving only the retracted identity or ignoring the stored predecessor lifetime.
@@ -168,6 +168,7 @@ export async function play(
   start: number,
   nonce: string,
   capture = false,
+  orderedIds = false,
 ) {
   const queues = scopes.map(() => [] as { e: Write; row: Save }[]),
     active = scopes.map(() => 0),
@@ -230,11 +231,12 @@ export async function play(
         expire(row, "dispatch");
         continue;
       }
-      // [DX-V01] Why: mint the PREP1 identity once for the exact dispatched intent.
-      // Rejected: reallocating IDs when looking up an uncertain receipt.
-      const candidate = expectedSave(row, e, sender.rows.get(task(row.account, row.subject))!,
-        sender.ordered ? sender.scope.cut : undefined);
-      if (candidate.ordered) row.orderedToken = candidate.ordered.token;
+      // [DX-INT1] Why: bind the identity block to this offered save through settling or recovering it.
+      // Rejected: minting a new block while looking up an uncertain receipt.
+      if (orderedIds) row.orderedToken = orderedSaveIdentity().token;
+      const prior = sender.rows.get(task(row.account, row.subject))!;
+      const candidate = expectedSave(row, e, prior);
+      if (orderedIds) candidate.input.sourceK = Math.max(sender.scope.cut, ...prior.map((field) => field.recorded_position));
       owned.set(key(row), row.id);
       active[account]!++;
       row.dispatched = now();

@@ -6,9 +6,9 @@ import { Histogram } from "../../../bench/lib/hist.ts";
 import { render as emptyCard } from "./render.ts";
 import type { MixedIds } from "./mixed-ids.ts";
 import type { adoptedArm } from "./adopted.ts";
-import { physicalJvm, selectedWriter, type Age, type Writer } from "./profile.ts";
+import { physicalJvm, selectedWriter, writerIntegration, type JvmProfile, type Age, type Writer } from "./profile.ts";
 
-type Card = { source: string; age: Age; writer: Writer; toy: boolean; campaign: string; out: string; forecast: string; failure?: string };
+type Card = { source: string; age: Age; writer: Writer; jvm?: JvmProfile; toy: boolean; campaign: string; out: string; forecast: string; failure?: string };
 type Observation = Awaited<ReturnType<typeof adoptedArm>>;
 const tag = (x: unknown) => (typeof x === "number" && Number.isFinite(x)) ? String(Number(x.toFixed(3))) : "—";
 export function writeAdoptedCard(run: Card) {
@@ -22,7 +22,7 @@ export function writeAdoptedCard(run: Card) {
     assert(x.startedAt <= x.start && x.start < x.endedAt && x.seed.head === x.firstCut);
     assert.equal(createHash("sha256").update(bytes).digest("hex"), x.observationsSha256);
     const raw = JSON.parse(bytes.toString());
-    assert.deepEqual(raw.p7, x.p7);
+    assert.deepEqual([raw.p6, raw.p7], [x.p6, x.p7]);
     const dispatch = new Map<string, number>(raw.writes.filter((r: any) => r.receipt && Number.isFinite(r.dispatched))
       .map((r: any) => [r.id, r.dispatched]));
     const feed = new Histogram();
@@ -40,7 +40,7 @@ export function writeAdoptedCard(run: Card) {
   const inputsFile = path.join(run.campaign, "input.json");
   if (!run.toy && fs.existsSync(inputsFile)) {
     const input = JSON.parse(fs.readFileSync(inputsFile, "utf8"));
-    assert.deepEqual([input.source, input.age, input.writer], [run.source, run.age, run.writer]);
+    assert.deepEqual([input.source, input.age, input.writer, input.jvm], [run.source, run.age, run.writer, run.jvm]);
     for (const arm of arms) assert.equal(arm.seed.imageSha256, input.imagePin);
   }
   if (zero && loaded) {
@@ -219,7 +219,8 @@ export function writeAdoptedCard(run: Card) {
   ]).join("\n").replaceAll("No compatible measurement from this attempt.", run.failure ?? "No compatible measurement from this attempt.");
   const settings = {
     ...selectedWriter(run.writer),
-    ...(run.toy ? {} : { physicalJvm: physicalJvm() }),
+    writerIntegration,
+    ...(run.toy ? {} : { jvm: run.jvm, physicalJvm: physicalJvm(run.jvm) }),
     ...(run.writer === "per-person-ordered" ? { comparison: selectedWriter("grouped") } : {}),
     armReadbacks: arms.map((a) => a.settings),
   };

@@ -115,11 +115,13 @@
         (macroexpand-1 (cons `changes-application-rows? (rest node)))
         node))
     (walk/postwalk-replace {'stamp-rows commit/compiled-stamp-code
-                            'mutable-flags mutable-flags
-                            'check-history (if ordered-ids? ordered-history-guard history-guard)
-                            'owner-witness-check (when numeric-owner?
-                                                   '(not= (:owner-key plan) (value owner :triplex.entity/id)))}
-                           body)))
+                          'mutable-flags mutable-flags
+                          'check-history (if ordered-ids? ordered-history-guard history-guard)
+                          ;; [DX-PREP1] Why: the numeric owner must still own this public ID in db-before.
+                          ;; Rejected: trusting the peer's lookup alone (an ID change can leave its revision intact).
+                          'owner-witness-check (when numeric-owner?
+                                                 '(not= (:owner-key plan) (value owner :triplex.entity/id)))}
+                         body)))
 (def source-hash (schema/sha256 (pr-str code)))
 (def ident (keyword "triplex.subject" (str "v-" (subs source-hash 0 24))))
 
@@ -256,7 +258,8 @@
                 (cond-> {:scope scope :flags flags :function [ident fn-tx] :owner owner :revision revision
                          :journal journal :operation (:triplex.tx/operation-id op-header) :command claim
                          :provisional provisional :submitted-clock (reduce max (map double clocks))
-                         :prefixes prefixes :expected-erasure expected-erasure
+                         :prefixes prefixes
+                         :expected-erasure expected-erasure
                          :ops (render-ops ops owner subject prior (set new-ids))}
                   numeric-owner? (assoc :owner-key subject)
                   ordered-ids? (assoc :ordered-bounds (ordered-bounds journal prefixes)))))))))))

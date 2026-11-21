@@ -8,13 +8,15 @@ import { restoreDump } from "../scale1/seed-image.ts";
 import { adoptedArm, jsonFile, quietPair, recordMixedIds, type Residency } from "./adopted.ts";
 import { nativeMetrics } from "../thin1/native-metrics.ts";
 import { openScaleSeal, hex } from "./adopt.ts";
-import { budget, isWriter, stackOptions, type Age } from "./profile.ts";
+import { budget, isWriter, jvmProfiles, physicalJvm, stackOptions, type Age, type JvmProfile } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
 
-const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, agedFile, agedPin, agedDump, agedDumpPin] = process.argv.slice(2);
+const [source, campaign, deadlineText, seedDir, imagePin, transferPin, age, requestedWriter, jvm, agedFile, agedPin, agedDump, agedDumpPin] = process.argv.slice(2);
 assert(source && campaign && seedDir && imagePin && transferPin);
 assert(age === "fresh" || age === "1B");
 assert(isWriter(requestedWriter));
+assert(jvmProfiles.includes(jvm as JvmProfile));
+const jvmProfile = jvm as JvmProfile;
 const end = Number(deadlineText);
 assert(Number.isSafeInteger(end) && end > Date.now());
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"), queue = fs.statSync(`/proc/${process.ppid}/fd/9`);
@@ -25,7 +27,7 @@ verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 const seed = openScaleSeal(path.join(fs.realpathSync(seedDir), "image.json"), imagePin, false, transferPin);
 const expected = age === "1B" ? openAged(age, agedFile, agedPin, agedDump, agedDumpPin) : undefined;
 fs.mkdirSync(campaign);
-jsonFile(path.join(campaign, "input.json"), { source, age, writer: requestedWriter, imagePin, transferPin, originalScope: seed.scope,
+jsonFile(path.join(campaign, "input.json"), { source, age, writer: requestedWriter, jvm: jvmProfile, imagePin, transferPin, originalScope: seed.scope,
   agedBundle: expected?.pin, agedDump: expected?.dumpPin });
 let stopping = false;
 const stop = () => { stopping = true; };
@@ -49,7 +51,7 @@ for (const { writer, loaded } of stages) {
   const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
   assert(Object.values(scaleHost.childrenInventory(slot)).every((x) => x.length === 0));
   try {
-    const { engines } = startScaleStack(out, slot, source, writer === "grouped", stackOptions(writer, attempt));
+    const { engines } = startScaleStack(out, slot, source, writer === "grouped", stackOptions(writer, attempt, jvmProfile));
     const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
     const residency = async () => {
       const { write, read } = peerUrls();
@@ -64,7 +66,7 @@ for (const { writer, loaded } of stages) {
       Math.min(stageEnd - 10 * 60_000, Date.now() + 42 * 60_000));
     const write = `http://${engines["gw-w"]!.address}:8080`;
     const read = `http://${engines["gw-r"]!.address}:8080`;
-    const jw = await readJvm(engines);
+    const jw = await readJvm(engines, jvmProfile);
     const health = await (await fetch(new URL("/health", write), { signal: AbortSignal.timeout(2000) })).json() as any;
     assert.match(health.gatewaySourceHash, /^[a-f0-9]{64}$/);
     const head = expected ? await verifyAged(expected, out, engines.pg!.address) : seed.scope.cut;
@@ -119,15 +121,16 @@ async function verifyAged(expected: ReturnType<typeof openAged>, out: string, po
   }
 }
 
-async function readJvm(engines: Record<string, { id: string }>) {
+async function readJvm(engines: Record<string, { id: string }>, profile: JvmProfile) {
+  const expected = physicalJvm(profile);
   const result = [];
   for (const role of ["tx", "gw-w", "gw-r"]) {
     const id = engines[role]!.id;
     const args = execFileSync("docker", ["exec", id, "sh", "-ec",
       'java -version 2>&1; for p in /proc/[0-9]*; do [ "$(cat "$p/comm" 2>/dev/null)" = java ] || continue; tr "\\000" "\\n" < "$p/cmdline" | grep -E "^(-X|-Ddatomic[.]|-Dlogback[.]|--enable-native-access|--sun-misc)" ; done'],
     { encoding: "utf8", timeout: 10000 });
-    assert.match(args, /version "25\./);
-    assert.match(args, /-XX:\+UseG1GC/);
+    assert(args.includes('version "' + expected.major + "."));
+    assert(args.trim().split("\n").includes(expected.selectedCollector));
     result.push({ role, container: id, observed: args.trim().split("\n") });
   }
   return result;

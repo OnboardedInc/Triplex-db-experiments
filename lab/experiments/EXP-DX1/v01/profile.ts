@@ -5,6 +5,11 @@ export type Writer = (typeof writers)[number];
 export function isWriter(value: unknown): value is Writer {
   return writers.some((writer) => writer === value);
 }
+export const writerIntegration = "f25a46e02591a1c6b6a9495f7f2cce20249571f0";
+export const defaultWriter: Writer = "per-person-ordered";
+export const jvmProfiles = ["j21-g1", "j25-g1", "j25-zgc"] as const;
+export type JvmProfile = (typeof jvmProfiles)[number];
+export const defaultJvm: JvmProfile = "j21-g1";
 export type Age = "fresh" | "1B";
 export const budget = { adoptionAndP1to4: 105, P6: 20, P7: 10, P8: 25, comparison: 60, cleanup: 15 };
 export const ceiling = Object.values(budget).reduce((a, b) => a + b, 0);
@@ -18,7 +23,7 @@ export function selectedWriter(writer: Writer) {
   return {
     writer,
     layout: "lean",
-    journal: "K",
+    journal: grouped ? "K" : "native rows",
     TX2_PREDECESSOR_LOOKUP: "1",
     TX2_SMALL_ROWS: grouped ? "1" : "0",
     TX2_SAVE_LEDGER: grouped ? "1" : "0",
@@ -44,17 +49,23 @@ export function selectedWriter(writer: Writer) {
   } as const;
 }
 
-export function physicalJvm() {
+export function physicalJvm(profile: JvmProfile = defaultJvm) {
+  const major = profile === "j21-g1" ? "21" : "25";
+  const selectedCollector = profile === "j25-zgc" ? "-XX:+UseZGC" : "-XX:+UseG1GC";
+  const peer = "-Xms256m -Xmx3g -Ddatomic.objectCacheMax=1536m";
+  const override = profile === "j25-zgc" ? " " + selectedCollector : "";
+  // [DX-INT1] Why: apply the selected collector to all roles in the same prepared image family.
+  // Rejected: selecting the Java version while silently retaining a different gateway collector.
   return {
-    major: 25,
-    tx: launchOptions("tx", 1, "-Xms256m -Xmx5g -XX:+UseG1GC"),
-    "gw-w": launchOptions("gw-w", 1, "-Xms256m -Xmx3g -Ddatomic.objectCacheMax=1536m"),
-    "gw-r": launchOptions("gw-r", 2, "-Xms256m -Xmx3g -Ddatomic.objectCacheMax=1536m"),
+    major, selectedCollector,
+    tx: launchOptions("tx", 1, "-Xms256m -Xmx5g" + override),
+    "gw-w": launchOptions("gw-w", 1, peer + override),
+    "gw-r": launchOptions("gw-r", 2, peer + override),
   };
 }
 
-export function stackOptions(writer: Writer, attempt: string) {
-  const settings = selectedWriter(writer);
+export function stackOptions(writer: Writer, attempt: string, profile: JvmProfile = defaultJvm) {
+  const settings = selectedWriter(writer), jvm = physicalJvm(profile);
   return {
     DX_GROUP_COMMIT: settings.TX2_GROUP_COMMIT,
     DX_GROUP_STAGE_CLOCK: "1", DX_W1_EXTRA: "1",
@@ -66,7 +77,7 @@ export function stackOptions(writer: Writer, attempt: string) {
     TX2_SUBJECT_NUMERIC_OWNER: settings.TX2_SUBJECT_NUMERIC_OWNER, TX2_SUBJECT_ORDERED_IDS: settings.TX2_SUBJECT_ORDERED_IDS,
     TX2_SUBJECT_PREFETCH: settings.TX2_SUBJECT_PREFETCH,
     DX_WRITE_OPTIONS_ATTEMPT: attempt, DX_V01_IMPORT_TIMING: "1",
-    DX_JAVA: "25",
-    DX_GW_WRITE_JAVA_OPTS: physicalJvm()["gw-w"], DX_GW_READ_JAVA_OPTS: physicalJvm()["gw-r"],
+    DX_JAVA: jvm.major, DX_TX_JAVA_OPTS: jvm.tx,
+    DX_GW_WRITE_JAVA_OPTS: jvm["gw-w"], DX_GW_READ_JAVA_OPTS: jvm["gw-r"],
   };
 }
