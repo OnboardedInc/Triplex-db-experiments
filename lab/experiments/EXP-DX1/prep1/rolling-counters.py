@@ -47,10 +47,27 @@ def sample_roles(roles, masks):
     return out
 
 
+def counters(path):
+    return {line.split()[0]: int(line.split()[1]) for line in path.read_text().splitlines()}
+
+
+def sample_memory(roles):
+    # [DX-PREP1] Why: separate role pressure and file cache within each capped cgroup.
+    # Rejected: subtracting summed RSS from the advertised RAM and calling the rest free.
+    out = {}
+    for role, (cpu, _, _) in roles.items():
+        cgroup = cpu.parent
+        types = counters(cgroup / "memory.stat")
+        out[role] = dict(current=int((cgroup / "memory.current").read_text()), anon=types["anon"], file=types["file"],
+                         events=counters(cgroup / "memory.events"))
+    return out
+
+
 def run(out, containers, slot, source, attempt, sender):
     assert sys.platform == "linux" and __debug__
-    assert re.fullmatch(r"tx2-dxprep1-[a-f0-9]{8}-1-(barrier6|rolling(6|8|12|16)|rolling6-tx5|fresh(-zgc)?(6|12))-s", slot)
-    tx5 = slot.endswith("-rolling6-tx5-s")
+    assert re.fullmatch(r"tx2-dxprep1-[a-f0-9]{8}-1-(barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12))-s", slot)
+    cache32 = slot.endswith("-cache32-s")
+    tx5 = slot.endswith(("-tx5-s", "-tx5-cache32-s"))
     masks = {**ROLE_MASKS, "tx": {0, 4, 5, 7, 8}, "gw-w": {2, 3}} if tx5 else ROLE_MASKS
     for _ in range(20):
         if os.sched_getaffinity(sender) == {9}:
@@ -66,8 +83,12 @@ def run(out, containers, slot, source, attempt, sender):
                  ticks=os.sysconf("SC_CLK_TCK"), sender=sender, senderStartTicks=born,
                  roles={r: {"id": live[r]["Id"], "pid": p, "startTicks": start}
                         for r, (_, p, start) in roles.items()})
-    if tx5:
+    if tx5 or cache32:
         bound["masks"] = {r: sorted(mask) for r, mask in masks.items()}
+    if cache32:
+        bound["memoryMax"] = {r: int((path.parent / "memory.max").read_text()) for r, (path, _, _) in roles.items()}
+        memory = counters(Path("/proc/meminfo"))
+        bound["hostMemoryKiB"] = {k: memory[k + ":"] for k in ("MemTotal", "MemAvailable")}
     argv = ["docker", "exec", "-i", "-e", "PGOPTIONS=-c statement_timeout=3000",
             slot + "-pg", "psql", "-XqAt", "-U", "postgres", "-d", "datomic",
             "-v", "ON_ERROR_STOP=1"]
@@ -92,8 +113,11 @@ def run(out, containers, slot, source, attempt, sender):
                 wall = time.time_ns()
                 assert row["durable"] == "on" and row["wal"] and row["checkpointer"] and row["io"]
                 assert abs(int(row["wallNs"]) - wall) <= right - left + 100_000_000
-                print(json.dumps(dict(monoNs=str(left), endMonoNs=str(right), wallNs=str(wall),
-                                      senderTicks=sender_ticks, cpu=role_cpu, pg=row)), file=sink)
+                sample = dict(monoNs=str(left), endMonoNs=str(right), wallNs=str(wall),
+                              senderTicks=sender_ticks, cpu=role_cpu, pg=row)
+                if cache32:
+                    sample["memory"] = sample_memory(roles)
+                print(json.dumps(sample), file=sink)
                 if not started:
                     with (out / ".counters-ready.tmp").open("x") as ready:
                         json.dump(bound, ready)

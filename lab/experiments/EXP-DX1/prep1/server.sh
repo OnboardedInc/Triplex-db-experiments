@@ -10,7 +10,7 @@ repo=$(git rev-parse --show-toplevel)
 cd "$repo"
 here=lab/experiments/EXP-DX1/prep1
 stack=lab/experiments/EXP-DX1/stack
-mode=${1:?expected run, storage, storage-ordered, ceiling, scale, rolling, fresh, tail, tail-combined, owner, fair or arm}
+mode=${1:?expected run, storage, storage-ordered, ceiling, scale, rolling, cache32, fresh, tail, tail-combined, owner, fair or arm}
 out=${2:?provide an absolute new output directory}
 source=${3:?provide the pinned Git commit}
 [[ "$out" == /* && "$source" =~ ^[a-f0-9]{40}$ && $(git rev-parse HEAD) == "$source" && -z $(git status --porcelain) ]]
@@ -109,7 +109,7 @@ clear_scale_wal() {
   if [[ -n ${scale_wal_owned:-} ]]; then
     [[ $(findmnt -nro SOURCE --mountpoint "$scale_wal_mount") == "${scale_wal_device:-/dev/nvme1n1}" &&
        $scale_wal_owned == "$scale_wal_mount/$owned" &&
-       $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(scale-wal-zgc|barrier6|rolling(6|8|12|16)|rolling6-tx5|fresh(-zgc)?(6|12))-s$ &&
+       $owned =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(scale-wal-zgc|barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12))-s$ &&
        ! -L $scale_wal_owned ]] || return 1
     rm -rf --one-file-system -- "$scale_wal_owned" || return 1
     unset scale_wal_owned DX_PREP1_SCALE_WAL_DIR
@@ -130,13 +130,17 @@ if [[ $mode == ceiling ]]; then
   [[ $# == 6 || ($# == 8 && $7 == --pg-data) ]]
   exec timeout --kill-after=40s 3560s bash "$here/server.sh" ceiling-timed "${@:2}"
 elif [[ $mode == rolling ]]; then
-  [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && -z ${DX_PREP1_FRESH_CREDITS:-} ]]
+  [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && -z ${DX_PREP1_FRESH_CREDITS:-}${DX_PREP1_CACHE32:-} ]]
   limit=8960
   if [[ ${DX_PREP1_ROLLING_ARM:-} == rolling6-tx5 ]]; then limit=2060; fi
   exec timeout --kill-after=40s "${limit}s" bash "$here/server.sh" rolling-timed "${@:2}"
+elif [[ $mode == cache32 ]]; then
+  [[ $# == 10 && $7 == --pg-data && $9 == --wal-mount && -z ${DX_PREP1_FRESH_CREDITS:-}${DX_PREP1_ROLLING_ARM:-} ]]
+  export DX_PREP1_CACHE32=1
+  exec timeout --kill-after=40s 3560s bash "$here/server.sh" rolling-timed "${@:2}"
 elif [[ $mode == fresh ]]; then
   [[ $# == 12 && $7 == --pg-data && $9 == --wal-mount &&
-     ${11} == --write-jvm && ${12} == j25-zgc && -z ${DX_PREP1_ROLLING_ARM:-} ]]
+     ${11} == --write-jvm && ${12} == j25-zgc && -z ${DX_PREP1_ROLLING_ARM:-}${DX_PREP1_CACHE32:-} ]]
   export DX_PREP1_FRESH_CREDITS=${DX_PREP1_FRESH_CREDITS:-6}
   [[ $DX_PREP1_FRESH_CREDITS =~ ^(6|12)$ ]]
   exec timeout --kill-after=40s 7160s bash "$here/server.sh" rolling-timed "${@:2:9}"
@@ -156,6 +160,13 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
       wal_disk=$(disk_of "$scale_wal_device")
       [[ $data_disk =~ ^nvme[0-9]+n[0-9]+$ && $wal_disk =~ ^nvme[0-9]+n[0-9]+$ && $data_disk != "$wal_disk" ]]
       export DX_PREP1_ROLLING_WAL_DEVICE=$scale_wal_device
+      if [[ ${DX_PREP1_CACHE32:-} == 1 ]]; then
+        # [DX-PREP1] Why: preserve at least 10 GiB outside the 79 GiB of role caps (:GiB, not advertised GB).
+        # Rejected: treating the server SKU size as MemTotal or budgeting only Java heap.
+        host_kib=$(awk '$1 == "MemTotal:" && $3 == "kB" {print $2}' /proc/meminfo)
+        [[ $host_kib =~ ^[0-9]+$ ]]
+        (( host_kib >= 89*1024*1024 ))
+      fi
     else
       [[ $scale_wal_device == /dev/nvme1n1 && $(findmnt -nro SOURCE /) == /dev/nvme0n1p2 ]]
     fi
@@ -217,7 +228,10 @@ elif [[ $mode == ceiling-timed || $mode == scale-timed || $mode == rolling-timed
     arm_limit=850
     if [[ $mode == rolling-timed ]]; then
       arm_limit=2950
-      if [[ -n ${DX_PREP1_FRESH_CREDITS:-} ]]; then
+      if [[ ${DX_PREP1_CACHE32:-} == 1 ]]; then
+        arm_limit=1740
+        selected=(1-rolling6-cache32-S 1-rolling6-tx5-cache32-S)
+      elif [[ -n ${DX_PREP1_FRESH_CREDITS:-} ]]; then
         [[ $DX_PREP1_FRESH_CREDITS =~ ^(6|12)$ && -z ${DX_PREP1_ROLLING_ARM:-} ]]
         arm_limit=2340
         selected=("1-rolling$DX_PREP1_FRESH_CREDITS-S" "1-fresh$DX_PREP1_FRESH_CREDITS-S" "1-fresh-zgc$DX_PREP1_FRESH_CREDITS-S")
@@ -389,9 +403,10 @@ elif [[ $mode == arm ]]; then
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == scale ]]; then
     [[ $cell =~ ^1-scale-(base|cache|wal-zgc)-S$ && $(cat "$out/source") == "$source" ]]
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == rolling ]]; then
-    [[ $cell =~ ^1-(barrier6|rolling(6|8|12|16)|rolling6-tx5|fresh(-zgc)?(6|12))-S$ && $(cat "$out/source") == "$source" ]]
-    if [[ $cell == 1-rolling6-tx5-S ]]; then
-      [[ ${DX_PREP1_ROLLING_ARM:-} == rolling6-tx5 ]]
+    [[ $cell =~ ^1-(barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12))-S$ && $(cat "$out/source") == "$source" ]]
+    if [[ $cell == 1-rolling6-tx5-S || $cell == 1-rolling6*-cache32-S ]]; then
+      if [[ $cell == *-cache32-S ]]; then [[ ${DX_PREP1_CACHE32:-} == 1 ]]
+      else [[ ${DX_PREP1_ROLLING_ARM:-} == rolling6-tx5 ]]; fi
       export DX_JVM1_TX_PROPERTIES='{"index-parallelism":1}'
     fi
   elif [[ ${DX_PREP1_CAMPAIGN:-comparison} == tail ]]; then
@@ -471,10 +486,10 @@ elif [[ $mode == arm ]]; then
     "$DX_STACK_EVIDENCE/$owned/stack.json" http://127.0.0.1:8495 "${urls[@]}")
   if [[ ${DX_PREP1_CAMPAIGN:-} == rolling ]]; then
     printf '%s\n' "${profile[0]}" > "$dir/launch-profile.json"
-    if [[ $cell == 1-rolling6-tx5-S ]]; then
+    if [[ $cell == 1-rolling6-tx5-S || $cell == 1-rolling6*-cache32-S ]]; then
       attempt="$DX_STACK_EVIDENCE/$owned"
       docker logs "$owned-gw-w" > "$dir/gw-w-placement.log" 2>&1
-      node "$here/rolling-launch.mjs" "$dir/launch-profile.json" "$attempt/tx-startup-wait.log" \
+      node "$here/rolling-launch.mjs" "$cell" "$dir/launch-profile.json" "$attempt/tx-startup-wait.log" \
         "$dir/gw-w-placement.log" "$attempt/config/sql.properties"
     fi
     taskset -c 9 "${producer[@]}" "${args[@]}" & sender_pid=$!

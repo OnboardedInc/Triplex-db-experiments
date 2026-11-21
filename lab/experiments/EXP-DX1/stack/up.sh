@@ -255,7 +255,7 @@ prep_pgdata=${DX_PREP1_PGDATA:-}
 prep_wal=${DX_PREP1_SCALE_WAL_DIR:-}
 if [[ -n $prep_pgdata ]]; then
   [[ ${DX_BARE_METAL:-0} == 1 && ${DX_PREP1_SERVER:-0} == 1 && ${DX_PREP1_CAMPAIGN:-} =~ ^(ceiling|scale|rolling)$ &&
-     $prefix =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(ceiling|scale-(base|cache|wal-zgc)|barrier6|rolling(6|8|12|16)|rolling6-tx5|fresh(-zgc)?(6|12))-s$ && -d $prep_pgdata && $prep_pgdata == /* &&
+     $prefix =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(ceiling|scale-(base|cache|wal-zgc)|barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12))-s$ && -d $prep_pgdata && $prep_pgdata == /* &&
      $prep_pgdata != *[,\"$'\n']* && -z $seed_volume && -z ${DX_PREP1_DUMP:-} && -z ${DX_JVM1_PG_RESTORE:-} &&
      -z ${DX_BM1_WAL_MOUNT:-} && ${DX_BM1_WAL_AB:-0} == 0 ]]
   [[ ${DX_PREP1_SEED_SHA:?} =~ ^[a-f0-9]{64}$ && ${DX_WRITE_OPTIONS_ATTEMPT:?} =~ ^[a-f0-9-]{36}$ ]]
@@ -717,6 +717,7 @@ ROLLING_LOGBACK
     # [DX-PREP1] Why: collect Datomic index and pressure events without enabling per-transaction logging.
     # Rejected: turning every transaction into a synchronous vendor log event.
     prep_tx+=(-e PREP1_ROLLING_INDEX=1)
+    if [[ $prefix == *-cache32-s ]]; then prep_tx+=(-e PREP1_CACHE_METRICS=1); fi
     trace_tx_java+=' -Ddatomic.metricsCallback=triplex.prep1.observe/rolling-metrics -Dlogback.configurationFile=/dxh1/rolling-index-logback.xml'
   fi
   trace_tx_java+=' -Xlog:gc*,safepoint*=debug:file=/trace/prep1-gc-tx.log:time,uptimemillis,level,tags,pid,tid:filecount=0'

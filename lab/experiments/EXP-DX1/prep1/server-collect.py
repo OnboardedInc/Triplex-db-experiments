@@ -91,7 +91,7 @@ def rolling_metrics(result, rows, selection):
                                        for v in turns.values()]) if selection["mode"] == "barrier" else None)
 
 
-def rolling_counters(directory, root, header, live, masks=None):
+def rolling_counters(directory, root, header, live, masks=None, memory_limits=None):
     ready = read(directory / "counters-ready.json")
     assert (ready["source"], ready["slot"], ready["attempt"], ready["boot"]) == (
         header["commit"], header["slot"], header["nonce"], (directory / "boot-id").read_text().strip())
@@ -100,6 +100,10 @@ def rolling_counters(directory, root, header, live, masks=None):
         c["Name"].removeprefix("/"+header["slot"]+"-"): (c["Id"], c["State"]["Pid"]) for c in read(live)}
     if masks is not None:
         assert ready["masks"] == {role: [int(cpu) for cpu in mask.split(",")] for role, mask in masks.items()}
+    if memory_limits is not None:
+        assert ready["memoryMax"] == memory_limits
+        total, available = (ready["hostMemoryKiB"][k] for k in ("MemTotal", "MemAvailable"))
+        assert total*1024 - sum(memory_limits.values()) >= 10 << 30 and 0 < available <= total
     counters = directory / "counters.ndjson"
     samples = [json.loads(line) for line in counters.read_text().splitlines()]
     assert len(samples) > 60
@@ -109,6 +113,10 @@ def rolling_counters(directory, root, header, live, masks=None):
         assert {"wal_write", "wal_sync", "wal_write_time", "wal_sync_time"} <= s["pg"]["wal"].keys()
         assert {"num_timed", "num_requested", "write_time", "sync_time"} <= s["pg"]["checkpointer"].keys()
         assert s["pg"]["io"] and s["pg"]["backend"] == samples[0]["pg"]["backend"]
+        if memory_limits is not None:
+            assert s["memory"].keys() == memory_limits.keys()
+            assert all(all(isinstance(m[k], int) and m[k] >= 0 for k in ("current", "anon", "file"))
+                       and "oom_kill" in m["events"] for m in s["memory"].values())
         if i:
             prior = samples[i-1]
             assert 0 < int(s["monoNs"]) - int(prior["monoNs"]) <= 3_000_000_000
@@ -161,7 +169,9 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     assert campaign in ("comparison", "fair", "owner", "storage", "storage-ordered", "ceiling", "scale", "tail", "tail-combined", "rolling")
     scale = campaign == "scale"
     rolling = campaign == "rolling"
-    tx5 = arm["id"] == "1-rolling6-tx5-S"
+    cache32_ids = ("1-rolling6-cache32-S", "1-rolling6-tx5-cache32-S")
+    cache32 = arm["id"] in cache32_ids
+    tx5 = arm["id"] in ("1-rolling6-tx5-S", cache32_ids[1])
     fresh_credits = plan.get("freshCredits")
     assert fresh_credits is None or (rolling and fresh_credits in (6, 12))
     wide = campaign == "ceiling" or scale or rolling
@@ -199,7 +209,11 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         choices = [
             (f"1-{mode}{credits}-S", {"mode": mode, "credits": credits})
             for mode, credits in (("barrier", 6), ("rolling", 6), ("rolling", 8), ("rolling", 12), ("rolling", 16))]
-        if tx5:
+        if cache32:
+            assert fresh_credits is None and observed == [
+                (name, dict(mode="rolling", credits=6)) for name in cache32_ids]
+            assert all("writeJvm" not in a for a in plan["arms"])
+        elif tx5:
             assert fresh_credits is None and observed == [("1-rolling6-tx5-S", dict(mode="rolling", credits=6))]
             assert "writeJvm" not in arm
         elif fresh_credits:
@@ -211,7 +225,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
         else:
             assert observed == [choices[i] for i in (0, 1, 3)] or (len(observed) == 1 and observed[0] in choices)
         assert all(a["writers"] == 1 and a["writer"] == "S" and a["numericOwner"] and a["orderedIds"]
-                   and not a["reverse"] and not a["prefetch"] and a["cacheGiB"] == 16 for a in plan["arms"])
+                   and not a["reverse"] and not a["prefetch"] and a["cacheGiB"] == (32 if cache32 else 16)
+                   for a in plan["arms"])
     elif scale:
         assert [(a["id"], a["scale"], a["cacheGiB"], a["credits"]) for a in plan["arms"]] == [
             (f"1-scale-{name}-S", name, size, 6) for name, size in (("base", 2), ("cache", 16), ("wal-zgc", 16))]
@@ -234,7 +249,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
     if rolling:
         assert [(c["label"], c["rate"], c["offered"], c["fairCredits"]) for c in arm["cells"]] == [
             (f"r{rate}-{mode}", rate, round((3.5 if mode == "alone" else rate) * plan["seconds"]), fair_credits)
-            for rate in ((394, 620) if tx5 else (235, 394, 620)) for mode in ("alone", "loaded")]
+            for rate in ((394, 620) if tx5 or cache32 else (235, 394, 620)) for mode in ("alone", "loaded")]
     elif wide:
         variants = ((394, "on", 6), (620, "on", 6)) if scale else (
             (620, "off", 0), (620, "on", 6), (900, "on", 6), (900, "off", 0))
@@ -351,9 +366,10 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 header["slot"], header["slot"], header["commit"], "tx")
             assert tx_jvm["jvm"]["objectCacheMax"] in (f'{arm["cacheGiB"]}g', f'{arm["cacheGiB"]*1024}m')
             assert tx_jvm["jvm"]["prefetchProbes"] == "true" and tx_jvm["jvm"]["prefetchEnabled"] is True
-            assert 23 << 30 <= tx_jvm["jvm"]["maxHeapBytes"] <= 24 << 30
+            heap = 48 if cache32 else 24
+            assert (heap-1) << 30 <= tx_jvm["jvm"]["maxHeapBytes"] <= heap << 30
             tx_container, = [container for container in stack["containers"] if container["name"] == header["slot"] + "-tx"]
-            assert tx_container["memory"] == 30 << 30
+            assert tx_container["memory"] == (60 if cache32 else 30) << 30
         if scale or rolling:
             config = native_path.parents[2] / "config"
             masks = {"tx": "0,7,8" if rolling else "0" if arm["scale"] == "base" else "0,7-8",
@@ -361,6 +377,10 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             if tx5:
                 masks.update({"tx": "0,4,5,7,8", "gw-w": "2,3"})
             assert {c["name"].removeprefix(header["slot"]+"-"): c["cpuset"] for c in stack["containers"]} == masks
+            memory_limits = None
+            if cache32:
+                memory_limits = {role: gib << 30 for role, gib in {"tx": 60, "pg": 8, "gw-w": 6, "gw-r": 5}.items()}
+                assert {c["name"].removeprefix(header["slot"]+"-"): c["memory"] for c in stack["containers"]} == memory_limits
             base_image_path = config / "java-image.txt"
             zgc_image_path = config / ("tx-java-image.txt" if rolling else "tail-tx-image.txt")
             base_image = base_image_path.read_text().split("|")
@@ -390,13 +410,13 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
             if rolling:
                 profile_file = directory / "launch-profile.json"
                 profile = read(profile_file)
-                if tx5:
+                if tx5 or cache32:
                     # [DX-PREP1] Why: reconcile the requested split with this slot's startup bytes and live affinity.
                     # Rejected: treating a declared core count or JVM option as an observed placement.
                     witnessed = [config.parent / "tx-startup-wait.log", directory / "gw-w-placement.log",
                                  config / "sql.properties"]
                     subprocess.run(["node", str(Path(__file__).with_name("rolling-launch.mjs")),
-                                    str(profile_file), *map(str, witnessed)], check=True)
+                                    arm["id"], str(profile_file), *map(str, witnessed)], check=True)
                     pg_data_evidence.extend(witnessed)
                 if fresh_credits:
                     want_major = "25" if arm.get("writeJvm") else "21"
@@ -408,7 +428,8 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                 assert (sql["settings"]["min_wal_size"], sql["settings"]["checkpoint_timeout"],
                         sql["settings"]["checkpoint_completion_target"], sql["settings"]["checkpoint_flush_after"]) == (
                             "80MB", "5min", "0.9", "256kB")
-                extra, counters = rolling_counters(directory, native_path.parent, header, live_pg, masks if tx5 else None)
+                extra, counters = rolling_counters(directory, native_path.parent, header, live_pg,
+                                                   masks if tx5 or cache32 else None, memory_limits)
                 pg_data_evidence.extend(extra + [profile_file])
 
     native, end, block_no = {}, False, 0

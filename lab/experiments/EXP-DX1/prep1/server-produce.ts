@@ -38,6 +38,7 @@ import {
   ownerPrediction,
   prediction,
   rollingArms,
+  rollingCache32Arms,
   rollingTx5Arm,
   rollingPrediction,
   rollingSeconds,
@@ -94,6 +95,8 @@ assert(
 );
 const rollingArm = process.env.DX_PREP1_ROLLING_ARM;
 const freshCredits = process.env.DX_PREP1_FRESH_CREDITS;
+const cache32 = process.env.DX_PREP1_CACHE32;
+assert(cache32 === undefined || (cache32 === "1" && campaign === "rolling" && !rollingArm && freshCredits === undefined));
 const tx5 = rollingArm === "rolling6-tx5";
 assert(rollingArm === undefined || (campaign === "rolling" && (tx5 || rollingArms.some((a) => a.id === `1-${rollingArm}-S`))));
 assert(freshCredits === undefined || (campaign === "rolling" && rollingArm === undefined));
@@ -105,7 +108,7 @@ const campaignArms = {
   "storage-ordered": [storageOrderedArm],
   ceiling: [ceilingArm],
   scale: scaleArms,
-  rolling: tx5 ? [rollingTx5Arm] : freshCredits === undefined
+  rolling: cache32 ? rollingCache32Arms : tx5 ? [rollingTx5Arm] : freshCredits === undefined
     ? rollingArms.filter((a) => rollingArm === undefined ? [6, 12].includes(a.admission!.credits) : a.id === `1-${rollingArm}-S`)
     : freshArms(Number(freshCredits)),
   tail: tailArms,

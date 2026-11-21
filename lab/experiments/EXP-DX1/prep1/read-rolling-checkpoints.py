@@ -1,7 +1,7 @@
 """Verify transferred rolling checkpoints and identify which source data they contain."""
 
 import argparse
-from collections import defaultdict
+from collections import Counter, defaultdict
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -17,13 +17,15 @@ IMAGE = "77d66794d41d321e2fb3daed96c5e9b9f32e6dd760c4ed67923c564861a8a76b"
 # [DX-PREP1] Why: compare the same elapsed bins in both arms, anchored to the published rolling-6 queue.
 # Rejected: selecting each arm's bins independently based on its observed apply or SQL cost.
 PLACEMENT_WINDOWS = {"building": ((200, 220), (270, 290)), "clearOrDraining": ((170, 190), (230, 250))}
+CACHE_KEYS = ("sql", "ocache", "valcache", "memcached", "aevt", "eavt", "avet", "vaet",
+              "aevt-load", "eavt-load", "avet-load", "vaet-load")
 
 
 def digest(data):
     return hashlib.sha256(data).hexdigest()
 
 
-def checked_checkpoint(root, label, manifest, raw_root=None):
+def checked_checkpoint(root, label, manifest, raw_root=None, cache=False):
     base = f"bench3/checkpoints/{label}/checkpoint.tar"
     path = root / base
     if not path.is_file() or base not in manifest:
@@ -95,7 +97,7 @@ def checked_checkpoint(root, label, manifest, raw_root=None):
                                         extraBeforeSendSec=at_least * (extra-http_p99) / 1000,
                                         shareWithinSubcohort=(extra-http_p99) / extra)
             out[key]["preSendFloor"] = floors
-        ledger = read_delays(raw_root, plan, header, summary) if raw_root else None
+        ledger = read_delays(raw_root, plan, header, summary, cache) if raw_root else None
         return dict(archiveSha256=archive_sha, source=SOURCE, slot=summary["slot"], nonce=summary["nonce"],
                     members=sorted(names), rawPresent=sorted(n for n in names if Path(n).name in {
                         "r394-loaded.json", "prep1-native.ndjson", "counters.ndjson", "prep1-gc-gw-w.log"}),
@@ -174,7 +176,12 @@ def resource_windows(phase, analysis, samples, index, jobs, credits, ticks):
     return out
 
 
-def read_delays(root, plan, header, summary):
+def record_reads(bucket, reads, apply_ms):
+    bucket.update({"saves": 1, "applyMs": apply_ms})
+    bucket.update({key: reads.get(key, 0) for key in CACHE_KEYS})
+
+
+def read_delays(root, plan, header, summary, cache=False):
     arm = header["arm"]["id"]
     slot = header["slot"]
 
@@ -229,6 +236,12 @@ def read_delays(root, plan, header, summary):
         analysis = PhaseLatency(phase, pauses)
         placement = defaultdict(list)
         start = int(phase["phaseStartNs"])
+        wall = phase["phaseWallMs"]
+        cache_jobs = [(a-wall, b-wall) for a, b in jobs if wall-10_000 < b and a < wall+310_000] if cache else []
+        cache_second = defaultdict(Counter)
+        job_rows = [dict(startSec=a/1000, endSec=b/1000, before=Counter(), during=Counter(), after=Counter())
+                    for a, b in cache_jobs]
+        cache_cohorts = defaultdict(Counter)
         checked = 0
         for row, offer in zip(sorted(phase["rows"], key=lambda r: r["ordinal"]), tape, strict=True):
             assert (row["due"], row["account"], row["person"]) == tuple(offer[:3])
@@ -240,8 +253,22 @@ def read_delays(root, plan, header, summary):
                 assert int(phase["phaseStartNs"]) <= member["started-at"]
                 assert block["end"] <= int(phase["phaseStartNs"]) + round(row["end"] * 1e6) + 100000
                 checked += 1
-                analysis.add(row, block, member)
-                if cell == "r394-loaded" and arm in ("1-rolling6-S", "1-rolling12-S"):
+                if not cache:
+                    analysis.add(row, block, member)
+                if cache:
+                    at = (member["started-at"]-start)/1e6
+                    if 0 <= at < phase["seconds"]*1000:
+                        reads = ack["nativeIoStats"]["reads"]
+                        apply_ms = (member["applied-at"]-member["started-at"])/1e6
+                        record_reads(cache_second[int(at//1000)], reads, apply_ms)
+                        indexing = any(a <= at < b for a, b in cache_jobs)
+                        record_reads(cache_cohorts["indexing" if indexing else "outside"], reads, apply_ms)
+                        for (a, b), job in zip(cache_jobs, job_rows, strict=True):
+                            window = ("during" if a <= at < b else "before" if a-10_000 <= at < a
+                                      else "after" if b <= at < b+10_000 else None)
+                            if window:
+                                record_reads(job[window], reads, apply_ms)
+                if not cache and cell == "r394-loaded" and arm in ("1-rolling6-S", "1-rolling12-S"):
                     second = (member["started-at"] - start) / 1e9
                     reads = ack["nativeIoStats"]["reads"]
                     assert ack.get("groupSize", 1) == 1
@@ -253,6 +280,10 @@ def read_delays(root, plan, header, summary):
                                 placement[key].append(sample)
                                 placement[f"{lo}:{hi}"].append(sample)
         assert checked == c["durable"]
+        if cache:
+            out[cell] = dict(cacheBySecond=dict(cache_second), cacheByJob=job_rows, cacheCohorts=dict(cache_cohorts),
+                             savedGaugeNames=sorted({k for r in index for k in r.get("gauges", {})}))
+            continue
         out[cell] = analysis.finished()
         if placement:
             out[cell]["applyAndReadsByPlacementWindow"] = {
@@ -277,7 +308,10 @@ if __name__ == "__main__":
     cli.add_argument("evidence", type=Path)
     cli.add_argument("manifest", type=Path)
     cli.add_argument("--raw", type=Path, help="Verified unpacked arm tree containing the raw cells and role logs")
+    cli.add_argument("--cache", action="store_true", help="Keep native read counts by second and index job")
     args = cli.parse_args()
     manifest = dict((name, sha) for sha, name in (line.split() for line in args.manifest.read_text().splitlines() if line.strip()))
-    results = {name: checked_checkpoint(args.evidence, name, manifest, args.raw) for name in ("barrier6", "rolling6", "rolling12")}
+    assert not args.cache or args.raw
+    results = {name: checked_checkpoint(args.evidence, name, manifest, args.raw, args.cache)
+               for name in ("barrier6", "rolling6", "rolling12")}
     print(json.dumps(results, indent=2))

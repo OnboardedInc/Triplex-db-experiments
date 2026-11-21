@@ -10,7 +10,7 @@
             [datomic.transaction :as tx])
   (:import [datomic Datom]
            [java.io FileInputStream]
-           [java.lang.management ManagementFactory ThreadMXBean]
+           [java.lang.management BufferPoolMXBean ManagementFactory ThreadMXBean]
            [java.nio.charset StandardCharsets]
            [java.sql Connection SQLException]
            [java.util.concurrent ArrayBlockingQueue]
@@ -39,12 +39,24 @@
     (.incrementAndGet dropped)))
 
 (def rolling-index? (= "1" (System/getenv "PREP1_ROLLING_INDEX")))
+(def cache-metrics? (= "1" (System/getenv "PREP1_CACHE_METRICS")))
 (def rolling-fixture (when (= mode "rolling-recovery") (file/file (System/getenv "PREP1_ROLLING_FAIL_PATH"))))
 (defn rolling-metrics [metrics]
   ((requiring-resolve 'triplex.gateway.native-settings/metrics) metrics)
   (when rolling-index?
-    (retain! "metrics" {:type "metrics" :monoNs (str (System/nanoTime)) :wallMs (System/currentTimeMillis)
-                       :gauges (select-keys metrics [:MemoryIndexMB :AlarmBackPressure :CreateEntireIndexMsec])})))
+    (retain! "metrics"
+             (cond-> {:type "metrics" :monoNs (str (System/nanoTime)) :wallMs (System/currentTimeMillis)
+                      :gauges (select-keys metrics [:MemoryIndexMB :AlarmBackPressure :CreateEntireIndexMsec])}
+               ;; [DX-PREP1] Why: retain the vendor interval and observe direct use against the smaller cap.
+               ;; Rejected: treating heap RSS as object-cache occupancy or assigning callback totals to single saves.
+               cache-metrics?
+               (assoc :cacheGauges (select-keys metrics [:ObjectCache :ObjectCacheCount :JvmFreeMb
+                                                        :StorageGetBytes :StorageGetMsec])
+                      :heapUsedBytes (.getUsed (.getHeapMemoryUsage (ManagementFactory/getMemoryMXBean)))
+                      :directPoolBytes
+                      (some (fn [^BufferPoolMXBean pool]
+                              (when (= "direct" (.getName pool)) (.getMemoryUsed pool)))
+                            (ManagementFactory/getPlatformMXBeans BufferPoolMXBean)))))))
 
 (when rolling-index?
   ;; [DX-PREP1] Why: timestamp actual adoption separately from the vendor's index build start/end.

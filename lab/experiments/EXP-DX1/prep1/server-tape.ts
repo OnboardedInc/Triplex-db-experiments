@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { rollingWidths, type Admission } from "./rolling-credits.ts";
-import { tx5ArmId } from "./rolling-launch.mjs";
+import { cache32ArmIds, tx5ArmId } from "./rolling-launch.mjs";
 import { offers, sha, type Offer } from "../w1/field/schedule.ts";
 
 export const seconds = 144;
@@ -20,7 +20,7 @@ export type Arm = {
   credits?: 0 | 1 | 6;
   numericOwner?: boolean;
   prefetch?: boolean;
-  cacheGiB?: 2 | 16;
+  cacheGiB?: 2 | 16 | 32;
   orderedIds?: boolean;
   tail?: "control" | "wal" | "zgc" | "fair" | "combined";
   scale?: "base" | "cache" | "wal-zgc";
@@ -88,6 +88,7 @@ export const rollingArms: Arm[] = [
   })),
 ];
 export const rollingTx5Arm: Arm = { ...rollingArms.find((arm) => arm.id === "1-rolling6-S")!, id: tx5ArmId };
+export const rollingCache32Arms: Arm[] = cache32ArmIds.map((id) => ({ ...rollingTx5Arm, id, cacheGiB: 32 }));
 
 export function freshArms(credits: number): Arm[] {
   assert(credits === 6 || credits === 12);
@@ -133,6 +134,8 @@ export function rollingPrediction(arm: Arm, rate: number, alone: boolean, nextCa
       [394, 394, 22, 900, 9, 300, 21, 49],
       [478, 500, 29_700, 30_025, 29_820, 30_025, 15, 55],
     ],
+    [cache32ArmIds[0]]: [[], [394, 394, 11, 280, 8, 90, 19, 47], [495, 515, 28_500, 30_025, 29_750, 30_025, 15, 50]],
+    [cache32ArmIds[1]]: [[], [394, 394, 9, 170, 7, 60, 19, 43], [520, 540, 26_500, 30_025, 29_600, 30_025, 15, 48]],
   };
   // The reserved debt lane can leave a long tail in the original offer cohort.
   const fresh = arm.writeJvm
@@ -275,7 +278,7 @@ export function cells(
     return variants.flatMap(([rate, credits], band) => {
       // [DX-PREP1] Why: keep the 394 and 620 person bands identical to the three-rate control.
       // Rejected: removing 235 before assigning the stable person bands.
-      if (arm.id === tx5ArmId && rate === 235) return [];
+      if ((arm.id === tx5ArmId || cache32ArmIds.includes(arm.id)) && rate === 235) return [];
       // [DX-PREP1] Why: visit the account's working set broadly and give each treatment its own person band.
       // Rejected: replaying one hot tape onto both sides or claiming to reproduce a day in 90 seconds.
       const choose = (stream: Offer[]) =>

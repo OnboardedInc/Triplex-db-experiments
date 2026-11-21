@@ -5,7 +5,7 @@ slot=${2:?}
 [[ $# == 2 && $(uname -s) == Linux && ${DX_BARE_METAL:-0} == 1 &&
    ${DOCKER_HOST:-} == unix:///var/run/docker.sock &&
    ($slot =~ ^tx2-dxprep1-[a-f0-9]{8}-1-tail-(control|wal|zgc|fair|combined)-s$ ||
-    ($action == settings && $slot =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(scale-(base|cache|wal-zgc)|barrier6|rolling(6|8|12|16)|rolling6-tx5|fresh(-zgc)?(6|12))-s$)) ]]
+    ($action == settings && $slot =~ ^tx2-dxprep1-[a-f0-9]{8}-1-(scale-(base|cache|wal-zgc)|barrier6|rolling(6|8|12|16)|rolling6(-tx5)?(-cache32)?|fresh(-zgc)?(6|12))-s$)) ]]
 pg="$slot-pg"
 sql=(docker exec -i "$pg" psql -XqAt -v ON_ERROR_STOP=1 -U postgres)
 case "$action" in
