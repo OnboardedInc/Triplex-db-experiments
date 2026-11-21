@@ -71,7 +71,7 @@ for (const loaded of [false, true]) {
       Math.min(end - 9 * 60_000, Date.now() + (tuned ? 11 : 42) * 60_000), tuned ? () => {
         // [DX-RD1] Why: the restored reader requires a new trace file for its own JVM boot.
         // Rejected: appending samples to an empty-stack JVM's observations or discarding those observations.
-        for (const file of ["gw-r.jsonl", "rd1-gc.log"]) {
+        for (const file of ["gw-r.jsonl", "rd1-gc.log", "gw-r-native-settings.json"]) {
           const from = path.join(raw, file);
           if (fs.existsSync(from)) fs.renameSync(from, from + ".before-restore");
         }

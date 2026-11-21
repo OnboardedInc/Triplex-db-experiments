@@ -239,10 +239,17 @@ function witness(slot: string) {
       owner.mode === "exclusive" &&
       fs.realpathSync(owner.worktree) === fs.realpathSync(repo),
   );
-  const line = manager(["logs", "--slot", slot, "--tail", "2000"])
-    .split("\n")
-    .filter((l) => l.startsWith("DXTHIN-SLOT "))
-    .at(-1);
+  const find = () => manager(["logs", "--slot", slot, "--tail", "2000"])
+    .split("\n").filter((l) => l.startsWith("DXTHIN-SLOT ")).at(-1);
+  // [DX-RD1] Why: the compact read peer can still be starting when the managed writer reports healthy.
+  // Rejected: binding a half-started stack or giving the slot a fixed startup delay.
+  const end = Date.now() + (attempt.compact ? 45_000 : 0);
+  const wait = new Int32Array(new SharedArrayBuffer(4));
+  let line = find();
+  while (!line && Date.now() < end) {
+    Atomics.wait(wait, 0, 0, 250);
+    line = find();
+  }
   assert(line, "Missing live slot identity");
   const event = JSON.parse(line.slice(12));
   assert(

@@ -22,7 +22,7 @@ const { values } = parseArgs({
   },
 });
 if (values.help) {
-  console.log("scorecard.mjs --age fresh|1B --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer grouped|subject] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm PROFILE] [--write-jvm PROFILE] [--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16] [--wal-directory DIR]\nFor 1B add --aged-bundle FILE --aged-bundle-sha256 SHA --aged-dump FILE --aged-dump-sha256 SHA.\nscorecard.mjs --plan");
+  console.log("scorecard.mjs --age fresh|1B --seed SCALE1_DIRECTORY --image-sha256 SHA --transfer-sha256 SHA --commit COMMIT --out NEW_DIRECTORY [--writer grouped|subject] [--jvm j21-g1|j25-g1|j25-zgc] [--tx-jvm PROFILE] [--write-jvm PROFILE] [--credit-mode barrier6|rolling6|rolling8|rolling12|rolling16] [--wal-directory DIR]\nFor 1B add --aged-bundle FILE --aged-bundle-sha256 SHA --aged-dump FILE --aged-dump-sha256 SHA.\nFor the fresh reader diagnostic use --read-study [--read-study-jvm PROFILE].\nscorecard.mjs --plan [--read-study]");
   process.exit(0);
 }
 const price = Number(values["hourly-usd"]);
@@ -77,11 +77,10 @@ const exit = await new Promise<string>((done) => {
 process.removeListener("SIGINT", stop); process.removeListener("SIGTERM", stop);
 if (study) {
   console.log(path.join(out, "campaign.log"));
-  if (exit) process.exitCode = 1;
-  process.exit();
+} else {
+  const { writeAdoptedCard } = await import("./adopted-card.ts");
+  writeAdoptedCard({ source, age: values.age, writer: values.writer, toy: false, out, campaign, forecast,
+    failure: exit ? "The adopted campaign stopped. See [campaign.log](campaign.log)." : undefined });
+  console.log(path.join(out, "SCORECARD-v0.1.md"));
 }
-const { writeAdoptedCard } = await import("./adopted-card.ts");
-writeAdoptedCard({ source, age: values.age, writer: values.writer, toy: false, out, campaign, forecast,
-  failure: exit ? "The adopted campaign stopped. See [campaign.log](campaign.log)." : undefined });
-console.log(path.join(out, "SCORECARD-v0.1.md"));
 if (exit) process.exitCode = 1;
