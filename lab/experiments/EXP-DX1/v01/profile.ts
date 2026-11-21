@@ -2,6 +2,10 @@ import { launchOptions } from "../jvm1/launch.mjs";
 
 export type Writer = "grouped" | "subject";
 export type Age = "fresh" | "1B";
+export const defaultWriter: Writer = "subject";
+export const jvmProfiles = ["j21-g1", "j25-g1", "j25-zgc"] as const;
+export type JvmProfile = (typeof jvmProfiles)[number];
+export const defaultJvm: JvmProfile = "j21-g1";
 export const budget = { adoptionAndP1to4: 105, P5: 25, P6: 30, P7: 15, P8: 25, P9: 20, cleanup: 15 };
 export const ceiling = Object.values(budget).reduce((a, b) => a + b, 0);
 export const ladder = [1, 4, 16, 64, 256, 1024];
@@ -37,17 +41,23 @@ export function selectedWriter(writer: Writer) {
   } as const;
 }
 
-export function physicalJvm() {
+export function physicalJvm(profile: JvmProfile = defaultJvm) {
+  const major = profile === "j21-g1" ? "21" : "25";
+  const selectedCollector = profile === "j25-zgc" ? "-XX:+UseZGC" : "-XX:+UseG1GC";
+  const peer = "-Xms256m -Xmx3g -Ddatomic.objectCacheMax=1536m";
+  const override = profile === "j25-zgc" ? " " + selectedCollector : "";
+  // [DX-INT1] Why: apply the selected collector to all roles in the same prepared image family.
+  // Rejected: selecting the Java version while silently retaining a different gateway collector.
   return {
-    major: 25,
-    tx: launchOptions("tx", 1, "-Xms256m -Xmx5g -XX:+UseG1GC"),
-    "gw-w": launchOptions("gw-w", 1, "-Xms256m -Xmx3g -Ddatomic.objectCacheMax=1536m"),
-    "gw-r": launchOptions("gw-r", 2, "-Xms256m -Xmx3g -Ddatomic.objectCacheMax=1536m"),
+    major, selectedCollector,
+    tx: launchOptions("tx", 1, "-Xms256m -Xmx5g" + override),
+    "gw-w": launchOptions("gw-w", 1, peer + override),
+    "gw-r": launchOptions("gw-r", 2, peer + override),
   };
 }
 
-export function stackOptions(writer: Writer, attempt: string) {
-  const policy = selectedWriter(writer);
+export function stackOptions(writer: Writer, attempt: string, profile: JvmProfile = defaultJvm) {
+  const policy = selectedWriter(writer), jvm = physicalJvm(profile);
   return {
     DX_GROUP_COMMIT: policy.TX2_GROUP_COMMIT,
     DX_GROUP_STAGE_CLOCK: "1", DX_W1_EXTRA: "1",
@@ -60,7 +70,7 @@ export function stackOptions(writer: Writer, attempt: string) {
     TX2_SUBJECT_ORDERED_IDS: policy.TX2_SUBJECT_ORDERED_IDS,
     TX2_SUBJECT_PREFETCH: policy.TX2_SUBJECT_PREFETCH,
     DX_WRITE_OPTIONS_ATTEMPT: attempt,
-    DX_JAVA: "25",
-    DX_GW_WRITE_JAVA_OPTS: physicalJvm()["gw-w"], DX_GW_READ_JAVA_OPTS: physicalJvm()["gw-r"],
+    DX_JAVA: jvm.major, DX_TX_JAVA_OPTS: jvm.tx,
+    DX_GW_WRITE_JAVA_OPTS: jvm["gw-w"], DX_GW_READ_JAVA_OPTS: jvm["gw-r"],
   };
 }
