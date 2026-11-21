@@ -28,6 +28,14 @@ case $selection in
     arms=(rolling6 fresh6 fresh-zgc6)
     export DX_PREP1_FRESH_CREDITS=6
     ;;
+  cache32b)
+    # [DX-BM1] Why: repeat the 32 GiB cache pair once, unchanged, so the key result has a second run.
+    # Rejected: changing its pin or arms between the two runs.
+    pin=97aced1b1128ca54da2a72003299f38d805f1abc
+    command=cache32
+    prior=triplex-bench3-realistic.service
+    arms=(rolling6-cache32 rolling6-tx5-cache32)
+    ;;
   *) exit 2 ;;
 esac
 job=$root/queue/$selection
@@ -82,7 +90,7 @@ done
 [[ $(findmnt -nro SOURCE --mountpoint "$wal") == /dev/nvme1n1 ]]
 for policy in /sys/devices/system/cpu/cpufreq/policy*/scaling_governor; do [[ $(cat "$policy") == performance ]]; done
 df -Pk "$root" | awk 'NR==2 {exit ($4 < 200000000)}'
-if [[ $selection == cache32 ]]; then
+if [[ $selection == cache32* ]]; then
   awk '$1 == "MemTotal:" {exit ($2 < 89*1024*1024)}' /proc/meminfo
 fi
 date -u +%FT%TZ > "$job/started"

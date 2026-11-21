@@ -14,6 +14,7 @@ from tempfile import TemporaryDirectory
 ITEMS = {
     "rolling-rolling8": ("c8f903ce1142772751328b88d972cc527ca46dfc", ("rolling8",)),
     "cache32": ("97aced1b1128ca54da2a72003299f38d805f1abc", ("rolling6-cache32", "rolling6-tx5-cache32")),
+    "cache32b": ("97aced1b1128ca54da2a72003299f38d805f1abc", ("rolling6-cache32", "rolling6-tx5-cache32")),
     "tx5": ("73afad665ac2ccecea62161b8dfb6a3a48287057", ("rolling6-tx5",)),
     "fresh": ("891ab9139eb4fa6defe2c5484ada332b84090e6f", ("rolling6", "fresh6", "fresh-zgc6")),
 }
@@ -144,7 +145,7 @@ def inspect(evidence, item, output):
                 cell["pendingLate"] = {"maxUnacked": max(point[2] for point in late),
                                        "300": spell_runs(late, 300), "1000": spell_runs(late, 1000)}
         memory_path = now / "counters.ndjson"
-        if item == "cache32":
+        if item.startswith("cache32"):
             assert digest(memory_path) == raw["rawSha256"][memory_path.name]
             peaks = Counter()
             with memory_path.open() as file:
