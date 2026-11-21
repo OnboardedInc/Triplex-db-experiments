@@ -1,15 +1,38 @@
-# Work logged for next week (not launched over the weekend)
+# Backlog (was "work logged for next week"; Sam lifted the deferral on 2026-11-21)
 
-Sam, 2026-11-20: launch only what the weekend's server runs need; log everything else here. Each entry says what it
-is, why it matters, and what it is waiting on. Newest decisions and results are in `STATUS.md`; version 0.1 is
-defined in `lab/V0.1.md` on main.
+Sam, 2026-11-21 about 09:10 local: "I don't want to wait until next week." and "run a total of 6 agents". This file is
+now the queue: six agents at a time, highest value first. The entries below keep their numbers. Newest decisions and
+results are in `STATUS.md`; version 0.1 is defined in `lab/V0.1.md` on main.
+
+## Running and queued (state at 2026-11-21 09:25 local)
+
+Running (6): DX-SCALE1 (server 2: 1 billion load, then the aged scorecard), DX-PREP1 (16g rolling release of
+fair-turn credits), DX-BM1 (rented server `triplex-bench-3`: bootstrap, full-size seed from server 2, rolling arms),
+DX-V01 (16i scorecard: five-minute windows in halves, counters, clear verdicts, credit mode option), DX-W1 (16f and
+11: name and remove the storage reads on each full-size save; gateway preparation tail), DX-PLAY1 (21: corrected
+sizing, data set, upload to the public R2 bucket `triplex-playground-data`).
+
+Next, as slots free, in this order:
+1. DX-THIN1: merge the rolling release into `exp/DX-INT1` when DX-PREP1 publishes; then DX-V01 re-pins.
+2. DX-HASYNC1 (16b): two-server failover command for bare metal on the `server` profile, policies B and A, for
+   Sunday morning when both servers are free.
+3. DX-ACT1 (14, 16e): Publish with priority at 100,000 people on the `server` profile; why saves fell behind at
+   39.4 offered.
+4. DX-ERASE1 in a fresh session (13, 16c): erasure full stage on a server; route checks merged.
+5. Quiet-account bound after the rolling release (9): one reserved opportunity measured; the 1.25 ratio at full size.
+6. Import on the ordered writer with quiet isolation (8).
+7. Read gateway memory per untouched person, 70 against 64 bytes (10); current pulls p99 50 ms against 25.
+8. Scorecard rows 5 and 9 on the held seed (21a). Wide thin accounts and one hundred small accounts in the same
+   full-size database as the ten deep ones (not yet run together on a server).
+9. Version 0.1 write-up (22).
 
 ## Waiting on a decision from Sam
 
 1. **Failover after a machine loss: A, B or C** (`origin/exp/DX-HASYNC1-sync-failover`, `hasync1/OWNER-DECISION.md`).
    B is the default until he answers. C needs a third machine and a provider that allows three servers.
-2. **Which Cloudflare account holds the playground's test data, and may it be publicly readable.** Nothing is
-   created or uploaded until he answers.
+2. ~~Which Cloudflare account holds the playground's test data, and may it be publicly readable.~~ Answered
+   2026-11-21: his account through the Wrangler login on the Mac; public read is fine. Bucket
+   `triplex-playground-data` created with a public address.
 3. **Playground data size** once DX-PLAY1's measured tier table exists (largest that fits 5 GB; full population with
    history for active people; full population with full history).
 4. **Broad journal queries on the compact layout:** leave as is, add a journal index (3 to 7 records per save), or

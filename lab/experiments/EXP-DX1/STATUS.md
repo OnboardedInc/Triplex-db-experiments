@@ -4273,3 +4273,13 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
 - **Disk:** +3.0 GB for 126.4 million records since the initial collection (0.024 GB per million, against 0.29 on the fresh seed and 0.71 to 0.91 without collection). At this slope the directory at 1 billion is about 177 GB.
 - **Time:** 12.26 hours at the last rate; with the forecast decline about 14 hours: the load ends between 21:10 and 23:00 local. Server 2 at USD 47.33 (08:55); total USD 115.62 of 200.
 - Agents running: DX-SCALE1.
+
+### 2026-11-21 09:16 local: Sam lifts the deferral; rolling release building; second server rented; six agents running
+
+- **Sam, about 09:10 local** (verbatim in `lab/research/SAM-decisions-2026-11-09.md`): build the rolling release now and run it as fast as possible; do not wait for next week; six agents in total, Codex first, Opus when Codex runs out; playground data on his Cloudflare account, public read is fine. My reading of his 2026-11-20 limit (8 on Codex, run-critical only) was wrong and is corrected.
+- **Launched or resumed 09:14 to 09:25** (six running): DX-PREP1 part 14 (rolling release of fair-turn credits: rolling 6, 8, 12, 16 against the barrier; reserved quiet opportunity; gates; server command with five-minute windows in halves and counters); DX-BM1 (driver for the rented server); DX-V01 part 8 (scorecard windows, counters, verdicts, credit option); DX-W1 part 8 (storage reads on each full-size save; apply 1.86 ms caps a serial transactor near 537 saves/s); DX-PLAY1 part 3 (sizing redo, data set, upload); DX-SCALE1 continues the 1 billion load.
+- **Second server ordered at 09:13 local (14:13 UTC):** the provider assigned the same machine and address as the first server, reinstalled, as `triplex-bench-3`, USD 1.09 per hour, SSH-only firewall assigned. Use: rolling release arms at full size today (seed copied read-only from server 2), then the scorecard rerun with the winner, Publish at 100,000 people on the server profile, and on Sunday morning the two-server failover measurement. Allowed up to 24 hours (USD 26).
+- **Cloudflare R2:** bucket `triplex-playground-data` created through the Wrangler login on the Mac; public read enabled (address in the playground builder's brief and to be recorded in `AGENTS-PLAYGROUND.md`). Nothing uploaded yet.
+- **Backlog file** rewritten as a queue (`NEXT-WEEK.md`): running six, next nine in order.
+- **1 billion load:** 603.9 million at 08:55, 8,978 records/s with maintenance; ends about 21:10 to 23:00 local.
+- **Cloud:** about USD 116.2 of 200 at 09:20 (first rental 68.29, server 2 about 47.8, new rental 0.1). Projected about USD 170 with both servers through Sunday midday.
