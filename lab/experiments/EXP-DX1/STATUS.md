@@ -4510,3 +4510,17 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   - Merged with gates: read study `78867bd8d` (54,110 native assertions, 439 SDK tests, 72,179 exact pinned toy reads); cold start settings `7deb47622` (six JVM boots, 44 focused tests; off in ordinary launches); fair import `b21ff7a17` (25,024 imported facts and both lost replies in barrier6 and rolling6); append retirement `1f64480bb` (813 native assertions; 112 durable saves, 12 refusals, both lost replies in both modes). `int1/V0.1-STATE.md` has the nine-priority table with sources.
 - **DX-CHK1 launched** (new builder, `exp/DX-CHK1-combined-gates`): the features merged today were each gated alone; this runs them together at toy size (rolling6 with removal and append retirement; with imports, a quiet account and a Publish; with the read study reading people being saved and removed; the admission ramp with resends; write gateway ZGC; the realistic toy seed; policy B failover with rolling6), with an independent journal recount and a fresh-reader replay, before tonight's long server runs.
 - Agents running: DX-SCALE1, DX-BM1, DX-W1, DX-PREP1, DX-CHK1.
+
+### 2026-11-21 12:06 local: inside a backlog spell a save takes twice as long and reads 60% more; two settings arms added (5 agents running)
+
+- **DX-PREP1 part 16 finished** (exit 0). `origin/exp/DX-PREP1-parallel-prepare` `73afad665` (head `ca01816ed`), `prep1/CORE-SPLIT.md`.
+
+  | At 394 offered | Mean apply outside -> inside spells | SQL reads per save outside -> inside |
+  | --- | ---: | ---: |
+  | Rolling 6 | 1.40 -> 2.79 ms | 0.99 -> 1.57 |
+  | Rolling 12 | 1.45 -> 2.54 ms | 0.98 -> 1.64 |
+
+  SQL read and decode time rose 0.76 (rolling 6) and 0.69 ms per save (rolling 12). Every spell coincides with an active index job; neither comparison interval outside the spells had one. No cgroup quota throttling. **My reading of part 15 (CPU contention alone) is ruled out as the whole story:** the checkpoints cannot separate CPU contention from storage and cache effects.
+  - **Arm published:** `rolling6-tx5` (cores 4 and 5 moved from the write gateway to the transactor, `ActiveProcessorCount=5`, index parallelism 1, ZGC threads unchanged), 394 and 620 offered, 35 minutes. **Prediction:** 394 stored whole and late; late busy p99 300 ms; no sustained 300-offer spell; quiet loaded p99 49 ms; at 620: 478 / 500 stored. Falsifier: thousand-offer queues recur with 2.5 to 3.0 ms applies and about 1.6 reads per save while the transactor stays well under five cores.
+- **My second reading, sent as part 17:** the index job's own reads push the apply thread's segments out of a 16 GiB object cache that DX-W1's model says covers only half the working set at this size (32 GiB needed at 430 million records). Arm requested: `rolling6` with a 32 GiB object cache on three cores, and combined with the five-core split, with the cache's occupancy and hit rate checked in the checkpoints first and predictions before publishing. Supporting history: 2 -> 16 GiB took the ordered writer from 201.83 to 361.51 saves/s on this database; nothing above 16 GiB has been tried.
+- Agents running: DX-SCALE1, DX-BM1, DX-W1, DX-CHK1, DX-PREP1.
