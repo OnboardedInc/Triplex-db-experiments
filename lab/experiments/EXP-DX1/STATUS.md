@@ -3987,3 +3987,19 @@ treatment, 235 window then 394 window, 60 second delivery windows, 152,640 offer
   minute full-size command at 394 and 620 offered with a 16 GiB transactor cache and three cores, then with the
   separate log drive and ZGC.
 - Server 2 is preparing the three copies for the fresh scorecard with the ordered writer.
+
+## 2026-11-21 05:07 UTC (00:07 local, 2026-11-21): DX-PREP1 part 13 in; both servers given the follow-up runs
+
+- **DX-PREP1 part 13 (`1d0e2f566`; `prep1/FULL-SIZE-READING.md`, `TAIL-APPEND.md`).** At full size native apply
+  occupied 93 to 95 percent of the loaded windows with fair turns off; with fair turns on, the wait between
+  six-save turns also limited throughput; the archive lacks total transactor CPU and per-lookup read attribution.
+  Two pinned commands: server 1 combined arm at `d1224c27e` (separate log drive, transactor on Java 25 ZGC, fair
+  turns; 30 minutes; forecast nothing expired, quiet solo p99 13 and 9 ms, loaded ratio 1.54 and 1.89 at 235 and
+  394); server 2 full-size follow-up at `6abc19f66` (394 and 620 offered, fair turns on: as measured; 16 GiB
+  cache and three transactor cores; plus separate log drive and ZGC; 45 minutes). The mixed-Java startup check
+  now tests each JVM against its own image. Local gate: relocated WAL copy reopened and original receipt recovered.
+  Parked.
+- **Drivers re-briefed (both stopped and resumed; server-side work untouched):** server 2 runs the 45 minute
+  full-size follow-up before the fresh scorecard, then the 1 billion run, then the aged scorecard; server 1 runs
+  the combined arm after the two arms in progress, then Publish under load, the erasure note and its final handoff.
+- Running: DX-BM1, DX-SCALE1 (two).
