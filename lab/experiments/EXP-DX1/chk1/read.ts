@@ -40,7 +40,8 @@ export async function protectedReads(e: Evidence, writeUrl: string, readUrl: str
     const basis = { recordedPosition: initial.position, validAt: 1 };
     const receipts: Receipt[] = [];
     const sizes: number[] = [];
-    const available = async <T>(fn: () => Promise<T>) => {
+    const refusals: Record<string, number> = {};
+    const available = async <T>(route: string, fn: () => Promise<T>) => {
       const end = now() + 5000;
       for (;;)
         try {
@@ -52,12 +53,13 @@ export async function protectedReads(e: Evidence, writeUrl: string, readUrl: str
             now() >= end
           )
             throw error;
+          refusals[route] = (refusals[route] ?? 0) + 1;
           await sleep(5);
         }
     };
     const batch = pinnedFields(reader, db, attribute, basis, 8, (send, size) => {
       sizes.push(size);
-      return available(send);
+      return available("batch", send);
     });
     const exact = async (removed?: Awaited<ReturnType<DatomicClient["erase"]>>) => {
       const pinned = await Promise.all(people.map(batch));
@@ -104,7 +106,7 @@ export async function protectedReads(e: Evidence, writeUrl: string, readUrl: str
       const ack = await request;
       const cut = Number(saveAck(ack).position.v);
       const { id, value_string, entity_id } = input.rows[0]!;
-      const actual = await available(() =>
+      const actual = await available("save-readback", () =>
         reader.rows(db, {
           entityIds: [entity_id],
           pattern: { attribute },
@@ -149,7 +151,9 @@ export async function protectedReads(e: Evidence, writeUrl: string, readUrl: str
         async send() {
           const index = sent++;
           const frame = importFrame(e.nonce, 8, index);
-          const saved = await bulk.transactCommand(db, frame.input);
+          // [DX-CHK1] Why: a removal can temporarily close storage admission. Keep the same frame and fair credit until it settles.
+          // Rejected: dropping the frame or consuming another source identity on a typed frontier refusal.
+          const saved = await available("import", () => bulk.transactCommand(db, frame.input));
           assert.equal(saved.txId, frame.input.claims[0]!.txId);
           receipts.push({
             id: saved.operationId,
@@ -158,7 +162,7 @@ export async function protectedReads(e: Evidence, writeUrl: string, readUrl: str
             clock: saved.recordedAt,
             tx: saved.txId,
           });
-          const observed = await available(() =>
+          const observed = await available("import-readback", () =>
             reader.rows(db, {
               entityIds: [frame.entity],
               basis: { recordedPosition: saved.position, validAt: 1 },
@@ -222,6 +226,7 @@ export async function protectedReads(e: Evidence, writeUrl: string, readUrl: str
       batches: sizes.length,
       logicalReads: sizes.reduce((a, b) => a + b, 0),
       replayed: replayed.length,
+      refusals,
     };
     e.write("read-combined", { source: e.source, attempt: e.nonce, slot: e.slot, ...resultRow });
     return resultRow;

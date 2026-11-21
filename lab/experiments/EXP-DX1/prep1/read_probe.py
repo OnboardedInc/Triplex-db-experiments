@@ -48,7 +48,18 @@ def managed_events(out):
     inputs, image = frozen_inputs(out)
     terminal = read(out / "terminal.json")
     assert terminal["attempt"] == inputs["attempt"] and terminal["exit"] == 0
-    assert terminal["holder"] == "DX-PREP1" and terminal["slot"] == "tx2-datomic-selftest"
+    holder = "DX-PREP1"
+    if inputs.get("appendRetirement"):
+        assert inputs["mode"] == "rolling-recovery" and inputs["orderedIds"] and inputs["serialApply"]
+        assert inputs["holder"] == "DX-CHK1"
+        assert image["sources"]["sha256"]
+        staged = read(out / "stage/lab/config/slots.json")["lanes"]["datomic"]
+        assert staged["image"] == f"tx2-datomic:dx-chk1-rolling-{inputs['attempt'][:8]}"
+        assert staged["imageId"] == image["imageId"]
+        assert staged["buildInputsSha256"] == image["buildInputsSha256"]
+        assert staged["sourceInputsSha256"] == image["sources"]["sha256"]
+        holder = "DX-CHK1"
+    assert terminal["holder"] == holder and terminal["slot"] == "tx2-datomic-selftest"
     assert terminal["image"] == image["imageId"]
     raw = out / terminal["log"]
     assert sha(raw) == terminal["sha256"]
