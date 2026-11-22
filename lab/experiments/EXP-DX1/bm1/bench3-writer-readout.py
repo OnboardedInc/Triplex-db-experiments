@@ -17,6 +17,7 @@ ITEMS = {
     "cache32b": ("97aced1b1128ca54da2a72003299f38d805f1abc", ("rolling6-cache32", "rolling6-tx5-cache32")),
     "rolling6r": ("c8f903ce1142772751328b88d972cc527ca46dfc", ("rolling6",)),
     "cache32c": ("97aced1b1128ca54da2a72003299f38d805f1abc", ("rolling6-cache32", "rolling6-tx5-cache32")),
+    "rolling6s": ("c8f903ce1142772751328b88d972cc527ca46dfc", ("rolling6",)),
     "tx5": ("73afad665ac2ccecea62161b8dfb6a3a48287057", ("rolling6-tx5",)),
     "fresh": ("891ab9139eb4fa6defe2c5484ada332b84090e6f", ("rolling6", "fresh6", "fresh-zgc6")),
 }

@@ -100,7 +100,7 @@ for selection, arms in ROLLING_ARMS.items():
         ("plan.json", "seed.json", "source", "prefix", "SEAL.sha256", "scale-wal-mount.json",
          "engines", *("1-"+arm+"-S" for arm in arms)),
     )
-for selection in ("cache32", "cache32b", "cache32c", "tx5", "fresh", "rolling6r"):
+for selection in ("cache32", "cache32b", "cache32c", "tx5", "fresh", "rolling6r", "rolling6s"):
     SLOTS["bench3-"+selection] = ("bench3/queue/"+selection, ("result", "started", "unit.log",
         "build/results/IMAGE-INPUTS.SHA256SUMS", "build/results/images.json", "build/results/bootstrap.exit"))
 

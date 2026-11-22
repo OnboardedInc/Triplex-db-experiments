@@ -37,13 +37,36 @@ A new driver took over bench 3 at 12:45 EST after the previous driver stopped at
 
 **The cache32 repeat first stopped at once, then restarted.** `bench3-writer-addons.sh` runs `$job/prepare.sh`, and the previous driver had copied that file by hand into each job folder. The new `cache32b` folder lacked it, and the unit failed at 21:46:00 UTC. I copied the same `prepare.sh`, the one in `cache32`, `tx5` and `fresh`, and restarted the unit at 21:48:33 UTC. The server had no measurement running from 21:46:00 to 21:48:33. Any new add-on job folder needs that file.
 
-**Next steps for whoever drives next, as of 21:45 UTC:**
+**Publish at 100,000 stopped on a seed-order assertion, before any Publish offer.** On INT1 `8ab832093`, the dry run returned ADMITTED and the stack started at 00:08 UTC. `actv-lazy/join/held-campaign.ts` line 196, in `seedPositions`, asserts `detected.every((p, i) => i === 0 || p >= detected[i - 1])`. That requires each member row's recorded position to rise with member index. This seed was loaded by a worker pool (`image.json` `layout: pooled`), so it does not. The write gateway also logged `Trace file exists; use a fresh run` from its trace flush thread. **The ACT1 builder must fix the order assumption.** Evidence is at `evidence/DX-BM1/bench3/bench3-publish100k`, and the copy was deleted.
 
-1. **Realistic rung: failed, see above.** After the REAL1 fix, delete `queue/realistic/stopped`, move `result` aside, rebuild and rerun. Collect it with `BENCH_SERVER=<server> DX_BENCH_KNOWN_HOSTS=<pinned file> python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect bench3-realistic 8597e3ef7a73fc5ce81a448614c11c4e9e8db293 /var/tmp/triplex-bm1/bench3/evidence-control --bundles`. Read `verify.json` and `verified-pins.sha256`, then publish against the PREDICTIONS.md row. The sealed rung stays at `queue/realistic/stopped/pgdata`, with its pins in `queue/realistic/verified-pins.sha256`; the realistic card needs both.
-2. **Cache32 repeat: done and published** ([reading](ROLLING-READING.md#32-gib-cache-second-run-cache32b)). Collect it with `collect bench3-cache32b 97aced1b1128ca54da2a72003299f38d805f1abc ...`, then read it out with `bench3-writer-readout.py cache32b <evidence dir>`. Its predictions are in PREDICTIONS.md.
-3. **Rolling 6 repeat: done and published** ([reading](ROLLING-READING.md#rolling-6-second-run-rolling6r)). This is PREP1 `c8f903ce1` with `DX_PREP1_ROLLING_ARM=rolling6`, 16 GiB, at 235 / 394 / 620; its predictions are in PREDICTIONS.md. Collect it with `collect bench3-rolling6r c8f903ce1142772751328b88d972cc527ca46dfc ...` and `bench3-writer-readout.py rolling6r`. **Fair import: done and published** ([reading](FAIR-IMPORT-READING.md)). It used (`triplex-bench3-fair-import`, `bench3-fair-import.sh`, INT1 `8ab832093`, rolling 6) runs. It rebuilds, makes a separate-WAL copy, then runs `tools/dry-run/launch-dry-run.sh` (DX-HA1, from INT1 `54d644fd6`) and continues only on ADMITTED. Collect it with `collect bench3-fair-import 8ab8320936b646eb5f18fa893966137ad768fc40 ...`. The refused attempt is kept under `queue/fair-import/refused-guard-52ad`. **Publish at 100,000** (`triplex-bench3-publish100k`, preparing since 00:03:07 UTC, `bench3-publish100k.sh`, INT1 `8ab832093`, `actv-lazy/PART9.md`, 87 min cap). It uses the same rebuild, copy and dry-run gate. Collect it with `collect bench3-publish100k 8ab8320936b646eb5f18fa893966137ad768fc40 ...`. It has been running since 00:08:06 UTC, after an ADMITTED dry run, and should end around 01:40 UTC. **Then a third cache32 run** (`triplex-bench3-cache32c`, about 55 min) is the idle fallback. **Nothing is queued after it**, from about 02:40 UTC. The fair import's copy was deleted after collection. The failed realistic rung's started copy was deleted at 23:35 UTC to make room. The realistic card waits for the orchestrator to confirm INT1 `55278014a` and for the realistic rung to be rebuilt after the REAL1 fix. If neither is ready, queue another add-on repeat, which needs `prepare.sh` copied into its job folder.
-4. **Blocked items, with the fix each needs:** the reads ladder tuned arm (RD1 seal, [reading](RD1-READING.md)); cold start (JVM1 `subjectFunction` null at `jvm1/cold-server.ts` line 118); the append-retirement pair (needs a prepared-copy path); fair import and Publish at 100,000 (INT1 `8ab832093` carries the guard clause, so run them through `ha1/launch-dry-run.sh` first); Sunday failover (`8ab832093` replaces `9cd20b294`).
-5. **Rules learned today:** rebuild right before each run, because v01 builds retag shared image names. Never start a driver under `taskset` before its stack, because `stack/up.sh` checks the caller's affinity. Stop waiting units from the end of the chain backwards, and remember that stopping a unit releases the next one immediately. The removal stage's 118 GB copy stays at `queue/removal/prepared` for evidence and can be removed if disk is short.
+**Handoff at 00:15 UTC on November 22. The server keeps running without a driver:**
+
+| Order | Unit | What | Ends about |
+| --- | --- | --- | --- |
+| 1 | `triplex-bench3-cache32c` (preparing since 00:09:54 UTC) | Third run of the 32 GiB pair at PREP1 `97aced1b1` | 01:05 UTC |
+| 2 | `triplex-bench3-rolling6s` (waits for `cache32c`) | Third rolling 6 run at PREP1 `c8f903ce1`, 16 GiB | 01:50 UTC |
+
+**Nothing is queued after `rolling6s`.** Collect each item with `BENCH_SERVER=<server> DX_BENCH_KNOWN_HOSTS=<pinned file> python3 lab/experiments/EXP-DX1/bm1/day-evidence.py collect bench3-<item> <full pin> /var/tmp/triplex-bm1/bench3/evidence-control --bundles`. Then read it out with `bench3-writer-readout.py <item> <evidence dir>`, and summarise against PREDICTIONS.md.
+
+**Blocked, with the builder who must act:**
+
+| Item | Fault | Builder |
+| --- | --- | --- |
+| Reads ladder, tuned arm | `ladders/control-complete.json` is never written (`v01/adopted-server.ts` line 127), so tuned is refused at `rd1/prepared.ts` line 32 | RD1 |
+| Cold start | `subjectFunction` is null at `jvm1/cold-server.ts` line 118 | JVM1 |
+| Realistic rung | The census expects 429,778,659 native records and the copy has 429,778,722 (`real1/server.ts` line 412) | REAL1 |
+| Publish at 100,000 | Seed positions are not monotone (`held-campaign.ts` line 196) | ACT1 |
+| Append-retirement pair | Restores `seed.pgdump`, which this server does not hold, so it needs a prepared-copy path | W1 |
+| Realistic card | Needs the orchestrator to confirm INT1 `55278014a`, and the realistic rung first | orchestrator, REAL1 |
+| Sunday failover | Use INT1 `8ab832093` (replaces `9cd20b294`), at about 07:30 local with server 2 | orchestrator |
+
+**Launch rules learned today:**
+
+1. Rebuild right before every run, because each v01 build retags the shared image names.
+2. Never start a driver under `taskset` before its stack, because `stack/up.sh` checks the caller's affinity. Use `bench3-affinity.sh`, or pin after the transactor starts.
+3. Re-chain waiting units from the end of the chain backwards. Stopping a unit releases the next one at once.
+4. Every add-on job folder needs `prepare.sh`, copied from `queue/cache32`.
+5. Delete a published item's 118 GB copy, because the add-ons need 190 GiB free. The removal stage's copy still sits at `queue/removal/prepared`.
 
 ## Third rental for rolling credits
 

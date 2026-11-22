@@ -44,6 +44,15 @@ case $selection in
     prior=triplex-bench3-publish100k.service
     arms=(rolling6-cache32 rolling6-tx5-cache32)
     ;;
+  rolling6s)
+    # [DX-BM1] Why: a third rolling 6 run at 16 GiB as the idle fallback after the third cache32 run.
+    # Rejected: changing its pin or arm between runs.
+    pin=c8f903ce1142772751328b88d972cc527ca46dfc
+    command=rolling
+    prior=triplex-bench3-cache32c.service
+    arms=(rolling6)
+    export DX_PREP1_ROLLING_ARM=rolling6
+    ;;
   rolling6r)
     # [DX-BM1] Why: a second run of the morning's rolling 6 arm at 235, 394 and 620 from its own fresh build.
     # Rejected: reusing rolling-build, whose image tags later builds have moved.
