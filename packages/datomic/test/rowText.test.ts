@@ -3,6 +3,7 @@ import { expect, it } from "vitest";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { encodeRow, decodeRow } from "../src/protocol.js";
 import { encodeRowText, decodeRowText, decodeRowTextColumns } from "../src/rowText.js";
+import { acceptLoaderPositionRows, loaderPositionRowsAccepted } from "../src/loaderPositionRows.js";
 import { validateTagged } from "../src/codec.js";
 import { packValue } from "../src/rows.js";
 
@@ -190,8 +191,41 @@ it("rejects malformed modern wire positions and non-null journal placeholders", 
   const values = JSON.parse(text.slice(text.indexOf('["')));
   for (const p of [1, "1", "000000000000000x"])
     expect(() => decodeRowTextColumns([p, ...values.slice(1)], "2")).toThrow();
-  values[6] = 1;
+  values[6] = 2;
   expect(() => decodeRowTextColumns(values, "2")).toThrow();
+});
+
+// [DX-PREP1] Why: AGE1's aging loader wrote 28.2 million journal position rows with the gateway's test fixture
+// encoder: the ordinary "-" marker and the position itself as the payload. They carry nothing else.
+// Rejected: any payload other than the position, or a "P" header with a payload.
+const fixtureRow = () => {
+  const row = { ...base(), attribute: ":_tx/position", recorded_position: 28_309_866, value_number: 28_309_866 };
+  const canonical = encodeRowText(row);
+  return { canonical, fixture: canonical.replace('P["', '-["').replace('"number",null,null,', '"number",null,2.8309866E7,') };
+};
+
+it("reads the fixture encoder's journal position row as the canonical row when the loader option is on", () => {
+  const { canonical, fixture } = fixtureRow();
+  expect(fixture).not.toBe(canonical);
+  acceptLoaderPositionRows(true);
+  try {
+    expect(decodeRowText(fixture)).toEqual(decodeRowText(canonical));
+    expect(() => decodeRowText(fixture.replace("2.8309866E7", "2.8309867E7"))).toThrow(/payload must be null/);
+    expect(() => decodeRowText(canonical.replace('"number",null,null,', '"number",null,2.8309866E7,'))).toThrow();
+  } finally {
+    acceptLoaderPositionRows(false);
+  }
+});
+
+// [DX-INT1] Why: the product reader stays strict; only tools pointed at a loader-built database opt in.
+// Rejected: a default that silently accepts a non-canonical journal position row.
+it("refuses the fixture encoder's journal position row by default", () => {
+  const { canonical, fixture } = fixtureRow();
+  expect(loaderPositionRowsAccepted()).toBe(false);
+  expect(() => decodeRowText(fixture)).toThrow();
+  const values = JSON.parse(fixture.slice(fixture.indexOf('["')));
+  expect(() => decodeRowTextColumns(values, "2")).toThrow(/payload must be null/);
+  expect(decodeRowText(canonical).attribute).toBe(":_tx/position");
 });
 
 // [DX-T1-5] Why: JVM-assigned clocks use equivalent JSON numbers; binding still checks the exact duplicated header.

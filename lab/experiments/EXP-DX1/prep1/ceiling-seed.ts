@@ -4,7 +4,7 @@ import { readFileSync, statSync } from "node:fs";
 import { gunzipSync } from "node:zlib";
 import path from "node:path";
 import type { DatomicClient } from "../../../../packages/datomic/dist/index.js";
-import { decodeRowText } from "../../../../packages/datomic/dist/rowText.js";
+import { decodeRowText, rowTextColumns } from "../../../../packages/datomic/dist/rowText.js";
 import { fieldValue, taskId } from "../../../bench/lib/deep-world.ts";
 import { ids, SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { sha } from "../w1/field/schedule.ts";
@@ -159,6 +159,54 @@ export function agedCut(file: string, pin: string, imagePin: string, key: string
     lastTransaction: c.lastTransaction, lastRecordedAt: c.lastRecordedAt };
 }
 
+// AGE1's loader encoded its journal rows with the gateway's test fixture encoder (selftest/row-text). That encoder writes
+// the :_tx/position row with a "-" header marker and its position in value_number, where the product writes "P" and null.
+// The SDK decoder refuses that row, so the last save's journal is parsed here column by column.
+function journalColumns(text: string) {
+  assert.equal(text[0], "2", "aged journal row is not a version 2 row text");
+  const idLength = Number.parseInt(text.slice(1, 5), 16);
+  const id = text.slice(5, 5 + idLength);
+  const start = 5 + idLength;
+  const refLength = Number.parseInt(text.slice(start + 32, start + 36), 16);
+  const marker = text[start + 36 + refLength]!;
+  const values = JSON.parse(text.slice(start + 37 + refLength));
+  assert(Array.isArray(values) && values.length === rowTextColumns.length);
+  const row = Object.fromEntries(rowTextColumns.map((c: string, i: number) => [c, values[i]])) as Record<string, any>;
+  assert.equal(row.id, id);
+  assert.match(row.recorded_position, /^\d{16}$/);
+  return { marker, row: { ...row, recorded_position: Number(row.recorded_position) } };
+}
+
+// [DX-PREP1] Why: prove the newest transaction is AGE1's last save from every journal row it carries.
+// Rejected: the SDK decode (it refuses AGE1's position row) or dropping the position row from the proof.
+export function agedJournal(texts: string[], aged: AgedCut, head: number) {
+  const rows = texts.map(journalColumns);
+  const of = (attribute: string) => rows.filter(({ row }) => row.attribute === attribute);
+  for (const { row } of rows)
+    assert.deepEqual([row.entity_id, row.tx_id, row.entity_type, row.recorded_position, row.recorded_at],
+      [aged.lastTransaction, aged.lastTransaction, "_Transaction", head, aged.lastRecordedAt],
+      "aged journal row is not part of AGE1's last save");
+  const [position, ...extraPosition] = of(":_tx/position");
+  assert(position && !extraPosition.length && position.row.value_type === "number");
+  // AGE1's shape ("-" and the position as a number) or the product's ("P" and null); nothing else.
+  assert(position.marker === "-" ? position.row.value_number === head
+    : position.marker === "P" && position.row.value_number === null, "aged journal position payload differs");
+  const [command, ...extraCommand] = of(":_tx/command-id");
+  assert(command && !extraCommand.length);
+  assert.equal(command.row.value_string, aged.lastOperation);
+  const [instant, ...extraInstant] = of(":_tx/instant");
+  assert(instant && !extraInstant.length);
+  assert.equal(instant.row.value_datetime, aged.lastRecordedAt);
+  // Every other row still passes the SDK's own decoder, and the two parses agree.
+  for (const [i, { row }] of rows.entries()) {
+    if (row.attribute === ":_tx/position") continue;
+    const decoded = decodeRowText(texts[i]!) as unknown as Record<string, unknown>;
+    for (const c of ["id", "entity_id", "attribute", "value_type", "value_string", "recorded_position", "recorded_at", "tx_id"])
+      assert.deepEqual(decoded[c], row[c]);
+  }
+  return rows.length;
+}
+
 // [DX-PREP1] Why: AGE1 edits the first task's fields of a fixed, interleaved sample of each account. Its replay tape
 // fixes every such row's ID, value and position, so a current row is checked against those exact bytes.
 // Rejected: accepting any newer row (a different or tampered database would pass) or reusing the revision 0 value.
@@ -214,8 +262,7 @@ export async function scalePredecessors(
     assert.equal(last.transactions.length, 1, "aged head is not the newest transaction");
     const [lastId, lastPosition, lastText] = last.transactions[0]!;
     assert.deepEqual([lastId, lastPosition], [seed.aged.lastTransaction, seed.head]);
-    const row = lastText.map(decodeRowText).find((r) => r.attribute === ":_tx/command-id");
-    assert.deepEqual([row?.value_string, row?.recorded_at], [seed.aged.lastOperation, seed.aged.lastRecordedAt]);
+    agedJournal(lastText, seed.aged, seed.head);
     assert.equal(await reader.claim(seed.db, seed.aged.lastOperation, seed.head), lastId);
     agedProof = { position: lastPosition, command: seed.aged.lastOperation, claim: lastId, journalSha: sha(lastText) };
   }
