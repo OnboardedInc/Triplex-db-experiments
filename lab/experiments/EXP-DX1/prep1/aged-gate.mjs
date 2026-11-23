@@ -1,8 +1,8 @@
 // [DX-PREP1] Mac gate: the aged predecessor check accepts rows from AGE1's replay tape and refuses tampered ones.
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { scaleOwner, scalePredecessors } from "./ceiling-seed.ts";
-import { encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
+import { agedJournal, scaleOwner, scalePredecessors } from "./ceiling-seed.ts";
+import { decodeRowText, encodeRowText } from "../../../../packages/datomic/dist/rowText.js";
 
 const oracle = JSON.parse(readFileSync(process.argv[2], "utf8"));
 const cut = oracle.seedHead, head = cut + oracle.saves;
@@ -11,9 +11,30 @@ const last = "_tx/T" + pad25(oracle.saves - 1);
 const base = { id: "x", entity_id: last, attribute: ":_tx/command-id", value_type: "string", value_number: null,
   value_boolean: null, value_datetime: null, value_json: null, valid_from: 0, valid_to: null, retracted_at: null,
   retracted_position: null, retract_tx_id: null, schema_version: 1, entity_type: "_Transaction", created_by: null };
+const journal = oracle.lastJournal;
+assert.deepEqual([journal.tx, journal.operation, journal.position], [last, "age-save-" + (oracle.saves - 1), head]);
 const aged = { bundleSha256: "0".repeat(64), seedCut: cut, physicalT: 1, records: 1, nativeId: "toy",
-  active: oracle.active, people: oracle.people, tapeSaves: oracle.saves, lastOperation: "age-save-" + (oracle.saves - 1),
-  lastTransaction: last, lastRecordedAt: 2e12 };
+  active: oracle.active, people: oracle.people, tapeSaves: oracle.saves, lastOperation: journal.operation,
+  lastTransaction: last, lastRecordedAt: journal.clock };
+// Reproduce the server refusal on the bytes AGE1's encoder writes.
+// AGE1's JSON writer escapes "/" as "\\/".
+const positionText = journal.texts.find((t) => JSON.parse(t.slice(t.indexOf("[")))[3] === ":_tx/position");
+let reproduced = "";
+try { decodeRowText(positionText); } catch (error) { reproduced = error.message; }
+assert.equal(reproduced, "Journal position payload must be null");
+const journalRows = agedJournal(journal.texts, aged, head);
+const journalRefusals = [];
+for (const [name, edit] of [
+  ["position payload", (t) => t === positionText ? t.replace(/"number",null,[0-9.E]+,/, '"number",null,1.0,') : t],
+  ["command", (t) => t.replace(journal.operation, "age-save-0")],
+  ["record clock", (t) => t.replace(/"datetime",null,null,null,[0-9.E]+,/, '"datetime",null,null,null,1.0,')],
+  ["dropped row", null],
+]) {
+  const texts = edit ? journal.texts.map(edit) : journal.texts.slice(1);
+  assert.notDeepEqual(texts, journal.texts);
+  assert.throws(() => agedJournal(texts, aged, head));
+  journalRefusals.push(name);
+}
 const scope = JSON.stringify(["triplex-scope-v1", "test", "test", "toy", 0]);
 const seed = { db: "toy", scope, head, loaderSeal: "s", storage: "pg-data", aged };
 const owners = new Map(oracle.owners.map((o) => [scaleOwner(o.account, o.person), o]));
@@ -24,8 +45,7 @@ function peer(tamper) {
     request: async (_m, _p, { after }) => after === cut - 1
       ? { transactions: [["_tx/load", cut, [encodeRowText({ ...base, entity_id: "_tx/load", value_string: loaderCommand,
           recorded_position: cut, recorded_at: 1 })]]] }
-      : { transactions: [[last, head, [encodeRowText({ ...base, value_string: aged.lastOperation, recorded_position: head,
-          recorded_at: aged.lastRecordedAt })]]] },
+      : { transactions: [[last, head, journal.texts]] },
     claim: async (_db, command) => command === aged.lastOperation ? last : "_tx/load",
     rows: async (_db, { entityIds, pattern: { attribute }, basis }) => entityIds.map((entity) => {
       if (attribute === ":subject/account") return { ...base, id: entity, entity_id: entity, attribute,
@@ -61,5 +81,5 @@ for (const [name, tamper] of [
   await assert.rejects(scalePredecessors(fixed(peer(tamper)), seed, targets));
   refusals.push(name);
 }
-console.log(JSON.stringify({ gate: "aged-predecessors", owners: owners.size, editedRows: edited,
-  seedRows: oracle.owners.length * 2 - edited, accepted: true, refused: refusals }));
+console.log(JSON.stringify({ gate: "aged-predecessors", reproduced, journalRows, journalRefusals,
+  owners: owners.size, editedRows: edited, seedRows: oracle.owners.length * 2 - edited, accepted: true, refused: refusals }));
