@@ -178,13 +178,30 @@ Evidence (private): `evidence/DX-ACT3/load1/load-fair-*.tar.gz` (sha256 `a7d1c30
 `2fa6d4f3…` one in ten) and `evidence/DX-ACT3/check-256-subject.json` (`fcbe7d3c…`). `check-256.json` and
 `check-64.json` are from the first bucket rule (per policy) and superseded.
 
-## 7. Full-size run at 100,000 subjects (server command and predictions)
+## 7. Full-size runs at 100,000 subjects (server commands and predictions)
 
-**What it measures:** the one-second path of the large release at full size: every burst Publish in the twelve
-windows adds or removes 20 forms and 20 policies that every subject owes (`permille=1000`), with the deadline reads
-checked against the oracle. It does not settle the large release (section 4, item 1). Run it on the same machine
-and the same build as tonight's small-release Publish at 100,000 subjects, each on its own fresh prepared copy, so the
-two compare directly.
+The commit for both runs is the one carrying this section on `exp/DX-ACT3-large-release` (it also holds the repair
+for the bench 4 stop, [PUBLISH-STOP.md](PUBLISH-STOP.md)). Build it as for `PART9.md`; the w0 package must be rebuilt
+from it. Each run needs its own fresh prepared copy (about 4.4 minutes).
+
+**Run 1, small release, the windows bench 4 left unjudged** (about 28 minutes: boot and checks about 4, enrolment and
+first Publish about 2, eleven windows about 21, reopen 1). The first settlement is skipped (measured tonight: 14.5 and
+19.2 minutes). The two 3.5/s controls rerun so every ratio has its control in the same process:
+
+```sh
+sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
+  "DX_ACT3_SETTLE=0" \
+  "DX_HELD_WINDOWS=barrier6/3.5/0,rolling6/3.5/0,rolling6/3.5/1,rolling6/23.5/0,rolling6/23.5/1,barrier6/23.5/0,barrier6/23.5/1,barrier6/39.4/0,barrier6/39.4/1,rolling6/39.4/0,rolling6/39.4/1" \
+  bash lab/experiments/EXP-DX1/actv-lazy/join/held-server.sh \
+  "$COMMIT" "$SCALE1_IMAGE" "$SCALE1_IMAGE_SHA256" "$SCALE1_TRANSFER_SHA256" \
+  "$SCALE1_PGDATA" "$PREPARED_PGDATA" "$PREPARED_WAL" "$DX_LAZY_OUT"
+```
+
+Without the two controls (nine windows, about 24 minutes), drop the first two entries; ratios against quiet are
+then null and are taken from bench 4's controls.
+
+**Run 2, large release, all twelve windows** (about 30 minutes; no first-release settlement by default for a large
+release):
 
 ```sh
 sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.json" \
@@ -194,21 +211,35 @@ sudo env "PATH=$BUILD/tools/bin:$PATH" "DX_V01_BUILD_RECEIPT=$BUILD/BUILD-v0.1.j
   "$SCALE1_PGDATA" "$PREPARED_PGDATA" "$PREPARED_WAL" "$DX_LAZY_OUT"
 ```
 
-`$COMMIT` is this note's commit on `exp/DX-ACT3-large-release` (build it as for `PART9.md`; the w0 package must be
-rebuilt from this commit). **Duration:** about 40 minutes (boot and verification up to 8, enrolment 2, no first-release
-settlement, twelve windows with preload and drain about 26, reopen 1); the runner's own limit stays 87 minutes plus
-90 seconds. A prepared copy of the held directory takes about 4.4 minutes before it.
+The runner's own limit stays 87 minutes plus 90 seconds.
 
-**Predictions** (written before any run; small-release numbers at 100,000 with priority come from the same evening):
+**Predictions, small release** (kept from `PART9.md`):
+
+| Window | First correct p50 / p99 | Within one second | Read / save p99 vs quiet |
+| --- | --- | --- | --- |
+| Rolling 6, 3.5/s | 25–70 / 60–180 ms | 20/20 | 0.9–1.3× / 0.9–1.5× |
+| Barrier 6, 23.5/s | 45–140 / 130–450 ms | 19–20/20 | 1.2–1.8× / 2–6× |
+| Rolling 6, 23.5/s | 40–120 / 100–400 ms | 19–20/20 | 1.2–1.8× / 1.5–4× |
+| Barrier 6, 39.4/s | 60–220 / 200–900 ms | 18–20/20 | 1.4–2.2× / >6× |
+| Rolling 6, 39.4/s | 55–180 / 160–800 ms | 18–20/20 | 1.4–2.2× / 2–6× |
+
+**Prediction for the stop (both runs):** visibility failures (a probe answering before the acknowledged Publish) in
+0 to 3 of each rolling 6 window's 20 Publishes and in 0 of 20 at barrier 6, 3.5/s (bench 4: at least 1 at rolling 6
+3.5/s, 0 of 20 at barrier 6 3.5/s); possibly more at 23.5 and 39.4 in both modes as the read gateway gets busier.
+Each one fails the run's verdict at the end, by design, after every window has run and recorded itself; the
+owner decides whether such a read is acceptable (PUBLISH-STOP.md section 2). The +1 s deadline reads are all at or
+past their Publish.
+
+**Predictions, large release** (on top of run 1 at the same rate and mode):
 
 | Quantity | Prediction | Shows the analysis wrong |
 | --- | --- | --- |
 | Record per Publish | 4 fact changes; 17.6 to 17.8 KB of operations when R3 + forms follows R2 (toy: 17,658 to 17,663 B), about 11 KB the other way; the same as the toy within 2% | more than 2% above the toy, or more than 4 changes: the record depends on subjects |
-| First correct answer, large minus small release, same rate and mode | p50 +1 to +6 ms, p99 +0 to +15 ms | p50 more than 10 ms above the small release at the same rate and mode |
-| First correct answer, absolute | inside the PART9 ranges: 3.5/s p50 25 to 75, p99 60 to 190 ms; 23.5/s p50 45 to 145, p99 100 to 460 ms; 39.4/s p50 60 to 225, p99 160 to 910 ms | outside them while the small release is inside |
-| Within one second | 20 of 20 at 3.5 and 23.5 per mode; 18 to 20 of 20 at 39.4 | fewer than the small release at the same rate and mode |
-| Live read and save p99 against the matched no-Publish control | the same ratios as the small release within 10% | a ratio more than 10% worse than the small release's |
-| Exactness | every deadline read equals the oracle's answer for the active release (the runner stops on any mismatch) | any mismatch |
+| First correct answer, large minus small release, same rate and mode | p50 +1 to +6 ms, p99 +0 to +15 ms | p50 more than 10 ms above the small release |
+| First correct answer, absolute | inside the small-release ranges above, +6 ms | outside them while run 1 is inside |
+| Within one second | as run 1 at the same rate and mode | fewer than run 1 |
+| Live read and save p99 against the matched control | run 1's ratios within 10% | a ratio more than 10% worse |
+| Exactness | every probe, deadline and reopened answer equals the oracle's for the release in force at its basis | any exactness failure |
 
 ## 8. Not established
 
