@@ -47,6 +47,10 @@ export type Connection = {
   lastRecordedAtBringUp?: number | null;
   /** The database was aged by AGE1's loader, which wrote journal position rows in the test fixture's form. */
   loaderPositionRows?: boolean;
+  /** The server's launch settings (demo/server/profile.mjs --summary) and when its working copy was made. */
+  memory?: Record<string, unknown> | null;
+  workingCopyMadeAt?: string | null;
+  readyAt?: string | null;
   connectedAt: string;
 };
 
@@ -267,6 +271,10 @@ export class Demo {
           note: "Record time is the store's own clock. The aging loader ran it about a year ahead of wall time; dates for the 'believed then' view must fall inside this range. New saves are recorded after the last one.",
         },
         compatibility: c.loaderPositionRows ? compatibilityNote : null,
+        workingCopy: c.workingCopy,
+        workingCopyMadeAt: c.workingCopyMadeAt ?? null,
+        serverReadyAt: c.readyAt ?? null,
+        memory: c.memory ?? null,
         note: "Records are Datomic datoms counted by a fresh peer at bring-up (db-stats). Each save after that adds a few dozen.",
         position,
       };
@@ -352,7 +360,7 @@ export class Demo {
   }
 
   /** Both time axes at one instant: what is now believed true then, and what was believed then. */
-  readSubjectAt(accountInput: string | number, subjectNumber: number, at: string | number, attribute?: string, recordedAt?: string | number) {
+  readSubjectAt(accountInput: string | number, subjectNumber: number, at: string | number, attribute?: string, recordedAt?: string | number, believedPosition?: number) {
     return this.measure(async () => {
       const when = parseInstant(at, "at");
       const known = recordedAt === undefined ? when : parseInstant(recordedAt, "recordedAt");
@@ -363,7 +371,7 @@ export class Demo {
       const [current, trueThen, believedThen] = await Promise.all([
         this.world(p.root, { recordedPosition: position, validAt: now }),
         this.world(p.root, { recordedPosition: position, validAt: when }),
-        this.world(p.root, { recordedAt: known, validAt: when }),
+        this.world(p.root, believedPosition === undefined ? { recordedAt: known, validAt: when } : { recordedPosition: believedPosition, validAt: when }),
       ]);
       const keep = (f: { attribute: string }) => !attribute || f.attribute === attribute;
       const views = {
@@ -391,7 +399,7 @@ export class Demo {
         account: p.account,
         subject: p.subjectNumber,
         at: iso(when),
-        believedAsRecordedAt: iso(known),
+        believedAsRecordedAt: believedPosition === undefined ? iso(known) : `position ${believedPosition}`,
         counts: { current: views.current.length, trueThenAsKnownNow: views.trueThenAsKnownNow.length, believedThen: views.believedThen.length },
         differences,
         ...(attribute ? views : {}),
@@ -434,6 +442,7 @@ export class Demo {
         account: e.account, subject: e.subjectNumber, entity: e.entity, attribute,
         totalRows: entries.length,
         rowsAfterFirst: Math.max(0, entries.length - 1),
+        savesOfThisField: Math.max(0, new Set(entries.map((r) => r.recordedPosition)).size - 1),
         rowsAfterFirstNote: "one per loader save of this field; a demo save adds two (the old value closed at the save, and the new value)",
         entityHistoryRows: rows.length,
         rowsShown: entries.length > shown ? `the newest ${shown} of ${entries.length}` : `all ${entries.length}`,

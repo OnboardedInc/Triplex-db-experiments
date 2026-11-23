@@ -57,7 +57,8 @@ const writeUrl = `http://127.0.0.1:${w}`, readUrl = `http://127.0.0.1:${r}`;
   const connection = { version: "triplex-demo-connection/1", kind: x.kind, database: x.database, scope: x.scope,
     writeUrl, readUrl, workingCopy: x.workingCopy === true, recordsAtBringUp: x.recordsAtBringUp, headAtBringUp: x.head,
     physicalTAtBringUp: x.physicalT, sealed: x.sealed, roster: x.roster, clocks: x.clocks ?? null,
-    lastRecordedAtBringUp: x.lastRecordedAt ?? null, loaderPositionRows: x.loaderPositionRows === true, connectedAt: new Date().toISOString() };
+    lastRecordedAtBringUp: x.lastRecordedAt ?? null, loaderPositionRows: x.loaderPositionRows === true,
+    memory: x.memory ?? null, workingCopyMadeAt: x.workingCopyMadeAt ?? null, readyAt: x.startedAt ?? null, connectedAt: new Date().toISOString() };
   fs.writeFileSync(file + ".tmp", JSON.stringify(connection, null, 2) + "\n", { mode: 0o600 });
   fs.renameSync(file + ".tmp", file);
   console.log(`CONNECTED ${x.kind === "1b" ? "1 billion database" : "toy database"}: head ${wb.body.position.v} (read gateway ${rb.body.position.v}), ` +

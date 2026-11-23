@@ -1,0 +1,343 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Triplex Dashboard</title>
+<style>
+:root { --bg:#fafaf9; --panel:#fff; --ink:#1c1917; --muted:#78716c; --line:#e7e5e4; --accent:#2563eb; --ok:#15803d; --bad:#b91c1c; --warn:#b45309;
+  --save:#2563eb; --cur:#0d9488; --pin:#9333ea; --bar:#93c5fd; --bar2:#fca5a5; }
+@media (prefers-color-scheme: dark) { :root { --bg:#0c0a09; --panel:#1c1917; --ink:#f5f5f4; --muted:#a8a29e; --line:#292524; --accent:#60a5fa;
+  --ok:#4ade80; --bad:#f87171; --warn:#fbbf24; --save:#60a5fa; --cur:#2dd4bf; --pin:#c084fc; --bar:#1d4ed8; --bar2:#b91c1c; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 ui-sans-serif, system-ui, -apple-system, sans-serif; }
+header { padding:12px 16px; border-bottom:1px solid var(--line); }
+h1 { font-size:17px; margin:0 0 6px; }
+h2 { font-size:15px; margin:0 0 8px; display:flex; flex-wrap:wrap; gap:8px; align-items:baseline; }
+h3 { font-size:13px; margin:10px 0 6px; color:var(--muted); font-weight:600; }
+main { padding:12px 16px; display:grid; gap:12px; }
+section { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; min-width:0; }
+.n { font-size:12px; color:var(--muted); font-weight:normal; }
+.tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:8px; }
+.tile { border:1px solid var(--line); border-radius:6px; padding:8px; }
+.tile b { display:block; font-size:19px; }
+.tile span { font-size:12px; color:var(--muted); }
+.badge { display:inline-block; padding:1px 8px; border-radius:10px; font-size:12px; border:1px solid var(--ok); color:var(--ok); }
+.badge.bad { border-color:var(--bad); color:var(--bad); }
+.row { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:8px; }
+label { font-size:12px; color:var(--muted); }
+input, select, button { font:inherit; padding:4px 6px; border:1px solid var(--line); border-radius:4px; background:var(--bg); color:var(--ink); }
+input[type=number] { width:80px; }
+button { background:var(--accent); color:#fff; border:none; cursor:pointer; }
+button.stop { background:var(--bad); font-weight:600; padding:6px 16px; }
+button.link { background:none; color:var(--accent); padding:0 4px; text-decoration:underline; }
+button:disabled { opacity:.45; cursor:default; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+th, td { text-align:left; padding:3px 6px; border-bottom:1px solid var(--line); vertical-align:top; }
+td.num, th.num { text-align:right; font-variant-numeric:tabular-nums; }
+th { color:var(--muted); font-weight:500; }
+.scroll { max-height:360px; overflow:auto; }
+.grid2 { display:grid; grid-template-columns:repeat(auto-fit, minmax(440px, 1fr)); gap:12px; }
+.muted { color:var(--muted); }
+.ok { color:var(--ok); } .bad { color:var(--bad); } .warn { color:var(--warn); }
+.err { color:var(--bad); white-space:pre-wrap; font-size:12px; }
+.tl { position:relative; height:20px; background:var(--bg); border-radius:3px; margin:3px 0; }
+.tl span { position:absolute; top:2px; height:16px; background:var(--bar); border-radius:3px; font-size:11px; padding:0 4px; overflow:hidden; white-space:nowrap; }
+.tl span.retired { background:var(--bar2); opacity:.75; }
+code { font:12px ui-monospace, monospace; word-break:break-all; }
+svg text { fill:var(--muted); font-size:10px; }
+.note { font-size:12px; color:var(--muted); margin:4px 0 8px; }
+@media (max-width: 520px) { .grid2 { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Triplex at work <span class="n" id="kind"></span></h1>
+  <div class="note" id="conn">connecting…</div>
+</header>
+<main>
+
+<section>
+  <h2>1. What you are looking at <span class="n" id="t-summary"></span></h2>
+  <div class="tiles" id="tiles"></div>
+</section>
+
+<section>
+  <h2>2. Live load <span class="n" id="load-state">idle</span></h2>
+  <p class="note"><b>A demonstration, not a benchmark.</b> One client process on this Mac sends real saves and reads to the working copy through the SSH tunnel, open loop, at the rates below (capped at 20 saves/s, 200 reads/s, 400 subjects and 60 s per press). Every save is a durable, synchronous commit. Reads alternate between the current position and a pin near the head. Gateway time is the store's own; round trip adds the tunnel.</p>
+  <div class="row">
+    <label>saves/s</label><input id="l-saves" type="number" min="0" max="20" value="20">
+    <label>reads/s</label><input id="l-reads" type="number" min="0" max="200" value="200">
+    <label>seconds</label><input id="l-secs" type="number" min="1" max="60" value="60">
+    <label>subjects</label><input id="l-subj" type="number" min="1" max="400" value="300">
+    <button id="l-start">Start load</button>
+    <button id="l-stop" class="stop" disabled>STOP</button>
+  </div>
+  <div class="tiles" id="load-tiles"></div>
+  <div class="grid2" style="margin-top:8px">
+    <div>
+      <h3>Per second (gateway ms p50 / p99; round trip p50)</h3>
+      <div class="scroll" style="max-height:300px"><table id="load-seconds"></table></div>
+    </div>
+    <div>
+      <h3>Gateway time histogram for this run (count per bucket)</h3>
+      <svg id="hist" width="100%" height="190" viewBox="0 0 460 190" preserveAspectRatio="none"></svg>
+      <div class="note"><span style="color:var(--save)">■ saves (whole save: reads, commit, readback)</span> · <span style="color:var(--cur)">■ current reads</span> · <span style="color:var(--pin)">■ pinned reads</span></div>
+      <div id="load-errors" class="err"></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>3. Change feed, live <span class="n" id="t-feed"></span></h2>
+  <div class="scroll" style="max-height:340px"><table id="feed"></table></div>
+</section>
+
+<section>
+  <h2>4. One subject <span class="n">(the <a href="/inspector.html">single-subject inspector</a> holds the same views)</span></h2>
+  <div class="row">
+    <label>account</label><select id="account"></select>
+    <label>subject</label><input id="subject" type="number" min="0" value="0">
+    <button id="load">Load subject</button>
+    <span class="n" id="t-subject"></span>
+  </div>
+  <div class="grid2">
+    <div>
+      <h3>Current facts</h3>
+      <div class="row"><label>filter</label><input id="filter" placeholder="attribute or entity"></div>
+      <div class="scroll"><table id="facts"></table></div>
+    </div>
+    <div>
+      <h3>History of one field <span class="n" id="t-history"></span></h3>
+      <div class="row">
+        <label>attribute</label><input id="h-attr" value=":task/field-0" style="width:130px">
+        <button id="h-go">Show</button>
+        <span class="n">examples:</span>
+        <button class="link" id="ex-short">subject 1 (short history)</button>
+        <button class="link" id="ex-long">subject 0 (long history)</button>
+      </div>
+      <div id="timeline"></div>
+      <div class="scroll" style="max-height:220px"><table id="history"></table></div>
+    </div>
+    <div>
+      <h3>Both time axes <span class="n" id="t-at"></span></h3>
+      <div class="row">
+        <label>valid date</label><input id="at" style="width:210px">
+        <label>believed at position</label><input id="at-pos" type="number" min="1" style="width:110px" placeholder="optional">
+        <label>attribute</label><input id="at-attr" value=":task/field-0" style="width:120px">
+        <button id="at-go">Compare</button>
+      </div>
+      <div class="scroll" style="max-height:240px"><table id="axes"></table></div>
+    </div>
+    <div>
+      <h3>Apply a save <span class="n" id="t-save"></span></h3>
+      <div class="row">
+        <label>attribute</label><input id="s-attr" value=":task/field-0" style="width:120px">
+        <label>value</label><input id="s-val" value="reviewed in demo" style="width:150px">
+        <button id="s-go">Save</button>
+      </div>
+      <div id="saved" class="note">A real, durable, synchronous commit to the subject's first task. It appears in the change feed above.</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>5. Measured results <span class="badge bad">recorded, not live</span> <span class="n" id="m-note"></span></h2>
+  <div class="scroll" style="max-height:none"><table id="measured"></table></div>
+</section>
+
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const fmt = (n) => (n === null || n === undefined || n === "" ? "–" : typeof n === "number" ? n.toLocaleString("en-US") : n);
+const timing = (t) => t && t.timing ? `gateway ${t.timing.serverMs ?? "n/a"} ms · round trip ${t.timing.roundTripMs} ms · ${t.timing.requests} req · position ${fmt(t.position)}` : "";
+async function call(name, body = {}) {
+  const res = await fetch("/api/" + name, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+  const json = await res.json();
+  if (json.error) throw new Error(json.error.code + ": " + json.error.message);
+  return json;
+}
+const gib = (mib) => mib >= 1024 ? `${fmt(Math.round(mib / 102.4) / 10)} GiB` : `${fmt(mib)} MiB`;
+const tile = (big, small) => `<div class="tile"><b>${big}</b><span>${small}</span></div>`;
+
+// 1. Summary
+let summary;
+async function loadSummary() {
+  try {
+    const s = summary = await call("summary");
+    const m = s.memory;
+    $("kind").textContent = s.kind;
+    $("conn").innerHTML = `Database <code>${esc(s.database.slice(0, 24))}…</code> · <span class="badge${s.workingCopy ? "" : " bad"}">${s.workingCopy ? "working copy: changes are allowed and do not touch the sealed original" : "NOT a working copy: changes refused"}</span>`;
+    $("t-summary").textContent = timing(s) + " · refreshed every 5 s";
+    const range = s.recordTimeRange ?? {};
+    $("tiles").innerHTML = [
+      tile(fmt(s.recordsAtBringUp), "records (Datomic datoms) counted at bring-up"),
+      tile(fmt(s.subjects), "subjects (worker records)"),
+      tile(fmt(s.accounts), "accounts in one database"),
+      tile(fmt(s.head), `head position (sealed ${fmt(s.sealedHead)}, +${fmt(s.transactionsSinceSeal)} since)`),
+      tile(`${esc((range.first ?? "").slice(0, 10))} → ${esc((range.lastAtBringUp ?? "").slice(0, 10))}`, "record-time range (the store's own clock)"),
+      tile(m ? gib(m.transactor.objectCacheMiB) : "–", m ? `transactor object cache; heap ${esc(m.transactor.heap)}, container ${gib(m.transactor.containerMiB)}; reader cache ${fmt(m.readGateway.objectCacheMiB)} MiB; PostgreSQL ${gib(m.postgres.containerMiB)} (${esc(m.postgres.sharedBuffers)} buffers)` : "memory settings not reported"),
+      tile(s.workingCopyMadeAt ? esc(s.workingCopyMadeAt.replace("T", " ").slice(0, 19)) : "–", "working copy made (UTC)"),
+    ].join("");
+  } catch (e) { $("conn").innerHTML = `<span class="err">${esc(e.message)} (run demo/connect.sh)</span>`; }
+}
+
+// 2. Load
+let since = 0, rows = [];
+async function startLoad() {
+  try {
+    await call("load/start", { savesPerSecond: +$("l-saves").value, readsPerSecond: +$("l-reads").value, seconds: +$("l-secs").value, subjects: +$("l-subj").value });
+    since = 0; rows = []; pollLoad();
+  } catch (e) { $("load-errors").textContent = e.message; }
+}
+async function stopLoad() { await call("load/stop"); pollLoad(); }
+function cell(o) { return o && o.p50 !== null ? `${o.p50} / ${o.p99}` : "–"; }
+async function pollLoad() {
+  let st;
+  try { st = await call("load/status", { since: Math.max(0, since - 1) }); } catch (e) { $("load-errors").textContent = e.message; return; }
+  if (!st.runId) { $("load-state").textContent = "idle"; return; }
+  for (const s of st.seconds) { rows = rows.filter((r) => r.second !== s.second); rows.push(s); }
+  rows.sort((a, b) => a.second - b.second);
+  since = rows.length ? rows[rows.length - 1].second : 0;
+  $("l-start").disabled = st.running; $("l-stop").disabled = !st.running;
+  $("load-state").innerHTML = st.running ? `<span class="warn">running</span> · run ${esc(st.runId)} · ${st.options.savesPerSecond} saves/s, ${st.options.readsPerSecond} reads/s, ${st.options.subjects} subjects, up to ${st.options.seconds} s · pin ${st.options.pinBehind} positions behind the head`
+    : `stopped (${esc(st.stopReason)}) · run ${esc(st.runId)}`;
+  const t = st.totals;
+  $("load-tiles").innerHTML = [
+    tile(`${fmt(st.startHead)} → ${fmt(st.head)}`, `head position (+${fmt(st.head - st.startHead)})`),
+    tile(fmt(t.saves), `saves acknowledged · gateway p50/p99 ${cell(t.gateway.save)} ms; commit alone ${cell(t.transact)} ms`),
+    tile(fmt(t.reads), `reads · current p50/p99 ${cell(t.gateway.current)} ms · pinned ${cell(t.gateway.pinned)} ms`),
+    tile(`<span class="${t.errors ? "bad" : "ok"}">${fmt(t.errors)}</span>`, "errors"),
+  ].join("");
+  $("load-seconds").innerHTML = `<tr><th class="num">s</th><th class="num">head</th><th class="num">saves</th><th class="num">save</th><th class="num">commit</th><th class="num">reads cur/pin</th><th class="num">current</th><th class="num">pinned</th><th class="num">round trip save / read</th><th class="num">err</th></tr>` +
+    rows.slice().reverse().map((s) => `<tr class="${s.partial ? "muted" : ""}"><td class="num">${s.second}${s.partial ? "…" : ""}</td><td class="num">${fmt(s.head)}</td><td class="num">${s.done.save}/${s.offered.save}</td><td class="num">${cell(s.gateway.save)}</td><td class="num">${cell(s.transact)}</td><td class="num">${s.done.current}/${s.done.pinned}</td><td class="num">${cell(s.gateway.current)}</td><td class="num">${cell(s.gateway.pinned)}</td><td class="num">${s.roundTrip.save.p50 ?? "–"} / ${s.roundTrip.current.p50 ?? "–"}</td><td class="num ${s.errors ? "bad" : ""}">${s.errors}</td></tr>`).join("");
+  drawHist(st.histogram);
+  $("load-errors").textContent = st.errors.length ? "Errors:\n" + st.errors.join("\n") : "";
+  if (st.running) setTimeout(pollLoad, 1000);
+}
+function drawHist(h) {
+  const kinds = [["save", "var(--save)"], ["current", "var(--cur)"], ["pinned", "var(--pin)"]];
+  const n = h.bucketsMsBelow.length, W = 460, H = 160, gw = W / n, bw = gw / 4;
+  const max = Math.max(1, ...kinds.flatMap(([k]) => h[k]));
+  let out = "";
+  h.bucketsMsBelow.forEach((b, i) => {
+    kinds.forEach(([k, c], j) => {
+      const v = h[k][i], bh = v ? Math.max(1, (v / max) * (H - 10)) : 0;
+      out += `<rect x="${i * gw + 2 + j * bw}" y="${H - bh}" width="${bw - 1}" height="${bh}" style="fill:${c}"><title>${k} < ${b} ms: ${v}</title></rect>`;
+    });
+    out += `<text x="${i * gw + 2}" y="${H + 14}">${b === "more" ? "≥2s" : "<" + b}</text>`;
+  });
+  $("hist").innerHTML = out;
+}
+
+// 3. Feed
+async function loadFeed() {
+  try {
+    const r = await call("feed", { limit: 20 });
+    $("t-feed").textContent = timing(r) + (r.compatibility ? " · loader journal rows read with the named compatibility rule" : "");
+    const subj = (e) => { const m = /^acct\/([^/]+)\/[a-z0-9]+:0*(\d+)/.exec(e); return m ? [m[1], m[2]] : ["", e]; };
+    $("feed").innerHTML = "<tr><th class='num'>position</th><th>recorded</th><th>account</th><th>subject</th><th>fields changed</th><th>command</th></tr>" +
+      r.transactions.slice().reverse().map((t) => {
+        const who = [...new Set(t.changes.map((c) => subj(c.entity).join(" ")))];
+        const fields = [...new Set(t.changes.filter((c) => c.op === "assert" && (c.validTo === null || c.validTo === undefined)).map((c) => `${c.attribute} = ${String(c.value).slice(0, 40)}`))];
+        return `<tr><td class="num">${fmt(t.position)}</td><td>${esc((t.recordedAt ?? "").slice(0, 19))}</td><td>${esc(who.map((w) => w.split(" ")[0]).join(", "))}</td><td>${esc(who.map((w) => w.split(" ")[1]).join(", "))}</td><td>${fields.map(esc).join("<br>") || "<span class='muted'>retirement or correction</span>"}</td><td class="muted">${esc((t.commandId ?? "").slice(0, 28))}</td></tr>`;
+      }).join("");
+  } catch (e) { $("feed").innerHTML = `<tr><td class="err">${esc(e.message)}</td></tr>`; }
+}
+
+// 4. One subject
+const who = () => ({ account: $("account").value, subject: Number($("subject").value) });
+async function loadAccounts() {
+  const a = await call("accounts");
+  $("account").innerHTML = a.accounts.map((x) => `<option value="${esc(x.account)}" ${x.account === "account-003" ? "selected" : ""}>${esc(x.account)} (${fmt(x.subjects)})</option>`).join("");
+}
+async function loadSubject() {
+  try {
+    const p = await call("subject", who());
+    $("t-subject").textContent = timing(p) + ` · ${p.factCount} facts in ${p.entities} entities`;
+    const f = $("filter").value.trim();
+    $("facts").innerHTML = "<tr><th>entity</th><th>attribute</th><th>value</th><th>valid from</th><th>recorded</th></tr>" +
+      p.facts.filter((x) => !f || x.attribute.includes(f) || x.entity.includes(f))
+        .map((x) => `<tr><td>${esc(x.entity)}</td><td>${esc(x.attribute)}</td><td>${esc(String(x.value).slice(0, 60))}</td><td>${esc((x.validFrom ?? "").slice(0, 10))}</td><td>${esc((x.recordedAt ?? "").slice(0, 19))}</td></tr>`).join("");
+  } catch (e) { $("facts").innerHTML = `<tr><td class="err">${esc(e.message)}</td></tr>`; }
+}
+async function loadHistory(subject) {
+  if (subject !== undefined) $("subject").value = subject;
+  $("t-history").textContent = "reading…";
+  try {
+    const h = await call("history", { ...who(), attribute: $("h-attr").value, kind: "task" });
+    $("t-history").textContent = `${timing(h)} · ${fmt(h.totalRows)} rows (${fmt(h.savesOfThisField)} saves of this field; ${h.rowsShown} shown); the gateway read ${fmt(h.entityHistoryRows)} rows of this entity's history`;
+    const marks = [...new Set(h.rows.flatMap((r) => [r.recordedPosition, r.retiredPosition ?? h.position]))].sort((a, b) => a - b);
+    const x = (p) => (marks.indexOf(p) / Math.max(marks.length - 1, 1)) * 92;
+    const recent = h.rows.slice(-12);
+    $("timeline").innerHTML = `<div class="note">the newest ${recent.length} rows, each from the position that recorded it to the one that retired it (equal steps); red retired, blue live</div>` +
+      recent.map((r) => { const a = x(r.recordedPosition), b = x(r.retiredPosition ?? h.position);
+        return `<div class="tl"><span class="${r.live ? "" : "retired"}" style="left:${a}%;width:${Math.max(b - a, 4)}%" title="${esc(r.value)}">${esc(String(r.value).slice(0, 24))}</span></div>`; }).join("");
+    $("history").innerHTML = "<tr><th>value</th><th>valid from → to</th><th class='num'>recorded at position</th><th class='num'>retired at position</th></tr>" +
+      h.rows.slice().reverse().map((r) => `<tr><td>${esc(String(r.value).slice(0, 40))}</td><td>${esc((r.validFrom ?? "").slice(0, 10))} → ${esc((r.validTo ?? "open").slice(0, 10))}</td><td class="num">${fmt(r.recordedPosition)}</td><td class="num">${r.retiredPosition ? fmt(r.retiredPosition) : "live"}</td></tr>`).join("");
+    return h;
+  } catch (e) { $("history").innerHTML = `<tr><td class="err">${esc(e.message)}</td></tr>`; }
+}
+async function labelExamples() {
+  // Each example is labelled with its number of saves of :task/field-0, read once (the long one is slow on purpose).
+  for (const [id, n, label] of [["ex-short", 1, "short history"], ["ex-long", 0, "long history"]]) {
+    try {
+      const h = await call("history", { account: $("account").value, subject: n, attribute: ":task/field-0", kind: "task", limit: 1 });
+      $(id).textContent = `subject ${n} (${label}: ${fmt(h.savesOfThisField)} saves of this field; read in ${fmt(h.timing.serverMs)} ms)`;
+    } catch (e) { $(id).textContent += " (count unavailable)"; }
+  }
+}
+async function loadAxes() {
+  try {
+    const pos = $("at-pos").value;
+    const r = await call("at", { ...who(), at: $("at").value, attribute: $("at-attr").value || undefined, ...(pos ? { position: Number(pos) } : {}) });
+    $("t-at").textContent = timing(r);
+    const col = (list) => (list ?? []).map((f) => `${esc(f.entity)}: ${esc(String(f.value).slice(0, 30))}`).join("<br>") || "<span class='muted'>none</span>";
+    $("axes").innerHTML = `<tr><th>today</th><th>true on ${esc(r.at.slice(0, 19))}, as known now</th><th>believed then (${esc(String(r.believedAsRecordedAt).slice(0, 19))})</th></tr>` +
+      `<tr><td>${col(r.current)}</td><td>${col(r.trueThenAsKnownNow)}</td><td>${col(r.believedThen)}</td></tr>` +
+      `<tr><td colspan="3" class="muted">${r.differences.length} facts differ across the three views</td></tr>`;
+  } catch (e) { $("axes").innerHTML = `<tr><td class="err">${esc(e.message)}</td></tr>`; }
+}
+async function save() {
+  try {
+    const r = await call("save", { ...who(), kind: "task", changes: { [$("s-attr").value]: $("s-val").value } });
+    $("t-save").textContent = timing(r);
+    $("saved").innerHTML = `Receipt <code>${esc(r.receipt.txId)}</code> at durable position <b>${fmt(r.receipt.position)}</b>. Readback at that position: <code>${esc(JSON.stringify(r.readback))}</code> <span class="${r.readbackMatches ? "ok" : "bad"}">${r.readbackMatches ? "matches" : "DIFFERS"}</span>`;
+    $("h-attr").value = $("s-attr").value;
+    await Promise.all([loadSubject(), loadHistory(), loadFeed(), loadSummary()]);
+  } catch (e) { $("saved").innerHTML = `<span class="err">${esc(e.message)}</span>`; }
+}
+
+// 5. Measured
+async function loadMeasured() {
+  const m = await (await fetch("/measured.json")).json();
+  $("m-note").textContent = m.note;
+  const verdict = (v) => `<span class="${/^met$/.test(v) ? "ok" : /not met/.test(v) ? "bad" : "muted"}">${esc(v)}</span>`;
+  let group = "";
+  $("measured").innerHTML = "<tr><th>measure</th><th>value</th><th>bar</th><th>against the bar</th><th>date · reading</th><th>note</th></tr>" +
+    m.rows.map((r) => (r.group !== group ? `<tr><td colspan="6"><b>${esc(group = r.group)}</b></td></tr>` : "") +
+      `<tr><td>${esc(r.measure)}</td><td>${esc(r.value)}</td><td>${esc(r.bar)}</td><td>${verdict(r.verdict)}</td><td class="muted">${esc(r.date)} · <code>${esc(r.source.commit)}</code> ${esc(r.source.file)}</td><td class="muted">${esc(r.note)}</td></tr>`).join("");
+}
+
+$("l-start").onclick = startLoad; $("l-stop").onclick = stopLoad;
+$("load").onclick = () => Promise.all([loadSubject(), loadHistory()]);
+$("filter").oninput = loadSubject;
+$("h-go").onclick = () => loadHistory();
+$("ex-short").onclick = () => { $("h-attr").value = ":task/field-0"; $("subject").value = 1; loadSubject(); loadHistory(); };
+$("ex-long").onclick = () => { $("h-attr").value = ":task/field-0"; $("subject").value = 0; loadSubject(); loadHistory(); };
+$("at-go").onclick = loadAxes; $("s-go").onclick = save;
+(async () => {
+  await loadSummary();
+  const range = summary?.recordTimeRange ?? {};
+  $("at").value = range.first && range.lastAtBringUp ? new Date((Date.parse(range.first) + Date.parse(range.lastAtBringUp)) / 2).toISOString() : new Date().toISOString();
+  await loadAccounts().catch(() => {});
+  loadMeasured().catch((e) => { $("measured").innerHTML = `<tr><td class="err">${esc(e.message)}</td></tr>`; });
+  $("subject").value = 1;
+  loadFeed(); pollLoad(); loadSubject(); loadHistory().then(labelExamples);
+  setInterval(loadSummary, 5000);
+  setInterval(loadFeed, 1500);
+})();
+</script>
+</body>
+</html>

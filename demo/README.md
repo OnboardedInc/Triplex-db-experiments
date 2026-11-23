@@ -24,7 +24,7 @@ The database lives on a rented machine. Its gateways listen only on that machine
 | --- | --- | --- | --- |
 | 1. Bring the server up | rented machine, as root, in a checkout of this branch | `DEMO_ORIGINAL=<stopped cluster> DEMO_HANDOFF=<aged-scorecard.json> bash demo/server-up.sh` | about 10 minutes with the cluster on the machine (copy 3 to 8, start 1 to 4, identity checks 1 to 3); add about 25 to 40 minutes for `--fetch` from object storage; add 10 to 15 minutes on a freshly installed machine (bootstrap) |
 | 2. Connect | Mac | `bash demo/connect.sh` | under 10 seconds |
-| 3. Use it | Mac | an assistant with the MCP server registered (below), or `bash demo/inspect.sh` (MCP Inspector), or `bash demo/inspect.sh --page` (one-page inspector) | seconds |
+| 3. Use it | Mac | `bash demo/inspect.sh --dashboard` and open http://127.0.0.1:28580/ (the dashboard), or an assistant with the MCP server registered (below), or `bash demo/inspect.sh` (MCP Inspector) | seconds |
 
 **Step 1 in detail.** `server-up.sh` bootstraps what is missing (Docker, Node, the two Datomic images, through `lab/experiments/EXP-DX1/t1/bare-metal.sh --prepare`), fetches the cluster when it is not on the machine, copies it to `/var/tmp/triplex-demo/work/cluster`, starts PostgreSQL, the transactor and both gateways on the copy with the 32 GiB cache settings, runs the identity checks, and prints one line:
 
@@ -37,6 +37,20 @@ DEMO READY head=28309866 records=1000251169 t=62888918 ...
 - **On the Mac (toy):** `bash demo/toy/build-toy.sh` once, then `bash demo/server-up.sh --toy`.
 
 **Step 2 in detail.** Put the server's address in `~/.triplex-demo/server` (one line; it stays on the Mac, outside the repository). `connect.sh` opens the two forwards on free local ports (never 15442, 17019, 5432, 6379, 4222, 4566 or 16686), checks both gateways answer, prints the head and record count, and writes `~/.triplex-demo/connection.json` (mode 0600), which the MCP server and the inspector page read. `bash demo/disconnect.sh` closes the forwards.
+
+## The dashboard
+
+`bash demo/inspect.sh --dashboard` serves one page on http://127.0.0.1:28580/ (the one-subject inspector stays at `/inspector.html`; `--page` starts the same server). No framework; the page calls the same local functions as the MCP tools, through the same small local server. Top to bottom:
+
+1. **What you are looking at:** records counted at bring-up, subjects, accounts, the head, the record-time range, the server's memory settings, when the working copy was made, and that it is a working copy. Refreshed every 5 s.
+2. **Live load:** Start and STOP buttons. The local server process (not the browser) sends real saves and reads to the working copy: by default 20 saves/s and 200 reads/s across 300 subjects for at most 60 s per press; hard caps 20 saves/s, 200 reads/s, 400 subjects, 60 s, 40 saves and 256 reads in flight. Reads alternate between the current position and a pin about 1,000 positions behind the head. Per second it shows saves and reads completed, the gateway's own p50 and p99 for the whole save (its reads, the commit, the readback), for the commit alone, for current and for pinned reads, the round trip from the Mac beside them, a histogram of gateway times, errors, and the head advancing. It refuses unless the connection file says the target is a working copy. **It is a demonstration, not a benchmark:** one client, through the tunnel, at a fraction of the measured capacity. The load writes `:task/field-4` on subjects 2 and up of every account, so subjects 0 and 1 keep their histories for the examples.
+3. **Change feed, live:** the last twenty transactions with position, account, subject and the fields changed; it updates as the load or a manual save runs.
+4. **One subject:** current facts, a field's history as a timeline with the short-history (subject 1) and long-history (subject 0) examples one click away, each labelled with its number of saves of that field, both time axes at a chosen date or position, and a box to apply a save and watch it land in the feed.
+5. **Measured results, recorded and not live:** a table read from `demo/measured.json`, each row with its date, the commit and file of its reading, its bar from `lab/TARGETS.md`, and whether the bar is met. The page never computes a result of its own there.
+
+`node examples/demo-mcp/src/load-check.ts --dashboard http://127.0.0.1:28580 --existing` checks the last run a viewer started: every acknowledged save present at its position through the SDK (and each subject's last one current at the head), every read equal to the SDK's rows at the same position and valid time.
+
+**The toy on the Mac in one command:** `bash demo/toy/up.sh` (add `--reset` to start from the untouched toy original) and `bash demo/toy/down.sh`. It uses the lab VM (stack `tx2-dxdemo1-toy-*` on VM CPUs 5 to 7, at most 2.8 GiB of VM memory, VM ports 18491 and 18495) and Mac ports 28491, 28492 and 28580; it holds no heavy token or engine slot.
 
 ## Register the MCP server
 

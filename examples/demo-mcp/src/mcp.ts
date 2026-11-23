@@ -79,9 +79,9 @@ server.registerTool("read_subject", {
 server.registerTool("read_subject_at", {
   title: "Read a subject at an earlier date",
   description: "Both time axes: what we now believe was true on a date (valid time), and what the store believed about that date at a record time (default: the same date), with the facts that differ from today.",
-  inputSchema: { account, subject, at: z.string().describe("ISO date-time or epoch milliseconds"), attribute: attribute.optional().describe("Only this attribute; also lists the three views in full"), recordedAt: z.string().optional().describe("Record time for the 'believed' view; default is the same instant as at") },
+  inputSchema: { account, subject, at: z.string().describe("ISO date-time or epoch milliseconds"), attribute: attribute.optional().describe("Only this attribute; also lists the three views in full"), recordedAt: z.string().optional().describe("Record time for the 'believed' view; default is the same instant as at"), position: z.number().int().min(1).optional().describe("Or a database position for the 'believed' view (what the store held at that position)") },
   annotations: READ,
-}, (a) => answer(() => demo().readSubjectAt(a.account, a.subject, a.at, a.attribute, a.recordedAt)));
+}, (a) => answer(() => demo().readSubjectAt(a.account, a.subject, a.at, a.attribute, a.recordedAt, a.position)));
 
 server.registerTool("field_history", {
   title: "History of one field",

@@ -36,6 +36,18 @@ const args = [
   "--memory-index-threshold", policy.index.threshold, "--memory-index-max", policy.index.max,
   "--pg-settings", Object.entries(policy.pg.settings).map(([k, v]) => "-c " + k + "=" + v).join(" "),
 ];
+if (process.argv[3] === "--summary") {
+  const flag = (flags, name) => flags.find((f) => f.startsWith(name))?.slice(name.length) ?? null;
+  console.log(JSON.stringify({
+    profile: kind === "server" ? "server, 32 GiB transactor cache arm" : "laptop (toy)",
+    transactor: { containerMiB: policy.tx.memoryMiB, heap: flag(policy.tx.flags, "-Xmx"), objectCacheMiB: policy.tx.cacheMiB, java: policy.tx.major, collector: policy.tx.collector },
+    writeGateway: { containerMiB: policy["gw-w"].memoryMiB, heap: flag(policy["gw-w"].flags, "-Xmx") },
+    readGateway: { containerMiB: policy["gw-r"].memoryMiB, heap: flag(policy["gw-r"].flags, "-Xmx"), objectCacheMiB: policy["gw-r"].cacheMiB },
+    postgres: { containerMiB: policy.pg.memoryMiB, sharedBuffers: policy.pg.settings.shared_buffers ?? "128MB (default)" },
+    memoryIndex: policy.index,
+  }));
+  process.exit(0);
+}
 for (const [k, v] of Object.entries(env)) { assert(!/[\n\0]/.test(String(v))); console.log(k + "=" + v); }
 console.log("--");
 for (const a of args) { assert(!/[\n\0]/.test(a)); console.log(a); }

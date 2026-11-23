@@ -178,6 +178,11 @@ const s16 = await call("Summary after the demo", "How many transactions has the 
 check(s16, s16.out.transactionsSinceSeal >= 3, `${s16.out.transactionsSinceSeal} transactions since the seal`);
 
 await client.close();
+
+// ---- the dashboard's live load (load-check.ts): started through the dashboard server's own endpoints, then every
+// acknowledged save and every read checked against the SDK at the same position --------------------------------
+const { checkLoad } = await import("./load-check.ts");
+const loadResult = process.argv.includes("--no-load") ? undefined : await checkLoad({ arg, conn, reader, rowsAt, big });
 reader.close();
 
 // ---- write EXAMPLES.md ----------------------------------------------------------------------------------------------
@@ -208,6 +213,23 @@ const lines = [
   "**The bulk loader's journal rows.** " + (conn.loaderPositionRows ? "The bulk loader that built this database wrote one field of each save's journal in a non-standard form; the demo reads it with a named compatibility rule (`setLoaderPositionRowCompatibility`), off in the product's default reader. The example \"The feed across the loader's history\" reads across it." : "Not used for this database."),
   "",
 ];
+if (loadResult) {
+  const t = loadResult.status.totals, o = loadResult.status.options;
+  const q = (x: { p50: number | null; p99: number | null }) => `${x.p50 ?? "n/a"} / ${x.p99 ?? "n/a"}`;
+  lines.push("## The dashboard's live load", "",
+    `Started and stopped through the dashboard server's own endpoints (\`/api/load/start\`, \`/api/load/stop\`, the Start and STOP buttons): ${o.savesPerSecond} saves/s and ${o.readsPerSecond} reads/s offered across ${o.subjects} subjects for up to ${o.seconds} s, from one client on the Mac through the tunnel. A demonstration, not a benchmark.`, "",
+    "| Measure | Value |", "| --- | --- |",
+    `| Saves acknowledged | ${t.saves.toLocaleString("en-US")} (head ${loadResult.status.startHead.toLocaleString("en-US")} to ${loadResult.status.head.toLocaleString("en-US")}) |`,
+    `| Reads returned | ${t.reads.toLocaleString("en-US")} (current and pinned near the head, alternating) |`,
+    `| Gateway ms p50 / p99: whole save (reads, commit, readback) | ${q(t.gateway.save)} |`,
+    `| Gateway ms p50 / p99: the commit alone | ${q(t.transact)} |`,
+    `| Gateway ms p50 / p99: current reads | ${q(t.gateway.current)} |`,
+    `| Gateway ms p50 / p99: pinned reads near the head | ${q(t.gateway.pinned)} |`,
+    `| Errors | ${t.errors} |`,
+    `| Per-second samples | ${loadResult.secondsSampled} |`, "",
+    `- Checked: all ${loadResult.savesChecked.toLocaleString("en-US")} acknowledged saves are present at their positions through the SDK, and each subject's last one is current at the head.`,
+    `- Checked: all ${loadResult.readsChecked.toLocaleString("en-US")} reads equal the SDK's rows for the same entities at the same position and valid time.`, "");
+}
 for (const s of steps) {
   lines.push(`## ${s.n}. ${s.title}`, "", `**Prompt:** ${s.prompt}`, "", "**Tool call:**", "", "```json", JSON.stringify({ tool: s.tool, arguments: s.args }, null, 2), "```", "",
     `**Time:** gateway ${s.out.timing?.serverMs ?? "n/a"} ms, round trip ${s.out.timing?.roundTripMs ?? "n/a"} ms, ${s.out.timing?.requests ?? "n/a"} requests.`, "",
