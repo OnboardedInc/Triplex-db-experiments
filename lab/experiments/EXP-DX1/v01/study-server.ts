@@ -11,7 +11,7 @@ import { nativeMetrics } from "../thin1/native-metrics.ts";
 import { openScaleSeal, hex } from "./adopt.ts";
 import { stackOptions, writeDiagnostics, type Age, type JvmProfile, type Writer } from "./profile.ts";
 import { cleanSource, verifyBuild } from "./source.ts";
-import { openPreparedLadder } from "../rd1/prepared.ts";
+import { openPreparedLadder, sealedArm } from "../rd1/prepared.ts";
 
 // [DX-THIN1] Why: the realistic card replaced adopted-server.ts with its staged three-arm runner and command line.
 // This file keeps the read-study and append-retirement pair runners exactly as gated on INT1 before that merge.
@@ -40,7 +40,13 @@ assert(Number.isSafeInteger(end) && end > Date.now());
 const lock = fs.statSync("/var/tmp/triplex-bm1/dx-bm1-day.lock"), queue = fs.statSync(`/proc/${process.ppid}/fd/9`);
 assert.equal(lock.ino, queue.ino); assert.equal(lock.dev, queue.dev);
 scaleHost.physical();
-if (tuned) execFileSync("taskset", ["-apc", "9,10", String(process.pid)]);
+// [DX-INT1] Why: stack/up.sh admits only CPUs in its caller's affinity under DX_BARE_METAL, so a driver pinned to 9,10
+// before the stack is refused cores 0-8 (bench 3, 18:57 and 19:43 UTC). The driver is unpinned while each stack starts
+// and pinned to 9,10 before its first read or save, so every measured window keeps the same placement.
+// Rejected: widening up.sh's check, or pinning only after the first ladder (a second arm would be refused again).
+const onlineCpus = tuned ? fs.readFileSync("/sys/devices/system/cpu/online", "utf8").trim() : "";
+assert(!tuned || /^[0-9,-]+$/.test(onlineCpus));
+const placeDriver = (cpus: string) => execFileSync("taskset", ["-apc", cpus, String(process.pid)], { stdio: "ignore" });
 process.env.DX_BARE_METAL = "1";
 verifyBuild(cleanSource(source), process.env.DX_V01_BUILD_RECEIPT);
 // [DX-RD1] Why: a prepared read study names its ladder and one private PostgreSQL copy through the environment.
@@ -74,13 +80,15 @@ for (const loaded of [false, true]) {
   const slot = "tx2-dxscale1-v01-" + attempt.slice(0, 12);
   jsonFile(path.join(out, "attempt.json"), { source, tag: path.basename(out), slot, attempt });
   assert(Object.values(scaleHost.childrenInventory(slot)).every((x) => x.length === 0));
-  let systemIdentifier = "";
-  try {
+  await sealedArm(prepared, slot, attempt, async () => {
+    let systemIdentifier = "";
     const options = stackOptions(writer, attempt, diagnostics);
     prepared?.claim(slot, attempt);
+    if (tuned) placeDriver(onlineCpus);
     const { engines } = startScaleStack(out, slot, source, writer === "grouped", tuned ? {
       ...options, DX_RD1_READ_PROFILE: "1", DX_RD1_READ_FILTER: loaded ? "1" : "0", ...prepared?.env,
     } : retirement ? { ...options, TX2_SUBJECT_APPEND_RETIREMENT: loaded ? "1" : "0" } : options, { policy, walDirectory });
+    if (tuned) placeDriver("9,10");
     const peerUrls = () => ({ write: `http://${engines["gw-w"]!.address}:8080`, read: `http://${engines["gw-r"]!.address}:8080` });
     const residency = async () => {
       const { write, read } = peerUrls();
@@ -127,10 +135,10 @@ for (const loaded of [false, true]) {
           { rate, batch: loaded ? 8 : 1, sample: true, counters });
         terminal = arm.terminal;
       }
+      // [DX-INT1] A `continue` here skipped prepared.complete, so the control ladder exited 0 without
+      // ladders/control-complete.json (bench 3, 19:43 UTC) and the tuned ladder was refused; sealedArm now seals.
       if (prepared) assert(!stopping, "Prepared ladder was interrupted");
-      continue;
-    }
-    if (retirement) {
+    } else if (retirement) {
       let cut = head;
       const [rates, seconds] = age === "fresh" ? [[394, 620], 300] as const : [[50, 235], 120] as const;
       for (const rate of rates) {
@@ -145,12 +153,9 @@ for (const loaded of [false, true]) {
       const arm = await adoptedArm(out, source, peer, seed, writer, loaded, false, head);
       if (loaded && !stopping) await quietPair(campaign, source, peer, seed, writer, false, arm.terminal);
     }
-  } finally {
-    scaleHost.clean(out, slot);
-  }
-  if (prepared) prepared.complete(slot, attempt, systemIdentifier);
-  if (retirement) execFileSync("python3", ["-I", "lab/experiments/EXP-DX1/w1/serial/summarize.py",
-    out, slot, attempt, source, age, creditMode], { stdio: "inherit" });
+    return systemIdentifier;
+  }, () => scaleHost.clean(out, slot), retirement ? () => execFileSync("python3", ["-I", "lab/experiments/EXP-DX1/w1/serial/summarize.py",
+    out, slot, attempt, source, age, creditMode], { stdio: "inherit" }) : undefined);
 }
 
 if (retirement) {

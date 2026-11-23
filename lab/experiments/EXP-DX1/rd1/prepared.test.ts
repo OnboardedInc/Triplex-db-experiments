@@ -63,3 +63,43 @@ test("prepared reader ladders run control then tuned on fresh copies of one seal
   fs.writeFileSync(path.join(campaign, "control", "50", "arm.json"), "{\"changed\":true}");
   assert.throws(() => checkPreparedStudy(campaign), /Ladder evidence differs/);
 });
+
+// [DX-INT1] The runner's own arm wrapper, driven as study-server.ts drives it: the control ladder's body returns, its
+// cleanup writes the inventory, and the seal follows, so the tuned ladder is admitted. Bench 3 stopped here.
+test("sealedArm seals each prepared ladder after cleanup for the read study", async (t) => {
+  const { sealedArm } = await import("./prepared.ts");
+  const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "dx-int1-sealed-")));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const sealed = path.join(root, "sealed");
+  fs.mkdirSync(path.join(sealed, "global"), { recursive: true });
+  fs.writeFileSync(path.join(sealed, "PG_VERSION"), "17\n");
+  fs.writeFileSync(path.join(sealed, "global", "pg_control"), Buffer.alloc(8192, 3));
+  const copy = (name: string) => { fs.cpSync(sealed, path.join(root, name), { recursive: true }); return path.join(root, name); };
+  const record = { source: "a".repeat(40), imagePin: "b".repeat(64) };
+  const arm = async (campaign: string, ladder: string, rates: string[], n: number, fail = false) => {
+    const p = openPreparedLadder({ campaign, ladder, source: sealed, copy: copy(ladder + n), record });
+    const slot = "tx2-dxscale1-v01-" + String(n).repeat(12), attempt = slot + "-attempt";
+    const dir = path.join(campaign, ladder);
+    fs.mkdirSync(dir);
+    fs.writeFileSync(path.join(dir, "attempt.json"), "{}");
+    const run = sealedArm(p, slot, attempt, async () => {
+      p.claim(slot, attempt);
+      fs.writeFileSync(path.join(dir, "pgdata.json"), JSON.stringify({ slot, attempt, copy: p.copy, systemIdentifier: "7311" }));
+      for (const rate of rates) {
+        fs.mkdirSync(path.join(dir, rate));
+        for (const file of ["arm.json", "operations.json"]) fs.writeFileSync(path.join(dir, rate, file), JSON.stringify({ ladder, rate }));
+      }
+      if (fail) throw new Error("arm failed");
+      return "7311";
+    }, () => {
+      fs.mkdirSync(path.join(dir, "cleanup"));
+      fs.writeFileSync(path.join(dir, "cleanup", "inventory.json"), "[]");
+    });
+    return run;
+  };
+  const read = path.join(root, "read", "campaign");
+  fs.mkdirSync(path.dirname(read));
+  await arm(read, "control", ["50", "235"], 1);
+  await arm(read, "tuned", ["50", "235"], 2);
+  assert.equal(checkPreparedStudy(read).tuned.end.systemIdentifier, "7311");
+});

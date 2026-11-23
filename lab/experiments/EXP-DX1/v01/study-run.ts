@@ -109,5 +109,11 @@ if (ladder === "tuned" && !exit) {
   console.log(`Both ladders complete on PostgreSQL system ${control.end.systemIdentifier} (${control.end.slot}, ${checked.end.slot}).`);
 }
 console.log(log);
-if (ladder && !exit) console.log(`The ${ladder} ladder is complete. Its scratch PGDATA and WAL subdirectory may be removed.`);
+// [DX-INT1] Why: report a ladder complete only from its seal; at RD1 ca93f5165 the control child exited 0 with no seal.
+// Rejected: trusting the child's exit status alone.
+if (ladder && !exit) {
+  const { completed } = await import("../rd1/prepared.ts");
+  completed(campaign, ladder);
+  console.log(`The ${ladder} ladder is complete. Its scratch PGDATA and WAL subdirectory may be removed.`);
+}
 if (exit) process.exitCode = 1;

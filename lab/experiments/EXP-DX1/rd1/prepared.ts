@@ -27,7 +27,7 @@ type Start = { inputSha256: string; ladder: Ladder; startedAt: number; sealed: D
 type Complete = { startSha256: string; completedAt: number; slot: string; attempt: string; systemIdentifier: string;
   files: Record<string, string> };
 
-function completed(campaign: string, ladder: Ladder) {
+export function completed(campaign: string, ladder: Ladder) {
   const loc = ladderPaths(campaign, ladder);
   assert(fs.existsSync(loc.end), `The ${ladder} ladder has not completed`);
   const startBytes = fs.readFileSync(loc.start), start: Start = JSON.parse(startBytes.toString());
@@ -99,6 +99,23 @@ export function openPreparedLadder(input: { campaign: string; ladder: string; so
     },
   };
 }
+
+// [DX-INT1] Why: one arm of a prepared invocation is sealed only after its body returns and its cleanup has written
+// the inventory, on every path out of the body. The body is a function, so a `continue` cannot skip the seal: at RD1
+// ca93f5165 the reader branch ended in `continue` and no ladder was ever sealed.
+// Rejected: sealing inside the body (cleanup evidence does not exist yet) or sealing after a failed body.
+export async function sealedArm(prepared: PreparedLadder | undefined, slot: string, attempt: string,
+  body: () => Promise<string>, cleanup: () => void, after?: () => void) {
+  let systemIdentifier: string;
+  try {
+    systemIdentifier = await body();
+  } finally {
+    cleanup();
+  }
+  after?.();
+  prepared?.complete(slot, attempt, systemIdentifier);
+}
+export type PreparedLadder = ReturnType<typeof openPreparedLadder>;
 
 function evidenceFiles(campaign: string, ladder: Ladder) {
   const files = ["input.json", `${ladder}/attempt.json`, `${ladder}/pgdata.json`, `${ladder}/cleanup/inventory.json`];
