@@ -28,7 +28,8 @@ PRODUCTION_ARMS = {
 }
 PRODUCTION_SETS = {"hour": ["1-prodR-S", "1-prodS-394-S"],
                    "full": ["1-prodR-S", "1-prodS-S", "1-prodR-cache32-S", "1-prodS-cache32-S"],
-                   "aged": ["1-prodR-394-cache32-S", "1-prodS-394-cache32-S", "1-prodR-394-S"]}
+                   "aged": ["1-prodR-394-cache32-S", "1-prodS-394-cache32-S", "1-prodR-394-S"],
+                   "s394": ["1-prodS-394-S"]}
 
 
 def read(path):
@@ -564,7 +565,10 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                     assert 0 <= r["legacyPredecessors"] <= written
             ack, receipt = r.get("ack"), r.get("receipt")
             token = r.get("orderedToken")
-            assert bool(token) == (ordered_ids and "sent" in r)
+            # [DX-REAL2] A production commit over 256 assertions takes the general identity (one byte of ordinal).
+            assert "assertions" not in r or 2 * len(offer[6]) + 4 <= r["assertions"] <= 3 * len(offer[6]) + 4
+            wide_commit = r.get("assertions", 0) > 256
+            assert bool(token) == (ordered_ids and "sent" in r and not wide_commit)
             if token:
                 # [DX-PREP1] Why: verify the producer's allocated token against the journal actually read.
                 # Rejected: accepting an ordered-writer flag without binding it to the submitted identity.
@@ -684,6 +688,7 @@ def collect(plan_path, directory, native_path, allow_fixture=False):
                   if r.get("ack") and r["ack"].get("nativeIoStats") is not None]
             # [DX-REAL2] The per-person writer takes saves of one to three facts that each replace a current value;
             # wider saves and first writes of a field take the general writer. Report the split and each path's reads.
+            save_metrics["generalIdentityCommits"] = sum(r.get("assertions", 0) > 256 for r in rows)
             save_metrics["writerPath"] = {
                 "subject": sum(bool(r.get("ack", {}).get("subjectSave")) for r in rows if r["account"]),
                 "general": sum(bool(r.get("ack")) and not r["ack"].get("subjectSave") for r in rows if r["account"])}

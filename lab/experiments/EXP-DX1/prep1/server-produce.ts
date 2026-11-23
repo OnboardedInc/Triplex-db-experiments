@@ -89,6 +89,7 @@ type Seed = {
   seeds: Awaited<ReturnType<typeof seedPooled>>["seeds"];
 };
 const requestedCredits = Number(process.env.DX_PREP1_FAIR_CREDITS ?? 0);
+export const orderedBlockLimit = 256;
 assert([0, 1, 2, 6].includes(requestedCredits));
 const campaign = process.env.DX_PREP1_CAMPAIGN ?? "comparison";
 assert(
@@ -348,7 +349,14 @@ export async function phase(
     // Rejected: the old "answer, plus note when extra" filter, which assumed an owner held only those two rows.
     const written = new Set(facts.map((f) => f.a));
     const old = previous.filter((r) => written.has(r.attribute));
-    const identity = orderedIds ? orderedSaveIdentity() : undefined;
+    // [DX-REAL2] Why: the ordered identity block numbers a commit's assertions in one byte (at most 256). A commit's
+    // assertions are its facts, one journal change per fact asserted and per value retired, and four journal rows.
+    // Today the product mints a general identity for every assertion and only the per-person writer, which accepts
+    // one to three facts, uses ordered blocks; a wider commit goes through the general writer either way. So a commit
+    // over 256 assertions takes the general identity, as the product would, and stays one atomic commit.
+    // Rejected: splitting the save into several commits, which the product does not do.
+    const assertions = 2 * facts.length + old.length + 4;
+    const identity = orderedIds && assertions <= orderedBlockLimit ? orderedSaveIdentity() : undefined;
     const input = command(id, facts, old, true, false, identity);
     input.sourceK = Math.max(head, ...previous.map((r) => r.recorded_position));
     input.groupAccount = wide ? scaleAccount(o.account) : accounts[o.account]!.key;
@@ -370,6 +378,7 @@ export async function phase(
       ...(deadlines && account !== 0 ? { overdueAtGrant: overdue } : {}),
       sent,
       orderedToken: identity?.token,
+      ...(slots ? { assertions } : {}),
       legacyPredecessors: legacyIds ? old.filter((row) => legacyIds.has(row.id)).length : undefined,
     };
     let known = false;

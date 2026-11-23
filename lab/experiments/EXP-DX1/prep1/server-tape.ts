@@ -113,6 +113,8 @@ export const productionSets: Record<string, string[]> = {
   hour: ["1-prodR-S", "1-prodS-394-S"],
   full: ["1-prodR-S", "1-prodS-S", "1-prodR-cache32-S", "1-prodS-cache32-S"],
   aged: ["1-prodR-394-cache32-S", "1-prodS-394-cache32-S", "1-prodR-394-S"],
+  // [DX-REAL2] The fresh S arm alone, after its first run stopped at the ordered identity's 256-assertion limit.
+  s394: ["1-prodS-394-S"],
 };
 let productionLoaded: { params: ProductionParams; sha256: string; file: string } | undefined;
 export function productionParams(file = process.env.DX_REAL2_PARAMS ?? productionDefaultParams) {

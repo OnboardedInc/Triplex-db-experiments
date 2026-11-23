@@ -34,7 +34,14 @@ function toyCell(shape: Shape, band: number) {
   return { label: `${shape}-toy-loaded`, rate: 0, tape, duration: window, tapeSha: sha(tape), credits: 6 };
 }
 // Separate bands keep the two shapes' people apart, as separate arms do on the server.
-const cellsToRun = [toyCell("R", 0), toyCell("S", 1)];
+// [DX-REAL2] Two saves over the ordered identity's 256 assertions, for one subject: 130 facts replacing the 13 or 14
+// seeded fields and creating the rest (277 or more assertions), then the same 130 facts again, all replacing (394).
+const wideSubject = (toyCell("S", 1).tape.find((o) => o.account === 3) ?? { person: 0 }).person;
+const wideSlots = Array.from({ length: 130 }, (_, i) => i);
+const wideTape = [0, 1].map((n) => ({ ms: 500 + n * 2000, account: 3, person: wideSubject, subtask: 0, ordinal: 0, extra: false,
+  save: 100_000 + n, slots: wideSlots, gap: n ? 2 : 60 }));
+const wideCell = { label: "S-wide-toy-loaded", rate: 0, tape: wideTape, duration: 5, tapeSha: sha(wideTape), credits: 6 };
+const cellsToRun = [toyCell("R", 0), toyCell("S", 1), wideCell];
 
 const init = await client.create(scope, "lean", true, 35_000);
 assert(init.created && init.strictRecordClocks);
@@ -69,6 +76,10 @@ for (const cell of cellsToRun) {
   const started = Date.now();
   const result = await phase([client], reader, db, cut, fields, new Set(), cell, true, scheduler(), legacyIds);
   assert(result.rows.every((row) => !row.reason || row.reason === "expired"), "a save failed");
+  if (cell === wideCell) {
+    assert(result.rows.length === 2 && result.rows.every((r) => r.receipt && !r.orderedToken && (r as any).assertions > 256),
+      "a save over 256 assertions was not committed whole with the general identity");
+  }
   results.push({ cell, result, wallMs: Date.now() - started });
   cut = result.after;
 }
@@ -119,10 +130,13 @@ const summary = {
       expired: result.rows.filter((r) => r.reason === "expired").length, wallMs,
       shape: report.shape, factsPerCommit: report.neighbours.factsPerCommit, saves: report.neighbours.saves,
       maxSlots: Math.max(...cell.tape.map((o) => (o as Partial<ProductionOffer>).slots?.length ?? 0)),
+      maxAssertions: Math.max(0, ...result.rows.map((r) => (r as any).assertions ?? 0)),
+      generalIdentity: result.rows.filter((r) => r.receipt && !r.orderedToken).length,
     };
   }),
 };
 for (const c of summary.cells) assert(c.acked > 0.9 * c.offers, "too few acknowledged saves to judge exactness");
+assert(results[2]!.result.rows.every((r) => (r as any).assertions > 256));
 console.log("REAL2_GATE " + JSON.stringify(summary));
 client.close();
 reader.close();
