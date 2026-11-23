@@ -124,6 +124,7 @@ export function BasisControl({ current = false }: { current?: boolean }) {
                   </Label>
                   <Input
                     className="h-7 w-36 tabular-nums"
+                    data-testid="basis-position"
                     inputMode="numeric"
                     value={position}
                     placeholder={sealed ? String(sealed) : "position"}

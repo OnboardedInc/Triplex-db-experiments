@@ -61,7 +61,7 @@
   },
   {
     "name": "The same question at the sealed head",
-    "note": "Tasks that are not complete, read at the exact position the 1 billion database was sealed at.",
+    "note": "Tasks that are not complete, read at the exact position this database was sealed at.",
     "from": { "subject": { "account": "account-003", "subject": 50000 } },
     "basis": { "position": 28309866 },
     "query": {

@@ -389,7 +389,7 @@ export function QueryPage() {
                         reloadExample(a, n);
                       }}
                     >
-                      <SelectTrigger className="h-8 w-36">
+                      <SelectTrigger className="h-8 w-36" data-testid="query-account">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>

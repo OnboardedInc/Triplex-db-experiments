@@ -22,7 +22,10 @@ Triplex Console is a local web app with a matching MCP server for one Triplex da
 | Step | Command | Time |
 | --- | --- | --- |
 | Build the toy once | `bash demo/toy/build-toy.sh` | about 10 minutes |
-| Start everything | `bash demo/toy/up.sh` (`--reset` starts from the untouched toy) | about 40 s |
+| Start everything | `bash demo/toy/up.sh` (`--reset` starts from the untouched toy and prepares the example: the Review type and six reviews in account-003, one corrected from 16 November) | about 40 s |
+| Build the web app after a change in `examples/console` | `pnpm --filter triplex-console build` (the server serves `examples/console/dist`) | 1 s |
+| Run the gates, then give the toy back clean | `bash demo/toy/gates.sh <dir> --fresh-after` | about 2 minutes |
+| Walk the demo script with screenshots | `node examples/console/e2e/demo-pass.mjs --database toy --out <dir> --mcp $PWD` (moves live back when it ends) | about 45 s |
 | Open the console | http://127.0.0.1:28580/ (the API is `/api/catalogue`, `/api/connection`, `POST /api/tools/:name`) | |
 | Restart only the console server after a code change | `bash demo/toy/restart-console.sh` | 1 s |
 | Stop everything | `bash demo/toy/down.sh` | about 12 s |
@@ -40,6 +43,28 @@ Triplex Console is a local web app with a matching MCP server for one Triplex da
 | Open | Mac | `node examples/demo-mcp/src/page.ts 28580`, then http://127.0.0.1:28580/ |
 | Prove it, headless on the server | rented machine, root | `bash demo/prove-console.sh --tools <bootstrap build>`; see [PROVE-CONSOLE.md](PROVE-CONSOLE.md) |
 | Shut down | both | `bash demo/disconnect.sh` on the Mac; `bash demo/server-down.sh [--delete-work]` on the server |
+
+## Showing it on the 1 billion database
+
+**The toy console stays on 127.0.0.1:28580; the 1 billion database gets its own connection file, tunnel and console server on 127.0.0.1:28583.** `TRIPLEX_DEMO_STATE` names the connection file for `connect.sh`, `disconnect.sh`, the console server and the MCP server alike; each file gets its own SSH tunnel, so connecting the second one does not close the toy's. Run these from the repository root of this branch, after the server shows `DEMO READY` on the rented machine:
+
+```
+export TRIPLEX_DEMO_STATE=$HOME/.triplex-demo/connection-1b.json
+bash demo/connect.sh                                   # server address from ~/.triplex-demo/server or DEMO_SERVER
+pnpm --filter triplex-console build                    # once, if examples/console changed
+node examples/demo-mcp/src/page.ts 28583               # then open http://127.0.0.1:28583/
+```
+
+**The demo script, walked with screenshots.** In a second terminal, with the server on 28583 running:
+
+```
+node examples/console/e2e/demo-pass.mjs --database 1b --api http://127.0.0.1:28583 \
+  --state $HOME/.triplex-demo/connection-1b.json --mcp $PWD --type Inspection --out <screenshot dir>
+```
+
+It follows section 3 of the design on subject 50000 of account-003: the subject read twice, the Query examples, the sealed head and position 87,002 (`--far-back` changes it), the refusal, a new type named by `--type` and an Edit type re-commit, one entity from the form, one correction from 16 November, Both time axes on 17 November, History, the assistant's create over MCP arriving in the open Journal, Changed since, Move live back, a derivation, About, Try it here and the palette. It writes only that release, two entities and one correction, all on the working copy, and moves `live` back to where it found it even when a step fails. Every step leaves a light and a dark screenshot. Any console error, failed request or failed step makes it exit 1 and is listed at the end of `demo-pass.log` in the screenshot folder. Every time on screen comes from a tool answer. The same command with `--database toy --api http://127.0.0.1:28580` rehearses it on the toy.
+
+**Closing it.** `TRIPLEX_DEMO_STATE=$HOME/.triplex-demo/connection-1b.json bash demo/disconnect.sh` closes only the 1 billion database's tunnel and removes its connection file; stop the server on 28583 with Ctrl-C.
 
 ## Register the MCP server
 
