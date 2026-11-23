@@ -41,6 +41,9 @@ export async function fairLocal(stack: Stack) {
   // Rejected: a second Mac stack recipe for the same toy seed.
   if (process.env.DX_ACT3_HELD === "1") {
     const { runHeld } = await import("../actv-lazy/join/held-campaign.ts");
+    // The held runner opens its stores from these, as held-server.ts sets them.
+    process.env.DATOMIC_URL = write;
+    process.env.DATOMIC_READ_URLS = read;
     const peer = { slot: e.slot, attempt: e.nonce, write, read, gatewaySource: e.source.gateway,
       java: { origin: "managed-laptop" } };
     await runHeld(e.dir, e.source.git, peer, seed, true);
