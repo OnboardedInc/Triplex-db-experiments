@@ -944,3 +944,13 @@ Sam, verbatim (three messages):
 > I want to be able to show to ben how this works at the 1 billion facts scale
 
 Recorded by the orchestrator: a demo is to be built (tunnel from the Mac, a local MCP server with example queries and changes, an inspector) to show Ben the store at 1 billion records. "Inspector" is read as both the standard MCP Inspector and a small page to look at a person's facts, history and feed (the orchestrator's reading). When the demo happens is not yet stated.
+
+## 2026-11-23 about 15:10 local: say "subject"; break the 1 billion scorecard down; Datomic on hosted Postgres?
+
+Sam, verbatim:
+
+> Can you not say "person"? Do you actually mean "if a person has not changed as the pinpoint"? Do you just mean "if a subject has not changed" or what do you mean by that?
+>
+> For the $1 billion scorecard can you break these down for me? What are we at? What is working and what's not working? Can you explain to me? Do we have plans to figure out how to fix these? Also is this possible: that we could run Datomic Pro eventually on a hosted Postgres? Is that how that works, like on Neon or on Supabase, or no?
+
+Recorded by the orchestrator: from now on the unit is called a subject in messages and new documents. The other two are questions, answered in the session.
