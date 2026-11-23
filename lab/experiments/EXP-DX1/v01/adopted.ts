@@ -22,6 +22,7 @@ import { realisticSubject, realisticTape } from "./realistic-plan.ts";
 import { subject as realSubject } from "../real1/population.ts";
 import { defaultCreditMode } from "../jvm1/launch.mjs";
 import { collectCell, type physicalTelemetry } from "./cell-telemetry.ts";
+import { migratedReadRate, recentlyOffered, sampleMigratedReads } from "../w1/migrated-reads.ts";
 
 export type Residency = Record<string, { rssBytes: number; threads: number }>;
 export type Peer = { write: string; read: string; slot: string; attempt: string; gatewaySource: string; java: unknown;
@@ -349,6 +350,13 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const background = seed.realistic && quietCell !== undefined && loaded
       ? realisticBackground(reader, seed, start, seconds, toy) : undefined;
     const samples: ReadSamples = [];
+    // [Opus W1] Why: the owner-head pair times reads of people this tape has just saved, in both arms, on a separate
+    // reader client at a low fixed rate, outside the save path's clock.
+    const migratedReader = retirement ? new DatomicClient(peer.read, 35000) : undefined;
+    const ownerOf = (e: Write) => (e as Write & { owner?: string }).owner ?? task(e.account, e.subject);
+    const migratedLoaded = migratedReader ? sampleMigratedReads(migratedReader, seed.scope.db, { phase: "loaded",
+      start: start + 2000, seconds: seconds - 2, firstCut: startHead, validAt: SEED_VALID_FROM,
+      candidates: (at) => recentlyOffered(tape, start, at, 1000, ownerOf) }) : undefined;
     const [writes, phases, quietRead, mixedReads] = await Promise.all([
       play(senders, tape, start, peer.attempt, false, writer === "per-person-ordered", selection),
       !retirement && quietCell === undefined && !comparison ? readWindows(reader, seed, start, loaded, toy, study, samples) : [], quiet, background,
@@ -359,6 +367,16 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     await writerClient.release(seed.scope.db, head.handle);
     const feed = await feeding;
     const saves = writes.rows.filter((r) => r.receipt);
+    let migratedReads;
+    if (migratedReader) {
+      const loadedReads = await migratedLoaded!;
+      const savedPeople = [...new Set(saves.map((r) => ownerOf(r as unknown as Write)))].reverse();
+      const settled = await sampleMigratedReads(migratedReader, seed.scope.db, { phase: "settled", start: now() + 1000,
+        seconds: 30, firstCut: startHead, validAt: SEED_VALID_FROM, candidates: () => savedPeople });
+      migratedReader.close();
+      migratedReads = { ratePerSecond: migratedReadRate, client: "separate reader client on the read gateway",
+        loaded: loadedReads, settled };
+    }
     const byPosition = new Map(feed.map((r) => [r.position, r]));
     assert.equal(feed.length, saves.length);
     const saveHistogram = new Histogram();
@@ -405,7 +423,7 @@ export async function adoptedArm(out: string, source: string, peer: Peer, seed: 
     const evidence = path.join(out, "operations.json");
     jsonFile(evidence, { writes: writes.rows, journal: feed, tape, fairCredits: credits, selection, p1: phases, p4: pulls, p6, p7, thin });
     const result = { source, writer, telemetrySha256, fixture: toy, slot: peer.slot, attempt: peer.attempt, startedAt: begin, endedAt: now(), start,
-      loaded, retirement, serialAnchor, firstCut: startHead, terminal, seed: { ...adopted, realistic: seed.realisticBinding }, tapeSha256: hex(JSON.stringify(tape)),
+      loaded, retirement, migratedReads, serialAnchor, firstCut: startHead, terminal, seed: { ...adopted, realistic: seed.realisticBinding }, tapeSha256: hex(JSON.stringify(tape)),
       observationsSha256: hex(fs.readFileSync(evidence)), settings: { ...selected, observed: options, java: peer.java, creditMode: mode, selection, fairCredits: credits },
       study: study && { rate: study.rate, batch: study.batch, savesByLevel: phases.map((phase, i) => {
         const bucket = writes.rows.filter((row) => row.due >= start + i * 30_000 && row.due < start + (i + 1) * 30_000);

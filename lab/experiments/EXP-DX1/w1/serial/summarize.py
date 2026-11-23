@@ -133,6 +133,13 @@ def summarize(root, slot, attempt, source, age, credit_mode):
                        "firstCut": header["firstCut"], "terminal": header["terminal"],
                        "refusedOrExpired": len(ops["writes"]) - len(saved),
                        "pinnedRead": (ops.get("p6") or {}).get("read"),
+                       # [Opus W1] Why: reads of people this window's tape saved (migrated in the owner-head arm).
+                       "migratedReads": {phase: {kind: {k: (header["migratedReads"][phase][kind] or {}).get(k)
+                                                        for k in ("count", "p50Ms", "p99Ms")}
+                                                 for kind in ("current", "pinned")}
+                                         | {"attempted": header["migratedReads"][phase]["attempted"],
+                                            "errors": len(header["migratedReads"][phase]["errors"])}
+                                         for phase in ("loaded", "settled")} if header.get("migratedReads") else None,
                        "function": header["settings"]["observed"]["subjectFunction"]})
 
     assert len(wanted_databases) == 1

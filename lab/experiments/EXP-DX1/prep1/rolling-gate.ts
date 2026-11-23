@@ -9,6 +9,7 @@ import type { CreditMode } from "../jvm1/launch.mjs";
 import { command } from "../w1/group/workload.ts";
 import { SEED_VALID_FROM } from "../../../bench/lib/world.ts";
 import { replay } from "../chk1/replay.ts";
+import { sampleMigratedReads } from "../w1/migrated-reads.ts";
 
 const [phase, mode, witnessPath] = process.argv.slice(2);
 const selection = creditModeSelection(mode as CreditMode);
@@ -166,6 +167,21 @@ async function before(witness: string) {
     assert(sequence.every((s, i) => i === 0 || sequence[i-1]!.receipt!.p < s.receipt!.p));
   }
   assert.equal(await head(db), cut + okTape.length);
+  if (ownerHead) {
+    // [Opus W1] Why: gate the owner-head pair's migrated-person read sampler on people this tape just saved.
+    // Rejected: trusting the full-size runner to be the first place its request shapes and cut checks execute.
+    const sampler = new DatomicClient(url, 5000);
+    const people = [...new Set(okTape.map((e) => task(e.account, e.subject)))];
+    const sampled = await sampleMigratedReads(sampler, db, { phase: "settled", start: Date.now() + 200, seconds: 3,
+      firstCut: cut, validAt: SEED_VALID_FROM, candidates: () => people });
+    sampler.close();
+    assert.equal(sampled.errors.length, 0, sampled.errors.join("\n"));
+    assert(sampled.attempted >= 10 && sampled.notYetSaved === 0 && sampled.pinnedSkipped === 0);
+    assert(sampled.current.count === sampled.attempted && sampled.pinned.count === sampled.attempted);
+    console.log("DX-W1_MIGRATED_READS " + JSON.stringify({ attempt, mode, db, rate: sampled.ratePerSecond,
+      attempted: sampled.attempted, current: { p50: sampled.current.p50Ms, p99: sampled.current.p99Ms },
+      pinned: { p50: sampled.pinned.p50Ms, p99: sampled.pinned.p99Ms }, rows: sampled.currentRows, clock: "diagnostic" }));
+  }
 
   const lostTape = tape(credits, "lost");
   const lostId = operationId(nonce, lostTape[credits-1]!.version);
