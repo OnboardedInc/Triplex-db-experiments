@@ -17,17 +17,28 @@ export type MigratedReadPhase = {
   notYetSaved: number;
   pinnedSkipped: number;
   errors: string[];
+  errorCount: number;
   current: ReturnType<Histogram["summary"]> & { hist: ReturnType<Histogram["toJSON"]> };
   pinned: ReturnType<Histogram["summary"]> & { hist: ReturnType<Histogram["toJSON"]> };
   currentRows: number[];
 };
 
-type Reader = Pick<DatomicClient, "rows" | "begin" | "release">;
+type Reader = Pick<DatomicClient, "rows">;
 
 /**
  * Sample current and pinned reads of people saved after `firstCut`, at a fixed low rate on its own client.
  * `candidates(nowMs)` returns entity ids, most recently saved first. A person counts as migrated-or-saved only when
- * the current read shows a row recorded after `firstCut`; the pinned read then uses a snapshot cut at or after that row.
+ * the current read shows a row recorded after `firstCut`; the pinned read then asks for the subject at the recorded
+ * position of that newest row (`saved`), which the same reader has already shown.
+ *
+ * [Opus W1] Why: bench 4 (2026-11-23) pinned at a snapshot cut taken after the current read. Under load the tape saves
+ * the same subject again within milliseconds (394/s: 48,625 repeat gaps under 1 s among 14,299 subjects), so that cut
+ * could include a newer save that replaced the rows recorded at `saved`, and a correct store could fail the check
+ * (bench 4 logged 3 and 11 such errors without the subject or positions, so which case they were is not known).
+ * At `saved` nothing later can appear, so every check below is exact: a row at that basis is recorded at `saved`,
+ * and every row the current read returned is still there (a row alive later was alive at `saved`).
+ * The basis maps to the physical transaction holding `saved` (storage.clj at-position); the same reader showed it.
+ * Rejected: skipping the check, waiting for a quieter cut, or counting a mismatch as anything but an error.
  */
 export async function sampleMigratedReads(reader: Reader, db: string, opts: {
   phase: "loaded" | "settled"; start: number; seconds: number; firstCut: number; validAt: number;
@@ -38,14 +49,7 @@ export async function sampleMigratedReads(reader: Reader, db: string, opts: {
   const current = new Histogram(), pinned = new Histogram();
   const currentRows: number[] = [];
   const errors: string[] = [];
-  let attempted = 0, notYetSaved = 0, pinnedSkipped = 0, cursor = 0;
-  let cut = opts.firstCut, cutAt = 0;
-  const refreshCut = async () => {
-    const snap = await reader.begin(db);
-    await reader.release(db, snap.handle);
-    cut = snap.position;
-    cutAt = Date.now();
-  };
+  let attempted = 0, notYetSaved = 0, pinnedSkipped = 0, errorCount = 0, cursor = 0;
   const end = opts.start + opts.seconds * 1000;
   for (let tick = opts.start; tick < end && !opts.stop?.(); tick += 1000 / rate) {
     const wait = tick - Date.now();
@@ -55,27 +59,31 @@ export async function sampleMigratedReads(reader: Reader, db: string, opts: {
     if (pool.length === 0) continue;
     const entity = pool[cursor++ % Math.min(pool.length, 64)]!;
     attempted++;
+    let saved = Number.NaN, rows: Awaited<ReturnType<Reader["rows"]>> = [], held: typeof rows = [];
     try {
-      if (Date.now() - cutAt >= 1000) await refreshCut();
       const t0 = performance.now();
-      const rows = await reader.rows(db, { entityIds: [entity], basis: { validAt: opts.validAt } });
+      rows = await reader.rows(db, { entityIds: [entity], basis: { validAt: opts.validAt } });
       const t1 = performance.now();
-      const saved = Math.max(...rows.map((r) => Number(r.recorded_position)));
+      saved = Math.max(...rows.map((r) => Number(r.recorded_position)));
       if (!(saved > opts.firstCut)) { notYetSaved++; continue; }
       current.recordMs(t1 - t0);
       currentRows.push(rows.length);
-      if (saved > cut) await refreshCut();
-      if (saved > cut) { pinnedSkipped++; continue; }
       const t2 = performance.now();
-      const held = await reader.rows(db, { entityIds: [entity], basis: { recordedPosition: cut, validAt: opts.validAt } });
+      held = await reader.rows(db, { entityIds: [entity], basis: { recordedPosition: saved, validAt: opts.validAt } });
       const t3 = performance.now();
-      assert(held.length > 0 && held.some((r) => Number(r.recorded_position) === saved));
+      const heldIds = new Set(held.map((r) => r.id));
+      assert(held.some((r) => Number(r.recorded_position) === saved) && held.length >= rows.length
+        && rows.every((r) => heldIds.has(r.id)), "pinned read at the saved position lacks the current rows");
       pinned.recordMs(t3 - t2);
     } catch (error) {
-      if (errors.length < 20) errors.push(String(error).slice(0, 300));
+      errorCount++;
+      // Every error names the subject and both reads' positions, so it can be judged from the evidence alone.
+      if (errors.length < 20) errors.push(JSON.stringify({ error: String(error).slice(0, 200), entity, saved,
+        current: rows.map((r) => [r.id, Number(r.recorded_position)]),
+        held: held.map((r) => [r.id, Number(r.recorded_position)]) }).slice(0, 4000));
     }
   }
-  return { phase: opts.phase, ratePerSecond: rate, seconds: opts.seconds, attempted, notYetSaved, pinnedSkipped, errors,
+  return { phase: opts.phase, ratePerSecond: rate, seconds: opts.seconds, attempted, notYetSaved, pinnedSkipped, errors, errorCount,
     current: { ...current.summary(), hist: current.toJSON() }, pinned: { ...pinned.summary(), hist: pinned.toJSON() },
     currentRows: [...new Set(currentRows)].sort((a, b) => a - b) };
 }

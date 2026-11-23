@@ -71,19 +71,38 @@ def main():
             for block in native:
                 f.write(json.dumps({"attempt": ATTEMPT, **block}) + "\n")
             f.write(json.dumps({"attempt": ATTEMPT, "end": True, "dropped": 0}) + "\n")
-        with (trace / "prep1-lookups.ndjson").open("w") as f:
-            for event in lookups:
-                f.write(json.dumps(event) + "\n")
-            f.write(json.dumps({"attempt": ATTEMPT, "end": True, "dropped": 0}) + "\n")
+        # [Opus W1] observe.clj writes its other retained events to the same file; bench 4 had one PREP1_NATIVE_PREFETCH first.
+        prefetch = {"setting": "true", "enabled": True, "processors": 3, "attempt": ATTEMPT, "kind": "PREP1_NATIVE_PREFETCH"}
+        guard = {"attempt": ATTEMPT, "kind": "PREP1_GUARD", "mode": "x"}
+
+        def lookup_file(rows):
+            with (trace / "prep1-lookups.ndjson").open("w") as f:
+                for event in rows:
+                    f.write(json.dumps(event) + "\n")
+                f.write(json.dumps({"attempt": ATTEMPT, "end": True, "dropped": 0}) + "\n")
+
+        # A PREP1_LOOKUPS event at another sample rate, or a record with no kind that is not the terminal, still fails.
+        for bad in ({**lookups[0], "sampleEvery": 32}, {k: v for k, v in lookups[0].items() if k != "kind"}):
+            lookup_file([prefetch, bad, *lookups[1:]])
+            try:
+                summarize.summarize(root, SLOT, ATTEMPT, SOURCE, "1B", "rolling6")
+            except AssertionError:
+                pass
+            else:
+                raise SystemExit("summarize accepted " + json.dumps(bad)[:120])
+            assert not (root / "retirement-diagnostic.json").exists()
+        lookup_file([prefetch, *lookups[:3], guard, *lookups[3:]])
         summarize.summarize(root, SLOT, ATTEMPT, SOURCE, "1B", "rolling6")
         result = json.loads((root / "retirement-diagnostic.json").read_text())
+        assert result["otherLookupFileEvents"] == {"PREP1_GUARD": 1, "PREP1_NATIVE_PREFETCH": 1}
+        assert result["lookupSamples"] == len(lookups)
         for w in result["windows"]:
             assert w["agedHead"] == aged_head
             late = w["halves"][1]["byOwnerGroup"]
             assert set(late) == {"loader", "seed"}
             assert late["loader"]["sqlReadsPerSave"]["mean"] == 2 and late["seed"]["sqlReadsPerSave"]["mean"] == 1
             assert late["loader"]["saves"] + late["seed"]["saves"] == w["halves"][1]["sqlSamples"]
-        print("summarize per-group test passed", [(w["rate"], {g: v["saves"] for g, v in w["halves"][1]["byOwnerGroup"].items()}) for w in result["windows"]])
+        print("summarize per-group test passed; other kinds counted", result["otherLookupFileEvents"], [(w["rate"], {g: v["saves"] for g, v in w["halves"][1]["byOwnerGroup"].items()}) for w in result["windows"]])
 
 
 if __name__ == "__main__":

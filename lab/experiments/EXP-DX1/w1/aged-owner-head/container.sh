@@ -96,4 +96,9 @@ java $opts -Dtriplex.codec.spec=/opt/gateway/codec-spec.json \
   clojure.main -m owner-census "$name" /out/owner-census.json > /out/owner-census.log 2>&1
 gateway 0
 echo fence > /out/fence-ready
+# [Opus W1] Step 7: the owner head again on the same database for the migrated-subject read sampler under same-subject saves.
+wait_file sampler-wanted
+stop "$gw_pid"
+gateway 1
+echo sampler > /out/sampler-ready
 wait_file finished
